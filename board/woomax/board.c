@@ -10,11 +10,11 @@
 #include "cbi_ec_fw_config.h"
 #include "cbi_ssfc.h"
 #include "cros_board_info.h"
-#include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_icm_common.h"
-#include "driver/accelgyro_icm426xx.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
+#include "driver/accelgyro_bmi_common.h"
+#include "driver/accelgyro_icm426xx.h"
+#include "driver/accelgyro_icm_common.h"
 #include "driver/retimer/pi3dpx1207.h"
 #include "driver/retimer/pi3hdx1204.h"
 #include "driver/retimer/ps8802.h"
@@ -42,6 +42,7 @@
 #include "usb_charge.h"
 #include "usb_mux.h"
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
@@ -451,7 +452,7 @@ static int woomax_ps8802_mux_set(const struct usb_mux *me,
 const struct usb_mux usbc1_woomax_ps8818 = {
 	.usb_port = USBC_PORT_C1,
 	.i2c_port = I2C_PORT_TCPC1,
-	.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
+	.i2c_addr_flags = PS8818_I2C_ADDR0_FLAGS,
 	.driver = &ps8818_usb_retimer_driver,
 	.board_set = &woomax_ps8818_mux_set,
 };

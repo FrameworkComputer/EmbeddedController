@@ -39,11 +39,13 @@ static void host_event_set_bit(host_event_t *ev, uint8_t bit)
 	if (bit == 0)
 		return;
 
-#ifdef CONFIG_HOST_EVENT64
+	/*
+	 * The overall host event implementation assumes it's running on and
+	 * communicating with little-endian architectures.
+	 */
 	if (bit > 32)
 		*(ptr + 1) = HOST_EVENT_32BIT_MASK(bit - 32);
 	else
-#endif
 		*ptr = HOST_EVENT_32BIT_MASK(bit);
 }
 
@@ -138,14 +140,12 @@ int lpc_get_next_host_event(void)
 	host_event_t ev;
 	int evt_idx = __builtin_ffs(lpc_host_events);
 
-#ifdef CONFIG_HOST_EVENT64
 	if (evt_idx == 0) {
 		int evt_idx_high = __builtin_ffs(lpc_host_events >> 32);
 
 		if (evt_idx_high)
 			evt_idx = 32 + evt_idx_high;
 	}
-#endif
 
 	if (evt_idx) {
 		host_event_set_bit(&ev, evt_idx);
@@ -268,9 +268,7 @@ static void host_events_atomic_or(host_event_t *e, host_event_t m)
 	atomic_t *ptr = (atomic_t *)e;
 
 	atomic_or(ptr, (uint32_t)m);
-#ifdef CONFIG_HOST_EVENT64
 	atomic_or(ptr + 1, (uint32_t)(m >> 32));
-#endif
 }
 
 static void host_events_atomic_clear(host_event_t *e, host_event_t m)
@@ -278,15 +276,12 @@ static void host_events_atomic_clear(host_event_t *e, host_event_t m)
 	atomic_t *ptr = (atomic_t *)e;
 
 	atomic_clear_bits(ptr, (uint32_t)m);
-#ifdef CONFIG_HOST_EVENT64
 	atomic_clear_bits(ptr + 1, (uint32_t)(m >> 32));
-#endif
 }
 
 #if !defined(CONFIG_HOSTCMD_X86) && defined(CONFIG_MKBP_EVENT)
 static void host_events_send_mkbp_event(host_event_t e)
 {
-#ifdef CONFIG_HOST_EVENT64
 	/*
 	 * If event bits in the upper 32-bit are set, indicate 64-bit host
 	 * event.
@@ -294,7 +289,6 @@ static void host_events_send_mkbp_event(host_event_t e)
 	if (!(uint32_t)e)
 		mkbp_send_event(EC_MKBP_EVENT_HOST_EVENT64);
 	else
-#endif
 		mkbp_send_event(EC_MKBP_EVENT_HOST_EVENT);
 }
 #endif
@@ -397,7 +391,6 @@ static int host_get_next_event(uint8_t *out)
 }
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_HOST_EVENT, host_get_next_event);
 
-#ifdef CONFIG_HOST_EVENT64
 static int host_get_next_event64(uint8_t *out)
 {
 	host_event_t event_out = events;
@@ -408,7 +401,6 @@ static int host_get_next_event64(uint8_t *out)
 	return sizeof(event_out);
 }
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_HOST_EVENT64, host_get_next_event64);
-#endif
 #endif
 
 /**

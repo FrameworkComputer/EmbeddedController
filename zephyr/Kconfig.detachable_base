@@ -1,0 +1,20 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_DETACHABLE_BASE
+	bool "Detachable base support"
+	help
+		Enable base state related helpers.
+
+		If enabled, the board should implement a base_force_state()
+		function and board-specific base attach detection algorithm.
+
+		Enable this if the board has a detachable base.
+
+config PLATFORM_EC_BASE_ATTACHED_SWITCH
+	bool "Base attached switch"
+	depends on PLATFORM_EC_DETACHABLE_BASE
+	help
+		Add a virtual switch to indicate when detachable device has
+		base attached.

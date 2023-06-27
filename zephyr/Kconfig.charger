@@ -85,6 +85,16 @@ config PLATFORM_EC_CHARGE_STATE_DEBUG
 	  this config will allow the EC_CMD_CHARGE_STATE host command to use the
 	  CHARGE_STATE_CMD_GET_PARAM command to query the current charge state.
 
+config PLATFORM_EC_CHARGE_DEBUG
+	bool "Add a debug sub-command to the 'chgstate' command"
+	depends on PLATFORM_EC_CHARGE_MANAGER
+	default y
+	help
+	  Enables the 'chgstate debug' command which allows extra debugging to
+	  be shown when charging, or when a separate base (with battery) is
+	  used. This adds a little to the code size, but can normally be safely
+	  enabled.
+
 config PLATFORM_EC_CMD_PWR_AVG
 	bool "Enable the console command to print power average"
 	depends on PLATFORM_EC_CHARGE_MANAGER
@@ -151,6 +161,16 @@ config PLATFORM_EC_CHARGER_ISL9241
 	  control. It supports an input voltage range of 3.9-23.4V and output
 	  of 3.9-18.3V. It provides an I2C interface for configuration.
 
+config PLATFORM_EC_CHARGER_RAA489110
+	bool "Use the RAA489110 charger"
+	depends on PLATFORM_EC_I2C
+	# Hardware based charge ramp is broken in the ISL9241 (b/169350714)
+	# Probably also broken for RAA489110.
+	select PLATFORM_EC_CHARGER_CHGRAMP_BROKEN
+	help
+	  Enables a driver for the RAA489110 VCD Battery Charger. This is a
+	  EPR capable version of ISL9241.
+
 if PLATFORM_EC_CHARGER_ISL9241
 
 config PLATFORM_EC_ISL9241_SWITCHING_FREQ
@@ -198,6 +218,18 @@ config PLATFORM_EC_CHARGER_RAA489000
 	  Enables the driver for the Renesas RAA489000 battery charger
 	  with integrated USB-C TCPC.
 
+config PLATFORM_EC_RAA489000_AC_PRESENT_CONTROL
+	bool "Invert the AC_PRESENT signal when in OTG mode"
+	depends on PLATFORM_EC_CHARGER_RAA489000 && !PLATFORM_EC_EXTPOWER_GPIO
+	help
+	  Enables the RAA489000 chip to invert the AC_PRESENT signal
+	  when the charger is in OTG (sourcing) mode.
+	  This is required when the internal comparator is used to
+	  generate the AC_PRESENT signal from the ACOK signal.
+	  In OTG mode the ACOK signal is high, but the AC_PRESENT
+	  should be set low, so the comparator output must be inverted.
+	  The GPIO_AC_PRESENT gpio signal must not be configured.
+
 config PLATFORM_EC_CHARGER_RT9490
 	bool "Use the RT9490 charger"
 	default y
@@ -217,6 +249,12 @@ config PLATFORM_EC_CHARGER_SM5803
 	help
 	  Enables the driver for the SM5803.
 	  The SM5803 is the Silicon Mitus SM5803 Buck-Boost Charger.
+
+	  This charger is known to be very inefficient when operating in buck-boost
+	  mode (when input voltage is close to output voltage), such that permanent
+	  damage may be done to the charger. Users should exercise caution around
+	  choice of supported configurations: see b:260271871, b:258754576, and
+	  b:230712704 for more information.
 
 
 if PLATFORM_EC_OCPC
@@ -540,6 +578,13 @@ config PLATFORM_EC_CHARGER_MAINTAIN_VBAT
 	  all conditions, even when AC is not present. This may be necessary to
 	  work around quirks of certain charger chips, such as the BD9995X.
 
+config PLATFORM_EC_CHARGER_BYPASS_MODE
+	bool
+	help
+	  Select this option if the charger will be used in a bypass mode in
+	  order to pass the input current from AC directly to the system
+	  power rail for efficiency.
+
 config PLATFORM_EC_CHARGER_NARROW_VDC
 	bool
 	help
@@ -773,5 +818,38 @@ config PLATFORM_EC_ISL9238C_DISABLE_CMOUT_LATCH
 	depends on PLATFORM_EC_CHARGER_ISL9238C
 	help
 	  Disable the CMOUT latch function for ISL9238C.
+
+config PLATFORM_EC_ISL9238C_ENABLE_BUCK_MODE
+	bool "Enable Force Buck mode"
+	default n
+	depends on PLATFORM_EC_CHARGER_ISL9238C
+	help
+	  Enable Force Buck mode for ISL9238C.
+	  If the Force Buck mode is enabled, the Buck-Boost window narrows.
+
+config PLATFORM_EC_ISL9238C_BUCK_PHASE_VOLTAGE
+	int "Value of phase comparator threshold offset"
+	default 0
+	help
+	  Adjusts the phase comparator threshold offset for forward buck
+	  and buck-boost.
+
+config PLATFORM_EC_AC_PROCHOT_CURRENT_MA
+	int "Value of the prochot threshold current in mA"
+	default 3328
+	help
+	  To set the PROCHOT# assertion threshold for adapter overcurrent
+	  conditions.
+
+config PLATFORM_EC_DC_PROCHOT_CURRENT_MA
+	int "Value of the prochot threshold current in mA"
+	default 6570
+	help
+	  To set the PROCHOT# signal assertion threshold for battery over
+	  discharging current conditions.
+
+config PLATFORM_EC_CHARGER_DUMP_PROCHOT
+	bool "Enable support for prochot status dumping functions"
+	default n
 
 endif # PLATFORM_EC_CHARGER

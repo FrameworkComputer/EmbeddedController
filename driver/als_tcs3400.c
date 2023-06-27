@@ -5,9 +5,9 @@
  * AMS TCS3400 light sensor driver
  */
 #include "accelgyro.h"
+#include "als_tcs3400.h"
 #include "common.h"
 #include "console.h"
-#include "als_tcs3400.h"
 #include "hooks.h"
 #include "hwtimer.h"
 #include "i2c.h"
@@ -24,47 +24,12 @@
 
 volatile uint32_t last_interrupt_timestamp;
 
-#ifdef CONFIG_TCS_USE_LUX_TABLE
-/*
- * Stores the number of atime increments/decrements needed to change light value
- * by 1% of saturation for each gain setting for each predefined LUX range.
- *
- * Values in array are TCS_ATIME_GAIN_FACTOR (100x) times actual value to allow
- * for fractions using integers.
- */
-static const uint16_t range_atime[TCS_MAX_AGAIN - TCS_MIN_AGAIN +
-				  1][TCS_MAX_ATIME_RANGES] = {
-	{ 11200, 5600, 5600, 7200, 5500, 4500, 3800, 3800, 3300, 2900, 2575,
-	  2275, 2075 },
-	{ 11200, 5100, 2700, 1840, 1400, 1133, 981, 963, 833, 728, 650, 577,
-	  525 },
-	{ 250, 1225, 643, 441, 337, 276, 253, 235, 203, 176, 150, 0, 0 },
-	{ 790, 261, 163, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0 }
-};
-
-static void decrement_atime(struct tcs_saturation_t *sat_p, uint16_t cur_lux,
-			    int percent)
-{
-	int atime;
-	uint16_t steps;
-	int lux = MIN(cur_lux, TCS_GAIN_TABLE_MAX_LUX);
-
-	steps = percent * range_atime[sat_p->again][lux / 1000] /
-		TCS_ATIME_GAIN_FACTOR;
-	atime = MAX(sat_p->atime - steps, TCS_MIN_ATIME);
-	sat_p->atime = MIN(atime, TCS_MAX_ATIME);
-}
-
-#else
-
 static void decrement_atime(struct tcs_saturation_t *sat_p,
 			    uint16_t __attribute__((unused)) cur_lux,
 			    int __attribute__((unused)) percent)
 {
 	sat_p->atime = MAX(sat_p->atime - TCS_ATIME_DEC_STEP, TCS_MIN_ATIME);
 }
-
-#endif /* CONFIG_TCS_USE_LUX_TABLE */
 
 static void increment_atime(struct tcs_saturation_t *sat_p)
 {

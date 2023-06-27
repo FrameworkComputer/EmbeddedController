@@ -3,9 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "charge_manager.h"
 #include "console.h"
 #include "emul/emul_isl923x.h"
@@ -14,6 +11,9 @@
 #include "tcpm/tcpci.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 struct console_cmd_charge_manager_fixture {
 	struct tcpci_partner_data sink_5v_3a;

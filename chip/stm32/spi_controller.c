@@ -371,6 +371,7 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 
 	spi_clear_rx_fifo(spi);
 
+	/* Initiate write part of the transaction, non-blocking. */
 	if (txlen) {
 		rv = spi_dma_start(port, txdata, buf, txlen);
 		if (rv != EC_SUCCESS)
@@ -383,13 +384,20 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 	if (full_readback)
 		return EC_SUCCESS;
 
-	rv = spi_dma_wait(port);
-	if (rv != EC_SUCCESS)
-		goto err_free;
-
-	spi_clear_tx_fifo(spi);
-
 	if (rxlen) {
+		/*
+		 * If "write then read" was requested, then we have to wait for
+		 * the write to complete, before we can initiate read.
+		 */
+		if (txlen) {
+			rv = spi_dma_wait(port);
+			if (rv != EC_SUCCESS)
+				goto err_free;
+
+			spi_clear_tx_fifo(spi);
+		}
+
+		/* Initiate read part of the transaction, non-blocking. */
 		rv = spi_dma_start(port, buf, rxdata, rxlen);
 		if (rv != EC_SUCCESS)
 			goto err_free;
@@ -397,6 +405,13 @@ int spi_transaction_async(const struct spi_device_t *spi_device,
 		spi->cr1 &= ~STM32_SPI_CR1_BIDIOE;
 #endif
 	}
+
+	/*
+	 * At this point, there is EITHER a pending non-blocking write OR a
+	 * pending non-blocking read.  In either case, spi_transaction_flush()
+	 * will wait for completion of the DMA transfer, and also make sure
+	 * that any last bits in the transmit shift register is flushed.
+	 */
 
 err_free:
 #ifndef CONFIG_SPI_HALFDUPLEX
@@ -409,6 +424,15 @@ err_free:
 int spi_transaction_flush(const struct spi_device_t *spi_device)
 {
 	int rv = spi_dma_wait(spi_device->port);
+	int port = spi_device->port;
+	stm32_spi_regs_t *spi = SPI_REGS[port];
+
+	/*
+	 * For the case that the DMA transfer just finished was for SPI
+	 * transfer, ensure that the last bits are fully transmitted before
+	 * releasing CS.
+	 */
+	spi_clear_tx_fifo(spi);
 
 	if (!IS_ENABLED(CONFIG_USB_SPI) ||
 	    !spi_chip_select_already_asserted[spi_device->port]) {

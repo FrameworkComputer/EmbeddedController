@@ -4,9 +4,9 @@
  */
 
 #include "chipset.h"
-#include "ctn730.h"
 #include "common.h"
 #include "console.h"
+#include "ctn730.h"
 #include "gpio.h"
 #include "i2c.h"
 #include "peripheral_charger.h"
@@ -319,6 +319,16 @@ static int _process_payload_response(struct pchg *ctx, struct ctn730_msg *res)
 			ctx->event = PCHG_EVENT_UPDATE_WRITTEN;
 		}
 		break;
+	case WLC_HOST_CTRL_BIST:
+		if (len != WLC_HOST_CTRL_BIST_CMD_SIZE)
+			return EC_ERROR_UNKNOWN;
+		if (buf[0] != WLC_HOST_STATUS_OK) {
+			CPRINTS("BIST command failed for %s",
+				_text_status_code(buf[0]));
+			ctx->event = PCHG_EVENT_ERROR;
+			ctx->error |= PCHG_ERROR_MASK(PCHG_ERROR_RESPONSE);
+		}
+		break;
 	case WLC_CHG_CTRL_ENABLE:
 		if (len != WLC_CHG_CTRL_ENABLE_RSP_SIZE)
 			return EC_ERROR_UNKNOWN;
@@ -347,9 +357,6 @@ static int _process_payload_response(struct pchg *ctx, struct ctn730_msg *res)
 			ctx->battery_percent = buf[1];
 			ctx->event = PCHG_EVENT_CHARGE_UPDATE;
 		}
-		break;
-	case WLC_HOST_CTRL_BIST:
-		CPRINTS("Received BIST response");
 		break;
 	default:
 		CPRINTS("Received unknown response (%d)", res->instruction);
@@ -618,6 +625,32 @@ static int ctn730_passthru(struct pchg *ctx, bool enable)
 	return EC_SUCCESS;
 }
 
+static int ctn730_bist(struct pchg *ctx, uint8_t test_id)
+{
+	uint8_t buf[sizeof(struct ctn730_msg) + WLC_HOST_CTRL_BIST_CMD_SIZE];
+	struct ctn730_msg *cmd = (void *)buf;
+	uint8_t *id = cmd->payload;
+	int rv;
+
+	cmd->message_type = CTN730_MESSAGE_TYPE_COMMAND;
+	cmd->instruction = WLC_HOST_CTRL_BIST;
+	*id = test_id;
+
+	switch (test_id) {
+	case PCHG_BIST_CMD_RF_CHARGE_ON:
+		cmd->length = 1;
+		break;
+	default:
+		return EC_ERROR_UNIMPLEMENTED;
+	}
+
+	rv = _send_command(ctx, cmd);
+	if (rv)
+		return rv;
+
+	return EC_SUCCESS_IN_PROGRESS;
+}
+
 /**
  * Send command in blocking loop
  *
@@ -690,6 +723,7 @@ const struct pchg_drv ctn730_drv = {
 	.update_write = ctn730_update_write,
 	.update_close = ctn730_update_close,
 	.passthru = ctn730_passthru,
+	.bist = ctn730_bist,
 };
 
 static int cc_ctn730(int argc, const char **argv)
@@ -705,7 +739,7 @@ static int cc_ctn730(int argc, const char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	port = strtoi(argv[1], &end, 0);
-	if (*end || port < 0 || pchg_count <= port)
+	if (*end || port < 0 || board_get_pchg_count() <= port)
 		return EC_ERROR_PARAM2;
 
 	cmd->message_type = CTN730_MESSAGE_TYPE_COMMAND;

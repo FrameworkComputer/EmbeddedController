@@ -35,7 +35,7 @@ struct d_notify_policy {
 			unsigned int min_charger_watts;
 		} ac;
 		struct {
-			unsigned int min_battery_soc;
+			unsigned int max_battery_soc;
 		} dc;
 	};
 };
@@ -50,9 +50,9 @@ struct d_notify_policy {
 		.power_source = D_NOTIFY_AC_DC, \
 	}
 
-#define DC_ATLEAST_SOC(S)                                               \
+#define DC_ATMOST_SOC(S)                                                \
 	{                                                               \
-		.power_source = D_NOTIFY_DC, .dc.min_battery_soc = (S), \
+		.power_source = D_NOTIFY_DC, .dc.max_battery_soc = (S), \
 	}
 
 void nvidia_gpu_init_policy(const struct d_notify_policy *policies);

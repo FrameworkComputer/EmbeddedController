@@ -27,8 +27,8 @@
 #define TCPC_REG_PD_INT_REV_VER_MASK 0x00ff
 #define TCPC_REG_PD_INT_REV_VER_1_0 0x10
 #define TCPC_REG_PD_INT_REV_VER_1_1 0x11
-#define TCPC_REG_PD_INT_REV_REV(reg) ((reg & TCOC_REG_PD_INT_REV_REV_MASK) >> 8)
-#define TCPC_REG_PD_INT_REV_VER(reg) (reg & TCOC_REG_PD_INT_REV_VER_MASK)
+#define TCPC_REG_PD_INT_REV_REV(reg) ((reg & TCPC_REG_PD_INT_REV_REV_MASK) >> 8)
+#define TCPC_REG_PD_INT_REV_VER(reg) (reg & TCPC_REG_PD_INT_REV_VER_MASK)
 
 #define TCPC_REG_ALERT 0x10
 #define TCPC_REG_ALERT_NONE 0x0000
@@ -98,7 +98,7 @@
 
 #define TCPC_REG_FAULT_CTRL 0x1b
 #define TCPC_REG_FAULT_CTRL_VBUS_OVP_FAULT_DIS BIT(1)
-#define TCPC_REG_FAULT_CTRL_VBUS_OCP_FAULT_DIS BIT(0)
+#define TCPC_REG_FAULT_CTRL_VCONN_OCP_FAULT_DIS BIT(0)
 
 #define TCPC_REG_POWER_CTRL 0x1c
 #define TCPC_REG_POWER_CTRL_FRS_ENABLE BIT(7)
@@ -153,6 +153,7 @@
 
 #define TCPC_REG_COMMAND 0x23
 #define TCPC_REG_COMMAND_WAKE_I2C 0x11
+#define TCPC_REG_COMMAND_DISABLE_VBUS_DETECT 0x22
 #define TCPC_REG_COMMAND_ENABLE_VBUS_DETECT 0x33
 #define TCPC_REG_COMMAND_SNK_CTRL_LOW 0x44
 #define TCPC_REG_COMMAND_SNK_CTRL_HIGH 0x55
@@ -233,6 +234,7 @@
 #define TCPC_REG_RX_DETECT_SOP_SOPP_SOPPP_HRST_MASK         \
 	(TCPC_REG_RX_DETECT_SOP | TCPC_REG_RX_DETECT_SOPP | \
 	 TCPC_REG_RX_DETECT_SOPPP | TCPC_REG_RX_DETECT_HRST)
+#define TCPC_REG_RX_DETECT_NONE 0xff
 
 /* TCPCI Rev 1.0 receive registers */
 #define TCPC_REG_RX_BYTE_CNT 0x30
@@ -279,7 +281,7 @@
  * 11: reserved
  */
 #define TCPC_REG_VBUS_VOLTAGE_SCALE(x) \
-	(1 << (((x)&TCPC_REG_VBUS_VOLTAGE_SCALE_FACTOR) >> 9))
+	(1 << (((x)&TCPC_REG_VBUS_VOLTAGE_SCALE_FACTOR) >> 10))
 #define TCPC_REG_VBUS_VOLTAGE_MEASURE(x) ((x)&TCPC_REG_VBUS_VOLTAGE_MEASUREMENT)
 #define TCPC_REG_VBUS_VOLTAGE_VBUS(x)                                        \
 	(TCPC_REG_VBUS_VOLTAGE_SCALE(x) * TCPC_REG_VBUS_VOLTAGE_MEASURE(x) * \
@@ -340,8 +342,56 @@ int tcpci_tcpm_mux_set(const struct usb_mux *me, mux_state_t mux_state,
 		       bool *ack_required);
 int tcpci_tcpm_mux_get(const struct usb_mux *me, mux_state_t *mux_state);
 int tcpci_tcpm_mux_enter_low_power(const struct usb_mux *me);
+
+/**
+ * Get the TCPC chip information (chip IDs, etc) for the given port.
+ *
+ * The returned value is cached internally, so subsequent calls to this function
+ * will not access the TCPC. If live is true, data will be fetched from the TCPC
+ * regardless of whether any cached data is available.
+ *
+ * If chip_info is NULL, this will ensure the cache is up to date but avoid
+ * writing the output chip_info.
+ *
+ * If the TCPC is accessed (live data is retrieved), this will wake the chip up
+ * from low power mode on I2C access. It is expected that the USB-PD state
+ * machine will return it to low power mode as appropriate afterward.
+ *
+ * Returns EC_SUCCESS or an error; chip_info is not updated on error.
+ */
 int tcpci_get_chip_info(int port, int live,
 			struct ec_response_pd_chip_info_v1 *chip_info);
+
+/**
+ * Equivalent to tcpci_get_chip_info, but allows the caller to modify the cache
+ * if new data is fetched.
+ *
+ * If mutator is non-NULL and data is read from the TCPC (either because live
+ * data is requested or nothing was cached), then it is called with a pointer
+ * to the cached information for the port. It can then make changes to the
+ * cached data (for example correcting IDs that are known to be reported
+ * incorrectly by some chips, possibly requiring more communication with the
+ * TCPC). Any error returned by mutator causes this function to return with the
+ * same error.
+ *
+ * If mutator writes through the cached data pointer, those changes will be
+ * retained until live data is requested again.
+ */
+int tcpci_get_chip_info_mutable(
+	int port, int live, struct ec_response_pd_chip_info_v1 *chip_info,
+	int (*mutator)(int port, bool live,
+		       struct ec_response_pd_chip_info_v1 *cached));
+
+/**
+ * This function is identical to the tcpci_get_vbus_voltage without
+ * checking the DEV_CAP_1.
+ *
+ * @param port: The USB-C port to query
+ * @param vbus: VBUS voltage in mV the TCPC sensed
+ *
+ * @return EC_SUCCESS on success, and otherwise on failure.
+ */
+int tcpci_get_vbus_voltage_no_check(int port, int *vbus);
 int tcpci_get_vbus_voltage(int port, int *vbus);
 bool tcpci_tcpm_get_snk_ctrl(int port);
 int tcpci_tcpm_set_snk_ctrl(int port, int enable);

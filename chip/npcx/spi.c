@@ -5,11 +5,11 @@
 
 /* SPI module for Chrome EC */
 
+#include "clock.h"
+#include "clock_chip.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "clock.h"
-#include "clock_chip.h"
 #include "registers.h"
 #include "spi.h"
 #include "task.h"
@@ -27,6 +27,9 @@
 
 /* SPI IP as SPI controller */
 #define SPI_CLK 8000000
+
+static struct mutex spi_lock;
+
 /**
  * Clear SPI data buffer.
  *
@@ -106,30 +109,13 @@ int spi_enable(const struct spi_device_t *spi_device, int enable)
 	return EC_SUCCESS;
 }
 
-/**
- * Flush an SPI transaction and receive data from peripheral.
- *
- * @param   spi_device  device to talk to
- * @param   txdata  transfer data
- * @param   txlen   transfer length
- * @param   rxdata  receive data
- * @param   rxlen   receive length
- * @return  success
- * @notes   set controller transaction mode in npcx chip
- */
-int spi_transaction(const struct spi_device_t *spi_device,
-		    const uint8_t *txdata, int txlen, uint8_t *rxdata,
-		    int rxlen)
+int spi_transaction_async(const struct spi_device_t *spi_device,
+			  const uint8_t *txdata, int txlen, uint8_t *rxdata,
+			  int rxlen)
 {
 	int i = 0;
 	enum gpio_signal gpio = spi_device->gpio_cs;
-	static struct mutex spi_lock;
 
-	mutex_lock(&spi_lock);
-	/* Make sure CS# is a GPIO output mode. */
-	gpio_set_flags(gpio, GPIO_OUTPUT);
-	/* Make sure CS# is deselected */
-	gpio_set_level(gpio, 1);
 	/* Cleaning junk data in the buffer */
 	clear_databuf();
 	/* Assert CS# to start transaction */
@@ -148,9 +134,19 @@ int spi_transaction(const struct spi_device_t *spi_device,
 		/* Waiting till reading is finished */
 		while (!IS_BIT_SET(NPCX_SPI_STAT, NPCX_SPI_STAT_RBF))
 			;
-		/* Reading the (unused) data */
-		clear_databuf();
+
+		if (rxlen == SPI_READBACK_ALL) {
+			rxdata[i] = (uint8_t)NPCX_SPI_DATA;
+			CPRINTS("rxdata[i]=%x", rxdata[i]);
+		} else {
+			/* Reading the (unused) data to empty the read buffer */
+			clear_databuf();
+		}
 	}
+
+	if (rxlen == SPI_READBACK_ALL)
+		return EC_SUCCESS;
+
 	CPRINTS("write end");
 	/* Reading the data */
 	for (i = 0; i < rxlen; ++i) {
@@ -166,11 +162,51 @@ int spi_transaction(const struct spi_device_t *spi_device,
 		rxdata[i] = (uint8_t)NPCX_SPI_DATA;
 		CPRINTS("rxdata[i]=%x", rxdata[i]);
 	}
-	/* Deassert CS# (high) to end transaction */
-	gpio_set_level(gpio, 1);
-	mutex_unlock(&spi_lock);
 
 	return EC_SUCCESS;
+}
+
+int spi_transaction_flush(const struct spi_device_t *spi_device)
+{
+	enum gpio_signal gpio = spi_device->gpio_cs;
+
+	/* Making sure if the SPI transaction already finishes */
+	while (IS_BIT_SET(NPCX_SPI_STAT, NPCX_SPI_STAT_BSY))
+		;
+	/* Deassert CS# (high) to end transaction */
+	gpio_set_level(gpio, 1);
+
+	return EC_SUCCESS;
+}
+
+int spi_transaction_wait(const struct spi_device_t *spi_device)
+{
+	return EC_SUCCESS;
+}
+
+/**
+ * Flush an SPI transaction and receive data from peripheral.
+ *
+ * @param   spi_device  device to talk to
+ * @param   txdata  transfer data
+ * @param   txlen   transfer length
+ * @param   rxdata  receive data
+ * @param   rxlen   receive length
+ * @return  success
+ * @notes   set controller transaction mode in npcx chip
+ */
+int spi_transaction(const struct spi_device_t *spi_device,
+		    const uint8_t *txdata, int txlen, uint8_t *rxdata,
+		    int rxlen)
+{
+	int rv;
+
+	mutex_lock(&spi_lock);
+	rv = spi_transaction_async(spi_device, txdata, txlen, rxdata, rxlen);
+	rv |= spi_transaction_flush(spi_device);
+	mutex_unlock(&spi_lock);
+
+	return rv;
 }
 
 /**

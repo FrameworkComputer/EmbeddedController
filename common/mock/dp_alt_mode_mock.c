@@ -10,8 +10,8 @@
  */
 
 #include "console.h"
-#include "usb_dp_alt_mode.h"
 #include "mock/dp_alt_mode_mock.h"
+#include "usb_dp_alt_mode.h"
 
 #ifndef TEST_BUILD
 #error "Mocks should only be in the test build."
@@ -28,9 +28,4 @@
 void mock_dp_alt_mode_reset(void)
 {
 	/* Nothing to do right now, but in the future ... */
-}
-
-void dp_init(int port)
-{
-	CPRINTS("C%d: DP init", port);
 }

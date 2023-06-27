@@ -5,12 +5,12 @@
 
 /* R19ME4070 temperature sensor module for Chrome EC */
 
+#include "amd_r19me4070.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "amd_r19me4070.h"
 #include "power.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)

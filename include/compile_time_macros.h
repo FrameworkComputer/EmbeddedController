@@ -79,12 +79,16 @@
  */
 #ifndef CONFIG_ZEPHYR
 #define BIT(nr) (1U << (nr))
+/* Set <mask> for <var> if <set> is true or clear <mask> if <set> is false. */
+#define WRITE_MASK(var, mask, set) \
+	((var) = (set) ? ((var) | (mask)) : ((var) & ~(mask)))
+
 /*
  * Set or clear <bit> of <var> depending on <set>.
  * It also supports setting and clearing (e.g. SET_BIT, CLR_BIT) macros.
  */
-#define WRITE_BIT(var, bit, set) \
-	((var) = (set) ? ((var) | BIT(bit)) : ((var) & ~BIT(bit)))
+#define WRITE_BIT(var, bit, set) WRITE_MASK(var, BIT(bit), set)
+
 #endif
 #define BIT_ULL(nr) (1ULL << (nr))
 

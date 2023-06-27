@@ -10,6 +10,8 @@
 #ifndef __CROS_EC_OCPC_H_
 #define __CROS_EC_OCPC_H_
 
+#include "battery.h"
+
 #define OCPC_UNINIT 0xdededede
 
 struct ocpc_data {
@@ -86,4 +88,41 @@ void ocpc_reset(struct ocpc_data *ocpc);
  * @param ocpc: Pointer to OCPC data
  */
 __override_proto void board_ocpc_init(struct ocpc_data *ocpc);
+
+#ifdef TEST_BUILD
+/**
+ * @brief Force a reload of PID constants by calling ocpc_get_pid_constants().
+ */
+void ocpc_set_pid_constants(void);
+
+/**
+ * @brief Return the value of viz_output
+ *
+ * @return int
+ */
+int test_ocpc_get_viz_output(void);
+
+/**
+ * @brief Return the value of debug_output
+ *
+ * @return int
+ */
+int test_ocpc_get_debug_output(void);
+
+/**
+ * @brief Reset state used to track resistance calculations.
+ */
+void test_ocpc_reset_resistance_state(void);
+
+/**
+ * @brief Calculate the system impedance
+ *
+ * @param ocpc OCPC data struct pointer
+ * @param battery Battery params pointer
+ * @return enum ec_error_list Success or error code
+ */
+enum ec_error_list ocpc_calc_resistances(struct ocpc_data *ocpc,
+					 struct batt_params *battery);
+#endif
+
 #endif /* __CROS_EC_OCPC_H */

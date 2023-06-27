@@ -6,13 +6,13 @@
 /* Intel-RVP family-specific configuration */
 
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "console.h"
 #include "driver/ppc/sn5s330.h"
 #include "gpio.h"
 #include "hooks.h"
-#include "tcpm/tcpci.h"
 #include "system.h"
+#include "tcpm/tcpci.h"
 #include "usbc_ppc.h"
 
 #ifdef CONFIG_ZEPHYR
@@ -48,6 +48,7 @@ static void baseboard_tcpc_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
 
+#ifndef CONFIG_ZEPHYR
 void tcpc_alert_event(enum gpio_signal signal)
 {
 	int i;
@@ -63,6 +64,7 @@ void tcpc_alert_event(enum gpio_signal signal)
 		}
 	}
 }
+#endif
 
 uint16_t tcpc_get_alert_status(void)
 {

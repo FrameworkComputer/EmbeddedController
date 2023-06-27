@@ -1,0 +1,20 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+choice GERALT_VARIANT
+	prompt "Pick a variant of Geralt"
+	help
+	  Geralt is the reference device that has MediaTek MT8188G SoC with
+	  ITE it81202-cx EC.
+	  Pick one of the variants below.
+
+config BOARD_GERALT
+	bool "Google Geralt Reference Board"
+	help
+	  Build the Geralt reference board. The board is the reference design
+	  of Geralt family.
+
+endchoice
+
+source "Kconfig.zephyr"

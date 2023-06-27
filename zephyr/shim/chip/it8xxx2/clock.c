@@ -3,15 +3,17 @@
  * found in the LICENSE file.
  */
 
+#include "common.h"
+#include "module_id.h"
+
 #include <zephyr/device.h>
 #include <zephyr/drivers/clock_control.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-#include <soc.h>
-#include <soc/ite_it8xxx2/reg_def_cros.h>
 #include <zephyr/sys/util.h>
 
-#include "module_id.h"
+#include <soc.h>
+#include <soc/ite_it8xxx2/reg_def_cros.h>
 
 LOG_MODULE_REGISTER(shim_clock, LOG_LEVEL_ERR);
 
@@ -29,4 +31,8 @@ int clock_get_freq(void)
 	int reg_val = ecpm_base->ECPM_PLLFREQ & PLLFREQ_MASK;
 
 	return pll_reg_to_freq[reg_val];
+}
+
+test_mockable void clock_enable_module(enum module_id module, int enable)
+{
 }

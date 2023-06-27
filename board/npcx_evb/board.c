@@ -26,10 +26,11 @@
 #include "switch.h"
 #include "temp_sensor.h"
 #include "temp_sensor_chip.h"
-#include "timer.h"
 #include "thermal.h"
+#include "timer.h"
 #include "util.h"
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /******************************************************************************/

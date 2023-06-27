@@ -5,8 +5,8 @@
 
 /* Defines helper function that convert Enums to strings for prints in tests */
 
-#include "usb_pd_tcpm.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 
 #ifndef __CROS_EC_TEST_ENUM_STINGS_H
 #define __CROS_EC_TEST_ENUM_STINGS_H

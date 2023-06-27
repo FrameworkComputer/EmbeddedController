@@ -3,20 +3,20 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/emul.h>
-#include <zephyr/fff.h>
-
 #include "battery.h"
 #include "battery_smart.h"
-#include "test/drivers/charger_utils.h"
 #include "driver/charger/isl923x.h"
 #include "driver/charger/isl923x_public.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_isl923x.h"
 #include "system.h"
+#include "test/drivers/charger_utils.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
 
 BUILD_ASSERT(CONFIG_CHARGER_SENSE_RESISTOR == 10 ||
 	     CONFIG_CHARGER_SENSE_RESISTOR == 5);
@@ -681,9 +681,9 @@ ZTEST(isl923x, test_init_late_jump)
 		      isl923x_drv.get_input_current_limit(CHARGER_NUM,
 							  &input_current),
 		      "Could not read input current limit.");
-	zassert_equal(CONFIG_CHARGER_INPUT_CURRENT, input_current,
+	zassert_equal(CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT, input_current,
 		      "Input current (%d) not at (%d)", input_current,
-		      CONFIG_CHARGER_INPUT_CURRENT);
+		      CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT);
 }
 
 ZTEST(isl923x, test_isl923x_is_acok)
@@ -720,6 +720,18 @@ ZTEST(isl923x, test_isl923x_is_acok)
 	rv = raa489000_is_acok(CHARGER_NUM, &acok);
 	zassert_equal(EC_SUCCESS, rv, "AC OK check did not return success");
 	zassert_false(acok, "AC OK is true");
+
+	/*
+	 * Charger is sourcing - ACOK is always false,
+	 * even if the pin is asserted.
+	 */
+	raa489000_emul_set_acok_pin(isl923x_emul, 1);
+	raa489000_emul_set_state_machine_state(isl923x_emul,
+					       RAA489000_INFO2_STATE_OTG);
+
+	rv = raa489000_is_acok(CHARGER_NUM, &acok);
+	zassert_equal(EC_SUCCESS, rv, "AC OK check did not return success");
+	zassert_false(acok, "ACOK is true when sourcing, expected false");
 }
 
 ZTEST(isl923x, test_isl923x_enable_asgate)

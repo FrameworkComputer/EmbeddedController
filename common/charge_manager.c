@@ -9,7 +9,7 @@
 #include "builtin/assert.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "console.h"
 #include "dps.h"
@@ -467,7 +467,6 @@ charge_manager_fill_power_info(int port,
 			board_fill_source_power_info(port, r);
 		}
 	} else {
-		int use_ramp_current;
 		uint32_t max_mv, max_ma, pdo, unused;
 
 		switch (sup) {
@@ -540,13 +539,7 @@ charge_manager_fill_power_info(int port,
 #endif
 
 #if defined(HAS_TASK_CHG_RAMP) || defined(CONFIG_CHARGE_RAMP_HW)
-		/* Read ramped current if active charging port */
-		use_ramp_current = (charge_port == port) &&
-				   chg_ramp_allowed(port, sup);
-#else
-		use_ramp_current = 0;
-#endif
-		if (use_ramp_current) {
+		if ((charge_port == port) && chg_ramp_allowed(port, sup)) {
 			/* Current limit is output of ramp module */
 			r->meas.current_lim = chg_ramp_get_current_limit();
 
@@ -563,10 +556,12 @@ charge_manager_fill_power_info(int port,
 				chg_ramp_is_stable() ?
 					r->meas.current_lim :
 					chg_ramp_max(port, sup, max_ma);
-
 		} else {
 			r->meas.current_max = r->meas.current_lim = max_ma;
 		}
+#else
+		r->meas.current_max = r->meas.current_lim = max_ma;
+#endif
 		r->max_power = r->meas.current_max * r->meas.voltage_max;
 
 		r->meas.voltage_now = get_vbus_voltage(port, r->role);
@@ -835,8 +830,12 @@ static void charge_manager_refresh(void)
 		override_port = OVERRIDE_OFF;
 
 	if (new_supplier == CHARGE_SUPPLIER_NONE) {
+#ifdef CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT
+		new_charge_current = CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT;
+#else
 		new_charge_current = 0;
-		new_charge_current_uncapped = 0;
+#endif
+		new_charge_current_uncapped = new_charge_current;
 		new_charge_voltage = 0;
 	} else {
 		new_charge_current_uncapped =
@@ -1235,6 +1234,11 @@ void charge_manager_update_dualrole(int port, enum dualrole_capabilities cap)
 }
 
 #ifdef CONFIG_CHARGE_MANAGER_SAFE_MODE
+__overridable int board_get_leave_safe_mode_delay_ms(void)
+{
+	return 500;
+}
+
 void charge_manager_leave_safe_mode(void)
 {
 	if (left_safe_mode)
@@ -1254,7 +1258,7 @@ void charge_manager_leave_safe_mode(void)
 	 * CHARGE_PORT_NONE around init time and not cut off the
 	 * input FETs.
 	 */
-	msleep(500);
+	msleep(board_get_leave_safe_mode_delay_ms());
 	CPRINTS("%s()", __func__);
 	cflush();
 	left_safe_mode = 1;
@@ -1281,15 +1285,29 @@ void charge_manager_force_ceil(int port, int ceil)
 	 * Force our input current to ceil if we're exceeding it, without
 	 * waiting for our deferred task to run.
 	 */
-	if (left_safe_mode && port == charge_port && ceil < charge_current)
+	if (left_safe_mode && port == charge_port && ceil < charge_current) {
 		board_set_charge_limit(port, CHARGE_SUPPLIER_PD, ceil,
 				       charge_current_uncapped, charge_voltage);
-
-	/*
-	 * Now inform charge_manager so it stays in sync with the state of
-	 * the world.
-	 */
-	charge_manager_set_ceil(port, CEIL_REQUESTOR_PD, ceil);
+		/* Enforcing charge_ceil here prevents race conditions between
+		 * the hook task and the PD task, which could occur if
+		 * charge_ceil is changed while a deferred
+		 * charge_manager_refresh is in process.
+		 * charge_manager_force_ceil's premise as an API is to lower
+		 * the ceil for the current charge port. It doesn't need to find
+		 * a better port, supplier, or PDO. That means most of
+		 * charge_manager_refresh doesn't need to be called.
+		 */
+		charge_current = ceil;
+		charge_ceil[port][CEIL_REQUESTOR_PD] = ceil;
+		CPRINTS("CL: p%d s%d i%d v%d (forced)", port,
+			CHARGE_SUPPLIER_PD, charge_current, charge_voltage);
+	} else {
+		/*
+		 * Inform charge_manager so it stays in sync with the state
+		 * of the world.
+		 */
+		charge_manager_set_ceil(port, CEIL_REQUESTOR_PD, ceil);
+	}
 }
 
 int charge_manager_set_override(int port)
@@ -1515,15 +1533,13 @@ static enum ec_status
 hc_charge_port_override(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_charge_port_override *p = args->params;
-	const int16_t override_port = p->override_port;
+	const int16_t op = p->override_port;
 
-	if (override_port < OVERRIDE_DONT_CHARGE ||
-	    override_port >= CHARGE_PORT_COUNT)
+	if (op < OVERRIDE_DONT_CHARGE || op >= CHARGE_PORT_COUNT)
 		return EC_RES_INVALID_PARAM;
 
-	return charge_manager_set_override(override_port) == EC_SUCCESS ?
-		       EC_RES_SUCCESS :
-		       EC_RES_ERROR;
+	return charge_manager_set_override(op) == EC_SUCCESS ? EC_RES_SUCCESS :
+							       EC_RES_ERROR;
 }
 DECLARE_HOST_COMMAND(EC_CMD_PD_CHARGE_PORT_OVERRIDE, hc_charge_port_override,
 		     EC_VER_MASK(0));
@@ -1706,4 +1722,12 @@ board_fill_source_power_info(int port, struct ec_response_usb_pd_power_info *r)
 	r->meas.current_max = 0;
 	r->meas.current_lim = 0;
 	r->max_power = 0;
+}
+
+__overridable void board_set_charge_limit(int port, int supplier, int charge_ma,
+					  int max_ma, int charge_mv)
+{
+#if defined(CONFIG_CHARGER) && defined(CONFIG_BATTERY)
+	charge_set_input_current_limit(charge_ma, charge_mv);
+#endif
 }

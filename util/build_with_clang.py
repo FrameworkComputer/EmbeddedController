@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 # Copyright 2021 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -7,19 +6,22 @@
 """Build firmware with clang instead of gcc."""
 import argparse
 import concurrent
+from concurrent.futures import ThreadPoolExecutor
 import logging
 import multiprocessing
 import os
+import shutil
 import subprocess
 import sys
 import typing
-from concurrent.futures import ThreadPoolExecutor
+
 
 # Add to this list as compilation errors are fixed for boards.
 BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Fingerprint boards
     "dartmonkey",
     "bloonchipper",
+    "helipilot",
     "nami_fp",
     "nucleo-dartmonkey",
     "nucleo-f412zg",
@@ -27,10 +29,12 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Boards that use CHIP:=stm32 and *not* CHIP_FAMILY:=stm32f0
     # git grep  --name-only 'CHIP:=stm32' | xargs grep -L 'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "baklava",
+    "bellis",
     "discovery",
     "gingerbread",
     "hatch_fp",
     "hyperdebug",
+    "munna",
     "nocturne_fp",
     "nucleo-f411re",
     "nucleo-g431rb",
@@ -43,20 +47,34 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
     # git grep  --name-only 'CHIP:=stm32' | xargs grep -L 'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "bland",
+    "burnet",
     "c2d2",
+    "cerise",
     "coffeecake",
+    "damu",
     "dingdong",
     "discovery-stm32f072",
     "don",
     "duck",
     "eel",
     "elm",
+    "fennel",
     "fluffy",
     "fusb307bgevb",
     "gelatin",
     "hammer",
     "hoho",
+    "jacuzzi",
+    "jewel",
+    "juniper",
+    "kakadu",
+    "kappa",
+    "katsu",
+    "kodama",
+    "krane",
+    "kukui",
     "magnemite",
+    "makomo",
     "masterball",
     "minimuffin",
     "moonball",
@@ -72,9 +90,11 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "servo_v4p1",
     "staff",
     "star",
+    "stern",
     "tigertail",
     "twinkie",
     "wand",
+    "willow",
     "zed",
     "zinger",
     # Boards that use CHIP:=mchp
@@ -95,6 +115,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "ambassador",
     "anahera",
     "atlas",
+    "aurash",
     "banshee",
     "berknip",
     "bloog",
@@ -109,6 +130,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "chronicler",
     "coachz",
     "collis",
+    "constitution",
     "copano",
     "coral",
     "corori",
@@ -135,12 +157,15 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "fleex",
     "foob",
     "gaelin",
+    "garg",
     "gelarshie",
     "genesis",
     "gimble",
+    "gladios",
     "grunt",
     "gumboz",
     "guybrush",
+    "hades",
     "hatch",
     "helios",
     "herobrine",
@@ -171,6 +196,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "moonbuggy",
     "morphius",
     "mrbland",
+    "mushu",
     "nami",
     "nautilus",
     "nightfury",
@@ -181,6 +207,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "npcx_evb",
     "npcx_evb_arm",
     "nuwani",
+    "omnigul",
     "osiris",
     "palkia",
     "pazquel",
@@ -200,6 +227,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "stryke",
     "taeko",
     "taniks",
+    "terrador",
     "treeya",
     "trembyle",
     "trogdor",
@@ -208,6 +236,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "voema",
     "volet",
     "volmar",
+    "volteer",
     "volteer_npcx797fc",
     "voxel",
     "voxel_ecmodeentry",
@@ -238,6 +267,7 @@ NDS32_BOARDS = [
     "beetley",
     "blipper",
     "boten",
+    "boxy",
     "dibbi",
     "drawcia",
     "galtic",
@@ -251,6 +281,7 @@ NDS32_BOARDS = [
     "sasukette",
     "shotzo",
     "storo",
+    "taranza",
     "waddledee",
     "wheelie",
 ]
@@ -274,31 +305,8 @@ RISCV_BOARDS = [
 ]
 
 BOARDS_THAT_FAIL_WITH_CLANG = [
-    # Boards that use CHIP:=stm32 and *not* CHIP_FAMILY:=stm32f0
-    "bellis",  # overflows flash
-    "munna",  # overflows flash
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
-    "burnet",  # overflows flash
-    "cerise",  # overflows flash
     "chocodile_vpdmcu",  # compilation error: b/254710459
-    "damu",  # overflows flash
-    "fennel",  # overflows flash
-    "jacuzzi",  # overflows flash
-    "juniper",  # overflows flash
-    "kakadu",  # overflows flash
-    "kappa",  # overflows flash
-    "katsu",  # overflows flash
-    "kodama",  # overflows flash
-    "krane",  # overflows flash
-    "kukui",  # overflows flash
-    "makomo",  # overflows flash
-    "stern",  # overflows flash
-    "willow",  # overflows flash
-    # Boards that use CHIP:=npcx
-    "garg",  # overflows flash
-    "mushu",  # overflows flash
-    "terrador",  # overflows flash
-    "volteer",  # overflows flash
 ]
 
 # TODO(b/201311714): NDS32 is not supported by LLVM.
@@ -362,8 +370,26 @@ def main() -> int:
         "--num_threads", "-j", type=int, default=multiprocessing.cpu_count()
     )
 
+    group = parser.add_mutually_exclusive_group(required=False)
+    group.add_argument(
+        "--clean",
+        action="store_true",
+        help="Remove build directory before compiling",
+    )
+    group.add_argument(
+        "--no-clean",
+        dest="clean",
+        action="store_false",
+        help="Do not remove build directory before compiling",
+    )
+    parser.set_defaults(clean=True)
+
     args = parser.parse_args()
     logging.basicConfig(level=args.log_level)
+
+    if args.clean:
+        logging.debug("Removing build directory")
+        shutil.rmtree("./build", ignore_errors=True)
 
     check_boards()
 

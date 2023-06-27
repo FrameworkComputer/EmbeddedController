@@ -9,11 +9,11 @@
 #include "battery.h"
 #include "battery_smart.h"
 #include "builtin/assert.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
+#include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
-#include "common.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "isl923x.h"
@@ -705,6 +705,20 @@ static void isl923x_init(int chgnum)
 
 		if (raw_write16(chgnum, ISL9238C_REG_CONTROL6, reg))
 			goto init_fail;
+
+		if (IS_ENABLED(CONFIG_ISL9238C_ENABLE_BUCK_MODE)) {
+			if (raw_read16(chgnum, ISL923X_REG_CONTROL0, &reg))
+				goto init_fail;
+
+			reg |= ISL923X_C0_ENABLE_BUCK;
+			/* Adjusts phase comparator threshold offset */
+			reg &= ~ISL923X_C0_BUCK_PHASE_MASK;
+			reg |= CONFIG_ISL9238C_BUCK_PHASE_VOLTAGE
+			       << ISL923X_C0_BUCK_PHASE_SHIFT;
+
+			if (raw_write16(chgnum, ISL923X_REG_CONTROL0, reg))
+				goto init_fail;
+		}
 	}
 
 	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
@@ -772,7 +786,7 @@ static void isl923x_init(int chgnum)
 		 * Initialize the input current limit to the board's default.
 		 */
 		if (isl923x_set_input_current_limit(
-			    chgnum, CONFIG_CHARGER_INPUT_CURRENT))
+			    chgnum, CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT))
 			goto init_fail;
 	}
 
@@ -865,7 +879,7 @@ enum ec_error_list raa489000_is_acok(int chgnum, bool *acok)
 {
 	int regval, rv;
 
-	if ((chgnum < 0) || (chgnum > board_get_charger_chip_count())) {
+	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
 		CPRINTS("%s: Invalid chgnum! (%d)", __func__, chgnum);
 		return EC_ERROR_INVAL;
 	}
@@ -873,7 +887,28 @@ enum ec_error_list raa489000_is_acok(int chgnum, bool *acok)
 	rv = raw_read16(chgnum, ISL9238_REG_INFO2, &regval);
 	if (rv != EC_SUCCESS)
 		return rv;
-	*acok = (regval & RAA489000_INFO2_ACOK);
+
+	/*
+	 * ACOK can sometimes be asserted when RAA489000 is sourcing VBUS in OTG
+	 * mode, because that bit is derived from the VBUS comparator. If the
+	 * charger reports it's in OTG mode, always say ACOK is false because we
+	 * can't be running from a charger if we're also sourcing VBUS and the
+	 * ACOK bit may be untrustworthy.
+	 *
+	 * This may sometimes report incorrectly because the state bits of
+	 * the Information2 register take a small amount of time to update on
+	 * a state change. In most cases the event hooks used to trigger
+	 * raa489000_check_ac_present are good indications of a state change,
+	 * but during power role swaps there may be no hooks executed so it's
+	 * most consistent to use the charger's reported state only (otherwise
+	 * some situations could use the EC's view of the current state and
+	 * others would require asking the charger).
+	 */
+	if (((regval >> RAA489000_INFO2_STATE_SHIFT) &
+	     RAA489000_INFO2_STATE_MASK) == RAA489000_INFO2_STATE_OTG)
+		*acok = false;
+	else
+		*acok = (regval & RAA489000_INFO2_ACOK) != 0;
 
 	return EC_SUCCESS;
 }
@@ -890,7 +925,7 @@ void raa489000_hibernate(int chgnum, bool disable_adc)
 {
 	int rv, regval;
 
-	if ((chgnum < 0) || (chgnum > board_get_charger_chip_count())) {
+	if ((chgnum < 0) || (chgnum >= board_get_charger_chip_count())) {
 		CPRINTS("%s: Invalid chgnum! (%d)", __func__, chgnum);
 		return;
 	}
@@ -1447,6 +1482,71 @@ static enum ec_error_list raa489000_set_vsys_compensation(int chgnum,
 	return EC_ERROR_UNIMPLEMENTED;
 }
 #endif /* CONFIG_CHARGER_RAA489000 && CONFIG_OCPC */
+
+#ifdef CONFIG_PLATFORM_EC_RAA489000_AC_PRESENT_CONTROL
+/*
+ * If the device is in OTG mode, flip the comparator output
+ * so that the AC_PRESENT signal does not get asserted incorrectly
+ * (the comparator still operates in OTG mode).
+ * The main use case for this is in the factory where battery cut-off
+ * is performed, and the expectation is that the power will be supplied
+ * on port 0 (the primary charger port).
+ * This does not fully support the case where power is supplied
+ * by port 1, and a device on port 0 undergoes a role swap.
+ */
+void raa489000_check_ac_delayed(void)
+{
+	static bool current_val;
+	bool new_val;
+	int rv, regval;
+	int chgnum =
+#ifdef CONFIG_OCPC
+		CHARGER_PRIMARY;
+#else
+		0;
+#endif
+
+	rv = raw_read16(chgnum, ISL9238_REG_INFO2, &regval);
+	if (rv == EC_SUCCESS) {
+		new_val = (((regval >> RAA489000_INFO2_STATE_SHIFT) &
+			    RAA489000_INFO2_STATE_MASK) ==
+			   RAA489000_INFO2_STATE_OTG);
+		if (new_val != current_val) {
+			/*
+			 * If the mode has changed to/from OTG mode,
+			 * set the comparator output to be inverted (OTG mode)
+			 * or non-inverted.
+			 * In OTG mode, ACOK is always on, and AC_PRESENT should
+			 * be low.
+			 */
+			current_val = new_val;
+			isl923x_set_comparator_inversion(chgnum, new_val);
+		}
+	}
+}
+DECLARE_DEFERRED(raa489000_check_ac_delayed);
+
+void raa489000_check_ac_present(void)
+{
+	/*
+	 * The check is deferred for a short time since
+	 * the chip state machine status does not
+	 * update immediately.
+	 */
+	hook_call_deferred(&raa489000_check_ac_delayed_data, 1 * SECOND);
+}
+
+/*
+ * Several hooks are required to ensure the check is done
+ * for the relevant cases.
+ */
+DECLARE_HOOK(HOOK_USB_PD_DISCONNECT, raa489000_check_ac_present,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_USB_PD_CONNECT, raa489000_check_ac_present,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_POWER_SUPPLY_CHANGE, raa489000_check_ac_present,
+	     HOOK_PRIO_DEFAULT);
+#endif /* CONFIG_PLATFORM_EC_RAA489000_AC_PRESENT_CONTROL */
 
 const struct charger_drv isl923x_drv = {
 	.init = &isl923x_init,

@@ -4,16 +4,15 @@
  */
 
 #include "builtin/assert.h"
-#include "system.h"
+#include "console.h"
 #include "gpio.h"
-
+#include "i2c.h"
 #include "i2c_bitbang.h"
 #include "i2c_private.h"
-#include "i2c.h"
-#include "console.h"
-#include "watchdog.h"
 #include "printf.h"
+#include "system.h"
 #include "util.h"
+#include "watchdog.h"
 
 /* This source file contains I2C controller code that is used only in legacy
  * (CrOS EC) builds.

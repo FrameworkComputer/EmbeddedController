@@ -4,12 +4,19 @@
 
 menuconfig PLATFORM_EC_MOTIONSENSE
     bool "Motion Sense"
+    default y
+    depends on DT_HAS_CROS_EC_MOTIONSENSE_SENSOR_INFO_ENABLED || \
+      $(dt_nodelabel_enabled,lid_accel) || \
+      $(dt_nodelabel_enabled,base_accel) || \
+      $(dt_nodelabel_enabled,base_gyro)
     select HAS_TASK_MOTIONSENSE
     help
       Enable motion sense task. The task collects data from available sensors
       and report them to AP. Besides the task reports the sensor data to AP.
       Based on the data, it also does other things like calculating lid angle
       and detect tablet mode.
+
+if PLATFORM_EC_MOTIONSENSE
 
 config PLATFORM_EC_ACCEL_FIFO
     bool "Sensor FIFO"
@@ -93,10 +100,9 @@ config PLATFORM_EC_LID_ANGLE
       peripheral devices(refer "Lid Angle Update" below).
       # TODO(b/173507858): add more detail after .dts change
 
-if PLATFORM_EC_LID_ANGLE
-
 config PLATFORM_EC_LID_ANGLE_UPDATE
     bool "Lid Angle Update"
+    depends on PLATFORM_EC_LID_ANGLE
     help
       Enable this to allow using the lid angle measurement to determine if
       peripheral devices should be enabled or disabled, like key scanning,
@@ -127,7 +133,6 @@ config PLATFORM_EC_GMR_TABLET_MODE
       in common/tablet_mode.c.
 
 endif # PLATFORM_EC_TABLET_MODE
-endif # PLATFORM_EC_LID_ANGLE
 
 config PLATFORM_EC_CONSOLE_CMD_ACCELS
     bool "Console commands: accels, accelrate, accelinit, accelinfo, etc."
@@ -174,4 +179,17 @@ config PLATFORM_EC_CONSOLE_CMD_ACCEL_SPOOF
 
 endif # PLATFORM_EC_ACCEL_SPOOF_MODE
 
+config PLATFORM_EC_GESTURE_DETECTION
+	bool "Gesture detection"
+	help
+	  Enable this to support gesture detection.
+
+config PLATFORM_EC_GESTURE_HOST_DETECTION
+	bool "Gesture host detection"
+	help
+	  Enable gesture host interface
+
 rsource "Kconfig.sensor_devices"
+rsource "Kconfig.body_detection"
+
+endif # PLATFORM_EC_MOTIONSENSE

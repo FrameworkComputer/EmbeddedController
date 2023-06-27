@@ -3,16 +3,17 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include "simulation.h"
+
 #include <assert.h>
-#include <pthread.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <xcb/xcb.h>
 
-#include "simulation.h"
+#include <pthread.h>
+#include <xcb/xcb.h>
 
 /*****************************************************************************/
 /* Window drawing stuff */

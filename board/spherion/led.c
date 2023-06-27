@@ -5,12 +5,12 @@
  * Battery LED control for Spherion
  */
 
+#include "chipset.h"
+#include "driver/bc12/mt6360.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
-#include "chipset.h"
-#include "driver/bc12/mt6360.h"
 
 __override const int led_charge_lvl_1 = 5;
 __override const int led_charge_lvl_2 = 95;

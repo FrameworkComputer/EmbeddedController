@@ -1,0 +1,230 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Skyrim program common DTS includes */
+#include "../adc.dtsi"
+#include "../fan.dtsi"
+#include "../gpio.dtsi"
+#include "../i2c.dtsi"
+#include "../interrupts.dtsi"
+#include "../keyboard.dtsi"
+#include "../usbc.dtsi"
+
+/* winterhold project DTS includes*/
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+#include "motionsense.dtsi"
+
+/* Winterhold overrides follow... */
+/ {
+	/* battery overrides */
+	batteries {
+		default_battery: lgc_xphx8 {
+			compatible = "lgc,xphx8", "battery-smart";
+		};
+		smp_atlxdy9k {
+			compatible = "smp,atlxdy9k", "battery-smart";
+		};
+		smp_cosxdy9k {
+			compatible = "smp,cosxdy9k", "battery-smart";
+		};
+		byd_wv3k8 {
+			compatible = "byd,wv3k8", "battery-smart";
+		};
+		cosmx_mvk11 {
+			compatible = "cosmx,mvk11", "battery-smart";
+		};
+		sunwoda_atlvkyjx {
+			compatible = "sunwoda,atlvkyjx", "battery-smart";
+		};
+		sunwoda_cosvkyjx {
+			compatible = "sunwoda,cosvkyjx", "battery-smart";
+		};
+		atl_cfd72 {
+			compatible = "atl,cfd72", "battery-smart";
+		};
+	};
+
+	named-gpios {
+		/* Winterhold-specific GPIO customizations */
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_sensor_soc: soc-pct2075 {
+			temp_host_high = <97>;
+			temp_host_halt = <98>;
+			temp_host_release_high = <87>;
+			temp_host_release_halt = <88>;
+			temp_fan_off = <55>;
+			temp_fan_max = <72>;
+			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&soc_pct2075>;
+		};
+		temp_sensor_amb: amb-pct2075 {
+			temp_host_warn = <43>;
+			temp_host_high = <97>;
+			temp_host_halt = <98>;
+			temp_host_release_warn = <39>;
+			temp_host_release_high = <87>;
+			temp_host_release_halt = <88>;
+			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&amb_pct2075>;
+		};
+	};
+
+	/*
+	 * Note this is expected to vary per-board, so we keep it in the overlay
+	 * files.
+	 */
+	Winterhold-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		/*
+		 * FW_CONFIG field to enable KB back light or not.
+		 */
+		kb-bl {
+			enum-name = "FW_KB_BL";
+			start = <1>;
+			size = <1>;
+
+			no-kb-bl {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_NOT_PRESENT";
+				value = <0>;
+			};
+			kb-bl-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_PRESENT";
+				value = <1>;
+			};
+		};
+
+		charger-option {
+			enum-name = "FW_CHARGER";
+			start = <2>;
+			size = <1>;
+
+			charger-option-isl9238 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_CHARGER_ISL9238";
+				value = <0>;
+				default;
+			};
+			charger-option-isl9538 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_CHARGER_ISL9538";
+				value = <1>;
+			};
+		};
+
+		base-sensor {
+			enum-name = "FW_BASE_SENSOR";
+			start = <3>;
+			size = <1>;
+
+			bmi323 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BASE_BMI323";
+				value = <0>;
+				default;
+			};
+			lis2dw12 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BASE_LIS2DW12";
+				value = <1>;
+			};
+		};
+	};
+
+	/* Rotation matrices for motion sensors. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <0 (-1) 0
+				 1 0 0
+				 0 0 1>;
+		};
+
+		base_rot_ref: base-rotation-ref {
+			mat33 = <0 1 0
+				 (-1) 0 0
+				 0 0 1>;
+		};
+		base_rot_ref_bmi: base-rotation-ref-bmi {
+			mat33 = <0 (-1) 0
+				 1 0 0
+				 0 0 1>;
+		};
+	};
+};
+
+/*i2c overrides */
+&i2c1_0 {
+	/delete-node/ ps8818@28;
+};
+
+&i2c4_1 {
+	/delete-node/ isl9241@9;
+	/delete-node/ isl9538@9;
+	charger: isl9238@9 {
+		compatible = "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+	};
+	alt_charger: isl9538@9 {
+		compatible = "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
+
+/* usbc overrides */
+&usbc_port0 {
+	/delete-property/ chg_alt;
+	chg_alt = <&alt_charger>;
+};
+
+&usbc_port1 {
+	/delete-node/ usb-mux-chain-1-ps;
+};
+
+/* fan overrides */
+&fan0 {
+	pwms = <&pwm0 0 PWM_KHZ(2) PWM_POLARITY_NORMAL>;
+	rpm_min = <2100>;
+	rpm_start = <2800>;
+	rpm_max = <4800>;
+	rpm_deviation = <3>;
+};
+
+/* temperature sensor overrides */
+&temp_sensor_charger {
+	temp_host_high = <97>;
+	temp_host_halt = <98>;
+	temp_host_release_high = <87>;
+	temp_host_release_halt = <88>;
+};
+
+&temp_sensor_memory {
+	temp_host_high = <91>;
+	temp_host_halt = <96>;
+	temp_host_release_high = <81>;
+	temp_host_release_halt = <86>;
+};
+
+&temp_sensor_cpu {
+	temp_host_high = <110>;
+	temp_host_halt = <112>;
+	temp_host_release_high = <96>;
+	temp_host_release_halt = <96>;
+	temp_fan_off = <76>;
+	temp_fan_max = <82>;
+};
+
+/* handler overrides */
+&int_accel_gyro {
+	handler = "base_accel_interrupt";
+};

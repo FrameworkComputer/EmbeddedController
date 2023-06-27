@@ -4,19 +4,19 @@
  */
 
 /* TODO: b/218904113: Convert to using Zephyr GPIOs */
-#include "gpio_signal.h"
 #include "adlrvp_zephyr.h"
+#include "battery.h"
+#include "battery_fuel_gauge.h"
+#include "bq25710.h"
+#include "charger.h"
 #include "common.h"
 #include "console.h"
-#include "intelrvp.h"
-#include "intel_rvp_board_id.h"
-#include "battery_fuel_gauge.h"
-#include "charger.h"
-#include "battery.h"
-#include "bq25710.h"
 #include "driver/retimer/bb_retimer_public.h"
 #include "extpower.h"
+#include "gpio_signal.h"
 #include "hooks.h"
+#include "intel_rvp_board_id.h"
+#include "intelrvp.h"
 #include "ioexpander.h"
 #include "isl9241.h"
 #include "power/icelake.h"
@@ -62,38 +62,6 @@ const struct tcpc_aic_gpio_config_t tcpc_aic_gpios[] = {
 #endif
 };
 BUILD_ASSERT(ARRAY_SIZE(tcpc_aic_gpios) == CONFIG_USB_PD_PORT_MAX_COUNT);
-
-/* USB-C PPC configuration */
-struct ppc_config_t ppc_chips[] = {
-	[TYPE_C_PORT_0] = {
-		.i2c_port = I2C_PORT_TYPEC_0,
-		.i2c_addr_flags = I2C_ADDR_SN5S330_TCPC_AIC_PPC,
-		.drv = &sn5s330_drv,
-	},
-#if defined(HAS_TASK_PD_C1)
-	[TYPE_C_PORT_1] = {
-		.i2c_port = I2C_PORT_TYPEC_1,
-		.i2c_addr_flags = I2C_ADDR_SN5S330_TCPC_AIC_PPC,
-		.drv = &sn5s330_drv
-	},
-#endif
-#if defined(HAS_TASK_PD_C2)
-	[TYPE_C_PORT_2] = {
-		.i2c_port = I2C_PORT_TYPEC_2,
-		.i2c_addr_flags = I2C_ADDR_SN5S330_TCPC_AIC_PPC,
-		.drv = &sn5s330_drv,
-	},
-#endif
-#if defined(HAS_TASK_PD_C3)
-	[TYPE_C_PORT_3] = {
-		.i2c_port = I2C_PORT_TYPEC_3,
-		.i2c_addr_flags = I2C_ADDR_SN5S330_TCPC_AIC_PPC,
-		.drv = &sn5s330_drv,
-	},
-#endif
-};
-BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == CONFIG_USB_PD_PORT_MAX_COUNT);
-unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 /* Cache BB retimer power state */
 static bool cache_bb_enable[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -405,10 +373,8 @@ __override bool board_is_tbt_usb4_port(int port)
 	return tbt_usb4;
 }
 
-static int board_pre_task_peripheral_init(const struct device *unused)
+static int board_pre_task_peripheral_init(void)
 {
-	ARG_UNUSED(unused);
-
 	/* Initialized IOEX-0 to access IOEX-GPIOs needed pre-task */
 	ioex_init(IOEX_C0_PCA9675);
 

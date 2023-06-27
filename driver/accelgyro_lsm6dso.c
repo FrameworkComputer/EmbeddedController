@@ -149,6 +149,9 @@ static void push_fifo_data(struct motion_sensor_t *main_s, uint8_t *fifo,
 
 	/* Apply precision, sensitivity and rotation. */
 	st_normalize(sensor, axis, ptr);
+	if (IS_ENABLED(CONFIG_ACCEL_SPOOF_MODE) &&
+	    sensor->flags & MOTIONSENSE_FLAG_IN_SPOOF_MODE)
+		axis = sensor->spoof_xyz;
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO)) {
 		struct ec_response_motion_sensor_data vect;
 

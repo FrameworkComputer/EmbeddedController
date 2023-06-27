@@ -14,6 +14,12 @@ config BOARD_KINGLER
 	  Build Google Kingler reference board. Krabby has MediaTek MT8186 SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_STARMIE
+	bool "Google Starmie Board"
+	help
+	  Build Google Starmie variant board. Starmie is a variant of Krabby
+	  and has MediaTek MT8186 SoC with ITE it81202-bx EC
+
 config BOARD_STEELIX
 	bool "Google Steelix Board"
 	help
@@ -32,6 +38,12 @@ config BOARD_MAGIKARP
 	  Build Google Magikarp variant board. Magikarp is a variant of Krabby
 	  and has MediaTek MT8186 SoC with ITE it81202-bx EC.
 
+config BOARD_VOLTORB
+	bool "Google Voltorb Board"
+	help
+	  Build Google Voltorb variant board. Voltorb is a variant of Kingler
+	  and has MediaTek MT8186/MT8186T SoC with NPCX993FA0BX EC.
+
 config VARIANT_CORSOLA_DB_DETECTION
 	bool "Corsola Platform Runtime Daughter Board Detection"
 	depends on PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG
@@ -41,12 +53,10 @@ config VARIANT_CORSOLA_DB_DETECTION
           includes pin configuration and driver loading.
 	default y
 
-config VARIANT_CORSOLA_USBA
-	bool "Corsola Platform USB-A support"
+config CORSOLA_HIBERNATE_PRE_OFF_5V
+	bool "Corsola Platform Hibernate Power Sequence Selection"
 	help
-	  Support Corsola USB-A related functions. Enable this function if
-	  it has USB-A ports.
-        depends on PLATFORM_EC_USBC
-	default y
+	  Set PP5000_Z2 to deactivate before executing normal corsola hibernate.
+	default n
 
 source "Kconfig.zephyr"

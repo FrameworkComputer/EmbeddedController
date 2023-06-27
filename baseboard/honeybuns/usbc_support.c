@@ -7,21 +7,21 @@
 
 #include "common.h"
 #include "console.h"
-#include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/ps8xxx.h"
-#include "sn5s330.h"
+#include "driver/tcpm/tcpci.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "registers.h"
+#include "sn5s330.h"
 #include "system.h"
 #include "timer.h"
+#include "ucpd-stm32gx.h"
 #include "usb_charge.h"
-#include "usb_pd_tcpm.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 #include "util.h"
-#include "registers.h"
-#include "ucpd-stm32gx.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)

@@ -3,6 +3,10 @@
  * found in the LICENSE file.
  */
 
+#include "comm-host.h"
+#include "misc_util.h"
+#include "timer.h"
+
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
@@ -11,10 +15,6 @@
 
 #include <chrono>
 #include <thread>
-
-#include "comm-host.h"
-#include "misc_util.h"
-#include "timer.h"
 
 static const auto ERASE_ASYNC_TIMEOUT = std::chrono::seconds(10);
 static const auto ERASE_ASYNC_WAIT_MS = std::chrono::milliseconds(500);

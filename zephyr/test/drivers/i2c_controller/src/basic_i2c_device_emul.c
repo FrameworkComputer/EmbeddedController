@@ -2,12 +2,13 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <string.h>
-#include <zephyr/device.h>
-
 #include "basic_i2c_device_emul.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_stub_device.h"
+
+#include <string.h>
+
+#include <zephyr/device.h>
 
 #define DT_DRV_COMPAT basic_i2c_device
 
@@ -104,7 +105,7 @@ static int basic_i2c_device_init(const struct emul *emul,
 	};                                                                \
 	EMUL_DT_INST_DEFINE(n, basic_i2c_device_init,                     \
 			    &basic_i2c_device_data_##n, &common_cfg_##n,  \
-			    &i2c_common_emul_api)
+			    &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_BASIC_I2C_DEVICE_EMUL);
 

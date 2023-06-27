@@ -33,12 +33,10 @@
  *    bypass mode.
  */
 
-#include "common.h"
-
 #include "charge_manager.h"
 #include "charge_state.h"
-#include "charge_state_v2.h"
 #include "charger.h"
+#include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "driver/charger/isl9241.h"
@@ -46,8 +44,8 @@
 #include "hooks.h"
 #include "stdbool.h"
 #include "throttle_ap.h"
-#include "usbc_ppc.h"
 #include "usb_pd.h"
+#include "usbc_ppc.h"
 #include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
@@ -194,13 +192,6 @@ int board_set_active_charge_port(int port)
 	CPRINTS("New charger P%d", port);
 
 	return EC_SUCCESS;
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 static const struct charge_port_info bj_power = {

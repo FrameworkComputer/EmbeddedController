@@ -1,0 +1,202 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_posix.dts>
+#include <dt-bindings/usb_pd_tcpm.h>
+#include <npcx_emul.dts>
+#include <zephyr/dt-bindings/gpio/gpio.h>
+
+/ {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+			usb_mux_chain_1_hdmi_db: usb-mux-chain-1-hdmi-db {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+
+	adc0: adc {
+		compatible = "zephyr,adc-emul";
+		nchannels = <6>;
+		ref-internal-mv = <3300>;
+		#io-channel-cells = <1>;
+		status = "okay";
+	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_charger_pmon_r {
+			enum-name = "ADC_PSYS";
+			io-channels = <&adc0 0>;
+			/*
+			 * ISL9238C PSYS output is 1.44 uA/W over 33K resistor.
+			 */
+			mul = <21043>;
+		};
+		adc_ec_id0 {
+			enum-name = "ADC_ID_0";
+			io-channels = <&adc0 1>;
+		};
+		adc_ec_id1 {
+			enum-name = "ADC_ID_1";
+			io-channels = <&adc0 2>;
+		};
+		adc_charger_amon_r {
+			enum-name = "ADC_AMON_BMON";
+			io-channels = <&adc0 3>;
+			mul = <1000>;
+			div = <18>;
+		};
+	};
+
+	/* These are temporary just to get the test to build.
+	 * Should be replaced with the correct accel drivers,
+	 * but we're not testing that code right now anyway.
+	 */
+	motionsense-sensor-data {
+		bmi160_data: bmi160-drv-data {
+			compatible = "cros-ec,drvdata-bmi160";
+			status = "okay";
+		};
+	};
+	motionsense-sensor {
+		base_accel: ms-bmi160-accel {
+			compatible = "cros-ec,bmi160-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
+			location = "MOTIONSENSE_LOC_BASE";
+			drv-data = <&bmi160_data>;
+			default-range = <4>;
+			i2c-spi-addr-flags = "BMI160_ADDR0_FLAGS";
+		};
+		lid_accel: ms-bmi160-accel2 {
+			compatible = "cros-ec,bmi160-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
+			location = "MOTIONSENSE_LOC_BASE";
+			drv-data = <&bmi160_data>;
+			default-range = <4>;
+			i2c-spi-addr-flags = "BMI160_ADDR0_FLAGS";
+		};
+	};
+	motionsense-sensor-info {
+		compatible = "cros-ec,motionsense-sensor-info";
+
+		/*
+		 * list of GPIO interrupts that have to
+		 * be enabled at initial stage
+		 */
+		sensor-irqs = <&int_base_imu>;
+		/* list of sensors in force mode */
+		accel-force-mode-sensors = <&lid_accel>;
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+		i2c_sensor: i2c-sensor {
+			i2c-port = <&i2c_ctrl0>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+		i2c_eeprom: i2c-eeprom {
+			i2c-port = <&i2c_ctrl3>;
+			enum-names = "I2C_PORT_EEPROM", "I2C_PORT_BATTERY",
+					"I2C_PORT_CHARGER";
+		};
+	};
+	pinctrl: pinctrl {
+		compatible = "nuvoton,npcx-pinctrl";
+		status = "okay";
+		/* I2C peripheral interfaces */
+		/omit-if-no-ref/ i2c0_0_sda_scl_gpb4_b5: periph-i2c0-0 {
+			pinmux = <&alt2_i2c0_0_sl>;
+			periph-pupd = <0x00 0>;
+		};
+		/omit-if-no-ref/ i2c3_0_sda_scl_gpd0_d1: periph-i2c3-0 {
+			pinmux = <&alt2_i2c3_0_sl>;
+			periph-pupd = <0x00 6>;
+		};
+	};
+	npcx-alts-map {
+		compatible = "nuvoton,npcx-pinctrl-conf";
+		/* SCFG DEVALT 2 */
+		alt2_i2c0_0_sl: alt20 {
+			alts = <&scfg 0x02 0x0 0>;
+		};
+		alt2_i2c3_0_sl: alt26 {
+			alts = <&scfg 0x02 0x6 0>;
+		};
+	};
+};
+
+&i2c_ctrl0 {
+	status = "okay";
+
+
+	battery: sb@b {
+		compatible = "zephyr,smart-battery-emul";
+		status = "okay";
+		reg = <0xb>;
+		cycle-count = <99>;
+		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
+		/* Real battery voltages are multiples of 4.4V. */
+		desired-charg-volt = <5000>;
+		desired-charg-cur = <1000>;
+		mf-name = "LGC";
+		dev-name = "AC17A8M";
+	};
+};
+
+&i2c_ctrl2 {
+	status = "okay";
+};
+
+&i2c_ctrl3 {
+	status = "okay";
+
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+};
+
+&i2c_ctrl5 {
+	status = "okay";
+};
+

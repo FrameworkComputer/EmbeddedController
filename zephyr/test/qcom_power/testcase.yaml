@@ -2,3 +2,9 @@ common:
   platform_allow: native_posix
 tests:
   qcom_power.default: {}
+  qcom_power.power_gpio_keys:
+    extra_configs:
+    - CONFIG_PLATFORM_EC_POWER_BUTTON=n
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./boards/power_button.dtsi

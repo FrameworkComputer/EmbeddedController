@@ -3,17 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include "zephyr/kernel.h"
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/fff.h>
-#include <zephyr/ztest.h>
-
 #include "baseboard_usbc_config.h"
 #include "ec_commands.h"
 #include "gpio_signal.h"
 #include "hooks.h"
 #include "usb_mux.h"
 #include "variant_db_detection.h"
+#include "zephyr/kernel.h"
+
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
 
 FAKE_VALUE_FUNC(int, corsola_is_dp_muxable, int);
 FAKE_VOID_FUNC(svdm_set_hpd_gpio, int, int);

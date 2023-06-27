@@ -8,10 +8,15 @@
 #ifndef __CROS_EC_FPSENSOR_CRYPTO_H
 #define __CROS_EC_FPSENSOR_CRYPTO_H
 
-#include <stddef.h>
+#include "compile_time_macros.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #include "sha256.h"
 
+#include <stddef.h>
 #define HKDF_MAX_INFO_SIZE 128
 #define HKDF_SHA256_MAX_BLOCK_COUNT 255
 
@@ -28,8 +33,9 @@
  * HKDF_MAX_INFO_SIZE bytes.
  * @return EC_SUCCESS on success and error code otherwise.
  */
-int hkdf_expand(uint8_t *out_key, size_t out_key_size, const uint8_t *prk,
-		size_t prk_size, const uint8_t *info, size_t info_size);
+enum ec_error_list hkdf_expand(uint8_t *out_key, size_t out_key_size,
+			       const uint8_t *prk, size_t prk_size,
+			       const uint8_t *info, size_t info_size);
 
 /**
  * Derive hardware encryption key from rollback secret and |salt|.
@@ -38,7 +44,7 @@ int hkdf_expand(uint8_t *out_key, size_t out_key_size, const uint8_t *prk,
  * @param salt the salt to use in HKDF.
  * @return EC_SUCCESS on success and error code otherwise.
  */
-int derive_encryption_key(uint8_t *out_key, const uint8_t *salt);
+enum ec_error_list derive_encryption_key(uint8_t *out_key, const uint8_t *salt);
 
 /**
  * Derive positive match secret from |input_positive_match_salt| and
@@ -50,8 +56,9 @@ int derive_encryption_key(uint8_t *out_key, const uint8_t *salt);
  * least FP_POSITIVE_MATCH_SALT_BYTES in size.
  * @return EC_SUCCESS on success and error code otherwise.
  */
-int derive_positive_match_secret(uint8_t *output,
-				 const uint8_t *input_positive_match_salt);
+enum ec_error_list
+derive_positive_match_secret(uint8_t *output,
+			     const uint8_t *input_positive_match_salt);
 
 /**
  * Encrypt |plaintext| using AES-GCM128.
@@ -67,9 +74,11 @@ int derive_positive_match_secret(uint8_t *output,
  * @param tag_size the size of |tag|.
  * @return EC_SUCCESS on success and error code otherwise.
  */
-int aes_gcm_encrypt(const uint8_t *key, int key_size, const uint8_t *plaintext,
-		    uint8_t *ciphertext, int text_size, const uint8_t *nonce,
-		    int nonce_size, uint8_t *tag, int tag_size);
+enum ec_error_list aes_gcm_encrypt(const uint8_t *key, int key_size,
+				   const uint8_t *plaintext,
+				   uint8_t *ciphertext, int text_size,
+				   const uint8_t *nonce, int nonce_size,
+				   uint8_t *tag, int tag_size);
 
 /**
  * Decrypt |plaintext| using AES-GCM128.
@@ -85,9 +94,14 @@ int aes_gcm_encrypt(const uint8_t *key, int key_size, const uint8_t *plaintext,
  * @param tag_size the length of tag to compare against.
  * @return EC_SUCCESS on success and error code otherwise.
  */
-int aes_gcm_decrypt(const uint8_t *key, int key_size, uint8_t *plaintext,
-		    const uint8_t *ciphertext, int text_size,
-		    const uint8_t *nonce, int nonce_size, const uint8_t *tag,
-		    int tag_size);
+enum ec_error_list aes_gcm_decrypt(const uint8_t *key, int key_size,
+				   uint8_t *plaintext,
+				   const uint8_t *ciphertext, int text_size,
+				   const uint8_t *nonce, int nonce_size,
+				   const uint8_t *tag, int tag_size);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_FPSENSOR_CRYPTO_H */

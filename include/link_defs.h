@@ -64,6 +64,10 @@ extern const struct hook_data __hooks_lid_change[];
 extern const struct hook_data __hooks_lid_change_end[];
 extern const struct hook_data __hooks_tablet_mode_change[];
 extern const struct hook_data __hooks_tablet_mode_change_end[];
+#ifdef CONFIG_BODY_DETECTION
+extern const struct hook_data __hooks_body_detect_change[];
+extern const struct hook_data __hooks_body_detect_change_end[];
+#endif
 extern const struct hook_data __hooks_base_attached_change[];
 extern const struct hook_data __hooks_base_attached_change_end[];
 extern const struct hook_data __hooks_pwrbtn_change[];

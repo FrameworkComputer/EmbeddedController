@@ -13,9 +13,10 @@ as a reviewer on your CL.
 
 Ask a question:
 - If you're a googler, please post using our YAQS label [zephyr-rtos-test](http://yaqs/eng/t/zephyr-rtos-test)
-- External contributors should email to [zephyr-test-eng@google.com](mailto:zephyr-test-eng@google.com)
-  or ask on the public Zephyr discord [#testing](https://discord.com/channels/720317445772017664/733037944922964069)
-  channel for generic Zephyr questions.
+- External contributors should:
+    - email to [zephyr-test-eng@google.com](mailto:zephyr-test-eng@google.com)
+    - or [sign up to the Public Zephyr discord](https://discord.com/invite/Ck7jw53nU2), and then visit the [#testing](https://discord.com/channels/720317445772017664/733037944922964069)
+  channel for questions.
 
 ## Where to add tests?
 
@@ -53,10 +54,18 @@ test cases, but the attributes are applied to all test cases in the file. See
 for more details.
 
 Some common attributes include:
-- `extra_configs` which is a list of Kconfigs to add to the test.
-- `extra_args` which is a string containing additional arguments to pass to
-  CMake
+- `extra_configs` - a list of Kconfigs to add to the test.
+- `extra_conf_files` - specifies a YAML list of additional Kconfig files to
+  to apply to the build. Replaces the `CONF_FILE` field in extra_args.
+- `extra_overlay_confs` - specifies a list of overlay Kconfig files. Replaces
+  the `OVERLAY_CONFIG` field in extra_args.
+- `extra_dtc_overlay_files` - specifies a list of additional device tree files
+  to apply to the build. Replaces the `DTC_OVERLAY_FILE` field in extra_args.
 
+`extra_args` is a string field that allows injecting free-form CMake variables
+into the build. It is rarely needed and the practice of specifying `CONF_FILE`,
+`OVERLAY_CONFIG`, or `DTC_OVERLAY_FILE` here is deprecated. Please use the
+above fields for these functions, as they are much more readable.
 ## Integration tests
 
 Integration tests build the full EC. They require devicetree and all Kconfigs to
@@ -65,7 +74,7 @@ CMakeLists.txt template:
 
 ```cmake
 cmake_minimum_required(VERSION 3.20.0)
-find_package(Zephyr REQUIRED HITS $ENV{ZEPHYR_BASE})
+find_package(Zephyr REQUIRED HINTS $ENV{ZEPHYR_BASE})
 project(<your_test_project_name>)
 target_sources(app
   PRIVATE
@@ -120,24 +129,36 @@ For most use cases these are the things to remember:
 
 ## Running twister
 
-Run all tests under a specific directory:
+### Run all tests under a specific directory
 
 ```shell
 platform/ec$ ./twister -T path/to/my/tests
 ```
 
-Run a specific test:
+### Run a specific test
 ```shell
-platform/ec$ ./twister -s path/to/my/tests/my.test.case
+platform/ec$ ./twister -s <test dir>/<my.test.scenario>
 ```
 
-Run all tests with coverage (get more info on code coverage at
-[Zephyr ztest code coverage](../code_coverage.md#Zephyr_ztest_code_coverage):
+For example:
+```shell
+platform/ec$ ./twister -s drivers/drivers.default
+```
+
+Explanation of this string: `drivers/` is the directory under `zephyr/test/`
+that contains the requested test, and `drivers.default` is the specific test
+scenario specified in that directory's `testcase.yaml` file.
+
+### Run all tests with coverage
+
+You can find more info on code coverage at
+[Zephyr ztest code coverage](../code_coverage.md#Zephyr_ztest_code_coverage).
+
 ```shell
 platform/ec$ ./twister -p native_posix -p unit_testing --coverage
 ```
 
-Get more info on twister:
+### Get more info on twister
 ```shell
 platform/ec$ ./twister --help
 ```

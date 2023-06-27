@@ -25,13 +25,6 @@
 /* Stop charge when charging and battery level >= this percentage */
 #define BATTERY_LEVEL_FULL 100
 
-/* Tell host we're charged when battery level >= this percentage */
-#ifdef CONFIG_BATTERY_LEVEL_NEAR_FULL
-#define BATTERY_LEVEL_NEAR_FULL CONFIG_BATTERY_LEVEL_NEAR_FULL
-#else
-#define BATTERY_LEVEL_NEAR_FULL 97
-#endif
-
 /*
  * Send battery-low host event when discharging and battery level <= this level
  */
@@ -76,8 +69,14 @@ FORWARD_DECLARE_ENUM(battery_present){
 	BP_NOT_SURE,
 };
 
+/*
+ * BATTERY_CUTOFF_STATE_IN_PROGRESS: Battery cutoff has begun but not completed.
+ * BATTERY_CUTOFF_STATE_PENDING: Battery cutoff is requested by the
+ * AP but hasn't started.
+ */
 enum battery_cutoff_states {
 	BATTERY_CUTOFF_STATE_NORMAL = 0,
+	BATTERY_CUTOFF_STATE_IN_PROGRESS,
 	BATTERY_CUTOFF_STATE_CUT_OFF,
 	BATTERY_CUTOFF_STATE_PENDING,
 };
@@ -159,6 +158,13 @@ int battery_get_avg_voltage(void); /* in mV */
 #define BATT_FLAG_BAD_AVERAGE_CURRENT 0x00001000
 /* All of the above BATT_FLAG_BAD_* bits */
 #define BATT_FLAG_BAD_ANY 0x000017fc
+/* Flags which are set or unset on every access (via battery_get_params) */
+#define BATT_FLAG_VOLATILE                                                  \
+	(BATT_FLAG_BAD_ANY | BATT_FLAG_WANT_CHARGE | BATT_FLAG_RESPONSIVE | \
+	 BATT_FLAG_IMBALANCED_CELL)
+
+/* The flag of prechare when the battery voltage is lower than voltage_min */
+#define BATT_FLAG_DEEP_CHARGE 0x00010000
 
 /* Battery constants */
 struct battery_info {
@@ -437,6 +443,11 @@ int battery_imbalance_mv(void);
  * @return EC_RES_INVALID_COMMAND if the battery doesn't support.
  */
 int board_cut_off_battery(void);
+
+/**
+ * Return if the battery start cut off.
+ */
+int battery_cutoff_in_progress(void);
 
 /**
  * Return if the battery has been cut off.

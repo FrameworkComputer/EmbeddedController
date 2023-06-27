@@ -5,16 +5,16 @@
  * EC-EC communication, task and functions for server.
  */
 
-#include "common.h"
 #include "battery.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
+#include "common.h"
 #include "console.h"
 #include "crc8.h"
 #include "ec_commands.h"
 #include "ec_ec_comm_server.h"
 #include "extpower.h"
-#include "hwtimer.h"
 #include "hooks.h"
+#include "hwtimer.h"
 #include "queue.h"
 #include "queue_policies.h"
 #include "system.h"
@@ -169,8 +169,9 @@ handle_cmd_charger_control(const struct ec_params_charger_control *params,
 			goto out;
 		}
 
-		/* Reset input current to minimum. */
-		charge_set_input_current_limit(CONFIG_CHARGER_INPUT_CURRENT, 0);
+		/* Reset input current to default. */
+		charge_set_input_current_limit(
+			CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT, 0);
 		/* Setup and enable "OTG". */
 		charge_set_output_current_limit(CHARGER_SOLO,
 						-params->max_current,

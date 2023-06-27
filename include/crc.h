@@ -11,6 +11,9 @@
 #if defined(CONFIG_HW_CRC) && !defined(HOST_TOOLS_BUILD)
 #include "crc_hw.h"
 #else
+#ifdef CONFIG_ZEPHYR
+#include <stdint.h>
+#endif /* CONFIG_ZEPHYR */
 
 /* Use software implementation */
 
@@ -52,6 +55,17 @@ void crc32_ctx_hash16(uint32_t *ctx, uint16_t val);
 void crc32_ctx_hash8(uint32_t *ctx, uint8_t val);
 
 uint32_t crc32_ctx_result(uint32_t *ctx);
+
+/**
+ * Return CRC-16 of the data using X^16 + X^15 + X^2 + 1 polynomial, based
+ * upon pre-calculated partial CRC of previous data.
+ * @param data uint8_t *, input, a pointer to input data
+ * @param len int, input, size of input data in bytes
+ * @param previous_crc uint16_t, input, pre-calculated CRC of previous data.
+ *        Seed with zero for a new calculation.
+ * @return the crc-16 of the input data.
+ */
+uint16_t cros_crc16(const uint8_t *data, int len, uint16_t previous_crc);
 
 #endif /* CONFIG_HW_CRC && !HOST_TOOLS_BUILD */
 

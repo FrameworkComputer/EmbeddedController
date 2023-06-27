@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
+#include "test/drivers/test_state.h"
+#include "timer.h"
+#include "usbc_ocp.h"
+
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 #include <zephyr/ztest_assert.h>
-
-#include "usbc_ocp.h"
-#include "test/drivers/test_state.h"
-#include "timer.h"
 
 /* Tests for USBC OCP (Overcurrent Protection) Common Code */
 

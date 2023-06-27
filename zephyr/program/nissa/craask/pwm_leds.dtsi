@@ -26,7 +26,7 @@
 		color-map-white  = <100 100  100>;
 		color-map-amber  = < 90  10    0>;
 
-		brightness-range = <100 100 100 0 0 0>;
+		brightness-range = <100 100 100 0 0 100>;
 
 		#address-cells = <1>;
 		#size-cells = <0>;

@@ -8,11 +8,11 @@
 #ifndef __CROS_EC_ST_COMMONS_H
 #define __CROS_EC_ST_COMMONS_H
 
-#include "common.h"
-#include "util.h"
 #include "accelgyro.h"
+#include "common.h"
 #include "console.h"
 #include "i2c.h"
+#include "util.h"
 
 /* X, Y, Z axis data len */
 #define OUT_XYZ_SIZE 6

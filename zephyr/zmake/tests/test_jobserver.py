@@ -4,10 +4,10 @@
 
 """Test jobserver functionality."""
 
+from asyncio import subprocess
 import logging
 import os
 import threading
-from asyncio import subprocess
 
 import pytest  # pylint:disable=import-error
 import zmake.jobserver

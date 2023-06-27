@@ -3,13 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "event_log.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 #include "usb_pd.h"
+#include "util.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 /**
  * @brief This is the maximum size of a single log entry.
@@ -18,6 +19,14 @@
  * specific data.
  */
 #define MAX_EVENT_LOG_ENTRY_SIZE (sizeof(struct event_log_entry) + 16)
+
+/**
+ * @brief This is the maximum size of a response pd log entry.
+ *
+ * Each entry must contain some common data + up to 16 bytes of additional type
+ * specific data.
+ */
+#define MAX_RESPONSE_PD_LOG_ENTRY_SIZE (sizeof(struct ec_response_pd_log) + 16)
 
 /**
  * @brief The size of the PD log entry data
@@ -59,10 +68,9 @@ ZTEST_USER(pd_log, test_bad_type)
 	struct ec_params_pd_write_log_entry params = {
 		.type = PD_EVENT_ACC_BASE,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_PD_WRITE_LOG_ENTRY, UINT8_C(0), params);
 
-	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args), NULL);
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      ec_cmd_pd_write_log_entry(NULL, &params), NULL);
 }
 
 ZTEST_USER(pd_log, test_bad_port)
@@ -70,11 +78,10 @@ ZTEST_USER(pd_log, test_bad_port)
 	struct ec_params_pd_write_log_entry params = {
 		.type = PD_EVENT_MCU_BASE,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_PD_WRITE_LOG_ENTRY, UINT8_C(0), params);
 
 	params.port = board_get_usb_pd_port_count() + 1;
-	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args), NULL);
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      ec_cmd_pd_write_log_entry(NULL, &params), NULL);
 }
 
 ZTEST_USER_F(pd_log, test_mcu_charge)
@@ -83,10 +90,8 @@ ZTEST_USER_F(pd_log, test_mcu_charge)
 		.type = PD_EVENT_MCU_CHARGE,
 		.port = 0,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_PD_WRITE_LOG_ENTRY, UINT8_C(0), params);
 
-	zassert_ok(host_command_process(&args), NULL);
+	zassert_ok(ec_cmd_pd_write_log_entry(NULL, &params), NULL);
 	zassert_equal(sizeof(struct event_log_entry) + PD_LOG_ENTRY_DATA_SIZE,
 		      log_dequeue_event(&fixture->log_entry), NULL);
 	zassert_equal(params.type, fixture->log_entry.type, NULL);
@@ -103,10 +108,8 @@ ZTEST_USER_F(pd_log, test_mcu_connect)
 		.type = PD_EVENT_MCU_CONNECT,
 		.port = 0,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_PD_WRITE_LOG_ENTRY, UINT8_C(0), params);
 
-	zassert_ok(host_command_process(&args), NULL);
+	zassert_ok(ec_cmd_pd_write_log_entry(NULL, &params), NULL);
 	zassert_equal(sizeof(struct event_log_entry),
 		      log_dequeue_event(&fixture->log_entry), NULL);
 	zassert_equal(params.type, fixture->log_entry.type, NULL);
@@ -120,7 +123,7 @@ ZTEST_USER_F(pd_log, test_mcu_connect)
 
 ZTEST_USER_F(pd_log, test_read_log_entry)
 {
-	uint8_t response_buffer[sizeof(struct ec_response_pd_log) + 16];
+	uint8_t response_buffer[MAX_RESPONSE_PD_LOG_ENTRY_SIZE];
 	struct ec_response_pd_log *response =
 		(struct ec_response_pd_log *)response_buffer;
 	struct host_cmd_handler_args args =
@@ -132,4 +135,26 @@ ZTEST_USER_F(pd_log, test_read_log_entry)
 	zassert_ok(host_command_process(&args), NULL);
 	zassert_equal(sizeof(struct event_log_entry), args.response_size, NULL);
 	zassert_equal(PD_EVENT_NO_ENTRY, response->type, NULL);
+}
+
+ZTEST_USER_F(pd_log, test_log_recv_vdm)
+{
+	uint8_t response_buffer[MAX_RESPONSE_PD_LOG_ENTRY_SIZE];
+	uint32_t *payload = (uint32_t *)response_buffer;
+	struct ec_response_pd_log *response =
+		(struct ec_response_pd_log *)&payload[1];
+
+	memset(response_buffer, 0, sizeof(response_buffer));
+	payload[0] |= VDO_SRC_RESPONDER;
+	response->type = PD_EVENT_MCU_CONNECT;
+	response->size_port = 8;
+	int cnt = DIV_ROUND_UP(response->size_port, sizeof(uint32_t)) + 2;
+
+	pd_log_recv_vdm(0, cnt, payload);
+
+	(void)log_dequeue_event(&fixture->log_entry);
+
+	zassert_equal(response->type, fixture->log_entry.type,
+		      "type=%d, received=%d", response->type,
+		      fixture->log_entry.type);
 }

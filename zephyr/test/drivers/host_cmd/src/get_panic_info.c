@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "host_command.h"
 #include "panic.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/ztest.h>
 
 struct host_cmd_get_panic_info_fixture {
 	struct panic_data saved_pdata;

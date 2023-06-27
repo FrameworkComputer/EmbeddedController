@@ -5,12 +5,13 @@
  */
 
 #include <errno.h>
-#include <getopt.h>
-#include <libusb.h>
 #include <stdarg.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <getopt.h>
+#include <libusb.h>
 
 /* Options */
 static uint16_t vid = 0x18d1; /* Google */

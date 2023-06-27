@@ -55,4 +55,25 @@
 #define HAS_TASK_CYPD 1
 #endif /* CONFIG_HAS_TASK_CYPD */
 
+#ifndef CONFIG_TASK_HOSTCMD_THREAD_MAIN
+#define HAS_TASK_MAIN 1
+#endif /* CONFIG_TASK_HOSTCMD_THREAD_DEDICATED */
+
+#if (defined(CONFIG_SHELL_BACKEND_SERIAL) || \
+     defined(CONFIG_SHELL_BACKEND_DUMMY))
+#define HAS_TASK_SHELL 1
+#endif
+
+/* These non-shimmed (extra) tasks are always present */
+#define HAS_TASK_IDLE 1
+#define HAS_TASK_SYSWORKQ 1
+
+#ifdef CONFIG_HAS_TASK_TOUCHPAD
+#define HAS_TASK_TOUCHPAD 1
+#endif /* CONFIG_HAS_TASK_TOUCHPAD */
+
+#ifdef CONFIG_HAS_TASK_RWSIG
+#define HAS_TASK_RWSIG 1
+#endif /* CONFIG_HAS_TASK_RWSIG */
+
 #endif /* __CROS_EC_SHIMMED_TASKS_H */

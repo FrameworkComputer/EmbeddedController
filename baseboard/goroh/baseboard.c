@@ -10,15 +10,13 @@
 #include "baseboard_usbc_config.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charger.h"
-#include "charger.h"
 #include "charge_state.h"
-#include "charge_state_v2.h"
+#include "charger.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_lis2dw12.h"
+#include "driver/accelgyro_bmi_common.h"
 #include "driver/als_tcs3400.h"
 #include "driver/charger/isl923x.h"
 #include "driver/ppc/syv682x.h"
@@ -31,9 +29,8 @@
 #include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
+#include "power.h"
 #include "power_button.h"
-#include "power.h"
-#include "power.h"
 #include "spi.h"
 #include "switch.h"
 #include "tablet_mode.h"
@@ -41,11 +38,12 @@
 #include "temp_sensor.h"
 #include "timer.h"
 #include "uart.h"
-#include "usbc_ppc.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usbc_ppc.h"
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
@@ -159,13 +157,6 @@ const struct cc_para_t *board_get_cc_tuning_parameter(enum usbpd_port port)
 		};
 
 	return &cc_parameter[port];
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)

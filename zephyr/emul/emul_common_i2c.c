@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
-#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(emul_common_i2c);
+#include "emul/emul_common_i2c.h"
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/logging/log.h>
 
-#include "emul/emul_common_i2c.h"
+#define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
+LOG_MODULE_REGISTER(emul_common_i2c);
 
 /** Check description in emul_common_i2c.h */
 int i2c_common_emul_lock_data(struct i2c_common_emul_data *common_data,
@@ -172,16 +172,6 @@ static int i2c_common_emul_write_byte(const struct emul *target,
 {
 	int reg, ret;
 
-	/* Custom user handler */
-	if (data->write_func) {
-		ret = data->write_func(target, data->cur_reg, val,
-				       data->msg_byte, data->write_func_data);
-		if (ret < 0) {
-			return -EIO;
-		} else if (ret == 0) {
-			return 0;
-		}
-	}
 	/* Check if user wants to fail on accessed register */
 	if (data->access_reg) {
 		reg = data->access_reg(target, data->cur_reg, data->msg_byte,
@@ -195,6 +185,18 @@ static int i2c_common_emul_write_byte(const struct emul *target,
 	    data->write_fail_reg == I2C_COMMON_EMUL_FAIL_ALL_REG) {
 		return -EIO;
 	}
+
+	/* Custom user handler */
+	if (data->write_func) {
+		ret = data->write_func(target, data->cur_reg, val,
+				       data->msg_byte, data->write_func_data);
+		if (ret < 0) {
+			return -EIO;
+		} else if (ret == 0) {
+			return 0;
+		}
+	}
+
 	/* Emulator handler */
 	if (data->write_byte) {
 		k_mutex_lock(&data->data_mtx, K_FOREVER);
@@ -228,16 +230,6 @@ static int i2c_common_emul_read_byte(const struct emul *target,
 {
 	int reg, ret;
 
-	/* Custom user handler */
-	if (data->read_func) {
-		ret = data->read_func(target, data->cur_reg, val,
-				      data->msg_byte, data->read_func_data);
-		if (ret < 0) {
-			return -EIO;
-		} else if (ret == 0) {
-			return 0;
-		}
-	}
 	/* Check if user wants to fail on accessed register */
 	if (data->access_reg) {
 		reg = data->access_reg(target, data->cur_reg, data->msg_byte,
@@ -250,6 +242,18 @@ static int i2c_common_emul_read_byte(const struct emul *target,
 	    data->read_fail_reg == I2C_COMMON_EMUL_FAIL_ALL_REG) {
 		return -EIO;
 	}
+
+	/* Custom user handler */
+	if (data->read_func) {
+		ret = data->read_func(target, data->cur_reg, val,
+				      data->msg_byte, data->read_func_data);
+		if (ret < 0) {
+			return -EIO;
+		} else if (ret == 0) {
+			return 0;
+		}
+	}
+
 	/* Emulator handler */
 	if (data->read_byte) {
 		k_mutex_lock(&data->data_mtx, K_FOREVER);

@@ -5,18 +5,18 @@
 
 /* This is not a chip emulator, it's a fake driver. */
 
-#define DT_DRV_COMPAT cros_ec_rtc_emul
-
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(emul_rtc);
+#include "drivers/cros_rtc.h"
+#include "ec_commands.h"
+#include "flash.h"
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
-#include <ec_commands.h>
-#include <drivers/cros_rtc.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/sys/__assert.h>
 
-#include "flash.h"
+#define DT_DRV_COMPAT cros_ec_rtc_emul
+
+LOG_MODULE_REGISTER(emul_rtc);
 
 struct cros_rtc_emul_data {
 	const struct device *rtc_dev;

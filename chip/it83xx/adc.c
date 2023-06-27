@@ -7,8 +7,8 @@
 
 #include "adc.h"
 #include "clock.h"
-#include "console.h"
 #include "common.h"
+#include "console.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
@@ -167,7 +167,7 @@ int adc_read_channel(enum adc_channel ch)
 		else
 			IT83XX_ADC_ADCDVSTS2 = (1 << (adc_ch - CHIP_ADC_CH13));
 
-		mv = adc_raw_data * adc_channels[ch].factor_mul /
+		mv = (uint64_t)adc_raw_data * adc_channels[ch].factor_mul /
 			     adc_channels[ch].factor_div +
 		     adc_channels[ch].shift;
 		valid = 1;

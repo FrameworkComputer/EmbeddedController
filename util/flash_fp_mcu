@@ -36,6 +36,7 @@ FLAGS "${@}" || exit "${EXIT_ARGUMENT}"
 eval set -- "${FLAGS_ARGV}"
 
 readonly CROS_EC_SPI_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-spi"
+readonly CROS_EC_FP_SPI_MODALIAS_STR="spi:cros-ec-fp"
 
 readonly CROS_EC_UART_MODALIAS_STR="of:NcrfpTCgoogle,cros-ec-uart"
 
@@ -50,7 +51,9 @@ check_hardware_write_protect_disabled() {
     exit "${EXIT_PRECONDITION}"
   fi
   if [[ "${hardware_write_protect_state}" != "0" ]]; then
-    echo "Please make sure hardware write protect is disabled."
+    echo "Unable to proceed because hardware write protect is enabled."
+    echo "Please disable the hardware write protect, so that we can" \
+    "reboot the FPMCU into the ROM bootloader."
     echo "See https://www.chromium.org/chromium-os/firmware-porting-guide/firmware-ec-write-protection"
     exit "${EXIT_PRECONDITION}"
   fi
@@ -77,17 +80,13 @@ get_sysfs_gpiochip_base() {
 # Get the spiid for the fingerprint sensor based on the modalias
 # string: https://crbug.com/955117
 get_spiid() {
-  # TODO(b/179533783): Fix modalias on strongbad and remove this bypass.
-  if [[ -n "${DEVICEID}" ]]; then
-    echo "${DEVICEID}"
-    return 0
-  fi
-
   for dev in /sys/bus/spi/devices/*; do
-    if [[ "$(cat "${dev}/modalias")" == "${CROS_EC_SPI_MODALIAS_STR}" ]]; then
-      basename "${dev}"
-      return 0
-    fi
+    case "$(cat "${dev}/modalias")" in
+      "${CROS_EC_SPI_MODALIAS_STR}"|"${CROS_EC_FP_SPI_MODALIAS_STR}")
+        basename "${dev}"
+        return 0
+        ;;
+    esac
   done
 
   return 1
@@ -234,13 +233,17 @@ match_kernel_regex() {
 # * platform_base_name "hatch-arc-r"      --> "hatch"
 # * platform_base_name "hatch-borealis"   --> "hatch"
 # * platform_base_name "hatch"            --> "hatch"
+# * platform_base_name "strongbad64"      --> "strongbad"
 #
 # Usage: platform_base_name <platform_name>
 platform_base_name() {
   local platform_name="$1"
 
   # We remove any suffix starting at the first '-'.
-  echo "${platform_name%%-*}"
+  local base_name="${platform_name%%-*}"
+
+  # Remove any numbers from the base name.
+  echo "${base_name//[0-9]/}"
 }
 
 get_default_fw() {
@@ -471,7 +474,9 @@ flash_fp_mcu_stm32() {
   # open-drain outputs on other platforms.
   if [[ "${PLATFORM_BASE_NAME}" != "strongbad" ]] &&
      [[ "${PLATFORM_BASE_NAME}" != "herobrine" ]] &&
-     [[ "${PLATFORM_BASE_NAME}" != "zork" ]]; then
+     [[ "${PLATFORM_BASE_NAME}" != "zork" ]] &&
+     [[ "${PLATFORM_BASE_NAME}" != "myst" ]] &&
+     [[ "${PLATFORM_BASE_NAME}" != "skyrim" ]]; then
     gpio in       "${gpio_boot0}" "${gpio_nrst}"
   fi
   gpio unexport "${gpio_boot0}" "${gpio_nrst}"
@@ -521,32 +526,30 @@ config_hatch() {
   # for pin name to number mapping.
   # Examine `cat /sys/kernel/debug/pinctrl/INT34BB:00/gpio-ranges` on a hatch
   # device to determine gpio number from pin number.
- 
-  local gpiochip="gpiochip712"
-  # Support kernel version 4.x, 5.4 and 5.10 during transition to 5.15+
-  match_kernel_regex "^((4\..)|(5\.4\.)|(5\.10\.))" && gpiochip="gpiochip200"
-  readonly GPIO_CHIP="${gpiochip}"
-  local offset=0
-  # Support kernel version 4.x, 5.4 and 5.10 during transition to 5.15+
-  # v4.4 has GPIOs that are offset by -512
-  match_kernel_regex "^((4\..)|(5\.4\.)|(5\.10\.))" && offset=512
-  
-  # FPMCU RST_ODL is on GPP_A12 = 712 + 12 = 724
-  local gpionrst=724
-  readonly GPIO_NRST=$(( gpionrst - offset ))
-  # FPMCU BOOT0 is on GPP_A22 = 712 + 22 = 734
-  local gpioboot=734
-  readonly GPIO_BOOT0=$(( gpioboot - offset ))
-  # FP_PWR_EN is on GPP_C11 = 968 + (192 - 181) = 968 + 11 = 979
-  local gpiopwren=979
-  readonly GPIO_PWREN=$(( gpiopwren - offset ))
+
+  local gpiochip_dev_path="*/pci0000\:00/INT34BB\:00/gpio/*"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
+
+  local GPIO_CHIP="gpiochip${gpiobase}"
+
+  # FPMCU RST_ODL is on GPP_A12 = 12
+  local gpionrst=12
+  readonly GPIO_NRST=$(( gpionrst + gpiobase ))
+  # FPMCU BOOT0 is on GPP_A22 = 22
+  local gpioboot=22
+  readonly GPIO_BOOT0=$(( gpioboot + gpiobase ))
+  # FP_PWR_EN is on GPP_C11 = 256 + 11 = 267
+  local gpiopwren=267
+  readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
 }
 
 config_herobrine() {
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev9.0"
-  # TODO(b/179533783): Fix this script to look for non-ACPI modalias
-  readonly DEVICEID="spi9.0"
 
   local dev_path="*/platform/soc@0/f100000.pinctrl/gpio/*"
   local gpiobase
@@ -602,8 +605,6 @@ config_nocturne() {
 config_strongbad() {
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev10.0"
-  # TODO(b/179533783): Fix modalias on strongbad and remove this bypass.
-  readonly DEVICEID="spi10.0"
 
   local dev_path="*/platform/soc@0/3500000.pinctrl/gpio/*"
   local gpiobase
@@ -637,26 +638,26 @@ config_volteer() {
   # volteer device to determine gpio number from pin number.
   # For example: GPP_C23 is UART2_CTS which can be queried from EDS
   # the pin number is 194. From the gpio-ranges, the gpio value is
-  # 920 + (194-171) = 943
+  # 920 + (194-171) = 943. The relative gpio value is 943 - 664 = 279.
 
-  local gpiochip="gpiochip664"
-  # Support kernel version 4.x, 5.4, 5.10 during transition to 5.15+
-  match_kernel_regex "^((4\..)|(5\.4\.)|(5\.10\..))" && gpiochip="gpiochip152"
-  readonly GPIO_CHIP="${gpiochip}"
-  local offset=0
-  # Support kernel version 4.x, 5.4, 5.10 during transition to 5.15+
-  # v4.4 has GPIOs that are offset by -512
-  match_kernel_regex "^((4\..)|(5\.4\.)|(5\.10\.))" && offset=512
+  local gpiochip_dev_path="*/pci0000\:00/INT34C5\:00/gpio/*"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
 
-  # FPMCU RST_ODL is on GPP_C23 = 920 + (194 - 171) = 943
-  local gpionrst=943
-  readonly GPIO_NRST=$(( gpionrst - offset ))
-  # FPMCU BOOT0 is on GPP_C22 = 920 + (193 - 171) = 942
-  local gpioboot=942
-  readonly GPIO_BOOT0=$(( gpioboot - offset ))
-  # FP_PWR_EN is on GPP_A21 = 728 + (63 - 42) = 749
-  local gpiopwren=749
-  readonly GPIO_PWREN=$(( gpiopwren - offset ))
+  local GPIO_CHIP="gpiochip${gpiobase}"
+
+  # FPMCU RST_ODL is on GPP_C23 = 256 + (194 - 171) = 279
+  local gpionrst=279
+  readonly GPIO_NRST=$(( gpionrst + gpiobase ))
+  # FPMCU BOOT0 is on GPP_C22 = 256 + (193 - 171) = 278
+  local gpioboot=278
+  readonly GPIO_BOOT0=$(( gpioboot + gpiobase ))
+  # FP_PWR_EN is on GPP_A21 = 64 + (63 - 42) = 85
+  local gpiopwren=85
+  readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
 }
 
 config_brya() {
@@ -706,20 +707,48 @@ config_rex() {
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev0.0"
 
-  # See kernel/v5.15/drivers/pinctrl/intel/pinctrl-meteorlake.c
+  # See kernel/v6.1/drivers/pinctrl/intel/pinctrl-meteorlake.c
   # for pin name and pin number.
   # Examine `cat /sys/kernel/debug/pinctrl/INTC1083:00/gpio-ranges` on a
   # rex device to determine gpio number from pin number.
   # For example: GPP_B11, the pin number is 215 from the pinctrl-meteorlake.c.
   # From the gpio-ranges, the gpio value is 925 + (215-204) = 936
 
-  readonly GPIO_CHIP="gpiochip573"
-  # FPMCU RST_ODL is on GPP_C23 = 637 + (52 - 29) = 660
-  readonly GPIO_NRST=660
-  # FPMCU BOOT0 is on GPP_C22 = 637 + (51 - 29) = 659
-  readonly GPIO_BOOT0=659
-  # FP_PWR_EN is on GPP_B11 = 925 + (215-204) = 936
-  readonly GPIO_PWREN=936
+  local gpiochip_dev_path="*/pci0000:00/INTC1083\:00/gpio/*"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
+
+  readonly GPIO_CHIP="gpiochip${gpiobase}"
+
+  local model=$(cros_config / name)
+  case "${model}" in
+    screebo)
+      # Screebo is based off Rex but with different pins for FPMCU
+      # FPMCU RST_ODL is on GPP_C21 = 64 + (50 - 29) = 85
+      local gpionrst=85
+      readonly GPIO_NRST=$(( gpionrst + gpiobase ))
+      # FPMCU BOOT0 is on GPP_C20 = 64 + (49 - 29) = 84
+      local gpioboot=84
+      readonly GPIO_BOOT0=$(( gpioboot + gpiobase ))
+      # FP_PWR_EN is on GPP_B08 = 352 + (212-204) - 573 = 360
+      local gpiopwren=360
+      readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
+      ;;
+    *)
+      # FPMCU RST_ODL is on GPP_C23 = 64 + (52 - 29) = 87
+      local gpionrst=87
+      readonly GPIO_NRST=$(( gpionrst + gpiobase ))
+      # FPMCU BOOT0 is on GPP_C22 = 64 + (51 - 29) = 86
+      local gpioboot=86
+      readonly GPIO_BOOT0=$(( gpioboot + gpiobase ))
+      # FP_PWR_EN is on GPP_B11 = 352 + (215-204) = 363
+      local gpiopwren=363
+      readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
+      ;;
+  esac
 }
 
 config_zork() {
@@ -751,25 +780,24 @@ config_guybrush() {
   readonly TRANSPORT="UART"
   readonly DEVICE="/dev/ttyS1"
 
-  local gpiochip="gpiochip768"
-  # Support kernel version 5.10 during transition to 5.15+
-  match_kernel_regex "^5\.10\." && gpiochip="gpiochip256"
-  readonly GPIO_CHIP="${gpiochip}"
+  local gpiochip_dev_path="*/platform/AMD0030\:00/gpio/*"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
 
-  local offset=0
-  # Support kernel version 5.10 during transition to 5.15+
-  # v5.10 has GPIOs that are offset by -512
-  match_kernel_regex "^5\.10\." && offset=512
+  local GPIO_CHIP="gpiochip${gpiobase}"
 
-  # FPMCU RST_ODL is on AGPIO 11 = 768 + 11 = 779
-  local gpionrst=779
-  readonly GPIO_NRST=$(( gpionrst - offset ))
-  # FPMCU BOOT0 is on AGPIO 144 = 768 + 144 = 912
-  local gpioboot=912
-  readonly GPIO_BOOT0=$(( gpioboot - offset ))
-  # FPMCU PWR_EN is on AGPIO 3 = 768 + 3 = 771
-  local gpiopwren=771
-  readonly GPIO_PWREN=$(( gpiopwren - offset ))
+  # FPMCU RST_ODL is on AGPIO 11
+  local gpionrst=11
+  readonly GPIO_NRST=$(( gpionrst + gpiobase ))
+  # FPMCU BOOT0 is on AGPIO 144
+  local gpioboot=144
+  readonly GPIO_BOOT0=$(( gpioboot + gpiobase ))
+  # FPMCU PWR_EN is on AGPIO 3
+  local gpiopwren=3
+  readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
 }
 
 config_skyrim() {
@@ -782,6 +810,20 @@ config_skyrim() {
   readonly GPIO_NRST=780
   # FPMCU BOOT0 is on AGPIO 130 = 768 + 130 = 898
   readonly GPIO_BOOT0=898
+  # FPMCU PWR_EN is on AGPIO 4 = 768 + 4 = 772
+  readonly GPIO_PWREN=772
+}
+
+config_myst() {
+  readonly TRANSPORT="UART"
+
+  readonly DEVICE="/dev/ttyS1"
+
+  readonly GPIO_CHIP="gpiochip768"
+  # FPMCU RST_ODL is on AGPIO 40 = 768 + 40 = 808
+  readonly GPIO_NRST=808
+  # FPMCU BOOT0 is on AGPIO 132 = 768 + 132 = 900
+  readonly GPIO_BOOT0=900
   # FPMCU PWR_EN is on AGPIO 4 = 768 + 4 = 772
   readonly GPIO_PWREN=772
 }

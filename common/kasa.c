@@ -6,6 +6,7 @@
 #include "common.h"
 #include "kasa.h"
 #include "mat44.h"
+
 #include <string.h>
 
 void kasa_reset(struct kasa_fit *kasa)

@@ -3,12 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include "test_util.h"
-
 #include "flash.h"
 #include "string.h"
 #include "system.h"
 #include "task.h"
+#include "test_util.h"
 #include "write_protect.h"
 
 static bool write_protect_enabled;

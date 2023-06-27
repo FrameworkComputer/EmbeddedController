@@ -6,8 +6,8 @@
 #include "common.h"
 #include "math.h"
 #include "math_util.h"
-#include "vec3.h"
 #include "util.h"
+#include "vec3.h"
 
 static fpv3_t zero_initialized_vector = { FLOAT_TO_FP(0.0f), FLOAT_TO_FP(0.0f),
 					  FLOAT_TO_FP(0.0f) };

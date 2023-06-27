@@ -21,6 +21,7 @@ def register_variant(
             # Project-specific KConfig customization.
             here / project_name / "project.conf",
         ],
+        inherited_from=["herobrine"],
     )
 
 

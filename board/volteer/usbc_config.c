@@ -4,23 +4,23 @@
  */
 
 /* Volteer family-specific USB-C configuration */
-#include "common.h"
 #include "cbi_ec_fw_config.h"
-#include "gpio.h"
-#include "hooks.h"
-#include "system.h"
-#include "timer.h"
-#include "usbc_config.h"
-#include "usbc_ppc.h"
-#include "usb_mux.h"
+#include "common.h"
 #include "driver/bc12/pi3usb9201_public.h"
 #include "driver/ppc/sn5s330_public.h"
 #include "driver/ppc/syv682x_public.h"
 #include "driver/retimer/bb_retimer_public.h"
 #include "driver/tcpm/ps8xxx_public.h"
 #include "driver/tcpm/rt1715_public.h"
-#include "driver/tcpm/tusb422_public.h"
 #include "driver/tcpm/tcpci.h"
+#include "driver/tcpm/tusb422_public.h"
+#include "gpio.h"
+#include "hooks.h"
+#include "system.h"
+#include "timer.h"
+#include "usb_mux.h"
+#include "usbc_config.h"
+#include "usbc_ppc.h"
 
 /* Disable debug messages to save flash space */
 #define CPRINTS(format, args...)

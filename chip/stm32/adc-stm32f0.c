@@ -108,14 +108,14 @@ static void adc_init(const struct adc_t *adc)
 		STM32_ADC_CR = STM32_ADC_CR_ADEN;
 }
 
-static void adc_configure(int ain_id, enum stm32_adc_smpr sample_rate)
+static void adc_configure(int ain_id, enum stm32_adc_smpr sample_time)
 {
 	/* Sampling time */
-	if (sample_rate == STM32_ADC_SMPR_DEFAULT ||
-	    sample_rate >= STM32_ADC_SMPR_COUNT)
+	if (sample_time == STM32_ADC_SMPR_DEFAULT ||
+	    sample_time >= STM32_ADC_SMPR_COUNT)
 		STM32_ADC_SMPR = profile.smpr_reg;
 	else
-		STM32_ADC_SMPR = STM32_ADC_SMPR_SMP(sample_rate);
+		STM32_ADC_SMPR = STM32_ADC_SMPR_SMP(sample_time);
 
 	/* Select channel to convert */
 	STM32_ADC_CHSELR = BIT(ain_id);
@@ -321,7 +321,7 @@ int adc_read_channel(enum adc_channel ch)
 		adc_disable_watchdog_no_lock();
 	}
 
-	adc_configure(adc->channel, adc->sample_rate);
+	adc_configure(adc->channel, adc->sample_time);
 
 	/* Clear flags */
 	STM32_ADC_ISR = 0xe;

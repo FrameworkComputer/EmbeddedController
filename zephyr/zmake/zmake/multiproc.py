@@ -18,6 +18,7 @@ import select
 import threading
 from typing import Any, ClassVar, Dict, List
 
+
 # Should we log job names or not
 LOG_JOB_NAMES = True
 
@@ -270,6 +271,39 @@ class LogWriter:
             LogWriter._logging_cv.wait_for(lambda: not LogWriter._logging_map)
 
 
+class ThreadWithResult(threading.Thread):
+    """Subclass to create a thread and return the result from the target"""
+
+    def __init__(
+        self,
+        group=None,
+        target=None,
+        name=None,
+        args=(),
+        kwargs=None,
+        *,
+        daemon=None
+    ):
+        threading.Thread.__init__(
+            self,
+            group=group,
+            target=target,
+            name=name,
+            args=args,
+            kwargs=kwargs,
+            daemon=daemon,
+        )
+        self._return = None
+
+    def run(self):
+        if self._target is not None:
+            self._return = self._target(*self._args, **self._kwargs)
+
+    def join(self, timeout=None):
+        threading.Thread.join(self, timeout=timeout)
+        return self._return
+
+
 class Executor:
     """Parallel executor helper class.
 
@@ -309,7 +343,7 @@ class Executor:
             A join function which will wait until this task is finished.
         """
         with self.lock:
-            thread = threading.Thread(
+            thread = ThreadWithResult(
                 target=lambda: self._run_fn(func), daemon=True
             )
             thread.start()
@@ -349,6 +383,8 @@ class Executor:
         with self.lock:
             self.results.append(result)
             self.lock.notify_all()
+
+        return result
 
     @property
     def _is_finished(self):

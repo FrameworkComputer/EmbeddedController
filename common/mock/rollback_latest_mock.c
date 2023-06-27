@@ -8,13 +8,13 @@
  * @brief Mock rollback block library
  */
 
-#include <string.h>
-
 #include "common.h"
 #include "compile_time_macros.h"
-#include "util.h"
 #include "mock/rollback_latest_mock.h"
 #include "rollback_private.h"
+#include "util.h"
+
+#include <string.h>
 
 #ifndef TEST_BUILD
 #error "Mocks should only be in the test build."

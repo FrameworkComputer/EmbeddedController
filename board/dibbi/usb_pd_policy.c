@@ -3,15 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include "battery_smart.h" /* TODO(b/257377326) remove */
 #include "charge_manager.h"
 #include "charger.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
-#include "driver/charger/sm5803.h" /* TODO(b/257377326) remove */
-#include "driver/tcpm/tcpci.h"
+#include "gpio.h"
 #include "usb_pd.h"
+#include "usbc_ppc.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
@@ -19,7 +18,7 @@
 int pd_check_vconn_swap(int port)
 {
 	/* Allow VCONN swaps if the AP is on */
-	return chipset_in_state(CHIPSET_STATE_ANY_SUSPEND | CHIPSET_STATE_ON);
+	return gpio_get_level(GPIO_EN_PP5000_U);
 }
 
 void pd_power_supply_reset(int port)
@@ -29,14 +28,14 @@ void pd_power_supply_reset(int port)
 	if (port < 0 || port >= board_get_usb_pd_port_count())
 		return;
 
-	prev_en = charger_is_sourcing_otg_power(port);
+	prev_en = ppc_is_sourcing_vbus(port);
 
-	/* Disable Vbus */
-	charger_enable_otg_power(port, 0);
+	/* Disable VBUS source */
+	ppc_vbus_source_enable(port, 0);
 
-	/* Discharge Vbus if previously enabled */
+	/* Enable discharge if we were previously sourcing 5V */
 	if (prev_en)
-		sm5803_set_vbus_disch(port, 1);
+		pd_set_vbus_discharge(port, 1);
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -44,18 +43,19 @@ void pd_power_supply_reset(int port)
 
 int pd_set_power_supply_ready(int port)
 {
-	enum ec_error_list rv;
+	int rv;
 
-	/* Disable sinking */
-	rv = sm5803_vbus_sink_enable(port, 0);
+	/* Disable charging */
+	rv = ppc_vbus_sink_enable(port, 0);
 	if (rv)
 		return rv;
 
-	/* Disable Vbus discharge */
-	sm5803_set_vbus_disch(port, 0);
+	pd_set_vbus_discharge(port, 0);
 
-	/* Provide Vbus */
-	charger_enable_otg_power(port, 1);
+	/* Enable VBUS source */
+	rv = ppc_vbus_source_enable(port, 1);
+	if (rv)
+		return rv;
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -63,12 +63,10 @@ int pd_set_power_supply_ready(int port)
 	return EC_SUCCESS;
 }
 
-__override bool pd_check_vbus_level(int port, enum vbus_level level)
+__override int pd_snk_is_vbus_provided(int port)
 {
-	return sm5803_check_vbus_level(port, level);
-}
+	if (port != CHARGE_PORT_TYPEC0)
+		return 0;
 
-int pd_snk_is_vbus_provided(int port)
-{
-	return sm5803_is_vbus_present(port);
+	return ppc_is_vbus_present(port);
 }

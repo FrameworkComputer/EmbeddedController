@@ -3,23 +3,21 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/logging/log.h>
-
 #include "cros_cbi.h"
 #include "fan.h"
 #include "gpio/gpio.h"
 #include "hooks.h"
 
-#include "nissa_common.h"
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 /*
  * Nirwen fan support
  */
-static void fan_init(void)
+test_export_static void fan_init(void)
 {
 	int ret;
 	uint32_t val;

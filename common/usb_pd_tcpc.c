@@ -18,10 +18,10 @@
 #include "tcpm/tcpci.h"
 #include "tcpm/tcpm.h"
 #include "timer.h"
-#include "util.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
 #include "usb_pd_tcpm.h"
+#include "util.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)

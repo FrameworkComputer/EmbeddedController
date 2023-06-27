@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_i2c_mock
+#include "emul/emul_common_i2c.h"
+#include "emul/emul_stub_device.h"
 
 #include <zephyr/device.h>
 #include <zephyr/logging/log.h>
 
-#include "emul/emul_common_i2c.h"
-#include "emul/emul_stub_device.h"
+#define DT_DRV_COMPAT cros_i2c_mock
 
 LOG_MODULE_REGISTER(i2c_mock, CONFIG_I2C_MOCK_LOG_LEVEL);
 
@@ -63,7 +63,7 @@ static int i2c_mock_init(const struct emul *emul, const struct device *parent)
 	};                                                           \
 	static struct i2c_common_emul_data i2c_mock_data_##n;        \
 	EMUL_DT_INST_DEFINE(n, i2c_mock_init, &i2c_mock_data_##n,    \
-			    &i2c_mock_cfg_##n, &i2c_common_emul_api)
+			    &i2c_mock_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_I2C_MOCK)
 

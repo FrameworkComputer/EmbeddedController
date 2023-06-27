@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
 #include "accelgyro.h"
 #include "adc_chip.h"
+#include "common.h"
 #include "driver/accel_bma422.h"
 #include "driver/accel_bma4xx.h"
 #include "driver/accel_lis2dw12.h"
@@ -16,10 +16,10 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "motion_sense.h"
-#include "temp_sensor.h"
-#include "thermal.h"
-#include "temp_sensor/thermistor.h"
 #include "tablet_mode.h"
+#include "temp_sensor.h"
+#include "temp_sensor/thermistor.h"
+#include "thermal.h"
 
 #if 0
 #define CPRINTS(format, args...) ccprints(format, ##args)
@@ -231,11 +231,7 @@ struct motion_sensor_t motion_sensors[] = {
 	},
 };
 
-#ifdef CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-#else
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
-#endif
 
 static void board_detect_motionsensor(void)
 {

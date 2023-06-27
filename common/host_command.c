@@ -13,9 +13,11 @@
 #include "host_command.h"
 #include "link_defs.h"
 #include "lpc.h"
+#include "power.h"
 #include "printf.h"
 #include "shared_mem.h"
 #include "system.h"
+#include "system_safe_mode.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
@@ -373,6 +375,10 @@ host_packet_bad:
  */
 static const struct host_command *find_host_command(int command)
 {
+	if (IS_ENABLED(CONFIG_SYSTEM_SAFE_MODE) && system_is_in_safe_mode()) {
+		if (!command_is_allowed_in_safe_mode(command))
+			return NULL;
+	}
 	if (IS_ENABLED(CONFIG_ZEPHYR)) {
 		return zephyr_find_host_command(command);
 	} else if (IS_ENABLED(CONFIG_HOSTCMD_SECTION_SORTED)) {
@@ -911,3 +917,24 @@ DECLARE_CONSOLE_COMMAND(hcdebug, command_hcdebug,
 			"hcdebug [off | normal | every | params]",
 			"Set host command debug output mode");
 #endif /* CONFIG_CMD_HCDEBUG */
+
+#if defined(CONFIG_AP_PWRSEQ_S0IX_COUNTER) || \
+	defined(CONFIG_POWERSEQ_S0IX_COUNTER)
+static enum ec_status
+host_command_get_s0ix_cnt(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_s0ix_cnt *p = args->params;
+	struct ec_response_s0ix_cnt *r = args->response;
+
+	if (p->flags & EC_S0IX_COUNTER_RESET) {
+		atomic_clear(&s0ix_counter);
+	}
+
+	r->s0ix_counter = atomic_get(&s0ix_counter);
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_S0IX_COUNTER, host_command_get_s0ix_cnt,
+		     EC_VER_MASK(0));
+#endif

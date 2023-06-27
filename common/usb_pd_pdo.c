@@ -4,8 +4,8 @@
  */
 
 #include "usb_pd.h"
-#include "util.h"
 #include "usb_pd_pdo.h"
+#include "util.h"
 
 #ifndef CONFIG_USB_PD_CUSTOM_PDO
 

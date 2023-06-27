@@ -19,14 +19,20 @@
  * the Zephyr kscan API.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 27
+
 #ifndef ZEPHYR_INCLUDE_DRIVERS_CROS_KB_RAW_H_
 #define ZEPHYR_INCLUDE_DRIVERS_CROS_KB_RAW_H_
 
-#include <zephyr/kernel.h>
+#include "gpio_signal.h"
+
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio.h>
-
-#include "gpio_signal.h"
+#include <zephyr/kernel.h>
 
 /*
  * When CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED is enabled, the keyboard
@@ -35,7 +41,7 @@
  * GPIO module. Use the presence of the alias node "gpio-kbd-kso2" to determine
  * when this code is needed.
  */
-#define KBD_KS02_NODE DT_ALIAS(gpio_kbd_kso2)
+#define KBD_KSO2_NODE DT_ALIAS(gpio_kbd_kso2)
 
 /**
  * @brief CROS Keyboard Raw Driver APIs
@@ -223,9 +229,9 @@ static inline int z_impl_cros_kb_raw_config_alt(const struct device *dev,
 static inline void cros_kb_raw_set_col2(int level)
 {
 #if defined CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED && \
-	DT_NODE_EXISTS(KBD_KS02_NODE)
+	DT_NODE_EXISTS(KBD_KSO2_NODE)
 	const struct gpio_dt_spec *kbd_dt_spec =
-		GPIO_DT_FROM_NODE(KBD_KS02_NODE);
+		GPIO_DT_FROM_NODE(KBD_KSO2_NODE);
 
 	gpio_pin_set(kbd_dt_spec->port, kbd_dt_spec->pin, level);
 #endif

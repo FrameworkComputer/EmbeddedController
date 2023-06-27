@@ -12,6 +12,7 @@ import zmake.output_packers
 import zmake.project as project
 import zmake.toolchains as toolchains
 
+
 # pylint:disable=redefined-outer-name,unused-argument
 
 
@@ -112,6 +113,7 @@ def test_coreboot_sdk(fake_project: project.Project, coreboot_sdk_exists):
     assert config.cmake_defs == {
         "ZEPHYR_TOOLCHAIN_VARIANT": "coreboot-sdk",
         "TOOLCHAIN_ROOT": "/mnt/host/source/src/platform/ec/zephyr",
+        "COREBOOT_SDK_ROOT": "/opt/coreboot-sdk",
     }
 
 

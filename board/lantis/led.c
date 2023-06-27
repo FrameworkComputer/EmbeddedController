@@ -175,7 +175,7 @@ static void led_set_battery(void)
 	 */
 	if (get_cbi_fw_config_tablet_mode() == TABLET_MODE_ABSENT) {
 		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
-		    charge_get_state() != PWR_STATE_CHARGE) {
+		    led_pwr_get_state() != LED_PWRS_CHARGE) {
 			power_ticks++;
 
 			led_set_color_battery(RIGHT_PORT, power_ticks & 0x2 ?
@@ -190,17 +190,17 @@ static void led_set_battery(void)
 
 	power_ticks = 0;
 
-	switch (charge_get_state()) {
-	case PWR_STATE_CHARGE:
+	switch (led_pwr_get_state()) {
+	case LED_PWRS_CHARGE:
 		set_active_port_color(LED_AMBER);
 		break;
-	case PWR_STATE_DISCHARGE_FULL:
+	case LED_PWRS_DISCHARGE_FULL:
 		if (extpower_is_present()) {
 			set_active_port_color(LED_WHITE);
 			break;
 		}
 		__fallthrough;
-	case PWR_STATE_DISCHARGE:
+	case LED_PWRS_DISCHARGE:
 		/*
 		 * Blink white/amber light (1 sec on, 1 sec off)
 		 * when battery capacity is less than 10%
@@ -231,7 +231,7 @@ static void led_set_battery(void)
 			set_active_port_color(LED_OFF);
 		}
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		if (is_led_old_policy())
 			set_active_port_color(
 				(battery_ticks % 0x2) ? LED_WHITE : LED_OFF);
@@ -239,13 +239,13 @@ static void led_set_battery(void)
 			set_active_port_color(
 				(battery_ticks % 0x2) ? LED_AMBER : LED_OFF);
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
+	case LED_PWRS_CHARGE_NEAR_FULL:
 		set_active_port_color(LED_WHITE);
 		break;
-	case PWR_STATE_IDLE: /* External power connected in IDLE */
+	case LED_PWRS_IDLE: /* External power connected in IDLE */
 		set_active_port_color(LED_WHITE);
 		break;
-	case PWR_STATE_FORCED_IDLE:
+	case LED_PWRS_FORCED_IDLE:
 		set_active_port_color((battery_ticks & 0x2) ? LED_AMBER :
 							      LED_OFF);
 		break;

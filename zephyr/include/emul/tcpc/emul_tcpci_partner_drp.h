@@ -12,12 +12,13 @@
 #ifndef __EMUL_TCPCI_PARTNER_DRP_H
 #define __EMUL_TCPCI_PARTNER_DRP_H
 
-#include <zephyr/drivers/emul.h>
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_common.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "usb_pd.h"
+
+#include <zephyr/drivers/emul.h>
 
 /**
  * @brief USB-C dual role device extension backend API

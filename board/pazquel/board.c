@@ -9,14 +9,14 @@
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state.h"
-#include "extpower.h"
-#include "driver/accel_kionix.h"
 #include "driver/accel_bma2x2.h"
-#include "driver/accelgyro_bmi_common.h"
+#include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi323.h"
+#include "driver/accelgyro_bmi_common.h"
 #include "driver/ppc/sn5s330.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
@@ -27,9 +27,9 @@
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
-#include "system.h"
 #include "shi_chip.h"
 #include "switch.h"
+#include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
 #include "usbc_ocp.h"
@@ -46,6 +46,7 @@ static void usba_oc_interrupt(enum gpio_signal signal);
 static void ppc_interrupt(enum gpio_signal signal);
 static void board_connect_c0_sbu(enum gpio_signal s);
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* GPIO Interrupt Handlers */
@@ -534,8 +535,8 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	/*
 	 * Ignore lower charge ceiling on PD transition if our battery is
@@ -547,8 +548,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 		charge_ma = max_ma;
 	}
 
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(charge_ma, charge_mv);
 }
 
 uint16_t tcpc_get_alert_status(void)

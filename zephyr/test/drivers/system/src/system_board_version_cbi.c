@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "ec_commands.h"
 #include "host_command.h"
 #include "system.h"
-#include "test/drivers/test_state.h"
 #include "test/drivers/test_mocks.h"
+#include "test/drivers/test_state.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 FAKE_VALUE_FUNC(int, cbi_get_board_version, uint32_t *);
 

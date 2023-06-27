@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_THROTTLE_AP_H
 #define __CROS_EC_THROTTLE_AP_H
 
+#define PROCHOT_IN_DEBOUNCE_US (100 * MSEC)
+
 /**
  * Level of throttling desired.
  */
@@ -42,6 +44,8 @@ enum throttle_sources {
  */
 struct prochot_cfg {
 	enum gpio_signal gpio_prochot_in;
+	void (*callback)(bool asserted, void *data);
+	void *callback_data;
 #ifdef CONFIG_CPU_PROCHOT_GATE_ON_C10
 	enum gpio_signal gpio_c10_in;
 	bool c10_active_high;

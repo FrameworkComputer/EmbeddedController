@@ -6,6 +6,9 @@
 /* Flash memory module for Chrome EC - common functions */
 
 #include "builtin/assert.h"
+#ifdef CONFIG_ZEPHYR
+#include "cbi_flash.h"
+#endif /* CONFIG_ZEPHYR */
 #include "common.h"
 #include "console.h"
 #include "cros_board_info.h"
@@ -125,6 +128,9 @@ const uint32_t pstate_data __attribute__((section(".rodata.pstate"))) =
 #endif /* !CONFIG_FLASH_PSTATE_BANK */
 #endif /* CONFIG_FLASH_PSTATE */
 
+/* Shim layer provides implementation of these functions based on Zephyr API */
+#if !defined(CONFIG_ZEPHYR) || \
+	!defined(CONFIG_PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT)
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
 const struct ec_flash_bank *flash_bank_info(int bank)
 {
@@ -218,7 +224,53 @@ int crec_flash_bank_start_offset(int bank)
 	return offset;
 }
 
+int crec_flash_response_fill_banks(struct ec_response_flash_info_2 *r,
+				   int num_banks)
+{
+	const struct ec_flash_bank *banks = flash_bank_array;
+	int banks_to_copy = MIN(ARRAY_SIZE(flash_bank_array), num_banks);
+
+	r->num_banks_desc = banks_to_copy;
+	r->num_banks_total = ARRAY_SIZE(flash_bank_array);
+	if (banks_to_copy > 0)
+		memcpy(r->banks, banks,
+		       banks_to_copy * sizeof(struct ec_flash_bank));
+
+	return EC_RES_SUCCESS;
+}
+#else /* CONFIG_FLASH_MULTIPLE_REGION */
+#if CONFIG_FLASH_BANK_SIZE < CONFIG_FLASH_ERASE_SIZE
+#error "Flash: Bank size expected bigger or equal to erase size."
+#endif
+int crec_flash_response_fill_banks(struct ec_response_flash_info_2 *r,
+				   int num_banks)
+{
+	if (num_banks >= 1) {
+		r->banks[0].count = crec_flash_total_banks();
+		r->banks[0].size_exp = __fls(CONFIG_FLASH_BANK_SIZE);
+		r->banks[0].write_size_exp = __fls(CONFIG_FLASH_WRITE_SIZE);
+		r->banks[0].erase_size_exp = __fls(CONFIG_FLASH_ERASE_SIZE);
+		r->banks[0].protect_size_exp = __fls(CONFIG_FLASH_BANK_SIZE);
+
+		r->num_banks_desc = 1;
+	} else {
+		/* num_banks == 0, don't fill the banks array */
+		r->num_banks_desc = 0;
+	}
+
+	r->num_banks_total = 1;
+
+	return EC_RES_SUCCESS;
+}
 #endif /* CONFIG_FLASH_MULTIPLE_REGION */
+
+int crec_flash_total_banks(void)
+{
+	return PHYSICAL_BANKS;
+}
+#endif /* !defined(CONFIG_ZEPHYR) ||                                \
+	* !defined(CONFIG_PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT) \
+	*/
 
 static int flash_range_ok(int offset, int size_req, int align)
 {
@@ -232,6 +284,13 @@ static int flash_range_ok(int offset, int size_req, int align)
 }
 
 #ifdef CONFIG_MAPPED_STORAGE
+
+/**
+ * A test public variable allowing us to override the base address of
+ * flash_physical_dataptr().
+ */
+test_export_static const char *flash_physical_dataptr_override;
+
 /**
  * Get the physical memory address of a flash offset
  *
@@ -245,6 +304,9 @@ static int flash_range_ok(int offset, int size_req, int align)
  */
 static const char *flash_physical_dataptr(int offset)
 {
+	if (IS_ENABLED(TEST_BUILD) && flash_physical_dataptr_override != NULL) {
+		return flash_physical_dataptr_override + offset;
+	}
 	return (char *)((uintptr_t)CONFIG_MAPPED_STORAGE_BASE + offset);
 }
 
@@ -607,7 +669,45 @@ int crec_flash_is_erased(uint32_t offset, int size)
 	return 1;
 }
 
-int crec_flash_read(int offset, int size, char *data)
+#if defined(CONFIG_ZEPHYR) && defined(CONFIG_PLATFORM_EC_CBI_FLASH)
+/**
+ * Check if the passed section overlaps with CBI section on EC flash.
+ *
+ * @param offset	Flash offset.
+ * @param size		Length of section in bytes.
+ * @return true if there is overlap, or false if there is no overlap.
+ */
+static bool check_cbi_section_overlap(int offset, int size)
+{
+	int cbi_start = CBI_FLASH_OFFSET;
+	int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+	int sec_start = offset;
+	int sec_end = offset + size;
+
+	return !((sec_end <= cbi_start) || (sec_start >= cbi_end));
+}
+
+/**
+ * Hide the information related to CBI(EC flash) if data contains any.
+ *
+ * @param offset	Flash offset.
+ * @param size		Length of section in bytes.
+ * @param data		Flash data.  Must be 32-bit aligned.
+ */
+static void protect_cbi_overlapped_section(int offset, int size, char *data)
+{
+	if (check_cbi_section_overlap(offset, size)) {
+		int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+		int sec_end = offset + size;
+		int cbi_fill_start = MAX(CBI_FLASH_OFFSET, offset);
+		int cbi_fill_size = MIN(cbi_end, sec_end) - cbi_fill_start;
+
+		memset(data + (cbi_fill_start - offset), 0xff, cbi_fill_size);
+	}
+}
+#endif
+
+test_mockable int crec_flash_unprotected_read(int offset, int size, char *data)
 {
 #ifdef CONFIG_MAPPED_STORAGE
 	const char *src;
@@ -622,6 +722,15 @@ int crec_flash_read(int offset, int size, char *data)
 #else
 	return crec_flash_physical_read(offset, size, data);
 #endif
+}
+
+int crec_flash_read(int offset, int size, char *data)
+{
+	RETURN_ERROR(crec_flash_unprotected_read(offset, size, data));
+#if defined(CONFIG_ZEPHYR) && defined(CONFIG_PLATFORM_EC_CBI_FLASH)
+	protect_cbi_overlapped_section(offset, size, data);
+#endif
+	return EC_SUCCESS;
 }
 
 static void flash_abort_or_invalidate_hash(int offset, int size)
@@ -669,6 +778,23 @@ int crec_flash_write(int offset, int size, const char *data)
 
 	flash_abort_or_invalidate_hash(offset, size);
 
+#if defined(CONFIG_ZEPHYR) && defined(CONFIG_PLATFORM_EC_CBI_FLASH)
+	if (check_cbi_section_overlap(offset, size)) {
+		int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+		int sec_end = offset + size;
+
+		if (offset < CBI_FLASH_OFFSET) {
+			RETURN_ERROR(crec_flash_physical_write(
+				offset, CBI_FLASH_OFFSET - offset, data));
+		}
+		if (sec_end > cbi_end) {
+			RETURN_ERROR(crec_flash_physical_write(
+				cbi_end, sec_end - cbi_end,
+				data + cbi_end - offset));
+		}
+		return EC_SUCCESS;
+	}
+#endif
 	return crec_flash_physical_write(offset, size, data);
 }
 
@@ -681,6 +807,22 @@ int crec_flash_erase(int offset, int size)
 
 	flash_abort_or_invalidate_hash(offset, size);
 
+#if defined(CONFIG_ZEPHYR) && defined(CONFIG_PLATFORM_EC_CBI_FLASH)
+	if (check_cbi_section_overlap(offset, size)) {
+		int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+		int sec_end = offset + size;
+
+		if (offset < CBI_FLASH_OFFSET) {
+			RETURN_ERROR(crec_flash_physical_erase(
+				offset, CBI_FLASH_OFFSET - offset));
+		}
+		if (sec_end > cbi_end) {
+			RETURN_ERROR(crec_flash_physical_erase(
+				cbi_end, sec_end - cbi_end));
+		}
+		return EC_SUCCESS;
+	}
+#endif
 	return crec_flash_physical_erase(offset, size);
 }
 
@@ -753,7 +895,7 @@ uint32_t crec_flash_get_protect(void)
 #endif
 
 	/* Scan flash protection */
-	for (i = 0; i < PHYSICAL_BANKS; i++) {
+	for (i = 0; i < crec_flash_total_banks(); i++) {
 		int is_ro = (i >= WP_BANK_OFFSET &&
 			     i < WP_BANK_OFFSET + WP_BANK_COUNT);
 		enum flash_region region = is_ro ? FLASH_REGION_RO :
@@ -965,7 +1107,6 @@ static struct ec_params_flash_erase_v1 erase_info;
 
 static void flash_erase_deferred(void)
 {
-	erase_rc = EC_RES_BUSY;
 	if (crec_flash_erase(erase_info.params.offset, erase_info.params.size))
 		erase_rc = EC_RES_ERROR;
 	else
@@ -974,18 +1115,13 @@ static void flash_erase_deferred(void)
 DECLARE_DEFERRED(flash_erase_deferred);
 #endif
 
-/*****************************************************************************/
-/* Console commands */
-
-#ifdef CONFIG_CMD_FLASHINFO
-static int command_flash_info(int argc, const char **argv)
+#if !defined(CONFIG_ZEPHYR) || \
+	!defined(CONFIG_PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT)
+void crec_flash_print_region_info(void)
 {
-	int i, flags;
-
-	ccprintf("Usable:  %4d KB\n", CONFIG_FLASH_SIZE_BYTES / 1024);
-	ccprintf("Write:   %4d B (ideal %d B)\n", CONFIG_FLASH_WRITE_SIZE,
-		 CONFIG_FLASH_WRITE_IDEAL_SIZE);
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
+	int i;
+
 	ccprintf("Regions:\n");
 	for (i = 0; i < ARRAY_SIZE(flash_bank_array); i++) {
 		ccprintf(" %d region%s:\n", flash_bank_array[i].count,
@@ -1001,40 +1137,56 @@ static int command_flash_info(int argc, const char **argv)
 		 CONFIG_FLASH_ERASED_VALUE32 ? 1 : 0);
 	ccprintf("Protect: %4d B\n", CONFIG_FLASH_BANK_SIZE);
 #endif
+}
+#endif
+
+/*****************************************************************************/
+/* Console commands */
+
+#ifdef CONFIG_CMD_FLASHINFO
+#define BIT_TO_ON_OFF(value, mask) \
+	((((value) & (mask)) == (mask)) ? "ON" : "OFF")
+static int command_flash_info(int argc, const char **argv)
+{
+	int i, flags;
+
+	ccprintf("Usable:  %4d KB\n", CONFIG_FLASH_SIZE_BYTES / 1024);
+	ccprintf("Write:   %4d B (ideal %d B)\n", CONFIG_FLASH_WRITE_SIZE,
+		 CONFIG_FLASH_WRITE_IDEAL_SIZE);
+	crec_flash_print_region_info();
 	flags = crec_flash_get_protect();
-	ccprintf("Flags:  ");
-	if (flags & EC_FLASH_PROTECT_GPIO_ASSERTED)
-		ccputs(" wp_gpio_asserted");
-	if (flags & EC_FLASH_PROTECT_RO_AT_BOOT)
-		ccputs(" ro_at_boot");
-	if (flags & EC_FLASH_PROTECT_ALL_AT_BOOT)
-		ccputs(" all_at_boot");
-	if (flags & EC_FLASH_PROTECT_RO_NOW)
-		ccputs(" ro_now");
-	if (flags & EC_FLASH_PROTECT_ALL_NOW)
-		ccputs(" all_now");
+	ccprintf("Flags:\n");
+	ccprintf("  wp_gpio_asserted: %s\n",
+		 BIT_TO_ON_OFF(flags, EC_FLASH_PROTECT_GPIO_ASSERTED));
+	ccprintf("  ro_at_boot: %s\n",
+		 BIT_TO_ON_OFF(flags, EC_FLASH_PROTECT_RO_AT_BOOT));
+	ccprintf("  all_at_boot: %s\n",
+		 BIT_TO_ON_OFF(flags, EC_FLASH_PROTECT_ALL_AT_BOOT));
+	ccprintf("  ro_now: %s\n",
+		 BIT_TO_ON_OFF(flags, EC_FLASH_PROTECT_RO_NOW));
+	ccprintf("  all_now: %s\n",
+		 BIT_TO_ON_OFF(flags, EC_FLASH_PROTECT_ALL_NOW));
 #ifdef CONFIG_FLASH_PROTECT_RW
-	if (flags & EC_FLASH_PROTECT_RW_AT_BOOT)
-		ccputs(" rw_at_boot");
-	if (flags & EC_FLASH_PROTECT_RW_NOW)
-		ccputs(" rw_now");
+	ccprintf("  rw_at_boot: %s\n",
+		 BIT_TO_ON_OFF(flags, EC_FLASH_PROTECT_RW_AT_BOOT));
+	ccprintf("  rw_now: %s\n",
+		 BIT_TO_ON_OFF(flags, EC_FLASH_PROTECT_RW_NOW));
 #endif
-	if (flags & EC_FLASH_PROTECT_ERROR_STUCK)
-		ccputs(" STUCK");
-	if (flags & EC_FLASH_PROTECT_ERROR_INCONSISTENT)
-		ccputs(" INCONSISTENT");
-	if (flags & EC_FLASH_PROTECT_ERROR_UNKNOWN)
-		ccputs(" UNKNOWN_ERROR");
+	ccprintf("  STUCK: %s\n",
+		 BIT_TO_ON_OFF(flags, EC_FLASH_PROTECT_ERROR_STUCK));
+	ccprintf("  INCONSISTENT: %s\n",
+		 BIT_TO_ON_OFF(flags, EC_FLASH_PROTECT_ERROR_INCONSISTENT));
+	ccprintf("  UNKNOWN_ERROR: %s\n",
+		 BIT_TO_ON_OFF(flags, EC_FLASH_PROTECT_ERROR_UNKNOWN));
 #ifdef CONFIG_ROLLBACK
-	if (flags & EC_FLASH_PROTECT_ROLLBACK_AT_BOOT)
-		ccputs(" rollback_at_boot");
-	if (flags & EC_FLASH_PROTECT_ROLLBACK_NOW)
-		ccputs(" rollback_now");
+	ccprintf("  rollback_at_boot: %s\n",
+		 BIT_TO_ON_OFF(flags, EC_FLASH_PROTECT_ROLLBACK_AT_BOOT));
+	ccprintf("  rollback_now: %s\n",
+		 BIT_TO_ON_OFF(flags, EC_FLASH_PROTECT_ROLLBACK_NOW));
 #endif
-	ccputs("\n");
 
 	ccputs("Protected now:");
-	for (i = 0; i < PHYSICAL_BANKS; i++) {
+	for (i = 0; i < crec_flash_total_banks(); i++) {
 		if (!(i & 31))
 			ccputs("\n    ");
 		else if (!(i & 7))
@@ -1113,7 +1265,7 @@ static int command_flash_read(int argc, const char **argv)
 	int offset = -1;
 	int size = 256;
 	int rv;
-	char *data;
+	uint8_t *data;
 	int i;
 
 	rv = parse_offset_size(argc, argv, 1, &offset, &size);
@@ -1124,7 +1276,7 @@ static int command_flash_read(int argc, const char **argv)
 		size = shared_mem_size();
 
 	/* Acquire the shared memory buffer */
-	rv = shared_mem_acquire(size, &data);
+	rv = shared_mem_acquire(size, (char **)&data);
 	if (rv) {
 		ccputs("Can't get shared mem\n");
 		return rv;
@@ -1230,32 +1382,16 @@ static enum ec_status flash_command_get_info(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_info_2 *p_2 = args->params;
 	struct ec_response_flash_info_2 *r_2 = args->response;
-#ifdef CONFIG_FLASH_MULTIPLE_REGION
-	int banks_size = ARRAY_SIZE(flash_bank_array);
-	const struct ec_flash_bank *banks = flash_bank_array;
-#else
+#ifndef CONFIG_FLASH_MULTIPLE_REGION
 	struct ec_response_flash_info_1 *r_1 = args->response;
-#if CONFIG_FLASH_BANK_SIZE < CONFIG_FLASH_ERASE_SIZE
-#error "Flash: Bank size expected bigger or equal to erase size."
 #endif
-	struct ec_flash_bank single_bank = {
-		.count = CONFIG_FLASH_SIZE_BYTES / CONFIG_FLASH_BANK_SIZE,
-		.size_exp = __fls(CONFIG_FLASH_BANK_SIZE),
-		.write_size_exp = __fls(CONFIG_FLASH_WRITE_SIZE),
-		.erase_size_exp = __fls(CONFIG_FLASH_ERASE_SIZE),
-		.protect_size_exp = __fls(CONFIG_FLASH_BANK_SIZE),
-	};
-	int banks_size = 1;
-	const struct ec_flash_bank *banks = &single_bank;
-#endif
-	int banks_len;
-	int ideal_size;
+	int res;
 
 	/*
 	 * Compute the ideal amount of data for the host to send us,
 	 * based on the maximum response size and the ideal write size.
 	 */
-	ideal_size =
+	int ideal_size =
 		(args->response_max - sizeof(struct ec_params_flash_write)) &
 		~(CONFIG_FLASH_WRITE_IDEAL_SIZE - 1);
 	/*
@@ -1280,11 +1416,16 @@ static enum ec_status flash_command_get_info(struct host_cmd_handler_args *args)
 		r_2->flags |= EC_FLASH_INFO_SELECT_REQUIRED;
 #endif
 		r_2->write_ideal_size = ideal_size;
-		r_2->num_banks_total = banks_size;
-		r_2->num_banks_desc = MIN(banks_size, p_2->num_banks_desc);
-		banks_len = r_2->num_banks_desc * sizeof(struct ec_flash_bank);
-		memcpy(r_2->banks, banks, banks_len);
-		args->response_size += banks_len;
+		/*
+		 * Fill r_2->num_banks_desc, r_2->num_banks_total and
+		 * r_2->banks.
+		 */
+		res = crec_flash_response_fill_banks(r_2, p_2->num_banks_desc);
+		if (res != EC_RES_SUCCESS)
+			return res;
+
+		args->response_size +=
+			r_2->num_banks_desc * sizeof(struct ec_flash_bank);
 		return EC_RES_SUCCESS;
 	}
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
@@ -1418,6 +1559,7 @@ static enum ec_status flash_command_erase(struct host_cmd_handler_args *args)
 			memcpy(&erase_info, p_1, sizeof(*p_1));
 			hook_call_deferred(&flash_erase_deferred_data,
 					   100 * MSEC);
+			erase_rc = EC_RES_BUSY;
 		} else {
 			/*
 			 * Not our job to return the result of
@@ -1446,8 +1588,108 @@ DECLARE_HOST_COMMAND(EC_CMD_FLASH_ERASE, flash_command_erase,
 #endif
 );
 
+#ifdef CONFIG_FLASH_PROTECT_DEFERRED
+struct flash_protect_async {
+	uint32_t mask;
+	uint32_t flags;
+
+	volatile enum ec_status rc;
+} __ec_align4;
+
+static struct flash_protect_async flash_protect_async_data = {
+	.rc = EC_RES_SUCCESS
+};
+
+static void crec_flash_set_protect_deferred(void)
+{
+	if (crec_flash_set_protect(flash_protect_async_data.mask,
+				   flash_protect_async_data.flags))
+		flash_protect_async_data.rc = EC_RES_ERROR;
+	else
+		flash_protect_async_data.rc = EC_RES_SUCCESS;
+}
+DECLARE_DEFERRED(crec_flash_set_protect_deferred);
+
+static enum ec_status
+flash_command_protect_v2(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_flash_protect_v2 *p = args->params;
+	struct ec_response_flash_protect *r = args->response;
+	int rc = EC_RES_SUCCESS;
+
+	flash_protect_async_data.mask = p->mask;
+	flash_protect_async_data.flags = p->flags;
+
+	/*
+	 * Handle requesting new flags.  Note that we ignore the return code
+	 * from flash_set_protect(), since errors will be visible to the caller
+	 * via the flags in the response.  (If we returned error, the caller
+	 * wouldn't get the response.)
+	 */
+
+	switch (p->action) {
+	case FLASH_PROTECT_ASYNC:
+		if (p->mask) {
+			rc = flash_protect_async_data.rc;
+			if (rc != EC_RES_SUCCESS) {
+				rc = EC_RES_BUSY;
+				break;
+			}
+			hook_call_deferred(
+				&crec_flash_set_protect_deferred_data,
+				100 * MSEC);
+			/* Not our job to return the result of
+			 * the previous command.
+			 */
+			flash_protect_async_data.rc = EC_RES_BUSY;
+		}
+		return EC_RES_SUCCESS;
+
+	case FLASH_PROTECT_GET_RESULT:
+		/*
+		 * Retrieve the current flags.  The caller can use this
+		 * to determine which of the requested flags could be
+		 * set.  This is cleaner than simply returning error,
+		 * because it provides information to the caller about
+		 * the actual result.
+		 */
+		rc = flash_protect_async_data.rc;
+		if (rc == EC_RES_BUSY || rc == EC_RES_ERROR)
+			break;
+
+		r->flags = crec_flash_get_protect();
+
+		/* Indicate which flags are valid on this platform */
+		r->valid_flags = EC_FLASH_PROTECT_GPIO_ASSERTED |
+				 EC_FLASH_PROTECT_ERROR_STUCK |
+				 EC_FLASH_PROTECT_ERROR_INCONSISTENT |
+				 EC_FLASH_PROTECT_ERROR_UNKNOWN |
+				 crec_flash_physical_get_valid_flags();
+		r->writable_flags =
+			crec_flash_physical_get_writable_flags(r->flags);
+
+		args->response_size = sizeof(*r);
+
+		/* Ready for another command */
+		flash_protect_async_data.rc = EC_RES_SUCCESS;
+		break;
+
+	default:
+		rc = EC_RES_INVALID_PARAM;
+	}
+
+	return rc;
+}
+#endif
+
 static enum ec_status flash_command_protect(struct host_cmd_handler_args *args)
 {
+#if defined(CONFIG_FLASH_PROTECT_DEFERRED)
+	if (args->version == 2) {
+		return flash_command_protect_v2(args);
+	}
+#endif
+
 	const struct ec_params_flash_protect *p = args->params;
 	struct ec_response_flash_protect *r = args->response;
 
@@ -1481,13 +1723,12 @@ static enum ec_status flash_command_protect(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 
-/*
- * TODO(crbug.com/239197) : Adding both versions to the version mask is a
- * temporary workaround for a problem in the cros_ec driver. Drop
- * EC_VER_MASK(0) once cros_ec driver can send the correct version.
- */
 DECLARE_HOST_COMMAND(EC_CMD_FLASH_PROTECT, flash_command_protect,
-		     EC_VER_MASK(0) | EC_VER_MASK(1));
+		     EC_VER_MASK(1)
+#ifdef CONFIG_FLASH_PROTECT_DEFERRED
+			     | EC_VER_MASK(2)
+#endif
+);
 
 static enum ec_status
 flash_command_region_info(struct host_cmd_handler_args *args)

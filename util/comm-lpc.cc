@@ -6,13 +6,14 @@
 /* The I/O asm funcs exist only on x86. */
 #if defined(__i386__) || defined(__x86_64__)
 
+#include "comm-host.h"
+
 #include <stdint.h>
 #include <stdio.h>
+
 #include <sys/io.h>
 #include <sys/param.h>
 #include <unistd.h>
-
-#include "comm-host.h"
 
 #define INITIAL_UDELAY 5 /* 5 us */
 #define MAXIMUM_UDELAY 10000 /* 10 ms */

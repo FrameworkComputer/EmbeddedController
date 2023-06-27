@@ -7,21 +7,22 @@
 #define _GNU_SOURCE /* for asprintf */
 #endif
 
+#include "comm-host.h"
+#include "i2c.h"
+
 #include <errno.h>
-#include <fcntl.h>
-#include <linux/i2c.h>
-#include <linux/i2c-dev.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
+#include <fcntl.h>
+#include <linux/i2c-dev.h>
+#include <linux/i2c.h>
 #include <sys/ioctl.h>
 #include <sys/stat.h>
 #include <sys/types.h>
 #include <unistd.h>
-
-#include "comm-host.h"
-#include "i2c.h"
 
 #define EC_I2C_ADDR 0x1e
 

@@ -20,23 +20,29 @@
 #include "lightbar.h"
 #include "math_util.h"
 #include "mkbp_event.h"
-#include "motion_sense.h"
-#include "motion_sense_fifo.h"
 #include "motion_lid.h"
 #include "motion_orientation.h"
+#include "motion_sense.h"
+#include "motion_sense_fifo.h"
 #include "online_calibration.h"
-#include "printf.h"
 #include "power.h"
+#include "printf.h"
 #include "queue.h"
 #include "tablet_mode.h"
-#include "timer.h"
 #include "task.h"
+#include "timer.h"
 #include "util.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_MOTION_SENSE, outstr)
 #define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_MOTION_SENSE, format, ##args)
+
+/* Number of times we ran motion_sense_task; for stats printing */
+static atomic_t motion_sense_task_loops;
+
+/* When we started the task the last time */
+static timestamp_t ts_begin_task;
 
 /* Minimum time in between running motion sense task loop. */
 unsigned int motion_min_interval = CONFIG_MOTION_MIN_SENSE_WAIT_TIME * MSEC;
@@ -70,10 +76,8 @@ static atomic_t odr_event_required;
 __maybe_unused static int fifo_int_enabled;
 
 #ifdef CONFIG_ZEPHYR
-static int init_sensor_mutex(const struct device *dev)
+static int init_sensor_mutex(void)
 {
-	ARG_UNUSED(dev);
-
 	k_mutex_init(&g_sensor_mutex);
 
 	return 0;
@@ -118,7 +122,8 @@ motion_sensor_time_to_read(const timestamp_t *ts,
 			  sensor->next_collection - motion_min_interval);
 }
 
-static enum sensor_config motion_sense_get_ec_config(void)
+STATIC_IF_NOT(CONFIG_ZTEST)
+enum sensor_config motion_sense_get_ec_config(void)
 {
 	switch (sensor_active) {
 	case SENSOR_ACTIVE_S0:
@@ -130,7 +135,7 @@ static enum sensor_config motion_sense_get_ec_config(void)
 	default:
 		CPRINTS("get_ec_config: Invalid active state: %x",
 			sensor_active);
-		return SENSOR_CONFIG_MAX;
+		return SENSOR_CONFIG_EC_S5;
 	}
 }
 /* motion_sense_set_data_rate
@@ -164,17 +169,18 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 	roundup = !!(sensor->config[config_id].odr & ROUND_UP_FLAG);
 
 	ret = sensor->drv->set_data_rate(sensor, odr, roundup);
-	if (ret)
-		return ret;
 
 	if (IS_ENABLED(CONFIG_CONSOLE_VERBOSE))
-		CPRINTS("%s ODR: %d - roundup %d from config %d [AP %d]",
+		CPRINTS("%s ODR: %d - roundup %d from config %d [AP %d]: %d",
 			sensor->name, odr, roundup, config_id,
-			BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr));
+			BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr), ret);
 	else
-		CPRINTS("%c%d ODR %d rup %d cfg %d AP %d", sensor->name[0],
+		CPRINTS("%c%d ODR %d rup %d cfg %d AP %d: %d", sensor->name[0],
 			sensor->type, odr, roundup, config_id,
-			BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr));
+			BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr), ret);
+
+	if (ret)
+		return ret;
 
 	mutex_lock(&g_sensor_mutex);
 	odr = sensor->drv->get_data_rate(sensor);
@@ -328,7 +334,12 @@ static void motion_sense_switch_sensor_rate(void)
 			body_detect_set_enable(false);
 			break;
 		case SENSOR_ACTIVE_S0:
-			body_detect_set_enable(was_enabled);
+			/* force to enable the body detection in S0 */
+			if (IS_ENABLED(
+				    CONFIG_BODY_DETECTION_ALWAYS_ENABLE_IN_S0))
+				body_detect_set_enable(true);
+			else
+				body_detect_set_enable(was_enabled);
 			break;
 		default:
 			break;
@@ -356,18 +367,40 @@ static void motion_sense_switch_sensor_rate(void)
 							     0, NULL);
 			}
 			/* Re-enable double tap in case AP disabled it */
-			sensor->drv->manage_activity(
-				sensor, MOTIONSENSE_ACTIVITY_DOUBLE_TAP, 1,
-				NULL);
+			if (IS_ENABLED(CONFIG_GESTURE_SENSOR_DOUBLE_TAP))
+				sensor->drv->manage_activity(
+					sensor, MOTIONSENSE_ACTIVITY_DOUBLE_TAP,
+					1, NULL);
 		}
 	}
 }
 DECLARE_DEFERRED(motion_sense_switch_sensor_rate);
 
+static void motion_sense_print_stats(const char *event)
+{
+	unsigned int active = 0;
+	unsigned int states = 0;
+	int i;
+
+	for (i = 0; i < motion_sensor_count; i++) {
+		if (motion_sensors[i].active_mask)
+			active |= BIT(i);
+		/* States fit in 2 bits but we'll give them 4 for readbility */
+		states |= motion_sensors[i].state << (4 * i);
+	}
+
+	CPRINTS("Motion pre-%s; loops %u; last %u ms ago; a=0x%x, s=0x%x",
+		event, (unsigned int)motion_sense_task_loops,
+		(unsigned int)(get_time().val - ts_begin_task.val) / 1000,
+		active, states);
+}
+
 static void motion_sense_shutdown(void)
 {
 	int i;
 	struct motion_sensor_t *sensor;
+
+	motion_sense_print_stats("shutdown");
 
 	sensor_active = SENSOR_ACTIVE_S5;
 	for (i = 0; i < motion_sensor_count; i++) {
@@ -389,6 +422,8 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, motion_sense_shutdown,
 
 static void motion_sense_suspend(void)
 {
+	motion_sense_print_stats("suspend");
+
 	/*
 	 *  If we are coming from S5, don't enter suspend:
 	 *  We will go in SO almost immediately.
@@ -418,6 +453,8 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, motion_sense_suspend,
 
 static void motion_sense_resume(void)
 {
+	motion_sense_print_stats("resume");
+
 	sensor_active = SENSOR_ACTIVE_S0;
 	hook_call_deferred(&motion_sense_switch_sensor_rate_data,
 			   CONFIG_MOTION_SENSE_RESUME_DELAY_US);
@@ -738,7 +775,8 @@ static void check_and_queue_gestures(uint32_t *event)
 						"Inv_Portrait", "Inv_Landscape",
 						"Unknown"
 					};
-					CPRINTS(mode[vector.activity_data.state]);
+					CPRINTS("%s",
+						mode[vector.activity_data.state]);
 				}
 			}
 			mutex_unlock(sensor->mutex);
@@ -757,7 +795,7 @@ static void check_and_queue_gestures(uint32_t *event)
 void motion_sense_task(void *u)
 {
 	int i, ret, sample_id = 0;
-	timestamp_t ts_begin_task, ts_end_task;
+	timestamp_t ts_end_task;
 	int32_t time_diff;
 	uint32_t event = 0;
 	uint16_t ready_status = 0;
@@ -775,6 +813,7 @@ void motion_sense_task(void *u)
 
 	while (1) {
 		ts_begin_task = get_time();
+		atomic_add(&motion_sense_task_loops, 1);
 		for (i = 0; i < motion_sensor_count; ++i) {
 			sensor = &motion_sensors[i];
 

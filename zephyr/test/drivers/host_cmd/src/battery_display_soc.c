@@ -3,24 +3,23 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "battery.h"
 #include "charge_state.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 
-ZTEST_USER(battery_display_soc, happy_path)
+#include <zephyr/ztest.h>
+
+ZTEST_USER(battery_display_soc, test_happy_path)
 {
 	const uint32_t full_charge_as_tenths =
 		CONFIG_BATT_HOST_FULL_FACTOR * 10;
 	const uint32_t host_shutdown_charge_as_tenths =
 		CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE * 10;
 	struct ec_response_display_soc response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_DISPLAY_SOC, 0, response);
+	struct host_cmd_handler_args args;
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_display_soc(&args, &response));
 
 	zassert_equal(args.response_size, sizeof(response));
 	zassert_equal(response.display_soc, charge_get_display_charge());

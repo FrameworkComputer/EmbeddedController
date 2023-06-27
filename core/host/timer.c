@@ -5,19 +5,19 @@
 
 /* Timer module */
 
-#include <stdint.h>
-#include <stdio.h>
-
 #include "builtin/assert.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
 
+#include <stdint.h>
+#include <stdio.h>
+
 static timestamp_t boot_time;
 static int time_set;
 
-void usleep(unsigned us)
+void usleep(unsigned int us)
 {
 	if (!task_start_called() || task_get_current() == TASK_ID_INVALID) {
 		udelay(us);
@@ -63,7 +63,7 @@ void force_time(timestamp_t ts)
 	time_set = 1;
 }
 
-void udelay(unsigned us)
+void udelay(unsigned int us)
 {
 	timestamp_t deadline;
 

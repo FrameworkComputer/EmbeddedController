@@ -3,19 +3,22 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(tcpci_partner, CONFIG_TCPCI_EMUL_LOG_LEVEL);
-
-#include <stdlib.h>
-#include <zephyr/sys/byteorder.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "common.h"
-#include "emul/tcpc/emul_tcpci_partner_common.h"
+#include "driver/tcpm/tcpci.h"
+#include "ec_commands.h"
 #include "emul/tcpc/emul_tcpci.h"
+#include "emul/tcpc/emul_tcpci_partner_common.h"
 #include "usb_pd.h"
 #include "util.h"
+
+#include <stdlib.h>
+
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/byteorder.h>
+#include <zephyr/ztest.h>
+
+LOG_MODULE_REGISTER(tcpci_partner, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 /** Length of PDO, RDO and BIST request object in SOP message in bytes */
 #define TCPCI_MSG_DO_LEN 4
@@ -404,11 +407,21 @@ int tcpci_partner_send_control_msg(struct tcpci_partner_data *data,
 
 	msg->type = type;
 
-	if (msg->type == PD_CTRL_DR_SWAP) {
-		/* Remember the control request initiated, so we can
-		 * handle the responses
+	switch (msg->type) {
+	case PD_CTRL_DR_SWAP:
+	case PD_CTRL_VCONN_SWAP:
+		/* For supported message types, remember the control request
+		 * initiated, so the partner can handle the responses.
+		 * (Eventually, all messages that can start an AMS should be
+		 * supported.)
 		 */
 		tcpci_partner_common_set_ams_ctrl_msg(data, msg->type);
+		break;
+	default:
+		/* For messages that do not start an AMS, there is nothing to
+		 * record.
+		 */
+		break;
 	}
 
 	return tcpci_partner_send_msg(data, msg, delay);
@@ -747,6 +760,27 @@ tcpci_partner_common_vdm_handler(struct tcpci_partner_data *data,
 }
 
 static enum tcpci_partner_handler_res
+tcpci_partner_enter_usb_handler(struct tcpci_partner_data *data,
+				const struct tcpci_emul_msg *message)
+{
+	/*
+	 * Validate received Enter_USB message against EUDO contents in
+	 * tcpci_partner_data.
+	 *
+	 * TODO(b/260095516): This support needs to be expanded to validate the
+	 * message contents, in a bit field basis. Currently, using this field
+	 * as simple ACCEPT/REJECT criteria. If this value is 0 (default case),
+	 * then ACCEPT this message, else reject it.
+	 */
+	if (data->enter_usb_accept)
+		tcpci_partner_send_control_msg(data, PD_CTRL_ACCEPT, 0);
+	else
+		tcpci_partner_send_control_msg(data, PD_CTRL_REJECT, 0);
+
+	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+}
+
+static enum tcpci_partner_handler_res
 tcpci_partner_common_cable_handler(struct tcpci_partner_data *data,
 				   const struct tcpci_emul_msg *message,
 				   enum tcpci_msg_type sop_type)
@@ -876,13 +910,12 @@ tcpci_partner_common_vconn_swap_handler(struct tcpci_partner_data *data)
 {
 	tcpci_partner_common_set_ams_ctrl_msg(data, PD_CTRL_VCONN_SWAP);
 
-	if (!data->vconn_supported) {
-		tcpci_partner_send_control_msg(data, PD_CTRL_NOT_SUPPORTED, 0);
+	tcpci_partner_send_control_msg(data, data->vcs_response, 0);
+
+	if (data->vcs_response != PD_CTRL_ACCEPT) {
 		tcpci_partner_common_clear_ams_ctrl_msg(data);
 		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 	}
-
-	tcpci_partner_send_control_msg(data, PD_CTRL_ACCEPT, 0);
 
 	if (data->vconn_role == PD_ROLE_VCONN_OFF) {
 		tcpci_partner_common_set_vconn(data, PD_ROLE_VCONN_SRC);
@@ -924,8 +957,14 @@ void tcpci_partner_common_swap_data_role(struct tcpci_partner_data *data)
 static enum tcpci_partner_handler_res
 tcpci_partner_common_dr_swap_handler(struct tcpci_partner_data *data)
 {
-	tcpci_partner_send_control_msg(data, PD_CTRL_ACCEPT, 0);
-	tcpci_partner_common_swap_data_role(data);
+	enum pd_ctrl_msg_type response = PD_CTRL_REJECT;
+
+	if ((data->data_role == PD_ROLE_DFP && data->drs_to_ufp_supported) ||
+	    (data->data_role == PD_ROLE_UFP && data->drs_to_dfp_supported))
+		response = PD_CTRL_ACCEPT;
+	tcpci_partner_send_control_msg(data, response, 0);
+	if (response == PD_CTRL_ACCEPT)
+		tcpci_partner_common_swap_data_role(data);
 
 	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 }
@@ -936,6 +975,26 @@ tcpci_partner_common_accept_dr_swap_handler(struct tcpci_partner_data *data)
 	tcpci_partner_common_clear_ams_ctrl_msg(data);
 
 	tcpci_partner_common_swap_data_role(data);
+
+	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+}
+
+static enum tcpci_partner_handler_res
+tcpci_partner_common_accept_vconn_swap_handler(struct tcpci_partner_data *data)
+{
+	if (data->vconn_role == PD_ROLE_VCONN_SRC) {
+		/* TODO: Wait for PS_RDY. */
+	} else {
+		/* VCONN Swap from off to VCONN Source means the partner sends
+		 * the first PS_RDY after turning on VCONN.
+		 */
+		tcpci_partner_common_set_vconn(data, PD_ROLE_VCONN_ON);
+		tcpci_partner_send_control_msg(data, PD_CTRL_PS_RDY, 15);
+		tcpci_partner_common_clear_ams_ctrl_msg(data);
+		/* Strictly speaking, the AMS isn't over until the partner
+		 * receives GoodCRC for the PS_RDY.
+		 */
+	}
 
 	return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 }
@@ -958,8 +1017,25 @@ static enum tcpci_partner_handler_res
 tcpi_partner_common_handle_accept(struct tcpci_partner_data *data)
 {
 	switch (data->cur_ams_ctrl_req) {
+	case PD_CTRL_VCONN_SWAP:
+		data->cur_ams_ctrl_req = PD_CTRL_INVALID;
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+
+	default:
+		LOG_ERR("Unhandled current_req=%u in ACCEPT",
+			data->cur_ams_ctrl_req);
+		return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
+	}
+}
+
+static enum tcpci_partner_handler_res
+tcpci_partner_common_handle_reject(struct tcpci_partner_data *data)
+{
+	switch (data->cur_ams_ctrl_req) {
 	case PD_CTRL_DR_SWAP:
 		return tcpci_partner_common_accept_dr_swap_handler(data);
+	case PD_CTRL_VCONN_SWAP:
+		return tcpci_partner_common_accept_vconn_swap_handler(data);
 
 	default:
 		LOG_ERR("Unhandled current_req=%u in ACCEPT",
@@ -1032,6 +1108,8 @@ tcpci_partner_common_sop_msg_handler(struct tcpci_partner_data *data,
 		switch (PD_HEADER_TYPE(header)) {
 		case PD_DATA_VENDOR_DEF:
 			return tcpci_partner_common_vdm_handler(data, tx_msg);
+		case PD_DATA_ENTER_USB:
+			return tcpci_partner_enter_usb_handler(data, tx_msg);
 		default:
 			/* No other common handlers for data messages */
 			return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
@@ -1072,6 +1150,10 @@ tcpci_partner_common_sop_msg_handler(struct tcpci_partner_data *data,
 			tcpci_partner_common_send_hard_reset(data);
 
 			return TCPCI_PARTNER_COMMON_MSG_HARD_RESET;
+		} else if (data->cur_ams_ctrl_req != PD_CTRL_INVALID) {
+			if (tcpci_partner_common_handle_reject(data) ==
+			    TCPCI_PARTNER_COMMON_MSG_HANDLED)
+				return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 		}
 
 		tcpci_partner_common_clear_ams_ctrl_msg(data);
@@ -1107,6 +1189,18 @@ tcpci_partner_common_sop_msg_handler(struct tcpci_partner_data *data,
 		tcpci_partner_common_send_soft_reset(data);
 
 		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	case PD_CTRL_DATA_RESET:
+		/*
+		 * Send Accept/Reject message
+		 * TODO(b/260095516): To fully exercise this code path, there
+		 * needs to be a mechanism (trigger) to either accept or reject
+		 * this message.
+		 */
+		tcpci_partner_send_control_msg(data, PD_CTRL_ACCEPT, 0);
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	case PD_CTRL_DATA_RESET_COMPLETE:
+		/* There is no expected reply message from the port parter */
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 	}
 
 	return TCPCI_PARTNER_COMMON_MSG_NOT_HANDLED;
@@ -1139,6 +1233,16 @@ void tcpci_partner_set_discovery_info(struct tcpci_partner_data *data,
 	memcpy(data->svids_vdm, svids_vdm, svids_vdos * sizeof(*svids_vdm));
 	data->modes_vdos = modes_vdos;
 	memcpy(data->modes_vdm, modes_vdm, modes_vdos * sizeof(*modes_vdm));
+}
+
+static void tcpci_partner_common_control_change(struct tcpci_partner_data *data)
+{
+	const struct emul *tcpci_emul = data->tcpci_emul;
+	uint16_t role_control;
+
+	tcpci_emul_get_reg(tcpci_emul, TCPC_REG_ROLE_CTRL, &role_control);
+	data->tcpm_cc1 = TCPC_REG_ROLE_CTRL_CC1(role_control);
+	data->tcpm_cc1 = TCPC_REG_ROLE_CTRL_CC2(role_control);
 }
 
 void tcpci_partner_common_disconnect(struct tcpci_partner_data *data)
@@ -1316,7 +1420,6 @@ void tcpci_partner_received_msg_status(struct tcpci_partner_data *data,
 	if (data->received_msg_status == NULL) {
 		return;
 	}
-
 	/*
 	 * Status of each received message should be reported to TCPCI emulator
 	 * only once
@@ -1440,6 +1543,22 @@ tcpci_partner_rx_consumed_op(const struct emul *emul,
 	tcpci_partner_free_msg(msg);
 }
 
+static void
+tcpci_partner_control_change_op(const struct emul *emul,
+				const struct tcpci_emul_partner_ops *ops)
+{
+	struct tcpci_partner_data *data =
+		CONTAINER_OF(ops, struct tcpci_partner_data, ops);
+	struct tcpci_partner_extension *ext;
+
+	tcpci_partner_common_control_change(data);
+	for (ext = data->extensions; ext != NULL; ext = ext->next) {
+		if (ext->ops->control_change) {
+			ext->ops->control_change(ext, data);
+		}
+	}
+}
+
 /**
  * @brief Function called when emulator is disconnected from TCPCI
  *
@@ -1521,17 +1640,21 @@ void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 	data->identity_vdos = 0;
 	data->svids_vdos = 0;
 	data->modes_vdos = 0;
+	data->rmdo = 0;
+	data->enter_usb_accept = false;
 
 	tcpci_partner_common_clear_ams_ctrl_msg(data);
 
 	data->send_goodcrc = true;
 
 	data->rev = rev;
-	data->vconn_supported = true;
+	data->drs_to_dfp_supported = true;
+	data->drs_to_ufp_supported = true;
+	data->vcs_response = PD_CTRL_ACCEPT;
 
 	data->ops.transmit = tcpci_partner_transmit_op;
 	data->ops.rx_consumed = tcpci_partner_rx_consumed_op;
-	data->ops.control_change = NULL;
+	data->ops.control_change = tcpci_partner_control_change_op;
 	data->ops.disconnect = tcpci_partner_disconnect_op;
 	data->displayport_configured = false;
 	data->entered_svid = 0;
@@ -1544,8 +1667,16 @@ void tcpci_partner_init(struct tcpci_partner_data *data, enum pd_rev_type rev)
 	data->cable = NULL;
 }
 
-void tcpci_partner_set_vconn_support(struct tcpci_partner_data *data,
-				     bool vconn_supported)
+void tcpci_partner_set_drs_support(struct tcpci_partner_data *data,
+				   bool drs_to_ufp_supported,
+				   bool drs_to_dfp_supported)
 {
-	data->vconn_supported = vconn_supported;
+	data->drs_to_ufp_supported = drs_to_ufp_supported;
+	data->drs_to_dfp_supported = drs_to_dfp_supported;
+}
+
+void tcpci_partner_set_vcs_response(struct tcpci_partner_data *data,
+				    enum pd_ctrl_msg_type vcs_response)
+{
+	data->vcs_response = vcs_response;
 }

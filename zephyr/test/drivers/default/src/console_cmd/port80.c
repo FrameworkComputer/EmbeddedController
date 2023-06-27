@@ -8,17 +8,16 @@
  * @brief Unit Tests for ESPI port 80 console command
  */
 
-#include <zephyr/logging/log.h>
-#include <zephyr/shell/shell.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "ec_commands.h"
 #include "port80.h"
-
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 /**
  * @brief TestPurpose: Verify port 80 console commands
@@ -29,7 +28,7 @@
  * Expected Results
  *  - The port 80 console commands return the appropriate result
  */
-ZTEST(port80, test_port80_console)
+ZTEST(console_cmd_port80, test_port80_console)
 {
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "port80"), NULL);
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "port80 flush"), NULL);

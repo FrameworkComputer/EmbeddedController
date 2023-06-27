@@ -7,11 +7,11 @@
 
 #include "adc.h"
 #include "baseboard_common.h"
-#include "bc12/pi3usb9201_public.h"
 #include "bc12/mt6360_public.h"
+#include "bc12/pi3usb9201_public.h"
 #include "button.h"
+#include "charge_state.h"
 #include "charger.h"
-#include "charge_state_v2.h"
 #include "charger/isl923x_public.h"
 #include "console.h"
 #include "ec_commands.h"
@@ -20,20 +20,19 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "lid_switch.h"
-#include "task.h"
-#include "ppc/syv682x_public.h"
 #include "power.h"
 #include "power_button.h"
+#include "ppc/syv682x_public.h"
 #include "spi.h"
 #include "switch.h"
 #include "tablet_mode.h"
+#include "task.h"
 #include "tcpm/it8xxx2_pd_public.h"
 #include "uart.h"
-#include "usbc_ppc.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
-#include "usb_mux/ps8743_public.h"
 #include "usb_mux/it5205_public.h"
+#include "usb_mux/ps8743_public.h"
 #include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 
@@ -307,13 +306,6 @@ void board_reset_pd_mcu(void)
 	 * C0 & C1: TCPC is embedded in the EC and processes interrupts in the
 	 * chip code (it83xx/intc.c)
 	 */
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)

@@ -27,6 +27,12 @@
 /* Charger */
 #define CONFIG_CHARGE_RAMP_HW
 #define CONFIG_CHARGER_RAA489000
+/*
+ * b/147463641: The charger IC seems to overdraw ~4%, therefore we
+ * reduce our target accordingly.
+ */
+#undef CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT
+#define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 4
 #define PD_MAX_VOLTAGE_MV 20000
 #define CONFIG_CHARGER_SENSE_RESISTOR_AC 10
 #define CONFIG_CHARGER_SENSE_RESISTOR 10

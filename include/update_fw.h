@@ -6,9 +6,9 @@
 #ifndef __CROS_EC_UPDATE_FW_H
 #define __CROS_EC_UPDATE_FW_H
 
-#include <stddef.h>
-
 #include "compile_time_macros.h"
+
+#include <stddef.h>
 
 /*
  * This file contains structures used to facilitate EC firmware updates

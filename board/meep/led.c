@@ -7,9 +7,9 @@
 
 #include "ec_commands.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
-#include "hooks.h"
 
 #define LED_OFF_LVL 1
 #define LED_ON_LVL 0

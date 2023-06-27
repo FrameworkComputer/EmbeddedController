@@ -5,8 +5,8 @@
 
 /* Hardware timers driver */
 
-#include "cpu.h"
 #include "common.h"
+#include "cpu.h"
 #include "hooks.h"
 #include "hwtimer.h"
 #include "hwtimer_chip.h"
@@ -203,6 +203,13 @@ static void __hw_clock_source_irq(void)
 #ifdef CONFIG_FANS
 	if (irq == et_ctrl_regs[FAN_CTRL_EXT_TIMER].irq) {
 		fan_ext_timer_interrupt();
+		return;
+	}
+#endif
+
+#ifdef CONFIG_CEC_BITBANG
+	if (irq == et_ctrl_regs[CEC_EXT_TIMER].irq) {
+		cec_ext_timer_interrupt();
 		return;
 	}
 #endif

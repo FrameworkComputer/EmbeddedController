@@ -48,7 +48,6 @@
 
 /* EC console commands */
 #define CONFIG_CMD_TASKREADY
-#define CONFIG_CMD_STACKOVERFLOW
 #define CONFIG_CMD_JUMPTAGS
 #define CONFIG_CMD_FLASH
 #define CONFIG_CMD_SPI_FLASH

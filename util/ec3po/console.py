@@ -17,6 +17,7 @@ from __future__ import print_function
 import argparse
 import binascii
 import ctypes
+from datetime import datetime
 import logging
 import os
 import pty
@@ -25,10 +26,11 @@ import select
 import stat
 import sys
 import traceback
-from datetime import datetime
 
+from ec3po import interpreter
+from ec3po import threadproc_shim
 import six
-from ec3po import interpreter, threadproc_shim
+
 
 PROMPT = b"> "
 CONSOLE_INPUT_LINE_SIZE = 80  # Taken from the CONFIG_* with the same name.

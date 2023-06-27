@@ -7,8 +7,8 @@
 
 #include "builtin/assert.h"
 #include "common.h"
-#include "init_rom.h"
 #include "flash.h"
+#include "init_rom.h"
 #include "stdbool.h"
 #include "stddef.h"
 

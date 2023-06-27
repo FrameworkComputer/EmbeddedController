@@ -11,10 +11,10 @@
 #include "host_command.h"
 #include "host_command_heci.h"
 #include "hwtimer.h"
-#include "timer.h"
 #include "link_defs.h"
 #include "mkbp_event.h"
 #include "power.h"
+#include "timer.h"
 #include "util.h"
 
 #define CPUTS(outstr) cputs(CC_COMMAND, outstr)
@@ -68,6 +68,9 @@ struct mkbp_state {
 static struct mkbp_state state;
 uint32_t mkbp_last_event_time;
 
+static const int ap_comm_failure_threshold = 2;
+static int ap_comm_failure_count;
+
 #ifdef CONFIG_MKBP_EVENT_WAKEUP_MASK
 static uint32_t mkbp_event_wake_mask = CONFIG_MKBP_EVENT_WAKEUP_MASK;
 #endif /* CONFIG_MKBP_EVENT_WAKEUP_MASK */
@@ -77,10 +80,8 @@ static uint32_t mkbp_host_event_wake_mask = CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK;
 #endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
 
 #ifdef CONFIG_ZEPHYR
-static int init_mkbp_mutex(const struct device *dev)
+static int init_mkbp_mutex(void)
 {
-	ARG_UNUSED(dev);
-
 	k_mutex_init(&state.lock);
 
 	return 0;
@@ -104,7 +105,10 @@ static int mkbp_set_host_active_via_gpio(int active, uint32_t *timestamp)
 		*timestamp = __hw_clock_source_read();
 	}
 
-	gpio_set_level(GPIO_EC_INT_L, !active);
+	if (IS_ENABLED(CONFIG_MKBP_USE_GPIO_ACTIVE_HIGH))
+		gpio_set_level(GPIO_EC_INT_L, active);
+	else
+		gpio_set_level(GPIO_EC_INT_L, !active);
 
 	if (timestamp)
 		irq_unlock(lock_key);
@@ -310,6 +314,7 @@ static void force_mkbp_if_events(void)
 		 * activate_mkbp_with_events() will set interrupt state to
 		 * ACTIVE before this function will be called.
 		 */
+		++ap_comm_failure_count;
 		if (++state.failed_attempts < 3) {
 			send_mkbp_interrupt = 1;
 			toggled = 1;
@@ -329,8 +334,18 @@ static void force_mkbp_if_events(void)
 	}
 	mutex_unlock(&state.lock);
 
-	if (toggled)
-		CPRINTS("MKBP not cleared within threshold, toggling.");
+	if (toggled) {
+		/**
+		 * Don't spam the EC logs when the AP is hung. Instead, log the
+		 * first few failures, and then indicate the AP is likely hung.
+		 */
+		if (ap_comm_failure_count < ap_comm_failure_threshold) {
+			CPRINTS("MKBP not cleared within threshold, toggling.");
+		} else if (ap_comm_failure_count == ap_comm_failure_threshold) {
+			CPRINTS("MKBP: The AP is failing to respond despite "
+				"being powered on.");
+		}
+	}
 
 	if (send_mkbp_interrupt)
 		activate_mkbp_with_events(0);
@@ -358,8 +373,14 @@ static int set_inactive_if_no_events(void)
 	mutex_unlock(&state.lock);
 
 	/* Cancel our safety net since the events were cleared. */
-	if (interrupt_cleared)
+	if (interrupt_cleared) {
 		hook_call_deferred(&force_mkbp_if_events_data, -1);
+		/**
+		 * This AP communication was successful.
+		 * Reset the count to log the next AP communication failure.
+		 */
+		ap_comm_failure_count = 0;
+	}
 
 	return interrupt_cleared;
 }
@@ -397,7 +418,7 @@ static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 {
 	static int last;
 	int i, evt;
-	uint8_t *resp = args->response;
+	struct ec_response_get_next_event *r = args->response;
 	const struct mkbp_event_source *src;
 
 	int data_size = -EC_ERROR_BUSY;
@@ -427,7 +448,7 @@ static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 		if (src == NULL)
 			return EC_RES_ERROR;
 
-		resp[0] = evt; /* Event type */
+		r->event_type = evt;
 
 		/*
 		 * get_data() can return -EC_ERROR_BUSY which indicates that the
@@ -437,7 +458,7 @@ static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 		 * event instead.  Therefore, we have to service that button
 		 * event first.
 		 */
-		data_size = src->get_data(resp + 1);
+		data_size = src->get_data((uint8_t *)&r->data);
 		if (data_size == -EC_ERROR_BUSY) {
 			mutex_lock(&state.lock);
 			state.events |= BIT(evt);
@@ -447,7 +468,7 @@ static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 
 	/* If there are no more events and we support the "more" flag, set it */
 	if (!set_inactive_if_no_events() && args->version >= 2)
-		resp[0] |= EC_MKBP_HAS_MORE_EVENTS;
+		r->event_type |= EC_MKBP_HAS_MORE_EVENTS;
 
 	if (data_size < 0)
 		return EC_RES_ERROR;
@@ -586,5 +607,12 @@ void mkbp_event_clear_all(void)
 
 	/* Reset the interrupt line */
 	mkbp_set_host_active(0, NULL);
+#ifdef CONFIG_MKBP_EVENT_WAKEUP_MASK
+	mkbp_event_wake_mask = CONFIG_MKBP_EVENT_WAKEUP_MASK;
+#endif /* CONFIG_MKBP_EVENT_WAKEUP_MASK */
+
+#ifdef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
+	mkbp_host_event_wake_mask = CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK;
+#endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
 }
 #endif

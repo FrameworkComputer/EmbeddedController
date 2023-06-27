@@ -3,19 +3,19 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT cros_ec_flash_emul
-
-#include <zephyr/drivers/flash.h>
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(emul_flash);
+#include "drivers/cros_flash.h"
+#include "ec_commands.h"
+#include "flash.h"
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
-#include <ec_commands.h>
-#include <drivers/cros_flash.h>
+#include <zephyr/drivers/flash.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/sys/__assert.h>
 
-#include "flash.h"
+#define DT_DRV_COMPAT cros_ec_flash_emul
+
+LOG_MODULE_REGISTER(emul_flash);
 
 struct flash_emul_data {
 	const struct device *flash_dev;
@@ -192,6 +192,11 @@ static int cros_flash_emul_protect_now(const struct device *dev, int all)
 void cros_flash_emul_protect_reset(void)
 {
 	ro_protected = all_protected = false;
+}
+
+void cros_flash_emul_enable_protect(void)
+{
+	ro_protected = all_protected = true;
 }
 
 static int cros_flash_emul_get_jedec_id(const struct device *dev,

@@ -5,25 +5,24 @@
 
 /* Guybrush family-specific configuration */
 
-#include "cros_board_info.h"
 #include "base_fw_config.h"
 #include "battery_fuel_gauge.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
-#include "charge_state_v2.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "chip/npcx/ps2_chip.h"
 #include "chip/npcx/pwm_chip.h"
 #include "chipset.h"
+#include "cros_board_info.h"
 #include "driver/ppc/aoz1380_public.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/retimer/anx7491.h"
 #include "driver/retimer/ps8811.h"
 #include "driver/retimer/ps8818_public.h"
 #include "driver/tcpm/nct38xx.h"
-#include "driver/usb_mux/anx7451.h"
 #include "driver/usb_mux/amd_fp6.h"
+#include "driver/usb_mux/anx7451.h"
 #include "fan.h"
 #include "fan_chip.h"
 #include "gpio.h"
@@ -246,7 +245,7 @@ const struct usb_mux usbc1_ps8818 = {
 	.usb_port = USBC_PORT_C1,
 	.i2c_port = I2C_PORT_TCPC1,
 	.flags = USB_MUX_FLAG_RESETS_IN_G3,
-	.i2c_addr_flags = PS8818_I2C_ADDR_FLAGS,
+	.i2c_addr_flags = PS8818_I2C_ADDR0_FLAGS,
 	.driver = &ps8818_usb_retimer_driver,
 	.board_set = &board_c1_ps8818_mux_set,
 };
@@ -532,13 +531,6 @@ int board_aoz1380_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
 			    (rp == TYPEC_RP_3A0) ? 1 : 0);
 
 	return rv;
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 void sbu_fault_interrupt(enum ioex_signal signal)

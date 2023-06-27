@@ -1,0 +1,188 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	aliases {
+		gpio-wp = &gpio_gsc_flash_wp_odl;
+		gpio-cbi-wp = &gpio_ec_cbi_wp;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_ec_entering_rw: ec_entering_rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+
+	usba-port-enable-list {
+		compatible = "cros-ec,usba-port-enable-pins";
+		enable-pins = <&gpio_en_usb_a_vbus>;
+	};
+};
+
+/* host interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};
+
+/* Power switch logic input pads */
+&psl_in1_gpd2 {
+	/* LID_OPEN */
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
+};
+
+&psl_in2_gp00 {
+	/* ACOK_OD */
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
+};
+
+&psl_in4_gp02 {
+	/* MECH_PWR_BTN_ODL */
+	psl-in-mode = "edge";
+	psl-in-pol = "low-falling";
+};
+
+/* Power domain device controlled by PSL (Power Switch Logic) IO pads */
+&power_ctrl_psl {
+	status = "okay";
+	pinctrl-names = "sleep";
+	pinctrl-0 = <&psl_in1_gpd2 &psl_in2_gp00 &psl_in4_gp02>;
+};
+
+/* ADC and GPIO alt-function specifications */
+&adc0 {
+	pinctrl-0 = <&adc0_chan0_gp45
+		     &adc0_chan1_gp44>;
+	pinctrl-names = "default";
+};
+
+&i2c1_0 {
+	label = "I2C_USB_C0";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
+	pinctrl-names = "default";
+
+	tcpc_port0: rt1716@4e {
+		compatible = "richtek,rt1715-tcpc";
+		reg = <0x4e>;
+		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
+		/* a duplicate of the <&gpio_usb_c1_tcpc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
+	};
+
+	ppc_port0_syv: ppc_syv@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&gpio_usb_c0_frs_en>;
+	};
+
+	usb_c0_hb_retimer: jhl9040r-c0@56 {
+		compatible = "intel,jhl9040r";
+		reg = <0x56>;
+		ls-en-pin = <&gpio_usb_c0_rt_3p3_sx_en>;
+		int-pin = <&gpio_usb_c0_rt_int_odl>;
+		reset-pin = <&gpio_usb_c0_rt_rst_l>;
+	};
+};
+
+&i2c2_0 {
+	label = "I2C_USB_C1";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
+	pinctrl-names = "default";
+
+	tcpc_port1: rt1716@4e {
+		compatible = "richtek,rt1715-tcpc";
+		reg = <0x4e>;
+		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
+		/* a duplicate of the <&gpio_usb_c1_tcpc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio3 4 GPIO_ACTIVE_LOW>;
+	};
+
+	ppc_port1_syv: ppc_syv@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&gpio_usb_c1_frs_en>;
+	};
+
+	usb_c1_hb_retimer: jhl9040r-c0@56 {
+		compatible = "intel,jhl9040r";
+		reg = <0x56>;
+		ls-en-pin = <&gpio_usb_c1_rt_3p3_sx_en>;
+		int-pin = <&gpio_usb_c1_rt_int_odl>;
+		reset-pin = <&gpio_usb_c1_rt_rst_l>;
+	};
+};
+
+&i2c3_0 {
+	label = "I2C_USB_C2";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
+	pinctrl-names = "default";
+
+	tcpc_port2: rt1716@4e {
+		compatible = "richtek,rt1715-tcpc";
+		reg = <0x4e>;
+		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
+		/* a duplicate of the <&gpio_usb_c1_tcpc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiod 4 GPIO_ACTIVE_LOW>;
+	};
+
+	ppc_port2_syv: ppc_syv@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&gpio_usb_c2_frs_en>;
+	};
+
+	usb_c2_hb_retimer: jhl9040r-c0@56 {
+		compatible = "intel,jhl9040r";
+		reg = <0x56>;
+		ls-en-pin = <&gpio_usb_c2_rt_3p3_sx_en>;
+		int-pin = <&gpio_usb_c2_rt_int_odl>;
+		reset-pin = <&gpio_usb_c2_rt_rst_l>;
+	};
+};
+
+&i2c7_0 {
+	label = "I2C_MISC";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
+	pinctrl-names = "default";
+
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+};

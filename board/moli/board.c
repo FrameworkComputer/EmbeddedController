@@ -6,13 +6,17 @@
 #include "adc.h"
 #include "builtin/assert.h"
 #include "button.h"
+#include "cec.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
+#include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "cros_board_info.h"
+#include "driver/cec/bitbang.h"
 #include "driver/tcpm/tcpci.h"
+#include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "hooks.h"
@@ -31,6 +35,32 @@ static void power_monitor(void);
 DECLARE_DEFERRED(power_monitor);
 
 /******************************************************************************/
+/* Power on by HDMI/ DP monitor */
+struct monitor_config {
+	enum gpio_signal gpio;
+	uint8_t state;
+};
+
+static struct monitor_config monitors[MONITOR_COUNT] = {
+	[HDMI1_MONITOR] = {
+		.gpio = GPIO_HDMI1_MONITOR_ON,
+		.state = MONITOR_OFF,
+	},
+
+	[HDMI2_MONITOR] = {
+		.gpio = GPIO_HDMI2_MONITOR_ON,
+		.state = MONITOR_OFF,
+	},
+
+	[OPTION_MONITOR] = {
+		.gpio = GPIO_OPTION_MONITOR_ON,
+		.state = MONITOR_OFF,
+	},
+};
+
+/******************************************************************************/
+
+/******************************************************************************/
 /* USB-A charging control */
 
 const int usb_port_enable[USB_PORT_COUNT] = {
@@ -39,6 +69,15 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 
 /******************************************************************************/
+
+/* CEC ports */
+const struct cec_config_t cec_config[] = {
+	[CEC_PORT_0] = {
+		.drv = &bitbang_cec_drv,
+		.offline_policy = NULL,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(cec_config) == CEC_PORT_COUNT);
 
 int board_set_active_charge_port(int port)
 {
@@ -116,34 +155,6 @@ static uint8_t usbc_overcurrent;
  * only do that if the system is off since it might still brown out.
  */
 
-/*
- * Barrel-jack power adapter ratings.
- */
-static const struct {
-	int voltage;
-	int current;
-} bj_power[] = {
-	{ /* 0 - 90W (also default) */
-	  .voltage = 19000,
-	  .current = 4740 },
-	{ /* 1 - 135W */
-	  .voltage = 19500,
-	  .current = 6920 },
-};
-
-static unsigned int ec_config_get_bj_power(void)
-{
-	uint32_t fw_config;
-	unsigned int bj;
-
-	cbi_get_fw_config(&fw_config);
-	bj = (fw_config & EC_CFG_BJ_POWER_MASK) >> EC_CFG_BJ_POWER_L;
-	/* Out of range value defaults to 0 */
-	if (bj >= ARRAY_SIZE(bj_power))
-		bj = 0;
-	return bj;
-}
-
 #define ADP_DEBOUNCE_MS 1000 /* Debounce time for BJ plug/unplug */
 /* Debounced connection state of the barrel jack */
 static int8_t adp_connected = -1;
@@ -155,12 +166,9 @@ static void adp_connect_deferred(void)
 	/* Debounce */
 	if (connected == adp_connected)
 		return;
-	if (connected) {
-		unsigned int bj = ec_config_get_bj_power();
+	if (connected)
+		ec_bj_power(&pi.voltage, &pi.current);
 
-		pi.voltage = bj_power[bj].voltage;
-		pi.current = bj_power[bj].current;
-	}
 	charge_manager_update_charge(CHARGE_SUPPLIER_DEDICATED,
 				     DEDICATED_CHARGE_PORT, &pi);
 	adp_connected = connected;
@@ -192,12 +200,29 @@ DECLARE_HOOK(HOOK_INIT, adp_state_init, HOOK_PRIO_INIT_CHARGE_MANAGER + 1);
 
 static void board_init(void)
 {
+	int i;
+
 	gpio_enable_interrupt(GPIO_BJ_ADP_PRESENT_ODL);
 	gpio_enable_interrupt(GPIO_HDMI_CONN_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A1_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A2_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A3_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A4_OC_ODL);
+
+	if (ec_cfg_power_on_monitor() == POWER_ON_MONITOR_ENABLE) {
+		/*
+		 * Only enable interrupt when fw_config set it as enable.
+		 */
+		gpio_enable_interrupt(GPIO_HDMI1_MONITOR_ON);
+		gpio_enable_interrupt(GPIO_HDMI2_MONITOR_ON);
+		gpio_enable_interrupt(GPIO_OPTION_MONITOR_ON);
+
+		/*
+		 * Initialize the monitor state to corresponding gpio state.
+		 */
+		for (i = 0; i < MONITOR_COUNT; i++)
+			monitors[i].state = gpio_get_level(monitors[i].gpio);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -267,7 +292,8 @@ void board_overcurrent_event(int port, int is_overcurrented)
 #define POWER_DELAY_MS 2
 #define POWER_READINGS (10 / POWER_DELAY_MS)
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 static void power_monitor(void)
 {
@@ -432,3 +458,72 @@ static void power_monitor(void)
  * Start power monitoring after ADCs have been initialised.
  */
 DECLARE_HOOK(HOOK_INIT, power_monitor, HOOK_PRIO_INIT_ADC + 1);
+
+/******************************************************************************/
+/*
+ * System power on and wake up by monitor power button.
+ *
+ * After pressing power button of monitor for power on, monitor will send power
+ * on signal with 3.3V / 200ms to DT. If DT detect that pulse, there are three
+ * DT behavior:
+ *
+ *  - Do nothing in state S0.
+ *  - Wake up from state S0ix.
+ *  - Power on from state S5 and G3.
+ */
+
+/* Debounce time for HDMI power button press */
+#define MONITOR_DEBOUNCE_MS 100
+
+static void monitor_irq_deferred(void);
+DECLARE_DEFERRED(monitor_irq_deferred);
+
+static void monitor_irq_deferred(void)
+{
+	int i;
+
+	for (i = 0; i < MONITOR_COUNT; i++) {
+		if (monitors[i].state && gpio_get_level(monitors[i].gpio)) {
+			/*
+			 * System power on from state S5 and G3.
+			 */
+			if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+				chipset_power_on();
+			/*
+			 * System wake up from state S0ix.
+			 */
+			else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+				power_button_simulate_press(200);
+		}
+		monitors[i].state = MONITOR_OFF;
+	}
+}
+
+/* Power on by HDMI/ DP monitor. */
+void monitor_interrupt(enum gpio_signal signal)
+{
+	/*
+	 * Power on by HDMI/ DP monitor only works
+	 * when system is not in S0.
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		return;
+
+	if (ec_cfg_power_on_monitor() == POWER_ON_MONITOR_ENABLE) {
+		switch (signal) {
+		case GPIO_HDMI1_MONITOR_ON:
+			monitors[HDMI1_MONITOR].state = MONITOR_ON;
+			break;
+		case GPIO_HDMI2_MONITOR_ON:
+			monitors[HDMI2_MONITOR].state = MONITOR_ON;
+			break;
+		case GPIO_OPTION_MONITOR_ON:
+			monitors[OPTION_MONITOR].state = MONITOR_ON;
+			break;
+		default:
+			break;
+		}
+		hook_call_deferred(&monitor_irq_deferred_data,
+				   MONITOR_DEBOUNCE_MS * MSEC);
+	}
+}

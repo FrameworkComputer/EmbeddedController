@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "ec_panicinfo.h"
+#include <libec/ec_panicinfo.h>
 
 /* Fuzzing Build command:
  * $ clang++ ec_panicinfo_fuzzer.cc ec_panicinfo.cc -g -fsanitize=address,fuzzer

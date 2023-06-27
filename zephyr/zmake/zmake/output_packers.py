@@ -1,11 +1,13 @@
 # Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """Types which provide many builds and composite them into a single binary."""
 import logging
+from pathlib import Path
 import shutil
 import subprocess
-from pathlib import Path
+import sys
 from typing import Dict, Optional
 
 import zmake.build_config as build_config
@@ -111,6 +113,14 @@ class RawBinPacker(BasePacker):
         yield dir_map["singleimage"] / "zephyr" / "zephyr.bin", "ec.bin"
 
 
+class IshBinPacker(BasePacker):
+    """Raw proxy for ish_fw.bin output of a single build."""
+
+    def pack_firmware(self, work_dir, jobclient, dir_map, version_string=""):
+        del version_string
+        yield dir_map["singleimage"] / "zephyr" / "ish_fw.bin", "ish_fw.bin"
+
+
 class BinmanPacker(BasePacker):
     """Packer for RO/RW image to generate a .bin build using FMAP."""
 
@@ -172,7 +182,8 @@ class BinmanPacker(BasePacker):
 
         proc = jobclient.popen(
             [
-                "binman",
+                sys.executable,
+                util.get_tool_path("binman"),
                 "-v",
                 "5",
                 "build",

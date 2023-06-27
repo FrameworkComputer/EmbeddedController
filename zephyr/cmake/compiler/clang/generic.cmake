@@ -2,5 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-set(CMAKE_C_COMPILER "/usr/bin/x86_64-pc-linux-gnu-clang")
-set(CMAKE_GCOV "/usr/bin/llvm-cov gcov")
+if(EXISTS /etc/cros_chroot_version)
+  set(CMAKE_C_COMPILER "/usr/bin/x86_64-pc-linux-gnu-clang")
+  set(CMAKE_CXX_COMPILER "/usr/bin/x86_64-pc-linux-gnu-clang++")
+  set(CMAKE_GCOV "/usr/bin/llvm-cov gcov")
+else()
+  find_program(CMAKE_C_COMPILER clang)
+  find_program(CMAKE_CXX_COMPILER clang++)
+  find_program(CMAKE_GCOV gcov)
+endif()

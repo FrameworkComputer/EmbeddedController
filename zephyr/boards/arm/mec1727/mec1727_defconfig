@@ -20,9 +20,6 @@ CONFIG_UART_INTERRUPT_DRIVEN=y
 CONFIG_CONSOLE=y
 CONFIG_UART_CONSOLE=y
 
-# Pinmux Driver
-CONFIG_PINMUX=n
-
 # Pinctrl Driver
 CONFIG_PINCTRL=y
 
@@ -35,7 +32,6 @@ CONFIG_CLOCK_CONTROL=y
 
 # WATCHDOG configuration
 CONFIG_WATCHDOG=y
-CONFIG_WDT_XEC=y
 
 # Power Management
 #CONFIG_PM=y
@@ -44,7 +40,6 @@ CONFIG_WDT_XEC=y
 
 # BBRAM
 CONFIG_BBRAM=y
-CONFIG_BBRAM_XEC=y
 
 # SPI
 CONFIG_SPI=y
@@ -52,7 +47,6 @@ CONFIG_SPI=y
 
 # Flash
 CONFIG_FLASH=y
-CONFIG_SPI_NOR=y
 # disabling this causes build error: calling function to read JEDEC ID
 # MEC1727 internal SST25PF040 does not support SFDP
 CONFIG_FLASH_JESD216_API=y

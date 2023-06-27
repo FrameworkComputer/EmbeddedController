@@ -168,7 +168,7 @@ cmd_rsasign_rwsig = futility sign --type rwsig \
 
 # commands to build optional xref files
 cmd_deps_to_list = cat $(deps) | tr -d ':\\' | tr ' ' '\012' \
-	| egrep '\.[chS]$$' | sort | uniq > $@
+	| grep -E '\.[chS]$$' | sort | uniq > $@
 cmd_etags = etags -o $@ $(shell cat $<)
 cmd_ctags = ctags -o $@ $(shell cat $<)
 targ_if_prog = $(if $(shell which $(1) 2>/dev/null),$(2),)
@@ -203,8 +203,13 @@ build_boards: | $(FAILED_BOARDS_DIR)
 	@rm -f $(FAILED_BOARDS_DIR)/*
 	$(MAKE) try_build_boards
 
+.PHONY: check_undef
+check_undef:
+	$(call quiet,check_undef)
+
 .PHONY: buildall_only
-buildall_only: build_boards build_cros_ec_commands
+buildall_only: build_boards build_cros_ec_commands check_undef
+	$(MAKE) BOARD=host utils
 	$(MAKE) build_cts
 	$(MAKE) buildfuzztests
 
@@ -260,17 +265,22 @@ conflicting_options := \
 	MPU \
 	PECI \
 	PS2 \
+	SMBUS \
 	SPI \
 	UART_CONSOLE
 
 cmd_check_allowed = ./util/kconfig_check.py -c ${config} \
-	 -a util/config_allowed.txt -p PLATFORM_EC_ -s zephyr/ \
+	 -a util/config_allowed.txt -p PLATFORM_EC_ -s "" \
 	 -I "${ZEPHYR_BASE}" \
 	 $(foreach opt,$(conflicting_options),-i $(opt)) check
+cmd_check_undef = ./util/kconfig_check.py -s "" -I "${ZEPHYR_BASE}" \
+	check_undef
 else
 cmd_check_allowed = true
+cmd_check_undef = true
 endif
 quiet_cmd_check_allowed = CHECK_ALLOWED ${config}
+quiet_cmd_check_undef = CHECK_UNDEF
 
 # Print any important notices at the end of the build.
 .PHONY: notice
@@ -749,6 +759,14 @@ flash_ec: $(out)/ec.bin
 .PHONY: flash_dfu
 flash_dfu: $(out)/ec.bin
 	sudo ./$(BDIR)/dfu $(out)/ec.bin
+
+.PHONY: print-all-baseboards
+print-all-baseboards: $(foreach b, $(BOARDS), print-baseboard-$(b))
+print-baseboard-%:
+	@$(MAKE) BOARD=$* V=$(V) print-one-baseboard
+.PHONY: print-one-baseboard
+print-one-baseboard:
+	@echo "${BOARD}=${BASEBOARD}"
 
 # Deprecated, use print-make-vars instead
 .PHONY: print-baseboard

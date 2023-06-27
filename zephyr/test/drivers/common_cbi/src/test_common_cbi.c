@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/eeprom.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/ztest.h>
-
 #include "cros_board_info.h"
 #include "host_command.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
 
-#define WP_L_GPIO_PATH DT_PATH(named_gpios, wp_l)
+#include <zephyr/drivers/eeprom.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/ztest.h>
+
+#define WP_L_GPIO_PATH NAMED_GPIOS_GPIO_NODE(wp_l)
 #define CBI_EEPROM_DEV DEVICE_DT_GET(DT_NODELABEL(cbi_eeprom))
 
 FAKE_VALUE_FUNC(int, eeprom_load, uint8_t, uint8_t *, int);

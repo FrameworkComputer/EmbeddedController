@@ -11,8 +11,8 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "led_common.h"
-#include "util.h"
 #include "system.h"
+#include "util.h"
 
 const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED };
 
@@ -154,15 +154,15 @@ static void oak_led_set_battery(int board_version)
 		 * - Battery discharging capacity<10%, red blink
 		 * - Battery error: Red ON
 		 */
-		switch (charge_get_state()) {
-		case PWR_STATE_CHARGE:
+		switch (led_pwr_get_state()) {
+		case LED_PWRS_CHARGE:
 			bat_led_set(BAT_LED_AMBER, 1);
 			break;
-		case PWR_STATE_CHARGE_NEAR_FULL:
+		case LED_PWRS_CHARGE_NEAR_FULL:
 			bat_led_set(BAT_LED_GREEN, 1);
 			bat_led_set(BAT_LED_RED, 0);
 			break;
-		case PWR_STATE_DISCHARGE:
+		case LED_PWRS_DISCHARGE:
 			bat_led_set(BAT_LED_GREEN, 0);
 			if (charge_get_percent() < 3)
 				bat_led_set(BAT_LED_RED,
@@ -173,10 +173,10 @@ static void oak_led_set_battery(int board_version)
 			else
 				bat_led_set(BAT_LED_RED, 0);
 			break;
-		case PWR_STATE_ERROR:
+		case LED_PWRS_ERROR:
 			bat_led_set(BAT_LED_RED, 1);
 			break;
-		case PWR_STATE_IDLE: /* Ext. power connected in IDLE. */
+		case LED_PWRS_IDLE: /* Ext. power connected in IDLE. */
 			bat_led_set(BAT_LED_GREEN, 1);
 			bat_led_set(BAT_LED_RED, 0);
 			break;
@@ -219,14 +219,14 @@ static void oak_led_set_battery(int board_version)
 		 *   situation: Orange in blinking mode (1s on, 1s off)
 		 * Using battery or not connected to AC power: OFF
 		 */
-		switch (charge_get_state()) {
-		case PWR_STATE_CHARGE:
+		switch (led_pwr_get_state()) {
+		case LED_PWRS_CHARGE:
 			bat_led_set(BAT_LED_ORANGE, 1);
 			break;
-		case PWR_STATE_CHARGE_NEAR_FULL:
+		case LED_PWRS_CHARGE_NEAR_FULL:
 			bat_led_set(BAT_LED_ORANGE, 1);
 			break;
-		case PWR_STATE_DISCHARGE:
+		case LED_PWRS_DISCHARGE:
 			if (charge_get_percent() < 3)
 				bat_led_set(BAT_LED_ORANGE,
 					    (battery_second & 1) ? 0 : 1);
@@ -236,11 +236,11 @@ static void oak_led_set_battery(int board_version)
 			else
 				bat_led_set(BAT_LED_ORANGE, 0);
 			break;
-		case PWR_STATE_ERROR:
+		case LED_PWRS_ERROR:
 			bat_led_set(BAT_LED_ORANGE,
 				    (battery_second & 1) ? 0 : 1);
 			break;
-		case PWR_STATE_IDLE: /* Ext. power connected in IDLE. */
+		case LED_PWRS_IDLE: /* Ext. power connected in IDLE. */
 			bat_led_set(BAT_LED_ORANGE, 0);
 			break;
 		default:

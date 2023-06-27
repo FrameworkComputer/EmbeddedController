@@ -5,15 +5,12 @@
 
 /* Primus specific PWM LED settings. */
 
-#include <stdint.h>
-
-#include "common.h"
-#include "compile_time_macros.h"
 #include "battery.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
+#include "compile_time_macros.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "extpower.h"
@@ -24,6 +21,8 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+
+#include <stdint.h>
 #define CPRINTS(format, args...) cprints(CC_LOGOLED, format, ##args)
 
 #define LED_ON_LVL 100
@@ -70,15 +69,15 @@ static void led_set_color_battery(enum ec_led_colors color)
 
 static void led_set_battery(void)
 {
-	switch (charge_get_state()) {
-	case PWR_STATE_CHARGE:
+	switch (led_pwr_get_state()) {
+	case LED_PWRS_CHARGE:
 		/* Always indicate when charging, even in suspend. */
 		led_set_color_battery(EC_LED_COLOR_AMBER);
 		break;
-	case PWR_STATE_DISCHARGE:
+	case LED_PWRS_DISCHARGE:
 		led_set_color_battery(LED_OFF);
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
+	case LED_PWRS_CHARGE_NEAR_FULL:
 		led_set_color_battery(EC_LED_COLOR_WHITE);
 		break;
 	default:

@@ -11,8 +11,8 @@
 #include "keyboard_scan.h"
 #include "registers.h"
 #include "task.h"
-#include "util.h"
 #include "tfdp_chip.h"
+#include "util.h"
 
 /*
  * Using direct mode interrupt, do not enable

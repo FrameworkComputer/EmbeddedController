@@ -1,0 +1,17 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+source "Kconfig.zephyr"
+
+config AP_POWER_CONTROL
+	bool "Allows the test to mock various chipset functions"
+	default y
+
+config TEST_INTERRUPT
+	bool "Enable testing of prochot interrupts"
+	default n
+
+config TEST_THROTTLE_AP
+	bool "Enable testing of AP throttling functions"
+	default n

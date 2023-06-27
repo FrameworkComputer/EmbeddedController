@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "ec_commands.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 
-ZTEST(host_cmd_host_commands, get_command_versions__v1)
+#include <zephyr/ztest.h>
+
+ZTEST(host_cmd_host_commands, test_get_command_versions__v1)
 {
 	struct ec_response_get_cmd_versions response;
 	struct ec_params_get_cmd_versions_v1 params = {
@@ -17,16 +17,13 @@ ZTEST(host_cmd_host_commands, get_command_versions__v1)
 	};
 	int rv;
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_GET_CMD_VERSIONS, 1, response, params);
-
-	rv = host_command_process(&args);
+	rv = ec_cmd_get_cmd_versions_v1(NULL, &params, &response);
 
 	zassert_ok(rv, "Got %d", rv);
 	zassert_equal(EC_VER_MASK(0) | EC_VER_MASK(1), response.version_mask);
 }
 
-ZTEST(host_cmd_host_commands, get_command_versions__invalid_cmd)
+ZTEST(host_cmd_host_commands, test_get_command_versions__invalid_cmd)
 {
 	struct ec_response_get_cmd_versions response;
 	struct ec_params_get_cmd_versions_v1 params = {
@@ -35,23 +32,17 @@ ZTEST(host_cmd_host_commands, get_command_versions__invalid_cmd)
 	};
 	int rv;
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND(
-		EC_CMD_GET_CMD_VERSIONS, 1, response, params);
-
-	rv = host_command_process(&args);
+	rv = ec_cmd_get_cmd_versions_v1(NULL, &params, &response);
 
 	zassert_equal(EC_RES_INVALID_PARAM, rv, "Got %d", rv);
 }
 
-ZTEST(host_cmd_host_commands, get_comms_status)
+ZTEST(host_cmd_host_commands, test_get_comms_status)
 {
 	struct ec_response_get_comms_status response;
 	int rv;
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
-		EC_CMD_GET_COMMS_STATUS, 0, response);
-
-	rv = host_command_process(&args);
+	rv = ec_cmd_get_comms_status(NULL, &response);
 
 	zassert_ok(rv, "Got %d", rv);
 
@@ -61,7 +52,7 @@ ZTEST(host_cmd_host_commands, get_comms_status)
 	zassert_false(response.flags);
 }
 
-ZTEST(host_cmd_host_commands, resend_response)
+ZTEST(host_cmd_host_commands, test_resend_response)
 {
 	struct host_cmd_handler_args args =
 		(struct host_cmd_handler_args)BUILD_HOST_COMMAND_SIMPLE(
@@ -79,7 +70,7 @@ ZTEST(host_cmd_host_commands, resend_response)
 	 */
 }
 
-ZTEST(host_cmd_host_commands, get_proto_version)
+ZTEST(host_cmd_host_commands, test_get_proto_version)
 {
 	struct ec_response_proto_version response;
 	int rv;

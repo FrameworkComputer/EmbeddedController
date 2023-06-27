@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/sys/util.h>
-
 #include "console.h"
 #include "power.h"
 #include "power/power.h"
+
+#include <zephyr/sys/util.h>
 
 #define GEN_POWER_SIGNAL_STRUCT_ENTRY_GPIO(cid) \
 	DT_STRING_UPPER_TOKEN(DT_PROP(cid, power_gpio_pin), enum_name)

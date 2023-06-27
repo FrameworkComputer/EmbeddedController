@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_USB_HID_HW_H
 #define __CROS_EC_USB_HID_HW_H
 
+#include "chip/stm32/usb_hw.h"
+
 #include <common.h>
 
 struct usb_hid_config_t {

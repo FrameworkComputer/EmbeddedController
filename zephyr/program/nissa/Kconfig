@@ -2,6 +2,15 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config NISSA_SUB_BOARD
+	bool "Nissa sub-board support"
+	default y
+	help
+	  Enable the sub-board support for Nissa boards.
+	  This uses a common fw_config bitfield to select
+	  one of a number of option sub-boards with different
+	  hardware configurations.
+
 config BOARD_NIVVIKS
 	bool "Google Nivviks Board"
 	help
@@ -13,6 +22,12 @@ config BOARD_NEREID
 	help
 	  Build Google Nereid reference board. Nereid has Intel ADL-N SoC
 	  with IT81302 EC.
+
+config BOARD_NEREID_CX
+	bool "Google Nereid Board with IT81302 CX"
+	help
+	  Build Google Nereid reference board, but with IT81302 CX EC rather
+	  than IT81302 BX.
 
 config BOARD_CRAASK
 	bool "Google Craask Board"
@@ -32,6 +47,12 @@ config BOARD_XIVU
           Build Google Xivu board. Xivu has Intel ADL-N SoC
           with NPCX993FA0BX EC.
 
+config BOARD_XIVUR
+        bool "Google Xivur Board"
+        help
+          Build Google Xivur board. Xivur has Intel ADL-N SoC
+          with NPCX993FA0BX EC.
+
 config BOARD_JOXER
 	bool "Google Joxer Board"
 	help
@@ -44,6 +65,23 @@ config BOARD_YAVIKS
 	  Build Google Yaviks board. Yaviks has Intel ADL-N SoC
 	  with IT81302 EC.
 
+config BOARD_YAVILLA
+	bool "Google Yavilla Board"
+	help
+	  Build Google Yavilla board. Yavilla has Intel ADL-N SoC
+	  with IT81302 EC.
+
+config BOARD_ULDREN
+	bool "Google Uldren Board"
+	help
+	  Build Google Uldren reference board. Uldren has Intel ADL-N SoC
+	  with NPCX993FA0BX EC.
+
+config BOARD_GOTHRAX
+	bool "Google Gothrax Board"
+	help
+	  Build Google Gothrax reference board. Gothrax has Intel ADL-N SoC
+	  with IT81302 EC.
 
 module = NISSA
 module-str = Nissa board-specific code

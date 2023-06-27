@@ -32,7 +32,7 @@
 
 #ifdef CONFIG_HOSTCMD_PD_CHG_CTRL
 /* By default allow 5V charging only for the dead battery case */
-static enum pd_charge_state charge_state = PD_CHARGE_5V;
+static enum pd_charge_state pd_chg_state = PD_CHARGE_5V;
 
 #define CHARGE_PORT_UNINITIALIZED -2
 static int charge_port = CHARGE_PORT_UNINITIALIZED;
@@ -48,7 +48,7 @@ void host_command_pd_send_status(enum pd_charge_state new_chg_state)
 #ifdef CONFIG_HOSTCMD_PD_CHG_CTRL
 	/* Update PD MCU charge state if necessary */
 	if (new_chg_state != PD_CHARGE_NO_CHANGE)
-		charge_state = new_chg_state;
+		pd_chg_state = new_chg_state;
 #endif
 	/* Wake PD HC task to send status */
 	task_set_event(TASK_ID_PDCMD, TASK_EVENT_EXCHANGE_PD_STATUS);
@@ -74,7 +74,7 @@ static void pd_exchange_update_ec_status(struct ec_params_pd_status *ec_status,
 {
 	/* Send PD charge state and battery state of charge */
 #ifdef CONFIG_HOSTCMD_PD_CHG_CTRL
-	ec_status->charge_state = charge_state;
+	ec_status->charge_state = pd_chg_state;
 #endif
 	if (charge_get_flags() & CHARGE_FLAG_BATT_RESPONSIVE)
 		ec_status->batt_soc = charge_get_percent();
@@ -126,10 +126,7 @@ static void pd_check_chg_status(struct ec_response_pd_status *pd_status)
 #endif
 
 	/* Set input current limit */
-	rv = charge_set_input_current_limit(
-		MAX(pd_status->curr_lim_ma, CONFIG_CHARGER_INPUT_CURRENT), 0);
-	if (rv < 0)
-		CPRINTS("Failed to set input curr limit from PD MCU");
+	board_set_charge_limit(pd_status->curr_lim_ma, 0);
 }
 #endif /* CONFIG_HOSTCMD_PD_CHG_CTRL */
 #endif /* CONFIG_HOSTCMD_PD */

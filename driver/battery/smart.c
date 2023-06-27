@@ -22,27 +22,39 @@
 static int fake_state_of_charge = -1;
 static int fake_temperature = -1;
 
-static int battery_supports_pec(void)
+#ifdef CONFIG_SMBUS_PEC
+static void addr_flags_for_pec(uint16_t *addr_flags)
 {
 	static int supports_pec = -1;
-
-	if (!IS_ENABLED(CONFIG_SMBUS_PEC))
-		return 0;
 
 	if (supports_pec < 0) {
 		int spec_info;
 		int rv = i2c_read16(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS,
 				    SB_SPECIFICATION_INFO, &spec_info);
-		/* failed, assuming not support and try again later */
+		/* failed, assuming not supported and try again later */
 		if (rv)
-			return 0;
+			return;
 
 		supports_pec = (BATTERY_SPEC_VERSION(spec_info) ==
 				BATTERY_SPEC_VER_1_1_WITH_PEC);
 		CPRINTS("battery supports pec: %d", supports_pec);
 	}
-	return supports_pec;
+
+	if (supports_pec) {
+		*addr_flags |= I2C_FLAG_PEC;
+	}
 }
+/* macro to avoid calling a routine when config is disabled */
+#define ADDR_FLAGS_FOR_PEC(ADDR_FLAGS) addr_flags_for_pec(ADDR_FLAGS)
+
+#else
+/*
+ * don't call it at all - this allows compiler optimization to prune
+ * PEC address code
+ */
+#define ADDR_FLAGS_FOR_PEC(ADDR_FLAGS)
+
+#endif
 
 test_mockable int sb_read(int cmd, int *param)
 {
@@ -50,14 +62,20 @@ test_mockable int sb_read(int cmd, int *param)
 
 #ifdef CONFIG_BATTERY_CUT_OFF
 	/*
+	 * Ship mode command need to set continuously, can't be interfered
+	 * by another command.
+	 */
+	if (battery_cutoff_in_progress())
+		return EC_ERROR_ACCESS_DENIED;
+
+	/*
 	 * Some batteries would wake up after cut-off if we talk to it.
 	 */
 	if (battery_is_cut_off())
 		return EC_RES_ACCESS_DENIED;
 #endif
-	if (battery_supports_pec())
-		addr_flags |= I2C_FLAG_PEC;
 
+	ADDR_FLAGS_FOR_PEC(&addr_flags);
 	return i2c_read16(I2C_PORT_BATTERY, addr_flags, cmd, param);
 }
 
@@ -72,8 +90,8 @@ test_mockable int sb_write(int cmd, int param)
 	if (battery_is_cut_off())
 		return EC_RES_ACCESS_DENIED;
 #endif
-	if (battery_supports_pec())
-		addr_flags |= I2C_FLAG_PEC;
+
+	ADDR_FLAGS_FOR_PEC(&addr_flags);
 
 	return i2c_write16(I2C_PORT_BATTERY, addr_flags, cmd, param);
 }
@@ -84,13 +102,20 @@ int sb_read_string(int offset, uint8_t *data, int len)
 
 #ifdef CONFIG_BATTERY_CUT_OFF
 	/*
+	 * Ship mode command need to set continuously, can't be interfered
+	 * by another command.
+	 */
+	if (battery_cutoff_in_progress())
+		return EC_ERROR_ACCESS_DENIED;
+
+	/*
 	 * Some batteries would wake up after cut-off if we talk to it.
 	 */
 	if (battery_is_cut_off())
 		return EC_RES_ACCESS_DENIED;
 #endif
-	if (battery_supports_pec())
-		addr_flags |= I2C_FLAG_PEC;
+
+	ADDR_FLAGS_FOR_PEC(&addr_flags);
 
 	return i2c_read_string(I2C_PORT_BATTERY, addr_flags, offset, data, len);
 }
@@ -102,14 +127,20 @@ int sb_read_sized_block(int offset, uint8_t *data, int len)
 
 	if (IS_ENABLED(CONFIG_BATTERY_CUT_OFF)) {
 		/*
+		 * Ship mode command need to set continuously, can't be
+		 * interfered by another command.
+		 */
+		if (battery_cutoff_in_progress())
+			return EC_ERROR_ACCESS_DENIED;
+
+		/*
 		 * Some batteries would wake up after cut-off if we talk to it.
 		 */
 		if (battery_is_cut_off())
 			return EC_RES_ACCESS_DENIED;
 	}
 
-	if (battery_supports_pec())
-		addr_flags |= I2C_FLAG_PEC;
+	ADDR_FLAGS_FOR_PEC(&addr_flags);
 
 	return i2c_read_sized_block(I2C_PORT_BATTERY, addr_flags, offset, data,
 				    len, &read_len);
@@ -145,6 +176,42 @@ int sb_read_mfgacc(int cmd, int block, uint8_t *data, int len)
 	return EC_SUCCESS;
 }
 
+int sb_read_mfgacc_block(int cmd, int block, uint8_t *data, int len)
+{
+	int rv;
+
+	uint8_t operation_status[3] = {
+		0x02,
+		cmd & 0xFF,
+		cmd >> 8,
+	};
+
+	/*
+	 * First two bytes returned from read are command sent hence read
+	 * doesn't yield anything if the length is less than 3 bytes.
+	 */
+	if (len < 3)
+		return EC_ERROR_INVAL;
+
+	/* Send manufacturer access command by the SMB block protocol */
+	rv = sb_write_block(block, operation_status, sizeof(operation_status));
+	if (rv)
+		return rv;
+
+	/*
+	 * Read data on the register block.
+	 * First two bytes returned are command sent,
+	 * rest are actual data LSB to MSB.
+	 */
+	rv = sb_read_sized_block(block, data, len);
+	if (rv)
+		return rv;
+	if ((data[0] | data[1] << 8) != cmd)
+		return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
+}
+
 int sb_write_block(int reg, const uint8_t *val, int len)
 {
 	uint16_t addr_flags = BATTERY_ADDR_FLAGS;
@@ -157,8 +224,7 @@ int sb_write_block(int reg, const uint8_t *val, int len)
 		return EC_RES_ACCESS_DENIED;
 #endif
 
-	if (battery_supports_pec())
-		addr_flags |= I2C_FLAG_PEC;
+	ADDR_FLAGS_FOR_PEC(&addr_flags);
 
 	/* TODO: implement smbus_write_block. */
 	return i2c_write_block(I2C_PORT_BATTERY, addr_flags, reg, val, len);
@@ -394,6 +460,34 @@ static void apply_fake_state_of_charge(struct batt_params *batt)
 	batt->flags &= ~BATT_FLAG_BAD_REMAINING_CAPACITY;
 }
 
+static bool battery_want_charge(struct batt_params *batt)
+{
+	if (batt->flags &
+	    (BATT_FLAG_BAD_DESIRED_VOLTAGE | BATT_FLAG_BAD_DESIRED_CURRENT |
+	     BATT_FLAG_BAD_STATE_OF_CHARGE))
+		return false;
+
+	/*
+	 * Charging allowed if both desired voltage and current are nonzero
+	 * and battery isn't full (and we read them all correctly).
+	 */
+	if (batt->desired_voltage && batt->desired_current &&
+	    batt->state_of_charge < BATTERY_LEVEL_FULL)
+		return true;
+
+	/*
+	 * TODO (crosbug.com/p/29467): remove this workaround for dead battery
+	 * that requests no voltage/current
+	 */
+	if (IS_ENABLED(CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD)) {
+		if (batt->desired_voltage == 0 && batt->desired_current == 0 &&
+		    batt->state_of_charge == 0)
+			return true;
+	}
+
+	return false;
+}
+
 void battery_get_params(struct batt_params *batt)
 {
 	struct batt_params batt_new;
@@ -405,7 +499,7 @@ void battery_get_params(struct batt_params *batt)
 	 * will be preserved.
 	 */
 	memcpy(&batt_new, batt, sizeof(*batt));
-	batt_new.flags = 0;
+	batt_new.flags &= ~BATT_FLAG_VOLATILE;
 
 	if (sb_read(SB_TEMPERATURE, &batt_new.temperature) &&
 	    fake_temperature < 0)
@@ -430,6 +524,7 @@ void battery_get_params(struct batt_params *batt)
 
 	if (sb_read(SB_AVERAGE_CURRENT, &v))
 		batt_new.flags |= BATT_FLAG_BAD_AVERAGE_CURRENT;
+
 	if (sb_read(SB_CHARGING_VOLTAGE, &batt_new.desired_voltage))
 		batt_new.flags |= BATT_FLAG_BAD_DESIRED_VOLTAGE;
 
@@ -466,26 +561,7 @@ void battery_get_params(struct batt_params *batt)
 		batt_new.is_present = BP_NOT_SURE;
 #endif
 
-	/*
-	 * Charging allowed if both desired voltage and current are nonzero
-	 * and battery isn't full (and we read them all correctly).
-	 */
-	if (!(batt_new.flags &
-	      (BATT_FLAG_BAD_DESIRED_VOLTAGE | BATT_FLAG_BAD_DESIRED_CURRENT |
-	       BATT_FLAG_BAD_STATE_OF_CHARGE)) &&
-#ifdef CONFIG_BATTERY_REQUESTS_NIL_WHEN_DEAD
-	    /*
-	     * TODO (crosbug.com/p/29467): remove this workaround
-	     * for dead battery that requests no voltage/current
-	     */
-	    ((batt_new.desired_voltage && batt_new.desired_current &&
-	      batt_new.state_of_charge < BATTERY_LEVEL_FULL) ||
-	     (batt_new.desired_voltage == 0 && batt_new.desired_current == 0 &&
-	      batt_new.state_of_charge == 0)))
-#else
-	    batt_new.desired_voltage && batt_new.desired_current &&
-	    batt_new.state_of_charge < BATTERY_LEVEL_FULL)
-#endif
+	if (battery_want_charge(&batt_new))
 		batt_new.flags |= BATT_FLAG_WANT_CHARGE;
 	else
 		/* Force both to zero */
@@ -514,14 +590,25 @@ int battery_wait_for_stable(void)
 		BATTERY_NO_RESPONSE_TIMEOUT);
 	while (get_time().val < wait_timeout) {
 		/* Starting pinging battery */
-		if (battery_status(&status) == EC_SUCCESS) {
-			/* Battery is stable */
-			CPRINTS("battery responded with status %x", status);
-			return EC_SUCCESS;
+		if (battery_status(&status) != EC_SUCCESS) {
+			msleep(25); /* clock stretching could hold 25ms */
+			continue;
 		}
-		msleep(25); /* clock stretching could hold 25ms */
+
+#ifdef CONFIG_BATTERY_STBL_STAT
+		if (((status & CONFIG_BATT_ALARM_MASK1) ==
+		     CONFIG_BATT_ALARM_MASK1) ||
+		    ((status & CONFIG_BATT_ALARM_MASK2) ==
+		     CONFIG_BATT_ALARM_MASK2)) {
+			msleep(25);
+			continue;
+		}
+#endif
+		/* Battery is stable */
+		CPRINTS("battery responded with status %x", status);
+		return EC_SUCCESS;
 	}
-	CPRINTS("battery not responding");
+	CPRINTS("battery not responding with status %x", status);
 	return EC_ERROR_NOT_POWERED;
 }
 
@@ -616,80 +703,6 @@ DECLARE_CONSOLE_COMMAND(battmfgacc, command_batt_mfg_access_read,
 			"cmd block | len",
 			"Read battery manufacture access data");
 #endif /* CONFIG_CMD_BATT_MFG_ACCESS */
-
-/*****************************************************************************/
-/* Smart battery pass-through
- */
-#ifdef CONFIG_SB_PASSTHROUGH
-static enum ec_status
-host_command_sb_read_word(struct host_cmd_handler_args *args)
-{
-	int rv;
-	int val;
-	const struct ec_params_sb_rd *p = args->params;
-	struct ec_response_sb_rd_word *r = args->response;
-
-	if (p->reg > 0x1c)
-		return EC_RES_INVALID_PARAM;
-	rv = sb_read(p->reg, &val);
-	if (rv)
-		return EC_RES_ERROR;
-
-	r->value = val;
-	args->response_size = sizeof(struct ec_response_sb_rd_word);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_SB_READ_WORD, host_command_sb_read_word,
-		     EC_VER_MASK(0));
-
-static enum ec_status
-host_command_sb_write_word(struct host_cmd_handler_args *args)
-{
-	int rv;
-	const struct ec_params_sb_wr_word *p = args->params;
-
-	if (p->reg > 0x1c)
-		return EC_RES_INVALID_PARAM;
-	rv = sb_write(p->reg, p->value);
-	if (rv)
-		return EC_RES_ERROR;
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_SB_WRITE_WORD, host_command_sb_write_word,
-		     EC_VER_MASK(0));
-
-static enum ec_status
-host_command_sb_read_block(struct host_cmd_handler_args *args)
-{
-	int rv;
-	const struct ec_params_sb_rd *p = args->params;
-	struct ec_response_sb_rd_block *r = args->response;
-
-	if ((p->reg != SB_MANUFACTURER_NAME) && (p->reg != SB_DEVICE_NAME) &&
-	    (p->reg != SB_DEVICE_CHEMISTRY) && (p->reg != SB_MANUFACTURER_DATA))
-		return EC_RES_INVALID_PARAM;
-	rv = sb_read_string(p->reg, r->data, 32);
-	if (rv)
-		return EC_RES_ERROR;
-
-	args->response_size = sizeof(struct ec_response_sb_rd_block);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_SB_READ_BLOCK, host_command_sb_read_block,
-		     EC_VER_MASK(0));
-
-static enum ec_status
-host_command_sb_write_block(struct host_cmd_handler_args *args)
-{
-	/* Not implemented */
-	return EC_RES_INVALID_COMMAND;
-}
-DECLARE_HOST_COMMAND(EC_CMD_SB_WRITE_BLOCK, host_command_sb_write_block,
-		     EC_VER_MASK(0));
-#endif
 
 #ifdef CONFIG_CMD_I2C_STRESS_TEST_BATTERY
 test_mockable int sb_i2c_test_read(int cmd, int *param)

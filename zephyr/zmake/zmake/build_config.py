@@ -37,6 +37,24 @@ class BuildConfig:
 
         self.kconfig_files = _remove_duplicate_paths(kconfig_files or [])
 
+    @classmethod
+    def from_args(cls, args):
+        """Convert CLI arguments (from -D) to a build config.
+
+        Args:
+            args: The command line arguments to parse.
+
+        Returns:
+            A BuildConfig.
+        """
+        defs_dict = {}
+        for arg in args:
+            key, sep, value = arg.partition("=")
+            if not sep:
+                value = "1"
+            defs_dict[key] = value
+        return cls(cmake_defs=defs_dict)
+
     def popen_cmake(
         self,
         jobclient: zmake.jobserver.JobClient,
@@ -79,7 +97,7 @@ class BuildConfig:
 
         return jobclient.popen(
             [
-                "/usr/bin/cmake",
+                util.get_tool_path("cmake"),
                 "-S",
                 project_dir,
                 "-B",

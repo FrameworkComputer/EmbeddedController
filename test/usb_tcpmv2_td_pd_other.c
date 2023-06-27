@@ -8,9 +8,9 @@
 #include "tcpm/tcpci.h"
 #include "test_util.h"
 #include "timer.h"
-#include "usb_tcpmv2_compliance.h"
-#include "usb_tc_sm.h"
 #include "usb_prl_sm.h"
+#include "usb_tc_sm.h"
+#include "usb_tcpmv2_compliance.h"
 
 int test_connect_as_nonpd_sink(void)
 {

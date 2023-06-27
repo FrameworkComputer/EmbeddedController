@@ -8,9 +8,9 @@
 #include "clock.h"
 #include "common.h"
 #include "powerdemo.h"
+#include "registers.h"
 #include "task.h"
 #include "timer.h"
-#include "registers.h"
 
 static volatile enum {
 	POWER_STATE_IDLE = 0, /* Idle */

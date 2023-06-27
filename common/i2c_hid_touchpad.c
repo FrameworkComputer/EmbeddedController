@@ -3,10 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include "i2c_hid_touchpad.h"
-
 #include "console.h"
 #include "hwtimer.h"
+#include "i2c_hid_touchpad.h"
 #include "util.h"
 
 /* 2 bytes for length + 1 byte for report ID */

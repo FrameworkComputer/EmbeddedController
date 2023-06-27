@@ -22,14 +22,15 @@
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "registers.h"
+#include "shi_chip.h"
 #include "switch.h"
 #include "temp_sensor.h"
 #include "temp_sensor_chip.h"
-#include "timer.h"
 #include "thermal.h"
+#include "timer.h"
 #include "util.h"
-#include "shi_chip.h"
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /******************************************************************************/

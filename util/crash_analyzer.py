@@ -10,6 +10,7 @@ import pathlib
 import re
 import sys
 
+
 # TODO(b/253492108): Add regexp for missing architectures.
 # Regex tested here: https://regex101.com/r/K5S8cB/1
 _REGEX_CORTEX_M0 = (
@@ -124,6 +125,17 @@ def cm0_parse(match) -> dict:
     regs["ipsr"] = values[22]
 
     regs["cause"] = get_crash_cause(values[6])  # r4
+
+    # When CONFIG_DEBUG_STACK_OVERFLOW is enabled, the task number for a stack
+    # overflow is saved in R5.
+    if regs["cause"] == "stack-overflow":
+        regs["task"] = values[7]  # r5
+
+    # based on crash reports in case of asserrt the PC is in R3
+    if regs["cause"] == "assert":
+        regs["symbol"] = get_symbol(values[5])  # r3
+        return regs
+
     # Heuristics: try link register, then PC, then what is believed to be PC.
     # When analyzing watchdogs, we try to be as close as possible to the caller
     # function that caused the watchdog.
@@ -230,7 +242,7 @@ def process_log_file(file_name: str) -> tuple:
     ec_ver = None
     bios_ver = None
     try:
-        with open(file_name, "r") as log_file:
+        with open(file_name, "r", encoding="ascii") as log_file:
             lines = log_file.readlines()
             for line in lines:
                 # Searching for something like:
@@ -271,7 +283,7 @@ def process_log_file(file_name: str) -> tuple:
 def process_crash_file(filename: str) -> dict:
     """Process a single crash report, and convert it to a dictionary"""
 
-    with open(filename, "r") as crash_file:
+    with open(filename, "r", encoding="ascii") as crash_file:
         content = crash_file.read()
 
         for key, arch in get_architectures().items():

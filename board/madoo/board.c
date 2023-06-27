@@ -9,7 +9,7 @@
 #include "button.h"
 #include "cbi_fw_config.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
 #include "common.h"
@@ -28,8 +28,8 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "keyboard_scan.h"
 #include "keyboard_8042_sharedlib.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
 #include "motion_sense.h"
 #include "power.h"
@@ -129,6 +129,7 @@ static void c0_ccsbu_ovp_interrupt(enum gpio_signal s)
 	pd_handle_cc_overvoltage(0);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* ADC channels */
@@ -310,20 +311,6 @@ int board_set_active_charge_port(int port)
 	charger_discharge_on_ac(0);
 
 	return EC_SUCCESS;
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
-
-	/*
-	 * b/147463641: The charger IC seems to overdraw ~4%, therefore we
-	 reduce
-	 * our target accordingly.
-	 */
-	icl = icl * 96 / 100;
-	charge_set_input_current_limit(icl, charge_mv);
 }
 
 __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)

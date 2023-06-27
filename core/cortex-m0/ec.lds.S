@@ -155,6 +155,12 @@ SECTIONS
 		KEEP(*(.rodata.HOOK_TABLET_MODE_CHANGE))
 		__hooks_tablet_mode_change_end = .;
 
+#ifdef CONFIG_BODY_DETECTION
+		__hooks_body_detect_change = .;
+		KEEP(*(.rodata.HOOK_BODY_DETECT_CHANGE))
+		__hooks_body_detect_change_end = .;
+#endif
+
 		__hooks_base_attached_change = .;
 		KEEP(*(.rodata.HOOK_BASE_ATTACHED_CHANGE))
 		__hooks_base_attached_change_end = .;
@@ -295,12 +301,6 @@ SECTIONS
 		__data_end = .;
 
 		/*
-		 * _sbrk in newlib expects "end" symbol to point to start of
-		 * free memory.
-		 */
-		end = .;
-
-		/*
 		 * Shared memory buffer must be at the end of preallocated
 		 * RAM, so it can expand to use all the remaining RAM.
 		 */
@@ -315,6 +315,17 @@ SECTIONS
 
 	__ram_free = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE) -
 		     (__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
+
+	/*
+	 * Relocations are not supported, so make sure that there is no GOT
+	 * section. See http://issuetracker.google.com/234507656#comment15.
+	 */
+	.got (NOLOAD) :
+	{
+		KEEP(*(.got*));
+	}
+	ASSERT(SIZEOF(.got) == 0, "GOT section found, but not supported.\
+ Make sure that all code is compiled without -fPIC.")
 
 	/*
 	 * __flash_used and __flash_size is used in flash free calculations by

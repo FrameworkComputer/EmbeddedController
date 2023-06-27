@@ -8,7 +8,6 @@
  * early. e.g. CONFIG_FPU, which is needed in math_util.h.
  */
 #include "common.h"
-
 #include "mat33.h"
 #include "mat44.h"
 #include "math.h"

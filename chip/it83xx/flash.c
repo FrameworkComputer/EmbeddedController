@@ -9,13 +9,13 @@
 #include "flash_chip.h"
 #include "host_command.h"
 #include "intc.h"
+#include "registers.h"
+#include "shared_mem.h"
 #include "system.h"
+#include "task.h"
+#include "uart.h"
 #include "util.h"
 #include "watchdog.h"
-#include "registers.h"
-#include "task.h"
-#include "shared_mem.h"
-#include "uart.h"
 
 #define FLASH_DMA_START ((uint32_t)&__flash_dma_start)
 #define FLASH_DMA_CODE __attribute__((section(".flash_direct_map")))

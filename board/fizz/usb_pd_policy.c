@@ -4,12 +4,12 @@
  */
 
 #include "atomic.h"
-#include "extpower.h"
 #include "charge_manager.h"
 #include "common.h"
 #include "console.h"
 #include "driver/tcpm/anx74xx.h"
 #include "driver/tcpm/ps8xxx.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -17,11 +17,11 @@
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "util.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_pdo.h"
 #include "usb_pd_tcpm.h"
+#include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
@@ -59,19 +59,6 @@ void pd_power_supply_reset(int port)
 int pd_snk_is_vbus_provided(int port)
 {
 	return !gpio_get_level(GPIO_USB_C0_VBUS_WAKE_L);
-}
-
-__override int pd_check_power_swap(int port)
-{
-	/* If type-c port is supplying power, we never swap PR (to source) */
-	if (port == charge_manager_get_active_charge_port())
-		return 0;
-	/*
-	 * Allow power swap as long as we are acting as a dual role device,
-	 * otherwise assume our role is fixed (not in S0 or console command
-	 * to fix our role).
-	 */
-	return pd_get_dual_role(port) == PD_DRP_TOGGLE_ON ? 1 : 0;
 }
 
 int pd_check_vconn_swap(int port)

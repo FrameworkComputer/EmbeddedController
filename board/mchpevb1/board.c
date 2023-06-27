@@ -12,6 +12,7 @@
 
 #include "adc.h"
 #include "als.h"
+#include "battery_smart.h"
 #include "bd99992gw.h"
 #include "button.h"
 #include "charge_manager.h"
@@ -19,24 +20,24 @@
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
-#include "driver/als_opt3001.h"
 #include "driver/accel_kionix.h"
 #include "driver/accel_kx022.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "driver/als_opt3001.h"
 #include "driver/tcpm/tcpci.h"
+#include "espi.h"
 #include "extpower.h"
-#include "gpio_chip.h"
 #include "gpio.h"
+#include "gpio_chip.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
-#include "espi.h"
-#include "lpc_chip.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "lpc_chip.h"
 #include "math_util.h"
-#include "motion_sense.h"
 #include "motion_lid.h"
+#include "motion_sense.h"
 #include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
@@ -53,8 +54,6 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
-#include "espi.h"
-#include "battery_smart.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
@@ -206,6 +205,7 @@ void tablet_mode_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&enable_input_devices_data, 0);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* ADC channels
@@ -589,21 +589,6 @@ int board_set_active_charge_port(int charge_port)
 	}
 
 	return EC_SUCCESS;
-}
-
-/**
- * Set the charge limit based upon desired maximum.
- *
- * @param port          Port number.
- * @param supplier      Charge supplier type.
- * @param charge_ma     Desired charge limit (mA).
- * @param charge_mv     Negotiated charge voltage (mV).
- */
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 #endif
 

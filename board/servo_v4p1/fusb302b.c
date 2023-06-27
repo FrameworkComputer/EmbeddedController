@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include "i2c.h"
 #include "fusb302b.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "ioexpanders.h"
-#include "util.h"
 #include "task.h"
 #include "time.h"
 #include "usb_pd.h"
+#include "util.h"
 
 static int port;
 static int status0;

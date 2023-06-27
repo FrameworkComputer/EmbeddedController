@@ -12,8 +12,8 @@
 #include "pwm.h"
 #include "pwm_chip.h"
 #include "registers.h"
-#include "util.h"
 #include "tfdp_chip.h"
+#include "util.h"
 
 #define CPUTS(outstr) cputs(CC_PWM, outstr)
 #define CPRINTS(format, args...) cprints(CC_PWM, format, ##args)

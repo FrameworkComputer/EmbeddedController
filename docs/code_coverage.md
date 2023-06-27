@@ -5,6 +5,12 @@ tests in the EC codebase.
 
 [TOC]
 
+## Test Coverage Requirements
+
+All changes to the EC code base require you include tests covering at least 80%
+of any new or changed lines of code. Refer to the [ChromeOS EC Firmware Test
+Requirements] for details.
+
 ## Availability
 
 Code coverage is only available for host-based unit tests, as opposed to manual
@@ -79,11 +85,12 @@ genhtml -q -s --branch-coverage -o build/zephyr/coverage_rpt/ \
 The coverage report top-level page is
 `build/zephyr/coverage_rpt/index.html`.
 
-For coverage report for a single test you can run:
-`./twister -v -i --coverage -p native_posix -p unit_testing -s <pathToTest>/<testName>`
+For coverage report for a single test you can run: `./twister -v -i --coverage
+-p native_posix -p unit_testing -s <testDir>/<testName>`
 
-Example of running test tasks.default from zephyr/test/tasks/testcase.yaml:
-`./twister -v -i --coverage -p native_posix -p unit_testing -s zephyr/test/tasks/tasks.default`
+Example of running test `tasks.default` from `zephyr/test/tasks/testcase.yaml`:
+`./twister -v -i --coverage -p native_posix -p unit_testing -s
+tasks/tasks.default`
 
 ## Code Coverage in CQ
 
@@ -148,3 +155,5 @@ and click on the latest successful build.
 ![LUCI post-submit screenshot](images/postsubmit.png)
 
 From there, it is exactly the same steps as above to get to the artifacts.
+
+[ChromeOS EC Firmware Test Requirements]: ./chromeos-ec-firmware-test-requirements.md

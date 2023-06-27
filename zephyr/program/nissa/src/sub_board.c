@@ -5,26 +5,105 @@
 
 /* Nissa sub-board hardware configuration */
 
-#include <ap_power/ap_power.h>
+#include "cros_board_info.h"
+#include "cros_cbi.h"
+#include "driver/tcpm/tcpci.h"
+#include "gpio/gpio_int.h"
+#include "hooks.h"
+#include "nissa_hdmi.h"
+#include "nissa_sub_board.h"
+#include "task.h"
+#include "usb_charge.h"
+#include "usb_mux.h"
+#include "usb_pd.h"
+#include "usbc/usb_muxes.h"
+
 #include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/pinctrl.h>
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
 #include <zephyr/sys/printk.h>
 
-#include "cros_board_info.h"
-#include "driver/tcpm/tcpci.h"
-#include "gpio/gpio_int.h"
-#include "hooks.h"
-#include "usb_charge.h"
-#include "usb_pd.h"
-#include "usbc/usb_muxes.h"
-#include "task.h"
-
-#include "nissa_common.h"
-#include "nissa_hdmi.h"
+#include <ap_power/ap_power.h>
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
+
+static uint8_t cached_usb_pd_port_count;
+
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	__ASSERT(cached_usb_pd_port_count != 0,
+		 "sub-board detection did not run before a port count request");
+	if (cached_usb_pd_port_count == 0)
+		LOG_WRN("USB PD Port count not initialized!");
+	return cached_usb_pd_port_count;
+}
+
+test_export_static enum nissa_sub_board_type nissa_cached_sub_board =
+	NISSA_SB_UNKNOWN;
+/*
+ * Retrieve sub-board type from FW_CONFIG.
+ */
+enum nissa_sub_board_type nissa_get_sb_type(void)
+{
+	int ret;
+	uint32_t val;
+
+	/*
+	 * Return cached value.
+	 */
+	if (nissa_cached_sub_board != NISSA_SB_UNKNOWN)
+		return nissa_cached_sub_board;
+
+	nissa_cached_sub_board = NISSA_SB_NONE; /* Defaults to none */
+	ret = cros_cbi_get_fw_config(FW_SUB_BOARD, &val);
+	if (ret != 0) {
+		LOG_WRN("Error retrieving CBI FW_CONFIG field %d",
+			FW_SUB_BOARD);
+		return nissa_cached_sub_board;
+	}
+	switch (val) {
+	default:
+		LOG_WRN("No sub-board defined");
+		break;
+	case FW_SUB_BOARD_1:
+		nissa_cached_sub_board = NISSA_SB_C_A;
+		LOG_INF("SB: USB type C, USB type A");
+		break;
+
+	case FW_SUB_BOARD_2:
+		nissa_cached_sub_board = NISSA_SB_C_LTE;
+		LOG_INF("SB: USB type C, WWAN LTE");
+		break;
+
+	case FW_SUB_BOARD_3:
+		nissa_cached_sub_board = NISSA_SB_HDMI_A;
+		LOG_INF("SB: HDMI, USB type A");
+		break;
+	}
+	return nissa_cached_sub_board;
+}
+
+/*
+ * Initialise the USB PD port count, which
+ * depends on which sub-board is attached.
+ */
+test_export_static void board_usb_pd_count_init(void)
+{
+	switch (nissa_get_sb_type()) {
+	default:
+		cached_usb_pd_port_count = 1;
+		break;
+
+	case NISSA_SB_C_A:
+	case NISSA_SB_C_LTE:
+		cached_usb_pd_port_count = 2;
+		break;
+	}
+}
+/*
+ * Make sure setup is done after EEPROM is readable.
+ */
+DECLARE_HOOK(HOOK_INIT, board_usb_pd_count_init, HOOK_PRIO_INIT_I2C);
 
 #if NISSA_BOARD_HAS_HDMI_SUPPORT
 static void hdmi_power_handler(struct ap_power_ev_callback *cb,
@@ -102,6 +181,7 @@ __overridable void nissa_configure_hdmi_power_gpios(void)
  */
 #define I2C4_NODE DT_NODELABEL(i2c4)
 #if DT_NODE_EXISTS(I2C4_NODE)
+#include <zephyr/drivers/pinctrl.h>
 PINCTRL_DT_DEFINE(I2C4_NODE);
 
 /* disable i2c4 alternate function  */
@@ -149,6 +229,9 @@ static void nereid_subboard_config(void)
 	enum nissa_sub_board_type sb = nissa_get_sb_type();
 	static struct ap_power_ev_callback power_cb;
 
+#if USB_PORT_ENABLE_COUNT > 1
+	BUILD_ASSERT(USB_PORT_ENABLE_COUNT == 2,
+		     "Nissa assumes no more than 2 USB-A ports");
 	/*
 	 * USB-A port: current limit output is configured by default and unused
 	 * if this port is not present. VBUS enable must be configured if
@@ -173,10 +256,9 @@ static void nereid_subboard_config(void)
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus),
 				      GPIO_DISCONNECTED);
 		/* Disable second USB-A port enable GPIO */
-		__ASSERT(USB_PORT_ENABLE_COUNT == 2,
-			 "USB A port count != 2 (%d)", USB_PORT_ENABLE_COUNT);
 		usb_port_enable[1] = -1;
 	}
+#endif
 	/*
 	 * USB-C port: the default configuration has I2C on the I2C pins,
 	 * but the interrupt line needs to be configured.
@@ -286,13 +368,3 @@ static void board_init(void)
 #endif
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
-
-/* Trigger shutdown by enabling the Z-sleep circuit */
-__override void board_hibernate_late(void)
-{
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_slp_z), 1);
-	/*
-	 * The system should hibernate, but there may be
-	 * a small delay, so return.
-	 */
-}

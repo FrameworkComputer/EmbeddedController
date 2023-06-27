@@ -1,0 +1,15 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_OVIS
+	bool "Google Ovis Baseboard"
+	help
+	  Build Google Ovis reference board.  The board uses Nuvoton
+	  NPCX9 chip as the EC.
+
+module = OVIS
+module-str = Ovis board-specific code
+source "subsys/logging/Kconfig.template.log_config"
+
+source "Kconfig.zephyr"

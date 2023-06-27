@@ -14,8 +14,8 @@
 #include "driver/ppc/syv682x.h"
 #include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
-#include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/rt1715.h"
+#include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tusb422.h"
 #include "extpower.h"
 #include "fan.h"
@@ -30,8 +30,8 @@
 #include "pwm_chip.h"
 #include "switch.h"
 #include "system.h"
-#include "task.h"
 #include "tablet_mode.h"
+#include "task.h"
 #include "uart.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
@@ -39,7 +39,8 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ##args)

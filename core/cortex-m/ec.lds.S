@@ -275,6 +275,12 @@ SECTIONS
 		KEEP(*(.rodata.HOOK_TABLET_MODE_CHANGE))
 		__hooks_tablet_mode_change_end = .;
 
+#ifdef CONFIG_BODY_DETECTION
+		__hooks_body_detect_change = .;
+		KEEP(*(.rodata.HOOK_BODY_DETECT_CHANGE))
+		__hooks_body_detect_change_end = .;
+#endif
+
 		__hooks_base_attached_change = .;
 		KEEP(*(.rodata.HOOK_BASE_ATTACHED_CHANGE))
 		__hooks_base_attached_change_end = .;
@@ -352,7 +358,9 @@ SECTIONS
 		 * https://developer.arm.com/documentation/dui0475/c/the-arm-c-and-c---libraries/c---initialization--construction-and-destruction
 		 */
 		. = ALIGN(4);
+		__init_array_start = .;
 		*(.init_array*)
+		__init_array_end = .;
 
 		/*
 		 * Empty C++ exception index table. The exception index
@@ -374,12 +382,32 @@ SECTIONS
  * TODO(b/202863352): Unify clang and gcc behavior.
  */
 #ifdef __clang__
+#if defined(SECTION_IS_RO) && defined(NPCX_RO_HEADER)
+	__data_lma_start = LOADADDR(.data) - SIZEOF(.header);
+#else
 	__data_lma_start = LOADADDR(.data);
+#endif
 #else
 	__data_lma_start = .;
 #endif
 	#define INIT_ROM_LMA	ORIGIN(ROM_RESIDENT_VMA)
 #endif
+
+	/*
+	 * This SRAM section is not used by common/ or chip/stm32/, but
+	 * available if particular boards want to move the vector table
+	 * into SRAM for performance or mutability.
+	 */
+	.vtable : {
+		/*
+		 * Vector table must be at the base of SRAM. The vector
+		 * table section contains a RAM copy of the vector table used on
+		 * STM chips for relocating the vector table.
+		 */
+		. = ALIGN(8);
+		*(.bss.vector_table)
+		. = ALIGN(8);
+	} > IRAM
 
 #ifdef CONFIG_PRESERVE_LOGS
 	.preserve_logs(NOLOAD) : {
@@ -476,12 +504,6 @@ SECTIONS
 		__data_end = .;
 
 		/*
-		 * _sbrk in newlib expects "end" symbol to point to start of
-		 * free memory.
-		 */
-		end = .;
-
-		/*
 		 * Shared memory buffer must be at the end of preallocated
 		 * RAM, so it can expand to use all the remaining RAM.
 		 */
@@ -496,6 +518,17 @@ SECTIONS
 
 	__ram_free = (CONFIG_RAM_BASE + CONFIG_RAM_SIZE) -
 		     (__shared_mem_buf + CONFIG_SHAREDMEM_MINIMUM_SIZE);
+
+	/*
+	 * Relocations are not supported, so make sure that there is no GOT
+	 * section. See http://issuetracker.google.com/234507656#comment15.
+	 */
+	.got (NOLOAD) :
+	{
+		KEEP(*(.got*));
+	}
+	ASSERT(SIZEOF(.got) == 0, "GOT section found, but not supported.\
+ Make sure that all code is compiled without -fPIC.")
 
 #ifdef CONFIG_CHIP_DATA_IN_INIT_ROM
 	/*

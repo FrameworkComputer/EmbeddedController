@@ -656,15 +656,15 @@ struct stm32_spi_regs {
 	uint16_t _pad0;
 	uint16_t cr2;
 	uint16_t _pad1;
-	unsigned sr;
+	unsigned int sr;
 	uint8_t dr;
 	uint8_t _pad2;
 	uint16_t _pad3;
-	unsigned crcpr;
-	unsigned rxcrcr;
-	unsigned txcrcr;
-	unsigned i2scfgr; /* STM32L only */
-	unsigned i2spr; /* STM32L only */
+	unsigned int crcpr;
+	unsigned int rxcrcr;
+	unsigned int txcrcr;
+	unsigned int i2scfgr; /* STM32L only */
+	unsigned int i2spr; /* STM32L only */
 };
 /* Must be volatile, or compiler optimizes out repeated accesses */
 typedef volatile struct stm32_spi_regs stm32_spi_regs_t;

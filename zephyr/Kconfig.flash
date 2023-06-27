@@ -56,6 +56,7 @@ choice PLATFORM_EC_STORAGE_TYPE
        default PLATFORM_EC_EXTERNAL_STORAGE if SOC_FAMILY_NPCX
        default PLATFORM_EC_EXTERNAL_STORAGE if SOC_FAMILY_MEC
        default PLATFORM_EC_INTERNAL_STORAGE if SOC_FAMILY_RISCV_ITE
+       default PLATFORM_EC_INTERNAL_STORAGE if SOC_FAMILY_STM32
        help
          Sets the EC code storage type.
 
@@ -75,6 +76,13 @@ config PLATFORM_EC_INTERNAL_STORAGE
 	  i.e. code is being fetched directly from storage media.
 
 endchoice
+
+config PLATFORM_EC_RW_TOTAL_IMAGE_SIZE
+	hex
+	default $(dt_node_int_prop_hex,/binman/ec-rw,size)
+	help
+	  Total size of the EC RW image, including the 32-byte RW_FWID. The
+	  source of truth for this setting is the binman devicetree node.
 
 # Workaround for not being able to have commas in macro arguments
 DT_CHOSEN_CROS_FLASH := cros-ec,flash
@@ -120,5 +128,36 @@ config PLATFORM_EC_NPCX_FLASH_ERASE_SIZE
 	  The NPCX flash driver does not currently support CONFIG_FLASH_MULTIPLE_REGION,
 	  so set the erase size to the maximum (64 KiB) for the best performance.
 
+if PLATFORM_EC_FLASH_PSTATE
+
+config PLATFORM_EC_FLASH_PSTATE_BANK
+	bool "Store the pstate data in its own dedicated bank of flash"
+	default y
+	help
+	  Store the pstate data in its own dedicated bank of flash.  This allows
+	  disabling the protect-RO-at-boot flag without rewriting the RO
+	  firmware, but costs a bank of flash.
+
+	  If this is not defined, the pstate data is stored inside the RO
+	  firmware image itself.  This is more space-efficient, but the only way
+	  to clear the flag once it's set is to rewrite the RO firmware (after
+	  removing the WP screw, of course).
+
+config PLATFORM_EC_FLASH_PSTATE_LOCKED
+	bool "Lock the pstate by default"
+	depends on !PLATFORM_EC_FLASH_PSTATE_BANK
+	help
+	  Lock the pstate by default, Currently only supported when
+	  PLATFORM_EC_FLASH_PSTATE_BANK is not defined.
+
+endif # PLATFORM_EC_FLASH_PSTATE
+
+config PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT
+	bool "Use Zephyr flash page layout API to get sector information"
+	default y if SOC_FAMILY_STM32
+	select FLASH_PAGE_LAYOUT
+	help
+	  When enabled, EC will use flash page layout API to get information
+	  about flash sectors (index, offset, and size).
 
 endif # PLATFORM_EC_FLASH_CROS

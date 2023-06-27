@@ -1,0 +1,32 @@
+# Copyright 2023 The ChromiumOS Authors.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if SOC_FAMILY_STM32
+
+DT_CHOSEN_Z_SRAM := zephyr,sram
+
+config CROS_EC_PROGRAM_MEMORY_BASE
+	default FLASH_BASE_ADDRESS
+
+config CROS_EC_RAM_BASE
+	default SRAM_BASE_ADDRESS
+
+config CROS_EC_DATA_RAM_SIZE
+	default $(dt_chosen_reg_size_hex,$(DT_CHOSEN_Z_SRAM))
+
+config CROS_EC_RAM_SIZE
+	default $(dt_chosen_reg_size_hex,$(DT_CHOSEN_Z_SRAM))
+
+config CROS_EC_RO_MEM_OFF
+	default $(dt_node_int_prop_hex,/binman/wp-ro,offset)
+
+config CROS_EC_RW_MEM_OFF
+	default $(dt_node_int_prop_hex,/binman/ec-rw,offset)
+
+# Tell the linker where the RO/RW part is.
+config FLASH_LOAD_OFFSET
+	default CROS_EC_RO_MEM_OFF if CROS_EC_RO
+	default CROS_EC_RW_MEM_OFF if CROS_EC_RW
+
+endif # SOC_FAMILY_STM32

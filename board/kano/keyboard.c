@@ -4,7 +4,6 @@
  */
 
 #include "common.h"
-
 #include "ec_commands.h"
 #include "keyboard_scan.h"
 #include "timer.h"

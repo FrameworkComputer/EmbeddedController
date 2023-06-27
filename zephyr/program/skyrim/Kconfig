@@ -2,12 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-config BOARD_MORTHAL
-	bool "Google Morthal Board"
-	help
-	  Build Google Morthal reference board.  This board uses an AMD SoC
-	  and NPCX9 EC
-
 config BOARD_SKYRIM
 	bool "Google Skyrim Board"
 	help
@@ -26,11 +20,17 @@ config BOARD_FROSTFLOW
 	  Build Google Frostflow reference board.  This board uses an AMD SoC
 	  and NPCX9 EC
 
-config BOARD_INPUT_CURRENT_SCALE_FACTOR
-	int "Input current scale factor"
-	default 100
+config BOARD_CRYSTALDRIFT
+	bool "Google Crystaldrift Board"
 	help
-	  Limit input current to fraction of negotiated limit.
+	  Build Google Crystaldrift reference board.  This board uses an AMD SoC
+	  and NPCX9 EC
+
+config BOARD_MARKARTH
+	bool "Google Markarth Board"
+	help
+	  Build Google Markarth reference board.  This board uses an AMD SoC
+	  and NPCX9 EC
 
 config BOARD_USB_HUB_RESET
 	bool "Support USB hub reset or not"

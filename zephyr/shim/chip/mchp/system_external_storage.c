@@ -3,22 +3,21 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
-#include <zephyr/drivers/bbram.h>
-#include <soc.h>
-
+#include "bbram.h"
 #include "clock_chip.h"
 #include "common.h"
+#include "config_chip.h"
 #include "system.h"
 #include "system_chip.h"
-#include "config_chip.h"
+
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/bbram.h>
+
+#include <soc.h>
 
 #define MCHP_ECRO_WORD 0x4F524345u /* ASCII ECRO */
 #define MCHP_ECRW_WORD 0x57524345u /* ASCII ECRW */
 #define MCHP_PCR_NODE DT_INST(0, microchip_xec_pcr)
-
-#define GET_BBRAM_OFS(node) DT_PROP(DT_PATH(named_bbram_regions, node), offset)
-#define GET_BBRAM_SZ(node) DT_PROP(DT_PATH(named_bbram_regions, node), size)
 
 static const struct device *const bbram_dev =
 	COND_CODE_1(DT_HAS_CHOSEN(cros_ec_bbram),
@@ -86,8 +85,9 @@ enum ec_image system_get_shrspi_image_copy(void)
 	uint32_t value = 0u;
 
 	if (bbram_dev) {
-		if (!bbram_read(bbram_dev, GET_BBRAM_OFS(ec_img_load),
-				GET_BBRAM_SZ(ec_img_load), (uint8_t *)&value)) {
+		if (!bbram_read(bbram_dev, BBRAM_REGION_OFFSET(ec_img_load),
+				BBRAM_REGION_SIZE(ec_img_load),
+				(uint8_t *)&value)) {
 			img = (enum ec_image)(value & 0x7fu);
 		}
 	}
@@ -127,6 +127,6 @@ void system_set_image_copy(enum ec_image copy)
 		break;
 	}
 
-	bbram_write(bbram_dev, GET_BBRAM_OFS(ec_img_load),
-		    GET_BBRAM_SZ(ec_img_load), (uint8_t *)&value);
+	bbram_write(bbram_dev, BBRAM_REGION_OFFSET(ec_img_load),
+		    BBRAM_REGION_SIZE(ec_img_load), (uint8_t *)&value);
 }

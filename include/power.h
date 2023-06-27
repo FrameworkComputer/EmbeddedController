@@ -58,7 +58,9 @@ FORWARD_DECLARE_ENUM(power_state){
  * +------------------------------------------------------+
  * |       1         |    Signal interrupt state at boot  |
  * +------------------------------------------------------+
- * |     2 : 32      |            Reserved                |
+ * |       2         |     Do not log the signal change   |
+ * +------------------------------------------------------+
+ * |     3 : 32      |            Reserved                |
  * +-----------------+------------------------------------+
  */
 
@@ -68,6 +70,8 @@ FORWARD_DECLARE_ENUM(power_state){
 
 #define POWER_SIGNAL_INTR_STATE BIT(1)
 #define POWER_SIGNAL_DISABLE_AT_BOOT BIT(1)
+
+#define POWER_SIGNAL_NO_LOG BIT(2)
 
 /* Information on an power signal */
 struct power_signal_info {
@@ -216,6 +220,17 @@ static inline void power_signal_interrupt(enum gpio_signal signal)
 {
 }
 #endif /* !CONFIG_AP_POWER_CONTROL */
+
+/**
+ * Interrupt handler for pwrok signal. This interrupt handler should be used
+ * when there is a requirement to have minimum pass through delay between the
+ * pwrok coming to the EC and the pwrok that goes to the PCH for high->low
+ * transitions. Low->high transitions are still handled from within the chipset
+ * task power state machine.
+ *
+ * @param signal - The gpio signal that triggered the interrupt.
+ */
+void intel_x86_pwrok_signal_interrupt(enum gpio_signal signal);
 
 /**
  * Interrupt handler for rsmrst signal GPIO. This interrupt handler should be
@@ -399,6 +414,11 @@ void sleep_reset_tracking(void);
 void power_reset_host_sleep_state(void);
 #endif /* CONFIG_POWER_S0IX */
 #endif /* CONFIG_POWER_TRACK_HOST_SLEEP_STATE */
+
+#if defined(CONFIG_AP_PWRSEQ_S0IX_COUNTER) || \
+	defined(CONFIG_POWERSEQ_S0IX_COUNTER)
+extern atomic_t s0ix_counter;
+#endif
 
 /**
  * Board specific implementation to enable/disable the PP5000 rail.

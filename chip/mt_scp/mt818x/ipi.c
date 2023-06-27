@@ -24,13 +24,13 @@
 #include "console.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "hwtimer.h"
 #include "ipi_chip.h"
 #include "mkbp_event.h"
 #include "power.h"
 #include "system.h"
 #include "task.h"
 #include "util.h"
-#include "hwtimer.h"
 #include "video.h"
 
 #define CPRINTF(format, args...) cprintf(CC_IPI, format, ##args)

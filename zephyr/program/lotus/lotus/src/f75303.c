@@ -14,6 +14,15 @@
 #include "lotus/gpu.h"
 #include "console.h"
 
+#define F75303_SENSOR_ID_INTERNAL(node_id) DT_CAT(F75303_, node_id)
+#define F75303_SENSOR_ID_WITH_COMMA_INTERNAL(node_id) F75303_SENSOR_ID_INTERNAL(node_id),
+enum f75303_sensor_internal {
+        DT_FOREACH_STATUS_OKAY(F75303_COMPAT, F75303_SENSOR_ID_WITH_COMMA_INTERNAL)
+                F75303_COUNT,
+};
+#undef F75303_SENSOR_ID_WITH_COMMA_INTERNAL
+
+
 static int temps[F75303_COUNT];
 static int8_t fake_temp[F75303_COUNT] = { -1, -1, -1, -1, -1, -1};
 
@@ -39,7 +48,7 @@ static int get_temp(int sensor, const int offset, int *temp)
 	return EC_SUCCESS;
 }
 
-int f75303_get_val(int idx, int *temp)
+int f75303_get_val_k(int idx, int *temp)
 {
 	if (idx < 0 || F75303_COUNT <= idx)
 		return EC_ERROR_INVAL;
@@ -50,7 +59,7 @@ int f75303_get_val(int idx, int *temp)
 	}
 
 	if (!gpu_present() && (idx < 3))
-		*temp = C_TO_K(0);
+		*temp = 0;
 	else
 		*temp = temps[idx];
 	return EC_SUCCESS;
@@ -67,35 +76,35 @@ void f75303_update_temperature(int idx)
 	/* gpu_amb_f75303 */
 	case 0:
 		if (gpu_present())
-			rv = get_temp(idx, F75303_TEMP_LOCAL, &temp_reg);
+			rv = get_temp(idx, F75303_TEMP_LOCAL_REGISTER, &temp_reg);
 		else
 			rv = EC_ERROR_NOT_POWERED;
 		break;
 	/* gpu_vr_f75303 */
 	case 1:
 		if (gpu_present())
-			rv = get_temp(idx, F75303_TEMP_REMOTE1, &temp_reg);
+			rv = get_temp(idx, F75303_TEMP_REMOTE1_REGISTER, &temp_reg);
 		else
 			rv = EC_ERROR_NOT_POWERED;
 		break;
 	/* gpu_vram_f75303 */
 	case 2:
 		if (gpu_present())
-			rv = get_temp(idx, F75303_TEMP_REMOTE2, &temp_reg);
+			rv = get_temp(idx, F75303_TEMP_REMOTE2_REGISTER, &temp_reg);
 		else
 			rv = EC_ERROR_NOT_POWERED;
 		break;
 	/* local_f75303 */
 	case 3:
-		rv = get_temp(idx, F75303_TEMP_LOCAL, &temp_reg);
+		rv = get_temp(idx, F75303_TEMP_LOCAL_REGISTER, &temp_reg);
 		break;
 	/* ddr_f75303 */
 	case 4:
-		rv = get_temp(idx, F75303_TEMP_REMOTE1, &temp_reg);
+		rv = get_temp(idx, F75303_TEMP_REMOTE1_REGISTER, &temp_reg);
 		break;
 	/* cpu_f75303 */
 	case 5:
-		rv = get_temp(idx, F75303_TEMP_REMOTE2, &temp_reg);
+		rv = get_temp(idx, F75303_TEMP_REMOTE2_REGISTER, &temp_reg);
 		break;
 	}
 	if (rv == EC_SUCCESS)

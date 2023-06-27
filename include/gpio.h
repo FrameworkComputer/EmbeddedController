@@ -21,8 +21,9 @@
  */
 #ifdef CONFIG_ZEPHYR
 #include <zephyr/drivers/gpio.h>
-#include <zephyr/dt-bindings/gpio/nuvoton-npcx-gpio.h>
 #include <zephyr/dt-bindings/gpio/ite-it8xxx2-gpio.h>
+#include <zephyr/dt-bindings/gpio/nuvoton-npcx-gpio.h>
+
 #include <dt-bindings/native-posix-gpio.h>
 
 /*
@@ -90,6 +91,16 @@
 #define GPIO_SEL_1P8V GPIO_VOLTAGE_1P8
 #elif DT_HAS_COMPAT_STATUS_OKAY(zephyr_gpio_emul)
 #define GPIO_VOLTAGE_1P8 NATIVE_POSIX_GPIO_VOLTAGE_1P8
+#define GPIO_SEL_1P8V GPIO_VOLTAGE_1P8
+#elif DT_HAS_COMPAT_STATUS_OKAY(microchip_xec_gpio_v2)
+/*
+ * Add GPIO_VOLTAGE_1P8 and GPIO_SEL_1P8V used in common code.
+ * In MEC1727, GPIO_VOLTAGE_1P8 feature is not supported in GPIO control
+ * register, GPIO driver will skip this bit configuration, but MEC1727
+ * supports a group of GPIOs with 1.8V power rail, 1.8V design will be
+ * considered and supported in board circuit design state.
+ */
+#define GPIO_VOLTAGE_1P8 (1U << 11)
 #define GPIO_SEL_1P8V GPIO_VOLTAGE_1P8
 #endif
 /* GPIO_ALTERNATE          not supported by Zephyr */
@@ -389,6 +400,28 @@ int gpio_or_ioex_get_level(int signal, int *value);
 void gpio_reset(enum gpio_signal signal);
 
 #ifdef CONFIG_ZEPHYR
+
+/**
+ * @brief Save state of a GPIO controller port
+ *
+ * This function saves all pins current state from selected port.
+ *
+ * @param port	Port to save
+ * @param flags	Buffer to hold gpio flags
+ */
+int gpio_save_port_config(const struct device *port, gpio_flags_t *flags,
+			  int buff_size);
+
+/**
+ * @brief Restore state of a GPIO controller port
+ *
+ * This function restore all pins current state from selected port.
+ *
+ * @param port	Port to restore
+ * @param flags	Buffer with gpio flags saved by ioex_save_gpio_config
+ */
+int gpio_restore_port_config(const struct device *port, gpio_flags_t *flags,
+			     int buff_size);
 
 /**
  * @brief Reset all the GPIOs to default state

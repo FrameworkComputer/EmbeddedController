@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
+#include "cts_common.h"
 #include "gpio.h"
 #include "timer.h"
 #include "watchdog.h"
-#include "cts_common.h"
 
 /* Return SUCCESS if and only if we reach end of function
  * Returning success here means sync was successful

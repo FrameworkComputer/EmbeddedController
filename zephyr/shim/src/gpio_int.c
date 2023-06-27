@@ -3,18 +3,18 @@
  * found in the LICENSE file.
  */
 
+#ifdef __REQUIRE_ZEPHYR_GPIOS__
+#undef __REQUIRE_ZEPHYR_GPIOS__
+#endif
+#include "cros_version.h"
+#include "gpio.h"
+#include "gpio/gpio.h"
+#include "gpio/gpio_int.h"
+
 #include <zephyr/device.h>
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
-
-#ifdef __REQUIRE_ZEPHYR_GPIOS__
-#undef __REQUIRE_ZEPHYR_GPIOS__
-#endif
-#include "gpio.h"
-#include "gpio/gpio.h"
-#include "gpio/gpio_int.h"
-#include "cros_version.h"
 
 LOG_MODULE_REGISTER(gpio_int, LOG_LEVEL_ERR);
 
@@ -52,7 +52,7 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(cros_ec_gpio_interrupts) == 1,
 	extern void DT_STRING_TOKEN(id, handler)(enum gpio_signal);
 
 #if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_gpio_interrupts)
-DT_FOREACH_CHILD(DT_IRQ_NODE, INT_HANDLER_DECLARE)
+DT_FOREACH_CHILD_STATUS_OKAY(DT_IRQ_NODE, INT_HANDLER_DECLARE)
 #endif
 
 #undef INT_HANDLER_DECLARE
@@ -85,7 +85,7 @@ struct gpio_callback int_cb_data[GPIO_INT_COUNT];
  */
 static const struct gpio_int_config gpio_int_data[] = {
 
-	DT_FOREACH_CHILD(DT_IRQ_NODE, INT_CONFIG_FROM_NODE)
+	DT_FOREACH_CHILD_STATUS_OKAY(DT_IRQ_NODE, INT_CONFIG_FROM_NODE)
 };
 #endif
 
@@ -107,7 +107,7 @@ static const struct gpio_int_config gpio_int_data[] = {
 
 #if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_gpio_interrupts)
 
-DT_FOREACH_CHILD(DT_IRQ_NODE, INT_CONFIG_PTR_DECLARE)
+DT_FOREACH_CHILD_STATUS_OKAY(DT_IRQ_NODE, INT_CONFIG_PTR_DECLARE)
 
 #endif
 

@@ -7,15 +7,15 @@
 
 #include "common.h"
 #include "console.h"
-#include "nx20p348x.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "nx20p348x.h"
 #include "system.h"
 #include "tcpm/tcpm.h"
 #include "usb_charge.h"
-#include "usb_pd_tcpm.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -311,6 +311,7 @@ static int nx20p348x_init(int port)
 	/* Mask interrupts for interrupt 1 register */
 	mask = ~(NX20P348X_INT1_OC_5VSRC | NX20P348X_INT1_SC_5VSRC |
 		 NX20P348X_INT1_RCP_5VSRC | NX20P348X_INT1_DBEXIT_ERR);
+	mask &= ~NX20P3481_INT1_RESERVED;
 	if (IS_ENABLED(CONFIG_USBC_PPC_NX20P3481)) {
 		/* Unmask Fast Role Swap detect interrupt */
 		mask &= ~NX20P3481_INT1_FRS_DET;
@@ -409,7 +410,7 @@ static void nx20p348x_handle_interrupt(int port)
 		    NX20P348X_DB_EXIT_FAIL_THRESHOLD) {
 			ppc_prints("failed to exit DB mode", port);
 			if (read_reg(port, NX20P348X_INTERRUPT1_MASK_REG,
-				     &mask_reg)) {
+				     &mask_reg) == 0) {
 				mask_reg |= NX20P348X_INT1_DBEXIT_ERR;
 				write_reg(port, NX20P348X_INTERRUPT1_MASK_REG,
 					  mask_reg);
@@ -501,7 +502,6 @@ static int nx20p348x_dump(int port)
 	int reg;
 	int rv;
 
-	ccprintf("Port %d NX20P348X registers\n", port);
 	for (reg_addr = NX20P348X_DEVICE_ID_REG;
 	     reg_addr <= NX20P348X_DEVICE_CONTROL_REG; reg_addr++) {
 		rv = read_reg(port, reg_addr, &reg);

@@ -1,0 +1,14 @@
+common:
+  platform_allow: native_posix
+tests:
+  throttle_ap.interrupt.active_low:
+    extra_configs:
+      - CONFIG_PLATFORM_EC_POWERSEQ_CPU_PROCHOT_ACTIVE_LOW=n
+      - CONFIG_TEST_INTERRUPT=y
+  throttle_ap.interrupt.active_high:
+    extra_configs:
+      - CONFIG_PLATFORM_EC_POWERSEQ_CPU_PROCHOT_ACTIVE_LOW=y
+      - CONFIG_TEST_INTERRUPT=y
+  thottle_ap.throttle_ap:
+    extra_configs:
+      - CONFIG_TEST_THROTTLE_AP=y

@@ -8,6 +8,7 @@
 #ifndef __CROS_EC_DRIVER_ACCEL_LIS2DW12_PUBLIC_H
 #define __CROS_EC_DRIVER_ACCEL_LIS2DW12_PUBLIC_H
 
+#include "config.h"
 #include "gpio_signal.h"
 
 extern const struct accelgyro_drv lis2dw12_drv;

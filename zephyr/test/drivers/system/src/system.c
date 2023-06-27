@@ -3,19 +3,19 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/shell/shell_dummy.h>
-#include <zephyr/ztest.h>
-
 #include "ec_commands.h"
 #include "host_command.h"
+#include "mock/power.h"
 #include "panic.h"
 #include "system.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
-#include "mock/power.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/ztest.h>
 
 FAKE_VALUE_FUNC(int, system_run_image_copy_with_flags, enum ec_image, int);
 FAKE_VOID_FUNC(system_disable_jump);
@@ -26,12 +26,10 @@ FAKE_VOID_FUNC(jump_to_image, uintptr_t);
 ZTEST_USER(system, test_hostcmd_sysinfo)
 {
 	struct ec_response_sysinfo response;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_SYSINFO, 0, response);
+	struct host_cmd_handler_args args;
 
 	/* Simply issue the command and get the results */
-	zassert_ok(host_command_process(&args), NULL);
-	zassert_ok(args.result, NULL);
+	zassert_ok(ec_cmd_sysinfo(&args, &response), NULL);
 	zassert_equal(args.response_size, sizeof(response), NULL);
 	zassert_equal(response.reset_flags, 0, "response.reset_flags = %d",
 		      response.reset_flags);
@@ -100,11 +98,61 @@ ZTEST(system, test_system_common_pre_init__watch_dog_panic)
 	uint32_t info;
 	uint8_t exception;
 
+	/* Watchdog reset should result in any existing panic data being
+	 * overwritten
+	 */
+	panic_set_reason(PANIC_SW_DIV_ZERO, 0x12, 0x34);
+
 	/* Clear all reset flags and set them arbitrarily */
 	system_set_reset_flags(EC_RESET_FLAG_WATCHDOG);
 	system_common_pre_init();
 	panic_get_reason(&reason, &info, &exception);
 	zassert_equal(reason, PANIC_SW_WATCHDOG);
+	zassert_equal(info, 0);
+	zassert_equal(exception, 0);
+}
+
+ZTEST(system, test_system_common_pre_init__watch_dog_panic_already_initialized)
+{
+	uint32_t reason;
+	uint32_t info;
+	uint8_t exception;
+
+	/* Watchdog reset should not overwrite panic info if already filled
+	 * in with watchdog panic info that HAS NOT been read by host
+	 */
+	panic_set_reason(PANIC_SW_WATCHDOG, 0x12, 0x34);
+
+	/* Clear all reset flags and set them arbitrarily */
+	system_set_reset_flags(EC_RESET_FLAG_WATCHDOG);
+	system_common_pre_init();
+	panic_get_reason(&reason, &info, &exception);
+	zassert_equal(reason, PANIC_SW_WATCHDOG);
+	zassert_equal(info, 0x12);
+	zassert_equal(exception, 0x34);
+}
+
+ZTEST(system, test_system_common_pre_init__watch_dog_panic_already_read)
+{
+	uint32_t reason;
+	uint32_t info;
+	uint8_t exception;
+	struct panic_data *pdata;
+
+	/* Watchdog reset should overwrite panic info if already filled
+	 * in with watchdog panic info that HAS been read by host
+	 */
+	panic_set_reason(PANIC_SW_WATCHDOG, 0x12, 0x34);
+	pdata = get_panic_data_write();
+	pdata->flags |= PANIC_DATA_FLAG_OLD_HOSTCMD;
+
+	/* Clear all reset flags and set them arbitrarily */
+	system_set_reset_flags(EC_RESET_FLAG_WATCHDOG);
+	system_common_pre_init();
+	panic_get_reason(&reason, &info, &exception);
+	zassert_equal(reason, PANIC_SW_WATCHDOG);
+	zassert_equal(info, 0);
+	zassert_equal(exception, 0);
 }
 
 ZTEST(system, test_system_encode_save_flags)

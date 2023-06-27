@@ -5,8 +5,8 @@
 
 #include "base_state.h"
 #include "console.h"
-#include "host_command.h"
 #include "hooks.h"
+#include "host_command.h"
 
 #define CPRINTS(format, args...) cprints(CC_MOTION_LID, format, ##args)
 

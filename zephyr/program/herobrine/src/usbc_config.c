@@ -5,12 +5,10 @@
 
 /* Herobrine board-specific USB-C configuration */
 
-#include <zephyr/drivers/gpio.h>
-
-#include "charger.h"
-#include "charger/isl923x_public.h"
 #include "charge_manager.h"
 #include "charge_state.h"
+#include "charger.h"
+#include "charger/isl923x_public.h"
 #include "common.h"
 #include "config.h"
 #include "cros_board_info.h"
@@ -22,33 +20,16 @@
 #include "tcpm/ps8xxx_public.h"
 #include "tcpm/tcpci.h"
 #include "timer.h"
-#include "usb_pd.h"
 #include "usb_mux.h"
+#include "usb_pd.h"
+#include "usbc/ppc.h"
 #include "usbc_ocp.h"
 #include "usbc_ppc.h"
-#include "usbc/ppc.h"
+
+#include <zephyr/drivers/gpio.h>
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
-
-/* GPIO Interrupt Handlers */
-void tcpc_alert_event(enum gpio_signal signal)
-{
-	int port = -1;
-
-	switch (signal) {
-	case GPIO_USB_C0_PD_INT_ODL:
-		port = 0;
-		break;
-	case GPIO_USB_C1_PD_INT_ODL:
-		port = 1;
-		break;
-	default:
-		return;
-	}
-
-	schedule_deferred_pd_interrupt(port);
-}
 
 #ifdef CONFIG_PLATFORM_EC_USBA
 static void usba_oc_deferred(void)
@@ -82,6 +63,11 @@ void ppc_interrupt(enum gpio_signal signal)
 	}
 }
 
+__overridable int board_charger_profile_override(struct charge_state_data *curr)
+{
+	return EC_SUCCESS;
+}
+
 int charger_profile_override(struct charge_state_data *curr)
 {
 	int usb_mv;
@@ -104,6 +90,8 @@ int charger_profile_override(struct charge_state_data *curr)
 		for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++)
 			pd_set_external_voltage_limit(port, usb_mv);
 	}
+
+	board_charger_profile_override(curr);
 
 	return 0;
 }
@@ -142,10 +130,6 @@ void board_tcpc_init(void)
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_swctl));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_swctl));
 
-	/* Enable TCPC interrupts */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_pd));
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_pd));
-
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see
 	 * HPD pulse to enable video path
@@ -161,11 +145,11 @@ void board_reset_pd_mcu(void)
 	cprints(CC_USB, "Resetting TCPCs...");
 	cflush();
 
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l), 0);
+	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 1);
+	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 1);
 	msleep(PS8XXX_RESET_DELAY_MS);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l), 1);
+	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 0);
+	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 0);
 	msleep(PS8805_FW_INIT_DELAY_MS);
 }
 
@@ -249,8 +233,8 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	/*
 	 * Ignore lower charge ceiling on PD transition if our battery is
@@ -262,22 +246,5 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 		charge_ma = max_ma;
 	}
 
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
-}
-
-uint16_t tcpc_get_alert_status(void)
-{
-	uint16_t status = 0;
-
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_int_odl)))
-		if (gpio_pin_get_dt(
-			    GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l)))
-			status |= PD_STATUS_TCPC_ALERT_0;
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_int_odl)))
-		if (gpio_pin_get_dt(
-			    GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l)))
-			status |= PD_STATUS_TCPC_ALERT_1;
-
-	return status;
+	charge_set_input_current_limit(charge_ma, charge_mv);
 }

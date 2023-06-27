@@ -10,8 +10,6 @@
 
 #include "usb_mux.h"
 
-struct usb_mux;
-
 /* I2C interface */
 #define PS8XXX_I2C_ADDR1_P1_FLAGS 0x09
 #define PS8XXX_I2C_ADDR1_P2_FLAGS 0x0A

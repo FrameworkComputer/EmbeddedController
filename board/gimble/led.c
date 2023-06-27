@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-
 #include "charge_manager.h"
 #include "common.h"
 #include "compile_time_macros.h"
@@ -14,6 +12,8 @@
 #include "led_onoff_states.h"
 #include "pwm.h"
 #include "util.h"
+
+#include <stdint.h>
 
 #define BAT_LED_ON_LVL 100
 #define BAT_LED_OFF_LVL 0

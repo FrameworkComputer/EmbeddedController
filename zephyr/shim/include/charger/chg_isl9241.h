@@ -3,8 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/devicetree.h>
 #include "driver/charger/isl9241_public.h"
+
+#include <zephyr/devicetree.h>
 
 #define ISL9241_CHG_COMPAT intersil_isl9241
 

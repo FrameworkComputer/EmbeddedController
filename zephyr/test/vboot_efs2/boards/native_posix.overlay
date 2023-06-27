@@ -25,7 +25,7 @@
 			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
-			gpios = <&gpio0 4 GPIO_INPUT>;
+			gpios = <&gpio0 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		ec_batt_pres_odl {
 			gpios = <&gpio0 5 GPIO_INPUT>;
@@ -89,7 +89,7 @@
 			compatible = "cros,tcpci-generic-emul";
 			status = "okay";
 			reg = <0x82>;
-			alert_gpio = <&usb_c0_tcpc_int_odl>;
+			irq-gpios = <&gpio0 4 GPIO_ACTIVE_LOW>;
 		};
 	};
 	adc0: adc {
@@ -126,7 +126,7 @@
 
 &i2c0 {
 	battery: sb@b {
-		compatible = "zephyr,smart-battery";
+		compatible = "zephyr,smart-battery-emul";
 		reg = <0xb>;
 		cycle-count = <99>;
 		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";

@@ -6,8 +6,8 @@
  * Tasks for mutexes basic tests.
  */
 
-#include "console.h"
 #include "common.h"
+#include "console.h"
 #include "cts_common.h"
 #include "task.h"
 #include "test_util.h"

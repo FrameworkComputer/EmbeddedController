@@ -1,0 +1,25 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_CEC
+	bool "EC CEC support"
+	help
+	  Enable support for HDMI CEC (Consumer Electronics Control).
+
+if PLATFORM_EC_CEC
+
+config PLATFORM_EC_CEC_DEBUG
+	bool "CEC debug logs"
+	help
+	  Enable CEC debug logs.
+
+config PLATFORM_EC_CEC_BITBANG
+	bool "CEC bitbang driver"
+	help
+	  Enable the CEC bitbang driver. This driver uses GPIOs and a hardware
+	  timer to send and receive CEC messages. It can be used on ECs without
+	  a CEC peripheral, or in addition to a CEC peripheral to enable more
+	  CEC ports.
+
+endif # PLATFORM_EC_CEC

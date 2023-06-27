@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
 #include "accelgyro.h"
 #include "adc_chip.h"
+#include "common.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accel_bma2x2_public.h"
 #include "driver/accel_bma422.h"
@@ -18,8 +18,8 @@
 #include "keyboard_scan.h"
 #include "motion_sense.h"
 #include "temp_sensor.h"
-#include "thermal.h"
 #include "temp_sensor/thermistor.h"
+#include "thermal.h"
 
 /* ADC configuration */
 const struct adc_t adc_channels[] = {

@@ -15,10 +15,10 @@
 #include "console.h"
 #include "gpio.h"
 #include "host_command.h"
-#include "test_util.h"
-#include "timer.h"
 #include "keyboard_config.h"
 #include "keyboard_protocol.h"
+#include "test_util.h"
+#include "timer.h"
 #include "util.h"
 
 #define UNCHANGED -1

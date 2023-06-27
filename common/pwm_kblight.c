@@ -19,11 +19,6 @@ static int kblight_pwm_set(int percent)
 	return EC_SUCCESS;
 }
 
-static int kblight_pwm_get(void)
-{
-	return pwm_get_duty(kblight_pwm_ch);
-}
-
 static int kblight_pwm_init(void)
 {
 	/* dnojiri: Why do we need save/restore setting over sysjump? */
@@ -46,7 +41,6 @@ static int kblight_pwm_get_enabled(void)
 const struct kblight_drv kblight_pwm = {
 	.init = kblight_pwm_init,
 	.set = kblight_pwm_set,
-	.get = kblight_pwm_get,
 	.enable = kblight_pwm_enable,
 	.get_enabled = kblight_pwm_get_enabled,
 };

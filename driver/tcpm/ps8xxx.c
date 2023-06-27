@@ -1039,6 +1039,9 @@ const struct tcpm_drv ps8xxx_tcpm_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.check_vbus_level = tcpci_tcpm_check_vbus_level,
 #endif
+#ifdef CONFIG_USB_PD_VBUS_MEASURE_TCPC
+	.get_vbus_voltage = tcpci_get_vbus_voltage,
+#endif
 	.select_rp_value = tcpci_tcpm_select_rp_value,
 	.set_cc = ps8xxx_tcpm_set_cc,
 	.set_polarity = tcpci_tcpm_set_polarity,
@@ -1118,7 +1121,7 @@ static int ps8xxx_mux_set(const struct usb_mux *me, mux_state_t mux_state,
 			  bool *ack_required)
 {
 	/* This driver treats safe mode as none */
-	if (mux_state == USB_PD_MUX_SAFE_MODE)
+	if (mux_state & USB_PD_MUX_SAFE_MODE)
 		mux_state = USB_PD_MUX_NONE;
 
 	if (product_id[me->usb_port] == PS8751_PRODUCT_ID &&

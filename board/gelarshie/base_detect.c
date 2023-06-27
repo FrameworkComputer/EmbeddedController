@@ -6,8 +6,8 @@
 /* Gelarshie base detection code */
 
 #include "adc.h"
-#include "board.h"
 #include "base_state.h"
+#include "board.h"
 #include "chipset.h"
 #include "common.h"
 #include "console.h"

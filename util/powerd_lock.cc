@@ -21,14 +21,15 @@
  * powerd_lock.c: power management routines
  */
 
+#include "powerd_lock.h"
+
 #include <errno.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <sys/types.h>
 #include <unistd.h>
-
-#include "powerd_lock.h"
 
 /*
  * Path to a file containing flashrom's PID. While present, powerd avoids

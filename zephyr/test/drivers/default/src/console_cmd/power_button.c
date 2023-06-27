@@ -4,6 +4,7 @@
  */
 
 #include <zephyr/ztest.h>
+
 #include <console.h>
 
 ZTEST_SUITE(console_cmd_power_button, NULL, NULL, NULL, NULL, NULL);

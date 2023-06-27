@@ -122,6 +122,12 @@ SECTIONS
 		KEEP(*(.rodata.HOOK_TABLET_MODE_CHANGE))
 		__hooks_tablet_mode_change_end = .;
 
+#ifdef CONFIG_BODY_DETECTION
+		__hooks_body_detect_change = .;
+		KEEP(*(.rodata.HOOK_BODY_DETECT_CHANGE))
+		__hooks_body_detect_change_end = .;
+#endif
+
 		__hooks_base_attached_change = .;
 		KEEP(*(.rodata.HOOK_BASE_ATTACHED_CHANGE))
 		__hooks_base_attached_change_end = .;
@@ -219,12 +225,6 @@ SECTIONS
 
 		 __bss_end = .;
 		 __bss_size_words = ABSOLUTE((__bss_end - __bss_start) / 4);
-
-		 /*
-		 * _sbrk in newlib expects "end" symbol to point to start of
-		 * free memory.
-		 */
-		end = .;
 
 		/*
 		 * Shared memory buffer must be at the end of

@@ -66,7 +66,7 @@ static void gpu_init_temp_sensor(int idx)
 	CPRINTS("init GPU fail: %d", rv);
 }
 
-int amdr23m_get_val(int idx, int *temp)
+int amdr23m_get_val_k(int idx, int *temp)
 {
 	if (idx < 0 || AMDR23M_COUNT <= idx)
 		return EC_ERROR_INVAL;

@@ -5,12 +5,11 @@
 
 /* Interrupt based USART RX driver for STM32L */
 
-#include "usart.h"
-
 #include "atomic.h"
 #include "common.h"
 #include "queue.h"
 #include "registers.h"
+#include "usart.h"
 
 static void usart_rx_init(struct usart_config const *config)
 {

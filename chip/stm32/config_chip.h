@@ -140,7 +140,7 @@
 #define CONFIG_WATCHDOG_HELP
 
 /* Use DMA */
-#define CONFIG_DMA
+#define CONFIG_DMA_CROS
 
 /* STM32 features RTC (optional feature) */
 #define CONFIG_RTC

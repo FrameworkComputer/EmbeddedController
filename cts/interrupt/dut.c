@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <string.h>
 #include "common.h"
 #include "cts_common.h"
 #include "gpio.h"
@@ -11,6 +10,8 @@
 #include "task.h"
 #include "timer.h"
 #include "watchdog.h"
+
+#include <string.h>
 
 static int got_interrupt;
 static int wake_me_up;

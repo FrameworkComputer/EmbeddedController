@@ -3,8 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <emul/emul_kb_raw.h>
 #include <zephyr/drivers/emul.h>
+
+#include <emul/emul_kb_raw.h>
 
 const static struct device *dev = DEVICE_DT_GET(DT_NODELABEL(cros_kb_raw));
 

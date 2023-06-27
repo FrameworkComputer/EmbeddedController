@@ -8,6 +8,18 @@ config BUG_249829957
 config LINK_TEST_SUITE_DEFAULT
 	bool "Link and test the default test suite"
 
+config LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS
+	bool "Link and test the default console commands test suite"
+
+config LINK_TEST_SUITE_CONSOLE_CMD_CRASH
+	bool "Link and test the console command crash test suite"
+
+config LINK_TEST_SUITE_CONSOLE_CMD_MFALLOW
+	bool "Link and test the console command mfallow test suite"
+
+config LINK_TEST_SUITE_AMD_FP6_USB_MUX
+	bool "Link and test the AMD FP6 USB mux tests"
+
 config LINK_TEST_SUITE_ANX7447
 	bool "Link and test the anx7447 tests"
 
@@ -19,6 +31,12 @@ config LINK_TEST_SUITE_AP_VDM_CONTROL
 
 config LINK_TEST_SUITE_BUTTON
 	bool "Link tests for common/button.c"
+
+config LINK_TEST_SUITE_CBI_FLASH
+	bool "Link and execute the zephyr/shim/src/cbi/cbi_flash.c tests"
+	help
+	  Include the CBI Flash storage driver test suite
+	  in the binary.
 
 config LINK_TEST_SUITE_CHARGESPLASH
 	bool "Link and test the chargesplash tests"
@@ -32,18 +50,51 @@ config LINK_TEST_SUITE_COMMON_CBI_GPIO
 config LINK_TEST_SUITE_COMMON_CHARGER
 	bool "Link and execute the common/charger.c tests"
 
+config LINK_TEST_SUITE_CROS_FLASH
+	bool "Link and execute the cros-flash driver tests"
+	help
+	  Include the test suite exercising cros-flash driver in the binary.
+
+config LINK_TEST_SUITE_FLASH
+	bool "Link and execute the common/flash.c tests"
+	help
+	  Include the test suite exercising flash-related code in the binary.
+
+config LINK_TEST_SUITE_GPIO_UNHOOK
+  	bool "Link and execute the unhooked gpio tests"
+
 config LINK_TEST_SUITE_HOST_COMMANDS
 	select PLATFORM_EC_CHARGE_STATE_DEBUG
 	bool "Link and test the host command tests"
 
+config LINK_TEST_SUITE_HOST_COMMAND_READ_MEMMAP
+	bool "Link and test the host command read memmap tests"
+
+config LINK_TEST_SUITE_ICM42607
+	bool "Link and test the icm42607 tests"
+
 config LINK_TEST_SUITE_ISL923X
 	bool "Link and test the isl923x tests"
+
+config LINK_TEST_SUITE_ISL9241
+	bool "Link and test the isl9241 tests"
 
 config LINK_TEST_SUITE_I2C_CONTROLLER
 	bool "Link and test the i2c_controller tests"
 
+config LINK_TEST_SUITE_IT8XXX2_HW_SHA256
+	bool "Link and test the it8xxx2_hw_sha256 tests"
+	help
+	  Include the it8xxx2_hw_sha256 test suite
+	  in the binary.
+
+config LINK_TEST_SUITE_KEYBOARD_8042
+	bool "Link and test the keyboard_8042 tests"
+
 config LINK_TEST_SUITE_KEYBOARD_SCAN
 	bool "Link and test the keyboard_scan tests"
+	select PLATFORM_EC_MKBP_EVENT_WAKEUP_MASK
+	select PLATFORM_EC_MKBP_HOST_EVENT_WAKEUP_MASK
 
 config LINK_TEST_SUITE_LED_DRIVER
 	bool "Link and test the led_driver tests"
@@ -57,11 +108,36 @@ config LINK_TEST_SUITE_LOCATE_CHIP_ALTS
 config LINK_TEST_SUITE_MKBP
 	bool "Link and test the mkbp tests"
 
+config LINK_TEST_SUITE_NCT38XX
+	bool "Link and test the nct38xx tests"
+
+config LINK_TEST_SUITE_NX20P348X
+	bool "Link and test the nx20p348x tests"
+	select PLATFORM_EC_CONSOLE_CMD_PPC_DUMP
+	select PLATFORM_EC_USB_PD_LOGGING
+
+config LINK_TEST_SUITE_PANIC_OUTPUT
+	bool "Link and test the panic_output tests"
+
 config LINK_TEST_SUITE_POWER_HOST_SLEEP
 	bool "Link and run the power/host_sleep.c specific tests"
 
+config LINK_TEST_SUITE_PS8XXX
+	bool "Link and test the ps8xxx tests"
+
+config LINK_TEST_SUITE_RT1718S
+	bool "Link and test the rt1718s tests"
+	help
+	  Link tests rt1718s test suite for the TCPM driver related function
+	  tests.
+
 config LINK_TEST_SUITE_RT9490
 	bool "Link and test the rt9490 tests"
+
+config LINK_TEST_SUITE_RANDOM
+	bool "Link and run random (trng) tests"
+	help
+	  Include the test suite exercising RNG code in the binary.
 
 config LINK_TEST_SUITE_SHIM_GPIO_ID
 	bool "Link and run the gpio tests"
@@ -81,6 +157,9 @@ config LINK_TEST_SUITE_TIMER
 config LINK_TEST_SUITE_USB_COMMON
 	bool "Link and test USB common code tests"
 
+config LINK_TEST_SUITE_USB_PD_DISCOVERY
+	bool "Link and test USB PD discovery tests"
+
 config LINK_TEST_SUITE_USB_MALFUNCTION_SINK
 	bool "Link and test the usb_malfunction_sink tests"
 
@@ -99,17 +178,55 @@ config LINK_TEST_SUITE_USBC_ALT_MODE
 config LINK_TEST_SUITE_USBC_CONSOLE_PD
 	bool"Link and test the usbc_console_pd tests"
 
+config LINK_TEST_SUITE_USBC_CTVPD
+	bool "Link tests for charge-through VCONN-powered device support"
+	select EMUL_TCPCI_PARTNER_VPD
+	select LOG
+
+config LINK_TEST_SUITE_USBC_FRS
+	bool "Link tests for fast role swap support"
+	select LOG
+	select PLATFORM_EC_USB_PD_FRS
+
 config LINK_TEST_SUITE_USBC_OCP
 	bool "Link tests for common USBC OCP code"
 
 config LINK_TEST_SUITE_USBC_PPC
 	bool "Link tests for common USBC PPC code"
 
+config LINK_TEST_SUITE_USBC_TCPC
+	bool "Link tests for common USBC TCPC code"
+	help
+	  Include the USBC TCPC test suite in the
+	  binary.
+
 config LINK_TEST_SUITE_USBC_SVDM_DFP_ONLY
 	bool "Link and test the usbc_svdm_dfp_only tests"
 
+config LINK_TEST_SUITE_USBC_RETIMER
+	bool "Link the USBC retimer tests"
+
+config LINK_TEST_SUITE_USBC_RETIMER_ANX7483
+	bool "Link and test the ANX7484 tests"
+	select LINK_TEST_SUITE_USBC_RETIMER
+	select PLATFORM_EC_USBC_RETIMER_ANX7483
+	help
+	  Include the ANX7483 test suite in the binary.
+
+config LINK_TEST_SUITE_USBC_RETIMER_PS8811
+	bool "Link and test the PS8811 tests"
+	select LINK_TEST_SUITE_USBC_RETIMER
+	select PLATFORM_EC_USBC_RETIMER_PS8811
+	help
+	  Include the PS8811 test suite in the binary.
+
 config LINK_TEST_SUITE_USBC_TBT_MODE
 	bool "Link and test the usbc_tbt_mode tests"
+
+config LINK_TEST_SUITE_USBC_USB4_MODE
+	bool "Link and test the usbc_usb4_mode tests"
+	help
+	  Include the usbc_usb4 test suite in the binary.
 
 config LINK_TEST_SUITE_USBC_VCONN_SWAP
 	bool "Link and test the usbc_vconn_swap tests"
@@ -125,5 +242,31 @@ config LINK_TEST_SUITE_HOST_CMD_THREAD
 
 config LINK_TEST_SUITE_PI3USB9201
 	bool "Link and test the pi3usb9201 tests"
+
+config LINK_TEST_SUITE_MEMMAP
+	bool "Link and test memory mapped tests for common/flash.c"
+	select PLATFORM_EC_MAPPED_STORAGE
+
+config LINK_TEST_SUITE_LED_COMMON
+	bool "Link and test the led_common.c file"
+	depends on !PLATFORM_EC_LED_DT
+	select PLATFORM_EC_LED_COMMON
+
+config LINK_TEST_SUITE_HOST_COMMAND_MEMORY_DUMP
+	bool "Link and test memory dump host commands tests"
+
+config LINK_TEST_SUITE_ANX7452
+	bool "Link and test the anx7452 tests"
+	help
+	  Include the test suite of ANX7452 retimer in the binary. The tests
+	  use I2C emulation.
+
+config LINK_TEST_SUITE_SM5803
+	bool "Link and test the SM5803 charger tests"
+
+config LINK_TEST_SUITE_BODY_DETECTION
+	bool "Link and test the body detection tests"
+	help
+	  Include the test suite exercising body detection behaviors in the binary.
 
 source "Kconfig.zephyr"

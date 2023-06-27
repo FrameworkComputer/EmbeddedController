@@ -18,7 +18,6 @@
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/temp_sensor/amd_r19me4070.h"
-#include "driver/temp_sensor/f75303.h"
 #include "ec_commands.h"
 #include "extpower.h"
 #include "fan.h"
@@ -36,8 +35,9 @@
 #include "system.h"
 #include "task.h"
 #include "temp_sensor.h"
-#include "thermal.h"
+#include "temp_sensor/f75303.h"
 #include "temp_sensor/thermistor.h"
+#include "thermal.h"
 #include "uart.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
@@ -107,7 +107,8 @@ static void bc12_interrupt(enum gpio_signal signal)
 	}
 }
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /******************************************************************************/
 /* SPI devices */

@@ -12,8 +12,8 @@
 #ifndef __CROS_EC_PI3USB3X532_H
 #define __CROS_EC_PI3USB3X532_H
 
-#include "usb_pd.h"
 #include "usb_mux.h"
+#include "usb_pd.h"
 
 /* I2C Addresses */
 #define PI3USB3X532_I2C_ADDR0 0x54

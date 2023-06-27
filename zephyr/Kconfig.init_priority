@@ -26,3 +26,6 @@ config PLATFORM_EC_PWM_INIT_PRIORITY
 	  Sets the initialization priority of the PWM module. This MUST be a
 	  value greater than the PWM driver's initialization priority which
 	  currently defaults to KERNEL_INIT_PRIORITY_DEVICE.
+
+config EEPROM_INIT_PRIORITY
+	default 70

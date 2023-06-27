@@ -129,21 +129,21 @@
 			reg = <3>;
 		};
 	};
+	named-bbram-regions {
+		compatible = "named-bbram-regions";
+		charge_limit_max {
+			offset = <0x44>;
+			size = <0x01>;
+		};
+		fp_led_level {
+			offset = <0x45>;
+			size = <0x01>;
+		};
+	};
 };
 
 &cros_kb_raw {
 	status = "okay";
 	pinctrl-0 = <>;
 	pinctrl-names = "default";
-};
-
-&bbram_regions {
-	charge_limit_max {
-		offset = <0x44>;
-		size = <0x01>;
-	};
-	fp_led_level {
-		offset = <0x45>;
-		size = <0x01>;
-	};
 };

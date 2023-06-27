@@ -3,20 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-#include <zephyr/drivers/uart.h>
-#include <zephyr/shell/shell.h>
-#ifdef CONFIG_SHELL_BACKEND_DUMMY /* nocheck */
-#include <zephyr/shell/shell_dummy.h> /* nocheck */
-#endif
-#include <zephyr/shell/shell_uart.h>
-#include <stdbool.h>
-#include <string.h>
-#include <zephyr/sys/printk.h>
-#include <zephyr/sys/ring_buffer.h>
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
-
 /*
  * TODO(b/238433667): Include EC printf functions
  * (crec_vsnprintf/crec_snprintf) until we switch to the standard
@@ -29,6 +15,21 @@
 #include "uart.h"
 #include "usb_console.h"
 #include "zephyr_console_shim.h"
+
+#include <stdbool.h>
+#include <string.h>
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/uart.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/shell/shell.h>
+#ifdef CONFIG_SHELL_BACKEND_DUMMY /* nocheck */
+#include <zephyr/shell/shell_dummy.h> /* nocheck */
+#endif
+#include <zephyr/shell/shell_uart.h>
+#include <zephyr/sys/printk.h>
+#include <zephyr/sys/ring_buffer.h>
 
 #if !defined(CONFIG_SHELL_BACKEND_SERIAL) && \
 	!defined(CONFIG_SHELL_BACKEND_DUMMY) /* nocheck */
@@ -267,12 +268,17 @@ int zshim_run_ec_console_command(const struct zephyr_console_command *command,
 	return ret;
 }
 
-#if defined(CONFIG_CONSOLE_CHANNEL) && DT_NODE_EXISTS(DT_PATH(ec_console))
-#define EC_CONSOLE DT_PATH(ec_console)
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(ec_console) <= 1,
+	     "at most one ec-console compatible node may be present");
 
-static const char *const disabled_channels[] = DT_PROP(EC_CONSOLE, disabled);
-static const size_t disabled_channel_count = DT_PROP_LEN(EC_CONSOLE, disabled);
-static int init_ec_console(const struct device *unused)
+#define EC_CONSOLE_NODE DT_COMPAT_GET_ANY_STATUS_OKAY(ec_console)
+#if DT_NODE_EXISTS(EC_CONSOLE_NODE)
+
+static const char *const disabled_channels[] =
+	DT_PROP(EC_CONSOLE_NODE, disabled);
+static const size_t disabled_channel_count =
+	DT_PROP_LEN(EC_CONSOLE_NODE, disabled);
+static int init_ec_console(void)
 {
 	for (size_t i = 0; i < disabled_channel_count; i++)
 		console_channel_disable(disabled_channels[i]);
@@ -280,9 +286,9 @@ static int init_ec_console(const struct device *unused)
 	return 0;
 }
 SYS_INIT(init_ec_console, PRE_KERNEL_1, 50);
-#endif /* CONFIG_CONSOLE_CHANNEL && DT_NODE_EXISTS(DT_PATH(ec_console)) */
+#endif /* CONFIG_PLATFORM_EC_CONSOLE_CHANNEL */
 
-static int init_ec_shell(const struct device *unused)
+static int init_ec_shell(void)
 {
 #if defined(CONFIG_SHELL_BACKEND_SERIAL)
 	shell_zephyr = shell_backend_uart_get_ptr();
@@ -301,6 +307,14 @@ const struct shell *get_ec_shell(void)
 	return shell_zephyr;
 }
 #endif
+
+k_tid_t get_shell_thread(void)
+{
+	if (shell_zephyr == NULL) {
+		return NULL;
+	}
+	return shell_zephyr->thread;
+}
 
 void uart_tx_start(void)
 {
@@ -321,7 +335,7 @@ void uart_write_char(char c)
 {
 	uart_poll_out(uart_shell_dev, c);
 
-	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE))
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE) && !k_is_in_isr())
 		console_buf_notify_chars(&c, 1);
 }
 
@@ -386,15 +400,21 @@ static void handle_sprintf_rv(int rv, size_t *len)
 static void zephyr_print(const char *buff, size_t size)
 {
 	/*
-	 * shell_* functions can not be used in ISRs so use printk instead.
+	 * shell_* functions can not be used in ISRs so optionally use
+	 * printk instead.
 	 * If the shell is about to be (or is) stopped, use printk, since the
 	 * output may be stalled and the shell mutex held.
 	 * Also, console_buf_notify_chars uses a mutex, which may not be
 	 * locked in ISRs.
 	 */
-	if (k_is_in_isr() || shell_stopped ||
+	bool in_isr = k_is_in_isr();
+
+	if (in_isr || shell_stopped ||
 	    shell_zephyr->ctx->state != SHELL_STATE_ACTIVE) {
-		printk("%s", buff);
+		if (IS_ENABLED(CONFIG_PLATFORM_EC_ISR_CONSOLE_OUTPUT) ||
+		    !in_isr) {
+			printk("!%s", buff);
+		}
 	} else {
 		shell_fprintf(shell_zephyr, SHELL_NORMAL, "%s", buff);
 		if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE))

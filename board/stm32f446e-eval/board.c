@@ -7,7 +7,6 @@
 #include "dma.h"
 #include "ec_version.h"
 #include "gpio.h"
-#include "gpio_list.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "registers.h"
@@ -15,6 +14,9 @@
 #include "usb_descriptor.h"
 #include "usb_dwc_console.h"
 #include "usb_hw.h"
+
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /******************************************************************************
  * Define the strings used in our USB descriptors.

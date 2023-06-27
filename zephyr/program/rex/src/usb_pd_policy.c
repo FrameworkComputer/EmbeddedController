@@ -5,8 +5,6 @@
 
 /* Shared USB-C policy for Rex boards */
 
-#include <zephyr/drivers/gpio.h>
-
 #include "charge_manager.h"
 #include "chipset.h"
 #include "common.h"
@@ -14,16 +12,22 @@
 #include "console.h"
 #include "ec_commands.h"
 #include "ioexpander.h"
+#include "power_signals.h"
 #include "system.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
+#include <zephyr/drivers/gpio.h>
+
 int pd_check_vconn_swap(int port)
 {
-	/* Allow VCONN swaps if the AP is on. */
-	return chipset_in_state(CHIPSET_STATE_ANY_SUSPEND | CHIPSET_STATE_ON);
+	/* Allow VCONN swaps when gpio_en_z1_rails is enabled. */
+	const struct gpio_dt_spec *const en_z1_rails_gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_en_z1_rails);
+
+	return gpio_pin_get_dt(en_z1_rails_gpio);
 }
 
 void pd_power_supply_reset(int port)
@@ -67,7 +71,7 @@ int pd_set_power_supply_ready(int port)
 /* Used by Vbus discharge common code with CONFIG_USB_PD_DISCHARGE */
 int board_vbus_source_enabled(int port)
 {
-	return tcpm_get_src_ctrl(port);
+	return ppc_is_sourcing_vbus(port);
 }
 
 /* Used by USB charger task with CONFIG_USB_PD_5V_EN_CUSTOM */

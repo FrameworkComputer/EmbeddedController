@@ -4,6 +4,7 @@
  */
 
 #include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/usb_pd_tcpm.h>
 
 / {
 	aliases {
@@ -101,16 +102,22 @@
 		};
 
 		gpio_sb_3: sb_3 {
-			gpios = <&gpiof 5 GPIO_OPEN_DRAIN>;
+			gpios = <&gpiof 5 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
 			no-auto-init;
 		};
 		gpio_sb_4: sb_4 {
-			gpios = <&gpiof 4 GPIO_INPUT>;
+			gpios = <&gpiof 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			no-auto-init;
 		};
 		gpio_fan_enable: fan-enable {
 			gpios = <&gpio6 3 GPIO_OUTPUT>;
 			no-auto-init;
+		};
+		ec-i2c-sensor-scl {
+			gpios = <&gpio9 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec-i2c-sensor-sda {
+			gpios = <&gpio8 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_power_led: power_led {
 			gpios = <&gpioc 2 GPIO_OUTPUT_LOW>;
@@ -213,6 +220,7 @@
 			reg = <0>;
 			bc12 = <&bc12_port0>;
 			chg = <&chg_port0>;
+			tcpc = <&tcpc_port0>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_0>;
@@ -245,8 +253,17 @@
 	  unused-pins {
 		compatible = "unused-gpios";
 		unused-gpios =
+			<&gpio3 2 0>,
 			<&gpio3 3 0>,
+			<&gpio3 5 0>,
 			<&gpio3 6 0>,
+			<&gpio5 7 0>,
+			<&gpio6 0 0>,
+			<&gpio6 6 0>,
+			<&gpio8 3 0>,
+			<&gpio8 6 0>,
+			<&gpiob 1 0>,
+			<&gpioc 7 0>,
 			<&gpiod 7 0>,
 			<&gpiof 2 0>,
 			<&gpiof 3 0>;
@@ -309,6 +326,14 @@
 		status = "okay";
 		reg = <0x9>;
 	};
+
+	tcpc_port0: raa489000@22 {
+		compatible = "renesas,raa489000";
+		reg = <0x22>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_VBUS_MONITOR)>;
+	};
 };
 
 &i2c7_0 {
@@ -350,6 +375,6 @@
  * after waking up automatically for better power consumption.
  */
 &power_leakage_io {
-	leak-gpios = <&gpioa 4 0
-		      &gpiof 1 0>;
+	leak-gpios = <&gpioa 4 GPIO_OPEN_DRAIN
+		      &gpiof 1 GPIO_OPEN_DRAIN>;
 };

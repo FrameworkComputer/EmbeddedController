@@ -13,9 +13,9 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
+#include "tfdp_chip.h"
 #include "uart.h"
 #include "util.h"
-#include "tfdp_chip.h"
 
 #define TX_FIFO_SIZE 16
 

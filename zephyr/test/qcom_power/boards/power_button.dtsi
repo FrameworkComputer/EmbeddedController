@@ -1,0 +1,26 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include <dt-bindings/buttons.h>
+#include <zephyr/dt-bindings/input/input-event-codes.h>
+
+/ {
+	gpio-keys {
+		compatible = "zephyr,gpio-keys";
+		debounce-interval-ms = <30>;
+		power_button: power_button {
+			gpios = <&gpio0 25 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+			/* TODO: use an INPUT_KEY code here. */
+			zephyr,code = <BUTTON_POWER>;
+		};
+	};
+
+};
+
+/* interrupt overrides */
+/{
+	gpio-interrupts {
+		/delete-node/ power_button;
+	};
+};

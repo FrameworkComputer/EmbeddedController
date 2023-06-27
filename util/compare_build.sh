@@ -81,7 +81,7 @@ assoc-rm-keys() {
   shift
 
   for key in "${@}"; do
-    unset arr["${key}"]
+    unset 'arr[${key}]'
   done
 }
 
@@ -122,7 +122,7 @@ parse-boards() {
   local -A BOARD_GROUPS=(
     # make-print-boards already filters out the skipped boards
     [all]="$(make-print-boards)"
-    [fp]="dartmonkey bloonchipper nucleo-dartmonkey nucleo-h743zi"
+    [fp]="dartmonkey bloonchipper helipilot nucleo-dartmonkey nucleo-h743zi"
     [stm32]="$(boards-with 'CHIP[[:space:]:=]*stm32')"
     [stm32f0]="$(boards-with 'CHIP_VARIANT[[:space:]:=]*stm32f0')"
     [stm32f4]="$(boards-with 'CHIP_VARIANT[[:space:]:=]*stm32f4')"
@@ -223,6 +223,7 @@ fi
 echo "# Preparing Makefile"
 cat > "${TMP_DIR}/Makefile" <<HEREDOC
 ORIGIN ?= $(realpath .)
+BORINGSSL_DIR ?= $(realpath ../../third_party/boringssl)
 CRYPTOC_DIR ?= $(realpath ../../third_party/cryptoc)
 ZEPHYR_BASE ?= $(realpath ../../../src/third_party/zephyr/main)
 BOARDS ?= ${BOARDS[*]}
@@ -232,7 +233,7 @@ LINKS ?= ${LINKS[*]}
 all: build-${OLD_REF} build-${NEW_REF}
 
 ec-%:
-	git clone --quiet --no-checkout \$(ORIGIN) \$@
+	git clone --quiet --no-checkout --shared \$(ORIGIN) \$@
 	git -C \$@ checkout --quiet \$(@:ec-%=%)
 ifneq (\$(LINKS),)
 	ln -s \$(addprefix \$(ORIGIN)/,\$(LINKS)) \$@
@@ -241,6 +242,7 @@ endif
 build-%: ec-%
 	\$(MAKE) --no-print-directory -C \$(@:build-%=ec-%)                   \\
 		STATIC_VERSION=1                                              \\
+		BORINGSSL_DIR=\$(BORINGSSL_DIR)                               \\
 		CRYPTOC_DIR=\$(CRYPTOC_DIR)                                   \\
 		ZEPHYR_BASE=\$(ZEPHYR_BASE)                                   \\
 		\$(addprefix proj-,\$(BOARDS))

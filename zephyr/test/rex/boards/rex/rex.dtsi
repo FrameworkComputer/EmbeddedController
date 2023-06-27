@@ -1,0 +1,49 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../native_posix.overlay"
+#include "../../../../program/rex/rex/cbi.dtsi"
+
+/ {
+	/* Unused Stub */
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		named_i2c0: i2c0 {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_USB_MUX";
+		};
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		usbc_port0: port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+		};
+		usbc_port1: port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+		};
+	};
+
+	aliases {
+		kb-usb-c1-rst-odl = &gpio_usb_c1_rst_odl;
+		anx-usb-c1-rt-hpd-in = &gpio_usb_c1_rst_odl;
+
+		kb-usb-c1-dp-mode = &gpio_usb_c1_rt_int_odl;
+		anx-usb-c1-rt-dp-en = &gpio_usb_c1_rt_int_odl;
+
+		ps-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
+		kb-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
+		anx-usb-c1-rt-usb-en = &gpio_usb_c1_rt_rst_r_odl;
+
+		kb-usb-c1-frs-alert = &gpio_usb_c1_frs_en;
+		anx-usb-c1-frs-en = &gpio_usb_c1_frs_en;
+	};
+
+};

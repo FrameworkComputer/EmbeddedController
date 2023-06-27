@@ -1,0 +1,51 @@
+/* Copyright 2023 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/binman.dtsi>
+
+/ {
+	chosen {
+		cros-ec,bbram = &bbram;
+		cros-ec,flash = &flash0;
+		cros-ec,flash-controller = &flash_controller;
+		cros-ec,watchdog = &iwdg;
+		cros-ec,watchdog-helper = &wdg_helper;
+	};
+
+	soc {
+		flash_controller: cros-flash {
+			compatible = "cros-ec,cros-flash";
+		};
+	};
+
+	wdg_helper: counter-watchdog {
+		compatible = "zephyr,counter-watchdog";
+		status = "disable";
+	};
+
+	binman {
+		wp-ro {
+			offset = <0x0>;
+			size = <0x20000>;
+		};
+
+		ec-rw {
+			offset = <0x20000>;
+			size = <0x20000>;
+			rw-fw {
+				rw-fwid {
+					/* Fix the location of the FWID to the
+					 * last 32 bytes of the flash. This
+					 * ensures the RW entries in the FMAP
+					 * stored in the RO section of flash
+					 * are always correct.
+					 */
+					offset = <(0x20000 - 32)>;
+				};
+			};
+		};
+		pad-byte = <0xff>;
+	};
+};

@@ -25,6 +25,8 @@
 #define CONFIG_USB_PID 0x5057
 #elif defined(BOARD_GELATIN)
 #define CONFIG_USB_PID 0x505D
+#elif defined(BOARD_JEWEL)
+#define CONFIG_USB_PID 0x5061
 #elif defined(BOARD_MAGNEMITE)
 #define CONFIG_USB_PID 0x503d
 #elif defined(BOARD_MASTERBALL)
@@ -105,6 +107,14 @@
 #define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 1060 /* tenth of mm */
 #define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 575 /* tenth of mm */
 #define CONFIG_TOUCHPAD_VIRTUAL_SIZE (64 * 1024)
+#elif defined(BOARD_JEWEL)
+#define HAS_I2C_TOUCHPAD
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X 2925
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y 1440
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_PRESSURE 511
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X 929 /* tenth of mm */
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y 457 /* tenth of mm */
+#define CONFIG_TOUCHPAD_VIRTUAL_SIZE (56 * 1024)
 #elif defined(BOARD_MAGNEMITE)
 #define HAS_NO_TOUCHPAD
 #elif defined(BOARD_MASTERBALL)
@@ -198,7 +208,7 @@
 /* GMR sensor for tablet mode detection */
 #if defined(BOARD_DON) || defined(BOARD_MASTERBALL) ||        \
 	defined(BOARD_MOONBALL) || defined(BOARD_WHISKERS) || \
-	defined(BOARD_EEL)
+	defined(BOARD_EEL) || defined(BOARD_JEWEL)
 #define CONFIG_GMR_TABLET_MODE
 #endif
 

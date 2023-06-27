@@ -17,6 +17,7 @@
 #include "hooks.h"
 #include "power.h"
 #include "power_button.h"
+#include "queue.h"
 #include "system.h"
 #include "task.h"
 #include "tcpm/tcpm.h"
@@ -25,16 +26,31 @@
 #include "usb_mode.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_ap_vdm_control.h"
+#include "usb_pd_dpm_sm.h"
 #include "usb_pd_pdo.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pd_timer.h"
 #include "usb_pe_sm.h"
-#include "usb_pd_dpm_sm.h"
-#include "usb_tc_sm.h"
 #include "usb_tbt_alt_mode.h"
+#include "usb_tc_sm.h"
+
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 43
 
 #ifdef CONFIG_ZEPHYR
 #include "temp_sensor/temp_sensor.h"
+#endif
+
+#ifdef CONFIG_USB_PD_DEBUG_LEVEL
+static const enum debug_level dpm_debug_level = CONFIG_USB_PD_DEBUG_LEVEL;
+#elif defined(CONFIG_USB_PD_INITIAL_DEBUG_LEVEL)
+static enum debug_level dpm_debug_level = CONFIG_USB_PD_INITIAL_DEBUG_LEVEL;
+#else
+static enum debug_level dpm_debug_level = DEBUG_LEVEL_1;
 #endif
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -44,9 +60,6 @@
 #define CPRINTF(format, args...)
 #define CPRINTS(format, args...)
 #endif
-
-/* Max Attention length is header + 1 VDO */
-#define DPM_ATTENION_MAX_VDO 2
 
 static struct {
 	/* state machine context */
@@ -58,6 +71,15 @@ static struct {
 	mutex_t vdm_req_mutex;
 	enum dpm_pd_button_state pd_button_state;
 } dpm[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+__overridable const struct svdm_response svdm_rsp = {
+	.identity = NULL,
+	.svids = NULL,
+	.modes = NULL,
+};
+
+/* Tracker for which task is waiting on sysjump prep to finish */
+static volatile task_id_t sysjump_task_waiting = TASK_ID_INVALID;
 
 #define DPM_SET_FLAG(port, flag) atomic_or(&dpm[(port)].flags, (flag))
 #define DPM_CLR_FLAG(port, flag) atomic_clear_bits(&dpm[(port)].flags, (flag))
@@ -72,17 +94,18 @@ static struct {
 #define DPM_FLAG_ENTER_ANY \
 	(DPM_FLAG_ENTER_DP | DPM_FLAG_ENTER_TBT | DPM_FLAG_ENTER_USB4)
 #define DPM_FLAG_SEND_VDM_REQ BIT(5)
-#define DPM_FLAG_DATA_RESET_REQUESTED BIT(6)
-#define DPM_FLAG_DATA_RESET_DONE BIT(7)
-#define DPM_FLAG_PD_BUTTON_PRESSED BIT(8)
-#define DPM_FLAG_PD_BUTTON_RELEASED BIT(9)
-#define DPM_FLAG_PE_READY BIT(10)
+#define DPM_FLAG_DATA_RESET_DONE BIT(6)
+#define DPM_FLAG_PD_BUTTON_PRESSED BIT(7)
+#define DPM_FLAG_PD_BUTTON_RELEASED BIT(8)
+#define DPM_FLAG_PE_READY BIT(9)
 
 /* List of all Device Policy Manager level states */
 enum usb_dpm_state {
 	/* Normal States */
 	DPM_WAITING,
-	DPM_READY,
+	DPM_DFP_READY,
+	DPM_UFP_READY,
+	DPM_DATA_RESET,
 };
 
 /* Forward declare the full list of states. This is indexed by usb_pd_state */
@@ -92,10 +115,19 @@ static const struct usb_state dpm_states[];
 __maybe_unused static __const_data const char *const dpm_state_names[] = {
 	/* Normal States */
 	[DPM_WAITING] = "DPM Waiting",
-	[DPM_READY] = "DPM Ready",
+	[DPM_DFP_READY] = "DPM DFP Ready",
+	[DPM_UFP_READY] = "DPM UFP Ready",
+	[DPM_DATA_RESET] = "DPM Data Reset",
 };
 
 static enum sm_local_state local_state[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+void dpm_set_debug_level(enum debug_level debug_level)
+{
+#ifndef CONFIG_USB_PD_DEBUG_LEVEL
+	dpm_debug_level = debug_level;
+#endif
+}
 
 /* Set the DPM state machine to a new state. */
 static void set_state_dpm(const int port, const enum usb_dpm_state new_state)
@@ -116,19 +148,103 @@ static void print_current_state(const int port)
 }
 
 #ifdef CONFIG_ZEPHYR
-static int init_vdm_req_mutex(const struct device *dev)
+static int init_dpm_mutexes(void)
 {
 	int port;
 
-	ARG_UNUSED(dev);
-
-	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++)
+	for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT; port++) {
 		k_mutex_init(&dpm[port].vdm_req_mutex);
+	}
 
 	return 0;
 }
-SYS_INIT(init_vdm_req_mutex, POST_KERNEL, 50);
+SYS_INIT(init_dpm_mutexes, POST_KERNEL, 50);
 #endif /* CONFIG_ZEPHYR */
+
+void pd_prepare_sysjump(void)
+{
+#ifndef CONFIG_ZEPHYR
+	int i;
+
+	/* Exit modes before sysjump so we can cleanly enter again later */
+	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
+		/*
+		 * If the port is not capable of alternate mode, then there's no
+		 * need to send the event.
+		 */
+		if (!pd_alt_mode_capable(i))
+			continue;
+
+		sysjump_task_waiting = task_get_current();
+		task_set_event(PD_PORT_TO_TASK_ID(i), PD_EVENT_SYSJUMP);
+		task_wait_event_mask(TASK_EVENT_SYSJUMP_READY, -1);
+		sysjump_task_waiting = TASK_ID_INVALID;
+	}
+#endif /* CONFIG_ZEPHYR */
+}
+
+void notify_sysjump_ready(void)
+{
+	/*
+	 * If event was set from pd_prepare_sysjump, wake the
+	 * task waiting on us to complete.
+	 */
+	if (sysjump_task_waiting != TASK_ID_INVALID)
+		task_set_event(sysjump_task_waiting, TASK_EVENT_SYSJUMP_READY);
+}
+
+/*
+ * TODO(b/270409939): Refactor this function
+ */
+int pd_dfp_exit_mode(int port, enum tcpci_msg_type type, uint16_t svid,
+		     int opos)
+{
+	/*
+	 * Empty svid signals we should reset DFP VDM state by exiting all
+	 * entered modes then clearing state.  This occurs when we've
+	 * disconnected or for hard reset.
+	 */
+	if (!svid) {
+		if (IS_ENABLED(CONFIG_USB_PD_DP_MODE) && dp_is_active(port))
+			svdm_exit_dp_mode(port);
+		pd_dfp_mode_init(port);
+	}
+
+	/*
+	 * Return 0 indicating no message is needed.  All modules should be
+	 * handling their SVID-specific cases themselves.
+	 */
+	return 0;
+}
+
+/*
+ * Note: this interface is used in board code, but should be obsoleted
+ * TODO(b/267545470): Fold board DP code into the DP module
+ */
+int pd_alt_mode(int port, enum tcpci_msg_type type, uint16_t svid)
+{
+	if (svid == USB_SID_DISPLAYPORT && !dp_is_idle(port))
+		return 1;
+	else if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
+		 svid == USB_VID_INTEL && tbt_is_active(port))
+		return 1;
+
+	return -1;
+}
+
+void dfp_consume_attention(int port, uint32_t *payload)
+{
+	uint16_t svid = PD_VDO_VID(payload[0]);
+
+	if (IS_ENABLED(CONFIG_USB_PD_DP_MODE) && svid == USB_SID_DISPLAYPORT) {
+		/*
+		 * Attention is only valid after EnterMode, so drop if this is
+		 * out of sequence
+		 */
+		if (!dp_is_idle(port))
+			svdm_dp_attention(port, payload);
+	}
+}
 
 __overridable bool board_is_tbt_usb4_port(int port)
 {
@@ -154,7 +270,7 @@ enum ec_status pd_request_vdm(int port, const uint32_t *data, int vdo_count,
 
 	/* SVDM Attention message must be 1 or 2 VDOs in length */
 	if (PD_VDO_SVDM(data[0]) && (PD_VDO_CMD(data[0]) == CMD_ATTENTION) &&
-	    vdo_count > DPM_ATTENION_MAX_VDO) {
+	    vdo_count > PD_ATTENTION_MAX_VDO) {
 		mutex_unlock(&dpm[port].vdm_req_mutex);
 		return EC_RES_INVALID_PARAM;
 	}
@@ -167,13 +283,23 @@ enum ec_status pd_request_vdm(int port, const uint32_t *data, int vdo_count,
 	/*
 	 * Indicate to DPM that a REQ message needs to be sent. This flag
 	 * will be cleared when the REQ message is sent to the policy
-	 * engine.
+	 * engine (VDM:Attention), or when the reply is received (all others).
 	 */
 	DPM_SET_FLAG(port, DPM_FLAG_SEND_VDM_REQ);
 
 	mutex_unlock(&dpm[port].vdm_req_mutex);
 
 	return EC_RES_SUCCESS;
+}
+
+void dpm_clear_vdm_request(int port)
+{
+	DPM_CLR_FLAG(port, DPM_FLAG_SEND_VDM_REQ);
+}
+
+bool dpm_check_vdm_request(int port)
+{
+	return DPM_CHK_FLAG(port, DPM_FLAG_SEND_VDM_REQ);
 }
 
 enum ec_status pd_request_enter_mode(int port, enum typec_mode mode)
@@ -186,27 +312,20 @@ enum ec_status pd_request_enter_mode(int port, enum typec_mode mode)
 				       DPM_FLAG_ENTER_USB4))
 		return EC_RES_BUSY;
 
-	switch (mode) {
-	case TYPEC_MODE_DP:
+	if (IS_ENABLED(CONFIG_USB_PD_DP_MODE) && mode == TYPEC_MODE_DP) {
 		if (dp_is_idle(port))
 			dp_init(port);
 		DPM_SET_FLAG(port, DPM_FLAG_ENTER_DP);
-		break;
-#ifdef CONFIG_USB_PD_TBT_COMPAT_MODE
-	case TYPEC_MODE_TBT:
+	} else if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
+		   mode == TYPEC_MODE_TBT) {
 		/* TODO(b/235984702#comment21): Refactor alt mode modules
 		 * to better support mode reentry. */
 		if (dp_is_idle(port))
 			dp_init(port);
 		DPM_SET_FLAG(port, DPM_FLAG_ENTER_TBT);
-		break;
-#endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
-#ifdef CONFIG_USB_PD_USB4
-	case TYPEC_MODE_USB4:
+	} else if (IS_ENABLED(CONFIG_USB_PD_USB4) && mode == TYPEC_MODE_USB4) {
 		DPM_SET_FLAG(port, DPM_FLAG_ENTER_USB4);
-		break;
-#endif
-	default:
+	} else {
 		return EC_RES_INVALID_PARAM;
 	}
 
@@ -221,6 +340,7 @@ void dpm_init(int port)
 {
 	dpm[port].flags = 0;
 	dpm[port].pd_button_state = DPM_PD_BUTTON_IDLE;
+	ap_vdm_init(port);
 
 	/* Ensure that DPM state machine gets reset */
 	set_state_dpm(port, DPM_WAITING);
@@ -247,7 +367,6 @@ void dpm_set_mode_exit_request(int port)
 
 void dpm_data_reset_complete(int port)
 {
-	DPM_CLR_FLAG(port, DPM_FLAG_DATA_RESET_REQUESTED);
 	DPM_SET_FLAG(port, DPM_FLAG_DATA_RESET_DONE);
 	DPM_CLR_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE);
 }
@@ -295,9 +414,15 @@ static bool dpm_mode_entry_requested(int port, enum typec_mode mode)
 void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		   uint32_t *vdm)
 {
-	const uint16_t svid = PD_VDO_VID(vdm[0]);
+	__maybe_unused const uint16_t svid = PD_VDO_VID(vdm[0]);
 
 	assert(vdo_count >= 1);
+	assert(vdo_count <= VDO_MAX_SIZE);
+
+	if (IS_ENABLED(CONFIG_USB_PD_VDM_AP_CONTROL)) {
+		ap_vdm_acked(port, type, vdo_count, vdm);
+		return;
+	}
 
 	switch (svid) {
 	case USB_SID_DISPLAYPORT:
@@ -312,7 +437,7 @@ void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		break;
 #else
 		__fallthrough;
-#endif
+#endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
 	default:
 		CPRINTS("C%d: Received unexpected VDM ACK for SVID %d", port,
 			svid);
@@ -320,8 +445,13 @@ void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 }
 
 void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
-		   uint8_t vdm_cmd)
+		   uint8_t vdm_cmd, uint32_t vdm_header)
 {
+	if (IS_ENABLED(CONFIG_USB_PD_VDM_AP_CONTROL)) {
+		ap_vdm_naked(port, type, svid, vdm_cmd, vdm_header);
+		return;
+	}
+
 	switch (svid) {
 	case USB_SID_DISPLAYPORT:
 		dp_vdm_naked(port, type, vdm_cmd);
@@ -335,7 +465,7 @@ void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
 		break;
 #else
 		__fallthrough;
-#endif
+#endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
 	default:
 		CPRINTS("C%d: Received unexpected VDM NAK for SVID %d", port,
 			svid);
@@ -350,8 +480,30 @@ static void dpm_send_req_vdm(int port)
 		/* Trigger PE to start a VDM command run */
 		pd_dpm_request(port, DPM_REQUEST_VDM);
 
-	/* Clear flag after message is sent to PE layer */
-	DPM_CLR_FLAG(port, DPM_FLAG_SEND_VDM_REQ);
+	/*
+	 * Clear flag after message is sent to PE layer if it was Attention,
+	 * which generates no reply.
+	 *
+	 * Otherwise, clear flag after message is ACK'd or NAK'd.  The flag
+	 * will serve as a guard to indicate that the VDM reply buffer is not
+	 * yet ready to read.
+	 *
+	 */
+	if (PD_VDO_SVDM(dpm[port].vdm_req[0]) &&
+	    (PD_VDO_CMD(dpm[port].vdm_req[0]) == CMD_ATTENTION))
+		DPM_CLR_FLAG(port, DPM_FLAG_SEND_VDM_REQ);
+}
+
+void dpm_notify_attention(int port, size_t vdo_objects, uint32_t *buf)
+{
+	/*
+	 * Note: legacy code just assumes 1 VDO, but the spec allows 0
+	 * This should be fine because baked-in EC logic will only be
+	 * handling DP:Attention messages, which are defined to have 1
+	 * VDO
+	 */
+	dfp_consume_attention(port, buf);
+	ap_vdm_attention_enqueue(port, vdo_objects, buf);
 }
 
 void dpm_handle_alert(int port, uint32_t ado)
@@ -971,7 +1123,7 @@ int dpm_get_status_msg(int port, uint8_t *msg, uint32_t *len)
 	/* Power Status */
 	sdb.power_status = 0x0;
 
-	partner_rmdo = pe_get_partner_rmdo(port);
+	partner_rmdo = pd_get_partner_rmdo(port);
 	if ((partner_rmdo.major_rev == 3 && partner_rmdo.minor_rev >= 1) ||
 	    partner_rmdo.major_rev > 3) {
 		/* USB PD Rev 3.1: 6.5.2 Status Message */
@@ -1013,8 +1165,10 @@ uint8_t pd_get_bist_share_mode(void)
  * sequence. This only happens if preconditions for mode entry are met. If
  * CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY is enabled, this function waits for the
  * AP to direct mode entry.
+ *
+ * Returns true when the DPM state is changed in this function.
  */
-static void dpm_dfp_enter_mode_msg(int port)
+static bool dpm_dfp_enter_mode_msg(int port)
 {
 	int vdo_count = 0;
 	uint32_t vdm[VDO_MAX_SIZE];
@@ -1022,19 +1176,6 @@ static void dpm_dfp_enter_mode_msg(int port)
 	bool enter_mode_requested =
 		IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY) ? false : true;
 	enum dpm_msg_setup_status status = MSG_SETUP_UNSUPPORTED;
-
-	if (pd_get_data_role(port) != PD_ROLE_DFP) {
-		if (DPM_CHK_FLAG(port, DPM_FLAG_ENTER_DP | DPM_FLAG_ENTER_TBT |
-					       DPM_FLAG_ENTER_USB4))
-			DPM_CLR_FLAG(port, DPM_FLAG_ENTER_DP |
-						   DPM_FLAG_ENTER_TBT |
-						   DPM_FLAG_ENTER_USB4);
-		/*
-		 * TODO(b/168030639): Notify the AP that the enter mode request
-		 * failed.
-		 */
-		return;
-	}
 
 #ifdef CONFIG_AP_POWER_CONTROL
 	/*
@@ -1045,7 +1186,7 @@ static void dpm_dfp_enter_mode_msg(int port)
 	 * enter the mode to fail prematurely.
 	 */
 	if (!chipset_in_state(CHIPSET_STATE_ANY_SUSPEND | CHIPSET_STATE_ON))
-		return;
+		return false;
 #endif
 	/*
 	 * If discovery has not occurred for modes, do not attempt to switch
@@ -1053,38 +1194,26 @@ static void dpm_dfp_enter_mode_msg(int port)
 	 */
 	if (pd_get_svids_discovery(port, TCPCI_MSG_SOP) != PD_DISC_COMPLETE ||
 	    pd_get_modes_discovery(port, TCPCI_MSG_SOP) != PD_DISC_COMPLETE)
-		return;
+		return false;
 
 	if (dp_entry_is_done(port) ||
 	    (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) &&
 	     tbt_entry_is_done(port)) ||
 	    (IS_ENABLED(CONFIG_USB_PD_USB4) && enter_usb_entry_is_done(port))) {
 		dpm_set_mode_entry_done(port);
-		return;
+		return false;
 	}
 
 	/*
-	 * If muxes are still settling, then wait on our next VDM.  We must
-	 * ensure we correctly sequence actions such as USB safe state with TBT
-	 * entry or DP configuration.
+	 * If AP mode entry is enabled, and a Data Reset has not been done, then
+	 * first request Data Reset prior to attempting to enter any modes.
 	 */
-	if (IS_ENABLED(CONFIG_USBC_SS_MUX) && !usb_mux_set_completed(port))
-		return;
-
 	if (IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY) &&
 	    IS_ENABLED(CONFIG_USB_PD_DATA_RESET_MSG) &&
 	    DPM_CHK_FLAG(port, DPM_FLAG_ENTER_ANY) &&
-	    !DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_REQUESTED) &&
 	    !DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE)) {
-		pd_dpm_request(port, DPM_REQUEST_DATA_RESET);
-		DPM_SET_FLAG(port, DPM_FLAG_DATA_RESET_REQUESTED);
-		return;
-	}
-
-	if (IS_ENABLED(CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY) &&
-	    IS_ENABLED(CONFIG_USB_PD_DATA_RESET_MSG) &&
-	    !DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE)) {
-		return;
+		set_state_dpm(port, DPM_DATA_RESET);
+		return true;
 	}
 
 	/* Check if port, port partner and cable support USB4. */
@@ -1102,7 +1231,7 @@ static void dpm_dfp_enter_mode_msg(int port)
 						    &tx_type);
 		} else {
 			pd_dpm_request(port, DPM_REQUEST_ENTER_USB);
-			return;
+			return false;
 		}
 	}
 
@@ -1130,7 +1259,7 @@ static void dpm_dfp_enter_mode_msg(int port)
 
 	/* Not ready to send a VDM, check again next cycle */
 	if (status == MSG_SETUP_MUX_WAIT)
-		return;
+		return false;
 
 	/*
 	 * If the PE didn't discover any supported (requested) alternate mode,
@@ -1150,13 +1279,13 @@ static void dpm_dfp_enter_mode_msg(int port)
 		 * future, but the DPM is done trying for now.
 		 */
 		dpm_set_mode_entry_done(port);
-		return;
+		return false;
 	}
 
 	if (status != MSG_SETUP_SUCCESS) {
 		dpm_set_mode_entry_done(port);
 		CPRINTS("C%d: Couldn't construct alt mode VDM", port);
-		return;
+		return false;
 	}
 
 	/*
@@ -1165,13 +1294,22 @@ static void dpm_dfp_enter_mode_msg(int port)
 	 */
 	if (!pd_setup_vdm_request(port, tx_type, vdm, vdo_count)) {
 		dpm_set_mode_entry_done(port);
-		return;
+		return false;
 	}
 
+	/* Wait for PE to handle VDM request */
 	pd_dpm_request(port, DPM_REQUEST_VDM);
+	set_state_dpm(port, DPM_WAITING);
+
+	return true;
 }
 
-static void dpm_dfp_exit_mode_msg(int port)
+/*
+ * Checks to see if either USB4 or ALT-DP/TBT modes need to be exited. If the
+ * DPM is requesting the PE to send an exit message, then this function will
+ * return true to indicate that the DPM state has been changed.
+ */
+static bool dpm_dfp_exit_mode_msg(int port)
 {
 	uint32_t vdm[VDO_MAX_SIZE];
 	int vdo_count = ARRAY_SIZE(vdm);
@@ -1182,15 +1320,10 @@ static void dpm_dfp_exit_mode_msg(int port)
 	 * state checked below will reset to its inactive state. If Data Reset
 	 * is not supported, exit active modes individually.
 	 */
-	if (IS_ENABLED(CONFIG_USB_PD_DATA_RESET_MSG)) {
-		if (!DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_REQUESTED) &&
-		    !DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE)) {
-			pd_dpm_request(port, DPM_REQUEST_DATA_RESET);
-			DPM_SET_FLAG(port, DPM_FLAG_DATA_RESET_REQUESTED);
-			return;
-		} else if (!DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE)) {
-			return;
-		}
+	if (IS_ENABLED(CONFIG_USB_PD_DATA_RESET_MSG) &&
+	    !DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE)) {
+		set_state_dpm(port, DPM_DATA_RESET);
+		return true;
 	}
 
 	/* TODO(b/209625351): Data Reset is the only real way to exit from USB4
@@ -1200,14 +1333,6 @@ static void dpm_dfp_exit_mode_msg(int port)
 		CPRINTS("C%d: USB4 teardown", port);
 		usb4_exit_mode_request(port);
 	}
-
-	/*
-	 * If muxes are still settling, then wait on our next VDM.  We must
-	 * ensure we correctly sequence actions such as USB safe state with TBT
-	 * or DP mode exit.
-	 */
-	if (IS_ENABLED(CONFIG_USBC_SS_MUX) && !usb_mux_set_completed(port))
-		return;
 
 	if (IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE) && tbt_is_active(port)) {
 		/*
@@ -1223,19 +1348,22 @@ static void dpm_dfp_exit_mode_msg(int port)
 	} else {
 		/* Clear exit mode request */
 		dpm_clear_mode_exit_request(port);
-		return;
+		return false;
 	}
 
 	/* This covers error, wait mux, and unsupported cases */
 	if (status != MSG_SETUP_SUCCESS)
-		return;
+		return false;
 
 	if (!pd_setup_vdm_request(port, tx_type, vdm, vdo_count)) {
 		dpm_clear_mode_exit_request(port);
-		return;
+		return false;
 	}
 
 	pd_dpm_request(port, DPM_REQUEST_VDM);
+	set_state_dpm(port, DPM_WAITING);
+
+	return true;
 }
 
 void dpm_run(int port, int evt, int en)
@@ -1273,45 +1401,121 @@ void dpm_run(int port, int evt, int en)
 static void dpm_waiting_entry(const int port)
 {
 	DPM_CLR_FLAG(port, DPM_FLAG_PE_READY);
-	print_current_state(port);
+	if (dpm_debug_level >= DEBUG_LEVEL_2) {
+		print_current_state(port);
+	}
 }
 
 static void dpm_waiting_run(const int port)
 {
+	enum pd_data_role dr = pd_get_data_role(port);
+
 	if (DPM_CHK_FLAG(port, DPM_FLAG_PE_READY)) {
-		set_state_dpm(port, DPM_READY);
+		if (dr == PD_ROLE_UFP) {
+			set_state_dpm(port, DPM_UFP_READY);
+		} else if (dr == PD_ROLE_DFP) {
+			set_state_dpm(port, DPM_DFP_READY);
+		}
 	}
 }
 
 /*
- * DPM_READY
+ * DPM_DFP_READY
  */
-static void dpm_ready_entry(const int port)
+static void dpm_dfp_ready_entry(const int port)
 {
-	print_current_state(port);
+	if (dpm_debug_level >= DEBUG_LEVEL_2) {
+		print_current_state(port);
+	}
 }
 
-static void dpm_ready_run(const int port)
+static void dpm_dfp_ready_run(const int port)
 {
 	if (!DPM_CHK_FLAG(port, DPM_FLAG_PE_READY)) {
 		set_state_dpm(port, DPM_WAITING);
 		return;
 	}
 
-	if (pd_get_data_role(port) == PD_ROLE_DFP) {
-		/* Run DFP related DPM requests */
-		if (DPM_CHK_FLAG(port, DPM_FLAG_EXIT_REQUEST))
-			dpm_dfp_exit_mode_msg(port);
-		else if (!DPM_CHK_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE))
-			dpm_dfp_enter_mode_msg(port);
+	/* Run power button state machine */
+	dpm_run_pd_button_sm(port);
 
-		/* Run USB PD Power button state machine */
-		dpm_run_pd_button_sm(port);
+	/*
+	 * If muxes are still settling, then wait on our next VDM.  We must
+	 * ensure we correctly sequence actions such as USB safe state with TBT
+	 * or DP mode exit.
+	 */
+	if (IS_ENABLED(CONFIG_USBC_SS_MUX) && !usb_mux_set_completed(port))
+		return;
+
+	/* Run DFP related DPM requests */
+	if (DPM_CHK_FLAG(port, DPM_FLAG_EXIT_REQUEST)) {
+		if (dpm_dfp_exit_mode_msg(port))
+			return;
+	} else if (!DPM_CHK_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE)) {
+		if (dpm_dfp_enter_mode_msg(port))
+			return;
 	}
 
 	/* Run any VDM REQ messages */
-	if (DPM_CHK_FLAG(port, DPM_FLAG_SEND_VDM_REQ))
+	if (DPM_CHK_FLAG(port, DPM_FLAG_SEND_VDM_REQ)) {
 		dpm_send_req_vdm(port);
+		set_state_dpm(port, DPM_WAITING);
+		return;
+	}
+}
+
+/*
+ * DPM_UFP_READY
+ */
+static void dpm_ufp_ready_entry(const int port)
+{
+	if (dpm_debug_level >= DEBUG_LEVEL_2) {
+		print_current_state(port);
+	}
+}
+
+static void dpm_ufp_ready_run(const int port)
+{
+	if (!DPM_CHK_FLAG(port, DPM_FLAG_PE_READY)) {
+		set_state_dpm(port, DPM_WAITING);
+		return;
+	}
+
+	if (DPM_CHK_FLAG(port, DPM_FLAG_ENTER_ANY)) {
+		DPM_CLR_FLAG(port, DPM_FLAG_ENTER_DP | DPM_FLAG_ENTER_TBT |
+					   DPM_FLAG_ENTER_USB4);
+		/*
+		 * TODO(b/168030639): Notify the AP that the
+		 * enter mode request failed.
+		 */
+		return;
+	}
+
+	/* Run any VDM REQ messages */
+	if (DPM_CHK_FLAG(port, DPM_FLAG_SEND_VDM_REQ)) {
+		dpm_send_req_vdm(port);
+		set_state_dpm(port, DPM_WAITING);
+		return;
+	}
+}
+
+/*
+ * DPM_DATA_RESET
+ */
+static void dpm_data_reset_entry(const int port)
+{
+	print_current_state(port);
+
+	pd_dpm_request(port, DPM_REQUEST_DATA_RESET);
+}
+
+static void dpm_data_reset_run(const int port)
+{
+	/* Wait for Data Reset to Complete */
+	if (!DPM_CHK_FLAG(port, DPM_FLAG_DATA_RESET_DONE))
+		return;
+
+	set_state_dpm(port, DPM_DFP_READY);
 }
 
 static __const_data const struct usb_state dpm_states[] = {
@@ -1320,8 +1524,16 @@ static __const_data const struct usb_state dpm_states[] = {
 		.entry = dpm_waiting_entry,
 		.run   = dpm_waiting_run,
 	},
-	[DPM_READY] = {
-		.entry = dpm_ready_entry,
-		.run   = dpm_ready_run,
+	[DPM_DFP_READY] = {
+		.entry = dpm_dfp_ready_entry,
+		.run   = dpm_dfp_ready_run,
+	},
+	[DPM_UFP_READY] = {
+		.entry = dpm_ufp_ready_entry,
+		.run   = dpm_ufp_ready_run,
+	},
+	[DPM_DATA_RESET] = {
+		.entry = dpm_data_reset_entry,
+		.run   = dpm_data_reset_run,
 	},
 };

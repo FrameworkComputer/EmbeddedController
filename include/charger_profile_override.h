@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_CHARGER_PROFILE_OVERRIDE_H
 #define __CROS_EC_CHARGER_PROFILE_OVERRIDE_H
 
-#include "charge_state_v2.h"
+#include "charge_state.h"
 
 #define TEMPC_TENTHS_OF_DEG(c) ((c)*10)
 

@@ -5,12 +5,12 @@
  * Power and battery LED control for Damu
  */
 #include "common.h"
-#include "ioexpander.h"
 #include "driver/ioexpander/it8801.h"
 #include "ec_commands.h"
+#include "hooks.h"
+#include "ioexpander.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
-#include "hooks.h"
 
 #define LED_ON_LVL 0
 #define LED_OFF_LVL 1

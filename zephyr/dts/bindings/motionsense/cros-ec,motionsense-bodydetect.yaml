@@ -1,0 +1,46 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+include: base.yaml
+
+compatible: "cros-ec,motionsense-bodydetect"
+
+description: Body detection configuration parameters
+properties:
+  var_noise_factor:
+    type: int
+    required: false
+    description: |
+      The unit is percentage
+      This is used for mitigate the effect of the noise from sensor.
+      If set to 100%, the average noise is canceled out.
+  var_threshold:
+    type: int
+    required: false
+    description: |
+      The unit is (mm/s^2)^2
+      The motion confidence is calculated if the variance is within
+      variance_threshold +/- confidence_delta. Otherwise, if variance
+      is too high/low, confidence will be 100%/0%
+  confidence_delta:
+    type: int
+    required: false
+    description: |
+      The unit is (mm/s^2)^2
+      The motion confidence is calculated if the variance is within
+      variance_threshold +/- confidence_delta. Otherwise, if variance
+      is too high/low, confidence will be 100%/0%
+
+# example:
+# base_accel: base-accel {
+#    compatible = "cros-ec,lis2dw12";
+#    (...)
+#    bodydetect {
+#         compatible = "cros-ec,motionsense-bodydetect";
+#         status = "okay";
+#         var_noise_factor = <150>;
+#         var_threshold = <3000>;
+#         confidence_delta = <2900>;
+#   };
+# };

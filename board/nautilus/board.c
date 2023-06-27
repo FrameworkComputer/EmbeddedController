@@ -6,24 +6,25 @@
 /* Poppy board-specific configuration */
 
 #include "adc.h"
+#include "battery_smart.h"
 #include "bd99992gw.h"
 #include "board_config.h"
-#include "battery_smart.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charge_state.h"
 #include "charge_ramp.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "chipset.h"
 #include "console.h"
-#include "driver/accelgyro_bmi_common.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accelgyro_bmi_common.h"
 #include "driver/baro_bmp280.h"
 #include "driver/charger/isl923x.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "driver/tcpm/tcpci.h"
 #include "driver/tcpm/tcpm.h"
 #include "driver/temp_sensor/bd99992gw.h"
+#include "espi.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -34,8 +35,8 @@
 #include "math_util.h"
 #include "motion_lid.h"
 #include "motion_sense.h"
-#include "pi3usb9281.h"
 #include "panic.h"
+#include "pi3usb9281.h"
 #include "power.h"
 #include "power_button.h"
 #include "spi.h"
@@ -51,7 +52,6 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
-#include "espi.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
@@ -111,6 +111,7 @@ void usb1_evt(enum gpio_signal signal)
 	usb_charger_task_set_event(1, USB_CHG_EVENT_BC12);
 }
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* Hibernate wake configuration */
@@ -525,26 +526,6 @@ int board_set_active_charge_port(int charge_port)
 	}
 
 	return EC_SUCCESS;
-}
-
-/**
- * Set the charge limit based upon desired maximum.
- *
- * @param port          Port number.
- * @param supplier      Charge supplier type.
- * @param charge_ma     Desired charge limit (mA).
- * @param charge_mv     Negotiated charge voltage (mV).
- */
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	/*
-	 * Limit the input current to 96% negotiated limit,
-	 * to account for the charger chip margin.
-	 */
-	charge_ma = charge_ma * 96 / 100;
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 /**

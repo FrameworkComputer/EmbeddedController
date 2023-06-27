@@ -5,11 +5,17 @@
 
 /* Host command module for Chrome EC */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #ifndef __CROS_EC_HOST_COMMAND_H
 #define __CROS_EC_HOST_COMMAND_H
 
-#include "compiler.h"
 #include "common.h"
+#include "compiler.h"
 #include "ec_commands.h"
 
 #ifdef __cplusplus
@@ -132,16 +138,9 @@ struct host_command {
 	int version_mask;
 };
 
-#ifdef CONFIG_HOST_EVENT64
 typedef uint64_t host_event_t;
 #define HOST_EVENT_CPRINTS(str, e) CPRINTS("%s 0x%016" PRIx64, str, e)
 #define HOST_EVENT_CCPRINTF(str, e) ccprintf("%s 0x%016" PRIx64 "\n", str, e)
-
-#else
-typedef uint32_t host_event_t;
-#define HOST_EVENT_CPRINTS(str, e) CPRINTS("%s 0x%08x", str, e)
-#define HOST_EVENT_CCPRINTF(str, e) ccprintf("%s 0x%08x\n", str, e)
-#endif
 
 /**
  * Return a pointer to the memory-mapped buffer.
@@ -384,6 +383,39 @@ stub_send_response_callback(struct host_cmd_handler_args *args)
 
 #define BUILD_HOST_COMMAND_SIMPLE(CMD, VERSION) \
 	BUILD_HOST_COMMAND(CMD, VERSION, EMPTY, EMPTY)
+
+#define CROS_EC_COMMAND_INFO struct host_cmd_handler_args
+
+static inline int CROS_EC_COMMAND(CROS_EC_COMMAND_INFO *handle,
+				  uint16_t command, uint8_t version,
+				  const void *params, uint16_t params_size,
+				  void *response, uint16_t response_size)
+{
+	struct host_cmd_handler_args args;
+	int rv;
+
+	if (handle == NULL)
+		handle = &args;
+
+	handle->send_response = stub_send_response_callback;
+	handle->command = command;
+	handle->version = version;
+	handle->params = params;
+	handle->params_size = params_size;
+	handle->response = response;
+	handle->response_max = response_size;
+	handle->response_size = 0;
+	handle->result = 0;
+
+	rv = host_command_process(handle);
+	if (handle->result != EC_RES_SUCCESS)
+		return handle->result;
+
+	return rv;
+}
+
+#include "ec_cmd_api.h"
+
 #endif /* CONFIG_ZTEST */
 
 #ifdef __cplusplus

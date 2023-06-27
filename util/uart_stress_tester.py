@@ -17,7 +17,9 @@ Prerequisite:
         e.g. dut-control cr50_uart_timestamp:off
 """
 
-from __future__ import absolute_import, division, print_function
+from __future__ import absolute_import
+from __future__ import division
+from __future__ import print_function
 
 import argparse
 import atexit
@@ -29,6 +31,7 @@ import threading
 import time
 
 import serial  # pylint:disable=import-error
+
 
 BAUDRATE = 115200  # Default baudrate setting for UART port
 CROS_USERNAME = "root"  # Account name to login to ChromeOS
@@ -90,6 +93,7 @@ class UartSerial:
                 "touch " + FLAG_FILENAME,  # Create a temp file
             ],
             "cleanup_cmd": [
+                "\x03",
                 "rm -f " + FLAG_FILENAME,  # Remove the temp file
                 "dmesg -E",  # Enable console message
                 "logout",  # Logout
@@ -109,7 +113,7 @@ class UartSerial:
             "prompt": "ec:~$",
             "device_type": "EC(Zephyr)",
             "prepare_cmd": ["chan save", "chan 0"],  # Disable console message
-            "cleanup_cmd": ["", "chan restore"],
+            "cleanup_cmd": ["x", "", "chan restore"],
             "end_of_input": CRLF,
         },
     )
@@ -193,7 +197,7 @@ class UartSerial:
         if self.serial.inWaiting() == 0:
             time.sleep(1)
 
-        return self.serial.read(self.serial.inWaiting()).decode()
+        return self.serial.read(self.serial.inWaiting()).decode(errors="ignore")
 
     def prepare(self):
         """Prepare the test:
@@ -213,8 +217,6 @@ class UartSerial:
             self.serial.flushInput()
             self.serial.flushOutput()
 
-            # Send 'x' to cancel any previous chargen command still running.
-            self.run_command(["x"], delay=1)
             self.get_output()  # drain data
 
             # Send a couple of line feeds, and capture the prompt text.
@@ -330,9 +332,9 @@ class UartSerial:
                 if captured:
                     if self.num_ch_cap == 0:
                         # Strip prompt on first read (if it's there)
-                        prefixstr = self.dev_prof["prompt"] + " "
-                        if captured.startswith(prefixstr):
-                            captured = captured[len(prefixstr) :]
+                        start = captured.find("0123")
+                        if start > 0:
+                            captured = captured[start:]
                     # There is some output data. Reset the data starvation count.
                     data_starve_count = 0
                 else:

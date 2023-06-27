@@ -5,9 +5,9 @@
 
 /* Trogdor family-specific USB-C configuration */
 
+#include "charge_state.h"
 #include "charger.h"
 #include "charger/isl923x_public.h"
-#include "charge_state.h"
 #include "console.h"
 #include "temp_sensor.h"
 #include "usb_pd.h"

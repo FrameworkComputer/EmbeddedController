@@ -222,12 +222,6 @@ When `BUILD.py` is sourced, the following two globals are defined:
   unnecessary modules as modules are typically guarded by Kconfig
   options, so the only reason to set this is if your project needs to
   build in a limited environment where not all modules are available.
-- `is_test` (optional): `True` if the code should be executed as a
-  test after compilation, `False` otherwise.  Defaults to `False`.
-- `test_args` (optional): A list of command line arguments that should
-  be used when running the test.  Instances of `{test_temp_dir}`
-  inside of an argument will be replaced with a path to a temporary
-  directory guaranteed to be unique for the current execution.
 - `dts_overlays` (optional): A list of files which should be concatenated
   together and applied as a Zephyr device-tree overlay. The recommended setting
   is to select the **project** specific devicetree overlay file.
@@ -253,8 +247,6 @@ more defaults for you:
 
 - `register_host_project`: Define a project which runs in the chroot
   (not on hardware).
-- `register_host_test`: Just like `register_host_project`, but
-  `is_test` gets set to `True`.
 - `register_raw_project`: Register a project which builds a single
   `.bin` file, no RO+RW packing, no FMAP.
 - `register_binman_project`: Register a project which builds RO and RW

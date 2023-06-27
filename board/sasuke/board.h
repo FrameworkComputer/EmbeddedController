@@ -29,6 +29,12 @@
 #define CONFIG_OCPC_DEF_RBATT_MOHMS               \
 	22 /* R_DS(on) 11.6mOhm + 10mOhm sns rstr \
 	    */
+/*
+ * b/147463641: The charger IC seems to overdraw ~4%, therefore we
+ * reduce our target accordingly.
+ */
+#undef CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT
+#define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 4
 #define CONFIG_OCPC
 #define CONFIG_CHARGER_PROFILE_OVERRIDE
 #define CONFIG_CHARGE_RAMP_HW

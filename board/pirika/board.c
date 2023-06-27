@@ -9,15 +9,15 @@
 #include "button.h"
 #include "cbi_fw_config.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/isl923x.h"
 #include "driver/retimer/tusb544.h"
-#include "driver/temp_sensor/thermistor.h"
 #include "driver/tcpm/raa489000.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/it5205.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -491,18 +491,6 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
-
-	/*
-	 * TODO(b/151955431): Characterize the input current limit in case a
-	 * scaling needs to be applied here
-	 */
-	charge_set_input_current_limit(icl, charge_mv);
-}
-
 int board_is_sourcing_vbus(int port)
 {
 	int regval;
@@ -590,7 +578,7 @@ __override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
 
 __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 {
-	if (port < 0 || port > board_get_usb_pd_port_count())
+	if (!board_is_usb_pd_port_present(port))
 		return;
 
 	raa489000_set_output_current(port, rp);

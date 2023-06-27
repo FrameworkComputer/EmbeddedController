@@ -32,15 +32,6 @@ static int accel_set_range(struct motion_sensor_t *s, int range, int rnd)
 	return EC_SUCCESS;
 }
 
-static int accel_get_resolution(const struct motion_sensor_t *s)
-{
-#ifdef TEST_BODY_DETECTION
-	/* Assume we are using BMI160 */
-	return BMI_RESOLUTION;
-#endif
-	return 0;
-}
-
 int test_data_rate[2] = { 0 };
 
 static int accel_set_data_rate(const struct motion_sensor_t *s, const int rate,
@@ -71,7 +62,6 @@ const struct accelgyro_drv test_motion_sense = {
 	.init = accel_init,
 	.read = accel_read,
 	.set_range = accel_set_range,
-	.get_resolution = accel_get_resolution,
 	.set_data_rate = accel_set_data_rate,
 	.get_data_rate = accel_get_data_rate,
 #ifdef CONFIG_BODY_DETECTION

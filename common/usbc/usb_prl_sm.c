@@ -10,6 +10,7 @@
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
+#include "compile_time_macros.h"
 #include "console.h"
 #include "cros_version.h"
 #include "ec_commands.h"
@@ -20,16 +21,16 @@
 #include "system.h"
 #include "task.h"
 #include "tcpm/tcpm.h"
-#include "util.h"
 #include "usb_charge.h"
+#include "usb_emsg.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_timer.h"
 #include "usb_pe_sm.h"
 #include "usb_prl_sm.h"
-#include "usb_tc_sm.h"
-#include "usb_emsg.h"
 #include "usb_sm.h"
+#include "usb_tc_sm.h"
+#include "util.h"
 #include "vpd_api.h"
 
 #ifdef CONFIG_COMMON_RUNTIME
@@ -120,6 +121,11 @@ __maybe_unused static void print_flag(const char *group, int set_or_clear,
 #define PRL_FLAGS_ABORT BIT(9)
 /* Flag to note current TX message uses chunking */
 #define PRL_FLAGS_CHUNKING BIT(10)
+/* Flag to disable checking data role on incoming messages. */
+#define PRL_FLAGS_IGNORE_DATA_ROLE BIT(11)
+
+/* For checking flag_bit_names[] */
+#define PRL_FLAGS_COUNT 12
 
 struct bit_name {
 	int value;
@@ -139,7 +145,9 @@ static __const_data const struct bit_name flag_bit_names[] = {
 	{ PRL_FLAGS_MSG_RECEIVED, "PRL_FLAGS_MSG_RECEIVED" },
 	{ PRL_FLAGS_ABORT, "PRL_FLAGS_ABORT" },
 	{ PRL_FLAGS_CHUNKING, "PRL_FLAGS_CHUNKING" },
+	{ PRL_FLAGS_IGNORE_DATA_ROLE, "PRL_FLAGS_IGNORE_DATA_ROLE" },
 };
+BUILD_ASSERT(ARRAY_SIZE(flag_bit_names) == PRL_FLAGS_COUNT);
 
 __maybe_unused static void print_bits(const char *group, const char *desc,
 				      int value, const struct bit_name *names,
@@ -364,6 +372,18 @@ static struct pd_message {
 struct extended_msg rx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 struct extended_msg tx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 
+enum prl_event_log_state_kind {
+	/* Identifies uninitialized entries */
+	PRL_EVENT_LOG_STATE_NONE,
+	PRL_EVENT_LOG_STATE_TX,
+	PRL_EVENT_LOG_STATE_HR,
+	PRL_EVENT_LOG_STATE_RCH,
+	PRL_EVENT_LOG_STATE_TCH,
+};
+
+__maybe_unused static void
+prl_event_log_append(enum prl_event_log_state_kind kind, int port);
+
 /* Common Protocol Layer Message Transmission */
 static void prl_tx_construct_message(int port);
 static void prl_rx_wait_for_phy_message(const int port, int evt);
@@ -430,6 +450,7 @@ test_export_static enum usb_prl_tx_state prl_tx_get_state(const int port)
 /* Print the protocol transmit statemachine's current state. */
 static void print_current_prl_tx_state(const int port)
 {
+	prl_event_log_append(PRL_EVENT_LOG_STATE_TX, port);
 	if (prl_debug_level >= DEBUG_LEVEL_3)
 		CPRINTS("C%d: %s", port,
 			prl_tx_state_names[prl_tx_get_state(port)]);
@@ -451,6 +472,7 @@ enum usb_prl_hr_state prl_hr_get_state(const int port)
 /* Print the hard reset statemachine's current state. */
 static void print_current_prl_hr_state(const int port)
 {
+	prl_event_log_append(PRL_EVENT_LOG_STATE_HR, port);
 	if (prl_debug_level >= DEBUG_LEVEL_3)
 		CPRINTS("C%d: %s", port,
 			prl_hr_state_names[prl_hr_get_state(port)]);
@@ -473,6 +495,7 @@ test_export_static enum usb_rch_state rch_get_state(const int port)
 /* Print the chunked Rx statemachine's current state. */
 static void print_current_rch_state(const int port)
 {
+	prl_event_log_append(PRL_EVENT_LOG_STATE_RCH, port);
 	if (prl_debug_level >= DEBUG_LEVEL_3)
 		CPRINTS("C%d: %s", port, rch_state_names[rch_get_state(port)]);
 }
@@ -498,6 +521,7 @@ test_export_static enum usb_tch_state tch_get_state(const int port)
 /* Print the chunked Tx statemachine's current state. */
 static void print_current_tch_state(const int port)
 {
+	prl_event_log_append(PRL_EVENT_LOG_STATE_TCH, port);
 	if (prl_debug_level >= DEBUG_LEVEL_3)
 		CPRINTS("C%d: %s", port, tch_state_names[tch_get_state(port)]);
 }
@@ -541,6 +565,14 @@ void prl_execute_hard_reset(int port)
 	PRL_HR_SET_FLAG(port, PRL_FLAGS_PE_HARD_RESET);
 	set_state_prl_hr(port, PRL_HR_RESET_LAYER);
 	task_wake(PD_PORT_TO_TASK_ID(port));
+}
+
+void prl_set_data_role_check(int port, bool enable)
+{
+	if (enable)
+		RCH_CLR_FLAG(port, PRL_FLAGS_IGNORE_DATA_ROLE);
+	else
+		RCH_SET_FLAG(port, PRL_FLAGS_IGNORE_DATA_ROLE);
 }
 
 int prl_is_running(int port)
@@ -1789,7 +1821,7 @@ static void tch_wait_for_message_request_from_pe_entry(const int port)
 	PDMSG_CLR_FLAG(port, PRL_FLAGS_ABORT);
 
 	/* All Messages are chunked */
-	tch[port].flags = PRL_FLAGS_CHUNKING;
+	TCH_SET_FLAG(port, PRL_FLAGS_CHUNKING);
 }
 
 static void tch_wait_for_message_request_from_pe_run(const int port)
@@ -2183,9 +2215,12 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	 * defined in [USB Type-C 2.0] Shall be performed."
 	 *
 	 * The spec lists no required state for this check, so centralize it by
-	 * processing this requirement in the PRL RX.
+	 * processing this requirement in the PRL RX. Because the TCPM does not
+	 * swap data roles instantaneously, disable this check during the
+	 * transition.
 	 */
-	if (PD_HEADER_GET_SOP(header) == TCPCI_MSG_SOP &&
+	if (!RCH_CHK_FLAG(port, PRL_FLAGS_IGNORE_DATA_ROLE) &&
+	    PD_HEADER_GET_SOP(header) == TCPCI_MSG_SOP &&
 	    PD_HEADER_DROLE(header) == pd_get_data_role(port)) {
 		CPRINTS("C%d Error: Data role mismatch (0x%08x)", port, header);
 		tc_start_error_recovery(port);
@@ -2425,6 +2460,153 @@ __maybe_unused static const struct usb_state tch_states[] = {
 	},
 #endif /* CONFIG_USB_PD_EXTENDED_MESSAGES */
 };
+
+#ifdef CONFIG_USB_PD_PRL_EVENT_LOG
+struct prl_event_log_entry {
+	/*
+	 * Truncating to 32 bits still covers a time range of about an hour and
+	 * saves 4 bytes of RAM per entry, which is significant.
+	 */
+	uint32_t timestamp;
+	uint16_t flags;
+	uint8_t port;
+	enum prl_event_log_state_kind kind;
+	union {
+		enum usb_prl_tx_state tx;
+		enum usb_prl_hr_state hr;
+		enum usb_rch_state rch;
+		enum usb_tch_state tch;
+	};
+};
+BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT <= UINT8_MAX);
+
+static struct prl_event_log_entry
+	prl_event_log_buffer[CONFIG_USB_PD_PRL_EVENT_LOG_CAPACITY];
+static atomic_t prl_event_log_next;
+
+static void prl_event_log_append(enum prl_event_log_state_kind kind, int port)
+{
+	struct prl_event_log_entry entry = {
+		.timestamp = get_time().val,
+		.port = port,
+		.kind = kind,
+	};
+
+	switch (kind) {
+	case PRL_EVENT_LOG_STATE_TX:
+		entry.flags = prl_tx[port].flags;
+		entry.tx = prl_tx_get_state(port);
+		break;
+	case PRL_EVENT_LOG_STATE_HR:
+		entry.flags = prl_hr[port].flags;
+		entry.hr = prl_hr_get_state(port);
+		break;
+	case PRL_EVENT_LOG_STATE_RCH:
+		entry.flags = rch[port].flags;
+		entry.rch = rch_get_state(port);
+		break;
+	case PRL_EVENT_LOG_STATE_TCH:
+		entry.flags = tch[port].flags;
+		entry.tch = tch_get_state(port);
+		break;
+	case PRL_EVENT_LOG_STATE_NONE:
+		/* Should never be written to the log */
+		return;
+	}
+
+	prl_event_log_buffer[atomic_add(&prl_event_log_next, 1) %
+			     ARRAY_SIZE(prl_event_log_buffer)] = entry;
+}
+
+static int command_prllog(int argc, const char **argv)
+{
+	if (argc == 2 && strcmp("clear", argv[1]) == 0) {
+		/* Clear buffer contents */
+		for (int i = 0; i < ARRAY_SIZE(prl_event_log_buffer); i++) {
+			memset(prl_event_log_buffer, 0,
+			       sizeof(prl_event_log_buffer));
+		}
+		return EC_SUCCESS;
+	} else if (argc != 1) {
+		return EC_ERROR_PARAM1;
+	}
+
+	/* Locate the oldest entry in the buffer, to start output there. */
+	unsigned int oldest_index = INT_MAX;
+
+	for (int i = 0; i < ARRAY_SIZE(prl_event_log_buffer); i++) {
+		const struct prl_event_log_entry *entry =
+			&prl_event_log_buffer[i];
+		if (entry->kind == PRL_EVENT_LOG_STATE_NONE) {
+			continue;
+		}
+
+		if (oldest_index == INT_MAX) {
+			oldest_index = i;
+		} else if (entry->timestamp <
+			   prl_event_log_buffer[oldest_index].timestamp) {
+			oldest_index = i;
+			/*
+			 * Timestamps increase monotonically, so any decrease in
+			 * time indicates we rolled over to old entries and any
+			 * after this will always be newer.
+			 */
+			break;
+		}
+	}
+	if (oldest_index == INT_MAX) {
+		/* No valid entries in the buffer. */
+		return EC_SUCCESS;
+	}
+
+	/* Dump buffer contents */
+	for (unsigned int i = 0; i < ARRAY_SIZE(prl_event_log_buffer); i++) {
+		const struct prl_event_log_entry *entry =
+			&prl_event_log_buffer[(oldest_index + i) %
+					      ARRAY_SIZE(prl_event_log_buffer)];
+
+		if (entry->kind == PRL_EVENT_LOG_STATE_NONE) {
+			/*
+			 * oldest_index refers to the oldest non-empty entry, so
+			 * if we find an empty one later we know the buffer is
+			 * empty past that point.
+			 */
+			break;
+		}
+
+		CPRINTF("%" PRIu32 " C%d ", entry->timestamp, entry->port);
+		switch (entry->kind) {
+		case PRL_EVENT_LOG_STATE_TX:
+			CPRINTF("%s ", prl_tx_state_names[entry->tx]);
+			print_flag("PRL_TX", 1, entry->flags);
+			break;
+		case PRL_EVENT_LOG_STATE_HR:
+			CPRINTF("%s ", prl_hr_state_names[entry->hr]);
+			print_flag("PRL_HR", 1, entry->flags);
+			break;
+		case PRL_EVENT_LOG_STATE_RCH:
+			CPRINTF("%s ", rch_state_names[entry->rch]);
+			print_flag("RCH", 1, entry->flags);
+			break;
+		case PRL_EVENT_LOG_STATE_TCH:
+			CPRINTF("%s ", tch_state_names[entry->tch]);
+			print_flag("TCH", 1, entry->flags);
+			break;
+		default:
+			CPRINTF("unrecognized event kind\n");
+			continue;
+		}
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(prllog, command_prllog, "[clear]",
+			"Dump USB-PD PRL state log");
+#else
+__maybe_unused static void
+prl_event_log_append(enum prl_event_log_state_kind kind, int port)
+{
+}
+#endif
 
 #ifdef TEST_BUILD
 

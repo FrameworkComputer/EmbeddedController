@@ -3,15 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "common.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/tcpc/emul_tcpci.h"
+#include "tcpm/tcpci.h"
 #include "test/drivers/tcpci_test_common.h"
 
-#include "tcpm/tcpci.h"
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 /** Check TCPC register value */
 void check_tcpci_reg_f(const struct emul *emul, int reg, uint16_t exp_val,
@@ -58,6 +57,7 @@ void test_tcpci_init(const struct emul *emul,
 	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
 			   TCPC_REG_POWER_STATUS_UNINIT);
 	zassert_equal(EC_ERROR_TIMEOUT, drv->init(port));
+	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS, 0);
 
 	/*
 	 * Set expected alert mask. It is used in test until vSafe0V tcpc
@@ -69,8 +69,7 @@ void test_tcpci_init(const struct emul *emul,
 		   TCPC_REG_ALERT_FAULT | TCPC_REG_ALERT_POWER_STATUS;
 
 	/* Set TCPCI emulator VBUS to safe0v (disconnected) */
-	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
-			   TCPC_REG_POWER_STATUS_VBUS_DET);
+	zassert_ok(tcpci_emul_set_vbus_level(emul, VBUS_SAFE0V));
 
 	/* Test init with VBUS safe0v without vSafe0V tcpc config flag */
 	zassert_equal(EC_SUCCESS, drv->init(port));
@@ -81,9 +80,7 @@ void test_tcpci_init(const struct emul *emul,
 	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, exp_mask);
 
 	/* Set TCPCI emulator VBUS to present (connected, above 4V) */
-	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
-			   TCPC_REG_POWER_STATUS_VBUS_PRES |
-				   TCPC_REG_POWER_STATUS_VBUS_DET);
+	zassert_ok(tcpci_emul_set_vbus_level(emul, VBUS_PRESENT));
 
 	/* Test init with VBUS present without vSafe0V tcpc config flag */
 	zassert_equal(EC_SUCCESS, drv->init(port));
@@ -106,10 +103,7 @@ void test_tcpci_init(const struct emul *emul,
 	check_tcpci_reg(emul, TCPC_REG_ALERT_MASK, exp_mask);
 
 	/* Set TCPCI emulator VBUS to safe0v (disconnected) */
-	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
-			   TCPC_REG_POWER_STATUS_VBUS_DET);
-	tcpci_emul_set_reg(emul, TCPC_REG_EXT_STATUS,
-			   TCPC_REG_EXT_STATUS_SAFE0V);
+	zassert_ok(tcpci_emul_set_vbus_level(emul, VBUS_SAFE0V));
 
 	/* Test init with VBUS safe0v with vSafe0V tcpc config flag */
 	zassert_equal(EC_SUCCESS, drv->init(port));
@@ -123,7 +117,7 @@ void test_tcpci_init(const struct emul *emul,
 	 * Set TCPCI emulator VBUS to disconnected but not at vSafe0V
 	 * (VBUS in 0.8V - 3.5V range)
 	 */
-	tcpci_emul_set_reg(emul, TCPC_REG_EXT_STATUS, 0);
+	zassert_ok(tcpci_emul_set_vbus_level(emul, VBUS_REMOVED));
 
 	/* Test init with VBUS not safe0v with vSafe0V tcpc config flag */
 	zassert_equal(EC_SUCCESS, drv->init(port));
@@ -901,6 +895,19 @@ void test_tcpci_drp_toggle(const struct emul *emul,
 			TCPC_REG_COMMAND_LOOK4CONNECTION);
 }
 
+static int test_tcpci_get_chip_info_mutator_device_id(
+	int port, bool live, struct ec_response_pd_chip_info_v1 *cached)
+{
+	cached->device_id = 0xbeef;
+	return EC_SUCCESS;
+}
+
+static int test_tcpci_get_chip_info_mutator_fail(
+	int port, bool live, struct ec_response_pd_chip_info_v1 *cached)
+{
+	return EC_ERROR_UNCHANGED;
+}
+
 /** Test TCPCI get chip info */
 void test_tcpci_get_chip_info(const struct emul *emul,
 			      struct i2c_common_emul_data *common_data,
@@ -914,13 +921,16 @@ void test_tcpci_get_chip_info(const struct emul *emul,
 	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_VENDOR_ID);
 	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 1, &info));
 
-	/* Test error on failed product id get */
+	/*
+	 * Test error on failed product id get. Cache should not be valid
+	 * because the previous call to get_chip_info failed.
+	 */
 	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_PRODUCT_ID);
-	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 1, &info));
+	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 0, &info));
 
 	/* Test error on failed BCD get */
-	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_VENDOR_ID);
-	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 1, &info));
+	i2c_common_emul_set_read_fail_reg(common_data, TCPC_REG_BCD_DEV);
+	zassert_equal(EC_ERROR_INVAL, drv->get_chip_info(port, 0, &info));
 	i2c_common_emul_set_read_fail_reg(common_data,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 
@@ -949,6 +959,68 @@ void test_tcpci_get_chip_info(const struct emul *emul,
 	zassert_equal(vendor, info.vendor_id);
 	zassert_equal(product, info.product_id);
 	zassert_equal(bcd, info.device_id);
+
+	/* Test providing a callback to modify cached data. */
+	zassert_equal(EC_SUCCESS,
+		      tcpci_get_chip_info_mutable(
+			      port, 1, &info,
+			      test_tcpci_get_chip_info_mutator_device_id));
+	zassert_equal(0xbeef, info.device_id);
+
+	/* Errors from the mutator get bubbled up. */
+	zassert_equal(EC_ERROR_UNCHANGED,
+		      tcpci_get_chip_info_mutable(
+			      port, 1, &info,
+			      test_tcpci_get_chip_info_mutator_fail));
+}
+
+void test_tcpci_get_vbus_voltage(const struct emul *emul,
+				 struct i2c_common_emul_data *common_data,
+				 enum usbc_port port)
+{
+	const struct tcpm_drv *drv = tcpc_config[port].drv;
+	const int fake_vbus[] = { 0,	 25,	1500,  5000,  12000, 16000,
+				  20000, 25575, 25600, 51150, 51200, 102300 };
+	const int fake_meas[] = { 0, 1, 2, 3, 4, 5, 128, 256, 512, 1023 };
+	const int fake_scl[] = { 0, 1 << 10, 2 << 10 };
+	int vbus = 0;
+
+	/* Test dev_cap_1 unsupported */
+	tcpci_emul_set_reg(emul, TCPC_REG_DEV_CAP_1, 0);
+	zassert_equal(EC_ERROR_UNIMPLEMENTED,
+		      drv->get_vbus_voltage(port, &vbus));
+
+	tcpci_emul_set_reg(emul, TCPC_REG_DEV_CAP_1,
+			   TCPC_REG_DEV_CAP_1_VBUS_MEASURE_ALARM_CAPABLE);
+
+	/* Refresh cached dev_cap_1 */
+	zassert_equal(EC_SUCCESS, drv->init(port), NULL);
+
+	/* Test error on failed command get */
+	i2c_common_emul_set_read_fail_reg(common_data,
+					  I2C_COMMON_EMUL_FAIL_ALL_REG);
+	zassert_equal(EC_ERROR_INVAL, drv->get_vbus_voltage(port, &vbus));
+	i2c_common_emul_set_read_fail_reg(common_data,
+					  I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	/* Test by setting vbus */
+	for (int i = 0; i < ARRAY_SIZE(fake_vbus); i++) {
+		tcpci_emul_set_vbus_voltage(emul, fake_vbus[i]);
+		zassert_equal(EC_SUCCESS, drv->get_vbus_voltage(port, &vbus));
+		zassert_equal(vbus, fake_vbus[i]);
+	}
+
+	/* Test by setting the register */
+	for (int i = 0; i < ARRAY_SIZE(fake_meas); i++) {
+		for (int j = 0; j < ARRAY_SIZE(fake_scl); j++) {
+			tcpci_emul_set_reg(emul, TCPC_REG_VBUS_VOLTAGE,
+					   (fake_meas[i] | fake_scl[j]));
+			zassert_equal(EC_SUCCESS,
+				      drv->get_vbus_voltage(port, &vbus));
+			zassert_equal(vbus, BIT(j) * fake_meas[i] *
+						    TCPC_REG_VBUS_VOLTAGE_LSB);
+		}
+	}
 }
 
 /** Test TCPCI enter low power mode */

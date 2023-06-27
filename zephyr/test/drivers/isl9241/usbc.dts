@@ -1,0 +1,27 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	usbc {
+		port0@0 {
+			compatible = "named-usbc-port";
+			chg = <&isl9241_emul>;
+		};
+	};
+};
+
+&i2c0 {
+	status="okay";
+
+	/delete-node/ isl923x@9;
+
+	isl9241_emul: isl9241_emul@9 {
+		compatible = "intersil,isl9241";
+		status = "okay";
+		reg = <0x9>;
+	};
+};

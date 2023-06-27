@@ -45,10 +45,12 @@ rsource "Kconfig.charger"
 rsource "Kconfig.chargesplash"
 rsource "Kconfig.board_version"
 rsource "Kconfig.cbi"
+rsource "Kconfig.cec"
 rsource "Kconfig.console"
 rsource "Kconfig.console_cmd_mem"
 rsource "Kconfig.debug_assert"
 rsource "Kconfig.defaults"
+rsource "Kconfig.detachable_base"
 rsource "Kconfig.espi"
 rsource "Kconfig.flash"
 rsource "Kconfig.header"
@@ -66,6 +68,8 @@ rsource "Kconfig.powerseq"
 rsource "Kconfig.pmic"
 rsource "Kconfig.mkbp_event"
 rsource "Kconfig.motionsense"
+rsource "Kconfig.random"
+rsource "Kconfig.rsa"
 rsource "Kconfig.rtc"
 rsource "Kconfig.stacks"
 rsource "Kconfig.system"
@@ -73,6 +77,7 @@ rsource "Kconfig.tasks"
 rsource "Kconfig.temperature"
 rsource "Kconfig.timer"
 rsource "Kconfig.throttle_ap"
+rsource "Kconfig.touchpad"
 rsource "Kconfig.usba"
 rsource "Kconfig.usbc"
 rsource "Kconfig.watchdog"
@@ -145,6 +150,18 @@ config PLATFORM_EC_BOARD_RESET_AFTER_POWER_ON
 	  the EC starts up, performs some amount of processing and then gets a
 	  reset that it is not expecting.
 
+config PLATFORM_EC_BOOT_NO_SLEEP
+	bool "Disable deep sleep after boot"
+	default y if !ZTEST
+	help
+	  Disable deep sleep for PLATFORM_EC_BOOT_NO_SLEEP_MS after boot.
+
+config PLATFORM_EC_BOOT_NO_SLEEP_MS
+	int "No deep sleep after boot duration"
+	default 15000
+	help
+	  Duration for PLATFORM_EC_BOOT_NO_SLEEP in ms.
+
 config PLATFORM_EC_WAIT_RESET_CYCLES_PER_ITERATION
 	int "CPU execution cycle per iteration for waiting the H1 reset"
 	default 4
@@ -209,6 +226,22 @@ config PLATFORM_EC_CHIP_INIT_ROM_REGION
 	  Enable this flag if the board has a `.init_rom` region. This will
 	  activate routines in `init_rom.h` to access objects in this region.
 
+config PLATFORM_EC_CMD_GPIO_EXTENDED
+	bool "Console command: gpioset"
+	default n
+	help
+	  Enable the `gpioset name <value> abilities.
+
+	  NOTE: This flag should be removed on a shipping device.
+
+config PLATFORM_EC_CMD_POWERINDEBUG
+	bool "Console command: powerindebug"
+	default y
+	help
+	  Enable the `powerindebug` console command. This command is used to
+	  get and set power signal. This flag should be disabled on a shipping
+	  device.
+
 config PLATFORM_EC_CONSOLE_CMD_HCDEBUG
 	bool "Console command: hcdebug"
 	default y
@@ -220,7 +253,7 @@ config PLATFORM_EC_CONSOLE_CMD_HCDEBUG
 
 	    hcdebug [off | normal | every | params]
 
-	  See PLATFORM_EC_HOSTCMD_DEBUG_MODE for more detail.
+	  See PLATFORM_EC_HOSTCMD_DEBUG_MODE_CHOICE for more detail.
 
 config PLATFORM_EC_CONSOLE_CMD_IRQ
 	bool "Console command: irq"
@@ -287,7 +320,8 @@ config PLATFORM_EC_CROS_FWID_VERSION
 
 config PLATFORM_EC_DEBUG_ASSERT
 	bool "Enable assertion failures"
-	default y
+	default n
+	select ASSERT
 	help
 	  Assertion failures are used to flag conditions which should not occur
 	  and thus indicate the software is unable to continue execution. This
@@ -357,15 +391,11 @@ config PLATFORM_EC_FLASH_CROS
 	  e.g. to support auto-update. Various write-protection features are
 	  also provided.
 
-config PLATFORM_EC_FPU
-	bool "Support floating point"
-	depends on FPU && (CPU_CORTEX_M || RISCV) && !NEWLIB_LIBC
-	default y
+config PLATFORM_EC_FLASH_PROTECT_DEFERRED
+	bool "Enable Async Flash Protect"
 	help
-	  This enables support for floating point. This is generally already
-	  provided in Zephyr, but the EC side expects a few functions to be
-	  available which are not available with Zephyr's minimal lib: sqrtf()
-	  and fabsf(). Enabling this options defines them.
+	  Enable the async version of the FLASH_PROTECT command. This uses
+	  a deferred flash_protect_set.
 
 config PLATFORM_EC_HOOKS
 	bool "Hooks and deferred compatibility shim"
@@ -407,7 +437,19 @@ config PLATFORM_EC_HOSTCMD_REGULATOR
 	  regulator. The board should also implement board functions defined in
 	  include/regulator.h.
 
-choice PLATFORM_EC_HOSTCMD_DEBUG_MODE
+config PLATFORM_EC_HOSTCMD_DEBUG_MODE
+	int
+	default 0 if HCDEBUG_OFF
+	default 1 if HCDEBUG_NORMAL
+	default 2 if HCDEBUG_EVERY
+	default 4 if HCDEBUG_PARAMS
+	default 0
+	help
+	  This is a helper symbol that sets the host command debug level as an
+	  integer value.  This symbol is set automatically based on the
+	  configuration of PLATFORM_EC_HOSTCMD_DEBUG_MODE_CHOICE.
+
+choice PLATFORM_EC_HOSTCMD_DEBUG_MODE_CHOICE
 	prompt "Select method to use for HostCmd Debug Mode"
 	depends on PLATFORM_EC_HOSTCMD
 	default HCDEBUG_NORMAL
@@ -439,7 +481,7 @@ config HCDEBUG_PARAMS
 	  Display all host commands and the parameters received
 	  from the AP.
 
-endchoice # PLATFORM_EC_HOSTCMD_DEBUG_MODE
+endchoice # PLATFORM_EC_HOSTCMD_DEBUG_MODE_CHOICE
 
 config PLATFORM_EC_LID_SWITCH
 	bool "Lid switch"
@@ -451,8 +493,14 @@ config PLATFORM_EC_LID_SWITCH
 
 	  This requires a GPIO named GPIO_LID_OPEN to be defined or aliased.
 
+config MKBP_PROTOCOL
+	bool "MKBP protocol support"
+	help
+	  Enable the MKBP support protocol code.
+
 config PLATFORM_EC_MKBP_INPUT_DEVICES
 	bool "Input devices via MKBP"
+	select MKBP_PROTOCOL
 	help
 	  Enable passing events from various input sources to AP via MKBP.
 	  This include buttons (power, volume); switches (lid, tablet mode)
@@ -465,6 +513,11 @@ config PLATFORM_EC_LOW_POWER_IDLE
 	  Enable low power idle modes in the EC chipset. This is automatically
 	  enabled when the Zephyr power management options are enabled with the
 	  PM option.
+
+config PLATFORM_EC_LOW_POWER_S0
+	bool "Enable deep sleep during S0"
+	help
+	  Enable deep sleep during S0 (ignores SLEEP_MASK_AP_RUN).
 
 config PLATFORM_EC_POWER_COMMON
 	bool
@@ -492,8 +545,9 @@ config PLATFORM_EC_MKBP_EVENT
 
 config PLATFORM_EC_MKBP_EVENT_WAKEUP_MASK
     bool
+    default y
+    depends on DT_HAS_CROS_EC_MKBP_EVENT_WAKEUP_MASK_ENABLED
     depends on PLATFORM_EC_MKBP_EVENT
-    default $(dt_node_has_prop,/ec-mkbp-event-wakeup-mask,wakeup-mask)
     help
       Enable which MKBP events should wakeup the system in suspend.
       For example:
@@ -506,8 +560,9 @@ config PLATFORM_EC_MKBP_EVENT_WAKEUP_MASK
 
 config PLATFORM_EC_MKBP_HOST_EVENT_WAKEUP_MASK
     bool
+    default y
+    depends on DT_HAS_CROS_EC_MKBP_HOST_EVENT_WAKEUP_MASK_ENABLED
     depends on PLATFORM_EC_MKBP_EVENT
-    default $(dt_node_has_prop,/ec-mkbp-host-event-wakeup-mask,wakeup-mask)
     help
       Enable which host events should wakeup the system in suspend.
       For example:
@@ -545,7 +600,7 @@ config PLATFORM_EC_PORT80
 
 config PLATFORM_EC_POWER_BUTTON
 	bool "Power-button support"
-	depends on PLATFORM_EC_HOSTCMD
+	depends on PLATFORM_EC_HOSTCMD && !INPUT_GPIO_KEYS
 	help
 	  Enable shimming the power button implementation and related
 	  commands in platform/ec.  This is used to implement the Chromium OS
@@ -553,11 +608,27 @@ config PLATFORM_EC_POWER_BUTTON
 
 	  This requires a GPIO named GPIO_POWER_BUTTON_L.
 
+config PLATFORM_EC_POWER_BUTTON_IGNORE_LID
+	bool "Ignore lid switch for power button press"
+	default y if !PLATFORM_EC_LID_SWITCH
+	depends on PLATFORM_EC_POWER_BUTTON
+	help
+	  Don't check for lid_is_open when processing power button presses.
+	  This option should be used when power button support is required,
+	  but there is no lid switch present.
+
 config PLATFORM_EC_BUTTON_DEBOUNCE
 	int "button debounce in us"
 	default 30000
 	help
 	  Configure the button debounce time in us per project requirement.
+
+config PLATFORM_EC_PSE_LTC4291
+	bool "power sourcing equipment (PSE)  support"
+	help
+	  Enable the power sourcing equipment (PSE) driver support for
+	  Analog Device power over ethernet (PoE) power sourcing equipment (PSE)
+	  controller.
 
 config PLATFORM_EC_PWM_HC
 	bool
@@ -569,14 +640,18 @@ config PLATFORM_EC_PWM_DISPLIGHT
 	bool "PWM display backlight"
 	default y
 	depends on DT_HAS_CROS_EC_DISPLIGHT_ENABLED
+	select PWM
 	select PLATFORM_EC_PWM_HC
 	help
 	  Enables display backlight controlled by a PWM signal connected
 	  directly to the EC chipset. The board devicetree file must define a
 	  "cros-ec,displight" compatible device node.
 
+CHOSEN_CROS_RTC := cros,rtc
+
 config PLATFORM_EC_RTC
 	bool "Real-time clock (RTC)"
+	depends on $(dt_chosen_enabled,$(CHOSEN_CROS_RTC))
 	help
 	  Enable support for a real-time clock. Typically this is available
 	  on-chip in the EC. It provides a way to track the passage of time
@@ -588,8 +663,21 @@ config PLATFORM_EC_RTC
 	  to the outside world and can often obtain the current time when
 	  desired.
 
+# Workaround for not being able to have commas in macro arguments
+DT_CHOSEN_CROS_EC_SHA := cros-ec,sha
+
+config PLATFORM_EC_SHA256_HW_ZEPHYR
+	bool
+	default "$(dt_chosen_enabled,$(DT_CHOSEN_CROS_EC_SHA))"
+	select CRYPTO
+	help
+	  Use the Zephyr crypto_sha driver to compute SHA256 hashing.
+	  Enabling this config implies PLATFORM_EC_SHA256_HW_ACCELERATE is
+	  selected.
+
 choice PLATFORM_EC_SHA256_MODE
 	prompt "Select method to use for computing SHA256 hashes"
+	default PLATFORM_EC_SHA256_HW_ACCELERATE if $(dt_chosen_enabled,$(DT_CHOSEN_CROS_EC_SHA))
 	help
 	  The verified boot mechanism requests the hash of the entire read-write
 	  portion of the EC image. This is typically done using a hashing block
@@ -616,7 +704,7 @@ endchoice # PLATFORM_EC_SHA256_MODE
 
 config PLATFORM_EC_SHA256_UNROLLED
 	bool "Manually unroll sha256 transform"
-	depends on PLATFORM_EC_SHA25_SW
+	depends on PLATFORM_EC_SHA256_SW
 	default n
 	help
 	  Enable loop unroll to improve the performance of sha256 software
@@ -639,25 +727,17 @@ config PLATFORM_EC_SWITCH
           This also enables the "mmapinfo" console command to report the current
           state of all switches.
 
-choice PLATFORM_EC_SWITCHCAP_TYPE
-	prompt "Enable switchcap support"
-	optional
-	help
-	  Enable support for switchcap used to power on the AP.
-	  If enabled, type of switchcap must be selected and node in device
-	  tree must be added that describes the driver and pins used to control
-	  the switchcap.
-
 config PLATFORM_EC_SWITCHCAP_GPIO
 	bool "GPIO controlled switchcap"
+	default y
+	depends on DT_HAS_CROS_EC_SWITCHCAP_GPIO_ENABLED
 	help
 	  Enable support for the GPIO controlled switchcap.
 	  Pins used for controlling the switchcap must be defined in board's
 	  device tree.
 
 config PLATFORM_EC_SWITCHCAP_LN9310
-	bool "LN9310 switchcap driver"
-	depends on PLATFORM_EC_I2C
+	bool "LN9310 switchcap common code"
 	help
 	  Enable support for the LION Semiconductor LN9310 switched
 	  capacitor converter.  This will export definitions for
@@ -665,7 +745,14 @@ config PLATFORM_EC_SWITCHCAP_LN9310
 	  project-specific code should call appropriately if there's
 	  no switchcap node in device tree.
 
-endchoice
+config CROS_EC_SWITCHCAP_LN9310
+	bool "LN9310 switchcap generic driver"
+	default y
+	depends on DT_HAS_LION_LN9310_ENABLED
+	help
+	  Enable support for the generic driver for the LION Semiconductor
+	  LN9310 switched capacitor converter. This requires a lion,ln9310 node
+	  to be defined.
 
 config PLATFORM_EC_SYSTEM_UNLOCKED
 	bool "System unlocked: allow dangerous commands while in development"
@@ -684,12 +771,31 @@ config PLATFORM_EC_SYSTEM_UNLOCKED
 
 config PLATFORM_EC_THROTTLE_AP
 	bool "CPU throttling"
-	depends on PLATFORM_EC_TEMP_SENSOR
 	help
-	  Enable throttling the CPU based on the temperature sensors. When they
-	  detect that the CPU is getting too hot, the CPU is throttled to
-	  a lower speed. This reduce the CPU's power output and eventually
-	  results in a lower temperature.
+	  Enable throttling the CPU. When triggered this reduces the CPU's
+	  power output and eventually results in a lower temperature.
+
+if PLATFORM_EC_THROTTLE_AP
+
+config PLATFORM_EC_THROTTLE_AP_SINGLE_PIN
+	bool "CPU throttling and interrupt detection on a single pin"
+	help
+	  Enable detection of throttling interrupts on the same pin used to
+	  trigger throttling. The GPIO should be configured as an output by
+	  default. throttle_ap_config_prochot will configure the GPIO as
+	  an interrupt. Chipset specific functions are responsible for
+	  handling any subsequent changes.
+
+config PLATFORM_EC_THROTTLE_AP_NO_FAN
+	bool "No automatic fan control for AP throttling"
+	help
+	  Disable automatic fan control when an AP throttling interrupt occurs
+
+config PLATFORM_EC_CONSOLE_CMD_APTHROTTLE
+	bool "Enable apthrottle command to disable throttling state"
+	default n
+
+endif #PLATFORM_EC_THROTTLE_AP
 
 menuconfig PLATFORM_EC_TIMER
 	bool "Timer module"
@@ -749,23 +855,6 @@ config PLATFORM_EC_VSTORE_SLOT_COUNT
 	  used only for recording a hash of the read-write AP firmware for
 	  checking on resume. For this, one slot is enough.
 
-menuconfig PLATFORM_EC_WATCHDOG
-	bool "Watchdog"
-	depends on WATCHDOG
-	default y
-	help
-	  Enable the watchdog functionality. The watchdog timer will reboot the
-	  system if the hook task (which is the lowest-priority task on the
-	  system) gets starved for CPU time and isn't able to fire its
-	  HOOK_TICK event.
-
-	  Chromium EC system uses an auxiliary timer to handle the system
-	  warning event. This leaves some time to the system for preparing &
-	  printing the debug information. The interval between reloads of the
-	  watchdog timer should be less than half of the auxiliary timer
-	  (PLATFORM_EC_WATCHDOG_PERIOD_MS -
-	  PLATFORM_EC_WATCHDOG_WARNING_LEADING_TIME_MS).
-
 config PLATFORM_EC_WORKAROUND_FLASH_DOWNLOAD_API
 	bool "Workaround needed for npcx9 ES1 chip"
 	depends on SOC_SERIES_NPCX9
@@ -807,6 +896,17 @@ config PLATFORM_EC_AMD_SB_RMI
 	  perform tasks such as managing power consumption and power limits of
 	  the CPU socket.
 
+config PLATFORM_EC_AMD_STB_DUMP
+	bool "Enable STB dumping feature"
+	help
+	  Enable STB dumping when AP hangs during suspend/resume.
+
+config PLATFORM_EC_AMD_STB_DUMP_CMD
+	bool "Enable `amdstbdump` console command"
+	depends on PLATFORM_EC_AMD_STB_DUMP
+	help
+	  Enables the `amdstbdump` command to manually trigger an STB dump.
+
 config PLATFORM_EC_AMD_STT
 	bool "Enable driver for AMD STT interface"
 	depends on PLATFORM_EC_AMD_SB_RMI
@@ -841,5 +941,11 @@ config PLATFORM_EC_UNIMPLEMENTED_GPIO
 	help
 	  In Zephyr shim, some gpios should not be controlled if project
 	  does not implement this pin.
+
+config SYSTEM_BOOT_TIME_LOGGING
+	bool "boot time logging"
+	help
+	  This config enables boot time logging functionality in EC which
+	  is used for calculating system boot time.
 
 endif # PLATFORM_EC

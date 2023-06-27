@@ -6,13 +6,13 @@
 #include "common.h"
 #include "config.h"
 #include "console.h"
+#include "hooks.h"
+#include "task.h"
 #include "timer.h"
 #include "uart.h"
 #include "usb_console.h"
 #include "util.h"
 #include "watchdog.h"
-#include "hooks.h"
-#include "task.h"
 
 #ifndef SECTION_IS_RO
 

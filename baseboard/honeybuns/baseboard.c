@@ -7,15 +7,15 @@
 #include "console.h"
 #include "cros_board_info.h"
 #include "driver/mp4245.h"
+#include "driver/tcpm/tcpm.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "usb_pd.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
+#include "usb_pd.h"
 #include "usbc_ppc.h"
-#include "driver/tcpm/tcpm.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)

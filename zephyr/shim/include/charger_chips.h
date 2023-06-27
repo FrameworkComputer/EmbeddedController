@@ -7,6 +7,7 @@
 #define __CROS_EC_CHARGER_CHIPS_H
 
 #include "charger.h"
+
 #include <zephyr/devicetree.h>
 
 extern const struct charger_config_t chg_chips_alt[];

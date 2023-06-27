@@ -9,8 +9,6 @@
  */
 
 #include "atomic.h"
-#include <stdbool.h>
-#include <stdint.h>
 #include "compile_time_macros.h"
 #include "console.h"
 #include "tcpm/tcpm.h"
@@ -22,6 +20,9 @@
 #include "usb_pd_tcpm.h"
 #include "usb_pe_sm.h"
 #include "usb_tbt_alt_mode.h"
+
+#include <stdbool.h>
+#include <stdint.h>
 
 /*
  * Enter/Exit TBT mode with active cable
@@ -80,6 +81,9 @@ static uint8_t tbt_flags[CONFIG_USB_PD_PORT_MAX_COUNT];
 #define TBT_SET_FLAG(port, flag) (tbt_flags[port] |= (flag))
 #define TBT_CLR_FLAG(port, flag) (tbt_flags[port] &= (~flag))
 #define TBT_CHK_FLAG(port, flag) (tbt_flags[port] & (flag))
+
+/* Note: there is currently only one defined TBT mode */
+static const int tbt_opos = 1;
 
 static int tbt_prints(const char *string, int port)
 {
@@ -286,7 +290,6 @@ void intel_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		     uint32_t *vdm)
 {
 	const uint8_t vdm_cmd = PD_VDO_CMD(vdm[0]);
-	int opos_sop, opos_sop_prime;
 
 	if (!tbt_response_valid(port, type, "ACK", vdm_cmd))
 		return;
@@ -317,12 +320,7 @@ void intel_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		break;
 	case TBT_EXIT_SOP:
 		tbt_prints("exit mode SOP", port);
-		opos_sop = pd_alt_mode(port, TCPCI_MSG_SOP, USB_VID_INTEL);
-
-		/* Clear Thunderbolt related signals */
-		if (opos_sop > 0)
-			pd_dfp_exit_mode(port, TCPCI_MSG_SOP, USB_VID_INTEL,
-					 opos_sop);
+		pd_set_dfp_enter_mode_flag(port, false);
 
 		if (tbt_sop_prime_prime_needed(port)) {
 			tbt_state[port] = TBT_EXIT_SOP_PRIME_PRIME;
@@ -348,12 +346,7 @@ void intel_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 			 * Exit mode process is complete; go to inactive state.
 			 */
 			tbt_exit_done(port);
-			opos_sop_prime = pd_alt_mode(port, TCPCI_MSG_SOP_PRIME,
-						     USB_VID_INTEL);
-
 			/* Clear Thunderbolt related signals */
-			pd_dfp_exit_mode(port, TCPCI_MSG_SOP_PRIME,
-					 USB_VID_INTEL, opos_sop_prime);
 			set_usb_mux_with_current_data_role(port);
 		} else {
 			tbt_retry_enter_mode(port);
@@ -461,7 +454,6 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 					     uint32_t *vdm,
 					     enum tcpci_msg_type *tx_type)
 {
-	struct svdm_amode_data *modep;
 	int vdo_count_ret = 0;
 
 	*tx_type = TCPCI_MSG_SOP;
@@ -528,36 +520,22 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 		return MSG_SETUP_MUX_WAIT;
 	case TBT_EXIT_SOP:
 		/* DPM will only call this after safe state set is done */
-		modep = pd_get_amode_data(port, TCPCI_MSG_SOP, USB_VID_INTEL);
-		if (!(modep && modep->opos))
-			return MSG_SETUP_ERROR;
-
 		vdm[0] = VDO(USB_VID_INTEL, 1, CMD_EXIT_MODE) |
-			 VDO_OPOS(modep->opos) | VDO_CMDT(CMDT_INIT) |
+			 VDO_OPOS(tbt_opos) | VDO_CMDT(CMDT_INIT) |
 			 VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP));
 		vdo_count_ret = 1;
 		break;
 	case TBT_EXIT_SOP_PRIME_PRIME:
-		modep = pd_get_amode_data(port, TCPCI_MSG_SOP_PRIME,
-					  USB_VID_INTEL);
-		if (!(modep && modep->opos))
-			return MSG_SETUP_ERROR;
-
 		vdm[0] = VDO(USB_VID_INTEL, 1, CMD_EXIT_MODE) |
-			 VDO_OPOS(modep->opos) | VDO_CMDT(CMDT_INIT) |
+			 VDO_OPOS(tbt_opos) | VDO_CMDT(CMDT_INIT) |
 			 VDO_SVDM_VERS(pd_get_vdo_ver(
 				 port, TCPCI_MSG_SOP_PRIME_PRIME));
 		vdo_count_ret = 1;
 		*tx_type = TCPCI_MSG_SOP_PRIME_PRIME;
 		break;
 	case TBT_EXIT_SOP_PRIME:
-		modep = pd_get_amode_data(port, TCPCI_MSG_SOP_PRIME,
-					  USB_VID_INTEL);
-		if (!(modep && modep->opos))
-			return MSG_SETUP_ERROR;
-
 		vdm[0] = VDO(USB_VID_INTEL, 1, CMD_EXIT_MODE) |
-			 VDO_OPOS(modep->opos) | VDO_CMDT(CMDT_INIT) |
+			 VDO_OPOS(tbt_opos) | VDO_CMDT(CMDT_INIT) |
 			 VDO_SVDM_VERS(
 				 pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME));
 		vdo_count_ret = 1;
@@ -582,7 +560,7 @@ enum dpm_msg_setup_status tbt_setup_next_vdm(int port, int *vdo_count,
 
 uint32_t pd_get_tbt_mode_vdo(int port, enum tcpci_msg_type type)
 {
-	uint32_t tbt_mode_vdo[PDO_MODES];
+	uint32_t tbt_mode_vdo[VDO_MAX_OBJECTS];
 
 	return pd_get_mode_vdo_for_svid(port, type, USB_VID_INTEL,
 					tbt_mode_vdo) ?
@@ -705,9 +683,10 @@ int enter_tbt_compat_mode(int port, enum tcpci_msg_type sop, uint32_t *payload)
 	 * doesn't have opos for SOP''. Hence, send Enter Mode SOP'' with same
 	 * opos and revision as SOP'.
 	 */
-	payload[0] = pd_dfp_enter_mode(port, enter_mode_sop, USB_VID_INTEL, 0) |
-		     VDO_CMDT(CMDT_INIT) |
-		     VDO_SVDM_VERS(pd_get_vdo_ver(port, enter_mode_sop));
+	payload[0] =
+		VDO(USB_VID_INTEL, 1, CMD_ENTER_MODE | VDO_OPOS(tbt_opos)) |
+		VDO_CMDT(CMDT_INIT) |
+		VDO_SVDM_VERS(pd_get_vdo_ver(port, enter_mode_sop));
 
 	/* For TBT3 Cable Enter Mode Command, number of Objects is 1 */
 	if ((sop == TCPCI_MSG_SOP_PRIME) || (sop == TCPCI_MSG_SOP_PRIME_PRIME))

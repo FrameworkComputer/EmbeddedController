@@ -3,18 +3,18 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/emul.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest_assert.h>
-#include <zephyr/drivers/i2c_emul.h>
-
 #include "drivers/cros_displight.h"
 #include "ec_commands.h"
 #include "host_command.h"
 #include "keyboard_backlight.h"
 #include "pwm.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 
 ZTEST(shim_pwm_hc, test_pwm_set_duty_hc__kblight)
 {
@@ -25,10 +25,7 @@ ZTEST(shim_pwm_hc, test_pwm_set_duty_hc__kblight)
 		.duty = PWM_PERCENT_TO_RAW(56),
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_PWM_SET_DUTY, 0, p);
-
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_pwm_set_duty(NULL, &p));
 	zassert_equal(kblight_get(), PWM_RAW_TO_PERCENT(p.duty));
 }
 
@@ -41,10 +38,7 @@ ZTEST(shim_pwm_hc, test_pwm_set_duty_hc__displight)
 		.duty = PWM_PERCENT_TO_RAW(72)
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_PWM_SET_DUTY, 0, p);
-
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_pwm_set_duty(NULL, &p));
 	zassert_equal(displight_get(), PWM_RAW_TO_PERCENT(p.duty));
 }
 
@@ -57,10 +51,7 @@ ZTEST(shim_pwm_hc, test_pwm_set_duty_hc__bad_pwm_type)
 		p.pwm_type = EC_PWM_TYPE_COUNT,
 	};
 
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_PARAMS(EC_CMD_PWM_SET_DUTY, 0, p);
-
-	zassert_equal(EC_RES_INVALID_PARAM, host_command_process(&args));
+	zassert_equal(EC_RES_INVALID_PARAM, ec_cmd_pwm_set_duty(NULL, &p));
 }
 
 ZTEST(shim_pwm_hc, test_pwm_get_duty_hc__kblight)
@@ -71,13 +62,12 @@ ZTEST(shim_pwm_hc, test_pwm_get_duty_hc__kblight)
 	};
 
 	struct ec_response_pwm_get_duty r;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_PWM_GET_DUTY, 0, r, p);
+	struct host_cmd_handler_args args;
 
 	/* Set kblight percentage to arbitrary 56% */
 	kblight_set(56);
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_pwm_get_duty(&args, &p, &r));
 	zassert_equal(args.response_size, sizeof(r));
 	zassert_equal(r.duty, PWM_PERCENT_TO_RAW(56));
 }
@@ -90,13 +80,12 @@ ZTEST(shim_pwm_hc, test_pwm_get_duty_hc__displight)
 	};
 
 	struct ec_response_pwm_get_duty r;
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND(EC_CMD_PWM_GET_DUTY, 0, r, p);
+	struct host_cmd_handler_args args;
 
 	/* Set displight percentage to arbitrary 72% */
 	displight_set(72);
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_pwm_get_duty(&args, &p, &r));
 	zassert_equal(args.response_size, sizeof(r));
 	zassert_equal(r.duty, PWM_PERCENT_TO_RAW(72));
 }

@@ -4,16 +4,15 @@
  */
 
 /* Corsola daughter board detection */
-#include <zephyr/drivers/gpio.h>
-
 #include "baseboard_usbc_config.h"
 #include "console.h"
 #include "cros_cbi.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "usb_mux.h"
-
 #include "variant_db_detection.h"
+
+#include <zephyr/drivers/gpio.h>
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)

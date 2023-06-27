@@ -5,11 +5,12 @@
  * NPCX SoC spi flash update tool - monitor firmware
  */
 
-#include <stdint.h>
 #include "config.h"
 #include "npcx_monitor.h"
 #include "registers.h"
 #include "util.h"
+
+#include <stdint.h>
 
 /*****************************************************************************/
 /* spi flash internal functions */

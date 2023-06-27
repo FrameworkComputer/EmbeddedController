@@ -7,9 +7,9 @@
 
 #include "adc_chip.h"
 #include "button.h"
-#include "extpower.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accelgyro_bmi_common.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "keyboard_scan.h"
@@ -18,9 +18,9 @@
 #include "power_button.h"
 #include "pwm.h"
 #include "pwm_chip.h"
-#include "system.h"
 #include "shi_chip.h"
 #include "switch.h"
+#include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
 #include "usbc_config.h"
@@ -29,6 +29,7 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 static uint8_t sku_id;

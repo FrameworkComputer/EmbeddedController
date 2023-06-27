@@ -5,16 +5,23 @@
 
 /* common.h - Common includes for Chrome EC */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #ifndef __CROS_EC_COMMON_H
 #define __CROS_EC_COMMON_H
 
-#include <stdint.h>
-#include <inttypes.h>
-
 #include "compile_time_macros.h"
+
+#include <inttypes.h>
+#include <stdint.h>
 
 #ifdef CONFIG_ZEPHYR
 #include "fpu.h"
+
 #include <zephyr/sys/util.h>
 #include <zephyr/toolchain.h>
 #ifdef CONFIG_ZTEST
@@ -28,7 +35,7 @@
  * way of ensuring that the given section is in the same relative location in
  * both the RO/RW images.
  */
-#ifdef CONFIG_ZEPHYR
+#if defined(CONFIG_ZEPHYR) && !defined(CONFIG_SOC_FAMILY_INTEL_ISH)
 #define FIXED_SECTION(name) __attribute__((section(".fixed." name)))
 #else
 #define FIXED_SECTION(name) __attribute__((section(".rodata." name)))

@@ -222,9 +222,8 @@
  * Other
  *-------------------------------------------------------------------------*/
 
-#define CONFIG_AES
-#define CONFIG_AES_GCM
-#define CONFIG_DMA
+#define CONFIG_BORINGSSL_CRYPTO
+#define CONFIG_DMA_CROS
 #define CONFIG_FPU
 #define CONFIG_FPU_WARNINGS
 #define CONFIG_HOST_COMMAND_STATUS
@@ -254,8 +253,8 @@
 #define TIM_CLOCK32 2
 #define TIM_WATCHDOG 9
 
-#include "gpio_signal.h"
 #include "board_rw.h"
+#include "gpio_signal.h"
 
 void slp_event(enum gpio_signal signal);
 

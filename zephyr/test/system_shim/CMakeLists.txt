@@ -9,16 +9,8 @@ project(system_shim_test)
 # Include FFF fakes
 add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 
-target_sources(app
-  PRIVATE
-    src/suite.c
-    ${PLATFORM_EC}/zephyr/shim/src/system.c
-)
-target_include_directories(app PRIVATE include)
-
-dt_has_chosen(has_bbram PROPERTY "cros-ec,bbram")
-if(has_bbram)
-  target_sources(app PRIVATE src/test_system.c)
-else()
-  target_sources(app PRIVATE src/no_chosen.c)
+if(CONFIG_SYSTEM_SHIM_TEST_ISH)
+  include("${CMAKE_CURRENT_LIST_DIR}/test_ish.cmake")
+elseif(CONFIG_SYSTEM_SHIM_TEST_DEFAULT)
+  include("${CMAKE_CURRENT_LIST_DIR}/test_default.cmake")
 endif()

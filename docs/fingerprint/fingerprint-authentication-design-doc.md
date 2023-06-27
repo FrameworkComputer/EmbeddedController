@@ -573,7 +573,7 @@ could start sending D-Bus commands to biod.
 
 The enrollment/matching and image capture libraries are provided by a 3rd-party
 vendor in binary form. That proprietary blob went through a security audit by a
-3rd party auditor (see the auditor’s [report][Security Audit Report].
+3rd party auditor (see the auditor’s [report][Security Audit Report]).
 
 On top of the security audit of the 3rd-party proprietary code, we limit the
 attack surface of those libraries by not directly exposing them to user input.

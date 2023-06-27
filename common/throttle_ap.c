@@ -27,7 +27,6 @@
  * power rail is turned back on. Recheck PROCHOT directly from the C10 exit
  * using a shorter debounce than the PROCHOT interrupt.
  */
-#define PROCHOT_IN_DEBOUNCE_US (100 * MSEC)
 #define C10_IN_DEBOUNCE_US (10 * MSEC)
 
 /*****************************************************************************/
@@ -86,6 +85,10 @@ void throttle_ap(enum throttle_level level, enum throttle_type type,
 void throttle_ap_config_prochot(const struct prochot_cfg *cfg)
 {
 	prochot_cfg = cfg;
+
+	if (IS_ENABLED(CONFIG_THROTTLE_AP_SINGLE_PIN)) {
+		gpio_set_flags(prochot_cfg->gpio_prochot_in, GPIO_INPUT);
+	}
 }
 
 __maybe_unused static bool prochot_is_gated_by_c10(int prochot_in)
@@ -142,16 +145,20 @@ static void prochot_input_deferred(void)
 
 	if (debounced_prochot_in) {
 		CPRINTS("External PROCHOT assertion detected");
-#ifdef CONFIG_FANS
+#if defined(CONFIG_FANS) && !defined(CONFIG_THROTTLE_AP_NO_FAN)
 		dptf_set_fan_duty_target(100);
 #endif
 	} else {
 		CPRINTS("External PROCHOT condition cleared");
-#ifdef CONFIG_FANS
+#if defined(CONFIG_FANS) && !defined(CONFIG_THROTTLE_AP_NO_FAN)
 		/* Revert to automatic control of the fan */
 		dptf_set_fan_duty_target(-1);
 #endif
 	}
+
+	if (prochot_cfg->callback)
+		prochot_cfg->callback(debounced_prochot_in,
+				      prochot_cfg->callback_data);
 }
 DECLARE_DEFERRED(prochot_input_deferred);
 

@@ -5,7 +5,7 @@
 		compatible = "cros-ec,led-policy";
 
 		power-state-charge-left {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 			charge-port = <1>; /* Left port */
 
 			/* Turn off the right LED */
@@ -19,7 +19,7 @@
 		};
 
 		power-state-charge-right {
-			charge-state = "PWR_STATE_CHARGE";
+			charge-state = "LED_PWRS_CHARGE";
 			charge-port = <0>; /* Right port */
 
 			/* Turn off the left LED */
@@ -33,7 +33,7 @@
 		};
 
 		power-state-discharge-right-low {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			/* Battery percent range (>= Empty, <= Low) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
 
@@ -53,7 +53,7 @@
 		};
 
 		power-state-discharge-right {
-			charge-state = "PWR_STATE_DISCHARGE";
+			charge-state = "LED_PWRS_DISCHARGE";
 			/* Battery percent range (> Low, <= Full) */
 			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
 
@@ -68,7 +68,7 @@
 		};
 
 		power-state-error-left {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 			charge-port = <1>; /* Left port */
 
 			/* Turn off the right LED */
@@ -87,7 +87,7 @@
 		};
 
 		power-state-error-right {
-			charge-state = "PWR_STATE_ERROR";
+			charge-state = "LED_PWRS_ERROR";
 			charge-port = <0>; /* Right port */
 
 			/* Turn off the left LED */
@@ -106,7 +106,7 @@
 		};
 
 		power-state-near-full-left {
-			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 			charge-port = <1>; /* Left port */
 
 			/* Turn off the right LED */
@@ -120,7 +120,7 @@
 		};
 
 		power-state-near-full-right {
-			charge-state = "PWR_STATE_CHARGE_NEAR_FULL";
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 			charge-port = <0>; /* Right port */
 
 			/* Turn off the left LED */
@@ -134,7 +134,7 @@
 		};
 
 		power-state-forced-idle-left {
-			charge-state = "PWR_STATE_FORCED_IDLE";
+			charge-state = "LED_PWRS_FORCED_IDLE";
 			charge-port = <1>; /* Left port */
 
 			/* Turn off the right LED */
@@ -153,7 +153,7 @@
 		};
 
 		power-state-forced-idle-right {
-			charge-state = "PWR_STATE_FORCED_IDLE";
+			charge-state = "LED_PWRS_FORCED_IDLE";
 			charge-port = <0>; /* Right port */
 
 			/* Turn off the left LED */
@@ -172,7 +172,7 @@
 		};
 
 		power-state-idle-left {
-			charge-state = "PWR_STATE_IDLE";
+			charge-state = "LED_PWRS_IDLE";
 			charge-port = <1>; /* Left port */
 
 			/* Turn off the right LED */
@@ -186,7 +186,7 @@
 		};
 
 		power-state-idle-right {
-			charge-state = "PWR_STATE_IDLE";
+			charge-state = "LED_PWRS_IDLE";
 			charge-port = <0>; /* Right port */
 
 			/* Turn off the left LED */

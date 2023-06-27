@@ -13,6 +13,9 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+/* Disable console commands to help save space */
+#undef CONFIG_CMD_POWERINDEBUG
+
 #define CONFIG_MP2964
 
 /* Barrel Jack */
@@ -20,6 +23,7 @@
 
 /* HDMI CEC */
 #define CONFIG_CEC
+#define CONFIG_CEC_BITBANG
 #define CEC_GPIO_OUT GPIO_HDMI_CEC_OUT
 #define CEC_GPIO_IN GPIO_HDMI_CEC_IN
 #define CEC_GPIO_PULL_UP GPIO_HDMI_CEC_PULL_UP
@@ -142,6 +146,7 @@
 #ifdef SECTION_IS_RW
 #define CONFIG_PERIPHERAL_CHARGER
 #define CONFIG_CPS8100
+#define CONFIG_SW_CRC
 #endif
 
 #ifndef __ASSEMBLER__
@@ -184,6 +189,8 @@ enum pwm_channel {
 enum fan_channel { FAN_CH_0 = 0, FAN_CH_COUNT };
 
 enum mft_channel { MFT_CH_0 = 0, MFT_CH_COUNT };
+
+enum cec_port { CEC_PORT_0, CEC_PORT_COUNT };
 
 extern void adp_connect_interrupt(enum gpio_signal signal);
 

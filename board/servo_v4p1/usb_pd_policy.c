@@ -4,8 +4,8 @@
  */
 
 #include "atomic.h"
-#include "chg_control.h"
 #include "charge_manager.h"
+#include "chg_control.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -19,12 +19,12 @@
 #include "task.h"
 #include "tcpm/tcpm.h"
 #include "timer.h"
-#include "util.h"
 #include "usb_common.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_config.h"
 #include "usb_pd_tcpm.h"
+#include "util.h"
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
@@ -33,8 +33,6 @@
 	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | PDO_FIXED_COMM_CAP)
 
 #define CHG_PDO_FIXED_FLAGS (PDO_FIXED_DATA_SWAP)
-
-#define VBUS_UNCHANGED(curr, pend, new) (curr == new &&pend == new)
 
 /* Macros to config the PD role */
 #define CONF_SET_CLEAR(c, set, clear) ((c | (set)) & ~(clear))
@@ -391,8 +389,8 @@ int board_set_active_charge_port(int charge_port)
 	return 0;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	if (port != CHG)
 		return;

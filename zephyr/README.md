@@ -8,6 +8,74 @@ Zephyr EC is an effort to create an industry-standard Embedded Controller
 implementation for use primarily on laptops. It is born out of the Chromium OS
 EC.
 
+## native-posix development
+
+Zephyr can be built to run on your host machine, making it easier to develop
+and test features. This is called the native_posix build.
+
+To build it::
+
+```
+  cd ~/chromium/src/platform/ec
+  zmake build minimal-posix
+```
+
+and run it:
+
+```
+  build/zephyr/minimal-posix/build-singleimage/zephyr/zephyr.elf
+```
+
+Check the display for the pseudotty and connect an xterm to it, e.g.:
+
+```
+   xterm -e screen /dev/pts/28
+```
+
+You will then see the EC prompt and you can type commands, e.g. type 'help':
+
+```
+  Please press the <Tab> button to see all available commands.
+  You can also use the <Tab> button to prompt or auto-complete all commands or its subcommands.
+  You can try to call commands with <-h> or <--help> parameter for more information.
+
+  Available commands:
+    cbi        :Print or change Cros Board Info from flash
+    chan       :Save, restore, get or set console channel mask
+    crash      :Crash the system (for testing)
+    feat       :Print feature flags
+    gettime    :Print current time
+    gpioget    :Read GPIO value(s)
+    gpioset    :Set a GPIO
+    help       :Prints the help message.
+    hibernate  :Hibernate the EC
+    kernel     :Kernel commands
+    log        :Commands for controlling logger
+    md         :dump memory values, optionally specifying the format
+    panicinfo  :Print info from a previous panic
+    reboot     :Reboot the EC
+    rw         :Read or write a word in memory optionally specifying the size
+    shmem      :Print shared memory stats
+    sysinfo    :Print system info
+    syslock    :Lock the system, even if WP is disabled
+    timerinfo  :Print timer info
+    version    :Print versions
+    waitms     :Busy-wait for msec (large delays will reset)
+```
+
+Use Ctrl-C to quit (from the main terminal) as normal.
+
+You can run zephyr under gdb just like any other program.
+
+If you want to share the same terminal, add this line to
+`zephyr/program/minimal/prj.conf` and rebuild:
+
+```
+  CONFIG_NATIVE_UART_0_ON_STDINOUT=y
+```
+
+Running that will show an EC prompt on your terminal. Use Ctrl-\ to quit.
+
 ## Gitlab integration
 
 As an experiment we have a basic gitlab integration. It watches the EC repo and

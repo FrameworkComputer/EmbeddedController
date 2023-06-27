@@ -9,14 +9,14 @@
 #include "button.h"
 #include "cbi_fw_config.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "cros_board_info.h"
 #include "driver/charger/sm5803.h"
 #include "driver/led/oz554.h"
-#include "driver/temp_sensor/thermistor.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/tcpm/ps8xxx.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/it5205.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -351,8 +351,8 @@ uint16_t tcpc_get_alert_status(void)
 	return 0;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	if (port == CHARGER_SOLO) {
 		charger_set_input_current_limit(CHARGER_SOLO, max_ma);

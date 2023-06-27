@@ -8,8 +8,8 @@
 #ifndef __CROS_EC_MP3385_H
 #define __CROS_EC_MP3385_H
 
-#include "gpio.h"
 #include "common.h"
+#include "gpio.h"
 
 /*
  * Overridable board initialization.  Should be overridden by a board

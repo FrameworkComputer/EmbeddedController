@@ -25,6 +25,7 @@ import sys
 import tempfile
 import time
 
+
 DEFAULT_SEGGER_REMOTE_PORT = 19020
 
 # Commands are documented here: https://wiki.segger.com/J-Link_Commander
@@ -158,6 +159,8 @@ def flash(jlink_exe, remote, device, interface, cmd_file):
             "-speed",
             "auto",
             "-autoconnect",
+            "1",
+            "-NoGui",
             "1",
             "-CommandFile",
             cmd_file,

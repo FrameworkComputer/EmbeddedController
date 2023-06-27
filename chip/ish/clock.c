@@ -7,8 +7,8 @@
 
 #include "clock.h"
 #include "common.h"
-#include "util.h"
 #include "power_mgt.h"
+#include "util.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
@@ -28,4 +28,8 @@ void clock_refresh_console_in_use(void)
 	 * when console is in use
 	 */
 	ish_pm_refresh_console_in_use();
+}
+
+test_mockable void clock_enable_module(enum module_id module, int enable)
+{
 }

@@ -27,6 +27,7 @@ import time
 
 import common.board as board
 
+
 CTS_RC_PREFIX = "CTS_RC_"
 DEFAULT_TH = "stm32l476g-eval"
 DEFAULT_DUT = "nucleo-f072rb"

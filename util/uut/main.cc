@@ -4,20 +4,21 @@
  * found in the LICENSE file.
  */
 
-#include <errno.h>
-#include <getopt.h>
-#include <stdarg.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <sys/stat.h>
-
 #include "com_port.h"
 #include "compile_time_macros.h"
 #include "main.h"
 #include "misc_util.h"
 #include "opr.h"
+
+#include <errno.h>
+#include <stdarg.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+
+#include <getopt.h>
+#include <sys/stat.h>
 
 /*----------------------------------------------------------------------------
  * Constant definitions
@@ -139,6 +140,12 @@ const static struct npcx_chip_info chip_info[] = {
 		.device_id = 0x21,
 		.chip_id = 0x09,
 		.flash_size = 512 * 1024,
+	},
+	{
+		/* NPCX997F */
+		.device_id = 0x22,
+		.chip_id = 0x09,
+		.flash_size = 1024 * 1024,
 	},
 };
 /*---------------------------------------------------------------------------

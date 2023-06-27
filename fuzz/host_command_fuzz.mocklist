@@ -4,7 +4,7 @@
  */
 
  #define CONFIG_TEST_MOCK_LIST \
-	MOCK(FP_SENSOR)        \
+	MOCK(FPSENSOR)        \
 	MOCK(FPSENSOR_DETECT)  \
 	MOCK(MKBP_EVENTS)      \
 	MOCK(ROLLBACK)

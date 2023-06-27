@@ -5,14 +5,14 @@
 
 /* Flash module for emulator */
 
-#include <stdio.h>
-
 #include "builtin/assert.h"
 #include "common.h"
 #include "config_chip.h"
 #include "flash.h"
 #include "persistence.h"
 #include "util.h"
+
+#include <stdio.h>
 
 /* This needs to be aligned to the erase bank size for NVCTR. */
 __aligned(CONFIG_FLASH_ERASE_SIZE) char __host_flash[CONFIG_FLASH_SIZE_BYTES];

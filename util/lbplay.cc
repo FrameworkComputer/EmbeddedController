@@ -4,10 +4,11 @@
  */
 
 #include <errno.h>
-#include <fcntl.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <string.h>
+
+#include <fcntl.h>
 #include <strings.h>
 #include <sys/file.h>
 #include <sys/stat.h>

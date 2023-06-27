@@ -7,6 +7,7 @@ if PLATFORM_EC_USBC
 menuconfig PLATFORM_EC_USB_MUX
 	bool "USB muxes"
 	default y
+	depends on DT_HAS_CROS_EC_USB_MUX_CHAIN_ENABLED
 	help
 	  Enables support for USB muxes. These allow multiplexing
 
@@ -37,12 +38,16 @@ config PLATFORM_EC_USB_MUX_AP_CONTROL
 
 config PLATFORM_EC_USB_MUX_AMD_FP6
 	bool "AMD FP6 integrated mux"
+	default y
+	depends on DT_HAS_AMD_USBC_MUX_AMD_FP6_ENABLED
 	help
 	  Integrated AMD FP6 mux for USB and DP.  Mux control happens over
 	  an i2c channel.
 
 config PLATFORM_EC_USB_MUX_IT5205
 	bool "ITE IT5205 USB Type-C 3:2 Alternative mode passive mux"
+	default y
+	depends on DT_HAS_ITE_IT5205_ENABLED
 	help
 	  This is a USB Type-C 3:2 Alternative mode mux, supporting USB 3.1
 	  Gen 2 10Gbps as well as DisplayPort (DP1.4) at 8Gbps. It provides a
@@ -51,6 +56,8 @@ config PLATFORM_EC_USB_MUX_IT5205
 
 config PLATFORM_EC_USB_MUX_PS8743
 	bool "Parade PS8743 USB-C Host Switch with redriver"
+	default y
+	depends on DT_HAS_PARADE_PS8743_ENABLED || DT_HAS_ZEPHYR_PS8743_EMUL_ENABLED
 	help
 	  This is a Parade USB 3.1 Gen 1 / DisplayPort (DP) Alt Mode
 	  High-Bit-Rate 2 (HBR2) redriver. It provides control of switching
@@ -58,10 +65,16 @@ config PLATFORM_EC_USB_MUX_PS8743
 
 choice PLATFORM_EC_USB_MUX_TUSB_TYPE
 	prompt "Select the TUSB USB-C Redriver type"
-	optional
+	default PLATFORM_EC_USB_MUX_TUSB1064 if DT_HAS_TI_TUSB1064_ENABLED
+	default PLATFORM_EC_USB_MUX_TUSB1064 if DT_HAS_ZEPHYR_TUSB1064_EMUL_ENABLED
 	help
 	  There are three supported types of TUSB USB-C Redriver: TUSB546,
 	  TUSB1044, and TUSB1064.
+
+config PLATFORM_EC_USB_MUX_TUSB_NONE
+	bool "None"
+	help
+	  Default option if the board doesn't contain any model of TUSB family.
 
 config PLATFORM_EC_USB_MUX_TUSB546
 	bool "TI TUSB546 USB-C DP ALT Mode Linear Redriver Crosspoint Switch"

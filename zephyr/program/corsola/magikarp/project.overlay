@@ -1,0 +1,424 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Corsola program common DTS includes */
+
+#include <cros/thermistor/thermistor.dtsi>
+#include "../common.dtsi"
+#include "../power_signal.dtsi"
+#include "../usba.dtsi"
+#include "../ite_adc.dtsi"
+#include "../ite_gpio.dtsi"
+#include "../ite_keyboard.dtsi"
+#include "../ite_i2c.dtsi"
+#include "../ite_interrupts.dtsi"
+#include "../ite_led.dtsi"
+#include "../ite_motionsense.dtsi"
+#include "../ite_usbc.dtsi"
+#include "../ite_shi.dtsi"
+
+/ {
+	aliases {
+		/*
+		 * motion sense's <>_INT_EVENT is handled
+		 * by alias. Using the alias, each driver creates
+		 * its own <>_INT_EVENT.
+		 */
+		bmi3xx-int = &base_accel;
+	};
+
+	named-gpios {
+		/delete-node/ usb_c0_ppc_bc12_int_odl;
+
+		usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
+			gpios = <&gpiod 1 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
+		};
+
+		usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {
+			gpios = <&gpiof 1 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
+		};
+
+		/delete-node/ usb_c0_ppc_frsinfo;
+
+		usb_c0_frs_en: usb_c0_frs_en {
+			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_USB_C0_FRS_EN";
+		};
+	};
+
+	unused-pins {
+		unused-gpios =
+			/* pg_pp5000_z2_od */
+			<&gpiod 2 GPIO_INPUT>,
+			/* pg_mt6315_proc_b_odl */
+			<&gpioe 1 GPIO_INPUT>,
+			/* ec_pen_chg_dis_odl */
+			<&gpioh 3 GPIO_ODR_HIGH>,
+			/* unnamed nc pins */
+			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
+			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
+			/* reserved for b:241345809 */
+			<&gpiod 7 GPIO_OUTPUT_LOW>,
+			<&gpiog 2 GPIO_INPUT_PULL_DOWN>,
+			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
+			<&gpioh 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 3 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpiom 6 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>,
+			/* spi_clk_gpg6 */
+			<&gpiog 6 GPIO_INPUT_PULL_UP>,
+			/* spi_mosi_gpg4 */
+			<&gpiog 4 GPIO_OUTPUT_LOW>,
+			/* spi_miso_gpg5 */
+			<&gpiog 5 GPIO_OUTPUT_LOW>,
+			/* spi_cs_gpg7 */
+			<&gpiog 7 GPIO_OUTPUT_LOW>;
+	};
+
+	gpio-interrupts {
+		int_base_imu: base_imu {
+			handler = "motion_interrupt";
+		};
+
+		/delete-node/ usb_c0_ppc_bc12;
+
+		int_usb_c0_ppc: usb_c0_ppc {
+			irq-pin = <&usb_c0_ppc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+
+		int_usb_c0_bc12: usb_c0_bc12 {
+			irq-pin = <&usb_c0_bc12_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bc12_interrupt";
+		};
+	};
+
+
+	usbc {
+		port0@0 {
+			bc12 = <&bc12_port0>;
+			ppc = <&ppc_port0>;
+		};
+
+		port1@1 {
+			usb-mux-chain-1 {
+				usb-muxes = <&ps8743_mux_1 &virtual_mux_1>;
+			};
+		};
+	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+		adc_ambient: ambient {
+			enum-name = "ADC_TEMP_SENSOR_2_AMBIENT";
+			io-channels = <&adc0 5>;
+		};
+	};
+
+
+	temp_ambient: ambient {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_30K9_47K_NCP15WB>;
+		adc = <&adc_ambient>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		ambient {
+			sensor = <&temp_ambient>;
+		};
+	};
+
+	/*
+	 * Declare mutexes used by sensor drivers.
+	 * A mutex node is used to create an instance of mutex_t.
+	 * A mutex node is referenced by a sensor node if the
+	 * corresponding sensor driver needs to use the
+	 * instance of the mutex.
+	 */
+	motionsense-mutex {
+		base_mutex_bmi323: bmi323-mutex {
+		};
+	};
+
+	/* Rotation matrix used by drivers. */
+	motionsense-rotation-ref {
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <1 0 0
+				 0 1 0
+				 0 0 (-1)>;
+		};
+
+		base_rot_ref_bmi: base-rotation-ref-bmi {
+			mat33 = <0 1 0
+				 (-1) 0 0
+				 0 0 1>;
+		};
+	};
+
+	/*
+	 * Driver specific data. A driver-specific data can be shared with
+	 * different motion sensors while they are using the same driver.
+	 *
+	 * If a node's compatible starts with "cros-ec,accelgyro-", it is for
+	 * a common structure defined in accelgyro.h.
+	 * e.g) compatible = "cros-ec,accelgyro-als-drv-data" is for
+	 * "struct als_drv_data_t" in accelgyro.h
+	 */
+	motionsense-sensor-data {
+		bmi323_data: bmi323-drv-data {
+			compatible = "cros-ec,drvdata-bmi3xx";
+			status = "okay";
+		};
+	};
+
+	motionsense-sensor-alt {
+		alt_base_accel: alt-base-accel {
+			compatible = "cros-ec,bmi3xx-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex_bmi323>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&base_rot_ref_bmi>;
+			drv-data = <&bmi323_data>;
+			alternate-for = <&base_accel>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
+		alt_base_gyro: alt-base-gyro {
+			compatible = "cros-ec,bmi3xx-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex_bmi323>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&base_rot_ref_bmi>;
+			drv-data = <&bmi323_data>;
+			alternate-for = <&base_gyro>;
+		};
+	};
+
+	led-colors {
+		compatible = "cros-ec,led-policy";
+
+		/* Magikarp LED bat charge */
+		bat-power-state-charge {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery percent range (>= Empty, <= 94%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 94>;
+			color-0 {
+				led-color = <&color_battery_amber>;
+			};
+		};
+
+		bat-power-state-charge-near-full {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery percent range (>= 95%, <= Full) */
+			batt-lvl = <95 BATTERY_LEVEL_FULL>;
+			color-0 {
+				led-color = <&color_battery_white>;
+			};
+		};
+
+		/* Magikarp LED bat discharge */
+		bat-power-state-discharge-s0 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S0";
+			/* Battery percent range (>= 11%, <= Full) */
+			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
+
+			color-0 {
+				led-color = <&color_battery_white>;
+			};
+		};
+
+
+		bat-power-state-discharge-s0-bat-low {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S0";
+			/* Battery percent range (>= Empty, <= 10%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
+
+			color-0 {
+				led-color = <&color_battery_amber>;
+				period-ms = <1000>;
+			};
+
+			color-1 {
+				led-color = <&color_battery_off>;
+				period-ms = <3000>;
+			};
+		};
+
+		bat-power-state-discharge-s3 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S3";
+
+			color-0 {
+				led-color = <&color_battery_white>;
+				period-ms = <1000>;
+			};
+
+			color-1 {
+				led-color = <&color_battery_off>;
+				period-ms = <3000>;
+			};
+		};
+
+		bat-power-state-discharge-s5 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S5";
+			color-0 {
+				led-color = <&color_battery_off>;
+			};
+		};
+
+		/* Magikarp LED bat error */
+		bat-power-state-error {
+			charge-state = "LED_PWRS_ERROR";
+			chipset-state = "POWER_S0";
+
+			color-0 {
+				led-color = <&color_battery_amber>;
+				period-ms = <1000>;
+			};
+
+			color-1 {
+				led-color = <&color_battery_off>;
+				period-ms = <1000>;
+			};
+		};
+
+		bat-power-state-error-s3 {
+			charge-state = "LED_PWRS_ERROR";
+			chipset-state = "POWER_S3";
+
+			color-0 {
+				led-color = <&color_battery_white>;
+				period-ms = <1000>;
+			};
+
+			color-1 {
+				led-color = <&color_battery_off>;
+				period-ms = <3000>;
+			};
+		};
+
+		bat-power-state-error-s5 {
+			charge-state = "LED_PWRS_ERROR";
+			chipset-state = "POWER_S5";
+
+			color-0 {
+				led-color = <&color_battery_off>;
+			};
+		};
+	};
+
+	pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		power_led: power-led {
+			led-id = "EC_LED_ID_POWER_LED";
+			led-pwms = <&led_power_white>;
+
+			/* Overwrite Power LED white to off */
+			color_power_white: color-power-white {
+				led-color = "LED_WHITE";
+				led-values = <0>;
+			};
+		};
+	};
+
+	batteries {
+		default_battery: smp_c31n1915 {
+			compatible = "smp,c31n1915", "battery-smart";
+		};
+	};
+
+	/* magikarp-specific fw_config fields. */
+	magikarp-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+		/*
+		 * FW_CONFIG field to describe mainboard orientation in chassis.
+		 */
+		base-gyro {
+			enum-name = "FW_BASE_GYRO";
+			start = <0>;
+			size = <2>;
+
+			None {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BASE_NONE";
+				value = <0>;
+			};
+			icm42607 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BASE_ICM42607";
+				value = <1>;
+				default;
+			};
+			bmi323 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BASE_BMI323";
+				value = <2>;
+			};
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_ch0_gpi0_default
+		     &adc0_ch1_gpi1_default
+		     &adc0_ch2_gpi2_default
+		     &adc0_ch5_gpi5_default
+		     &adc0_ch7_gpi7_default>;
+	pinctrl-names = "default";
+};
+
+&thermistor_3V3_30K9_47K_NCP15WB {
+	status = "okay";
+};
+
+&i2c2 {
+	bc12_port0: pi3usb9201@5f {
+		compatible = "pericom,pi3usb9201";
+		status = "okay";
+		reg = <0x5f>;
+		irq = <&int_usb_c0_bc12>;
+	};
+	ppc_port0: syv682x@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&usb_c0_frs_en>;
+	};
+};
+
+&i2c4 {
+	ps8743_mux_1: ps8743-mux-1@10 {
+		compatible = "parade,ps8743";
+		reg = <0x10>;
+	};
+
+	/delete-node/ tusb1064-mux-1;
+};

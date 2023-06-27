@@ -2,6 +2,7 @@
 # Copyright 2021 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """Kconfig checker
 
 Checks that the .config file provided does not introduce any new ad-hoc CONFIG
@@ -21,11 +22,13 @@ Use the -d flag to select the second format.
 """
 
 import argparse
+import glob
 import os
 import pathlib
 import re
 import sys
 import traceback
+
 
 # Try to use kconfiglib if available, but fall back to a simple recursive grep.
 # This is used by U-Boot in some situations so we keep it to avoid forking this
@@ -117,6 +120,9 @@ a corresponding Kconfig option for Zephyr"""
 
     subparsers.add_parser("build", help="Build new list of ad-hoc CONFIGs")
     subparsers.add_parser("check", help="Check for new ad-hoc CONFIGs")
+    subparsers.add_parser(
+        "check_undef", help="Verify #undef directives in ec headers"
+    )
 
     return parser.parse_args(argv)
 
@@ -284,21 +290,37 @@ class KconfigCheck:
             List of config and menuconfig options found
         """
         if USE_KCONFIGLIB and try_kconfiglib:
-            os.environ["srctree"] = srcdir
-            kconf = kconfiglib.Kconfig(
-                "Kconfig",
-                warn=False,
-                search_paths=search_paths,
-                allow_empty_macros=True,
+            os.environ.update(
+                {
+                    "srctree": srcdir,
+                    "SOC_DIR": "soc",
+                    "ARCH_DIR": "arch",
+                    "BOARD_DIR": "boards/*/*",
+                    "ARCH": "*",
+                }
             )
+            kconfigs = []
+            for filename in [
+                "Kconfig",
+                os.path.join(os.environ["ZEPHYR_BASE"], "Kconfig.zephyr"),
+            ]:
+                kconf = kconfiglib.Kconfig(
+                    filename,
+                    warn=False,
+                    search_paths=search_paths,
+                    allow_empty_macros=True,
+                )
 
-            # There is always a MODULES config, since kconfiglib is designed for
-            # linux, but we don't want it
-            kconfigs = [name for name in kconf.syms if name != "MODULES"]
+                symbols = [
+                    node.item.name
+                    for node in kconf.node_iter()
+                    if isinstance(node.item, kconfiglib.Symbol)
+                ]
 
-            if prefix:
-                re_drop_prefix = re.compile(r"^%s" % prefix)
-                kconfigs = [re_drop_prefix.sub("", name) for name in kconfigs]
+                if prefix:
+                    re_drop_prefix = re.compile(r"^%s" % prefix)
+                    symbols = [re_drop_prefix.sub("", name) for name in symbols]
+                kconfigs += symbols
         else:
             kconfigs = []
             # Remove the prefix if present
@@ -478,6 +500,68 @@ update in your CL:
                 print(f"CONFIG_{config}", file=out)
         print(f"New list is in {NEW_ALLOWED_FNAME}")
 
+    def check_undef(
+        self,
+        srcdir,
+        search_paths,
+    ):
+        """Parse the ec header files and find zephyr Kconfigs that are
+        incorrectly undefined or defined to a default value.
+
+        Args:
+            srcdir: Source directory to scan for Kconfig files
+            search_paths: List of project paths to search for Kconfig files, in
+                addition to the current directory
+
+        Returns:
+            Exit code: 0 if OK, 1 if a problem was found
+        """
+        kconfigs = set(self.scan_kconfigs(srcdir, "", search_paths))
+
+        if_re = re.compile(r"^\s*#\s*if(ndef CONFIG_ZEPHYR)?")
+        endif_re = re.compile(r"^\s*#\s*endif")
+        modify_config_re = re.compile(r"^\s*#\s*(define|undef)\s+CONFIG_(\S*)")
+        exit_code = 0
+        files_to_check = glob.glob(
+            os.path.join(srcdir, "include/**/*.h"), recursive=True
+        )
+        files_to_check += glob.glob(
+            os.path.join(srcdir, "common/**/public/*.h"), recursive=True
+        )
+        files_to_check += glob.glob(
+            os.path.join(srcdir, "driver/**/*.h"), recursive=True
+        )
+        for filename in files_to_check:
+            with open(filename, "r") as config_h:
+                depth = 0
+                ignore_depth = 0
+                line_count = 0
+                for line in config_h.readlines():
+                    line_count += 1
+                    line = line.strip("\n")
+                    match = if_re.match(line)
+                    if match:
+                        depth += 1
+                        if match[1] or ignore_depth > 0:
+                            ignore_depth += 1
+                    if endif_re.match(line):
+                        if depth > 0:
+                            depth -= 1
+                        if ignore_depth > 0:
+                            ignore_depth -= 1
+                    if ignore_depth == 0:
+                        match = modify_config_re.match(line)
+                        if match:
+                            if match[2] in kconfigs:
+                                print(
+                                    f"ERROR: Modifying CONFIG_{match[2]} "
+                                    "outside of #ifndef CONFIG_ZEPHYR not "
+                                    f"allowed at {filename}:{line_count}",
+                                    file=sys.stderr,
+                                )
+                                exit_code = 1
+        return exit_code
+
 
 def main(argv):
     """Main function"""
@@ -502,6 +586,11 @@ def main(argv):
             allowed_file=args.allowed,
             prefix=args.prefix,
             use_defines=args.use_defines,
+            search_paths=args.search_path,
+        )
+    if args.cmd == "check_undef":
+        return checker.check_undef(
+            srcdir=args.srctree,
             search_paths=args.search_path,
         )
     return 2

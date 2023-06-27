@@ -18,6 +18,7 @@ import threading
 import time
 import tty
 
+
 try:
     import usb  # pylint:disable=import-error
 except ModuleNotFoundError:

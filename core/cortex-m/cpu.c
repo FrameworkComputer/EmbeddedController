@@ -9,6 +9,10 @@
 #include "cpu.h"
 #include "hooks.h"
 
+#define STACK_IDX_REG_LR 5
+#define STACK_IDX_REG_PC 6
+#define STACK_IDX_REG_PSR 7
+
 void cpu_init(void)
 {
 	/* Catch divide by 0 and unaligned access */
@@ -18,6 +22,40 @@ void cpu_init(void)
 	CPU_NVIC_SHCSR |= CPU_NVIC_SHCSR_MEMFAULTENA |
 			  CPU_NVIC_SHCSR_BUSFAULTENA |
 			  CPU_NVIC_SHCSR_USGFAULTENA;
+}
+
+void cpu_return_from_exception_msp(void (*func)(void))
+{
+	uint32_t *msp;
+
+	__asm__ volatile("mrs %0, msp" : "=r"(msp));
+
+	msp[STACK_IDX_REG_LR] = 0; /* Will never return */
+	msp[STACK_IDX_REG_PC] = (uint32_t)func; /* Return to this function */
+	msp[STACK_IDX_REG_PSR] = (1 << 24); /* Just set thumb mode */
+
+	/* Return from exception using main stack */
+	__asm__ volatile("bx %0" : : "r"(0xFFFFFFF9));
+
+	/* should not reach here */
+	__builtin_unreachable();
+}
+
+void cpu_return_from_exception_psp(void (*func)(void))
+{
+	uint32_t *psp;
+
+	__asm__ volatile("mrs %0, psp" : "=r"(psp));
+
+	psp[STACK_IDX_REG_LR] = 0; /* Will never return */
+	psp[STACK_IDX_REG_PC] = (uint32_t)func; /* Return to this function */
+	psp[STACK_IDX_REG_PSR] = (1 << 24); /* Just set thumb mode */
+
+	/* Return from exception using main stack */
+	__asm__ volatile("bx %0" : : "r"(0xFFFFFFFD));
+
+	/* should not reach here */
+	__builtin_unreachable();
 }
 
 #ifdef CONFIG_ARMV7M_CACHE

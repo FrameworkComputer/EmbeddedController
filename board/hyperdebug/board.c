@@ -4,20 +4,21 @@
  */
 /* HyperDebug board configuration */
 
+#include "adc.h"
 #include "common.h"
-#include "console.h"
 #include "ec_version.h"
-#include "gpio.h"
-#include "i2c.h"
 #include "queue_policies.h"
 #include "registers.h"
 #include "spi.h"
-#include "task.h"
+#include "stm32-dma.h"
 #include "timer.h"
 #include "usart-stm32l5.h"
-#include "usb_hw.h"
-#include "usb_spi.h"
 #include "usb-stream.h"
+#include "usb_spi.h"
+
+#include <stdio.h>
+
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 void board_config_pre_init(void)
@@ -118,70 +119,6 @@ USB_STREAM_CONFIG(usart5_usb, USB_IFACE_USART5_STREAM,
 		  usart5_to_usb)
 
 /******************************************************************************
- * Support SPI bridging over USB, this requires usb_spi_board_enable and
- * usb_spi_board_disable to be defined to enable and disable the SPI bridge.
- */
-
-/* SPI devices */
-const struct spi_device_t spi_devices[] = {
-	{ 1 /* SPI2 */, 7, GPIO_SPI2_CS },
-};
-const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
-
-void usb_spi_board_enable(struct usb_spi_config const *config)
-{
-	/* Configure SPI GPIOs */
-	gpio_config_module(MODULE_SPI, 1);
-	gpio_config_module(MODULE_SPI_FLASH, 1);
-
-	/* Set all SPI pins to high speed */
-	STM32_GPIO_OSPEEDR(GPIO_F) |= 0xFFF00000;
-	STM32_GPIO_OSPEEDR(GPIO_D) |= 0x000000C3;
-	STM32_GPIO_OSPEEDR(GPIO_C) |= 0x000000F0;
-
-	/* Enable clocks to SPI2 module */
-	STM32_RCC_APB1ENR1 |= STM32_RCC_APB1ENR1_SPI2EN;
-
-	/* Reset SPI2 */
-	STM32_RCC_APB1RSTR1 |= STM32_RCC_APB1RSTR1_SPI2RST;
-	STM32_RCC_APB1RSTR1 &= ~STM32_RCC_APB1RSTR1_SPI2RST;
-
-	spi_enable(&spi_devices[0], 1);
-}
-
-void usb_spi_board_disable(struct usb_spi_config const *config)
-{
-	spi_enable(&spi_devices[0], 0);
-
-	/* Disable clocks to SPI2 module */
-	STM32_RCC_APB1ENR &= ~STM32_RCC_PB1_SPI2;
-
-	/* Release SPI GPIOs */
-	gpio_config_module(MODULE_SPI_FLASH, 0);
-}
-
-USB_SPI_CONFIG(usb_spi, USB_IFACE_SPI, USB_EP_SPI, 0);
-
-/******************************************************************************
- * Support I2C bridging over USB.
- */
-
-/* I2C ports */
-const struct i2c_port_t i2c_ports[] = {
-	{ .name = "controller",
-	  .port = I2C_PORT_CONTROLLER,
-	  .kbps = 100,
-	  .scl = GPIO_TPM_I2C1_HOST_SCL,
-	  .sda = GPIO_TPM_I2C1_HOST_SDA },
-};
-const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
-
-int usb_i2c_board_is_enabled(void)
-{
-	return 1;
-}
-
-/******************************************************************************
  * Define the strings used in our USB descriptors.
  */
 
@@ -198,9 +135,44 @@ const void *const usb_strings[] = {
 	[USB_STR_USART3_STREAM_NAME] = USB_STRING_DESC("UART3"),
 	[USB_STR_USART4_STREAM_NAME] = USB_STRING_DESC("UART4"),
 	[USB_STR_USART5_STREAM_NAME] = USB_STRING_DESC("UART5"),
+	[USB_STR_DFU_NAME] = USB_STRING_DESC("DFU"),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
+
+/******************************************************************************
+ * Set up USB PD
+ */
+
+/* ADC channels */
+const struct adc_t adc_channels[] = {
+	/*
+	 * All available ADC signals, converted to mV (3300mV/4096).  Every one
+	 * is declared with same name as the GPIO signal on the same pin, that
+	 * is how opentitantool identifies the signal.
+	 *
+	 * Technically, the Nucleo-L552ZE-Q board can run at either 1v8 or 3v3
+	 * supply, but we use HyperDebug only on 3v3 setting.  If in the future
+	 * we want to detect actual voltage, Vrefint could be used.  This would
+	 * also serve as calibration as the supply voltage may not be 3300mV
+	 * exactly.
+	 */
+	[ADC_CN9_11] = { "CN9_11", 3300, 4096, 0, STM32_AIN(1) },
+	[ADC_CN9_9] = { "CN9_9", 3300, 4096, 0, STM32_AIN(2) },
+	/*[ADC_CN10_9] = { "CN10_9", 3300, 4096, 0, STM32_AIN(3) },*/
+	[ADC_CN9_5] = { "CN9_5", 3300, 4096, 0, STM32_AIN(4) },
+	[ADC_CN10_29] = { "CN10_29", 3300, 4096, 0, STM32_AIN(5) },
+	[ADC_CN10_11] = { "CN10_11", 3300, 4096, 0, STM32_AIN(6) },
+	[ADC_CN9_3] = { "CN9_3", 3300, 4096, 0, STM32_AIN(7) },
+	[ADC_CN9_1] = { "CN9_1", 3300, 4096, 0, STM32_AIN(8) },
+	[ADC_CN7_9] = { "CN7_9", 3300, 4096, 0, STM32_AIN(9) },
+	[ADC_CN7_10] = { "CN7_10", 3300, 4096, 0, STM32_AIN(10) },
+	[ADC_CN7_12] = { "CN7_12", 3300, 4096, 0, STM32_AIN(11) },
+	[ADC_CN7_14] = { "CN7_14", 3300, 4096, 0, STM32_AIN(12) },
+	[ADC_CN9_7] = { "CN9_7", 3300, 4096, 0, STM32_AIN(15) },
+	[ADC_CN10_7] = { "CN10_7", 3300, 4096, 0, STM32_AIN(16) },
+};
+BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /******************************************************************************
  * Initialize board.
@@ -208,6 +180,8 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 static void board_init(void)
 {
+	timestamp_t deadline;
+
 	STM32_GPIO_BSRR(STM32_GPIOE_BASE) |= 0x0000FF00;
 
 	/* We know VDDIO2 is present, enable the GPIO circuit. */
@@ -223,7 +197,6 @@ static void board_init(void)
 	queue_init(&usart5_to_usb);
 	queue_init(&usb_to_usart5);
 
-	STM32_GPIO_BSRR(STM32_GPIOE_BASE) |= 0x0F000000;
 	/* UART init */
 	usart_init(&usart2);
 	usart_init(&usart3);
@@ -231,99 +204,84 @@ static void board_init(void)
 	usart_init(&usart5);
 
 	/* Structured endpoints */
-	usb_spi_enable(&usb_spi, 1);
-	STM32_GPIO_BSRR(STM32_GPIOE_BASE) |= 0xF0000000;
+	usb_spi_enable(1);
+
+	/* Configure SPI GPIOs */
+	gpio_config_module(MODULE_SPI, 1);
+
+	/* Enable ADC */
+	STM32_RCC_AHB2ENR |= STM32_RCC_AHB2ENR_ADCEN;
+	/* Initialize the ADC by performing a fake reading */
+	adc_read_channel(ADC_CN9_11);
+
+	/* Enable DAC */
+	STM32_RCC_APB1ENR |= STM32_RCC_APB1ENR1_DAC1EN;
+
+	/*
+	 * Enable SPI2.
+	 */
+
+	/* Enable clocks to SPI2 module */
+	STM32_RCC_APB1ENR1 |= STM32_RCC_APB1ENR1_SPI2EN;
+
+	/* Reset SPI2 */
+	STM32_RCC_APB1RSTR1 |= STM32_RCC_APB1RSTR1_SPI2RST;
+	STM32_RCC_APB1RSTR1 &= ~STM32_RCC_APB1RSTR1_SPI2RST;
+
+	spi_enable(&spi_devices[0], 1);
+
+	/*
+	 * Enable OCTOSPI, no driver for this in chip/stm32.
+	 */
+	deadline.val = get_time().val + OCTOSPI_INIT_TIMEOUT_US;
+
+	STM32_RCC_AHB3ENR |= STM32_RCC_AHB3ENR_QSPIEN;
+	while (STM32_OCTOSPI_SR & STM32_OCTOSPI_SR_BUSY) {
+		timestamp_t now = get_time();
+		if (timestamp_expired(deadline, &now)) {
+			/*
+			 * Ideally, the USB host would have a way of
+			 * discovering our failure to initialize OctoSPI.  But
+			 * for now, log and move on, this would happen only on
+			 * code bug or hardware failure.
+			 */
+			cprints(CC_SPI, "Initialization of OctoSPI failed");
+			break;
+		}
+	}
+
+	/*
+	 * Declare that a "Standard" SPI flash device, maximum size is connected
+	 * to OCTOSPI.  This allows the controller to send arbitrary 32-bit
+	 * addresses, which is needed as we use the instruction and address
+	 * bytes as arbitrary data to send via SPI.
+	 */
+	STM32_OCTOSPI_DCR1 = STM32_OCTOSPI_DCR1_MTYP_STANDARD |
+			     STM32_OCTOSPI_DCR1_DEVSIZE_MSK;
+	/* Clock prescaler (max value 255) */
+	STM32_OCTOSPI_DCR2 = spi_devices[1].div;
+
+	/* Select DMA channel */
+	dma_select_channel(STM32_DMAC_CH13, DMAMUX_REQ_OCTOSPI1);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
-/**
- * Find a GPIO signal by name.
- *
- * This is copied from gpio.c unfortunately, as it is static over there.
- *
- * @param name		Signal name to find
- *
- * @return the signal index, or GPIO_COUNT if no match.
- */
-static enum gpio_signal find_signal_by_name(const char *name)
+const char *board_read_serial(void)
 {
-	int i;
+	const uint32_t *stm32_unique_id =
+		(const uint32_t *)STM32_UNIQUE_ID_BASE;
+	static char serial[13];
 
-	if (!name || !*name)
-		return GPIO_COUNT;
-
-	for (i = 0; i < GPIO_COUNT; i++)
-		if (gpio_is_implemented(i) &&
-		    !strcasecmp(name, gpio_get_name(i)))
-			return i;
-
-	return GPIO_COUNT;
+	// Compute 12 hex digits from three factory programmed 32-bit "Unique
+	// ID" words in a manner that has been observed to be consistent with
+	// how the STM DFU ROM bootloader presents its serial number.  This
+	// means that the serial number of any particular HyperDebug board will
+	// remain the same as it enters and leaves DFU mode for software
+	// upgrade.
+	int rc = snprintf(serial, sizeof(serial), "%08X%04X",
+			  stm32_unique_id[0] + stm32_unique_id[2],
+			  stm32_unique_id[1] >> 16);
+	if (12 != rc)
+		return NULL;
+	return serial;
 }
-
-/*
- * Set the mode of a GPIO pin: input/opendrain/pushpull.
- */
-static int command_gpio_mode(int argc, const char **argv)
-{
-	int gpio;
-	int flags;
-
-	if (argc < 3)
-		return EC_ERROR_PARAM_COUNT;
-
-	gpio = find_signal_by_name(argv[1]);
-	if (gpio == GPIO_COUNT)
-		return EC_ERROR_PARAM1;
-	flags = gpio_get_flags(gpio);
-
-	flags = flags & ~(GPIO_INPUT | GPIO_OUTPUT | GPIO_OPEN_DRAIN);
-	if (strcasecmp(argv[2], "input") == 0)
-		flags |= GPIO_INPUT;
-	else if (strcasecmp(argv[2], "opendrain") == 0)
-		flags |= GPIO_OUTPUT | GPIO_OPEN_DRAIN;
-	else if (strcasecmp(argv[2], "pushpull") == 0)
-		flags |= GPIO_OUTPUT;
-	else
-		return EC_ERROR_PARAM2;
-
-	/* Update GPIO flags. */
-	gpio_set_flags(gpio, flags);
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND_FLAGS(gpiomode, command_gpio_mode,
-			      "name <input | opendrain | pushpull>",
-			      "Set a GPIO mode", CMD_FLAG_RESTRICTED);
-
-/*
- * Set the weak pulling of a GPIO pin: up/down/none.
- */
-static int command_gpio_pull_mode(int argc, const char **argv)
-{
-	int gpio;
-	int flags;
-
-	if (argc < 3)
-		return EC_ERROR_PARAM_COUNT;
-
-	gpio = find_signal_by_name(argv[1]);
-	if (gpio == GPIO_COUNT)
-		return EC_ERROR_PARAM1;
-	flags = gpio_get_flags(gpio);
-
-	flags = flags & ~(GPIO_PULL_UP | GPIO_PULL_DOWN);
-	if (strcasecmp(argv[2], "none") == 0)
-		;
-	else if (strcasecmp(argv[2], "up") == 0)
-		flags |= GPIO_PULL_UP;
-	else if (strcasecmp(argv[2], "down") == 0)
-		flags |= GPIO_PULL_DOWN;
-	else
-		return EC_ERROR_PARAM2;
-
-	/* Update GPIO flags. */
-	gpio_set_flags(gpio, flags);
-	return EC_SUCCESS;
-}
-DECLARE_CONSOLE_COMMAND_FLAGS(gpiopullmode, command_gpio_pull_mode,
-			      "name <none | up | down>",
-			      "Set a GPIO weak pull mode", CMD_FLAG_RESTRICTED);

@@ -45,4 +45,11 @@ config CROS_RTC_RENESAS_IDT1337AG
 
 endchoice # CROS_RTC_TYPE
 
+config PLATFORM_EC_PCF85063A_CAP_SEL
+	bool "Set CAP_SEL of PCF85063A"
+	depends on CROS_RTC_NXP_PCF85063A
+	help
+	  This option select the internal oscillator capacitor to 12.5 pF,
+	  default is 7 pF.
+
 endif # PLATFORM_EC_RTC

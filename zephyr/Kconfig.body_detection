@@ -1,0 +1,104 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig PLATFORM_EC_BODY_DETECTION
+	bool "Sensor body detection"
+	help
+	  Enable the body detection function.
+
+	  The Power Reduction Algorithm is based on the Motion Detector
+	  output of In Motion (on body) state or Stationary (off body) state.
+	  The input of the Motion Detector is the X and Y axis signal
+	  from an accelerometer.
+
+if PLATFORM_EC_BODY_DETECTION
+
+config PLATFORM_EC_BODY_DETECTION_MAX_WINDOW_SIZE
+	int "Maximal sensor data rate"
+	default 250
+	help
+	  Sets the maximum sensor data rate, in Hz. Note that larger data rate
+	  values consume more memory and computing resource.
+
+config PLATFORM_EC_BODY_DETECTION_VAR_THRESHOLD
+	int "The threshold of acceleration variance for confidence calculation"
+	default 550
+	help
+	  The unit is (mm/s^2)^2
+
+	  The motion confidence is calculated if the variance is within
+	  variance_threshold +/- confidence_delta. Otherwise, if variance is
+	  too high/low, confidence will be 100%/0%
+
+config PLATFORM_EC_BODY_DETECTION_CONFIDENCE_DELTA
+	int "The delta of acceleration variance for confidence calculation"
+	default 525
+	help
+	  The unit is (mm/s^2)^2
+
+	  The motion confidence is calculated if the variance is within
+	  variance_threshold +/- confidence_delta. Otherwise, if variance is
+	  too high/low, confidence will be 100%/0%
+
+config PLATFORM_EC_BODY_DETECTION_VAR_NOISE_FACTOR
+	int "How much noise affects the threshold of variance"
+	default 120
+	help
+	  The unit is percentage
+
+	  This is used for mitigate the effect of the noise from the sensor.
+	  If set to 100%, the average noise is canceled out. This is set to
+	  120% by default because the noise might get larger than average
+	  sometimes.
+
+config PLATFORM_EC_BODY_DETECTION_ON_BODY_CON
+	int "The confidence limit of on_body"
+	default 50
+	help
+	  The unit is percentage
+
+	  Higher the value, more diffcult to enter the on-body from off-body
+
+config PLATFORM_EC_BODY_DETECTION_OFF_BODY_CON
+	int "The confidence limit of off body"
+	default 10
+	help
+	  The unit is percentage
+
+	  Lower the value, more diffcult to enter the off-body from on-body.
+	  Should be set less than the PLATFORM_EC_BODY_DETECTION_ON_BODY_CON
+
+config PLATFORM_EC_BODY_DETECTION_STATIONARY_DURATION
+	int "The threshold duration to change to off_body"
+	default 15
+	help
+	  The unit is seconds
+
+	  How long should we stay in on-body state before entering to off-body
+	  state when the motion confidence is less than
+	  PLATFORM_EC_BODY_DETECTION_OFF_BODY_CON
+
+config PLATFORM_EC_BODY_DETECTION_NOTIFY_MODE_CHANGE
+	bool "Notify host with a specific host event when body status is changed"
+	default n
+	help
+	  Notify the host via SCI events EC_HOST_EVENT_BODY_DETECT_CHANGE when body
+	  status is changed, in addition to adding an event in the motion sensor
+	  FIFO queue.
+
+config PLATFORM_EC_BODY_DETECTION_NOTIFY_MKBP
+	bool "Notify host with MKBP event when the body on/off"
+	default n
+	help
+	  Notify the host via EC_MKBP_FRONT_PROXIMITY
+	  when the body status changed.
+
+config PLATFORM_EC_BODY_DETECTION_ALWAYS_ENABLE_IN_S0
+	bool "Always enable body detection function in S0"
+	default n
+	help
+	  Always enable the body detection function in S0
+	  w/o the host command
+
+endif # PLATFORM_EC_BODY_DETECTION

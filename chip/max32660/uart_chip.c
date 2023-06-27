@@ -5,17 +5,18 @@
 
 /* MAX32660 Console UART Module for Chrome EC */
 
-#include <stdint.h>
-#include "system.h"
-#include "task.h"
-#include "uart.h"
-#include "registers.h"
-#include "tmr_regs.h"
-#include "gpio.h"
-#include "gpio_regs.h"
 #include "common.h"
 #include "gcr_regs.h"
+#include "gpio.h"
+#include "gpio_regs.h"
+#include "registers.h"
+#include "system.h"
+#include "task.h"
+#include "tmr_regs.h"
+#include "uart.h"
 #include "uart_regs.h"
+
+#include <stdint.h>
 
 static int done_uart_init_yet;
 

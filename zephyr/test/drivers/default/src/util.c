@@ -2,13 +2,13 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <zephyr/ztest.h>
-#include <zephyr/fff.h>
-
-#include "util.h"
 #include "test/drivers/test_state.h"
+#include "util.h"
 
-ZTEST(util, reverse)
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
+
+ZTEST(util, test_reverse)
 {
 	uint8_t input[] = { 0, 1, 2, 3, 4 };
 	uint8_t expected[] = { 4, 3, 2, 1, 0 };
@@ -18,7 +18,7 @@ ZTEST(util, reverse)
 	zassert_mem_equal(input, expected, sizeof(input), NULL);
 }
 
-ZTEST(util, parse_offset_size__normal)
+ZTEST(util, test_parse_offset_size__normal)
 {
 	const char *argv[] = { "cmd", "123", "456" };
 	int argc = ARRAY_SIZE(argv);
@@ -30,7 +30,7 @@ ZTEST(util, parse_offset_size__normal)
 	zassert_equal(456, size, NULL);
 }
 
-ZTEST(util, parse_offset_size__invalid_param1)
+ZTEST(util, test_parse_offset_size__invalid_param1)
 {
 	const char *argv[] = { "cmd", "xyz" /* <- bad */, "456" };
 	int argc = ARRAY_SIZE(argv);
@@ -41,7 +41,7 @@ ZTEST(util, parse_offset_size__invalid_param1)
 		      parse_offset_size(argc, argv, 1, &offset, &size), NULL);
 }
 
-ZTEST(util, parse_offset_size__invalid_param2)
+ZTEST(util, test_parse_offset_size__invalid_param2)
 {
 	const char *argv[] = { "cmd", "123", "xyz" /* <- bad */ };
 	int argc = ARRAY_SIZE(argv);
@@ -52,7 +52,7 @@ ZTEST(util, parse_offset_size__invalid_param2)
 		      parse_offset_size(argc, argv, 1, &offset, &size), NULL);
 }
 
-ZTEST(util, wait_for_ready)
+ZTEST(util, test_wait_for_ready)
 {
 	uint32_t reg;
 
@@ -66,7 +66,7 @@ ZTEST(util, wait_for_ready)
 	wait_for_ready(&reg, 1, 1);
 }
 
-ZTEST(util, binary_from_bits)
+ZTEST(util, test_binary_from_bits)
 {
 	int input[] = {
 		0,
@@ -79,7 +79,7 @@ ZTEST(util, binary_from_bits)
 	zassert_equal(0, binary_from_bits(NULL, 0), NULL);
 }
 
-ZTEST(util, ternary_from_bits)
+ZTEST(util, test_ternary_from_bits)
 {
 	int input[] = {
 		0,

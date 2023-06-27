@@ -6,9 +6,9 @@
 #define __CROS_EC_USB_PD_TCPM_RT1718S_H
 
 #include "tcpm/rt1718s_public.h"
-#include "util.h"
 #include "usb_charge.h"
 #include "usb_pd_tcpm.h"
+#include "util.h"
 
 /* RT1718S Private RegMap */
 #define RT1718S_PHYCTRL1 0x80
@@ -92,9 +92,14 @@
 #define RT1718S_ENA_SRC_VBUS_CTRL 0xE1
 #define RT1718S_FAULT_OC1_VBUS_CTRL 0xE3
 #define RT1718S_GPIO1_VBUS_CTRL 0xEA
-#define RT1718S_GPIO1_VBUS_CTRL_FRS_RX_VBUS BIT(6)
+#define RT1718S_GPIO_VBUS_CTRL_FRS_RX_VBUS BIT(6)
+#define RT1718S_GPIO_VBUS_CTRL_FRS_TX_VBUS BIT(5)
+#define RT1718S_GPIO_VBUS_CTRL_ENA_SRC_HV_VBUS_GPIO BIT(4)
+#define RT1718S_GPIO_VBUS_CTRL_ENA_SRC_VBUS_GPIO BIT(3)
+#define RT1718S_GPIO_VBUS_CTRL_DIS_SRC_VBUS_GPIO BIT(2)
+#define RT1718S_GPIO_VBUS_CTRL_ENA_SNK_VBUS_GPIO BIT(1)
+#define RT1718S_GPIO_VBUS_CTRL_DIS_SNK_VBUS_GPIO BIT(0)
 #define RT1718S_GPIO2_VBUS_CTRL 0xEB
-#define RT1718S_GPIO2_VBUS_CTRL_FRS_RX_VBUS BIT(6)
 #define RT1718S_VBUS_CTRL_EN 0xEC
 #define RT1718S_VBUS_CTRL_EN_GPIO2_VBUS_PATH_EN BIT(7)
 #define RT1718S_VBUS_CTRL_EN_GPIO1_VBUS_PATH_EN BIT(6)
@@ -109,6 +114,8 @@
 
 #define RT1718S_UNLOCK_PW_2 0xF0
 #define RT1718S_UNLOCK_PW_1 0xF1
+
+#define RT1718S_RT2 0xF2
 
 #define RT1718S_RT2_SYS_CTRL5 0xF210
 
@@ -267,4 +274,13 @@ int rt1718s_sw_reset(int port);
  * @return EC_SUCCESS if success, EC_ERROR_UNKNOWN otherwise.
  */
 __override_proto int board_rt1718s_set_snk_enable(int port, int enable);
+
+/**
+ * Board hook for rt1718s_set_src_enable
+ *
+ * @param port		USB-C port
+ * @param enable	enable/disable source
+ * @return EC_SUCCESS if success, EC_ERROR_UNKNOWN otherwise.
+ */
+__override_proto int board_rt1718s_set_src_enable(int port, int enable);
 #endif /* __CROS_EC_USB_PD_TCPM_MT6370_H */

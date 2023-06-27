@@ -209,4 +209,7 @@ int sb_write_block(int reg, const uint8_t *val, int len);
 /* Read manufactures access data from the battery */
 int sb_read_mfgacc(int cmd, int block, uint8_t *data, int len);
 
+/* Read manufactures access data from the battery */
+int sb_read_mfgacc_block(int cmd, int block, uint8_t *data, int len);
+
 #endif /* __CROS_EC_BATTERY_SMART_H */

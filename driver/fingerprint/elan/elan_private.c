@@ -3,28 +3,27 @@
  * found in the LICENSE file.
  */
 
-#include <stddef.h>
 #include "common.h"
 #include "console.h"
-#include "endian.h"
+#include "cryptoc/util.h"
+#include "elan_sensor.h"
+#include "elan_sensor_pal.h"
+#include "elan_setting.h"
+#include "fpsensor.h"
+#include "fpsensor_utils.h"
 #include "gpio.h"
 #include "link_defs.h"
+#include "math_util.h"
+#include "shared_mem.h"
 #include "spi.h"
 #include "system.h"
 #include "timer.h"
+#include "trng.h"
 #include "util.h"
-#include "shared_mem.h"
-#include "math_util.h"
-#include "fpsensor.h"
-#include "cryptoc/util.h"
 
-#include "elan_sensor.h"
-#include "elan_setting.h"
-#include "elan_sensor_pal.h"
+#include <stddef.h>
 
 static uint16_t errors;
-
-#define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
 
 /* Sensor description */
 static struct ec_response_fp_info ec_fp_sensor_info = {
@@ -34,11 +33,11 @@ static struct ec_response_fp_info ec_fp_sensor_info = {
 	.model_id = MID,
 	.version = VERSION,
 	/* Image frame characteristics */
-	.frame_size = FP_SENSOR_RES_X * FP_SENSOR_RES_Y,
+	.frame_size = FP_SENSOR_RES_X_ELAN * FP_SENSOR_RES_Y_ELAN,
 	.pixel_format = V4L2_PIX_FMT_GREY,
-	.width = FP_SENSOR_RES_X,
-	.height = FP_SENSOR_RES_Y,
-	.bpp = FP_SENSOR_RES_BPP,
+	.width = FP_SENSOR_RES_X_ELAN,
+	.height = FP_SENSOR_RES_Y_ELAN,
+	.bpp = FP_SENSOR_RES_BPP_ELAN,
 };
 
 /**
@@ -244,4 +243,22 @@ int fp_maintenance(void)
 {
 	CPRINTF("========%s=======\n", __func__);
 	return elan_fp_maintenance(&errors);
+}
+
+/**
+ * Provides the init_trng function required by the elan library using the EC
+ * trng API
+ */
+void init_trng(void)
+{
+	trng_init();
+}
+
+/**
+ * Provides the exit_trng function required by the elan library using the EC
+ * trng API
+ */
+void exit_trng(void)
+{
+	trng_exit();
 }

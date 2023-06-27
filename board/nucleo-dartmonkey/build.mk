@@ -13,7 +13,7 @@ board-y+=fpsensor_detect.o
 test-list-y=\
        abort \
        aes \
-       cec \
+       boringssl_crypto \
        compile_time_macros \
        crc \
        debug \
@@ -21,6 +21,8 @@ test-list-y=\
        flash_physical \
        flash_write_protect \
        fpsensor \
+       fpsensor_auth_crypto_stateful \
+       fpsensor_auth_crypto_stateless \
        fpsensor_hw \
        libc_printf \
        mpu \
@@ -33,6 +35,7 @@ test-list-y=\
        rollback_entropy \
        rsa3 \
        rtc \
+       sbrk \
        scratchpad \
        sha256 \
        sha256_unrolled \

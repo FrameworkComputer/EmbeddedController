@@ -8,8 +8,8 @@
 #ifndef __CROS_EC_OZ554_H
 #define __CROS_EC_OZ554_H
 
-#include "gpio.h"
 #include "common.h"
+#include "gpio.h"
 
 /*
  * Overridable board initialization.  Should be overridden by a board

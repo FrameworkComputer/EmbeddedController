@@ -6,6 +6,10 @@
 #ifndef __AP_PWRSEQ_SIGNAL_VW_H__
 #define __AP_PWRSEQ_SIGNAL_VW_H__
 
+#include <zephyr/devicetree.h>
+
+#include <power_signals.h>
+
 #define PWR_SIG_TAG_VW PWR_VW_
 
 /*
@@ -20,10 +24,7 @@
 #define PWR_VW_ENUM(id) TAG_VW(PWR_SIG_TAG_VW, PWR_SIGNAL_ENUM(id)),
 
 enum pwr_sig_vw {
-#if HAS_VW_SIGNALS
-	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_vw, PWR_VW_ENUM)
-#endif
-		PWR_SIG_VW_COUNT
+	DT_FOREACH_STATUS_OKAY(intel_ap_pwrseq_vw, PWR_VW_ENUM) PWR_SIG_VW_COUNT
 };
 
 #undef PWR_VW_ENUM

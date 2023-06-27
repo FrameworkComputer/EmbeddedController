@@ -11,6 +11,8 @@
 #ifndef __AP_POWER_AP_EVENTS_H__
 #define __AP_POWER_AP_EVENTS_H__
 
+#include <ap_power/ap_power.h>
+
 /**
  * @brief Dispatch callbacks for an event.
  *

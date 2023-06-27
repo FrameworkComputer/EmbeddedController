@@ -43,8 +43,20 @@ struct cros_ec_ishtp_msg_hdr {
 } __ec_align4;
 
 #define CROS_EC_ISHTP_MSG_HDR_SIZE sizeof(struct cros_ec_ishtp_msg_hdr)
+
+/*
+ * Increase response_buffer size
+ * some host command response messages use bigger space; so increase
+ * the buffer size on par with EC, which is 256 bytes in total.
+ * The size has to meet
+ * HECI_CROS_EC_RESPONSE_BUF_SIZE >= CROS_EC_ISHTP_MSG_HDR_SIZE + 256.
+ * Here 260 bytes is chosen.
+ */
+#define HECI_CROS_EC_RESPONSE_BUF_SIZE 260
 #define HECI_CROS_EC_RESPONSE_MAX \
-	(HECI_IPC_PAYLOAD_SIZE - CROS_EC_ISHTP_MSG_HDR_SIZE)
+	(HECI_CROS_EC_RESPONSE_BUF_SIZE - CROS_EC_ISHTP_MSG_HDR_SIZE)
+BUILD_ASSERT(HECI_CROS_EC_RESPONSE_BUF_SIZE >=
+	     CROS_EC_ISHTP_MSG_HDR_SIZE + 256);
 
 struct cros_ec_ishtp_msg {
 	struct cros_ec_ishtp_msg_hdr hdr;
@@ -56,7 +68,7 @@ enum heci_cros_ec_channel {
 	CROS_MKBP_EVENT = 2, /* initiated from EC */
 };
 
-static uint8_t response_buffer[IPC_MAX_PAYLOAD_SIZE] __aligned(4);
+static uint8_t response_buffer[HECI_CROS_EC_RESPONSE_BUF_SIZE] __aligned(4);
 static struct host_packet heci_packet;
 
 int heci_send_mkbp_event(uint32_t *timestamp)

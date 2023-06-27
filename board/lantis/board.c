@@ -10,7 +10,7 @@
 #include "cbi_fw_config.h"
 #include "cbi_ssfc.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "cros_board_info.h"
 #include "driver/accel_bma2x2.h"
@@ -18,9 +18,9 @@
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/sm5803.h"
-#include "driver/temp_sensor/thermistor.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/tcpm/ps8xxx.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/it5205.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -719,18 +719,6 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
-
-	/*
-	 * TODO(b/151955431): Characterize the input current limit in case a
-	 * scaling needs to be applied here
-	 */
-	charge_set_input_current_limit(icl, charge_mv);
-}
-
 int board_set_active_charge_port(int port)
 {
 	int is_valid_port = (port >= 0 && port < board_get_usb_pd_port_count());
@@ -790,6 +778,22 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 	current = (rp == TYPEC_RP_3A0) ? 3000 : 1500;
 
 	charger_set_otg_current_voltage(port, current, 5000);
+}
+
+__override uint16_t board_get_ps8xxx_product_id(int port)
+{
+	/* Lantis variant doesn't have ps8xxx product in the port 0 */
+	if (port == 0)
+		return 0;
+
+	switch (get_cbi_ssfc_tcpc_p1()) {
+	case SSFC_TCPC_P1_PS8805:
+		return PS8805_PRODUCT_ID;
+	case SSFC_TCPC_P1_DEFAULT:
+	case SSFC_TCPC_P1_PS8705:
+	default:
+		return PS8705_PRODUCT_ID;
+	}
 }
 
 /* PWM channels. Must be in the exactly same order as in enum pwm_channel. */

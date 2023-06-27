@@ -5,11 +5,11 @@
 
 /* Functions needed by keyboard scanner module for Chrome EC */
 
+#include "clock.h"
 #include "common.h"
+#include "gpio.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
-#include "clock.h"
-#include "gpio.h"
 #include "registers.h"
 #include "task.h"
 

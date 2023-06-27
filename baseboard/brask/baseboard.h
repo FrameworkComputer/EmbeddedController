@@ -189,12 +189,12 @@
 
 #ifndef __ASSEMBLER__
 
+#include "baseboard_usbc_config.h"
+#include "common.h"
+#include "extpower.h"
+
 #include <stdbool.h>
 #include <stdint.h>
-
-#include "common.h"
-#include "baseboard_usbc_config.h"
-#include "extpower.h"
 
 /*
  * Configure run-time data structures and operation based on CBI data. This

@@ -3,15 +3,16 @@
  * found in the LICENSE file.
  */
 
+#include "comm-host.h"
+#include "misc_util.h"
+
 #include <ctype.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/utsname.h>
 
-#include "comm-host.h"
-#include "misc_util.h"
+#include <sys/utsname.h>
 
 int write_file(const char *filename, const char *buf, int size)
 {
@@ -171,4 +172,41 @@ int kernel_version_ge(int major, int minor, int sublevel)
 		return 0 == sublevel;
 
 	return ksublevel >= sublevel;
+}
+
+/**
+ * Prints data in hexdump canonical format.
+ *
+ * @param data Buffer of data to print
+ * @param len Length of data to print
+ * @param offset_start Starting offset added to the displayed offset.
+ *        This only affects how the offset is printed, it does not affect
+ *        what data is printed.
+ */
+void hexdump_canonical(const uint8_t *data, size_t len, uint32_t offset_start)
+{
+	uint32_t i, j;
+
+	if (!data || !len)
+		return;
+
+	for (i = 0; i < len; i += 16) {
+		printf("%08x  ", i + offset_start);
+		for (j = i; j < i + 16; j++) {
+			if (j == i + 8)
+				printf(" ");
+			if (j < len)
+				printf("%02x ", data[j]);
+			else
+				printf("   ");
+		}
+		printf(" |");
+		for (j = i; j < i + 16 && j < len; j++)
+			if (isprint(data[i + j]))
+				printf("%c", data[i + j]);
+			else
+				printf(".");
+		printf("|\n");
+	}
+	printf("%08x\n", i + offset_start);
 }

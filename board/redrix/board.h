@@ -13,6 +13,10 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+/* Increase tx buffer size. */
+#undef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 8192
+
 /*
  * This will happen automatically on NPCX9 ES2 and later. Do not remove
  * until we can confirm all earlier chips are out of service.
@@ -65,6 +69,9 @@
 /* USB Type A Features */
 #define USB_PORT_COUNT 1
 #define CONFIG_USB_PORT_POWER_DUMB
+
+#undef CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT
+#define CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT 6
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY

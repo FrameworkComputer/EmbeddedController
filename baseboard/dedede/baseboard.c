@@ -294,6 +294,7 @@ int board_is_i2c_port_powered(int port)
 	return chipset_in_state(CHIPSET_STATE_ANY_OFF) ? 0 : 1;
 }
 
+#if defined(CONFIG_CHARGER_RAA489000) || defined(CONFIG_CHARGER_SM5803)
 __overridable int extpower_is_present(void)
 {
 	int port;
@@ -314,6 +315,7 @@ __overridable int extpower_is_present(void)
 
 	return 0;
 }
+#endif
 
 __override uint32_t board_override_feature_flags0(uint32_t flags0)
 {

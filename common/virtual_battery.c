@@ -103,9 +103,6 @@ int virtual_battery_handler(struct ec_response_i2c_passthru *resp, int in_len,
 		if (cache_hit)
 			*err_code = 0;
 		break;
-	default:
-		reset_parse_state();
-		return EC_ERROR_INVAL;
 	}
 
 	acc_write_len += write_len;
@@ -129,10 +126,15 @@ int virtual_battery_handler(struct ec_response_i2c_passthru *resp, int in_len,
 							  read_len, 0);
 			}
 			break;
+		/* LCOV_EXCL_START - Unreachable in IDLE state and remaining
+		 * states covered above.
+		 */
 		default:
 			reset_parse_state();
 			return EC_ERROR_INVAL;
 		}
+		/* LCOV_EXCL_STOP */
+
 		/* Reset the state in the end of messages */
 		reset_parse_state();
 	}

@@ -25,6 +25,8 @@ endif
 CFLAGS_CPU+=-mthumb
 ifeq ($(cc-name),clang)
 CFLAGS_CPU+=-Oz		# Like -Os (and thus -O2), but reduces code size further.
+# b/256193799: Reduce inline threshold to decrease code size.
+CFLAGS_CPU+=-Wl,-mllvm -Wl,-inline-threshold=-10
 # Link compiler-rt when using clang, so clang finds the builtins it provides.
 LDFLAGS_EXTRA+=-lclang_rt.builtins-armv7m
 else
@@ -44,8 +46,6 @@ core-y=cpu.o debug.o init.o vecttable.o
 ifneq ($(cc-name),clang)
 core-y+=ldivmod.o llsr.o uldivmod.o
 endif
-core-$(CONFIG_AES)+=aes.o
-core-$(CONFIG_AES_GCM)+=ghash.o
 core-$(CONFIG_ARMV7M_CACHE)+=cache.o
 core-$(CONFIG_COMMON_PANIC_OUTPUT)+=panic.o
 core-$(CONFIG_COMMON_RUNTIME)+=switch.o task.o

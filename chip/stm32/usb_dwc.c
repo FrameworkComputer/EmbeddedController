@@ -13,12 +13,12 @@
 #include "hooks.h"
 #include "link_defs.h"
 #include "registers.h"
-#include "usb_hw.h"
 #include "system.h"
 #include "task.h"
 #include "timer.h"
-#include "util.h"
 #include "usb_descriptor.h"
+#include "usb_hw.h"
+#include "util.h"
 #include "watchdog.h"
 
 /****************************************************************************/

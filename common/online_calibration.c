@@ -3,19 +3,19 @@
  * found in the LICENSE file.
  */
 
+#include "accel_cal.h"
 #include "accelgyro.h"
 #include "atomic.h"
-#include "hwtimer.h"
-#include "online_calibration.h"
 #include "common.h"
+#include "ec_commands.h"
+#include "gyro_cal.h"
+#include "hwtimer.h"
 #include "mag_cal.h"
+#include "mkbp_event.h"
+#include "online_calibration.h"
+#include "task.h"
 #include "util.h"
 #include "vec3.h"
-#include "task.h"
-#include "ec_commands.h"
-#include "accel_cal.h"
-#include "mkbp_event.h"
-#include "gyro_cal.h"
 
 #define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ##args)
 

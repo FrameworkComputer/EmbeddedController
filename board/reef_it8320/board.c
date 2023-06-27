@@ -27,8 +27,8 @@
 #include "lid_angle.h"
 #include "lid_switch.h"
 #include "math_util.h"
-#include "motion_sense.h"
 #include "motion_lid.h"
+#include "motion_sense.h"
 #include "panic.h"
 #include "power.h"
 #include "power_button.h"
@@ -56,6 +56,7 @@
 #define IN_PGOOD_PP3300 POWER_SIGNAL_MASK(X86_PGOOD_PP3300)
 #define IN_PGOOD_PP5000 POWER_SIGNAL_MASK(X86_PGOOD_PP5000)
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 const struct adc_t adc_channels[] = {
@@ -299,8 +300,8 @@ int board_set_active_charge_port(int charge_port)
  * @param charge_ma     Desired charge limit (mA).
  * @param charge_mv     Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	/* Enable charging trigger by BC1.2 detection */
 	int bc12_enable = (supplier == CHARGE_SUPPLIER_BC12_CDP ||
@@ -311,9 +312,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 	if (bd9995x_bc12_enable_charging(port, bc12_enable))
 		return;
 
-	charge_ma = (charge_ma * 95) / 100;
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(charge_ma, charge_mv);
 }
 
 /**

@@ -3,15 +3,14 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT richtek_rt9490_bc12
+#define DT_DRV_COMPAT richtek_rt9490
 
-#include <zephyr/devicetree.h>
 #include "driver/charger/rt9490.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "usbc/utils.h"
 
-#if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
+#include <zephyr/devicetree.h>
 
 static void rt9490_bc12_enable_irqs(void)
 {
@@ -26,8 +25,8 @@ DECLARE_HOOK(HOOK_INIT, rt9490_bc12_enable_irqs, HOOK_PRIO_DEFAULT);
 		    : rt9490_interrupt(USBC_PORT_NEW(usbc_id));            \
 		    break;))
 
-#define RT9490_CHECK(usbc_id, bc12_id)                                \
-	COND_CODE_1(DT_NODE_HAS_COMPAT(bc12_id, richtek_rt9490_bc12), \
+#define RT9490_CHECK(usbc_id, bc12_id)                           \
+	COND_CODE_1(DT_NODE_HAS_COMPAT(bc12_id, richtek_rt9490), \
 		    (RT9490_DISPATCH_INTERRUPT(usbc_id, bc12_id)), ())
 
 #define RT9490_INTERRUPT(usbc_id)                    \
@@ -42,5 +41,3 @@ void rt9490_bc12_dt_interrupt(enum gpio_signal signal)
 		break;
 	}
 }
-
-#endif /* DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT) */

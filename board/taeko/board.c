@@ -7,32 +7,32 @@
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_ramp.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
-#include "gpio.h"
-#include "gpio_signal.h"
-#include "hooks.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/accelgyro_lsm6dso.h"
 #include "driver/als_tcs3400.h"
 #include "fw_config.h"
+#include "gpio.h"
+#include "gpio_signal.h"
 #include "hooks.h"
+#include "keyboard_raw.h"
+#include "keyboard_scan.h"
 #include "lid_switch.h"
-#include "power_button.h"
 #include "power.h"
+#include "power_button.h"
 #include "registers.h"
 #include "switch.h"
 #include "tablet_mode.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
-#include "keyboard_raw.h"
-#include "keyboard_scan.h"
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
@@ -135,17 +135,4 @@ enum battery_present battery_hw_present(void)
 {
 	/* The GPIO is low when the battery is physically present */
 	return gpio_get_level(GPIO_EC_BATT_PRES_ODL) ? BP_NO : BP_YES;
-}
-
-__override void board_set_charge_limit(int port, int supplier, int charge_ma,
-				       int max_ma, int charge_mv)
-{
-	/*
-	 * Follow OEM request to limit the input current to
-	 * 95% negotiated limit.
-	 */
-	charge_ma = charge_ma * 95 / 100;
-
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }

@@ -1,0 +1,23 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Include base Rex */
+#include "../rex/project.overlay"
+
+&i2c0_0 {
+	status = "disabled";
+};
+&i2c_ec_i2c_sensor_scl_r {
+	status = "disabled";
+};
+&int_imu {
+	status = "disabled";
+};
+&int_als_rgb {
+	status = "disabled";
+};
+&int_accel {
+	status = "disabled";
+};

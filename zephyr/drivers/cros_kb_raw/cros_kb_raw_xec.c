@@ -5,23 +5,24 @@
 
 #define DT_DRV_COMPAT microchip_xec_cros_kb_raw
 
-#include <assert.h>
-#include <drivers/cros_kb_raw.h>
-#include <zephyr/drivers/clock_control.h>
-#include <zephyr/drivers/pinctrl.h>
-#include <zephyr/drivers/interrupt_controller/intc_mchp_xec_ecia.h>
-#include <soc.h>
-#include <soc/microchip_xec/reg_def_cros.h>
-
 #include "ec_tasks.h"
 #include "keyboard_raw.h"
 #include "task.h"
 
+#include <assert.h>
+
+#include <zephyr/drivers/clock_control.h>
+#include <zephyr/drivers/interrupt_controller/intc_mchp_xec_ecia.h>
+#include <zephyr/drivers/pinctrl.h>
 #include <zephyr/logging/log.h>
+
+#include <drivers/cros_kb_raw.h>
+#include <soc.h>
+#include <soc/microchip_xec/reg_def_cros.h>
 LOG_MODULE_REGISTER(cros_kb_raw, LOG_LEVEL_ERR);
 
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED
-#if !DT_NODE_EXISTS(KBD_KS02_NODE)
+#if !DT_NODE_EXISTS(KBD_KSO2_NODE)
 #error gpio_kbd_kso2 alias has to point to the keyboard column 2 output pin.
 #endif
 #endif /* CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED */

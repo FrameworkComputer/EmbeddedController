@@ -8,12 +8,12 @@
 #ifndef __CROS_EC_ACCELGYRO_ICM_COMMON_H
 #define __CROS_EC_ACCELGYRO_ICM_COMMON_H
 
-#include <sys/types.h>
-
 #include "accelgyro.h"
+#include "builtin/stddef.h"
 #include "hwtimer.h"
 #include "timer.h"
-#include "builtin/stddef.h"
+
+#include <sys/types.h>
 
 #if !defined(CONFIG_ACCELGYRO_ICM_COMM_SPI) && \
 	!defined(CONFIG_ACCELGYRO_ICM_COMM_I2C)

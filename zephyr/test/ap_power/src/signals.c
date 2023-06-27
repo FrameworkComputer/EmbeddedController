@@ -8,23 +8,23 @@
  * @brief Unit Tests for power signals API
  */
 
-#include <zephyr/device.h>
-
-#include <zephyr/drivers/espi.h>
-#include <zephyr/drivers/espi_emul.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
-#include "power_signals.h"
-
 #include "ec_tasks.h"
 #include "emul/emul_stub_device.h"
 #include "gpio.h"
 #include "gpio/gpio.h"
 #include "gpio/gpio_int.h"
+#include "power_signals.h"
 #include "test_state.h"
+#include "vcmp_mock.h"
+
+#include <zephyr/device.h>
+#include <zephyr/drivers/espi.h>
+#include <zephyr/drivers/espi_emul.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/drivers/sensor.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/ztest.h>
 
 extern bool gpio_test_interrupt_triggered;
 
@@ -402,6 +402,102 @@ ZTEST(signals, test_espi_vw)
 	zassert_equal(1, power_signal_get(PWR_SLP_S5), "VW SLP_S5 should be 1");
 	emul_espi_host_send_vw(espi, ESPI_VWIRE_SIGNAL_SLP_S5, 1);
 	zassert_equal(0, power_signal_get(PWR_SLP_S5), "VW SLP_S5 should be 0");
+}
+
+enum trigger_expect {
+	ADC_TRIG_NONE,
+	ADC_TRIG_HIGH,
+	ADC_TRIG_LOW,
+};
+
+static void check_adc_triggers(enum trigger_expect expect)
+{
+	const struct device *trigger_high =
+		DEVICE_DT_GET(DT_NODELABEL(mock_cmp_high));
+	const struct device *trigger_low =
+		DEVICE_DT_GET(DT_NODELABEL(mock_cmp_low));
+	struct sensor_value val_high;
+	struct sensor_value val_low;
+
+	sensor_attr_get(trigger_high, SENSOR_CHAN_VOLTAGE, SENSOR_ATTR_ALERT,
+			&val_high);
+	sensor_attr_get(trigger_low, SENSOR_CHAN_VOLTAGE, SENSOR_ATTR_ALERT,
+			&val_low);
+	switch (expect) {
+	case ADC_TRIG_NONE:
+		zassert_equal(0, val_high.val1,
+			      "high trigger should be disabled");
+		zassert_equal(0, val_low.val1,
+			      "low trigger should be disabled");
+		break;
+	case ADC_TRIG_HIGH:
+		zassert_equal(1, val_high.val1,
+			      "high trigger should be enabled");
+		zassert_equal(0, val_low.val1,
+			      "low trigger should be disabled");
+		break;
+	case ADC_TRIG_LOW:
+		zassert_equal(0, val_high.val1,
+			      "high trigger should be disabled");
+		zassert_equal(1, val_low.val1, "low trigger should be enabled");
+		break;
+	}
+}
+
+ZTEST(signals, test_adc_get)
+{
+	const struct device *trigger_high =
+		DEVICE_DT_GET(DT_NODELABEL(mock_cmp_high));
+	const struct device *trigger_low =
+		DEVICE_DT_GET(DT_NODELABEL(mock_cmp_low));
+
+	/* Always start low */
+	vcmp_mock_trigger(trigger_low);
+
+	zassert_equal(0, power_signal_get(PWR_PG_PP1P05),
+		      "power_signal_get of PWR_PG_PP1P05 should be 0");
+	check_adc_triggers(ADC_TRIG_HIGH);
+
+	/* Signal goes up... */
+	vcmp_mock_trigger(trigger_high);
+
+	zassert_equal(1, power_signal_get(PWR_PG_PP1P05),
+		      "power_signal_get of PWR_PG_PP1P05 should be 1");
+	check_adc_triggers(ADC_TRIG_LOW);
+
+	/* ...signal goes down. */
+	vcmp_mock_trigger(trigger_low);
+
+	zassert_equal(0, power_signal_get(PWR_PG_PP1P05),
+		      "power_signal_get of PWR_PG_PP1P05 should be 0");
+	check_adc_triggers(ADC_TRIG_HIGH);
+}
+
+ZTEST(signals, test_adc_enable_disable)
+{
+	const struct device *trigger_high =
+		DEVICE_DT_GET(DT_NODELABEL(mock_cmp_high));
+	const struct device *trigger_low =
+		DEVICE_DT_GET(DT_NODELABEL(mock_cmp_low));
+
+	/* Always start from low */
+	vcmp_mock_trigger(trigger_low);
+	check_adc_triggers(ADC_TRIG_HIGH);
+
+	power_signal_disable(PWR_PG_PP1P05);
+	check_adc_triggers(ADC_TRIG_NONE);
+
+	power_signal_enable(PWR_PG_PP1P05);
+	check_adc_triggers(ADC_TRIG_HIGH);
+
+	vcmp_mock_trigger(trigger_high);
+	check_adc_triggers(ADC_TRIG_LOW);
+
+	power_signal_disable(PWR_PG_PP1P05);
+	check_adc_triggers(ADC_TRIG_NONE);
+
+	power_signal_enable(PWR_PG_PP1P05);
+	check_adc_triggers(ADC_TRIG_LOW);
 }
 
 static void *init_dev(void)

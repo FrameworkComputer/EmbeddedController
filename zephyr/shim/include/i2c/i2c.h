@@ -8,20 +8,25 @@
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
+#include <zephyr/toolchain.h>
 
-#ifdef CONFIG_PLATFORM_EC_I2C
-#if DT_NODE_EXISTS(DT_PATH(named_i2c_ports))
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(named_i2c_ports) == 1,
+	     "only one named-i2c-ports compatible node may be present");
+
+#define NAMED_I2C_PORTS_NODE DT_COMPAT_GET_ANY_STATUS_OKAY(named_i2c_ports)
 
 #define NPCX_PORT_COMPAT nuvoton_npcx_i2c_port
 #define ITE_IT8XXX2_PORT_COMPAT ite_it8xxx2_i2c
 #define ITE_ENHANCE_PORT_COMPAT ite_enhance_i2c
 #define MICROCHIP_XEC_COMPAT microchip_xec_i2c_v2
+#define INTEL_SEDI_I2C_COMPAT intel_sedi_i2c
 #define I2C_EMUL_COMPAT zephyr_i2c_emul_controller
 #define I2C_FOREACH_PORT(fn)                                \
 	DT_FOREACH_STATUS_OKAY(NPCX_PORT_COMPAT, fn)        \
 	DT_FOREACH_STATUS_OKAY(ITE_IT8XXX2_PORT_COMPAT, fn) \
 	DT_FOREACH_STATUS_OKAY(ITE_ENHANCE_PORT_COMPAT, fn) \
 	DT_FOREACH_STATUS_OKAY(MICROCHIP_XEC_COMPAT, fn)    \
+	DT_FOREACH_STATUS_OKAY(INTEL_SEDI_I2C_COMPAT, fn)   \
 	DT_FOREACH_STATUS_OKAY(I2C_EMUL_COMPAT, fn)
 
 /*
@@ -171,10 +176,8 @@ BUILD_ASSERT(I2C_PORT_COUNT != 0, "No I2C devices defined");
  * enum i2c_ports_chip above for every I2C port devicetree node.
  */
 enum i2c_ports {
-	DT_FOREACH_CHILD(DT_PATH(named_i2c_ports), NAMED_I2C_PORT_COMMA)
+	DT_FOREACH_CHILD_STATUS_OKAY(NAMED_I2C_PORTS_NODE, NAMED_I2C_PORT_COMMA)
 };
-#endif /* named_i2c_ports */
-#endif /* CONFIG_PLATFORM_EC_I2C */
 
 /**
  * @brief Adaptation of platform/ec's port IDs which map a port/bus to a device.

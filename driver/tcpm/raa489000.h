@@ -39,7 +39,12 @@
 
 /* VBUS_OCP_UV_THRESHOLD */
 /* Detect voltage level of overcurrent protection during Sourcing VBUS */
+#ifdef CONFIG_PLATFORM_EC_RAA489000_OCP_UV_THRESHOLD_MV
+#define RAA489000_OCP_THRESHOLD_VALUE \
+	(CONFIG_PLATFORM_EC_RAA489000_OCP_UV_THRESHOLD_MV / 25)
+#else
 #define RAA489000_OCP_THRESHOLD_VALUE 0x00BE /* 4.75V */
+#endif
 
 /* TYPEC_SETTING1 - only older silicon */
 /* Enables for reverse current protection */

@@ -4,15 +4,16 @@
  * found in the LICENSE file.
  */
 
+#include "desc_parser.h"
+
 #include <ctype.h>
 #include <errno.h>
-#include <malloc.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/stat.h>
 
-#include "desc_parser.h"
+#include <malloc.h>
+#include <sys/stat.h>
 
 static FILE *hash_file_;
 static int line_count_;

@@ -25,10 +25,10 @@
  * connected to a regular GPIO pin.
  */
 
-#include "cros_board_info.h"
 #include "charge_state.h"
 #include "chipset.h"
 #include "console.h"
+#include "cros_board_info.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -504,42 +504,42 @@ void config_leds(enum led_charge_state charge)
 static void call_handler(void)
 {
 	int soc;
-	enum charge_state cs;
+	enum led_pwr_state cs;
 
 	if (!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
 		return;
 
-	cs = charge_get_state();
+	cs = led_pwr_get_state();
 	soc = charge_get_display_charge();
 	if (soc < 0)
-		cs = PWR_STATE_ERROR;
+		cs = LED_PWRS_ERROR;
 
 	switch (cs) {
-	case PWR_STATE_DISCHARGE:
-	case PWR_STATE_DISCHARGE_FULL:
+	case LED_PWRS_DISCHARGE:
+	case LED_PWRS_DISCHARGE_FULL:
 		if (soc < low_battery_soc)
 			start_tick(EC_LED_ID_BATTERY_LED, &low_battery);
 		else
 			config_led(EC_LED_ID_BATTERY_LED, LED_STATE_DISCHARGE);
 		config_led(EC_LED_ID_POWER_LED, LED_STATE_DISCHARGE);
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
-	case PWR_STATE_CHARGE:
+	case LED_PWRS_CHARGE_NEAR_FULL:
+	case LED_PWRS_CHARGE:
 		if (soc >= 1000)
 			config_leds(LED_STATE_FULL);
 		else
 			config_leds(LED_STATE_CHARGE);
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		/* It doesn't matter what 'charge' state we pass because power
 		 * LED (if it exists) is orthogonal to battery state. */
 		config_led(EC_LED_ID_POWER_LED, 0);
 		led_alert(1);
 		break;
-	case PWR_STATE_IDLE:
+	case LED_PWRS_IDLE:
 		/* External power connected in IDLE. */
 		break;
-	case PWR_STATE_FORCED_IDLE:
+	case LED_PWRS_FORCED_IDLE:
 		/* This is used to show factory mode when
 		 * 'ectool chargecontrol idle' is run during factory process.
 		 */

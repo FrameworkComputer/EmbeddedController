@@ -3,10 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "common.h"
 #include "spi_flash_reg.h"
+
+#include <zephyr/ztest.h>
 
 ZTEST_SUITE(flash_reg_to_protect, NULL, NULL, NULL, NULL, NULL);
 

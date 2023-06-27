@@ -42,6 +42,16 @@
 	tcpc_port0: ps8xxx@1b {
 		compatible = "parade,ps8xxx";
 		reg = <0x1b>;
+		/* a duplicate of the <&gpio_usb_c0_pd_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
+		/* a duplicate of the <&gpio_usb_c0_pd_rst_l> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		rst-gpios = <&gpiof 1 GPIO_ACTIVE_LOW>;
 	};
 };
 
@@ -50,5 +60,15 @@
 	tcpc_port1: ps8xxx@1b {
 		compatible = "parade,ps8xxx";
 		reg = <0x1b>;
+		/* a duplicate of the <&gpio_usb_c1_pd_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
+		/* a duplicate of the <&gpio_usb_c1_pd_rst_l> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		rst-gpios = <&gpioe 4 GPIO_ACTIVE_LOW>;
 	};
 };

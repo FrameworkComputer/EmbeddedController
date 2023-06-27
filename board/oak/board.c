@@ -72,6 +72,7 @@ void usb_evt(enum gpio_signal signal)
 }
 #endif /* BOARD_REV >= OAK_REV4 */
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /* power signal list.  Must match order of enum power_signal. */
@@ -357,11 +358,10 @@ int board_set_active_charge_port(int charge_port)
  * @param charge_ma     Desired charge limit (mA).
  * @param charge_mv     Negotiated charge voltage (mV).
  */
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
+	charge_set_input_current_limit(charge_ma, charge_mv);
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 

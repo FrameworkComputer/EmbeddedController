@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+rsource "retimer/Kconfig"
 rsource "tcpc/Kconfig"
 
 config EMUL_COMMON_I2C
@@ -13,27 +14,65 @@ config EMUL_COMMON_I2C
 
 config EMUL_SMART_BATTERY
 	bool "Smart Battery emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_SMART_BATTERY_EMUL_ENABLED
 	select EMUL_COMMON_I2C
 	help
 	  Enable the Smart Battery emulator. This driver use emulated I2C bus.
 
 config EMUL_BMA255
 	bool "BMA255 emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_BMA255_EMUL_ENABLED
 	select EMUL_COMMON_I2C
 	help
 	  Enable the BMA255 emulator. This driver use emulated I2C bus.
 	  It is used to test bma2x2 driver. Emulators API is available in
 	  zephyr/include/emul/emul_bma255.h
 
+config EMUL_BMA4XX
+	bool "BMA4xx emulator"
+	default y
+	depends on DT_HAS_CROS_BMA4XX_EMUL_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable the BMA4xx emulator, used to test the bma4xx driver on an
+	  emulated I2C bus; emulator API is in
+	  zephyr/include/emul/emul_bma4xx.h.
+
 config EMUL_BC12_DETECT_PI3USB9201
 	bool "PI3USB9201 emulator"
+	default y if ZTEST
+	depends on DT_HAS_PERICOM_PI3USB9201_ENABLED
 	help
 	  Enable the PI3USB9201 emulator. PI3USB9201 is a BC1.2 charger
 	  detector/advertiser. The emulator supports reading and writing the
 	  4 I2C registers of the PI3USB9201 using the emulated I2C bus.
 
+config EMUL_CHARGER_ISL9241
+	bool "Renesas buck-boost battery charger emulator"
+	default y
+	depends on ZTEST && DT_HAS_INTERSIL_ISL9241_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable the ISL9241 emulator.  This chip is a configurable buck-boost
+	  battery charger which can communicate over I2C, and utilizes the
+	  emulated I2C bus.
+
+config EMUL_PPC_NX20P348X
+	bool "NXP PPC emulator"
+	default y
+	depends on ZTEST && DT_HAS_NXP_NX20P348X_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable the NX20P348X emulator, which covers both the NX20P3481 and
+	  NX20P3483.  It is also register compatible with the SM5360A.  This
+	  emulator makes use of the emulated I2C bus.
+
 config EMUL_PPC_SYV682X
 	bool "Silergy SYV682x PPC emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_SYV682X_EMUL_ENABLED
 	select PLATFORM_EC_USBC_PPC_SYV682X
 	help
 	  Enable the SYV682x emulator. SYV682 is a USB Type-C PPC. This driver
@@ -41,6 +80,8 @@ config EMUL_PPC_SYV682X
 
 config EMUL_BMI
 	bool "BMI emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_BMI_EMUL_ENABLED
 	select EMUL_COMMON_I2C
 	help
 	  Enable the BMI emulator. This driver use emulated I2C bus.
@@ -49,6 +90,8 @@ config EMUL_BMI
 
 config EMUL_TCS3400
 	bool "TCS3400 emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_TCS3400_EMUL_ENABLED
 	select EMUL_COMMON_I2C
 	help
 	  Enable the TCS3400 light sensor. This driver use emulated I2C bus.
@@ -62,13 +105,27 @@ config EMUL_TCS3400
 
 config EMUL_TUSB1064
 	bool "TCS3400 emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_TUSB1064_EMUL_ENABLED
 	select EMUL_COMMON_I2C
 	help
 	  Enable the TUSB1064 usb mux. This driver use emulated I2C bus.
 	  Emulator API is available in zephyr/include/emul/emul_tusb1064.h.
 
+config EMUL_USB_MUX_AMD_FP6
+	bool "AMD FP6 USB mux emulator"
+	default y
+	depends on ZTEST && DT_HAS_AMD_USBC_MUX_AMD_FP6_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable emulator for the AMD FP6 USB mux target.  This is a mux
+	  which, while it resides on the SoC, presents itself to the EC as a
+	  I2C target device
+
 config EMUL_BB_RETIMER
 	bool "BB retimer emulator"
+	default y
+	depends on ZTEST && DT_HAS_INTEL_JHL8040R_ENABLED
 	select EMUL_COMMON_I2C
 	help
 	  Enable the BB (Burnside Bridge) retimer emulator. This driver use
@@ -78,11 +135,15 @@ config EMUL_BB_RETIMER
 
 config EMUL_KB_RAW
 	bool "Raw keyboard emulator"
+	default y
+	depends on DT_HAS_CROS_EC_KB_RAW_EMUL_ENABLED
 	help
 	  Enable the raw keyboard emulator.
 
 config EMUL_CROS_FLASH
 	bool "Emulated flash driver for the Zephyr shim"
+	default y
+	depends on DT_HAS_CROS_EC_FLASH_EMUL_ENABLED
 	select PLATFORM_EC_FLASH_CROS
 	imply SYSTEM_FAKE
 	help
@@ -90,11 +151,15 @@ config EMUL_CROS_FLASH
 
 config EMUL_RTC
 	bool "Emulated RTC driver for Zephyr shim"
+	default y
+	depends on DT_HAS_CROS_EC_RTC_EMUL_ENABLED
 	help
 	  This options enables the RTC emulator for testing.
 
 config EMUL_RT9490
 	bool "Rt9490 charger emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_RT9490_EMUL_ENABLED
 	select EMUL_COMMON_I2C
 	help
 	  Enable the RT9490 light sensor emulator. This driver use emulated I2C
@@ -102,20 +167,61 @@ config EMUL_RT9490
 
 config PWM_MOCK
 	bool "Mock implementation of an PWM device"
+	default y
+	depends on DT_HAS_CROS_PWM_MOCK_ENABLED
 	help
 	  Enable the PWM mock. This driver is a pure mock and does nothing by
 	  default.
 
+config VCMP_MOCK
+	bool "Generic voltage comparator device mock implementation"
+	default y
+	depends on DT_HAS_CROS_VCMP_MOCK_ENABLED
+	select ADC
+	help
+	  Enable the generic voltage comparator mock driver.
+
 config EMUL_PCT2075
 	bool "PCT2075 emulator"
+	default y
+	depends on ZTEST && DT_HAS_NXP_PCT2075_ENABLED
 	select EMUL_COMMON_I2C
 	help
 	  Enable the PCT2075 temperature sensor emulator. It uses emulated I2C bus.
 	  Emulator API is available in zephyr/include/emul/emul_pct2075.h.
+
+config EMUL_ANX7452
+	bool "ANX7452 retimer emulator"
+	default y
+	depends on ZTEST && DT_HAS_ANALOGIX_ANX7452_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable the ANX7452(Analogix) retimer emulator. This driver use
+	  emulated I2C bus. It is used to test anx7452 driver. It supports
+	  reads and writes to all emulator registers. Emulators API is
+	  available in zephyr/include/emul/emul_anx7452.h
+
+config EMUL_PS8743
+	bool "PS8743 emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_PS8743_EMUL_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable the PS8743 usb mux. This driver use emulated I2C bus.
+	  Emulator API is available in zephyr/include/emul/emul_ps8743.h.
+
+config EMUL_ICM42607
+	bool "icm42607 emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_ICM42607_EMUL_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable the ICM42607 accelerometer and gyroscope emulator.
 
 rsource "Kconfig.ln9310"
 rsource "Kconfig.lis2dw12"
 rsource "Kconfig.i2c_mock"
 rsource "Kconfig.isl923x"
 rsource "Kconfig.clock_control"
+rsource "Kconfig.sm5803"
 rsource "Kconfig.sn5s330"

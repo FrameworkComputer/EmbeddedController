@@ -3,12 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-#include <stdbool.h>
-
 #include "cbi.h"
-#include "charger.h"
 #include "charge_ramp.h"
+#include "charger.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
@@ -25,12 +22,15 @@
 #include "task.h"
 #include "task_id.h"
 #include "timer.h"
-#include "usbc_config.h"
-#include "usbc_ppc.h"
 #include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usbc_config.h"
+#include "usbc_ppc.h"
+
+#include <stdbool.h>
+#include <stdint.h>
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
@@ -46,7 +46,6 @@ const struct tcpc_config_t tcpc_config[] = {
 		.drv = &ps8xxx_tcpm_drv,
 		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
 			 TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
-			 TCPC_FLAGS_CONTROL_VCONN |
 			 TCPC_FLAGS_CONTROL_FRS,
 	},
 	[USBC_PORT_C1] = {
@@ -58,7 +57,6 @@ const struct tcpc_config_t tcpc_config[] = {
 		.drv = &ps8xxx_tcpm_drv,
 		.flags = TCPC_FLAGS_TCPCI_REV2_0 |
 			 TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
-			 TCPC_FLAGS_CONTROL_VCONN |
 			 TCPC_FLAGS_CONTROL_FRS,
 	},
 };

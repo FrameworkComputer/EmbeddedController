@@ -65,8 +65,8 @@ int gpio_get_flags_by_mask(uint32_t port, uint32_t mask)
 
 	if (STM32_EXTI_RTSR & mask)
 		flags |= GPIO_INT_F_RISING;
-	if (STM32_EXTI_RTSR & mask)
-		flags |= GPIO_INT_F_RISING;
+	if (STM32_EXTI_FTSR & mask)
+		flags |= GPIO_INT_F_FALLING;
 
 	return flags;
 }

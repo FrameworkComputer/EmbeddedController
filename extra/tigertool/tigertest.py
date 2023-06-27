@@ -9,6 +9,7 @@ import argparse
 import subprocess
 import sys
 
+
 # Script to control tigertail USB-C Mux board.
 #
 # optional arguments:

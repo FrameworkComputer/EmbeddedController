@@ -9,7 +9,6 @@
 #include "button.h"
 #include "charge_manager.h"
 #include "charge_state.h"
-#include "charge_state_v2.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
@@ -464,18 +463,6 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	/*
-	 * Limit the input current to 95% negotiated limit,
-	 * to account for the charger chip margin.
-	 */
-	charge_ma = charge_ma * 95 / 100;
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
-}
-
 /* Keyboard scan setting */
 __override struct keyboard_scan_config keyscan_config = {
 	/*
@@ -796,6 +783,15 @@ void board_hibernate(void)
 	 */
 	ppc_vbus_source_enable(0, 0);
 	ppc_vbus_sink_enable(0, 1);
+	/*
+	 * PPC1 therefore now needs to be configured the same way as PPC0,
+	 * to mimic the previous dead-battery behavior and allow wake on AC
+	 * plug.
+	 */
+	if (!IS_ENABLED(CONFIG_HIBERNATE_PSL)) {
+		ppc_vbus_source_enable(1, 0);
+		ppc_vbus_sink_enable(1, 1);
+	}
 
 	/*
 	 * If CCD not active, set port 0 SBU_EN=0 to avoid power leakage during

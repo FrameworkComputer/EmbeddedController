@@ -77,15 +77,15 @@ Dragonclaw v0.3 with 10-pin SWD (0.05" / 1.27mm) on J4. |
 ------------------------------------------------------- |
 ![Dragonclaw with 10-pin SWD]                           |
 
-### Icetower v0.1
+### Icetower v3
 
-The connector for SWD is `J4` on Icetower v0.1.
+The connector for SWD is labeled with `CORESIGHT20 DB CONN` on Icetower v3.
 
-`SW2` on Icetower must be set to `CORESIGHT` (not `SERVO`).
+`JTAG` on Icetower must be set to `CORESIGHT` (not `SERVO`).
 
-Icetower v0.1 with 20-pin SWD (0.05" / 1.27mm) on J4. |
------------------------------------------------------ |
-![Icetower with 20-pin SWD]                           |
+Icetower v3 with 20-pin SWD (0.05" / 1.27mm) on `CORESIGHT20 DB CONN`. |
+---------------------------------------------------------------------- |
+![Icetower with 20-pin SWD]                                            |
 
 ## Powering the Board {#power}
 

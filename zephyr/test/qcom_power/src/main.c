@@ -3,54 +3,59 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/device.h>
-#include <zephyr/devicetree.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/shell/shell_dummy.h>
-#include <zephyr/fff.h>
+#include "console.h"
+#include "ec_app_main.h"
+#include "gpio.h"
+#include "gpio_signal.h"
+#include "hooks.h"
+#include "host_command.h"
+#include "include/power_button.h"
+#include "lid_switch.h"
+#include "power.h"
+#include "power/qcom.h"
+#include "task.h"
 
 #include <setjmp.h>
 
-#include "gpio_signal.h"
-#include "power/qcom.h"
-#include "ec_app_main.h"
-#include "power.h"
-#include "console.h"
-#include "task.h"
-#include "hooks.h"
-#include "host_command.h"
-#include "lid_switch.h"
-#include "gpio.h"
+#include <zephyr/device.h>
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/fff.h>
+#include <zephyr/input/input.h>
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/ztest.h>
+
+#include <dt-bindings/buttons.h>
 
 /* For simplicity, enforce that all the gpios are on the same controller. */
 #define GPIO_DEVICE \
-	DEVICE_DT_GET(DT_GPIO_CTLR(DT_PATH(named_gpios, ap_rst_l), gpios))
-#define ASSERT_SAME_CONTROLLER(x)                                            \
-	BUILD_ASSERT(DT_DEP_ORD(DT_GPIO_CTLR(DT_PATH(named_gpios, ap_rst_l), \
-					     gpios)) ==                      \
-		     DT_DEP_ORD(DT_GPIO_CTLR(DT_PATH(named_gpios, x), gpios)))
+	DEVICE_DT_GET(DT_GPIO_CTLR(NAMED_GPIOS_GPIO_NODE(ap_rst_l), gpios))
+#define ASSERT_SAME_CONTROLLER(x)                                        \
+	BUILD_ASSERT(                                                    \
+		DT_DEP_ORD(DT_GPIO_CTLR(NAMED_GPIOS_GPIO_NODE(ap_rst_l), \
+					gpios)) ==                       \
+		DT_DEP_ORD(DT_GPIO_CTLR(NAMED_GPIOS_GPIO_NODE(x), gpios)))
 
-#define AP_RST_L_PIN DT_GPIO_PIN(DT_PATH(named_gpios, ap_rst_l), gpios)
+#define AP_RST_L_PIN DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(ap_rst_l), gpios)
 ASSERT_SAME_CONTROLLER(ap_rst_l);
-#define POWER_GOOD_PIN DT_GPIO_PIN(DT_PATH(named_gpios, mb_power_good), gpios)
+#define POWER_GOOD_PIN DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(mb_power_good), gpios)
 ASSERT_SAME_CONTROLLER(mb_power_good);
-#define AP_SUSPEND_PIN DT_GPIO_PIN(DT_PATH(named_gpios, ap_suspend), gpios)
+#define AP_SUSPEND_PIN DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(ap_suspend), gpios)
 ASSERT_SAME_CONTROLLER(ap_suspend);
 #define SWITCHCAP_PG_PIN \
-	DT_GPIO_PIN(DT_PATH(named_gpios, src_vph_pwr_pg), gpios)
+	DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(src_vph_pwr_pg), gpios)
 ASSERT_SAME_CONTROLLER(src_vph_pwr_pg);
-#define PMIC_RESIN_L_PIN DT_GPIO_PIN(DT_PATH(named_gpios, pmic_resin_l), gpios)
+#define PMIC_RESIN_L_PIN DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(pmic_resin_l), gpios)
 ASSERT_SAME_CONTROLLER(pmic_resin_l);
 #define EC_PWR_BTN_ODL_PIN \
-	DT_GPIO_PIN(DT_PATH(named_gpios, ec_pwr_btn_odl), gpios)
+	DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(ec_pwr_btn_odl), gpios)
 ASSERT_SAME_CONTROLLER(ec_pwr_btn_odl);
-#define LID_OPEN_EC_PIN DT_GPIO_PIN(DT_PATH(named_gpios, lid_open_ec), gpios)
+#define LID_OPEN_EC_PIN DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(lid_open_ec), gpios)
 ASSERT_SAME_CONTROLLER(lid_open_ec);
 #define PMIC_KPD_PWR_ODL_PIN \
-	DT_GPIO_PIN(DT_PATH(named_gpios, pmic_kpd_pwr_odl), gpios)
+	DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(pmic_kpd_pwr_odl), gpios)
 ASSERT_SAME_CONTROLLER(pmic_kpd_pwr_odl);
 
 static int chipset_reset_count;
@@ -302,10 +307,8 @@ ZTEST(qcom_power, test_request_sleep)
 	struct ec_params_host_sleep_event params = {
 		.sleep_event = HOST_SLEEP_EVENT_S3_SUSPEND,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_HOST_SLEEP_EVENT, UINT8_C(0), params);
 
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_host_sleep_event(NULL, &params));
 	zassert_ok(gpio_emul_input_set(gpio_dev, AP_SUSPEND_PIN, 1));
 	k_sleep(K_SECONDS(16));
 	zassert_equal(power_get_state(), POWER_S3);
@@ -320,11 +323,9 @@ ZTEST(qcom_power, test_request_sleep_timeout)
 	struct ec_params_host_sleep_event params = {
 		.sleep_event = HOST_SLEEP_EVENT_S3_SUSPEND,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_HOST_SLEEP_EVENT, UINT8_C(0), params);
 
 	shell_backend_dummy_clear_output(get_ec_shell());
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_host_sleep_event(NULL, &params));
 	k_sleep(K_SECONDS(16));
 	zassert_equal(power_get_state(), POWER_S0);
 	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
@@ -357,10 +358,35 @@ ZTEST(qcom_power, test_power_button)
 
 	zassert_ok(gpio_emul_input_set(gpio_dev, EC_PWR_BTN_ODL_PIN, 0));
 	k_sleep(K_MSEC(100));
+	zassert_equal(power_button_signal_asserted(), 1);
 	zassert_ok(gpio_emul_input_set(gpio_dev, EC_PWR_BTN_ODL_PIN, 1));
 	k_sleep(K_MSEC(500));
+	zassert_equal(power_button_signal_asserted(), 0);
 	zassert_equal(power_get_state(), POWER_S0);
 }
+
+#ifdef CONFIG_INPUT_GPIO_KEYS
+
+ZTEST(qcom_power, test_power_button_input_event)
+{
+	const struct device *dev = DEVICE_DT_GET_ONE(zephyr_gpio_keys);
+
+	zassert_equal(power_button_is_pressed(), 0);
+
+	input_report_key(dev, BUTTON_POWER, 1, true, K_FOREVER);
+	zassert_equal(power_button_is_pressed(), 1);
+
+	input_report_key(dev, BUTTON_RECOVERY, 1, true, K_FOREVER);
+	zassert_equal(power_button_is_pressed(), 1);
+
+	input_report_abs(dev, INPUT_ABS_X, 1, true, K_FOREVER);
+	zassert_equal(power_button_is_pressed(), 1);
+
+	input_report_key(dev, BUTTON_POWER, 0, true, K_FOREVER);
+	zassert_equal(power_button_is_pressed(), 0);
+}
+
+#endif
 
 ZTEST(qcom_power, test_power_button_no_power_good)
 {
@@ -446,8 +472,6 @@ ZTEST(qcom_power, test_host_sleep_event_resume)
 	struct ec_params_host_sleep_event params = {
 		.sleep_event = HOST_SLEEP_EVENT_S3_RESUME,
 	};
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_HOST_SLEEP_EVENT, UINT8_C(0), params);
 
 	/* Get into S3 first */
 	power_signal_enable_interrupt(GPIO_AP_SUSPEND);
@@ -464,7 +488,7 @@ ZTEST(qcom_power, test_host_sleep_event_resume)
 		      power_get_state());
 
 	/* Call host command to notify ec resume is done. */
-	zassert_ok(host_command_process(&args));
+	zassert_ok(ec_cmd_host_sleep_event(NULL, &params));
 	k_sleep(K_MSEC(10));
 	zassert_equal(power_get_state(), POWER_S0, "power_state=%d",
 		      power_get_state());

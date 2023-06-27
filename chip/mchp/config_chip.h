@@ -167,7 +167,7 @@
 /* Customize the build */
 /* Optional features present on this chip */
 #define CONFIG_ADC
-#define CONFIG_DMA
+#define CONFIG_DMA_CROS
 #define CONFIG_HOSTCMD_X86
 #define CONFIG_SPI
 #define CONFIG_SWITCH

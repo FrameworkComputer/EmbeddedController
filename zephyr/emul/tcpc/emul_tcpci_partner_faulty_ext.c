@@ -3,17 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/logging/log.h>
-LOG_MODULE_REGISTER(tcpci_faulty_ext, CONFIG_TCPCI_EMUL_LOG_LEVEL);
-
-#include <zephyr/sys/byteorder.h>
-#include <zephyr/kernel.h>
-
 #include "common.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "emul/tcpc/emul_tcpci_partner_common.h"
 #include "emul/tcpc/emul_tcpci_partner_faulty_ext.h"
 #include "usb_pd.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/sys/byteorder.h>
+
+LOG_MODULE_REGISTER(tcpci_faulty_ext, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 /**
  * @brief Reduce number of times to repeat action. If count reaches zero, action
@@ -25,6 +25,7 @@ static void
 tcpci_faulty_ext_reduce_action_count(struct tcpci_faulty_ext_data *data)
 {
 	struct tcpci_faulty_ext_action *action;
+	void *buf;
 
 	action = k_fifo_peek_head(&data->action_list);
 
@@ -38,7 +39,7 @@ tcpci_faulty_ext_reduce_action_count(struct tcpci_faulty_ext_data *data)
 	}
 
 	/* Remove action from queue */
-	k_fifo_get(&data->action_list, K_FOREVER);
+	buf = k_fifo_get(&data->action_list, K_FOREVER);
 }
 
 void tcpci_faulty_ext_append_action(struct tcpci_faulty_ext_data *data,
@@ -49,8 +50,9 @@ void tcpci_faulty_ext_append_action(struct tcpci_faulty_ext_data *data,
 
 void tcpci_faulty_ext_clear_actions_list(struct tcpci_faulty_ext_data *data)
 {
+	void *buf;
 	while (!k_fifo_is_empty(&data->action_list)) {
-		k_fifo_get(&data->action_list, K_FOREVER);
+		buf = k_fifo_get(&data->action_list, K_FOREVER);
 	}
 }
 

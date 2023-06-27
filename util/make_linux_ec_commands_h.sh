@@ -27,12 +27,6 @@ if [ $# -ne 2 ]; then
   exit 1
 fi
 
-if [ ! -d "${CROS_WORKON_SRCROOT}" ]; then
-  printf "Not in Chrome OS chroot!\n\n"
-  usage
-  exit 0
-fi
-
 out_dir="$(dirname "${out}")"
 mkdir -p "${out_dir}"
 tmp="$(mktemp -p "${out_dir}" cros_ec_XXX.h)"
@@ -74,8 +68,5 @@ sed -i "s/INT\([0-9]\{1,2\}\)_MIN/S\1_MIN/" "${tmp}"
 # Remove non kernel code to prevent checkpatch warnings and simplify the .h.
 unifdef -x2 -m -UCONFIG_HOSTCMD_ALIGNED -U__ACPI__ -D__KERNEL__ -U__cplusplus \
   -UCHROMIUM_EC "${tmp}"
-
-# Check kernel checkpatch passes.
-"${CROS_WORKON_SRCROOT}/src/repohooks/checkpatch.pl" -f "${tmp}"
 
 cp "${tmp}" "${out}"

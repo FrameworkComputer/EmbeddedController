@@ -3,11 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <stdbool.h>
-
 #include "common.h"
 #include "ec_commands.h"
 #include "stddef.h"
+
+#include <stdbool.h>
 
 /* Use this instead of '3' for readability where applicable. */
 #define SIZE_OF_RGB sizeof(struct rgb_s)

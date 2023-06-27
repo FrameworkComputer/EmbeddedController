@@ -2,8 +2,6 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <string.h>
-
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -11,6 +9,8 @@
 #include "spi.h"
 #include "stddef.h"
 #include "timer.h"
+
+#include <string.h>
 
 #define CPRINTF(fmt, args...) cprintf(CC_RGBKBD, "RGBKBD: " fmt, ##args)
 #define CPRINTS(fmt, args...) cprints(CC_RGBKBD, "RGBKBD: " fmt, ##args)

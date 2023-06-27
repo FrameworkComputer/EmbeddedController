@@ -13,7 +13,8 @@ import time
 import six
 import usb  # pylint:disable=import-error
 
-from . import pty_driver, stm32uart
+from . import pty_driver
+from . import stm32uart
 
 
 def get_subprocess_args():

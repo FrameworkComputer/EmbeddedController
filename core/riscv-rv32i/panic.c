@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "cpu.h"
 #include "console.h"
+#include "cpu.h"
 #include "panic.h"
 #include "task.h"
 #include "util.h"

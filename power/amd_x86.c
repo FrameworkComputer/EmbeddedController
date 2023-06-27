@@ -8,20 +8,21 @@
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
+#include "driver/amd_stb.h"
 #include "ec_commands.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "lid_switch.h"
 #include "lpc.h"
-#include "power/amd_x86.h"
 #include "power.h"
+#include "power/amd_x86.h"
 #include "power_button.h"
+#include "registers.h"
 #include "system.h"
 #include "timer.h"
 #include "usb_charge.h"
 #include "util.h"
 #include "wireless.h"
-#include "registers.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
@@ -74,6 +75,12 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 		return;
 	}
 
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_AMD_STB_DUMP) &&
+	    amd_stb_dump_in_progress()) {
+		CPRINTS("STB dump still in progress during reset");
+		amd_stb_dump_finish();
+	}
+
 	report_ap_reset(reason);
 	/*
 	 * Send a pulse to SYS_RST to trigger a warm reset.
@@ -89,8 +96,29 @@ void chipset_throttle_cpu(int throttle)
 	if (IS_ENABLED(CONFIG_CPU_PROCHOT_ACTIVE_LOW))
 		throttle = !throttle;
 
-	if (chipset_in_state(CHIPSET_STATE_ON))
-		gpio_set_level(GPIO_CPU_PROCHOT, throttle);
+	if (!chipset_in_state(CHIPSET_STATE_ON))
+		return;
+
+	if (IS_ENABLED(CONFIG_THROTTLE_AP_INTERRUPT_SINGLE)) {
+		if (throttle == IS_ENABLED(CONFIG_CPU_PROCHOT_ACTIVE_LOW)) {
+			/* Enable interrupt if we're not throttling the AP */
+			gpio_set_flags(GPIO_CPU_PROCHOT, GPIO_INPUT);
+			gpio_enable_interrupt(GPIO_CPU_PROCHOT);
+
+			if ((!gpio_get_level(GPIO_CPU_PROCHOT)) ==
+			    IS_ENABLED(CONFIG_CPU_PROCHOT_ACTIVE_LOW)) {
+				CPRINTS("External prochot during throttling");
+			}
+			return;
+		}
+
+		/* Otherwise restore our original GPIO settings */
+		gpio_disable_interrupt(GPIO_CPU_PROCHOT);
+		gpio_set_flags(GPIO_CPU_PROCHOT,
+			       gpio_get_default_flags(GPIO_CPU_PROCHOT));
+	}
+
+	gpio_set_level(GPIO_CPU_PROCHOT, throttle);
 }
 
 void chipset_handle_espi_reset_assert(void)
@@ -247,6 +275,9 @@ __override void power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 		get_lazy_wake_mask(POWER_S0ix, &sleep_wake_mask);
 		lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, sleep_wake_mask);
 	}
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_AMD_STB_DUMP))
+		amd_stb_dump_trigger();
 
 	CPRINTS("Warning: Detected sleep hang! Waking host up!");
 	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
@@ -496,11 +527,12 @@ enum power_state power_handle_state(enum power_state state)
 		if ((gpio_get_level(GPIO_PCH_SLP_S0_L) == 1) &&
 		    (gpio_get_level(GPIO_PCH_SLP_S3_L) == 1)) {
 			return POWER_S0ixS0;
-		} else if (!power_has_signals(IN_S5_PGOOD)) {
-			/* Lost power, start transition to G3 */
+		} else if (!power_has_signals(IN_S5_PGOOD) ||
+			   (gpio_get_level(GPIO_PCH_SLP_S5_L) == 0)) {
+			/* Lost power or AP shutdown, start transition to G3 */
+			power_reset_host_sleep_state();
 			return POWER_S0;
 		}
-
 		break;
 
 	case POWER_S0S0ix:

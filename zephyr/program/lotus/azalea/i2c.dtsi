@@ -130,21 +130,25 @@
 	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
 	pinctrl-names = "default";
 
-	/* Uth1 */
-	local_f75303: local_f75303@4d {
-		compatible = "cros-ec,temp-sensor-f75303";
-		reg = <0x4d>;
-	};
 
 	/* Qth1 */
 	cpu_f75303: cpu_f75303@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
+		temperature-type = "F75303_IDX_REMOTE1";
 		reg = <0x4d>;
 	};
 
 	/* Qth2 */
 	ddr_f75303: ddr_f75303@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
+		temperature-type = "F75303_IDX_REMOTE2";
+		reg = <0x4d>;
+	};
+
+	/* Uth1 */
+	local_f75303: local_f75303@4d {
+		compatible = "cros-ec,temp-sensor-f75303";
+		temperature-type = "F75303_IDX_LOCAL";
 		reg = <0x4d>;
 	};
 

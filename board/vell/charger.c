@@ -3,17 +3,16 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
-
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
+#include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
 #include "driver/charger/isl9241.h"
 #include "hooks.h"
-#include "usbc_ppc.h"
 #include "usb_pd.h"
+#include "usbc_ppc.h"
 #include "util.h"
 
 #define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
@@ -79,18 +78,6 @@ int board_set_active_charge_port(int port)
 	}
 
 	return EC_SUCCESS;
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	/*
-	 * Limit the input current to 96% negotiated limit,
-	 * to account for the charger chip margin.
-	 */
-	charge_ma = charge_ma * 96 / 100;
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }
 
 static void set_ac_prochot(void)

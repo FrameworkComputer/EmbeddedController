@@ -6,6 +6,10 @@
 #ifndef __BOARD_LED_H
 #define __BOARD_LED_H
 
+#include <stdint.h>
+
+#include <zephyr/drivers/pwm.h>
+
 struct board_led_pwm_dt_channel {
 	const struct device *dev;
 	uint32_t channel;

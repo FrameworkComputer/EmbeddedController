@@ -6,24 +6,24 @@
 /* F75303 temperature sensor module for Chrome EC */
 
 #include "common.h"
-#include "i2c.h"
+#include "console.h"
 #include "hooks.h"
+#include "i2c.h"
+#include "math_util.h"
 #include "temp_sensor/f75303.h"
 #include "util.h"
-#include "console.h"
-
-
 
 #ifdef CONFIG_ZEPHYR
 #include "temp_sensor/temp_sensor.h"
 #endif
 
-static int temps[F75303_IDX_COUNT];
-static int8_t fake_temp[F75303_IDX_COUNT] = { -1, -1, -1 };
+#define F75303_RESOLUTION 11
+#define F75303_SHIFT1 (16 - F75303_RESOLUTION)
+#define F75303_SHIFT2 (F75303_RESOLUTION - 8)
 
-/**
- * Read 8 bits register from temp sensor.
- */
+static int temps[F75303_IDX_COUNT];
+static int8_t fake_temp[F75303_IDX_COUNT];
+
 #ifndef CONFIG_ZEPHYR
 /**
  * Read 8 bits register from temp sensor.
@@ -42,7 +42,6 @@ static int raw_read8(int sensor, const int offset, int *data)
 			 f75303_sensors[sensor].i2c_addr_flags, offset, data);
 }
 #endif /* !CONFIG_ZEPHYR */
-
 
 #ifndef CONFIG_ZEPHYR
 static int get_temp(const int offset, int *temp)
@@ -67,11 +66,10 @@ static int get_temp(int sensor, const int offset, int *temp)
 	if (rv != 0)
 		return rv;
 
-	*temp = C_TO_K(temp_raw);
+	*temp = CELSIUS_TO_MILLI_KELVIN(temp_raw);
 	return EC_SUCCESS;
 }
 #endif /* !CONFIG_ZEPHYR */
-
 
 int f75303_get_val(int idx, int *temp)
 {
@@ -87,31 +85,58 @@ int f75303_get_val(int idx, int *temp)
 	return EC_SUCCESS;
 }
 
+static inline int f75303_reg_to_mk(int16_t reg)
+{
+	int temp_mc;
+
+	temp_mc = (((reg >> F75303_SHIFT1) * 1000) >> F75303_SHIFT2);
+
+	return MILLI_CELSIUS_TO_MILLI_KELVIN(temp_mc);
+}
+
+int f75303_get_val_k(int idx, int *temp_k_ptr)
+{
+	if (idx >= F75303_IDX_COUNT)
+		return EC_ERROR_INVAL;
+
+	*temp_k_ptr = MILLI_KELVIN_TO_KELVIN(temps[idx]);
+	return EC_SUCCESS;
+}
+
+int f75303_get_val_mk(int idx, int *temp_mk_ptr)
+{
+	if (idx >= F75303_IDX_COUNT)
+		return EC_ERROR_INVAL;
+
+	*temp_mk_ptr = temps[idx];
+	return EC_SUCCESS;
+}
+
 #ifndef CONFIG_ZEPHYR
 static void f75303_sensor_poll(void)
 {
-	get_temp(F75303_TEMP_LOCAL, &temps[F75303_IDX_LOCAL]);
-	get_temp(F75303_TEMP_REMOTE1, &temps[F75303_IDX_REMOTE1]);
-	get_temp(F75303_TEMP_REMOTE2, &temps[F75303_IDX_REMOTE2]);
+	get_temp(F75303_TEMP_LOCAL_REGISTER, &temps[F75303_IDX_LOCAL]);
+	get_temp(F75303_TEMP_REMOTE1_REGISTER, &temps[F75303_IDX_REMOTE1]);
+	get_temp(F75303_TEMP_REMOTE2_REGISTER, &temps[F75303_IDX_REMOTE2]);
 }
 DECLARE_HOOK(HOOK_SECOND, f75303_sensor_poll, HOOK_PRIO_TEMP_SENSOR);
 #else
 void f75303_update_temperature(int idx)
 {
 	int temp_reg = 0;
-	int rv = 0;
+	int rv = EC_ERROR_INVAL;
 
 	if (idx >= F75303_IDX_COUNT)
 		return;
 	switch (idx) {
-	case 0:
-		rv = get_temp(idx, F75303_TEMP_LOCAL, &temp_reg);
+	case F75303_IDX_LOCAL:
+		rv = get_temp(idx, F75303_TEMP_LOCAL_REGISTER, &temp_reg);
 		break;
-	case 1:
-		rv = get_temp(idx, F75303_TEMP_REMOTE1, &temp_reg);
+	case F75303_IDX_REMOTE1:
+		rv = get_temp(idx, F75303_TEMP_REMOTE1_REGISTER, &temp_reg);
 		break;
-	case 2:
-		rv = get_temp(idx, F75303_TEMP_REMOTE2, &temp_reg);
+	case F75303_IDX_REMOTE2:
+		rv = get_temp(idx, F75303_TEMP_REMOTE2_REGISTER, &temp_reg);
 		break;
 	}
 	if (rv == EC_SUCCESS)
@@ -150,3 +175,12 @@ static int f75303_set_fake_temp(int argc, const char **argv)
 }
 DECLARE_CONSOLE_COMMAND(f75303, f75303_set_fake_temp, "<index> <value>|off",
 			"Set fake temperature of sensor f75303.");
+
+static void f75303_init(void)
+{
+	int index;
+
+	for (index = 0; index < F75303_IDX_COUNT; index++)
+		fake_temp[index] = -1;
+}
+DECLARE_HOOK(HOOK_INIT, f75303_init, HOOK_PRIO_TEMP_SENSOR);

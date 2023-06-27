@@ -25,6 +25,9 @@ GPIO_INT(EC_RECOVERY_BTN_ODL,        PIN(2, 3), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(USB_C1_RT_INT_ODL,          PIN(4, 1), GPIO_INT_FALLING, retimer_interrupt)
 GPIO_INT(USB_C1_BC12_INT_ODL,        PIN(8, 3), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C1_PPC_INT_ODL,         PIN(7, 0), GPIO_INT_FALLING, ppc_interrupt)
+GPIO_INT(HDMI1_MONITOR_ON,           PIN(B, 4), GPIO_INT_RISING, monitor_interrupt)
+GPIO_INT(HDMI2_MONITOR_ON,           PIN(B, 5), GPIO_INT_RISING, monitor_interrupt)
+GPIO_INT(OPTION_MONITOR_ON,          PIN(1, 0), GPIO_INT_RISING, monitor_interrupt)
 
 /* CCD */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
@@ -120,12 +123,9 @@ GPIO(LED_ORANGE_CONTROL,             PIN(3, 1), GPIO_ODR_LOW)
 GPIO(LED_BLUE_CONTROL,               PIN(2, 5), GPIO_ODR_LOW)
 
 /* Option Board */
-GPIO(HDMI1_MONITOR_ON,               PIN(B, 4), GPIO_INPUT)
-GPIO(HDMI1_MONON_SIO,                PIN(1, 6), GPIO_ODR_LOW)
-GPIO(OPTION_MONITOR_ON,              PIN(1, 0), GPIO_INPUT)
-GPIO(OPTION_MONON_SIO,               PIN(2, 1), GPIO_ODR_LOW)
-GPIO(HDMI2_MONITOR_ON,               PIN(B, 5), GPIO_INPUT)
-GPIO(HDMI2_MONON_SIO,                PIN(1, 5), GPIO_ODR_LOW)
+GPIO(HDMI1_MONON_SIO,                PIN(1, 6), GPIO_INPUT)
+GPIO(HDMI2_MONON_SIO,                PIN(1, 5), GPIO_INPUT)
+GPIO(OPTION_MONON_SIO,               PIN(2, 1), GPIO_INPUT)
 
 IOEX(USB_C0_OC_ODL,          EXPIN(IOEX_C0_NCT38XX, 0, 4), GPIO_ODR_HIGH)
 IOEX(USB_C0_FRS_EN,          EXPIN(IOEX_C0_NCT38XX, 0, 6), GPIO_LOW)

@@ -6,7 +6,7 @@
 
 ## Usage
 
-**Usage:** `zmake [-h] [--checkout CHECKOUT] [-j JOBS] [--goma] [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL} | -D] [-L] [--log-label] [--modules-dir MODULES_DIR] [--zephyr-base ZEPHYR_BASE] subcommand ...`
+**Usage:** `zmake [-h] [--checkout CHECKOUT] [-j JOBS] [--goma] [-l {DEBUG,INFO,WARNING,ERROR,CRITICAL} | -D] [-L] [--log-label] [--modules-dir MODULES_DIR] [--projects-dir PROJECTS_DIR] [--zephyr-base ZEPHYR_BASE] subcommand ...`
 
 Chromium OS's meta-build tool for Zephyr
 
@@ -29,13 +29,14 @@ Chromium OS's meta-build tool for Zephyr
 | `-L`, `--no-log-label` | Turn off logging labels |
 | `--log-label` | Turn on logging labels |
 | `--modules-dir MODULES_DIR` | The path to a directory containing all modules needed.  If unspecified, zmake will assume you have a Chrome OS checkout and try locating them in the checkout. |
+| `--projects-dir PROJECTS_DIR` | Base directory to search for BUILD.py files. |
 | `--zephyr-base ZEPHYR_BASE` | Path to Zephyr OS repository |
 
 ## Subcommands
 
 ### zmake configure
 
-**Usage:** `zmake configure [-h] [--bringup] [--clobber] [--static] [--save-temps] [--allow-warnings] [-B BUILD_DIR] [-c] [--delete-intermediates] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
+**Usage:** `zmake configure [-h] [--bringup] [--clobber] [--static] [--save-temps] [--allow-warnings] [-B BUILD_DIR] [-c] [--delete-intermediates] [-D CMAKE_DEFS] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
 
 #### Positional Arguments
 
@@ -56,13 +57,14 @@ Chromium OS's meta-build tool for Zephyr
 | `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Root build directory, project files will be in ${build_dir}/${project_name} |
 | `-c`, `--coverage` | Enable CONFIG_COVERAGE Kconfig. |
 | `--delete-intermediates` | Delete intermediate files to save disk space |
+| `-D CMAKE_DEFS`, `--cmake-define CMAKE_DEFS` | None |
 | `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
 | `--extra-cflags EXTRA_CFLAGS` | Additional CFLAGS to use for target builds |
 | `-a`, `--all` | Select all projects |
 
 ### zmake build
 
-**Usage:** `zmake build [-h] [--bringup] [--clobber] [--static] [--save-temps] [--allow-warnings] [-B BUILD_DIR] [-c] [--delete-intermediates] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
+**Usage:** `zmake build [-h] [--bringup] [--clobber] [--static] [--save-temps] [--allow-warnings] [-B BUILD_DIR] [-c] [--delete-intermediates] [-D CMAKE_DEFS] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
 
 #### Positional Arguments
 
@@ -83,13 +85,14 @@ Chromium OS's meta-build tool for Zephyr
 | `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Root build directory, project files will be in ${build_dir}/${project_name} |
 | `-c`, `--coverage` | Enable CONFIG_COVERAGE Kconfig. |
 | `--delete-intermediates` | Delete intermediate files to save disk space |
+| `-D CMAKE_DEFS`, `--cmake-define CMAKE_DEFS` | None |
 | `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
 | `--extra-cflags EXTRA_CFLAGS` | Additional CFLAGS to use for target builds |
 | `-a`, `--all` | Select all projects |
 
 ### zmake compare-builds
 
-**Usage:** `zmake compare-builds [-h] [--ref1 REF1] [--ref2 REF2] [-k] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
+**Usage:** `zmake compare-builds [-h] [--ref1 REF1] [--ref2 REF2] [-k] [-n] [-b] [-d] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
 
 #### Positional Arguments
 
@@ -105,19 +108,16 @@ Chromium OS's meta-build tool for Zephyr
 | `--ref1 REF1` | 1st git reference (commit, branch, etc), default=HEAD |
 | `--ref2 REF2` | 2nd git reference (commit, branch, etc), default=HEAD~ |
 | `-k`, `--keep-temps` | Keep temporary build directories on exit |
+| `-n`, `--compare-configs` | Compare configs of build outputs |
+| `-b`, `--compare-binaries-disable` | Don't compare binaries of build outputs |
+| `-d`, `--compare-devicetrees` | Compare devicetrees of build outputs |
 | `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
 | `--extra-cflags EXTRA_CFLAGS` | Additional CFLAGS to use for target builds |
 | `-a`, `--all` | Select all projects |
 
 ### zmake list-projects
 
-**Usage:** `zmake list-projects [-h] [--format FMT] [search_dir]`
-
-#### Positional Arguments
-
-|   |   |
-|---|---|
-| `search_dir` | Optional directory to search for BUILD.py files in. |
+**Usage:** `zmake list-projects [-h] [--format FMT]`
 
 #### Optional Arguments
 
@@ -125,47 +125,6 @@ Chromium OS's meta-build tool for Zephyr
 |---|---|
 | `-h`, `--help` | show this help message and exit |
 | `--format FMT` | Output format to print projects (str.format(config=project.config) is called on this for each project). |
-
-### zmake test
-
-**Usage:** `zmake test [-h] [--no-rebuild] [--bringup] [--clobber] [--static] [--save-temps] [--allow-warnings] [-B BUILD_DIR] [-c] [--delete-intermediates] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
-
-#### Positional Arguments
-
-|   |   |
-|---|---|
-| `project_name` | Name(s) of the project(s) to build |
-
-#### Optional Arguments
-
-|   |   |
-|---|---|
-| `-h`, `--help` | show this help message and exit |
-| `--no-rebuild` | Do not configure or build before running tests. |
-| `--bringup` | Enable bringup debugging features |
-| `--clobber` | Delete existing build directories, even if configuration is unchanged |
-| `--static` | Generate static version information for reproducible builds |
-| `--save-temps` | Save the temporary files containing preprocessor output |
-| `--allow-warnings` | Do not treat warnings as errors |
-| `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Root build directory, project files will be in ${build_dir}/${project_name} |
-| `-c`, `--coverage` | Enable CONFIG_COVERAGE Kconfig. |
-| `--delete-intermediates` | Delete intermediate files to save disk space |
-| `-t TOOLCHAIN`, `--toolchain TOOLCHAIN` | Name of toolchain to use |
-| `--extra-cflags EXTRA_CFLAGS` | Additional CFLAGS to use for target builds |
-| `-a`, `--all` | Select all projects |
-
-### zmake testall
-
-**Usage:** `zmake testall [-h] [--clobber] [-B BUILD_DIR] [--static]`
-
-#### Optional Arguments
-
-|   |   |
-|---|---|
-| `-h`, `--help` | show this help message and exit |
-| `--clobber` | Delete existing build directories, even if configuration is unchanged |
-| `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Build directory |
-| `--static` | Generate static version information for reproducible builds |
 
 ### zmake generate-readme
 

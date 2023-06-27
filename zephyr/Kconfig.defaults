@@ -13,9 +13,6 @@ config LOG
 	default y
 	imply LOG_DEFAULT_MINIMAL
 
-config GPIO_EMUL
-	default y if ARCH_POSIX
-
 config GPIO
 	default y if ARCH_POSIX
 
@@ -39,5 +36,24 @@ config EXTRA_EXCEPTION_INFO
 
 config EEPROM_SHELL
 	default n
+
+config PWM_SHELL
+	default n
+
+config SENSOR_SHELL
+	default n
+
+config ESPI_NPCX_PERIPHERAL_DEBUG_PORT_80_MULTI_BYTE
+	default y
+
+choice INPUT_MODE
+	default INPUT_MODE_SYNCHRONOUS
+endchoice
+
+config CHECK_INIT_PRIORITIES
+	default y if !ZTEST
+
+config CHECK_INIT_PRIORITIES_FAIL_ON_WARNING
+	default y if !ZTEST
 
 orsource "Kconfig.defaults-$(ARCH)"

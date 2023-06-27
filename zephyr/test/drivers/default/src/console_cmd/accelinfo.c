@@ -3,14 +3,14 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "config.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "test/drivers/test_state.h"
 #include "timer.h"
+
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 static void console_cmd_accelinfo_after(void *fixture)
 {

@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <stdnoreturn.h>
-
 #include "aontaskfw/ish_aon_share.h"
 #include "console.h"
 #include "hwtimer.h"
@@ -16,6 +14,8 @@
 #include "task.h"
 #include "util.h"
 #include "watchdog.h"
+
+#include <stdnoreturn.h>
 
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)

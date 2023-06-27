@@ -1,0 +1,25 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&{/gpio-interrupts} {
+	int_usb_c0: usb_c0 {
+		irq-pin = <&usb_c0_tcpc_int_odl>;
+		flags = <GPIO_INT_EDGE_FALLING>;
+		handler = "tcpc_alert_event";
+	};
+	int_usb_c1: usb_c1 {
+		irq-pin = <&usb_c1_tcpc_int_odl>;
+		flags = <GPIO_INT_EDGE_FALLING>;
+		handler = "tcpc_alert_event";
+	};
+};
+
+&tcpci_emul {
+	int-pin = <&usb_c0_tcpc_int_odl>;
+};
+
+&ps8xxx_emul {
+	int-pin = <&usb_c1_tcpc_int_odl>;
+};

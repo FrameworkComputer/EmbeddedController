@@ -14,21 +14,6 @@
 
 /* 'adc' console command is not supported in continuous mode */
 #ifndef CONFIG_ADC_PROFILE_FAST_CONTINUOUS
-static enum adc_channel find_adc_channel_by_name(const char *name)
-{
-	const struct adc_t *ch = adc_channels;
-	int i;
-
-	if (!name || !*name)
-		return ADC_CH_COUNT;
-
-	for (i = 0; i < ADC_CH_COUNT; i++, ch++) {
-		if (!strcasecmp(name, ch->name))
-			return i;
-	}
-
-	return ADC_CH_COUNT;
-}
 
 static int print_one_adc(int channel)
 {
@@ -37,7 +22,7 @@ static int print_one_adc(int channel)
 	v = adc_read_channel(channel);
 	if (v == ADC_READ_ERROR)
 		return EC_ERROR_UNKNOWN;
-	ccprintf("  %s = %d mV\n", adc_channels[channel].name, v);
+	ccprintf("[%d] %s = %d mV\n", channel, adc_channels[channel].name, v);
 	return EC_SUCCESS;
 }
 
@@ -47,8 +32,10 @@ static int command_adc(int argc, const char **argv)
 
 	/* If a channel is specified, read only that one */
 	if (argc == 2) {
-		i = find_adc_channel_by_name(argv[1]);
-		if (i == ADC_CH_COUNT)
+		char *end;
+
+		i = strtoi(argv[1], &end, 0);
+		if (*end || i < 0 || i >= ADC_CH_COUNT)
 			return EC_ERROR_PARAM1;
 		return print_one_adc(i);
 	} else {
@@ -61,7 +48,7 @@ static int command_adc(int argc, const char **argv)
 		return EC_SUCCESS;
 	}
 }
-DECLARE_CONSOLE_COMMAND(adc, command_adc, "[name]", "Print ADC channel(s)");
+DECLARE_CONSOLE_COMMAND(adc, command_adc, "[id]", NULL);
 
 static enum ec_status hc_adc_read(struct host_cmd_handler_args *args)
 {

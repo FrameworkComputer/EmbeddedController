@@ -8,7 +8,7 @@
 #include "battery.h"
 #include "battery_fuel_gauge.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "common.h"
 #include "console.h"
@@ -166,12 +166,24 @@ static bool is_within_range(struct ocpc_data *ocpc, int combined, int rbatt,
 enum ec_error_list ocpc_calc_resistances(struct ocpc_data *ocpc,
 					 struct batt_params *battery)
 {
-	int act_chg = ocpc->active_chg_chip;
+	int act_chg;
 	static bool seeded;
 	static int initial_samples;
 	int combined;
 	int rsys = -1;
 	int rbatt = -1;
+
+#ifdef TEST_BUILD
+	/* Mechanism for resetting static vars in tests */
+	if (!ocpc && !battery) {
+		seeded = false;
+		initial_samples = 0;
+
+		return EC_SUCCESS;
+	}
+#endif
+
+	act_chg = ocpc->active_chg_chip;
 
 	/*
 	 * In order to actually calculate the resistance, we need to make sure
@@ -685,6 +697,10 @@ void ocpc_reset(struct ocpc_data *ocpc)
 			   !(batt.flags & BATT_FLAG_BAD_VOLTAGE)) ?
 				  batt.voltage :
 				  battery_get_info()->voltage_normal;
+#ifdef CONFIG_CHARGER_NARROW_VDC
+		if (voltage < battery_get_info()->voltage_min)
+			voltage = battery_get_info()->voltage_min;
+#endif
 		CPRINTS("OCPC: C%d Init VSYS to %dmV", ocpc->active_chg_chip,
 			voltage);
 		charger_set_voltage(ocpc->active_chg_chip, voltage);
@@ -697,7 +713,7 @@ void ocpc_reset(struct ocpc_data *ocpc)
 	ocpc_precharge_enable(false);
 }
 
-static void ocpc_set_pid_constants(void)
+test_export_static void ocpc_set_pid_constants(void)
 {
 	ocpc_get_pid_constants(&k_p, &k_p_div, &k_i, &k_i_div, &k_d, &k_d_div);
 }
@@ -796,3 +812,29 @@ static int command_ocpcdrvlmt(int argc, const char **argv)
 }
 DECLARE_SAFE_CONSOLE_COMMAND(ocpcdrvlmt, command_ocpcdrvlmt, "[<drive_limit>]",
 			     "Show/Set drive limit for OCPC PID loop");
+
+#ifdef TEST_BUILD
+int test_ocpc_get_viz_output(void)
+{
+	return viz_output;
+}
+int test_ocpc_get_debug_output(void)
+{
+	return debug_output;
+}
+void test_ocpc_reset_resistance_state(void)
+{
+	for (int i = 0; i < NUM_RESISTANCE_SAMPLES; i++) {
+		resistance_tbl[i][0] = CONFIG_OCPC_DEF_RBATT_MOHMS;
+		resistance_tbl[i][1] = CONFIG_OCPC_DEF_RBATT_MOHMS;
+		resistance_tbl[i][2] = 0;
+	}
+
+	resistance_tbl_idx = 0;
+
+	memset(mean_resistance, 0, sizeof(mean_resistance));
+	memset(stddev_resistance, 0, sizeof(stddev_resistance));
+	memset(ub, 0, sizeof(ub));
+	memset(lb, 0, sizeof(lb));
+}
+#endif

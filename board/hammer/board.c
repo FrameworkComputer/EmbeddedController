@@ -9,8 +9,8 @@
 #include "common.h"
 #include "driver/charger/isl923x.h"
 #include "driver/led/lm3630a.h"
-#include "ec_version.h"
 #include "ec_ec_comm_server.h"
+#include "ec_version.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "hwtimer.h"
@@ -28,18 +28,19 @@
 #include "system.h"
 #include "tablet_mode.h"
 #include "task.h"
-#include "touchpad.h"
 #include "timer.h"
+#include "touchpad.h"
 #include "update_fw.h"
 #include "usart-stm32f0.h"
-#include "usart_tx_dma.h"
 #include "usart_rx_dma.h"
+#include "usart_tx_dma.h"
 #include "usb_api.h"
 #include "usb_descriptor.h"
 #include "usb_i2c.h"
 #include "usb_spi.h"
 #include "util.h"
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 #ifdef SECTION_IS_RW
@@ -78,16 +79,16 @@ BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 #ifdef HAS_SPI_TOUCHPAD
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
-	[SPI_ST_TP_DEVICE_ID] = { CONFIG_SPI_TOUCHPAD_PORT, 2, GPIO_SPI1_NSS },
+	[SPI_ST_TP_DEVICE_ID] = { CONFIG_SPI_TOUCHPAD_PORT, 2, GPIO_SPI1_NSS,
+				  USB_SPI_ENABLED },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
-USB_SPI_CONFIG(usb_spi, USB_IFACE_I2C_SPI, USB_EP_I2C_SPI, 0);
 /* SPI interface is always enabled, no need to do anything. */
-void usb_spi_board_enable(struct usb_spi_config const *config)
+void usb_spi_board_enable(void)
 {
 }
-void usb_spi_board_disable(struct usb_spi_config const *config)
+void usb_spi_board_disable(void)
 {
 }
 #endif /* !HAS_SPI_TOUCHPAD */
@@ -204,7 +205,7 @@ static void board_init(void)
 	spi_enable(&spi_devices[SPI_ST_TP_DEVICE_ID], 0);
 
 	/* Disable SPI passthrough when the system is locked */
-	usb_spi_enable(&usb_spi, system_is_locked());
+	usb_spi_enable(system_is_locked());
 
 	/* Set all four SPI pins to high speed */
 	/* pins B3/5, A15 */

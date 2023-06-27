@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_DRIVER_TCPM_RT1718S_PUBLIC_H
 #define __CROS_EC_DRIVER_TCPM_RT1718S_PUBLIC_H
 
+#include "usb_pd_tcpm.h"
+
 #define RT1718S_I2C_ADDR1_FLAGS 0x43
 #define RT1718S_I2C_ADDR2_FLAGS 0x40
 

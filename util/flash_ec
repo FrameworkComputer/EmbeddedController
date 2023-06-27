@@ -116,6 +116,7 @@ BOARDS_NPCX_7M7X_JTAG=(
 )
 
 BOARDS_NPCX_SPI=(
+	helipilot
 )
 
 BOARDS_NPCX_INT_SPI=(
@@ -142,13 +143,16 @@ BOARDS_RAIDEN=(
 	soraka
 )
 
+BOARDS_MCHP_INT_SPI=(
+	mtlrvpp_mchp
+)
 DEFAULT_PORT="${SERVOD_PORT:-9999}"
 BITBANG_RATE="57600"  # Could be overwritten by a command line option.
 
 # Flags
 DEFINE_integer bitbang_rate "${BITBANG_RATE}" \
 	"UART baud rate to use when bit bang programming, " \
-"standard UART rates from 9600 to 57600 are supported."
+	"standard UART rates from 9600 to 57600 are supported."
 DEFINE_string board "" \
 	"The board to run debugger on."
 DEFINE_string chip "" \
@@ -157,6 +161,8 @@ DEFINE_boolean dry_run "${FLAGS_FALSE}" \
 	"Print the commands to be run instead of actually running them."
 DEFINE_string image "" \
 	"Full pathname of the EC firmware image to flash."
+DEFINE_string mchp_loader "" \
+	"Full pathname of the Microchip loader firmware image to SRAM."
 DEFINE_string logfile "" \
 	"Stm32 only: pathname of the file to store communications log."
 DEFINE_string offset "0" \
@@ -178,6 +184,8 @@ DEFINE_boolean verify "${FLAGS_FALSE}" \
 	"Verify EC firmware image after programming."
 DEFINE_boolean zephyr "${FLAGS_FALSE}" \
 	"Program a Zephyr EC image instead of a CrOS EC image"
+DEFINE_boolean no_preserve "${FLAGS_FALSE}" \
+	"Avoid preserving the sections of firmware image with preserve property"
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
@@ -322,6 +330,10 @@ if in_array "${BOARDS_IT83XX_SPI_PROGRAMMING[@]}" "${BOARD}"; then
 	SUPPORTED_CHIPS+=("ite_spi")
 fi
 
+if in_array "${BOARDS_MCHP_INT_SPI[@]}" "${BOARD}"; then
+	SUPPORTED_CHIPS+=("mchp_int_spi")
+fi
+
 if [[ ${#SUPPORTED_CHIPS[@]} -eq 0 && -n "${FLAGS_chip}" ]]; then
 	SUPPORTED_CHIPS+=("${FLAGS_chip}")
 fi
@@ -372,14 +384,14 @@ case "${BOARD}" in
 	chocodile_bec ) MCU="usbpd" ;;
 	oak_pd|strago_pd ) MCU="usbpd" ;;
 	chell_pd|glados_pd ) MCU="usbpd" ;;
-	bloonchipper|dartmonkey|hatch_fp|nami_fp|nocturne_fp ) MCU="fpmcu" ;;
+	bloonchipper|dartmonkey|hatch_fp|helipilot|nami_fp|nocturne_fp ) MCU="fpmcu" ;;
 	dingdong|hoho|twinkie ) DUT_CONTROL_CMD=( "true" ); MCU="ec" ;;
 	*) MCU="ec" ;;
 esac
 
 case "${CHIP}" in
 	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"npcx_uut"|"ite_spi"| \
-			"ite_spi_ccd_i2c"|"it8xxx2")
+			"ite_spi_ccd_i2c"|"it8xxx2"|"mchp_int_spi")
 		;;
 	*)
 		if [[ -n "${FLAGS_read}" ]]; then
@@ -750,6 +762,29 @@ function ec_image() {
 	die "no EC image found : build one or specify one."
 }
 
+# Find the Loader image to use
+function mchp_loader_image() {
+	# If no image specified on the command line, try default ones
+	if [[ -n "${FLAGS_mchp_loader}" ]] ; then
+		if [ -e "${FLAGS_mchp_loader}" ] || \
+		   [ "${FLAGS_mchp_loader}" == "-" ]; then
+			echo "${FLAGS_mchp_loader}"
+			return
+		fi
+		die "Invalid image path: ${FLAGS_mchp_loader}"
+	else
+		if [ -f "${LOCAL_BUILD}" ]; then
+			echo "${LOCAL_BUILD}"
+			return
+		fi
+		if [ -f "${EMERGE_BUILD}" ]; then
+			echo "${EMERGE_BUILD}"
+			return
+		fi
+	fi
+	die "No loader image found: build one or specify one"
+}
+
 # Get the correct UART for flashing. The resulting string is concatenated with
 # the various UART control suffixes, such as "_pty", "_en", "_parity", etc.
 function servo_ec_uart_prefix() {
@@ -794,7 +829,7 @@ function servo_save_add() {
 			# Don't save the control with the prefix, because
 			# dut_control will add the prefix again when we restore
 			# the settings.
-			save=( "${CTRL_RESULT#${DUT_CTRL_PREFIX}}" "${save[@]}" )
+			save=( "${CTRL_RESULT#"${DUT_CTRL_PREFIX}"}" "${save[@]}" )
 		   fi
 		   ;;
 		2) save=( "$1:$2" "${save[@]}" )
@@ -850,6 +885,7 @@ function claim_pty() {
 
 	# reverse order to SIGSTOP parents before children
 	for pid in $(echo "${pids}" | tac -s " "); do
+		# shellcheck disable=SC2009
 		if ps -o cmd= "${pid}" | grep -qE "(servod|/sbin/init)"; then
 			info "Skip stopping servod or init: process ${pid}."
 		else
@@ -988,21 +1024,31 @@ function flash_flashrom() {
 
 			# Set GP_SEL# as low then start ec
 			dut_control fw_up:on
-			sleep 0.1
+			sleep 0.2
+			dut_control cold_reset:off
+		# Gang programmer mode for npcx_spi requires using dev_mode
+		# rather than fw_up
+		elif [[ "${CHIP}" == "npcx_spi" ]]; then
+			servo_save_add "dev_mode" "off"
+
+			dut_control dev_mode:on
+			sleep 0.2
 			dut_control cold_reset:off
 		fi
 
 		# Enable SPI programming mode.
 		if [[ "${CHIP}" == "ite_spi" ||
-		      "${CHIP}" == "ite_spi_ccd_i2c" ||
-		      "${CHIP}" == "it8xxx2" ]]; then
-			# Set hardware strap pin (GPG6) of SPI programming as low then start ec
-			dut_control fw_up:on
-			sleep 0.1
-			dut_control cold_reset:off
-			sleep 0.1
-			# We have to release the HW strap pin because it also SPI clock pin.
-			dut_control fw_up:off
+			"${CHIP}" == "ite_spi_ccd_i2c" ||
+			"${CHIP}" == "it8xxx2" ]]; then
+					# Set hardware strap pin (GPG6) of SPI
+					# programming as low then start ec
+					dut_control fw_up:on
+					sleep 0.1
+					dut_control cold_reset:off
+					sleep 0.2
+					# We have to release the HW strap pin
+					# because it also SPI clock pin.
+					dut_control fw_up:off
 		fi
 
 		servo_save_add "spi1_vref" "off"
@@ -1022,7 +1068,7 @@ function flash_flashrom() {
 			# Set GP_SEL# as low then start ec
 			dut_control cold_reset:on
 			dut_control fw_up:on
-			# sleep 0.1
+			sleep 0.2
 			dut_control cold_reset:off
 		else
 			# Assert EC reset.
@@ -1292,7 +1338,7 @@ function flash_it83xx() {
 		c2d2_wait_for_h1_power_on_or_reset
 
 		# Don't let the EC come out of reset after H1 reset
-		dut_control ec_reset:on
+		dut_control gsc_ec_reset:on
 
 		# Enable i2c bus on C2D2 at 400kbps
 		servo_save_add "i2c_ec_bus_speed"
@@ -1318,7 +1364,7 @@ function flash_it83xx() {
 	# We need to send the special waveform very soon after the EC powers on
 	if [[ "${SERVO_TYPE}" =~ "c2d2" ]]; then
 		# The EC was held in reset above
-		dut_control ec_reset:off
+		dut_control gsc_ec_reset:off
 	elif servo_has_cold_reset; then
 		servo_ec_hard_reset_or_die
 	fi
@@ -1429,9 +1475,14 @@ function flash_npcx_jtag() {
 function flash_npcx_uut() {
 	local NPCX_UUT
 	local EC_UART
+	local TEMP_SUFFIX
+	local TEMP_DIR
 	local TOOL_PATH="${EC_DIR}/build/${BOARD}/util:${PATH}"
 	NPCX_UUT=$(PATH="${TOOL_PATH}" which uartupdatetool)
 	EC_UART="$(servo_ec_uart)"
+	TEMP_SUFFIX=".$(basename "${SCRIPT}").${CHIP}.$$"
+	TEMP_DIR="$(mktemp -d --suffix="${TEMP_SUFFIX}")"
+	DELETE_LIST+=("${TEMP_DIR}")
 
 	# Look for npcx_monitor.bin in multiple directories, starting with
 	# the same path as the EC binary.
@@ -1480,11 +1531,11 @@ function flash_npcx_uut() {
 		c2d2_wait_for_h1_power_on_or_reset
 
 		# Don't let the EC come out of reset after H1 reset
-		dut_control ec_reset:on
+		dut_control gsc_ec_reset:on
 
 		# Force the EC to boot in UART update mode coming out of reset
 		ec_enable_boot0 "uut"
-		dut_control ec_reset:off
+		dut_control gsc_ec_reset:off
 
 		# Ensure normal UART operation
 		ec_disable_boot0 "uut"
@@ -1536,6 +1587,24 @@ function flash_npcx_uut() {
 			die "Failed to load monitor binary."
 		fi
 
+		if [[ "${FLAGS_no_preserve}" == "${FLAGS_FALSE}" ]]; then
+			local CUR_IMG
+			local PRESERVE_STATUS
+
+			PRESERVE_STATUS=0
+			is_preservation_needed "${IMG}" "${TEMP_DIR}" || PRESERVE_STATUS=$?
+			if [[ "${PRESERVE_STATUS}" -eq 0 ]]; then
+				info "Reading current EC firmware image."
+				CUR_IMG="${TEMP_DIR}/ec.cur.bin"
+				local UUT_CUR_RD=( "${NPCX_UUT}" "${UUT_ARGS[@]}"   \
+							"--read-flash" "--file=${CUR_IMG}" )
+				echo "${UUT_CUR_RD[*]}"
+				print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
+					"${UUT_CUR_RD[@]}" || die "${MSG_READ_FAIL}"
+
+				preserve_sections "${CUR_IMG}" "${IMG}" "${TEMP_DIR}"
+			fi
+		fi
 
 		info "Programming EC firmware image."
 		local UUT_WR=( "${NPCX_UUT}" "${UUT_ARGS[@]}"      \
@@ -1550,13 +1619,7 @@ function flash_npcx_uut() {
 		# If it is a program-verify request, then make a temporary
 		# directory to store the image.
 		if [[ "${FLAGS_verify}" == "${FLAGS_TRUE}" ]]; then
-			local TEMP_SUFFIX
-			local TEMP_DIR
-			TEMP_SUFFIX=".$(basename "${SCRIPT}").${CHIP}.$$"
-			TEMP_DIR="$(mktemp -d --suffix="${TEMP_SUFFIX}")"
-
 			IMG_READ="${TEMP_DIR}/ec.read.bin"
-			DELETE_LIST+=( "${TEMP_DIR}" )
 		fi
 	fi
 
@@ -1612,6 +1675,39 @@ function flash_npcx_int_spi() {
 	flash_flashrom
 }
 
+function flash_mchp_int_spi() {
+	EC_UART="$(servo_ec_uart)"
+	EC_UART_PREFIX="$(servo_ec_uart_prefix)"
+
+	# Use of --value_only argument helps to get only baudrate value.
+	current_baudrate="$(dut_control_get "${EC_UART_PREFIX}"_baudrate)"
+
+	# On script exit, serial port will be configured back with saved
+	# baudrate by servo_restore thru cleanup method
+	servo_save_add "${EC_UART_PREFIX}_baudrate" "${current_baudrate}"
+
+	# Reset chip in firmware update mode
+	dut_control cold_reset:on fw_up:on cold_reset:off
+
+	# Set 9600 baudrate to program Second loader image
+	sec_load_baudrate=9600
+	if [ "${current_baudrate}" != "${sec_load_baudrate}" ] ; then
+	   dut_control "${EC_UART_PREFIX}"_baudrate:"${sec_load_baudrate}"
+	fi
+	# Load Second loader image into SRAM
+	mchp/crisis_rcvry_util.py -s "$(mchp_loader_image)" -p "${EC_UART}"
+
+	# Set 57600 baudrate to program EC image
+	image_load_baudrate=57600
+	dut_control "${EC_UART_PREFIX}"_baudrate:"${image_load_baudrate}"
+
+	# Flash EC image into the internal flash
+	mchp/crisis_rcvry_util.py -e "$(ec_image)" -p "${EC_UART}"
+
+	# Reset chip in firmware execution mode
+	dut_control cold_reset:on fw_up:off cold_reset:off
+}
+
 info "Using ${SERVO_TYPE}."
 
 # Only if it is a flash program request, call ec_image.
@@ -1624,6 +1720,44 @@ fi
 if [ "${NEED_SERVO}" != "no" ] ; then
 	servo_save
 fi
+
+function is_preservation_needed() {
+	local NEW_IMG
+	local TEMP_DIR
+
+	NEW_IMG=${1:?"missing arg 1: EC image path"}
+	NEW_IMG=$(readlink -f "${NEW_IMG}")
+	TEMP_DIR=${2:?"missing arg 2: Temp directory path"}
+
+	(
+		cd "${TEMP_DIR}"
+		dump_fmap "${NEW_IMG}" -e | grep -q ' preserve'
+	)
+}
+
+function preserve_sections() {
+	local CUR_IMG
+	local NEW_IMG
+	local TEMP_DIR
+
+	CUR_IMG=${1:?"missing arg 1: Cur EC image path"}
+	NEW_IMG=${2:?"missing arg 2: New EC image path"}
+	NEW_IMG=$(readlink -f "${NEW_IMG}")
+	TEMP_DIR=${3:?"missing arg 3: Temp directory path"}
+	(
+		cd "${TEMP_DIR}"
+		dump_fmap "${NEW_IMG}" -e | grep ' preserve' | cut \
+			-f1 -d' ' |
+		while read -r line
+		do
+			info "Preserving ${line} section on EC chip"
+			local SEC_IMG="${TEMP_DIR}/ec.cur.${line}.bin"
+
+			cbfstool "${CUR_IMG}" read -r "${line}" -f "${SEC_IMG}"
+			cbfstool "${NEW_IMG}" write -r "${line}" -f "${SEC_IMG}"
+		done
+	)
+}
 
 info "Flashing chip ${CHIP}."
 flash_"${CHIP}"

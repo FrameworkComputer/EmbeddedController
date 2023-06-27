@@ -5,6 +5,8 @@
  * PWM LED control.
  */
 
+#define DT_DRV_COMPAT cros_ec_pwm_led_pins
+
 #include "ec_commands.h"
 #include "led.h"
 #include "util.h"
@@ -13,9 +15,10 @@
 #include <zephyr/drivers/pwm.h>
 #include <zephyr/logging/log.h>
 
-#if DT_HAS_COMPAT_STATUS_OKAY(COMPAT_PWM_LED)
-
 LOG_MODULE_REGISTER(pwm_led, LOG_LEVEL_ERR);
+
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
+	     "Exactly one instance of cros-ec,pwm-led-pins should be defined.");
 
 /*
  * Period in ns from frequency(Hz) defined in pins node
@@ -28,28 +31,30 @@ LOG_MODULE_REGISTER(pwm_led, LOG_LEVEL_ERR);
  * duty_cycle = 50 %, pulse_ns  = (2000000*50)/100 = 1000000ns
  */
 
-#define SET_PIN(node_id, prop, i)                                             \
-	{                                                                     \
-		.pwm = PWM_DT_SPEC_GET(DT_PHANDLE_BY_IDX(node_id, prop, i)),  \
-		.pulse_ns = DIV_ROUND_NEAREST(                                \
-			DT_PWMS_PERIOD(DT_PHANDLE_BY_IDX(node_id, prop, i)) * \
-				DT_PHA_BY_IDX(node_id, prop, i, value),       \
-			100),                                                 \
+#define SET_PIN(node_id, prop, i)                                            \
+	{                                                                    \
+		.pwm = PWM_DT_SPEC_GET(                                      \
+			DT_PHANDLE_BY_IDX(DT_PARENT(node_id), led_pwms, i)), \
+		.pulse_ns = DIV_ROUND_NEAREST(                               \
+			DT_PWMS_PERIOD(DT_PHANDLE_BY_IDX(DT_PARENT(node_id), \
+							 led_pwms, i)) *     \
+				DT_PROP_BY_IDX(node_id, prop, i),            \
+			100),                                                \
 	},
 
 #define SET_PWM_PIN(node_id) \
-	{ DT_FOREACH_PROP_ELEM(node_id, led_pins, SET_PIN) };
+	{ DT_FOREACH_PROP_ELEM(node_id, led_values, SET_PIN) };
 
 #define GEN_PINS_ARRAY(id) struct pwm_pin_t PINS_ARRAY(id)[] = SET_PWM_PIN(id)
 
-DT_FOREACH_CHILD(PWM_LED_PINS_NODE, GEN_PINS_ARRAY)
+DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD, GEN_PINS_ARRAY)
 
-#define SET_PIN_NODE(node_id)                          \
-	{ .led_color = GET_PROP(node_id, led_color),   \
-	  .led_id = GET_PROP(node_id, led_id),         \
-	  .br_color = GET_PROP_NVE(node_id, br_color), \
-	  .pwm_pins = PINS_ARRAY(node_id),             \
-	  .pins_count = DT_PROP_LEN(node_id, led_pins) };
+#define SET_PIN_NODE(node_id)                                \
+	{ .led_color = GET_PROP(node_id, led_color),         \
+	  .led_id = GET_PROP(DT_PARENT(node_id), led_id),    \
+	  .br_color = GET_COLOR_PROP_NVE(node_id, br_color), \
+	  .pwm_pins = PINS_ARRAY(node_id),                   \
+	  .pins_count = DT_PROP_LEN(node_id, led_values) };
 
 /*
  * Initialize led_pins_node_t struct for each pin node defined
@@ -57,14 +62,17 @@ DT_FOREACH_CHILD(PWM_LED_PINS_NODE, GEN_PINS_ARRAY)
 #define GEN_PINS_NODES(id) \
 	const struct led_pins_node_t PINS_NODE(id) = SET_PIN_NODE(id)
 
-DT_FOREACH_CHILD(PWM_LED_PINS_NODE, GEN_PINS_NODES)
+DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD, GEN_PINS_NODES)
 
 /*
  * Array of pointers to each pin node
  */
 #define PINS_NODE_PTR(id) &PINS_NODE(id),
-const struct led_pins_node_t *pins_node[] = { DT_FOREACH_CHILD(
-	PWM_LED_PINS_NODE, PINS_NODE_PTR) };
+
+const struct led_pins_node_t *pins_node[] = {
+	DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD,
+						PINS_NODE_PTR)
+};
 
 /*
  * Set all the PWM channels defined in the node to the defined value,
@@ -104,7 +112,7 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 			continue;
 		}
 
-		if (br_color != -1) {
+		if (br_color != EC_LED_COLOR_INVALID) {
 			brightness_range[br_color] = 100;
 		}
 	}
@@ -121,7 +129,8 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 			continue;
 		}
 
-		if ((br_color != -1) && (brightness[br_color] != 0)) {
+		if (br_color != EC_LED_COLOR_INVALID &&
+		    brightness[br_color] != 0) {
 			color_set = true;
 			led_set_color(pins_node[i]->led_color, led_id);
 		}
@@ -147,4 +156,3 @@ __override int led_is_supported(enum ec_led_id led_id)
 
 	return ((1 << (int)led_id) & supported_leds);
 }
-#endif /* DT_HAS_COMPAT_STATUS_OKAY(COMPAT_PWM_LED) */

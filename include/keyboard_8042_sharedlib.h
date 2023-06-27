@@ -8,11 +8,11 @@
 #ifndef __CROS_EC_KEYBOARD_8042_SHAREDLIB_H
 #define __CROS_EC_KEYBOARD_8042_SHAREDLIB_H
 
-#include <stddef.h>
-
 #include "button.h"
 #include "keyboard_config.h"
 #include "keyboard_protocol.h"
+
+#include <stddef.h>
 
 struct button_8042_t {
 	uint16_t scancode;
@@ -99,14 +99,14 @@ const char *get_keycap_long_label(uint8_t idx);
  * @param col	Column number
  * @return	KLLI_UNKNO on error, label for the (row,col) if successful
  */
-char get_keycap_label(uint8_t row, uint8_t col);
+uint8_t get_keycap_label(uint8_t row, uint8_t col);
 /**
  * Set the keycap label
  * @param row	Row number
  * @param col	Column number
  * @param val	Value to set
  */
-void set_keycap_label(uint8_t row, uint8_t col, char val);
+void set_keycap_label(uint8_t row, uint8_t col, uint8_t val);
 #endif
 
 /* Button scancodes (Power, Volume Down, Volume Up, etc.) */

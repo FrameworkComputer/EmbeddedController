@@ -5,21 +5,21 @@ compatible: "cros,ioex-port"
 include: [gpio-controller.yaml, base.yaml]
 
 properties:
-    reg:
-      required: true
-      description:
-        Number of port within IO expander
+  reg:
+    required: true
+    description:
+      Number of port within IO expander
 
-    "#gpio-cells":
-      required: true
-      const: 2
-      description:
-        Number of parameters describing the pin
+  "#gpio-cells":
+    required: true
+    const: 2
+    description:
+      Number of parameters describing the pin
 
-    ngpios:
-      required: true
-      description:
-        Number of pins per port
+  ngpios:
+    required: true
+    description:
+      Number of pins per port
 
 gpio-cells:
   - pin

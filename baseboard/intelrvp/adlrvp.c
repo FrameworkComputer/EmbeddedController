@@ -5,10 +5,10 @@
 
 /* Intel ADLRVP board-specific common configuration */
 
-#include "battery_fuel_gauge.h"
-#include "charger.h"
 #include "battery.h"
+#include "battery_fuel_gauge.h"
 #include "bq25710.h"
+#include "charger.h"
 #include "common.h"
 #include "driver/retimer/bb_retimer_public.h"
 #include "extpower.h"

@@ -4,13 +4,13 @@
  */
 
 /* Chronicler board-specific configuration */
+#include "accelgyro.h"
 #include "battery.h"
 #include "battery_smart.h"
 #include "button.h"
-#include "charge_state_v2.h"
-#include "common.h"
-#include "accelgyro.h"
 #include "cbi_ec_fw_config.h"
+#include "charge_state.h"
+#include "common.h"
 #include "driver/sync.h"
 #include "driver/tcpm/ps8xxx.h"
 #include "extpower.h"
@@ -34,7 +34,8 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 

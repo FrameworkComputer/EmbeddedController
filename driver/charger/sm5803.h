@@ -455,4 +455,9 @@ extern const struct charger_drv sm5803_drv;
 /* Expose interrupt handler for processing in PD_INT task when needed */
 void sm5803_handle_interrupt(int chgnum);
 
+#ifdef TEST_BUILD
+void test_sm5803_set_fast_charge_disabled(bool value);
+bool test_sm5803_get_fast_charge_disabled(void);
+#endif
+
 #endif

@@ -36,6 +36,7 @@ driver-$(CONFIG_BC12_DETECT_MAX14637)+=bc12/max14637.o
 driver-$(CONFIG_BC12_DETECT_MT6360)+=bc12/mt6360.o
 driver-$(CONFIG_BC12_DETECT_PI3USB9201)+=bc12/pi3usb9201.o
 driver-$(CONFIG_BC12_DETECT_PI3USB9281)+=bc12/pi3usb9281.o
+driver-$(CONFIG_BC12_DETECT_RT1718S)+=bc12/rt1718s.o
 
 # Gyrometers
 driver-$(CONFIG_GYRO_L3GD20H)+=gyro_l3gd20h.o
@@ -76,11 +77,15 @@ driver-$(CONFIG_CHARGER_ISL9238C)+=charger/isl923x.o
 driver-$(CONFIG_CHARGER_ISL9241)+=charger/isl9241.o
 driver-$(CONFIG_CHARGER_MT6370)+=charger/rt946x.o
 driver-$(CONFIG_CHARGER_RAA489000)+=charger/isl923x.o
+driver-$(CONFIG_CHARGER_RAA489110)+=charger/isl9241.o
 driver-$(CONFIG_CHARGER_RT9466)+=charger/rt946x.o
 driver-$(CONFIG_CHARGER_RT9467)+=charger/rt946x.o
 driver-$(CONFIG_CHARGER_RT9490)+=charger/rt9490.o
 driver-$(CONFIG_CHARGER_SY21612)+=charger/sy21612.o
 driver-$(CONFIG_CHARGER_SM5803)+=charger/sm5803.o
+
+# CEC drivers
+driver-$(CONFIG_CEC_BITBANG)+=cec/bitbang.o
 
 # DP Redrivers
 driver-$(CONFIG_DP_REDRIVER_TDP142)+=retimer/tdp142.o
@@ -124,6 +129,9 @@ driver-$(CONFIG_GPU_NVIDIA)+=nvidia_gpu.o
 # Voltage regulators
 driver-$(CONFIG_REGULATOR_IR357X)+=regulator_ir357x.o
 
+# Power Sourcing Equipment
+driver-$(CONFIG_PSE_LTC4291)+=pse_ltc4291.o
+
 # Temperature sensors
 driver-$(CONFIG_TEMP_SENSOR_ADT7481)+=temp_sensor/adt7481.o
 driver-$(CONFIG_TEMP_SENSOR_BD99992GW)+=temp_sensor/bd99992gw.o
@@ -162,6 +170,7 @@ driver-y +=tcpm/ite_pd_intc.o
 driver-$(CONFIG_USB_PD_TCPM_DRIVER_IT83XX)+=tcpm/it83xx.o
 driver-$(CONFIG_USB_PD_TCPM_DRIVER_IT8XXX2)+=tcpm/it8xxx2.o
 endif
+driver-$(CONFIG_USB_PD_TCPM_ANX7406)+=tcpm/anx7406.o
 driver-$(CONFIG_USB_PD_TCPM_ANX74XX)+=tcpm/anx74xx.o
 driver-$(CONFIG_USB_PD_TCPM_ANX7688)+=tcpm/anx7688.o
 driver-$(CONFIG_USB_PD_TCPM_ANX7447)+=tcpm/anx7447.o
@@ -181,8 +190,10 @@ driver-$(CONFIG_USB_PD_TCPM_STM32GX)+=tcpm/stm32gx.o
 
 # Type-C Retimer drivers
 driver-$(CONFIG_USBC_RETIMER_ANX7483)+=retimer/anx7483.o
+driver-$(CONFIG_USBC_RETIMER_ANX7452)+=retimer/anx7452.o
 driver-$(CONFIG_USBC_RETIMER_INTEL_BB)+=retimer/bb_retimer.o
 driver-$(CONFIG_USBC_RETIMER_KB800X)+=retimer/kb800x.o
+driver-$(CONFIG_USBC_RETIMER_KB8010)+=retimer/kb8010.o
 driver-$(CONFIG_USBC_RETIMER_NB7V904M)+=retimer/nb7v904m.o
 driver-$(CONFIG_USBC_RETIMER_PI3DPX1207)+=retimer/pi3dpx1207.o
 driver-$(CONFIG_USBC_RETIMER_PI3HDX1204)+=retimer/pi3hdx1204.o
@@ -226,6 +237,7 @@ endif
 driver-$(CONFIG_USBC_PPC_SYV682X)+=ppc/syv682x.o
 driver-$(CONFIG_USBC_PPC_NX20P3483)+=ppc/nx20p348x.o
 driver-$(CONFIG_USBC_PPC_KTU1125)+=ppc/ktu1125.o
+driver-$(CONFIG_USBC_PPC_TCPCI)+=ppc/tcpci_ppc.o
 
 # Switchcap
 driver-$(CONFIG_LN9310)+=ln9310.o

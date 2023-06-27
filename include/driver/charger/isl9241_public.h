@@ -33,7 +33,11 @@ int isl9241_set_ac_prochot(int chgnum, int ma);
  */
 int isl9241_set_dc_prochot(int chgnum, int ma);
 
+#ifdef CONFIG_CHARGER_RAA489110
+#define ISL9241_AC_PROCHOT_CURRENT_MIN 32 /* mA */
+#else /* CONFIG_CHARGER_ISL9241 */
 #define ISL9241_AC_PROCHOT_CURRENT_MIN 128 /* mA */
+#endif
 #define ISL9241_AC_PROCHOT_CURRENT_MAX 6400 /* mA */
 #define ISL9241_DC_PROCHOT_CURRENT_MIN 256 /* mA */
 #define ISL9241_DC_PROCHOT_CURRENT_MAX 12800 /* mA */

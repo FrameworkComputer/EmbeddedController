@@ -10,6 +10,10 @@
 
 #define CONFIG_LTO
 
+/* Free up additional flash space. */
+#undef CONFIG_CMD_I2C_SCAN
+#undef CONFIG_CMD_I2C_XFER
+
 /*
  * By default, enable all console messages excepted HC, ACPI and event:
  * The sensor stack is generating a lot of activity.
@@ -164,7 +168,8 @@
 #define CONFIG_CHARGE_MANAGER
 #define CONFIG_CHARGER
 #define CONFIG_CHARGER_DISCHARGE_ON_AC
-#define CONFIG_CHARGER_INPUT_CURRENT 256
+#define CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT 256
+#define CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT 256
 #define CONFIG_USB_CHARGER
 #define CONFIG_TRICKLE_CHARGING
 
@@ -245,6 +250,9 @@
 /* TODO(b:147314141): Verify these timings */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 250000 /* us */
+
+/* System safe mode for improved panic debugging */
+#define CONFIG_SYSTEM_SAFE_MODE
 
 #ifndef __ASSEMBLER__
 

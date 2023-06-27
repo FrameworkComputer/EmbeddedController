@@ -4,13 +4,14 @@
  */
 
 #include "charger.h"
-#include <zephyr/devicetree.h>
 #include "charger/chg_bq25710.h"
 #include "charger/chg_isl923x.h"
 #include "charger/chg_isl9241.h"
 #include "charger/chg_rt9490.h"
 #include "charger/chg_sm5803.h"
 #include "usbc/utils.h"
+
+#include <zephyr/devicetree.h>
 
 #define CHG_CHIP_ENTRY(usbc_id, chg_id, config_fn) \
 	[USBC_PORT_NEW(usbc_id)] = config_fn(chg_id)

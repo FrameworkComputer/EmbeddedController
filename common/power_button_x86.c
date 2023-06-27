@@ -202,7 +202,7 @@ static void power_button_released(uint64_t tnow)
 /**
  * Set initial power button state.
  */
-static void set_initial_pwrbtn_state(void)
+test_export_static void set_initial_pwrbtn_state(void)
 {
 	uint32_t reset_flags = system_get_reset_flags();
 
@@ -425,14 +425,15 @@ void power_button_task(void *u)
 			tsleep = tnext_state;
 		t = get_time().val;
 		if (tsleep > t) {
-			unsigned d = tsleep == -1 ? -1 : (unsigned)(tsleep - t);
+			unsigned int d =
+				tsleep == -1 ? -1 : (unsigned int)(tsleep - t);
 			/*
-			 * (Yes, the conversion from uint64_t to unsigned could
-			 * theoretically overflow if we wanted to sleep for
-			 * more than 2^32 us, but our timeouts are small enough
-			 * that can't happen - and even if it did, we'd just go
-			 * back to sleep after deciding that we woke up too
-			 * early.)
+			 * (Yes, the conversion from uint64_t to unsigned int
+			 * could theoretically overflow if we wanted to sleep
+			 * for more than 2^32 us, but our timeouts are small
+			 * enough that can't happen - and even if it did, we'd
+			 * just go back to sleep after deciding that we woke up
+			 * too early.)
 			 */
 			CPRINTS("PB task %d = %s, wait %d", pwrbtn_state,
 				state_names[pwrbtn_state], d);

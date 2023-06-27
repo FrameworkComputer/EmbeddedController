@@ -21,6 +21,7 @@
 #define CONFIG_BOARD_HAS_RTC_RESET
 #define CONFIG_CRC8
 #define CONFIG_CEC
+#define CONFIG_CEC_BITBANG
 #define CONFIG_CBI_EEPROM
 #define CONFIG_DEDICATED_RECOVERY_BUTTON
 #define CONFIG_EMULATED_SYSRQ
@@ -207,6 +208,8 @@ enum mft_channel {
 	/* Number of MFT channels */
 	MFT_CH_COUNT
 };
+
+enum cec_port { CEC_PORT_0, CEC_PORT_COUNT };
 
 enum OEM_ID {
 	OEM_KARMA = 7,

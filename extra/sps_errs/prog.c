@@ -3,16 +3,16 @@
  * found in the LICENSE file.
  */
 
+#include "ec_commands.h"
+#include "mpsse.h"
+
 #include <signal.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
+
 #include <unistd.h>
-
-#include "mpsse.h"
-
-#include "ec_commands.h"
 
 static int opt_verbose;
 static size_t stop_after = -1;
@@ -48,9 +48,9 @@ static const char *ec_strerr(enum ec_status r)
 	return "<undefined result>";
 };
 
-	/****************************************************************************
-	 * Debugging output
-	 */
+/****************************************************************************
+ * Debugging output
+ */
 
 #define LINELEN 16
 

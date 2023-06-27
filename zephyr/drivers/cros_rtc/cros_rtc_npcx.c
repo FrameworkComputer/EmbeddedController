@@ -1,23 +1,23 @@
-/*
- * Copyright 2021 Google LLC
- *
- * SPDX-License-Identifier: Apache-2.0
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
  */
 
 #define DT_DRV_COMPAT nuvoton_npcx_cros_mtc
-
-#include <assert.h>
-#include <drivers/cros_rtc.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/kernel.h>
-#include <soc.h>
-#include <soc/nuvoton_npcx/reg_def_cros.h>
 
 #include "ec_tasks.h"
 #include "soc_miwu.h"
 #include "task.h"
 
+#include <assert.h>
+
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+
+#include <drivers/cros_rtc.h>
+#include <soc.h>
+#include <soc/nuvoton_npcx/reg_def_cros.h>
 LOG_MODULE_REGISTER(cros_rtc, LOG_LEVEL_ERR);
 
 #define NPCX_MTC_TTC_LOAD_DELAY_US 250 /* Delay after writing TTC */
@@ -34,7 +34,7 @@ struct cros_rtc_npcx_config {
 /* Driver data */
 struct cros_rtc_npcx_data {
 	/* Monotonic counter wake-up callback object */
-	struct miwu_dev_callback miwu_mtc_cb;
+	struct miwu_callback miwu_mtc_cb;
 	cros_rtc_alarm_callback_t alarm_callback;
 };
 
@@ -216,7 +216,7 @@ static int cros_rtc_npcx_init(const struct device *dev)
 	/* Initialize the miwu input and its callback for monotonic counter */
 	npcx_miwu_init_dev_callback(&data->miwu_mtc_cb, &config->mtc_alarm,
 				    counter_npcx_isr, dev);
-	npcx_miwu_manage_dev_callback(&data->miwu_mtc_cb, true);
+	npcx_miwu_manage_callback(&data->miwu_mtc_cb, true);
 
 	/*
 	 * Configure the monotonic counter wake-up event triggered from a rising

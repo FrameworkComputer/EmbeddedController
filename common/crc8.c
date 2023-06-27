@@ -12,7 +12,7 @@ inline uint8_t cros_crc8(const uint8_t *data, int len)
 
 uint8_t cros_crc8_arg(const uint8_t *data, int len, uint8_t previous_crc)
 {
-	unsigned crc = previous_crc << 8;
+	unsigned int crc = previous_crc << 8;
 	int i, j;
 
 	for (j = len; j; j--, data++) {

@@ -3,23 +3,25 @@
  * found in the LICENSE file.
  */
 
-#define DT_DRV_COMPAT nuvoton_npcx_cros_shi
-
-#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
-#include <assert.h>
-#include <zephyr/dt-bindings/clock/npcx_clock.h>
-#include <zephyr/drivers/clock_control.h>
-#include <zephyr/drivers/pinctrl.h>
-#include <drivers/cros_shi.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/kernel.h>
-#include <soc.h>
-#include <soc/nuvoton_npcx/reg_def_cros.h>
+#define DT_DRV_COMPAT nuvoton_npcx_shi
 
 #include "host_command.h"
 #include "soc_miwu.h"
 #include "system.h"
+
+#include <assert.h>
+
+#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
+#include <zephyr/drivers/clock_control.h>
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/pinctrl.h>
+#include <zephyr/dt-bindings/clock/npcx_clock.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+
+#include <drivers/cros_shi.h>
+#include <soc.h>
+#include <soc/nuvoton_npcx/reg_def_cros.h>
 
 #ifdef CONFIG_CROS_SHI_NPCX_DEBUG
 #define DEBUG_CPRINTS(format, args...) cprints(CC_SPI, format, ##args)
@@ -31,7 +33,7 @@
 
 LOG_MODULE_REGISTER(cros_shi, LOG_LEVEL_DBG);
 
-#define SHI_NODE DT_NODELABEL(shi)
+#define SHI_NODE DT_NODELABEL(shi0)
 #define SHI_VER_CTRL_PH DT_PHANDLE_BY_IDX(SHI_NODE, ver_ctrl, 0)
 #define SHI_VER_CTRL_ALT_FILED(f) DT_PHA_BY_IDX(SHI_VER_CTRL_PH, alts, 0, f)
 

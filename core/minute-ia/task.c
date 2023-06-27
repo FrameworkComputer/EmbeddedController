@@ -16,14 +16,14 @@
 #include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
+#include "hpet.h"
+#include "interrupts.h"
 #include "link_defs.h"
 #include "panic.h"
 #include "task.h"
+#include "task_defs.h"
 #include "timer.h"
 #include "util.h"
-#include "task_defs.h"
-#include "interrupts.h"
-#include "hpet.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
@@ -116,7 +116,7 @@ static const struct {
 /* Contexts for all tasks */
 static task_ tasks[TASK_ID_COUNT];
 /* Validity checks about static task invariants */
-BUILD_ASSERT(TASK_ID_COUNT <= sizeof(unsigned) * 8);
+BUILD_ASSERT(TASK_ID_COUNT <= sizeof(unsigned int) * 8);
 BUILD_ASSERT(TASK_ID_COUNT < (1 << (sizeof(task_id_t) * 8)));
 
 /* Stacks for all tasks */
@@ -221,7 +221,8 @@ uint32_t switch_handler(int desched, task_id_t resched)
 	current = current_task;
 
 	if (IS_ENABLED(CONFIG_DEBUG_STACK_OVERFLOW) &&
-	    *current->stack != STACK_UNUSED_VALUE) {
+	    *current->stack != STACK_UNUSED_VALUE &&
+	    task_enabled(current - tasks)) {
 		panic_printf("\n\nStack overflow in %s task!\n",
 			     task_get_name(current - tasks));
 
@@ -402,6 +403,11 @@ void task_enable_all_tasks(void)
 void task_enable_task(task_id_t tskid)
 {
 	atomic_or(&tasks_enabled, BIT(tskid));
+}
+
+bool task_enabled(task_id_t tskid)
+{
+	return tasks_enabled & BIT(tskid);
 }
 
 void task_disable_task(task_id_t tskid)

@@ -5,8 +5,6 @@
 
 /* Crota specific PWM LED settings. */
 
-#include <stdint.h>
-
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
@@ -17,6 +15,8 @@
 #include "led_onoff_states.h"
 #include "pwm.h"
 #include "util.h"
+
+#include <stdint.h>
 
 #define BAT_LED_ON_LVL 100
 #define BAT_LED_OFF_LVL 0
@@ -98,7 +98,7 @@ __override enum led_states board_led_get_state(enum led_states desired_state)
 	/* Make sure when battery is pre-charging, the LED will blinking.
 	 * Otherwise it will wait 30 seconds then blinking.
 	 */
-	if (charge_get_state() == PWR_STATE_IDLE) {
+	if (led_pwr_get_state() == LED_PWRS_IDLE) {
 		if (charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER)
 			desired_state = STATE_BATTERY_ERROR;
 	}

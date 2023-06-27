@@ -34,8 +34,8 @@ static int new_power_request[CONFIG_USB_PD_PORT_MAX_COUNT];
 static enum pd_power_role power_role[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /* Callback functions called by CM on state change */
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	active_charge_limit = charge_ma;
 }

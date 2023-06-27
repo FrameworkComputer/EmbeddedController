@@ -3,20 +3,16 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "ec_commands.h"
 #include "include/lpc.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 
-#ifdef CONFIG_HOST_EVENT64
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
+
 #define HOSTEVENT_PRINT_FORMAT "016" PRIx64
-#else
-#define HOSTEVENT_PRINT_FORMAT "08" PRIx32
-#endif
 
 struct console_cmd_hostevent_fixture {
 	struct host_events_ctx ctx;

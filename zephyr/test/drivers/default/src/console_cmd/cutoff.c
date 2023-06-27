@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/shell/shell.h>
-#include <zephyr/ztest.h>
-
 #include "battery.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "hooks.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+
+#include <zephyr/shell/shell.h>
+#include <zephyr/ztest.h>
 
 static void console_cmd_cutoff_after(void *unused)
 {

@@ -5,12 +5,12 @@
 
 /* ADT7481 temperature sensor module for Chrome EC */
 
+#include "adt7481.h"
 #include "common.h"
 #include "console.h"
-#include "adt7481.h"
 #include "gpio.h"
-#include "i2c.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "util.h"
 
 static int temp_val_local;

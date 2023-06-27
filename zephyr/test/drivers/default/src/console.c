@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <zephyr/shell/shell_dummy.h>
-
 #include "builtin/stdio.h"
-#include "test/drivers/test_state.h"
 #include "console.h"
-#include "uart.h"
 #include "ec_commands.h"
+#include "test/drivers/test_state.h"
+#include "uart.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/ztest.h>
 
 ZTEST_USER(console, test_printf_overflow)
 {

@@ -9,6 +9,31 @@ compatible: "richtek,rt9490"
 include: chg-chip.yaml
 
 properties:
-    thermistor:
-      type: phandle
-      description: Underlying thermistor device to measure temperature
+  irq:
+    type: phandles
+    description: |
+        GPIO interrupt from BC1.2
+
+  thermistor:
+    type: phandle
+    description: Underlying thermistor device to measure temperature
+
+  eoc-current:
+    type: int
+    default: 240
+    description: End-of-charge current in mA, between 40 to 1000.
+
+  mivr:
+    type: int
+    default: 3800
+    description: Minimum input voltage regulation in mV, between 3600 to 22000.
+
+  boost-voltage:
+    type: int
+    default: 5050
+    description: OTG voltage limit regulation in mV, between 2800 to 22000.
+
+  boost-current:
+    type: int
+    default: 1500
+    description: OTG current limit regulation in mA, between 120 to 3320.

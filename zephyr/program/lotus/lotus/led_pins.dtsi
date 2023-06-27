@@ -4,26 +4,22 @@
  */
 
 / {
-	pwm_pins {
-		compatible = "cros-ec,pwm-pin-config";
+	pwmleds {
+		compatible = "pwm-leds";
 
 		pwm_b: pwm_b {
-			#led-pin-cells = <1>;
 			pwms = <&pwm2 0 PWM_HZ(100) PWM_POLARITY_NORMAL>;
 		};
 
 		pwm_r: pwm_r {
-			#led-pin-cells = <1>;
 			pwms = <&pwm3 0 PWM_HZ(100) PWM_POLARITY_NORMAL>;
 		};
 
 		pwm_g: pwm_g {
-			#led-pin-cells = <1>;
 			pwms = <&pwm4 0 PWM_HZ(100) PWM_POLARITY_NORMAL>;
 		};
 
 		pwm_power_w: pwm_power_w {
-			#led-pin-cells = <1>;
 			pwms = <&pwm5 0 PWM_HZ(100) PWM_POLARITY_NORMAL>;
 		};
 	};
@@ -31,79 +27,61 @@
 	pwm-led-pins {
 		compatible = "cros-ec,pwm-led-pins";
 
-		color_off: color-off {
-			led-color = "LED_OFF";
+		battery_led: battery-led {
 			led-id = "EC_LED_ID_BATTERY_LED";
-			led-pins = <&pwm_b 0>,
-				   <&pwm_r 0>,
-				   <&pwm_g 0>;
+			led-pwms = <&pwm_r &pwm_g &pwm_b>;
+
+
+			color_off: color-off {
+				led-color = "LED_OFF";
+				led-values = <0 0 0>;
+			};
+
+			color_red: color-red {
+				led-color = "LED_RED";
+				led-values = <8 0 0>;
+			};
+
+			color_green: color-green {
+				led-color = "LED_GREEN";
+				led-values = <0 8 0>;
+			};
+
+			color_blue: color-blue {
+				led-color = "LED_BLUE";
+				led-values = <0 0 8>;
+			};
+
+			color_yellow: color-yellow {
+				led-color = "LED_YELLOW";
+				led-values = <4 5 0>;
+			};
+
+			color_white: color-white {
+				led-color = "LED_WHITE";
+				led-values = <4 10 5>;
+			};
+
+			color_amber: color-amber {
+				led-color = "LED_AMBER";
+				led-values = <9 1 0>;
+			};
+
 		};
 
-		color_red: color-red {
-			led-color = "LED_RED";
-			led-id = "EC_LED_ID_BATTERY_LED";
-			br-color = "EC_LED_COLOR_RED";
-			led-pins = <&pwm_b 0>,
-				   <&pwm_r 8>,
-				   <&pwm_g 0>;
-		};
-
-		color_green: color-green {
-			led-color = "LED_GREEN";
-			led-id = "EC_LED_ID_BATTERY_LED";
-			br-color = "EC_LED_COLOR_GREEN";
-			led-pins = <&pwm_b 0>,
-				   <&pwm_r 0>,
-				   <&pwm_g 8>;
-		};
-
-		color_blue: color-blue {
-			led-color = "LED_BLUE";
-			led-id = "EC_LED_ID_BATTERY_LED";
-			br-color = "EC_LED_COLOR_BLUE";
-			led-pins = <&pwm_b 8>,
-				   <&pwm_r 0>,
-				   <&pwm_g 0>;
-		};
-
-		color_yellow: color-yellow {
-			led-color = "LED_YELLOW";
-			led-id = "EC_LED_ID_BATTERY_LED";
-			br-color = "EC_LED_COLOR_YELLOW";
-			led-pins = <&pwm_b 0>,
-				   <&pwm_r 4>,
-				   <&pwm_g 5>;
-		};
-
-		color_white: color-white {
-			led-color = "LED_WHITE";
-			led-id = "EC_LED_ID_BATTERY_LED";
-			br-color = "EC_LED_COLOR_WHITE";
-			led-pins = <&pwm_b 5>,
-				   <&pwm_r 4>,
-				   <&pwm_g 10>;
-		};
-
-		color_amber: color-amber {
-			led-color = "LED_AMBER";
-			led-id = "EC_LED_ID_BATTERY_LED";
-			br-color = "EC_LED_COLOR_AMBER";
-			led-pins = <&pwm_b 0>,
-				   <&pwm_r 9>,
-				   <&pwm_g 1>;
-		};
-
-		color_power_off: color-power-off {
-			led-color = "LED_OFF";
+		power_led: power-led {
 			led-id = "EC_LED_ID_POWER_LED";
-			led-pins = <&pwm_power_w 0>;
-		};
+			led-pwms = <&pwm_power_w>;
 
-		color_power_white: color-power-white {
-			led-color = "LED_WHITE";
-			led-id = "EC_LED_ID_POWER_LED";
-			br-color = "EC_LED_COLOR_WHITE";
-			led-pins = <&pwm_power_w 55>;
+			color_power_off: color-power-off {
+				led-color = "LED_OFF";
+				led-values = <0>;
+			};
+
+			color_power_white: color-power-white {
+				led-color = "LED_WHITE";
+				led-values = <55>;
+			};
 		};
 	};
 };

@@ -3,13 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
-#include <zephyr/arch/cpu.h>
-#include <zephyr/init.h>
-
 #include "config.h"
 #include "mpu.h"
 
+#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
+#include <zephyr/arch/cpu.h>
+#include <zephyr/init.h>
 #include <zephyr/logging/log.h>
 LOG_MODULE_REGISTER(shim_mpu, LOG_LEVEL_ERR);
 
@@ -22,7 +21,7 @@ void mpu_enable(void)
 	}
 }
 
-static int mpu_disable_fixed_regions(const struct device *dev)
+static int mpu_disable_fixed_regions(void)
 {
 	/* MPU is configured and enabled by the Zephyr init code, disable the
 	 * fixed sections by default.

@@ -3,13 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "host_command.h"
-#include "uart.h"
 #include "test/drivers/test_state.h"
+#include "uart.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 /** Messages used in test */
 static const char msg1[] = "test";
@@ -28,11 +28,9 @@ static void setup_snapshots_and_messages(void *unused)
 	char response[1024];
 	struct host_cmd_handler_args read_args =
 		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_CONSOLE_READ, 0, response);
-	struct host_cmd_handler_args args =
-		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_CONSOLE_SNAPSHOT, 0);
 
 	/* Set first snapshot before first message */
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&args));
+	zassert_equal(EC_RES_SUCCESS, ec_cmd_console_snapshot(NULL));
 	cputs(CC_COMMAND, msg1);
 
 	/* Read everything from buffer */
@@ -44,7 +42,7 @@ static void setup_snapshots_and_messages(void *unused)
 	} while (read_args.response_size != 0);
 
 	/* Set second snapshot after first message */
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&args));
+	zassert_equal(EC_RES_SUCCESS, ec_cmd_console_snapshot(NULL));
 	cputs(CC_COMMAND, msg2);
 }
 
@@ -60,8 +58,6 @@ static void test_uart_hc_read_next(int ver)
 	struct ec_params_console_read_v1 params;
 	struct host_cmd_handler_args read_args =
 		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_CONSOLE_READ, ver, response);
-	struct host_cmd_handler_args snap_args =
-		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_CONSOLE_SNAPSHOT, 0);
 	char *msg1_start;
 	char *msg2_start;
 	char *msg3_start;
@@ -90,7 +86,7 @@ static void test_uart_hc_read_next(int ver)
 			  msg1_start);
 
 	/* Set new snapshot which should include message 2 */
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&snap_args));
+	zassert_equal(EC_RES_SUCCESS, ec_cmd_console_snapshot(NULL));
 
 	read_args.response_size = 0;
 	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args));
@@ -123,7 +119,7 @@ static void test_uart_hc_read_next(int ver)
 		      read_args.response_size);
 
 	/* Set new snapshot which should include message 3 */
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&snap_args));
+	zassert_equal(EC_RES_SUCCESS, ec_cmd_console_snapshot(NULL));
 
 	read_args.response_size = 0;
 	zassert_equal(EC_RES_SUCCESS, host_command_process(&read_args));
@@ -163,8 +159,6 @@ ZTEST_USER(uart_hostcmd, test_uart_hc_read_recent_v1)
 	struct ec_params_console_read_v1 params;
 	struct host_cmd_handler_args read_args =
 		BUILD_HOST_COMMAND(EC_CMD_CONSOLE_READ, 1, response, params);
-	struct host_cmd_handler_args snap_args =
-		BUILD_HOST_COMMAND_SIMPLE(EC_CMD_CONSOLE_SNAPSHOT, 0);
 
 	params.subcmd = CONSOLE_READ_RECENT;
 
@@ -183,7 +177,7 @@ ZTEST_USER(uart_hostcmd, test_uart_hc_read_recent_v1)
 			  response);
 
 	/* Set new snapshot after second message */
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&snap_args));
+	zassert_equal(EC_RES_SUCCESS, ec_cmd_console_snapshot(NULL));
 
 	/* Only message between two last snapshots should be read */
 	read_args.response_size = 0;
@@ -210,7 +204,7 @@ ZTEST_USER(uart_hostcmd, test_uart_hc_read_recent_v1)
 		      read_args.response_size);
 
 	/* Set new snapshot */
-	zassert_equal(EC_RES_SUCCESS, host_command_process(&snap_args));
+	zassert_equal(EC_RES_SUCCESS, ec_cmd_console_snapshot(NULL));
 
 	/* This time only third message should be read */
 	read_args.response_size = 0;

@@ -10,9 +10,9 @@
 #include "compile_time_macros.h"
 #include "consumer.h"
 #include "hooks.h"
-#include "registers.h"
 #include "producer.h"
 #include "queue.h"
+#include "registers.h"
 #include "usb_descriptor.h"
 #include "usb_hw.h"
 

@@ -80,7 +80,7 @@ static void pulse_leds(enum pwm_led_id id, int period)
 
 static void update_charger_led(enum pwm_led_id id)
 {
-	enum charge_state chg_st = charge_get_state();
+	enum led_pwr_state chg_st = led_pwr_get_state();
 
 	/*
 	 * The colors listed below are the default, but can be overridden.
@@ -90,13 +90,12 @@ static void update_charger_led(enum pwm_led_id id)
 	 * LED on     = Charging
 	 * LED off    = No Charger connected
 	 */
-	if (chg_st == PWR_STATE_CHARGE ||
-	    chg_st == PWR_STATE_CHARGE_NEAR_FULL) {
+	if (chg_st == LED_PWRS_CHARGE || chg_st == LED_PWRS_CHARGE_NEAR_FULL) {
 		/* Charging: LED ON */
 		rvp_led[id].led_is_pulsing = false;
 		set_pwm_led_color(id, EC_LED_COLOR_GREEN);
-	} else if (chg_st == PWR_STATE_DISCHARGE ||
-		   chg_st == PWR_STATE_DISCHARGE_FULL) {
+	} else if (chg_st == LED_PWRS_DISCHARGE ||
+		   chg_st == LED_PWRS_DISCHARGE_FULL) {
 		if (extpower_is_present()) {
 			/* Discharging:
 			 * Flash slower (2 second period, 100% duty cycle)
@@ -107,7 +106,7 @@ static void update_charger_led(enum pwm_led_id id)
 			rvp_led[id].led_is_pulsing = false;
 			set_pwm_led_color(id, LED_OFF);
 		}
-	} else if (chg_st == PWR_STATE_ERROR) {
+	} else if (chg_st == LED_PWRS_ERROR) {
 		/* Charging error:
 		 * Flash faster (250 ms period, 100% duty cycle)
 		 */

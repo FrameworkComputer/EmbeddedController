@@ -3,24 +3,25 @@
  * found in the LICENSE file.
  */
 
+#include "signal_adc.h"
+#include "signal_gpio.h"
+#include "signal_vw.h"
+
 #include <zephyr/kernel.h>
-#include <zephyr/toolchain.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/atomic.h>
+#include <zephyr/toolchain.h>
+#ifdef CONFIG_AP_PWRSEQ_DRIVER
+#include <ap_power/ap_pwrseq.h>
+#endif
 
 #include <ap_power/ap_pwrseq.h>
 #include <power_signals.h>
 
-#include "signal_gpio.h"
-#include "signal_vw.h"
-#include "signal_adc.h"
-
 LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
-#if DT_HAS_COMPAT_STATUS_OKAY(intel_ap_pwrseq)
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(intel_ap_pwrseq) == 1,
 	     "Only one node for intel_ap_pwrseq is allowed");
-#endif
 
 BUILD_ASSERT(POWER_SIGNAL_COUNT <= 32, "Too many power signals");
 
@@ -44,7 +45,11 @@ struct ps_config {
 
 #define PWR_ENUM(id, tag) TAG_PWR_ENUM(tag, PWR_SIGNAL_ENUM(id))
 
+#ifdef CONFIG_AP_PWRSEQ_SIGNAL_DEBUG_NAMES
 #define DBGNAME(id) "(" DT_PROP(id, enum_name) ") " DT_PROP(id, dbg_label)
+#else
+#define DBGNAME(id) DT_PROP(id, enum_name)
+#endif
 
 #define GEN_PS_ENTRY(id, src, tag)             \
 	{                                      \
@@ -62,18 +67,18 @@ struct ps_config {
 /*
  * Generate the power signal configuration array.
  */
+/* clang-format off */
 static const struct ps_config sig_config[] = {
 	DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_gpio, GEN_PS_ENTRY,
 				     PWR_SIG_SRC_GPIO, PWR_SIG_TAG_GPIO)
-		DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_vw, GEN_PS_ENTRY,
-					     PWR_SIG_SRC_VW, PWR_SIG_TAG_VW)
-			DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_external,
-						     GEN_PS_ENTRY_NO_ENUM,
-						     PWR_SIG_SRC_EXT)
-				DT_FOREACH_STATUS_OKAY_VARGS(
-					intel_ap_pwrseq_adc, GEN_PS_ENTRY,
-					PWR_SIG_SRC_ADC, PWR_SIG_TAG_ADC)
+	DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_vw, GEN_PS_ENTRY,
+				     PWR_SIG_SRC_VW, PWR_SIG_TAG_VW)
+	DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_external,
+				     GEN_PS_ENTRY_NO_ENUM, PWR_SIG_SRC_EXT)
+	DT_FOREACH_STATUS_OKAY_VARGS(intel_ap_pwrseq_adc, GEN_PS_ENTRY,
+				     PWR_SIG_SRC_ADC, PWR_SIG_TAG_ADC)
 };
+/* clang-format on */
 
 #define PWR_SIGNAL_POLLED(id) PWR_SIGNAL_ENUM(id),
 
@@ -131,13 +136,23 @@ power_signal_mask_t power_get_signals(void)
 	return mask | atomic_get(&power_signals);
 }
 
+#ifndef CONFIG_AP_PWRSEQ_DRIVER
 void power_signal_interrupt(enum power_signal signal, int value)
 {
 	atomic_set_bit_to(&power_signals, signal, value);
 	check_debug(signal);
 	ap_pwrseq_wake();
 }
+#else
+void power_signal_interrupt(enum power_signal signal, int value)
+{
+	const struct device *ap_pwrseq_dev = ap_pwrseq_get_instance();
 
+	atomic_set_bit_to(&power_signals, signal, value);
+	check_debug(signal);
+	ap_pwrseq_post_event(ap_pwrseq_dev, AP_PWRSEQ_EVENT_POWER_SIGNAL);
+}
+#endif
 int power_wait_mask_signals_timeout(power_signal_mask_t mask,
 				    power_signal_mask_t want, int timeout)
 {
@@ -166,22 +181,22 @@ int power_signal_get(enum power_signal signal)
 	default:
 		return -EINVAL; /* should never happen */
 
-#if HAS_GPIO_SIGNALS
+#if CONFIG_AP_PWRSEQ_SIGNAL_GPIO
 	case PWR_SIG_SRC_GPIO:
 		return power_signal_gpio_get(cp->src_enum);
 #endif
 
-#if HAS_VW_SIGNALS
+#if CONFIG_AP_PWRSEQ_SIGNAL_VW
 	case PWR_SIG_SRC_VW:
 		return power_signal_vw_get(cp->src_enum);
 #endif
 
-#if HAS_EXT_SIGNALS
+#if CONFIG_AP_PWRSEQ_SIGNAL_EXTERNAL
 	case PWR_SIG_SRC_EXT:
 		return board_power_signal_get(signal);
 #endif
 
-#if HAS_ADC_SIGNALS
+#if CONFIG_AP_PWRSEQ_SIGNAL_ADC
 	case PWR_SIG_SRC_ADC:
 		return power_signal_adc_get(cp->src_enum);
 #endif
@@ -202,13 +217,13 @@ int power_signal_set(enum power_signal signal, int value)
 	default:
 		return -EINVAL;
 
-#if HAS_GPIO_SIGNALS
+#if CONFIG_AP_PWRSEQ_SIGNAL_GPIO
 	case PWR_SIG_SRC_GPIO:
 		ret = power_signal_gpio_set(cp->src_enum, value);
 		break;
 #endif
 
-#if HAS_EXT_SIGNALS
+#if CONFIG_AP_PWRSEQ_SIGNAL_EXTERNAL
 	case PWR_SIG_SRC_EXT:
 		ret = board_power_signal_set(signal, value);
 		break;
@@ -240,11 +255,11 @@ int power_signal_enable(enum power_signal signal)
 		 */
 		return -EINVAL;
 
-#if HAS_GPIO_SIGNALS
+#if CONFIG_AP_PWRSEQ_SIGNAL_GPIO
 	case PWR_SIG_SRC_GPIO:
 		return power_signal_gpio_enable(cp->src_enum);
 #endif
-#if HAS_ADC_SIGNALS
+#if CONFIG_AP_PWRSEQ_SIGNAL_ADC
 	case PWR_SIG_SRC_ADC:
 		return power_signal_adc_enable(cp->src_enum);
 #endif
@@ -263,11 +278,11 @@ int power_signal_disable(enum power_signal signal)
 	default:
 		return -EINVAL;
 
-#if HAS_GPIO_SIGNALS
+#if CONFIG_AP_PWRSEQ_SIGNAL_GPIO
 	case PWR_SIG_SRC_GPIO:
 		return power_signal_gpio_disable(cp->src_enum);
 #endif
-#if HAS_ADC_SIGNALS
+#if CONFIG_AP_PWRSEQ_SIGNAL_ADC
 	case PWR_SIG_SRC_ADC:
 		return power_signal_adc_disable(cp->src_enum);
 #endif
@@ -284,13 +299,13 @@ const char *power_signal_name(enum power_signal signal)
 
 void power_signal_init(void)
 {
-	if (IS_ENABLED(HAS_GPIO_SIGNALS)) {
+	if (IS_ENABLED(CONFIG_AP_PWRSEQ_SIGNAL_GPIO)) {
 		power_signal_gpio_init();
 	}
-	if (IS_ENABLED(HAS_VW_SIGNALS)) {
+	if (IS_ENABLED(CONFIG_AP_PWRSEQ_SIGNAL_VW)) {
 		power_signal_vw_init();
 	}
-	if (IS_ENABLED(HAS_ADC_SIGNALS)) {
+	if (IS_ENABLED(CONFIG_AP_PWRSEQ_SIGNAL_ADC)) {
 		power_signal_adc_init();
 	}
 	/*

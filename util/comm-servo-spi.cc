@@ -15,18 +15,18 @@
  * sudo ectool_servo --name=905537-00474 version
  */
 
+#include "comm-host.h"
+#include "cros_ec_dev.h"
+
 #include <errno.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <unistd.h>
 
 #include <libftdi1/ftdi.h>
-
-#include "comm-host.h"
-#include "cros_ec_dev.h"
+#include <unistd.h>
 
 /* Servo V2 SPI1 interface identifiers */
 #define SERVO_V2_USB_VID 0x18d1

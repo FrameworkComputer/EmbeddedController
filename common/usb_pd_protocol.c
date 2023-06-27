@@ -26,16 +26,16 @@
 #include "tcpm/tcpm.h"
 #include "timer.h"
 #include "typec_control.h"
-#include "util.h"
 #include "usb_charge.h"
 #include "usb_common.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_flags.h"
-#include "usb_pd_tcpm.h"
 #include "usb_pd_tcpc.h"
+#include "usb_pd_tcpm.h"
 #include "usbc_ocp.h"
 #include "usbc_ppc.h"
+#include "util.h"
 #include "vboot.h"
 
 /* Flags to clear on a disconnect */
@@ -2322,7 +2322,7 @@ __maybe_unused static void exit_supported_alt_mode(int port)
 	}
 }
 
-#ifdef CONFIG_POWER_COMMON
+#ifdef CONFIG_AP_POWER_CONTROL
 static void handle_new_power_state(int port)
 {
 	if (chipset_in_or_transitioning_to_state(CHIPSET_STATE_ANY_OFF)) {
@@ -2341,7 +2341,7 @@ static void handle_new_power_state(int port)
 	/* Ensure mux is set properly after chipset transition */
 	set_usb_mux_with_current_data_role(port);
 }
-#endif /* CONFIG_POWER_COMMON */
+#endif /* CONFIG_AP_POWER_CONTROL */
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE
 enum pd_dual_role_states pd_get_dual_role(int port)
@@ -2955,7 +2955,7 @@ void pd_task(void *u)
 		if (evt & PD_EVENT_DEVICE_ACCESSED)
 			handle_device_access(port);
 #endif
-#ifdef CONFIG_POWER_COMMON
+#ifdef CONFIG_AP_POWER_CONTROL
 		if (evt & PD_EVENT_POWER_STATE_CHANGE)
 			handle_new_power_state(port);
 #endif

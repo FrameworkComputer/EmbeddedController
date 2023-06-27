@@ -11,11 +11,11 @@
 #ifndef __CROS_EC_USB_TBT_ALT_MODE_H
 #define __CROS_EC_USB_TBT_ALT_MODE_H
 
-#include <stdint.h>
-
 #include "tcpm/tcpm.h"
 #include "usb_pd_dpm_sm.h"
 #include "usb_pd_tcpm.h"
+
+#include <stdint.h>
 
 /*
  * Initialize Thunderbolt state for the specified port.

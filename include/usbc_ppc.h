@@ -221,7 +221,7 @@ int ppc_init(int port);
  * @param port: The Type-C port number.
  * @return 1 if sourcing Vbus, 0 if not.
  */
-int ppc_is_sourcing_vbus(int port);
+test_mockable int ppc_is_sourcing_vbus(int port);
 
 /**
  * Determine if VBUS is present or not.

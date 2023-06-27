@@ -36,6 +36,13 @@ host_command_host_sleep_event(struct host_cmd_handler_args *args)
 	struct host_sleep_event_context ctx;
 	enum host_sleep_event state = p->sleep_event;
 
+	/*
+	 * Treat a reboot after suspend as a resume for notification purposes
+	 * (see b/273327518 for more details)
+	 */
+	if (host_sleep_state == HOST_SLEEP_EVENT_S0IX_SUSPEND && state == 0)
+		state = HOST_SLEEP_EVENT_S0IX_RESUME;
+
 	host_sleep_state = state;
 	ctx.sleep_transitions = 0;
 	switch (state) {
@@ -107,6 +114,16 @@ void sleep_notify_transition(enum sleep_notify_type check_state, int hook_id)
 	hook_notify(hook_id);
 	sleep_set_notify(SLEEP_NOTIFY_NONE);
 }
+
+#ifdef CONFIG_POWERSEQ_S0IX_COUNTER
+atomic_t s0ix_counter;
+
+static void handle_chipset_suspend(void)
+{
+	atomic_inc(&s0ix_counter);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, handle_chipset_suspend, HOOK_PRIO_LAST);
+#endif /* CONFIG_POWERSEQ_S0IX_COUNTER */
 
 #ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
 

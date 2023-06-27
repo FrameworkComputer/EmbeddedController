@@ -7,14 +7,14 @@
 
 #include "common.h"
 #include "console.h"
-#include "ktu1125.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "ktu1125.h"
 #include "system.h"
 #include "timer.h"
 #include "usb_charge.h"
-#include "usb_pd_tcpm.h"
 #include "usb_pd.h"
+#include "usb_pd_tcpm.h"
 #include "usbc_ppc.h"
 #include "util.h"
 
@@ -22,6 +22,8 @@
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
 static atomic_t irq_pending; /* Bitmask of ports signaling an interrupt. */
+
+static void ktu1125_handle_interrupt(int port);
 
 static int read_reg(uint8_t port, int reg, int *regval)
 {
@@ -96,11 +98,10 @@ static int ktu1125_dump(int port)
 /* helper */
 static int ktu1125_power_path_control(int port, int enable)
 {
-	int status = enable ? set_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_SW_AB_EN) :
-			      clr_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_SW_AB_EN | KTU1125_CC1S_VCONN |
-						KTU1125_CC2S_VCONN);
+	int status =
+		enable ?
+			set_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_SW_AB_EN) :
+			clr_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_SW_AB_EN);
 
 	if (status) {
 		CPRINTS("ppc p%d: Failed to %s power path", port,
@@ -260,7 +261,7 @@ static int ktu1125_is_vbus_present(int port)
 		return 0;
 	}
 
-	return regval & KTU1125_SYSA_OK;
+	return !!(regval & KTU1125_SYSA_OK);
 }
 #endif /* defined(CONFIG_USB_PD_VBUS_DETECT_PPC) */
 
@@ -275,21 +276,18 @@ static int ktu1125_is_sourcing_vbus(int port)
 		return 0;
 	}
 
-	return regval & KTU1125_VBUS_OK;
+	return !!(regval & KTU1125_VBUS_OK);
 }
 
 #ifdef CONFIG_USBC_PPC_POLARITY
 static int ktu1125_set_polarity(int port, int polarity)
 {
-	if (polarity) {
-		/* CC2 active. */
-		clr_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_CC2S_VCONN);
-		return set_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_CC1S_VCONN);
-	}
-
-	/* else CC1 active. */
-	clr_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_CC1S_VCONN);
-	return set_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_CC2S_VCONN);
+	/*
+	 * KTU1125 doesn't need to be informed about polarity.
+	 * Polarity is queried via pd_get_polarity when applying VCONN.
+	 */
+	ppc_prints("KTU1125 sets polarity only when applying VCONN", port);
+	return EC_SUCCESS;
 }
 #endif
 
@@ -345,11 +343,23 @@ static int ktu1125_discharge_vbus(int port, int enable)
 #ifdef CONFIG_USBC_PPC_VCONN
 static int ktu1125_set_vconn(int port, int enable)
 {
-	int status = enable ? set_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_VCONN_EN) :
-			      clr_flags(port, KTU1125_CTRL_SW_CFG,
-					KTU1125_VCONN_EN | KTU1125_CC1S_VCONN |
-						KTU1125_CC2S_VCONN);
+	int polarity;
+	int status;
+	int flags = KTU1125_VCONN_EN;
+
+	polarity = polarity_rm_dts(pd_get_polarity(port));
+
+	if (enable) {
+		/*
+		 * If polarity is CC1, then apply VCONN on CC2.
+		 * else if polarity is CC2, then apply VCONN on CC1
+		 */
+		flags |= polarity ? KTU1125_CC1S_VCONN : KTU1125_CC2S_VCONN;
+		status = set_flags(port, KTU1125_CTRL_SW_CFG, flags);
+	} else {
+		flags |= KTU1125_CC1S_VCONN | KTU1125_CC2S_VCONN;
+		status = clr_flags(port, KTU1125_CTRL_SW_CFG, flags);
+	}
 
 	return status;
 }
@@ -378,6 +388,12 @@ static int ktu1125_set_frs_enable(int port, int enable)
 
 static int ktu1125_vbus_sink_enable(int port, int enable)
 {
+#ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
+	/* Skip if VBUS SNK is already enabled/disabled */
+	if (ktu1125_is_vbus_present(port) == enable)
+		return EC_SUCCESS;
+#endif
+
 	/* Select active sink */
 	int rv = clr_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_POW_MODE);
 
@@ -391,6 +407,10 @@ static int ktu1125_vbus_sink_enable(int port, int enable)
 
 static int ktu1125_vbus_source_enable(int port, int enable)
 {
+	/* Skip if VBUS SRC is already enabled/disabled */
+	if (ktu1125_is_sourcing_vbus(port) == enable)
+		return EC_SUCCESS;
+
 	/* Select active source */
 	int rv = set_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_POW_MODE);
 
@@ -419,12 +439,29 @@ static int ktu1125_set_sbu(int port, int enable)
 }
 #endif /* CONFIG_USBC_PPC_SBU */
 
+static void ktu1125_irq_deferred(void)
+{
+	int i;
+	uint32_t pending = atomic_clear(&irq_pending);
+
+	for (i = 0; i < board_get_usb_pd_port_count(); i++)
+		if (BIT(i) & pending)
+			ktu1125_handle_interrupt(i);
+}
+DECLARE_DEFERRED(ktu1125_irq_deferred);
+
+void ktu1125_interrupt(int port)
+{
+	atomic_or(&irq_pending, BIT(port));
+	hook_call_deferred(&ktu1125_irq_deferred_data, 0);
+}
+
 static void ktu1125_handle_interrupt(int port)
 {
 	int attempt = 0;
 
 	/*
-	 * KTU1135's /INT pin is level, so process interrupts until it
+	 * KTU1125's /INT pin is level, so process interrupts until it
 	 * deasserts if the chip has a dedicated interrupt pin.
 	 */
 #ifdef CONFIG_USBC_PPC_DEDICATED_INT
@@ -441,6 +478,13 @@ static void ktu1125_handle_interrupt(int port)
 			ppc_prints("Could not clear interrupts on first "
 				   "try, retrying",
 				   port);
+
+		if (attempt > 10) {
+			ppc_prints("Rescheduling interrupt handler", port);
+			atomic_or(&irq_pending, BIT(port));
+			hook_call_deferred(&ktu1125_irq_deferred_data, MSEC);
+			return;
+		}
 
 		/* Clear the interrupt by reading all 3 registers */
 		read_reg(port, KTU1125_INT_SNK, &snk);
@@ -482,23 +526,6 @@ static void ktu1125_handle_interrupt(int port)
 				pd_handle_cc_overvoltage(port);
 		}
 	}
-}
-
-static void ktu1125_irq_deferred(void)
-{
-	int i;
-	uint32_t pending = atomic_clear(&irq_pending);
-
-	for (i = 0; i < board_get_usb_pd_port_count(); i++)
-		if (BIT(i) & pending)
-			ktu1125_handle_interrupt(i);
-}
-DECLARE_DEFERRED(ktu1125_irq_deferred);
-
-void ktu1125_interrupt(int port)
-{
-	atomic_or(&irq_pending, BIT(port));
-	hook_call_deferred(&ktu1125_irq_deferred_data, 0);
 }
 
 const struct ppc_drv ktu1125_drv = {

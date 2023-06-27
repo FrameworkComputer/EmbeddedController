@@ -3,18 +3,19 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-#include <string.h>
-#include <zephyr/kernel.h>
-#include <zephyr/shell/shell_dummy.h>
-#include <zephyr/ztest_assert.h>
-#include <zephyr/ztest.h>
-
 #include "console.h"
 #include "gpio.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 #include "usb_charge.h"
+
+#include <stdint.h>
+#include <string.h>
+
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 
 /* Expecting at least one port */
 BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) >= 1);
@@ -36,7 +37,7 @@ static int check_gpio_status_for_port(int port_id)
 	return gpio_get_level(usb_port_enable[port_id]);
 }
 
-ZTEST(usb_port_power_dumb, console_command__noargs)
+ZTEST(usb_port_power_dumb, test_console_command__noargs)
 {
 	const char *outbuffer;
 	size_t buffer_size;
@@ -53,7 +54,7 @@ ZTEST(usb_port_power_dumb, console_command__noargs)
 	zassert_false(check_gpio_status_for_port(PORT_ID), NULL);
 }
 
-ZTEST(usb_port_power_dumb, console_command__modify_port_status)
+ZTEST(usb_port_power_dumb, test_console_command__modify_port_status)
 {
 	const char *outbuffer;
 	size_t buffer_size;
@@ -72,7 +73,7 @@ ZTEST(usb_port_power_dumb, console_command__modify_port_status)
 	zassert_true(check_gpio_status_for_port(PORT_ID), NULL);
 }
 
-ZTEST(usb_port_power_dumb, console_command__invalid)
+ZTEST(usb_port_power_dumb, test_console_command__invalid)
 {
 	/* Various bad input */
 	zassert_ok(!shell_execute_cmd(get_ec_shell(), "usbchargemode NaN"),
@@ -87,7 +88,7 @@ ZTEST(usb_port_power_dumb, console_command__invalid)
 		NULL);
 }
 
-ZTEST(usb_port_power_dumb, host_command__enable)
+ZTEST(usb_port_power_dumb, test_host_command__enable)
 {
 	int ret;
 	struct ec_params_usb_charge_set_mode params = {
@@ -95,15 +96,13 @@ ZTEST(usb_port_power_dumb, host_command__enable)
 		.usb_port_id = PORT_ID,
 	};
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_USB_CHARGE_SET_MODE, 0, params);
-	ret = host_command_process(&args);
+	ret = ec_cmd_usb_charge_set_mode(NULL, &params);
 
 	zassert_ok(ret, "Host command returned %d", ret);
 	zassert_true(check_gpio_status_for_port(PORT_ID), NULL);
 }
 
-ZTEST(usb_port_power_dumb, host_command__invalid_port_id)
+ZTEST(usb_port_power_dumb, test_host_command__invalid_port_id)
 {
 	int ret;
 	struct ec_params_usb_charge_set_mode params = {
@@ -112,15 +111,13 @@ ZTEST(usb_port_power_dumb, host_command__invalid_port_id)
 		.usb_port_id = UINT8_MAX,
 	};
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_USB_CHARGE_SET_MODE, 0, params);
-	ret = host_command_process(&args);
+	ret = ec_cmd_usb_charge_set_mode(NULL, &params);
 
 	zassert_equal(EC_RES_ERROR, ret, "Host command returned %d", ret);
 	zassert_false(check_gpio_status_for_port(PORT_ID), NULL);
 }
 
-ZTEST(usb_port_power_dumb, host_command__invalid_mode)
+ZTEST(usb_port_power_dumb, test_host_command__invalid_mode)
 {
 	int ret;
 	struct ec_params_usb_charge_set_mode params = {
@@ -128,9 +125,7 @@ ZTEST(usb_port_power_dumb, host_command__invalid_mode)
 		.usb_port_id = PORT_ID,
 	};
 
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_PARAMS(
-		EC_CMD_USB_CHARGE_SET_MODE, 0, params);
-	ret = host_command_process(&args);
+	ret = ec_cmd_usb_charge_set_mode(NULL, &params);
 
 	zassert_equal(EC_RES_ERROR, ret, "Host command returned %d", ret);
 	zassert_false(check_gpio_status_for_port(PORT_ID), NULL);

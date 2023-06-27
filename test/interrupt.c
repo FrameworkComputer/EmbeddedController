@@ -4,14 +4,14 @@
  *
  * Test interrupt support of EC emulator.
  */
-#include <stdio.h>
-
 #include "common.h"
 #include "console.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
 #include "util.h"
+
+#include <stdio.h>
 
 static int main_count;
 static int has_error;

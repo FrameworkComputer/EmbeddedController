@@ -3,22 +3,21 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/gpio.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-
 #include "common.h"
 #include "ec_tasks.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "tcpm/tcpci.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/tcpci_test_common.h"
-
-#include "tcpm/tcpci.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 #define TCPCI_EMUL_NODE DT_NODELABEL(tcpci_emul)
 
@@ -103,6 +102,16 @@ ZTEST(tcpci, test_generic_tcpci_set_rx_detect)
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
 	test_tcpci_set_rx_detect(emul, common_data, USBC_PORT_C0);
+}
+
+/** Test TCPCI get vbus voltage */
+ZTEST(tcpci, test_generic_tcpci_get_vbus_voltage)
+{
+	const struct emul *emul = EMUL_DT_GET(TCPCI_EMUL_NODE);
+	struct i2c_common_emul_data *common_data =
+		emul_tcpci_generic_get_i2c_common_data(emul);
+
+	test_tcpci_get_vbus_voltage(emul, common_data, USBC_PORT_C0);
 }
 
 /** Test TCPCI get raw message from TCPC revision 2.0 */
@@ -201,6 +210,11 @@ ZTEST(tcpci, test_generic_tcpci_get_chip_info)
 		emul_tcpci_generic_get_i2c_common_data(emul);
 
 	test_tcpci_get_chip_info(emul, common_data, USBC_PORT_C0);
+
+	zassert_equal(EC_ERROR_INVAL,
+		      tcpci_get_chip_info(board_get_usb_pd_port_count(), false,
+					  NULL),
+		      "get_chip_info should return INVAL for an invalid port");
 }
 
 /** Test TCPCI enter low power mode */
@@ -330,10 +344,10 @@ ZTEST(tcpci, test_generic_tcpci_mux_init)
 			   TCPC_REG_POWER_STATUS_UNINIT);
 	zassert_equal(EC_ERROR_TIMEOUT, tcpci_tcpm_mux_init(tcpci_usb_mux),
 		      NULL);
+	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS, 0);
 
 	/* Set default power status for rest of the test */
-	tcpci_emul_set_reg(emul, TCPC_REG_POWER_STATUS,
-			   TCPC_REG_POWER_STATUS_VBUS_DET);
+	zassert_ok(tcpci_emul_set_vbus_level(emul, VBUS_REMOVED));
 
 	/* Test fail on alert mask write fail */
 	i2c_common_emul_set_write_fail_reg(common_data, TCPC_REG_ALERT_MASK);

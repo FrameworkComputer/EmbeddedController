@@ -16,12 +16,13 @@
 #include "power.h"
 #include "power_button.h"
 #include "pwm.h"
-#include "system.h"
 #include "switch.h"
+#include "system.h"
+#include "system_chip.h"
 #include "tablet_mode.h"
 #include "task.h"
-#include "system_chip.h"
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 static uint8_t is_psl_hibernate;

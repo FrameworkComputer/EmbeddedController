@@ -21,6 +21,8 @@
 #define CBI_IMAGE_SIZE               \
 	(sizeof(struct cbi_header) + \
 	 (2 * (sizeof(struct cbi_data) + sizeof(uint32_t))))
+#elif defined(CONFIG_CBI_FLASH)
+#define CBI_IMAGE_SIZE DT_PROP(DT_NODELABEL(cbi_flash), size)
 #else
 #define CBI_IMAGE_SIZE 256
 #endif
@@ -60,7 +62,8 @@ enum cbi_cache_status {
 
 enum cbi_storage_type {
 	CBI_STORAGE_TYPE_EEPROM = 0,
-	CBI_STORAGE_TYPE_GPIO = 1
+	CBI_STORAGE_TYPE_GPIO = 1,
+	CBI_STORAGE_TYPE_FLASH = 2,
 };
 
 /*

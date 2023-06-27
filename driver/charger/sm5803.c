@@ -7,15 +7,15 @@
 #include "atomic.h"
 #include "battery.h"
 #include "battery_smart.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "sm5803.h"
-#include "system.h"
 #include "stdbool.h"
+#include "system.h"
 #include "throttle_ap.h"
 #include "timer.h"
 #include "usb_charge.h"
@@ -44,7 +44,7 @@
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
 #define UNKNOWN_DEV_ID -1
-static int dev_id = UNKNOWN_DEV_ID;
+test_export_static int dev_id = UNKNOWN_DEV_ID;
 
 static const struct charger_info sm5803_charger_info = {
 	.name = CHARGER_NAME,
@@ -87,6 +87,18 @@ static int attempt_bfet_enable;
  * has connected.
  */
 static bool fast_charge_disabled;
+
+#ifdef TEST_BUILD
+void test_sm5803_set_fast_charge_disabled(bool value)
+{
+	fast_charge_disabled = value;
+}
+
+bool test_sm5803_get_fast_charge_disabled(void)
+{
+	return fast_charge_disabled;
+}
+#endif
 
 #define CHARGING_FAILURE_MAX_COUNT 5
 #define CHARGING_FAILURE_INTERVAL MINUTE
@@ -435,7 +447,7 @@ enum ec_error_list sm5803_vbus_sink_enable(int chgnum, int enable)
  * Track and store whether we've initialized the charger chips already on this
  * boot.  This should prevent us from re-running inits after sysjumps.
  */
-static bool chip_inited[CHARGER_NUM];
+test_export_static bool chip_inited[CHARGER_NUM];
 #define SM5803_SYSJUMP_TAG 0x534D /* SM */
 #define SM5803_HOOK_VERSION 1
 
@@ -712,7 +724,7 @@ static void sm5803_init(int chgnum)
 	rv |= chg_write8(chgnum, SM5803_REG_DPM_VL_SET_LSB, (reg & 0x7));
 
 	/* Set default input current */
-	reg = SM5803_CURRENT_TO_REG(CONFIG_CHARGER_INPUT_CURRENT) &
+	reg = SM5803_CURRENT_TO_REG(CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT) &
 	      SM5803_CHG_ILIM_RAW;
 	rv |= chg_write8(chgnum, SM5803_REG_CHG_ILIM, reg);
 
@@ -734,14 +746,12 @@ static void sm5803_init(int chgnum)
 			  SM5803_TINT_MIN_LEVEL);
 
 	/*
-	 * Configure VBAT_SNSP high interrupt to fire after thresholds are set.
+	 * Configure VBAT_SNSP high and TINT interrupts to fire after
+	 * thresholds are set.
 	 */
 	rv |= main_read8(chgnum, SM5803_REG_INT2_EN, &reg);
-	reg |= SM5803_INT2_VBATSNSP;
+	reg |= SM5803_INT2_VBATSNSP | SM5803_INT2_TINT;
 	rv |= main_write8(chgnum, SM5803_REG_INT2_EN, reg);
-
-	/* Configure TINT interrupts to fire after thresholds are set */
-	rv |= main_write8(chgnum, SM5803_REG_INT2_EN, SM5803_INT2_TINT);
 
 	/*
 	 * Configure CHG_ENABLE to only be set through I2C by setting
@@ -1029,19 +1039,27 @@ void sm5803_disable_low_power_mode(int chgnum)
 		return;
 	}
 	/* Enable Psys DAC */
-	rv |= meas_read8(chgnum, SM5803_REG_PSYS1, &reg);
+	rv = meas_read8(chgnum, SM5803_REG_PSYS1, &reg);
+	if (rv) {
+		goto err;
+	}
 	reg |= SM5803_PSYS1_DAC_EN;
-	rv |= meas_write8(chgnum, SM5803_REG_PSYS1, reg);
+	rv = meas_write8(chgnum, SM5803_REG_PSYS1, reg);
 
 	/* Enable PROCHOT comparators except Ibus */
 	rv |= chg_read8(chgnum, SM5803_REG_PHOT1, &reg);
+	if (rv) {
+		goto err;
+	}
 	reg |= SM5803_PHOT1_COMPARATOR_EN;
 	reg &= ~SM5803_PHOT1_IBUS_PHOT_COMP_EN;
 	rv |= chg_write8(chgnum, SM5803_REG_PHOT1, reg);
 
-	if (rv)
+err:
+	if (rv) {
 		CPRINTS("%s %d: Failed to set in disable low power mode",
 			CHARGER_NAME, chgnum);
+	}
 }
 
 void sm5803_enable_low_power_mode(int chgnum)
@@ -1057,7 +1075,10 @@ void sm5803_enable_low_power_mode(int chgnum)
 		return;
 	}
 	/* Disable Psys DAC */
-	rv |= meas_read8(chgnum, SM5803_REG_PSYS1, &reg);
+	rv = meas_read8(chgnum, SM5803_REG_PSYS1, &reg);
+	if (rv) {
+		goto err;
+	}
 	reg &= ~SM5803_PSYS1_DAC_EN;
 	rv |= meas_write8(chgnum, SM5803_REG_PSYS1, reg);
 
@@ -1068,14 +1089,19 @@ void sm5803_enable_low_power_mode(int chgnum)
 	 * called after Vbus has turned on.
 	 */
 	rv |= chg_read8(chgnum, SM5803_REG_PHOT1, &reg);
+	if (rv) {
+		goto err;
+	}
 	reg &= ~SM5803_PHOT1_COMPARATOR_EN;
 	if (pd_is_connected(chgnum))
 		reg |= SM5803_PHOT1_VBUS_MON_EN;
 	rv |= chg_write8(chgnum, SM5803_REG_PHOT1, reg);
 
-	if (rv)
+err:
+	if (rv) {
 		CPRINTS("%s %d: Failed to set in enable low power mode",
 			CHARGER_NAME, chgnum);
+	}
 }
 
 /*
@@ -1233,8 +1259,7 @@ void sm5803_handle_interrupt(int chgnum)
 				 0xFF);
 
 		/* Disable battery charge */
-		rv |= sm5803_flow1_update(chgnum, CHARGER_MODE_DISABLED,
-					  MASK_CLR);
+		rv |= sm5803_flow1_update(chgnum, SM5803_FLOW1_MODE, MASK_CLR);
 		if (is_platform_id_2s(platform_id)) {
 			/* 2S battery: set VBAT_SENSP TH 9V */
 			rv |= meas_write8(CHARGER_PRIMARY,
@@ -1815,7 +1840,7 @@ static enum ec_error_list sm5803_set_otg_current_voltage(int chgnum,
 		   SM5803_DISCH_CONF5_CLS_LIMIT);
 	rv |= chg_write8(chgnum, SM5803_REG_DISCH_CONF5, reg);
 
-	reg = SM5803_VOLTAGE_TO_REG(output_voltage);
+	reg = MAX(SM5803_VOLTAGE_TO_REG(output_voltage), 0);
 	rv = chg_write8(chgnum, SM5803_REG_VPWR_MSB, (reg >> 3));
 	rv |= chg_write8(chgnum, SM5803_REG_DISCH_CONF2,
 			 reg & SM5803_DISCH_CONF5_VPWR_LSB);
@@ -1943,7 +1968,7 @@ static enum ec_error_list sm5803_set_vsys_compensation(int chgnum,
 	/* Set IR drop compensation */
 	r = ocpc->combined_rsys_rbatt_mo * 100 / 167; /* 1.67mOhm steps */
 	r = MAX(0, r);
-	rv = chg_write8(chgnum, SM5803_REG_IR_COMP2, r & 0x7F);
+	rv = chg_write8(chgnum, SM5803_REG_IR_COMP2, r & 0xFF);
 	rv |= chg_read8(chgnum, SM5803_REG_IR_COMP1, &regval);
 	regval &= ~SM5803_IR_COMP_RES_SET_MSB;
 	r = r >> 8; /* Bits 9:8 */

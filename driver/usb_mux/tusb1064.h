@@ -6,8 +6,9 @@
 #ifndef __CROS_EC_TUSB1064_H
 #define __CROS_EC_TUSB1064_H
 
-#include <stdint.h>
 #include "usb_mux.h"
+
+#include <stdint.h>
 
 /*
  * TUSB1064 Has 16 possible device addresses which are selected by A1|A0 lines
@@ -149,4 +150,6 @@ void tusb1044_hpd_update(const struct usb_mux *me, mux_state_t mux_state,
  */
 int tusb1064_set_dp_rx_eq(const struct usb_mux *me, int db);
 
+int tusb1064_set_mux(const struct usb_mux *me, mux_state_t mux_state,
+		     bool *ack_required);
 #endif /* __CROS_EC_TUSB1064_H */

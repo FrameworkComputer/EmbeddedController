@@ -122,25 +122,6 @@ static inline void keyboard_scan_enable(int enable,
 }
 #endif
 
-#ifdef CONFIG_KEYBOARD_SUPPRESS_NOISE
-/**
- * Indicate to audio codec that a key has been pressed.
- *
- * Boards may supply this function to suppress audio noise.
- */
-void keyboard_suppress_noise(void);
-#endif
-
-#ifdef CONFIG_KEYBOARD_LANGUAGE_ID
-/**
- * Get the KEYBOARD ID for a keyboard
- *
- * @return A value that identifies keyboard variants. Its meaning and
- * the number of bits actually used is the supported keyboard layout.
- */
-int keyboard_get_keyboard_id(void);
-#endif
-
 #ifdef CONFIG_KEYBOARD_RUNTIME_KEYS
 void set_vol_up_key(uint8_t row, uint8_t col);
 #else
@@ -204,6 +185,11 @@ __test_only void keyboard_scan_set_print_state_changes(int val);
  * @return int non-zero if enabled, zero otherwise.
  */
 int keyboard_scan_is_enabled(void);
+
+/**
+ * @brief Reset key debouncing logic
+ */
+void test_keyboard_scan_debounce_reset(void);
 #endif /* TEST_BUILD */
 
 #endif /* __CROS_EC_KEYBOARD_SCAN_H */

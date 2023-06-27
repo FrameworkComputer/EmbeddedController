@@ -5,22 +5,23 @@
 
 /* Functions needed by Serial Host Interface module for Chrome EC */
 
-#include <zephyr/device.h>
-#include <zephyr/dt-bindings/clock/npcx_clock.h>
-#include <zephyr/logging/log.h>
-#include <soc.h>
-#include <zephyr/kernel.h>
-
-#include <ap_power/ap_power.h>
 #include "chipset.h"
 #include "drivers/cros_shi.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "system.h"
 
+#include <zephyr/device.h>
+#include <zephyr/dt-bindings/clock/npcx_clock.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+
+#include <ap_power/ap_power.h>
+#include <soc.h>
+
 LOG_MODULE_REGISTER(shim_cros_shi, LOG_LEVEL_DBG);
 
-#define SHI_NODE DT_NODELABEL(shi)
+#define SHI_NODE DT_NODELABEL(shi0)
 
 static void shi_enable(void)
 {

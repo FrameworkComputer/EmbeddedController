@@ -77,7 +77,7 @@ static int ps8740_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 	*ack_required = false;
 
 	/* This driver treats safe mode as none */
-	if (mux_state == USB_PD_MUX_SAFE_MODE)
+	if (mux_state & USB_PD_MUX_SAFE_MODE)
 		mux_state = USB_PD_MUX_NONE;
 
 	if (mux_state & USB_PD_MUX_USB_ENABLED)

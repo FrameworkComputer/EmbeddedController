@@ -68,12 +68,12 @@ static void board_led_set_battery(void)
 
 	battery_ticks++;
 
-	switch (charge_get_state()) {
-	case PWR_STATE_CHARGE:
+	switch (led_pwr_get_state()) {
+	case LED_PWRS_CHARGE:
 		/* Always indicate amber on when charging. */
 		color = LED_RED;
 		break;
-	case PWR_STATE_DISCHARGE:
+	case LED_PWRS_DISCHARGE:
 		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
 			/* Discharging in S3: Red 1 sec, off 3 sec */
 			period = (1 + 3) * LED_ONE_SEC;
@@ -90,7 +90,7 @@ static void board_led_set_battery(void)
 			color = LED_BLUE;
 		}
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		/* Battery error: Red 1 sec, off 1 sec */
 		period = (1 + 1) * LED_ONE_SEC;
 		battery_ticks = battery_ticks % period;
@@ -99,14 +99,14 @@ static void board_led_set_battery(void)
 		else
 			color = LED_OFF;
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
+	case LED_PWRS_CHARGE_NEAR_FULL:
 		/* Full Charged: Blue on */
 		color = LED_BLUE;
 		break;
-	case PWR_STATE_IDLE: /* External power connected in IDLE */
+	case LED_PWRS_IDLE: /* External power connected in IDLE */
 		color = LED_BLUE;
 		break;
-	case PWR_STATE_FORCED_IDLE:
+	case LED_PWRS_FORCED_IDLE:
 		/* Factory mode: Blue 2 sec, Red 2 sec */
 		period = (2 + 2) * LED_ONE_SEC;
 		battery_ticks = battery_ticks % period;

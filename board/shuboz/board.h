@@ -10,8 +10,9 @@
 
 #define VARIANT_ZORK_DALBOZ
 
-#include <stdbool.h>
 #include "baseboard.h"
+
+#include <stdbool.h>
 
 #define CONFIG_USBC_PPC_NX20P3483
 #define CONFIG_USB_MUX_PS8740

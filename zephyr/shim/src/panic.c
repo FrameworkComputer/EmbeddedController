@@ -3,14 +3,16 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/arch/cpu.h>
-#include <zephyr/fatal.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/logging/log_ctrl.h>
-#include <zephyr/kernel.h>
-
+#include "builtin/assert.h"
 #include "common.h"
 #include "panic.h"
+#include "system_safe_mode.h"
+
+#include <zephyr/arch/cpu.h>
+#include <zephyr/fatal.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/logging/log_ctrl.h>
 
 /*
  * Arch-specific configuration
@@ -66,7 +68,7 @@
  * Not all registers are passed in the context from Zephyr
  * (see include/zephyr/arch/riscv/exp.h), in particular
  * the mcause register is not saved (mstatus is saved instead).
- * The assignments must match util/ec_panicinfo.c
+ * The assignments must match include/panic_defs.h
  */
 #define PANIC_ARCH PANIC_ARCH_RISCV_RV32I
 #define PANIC_REG_LIST(M)         \
@@ -131,6 +133,7 @@ static void copy_esf_to_panic_data(const z_arch_esf_t *esf,
 
 void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *esf)
 {
+	struct panic_data *pdata = get_panic_data_write();
 	/*
 	 * If CONFIG_LOG is on, the exception details
 	 * have already been logged to the console.
@@ -140,19 +143,34 @@ void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *esf)
 	}
 
 	if (PANIC_ARCH && esf) {
-		copy_esf_to_panic_data(esf, get_panic_data_write());
+		copy_esf_to_panic_data(esf, pdata);
 		if (!IS_ENABLED(CONFIG_LOG)) {
 			panic_data_print(panic_get_data());
 		}
 	}
 
 	LOG_PANIC();
+
+	/* Start system safe mode if possible */
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_SYSTEM_SAFE_MODE)) {
+		if (reason != K_ERR_KERNEL_PANIC &&
+		    start_system_safe_mode() == EC_SUCCESS) {
+			/* Returning from k_sys_fatal_error_handler will cause
+			 * the faulting thread to be aborted and resume the
+			 * kernel
+			 */
+			pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_STARTED;
+			return;
+		}
+		pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_FAIL_PRECONDITIONS;
+	}
+
 	/*
 	 * Reboot immediately, don't wait for watchdog, otherwise
 	 * the watchdog will overwrite this panic.
 	 */
 	panic_reboot();
-	CODE_UNREACHABLE;
+	__ASSERT_UNREACHABLE;
 }
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)

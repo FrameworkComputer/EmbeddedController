@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <stdint.h>
-
-#include "console.h"
 #include "common.h"
+#include "console.h"
 #include "cros_board_info.h"
 #include "hooks.h"
+
+#include <stdint.h>
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)

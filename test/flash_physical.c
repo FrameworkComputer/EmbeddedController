@@ -112,7 +112,7 @@ test_static int test_disable_flash_control_register(void)
 
 test_static int test_flash_config(void)
 {
-	TEST_EQ(PHYSICAL_BANKS, flash_info.num_flash_banks, "%d");
+	TEST_EQ(crec_flash_total_banks(), flash_info.num_flash_banks, "%d");
 	TEST_EQ(WP_BANK_OFFSET, flash_info.write_protect_bank_offset, "%d");
 	TEST_EQ(WP_BANK_COUNT, flash_info.write_protect_bank_count, "%d");
 	return EC_SUCCESS;

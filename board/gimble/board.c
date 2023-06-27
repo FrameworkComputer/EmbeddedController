@@ -6,25 +6,24 @@
 #include "battery.h"
 #include "button.h"
 #include "charge_ramp.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
-#include "driver/charger/bq25710.h"
-#include "gpio.h"
-#include "gpio_signal.h"
-#include "hooks.h"
 #include "driver/accel_bma2x2_public.h"
 #include "driver/accel_bma422.h"
 #include "driver/accelgyro_bmi160.h"
 #include "driver/accelgyro_lsm6dsm.h"
+#include "driver/charger/bq25710.h"
 #include "fw_config.h"
+#include "gpio.h"
+#include "gpio_signal.h"
 #include "hooks.h"
 #include "keyboard_8042_sharedlib.h"
 #include "lid_switch.h"
-#include "power_button.h"
 #include "power.h"
+#include "power_button.h"
 #include "ps8xxx.h"
 #include "registers.h"
 #include "switch.h"
@@ -32,7 +31,8 @@
 #include "throttle_ap.h"
 #include "usbc_config.h"
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
@@ -184,17 +184,4 @@ __overridable void board_ps8xxx_tcpc_init(int port)
 		       PS8815_REG_RX_EQ_AT_5G, 0x44))
 		CPRINTS("ps8815: fail to write reg 0x%02x",
 			PS8815_REG_RX_EQ_AT_5G);
-}
-
-__override void board_set_charge_limit(int port, int supplier, int charge_ma,
-				       int max_ma, int charge_mv)
-{
-	/*
-	 * Follow OEM request to limit the input current to
-	 * 90% negotiated limit.
-	 */
-	charge_ma = charge_ma * 90 / 100;
-
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
 }

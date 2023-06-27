@@ -4,10 +4,8 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-/dts-v1/;
-
 #include <cros/binman.dtsi>
-#include <nuvoton/npcx.dtsi>
+#include <nuvoton/npcx/npcx.dtsi>
 
 / {
 	chosen {
@@ -81,22 +79,13 @@
 			clocks = <&pcc NPCX_CLOCK_BUS_APB1 NPCX_PWDWN_CTL1 0>;
 			wui_maps = <&wui_io31 &wui_io30 &wui_io27 &wui_io26
 				    &wui_io25 &wui_io24 &wui_io23 &wui_io22>;
+			status = "disabled";
 		};
 
 		mtc: mtc@400b7000 {
 			compatible = "nuvoton,npcx-cros-mtc";
 			reg = <0x400b7000 0x2000>;
 			mtc-alarm = <&wui_mtc>;
-		};
-
-		shi: shi@4000f000 {
-			compatible = "nuvoton,npcx-cros-shi";
-			reg = <0x4000f000 0x120>;
-			interrupts = <18 1>;
-			clocks = <&pcc NPCX_CLOCK_BUS_APB3 NPCX_PWDWN_CTL5 1>;
-			shi-cs-wui =<&wui_io53>;
-			label = "SHI";
-			status = "disabled";
 		};
 	};
 
@@ -127,4 +116,8 @@
 
 &mdc {
 	status = "okay";
+};
+
+&shi0 {
+	shi-cs-wui =<&wui_io53>;
 };

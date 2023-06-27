@@ -3,20 +3,20 @@
 # found in the LICENSE file.
 
 description:
-    Possible CBI SSFC field values.
-    It has to be defined as grandchild on the "cros-ec,cbi-ssfc"
+  Possible CBI SSFC field values.
+  It has to be defined as grandchild on the "cros-ec,cbi-ssfc"
 
 compatible: "cros-ec,cbi-ssfc-value"
 
 properties:
-    value:
-        type: int
-        required: true
-        description:
-          Unique value of CBI SSFC field
-    default:
-        type: boolean
-        description:
-          Indicates that the specified value is default for the parent
-          CBI SSFC field node. It should appear only once for the CBI SSFC
-          definition.
+  value:
+    type: int
+    required: true
+    description:
+      Unique value of CBI SSFC field
+  default:
+    type: boolean
+    description:
+      Indicates that the specified value is default for the parent
+      CBI SSFC field node. It should appear only once for the CBI SSFC
+      definition.

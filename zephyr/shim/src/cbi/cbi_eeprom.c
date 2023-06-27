@@ -3,12 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/eeprom.h>
-#include <zephyr/drivers/gpio.h>
-
 #include "console.h"
 #include "cros_board_info.h"
 #include "write_protect.h"
+
+#include <zephyr/drivers/eeprom.h>
+#include <zephyr/drivers/gpio.h>
 
 #define CBI_EEPROM_NODE DT_NODELABEL(cbi_eeprom)
 
@@ -45,7 +45,12 @@ static int eeprom_is_write_protected(void)
 		return 0;
 	}
 
+#ifdef CONFIG_PLATFORM_EC_EEPROM_CBI_WP
+	return gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_cbi_wp));
+#else
+	/* GSC controlled write protect */
 	return write_protect_is_asserted();
+#endif
 }
 
 static int eeprom_store(uint8_t *cbi)

@@ -5,13 +5,14 @@
  * Test motion sense code.
  */
 
-#include <math.h>
-#include <stdio.h>
 #include "common.h"
 #include "math_util.h"
 #include "motion_sense.h"
 #include "test_util.h"
 #include "util.h"
+
+#include <math.h>
+#include <stdio.h>
 
 /*****************************************************************************/
 /*

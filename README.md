@@ -175,7 +175,7 @@ Building directly from the EC repository:
 
 ```bash
 cros_sdk
-cd ~/trunk/src/platform/ec
+cd ~/chromiumos/src/platform/ec
 make -j BOARD=<boardname>
 ```
 
@@ -294,7 +294,7 @@ and turn on other developer-friendly flags (note that write protect must be
 disabled for this to work):
 
 ```bash
-# /usr/share/vboot/bin/set_gbb_flags.sh 0x239
+# futility gbb --set --flash --flags=0x239
 ```
 
 ```bash
@@ -308,6 +308,13 @@ This turns on the following flags:
 *   `GBB_FLAG_FORCE_DEV_BOOT_USB`
 *   `GBB_FLAG_DISABLE_FW_ROLLBACK_CHECK`
 *   `GBB_FLAG_DISABLE_EC_SOFTWARE_SYNC`
+
+
+Alternatively, if the OS cannot be accessed, the same flag can be set over a servo with:
+
+```bash
+$ sudo futility gbb -s --flags=0x239 --servo
+```
 
 The `GBB` (Google Binary Block) flags are defined in the
 [vboot_reference source](https://chromium.googlesource.com/chromiumos/platform/vboot_reference/+/main/firmware/2lib/include/2struct.h).
@@ -509,7 +516,7 @@ Prior to uploading a new change for review, please run the EC unit tests with:
 
 These commands will build and run unit tests in an emulator on your host.
 
-Pre-submit checks are run when you try to upload a change-list. If you wish to
+Pre-upload checks are run when you try to upload a change-list. If you wish to
 run these checks manually first, commit your change locally then run the
 following command from within the chroot and while in the `src/platform/ec`
 directory:
@@ -518,14 +525,16 @@ directory:
 (chroot) $ ~/trunk/src/repohooks/pre-upload.py
 ```
 
-The pre-submit checks include checking the commit message. Commit messages must
-have a `BUG`, `BRANCH`, and `TEST` line along with `Signed-off-by: First Last
-<name@company.com>`. The signed-off-by line is a statement that you have written
-this code and it can be contributed under the terms of the `LICENSE` file.
+The pre-upload checks include checking the commit message.  Commit messages must
+have a `BUG` and `TEST`.  You may also optionally include a `BRANCH` line with a
+list of board names for which the CL should be cherry-picked back to old
+branches for.
 
 Please refer to existing commits (`git log`) to see the proper format for the
-commit message. If you have configured git properly, running `git commit` with
-the `-s` argument will add the Signed-off-by line for you.
+commit message.
+
+Note that code you submit must adhere to the [ChromeOS EC Firmware Test
+Requirements].
 
 ## Debugging
 
@@ -677,3 +686,5 @@ cat /tmp/artifact_bundle_metadata
 cat /tmp/metrics_build
 ls -l /tmp/artifact_bundles/
 ```
+
+[ChromeOS EC Firmware Test Requirements]: ./docs/chromeos-ec-firmware-test-requirements.md

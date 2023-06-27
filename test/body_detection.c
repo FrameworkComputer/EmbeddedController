@@ -19,10 +19,9 @@ static const int window_size = 50; /* sensor data rate (Hz) */
 
 static int filler(const struct motion_sensor_t *s, const float v)
 {
-	int resolution = s->drv->get_resolution(s);
-	int data_1g = BIT(resolution - 1) / s->current_range;
+	int data_1g = MOTION_SCALING_FACTOR / s->current_range;
 
-	return (int)(v * data_1g / 9.8);
+	return (int)(v * data_1g / MOTION_ONE_G);
 }
 
 static void feed_body_detect_data(const struct body_detect_test_data *array,

@@ -10,8 +10,8 @@
 #include "driver/ln9310.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "util.h"
 #include "timer.h"
+#include "util.h"
 
 #define CPUTS(outstr) cputs(CC_I2C, outstr)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ##args)

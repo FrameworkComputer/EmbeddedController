@@ -13,10 +13,10 @@
 #ifndef _GPIO_CHIP_H
 #define _GPIO_CHIP_H
 
-#include <stdint.h>
-#include <stddef.h>
-
 #include "gpio.h"
+
+#include <stddef.h>
+#include <stdint.h>
 
 #ifdef __cplusplus
 extern "C" {

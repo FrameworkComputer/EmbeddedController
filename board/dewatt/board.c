@@ -14,13 +14,13 @@
 #include "charger.h"
 #include "common.h"
 #include "cros_board_info.h"
-#include "driver/accelgyro_bmi_common.h"
-#include "driver/accelgyro_bmi260.h"
 #include "driver/accel_bma422.h"
+#include "driver/accelgyro_bmi260.h"
+#include "driver/accelgyro_bmi_common.h"
 #include "driver/retimer/ps8811.h"
 #include "driver/retimer/ps8818_public.h"
-#include "driver/temp_sensor/sb_tsi.h"
 #include "driver/temp_sensor/pct2075.h"
+#include "driver/temp_sensor/sb_tsi.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -32,12 +32,13 @@
 #include "switch.h"
 #include "tablet_mode.h"
 #include "temp_sensor.h"
-#include "temp_sensor/thermistor.h"
 #include "temp_sensor/pct2075.h"
+#include "temp_sensor/thermistor.h"
 #include "thermal.h"
 #include "usb_mux.h"
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /* Motion sensor mutex */
 static struct mutex g_lid_mutex;

@@ -3,17 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/emul.h>
-#include <zephyr/kernel.h>
-#include <zephyr/ztest_assert.h>
-#include <zephyr/drivers/i2c_emul.h>
-
 #include "driver/ln9310.h"
-#include "emul/emul_ln9310.h"
 #include "emul/emul_common_i2c.h"
-#include "timer.h"
+#include "emul/emul_ln9310.h"
 #include "test/drivers/test_state.h"
+#include "timer.h"
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/i2c_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 
 /*
  * TODO(b/201420132): Implement approach for tests to immediately schedule work

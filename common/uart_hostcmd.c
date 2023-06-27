@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "config.h"
 #include "common.h"
+#include "config.h"
 #include "ec_commands.h"
 #include "host_command.h"
 #include "uart.h"

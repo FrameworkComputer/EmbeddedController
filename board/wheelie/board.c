@@ -8,17 +8,17 @@
 #include "adc_chip.h"
 #include "button.h"
 #include "charge_manager.h"
-#include "charge_state_v2.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "driver/accel_lis2dh.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/sm5803.h"
-#include "driver/sync.h"
 #include "driver/retimer/tusb544.h"
-#include "driver/temp_sensor/thermistor.h"
+#include "driver/sync.h"
 #include "driver/tcpm/anx7447.h"
 #include "driver/tcpm/it83xx_pd.h"
+#include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/it5205.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -227,18 +227,6 @@ uint16_t tcpc_get_alert_status(void)
 	}
 
 	return status;
-}
-
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
-{
-	int icl = MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT);
-
-	/*
-	 * TODO(b/151955431): Characterize the input current limit in case a
-	 * scaling needs to be applied here
-	 */
-	charge_set_input_current_limit(icl, charge_mv);
 }
 
 int board_set_active_charge_port(int port)

@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/drivers/gpio.h>
-
 #include "common.h"
 #include "config.h"
 #include "console.h"
@@ -13,8 +11,10 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "power/qcom.h"
-#include "system.h"
 #include "sku.h"
+#include "system.h"
+
+#include <zephyr/drivers/gpio.h>
 
 #define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_I2C, format, ##args)
@@ -28,14 +28,22 @@ const struct ln9310_config_t ln9310_config = {
 static void switchcap_init(void)
 {
 	if (board_has_da9313()) {
+		const struct gpio_dt_spec *da9313_gpio =
+			GPIO_DT_FROM_NODELABEL(gpio_da9313_gpio0);
+		gpio_flags_t flags = da9313_gpio->dt_flags;
+
 		CPRINTS("Use switchcap: DA9313");
 
 		/*
 		 * When the chip in power down mode, it outputs high-Z.
-		 * Set pull-down to avoid floating.
+		 * Set pull-down to avoid floating.  Also use the
+		 * gpio_pin_configure() routine here so we can clear
+		 * the active low flag. gpio_pin_configure_dt() only allows
+		 * setting additional flags.
 		 */
-		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_da9313_gpio0),
-				      GPIO_INPUT | GPIO_PULL_DOWN);
+		flags &= ~GPIO_ACTIVE_LOW;
+		flags |= GPIO_INPUT | GPIO_PULL_DOWN;
+		gpio_pin_configure(da9313_gpio->port, da9313_gpio->pin, flags);
 
 		/*
 		 * Configure DA9313 enable, push-pull output. Don't set the

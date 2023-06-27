@@ -7,19 +7,19 @@
 
 #include "builtin/assert.h"
 #include "common.h"
+#include "ec_commands.h"
 #include "gpio.h"
 #include "gpio_chip.h"
-#include "i2c.h"
 #include "hooks.h"
+#include "host_command.h"
+#include "hwtimer_chip.h"
+#include "i2c.h"
 #include "registers.h"
+#include "system.h"
+#include "system_chip.h"
 #include "task.h"
 #include "timer.h"
 #include "util.h"
-#include "system.h"
-#include "system_chip.h"
-#include "ec_commands.h"
-#include "host_command.h"
-#include "hwtimer_chip.h"
 
 #if !(DEBUG_GPIO)
 #define CPUTS(...)

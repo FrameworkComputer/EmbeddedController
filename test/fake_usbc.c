@@ -5,9 +5,9 @@
  * Test USB Type-C module.
  */
 #include "common.h"
-#include "usb_tc_sm.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usb_tc_sm.h"
 
 __overridable int pd_is_vbus_present(int port)
 {
@@ -270,11 +270,11 @@ const char *pd_get_task_state_name(int port)
 }
 #endif /* CONFIG_USB_DRP_ACC_TRYSRC */
 
-void dp_init(int port)
+void dfp_consume_attention(int port, uint32_t *payload)
 {
 }
 
-void dp_vdm_acked(int port, int cmd)
+void pd_prepare_sysjump(void)
 {
 }
 
@@ -292,7 +292,7 @@ void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 }
 
 void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
-		   uint8_t vdm_cmd)
+		   uint8_t vdm_cmd, uint32_t vdm_header)
 {
 }
 
@@ -301,6 +301,10 @@ void dpm_set_mode_entry_done(int port)
 }
 
 void dpm_set_mode_exit_request(int port)
+{
+}
+
+void dpm_notify_attention(int port, size_t vdo_objects, uint32_t *buf)
 {
 }
 

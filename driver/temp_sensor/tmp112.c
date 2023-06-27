@@ -7,8 +7,8 @@
 
 #include "common.h"
 #include "console.h"
-#include "i2c.h"
 #include "hooks.h"
+#include "i2c.h"
 #include "math_util.h"
 #include "temp_sensor/tmp112.h"
 #include "util.h"

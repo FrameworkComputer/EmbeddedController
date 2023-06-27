@@ -61,6 +61,7 @@ static void gauge_interrupt(enum gpio_signal signal)
 static void motion_interrupt(enum gpio_signal signal);
 #endif /* SECTION_IS_RW */
 
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 /******************************************************************************/
@@ -206,7 +207,7 @@ int board_set_active_charge_port(int charge_port)
 		gpio_set_level(GPIO_EN_POGO_CHARGE_L, 0);
 		break;
 #endif
-	case CHARGE_PORT_NONE:
+	default:
 		/*
 		 * To ensure the fuel gauge (max17055) is always powered
 		 * even when battery is disconnected, keep VBAT rail on but
@@ -215,9 +216,6 @@ int board_set_active_charge_port(int charge_port)
 		gpio_set_level(GPIO_EN_POGO_CHARGE_L, 1);
 		gpio_set_level(GPIO_EN_USBC_CHARGE_L, 1);
 		charger_set_current(CHARGER_SOLO, 0);
-		break;
-	default:
-		panic("Invalid charge port\n");
 		break;
 	}
 

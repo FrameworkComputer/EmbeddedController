@@ -14,10 +14,10 @@
 #error "This fake trng driver must not be used in non-test builds."
 #endif
 
+#include "common.h"
+
 #include <stdint.h>
 #include <stdlib.h> /* Only valid for host */
-
-#include "common.h"
 
 static unsigned int seed;
 
@@ -29,6 +29,11 @@ test_mockable void trng_init(void)
 
 test_mockable void trng_exit(void)
 {
+}
+
+test_mockable uint32_t trng_rand(void)
+{
+	return (uint32_t)rand_r(&seed);
 }
 
 test_mockable void trng_rand_bytes(void *buffer, size_t len)

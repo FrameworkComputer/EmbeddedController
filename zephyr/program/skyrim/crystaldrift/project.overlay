@@ -1,0 +1,240 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Skyrim program common DTS includes */
+#include "../adc.dtsi"
+#include "../fan.dtsi"
+#include "../gpio.dtsi"
+#include "../i2c.dtsi"
+#include "../interrupts.dtsi"
+#include "../keyboard.dtsi"
+#include "../usbc.dtsi"
+
+/* Crystaldrift project DTS includes*/
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+#include "motionsense.dtsi"
+
+/* Crystaldrift overrides follow... */
+/ {
+	/* battery overrides */
+	batteries {
+		default_battery: bms-gf_cr50 {
+			compatible = "bms-gf,cr50", "battery-smart";
+		};
+		gfl_mfp-549358 {
+			compatible = "gfl,mfp-549358", "battery-smart";
+		};
+	};
+
+	named-gpios {
+		/* Crystaldrift-specific GPIO customizations */
+		gpio_ec_chg_led_r: ec_chg_led_r {
+			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_chg_led_b: ec_chg_led_b {
+			gpios = <&gpio8 0 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_usbhub_en: ec_usbhub_en {
+			gpios = <&gpio4 5 GPIO_OUTPUT_HIGH>;
+		};
+	};
+
+	gpio-interrupts {
+		int_lid_accel: lid_accel {
+			irq-pin = <&gpio_lid_accel_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bma4xx_interrupt";
+		};
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		soc-pct2075 {
+			temp_host_high = <100>;
+			temp_host_halt = <105>;
+			temp_host_release_high = <80>;
+			temp_host_release_halt = <80>;
+			temp_fan_off = <35>;
+			temp_fan_max = <70>;
+			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&soc_pct2075>;
+		};
+		amb-pct2075 {
+			power-good-pin = <&gpio_pg_pwr_s5>;
+			sensor = <&amb_pct2075>;
+		};
+	};
+	fan_steps: fan-step {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp_on = <(-1) (-1) 38 (-1) (-1)>;
+			temp_off = <(-1) (-1) 39 (-1) (-1)>;
+			rpm_target = <0>;
+		};
+		level_1 {
+			temp_on = <(-1) (-1) 45 (-1) (-1)>;
+			temp_off = <(-1) (-1) 47 (-1) (-1)>;
+			rpm_target = <3400>;
+		};
+		level_2 {
+			temp_on = <(-1) (-1) 52 (-1) (-1)>;
+			temp_off = <(-1) (-1) 56 (-1) (-1)>;
+			rpm_target = <3800>;
+		};
+		level_3 {
+			temp_on = <(-1) (-1) 61 (-1) (-1)>;
+			temp_off = <(-1) (-1) 68 (-1) (-1)>;
+			rpm_target = <4200>;
+		};
+		level_4 {
+			temp_on = <(-1) (-1) 70 (-1) (-1)>;
+			temp_off = <(-1) (-1) 73 (-1) (-1)>;
+			rpm_target = <4500>;
+		};
+		level_5 {
+			temp_on = <(-1) (-1) 76 (-1) (-1)>;
+			temp_off = <(-1) (-1) 74 (-1) (-1)>;
+			rpm_target = <4800>;
+		};
+	};
+
+	/*
+	 * Note this is expected to vary per-board, so we keep it in the overlay
+	 * file.
+	 */
+	crystaldrift-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		form-factor {
+			enum-name = "FW_FORM_FACTOR";
+			start = <0>;
+			size = <1>;
+
+			ff-clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FF_CLAMSHELL";
+				value = <0>;
+			};
+			ff-convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FF_CONVERTIBLE";
+				value = <1>;
+				default;
+			};
+		};
+		io-db {
+			enum-name = "FW_IO_DB";
+			start = <6>;
+			size = <2>;
+
+			io-db-ps8811-ps8818 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_IO_DB_PS8811_PS8818";
+				value = <0>;
+			};
+			io-db-none-anx7483 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_IO_DB_NONE_ANX7483";
+				value = <1>;
+				default;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to enable fan or not.
+		 */
+		fan {
+			enum-name = "FW_FAN";
+			start = <10>;
+			size = <1>;
+
+			no-fan {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_NOT_PRESENT";
+				value = <0>;
+			};
+			fan-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_PRESENT";
+				value = <1>;
+				/*
+				 * Set as default so that unprovisioned
+				 * configs will run the fan regardless.
+				 */
+				default;
+			};
+		};
+
+	};
+
+	/* Rotation matrices for motion sensors. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <0 (-1) 0
+				 1 0 0
+				 0 0 1>;
+		};
+
+		lid_rot_ref1: lid-rotation-ref1 {
+			mat33 = <0 1 0
+				 (-1) 0 0
+				 0 0 1>;
+		};
+
+		base_rot_ref: base-rotation-ref {
+			mat33 = <0 1 0
+				 (-1) 0 0
+				 0 0 1>;
+		};
+	};
+};
+
+/* i2c overrides */
+&i2c0_0 {
+	/delete-node/ anx7483@3e;
+};
+&i2c4_1 {
+	/delete-node/ isl9241@9;
+	/delete-node/ isl9538@9;
+	charger: isl9238@9 {
+		compatible = "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
+
+/* usbc overrides */
+&usbc_port0 {
+	/delete-property/ chg_alt;
+};
+&amd_fp6_port0 {
+	board-set = "board_c0_amd_fp6_mux_set";
+};
+/* usbc overrides */
+&usbc_port0 {
+	usb-mux-chain-0 {
+		usb-muxes = <&amd_fp6_port0>;
+	};
+};
+/* fan overrides */
+&fan0 {
+	pwms = <&pwm0 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+	rpm_min = <2500>;
+	rpm_start = <2500>;
+	rpm_max = <4800>;
+};
+
+&temp_sensor_cpu {
+	temp_host_warn = <90>;
+	temp_host_high = <102>;
+	temp_host_halt = <104>;
+	temp_host_release_warn = <87>;
+	temp_host_release_high = <92>;
+	temp_host_release_halt = <94>;
+	temp_fan_off = <38>;
+	temp_fan_max = <76>;
+};

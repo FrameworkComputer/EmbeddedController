@@ -22,6 +22,11 @@ config PLATFORM_EC_MKBP_USE_HOST_EVENT
     help
       Select to send MKBP events via host event.
 
+config PLATFORM_EC_MKBP_USE_HECI
+    bool "Use HECI"
+    help
+      Select to send MKBP events via HECI.
+
 config PLATFORM_EC_MKBP_USE_GPIO_AND_HOST_EVENT
     bool "Use GPIO and host event"
     help
@@ -45,5 +50,12 @@ config PLATFORM_EC_MKBP_USE_CUSTOM
       to be sent. for more about the function, refer to mkbp_event.h.
 
 endchoice
+
+config PLATFORM_EC_MKBP_USE_GPIO_ACTIVE_HIGH
+    bool "EC_SOC_INT active high"
+    default n
+    depends on PLATFORM_EC_MKBP_USE_GPIO
+    help
+      Select if HW invert the SOC_INT signal on EC side.
 
 endif # PLATFORM_EC_MKBP_EVENT

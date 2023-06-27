@@ -10,15 +10,15 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
+#include "driver/nvidia_gpu.h"
+#include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "hooks.h"
-#include "fw_config.h"
-#include "hooks.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
-#include "power_button.h"
 #include "power.h"
+#include "power_button.h"
 #include "registers.h"
 #include "switch.h"
 #include "system.h"
@@ -26,9 +26,8 @@
 #include "usbc_config.h"
 #include "util.h"
 
-#include "driver/nvidia_gpu.h"
-
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
@@ -37,8 +36,11 @@
 static int block_sequence;
 
 struct d_notify_policy d_notify_policies[] = {
-	AC_ATLEAST_W(100),  AC_ATLEAST_W(65),  AC_DC,
-	DC_ATLEAST_SOC(20), DC_ATLEAST_SOC(5),
+	[D_NOTIFY_1] = AC_ATLEAST_W(100),
+	[D_NOTIFY_2] = AC_ATLEAST_W(65),
+	[D_NOTIFY_3] = AC_DC,
+	[D_NOTIFY_4] = DC_ATMOST_SOC(20),
+	[D_NOTIFY_5] = DC_ATMOST_SOC(5),
 };
 BUILD_ASSERT(ARRAY_SIZE(d_notify_policies) == D_NOTIFY_COUNT);
 

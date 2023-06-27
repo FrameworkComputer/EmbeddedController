@@ -223,6 +223,27 @@ static void rt1715_alert(int port)
 	tcpci_tcpc_alert(port);
 }
 
+#ifdef CONFIG_CMD_TCPC_DUMP
+static const struct tcpc_reg_dump_map rt1715_regs[] = {
+	{
+		.addr = RT1715_REG_RT_INT,
+		.name = "RT_INT",
+		.size = 1,
+	},
+	{
+		.addr = RT1715_REG_RT_MASK,
+		.name = "RT_MASK",
+		.size = 1,
+	},
+};
+
+static void rt1715_dump_registers(int port)
+{
+	tcpc_dump_std_registers(port);
+	tcpc_dump_registers(port, rt1715_regs, ARRAY_SIZE(rt1715_regs));
+}
+#endif /* defined(CONFIG_CMD_TCPC_DUMP) */
+
 const struct tcpm_drv rt1715_tcpm_drv = {
 	.init = &rt1715_tcpci_tcpm_init,
 	.release = &tcpci_tcpm_release,
@@ -258,4 +279,7 @@ const struct tcpm_drv rt1715_tcpm_drv = {
 #endif
 	.set_bist_test_mode = &tcpci_set_bist_test_mode,
 	.get_bist_test_mode = &tcpci_get_bist_test_mode,
+#ifdef CONFIG_CMD_TCPC_DUMP
+	.dump_registers = &rt1715_dump_registers,
+#endif
 };

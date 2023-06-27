@@ -3,12 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-#include <zephyr/drivers/emul.h>
 #include "driver/accel_lis2dw12.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_lis2dw12.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/drivers/emul.h>
+#include <zephyr/ztest.h>
 
 #define LIS2DW12_NODELABEL DT_NODELABEL(ms_lis2dw12_accel)
 #define LIS2DW12_SENSOR_ID SENSOR_ID(LIS2DW12_NODELABEL)
@@ -336,14 +337,14 @@ ZTEST(lis2dw12, test_lis2dw12_set_rate)
 			test_params[i].expected_reg_val, odr_bits,
 			LIS2DW12_ODR_MAX_VAL);
 
-		/* Check if high performance mode was enabled if rate >
-		 * 200,000mHz
+		/* Check if high performance mode was enabled if rate >=
+		 * 50,000mHz
 		 */
 
 		uint8_t mode_bits = lis2dw12_emul_peek_mode(emul);
 		uint8_t lpmode_bits = lis2dw12_emul_peek_lpmode(emul);
 
-		if (odr_bits > LIS2DW12_ODR_200HZ_VAL) {
+		if (odr_bits >= LIS2DW12_ODR_50HZ_VAL) {
 			/* High performance mode, LP mode immaterial */
 			zassert_equal(mode_bits, LIS2DW12_HIGH_PERF,
 				      "MODE[1:0] should be 0x%x, but got 0x%x",

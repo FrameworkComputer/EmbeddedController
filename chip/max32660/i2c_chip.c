@@ -5,18 +5,19 @@
 
 /* MAX32660 I2C port module for Chrome EC. */
 
-#include <stdint.h>
-#include <stddef.h>
 #include "common.h"
 #include "config_chip.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "i2c_regs.h"
+#include "registers.h"
 #include "stdbool.h"
 #include "system.h"
 #include "task.h"
-#include "registers.h"
-#include "i2c_regs.h"
+
+#include <stddef.h>
+#include <stdint.h>
 
 /**
  * Byte to use if the EC HOST requested more data
@@ -131,7 +132,7 @@ struct i2c_req {
 	uint8_t addr_match_flag;
 	const uint8_t *tx_data;
 	uint8_t *rx_data;
-	volatile unsigned received_count;
+	volatile unsigned int received_count;
 	volatile int tx_remain;
 	volatile i2c_target_state_t state;
 	volatile int restart;

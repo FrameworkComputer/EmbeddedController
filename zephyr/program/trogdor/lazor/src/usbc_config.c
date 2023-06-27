@@ -7,23 +7,23 @@
 
 #include "battery_fuel_gauge.h"
 #include "bc12/pi3usb9201_public.h"
-#include "charger.h"
-#include "charger/isl923x_public.h"
 #include "charge_manager.h"
 #include "charge_state.h"
+#include "charger.h"
+#include "charger/isl923x_public.h"
 #include "common.h"
 #include "config.h"
 #include "driver/ln9310.h"
-#include "gpio_signal.h"
 #include "gpio/gpio_int.h"
+#include "gpio_signal.h"
 #include "hooks.h"
 #include "ppc/sn5s330_public.h"
 #include "system.h"
 #include "tcpm/ps8xxx_public.h"
 #include "tcpm/tcpci.h"
 #include "timer.h"
-#include "usb_pd.h"
 #include "usb_mux.h"
+#include "usb_pd.h"
 #include "usbc_ocp.h"
 #include "usbc_ppc.h"
 
@@ -111,25 +111,6 @@ void board_connect_c0_sbu(enum gpio_signal s)
 	hook_call_deferred(&board_connect_c0_sbu_deferred_data, 0);
 }
 
-/* GPIO Interrupt Handlers */
-void tcpc_alert_event(enum gpio_signal signal)
-{
-	int port = -1;
-
-	switch (signal) {
-	case GPIO_USB_C0_PD_INT_ODL:
-		port = 0;
-		break;
-	case GPIO_USB_C1_PD_INT_ODL:
-		port = 1;
-		break;
-	default:
-		return;
-	}
-
-	schedule_deferred_pd_interrupt(port);
-}
-
 /*
  * Port-0/1 USB mux driver.
  *
@@ -195,10 +176,6 @@ void board_tcpc_init(void)
 	/* Enable PPC interrupts */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_swctl));
 
-	/* Enable TCPC interrupts */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_tcpc));
-
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see
 	 * HPD pulse to enable video path
@@ -214,11 +191,11 @@ void board_reset_pd_mcu(void)
 	cprints(CC_USB, "Resetting TCPCs...");
 	cflush();
 
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l), 0);
+	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 1);
+	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 1);
 	msleep(PS8XXX_RESET_DELAY_MS);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l), 1);
+	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 0);
+	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 0);
 }
 
 void board_set_tcpc_power_mode(int port, int mode)
@@ -301,8 +278,8 @@ int board_set_active_charge_port(int port)
 	return EC_SUCCESS;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
-			    int charge_mv)
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
 {
 	/*
 	 * Ignore lower charge ceiling on PD transition if our battery is
@@ -314,22 +291,5 @@ void board_set_charge_limit(int port, int supplier, int charge_ma, int max_ma,
 		charge_ma = max_ma;
 	}
 
-	charge_set_input_current_limit(
-		MAX(charge_ma, CONFIG_CHARGER_INPUT_CURRENT), charge_mv);
-}
-
-uint16_t tcpc_get_alert_status(void)
-{
-	uint16_t status = 0;
-
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_int_odl)))
-		if (gpio_pin_get_dt(
-			    GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_rst_l)))
-			status |= PD_STATUS_TCPC_ALERT_0;
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_pd_int_odl)))
-		if (gpio_pin_get_dt(
-			    GPIO_DT_FROM_NODELABEL(gpio_usb_c1_pd_rst_l)))
-			status |= PD_STATUS_TCPC_ALERT_1;
-
-	return status;
+	charge_set_input_current_limit(charge_ma, charge_mv);
 }

@@ -9,10 +9,10 @@
  */
 
 #include "accelgyro.h"
+#include "accelgyro_bmi260.h"
+#include "accelgyro_bmi_common.h"
 #include "builtin/assert.h"
 #include "console.h"
-#include "accelgyro_bmi_common.h"
-#include "accelgyro_bmi260.h"
 #include "hwtimer.h"
 #include "i2c.h"
 #include "init_rom.h"

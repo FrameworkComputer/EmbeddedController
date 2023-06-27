@@ -9,7 +9,8 @@
 #include "gpio.h"
 #include "hooks.h"
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 static void board_init(void)
 {

@@ -3,10 +3,11 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
+#include "hwtimer.h"
+
 #include <stdint.h>
 
-#include "hwtimer.h"
+#include <zephyr/kernel.h>
 
 uint64_t __hw_clock_source_read64(void)
 {
@@ -22,7 +23,7 @@ uint32_t __hw_clock_event_get(void)
 	return 0;
 }
 
-void udelay(unsigned us)
+void udelay(unsigned int us)
 {
 	k_busy_wait(us);
 }

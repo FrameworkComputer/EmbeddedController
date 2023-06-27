@@ -1,0 +1,39 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&binman {
+	wp-ro {
+		ec-ro {
+			key-ro {
+				type = "blob";
+				offset = <(0x40000 - 4096 - 1024)>;
+				size = <1024>;
+				filename = "../build-rw/key.vbpubk2";
+			};
+		};
+	};
+
+	ec-rw {
+		rw-fw {
+			/* rwsig module doesn't allow extra contents after
+			 * zephyr-rw.
+			 * Remove rw-fwid since it's only used in FAFT.
+			 */
+			/delete-node/ rw-fwid;
+
+			sig-rw {
+				type = "blob";
+				offset = <(0x40000 - 1024)>;
+				size = <1024>;
+				filename = "../build-rw/ec.sig";
+			};
+
+			/* rwsig assumes the padding bytes between zephyr-rw and
+			 * sig-rw are filled with 0xff.
+			 */
+			pad-byte = <0xff>;
+		};
+	};
+};

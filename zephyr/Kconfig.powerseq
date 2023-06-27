@@ -24,6 +24,13 @@ config PLATFORM_EC_POWERSEQ_S0IX
 	  option, Intel's low-power idle sleep state, also known as
 	  "modern sleep".
 
+config PLATFORM_EC_POWERSEQ_CPU_PROCHOT_ACTIVE_LOW
+	bool "The CPU_PROCHOT signal is an active low signal"
+	default y
+	help
+	  If CPU_PROCHOT should be treated as active-low, enable this
+	  configuration option.
+
 config PLATFORM_EC_POWERSEQ_HOST_SLEEP
 	bool "Track host sleep states"
 	help
@@ -40,6 +47,15 @@ config PLATFORM_EC_POWER_SLEEP_FAILURE_DETECTION
 
 	  Failure information is reported via the EC_CMD_HOST_SLEEP_EVENT host
 	  command.
+
+config PLATFORM_EC_POWERSEQ_S0IX_COUNTER
+	bool "Enable S0ix counter"
+	depends on PLATFORM_EC_POWERSEQ_S0IX
+	depends on PLATFORM_EC_POWERSEQ_HOST_SLEEP
+	default y
+	help
+	  Enables counter which increases at every transitions to S0ix state.
+	  Counter can be read via host command.
 
 config PLATFORM_EC_HOSTCMD_AP_RESET
 	bool "Host command: EC_CMD_AP_RESET"
@@ -114,13 +130,6 @@ menuconfig PLATFORM_EC_POWERSEQ_INTEL
 	  Intel.
 
 if PLATFORM_EC_POWERSEQ_INTEL
-
-config PLATFORM_EC_POWERSEQ_CPU_PROCHOT_ACTIVE_LOW
-	bool "The CPU_PROCHOT signal is an active low signal"
-	default y
-	help
-	  If CPU_PROCHOT should be treated as active-low, enable this
-	  configuration option.
 
 config PLATFORM_EC_POWERSEQ_CPU_PROCHOT_GATE_ON_C10
 	bool "Gate PROCHOT detection based on the AP C10 state"
@@ -225,6 +234,14 @@ config PLATFORM_EC_POWERSEQ_MT8186
 	depends on AP_ARM_MTK_MT8186
 	help
 	  Use the MT8186 code for power sequencing.
+
+config PLATFORM_EC_POWERSEQ_MT8188
+	bool "Use common MT8188 code for power sequencing"
+	default y
+	depends on AP_ARM_MTK_MT8188
+	help
+	  Use the MT8188 code for power sequencing. Re-use MT8186 common
+	  code.
 
 config PLATFORM_EC_POWERSEQ_SC7180
 	bool "SC7180 power sequencing"

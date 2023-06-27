@@ -9,6 +9,7 @@
 	common-pwrseq {
 		compatible = "intel,ap-pwrseq";
 		s5-inactivity-timeout = <1>;
+		all-sys-pwrgd-timeout = <50>;
 	};
 
 	en_pp5000: pwr-en-pp5000-s5 {
@@ -126,10 +127,30 @@
 		dbg-label = "PP3300 PWROK";
 		enum-name = "PWR_DSW_PWROK";
 	};
+
+	adc0: adc {
+		compatible = "zephyr,adc-emul";
+		nchannels = <6>;
+		ref-internal-mv = <3300>;
+		#io-channel-cells = <1>;
+		status = "okay";
+	};
+	mock_cmp_high: mock-cmp-high {
+		compatible = "cros,vcmp-mock";
+		threshold-mv = <50>;
+		io-channels = <&adc0 0>;
+	};
+	mock_cmp_low: mock-cmp-low {
+		compatible = "cros,vcmp-mock";
+		threshold-mv = <100>;
+		io-channels = <&adc0 1>;
+	};
 	pwr-pp1p05-pwrok {
-		compatible = "intel,ap-pwrseq-external";
-		dbg-label = "PP1P05 PWROK";
+		compatible = "intel,ap-pwrseq-adc";
+		dbg-label = "PP1P05 PWROK (from ADC)";
 		enum-name = "PWR_PG_PP1P05";
+		trigger-high = <&mock_cmp_high>;
+		trigger-low = <&mock_cmp_low>;
 	};
 
 	en_pp3300_emul: en-pp3300-emul {
@@ -161,7 +182,8 @@
 		ec-dsw-pwrok-slp-sus-emul {
 			output-signal = <&slp_sus>;
 			assert-delay-ms = <20>;
-			init-value= <0>;
+			init-value= <1>;
+			invert-value;
 		};
 	};
 
@@ -184,12 +206,14 @@
 		ec-pch-rsmrst-slp-s3-emul {
 			output-signal = <&slp_s3>;
 			assert-delay-ms = <40>;
-			init-value= <0>;
+			init-value= <1>;
+			invert-value;
 		};
 		ec-pch-rsmrst-slp-s0-emul {
 			output-signal = <&slp_s0>;
 			assert-delay-ms = <45>;
-			init-value= <0>;
+			init-value= <1>;
+			invert-value;
 		};
 		ec-pch-rsmrst-all-sys-pwrgd {
 			output-signal = <&all_sys_pwrgd>;
@@ -213,6 +237,10 @@
 			assert-delay-ms = <50>;
 			invert-value;
 		};
+		pch-pwrok-slp-sus-emul {
+			output-signal = <&slp_sus>;
+			assert-delay-ms = <60>;
+		};
 	};
 
 	tp-sys-s0-power-fail {
@@ -225,10 +253,9 @@
 		input-signal = <&pch_pwrok>;
 		init-value = <0>;
 		edge = "EDGE_ACTIVE_ON_ASSERT";
-		pch-pwrok-dsw-pwrok-emul {
-			output-signal = <&dsw_pwrok>;
+		pch-pwrok-slp-sus-emul {
+			output-signal = <&slp_sus>;
 			assert-delay-ms = <70>;
-			invert-value;
 		};
 
 		pch_pwrok-rsmrst-emul {
@@ -250,13 +277,11 @@
 		pch-pwrok-slp-s3-emul {
 			output-signal = <&slp_s3>;
 			assert-delay-ms = <20>;
-			invert-value;
 		};
 
 		pch-pwrok-slp-s0-emul {
 			output-signal = <&slp_s0>;
 			assert-delay-ms = <15>;
-			invert-value;
 		};
 	};
 
@@ -266,4 +291,106 @@
 			      &ec_soc_dsw_pwrok_emul &ec_pch_rsmrst_emul
 			      &pch_pwrok_power_down_emul>;
 	};
+
+	tp-sys-s5-slp-sus-fail {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&en_pp3300_emul>;
+	};
+
+	ec_pch_rsmrst_s4_dsw_pwrok_fail_emul:
+			ec-pch-rsmrst-s4-dsw-pwrok-fail-emul {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&ec_pch_rsmrst>;
+		init-value = <0>;
+		ec-pch-rsmrst-slp-s5-emul {
+			output-signal = <&slp_s5>;
+			assert-delay-ms = <20>;
+			invert-value;
+			init-value= <1>;
+		};
+		ec-pch-rsmrst-slp-s4-emul {
+			output-signal = <&slp_s4>;
+			assert-delay-ms = <30>;
+			invert-value;
+			init-value= <1>;
+		};
+		pch-pwrok-dsw-pwrok-emul {
+			output-signal = <&dsw_pwrok>;
+			assert-delay-ms = <50>;
+			invert-value;
+		};
+	};
+
+	tp-sys-s4-dsw-pwrok-fail {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&en_pp3300_emul &en_pp5000_emul &ec_soc_dsw_pwrok_emul
+			     &ec_pch_rsmrst_s4_dsw_pwrok_fail_emul>;
+	};
+
+	ec_pch_rsmrst_s3_dsw_pwrok_fail_emul:
+			ec-pch-rsmrst-s3-dsw-pwrok-fail-emul {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&ec_pch_rsmrst>;
+		init-value = <0>;
+		ec-pch-rsmrst-slp-s5-emul {
+			output-signal = <&slp_s5>;
+			assert-delay-ms = <20>;
+			invert-value;
+			init-value= <1>;
+		};
+		ec-pch-rsmrst-slp-s4-emul {
+			output-signal = <&slp_s4>;
+			assert-delay-ms = <30>;
+			invert-value;
+			init-value= <1>;
+		};
+		ec-pch-rsmrst-slp-s3-emul {
+			output-signal = <&slp_s3>;
+			assert-delay-ms = <30>;
+			invert-value;
+			init-value= <1>;
+		};
+		pch-pwrok-dsw-pwrok-emul {
+			output-signal = <&dsw_pwrok>;
+			assert-delay-ms = <50>;
+			invert-value;
+		};
+	};
+
+	tp-sys-s3-dsw-pwrok-fail {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&en_pp3300_emul &en_pp5000_emul &ec_soc_dsw_pwrok_emul
+			     &ec_pch_rsmrst_s3_dsw_pwrok_fail_emul>;
+	};
+
+	pch_sleep: pch-sleep {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&pch_pwrok>;
+
+		slp-s0-suspend-emul {
+			output-signal = <&slp_s0>;
+			init-value=<1>;
+		};
+	};
+
+	tp-sys-sleep {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&pch_sleep>;
+	};
+
+	pch_wake: pch-wake {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&pch_pwrok>;
+
+		slp-s0-resume-emul {
+			output-signal = <&slp_s0>;
+			init-value=<0>;
+		};
+	};
+
+	tp-sys-wake {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&pch_wake>;
+	};
+
 };

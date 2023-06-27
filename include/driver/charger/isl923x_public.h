@@ -64,6 +64,12 @@ void raa489000_hibernate(int chgnum, bool disable_adc);
  */
 int raa489000_enable_asgate(int chgnum, bool enable);
 
+/**
+ * Check whether the comparator output needs to
+ * be inverted for the AC_PRESENT signal.
+ */
+void raa489000_check_ac_present(void);
+
 enum ec_error_list isl9238c_hibernate(int chgnum);
 enum ec_error_list isl9238c_resume(int chgnum);
 

@@ -10,8 +10,8 @@
 #include "accelgyro.h"
 #include "accelgyro_bmi160.h"
 #include "accelgyro_bmi260.h"
-#include "mag_bmm150.h"
 #include "accelgyro_bmi_common_public.h"
+#include "mag_bmm150.h"
 
 #if !defined(CONFIG_ACCELGYRO_BMI_COMM_SPI) && \
 	!defined(CONFIG_ACCELGYRO_BMI_COMM_I2C)

@@ -10,13 +10,13 @@
 #include "charge_state.h"
 #include "chipset.h"
 #include "ec_commands.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "led_common.h"
 #include "system.h"
 #include "util.h"
-#include "extpower.h"
 
 #define LED_ONE_SEC (1000 / HOOK_TICK_INTERVAL_MS)
 /* Battery LED blinks every per 400ms */
@@ -100,9 +100,9 @@ static void board_led_set_battery(void)
 
 	battery_ticks++;
 
-	switch (charge_get_state()) {
-	case PWR_STATE_CHARGE:
-	case PWR_STATE_CHARGE_NEAR_FULL:
+	switch (led_pwr_get_state()) {
+	case LED_PWRS_CHARGE:
+	case LED_PWRS_CHARGE_NEAR_FULL:
 		if (chipset_in_state(CHIPSET_STATE_ON |
 				     CHIPSET_STATE_ANY_SUSPEND |
 				     CHIPSET_STATE_ANY_OFF)) {
@@ -110,7 +110,7 @@ static void board_led_set_battery(void)
 				/* battery capa <= 5%, Red */
 				color = LED_RED;
 			} else if (percent > BATTERY_LEVEL_CRITICAL &&
-				   percent < BATTERY_LEVEL_NEAR_FULL) {
+				   percent < CONFIG_BATT_HOST_FULL_FACTOR) {
 				/* 5% < battery capa < 97%, Orange */
 				color = LED_AMBER;
 			} else {
@@ -119,10 +119,10 @@ static void board_led_set_battery(void)
 			}
 		}
 		break;
-	case PWR_STATE_DISCHARGE:
+	case LED_PWRS_DISCHARGE:
 		color = LED_OFF;
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		/* Battery error, Red on 1sec off 1sec */
 		period = (1 + 1) * LED_ONE_SEC;
 		battery_ticks = battery_ticks % period;
@@ -131,10 +131,10 @@ static void board_led_set_battery(void)
 		else
 			color = LED_OFF;
 		break;
-	case PWR_STATE_IDLE: /* External power connected in IDLE */
+	case LED_PWRS_IDLE: /* External power connected in IDLE */
 		color = LED_RED;
 		break;
-	case PWR_STATE_FORCED_IDLE:
+	case LED_PWRS_FORCED_IDLE:
 		/* Factory mode, Red 2 sec, green 2 sec */
 		period = (2 + 2) * LED_ONE_SEC;
 		battery_ticks = battery_ticks % period;
@@ -159,10 +159,10 @@ static void board_led_set_power(void)
 
 	power_ticks++;
 
-	switch (charge_get_state()) {
-	case PWR_STATE_CHARGE:
-	case PWR_STATE_CHARGE_NEAR_FULL:
-	case PWR_STATE_DISCHARGE:
+	switch (led_pwr_get_state()) {
+	case LED_PWRS_CHARGE:
+	case LED_PWRS_CHARGE_NEAR_FULL:
+	case LED_PWRS_DISCHARGE:
 		if (chipset_in_state(CHIPSET_STATE_ON)) {
 			/* S0, White (soild on) */
 			color = LED_WHITE;

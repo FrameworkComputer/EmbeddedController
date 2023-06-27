@@ -98,6 +98,14 @@ data_loop:
 	isb                 /* Reset pipeline */
 #endif /* CONFIG_DEBUG_DISABLE_WRITE_BUFFER */
 
+#if !defined(USE_BUILTIN_STDLIB)
+	/*
+	 * Constructors of global objects.
+	 * https://developer.arm.com/documentation/dui0475/c/the-arm-c-and-c---libraries/c---initialization--construction-and-destruction
+	 */
+	bl __libc_init_array
+#endif
+
 	/* Jump to C code */
 	bl main
 

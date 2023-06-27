@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_BASEBOARD_CBI_H
 #define __CROS_EC_BASEBOARD_CBI_H
 
+#include "common.h"
+
 unsigned char get_board_id(void);
 
 /**

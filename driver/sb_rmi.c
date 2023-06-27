@@ -5,8 +5,8 @@
 
 /* AMD SB-RMI (Side-band Remote Management Interface) Driver */
 
-#include "common.h"
 #include "chipset.h"
+#include "common.h"
 #include "console.h"
 #include "i2c.h"
 #include "sb_rmi.h"
@@ -91,6 +91,8 @@ int sb_rmi_mailbox_xfer(int cmd, uint32_t msg_in, uint32_t *msg_out_ptr)
 	int val;
 	bool alerted;
 	timestamp_t start;
+	const int ap_comm_failure_threshold = 2;
+	static int ap_comm_failure_count;
 
 	if (!chipset_in_state(CHIPSET_STATE_ON))
 		return EC_ERROR_NOT_POWERED;
@@ -140,15 +142,44 @@ int sb_rmi_mailbox_xfer(int cmd, uint32_t msg_in, uint32_t *msg_out_ptr)
 	} while (time_since32(start) < SB_RMI_MAILBOX_TIMEOUT_MS * MSEC);
 
 	if (!alerted) {
-		CPRINTS("SB-SMI: Mailbox transfer timeout");
+		/**
+		 * Don't spam the EC logs when the AP is hung. Instead, log the
+		 * first few failures, and then indicate the AP is likely hung.
+		 */
+		if (ap_comm_failure_count < ap_comm_failure_threshold) {
+			CPRINTS("SB-SMI: Mailbox transfer timeout");
+		} else if (ap_comm_failure_count == ap_comm_failure_threshold) {
+			CPRINTS("RMI: The AP is failing to respond despite "
+				"being powered on.");
+		}
+		++ap_comm_failure_count;
+
 		return EC_ERROR_TIMEOUT;
 	}
 
 	RETURN_ERROR(sb_rmi_read(SB_RMI_OUT_BND_MSG0_REG, &val));
 	if (val != cmd) {
-		CPRINTS("RMI: Unexpected command value in out bound message");
+		/**
+		 * Don't spam the EC logs when the AP is hung. Instead, log the
+		 * first few failures, and then indicate the AP is likely hung.
+		 */
+		if (ap_comm_failure_count < ap_comm_failure_threshold) {
+			CPRINTS("RMI: Unexpected command value in out bound "
+				"message");
+		} else if (ap_comm_failure_count == ap_comm_failure_threshold) {
+			CPRINTS("RMI: The AP is failing to respond despite "
+				"being powered on.");
+		}
+		++ap_comm_failure_count;
+
 		return EC_ERROR_UNKNOWN;
 	}
+
+	/**
+	 * This AP communication was successful.
+	 * Reset the count to log the next AP communication failure.
+	 */
+	ap_comm_failure_count = 0;
 
 	/* Step 8: read msgOut from {SBRMI_x34(MSB):SBRMI_x31(LSB)} */
 	*msg_out_ptr = 0;

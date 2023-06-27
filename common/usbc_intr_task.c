@@ -5,7 +5,11 @@
 
 /* High-priority interrupt tasks implementations */
 
-#include <stdint.h>
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
 
 #include "builtin/assert.h"
 #include "common.h"
@@ -17,6 +21,8 @@
 #include "timer.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+
+#include <stdint.h>
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)

@@ -8,8 +8,8 @@
 #ifndef __CROS_EC_ACCEL_KIONIX_H
 #define __CROS_EC_ACCEL_KIONIX_H
 
-#include "common.h"
 #include "accelgyro.h"
+#include "common.h"
 #include "driver/accel_kx022.h"
 #include "driver/accel_kxcj9.h"
 

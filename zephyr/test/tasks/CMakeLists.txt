@@ -9,6 +9,9 @@ project(tasks)
 # Include the local test directory for shimmed_test_tasks.h
 zephyr_include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 
-target_sources(app PRIVATE
+target_sources_ifdef(CONFIG_HAS_TEST_TASKS app PRIVATE
 	main.c
 	"${CMAKE_CURRENT_SOURCE_DIR}/../../shim/src/tasks.c")
+
+target_sources_ifdef(CONFIG_SHIMMED_TASKS app PRIVATE
+	extra_tasks.c)

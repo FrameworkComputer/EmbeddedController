@@ -5,8 +5,8 @@
 
 /* Base-32 encoding/decoding */
 
-#include "common.h"
 #include "base32.h"
+#include "common.h"
 #include "util.h"
 
 static const unsigned char crc5_table1[] = { 0x00, 0x0E, 0x1C, 0x12, 0x11, 0x1F,

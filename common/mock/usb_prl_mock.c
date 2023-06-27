@@ -4,16 +4,17 @@
  *
  * Mock Protocol Layer module.
  */
-#include <string.h>
 #include "common.h"
-#include "usb_emsg.h"
-#include "usb_pe_sm.h"
-#include "usb_prl_sm.h"
 #include "mock/usb_prl_mock.h"
 #include "task.h"
 #include "test_util.h"
 #include "timer.h"
+#include "usb_emsg.h"
 #include "usb_pd_tcpm.h"
+#include "usb_pe_sm.h"
+#include "usb_prl_sm.h"
+
+#include <string.h>
 
 #ifndef TEST_BUILD
 #error "Mocks should only be in the test build."
@@ -60,6 +61,10 @@ void prl_execute_hard_reset(int port)
 	mock_prl_port[port].last_ctrl_msg = 0;
 	mock_prl_port[port].last_data_msg = 0;
 	mock_prl_port[port].last_tx_type = TCPCI_MSG_TX_HARD_RESET;
+}
+
+void prl_set_data_role_check(int port, bool enable)
+{
 }
 
 enum pd_rev_type prl_get_rev(int port, enum tcpci_msg_type partner)

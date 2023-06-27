@@ -6,10 +6,10 @@
 #ifndef __HBM_H
 #define __HBM_H
 
-#include <stdint.h>
-#include <stddef.h>
-
 #include "heci_client.h"
+
+#include <stddef.h>
+#include <stdint.h>
 
 #define HBM_MAJOR_VERSION 1
 #ifdef HECI_ENABLE_DMA

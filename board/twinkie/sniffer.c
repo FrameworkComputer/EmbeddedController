@@ -9,8 +9,9 @@
 #include "console.h"
 #include "dma.h"
 #include "gpio.h"
-#include "hwtimer.h"
 #include "hooks.h"
+#include "hwtimer.h"
+#include "ina2xx.h"
 #include "injector.h"
 #include "link_defs.h"
 #include "registers.h"
@@ -19,7 +20,6 @@
 #include "usb_descriptor.h"
 #include "usb_hw.h"
 #include "util.h"
-#include "ina2xx.h"
 
 /* Size of one USB packet buffer */
 #define EP_BUF_SIZE 64

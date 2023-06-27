@@ -8,25 +8,26 @@
 /* remove when ftdi_usb_purge_buffers has been replaced to follow libftdi */
 #define _FTDI_DISABLE_DEPRECATED
 
+#include "compile_time_macros.h"
+#include "usb_if.h"
+
 #include <errno.h>
-#include <fcntl.h>
-#include <ftdi.h>
-#include <getopt.h>
-#include <linux/i2c-dev.h>
-#include <linux/i2c.h>
 #include <signal.h>
 #include <stdbool.h>
 #include <stdint.h>
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <sys/ioctl.h>
 #include <time.h>
-#include <unistd.h>
-#include <sys/wait.h>
 
-#include "compile_time_macros.h"
-#include "usb_if.h"
+#include <fcntl.h>
+#include <ftdi.h>
+#include <getopt.h>
+#include <linux/i2c-dev.h>
+#include <linux/i2c.h>
+#include <sys/ioctl.h>
+#include <sys/wait.h>
+#include <unistd.h>
 
 /* Default FTDI device : Servo v2. */
 #define SERVO_USB_VID 0x18d1

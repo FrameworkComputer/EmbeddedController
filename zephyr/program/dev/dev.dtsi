@@ -1,0 +1,150 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_posix.dts>
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_charger: charger {
+			enum-name = "ADC_TEMP_SENSOR_CHARGER";
+			io-channels = <&adc0 0>;
+		};
+	};
+
+	named-gpios {
+		ec_batt_pres_odl {
+			gpios = <&gpio0 28 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		gpio_usb_c0_bc12_int_l: usb_c0_bc12_int_l {
+			gpios = <&gpio0 10 GPIO_INPUT>;
+		};
+		gpio_usb_c0_ppc_int: usb_c0_ppc_int {
+			gpios = <&gpio0 14 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_acok_od: acok_od {
+			gpios = <&gpio0 0 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+		accel-0 {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_ACCEL",  "I2C_PORT_BATTERY";
+		};
+
+	};
+
+	adc0: adc {
+		compatible = "zephyr,adc-emul";
+		nchannels = <6>;
+		ref-internal-mv = <3300>;
+		#io-channel-cells = <1>;
+		status = "okay";
+	};
+
+	batteries {
+		default_battery: lgc_ac17a8m {
+			compatible = "lgc,ac17a8m", "battery-smart";
+			/**
+			 * this has to be strictly lower than the desired
+			 * voltage in smart battery emulator (5000mV).
+			 */
+			voltage_min = <4000>;
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_usb_c0_bc12: usb_c0_bc12 {
+			irq-pin = <&gpio_usb_c0_bc12_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb0_evt";
+		};
+		int_ac_present: ac_present {
+			irq-pin = <&gpio_acok_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			bc12 = <&pi3usb9201_emul0>;
+			chg = <&isl923x_emul>;
+			tcpc = <&tcpci_emul>;
+			ppc = <&sn5s330_emul>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&tcpci_mux_c0
+					     &virtual_mux_c0>;
+			};
+		};
+		port0-muxes {
+			tcpci_mux_c0: tcpci-mux-c0 {
+				compatible = "cros-ec,usbc-mux-tcpci";
+			};
+			virtual_mux_c0: virtual-mux-c0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};
+
+&i2c0 {
+	battery: sb@b {
+		compatible = "zephyr,smart-battery-emul";
+		reg = <0xb>;
+		cycle-count = <99>;
+		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
+		/* Real battery voltages are multiples of 4.4V. */
+		desired-charg-volt = <5000>;
+		desired-charg-cur = <1000>;
+		mf-name = "LGC";
+		dev-name = "AC17A8M";
+	};
+
+	bmi_i2c: bmi@68 {
+		compatible = "bosch,bmi160";
+		reg = <0x68>;
+	};
+
+	isl923x_emul: isl923x@9 {
+		compatible = "cros,isl923x-emul";
+		status = "okay";
+		reg = <0x9>;
+		battery = <&battery>;
+	};
+
+	pi3usb9201_emul0: pi3usb9201@5f {
+		compatible = "pericom,pi3usb9201";
+		reg = <0x5f>;
+		irq = <&int_usb_c0_bc12>;
+	};
+
+	sn5s330_emul: sn5s330@40 {
+		compatible = "cros,sn5s330-emul";
+		reg = <0x40>;
+		int-pin = <&gpio_usb_c0_ppc_int>;
+	};
+
+	tcpci_emul: tcpci_emul@2 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x2>;
+		irq-gpios = <&gpio0 9 GPIO_ACTIVE_LOW>;
+		rst-gpios = <&gpio0 11 GPIO_ACTIVE_LOW>;
+	};
+};

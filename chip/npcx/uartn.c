@@ -6,14 +6,15 @@
 
 /* UART module for Chrome EC */
 
-#include <clock.h>
 #include "common.h"
-#include <gpio.h>
-#include <gpio_chip.h>
 #include "registers.h"
 #include "system.h"
 #include "task.h"
 #include "util.h"
+
+#include <clock.h>
+#include <gpio.h>
+#include <gpio_chip.h>
 
 #ifdef NPCX_UART_FIFO_SUPPORT
 /* Enable UART Tx FIFO empty interrupt */

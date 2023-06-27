@@ -3,11 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <stdbool.h>
 #include "flash.h"
 #include "mpu.h"
 #include "string.h"
 #include "test_util.h"
+
+#include <stdbool.h>
 
 struct rollback_info {
 	int region_0_offset;
@@ -19,7 +20,7 @@ struct rollback_info {
  * config headers, so that if the headers are accidentally changed we can catch
  * it.
  */
-#if defined(CHIP_VARIANT_STM32F412)
+#if defined(CHIP_VARIANT_STM32F412) || defined(CHIP_VARIANT_NPCX9M8S)
 struct rollback_info rollback_info = {
 	.region_0_offset = 0x20000,
 	.region_1_offset = 0x40000,

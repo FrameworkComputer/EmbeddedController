@@ -3,15 +3,15 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/shell/shell_dummy.h>
-#include <zephyr/ztest.h>
-#include <zephyr/ztest_assert.h>
-
 #include "console.h"
 #include "test/drivers/test_state.h"
 #include "timer.h"
 #include "usbc_ppc.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/shell/shell_dummy.h>
+#include <zephyr/ztest.h>
+#include <zephyr/ztest_assert.h>
 
 /* Tests for USBC PPC Common Code */
 

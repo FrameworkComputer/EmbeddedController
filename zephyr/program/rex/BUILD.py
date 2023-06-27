@@ -2,44 +2,52 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""Rex Projects."""
+"""Define zmake projects for Rex."""
 
 
-def register_variant(
-    project_name, extra_dts_overlays=(), extra_kconfig_files=()
+def register_rex_project(
+    project_name,
+    kconfig_files=None,
 ):
-    """Register a variant of rex."""
+    """Register a variant of Rex."""
+    if kconfig_files is None:
+        kconfig_files = [
+            # Common to all projects.
+            here / "program.conf",
+            # Project-specific KConfig customization.
+            here / project_name / "project.conf",
+        ]
+
     register_npcx_project(
         project_name=project_name,
         zephyr_board="npcx9m7f",
         dts_overlays=[
-            # Common to all projects.
-            here / "rex.dts",
-            # Project-specific DTS customization.
-            *extra_dts_overlays,
+            here / project_name / "project.overlay",
         ],
-        kconfig_files=[
-            # Common to all projects.
-            here / "prj.conf",
-            # Project-specific KConfig customization.
-            *extra_kconfig_files,
-        ],
+        kconfig_files=kconfig_files,
+        inherited_from=["rex"],
     )
 
 
-register_variant(
+register_rex_project(
     project_name="rex",
-    extra_dts_overlays=[
-        here / "generated.dts",
-        here / "interrupts.dts",
-        here / "power_signals.dts",
-        here / "battery.dts",
-        here / "usbc.dts",
-        here / "keyboard.dts",
-        here / "led.dts",
-        here / "fan.dts",
-        here / "temp_sensors.dts",
-        here / "motionsense.dts",
+)
+
+register_rex_project(
+    project_name="rex-ish-ec",
+    kconfig_files=[
+        # Common to all projects.
+        here / "program.conf",
+        # Parent project's config
+        here / "rex" / "project.conf",
+        # Project-specific KConfig customization.
+        here / "rex-ish-ec" / "project.conf",
     ],
-    extra_kconfig_files=[here / "prj_rex.conf"],
+)
+
+register_rex_project(
+    project_name="screebo",
+)
+register_rex_project(
+    project_name="karis",
 )

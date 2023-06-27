@@ -3,16 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <flash.h>
-#include <zephyr/kernel.h>
-#include <zephyr/logging/log.h>
-#include <zephyr/drivers/flash.h>
-
 #include "console.h"
 #include "drivers/cros_flash.h"
 #include "registers.h"
 #include "task.h"
 #include "util.h"
+
+#include <zephyr/drivers/flash.h>
+#include <zephyr/kernel.h>
+#include <zephyr/logging/log.h>
+
+#include <flash.h>
 
 LOG_MODULE_REGISTER(shim_flash, LOG_LEVEL_ERR);
 
@@ -39,7 +40,8 @@ void crec_flash_lock_mapped_storage(int lock)
 }
 #endif
 
-int crec_flash_physical_write(int offset, int size, const char *data)
+test_mockable int crec_flash_physical_write(int offset, int size,
+					    const char *data)
 {
 	int rv;
 
@@ -111,7 +113,7 @@ int crec_flash_physical_protect_now(int all)
 	return cros_flash_physical_protect_now(cros_flash_dev, all);
 }
 
-int crec_flash_physical_read(int offset, int size, char *data)
+test_mockable int crec_flash_physical_read(int offset, int size, char *data)
 {
 	int rv;
 
@@ -129,10 +131,8 @@ int crec_flash_physical_read(int offset, int size, char *data)
 	return rv;
 }
 
-static int flash_dev_init(const struct device *unused)
+static int flash_dev_init(void)
 {
-	ARG_UNUSED(unused);
-
 	if (!device_is_ready(cros_flash_dev) ||
 	    !device_is_ready(flash_ctrl_dev))
 		k_oops();
@@ -165,6 +165,185 @@ uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 
 	return ret;
 }
+
+#if IS_ENABLED(CONFIG_PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT)
+int crec_flash_bank_size(int bank)
+{
+	int rv;
+	struct flash_pages_info info;
+
+	rv = flash_get_page_info_by_idx(flash_ctrl_dev, bank, &info);
+
+	if (rv)
+		return -1;
+
+	return info.size;
+}
+
+int crec_flash_bank_erase_size(int bank)
+{
+	return crec_flash_bank_size(bank);
+}
+
+int crec_flash_bank_index(int offset)
+{
+	int rv;
+	struct flash_pages_info info;
+
+	rv = flash_get_page_info_by_offs(flash_ctrl_dev, offset, &info);
+
+	if (rv)
+		return -1;
+
+	return info.index;
+}
+
+int crec_flash_bank_count(int offset, int size)
+{
+	int begin, end;
+
+	if (size < 1)
+		return -1;
+
+	begin = crec_flash_bank_index(offset);
+	end = crec_flash_bank_index(offset + size - 1);
+
+	if (begin < 0 || end < 0)
+		return -1;
+
+	return end - begin + 1;
+}
+
+int crec_flash_bank_start_offset(int bank)
+{
+	int rv;
+	struct flash_pages_info info;
+
+	rv = flash_get_page_info_by_idx(flash_ctrl_dev, bank, &info);
+
+	if (rv)
+		return -1;
+
+	return info.start_offset;
+}
+
+/*
+ * Flash_get_region() is used to get information about region which contains
+ * 'start_idx' sector. Information about region is saved in a ec_flash_bank
+ * structure. Function returns EC_RES_IN_PROGRESS if there are more regions.
+ * EC_RES_SUCCESS is returned if the region is the last one. EC_RES_ERROR is
+ * returned if there was an error.
+ *
+ * Please note that 'start_idx' should point to first sector of the region
+ * otherwise number of sectors in region will be wrong.
+ */
+static int flash_get_region(size_t start_idx, struct ec_flash_bank *region)
+{
+	struct flash_pages_info first, next;
+	size_t total_pages;
+	int rv;
+
+	total_pages = flash_get_page_count(flash_ctrl_dev);
+	rv = flash_get_page_info_by_idx(flash_ctrl_dev, start_idx, &first);
+	if (rv)
+		return EC_RES_ERROR;
+
+	/* Region has sectors with the same size, save these information now. */
+	region->count = 1;
+	region->size_exp = __fls(first.size);
+	region->write_size_exp = __fls(CONFIG_FLASH_WRITE_SIZE);
+	region->erase_size_exp = __fls(first.size);
+	region->protect_size_exp = __fls(first.size);
+
+	for (size_t i = start_idx + 1; i < total_pages; i++) {
+		rv = flash_get_page_info_by_idx(flash_ctrl_dev, i, &next);
+		if (rv)
+			return EC_RES_ERROR;
+
+		/*
+		 * If size of the next page is different than size of the first
+		 * page of this region then we know how many pages the region
+		 * has and this is not the last region.
+		 */
+		if (next.size != first.size)
+			return EC_RES_IN_PROGRESS;
+
+		region->count++;
+	}
+
+	return EC_RES_SUCCESS;
+}
+
+/*
+ * Both crec_flash_print_region_into() and crec_flash_response_fill_banks()
+ * could be easily implemented if we had an access to flash layout structure
+ * that aggregates pages with the same size in one entry ('compressed' form).
+ *
+ * Zephyr internally keeps flash layout in structure of this type, but using the
+ * flash API it's only possible to get information about single pages. Extending
+ * flash API encounters resistance from developers.
+ */
+void crec_flash_print_region_info(void)
+{
+	const struct flash_parameters *params;
+	struct ec_flash_bank region;
+	size_t sector_idx = 0;
+	int res;
+
+	params = flash_get_parameters(flash_ctrl_dev);
+	if (!params)
+		return;
+
+	cprintf(CC_COMMAND, "Regions:\n");
+	do {
+		res = flash_get_region(sector_idx, &region);
+		if (res != EC_RES_SUCCESS && res != EC_RES_IN_PROGRESS)
+			break;
+
+		cprintf(CC_COMMAND, " %d region%s:\n", region.count,
+			(region.count == 1 ? "" : "s"));
+		cprintf(CC_COMMAND, "  Erase:   %4d B (to %d-bits)\n",
+			1 << region.erase_size_exp,
+			params->erase_value ? 1 : 0);
+		cprintf(CC_COMMAND, "  Size/Protect: %4d B\n",
+			1 << region.size_exp);
+
+		sector_idx += region.count;
+	} while (res == EC_RES_IN_PROGRESS);
+}
+
+int crec_flash_response_fill_banks(struct ec_response_flash_info_2 *r,
+				   int num_banks)
+{
+	struct ec_flash_bank region;
+	size_t sector_idx = 0;
+	int banks_idx = 0;
+	int res;
+
+	do {
+		res = flash_get_region(sector_idx, &region);
+		if (res != EC_RES_SUCCESS && res != EC_RES_IN_PROGRESS)
+			break;
+
+		if (banks_idx < num_banks)
+			memcpy(&r->banks[banks_idx], &region,
+			       sizeof(struct ec_flash_bank));
+
+		sector_idx += region.count;
+		banks_idx++;
+	} while (res == EC_RES_IN_PROGRESS);
+
+	r->num_banks_desc = MIN(banks_idx, num_banks);
+	r->num_banks_total = banks_idx;
+
+	return res;
+}
+
+int crec_flash_total_banks(void)
+{
+	return flash_get_page_count(flash_ctrl_dev);
+}
+#endif /* CONFIG_PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT */
 
 #if IS_ENABLED(CONFIG_SHELL)
 static int command_flashchip(const struct shell *shell, size_t argc,
@@ -217,6 +396,11 @@ SHELL_CMD_REGISTER(flashchip, NULL, "Information about flash chip",
 	CONFIG_CROS_FLASH_MCHP_INIT_PRIORITY
 #error "CONFIG_PLATFORM_EC_FLASH_INIT_PRIORITY must be greater than" \
 	"CONFIG_CROS_FLASH_MCHP_INIT_PRIORITY."
+#endif
+#elif IS_ENABLED(CONFIG_CROS_FLASH)
+#if CONFIG_PLATFORM_EC_FLASH_INIT_PRIORITY <= CONFIG_CROS_FLASH_INIT_PRIORITY
+#error "CONFIG_PLATFORM_EC_FLASH_INIT_PRIORITY must be greater than" \
+	"CONFIG_CROS_FLASH_INIT_PRIORITY."
 #endif
 #endif
 SYS_INIT(flash_dev_init, POST_KERNEL, CONFIG_PLATFORM_EC_FLASH_INIT_PRIORITY);

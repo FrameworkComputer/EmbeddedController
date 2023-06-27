@@ -11,16 +11,16 @@
 #include "console.h"
 #include "cpu.h"
 #include "ec_commands.h"
+#include "gpio.h"
 #include "hooks.h"
+#include "hwtimer_chip.h"
 #include "lct_chip.h"
 #include "registers.h"
+#include "rom_chip.h"
 #include "system.h"
+#include "system_chip.h"
 #include "task.h"
 #include "util.h"
-#include "gpio.h"
-#include "hwtimer_chip.h"
-#include "system_chip.h"
-#include "rom_chip.h"
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)

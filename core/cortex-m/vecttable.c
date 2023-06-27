@@ -9,6 +9,7 @@
 #define ___INIT
 #include "compiler.h"
 #include "config.h"
+
 #include <task.h>
 #endif
 

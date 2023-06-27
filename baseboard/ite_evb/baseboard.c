@@ -25,6 +25,8 @@
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
+
+/* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
 
 #if defined(CONFIG_FANS) || defined(CONFIG_PWM)

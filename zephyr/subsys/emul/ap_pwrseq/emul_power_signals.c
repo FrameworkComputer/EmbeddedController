@@ -3,20 +3,20 @@
  * found in the LICENSE file.
  */
 
+#include "ap_power/ap_power.h"
+#include "ap_power/ap_power_events.h"
+#include "chipset.h"
+#include "emul/emul_power_signals.h"
+#include "power_signals.h"
+#include "test_state.h"
+
+#include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/espi.h>
 #include <zephyr/drivers/espi_emul.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
-
-#include "ap_power/ap_power.h"
-#include "ap_power/ap_power_events.h"
-#include <zephyr/drivers/adc.h>
-#include "chipset.h"
-#include "emul/emul_power_signals.h"
-#include "power_signals.h"
-#include "test_state.h"
 
 LOG_MODULE_REGISTER(emul_power_signal, CONFIG_EMUL_POWER_SIGNALS_LOG_LEVEL);
 
@@ -30,12 +30,18 @@ enum power_signal_emul_source {
 	PWR_SIG_EMUL_SRC_ADC,
 };
 
+struct wv_dt_spec {
+	enum espi_vwire_signal espi_signal;
+	bool invert;
+};
+
 /**
  * @brief Power signal containers definition.
  */
 union power_signal_emul_signal_spec {
 	struct gpio_dt_spec gpio;
 	struct adc_dt_spec adc;
+	struct wv_dt_spec vw;
 };
 
 /**
@@ -58,7 +64,7 @@ struct power_signal_emul_output {
 	const int deassert_value;
 	const int deassert_delay_ms;
 	const int init_value;
-	const bool retain;
+	const bool initialized;
 	const bool invert;
 	struct k_work_delayable d_work;
 	int value;
@@ -77,7 +83,7 @@ struct power_signal_emul_input {
 	struct power_signal_emul_signal_desc desc;
 	const int assert_value;
 	const int init_value;
-	const bool retain;
+	const bool initialized;
 	const enum power_signal_edge edge;
 	struct gpio_callback cb;
 	int value;
@@ -95,6 +101,12 @@ struct power_signal_emul_node {
 	struct power_signal_emul_output *const outputs;
 };
 
+#define VW_DT_SPEC_GET(id)                                              \
+	{                                                               \
+		.espi_signal = DT_STRING_UPPER_TOKEN(id, virtual_wire), \
+		.invert = DT_PROP(id, vw_invert),                       \
+	}
+
 #define EMUL_POWER_SIGNAL_GET_SOURCE(inst)                                    \
 	COND_CODE_1(                                                          \
 		DT_NODE_HAS_COMPAT(inst, intel_ap_pwrseq_gpio),               \
@@ -107,13 +119,18 @@ struct power_signal_emul_node {
 				     (PWR_SIG_EMUL_SRC_EXT),                  \
 				     (PWR_SIG_EMUL_SRC_ADC))))))
 
-#define EMUL_POWER_SIGNAL_GET_SIGNAL_SPEC(inst, dir_signal)               \
-	{                                                                 \
-		COND_CODE_1(DT_NODE_HAS_COMPAT(DT_PROP(inst, dir_signal), \
-					       intel_ap_pwrseq_gpio),     \
-			    (.gpio = GPIO_DT_SPEC_GET(                    \
-				     DT_PROP(inst, dir_signal), gpios)),  \
-			    ())                                           \
+#define EMUL_POWER_SIGNAL_GET_SIGNAL_SPEC(inst, dir_signal)                    \
+	{                                                                      \
+		COND_CODE_1(DT_NODE_HAS_COMPAT(DT_PROP(inst, dir_signal),      \
+					       intel_ap_pwrseq_gpio),          \
+			    (.gpio = GPIO_DT_SPEC_GET(                         \
+				     DT_PROP(inst, dir_signal), gpios)),       \
+			    (COND_CODE_1(DT_NODE_HAS_COMPAT(                   \
+						 DT_PROP(inst, dir_signal),    \
+						 intel_ap_pwrseq_vw),          \
+					 (.vw = VW_DT_SPEC_GET(                \
+						  DT_PROP(inst, dir_signal))), \
+					 ())))                                 \
 	}
 
 #define EMUL_POWER_SIGNAL_GET_SIGNAL(inst, dir)                             \
@@ -130,7 +147,7 @@ struct power_signal_emul_node {
 		.assert_value = DT_PROP(inst, assert_value),              \
 		.init_value = DT_PROP_OR(inst, init_value, 0),            \
 		.edge = DT_STRING_TOKEN(inst, edge),                      \
-		.retain = !DT_NODE_HAS_PROP(inst, init_value),            \
+		.initialized = DT_NODE_HAS_PROP(inst, init_value),        \
 	}
 
 #define EMUL_POWER_SIGNAL_OUT_DEF(inst)                                    \
@@ -141,7 +158,7 @@ struct power_signal_emul_node {
 		.deassert_value = DT_PROP(inst, deassert_value),           \
 		.deassert_delay_ms = DT_PROP(inst, deassert_delay_ms),     \
 		.init_value = DT_PROP_OR(inst, init_value, 0),             \
-		.retain = !DT_NODE_HAS_PROP(inst, init_value),             \
+		.initialized = DT_NODE_HAS_PROP(inst, init_value),         \
 		.invert = DT_PROP(inst, invert_value),                     \
 	},
 
@@ -243,11 +260,30 @@ static void power_signal_emul_set_gpio_value(const struct gpio_dt_spec *spec,
 	zassert_ok(ret, "Getting GPIO flags!!");
 
 	if (gpio_flags & GPIO_INPUT) {
-		ret = gpio_emul_input_set(spec->port, spec->pin, value);
+		ret = gpio_emul_input_set(
+			spec->port, spec->pin,
+			gpio_flags & GPIO_ACTIVE_LOW ? !value : !!value);
 	} else if (gpio_flags & GPIO_OUTPUT) {
 		ret = gpio_pin_set(spec->port, spec->pin, value);
 	}
 	zassert_ok(ret, "Setting GPIO value!!");
+}
+
+/**
+ * @brief Set virtual wire type power signal to value.
+ *
+ * @param spec Pointer to container for virtual wire information specified in
+ *             devicetree.
+ * @param value Value to be set on virtual wire.
+ */
+static void power_signal_emul_set_vw_value(const struct wv_dt_spec *vw,
+					   int value)
+{
+	const struct device *espi =
+		DEVICE_DT_GET_ANY(zephyr_espi_emul_controller);
+
+	emul_espi_host_send_vw(espi, vw->espi_signal,
+			       vw->invert ? !value : !!value);
 }
 
 /**
@@ -270,15 +306,16 @@ power_signal_emul_set_value(struct power_signal_emul_signal_desc *desc,
 	case PWR_SIG_EMUL_SRC_EXT:
 		zassert_ok(power_signal_set(desc->enum_id, value),
 			   "Setting %s Signal value!!", desc->name);
-		__fallthrough;
+		break;
 
 	case PWR_SIG_EMUL_SRC_VW:
-		power_signal_interrupt(desc->enum_id, value);
+		power_signal_emul_set_vw_value(&desc->spec.vw, value);
 		break;
 
 	default:
 		zassert_unreachable("Undefined Signal %s!!", desc->name);
 	}
+	power_signal_interrupt(desc->enum_id, value);
 }
 
 /**
@@ -301,6 +338,7 @@ static int power_signal_emul_get_gpio_value(const struct gpio_dt_spec *spec)
 		ret = gpio_pin_get(spec->port, spec->pin);
 	} else if (gpio_flags & GPIO_OUTPUT) {
 		ret = gpio_emul_output_get(spec->port, spec->pin);
+		ret = gpio_flags & GPIO_ACTIVE_LOW ? !ret : !!ret;
 	}
 
 	return ret;
@@ -318,10 +356,18 @@ power_signal_emul_get_value(struct power_signal_emul_signal_desc *desc)
 {
 	int ret;
 
-	if (desc->source == PWR_SIG_EMUL_SRC_GPIO) {
+	switch (desc->source) {
+	case PWR_SIG_EMUL_SRC_GPIO:
 		ret = power_signal_emul_get_gpio_value(&desc->spec.gpio);
-	} else {
+		break;
+
+	case PWR_SIG_EMUL_SRC_VW:
 		ret = power_signal_get(desc->enum_id);
+		break;
+
+	default:
+		ret = power_signal_get(desc->enum_id);
+		break;
 	}
 
 	return ret;
@@ -421,27 +467,25 @@ static int power_signal_init_node(struct power_signal_emul_node *node)
 	for (int i = 0; i < node->outputs_count; i++) {
 		out_signal = &node->outputs[i];
 
-		if (out_signal->retain) {
-			out_signal->value =
-				power_signal_emul_get_value(&out_signal->desc);
-		} else {
-			/* Not retaining previous value, override */
+		if (out_signal->initialized) {
 			power_signal_emul_set_value(&out_signal->desc,
 						    out_signal->init_value);
 			out_signal->value = out_signal->init_value;
+		} else {
+			out_signal->value =
+				power_signal_emul_get_value(&out_signal->desc);
 		}
 		k_work_init_delayable(&out_signal->d_work,
 				      emul_signal_work_hanlder);
 	}
 
-	if (in_signal->retain) {
-		in_signal->value =
-			power_signal_emul_get_value(&in_signal->desc);
-	} else {
-		/* Not retaining previous value, override */
+	if (in_signal->initialized) {
 		power_signal_emul_set_value(&in_signal->desc,
 					    in_signal->init_value);
 		in_signal->value = in_signal->init_value;
+	} else {
+		in_signal->value =
+			power_signal_emul_get_value(&in_signal->desc);
 	}
 	if (in_signal->desc.source == PWR_SIG_EMUL_SRC_GPIO) {
 		gpio_init_callback(&in_signal->cb,
@@ -532,9 +576,8 @@ int power_signal_emul_unload(void)
  *
  * @return 0 Return success only.
  */
-static int power_signal_emul_work_q_init(const struct device *dev)
+static int power_signal_emul_work_q_init(void)
 {
-	ARG_UNUSED(dev);
 	struct k_work_queue_config cfg = {
 		.name = "psignal_emul",
 		.no_yield = true,

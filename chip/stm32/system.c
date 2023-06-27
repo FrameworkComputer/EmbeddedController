@@ -271,7 +271,7 @@ void system_pre_init(void)
 
 	/* enable clock on Power module */
 #ifndef CHIP_FAMILY_STM32H7
-#ifdef CHIP_FAMILY_STM32L4
+#if defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
 	STM32_RCC_APB1ENR1 |= STM32_RCC_PWREN;
 #else
 	STM32_RCC_APB1ENR |= STM32_RCC_PWREN;
@@ -283,7 +283,7 @@ void system_pre_init(void)
 #elif defined(CHIP_FAMILY_STM32H7)
 	/* enable backup registers */
 	STM32_RCC_AHB4ENR |= BIT(28);
-#elif defined(CHIP_FAMILY_STM32L4)
+#elif defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
 	/* enable RTC APB clock */
 	STM32_RCC_APB1ENR1 |= STM32_RCC_APB1ENR1_RTCAPBEN;
 #else

@@ -4,12 +4,12 @@
  * found in the LICENSE file.
  */
 
-#include <stddef.h>
-
 #include "common.h"
 #include "cros_version.h"
 #include "rwsig.h"
 #include "util.h"
+
+#include <stddef.h>
 
 /*
  * FMAP structs.

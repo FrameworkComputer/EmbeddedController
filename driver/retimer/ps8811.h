@@ -26,6 +26,11 @@
 #define PS8811_I2C_ADDR_FLAGS3 0x72
 
 /*
+ * PAGE 0 Register Definitions
+ */
+#define PS8811_REG_PAGE0 0x00
+
+/*
  * PAGE 1 Register Definitions
  */
 #define PS8811_REG_PAGE1 0x01

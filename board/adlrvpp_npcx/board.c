@@ -16,7 +16,8 @@
 #include "uart.h"
 #include "usb_pd_tcpm.h"
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /******************************************************************************/
 /* I2C ports */

@@ -7,7 +7,8 @@
 mock-$(HAS_MOCK_ADC) += adc_mock.o
 mock-$(HAS_MOCK_BATTERY) += battery_mock.o
 mock-$(HAS_MOCK_CHARGE_MANAGER) += charge_manager_mock.o
-mock-$(HAS_MOCK_FP_SENSOR) += fp_sensor_mock.o
+mock-$(HAS_MOCK_CLOCK) += clock_mock.o
+mock-$(HAS_MOCK_FPSENSOR) += fpsensor_mock.o
 mock-$(HAS_MOCK_FPSENSOR_CRYPTO) += fpsensor_crypto_mock.o
 mock-$(HAS_MOCK_FPSENSOR_DETECT) += fpsensor_detect_mock.o
 mock-$(HAS_MOCK_FPSENSOR_STATE) += fpsensor_state_mock.o

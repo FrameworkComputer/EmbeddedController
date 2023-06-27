@@ -9,3 +9,13 @@ config POWER_SEQUENCE_MOCK
 	  and suspend/resume hooks in appropriate state transitions. Any
 	  request that comes in mid sequence is pended and ran after final
 	  state is reached.
+
+config AP_POWER_EVENTS_MOCK
+	bool "Use a mocked ap power events driver."
+	help
+	  A simplified ap power events driver that provides it's functions fakes.
+
+config POWER_SIGNALS_MOCK
+	bool "Use a mocked power signals driver."
+	help
+	  A simplified power signals driver that provides it's functions fakes.

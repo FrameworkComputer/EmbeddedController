@@ -13,9 +13,10 @@ import tempfile
 import hypothesis  # pylint:disable=import-error
 import hypothesis.strategies as st  # pylint:disable=import-error
 import pytest  # pylint:disable=import-error
+from zmake.build_config import BuildConfig
 import zmake.jobserver
 import zmake.util as util
-from zmake.build_config import BuildConfig
+
 
 # pylint:disable=redefined-outer-name,unused-argument
 
@@ -127,16 +128,8 @@ def parse_cmake_args(argv):
     parser.add_argument("-D", dest="defs", action="append", default=[])
     args = parser.parse_args(argv[1:])
 
-    # Build the definition dictionary
-    cmake_defs = {}
-    for defn in args.defs:
-        key, sep, val = defn.partition("=")
-        if not sep:
-            val = "1"
-        assert key not in cmake_defs
-        cmake_defs[key] = val
-
-    return args, cmake_defs
+    build_cfg = BuildConfig.from_args(args.defs)
+    return args, build_cfg.cmake_defs
 
 
 @hypothesis.given(build_configs_no_kconfig, paths, paths)

@@ -6,6 +6,8 @@
 #ifndef __CROS_EC_BOARD_HATCH_FP_BOARD_RW_H
 #define __CROS_EC_BOARD_HATCH_FP_BOARD_RW_H
 
+#include "gpio_signal.h"
+
 void fps_event(enum gpio_signal signal);
 
 void board_init_rw(void);

@@ -4,11 +4,11 @@
  *
  * Test USB-PD interrupt task.
  */
-#include "task.h"
-#include "test_util.h"
 #include "mock/tcpc_mock.h"
 #include "mock/timer_mock.h"
 #include "mock/usb_mux_mock.h"
+#include "task.h"
+#include "test_util.h"
 
 #define PORT0 0
 

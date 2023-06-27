@@ -3,8 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include "common.h"
 #include "clock.h"
+#include "common.h"
 #include "dma.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -13,9 +13,9 @@
 #include "registers.h"
 #include "system.h"
 #include "task.h"
-#include "usart_rx_dma.h"
-#include "usart_host_command.h"
 #include "usart-stm32f4.h"
+#include "usart_host_command.h"
+#include "usart_rx_dma.h"
 #include "util.h"
 
 /* Console output macros */

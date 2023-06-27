@@ -3,16 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <stdlib.h>
-#include <zephyr/kernel.h>
-#include <zephyr/drivers/gpio/gpio_emul.h>
-#include <zephyr/ztest.h>
-
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "gpio_signal.h"
 #include "hooks.h"
 #include "variant_db_detection.h"
+
+#include <stdlib.h>
+
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 static void *db_detection_setup(void)
 {

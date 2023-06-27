@@ -14,10 +14,6 @@
 /* include the board layer keyboard header file */
 #include "keyboard_customization.h"
 #else /* CONFIG_KEYBOARD_CUSTOMIZATION */
-#ifdef CONFIG_KEYBOARD_LANGUAGE_ID
-/* Keyboard matrix support for language ID pins */
-#define KEYBOARD_IDS 2
-#endif
 
 /* Keyboard matrix is 13 (or 15 with keypad) output columns x 8 input rows */
 #define KEYBOARD_COLS_WITH_KEYPAD 15

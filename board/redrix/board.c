@@ -11,24 +11,24 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
-#include "gpio.h"
-#include "gpio_signal.h"
-#include "hooks.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "driver/als_tcs3400.h"
 #include "fw_config.h"
+#include "gpio.h"
+#include "gpio_signal.h"
 #include "hooks.h"
 #include "lid_switch.h"
 #include "peripheral_charger.h"
-#include "power_button.h"
 #include "power.h"
+#include "power_button.h"
 #include "registers.h"
 #include "switch.h"
 #include "tablet_mode.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
@@ -49,6 +49,8 @@ struct pchg pchgs[] = {
 			.irq_pin = GPIO_PEN_INT_ODL,
 			.full_percent = 96,
 			.block_size = 128,
+			/* A stylus needs about 700ms to complete recovery */
+			.rf_charge_msec = 1000,
 		},
 		.policy = {
 			[PCHG_CHIPSET_STATE_ON] = &pchg_policy_on,
@@ -57,7 +59,11 @@ struct pchg pchgs[] = {
 		.events = QUEUE_NULL(PCHG_EVENT_QUEUE_SIZE, enum pchg_event),
 	},
 };
-const int pchg_count = ARRAY_SIZE(pchgs);
+
+int board_get_pchg_count(void)
+{
+	return ARRAY_SIZE(pchgs);
+}
 #endif
 
 /******************************************************************************/

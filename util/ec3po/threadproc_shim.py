@@ -38,6 +38,7 @@ from threading import Thread as ThreadOrProcess
 
 from six.moves.queue import Queue
 
+
 # True if this module has ec3po using subprocesses, False if using threads.
 USING_SUBPROCS = False
 

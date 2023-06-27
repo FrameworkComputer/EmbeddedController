@@ -6,8 +6,13 @@ if PLATFORM_EC_USBC
 
 config PLATFORM_EC_USBC_RETIMER_INTEL_BB
 	bool "Support Intel Burnside Bridge retimer"
+	default y
+	depends on PLATFORM_EC_USB_MUX
+	depends on DT_HAS_INTEL_JHL8040R_ENABLED
+	select PLATFORM_EC_CONSOLE_CMD_RETIMER
 	select PLATFORM_EC_USB_PD_USB4
 	select PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
+	select PLATFORM_EC_USBC_RETIMER_FW_UPDATE
 	help
 	  Enable this to support the Intel Burnside Bridge Thunderbolt / USB /
 	  DisplayPort retimer.
@@ -29,8 +34,13 @@ config PLATFORM_EC_USBC_RETIMER_INTEL_BB
 
 config PLATFORM_EC_USBC_RETIMER_INTEL_HB
 	bool "Support Intel Hayden Bridge retimer"
+	default y
+	depends on PLATFORM_EC_USB_MUX
+	depends on DT_HAS_INTEL_JHL9040R_ENABLED
+	select PLATFORM_EC_CONSOLE_CMD_RETIMER
 	select PLATFORM_EC_USB_PD_USB4
 	select PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
+	select PLATFORM_EC_USBC_RETIMER_FW_UPDATE
 	help
 	  Enable this to support the Intel Hayden Bridge Thunderbolt / USB /
 	  DisplayPort retimer.
@@ -80,29 +90,17 @@ config PLATFORM_EC_USBC_RETIMER_ANX7451
 	  ANX7451 has built-in re-timers to recover both the USB and DP signals
 	  with loss compensation of 23dB for USB and up to 27dB for DP.
 
-config PLATFORM_EC_USBC_RETIMER_ANX7483
-	bool "Support Analogix ANX7483 10G Active Retimer"
-	help
-	  ANX7483 is a 4x4 re-driver capable of switching DisplayPort and
-	  USB3.2 Gen 2 10Gbps signals to support type-C (USB-C) ports with
-	  DisplayPort Alternate Mode.
-
-config PLATFORM_EC_USBC_RETIMER_PS8811
-	bool "Support Parade PS8811 Single Port USB 3.1 Gen 2 10G Retimer"
-	help
-	  The PS8811 is a one-port bidirectional USB 3.1 Gen 2 retimer that
-	  integrates the UniEye equalizer and a retimer to re-condition USB 3.1
-	  signals for long media link applications. It supports USB 3.1 Gen 2
-	  with operation speed up to 10Gbps as well as Gen 1 operation at 5Gbps.
-
 config PLATFORM_EC_USBC_RETIMER_PS8818
 	bool "Parade PS8818 USB Type-C Retimer for USB and DP Alternate Mode"
+	default y
+	depends on DT_HAS_PARADE_PS8818_ENABLED
 	help
 	  PS8818 is a 10Gbps retimer for Type-C applications with the
 	  integrated USB3.1 and DisplayPort alternate mode port.
 
 config PLATFORM_EC_USBC_RETIMER_KB800X
 	bool "Enable KB800X retimer"
+	select PLATFORM_EC_CONSOLE_CMD_RETIMER
 	help
 	  The KB8001 is a Universal Serial Bus (USB) Type-C 40 Gb/s multiprotocol
 	  switch and bidirectional Bit-Level Retimer (BLR) which supports:
@@ -120,4 +118,51 @@ config PLATFORM_EC_KB800X_CUSTOM_XBAR
 	  Enable this to allow using a custom crossbar configuration for the HSIO
 	  lanes.
 
+config PLATFORM_EC_CONSOLE_CMD_RETIMER
+	bool "Console command: retimer"
+	help
+	  This console command allows read or write to the retimer registers
+	  connected in a chain.
+
+config PLATFORM_EC_USBC_RETIMER_KB8010
+	bool "Enable Kandou KB8010 Active Retimer"
+	default y
+	depends on DT_HAS_KANDOU_KB8010_ENABLED
+	help
+	  The KB8001 is a Universal Serial Bus (USB) Type-C 40 Gb/s multiprotocol
+	  switch and bidirectional Bit-Level Retimer (BLR) which supports:
+	    - Display Port: four unidirectional DP lanes
+	    - USB3.1 Gen1/2: one bi-directional USB lane
+	    - USB4/Thunderbolt: two bi-directional lanes
+	    - Multifunction Display (MFD): two unidirectional lanes of DP and
+	      one bidirectional lane of USB3.1 Gen1/2
+
 endif # PLATFORM_EC_USBC
+
+config PLATFORM_EC_USBC_RETIMER_ANX7483
+	bool "Support Analogix ANX7483 10G Active Retimer"
+	default y
+	depends on DT_HAS_ANALOGIX_ANX7483_ENABLED && (PLATFORM_EC_USBC || TEST_DISABLE_PLATFORM_EC_USBC)
+	help
+	  ANX7483 is a 4x4 re-driver capable of switching DisplayPort and
+	  USB3.2 Gen 2 10Gbps signals to support type-C (USB-C) ports with
+	  DisplayPort Alternate Mode.
+
+config PLATFORM_EC_USBC_RETIMER_PS8811
+	bool "Support Parade PS8811 Single Port USB 3.1 Gen 2 10G Retimer"
+	depends on PLATFORM_EC_USBC || TEST_DISABLE_PLATFORM_EC_USBC
+	help
+	  The PS8811 is a one-port bidirectional USB 3.1 Gen 2 retimer that
+	  integrates the UniEye equalizer and a retimer to re-condition USB 3.1
+	  signals for long media link applications. It supports USB 3.1 Gen 2
+	  with operation speed up to 10Gbps as well as Gen 1 operation at 5Gbps.
+
+config PLATFORM_EC_USBC_RETIMER_ANX7452
+	bool "Support Analogix ANX7452 Active Retimer"
+	default y
+	depends on DT_HAS_ANALOGIX_ANX7452_ENABLED
+	help
+	  ANX7452 is a 2-lane USB4 Re-timer MUX capable of switching the USB4
+	  fabric protocol to support a single USB Type-C™ (USB-C™) port. ANX7452
+	  can be also configured to a DisplayPort (DP)2.0 Re-timer which
+	  supports up to 4-lane UHBR20.

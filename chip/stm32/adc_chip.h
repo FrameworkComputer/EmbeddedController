@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_ADC_CHIP_H
 #define __CROS_EC_ADC_CHIP_H
 
-#ifdef CHIP_FAMILY_STM32L4
+#if defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
 enum stm32_adc_smpr {
 	STM32_ADC_SMPR_DEFAULT = 0,
 	STM32_ADC_SMPR_2_5_CY,
@@ -43,12 +43,10 @@ struct adc_t {
 	int factor_div;
 	int shift;
 	int channel;
-#ifdef CHIP_FAMILY_STM32L4
-	int rank;
-#endif
 
-#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32L4)
-	enum stm32_adc_smpr sample_rate; /* Sampling Rate of the channel */
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32L4) || \
+	defined(CHIP_FAMILY_STM32L5)
+	enum stm32_adc_smpr sample_time; /* Sampling Time of the channel */
 #endif
 };
 
@@ -61,8 +59,5 @@ void adc_disable(void);
 
 /* Just plain id mapping for code readability */
 #define STM32_AIN(x) (x)
-
-/* Add for ADCs with RANK */
-#define STM32_RANK(x) (x)
 
 #endif /* __CROS_EC_ADC_CHIP_H */

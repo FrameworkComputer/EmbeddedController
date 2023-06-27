@@ -2,10 +2,11 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include <zephyr/logging/log.h>
-#include "usbc/ppc.h"
-#include "hooks.h"
 #include "cros_board_info.h"
+#include "hooks.h"
+#include "usbc/ppc.h"
+
+#include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(alt_dev_replacement);
 

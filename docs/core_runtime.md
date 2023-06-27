@@ -57,10 +57,10 @@ interrupt handlers can have the same priority. An interrupt handler can only be
 interrupted by a handler having a priority **strictly** **greater** than its
 own.
 
-In most cases, the exceptions (e.g data/prefetch aborts, software interrupt) can
-be seen as interrupts with a priority strictly greater than all IRQ vectors. So
-they can interrupt any IRQ handler using the same nesting mechanism. All fatal
-exceptions should ultimately lead to a reboot.
+In most cases, the exceptions (e.g., data/prefetch aborts, software interrupt)
+can be seen as interrupts with a priority strictly greater than all IRQ vectors.
+So they can interrupt any IRQ handler using the same nesting mechanism. All
+fatal exceptions should ultimately lead to a reboot.
 
 ### Events
 
@@ -82,7 +82,7 @@ the `task_set_event()` and `task_wake()` primitives.
 The two typical use-cases are:
 
 -   a task sends a message to another task (simply use some common memory
-    structures [see explanation](#single-address-space) and want it to process
+    structures [see explanation](#single-address-space)) and want it to process
     it now.
 -   a hardware IRQ occurred, and we need to do some long processing to respond
     to it (e.g. an I2C transaction). The associated interrupt handler cannot do
@@ -141,16 +141,18 @@ current task or creating a dedicated task (whose stack memory allocation would
 be wasting precious RAM).
 
 The HOOKS task has a list of deferred functions and their next deadline. Every
-time it is waken up, it runs through the list and calls the ones whose deadline
+time it is woken up, it runs through the list and calls the ones whose deadline
 is expired. Before going back to sleep, it arms a timer to the closest deadline.
 The deferred functions can be created using the `DECLARED_DEFERRED()` macro.
 Similarly, the HOOK_SECOND and HOOK_TICK hooks are called periodically by the
 HOOKS task loop (the *tick* duration is platform-defined and shorter than the
 second).
 
+For examples, of hooks and deferred functions, see the [`hooks` testcases].
+
 Note: be specially careful about priority inversions when accessing resources
 protected by a mutex (e.g. a shared I2C controller) in a deferred function.
-Indeed being the lowest priority task, it might be de-scheduled for long time
+Indeed, being the lowest priority task, it might be de-scheduled for long time
 and starve higher priority tasks trying to access the resource given there is no
 priority boosting implemented for this case. Also, be careful about long delays
 (> x 100us) in hook or deferred function handlers, since those will starve other
@@ -219,7 +221,7 @@ depending on what is available.
 
 The mutexes are actually statically allocated binary semaphores. In case of
 contention, they will make the waiting task sleep (removing its ready bit) and
-use the [event mechanism](#events) to wake-up the other waiters on unlocking.
+use the [event mechanism](#events) to wake up the other waiters on unlocking.
 
 Note: the mutexes are NOT triggering any priority boosting to avoid the priority
 inversion phenomenon.
@@ -260,7 +262,7 @@ the closest deadline and programs it in the hardware to get an interrupt. At the
 same time, it sets the TASK_EVENT_TIMER event in all tasks whose timer deadline
 has expired. The next deadline is computed in interrupt context.
 
-Note: given each task has a **single** timer which is also used to wake-up the
+Note: given each task has a **single** timer which is also used to wake up the
 task when `task_wait_event()` is called with a timeout, one needs to be careful
 when using directly the `timer_arm()` function because there is an eventuality
 that this timer is still running on the next `task_wait_event()` call, the call
@@ -272,7 +274,7 @@ will fail due to the lack of available timer.
 
 There is no memory isolation between tasks (ie they all live in the same address
 space). Some architectures implement memory protection mechanism albeit only to
-differentiate executable area (eg `.code`) from writable area (eg `.bss` or
+differentiate executable area (eg `.code`) from writable area (e.g., `.bss` or
 `.data`) as there is a **single** **privilege** level for all execution
 contexts.
 
@@ -302,9 +304,9 @@ Note 1: Each task stack is relatively small (e.g. 512 bytes), so one needs to be
 careful about stack usage when implementing features.
 
 Note 2: At the same time, the total size of RAM used by stacks is a big chunk of
-the total RAM consumption, so their sizes need to be carefully tuned. (please
+the total RAM consumption, so their sizes need to be carefully tuned. (Please
 refer to the [debugging paragraph](#debugging) for additional input on this
-topic.
+topic.)
 
 ## Firmware Code Organization and Multiple Copies
 
@@ -327,3 +329,5 @@ topic.
 -   TODO: Address the rest of the comments from https://crrev.com/c/445941
 
 \[1]: bitmap: array of bits.
+
+[`hooks` testcases]: ../test/hooks.c

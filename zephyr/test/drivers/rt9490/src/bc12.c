@@ -3,11 +3,8 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-#include <zephyr/fff.h>
-
-#include "charger.h"
 #include "charge_manager.h"
+#include "charger.h"
 #include "driver/charger/rt9490.h"
 #include "driver/tcpm/tcpci.h"
 #include "emul/emul_rt9490.h"
@@ -16,6 +13,9 @@
 #include "test/drivers/test_state.h"
 #include "timer.h"
 #include "usb_charge.h"
+
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
 
 FAKE_VALUE_FUNC(int, board_tcpc_post_init, int);
 
@@ -28,9 +28,7 @@ static void run_bc12_test(int reg_value, enum charge_supplier expected_result)
 	int port = 0;
 
 	/* simulate plug, expect bc12 detection starting. */
-	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_POWER_STATUS,
-			   TCPC_REG_POWER_STATUS_VBUS_PRES |
-				   TCPC_REG_POWER_STATUS_VBUS_DET);
+	zassert_ok(tcpci_emul_set_vbus_level(tcpci_emul, VBUS_PRESENT));
 
 	/* This is the same as calling tcpc_config[port].drv->init(port) but
 	 * also calls our board_tcpc_post_init_fake stub. During the init, the
@@ -71,8 +69,7 @@ static void run_bc12_test(int reg_value, enum charge_supplier expected_result)
 	zassert_equal(charge_manager_get_supplier(), expected_result, NULL);
 
 	/* simulate unplug */
-	tcpci_emul_set_reg(tcpci_emul, TCPC_REG_POWER_STATUS,
-			   TCPC_REG_POWER_STATUS_VBUS_DET);
+	zassert_ok(tcpci_emul_set_vbus_level(tcpci_emul, VBUS_REMOVED));
 	zassert_ok(tcpc_config[port].drv->init(port), NULL);
 	zassert_false(tcpc_config[port].drv->check_vbus_level(port,
 							      VBUS_PRESENT),

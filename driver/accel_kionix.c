@@ -9,12 +9,12 @@
  * Supported: KX022, KXCJ9
  */
 
-#include "accelgyro.h"
-#include "common.h"
-#include "console.h"
 #include "accel_kionix.h"
 #include "accel_kx022.h"
 #include "accel_kxcj9.h"
+#include "accelgyro.h"
+#include "common.h"
+#include "console.h"
 #include "i2c.h"
 #include "math_util.h"
 #include "motion_orientation.h"

@@ -95,9 +95,15 @@ int pd_find_pdo_index(uint32_t src_cap_cnt, const uint32_t *const src_caps,
 		if ((src_caps[i] & PDO_TYPE_MASK) == PDO_TYPE_AUGMENTED)
 			continue;
 
-		mv = ((src_caps[i] >> 10) & 0x3FF) * 50;
+		mv = PDO_FIXED_GET_VOLT(src_caps[i]);
 		/* Skip invalid voltage */
 		if (!mv)
+			continue;
+		/*
+		 * It's illegal to have EPR PDO in 1...7.
+		 * TODO: This is supposed to be a hard reset (8.3.3.3.8)
+		 */
+		if (i < 7 && mv > PD_MAX_SPR_VOLTAGE)
 			continue;
 		/* Skip any voltage not supported by this board */
 		if (!pd_is_valid_input_voltage(mv))
@@ -106,7 +112,7 @@ int pd_find_pdo_index(uint32_t src_cap_cnt, const uint32_t *const src_caps,
 		if ((src_caps[i] & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) {
 			uw = 250000 * (src_caps[i] & 0x3FF);
 		} else {
-			int ma = (src_caps[i] & 0x3FF) * 10;
+			int ma = PDO_FIXED_GET_CURR(src_caps[i]);
 
 			ma = MIN(ma, PD_MAX_CURRENT_MA);
 			uw = ma * mv;
@@ -316,6 +322,10 @@ void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
 	/* Mismatch bit set if less power offered than the operating power */
 	if (uw < (1000 * PD_OPERATING_POWER_MW))
 		flags |= RDO_CAP_MISMATCH;
+
+	/* b:271612382S has more details. */
+	if (IS_ENABLED(CONFIG_USB_PD_EPR))
+		flags |= RDO_EPR_MODE_CAPABLE;
 
 #ifdef CONFIG_USB_PD_GIVE_BACK
 	/* Tell source we are give back capable. */

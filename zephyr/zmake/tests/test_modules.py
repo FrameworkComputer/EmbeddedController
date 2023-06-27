@@ -11,6 +11,7 @@ import hypothesis  # pylint:disable=import-error
 import hypothesis.strategies as st  # pylint:disable=import-error
 import zmake.modules
 
+
 module_lists = st.lists(
     st.one_of(*map(st.just, zmake.modules.known_modules)), unique=True
 )

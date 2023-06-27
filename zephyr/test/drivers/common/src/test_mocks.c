@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "test/drivers/test_mocks.h"
+
+#include <zephyr/ztest.h>
 
 /* Mocks for common/init_rom.c */
 DEFINE_FAKE_VALUE_FUNC(const void *, init_rom_map, const void *, int);

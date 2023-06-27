@@ -3,20 +3,18 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/ztest.h>
-
 #include "ec_commands.h"
 #include "host_command.h"
+
+#include <zephyr/ztest.h>
 
 ZTEST_USER(system, test_hostcmd_board_version)
 {
 	struct ec_response_board_version response;
-	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
-		EC_CMD_GET_BOARD_VERSION, 0, response);
+	struct host_cmd_handler_args args;
 
 	/* Get the board version, which is default 0. */
-	zassert_ok(host_command_process(&args), NULL);
-	zassert_ok(args.result, NULL);
+	zassert_ok(ec_cmd_get_board_version(&args, &response), NULL);
 	zassert_equal(args.response_size, sizeof(response), NULL);
 	zassert_equal(response.board_version, 0, "response.board_version = %d",
 		      response.board_version);

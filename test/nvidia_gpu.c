@@ -4,12 +4,11 @@
  *
  * Tests for Nvidia GPU.
  */
-#include <stdio.h>
-
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
 #include "console.h"
+#include "driver/nvidia_gpu.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "task.h"
@@ -18,11 +17,11 @@
 #include "timer.h"
 #include "util.h"
 
-#include "driver/nvidia_gpu.h"
+#include <stdio.h>
 
 struct d_notify_policy d_notify_policies[] = {
-	AC_ATLEAST_W(100),  AC_ATLEAST_W(65),  AC_DC,
-	DC_ATLEAST_SOC(20), DC_ATLEAST_SOC(5),
+	AC_ATLEAST_W(100), AC_ATLEAST_W(65), AC_DC,
+	DC_ATMOST_SOC(20), DC_ATMOST_SOC(5),
 };
 
 extern enum d_notify_level d_notify_level;

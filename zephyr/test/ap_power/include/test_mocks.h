@@ -19,5 +19,6 @@ DECLARE_FAKE_VALUE_FUNC(int, extpower_is_present);
 
 /* Mocks for common/system.c */
 DECLARE_FAKE_VOID_FUNC(system_hibernate, uint32_t, uint32_t);
+DECLARE_FAKE_VALUE_FUNC(int, system_can_boot_ap);
 
 #endif /* __TEST_AP_POWER_TEST_MOCKS_H */

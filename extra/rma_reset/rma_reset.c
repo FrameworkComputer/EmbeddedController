@@ -3,26 +3,27 @@
  * found in the LICENSE file.
  */
 
+#include "base32.h"
+#include "curve25519.h"
+#include "rma_auth.h"
+#include "sha256.h"
+
 #include <ctype.h>
-#include <endian.h>
 #include <errno.h>
+#include <stdint.h>
+#include <stdio.h>
+#include <stdlib.h>
+#include <string.h>
+#include <time.h>
+
+#include <endian.h>
 #include <fcntl.h>
 #include <getopt.h>
 #include <openssl/bn.h>
 #include <openssl/ec.h>
 #include <openssl/obj_mac.h>
 #include <openssl/rand.h>
-#include <stdint.h>
-#include <stdio.h>
-#include <stdlib.h>
-#include <string.h>
-#include <time.h>
 #include <unistd.h>
-
-#include "rma_auth.h"
-#include "curve25519.h"
-#include "sha256.h"
-#include "base32.h"
 
 #define EC_COORDINATE_SZ 32
 #define EC_PRIV_KEY_SZ 32

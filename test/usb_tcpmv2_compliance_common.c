@@ -10,8 +10,8 @@
 #include "tcpm/tcpci.h"
 #include "test_util.h"
 #include "timer.h"
-#include "usb_tcpmv2_compliance.h"
 #include "usb_tc_sm.h"
+#include "usb_tcpmv2_compliance.h"
 
 uint32_t rdo = RDO_FIXED(1, 500, 500, 0);
 uint32_t pdo = PDO_FIXED(5000, 3000,

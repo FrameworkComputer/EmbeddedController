@@ -47,7 +47,7 @@ int vb21_is_signature_valid(const struct vb21_signature *sig,
 
 const struct vb21_packed_key *vb21_get_packed_key(void)
 {
-	return (const struct vb21_packed_key *)(CONFIG_RO_PUBKEY_ADDR);
+	return (const struct vb21_packed_key *)(CONFIG_RO_PUBKEY_READ_ADDR);
 }
 
 static void read_rwsig_info(struct ec_response_rwsig_info *r)

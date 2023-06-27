@@ -96,12 +96,12 @@ static void board_led_set_battery(void)
 
 	battery_ticks++;
 
-	switch (charge_get_state()) {
-	case PWR_STATE_CHARGE:
+	switch (led_pwr_get_state()) {
+	case LED_PWRS_CHARGE:
 		/* Always indicate when charging, even in suspend. */
 		set_active_port_color(LED_AMBER);
 		break;
-	case PWR_STATE_DISCHARGE:
+	case LED_PWRS_DISCHARGE:
 		if (led_auto_control_is_enabled(EC_LED_ID_LEFT_LED)) {
 			if (charge_get_percent() <= 10)
 				side_led_set_color(0, (battery_ticks & 0x4) ?
@@ -114,17 +114,17 @@ static void board_led_set_battery(void)
 		if (led_auto_control_is_enabled(EC_LED_ID_RIGHT_LED))
 			side_led_set_color(1, LED_OFF);
 		break;
-	case PWR_STATE_ERROR:
+	case LED_PWRS_ERROR:
 		set_active_port_color((battery_ticks & 0x2) ? LED_WHITE :
 							      LED_OFF);
 		break;
-	case PWR_STATE_CHARGE_NEAR_FULL:
+	case LED_PWRS_CHARGE_NEAR_FULL:
 		set_active_port_color(LED_WHITE);
 		break;
-	case PWR_STATE_IDLE: /* External power connected in IDLE */
+	case LED_PWRS_IDLE: /* External power connected in IDLE */
 		set_active_port_color(LED_WHITE);
 		break;
-	case PWR_STATE_FORCED_IDLE:
+	case LED_PWRS_FORCED_IDLE:
 		set_active_port_color((battery_ticks & 0x4) ? LED_AMBER :
 							      LED_OFF);
 		break;

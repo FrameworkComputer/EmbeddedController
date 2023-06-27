@@ -1,0 +1,74 @@
+/ {
+	aliases {
+		icm42607-int = &ms_icm42607_accel;
+	};
+
+	motionsense-mutex {
+		mutex_icm42607: icm42607-mutex {
+		};
+	};
+
+	motionsense-sensor-data {
+		icm42607_data: icm42607-drv-data {
+			compatible = "cros-ec,drvdata-icm42607";
+			status = "okay";
+		};
+	};
+
+	motionsense-sensor {
+		ms_icm42607_accel: ms-icm42607-accel {
+			compatible = "cros-ec,icm42607-accel";
+			status = "okay";
+
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&mutex_icm42607>;
+			port = <&named_i2c1>;
+			drv-data = <&icm42607_data>;
+			i2c-spi-addr-flags = "ICM42607_ADDR1_FLAGS";
+			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <10000>;
+				};
+				ec-s3 {
+					odr = <10000>;
+				};
+				ec-s5 {
+					odr = <10000>;
+				};
+			};
+		};
+
+		ms_icm42607_gyro: ms-icm42607-gryo {
+			compatible = "cros-ec,icm42607-gyro";
+			status = "okay";
+
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&mutex_icm42607>;
+			port = <&named_i2c1>;
+			drv-data = <&icm42607_data>;
+			i2c-spi-addr-flags = "ICM42607_ADDR1_FLAGS";
+			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
+		};
+	};
+};
+
+&i2c1 {
+		icm42607_emul: icm42607@69 {
+			compatible = "zephyr,icm42607-emul";
+			status = "okay";
+			reg = <0x69>;
+		};
+};
+
+/* motionsense framework supports at most 8 sensors, remove two so we can add
+ * our test target.
+ */
+&ms_bmi160_accel {
+	status = "disabled";
+};
+&ms_bmi160_gyro {
+	status = "disabled";
+};

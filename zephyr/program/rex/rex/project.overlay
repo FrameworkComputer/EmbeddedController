@@ -1,0 +1,22 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Rex program common DTSI includes */
+#include "../battery.dtsi"
+#include "../fan.dtsi"
+#include "../generated.dtsi"
+#include "../interrupts.dtsi"
+#include "../keyboard.dtsi"
+#include "../motionsense.dtsi"
+#include "../power_signals.dtsi"
+#include "../rex.dtsi"
+#include "../temp_sensors.dtsi"
+#include "../usbc.dtsi"
+
+/* Rex project DTS includes */
+#include "cbi.dtsi"
+#include "i2c.dtsi"
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"

@@ -3,18 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include <zephyr/kernel.h>
-#include <zephyr/ztest.h>
-
+#include "accelgyro.h"
 #include "common.h"
-#include "i2c.h"
+#include "driver/accel_bma2x2.h"
 #include "emul/emul_bma255.h"
 #include "emul/emul_common_i2c.h"
-
-#include "accelgyro.h"
+#include "i2c.h"
 #include "motion_sense.h"
-#include "driver/accel_bma2x2.h"
 #include "test/drivers/test_state.h"
+
+#include <zephyr/kernel.h>
+#include <zephyr/ztest.h>
 
 /** How accurate comparision of vectors should be. */
 #define V_EPS 8

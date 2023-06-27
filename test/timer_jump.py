@@ -7,6 +7,7 @@
 
 import time
 
+
 DELAY = 5
 ERROR_MARGIN = 0.5
 

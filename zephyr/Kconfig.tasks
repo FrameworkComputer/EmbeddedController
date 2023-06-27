@@ -270,4 +270,41 @@ config TASK_CYPD_STACK_SIZE
 
 endif # HASK_TASK_CYPD
 
+config HAS_TASK_TOUCHPAD
+	bool
+	help
+	  This turns on the touchpad task which handles the input event from
+	  touchpad, and forwards the event to AP through either USB-HID or MKBP
+	  interface.
+
+if HAS_TASK_TOUCHPAD
+
+config TASK_TOUCHPAD_STACK_SIZE
+	int "TOUCHPAD task stack size"
+	default 1280
+	help
+	  The stack size of the touchpad task.
+
+	  See b/176180736 for checking these stack sizes.
+
+endif # HAS_TASK_TOUCHPAD
+
+config HAS_TASK_RWSIG
+	bool # Selected by PLATFORM_EC_RWSIG
+	help
+	  This turns on the RWSIG task which verifys and jumps to the RW
+	  firmware automatically.
+
+if HAS_TASK_RWSIG
+
+config TASK_RWSIG_STACK_SIZE
+	int "RWSIG task stack size"
+	default 1536
+	help
+	  The stack size of the RWSIG task.
+
+	  See b/176180736 for checking these stack sizes.
+
+endif # HAS_TASK_RWSIG
+
 endmenu # Tasks

@@ -3,17 +3,23 @@
  * found in the LICENSE file.
  */
 
+#ifdef CONFIG_ZTEST
+#define CHARGER_SOLO 0
+#endif
+
 #include "ap_power/ap_power.h"
 #include "charger.h"
 #include "chipset.h"
 #include "config.h"
-#include "gpio_signal.h"
+#include "driver/amd_stb.h"
 #include "gpio/gpio_int.h"
+#include "gpio_signal.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "ioexpander.h"
 #include "power.h"
 #include "power/amd_x86.h"
+#include "throttle_ap.h"
 #include "timer.h"
 
 /* Power Signal Input List */
@@ -42,18 +48,30 @@ const struct power_signal_info power_signal_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
+static void handle_prochot(bool asserted, void *data);
+
+const struct prochot_cfg prochot_cfg = {
+	.gpio_prochot_in = GPIO_CPU_PROCHOT,
+	.callback = handle_prochot,
+};
+
 /* Chipset hooks */
-static void baseboard_suspend_change(struct ap_power_ev_callback *cb,
-				     struct ap_power_ev_data data)
+test_export_static void
+baseboard_suspend_change(struct ap_power_ev_callback *cb,
+			 struct ap_power_ev_data data)
 {
 	switch (data.event) {
 	default:
 		return;
 
 	case AP_POWER_SUSPEND:
-		/* Disable display backlight and retimer */
+		/* Disable display backlight */
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_disable_disp_bl),
 				1);
+		break;
+
+	case AP_POWER_SHUTDOWN:
+		/* Retimer disable */
 		ioex_set_level(IOEX_USB_A1_RETIMER_EN, 0);
 		break;
 
@@ -61,19 +79,42 @@ static void baseboard_suspend_change(struct ap_power_ev_callback *cb,
 		/* Enable retimer and display backlight */
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_disable_disp_bl),
 				0);
+		break;
+
+	case AP_POWER_STARTUP:
 		ioex_set_level(IOEX_USB_A1_RETIMER_EN, 1);
 		/* Any retimer tuning can be done after the retimer turns on */
 		break;
 	}
 }
 
-static void baseboard_init(void)
+static void check_charger_prochot(void)
+{
+	print_charger_prochot(CHARGER_SOLO);
+}
+DECLARE_DEFERRED(check_charger_prochot);
+
+static void handle_prochot(bool asserted, void *data)
+{
+	if (asserted) {
+		ccprints("Charger prochot asserted externally");
+		hook_call_deferred(&check_charger_prochot_data, 0);
+	} else
+		ccprints("Charger prochot deasserted externally");
+}
+
+test_export_static void baseboard_init(void)
 {
 	static struct ap_power_ev_callback cb;
+	const struct gpio_dt_spec *gpio_ec_sfh_int_h =
+		GPIO_DT_FROM_NODELABEL(gpio_ec_sfh_int_h);
+	const struct gpio_dt_spec *gpio_sfh_ec_int_h =
+		GPIO_DT_FROM_NODELABEL(gpio_sfh_ec_int_h);
 
 	/* Setup a suspend/resume callback */
 	ap_power_ev_init_callback(&cb, baseboard_suspend_change,
-				  AP_POWER_RESUME | AP_POWER_SUSPEND);
+				  AP_POWER_STARTUP | AP_POWER_SHUTDOWN |
+					  AP_POWER_RESUME | AP_POWER_SUSPEND);
 	ap_power_ev_add_callback(&cb);
 	/* Enable Power Group interrupts. */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pg_groupc_s0));
@@ -82,6 +123,14 @@ static void baseboard_init(void)
 
 	/* Enable thermtrip interrupt */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_thermtrip));
+
+	/* Enable prochot interrupt */
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_prochot));
+	throttle_ap_config_prochot(&prochot_cfg);
+
+	/* Enable STB dumping interrupt */
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_stb_dump));
+	amd_stb_dump_init(gpio_ec_sfh_int_h, gpio_sfh_ec_int_h);
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_init, HOOK_PRIO_POST_I2C);
 

@@ -18,8 +18,8 @@
 #include "driver/retimer/pi3hdx1204.h"
 #include "driver/retimer/ps8811.h"
 #include "driver/retimer/ps8818_public.h"
-#include "driver/temp_sensor/sb_tsi.h"
 #include "driver/temp_sensor/pct2075.h"
+#include "driver/temp_sensor/sb_tsi.h"
 #include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
@@ -37,7 +37,8 @@
 
 static void hdmi_hpd_interrupt(enum gpio_signal signal);
 
-#include "gpio_list.h" /* Must come after other header files. */
+/* Must come after other header files and interrupt handler declarations */
+#include "gpio_list.h"
 
 /*
  * We have total 30 pins for keyboard connecter {-1, -1} mean

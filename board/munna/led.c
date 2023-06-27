@@ -5,9 +5,9 @@
  * Power and battery LED control for Munna
  */
 #include "common.h"
-#include "ioexpander.h"
 #include "driver/ioexpander/it8801.h"
 #include "ec_commands.h"
+#include "ioexpander.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
 

@@ -4,11 +4,11 @@
  * found in the LICENSE file.
  */
 
+#include "usb_if.h"
+
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-
-#include "usb_if.h"
 
 /* Return 0 on error, since it's never gonna be EP 0 */
 static int find_endpoint(const struct libusb_interface_descriptor *iface,

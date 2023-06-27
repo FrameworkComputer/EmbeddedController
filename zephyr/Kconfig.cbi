@@ -4,6 +4,7 @@
 
 config PLATFORM_EC_BYPASS_CBI_EEPROM_WP_CHECK
 	bool "Bypass CBI EEPROM Write Protect"
+	depends on PLATFORM_EC_CBI_EEPROM
 	help
 	  Bypass the CBI EEPROM write protect checks. This should ONLY be
 	  defined during bringup, and should never be defined on a shipping or
@@ -14,6 +15,7 @@ config PLATFORM_EC_BYPASS_CBI_EEPROM_WP_CHECK
 
 config PLATFORM_EC_EEPROM_CBI_WP
 	bool "EC can independently set the CBI EEPROM WP signal"
+	depends on PLATFORM_EC_CBI_EEPROM
 	help
 	   Define this if the EC can independently set the CBI EEPROM WP
 	   signal. The accompanying hardware must ensure that the CBI WP gets
@@ -36,6 +38,7 @@ if PLATFORM_EC_CBI
 choice PLATFORM_EC_CBI_STORAGE_TYPE
 	prompt "CBI storage type"
 	default PLATFORM_EC_CBI_EEPROM if $(dt_nodelabel_enabled,cbi_eeprom)
+	default PLATFORM_EC_CBI_FLASH if $(dt_nodelabel_enabled,cbi_flash)
 	help
 	  Select the backing storage type for CBI data.
 
@@ -52,6 +55,12 @@ config PLATFORM_EC_CBI_GPIO
 	  Enables Chromium OS Board Info (CBI) from strapping pins. EC reads
 	  the BOARD ID and SKU ID from GPIOs and then substantiate in-memory
 	  CBI for AP to query.
+
+config PLATFORM_EC_CBI_FLASH
+	bool "CBI flash support"
+	help
+	  Enables full Chromium OS Board Info (CBI) support, with CBI data
+	  stored in an on-board flash.
 
 endchoice
 

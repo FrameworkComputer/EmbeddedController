@@ -27,16 +27,17 @@
 #ifdef CONFIG_MPU
 #include "mpu.h"
 #endif
+#include "cros_version.h"
 #include "panic.h"
 #include "sysjump.h"
 #include "system.h"
+#include "system_boot_time.h"
 #include "task.h"
 #include "timer.h"
 #include "uart.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
-#include "cros_version.h"
 #include "watchdog.h"
 
 /* Console output macros */
@@ -63,9 +64,14 @@ static uint32_t reset_flags; /* EC_RESET_FLAG_* */
 static int jumped_to_image;
 static int disable_jump; /* Disable ALL jumps if system is locked */
 static int force_locked; /* Force system locked even if WP isn't enabled */
-static enum ec_reboot_cmd reboot_at_shutdown;
+static struct ec_params_reboot_ec reboot_at_shutdown;
 
 static enum sysinfo_flags system_info_flags;
+
+/* Ensure enough space for panic_data, jump_data and at least one jump tag */
+BUILD_ASSERT((sizeof(struct panic_data) + sizeof(struct jump_data) +
+	      JUMP_TAG_MAX_SIZE) <= CONFIG_PRESERVED_END_OF_RAM_SIZE,
+	     "End of ram data size is too small for panic and jump data");
 
 STATIC_IF(CONFIG_HIBERNATE) uint32_t hibernate_seconds;
 STATIC_IF(CONFIG_HIBERNATE) uint32_t hibernate_microseconds;
@@ -336,7 +342,7 @@ struct jump_data *get_jump_data(void)
 }
 #endif
 
-int system_jumped_to_this_image(void)
+test_mockable int system_jumped_to_this_image(void)
 {
 	return jumped_to_image;
 }
@@ -349,15 +355,24 @@ test_mockable int system_jumped_late(void)
 int system_add_jump_tag(uint16_t tag, int version, int size, const void *data)
 {
 	struct jump_tag *t;
+	size_t new_entry_size;
 
 	/* Only allowed during a sysjump */
 	if (!jdata || jdata->magic != JUMP_DATA_MAGIC)
 		return EC_ERROR_UNKNOWN;
 
 	/* Make room for the new tag */
-	if (size > 255)
+	if (size > JUMP_TAG_MAX_SIZE)
 		return EC_ERROR_INVAL;
-	jdata->jump_tag_total += ROUNDUP4(size) + sizeof(struct jump_tag);
+
+	new_entry_size = ROUNDUP4(size) + sizeof(struct jump_tag);
+
+	if (system_usable_ram_end() - new_entry_size < JUMP_DATA_MIN_ADDRESS) {
+		ccprintf("ERROR: out of space for jump tags\n");
+		return EC_ERROR_INVAL;
+	}
+
+	jdata->jump_tag_total += new_entry_size;
 
 	t = (struct jump_tag *)system_usable_ram_end();
 	t->tag = tag;
@@ -376,6 +391,10 @@ test_mockable const uint8_t *system_get_jump_tag(uint16_t tag, int *version,
 	int used = 0;
 
 	if (!jdata)
+		return NULL;
+
+	/* Ensure system_usable_ram_end() is within bounds */
+	if (system_usable_ram_end() < JUMP_DATA_MIN_ADDRESS)
 		return NULL;
 
 	/* Search through tag data for a match */
@@ -610,10 +629,10 @@ test_mockable_static void jump_to_image(uintptr_t init_addr)
 	/* Disable interrupts before jump */
 	interrupt_disable_all();
 
-#ifdef CONFIG_DMA
+#ifdef CONFIG_DMA_CROS
 	/* Disable all DMA channels to avoid memory corruption */
 	dma_disable_all();
-#endif /* CONFIG_DMA */
+#endif /* CONFIG_DMA_CROS */
 
 	/* Jump to the reset vector */
 	resetvec = (void (*)(void))init_addr;
@@ -884,9 +903,17 @@ void system_common_pre_init(void)
 		uint32_t reason;
 		uint32_t info;
 		uint8_t exception;
+		struct panic_data *pdata;
 
 		panic_get_reason(&reason, &info, &exception);
-		if (reason != PANIC_SW_WATCHDOG)
+		pdata = panic_get_data();
+		/* The watchdog panic info may have already been initialized by
+		 * the watchdog handler, so only set it here if the panic reason
+		 * is not a watchdog or the panic info has already been read,
+		 * i.e. an old watchdog panic.
+		 */
+		if (reason != PANIC_SW_WATCHDOG || !pdata ||
+		    pdata->flags & PANIC_DATA_FLAG_OLD_HOSTCMD)
 			panic_set_reason(PANIC_SW_WATCHDOG, 0, 0);
 	}
 
@@ -917,6 +944,18 @@ void system_common_pre_init(void)
 			delta = sizeof(struct jump_data) - JUMP_DATA_SIZE_V2;
 		else
 			delta = sizeof(struct jump_data) - jdata->struct_size;
+
+		/*
+		 * Check if enough space for jump data.
+		 * Clear jump data and return if not.
+		 */
+		if (system_usable_ram_end() < JUMP_DATA_MIN_ADDRESS) {
+			/* TODO(b/251190975): This failure should be reported
+			 * in the panic data structure for more visibility.
+			 */
+			memset(jdata, 0, sizeof(struct jump_data));
+			return;
+		}
 
 		if (delta && jdata->jump_tag_total) {
 			uint8_t *d = (uint8_t *)system_usable_ram_end();
@@ -964,10 +1003,18 @@ int system_is_manual_recovery(void)
 /**
  * Handle a pending reboot command.
  */
-static int handle_pending_reboot(enum ec_reboot_cmd cmd)
+static int handle_pending_reboot(struct ec_params_reboot_ec p)
 {
-	switch (cmd) {
+	if (IS_ENABLED(CONFIG_POWER_BUTTON_INIT_IDLE) &&
+	    (p.flags & EC_REBOOT_FLAG_CLEAR_AP_IDLE)) {
+		CPRINTS("Clearing AP_IDLE");
+		chip_save_reset_flags(chip_read_reset_flags() &
+				      ~EC_RESET_FLAG_AP_IDLE);
+	}
+
+	switch (p.cmd) {
 	case EC_REBOOT_CANCEL:
+	case EC_REBOOT_NO_OP:
 		return EC_SUCCESS;
 	case EC_REBOOT_JUMP_RO:
 		return system_run_image_copy_with_flags(
@@ -1001,7 +1048,7 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 			board_reset_pd_mcu();
 
 		cflush();
-		if (cmd == EC_REBOOT_COLD_AP_OFF)
+		if (p.cmd == EC_REBOOT_COLD_AP_OFF)
 			system_reset(SYSTEM_RESET_HARD |
 				     SYSTEM_RESET_LEAVE_AP_OFF);
 		else
@@ -1011,16 +1058,6 @@ static int handle_pending_reboot(enum ec_reboot_cmd cmd)
 	case EC_REBOOT_DISABLE_JUMP:
 		system_disable_jump();
 		return EC_SUCCESS;
-	case EC_REBOOT_HIBERNATE_CLEAR_AP_OFF:
-		if (!IS_ENABLED(CONFIG_HIBERNATE))
-			return EC_ERROR_INVAL;
-
-		if (IS_ENABLED(CONFIG_POWER_BUTTON_INIT_IDLE)) {
-			CPRINTS("Clearing AP_IDLE");
-			chip_save_reset_flags(chip_read_reset_flags() &
-					      ~EC_RESET_FLAG_AP_IDLE);
-		}
-		__fallthrough;
 	case EC_REBOOT_HIBERNATE:
 		if (!IS_ENABLED(CONFIG_HIBERNATE))
 			return EC_ERROR_INVAL;
@@ -1069,7 +1106,7 @@ test_mockable void system_enter_hibernate(uint32_t seconds,
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		system_hibernate(seconds, microseconds);
 	else {
-		reboot_at_shutdown = EC_REBOOT_HIBERNATE;
+		reboot_at_shutdown.cmd = EC_REBOOT_HIBERNATE;
 		hibernate_seconds = seconds;
 		hibernate_microseconds = microseconds;
 
@@ -1083,9 +1120,12 @@ test_mockable void system_enter_hibernate(uint32_t seconds,
 static void system_common_shutdown(void)
 {
 	system_exit_manual_recovery();
-	if (reboot_at_shutdown)
-		CPRINTF("Reboot at shutdown: %d\n", reboot_at_shutdown);
+	if (reboot_at_shutdown.cmd)
+		CPRINTF("Reboot at shutdown: %d\n", reboot_at_shutdown.cmd);
 	handle_pending_reboot(reboot_at_shutdown);
+
+	/* Reset cnt on cold boot */
+	update_ap_boot_time(RESET_CNT);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN_COMPLETE, system_common_shutdown,
 	     HOOK_PRIO_DEFAULT);
@@ -1113,7 +1153,7 @@ static int sysinfo(struct ec_response_sysinfo *info)
 			system_info_flags |= SYSTEM_JUMP_ENABLED;
 	}
 
-	if (reboot_at_shutdown)
+	if (reboot_at_shutdown.cmd)
 		system_info_flags |= SYSTEM_REBOOT_AT_SHUTDOWN;
 
 	info->flags = system_info_flags;
@@ -1412,7 +1452,7 @@ static int command_reboot(int argc, const char **argv)
 		} else if (!strcasecmp(argv[i], "ro")) {
 			flags |= SYSTEM_RESET_STAY_IN_RO;
 		} else if (!strcasecmp(argv[i], "cancel")) {
-			reboot_at_shutdown = EC_REBOOT_CANCEL;
+			reboot_at_shutdown.cmd = EC_REBOOT_CANCEL;
 			return EC_SUCCESS;
 		} else if (!strcasecmp(argv[i], "preserve")) {
 			flags |= SYSTEM_RESET_PRESERVE_FLAGS;
@@ -1569,6 +1609,9 @@ host_command_get_version(struct host_cmd_handler_args *args)
 	 * to zero uninitialized fields here.
 	 */
 	if (args->version > 0 && IS_ENABLED(CONFIG_CROS_FWID_VERSION)) {
+		if (args->response_max < sizeof(*r))
+			return EC_RES_RESPONSE_TOO_BIG;
+
 		strzcpy(r->cros_fwid_ro, system_get_cros_fwid(EC_IMAGE_RO),
 			sizeof(r->cros_fwid_ro));
 		strzcpy(r->cros_fwid_rw, system_get_cros_fwid(EC_IMAGE_RW),
@@ -1620,21 +1663,6 @@ host_command_set_sku_id(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_SET_SKU_ID, host_command_set_sku_id,
-		     EC_VER_MASK(0));
-#endif
-
-#ifdef CONFIG_KEYBOARD_LANGUAGE_ID
-static enum ec_status
-host_command_get_keyboard_id(struct host_cmd_handler_args *args)
-{
-	struct ec_response_keyboard_id *r = args->response;
-
-	r->keyboard_id = keyboard_get_keyboard_id();
-	args->response_size = sizeof(*r);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_GET_KEYBOARD_ID, host_command_get_keyboard_id,
 		     EC_VER_MASK(0));
 #endif
 
@@ -1697,7 +1725,8 @@ static enum ec_status host_command_reboot(struct host_cmd_handler_args *args)
 
 	if (p.cmd == EC_REBOOT_CANCEL) {
 		/* Cancel pending reboot */
-		reboot_at_shutdown = EC_REBOOT_CANCEL;
+		reboot_at_shutdown.cmd = EC_REBOOT_CANCEL;
+		reboot_at_shutdown.flags = 0;
 		return EC_RES_SUCCESS;
 	}
 
@@ -1711,7 +1740,8 @@ static enum ec_status host_command_reboot(struct host_cmd_handler_args *args)
 	}
 	if (p.flags & EC_REBOOT_FLAG_ON_AP_SHUTDOWN) {
 		/* Store request for processing at chipset shutdown */
-		reboot_at_shutdown = p.cmd;
+		p.flags &= ~(EC_REBOOT_FLAG_ON_AP_SHUTDOWN);
+		reboot_at_shutdown = p;
 		return EC_RES_SUCCESS;
 	}
 
@@ -1726,7 +1756,7 @@ static enum ec_status host_command_reboot(struct host_cmd_handler_args *args)
 #endif
 
 	CPRINTS("Executing host reboot command %d", p.cmd);
-	switch (handle_pending_reboot(p.cmd)) {
+	switch (handle_pending_reboot(p)) {
 	case EC_SUCCESS:
 		return EC_RES_SUCCESS;
 	case EC_ERROR_INVAL:
@@ -1813,15 +1843,6 @@ __overridable int board_write_mac_addr(const char *mac_addr)
 }
 #endif /* CONFIG_MAC_ADDR_LEN */
 
-__attribute__((weak)) void clock_enable_module(enum module_id module,
-					       int enable)
-{
-	/*
-	 * Default weak implementation - for chips that don't support this
-	 * function.
-	 */
-}
-
 __test_only void system_common_reset_state(void)
 {
 	jdata = 0;
@@ -1832,9 +1853,9 @@ __test_only void system_common_reset_state(void)
 
 __test_only enum ec_reboot_cmd system_common_get_reset_reboot_at_shutdown(void)
 {
-	int ret = reboot_at_shutdown;
+	int ret = reboot_at_shutdown.cmd;
 
-	reboot_at_shutdown = 0;
+	reboot_at_shutdown.cmd = EC_REBOOT_CANCEL;
 
 	return ret;
 }
