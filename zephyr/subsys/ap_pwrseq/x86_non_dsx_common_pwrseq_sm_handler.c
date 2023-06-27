@@ -461,7 +461,7 @@ static int common_pwr_sm_run(int state)
 	case SYS_POWER_STATE_S3:
 		/* AP is out of suspend to RAM */
 		if (!rsmrst_power_is_good()) {
-			LOG_WRN("RSMRST De-asserted");
+			LOG_WRN("RSMRST is not GOOD");
 			return SYS_POWER_STATE_S3S4;
 		}
 		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
@@ -479,6 +479,9 @@ static int common_pwr_sm_run(int state)
 		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
 			shutdown_and_notify(AP_POWER_SHUTDOWN_POWERFAIL);
 			return SYS_POWER_STATE_G3;
+		}
+		if (!rsmrst_power_is_good()) {
+			return SYS_POWER_STATE_S3;
 		}
 
 		/* All the power rails must be stable */
