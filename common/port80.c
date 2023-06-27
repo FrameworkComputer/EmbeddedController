@@ -194,7 +194,7 @@ static enum ec_status port80_command_read(struct host_cmd_handler_args *args)
 	} else if (p->subcmd == EC_PORT80_READ_BUFFER) {
 		/* do not allow bad offset or size */
 		if (offset >= ARRAY_SIZE(history) || entries == 0 ||
-		    entries > args->response_max)
+		    entries * sizeof(uint16_t) > args->response_max)
 			return EC_RES_INVALID_PARAM;
 
 		for (i = 0; i < entries; i++) {

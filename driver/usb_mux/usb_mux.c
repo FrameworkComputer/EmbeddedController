@@ -844,6 +844,9 @@ static enum ec_status hc_usb_pd_mux_ack(struct host_cmd_handler_args *args)
 	if (!IS_ENABLED(CONFIG_USB_MUX_AP_ACK_REQUEST))
 		return EC_RES_INVALID_COMMAND;
 
+	if (p->port >= board_get_usb_pd_port_count())
+		return EC_RES_INVALID_PARAM;
+
 	if (ack_task[p->port] != TASK_ID_INVALID)
 		task_set_event(ack_task[p->port], PD_EVENT_AP_MUX_DONE);
 
