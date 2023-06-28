@@ -17,21 +17,8 @@
 #include "temp_sensor/temp_sensor.h"
 #include "util.h"
 
-#define F75303_RESOLUTION 11
-#define F75303_SHIFT1 (16 - F75303_RESOLUTION)
-#define F75303_SHIFT2 (F75303_RESOLUTION - 8)
-
-#define F75303_SENSOR_ID_INTERNAL(node_id) DT_CAT(F75303_, node_id)
-#define F75303_SENSOR_ID_WITH_COMMA_INTERNAL(node_id) F75303_SENSOR_ID_INTERNAL(node_id),
-enum f75303_sensor_internal {
-        DT_FOREACH_STATUS_OKAY(F75303_COMPAT, F75303_SENSOR_ID_WITH_COMMA_INTERNAL)
-                F75303_COUNT,
-};
-#undef F75303_SENSOR_ID_WITH_COMMA_INTERNAL
-
-
-static int temps[F75303_COUNT];
-static int8_t fake_temp[F75303_COUNT] = { -1, -1, -1, -1, -1, -1};
+static int temps[F75303_IDX_COUNT];
+static int8_t fake_temp[F75303_IDX_COUNT] = { -1, -1, -1, -1, -1, -1};
 
 /**
  * Read 8 bits register from temp sensor.
@@ -57,33 +44,19 @@ static int get_temp(int sensor, const int offset, int *temp)
 
 int f75303_get_val(int idx, int *temp)
 {
-	if (idx < 0 || F75303_IDX_COUNT <= idx)
-		return EC_ERROR_INVAL;
-
-	if (fake_temp[idx] != -1) {
-		*temp = C_TO_K(fake_temp[idx]);
-		return EC_SUCCESS;
-	}
-
-	*temp = temps[idx];
+	/* unused function */
 	return EC_SUCCESS;
-}
-
-static inline int f75303_reg_to_mk(int16_t reg)
-{
-	int temp_mc;
-
-	temp_mc = (((reg >> F75303_SHIFT1) * 1000) >> F75303_SHIFT2);
-
-	return MILLI_CELSIUS_TO_MILLI_KELVIN(temp_mc);
 }
 
 int f75303_get_val_k(int idx, int *temp_k_ptr)
 {
-	if (idx >= F75303_IDX_COUNT)
+	if (idx < 0 || idx >= F75303_IDX_COUNT)
 		return EC_ERROR_INVAL;
 
-	*temp_k_ptr = MILLI_KELVIN_TO_KELVIN(temps[idx]);
+	if (!gpu_present() && idx > 2)
+		*temp_k_ptr = C_TO_K(0);
+	else
+		*temp_k_ptr = MILLI_KELVIN_TO_KELVIN(temps[idx]);
 	return EC_SUCCESS;
 }
 
@@ -101,41 +74,41 @@ void f75303_update_temperature(int idx)
 	int temp_reg = 0;
 	int rv = 0;
 
-	if (idx >= F75303_COUNT)
+	if (idx >= F75303_IDX_COUNT)
 		return;
 	switch (idx) {
-	/* gpu_amb_f75303 */
+	/* local_f75303 */
 	case 0:
+		rv = get_temp(idx, F75303_TEMP_LOCAL_REGISTER, &temp_reg);
+		break;
+	/* ddr_f75303 */
+	case 1:
+		rv = get_temp(idx, F75303_TEMP_REMOTE1_REGISTER, &temp_reg);
+		break;
+	/* cpu_f75303 */
+	case 2:
+		rv = get_temp(idx, F75303_TEMP_REMOTE2_REGISTER, &temp_reg);
+		break;
+	/* gpu_amb_f75303 */
+	case 3:
 		if (gpu_present())
 			rv = get_temp(idx, F75303_TEMP_LOCAL_REGISTER, &temp_reg);
 		else
 			rv = EC_ERROR_NOT_POWERED;
 		break;
 	/* gpu_vr_f75303 */
-	case 1:
+	case 4:
 		if (gpu_present())
 			rv = get_temp(idx, F75303_TEMP_REMOTE1_REGISTER, &temp_reg);
 		else
 			rv = EC_ERROR_NOT_POWERED;
 		break;
 	/* gpu_vram_f75303 */
-	case 2:
+	case 5:
 		if (gpu_present())
 			rv = get_temp(idx, F75303_TEMP_REMOTE2_REGISTER, &temp_reg);
 		else
 			rv = EC_ERROR_NOT_POWERED;
-		break;
-	/* local_f75303 */
-	case 3:
-		rv = get_temp(idx, F75303_TEMP_LOCAL_REGISTER, &temp_reg);
-		break;
-	/* ddr_f75303 */
-	case 4:
-		rv = get_temp(idx, F75303_TEMP_REMOTE1_REGISTER, &temp_reg);
-		break;
-	/* cpu_f75303 */
-	case 5:
-		rv = get_temp(idx, F75303_TEMP_REMOTE2_REGISTER, &temp_reg);
 		break;
 	}
 	if (rv == EC_SUCCESS)
@@ -152,7 +125,7 @@ static int f75303_set_fake_temp(int argc, const char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	index = strtoi(argv[1], &e, 0);
-	if ((*e) || (index < 0) || (index >= F75303_COUNT))
+	if ((*e) || (index < 0) || (index >= F75303_IDX_COUNT))
 		return EC_ERROR_PARAM1;
 
 	if (!strcasecmp(argv[2], "off")) {
