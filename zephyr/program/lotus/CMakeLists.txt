@@ -36,6 +36,7 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 			"lotus/src/project_diagnostics.c"
 			"lotus/src/power_button_x86.c"
 			"lotus/src/amd_r23m.c"
+			"lotus/src/ej889i.c"
 	)
 endif()
 if(DEFINED CONFIG_BOARD_AZALEA)

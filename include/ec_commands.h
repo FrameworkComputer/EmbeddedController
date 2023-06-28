@@ -861,6 +861,7 @@ enum host_event_code {
 		[EC_HOST_EVENT_THERMAL_QEVENT] = "THERMAL_QEVENT",             \
 		[EC_HOST_EVENT_ALS] = "ALS_QEVENT",              \
 		[EC_HOST_EVENT_PB_RELEASE] = "POWER_BTN_RELEASE",              \
+		[EC_HOST_EVENT_DGPU_TYPEC_NOTIFY] = "DGPU_TYPEC_NOTIFY"	       \
 	}
 /* clang-format on */
 
