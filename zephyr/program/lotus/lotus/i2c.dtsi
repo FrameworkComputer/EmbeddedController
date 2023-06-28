@@ -144,19 +144,19 @@
 	/* TODO: Add the device on this bus */
 	gpu_amb_f75303: gpu_amb_f75303@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
-		temperature-type = "F75303_IDX_LOCAL";
+		temperature-type = "F75303_IDX_GPU_LOCAL";
 		reg = <0x4d>;
 	};
 
 	gpu_vr_f75303: gpu_vr_f75303@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
-		temperature-type = "F75303_IDX_REMOTE1";
+		temperature-type = "F75303_IDX_GPU_REMOTE1";
 		reg = <0x4d>;
 	};
 
 	gpu_vram_f75303: gpu_vram_f75303@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
-		temperature-type = "F75303_IDX_REMOTE2";
+		temperature-type = "F75303_IDX_GPU_REMOTE2";
 		reg = <0x4d>;
 	};
 	gpu_amdr23m: gpu_amdr23m@40 {

@@ -62,7 +62,7 @@
 			temp_host_release_high = <40>;
 			temp_fan_off = <40>;
 			temp_fan_max = <70>;
-			power-good-pin = <&gpio_slp_s5_l>;
+			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_amb_f75303>;
 		};
 		gpu-vr-f75303 {
@@ -73,7 +73,7 @@
 			temp_host_release_high = <40>;
 			temp_fan_off = <40>;
 			temp_fan_max = <70>;
-			power-good-pin = <&gpio_slp_s5_l>;
+			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_vr_f75303>;
 		};
 		gpu-vram-f75303 {
@@ -84,7 +84,7 @@
 			temp_host_release_high = <40>;
 			temp_fan_off = <40>;
 			temp_fan_max = <70>;
-			power-good-pin = <&gpio_slp_s5_l>;
+			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_vram_f75303>;
 		};
 		gpu-amdr23m {
@@ -95,7 +95,7 @@
 			temp_host_release_high = <60>;
 			temp_fan_off = <108>;
 			temp_fan_max = <108>;
-			power-good-pin = <&gpio_slp_s5_l>;
+			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_amdr23m>;
 		};
 	};
