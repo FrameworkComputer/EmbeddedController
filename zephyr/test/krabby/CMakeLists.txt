@@ -40,6 +40,8 @@ target_sources_ifdef(CONFIG_TEST_TENTACRUEL
 
 target_sources_ifdef(CONFIG_TEST_STARMIE
 	app PRIVATE
+	src/main.c
+	src/power_seq.c
 	src/temp_starmie.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/starmie/src/thermal.c
 )

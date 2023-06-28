@@ -73,13 +73,8 @@ int charger_profile_override(struct charge_state_data *curr)
 	 * charger_temp_ave is the calculated average of the previous
 	 * 4 times plus this time.
 	 */
-	if (thermal_cyc < 5) {
-		thermals[thermal_cyc] = charger_temp_c;
-		thermal_cyc++;
-	} else {
-		thermal_cyc = 0;
-		thermals[thermal_cyc] = charger_temp_c;
-	}
+	thermals[thermal_cyc] = charger_temp_c;
+	thermal_cyc = (thermal_cyc + 1) % 5;
 	for (int i = 0; i < 5; i++)
 		charger_temp_sum += thermals[i];
 

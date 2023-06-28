@@ -72,8 +72,53 @@
 			io-channels = <&adc0 4>;
 		};
 	};
+
+	named-gpios {
+		en_pp4200_s5: en-pp4200-s5 {
+			gpios = <&gpiod 2 GPIO_OUTPUT_LOW>;
+		};
+
+		pg_pp4200_s5_od: pg-pp4200-s5-od {
+			gpios = <&gpioe 1 GPIO_INPUT>;
+			enum-name = "GPIO_PG_PP4200_S5_OD";
+		};
+
+		pmic_ec_resetb: pmic-ec-resetb {
+			gpios = <&gpioh 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_PMIC_EC_RESETB";
+		};
+	};
+
+	power_signal_list: power-signal-list {
+		 compatible = "mediatek,mt8188-power-signal-list";
+
+		 pg_pp4200_s5 {
+			power-enum-name = "PG_PP4200_S5";
+			power-gpio-pin = <&pg_pp4200_s5_od>;
+		};
+		 pmic_ap_reset {
+			power-enum-name = "PMIC_AP_RST";
+			power-gpio-pin = <&pmic_ec_resetb>;
+		};
+	};
+
+	/delete-node/ unused-pins;
 };
 
 &thermistor_1V8_100K_100K_4250B {
 	status = "okay";
+};
+
+/* open-drain is not supported in gpio emul, re-config to push-pull  */
+&ec_pmic_en_odl {
+	gpios = <&gpiod 0 (GPIO_OUTPUT_HIGH | GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+};
+&sys_rst_odl {
+	gpios = <&gpiog 1 GPIO_OUTPUT_LOW>;
+};
+
+/* set default gpio-emul state */
+&power_button_l {
+	gpios = <&gpioe 4 (GPIO_INPUT | GPIO_PULL_UP)>;
 };
