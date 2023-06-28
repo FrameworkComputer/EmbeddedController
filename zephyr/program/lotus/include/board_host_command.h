@@ -143,10 +143,10 @@ struct ec_params_chassis_intrusion_control {
 } __ec_align1;
 
 struct ec_response_chassis_intrusion_control {
-	uint8_t chassis_ever_opened;
-	uint8_t coin_batt_ever_remove;
-	uint8_t total_open_count;
-	uint8_t vtr_open_count;
+	uint8_t chassis_ever_opened;	/* bios used */
+	uint8_t coin_batt_ever_remove;	/* factory used */
+	uint8_t total_open_count;	/* reserved */
+	uint8_t vtr_open_count;		/* reserved */
 } __ec_align1;
 
 /*****************************************************************************/

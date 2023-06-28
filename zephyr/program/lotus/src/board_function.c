@@ -13,6 +13,7 @@
 #include "customized_shared_memory.h"
 #include "diagnostics.h"
 #include "ec_commands.h"
+#include "extpower.h"
 #include "flash_storage.h"
 #include "hooks.h"
 #include "system.h"
@@ -35,6 +36,8 @@ static uint8_t chassis_open_count;
 static uint8_t chassis_press_counter;
 /* make sure only trigger once */
 static uint8_t chassis_once_flag;
+
+static uint64_t chassis_open_hibernate_time;
 
 int bios_function_status(uint16_t type, uint16_t addr, uint8_t flag)
 {
@@ -91,51 +94,82 @@ int chassis_cmd_clear(int type)
 	return -1;
 }
 
-static void check_chassis_open(int init)
+static void chassis_open_hibernate(void)
+{
+	uint64_t now;
+	int chassis_status = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l));
+
+	/* We don't need to hibernate EC when extpower is present or chassis is closed */
+	if (extpower_is_present() || chassis_status || !chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return;
+
+	/* EC does not update the chassis open hibernate timer, ignore it */
+	if (!chassis_open_hibernate_time)
+		return;
+
+	now = get_time().val;
+	CPRINTS("chassis_open_hibernate_time:%lld, now:%lld", chassis_open_hibernate_time, now);
+	if (now > chassis_open_hibernate_time) {
+		CPRINTS("Chassis open hibernate");
+		system_hibernate(0, 0);
+	}
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, chassis_open_hibernate, HOOK_PRIO_DEFAULT);
+DECLARE_DEFERRED(chassis_open_hibernate);
+
+__override enum critical_shutdown
+board_system_is_idle(uint64_t last_shutdown_time, uint64_t *target,
+		     uint64_t now)
+{
+	/* update the chassis open target time = 30s - 28s*/
+	chassis_open_hibernate_time = *target - 28000000;
+
+	/* After setting the chassis open hibernate timer, delay 2.5s to check the chassis status */
+	hook_call_deferred(&chassis_open_hibernate_data, 2500 * MSEC);
+
+	CPRINTS("target:%lld, now:%lld", *target, now);
+
+	if (now < *target)
+		return CRITICAL_SHUTDOWN_IGNORE;
+
+	CPRINTS("SDC Safe");
+	return CRITICAL_SHUTDOWN_HIBERNATE;
+}
+
+__overridable void project_chassis_function(enum gpio_signal signal)
+{
+}
+
+static void check_chassis_open(void)
 {
 	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0
-		&& !chassis_once_flag) {
+			&& !chassis_once_flag) {
+
+		CPRINTS("Chassis was opened");
 		chassis_once_flag = 1;
+
+		/* Record the chassis was open status in bbram */
 		system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 1);
 
-		if (init) {
-			system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN,
-							&chassis_vtr_open_count);
-			if (chassis_vtr_open_count < 0xFF)
-				system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN,
-								++chassis_vtr_open_count);
-		} else {
-			system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL,
-							&chassis_open_count);
-			if (chassis_open_count < 0xFF)
-				system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL,
-								++chassis_open_count);
-		}
-
-		/* counter for chasis pin */
+		/* Counter for chasis pin */
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 			if (chassis_press_counter < 0xFF)
 				chassis_press_counter++;
+	} else if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 1
+			&& chassis_once_flag) {
 
-		CPRINTS("Chassis was open");
-	} else if (chassis_once_flag) {
-		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 1) {
-			CPRINTS("Chassis was close");
-			chassis_once_flag = 0;
-		}
+		CPRINTS("Chassis was closed");
+		chassis_once_flag = 0;
 	}
+
+	hook_call_deferred(&chassis_open_hibernate_data, 0);
 }
+DECLARE_DEFERRED(check_chassis_open);
 
-static void board_customer_tick(void);
-DECLARE_DEFERRED(board_customer_tick);
-
-/*
- * for use experience, setting debounce time to 250 ms.
- */
-static void board_customer_tick(void)
+void chassis_interrupt_handler(enum gpio_signal signal)
 {
-	check_chassis_open(0);
-	hook_call_deferred(&board_customer_tick_data, 250 * MSEC);
+	project_chassis_function(signal);
+	hook_call_deferred(&check_chassis_open_data, 50 * MSEC);
 }
 
 static void bios_function_init(void)
@@ -146,11 +180,9 @@ static void bios_function_init(void)
 
 	if (flash_storage_get(FLASH_FLAGS_STANDALONE))
 		set_standalone_mode(1);
-
 #ifdef CONFIG_BOARD_LOTUS
 	set_detect_mode(flash_storage_get(FLASH_FLAGS_INPUT_MODULE_POWER));
 #endif
-	check_chassis_open(1);
-	hook_call_deferred(&board_customer_tick_data, 1000 * MSEC);
+	check_chassis_open();
 }
 DECLARE_HOOK(HOOK_INIT, bios_function_init, HOOK_PRIO_DEFAULT + 1);
