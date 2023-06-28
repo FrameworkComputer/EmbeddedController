@@ -5,6 +5,12 @@
  * Battery charging task and state machine.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #include "battery.h"
 #include "battery_smart.h"
 #include "builtin/assert.h"
