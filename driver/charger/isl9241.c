@@ -478,10 +478,18 @@ int isl9241_set_ac_prochot(int chgnum, int ma)
 	 * [15:13]. This routine should ensure these bits are not set before
 	 * writing the register.
 	 */
+
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	if (ma > AC_REG_TO_CURRENT(ISL9241_AC_PROCHOT_CURRENT_MAX))
+		reg = ISL9241_AC_PROCHOT_CURRENT_MAX;
+	else if (ma < AC_REG_TO_CURRENT(ISL9241_AC_PROCHOT_CURRENT_MIN))
+		reg = ISL9241_AC_PROCHOT_CURRENT_MIN;
+#else
 	if (ma > ISL9241_AC_PROCHOT_CURRENT_MAX)
 		reg = AC_CURRENT_TO_REG(ISL9241_AC_PROCHOT_CURRENT_MAX);
 	else if (ma < ISL9241_AC_PROCHOT_CURRENT_MIN)
 		reg = AC_CURRENT_TO_REG(ISL9241_AC_PROCHOT_CURRENT_MIN);
+#endif
 	else
 		reg = AC_CURRENT_TO_REG(ma);
 
