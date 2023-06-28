@@ -65,10 +65,12 @@ static void board_chargers_suspend(struct ap_power_ev_callback *const cb,
 	case AP_POWER_RESUME:
 		fn = sm5803_disable_low_power_mode;
 		break;
+	/* LCOV_EXCL_START can only happen if init doesn't match these cases */
 	default:
 		LOG_WRN("%s: power event %d is not recognized", __func__,
 			data.event);
 		return;
+		/* LCOV_EXCL_STOP */
 	}
 
 	fn(CHARGER_PRIMARY);
@@ -254,6 +256,7 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	charge_set_input_current_limit(charge_ma, charge_mv);
 }
 
+/* LCOV_EXCL_START function does nothing, but is required for build */
 void board_reset_pd_mcu(void)
 {
 	/*
@@ -262,6 +265,7 @@ void board_reset_pd_mcu(void)
 	 * to the EC.
 	 */
 }
+/* LCOV_EXCL_STOP */
 
 /* C0 interrupt can only be triggered by the charger */
 void usb_c0_interrupt(enum gpio_signal s)

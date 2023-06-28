@@ -40,6 +40,11 @@ choice TEST_TARGET
 	  select TEST_USB_PD_POLICY
 	  help
 		The test target that exercises nissa/gothrax/*.c
+
+	config TEST_NISSA_JOXER
+	  bool "Tests for Joxer-specific code"
+	  help
+		The test target that exercises nissa/joxer/*.c
 endchoice
 
 config TEST_USB_PD_POLICY

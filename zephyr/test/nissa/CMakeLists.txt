@@ -8,7 +8,9 @@ project(nissa)
 
 add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 
-zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/nissa/include")
+zephyr_include_directories(
+        "${PLATFORM_EC_PROGRAM_DIR}/nissa/include"
+        include)
 
 target_sources(app PRIVATE src/stubs.c)
 
@@ -66,5 +68,18 @@ if(CONFIG_TEST_NISSA_GOTHRAX)
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/gothrax/src/hdmi.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/gothrax/src/keyboard.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/gothrax/src/usbc.c
+    )
+endif()
+
+if(CONFIG_TEST_NISSA_JOXER)
+    target_compile_definitions(app PRIVATE CHARGER_PRIMARY=0 CHARGER_SECONDARY=1)
+    target_sources(
+            app PRIVATE
+            src/joxer.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/joxer/src/charger.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/joxer/src/fan.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/joxer/src/form_factor.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/joxer/src/keyboard.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/joxer/src/usbc.c
     )
 endif()

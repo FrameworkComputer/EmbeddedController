@@ -15,7 +15,7 @@
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
-static const struct ec_response_keybd_config joxer_kb_legacy = {
+test_export_static const struct ec_response_keybd_config joxer_kb_legacy = {
 	.num_top_row_keys = 13,
 	.action_keys = {
 		TK_BACK,		/* T1 */
@@ -44,7 +44,7 @@ board_vivaldi_keybd_config(void)
 /*
  * Keyboard layout decided by FW config.
  */
-static void kb_layout_init(void)
+test_export_static void kb_layout_init(void)
 {
 	int ret;
 	uint32_t val;

@@ -54,3 +54,12 @@ tests:
     extra_configs:
     - CONFIG_TEST_NISSA_GOTHRAX=y
     - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
+  nissa.joxer:
+    extra_configs:
+    - CONFIG_TEST_NISSA_JOXER=y
+    - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
+    - CONFIG_PLATFORM_EC_ACCELGYRO_BMI_COMM_I2C=y
+    - CONFIG_PLATFORM_EC_ACCELGYRO_BMI3XX=y
+    - CONFIG_PLATFORM_EC_ACCEL_BMA4XX=y
+    extra_dtc_overlay_files:
+    - "boards/joxer.dts"
