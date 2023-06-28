@@ -404,10 +404,8 @@ enum power_state power_handle_state(enum power_state state)
 		 * power up from S5.
 		 */
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 1);
-		if (gpu_present()) {
-			CPRINTS("Enabling GPU power");
+		if (gpu_present())
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 1);
-		}
 
 		k_msleep(20);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 1);
@@ -453,7 +451,6 @@ enum power_state power_handle_state(enum power_state state)
 
 #ifdef CONFIG_PLATFORM_EC_POWERSEQ_S0IX
 	case POWER_S0ix:
-		CPRINTS("PH S0ix");
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 0) {
 			/*
 			 * If power signal lose, we need to resume to S0 and
@@ -472,37 +469,29 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S0ixS3:
-		CPRINTS("PH S0ixS3");
 		/* follow power sequence Disable S3 power */
 		chipset_prepare_S3(0);
-		CPRINTS("PH S0ixS0->S3");
 		return POWER_S3;
 
 	case POWER_S3S0ix:
-		CPRINTS("PH S3->S0ix");
 		/* Enable power for CPU check system */
 		chipset_prepare_S3(1);
-		CPRINTS("PH S3S0ix->S0ix");
 		return POWER_S0ix;
 
 	case POWER_S0ixS0:
-		CPRINTS("PH S0ixS0");
 		resume_ms_flag = 0;
 		enter_ms_flag = 0;
 		lpc_s0ix_resume_restore_masks();
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
-		CPRINTS("PH S0ixS0->S0");
 		return POWER_S0;
 
 		break;
 
 	case POWER_S0S0ix:
-		CPRINTS("PH S0->S0ix");
 		lpc_s0ix_suspend_clear_masks();
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
-		CPRINTS("PH S0S0ix->S0ix");
 		return POWER_S0ix;
 
 		break;
