@@ -253,12 +253,18 @@ void board_check_current(void)
 	static int curr_status = EC_DEASSERTED_PROCHOT;
 	static int pre_status = EC_DEASSERTED_PROCHOT;
 	static int active_port;
+	static int pre_active_port;
 	static int shunt_register;
 
 	active_port = charge_manager_get_active_charge_port();
 
 	if (active_port == CHARGE_PORT_NONE) {
-		curr_status = EC_DEASSERTED_PROCHOT;
+		if (pre_active_port != active_port) {
+			curr_status = EC_DEASSERTED_PROCHOT;
+			throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_AC);
+
+			pre_active_port = active_port;
+		}
 		hook_call_deferred(&board_check_current_data, 100 * MSEC);
 		return;
 	}
@@ -291,6 +297,7 @@ void board_check_current(void)
 	}
 
 	pre_status = curr_status;
+	pre_active_port = active_port;
 }
 
 /* EC console command */
