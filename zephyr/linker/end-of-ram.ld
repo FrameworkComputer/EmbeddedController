@@ -8,7 +8,7 @@
  * would result in the SRAM utilization always being reported as 100%.
  */
 #if !defined(CONFIG_BOARD_NATIVE_POSIX)
-SECTION_PROLOGUE(.end_of_ram_info, 0, )
+SECTION_PROLOGUE(.end_of_ram_info, 0 (NOLOAD), )
 {
 	ASSERT(DEFINED(_image_ram_end) && _image_ram_end > 0, "Error: _image_ram_end is not defined");
 
