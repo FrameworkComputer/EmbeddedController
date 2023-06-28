@@ -70,7 +70,7 @@
 			color_amber: color-amber {
 				led-color = "LED_AMBER";
 				br-color = "EC_LED_COLOR_AMBER";
-				led-values = <9 1 0>;
+				led-values = <7 3 0>;
 			};
 
 		};
