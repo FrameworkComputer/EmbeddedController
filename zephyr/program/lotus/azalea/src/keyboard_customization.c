@@ -141,6 +141,13 @@ uint8_t bl_brightness = KEYBOARD_BL_BRIGHTNESS_OFF;
 #define CAPS_LED BIT(2)
 static uint8_t caps_led_status;
 
+void board_kblight_init(void)
+{
+	uint8_t current_kblight = 0;
+
+	if (system_get_bbram(SYSTEM_BBRAM_IDX_KBSTATE, &current_kblight) == EC_SUCCESS)
+		kblight_set(current_kblight & 0x7F);
+}
 
 int caps_status_check(void)
 {
