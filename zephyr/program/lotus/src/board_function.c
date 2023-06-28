@@ -180,9 +180,9 @@ static void bios_function_init(void)
 
 	if (flash_storage_get(FLASH_FLAGS_STANDALONE))
 		set_standalone_mode(1);
-
+#ifdef CONFIG_BOARD_LOTUS
 	set_detect_mode(flash_storage_get(FLASH_FLAGS_INPUT_MODULE_POWER));
-
+#endif
 	check_chassis_open();
 }
 DECLARE_HOOK(HOOK_INIT, bios_function_init, HOOK_PRIO_DEFAULT + 1);
