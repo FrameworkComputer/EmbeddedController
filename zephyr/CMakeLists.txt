@@ -675,3 +675,13 @@ if (DEFINED CONFIG_PIGWEED_LOG_TOKENIZED)
       ${CMAKE_BINARY_DIR}/zephyr/zephyr_pre0.elf
   )
 endif()
+
+if (NOT DEFINED CONFIG_BOARD_NATIVE_POSIX)
+  set_property(GLOBAL APPEND PROPERTY extra_post_build_commands
+    COMMAND
+      ${PYTHON_EXECUTABLE}
+      ${PLATFORM_EC}/util/check_zephyr_end_of_ram.py
+      ${CMAKE_BINARY_DIR}/zephyr/zephyr.elf
+      --delete
+  )
+endif()

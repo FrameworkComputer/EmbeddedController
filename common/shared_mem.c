@@ -12,6 +12,13 @@
 #include "system.h"
 #include "util.h"
 
+#if defined(CONFIG_ZEPHYR) && defined(CONFIG_SHAREDMEM_MINIMUM_SIZE)
+BUILD_ASSERT(
+	CONFIG_SHAREDMEM_MINIMUM_SIZE >=
+		CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE,
+	"ERROR: Sharedmem must be large enough for preserved end of ram data");
+#endif
+
 static int buf_in_use;
 static int max_used;
 
