@@ -1006,7 +1006,14 @@ static int get_desired_input_current(enum battery_present batt_present,
 #ifdef CONFIG_USB_POWER_DELIVERY
 		return MIN(PD_MAX_CURRENT_MA, info->input_current_max);
 #else
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+		int ilim = charge_manager_get_charger_current();
+		return ilim == CHARGE_CURRENT_UNINITIALIZED ?
+			       CHARGE_CURRENT_UNINITIALIZED :
+			       MAX(CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT, ilim);
+#else
 		return info->input_current_max;
+#endif
 #endif
 	}
 }
@@ -1576,6 +1583,11 @@ void charger_task(void *u)
 
 		charger_get_params(&curr.chg);
 		battery_get_params(&curr.batt);
+
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+		battery_customize(&curr);
+#endif
+
 #ifdef CONFIG_OCPC
 		if (curr.ac)
 			ocpc_get_adcs(&curr.ocpc);
