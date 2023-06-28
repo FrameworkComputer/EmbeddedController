@@ -77,7 +77,7 @@ config PLATFORM_EC_TEMP_SENSOR_F75303
 config PLATFORM_EC_TEMP_SENSOR_AMD_R23M
 	bool "AMD R23M support"
 	default y
-	depends on DT_HAS_CROS_EC_TEMP_SENSOR_AMD_R23M_ENABLED
+	depends on DT_HAS_CROS_EC_TEMP_SENSOR_AMDR23M_ENABLED
 	help
 	  Enables support for the CrosEC AMD R23M driver, an i2c peripheral
 	  temperature sensor from AMD.
