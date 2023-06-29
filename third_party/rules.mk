@@ -130,7 +130,7 @@ GOOGLETEST_INSTALL_DIR := $(realpath $(out))/googletest/install
 CMAKE_TOOLCHAIN_FILE := $(CURDIR)/cmake/toolchain-armv7m.cmake
 
 GOOGLETEST_CFLAGS := -I$(GOOGLETEST_INSTALL_DIR)/include
-GOOGLETEST_LDFLAGS := -L$(GOOGLETEST_INSTALL_DIR)/lib -lgtest
+GOOGLETEST_LDFLAGS := -L$(GOOGLETEST_INSTALL_DIR)/lib -lgtest -lgmock
 GOOGLETEST_LIB := $(GOOGLETEST_INSTALL_DIR)/lib/libgtest.a
 
 $(GOOGLETEST_LIB):

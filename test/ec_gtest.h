@@ -13,6 +13,7 @@
 #ifndef __CROS_EC_TEST_EC_GTEST_H
 #define __CROS_EC_TEST_EC_GTEST_H
 
+#include <gmock/gmock.h>
 #include <gtest/gtest.h>
 
 static inline void run_all_googletest_tests()
