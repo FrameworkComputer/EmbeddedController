@@ -385,10 +385,7 @@ measuring power.
 
 <!-- mdformat off(b/139308852) -->
 *** note
-**NOTE**: Icetower v0.1 has a hardware bug in the INA connections, so you cannot
-measure the 1.8V fingerprint sensor rail. See http://b/178098140.
-
-Additionally, before https://crrev.com/c/2689101, the sleep GPIOs were not
+**NOTE**: Before https://crrev.com/c/2689101, the sleep GPIOs were not
 configured correctly, so the change needs to be cherry-picked in order to
 measure releases before that point.
 ***
