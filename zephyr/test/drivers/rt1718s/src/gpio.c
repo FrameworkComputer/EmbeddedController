@@ -99,15 +99,13 @@ ZTEST(rt1718s_gpio, test_get_level)
 	     gpio_num++) {
 		zassert_ok(rt1718s_emul_set_reg(
 			rt1718s_emul, RT1718S_GPIO_CTRL(gpio_num), 0));
-		compare_reg_val_with_mask(rt1718s_emul,
-					  RT1718S_GPIO_CTRL(gpio_num), 0,
-					  RT1718S_GPIO_CTRL_I);
+		zassert_equal(
+			rt1718s_gpio_get_level(tcpm_rt1718s_port, gpio_num), 0);
 		zassert_ok(rt1718s_emul_set_reg(rt1718s_emul,
 						RT1718S_GPIO_CTRL(gpio_num),
 						RT1718S_GPIO_CTRL_I));
-		compare_reg_val_with_mask(rt1718s_emul,
-					  RT1718S_GPIO_CTRL(gpio_num), 0xFF,
-					  RT1718S_GPIO_CTRL_I);
+		zassert_equal(
+			rt1718s_gpio_get_level(tcpm_rt1718s_port, gpio_num), 1);
 	}
 }
 
