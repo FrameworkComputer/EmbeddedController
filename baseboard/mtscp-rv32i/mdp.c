@@ -29,7 +29,7 @@ static struct consumer const event_mdp_consumer = {
 };
 
 /* Stub functions only provided by private overlays. */
-#ifndef HAVE_PRIVATE_MT_SCP
+#if !defined(HAVE_PRIVATE_MT_SCP) || defined(HAVE_PRIVATE_MT_NO_MDP)
 void mdp_common_init(void)
 {
 }
