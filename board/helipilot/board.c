@@ -17,6 +17,7 @@
 #include "system.h"
 #include "task.h"
 #include "uart.h"
+#include "uart_host_command.h"
 #include "uartn.h"
 
 /* TODO(b/279096907): Investigate de-duping with other FPMCU boards*/
@@ -87,9 +88,7 @@ static void board_init_transport(void)
 
 		/* Check if CONFIG_USART_HOST_COMMAND is enabled. */
 		if (IS_ENABLED(CONFIG_USART_HOST_COMMAND))
-			/*TODO (b/279035335): implement protocol */
-			ccprints("TODO: CONFIG_USART_HOST_COMMAND protocol not "
-				 "yet implemented on helipilot");
+			uart_host_command_init();
 		else
 			ccprints("ERROR: UART not supported in fw build.");
 

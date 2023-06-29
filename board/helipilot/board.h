@@ -143,6 +143,17 @@
 #define CONSOLE_TASK_STACK_SIZE 4096
 
 /*-------------------------------------------------------------------------*
+ * UART Host Command Interface Defines
+ *-------------------------------------------------------------------------*
+ */
+#define NPCX_UART_BAUDRATE_3M
+
+#undef CONFIG_UART_HOST_COMMAND_HW
+#define CONFIG_UART_HOST_COMMAND_HW 1
+
+#define CONFIG_USART_HOST_COMMAND
+
+/*-------------------------------------------------------------------------*
  * Disable Features
  *-------------------------------------------------------------------------*
  */
