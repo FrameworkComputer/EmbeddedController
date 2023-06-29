@@ -176,6 +176,7 @@
 #define CONFIG_CMD_SPI_XFER
 /* TODO(b/130249462): remove for release */
 #define CONFIG_CMD_FPSENSOR_DEBUG
+#define CONFIG_LOW_POWER_IDLE
 #endif
 
 /*-------------------------------------------------------------------------*
