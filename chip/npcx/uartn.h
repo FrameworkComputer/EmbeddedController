@@ -62,4 +62,9 @@ void uartn_rx_int_en(uint8_t uart_num);
 void uartn_wui_en(uint8_t uart_num);
 /* Enable/disable Tx NXMIP (No Transmit In Progress) interrupt */
 void uartn_enable_tx_complete_int(uint8_t uart_num, uint8_t enable);
+/*
+ * Return true if No Transmit In Progress Interrupt is enabled.
+ * Otherwise, return false
+ */
+int uartn_nxmip_int_is_enable(uint8_t uart_num);
 #endif /* __CROS_EC_UARTN_H */

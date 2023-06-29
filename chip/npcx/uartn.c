@@ -79,17 +79,25 @@ struct uart_configs {
 };
 static const struct uart_configs uart_cfg[] = {
 	{ NPCX_IRQ_UART, CGC_OFFSET_UART, CGC_UART_MASK },
-#ifdef NPCX_SECOND_UART
+#if defined(NPCX_SECOND_UART)
 	{ NPCX_IRQ_UART2, CGC_OFFSET_UART2, CGC_UART2_MASK },
+#endif
+#if (NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9)
+	{ NPCX_IRQ_UART3, CGC_OFFSET_UART3, CGC_UART3_MASK },
+	{ NPCX_IRQ_UART4, CGC_OFFSET_UART4, CGC_UART4_MASK },
 #endif
 };
 BUILD_ASSERT(ARRAY_SIZE(uart_cfg) == UART_MODULE_COUNT);
 
 #ifdef CONFIG_LOW_POWER_IDLE
 static const struct npcx_wui uart_wui[] = {
-	WUI(1, NPCX_UART_WK_GROUP, NPCX_UART_WK_BIT),
-#ifdef NPCX_SECOND_UART
-	WUI(0, NPCX_UART2_WK_GROUP, NPCX_UART2_WK_BIT),
+	WUI(MIWU_TABLE_1, NPCX_UART_WK_GROUP, NPCX_UART_WK_BIT),
+#if defined(NPCX_SECOND_UART)
+	WUI(MIWU_TABLE_0, NPCX_UART2_WK_GROUP, NPCX_UART2_WK_BIT),
+#endif
+#if (NPCX_FAMILY_VERSION >= NPCX_FAMILY_NPCX9)
+	WUI(MIWU_TABLE_2, NPCX_UART3_WK_GROUP, NPCX_UART3_WK_BIT),
+	WUI(MIWU_TABLE_2, NPCX_UART4_WK_GROUP, NPCX_UART4_WK_BIT),
 #endif
 };
 BUILD_ASSERT(ARRAY_SIZE(uart_wui) == UART_MODULE_COUNT);
@@ -144,6 +152,11 @@ void uartn_enable_tx_complete_int(uint8_t uart_num, uint8_t enable)
 {
 	enable ? NPCX_UART_TX_NXMIP_INT_EN(uart_num) :
 		 NPCX_UART_TX_NXMIP_INT_DIS(uart_num);
+}
+
+int uartn_nxmip_int_is_enable(uint8_t uart_num)
+{
+	return IS_BIT_SET(NPCX_UFTCTL(uart_num), NPCX_UFTCTL_NXMIPEN);
 }
 #endif
 
@@ -238,7 +251,7 @@ static void uartn_config(uint8_t uart_num)
 	 * If apb2's clock is not 15MHz, we need to find the other optimized
 	 * values of UPSR and UBAUD for baud rate 115200.
 	 */
-#if (NPCX_APB_CLOCK(2) != 15000000)
+#if (NPCX_APB_CLOCK(2) != 15000000) && !defined(NPCX_UART_BAUDRATE_3M)
 #error "Unsupported apb2 clock for UART!"
 #endif
 
@@ -246,9 +259,18 @@ static void uartn_config(uint8_t uart_num)
 	 * Fix baud rate to 115200. If this value is modified, please also
 	 * modify the delay in uart_set_pad and uart_reset_default_pad_panic.
 	 */
+#if defined(NPCX_UART_BAUDRATE_3M)
+	if (uart_num == CONFIG_UART_HOST_COMMAND_HW) {
+		NPCX_UPSR(uart_num) = 0x08;
+		NPCX_UBAUD(uart_num) = 0x0;
+	} else {
+		NPCX_UPSR(uart_num) = 0x08;
+		NPCX_UBAUD(uart_num) = 0x19;
+	}
+#else
 	NPCX_UPSR(uart_num) = 0x38;
-	NPCX_UBAUD(uart_num) = 0x01;
-
+	NPCX_UBAUD(uart_num) = 0x1;
+#endif
 	/*
 	 * 8-N-1, FIFO enabled.  Must be done after setting
 	 * the divisor for the new divisor to take effect.
