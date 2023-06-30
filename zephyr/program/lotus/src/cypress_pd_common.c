@@ -912,36 +912,72 @@ static int cypd_update_power_status(int controller)
 	return rv;
 }
 
+static void perform_error_recovery(int controller)
+{
+	int i;
+	if (controller < 2)
+		for (i = 0; i < 2; i++) {
+		if (!((controller*2 + i) == prev_charge_port && battery_is_present() != BP_YES) )
+			cypd_write_reg8(controller, CCG_ERR_RECOVERY_REG, i);
+		}
+	else {
+		/* Hard reset all ports that are not supplying power in dead battery mode */
+		for (i = 0; i < 4; i++) {
+			if (!(i == prev_charge_port && battery_is_present() != BP_YES) ) {
+				CPRINTS("Hard reset %d", i);
+				cypd_write_reg8(i >> 1, CCG_ERR_RECOVERY_REG, i & 1);
+			}
+		}
+	}
+	return ;
+}
+enum power_state pd_prev_power_state = POWER_G3;
 void update_system_power_state(int controller)
 {
 	enum power_state ps = power_get_state();
 
+	if (battery_is_present() != BP_YES && ps == POWER_G3) {
+		return;
+	}
 	switch (ps) {
 	case POWER_G3:
-	case POWER_S5:
 	case POWER_S5G3:
+		pd_prev_power_state = POWER_G3;
 		cypd_set_power_state(CCG_POWERSTATE_G3, controller);
 		break;
+	case POWER_S5:
 	case POWER_S3S5:
+	case POWER_S4S5:
+		pd_prev_power_state = POWER_S5;
 		cypd_set_power_state(CCG_POWERSTATE_S5, controller);
 		break;
 	case POWER_S3:
+	case POWER_S4S3:
+	case POWER_S5S3:
+	case POWER_S0S3:
+	case POWER_S0ixS3: /* S0ix -> S3 */
+		if (pd_prev_power_state < POWER_S3) {
+			perform_error_recovery(controller);
+			pd_prev_power_state = ps;
+		}
 		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
 		break;
+	case POWER_S0:
+	case POWER_S3S0:
 	case POWER_S0ixS0: /* S0ix -> S0 */
+		if (pd_prev_power_state < POWER_S3) {
+			perform_error_recovery(controller);
+			pd_prev_power_state = ps;
+		}
 		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
 		break;
+	case POWER_S0ix:
+	case POWER_S3S0ix: /* S3 -> S0ix */
 	case POWER_S0S0ix: /* S0 -> S0ix */
 		cypd_set_power_state(CCG_POWERSTATE_S0ix, controller);
 		break;
-	case POWER_S0ixS3: /* S0ix -> S3 */
-		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
-		break;
-	case POWER_S3S0ix: /* S3 -> S0ix */
-		cypd_set_power_state(CCG_POWERSTATE_S0ix, controller);
-		break;
+
 	default:
-		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
 		break;
 	}
 
@@ -1044,7 +1080,7 @@ static void cypd_handle_state(int controller)
 			cypd_get_version(controller);
 			cypd_update_power_status(controller);
 
-			cypd_set_power_state(CCG_POWERSTATE_S5, controller);
+			//update_system_power_state(controller);
 			cypd_setup(controller);
 
 			/* After initial complete, update the type-c port state */
