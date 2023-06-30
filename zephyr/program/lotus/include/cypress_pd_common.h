@@ -43,7 +43,7 @@
 #define CCG_CUST_C_CTRL_CONTROL_REG	0x003B
 #define CCG_HPI_VERSION			0x003C
 /*User registers from 0x40 to 0x48 are used for BB retimer */
-#define CCG_ICL_CTRL_REG		0x0040
+#define CCG_ERR_RECOVERY_REG		0x0040
 #define CCG_ICL_STS_REG			0x0042
 #define CCG_ICL_BB_RETIMER_CMD_REG	0x0046
 #define CCG_ICL_BB_RETIMER_DAT_REG	0x0048
@@ -140,12 +140,12 @@
 /************************************************/
 /*          POWER STATE DEFINITION              */
 /************************************************/
-#define CCG_POWERSTATE_S0	0x01
-#define CCG_POWERSTATE_S0ix	0x02
-#define CCG_POWERSTATE_S3	0x03
-#define CCG_POWERSTATE_S4	0x04
-#define CCG_POWERSTATE_S5	0x05
-#define CCG_POWERSTATE_G3	0x06
+#define CCG_POWERSTATE_S0	0x00
+#define CCG_POWERSTATE_S3	0x01
+#define CCG_POWERSTATE_S4	0x02
+#define CCG_POWERSTATE_S5	0x03
+#define CCG_POWERSTATE_S0ix	0x04
+#define CCG_POWERSTATE_G3	0x05
 
 /************************************************/
 /*  CCG_CUST_C_CTRL_CONTROL_REG DEFINITION      */
