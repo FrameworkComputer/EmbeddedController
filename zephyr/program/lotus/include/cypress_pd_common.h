@@ -140,10 +140,12 @@
 /************************************************/
 /*          POWER STATE DEFINITION              */
 /************************************************/
-#define CCG_POWERSTATE_S0	0x00
-#define CCG_POWERSTATE_S3	0x01
-#define CCG_POWERSTATE_S4	0x02
-#define CCG_POWERSTATE_S5	0x03
+#define CCG_POWERSTATE_S0	0x01
+#define CCG_POWERSTATE_S0ix	0x02
+#define CCG_POWERSTATE_S3	0x03
+#define CCG_POWERSTATE_S4	0x04
+#define CCG_POWERSTATE_S5	0x05
+#define CCG_POWERSTATE_G3	0x06
 
 /************************************************/
 /*  CCG_CUST_C_CTRL_CONTROL_REG DEFINITION      */
