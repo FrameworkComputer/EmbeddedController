@@ -842,6 +842,8 @@ int cypd_set_power_state(int power_state, int controller)
 	int i;
 	int rv = EC_SUCCESS;
 
+	return EC_SUCCESS;
+
 	CPRINTS("C%d, %s pwr state %d", controller, __func__, power_state);
 
 	if (controller < 2)
@@ -918,11 +920,25 @@ void update_system_power_state(int controller)
 	case POWER_G3:
 	case POWER_S5:
 	case POWER_S5G3:
+		cypd_set_power_state(CCG_POWERSTATE_G3, controller);
+		break;
 	case POWER_S3S5:
 		cypd_set_power_state(CCG_POWERSTATE_S5, controller);
 		break;
 	case POWER_S3:
 		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
+		break;
+	case POWER_S0ixS0: /* S0ix -> S0 */
+		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
+		break;
+	case POWER_S0S0ix: /* S0 -> S0ix */
+		cypd_set_power_state(CCG_POWERSTATE_S0ix, controller);
+		break;
+	case POWER_S0ixS3: /* S0ix -> S3 */
+		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
+		break;
+	case POWER_S3S0ix: /* S3 -> S0ix */
+		cypd_set_power_state(CCG_POWERSTATE_S0ix, controller);
 		break;
 	default:
 		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
