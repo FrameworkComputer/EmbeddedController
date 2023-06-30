@@ -2,3 +2,4 @@
 
 add_subdirectory(ap_pwrseq)
 add_subdirectory(emul)
+add_subdirectory(host_service)
