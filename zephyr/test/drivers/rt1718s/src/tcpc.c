@@ -223,3 +223,16 @@ ZTEST(rt1718s_tcpc, test_set_snk_ctrl)
 		rt1718s_emul, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SNK_CTRL_LOW,
 		TCPC_REG_COMMAND_SNK_CTRL_HIGH | TCPC_REG_COMMAND_SNK_CTRL_LOW);
 }
+
+ZTEST(rt1718s_tcpc, test_set_src_ctrl)
+{
+	zassert_ok(rt1718s_tcpm_drv.set_src_ctrl(tcpm_rt1718s_port, true));
+	compare_reg_val_with_mask(
+		rt1718s_emul, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SRC_CTRL_HIGH,
+		TCPC_REG_COMMAND_SRC_CTRL_HIGH | TCPC_REG_COMMAND_SRC_CTRL_LOW);
+
+	zassert_ok(rt1718s_tcpm_drv.set_src_ctrl(tcpm_rt1718s_port, false));
+	compare_reg_val_with_mask(
+		rt1718s_emul, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SRC_CTRL_LOW,
+		TCPC_REG_COMMAND_SRC_CTRL_HIGH | TCPC_REG_COMMAND_SRC_CTRL_LOW);
+}

@@ -9,4 +9,5 @@ target_sources(app PRIVATE
   src/test_common.c
   src/tcpc.c
   src/gpio.c
+  src/adc.c
 )

@@ -492,14 +492,16 @@ test_mockable int rt1718s_get_adc(int port, enum rt1718s_adc_channel channel,
 	if (rv)
 		goto out;
 
-	/*
-	 * The resolution of VBUS1 ADC is 12.5mV,
-	 * other channels are 4mV.
-	 */
-	if (channel == RT1718S_ADC_VBUS1)
+	if (channel == RT1718S_ADC_VBUS1) {
+		/* 12.5mV / LSB */
 		*adc_val = *adc_val * 125 / 10;
-	else
+	} else if (channel == RT1718S_ADC_VBUS_CURRENT) {
+		/* 33mA / LSB */
+		*adc_val *= 33;
+	} else {
+		/* other channels are 4mV / LSB */
 		*adc_val *= 4;
+	}
 
 out:
 	/* Cleanup: disable adc and clear interrupt. Error ignored. */
