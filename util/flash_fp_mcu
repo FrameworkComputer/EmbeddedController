@@ -3,6 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# shellcheck source=../../../scripts/lib/shflags/shflags
 . /usr/share/misc/shflags
 
 readonly DEFAULT_RETRIES=${DEFAULT_RETRIES:-4}
@@ -62,16 +63,13 @@ check_hardware_write_protect_disabled() {
 # Get the gpiochip base number from sysfs that matches
 # a device path
 get_sysfs_gpiochip_base() {
-  local match="${1}"
+  local match="$1"
 
-  for chip in /sys/class/gpio/gpiochip*
-  do
-    case "$(readlink ${chip})" in
-     ${match})
+  for chip in /sys/class/gpio/gpiochip*; do
+    if [[ "$(readlink "${chip}")" =~ ${match} ]]; then
       echo "${chip#/sys/class/gpio/gpiochip}"
       return 0
-      ;;
-    esac
+    fi
   done
 
   return 1
@@ -214,7 +212,7 @@ match_kernel_regex() {
   local match_exp=$1
   local kversion
   kversion=$(uname -r)
-  [[ $kversion =~ $match_exp ]]
+  [[ ${kversion} =~ ${match_exp} ]]
   return $?
 }
 
@@ -357,7 +355,7 @@ flash_fp_mcu_stm32() {
   fi
 
   # Unbind cros-ec driver
-  if [[ ! -z "${deviceid}" ]]; then
+  if [[ -n "${deviceid}" ]]; then
     klog "Unbinding cros-ec driver"
     if [[ "${transport}" == "UART" ]]; then
       echo "${deviceid}" > /sys/bus/serial/drivers/cros-ec-uart/unbind
@@ -527,7 +525,7 @@ config_hatch() {
   # Examine `cat /sys/kernel/debug/pinctrl/INT34BB:00/gpio-ranges` on a hatch
   # device to determine gpio number from pin number.
 
-  local gpiochip_dev_path="*/pci0000\:00/INT34BB\:00/gpio/*"
+  local gpiochip_dev_path="pci0000:00/INT34BB:00/gpio"
   local gpiobase
   if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
     echo "Unable to find gpio chip base"
@@ -551,7 +549,7 @@ config_herobrine() {
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev9.0"
 
-  local dev_path="*/platform/soc@0/f100000.pinctrl/gpio/*"
+  local dev_path="platform/soc@0/f100000.pinctrl/gpio"
   local gpiobase
   if ! gpiobase=$(get_sysfs_gpiochip_base "${dev_path}"); then
     echo "Unable to find gpio chip base"
@@ -560,12 +558,12 @@ config_herobrine() {
 
   readonly GPIO_CHIP="gpiochip${gpiobase}"
   # FPMCU RST_ODL is $(gpiofind FP_RST_L) is gpiochip0 22
-  readonly GPIO_NRST=$((${gpiobase} + $(gpiofind FP_RST_L|cut -f2 -d" ")))
+  readonly GPIO_NRST=$((gpiobase + $(gpiofind FP_RST_L|cut -f2 -d" ")))
   # FPMCU BOOT0 is $(gpiofind FPMCU_BOOT0) is gpiochip0 10
-  readonly GPIO_BOOT0=$((${gpiobase} + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
+  readonly GPIO_BOOT0=$((gpiobase + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
 
   # EN FP RAILS is $(gpiofind EN_FP_RAILS) is gpiochip0 42
-  readonly GPIO_PWREN=$((${gpiobase} + $(gpiofind EN_FP_RAILS|cut -f2 -d" ")))
+  readonly GPIO_PWREN=$((gpiobase + $(gpiofind EN_FP_RAILS|cut -f2 -d" ")))
 }
 
 config_nami() {
@@ -606,7 +604,7 @@ config_strongbad() {
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev10.0"
 
-  local dev_path="*/platform/soc@0/3500000.pinctrl/gpio/*"
+  local dev_path="platform/soc@0/3500000.pinctrl/gpio"
   local gpiobase
   if ! gpiobase=$(get_sysfs_gpiochip_base "${dev_path}"); then
     echo "Unable to find gpio chip base"
@@ -615,14 +613,14 @@ config_strongbad() {
 
   readonly GPIO_CHIP="gpiochip${gpiobase}"
   # FPMCU RST_ODL is $(gpiofind FP_RST_L) is gpiochip0 22
-  readonly GPIO_NRST=$((${gpiobase} + $(gpiofind FP_RST_L|cut -f2 -d" ")))
+  readonly GPIO_NRST=$((gpiobase + $(gpiofind FP_RST_L|cut -f2 -d" ")))
   # FPMCU BOOT0 is $(gpiofind FPMCU_BOOT0) is gpiochip0 10
-  readonly GPIO_BOOT0=$((${gpiobase} + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
+  readonly GPIO_BOOT0=$((gpiobase + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
 
   # EN FP RAILS is $(gpiofind EN_FP_RAILS) is gpiochip0 74 (if available)
   local en_fp_rails
   if en_fp_rails=$(gpiofind EN_FP_RAILS); then
-    readonly GPIO_PWREN=$((${gpiobase} + $(echo $en_fp_rails|cut -f2 -d" ")))
+    readonly GPIO_PWREN=$((gpiobase + $(echo "${en_fp_rails}"|cut -f2 -d" ")))
   else
     readonly GPIO_PWREN=-1
   fi
@@ -640,7 +638,7 @@ config_volteer() {
   # the pin number is 194. From the gpio-ranges, the gpio value is
   # 920 + (194-171) = 943. The relative gpio value is 943 - 664 = 279.
 
-  local gpiochip_dev_path="*/pci0000\:00/INT34C5\:00/gpio/*"
+  local gpiochip_dev_path="pci0000:00/INT34C5:00/gpio"
   local gpiobase
   if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
     echo "Unable to find gpio chip base"
@@ -714,7 +712,7 @@ config_rex() {
   # For example: GPP_B11, the pin number is 215 from the pinctrl-meteorlake.c.
   # From the gpio-ranges, the gpio value is 925 + (215-204) = 936
 
-  local gpiochip_dev_path="*/pci0000:00/INTC1083\:00/gpio/*"
+  local gpiochip_dev_path="pci0000:00/INTC1083:00/gpio"
   local gpiobase
   if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
     echo "Unable to find gpio chip base"
@@ -723,7 +721,8 @@ config_rex() {
 
   readonly GPIO_CHIP="gpiochip${gpiobase}"
 
-  local model=$(cros_config / name)
+  local model
+  model=$(cros_config / name)
   case "${model}" in
     screebo)
       # Screebo is based off Rex but with different pins for FPMCU
@@ -780,7 +779,7 @@ config_guybrush() {
   readonly TRANSPORT="UART"
   readonly DEVICE="/dev/ttyS1"
 
-  local gpiochip_dev_path="*/platform/AMD0030\:00/gpio/*"
+  local gpiochip_dev_path="platform/AMD0030:00/gpio"
   local gpiobase
   if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
     echo "Unable to find gpio chip base"
