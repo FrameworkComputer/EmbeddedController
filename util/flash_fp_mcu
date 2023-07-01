@@ -21,7 +21,7 @@ DEFINE_integer 'retries' "${DEFAULT_RETRIES}" 'Specify number of retries' 'R'
 DEFINE_integer 'baudrate' "${STM32MON_SERIAL_BAUDRATE}" 'Specify UART baudrate' 'B'
 DEFINE_boolean 'hello' "${FLAGS_FALSE}" 'Only ping the bootloader' 'H'
 DEFINE_boolean 'services' "${FLAGS_TRUE}" \
-  'Stop and restart conflicting fingerprint services' 's'
+  'Stop the biod service before flashing and then resume it afterwards' 's'
 FLAGS_HELP="Usage: ${0} [flags] [ec.bin]"
 
 #        EXIT_SUCCESS=0
@@ -893,10 +893,11 @@ main() {
   fi
 
   if [[ "${FLAGS_services}" -eq "${FLAGS_TRUE}" ]]; then
-    echo "# Stopping biod and timberslide"
+    echo "# Stopping biod"
     stop biod
-    stop timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
   fi
+  echo "# Stopping timberslide"
+  stop timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
 
   # If cros-ec driver isn't bound on startup, this means the final rebinding
   # may fail.
@@ -938,8 +939,9 @@ main() {
   ret=$?
 
   if [[ "${FLAGS_services}" -eq "${FLAGS_TRUE}" ]]; then
-    echo "# Restarting biod and timberslide"
-    start timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
+  echo "# Restarting timberslide"
+  start timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
+    echo "# Restarting biod"
     start biod
   fi
 
