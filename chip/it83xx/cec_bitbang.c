@@ -21,6 +21,9 @@
 #define CPRINTS(...)
 #endif
 
+/* Only one instance of the bitbang driver is supported on ITE for now. */
+static int cec_port;
+
 /* Timestamp when the most recent interrupt occurred */
 static timestamp_t interrupt_time;
 
@@ -34,7 +37,7 @@ static bool transfer_initiated;
  * ITE doesn't have a capture timer, so we use a countdown timer for timeout
  * events combined with a GPIO interrupt for capture events.
  */
-void cec_tmr_cap_start(enum cec_cap_edge edge, int timeout)
+void cec_tmr_cap_start(int port, enum cec_cap_edge edge, int timeout)
 {
 	switch (edge) {
 	case CEC_CAP_EDGE_NONE:
@@ -77,18 +80,18 @@ void cec_tmr_cap_start(enum cec_cap_edge edge, int timeout)
 	}
 }
 
-void cec_tmr_cap_stop(void)
+void cec_tmr_cap_stop(int port)
 {
 	gpio_disable_interrupt(CEC_GPIO_IN);
 	ext_timer_stop(CEC_EXT_TIMER, 1);
 }
 
-int cec_tmr_cap_get(void)
+int cec_tmr_cap_get(int port)
 {
 	return CEC_US_TO_TICKS(interrupt_time.val - prev_interrupt_time.val);
 }
 
-__override void cec_update_interrupt_time(void)
+__override void cec_update_interrupt_time(int port)
 {
 	prev_interrupt_time = interrupt_time;
 	interrupt_time = get_time();
@@ -96,29 +99,33 @@ __override void cec_update_interrupt_time(void)
 
 void cec_ext_timer_interrupt(void)
 {
+	int port = cec_port;
+
 	if (transfer_initiated) {
 		transfer_initiated = false;
-		cec_event_tx();
+		cec_event_tx(port);
 	} else {
-		cec_update_interrupt_time();
-		cec_event_timeout();
+		cec_update_interrupt_time(port);
+		cec_event_timeout(port);
 	}
 }
 
 void cec_gpio_interrupt(enum gpio_signal signal)
 {
-	cec_update_interrupt_time();
-	cec_event_cap();
+	int port = cec_port;
+
+	cec_update_interrupt_time(port);
+	cec_event_cap(port);
 }
 
-void cec_trigger_send(void)
+void cec_trigger_send(int port)
 {
 	/* Elevate to interrupt context */
 	transfer_initiated = true;
 	task_trigger_irq(et_ctrl_regs[CEC_EXT_TIMER].irq);
 }
 
-void cec_enable_timer(void)
+void cec_enable_timer(int port)
 {
 	/*
 	 * Nothing to do. Interrupts will be enabled as needed by
@@ -126,15 +133,17 @@ void cec_enable_timer(void)
 	 */
 }
 
-void cec_disable_timer(void)
+void cec_disable_timer(int port)
 {
-	cec_tmr_cap_stop();
+	cec_tmr_cap_stop(port);
 
 	interrupt_time.val = 0;
 	prev_interrupt_time.val = 0;
 }
 
-void cec_init_timer(void)
+void cec_init_timer(int port)
 {
+	cec_port = port;
+
 	ext_timer_ms(CEC_EXT_TIMER, CEC_CLOCK_SOURCE, 0, 0, 0, 1, 0);
 }

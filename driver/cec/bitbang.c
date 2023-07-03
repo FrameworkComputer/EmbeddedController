@@ -201,7 +201,7 @@ static struct cec_tx cec_tx;
  */
 static uint8_t cec_addr = UINT8_MAX;
 
-static void enter_state(enum cec_state new_state)
+static void enter_state(int port, enum cec_state new_state)
 {
 	int gpio = -1, timeout = -1;
 	enum cec_cap_edge cap_edge = CEC_CAP_EDGE_NONE;
@@ -221,7 +221,7 @@ static void enter_state(enum cec_state new_state)
 		cec_rx.transfer.byte = 0;
 		if (cec_tx.len > 0) {
 			/* Execute a postponed send */
-			enter_state(CEC_STATE_INITIATOR_FREE_TIME);
+			enter_state(port, CEC_STATE_INITIATOR_FREE_TIME);
 		} else {
 			/* Wait for incoming command */
 			gpio = 1;
@@ -389,68 +389,68 @@ static void enter_state(enum cec_state new_state)
 	if (gpio >= 0)
 		gpio_set_level(CEC_GPIO_OUT, gpio);
 	if (timeout >= 0) {
-		cec_tmr_cap_start(cap_edge, timeout);
+		cec_tmr_cap_start(port, cap_edge, timeout);
 	}
 }
 
-void cec_event_timeout(void)
+void cec_event_timeout(int port)
 {
 	switch (cec_state) {
 	case CEC_STATE_DISABLED:
 	case CEC_STATE_IDLE:
 		break;
 	case CEC_STATE_INITIATOR_FREE_TIME:
-		enter_state(CEC_STATE_INITIATOR_START_LOW);
+		enter_state(port, CEC_STATE_INITIATOR_START_LOW);
 		break;
 	case CEC_STATE_INITIATOR_START_LOW:
-		enter_state(CEC_STATE_INITIATOR_START_HIGH);
+		enter_state(port, CEC_STATE_INITIATOR_START_HIGH);
 		break;
 	case CEC_STATE_INITIATOR_START_HIGH:
-		enter_state(CEC_STATE_INITIATOR_HEADER_INIT_LOW);
+		enter_state(port, CEC_STATE_INITIATOR_HEADER_INIT_LOW);
 		break;
 	case CEC_STATE_INITIATOR_HEADER_INIT_LOW:
-		enter_state(CEC_STATE_INITIATOR_HEADER_INIT_HIGH);
+		enter_state(port, CEC_STATE_INITIATOR_HEADER_INIT_HIGH);
 		break;
 	case CEC_STATE_INITIATOR_HEADER_INIT_HIGH:
 		cec_transfer_inc_bit(&cec_tx.transfer);
 		if (cec_tx.transfer.bit == 4)
-			enter_state(CEC_STATE_INITIATOR_HEADER_DEST_LOW);
+			enter_state(port, CEC_STATE_INITIATOR_HEADER_DEST_LOW);
 		else
-			enter_state(CEC_STATE_INITIATOR_HEADER_INIT_LOW);
+			enter_state(port, CEC_STATE_INITIATOR_HEADER_INIT_LOW);
 		break;
 	case CEC_STATE_INITIATOR_HEADER_DEST_LOW:
-		enter_state(CEC_STATE_INITIATOR_HEADER_DEST_HIGH);
+		enter_state(port, CEC_STATE_INITIATOR_HEADER_DEST_HIGH);
 		break;
 	case CEC_STATE_INITIATOR_HEADER_DEST_HIGH:
 		cec_transfer_inc_bit(&cec_tx.transfer);
 		if (cec_tx.transfer.byte == 1)
-			enter_state(CEC_STATE_INITIATOR_EOM_LOW);
+			enter_state(port, CEC_STATE_INITIATOR_EOM_LOW);
 		else
-			enter_state(CEC_STATE_INITIATOR_HEADER_DEST_LOW);
+			enter_state(port, CEC_STATE_INITIATOR_HEADER_DEST_LOW);
 		break;
 	case CEC_STATE_INITIATOR_EOM_LOW:
-		enter_state(CEC_STATE_INITIATOR_EOM_HIGH);
+		enter_state(port, CEC_STATE_INITIATOR_EOM_HIGH);
 		break;
 	case CEC_STATE_INITIATOR_EOM_HIGH:
-		enter_state(CEC_STATE_INITIATOR_ACK_LOW);
+		enter_state(port, CEC_STATE_INITIATOR_ACK_LOW);
 		break;
 	case CEC_STATE_INITIATOR_ACK_LOW:
-		enter_state(CEC_STATE_INITIATOR_ACK_HIGH);
+		enter_state(port, CEC_STATE_INITIATOR_ACK_HIGH);
 		break;
 	case CEC_STATE_INITIATOR_ACK_HIGH:
-		enter_state(CEC_STATE_INITIATOR_ACK_VERIFY);
+		enter_state(port, CEC_STATE_INITIATOR_ACK_VERIFY);
 		break;
 	case CEC_STATE_INITIATOR_ACK_VERIFY:
 		if (cec_tx.ack) {
 			if (!cec_transfer_is_eom(&cec_tx.transfer,
 						 cec_tx.len)) {
 				/* More data in this frame */
-				enter_state(CEC_STATE_INITIATOR_DATA_LOW);
+				enter_state(port, CEC_STATE_INITIATOR_DATA_LOW);
 			} else {
 				/* Transfer completed successfully */
 				cec_tx.len = 0;
 				cec_tx.resends = 0;
-				enter_state(CEC_STATE_IDLE);
+				enter_state(port, CEC_STATE_IDLE);
 				task_set_event(TASK_ID_CEC,
 					       CEC_TASK_EVENT_OKAY);
 			}
@@ -458,35 +458,36 @@ void cec_event_timeout(void)
 			if (cec_tx.resends < CEC_MAX_RESENDS) {
 				/* Resend */
 				cec_tx.resends++;
-				enter_state(CEC_STATE_INITIATOR_FREE_TIME);
+				enter_state(port,
+					    CEC_STATE_INITIATOR_FREE_TIME);
 			} else {
 				/* Transfer failed */
 				cec_tx.len = 0;
 				cec_tx.resends = 0;
-				enter_state(CEC_STATE_IDLE);
+				enter_state(port, CEC_STATE_IDLE);
 				task_set_event(TASK_ID_CEC,
 					       CEC_TASK_EVENT_FAILED);
 			}
 		}
 		break;
 	case CEC_STATE_INITIATOR_DATA_LOW:
-		enter_state(CEC_STATE_INITIATOR_DATA_HIGH);
+		enter_state(port, CEC_STATE_INITIATOR_DATA_HIGH);
 		break;
 	case CEC_STATE_INITIATOR_DATA_HIGH:
 		cec_transfer_inc_bit(&cec_tx.transfer);
 		if (cec_tx.transfer.bit == 0)
-			enter_state(CEC_STATE_INITIATOR_EOM_LOW);
+			enter_state(port, CEC_STATE_INITIATOR_EOM_LOW);
 		else
-			enter_state(CEC_STATE_INITIATOR_DATA_LOW);
+			enter_state(port, CEC_STATE_INITIATOR_DATA_LOW);
 		break;
 	case CEC_STATE_FOLLOWER_ACK_LOW:
-		enter_state(CEC_STATE_FOLLOWER_ACK_VERIFY);
+		enter_state(port, CEC_STATE_FOLLOWER_ACK_VERIFY);
 		break;
 	case CEC_STATE_FOLLOWER_ACK_VERIFY:
 		if (cec_rx.broadcast_nak)
-			enter_state(CEC_STATE_IDLE);
+			enter_state(port, CEC_STATE_IDLE);
 		else
-			enter_state(CEC_STATE_FOLLOWER_ACK_FINISH);
+			enter_state(port, CEC_STATE_FOLLOWER_ACK_FINISH);
 		break;
 	case CEC_STATE_FOLLOWER_START_LOW:
 	case CEC_STATE_FOLLOWER_START_HIGH:
@@ -500,12 +501,12 @@ void cec_event_timeout(void)
 	case CEC_STATE_FOLLOWER_ACK_FINISH:
 	case CEC_STATE_FOLLOWER_DATA_LOW:
 	case CEC_STATE_FOLLOWER_DATA_HIGH:
-		enter_state(CEC_STATE_IDLE);
+		enter_state(port, CEC_STATE_IDLE);
 		break;
 	}
 }
 
-void cec_event_cap(void)
+void cec_event_cap(int port)
 {
 	int t;
 	int data;
@@ -513,7 +514,7 @@ void cec_event_cap(void)
 	switch (cec_state) {
 	case CEC_STATE_IDLE:
 		/* A falling edge during idle, likely a start bit */
-		enter_state(CEC_STATE_FOLLOWER_START_LOW);
+		enter_state(port, CEC_STATE_FOLLOWER_START_LOW);
 		break;
 	case CEC_STATE_INITIATOR_FREE_TIME:
 	case CEC_STATE_INITIATOR_START_HIGH:
@@ -524,108 +525,112 @@ void cec_event_cap(void)
 		 */
 		cec_tx.transfer.bit = 0;
 		cec_tx.transfer.byte = 0;
-		enter_state(CEC_STATE_FOLLOWER_START_LOW);
+		enter_state(port, CEC_STATE_FOLLOWER_START_LOW);
 		break;
 	case CEC_STATE_FOLLOWER_START_LOW:
 		/* Rising edge of start bit, validate low time */
-		t = cec_tmr_cap_get();
+		t = cec_tmr_cap_get(port);
 		if (VALID_LOW(START_BIT, t)) {
 			cec_rx.low_ticks = t;
-			enter_state(CEC_STATE_FOLLOWER_START_HIGH);
+			enter_state(port, CEC_STATE_FOLLOWER_START_HIGH);
 		} else if (t < DEBOUNCE_LIMIT_TICKS) {
 			/* Wait a bit if start-pulses are really short */
-			enter_state(CEC_STATE_FOLLOWER_DEBOUNCE);
+			enter_state(port, CEC_STATE_FOLLOWER_DEBOUNCE);
 		} else {
-			enter_state(CEC_STATE_IDLE);
+			enter_state(port, CEC_STATE_IDLE);
 		}
 		break;
 	case CEC_STATE_FOLLOWER_START_HIGH:
-		if (VALID_HIGH(START_BIT, cec_rx.low_ticks, cec_tmr_cap_get()))
-			enter_state(CEC_STATE_FOLLOWER_HEADER_INIT_LOW);
+		if (VALID_HIGH(START_BIT, cec_rx.low_ticks,
+			       cec_tmr_cap_get(port)))
+			enter_state(port, CEC_STATE_FOLLOWER_HEADER_INIT_LOW);
 		else
-			enter_state(CEC_STATE_IDLE);
+			enter_state(port, CEC_STATE_IDLE);
 		break;
 	case CEC_STATE_FOLLOWER_HEADER_INIT_LOW:
 	case CEC_STATE_FOLLOWER_HEADER_DEST_LOW:
 	case CEC_STATE_FOLLOWER_DATA_LOW:
-		t = cec_tmr_cap_get();
+		t = cec_tmr_cap_get(port);
 		if (VALID_LOW(DATA_ZERO, t)) {
 			cec_rx.low_ticks = t;
 			cec_transfer_set_bit(&cec_rx.transfer, 0);
-			enter_state(cec_state + 1);
+			enter_state(port, cec_state + 1);
 		} else if (VALID_LOW(DATA_ONE, t)) {
 			cec_rx.low_ticks = t;
 			cec_transfer_set_bit(&cec_rx.transfer, 1);
-			enter_state(cec_state + 1);
+			enter_state(port, cec_state + 1);
 		} else {
-			enter_state(CEC_STATE_IDLE);
+			enter_state(port, CEC_STATE_IDLE);
 		}
 		break;
 	case CEC_STATE_FOLLOWER_HEADER_INIT_HIGH:
-		t = cec_tmr_cap_get();
+		t = cec_tmr_cap_get(port);
 		data = cec_transfer_get_bit(&cec_rx.transfer);
 		if (VALID_DATA_HIGH(data, cec_rx.low_ticks, t)) {
 			cec_transfer_inc_bit(&cec_rx.transfer);
 			if (cec_rx.transfer.bit == 4)
-				enter_state(CEC_STATE_FOLLOWER_HEADER_DEST_LOW);
+				enter_state(port,
+					    CEC_STATE_FOLLOWER_HEADER_DEST_LOW);
 			else
-				enter_state(CEC_STATE_FOLLOWER_HEADER_INIT_LOW);
+				enter_state(port,
+					    CEC_STATE_FOLLOWER_HEADER_INIT_LOW);
 		} else {
-			enter_state(CEC_STATE_IDLE);
+			enter_state(port, CEC_STATE_IDLE);
 		}
 		break;
 	case CEC_STATE_FOLLOWER_HEADER_DEST_HIGH:
-		t = cec_tmr_cap_get();
+		t = cec_tmr_cap_get(port);
 		data = cec_transfer_get_bit(&cec_rx.transfer);
 		if (VALID_DATA_HIGH(data, cec_rx.low_ticks, t)) {
 			cec_transfer_inc_bit(&cec_rx.transfer);
 			if (cec_rx.transfer.bit == 0)
-				enter_state(CEC_STATE_FOLLOWER_EOM_LOW);
+				enter_state(port, CEC_STATE_FOLLOWER_EOM_LOW);
 			else
-				enter_state(CEC_STATE_FOLLOWER_HEADER_DEST_LOW);
+				enter_state(port,
+					    CEC_STATE_FOLLOWER_HEADER_DEST_LOW);
 		} else {
-			enter_state(CEC_STATE_IDLE);
+			enter_state(port, CEC_STATE_IDLE);
 		}
 		break;
 	case CEC_STATE_FOLLOWER_EOM_LOW:
-		t = cec_tmr_cap_get();
+		t = cec_tmr_cap_get(port);
 		if (VALID_LOW(DATA_ZERO, t)) {
 			cec_rx.low_ticks = t;
 			cec_rx.eom = 0;
-			enter_state(CEC_STATE_FOLLOWER_EOM_HIGH);
+			enter_state(port, CEC_STATE_FOLLOWER_EOM_HIGH);
 		} else if (VALID_LOW(DATA_ONE, t)) {
 			cec_rx.low_ticks = t;
 			cec_rx.eom = 1;
-			enter_state(CEC_STATE_FOLLOWER_EOM_HIGH);
+			enter_state(port, CEC_STATE_FOLLOWER_EOM_HIGH);
 		} else {
-			enter_state(CEC_STATE_IDLE);
+			enter_state(port, CEC_STATE_IDLE);
 		}
 		break;
 	case CEC_STATE_FOLLOWER_EOM_HIGH:
-		t = cec_tmr_cap_get();
+		t = cec_tmr_cap_get(port);
 		data = cec_rx.eom;
 		if (VALID_DATA_HIGH(data, cec_rx.low_ticks, t))
-			enter_state(CEC_STATE_FOLLOWER_ACK_LOW);
+			enter_state(port, CEC_STATE_FOLLOWER_ACK_LOW);
 		else
-			enter_state(CEC_STATE_IDLE);
+			enter_state(port, CEC_STATE_IDLE);
 		break;
 	case CEC_STATE_FOLLOWER_ACK_LOW:
-		enter_state(CEC_STATE_FOLLOWER_ACK_FINISH);
+		enter_state(port, CEC_STATE_FOLLOWER_ACK_FINISH);
 		break;
 	case CEC_STATE_FOLLOWER_ACK_FINISH:
-		enter_state(CEC_STATE_FOLLOWER_DATA_LOW);
+		enter_state(port, CEC_STATE_FOLLOWER_DATA_LOW);
 		break;
 	case CEC_STATE_FOLLOWER_DATA_HIGH:
-		t = cec_tmr_cap_get();
+		t = cec_tmr_cap_get(port);
 		data = cec_transfer_get_bit(&cec_rx.transfer);
 		if (VALID_DATA_HIGH(data, cec_rx.low_ticks, t)) {
 			cec_transfer_inc_bit(&cec_rx.transfer);
 			if (cec_rx.transfer.bit == 0)
-				enter_state(CEC_STATE_FOLLOWER_EOM_LOW);
+				enter_state(port, CEC_STATE_FOLLOWER_EOM_LOW);
 			else
-				enter_state(CEC_STATE_FOLLOWER_DATA_LOW);
+				enter_state(port, CEC_STATE_FOLLOWER_DATA_LOW);
 		} else {
-			enter_state(CEC_STATE_IDLE);
+			enter_state(port, CEC_STATE_IDLE);
 		}
 		break;
 	default:
@@ -633,7 +638,7 @@ void cec_event_cap(void)
 	}
 }
 
-void cec_event_tx(void)
+void cec_event_tx(int port)
 {
 	/*
 	 * If we have an ongoing receive, this transfer
@@ -644,18 +649,18 @@ void cec_event_tx(void)
 		 * Only update the interrupt time if it's idle, otherwise it
 		 * will interfere with the timing of the current transfer.
 		 */
-		cec_update_interrupt_time();
-		enter_state(CEC_STATE_INITIATOR_FREE_TIME);
+		cec_update_interrupt_time(port);
+		enter_state(port, CEC_STATE_INITIATOR_FREE_TIME);
 	}
 }
 
-__overridable void cec_update_interrupt_time(void)
+__overridable void cec_update_interrupt_time(int port)
 {
 }
 
 static int bitbang_cec_init(int port)
 {
-	cec_init_timer();
+	cec_init_timer(port);
 
 	/* If RO doesn't set it, RW needs to set it explicitly. */
 #ifdef CEC_GPIO_PULL_UP
@@ -686,15 +691,15 @@ static int bitbang_cec_set_enable(int port, uint8_t enable)
 		return EC_SUCCESS;
 
 	if (enable) {
-		enter_state(CEC_STATE_IDLE);
+		enter_state(port, CEC_STATE_IDLE);
 
-		cec_enable_timer();
+		cec_enable_timer(port);
 
 		CPRINTF("CEC enabled\n");
 	} else {
-		cec_disable_timer();
+		cec_disable_timer(port);
 
-		enter_state(CEC_STATE_DISABLED);
+		enter_state(port, CEC_STATE_DISABLED);
 
 		CPRINTF("CEC disabled\n");
 	}
@@ -735,7 +740,7 @@ static int bitbang_cec_send(int port, const uint8_t *msg, uint8_t len)
 
 	memcpy(cec_tx.transfer.buf, msg, len);
 
-	cec_trigger_send();
+	cec_trigger_send(port);
 
 	return EC_SUCCESS;
 }
