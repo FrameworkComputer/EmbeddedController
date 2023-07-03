@@ -95,7 +95,7 @@ config PLATFORM_EC_FLASH_SIZE_BYTES
 
 config PLATFORM_EC_MAPPED_STORAGE
 	bool "Flash is mapped into the EC's address space"
-	default y if SOC_FAMILY_NPCX || SOC_FAMILY_RISCV_ITE
+	default y if SOC_FAMILY_NPCX || SOC_FAMILY_RISCV_ITE || SOC_FAMILY_STM32
 	help
 	  This indicates that the EC's flash is directly mapped into
 	  its address space. This makes it easier to read and write the flash.
