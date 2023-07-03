@@ -893,17 +893,20 @@ static int cypd_update_power_status(int controller)
 	int i;
 	int rv = EC_SUCCESS;
 	int power_stat = 0;
-
-	if (battery_is_present() == BP_YES)
-		power_stat |= BIT(3);
-	if (extpower_is_present())
-		power_stat |= BIT(1) + BIT(2);
+	int pd_controller_is_sink = (prev_charge_port & 0x02) >> 1;
 
 	CPRINTS("C%d, %s power_stat 0x%x", controller, __func__, power_stat);
 	if (controller < PD_CHIP_COUNT)
 		rv = cypd_write_reg8_wait_ack(controller, CCG_POWER_STAT, power_stat);
 	else {
 		for (i = 0; i < PD_CHIP_COUNT; i++) {
+			power_stat = 0;
+			if (battery_is_present() == BP_YES)
+				power_stat |= BIT(3);
+			if ((extpower_is_present() && battery_is_present() == BP_YES) ||
+				(extpower_is_present() && i != pd_controller_is_sink && prev_charge_port >=0))
+				power_stat |= BIT(1) + BIT(2);
+
 			rv = cypd_write_reg8_wait_ack(i, CCG_POWER_STAT, power_stat);
 			if (rv != EC_SUCCESS)
 				break;
@@ -1080,7 +1083,7 @@ static void cypd_handle_state(int controller)
 			cypd_get_version(controller);
 			cypd_update_power_status(controller);
 
-			//update_system_power_state(controller);
+			update_system_power_state(controller);
 			cypd_setup(controller);
 
 			/* After initial complete, update the type-c port state */
@@ -1089,7 +1092,6 @@ static void cypd_handle_state(int controller)
 
 			ucsi_startup(controller);
 
-			update_system_power_state(controller);
 			gpio_enable_interrupt(pd_chip_config[controller].gpio);
 
 			/* Update PDO format after init complete */
