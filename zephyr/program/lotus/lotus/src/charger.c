@@ -253,16 +253,19 @@ void board_check_current(void)
 	static int curr_status = EC_DEASSERTED_PROCHOT;
 	static int pre_status = EC_DEASSERTED_PROCHOT;
 	static int active_port;
+	static int active_current;
 	static int pre_active_port;
 	static int shunt_register;
 
 	active_port = charge_manager_get_active_charge_port();
+	active_current = pd_get_active_current(active_port);
 
-	if (active_port == CHARGE_PORT_NONE) {
+	if (active_port == CHARGE_PORT_NONE || !extpower_is_present()) {
 		if (pre_active_port != active_port) {
 			curr_status = EC_DEASSERTED_PROCHOT;
 			throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_AC);
 
+			pre_status = curr_status;
 			pre_active_port = active_port;
 		}
 		hook_call_deferred(&board_check_current_data, 100 * MSEC);
@@ -274,8 +277,8 @@ void board_check_current(void)
 	else
 		shunt_register = 5;
 
-	if (ABS(INA2XX_SHUNT_UV(sv) / shunt_register) > pd_get_active_current(active_port)) {
-		/* Only assert the prochot at EVT phase */
+	if (ABS(INA2XX_SHUNT_UV(sv) / shunt_register) > active_current &&
+		(INA2XX_SHUNT_UV(sv) > 0) && (active_current != 0)) {
 		curr_status = EC_ASSERTED_PROCHOT;
 		hook_call_deferred(&board_check_current_data, 10 * MSEC);
 	} else if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
