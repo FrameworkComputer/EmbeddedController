@@ -127,10 +127,6 @@
 		<&gpiom 2 GPIO_INPUT_PULL_DOWN>;
 	};
 
-	named-i2c-ports {
-		/delete-node/ usb-c1;			//unused i2c_usb_c1
-	};
-
 	/delete-node/ cros-keyscan;
 
 	aliases {
