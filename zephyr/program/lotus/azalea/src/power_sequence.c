@@ -272,8 +272,8 @@ static void key_stuck_wa(void)
 	int wa_bit = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_DISPLAY_ON);
 
 	if (wa_bit) {
-		simulate_keyboard(120, 1);
-		simulate_keyboard(120, 0);
+		simulate_keyboard(SCANCODE_UNASSIGNED, 1);
+		simulate_keyboard(SCANCODE_UNASSIGNED, 0);
 		keyboard_clear_buffer();
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_DISPLAY_ON) = 0;
 		hook_call_deferred(&key_stuck_wa_data, -1);
