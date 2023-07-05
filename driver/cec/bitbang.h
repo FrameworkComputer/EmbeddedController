@@ -18,6 +18,11 @@ struct bitbang_cec_config {
 	enum gpio_signal gpio_out;
 	enum gpio_signal gpio_in;
 	enum gpio_signal gpio_pull_up;
+	/*
+	 * HW timer to use. Meaning is chip-specific.
+	 * For ITE it should be an element of enum ext_timer_sel.
+	 */
+	int timer;
 };
 
 extern const struct cec_drv bitbang_cec_drv;

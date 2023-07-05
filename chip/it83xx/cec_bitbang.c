@@ -76,10 +76,10 @@ void cec_tmr_cap_start(int port, enum cec_cap_edge edge, int timeout)
 		}
 
 		/* Start the timer and enable the timer interrupt */
-		ext_timer_ms(CEC_EXT_TIMER, CEC_CLOCK_SOURCE, 1, 1, timer_count,
-			     0, 1);
+		ext_timer_ms(drv_config->timer, CEC_CLOCK_SOURCE, 1, 1,
+			     timer_count, 0, 1);
 	} else {
-		ext_timer_stop(CEC_EXT_TIMER, 1);
+		ext_timer_stop(drv_config->timer, 1);
 	}
 }
 
@@ -89,7 +89,7 @@ void cec_tmr_cap_stop(int port)
 		cec_config[port].drv_config;
 
 	gpio_disable_interrupt(drv_config->gpio_in);
-	ext_timer_stop(CEC_EXT_TIMER, 1);
+	ext_timer_stop(drv_config->timer, 1);
 }
 
 int cec_tmr_cap_get(int port)
@@ -126,9 +126,12 @@ void cec_gpio_interrupt(enum gpio_signal signal)
 
 void cec_trigger_send(int port)
 {
+	const struct bitbang_cec_config *drv_config =
+		cec_config[port].drv_config;
+
 	/* Elevate to interrupt context */
 	transfer_initiated = true;
-	task_trigger_irq(et_ctrl_regs[CEC_EXT_TIMER].irq);
+	task_trigger_irq(et_ctrl_regs[drv_config->timer].irq);
 }
 
 void cec_enable_timer(int port)
@@ -149,7 +152,10 @@ void cec_disable_timer(int port)
 
 void cec_init_timer(int port)
 {
+	const struct bitbang_cec_config *drv_config =
+		cec_config[port].drv_config;
+
 	cec_port = port;
 
-	ext_timer_ms(CEC_EXT_TIMER, CEC_CLOCK_SOURCE, 0, 0, 0, 1, 0);
+	ext_timer_ms(drv_config->timer, CEC_CLOCK_SOURCE, 0, 0, 0, 1, 0);
 }

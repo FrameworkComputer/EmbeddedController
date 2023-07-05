@@ -19,6 +19,7 @@
 #include "driver/usb_mux/it5205.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "hwtimer_chip.h"
 #include "intc.h"
 #include "power.h"
 #include "power_button.h"
@@ -157,6 +158,7 @@ static const struct bitbang_cec_config bitbang_cec_config = {
 	.gpio_out = GPIO_HDMI2_CEC,
 	.gpio_in = GPIO_HDMI2_CEC_IN,
 	.gpio_pull_up = GPIO_HDMI2_CEC_PULL_UP,
+	.timer = CEC_EXT_TIMER,
 };
 
 const struct cec_config_t cec_config[] = {
