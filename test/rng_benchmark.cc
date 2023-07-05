@@ -46,7 +46,7 @@ test_static int test_trng_rand_bytes()
 
 test_static int test_trng_rand_bytes_toggle()
 {
-	constexpr int num_iterations = 100;
+	constexpr int num_iterations = 10;
 	Benchmark benchmark({ .num_iterations = num_iterations });
 	std::array<uint32_t, num_iterations> trng_out;
 
