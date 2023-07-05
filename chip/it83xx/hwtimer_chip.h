@@ -89,7 +89,7 @@ uint32_t __ram_code ext_observation_reg_read(enum ext_timer_sel ext_timer);
 void ext_timer_start(enum ext_timer_sel ext_timer, int en_irq);
 void ext_timer_stop(enum ext_timer_sel ext_timer, int dis_irq);
 void fan_ext_timer_interrupt(void);
-void cec_ext_timer_interrupt(void);
+void cec_ext_timer_interrupt(enum ext_timer_sel ext_timer);
 void update_exc_start_time(void);
 
 /**
