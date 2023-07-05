@@ -178,12 +178,16 @@ static enum ec_status check_deck_state(struct host_cmd_handler_args *args)
 	int idx;
 
 	/* set mode */
-	if (p->mode == 0x01)
+	if (p->mode == 0x01) {
 		deck_state = DECK_DISCONNECTED;
-	else if (p->mode == 0x02)
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+	} else if (p->mode == 0x02) {
 		deck_state = DECK_FORCE_ON;
-	else if (p->mode == 0x04)
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
+	} else if (p->mode == 0x04) {
 		deck_state = DECK_FORCE_OFF;
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+	}
 
 	set_detect_mode(p->mode);
 
