@@ -194,6 +194,17 @@ static void start_smart_access_graphic(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, start_smart_access_graphic, HOOK_PRIO_DEFAULT);
 
+static void reset_mux_status(void)
+{
+	uint8_t gpu_status = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL);
+
+	/* When the system shutdown, the gpu mux needs to switch to iGPU */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
+	gpu_status &= 0xFC;
+	gpu_status &= ~GPU_MUX;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, reset_mux_status, HOOK_PRIO_DEFAULT);
+
 static void f75303_disable_alert_mask(void)
 {
 	if (gpu_present())
