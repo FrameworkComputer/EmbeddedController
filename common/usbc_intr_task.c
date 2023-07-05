@@ -213,6 +213,10 @@ void pd_shared_alert_task(void *p)
 				}
 				service_one_port(port);
 			}
+			for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT;
+			     ++port) {
+				board_process_pd_alert(port);
+			}
 		} while (have_alerts != 0);
 	}
 }
