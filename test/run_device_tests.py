@@ -155,6 +155,7 @@ class ApplicationType(Enum):
 
 
 @dataclass
+# pylint: disable-next=too-many-instance-attributes
 class BoardConfig:
     """Board-specific configuration."""
 
@@ -164,6 +165,7 @@ class BoardConfig:
     rollback_region0_regex: object
     rollback_region1_regex: object
     mpu_regex: object
+    reboot_timeout: float
     variants: Dict
 
 
@@ -404,6 +406,7 @@ BLOONCHIPPER_CONFIG = BoardConfig(
     name=BLOONCHIPPER,
     servo_uart_name="raw_fpmcu_console_uart_pty",
     servo_power_enable="fpmcu_pp3300",
+    reboot_timeout=1.0,
     rollback_region0_regex=DATA_ACCESS_VIOLATION_8020000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_8040000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_20000000_REGEX,
@@ -421,6 +424,7 @@ DARTMONKEY_CONFIG = BoardConfig(
     name=DARTMONKEY,
     servo_uart_name="raw_fpmcu_console_uart_pty",
     servo_power_enable="fpmcu_pp3300",
+    reboot_timeout=1.0,
     rollback_region0_regex=DATA_ACCESS_VIOLATION_80C0000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_80E0000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_24000000_REGEX,
@@ -443,7 +447,7 @@ HELIPILOT_CONFIG = BoardConfig(
     name=HELIPILOT,
     servo_uart_name="raw_fpmcu_console_uart_pty",
     servo_power_enable="fpmcu_pp3300",
-    # TODO(b/286537264): Double check these values and ensure rollback tests pass
+    reboot_timeout=1.5,
     rollback_region0_regex=DATA_ACCESS_VIOLATION_64020000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_64040000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_20000000_REGEX,
@@ -563,7 +567,7 @@ def power_cycle(board_config: BoardConfig) -> None:
     """power_cycle the boards."""
     logging.debug("power_cycling board")
     power(board_config, power_on=False)
-    time.sleep(1)
+    time.sleep(board_config.reboot_timeout)
     power(board_config, power_on=True)
 
 
@@ -691,17 +695,20 @@ def process_console_output_line(line: bytes, test: TestConfig):
 
 
 def run_test(
-    test: TestConfig, console: io.FileIO, executor: ThreadPoolExecutor
+    test: TestConfig,
+    console: io.FileIO,
+    reboot_timeout: float,
+    executor: ThreadPoolExecutor,
 ) -> bool:
     """Run specified test."""
     start = time.time()
 
     # Wait for boot to finish
-    time.sleep(1)
+    time.sleep(reboot_timeout)
     console.write("\n".encode())
     if test.imagetype_to_use == ImageType.RO:
         console.write("reboot ro\n".encode())
-        time.sleep(1)
+        time.sleep(reboot_timeout)
 
     # Skip runtest if using standard app type
     if test.apptype_to_use != ApplicationType.PRODUCTION:
@@ -823,7 +830,7 @@ def flash_and_run_test(
         ):
             flash_succeeded = True
             break
-        time.sleep(1)
+        time.sleep(board_config.reboot_timeout)
 
     if not flash_succeeded:
         logging.debug(
@@ -851,7 +858,9 @@ def flash_and_run_test(
             console_file = open(get_console(board_config), "wb+", buffering=0)
             console = stack.enter_context(console_file)
 
-        return run_test(test, console, executor=executor)
+        return run_test(
+            test, console, board_config.reboot_timeout, executor=executor
+        )
 
 
 def parse_remote_arg(remote: str) -> str:
