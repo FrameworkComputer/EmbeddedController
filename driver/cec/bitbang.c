@@ -203,6 +203,8 @@ static uint8_t cec_addr = UINT8_MAX;
 
 static void enter_state(int port, enum cec_state new_state)
 {
+	const struct bitbang_cec_config *drv_config =
+		cec_config[port].drv_config;
 	int gpio = -1, timeout = -1;
 	enum cec_cap_edge cap_edge = CEC_CAP_EDGE_NONE;
 	uint8_t addr;
@@ -288,7 +290,7 @@ static void enter_state(int port, enum cec_state new_state)
 			  DATA_ONE_LOW_TICKS;
 		break;
 	case CEC_STATE_INITIATOR_ACK_VERIFY:
-		cec_tx.ack = !gpio_get_level(CEC_GPIO_OUT);
+		cec_tx.ack = !gpio_get_level(drv_config->gpio_out);
 		if ((cec_tx.transfer.buf[0] & 0x0f) == CEC_BROADCAST_ADDR) {
 			/*
 			 * We are sending a broadcast. Any follower can
@@ -350,7 +352,8 @@ static void enter_state(int port, enum cec_state new_state)
 		 * lost if any follower pulls the line low
 		 */
 		if ((cec_rx.transfer.buf[0] & 0x0f) == CEC_BROADCAST_ADDR)
-			cec_rx.broadcast_nak = !gpio_get_level(CEC_GPIO_OUT);
+			cec_rx.broadcast_nak =
+				!gpio_get_level(drv_config->gpio_out);
 		else
 			cec_rx.broadcast_nak = 0;
 
@@ -387,7 +390,7 @@ static void enter_state(int port, enum cec_state new_state)
 	}
 
 	if (gpio >= 0)
-		gpio_set_level(CEC_GPIO_OUT, gpio);
+		gpio_set_level(drv_config->gpio_out, gpio);
 	if (timeout >= 0) {
 		cec_tmr_cap_start(port, cap_edge, timeout);
 	}
@@ -660,15 +663,16 @@ __overridable void cec_update_interrupt_time(int port)
 
 static int bitbang_cec_init(int port)
 {
+	const struct bitbang_cec_config *drv_config =
+		cec_config[port].drv_config;
+
 	cec_init_timer(port);
 
 	/* If RO doesn't set it, RW needs to set it explicitly. */
-#ifdef CEC_GPIO_PULL_UP
-	gpio_set_level(CEC_GPIO_PULL_UP, 1);
-#endif
+	gpio_set_level(drv_config->gpio_pull_up, 1);
 
 	/* Ensure the CEC bus is not pulled low by default on startup. */
-	gpio_set_level(CEC_GPIO_OUT, 1);
+	gpio_set_level(drv_config->gpio_out, 1);
 
 	return EC_SUCCESS;
 }

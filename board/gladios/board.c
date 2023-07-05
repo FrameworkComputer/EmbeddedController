@@ -59,9 +59,16 @@ struct cec_offline_policy gladios_cec_policy[] = {
 };
 
 /* CEC ports */
+static const struct bitbang_cec_config bitbang_cec_config = {
+	.gpio_out = GPIO_HDMIB_CEC_OUT,
+	.gpio_in = GPIO_HDMIB_CEC_IN,
+	.gpio_pull_up = GPIO_HDMIB_CEC_PULL_UP,
+};
+
 const struct cec_config_t cec_config[] = {
 	[CEC_PORT_0] = {
 		.drv = &bitbang_cec_drv,
+		.drv_config = &bitbang_cec_config,
 		.offline_policy = gladios_cec_policy,
 	},
 };

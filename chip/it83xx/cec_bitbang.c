@@ -39,17 +39,20 @@ static bool transfer_initiated;
  */
 void cec_tmr_cap_start(int port, enum cec_cap_edge edge, int timeout)
 {
+	const struct bitbang_cec_config *drv_config =
+		cec_config[port].drv_config;
+
 	switch (edge) {
 	case CEC_CAP_EDGE_NONE:
-		gpio_disable_interrupt(CEC_GPIO_IN);
+		gpio_disable_interrupt(drv_config->gpio_in);
 		break;
 	case CEC_CAP_EDGE_FALLING:
-		gpio_set_flags(CEC_GPIO_IN, GPIO_INT_FALLING);
-		gpio_enable_interrupt(CEC_GPIO_IN);
+		gpio_set_flags(drv_config->gpio_in, GPIO_INT_FALLING);
+		gpio_enable_interrupt(drv_config->gpio_in);
 		break;
 	case CEC_CAP_EDGE_RISING:
-		gpio_set_flags(CEC_GPIO_IN, GPIO_INT_RISING);
-		gpio_enable_interrupt(CEC_GPIO_IN);
+		gpio_set_flags(drv_config->gpio_in, GPIO_INT_RISING);
+		gpio_enable_interrupt(drv_config->gpio_in);
 		break;
 	}
 
@@ -82,7 +85,10 @@ void cec_tmr_cap_start(int port, enum cec_cap_edge edge, int timeout)
 
 void cec_tmr_cap_stop(int port)
 {
-	gpio_disable_interrupt(CEC_GPIO_IN);
+	const struct bitbang_cec_config *drv_config =
+		cec_config[port].drv_config;
+
+	gpio_disable_interrupt(drv_config->gpio_in);
 	ext_timer_stop(CEC_EXT_TIMER, 1);
 }
 

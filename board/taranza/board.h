@@ -96,9 +96,6 @@
 /* CEC */
 #define CONFIG_CEC
 #define CONFIG_CEC_BITBANG
-#define CEC_GPIO_OUT GPIO_HDMI2_CEC
-#define CEC_GPIO_IN GPIO_HDMI2_CEC_IN
-#undef CEC_GPIO_PULL_UP /* Pull-up to PP3300_Z1 */
 
 /* No Keyboard */
 #undef CONFIG_KEYBOARD_COL2_INVERTED

@@ -115,6 +115,10 @@ struct cec_offline_policy {
  */
 struct cec_config_t {
 	const struct cec_drv *drv;
+
+	/* Optional driver-specific configuration data */
+	const void *drv_config;
+
 	/*
 	 * Actions taken on message received when the system is off.
 	 * Last entry must be null terminated.
