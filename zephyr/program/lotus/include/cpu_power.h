@@ -17,23 +17,25 @@
 #define BATTERY_TYPE_61W 1
 
 struct power_limit_details {
-    uint32_t spl_mwatt;
-    uint32_t sppt_mwatt;
-    uint32_t fppt_mwatt;
-    uint32_t p3t_mwatt;
+    int spl_mwatt;
+    int sppt_mwatt;
+    int fppt_mwatt;
+    int p3t_mwatt;
 } __ec_align1;
 
 enum power_limit_function {
     FUNCTION_DEFAULT = 0,
-	FUNCTION_SAFETY,
-	FUNCTION_SLIDER,
+	FUNCTION_SLIDER = 0,
+    FUNCTION_SAFETY,
 	FUNCTION_POWER,
     FUNCTION_THERMAL,
 	FUNCTION_COUNT,
 };
 
+#define BATTERY_55mW 55000
+#define BATTERY_61mW 61000
+#define POWER_DELTA 20000
+
 void update_soc_power_limit(bool force_update, bool force_no_adapter);
-void update_os_power_slider(void);
-void update_safety_power_limit(void);
 
 #endif	/* __CROS_EC_CPU_POWER_H */
