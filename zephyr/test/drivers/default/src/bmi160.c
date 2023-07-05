@@ -338,6 +338,55 @@ ZTEST_USER(bmi160, test_bmi_acc_set_offset)
 }
 
 /**
+ * Test set accelerometer offset with extreme values.
+ */
+ZTEST_USER(bmi160, test_bmi_acc_set_offset_min_max)
+{
+	struct motion_sensor_t *ms;
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
+	int16_t input_v[3];
+	int16_t temp = 0;
+	intv3_t ret_v;
+	intv3_t exp_v;
+
+	ms = &motion_sensors[BMI_ACC_SENSOR_ID];
+
+	/* Set expected offsets */
+	exp_v[0] = 8128;
+	exp_v[1] = -8192;
+	exp_v[2] = 0;
+	/* Set some extreme values. */
+	input_v[0] = INT16_MAX;
+	input_v[1] = INT16_MIN;
+	input_v[2] = 0;
+	/* Disable rotation */
+	ms->rot_standard_ref = NULL;
+
+	/* Test set offset without rotation */
+	zassert_equal(EC_SUCCESS, ms->drv->set_offset(ms, input_v, temp));
+	get_emul_acc_offset(emul, ret_v);
+	compare_int3v(exp_v, ret_v);
+	/* Accelerometer offset should be enabled */
+	zassert_true(bmi_emul_get_reg(emul, BMI160_OFFSET_ACC70) &
+			     BMI160_OFFSET_ACC_EN,
+		     NULL);
+
+	/* Setup rotation and rotate input for set_offset function */
+	ms->rot_standard_ref = &test_rotation;
+	convert_int3v_int16(input_v, ret_v);
+	rotate_int3v_by_test_rotation(ret_v);
+	convert_int3v_int16(ret_v, input_v);
+
+	/* Test set offset with rotation */
+	zassert_equal(EC_SUCCESS, ms->drv->set_offset(ms, input_v, temp));
+	get_emul_acc_offset(emul, ret_v);
+	compare_int3v(exp_v, ret_v);
+	zassert_true(bmi_emul_get_reg(emul, BMI160_OFFSET_ACC70) &
+			     BMI160_OFFSET_ACC_EN,
+		     NULL);
+}
+
+/**
  * Test set gyroscope offset with and without rotation. Also test behaviour
  * on I2C error.
  */
