@@ -179,6 +179,15 @@ tests:
     extra_conf_files:
     - prj.conf
     - dps/prj.conf
+  drivers.fan:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FAN=y
+    extra_conf_files:
+    - prj.conf
+    - fan/prj.conf
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./fan/fans.dts
   drivers.flash:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_FLASH=y
