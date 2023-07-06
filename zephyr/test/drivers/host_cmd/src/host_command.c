@@ -84,5 +84,25 @@ ZTEST(host_cmd_host_commands, test_get_proto_version)
 	zassert_equal(EC_PROTO_VERSION, response.version);
 }
 
+ZTEST(host_cmd_host_commands, test_hello)
+{
+	struct ec_response_hello response;
+	struct ec_params_hello params;
+	int rv;
+	uint32_t params_to_test[] = { 0x0, 0xaaaaaaaa, 0xffffffff };
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND(EC_CMD_HELLO, 0, response, params);
+
+	for (int i = 0; i < ARRAY_SIZE(params_to_test); i++) {
+		params.in_data = params_to_test[i];
+
+		rv = host_command_process(&args);
+
+		zassert_ok(rv, "Got %d, in_data: %x", rv, params_to_test[i]);
+		zassert_equal(params_to_test[i] + 0x01020304, response.out_data,
+			      "in_data: %x", params_to_test[i]);
+	}
+}
+
 ZTEST_SUITE(host_cmd_host_commands, drivers_predicate_post_main, NULL, NULL,
 	    NULL, NULL);
