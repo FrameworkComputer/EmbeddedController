@@ -4,7 +4,6 @@
  */
 
 /* Rex program common DTSI includes */
-#include "../battery.dtsi"
 #include "../fan.dtsi"
 #include "../generated.dtsi"
 #include "../interrupts.dtsi"
@@ -15,7 +14,8 @@
 #include "../temp_sensors.dtsi"
 #include "../usbc.dtsi"
 
-/* Rex project DTS includes */
+/* Karis project DTS includes */
+#include "battery.dtsi"
 #include "cbi.dtsi"
 #include "i2c.dtsi"
 #include "led_pins.dtsi"
