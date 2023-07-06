@@ -136,9 +136,6 @@
 		 * its own <>_INT_EVENT.
 		 */
 		bmi3xx-int = &lid_accel;
-
-		/* Use lid accelerometer for body detection */
-		on-body-sensor = &lid_accel;
 	};
 
 	motionsense-mutex {
