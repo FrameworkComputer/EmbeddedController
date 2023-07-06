@@ -172,7 +172,7 @@ static int amd_fp8_set_mux_unsafe(struct amd_fp8_mux_state *amd_mux,
 	/* TODO(b/276335130): Add Data reset request */
 
 	/* These are only relevant for USB4/TBT. */
-	if (amd_fp8_mux_supports_usb4(i2c_addr, usb_port)) {
+	if (amd_fp8_mux_supports_usb4(i2c_addr, amd_mux->port)) {
 		payload_len = AMD_FP8_WRITE1_USB4_LEN;
 
 		if (pd_get_data_role(usb_port) == PD_ROLE_UFP)
