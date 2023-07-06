@@ -82,6 +82,7 @@ static void setup_mux(void)
 
 	case FW_IO_DB_SKU_B:
 		LOG_INF("USB DB: Setting SKU_B DB");
+		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_chain_port0_ps8828);
 		TCPC_ENABLE_ALTERNATE_BY_NODELABEL(USBC_PORT_C1,
 						   tcpc_ps8815_port1);
 		PPC_ENABLE_ALTERNATE_BY_NODELABEL(USBC_PORT_C1,

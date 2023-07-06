@@ -14,9 +14,16 @@
 			tcpc = <&tcpc_port0>;
 			chg = <&charger>;
 			ppc = <&ppc_port0>;
-			usb-mux-chain-0 {
+
+			usb-mux-chain-port0-ps8833 {
 				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&amd_fp8_port0>;
+				usb-muxes = <&amd_fp8_port0 &ps8833_port0>;
+			};
+
+			usb_mux_chain_port0_ps8828: usb-mux-chain-port0-ps8828 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&amd_fp8_port0 &ps8828_port0>;
+				alternative-chain;
 			};
 		};
 

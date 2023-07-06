@@ -165,6 +165,18 @@
 	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
 	pinctrl-names = "default";
 
+	ps8833_port0: ps8833@10 {
+		compatible = "parade,ps8833";
+		status = "okay";
+		reg = <0x08>;
+	};
+
+	ps8828_port0: ps8828@08 {
+		compatible = "parade,ps8828";
+		status = "okay";
+		reg = <0x08>;
+	};
+
 	amd_fp8_port0: amd_fp8@54 {
 		compatible = "amd,usbc-mux-amd-fp8";
 		status = "okay";
