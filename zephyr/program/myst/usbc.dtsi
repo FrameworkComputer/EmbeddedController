@@ -45,6 +45,7 @@
 		port1-muxes {
 			tcpci_mux_c1: tcpci-mux-c1 {
 				compatible = "cros-ec,usbc-mux-tcpci";
+				hpd-update = "ps8xxx_tcpc_update_hpd_status";
 			};
 		};
 	};
