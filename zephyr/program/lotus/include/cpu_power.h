@@ -13,15 +13,13 @@
 #define SB_RMI_WRITE_SLOW_PPT_LIMIT_CMD 0x32
 #define SB_RMI_WRITE_P3T_LIMIT_CMD 0x3C
 
-#define BATTERY_TYPE_55W 0
-#define BATTERY_TYPE_61W 1
-
-struct power_limit_details {
-    int spl_mwatt;
-    int sppt_mwatt;
-    int fppt_mwatt;
-    int p3t_mwatt;
-} __ec_align1;
+enum power_limit_type {
+    TYPE_SPL = 0,
+	TYPE_SPPT,
+    TYPE_FPPT,
+	TYPE_P3T,
+	TYPE_COUNT,
+};
 
 enum power_limit_function {
     FUNCTION_DEFAULT = 0,
@@ -31,6 +29,10 @@ enum power_limit_function {
     FUNCTION_THERMAL,
 	FUNCTION_COUNT,
 };
+
+struct power_limit_details {
+    int mwatt[TYPE_COUNT];
+} __ec_align1;
 
 #define BATTERY_55mW 55000
 #define BATTERY_61mW 61000

@@ -22,9 +22,9 @@ static struct power_limit_details power_limit[FUNCTION_COUNT];
 uint32_t ports_cost; /* TODO (0.9 * (total port cost)) */
 bool manual_ctl;
 static int battery_mwatt_type;
-static int battery_p3t_mwatt;
+static int battery_mwatt_p3t;
 static int battery_current_limit_mA;
-static int target_function;
+static int target_function[TYPE_COUNT];
 static int powerlimit_restore;
 
 static int update_sustained_power_limit(uint32_t mwatt)
@@ -77,55 +77,55 @@ static void set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p
 
 static void update_os_power_slider(int mode, int with_dc, int active_mpower)
 {
-	power_limit[FUNCTION_SLIDER].p3t_mwatt = battery_p3t_mwatt - POWER_DELTA - ports_cost;
+	power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T] = battery_mwatt_p3t - POWER_DELTA - ports_cost;
 
 	switch (mode) {
 	case EC_DC_BEST_PERFORMANCE:
-		power_limit[FUNCTION_SLIDER].spl_mwatt = 30000;
-		power_limit[FUNCTION_SLIDER].sppt_mwatt = 35000;
-		power_limit[FUNCTION_SLIDER].fppt_mwatt =
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 30000;
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] = 35000;
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
 			((battery_mwatt_type == BATTERY_55mW) ? 35000 : 41000);
 		CPRINTS("DC BEST PERFORMANCE");
 		break;
 	case EC_DC_BALANCED:
-		power_limit[FUNCTION_SLIDER].spl_mwatt = 28000;
-		power_limit[FUNCTION_SLIDER].sppt_mwatt = 33000;
-		power_limit[FUNCTION_SLIDER].fppt_mwatt =
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 28000;
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] = 33000;
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
 			((battery_mwatt_type == BATTERY_55mW) ? 35000 : 41000);
 		CPRINTS("DC BALANCED");
 		break;
 	case EC_DC_BEST_EFFICIENCYE:
-		power_limit[FUNCTION_SLIDER].spl_mwatt = 15000;
-		power_limit[FUNCTION_SLIDER].sppt_mwatt = 20000;
-		power_limit[FUNCTION_SLIDER].fppt_mwatt = 30000;
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 15000;
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] = 20000;
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] = 30000;
 		CPRINTS("DC BEST EFFICIENCYE");
 		break;
 	case EC_DC_BATTERY_SAVER:
-		power_limit[FUNCTION_SLIDER].spl_mwatt = 15000;
-		power_limit[FUNCTION_SLIDER].sppt_mwatt = 15000;
-		power_limit[FUNCTION_SLIDER].fppt_mwatt = 30000;
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 15000;
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] = 15000;
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] = 30000;
 		CPRINTS("DC BATTERY SAVER");
 		break;
 	case EC_AC_BEST_PERFORMANCE:
-		power_limit[FUNCTION_SLIDER].spl_mwatt = 30000;
-		power_limit[FUNCTION_SLIDER].sppt_mwatt =
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 30000;
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] =
 			(with_dc ? 35000 : (MIN(35000, ((active_mpower - 15000) * 9 / 10))));
-		power_limit[FUNCTION_SLIDER].fppt_mwatt = 53000;
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] = 53000;
 		CPRINTS("AC BEST PERFORMANCE");
 		break;
 	case EC_AC_BALANCED:
-		power_limit[FUNCTION_SLIDER].spl_mwatt = 28000;
-		power_limit[FUNCTION_SLIDER].sppt_mwatt =
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 28000;
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] =
 			(with_dc ? 33000 : (MIN(33000, ((active_mpower - 15000) * 9 / 10))));
-		power_limit[FUNCTION_SLIDER].fppt_mwatt =
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
 			(with_dc ? 51000 : (MIN(51000, (active_mpower - 15000))));
 		CPRINTS("AC BALANCED");
 		break;
 	case EC_AC_BEST_EFFICIENCYE:
-		power_limit[FUNCTION_SLIDER].spl_mwatt = (with_dc ? 15000 : 28000);
-		power_limit[FUNCTION_SLIDER].sppt_mwatt =
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = (with_dc ? 15000 : 28000);
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] =
 			(with_dc ? 25000 : (MIN(33000, ((active_mpower - 15000) * 9 / 10))));
-		power_limit[FUNCTION_SLIDER].fppt_mwatt =
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
 			(with_dc ? 30000 : (MIN(51000, (active_mpower - 15000))));
 		CPRINTS("AC BEST EFFICIENCYE");
 		break;
@@ -139,31 +139,31 @@ static void update_power_power_limit(int battery_percent, int active_mpower)
 {
 	if ((active_mpower < 55000)) {
 		/* dc mode (active_mpower == 0) or AC < 55W */
-		power_limit[FUNCTION_POWER].spl_mwatt = 30000;
-		power_limit[FUNCTION_POWER].sppt_mwatt =
+		power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
+		power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] =
 			battery_mwatt_type - POWER_DELTA - ports_cost;
-		power_limit[FUNCTION_POWER].fppt_mwatt =
+		power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] =
 			battery_mwatt_type - POWER_DELTA - ports_cost;
-		power_limit[FUNCTION_POWER].p3t_mwatt =
-			battery_p3t_mwatt - POWER_DELTA - ports_cost;
+		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+			battery_mwatt_p3t - POWER_DELTA - ports_cost;
 	} else if (battery_percent > 40) {
 		/* ADP > 55W and Battery percentage > 40% */
-		power_limit[FUNCTION_POWER].spl_mwatt = 30000;
-		power_limit[FUNCTION_POWER].sppt_mwatt =
+		power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
+		power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] =
 			MIN(43000, (active_mpower * 95 / 100) + battery_mwatt_type - POWER_DELTA - ports_cost);
-		power_limit[FUNCTION_POWER].fppt_mwatt =
+		power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] =
 			MIN(53000, (active_mpower * 95 / 100) + battery_mwatt_type - POWER_DELTA - ports_cost);
-		power_limit[FUNCTION_POWER].p3t_mwatt =
-			(active_mpower * 95 / 100) + battery_mwatt_type - POWER_DELTA - ports_cost;
+		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+			(active_mpower * 85 / 100) + battery_mwatt_type - POWER_DELTA - ports_cost;
 	} else {
 		/* ADP > 55W and Battery percentage <= 40% */
-		power_limit[FUNCTION_POWER].spl_mwatt = 30000;
-		power_limit[FUNCTION_POWER].sppt_mwatt =
+		power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
+		power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] =
 			MIN(43000, (active_mpower * 95 / 100) - POWER_DELTA - ports_cost);
-		power_limit[FUNCTION_POWER].fppt_mwatt =
+		power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] =
 			MIN(53000, (active_mpower * 95 / 100) - POWER_DELTA - ports_cost);
-		power_limit[FUNCTION_POWER].p3t_mwatt =
-			(active_mpower * 95 / 100) - POWER_DELTA - ports_cost;
+		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+			(active_mpower * 85 / 100) - POWER_DELTA - ports_cost;
 	}
 }
 
@@ -179,13 +179,13 @@ static void update_dc_safety_power_limit(void)
 
 	if (!powerlimit_restore) {
 		/* restore to slider mode */
-		power_limit[FUNCTION_SAFETY].spl_mwatt = power_limit[FUNCTION_SLIDER].spl_mwatt;
-		power_limit[FUNCTION_SAFETY].sppt_mwatt = power_limit[FUNCTION_SLIDER].sppt_mwatt;
-		power_limit[FUNCTION_SAFETY].fppt_mwatt = power_limit[FUNCTION_SLIDER].fppt_mwatt;
-		power_limit[FUNCTION_SAFETY].p3t_mwatt = power_limit[FUNCTION_SLIDER].p3t_mwatt;
+		power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL] = power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
+		power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPPT] = power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
+		power_limit[FUNCTION_SAFETY].mwatt[TYPE_FPPT] = power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
+		power_limit[FUNCTION_SAFETY].mwatt[TYPE_P3T] = power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T];
 		powerlimit_restore = 1;
 	} else {
-		new_mwatt = power_limit[FUNCTION_SAFETY].spl_mwatt;
+		new_mwatt = power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL];
 		/* start tuning PL by formate */
 		/* discharge, value compare based on negative*/
 		if (battery_current < battery_current_limit_mA) {
@@ -196,10 +196,10 @@ static void update_dc_safety_power_limit(void)
 			 */
 			delta = (ABS(battery_current - battery_current_limit_mA) * battery_voltage) * 12 / 10 / 1000;
 			new_mwatt = new_mwatt - delta;
-			power_limit[FUNCTION_SAFETY].spl_mwatt = MAX(new_mwatt, 15000);
-			power_limit[FUNCTION_SAFETY].sppt_mwatt = power_limit[FUNCTION_SAFETY].spl_mwatt;
-			power_limit[FUNCTION_SAFETY].fppt_mwatt = power_limit[FUNCTION_SAFETY].spl_mwatt;
-			CPRINTF("batt ocp, delta: %d, new PL: %d\n", delta, power_limit[FUNCTION_SAFETY].spl_mwatt);
+			power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL] = MAX(new_mwatt, 15000);
+			power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPPT] = power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL];
+			power_limit[FUNCTION_SAFETY].mwatt[TYPE_FPPT] = power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL];
+			CPRINTF("batt ocp, delta: %d, new PL: %d\n", delta, power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL]);
 
 			if (new_mwatt < 15000) {
 				chipset_throttle_cpu(1);
@@ -216,7 +216,7 @@ static void update_dc_safety_power_limit(void)
 				CPRINTF("batt ocp, recovery prochot\n");
 				powerlimit_level = 0;
 			} else {
-				if (power_limit[FUNCTION_SAFETY].spl_mwatt == power_limit[FUNCTION_SLIDER].spl_mwatt) {
+				if (power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL] == power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL]) {
 					powerlimit_restore = 0;
 					return;
 				}
@@ -224,11 +224,11 @@ static void update_dc_safety_power_limit(void)
 					* battery_voltage) * 12 / 10 / 1000;
 				new_mwatt = new_mwatt + delta;
 
-				power_limit[FUNCTION_SAFETY].spl_mwatt = MIN(new_mwatt, power_limit[FUNCTION_SLIDER].spl_mwatt);
-				power_limit[FUNCTION_SAFETY].sppt_mwatt = power_limit[FUNCTION_SAFETY].spl_mwatt;
-				power_limit[FUNCTION_SAFETY].fppt_mwatt = power_limit[FUNCTION_SAFETY].spl_mwatt;
+				power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL] = MIN(new_mwatt, power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL]);
+				power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPPT] = power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL];
+				power_limit[FUNCTION_SAFETY].mwatt[TYPE_FPPT] = power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL];
 				CPRINTF("batt ocp recover, delta: %d, new PL: %d\n",
-					delta, power_limit[FUNCTION_SAFETY].spl_mwatt);
+					delta, power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL]);
 			}
 		}
 	}
@@ -262,38 +262,38 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	if (active_mpower == 0)
 		update_dc_safety_power_limit();
 	else {
-		power_limit[FUNCTION_SAFETY].spl_mwatt = 0;
-		power_limit[FUNCTION_SAFETY].sppt_mwatt = 0;
-		power_limit[FUNCTION_SAFETY].fppt_mwatt = 0;
-		power_limit[FUNCTION_SAFETY].p3t_mwatt = 0;
+		power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL] = 0;
+		power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPPT] = 0;
+		power_limit[FUNCTION_SAFETY].mwatt[TYPE_FPPT] = 0;
+		power_limit[FUNCTION_SAFETY].mwatt[TYPE_P3T] = 0;
 		powerlimit_restore = 0;
 	}
 
 	/* choose the lowest one */
-	/* use slider as default */
-	target_function = FUNCTION_SLIDER; 
-	for (int i = FUNCTION_DEFAULT; i < FUNCTION_COUNT; i++) {
-		if (power_limit[i].spl_mwatt < 1)
-			continue;
-		if (power_limit[target_function].spl_mwatt > power_limit[i].spl_mwatt)
-			target_function = i;
-		else if ((power_limit[target_function].spl_mwatt == power_limit[i].spl_mwatt)
-			&& (power_limit[target_function].sppt_mwatt > power_limit[i].sppt_mwatt))
-			target_function = i;
+	for (int item = TYPE_SPL; item < TYPE_COUNT; item++) {
+		/* use slider as default */ 
+		target_function[item] = FUNCTION_SLIDER;
+		for (int func = FUNCTION_DEFAULT; func < FUNCTION_COUNT; func++) {
+			if (power_limit[func].mwatt[item] < 1)
+				continue;
+			if (power_limit[target_function[item]].mwatt[item] > power_limit[func].mwatt[item])
+				target_function[item] = func;
+		}
 	}
 
-	if (power_limit[target_function].spl_mwatt != old_sustain_power_limit
-		|| power_limit[target_function].fppt_mwatt != old_fast_ppt_limit
-		|| power_limit[target_function].sppt_mwatt != old_slow_ppt_limit
-		|| power_limit[target_function].p3t_mwatt != old_p3t_limit
+	if (power_limit[target_function[TYPE_SPL]].mwatt[TYPE_SPL] != old_sustain_power_limit
+		|| power_limit[target_function[TYPE_FPPT]].mwatt[TYPE_FPPT] != old_fast_ppt_limit
+		|| power_limit[target_function[TYPE_SPPT]].mwatt[TYPE_SPPT] != old_slow_ppt_limit
+		|| power_limit[target_function[TYPE_P3T]].mwatt[TYPE_P3T] != old_p3t_limit
 		|| force_update) {
 		/* only set PL when it is changed */
-		old_sustain_power_limit = power_limit[target_function].spl_mwatt;
-		old_fast_ppt_limit = power_limit[target_function].fppt_mwatt;
-		old_slow_ppt_limit = power_limit[target_function].sppt_mwatt;
-		old_p3t_limit = power_limit[target_function].p3t_mwatt;
-		CPRINTF("SOC Power Limit: target %d, SPL %dmW, fPPT %dmW, sPPT %dmW p3T %dmW\n",
-			target_function, old_sustain_power_limit, old_fast_ppt_limit, old_slow_ppt_limit, old_p3t_limit);
+		old_sustain_power_limit = power_limit[target_function[TYPE_SPL]].mwatt[TYPE_SPL];
+		old_slow_ppt_limit = power_limit[target_function[TYPE_SPPT]].mwatt[TYPE_SPPT];
+		old_fast_ppt_limit = power_limit[target_function[TYPE_FPPT]].mwatt[TYPE_FPPT];
+		old_p3t_limit = power_limit[target_function[TYPE_P3T]].mwatt[TYPE_P3T];
+
+		CPRINTF("Change SOC Power Limit: SPL %dmW, sPPT %dmW, fPPT %dmW p3T %dmW\n",
+			old_sustain_power_limit, old_slow_ppt_limit, old_fast_ppt_limit, old_p3t_limit);
 		set_pl_limits(old_sustain_power_limit, old_fast_ppt_limit, old_slow_ppt_limit, old_p3t_limit);
 	}
 }
@@ -311,17 +311,17 @@ static void initial_soc_power_limit(void)
 	char *str = "FRANGWAT01";
 	battery_mwatt_type =
 		strncmp(battery_static[BATT_IDX_MAIN].model_ext, str, 10) ? BATTERY_55mW : BATTERY_61mW;
-	battery_p3t_mwatt =
+	battery_mwatt_p3t =
 		((battery_mwatt_type == BATTERY_55mW) ? 100000 : 90000);
 	battery_current_limit_mA =
 		((battery_mwatt_type == BATTERY_55mW) ? -3570 : -3920);
 	
 	/* initial slider table to battery balance as default */
-	power_limit[FUNCTION_SLIDER].spl_mwatt = 28000;
-	power_limit[FUNCTION_SLIDER].sppt_mwatt = 33000;
-	power_limit[FUNCTION_SLIDER].fppt_mwatt =
+	power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 28000;
+	power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] = 33000;
+	power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
 		((battery_mwatt_type == BATTERY_55mW) ? 35000 : 41000);
-	power_limit[FUNCTION_SLIDER].p3t_mwatt = battery_p3t_mwatt - POWER_DELTA - ports_cost;
+	power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T] = battery_mwatt_p3t - POWER_DELTA - ports_cost;
 }
 DECLARE_HOOK(HOOK_INIT, initial_soc_power_limit, HOOK_PRIO_INIT_I2C);
 
@@ -330,9 +330,11 @@ static int cmd_cpupower(int argc, const char **argv)
 	uint32_t spl, fppt, sppt, p3t;
 	char *e;
 
-	CPRINTF("SOC Power Limit: function=%d, SPL %dmW, fPPT %dmW, sPPT %dmW, p3T %dmW\n",
-		target_function, power_limit[target_function].spl_mwatt, power_limit[target_function].fppt_mwatt,
-		power_limit[target_function].sppt_mwatt, power_limit[target_function].p3t_mwatt);
+	CPRINTF("Now SOC Power Limit:\n FUNC = %d, SPL %dmW,\n FUNC = %d, fPPT %dmW,\n FUNC = %d, sPPT %dmW,\n FUNC = %d, p3T %dmW\n",
+		target_function[TYPE_SPL], power_limit[target_function[TYPE_SPL]].mwatt[TYPE_SPL],
+		target_function[TYPE_SPPT], power_limit[target_function[TYPE_SPPT]].mwatt[TYPE_SPPT],
+		target_function[TYPE_FPPT], power_limit[target_function[TYPE_FPPT]].mwatt[TYPE_FPPT], 
+		target_function[TYPE_P3T], power_limit[target_function[TYPE_P3T]].mwatt[TYPE_P3T]);
 
 	if (argc >= 2) {
 		if (!strncmp(argv[1], "auto", 4)) {
@@ -348,9 +350,9 @@ static int cmd_cpupower(int argc, const char **argv)
 			CPRINTF("Table Power Limit:\n");
 			for (int i = FUNCTION_DEFAULT; i < FUNCTION_COUNT; i++) {
 				CPRINTF("function %d, SPL %dmW, fPPT %dmW, sPPT %dmW, p3T %dmW\n",
-					i, power_limit[i].spl_mwatt, 
-					power_limit[i].fppt_mwatt, power_limit[i].sppt_mwatt,
-					power_limit[i].p3t_mwatt);
+					i, power_limit[i].mwatt[TYPE_SPL], 
+					power_limit[i].mwatt[TYPE_FPPT], power_limit[i].mwatt[TYPE_SPPT],
+					power_limit[i].mwatt[TYPE_P3T]);
 			}
 		}
 	}
@@ -372,7 +374,6 @@ static int cmd_cpupower(int argc, const char **argv)
 			return EC_ERROR_PARAM4;
 
 		set_pl_limits(spl, fppt, sppt, p3t);
-
 	}
 	return EC_SUCCESS;
 
