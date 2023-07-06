@@ -1,0 +1,9 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Parade PS8833 USB Type-C 10Gbps Retimer
+
+include: ["i2c-device.yaml", "cros-ec,usbc-mux.yaml"]
+
+compatible: "parade,ps8833"

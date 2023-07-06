@@ -106,6 +106,14 @@ config PLATFORM_EC_USBC_RETIMER_PS8828
 	  This is a Parade USB type-C 10Gbps retimer for USB 3.2 Gen2x2 and DP 1.4
 	  alternate.
 
+config PLATFORM_EC_USBC_RETIMER_PS8833
+	bool "Parade PS8833 USB Type-C Retimer for USB and DP Alternate Mode"
+	default y
+	depends on DT_HAS_PARADE_PS8833_ENABLED
+	help
+	  This is a Parade USB type-C 10Gbps retimer for USB 3.2 Gen2x2 and DP 1.4
+	  alternate.
+
 config PLATFORM_EC_USBC_RETIMER_KB800X
 	bool "Enable KB800X retimer"
 	select PLATFORM_EC_CONSOLE_CMD_RETIMER
