@@ -316,7 +316,7 @@ def in_fwsdk() -> bool:
             stderr=subprocess.DEVNULL,
             check=True,
         )
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         return False
     return True
 
