@@ -225,7 +225,9 @@ static int test_mula32(void)
 		r2 = mulaa32(b, c, r2 >> 32, r2);
 		b = (b << 13) ^ (b >> 2) ^ i;
 		c = (c << 16) ^ (c >> 7) ^ i;
-		watchdog_reload();
+
+		if (i % 100000 == 0)
+			watchdog_reload();
 	}
 	t1 = get_time();
 
