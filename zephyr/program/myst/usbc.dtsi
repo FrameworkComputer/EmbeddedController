@@ -30,9 +30,21 @@
 		usbc_port1: port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
-			usb-mux-chain-1-anx {
+
+			usb_mux_chain_port1_ps8833: usb-mux-chain-port1-ps8833 {
 				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&amd_fp8_port1>;
+				usb-muxes = <&amd_fp8_port1 &ps8833_port1>;
+			};
+
+			usb_mux_chain_port1_tcpci: usb-mux-chain-port1-tcpci {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&amd_fp8_port1 &tcpci_mux_c1>;
+				alternative-chain;
+			};
+		};
+		port1-muxes {
+			tcpci_mux_c1: tcpci-mux-c1 {
+				compatible = "cros-ec,usbc-mux-tcpci";
 			};
 		};
 	};

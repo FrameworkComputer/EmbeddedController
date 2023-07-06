@@ -184,6 +184,12 @@
 		irq-gpios = <&gpioa 3 GPIO_ACTIVE_HIGH>;
 	};
 
+	ps8833_port1: ps8833@40 {
+		compatible = "parade,ps8833";
+		status = "okay";
+		reg = <0x40>;
+	};
+
 	amd_fp8_port1: amd_fp8@58 {
 		compatible = "amd,usbc-mux-amd-fp8";
 		status = "okay";
