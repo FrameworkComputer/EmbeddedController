@@ -3,229 +3,229 @@
 # found in the LICENSE file.
 
 load(
-    "@cros_firmware//platform/rules_cros_firmware/cros_firmware:ec.bzl",
-    "ec_binary",
+    "@cros_firmware//platform/ec/bazel:ec_target.bzl",
+    "ec_target",
 )
 
-ec_binary(
+ec_target(
     name = "adlrvp_mchp",
 )
 
-ec_binary(
+ec_target(
     name = "adlrvp_npcx",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "brya",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "craask",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "crystaldrift",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "dev-posix",
 )
 
-ec_binary(
+ec_target(
     name = "evoker",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "frostflow",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "geralt",
 )
 
-ec_binary(
+ec_target(
     name = "gothrax",
 )
 
-ec_binary(
+ec_target(
     name = "herobrine",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "hoglin",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "it8xxx2_evb",
 )
 
-ec_binary(
+ec_target(
     name = "joxer",
 )
 
-ec_binary(
+ec_target(
     name = "kingler",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "krabby",
 )
 
-ec_binary(
+ec_target(
     name = "lazor",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "magikarp",
 )
 
-ec_binary(
+ec_target(
     name = "markarth",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "minimal-it8xxx2",
 )
 
-ec_binary(
+ec_target(
     name = "minimal-npcx9",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "minimal-posix",
 )
 
-ec_binary(
+ec_target(
     name = "mtlrvpp_mchp",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "mtlrvpp_npcx",
 )
 
-ec_binary(
+ec_target(
     name = "myst",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "nereid",
 )
 
-ec_binary(
+ec_target(
     name = "nereid_cx",
 )
 
-ec_binary(
+ec_target(
     name = "nivviks",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "npcx7",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "npcx9",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "pujjo",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "rex",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "rex-ish-ec",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "screebo",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "skyrim",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "starmie",
 )
 
-ec_binary(
+ec_target(
     name = "steelix",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "tentacruel",
 )
 
-ec_binary(
+ec_target(
     name = "uldren",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "villager",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "voltorb",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "winterhold",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "xivu",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "xivur",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "yaviks",
 )
 
-ec_binary(
+ec_target(
     name = "yavilla",
 )
 
-ec_binary(
+ec_target(
     name = "zoglin",
     extra_modules = ["cmsis"],
 )
 
-ec_binary(
+ec_target(
     name = "zombie",
     extra_modules = ["cmsis"],
 )

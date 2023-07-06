@@ -13,7 +13,8 @@ if [[ "$(basename "${EC_DIR}")" != "ec" ]]; then
 fi
 
 # Loads script libraries.
-. "/usr/share/misc/shflags" || exit 1
+# shellcheck source=/dev/null
+. "${SHFLAGS:-/usr/share/misc/shflags}" || exit 1
 
 # Redirects tput to stderr, and drop any error messages.
 tput2() {
@@ -202,7 +203,13 @@ MSG_VERIFY_FAIL="Failed to verify EC firmware image."
 
 set -e
 
-DUT_CONTROL_CMD=( "dut-control" "--port=${FLAGS_port}" )
+if [[ -n "${BAZEL_DUT_CONTROL}" ]]; then
+	DUT_CONTROL_CMD=( "${BAZEL_DUT_CONTROL}" )
+else
+	DUT_CONTROL_CMD=( "dut-control" )
+fi
+DUT_CONTROL_CMD+=( "--port=${FLAGS_port}" )
+
 DUT_CTRL_PREFIX=""
 
 # Run a command which mutates the state of an attached device.
