@@ -181,6 +181,14 @@ config PWM_MOCK
 	  Enable the PWM mock. This driver is a pure mock and does nothing by
 	  default.
 
+config TACH_MOCK
+	bool "Mock implementation of a tachometer"
+	default y
+	depends on DT_HAS_CROS_TACH_MOCK_ENABLED
+	help
+	  Enable the tachometer mock.  This driver does nothing by default but
+	  provides an interface to set the tachometer reading value as needed.
+
 config VCMP_MOCK
 	bool "Generic voltage comparator device mock implementation"
 	default y
