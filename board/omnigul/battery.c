@@ -95,6 +95,69 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_max_c	= 75,
 		},
 	},
+	/* LGES AP23A8L Battery Information */
+	/*
+	 * Battery info provided by ODM on b/290149136, comment #2
+	 */
+	[BATTERY_AP23A8L] = {
+		.fuel_gauge = {
+			.manuf_name = "LGES KT0030G025",
+			.ship_mode = {
+				.reg_addr = 0x3A,
+				.reg_data = { 0xC574, 0xC574 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0006,	/* D-FET C-FET */
+				.disconnect_val = 0x0000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200,
+			.voltage_normal		= 11280, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 50,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 75,
+		},
+	},
+
+	/* LGES AP23A7L Battery Information */
+	/*
+	 * Battery info provided by ODM on b/290149136, comment #2
+	 */
+	[BATTERY_AP23A7L] = {
+		.fuel_gauge = {
+			.manuf_name = "SMP KT00307012",
+			.ship_mode = {
+				.reg_addr = 0x3A,
+				.reg_data = { 0xC574, 0xC574 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x0,
+				.reg_mask = 0x0006,	/* D-FET C-FET */
+				.disconnect_val = 0x0000,
+			}
+		},
+		.batt_info = {
+			.voltage_max		= 13200,
+			.voltage_normal		= 11250, /* mV */
+			.voltage_min		= 9000, /* mV */
+			.precharge_current	= 256,	/* mA */
+			.start_charging_min_c	= 0,
+			.start_charging_max_c	= 45,
+			.charging_min_c		= 0,
+			.charging_max_c		= 60,
+			.discharging_min_c	= -20,
+			.discharging_max_c	= 75,
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
