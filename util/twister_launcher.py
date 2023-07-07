@@ -339,7 +339,7 @@ def maybe_relaunch_in_bazel(
 
     gen_starlark = f"""
 load(
-    "//platform/rules_cros_firmware/cros_firmware/twister:twister.bzl",
+    "//platform/ec/bazel:twister.bzl",
     "twister_test_binary",
 )
 twister_test_binary(
