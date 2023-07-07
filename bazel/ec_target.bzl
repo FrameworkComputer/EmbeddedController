@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 load(
-    "@cros_firmware//platform/rules_cros_firmware/cros_firmware:ec.bzl",
+    "@cros_firmware//platform/ec/bazel:zephyr_ec.bzl",
     "ec_binary",
 )
 load(
