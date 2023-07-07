@@ -175,7 +175,7 @@ static enum ec_status hc_force_lid_open(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_FORCE_LID_OPEN, hc_force_lid_open, EC_VER_MASK(0));
 
-#if defined(HAS_TASK_KEYSCAN)
+#if defined(HAS_TASK_KEYSCAN) || defined(CONFIG_CROS_EC_KEYBOARD_INPUT)
 
 static void keyboard_lid_change(void)
 {

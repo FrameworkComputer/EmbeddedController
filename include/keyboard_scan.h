@@ -106,7 +106,7 @@ enum kb_scan_disable_masks {
 	KB_SCAN_DISABLE_USB_SUSPENDED = (1 << 3),
 };
 
-#ifdef HAS_TASK_KEYSCAN
+#if defined(HAS_TASK_KEYSCAN) || defined(CONFIG_CROS_EC_KEYBOARD_INPUT)
 /**
  * Enable/disable keyboard scanning. Scanning will be disabled if any disable
  * reason bit is set. Scanning is enabled only if no disable reasons are set.

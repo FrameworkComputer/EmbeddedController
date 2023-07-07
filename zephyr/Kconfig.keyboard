@@ -3,11 +3,12 @@
 # found in the LICENSE file.
 
 CHOSEN_CROS_EC_RAW_KB := cros-ec,raw-kb
+CHOSEN_CROS_EC_KEYBOARD := cros-ec,keyboard
 
 menuconfig PLATFORM_EC_KEYBOARD
 	bool "Keyboard support"
 	default y
-	depends on ($(dt_chosen_enabled,$(CHOSEN_CROS_EC_RAW_KB)) || $(dt_nodelabel_enabled,kb_discrete))
+	depends on ($(dt_chosen_enabled,$(CHOSEN_CROS_EC_RAW_KB)) || $(dt_chosen_enabled,$(CHOSEN_CROS_EC_KEYBOARD)) || $(dt_nodelabel_enabled,kb_discrete))
 	help
 	  Enable keyboard support.
 
@@ -40,6 +41,15 @@ config PLATFORM_EC_KEYBOARD_DISCRETE
 	help
 	  Enable support for a discrete Keyboard if the platform needs one
 	  or the raw Keyboard support is not built-in in the EC.
+
+config CROS_EC_KEYBOARD_INPUT
+	bool "Input subsystem based Keyboard"
+	depends on $(dt_chosen_enabled,$(CHOSEN_CROS_EC_KEYBOARD))
+	depends on INPUT
+	help
+	  Input subsystem based Keyboard implementation, requires a
+	  `cros-ec,keyboard` chosen property pointing at the desired input
+	  device node.
 
 endchoice # PLATFORM_EC_KEYBOARD_DRIVER
 
