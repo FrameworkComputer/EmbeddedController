@@ -262,6 +262,10 @@ DEVICE_DT_INST_DEFINE(0, kb_raw_npcx_init, NULL, NULL, &cros_kb_raw_cfg,
 		      PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
 		      &cros_kb_raw_npcx_driver_api);
 
+BUILD_ASSERT(
+	!IS_ENABLED(CONFIG_INPUT_NPCX_KBD),
+	"cros_kb_raw_npcx can't be enabled at the same time as input_npcx_kbd");
+
 /* KBS register structure check */
 NPCX_REG_SIZE_CHECK(kbs_reg, 0x010);
 NPCX_REG_OFFSET_CHECK(kbs_reg, KBSIN, 0x004);
