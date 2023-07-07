@@ -842,8 +842,6 @@ int cypd_set_power_state(int power_state, int controller)
 	int i;
 	int rv = EC_SUCCESS;
 
-	return EC_SUCCESS;
-
 	CPRINTS("C%d, %s pwr state %d", controller, __func__, power_state);
 
 	if (controller < 2)
@@ -939,9 +937,6 @@ void update_system_power_state(int controller)
 {
 	enum power_state ps = power_get_state();
 
-	if (battery_is_present() != BP_YES && ps == POWER_G3) {
-		return;
-	}
 	switch (ps) {
 	case POWER_G3:
 	case POWER_S5G3:
@@ -959,20 +954,20 @@ void update_system_power_state(int controller)
 	case POWER_S5S3:
 	case POWER_S0S3:
 	case POWER_S0ixS3: /* S0ix -> S3 */
+		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
 		if (pd_prev_power_state < POWER_S3) {
 			perform_error_recovery(controller);
 			pd_prev_power_state = ps;
 		}
-		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
 		break;
 	case POWER_S0:
 	case POWER_S3S0:
 	case POWER_S0ixS0: /* S0ix -> S0 */
+		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
 		if (pd_prev_power_state < POWER_S3) {
 			perform_error_recovery(controller);
 			pd_prev_power_state = ps;
 		}
-		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
 		break;
 	case POWER_S0ix:
 	case POWER_S3S0ix: /* S3 -> S0ix */
