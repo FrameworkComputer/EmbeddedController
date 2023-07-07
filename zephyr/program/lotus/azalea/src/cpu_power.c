@@ -276,6 +276,12 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		powerlimit_restore = 0;
 	}
 
+	/* when trigger thermal warm, reduce SPL to 15W */
+	if (thermal_warn_trigger())
+		power_limit[FUNCTION_THERMAL].mwatt[TYPE_SPL] = 15000;
+	else
+		power_limit[FUNCTION_THERMAL].mwatt[TYPE_SPL] = 0;
+
 	/* choose the lowest one */
 	for (int item = TYPE_SPL; item < TYPE_P3T; item++) {
 		/* use slider as default */

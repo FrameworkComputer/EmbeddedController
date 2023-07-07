@@ -42,4 +42,6 @@ struct power_limit_details {
 
 void update_soc_power_limit(bool force_update, bool force_no_adapter);
 
+extern bool thermal_warn_trigger(void);
+
 #endif	/* __CROS_EC_CPU_POWER_H */
