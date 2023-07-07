@@ -154,7 +154,7 @@ static void update_power_power_limit(int battery_percent, int active_mpower)
 			MIN(53000, (active_mpower * 95 / 100)
 				+ battery_mwatt_type - POWER_DELTA - ports_cost);
 		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-			(active_mpower * 85 / 100) + battery_mwatt_type - POWER_DELTA - ports_cost;
+			(active_mpower * 95 / 100) + battery_mwatt_type - POWER_DELTA - ports_cost;
 	} else {
 		/* ADP > 55W and Battery percentage <= 40% */
 		power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
@@ -163,7 +163,7 @@ static void update_power_power_limit(int battery_percent, int active_mpower)
 		power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] =
 			MIN(53000, (active_mpower * 95 / 100) - POWER_DELTA - ports_cost);
 		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-			(active_mpower * 85 / 100) - POWER_DELTA - ports_cost;
+			(active_mpower * 95 / 100) - POWER_DELTA - ports_cost;
 	}
 }
 
