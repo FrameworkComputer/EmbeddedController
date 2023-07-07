@@ -14,24 +14,24 @@
 #define SB_RMI_WRITE_P3T_LIMIT_CMD 0x3C
 
 enum power_limit_type {
-    TYPE_SPL = 0,
+	TYPE_SPL = 0,
 	TYPE_SPPT,
-    TYPE_FPPT,
+	TYPE_FPPT,
 	TYPE_P3T,
 	TYPE_COUNT,
 };
 
 enum power_limit_function {
-    FUNCTION_DEFAULT = 0,
+	FUNCTION_DEFAULT = 0,
 	FUNCTION_SLIDER = 0,
-    FUNCTION_SAFETY,
+	FUNCTION_SAFETY,
 	FUNCTION_POWER,
-    FUNCTION_THERMAL,
+	FUNCTION_THERMAL,
 	FUNCTION_COUNT,
 };
 
 struct power_limit_details {
-    int mwatt[TYPE_COUNT];
+	int mwatt[TYPE_COUNT];
 } __ec_align1;
 
 #define BATTERY_55mW 55000
