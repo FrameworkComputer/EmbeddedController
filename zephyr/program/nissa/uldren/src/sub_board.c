@@ -99,23 +99,23 @@ test_export_static void board_usb_pd_count_init(void)
  */
 DECLARE_HOOK(HOOK_INIT, board_usb_pd_count_init, HOOK_PRIO_INIT_I2C);
 
-static void lte_power_handler(struct ap_power_ev_callback *cb,
-			      struct ap_power_ev_data data)
+static void sub_board_power_handler(struct ap_power_ev_callback *cb,
+				    struct ap_power_ev_data data)
 {
 	/* Enable rails for S5 */
 	const struct gpio_dt_spec *s5_rail =
 		GPIO_DT_FROM_ALIAS(gpio_en_sub_s5_rails);
 	switch (data.event) {
 	case AP_POWER_PRE_INIT:
-		LOG_DBG("Enabling LTE sub-board power rails");
+		LOG_DBG("Enabling sub-board power rails");
 		gpio_pin_set_dt(s5_rail, 1);
 		break;
 	case AP_POWER_HARD_OFF:
-		LOG_DBG("Disabling LTE sub-board power rails");
+		LOG_DBG("Disabling sub-board power rails");
 		gpio_pin_set_dt(s5_rail, 0);
 		break;
 	default:
-		LOG_ERR("Unhandled LTE power event %d", data.event);
+		LOG_ERR("Unhandled power event %d", data.event);
 		break;
 	}
 }
@@ -154,9 +154,6 @@ static void uldren_subboard_config(void)
 
 	switch (sb) {
 	case ULDREN_SB_C:
-		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_sub_s5_rails),
-				      GPIO_OUTPUT_INACTIVE);
-		break;
 	case ULDREN_SB_C_LTE:
 		/*
 		 * LTE: Set up callbacks for enabling/disabling
@@ -164,10 +161,10 @@ static void uldren_subboard_config(void)
 		 */
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_en_sub_s5_rails),
 				      GPIO_OUTPUT_INACTIVE);
-		/* Control LTE power when CPU entering or
+		/* Control sub_board power when CPU entering or
 		 * exiting S5 state.
 		 */
-		ap_power_ev_init_callback(&power_cb, lte_power_handler,
+		ap_power_ev_init_callback(&power_cb, sub_board_power_handler,
 					  AP_POWER_HARD_OFF |
 						  AP_POWER_PRE_INIT);
 		ap_power_ev_add_callback(&power_cb);
