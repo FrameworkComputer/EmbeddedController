@@ -6,6 +6,12 @@ load(
     "@cros_firmware//platform/ec/bazel:ec_target.bzl",
     "ec_target",
 )
+load(
+    "@cros_firmware//platform/ec/bazel:legacy_ec.bzl",
+    "legacy_ec",
+)
+
+legacy_ec.ec_srcs()
 
 ec_target(
     name = "adlrvp_mchp",
@@ -228,4 +234,11 @@ ec_target(
 ec_target(
     name = "zombie",
     extra_modules = ["cmsis"],
+)
+
+ec_target(
+    name = "arcada_ish",
+    zephyr = False,
+    chip = "ish",
+    core = "minute-ia",
 )
