@@ -77,8 +77,6 @@ static void set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p
 
 static void update_os_power_slider(int mode, int with_dc, int active_mpower)
 {
-	power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T] = battery_mwatt_p3t - POWER_DELTA - ports_cost;
-
 	switch (mode) {
 	case EC_DC_BEST_PERFORMANCE:
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 30000;
@@ -285,7 +283,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	}
 
 	/* choose the lowest one */
-	for (int item = TYPE_SPL; item < TYPE_COUNT; item++) {
+	for (int item = TYPE_SPL; item < TYPE_P3T; item++) {
 		/* use slider as default */
 		target_func[item] = FUNCTION_SLIDER;
 		for (int func = FUNCTION_DEFAULT; func < FUNCTION_COUNT; func++) {
@@ -296,6 +294,9 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 				target_func[item] = func;
 		}
 	}
+
+	/* p3t follow power table */
+	target_func[TYPE_P3T] = FUNCTION_POWER;
 
 	if (power_limit[target_func[TYPE_SPL]].mwatt[TYPE_SPL] != old_sustain_power_limit
 		|| power_limit[target_func[TYPE_FPPT]].mwatt[TYPE_FPPT] != old_fast_ppt_limit
@@ -342,6 +343,8 @@ static void initial_soc_power_limit(void)
 	power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
 		((battery_mwatt_type == BATTERY_55mW) ? 35000 : 41000);
 	power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T] = battery_mwatt_p3t - POWER_DELTA - ports_cost;
+	power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+			battery_mwatt_p3t - POWER_DELTA - ports_cost;
 }
 DECLARE_HOOK(HOOK_INIT, initial_soc_power_limit, HOOK_PRIO_INIT_I2C);
 
