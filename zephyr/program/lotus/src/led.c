@@ -10,6 +10,7 @@
 #include <stdint.h>
 
 #include "battery.h"
+#include "board_led.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
@@ -36,6 +37,8 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 	     "Exactly one instance of cros-ec,led-policy should be defined.");
 
 #define LED_COLOR_NODE DT_PATH(led_colors)
+
+#define BOARD_LED_PWM_PERIOD_NS BOARD_LED_HZ_TO_PERIOD_NS(324)
 
 struct led_color_node_t {
 	struct led_pins_node_t *pins_node;
@@ -299,11 +302,9 @@ void pwm_set_breath_dt(const struct led_pins_node_t *pins_node, int percent)
 	 * duty_cycle = 50 %, pulse_ns  = (10000000*50)/100 = 5000000ns
 	 */
 
-	pulse_ns = DIV_ROUND_NEAREST(10000000 * percent, 100);
+	pulse_ns = DIV_ROUND_NEAREST(BOARD_LED_PWM_PERIOD_NS * percent, 100);
 
-	for (int j = 0; j < pins_node->pins_count; j++) {
-		pwm_set_pulse_dt(&pwm_pins[j].pwm, pulse_ns);
-	}
+	pwm_set_pulse_dt(&pwm_pins->pwm, pulse_ns);
 }
 
 /*

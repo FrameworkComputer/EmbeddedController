@@ -13,6 +13,16 @@
 			};
 		};
 
+		power-state-charge-lvl-2 {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery percent range (>= 97%, <= 100%) */
+			batt-lvl = <97 100>;
+
+			color-0 {
+				led-color = <&color_white>;
+			};
+		};
+
 		power-state-discharge {
 			charge-state = "LED_PWRS_DISCHARGE";
 			/* Battery percent range (>= 11, <= 97) */
