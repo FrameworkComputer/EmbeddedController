@@ -10,6 +10,7 @@
 #include <cstring>
 
 extern "C" {
+#include "panic.h"
 #include "test_util.h"
 }
 
@@ -45,9 +46,19 @@ test_static int test_unaligned_access()
 	return EC_SUCCESS;
 }
 
+test_static int test_crash_unaligned_disabled_if_unaligned_access_allowed(void)
+{
+	const char *crash_unaligned[2] = { "crash", "unaligned" };
+
+	TEST_EQ(test_command_crash(2, crash_unaligned), EC_ERROR_PARAM1, "%d");
+
+	return EC_SUCCESS;
+}
+
 void run_test(int, const char **)
 {
 	test_reset();
 	RUN_TEST(test_unaligned_access);
+	RUN_TEST(test_crash_unaligned_disabled_if_unaligned_access_allowed);
 	test_print_result();
 }

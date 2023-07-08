@@ -371,10 +371,12 @@ static int command_crash(int argc, const char **argv)
 		ccprintf("%08x", 1U / zero);
 	} else if (!strcasecmp(argv[1], "stack")) {
 		stack_overflow_recurse(1);
+#ifndef CONFIG_ALLOW_UNALIGNED_ACCESS
 	} else if (!strcasecmp(argv[1], "unaligned")) {
 		volatile intptr_t unaligned_ptr = 0xcdef;
 		cflush();
 		ccprintf("%08x", *(volatile int *)unaligned_ptr);
+#endif /* !CONFIG_ALLOW_UNALIGNED_ACCESS */
 	} else if (!strcasecmp(argv[1], "watchdog")) {
 		while (1) {
 /* Yield on native posix to avoid locking up the simulated sys clock */
