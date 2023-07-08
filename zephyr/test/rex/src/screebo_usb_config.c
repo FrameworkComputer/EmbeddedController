@@ -5,6 +5,7 @@
 
 #include "battery.h"
 #include "cros_cbi.h"
+#include "driver/retimer/bb_retimer_public.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "usb_config.h"
@@ -30,6 +31,21 @@ FAKE_VALUE_FUNC(int, board_set_active_charge_port, int);
 FAKE_VOID_FUNC(pd_power_supply_reset, int);
 FAKE_VALUE_FUNC(int, pd_check_vconn_swap, int);
 FAKE_VALUE_FUNC(int, pd_set_power_supply_ready, int);
+FAKE_VALUE_FUNC(int, cbi_get_board_version, uint32_t *);
+
+static int board_version;
+static struct bb_usb_control bb_controls_saved[2];
+
+static int mock_cbi_get_board_version(uint32_t *ver)
+{
+	*ver = board_version;
+	return 0;
+}
+
+static int mock_cbi_get_board_version_error(uint32_t *ver)
+{
+	return -1;
+}
 
 int mock_cros_cbi_get_fw_config_db_usb3(enum cbi_fw_config_field_id field_id,
 					uint32_t *value)
@@ -63,9 +79,21 @@ static void usb_config_before(void *fixture)
 	ARG_UNUSED(fixture);
 
 	RESET_FAKE(cros_cbi_get_fw_config);
+	RESET_FAKE(cbi_get_board_version);
 	RESET_FAKE(reset_nct38xx_port);
 	RESET_FAKE(nx20p348x_interrupt);
 	RESET_FAKE(syv682x_interrupt);
+
+	memcpy(bb_controls_saved, bb_controls,
+	       sizeof(struct bb_usb_control) * ARRAY_SIZE(bb_controls_saved));
+}
+
+static void usb_config_after(void *fixture)
+{
+	ARG_UNUSED(fixture);
+
+	memcpy(bb_controls, bb_controls_saved,
+	       sizeof(struct bb_usb_control) * ARRAY_SIZE(bb_controls_saved));
 }
 
 ZTEST_USER(usb_config, test_setup_db_usb3)
@@ -168,4 +196,40 @@ ZTEST_USER(usb_config, test_board_reset_pd_mcu)
 	zassert_equal(1, reset_nct38xx_port_fake.call_count);
 }
 
-ZTEST_SUITE(usb_config, NULL, NULL, usb_config_before, NULL, NULL);
+ZTEST_USER(usb_config, test_hbr_rst_runtime_config_cbi_error)
+{
+	cbi_get_board_version_fake.custom_fake =
+		mock_cbi_get_board_version_error;
+
+	hook_notify(HOOK_INIT);
+	zassert_equal(bb_controls[USBC_PORT_C0].retimer_rst_gpio,
+		      GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_hbr_rst_l)));
+	zassert_equal(bb_controls[USBC_PORT_C1].retimer_rst_gpio,
+		      GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c1_hbr_rst_l)));
+}
+
+ZTEST_USER(usb_config, test_hbr_rst_runtime_config_ioex)
+{
+	cbi_get_board_version_fake.custom_fake = mock_cbi_get_board_version;
+
+	board_version = 0;
+	hook_notify(HOOK_INIT);
+	zassert_equal(bb_controls[USBC_PORT_C0].retimer_rst_gpio,
+		      GPIO_SIGNAL(DT_NODELABEL(ioex_usb_c0_rt_rst_ls_l)));
+	zassert_equal(bb_controls[USBC_PORT_C1].retimer_rst_gpio,
+		      GPIO_SIGNAL(DT_NODELABEL(ioex_usb_c1_rt_rst_ls_l)));
+}
+
+ZTEST_USER(usb_config, test_hbr_rst_runtime_config_gpio)
+{
+	cbi_get_board_version_fake.custom_fake = mock_cbi_get_board_version;
+
+	board_version = 1;
+	hook_notify(HOOK_INIT);
+	zassert_equal(bb_controls[USBC_PORT_C0].retimer_rst_gpio,
+		      GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_hbr_rst_l)));
+	zassert_equal(bb_controls[USBC_PORT_C1].retimer_rst_gpio,
+		      GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c1_hbr_rst_l)));
+}
+
+ZTEST_SUITE(usb_config, NULL, NULL, usb_config_before, usb_config_after, NULL);

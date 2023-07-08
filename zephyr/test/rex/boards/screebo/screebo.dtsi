@@ -128,6 +128,12 @@
 			gpios = <&gpio0 16 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C1_BC12_INT_ODL";
 		};
+		gpio_usb_c0_hbr_rst_l: usb_c0_hbr_rst_l {
+			gpios = <&gpio0 17 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_usb_c1_hbr_rst_l: usb_c1_hbr_rst_l {
+			gpios = <&gpio0 18 GPIO_OUTPUT_HIGH>;
+		};
 	};
 
 	aliases {
@@ -225,14 +231,14 @@
 		reg = <0x56>;
 		ls-en-pin = <&gpio_usb_c0_rt_3p3_sx_en>;
 		int-pin = <&gpio_usb_c0_rt_int_odl>;
-		reset-pin = <&ioex_usb_c0_rt_rst_ls_l>;
+		reset-pin = <&gpio_usb_c0_hbr_rst_l>;
 	};
 
 	usb_c1_hb_retimer: jhl9040r-c1@54 {
 		compatible = "intel,jhl8040r";
 		reg = <0x54>;
-		ls-en-pin = <&gpio_usb_c0_rt_3p3_sx_en>;
-		int-pin = <&gpio_usb_c0_rt_int_odl>;
-		reset-pin = <&ioex_usb_c0_rt_rst_ls_l>;
+		ls-en-pin = <&gpio_usb_c1_rt_3p3_sx_en>;
+		int-pin = <&gpio_usb_c1_rt_int_odl>;
+		reset-pin = <&gpio_usb_c1_hbr_rst_l>;
 	};
 };

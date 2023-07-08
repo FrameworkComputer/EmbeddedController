@@ -61,7 +61,7 @@ config PLATFORM_EC_USBC_RETIMER_INTEL_HB
 
 config PLATFORM_EC_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
 	bool "Use runtime configuration of Intel Burnside Bridge"
-	depends on PLATFORM_EC_USBC_RETIMER_INTEL_BB
+	depends on PLATFORM_EC_USBC_RETIMER_INTEL_BB || PLATFORM_EC_USBC_RETIMER_INTEL_HB
 	default y
 	help
 	  Enable this to allow run-time configuration of the Burnside Bridge

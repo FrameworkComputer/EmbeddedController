@@ -43,8 +43,6 @@
 			<&gpio5 6 0>, /* ec_imu_int_r_l */
 			<&gpiod 4 0>, /* ec_als_rgb_int_r_l */
 			<&gpio8 1 0>, /* ec_accel_int_r_l */
-			<&gpio9 7 0>, /* ec_volup_btn_odl */
-			<&gpio9 3 0>, /* ec_voldn_btn_odl */
 			<&gpio9 5 0>, /* tablet_mode_l */
 			<&gpio6 0 0>; /* led_4_l */
 	};
@@ -104,8 +102,12 @@
 		reg = <0x54>;
 		ls-en-pin = <&gpio_usb_c1_rt_3p3_sx_en>;
 		int-pin = <&gpio_usb_c1_rt_int_odl>;
-		reset-pin = <&ioex_usb_c1_rt_rst_ls_l>;
+		reset-pin = <&gpio_usb_c1_hbr_rst_l>;
 	};
+};
+
+&usb_c0_hb_retimer {
+	reset-pin = <&gpio_usb_c0_hbr_rst_l>;
 };
 
 &i2c4_1 {
