@@ -18,6 +18,10 @@
 #include "timer.h"
 #include "util.h"
 
+#ifdef CONFIG_ZEPHYR
+#include "cros_als.h"
+#endif
+
 #define CPUTS(outstr) cputs(CC_ALS, outstr)
 #define CPRINTS(format, args...) cprints(CC_ALS, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_ALS, format, ##args)

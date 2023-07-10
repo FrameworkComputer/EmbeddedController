@@ -270,6 +270,23 @@ config TASK_CYPD_STACK_SIZE
 
 endif # HASK_TASK_CYPD
 
+config HAS_TASK_ALS
+	bool
+	depends on PLATFORM_EC_DEDICATED_ALS
+	help
+	  This turns on the ALS task which store the ASL sensor value into
+	  EC memmap.
+
+if HAS_TASK_ALS
+
+config TASK_ALS_STACK_SIZE
+	int "ALS task stack size"
+	default 768
+	help
+	  The stack size of the ALS task.
+
+endif # HAS_TASK_ALS
+
 config HAS_TASK_TOUCHPAD
 	bool
 	help

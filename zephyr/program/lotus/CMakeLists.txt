@@ -14,6 +14,7 @@ zephyr_library_sources("src/cpu_power.c")
 zephyr_library_sources("src/factory.c")
 zephyr_library_sources("src/diagnostics.c")
 zephyr_library_sources("src/ucsi.c")
+zephyr_library_sources("src/als.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led_pwm.c")

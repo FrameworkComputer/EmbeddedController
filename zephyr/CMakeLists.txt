@@ -201,6 +201,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BODY_DETECTION
                                                 "${PLATFORM_EC}/common/body_detection.c")
 zephyr_library_sources_ifdef(CONFIG_NAMED_ADC_CHANNELS
                                                 "${PLATFORM_EC}/common/adc.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_DEDICATED_ALS
+                                                "${PLATFORM_EC}/common/als.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ALS_TCS3400
                                                 "${PLATFORM_EC}/driver/als_tcs3400.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ALS_CM32183
