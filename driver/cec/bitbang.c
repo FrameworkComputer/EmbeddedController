@@ -24,13 +24,13 @@
  * the last bit (not from the start). We compensate by having one
  * free-time period less than in the spec.
  */
-#define NOMINAL_BIT_TICKS CEC_US_TO_TICKS(2400)
-/* Resend */
-#define FREE_TIME_RS_TICKS (2 * (NOMINAL_BIT_TICKS))
-/* New initiator */
-#define FREE_TIME_NI_TICKS (4 * (NOMINAL_BIT_TICKS))
-/* Present initiator */
-#define FREE_TIME_PI_TICKS (6 * (NOMINAL_BIT_TICKS))
+#define NOMINAL_BIT_TICKS CEC_US_TO_TICKS(CEC_NOMINAL_BIT_PERIOD_US)
+#define FREE_TIME_RS_TICKS \
+	CEC_US_TO_TICKS(CEC_FREE_TIME_RS_US - CEC_NOMINAL_BIT_PERIOD_US)
+#define FREE_TIME_NI_TICKS \
+	CEC_US_TO_TICKS(CEC_FREE_TIME_NI_US - CEC_NOMINAL_BIT_PERIOD_US)
+#define FREE_TIME_PI_TICKS \
+	CEC_US_TO_TICKS(CEC_FREE_TIME_PI_US - CEC_NOMINAL_BIT_PERIOD_US)
 
 /* Start bit timing */
 #define START_BIT_LOW_TICKS CEC_US_TO_TICKS(3700)

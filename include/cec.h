@@ -46,6 +46,17 @@
  */
 #define CEC_MAX_RESENDS 5
 
+/* Bit timing */
+#define CEC_NOMINAL_BIT_PERIOD_US 2400
+
+/* Free time timing */
+/* Resend */
+#define CEC_FREE_TIME_RS_US (3 * (CEC_NOMINAL_BIT_PERIOD_US))
+/* New initiator */
+#define CEC_FREE_TIME_NI_US (5 * (CEC_NOMINAL_BIT_PERIOD_US))
+/* Present initiator */
+#define CEC_FREE_TIME_PI_US (7 * (CEC_NOMINAL_BIT_PERIOD_US))
+
 /* All return EC_SUCCESS if successful, non-zero if error. */
 struct cec_drv {
 	/* Initialise the CEC port */
