@@ -2326,6 +2326,8 @@ extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 #if DT_NODE_HAS_PROP(SENSOR_INFO_NODE, als_sensors)
 #define CONFIG_ALS
 #define ALS_COUNT DT_PROP_LEN(SENSOR_INFO_NODE, als_sensors)
+#elif CONFIG_PLATFORM_EC_DEDICATED_ALS
+#define CONFIG_ALS
 #else
 #define ALS_COUNT 0
 #endif

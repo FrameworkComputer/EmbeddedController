@@ -193,3 +193,16 @@ rsource "Kconfig.sensor_devices"
 rsource "Kconfig.body_detection"
 
 endif # PLATFORM_EC_MOTIONSENSE
+
+config PLATFORM_EC_DEDICATED_ALS
+  bool "Enable als task without motionsense config"
+  default n
+  select HAS_TASK_ALS
+  help
+    Enable ALS task without motionsense.
+
+if PLATFORM_EC_DEDICATED_ALS
+
+rsource "Kconfig.sensor_devices"
+
+endif #PLATFORM_EC_DEDICATED_ALS
