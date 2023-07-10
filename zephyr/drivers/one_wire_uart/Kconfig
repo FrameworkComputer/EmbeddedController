@@ -1,0 +1,11 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_ONE_WIRE_UART
+	bool "One-wire uart driver"
+	depends on DT_HAS_CROS_EC_ONE_WIRE_UART_ENABLED
+	default y
+	help
+	  Enable the driver for communication between tablet and detachable
+	  keyboard over one-wire UART.

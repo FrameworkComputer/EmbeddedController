@@ -1,0 +1,23 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: One wire UART module
+
+compatible: "cros-ec,one-wire-uart"
+
+include: base.yaml
+
+properties:
+  id:
+    type: int
+    enum:
+      - 0
+      - 1
+    description: |
+      ID bit for loopback detection. The implementation uses this ID to detect
+      if a packet is sent from remote or not. The two sides of one-wire uart
+      application must set different ID.
+
+      For CrOS detachable devices, ID can be auto-detected using the existence
+      of CONFIG_PLATFORM_EC_DETACHABLE_BASE. No need to set manually.
