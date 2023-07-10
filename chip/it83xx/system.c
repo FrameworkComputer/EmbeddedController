@@ -90,11 +90,16 @@ static void system_reset_ec_by_gpg1(void)
 static void check_reset_cause(void)
 {
 	uint32_t flags;
+	uint32_t flags_to_keep = 0;
 	uint8_t raw_reset_cause = IT83XX_GCTRL_RSTS & 0x03;
 	uint8_t raw_reset_cause2 = IT83XX_GCTRL_SPCTRL4 & 0x07;
 
 	/* Restore saved reset flags. */
 	flags = chip_read_reset_flags();
+
+	/* AP_IDLE will be cleared on S5->S3 transition. */
+	if (IS_ENABLED(CONFIG_POWER_BUTTON_INIT_IDLE))
+		flags_to_keep = (flags & EC_RESET_FLAG_AP_IDLE);
 
 	/* Clear reset cause. */
 	IT83XX_GCTRL_RSTS |= 0x03;
@@ -140,7 +145,7 @@ static void check_reset_cause(void)
 	    (flags & EC_RESET_FLAG_POWER_ON)) {
 		if (flags & EC_RESET_FLAG_INITIAL_PWR) {
 			/* Second boot, clear the flag immediately */
-			chip_save_reset_flags(0);
+			chip_save_reset_flags(flags_to_keep);
 		} else {
 			/*
 			 * First boot, Keep current flags and set INITIAL_PWR
@@ -161,7 +166,7 @@ static void check_reset_cause(void)
 		}
 	} else {
 		/* Clear saved reset flags. */
-		chip_save_reset_flags(0);
+		chip_save_reset_flags(flags_to_keep);
 	}
 
 	system_set_reset_flags(flags);
