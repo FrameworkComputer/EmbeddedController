@@ -196,10 +196,10 @@ static struct cec_tx cec_tx;
 /*
  * CEC address of ourself. We ack incoming packages on this address.
  * However, the AP is responsible for writing the initiator address
- * on writes. UINT32_MAX means means that the address hasn't been
- * set by the AP yet.
+ * on writes. CEC_INVALID_ADDR means means that the address hasn't
+ * been set by the AP yet.
  */
-static uint8_t cec_addr = UINT8_MAX;
+static uint8_t cec_addr = CEC_INVALID_ADDR;
 
 static void enter_state(int port, enum cec_state new_state)
 {

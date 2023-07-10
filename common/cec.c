@@ -314,7 +314,7 @@ static enum ec_status cec_set_enable(int port, uint8_t enable)
 static enum ec_status cec_set_logical_addr(int port, uint8_t logical_addr)
 {
 	if (logical_addr >= CEC_BROADCAST_ADDR &&
-	    logical_addr != CEC_UNREGISTERED_ADDR)
+	    logical_addr != CEC_INVALID_ADDR)
 		return EC_RES_INVALID_PARAM;
 
 	if (cec_config[port].drv->set_logical_addr(port, logical_addr) !=
