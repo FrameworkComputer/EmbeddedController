@@ -167,12 +167,12 @@ enum {
 		    (CROS_EC_TASK(CYPD, cypd_interrupt_handler_task, 0,    \
 				  CONFIG_TASK_CYPD_STACK_SIZE,             \
 				  EC_TASK_CYPD_PRIO)),                     \
-                    ())                                                    \
+		())                                                    \
 	COND_CODE_1(HAS_TASK_ALS,                                         \
 		    (CROS_EC_TASK(ALS, als_task, 0,    \
 				  CONFIG_TASK_ALS_STACK_SIZE,             \
 				  EC_TASK_ALS_PRIO)),                     \
-                    ())                                                    \
+		())                                                    \
 	COND_CODE_1(HAS_TASK_TOUCHPAD,                                     \
 		    (CROS_EC_TASK(TOUCHPAD, touchpad_task, 0,              \
 				  CONFIG_TASK_TOUCHPAD_STACK_SIZE,         \

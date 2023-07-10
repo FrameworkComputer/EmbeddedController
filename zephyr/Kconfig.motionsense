@@ -200,6 +200,7 @@ config PLATFORM_EC_DEDICATED_ALS
   select HAS_TASK_ALS
   help
     Enable ALS task without motionsense.
+    This config must defines the als_t als[] in project layer.
 
 if PLATFORM_EC_DEDICATED_ALS
 

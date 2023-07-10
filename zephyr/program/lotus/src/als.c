@@ -51,7 +51,7 @@ int cm32183_init(void)
 		 */
 		if (i2c_write16(I2C_PORT_ALS, CM32183_I2C_ADDR,
 			CM32183_REG_CONFIGURE, CM32183_REG_CONFIGURE_CH_EN))
-			msleep(10);
+			k_msleep(10);
 		else
 			return EC_SUCCESS;
 	}
