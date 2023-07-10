@@ -86,6 +86,7 @@ driver-$(CONFIG_CHARGER_SM5803)+=charger/sm5803.o
 
 # CEC drivers
 driver-$(CONFIG_CEC_BITBANG)+=cec/bitbang.o
+driver-$(CONFIG_CEC_IT83XX)+=cec/it83xx.o
 
 # DP Redrivers
 driver-$(CONFIG_DP_REDRIVER_TDP142)+=retimer/tdp142.o

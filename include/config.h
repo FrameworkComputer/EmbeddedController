@@ -886,6 +886,7 @@
 
 /* CEC drivers */
 #undef CONFIG_CEC_BITBANG
+#undef CONFIG_CEC_IT83XX
 
 /*****************************************************************************/
 

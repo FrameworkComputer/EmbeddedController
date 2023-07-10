@@ -112,6 +112,12 @@ static void intc_cpu_int_group_12(void)
 		spi_peripheral_int_handler();
 		break;
 #endif
+#ifdef CONFIG_CEC_IT83XX
+	case IT83XX_IRQ_CEC:
+		cec_interrupt();
+		break;
+
+#endif
 	default:
 		break;
 	}
