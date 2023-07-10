@@ -4,6 +4,9 @@ on:
   push:
     branches:
       - lotus*
+      - azalea*
+    paths:
+      - 'zephyr/program/lotus/**'
   #pull_request:
   #  branches:
   #    - lotus-zephyr
