@@ -13,6 +13,7 @@
 #include "charge_state.h"
 #include "charger.h"
 #include "driver/cec/bitbang.h"
+#include "driver/cec/it83xx.h"
 #include "driver/ppc/syv682x_public.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/temp_sensor/thermistor.h"
@@ -171,7 +172,14 @@ static const struct bitbang_cec_config bitbang_cec_config = {
 };
 
 const struct cec_config_t cec_config[] = {
+	/* HDMI1 */
 	[CEC_PORT_0] = {
+		.drv = &it83xx_cec_drv,
+		.drv_config = NULL,
+		.offline_policy = NULL,
+	},
+	/* HDMI2 */
+	[CEC_PORT_1] = {
 		.drv = &bitbang_cec_drv,
 		.drv_config = &bitbang_cec_config,
 		.offline_policy = NULL,
