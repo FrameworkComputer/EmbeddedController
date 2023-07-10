@@ -54,7 +54,8 @@
 		i2c_sensor: sensor {
 			i2c-port = <&i2c7_0>;
 			enum-names =  "I2C_PORT_SENSOR",
-				"I2C_PORT_THERMAL_AP";
+				"I2C_PORT_THERMAL_AP",
+				"I2C_PORT_ALS";
 		};
 	};
 };
@@ -213,6 +214,11 @@
 	temp_cpu: cpu@4c {
 		compatible = "amd,sb-tsi";
 		reg = <0x4c>;
+	};
+
+	als_cm32183: als-cm32183@29 {
+		compatible = "nxp,cm32183";
+		reg = <0x29>;
 	};
 };
 
