@@ -150,8 +150,8 @@ enum cec_state {
 /* Receive buffer and states */
 struct cec_rx {
 	/*
-	 * The current incoming message being parsed. Copied to
-	 * receive queue upon completion
+	 * The current incoming message being parsed. Copied to received_message
+	 * on completion.
 	 */
 	struct cec_msg_transfer transfer;
 	/* End of Message received from source? */
@@ -165,6 +165,14 @@ struct cec_rx {
 	int low_ticks;
 	/* Number of too short pulses seen in a row */
 	int debounce_count;
+	/* Flag indicating whether received_message is available */
+	uint8_t received_message_available;
+	/*
+	 * The transfer is copied here when complete. This allows us to start
+	 * receiving a new message before the common code has read out the
+	 * previous one.
+	 */
+	struct cec_msg_transfer received_message;
 };
 
 /* Transfer buffer and states */
@@ -368,6 +376,19 @@ static void enter_state(int port, enum cec_state new_state)
 		if (cec_rx.eom || cec_rx.transfer.byte >= MAX_CEC_MSG_LEN) {
 			addr = cec_rx.transfer.buf[0] & 0x0f;
 			if (addr == cec_addr || addr == CEC_BROADCAST_ADDR) {
+				/*
+				 * If common code has not read the previous
+				 * message yet, discard it and keep the most
+				 * recent one.
+				 */
+				if (cec_rx.received_message_available)
+					CPRINTS("CEC WARNING: received message "
+						"not read out, discarding");
+
+				memcpy(&cec_rx.received_message,
+				       &cec_rx.transfer,
+				       sizeof(cec_rx.received_message));
+				cec_rx.received_message_available = 1;
 				cec_task_set_event(
 					port, CEC_TASK_EVENT_RECEIVED_DATA);
 			}
@@ -750,8 +771,12 @@ static int bitbang_cec_send(int port, const uint8_t *msg, uint8_t len)
 static int bitbang_cec_get_received_message(int port, uint8_t **msg,
 					    uint8_t *len)
 {
-	*msg = cec_rx.transfer.buf;
-	*len = cec_rx.transfer.byte;
+	if (!cec_rx.received_message_available)
+		return EC_ERROR_UNAVAILABLE;
+
+	*msg = cec_rx.received_message.buf;
+	*len = cec_rx.received_message.byte;
+	cec_rx.received_message_available = 0;
 
 	return EC_SUCCESS;
 }
