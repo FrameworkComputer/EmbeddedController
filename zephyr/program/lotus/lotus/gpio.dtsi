@@ -120,8 +120,8 @@
 		gpio_gpu_vsys_vadp_en: gpu_vsys_vadp_en {
 			gpios = <&gpio1 5 GPIO_OUTPUT_LOW>;	/* Enable GPIO Vsys/VADP PWR */
 		};
-		apu_ec_int_l {
-			gpios = <&gpio1 4 GPIO_ODR_LOW>;	/* HID over I2C interrupt */
+		gpio_apu_ec_int_l: apu_ec_int_l {
+			gpios = <&gpio1 4 GPIO_ODR_HIGH>;	/* HID over I2C interrupt */
 		};
 		ec_disen2 {
 			gpios = <&gpio1 3 GPIO_OUTPUT_LOW>;	/* Disable LM5143 Ph2 */

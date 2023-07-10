@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+#include <freq.h>
+
+
 / {
 	named-gpios {
 		/* Lotus-specific GPIO customizations */
@@ -158,5 +161,3 @@
 	>;
 	pinctrl-names = "default";
 };
-
-

@@ -18,6 +18,7 @@
 #include "pwm.h"
 #include "hooks.h"
 #include "system.h"
+#include "hid_device.h"
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_KEYBOARD, outstr)
@@ -281,15 +282,13 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t fn, int8_t pressed)
 		break;
 	case SCANCODE_F7:  /* TODO: DIM_SCREEN */
 		if (fn_table_media_set(pressed, KB_FN_F7)) {
-			/* TODO HID API */
-			/*update_hid_key(HID_KEY_DISPLAY_BRIGHTNESS_DN, pressed);*/
+			hid_consumer(BUTTON_ID_BRIGHTNESS_DECREMENT, pressed);
 			return EC_ERROR_UNIMPLEMENTED;
 		}
 		break;
 	case SCANCODE_F8:  /* TODO: BRIGHTEN_SCREEN */
 		if (fn_table_media_set(pressed, KB_FN_F8)) {
-			/* TODO HID API */
-			/*update_hid_key(HID_KEY_DISPLAY_BRIGHTNESS_UP, pressed);*/
+			hid_consumer(BUTTON_ID_BRIGHTNESS_INCREMENT, pressed);
 			return EC_ERROR_UNIMPLEMENTED;
 		}
 		break;
@@ -307,8 +306,7 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t fn, int8_t pressed)
 		break;
 	case SCANCODE_F10:  /* FLIGHT_MODE */
 		if (fn_table_media_set(pressed, KB_FN_F10)) {
-			/* TODO HID API */
-			/*update_hid_key(HID_KEY_AIRPLANE_MODE, pressed);*/
+			hid_airplane(pressed);
 			return EC_ERROR_UNIMPLEMENTED;
 		}
 		break;

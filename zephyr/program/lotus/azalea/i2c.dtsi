@@ -56,7 +56,24 @@
 	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
 	pinctrl-names = "default";
 
-	/* TODO: Add the device on this bus */
+	i2chid0: i2chid@50 {
+		compatible = "cros-ec,i2c-target-hid";
+		reg = <0x50>;
+		alert_gpios = <&gpio9 6 GPIO_OPEN_DRAIN>;
+		max_report_size = <32>;
+		hid_descriptor = "keyboard_hid_desc";
+		hid_report_descriptor = "keyboard_report_desc";
+	};
+
+	i2chid1: i2chid@51 {
+		compatible = "cros-ec,i2c-target-hid";
+		reg = <0x51>;
+		alert_gpios = <&gpio7 4 GPIO_OPEN_DRAIN>;
+		max_report_size = <32>;
+		hid_descriptor = "als_hid_desc";
+		hid_report_descriptor = "als_report_desc";
+	};
+
 };
 
 &i2c_ctrl0 {

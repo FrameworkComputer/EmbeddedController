@@ -1,0 +1,54 @@
+# SPDX-License-Identifier: Apache-2.0
+
+description: |
+  Zephyr I2C target HID implements the i2c-hid
+  protocol as a i2c slave device.
+
+compatible: "cros-ec,i2c-target-hid"
+
+include: [i2c-device.yaml]
+
+properties:
+  reg:
+    required: true
+
+  max_report_size:
+    type: int
+    required: true
+
+  alert_gpios:
+    required: true
+    type: phandle-array
+    description:
+      Active low GPIO to notify the i2c master to
+      service a request.
+
+  hid_descriptor:
+    type: string
+    description:
+      The C function name that will be called to
+      populate the hid report
+
+  hid_report_descriptor:
+    type: string
+    description:
+      The C function name that will be called to
+      populate the hid report
+
+  get_report_handler:
+    type: string
+    description:
+      The C function name that will be called to
+      populate the hid report
+
+  set_report_handler:
+    type: string
+    description:
+      The C function name that will be called to
+      act on a set report from the host
+
+  power_state_handler:
+    type: string
+    description:
+      The C function name that will be called when
+      the host updates the power state
