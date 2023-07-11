@@ -7,6 +7,7 @@
 #include "board_adc.h"
 #include "console.h"
 #include "diagnostics.h"
+#include "dptf.h"
 #include "driver/temp_sensor/f75303.h"
 #include "fan.h"
 #include "hooks.h"
@@ -42,9 +43,14 @@ void check_device_deferred(void)
 	if (product_id != F75303_ID)
 		set_diagnostic(DIAGNOSTICS_THERMAL_SENSOR, true);
 
+	/* force turn on the fan for diagnostic */
+	dptf_set_fan_duty_target(5);
 
 	if (!(fan_get_rpm_actual(0) > 100))
 		set_diagnostic(DIAGNOSTICS_NOFAN, true);
+
+	/* Exit the duty mode and let thermal to control the fan */
+	dptf_set_fan_duty_target(-1);
 
 	if (amd_ddr_initialized_check())
 		set_bios_diagnostic(CODE_DDR_FAIL);

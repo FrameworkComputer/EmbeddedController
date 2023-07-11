@@ -6,6 +6,7 @@
 #include "board_host_command.h"
 #include "console.h"
 #include "diagnostics.h"
+#include "dptf.h"
 #include "fan.h"
 #include "gpu.h"
 #include "hooks.h"
@@ -24,11 +25,17 @@ void check_device_deferred(void)
 	if (get_deck_state() != DECK_ON && !get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_INPUT_MODULE_FAULT, true);
 
+	/* force turn on the fan for diagnostic */
+	dptf_set_fan_duty_target(5);
+
 	if (!(fan_get_rpm_actual(0) > 100))
 		set_diagnostic(DIAGNOSTICS_NO_RIGHT_FAN, true);
 
 	if (!(fan_get_rpm_actual(1) > 100))
 		set_diagnostic(DIAGNOSTICS_NO_LEFT_FAN, true);
+
+	/* Exit the duty mode and let thermal to control the fan */
+	dptf_set_fan_duty_target(-1);
 
 	if (amd_ddr_initialized_check())
 		set_bios_diagnostic(CODE_DDR_FAIL);
