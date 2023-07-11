@@ -134,7 +134,7 @@ static void update_os_power_slider(int mode, int with_dc, int active_mpower)
 static void update_adapter_power_limit(int battery_percent, int active_mpower)
 {
 	if ((active_mpower < 55000)) {
-		/* dc mode (active_mpower == 0) or AC < 55W */
+		/* dc mode (active_mpower == 0) or AC < 55W (active_mpower == 0) */
 		power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
 		power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] =
 			battery_mwatt_type - POWER_DELTA - ports_cost;
@@ -257,7 +257,8 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	bool with_dc = ((battery_is_present() == BP_YES) ? true : false);
 	int battery_percent = charge_get_percent();
 
-	if (force_no_adapter || (!extpower_is_present())) {
+	/* azalea take 55W and lower adp as no ac */
+	if (force_no_adapter || (!extpower_is_present()) || (active_mpower < 55000)) {
 		active_mpower = 0;
 		if (mode > EC_DC_BATTERY_SAVER)
 			mode = mode << 4;
