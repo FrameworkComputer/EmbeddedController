@@ -78,13 +78,11 @@
 
 			color_power_green: color-power-green {
 				led-color = "LED_GREEN";
-				br-color = "EC_LED_COLOR_GREEN";
 				led-values = <0 100 0>;
 			};
 
 			color_power_blue: color-power-blue {
 				led-color = "LED_BLUE";
-				br-color = "EC_LED_COLOR_BLUE";
 				led-values = <0 0 100>;
 			};
 		};

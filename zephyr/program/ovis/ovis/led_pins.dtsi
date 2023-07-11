@@ -17,13 +17,11 @@
 
 			color_amber_left: color-amber-left {
 				led-color = "LED_AMBER";
-				br-color = "EC_LED_COLOR_AMBER";
 				led-values = <0 1>;
 			};
 
 			color_white_left: color-white-left {
 				led-color = "LED_WHITE";
-				br-color = "EC_LED_COLOR_WHITE";
 				led-values = <1 0>;
 			};
 		};

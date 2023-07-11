@@ -64,19 +64,6 @@ child-binding:
           - LED_YELLOW
           - LED_WHITE
           - LED_AMBER
-      br-color:
-        type: string
-        required: false
-        description: |
-          This is used in the ectool brightness range APIs. It must match
-          the enum names defined in ec_commands.h.
-        enum:
-          - EC_LED_COLOR_RED
-          - EC_LED_COLOR_GREEN
-          - EC_LED_COLOR_BLUE
-          - EC_LED_COLOR_YELLOW
-          - EC_LED_COLOR_WHITE
-          - EC_LED_COLOR_AMBER
       led-values:
         type: array
         required: true

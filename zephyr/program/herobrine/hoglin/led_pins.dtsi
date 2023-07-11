@@ -19,13 +19,11 @@
 
 			color_blue: color-blue {
 				led-color = "LED_BLUE";
-				br-color = "EC_LED_COLOR_BLUE";
 				led-values = <1 0>;
 			};
 
 			color_red: color-red {
 				led-color = "LED_RED";
-				br-color = "EC_LED_COLOR_RED";
 				led-values = <0 1>;
 			};
 		};

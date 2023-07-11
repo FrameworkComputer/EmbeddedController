@@ -1056,12 +1056,10 @@
 			};
 			color-blue {
 				led-color = "LED_BLUE";
-				br-color = "EC_LED_COLOR_BLUE";
 				led-values = <100 0>;
 			};
 			color-white {
 				led-color = "LED_WHITE";
-				br-color = "EC_LED_COLOR_WHITE";
 				led-values = <0 100>;
 			};
 		};
@@ -1076,12 +1074,10 @@
 			};
 			color-amber {
 				led-color = "LED_AMBER";
-				br-color = "EC_LED_COLOR_AMBER";
 				led-values = <100 0>;
 			};
 			color-white {
 				led-color = "LED_WHITE";
-				br-color = "EC_LED_COLOR_WHITE";
 				led-values = <0 100>;
 			};
 		};

@@ -195,13 +195,11 @@
 
 			color_amber: color-amber {
 				led-color = "LED_AMBER";
-				br-color = "EC_LED_COLOR_AMBER";
 				led-values = <100 0>;
 			};
 
 			color_blue: color_blue {
 				led-color = "LED_BLUE";
-				br-color = "EC_LED_COLOR_BLUE";
 				led-values = <0 100>;
 			};
 		};

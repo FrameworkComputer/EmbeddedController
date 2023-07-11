@@ -20,14 +20,6 @@
 	COND_CODE_1(DT_NODE_HAS_PROP(id, prop), \
 		    (DT_STRING_UPPER_TOKEN(id, prop)), (0))
 
-/*
- * Return string-token if the property exists, otherwise return
- * EC_LED_COLOR_INVALID.
- */
-#define GET_COLOR_PROP_NVE(id, prop)            \
-	COND_CODE_1(DT_NODE_HAS_PROP(id, prop), \
-		    (DT_STRING_UPPER_TOKEN(id, prop)), (EC_LED_COLOR_INVALID))
-
 #define LED_ENUM(id, enum_name) DT_STRING_TOKEN(id, enum_name)
 #define LED_ENUM_WITH_COMMA(id, enum_name)           \
 	COND_CODE_1(DT_NODE_HAS_PROP(id, enum_name), \
@@ -43,6 +35,14 @@ enum led_color {
 	LED_AMBER,
 	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
+
+BUILD_ASSERT((LED_RED - 1) == EC_LED_COLOR_RED);
+BUILD_ASSERT((LED_GREEN - 1) == EC_LED_COLOR_GREEN);
+BUILD_ASSERT((LED_BLUE - 1) == EC_LED_COLOR_BLUE);
+BUILD_ASSERT((LED_YELLOW - 1) == EC_LED_COLOR_YELLOW);
+BUILD_ASSERT((LED_WHITE - 1) == EC_LED_COLOR_WHITE);
+BUILD_ASSERT((LED_AMBER - 1) == EC_LED_COLOR_AMBER);
+BUILD_ASSERT((LED_COLOR_COUNT - 1) == EC_LED_COLOR_COUNT);
 
 /*
  * Struct defining LED GPIO pin and value to set.

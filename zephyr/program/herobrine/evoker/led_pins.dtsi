@@ -18,7 +18,6 @@
 
 			color_power_white: color-power-white {
 				led-color = "LED_WHITE";
-				br-color = "EC_LED_COLOR_WHITE";
 				led-values = <1>;
 			};
 		};
@@ -36,19 +35,16 @@
 
 			color_battery_amber: color-battery-amber {
 				led-color = "LED_AMBER";
-				br-color = "EC_LED_COLOR_AMBER";
 				led-values = <1 0 0>;
 			};
 
 			color_battery_white: color-battery-white {
 				led-color = "LED_WHITE";
-				br-color = "EC_LED_COLOR_WHITE";
 				led-values = <0 1 0>;
 			};
 
 			color_battery_red: color-battery-red {
 				led-color = "LED_RED";
-				br-color = "EC_LED_COLOR_RED";
 				led-values = <0 0 1>;
 			};
 		};

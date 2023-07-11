@@ -49,18 +49,21 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 
 DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD, GEN_PINS_ARRAY)
 
-#define SET_PIN_NODE(node_id)                                \
-	{ .led_color = GET_PROP(node_id, led_color),         \
-	  .led_id = GET_PROP(DT_PARENT(node_id), led_id),    \
-	  .br_color = GET_COLOR_PROP_NVE(node_id, br_color), \
-	  .pwm_pins = PINS_ARRAY(node_id),                   \
-	  .pins_count = DT_PROP_LEN(node_id, led_values) };
+/* EC_LED_COLOR maps to LED_COLOR - 1 */
+#define SET_PIN_NODE(node_id)                                   \
+	{                                                       \
+		.led_color = GET_PROP(node_id, led_color),      \
+		.led_id = GET_PROP(DT_PARENT(node_id), led_id), \
+		.br_color = GET_PROP(node_id, led_color) - 1,   \
+		.pwm_pins = PINS_ARRAY(node_id),                \
+		.pins_count = DT_PROP_LEN(node_id, led_values)  \
+	}
 
 /*
  * Initialize led_pins_node_t struct for each pin node defined
  */
 #define GEN_PINS_NODES(id) \
-	const struct led_pins_node_t PINS_NODE(id) = SET_PIN_NODE(id)
+	const struct led_pins_node_t PINS_NODE(id) = SET_PIN_NODE(id);
 
 DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD, GEN_PINS_NODES)
 
