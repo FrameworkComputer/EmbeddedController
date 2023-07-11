@@ -239,6 +239,16 @@ static void thermal_control(void)
 DECLARE_HOOK(HOOK_SECOND, thermal_control, HOOK_PRIO_TEMP_SENSOR_DONE);
 
 /*****************************************************************************/
+/* Project */
+bool thermal_warn_trigger(void)
+{
+	if (cond_went_true(&cond_hot[EC_TEMP_THRESH_WARN]))
+		return true;
+	else
+		return false;
+}
+
+/*****************************************************************************/
 /* Console commands */
 
 static int command_thermalget(int argc, const char **argv)

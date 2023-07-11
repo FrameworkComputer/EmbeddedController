@@ -10,8 +10,8 @@
 		fan0: fan_0 {
 			pwms = <&pwm0 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
 			tach = <&tach2>;
-			rpm_min = <1800>;
-			rpm_start = <1800>;
+			rpm_min = <2100>;
+			rpm_start = <2100>;
 			rpm_max = <6800>;
 			rpm_deviation = <3>;
 			pgood_gpio = <&gpio_slp_s3_l>;
