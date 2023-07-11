@@ -18,7 +18,7 @@
 
 void check_device_deferred(void)
 {
-	if (!gpu_present())
+	if (gpu_module_fault())
 		set_diagnostic(DIAGNOSTICS_GPU_MODULE_FAULT, true);
 
 	if (get_deck_state() != DECK_ON && !get_standalone_mode())
