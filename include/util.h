@@ -95,7 +95,9 @@ extern "C" {
 #define DIV_ROUND_UP(x, y) (((x) + ((y)-1)) / (y))
 #endif
 
+#ifndef DIV_ROUND_NEAREST
 #define DIV_ROUND_NEAREST(x, y) (((x) + ((y) / 2)) / (y))
+#endif
 
 /* Like strtol(), but for integers. */
 int strtoi(const char *nptr, char **endptr, int base);
