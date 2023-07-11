@@ -287,6 +287,7 @@ timer_dos-y=timer_dos.o
 timer-y=timer.o
 tpm_seed_clear-y=tpm_seed_clear.o
 unaligned_access-y=unaligned_access.o
+unaligned_access_benchmark-y=unaligned_access_benchmark.o
 uptime-y=uptime.o
 usb_common-y=usb_common_test.o fake_battery.o
 usb_pd_int-y=usb_pd_int.o
