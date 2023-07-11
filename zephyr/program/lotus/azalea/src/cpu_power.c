@@ -146,8 +146,8 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower)
 			MIN(43000, (active_mpower * 85 / 100) + battery_mwatt_type - POWER_ROP);
 		power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] =
 			MIN(53000, (active_mpower * 85 / 100) + battery_mwatt_type - POWER_ROP);
-		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-			(active_mpower * 95 / 100) + battery_mwatt_type - POWER_ROP - POWER_PORT_COST;
+		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = (active_mpower * 95 / 100)
+			+ battery_mwatt_type - POWER_ROP - POWER_PORT_COST;
 	} else {
 		/* ADP > 55W and Battery percentage <= 40% */
 		power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
@@ -342,9 +342,10 @@ static void initial_soc_power_limit(void)
 	power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] = 33000;
 	power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
 		battery_mwatt_type - POWER_ROP  - POWER_PORT_COST;
-	power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T] = battery_mwatt_p3t - POWER_ROP - POWER_PORT_COST;
+	power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T] =
+		battery_mwatt_p3t - POWER_ROP - POWER_PORT_COST;
 	power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-			battery_mwatt_p3t - POWER_ROP - POWER_PORT_COST;
+		battery_mwatt_p3t - POWER_ROP - POWER_PORT_COST;
 }
 DECLARE_HOOK(HOOK_INIT, initial_soc_power_limit, HOOK_PRIO_INIT_I2C);
 
