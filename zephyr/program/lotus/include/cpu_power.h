@@ -36,7 +36,9 @@ struct power_limit_details {
 
 #define BATTERY_55mW 55000
 #define BATTERY_61mW 61000
-#define POWER_DELTA 20000
+/* ROP: rest of platform */
+#define POWER_ROP 20000
+#define POWER_PORT_COST 5000
 
 void update_soc_power_limit(bool force_update, bool force_no_adapter);
 
