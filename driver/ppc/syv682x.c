@@ -631,7 +631,7 @@ static void syv682x_interrupt_delayed(int port, int delay)
 	hook_call_deferred(&syv682x_irq_deferred_data, delay * MSEC);
 }
 
-void syv682x_interrupt(int port)
+test_mockable void syv682x_interrupt(int port)
 {
 	/* FRS timings require <15ms response to an FRS event */
 	syv682x_interrupt_delayed(port, 0);

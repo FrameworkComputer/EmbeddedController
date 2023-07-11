@@ -8,6 +8,7 @@ project(rex)
 
 zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/rex/include")
 zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/rex/rex/include")
+zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/rex/screebo/include")
 
 add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 
@@ -19,3 +20,6 @@ target_sources_ifdef(CONFIG_TEST_BOARD_POWER app PRIVATE ${PLATFORM_EC_PROGRAM_D
 
 target_sources_ifdef(CONFIG_TEST_BOARD_USB_MUX_CONFIG app PRIVATE src/usb_mux_config.c)
 target_sources_ifdef(CONFIG_TEST_BOARD_USB_MUX_CONFIG app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/rex/rex/src/usb_mux_config.c)
+
+target_sources_ifdef(CONFIG_TEST_SCREEBO_USB_CONFIG app PRIVATE src/screebo_usb_config.c)
+target_sources_ifdef(CONFIG_TEST_SCREEBO_USB_CONFIG app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/rex/screebo/src/usb_config.c)

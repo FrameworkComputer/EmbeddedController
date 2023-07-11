@@ -8,6 +8,12 @@ config TEST_BOARD_USB_MUX_CONFIG
 	  Include usb_mux_config.c into the binary and test their
 	  functions.
 
+config TEST_SCREEBO_USB_CONFIG
+	bool "Run the tests intended for rex/screebo/src/usb_config.c"
+	help
+	  Include rex/screebo/src/usb_config.c into the binary and test their
+	  functions.
+
 config TEST_USB_PD_POLICY
 	bool "Run the tests intended for usb_pd_policy"
 	help
