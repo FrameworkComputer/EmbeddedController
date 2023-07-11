@@ -332,9 +332,9 @@ static void initial_soc_power_limit(void)
 		(strncmp(battery_static[BATT_IDX_MAIN].model_ext, str, 10) ?
 		BATTERY_55mW : BATTERY_61mW);
 	battery_mwatt_p3t =
-		((battery_mwatt_type == BATTERY_55mW) ? 100000 : 90000);
+		((battery_mwatt_type == BATTERY_61mW) ? 90000 : 100000);
 	battery_current_limit_mA =
-		((battery_mwatt_type == BATTERY_55mW) ? -3570 : -3920);
+		((battery_mwatt_type == BATTERY_61mW) ? -3920 : -3570);
 
 	/* initial slider table to battery balance as default */
 	power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 28000;
