@@ -17,6 +17,13 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
+void start_fan_deferred(void)
+{
+	/* force turn on the fan for diagnostic */
+	dptf_set_fan_duty_target(5);
+}
+DECLARE_DEFERRED(start_fan_deferred);
+
 void check_device_deferred(void)
 {
 	if (gpu_module_fault())
@@ -44,5 +51,6 @@ DECLARE_DEFERRED(check_device_deferred);
 
 void project_diagnostics(void)
 {
+	hook_call_deferred(&start_fan_deferred_data, 500 * MSEC);
 	hook_call_deferred(&check_device_deferred_data, 2000 * MSEC);
 }
