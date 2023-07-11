@@ -37,7 +37,7 @@ static int update_sustained_power_limit(uint32_t mwatt)
 	return sb_rmi_mailbox_xfer(SB_RMI_WRITE_SUSTAINED_POWER_LIMIT_CMD, msgIn, &msgOut);
 }
 
-static int update_flow_ppt_limit(uint32_t mwatt)
+static int update_fast_ppt_limit(uint32_t mwatt)
 {
 	uint32_t msgIn = 0;
 	uint32_t msgOut;
@@ -70,7 +70,7 @@ static int update_peak_package_power_limit(uint32_t mwatt)
 static void set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p3t)
 {
 	update_sustained_power_limit(spl);
-	update_flow_ppt_limit(fppt);
+	update_fast_ppt_limit(fppt);
 	update_slow_ppt_limit(sppt);
 	update_peak_package_power_limit(p3t);
 }
@@ -81,22 +81,20 @@ static void update_os_power_slider(int mode, int with_dc, int active_mpower)
 	case EC_DC_BEST_PERFORMANCE:
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 30000;
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] = 35000;
-		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
-			((battery_mwatt_type == BATTERY_55mW) ? 35000 : 41000);
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] = battery_mwatt_type - POWER_DELTA;
 		CPRINTS("DC BEST PERFORMANCE");
 		break;
 	case EC_DC_BALANCED:
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 28000;
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] = 33000;
-		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
-			((battery_mwatt_type == BATTERY_55mW) ? 35000 : 41000);
+		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] = battery_mwatt_type - POWER_DELTA;
 		CPRINTS("DC BALANCED");
 		break;
-	case EC_DC_BEST_EFFICIENCYE:
+	case EC_DC_BEST_EFFICIENCY:
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 15000;
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] = 20000;
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] = 30000;
-		CPRINTS("DC BEST EFFICIENCYE");
+		CPRINTS("DC BEST EFFICIENCY");
 		break;
 	case EC_DC_BATTERY_SAVER:
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 15000;
@@ -119,13 +117,13 @@ static void update_os_power_slider(int mode, int with_dc, int active_mpower)
 			(with_dc ? 51000 : (MIN(51000, (active_mpower - 15000))));
 		CPRINTS("AC BALANCED");
 		break;
-	case EC_AC_BEST_EFFICIENCYE:
+	case EC_AC_BEST_EFFICIENCY:
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = (with_dc ? 15000 : 28000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] =
 			(with_dc ? 25000 : (MIN(33000, ((active_mpower - 15000) * 9 / 10))));
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
 			(with_dc ? 30000 : (MIN(51000, (active_mpower - 15000))));
-		CPRINTS("AC BEST EFFICIENCYE");
+		CPRINTS("AC BEST EFFICIENCY");
 		break;
 	default:
 		/* no mode, run power table */
@@ -133,7 +131,7 @@ static void update_os_power_slider(int mode, int with_dc, int active_mpower)
 	}
 }
 
-static void update_power_power_limit(int battery_percent, int active_mpower)
+static void update_adapter_power_limit(int battery_percent, int active_mpower)
 {
 	if ((active_mpower < 55000)) {
 		/* dc mode (active_mpower == 0) or AC < 55W */
@@ -190,7 +188,7 @@ static void update_dc_safety_power_limit(void)
 		powerlimit_restore = 1;
 	} else {
 		new_mwatt = power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL];
-		/* start tuning PL by formate */
+		/* start tuning PL by format */
 		/* discharge, value compare based on negative*/
 		if (battery_current < battery_current_limit_mA) {
 			/*
@@ -270,7 +268,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		update_os_power_slider(mode, with_dc, active_mpower);
 	}
 
-	update_power_power_limit(battery_percent, active_mpower);
+	update_adapter_power_limit(battery_percent, active_mpower);
 
 	if (active_mpower == 0)
 		update_dc_safety_power_limit();
@@ -341,7 +339,7 @@ static void initial_soc_power_limit(void)
 	power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 28000;
 	power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] = 33000;
 	power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
-		((battery_mwatt_type == BATTERY_55mW) ? 35000 : 41000);
+		battery_mwatt_type - POWER_DELTA  - ports_cost;
 	power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T] = battery_mwatt_p3t - POWER_DELTA - ports_cost;
 	power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
 			battery_mwatt_p3t - POWER_DELTA - ports_cost;

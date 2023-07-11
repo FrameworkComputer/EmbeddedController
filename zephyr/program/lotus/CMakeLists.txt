@@ -37,7 +37,6 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 			"lotus/src/power_button_x86.c"
 			"lotus/src/amd_r23m.c"
 			"lotus/src/ej889i.c"
-			"lotus/src/cpu_power.c"
 	)
 endif()
 if(DEFINED CONFIG_BOARD_AZALEA)
