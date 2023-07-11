@@ -133,3 +133,11 @@ if(DEFINED CONFIG_BOARD_GOTHRAX)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "gothrax/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "gothrax/src/charger.c")
 endif()
+if(DEFINED CONFIG_BOARD_CRAASKOV)
+	project(craaskov)
+	zephyr_library_sources(
+			"craaskov/src/keyboard.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "craaskov/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "craaskov/src/charger.c")
+endif()
