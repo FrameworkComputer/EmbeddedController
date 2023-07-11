@@ -491,20 +491,18 @@ def main():
 
     twister_cli.extend(["--outdir", intercepted_args.outdir])
 
-    toolchain_root = (
-        str(ec_base / "zephyr") if in_cros_sdk() else str(zephyr_base)
-    )
-    twister_cli.extend([f"-x=TOOLCHAIN_ROOT={toolchain_root}"])
-
     # Prepare environment variables for export to Twister. Inherit the parent
     # process's environment, but set some default values if not already set.
     twister_env = dict(os.environ)
     with tempfile.TemporaryDirectory() as parsetab_dir:
+        toolchain_root = os.environ.get(
+            "TOOLCHAIN_ROOT",
+            str(ec_base / "zephyr") if in_cros_sdk() else str(zephyr_base),
+        )
+
+        twister_cli.extend([f"-x=TOOLCHAIN_ROOT={toolchain_root}"])
         extra_env_vars = {
-            "TOOLCHAIN_ROOT": os.environ.get(
-                "TOOLCHAIN_ROOT",
-                str(ec_base / "zephyr") if in_cros_sdk() else str(zephyr_base),
-            ),
+            "TOOLCHAIN_ROOT": toolchain_root,
             # TODO(https://github.com/zephyrproject-rtos/zephyr/issues/59453):
             # This ought to be passed as a CMake variable but can't due to how
             # Zephyr calls verify-toolchain.cmake
