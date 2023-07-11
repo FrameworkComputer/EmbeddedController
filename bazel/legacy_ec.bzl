@@ -72,7 +72,7 @@ def _impl(ctx):
 
     env = {
         "COREBOOT_SDK_ROOT": ctx.file._coreboot_root.path,
-        "BOARD": ctx.attr.name,
+        "BOARD": ctx.attr.board,
         "BUILD_DIR": build_dir.path,
         "EC_DIR": ctx.file._legacy_ec_makefile.dirname,
     }
@@ -134,6 +134,7 @@ _rule = rule(
             default = "@coreboot_sdk//:coreboot_sdk_root",
             allow_single_file = True,
         ),
+        "board": attr.string(),
         "board_srcs": attr.label(allow_files = True),
     },
 )

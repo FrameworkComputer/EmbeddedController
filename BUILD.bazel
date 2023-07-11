@@ -23,8 +23,17 @@ ec_target(
 )
 
 ec_target(
-    name = "brya",
+    name = "brya_zephyr",
+    board = "brya",
     extra_modules = ["cmsis"],
+)
+
+ec_target(
+    name = "brya",
+    zephyr = False,
+    baseboard = "brya",
+    chip = "npcx",
+    core = "cortex-m",
 )
 
 ec_target(

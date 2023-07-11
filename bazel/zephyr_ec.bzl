@@ -16,7 +16,7 @@ def _impl(ctx):
         "--zephyr-base",
         "external/zephyr",
         "build",
-        ctx.attr.name,
+        ctx.attr.board,
         "-B",
         build_dir.path,
         "-t",
@@ -59,6 +59,7 @@ ec_binary = rule(
         "extra_modules": attr.string_list(
             doc = "Extra modules, e.g. cmsis to be included for this ec binary",
         ),
+        "board": attr.string(),
         "_binman_path": attr.label(default = "@u_boot//:binman_path", allow_single_file = True),
         "_ec": attr.label(default = "@ec//:src", allow_files = True),
         "_cmsis": attr.label(default = "@cmsis//:src", allow_files = True),
