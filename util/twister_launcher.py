@@ -97,6 +97,7 @@ import sys
 import tempfile
 import time
 from typing import List
+import uuid
 
 
 # Paths under the EC base dir that contain tests. This is used to define
@@ -348,14 +349,41 @@ twister_test_binary(
     cwd = {str(cwd)!r},
 )"""
     run_hash = hashlib.md5(gen_starlark.encode("utf-8")).hexdigest()
-    twister_bzl_dir = (
-        Path(__file__).resolve().parent.parent / "build" / "twister-bzl"
-    )
+    build_dir = Path(__file__).resolve().parent.parent / "build"
+    twister_bzl_dir = build_dir / "twister-bzl"
     run_dir = twister_bzl_dir / run_hash
 
     if not run_dir.is_dir():
         run_dir.mkdir(parents=True)
         (run_dir / "BUILD.bazel").write_text(gen_starlark, encoding="utf-8")
+
+    # Twister users are used to seeing `twister-out`; symlink it to bazel twister-out
+    bazel_bin = Path(
+        subprocess.run(
+            ["bazel", "info", "bazel-bin"],
+            cwd=Path(__file__).resolve().parent,
+            check=True,
+            stdout=subprocess.PIPE,
+            encoding="utf-8",
+        ).stdout.strip()
+    )
+
+    ec_twister_out = Path("twister-out")
+    bazel_twister_out = (
+        bazel_bin / "platform/ec/build/twister-bzl" / run_hash / ec_twister_out
+    )
+
+    # Atomically symlink to twister out/build directory
+    # Largely taken from chromite.osutils.SafeSymlink()
+    tmp_twister_out = ec_twister_out.with_name(
+        f".tmp-{ec_twister_out.name}-{uuid.uuid4().hex}"
+    )
+    try:
+        tmp_twister_out.symlink_to(bazel_twister_out)
+        tmp_twister_out.rename(ec_twister_out)
+    except OSError:
+        # Clean up temporary symlink if rename failed
+        tmp_twister_out.unlink(missing_ok=True)
 
     bazel_cmd = ["bazel", "build", ":run_twister"]
     if sandbox_debug:
