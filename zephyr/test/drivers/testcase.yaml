@@ -26,6 +26,7 @@ tests:
     - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
     - CONFIG_PLATFORM_EC_USB_PD_DPS=y
     - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
+    - CONFIG_SHELL_BACKEND_DUMMY_BUF_SIZE=8192
     extra_conf_files:
     - prj.conf
     - default/prj.conf

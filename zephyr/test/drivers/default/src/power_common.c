@@ -14,6 +14,8 @@
 #include "hooks.h"
 #include "host_command.h"
 #include "power.h"
+#include "power/power.h"
+#include "power/qcom.h"
 #include "task.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
@@ -697,6 +699,67 @@ ZTEST(power_common_hibernation, test_power_cmd_hibernation_delay)
 		      system_hibernate_fake.call_count);
 }
 
+/**
+ * @brief GPIO test setup handler.
+ */
+static void siglog_before(void *state)
+{
+	/* enable chipset channel */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chan chipset"));
+}
+
+static void siglog_after(void *state)
+{
+	/* disable chipset channel */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chan chipset"));
+}
+
+#ifdef CONFIG_PLATFORM_EC_BRINGUP
+ZTEST(power_common_bring_up, test_siglog_output)
+{
+	size_t buffer_size;
+	const char *buffer;
+	const struct gpio_dt_spec *gp_pwr_good =
+		GPIO_DT_FROM_NODELABEL(gpio_mb_power_good);
+
+	/* wait for the power state stabilized */
+	k_msleep(10 * 1000);
+
+	shell_backend_dummy_clear_output(get_ec_shell());
+	/* test short logs */
+	gpio_pin_set_dt(gp_pwr_good, 1);
+	k_msleep(10);
+	gpio_pin_set_dt(gp_pwr_good, 0);
+	/* ensure the signal output printed */
+	k_msleep(2000);
+
+	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_not_equal(NULL, strstr(buffer, "2 signal changes:"));
+	zassert_not_equal(NULL,
+			  strstr(buffer, "+0.000000  mb_power_good => 1"));
+	zassert_not_equal(NULL, strstr(buffer, "mb_power_good => 0"));
+	zassert_equal(NULL, strstr(buffer, "SIGNAL LOG TRUNCATED..."));
+
+	/* test signal log truncated */
+	shell_backend_dummy_clear_output(get_ec_shell());
+	for (int i = 0; i < 13; i++) {
+		gpio_pin_set_dt(gp_pwr_good, 1);
+		k_msleep(10);
+		gpio_pin_set_dt(gp_pwr_good, 0);
+		k_msleep(10);
+	}
+	/* ensure the signal output printed */
+	k_msleep(2000);
+
+	/* ensure the signal output printed */
+	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_not_equal(NULL, strstr(buffer, "24 signal changes:"));
+	zassert_not_equal(NULL,
+			  strstr(buffer, "+0.000000  mb_power_good => 1"));
+	zassert_not_equal(NULL, strstr(buffer, "SIGNAL LOG TRUNCATED..."));
+}
+#endif
+
 ZTEST_SUITE(power_common_no_tasks, drivers_predicate_pre_main, NULL, NULL, NULL,
 	    NULL);
 
@@ -704,3 +767,6 @@ ZTEST_SUITE(power_common, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
 
 ZTEST_SUITE(power_common_hibernation, drivers_predicate_post_main, NULL,
 	    setup_hibernation_delay, NULL, NULL);
+
+ZTEST_SUITE(power_common_bring_up, drivers_predicate_post_main, NULL,
+	    siglog_before, siglog_after, NULL);
