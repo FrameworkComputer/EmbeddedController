@@ -523,11 +523,11 @@ static void led_tick(void)
 #ifdef CONFIG_BOARD_LOTUS
 	/* GPU bay cover detect switch open */
 	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_f_beam_open_l)) == 0) {
-			colors[0] = LED_RED;
-			colors[1] = LED_AMBER;
-			colors[2] = LED_OFF;
-			multifunction_leds_control(colors, 3, 1000);
-			return;
+		colors[0] = LED_RED;
+		colors[1] = LED_AMBER;
+		colors[2] = LED_OFF;
+		multifunction_leds_control(colors, 3, 1000);
+		return;
 	}
 
 	/* GPU Bay Module Fault */
