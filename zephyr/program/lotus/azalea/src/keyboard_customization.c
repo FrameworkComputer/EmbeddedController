@@ -87,14 +87,14 @@ static char keycap_label[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 			KLLI_UNKNO, KLLI_UNKNO, KLLI_RIGHT, KLLI_LEFT},
 };
 
-uint8_t get_keycap_label(uint8_t row, uint8_t col)
+char get_keycap_label(uint8_t row, uint8_t col)
 {
 	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS)
 		return keycap_label[col][row];
 	return KLLI_UNKNO;
 }
 
-void set_keycap_label(uint8_t row, uint8_t col, uint8_t val)
+void set_keycap_label(uint8_t row, uint8_t col, char val)
 {
 	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS)
 		keycap_label[col][row] = val;

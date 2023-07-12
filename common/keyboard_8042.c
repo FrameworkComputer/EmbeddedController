@@ -241,13 +241,6 @@ void keyboard_host_write(int data, int is_cmd)
 	task_wake(TASK_ID_KEYPROTO);
 }
 
-#ifdef CONFIG_CUSTOMIZED_DESIGN
-int keyboard_host_write_avaliable(void)
-{
-	return queue_count(&from_host);
-}
-#endif
-
 /**
  * Enable keyboard IRQ generation.
  *
