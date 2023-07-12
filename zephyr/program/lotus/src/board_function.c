@@ -15,6 +15,8 @@
 #include "ec_commands.h"
 #include "extpower.h"
 #include "flash_storage.h"
+#include "gpio/gpio_int.h"
+#include "gpio.h"
 #include "hooks.h"
 #include "system.h"
 #include "util.h"
@@ -183,6 +185,7 @@ static void bios_function_init(void)
 #ifdef CONFIG_BOARD_LOTUS
 	set_detect_mode(flash_storage_get(FLASH_FLAGS_INPUT_MODULE_POWER));
 #endif
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_chassis_open));
 	check_chassis_open();
 }
 DECLARE_HOOK(HOOK_INIT, bios_function_init, HOOK_PRIO_DEFAULT + 1);
