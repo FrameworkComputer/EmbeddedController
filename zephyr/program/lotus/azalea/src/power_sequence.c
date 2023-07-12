@@ -272,13 +272,13 @@ static void key_stuck_wa(void)
 	int wa_bit = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_DISPLAY_ON);
 
 	if (wa_bit) {
-		simulate_keyboard(SCANCODE_UNASSIGNED, 1);
-		simulate_keyboard(SCANCODE_UNASSIGNED, 0);
-		keyboard_clear_buffer();
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_DISPLAY_ON) = 0;
 		hook_call_deferred(&key_stuck_wa_data, -1);
+		simulate_keyboard(SCANCODE_UNASSIGNED, 1);
+		simulate_keyboard(SCANCODE_UNASSIGNED, 0);
 	} else
-		hook_call_deferred(&key_stuck_wa_data, 250 * MSEC);
+		hook_call_deferred(&key_stuck_wa_data, 10 * MSEC);
+
 }
 
 enum power_state power_handle_state(enum power_state state)
@@ -460,6 +460,7 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S0ixS3:
 		CPRINTS("PH S0ixS3");
+		hook_call_deferred(&key_stuck_wa_data, -1);
 		/* follow power sequence Disable S3 power */
 		chipset_prepare_S3(0);
 		CPRINTS("PH S0ixS0->S3");
@@ -467,6 +468,7 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S3S0ix:
 		CPRINTS("PH S3->S0ix");
+		hook_call_deferred(&key_stuck_wa_data, 1);
 		/* Enable power for CPU check system */
 		chipset_prepare_S3(1);
 		CPRINTS("PH S3S0ix->S0ix");
@@ -476,8 +478,8 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("PH S0ixS0");
 		resume_ms_flag = 0;
 		enter_ms_flag = 0;
-		hook_call_deferred(&key_stuck_wa_data, 10 * MSEC);
 		lpc_s0ix_resume_restore_masks();
+		hook_call_deferred(&key_stuck_wa_data, 50 * MSEC);
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
 		CPRINTS("PH S0ixS0->S0");
