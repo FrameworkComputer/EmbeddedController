@@ -26,6 +26,9 @@
 /* Allow objects to be linked into a flash resident section */
 #define CONFIG_CHIP_INIT_ROM_REGION
 
+/* System safe mode for improved panic debugging */
+#define CONFIG_SYSTEM_SAFE_MODE
+
 /* EC Defines */
 #define CONFIG_LTO
 #define CONFIG_BOARD_VERSION_CBI
