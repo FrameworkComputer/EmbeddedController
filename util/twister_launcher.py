@@ -348,7 +348,9 @@ twister_test_binary(
     cwd = {str(cwd)!r},
 )"""
     run_hash = hashlib.md5(gen_starlark.encode("utf-8")).hexdigest()
-    twister_bzl_dir = Path(__file__).parent.parent / "build" / "twister-bzl"
+    twister_bzl_dir = (
+        Path(__file__).resolve().parent.parent / "build" / "twister-bzl"
+    )
     run_dir = twister_bzl_dir / run_hash
 
     if not run_dir.is_dir():
