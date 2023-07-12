@@ -374,12 +374,6 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define I2C_PORT_CHARGER 0
 #endif
 
-#ifdef TEST_CEC
-#define CONFIG_CEC
-#define CONFIG_MKBP_EVENT
-#define CONFIG_MKBP_USE_GPIO
-#endif
-
 #ifdef TEST_LIGHTBAR
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER

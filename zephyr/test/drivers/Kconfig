@@ -49,6 +49,9 @@ config LINK_TEST_SUITE_CBI_FLASH
 	  Include the CBI Flash storage driver test suite
 	  in the binary.
 
+config LINK_TEST_SUITE_CEC_COMMON
+	bool "Link and run the common/cec.c tests"
+
 config LINK_TEST_SUITE_CHARGESPLASH
 	bool "Link and test the chargesplash tests"
 

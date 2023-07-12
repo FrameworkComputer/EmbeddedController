@@ -1,0 +1,17 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	cec {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cec0@0 {
+			compatible = "cros-ec,cec";
+			reg = <0>;
+		};
+	};
+};
+
