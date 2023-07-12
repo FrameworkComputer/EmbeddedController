@@ -31,7 +31,7 @@ BUILD_ASSERT(CEC_PORT_COUNT == 1);
  * Mutex for the read-offset of the rx queue. Needed since the
  * queue is read and flushed from different contexts
  */
-static struct mutex rx_queue_readoffset_mutex;
+static mutex_t rx_queue_readoffset_mutex;
 
 /* Queue of completed incoming CEC messages */
 static struct cec_rx_queue cec_rx_queue;
@@ -341,7 +341,9 @@ static void cec_init(void)
 {
 	int port = CEC_PORT;
 
-	cec_config[port].drv->init(port);
+	/* TODO(b/270507438): Remove once zephyr shims are added for drivers */
+	if (!IS_ENABLED(CONFIG_ZEPHYR))
+		cec_config[port].drv->init(port);
 
 	CPRINTS("CEC initialized");
 }

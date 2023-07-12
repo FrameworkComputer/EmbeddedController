@@ -32,6 +32,7 @@ enum {
 	EC_TASK_USB_CHG_PRIO,
 	EC_TASK_DPS_PRIO,
 	EC_TASK_CHARGER_PRIO,
+	EC_TASK_CEC_PRIO,
 	EC_TASK_CHIPSET_PRIO,
 	EC_TASK_MOTIONSENSE_PRIO,
 	EC_TASK_USB_MUX_PRIO,
@@ -170,6 +171,11 @@ enum {
 		    (CROS_EC_TASK(RWSIG, rwsig_task, 0,                    \
 				  CONFIG_TASK_RWSIG_STACK_SIZE,            \
 				  EC_TASK_RWSIG_PRIO)),                    \
+		    ())                                                    \
+	COND_CODE_1(HAS_TASK_CEC,                                          \
+		    (CROS_EC_TASK(CEC, cec_task, 0,                        \
+				  CONFIG_TASK_CEC_STACK_SIZE,              \
+				  EC_TASK_CEC_PRIO)),                      \
 		    ())
 #elif defined(CONFIG_HAS_TEST_TASKS)
 #include "shimmed_test_tasks.h"
@@ -210,7 +216,8 @@ enum {
 	CROS_EC_TASK(PD_INT_C1, NULL, 1, 0, EC_TASK_PD_INT_C1_PRIO)         \
 	CROS_EC_TASK(PD_INT_C2, NULL, 2, 0, EC_TASK_PD_INT_C2_PRIO)         \
 	CROS_EC_TASK(PD_INT_C3, NULL, 3, 0, EC_TASK_PD_INT_C3_PRIO)         \
-	CROS_EC_TASK(TOUCHPAD, NULL, 0, 0, EC_TASK_TOUCHPAD_PRIO)
+	CROS_EC_TASK(TOUCHPAD, NULL, 0, 0, EC_TASK_TOUCHPAD_PRIO)           \
+	CROS_EC_TASK(CEC, NULL, 0, 0, EC_TASK_CEC_PRIO)
 
 #endif /* CONFIG_SHIMMED_TASKS */
 

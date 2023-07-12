@@ -5,6 +5,10 @@
 
 #include "ec_commands.h"
 
+#ifdef CONFIG_ZEPHYR
+#include <zephyr_cec.h>
+#endif
+
 /* Size of the buffer inside the rx queue */
 #define CEC_RX_BUFFER_SIZE 20
 #if CEC_RX_BUFFER_SIZE < MAX_CEC_MSG_LEN + 1

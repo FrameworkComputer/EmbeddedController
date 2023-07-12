@@ -4,6 +4,7 @@
 
 config PLATFORM_EC_CEC
 	bool "EC CEC support"
+	select HAS_TASK_CEC
 	help
 	  Enable support for HDMI CEC (Consumer Electronics Control).
 

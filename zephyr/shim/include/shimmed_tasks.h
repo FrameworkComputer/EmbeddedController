@@ -73,4 +73,8 @@
 #define HAS_TASK_RWSIG 1
 #endif /* CONFIG_HAS_TASK_RWSIG */
 
+#ifdef CONFIG_HAS_TASK_CEC
+#define HAS_TASK_CEC 1
+#endif /* CONFIG_HAS_TASK_CEC */
+
 #endif /* __CROS_EC_SHIMMED_TASKS_H */
