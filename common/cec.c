@@ -129,6 +129,10 @@ int cec_process_offline_message(struct cec_rx_queue *queue, const uint8_t *msg,
 	snprintf_hex_buffer(str_buf, sizeof(str_buf), HEX_BUF(msg, msg_len));
 	CPRINTS("MSG: %s", str_buf);
 
+	/* Header-only, e.g. a polling message. No command, so nothing to do */
+	if (msg_len == 1)
+		return EC_SUCCESS;
+
 	command = msg[1];
 
 	if (cec_find_action(cec_config[port].offline_policy, command) ==
