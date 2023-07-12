@@ -1040,7 +1040,7 @@ static void cypd_update_port_state(int controller, int port)
 		/**
 		 * (charge_ma * charge_mv / 20000 ) * 0.9 * 0.94
 		 */
-		calculate_ma = (int64_t)pd_current * (int64_t)pd_voltage * 90 * 94 / 200000000;
+		calculate_ma = (int64_t)pd_current * (int64_t)pd_voltage * 90 * 95 / 200000000;
 	} else {
 		calculate_ma = (int64_t)pd_current * 88 / 100;
 	}
