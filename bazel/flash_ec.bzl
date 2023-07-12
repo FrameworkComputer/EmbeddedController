@@ -13,21 +13,21 @@ def _gen_shell_wrapper(argv, env):
 
 def _flash_ec(ctx):
     env = {
-        "PATH": "%s/usr/bin:/usr/bin:/bin" % ctx.files.ec_devutils[0].path,
-        "SHFLAGS": "%s/usr/share/misc/shflags" % ctx.files.shflags[0].path,
-        "BAZEL_DUT_CONTROL": ctx.executable.dut_control.short_path,
+        "PATH": "%s/usr/bin:/usr/bin:/bin" % ctx.files._ec_devutils[0].path,
+        "SHFLAGS": "%s/usr/share/misc/shflags" % ctx.files._shflags[0].path,
+        "BAZEL_DUT_CONTROL": ctx.executable._dut_control.short_path,
     }
 
     script = ctx.actions.declare_file("flash_ec_wrapper.sh")
     script_content = _gen_shell_wrapper(
         argv = [
-            ctx.files.flash_ec[0].path,
+            ctx.file._flash_ec.path,
             "--board",
             ctx.attr.board,
             "--zephyr",
             "--image",
             "%s/%s/output/ec.bin" % (
-                ctx.files.build_target[0].short_path,
+                ctx.file.build_target.short_path,
                 ctx.attr.board,
             ),
         ],
@@ -37,13 +37,13 @@ def _flash_ec(ctx):
 
     runfiles = ctx.runfiles(
         files = (
-            ctx.files.flash_ec +
-            ctx.files.ec_devutils +
-            ctx.files.shflags +
+            ctx.files._flash_ec +
+            ctx.files._ec_devutils +
+            ctx.files._shflags +
             ctx.files.build_target
         ),
     )
-    runfiles = runfiles.merge(ctx.attr.dut_control.default_runfiles)
+    runfiles = runfiles.merge(ctx.attr._dut_control.default_runfiles)
     return [
         DefaultInfo(executable = script, runfiles = runfiles),
     ]
@@ -54,24 +54,24 @@ flash_ec = rule(
         "board": attr.string(doc = "Board name to flash."),
         "build_target": attr.label(
             doc = "Build target for this board.",
-            allow_files = True,
+            allow_single_file = True,
         ),
-        "flash_ec": attr.label(
+        "_flash_ec": attr.label(
             doc = "The flash_ec script to run.",
-            allow_files = True,
+            allow_single_file = True,
             default = Label("@cros_firmware//platform/ec:util/flash_ec"),
         ),
-        "ec_devutils": attr.label(
+        "_ec_devutils": attr.label(
             doc = "The devutils bundle path.",
-            allow_files = True,
+            allow_single_file = True,
             default = Label("@ec_devutils//:bundle"),
         ),
-        "shflags": attr.label(
+        "_shflags": attr.label(
             doc = "The shflags bundle path.",
             allow_files = True,
             default = Label("@shflags//:bundle"),
         ),
-        "dut_control": attr.label(
+        "_dut_control": attr.label(
             doc = "The dut_control binary to use.",
             executable = True,
             cfg = "exec",
