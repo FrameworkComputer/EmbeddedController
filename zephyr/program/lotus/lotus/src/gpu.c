@@ -28,9 +28,16 @@ LOG_MODULE_REGISTER(gpu, LOG_LEVEL_INF);
 #define GPU_F75303_I2C_ADDR_FLAGS 0x4D
 
 static int module_present;
+static int module_fault;
+
 bool gpu_present(void)
 {
 	return module_present;
+}
+
+bool gpu_module_fault(void)
+{
+	return module_fault;
 }
 
 static void update_gpu_ac_power_state(void)
@@ -67,11 +74,14 @@ void check_gpu_module(void)
 		LOG_INF("Detected single interposer device");
 		module_present = 1;
 		break;
-
-	default:
+	case VALID_BOARDID(BOARD_VERSION_15, BOARD_VERSION_15):
 		LOG_INF("No gpu module detected %d %d", gpu_id_0, gpu_id_1);
-		/* Framework TODO remove for DVT, for now force on  unless feature is enabled */
 		module_present = 0;
+		break;
+	default:
+		LOG_INF("GPU module Fault");
+		module_present = 0;
+		module_fault = 1;
 	break;
 	}
 

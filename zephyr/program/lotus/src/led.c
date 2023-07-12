@@ -15,6 +15,7 @@
 #include "charge_state.h"
 #include "chipset.h"
 #include "ec_commands.h"
+#include "extpower.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "led.h"
@@ -26,6 +27,11 @@
 #include "cypress_pd_common.h"
 #include "diagnostics.h"
 #include "lid_switch.h"
+
+#ifdef CONFIG_BOARD_LOTUS
+#include "gpu.h"
+#include "input_module.h"
+#endif
 
 
 #include <zephyr/devicetree.h>
@@ -430,19 +436,25 @@ static void board_led_set_power(void)
 		led_set_color(LED_OFF, EC_LED_ID_POWER_LED);
 }
 
-static void chassis_open_blink_leds(void)
+static void multifunction_leds_control(int *colors, int num_color, int period)
 {
 	static uint32_t ticks;
+	static int idx;
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 1);
 
 	ticks++;
 
-	if ((ticks / 3) % 2)
-		led_set_color(LED_RED, EC_LED_ID_BATTERY_LED);
-	else
-		led_set_color(LED_OFF, EC_LED_ID_BATTERY_LED);
+	if ((ticks * 200) >= period) {
+		ticks = 0;
+		idx++;
+
+		if (idx >= num_color)
+			idx = 0;
+	}
+
+	led_set_color(colors[idx], EC_LED_ID_BATTERY_LED);
 }
 
 /* =============================== */
@@ -476,19 +488,67 @@ static void board_led_set_color(void)
 /* Called by hook task every HOOK_TICK_INTERVAL_MS */
 static void led_tick(void)
 {
+	int colors[3] = {LED_OFF, LED_OFF, LED_OFF};
+
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
 		board_led_set_power();
 
-	/* we have an error, override LED control*/
+	/* Debug Active */
 	if (diagnostics_tick())
 		return;
 
-	/* chassis open */
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0 &&
-		!get_standalone_mode()) {
-		chassis_open_blink_leds();
+	/* Battery disconnect active signal */
+	if (battery_is_cut_off()) {
+		colors[0] = LED_RED;
+		colors[1] = LED_BLUE;
+		colors[2] = LED_OFF;
+#ifdef CONFIG_BOARD_LOUTS
+		multifunction_leds_control(colors, 2, 1000);
+#else
+		multifunction_leds_control(colors, 2, 500);
+#endif
 		return;
 	}
+
+	/* C cover detect switch open */
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0 &&
+		!get_standalone_mode()) {
+		colors[0] = LED_RED;
+		colors[1] = LED_OFF;
+		colors[2] = LED_OFF;
+		multifunction_leds_control(colors, 2, 1000);
+		return;
+	}
+
+#ifdef CONFIG_BOARD_LOTUS
+	/* GPU bay cover detect switch open */
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_f_beam_open_l)) == 0 &&
+		!get_standalone_mode()) {
+		colors[0] = LED_RED;
+		colors[1] = LED_AMBER;
+		colors[2] = LED_OFF;
+		multifunction_leds_control(colors, 3, 1000);
+		return;
+	}
+
+	/* GPU Bay Module Fault */
+	if (gpu_module_fault() && extpower_is_present()) {
+		colors[0] = LED_RED;
+		colors[1] = LED_AMBER;
+		colors[2] = LED_OFF;
+		multifunction_leds_control(colors, 3, 1000);
+		return;
+	}
+
+	/* Input Deck not fully populated */
+	if (!input_deck_is_fully_populated() && !get_standalone_mode()) {
+		colors[0] = LED_RED;
+		colors[1] = LED_BLUE;
+		colors[2] = LED_OFF;
+		multifunction_leds_control(colors, 3, 500);
+		return;
+	}
+#endif
 
 	board_led_set_color();
 }

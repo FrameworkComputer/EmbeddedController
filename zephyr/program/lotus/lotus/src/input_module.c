@@ -47,6 +47,26 @@ int get_detect_mode(void)
 	return detect_mode;
 }
 
+bool input_deck_is_fully_populated(void)
+{
+	int idx;
+	int input_deck_sum = 0;
+
+	/* Touchpad disconnected */
+	if (hub_board_id[TOUCHPAD] != BOARD_VERSION_13)
+		return false;
+
+	for (idx = 0; idx < TOUCHPAD; idx++) {
+		if (hub_board_id[idx] != BOARD_VERSION_15)
+			input_deck_sum += hub_board_id[idx];
+	}
+
+	/* The minimum value is BOARD_ID_8 (Generic A) + BOARD_ID_9 (Generic B)*/
+	if (input_deck_sum < 17)
+		return false;
+
+	return true;
+}
 
 static void set_hub_mux(uint8_t input)
 {

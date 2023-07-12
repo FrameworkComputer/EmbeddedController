@@ -8,6 +8,8 @@
 
 bool gpu_present(void);
 
+bool gpu_module_fault(void);
+
 void set_host_dp_ready(int ready);
 
 #endif /* __BOARD_GPU_H__ */

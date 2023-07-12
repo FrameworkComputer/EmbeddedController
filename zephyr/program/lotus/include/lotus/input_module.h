@@ -48,6 +48,8 @@ enum input_deck_mux {
 
 int get_deck_state(void);
 
+bool input_deck_is_fully_populated(void);
+
 void input_modules_powerdown(void);
 
 void set_detect_mode(int mode);
