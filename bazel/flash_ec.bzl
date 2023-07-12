@@ -19,20 +19,24 @@ def _flash_ec(ctx):
     }
 
     script = ctx.actions.declare_file("flash_ec_wrapper.sh")
-    script_content = _gen_shell_wrapper(
-        argv = [
-            ctx.file._flash_ec.path,
-            "--board",
+    argv = [
+        ctx.file._flash_ec.path,
+        "--board",
+        ctx.attr.board,
+    ]
+
+    if ctx.attr.zephyr:
+        argv.append("--zephyr")
+        image_path = "%s/%s/output/ec.bin" % (
+            ctx.file.build_target.short_path,
             ctx.attr.board,
-            "--zephyr",
-            "--image",
-            "%s/%s/output/ec.bin" % (
-                ctx.file.build_target.short_path,
-                ctx.attr.board,
-            ),
-        ],
-        env = env,
-    )
+        )
+    else:
+        image_path = "%s/ec.bin" % ctx.file.build_target.short_path
+
+    argv.extend(["--image", image_path])
+
+    script_content = _gen_shell_wrapper(argv = argv, env = env)
     ctx.actions.write(script, script_content, is_executable = True)
 
     runfiles = ctx.runfiles(
@@ -56,6 +60,7 @@ flash_ec = rule(
             doc = "Build target for this board.",
             allow_single_file = True,
         ),
+        "zephyr": attr.bool(doc = "True if it's a Zephyr board."),
         "_flash_ec": attr.label(
             doc = "The flash_ec script to run.",
             allow_single_file = True,
