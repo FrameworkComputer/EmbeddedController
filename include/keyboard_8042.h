@@ -28,17 +28,6 @@ void button_state_changed(enum keyboard_button_type button, int is_pressed);
  */
 void keyboard_host_write(int data, int is_cmd);
 
-#ifdef CONFIG_CUSTOMIZED_DESIGN
-/**
- * Get the amount of free 8042 buffer slots
- * this is used to put backpressure on the host
- * if the keyboard task gets too slow
- * @return bytes_avaliable
- */
-int keyboard_host_write_avaliable(void);
-
-#endif
-
 /*
  * Board specific callback function when a key state is changed.
  *
