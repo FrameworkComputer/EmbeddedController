@@ -77,15 +77,15 @@ void f75303_update_temperature(int idx)
 	if (idx >= F75303_IDX_COUNT)
 		return;
 	switch (idx) {
-	/* local_f75303 */
+	/* ambient_f75303 */
 	case 0:
 		rv = get_temp(idx, F75303_TEMP_LOCAL_REGISTER, &temp_reg);
 		break;
-	/* ddr_f75303 */
+	/* apu_f75303 */
 	case 1:
 		rv = get_temp(idx, F75303_TEMP_REMOTE1_REGISTER, &temp_reg);
 		break;
-	/* cpu_f75303 */
+	/* charger_f75303 */
 	case 2:
 		rv = get_temp(idx, F75303_TEMP_REMOTE2_REGISTER, &temp_reg);
 		break;
