@@ -118,6 +118,7 @@
 
 #define CONFIG_WP_STORAGE_OFF CONFIG_EC_PROTECTED_STORAGE_OFF
 #define CONFIG_WP_STORAGE_SIZE CONFIG_EC_PROTECTED_STORAGE_SIZE
+#define CONFIG_WP_ACTIVE_HIGH
 
 /*
  * We want to prevent flash readout, and use it as indicator of protection
@@ -288,7 +289,7 @@
  * then redefined here to so it's more clear which signal is being used for
  * which purpose.
  */
-#define GPIO_WP_L GPIO_HOST_MCU_WP_OD
+#define GPIO_WP GPIO_HOST_MCU_WP_OD
 #define GPIO_SHI_CS_L GPIO_SPI_HOST_CS_MCU_ODL
 #define GPIO_FPS_INT GPIO_FP_MCU_INT_L
 #define GPIO_EC_INT_L GPIO_MCU_PLATFORM_INT_L
