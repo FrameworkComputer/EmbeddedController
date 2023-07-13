@@ -82,6 +82,10 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 	}
 
 	report_ap_reset(reason);
+
+#ifdef CONFIG_CHIPSET_RESET_HOOK
+	hook_notify(HOOK_CHIPSET_RESET);
+#endif
 	/*
 	 * Send a pulse to SYS_RST to trigger a warm reset.
 	 */

@@ -610,6 +610,8 @@ ZTEST(amd_power, test_power_chipset_reset_s0)
 	zassert_equal(2, interrupt_sys_reset_monitor_fake.call_count,
 		      "Interrupt pin asserted only %d times.",
 		      interrupt_sys_reset_monitor_fake.call_count);
+	/* Verify hook_notify calls that come from the AMD power file */
+	zassert_equal(hook_counts.reset_count, 1);
 }
 
 ZTEST(amd_power, test_power_chipset_reset_g3)
