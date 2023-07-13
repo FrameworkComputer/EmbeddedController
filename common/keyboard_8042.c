@@ -1139,7 +1139,9 @@ void simulate_keyboard(uint16_t scancode, int is_pressed)
 	 * Only send the scan code if main chipset is fully awake and
 	 * keystrokes are enabled.
 	 */
-	if (!chipset_in_state(CHIPSET_STATE_ON) || !keystroke_enabled)
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) ||
+		!keystroke_enabled ||
+		chipset_in_state(CHIPSET_STATE_SUSPEND))
 		return;
 
 	code_set = acting_code_set(scancode_set);
