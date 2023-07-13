@@ -19,8 +19,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led_pwm.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
-	"src/stt.c")
 
 if(DEFINED CONFIG_BOARD_LOTUS)
 	project(lotus)
@@ -39,6 +37,9 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 			"lotus/src/amd_r23m.c"
 			"lotus/src/ej889i.c"
 	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
+	"lotus/src/stt.c")
+
 endif()
 if(DEFINED CONFIG_BOARD_AZALEA)
 	project(azalea)
@@ -53,4 +54,7 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 			"azalea/src/project_diagnostics.c"
 			"azalea/src/power_button_x86.c"
 	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
+	"azalea/src/stt.c")
+
 endif()
