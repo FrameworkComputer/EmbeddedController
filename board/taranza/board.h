@@ -12,9 +12,6 @@
 #define VARIANT_DEDEDE_EC_IT8320
 #include "baseboard.h"
 
-/* System unlocked in early development */
-#define CONFIG_SYSTEM_UNLOCKED
-
 #define CONFIG_CMD_CHARGER_DUMP
 
 /* I2C Bus Configuration */
