@@ -79,7 +79,7 @@ test_static int check_equal(const struct rollback_data *actual,
 			    const struct rollback_data *expected)
 {
 	int rv = memcmp(actual->secret, expected->secret,
-			sizeof(*actual->secret));
+			sizeof(actual->secret));
 	TEST_EQ(rv, 0, "%d");
 	TEST_EQ(actual->rollback_min_version, expected->rollback_min_version,
 		"%d");
