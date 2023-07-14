@@ -6,6 +6,10 @@
 #include "common.h"
 #include "ec_commands.h"
 #include "ec_tasks.h"
+#include "emul/tcpc/emul_tcpci.h"
+#include "emul/tcpc/emul_tcpci_partner_drp.h"
+#include "emul/tcpc/emul_tcpci_partner_snk.h"
+#include "emul/tcpc/emul_tcpci_partner_src.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "i2c.h"
@@ -192,14 +196,7 @@ static int proxy_set_idle_mode_custom(const struct usb_mux *me, bool idle)
 		ec = org_mux[i]->driver->set_idle_mode(org_mux[i], idle);
 	}
 
-	if (task_get_current() == TASK_ID_TEST_RUNNER) {
-		RETURN_FAKE_RESULT(proxy_set_idle_mode);
-	}
-
-	/* Discard this call if made from different thread */
-	proxy_set_idle_mode_fake.call_count--;
-
-	return ec;
+	RETURN_FAKE_RESULT(proxy_set_idle_mode);
 }
 
 /** Proxy function for fw update capability */
@@ -799,19 +796,82 @@ ZTEST(usb_init_mux, test_usb_mux_chipset_reset)
 
 ZTEST(usb_init_mux, test_usb_mux_set_idle_mode)
 {
-	/* After the SUSPEND hook, set_idle_mode functions should be called */
+	/*
+	 * Create an emulated sink. Without a device connected TCPMv2 will put
+	 * the usb_mux in low power mode, which will prevent any calls to the
+	 * driver's set_idle_mode function.
+	 */
+	const struct emul *tcpci_emul = EMUL_GET_USBC_BINDING(1, tcpc);
+	struct tcpci_partner_data my_drp;
+	struct tcpci_drp_emul_data drp_ext;
+	struct tcpci_src_emul_data src_ext;
+	struct tcpci_snk_emul_data snk_ext;
+
+	zassert_ok(tcpc_config[0].drv->init(0));
+	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul));
+	k_sleep(K_SECONDS(1));
+
+	/* Connect emulated sink. */
+	tcpci_partner_init(&my_drp, PD_REV20);
+	my_drp.extensions = tcpci_drp_emul_init(
+		&drp_ext, &my_drp, PD_ROLE_SINK,
+		tcpci_src_emul_init(&src_ext, &my_drp, NULL),
+		tcpci_snk_emul_init(&snk_ext, &my_drp, NULL));
+	zassert_ok(tcpci_partner_connect_to_tcpci(&my_drp, tcpci_emul));
+
+	/* Wait for USB PD negotiation. */
+	k_sleep(K_SECONDS(10));
+
+	/*
+	 * Suspend the device. Either the HOOK_CHIPSET_SUSPEND or
+	 * HOOK_CHIPSET_SUSPEND_COMPLETE function will trigger a deferred call
+	 * to set_idle_mode. Wait 3 seconds, then check set_idle_mode has been
+	 * called.
+	 */
 	proxy_mux_0.flags |= USB_MUX_FLAG_CAN_IDLE;
 	hook_notify(HOOK_CHIPSET_SUSPEND);
+	k_sleep(K_MSEC(1000));
+	power_set_state(POWER_S3);
+	hook_notify(HOOK_CHIPSET_SUSPEND_COMPLETE);
+	k_sleep(K_MSEC(1500));
+	if (IS_ENABLED(CONFIG_CHIPSET_RESUME_INIT_HOOK)) {
+		/*
+		 * If CONFIG_CHIPSET_RESUME_INIT_HOOK is defined, set_idle_mode
+		 * won't be called until 2 seconds after the suspend complete
+		 * hook.
+		 */
+		CHECK_PROXY_FAKE_CALL_CNT(proxy_set_idle_mode, 0);
+		k_sleep(K_MSEC(1000));
+	}
 	CHECK_PROXY_FAKE_CALL_CNT(proxy_set_idle_mode, NUM_OF_PROXY_CAN_IDLE);
 
 	/*
 	 * Other tests will fail if we leave the chipset in SUSPEND,
-	 * so we test the RESUME case here.
+	 * so we test the RESUME case here. On resume, either the
+	 * HOOK_CHIPSET_RESUME_INIT or HOOK_CHIPSET_RESUME hooks will call
+	 * set_idle_mode.
 	 */
 	proxy_set_idle_mode_fake.call_count = 0;
-	/* After the RESUME hook, set_idle_mode functions should be called */
+	hook_notify(HOOK_CHIPSET_RESUME_INIT);
+	k_sleep(K_MSEC(1000));
+	if (IS_ENABLED(CONFIG_CHIPSET_RESUME_INIT_HOOK)) {
+		/*
+		 * If CONFIG_CHIPSET_RESUME_INIT_HOOK is defined, set_idle_mode
+		 * will be called on resume init.
+		 */
+		CHECK_PROXY_FAKE_CALL_CNT(proxy_set_idle_mode,
+					  NUM_OF_PROXY_CAN_IDLE);
+	} else {
+		/* Otherwise, set_idle_mode will not be called until resume. */
+		CHECK_PROXY_FAKE_CALL_CNT(proxy_set_idle_mode, 0);
+	}
 	hook_notify(HOOK_CHIPSET_RESUME);
+	power_set_state(POWER_S0);
+	k_sleep(K_MSEC(1000));
 	CHECK_PROXY_FAKE_CALL_CNT(proxy_set_idle_mode, NUM_OF_PROXY_CAN_IDLE);
+
+	/* Disconnect emulated sink. */
+	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul));
 }
 
 /* Test host command get mux info */
