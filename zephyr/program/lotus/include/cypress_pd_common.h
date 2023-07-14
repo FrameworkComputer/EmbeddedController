@@ -512,4 +512,11 @@ int cypd_vbus_state_check(void);
  */
 int cypd_get_port_cost(void);
 
+/**
+ * Return ac power, return by mW.
+ *
+ * @return int
+ */
+int cypd_get_ac_power(void);
+
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

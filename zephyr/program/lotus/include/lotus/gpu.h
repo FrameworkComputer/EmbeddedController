@@ -6,6 +6,7 @@
 #ifndef __BOARD_GPU_H__
 #define __BOARD_GPU_H__
 
+/* gpu install stable */
 bool gpu_present(void);
 
 bool gpu_module_fault(void);

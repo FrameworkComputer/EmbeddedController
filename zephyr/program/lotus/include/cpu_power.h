@@ -11,6 +11,8 @@
 #define SB_RMI_WRITE_SUSTAINED_POWER_LIMIT_CMD  0x30
 #define SB_RMI_WRITE_FAST_PPT_LIMIT_CMD 0x31
 #define SB_RMI_WRITE_SLOW_PPT_LIMIT_CMD 0x32
+#define SB_RMI_WRITE_SLOW_PPT_LIMIT_CMD 0x32
+#define SB_RMI_WRITE_APU_ONLY_SPPT_CMD 0x3B
 #define SB_RMI_WRITE_P3T_LIMIT_CMD 0x3C
 
 enum power_limit_type {
@@ -18,6 +20,9 @@ enum power_limit_type {
 	TYPE_SPPT,
 	TYPE_FPPT,
 	TYPE_P3T,
+#ifdef CONFIG_BOARD_LOTUS
+	TYPE_APU_ONLY_SPPT,
+#endif
 	TYPE_COUNT,
 };
 
@@ -44,5 +49,6 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter);
 
 extern bool thermal_warn_trigger(void);
 extern int cypd_get_port_cost(void);
+extern int cypd_get_ac_power(void);
 
 #endif	/* __CROS_EC_CPU_POWER_H */
