@@ -9,7 +9,7 @@
 /*
  * Physical detection of battery.
  */
-static enum battery_present rex_battery_hw_present(void)
+enum battery_present battery_hw_present(void)
 {
 	const struct gpio_dt_spec *batt_pres;
 
@@ -28,7 +28,7 @@ enum battery_present battery_is_present(void)
 	}
 
 	/* Get the physical hardware status */
-	batt_pres = rex_battery_hw_present();
+	batt_pres = battery_hw_present();
 
 	return batt_pres;
 }

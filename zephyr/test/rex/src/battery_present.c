@@ -58,3 +58,17 @@ ZTEST_USER(rex_battery, test_battery_is_present)
 	zassert_ok(gpio_emul_input_set(dev, GPIO_BATT_PRES_ODL_PORT, 1));
 	zassert_equal(BP_NO, battery_is_present());
 }
+
+ZTEST_USER(rex_battery, test_battery_hw_present)
+{
+	const struct device *dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_BATT_PRES_ODL_PATH, gpios));
+
+	zassert_not_null(dev, NULL);
+
+	zassert_ok(gpio_emul_input_set(dev, GPIO_BATT_PRES_ODL_PORT, 0));
+	zassert_equal(BP_YES, battery_hw_present());
+
+	zassert_ok(gpio_emul_input_set(dev, GPIO_BATT_PRES_ODL_PORT, 1));
+	zassert_equal(BP_NO, battery_hw_present());
+}
