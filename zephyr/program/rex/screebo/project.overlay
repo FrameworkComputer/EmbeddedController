@@ -221,3 +221,10 @@
 		usb-muxes = <&usb_c1_hb_retimer &virtual_mux_c1>;
 	};
 };
+
+&fan0 {
+	pwms = <&pwm5 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+	rpm_min = <1710>;
+	rpm_start = <1710>;
+	rpm_max = <5700>;
+};
