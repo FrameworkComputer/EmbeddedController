@@ -4,6 +4,7 @@
  */
 
 #include "chipset.h"
+#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "fpsensor_detect.h"
@@ -111,6 +112,12 @@ static void board_init(void)
 {
 	/* Run until the first S3 entry */
 	disable_sleep(SLEEP_MASK_AP_RUN);
+
+	/* TOOD(b/291273378): Depending on the outcome of b/291273378, we may
+	 * want to change the method of speeding up CPU.
+	 */
+	/* Turn on FAST_CPU mode */
+	clock_enable_module(MODULE_FAST_CPU, 1);
 
 	board_init_transport();
 
