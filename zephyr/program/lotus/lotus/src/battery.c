@@ -9,6 +9,7 @@
 #include "battery_smart.h"
 #include "battery_fuel_gauge.h"
 #include "board_adc.h"
+#include "board_function.h"
 #include "board_host_command.h"
 #include "charger.h"
 #include "charge_state.h"
@@ -77,16 +78,22 @@ static void enable_check_battery_timer(void)
 }
 DECLARE_HOOK(HOOK_INIT, enable_check_battery_timer, HOOK_PRIO_DEFAULT);
 
+uint32_t get_system_percentage(void)
+{
+	uint32_t memmap_cap = *(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_CAP);
+	uint32_t memmap_lfcc = *(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_LFCC);
+
+	return 1000 * memmap_cap / (memmap_lfcc + 1);
+
+}
+
 static void battery_percentage_control(void)
 {
 	enum ec_charge_control_mode new_mode;
 	static int in_percentage_control;
-	uint32_t memmap_cap = *(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_CAP);
-	uint32_t memmap_lfcc = *(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_LFCC);
-	uint32_t batt_os_percentage;
+	uint32_t batt_os_percentage = get_system_percentage();
 	int rv;
 
-	batt_os_percentage = 1000 * memmap_cap / (memmap_lfcc + 1);
 	/**
 	 * If the host command EC_CMD_CHARGE_CONTROL set control mode to CHARGE_CONTROL_DISCHARGE
 	 * or CHARGE_CONTROL_IDLE, ignore the battery_percentage_control();

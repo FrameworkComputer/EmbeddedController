@@ -6,8 +6,8 @@
 
 		power-state-charge {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery percent range (>= 0, <= 96) */
-			batt-lvl = <BATTERY_LEVEL_EMPTY 96>;
+			/* Battery percent range (>= 0, < 96) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 95>;
 			color-0 {
 				led-color = <&color_amber>;
 			};
@@ -15,8 +15,8 @@
 
 		power-state-charge-lvl-2 {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery percent range (>= 97%, <= 100%) */
-			batt-lvl = <97 100>;
+			/* Battery percent range (>= 96%, <= 100%) */
+			batt-lvl = <96 100>;
 
 			color-0 {
 				led-color = <&color_white>;
@@ -25,8 +25,6 @@
 
 		power-state-discharge {
 			charge-state = "LED_PWRS_DISCHARGE";
-			/* Battery percent range (>= 11, <= 97) */
-			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
 
 			color-0 {
 				led-color = <&color_off>;

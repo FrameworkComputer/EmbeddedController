@@ -24,6 +24,7 @@
 #include "system.h"
 #include "util.h"
 
+#include "board_function.h"
 #include "cypress_pd_common.h"
 #include "diagnostics.h"
 #include "lid_switch.h"
@@ -274,7 +275,7 @@ static int match_node(int node_idx)
 	/* Check if this node depends on battery level */
 	if (node_array[node_idx].batt_lvl[0] != -1) {
 		int curr_batt_lvl =
-			DIV_ROUND_NEAREST(charge_get_display_charge(), 10);
+			DIV_ROUND_NEAREST(get_system_percentage(), 10);
 
 		if ((curr_batt_lvl < node_array[node_idx].batt_lvl[0]) ||
 		    (curr_batt_lvl > node_array[node_idx].batt_lvl[1]))
