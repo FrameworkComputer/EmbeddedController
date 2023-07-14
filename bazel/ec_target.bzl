@@ -55,7 +55,7 @@ def ec_target(
         )
         legacy_ec.rule(name = name, board = board, board_srcs = board_srcs)
     flash_ec(
-        name = "flash_ec_{}".format(name),
+        name = "flash_{}".format(name),
         board = board,
         build_target = "@cros_firmware//platform/ec:{}".format(name),
         zephyr = zephyr,
