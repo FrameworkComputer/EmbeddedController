@@ -579,7 +579,7 @@ config PLATFORM_EC_CHARGER_MAINTAIN_VBAT
 	  work around quirks of certain charger chips, such as the BD9995X.
 
 config PLATFORM_EC_CHARGER_BYPASS_MODE
-	bool
+	bool "enable charger bypass mode"
 	help
 	  Select this option if the charger will be used in a bypass mode in
 	  order to pass the input current from AC directly to the system

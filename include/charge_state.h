@@ -420,6 +420,15 @@ __test_only bool charging_progress_displayed(void);
  */
 int board_should_charger_bypass(void);
 
+#ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
+/**
+ * Callback for boards to call the charger_enable_bypass_mode without mode change.
+ *
+ * @return True for requesting change.
+ */
+int board_want_charger_change_mode(void);
+#endif
+
 /* Config Charger */
 #include "charge_state.h"
 
