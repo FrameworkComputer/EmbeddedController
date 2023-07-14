@@ -310,7 +310,7 @@ DECLARE_CONSOLE_COMMAND(battery, command_battery, "<repeat_count> <sleep_ms>",
 			"Print battery info");
 
 #ifdef CONFIG_BATTERY_CUT_OFF
-int battery_is_cut_off(void)
+test_mockable int battery_is_cut_off(void)
 {
 	return (battery_cutoff_state == BATTERY_CUTOFF_STATE_CUT_OFF);
 }
@@ -411,7 +411,7 @@ static int command_cutoff(int argc, const char **argv)
 DECLARE_CONSOLE_COMMAND(cutoff, command_cutoff, "[at-shutdown]",
 			"Cut off the battery output");
 #else
-int battery_is_cut_off(void)
+test_mockable int battery_is_cut_off(void)
 {
 	return 0; /* Always return NOT cut off */
 }

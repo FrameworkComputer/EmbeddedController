@@ -28,10 +28,13 @@ static void battery_after(void *data)
 
 ZTEST_SUITE(rex_battery, NULL, NULL, NULL, battery_after, NULL);
 
-/*
- * The default battery_is_present() implementation only checks the GPIO
- * when the named-gpios/ec_batt_pres_odl node is present.
- */
+static bool mock_battery_cutoff_state;
+
+int battery_is_cut_off(void)
+{
+	return mock_battery_cutoff_state;
+}
+
 ZTEST_USER(rex_battery, test_battery_is_present)
 {
 	const struct device *dev =
@@ -39,9 +42,19 @@ ZTEST_USER(rex_battery, test_battery_is_present)
 
 	zassert_not_null(dev, NULL);
 
+	mock_battery_cutoff_state = true;
+	zassert_ok(gpio_emul_input_set(dev, GPIO_BATT_PRES_ODL_PORT, 0));
+	zassert_equal(BP_NO, battery_is_present());
+
+	mock_battery_cutoff_state = true;
+	zassert_ok(gpio_emul_input_set(dev, GPIO_BATT_PRES_ODL_PORT, 1));
+	zassert_equal(BP_NO, battery_is_present());
+
+	mock_battery_cutoff_state = false;
 	zassert_ok(gpio_emul_input_set(dev, GPIO_BATT_PRES_ODL_PORT, 0));
 	zassert_equal(BP_YES, battery_is_present());
 
+	mock_battery_cutoff_state = false;
 	zassert_ok(gpio_emul_input_set(dev, GPIO_BATT_PRES_ODL_PORT, 1));
 	zassert_equal(BP_NO, battery_is_present());
 }
