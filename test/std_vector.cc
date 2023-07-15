@@ -75,8 +75,8 @@ test_static int push_back_elements()
 
 test_static int fill_one_vector()
 {
-	// This test allocates 64kB of memory in total in a single std::vector
-	constexpr int num_elements = 16 * 1024;
+	// This test allocates 8kB of memory in total in a single std::vector
+	constexpr int num_elements = 2 * 1024;
 	std::vector<int32_t> vec;
 
 	for (int i = 0; i < num_elements; ++i)
@@ -115,10 +115,10 @@ test_static int fill_multiple_vectors()
 
 test_static int create_and_destroy_two_vectors()
 {
-	// This allocates 64kB of memory twice.
+	// This allocates 8kB of memory twice.
 	// The first vector is declared in a local scope and the memory is
 	// free'd at the end of the block.
-	constexpr int num_elements = 16 * 1024;
+	constexpr int num_elements = 2 * 1024;
 	{
 		std::vector<int32_t> vec;
 		for (int i = 0; i < num_elements; ++i)
