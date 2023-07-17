@@ -10,6 +10,15 @@ tests:
     extra_configs:
     - CONFIG_TEST_BOARD_BASEBOARD=y
 
+  skyrim.baseboard.usbc_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BASEBOARD=y
+    - CONFIG_TEST_BOARD_USBC_CONFIG=y
+    - CONFIG_PLATFORM_EC_USB_PD_TCPM_TCPCI=y
+    - CONFIG_PLATFORM_EC_USB_PD_TCPM_NCT38XX=y
+    - CONFIG_PLATFORM_EC_USB_CHARGER=y
+    - CONFIG_PLATFORM_EC_USB_PD_5V_EN_CUSTOM=y
+
   skyrim.baseboard.power_signals:
     extra_configs:
     - CONFIG_TEST_BOARD_BASEBOARD=y
