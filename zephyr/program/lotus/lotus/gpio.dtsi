@@ -236,7 +236,7 @@
 		gpio_f_beam_open_l: f_beam_open_l {
 			gpios = <&gpiof 0 GPIO_INPUT>;
 		};
-		enbkl_apu {
+		gpio_enblk_apu: enbkl_apu {
 			gpios = <&gpioe 0 GPIO_INPUT>;		/* monitor APU EDP BKL */
 		};
 		dgpu_pwr_en {
