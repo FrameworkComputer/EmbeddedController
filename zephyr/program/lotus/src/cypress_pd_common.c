@@ -1570,6 +1570,24 @@ void cypd_reinitialize(void)
 }
 
 /*****************************************************************************/
+/* project function */
+
+int cypd_get_port_cost(void)
+{
+	int cost_sum = 0;
+
+	/* assume per port cost 5W */
+	for (int port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
+		if ((pd_port_states[port_idx].c_state == CCG_STATUS_SINK) ||
+		((pd_port_states[port_idx].pd_state)
+		&& (pd_port_states[port_idx].power_role == PD_ROLE_SOURCE)))
+			cost_sum = cost_sum + 5000000;
+	}
+
+	return (cost_sum / 1000);
+}
+
+/*****************************************************************************/
 /* Host command */
 
 /*****************************************************************************/
