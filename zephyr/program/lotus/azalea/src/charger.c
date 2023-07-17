@@ -74,13 +74,19 @@ static void charger_chips_init(void)
 			CHARGER_SOLO, no_battery_current_limit_override_ma);
 	}
 
+	/* According to Power team suggest, Set ACOK reference to 4.544V */
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4207)))
+		goto init_fail;
+
+
 	/*
 	 * Set the MaxSystemVoltage to battery maximum,
 	 * 0x00=disables switching charger states
 	 */
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_MAX_SYSTEM_VOLTAGE, bi->voltage_max))
+		ISL9241_REG_MAX_SYSTEM_VOLTAGE, 0x3C28))
 		goto init_fail;
 
 	/*
@@ -119,17 +125,6 @@ static void charger_chips_init(void)
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL1, val))
 		goto init_fail;
-
-	/* According to Power team suggest, Set ACOK reference to 4.544V */
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_ACOK_REFERENCE, 0x0B00))
-		goto init_fail;
-
-	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_ADAPTER_CUR_LIMIT1, &value)) {
-		CPRINTS("read charger control1 fail");
-	}
-
 
 	/* TODO: should we need to talk to PD chip after initial complete ? */
 	CPRINTS("ISL9241 customized initial complete!  3F:%d", value);
