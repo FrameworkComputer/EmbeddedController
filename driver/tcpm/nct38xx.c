@@ -36,12 +36,12 @@
 
 static enum nct38xx_boot_type boot_type[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-enum nct38xx_boot_type nct38xx_get_boot_type(int port)
+test_mockable enum nct38xx_boot_type nct38xx_get_boot_type(int port)
 {
 	return boot_type[port];
 }
 
-void nct38xx_reset_notify(int port)
+test_mockable void nct38xx_reset_notify(int port)
 {
 	/* A full reset also resets the chip's dead battery boot status */
 	boot_type[port] = NCT38XX_BOOT_UNKNOWN;
