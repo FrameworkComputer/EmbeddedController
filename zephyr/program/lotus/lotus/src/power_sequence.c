@@ -164,6 +164,7 @@ void power_state_clear(int state)
  */
 static int enter_ms_flag;
 static int resume_ms_flag;
+static int system_in_s0ix;
 
 static int check_s0ix_statsus(void)
 {
@@ -368,7 +369,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 1) {
 
 			/* still in s0ix state */
-			if (enter_ms_flag)
+			if (system_in_s0ix)
 				return POWER_S3S0ix;
 
 			/* Power up to next state */
@@ -376,9 +377,10 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S3S0;
 		} else if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 0) {
 
-			if (enter_ms_flag) {
+			if (system_in_s0ix) {
 				resume_ms_flag = 0;
 				enter_ms_flag = 0;
+				system_in_s0ix = 0;
 				lpc_s0ix_resume_restore_masks();
 				/* Call hooks now that rails are up */
 				hook_notify(HOOK_CHIPSET_RESUME);
@@ -454,12 +456,15 @@ enum power_state power_handle_state(enum power_state state)
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 0) {
 			/*
 			 * If power signal lose, we need to resume to S0 and
-			 * clear the resume ms flag
+			 * clear the all s0ix flags
 			 */
 			if (resume_ms_flag > 0) {
-				resume_ms_flag--;
+				resume_ms_flag = 0;
+				enter_ms_flag = 0;
+				system_in_s0ix = 0;
 				return POWER_S0ixS0;
 			}
+
 			return POWER_S0ixS3;
 		}
 
@@ -480,7 +485,7 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S0ixS0:
 		resume_ms_flag = 0;
-		enter_ms_flag = 0;
+		system_in_s0ix = 0;
 		lpc_s0ix_resume_restore_masks();
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
@@ -489,6 +494,8 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S0S0ix:
+		enter_ms_flag = 0;
+		system_in_s0ix = 1;
 		lpc_s0ix_suspend_clear_masks();
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
