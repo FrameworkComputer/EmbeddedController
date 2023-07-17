@@ -455,6 +455,11 @@ def all_targets():
         extra_modules = ["cmsis"],
     )
     ec_target(
+        name = "craaskov",
+        board = "craaskov",
+        extra_modules = ["cmsis"],
+    )
+    ec_target(
         name = "cret",
         baseboard = "dedede",
         board = "cret",
@@ -1828,6 +1833,11 @@ def all_targets():
         name = "rex",
         board = "rex",
         extra_modules = ["cmsis"],
+    )
+    ec_target(
+        name = "rex-ish",
+        board = "rex-ish",
+        extra_modules = ["ish", "cmsis", "hal_intel"],
     )
     ec_target(
         name = "rex-ish-ec",
