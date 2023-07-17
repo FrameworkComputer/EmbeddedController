@@ -52,6 +52,9 @@ BUILD_ASSERT(EC_TEMP_THRESH_COUNT == 3);
 
 /* Keep track of which thresholds have triggered */
 static cond_t cond_hot[EC_TEMP_THRESH_COUNT];
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+static bool thermal_warn_active;
+#endif
 
 /* thermal sensor read delay */
 #if defined(CONFIG_TEMP_SENSOR_POWER) && \
@@ -207,9 +210,15 @@ static void thermal_control(void)
 	if (cond_went_true(&cond_hot[EC_TEMP_THRESH_WARN])) {
 		CPRINTS("thermal WARN");
 		throttle_ap(THROTTLE_ON, THROTTLE_SOFT, THROTTLE_SRC_THERMAL);
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+		thermal_warn_active = true;
+#endif
 	} else if (cond_went_false(&cond_hot[EC_TEMP_THRESH_WARN])) {
 		CPRINTS("thermal no longer warn");
 		throttle_ap(THROTTLE_OFF, THROTTLE_SOFT, THROTTLE_SRC_THERMAL);
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+		thermal_warn_active = false;
+#endif
 	}
 
 #ifdef CONFIG_FANS
@@ -242,10 +251,7 @@ DECLARE_HOOK(HOOK_SECOND, thermal_control, HOOK_PRIO_TEMP_SENSOR_DONE);
 /* Project */
 bool thermal_warn_trigger(void)
 {
-	if (cond_went_true(&cond_hot[EC_TEMP_THRESH_WARN]))
-		return true;
-	else
-		return false;
+	return thermal_warn_active;
 }
 
 /*****************************************************************************/

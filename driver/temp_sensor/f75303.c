@@ -141,6 +141,9 @@ void f75303_update_temperature(int idx)
 	}
 	if (rv == EC_SUCCESS)
 		temps[idx] = temp_reg;
+
+	if (fake_temp[idx] != -1)
+		temps[idx] = KELVIN_TO_MILLI_KELVIN(C_TO_K(fake_temp[idx]));
 }
 #endif /* CONFIG_ZEPHYR */
 
