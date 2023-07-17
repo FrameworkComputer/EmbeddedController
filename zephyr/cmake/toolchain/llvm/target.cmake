@@ -24,6 +24,13 @@ if("${ARCH}" STREQUAL "arm")
   endif()
 endif()
 
+# CMAKE_{C, ASM, CXX}_COMPILER_TARGET is used by CMake to provide correct
+# "--target" option to Clang and by Zephyr to determine which runtime library
+# should be linked.
+set(CMAKE_C_COMPILER_TARGET   ${CROSS_COMPILE_TARGET})
+set(CMAKE_ASM_COMPILER_TARGET ${CROSS_COMPILE_TARGET})
+set(CMAKE_CXX_COMPILER_TARGET ${CROSS_COMPILE_TARGET})
+
 set(CC clang)
 
 # TODO(b/286589977): Remove if() when hermetic host toolchain is added to fwsdk.
