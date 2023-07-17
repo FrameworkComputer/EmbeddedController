@@ -14,15 +14,28 @@ import sys
 from typing import List, Optional
 
 
-EC_DIR = Path(__file__).parent.parent
+EC_DIR = Path(__file__).resolve().parent.parent
 LEGACY_EC_BOARDS_DIR = EC_DIR / "board"
 ZEPHYR_DIR = EC_DIR / "zephyr"
 ZMAKE_DIR = ZEPHYR_DIR / "zmake"
 DEFAULT_OUTPUT = EC_DIR / "bazel" / "all_targets.generated.bzl"
 
+
+def find_checkout():
+    """Find the path to the base of the checkout (e.g., ~/chromiumos)."""
+    for path in EC_DIR.parents:
+        if (path / ".repo").is_dir():
+            return path
+    raise FileNotFoundError("Unable to locate the root of the checkout")
+
+
+site.addsitedir(find_checkout())
 site.addsitedir(ZMAKE_DIR)
 
+
 import zmake.project  # pylint: disable=import-error,wrong-import-position
+
+from chromite.format import formatters  # pylint: disable=wrong-import-position
 
 
 def _find_zephyr_ec_projects():
@@ -117,7 +130,8 @@ def _gen_bazel_lines():
 
 def gen_bazel():
     """Generate the source code that should be in the Bazel file."""
-    return "".join(f"{x}\n" for x in _gen_bazel_lines())
+    unformatted_code = "".join(f"{x}\n" for x in _gen_bazel_lines())
+    return formatters.star.Data(unformatted_code, DEFAULT_OUTPUT)
 
 
 def main(argv: Optional[List[str]] = None) -> Optional[int]:
@@ -133,7 +147,6 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
     opts = parser.parse_args(argv)
 
     opts.output_file.write_text(gen_bazel())
-    subprocess.run(["cros", "format", opts.output_file], check=True)
 
 
 if __name__ == "__main__":
