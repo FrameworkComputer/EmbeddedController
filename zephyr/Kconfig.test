@@ -6,4 +6,9 @@
 
 if ZTEST
 
+config PLATFORM_EC_TEST_CC_USBPD
+    bool "Enable USBPD console channel"
+    help
+      Enable USBPD console channel
+
 endif # ZTEST
