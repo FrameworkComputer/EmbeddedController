@@ -6,9 +6,14 @@ if(CONFIG_BORINGSSL_CRYPTO)
 
 zephyr_library_named(boringssl)
 
-# Currently BoringSSL is not as a module, so we need to provide a path to
-# sources.
-set(BORINGSSL_SOURCES ${ZEPHYR_BASE}/../../boringssl)
+# Look for BoringSSL sources in MODULES_DIR if provided.
+if (DEFINED ENV{MODULES_DIR})
+	set(BORINGSSL_SOURCES $ENV{MODULES_DIR}/boringssl)
+else()
+  # Currently BoringSSL is not as a module, so we need to provide a path to
+  # sources.
+  set(BORINGSSL_SOURCES ${ZEPHYR_BASE}/../../boringssl)
+endif()
 
 # Enable BoringSSL's checks if assert is enabled.
 if (DEFINED CONFIG_ASSERT)
