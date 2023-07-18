@@ -396,3 +396,26 @@ static int cmd_bbram(int argc, const char **argv)
 DECLARE_CONSOLE_COMMAND(bbram, cmd_bbram,
 			"[bbram address]",
 			"get bbram data with hibdata_index");
+
+static int cmd_memmap(int argc, const char **argv)
+{
+	int data;
+	int offset;
+	char *e;
+
+	if (argc > 3) {
+		offset = strtoi(argv[2], &e, 0);
+		data = strtoi(argv[3], &e, 0);
+		*host_get_memmap(offset) = data;
+		CPRINTS("EC_MEMMAP offset:%d, set data:%d", offset, data);
+	} else {
+		offset = strtoi(argv[2], &e, 0);
+		data = *host_get_memmap(offset);
+		CPRINTS("EC_MEMMAP offset:%d, get data:%d", offset, data);
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(memmap, cmd_memmap,
+			"[memmap get/set offset [value]]",
+			"get/set memmap data");
