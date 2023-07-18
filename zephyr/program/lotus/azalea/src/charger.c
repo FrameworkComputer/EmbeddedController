@@ -35,7 +35,7 @@ static void charger_chips_init(void)
 	 * after ADC
 	 */
 
-	const int no_battery_current_limit_override_ma = 6000;
+	const int no_battery_current_limit_override_ma = 3000;
 	const struct battery_info *bi = battery_get_info();
 	uint16_t val = 0x0000; /*default ac setting */
 	uint32_t data = 0;
@@ -57,6 +57,14 @@ static void charger_chips_init(void)
 		ISL9241_REG_CONTROL4, ISL9241_CONTROL4_WOCP_FUNCTION |
 		ISL9241_CONTROL4_VSYS_SHORT_CHECK |
 		ISL9241_CONTROL4_ACOK_BATGONE_DEBOUNCE_25US))
+		goto init_fail;
+
+	/*
+	 * Set control3 register to
+	 * [14]: ACLIM Reload (Do not reload)
+	 */
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL3, ISL9241_CONTROL3_ACLIM_RELOAD))
 		goto init_fail;
 
 	value = battery_is_charge_fet_disabled();
@@ -101,14 +109,6 @@ static void charger_chips_init(void)
 		ISL9241_REG_CONTROL2,
 		ISL9241_CONTROL2_TRICKLE_CHG_CURR(bi->precharge_current) |
 		ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000))
-		goto init_fail;
-
-	/*
-	 * Set control3 register to
-	 * [14]: ACLIM Reload (Do not reload)
-	 */
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL3, ISL9241_CONTROL3_ACLIM_RELOAD))
 		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
