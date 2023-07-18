@@ -26,6 +26,10 @@
 		gpio_en_z1_rails: en_z1_rails {
 			gpios = <&gpio0 5 GPIO_OUTPUT>;
 		};
+		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
+			gpios = <&gpio0 6 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
 	};
 
 	/*

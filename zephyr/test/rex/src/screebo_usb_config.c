@@ -26,7 +26,6 @@ FAKE_VOID_FUNC(nx20p348x_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(bc12_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(ppc_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(syv682x_interrupt, enum gpio_signal);
-FAKE_VALUE_FUNC(enum battery_present, battery_is_present);
 FAKE_VALUE_FUNC(int, board_set_active_charge_port, int);
 FAKE_VOID_FUNC(pd_power_supply_reset, int);
 FAKE_VALUE_FUNC(int, pd_check_vconn_swap, int);
