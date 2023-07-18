@@ -5,6 +5,6 @@
 description: >
   Properties for an Side Band Temperature Sensor Interface sensor
 
-compatible: "amd,sb-tsi"
+compatible: "cros-ec,temp-sensor-sb-tsi"
 
 include: i2c-device.yaml

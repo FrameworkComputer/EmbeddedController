@@ -283,7 +283,7 @@
 	pinctrl-names = "default";
 
 	temp_cpu: cpu@4c {
-		compatible = "amd,sb-tsi";
+		compatible = "cros-ec,temp-sensor-sb-tsi";
 		reg = <0x4c>;
 	};
 };
