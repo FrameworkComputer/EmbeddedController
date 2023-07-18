@@ -64,7 +64,8 @@ static void charger_chips_init(void)
 	 * [14]: ACLIM Reload (Do not reload)
 	 */
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL3, ISL9241_CONTROL3_ACLIM_RELOAD))
+		ISL9241_REG_CONTROL3,
+		(ISL9241_CONTROL3_ACLIM_RELOAD | ISL9241_CONTROL3_ENABLE_ADC)))
 		goto init_fail;
 
 	value = battery_is_charge_fet_disabled();
@@ -190,8 +191,6 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	if ((prochot_ma - charge_ma) < 128) {
 		charge_ma = prochot_ma - 128;
 	}
-
-	CPRINTS("Charger:%d mA", charge_ma);
 
 	charge_set_input_current_limit(charge_ma, charge_mv);
 	/* sync-up ac prochot with current change */

@@ -1917,8 +1917,6 @@ int charge_set_input_current_limit(int ma, int mv)
 	}
 #endif
 
-	CPRINTS("ComCharger: %dmA, %dmV", ma, mv);
-
 	if (IS_ENABLED(CONFIG_OCPC))
 		chgnum = charge_get_active_chg_chip();
 	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT))
