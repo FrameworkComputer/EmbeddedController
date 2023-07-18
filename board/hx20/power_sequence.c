@@ -559,6 +559,10 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_set_level(GPIO_SYSON, 0);
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 		cypd_set_power_active(POWER_S5);
+
+		/* Call hooks after we remove power rails */
+		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
+
 		power_s5_up = 0;
 		return POWER_S5;
 		break;
