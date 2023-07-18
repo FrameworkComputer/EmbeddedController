@@ -135,9 +135,14 @@ if(DEFINED CONFIG_BOARD_GOTHRAX)
 endif()
 if(DEFINED CONFIG_BOARD_CRAASKOV)
 	project(craaskov)
+	zephyr_include_directories("craaskov/include")
 	zephyr_library_sources(
 			"craaskov/src/keyboard.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "craaskov/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "craaskov/src/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+	"craaskov/src/keyboard.c"
+	"craaskov/src/keyboard_customization.c"
+	)
 endif()

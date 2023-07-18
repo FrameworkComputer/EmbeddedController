@@ -4,6 +4,24 @@
  */
 
 #include "ec_commands.h"
+#include "keyboard_scan.h"
+#include "timer.h"
+
+/* Keyboard scan setting */
+__override struct keyboard_scan_config keyscan_config = {
+	/* Increase from 50 us, because KSO_02 passes through the H1. */
+	.output_settle_us = 80,
+	/* Other values should be the same as the default configuration. */
+	.debounce_down_us = 9 * MSEC,
+	.debounce_up_us = 30 * MSEC,
+	.scan_period_us = 3 * MSEC,
+	.min_post_scan_delay_us = 1000,
+	.poll_timeout_us = 100 * MSEC,
+	.actual_key_mask = {
+		0x1c, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
+		0xa4, 0xff, 0xf7, 0x55, 0xfb, 0xca,
+	},
+};
 
 static const struct ec_response_keybd_config craaskov_kb = {
 	.num_top_row_keys = 10,
@@ -27,3 +45,30 @@ board_vivaldi_keybd_config(void)
 {
 	return &craaskov_kb;
 }
+
+/*
+ * Row Column info for Top row keys T1 - T10.
+ * on craaskov keyboard Row Column is customization
+ * need define row col to mapping matrix layout.
+ */
+__override const struct key {
+	uint8_t row;
+	uint8_t col;
+} vivaldi_keys[] = {
+	{ .row = 0, .col = 2 }, /* T1 */
+	{ .row = 3, .col = 2 }, /* T2 */
+	{ .row = 2, .col = 2 }, /* T3 */
+	{ .row = 1, .col = 2 }, /* T4 */
+	{ .row = 3, .col = 4 }, /* T5 */
+	{ .row = 2, .col = 4 }, /* T6 */
+	{ .row = 1, .col = 4 }, /* T7 */
+	{ .row = 2, .col = 9 }, /* T8 */
+	{ .row = 1, .col = 9 }, /* T9 */
+	{ .row = 0, .col = 4 }, /* T10 */
+	{ .row = 3, .col = 0 }, /* T11 */
+	{ .row = 1, .col = 5 }, /* T12 */
+	{ .row = 3, .col = 5 }, /* T13 */
+	{ .row = 0, .col = 9 }, /* T14 */
+	{ .row = 0, .col = 11 }, /* T15 */
+};
+BUILD_ASSERT(ARRAY_SIZE(vivaldi_keys) == MAX_TOP_ROW_KEYS);
