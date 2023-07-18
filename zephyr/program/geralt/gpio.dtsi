@@ -47,7 +47,7 @@
 			enum-name = "GPIO_EC_PMIC_EN_ODL";
 		};
 		usb_c0_ppc_bc12_int_odl: usb-c0-ppc-bc12-int-odl {
-			gpios = <&gpiod 1 GPIO_INPUT>;
+			gpios = <&gpiod 1 (GPIO_INPUT| GPIO_ACTIVE_LOW)>;
 		};
 		ap_ec_warm_rst_req: ap-ec-warm-rst-req {
 			gpios = <&gpiod 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
@@ -144,7 +144,7 @@
 			enum-name = "GPIO_CCD_MODE_ODL";
 		};
 		usb_c1_ppc_int_odl: usb-c1-ppc-int-odl {
-			gpios = <&gpiob 2 GPIO_INPUT>;
+			gpios = <&gpiob 2 (GPIO_INPUT| GPIO_ACTIVE_LOW)>;
 		};
 		en_pp5000_z1_l: en-pp5000-z1-l {
 			gpios = <&gpioc 6 GPIO_OUTPUT_LOW>;

@@ -7,8 +7,9 @@
 
 #define NX20P348X_COMPAT nxp_nx20p348x
 
-#define PPC_CHIP_NX20P348X(id)                                           \
-	{                                                                \
-		.i2c_port = I2C_PORT_BY_DEV(id),                         \
-		.i2c_addr_flags = DT_REG_ADDR(id), .drv = &nx20p348x_drv \
+#define PPC_CHIP_NX20P348X(id)                                            \
+	{                                                                 \
+		.i2c_port = I2C_PORT_BY_DEV(id),                          \
+		.i2c_addr_flags = DT_REG_ADDR(id), .drv = &nx20p348x_drv, \
+		.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {}),       \
 	}

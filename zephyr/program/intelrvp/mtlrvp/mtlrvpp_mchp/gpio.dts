@@ -87,10 +87,12 @@
 		}; /* GPIO240 */
 		/* NOTE: Netname is USBC_TCPC_ALRT_P1 */
 		usbc_tcpc_ppc_alrt_p0: usbc-tcpc-ppc-alrt-p0 {
-			gpios = <&gpio_240_276 1 GPIO_INPUT>;
+			gpios = <&gpio_240_276 1 (GPIO_INPUT | \
+				GPIO_ACTIVE_LOW)>;
 		}; /* GPIO241 */
 		usbc_tcpc_ppc_alrt_p1: usbc-tcpc-ppc-alrt-p1 {
-			gpios = <&gpio_140_176 13 GPIO_INPUT>;
+			gpios = <&gpio_140_176 13 (GPIO_INPUT | \
+				GPIO_ACTIVE_LOW)>;
 		}; /* GPIO155 */
 		usbc_tcpc_alrt_p2: usbc-tcpc-alrt-p2 {
 			gpios = <&gpio_200_236 17 GPIO_INPUT>;

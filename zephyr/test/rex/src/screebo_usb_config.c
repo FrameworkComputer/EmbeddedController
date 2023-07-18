@@ -8,6 +8,7 @@
 #include "driver/retimer/bb_retimer_public.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
+#include "ppc/syv682x_public.h"
 #include "usb_config.h"
 #include "usb_mux.h"
 #include "usbc/ppc.h"
@@ -24,7 +25,6 @@ FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 FAKE_VOID_FUNC(reset_nct38xx_port, int);
 FAKE_VOID_FUNC(nx20p348x_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(bc12_interrupt, enum gpio_signal);
-FAKE_VOID_FUNC(ppc_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(syv682x_interrupt, enum gpio_signal);
 FAKE_VALUE_FUNC(int, board_set_active_charge_port, int);
 FAKE_VOID_FUNC(pd_power_supply_reset, int);
@@ -34,6 +34,7 @@ FAKE_VALUE_FUNC(int, cbi_get_board_version, uint32_t *);
 
 static int board_version;
 static struct bb_usb_control bb_controls_saved[2];
+static struct ppc_config_t ppc_chips_saved[2];
 
 static int mock_cbi_get_board_version(uint32_t *ver)
 {
@@ -85,6 +86,9 @@ static void usb_config_before(void *fixture)
 
 	memcpy(bb_controls_saved, bb_controls,
 	       sizeof(struct bb_usb_control) * ARRAY_SIZE(bb_controls_saved));
+
+	memcpy(ppc_chips_saved, ppc_chips,
+	       sizeof(struct ppc_config_t) * ARRAY_SIZE(ppc_chips_saved));
 }
 
 static void usb_config_after(void *fixture)
@@ -93,6 +97,9 @@ static void usb_config_after(void *fixture)
 
 	memcpy(bb_controls, bb_controls_saved,
 	       sizeof(struct bb_usb_control) * ARRAY_SIZE(bb_controls_saved));
+
+	memcpy(ppc_chips, ppc_chips_saved,
+	       sizeof(struct ppc_config_t) * ARRAY_SIZE(ppc_chips_saved));
 }
 
 ZTEST_USER(usb_config, test_setup_db_usb3)
@@ -158,9 +165,9 @@ ZTEST_USER(usb_config, test_ppc_interrupt)
 		mock_cros_cbi_get_fw_config_mb_usb4;
 	hook_notify(HOOK_INIT);
 
-	screebo_ppc_interrupt(GPIO_USB_C0_PPC_INT_ODL);
+	ppc_chips[0].drv->interrupt(0);
 	zassert_equal(1, syv682x_interrupt_fake.call_count);
-	screebo_ppc_interrupt(GPIO_USB_C1_PPC_INT_ODL);
+	ppc_chips[1].drv->interrupt(1);
 	zassert_equal(2, syv682x_interrupt_fake.call_count);
 
 	/* Test USB3.2 SKU ppc interrupt */
@@ -168,15 +175,8 @@ ZTEST_USER(usb_config, test_ppc_interrupt)
 		mock_cros_cbi_get_fw_config_mb_usb3;
 	hook_notify(HOOK_INIT);
 
-	screebo_ppc_interrupt(GPIO_USB_C1_PPC_INT_ODL);
+	ppc_chips[1].drv->interrupt(1);
 	zassert_equal(1, nx20p348x_interrupt_fake.call_count);
-
-	/* Test switch default situation */
-	RESET_FAKE(nx20p348x_interrupt);
-	RESET_FAKE(syv682x_interrupt);
-	screebo_ppc_interrupt(GPIO_POWER_BUTTON_L);
-	zassert_equal(0, nx20p348x_interrupt_fake.call_count);
-	zassert_equal(0, syv682x_interrupt_fake.call_count);
 }
 
 ZTEST_USER(usb_config, test_board_reset_pd_mcu)

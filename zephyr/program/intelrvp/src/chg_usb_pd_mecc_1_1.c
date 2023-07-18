@@ -40,29 +40,15 @@ uint16_t tcpc_get_alert_status(void)
 
 int ppc_get_alert_status(int port)
 {
-	return tcpc_aic_gpios[port].ppc_intr_handler &&
+	return ppc_chips[port].drv->interrupt &&
 	       !gpio_get_level(tcpc_aic_gpios[port].ppc_alert);
-}
-
-/* PPC support routines */
-void ppc_interrupt(enum gpio_signal signal)
-{
-	int i;
-
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		if (tcpc_aic_gpios[i].ppc_intr_handler &&
-		    signal == tcpc_aic_gpios[i].ppc_alert) {
-			tcpc_aic_gpios[i].ppc_intr_handler(i);
-			break;
-		}
-	}
 }
 
 void board_charging_enable(int port, int enable)
 {
 	int rv;
 
-	if (tcpc_aic_gpios[port].ppc_intr_handler) {
+	if (ppc_chips[port].drv->interrupt) {
 		rv = ppc_vbus_sink_enable(port, enable);
 	} else {
 		rv = tcpc_config[port].drv->set_snk_ctrl(port, enable);

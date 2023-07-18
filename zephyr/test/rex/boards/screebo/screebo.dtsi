@@ -44,7 +44,7 @@
 
 			bc12 = <&pi3usb9201_emul1>;
 			tcpc = <&tcpci_emul1>;
-			ppc = <&ppc0_emul>;
+			ppc = <&ppc1_emul>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&usb_c1_hb_retimer
@@ -91,11 +91,11 @@
 		compatible = "named-gpios";
 
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
-			gpios = <&gpio1 6 GPIO_INPUT>;
+			gpios = <&gpio1 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 		};
 		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
-			gpios = <&gpio1 7 GPIO_INPUT>;
+			gpios = <&gpio1 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
 		};
 		gpio_usb_c1_rt_3p3_sx_en: usb_c1_rt_3p3_sx_en {
@@ -197,6 +197,7 @@
 		status = "okay";
 		reg = <0x42>;
 		frs_en_gpio = <&ioex_usb_c1_frs_en>;
+		irq-gpios = <&gpio1 6 GPIO_ACTIVE_LOW>;
 	};
 
 	ppc1_emul: syv682x@43 {
@@ -204,13 +205,14 @@
 		status = "okay";
 		reg = <0x43>;
 		frs_en_gpio = <&ioex_usb_c1_frs_en>;
+		irq-gpios = <&gpio1 7 GPIO_ACTIVE_LOW>;
 	};
 
 	ppc_nx20p_port1: nx20p348x@77 {
 		compatible = "nxp,nx20p348x";
 		status = "okay";
 		reg = <0x77>;
-		irq-gpios = <&gpio1 7 GPIO_ACTIVE_HIGH>;
+		irq-gpios = <&gpio1 7 GPIO_ACTIVE_LOW>;
 		is-alt;
 	};
 

@@ -176,7 +176,7 @@
 			gpios = <&gpio0 12 (GPIO_OUTPUT_HIGH | GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_usb_c1_ppc_int: usb_c1_ppc_int {
-			gpios = <&gpio0 13 GPIO_INPUT>;
+			gpios = <&gpio0 13 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_usb_c0_ppc_int: usb_c0_ppc_int {
 			gpios = <&gpio0 14 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
@@ -327,16 +327,6 @@
 			irq-pin = <&gpio_acok_od>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "extpower_interrupt";
-		};
-		int_usb_c0_ppc: usb_c0_ppc {
-			irq-pin = <&gpio_usb_c0_ppc_int>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "ppc_alert";
-		};
-		int_usb_c1_ppc: usb_c1_ppc {
-			irq-pin = <&gpio_usb_c1_ppc_int>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "ppc_alert";
 		};
 		int_switchcap_pg: switchcap_pg {
 			irq-pin = <&gpio_switchcap_pg_int_l>;
@@ -896,6 +886,7 @@
 			compatible = "cros,sn5s330-emul";
 			reg = <0x40>;
 			int-pin = <&gpio_usb_c0_ppc_int>;
+			irq-gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
 		};
 
 		tcpci_emul: tcpci_emul@82 {
@@ -926,6 +917,7 @@
 			reg = <0x41>;
 			frs_en_gpio = <&gpio_usb_c1_frs_en>;
 			alert_gpio = <&gpio_usb_c1_ppc_int>;
+			irq-gpios = <&gpio0 13 GPIO_ACTIVE_LOW>;
 		};
 
 		usb_c1_bb_retimer_emul: bbretimer@42 {

@@ -47,10 +47,6 @@ test_export_static void reset_nct38xx_port(int port);
 
 void usbc_interrupt_init(void)
 {
-	/* Enable PPC interrupts. */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_ppc));
-
 #if defined(CONFIG_PLATFORM_EC_USB_CHARGER)
 	/* Enable BC 1.2 interrupts */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));

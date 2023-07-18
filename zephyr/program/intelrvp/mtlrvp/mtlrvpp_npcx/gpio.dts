@@ -84,10 +84,10 @@
 		};
 		/* NOTE: Netname is USBC_TCPC_ALRT_P1 */
 		usbc_tcpc_ppc_alrt_p0: usbc-tcpc-ppc-alrt-p0 {
-			gpios = <&gpiod 1 GPIO_INPUT>;
+			gpios = <&gpiod 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		usbc_tcpc_ppc_alrt_p1: usbc-tcpc-ppc-alrt-p1 {
-			gpios = <&gpioe 4 GPIO_INPUT>;
+			gpios = <&gpioe 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		usbc_tcpc_alrt_p2: usbc-tcpc-alrt-p2 {
 			gpios = <&gpio9 1 GPIO_INPUT>;

@@ -32,24 +32,6 @@ LOG_MODULE_REGISTER(screebo, LOG_LEVEL_INF);
 uint32_t usb_db_type;
 uint32_t usb_mb_type;
 
-void screebo_ppc_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_PPC_INT_ODL:
-		syv682x_interrupt(USBC_PORT_C0);
-		break;
-	case GPIO_USB_C1_PPC_INT_ODL:
-		if (usb_db_type == FW_USB_DB_USB3) {
-			nx20p348x_interrupt(USBC_PORT_C1);
-		} else {
-			syv682x_interrupt(USBC_PORT_C1);
-		}
-		break;
-	default:
-		break;
-	}
-}
-
 void board_reset_pd_mcu(void)
 {
 	/* Reset TCPC0 */

@@ -215,12 +215,22 @@
 		compatible = "ti,sn5s330";
 		status = "okay";
 		reg = <0x40>;
+		/* a duplicate of the <&usbc_tcpc_ppc_alrt_p0> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiod 1 GPIO_ACTIVE_LOW>;
 	};
 
 	ppc_port1: sn5s330@41 {
 		compatible = "ti,sn5s330";
 		status = "okay";
 		reg = <0x41>;
+		/* a duplicate of the <&usbc_tcpc_ppc_alrt_p1> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpioe 4 GPIO_ACTIVE_LOW>;
 	};
 
 	usb_c0_hb_retimer: jhl9040r-c0@56 {

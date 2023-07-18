@@ -47,22 +47,6 @@ void usba_oc_interrupt(enum gpio_signal signal)
 }
 #endif
 
-void ppc_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_SWCTL_INT_ODL:
-		ppc_chips[0].drv->interrupt(0);
-		break;
-
-	case GPIO_USB_C1_SWCTL_INT_ODL:
-		ppc_chips[1].drv->interrupt(1);
-		break;
-
-	default:
-		break;
-	}
-}
-
 __overridable int board_charger_profile_override(struct charge_state_data *curr)
 {
 	return EC_SUCCESS;
@@ -125,11 +109,6 @@ void board_tcpc_init(void)
 		/* TODO(crosbug.com/p/61098): How long do we need to wait? */
 		board_reset_pd_mcu();
 	}
-
-	/* Enable PPC interrupts */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_swctl));
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_swctl));
-
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see
 	 * HPD pulse to enable video path

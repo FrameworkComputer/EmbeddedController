@@ -86,6 +86,11 @@
 		compatible = "kinetic,ktu1125";
 		status = "okay";
 		reg = <0x38>;
+		/* a duplicate of the <&gpio_usb_c0_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio6 7 (GPIO_PULL_UP | GPIO_ACTIVE_LOW)>;
 	};
 };
 
@@ -119,6 +124,11 @@
 		compatible = "nxp,nx20p348x";
 		status = "okay";
 		reg = <0x71>;
+		/* a duplicate of the <&gpio_usb_c1_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio7 0 GPIO_ACTIVE_LOW>;
 		is-alt;
 	};
 
@@ -138,6 +148,11 @@
 		compatible = "kinetic,ktu1125";
 		status = "okay";
 		reg = <0x38>;
+		/* a duplicate of the <&gpio_usb_c1_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio7 0 GPIO_ACTIVE_LOW>;
 		is-alt;
 	};
 };

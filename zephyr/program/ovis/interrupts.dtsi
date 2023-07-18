@@ -12,21 +12,6 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_button_interrupt";
 		};
-		int_usb_c0_ppc: usb_c0_ppc {
-			irq-pin = <&gpio_usb_c0_ppc_int_odl>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "ppc_interrupt";
-		};
-		int_usb_c1_ppc: usb_c1_ppc {
-			irq-pin = <&gpio_usb_c1_ppc_int_odl>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "ppc_interrupt";
-		};
-		int_usb_c2_ppc: usb_c2_ppc {
-			irq-pin = <&gpio_usb_c2_ppc_int_odl>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "ppc_interrupt";
-		};
 	};
 };
 

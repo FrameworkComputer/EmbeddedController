@@ -11,4 +11,5 @@
 	{                                                               \
 		.i2c_port = I2C_PORT_BY_DEV(id),                        \
 		.i2c_addr_flags = DT_REG_ADDR(id), .drv = &ktu1125_drv, \
+		.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {}),     \
 	}

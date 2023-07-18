@@ -31,7 +31,6 @@ void reset_nct38xx_port(int port);
 int nct38xx_tcpm_init(int port);
 
 FAKE_VOID_FUNC(pd_handle_overcurrent, int)
-FAKE_VOID_FUNC(ppc_interrupt, enum gpio_signal)
 FAKE_VOID_FUNC(usb_charger_task_set_event, int, uint8_t)
 FAKE_VOID_FUNC(battery_sleep_fuel_gauge)
 FAKE_VALUE_FUNC(int, charge_manager_get_active_charge_port)
@@ -91,8 +90,6 @@ void test_nct38xx1_interrupt(enum gpio_signal signal)
 		nct38xx_reset_toggles[1].us =
 			nct38xx_reset_toggles[1].us - get_time().val;
 }
-
-unsigned int ppc_cnt = 2;
 
 int pd_get_retry_count(int port, enum tcpci_msg_type type)
 {
@@ -234,7 +231,6 @@ static int validate_usb_fault_alert_output(int hub, int a0, int a1)
 /* Test suite and reset functions. */
 static void test_reset(void)
 {
-	RESET_FAKE(ppc_interrupt);
 	RESET_FAKE(pd_handle_overcurrent);
 	RESET_FAKE(usb_charger_task_set_event);
 	RESET_FAKE(battery_sleep_fuel_gauge);
@@ -322,10 +318,6 @@ ZTEST_SUITE(usbc_config, NULL, NULL, usbc_config_before, usbc_config_after,
 /* Test that our interrupts are being enabled. */
 ZTEST(usbc_config, test_usbc_interrupt_init)
 {
-	const struct gpio_dt_spec *gpio_usb_c0_ppc_int_odl =
-		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_ppc_int_odl);
-	const struct gpio_dt_spec *gpio_usb_c1_ppc_int_odl =
-		GPIO_DT_FROM_NODELABEL(gpio_usb_c1_ppc_int_odl);
 	const struct gpio_dt_spec *ioex_usb_c0_sbu_fault_odl =
 		GPIO_DT_FROM_NODELABEL(ioex_usb_c0_sbu_fault_odl);
 	const struct gpio_dt_spec *ioex_usb_c1_sbu_fault_odl =
@@ -347,23 +339,6 @@ ZTEST(usbc_config, test_usbc_interrupt_init)
 
 	/* usbc_interrupt_init should be called on init. */
 	hook_notify(HOOK_INIT);
-
-	/* Verify that interrupts are enabled and the handler. */
-	zassert_ok(toggle_pin_falling(gpio_usb_c0_ppc_int_odl));
-	zassert_equal(ppc_interrupt_fake.call_count, 1);
-	RESET_FAKE(ppc_interrupt);
-
-	zassert_ok(toggle_pin_falling(gpio_usb_c1_ppc_int_odl));
-	zassert_equal(ppc_interrupt_fake.call_count, 1);
-	RESET_FAKE(ppc_interrupt);
-
-	zassert_ok(toggle_pin_rising(gpio_usb_c0_ppc_int_odl));
-	zassert_equal(ppc_interrupt_fake.call_count, 0);
-	RESET_FAKE(ppc_interrupt);
-
-	zassert_ok(toggle_pin_rising(gpio_usb_c1_ppc_int_odl));
-	zassert_equal(ppc_interrupt_fake.call_count, 0);
-	RESET_FAKE(ppc_interrupt);
 
 	/* Verify bc12 interrupt handler is called. */
 	zassert_ok(toggle_pin_falling(gpio_usb_c0_bc12_int_odl));

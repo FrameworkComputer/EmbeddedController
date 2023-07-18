@@ -8,7 +8,8 @@
 #define AOZ1380_COMPAT aoz_aoz1380
 
 /* Note: This chip has no i2c interface */
-#define PPC_CHIP_AOZ1380(id)        \
-	{                           \
-		.drv = &aoz1380_drv \
+#define PPC_CHIP_AOZ1380(id)                                        \
+	{                                                           \
+		.drv = &aoz1380_drv,                                \
+		.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {}), \
 	}

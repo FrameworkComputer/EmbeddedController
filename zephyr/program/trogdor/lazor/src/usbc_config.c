@@ -82,20 +82,6 @@ void usba_oc_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&usba_oc_deferred_data, 0);
 }
 
-void ppc_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_swctl_int_odl)):
-		sn5s330_interrupt(0);
-		break;
-	case GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c1_swctl_int_odl)):
-		sn5s330_interrupt(1);
-		break;
-	default:
-		break;
-	}
-}
-
 static void board_connect_c0_sbu_deferred(void)
 {
 	/*
@@ -172,9 +158,6 @@ void board_tcpc_init(void)
 		/* TODO(crosbug.com/p/61098): How long do we need to wait? */
 		board_reset_pd_mcu();
 	}
-
-	/* Enable PPC interrupts */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_swctl));
 
 	/*
 	 * Initialize HPD to low; after sysjump SOC needs to see

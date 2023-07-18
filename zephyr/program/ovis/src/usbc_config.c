@@ -38,15 +38,6 @@
 /*******************************************************************/
 /* USB-C Configuration Start */
 
-static void usbc_interrupt_init(void)
-{
-	/* Enable PPC interrupts. */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_ppc));
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c2_ppc));
-}
-DECLARE_HOOK(HOOK_INIT, usbc_interrupt_init, HOOK_PRIO_POST_I2C);
-
 __override void board_overcurrent_event(int port, int is_overcurrented)
 {
 	/*

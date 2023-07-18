@@ -54,6 +54,12 @@
 		usb_c0_tcpc_rst_odl {
 			gpios = <&gpio6 7 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
 		};
+		usb_c0_ppc_int_odl {
+			gpios = <&gpio6 2 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		usb_c1_ppc_int_odl {
+			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
 	};
 
 	named-gpios {

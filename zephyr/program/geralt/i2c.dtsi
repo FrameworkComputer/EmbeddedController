@@ -90,6 +90,11 @@
 		compatible = "richtek,rt1739-ppc";
 		status = "okay";
 		reg = <0x70>;
+		/* a duplicate of the <&usb_c0_ppc_bc12_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiod 1 GPIO_ACTIVE_LOW>;
 	};
 
 	tusb546_mux_0: tusb546-mux-0@44 {
@@ -102,6 +107,11 @@
 		status = "okay";
 		reg = <0x40>;
 		frs_en_gpio = <&usb_c1_frs_en>;
+		/* a duplicate of the <&usb_c1_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiob 2 GPIO_ACTIVE_LOW>;
 	};
 
 	ps8743_mux_1: ps8743-mux-1@10 {

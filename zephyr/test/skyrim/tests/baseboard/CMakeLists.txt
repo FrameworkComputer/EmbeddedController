@@ -7,6 +7,7 @@ target_sources_ifdef(CONFIG_TEST_BOARD_USB_PD_POLICY app PRIVATE src/usb_pd_poli
 target_sources_ifdef(CONFIG_TEST_BOARD_USBC_CONFIG app
     PRIVATE src/usbc_config.c
     ${PLATFORM_EC_PROGRAM_DIR}/skyrim/src/usbc_config.c
+    ${PLATFORM_EC}/zephyr/shim/src/ppc.c
     ${PLATFORM_EC}/zephyr/shim/src/tcpc.c
 )
 target_sources_ifdef(CONFIG_TEST_BOARD_POWER_SIGNALS app PRIVATE src/power_signals ${PLATFORM_EC_PROGRAM_DIR}/skyrim/src/power_signals.c)

@@ -21,11 +21,11 @@
 			enum-name = "GPIO_USB_C1_PD_INT_ODL";
 		};
 		gpio_usb_c0_swctl_int_odl: usb_c0_swctl_int_odl {
-			gpios = <&gpio0 3 GPIO_INPUT>;
+			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_SWCTL_INT_ODL";
 		};
 		gpio_usb_c1_swctl_int_odl: usb_c1_swctl_int_odl {
-			gpios = <&gpio4 0 GPIO_INPUT>;
+			gpios = <&gpio4 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C1_SWCTL_INT_ODL";
 		};
 		gpio_usb_c0_bc12_int_l: usb_c0_bc12_int_l {
