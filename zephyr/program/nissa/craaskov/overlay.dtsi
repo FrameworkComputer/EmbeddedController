@@ -21,11 +21,14 @@
 	};
 
 	batteries {
-		default_battery: lgc {
-			compatible = "lgc,ap18c8k", "battery-smart";
+		default_battery: cosmx_ap20cbl-2 {
+			compatible = "cosmx,ap20cbl-2", "battery-smart";
 		};
-		lgc_ap19b8m {
-			compatible = "lgc,ap19b8m", "battery-smart";
+		lges_ap23a8l {
+			compatible = "lges,ap23a8l", "battery-smart";
+		};
+		panasonic_ap23a5l {
+			compatible = "panasonic,ap23a5l", "battery-smart";
 		};
 	};
 
