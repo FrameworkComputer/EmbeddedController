@@ -91,48 +91,48 @@
 		compatible = "named-gpios";
 
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
-			gpios = <&gpio0 6 GPIO_INPUT>;
+			gpios = <&gpio1 6 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 		};
 		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
-			gpios = <&gpio0 7 GPIO_INPUT>;
+			gpios = <&gpio1 7 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
 		};
 		gpio_usb_c1_rt_3p3_sx_en: usb_c1_rt_3p3_sx_en {
-			gpios = <&gpio0 8 0>;
+			gpios = <&gpio1 8 0>;
 		};
 		ioex_usb_c1_rt_rst_ls_l: usb_c1_rt_rst_ls_l {
-			gpios = <&gpio0 9 0>;
+			gpios = <&gpio1 9 0>;
 		};
 		ioex_usb_c1_frs_en: usb_c1_frs_en {
-			gpios = <&gpio0 10 0>;
+			gpios = <&gpio1 10 0>;
 		};
 		gpio_usb_c0_rt_3p3_sx_en: usb_c0_rt_3p3_sx_en {
-			gpios = <&gpio0 11 GPIO_ODR_LOW>;
+			gpios = <&gpio1 11 GPIO_ODR_LOW>;
 		};
 		gpio_usb_c0_rt_int_odl: usb_c0_rt_int_odl {
-			gpios = <&gpio0 12 GPIO_INPUT>;
+			gpios = <&gpio1 12 GPIO_INPUT>;
 		};
 		ioex_usb_c0_rt_rst_ls_l: usb_c0_rt_rst_ls_l {
-			gpios = <&gpio0 13 0>;
+			gpios = <&gpio1 13 0>;
 		};
 		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
-			gpios = <&gpio0 14 GPIO_INPUT>;
+			gpios = <&gpio1 14 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {
-			gpios = <&gpio0 15 GPIO_INPUT>;
+			gpios = <&gpio1 15 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
 		};
 		gpio_usb_c1_bc12_int_odl: usb_c1_bc12_int_odl {
-			gpios = <&gpio0 16 GPIO_INPUT>;
+			gpios = <&gpio1 16 GPIO_INPUT>;
 			enum-name = "GPIO_USB_C1_BC12_INT_ODL";
 		};
 		gpio_usb_c0_hbr_rst_l: usb_c0_hbr_rst_l {
-			gpios = <&gpio0 17 GPIO_OUTPUT_HIGH>;
+			gpios = <&gpio1 17 GPIO_OUTPUT_HIGH>;
 		};
 		gpio_usb_c1_hbr_rst_l: usb_c1_hbr_rst_l {
-			gpios = <&gpio0 18 GPIO_OUTPUT_HIGH>;
+			gpios = <&gpio1 18 GPIO_OUTPUT_HIGH>;
 		};
 	};
 
@@ -188,7 +188,7 @@
 			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
 			TCPC_FLAGS_CONTROL_VCONN |
 			TCPC_FLAGS_CONTROL_FRS)>;
-		rst-gpios = <&gpio0 13 GPIO_ACTIVE_HIGH>;
+		rst-gpios = <&gpio1 13 GPIO_ACTIVE_HIGH>;
 		is-alt;
 	};
 
@@ -210,7 +210,7 @@
 		compatible = "nxp,nx20p348x";
 		status = "okay";
 		reg = <0x77>;
-		irq-gpios = <&gpio0 7 GPIO_ACTIVE_HIGH>;
+		irq-gpios = <&gpio1 7 GPIO_ACTIVE_HIGH>;
 		is-alt;
 	};
 

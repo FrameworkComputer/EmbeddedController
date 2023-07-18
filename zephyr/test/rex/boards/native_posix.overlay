@@ -27,4 +27,21 @@
 			gpios = <&gpio0 5 GPIO_OUTPUT>;
 		};
 	};
+
+	/*
+	 * This is a 2nd GPIO bank to be used by variants to
+	 * avoid conflicts with common GPIO assignments.
+	 */
+	gpio1: gpio@101 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x101 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <32>;
+	};
 };
