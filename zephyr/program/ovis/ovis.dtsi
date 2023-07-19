@@ -161,9 +161,10 @@
 		frs_en_gpio = <&gpio_usb_c2_frs_en>;
 	};
 
-	usb_c2_hb_retimer: jhl9040r-c0@56 {
+/* C2 retimer shares a SPI flash with C0 and must use 0x57 I2C address */
+	usb_c2_hb_retimer: jhl9040r-c0@57 {
 		compatible = "intel,jhl9040r";
-		reg = <0x56>;
+		reg = <0x57>;
 		ls-en-pin = <&gpio_usb_c2_rt_3p3_sx_en>;
 		int-pin = <&gpio_usb_c2_rt_int_odl>;
 		reset-pin = <&gpio_usb_c2_rt_rst_l>;
