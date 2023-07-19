@@ -60,8 +60,8 @@
  *-------------------------------------------------------------------------*
  */
 #undef NPCX_PROGRAM_MEMORY_SIZE
-/* 384 KB program RAM */
-#define NPCX_PROGRAM_MEMORY_SIZE ((416 - 32) * 1024)
+/* 352 KB program RAM */
+#define NPCX_PROGRAM_MEMORY_SIZE ((416 - 64) * 1024)
 
 #undef CONFIG_PROGRAM_MEMORY_BASE
 #define CONFIG_PROGRAM_MEMORY_BASE 0x10058000
@@ -69,15 +69,15 @@
 #undef CONFIG_RAM_BASE
 /*
  * Adjust the base address of the Data RAM
- * 0x200C0000 - 32K (0x8000) memory address of Data RAM
+ * 0x200C0000 - 64K (0x10000) memory address of Data RAM
  */
-#define CONFIG_RAM_BASE 0x200B8000
+#define CONFIG_RAM_BASE 0x200B0000
 
 #undef CONFIG_DATA_RAM_SIZE
 /*
- * Define Data RAM size  = 128KB - 4KB (Reserved for booter).
+ * Define Data RAM size  = 160KB - 4KB (Reserved for booter).
  */
-#define CONFIG_DATA_RAM_SIZE ((96 + 32) * 1024 - 0x1000)
+#define CONFIG_DATA_RAM_SIZE ((96 + 64) * 1024 - 0x1000)
 /*-------------------------------------------------------------------------*/
 
 #define CONFIG_SHAREDLIB_SIZE 0
