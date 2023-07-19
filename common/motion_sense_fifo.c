@@ -265,8 +265,9 @@ static inline bool is_new_timestamp(uint8_t sensor_num)
  * @param valid_data The number of readable data entries in the data.
  *   sensor can be NULL (for activity sensors). valid_data must be 0 then.
  */
-static void fifo_stage_unit(struct ec_response_motion_sensor_data *data,
-			    struct motion_sensor_t *sensor, int valid_data)
+test_export_static void
+fifo_stage_unit(struct ec_response_motion_sensor_data *data,
+		struct motion_sensor_t *sensor, int valid_data)
 {
 	struct queue_chunk chunk;
 	int i;
@@ -552,6 +553,9 @@ commit_data_end:
 		/* Get the sensor number and point to the timestamp entry. */
 		sensor_num = data->sensor_num;
 		data = peek_fifo_staged(i - 1);
+		if (!data) {
+			continue;
+		}
 
 		/* Verify we're pointing at a timestamp. */
 		if (!is_timestamp(data)) {
