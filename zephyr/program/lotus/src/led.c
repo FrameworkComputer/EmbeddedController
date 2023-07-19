@@ -541,7 +541,8 @@ static void led_tick(void)
 	}
 
 	/* Input Deck not fully populated */
-	if (!input_deck_is_fully_populated() && !get_standalone_mode()) {
+	if (!input_deck_is_fully_populated() && !get_standalone_mode() &&
+		!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		colors[0] = LED_RED;
 		colors[1] = LED_BLUE;
 		colors[2] = LED_OFF;
