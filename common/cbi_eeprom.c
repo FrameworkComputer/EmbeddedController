@@ -76,7 +76,9 @@ const struct cbi_storage_driver eeprom_drv = {
 	.is_protected = eeprom_is_write_protected,
 };
 
-const struct cbi_storage_config_t cbi_config = {
+const struct cbi_storage_config_t eeprom_cbi_config = {
 	.storage_type = CBI_STORAGE_TYPE_EEPROM,
 	.drv = &eeprom_drv,
 };
+
+const struct cbi_storage_config_t *cbi_config = &eeprom_cbi_config;

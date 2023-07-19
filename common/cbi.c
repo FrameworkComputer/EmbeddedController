@@ -111,7 +111,7 @@ static int do_cbi_read(void)
 	CPRINTS("Reading board info");
 
 	/* Read header */
-	if (cbi_config.drv->load(0, cbi, sizeof(*head))) {
+	if (cbi_config->drv->load(0, cbi, sizeof(*head))) {
 		CPRINTS("Failed to read header");
 		return EC_ERROR_INVAL;
 	}
@@ -139,14 +139,14 @@ static int do_cbi_read(void)
 	}
 
 	/* Read the data */
-	if (cbi_config.drv->load(sizeof(*head), head->data,
-				 head->total_size - sizeof(*head))) {
+	if (cbi_config->drv->load(sizeof(*head), head->data,
+				  head->total_size - sizeof(*head))) {
 		CPRINTS("Failed to read body");
 		return EC_ERROR_INVAL;
 	}
 
 	/* Check CRC. This supports new fields unknown to this parser. */
-	if (cbi_config.storage_type != CBI_STORAGE_TYPE_GPIO &&
+	if (cbi_config->storage_type != CBI_STORAGE_TYPE_GPIO &&
 	    cbi_crc8(head) != head->crc) {
 		CPRINTS("Bad CRC");
 		return EC_ERROR_INVAL;
@@ -247,12 +247,12 @@ test_mockable int cbi_set_board_info(enum cbi_data_tag tag, const uint8_t *buf,
 
 int cbi_write(void)
 {
-	if (cbi_config.drv->is_protected()) {
+	if (cbi_config->drv->is_protected()) {
 		CPRINTS("Failed to write due to WP");
 		return EC_ERROR_ACCESS_DENIED;
 	}
 
-	return cbi_config.drv->store(cbi);
+	return cbi_config->drv->store(cbi);
 }
 
 test_mockable int cbi_get_board_version(uint32_t *ver)
@@ -343,7 +343,7 @@ common_cbi_set(const struct __ec_align4 ec_params_set_cbi *p)
 	 * If we ultimately cannot write to the flash, then fail early unless
 	 * we are explicitly trying to write to the in-memory CBI only
 	 */
-	if (cbi_config.drv->is_protected() && !(p->flag & CBI_SET_NO_SYNC)) {
+	if (cbi_config->drv->is_protected() && !(p->flag & CBI_SET_NO_SYNC)) {
 		CPRINTS("Failed to write due to WP");
 		return EC_RES_ACCESS_DENIED;
 	}
@@ -559,7 +559,7 @@ DECLARE_CONSOLE_COMMAND(cbi, cc_cbi,
 int cbi_set_fw_config(uint32_t fw_config)
 {
 	/* Check write protect status */
-	if (cbi_config.drv->is_protected())
+	if (cbi_config->drv->is_protected())
 		return EC_ERROR_ACCESS_DENIED;
 
 	/* Ensure that CBI has been configured */
@@ -583,7 +583,7 @@ int cbi_set_fw_config(uint32_t fw_config)
 int cbi_set_ssfc(uint32_t ssfc)
 {
 	/* Check write protect status */
-	if (cbi_config.drv->is_protected())
+	if (cbi_config->drv->is_protected())
 		return EC_ERROR_ACCESS_DENIED;
 
 	/* Ensure that CBI has been configured */

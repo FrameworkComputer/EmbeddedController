@@ -66,7 +66,9 @@ const struct cbi_storage_driver gpio_drv = {
 	.is_protected = cbi_gpio_is_write_protected,
 };
 
-const struct cbi_storage_config_t cbi_config = {
+const struct cbi_storage_config_t gpio_cbi_config = {
 	.storage_type = CBI_STORAGE_TYPE_GPIO,
 	.drv = &gpio_drv,
 };
+
+const struct cbi_storage_config_t *cbi_config = &gpio_cbi_config;

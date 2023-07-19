@@ -79,10 +79,12 @@ struct cbi_storage_driver {
 	int (*is_protected)(void);
 };
 
-extern const struct cbi_storage_config_t {
+struct cbi_storage_config_t {
 	enum cbi_storage_type storage_type;
 	const struct cbi_storage_driver *drv;
-} cbi_config;
+};
+
+extern const struct cbi_storage_config_t *cbi_config;
 
 /**
  * Board info accessors
