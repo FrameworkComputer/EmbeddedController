@@ -2053,6 +2053,8 @@ static bool port_try_vconn_swap(int port)
 		set_state_pe(port, get_last_state_pe(port));
 		return true;
 	}
+
+	CPRINTS("C%d: VCONN Swap counter exhausted", port);
 	return false;
 }
 
