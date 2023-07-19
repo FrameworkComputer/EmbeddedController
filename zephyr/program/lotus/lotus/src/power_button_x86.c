@@ -260,19 +260,13 @@ static void state_machine(uint64_t tnow)
 	case PWRBTN_STATE_PRESSED:
 		/* chipset exit hard off function only executes at G3 state */
 		if (chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
-			/* Check the VALW power rail is ready */
-			if (get_power_rail_status()) {
-				/*
-				 * Power button out signal implements in power_sequence.c,
-				 * just call the exit hard off start to run the state mechine.
-				 */
-				reset_diagnostics();
-				chipset_exit_hard_off();
-				pwrbtn_state = PWRBTN_STATE_IDLE;
-			} else {
-				tnext_state = tnow + PWRBTN_DELAY_INIT;
-				pwrbtn_state = PWRBTN_STATE_PRESSED;
-			}
+			/*
+			 * Power button out signal implements in power_sequence.c,
+			 * just call the exit hard off start to run the state mechine.
+			 */
+			reset_diagnostics();
+			chipset_exit_hard_off();
+			pwrbtn_state = PWRBTN_STATE_IDLE;
 		} else {
 			/*
 			 * when in preOS still need send power button signal
@@ -344,19 +338,13 @@ static void state_machine(uint64_t tnow)
 			}
 		}
 
-		/* Check the VALW power rail is ready */
-		if (get_power_rail_status()) {
-			/*
-			 * Power button out signal implements in power_sequence.c,
-			 * just call the exit hard off start to run the state mechine.
-			 */
-			reset_diagnostics();
-			chipset_exit_hard_off();
-			pwrbtn_state = PWRBTN_STATE_IDLE;
-		} else {
-			tnext_state = tnow + PWRBTN_DELAY_INIT;
-			pwrbtn_state = PWRBTN_STATE_INIT_ON;
-		}
+		/*
+		 * Power button out signal implements in power_sequence.c,
+		 * just call the exit hard off start to run the state mechine.
+		 */
+		reset_diagnostics();
+		chipset_exit_hard_off();
+		pwrbtn_state = PWRBTN_STATE_IDLE;
 		break;
 	case PWRBTN_STATE_HELD:
 
