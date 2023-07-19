@@ -36,6 +36,7 @@ SPECIAL_BOARDS = [
     "geralt",
     "roach",
     "myst",
+    "ovis",
     # Nissa variants
     "nereid",
     "nivviks",

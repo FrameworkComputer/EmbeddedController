@@ -364,6 +364,16 @@ myst_coverage:
     PROJECT: "myst"
   <<: *coverage_template
 
+ovis:
+  variables:
+    PROJECT: "ovis"
+  <<: *build_template
+
+ovis_coverage:
+  variables:
+    PROJECT: "ovis"
+  <<: *coverage_template
+
 ec_coverage:
   stage: test
   needs: []
