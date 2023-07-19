@@ -169,6 +169,12 @@ static void espi_chipset_reset(void)
 DECLARE_DEFERRED(espi_chipset_reset);
 #endif /* CONFIG_PLATFORM_EC_CHIPSET_RESET_HOOK */
 
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+__overridable void platform_reset_handler(int plt_rst_status)
+{
+}
+#endif
+
 /*
  * Callback for vwire received.
  * PLTRST (platform reset) is handled specially by
@@ -192,9 +198,15 @@ static void espi_vwire_handler(const struct device *dev,
 	if (event.evt_details == ESPI_VWIRE_SIGNAL_PLTRST &&
 	    event.evt_data == 0) {
 		hook_call_deferred(&espi_chipset_reset_data, MSEC);
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+		platform_reset_handler(0);
+#endif
 		update_ap_boot_time(PLTRST_LOW);
 	} else if (event.evt_details == ESPI_VWIRE_SIGNAL_PLTRST &&
 		   event.evt_data == 1) {
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+		platform_reset_handler(1);
+#endif
 		update_ap_boot_time(PLTRST_HIGH);
 	}
 #endif

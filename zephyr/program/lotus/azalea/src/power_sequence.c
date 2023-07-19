@@ -18,6 +18,7 @@
 #include "keyboard_protocol.h"
 #include "lpc.h"
 #include "power.h"
+#include "port80.h"
 #include "power_sequence.h"
 #include "task.h"
 #include "util.h"
@@ -560,7 +561,6 @@ enum power_state power_handle_state(enum power_state state)
 	return state;
 }
 
-/* Peripheral power control */
 static void peripheral_power_startup(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 1);
