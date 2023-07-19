@@ -31,6 +31,12 @@ config TEST_ENABLE_USB_PD_HOST_CMD
 	  This is used to define CONFIG_USB_PD_HOST_CMD for testing purposes
 	  directly.
 
+config TEST_BATTERY_PRESENT
+	bool "Tests battery presence detect"
+	help
+	  Include tests for board specific battery presence detection.
+	  Really, that's all it does.
+
 config TEST_BOARD_POWER
 	bool "Run the tests intended for board_power"
 	help

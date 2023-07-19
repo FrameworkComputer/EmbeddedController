@@ -23,6 +23,24 @@ tests:
       - CONFIG_POWER_SIGNALS_MOCK=y
       - CONFIG_AP_EVENTS=n
 
+  rex.battery_present:
+    extra_dtc_overlay_files:
+      - boards/rex/rex.dtsi
+      - boards/rex/power.dtsi
+    extra_configs:
+      - CONFIG_TEST_BATTERY_PRESENT=y
+      - CONFIG_PLATFORM_EC_CHARGER_ISL9241=y
+      - CONFIG_PLATFORM_EC_CHARGER_SENSE_RESISTOR=10
+      - CONFIG_PLATFORM_EC_CHARGER_SENSE_RESISTOR_AC=20
+      - CONFIG_PLATFORM_EC_BACKLIGHT_LID=n
+      - CONFIG_PLATFORM_EC_BATTERY_FUEL_GAUGE=y
+      - CONFIG_PLATFORM_EC_HOSTCMD=y
+      - CONFIG_PLATFORM_EC_SWITCH=n
+      - CONFIG_PLATFORM_EC_USB_PD_VBUS_MEASURE_NOT_PRESENT=y
+      - CONFIG_PLATFORM_EC_VBOOT_HASH=n
+      - CONFIG_PLATFORM_EC_BC12_SINGLE_DRIVER=n
+      - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE=n
+
   rex.rex.usb_mux_config:
     extra_dtc_overlay_files:
       - boards/rex/rex.dtsi
