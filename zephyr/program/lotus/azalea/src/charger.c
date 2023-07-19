@@ -5,6 +5,8 @@
 #include <zephyr/drivers/gpio.h>
 
 #include "battery.h"
+#include "battery_smart.h"
+#include "battery_fuel_gauge.h"
 #include "board_charger.h"
 #include "charge_manager.h"
 #include "charge_state.h"
@@ -33,10 +35,11 @@ static void charger_chips_init(void)
 	 * after ADC
 	 */
 
-	int chip;
+	const int no_battery_current_limit_override_ma = 3000;
+	const struct battery_info *bi = battery_get_info();
 	uint16_t val = 0x0000; /*default ac setting */
 	uint32_t data = 0;
-
+	int value;
 
 	/*
 	 * In our case the EC can boot before the charger has power so
@@ -50,18 +53,69 @@ static void charger_chips_init(void)
 		return;
 	}
 
-	for (chip = 0; chip < board_get_charger_chip_count(); chip++) {
-		if (chg_chips[chip].drv->init)
-			chg_chips[chip].drv->init(chip);
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL4, ISL9241_CONTROL4_WOCP_FUNCTION |
+		ISL9241_CONTROL4_VSYS_SHORT_CHECK |
+		ISL9241_CONTROL4_ACOK_BATGONE_DEBOUNCE_25US))
+		goto init_fail;
+
+	/*
+	 * Set control3 register to
+	 * [14]: ACLIM Reload (Do not reload)
+	 */
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL3,
+		(ISL9241_CONTROL3_ACLIM_RELOAD | ISL9241_CONTROL3_ENABLE_ADC)))
+		goto init_fail;
+
+	value = battery_is_charge_fet_disabled();
+	/* reverse the flag if no error */
+	if (value != -1)
+		value = !value;
+	/*
+	 * When there is no battery, override charger current limit to
+	 * prevent brownout during boot.
+	 */
+	if (value == -1) {
+		ccprints("No Battery Found - Override Current Limit to %dmA",
+			 no_battery_current_limit_override_ma);
+		charger_set_input_current_limit(
+			CHARGER_SOLO, no_battery_current_limit_override_ma);
 	}
+
+	/* According to Power team suggest, Set ACOK reference to 4.544V */
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4207)))
+		goto init_fail;
+
+
+	/*
+	 * Set the MaxSystemVoltage to battery maximum,
+	 * 0x00=disables switching charger states
+	 */
+	if (value == -1) {
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_MAX_SYSTEM_VOLTAGE, 15400))
+			goto init_fail;
+	} else {
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_MAX_SYSTEM_VOLTAGE, bi->voltage_max))
+			goto init_fail;
+	}
+
+	/*
+	 * Set the MinSystemVoltage to battery minimum,
+	 * 0x00=disables all battery charging
+	 */
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_MIN_SYSTEM_VOLTAGE, bi->voltage_min))
+		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL2,
-			ISL9241_CONTROL2_TRICKLE_CHG_CURR(128) |
-			ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR |
-			ISL9241_CONTROL2_PROCHOT_DEBOUNCE_100))
+		ISL9241_CONTROL2_TRICKLE_CHG_CURR(bi->precharge_current) |
+		ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000))
 		goto init_fail;
-
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL0, 0x0000))
@@ -78,19 +132,8 @@ static void charger_chips_init(void)
 		ISL9241_REG_CONTROL1, val))
 		goto init_fail;
 
-	/* According to Power team suggest, Set ACOK reference to 4.544V */
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_ACOK_REFERENCE, 0x0B00))
-		goto init_fail;
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL4, ISL9241_CONTROL4_WOCP_FUNCTION |
-		ISL9241_CONTROL4_VSYS_SHORT_CHECK |
-		ISL9241_CONTROL4_ACOK_BATGONE_DEBOUNCE_25US))
-		goto init_fail;
-
 	/* TODO: should we need to talk to PD chip after initial complete ? */
-	CPRINTS("ISL9241 customized initial complete!");
+	CPRINTS("ISL9241 customized initial complete!  3F:%d", value);
 	return;
 
 init_fail:
