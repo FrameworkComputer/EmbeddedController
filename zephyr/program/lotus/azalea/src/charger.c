@@ -93,10 +93,15 @@ static void charger_chips_init(void)
 	 * Set the MaxSystemVoltage to battery maximum,
 	 * 0x00=disables switching charger states
 	 */
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_MAX_SYSTEM_VOLTAGE, 0x3C28))
-		goto init_fail;
+	if (value == -1) {
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_MAX_SYSTEM_VOLTAGE, 15400))
+			goto init_fail;
+	} else {
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_MAX_SYSTEM_VOLTAGE, bi->voltage_max))
+			goto init_fail;
+	}
 
 	/*
 	 * Set the MinSystemVoltage to battery minimum,
