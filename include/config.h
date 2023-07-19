@@ -5802,6 +5802,9 @@
 /* Define this to support Cros Board Info from GPIO. */
 #undef CONFIG_CBI_GPIO
 
+/* Define this to support Cros Board Info from EC flash. */
+#undef CONFIG_CBI_FLASH
+
 /*****************************************************************************/
 /*
  * ISH config defaults
@@ -7114,6 +7117,10 @@
 
 #if defined(CONFIG_CBI_EEPROM) && defined(CONFIG_CBI_GPIO)
 #error "CONFIG_CBI_EEPROM and CONFIG_CBI_GPIO are mutually exclusive."
+#endif
+
+#if defined(CONFIG_CBI_FLASH) && defined(CONFIG_CBI_GPIO)
+#error "CONFIG_CBI_FLASH and CONFIG_CBI_GPIO are mutually exclusive."
 #endif
 
 #if !defined(CONFIG_ZEPHYR) && !defined(CONFIG_ACCELGYRO_ICM_COMM_SPI) && \
