@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "cbi_config.h"
 #include "cbi_flash.h"
 #include "console.h"
 #include "cros_board_info.h"
@@ -71,5 +72,3 @@ const struct cbi_storage_config_t flash_cbi_config = {
 	.storage_type = CBI_STORAGE_TYPE_FLASH,
 	.drv = &flash_drv,
 };
-
-const struct cbi_storage_config_t *cbi_config = &flash_cbi_config;

@@ -5,6 +5,7 @@
 
 /* Support Cros Board Info GPIO */
 
+#include "cbi_config.h"
 #include "console.h"
 #include "cros_board_info.h"
 #include "gpio.h"
@@ -70,5 +71,3 @@ const struct cbi_storage_config_t gpio_cbi_config = {
 	.storage_type = CBI_STORAGE_TYPE_GPIO,
 	.drv = &gpio_drv,
 };
-
-const struct cbi_storage_config_t *cbi_config = &gpio_cbi_config;
