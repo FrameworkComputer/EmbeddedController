@@ -449,7 +449,7 @@ enum power_state power_handle_state(enum power_state state)
 			 * clear the resume ms flag
 			 */
 			if (resume_ms_flag > 0) {
-				esume_ms_flag = 0;
+				resume_ms_flag = 0;
 				enter_ms_flag = 0;
 				system_in_s0ix = 0;
 				return POWER_S0ixS0;
