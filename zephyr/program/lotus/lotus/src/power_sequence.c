@@ -554,9 +554,9 @@ void panel_interrupt_handler(enum gpio_signal signal)
 		hook_call_deferred(&panel_power_control_data, 50 * MSEC);
 }
 
-void edp_reset_control(int enable)
+void platform_reset_handler(int plt_rst_status)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_edp_reset), enable);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_edp_reset), plt_rst_status);
 }
 
 static void peripheral_power_startup(void)

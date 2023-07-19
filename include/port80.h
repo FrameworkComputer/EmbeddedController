@@ -45,8 +45,6 @@ int port_80_last(void);
  * @return 0: ddr detect; 1: ddr no detect.
  */
 int amd_ddr_initialized_check(void);
-
-void edp_reset_control(int enable);
 #endif
 
 #endif /* __CROS_EC_PORT80_H */
