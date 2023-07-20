@@ -270,6 +270,19 @@ enum power_state power_chipset_init(void)
 	return POWER_G3;
 }
 
+/*
+ * By default we use IN_PGOOD_ALL_CORE for power fail detection, but chipsets
+ * can override it by defining CHIPSET_POWERFAIL_DETECT.
+ */
+static bool power_has_failed(void)
+{
+#ifdef CHIPSET_POWERFAIL_DETECT
+	return !power_has_signals(CHIPSET_POWERFAIL_DETECT);
+#else
+	return !power_has_signals(IN_PGOOD_ALL_CORE);
+#endif
+}
+
 enum power_state common_intel_x86_power_handle_state(enum power_state state)
 {
 	switch (state) {
@@ -299,7 +312,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S3:
-		if (!power_has_signals(IN_PGOOD_ALL_CORE)) {
+		if (power_has_failed()) {
 			/* Required rail went away, go straight to S5 */
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			return POWER_S3S5;
@@ -314,7 +327,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S0:
-		if (!power_has_signals(IN_PGOOD_ALL_CORE)) {
+		if (power_has_failed()) {
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			return POWER_S0S3;
 		} else if (chipset_get_sleep_signal(SYS_SLEEP_S3) == 0) {
@@ -346,7 +359,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		if ((chipset_get_sleep_signal(SYS_SLEEP_S0IX) == 1) &&
 		    (chipset_get_sleep_signal(SYS_SLEEP_S3) == 1)) {
 			return POWER_S0ixS0;
-		} else if (!power_has_signals(IN_PGOOD_ALL_CORE)) {
+		} else if (power_has_failed()) {
 			return POWER_S0;
 		}
 
@@ -384,7 +397,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 	case POWER_S5S3:
 		__fallthrough;
 	case POWER_S4S3:
-		if (!power_has_signals(IN_PGOOD_ALL_CORE)) {
+		if (power_has_failed()) {
 			/* Required rail went away */
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			return POWER_S5G3;
@@ -403,7 +416,7 @@ enum power_state common_intel_x86_power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S0:
-		if (!power_has_signals(IN_PGOOD_ALL_CORE)) {
+		if (power_has_failed()) {
 			/* Required rail went away, go straight back to S5 */
 			chipset_force_shutdown(CHIPSET_SHUTDOWN_POWERFAIL);
 			return POWER_S3S5;
