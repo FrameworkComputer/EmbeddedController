@@ -547,6 +547,18 @@ struct tcpm_drv {
 #endif /* defined(CONFIG_CMD_TCPC_DUMP) */
 
 	int (*reset_bist_type_2)(int port);
+
+#ifdef CONFIG_MFD
+	/**
+	 * Optional - lock the TCPC port for exclusive I2C access.  Only
+	 * supported on Zephyr projects that use multi-function devices
+	 * for the TCPC.
+	 *
+	 * @param part USB-C port number
+	 * @param get_lock Non zero to acquire lock, zero to release lock
+	 */
+	void (*lock)(int port, int get_lock);
+#endif
 };
 
 #ifdef CONFIG_ZEPHYR
