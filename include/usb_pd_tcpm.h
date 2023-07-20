@@ -607,6 +607,16 @@ struct tcpc_config_t {
 #else
 	enum gpio_signal alert_signal;
 #endif
+#ifdef CONFIG_MFD
+	/*
+	 * Some TCPCs are multi-function devices supporting a TCPC
+	 * function and other functions (I/O expander, PPC, BC1.2, etc).
+	 * When Zephyr upstream provides a parent multi-function driver,
+	 * this field gets set to the corresponding device so the TCPC
+	 * driver can lock access and prevent corruption.
+	 */
+	const struct device *mfd_parent;
+#endif
 };
 
 #ifndef CONFIG_USB_PD_TCPC_RUNTIME_CONFIG

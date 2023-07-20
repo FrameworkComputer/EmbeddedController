@@ -15,7 +15,7 @@
 #define ALERT_TEST_VAL 0xffff
 
 #define NCT38XX_PORT 0
-#define NCT38XX_EMUL EMUL_DT_GET(DT_NODELABEL(nct38xx_emul))
+#define NCT38XX_EMUL EMUL_GET_CHIP_BINDING(DT_NODELABEL(nct38xx_emul))
 
 int nct38xx_tcpm_init(int port);
 int nct38xx_tcpm_set_snk_ctrl(int port, int enable);

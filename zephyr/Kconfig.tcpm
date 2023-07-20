@@ -164,6 +164,7 @@ config PLATFORM_EC_USB_PD_TCPM_NCT38XX
 	default y
 	depends on DT_HAS_NUVOTON_NCT38XX_TCPC_ENABLED
 	select PLATFORM_EC_USB_PD_TCPM_TCPCI
+        select MFD
 	help
 	  The NCT38n7/8 is a single/dual-port, USB Type-C Port Controller
 	  (TCPC). It incorporates a Power Delivery (PD) PHY with BMC encoding,

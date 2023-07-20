@@ -2,11 +2,15 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-description: Nuvoton NCT38XX USB TCPC binding
+description: |
+  Nuvoton NCT38XX USB TCPC binding
+
+  This NCT38xx TCPC binding must be child-node under the "nuvoton,nct38xx"
+  multi-function device node.
 
 compatible: "nuvoton,nct38xx-tcpc"
 
-include: ["i2c-device.yaml", "tcpc-device.yaml"]
+include: ["tcpc-device.yaml"]
 
 properties:
   gpio-dev:

@@ -22,6 +22,17 @@
 #include <zephyr/ztest.h>
 
 /**
+ * @brief Helper macro to check for the NTC38xx TCPC. The NCT38xx TCPC
+ * is configured as a child binding under the nuvoton,nc38xx MFD. Grab
+ * the parent phanlde when the NCT38xx TCPC is detected, otherwise return
+ * the current node phandle.
+ */
+#define EMUL_GET_CHIP_BINDING(chip_phandle)                                 \
+	COND_CODE_1(DT_NODE_HAS_COMPAT(chip_phandle, nuvoton_nct38xx_tcpc), \
+		    (EMUL_DT_GET(DT_PARENT(chip_phandle))),                 \
+		    (EMUL_DT_GET(chip_phandle)))
+
+/**
  * @brief Helper macro for EMUL_GET_USBC_BINDING. If @p usbc_id has the same
  *        port number as @p port, then struct emul* for @p chip phandle is
  *        returned.
@@ -32,7 +43,7 @@
  */
 #define EMUL_GET_USBC_BINDING_IF_PORT_MATCH(usbc_id, port, chip) \
 	COND_CODE_1(IS_EQ(USBC_PORT_NEW(usbc_id), port),         \
-		    (EMUL_DT_GET(DT_PHANDLE(usbc_id, chip))), ())
+		    (EMUL_GET_CHIP_BINDING(DT_PHANDLE(usbc_id, chip))), ())
 
 /**
  * @brief Get struct emul from phandle @p chip property of USBC @p port
