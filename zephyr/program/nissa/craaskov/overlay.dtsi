@@ -83,11 +83,6 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "usb_interrupt";
 		};
-		int_usb_c1: usb_c1 {
-			irq-pin = <&gpio_sb_1>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "usb_interrupt";
-		};
 	};
 
 	named-gpios {
@@ -131,7 +126,6 @@
 		 * Input GPIO when used with type-C port 1
 		 * Output when used with HDMI sub-board
 		 */
-		gpio-usb-c1-int-odl = &gpio_sb_1;
 		gpio-en-rails-odl = &gpio_sb_1;
 		/*
 		 * Sub-board with type A USB, enable.
@@ -209,30 +203,6 @@
 		};
 		port0-muxes {
 			virtual_mux_0: virtual-mux-0 {
-				compatible = "cros-ec,usbc-mux-virtual";
-			};
-		};
-		/*
-		 * TODO(b:211693800): port1 may not be present on some
-		 * sub-boards.
-		 */
-		port1@1 {
-			compatible = "named-usbc-port";
-			reg = <1>;
-			chg = <&chg_port1>;
-			tcpc = <&tcpc_port1>;
-			usb-mux-chain-1 {
-				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&virtual_mux_1 &anx7483_mux_1>;
-			};
-			usb_mux_chain_1_no_mux: usb-mux-chain-1-no-mux {
-				compatible = "cros-ec,usb-mux-chain";
-				alternative-chain;
-				usb-muxes = <&virtual_mux_1>;
-			};
-		};
-		port1-muxes {
-			virtual_mux_1: virtual-mux-1 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
 		};
@@ -320,32 +290,6 @@
 		tcpc-flags = <(
 			TCPC_FLAGS_TCPCI_REV2_0 |
 			TCPC_FLAGS_VBUS_MONITOR)>;
-	};
-};
-
-&i2c5_1 {
-	label = "I2C_SUB_C1_TCPC";
-	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
-
-	chg_port1: isl923x@9 {
-		compatible = "intersil,isl923x";
-		status = "okay";
-		reg = <0x9>;
-	};
-
-	tcpc_port1: raa489000@22 {
-		compatible = "renesas,raa489000";
-		reg = <0x22>;
-		tcpc-flags = <(
-			TCPC_FLAGS_TCPCI_REV2_0 |
-			TCPC_FLAGS_VBUS_MONITOR)>;
-	};
-
-	anx7483_mux_1: anx7483-mux-1@3e {
-		compatible = "analogix,anx7483";
-		reg = <0x3e>;
-		board-set = "anx7483_set_default_tuning";
-		flags = <USB_MUX_FLAG_RESETS_IN_G3>;
 	};
 };
 

@@ -112,18 +112,6 @@ uint16_t tcpc_get_alert_status(void)
 		}
 	}
 
-	if (board_get_usb_pd_port_count() == 2 &&
-	    !gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl))) {
-		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
-			/* TCPCI spec Rev 1.0 says to ignore bits 14:12. */
-			if (!(tcpc_config[1].flags & TCPC_FLAGS_TCPCI_REV2_0))
-				regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
-
-			if (regval)
-				status |= PD_STATUS_TCPC_ALERT_1;
-		}
-	}
-
 	return status;
 }
 
@@ -189,14 +177,10 @@ void board_reset_pd_mcu(void)
  */
 void usb_interrupt(enum gpio_signal signal)
 {
-	int port;
+	if (signal != GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_int_odl)))
+		return;
 
-	if (signal == GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_int_odl))) {
-		port = 0;
-	} else {
-		port = 1;
-	}
 	/* Trigger polling of TCPC in USB-PD task */
-	schedule_deferred_pd_interrupt(port);
+	schedule_deferred_pd_interrupt(0);
 }
 /* LCOV_EXCL_STOP */
