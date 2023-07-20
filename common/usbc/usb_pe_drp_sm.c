@@ -680,14 +680,14 @@ test_export_static void set_state_pe(const int port,
 static void pe_set_dpm_curr_request(const int port, const int request);
 /*
  * The spec. revision is used to index into this array.
- *  PD 1.0 (VDO 1.0) - return VDM_VER10
- *  PD 2.0 (VDO 1.0) - return VDM_VER10
- *  PD 3.0 (VDO 2.0) - return VDM_VER20
+ *  PD 1.0 (VDO 1.0) - return SVDM_VER_1_0
+ *  PD 2.0 (VDO 1.0) - return SVDM_VER_1_0
+ *  PD 3.0 (VDO 2.0) - return SVDM_VER_1_0
  */
 static const uint8_t vdo_ver[] = {
-	[PD_REV10] = VDM_VER10,
-	[PD_REV20] = VDM_VER10,
-	[PD_REV30] = VDM_VER20,
+	[PD_REV10] = SVDM_VER_1_0,
+	[PD_REV20] = SVDM_VER_1_0,
+	[PD_REV30] = SVDM_VER_2_0,
 };
 
 int pd_get_rev(int port, enum tcpci_msg_type type)
@@ -702,7 +702,7 @@ int pd_get_vdo_ver(int port, enum tcpci_msg_type type)
 	if (rev < PD_REV30)
 		return vdo_ver[rev];
 	else
-		return VDM_VER20;
+		return SVDM_VER_2_0;
 }
 
 static void pe_set_ready_state(int port)

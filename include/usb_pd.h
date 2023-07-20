@@ -465,6 +465,12 @@ enum pd_alternate_modes {
 #define AMODE_TYPE_COUNT (TCPCI_MSG_SOP + 1)
 #endif
 
+enum usb_pd_svdm_ver {
+	SVDM_VER_1_0,
+	SVDM_VER_2_0,
+	SVDM_VER_2_1,
+};
+
 /* Discovery results for a port partner (SOP) or cable plug (SOP') */
 struct pd_discovery {
 	/* Identity data */
@@ -496,9 +502,6 @@ struct partner_active_modes {
  * VDM object is minimum of VDM header + 6 additional data objects.
  */
 #define VDO_HDR_SIZE 1
-
-#define VDM_VER10 0
-#define VDM_VER20 1
 
 #define PD_VDO_INVALID -1
 
@@ -1564,8 +1567,8 @@ int pd_get_rev(int port, enum tcpci_msg_type type);
  *
  * @param port USB-C port number
  * @param type USB-C port partner
- * @return VDM_VER10 for VDM Version 1.0
- *         VDM_VER20 for VDM Version 2.0
+ * @return SVDM_VER_1_0 for VDM Version 1.0
+ *         SVDM_VER_2_0 for VDM Version 2.0
  */
 int pd_get_vdo_ver(int port, enum tcpci_msg_type type);
 

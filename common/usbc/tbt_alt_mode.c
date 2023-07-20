@@ -279,7 +279,7 @@ bool tbt_cable_entry_required_for_usb4(int port)
 
 	if (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE) {
 		disc_sop_prime = pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
-		if (pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME) < VDM_VER20 ||
+		if (pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME) < SVDM_VER_2_0 ||
 		    disc_sop_prime->identity.product_t1.a_rev30.vdo_ver <
 			    VDO_VERSION_1_3)
 			return true;

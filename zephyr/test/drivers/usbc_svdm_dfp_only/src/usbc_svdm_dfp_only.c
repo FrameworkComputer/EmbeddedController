@@ -42,7 +42,7 @@ get_identity_response(struct usbc_svdm_dfp_only_fixture *fixture)
 {
 	uint32_t discover_identity[] = {
 		VDO(USB_SID_PD, 1,
-		    VDO_SVDM_VERS(VDM_VER20) | CMD_DISCOVER_IDENT),
+		    VDO_SVDM_VERS(SVDM_VER_2_0) | CMD_DISCOVER_IDENT),
 	};
 
 	/* Send a discover identity command from the partner */
