@@ -320,6 +320,7 @@
 		     &i2c2_data_gpf7_default>;
 	pinctrl-names = "default";
 	status = "okay";
+	/delete-property/ fifo-enable;
 };
 
 &i2c4 {
