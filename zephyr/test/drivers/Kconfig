@@ -2,6 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config TEST_PROVIDE_PM_HOOKS
+	bool "Provide PM hooks for test purposes"
+	default y
+	select HAS_PM
+
 config BUG_249829957
 	bool "Tracking b/249829957"
 

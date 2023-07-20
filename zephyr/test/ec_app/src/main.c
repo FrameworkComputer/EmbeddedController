@@ -13,6 +13,19 @@
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test_new.h>
 
+void pm_state_set(enum pm_state state, uint8_t substate_id)
+{
+	ARG_UNUSED(substate_id);
+	ARG_UNUSED(state);
+}
+
+void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
+{
+	ARG_UNUSED(state);
+	ARG_UNUSED(substate_id);
+	irq_unlock(0);
+}
+
 #ifdef CONFIG_CMD_AP_RESET_LOG
 ZTEST(ec_app_tests, test_init_reset_log)
 {
