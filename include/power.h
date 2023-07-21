@@ -176,6 +176,13 @@ int power_wait_mask_signals_timeout(uint32_t want, uint32_t mask, int timeout);
  */
 void power_set_state(enum power_state new_state);
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+/**
+ * Reboot the ap if detect the system has hung
+ */
+void board_reboot_ap_on_g3(void);
+#endif
+
 /**
  * Set the low-level chipset power state.
  *

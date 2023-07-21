@@ -105,6 +105,13 @@ host_command_reboot_ap_on_g3(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_REBOOT_AP_ON_G3, host_command_reboot_ap_on_g3,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+void board_reboot_ap_on_g3(void)
+{
+	want_reboot_ap_at_g3 = true;
+}
+#endif
+
 __overridable int power_signal_get_level(enum gpio_signal signal)
 {
 	if (IS_ENABLED(CONFIG_HOST_ESPI_VW_POWER_SIGNAL)) {
