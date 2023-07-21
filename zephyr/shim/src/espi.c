@@ -706,6 +706,35 @@ static void espi_peripheral_handler(const struct device *dev,
 	}
 }
 
+#if defined(CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN)
+/* Workaround for ADM fw18 known issue */
+static int espi_channel_vr_ready;
+int get_espi_virtual_wire_channel_status(void)
+{
+	return espi_channel_vr_ready;
+}
+
+void clear_espi_virtual_wire_channel_status(void)
+{
+	espi_channel_vr_ready = 0;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, clear_espi_virtual_wire_channel_status, HOOK_PRIO_DEFAULT);
+
+static void custom_espi_channel_ready_handler(const struct device *dev,
+				    struct espi_callback *cb,
+				    struct espi_event event)
+{
+	if (event.evt_type == ESPI_BUS_EVENT_CHANNEL_READY) {
+		switch (event.evt_details) {
+		case ESPI_CHANNEL_VWIRE:
+			espi_channel_vr_ready = 1;
+			break;
+		default:
+		}
+	}
+}
+#endif
+
 static int zephyr_shim_setup_espi(void)
 {
 	uint32_t enable = 1;
@@ -728,6 +757,12 @@ static int zephyr_shim_setup_espi(void)
 		{
 			.handler = power_signal_espi_cb,
 			.event_type = POWER_SIGNAL_ESPI_BUS_EVENTS,
+		},
+#endif
+#if defined(CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN)
+		{
+			.handler = custom_espi_channel_ready_handler,
+			.event_type = ESPI_BUS_EVENT_CHANNEL_READY,
 		},
 #endif
 	};
