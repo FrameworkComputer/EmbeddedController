@@ -4,3 +4,5 @@
 
 target_sources(app PRIVATE src/common.c)
 target_sources_ifdef(CONFIG_TEST_BOARD_PPC_CONFIG app PRIVATE src/ppc_config.c)
+target_sources_ifdef(CONFIG_TEST_BOARD_FORM_FACTOR app PRIVATE
+	../skyrim/src/form_factor.c ${PLATFORM_EC_PROGRAM_DIR}/skyrim/${CONFIG_TEST_BOARD_NAME}/src/form_factor.c)

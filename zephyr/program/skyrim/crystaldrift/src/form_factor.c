@@ -17,7 +17,7 @@
 
 LOG_MODULE_DECLARE(crystaldrift, CONFIG_SKYRIM_LOG_LEVEL);
 
-static void clamshell_init(void)
+test_export_static void clamshell_init(void)
 {
 	int ret;
 	uint32_t val;
