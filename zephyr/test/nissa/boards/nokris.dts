@@ -288,10 +288,14 @@
 		reg = <0x82>;
 	};
 
-	tcpc_port0: nct38xx_emul@70 {
-		compatible = "cros,nct38xx-emul", "nuvoton,nct38xx-tcpc";
+	nct38xx@70 {
+		compatible = "nuvoton,nct38xx";
 		reg = <0x70>;
-		rst-gpios = <&gpio7 3 0x7>;
+		tcpc_port0: nct38xx-tcpc {
+			compatible = "cros,nct38xx-emul",
+				"nuvoton,nct38xx-tcpc";
+			rst-gpios = <&gpio7 3 0x7>;
+		};
 	};
 
 	tcpc_port1: ps8xxx_emul@b {
@@ -315,4 +319,3 @@
 		reg = <0x5e>;
 	};
 };
-

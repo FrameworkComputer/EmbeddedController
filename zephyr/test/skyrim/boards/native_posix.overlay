@@ -547,10 +547,15 @@
 			reg = <0x82>;
 		};
 
-		tcpc_port0: nct38xx_emul@70 {
-			compatible = "cros,nct38xx-emul", "nuvoton,nct38xx-tcpc";
+		nct38xx@70 {
+			compatible = "nuvoton,nct38xx";
 			reg = <0x70>;
-			rst-gpios = <&gpio_test 0 GPIO_ACTIVE_LOW>;
+
+			tcpc_port0: nct38xx-tcpc {
+				compatible = "cros,nct38xx-emul",
+					"nuvoton,nct38xx-tcpc";
+				rst-gpios = <&gpio_test 0 GPIO_ACTIVE_LOW>;
+			};
 		};
 	};
 
@@ -573,10 +578,15 @@
 			reg = <0x72>;
 		};
 
-		tcpc_port1: nct38xx_emul@70 {
-			compatible = "cros,nct38xx-emul", "nuvoton,nct38xx-tcpc";
+		nct38xx@70 {
+			compatible = "nuvoton,nct38xx";
 			reg = <0x70>;
-			rst-gpios = <&gpio_test 1 GPIO_ACTIVE_LOW>;
+
+			tcpc_port1: nc38xx-tcpc {
+				compatible = "cros,nct38xx-emul",
+					"nuvoton,nct38xx-tcpc";
+				rst-gpios = <&gpio_test 1 GPIO_ACTIVE_LOW>;
+			};
 		};
 	};
 
