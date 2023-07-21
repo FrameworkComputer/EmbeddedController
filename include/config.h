@@ -6938,12 +6938,44 @@
 #endif /* CONFIG_DPTF_MULTI_PROFILE && !CONFIG_DPTF */
 
 /*
+ * The EC monitors the AP suspend/resume process using:
+ * - EC_CMD_HOST_SLEEP_EVENT (0x00A9)
+ * - SLP_S0 signal
+ *
+ * When the AP starts the suspend process, it sends EC_CMD_HOST_SLEEP_EVENT to
+ * signal to the EC that a suspend has begun. This starts the EC's timer, which
+ * uses CONFIG_SLEEP_TIMEOUT_MS to determine how long to wait for the suspend to
+ * complete (by monitoring SLP_S0) before considering the AP "hung". Similarly,
+ * when a resume is begun, the EC starts a timer using the same
+ * CONFIG_SLEEP_TIMEOUT_MS value and waits for the AP to send
+ * EC_CMD_HOST_SLEEP_EVENT to indicate the resume has completed.
+ *
+ * For AMD Systems:
+ * If the EC hits the timeout value CONFIG_SLEEP_TIMEOUT_MS, the AP is
+ * considered "hung" and the EC begins the recovery process. If
+ * CONFIG_POWER_SLEEP_FAILURE_DETECTION is enabled for the board, the EC will
+ * send the Host Event EC_HOST_EVENT_HANG_DETECT, possibly triggering recovery
+ * within the AP, and then start a timer to wait CONFIG_HARD_SLEEP_HANG_TIMEOUT.
+ * If the AP fails to complete the sleep step within
+ * CONFIG_HARD_SLEEP_HANG_TIMEOUT, the EC will forcefully reset the AP to
+ * complete recovery.
+ */
+
+/*
  * Define the timeout in milliseconds between when the EC receives a suspend
  * command and when the EC times out and asserts wake because the sleep signal
  * SLP_S0 did not assert.
  */
 #ifndef CONFIG_SLEEP_TIMEOUT_MS
-#define CONFIG_SLEEP_TIMEOUT_MS 15000
+#define CONFIG_SLEEP_TIMEOUT_MS 10000
+#endif
+
+/*
+ * Define the timeout in milliseconds between when the EC |SysRq| to the AP
+ * and when the AP is forcibly reset because it didn't reboot on its own.
+ */
+#ifndef CONFIG_HARD_SLEEP_HANG_TIMEOUT
+#define CONFIG_HARD_SLEEP_HANG_TIMEOUT 10000
 #endif
 
 #ifdef CONFIG_PWM_KBLIGHT

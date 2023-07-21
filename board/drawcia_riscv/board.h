@@ -17,6 +17,9 @@
 #define VARIANT_DEDEDE_EC_IT8320
 #include "baseboard.h"
 
+/* Save some flash space */
+#undef CONFIG_POWER_SLEEP_FAILURE_DETECTION
+
 #define CONFIG_LTO
 
 /*

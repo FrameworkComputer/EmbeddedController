@@ -75,6 +75,30 @@ tests:
     - default/prj.conf
     extra_dtc_overlay_files:
     - default/boards/native_posix.overlay
+  drivers.default.console_cmds_ro:
+    timeout: 360
+    extra_args:
+    - EXTRA_CFLAGS=-DSECTION_IS_RO
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS=y
+    - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    extra_conf_files:
+    - prj.conf
+    - default/prj.conf
+    extra_dtc_overlay_files:
+    - default/boards/native_posix.overlay
+  drivers.default.console_cmds_rw:
+    timeout: 360
+    extra_args:
+    - EXTRA_CFLAGS=-DSECTION_IS_RW
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS=y
+    - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    extra_conf_files:
+    - prj.conf
+    - default/prj.conf
+    extra_dtc_overlay_files:
+    - default/boards/native_posix.overlay
   drivers.default.console_cmds.ec_host_cmd:
     timeout: 360
     extra_configs:
@@ -792,6 +816,28 @@ tests:
     - prj.conf
     - ec_host_cmd.conf
   drivers.power_host_sleep:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_POWER_HOST_SLEEP=y
+    # Make tests independent of chipset specific code
+    - CONFIG_AP_ARM_QUALCOMM_SC7280=n
+    - CONFIG_PLATFORM_EC_POWERSEQ_SC7280=n
+    - CONFIG_POWER_SEQUENCE_MOCK=y
+    - CONFIG_PLATFORM_EC_POWERSEQ_HOST_SLEEP=y
+    - CONFIG_PLATFORM_EC_POWERSEQ_S0IX=y
+  drivers.power_host_sleep_ro:
+    extra_args:
+    - EXTRA_CFLAGS=-DSECTION_IS_RO
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_POWER_HOST_SLEEP=y
+    # Make tests independent of chipset specific code
+    - CONFIG_AP_ARM_QUALCOMM_SC7280=n
+    - CONFIG_PLATFORM_EC_POWERSEQ_SC7280=n
+    - CONFIG_POWER_SEQUENCE_MOCK=y
+    - CONFIG_PLATFORM_EC_POWERSEQ_HOST_SLEEP=y
+    - CONFIG_PLATFORM_EC_POWERSEQ_S0IX=y
+  drivers.power_host_sleep_rw:
+    extra_args:
+    - EXTRA_CFLAGS=-DSECTION_IS_RW
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_POWER_HOST_SLEEP=y
     # Make tests independent of chipset specific code

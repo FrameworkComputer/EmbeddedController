@@ -44,6 +44,7 @@
 #undef CONFIG_CMD_POWERINDEBUG
 #undef CONFIG_CMD_POWER_AVG
 #undef CONFIG_CMD_REGULATOR
+#undef CONFIG_POWER_SLEEP_FAILURE_DETECTION
 
 /* Optional features */
 #define CONFIG_SYSTEM_UNLOCKED /* Allow dangerous commands while in dev. */

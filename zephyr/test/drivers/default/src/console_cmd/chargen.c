@@ -20,6 +20,8 @@ const char expected_output[] =
 	"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ"
 	"0123456789abcdefghijklmnopqrstuvwxyzABCDEFGHIJKLMNOPQRSTUVWXYZ\r\n";
 
+/* |chargen| is only supported in RW */
+#if defined(SECTION_IS_RW)
 ZTEST_USER(console_cmd_chargen, test_no_args)
 {
 	const struct device *uart_shell_dev =
@@ -31,6 +33,7 @@ ZTEST_USER(console_cmd_chargen, test_no_args)
 	shell_backend_dummy_clear_output(shell_zephyr);
 
 	uart_clear_input();
+
 	zassert_ok(shell_execute_cmd(shell_zephyr, "chargen 62 124"), NULL);
 	k_sleep(K_MSEC(500));
 
@@ -39,6 +42,7 @@ ZTEST_USER(console_cmd_chargen, test_no_args)
 	zassert_true(nread == sizeof(read_buf));
 	zassert_true(memcmp(read_buf, expected_output, nread));
 }
+#endif
 
 ZTEST_SUITE(console_cmd_chargen, drivers_predicate_post_main, NULL, NULL, NULL,
 	    NULL);

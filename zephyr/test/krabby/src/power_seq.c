@@ -232,8 +232,10 @@ ZTEST(power_seq, test_host_sleep_hang)
 			      .sleep_event = HOST_SLEEP_EVENT_S3_SUSPEND }));
 	k_sleep(K_SECONDS(30));
 
+#if defined(SECTION_IS_RW)
 	/* Verify that EC_HOST_EVENT_HANG_DETECT is triggered */
 	zassert_true(host_is_event_set(EC_HOST_EVENT_HANG_DETECT));
+#endif /* SECTION_IS_RW */
 }
 
 /* Shutdown from EC, S0 -> power key press (8 secs) -> S3S5 (8 secs) -> S5 -> G3

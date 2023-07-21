@@ -11,6 +11,8 @@
 #include <zephyr/shell/shell.h>
 #include <zephyr/ztest.h>
 
+#if defined(SECTION_IS_RW)
+
 ZTEST_USER(console_cmd_sleeptimeout, test_no_params)
 {
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "sleeptimeout"),
@@ -42,3 +44,5 @@ ZTEST_USER(console_cmd_sleeptimeout, test_bad_params)
 }
 
 ZTEST_SUITE(console_cmd_sleeptimeout, NULL, NULL, NULL, NULL, NULL);
+
+#endif /* SECTION_IS_RW */

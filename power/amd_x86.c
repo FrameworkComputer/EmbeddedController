@@ -266,25 +266,8 @@ static void lpc_s0ix_resume_restore_masks(void)
 
 __override void power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 {
-	/*
-	 * Wake up the AP so they don't just chill in a non-suspended state and
-	 * burn power. Overload a vaguely related event bit since event bits are
-	 * at a premium. If the system never entered S0ix, then manually set the
-	 * wake mask to pretend it did, so that the hang detect event wakes the
-	 * system.
-	 */
-	if (power_get_state() == POWER_S0) {
-		host_event_t sleep_wake_mask;
-
-		get_lazy_wake_mask(POWER_S0ix, &sleep_wake_mask);
-		lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, sleep_wake_mask);
-	}
-
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_AMD_STB_DUMP))
 		amd_stb_dump_trigger();
-
-	CPRINTS("Warning: Detected sleep hang! Waking host up!");
-	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
 }
 
 static void handle_chipset_reset(void)

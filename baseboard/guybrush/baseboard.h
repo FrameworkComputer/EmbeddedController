@@ -17,10 +17,6 @@
 #define CONFIG_ASSERT_CCD_MODE_ON_DTS_CONNECT
 #define CONFIG_LTO /* Link-Time Optimizations to reduce code size */
 
-/* Detect sleep hang after 10s */
-#undef CONFIG_SLEEP_TIMEOUT_MS
-#define CONFIG_SLEEP_TIMEOUT_MS 10000
-
 #undef CONFIG_UART_TX_BUF_SIZE
 #define CONFIG_UART_TX_BUF_SIZE 4096
 

@@ -8,3 +8,13 @@ tests:
   amd.power:
     extra_configs:
       - CONFIG_TEST_AMD_POWER=y
+  amd.power_ro:
+    extra_args:
+      - EXTRA_CFLAGS=-DSECTION_IS_RO
+    extra_configs:
+      - CONFIG_TEST_AMD_POWER=y
+  amd.power_rw:
+    extra_args:
+      - EXTRA_CFLAGS=-DSECTION_IS_RW
+    extra_configs:
+      - CONFIG_TEST_AMD_POWER=y

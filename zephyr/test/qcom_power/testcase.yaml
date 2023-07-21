@@ -8,3 +8,19 @@ tests:
     extra_dtc_overlay_files:
     - ./boards/native_posix.overlay
     - ./boards/power_button.dtsi
+  qcom_power.power_gpio_keys_ro:
+    extra_args:
+    - EXTRA_CFLAGS=-DSECTION_IS_RO
+    extra_configs:
+    - CONFIG_PLATFORM_EC_POWER_BUTTON=n
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./boards/power_button.dtsi
+  qcom_power.power_gpio_keys_rw:
+    extra_args:
+    - EXTRA_CFLAGS=-DSECTION_IS_RW
+    extra_configs:
+    - CONFIG_PLATFORM_EC_POWER_BUTTON=n
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./boards/power_button.dtsi

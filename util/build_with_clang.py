@@ -48,7 +48,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
     # git grep  --name-only 'CHIP:=stm32' | xargs grep -L 'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "bland",
-    "burnet",
     "c2d2",
     "cerise",
     "coffeecake",
@@ -72,7 +71,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "kappa",
     "katsu",
     "kodama",
-    "krane",
     "kukui",
     "magnemite",
     "makomo",
@@ -128,14 +126,11 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "careena",
     "casta",
     "chronicler",
-    "coachz",
     "collis",
     "constitution",
     "copano",
     "coral",
     "corori",
-    "corori2",
-    "cret",
     "crota",
     "dalboz",
     "delbin",
@@ -194,7 +189,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "moonbuggy",
     "morphius",
     "mrbland",
-    "mushu",
     "nami",
     "nautilus",
     "nightfury",
@@ -290,7 +284,6 @@ RISCV_BOARDS = [
     "cherry_scp",
     "cozmo",
     "dojo",
-    "drawcia_riscv",
     "goroh",
     "hayato",
     "icarus",
@@ -307,6 +300,14 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     # Boards that use CHIP:=npcx
     "garg",
     "volteer",
+    # Not enough flash space with CONFIG_POWER_SLEEP_FAILURE_DETECTION enabled
+    "burnet",
+    "coachz",
+    "corori2",
+    "cret",
+    "drawcia_riscv",
+    "krane",
+    "mushu",
 ]
 
 # TODO(b/201311714): NDS32 is not supported by LLVM.

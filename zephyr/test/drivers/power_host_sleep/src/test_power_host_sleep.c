@@ -164,11 +164,9 @@ ZTEST(power_host_sleep, test_sleep_start_suspend_custom_timeout)
 	zassert_equal(power_board_handle_sleep_hang_fake.call_count, 0);
 
 	/* Allow timeout to occur */
-	/*
-	 * TODO(b/253284635): Why can't we just wait 5ms?
-	 */
-	k_sleep(K_SECONDS(1));
+	k_sleep(K_MSEC(CONFIG_SLEEP_TIMEOUT_MS * 2));
 
+#if defined(SECTION_IS_RW)
 	/* Check timeout handlers fired only *once* after multiple calls */
 	zassert_equal(power_chipset_handle_sleep_hang_fake.call_count, 1);
 	zassert_equal(power_board_handle_sleep_hang_fake.call_count, 1);
@@ -177,6 +175,7 @@ ZTEST(power_host_sleep, test_sleep_start_suspend_custom_timeout)
 		      SLEEP_HANG_S0IX_SUSPEND);
 	zassert_equal(power_board_handle_sleep_hang_fake.arg0_val,
 		      SLEEP_HANG_S0IX_SUSPEND);
+#endif /* SECTION_IS_RW */
 }
 
 ZTEST(power_host_sleep, test_sleep_start_suspend_default_timeout)
@@ -187,11 +186,9 @@ ZTEST(power_host_sleep, test_sleep_start_suspend_default_timeout)
 
 	sleep_start_suspend(&context);
 
-	/*
-	 * TODO(b/253284635): Why can't we just wait CONFIG_SLEEP_TIMEOUT_MS?
-	 */
 	k_msleep(CONFIG_SLEEP_TIMEOUT_MS * 2);
 
+#if defined(SECTION_IS_RW)
 	zassert_equal(power_chipset_handle_sleep_hang_fake.call_count, 1);
 	zassert_equal(power_board_handle_sleep_hang_fake.call_count, 1);
 
@@ -199,6 +196,7 @@ ZTEST(power_host_sleep, test_sleep_start_suspend_default_timeout)
 		      SLEEP_HANG_S0IX_SUSPEND);
 	zassert_equal(power_board_handle_sleep_hang_fake.arg0_val,
 		      SLEEP_HANG_S0IX_SUSPEND);
+#endif /* SECTION_IS_RW */
 }
 
 ZTEST(power_host_sleep, test_sleep_start_suspend_infinite_timeout)
@@ -237,6 +235,7 @@ ZTEST(power_host_sleep, test_suspend_then_resume_with_timeout)
 	sleep_resume_transition();
 	k_sleep(K_MSEC(CONFIG_SLEEP_TIMEOUT_MS * 2));
 
+#if defined(SECTION_IS_RW)
 	/* Resume state transition timeout hook should've fired */
 	zassert_equal(power_chipset_handle_sleep_hang_fake.call_count, 1);
 	zassert_equal(power_board_handle_sleep_hang_fake.call_count, 1);
@@ -254,6 +253,7 @@ ZTEST(power_host_sleep, test_suspend_then_resume_with_timeout)
 		      2);
 	/* There was a timeout */
 	zassert_true(context.sleep_transitions & EC_HOST_RESUME_SLEEP_TIMEOUT);
+#endif /* SECTION_IS_RW */
 }
 
 ZTEST(power_host_sleep, test_suspend_then_resume_with_reboot)
@@ -289,6 +289,7 @@ ZTEST(power_host_sleep, test_suspend_then_resume_with_reboot)
 	sleep_resume_transition();
 	k_sleep(K_MSEC(CONFIG_SLEEP_TIMEOUT_MS * 2));
 
+#if defined(SECTION_IS_RW)
 	/* Resume state transition timeout hook should've fired */
 	zassert_equal(power_chipset_handle_sleep_hang_fake.call_count, 1);
 	zassert_equal(power_board_handle_sleep_hang_fake.call_count, 1);
@@ -305,6 +306,7 @@ ZTEST(power_host_sleep, test_suspend_then_resume_with_reboot)
 	zassert_equal(power_chipset_handle_host_sleep_event_fake.call_count, 2);
 	zassert_equal(power_chipset_handle_host_sleep_event_fake.arg0_val,
 		      HOST_SLEEP_EVENT_S0IX_RESUME);
+#endif /* SECTION_IS_RW */
 }
 
 ZTEST(power_host_sleep, test_suspend_then_reboot)
