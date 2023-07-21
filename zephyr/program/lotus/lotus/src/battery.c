@@ -84,7 +84,6 @@ uint32_t get_system_percentage(void)
 	uint32_t memmap_lfcc = *(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_LFCC);
 
 	return 1000 * memmap_cap / (memmap_lfcc + 1);
-
 }
 
 static void battery_percentage_control(void)
