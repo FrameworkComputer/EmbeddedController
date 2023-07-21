@@ -11,6 +11,13 @@ config NISSA_SUB_BOARD
 	  one of a number of option sub-boards with different
 	  hardware configurations.
 
+config NISSA_BOARD_HAS_HDMI_SUPPORT
+	bool "Board supports HDMI sub-boards"
+	default $(dt_nodelabel_enabled,gpio_hdmi_sel)
+	help
+	  Enable board code for managing the state of HDMI connections
+	  on a sub-board.
+
 config BOARD_NIVVIKS
 	bool "Google Nivviks Board"
 	help

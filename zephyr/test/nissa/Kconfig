@@ -53,6 +53,12 @@ config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	  This is used to not define chipset_in_state method as inline
 	  function.
 
+config NISSA_BOARD_HAS_HDMI_SUPPORT
+	bool "Board supports HDMI sub-boards"
+	help
+	  Enable board code for managing the state of hdmi connections
+	  for nissa/src/sub_board.c.
+
 module = NISSA
 module-str = Nissa board-specific code (unit tests)
 source "subsys/logging/Kconfig.template.log_config"

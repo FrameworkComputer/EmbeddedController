@@ -10,6 +10,7 @@ tests:
     - "boards/generic_npcx.dts"
     extra_configs:
     - CONFIG_TEST_NISSA_SUB_BOARD=y
+    - CONFIG_NISSA_BOARD_HAS_HDMI_SUPPORT=y
   nissa.common:
     extra_dtc_overlay_files:
     - "boards/generic_npcx.dts"
