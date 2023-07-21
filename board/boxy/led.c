@@ -7,6 +7,8 @@
 
 #include "common.h"
 #include "ec_commands.h"
+#include "hooks.h"
+#include "led_common.h"
 #include "led_pwm.h"
 #include "pwm.h"
 #include "util.h"
@@ -78,3 +80,11 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 	return EC_SUCCESS;
 }
+
+void board_led_init(void)
+{
+	led_auto_control(EC_LED_ID_POWER_LED, 0);
+	set_pwm_led_color(PWM_LED0, EC_LED_COLOR_RED);
+}
+
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_led_init, HOOK_PRIO_DEFAULT);
