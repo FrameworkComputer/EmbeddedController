@@ -6,14 +6,9 @@ description: Renesas RAA489000 USB TCPC binding
 
 compatible: "renesas,raa489000"
 
-include: ["i2c-device.yaml", "cros-ec,tcpci.yaml"]
+include: ["i2c-device.yaml", "tcpc-device.yaml"]
 
 properties:
-  tcpc-flags:
-    type: int
-    default: 0
-    description: |
-      TCPC configuration flags
   irq-gpios:
     type: phandle-array
     description: |

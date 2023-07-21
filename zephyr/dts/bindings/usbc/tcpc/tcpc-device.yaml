@@ -1,0 +1,24 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+  USBC TCPC
+
+  Properties common to all TCPC drivers.
+
+compatible: "tcpc-device"
+
+include: base.yaml
+
+properties:
+  tcpc-flags:
+    type: int
+    default: 0
+    description: |
+      TCPC configuration flags
+  is-alt:
+    type: boolean
+    description: |
+      If present, this node refers to an alternate TCPC device. The TCPC device
+      is not used by default, and must be manually enabled at runtime.

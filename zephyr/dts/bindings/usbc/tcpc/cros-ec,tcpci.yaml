@@ -1,12 +1,10 @@
-description: USBC TCPC
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+  TCPCI compatible driver with no vendor extensions
 
 compatible: "cros-ec,tcpci"
 
-include: i2c-device.yaml
-
-properties:
-  is-alt:
-    type: boolean
-    description: |
-      If present, this node refers to an alternate TCPC device. The TCPC device
-      is not used by default, and must be manually enabled at runtime.
+include: ["i2c-device.yaml", "tcpc-device.yaml"]
