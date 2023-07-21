@@ -17,7 +17,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
 
-#define DT_DRV_COMPAT nuvoton_nct38xx
+#define DT_DRV_COMPAT nuvoton_nct38xx_tcpc
 
 #define NCT38XX_VENDOR_REG_START 0xC0
 #define NCT38XX_VENDOR_REG_END 0xDE

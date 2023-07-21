@@ -153,7 +153,7 @@ config PLATFORM_EC_USB_PD_TCPM_FUSB302
 config PLATFORM_EC_USB_PD_TCPM_NCT38XX
 	bool "Nuvoton 3807/8 Single/Dual Port Controller with Power Delivery"
 	default y
-	depends on DT_HAS_NUVOTON_NCT38XX_ENABLED
+	depends on DT_HAS_NUVOTON_NCT38XX_TCPC_ENABLED
 	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	help
 	  The NCT38n7/8 is a single/dual-port, USB Type-C Port Controller

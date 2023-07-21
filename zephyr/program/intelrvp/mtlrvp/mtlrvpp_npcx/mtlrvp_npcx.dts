@@ -149,7 +149,7 @@
 	pinctrl-names = "default";
 
 	tcpc_port0: nct38xx@73 {
-		compatible = "nuvoton,nct38xx";
+		compatible = "nuvoton,nct38xx-tcpc";
 		reg = <0x73>;
 		gpio-dev = <&nct38xx_c0>;
 		tcpc-flags = <(
@@ -178,7 +178,7 @@
 	};
 
 	tcpc_port1: nct38xx@77 {
-		compatible = "nuvoton,nct38xx";
+		compatible = "nuvoton,nct38xx-tcpc";
 		reg = <0x77>;
 		gpio-dev = <&nct38xx_c1>;
 		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;

@@ -80,7 +80,7 @@
 	};
 
 	tcpc_port0: nct38xx@70 {
-		compatible = "nuvoton,nct38xx";
+		compatible = "nuvoton,nct38xx-tcpc";
 		reg = <0x70>;
 		gpio-dev = <&nct3807_C0>;
 		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
@@ -169,7 +169,7 @@
 	};
 
 	tcpc_port1: nct38xx@70 {
-		compatible = "nuvoton,nct38xx";
+		compatible = "nuvoton,nct38xx-tcpc";
 		reg = <0x70>;
 		gpio-dev = <&nct3807_C1>;
 		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;

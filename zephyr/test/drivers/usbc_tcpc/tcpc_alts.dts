@@ -52,7 +52,7 @@
 	};
 
 	tcpc_nct38xx_alt: tcpc-nct38xx-alt@73 {
-		compatible = "nuvoton,nct38xx";
+		compatible = "nuvoton,nct38xx-tcpc";
 		reg = <0x73>;
 		tcpc-flags = <(
 			TCPC_FLAGS_TCPCI_REV2_0 |

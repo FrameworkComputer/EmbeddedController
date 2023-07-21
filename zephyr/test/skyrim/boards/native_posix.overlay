@@ -548,7 +548,7 @@
 		};
 
 		tcpc_port0: nct38xx_emul@70 {
-			compatible = "cros,nct38xx-emul", "nuvoton,nct38xx";
+			compatible = "cros,nct38xx-emul", "nuvoton,nct38xx-tcpc";
 			reg = <0x70>;
 			rst-gpios = <&gpio_test 0 GPIO_ACTIVE_LOW>;
 		};
@@ -574,7 +574,7 @@
 		};
 
 		tcpc_port1: nct38xx_emul@70 {
-			compatible = "cros,nct38xx-emul", "nuvoton,nct38xx";
+			compatible = "cros,nct38xx-emul", "nuvoton,nct38xx-tcpc";
 			reg = <0x70>;
 			rst-gpios = <&gpio_test 1 GPIO_ACTIVE_LOW>;
 		};

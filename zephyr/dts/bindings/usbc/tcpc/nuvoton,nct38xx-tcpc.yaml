@@ -4,7 +4,7 @@
 
 description: Nuvoton NCT38XX USB TCPC binding
 
-compatible: "nuvoton,nct38xx"
+compatible: "nuvoton,nct38xx-tcpc"
 
 include: ["i2c-device.yaml", "cros-ec,tcpci.yaml"]
 

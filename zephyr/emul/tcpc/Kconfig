@@ -43,7 +43,7 @@ config EMUL_TCPCI_PARTNER_COMMON
 config EMUL_NCT38XX
 	bool "Nuvoton NCT38xx emulator"
 	default y
-	depends on DT_HAS_NUVOTON_NCT38XX_ENABLED
+	depends on DT_HAS_NUVOTON_NCT38XX_TCPC_ENABLED
 	help
 	  Enable emulator for NCT38XX family of TCPC. This emulator is extension
 	  of the TCPCI emulator.

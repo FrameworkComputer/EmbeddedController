@@ -10,7 +10,7 @@
 
 #include <zephyr/devicetree.h>
 
-#define NCT38XX_TCPC_COMPAT nuvoton_nct38xx
+#define NCT38XX_TCPC_COMPAT nuvoton_nct38xx_tcpc
 
 /* clang-format off */
 #define TCPC_CONFIG_NCT38XX(id)                                                \

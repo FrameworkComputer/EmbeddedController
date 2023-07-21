@@ -108,7 +108,7 @@
 	/delete-node/ rt1716@4e;
 
 	tcpc_nct38xx_port1: nct38xx@73 {
-		compatible = "nuvoton,nct38xx";
+		compatible = "nuvoton,nct38xx-tcpc";
 		gpio-dev = <&nct3807_C1>;
 		reg = <0x73>;
 		tcpc-flags = <(
