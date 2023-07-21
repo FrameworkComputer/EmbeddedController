@@ -506,7 +506,7 @@ static void led_tick(void)
 #ifdef CONFIG_BOARD_LOTUS
 		multifunction_leds_control(colors, 2, 1000);
 #else
-		multifunction_leds_control(colors, 2, 500);
+		multifunction_leds_control(colors, 2, 400);
 #endif
 		return;
 	}
