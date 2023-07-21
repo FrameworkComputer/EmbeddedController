@@ -717,7 +717,8 @@ static void cypd_ppm_port_clear(void)
  * message, or extmessage header - then data
  * length should include length of all data after pd header
  */
-void cypd_send_msg(int controller, int port, uint32_t pd_header, uint16_t ext_hdr, bool pd30, bool response_timer, void *data, uint32_t data_size)
+void cypd_send_msg(int controller, int port, uint32_t pd_header, uint16_t ext_hdr,
+	bool pd30, bool response_timer, void *data, uint32_t data_size)
 {
 	uint16_t header[2] = {0};
 	uint16_t dm_control_data;
@@ -838,11 +839,13 @@ void cypd_response_get_battery_capability(int controller, int port,
 			}
 		}
 	}
-	cypd_send_msg(controller, port, header, ext_header,  false, false, (void *)msg, ARRAY_SIZE(msg)*sizeof(uint16_t));
+	cypd_send_msg(controller, port, header, ext_header,  false, false,
+		(void *)msg, ARRAY_SIZE(msg)*sizeof(uint16_t));
 
 }
 
-int cypd_response_get_battery_status(int controller, int port, uint32_t pd_header, enum tcpci_msg_type sop_type)
+int cypd_response_get_battery_status(int controller, int port,
+	uint32_t pd_header, enum tcpci_msg_type sop_type)
 {
 	int rv = 0;
 	uint32_t msg = 0;
@@ -916,6 +919,7 @@ int cypd_handle_extend_msg(int controller, int port, int len, enum tcpci_msg_typ
 	int i;
 	int port_idx = (controller << 1) + port;
 	int pd_header;
+
 	if (len > 260) {
 		CPRINTS("ExtMsg Too Long");
 		return EC_ERROR_INVAL;
@@ -924,8 +928,10 @@ int cypd_handle_extend_msg(int controller, int port, int len, enum tcpci_msg_typ
 	/* Read the extended message packet */
 	rv = cypd_read_reg_block(controller,
 		CCG_READ_DATA_MEMORY_REG(port, 0), (void *)&(rx_emsg[port_idx].len), len);
-		/*avoid a memcopy so direct copy into the buffer and then swap header and len
-		 * look at the memory layout for the rx_emsg structure to see why we do this */
+		/*
+		 * avoid a memcopy so direct copy into the buffer and then swap header and len
+		 * look at the memory layout for the rx_emsg structure to see why we do this
+		 */
 	rx_emsg[port_idx].header = rx_emsg[port_idx].len >> 16;
 	pd_header = (rx_emsg[port_idx].len & 0xFFFF) + PD_HEADER_SOP(sop_type);
 	rx_emsg[port_idx].len = len-4;
