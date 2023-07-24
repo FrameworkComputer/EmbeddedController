@@ -36,3 +36,8 @@ if (DEFINED CONFIG_TEST_BOARD_USB_MUX_CONFIG)
 		${PLATFORM_EC_PROGRAM_DIR}/skyrim/${CONFIG_TEST_BOARD_NAME}/src/usb_mux_config.c
 	)
 endif()
+
+# USB-C fakes
+if (CONFIG_PLATFORM_EC_USBC)
+  target_sources(app PRIVATE src/usbc_fakes.c)
+endif()
