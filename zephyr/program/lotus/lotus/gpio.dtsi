@@ -218,6 +218,9 @@
 		gpio_syson: syson {
 			gpios = <&gpioa 6 GPIO_OUTPUT_LOW>;
 		};
+		ec_edp_pwm {
+			gpios = <&gpioc 0 GPIO_INPUT>;
+		};
 		fp_control {
 			gpios = <&gpio6 0 GPIO_INPUT>;		/* Finger Printer feature */
 		};
@@ -267,6 +270,9 @@
 		};
 		gpio_gpu_i2c_s5_int: gpu_i2c_s5_int {
 			gpios = <&gpioa 5 GPIO_INPUT>;
+		};
+		gpio_usb_hub_re_en: usb_hub_re_en {
+			gpios = <&gpiob 0 GPIO_OUTPUT_LOW>;
 		};
 		gpio_wl_rst_l: wl_rst_l {
 			gpios = <&gpio6 1 GPIO_OUTPUT_LOW>;
