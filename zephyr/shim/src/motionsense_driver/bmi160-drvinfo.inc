@@ -7,7 +7,7 @@
 #include "driver/accelgyro_bmi160_public.h"
 
 /*
- * CREATE_SENSOR_DATA which is defined in motionsense_sensros.c is
+ * CREATE_SENSOR_DATA which is defined in motionsense_sensors.c is
  * the helper to create sensor driver specific data.
  *
  * CREATE_SENSOR_DATA gets two arguments. One is the compatible

@@ -7,7 +7,7 @@
 #include "driver/accelgyro_bmi3xx.h"
 
 /*
- * CREATE_SENSOR_DATA which is defined in motionsense_sensros.c is
+ * CREATE_SENSOR_DATA which is defined in motionsense_sensors.c is
  * the helper to create sensor driver specific data.
  *
  * CREATE_SENSOR_DATA gets two arguments. One is the compatible
@@ -29,7 +29,7 @@
  */
 CREATE_SENSOR_DATA(cros_ec_drvdata_bmi3xx, CREATE_SENSOR_DATA_BMI3XX)
 /*
- * CREATE_MOTION_SENSOR which is defined in motionsense_sensros.c is
+ * CREATE_MOTION_SENSOR which is defined in motionsense_sensors.c is
  * the macro to create an entry in motion_sensors array.
  * The macro gets value of compatible property of
  * the sensor in device tree and sensor specific values like chip ID,
