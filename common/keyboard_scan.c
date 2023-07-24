@@ -418,8 +418,8 @@ static int read_matrix(uint8_t *state, bool at_boot)
 
 #ifdef CONFIG_KEYBOARD_RUNTIME_KEYS
 
-static uint8_t key_vol_up_row = KEYBOARD_DEFAULT_ROW_VOL_UP;
-static uint8_t key_vol_up_col = KEYBOARD_DEFAULT_COL_VOL_UP;
+test_export_static uint8_t key_vol_up_row = KEYBOARD_DEFAULT_ROW_VOL_UP;
+test_export_static uint8_t key_vol_up_col = KEYBOARD_DEFAULT_COL_VOL_UP;
 
 void set_vol_up_key(uint8_t row, uint8_t col)
 {

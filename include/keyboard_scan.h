@@ -12,6 +12,11 @@
 #include "compile_time_macros.h"
 #include "keyboard_config.h"
 
+#ifdef CONFIG_ZTEST
+extern uint8_t key_vol_up_row;
+extern uint8_t key_vol_up_col;
+#endif
+
 struct keyboard_scan_config {
 	/* Delay between setting up output and waiting for it to settle */
 	uint16_t output_settle_us;

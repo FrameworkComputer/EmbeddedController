@@ -66,5 +66,8 @@ tests:
   kingler.ponyta:
     extra_configs:
     - CONFIG_TEST_PONYTA=y
+    - CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP=y
+    - CONFIG_PLATFORM_EC_MKBP_EVENT=y
     extra_dtc_overlay_files:
     - kingler.ponyta.overlay
+    - boards/ponyta.dtsi

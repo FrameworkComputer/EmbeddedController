@@ -7,6 +7,8 @@
 #include "cros_cbi.h"
 #include "gpio_signal.h"
 #include "hooks.h"
+#include "keyboard_config.h"
+#include "keyboard_scan.h"
 #include "tablet_mode.h"
 #include "zephyr/kernel.h"
 
@@ -27,6 +29,11 @@ static int interrupt_id;
 #define SSFC_MAIM_SENSORS (SSFC_LID_MAIN_SENSOR | SSFC_BASE_MAIN_SENSOR)
 #define SSFC_ALT_SENSORS (SSFC_LID_ALT_SENSOR | SSFC_BASE_ALT_SENSOR)
 
+/* Vol-up key matrix */
+#define VOL_UP_KEY_ROW 1
+#define VOL_UP_KEY_COL 5
+
+FAKE_VALUE_FUNC(int, clock_get_freq);
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
 
@@ -187,4 +194,17 @@ ZTEST(no_alt_sensor, test_no_alt_sensor)
 	k_sleep(K_MSEC(100));
 
 	zassert_equal(interrupt_id, 1, "interrupt_id=%d", interrupt_id);
+}
+
+ZTEST_SUITE(customize_vol_up_key, NULL, NULL, NULL, NULL, NULL);
+
+ZTEST(customize_vol_up_key, test_customize_vol_up_key)
+{
+	zassert_equal(KEYBOARD_DEFAULT_ROW_VOL_UP, key_vol_up_row);
+	zassert_equal(KEYBOARD_DEFAULT_COL_VOL_UP, key_vol_up_col);
+
+	hook_notify(HOOK_INIT);
+
+	zassert_equal(VOL_UP_KEY_ROW, key_vol_up_row);
+	zassert_equal(VOL_UP_KEY_COL, key_vol_up_col);
 }
