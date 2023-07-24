@@ -81,6 +81,7 @@
 
 #ifdef CONFIG_BOARD_PRE_INIT
 /*
+ * NOTE
  * Used to enable JTAG debug during development.
  * NOTE: If ARM Serial Wire Viewer not used then SWV pin can be
  * be disabled and used for another purpose. Change mode to
@@ -229,6 +230,7 @@ static void pd_mcu_interrupt(enum gpio_signal signal)
  * name, factor multiplier, factor divider, shift, channel
  */
 const struct adc_t adc_channels[] = {
+	// TODO: Can we add better comments here?
 	[ADC_I_ADP]           = {"I_ADP", 3300, 4096, 0, 0},
 	[ADC_I_SYS]           = {"I_SYS", 3300, 4096, 0, 1},
 	[ADC_VCIN1_BATT_TEMP] = {"BATT_PRESENT", 3300, 4096, 0, 2},
@@ -241,6 +243,7 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 /*
  * MCHP EVB connected to KBL RVP3
+ * TODO: This isn't used?
  */
 const struct i2c_port_t i2c_ports[]  = {
 	{"pch",      MCHP_I2C_PORT0, 400,  GPIO_I2C_0_SDA, GPIO_I2C_0_SCL},
@@ -389,6 +392,8 @@ void spi_mux_control(int enable)
 }
 
 
+// TODO: Add comment. Is this the BIOS flash?
+// TODO: Why not just return it instead of out-ptr?
 void board_spi_read_byte(uint8_t offset, uint8_t *data)
 {
 	int rv;
@@ -404,6 +409,7 @@ void board_spi_read_byte(uint8_t offset, uint8_t *data)
 	spi_mux_control(0);
 }
 
+// TODO: Add comment. Is this the BIOS flash?
 void board_spi_write_byte(uint8_t offset, uint8_t data)
 {
 	int rv;
@@ -448,6 +454,7 @@ int poweron_reason_powerbtn(void)
 	return power_button_pressed_on_boot;
 }
 
+// TODO: What's VCI?
 static void vci_init(void)
 {
 	if (MCHP_VCI_NEGEDGE_DETECT & (BIT(0) | BIT(1))) {
@@ -560,12 +567,15 @@ static uint8_t chassis_open_count;
 
 static void check_chassis_open(int init)
 {
+	// Detect if the chassis was/is open. This works even when the EC comes
+	// back on because it can detect a sticky bit.
 	if (MCHP_VCI_NEGEDGE_DETECT & BIT(2)) {
 		MCHP_VCI_POSEDGE_DETECT = BIT(2);
 		MCHP_VCI_NEGEDGE_DETECT = BIT(2);
 		system_set_bbram(STSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 1);
 
 		if (init) {
+			// Currently initializing, so chassis was opened during power 
 			system_get_bbram(STSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN,
 							&chassis_vtr_open_count);
 			if (chassis_vtr_open_count < 0xFF)
@@ -671,7 +681,7 @@ static void board_init(void)
 	uint8_t memcap;
 
 	board_spi_read_byte(SPI_AC_BOOT_OFFSET, &memcap);
-
+	// TODO: What's this?
 	if (memcap && !ac_boot_status())
 		*host_get_customer_memmap(0x48) = (memcap & BIT(0));
 
@@ -680,11 +690,14 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_SOC_ENBKL);
 	gpio_enable_interrupt(GPIO_ON_OFF_BTN_L);
 
+	// TODO: What's this?
 	reconfigure_kbbl_pwm_frquency();
 
 	/**
-	 * If we plug-in DC and chassis open, EC will assert EC_ON.
+	 * If we plug-in DC and chassis is open, EC will assert EC_ON.
 	 * We should de-assert the VCI_OUT if we do not power on system.
+	 * Hmm, I don't get it. Seems like EC won't boot unless AC is connected?
+	 * Where is there anything about chassis open/closed?
 	 */
 	if (!extpower_is_present())
 		board_power_off();
@@ -807,7 +820,7 @@ void board_hibernate_late(void)
 /* according to Panel team suggest, delay 60ms to meet spec */
 static void bkoff_on_deferred(void)
 {
-	gpio_set_level(GPIO_EC_BKOFF_L, 1);
+	gpio_set_level(GPIO_ENABLE_BACKLIGHT, 1);
 }
 DECLARE_DEFERRED(bkoff_on_deferred);
 
@@ -818,7 +831,7 @@ void soc_signal_interrupt(enum gpio_signal signal)
 	if (gpio_get_level(GPIO_SOC_ENBKL))
 		hook_call_deferred(&bkoff_on_deferred_data, 60 * MSEC);
 	else
-		gpio_set_level(GPIO_EC_BKOFF_L, 0);
+		gpio_set_level(GPIO_ENABLE_BACKLIGHT, 0);
 }
 
 void chassis_control_interrupt(enum gpio_signal signal)

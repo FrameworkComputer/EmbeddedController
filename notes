@@ -1,0 +1,46 @@
+Branches:
+
+- hx20
+- hx30
+- internal-hx20
+- internal-hx30
+  - Branched off from internal-hx20
+- all-platforms-merged
+  - Merge hx30 into hx20 with merge commit
+
+# TODO: Dedup
+
+- [ ] cpu_power.c
+  - Simple
+- [ ] cypress5525.c
+  - Big difference
+- [x] ec.tasklist
+  - Why doesn't hx20 have the ALS task
+- [ ] gpio.inc
+- [ ] host_command_customization.c
+  - Simple
+- [ ] i2c_hid_mediakeys.c
+  - Big difference
+- [x] keyboard_customization.c
+  - Same
+- [x] led.c
+- [ ] lfw
+- [ ] peci_customization.c
+  - Simple
+- [ ] power_button_x86.c
+  - Simple
+- [ ] power_sequence.c
+  - Medium
+- [ ] ps2mouse.c
+  - Simple
+- [ ] ucsi.c
+  - Simple
+
+# TODO: Upstream merge
+
+- [ ] include/gpio.h
+- [ ] include/config.h
+- [ ] I'm not confident about my merging of driver/als_cm32183.c
+- [ ] common/charge_state_v2.c
+- [ ] common/battery.c
+- [ ] Everything in mchp
