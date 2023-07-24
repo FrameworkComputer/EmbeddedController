@@ -499,14 +499,14 @@ static void led_tick(void)
 		return;
 
 	/* Battery disconnect active signal */
-	if (battery_is_cut_off()) {
+	if (battery_is_cut_off() || (battery_is_present() != BP_YES)) {
 		colors[0] = LED_RED;
 		colors[1] = LED_BLUE;
 		colors[2] = LED_OFF;
 #ifdef CONFIG_BOARD_LOTUS
 		multifunction_leds_control(colors, 2, 1000);
 #else
-		multifunction_leds_control(colors, 2, 400);
+		multifunction_leds_control(colors, 2, 500);
 #endif
 		return;
 	}
