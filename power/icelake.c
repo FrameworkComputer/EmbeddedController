@@ -75,6 +75,23 @@ const struct power_signal_info power_signal_list[] = {
 		.flags = POWER_SIGNAL_ACTIVE_HIGH,
 		.name = "ALL_SYS_PWRGD",
 	},
+#ifdef CONFIG_CHIPSET_JASPERLAKE
+	[PP1050_ST_PGOOD] = {
+		.gpio = GPIO_PG_PP1050_ST_OD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "PP1050_ST_PGOOD",
+	},
+	[DRAM_PGOOD] = {
+		.gpio = GPIO_PG_DRAM_OD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "DRAM_PGOOD",
+	},
+	[VCCIO_EXT_PGOOD] = {
+		.gpio = GPIO_PG_VCCIO_EXT_OD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "VCCIO_EXT_PGOOD",
+	},
+#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
