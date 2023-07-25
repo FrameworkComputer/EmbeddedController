@@ -32,6 +32,10 @@
 #define PS8833_REG_DP 0x01
 #define PS8833_REG_DP_EN BIT(0)
 
+#define PS8833_REG_TBT3_USB4 0x02
+#define PS8833_REG_TBT3_USB4_TBT3_EN BIT(0)
+#define PS8833_REG_TBT3_USB4_USB4_EN BIT(7)
+
 extern const struct usb_mux_driver ps8833_usb_retimer_driver;
 
 #endif /* __CROS_EC_USB_MUX_PARADE8833_H */
