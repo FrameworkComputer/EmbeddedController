@@ -151,8 +151,11 @@
 		i2c_int_tp_l {
 			gpios = <&gpioa 4 GPIO_INPUT>;		/* HUB board TP module */
 		};
-		apu_ec_int_l {
+		gpio_apu_ec_int_l: apu_ec_int_l {
 			gpios = <&gpio9 6 GPIO_ODR_HIGH>;	/* EC notify host HID interrupt */
+		};
+		gpio_apu_ec_int2_l: apu_ec_int2_l {
+			gpios = <&gpio7 4 GPIO_ODR_HIGH>;	/* EC notify host HID interrupt 2*/
 		};
 		cam_sw {
 			gpios = <&gpio9 3 GPIO_INPUT>;
