@@ -120,6 +120,7 @@ if(DEFINED CONFIG_BOARD_ULDREN)
 			"uldren/src/form_factor.c"
 			"uldren/src/kb_backlight.c"
 			"uldren/src/sub_board.c"
+			"uldren/src/mp2964_update.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "uldren/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "uldren/src/charger.c")

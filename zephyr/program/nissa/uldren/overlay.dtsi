@@ -320,6 +320,12 @@
 &i2c1_0 {
 	label = "I2C_SENSOR";
 	clock-frequency = <I2C_BITRATE_FAST>;
+
+	pmic_mp2964: pmic_mp2964@20 {
+			compatible = "mps,mp2964";
+			reg = <0x20>;
+			label = "I2C_ADDR_MP2964_FLAGS";
+	};
 };
 
 &i2c3_0 {
