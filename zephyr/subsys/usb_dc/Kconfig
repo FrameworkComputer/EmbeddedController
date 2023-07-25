@@ -1,0 +1,68 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config USB_DC_HID_KEYBOARD
+	bool "Enable support USB HID keyboard"
+	depends on USB_DEVICE_STACK
+	default n
+	help
+	  Enable keyboard support.
+
+config USB_DC_KEYBOARD_HID_NUM
+	int "Set the HID number for keyboard instance name"
+	depends on USB_DC_HID_KEYBOARD
+	default 0
+	help
+	  Set the hid number for keyboard instance name.
+	  The format of hid instance name is name_n, where the name can be
+	  configured by CONFIG_USB_HID_DEVICE_NAME and n(hid number) should be in
+	  the range of 0 to (CONFIG_USB_HID_DEVICE_COUNT - 1).
+
+config USB_DC_HID_VIVALDI
+	bool "Enable support vivaldi keyboard"
+	depends on USB_DC_HID_KEYBOARD
+	default n
+	help
+	  Enable code for Vivaldi keyboard (standard for new Chromium OS
+	  devices).
+
+config USB_DC_KEYBOARD_NUM_TOP_ROW_KEYS
+	int "Keyboard top raw key number"
+	depends on USB_DC_HID_VIVALDI
+	default 10
+	range 10 15
+	help
+	  The number of top raw keys.
+	  The number should be between 10 and 15.
+
+config USB_DC_KEYBOARD_ASSISTANT_KEY
+	bool "Enable support assistant key"
+	depends on USB_DC_HID_KEYBOARD
+	default n
+	help
+	  Enable assistant key for keyboard device.
+
+config USB_DC_KEYBOARD_TABLET_MODE_SWITCH
+	bool "Enable support tablet mode switch key"
+	depends on USB_DC_HID_KEYBOARD
+	default n
+	help
+	  Enable tablet mode switch for keyboard device.
+
+config USB_DC_HID_TOUCHPAD
+	bool "Enable support USB HID touchpad"
+	depends on USB_DEVICE_STACK
+	default n
+	help
+	  Enable touchpad support.
+
+config USB_DC_TOUCHPAD_HID_NUM
+	int "Set the HID number for touchpad instance name"
+	depends on USB_DC_HID_TOUCHPAD
+	default 1
+	help
+	  Set the hid number for touchpad instance name.
+	  The format of hid instance name is name_n, where the name can be
+	  configured by CONFIG_USB_HID_DEVICE_NAME and n(hid number) should be in
+	  the range of 0 to (CONFIG_USB_HID_DEVICE_COUNT - 1).
