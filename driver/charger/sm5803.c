@@ -746,11 +746,12 @@ static void sm5803_init(int chgnum)
 			  SM5803_TINT_MIN_LEVEL);
 
 	/*
-	 * Configure VBAT_SNSP high and TINT interrupts to fire after
-	 * thresholds are set.
+	 * Configure TINT interrupt to fire after thresholds are set.
+	 * b:292038738: Temporarily disable VBAT_SNSP high interrupt since
+	 * the setpoint is not confirmed.
 	 */
 	rv |= main_read8(chgnum, SM5803_REG_INT2_EN, &reg);
-	reg |= SM5803_INT2_VBATSNSP | SM5803_INT2_TINT;
+	reg |= SM5803_INT2_TINT;
 	rv |= main_write8(chgnum, SM5803_REG_INT2_EN, reg);
 
 	/*
