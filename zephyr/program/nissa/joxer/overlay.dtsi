@@ -323,6 +323,7 @@
 	pinctrl-0 = <&i2c2_clk_gpf6_default
 		     &i2c2_data_gpf7_default>;
 	pinctrl-names = "default";
+	/delete-property/ fifo-enable;
 };
 
 &i2c4 {
