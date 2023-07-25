@@ -99,8 +99,14 @@ struct npcx_io_info {
 		.enable = true,                                               \
 	},
 
-#define NAMED_GPIO_INIT(node) \
-	COND_CODE_1(DT_NODE_HAS_PROP(node, gpios), (NAMED_GPIO_INFO(node)), ())
+#define NAMED_GPIO_IS_ON_CHIP_GPIO(node)                          \
+	COND_CODE_1(DT_NODE_HAS_COMPAT(DT_GPIO_CTLR(node, gpios), \
+				       nuvoton_npcx_gpio),        \
+		    (NAMED_GPIO_INFO(node)), ())
+
+#define NAMED_GPIO_INIT(node)                      \
+	COND_CODE_1(DT_NODE_HAS_PROP(node, gpios), \
+		    (NAMED_GPIO_IS_ON_CHIP_GPIO(node)), ())
 
 static struct npcx_io_info gpio_info[] = {
 #if DT_NODE_EXISTS(NAMED_GPIOS_NODE)
