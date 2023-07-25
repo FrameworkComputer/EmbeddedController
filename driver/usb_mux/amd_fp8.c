@@ -163,10 +163,11 @@ static int amd_fp8_set_mux_unsafe(struct amd_fp8_mux_state *amd_mux,
 	} else if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		ctrl = AMD_FP8_CONTROL_DP;
 	} else {
-		/* (b/276335130): Add USB4 and TBT3 handling */
-		CPRINTSUSB("AMD FP8(%02x): unhandled mux_state %x", i2c_addr,
-			   mux_state);
-		return EC_ERROR_INVAL;
+		if (!amd_fp8_mux_supports_usb4(i2c_addr, amd_mux->port)) {
+			CPRINTSUSB("AMD FP8(%02x): unhandled mux_state %x",
+				   i2c_addr, mux_state);
+			return EC_ERROR_INVAL;
+		}
 	}
 
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
@@ -174,15 +175,23 @@ static int amd_fp8_set_mux_unsafe(struct amd_fp8_mux_state *amd_mux,
 
 	/* TODO(b/276335130): Add Data reset request */
 
-	/* These are only relevant for USB4/TBT. */
+	/* These are only relevant for USB4/TBT supporting muxes. */
 	if (amd_fp8_mux_supports_usb4(i2c_addr, amd_mux->port)) {
 		payload_len = AMD_FP8_WRITE1_USB4_LEN;
 
 		if (pd_get_data_role(usb_port) == PD_ROLE_UFP)
 			ctrl |= AMD_FP8_MUX_W1_CTRL_UFP;
 
-		/* TODO(b/276335130): Add Cable information */
+		/* Enable TBT3/USB4. */
 		payload[AMD_FP8_MUX_WRITE1_CABLE_BYTE] = 0;
+		if (mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED)
+			payload[AMD_FP8_MUX_WRITE1_CABLE_BYTE] |=
+				AMD_FP8_MUX_W1_CABLE_TBT3;
+		else if (mux_state & USB_PD_MUX_USB4_ENABLED)
+			payload[AMD_FP8_MUX_WRITE1_CABLE_BYTE] |=
+				AMD_FP8_MUX_W1_CABLE_USB4;
+
+		/* TODO(b/276335130): Add Cable information */
 		payload[AMD_FP8_MUX_WRITE1_VER_BYTE] = 0;
 
 		if (pd_is_connected(usb_port))
