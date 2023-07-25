@@ -262,6 +262,7 @@
 		compatible = "unused-gpios";
 		unused-gpios =
 			<&gpio3 2 0>,
+			<&gpio3 3 0>,
 			<&gpio3 5 0>,
 			<&gpio3 6 0>,
 			<&gpio5 7 0>,
@@ -278,6 +279,7 @@
 			<&gpioc 0 0>,
 			<&gpioc 6 0>,
 			<&gpioc 7 0>,
+			<&gpiod 5 0>,
 			<&gpioe 4 0>,
 			<&gpiof 2 0>,
 			<&gpiof 3 0>;
