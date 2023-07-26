@@ -184,7 +184,6 @@ static void bios_function_init(void)
 		set_standalone_mode(1);
 #ifdef CONFIG_BOARD_LOTUS
 	set_detect_mode(flash_storage_get(FLASH_FLAGS_INPUT_MODULE_POWER));
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_enblk_apu_interrupt));
 #endif
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_chassis_open));
 	check_chassis_open();
