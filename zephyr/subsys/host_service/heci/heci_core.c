@@ -7,6 +7,7 @@
 #include "bsp_helper.h"
 #include "heci_dma.h"
 #include "heci_internal.h"
+#include "heci_system_state.h"
 #include "host_bsp_service.h"
 
 #include <stdlib.h>
@@ -215,7 +216,8 @@ static int32_t cal_send_msg_len(uint32_t conn_id, struct mrd_t *msg)
 
 	conn = &heci_dev.connections[conn_id];
 	if (!(conn->state & HECI_CONN_STATE_OPEN)) {
-		LOG_ERR("bad connection state 0x%x", conn->state);
+		LOG_ERR("bad connection id %d, state 0x%x", conn_id,
+			conn->state);
 		heci_unlock();
 		return -1;
 	}
@@ -1123,6 +1125,8 @@ static void heci_process_message(struct heci_bus_msg_t *msg)
 		 * which doesn't need connections and flow control
 		 */
 		proc_hdls[msg->hdr.fw_addr]((void *)msg->payload, msg->hdr.len);
+	} else if ((msg->hdr.fw_addr) == HECI_SYSTEM_STATE_CLIENT_ADDR) {
+		heci_handle_system_state_msg(msg->payload, msg->hdr.len);
 	} else {
 		LOG_INF("no handler for addr 0x%08x", msg->hdr.fw_addr);
 	}
