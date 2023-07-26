@@ -884,6 +884,8 @@ static void cypd_update_epr_state(int controller, int port, int response_len)
 			CPRINTS("EPR failed %d", data[1]);
 		}
 	}
+
+	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
 }
 
 static int cypd_update_power_status(int controller)
