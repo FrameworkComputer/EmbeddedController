@@ -22,7 +22,8 @@
 static struct power_limit_details power_limit[FUNCTION_COUNT];
 bool manual_ctl;
 int mode_ctl;
-uint8_t func_ctl = 0xff;
+/* disable b[1:1] to disable power table */
+uint8_t func_ctl = 0xfd;
 static int battery_mwatt_type;
 static int battery_mwatt_p3t;
 static int battery_current_limit_mA;
