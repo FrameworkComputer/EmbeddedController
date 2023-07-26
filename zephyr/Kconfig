@@ -100,7 +100,8 @@ config PLATFORM_EC_GPU
 	bool "Project supports the GPU board"
 	default n
 	help
-	  Enable the GPU related function in common code.
+	  Project supports the GPU board.
+	  Enable this config to call the GPU related function.
 
 config PLATFORM_EC_ACPI
 	bool "Advanced Confiugration and Power Interface (ACPI)"
