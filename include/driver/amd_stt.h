@@ -23,5 +23,6 @@ enum amd_stt_pcb_sensor {
  */
 int board_get_soc_temp_mk(int *temp_mk);
 int board_get_ambient_temp_mk(int *temp_mk);
+int board_get_gpu_temp_mk(int *temp_mk);
 
 #endif /* __CROS_EC_AMD_STT_H */

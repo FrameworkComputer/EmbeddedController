@@ -72,6 +72,9 @@ static void amd_stt_handler(void)
 	int rv;
 	int soc_temp_mk;
 	int ambient_temp_mk;
+#ifdef CONFIG_GPU
+	int gpu_temp_mk;
+#endif
 
 	/* STT interface is only active in S0 */
 	if (!chipset_in_state(CHIPSET_STATE_ON))
@@ -111,6 +114,27 @@ static void amd_stt_handler(void)
 		 */
 		return;
 	}
+
+#ifdef CONFIG_GPU
+
+	/*
+	 * TODO(b/192391025): Replace with
+	 *	temp_sensor_read_mk(TEMP_SENSOR_GPU)
+	 */
+	rv = board_get_gpu_temp_mk(&gpu_temp_mk);
+	if (rv) {
+		CPRINTS("STT: Failed to read GPU temp rv:%d", rv);
+		return;
+	}
+
+	rv = write_stt_sensor_val(AMD_STT_PCB_SENSOR_GPU, gpu_temp_mk);
+	if (rv) {
+		/* Failure reason will be logged by write_stt_sensor_val(), so
+		 * no need to log it here too.
+		 */
+		return;
+	}
+#endif
 }
 DECLARE_HOOK(HOOK_SECOND, amd_stt_handler, HOOK_PRIO_TEMP_SENSOR + 1);
 

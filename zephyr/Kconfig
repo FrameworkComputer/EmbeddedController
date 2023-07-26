@@ -96,6 +96,12 @@ config PLATFORM_EC_CUSTOMIZED_DESIGN
 	  Enable the customized design in common code.
 	  This config is only used at non-chromeOS project.
 
+config PLATFORM_EC_GPU
+	bool "Project supports the GPU board"
+	default n
+	help
+	  Enable the GPU related function in common code.
+
 config PLATFORM_EC_ACPI
 	bool "Advanced Confiugration and Power Interface (ACPI)"
 	default y if AP_X86 && PLATFORM_EC_HOST_INTERFACE_ESPI
