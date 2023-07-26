@@ -14,10 +14,10 @@
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 		local-f75303 {
-			temp_host_warn = <52>;
-			temp_host_high = <70>;
+			temp_host_warn = <70>;
+			temp_host_high = <80>;
 			temp_host_halt = <120>;
-			temp_host_release_warn = <45>;
+			temp_host_release_warn = <50>;
 			temp_host_release_high = <55>;
 			temp_host_release_halt = <115>;
 			temp_fan_off = <40>;
@@ -26,10 +26,10 @@
 			sensor = <&local_f75303>;
 		};
 		cpu-f75303 {
-			temp_host_warn = <61>;
-			temp_host_high = <70>;
+			temp_host_warn = <70>;
+			temp_host_high = <80>;
 			temp_host_halt = <120>;
-			temp_host_release_warn = <50>;
+			temp_host_release_warn = <53>;
 			temp_host_release_high = <55>;
 			temp_host_release_halt = <115>;
 			temp_fan_off = <46>;
@@ -38,10 +38,10 @@
 			sensor = <&cpu_f75303>;
 		};
 		ddr-f75303 {
-			temp_host_warn = <49>;
-			temp_host_high = <70>;
+			temp_host_warn = <70>;
+			temp_host_high = <80>;
 			temp_host_halt = <120>;
-			temp_host_release_warn = <45>;
+			temp_host_release_warn = <50>;
 			temp_host_release_high = <55>;
 			temp_host_release_halt = <115>;
 			temp_fan_off = <128>;
