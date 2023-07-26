@@ -1410,6 +1410,9 @@
 /* Enable customized design */
 #undef CONFIG_CUSTOMIZED_DESIGN
 
+/* Enable the GPU feature */
+#undef CONFIG_GPU
+
 /*****************************************************************************/
 
 /*
