@@ -1023,24 +1023,54 @@ def StartLoop(console, command_active, shutdown_pipe=None):
 
             # Check if any input is ready, or wait for .1 sec and re-poll if
             # a user has connected to the pts.
-            select_output = select.select(read_list, [], [], 0.1)
-            if not select_output:
-                continue
-            ready_for_reading = select_output[0]
+            with select.epoll() as poller:
+                for read_handle in read_list:
+                    poller.register(read_handle, select.EPOLLIN)
+                events = poller.poll(0.1)
+                if not events:
+                    continue
 
-            for obj in ready_for_reading:
-                if obj is console.controller_pty:
-                    if not command_active.value:
-                        # Convert to bytes so we can look for non-printable chars such as
-                        # Ctrl+A, Ctrl+E, etc.
-                        try:
-                            line = bytearray(
-                                os.read(
-                                    console.controller_pty, CONSOLE_MAX_READ
+                for fileno, _ in events:
+                    if fileno == console.controller_pty:
+                        if not command_active.value:
+                            # Convert to bytes so we can look for non-printable chars such as
+                            # Ctrl+A, Ctrl+E, etc.
+                            try:
+                                line = bytearray(
+                                    os.read(
+                                        console.controller_pty, CONSOLE_MAX_READ
+                                    )
                                 )
+                                console.logger.debug(
+                                    "Input from user: %s, locked:%s",
+                                    str(line).strip(),
+                                    command_active.value,
+                                )
+                                for i in line:
+                                    try:
+                                        # Handle each character as it arrives.
+                                        console.HandleChar(i)
+                                    except EOFError:
+                                        console.logger.debug(
+                                            "ec3po console received EOF from dbg_pipe in HandleChar()"
+                                            " while reading console.controller_pty"
+                                        )
+                                        continue_looping = False
+                                        break
+                            except OSError:
+                                console.logger.debug(
+                                    "Ptm read failed, probably user disconnect."
+                                )
+
+                    elif fileno == console.interface_pty:
+                        if command_active.value:
+                            # Convert to bytes so we can look for non-printable chars such as
+                            # Ctrl+A, Ctrl+E, etc.
+                            line = bytearray(
+                                os.read(console.interface_pty, CONSOLE_MAX_READ)
                             )
                             console.logger.debug(
-                                "Input from user: %s, locked:%s",
+                                "Input from interface: %s, locked:%s",
                                 str(line).strip(),
                                 command_active.value,
                             )
@@ -1051,117 +1081,89 @@ def StartLoop(console, command_active, shutdown_pipe=None):
                                 except EOFError:
                                     console.logger.debug(
                                         "ec3po console received EOF from dbg_pipe in HandleChar()"
-                                        " while reading console.controller_pty"
+                                        " while reading console.interface_pty"
                                     )
                                     continue_looping = False
                                     break
-                        except OSError:
-                            console.logger.debug(
-                                "Ptm read failed, probably user disconnect."
-                            )
 
-                elif obj is console.interface_pty:
-                    if command_active.value:
-                        # Convert to bytes so we can look for non-printable chars such as
-                        # Ctrl+A, Ctrl+E, etc.
-                        line = bytearray(
-                            os.read(console.interface_pty, CONSOLE_MAX_READ)
-                        )
-                        console.logger.debug(
-                            "Input from interface: %s, locked:%s",
-                            str(line).strip(),
-                            command_active.value,
-                        )
-                        for i in line:
-                            try:
-                                # Handle each character as it arrives.
-                                console.HandleChar(i)
-                            except EOFError:
+                    elif fileno is console.cmd_pipe.fileno():
+                        try:
+                            data = console.cmd_pipe.recv()
+                        except EOFError:
+                            console.logger.debug(
+                                "ec3po console received EOF from cmd_pipe"
+                            )
+                            continue_looping = False
+                        else:
+                            # Write it to the user console.
+                            if console.raw_debug:
                                 console.logger.debug(
-                                    "ec3po console received EOF from dbg_pipe in HandleChar()"
-                                    " while reading console.interface_pty"
+                                    "|CMD|-%s->%r",
+                                    ("u" if controller_connected else "")
+                                    + ("i" if command_active.value else ""),
+                                    data.strip(),
                                 )
-                                continue_looping = False
-                                break
+                            if controller_connected:
+                                os.write(console.controller_pty, data)
+                            if command_active.value:
+                                os.write(console.interface_pty, data)
 
-                elif obj is console.cmd_pipe:
-                    try:
-                        data = console.cmd_pipe.recv()
-                    except EOFError:
-                        console.logger.debug(
-                            "ec3po console received EOF from cmd_pipe"
-                        )
-                        continue_looping = False
-                    else:
-                        # Write it to the user console.
-                        if console.raw_debug:
+                    elif fileno == console.dbg_pipe.fileno():
+                        try:
+                            data = console.dbg_pipe.recv()
+                        except EOFError:
                             console.logger.debug(
-                                "|CMD|-%s->%r",
-                                ("u" if controller_connected else "")
-                                + ("i" if command_active.value else ""),
-                                data.strip(),
+                                "ec3po console received EOF from dbg_pipe"
                             )
-                        if controller_connected:
-                            os.write(console.controller_pty, data)
-                        if command_active.value:
-                            os.write(console.interface_pty, data)
+                            continue_looping = False
+                        else:
+                            if console.interrogation_mode == b"auto":
+                                # Search look buffer for enhanced EC image string.
+                                console.CheckBufferForEnhancedImage(data)
+                            # Write it to the user console.
+                            if len(data) > 1 and console.raw_debug:
+                                console.logger.debug(
+                                    "|DBG|-%s->%r",
+                                    ("u" if controller_connected else "")
+                                    + ("i" if command_active.value else ""),
+                                    data.strip(),
+                                )
+                            console.LogConsoleOutput(data)
+                            if controller_connected:
+                                end = len(data) - 1
+                                if console.timestamp_enabled:
+                                    # A timestamp is required at the beginning of this line
+                                    if tm_req is True:
+                                        now = datetime.now()
+                                        tm = CanonicalizeTimeString(
+                                            now.strftime(HOST_STRFTIME)
+                                        )
+                                        os.write(console.controller_pty, tm)
+                                        tm_req = False
 
-                elif obj is console.dbg_pipe:
-                    try:
-                        data = console.dbg_pipe.recv()
-                    except EOFError:
-                        console.logger.debug(
-                            "ec3po console received EOF from dbg_pipe"
-                        )
-                        continue_looping = False
-                    else:
-                        if console.interrogation_mode == b"auto":
-                            # Search look buffer for enhanced EC image string.
-                            console.CheckBufferForEnhancedImage(data)
-                        # Write it to the user console.
-                        if len(data) > 1 and console.raw_debug:
-                            console.logger.debug(
-                                "|DBG|-%s->%r",
-                                ("u" if controller_connected else "")
-                                + ("i" if command_active.value else ""),
-                                data.strip(),
-                            )
-                        console.LogConsoleOutput(data)
-                        if controller_connected:
-                            end = len(data) - 1
-                            if console.timestamp_enabled:
-                                # A timestamp is required at the beginning of this line
-                                if tm_req is True:
+                                    # Insert timestamps into the middle where appropriate
+                                    # except if the last character is a newline
+                                    nls_found = data.count(b"\n", 0, end)
                                     now = datetime.now()
                                     tm = CanonicalizeTimeString(
-                                        now.strftime(HOST_STRFTIME)
+                                        now.strftime("\n" + HOST_STRFTIME)
                                     )
-                                    os.write(console.controller_pty, tm)
-                                    tm_req = False
+                                    data_tm = data.replace(b"\n", tm, nls_found)
+                                else:
+                                    data_tm = data
 
-                                # Insert timestamps into the middle where appropriate
-                                # except if the last character is a newline
-                                nls_found = data.count(b"\n", 0, end)
-                                now = datetime.now()
-                                tm = CanonicalizeTimeString(
-                                    now.strftime("\n" + HOST_STRFTIME)
-                                )
-                                data_tm = data.replace(b"\n", tm, nls_found)
-                            else:
-                                data_tm = data
+                                # timestamp required on next input
+                                if data[end] == b"\n"[0]:
+                                    tm_req = True
+                                os.write(console.controller_pty, data_tm)
+                            if command_active.value:
+                                os.write(console.interface_pty, data)
 
-                            # timestamp required on next input
-                            if data[end] == b"\n"[0]:
-                                tm_req = True
-                            os.write(console.controller_pty, data_tm)
-                        if command_active.value:
-                            os.write(console.interface_pty, data)
-
-                elif obj is shutdown_pipe:
-                    console.logger.debug(
-                        "ec3po console received shutdown pipe unblocked notification"
-                    )
-                    continue_looping = False
+                    elif fileno == shutdown_pipe.fileno():
+                        console.logger.debug(
+                            "ec3po console received shutdown pipe unblocked notification"
+                        )
+                        continue_looping = False
 
             while not console.oobm_queue.empty():
                 console.logger.debug("OOBM queue ready for reading.")
