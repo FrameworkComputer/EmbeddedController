@@ -884,6 +884,8 @@ static void cypd_update_epr_state(int controller, int port, int response_len)
 			CPRINTS("EPR failed %d", data[1]);
 		}
 	}
+
+	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
 }
 
 static int cypd_update_power_status(int controller)
@@ -1242,7 +1244,6 @@ void cypd_port_int(int controller, int port)
 		break;
 	case CCG_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE:
 		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE %d", port_idx);
-		hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
 		cypd_set_prepare_pdo(controller, port);
 		break;
 	case CCG_RESPONSE_PORT_CONNECT:
