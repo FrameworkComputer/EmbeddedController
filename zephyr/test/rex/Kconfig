@@ -2,19 +2,41 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-config TEST_BOARD_USB_MUX_CONFIG
+choice TEST_PROJECT_TYPE
+	prompt "Select board variant for tests"
+	help
+	  Board variant to use for tests
+
+	config TEST_PROJECT_REX
+		bool "Enable rex-specific tests"
+		help
+		Enable tests for rex variant.
+
+	config TEST_PROJECT_SCREEBO
+		bool "Enable screebo-specific tests"
+		help
+		Enable tests for screebo variant.
+
+endchoice # TEST_PROJECT_TYPE
+
+config TEST_PROJECT_NAME
+	string "Board name"
+	default "rex" if TEST_PROJECT_REX
+	default "screebo" if TEST_PROJECT_SCREEBO
+
+config TEST_PROJECT_USB_MUX_CONFIG
 	bool "Run the tests intended for usb_mux_config"
 	help
-	  Include usb_mux_config.c into the binary and test their
-	  functions.
+	  Include project specific usb_mux_config.c into the binary and
+	  test their functions.
 
-config TEST_SCREEBO_USB_CONFIG
-	bool "Run the tests intended for rex/screebo/src/usb_config.c"
+config TEST_PROJECT_USB_CONFIG
+	bool "Run the tests intended for usb_config"
 	help
-	  Include rex/screebo/src/usb_config.c into the binary and test their
-	  functions.
+	  Include project specific usb_config.c into the binary and test
+	  their functions.
 
-config TEST_USB_PD_POLICY
+config TEST_PROGRAM_USB_PD_POLICY
 	bool "Run the tests intended for usb_pd_policy"
 	help
 	  Include usb_pd_policy.c into the binary and test their functions.
@@ -37,13 +59,13 @@ config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	  This is used to not define chipset_in_state method as inline
 	  function.
 
-config TEST_BATTERY_PRESENT
+config TEST_PROGRAM_BATTERY_PRESENT
 	bool "Tests battery presence detect"
 	help
 	  Include tests for board specific battery presence detection.
 	  Really, that's all it does.
 
-config TEST_BOARD_POWER
+config TEST_PROGRAM_BOARD_POWER
 	bool "Run the tests intended for board_power"
 	help
 	  Include board_power.c into the binary and test

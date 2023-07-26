@@ -9,16 +9,16 @@ tests:
     extra_dtc_overlay_files:
       - boards/native_posix.overlay
     extra_configs:
-      - CONFIG_TEST_USB_PD_POLICY=y
+      - CONFIG_TEST_PROGRAM_USB_PD_POLICY=y
       - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
       - CONFIG_TEST_ENABLE_USB_PD_DISCHARGE=y
       - CONFIG_TEST_ENABLE_USB_PD_HOST_CMD=y
 
   rex.board_power:
     extra_dtc_overlay_files:
-      - board_power.dtsi
+      - boards/board_power.dtsi
     extra_configs:
-      - CONFIG_TEST_BOARD_POWER=y
+      - CONFIG_TEST_PROGRAM_BOARD_POWER=y
       - CONFIG_TEST_X86_NON_DSX_PWRSEQ_MTL=y
       - CONFIG_AP_POWER_EVENTS_MOCK=y
       - CONFIG_POWER_SIGNALS_MOCK=y
@@ -27,9 +27,9 @@ tests:
   rex.battery_present:
     extra_dtc_overlay_files:
       - boards/rex/rex.dtsi
-      - boards/rex/power.dtsi
+      - boards/power.dtsi
     extra_configs:
-      - CONFIG_TEST_BATTERY_PRESENT=y
+      - CONFIG_TEST_PROGRAM_BATTERY_PRESENT=y
       - CONFIG_PLATFORM_EC_BATTERY_PRESENT_CUSTOM=y
       - CONFIG_PLATFORM_EC_BATTERY_HW_PRESENT_CUSTOM=y
       - CONFIG_PLATFORM_EC_CHARGER_ISL9241=y
@@ -44,17 +44,29 @@ tests:
       - CONFIG_PLATFORM_EC_BC12_SINGLE_DRIVER=n
       - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE=n
 
+  # Rex project tests
+  rex.rex:
+    extra_configs:
+      - CONFIG_TEST_PROJECT_REX=y
+
   rex.rex.usb_mux_config:
     extra_dtc_overlay_files:
       - boards/rex/rex.dtsi
     extra_configs:
-      - CONFIG_TEST_BOARD_USB_MUX_CONFIG=y
+      - CONFIG_TEST_PROJECT_REX=y
+      - CONFIG_TEST_PROJECT_USB_MUX_CONFIG=y
+
+  # Screebo project tests
+  rex.screebo:
+    extra_configs:
+      - CONFIG_TEST_PROJECT_SCREEBO=y
 
   rex.screebo.usb_config:
     extra_dtc_overlay_files:
       - boards/screebo/screebo.dtsi
     extra_configs:
-      - CONFIG_TEST_SCREEBO_USB_CONFIG=y
+      - CONFIG_TEST_PROJECT_SCREEBO=y
+      - CONFIG_TEST_PROJECT_USB_CONFIG=y
       - CONFIG_PLATFORM_EC_BACKLIGHT_LID=n
       - CONFIG_PLATFORM_EC_BATTERY_FUEL_GAUGE=y
       - CONFIG_PLATFORM_EC_CHARGER_ISL9241=y
