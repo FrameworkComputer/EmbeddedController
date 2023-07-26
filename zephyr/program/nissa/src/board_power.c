@@ -153,6 +153,35 @@ bool board_ap_power_check_power_rails_enabled(void)
 	       power_signal_get(PWR_EC_SOC_DSW_PWROK);
 }
 #else
+#ifndef CONFIG_EMUL_AP_PWRSEQ_DRIVER
+/* This is called by AP Power Sequence driver only when AP exits S0 or S0IX */
+static void board_ap_power_cb(const struct device *dev,
+			      const enum ap_pwrseq_state entry,
+			      const enum ap_pwrseq_state exit)
+{
+	if (entry == AP_POWER_STATE_S0IX) {
+		/* Avoid enabling signals when entering S0IX */
+		return;
+	}
+	power_signal_enable(PWR_DSW_PWROK);
+	power_signal_enable(PWR_PG_PP1P05);
+}
+
+static int board_ap_power_init(void)
+{
+	const struct device *ap_pwrseq_dev = ap_pwrseq_get_instance();
+	static struct ap_pwrseq_state_callback exit_cb = {
+		.cb = board_ap_power_cb,
+		.states_bit_mask =
+			(BIT(AP_POWER_STATE_S0) | BIT(AP_POWER_STATE_S0IX)),
+	};
+
+	ap_pwrseq_register_state_exit_callback(ap_pwrseq_dev, &exit_cb);
+
+	return 0;
+}
+SYS_INIT(board_ap_power_init, APPLICATION, CONFIG_APPLICATION_INIT_PRIORITY);
+#endif /* CONFIG_EMUL_AP_PWRSEQ_DRIVER */
 
 static int board_ap_power_g3_entry(void *data)
 {
