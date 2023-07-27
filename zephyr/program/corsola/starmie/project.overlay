@@ -49,6 +49,12 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "base_detect_interrupt";
 		};
+
+		usb_c0_ppc_bc12 {
+			handler = "ppc_interrupt";
+		};
+
+		/delete-node/ usb_c1_bc12_charger;
 		/delete-node/ lid_imu;
 	};
 
@@ -111,6 +117,7 @@
 
 		/delete-node/ en_pp5000_usb_a0_vbus;
 		/delete-node/ usb_a0_fault_odl;
+		/delete-node/ usb_c1_bc12_charger_int_odl;
 	};
 
 	unused-pins {
@@ -124,6 +131,7 @@
 		<&gpioh 1 GPIO_INPUT_PULL_DOWN>,
 		<&gpioh 2 GPIO_INPUT_PULL_DOWN>,
 		<&gpioi 3 GPIO_INPUT_PULL_DOWN>,	//EC_AP_RSVD0_ODL
+		<&gpioj 4 GPIO_INPUT_PULL_DOWN>,
 		<&gpiom 2 GPIO_INPUT_PULL_DOWN>;
 	};
 
@@ -216,6 +224,7 @@
 		/delete-node/ port1-muxes;
 
 		port0@0{
+			/delete-property/ bc12;
 			usb-mux-chain-0{
 				usb-muxes = <&ps8743_mux_1 &virtual_mux_0>;
 			};
@@ -428,6 +437,7 @@
 	charger_bc12_port1: rt9490@53{
 		compatible = "richtek,rt9490";
 		thermistor = <&thermistor_rt9490>;
+		/delete-property/ irq;
 	};
 };
 
@@ -435,6 +445,9 @@
 	ps8743_mux_1: ps8743-mux-1@10 {
 		compatible = "parade,ps8743";
 		reg = <0x10>;
+	};
+	rt1739@70{
+		compatible = "richtek,rt1739-ppc";
 	};
 };
 
