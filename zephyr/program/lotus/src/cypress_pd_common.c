@@ -1186,6 +1186,22 @@ void cypd_cfet_full_vbus_on(void)
 }
 
 /*****************************************************************************/
+/* Project */
+int cypd_get_ac_power(void)
+{
+	int ac_power_mW = 0;
+
+	/* -1 means no ac */
+	if (prev_charge_port == -1)
+		return 0;
+
+	ac_power_mW = (pd_port_states[prev_charge_port].current
+		* pd_port_states[prev_charge_port].voltage);
+
+	return (ac_power_mW / 1000);
+}
+
+/*****************************************************************************/
 /* Interrupt handler */
 
 int cypd_device_int(int controller)
