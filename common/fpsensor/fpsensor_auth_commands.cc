@@ -21,10 +21,16 @@
 #include <cstdint>
 #include <utility>
 
+namespace
+{
+/* TODO(b/293412128): Remove the workaround after we have a better solution. */
+constexpr int kMaxPreloadFingerCount = 3;
+} // namespace
+
 /* Store the intermediate encrypted data for transfer & reuse purpose.*/
 /* The data will be copied into fp_enc_buffer after commit. */
 static std::array<std::array<uint8_t, FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE>,
-		  FP_MAX_FINGER_COUNT>
+		  std::min(FP_MAX_FINGER_COUNT, kMaxPreloadFingerCount)>
 	fp_xfer_buffer;
 
 /* The GSC pairing key. */
@@ -289,7 +295,7 @@ static enum ec_error_list preload_template(const uint8_t *data, uint32_t size,
 					   bool xfer_complete)
 {
 	/* Can we store one more template ? */
-	if (idx >= FP_MAX_FINGER_COUNT)
+	if (idx >= fp_xfer_buffer.size())
 		return EC_ERROR_OVERFLOW;
 
 	enum ec_error_list ret = validate_fp_buffer_offset(
