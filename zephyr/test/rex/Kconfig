@@ -31,6 +31,12 @@ config TEST_ENABLE_USB_PD_HOST_CMD
 	  This is used to define CONFIG_USB_PD_HOST_CMD for testing purposes
 	  directly.
 
+config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	bool "Disable chipset_in_state inline method"
+	help
+	  This is used to not define chipset_in_state method as inline
+	  function.
+
 config TEST_BATTERY_PRESENT
 	bool "Tests battery presence detect"
 	help

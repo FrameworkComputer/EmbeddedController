@@ -10,6 +10,7 @@ tests:
       - boards/native_posix.overlay
     extra_configs:
       - CONFIG_TEST_USB_PD_POLICY=y
+      - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
       - CONFIG_TEST_ENABLE_USB_PD_DISCHARGE=y
       - CONFIG_TEST_ENABLE_USB_PD_HOST_CMD=y
 

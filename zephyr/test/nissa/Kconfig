@@ -26,7 +26,7 @@ choice TEST_TARGET
 
 	config TEST_NISSA_NIVVIKS_CHARGER
 	  bool "Tests for Nivviks-specific charger/USB-C code"
-	  select TEST_USB_PD_POLICY
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	  help
 	    The test target that exercises nissa/nivviks/{charger,usbc}.c
 
@@ -37,7 +37,7 @@ choice TEST_TARGET
 
 	config TEST_NISSA_GOTHRAX
 	  bool "Tests for Gothrax-specific code"
-	  select TEST_USB_PD_POLICY
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	  help
 		The test target that exercises nissa/gothrax/*.c
 
@@ -47,10 +47,11 @@ choice TEST_TARGET
 		The test target that exercises nissa/joxer/*.c
 endchoice
 
-config TEST_USB_PD_POLICY
-	bool
+config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	bool "Disable chipset_in_state inline method"
 	help
-	  Enable mocking of chipset_in_state() for PD policy testing.
+	  This is used to not define chipset_in_state method as inline
+	  function.
 
 module = NISSA
 module-str = Nissa board-specific code (unit tests)

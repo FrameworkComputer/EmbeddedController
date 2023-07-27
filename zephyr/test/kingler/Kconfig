@@ -65,8 +65,15 @@ config TEST_VOLTORB
 	  Include voltorb_usbc.c into the binary to test the type-c output
 	  current limit function.
 
+config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	bool "Disable chipset_in_state inline method"
+	help
+	  This is used to not define chipset_in_state method as inline
+	  function.
+
 config TEST_USB_PD_POLICY
 	bool "Run the tests intended for voltorb usb policy"
+	select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	help
 	  Include voltorb_usbc.c into the binary to test the type-c output
 	  current limit function.
