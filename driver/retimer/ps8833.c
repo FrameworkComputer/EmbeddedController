@@ -111,7 +111,7 @@ static int ps8833_get_mux(const struct usb_mux *me, mux_state_t *mux_state)
 	if (mode & PS8833_REG_MODE_USB_EN)
 		*mux_state |= USB_PD_MUX_USB_ENABLED;
 	if (dp & PS8833_REG_DP_EN)
-		*mux_state |= PS8833_REG_DP_EN;
+		*mux_state |= USB_PD_MUX_DP_ENABLED;
 	if (mode & PS8833_REG_MODE_FLIP)
 		*mux_state |= USB_PD_MUX_POLARITY_INVERTED;
 
