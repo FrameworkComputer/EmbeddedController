@@ -12,6 +12,7 @@
 #include "console.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "power.h"
 #include "queue.h"
 #include "timer.h"
 #include "usb_mux.h"
@@ -21,6 +22,7 @@
 #define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 #define AMD_FP8_MUX_COUNT 3
+#define AMD_FP8_MUX_RESCHEDULE_DELAY_MS 10
 
 #define AMD_FP8_MUX_HELPER(id)                                         \
 	{                                                              \
@@ -130,10 +132,11 @@ static int amd_fp8_set_mux_unsafe(struct amd_fp8_mux_state *amd_mux,
 	 * Validate that the mux is ready and isn't already processing a
 	 * command.
 	 */
-
 	if (!amd_mux->xbar_ready) {
-		CPRINTSUSB("AMD FP8(%02x): skip mux set, xbar not ready",
-			   i2c_addr);
+		/* Mux is only active in S0. */
+		if (power_get_state() == POWER_S0)
+			CPRINTSUSB("AMD FP8(%02x): skip mux set xbar not ready",
+				   i2c_addr);
 		return EC_ERROR_BUSY;
 	}
 
@@ -315,6 +318,8 @@ static void amd_fp8_update_fixed_states(void)
 	}
 }
 
+static void amd_fp8_mux_interrupt_handler_call(int delay_ms);
+
 void amd_fp8_mux_interrupt_handler(void)
 {
 	uint8_t int_status;
@@ -384,15 +389,21 @@ void amd_fp8_mux_interrupt_handler(void)
 		 * first.
 		 */
 		CPRINTSUSB("AMD FP8: More interrupts, rescheduling");
-		msleep(50);
-		amd_fp8_mux_interrupt(0);
+		amd_fp8_mux_interrupt_handler_call(
+			AMD_FP8_MUX_RESCHEDULE_DELAY_MS);
 	}
 }
 DECLARE_DEFERRED(amd_fp8_mux_interrupt_handler);
 
+static void amd_fp8_mux_interrupt_handler_call(int delay_ms)
+{
+	hook_call_deferred(&amd_fp8_mux_interrupt_handler_data,
+			   delay_ms * MSEC);
+}
+
 void amd_fp8_mux_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(&amd_fp8_mux_interrupt_handler_data, 0);
+	amd_fp8_mux_interrupt_handler_call(0);
 }
 
 static int amd_fp8_set_mux(const struct usb_mux *me, mux_state_t mux_state,
