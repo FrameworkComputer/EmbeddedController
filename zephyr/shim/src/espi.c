@@ -10,6 +10,7 @@
 #include "hooks.h"
 #include "i8042_protocol.h"
 #include "keyboard_protocol.h"
+#include "keyboard_8042.h"
 #include "lpc.h"
 #include "port80.h"
 #include "power.h"
@@ -794,6 +795,10 @@ static int zephyr_shim_setup_espi(void)
 	/* Enable host interface interrupts */
 	espi_write_lpc_request(espi_dev, ECUSTOM_HOST_SUBS_INTERRUPT_EN,
 			       &enable);
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+	if (IS_ENABLED(HAS_TASK_KEYPROTO))
+		i8042_pause_to_host_queue(true);
+#endif
 	return 0;
 }
 
