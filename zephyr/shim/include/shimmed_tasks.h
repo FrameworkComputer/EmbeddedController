@@ -77,4 +77,8 @@
 #define HAS_TASK_CEC 1
 #endif /* CONFIG_HAS_TASK_CEC */
 
+#ifdef CONFIG_HAS_TASK_FPSENSOR
+#define HAS_TASK_FPSENSOR 1
+#endif /* CONFIG_HAS_TASK_FPSENSOR */
+
 #endif /* __CROS_EC_SHIMMED_TASKS_H */

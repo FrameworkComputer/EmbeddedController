@@ -28,6 +28,7 @@ enum {
 	EC_SYSWORKQ_PRIO = EC_TASK_PRIO_LOWEST,
 	EC_TASK_RWSIG_PRIO,
 	EC_TASK_TOUCHPAD_PRIO,
+	EC_TASK_FPSENSOR_PRIO,
 	EC_TASK_CHG_RAMP_PRIO,
 	EC_TASK_USB_CHG_PRIO,
 	EC_TASK_DPS_PRIO,
@@ -167,6 +168,11 @@ enum {
 				  CONFIG_TASK_TOUCHPAD_STACK_SIZE,         \
 				  EC_TASK_TOUCHPAD_PRIO, 0)),              \
 		    ())                                                    \
+	COND_CODE_1(HAS_TASK_FPSENSOR,                                     \
+		    (CROS_EC_TASK(FPSENSOR, fp_task, 0,                    \
+				  CONFIG_TASK_FPSENSOR_STACK_SIZE,         \
+				  EC_TASK_FPSENSOR_PRIO, K_FP_REGS)),      \
+		    ())                                                    \
 	COND_CODE_1(HAS_TASK_RWSIG,                                        \
 		    (CROS_EC_TASK(RWSIG, rwsig_task, 0,                    \
 				  CONFIG_TASK_RWSIG_STACK_SIZE,            \
@@ -217,6 +223,7 @@ enum {
 	CROS_EC_TASK(PD_INT_C2, NULL, 2, 0, EC_TASK_PD_INT_C2_PRIO, 0)         \
 	CROS_EC_TASK(PD_INT_C3, NULL, 3, 0, EC_TASK_PD_INT_C3_PRIO, 0)         \
 	CROS_EC_TASK(TOUCHPAD, NULL, 0, 0, EC_TASK_TOUCHPAD_PRIO, 0)           \
+	CROS_EC_TASK(FPSENSOR, NULL, 0, 0, EC_TASK_FPSENSOR_PRIO, K_FP_REGS)   \
 	CROS_EC_TASK(CEC, NULL, 0, 0, EC_TASK_CEC_PRIO, 0)
 
 #endif /* CONFIG_SHIMMED_TASKS */

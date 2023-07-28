@@ -164,6 +164,7 @@ config SHIMMED_TASKS
 	default y if HAS_TASK_CHG_RAMP
 	default y if HAS_TASK_CHIPSET
 	default y if HAS_TASK_DPS
+	default y if HAS_TASK_FPSENSOR
 	default y if HAS_TASK_HOSTCMD
 	default y if HAS_TASK_KEYSCAN
 	default y if HAS_TASK_KEYPROTO

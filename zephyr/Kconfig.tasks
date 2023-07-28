@@ -297,4 +297,20 @@ config TASK_CEC_STACK_SIZE
 
 endif # HAS_TASK_CEC
 
+config HAS_TASK_FPSENSOR
+	bool # Selected by PLATFORM_EC_FINGERPRINT
+	help
+	  This turns on the FPSENSOR task which provides fingerprint
+	  authentication service.
+
+if HAS_TASK_FPSENSOR
+
+config TASK_FPSENSOR_STACK_SIZE
+	int "FPSENSOR task stack size"
+	default 4096
+	help
+	  The stack size of the FPSENSOR task.
+
+endif # HAS_TASK_FPSENSOR
+
 endmenu # Tasks
