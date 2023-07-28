@@ -34,7 +34,7 @@ LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 #define LED_ON_TICKS 2
 #define POWER_LED_ON_S3_TICKS 2
 
-#define PWR_LED_PWM_PERIOD_NS BOARD_LED_HZ_TO_PERIOD_NS(1296)
+#define PWR_LED_PWM_PERIOD_NS BOARD_LED_HZ_TO_PERIOD_NS(324)
 
 /*
  * Due to the CSME-Lite processing, upon startup the CPU transitions through
