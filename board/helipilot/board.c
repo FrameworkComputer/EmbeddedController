@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "chip/npcx/trng_hw.h"
 #include "chipset.h"
 #include "clock.h"
 #include "common.h"
@@ -127,6 +128,11 @@ static void board_init(void)
 	if (IS_ENABLED(SECTION_IS_RW)) {
 		board_init_rw();
 	}
+
+	/* Initialize trng peripheral before kicking off the application to
+	 * avoid incurring that cost when generating random numbers
+	 */
+	npcx_trng_hw_init();
 
 	/*
 	 * Enable the SPI slave interface if the PCH is up.
