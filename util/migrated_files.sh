@@ -16,9 +16,10 @@ for file in "$@"; do
     util/*|zephyr/*) ;;
     **.c)
       if ! grep -q -F "\${PLATFORM_EC}/${ec_file}" "${cmakes[@]}" ; then
-        echo -n "WARNING: ${ec_file} is not used in Zephyr EC. Do not edit this"
-        echo -n " unless you also find the zephyr copy and fix the same code"
-        echo " there."
+        echo -n "WARNING: ${ec_file} is not used in Zephyr EC. There is "
+        echo -n "probably another file in the zephyr/shim directory that "
+        echo -n "needs the same fix that you just made. Alternativly, you "
+        echo "might have edited the wrong file."
         exit_code=1
       fi
       ;;
