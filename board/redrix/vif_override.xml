@@ -54,7 +54,7 @@
     </vif:SrcPdoList>
 
     <!-- SOP Discover ID -->
-    <vif:Product_Type_UFP_SOP value="2">PDUSB Peripheral</vif:Product_Type_UFP_SOP>
+    <vif:Product_Type_UFP_SOP value="0">Undefined</vif:Product_Type_UFP_SOP>
     <vif:Product_Type_DFP_SOP value="2">PDUSB Host</vif:Product_Type_DFP_SOP>
 
     <!-- USB4 Port -->
@@ -98,7 +98,7 @@
     </vif:SrcPdoList>
 
     <!-- SOP Discover ID -->
-    <vif:Product_Type_UFP_SOP value="3">PSD</vif:Product_Type_UFP_SOP>
+    <vif:Product_Type_UFP_SOP value="0">Undefined</vif:Product_Type_UFP_SOP>
     <vif:Product_Type_DFP_SOP value="2">PDUSB Host</vif:Product_Type_DFP_SOP>
 
     <!-- USB4 Port -->
