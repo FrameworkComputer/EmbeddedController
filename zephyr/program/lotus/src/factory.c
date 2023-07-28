@@ -41,7 +41,6 @@ int factory_status(void)
 
 static void fake_power_button(void)
 {
-#ifdef CONFIG_BOARD_AZALEA
 	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_on_off_btn_l)) == 0 &&
 		!fake_pwr_press) {
 		fake_pwr_press = 1;
@@ -54,5 +53,4 @@ static void fake_power_button(void)
 			fake_pwr_press);
 	}
 	hook_call_deferred(&fake_power_button_data, 100 * MSEC);
-#endif
 }
