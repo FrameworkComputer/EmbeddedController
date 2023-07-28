@@ -224,16 +224,6 @@ before_script:
     when: always
   coverage: '/lines\.*: \d+\.\d+%/'
 
-herobrine:
-  variables:
-    PROJECT: "herobrine"
-  <<: *build_template
-
-herobrine_coverage:
-  variables:
-    PROJECT: "herobrine"
-  <<: *coverage_template
-
 nivviks_coverage:
   variables:
     PROJECT: "nivviks"

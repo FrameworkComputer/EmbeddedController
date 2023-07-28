@@ -109,7 +109,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Boards that use CHIP:=npcx
     # git grep --name-only 'CHIP:=npcx' | sed 's#^board/\(.*\)/build.mk#"\1",#'
     "adlrvpp_npcx",
-    "agah",
     "akemi",
     "aleena",
     "ambassador",
@@ -165,10 +164,8 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "grunt",
     "gumboz",
     "guybrush",
-    "hades",
     "hatch",
     "helios",
-    "herobrine",
     "homestar",
     "jinlon",
     "kano",
