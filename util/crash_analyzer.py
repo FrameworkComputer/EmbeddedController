@@ -258,6 +258,9 @@ def process_log_file(file_name: str) -> tuple:
                 # Get EC version.
                 # There could be more than one "fw_version". Only the first one
                 # corresponds to the EC version.
+                if line.startswith("RW version") and ec_ver is None:
+                    _, ec_ver = line.split(":")
+                    ec_ver = ec_ver.strip(" \n")
                 if line.startswith("fw_version") and ec_ver is None:
                     _, ec_ver = line.split("|")
                     ec_ver = ec_ver.strip(" \n")
