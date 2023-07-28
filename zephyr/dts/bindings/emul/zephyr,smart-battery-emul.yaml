@@ -11,7 +11,6 @@ include: base.yaml
 properties:
   mf-access:
     type: int
-    required: false
     default: 0
     description: Word returned on manufacturer access command.
 
@@ -23,7 +22,6 @@ properties:
 
   version:
     type: string
-    required: false
     enum:
       - BATTERY_SPEC_VER_1_0
       - BATTERY_SPEC_VER_1_1
@@ -33,13 +31,11 @@ properties:
 
   vscale:
     type: int
-    required: false
     default: 0
     description: Scaling of voltage.
 
   ipscale:
     type: int
-    required: false
     default: 0
     description: Scaling of current.
 
@@ -54,108 +50,90 @@ properties:
 
   design-mv:
     type: int
-    required: false
     default: 5000
     description: Design battery voltage in mV.
 
   design-cap:
     type: int
-    required: false
     default: 5000
     description: Design battery capacity in mAh.
 
   temperature:
     type: int
-    required: false
     default: 2930
     description: Battery temperature in 0.1 Kelvins.
 
   volt:
     type: int
-    required: false
     default: 5000
     description: Battery voltage in mV.
 
   cur:
     type: int
-    required: false
     default: 1000
     description: Current charging (> 0) or discharging (< 0) battery in mA.
 
   avg-cur:
     type: int
-    required: false
     default: 1000
     description: Average current from 1 minute.
 
   max-error:
     type: int
-    required: false
     default: 0
     description: Maximum error of commands return value in percent.
 
   cap:
     type: int
-    required: false
     default: 2000
     description: Capacity of the battery in mAh.
 
   full-cap:
     type: int
-    required: false
     default: 4000
     description: Full capacity of the battery in mAh.
 
   desired-charg-cur:
     type: int
-    required: false
     default: 2000
     description: Charging current requested by battery.
 
   desired-charg-volt:
     type: int
-    required: false
     default: 7000
     description: Charging voltage requested by battery.
 
   cycle-count:
     type: int
-    required: false
     default: 125
     description: Number of cycles.
 
   serial-number:
     type: int
-    required: false
     default: 7
     description: Serial number of battery.
 
   mf-name:
     type: string
-    required: false
     default: "zephyr"
     description: Manufacturer name. Length has to be smaller than 32 bytes.
 
   dev-name:
     type: string
-    required: false
     default: "smartbat"
     description: Device name. Length has to be smaller than 32 bytes.
 
   dev-chem:
     type: string
-    required: false
     default: "LION"
     description: Device chemistry. Length has to be smaller than 32 bytes.
 
   mf-data:
     type: string
-    required: false
     default: "LION"
     description: Manufacturer data. Length has to be smaller than 32 bytes.
 
   mf-info:
     type: string
-    required: false
     default: "LION"
     description: Manufacturer info. Length has to be smaller than 32 bytes.

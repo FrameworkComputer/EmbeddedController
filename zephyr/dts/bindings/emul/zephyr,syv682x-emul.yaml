@@ -19,6 +19,5 @@ properties:
     required: true
   irq-gpios:
     type: phandle-array
-    required: false
     description: |
       Interrupt from PPC using shim driver

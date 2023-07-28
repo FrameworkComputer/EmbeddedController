@@ -34,17 +34,14 @@ properties:
       The size of the flash region, in bytes.
   read-only:
     type: boolean
-    required: false
     description: >-
       Set if the section should be read-only.
   preserve:
     type: boolean
-    required: false
     description: >-
       Set if the section should be preserved when updating firmware. This is
       just a signal. Enforcement of this is upto the updater.
   fill-byte:
     type: uint8-array
-    required: false
     description: >-
       Set if the section bytes should be filled with configured byte value.

@@ -16,6 +16,5 @@ properties:
       TCPC configuration flags
   rst-gpios:
     type: phandle-array
-    required: false
     description: |
       TCPC reset line

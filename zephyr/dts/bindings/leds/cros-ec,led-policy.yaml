@@ -35,7 +35,6 @@ child-binding:
         LED_PWRS_CHARGE_NEAR_FULL - AC is connected, battery is charging
                                      and close to fully charged.
       type: string
-      required: false
       enum:
         - LED_PWRS_CHARGE
         - LED_PWRS_DISCHARGE
@@ -48,14 +47,12 @@ child-binding:
       description: |
         If the LED color depends on the charging port (left or right).
       type: int
-      required: false
 
     chipset-state:
       description: |
         If the LED color depends on chipset state, this property is used
         to describe it.
       type: string
-      required: false
       enum:
         - POWER_S0
         - POWER_S3
@@ -68,14 +65,12 @@ child-binding:
         Use the macros defined in dt-bindings/battery.h.
         e.g. SB_STATUS_DISCHARGING - Battery is discharging.
       type: int
-      required: false
 
     batt-state:
       description: |
         If the LED color depends on battery state, this property is used
         to select the battery state value base on batt-state-mask.
       type: int
-      required: false
 
     batt-lvl:
       description: |
@@ -85,7 +80,6 @@ child-binding:
         e.g. <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW> describes battery level
              range of BATTERY_LEVEL_EMPTY to BATTERY_LEVEL_LOW inclusive.
       type: array
-      required: false
 
   child-binding:
     description: Color enum
@@ -115,4 +109,3 @@ child-binding:
              };
           };
         type: int
-        required: false

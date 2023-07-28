@@ -9,7 +9,6 @@ compatible: "cros-ec,keyscan"
 properties:
   output-settle:
     type: int
-    required: false
     default: 80
     description: |
         Delay time, in microseconds, between setting up output and waiting for
@@ -19,28 +18,24 @@ properties:
 
   debounce-down:
     type: int
-    required: false
     default: 9000
     description: |
         Time, in microseconds, to debounce key-down.
 
   debounce-up:
     type: int
-    required: false
     default: 30000
     description: |
         Time, in microseconds, to debounce key-up.
 
   scan-period:
     type: int
-    required: false
     default: 3000
     description: |
         Time between scans when keyboard scan task runs in polling mode.
 
   min-post-scan-delay:
     type: int
-    required: false
     default: 1000
     description: |
         Minimum time between end of one scan and start of the next one.
@@ -50,7 +45,6 @@ properties:
 
   poll-timeout:
     type: int
-    required: false
     default: 100000
     description: |
         Revert to interrupt mode after no keyboard activity for this period.
@@ -58,7 +52,6 @@ properties:
 
   actual-key-mask:
     type: array
-    required: false
     default: [
       0x1c, # C0
       0xff, # C1

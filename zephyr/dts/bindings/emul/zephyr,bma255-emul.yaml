@@ -11,49 +11,41 @@ include: base.yaml
 properties:
   nvm-off-x:
     type: int
-    required: false
     default: 0
     description: Accelerometer offset of x axis stored in NVM.
 
   nvm-off-y:
     type: int
-    required: false
     default: 0
     description: Accelerometer offset of y axis stored in NVM.
 
   nvm-off-z:
     type: int
-    required: false
     default: 0
     description: Accelerometer offset of z axis stored in NVM.
 
   nvm-gp0:
     type: int
-    required: false
     default: 0
     description: GP0 value stored in NVM.
 
   nvm-gp1:
     type: int
-    required: false
     default: 0
     description: GP1 value stored in NVM.
 
   nvm-acc-x:
     type: int
-    required: false
     default: 0
     description: Accelerometer value of x axis used until new value is set.
 
   nvm-acc-y:
     type: int
-    required: false
     default: 0
     description: Accelerometer value of y axis used until new value is set.
 
   nvm-acc-z:
     type: int
-    required: false
     default: 0
     description: Accelerometer value of z axis used until new value is set.
 

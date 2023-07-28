@@ -16,5 +16,4 @@ properties:
 
   generic-pwm-channel:
     type: int
-    required: false
     description: Generic PWM channel number for legacy compatibility.

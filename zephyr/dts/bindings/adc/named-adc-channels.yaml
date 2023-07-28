@@ -14,17 +14,14 @@ child-binding:
       type: phandle-array
       description: IO channels specifiers ADC channel used
     mul:
-      required: false
       type: int
       default: 1
       description: Multiplication factor of ADC measurement
     div:
-      required: false
       type: int
       default: 1
       description: Division factor of ADC measurement
     gain:
-      required: false
       type: string
       description:
         Gain selection for the ADC channel. Source of valid gain settings is
@@ -47,7 +44,6 @@ child-binding:
         - ADC_GAIN_128
       default: ADC_GAIN_1
     reference:
-      required: false
       type: string
       description:
         Sets the reference voltage for the ADC channel. Source of valid
@@ -63,7 +59,6 @@ child-binding:
         - ADC_REF_EXTERNAL1
       default: ADC_REF_INTERNAL
     acquisition-time:
-      required: false
       type: int
       description:
         Set the acquisition time for ADC conversion. Use the ADC_ACQ_TIME macro
@@ -71,7 +66,6 @@ child-binding:
         acquisition time, use ADC_ACQ_TIME_DEFAULT (0).
       default: 0
     differential:
-      required: false
       type: boolean
       description:
         Set the ADC acquisition mode to differential. Default mode is

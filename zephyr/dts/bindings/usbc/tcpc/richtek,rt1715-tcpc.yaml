@@ -16,6 +16,5 @@ properties:
       TCPC configuration flags
   irq-gpios:
     type: phandle-array
-    required: false
     description: |
       Interrupt from TCPC

@@ -9,7 +9,6 @@ properties:
     required: true
   remote-port:
     type: int
-    required: false
     description:
       A port number used by remote components like Kernel via the I2C_PASSTHRU
       Host Command
@@ -20,6 +19,5 @@ properties:
       Enum values used in the source code to refer to the i2c port
   dynamic-speed:
     type: boolean
-    required: false
     description:
       Enables run-time speed configuration.

@@ -11,12 +11,10 @@ properties:
 
   power-good-pin:
     type: phandle
-    required: false
     description: |
       GPIO used to read if power is good
 
   poff-delay-ms:
     type: int
-    required: false
     description: |
       Additional power off delay required for some systems

@@ -13,6 +13,5 @@ compatible: "cros-ec,usbc-mux-tcpci"
 properties:
   hpd-update:
     type: string
-    required: false
     description: |
       Name of function used as hpd_update callback

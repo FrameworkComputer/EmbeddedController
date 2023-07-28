@@ -32,13 +32,11 @@ child-binding:
   properties:
     odr:
       type: int
-      required: false
       description: |
         Sensor output data rate in mHz.
         MSB is used to know if we are rounding up.
     ec-rate:
       type: int
-      required: false
       description: Delay between collection by EC, in us.
 
 #

@@ -9,7 +9,6 @@ compatible: "cros-ec,motionsense-sensor-info"
 properties:
   als-sensors:
     type: phandles
-    required: false
     description: |
         List of ALS sensors to create motion_als_sensors array.
         The ALS sensors listed in the motion_als_sensors array
@@ -21,14 +20,12 @@ properties:
         This will automatically generate motion_als_sensors array from it.
   sensor-irqs:
     type: phandles
-    required: false
     description: |
         List of interrupts from sensors GPIOS to be enabled.
         Interrupts specified here will be enabled before motion sense task starts.
         sensor-irqs = <&int_imu &int_als_rgb>;
   accel-force-mode-sensors:
     type: phandles
-    required: false
     description: |
         List of sensors should be handled in force mode. Sensors listed will be
         used to define CONFIG_ACCEL_FORCE_MODE_MASK so that motion sense task can

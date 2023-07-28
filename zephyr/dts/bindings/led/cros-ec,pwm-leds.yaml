@@ -33,7 +33,6 @@ properties:
 
   sidesel:
     type: phandle
-    required: false
     description: |
       A pwm-leds node for the SIDESEL line, if present.
 
@@ -51,7 +50,6 @@ properties:
 
   color-map-red:
     type: array
-    required: false
     description: |
       A map of PWM duty cycles per color, up to three channels. Unset values
       default to zero.
@@ -66,27 +64,21 @@ properties:
 
   color-map-green:
     type: array
-    required: false
 
   color-map-blue:
     type: array
-    required: false
 
   color-map-yellow:
     type: array
-    required: false
 
   color-map-white:
     type: array
-    required: false
 
   color-map-amber:
     type: array
-    required: false
 
   brightness-range:
     type: array
-    required: false
     description: |
       A list of brigthness range value for all supported channels in order,
       Red, Green, Blue, Yellow, White, Amber (0 to 255).

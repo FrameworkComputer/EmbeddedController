@@ -8,19 +8,16 @@ child-binding:
                each step could have different rpm for each fan
   properties:
     temp_on:
-      required: false
       type: array
       description:
         Temperatures for each sensor to trigger next fan level,
         <sensor 0, sensor 1, sensor 2, ...> mapping to variant overlay
     temp_off:
-      required: false
       type: array
       description:
         Temperatures for each sensor to trigger previous fan level,
         <sensor 0, sensor 1, sensor 2, ...> mapping to variant overlay
     rpm_target:
-      required: false
       type: array
       description:
         Support multiple fan speed target for each level (in RPM),
