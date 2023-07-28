@@ -867,23 +867,12 @@ static int i2c_hid_target_init(const struct device *dev)
 	};								\
 	static void i2c_hid_##inst##_init(void) \
 	{	\
-		if (i2c_hid_target_##inst##_powerstate == 0 && \
-			gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l)) == 1) {	\
+		if (i2c_hid_target_##inst##_powerstate == 0) {	\
 			i2c_target_driver_register(DEVICE_DT_INST_GET(inst));	\
-				i2c_hid_target_##inst##_powerstate = 1;	\
+			i2c_hid_target_##inst##_powerstate = 1;	\
 		}	\
 	}	\
-	DECLARE_HOOK(HOOK_CHIPSET_RESUME, i2c_hid_##inst##_init, HOOK_PRIO_DEFAULT);	\
-									\
-	static void i2c_hid_##inst##_deinit(void)	\
-	{	\
-		if (i2c_hid_target_##inst##_powerstate == 1 &&	\
-			gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l)) == 0) {	\
-				i2c_target_driver_unregister(DEVICE_DT_INST_GET(inst));	\
-				i2c_hid_target_##inst##_powerstate = 0;	\
-			}	\
-	}	\
-	DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, i2c_hid_##inst##_deinit, HOOK_PRIO_DEFAULT);	\
+	DECLARE_HOOK(HOOK_INIT, i2c_hid_##inst##_init, HOOK_PRIO_DEFAULT);	\
 									\
 	DEVICE_DT_INST_DEFINE(inst,					\
 			    &i2c_hid_target_init,			\
