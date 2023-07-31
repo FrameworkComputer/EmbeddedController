@@ -4,6 +4,7 @@
 
 """This module defines helpers accessible to all BUILD.py files."""
 
+from zmake import signers  # pylint: disable=unused-import
 import zmake.output_packers
 
 

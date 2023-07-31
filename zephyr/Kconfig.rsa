@@ -28,22 +28,12 @@ endif # PLATFORM_EC_RSA
 
 config PLATFORM_EC_RWSIG
 	bool "Enable RW signature verification subsystem."
-	select PLATFORM_EC_RWSIG_SIGN if CROS_EC_RW
 	select PLATFORM_EC_RWSIG_VERIFY if CROS_EC_RO
 	help
 	  For accessories without software sync, enable this option to allow RO
 	  verify the RW firmware using RSA signature.
 
-	  Board should specify the path to the private key using
-	  PLATFORM_EC_RWSIG_KEY_PATH config variable.
-
 if PLATFORM_EC_RWSIG
-
-config PLATFORM_EC_RWSIG_SIGN
-	bool "Sign the RW firmware using the RSA key."
-	help
-	  If enabled, an extra signing step is added after linker stage, which
-	  signs and inserts the keys and signatures into the final image.
 
 config PLATFORM_EC_RWSIG_VERIFY
 	bool "Verify the RW firmware using the RSA signature."
@@ -53,12 +43,6 @@ config PLATFORM_EC_RWSIG_VERIFY
 	  If enabled, the RW part of the firmware will be verified using the
 	  public key stored in the RO part of the firmware and the signature
 	  provided with the RW part.
-
-config PLATFORM_EC_RWSIG_KEY_PATH
-	string "Path to the RSA private key for RWSIG signing"
-	help
-	  Path to the RSA private key in PEM format, relative to the platform/ec
-	  repo.
 
 choice PLATFORM_EC_RWSIG_TYPE
 	bool "futility signature type"

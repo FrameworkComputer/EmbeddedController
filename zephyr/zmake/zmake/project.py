@@ -13,6 +13,7 @@ import zmake.build_config as build_config
 import zmake.configlib as configlib
 import zmake.modules
 import zmake.output_packers
+import zmake.signers as signers
 import zmake.toolchains as toolchains
 
 
@@ -55,6 +56,7 @@ class ProjectConfig:
     inherited_from: typing.Iterable[str] = dataclasses.field(
         default_factory=list
     )
+    signer: signers.BaseSigner = signers.NullSigner()
 
     @property
     def full_name(self) -> str:
@@ -76,6 +78,7 @@ class Project:
         self.packer: zmake.output_packers.BasePacker = (
             self.config.output_packer(self)
         )
+        self.signer = self.config.signer
 
     def iter_builds(self):
         """Iterate thru the build combinations provided by the project's packer.

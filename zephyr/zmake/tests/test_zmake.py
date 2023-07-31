@@ -17,6 +17,7 @@ import zmake.jobserver
 import zmake.multiproc as multiproc
 import zmake.output_packers
 import zmake.project
+import zmake.signers
 import zmake.toolchains
 
 
@@ -36,7 +37,9 @@ class FakeProject:
             supported_toolchains=["llvm"],
             output_packer=zmake.output_packers.ElfPacker,
             project_dir=pathlib.Path("FakeProjectDir"),
+            signer=zmake.signers.NullSigner(),
         )
+        self.signer = self.config.signer
 
     @staticmethod
     def iter_builds():
