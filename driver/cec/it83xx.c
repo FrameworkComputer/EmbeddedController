@@ -459,6 +459,9 @@ static int it83xx_cec_set_enable(int port, uint8_t enable)
 		return EC_SUCCESS;
 
 	if (enable) {
+#ifndef CONFIG_ZEPHYR
+		/* TODO: Implement these in zephyr */
+
 		/* Enable CEC clock */
 		clock_enable_peripheral(CGC_OFFSET_CEC, 0, 0);
 
@@ -467,6 +470,7 @@ static int it83xx_cec_set_enable(int port, uint8_t enable)
 
 		/* Enable alternate function */
 		gpio_config_module(MODULE_CEC, 1);
+#endif
 
 		/* Set logical address to unregistered (default is 0 = TV) */
 		IT83XX_CEC_CECDLA = CEC_UNREGISTERED_ADDR &
@@ -490,12 +494,16 @@ static int it83xx_cec_set_enable(int port, uint8_t enable)
 		/* Disable all interrupts in interrupt enable register */
 		IT83XX_CEC_CECIE &= ~CEC_ALL_INTERRUPTS;
 
+#ifndef CONFIG_ZEPHYR
+		/* TODO: Implement these in zephyr */
+
 		/* Configure pin back to GPIO */
 		gpio_config_module(MODULE_CEC, 0);
 		IT83XX_GPIO_GRC8 &= ~BIT(5);
 
 		/* Disable CEC clock */
 		clock_disable_peripheral(CGC_OFFSET_CEC, 0, 0);
+#endif
 
 		cec_state = CEC_STATE_DISABLED;
 

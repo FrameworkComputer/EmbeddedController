@@ -7,3 +7,11 @@ description: CEC port
 compatible: "cros-ec,cec"
 
 include: base.yaml
+
+properties:
+  drv:
+    type: string
+    description:
+      CrOS EC driver used for this CEC port
+    enum:
+      - "it83xx_cec_drv"

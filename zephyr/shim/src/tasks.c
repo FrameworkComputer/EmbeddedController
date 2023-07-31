@@ -448,6 +448,11 @@ void task_enable_irq(int irq)
 	arch_irq_enable(irq);
 }
 
+void task_disable_irq(int irq)
+{
+	arch_irq_disable(irq);
+}
+
 inline bool in_interrupt_context(void)
 {
 	return k_is_in_isr();

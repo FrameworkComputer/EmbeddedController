@@ -52,6 +52,9 @@ config LINK_TEST_SUITE_CBI_FLASH
 config LINK_TEST_SUITE_CEC_COMMON
 	bool "Link and run the common/cec.c tests"
 
+config LINK_TEST_SUITE_CEC_IT83XX
+	bool "Link and run tests for driver/cec/it83xx"
+
 config LINK_TEST_SUITE_CHARGESPLASH
 	bool "Link and test the chargesplash tests"
 
