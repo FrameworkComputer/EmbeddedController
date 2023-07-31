@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-image: jbettis/ubuntu-28jul23
+image: jbettis/ubuntu-31jul23
 
 # You can update that image using this repo:
 #   https://gitlab.com/zephyr-ec/gitlab-ci-runner/-/tree/main
@@ -383,12 +383,19 @@ ec_coverage:
 zephyr_coverage:
   stage: test
   needs: []
+  parallel: 3
   script:
     - python3 ${EC_DIR}/twister --coverage --outdir "${TWISTER_OUT_DIR}"
+      -v -i -x=ALLOW_WARNINGS=ON -y
+    - tests=( $( jq -r '.testsuites[] | @text "\(.name)"' "${TWISTER_OUT_DIR}/testplan.json" |
+      sort |
+      split -n r/"${CI_NODE_INDEX}"/"${CI_NODE_TOTAL}") )
+    - printf ' -s %s' "${tests[@]}" | xargs python3 ${EC_DIR}/twister --coverage --outdir "${TWISTER_OUT_DIR}"
       -v -i -x=ALLOW_WARNINGS=ON
+    - mv "${TWISTER_OUT_DIR}/coverage.info" "${TWISTER_OUT_DIR}/coverage${CI_NODE_INDEX}.info"
   artifacts:
     paths:
-      - ec_dir/twister-out/coverage.info
+      - ec_dir/twister-out/coverage*.info
     expire_in: 1 week
   coverage: '/lines\.*: \d+\.\d+%/'
 
@@ -419,8 +426,9 @@ merged_coverage:
   needs: ["ec_coverage", "zephyr_coverage", "zephyr_boards_coverage"]
   script:
     # build_dir / "all_tests.info" -> "${BUILD_DIR}/merged.info"
-    - lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/merged.info"
-      -a "${BUILD_DIR}/coverage/lcov.info" -a "${TWISTER_OUT_DIR}/coverage.info"
+    - printf ' -a %s' "${TWISTER_OUT_DIR}/"coverage[0-9]*.info | xargs -x
+      lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/merged.info"
+      -a "${BUILD_DIR}/coverage/lcov.info"
     - printf ' -a %s' ${BUILD_DIR}/zephyr/all_builds[0-9]*.info | xargs -x
       lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/zephyr/zephyr_merged.info"
       -a "${BUILD_DIR}/merged.info"
