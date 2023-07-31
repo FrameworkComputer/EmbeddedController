@@ -42,13 +42,15 @@ uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE] FP_TEMPLATE_SECTION;
 uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
 			      [FP_POSITIVE_MATCH_SALT_BYTES];
 
-void fp_task_simulate(void)
+/* LCOV_EXCL_START */
+__test_only void fp_task_simulate(void)
 {
 	int timeout_us = -1;
 
 	while (1)
 		task_wait_event(timeout_us);
 }
+/* LCOV_EXCL_STOP */
 
 void fp_clear_finger_context(uint16_t idx)
 {

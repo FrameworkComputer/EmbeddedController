@@ -57,7 +57,7 @@ extern uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
 				     [FP_POSITIVE_MATCH_SALT_BYTES];
 
 /* Simulation for unit tests. */
-void fp_task_simulate(void);
+__test_only void fp_task_simulate(void);
 
 /*
  * Clear one fingerprint template.
