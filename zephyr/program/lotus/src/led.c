@@ -494,6 +494,12 @@ static void led_tick(void)
 	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
 		board_led_set_power();
 
+	if (!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 1);
+		return;
+	}
+
 	/* Debug Active */
 	if (diagnostics_tick())
 		return;
