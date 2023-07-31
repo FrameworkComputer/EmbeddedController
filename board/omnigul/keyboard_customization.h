@@ -77,4 +77,8 @@ extern uint8_t keyboard_cols;
 #define KEYBOARD_ROW_LEFT_SHIFT 5
 #define KEYBOARD_MASK_LEFT_SHIFT KEYBOARD_ROW_TO_MASK(KEYBOARD_ROW_LEFT_SHIFT)
 
+uint16_t get_scancode_set2(uint8_t row, uint8_t col);
+
+void set_scancode_set2(uint8_t row, uint8_t col, uint16_t val);
+
 #endif /* __KEYBOARD_CUSTOMIZATION_H */
