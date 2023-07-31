@@ -149,6 +149,26 @@
 				value = <1>;
 			};
 		};
+
+		/*
+		 * FW_CONFIG field to set keyboard layout.
+		 */
+		keyboard {
+			enum-name = "FW_KB_LAYOUT";
+			start = <2>;
+			size = <2>;
+
+			keyboard-default {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "KEYBOARD_DEFAULT";
+				value = <0>;
+			};
+			keyboard-ansi {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "KEYBOARD_ANSI";
+				value = <1>;
+			};
+		};
 	};
 
 	/* Rotation matrices for motion sensors. */
