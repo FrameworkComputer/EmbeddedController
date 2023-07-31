@@ -2088,8 +2088,9 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 		    PE_CHK_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP))) {
 		PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 		PE_CLR_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP);
-		set_state_pe(port, PE_DRS_SEND_SWAP);
-		return true;
+
+		pd_dpm_request(port, DPM_REQUEST_DR_SWAP);
+		return false;
 	}
 
 	/*
