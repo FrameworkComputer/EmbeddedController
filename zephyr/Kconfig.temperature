@@ -143,6 +143,13 @@ config PLATFORM_EC_NUM_FANS
 	  Declare the number of fans supported on this board and avilable
 	  for control through fan APIs.
 
+config PLATFORM_EC_FAN_RPM_CUSTOM
+	bool "Fan rpm custom control suuport"
+	default n
+	help
+	  Replace the default fan_percent_to_rpm() function with a board-specific
+	  implementation in board.c
+
 endif # PLATFORM_EC_FAN
 
 config PLATFORM_EC_FAN_BYPASS_SLOW_RESPONSE

@@ -375,6 +375,7 @@ enum fan_status fan_get_status(int ch)
 	return fan_data[ch].auto_status;
 }
 
+#ifndef CONFIG_PLATFORM_EC_FAN_RPM_CUSTOM
 void fan_set_rpm_target(int ch, int rpm)
 {
 	if (rpm == 0) {
@@ -396,6 +397,7 @@ void fan_set_rpm_target(int ch, int rpm)
 	fan_data[ch].rpm_target = rpm;
 	LOG_DBG("fan %d: set target rpm = %d", ch, fan_data[ch].rpm_target);
 }
+#endif
 
 int fan_is_stalled(int ch)
 {
