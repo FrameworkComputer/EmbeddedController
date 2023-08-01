@@ -852,8 +852,6 @@ static int i2c_hid_target_init(const struct device *dev)
 	static uint8_t							\
 	i2c_hid_target_##inst##_buffer[(DT_INST_PROP(inst, max_report_size))];	\
 									\
-	static bool i2c_hid_target_##inst##_powerstate;\
-									\
 	static const struct i2c_hid_target_config			\
 		i2c_hid_target_##inst##_cfg = {			\
 		.bus = I2C_DT_SPEC_INST_GET(inst),			\
@@ -867,10 +865,7 @@ static int i2c_hid_target_init(const struct device *dev)
 	};								\
 	static void i2c_hid_##inst##_init(void) \
 	{	\
-		if (i2c_hid_target_##inst##_powerstate == 0) {	\
 			i2c_target_driver_register(DEVICE_DT_INST_GET(inst));	\
-			i2c_hid_target_##inst##_powerstate = 1;	\
-		}	\
 	}	\
 	DECLARE_HOOK(HOOK_INIT, i2c_hid_##inst##_init, HOOK_PRIO_DEFAULT);	\
 									\
