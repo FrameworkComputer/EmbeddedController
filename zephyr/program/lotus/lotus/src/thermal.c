@@ -13,8 +13,6 @@
 #include "thermal.h"
 #include "util.h"
 
-
-
 void fan_set_rpm_target(int ch, int rpm)
 {
 	int board_rpm_max = fans[ch].rpm->rpm_max;
@@ -62,18 +60,3 @@ int fan_percent_to_rpm(int fan_index, int temp_ratio)
 
 	return rpm;
 }
-
-/* After GPU detect, update the thermal configuration */
-void update_thermal_configuration(void)
-{
-	if (gpu_present()) {
-		thermal_params[0].temp_fan_max = 52; /* UTH1 */
-		thermal_params[1].temp_fan_max = 52; /* QTH2 */
-		thermal_params[2].temp_fan_max = 52; /* QTH1 */
-
-		thermal_params[0].temp_fan_off = 40; /* UTH1 */
-		thermal_params[1].temp_fan_off = 40; /* QTH2 */
-		thermal_params[2].temp_fan_off = 40; /* QTH1 */
-	}
-}
-DECLARE_HOOK(HOOK_INIT, update_thermal_configuration, HOOK_PRIO_DEFAULT + 2);

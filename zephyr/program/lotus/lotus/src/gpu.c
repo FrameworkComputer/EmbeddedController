@@ -16,11 +16,12 @@
 #include "board_function.h"
 #include "console.h"
 #include "driver/temp_sensor/f75303.h"
-#include "system.h"
+#include "extpower.h"
+#include "flash_storage.h"
 #include "hooks.h"
 #include "i2c.h"
-#include "flash_storage.h"
-#include "extpower.h"
+#include "system.h"
+#include "thermal.h"
 
 LOG_MODULE_REGISTER(gpu, LOG_LEVEL_INF);
 
@@ -57,6 +58,29 @@ static void update_gpu_ac_power_state(void)
 	}
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, update_gpu_ac_power_state, HOOK_PRIO_DEFAULT);
+
+/* After GPU detect, update the thermal configuration */
+void update_thermal_configuration(void)
+{
+	if (gpu_present()) {
+		thermal_params[0].temp_fan_max = C_TO_K(65); /* UTH1 */
+		thermal_params[1].temp_fan_max = C_TO_K(64); /* QTH2 */
+		thermal_params[2].temp_fan_max = C_TO_K(67); /* QTH1 */
+
+		thermal_params[0].temp_fan_off = C_TO_K(46); /* UTH1 */
+		thermal_params[1].temp_fan_off = C_TO_K(50); /* QTH2 */
+		thermal_params[2].temp_fan_off = C_TO_K(45); /* QTH1 */
+	} else {
+		thermal_params[0].temp_fan_max = C_TO_K(60); /* UTH1 */
+		thermal_params[1].temp_fan_max = C_TO_K(60); /* QTH2 */
+		thermal_params[2].temp_fan_max = C_TO_K(62); /* QTH1 */
+
+		thermal_params[0].temp_fan_off = C_TO_K(46); /* UTH1 */
+		thermal_params[1].temp_fan_off = C_TO_K(50); /* QTH2 */
+		thermal_params[2].temp_fan_off = C_TO_K(45); /* QTH1 */
+	}
+}
+DECLARE_HOOK(HOOK_INIT, update_thermal_configuration, HOOK_PRIO_DEFAULT + 2);
 
 void check_gpu_module(void)
 {
@@ -112,6 +136,7 @@ void check_gpu_module(void)
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL) &= GPU_PRESENT;
 	}
 	update_gpu_ac_power_state();
+	update_thermal_configuration();
 }
 DECLARE_DEFERRED(check_gpu_module);
 DECLARE_HOOK(HOOK_INIT, check_gpu_module, HOOK_PRIO_INIT_ADC + 1);
@@ -133,6 +158,7 @@ __override void project_chassis_function(enum gpio_signal signal)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
 		module_present = 0;
+		update_thermal_configuration();
 	} else {
 		hook_call_deferred(&check_gpu_module_data, 50*MSEC);
 	}
@@ -154,6 +180,7 @@ void beam_open_interrupt(enum gpio_signal signal)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
 		module_present = 0;
+		update_thermal_configuration();
 	} else {
 		hook_call_deferred(&check_gpu_module_data, 50*MSEC);
 	}
