@@ -5,6 +5,8 @@
 
 /* Implement the BoringSSL sysrand from Zephyr Entropy Device. */
 
+#include <errno.h>
+
 #include <zephyr/drivers/entropy.h>
 #include <zephyr/kernel.h>
 
@@ -20,16 +22,31 @@
 #if !defined(__linux__)
 int getentropy(void *buffer, size_t length)
 {
+	if (!buffer) {
+		errno = EFAULT;
+		return -1;
+	}
+
+	if (length > 256) {
+		errno = EIO;
+		return -1;
+	}
+
 	/*
 	 * BoringSSL uses size_t to represent buffer size, but Zephyr uses
 	 * uint16_t. Crash the system if user requested more than UINT16_MAX
 	 * bytes.
 	 */
-	if (!device_is_ready(rng) || length > UINT16_MAX)
-		k_oops();
+	if (!device_is_ready(rng)) {
+		errno = EIO;
+		return -1;
+	}
 
-	if (entropy_get_entropy(rng, buffer, (uint16_t)length))
-		k_oops();
+	if (entropy_get_entropy(rng, buffer, (uint16_t)length)) {
+		errno = EIO;
+		return -1;
+	}
+
 	return 0;
 }
 #endif // !defined(__linux__)

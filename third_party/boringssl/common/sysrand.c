@@ -8,6 +8,8 @@
 #include "openssl/base.h"
 #include "trng.h"
 
+#include <errno.h>
+
 #include <unistd.h>
 
 // We should define the getentropy for boringssl 24.
@@ -17,6 +19,16 @@
 #if !defined(__linux__)
 int getentropy(void *buffer, size_t length)
 {
+	if (!buffer) {
+		errno = EFAULT;
+		return -1;
+	}
+
+	if (length > 256) {
+		errno = EIO;
+		return -1;
+	}
+
 	trng_init();
 	trng_rand_bytes(buffer, length);
 	trng_exit();
