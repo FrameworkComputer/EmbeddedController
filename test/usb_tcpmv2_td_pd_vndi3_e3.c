@@ -11,8 +11,8 @@
 #include "usb_tc_sm.h"
 #include "usb_tcpmv2_compliance.h"
 
-uint32_t vdo =
-	VDO(USB_SID_PD, 1, VDO_SVDM_VERS(SVDM_VER_2_0) | CMD_DISCOVER_IDENT);
+uint32_t vdo = VDO(USB_SID_PD, 1,
+		   VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0) | CMD_DISCOVER_IDENT);
 
 /*****************************************************************************
  * TD.PD.VNDI3.E3.VDM Identity

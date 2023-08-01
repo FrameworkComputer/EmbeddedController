@@ -280,7 +280,9 @@ enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 			     CMD_ENTER_MODE | VDO_OPOS(dp_opos));
 		/* CMDT_INIT is 0, so this is a no-op */
 		vdm[0] |= VDO_CMDT(CMDT_INIT);
-		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP));
+		vdm[0] |= VDO_SVDM_VERS_MAJOR(
+			pd_get_vdo_ver(port, TCPCI_MSG_SOP));
+
 		vdo_count_ret = 1;
 		if (dp_state[port] == DP_START)
 			CPRINTS("C%d: Attempting to enter DP mode", port);
@@ -291,7 +293,8 @@ enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 			return MSG_SETUP_ERROR;
 		vdm[0] |= PD_VDO_OPOS(dp_opos);
 		vdm[0] |= VDO_CMDT(CMDT_INIT);
-		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP));
+		vdm[0] |= VDO_SVDM_VERS_MAJOR(
+			pd_get_vdo_ver(port, TCPCI_MSG_SOP));
 		break;
 	case DP_STATUS_ACKED:
 		if (!get_dp_pin_mode(port))
@@ -319,7 +322,8 @@ enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 		if (vdo_count_ret == 0)
 			return MSG_SETUP_ERROR;
 		vdm[0] |= VDO_CMDT(CMDT_INIT);
-		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP));
+		vdm[0] |= VDO_SVDM_VERS_MAJOR(
+			pd_get_vdo_ver(port, TCPCI_MSG_SOP));
 		break;
 	case DP_ENTER_NAKED:
 		DP_SET_FLAG(port, DP_FLAG_RETRY);
@@ -343,7 +347,8 @@ enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 
 		vdm[0] |= VDO_OPOS(dp_opos);
 		vdm[0] |= VDO_CMDT(CMDT_INIT);
-		vdm[0] |= VDO_SVDM_VERS(pd_get_vdo_ver(port, TCPCI_MSG_SOP));
+		vdm[0] |= VDO_SVDM_VERS_MAJOR(
+			pd_get_vdo_ver(port, TCPCI_MSG_SOP));
 		vdo_count_ret = 1;
 		break;
 	case DP_INACTIVE:

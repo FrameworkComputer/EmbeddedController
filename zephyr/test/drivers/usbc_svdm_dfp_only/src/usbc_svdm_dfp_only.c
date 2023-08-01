@@ -42,7 +42,7 @@ get_identity_response(struct usbc_svdm_dfp_only_fixture *fixture)
 {
 	uint32_t discover_identity[] = {
 		VDO(USB_SID_PD, 1,
-		    VDO_SVDM_VERS(SVDM_VER_2_0) | CMD_DISCOVER_IDENT),
+		    VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0) | CMD_DISCOVER_IDENT),
 	};
 
 	/* Send a discover identity command from the partner */
@@ -113,7 +113,7 @@ ZTEST_F(usbc_svdm_dfp_only, test_verify_identity)
 	/* SVDM header: ACKing Discover_Identity */
 	zassert_equal(response.vdos[0],
 		      VDO(USB_SID_PD, 1,
-			  VDO_SVDM_VERS(1) | VDO_OPOS(0) |
+			  VDO_SVDM_VERS_MAJOR(1) | VDO_OPOS(0) |
 				  VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT),
 		      "VDM Header value unexpected: %#x", response.vdos[0]);
 	/* ID Header VDO per PD 3.0 */
@@ -149,7 +149,7 @@ ZTEST_F(usbc_svdm_dfp_only, test_verify_pd20_nak)
 	zassert_equal(response.n_vdos, 1);
 	zassert_equal(response.vdos[0],
 		      VDO(USB_SID_PD, 1,
-			  VDO_SVDM_VERS(0) | VDO_OPOS(0) |
+			  VDO_SVDM_VERS_MAJOR(0) | VDO_OPOS(0) |
 				  VDO_CMDT(CMDT_RSP_NAK) | CMD_DISCOVER_IDENT),
 		      "VDM Header value unexpected: %#x", response.vdos[0]);
 }

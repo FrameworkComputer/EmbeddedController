@@ -2140,7 +2140,7 @@ void pd_send_vdm(int port, uint32_t vid, int cmd, const uint32_t *data,
 					   (PD_VDO_CMD(cmd) <= CMD_ATTENTION),
 				   cmd);
 #ifdef CONFIG_USB_PD_REV30
-	pd[port].vdo_data[0] |= VDO_SVDM_VERS(vdo_ver[pd[port].rev]);
+	pd[port].vdo_data[0] |= VDO_SVDM_VERS_MAJOR(vdo_ver[pd[port].rev]);
 #endif
 	queue_vdm(port, pd[port].vdo_data, data, count, TCPCI_MSG_SOP);
 

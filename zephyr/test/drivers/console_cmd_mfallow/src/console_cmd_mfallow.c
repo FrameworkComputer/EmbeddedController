@@ -34,7 +34,7 @@ static void add_dp_discovery(struct tcpci_partner_data *partner)
 	partner->identity_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	partner->identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
 		/* USB host */ false, /* USB device */ true, IDH_PTYPE_HUB,
 		/* modal operation */ true, USB_VID_GOOGLE);
@@ -52,7 +52,7 @@ static void add_dp_discovery(struct tcpci_partner_data *partner)
 	partner->modes_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_MODES) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	partner->modes_vdm[VDO_INDEX_HDR + 1] =
 		VDO_MODE_DP(MODE_DP_PIN_C | MODE_DP_PIN_D, 0, 1,
 			    CABLE_RECEPTACLE, MODE_DP_V13, MODE_DP_SNK);
@@ -63,7 +63,7 @@ static void add_dp_discovery(struct tcpci_partner_data *partner)
 	partner->svids_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_SVID) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	partner->svids_vdm[VDO_INDEX_HDR + 1] =
 		VDO_SVID(USB_SID_DISPLAYPORT, 0);
 	partner->svids_vdos = VDO_INDEX_HDR + 2;
@@ -75,14 +75,14 @@ static void add_displayport_mode_responses(struct tcpci_partner_data *partner)
 	partner->enter_mode_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_ENTER_MODE) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	partner->enter_mode_vdos = VDO_INDEX_HDR + 1;
 
 	/* Add DisplayPort StatusUpdate response */
 	partner->dp_status_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DP_STATUS) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	partner->dp_status_vdm[VDO_INDEX_HDR + 1] =
 		VDO_DP_STATUS(0, /* IRQ_HPD */
 			      false, /* HPD_HI|LOW - Changed*/
@@ -98,7 +98,7 @@ static void add_displayport_mode_responses(struct tcpci_partner_data *partner)
 	partner->dp_config_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DP_CONFIG) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	partner->dp_config_vdos = VDO_INDEX_HDR + 1;
 }
 

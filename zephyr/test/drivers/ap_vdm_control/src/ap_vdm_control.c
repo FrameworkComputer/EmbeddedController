@@ -33,7 +33,7 @@ struct tcpci_cable_data passive_usb3 = {
 	.identity_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT) |
-		VDO_SVDM_VERS(SVDM_VER_2_0),
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0),
 	.identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
 		/* USB host */ false, /* USB device */ false, IDH_PTYPE_PCABLE,
 		/* modal operation */ false, USB_VID_GOOGLE),
@@ -52,7 +52,7 @@ static void add_dp_discovery(struct tcpci_partner_data *partner)
 	partner->identity_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_IDENT) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	partner->identity_vdm[VDO_INDEX_IDH] = VDO_IDH(
 		/* USB host */ false, /* USB device */ true, IDH_PTYPE_HUB,
 		/* modal operation */ true, USB_VID_GOOGLE);
@@ -70,7 +70,7 @@ static void add_dp_discovery(struct tcpci_partner_data *partner)
 	partner->modes_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_MODES) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	partner->modes_vdm[VDO_INDEX_HDR + 1] =
 		VDO_MODE_DP(MODE_DP_PIN_C | MODE_DP_PIN_D, 0, 1,
 			    CABLE_RECEPTACLE, MODE_DP_V13, MODE_DP_SNK);
@@ -81,7 +81,7 @@ static void add_dp_discovery(struct tcpci_partner_data *partner)
 	partner->svids_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_PD, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DISCOVER_SVID) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	partner->svids_vdm[VDO_INDEX_HDR + 1] =
 		VDO_SVID(USB_SID_DISPLAYPORT, 0);
 	partner->svids_vdos = VDO_INDEX_HDR + 2;
@@ -93,14 +93,14 @@ static void add_displayport_mode_responses(struct tcpci_partner_data *partner)
 	partner->enter_mode_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_ENTER_MODE) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	partner->enter_mode_vdos = VDO_INDEX_HDR + 1;
 
 	/* Add DisplayPort StatusUpdate response */
 	partner->dp_status_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DP_STATUS) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	partner->dp_status_vdm[VDO_INDEX_HDR + 1] =
 		VDO_DP_STATUS(0, /* IRQ_HPD */
 			      false, /* HPD_HI|LOW - Changed*/
@@ -116,7 +116,7 @@ static void add_displayport_mode_responses(struct tcpci_partner_data *partner)
 	partner->dp_config_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_ACK) | CMD_DP_CONFIG) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	partner->dp_config_vdos = VDO_INDEX_HDR + 1;
 }
 
@@ -297,7 +297,7 @@ ZTEST_F(ap_vdm_control, test_send_vdm_req_bad_count)
 ZTEST_F(ap_vdm_control, test_send_vdm_sop_req_valid)
 {
 	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT) |
-				  VDO_SVDM_VERS(SVDM_VER_2_0);
+				  VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	struct typec_vdm_req req = {
 		.vdm_data = { vdm_req_header },
 		.vdm_data_objects = 1,
@@ -317,7 +317,7 @@ ZTEST_F(ap_vdm_control, test_send_vdm_sop_req_valid)
 ZTEST_F(ap_vdm_control, test_send_vdm_sop_prime_req_valid)
 {
 	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT) |
-				  VDO_SVDM_VERS(SVDM_VER_2_0);
+				  VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	struct typec_vdm_req req = {
 		.vdm_data = { vdm_req_header },
 		.vdm_data_objects = 1,
@@ -337,7 +337,7 @@ ZTEST_F(ap_vdm_control, test_send_vdm_sop_prime_req_valid)
 ZTEST_F(ap_vdm_control, test_send_vdm_sop_attention_bad)
 {
 	uint32_t vdm_req_header = VDO(USB_SID_DISPLAYPORT, 1, CMD_ATTENTION) |
-				  VDO_SVDM_VERS(SVDM_VER_2_0);
+				  VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	struct ec_params_typec_control params = {
 		.port = TEST_PORT,
 		.command = TYPEC_CONTROL_COMMAND_SEND_VDM_REQ,
@@ -355,7 +355,7 @@ ZTEST_F(ap_vdm_control, test_send_vdm_sop_attention_bad)
 ZTEST_F(ap_vdm_control, test_send_vdm_req_in_progress)
 {
 	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT) |
-				  VDO_SVDM_VERS(SVDM_VER_2_0);
+				  VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	struct ec_params_typec_control params = {
 		.port = TEST_PORT,
 		.command = TYPEC_CONTROL_COMMAND_SEND_VDM_REQ,
@@ -382,7 +382,7 @@ ZTEST_F(ap_vdm_control, test_vdm_response_ack)
 	struct ec_response_typec_status status;
 	struct ec_response_typec_vdm_response vdm_resp;
 	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT) |
-				  VDO_SVDM_VERS(SVDM_VER_2_0);
+				  VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	struct typec_vdm_req req = {
 		.vdm_data = { vdm_req_header },
 		.vdm_data_objects = 1,
@@ -414,7 +414,7 @@ ZTEST_F(ap_vdm_control, test_vdm_request_nak)
 	struct ec_response_typec_status status;
 	struct ec_response_typec_vdm_response vdm_resp;
 	uint32_t vdm_req_header = VDO(USB_SID_DISPLAYPORT, 1, CMD_ENTER_MODE) |
-				  VDO_SVDM_VERS(SVDM_VER_2_0);
+				  VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	struct typec_vdm_req req = {
 		.vdm_data = { vdm_req_header },
 		.vdm_data_objects = 1,
@@ -425,7 +425,7 @@ ZTEST_F(ap_vdm_control, test_vdm_request_nak)
 	fixture->partner.enter_mode_vdm[VDO_INDEX_HDR] =
 		VDO(USB_SID_DISPLAYPORT, /* structured VDM */ true,
 		    VDO_CMDT(CMDT_RSP_NAK) | CMD_ENTER_MODE) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	fixture->partner.enter_mode_vdos = VDO_INDEX_HDR + 1;
 
 	host_cmd_typec_control_vdm_req(TEST_PORT, req);
@@ -455,7 +455,7 @@ ZTEST_F(ap_vdm_control, test_vdm_request_failed)
 	struct ec_response_typec_vdm_response vdm_resp;
 
 	uint32_t vdm_req_header = VDO(USB_SID_DISPLAYPORT, 1, CMD_ENTER_MODE) |
-				  VDO_SVDM_VERS(SVDM_VER_2_0);
+				  VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	struct typec_vdm_req req = {
 		.vdm_data = { vdm_req_header },
 		.vdm_data_objects = 1,
@@ -492,7 +492,7 @@ ZTEST_F(ap_vdm_control, test_vdm_request_in_progress)
 	struct ec_response_typec_vdm_response vdm_resp;
 
 	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT) |
-				  VDO_SVDM_VERS(SVDM_VER_2_0);
+				  VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	struct typec_vdm_req req = {
 		.vdm_data = { vdm_req_header },
 		.vdm_data_objects = 1,
@@ -521,7 +521,7 @@ ZTEST_F(ap_vdm_control, test_vdm_response_disconnect_clear)
 {
 	struct ec_response_typec_vdm_response vdm_resp;
 	uint32_t vdm_req_header = VDO(USB_SID_PD, 1, CMD_DISCOVER_IDENT) |
-				  VDO_SVDM_VERS(SVDM_VER_2_0);
+				  VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	struct typec_vdm_req req = {
 		.vdm_data = { vdm_req_header },
 		.vdm_data_objects = 1,
@@ -572,7 +572,7 @@ static void run_verify_dp_entry(struct ap_vdm_control_fixture *fixture,
 	struct typec_vdm_req req = {
 		.vdm_data = { VDO(USB_SID_DISPLAYPORT, 1,
 				  CMD_ENTER_MODE | VDO_OPOS(opos)) |
-			      VDO_SVDM_VERS(SVDM_VER_2_0) },
+			      VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0) },
 		.vdm_data_objects = 1,
 		.partner_type = TYPEC_PARTNER_SOP,
 	};
@@ -588,7 +588,7 @@ static void run_verify_dp_entry(struct ap_vdm_control_fixture *fixture,
 	/* Step 2: DP Status */
 	req.vdm_data[0] =
 		VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_STATUS | VDO_OPOS(opos)) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	req.vdm_data[1] = VDO_DP_STATUS(0, /* HPD IRQ  ... not applicable */
 					0, /* HPD level ... not applicable */
 					0, /* exit DP? ... no */
@@ -609,7 +609,7 @@ static void run_verify_dp_entry(struct ap_vdm_control_fixture *fixture,
 	/* Step 3: DP Configure */
 	req.vdm_data[0] =
 		VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_CONFIG | VDO_OPOS(opos)) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	req.vdm_data[1] = VDO_DP_CFG(MODE_DP_PIN_D, /* pin mode */
 				     1, /* DPv1.3 signaling */
 				     2); /* Set that partner should be DP sink
@@ -652,7 +652,7 @@ ZTEST_F(ap_vdm_control, test_vdm_attention_one)
 	vdm_attention_data[0] =
 		VDO(USB_SID_DISPLAYPORT, 1,
 		    VDO_OPOS(opos) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	vdm_attention_data[1] = VDO_DP_STATUS(1, /* IRQ_HPD */
 					      true, /* HPD_HI|LOW - Changed*/
 					      0, /* request exit DP */
@@ -696,7 +696,7 @@ ZTEST_F(ap_vdm_control, test_vdm_attention_two)
 	vdm_attention_first[0] =
 		VDO(USB_SID_DISPLAYPORT, 1,
 		    VDO_OPOS(opos) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	vdm_attention_first[1] = VDO_DP_STATUS(0, /* IRQ_HPD */
 					       false, /* HPD_HI|LOW - Changed*/
 					       0, /* request exit DP */
@@ -714,7 +714,7 @@ ZTEST_F(ap_vdm_control, test_vdm_attention_two)
 	vdm_attention_second[0] =
 		VDO(USB_SID_DISPLAYPORT, 1,
 		    VDO_OPOS(opos) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	vdm_attention_second[1] = VDO_DP_STATUS(1, /* IRQ_HPD */
 						true, /* HPD_HI|LOW - Changed*/
 						0, /* request exit DP */
@@ -766,7 +766,7 @@ ZTEST_F(ap_vdm_control, test_vdm_attention_disconnect_clear)
 	vdm_attention_data[0] =
 		VDO(USB_SID_DISPLAYPORT, 1,
 		    VDO_OPOS(opos) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION);
-	vdm_attention_data[0] |= VDO_SVDM_VERS(SVDM_VER_2_0);
+	vdm_attention_data[0] |= VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	vdm_attention_data[1] = VDO_DP_STATUS(1, /* IRQ_HPD */
 					      true, /* HPD_HI|LOW - Changed*/
 					      0, /* request exit DP */
@@ -891,7 +891,7 @@ ZTEST_F(ap_vdm_control, test_vdm_hpd_level)
 	vdm_attention_data[0] =
 		VDO(USB_SID_DISPLAYPORT, 1,
 		    VDO_OPOS(opos) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	vdm_attention_data[1] = VDO_DP_STATUS(1, /* IRQ_HPD */
 					      true, /* HPD_HI|LOW - Changed*/
 					      0, /* request exit DP */
@@ -926,7 +926,7 @@ ZTEST_F(ap_vdm_control, test_vdm_hpd_irq_ignored)
 	vdm_attention_data[0] =
 		VDO(USB_SID_DISPLAYPORT, 1,
 		    VDO_OPOS(opos) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	vdm_attention_data[1] = VDO_DP_STATUS(1, /* IRQ_HPD */
 					      false, /* HPD_HI|LOW - Changed*/
 					      0, /* request exit DP */
@@ -969,7 +969,7 @@ ZTEST_F(ap_vdm_control, test_vdm_status_hpd)
 	struct typec_vdm_req req = {
 		.vdm_data = { VDO(USB_SID_DISPLAYPORT, 1,
 				  CMD_ENTER_MODE | VDO_OPOS(opos)) |
-			      VDO_SVDM_VERS(SVDM_VER_2_0) },
+			      VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0) },
 		.vdm_data_objects = 1,
 		.partner_type = TYPEC_PARTNER_SOP,
 	};
@@ -985,7 +985,7 @@ ZTEST_F(ap_vdm_control, test_vdm_status_hpd)
 	/* Step 2: DP Status */
 	req.vdm_data[0] =
 		VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_STATUS | VDO_OPOS(opos)) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	req.vdm_data[1] = VDO_DP_STATUS(0, /* HPD IRQ  ... not applicable */
 					0, /* HPD level ... not applicable */
 					0, /* exit DP? ... no */
@@ -1008,7 +1008,7 @@ ZTEST_F(ap_vdm_control, test_vdm_status_hpd)
 	/* Step 3: DP Configure */
 	req.vdm_data[0] =
 		VDO(USB_SID_DISPLAYPORT, 1, CMD_DP_CONFIG | VDO_OPOS(opos)) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	req.vdm_data[1] = VDO_DP_CFG(MODE_DP_PIN_D, /* pin mode */
 				     1, /* DPv1.3 signaling */
 				     2); /* Set that partner should be DP sink
@@ -1038,7 +1038,7 @@ ZTEST_F(ap_vdm_control, test_vdm_hpd_disconnect_clear)
 	vdm_attention_data[0] =
 		VDO(USB_SID_DISPLAYPORT, 1,
 		    VDO_OPOS(opos) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	vdm_attention_data[1] = VDO_DP_STATUS(1, /* IRQ_HPD */
 					      true, /* HPD_HI|LOW - Changed*/
 					      0, /* request exit DP */
@@ -1095,7 +1095,7 @@ ZTEST_F(ap_vdm_control, test_vdm_wake_on_dock)
 	vdm_attention_data[0] =
 		VDO(USB_SID_DISPLAYPORT, 1,
 		    VDO_OPOS(opos) | VDO_CMDT(CMDT_INIT) | CMD_ATTENTION) |
-		VDO_SVDM_VERS(SVDM_VER_2_0);
+		VDO_SVDM_VERS_MAJOR(SVDM_VER_2_0);
 	vdm_attention_data[1] = VDO_DP_STATUS(1, /* IRQ_HPD */
 					      true, /* HPD_HI|LOW - Changed*/
 					      0, /* request exit DP */
