@@ -38,6 +38,7 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 			"lotus/src/power_button_x86.c"
 			"lotus/src/amd_r23m.c"
 			"lotus/src/ej889i.c"
+			"lotus/src/fan.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
 	"lotus/src/stt.c")
