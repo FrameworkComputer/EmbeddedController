@@ -112,6 +112,27 @@ ZTEST(system, test_system_common_pre_init__watch_dog_panic)
 	zassert_equal(exception, 0);
 }
 
+ZTEST(system, test_system_common_pre_init__watch_dog_warn_panic)
+{
+	uint32_t reason;
+	uint32_t info;
+	uint8_t exception;
+
+	/* Panic reason PANIC_SW_WATCHDOG_WARN should be switched
+	 * to PANIC_SW_WATCHDOG after a watchdog reset.
+	 * Info and exception should be preserved.
+	 */
+	panic_set_reason(PANIC_SW_WATCHDOG_WARN, 0x12, 0x34);
+
+	/* Clear all reset flags and set them arbitrarily */
+	system_set_reset_flags(EC_RESET_FLAG_WATCHDOG);
+	system_common_pre_init();
+	panic_get_reason(&reason, &info, &exception);
+	zassert_equal(reason, PANIC_SW_WATCHDOG);
+	zassert_equal(info, 0x12);
+	zassert_equal(exception, 0x34);
+}
+
 ZTEST(system, test_system_common_pre_init__watch_dog_panic_already_initialized)
 {
 	uint32_t reason;

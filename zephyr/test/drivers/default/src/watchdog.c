@@ -11,6 +11,7 @@
 #include "common.h"
 #include "ec_tasks.h"
 #include "hooks.h"
+#include "panic.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
 #include "watchdog.h"
@@ -116,6 +117,10 @@ ZTEST(watchdog, test_watchdog_reload)
  */
 ZTEST(watchdog, test_wdt_warning_handler)
 {
+	uint32_t reason;
+	uint32_t info;
+	uint8_t exception;
+
 	/* Feed the dog so timer is reset */
 	watchdog_reload();
 
@@ -126,6 +131,14 @@ ZTEST(watchdog, test_wdt_warning_handler)
 	k_timer_stop(&ktimer);
 
 	zassert_true(wdt_warning_triggered, "Watchdog timer did not expire.");
+
+	panic_get_reason(&reason, &info, &exception);
+
+	zassert_equal(PANIC_SW_WATCHDOG_WARN, reason,
+		      "Watchdog warning panic reason was not set");
+
+	zassert_equal(task_get_current(), exception,
+		      "Panic exception should match current task id");
 }
 
 /**

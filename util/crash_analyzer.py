@@ -82,6 +82,7 @@ def get_crash_cause(cause: int) -> str:
         0xDEAD6665: "bad-rng",
         0xDEAD6666: "pmic-fault",
         0xDEAD6667: "exit",
+        0xDEAD6668: "watchdog-warning",
     }
 
     if cause in causes:

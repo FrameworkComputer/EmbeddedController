@@ -35,9 +35,11 @@ static struct panic_data *const pdata_ptr = PANIC_DATA_PTR;
 
 /* Common SW Panic reasons strings */
 const char *const panic_sw_reasons[] = {
-	"PANIC_SW_DIV_ZERO",   "PANIC_SW_STACK_OVERFLOW", "PANIC_SW_PD_CRASH",
-	"PANIC_SW_ASSERT",     "PANIC_SW_WATCHDOG",	  "PANIC_SW_RNG",
-	"PANIC_SW_PMIC_FAULT",
+	"PANIC_SW_DIV_ZERO",	 "PANIC_SW_STACK_OVERFLOW",
+	"PANIC_SW_PD_CRASH",	 "PANIC_SW_ASSERT",
+	"PANIC_SW_WATCHDOG",	 "PANIC_SW_RNG",
+	"PANIC_SW_PMIC_FAULT",	 "PANIC_SW_EXIT",
+	"PANIC_SW_WATCHDOG_WARN"
 };
 
 /**

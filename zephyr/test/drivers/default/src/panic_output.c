@@ -38,7 +38,11 @@ ZTEST(panic_output, test_panic_sw_reason_is_valid)
 	zassert_true(panic_sw_reason_is_valid(PANIC_SW_BASE + 5), NULL);
 	/* PANIC_SW_PMIC_FAULT */
 	zassert_true(panic_sw_reason_is_valid(PANIC_SW_BASE + 6), NULL);
-	zassert_false(panic_sw_reason_is_valid(PANIC_SW_BASE + 7), NULL);
+	/* PANIC_SW_EXIT */
+	zassert_true(panic_sw_reason_is_valid(PANIC_SW_BASE + 7), NULL);
+	/* PANIC_SW_WATCHDOG_WARN */
+	zassert_true(panic_sw_reason_is_valid(PANIC_SW_BASE + 8), NULL);
+	zassert_false(panic_sw_reason_is_valid(PANIC_SW_BASE + 9), NULL);
 }
 
 ZTEST(panic_output, test_panic)
