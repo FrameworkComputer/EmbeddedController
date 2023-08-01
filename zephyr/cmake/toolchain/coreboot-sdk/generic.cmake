@@ -7,3 +7,5 @@
 # actually, as that's what's currently supported compiler-wise in the
 # chroot right now.
 include("${TOOLCHAIN_ROOT}/cmake/toolchain/llvm/generic.cmake")
+
+set(TOOLCHAIN_HAS_PICOLIBC ON CACHE BOOL "True if toolchain supports picolibc")
