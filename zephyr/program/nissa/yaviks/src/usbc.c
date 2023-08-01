@@ -152,8 +152,9 @@ uint16_t tcpc_get_alert_status(void)
 	uint16_t status = 0;
 	int regval;
 
-	/* Is the C1 port IRQ line asserted? */
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl))) {
+	/* Is the C1 port present and its IRQ line asserted? */
+	if (board_get_usb_pd_port_count() == 2 &&
+	    !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl))) {
 		/*
 		 * C1 IRQ is shared between BC1.2 and TCPC; poll TCPC to see if
 		 * it asserted the IRQ.
