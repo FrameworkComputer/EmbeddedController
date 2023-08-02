@@ -157,6 +157,11 @@ config LINK_TEST_SUITE_RT1739
 config LINK_TEST_SUITE_RT9490
 	bool "Link and test the rt9490 tests"
 
+config LINK_TEST_SUITE_WATCHDOG_HELPER
+	bool "Link and run watchdog helper tests"
+	help
+	  Include the test suite exercising the Watchdog Helper utility.
+
 config LINK_TEST_SUITE_RANDOM
 	bool "Link and run random (trng) tests"
 	help

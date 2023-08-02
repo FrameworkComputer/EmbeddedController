@@ -585,3 +585,10 @@ tests:
     - CONFIG_PLATFORM_EC_BODY_DETECTION_ALWAYS_ENABLE_IN_S0=y
     - CONFIG_PLATFORM_EC_BODY_DETECTION_NOTIFY_MODE_CHANGE=y
     - CONFIG_PLATFORM_EC_GESTURE_HOST_DETECTION=y
+  drivers.watchdog_helper:
+    extra_configs:
+    - CONFIG_PLATFORM_EC_WATCHDOG_HELPER=y
+    - CONFIG_LINK_TEST_SUITE_WATCHDOG_HELPER=y
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./watchdog_helper/watchdog_helper.dts

@@ -23,8 +23,11 @@ struct watchdog_info {
 
 __maybe_unused static void wdt_warning_handler(const struct device *wdt_dev,
 					       int channel_id);
+__maybe_unused static void
+wdt_warning_handler_with_enable(const struct device *wdt_dev, int channel_id);
 
 const struct watchdog_info wdt_info[] = {
+#if DT_NODE_HAS_STATUS(DT_CHOSEN(cros_ec_watchdog), okay)
 	{
 		.wdt_dev = DEVICE_DT_GET(DT_CHOSEN(cros_ec_watchdog)),
 		.config = {
@@ -41,6 +44,7 @@ const struct watchdog_info wdt_info[] = {
 #endif
 		},
 	},
+#endif
 #ifdef CONFIG_PLATFORM_EC_WATCHDOG_HELPER
 	{
 		.wdt_dev = DEVICE_DT_GET(DT_CHOSEN(cros_ec_watchdog_helper)),
@@ -48,7 +52,7 @@ const struct watchdog_info wdt_info[] = {
 			.flags = 0U,
 			.window.min = 0U,
 			.window.max = CONFIG_AUX_TIMER_PERIOD_MS,
-			.callback = wdt_warning_handler,
+			.callback = wdt_warning_handler_with_enable,
 		},
 	},
 #endif
@@ -175,7 +179,12 @@ __maybe_unused static void wdt_warning_handler(const struct device *wdt_dev,
 	 * occurs.
 	 */
 	panic_set_reason(PANIC_SW_WATCHDOG_WARN, 0, task_get_current());
+}
 
+__maybe_unused static void
+wdt_warning_handler_with_enable(const struct device *wdt_dev, int channel_id)
+{
+	wdt_warning_handler(wdt_dev, channel_id);
 	/* Watchdog is disabled after calling handler. Re-enable it now. */
 	watchdog_enable(wdt_dev);
 }
