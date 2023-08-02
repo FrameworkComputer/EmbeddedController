@@ -97,8 +97,9 @@ def build(opts):
                 platform_ec / "build" / "zephyr" / project.config.project_name
             )
             metric = metric_list.value.add()
-            metric.target_name = project.config.project_name
-            metric.platform_name = project.config.zephyr_board
+            full_name = project.config.full_name.split(".")
+            metric.target_name = full_name[-1]
+            metric.platform_name = ".".join(full_name[:-1])
             for variant, _ in project.iter_builds():
                 build_log = build_dir / f"build-{variant}" / "build.log"
                 parse_buildlog(
@@ -318,12 +319,13 @@ def test(opts):
             "ALL_FILTERED", metrics, build_dir / "lcov_no_tests.info"
         )
 
-        for board in SPECIAL_BOARDS:
-            _extract_lcov_summary(
-                f"BOARD_{board}".upper(),
-                metrics,
-                build_dir / (board + "_final.info"),
-            )
+        for project in zmake.project.find_projects(zephyr_dir).values():
+            if project.config.project_name in SPECIAL_BOARDS:
+                _extract_lcov_summary(
+                    f"BOARD_{project.config.full_name}".upper(),
+                    metrics,
+                    build_dir / (project.config.project_name + "_final.info"),
+                )
 
     with open(opts.metrics, "w") as file:
         file.write(json_format.MessageToJson(metrics))  # type: ignore
