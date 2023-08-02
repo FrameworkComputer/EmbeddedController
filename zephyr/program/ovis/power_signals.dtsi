@@ -65,18 +65,11 @@
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
 	pwr-slp-s3-l {
-		compatible = "intel,ap-pwrseq-vw";
+		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "SLP_S3_L input from PCH";
 		enum-name = "PWR_SLP_S3";
-		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S4";
-		vw-invert;
-/*
- * TODO: Initially, use virtual wire for sleep S3 signal instead of
- * of the GPIO signal which also exists.
- *		compatible = "intel,ap-pwrseq-gpio";
- *		gpios = <&gpio4 1 GPIO_ACTIVE_LOW>;
- *		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
- */
+		gpios = <&gpio4 1 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
 	pwr-slp-s4 {
 		compatible = "intel,ap-pwrseq-vw";
