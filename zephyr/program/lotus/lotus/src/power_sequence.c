@@ -576,7 +576,6 @@ static void peripheral_power_resume(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_invpwr), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, peripheral_power_resume, HOOK_PRIO_DEFAULT);
 
@@ -596,9 +595,28 @@ static void peripheral_power_suspend(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_invpwr), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, peripheral_power_suspend, HOOK_PRIO_DEFAULT);
+
+void system_check_d3cold(void)
+{
+	int enter_d3cold_flag =
+		(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) & ENTER_D3COLD);
+	int exit_d3cold_flag =
+		(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) & EXIT_D3COLD);
+	static int d3cold_is_entry;
+
+	if (enter_d3cold_flag && !d3cold_is_entry) {
+		d3cold_is_entry = 1;
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 0);
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) &= ~ENTER_D3COLD;
+	} else if (exit_d3cold_flag && d3cold_is_entry) {
+		d3cold_is_entry = 0;
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) &= ~EXIT_D3COLD;
+	}
+}
+DECLARE_HOOK(HOOK_TICK, system_check_d3cold, HOOK_PRIO_DEFAULT);
 
 void chipset_throttle_cpu(int throttle)
 {
