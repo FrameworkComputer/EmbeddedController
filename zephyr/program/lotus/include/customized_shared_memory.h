@@ -32,6 +32,8 @@
  */
 #define RTCWAKE  BIT(0)
 #define USBWAKE  BIT(1)
+#define ENTER_D3COLD	BIT(6)
+#define EXIT_D3COLD	BIT(7)
 
 /* Battery */
 #define EC_CUSTOMIZED_MEMMAP_BATT_AVER_TEMP	0x103
