@@ -35,7 +35,6 @@ struct cros_flash_npcx_data {
 };
 
 #define FLASH_DEV DT_CHOSEN(zephyr_flash_controller)
-#define SPI_CONTROLLER_DEV DT_NODELABEL(spi_fiu0)
 
 #define DRV_DATA(dev) ((struct cros_flash_npcx_data *)(dev)->data)
 
