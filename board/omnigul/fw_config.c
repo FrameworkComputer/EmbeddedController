@@ -46,3 +46,8 @@ bool ec_cfg_has_tabletmode(void)
 {
 	return (fw_config.tab_mode == TABLETMODE_ENABLED);
 }
+
+enum ec_cfg_keyboard_layout ec_cfg_keyboard_layout(void)
+{
+	return fw_config.kb_layout;
+}

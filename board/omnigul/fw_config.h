@@ -34,6 +34,8 @@ enum ec_cfg_audio_type {
 
 enum ec_cfg_sar_id { SAR_ID_0 = 0, SAR_ID_1 = 1 };
 
+enum ec_cfg_keyboard_layout { KEYBOARD_DEFAULT = 0, KEYBOARD_ANSI = 1 };
+
 union omnigul_cbi_fw_config {
 	struct {
 		enum ec_cfg_keyboard_backlight_type kb_bl : 1;
@@ -41,7 +43,8 @@ union omnigul_cbi_fw_config {
 		enum ec_cfg_storage_type stg : 2;
 		enum ec_cfg_audio_type aud : 1;
 		enum ec_cfg_sar_id sar_id : 1;
-		uint32_t reserved_1 : 26;
+		enum ec_cfg_keyboard_layout kb_layout : 2;
+		uint32_t reserved_1 : 24;
 	};
 	uint32_t raw_value;
 };
@@ -54,5 +57,7 @@ union omnigul_cbi_fw_config {
 union omnigul_cbi_fw_config get_fw_config(void);
 
 bool ec_cfg_has_tabletmode(void);
+
+enum ec_cfg_keyboard_layout ec_cfg_keyboard_layout(void);
 
 #endif /* __BOARD_OMNIGUL_FW_CONFIG_H_ */
