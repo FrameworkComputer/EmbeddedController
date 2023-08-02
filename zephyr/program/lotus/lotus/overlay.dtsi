@@ -60,8 +60,8 @@
 			temp_host_halt = <105>;
 			temp_host_release_warn = <40>;
 			temp_host_release_high = <40>;
-			temp_fan_off = <40>;
-			temp_fan_max = <70>;
+			temp_fan_off = <108>;
+			temp_fan_max = <108>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_amb_f75303>;
 		};
@@ -71,8 +71,8 @@
 			temp_host_halt = <105>;
 			temp_host_release_warn = <40>;
 			temp_host_release_high = <40>;
-			temp_fan_off = <40>;
-			temp_fan_max = <70>;
+			temp_fan_off = <50>;
+			temp_fan_max = <80>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_vr_f75303>;
 		};
@@ -82,8 +82,8 @@
 			temp_host_halt = <105>;
 			temp_host_release_warn = <40>;
 			temp_host_release_high = <40>;
-			temp_fan_off = <40>;
-			temp_fan_max = <70>;
+			temp_fan_off = <108>;
+			temp_fan_max = <108>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_vram_f75303>;
 		};
