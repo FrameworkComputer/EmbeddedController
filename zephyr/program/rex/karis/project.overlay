@@ -8,7 +8,6 @@
 #include "../generated.dtsi"
 #include "../interrupts.dtsi"
 #include "../keyboard.dtsi"
-#include "../motionsense.dtsi"
 #include "../power_signals.dtsi"
 #include "../rex.dtsi"
 #include "../temp_sensors.dtsi"
@@ -20,3 +19,17 @@
 #include "i2c.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
+#include "motionsense.dtsi"
+
+/ {
+	gpio-interrupts {
+		/delete-node/ ec_accel;
+		/delete-node/ ec_als_rgb;
+
+		int_imu: ec_imu {
+			irq-pin = <&gpio_ec_imu_int_r_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bma4xx_interrupt";
+		};
+	};
+};
