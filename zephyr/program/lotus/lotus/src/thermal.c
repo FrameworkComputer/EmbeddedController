@@ -30,7 +30,6 @@ void fan_set_rpm_target(int ch, int rpm)
 		/* Switch the fan configuration when gpu is present */
 		if (gpu_present())
 			board_rpm_max += (ch == 0) ? 800 : 700;
-	
 		if (rpm > board_rpm_max) {
 			rpm = board_rpm_max;
 		} else if (rpm < board_rpm_min) {
