@@ -128,6 +128,25 @@ void power_state_clear(int state)
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_STATE) &= ~state;
 }
 
+void power_s5_up_control(int control)
+{
+	CPRINTS("%s power s5 up!", control ? "setup" : "clear");
+	power_s5_up = control;
+}
+
+void clear_power_flags(void)
+{
+	/**
+	 * When system reboot and go into setup menu, we need to set the power_s5_up flag
+	 * to wait SLP_S5 and SLP_S3 signal to boot into OS.
+	 */
+	power_s5_up_control(1);
+
+	power_state_clear(EC_PS_ENTER_S4 | EC_PS_RESUME_S4 |
+		EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
+}
+
+
 #ifdef CONFIG_PLATFORM_EC_POWERSEQ_S0IX
 /*
  * Backup copies of SCI mask to preserve across S0ix suspend/resume
@@ -189,13 +208,6 @@ void s0ix_status_handle(void)
 }
 DECLARE_HOOK(HOOK_TICK, s0ix_status_handle, HOOK_PRIO_DEFAULT);
 #endif
-
-
-void power_s5_up_control(int control)
-{
-	CPRINTS("%s power s5 up!", control ? "setup" : "clear");
-	power_s5_up = control;
-}
 
 void chipset_reset(enum chipset_shutdown_reason reason)
 {
