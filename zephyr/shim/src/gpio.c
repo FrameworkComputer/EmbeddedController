@@ -283,8 +283,11 @@ test_export_static int init_gpios(const struct device *dev)
 		if (configs[i].no_auto_init)
 			continue;
 
-		if (!device_is_ready(configs[i].spec.port))
-			LOG_ERR("Not found (%s)", configs[i].name);
+		if (!device_is_ready(configs[i].spec.port)) {
+			LOG_ERR("%s: Not found (%s)", __func__,
+				configs[i].name);
+			continue;
+		}
 
 		/*
 		 * The configs[i].init_flags variable is read-only, so the
