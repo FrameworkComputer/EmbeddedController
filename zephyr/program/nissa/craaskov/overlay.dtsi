@@ -63,10 +63,10 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "gmr_tablet_switch_isr";
 		};
-		int_imu: ec_imu {
-			irq-pin = <&gpio_imu_int_l>;
+		int_lid_accel: ec_lid_accel  {
+			irq-pin = <&gpio_acc_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "lsm6dso_interrupt";
+			handler = "bma4xx_interrupt";
 		};
 		int_vol_down: vol_down {
 			irq-pin = <&gpio_voldn_btn_odl>;
