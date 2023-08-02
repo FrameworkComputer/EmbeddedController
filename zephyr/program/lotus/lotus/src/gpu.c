@@ -7,7 +7,7 @@
  */
 
 #include "adc.h"
-#include "amd_r23m.h"
+#include "battery.h"
 #include "chipset.h"
 #include "customized_shared_memory.h"
 #include "gpio/gpio_int.h"
@@ -24,7 +24,7 @@
 #include "system.h"
 #include "thermal.h"
 
-LOG_MODULE_REGISTER(gpu, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(gpu, LOG_LEVEL_DBG);
 
 #define VALID_BOARDID(ID1, ID0) ((ID1 << 8) + ID0)
 #define GPU_F75303_I2C_ADDR_FLAGS 0x4D
@@ -108,20 +108,20 @@ void check_gpu_module(void)
 
 	switch (VALID_BOARDID(gpu_id_1, gpu_id_0)) {
 	case VALID_BOARDID(BOARD_VERSION_12, BOARD_VERSION_12):
-		LOG_INF("Detected dual interposer device");
+		LOG_DBG("Detected dual interposer device");
 		module_present = 1;
 		break;
 	case VALID_BOARDID(BOARD_VERSION_11, BOARD_VERSION_15):
 	case VALID_BOARDID(BOARD_VERSION_13, BOARD_VERSION_15):
-		LOG_INF("Detected single interposer device");
+		LOG_DBG("Detected single interposer device");
 		module_present = 1;
 		break;
 	case VALID_BOARDID(BOARD_VERSION_15, BOARD_VERSION_15):
-		LOG_INF("No gpu module detected %d %d", gpu_id_0, gpu_id_1);
+		LOG_DBG("No gpu module detected %d %d", gpu_id_0, gpu_id_1);
 		module_present = 0;
 		break;
 	default:
-		LOG_INF("GPU module Fault");
+		LOG_DBG("GPU module Fault");
 		module_present = 0;
 		module_fault = 1;
 	break;
@@ -153,6 +153,19 @@ void check_gpu_module(void)
 DECLARE_DEFERRED(check_gpu_module);
 DECLARE_HOOK(HOOK_INIT, check_gpu_module, HOOK_PRIO_INIT_ADC + 1);
 
+void gpu_interposer_toggle_deferred(void)
+{
+	int rv;
+
+	rv = board_cut_off_battery();
+	if (rv == EC_RES_SUCCESS) {
+		LOG_DBG("board cut off succeeded.");
+		set_battery_in_cut_off();
+	} else
+		LOG_DBG("board cut off failed!");
+}
+DECLARE_DEFERRED(gpu_interposer_toggle_deferred);
+
 
 __override void project_chassis_function(enum gpio_signal signal)
 {
@@ -164,7 +177,7 @@ __override void project_chassis_function(enum gpio_signal signal)
 
 	if (!open_state) {
 		/* Make sure the module is off as fast as possible! */
-		LOG_INF("Powering off GPU");
+		LOG_DBG("Powering off GPU");
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
@@ -179,6 +192,8 @@ __override void project_chassis_function(enum gpio_signal signal)
 void beam_open_interrupt(enum gpio_signal signal)
 {
 	int open_state = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_f_beam_open_l));
+	static int gpu_interposer_toggle_count;
+	static int cutoff;
 
 	/* The dGPU SW is SW4 at DVT phase */
 	if (board_get_version() < BOARD_VERSION_7)
@@ -186,13 +201,24 @@ void beam_open_interrupt(enum gpio_signal signal)
 
 	if (!open_state) {
 		/* Make sure the module is off as fast as possible! */
-		LOG_INF("Powering off GPU");
+		LOG_DBG("Powering off GPU");
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
 		module_present = 0;
 		update_thermal_configuration();
+
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+			gpu_interposer_toggle_count++;
+
+			if (!cutoff && gpu_interposer_toggle_count >= 10) {
+				hook_call_deferred(&gpu_interposer_toggle_deferred_data,
+					100 * MSEC);
+				cutoff = 1;
+			}
+		} else
+			gpu_interposer_toggle_count = 0;
 	} else {
 		hook_call_deferred(&check_gpu_module_data, 50*MSEC);
 	}
@@ -241,7 +267,6 @@ void gpu_smart_access_graphic(void)
 	if (chipset_in_state(CHIPSET_STATE_ON))
 		hook_call_deferred(&gpu_smart_access_graphic_data, 10 * MSEC);
 }
-
 
 static void start_smart_access_graphic(void)
 {
