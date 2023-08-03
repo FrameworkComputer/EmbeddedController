@@ -10,7 +10,6 @@
 
 #include <../crypto/fipsmodule/rand/internal.h>
 #include <openssl/base.h>
-#include <unistd.h>
 
 #define rng DEVICE_DT_GET(DT_CHOSEN(zephyr_entropy))
 
