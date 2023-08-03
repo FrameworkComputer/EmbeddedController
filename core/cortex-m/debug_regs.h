@@ -3,11 +3,10 @@
  * found in the LICENSE file.
  */
 
-#ifndef __CROS_EC_DEBUG_H
-#define __CROS_EC_DEBUG_H
+#ifndef __CROS_EC_DEBUG_REGS_H
+#define __CROS_EC_DEBUG_REGS_H
 
 #include "common.h"
-#include "stdbool.h"
 
 /* For Cortex-M0, see "C1.6.3 Debug Halting Control and Status Register, DHCSR"
  * in the ARMv6-M Architecture Reference Manual.
@@ -32,6 +31,4 @@
 #define DHCSR_S_RETIRE_ST BIT(24)
 #define DHCSR_S_RESET_ST BIT(25)
 
-bool debugger_is_connected(void);
-
-#endif /* __CROS_EC_DEBUG_H */
+#endif /* __CROS_EC_DEBUG_REGS_H */

@@ -10,6 +10,7 @@
 _common_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
 
 common-y=util.o
+common-y+=debug.o
 common-y+=version.o printf.o queue.o queue_policies.o irq_locking.o
 common-y+=gettimeofday.o
 
