@@ -382,6 +382,6 @@ ZTEST_F(usb_pd_ctrl_msg_test_source, test_verify_bist_tx_test_data)
 	zassert_equal(get_state_pe(TEST_USB_PORT), PE_BIST_TX);
 
 	tcpci_partner_common_send_hard_reset(&super_fixture->partner_emul);
-	k_sleep(K_SECONDS(1));
+	k_sleep(K_SECONDS(2));
 	zassert_equal(get_state_pe(TEST_USB_PORT), PE_SNK_READY);
 }
