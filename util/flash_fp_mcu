@@ -723,7 +723,7 @@ config_rex() {
   local model
   model=$(cros_config / name)
   case "${model}" in
-    screebo)
+    (screebo | screebo4es)
       # Screebo is based off Rex but with different pins for FPMCU
       # FPMCU RST_ODL is on GPP_C21 = 64 + (50 - 29) = 85
       local gpionrst=85
