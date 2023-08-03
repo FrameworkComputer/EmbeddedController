@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "debug.h"
 #include "flash.h"
 #include "string.h"
 #include "system.h"
@@ -15,6 +16,27 @@ static bool write_protect_enabled;
 test_static int test_write_protect(void)
 {
 	TEST_EQ(write_protect_is_asserted(), write_protect_enabled, "%d");
+
+	return EC_SUCCESS;
+}
+
+/*
+ * This is more of a pre-condition, since further tests will fail in
+ * non-obvious ways if the STM32 chip thinks a debugger is or was attached
+ * once RDP is enabled. This is part of the stm32 flash RDP security feature.
+ *
+ * This debugger state will persist even after the debugger is
+ * disconnected. The only way to reset this state is to physically reset or
+ * power cycle the MCU.
+
+ * These tests can only help predict what the stm32 flash controller might
+ * think. We can't actually test the state it uses to determine if a debugger
+ * was/is attached.
+ */
+test_static int test_ensure_no_debugger_detected(void)
+{
+	TEST_EQ(debugger_is_connected(), false, "%d");
+	TEST_EQ(debugger_was_connected(), false, "%d");
 
 	return EC_SUCCESS;
 }
@@ -57,6 +79,7 @@ void test_run_step(uint32_t state)
 		if (test_get_error_count())
 			test_reboot_to_next_step(TEST_STATE_FAILED);
 		else if (write_protect_enabled) {
+			RUN_TEST(test_ensure_no_debugger_detected);
 			ccprintf("Request RO protection at boot\n");
 			cflush();
 			crec_flash_set_protect(EC_FLASH_PROTECT_RO_AT_BOOT,
