@@ -164,7 +164,11 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	if (chipset_in_state(CHIPSET_STATE_STANDBY))
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_STATE) |= EC_PS_RESUME_S0ix;
 
-	clear_power_flags();
+	/**
+	 * When system reboot and go into setup menu, we need to set the power_s5_up flag
+	 * to wait SLP_S5 and SLP_S3 signal to boot into OS.
+	 */
+	power_s5_up_control(1);
 
 	/**
 	 * Even though the protocol returns EC_SUCCESS,
@@ -172,6 +176,9 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	 * So move the update process at here.
 	 */
 	update_soc_power_limit(true, false);
+
+	power_state_clear(EC_PS_ENTER_S4 | EC_PS_RESUME_S4 |
+		EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
 
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) &= ~ACPI_DRIVER_READY;
 

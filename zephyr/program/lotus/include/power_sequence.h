@@ -24,8 +24,6 @@ enum s0ix_state {
 
 int get_power_rail_status(void);
 
-void clear_power_flags(void);
-
 void power_s5_up_control(int control);
 
 void power_state_clear(int state);
