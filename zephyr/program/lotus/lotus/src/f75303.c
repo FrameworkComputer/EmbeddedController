@@ -53,7 +53,7 @@ int f75303_get_val_k(int idx, int *temp_k_ptr)
 	if (idx < 0 || idx >= F75303_IDX_COUNT)
 		return EC_ERROR_INVAL;
 
-	if (!gpu_present() && idx > 2)
+	if ((!gpu_present() || !gpu_power_enable()) && idx > 2)
 		*temp_k_ptr = C_TO_K(0);
 	else
 		*temp_k_ptr = MILLI_KELVIN_TO_KELVIN(temps[idx]);
@@ -91,21 +91,21 @@ void f75303_update_temperature(int idx)
 		break;
 	/* gpu_amb_f75303 */
 	case 3:
-		if (gpu_present())
+		if (gpu_present() && gpu_power_enable())
 			rv = get_temp(idx, F75303_TEMP_LOCAL_REGISTER, &temp_reg);
 		else
 			rv = EC_ERROR_NOT_POWERED;
 		break;
 	/* gpu_vr_f75303 */
 	case 4:
-		if (gpu_present())
+		if (gpu_present() && gpu_power_enable())
 			rv = get_temp(idx, F75303_TEMP_REMOTE1_REGISTER, &temp_reg);
 		else
 			rv = EC_ERROR_NOT_POWERED;
 		break;
 	/* gpu_vram_f75303 */
 	case 5:
-		if (gpu_present())
+		if (gpu_present() && gpu_power_enable())
 			rv = get_temp(idx, F75303_TEMP_REMOTE2_REGISTER, &temp_reg);
 		else
 			rv = EC_ERROR_NOT_POWERED;

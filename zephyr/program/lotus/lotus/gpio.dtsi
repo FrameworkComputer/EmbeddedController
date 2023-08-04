@@ -242,7 +242,7 @@
 		gpio_enblk_apu: enbkl_apu {
 			gpios = <&gpioe 0 GPIO_INPUT>;		/* monitor APU EDP BKL */
 		};
-		dgpu_pwr_en {
+		gpio_dgpu_pwr_en: dgpu_pwr_en {
 			gpios = <&gpioc 7 GPIO_INPUT>;
 		};
 		gpio_0p75vs_pwr_en: 0p75vs_pwr_en {

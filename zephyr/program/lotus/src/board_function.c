@@ -129,8 +129,6 @@ board_system_is_idle(uint64_t last_shutdown_time, uint64_t *target,
 	/* After setting the chassis open hibernate timer, delay 2.5s to check the chassis status */
 	hook_call_deferred(&chassis_open_hibernate_data, 2500 * MSEC);
 
-	CPRINTS("target:%lld, now:%lld", *target, now);
-
 	if (now < *target)
 		return CRITICAL_SHUTDOWN_IGNORE;
 

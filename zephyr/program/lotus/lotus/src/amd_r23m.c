@@ -93,7 +93,7 @@ void amdr23m_update_temperature(int idx)
 	/*
 	 * if not detect GPU should not send I2C.
 	 */
-	if (!gpu_present()) {
+	if (!gpu_present() || !gpu_power_enable()) {
 		temps[idx] = C_TO_K(0);
 		initialized = 0;
 		return;
@@ -144,7 +144,6 @@ void amdr23m_update_temperature(int idx)
 
 void reset_gpu(void)
 {
-	CPRINTS("System power up, reset GPU");
 	initialized = 0;
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, reset_gpu, HOOK_PRIO_DEFAULT);

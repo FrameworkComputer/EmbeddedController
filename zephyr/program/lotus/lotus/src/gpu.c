@@ -7,6 +7,7 @@
  */
 
 #include "adc.h"
+#include "amd_r23m.h"
 #include "chipset.h"
 #include "customized_shared_memory.h"
 #include "gpio/gpio_int.h"
@@ -42,6 +43,15 @@ static int module_fault;
 bool gpu_present(void)
 {
 	return module_present;
+}
+
+bool gpu_power_enable(void)
+{
+	/* dgpu pwr enable pin will be high at s5 state*/
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return 0;
+	else
+		return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_dgpu_pwr_en));
 }
 
 bool gpu_module_fault(void)
@@ -127,6 +137,7 @@ void check_gpu_module(void)
 		if (board_get_version() >= BOARD_VERSION_7)
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_gpu_sel), 0);
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL) |= GPU_PRESENT;
+		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_gpu_power_en));
 	} else {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
@@ -134,6 +145,7 @@ void check_gpu_module(void)
 		if (board_get_version() >= BOARD_VERSION_7)
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_gpu_sel), 1);
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL) &= GPU_PRESENT;
+		gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_gpu_power_en));
 	}
 	update_gpu_ac_power_state();
 	update_thermal_configuration();
@@ -239,6 +251,13 @@ static void start_smart_access_graphic(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, start_smart_access_graphic, HOOK_PRIO_DEFAULT);
 
+static void reset_smart_access_graphic(void)
+{
+	/* smart access graphic default should be hybrid mode */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, reset_smart_access_graphic, HOOK_PRIO_DEFAULT);
+
 static void reset_mux_status(void)
 {
 	uint8_t gpu_status = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL);
@@ -263,7 +282,7 @@ static void gpu_board_f75303_initial(void)
 		GPU_F75303_REG_LOCAL_THERM,
 	};
 
-	if (gpu_present()) {
+	if (gpu_present() && chipset_in_state(CHIPSET_STATE_ON)) {
 		for (idx = 0; idx < sizeof(reg_arr); idx++) {
 			rv = i2c_write8(I2C_PORT_GPU0, GPU_F75303_I2C_ADDR_FLAGS,
 					reg_arr[idx], temp[idx]);
@@ -275,4 +294,12 @@ static void gpu_board_f75303_initial(void)
 		}
 	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, gpu_board_f75303_initial, HOOK_PRIO_DEFAULT);
+DECLARE_DEFERRED(gpu_board_f75303_initial);
+
+void gpu_power_enable_handler(void)
+{
+	/* we needs to re-initial the thermal sensor and gpu when gpu power enable */
+	if (gpu_power_enable())
+		hook_call_deferred(&gpu_board_f75303_initial_data, 500 * MSEC);
+
+}
