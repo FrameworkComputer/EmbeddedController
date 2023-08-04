@@ -224,18 +224,32 @@ int board_discharge_on_ac(int enable)
 	return rv;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
 	int prochot_ma;
+	int64_t calculate_ma;
 
 	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT) {
 		charge_ma = CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT;
 	}
 
-	prochot_ma = (DIV_ROUND_UP((charge_ma * 200 / 100), 855) * 855);
 
-	if ((prochot_ma - charge_ma) < 853) {
+	/* Handle EPR converstion through the buck switcher */
+	if (charge_mv > 20000) {
+		/**
+		 * (charge_ma * charge_mv / 20000 ) * 0.9 * 0.94
+		 */
+		calculate_ma = (int64_t)charge_ma * (int64_t)charge_mv * 90 * 95 / 200000000;
+	} else {
+		calculate_ma = (int64_t)charge_ma * 88 / 100;
+	}
+
+	CPRINTS("Updating charger with EPR correction: ma %d", (int16_t)calculate_ma);
+
+	prochot_ma = (DIV_ROUND_UP(((int)calculate_ma * 200 / 100), 855) * 855);
+
+	if ((prochot_ma - (int)calculate_ma) < 853) {
 		/* We need prochot to be at least 1 LSB above
 		 * the input current limit. This is not ideal
 		 * due to the low accuracy on prochot.
@@ -243,7 +257,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 		prochot_ma += 853;
 	}
 
-	charge_set_input_current_limit(charge_ma, charge_mv);
+	charge_set_input_current_limit((int)calculate_ma, charge_mv);
 	/* sync-up ac prochot with current change */
 	isl9241_set_ac_prochot(0, prochot_ma);
 }

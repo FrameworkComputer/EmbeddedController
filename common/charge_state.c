@@ -1969,6 +1969,7 @@ int charge_set_input_current_limit(int ma, int mv)
 	ma = MIN(ma, CONFIG_CHARGER_MAX_INPUT_CURRENT);
 #endif
 
+#if !defined(CONFIG_CHARGER_BYPASS_MODE) || !defined(CONFIG_CUSTOMIZED_DESIGN)
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER)) {
 		int pd_current_uncapped =
 			charge_manager_get_pd_current_uncapped();
@@ -1980,6 +1981,7 @@ int charge_set_input_current_limit(int ma, int mv)
 		    ma > pd_current_uncapped)
 			ma = pd_current_uncapped;
 	}
+#endif
 
 	curr.desired_input_current = ma;
 	if (IS_ENABLED(CONFIG_EC_EC_COMM_BATTERY_CLIENT)) {
