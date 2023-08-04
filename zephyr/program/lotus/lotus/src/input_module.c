@@ -47,26 +47,6 @@ int get_detect_mode(void)
 	return detect_mode;
 }
 
-bool input_deck_is_fully_populated(void)
-{
-	int idx;
-	int input_deck_sum = 0;
-
-	/* Touchpad disconnected */
-	if (hub_board_id[TOUCHPAD] != BOARD_VERSION_13)
-		return false;
-
-	for (idx = 0; idx < TOUCHPAD; idx++) {
-		if (hub_board_id[idx] != BOARD_VERSION_15)
-			input_deck_sum += hub_board_id[idx];
-	}
-
-	/* The minimum value is BOARD_ID_8 (Generic A) + BOARD_ID_9 (Generic B)*/
-	if (input_deck_sum < 17)
-		return false;
-
-	return true;
-}
 
 static void set_hub_mux(uint8_t input)
 {
@@ -114,6 +94,40 @@ static void board_input_module_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_input_module_init, HOOK_PRIO_DEFAULT + 2);
 
+
+bool input_deck_is_fully_populated(void)
+{
+	int i;
+
+	if (hub_board_id[HUBBOARD] == INPUT_MODULE_SHORT ||
+		hub_board_id[HUBBOARD] == INPUT_MODULE_DISCONNECTED) {
+		return false;
+	}
+	for (i = 0; i <= TOP_ROW_4;) {
+		switch (hub_board_id[i]) {
+		case INPUT_MODULE_GENERIC_A:
+		case INPUT_MODULE_KEYBOARD_A:
+			i += 3;
+			break;
+		case INPUT_MODULE_GENERIC_B:
+		case INPUT_MODULE_KEYBOARD_B:
+			i += 2;
+			break;
+		case INPUT_MODULE_GENERIC_C:
+			i++;
+			break;
+		default:
+			return false;
+		}
+	}
+
+	if (hub_board_id[TOUCHPAD] != INPUT_MODULE_TOUCHPAD) {
+		return false;
+	}
+
+	return true;
+}
+
 static void poll_c_deck(void)
 {
 	static int turning_on_count;
@@ -126,15 +140,15 @@ static void poll_c_deck(void)
 		/* TODO only poll touchpad and currently connected B1/C1 modules
 		 * if c deck state is ON as these must be removed first
 		 */
-		if (hub_board_id[TOUCHPAD] == INPUT_MODULE_TOUCHPAD) {
+		if (input_deck_is_fully_populated()) {
 			turning_on_count = 0;
 			deck_state = DECK_TURNING_ON;
 		}
 		break;
 	case DECK_TURNING_ON:
 		turning_on_count++;
-		scan_c_deck(false);
-		if (hub_board_id[TOUCHPAD] == INPUT_MODULE_TOUCHPAD &&
+		scan_c_deck(true);
+		if (input_deck_is_fully_populated() &&
 			turning_on_count > INPUT_MODULE_POWER_ON_DELAY) {
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
 			deck_state = DECK_ON;
@@ -148,8 +162,8 @@ static void poll_c_deck(void)
 		 * if lid is closed input modules cannot be removed
 		 */
 
-		scan_c_deck(false);
-		if (hub_board_id[TOUCHPAD] > INPUT_MODULE_TOUCHPAD) {
+		scan_c_deck(true);
+		if (!input_deck_is_fully_populated()) {
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
 			deck_state = DECK_DISCONNECTED;
 			LOG_INF("Input modules off");
