@@ -88,7 +88,7 @@ int fan_table_to_rpm(int fan, int *temp)
 
 void board_override_fan_control(int fan, int *temp)
 {
-	static int prev_rpm;
+	int prev_rpm;
 	int current_rpm = 0;
 
 	/*
@@ -98,12 +98,10 @@ void board_override_fan_control(int fan, int *temp)
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
 		fan_set_rpm_mode(fan, 1);
 		current_rpm = fan_table_to_rpm(fan, temp);
-
+		prev_rpm = fan_get_rpm_target(fan);
 		if (current_rpm == prev_rpm) {
 			return;
 		}
-
 		fan_set_rpm_target(fan, current_rpm);
-		prev_rpm = current_rpm;
 	}
 }
