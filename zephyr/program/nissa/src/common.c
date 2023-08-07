@@ -143,3 +143,21 @@ __override void board_ocpc_init(struct ocpc_data *ocpc)
 	}
 }
 #endif
+
+int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
+{
+	/*
+	 * AP tunneling to I2C is default-forbidden, but allowed for
+	 * type-C ports because these can be used to update TCPC or retimer
+	 * firmware. AP firmware separately sends a command to block tunneling
+	 * to these ports after it's done updating chips.
+	 */
+	return false
+#if DT_NODE_EXISTS(DT_NODELABEL(tcpc_port0))
+	       || (cmd_desc->port == I2C_PORT_BY_DEV(DT_NODELABEL(tcpc_port0)))
+#endif
+#if DT_NODE_EXISTS(DT_NODELABEL(tcpc_port1))
+	       || (cmd_desc->port == I2C_PORT_BY_DEV(DT_NODELABEL(tcpc_port1)))
+#endif
+		;
+}
