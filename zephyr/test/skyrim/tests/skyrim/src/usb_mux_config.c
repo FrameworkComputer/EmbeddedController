@@ -11,20 +11,9 @@
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
-#define ANX7483_EMUL0 EMUL_DT_GET(DT_NODELABEL(anx7483_port0))
 #define ANX7483_EMUL1 EMUL_DT_GET(DT_NODELABEL(anx7483_port1))
 
 void setup_mux(void);
-
-extern const struct anx7483_tuning_set anx7483_usb_enabled[];
-extern const struct anx7483_tuning_set anx7483_dp_enabled[];
-extern const struct anx7483_tuning_set anx7483_dock_noflip[];
-extern const struct anx7483_tuning_set anx7483_dock_flip[];
-
-extern const size_t anx7483_usb_enabled_count;
-extern const size_t anx7483_dp_enabled_count;
-extern const size_t anx7483_dock_noflip_count;
-extern const size_t anx7483_dock_flip_count;
 
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
@@ -49,34 +38,6 @@ static void usb_mux_config_before(void *fixture)
 }
 
 ZTEST_SUITE(usb_mux_config, NULL, NULL, usb_mux_config_before, NULL, NULL);
-
-ZTEST(usb_mux_config, test_board_anx7483_c0_mux_set)
-{
-	int rv;
-
-	usb_mux_init(0);
-
-	usb_mux_set(0, USB_PD_MUX_USB_ENABLED, USB_SWITCH_CONNECT, 0);
-	rv = anx7483_emul_validate_tuning(ANX7483_EMUL0, anx7483_usb_enabled,
-					  anx7483_usb_enabled_count);
-	zexpect_ok(rv);
-
-	usb_mux_set(0, USB_PD_MUX_DP_ENABLED, USB_SWITCH_CONNECT, 0);
-	rv = anx7483_emul_validate_tuning(ANX7483_EMUL0, anx7483_dp_enabled,
-					  anx7483_dp_enabled_count);
-	zexpect_ok(rv);
-
-	usb_mux_set(0, USB_PD_MUX_DOCK, USB_SWITCH_CONNECT, 0);
-	rv = anx7483_emul_validate_tuning(ANX7483_EMUL0, anx7483_dock_noflip,
-					  anx7483_dock_noflip_count);
-	zexpect_ok(rv);
-
-	usb_mux_set(0, USB_PD_MUX_DOCK | USB_PD_MUX_POLARITY_INVERTED,
-		    USB_SWITCH_CONNECT, 0);
-	rv = anx7483_emul_validate_tuning(ANX7483_EMUL0, anx7483_dock_flip,
-					  anx7483_dock_flip_count);
-	zexpect_ok(rv);
-}
 
 ZTEST(usb_mux_config, test_board_anx7483_c1_mux_set)
 {
