@@ -94,6 +94,7 @@ tests:
   rex.karis.usb_config:
     extra_dtc_overlay_files:
       - boards/karis/karis.dtsi
+      - boards/karis/usbc.dtsi
     extra_configs:
       - CONFIG_TEST_PROJECT_KARIS=y
       - CONFIG_TEST_PROJECT_USB_CONFIG=y
@@ -102,3 +103,9 @@ tests:
       - CONFIG_PLATFORM_EC_USBC_PPC_SYV682C=y
       - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE_PPC=y
       - CONFIG_PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG=y
+  rex.karis.keyboard:
+    extra_dtc_overlay_files:
+      - boards/karis/karis.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROJECT_KARIS=y
+      - CONFIG_TEST_PROJECT_KEYBOARD=y

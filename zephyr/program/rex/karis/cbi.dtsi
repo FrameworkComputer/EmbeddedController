@@ -26,5 +26,26 @@
 				value = <1>;
 			};
 		};
+
+		/*
+		 * FW_CONFIG field to change scancode for different type
+		 * keyboard.
+		 */
+		keyboard-type {
+			enum-name = "FW_KB_TYPE";
+			start = <10>;
+			size = <1>;
+
+			kb-default {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_DEFAULT";
+				value = <0>;
+			};
+			kb-ca-fr {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_CA_FR";
+				value = <1>;
+			};
+		};
 	};
 };

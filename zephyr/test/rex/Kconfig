@@ -41,6 +41,12 @@ config TEST_PROJECT_USB_CONFIG
 	  Include project specific usb_config.c into the binary and test
 	  their functions.
 
+config TEST_PROJECT_KEYBOARD
+	bool "Run the tests intended for keyboard.c"
+	help
+	  Include project specific keyboard.c into the binary and test
+	  their functions.
+
 config TEST_PROGRAM_USB_PD_POLICY
 	bool "Run the tests intended for usb_pd_policy"
 	help

@@ -8,3 +8,7 @@ target_sources_ifdef(CONFIG_TEST_PROJECT_USB_CONFIG app PRIVATE src/usb_config.c
 target_sources_ifdef(CONFIG_TEST_PROJECT_USB_CONFIG app PRIVATE
 	${PLATFORM_EC_PROGRAM_DIR}/rex/karis/src/usb_mux_config.c
 	${PLATFORM_EC_PROGRAM_DIR}/rex/karis/src/usbc_config.c)
+
+target_sources_ifdef(CONFIG_TEST_PROJECT_KEYBOARD app PRIVATE src/keyboard.c)
+target_sources_ifdef(CONFIG_TEST_PROJECT_KEYBOARD app PRIVATE
+	${PLATFORM_EC_PROGRAM_DIR}/rex/karis/src/keyboard.c)
