@@ -27,6 +27,7 @@ child-binding:
       - USB_SS_MUX
       - KEYBOARD
       - TS_SOURCE
+      - FAN_TYPE
     size:
       type: int
       required: true
