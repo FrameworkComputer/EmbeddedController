@@ -59,6 +59,12 @@ static int anx7483_emul_test_get_eq(enum anx7483_tune_pin pin,
 	return anx7483_emul_get_eq(ANX7483_EMUL, pin, eq);
 }
 
+static int anx7483_emul_test_get_fg(enum anx7483_tune_pin pin,
+				    enum anx7483_fg_setting *fg)
+{
+	return anx7483_emul_get_fg(ANX7483_EMUL, pin, fg);
+}
+
 static int anx7483_test_set_eq(enum anx7483_tune_pin pin,
 			       enum anx7483_eq_setting eq)
 {
@@ -305,49 +311,37 @@ ZTEST(anx7483, test_set_eq_func)
 ZTEST(anx7483, test_set_fg)
 {
 	int rv;
-	uint8_t val;
+	enum anx7483_fg_setting fg;
 
 	rv = anx7483_set_fg(&mux, ANX7483_PIN_UTX1, ANX7483_FG_SETTING_1_2DB);
 	zexpect_ok(rv);
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX1_PORT_CFG2_REG, &val);
+	rv = anx7483_emul_test_get_fg(ANX7483_PIN_UTX1, &fg);
 	zexpect_ok(rv);
-	zexpect_equal((val >> ANX7483_CFG2_FG_SHIFT) & 0x3,
-		      ANX7483_FG_SETTING_1_2DB);
+	zexpect_equal(fg, ANX7483_FG_SETTING_1_2DB);
 
 	rv = anx7483_set_fg(&mux, ANX7483_PIN_UTX2, ANX7483_FG_SETTING_1_2DB);
 	zexpect_ok(rv);
-	rv = anx7483_emul_test_get_reg(ANX7483_UTX2_PORT_CFG2_REG, &val);
+	rv = anx7483_emul_test_get_fg(ANX7483_PIN_UTX2, &fg);
 	zexpect_ok(rv);
-	zexpect_equal((val >> ANX7483_CFG2_FG_SHIFT) & 0x3,
-		      ANX7483_FG_SETTING_1_2DB);
-
-	rv = anx7483_set_fg(&mux, ANX7483_PIN_URX1, ANX7483_FG_SETTING_1_2DB);
-	zexpect_ok(rv);
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG2_REG, &val);
-	zexpect_ok(rv);
-	zexpect_equal((val >> ANX7483_CFG2_FG_SHIFT) & 0x3,
-		      ANX7483_FG_SETTING_1_2DB);
+	zexpect_equal(fg, ANX7483_FG_SETTING_1_2DB);
 
 	rv = anx7483_set_fg(&mux, ANX7483_PIN_URX2, ANX7483_FG_SETTING_1_2DB);
 	zexpect_ok(rv);
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG2_REG, &val);
+	rv = anx7483_emul_test_get_fg(ANX7483_PIN_URX2, &fg);
 	zexpect_ok(rv);
-	zexpect_equal((val >> ANX7483_CFG2_FG_SHIFT) & 0x3,
-		      ANX7483_FG_SETTING_1_2DB);
+	zexpect_equal(fg, ANX7483_FG_SETTING_1_2DB);
 
 	rv = anx7483_set_fg(&mux, ANX7483_PIN_DRX1, ANX7483_FG_SETTING_1_2DB);
 	zexpect_ok(rv);
-	rv = anx7483_emul_test_get_reg(ANX7483_URX1_PORT_CFG2_REG, &val);
+	rv = anx7483_emul_test_get_fg(ANX7483_PIN_DRX1, &fg);
 	zexpect_ok(rv);
-	zexpect_equal((val >> ANX7483_CFG2_FG_SHIFT) & 0x3,
-		      ANX7483_FG_SETTING_1_2DB);
+	zexpect_equal(fg, ANX7483_FG_SETTING_1_2DB);
 
 	rv = anx7483_set_fg(&mux, ANX7483_PIN_DRX2, ANX7483_FG_SETTING_1_2DB);
 	zexpect_ok(rv);
-	rv = anx7483_emul_test_get_reg(ANX7483_URX2_PORT_CFG2_REG, &val);
+	rv = anx7483_emul_test_get_fg(ANX7483_PIN_DRX2, &fg);
 	zexpect_ok(rv);
-	zexpect_equal((val >> ANX7483_CFG2_FG_SHIFT) & 0x3,
-		      ANX7483_FG_SETTING_1_2DB);
+	zexpect_equal(fg, ANX7483_FG_SETTING_1_2DB);
 
 	/* Test invalid pin. */
 	rv = anx7483_set_fg(&mux, 0xff, ANX7483_FG_SETTING_1_2DB);

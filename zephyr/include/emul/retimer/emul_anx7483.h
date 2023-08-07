@@ -130,6 +130,9 @@ int anx7483_emul_set_reg_reserved_mask(const struct emul *emul, int r,
 int anx7483_emul_get_eq(const struct emul *emul, enum anx7483_tune_pin pin,
 			enum anx7483_eq_setting *eq);
 
+int anx7483_emul_get_fg(const struct emul *emul, enum anx7483_tune_pin pin,
+			enum anx7483_fg_setting *fg);
+
 void anx7483_emul_reset(const struct emul *emul);
 
 int anx7483_emul_validate_tuning(const struct emul *emul,
