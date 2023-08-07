@@ -95,6 +95,10 @@
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_EMULATED_SYSRQ
 
+/* CEC */
+#define CONFIG_CEC
+#define CONFIG_CEC_IT83XX
+
 /* No Keyboard */
 #undef CONFIG_KEYBOARD_COL2_INVERTED
 #undef CONFIG_KEYBOARD_PROTOCOL_8042
@@ -161,6 +165,8 @@ enum temp_sensor_id {
 	TEMP_SENSOR_3,
 	TEMP_SENSOR_COUNT
 };
+
+enum cec_port { CEC_PORT_0, CEC_PORT_COUNT };
 
 #endif /* !__ASSEMBLER__ */
 
