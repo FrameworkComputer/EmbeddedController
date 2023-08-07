@@ -11223,21 +11223,19 @@ int cmd_wait_event(int argc, char *argv[])
  */
 #define CEC_PORT 0
 
-static void cmd_cec_help(const char *cmd)
+static void cmd_cec_help(void)
 {
-	fprintf(stderr,
-		"  Usage: %s write [write bytes...]\n"
-		"    Write message on the CEC bus\n"
-		"  Usage: %s read [timeout]\n"
-		"    [timeout] in seconds\n"
-		"  Usage: %s get <param>\n"
-		"  Usage: %s set <param> <val>\n"
-		"    <param> is one of:\n"
-		"      address: CEC receive address\n"
-		"        <val> is the new CEC address\n"
-		"      enable: Enable or disable CEC\n"
-		"        <val> is 1 to enable, 0 to disable\n",
-		cmd, cmd, cmd, cmd);
+	fprintf(stderr, "  Usage: cec write [write bytes...]\n"
+			"    Write message on the CEC bus\n"
+			"  Usage: cec read [timeout]\n"
+			"    [timeout] in seconds\n"
+			"  Usage: cec get <param>\n"
+			"  Usage: cec set <param> <val>\n"
+			"    <param> is one of:\n"
+			"      address: CEC receive address\n"
+			"        <val> is the new CEC address\n"
+			"      enable: Enable or disable CEC\n"
+			"        <val> is 1 to enable, 0 to disable\n");
 }
 
 static long timespec_diff_ms(const struct timespec *t1,
@@ -11265,7 +11263,7 @@ static int cmd_cec_write(int argc, char *argv[])
 
 	if (argc < 3 || argc > 18) {
 		fprintf(stderr, "Invalid number of params\n");
-		cmd_cec_help(argv[0]);
+		cmd_cec_help();
 		return -1;
 	}
 
@@ -11487,7 +11485,7 @@ static int cmd_cec_set(int argc, char *argv[])
 
 	if (argc != 4) {
 		fprintf(stderr, "Invalid number of params\n");
-		cmd_cec_help(argv[0]);
+		cmd_cec_help();
 		return -1;
 	}
 
@@ -11518,7 +11516,7 @@ static int cmd_cec_get(int argc, char *argv[])
 
 	if (argc != 3) {
 		fprintf(stderr, "Invalid number of params\n");
-		cmd_cec_help(argv[0]);
+		cmd_cec_help();
 		return -1;
 	}
 
@@ -11543,7 +11541,7 @@ int cmd_cec(int argc, char *argv[])
 {
 	if (argc < 2) {
 		fprintf(stderr, "Invalid number of params\n");
-		cmd_cec_help(argv[0]);
+		cmd_cec_help();
 		return -1;
 	}
 	if (!strcmp(argv[1], "write"))
@@ -11556,7 +11554,7 @@ int cmd_cec(int argc, char *argv[])
 		return cmd_cec_set(argc, argv);
 
 	fprintf(stderr, "Invalid sub command: %s\n", argv[1]);
-	cmd_cec_help(argv[0]);
+	cmd_cec_help();
 
 	return -1;
 }
