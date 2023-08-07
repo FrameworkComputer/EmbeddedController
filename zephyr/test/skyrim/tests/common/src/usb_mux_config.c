@@ -35,6 +35,27 @@ int chipset_in_state(int mask)
 
 ZTEST_SUITE(usb_mux_config_common, NULL, NULL, NULL, NULL, NULL);
 
+/*
+ * Winterhold is the only board that this test doesn't have
+ * board_c1_ps8818_mux_set.
+ */
+#ifndef CONFIG_TEST_BOARD_WINTERHOLD
+ZTEST(usb_mux_config_common, test_board_c1_ps8818_mux_set)
+{
+	const struct gpio_dt_spec *c1 =
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c1_in_hpd);
+	const struct usb_mux mux = {
+		.usb_port = 1,
+	};
+
+	board_c1_ps8818_mux_set(&mux, USB_PD_MUX_USB_ENABLED);
+	zassert_false(gpio_emul_output_get(c1->port, c1->pin));
+
+	board_c1_ps8818_mux_set(&mux, USB_PD_MUX_DP_ENABLED);
+	zassert_true(gpio_emul_output_get(c1->port, c1->pin));
+}
+#endif
+
 ZTEST(usb_mux_config_common, test_ioex_set_flip)
 {
 	const struct gpio_dt_spec *c0 =

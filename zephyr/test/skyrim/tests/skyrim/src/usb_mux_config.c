@@ -14,7 +14,6 @@
 #define ANX7483_EMUL0 EMUL_DT_GET(DT_NODELABEL(anx7483_port0))
 #define ANX7483_EMUL1 EMUL_DT_GET(DT_NODELABEL(anx7483_port1))
 
-int board_c1_ps8818_mux_set(const struct usb_mux *me, mux_state_t mux_state);
 void setup_mux(void);
 
 extern const struct anx7483_tuning_set anx7483_usb_enabled[];
@@ -165,21 +164,6 @@ ZTEST(usb_mux_config, test_board_anx7483_c1_mux_set)
 	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_DRX2, &eq);
 	zassert_ok(rv);
 	zassert_equal(eq, ANX7483_EQ_SETTING_12_5DB);
-}
-
-ZTEST(usb_mux_config, test_board_c1_ps8818_mux_set)
-{
-	const struct gpio_dt_spec *c1 =
-		GPIO_DT_FROM_NODELABEL(gpio_usb_c1_in_hpd);
-	const struct usb_mux mux = {
-		.usb_port = 1,
-	};
-
-	board_c1_ps8818_mux_set(&mux, USB_PD_MUX_USB_ENABLED);
-	zassert_false(gpio_emul_output_get(c1->port, c1->pin));
-
-	board_c1_ps8818_mux_set(&mux, USB_PD_MUX_DP_ENABLED);
-	zassert_true(gpio_emul_output_get(c1->port, c1->pin));
 }
 
 ZTEST(usb_mux_config, test_setup_mux)
