@@ -61,13 +61,16 @@ static int ps8828_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 
 	mode &= ~(PS8828_MODE_ALT_DP_EN | PS8828_MODE_USB_EN |
 		  PS8828_MODE_FLIP);
+	dphpd &= ~(PS8828_DPHPD_INHPD_DISABLE | PS8818_DPHPD_PLUGGED);
 
 	if (mux_state & USB_PD_MUX_USB_ENABLED)
 		mode |= PS8828_MODE_USB_EN;
 
-	/* TODO(b/289066482): figure out why DP adapters don't work. */
-	if (mux_state & USB_PD_MUX_DP_ENABLED)
+	if (mux_state & USB_PD_MUX_DP_ENABLED) {
 		mode |= PS8828_MODE_ALT_DP_EN;
+		dphpd |= PS8818_DPHPD_PLUGGED;
+		dphpd |= PS8828_DPHPD_INHPD_DISABLE;
+	}
 
 	if (mux_state & USB_PD_MUX_POLARITY_INVERTED)
 		mode |= PS8828_MODE_FLIP;
@@ -76,32 +79,11 @@ static int ps8828_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 	if (rv)
 		CPRINTSUSB("C%d: PS8828 mode write fail %d", me->usb_port, rv);
 
-	return rv;
-}
-
-void ps8828_hpd_update(const struct usb_mux *me, mux_state_t hpd_state,
-		       bool *ack_required)
-{
-	int dphpd;
-	int rv;
-
-	ack_required = false;
-
-	rv = ps8828_read(me, PS8828_REG_PAGE0, PS8828_REG_DPHPD, &dphpd);
-	if (rv) {
-		CPRINTSUSB("C%d: PS8828 DP read fail %d", me->usb_port, rv);
-		return;
-	}
-
-	dphpd |= PS8828_DPHPD_INHPD_DISABLE;
-	if (hpd_state & USB_PD_MUX_HPD_LVL)
-		dphpd |= PS8818_DPHPD_PLUGGED;
-	else
-		dphpd &= ~PS8818_DPHPD_PLUGGED;
-
 	rv = ps8828_write(me, PS8828_REG_PAGE0, PS8828_REG_DPHPD, dphpd);
 	if (rv)
 		CPRINTSUSB("C%d: PS8828 DP write fail %d", me->usb_port, rv);
+
+	return rv;
 }
 
 /* Reads control register and updates mux_state accordingly */

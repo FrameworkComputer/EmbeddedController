@@ -32,7 +32,4 @@
 
 extern const struct usb_mux_driver ps8828_usb_retimer_driver;
 
-void ps8828_hpd_update(const struct usb_mux *me, mux_state_t hpd_state,
-		       bool *ack_required);
-
 #endif /* __CROS_EC_USB_MUX_PARADE8828_H */

@@ -16,7 +16,6 @@
 			.driver = &ps8828_usb_retimer_driver,  \
 			.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
 			.i2c_addr_flags = DT_REG_ADDR(mux_id), \
-			.hpd_update = &ps8828_hpd_update,      \
 	}
 
 #endif /* __ZEPHYR_SHIM_PS8828_USB_MUX_H */
