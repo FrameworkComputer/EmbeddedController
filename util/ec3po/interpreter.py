@@ -439,54 +439,37 @@ def StartLoop(interp, shutdown_pipe=None):
                 inputs = list(interp.inputs)
                 inputs.append(shutdown_pipe)
 
-            input_filenos = [input.fileno() for input in inputs]
-            output_filenos = [output.fileno() for output in interp.outputs]
-            with select.epoll() as poller:
-                for fileno in input_filenos:
-                    mask = select.EPOLLIN
-                    if fileno in output_filenos:
-                        mask = select.EPOLLIN | select.EPOLLOUT
-                    poller.register(fileno, mask)
+            readable, writeable, _ = select.select(inputs, interp.outputs, [])
 
-                for fileno in output_filenos:
-                    if fileno not in input_filenos:
-                        poller.register(fileno, select.EPOLLOUT)
+            for obj in readable:
+                # Handle any debug prints from the EC.
+                if obj is interp.ec_uart_pty:
+                    interp.HandleECData()
 
-                events = poller.poll()
-                for fileno, event in events:
-                    if event & select.EPOLLIN and fileno in input_filenos:
-                        # Handle any debug prints from the EC.
-                        if fileno == interp.ec_uart_pty.fileno():
-                            interp.HandleECData()
+                # Handle any commands from the user.
+                elif obj is interp.cmd_pipe:
+                    try:
+                        interp.HandleUserData()
+                    except EOFError:
+                        interp.logger.debug(
+                            "ec3po interpreter received EOF from cmd_pipe in "
+                            "HandleUserData()"
+                        )
+                        continue_looping = False
 
-                        # Handle any commands from the user.
-                        elif fileno == interp.cmd_pipe.fileno():
-                            try:
-                                interp.HandleUserData()
-                            except EOFError:
-                                interp.logger.debug(
-                                    "ec3po interpreter received EOF from cmd_pipe in "
-                                    "HandleUserData()"
-                                )
-                                continue_looping = False
+                elif obj is shutdown_pipe:
+                    interp.logger.debug(
+                        "ec3po interpreter received shutdown pipe unblocked notification"
+                    )
+                    continue_looping = False
 
-                        elif fileno == shutdown_pipe.fileno():
-                            interp.logger.debug(
-                                "ec3po interpreter received shutdown pipe unblocked notification"
-                            )
-                            continue_looping = False
-
-                    if event & select.EPOLLOUT and fileno in output_filenos:
-                        # Send a command to the EC.)
-                        if fileno is interp.ec_uart_pty.fileno():
-                            interp.SendCmdToEC()
+            for obj in writeable:
+                # Send a command to the EC.
+                if obj is interp.ec_uart_pty:
+                    interp.SendCmdToEC()
 
     except KeyboardInterrupt:
         pass
-    except Exception as e:
-        interp.logger.debug(e)
-        interp.logger.debug(traceback.format_exc())
-        raise
 
     finally:
         interp.cmd_pipe.close()
