@@ -91,4 +91,7 @@ enum power_slide_mode {
 
 #define EC_CUSTOMIZED_MEMMAP_DISPLAY_ON		0x153
 
+#define EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT	0x155
+#define CPB_DISABLE	BIT(0) /* 0: enable; 1: disable */
+
 #endif /* __BOARD_CUSTOMIZED_SHARED_MEMORY_H */
