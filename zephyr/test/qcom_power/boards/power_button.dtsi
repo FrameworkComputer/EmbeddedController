@@ -7,7 +7,7 @@
 
 / {
 	gpio-keys {
-		compatible = "zephyr,gpio-keys";
+		compatible = "gpio-keys";
 		debounce-interval-ms = <30>;
 		power_button: power_button {
 			gpios = <&gpio0 25 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;

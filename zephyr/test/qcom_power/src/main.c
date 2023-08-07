@@ -369,7 +369,7 @@ ZTEST(qcom_power, test_power_button)
 
 ZTEST(qcom_power, test_power_button_input_event)
 {
-	const struct device *dev = DEVICE_DT_GET_ONE(zephyr_gpio_keys);
+	const struct device *dev = DEVICE_DT_GET_ONE(gpio_keys);
 
 	zassert_equal(power_button_is_pressed(), 0);
 
