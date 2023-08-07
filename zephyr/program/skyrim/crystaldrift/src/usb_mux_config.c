@@ -158,7 +158,7 @@ int board_c1_ps8818_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 	return 0;
 }
 
-static void setup_mux(void)
+test_export_static void setup_mux(void)
 {
 	uint32_t val;
 
