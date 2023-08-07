@@ -34,7 +34,6 @@ SPECIAL_BOARDS = [
     "rex",
     "geralt",
     "roach",
-    "myst",
     "ovis",
     # Nissa variants
     "nereid",
