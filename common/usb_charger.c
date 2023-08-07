@@ -153,14 +153,22 @@ static void usb_charger_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, usb_charger_init, HOOK_PRIO_POST_CHARGE_MANAGER);
 
-#ifdef CONFIG_PLATFORM_EC_USB_CHARGER_SINGLE_TASK
+__overridable bool board_usb_charger_support(void)
 
+{
+	return true;
+}
+
+#ifdef CONFIG_PLATFORM_EC_USB_CHARGER_SINGLE_TASK
 void usb_charger_task_shared(void *u)
 {
 	int port;
 	uint32_t evt;
 	uint32_t port_evt;
 	struct bc12_config *bc12_port;
+
+	if (!board_usb_charger_support())
+		return;
 
 	for (port = 0; port < board_get_usb_pd_port_count(); port++) {
 		bc12_port = &bc12_ports[port];
@@ -196,6 +204,9 @@ void usb_charger_task(void *u)
 	int port = TASK_ID_TO_USB_CHG_PORT(task_get_current());
 	uint32_t evt;
 	struct bc12_config *bc12_port;
+
+	if (!board_usb_charger_support())
+		return;
 
 	/*
 	 * The actual number of ports may be less than the maximum

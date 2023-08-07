@@ -444,8 +444,9 @@ void board_hibernate(void)
 
 __override void board_ocpc_init(struct ocpc_data *ocpc)
 {
-	/* There's no provision to measure Isys */
-	ocpc->chg_flags[CHARGER_SECONDARY] |= OCPC_NO_ISYS_MEAS_CAP;
+	if (get_cbi_fw_config_db() != DB_NONE)
+		/* There's no provision to measure Isys */
+		ocpc->chg_flags[CHARGER_SECONDARY] |= OCPC_NO_ISYS_MEAS_CAP;
 }
 
 void board_reset_pd_mcu(void)
@@ -464,7 +465,8 @@ __override void board_power_5v_enable(int enable)
 	 */
 	gpio_set_level(GPIO_EN_PP5000, !!enable);
 	gpio_set_level(GPIO_EN_USB_A0_VBUS, !!enable);
-	if (isl923x_set_comparator_inversion(1, !!enable))
+	if ((get_cbi_fw_config_db() != DB_NONE) &&
+	    (isl923x_set_comparator_inversion(1, !!enable)))
 		CPRINTS("Failed to %sable sub rails!", enable ? "en" : "dis");
 }
 
@@ -786,4 +788,25 @@ __override void board_pulse_entering_rw(void)
 	usleep(MSEC);
 	gpio_set_level(GPIO_EC_ENTERING_RW, 0);
 	gpio_set_level(GPIO_EC_ENTERING_RW2, 0);
+}
+
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	if (get_cbi_fw_config_db() == DB_NONE)
+		return 1;
+	else
+		return 2;
+}
+
+__override uint8_t board_get_charger_chip_count(void)
+{
+	if (get_cbi_fw_config_db() == DB_NONE)
+		return 1;
+	else
+		return 2;
+}
+
+__override bool board_usb_charger_support(void)
+{
+	return (get_cbi_fw_config_bc_support() == BC12_SUPPORT);
 }
