@@ -41,7 +41,7 @@ enum tcpc_cc_polarity pd_get_polarity(int port)
 FAKE_VOID_FUNC(chipset_force_shutdown, enum chipset_shutdown_reason);
 FAKE_VALUE_FUNC(int, extpower_is_present);
 
-int chipset_in_state(int mask)
+test_mockable int chipset_in_state(int mask)
 {
 	return mask & CHIPSET_STATE_ON;
 }

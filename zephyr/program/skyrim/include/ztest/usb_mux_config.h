@@ -5,6 +5,8 @@
 #ifndef __SKYRIM_TEST_USB_MUX_CONFIG
 #define __SKYRIM_TEST_USB_MUX_CONFIG
 
+#define WINTERHOLD_CHARGE_CURRENT_MAX 1152
+
 #ifdef CONFIG_ZTEST
 
 #include <zephyr/fff.h>
