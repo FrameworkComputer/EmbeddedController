@@ -115,6 +115,11 @@
 			enum-name = "GPIO_ENTERING_RW";
 		};
 
+		usb_c0_frs_en: usb_c0_frs_en {
+			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_USB_C0_FRS_EN";
+		};
+
 		/delete-node/ en_pp5000_usb_a0_vbus;
 		/delete-node/ usb_a0_fault_odl;
 		/delete-node/ usb_c1_bc12_charger_int_odl;
@@ -125,7 +130,6 @@
 		<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
 		<&gpioe 0 GPIO_INPUT_PULL_DOWN>,
 		<&gpioe 7 GPIO_INPUT_PULL_DOWN>,
-		<&gpiof 0 GPIO_INPUT_PULL_DOWN>,	//EC_EN_PP3300_WCAM
 		<&gpiof 1 GPIO_INPUT_PULL_DOWN>,
 		<&gpioh 0 GPIO_INPUT_PULL_DOWN>,	//EC_AP_RSVD1_ODL
 		<&gpioh 1 GPIO_INPUT_PULL_DOWN>,
@@ -225,6 +229,7 @@
 
 		port0@0{
 			/delete-property/ bc12;
+			ppc_alt = <&ppc_port0>;
 			usb-mux-chain-0{
 				usb-muxes = <&ps8743_mux_1 &virtual_mux_0>;
 			};
@@ -463,6 +468,12 @@
 	};
 	rt1739@70{
 		compatible = "richtek,rt1739-ppc";
+	};
+	ppc_port0: syv682x@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&usb_c0_frs_en>;
 	};
 };
 
