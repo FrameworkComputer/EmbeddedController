@@ -6,6 +6,7 @@ tests:
   system_shim.default:
     extra_dtc_overlay_files:
     - ./default.overlay
-  system_shim.ish:
-    extra_configs:
-    - CONFIG_SYSTEM_SHIM_TEST_ISH=y
+    # TODO(b/294880110) Re-enable rex-ish
+    # system_shim.ish:
+    #   extra_configs:
+    #   - CONFIG_SYSTEM_SHIM_TEST_ISH=y

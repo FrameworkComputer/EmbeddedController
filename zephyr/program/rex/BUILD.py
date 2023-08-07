@@ -52,11 +52,12 @@ register_rex_project(
     project_name="karis",
 )
 
-register_ish_project(
-    project_name="rex-ish",
-    zephyr_board="intel_ish_5_4_1",
-    dts_overlays=[
-        here / "rex-ish" / "project.overlay",
-    ],
-    kconfig_files=[here / "rex-ish" / "prj.conf"],
-)
+# TODO(b/294880110) Re-enable rex-ish
+# register_ish_project(
+#     project_name="rex-ish",
+#     zephyr_board="intel_ish_5_4_1",
+#     dts_overlays=[
+#         here / "rex-ish" / "project.overlay",
+#     ],
+#     kconfig_files=[here / "rex-ish" / "prj.conf"],
+# )
