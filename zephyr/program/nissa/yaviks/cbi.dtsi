@@ -118,4 +118,28 @@
 		 *	size = <1>;
 		 */
 	};
+	/* Yaviks-specific ssfc fields. */
+	cbi-ssfc {
+		compatible = "cros-ec,cbi-ssfc";
+		/*
+		 * SSFC field to identify fan type.
+		 */
+		fan-type {
+			enum-name = "FAN_TYPE";
+			size = <1>;
+
+			fan_type_1: type-1 {
+				compatible = "named-cbi-ssfc-value";
+				status = "okay";
+				value = <0>;
+				default;
+			};
+
+			fan_type_2: type-2 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+			};
+		};
+	};
 };
