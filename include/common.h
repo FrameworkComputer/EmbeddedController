@@ -283,6 +283,7 @@
 #define test_mockable_static_noreturn noreturn __attribute__((weak))
 #endif
 #define test_export_static
+#define test_overridable_const
 #else
 #define test_mockable
 #define test_mockable_static static
@@ -290,6 +291,7 @@
 #define test_mockable_noreturn noreturn
 #define test_mockable_static_noreturn static noreturn
 #define test_export_static static
+#define test_overridable_const const
 #endif
 
 /* Include top-level configuration file */
