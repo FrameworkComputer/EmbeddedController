@@ -16,6 +16,9 @@ DECLARE_FAKE_VOID_FUNC(usb_mux_enable_alternative);
 #undef USB_MUX_ENABLE_ALTERNATIVE
 #define USB_MUX_ENABLE_ALTERNATIVE(x) usb_mux_enable_alternative()
 
+/* test_export_static function needed by a few tests. */
+void setup_mux(void);
+
 #endif /* CONFIG_ZTEST */
 
 #endif /* __SKYRIM_TEST_USB_MUX_CONFIG */
