@@ -69,36 +69,6 @@ int f75303_get_val_mk(int idx, int *temp_mk_ptr)
 	return EC_SUCCESS;
 }
 
-
-
-static int gpu_board_f75303_init(int sensor)
-{
-	int idx, rv;
-	static const uint8_t reg_arr[6][2] = {
-		{F75303_REG_LOCAL_ALERT_REGISTER, 100},
-		{F75303_REG_REMOTE1_ALERT_REGISTER, 100},
-		{F75303_REG_REMOTE2_ALERT_REGISTER, 100},
-		{F75303_REG_REMOTE1_THERM_REGISTER, 110},
-		{F75303_REG_REMOTE2_THERM_REGISTER, 110},
-		{F75303_REG_LOCAL_THERM_REGISTER, 110}
-	};
-
-	for (idx = 0; idx < sizeof(reg_arr)/sizeof(reg_arr[0]); idx++) {
-		rv = i2c_write8(f75303_sensors[sensor].i2c_port,
-			 	f75303_sensors[sensor].i2c_addr_flags,
-				reg_arr[idx][0], reg_arr[idx][1]);
-
-		if (rv != EC_SUCCESS)
-			return rv;
-
-		k_msleep(1);
-	}
-	return EC_SUCCESS;
-}
-
-static bool gpu_temp_setup_needed;
-
-
 void f75303_update_temperature(int idx)
 {
 	int temp_reg = 0;
@@ -121,18 +91,8 @@ void f75303_update_temperature(int idx)
 		break;
 	/* gpu_amb_f75303 */
 	case 3:
-		if (gpu_present()) {
+		if (gpu_present())
 			rv = get_temp(idx, F75303_TEMP_LOCAL_REGISTER, &temp_reg);
-			/* we dont know when the OS will power the GPU 
-			 * so once we transition to powered, configure the temperature 
-			 * sensor here */
-			if (rv == EC_SUCCESS && gpu_temp_setup_needed) {
-				if (gpu_board_f75303_init(idx) == EC_SUCCESS)
-					gpu_temp_setup_needed = false;
-			} else if (rv != EC_SUCCESS) {
-				gpu_temp_setup_needed = true;
-			}
-		}
 		else
 			rv = EC_ERROR_NOT_POWERED;
 		break;
@@ -153,8 +113,6 @@ void f75303_update_temperature(int idx)
 	}
 	if (rv == EC_SUCCESS)
 		temps[idx] = temp_reg;
-	else
-		temps[idx] = 0;
 }
 
 static int f75303_set_fake_temp(int argc, const char **argv)

@@ -28,6 +28,13 @@ LOG_MODULE_REGISTER(gpu, LOG_LEVEL_INF);
 #define VALID_BOARDID(ID1, ID0) ((ID1 << 8) + ID0)
 #define GPU_F75303_I2C_ADDR_FLAGS 0x4D
 
+#define GPU_F75303_REG_LOCAL_ALERT   0x05
+#define GPU_F75303_REG_REMOTE1_ALERT 0x07
+#define GPU_F75303_REG_REMOTE2_ALERT 0x15
+
+#define GPU_F75303_REG_REMOTE1_THERM 0x19
+#define GPU_F75303_REG_REMOTE2_THERM 0x1A
+#define GPU_F75303_REG_LOCAL_THERM   0x21
 
 static int module_present;
 static int module_fault;
@@ -243,4 +250,29 @@ static void reset_mux_status(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, reset_mux_status, HOOK_PRIO_DEFAULT);
 
+static void gpu_board_f75303_initial(void)
+{
+	int idx, rv;
+	uint8_t temp[6] = {100, 100, 100, 110, 110, 110};
+	uint8_t reg_arr[6] = {
+		GPU_F75303_REG_LOCAL_ALERT,
+		GPU_F75303_REG_REMOTE1_ALERT,
+		GPU_F75303_REG_REMOTE2_ALERT,
+		GPU_F75303_REG_REMOTE1_THERM,
+		GPU_F75303_REG_REMOTE2_THERM,
+		GPU_F75303_REG_LOCAL_THERM,
+	};
 
+	if (gpu_present()) {
+		for (idx = 0; idx < sizeof(reg_arr); idx++) {
+			rv = i2c_write8(I2C_PORT_GPU0, GPU_F75303_I2C_ADDR_FLAGS,
+					reg_arr[idx], temp[idx]);
+
+			if (rv != EC_SUCCESS)
+				LOG_INF("gpu f75303 init reg 0x%02x failed", reg_arr[idx]);
+
+			k_msleep(1);
+		}
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, gpu_board_f75303_initial, HOOK_PRIO_DEFAULT);
