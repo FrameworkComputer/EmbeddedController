@@ -309,7 +309,7 @@ def in_fwsdk() -> bool:
     try:
         subprocess.run(
             [
-                "bazel",
+                "/usr/bin/bazel",
                 "query",
                 "//platform/rules_cros_firmware/cros_firmware:*",
             ],
@@ -360,7 +360,7 @@ twister_test_binary(
     # Twister users are used to seeing `twister-out`; symlink it to bazel twister-out
     bazel_bin = Path(
         subprocess.run(
-            ["bazel", "info", "bazel-bin"],
+            ["/usr/bin/bazel", "info", "bazel-bin"],
             cwd=Path(__file__).resolve().parent,
             check=True,
             stdout=subprocess.PIPE,
@@ -385,7 +385,7 @@ twister_test_binary(
         # Clean up temporary symlink if rename failed
         tmp_twister_out.unlink(missing_ok=True)
 
-    bazel_cmd = ["bazel", "build", ":run_twister"]
+    bazel_cmd = ["/usr/bin/bazel", "build", ":run_twister"]
     if sandbox_debug:
         bazel_cmd.append("--sandbox_debug")
 
