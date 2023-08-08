@@ -107,7 +107,7 @@
 #define PD_OPERATING_POWER_MW 15000
 #define PD_MAX_POWER_MW 65000
 #define PD_MAX_CURRENT_MA 3250
-#define PD_MAX_VOLTAGE_MV 15000
+#define PD_MAX_VOLTAGE_MV 20000
 
 /*
  * Because of b:279526032, modify monitor Vbus from Charger to TCPC.
