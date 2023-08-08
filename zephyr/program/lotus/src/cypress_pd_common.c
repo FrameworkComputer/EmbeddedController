@@ -1136,10 +1136,16 @@ static int cypd_update_power_status(int controller)
 	int power_stat = 0;
 	int pd_controller_is_sink = (prev_charge_port & 0x02) >> 1;
 
-	CPRINTS("C%d, %s power_stat 0x%x", controller, __func__, power_stat);
-	if (controller < PD_CHIP_COUNT)
+	if (controller < PD_CHIP_COUNT) {
+		if (battery_is_present() == BP_YES)
+			power_stat |= BIT(3);
+		if ((extpower_is_present() && battery_is_present() == BP_YES) ||
+			(extpower_is_present() && controller != pd_controller_is_sink && prev_charge_port >=0))
+			power_stat |= BIT(1) + BIT(2);
+
+		CPRINTS("%s:%d=0x%x", __func__,controller, power_stat);
 		rv = cypd_write_reg8_wait_ack(controller, CCG_POWER_STAT, power_stat);
-	else {
+	} else {
 		for (i = 0; i < PD_CHIP_COUNT; i++) {
 			power_stat = 0;
 			if (battery_is_present() == BP_YES)
@@ -1147,7 +1153,7 @@ static int cypd_update_power_status(int controller)
 			if ((extpower_is_present() && battery_is_present() == BP_YES) ||
 				(extpower_is_present() && i != pd_controller_is_sink && prev_charge_port >=0))
 				power_stat |= BIT(1) + BIT(2);
-
+			CPRINTS("%s:%d=0x%x", __func__,i, power_stat);
 			rv = cypd_write_reg8_wait_ack(i, CCG_POWER_STAT, power_stat);
 			if (rv != EC_SUCCESS)
 				break;
@@ -1166,7 +1172,7 @@ static void perform_error_recovery(int controller)
 		}
 	else {
 		/* Hard reset all ports that are not supplying power in dead battery mode */
-		for (i = 0; i < 4; i++) {
+		for (i = 0; i < PD_PORT_COUNT; i++) {
 			if (!(i == prev_charge_port && battery_is_present() != BP_YES) ) {
 				CPRINTS("Hard reset %d", i);
 				cypd_write_reg8(i >> 1, CCG_ERR_RECOVERY_REG, i & 1);
@@ -1371,16 +1377,13 @@ void cypd_cfet_vbus_off(void)
 {
 	int rv, i;
 
-	CPRINTS("Disable all type-c port to change the charger port");
-	for (i = 0; i < PD_CHIP_COUNT; i++) {
-		rv = cypd_write_reg8_wait_ack(i, CCG_PORT_VBUS_FET_CONTROL(0),
-		CCG_EC_CTRL_EN);
+	CPRINTS("Disable all type-c ports sink path");
+	for (i = 0; i < PD_PORT_COUNT; i++) {
+		rv = cypd_write_reg8_wait_ack(i >> 1,
+					CCG_PORT_VBUS_FET_CONTROL(i & 1),
+						CCG_EC_CTRL_EN);
 		if (rv != EC_SUCCESS)
-			CPRINTS("CMD Response fail");
-		rv = cypd_write_reg8_wait_ack(i, CCG_PORT_VBUS_FET_CONTROL(1),
-		CCG_EC_CTRL_EN);
-		if (rv != EC_SUCCESS)
-			CPRINTS("CMD Response fail");
+			CPRINTS("cfet_disable %d fail %d", i, rv);
 	}
 
 	/* turn on VBUS C-FET of chosen port */
@@ -1402,31 +1405,27 @@ void cypd_cfet_vbus_on(void)
 	rv = cypd_write_reg8_wait_ack(pd_controller, CCG_PORT_VBUS_FET_CONTROL(pd_port),
 		CCG_EC_CFET_OPEN);
 	if (rv != EC_SUCCESS)
-		CPRINTS("CMD Response fail");
-
-	CPRINTS("PD VBUS ON");
+		CPRINTS("%s:%d fail:%d", __func__, prev_charge_port, rv);
+	else {
+		CPRINTS("%s:%d", __func__, prev_charge_port);
+	}
 	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
-	CPRINTS("Updating %s port %d", __func__, prev_charge_port);
 }
 
-void cypd_cfet_full_vbus_on(void)
+void cypd_cfet_auto(void)
 {
 	int rv, i;
 
-	CPRINTS("Open Vbus Port");
-	for (i = 0; i < PD_CHIP_COUNT; i++) {
-		rv = cypd_write_reg8_wait_ack(i, CCG_PORT_VBUS_FET_CONTROL(0),
-		0);
+	CPRINTS(__func__);
+	for (i = 0; i < PD_PORT_COUNT; i++) {
+		rv = cypd_write_reg8_wait_ack(i >> 1,
+				CCG_PORT_VBUS_FET_CONTROL(i & 1),
+				0);
 		if (rv != EC_SUCCESS)
-			CPRINTS("CMD Response fail");
-		rv = cypd_write_reg8_wait_ack(i, CCG_PORT_VBUS_FET_CONTROL(1),
-		0);
-		if (rv != EC_SUCCESS)
-			CPRINTS("CMD Response fail");
+			CPRINTS("cfet_auto:%d fail %d", i, rv);
 	}
 
 	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
-	CPRINTS("Updating %s port %d", __func__, prev_charge_port);
 }
 
 /*****************************************************************************/
@@ -1706,7 +1705,7 @@ void cypd_interrupt_handler_task(void *p)
 			cypd_cfet_vbus_on();
 
 		if (evt & CCG_EVT_CFET_FULL_VBUS_ON)
-			cypd_cfet_full_vbus_on();
+			cypd_cfet_auto();
 
 		if (evt & (CCG_EVT_INT_CTRL_0 | CCG_EVT_INT_CTRL_1 |
 					CCG_EVT_STATE_CTRL_0 | CCG_EVT_STATE_CTRL_1)) {
