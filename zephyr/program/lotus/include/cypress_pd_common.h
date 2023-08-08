@@ -64,43 +64,43 @@
 /*    CCG PORT REGISTER ADDRESS DEFINITION      */
 /************************************************/
 #define CCG_DM_CONTROL_REG(x) \
-	(0x1000 + (x * 0x1000))
+	(0x1000 + ((x) * 0x1000))
 #define CCG_SELECT_SOURCE_PDO_MASK_REG(x) \
-	(0x1002 + (x * 0x1000))
+	(0x1002 + ((x) * 0x1000))
 #define CCG_SELECT_SOURCE_PDO_REG(x) \
-	(0x1004 + (x * 0x1000))
+	(0x1004 + ((x) * 0x1000))
 #define CCG_SELECT_SINK_PDO_REG(x) \
-	(0x1005 + (x * 0x1000))
+	(0x1005 + ((x) * 0x1000))
 #define CCG_PD_CONTROL_REG(x) \
-	(0x1006 + (x * 0x1000))
+	(0x1006 + ((x) * 0x1000))
 #define CCG_PD_STATUS_REG(x) \
-	(0x1008 + (x * 0x1000))
+	(0x1008 + ((x) * 0x1000))
 #define CCG_TYPE_C_STATUS_REG(x) \
-	(0x100C + (x * 0x1000))
+	(0x100C + ((x) * 0x1000))
 #define CCG_TYPE_C_VOLTAGE_REG(x) \
-	(0x100D + (x * 0x1000))
+	(0x100D + ((x) * 0x1000))
 #define CCG_CURRENT_PDO_REG(x) \
-	(0x1010 + (x * 0x1000))
+	(0x1010 + ((x) * 0x1000))
 #define CCG_CURRENT_RDO_REG(x) \
-	(0x1014 + (x * 0x1000))
+	(0x1014 + ((x) * 0x1000))
 #define CCG_EVENT_MASK_REG(x) \
-	(0x1024 + (x * 0x1000))
+	(0x1024 + ((x) * 0x1000))
 #define CCG_VDM_EC_CONTROL_REG(x) \
-	(0x102A + (x * 0x1000))
+	(0x102A + ((x) * 0x1000))
 #define CCG_DP_ALT_MODE_CONFIG_REG(x) \
-	(0x102B + (x * 0x1000))
+	(0x102B + ((x) * 0x1000))
 #define CCG_PORT_VBUS_FET_CONTROL(x) \
-	(0x1032 + (x * 0x1000))
+	(0x1032 + ((x) * 0x1000))
 #define CCG_PORT_INTR_STATUS_REG(x) \
-	(0x1034 + (x * 0x1000))
+	(0x1034 + ((x) * 0x1000))
 #define CCG_SINK_PPS_AVS_CTRL_REG(x) \
-	(0x1066 + (x * 0x1000))
+	(0x1066 + ((x) * 0x1000))
 #define CCG_PORT_PD_RESPONSE_REG(x) \
-	(0x1400 + (x * 0x1000))
+	(0x1400 + ((x) * 0x1000))
 #define CCG_READ_DATA_MEMORY_REG(x, offset) \
-	((0x1404 + offset) + (x * 0x1000))
+	((0x1404 + (offset)) + ((x) * 0x1000))
 #define CCG_WRITE_DATA_MEMORY_REG(x, offset) \
-	((0x1800 + offset) + (x * 0x1000))
+	((0x1800 + (offset)) + ((x) * 0x1000))
 
 
 /************************************************/
