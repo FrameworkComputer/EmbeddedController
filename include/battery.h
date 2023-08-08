@@ -444,6 +444,13 @@ int battery_imbalance_mv(void);
  */
 int board_cut_off_battery(void);
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+/**
+ * for board cut off to change state.
+ */
+void set_battery_in_cut_off(void);
+#endif
+
 /**
  * Return if the battery start cut off.
  */

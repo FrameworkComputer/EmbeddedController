@@ -9,6 +9,8 @@
 /* gpu install stable */
 bool gpu_present(void);
 
+bool gpu_power_enable(void);
+
 bool gpu_module_fault(void);
 
 void set_host_dp_ready(int ready);

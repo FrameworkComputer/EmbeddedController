@@ -310,6 +310,14 @@ DECLARE_CONSOLE_COMMAND(battery, command_battery, "<repeat_count> <sleep_ms>",
 			"Print battery info");
 
 #ifdef CONFIG_BATTERY_CUT_OFF
+
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+void set_battery_in_cut_off(void)
+{
+	battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
+}
+#endif
+
 int battery_is_cut_off(void)
 {
 	return (battery_cutoff_state == BATTERY_CUTOFF_STATE_CUT_OFF);

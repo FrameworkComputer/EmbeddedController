@@ -77,5 +77,10 @@
 			flags = <GPIO_INT_EDGE_RISING>;
 			handler = "dp_hot_plug_interrupt";
 		};
+		int_gpu_power_en: gpu_power_en {
+			irq-pin = <&gpio_dgpu_pwr_en>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "gpu_power_enable_handler";
+		};
 	};
 };

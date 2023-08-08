@@ -7,6 +7,7 @@
  */
 
 #include "adc.h"
+#include "battery.h"
 #include "chipset.h"
 #include "customized_shared_memory.h"
 #include "gpio/gpio_int.h"
@@ -23,11 +24,18 @@
 #include "system.h"
 #include "thermal.h"
 
-LOG_MODULE_REGISTER(gpu, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(gpu, LOG_LEVEL_DBG);
 
 #define VALID_BOARDID(ID1, ID0) ((ID1 << 8) + ID0)
 #define GPU_F75303_I2C_ADDR_FLAGS 0x4D
 
+#define GPU_F75303_REG_LOCAL_ALERT   0x05
+#define GPU_F75303_REG_REMOTE1_ALERT 0x07
+#define GPU_F75303_REG_REMOTE2_ALERT 0x15
+
+#define GPU_F75303_REG_REMOTE1_THERM 0x19
+#define GPU_F75303_REG_REMOTE2_THERM 0x1A
+#define GPU_F75303_REG_LOCAL_THERM   0x21
 
 static int module_present;
 static int module_fault;
@@ -35,6 +43,15 @@ static int module_fault;
 bool gpu_present(void)
 {
 	return module_present;
+}
+
+bool gpu_power_enable(void)
+{
+	/* dgpu pwr enable pin will be high at s5 state*/
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return 0;
+	else
+		return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_dgpu_pwr_en));
 }
 
 bool gpu_module_fault(void)
@@ -91,20 +108,20 @@ void check_gpu_module(void)
 
 	switch (VALID_BOARDID(gpu_id_1, gpu_id_0)) {
 	case VALID_BOARDID(BOARD_VERSION_12, BOARD_VERSION_12):
-		LOG_INF("Detected dual interposer device");
+		LOG_DBG("Detected dual interposer device");
 		module_present = 1;
 		break;
 	case VALID_BOARDID(BOARD_VERSION_11, BOARD_VERSION_15):
 	case VALID_BOARDID(BOARD_VERSION_13, BOARD_VERSION_15):
-		LOG_INF("Detected single interposer device");
+		LOG_DBG("Detected single interposer device");
 		module_present = 1;
 		break;
 	case VALID_BOARDID(BOARD_VERSION_15, BOARD_VERSION_15):
-		LOG_INF("No gpu module detected %d %d", gpu_id_0, gpu_id_1);
+		LOG_DBG("No gpu module detected %d %d", gpu_id_0, gpu_id_1);
 		module_present = 0;
 		break;
 	default:
-		LOG_INF("GPU module Fault");
+		LOG_DBG("GPU module Fault");
 		module_present = 0;
 		module_fault = 1;
 	break;
@@ -120,6 +137,7 @@ void check_gpu_module(void)
 		if (board_get_version() >= BOARD_VERSION_7)
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_gpu_sel), 0);
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL) |= GPU_PRESENT;
+		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_gpu_power_en));
 	} else {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
@@ -127,12 +145,26 @@ void check_gpu_module(void)
 		if (board_get_version() >= BOARD_VERSION_7)
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_gpu_sel), 1);
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL) &= GPU_PRESENT;
+		gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_gpu_power_en));
 	}
 	update_gpu_ac_power_state();
 	update_thermal_configuration();
 }
 DECLARE_DEFERRED(check_gpu_module);
 DECLARE_HOOK(HOOK_INIT, check_gpu_module, HOOK_PRIO_INIT_ADC + 1);
+
+void gpu_interposer_toggle_deferred(void)
+{
+	int rv;
+
+	rv = board_cut_off_battery();
+	if (rv == EC_RES_SUCCESS) {
+		LOG_DBG("board cut off succeeded.");
+		set_battery_in_cut_off();
+	} else
+		LOG_DBG("board cut off failed!");
+}
+DECLARE_DEFERRED(gpu_interposer_toggle_deferred);
 
 
 __override void project_chassis_function(enum gpio_signal signal)
@@ -145,7 +177,7 @@ __override void project_chassis_function(enum gpio_signal signal)
 
 	if (!open_state) {
 		/* Make sure the module is off as fast as possible! */
-		LOG_INF("Powering off GPU");
+		LOG_DBG("Powering off GPU");
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
@@ -160,6 +192,8 @@ __override void project_chassis_function(enum gpio_signal signal)
 void beam_open_interrupt(enum gpio_signal signal)
 {
 	int open_state = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_f_beam_open_l));
+	static int gpu_interposer_toggle_count;
+	static int cutoff;
 
 	/* The dGPU SW is SW4 at DVT phase */
 	if (board_get_version() < BOARD_VERSION_7)
@@ -167,13 +201,24 @@ void beam_open_interrupt(enum gpio_signal signal)
 
 	if (!open_state) {
 		/* Make sure the module is off as fast as possible! */
-		LOG_INF("Powering off GPU");
+		LOG_DBG("Powering off GPU");
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
 		module_present = 0;
 		update_thermal_configuration();
+
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+			gpu_interposer_toggle_count++;
+
+			if (!cutoff && gpu_interposer_toggle_count >= 10) {
+				hook_call_deferred(&gpu_interposer_toggle_deferred_data,
+					100 * MSEC);
+				cutoff = 1;
+			}
+		} else
+			gpu_interposer_toggle_count = 0;
 	} else {
 		hook_call_deferred(&check_gpu_module_data, 50*MSEC);
 	}
@@ -223,7 +268,6 @@ void gpu_smart_access_graphic(void)
 		hook_call_deferred(&gpu_smart_access_graphic_data, 10 * MSEC);
 }
 
-
 static void start_smart_access_graphic(void)
 {
 	/* Check GPU is present then polling the namespace to do the smart access graphic */
@@ -231,6 +275,13 @@ static void start_smart_access_graphic(void)
 		hook_call_deferred(&gpu_smart_access_graphic_data, 10 * MSEC);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, start_smart_access_graphic, HOOK_PRIO_DEFAULT);
+
+static void reset_smart_access_graphic(void)
+{
+	/* smart access graphic default should be hybrid mode */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, reset_smart_access_graphic, HOOK_PRIO_DEFAULT);
 
 static void reset_mux_status(void)
 {
@@ -243,4 +294,37 @@ static void reset_mux_status(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, reset_mux_status, HOOK_PRIO_DEFAULT);
 
+static void gpu_board_f75303_initial(void)
+{
+	int idx, rv;
+	uint8_t temp[6] = {100, 100, 100, 110, 110, 110};
+	uint8_t reg_arr[6] = {
+		GPU_F75303_REG_LOCAL_ALERT,
+		GPU_F75303_REG_REMOTE1_ALERT,
+		GPU_F75303_REG_REMOTE2_ALERT,
+		GPU_F75303_REG_REMOTE1_THERM,
+		GPU_F75303_REG_REMOTE2_THERM,
+		GPU_F75303_REG_LOCAL_THERM,
+	};
 
+	if (gpu_present() && chipset_in_state(CHIPSET_STATE_ON)) {
+		for (idx = 0; idx < sizeof(reg_arr); idx++) {
+			rv = i2c_write8(I2C_PORT_GPU0, GPU_F75303_I2C_ADDR_FLAGS,
+					reg_arr[idx], temp[idx]);
+
+			if (rv != EC_SUCCESS)
+				LOG_INF("gpu f75303 init reg 0x%02x failed", reg_arr[idx]);
+
+			k_msleep(1);
+		}
+	}
+}
+DECLARE_DEFERRED(gpu_board_f75303_initial);
+
+void gpu_power_enable_handler(void)
+{
+	/* we needs to re-initial the thermal sensor and gpu when gpu power enable */
+	if (gpu_power_enable())
+		hook_call_deferred(&gpu_board_f75303_initial_data, 500 * MSEC);
+
+}
