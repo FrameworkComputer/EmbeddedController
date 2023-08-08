@@ -13,7 +13,7 @@
 #include "usbc_ppc.h"
 
 #include <zephyr/device.h>
-#include <zephyr/devicetree/gpio.h>
+#include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/fff.h>

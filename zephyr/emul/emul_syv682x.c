@@ -11,7 +11,7 @@
 #include <string.h>
 
 #include <zephyr/device.h>
-#include <zephyr/devicetree/gpio.h>
+#include <zephyr/devicetree.h>
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/drivers/i2c.h>

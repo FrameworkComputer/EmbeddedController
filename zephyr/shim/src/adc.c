@@ -6,7 +6,7 @@
 #include "adc.h"
 #include "zephyr_adc.h"
 
-#include <zephyr/devicetree/io-channels.h>
+#include <zephyr/devicetree.h>
 #include <zephyr/drivers/adc.h>
 #include <zephyr/logging/log.h>
 
