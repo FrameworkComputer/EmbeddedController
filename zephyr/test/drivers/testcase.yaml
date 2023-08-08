@@ -486,6 +486,11 @@ tests:
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
+  drivers.gpio_init:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_GPIO_INIT=y
+    extra_dtc_overlay_files:
+    - ./gpio_init/gpio_init.dts
   drivers.gpio_unhook:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_GPIO_UNHOOK=y

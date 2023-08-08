@@ -1,0 +1,22 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../boards/native_posix.overlay"
+
+/ {
+	gpio_mock_controller: gpio-mock {
+		status = "okay";
+		compatible = "cros,gpio-controller-mock";
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+
+	named-gpios {
+		gpio_not_ready: gpio-not-ready {
+			gpios = <&gpio_mock_controller 0 0>;
+		};
+	};
+};
