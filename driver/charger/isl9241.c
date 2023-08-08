@@ -843,9 +843,7 @@ static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
 {
 	const struct battery_info *bi = battery_get_info();
 	const int charge_current = charge_manager_get_charger_current();
-#ifndef CONFIG_CUSTOMIZED_DESIGN
 	const int charge_voltage = charge_manager_get_charger_voltage();
-#endif
 	int vsys, vsys_target;
 	int rv = EC_SUCCESS;
 	timestamp_t deadline;
@@ -854,7 +852,11 @@ static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
 
 	mutex_lock(&control3_mutex_isl9241);
 	/* 1: Set adapter current limit. */
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	board_set_charge_limit(0, 0, charge_current, 0, charge_voltage);
+#else
 	isl9241_set_input_current_limit(chgnum, charge_current);
+#endif
 
 	/* 2: Set charge pumps to 100%. */
 	isl9241_update(chgnum, ISL9241_REG_CONTROL0,

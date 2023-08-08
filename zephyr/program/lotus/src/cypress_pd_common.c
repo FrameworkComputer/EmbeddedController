@@ -969,10 +969,6 @@ static void cypd_update_port_state(int controller, int port)
 	uint8_t pd_status_reg[4];
 	uint32_t pdo_reg;
 	uint8_t rdo_reg[4];
-#ifdef CONFIG_BOARD_LOTUS
-	uint64_t calculate_ma;
-#endif
-
 	int typec_status_reg;
 	int pd_current = 0;
 	int pd_voltage = 0;
@@ -1034,19 +1030,6 @@ static void cypd_update_port_state(int controller, int port)
 		break;
 	}
 
-#ifdef CONFIG_BOARD_LOTUS
-	/* Handle EPR converstion through the buck switcher */
-	if (pd_voltage > 20000) {
-		/**
-		 * (charge_ma * charge_mv / 20000 ) * 0.9 * 0.94
-		 */
-		calculate_ma = (int64_t)pd_current * (int64_t)pd_voltage * 90 * 94 / 200000000;
-	} else {
-		calculate_ma = (int64_t)pd_current * 88 / 100;
-	}
-
-	CPRINTS("Updating charger with EPR correction: ma %d", (int16_t)calculate_ma);
-#endif
 	cypd_read_reg_block(controller, CCG_CURRENT_RDO_REG(port), rdo_reg, 4);
 	rdo_max_current = (((rdo_reg[1]>>2) + (rdo_reg[2]<<6)) & 0x3FF)*10;
 
@@ -1075,15 +1058,8 @@ static void cypd_update_port_state(int controller, int port)
 
 	if (pd_port_states[port_idx].pd_state) {
 		if (pd_port_states[port_idx].power_role == PD_ROLE_SINK) {
-#ifdef CONFIG_BOARD_LOTUS
-			pd_set_input_current_limit(port_idx, (int16_t)calculate_ma, pd_voltage);
-			charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
-								(int16_t)calculate_ma);
-#else
 			pd_set_input_current_limit(port_idx, pd_current, pd_voltage);
-			charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
-								pd_current);
-#endif
+			charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD, pd_current);
 			pd_port_states[port_idx].current = pd_current;
 			pd_port_states[port_idx].voltage = pd_voltage;
 		} else {

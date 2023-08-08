@@ -64,7 +64,8 @@ static void charger_chips_init(void)
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL2, 
 		ISL9241_CONTROL2_TRICKLE_CHG_CURR(bi->precharge_current) |
-		ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR))
+		ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR |
+		ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000))
 		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
@@ -155,10 +156,10 @@ void charger_update(void)
 		/**
 		 * Update the DC prochot current limit
 		 * EVT: DC prochot value = 6820 mA / (10 / 3) = 2130 mA (0x800)
-		 * DVT: DC prochot value = 7100 mA / (10 / 5) = 3584 mA (0xE00)
+		 * DVT: DC prochot value = 13000 mA / (10 / 5) = 6500 mA (0x1d00)
 		 */
 		if (isl9241_set_dc_prochot(0,
-			(board_get_version() < BOARD_VERSION_7) ? 0x800 : 0xE00))
+			(board_get_version() < BOARD_VERSION_7) ? 0x800 : 0x1d00))
 			CPRINTS("Update DC prochot fail");
 
 		pre_ac_state = extpower_is_present();
@@ -223,18 +224,32 @@ int board_discharge_on_ac(int enable)
 	return rv;
 }
 
-void board_set_charge_limit(int port, int supplier, int charge_ma,
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
 			    int max_ma, int charge_mv)
 {
 	int prochot_ma;
+	int64_t calculate_ma;
 
 	if (charge_ma < CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT) {
 		charge_ma = CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT;
 	}
 
-	prochot_ma = (DIV_ROUND_UP(charge_ma, 855) * 855);
 
-	if ((prochot_ma - charge_ma) < 853) {
+	/* Handle EPR converstion through the buck switcher */
+	if (charge_mv > 20000) {
+		/**
+		 * (charge_ma * charge_mv / 20000 ) * 0.9 * 0.94
+		 */
+		calculate_ma = (int64_t)charge_ma * (int64_t)charge_mv * 90 * 95 / 200000000;
+	} else {
+		calculate_ma = (int64_t)charge_ma * 88 / 100;
+	}
+
+	CPRINTS("Updating charger with EPR correction: ma %d", (int16_t)calculate_ma);
+
+	prochot_ma = (DIV_ROUND_UP(((int)calculate_ma * 200 / 100), 855) * 855);
+
+	if ((prochot_ma - (int)calculate_ma) < 853) {
 		/* We need prochot to be at least 1 LSB above
 		 * the input current limit. This is not ideal
 		 * due to the low accuracy on prochot.
@@ -242,7 +257,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 		prochot_ma += 853;
 	}
 
-	charge_set_input_current_limit(charge_ma, charge_mv);
+	charge_set_input_current_limit((int)calculate_ma, charge_mv);
 	/* sync-up ac prochot with current change */
 	isl9241_set_ac_prochot(0, prochot_ma);
 }
@@ -277,7 +292,7 @@ void board_check_current(void)
 	else
 		shunt_register = 5;
 
-	if (ABS(INA2XX_SHUNT_UV(sv) / shunt_register) > active_current &&
+	if (ABS(INA2XX_SHUNT_UV(sv) / shunt_register) > (active_current * 120 / 100) &&
 		(INA2XX_SHUNT_UV(sv) > 0) && (active_current != 0)) {
 		curr_status = EC_ASSERTED_PROCHOT;
 		hook_call_deferred(&board_check_current_data, 10 * MSEC);
