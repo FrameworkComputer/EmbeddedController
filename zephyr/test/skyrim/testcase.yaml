@@ -10,6 +10,11 @@ tests:
     extra_configs:
     - CONFIG_TEST_BOARD_BASEBOARD=y
 
+  skyrim.baseboard.i2c_policy:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BASEBOARD=y
+    - CONFIG_TEST_BOARD_I2C_POLICY=y
+
   skyrim.baseboard.usbc_config:
     extra_configs:
     - CONFIG_TEST_BOARD_BASEBOARD=y

@@ -71,6 +71,9 @@ config TEST_BOARD_FORM_FACTOR
 	  Include tests which checks accelerometer
 	  interrupt and tablet mode.
 
+config TEST_BOARD_I2C_POLICY
+	bool "Enable I2C policy tests"
+
 config TEST_BOARD_USB_PD_POLICY
 	bool "Enable USB PD policy specific tests"
 	select TEST_ENABLE_USB_PD_HOST_CMD
