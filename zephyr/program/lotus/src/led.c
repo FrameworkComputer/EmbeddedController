@@ -298,6 +298,24 @@ int breath_led_status;
 static void breath_led_pwm_deferred(void);
 DECLARE_DEFERRED(breath_led_pwm_deferred);
 
+static void multifunction_pwr_leds_control(int *colors, int num_color, int period)
+{
+	static uint32_t ticks;
+	static int idx;
+
+	ticks++;
+
+	if ((ticks * 200) >= period) {
+		ticks = 0;
+		idx++;
+
+		if (idx >= num_color)
+			idx = 0;
+	}
+
+	led_set_color(colors[idx], EC_LED_ID_POWER_LED);
+}
+
 void pwm_set_breath_dt(const struct led_pins_node_t *pins_node, int percent)
 {
 	struct pwm_pin_t *pwm_pins = pins_node->pwm_pins;
@@ -414,6 +432,7 @@ void breath_led_run(uint8_t enable)
 static void board_led_set_power(void)
 {
 	uint8_t bbram_led_level;
+	int colors[3] = {LED_OFF, LED_OFF, LED_OFF};
 
 	system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &bbram_led_level);
 
@@ -431,8 +450,14 @@ static void board_led_set_power(void)
 	breath_led_run(0);
 
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		pwm_set_breath_dt(GET_PIN_NODE(7, 0),
-			bbram_led_level ? bbram_led_level : FP_LED_HIGH);
+		if (charge_get_percent() < 3 && !extpower_is_present()) {
+			colors[0] = LED_WHITE;
+			colors[1] = LED_OFF;
+			colors[2] = LED_OFF;
+			multifunction_pwr_leds_control(colors, 2, 500);
+		} else
+			pwm_set_breath_dt(GET_PIN_NODE(7, 0),
+				bbram_led_level ? bbram_led_level : FP_LED_HIGH);
 	} else
 		led_set_color(LED_OFF, EC_LED_ID_POWER_LED);
 }
