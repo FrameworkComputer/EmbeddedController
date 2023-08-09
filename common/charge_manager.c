@@ -656,92 +656,93 @@ static void charge_manager_get_best_port(int *new_port, int *new_supplier)
 	int best_port_power = -1, candidate_port_power;
 	int i, j;
 
-	/* Skip port selection on OVERRIDE_DONT_CHARGE. */
-	if (override_port != OVERRIDE_DONT_CHARGE) {
-		/*
-		 * Charge supplier selection logic:
-		 * 1. Prefer DPS charge port.
-		 * 2. Prefer higher priority supply.
-		 * 3. Prefer higher power over lower in case priority is tied.
-		 * 4. Prefer current charge port over new port in case (1)
-		 *    and (2) are tied.
-		 * available_charge can be changed at any time by other tasks,
-		 * so make no assumptions about its consistency.
-		 */
-		for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i)
-			for (j = 0; j < CHARGE_PORT_COUNT; ++j) {
-				/* Skip this port if it is not valid. */
-				if (!is_valid_port(j))
-					continue;
+	if (override_port == OVERRIDE_DONT_CHARGE) {
+		*new_port = CHARGE_PORT_NONE;
+		*new_supplier = CHARGE_SUPPLIER_NONE;
+		return;
+	}
 
-				/*
-				 * Skip this supplier if there is no
-				 * available charge.
-				 */
-				if (available_charge[i][j].current == 0 ||
-				    available_charge[i][j].voltage == 0)
-					continue;
+	/*
+	 * Charge supplier selection logic:
+	 * 1. Prefer DPS charge port.
+	 * 2. Prefer higher priority supply.
+	 * 3. Prefer higher power over lower in case priority is tied.
+	 * 4. Prefer current charge port over new port in case (1)
+	 *    and (2) are tied.
+	 * available_charge can be changed at any time by other tasks,
+	 * so make no assumptions about its consistency.
+	 */
+	for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i) {
+		for (j = 0; j < CHARGE_PORT_COUNT; ++j) {
+			/* Skip this port if it is not valid. */
+			if (!is_valid_port(j))
+				continue;
 
-				/*
-				 * Don't select this port if we have a
-				 * charge on another override port.
-				 */
-				if (override_port != OVERRIDE_OFF &&
-				    override_port == port && override_port != j)
-					continue;
+			/*
+			 * Skip this supplier if there is no
+			 * available charge.
+			 */
+			if (available_charge[i][j].current == 0 ||
+			    available_charge[i][j].voltage == 0)
+				continue;
+
+			/*
+			 * Don't select this port if we have a
+			 * charge on another override port.
+			 */
+			if (override_port != OVERRIDE_OFF &&
+			    override_port == port && override_port != j)
+				continue;
 
 #ifndef CONFIG_CHARGE_MANAGER_DRP_CHARGING
-				/*
-				 * Don't charge from a dual-role port unless
-				 * it is our override port.
-				 */
-				if (dualrole_capability[j] != CAP_DEDICATED &&
-				    override_port != j &&
-				    !charge_manager_spoof_dualrole_capability())
-					continue;
+			/*
+			 * Don't charge from a dual-role port unless
+			 * it is our override port.
+			 */
+			if (dualrole_capability[j] != CAP_DEDICATED &&
+			    override_port != j &&
+			    !charge_manager_spoof_dualrole_capability())
+				continue;
 #endif
 
-				candidate_port_power =
-					POWER(available_charge[i][j]);
+			candidate_port_power = POWER(available_charge[i][j]);
 
-				/* Select DPS port if provided. */
-				if (IS_ENABLED(CONFIG_USB_PD_DPS) &&
-				    override_port == OVERRIDE_OFF &&
-				    i == CHARGE_SUPPLIER_PD &&
-				    j == dps_get_charge_port()) {
-					supplier = i;
-					port = j;
-					break;
-					/* Select if no supplier chosen yet. */
-				} else if (supplier == CHARGE_SUPPLIER_NONE ||
-					   /* ..or if supplier priority is
-					      higher. */
-					   supplier_priority[i] <
-						   supplier_priority[supplier] ||
-					   /* ..or if this is our override port.
-					    */
-					   (j == override_port &&
-					    port != override_port) ||
-					   /* ..or if priority is tied and.. */
-					   (supplier_priority[i] ==
-						    supplier_priority[supplier] &&
-					    /* candidate port can supply more
-					       power or.. */
-					    (candidate_port_power >
-						     best_port_power ||
-					     /*
-					      * candidate port is the active
-					      * port and can supply the same
-					      * amount of power.
-					      */
-					     (candidate_port_power ==
-						      best_port_power &&
-					      charge_port == j)))) {
-					supplier = i;
-					port = j;
-					best_port_power = candidate_port_power;
-				}
+			/* Select DPS port if provided. */
+			if (IS_ENABLED(CONFIG_USB_PD_DPS) &&
+			    override_port == OVERRIDE_OFF &&
+			    i == CHARGE_SUPPLIER_PD &&
+			    j == dps_get_charge_port()) {
+				supplier = i;
+				port = j;
+				break;
+				/* Select if no supplier chosen yet. */
+			} else if (supplier == CHARGE_SUPPLIER_NONE ||
+				   /* ..or if supplier priority is higher. */
+				   supplier_priority[i] <
+					   supplier_priority[supplier] ||
+				   /* ..or if this is our override port. */
+				   (j == override_port &&
+				    port != override_port) ||
+				   /* ..or if priority is tied and.. */
+				   (supplier_priority[i] ==
+					    supplier_priority[supplier] &&
+				    /*
+				     * candidate port can supply more power or
+				     * ..
+				     */
+				    (candidate_port_power > best_port_power ||
+				     /*
+				      * candidate port is the active
+				      * port and can supply the same
+				      * amount of power.
+				      */
+				     (candidate_port_power == best_port_power &&
+				      charge_port == j)))) {
+				supplier = i;
+				port = j;
+				best_port_power = candidate_port_power;
 			}
+		}
 	}
 
 #ifdef CONFIG_BATTERY
