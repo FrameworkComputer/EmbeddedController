@@ -7,6 +7,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "chipset.h"
 #include "display_7seg.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -40,6 +41,7 @@ DECLARE_DEFERRED(port80_dump_buffer);
 
 #ifdef CONFIG_CUSTOMIZED_DESIGN
 static int ddr_initialized_fail;
+static int has_port_80_data;
 
 int port_80_last(void)
 {
@@ -50,11 +52,22 @@ int amd_ddr_initialized_check(void)
 {
 	return ddr_initialized_fail;
 }
+
+void port_80_read_customized(int index);
+DECLARE_DEFERRED(port_80_read_customized);
+
+void port_80_read_customized(int index)
+{
+	if (has_port_80_data) {
+		CPRINTF("PORT80: %04X\n", (history[writes % ARRAY_SIZE(history)] & 0xFFFF));
+		has_port_80_data = 0;
+	}
+}
 #endif
 
 void port_80_write(int data)
 {
-#ifndef CONFIG_PORT80_CUSTOM_FORMAT
+#ifndef CONFIG_CUSTOMIZED_DESIGN
 	char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 
 	/*
@@ -82,13 +95,13 @@ void port_80_write(int data)
 		hook_call_deferred(&port80_dump_buffer_data, 4 * SECOND);
 	}
 #else
-	/* This is for customer design to show port80 on 7-segment display */
-	CPRINTF("PORT80: %04X\n", (data & 0xFFFF));
+	if (!has_port_80_data) {
+		has_port_80_data = 1;
+		hook_call_deferred(&port_80_read_customized_data, 10 * MSEC);
+	}
 
-#ifdef CONFIG_CUSTOMIZED_DESIGN
 	if (data == 0x12344321)
 		ddr_initialized_fail = 1;
-#endif
 #endif
 
 	/* Save current port80 code if system is resetting */
