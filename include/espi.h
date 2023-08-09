@@ -100,4 +100,12 @@ int espi_signal_is_vw(int signal);
  */
 void espi_wait_vw_not_dirty(enum espi_vw_signal signal,
 			    unsigned int timeout_us);
+
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+/* Workaround for ADM fw18 known issue */
+int get_espi_virtual_wire_channel_status(void);
+
+void clear_espi_virtual_wire_channel_status(void);
+#endif
+
 #endif /* __CROS_EC_ESPI_H */
