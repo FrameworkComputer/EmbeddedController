@@ -649,8 +649,7 @@ static int charge_manager_get_ceil(int port)
  * @param new_port	Pointer to the best charge port by definition.
  * @param new_supplier	Pointer to the best charge supplier by definition.
  */
-static void charge_manager_get_best_charge_port(int *new_port,
-						int *new_supplier)
+static void charge_manager_get_best_port(int *new_port, int *new_supplier)
 {
 	int supplier = CHARGE_SUPPLIER_NONE;
 	int port = CHARGE_PORT_NONE;
@@ -781,7 +780,7 @@ static void charge_manager_refresh(void)
 
 	/* Hunt for an acceptable charge port */
 	while (1) {
-		charge_manager_get_best_charge_port(&new_port, &new_supplier);
+		charge_manager_get_best_port(&new_port, &new_supplier);
 
 		if (!left_safe_mode && new_port == CHARGE_PORT_NONE)
 			return;
@@ -1372,7 +1371,7 @@ int charge_manager_get_selected_charge_port(void)
 {
 	int port, supplier;
 
-	charge_manager_get_best_charge_port(&port, &supplier);
+	charge_manager_get_best_port(&port, &supplier);
 	return port;
 }
 
