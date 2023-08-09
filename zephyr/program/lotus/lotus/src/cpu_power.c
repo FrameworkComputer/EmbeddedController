@@ -318,10 +318,8 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	if (mode_ctl)
 		mode = mode_ctl;
 
-	/* azalea take 55W and lower adp as no ac */
-	if (force_no_adapter || (!extpower_is_present()) || (active_mpower < 55000)) {
-		if (mode > EC_DC_BATTERY_SAVER)
-			mode = mode << 4;
+	if (force_no_adapter || (!extpower_is_present())) {
+		active_mpower = 0;
 	}
 
 	if (old_slider_mode != mode) {

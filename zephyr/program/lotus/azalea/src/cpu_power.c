@@ -280,11 +280,8 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 
 	ports_cost = cypd_get_port_cost();
 
-	/* azalea take 55W and lower adp as no ac */
-	if (force_no_adapter || (!extpower_is_present()) || (active_mpower < 55000)) {
+	if (force_no_adapter || (!extpower_is_present())) {
 		active_mpower = 0;
-		if (mode > EC_DC_BATTERY_SAVER)
-			mode = mode << 4;
 	}
 
 	if (old_slider_mode != mode) {
