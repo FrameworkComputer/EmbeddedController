@@ -611,12 +611,6 @@ static int handle_mouse_data(uint8_t data, uint8_t *output, int *count)
 	return 1;
 }
 
-#ifdef CONFIG_CUSTOMIZED_DESIGN
-__overridable void board_caps_led_control(int data)
-{
-}
-#endif /* CONFIG_CUSTOMIZED_DESIGN */
-
 /**
  * Handle the port 0x60 writes from host.
  *

@@ -155,7 +155,7 @@ int caps_status_check(void)
 	return caps_led_status;
 }
 
-__override void board_caps_led_control(int data)
+void board_caps_led_control(int data)
 {
 	if (data & CAPS_LED) {
 		caps_led_status = 1;
