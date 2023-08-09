@@ -108,6 +108,7 @@ struct charge_state_data {
 struct sustain_soc {
 	int8_t lower;
 	int8_t upper;
+	uint8_t flags; /* enum ec_charge_control_flag */
 };
 
 #define BAT_MAX_DISCHG_CURRENT 5000 /* mA */
