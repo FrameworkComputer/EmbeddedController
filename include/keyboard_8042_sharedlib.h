@@ -200,7 +200,7 @@ enum scancode_values {
 #endif /* CONFIG_CUSTOMIZED_DESIGN */
 };
 #ifdef CONFIG_CUSTOMIZED_DESIGN
-__override_proto void board_caps_led_control(int data);
+void board_caps_led_control(int data);
 void simulate_keyboard(uint16_t scancode, int is_pressed);
 #endif /* CONFIG_CUSTOMIZED_DESIGN */
 #endif /* __CROS_EC_KEYBOARD_8042_SHAREDLIB_H */
