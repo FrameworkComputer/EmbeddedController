@@ -93,7 +93,7 @@ static timestamp_t registration_time[CHARGE_PORT_COUNT];
  */
 static int charge_ceil[CHARGE_PORT_COUNT][CEIL_REQUESTOR_COUNT];
 
-/* Dual-role capability of attached partner port */
+/* Dual-role capability of attached device (e.g. AC adapter, mobile battery). */
 static enum dualrole_capabilities dualrole_capability[CHARGE_PORT_COUNT];
 
 #ifdef CONFIG_USB_PD_LOGGING
@@ -643,11 +643,11 @@ static int charge_manager_get_ceil(int port)
 }
 
 /**
- * Select the 'best' charge port, as defined by the supplier heirarchy and the
- * ability of the port to provide power.
+ * Select the best charge port or the override port, as defined by the supplier
+ * hierarchy and the available power.
  *
- * @param new_port	Pointer to the best charge port by definition.
- * @param new_supplier	Pointer to the best charge supplier by definition.
+ * @param new_port	Pointer to the selected port.
+ * @param new_supplier	Pointer to the selected supplier.
  */
 static void charge_manager_get_best_port(int *new_port, int *new_supplier)
 {
@@ -787,11 +787,8 @@ static void charge_manager_refresh(void)
 			return;
 
 		/*
-		 * If the port or supplier changed, make an attempt to switch to
-		 * the port. We will re-set the active port on a supplier change
-		 * to give the board-level function another chance to reject
-		 * the port, for example, if the port has become a charge
-		 * source.
+		 * If the port and the supplier are the same, don't (attempt to)
+		 * switch to the port unless active charge port hasn't been set.
 		 */
 		if (active_charge_port_initialized && new_port == charge_port &&
 		    new_supplier == charge_supplier)
@@ -806,6 +803,10 @@ static void charge_manager_refresh(void)
 			trigger_ocpc_reset();
 		}
 
+		/*
+		 * A different port or a supplier was selected. Make an attempt
+		 * to switch to the port.
+		 */
 		if (board_set_active_charge_port(new_port) == EC_SUCCESS) {
 			if (IS_ENABLED(CONFIG_EXTPOWER))
 				board_check_extpower();
@@ -816,8 +817,9 @@ static void charge_manager_refresh(void)
 		ASSERT(new_port != CHARGE_PORT_NONE);
 
 		/*
-		 * Zero the available charge on the rejected port so that
-		 * it is no longer chosen.
+		 * The board rejected the offered port & supplier. Clear the
+		 * available charge on the rejected port so that it is no longer
+		 * chosen.
 		 */
 		for (i = 0; i < CHARGE_SUPPLIER_COUNT; ++i) {
 			available_charge[i][new_port].current = 0;
@@ -828,8 +830,8 @@ static void charge_manager_refresh(void)
 	active_charge_port_initialized = 1;
 
 	/*
-	 * Clear override if it wasn't selected as the 'best' port -- it means
-	 * that no charge is available on the port, or the port was rejected.
+	 * Clear override if it wasn't selected -- it means that no charge is
+	 * available on the port, or the port was rejected.
 	 */
 	if (override_port >= 0 && override_port != new_port)
 		override_port = OVERRIDE_OFF;
@@ -1068,6 +1070,7 @@ static void charge_manager_make_change(enum charge_manager_change_type change,
 			return;
 		if (charge->current > 0 &&
 		    available_charge[supplier][port].current == 0)
+			/* A charger is plugged. Clear override. */
 			clear_override = 1;
 #ifdef CONFIG_USB_PD_LOGGING
 		save_log[port] = 1;
