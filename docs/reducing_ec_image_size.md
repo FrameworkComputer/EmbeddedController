@@ -233,7 +233,7 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_PD_DEV_DUMP_INFO | | Not supported by TCPMv2 |
 | | CONFIG_CMD_PD_FLASH | `pd flash` | Not supported by TCPMv2 |
 | | CONFIG_CMD_PD_SRCCAPS_REDUCED_SIZE | `pd <port> srccaps` | Defining this reduces the verbosity of this command, saving bytes |
-| | CONFIG_CMD_PECI | `peci` | firmware_ECThermal uses `ectool tempsinfo` |
+| | CONFIG_CMD_PECI | `peci` | |
 | | CONFIG_CMD_PLL | `pll` | only used by lm4 chip |
 | | CONFIG_CMD_POWERINDEBUG | `powerindebug` | |
 | | CONFIG_CMD_POWERLED | `powerled` | |
