@@ -68,12 +68,13 @@ static int update_peak_package_power_limit(uint32_t mwatt)
 	return sb_rmi_mailbox_xfer(SB_RMI_WRITE_P3T_LIMIT_CMD, msgIn, &msgOut);
 }
 
-static void set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p3t)
+static int set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p3t)
 {
-	update_sustained_power_limit(spl);
-	update_fast_ppt_limit(fppt);
-	update_slow_ppt_limit(sppt);
-	update_peak_package_power_limit(p3t);
+	RETURN_ERROR(update_sustained_power_limit(spl));
+	RETURN_ERROR(update_fast_ppt_limit(fppt));
+	RETURN_ERROR(update_slow_ppt_limit(sppt));
+	RETURN_ERROR(update_peak_package_power_limit(p3t));
+	return EC_SUCCESS;
 }
 
 static void update_os_power_slider(int mode, int active_mpower)
@@ -272,11 +273,15 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	static uint32_t old_slow_ppt_limit;
 	static uint32_t old_p3t_limit;
 	static int old_slider_mode = EC_DC_BALANCED;
+	static int set_pl_limit;
 	int mode = *host_get_memmap(EC_MEMMAP_POWER_SLIDE);
 	int active_mpower = charge_manager_get_power_limit_uw() / 1000;
 	bool with_dc = ((battery_is_present() == BP_YES) ? true : false);
 	int battery_percent = charge_get_percent();
 	int ports_cost;
+
+	if (!chipset_in_state(CHIPSET_STATE_ON))
+		return;
 
 	ports_cost = cypd_get_port_cost();
 
@@ -333,7 +338,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		|| power_limit[target_func[TYPE_FPPT]].mwatt[TYPE_FPPT] != old_fast_ppt_limit
 		|| power_limit[target_func[TYPE_SPPT]].mwatt[TYPE_SPPT] != old_slow_ppt_limit
 		|| power_limit[target_func[TYPE_P3T]].mwatt[TYPE_P3T] != old_p3t_limit
-		|| force_update) {
+		|| set_pl_limit || force_update) {
 		/* only set PL when it is changed */
 		old_sustain_power_limit = power_limit[target_func[TYPE_SPL]].mwatt[TYPE_SPL];
 		old_slow_ppt_limit = power_limit[target_func[TYPE_SPPT]].mwatt[TYPE_SPPT];
@@ -343,8 +348,8 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		CPRINTF("Change SOC Power Limit: SPL %dmW, sPPT %dmW, fPPT %dmW p3T %dmW\n",
 			old_sustain_power_limit, old_slow_ppt_limit,
 			old_fast_ppt_limit, old_p3t_limit);
-		set_pl_limits(old_sustain_power_limit, old_fast_ppt_limit,
-			old_slow_ppt_limit, old_p3t_limit);
+		set_pl_limit = set_pl_limits(old_sustain_power_limit,
+			old_fast_ppt_limit, old_slow_ppt_limit, old_p3t_limit);
 	}
 }
 

@@ -84,12 +84,13 @@ static int update_apu_only_sppt_limit(uint32_t mwatt)
 	return sb_rmi_mailbox_xfer(SB_RMI_WRITE_APU_ONLY_SPPT_CMD, msgIn, &msgOut);
 }
 
-static void set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p3t)
+static int set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p3t)
 {
-	update_sustained_power_limit(spl);
-	update_fast_ppt_limit(fppt);
-	update_slow_ppt_limit(sppt);
-	update_peak_package_power_limit(p3t);
+	RETURN_ERROR(update_sustained_power_limit(spl));
+	RETURN_ERROR(update_fast_ppt_limit(fppt));
+	RETURN_ERROR(update_slow_ppt_limit(sppt));
+	RETURN_ERROR(update_peak_package_power_limit(p3t));
+	return EC_SUCCESS;
 }
 
 static void update_os_power_slider(int mode, bool with_dc, int active_mpower)
@@ -391,6 +392,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 #endif
 	static int old_slider_mode;
 	static int old_stt_table;
+	static int set_pl_limit;
 	int mode = *host_get_memmap(EC_MEMMAP_POWER_SLIDE);
 	int active_mpower = cypd_get_ac_power();
 	bool with_dc = ((battery_is_present() == BP_YES) ? true : false);
@@ -398,6 +400,9 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 
 	if ((*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER)) == 0)
 		old_stt_table = 0;
+		
+	if (!chipset_in_state(CHIPSET_STATE_ON))
+		return;
 
 	if (mode_ctl)
 		mode = mode_ctl;
@@ -462,7 +467,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		|| (power_limit[target_func[TYPE_APU_ONLY_SPPT]].mwatt[TYPE_APU_ONLY_SPPT]
 			!= old_ao_sppt)
 #endif
-		|| force_update) {
+		|| set_pl_limit || force_update) {
 		/* only set PL when it is changed */
 		old_sustain_power_limit = power_limit[target_func[TYPE_SPL]].mwatt[TYPE_SPL];
 		old_slow_ppt_limit = power_limit[target_func[TYPE_SPPT]].mwatt[TYPE_SPPT];
@@ -475,10 +480,11 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 			old_sustain_power_limit, old_slow_ppt_limit,
 			old_fast_ppt_limit, old_p3t_limit);
 		CPRINTF("ao_sppt %dmW\n", old_ao_sppt);
-		set_pl_limits(old_sustain_power_limit, old_fast_ppt_limit,
+		set_pl_limit = set_pl_limits(old_sustain_power_limit, old_fast_ppt_limit,
 			old_slow_ppt_limit, old_p3t_limit);
 #ifdef CONFIG_BOARD_LOTUS
-		update_apu_only_sppt_limit(old_ao_sppt);
+		if (!set_pl_limit)
+			set_pl_limit = update_apu_only_sppt_limit(old_ao_sppt);
 #endif
 	}
 }
