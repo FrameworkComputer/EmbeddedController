@@ -17,6 +17,11 @@ choice TEST_PROJECT_TYPE
 		help
 		Enable tests for screebo variant.
 
+	config TEST_PROJECT_KARIS
+		bool "Enable karis-specific tests"
+		help
+		Enable tests for karis variant.
+
 endchoice # TEST_PROJECT_TYPE
 
 config TEST_PROJECT_NAME
