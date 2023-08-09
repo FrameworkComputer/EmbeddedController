@@ -5,6 +5,7 @@
 
 /* Host command module for PD MCU */
 
+#include "battery.h"
 #include "charge_state.h"
 #include "common.h"
 #include "console.h"
@@ -76,7 +77,7 @@ static void pd_exchange_update_ec_status(struct ec_params_pd_status *ec_status,
 #ifdef CONFIG_HOSTCMD_PD_CHG_CTRL
 	ec_status->charge_state = pd_chg_state;
 #endif
-	if (charge_get_flags() & CHARGE_FLAG_BATT_RESPONSIVE)
+	if (charger_current_battery_params()->flags & BATT_FLAG_RESPONSIVE)
 		ec_status->batt_soc = charge_get_percent();
 	else
 		ec_status->batt_soc = -1;
