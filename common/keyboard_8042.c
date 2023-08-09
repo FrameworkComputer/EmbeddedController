@@ -92,6 +92,10 @@ enum scancode_set_list {
  */
 K_MUTEX_DEFINE(to_host_mutex);
 
+#if defined(CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN)
+K_MUTEX_DEFINE(from_host_mutex);
+#endif
+
 /* Queue command/data to the host */
 enum {
 	CHAN_KBD = 0,
@@ -239,6 +243,9 @@ void keyboard_host_write(int data, int is_cmd)
 	h.type = is_cmd ? HOST_COMMAND : HOST_DATA;
 	h.byte = data;
 	queue_add_unit(&from_host, &h);
+#if defined(CONFIG_THIRD_PARTY_CUSTOMIZED_DESIGN)
+	lpc_kbc_ibf_clear();
+#endif
 	task_wake(TASK_ID_KEYPROTO);
 }
 
@@ -910,6 +917,39 @@ static int handle_keyboard_command(uint8_t command, uint8_t *output)
 	return out_len;
 }
 
+#if defined(CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN)
+static void i8042_handle_from_host(void)
+{
+	struct host_byte h;
+	int ret_len;
+	uint8_t output[MAX_SCAN_CODE_LEN];
+	uint8_t chan;
+
+	k_mutex_lock(&from_host_mutex , K_FOREVER);
+	while (queue_count(&from_host) > 0) {
+		queue_peek_units(&from_host , &h, 0, 1);
+		if (h.type == HOST_COMMAND) {
+			ret_len = handle_keyboard_command(h.byte, output);
+			chan = CHAN_KBD;
+		} else {
+			CPRINTS5("KB recv data: 0x%02x", h.byte);
+			kblog_put('d', h.byte);
+
+			if (IS_ENABLED(CONFIG_8042_AUX) &&
+			    handle_mouse_data(h.byte, output, &ret_len)) {
+				chan = CHAN_AUX;
+			} else {
+				ret_len = handle_keyboard_data(h.byte, output);
+				chan = CHAN_CMD;
+			}
+		}
+		/* clear queue buffer */
+		queue_advance_head(&from_host, 1);
+		i8042_send_to_host(ret_len, output, chan, 0);
+	}
+	k_mutex_unlock(&from_host_mutex);
+}
+#else
 static void i8042_handle_from_host(void)
 {
 	struct host_byte h;
@@ -937,6 +977,7 @@ static void i8042_handle_from_host(void)
 		i8042_send_to_host(ret_len, output, chan, 0);
 	}
 }
+#endif
 
 void keyboard_protocol_task(void *u)
 {

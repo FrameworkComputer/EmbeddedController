@@ -194,9 +194,17 @@ static void espi_vwire_handler(const struct device *dev,
 	    event.evt_data == 0) {
 		hook_call_deferred(&espi_chipset_reset_data, MSEC);
 		update_ap_boot_time(PLTRST_LOW);
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+	if (IS_ENABLED(HAS_TASK_KEYPROTO))
+		i8042_pause_to_host_queue(true);
+#endif
 	} else if (event.evt_details == ESPI_VWIRE_SIGNAL_PLTRST &&
 		   event.evt_data == 1) {
 		update_ap_boot_time(PLTRST_HIGH);
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+	if (IS_ENABLED(HAS_TASK_KEYPROTO))
+		i8042_pause_to_host_queue(false);
+#endif
 	}
 #endif
 }
@@ -645,6 +653,68 @@ void lpc_aux_put_char(uint8_t chr, int send_irq)
 	LOG_INF("AUX put %02x", kb_char);
 }
 
+#ifdef CONFIG_THIRD_PARTY_CUSTOMIZED_DESIGN
+
+void lpc_kbc_ibf_clear(void)
+{
+	int rv;
+	int data;
+
+	rv = espi_read_lpc_request(espi_dev, E8042_CLEAR_IBF, &data);
+	if (rv) {
+		LOG_ERR("ESPI read failed: E8042_CLEAR_IBF = %d", rv);
+		return;
+	}
+}
+
+/*
+ * this can delay EC release irq and clear IBF
+ * it will let host not send data too fast, make EC
+ * have time to process 8042 data and also not lose data
+ * after delay finish read HIKMDI clear IBF data and release 8042 irq
+ */
+static void lpc_kbc_process(void)
+{
+	int rv;
+
+	rv = espi_write_lpc_request(espi_dev, E8042_RESUME_IRQ, 0);
+	if (rv) {
+		LOG_ERR("ESPI write failed: E8042_RESUME_IRQ = %d", rv);
+	}
+}
+DECLARE_DEFERRED(lpc_kbc_process);
+
+static void kbc_ibf_obe_handler(uint32_t data)
+{
+#ifdef HAS_TASK_KEYPROTO
+	uint8_t is_ibf = is_8042_ibf(data);
+	uint32_t status = I8042_AUX_DATA;
+	int rv;
+
+	if (is_ibf == HOST_KBC_EVT_IBF) {
+		if (keyboard_host_write_avaliable() == 0 ) {
+			LOG_ERR("kbc buffer full");
+			/* Pause 8042 irq let KB task process data */
+			rv = espi_write_lpc_request(espi_dev, E8042_PAUSE_IRQ, 0);
+			if (rv) {
+				LOG_ERR("ESPI write failed: E8042_PAUSE_IRQ = %d", rv);
+			}
+			hook_call_deferred(&lpc_kbc_process_data, MSEC);
+		} else {
+			/* put data to queue and trigger 8042 task*/
+			keyboard_host_write(get_8042_data(data), get_8042_type(data));
+		}
+	} else if (IS_ENABLED(CONFIG_8042_AUX)) {
+		rv = espi_write_lpc_request(espi_dev, E8042_CLEAR_FLAG,
+					    &status);
+		if (rv) {
+			LOG_ERR("ESPI write failed: E8042_CLEAR_FLAG = %d", rv);
+		}
+	}
+	task_wake(TASK_ID_KEYPROTO);
+#endif
+}
+#else
 static void kbc_ibf_obe_handler(uint32_t data)
 {
 #ifdef HAS_TASK_KEYPROTO
@@ -664,6 +734,7 @@ static void kbc_ibf_obe_handler(uint32_t data)
 	task_wake(TASK_ID_KEYPROTO);
 #endif
 }
+#endif
 
 int lpc_keyboard_input_pending(void)
 {

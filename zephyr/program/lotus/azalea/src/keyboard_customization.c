@@ -488,11 +488,3 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 
 	return EC_SUCCESS;
 }
-
-void platform_reset_handler(int plt_rst_status)
-{
-	int flag = plt_rst_status ? false : true;
-
-	if (IS_ENABLED(HAS_TASK_KEYPROTO))
-		i8042_pause_to_host_queue(flag);
-}
