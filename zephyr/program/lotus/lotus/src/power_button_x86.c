@@ -211,8 +211,7 @@ static void set_initial_pwrbtn_state(void)
 		pwrbtn_state = PWRBTN_STATE_INIT_ON;
 		CPRINTS("PB init-on after updating firmware");
 	} else if (((reset_flags & EC_RESET_FLAG_HIBERNATE) == EC_RESET_FLAG_HIBERNATE) &&
-		(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) == 0) &&
-		(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_on_off_btn_l)) == 0)) {
+		(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) == 0)) {
 		/**
 		 * EC needs to auto power on after exiting the hibernate mode w/o external power
 		 */
