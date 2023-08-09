@@ -1869,7 +1869,7 @@ int charge_set_output_current_limit(int chgnum, int ma, int mv)
 	/* If we start/stop providing power, wake the charger task. */
 	if ((curr.output_current == 0 && enable) ||
 	    (curr.output_current > 0 && !enable))
-		task_wake(TASK_ID_CHARGER);
+		charge_wakeup();
 
 	curr.output_current = ma;
 
