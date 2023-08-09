@@ -69,16 +69,21 @@ FORWARD_DECLARE_ENUM(battery_present){
 	BP_NOT_SURE,
 };
 
-/*
- * BATTERY_CUTOFF_STATE_IN_PROGRESS: Battery cutoff has begun but not completed.
- * BATTERY_CUTOFF_STATE_PENDING: Battery cutoff is requested by the
- * AP but hasn't started.
- */
 enum battery_cutoff_states {
+	/* Cutoff is not started or scheduled. */
 	BATTERY_CUTOFF_STATE_NORMAL = 0,
+	/* Cutoff has begun but not completed. */
 	BATTERY_CUTOFF_STATE_IN_PROGRESS,
+	/*
+	 * Cutoff has been completed. This state is effectively unused if AC is
+	 * unplugged because the EC will brown out when cutoff completes.
+	 */
 	BATTERY_CUTOFF_STATE_CUT_OFF,
-	BATTERY_CUTOFF_STATE_PENDING,
+	/*
+	 * Cutoff is scheduled but hasn't started. Cutoff is deferred or the EC
+	 * is waiting for a shutdown.
+	 */
+	BATTERY_CUTOFF_STATE_SCHEDULED,
 };
 
 enum battery_disconnect_state {

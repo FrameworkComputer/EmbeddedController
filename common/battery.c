@@ -320,20 +320,90 @@ int battery_cutoff_in_progress(void)
 	return (battery_cutoff_state == BATTERY_CUTOFF_STATE_IN_PROGRESS);
 }
 
-static void pending_cutoff_deferred(void)
+const struct deferred_data __keep pending_cutoff_deferred_data;
+/* Cutoff timeout */
+static timestamp_t cutoff_timeout;
+/* Interval between cutoff completion checks. */
+static const int cutoff_poll_msec = 250;
+
+static void battery_cutoff_clear(void)
+{
+	battery_cutoff_state = BATTERY_CUTOFF_STATE_NORMAL;
+	hook_call_deferred(&pending_cutoff_deferred_data, -1);
+}
+
+static int battery_cutoff_start(void)
 {
 	int rv;
 
-	battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
-	rv = board_cut_off_battery();
+	/* Reset previous attempt */
+	battery_cutoff_clear();
 
+	/* Send a request to the battery. */
+	rv = board_cut_off_battery();
 	if (rv == EC_RES_SUCCESS) {
-		CUTOFFPRINTS("succeeded.");
-		battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
+		battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
+		cutoff_timeout.val = get_time().val +
+				     CONFIG_BATTERY_CUTOFF_TIMEOUT_MSEC * MSEC;
+		CUTOFFPRINTS("started (timeout in %u msec)",
+			     CONFIG_BATTERY_CUTOFF_TIMEOUT_MSEC);
+		/* Start monitor loop. */
+		hook_call_deferred(&pending_cutoff_deferred_data, 0);
 	} else {
-		CUTOFFPRINTS("failed!");
 		battery_cutoff_state = BATTERY_CUTOFF_STATE_NORMAL;
+		CUTOFFPRINTS("failed");
 	}
+
+	return rv;
+}
+
+/*
+ * This is supposed to be called in the following cases:
+ * 1. Before cutoff starts (SCHEDULED):
+ *    This is used to delay start of cutoff for some reason.
+ * 2. Immediately after the battery accepts a cutoff request (NORMAL):
+ *    This is called by battery_cutoff_start.
+ * 3. Subsequent calls after #2 (IN_PROGRESS):
+ *    It recursively schedules itself until cutoff completes or timer expires.
+ */
+static void pending_cutoff_deferred(void)
+{
+	if (battery_cutoff_state == BATTERY_CUTOFF_STATE_IN_PROGRESS) {
+		if (timestamp_expired(cutoff_timeout, NULL)) {
+			battery_cutoff_state = BATTERY_CUTOFF_STATE_NORMAL;
+			CUTOFFPRINTS("failed");
+			return;
+		}
+
+		if (extpower_is_present()) {
+			/*
+			 * Since we're on AC, we'll keep running even after the
+			 * battery is cut off.
+			 *
+			 * TODO: Communicate with the battery to learn whether
+			 * cutoff has completed or not. Fall through until
+			 * cutoff is complete.
+			 */
+			battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
+			CUTOFFPRINTS("complete");
+			return;
+		}
+
+		/* Cutoff is still taking place. May brown out any time. */
+		CUTOFFPRINTS("waiting for completion (%llu)",
+			     (cutoff_timeout.val - get_time().val) / MSEC);
+		cflush();
+		hook_call_deferred(&pending_cutoff_deferred_data,
+				   cutoff_poll_msec * MSEC);
+		return;
+	} else if (battery_cutoff_state == BATTERY_CUTOFF_STATE_SCHEDULED) {
+		/* Delayed start */
+		CUTOFFPRINTS("starting shceduled cutoff");
+		battery_cutoff_start();
+		return;
+	}
+
+	CUTOFFPRINTS("Bad call to %s (%d)", __func__, battery_cutoff_state);
 }
 DECLARE_DEFERRED(pending_cutoff_deferred);
 
@@ -349,36 +419,26 @@ DECLARE_HOOK(HOOK_AC_CHANGE, clear_pending_cutoff, HOOK_PRIO_DEFAULT);
 static enum ec_status battery_command_cutoff(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_battery_cutoff *p;
-	int rv;
 
 	if (args->version == 1) {
 		p = args->params;
 		if (p->flags & EC_BATTERY_CUTOFF_FLAG_AT_SHUTDOWN) {
-			battery_cutoff_state = BATTERY_CUTOFF_STATE_PENDING;
+			battery_cutoff_state = BATTERY_CUTOFF_STATE_SCHEDULED;
 			CUTOFFPRINTS("at-shutdown is scheduled");
 			return EC_RES_SUCCESS;
 		}
 	}
 
-	battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
-	rv = board_cut_off_battery();
-	if (rv == EC_RES_SUCCESS) {
-		CUTOFFPRINTS("is successful.");
-		battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
-	} else {
-		CUTOFFPRINTS("has failed.");
-	}
-
-	return rv;
+	return battery_cutoff_start();
 }
 DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cutoff,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 static void check_pending_cutoff(void)
 {
-	if (battery_cutoff_state == BATTERY_CUTOFF_STATE_PENDING) {
-		CPRINTS("Cutting off battery in %d second(s)",
-			CONFIG_BATTERY_CUTOFF_DELAY_US / SECOND);
+	if (battery_cutoff_state == BATTERY_CUTOFF_STATE_SCHEDULED) {
+		CUTOFFPRINTS("deferred for %d secs",
+			     CONFIG_BATTERY_CUTOFF_DELAY_US / SECOND);
 		hook_call_deferred(&pending_cutoff_deferred_data,
 				   CONFIG_BATTERY_CUTOFF_DELAY_US);
 	}
@@ -387,26 +447,17 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, check_pending_cutoff, HOOK_PRIO_LAST);
 
 static int command_cutoff(int argc, const char **argv)
 {
-	int rv;
-
 	if (argc > 1) {
 		if (!strcasecmp(argv[1], "at-shutdown")) {
-			battery_cutoff_state = BATTERY_CUTOFF_STATE_PENDING;
+			battery_cutoff_state = BATTERY_CUTOFF_STATE_SCHEDULED;
 			return EC_SUCCESS;
 		} else {
 			return EC_ERROR_INVAL;
 		}
 	}
 
-	battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
-	rv = board_cut_off_battery();
-	if (rv == EC_RES_SUCCESS) {
-		ccprints("Battery cut off");
-		battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
-		return EC_SUCCESS;
-	}
-
-	return EC_ERROR_UNKNOWN;
+	return battery_cutoff_start() == EC_RES_SUCCESS ? EC_SUCCESS :
+							  EC_ERROR_UNKNOWN;
 }
 DECLARE_CONSOLE_COMMAND(cutoff, command_cutoff, "[at-shutdown]",
 			"Cut off the battery output");

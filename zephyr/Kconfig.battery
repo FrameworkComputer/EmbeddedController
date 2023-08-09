@@ -151,6 +151,14 @@ config PLATFORM_EC_BATTERY_CUT_OFF
 	  Once defined, a board specific board_cut_off_battery() function
 	  has to be provided.
 
+config PLATFORM_EC_BATTERY_CUTOFF_TIMEOUT_MSEC
+	int "Timeout for battery cutoff completion"
+	depends on PLATFORM_EC_BATTERY_CUT_OFF
+	default 8000
+	help
+	  After the EC executes battery cutoff, it'll wait for this amount of
+	  time in msec before deciding the cutoff failed.
+
 config PLATFORM_EC_BATTERY_FUEL_GAUGE
 	bool "Board supplies battery info"
 	help

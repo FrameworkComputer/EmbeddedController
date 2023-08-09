@@ -680,7 +680,7 @@ static uint8_t keyboard_scan_column(int column)
 	return state;
 }
 
-static void boot_key_add(enum boot_key key)
+static void boot_key_set(enum boot_key key)
 {
 	boot_key_value |= BIT(key);
 }
@@ -740,7 +740,7 @@ static void power_button_change(void)
 		state = keyboard_scan_column(refresh.col);
 
 	if (state & BIT(refresh.row)) {
-		boot_key_add(BOOT_KEY_REFRESH);
+		boot_key_set(BOOT_KEY_REFRESH);
 		CPRINTS("boot keys: 0x%x", boot_key_value);
 	}
 }

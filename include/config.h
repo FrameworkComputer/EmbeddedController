@@ -590,6 +590,12 @@
 #undef CONFIG_BATTERY_CUTOFF_DELAY_US
 
 /*
+ * After the EC executes battery cutoff, it'll wait for this amount of time in
+ * msec before deciding the cutoff failed.
+ */
+#define CONFIG_BATTERY_CUTOFF_TIMEOUT_MSEC 8000
+
+/*
  * The board-specific battery.c implements get and set functions to read and
  * write arbirary vendor-specific parameters stored in the battery.
  * See include/battery.h for prototypes.

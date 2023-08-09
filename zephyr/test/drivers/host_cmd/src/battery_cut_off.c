@@ -68,7 +68,9 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_battery)
 
 	rv = ec_cmd_battery_cut_off(NULL);
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected 0, but got %d", rv);
-	zassert_true(battery_is_cut_off(), NULL);
+	zassert_true(battery_cutoff_in_progress());
+	/* CONFIG_BATTERY_CUTOFF_TIMEOUT_MSEC is set to 500 in prj.conf. */
+	zassert_true(WAIT_FOR(battery_is_cut_off(), 510000, k_msleep(250)));
 }
 
 ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_v1)
@@ -80,7 +82,9 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_v1)
 
 	rv = ec_cmd_battery_cut_off_v1(NULL, &params);
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected 0, but got %d", rv);
-	zassert_true(battery_is_cut_off(), NULL);
+	zassert_true(battery_cutoff_in_progress());
+	k_msleep(500);
+	zassert_true(battery_is_cut_off());
 }
 
 ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_at_shutdown)
@@ -94,6 +98,6 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_at_shutdown)
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected 0, but got %d", rv);
 	zassert_false(battery_is_cut_off(), NULL);
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
-	zassert_true(WAIT_FOR(battery_is_cut_off(), 1500000, k_msleep(250)),
-		     NULL);
+	zassert_true(
+		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
 }
