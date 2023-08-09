@@ -130,7 +130,7 @@ static void led_set_battery(void)
 		led_set_color_battery(LED_BLUE);
 		break;
 	case LED_PWRS_IDLE: /* External power connected in IDLE */
-		if (charge_get_flags() & CHARGE_FLAG_FORCE_IDLE)
+		if (charge_get_led_flags() & CHARGE_LED_FLAG_FORCE_IDLE)
 			led_set_color_battery(
 				(battery_ticks % LED_TOTAL_4SECS_TICKS <
 				 LED_ON_2SECS_TICKS) ?

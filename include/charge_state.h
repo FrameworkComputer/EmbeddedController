@@ -59,13 +59,16 @@ enum led_pwr_state {
 	LED_PWRS_COUNT
 };
 
-/* Charge state flags */
+/*
+ * Charge state flags for LED control.
+ * This is being deprecated. Use enum led_pwr_state instead.
+ */
 /* Forcing idle state */
-#define CHARGE_FLAG_FORCE_IDLE BIT(0)
+#define CHARGE_LED_FLAG_FORCE_IDLE BIT(0)
 /* External (AC) power is present */
-#define CHARGE_FLAG_EXTERNAL_POWER BIT(1)
+#define CHARGE_LED_FLAG_EXTERNAL_POWER BIT(1)
 /* Battery is responsive */
-#define CHARGE_FLAG_BATT_RESPONSIVE BIT(2)
+#define CHARGE_LED_FLAG_BATT_RESPONSIVE BIT(2)
 
 /*
  * Charge task's states
@@ -126,13 +129,13 @@ __test_only enum charge_state charge_get_state(void);
 int charge_keep_power_off(void);
 
 /**
- * Return current charge state flags (CHARGE_FLAG_*)
+ * Return current charge LED state flags (CHARGE_LED_FLAG_*)
  *
  * This API is being deprecated. It has been used only for LED control and is
  * being replaced by led_pwr_get_state.
  */
 #if defined(BOARD_ELM) || defined(BOARD_REEF_MCHP) || defined(TEST_BUILD)
-uint32_t charge_get_flags(void);
+uint32_t charge_get_led_flags(void);
 #endif
 
 /**

@@ -1758,32 +1758,31 @@ static int battery_near_full(void)
 	return 1;
 }
 
-uint32_t charge_get_flags(void)
+uint32_t charge_get_led_flags(void)
 {
 	uint32_t flags = 0;
 
 	if (get_chg_ctrl_mode() != CHARGE_CONTROL_NORMAL)
-		flags |= CHARGE_FLAG_FORCE_IDLE;
+		flags |= CHARGE_LED_FLAG_FORCE_IDLE;
 	if (curr.ac)
-		flags |= CHARGE_FLAG_EXTERNAL_POWER;
+		flags |= CHARGE_LED_FLAG_EXTERNAL_POWER;
 	if (curr.batt.flags & BATT_FLAG_RESPONSIVE)
-		flags |= CHARGE_FLAG_BATT_RESPONSIVE;
+		flags |= CHARGE_LED_FLAG_BATT_RESPONSIVE;
 
 	return flags;
 }
 
 enum led_pwr_state led_pwr_get_state(void)
 {
-	uint32_t chflags;
+	uint32_t chflags = charge_get_led_flags();
 
 	switch (curr.state) {
 	case ST_IDLE:
-		chflags = charge_get_flags();
 
 		if (battery_seems_dead || curr.batt.is_present == BP_NO)
 			return LED_PWRS_ERROR;
 
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
+		if (chflags & CHARGE_LED_FLAG_FORCE_IDLE)
 			return LED_PWRS_FORCED_IDLE;
 		else
 			return LED_PWRS_IDLE;
@@ -1804,10 +1803,8 @@ enum led_pwr_state led_pwr_get_state(void)
 		else
 			return LED_PWRS_CHARGE;
 	case ST_PRECHARGE:
-		chflags = charge_get_flags();
-
 		/* we're in battery discovery mode */
-		if (chflags & CHARGE_FLAG_FORCE_IDLE)
+		if (chflags & CHARGE_LED_FLAG_FORCE_IDLE)
 			return LED_PWRS_FORCED_IDLE;
 		else
 			return LED_PWRS_IDLE;

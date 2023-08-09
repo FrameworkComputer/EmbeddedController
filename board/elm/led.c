@@ -124,7 +124,7 @@ static void elm_led_set_battery(void)
 	 * - Battery error: Orange blink(1:1)
 	 * - Factory force idle: Blue 2 sec, Orange 2 sec
 	 */
-	uint32_t charge_flags = charge_get_flags();
+	uint32_t charge_flags = charge_get_led_flags();
 	int remaining_capacity;
 	int full_charge_capacity;
 	int permillage;
@@ -166,7 +166,7 @@ static void elm_led_set_battery(void)
 		bat_led_set(BAT_LED_ORANGE, (blink_second & 1) ? 0 : 1);
 		break;
 	case LED_PWRS_IDLE: /* Ext. power connected in IDLE. */
-		if (charge_flags & CHARGE_FLAG_FORCE_IDLE) {
+		if (charge_flags & CHARGE_LED_FLAG_FORCE_IDLE) {
 			bat_led_set(BAT_LED_BLUE, (blink_second & 2) ? 0 : 1);
 			bat_led_set(BAT_LED_ORANGE, (blink_second & 2) ? 1 : 0);
 		} else {
