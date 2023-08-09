@@ -789,6 +789,9 @@ enum host_event_code {
 	/* Body detect (lap/desk) change event */
 	EC_HOST_EVENT_BODY_DETECT_CHANGE = 33,
 
+	/* Notify BIOS to change stt table */
+	EC_HOST_EVENT_STT_UPDATE = 57,
+
 	/* For notice host DGPU */
 	EC_HOST_EVENT_DGPU_TYPEC_NOTIFY = 58,
 
@@ -855,6 +858,8 @@ enum host_event_code {
 		[EC_HOST_EVENT_WOV] = "WOV",                                   \
 		[EC_HOST_EVENT_INVALID] = "INVALID",                           \
 		[EC_HOST_EVENT_BODY_DETECT_CHANGE] = "BODY_DETECT_CHANGE",     \
+		[EC_HOST_EVENT_STT_UPDATE] =					\
+			"STT_UPDATE",							\
 		[EC_HOST_EVENT_DGPU_TYPEC_NOTIFY] = "DGPU_TYPEC_DETECT",     \
 		[EC_HOST_EVENT_UCSI] = "UCSI",                                 \
 		[EC_HOST_EVENT_BATT_BTP] = "BATTERY_TRIP_POINT",               \

@@ -93,6 +93,9 @@ enum power_slide_mode {
 
 #define EC_CUSTOMIZED_MEMMAP_DISPLAY_ON		0x153
 
+/* 1~14 indicate #1 to #14 stt table */
+#define EC_MEMMAP_STT_TABLE_NUMBER	0x154
+
 #define EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT	0x155
 #define CPB_DISABLE	BIT(0) /* 0: enable; 1: disable */
 

@@ -174,6 +174,8 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	update_soc_power_limit(true, false);
 
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) &= ~ACPI_DRIVER_READY;
+	*host_get_memmap(EC_MEMMAP_POWER_SLIDE) = 0x0;
+	*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER) = 0x0;
 
 	return EC_RES_SUCCESS;
 }
