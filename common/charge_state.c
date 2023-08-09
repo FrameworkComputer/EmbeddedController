@@ -1530,7 +1530,7 @@ static int process_charge_state(int *need_staticp, int sleep_usec)
 		curr.requested_voltage = 0;
 		curr.batt.flags &= ~BATT_FLAG_WANT_CHARGE;
 		if (curr.state != ST_DISCHARGE)
-			curr.state = ST_IDLE;
+			set_charge_state(ST_IDLE);
 	}
 
 	if (IS_ENABLED(CONFIG_CHARGE_MANAGER) &&
