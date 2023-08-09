@@ -10,6 +10,7 @@
 #include "charge_state.h"
 #include "chipset.h"
 #include "ec_commands.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -90,7 +91,7 @@ static void nautilus_led_set_power_battery(void)
 	/* CHIPSET_STATE_OFF */
 	switch (chg_state) {
 	case LED_PWRS_DISCHARGE:
-		if ((charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER) &&
+		if (extpower_is_present() &&
 		    charge_percent >= CONFIG_BATT_HOST_FULL_FACTOR)
 			cur_led_color = LED_GREEN;
 		else

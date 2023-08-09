@@ -1758,6 +1758,20 @@ static int battery_near_full(void)
 	return 1;
 }
 
+uint32_t charge_get_flags(void)
+{
+	uint32_t flags = 0;
+
+	if (get_chg_ctrl_mode() != CHARGE_CONTROL_NORMAL)
+		flags |= CHARGE_FLAG_FORCE_IDLE;
+	if (curr.ac)
+		flags |= CHARGE_FLAG_EXTERNAL_POWER;
+	if (curr.batt.flags & BATT_FLAG_RESPONSIVE)
+		flags |= CHARGE_FLAG_BATT_RESPONSIVE;
+
+	return flags;
+}
+
 enum led_pwr_state led_pwr_get_state(void)
 {
 	uint32_t chflags;
@@ -1801,20 +1815,6 @@ enum led_pwr_state led_pwr_get_state(void)
 		/* Anything else can be considered an error for LED purposes */
 		return LED_PWRS_ERROR;
 	}
-}
-
-uint32_t charge_get_flags(void)
-{
-	uint32_t flags = 0;
-
-	if (get_chg_ctrl_mode() != CHARGE_CONTROL_NORMAL)
-		flags |= CHARGE_FLAG_FORCE_IDLE;
-	if (curr.ac)
-		flags |= CHARGE_FLAG_EXTERNAL_POWER;
-	if (curr.batt.flags & BATT_FLAG_RESPONSIVE)
-		flags |= CHARGE_FLAG_BATT_RESPONSIVE;
-
-	return flags;
 }
 
 int charge_get_percent(void)

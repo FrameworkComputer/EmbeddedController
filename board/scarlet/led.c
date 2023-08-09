@@ -8,6 +8,7 @@
 #include "battery.h"
 #include "charge_state.h"
 #include "chipset.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "led_common.h"
@@ -59,7 +60,6 @@ static int bat_led_set_color(enum led_color color)
 static void scarlet_led_set_battery(void)
 {
 	static int battery_second;
-	uint32_t chflags = charge_get_flags();
 
 	battery_second++;
 
@@ -75,7 +75,7 @@ static void scarlet_led_set_battery(void)
 			bat_led_set_color((battery_second & 3) ? LED_OFF :
 								 LED_AMBER);
 		else if (charge_get_percent() >= CONFIG_BATT_HOST_FULL_FACTOR &&
-			 (chflags & CHARGE_FLAG_EXTERNAL_POWER))
+			 extpower_is_present())
 			bat_led_set_color(LED_GREEN);
 		else
 			bat_led_set_color(LED_OFF);

@@ -127,8 +127,13 @@ int charge_keep_power_off(void);
 
 /**
  * Return current charge state flags (CHARGE_FLAG_*)
+ *
+ * This API is being deprecated. It has been used only for LED control and is
+ * being replaced by led_pwr_get_state.
  */
+#if defined(BOARD_ELM) || defined(BOARD_REEF_MCHP) || defined(TEST_BUILD)
 uint32_t charge_get_flags(void);
+#endif
 
 /**
  * Return current battery charge percentage.
