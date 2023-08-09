@@ -181,6 +181,11 @@ static int is_valid_port(int port)
 	return 1;
 }
 
+static bool is_valid_override_port(int port)
+{
+	return (OVERRIDE_DONT_CHARGE <= port) && (port < CHARGE_PORT_COUNT);
+}
+
 static int is_connected(int port)
 {
 	if (!is_pd_port(port))
@@ -1535,7 +1540,7 @@ hc_charge_port_override(struct host_cmd_handler_args *args)
 	const struct ec_params_charge_port_override *p = args->params;
 	const int16_t op = p->override_port;
 
-	if (op < OVERRIDE_DONT_CHARGE || op >= CHARGE_PORT_COUNT)
+	if (!is_valid_override_port(op))
 		return EC_RES_INVALID_PARAM;
 
 	return charge_manager_set_override(op) == EC_SUCCESS ? EC_RES_SUCCESS :
@@ -1578,8 +1583,7 @@ static int command_charge_port_override(int argc, const char **argv)
 
 	if (argc >= 2) {
 		port = strtoi(argv[1], &e, 0);
-		if (*e || port < OVERRIDE_DONT_CHARGE ||
-		    port >= CHARGE_PORT_COUNT)
+		if (*e || !is_valid_override_port(port))
 			return EC_ERROR_PARAM1;
 		ret = charge_manager_set_override(port);
 	}
