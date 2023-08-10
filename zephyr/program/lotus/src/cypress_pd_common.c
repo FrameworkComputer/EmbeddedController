@@ -11,7 +11,7 @@
 #include "charge_state.h"
 #include "console.h"
 #include "cypress_pd_common.h"
-#include "cpu_power.h"
+#include "common_cpu_power.h"
 #include "driver/charger/isl9241.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -1853,24 +1853,6 @@ void cypd_reinitialize(void)
 		/* Run state handler to set up controller */
 		task_set_event(TASK_ID_CYPD, 4<<i);
 	}
-}
-
-/*****************************************************************************/
-/* project function */
-
-int cypd_get_port_cost(void)
-{
-	int cost_sum = 0;
-
-	/* assume per port cost 5W */
-	for (int port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
-		if ((pd_port_states[port_idx].c_state == CCG_STATUS_SINK) ||
-		((pd_port_states[port_idx].pd_state)
-		&& (pd_port_states[port_idx].power_role == PD_ROLE_SOURCE)))
-			cost_sum = cost_sum + 5000000;
-	}
-
-	return (cost_sum / 1000);
 }
 
 /*****************************************************************************/

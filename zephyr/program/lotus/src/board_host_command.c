@@ -10,7 +10,7 @@
 #include "board_function.h"
 #include "chipset.h"
 #include "console.h"
-#include "cpu_power.h"
+#include "common_cpu_power.h"
 #include "customized_shared_memory.h"
 #include "cypress_pd_common.h"
 #include "diagnostics.h"
