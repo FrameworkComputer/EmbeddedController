@@ -925,9 +925,9 @@ static void i8042_handle_from_host(void)
 	uint8_t output[MAX_SCAN_CODE_LEN];
 	uint8_t chan;
 
-	k_mutex_lock(&from_host_mutex , K_FOREVER);
+	k_mutex_lock(&from_host_mutex, K_FOREVER);
 	while (queue_count(&from_host) > 0) {
-		queue_peek_units(&from_host , &h, 0, 1);
+		queue_peek_units(&from_host, &h, 0, 1);
 		if (h.type == HOST_COMMAND) {
 			ret_len = handle_keyboard_command(h.byte, output);
 			chan = CHAN_KBD;

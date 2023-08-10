@@ -67,7 +67,7 @@ int lpc_comx_get_char(void);
  * Put a character to the COMx LPC interface.
  */
 void lpc_comx_put_char(int c);
-#if defined(CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN)
+#if defined(CONFIG_THIRD_PARTY_CUSTOMIZED_DESIGN)
 /**
  * Read kbc data from DBBIN this action will clear ibf
  * also can use ibf to control host send data speed.

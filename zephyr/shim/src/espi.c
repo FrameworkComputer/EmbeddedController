@@ -195,14 +195,14 @@ static void espi_vwire_handler(const struct device *dev,
 		hook_call_deferred(&espi_chipset_reset_data, MSEC);
 		update_ap_boot_time(PLTRST_LOW);
 #ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
-	if (IS_ENABLED(HAS_TASK_KEYPROTO))
+	if (IS_ENABLED(CONFIG_HAS_TASK_KEYPROTO))
 		i8042_pause_to_host_queue(true);
 #endif
 	} else if (event.evt_details == ESPI_VWIRE_SIGNAL_PLTRST &&
 		   event.evt_data == 1) {
 		update_ap_boot_time(PLTRST_HIGH);
 #ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
-	if (IS_ENABLED(HAS_TASK_KEYPROTO))
+	if (IS_ENABLED(CONFIG_HAS_TASK_KEYPROTO))
 		i8042_pause_to_host_queue(false);
 #endif
 	}
@@ -692,7 +692,7 @@ static void kbc_ibf_obe_handler(uint32_t data)
 	int rv;
 
 	if (is_ibf == HOST_KBC_EVT_IBF) {
-		if (keyboard_host_write_avaliable() == 0 ) {
+		if (keyboard_host_write_avaliable() == 0) {
 			LOG_ERR("kbc buffer full");
 			/* Pause 8042 irq let KB task process data */
 			rv = espi_write_lpc_request(espi_dev, E8042_PAUSE_IRQ, 0);
@@ -867,7 +867,7 @@ static int zephyr_shim_setup_espi(void)
 	espi_write_lpc_request(espi_dev, ECUSTOM_HOST_SUBS_INTERRUPT_EN,
 			       &enable);
 #ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
-	if (IS_ENABLED(HAS_TASK_KEYPROTO))
+	if (IS_ENABLED(CONFIG_HAS_TASK_KEYPROTO))
 		i8042_pause_to_host_queue(true);
 #endif
 	return 0;
