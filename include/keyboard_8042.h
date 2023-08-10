@@ -10,6 +10,7 @@
 
 #include "button.h"
 #include "common.h"
+#include "stdbool.h"
 
 /**
  * Called by power button handler and button interrupt handler.
@@ -58,6 +59,23 @@ void send_aux_data_to_host_interrupt(uint8_t data);
  * @param data	Aux data to send to device.
  */
 void send_aux_data_to_device(uint8_t data);
+#ifdef CONFIG_BOARD_AZALEA
+/**
+ * Pauses or resumes the i8042 device -> host queue.
+ *
+ * We cannot send any IRQs before the eSPI virtual wire channel has been
+ * enabled. This method will allow deferring sending data to the host.
+ *
+ */
+void i8042_pause_to_host_queue(bool pause);
+#endif
+/**
+ * Get the amount of free 8042 buffer slots
+ * this is used to put backpressure on the host
+ * if the keyboard task gets too slow
+ * @return bytes_avaliable
+ */
+int keyboard_host_write_avaliable(void);
 
 #ifdef TEST_BUILD
 

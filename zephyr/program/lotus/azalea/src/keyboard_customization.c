@@ -9,6 +9,7 @@
 #include "customized_shared_memory.h"
 #include "factory.h"
 #include "keyboard_customization.h"
+#include "keyboard_8042.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_config.h"
 #include "keyboard_protocol.h"
@@ -88,14 +89,14 @@ static char keycap_label[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 			KLLI_UNKNO, KLLI_UNKNO, KLLI_RIGHT, KLLI_LEFT},
 };
 
-char get_keycap_label(uint8_t row, uint8_t col)
+uint8_t get_keycap_label(uint8_t row, uint8_t col)
 {
 	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS)
 		return keycap_label[col][row];
 	return KLLI_UNKNO;
 }
 
-void set_keycap_label(uint8_t row, uint8_t col, char val)
+void set_keycap_label(uint8_t row, uint8_t col, uint8_t val)
 {
 	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS)
 		keycap_label[col][row] = val;

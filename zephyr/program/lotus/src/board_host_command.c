@@ -22,6 +22,7 @@
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "keyboard_8042_sharedlib.h"
+#include "keyboard_8042.h"
 #include "led.h"
 #include "lpc.h"
 #include "power_sequence.h"
