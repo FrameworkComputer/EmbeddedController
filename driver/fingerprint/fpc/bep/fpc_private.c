@@ -218,8 +218,9 @@ int fp_sensor_get_info(struct ec_response_fp_info *resp)
 	return EC_SUCCESS;
 }
 
-int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
-		    int32_t *match_index, uint32_t *update_bitmap)
+__overridable int fp_finger_match(void *templ, uint32_t templ_count,
+				  uint8_t *image, int32_t *match_index,
+				  uint32_t *update_bitmap)
 {
 	int rc;
 
@@ -232,7 +233,7 @@ int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
 	return rc;
 }
 
-int fp_enrollment_begin(void)
+__overridable int fp_enrollment_begin(void)
 {
 	int rc;
 	bio_enrollment_t bio_enroll = enroll_ctx;
@@ -244,7 +245,7 @@ int fp_enrollment_begin(void)
 	return rc;
 }
 
-int fp_enrollment_finish(void *templ)
+__overridable int fp_enrollment_finish(void *templ)
 {
 	int rc;
 	bio_enrollment_t bio_enroll = enroll_ctx;
@@ -257,7 +258,7 @@ int fp_enrollment_finish(void *templ)
 	return rc;
 }
 
-int fp_finger_enroll(uint8_t *image, int *completion)
+__overridable int fp_finger_enroll(uint8_t *image, int *completion)
 {
 	int rc;
 	bio_enrollment_t bio_enroll = enroll_ctx;
