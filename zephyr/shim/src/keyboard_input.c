@@ -56,5 +56,4 @@ static void keyboard_input_cb(struct input_event *evt)
 		keyboard_state_changed(row, col, pressed);
 	}
 }
-INPUT_LISTENER_CB_DEFINE(DEVICE_DT_GET(CROS_EC_KEYBOARD_NODE),
-			 keyboard_input_cb);
+INPUT_CALLBACK_DEFINE(DEVICE_DT_GET(CROS_EC_KEYBOARD_NODE), keyboard_input_cb);

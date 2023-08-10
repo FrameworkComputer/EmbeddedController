@@ -33,4 +33,4 @@ static void buttons_cb_handler(struct input_event *evt)
 		break;
 	}
 }
-INPUT_LISTENER_CB_DEFINE(DEVICE_DT_GET_ONE(gpio_keys), buttons_cb_handler);
+INPUT_CALLBACK_DEFINE(DEVICE_DT_GET_ONE(gpio_keys), buttons_cb_handler);
