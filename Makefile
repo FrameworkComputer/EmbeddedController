@@ -89,6 +89,12 @@ all:
 # usage: common-$(call not_cfg,$(CONFIG_FOO))+=bar.o
 not_cfg = $(subst ro rw,y,$(filter-out $(1:y=ro rw),ro rw))
 
+# Check if private driver repository is present
+ifneq ($(wildcard private/build.mk),)
+HAVE_PRIVATE:=y
+CPPFLAGS+=-DHAVE_PRIVATE
+endif
+
 # The board makefile sets $CHIP and the chip makefile sets $CORE.
 # Include those now, since they must be defined for _flag_cfg below.
 include $(BDIR)/build.mk
