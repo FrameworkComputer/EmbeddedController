@@ -22,6 +22,18 @@
 #include "motionsense.dtsi"
 
 / {
+	named-gpios {
+		/delete-node/ led_3_l;
+		/delete-node/ led_4_l;
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpioc 2 0>, /* led_3_l */
+			<&gpio6 0 0>; /* led_4_l */
+	};
+
 	gpio-interrupts {
 		/delete-node/ ec_accel;
 		/delete-node/ ec_als_rgb;

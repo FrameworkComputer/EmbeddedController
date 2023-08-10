@@ -4,200 +4,97 @@
 	led-colors {
 		compatible = "cros-ec,led-policy";
 
-		power-state-near-full-left {
+		power-state-near-full {
 			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
-			charge-port = <0>; /* Left port */
 
-			/* Turn off the right LED */
+			/* Turn on Blue LED */
 			color-0 {
-				led-color = <&color_off_right>;
-			};
-			/* Left LED to White */
-			color-1 {
-				led-color = <&color_white_left>;
+				led-color = <&color_blue>;
 			};
 		};
 
-		power-state-near-full-right {
-			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
-			charge-port = <1>; /* Right port */
-
-			/* Turn off the left LED */
-			color-0 {
-				led-color = <&color_off_left>;
-			};
-			/* Right LED to White */
-			color-1 {
-				led-color = <&color_white_right>;
-			};
-		};
-
-		power-state-high-left {
+		power-state-charge-full {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery percent range 99..100 */
-			batt-lvl = <99 100>;
+			/* Battery percent range 97..100 */
+			batt-lvl = <97 100>;
 
-			charge-port = <0>; /* Left port */
-
-			/* Turn off the right LED */
+			/* Turn on Blue LED */
 			color-0 {
-				led-color = <&color_off_right>;
-			};
-			/* Left LED to White */
-			color-1 {
-				led-color = <&color_white_left>;
+				led-color = <&color_blue>;
 			};
 		};
 
-		power-state-high-right {
+		power-state-charge {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery percent range 99..100 */
-			batt-lvl = <99 100>;
-			charge-port = <1>; /* Right port */
+			/* Battery percent range 0..97 */
+			batt-lvl = <0 97>;
 
-			/* Turn off the left LED */
+			/* Turn on Amber LED */
 			color-0 {
-				led-color = <&color_off_left>;
-			};
-			/* Right LED to White */
-			color-1 {
-				led-color = <&color_white_right>;
+				led-color = <&color_amber>;
 			};
 		};
 
-		power-state-charge-left {
-			charge-state = "LED_PWRS_CHARGE";
-			/* Battery percent range 0..98 */
-			batt-lvl = <0 98>;
-			charge-port = <0>; /* Left port */
-
-			/* Left LED to Amber */
-			color-0 {
-				led-color = <&color_amber_left>;
-			};
-			/* Turn off the right LED */
-			color-1 {
-				led-color = <&color_off_right>;
-			};
-		};
-
-		power-state-charge-right {
-			charge-state = "LED_PWRS_CHARGE";
-			charge-port = <1>; /* Right port */
-			/* Battery percent range 0..98 */
-			batt-lvl = <0 98>;
-
-			/* Turn off the left LED */
-			color-0 {
-				led-color = <&color_off_left>;
-			};
-			/* Right LED to Amber */
-			color-1 {
-				led-color = <&color_amber_right>;
-			};
-		};
-
-		power-state-discharge {
+		power-state-discharge-s0 {
 			charge-state = "LED_PWRS_DISCHARGE";
-			/* Battery percent range (> Low, <= Full) */
-			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
+			chipset-state = "POWER_S0";
 
-			/* Turn off both LEDs LED */
+			/* Turn on Blue LED */
 			color-0 {
-				led-color = <&color_off_left>;
-			};
-			color-1 {
-				led-color = <&color_off_right>;
+				led-color = <&color_blue>;
 			};
 		};
 
-		power-state-discharge-low {
+		power-state-discharge-s3 {
 			charge-state = "LED_PWRS_DISCHARGE";
-			/* Battery percent range (>= Empty, <= Low) */
-			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
+			chipset-state = "POWER_S3";
 
-			/* Blink both LEDs amber at 0.5 Hz */
+			/* One sec Amber, three secs Off */
 			color-0 {
-				led-color = <&color_amber_left>;
+				led-color = <&color_amber>;
 				period-ms = <1000>;
 			};
 			color-1 {
-				led-color = <&color_amber_right>;
-				period-ms = <1000>;
-			};
-			color-2 {
-				led-color = <&color_off_left>;
-				period-ms = <1000>;
-			};
-			color-3 {
-				led-color = <&color_off_right>;
-				period-ms = <1000>;
+				led-color = <&color_off>;
+				period-ms = <3000>;
 			};
 		};
 
-		power-state-idle {
-			charge-state = "LED_PWRS_IDLE";
+		power-state-discharge-s5 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S5";
 
-			/* Blink both LEDs amber at 0.5 Hz */
+			/* Turn off */
 			color-0 {
-				led-color = <&color_amber_left>;
-				period-ms = <1000>;
-			};
-			color-1 {
-				led-color = <&color_amber_right>;
-				period-ms = <1000>;
-			};
-			color-2 {
-				led-color = <&color_white_left>;
-				period-ms = <1000>;
-			};
-			color-3 {
-				led-color = <&color_white_right>;
-				period-ms = <1000>;
+				led-color = <&color_off>;
 			};
 		};
 
 		power-state-forced-idle {
 			charge-state = "LED_PWRS_FORCED_IDLE";
 
-			/* Blink both LEDs amber at 2 Hz */
+			/* 2 secs Amber, 2 secs Blue */
 			color-0 {
-				led-color = <&color_amber_left>;
-				period-ms = <250>;
+				led-color = <&color_amber>;
+				period-ms = <2000>;
 			};
 			color-1 {
-				led-color = <&color_amber_right>;
-				period-ms = <250>;
-			};
-			color-2 {
-				led-color = <&color_white_left>;
-				period-ms = <250>;
-			};
-			color-3 {
-				led-color = <&color_white_right>;
-				period-ms = <250>;
+				led-color = <&color_blue>;
+				period-ms = <2000>;
 			};
 		};
 
 		power-state-error {
 			charge-state = "LED_PWRS_ERROR";
 
-			/* Blink both LEDs amber at 2 Hz */
+			/* One sec Amber, one sec Off */
 			color-0 {
-				led-color = <&color_amber_left>;
-				period-ms = <250>;
+				led-color = <&color_amber>;
+				period-ms = <1000>;
 			};
 			color-1 {
-				led-color = <&color_amber_right>;
-				period-ms = <250>;
-			};
-			color-2 {
-				led-color = <&color_off_left>;
-				period-ms = <250>;
-			};
-			color-3 {
-				led-color = <&color_off_right>;
-				period-ms = <250>;
+				led-color = <&color_off>;
+				period-ms = <1000>;
 			};
 		};
 
