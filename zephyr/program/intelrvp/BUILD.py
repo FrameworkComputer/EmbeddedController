@@ -86,7 +86,9 @@ register_intelrvp_project(
         here / "mtlrvp/mtlrvpp_mchp/gpio.dts",
         here / "mtlrvp/mtlrvpp_mchp/keyboard.dts",
         here / "mtlrvp/mtlrvpp_npcx/interrupts.dts",
+        here / "mtlrvp/mtlrvpp_npcx/tcpc_interrupts.dts",
         here / "mtlrvp/ioex.dts",
+        here / "mtlrvp/tcpc_ioex.dts",
         here / "mtlrvp/mtlrvpp_mchp/mtlrvp_mchp.dts",
         here / "mtlrvp/mtlrvpp_mchp/mtlrvp_mchp_power_signals.dts",
         here / "adlrvp/adlrvp_npcx/temp_sensor.dts",
@@ -95,6 +97,7 @@ register_intelrvp_project(
     extra_kconfig_files=[
         here / "zephyr_ap_pwrseq.conf",
         here / "mtlrvp/mtlrvpp_mchp/prj.conf",
+        here / "mtlrvp/tcpc.conf",
     ],
 )
 
@@ -105,10 +108,14 @@ register_intelrvp_project(
     extra_dts_overlays=[
         here / "mtlrvp/mtlrvpp_npcx/fan.dts",
         here / "mtlrvp/mtlrvpp_npcx/gpio.dts",
+        here / "mtlrvp/mtlrvpp_npcx/tcpc_gpio.dts",
         here / "mtlrvp/mtlrvpp_npcx/keyboard.dts",
         here / "mtlrvp/mtlrvpp_npcx/interrupts.dts",
+        here / "mtlrvp/mtlrvpp_npcx/tcpc_interrupts.dts",
         here / "mtlrvp/ioex.dts",
+        here / "mtlrvp/tcpc_ioex.dts",
         here / "mtlrvp/mtlrvpp_npcx/mtlrvp_npcx.dts",
+        here / "mtlrvp/mtlrvpp_npcx/tcpc_i2c.dts",
         here / "mtlrvp/mtlrvpp_npcx/mtlrvp_npcx_power_signals.dts",
         here / "adlrvp/adlrvp_npcx/temp_sensor.dts",
         here / "mtlrvp/usbc.dts",
@@ -116,5 +123,7 @@ register_intelrvp_project(
     extra_kconfig_files=[
         here / "zephyr_ap_pwrseq.conf",
         here / "mtlrvp/mtlrvpp_npcx/prj.conf",
+        here / "mtlrvp/mtlrvpp_npcx/board_npcx.conf",
+        here / "mtlrvp/tcpc.conf",
     ],
 )

@@ -61,41 +61,6 @@
 			gpios = <&gpio0 2 GPIO_INPUT>;
 			enum-name = "GPIO_AC_PRESENT";
 		};
-		/*
-		 * Note - the Intel boards implement their own handlers
-		 * for tcpc_get_alert_status().  These handlers use
-		 * gpio_get_level(), which returns the raw state of the pin,
-		 * ignoring the GPIO_ACTIVE_LOW flag.
-		 *
-		 * However, the interrupt pin is shared with the upstream
-		 * driver gpio_nct38xx_alert.c, which does use the logical
-		 * level of the pin and requires that the signal is active low.
-		 *
-		 * Mark the signal active low here as well which ensures there
-		 * is no conflict between the gpio_pin_configure_dt() run by
-		 * the named-gpios driver and the gpio_nct38xx_alert.c driver.
-		 */
-		 usbc_tcpc_alrt_p0: usbc-tcpc-alrt-p0 {
-			gpios = <&gpio4 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-		};
-		/* NOTE: Netname is USBC_TCPC_PPC_ALRT_P0 */
-		usb_c0_c1_tcpc_rst_odl: usb-c0-c1-tcpc-rst-odl {
-			gpios = <&gpiod 0 GPIO_ODR_HIGH>;
-		};
-		/* NOTE: Netname is USBC_TCPC_ALRT_P1 */
-		usbc_tcpc_ppc_alrt_p0: usbc-tcpc-ppc-alrt-p0 {
-			gpios = <&gpiod 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-		};
-		usbc_tcpc_ppc_alrt_p1: usbc-tcpc-ppc-alrt-p1 {
-			gpios = <&gpioe 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-		};
-		usbc_tcpc_alrt_p2: usbc-tcpc-alrt-p2 {
-			gpios = <&gpio9 1 GPIO_INPUT>;
-		};
-		/* NOTE: Netname is USBC_TCPC_PPC_ALRT_P3 */
-		usbc_tcpc_alrt_p3: usbc-tcpc-alrt-p3 {
-			gpios = <&gpiof 3 GPIO_INPUT>;
-		};
 		gpio_ec_pch_wake_odl: pch-wake-n {
 			gpios = <&gpio7 4 GPIO_ODR_HIGH>;
 		};
@@ -272,9 +237,6 @@
 		tp-gpiof1 {
 			gpios = <&gpiof 1 GPIO_INPUT>;
 		};
-		usbc_tcpc_ppc_alrt_p2: usbc-tcpc-ppc-alrt-p2 {
-			gpios = <&gpiof 2 GPIO_INPUT>;
-		};
 		tp-gpiof4 {
 			gpios = <&gpiof 4 GPIO_INPUT>;
 		};
@@ -301,77 +263,7 @@
 			gpios = <&ioex_it8801_port1 2 GPIO_INPUT>;
 		};
 
-		/* USB C IOEX configuration */
-		usb_c0_hb_retimer_ls_en: usb-c0-hbr-ls-en {
-			gpios = <&ioex_c0 2 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C0_HBR_LS_EN";
-			no-auto-init;
-		};
-		usb_c0_hb_retimer_rst: usb-c0-hbr-rst {
-			gpios = <&ioex_c0 3 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C0_HBR_RST";
-			no-auto-init;
-		};
-		usb_c1_hb_retimer_ls_en: usb-c1-hbr-ls-en {
-			gpios = <&ioex_c1 2 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C1_HBR_LS_EN";
-			no-auto-init;
-		};
-		usb_c1_hb_retimer_rst: usb-c1-hbr-rst {
-			gpios = <&ioex_c1 3 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C1_HBR_RST";
-			no-auto-init;
-		};
-		usb-c0-mux-oe-n {
-			gpios = <&ioex_c0 4 GPIO_OUTPUT_LOW>;
-			no-auto-init;
-		};
-		usb-c0-mux-sbu-sel-0 {
-			gpios = <&ioex_c0 6 GPIO_OUTPUT_HIGH>;
-			enum-name = "IOEX_USB_C0_MUX_SBU_SEL_0";
-			no-auto-init;
-		};
-		usb-c0-mux-sbu-sel-1 {
-			gpios = <&ioex_c1 4 GPIO_OUTPUT_LOW>;
-			enum-name = "IOEX_USB_C0_MUX_SBU_SEL_1";
-			no-auto-init;
-		};
-		usb-c0-c1-prochot-n {
-			gpios = <&ioex_c1 6 GPIO_INPUT>;
-			no-auto-init;
-		};
-		dg-bssb-sbu-sel {
-			gpios = <&ioex_c2_port1 4 GPIO_INPUT>;
-			no-auto-init;
-		};
-		usb_c2_hb_retimer_rst: usb-c2-hbr-rst {
-			gpios = <&ioex_c2_port1 1 (GPIO_ODR_LOW | \
-				GPIO_VOLTAGE_1P8)>;
-			enum-name = "IOEX_USB_C2_HBR_RST";
-			no-auto-init;
-		};
-		usb_c2_hb_retimer_ls_en: usb-c2-hbr-ls-en {
-			gpios = <&ioex_c2_port2 0 (GPIO_ODR_LOW | \
-				GPIO_VOLTAGE_1P8)>;
-			enum-name = "IOEX_USB_C2_HBR_LS_EN";
-			no-auto-init;
-		};
-		usb_c3_hb_retimer_rst: usb-c3-hbr-rst {
-			gpios = <&ioex_c2_port1 3 (GPIO_ODR_LOW | \
-				GPIO_VOLTAGE_1P8)>;
-			enum-name = "IOEX_USB_C3_HBR_RST";
-			no-auto-init;
-		};
-		usb_c3_hb_retimer_ls_en: usb-c3-hbr-ls-en {
-			gpios = <&ioex_c2_port3 3 (GPIO_ODR_LOW | \
-				GPIO_VOLTAGE_1P8)>;
-			enum-name = "IOEX_USB_C3_HBR_LS_EN";
-			no-auto-init;
-		};
-		usb-c2-c3-prochot-n {
-			gpios = <&ioex_c2_port0 0 GPIO_INPUT>;
-			no-auto-init;
-		};
+
 		/* unimplemented GPIOs */
 		en-pp5000 {
 			enum-name = "GPIO_EN_PP5000";

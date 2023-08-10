@@ -26,26 +26,6 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "io_expander_it8801_interrupt";
 		};
-		int_usb_c0_c1_tcpc: usb_c0_tcpc {
-			irq-pin = <&usbc_tcpc_alrt_p0>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "tcpc_alert_event";
-		};
-		int_usb_c2_tcpc: usb_c2_tcpc {
-			irq-pin = <&usbc_tcpc_alrt_p2>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "tcpc_alert_event";
-		};
-		int_usb_c3_tcpc: usb_c3_tcpc {
-			irq-pin = <&usbc_tcpc_alrt_p3>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "tcpc_alert_event";
-		};
-		int_ccd_mode: ccd_mode {
-			irq-pin = <&ccd_mode_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "board_connect_c0_sbu";
-		};
 		int_dc_jack_present: dc_jack_present {
 			irq-pin = <&std_adp_prsnt>;
 			flags = <GPIO_INT_EDGE_BOTH>;
