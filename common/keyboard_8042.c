@@ -140,7 +140,9 @@ static int i8042_keyboard_irq_enabled;
 static int i8042_aux_irq_enabled;
 
 /* i8042 global settings */
+#ifdef CONFIG_BOARD_AZALEA
 static bool to_host_queue_paused;
+#endif
 static int keyboard_enabled; /* default the keyboard is disabled. */
 static int aux_chan_enabled; /* default the mouse is disabled. */
 static int keystroke_enabled; /* output keystrokes */
@@ -509,7 +511,7 @@ void keyboard_state_changed(int row, int col, int is_pressed)
 		clear_typematic_key();
 	}
 }
-
+#ifdef CONFIG_BOARD_AZALEA
 void i8042_pause_to_host_queue(bool pause)
 {
 	CPRINTS5("8042 %s to_host queue", pause ? "pause" : "resume");
@@ -519,7 +521,7 @@ void i8042_pause_to_host_queue(bool pause)
 	if (!to_host_queue_paused)
 		task_wake(TASK_ID_KEYPROTO);
 }
-
+#endif
 static void keystroke_enable(int enable)
 {
 	if (!keystroke_enabled && enable)
@@ -1011,12 +1013,12 @@ void keyboard_protocol_task(void *u)
 				/* Wait for remaining interval */
 				wait = typematic_deadline.val - t.val;
 			}
-
+#ifdef CONFIG_BOARD_AZALEA
 			if (to_host_queue_paused) {
 				CPRINTS5("i8042 to_host queue is paused");
 				break;
 			}
-
+#endif
 			/* Handle command/data write from host */
 			i8042_handle_from_host();
 
@@ -1355,8 +1357,9 @@ static int command_8042_internal(int argc, const char **argv)
 	ccprintf("keyboard_enabled=%d\n", keyboard_enabled);
 	ccprintf("keystroke_enabled=%d\n", keystroke_enabled);
 	ccprintf("aux_chan_enabled=%d\n", aux_chan_enabled);
+#ifdef CONFIG_BOARD_AZALEA
 	ccprintf("to_host_queue_paused=%d\n", to_host_queue_paused);
-
+#endif
 	ccprintf("resend_command[]={");
 	for (i = 0; i < resend_command_len; i++)
 		ccprintf("0x%02x, ", resend_command[i]);

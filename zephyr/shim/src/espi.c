@@ -194,14 +194,14 @@ static void espi_vwire_handler(const struct device *dev,
 	    event.evt_data == 0) {
 		hook_call_deferred(&espi_chipset_reset_data, MSEC);
 		update_ap_boot_time(PLTRST_LOW);
-#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+#ifdef CONFIG_BOARD_AZALEA
 	if (IS_ENABLED(CONFIG_HAS_TASK_KEYPROTO))
 		i8042_pause_to_host_queue(true);
 #endif
 	} else if (event.evt_details == ESPI_VWIRE_SIGNAL_PLTRST &&
 		   event.evt_data == 1) {
 		update_ap_boot_time(PLTRST_HIGH);
-#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+#ifdef CONFIG_BOARD_AZALEA
 	if (IS_ENABLED(CONFIG_HAS_TASK_KEYPROTO))
 		i8042_pause_to_host_queue(false);
 #endif
@@ -866,7 +866,7 @@ static int zephyr_shim_setup_espi(void)
 	/* Enable host interface interrupts */
 	espi_write_lpc_request(espi_dev, ECUSTOM_HOST_SUBS_INTERRUPT_EN,
 			       &enable);
-#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+#ifdef CONFIG_BOARD_AZALEA
 	if (IS_ENABLED(CONFIG_HAS_TASK_KEYPROTO))
 		i8042_pause_to_host_queue(true);
 #endif

@@ -59,7 +59,7 @@ void send_aux_data_to_host_interrupt(uint8_t data);
  * @param data	Aux data to send to device.
  */
 void send_aux_data_to_device(uint8_t data);
-
+#ifdef CONFIG_BOARD_AZALEA
 /**
  * Pauses or resumes the i8042 device -> host queue.
  *
@@ -68,7 +68,7 @@ void send_aux_data_to_device(uint8_t data);
  *
  */
 void i8042_pause_to_host_queue(bool pause);
-
+#endif
 /**
  * Get the amount of free 8042 buffer slots
  * this is used to put backpressure on the host
