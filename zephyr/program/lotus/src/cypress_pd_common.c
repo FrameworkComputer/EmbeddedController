@@ -1235,7 +1235,7 @@ void cypd_set_power_active(enum power_state power)
 	task_set_event(TASK_ID_CYPD, CCG_EVT_S_CHANGE);
 }
 
-#define CYPD_SETUP_CMDS_LEN 7
+#define CYPD_SETUP_CMDS_LEN 5
 static int cypd_setup(int controller)
 {
 	/*
@@ -1261,9 +1261,6 @@ static int cypd_setup(int controller)
 		/* Set the port event mask */
 		{ CCG_EVENT_MASK_REG(0), 0x27ffff, 4, CCG_PORT0_INTR},
 		{ CCG_EVENT_MASK_REG(1), 0x27ffff, 4, CCG_PORT1_INTR },
-		/* Set the port event mask */
-		{ CCG_VDM_EC_CONTROL_REG(0), CCG_EXTEND_MSG_CTRL_EN, 1, CCG_PORT0_INTR},
-		{ CCG_VDM_EC_CONTROL_REG(1), CCG_EXTEND_MSG_CTRL_EN, 1, CCG_PORT1_INTR },
 		/* EC INIT Complete */
 		{ CCG_PD_CONTROL_REG(0), CCG_PD_CMD_EC_INIT_COMPLETE, CCG_PORT0_INTR },
 	};
