@@ -741,8 +741,10 @@ def run_test(
         test_cmd = "runtest " + " ".join(test.test_args) + "\n"
         console.write(test_cmd.encode())
 
+    board_config = BOARD_CONFIGS[build_board]
+
     logging.debug("Calling pre-test callback")
-    if not test.pre_test_callback(build_board):
+    if not test.pre_test_callback(board_config):
         logging.error("pre-test callback failed, aborting")
         return False
 
@@ -779,7 +781,7 @@ def run_test(
                     process_console_output_line(line, test)
 
                 logging.debug("Calling post-test callback")
-                post_cb_passed = test.post_test_callback(build_board)
+                post_cb_passed = test.post_test_callback(board_config)
                 return test.num_fails == 0 and post_cb_passed
 
 
