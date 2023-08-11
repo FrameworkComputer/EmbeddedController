@@ -594,6 +594,7 @@ def power_cycle(board_config: BoardConfig) -> None:
     power(board_config, power_on=False)
     time.sleep(board_config.reboot_timeout)
     power(board_config, power_on=True)
+    time.sleep(board_config.reboot_timeout)
 
 
 def hw_write_protect(enable: bool) -> None:
