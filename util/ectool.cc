@@ -39,6 +39,7 @@
 #include <libec/fingerprint/fp_encryption_status_command.h>
 #include <libec/flash_protect_command.h>
 #include <libec/rand_num_command.h>
+#include <libec/versions_command.h>
 #include <unistd.h>
 #include <vector>
 
@@ -1776,7 +1777,24 @@ int cmd_flash_protect(int argc, char *argv[])
 			mask |= ec::flash_protect::Flags::kRoAtBoot;
 	}
 
-	ec::FlashProtectCommand_v1 flash_protect_command(flags, mask);
+	// TODO(b/287519577) Use FlashProtectCommandFactory after removing its
+	// dependency on CrosFpDeviceInterface.
+	uint32_t version = 1;
+	ec::VersionsCommand flash_protect_versions_command(
+		EC_CMD_FLASH_PROTECT);
+
+	if (!flash_protect_versions_command.RunWithMultipleAttempts(
+		    comm_get_fd(), 20)) {
+		fprintf(stderr, "Flash Protect Versions Command failed:\n");
+		return -1;
+	}
+
+	if (flash_protect_versions_command.IsVersionSupported(2) ==
+	    ec::EcCmdVersionSupportStatus::SUPPORTED) {
+		version = 2;
+	}
+
+	ec::FlashProtectCommand flash_protect_command(flags, mask, version);
 	if (!flash_protect_command.Run(comm_get_fd())) {
 		int rv = -EECRESULT - flash_protect_command.Result();
 		fprintf(stderr, "Flash protect returned with errors: %d\n", rv);
