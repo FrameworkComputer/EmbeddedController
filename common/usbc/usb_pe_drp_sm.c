@@ -1021,15 +1021,26 @@ void pe_set_explicit_contract(int port)
 		typec_update_cc(port);
 }
 
-void pe_invalidate_explicit_contract(int port)
+/*
+ * Invalidate the explicit contract without disabling FRS.
+ *
+ * @param port USB-C port number
+ */
+static void pe_invalidate_explicit_contract_frs_untouched(int port)
 {
-	pe_set_frs_enable(port, 0);
-
 	PE_CLR_FLAG(port, PE_FLAGS_EXPLICIT_CONTRACT);
 
 	/* Set Rp for current limit if still attached */
 	if (IS_ENABLED(CONFIG_USB_PD_REV30) && pd_is_connected(port))
 		typec_update_cc(port);
+}
+
+void pe_invalidate_explicit_contract(int port)
+{
+	/* disable FRS and then invalidate the explicit contract */
+	pe_set_frs_enable(port, 0);
+
+	pe_invalidate_explicit_contract_frs_untouched(port);
 }
 
 void pd_notify_event(int port, uint32_t event_mask)
@@ -5473,7 +5484,17 @@ __maybe_unused static void pe_frs_snk_src_start_ams_entry(int port)
 	 * Invalidate the contract after the FRS flags set so the
 	 * flags can be propagated to this function.
 	 */
-	pe_invalidate_explicit_contract(port);
+	if (port_frs_disable_until_source_on(port)) {
+		/*
+		 * Delay disable FRS until starting sourcing VBUS.
+		 * Some boards need to extend the FRS enablement until the
+		 * vSafe5V hitted (rather than FRS Rx received) then it can turn
+		 * the source on automatically.
+		 */
+		pe_invalidate_explicit_contract_frs_untouched(port);
+	} else {
+		pe_invalidate_explicit_contract(port);
+	}
 
 	set_state_pe(port, PE_PRS_SNK_SRC_SEND_SWAP);
 }

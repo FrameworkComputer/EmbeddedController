@@ -46,3 +46,17 @@ __overridable bool port_discovery_vconn_swap_policy(int port,
 	/* Do not perform a VCONN swap */
 	return false;
 }
+
+/*
+ * Default Port Disable FRS until VBUS source on Policy.
+ *
+ * Default implementation is disabling FRS after receiving FRS Rx signal.
+ *
+ * @param port USB-C port number
+ * @param return True if FRS disable is delayed until PE_SRC_STARTUP, else
+ *        False.
+ */
+__overridable bool port_frs_disable_until_source_on(int port)
+{
+	return false;
+}
