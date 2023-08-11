@@ -336,7 +336,7 @@ static void cypd_print_version(int controller, const char *vtype, uint8_t *data)
 	 * Base version: Cypress release version
 	 * Application version: FAE release version
 	 */
-	CPRINTS("Controller %d  %s version B:%d.%d.%d.%d, AP:%d.%d.%d.",
+	CPRINTS("Controller %d  %s version B:%X.%X.%X.%Xgit , AP:%X.%X.%X",
 		controller, vtype,
 		(data[3]>>4) & 0xF, (data[3]) & 0xF, data[2], data[0] + (data[1]<<8),
 		(data[7]>>4) & 0xF, (data[7]) & 0xF, data[6]);
