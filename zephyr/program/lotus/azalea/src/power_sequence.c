@@ -292,9 +292,10 @@ static int chipset_prepare_S3(uint8_t enable)
 
 /*
  * Issue : 866a60d67
- * for this issue, if into S3 and resume back, system would not take Keybuffer(DBBOUT)
- * after EC send IRQ1, add this workaround EC manually send Keybuffer  and clearn OBF flag,
- * it will regenerate a IRQ signal to notice system.
+ * for this issue, if into S3 and resume back by keyboard, system would not wake
+ * because scan code was send before espi_rst, at the moment system would not
+ * take any scan code, co-work with BIOS when Keyboard event send,
+ * do this workaround to send a scan code again
  */
 static void key_stuck_wa(void);
 DECLARE_DEFERRED(key_stuck_wa);
@@ -311,6 +312,24 @@ static void key_stuck_wa(void)
 		hook_call_deferred(&key_stuck_wa_data, 10 * MSEC);
 
 }
+
+/*
+ * Issue : 866ajywad
+ * for this issue, if into S3 and resume back by power button,
+ * system would not take Keybuffer(DBBOUT) after EC send IRQ1,
+ * add this workaround EC manually send Keybuffer  and clearn OBF flag,
+ * it will regenerate a IRQ signal to notice system.
+ */
+static void key_stuck_ptn(void)
+{
+	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_DISPLAY_ON) = 0;
+	simulate_keyboard(SCANCODE_UNASSIGNED, 1);
+	simulate_keyboard(SCANCODE_UNASSIGNED, 0);
+	keyboard_clear_buffer();
+	/* stop key_stuck_wa if system already wake */
+	hook_call_deferred(&key_stuck_wa_data, -1);
+}
+DECLARE_DEFERRED(key_stuck_ptn);
 
 enum power_state power_handle_state(enum power_state state)
 {
@@ -514,7 +533,7 @@ enum power_state power_handle_state(enum power_state state)
 		resume_ms_flag = 0;
 		system_in_s0ix = 0;
 		lpc_s0ix_resume_restore_masks();
-		hook_call_deferred(&key_stuck_wa_data, 50 * MSEC);
+		hook_call_deferred(&key_stuck_ptn_data, 50 * MSEC);
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
 		CPRINTS("PH S0ixS0->S0");
