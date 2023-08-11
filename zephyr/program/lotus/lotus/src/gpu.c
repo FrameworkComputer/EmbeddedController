@@ -133,7 +133,9 @@ void check_gpu_module(void)
 
 	if (module_present) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 1);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 1);
+		/* vsys_vadp_en should follow the syson to enable */
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_syson)))
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_vadp_en), 1);
 		if (board_get_version() >= BOARD_VERSION_7)
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd_gpu_sel), 0);
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL) |= GPU_PRESENT;
