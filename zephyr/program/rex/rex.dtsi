@@ -231,13 +231,6 @@
 			pin_mask = <0xff>;
 		};
 	};
-
-	nct3808_alert_0 {
-		compatible = "nuvoton,nct38xx-gpio-alert";
-		irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
-		nct38xx-dev = <&nct3807_C0>;
-		label = "NCT3807_ALERT_0";
-	};
 };
 
 &i2c2_0 {

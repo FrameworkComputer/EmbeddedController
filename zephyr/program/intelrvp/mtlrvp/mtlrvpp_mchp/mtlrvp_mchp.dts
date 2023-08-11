@@ -187,14 +187,6 @@
 		};
 	};
 
-	nct38xx_alert_0 {
-		compatible = "nuvoton,nct38xx-gpio-alert";
-		/* irq-gpios = <&gpio4 0 GPIO_ACTIVE_LOW>; */
-		irq-gpios = <&gpio_140_176 3 GPIO_ACTIVE_LOW>;
-		nct38xx-dev = <&nct38xx_c0 &nct38xx_c1>;
-		label = "NCT38XX_ALERT_1";
-	}; /* GPIO143 */
-
 	ppc_port0: sn5s330@40 {
 		compatible = "ti,sn5s330";
 		status = "okay";

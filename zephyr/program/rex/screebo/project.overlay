@@ -154,13 +154,6 @@
 		};
 	};
 
-	nct3808_alert_1 {
-		compatible = "nuvoton,nct38xx-gpio-alert";
-		irq-gpios = <&gpio3 4 GPIO_ACTIVE_LOW>;
-		nct38xx-dev = <&nct3807_C1>;
-		label = "NCT3807_ALERT_0";
-	};
-
 	tcpc_ps8815_port1: ps8xxx@b {
 		compatible = "parade,ps8xxx";
 		reg = <0xb>;

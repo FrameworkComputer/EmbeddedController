@@ -124,13 +124,6 @@
 		};
 	};
 
-	nct3808_alert_0 {
-		compatible = "nuvoton,nct38xx-gpio-alert";
-		irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
-		nct38xx-dev = <&nct3807_C0>;
-		label = "NCT3807_ALERT_0";
-	};
-
 	anx7483_port0: anx7483@3e {
 		compatible = "analogix,anx7483";
 		reg = <0x3e>;
@@ -211,13 +204,6 @@
 			ngpios = <8>;
 			pin_mask = <0xff>;
 		};
-	};
-
-	nct3808_alert_1 {
-		compatible = "nuvoton,nct38xx-gpio-alert";
-		irq-gpios = <&gpioc 7 GPIO_ACTIVE_LOW>;
-		nct38xx-dev = <&nct3807_C1>;
-		label = "NCT3807_ALERT_1";
 	};
 
 	anx7483_port1: anx7483@3e {
