@@ -38,6 +38,9 @@ static int cap_charge;
 /* APB1 frequency. Store divided by 10k to avoid some runtime divisions */
 uint32_t apb1_freq_div_10k;
 
+/* Software generated interrupt triggers the send logic */
+static uint8_t sw_interrupt;
+
 void cec_tmr_cap_start(int port, enum cec_cap_edge edge, int timeout)
 {
 	int mdl = NPCX_MFT_MODULE_1;
@@ -98,21 +101,6 @@ int cec_tmr_cap_get(int port)
 	return (cap_charge + cap_delay - NPCX_TCRA(mdl));
 }
 
-static void tmr2_start(int timeout)
-{
-	int mdl = NPCX_MFT_MODULE_1;
-
-	NPCX_TCNT2(mdl) = timeout;
-	SET_FIELD(NPCX_TCKC(mdl), NPCX_TCKC_C2CSEL_FIELD, 1);
-}
-
-static void tmr2_stop(void)
-{
-	int mdl = NPCX_MFT_MODULE_1;
-
-	SET_FIELD(NPCX_TCKC(mdl), NPCX_TCKC_C2CSEL_FIELD, 0);
-}
-
 static void cec_isr(void)
 {
 	int port = cec_port;
@@ -135,9 +123,10 @@ static void cec_isr(void)
 		if (events & BIT(NPCX_TECTRL_TCPND))
 			cec_event_timeout(port);
 	}
-	/* Oneshot timer, a transfer has been initiated from AP */
-	if (events & BIT(NPCX_TECTRL_TDPND)) {
-		tmr2_stop();
+
+	/* Software interrupt, a transfer has been initiated from AP */
+	if (sw_interrupt > 0) {
+		sw_interrupt = 0;
 		cec_event_tx(port);
 	}
 
@@ -149,7 +138,8 @@ DECLARE_IRQ(NPCX_IRQ_MFT_1, cec_isr, 4);
 void cec_trigger_send(int port)
 {
 	/* Elevate to interrupt context */
-	tmr2_start(0);
+	sw_interrupt = 1;
+	task_trigger_irq(NPCX_IRQ_MFT_1);
 }
 
 void cec_enable_timer(int port)
@@ -162,7 +152,6 @@ void cec_enable_timer(int port)
 
 	/* Enable timer interrupts */
 	SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TAIEN);
-	SET_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TDIEN);
 
 	/* Enable multifunction timer interrupt */
 	task_enable_irq(NPCX_IRQ_MFT_1);
@@ -174,9 +163,7 @@ void cec_disable_timer(int port)
 
 	/* Disable timer interrupts */
 	CLEAR_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TAIEN);
-	CLEAR_BIT(NPCX_TIEN(mdl), NPCX_TIEN_TDIEN);
 
-	tmr2_stop();
 	cec_tmr_cap_stop(port);
 
 	task_disable_irq(NPCX_IRQ_MFT_1);
