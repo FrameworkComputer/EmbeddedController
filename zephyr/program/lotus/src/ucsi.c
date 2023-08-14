@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  *
  * PD chip UCSI
+ * See https://www.intel.com/content/dam/www/public/us/en/documents/technical-specifications/usb-type-c-ucsi-spec.pdf
+ *
  */
 
 #include <atomic.h>
@@ -21,6 +23,14 @@
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
+
+#define CCI_NOT_SUPPORTED_FLAG BIT(25)
+#define CCI_CANCELED_FLAG BIT(26)
+#define CCI_RESET_FLAG BIT(27)
+#define CCI_BUSY_FLAG BIT(28)
+#define CCI_ACKNOWLEDGE_FLAG BIT(29)
+#define CCI_ERROR_FLAG BIT(30)
+#define CCI_COMPLETE_FLAG BIT(31)
 
 static struct pd_chip_ucsi_info_t pd_chip_ucsi_info[] = {
 	[PD_CHIP_0] = {
@@ -81,7 +91,7 @@ int ucsi_write_tunnel(void)
 {
 	uint8_t *message_out = host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_OUT);
 	uint8_t *command = host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND);
-	uint8_t change_connector_indicator;
+	uint8_t change_connector_indicator = 0;
 	int i;
 	int offset = 0;
 	int rv = EC_SUCCESS;
@@ -91,16 +101,14 @@ int ucsi_write_tunnel(void)
 	 * A write to CONTROL (in CCGX) triggers processing of that command.
 	 * Hence MESSAGE_OUT must be available before CONTROL is written to CCGX.
 	 */
-	if (ucsi_debug_enable) {
-		CPRINTS("UCSI Write Command 0x%016llx %s",
-		*(uint64_t *)command, command_names(*command));
-		if (command[1])
-			cypd_print_buff("UCSI Msg Out: ", message_out, 6);
-	}
+
 	if (*command == UCSI_CMD_PPM_RESET) {
 		cypd_usci_ppm_reset();
 		CPRINTS("UCSI PPM_RESET");
 	}
+
+	pd_chip_ucsi_info[0].read_tunnel_complete = 0;
+	pd_chip_ucsi_info[1].read_tunnel_complete = 0;
 
 	switch (*command) {
 	case UCSI_CMD_GET_CONNECTOR_STATUS:
@@ -166,15 +174,26 @@ int ucsi_write_tunnel(void)
 		}
 		break;
 	}
+
+	if (ucsi_debug_enable) {
+		CPRINTS("UCSI Write P:%d Cmd 0x%016llx %s",
+			change_connector_indicator,
+			*(uint64_t *)command,
+			command_names(*command));
+		if (command[1])
+			cypd_print_buff("UCSI Msg Out: ", message_out, 6);
+	}
+
 	usleep(50);
 	return rv;
 }
-
+bool read_complete;
 int ucsi_read_tunnel(int controller)
 {
 	int rv;
 
-	if (ucsi_debug_enable && pd_chip_ucsi_info[controller].read_tunnel_complete == 1) {
+	if (ucsi_debug_enable && pd_chip_ucsi_info[controller].read_tunnel_complete == 1 &&
+		(pd_chip_ucsi_info[controller].cci & CCI_BUSY_FLAG) == 0) {
 		CPRINTS("UCSI Read tunnel but previous read still pending");
 	}
 
@@ -191,6 +210,8 @@ int ucsi_read_tunnel(int controller)
 		 * CCI connector change indicate offset bit 1, so need to add 0x04 (0x2 << 1)
 		 */
 		pd_chip_ucsi_info[controller].cci += 0x04;
+
+	/* If data length is non zero, then get data */
 	if (pd_chip_ucsi_info[controller].cci & 0xFF00) {
 		rv = cypd_read_reg_block(controller, CCG_MESSAGE_IN_REG,
 			pd_chip_ucsi_info[controller].message_in, 16);
@@ -210,19 +231,41 @@ int ucsi_read_tunnel(int controller)
 			controller,
 			cci_reg,
 			(cci_reg >> 1) & 0x07F,
-			cci_reg & BIT(25) ? "Not Support " : "",
-			cci_reg & BIT(26) ? "Canceled " : "",
-			cci_reg & BIT(27) ? "Reset " : "",
-			cci_reg & BIT(28) ? "Busy " : "",
-			cci_reg & BIT(29) ? "Acknowledge " : "",
-			cci_reg & BIT(30) ? "Error " : "",
-			cci_reg & BIT(31) ? "Complete " : ""
+			cci_reg & CCI_NOT_SUPPORTED_FLAG ? "Not Support " : "",
+			cci_reg & CCI_CANCELED_FLAG ? "Canceled " : "",
+			cci_reg & CCI_RESET_FLAG ? "Reset " : "",
+			cci_reg & CCI_BUSY_FLAG ? "Busy " : "",
+			cci_reg & CCI_ACKNOWLEDGE_FLAG ? "Acknowledge " : "",
+			cci_reg & CCI_ERROR_FLAG ? "Error " : "",
+			cci_reg & CCI_COMPLETE_FLAG ? "Complete " : ""
 			);
 		if (cci_reg & 0xFF00) {
 			cypd_print_buff("Message ", pd_chip_ucsi_info[controller].message_in, 16);
 		}
 	}
 
+	switch (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND)) {
+	case UCSI_CMD_PPM_RESET:
+	case UCSI_CMD_CANCEL:
+	case UCSI_CMD_ACK_CC_CI:
+	case UCSI_CMD_SET_NOTIFICATION_ENABLE:
+	case UCSI_CMD_GET_CAPABILITY:
+	case UCSI_CMD_GET_ERROR_STATUS:
+		/* Those command need to wait two pd chip to response completed */
+		if (pd_chip_ucsi_info[0].read_tunnel_complete &&
+		    pd_chip_ucsi_info[1].read_tunnel_complete)
+			read_complete = 1;
+		else
+			read_complete = 0;
+		break;
+	default:
+		if (pd_chip_ucsi_info[0].read_tunnel_complete ||
+		    pd_chip_ucsi_info[1].read_tunnel_complete)
+			read_complete = 1;
+		else
+			read_complete = 0;
+		break;
+	}
 
 	return EC_SUCCESS;
 }
@@ -267,18 +310,21 @@ int ucsi_startup(int controller)
 void check_ucsi_event_from_host(void)
 {
 	void *message_in;
-	void *cci;
-	int read_complete = 0;
+	uint32_t *cci;
 	int i;
 	int rv;
 
-	if (!timestamp_expired(ucsi_wait_time, NULL)) {
+	if (read_complete == 0 && !timestamp_expired(ucsi_wait_time, NULL)) {
 		if (ucsi_debug_enable)
 			CPRINTS("UCSI waiting for time expired");
 		return;
 	}
+
+	/* If the UCSI interface previously was busy then
+	 * poll to see if the busy bit cleared
+	 */
 	for (i = 0; i < PD_CHIP_COUNT; i++) {
-		if (pd_chip_ucsi_info[i].cci & BIT(28)) {
+		if (pd_chip_ucsi_info[i].cci & CCI_BUSY_FLAG) {
 			ucsi_read_tunnel(i);
 		}
 	}
@@ -301,39 +347,21 @@ void check_ucsi_event_from_host(void)
 		return;
 	}
 
-	switch (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND)) {
-	case UCSI_CMD_PPM_RESET:
-	case UCSI_CMD_CANCEL:
-	case UCSI_CMD_ACK_CC_CI:
-	case UCSI_CMD_SET_NOTIFICATION_ENABLE:
-	case UCSI_CMD_GET_CAPABILITY:
-	case UCSI_CMD_GET_ERROR_STATUS:
-		/* Those command need to wait two pd chip to response completed */
-		if (pd_chip_ucsi_info[0].read_tunnel_complete &&
-		    pd_chip_ucsi_info[1].read_tunnel_complete)
-			read_complete = 1;
-		break;
-	default:
-		if (pd_chip_ucsi_info[0].read_tunnel_complete ||
-		    pd_chip_ucsi_info[1].read_tunnel_complete)
-			read_complete = 1;
-		break;
-	}
-
 	if (read_complete) {
-
+		if (ucsi_debug_enable) {
+			CPRINTS("%s Complete",
+				command_names(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND)));
+		}
 		if (pd_chip_ucsi_info[0].read_tunnel_complete) {
-			ucsi_read_tunnel(0);
 			message_in = pd_chip_ucsi_info[0].message_in;
 			cci = &pd_chip_ucsi_info[0].cci;
 		}
 
 		if (pd_chip_ucsi_info[1].read_tunnel_complete) {
-			ucsi_read_tunnel(1);
 			message_in = pd_chip_ucsi_info[1].message_in;
 			cci = &pd_chip_ucsi_info[1].cci;
 		}
-
+		read_complete = false;
 
 		/* Fix UCSI stopping responding to right side ports
 		 * the standard says the CCI connector change indicator field
@@ -369,16 +397,19 @@ void check_ucsi_event_from_host(void)
 		/**
 		 * TODO: process the two pd results for one response.
 		 */
+
+		/* override bNumConnectors to the total number of connectors on the system */
 		if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND) == UCSI_CMD_GET_CAPABILITY)
-			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_IN + 4) = 0x04;
+			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_IN + 4) = PD_PORT_COUNT;
 
 		pd_chip_ucsi_info[0].read_tunnel_complete = 0;
 		pd_chip_ucsi_info[1].read_tunnel_complete = 0;
 
-		/* clear the UCSI command */
-		if (!(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & UCSI_EVENT))
-			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND) = 0;
-
+		/* clear the UCSI command if busy flag is not set */
+		if (0 == (*cci & CCI_BUSY_FLAG)) {
+			if (!(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & UCSI_EVENT))
+				*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND) = 0;
+		}
 		host_set_single_event(EC_HOST_EVENT_UCSI);
 	}
 }

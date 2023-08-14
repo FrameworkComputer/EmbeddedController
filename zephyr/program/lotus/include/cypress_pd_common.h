@@ -438,7 +438,7 @@ struct pd_chip_ucsi_info_t {
 	int read_tunnel_complete;
 	int write_tunnel_complete;
 	int wait_ack;
-} __packed;
+};
 
 int cypd_write_reg8(int controller, int reg, int data);
 
