@@ -16,4 +16,10 @@ extern uint32_t apb1_freq_div_10k;
 #define CEC_TICKS_TO_US(ticks) (100 * (ticks) / apb1_freq_div_10k)
 #endif
 
+enum npcx_cec_bitbang_timer {
+	NPCX_CEC_BITBANG_TIMER_A = 0,
+	NPCX_CEC_BITBANG_TIMER_B,
+	NPCX_CEC_BITBANG_TIMER_COUNT,
+};
+
 #endif /* __CROS_EC_CEC_CHIP_H */
