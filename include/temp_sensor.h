@@ -71,5 +71,10 @@ int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr);
  * @return EC_SUCCESS, or non-zero if error.
  */
 int print_temps(void);
-
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+/**
+ * Board specific callback when temp sensor condition different with common
+ */
+__override_proto int board_temp_smi_evet(void);
+#endif
 #endif /* __CROS_EC_TEMP_SENSOR_H */
