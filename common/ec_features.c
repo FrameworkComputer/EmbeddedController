@@ -171,6 +171,9 @@ uint32_t get_feature_flags1(void)
 #ifdef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
 		| EC_FEATURE_MASK_1(EC_FEATURE_TOKENIZED_LOGGING)
 #endif
+#ifdef CONFIG_PLATFORM_EC_AMD_STB_DUMP
+		| EC_FEATURE_MASK_1(EC_FEATURE_AMD_STB_DUMP)
+#endif
 		;
 	return board_override_feature_flags1(result);
 }

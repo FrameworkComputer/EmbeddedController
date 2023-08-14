@@ -1646,6 +1646,10 @@ enum ec_feature_code {
 	 * The EC image is built with tokenized logging enabled.
 	 */
 	EC_FEATURE_TOKENIZED_LOGGING = 49,
+	/*
+	 * The EC supports triggering an STB dump.
+	 */
+	EC_FEATURE_AMD_STB_DUMP = 50,
 };
 
 #define EC_FEATURE_MASK_0(event_code) BIT(event_code % 32)
