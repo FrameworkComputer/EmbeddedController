@@ -1416,6 +1416,11 @@ def all_targets():
         extra_modules = ["cmsis"],
     )
     ec_target(
+        name = "mtlrvpp_pd",
+        board = "mtlrvpp_pd",
+        extra_modules = ["cmsis"],
+    )
+    ec_target(
         name = "munna",
         baseboard = "kukui",
         board = "munna",

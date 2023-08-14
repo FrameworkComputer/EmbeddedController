@@ -30,3 +30,8 @@ if((DEFINED CONFIG_BOARD_MTLRVP_MCHP) OR (DEFINED CONFIG_BOARD_MTLRVP_NPCX))
   zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/chg_usb_pd_mecc_1_1.c")
   zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/chg_usb_pd.c")
 endif()
+
+if(DEFINED CONFIG_BOARD_MTLRVP_PD)
+  add_subdirectory(mtlrvp)
+  zephyr_library_sources("src/intelrvp.c")
+endif()

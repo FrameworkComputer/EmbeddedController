@@ -30,4 +30,11 @@ config BOARD_MTLRVP_NPCX
 	  Build Intel MTLRVP_NPCX reference board. This board is Intel MTL RVP
 	  SOC with NPCX_NPCX9M3F
 
+config BOARD_MTLRVP_PD
+	bool "Intel MTLRVP_PD board"
+	depends on SOC_NPCX9M3F
+	help
+	  Build Intel MTLRVP_PD reference board. This board is Intel MTL RVP
+	  SOC with NPCX_NPCX9M3F and CCG8 PD.
+
 source "Kconfig.zephyr"
