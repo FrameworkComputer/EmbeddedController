@@ -26,6 +26,16 @@
 #error Enable the Zephyr driver CONFIG_GPIO_NCT38XX instead.
 #endif
 
+/*
+ * TODO(b/295587630): nct38xx: upstream gpio_nct38xx_alert.c driver
+ * incompatible with downstream TCPC driver
+ */
+#ifdef CONFIG_GPIO_NCT38XX_ALERT
+#error Zephyr driver CONFIG_GPIO_NCT38XX_ALERT cannot be used with the
+#error downstream CONFIG_PLATFORM_EC_USB_PD_TCPM_NCT38XX driver.
+#error Delete the nuvoton,nct38xx-gpio-alert node from the devicetree.
+#endif
+
 #if !defined(CONFIG_USB_PD_TCPM_TCPCI)
 #error "NCT38XX is using part of standard TCPCI control"
 #error "Please upgrade your board configuration"
