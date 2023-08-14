@@ -903,12 +903,6 @@ config PLATFORM_EC_AMD_STB_DUMP
 	help
 	  Enable STB dumping when AP hangs during suspend/resume.
 
-config PLATFORM_EC_AMD_STB_DUMP_CMD
-	bool "Enable `amdstbdump` console command"
-	depends on PLATFORM_EC_AMD_STB_DUMP
-	help
-	  Enables the `amdstbdump` command to manually trigger an STB dump.
-
 config PLATFORM_EC_AMD_STT
 	bool "Enable driver for AMD STT interface"
 	depends on PLATFORM_EC_AMD_SB_RMI

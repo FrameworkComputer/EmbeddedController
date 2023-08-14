@@ -66,7 +66,6 @@ void amd_stb_dump_interrupt(enum gpio_signal signal)
 	hook_call_deferred(&stb_dump_interrupt_deferred_data, 0);
 }
 
-#ifdef CONFIG_PLATFORM_EC_AMD_STB_DUMP_CMD
 static int command_amdstbdump(int argc, const char **argv)
 {
 	amd_stb_dump_trigger();
@@ -74,4 +73,3 @@ static int command_amdstbdump(int argc, const char **argv)
 }
 DECLARE_CONSOLE_COMMAND(amdstbdump, command_amdstbdump, NULL,
 			"Trigger an STB dump");
-#endif
