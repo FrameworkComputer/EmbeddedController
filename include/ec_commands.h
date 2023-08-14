@@ -690,6 +690,8 @@ enum ec_status {
 	EC_RES_INVALID_DATA_CRC = 19, /* Data CRC invalid */
 	EC_RES_DUP_UNAVAILABLE = 20, /* Can't resend response */
 
+	EC_RES_COUNT,
+
 	EC_RES_MAX = UINT16_MAX, /**< Force enum to be 16 bits */
 } __packed;
 BUILD_ASSERT(sizeof(enum ec_status) == sizeof(uint16_t));
@@ -735,6 +737,39 @@ BUILD_ASSERT((uint16_t)EC_RES_DUP_UNAVAILABLE ==
 	     (uint16_t)EC_HOST_CMD_DUP_UNAVAILABLE);
 BUILD_ASSERT((uint16_t)EC_RES_MAX == (uint16_t)EC_HOST_CMD_MAX);
 
+#endif
+
+/* clang-format off */
+#define EC_STATUS_TEXT                                                        \
+	{                                                                     \
+	EC_MAP_ITEM(EC_RES_SUCCESS, SUCCESS),                                 \
+	EC_MAP_ITEM(EC_RES_INVALID_COMMAND, INVALID_COMMAND),                 \
+	EC_MAP_ITEM(EC_RES_ERROR, ERROR),                                     \
+	EC_MAP_ITEM(EC_RES_INVALID_PARAM, INVALID_PARAM),                     \
+	EC_MAP_ITEM(EC_RES_ACCESS_DENIED, ACCESS_DENIED),                     \
+	EC_MAP_ITEM(EC_RES_INVALID_RESPONSE, INVALID_RESPONSE),               \
+	EC_MAP_ITEM(EC_RES_INVALID_VERSION, INVALID_VERSION),                 \
+	EC_MAP_ITEM(EC_RES_INVALID_CHECKSUM, INVALID_CHECKSUM),               \
+	EC_MAP_ITEM(EC_RES_IN_PROGRESS, IN_PROGRESS),                         \
+	EC_MAP_ITEM(EC_RES_UNAVAILABLE, UNAVAILABLE),                         \
+	EC_MAP_ITEM(EC_RES_TIMEOUT, TIMEOUT),                                 \
+	EC_MAP_ITEM(EC_RES_OVERFLOW, OVERFLOW),                               \
+	EC_MAP_ITEM(EC_RES_INVALID_HEADER, INVALID_HEADER),                   \
+	EC_MAP_ITEM(EC_RES_REQUEST_TRUNCATED, REQUEST_TRUNCATED),             \
+	EC_MAP_ITEM(EC_RES_RESPONSE_TOO_BIG, RESPONSE_TOO_BIG),               \
+	EC_MAP_ITEM(EC_RES_BUS_ERROR, BUS_ERROR),                             \
+	EC_MAP_ITEM(EC_RES_BUSY, BUSY),                                       \
+	EC_MAP_ITEM(EC_RES_INVALID_HEADER_VERSION, INVALID_HEADER_VERSION),   \
+	EC_MAP_ITEM(EC_RES_INVALID_HEADER_CRC, INVALID_HEADER_CRC),           \
+	EC_MAP_ITEM(EC_RES_INVALID_DATA_CRC, INVALID_DATA_CRC),               \
+	EC_MAP_ITEM(EC_RES_DUP_UNAVAILABLE, DUP_UNAVAILABLE),                 \
+	}
+/* clang-format on */
+
+#ifndef __cplusplus
+#define EC_MAP_ITEM(k, v) [k] = #v
+BUILD_ASSERT(ARRAY_SIZE(((const char *[])EC_STATUS_TEXT)) == EC_RES_COUNT);
+#undef EC_MAP_ITEM
 #endif
 
 /*
