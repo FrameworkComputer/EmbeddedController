@@ -188,6 +188,9 @@
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_MKBP_USE_GPIO
 
+/* for Kernel debugging */
+#define CONFIG_EMULATED_SYSRQ
+
 /* Vboot Config */
 #define CONFIG_CRC8
 #define CONFIG_VBOOT_EFS2
