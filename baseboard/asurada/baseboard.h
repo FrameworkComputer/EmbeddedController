@@ -163,6 +163,9 @@
 #define CONFIG_KEYBOARD_PROTOCOL_MKBP
 #define CONFIG_MKBP_USE_GPIO
 
+/* for Kernel debugging */
+#define CONFIG_EMULATED_SYSRQ
+
 /* Voltage regulator control */
 #define CONFIG_HOSTCMD_REGULATOR
 
