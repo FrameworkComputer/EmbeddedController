@@ -110,6 +110,7 @@ EC_TEST_PATHS = [
 # Paths under ZEPHYR_BASE that we also wish to search for test cases.
 ZEPHYR_TEST_PATHS = [
     Path("tests/subsys/shell"),
+    Path("tests/drivers/fuel_gauge/sbs_gauge"),
 ]
 
 
