@@ -336,7 +336,7 @@ static void cypd_print_version(int controller, const char *vtype, uint8_t *data)
 	 * Base version: Cypress release version
 	 * Application version: FAE release version
 	 */
-	CPRINTS("Controller %d  %s version B:%X.%X.%X.%Xgit , AP:%X.%X.%X",
+	CPRINTS("Controller %d  %s version B:%X.%X.%X.%X , AP:%X.%X.%X",
 		controller, vtype,
 		(data[3]>>4) & 0xF, (data[3]) & 0xF, data[2], data[0] + (data[1]<<8),
 		(data[7]>>4) & 0xF, (data[7]) & 0xF, data[6]);
@@ -1569,35 +1569,27 @@ void cypd_interrupt(int controller)
 	if (data & CCG_ICLR_INTR)
 		clear_mask |= CCG_ICLR_INTR;
 
+	if (clear_mask)
+		cypd_clear_int(controller, clear_mask);
+
 	if (data & CCG_UCSI_INTR) {
 		ucsi_read_tunnel(controller);
 		cypd_clear_int(controller, CCG_UCSI_INTR);
 	}
 
-	cypd_clear_int(controller, clear_mask);
-}
-
-void pd0_chip_interrupt_deferred(void)
-{
-	task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_0);
 
 }
-DECLARE_DEFERRED(pd0_chip_interrupt_deferred);
-
-void pd1_chip_interrupt_deferred(void)
-{
-	task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_1);
-}
-DECLARE_DEFERRED(pd1_chip_interrupt_deferred);
 
 void pd0_chip_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(&pd0_chip_interrupt_deferred_data, 0);
+	if (gpio_pin_get_dt(gpio_get_dt_spec(pd_chip_config[PD_CHIP_0].gpio)) == 0)
+		task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_0);
 }
 
 void pd1_chip_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(&pd1_chip_interrupt_deferred_data, 0);
+	if (gpio_pin_get_dt(gpio_get_dt_spec(pd_chip_config[PD_CHIP_1].gpio)) == 0)
+		task_set_event(TASK_ID_CYPD, CCG_EVT_INT_CTRL_1);
 }
 
 static void cypd_ucsi_wait_delay_deferred(void)
@@ -1614,6 +1606,8 @@ void cypd_usci_ppm_reset(void)
 
 /*****************************************************************************/
 /* CYPD task */
+
+static int ucsi_tunnel_disabled;
 
 void cypd_interrupt_handler_task(void *p)
 {
@@ -1716,8 +1710,8 @@ void cypd_interrupt_handler_task(void *p)
 			 */
 			usleep(50);
 		}
-
-		check_ucsi_event_from_host();
+		if (!ucsi_tunnel_disabled)
+			check_ucsi_event_from_host();
 
 		for (i = 0; i < PD_CHIP_COUNT; i++) {
 			const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[i].gpio);
@@ -2028,6 +2022,9 @@ static int cmd_cypd_control(int argc, const char **argv)
 		} else if (!strncmp(argv[1], "verbose", 7)) {
 			verbose_msg_logging = (i != 0);
 			CPRINTS("verbose=%d", verbose_msg_logging);
+		} else if (!strncmp(argv[1], "ucsitun", 7)) {
+			ucsi_tunnel_disabled = !i;
+			CPRINTS("ucsi tun=%d", i);
 		} else if (!strncmp(argv[1], "ucsi", 4)) {
 			ucsi_set_debug(i != 0);
 			CPRINTS("ucsi verbose=%d", i);
