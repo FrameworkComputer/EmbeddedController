@@ -76,9 +76,9 @@ ZTEST(temp_current, test_current_limit_in_each_zone)
 		{ battflag[0], 384, 446, 343, 446, current_table[3], POWER_S0 },
 		{ battflag[0], 257, 446, 209, 446, current_table[4], POWER_S0 },
 		{ battflag[0], 209, 446, 257, 446, current_table[3], POWER_S0 },
-		{ battflag[0], 376, 446, 390, 446, current_table[2], POWER_S0 },
-		{ battflag[0], 376, 446, 418, 446, current_table[1], POWER_S0 },
-		{ battflag[0], 418, 446, 483, 446, current_table[0], POWER_S0 },
+		{ battflag[0], 376, 446, 411, 446, current_table[2], POWER_S0 },
+		{ battflag[0], 411, 446, 439, 446, current_table[1], POWER_S0 },
+		{ battflag[0], 439, 446, 483, 446, current_table[0], POWER_S0 },
 	};
 	for (int i = 0; i < ARRAY_SIZE(testdata); i++) {
 		test_table(testdata[i].batt, testdata[i].chgv1,

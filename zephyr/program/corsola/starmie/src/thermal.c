@@ -107,9 +107,9 @@ int charger_profile_override(struct charge_state_data *curr)
 					temp_zone = TEMP_OUT_OF_RANGE;
 				else if (charger_temp_ave < 45)
 					temp_zone = TEMP_ZONE_0;
-				else if (charger_temp_ave < 50)
+				else if (charger_temp_ave < 48)
 					temp_zone = TEMP_ZONE_1;
-				else if (charger_temp_ave < 54)
+				else if (charger_temp_ave < 52)
 					temp_zone = TEMP_ZONE_2;
 				else
 					temp_zone = TEMP_ZONE_3;
