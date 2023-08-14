@@ -159,7 +159,16 @@ static void thermal_control_dptf(void)
 		 * bus to the sensors; forcing a shutdown in that case would
 		 * merely hamper board bringup.
 		 */
+#ifndef CONFIG_CUSTOMIZED_DESIGN
 		if (!chipset_in_state(CHIPSET_STATE_HARD_OFF))
+#else
+		/*
+		 * at Lotus and azalea all temps sensor power source reference SLP_S3
+		 * so don't read any temps sensor when power not ready
+		 */
+		if (chipset_in_state(CHIPSET_STATE_ON)	||
+			chipset_in_state(CHIPSET_STATE_STANDBY))
+#endif
 			smi_sensor_failure_warning();
 	}
 

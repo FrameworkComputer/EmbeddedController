@@ -162,7 +162,16 @@ static void thermal_control(void)
 		 * on if the AP is out of G3. Note this could be 'ANY_OFF' as
 		 * well, but that causes the thermal unit test to fail.
 		 */
+#ifndef CONFIG_CUSTOMIZED_DESIGN
 		if (!chipset_in_state(CHIPSET_STATE_HARD_OFF))
+#else
+		/*
+		 * at Lotus and azalea all temps sensor power source reference SLP_S3
+		 * so don't read any temps sensor when power not ready
+		 */
+		if (chipset_in_state(CHIPSET_STATE_ON)	||
+			chipset_in_state(CHIPSET_STATE_STANDBY))
+#endif
 			smi_sensor_failure_warning();
 		return;
 	}
