@@ -83,6 +83,9 @@ void watchdog_warning_irq(void)
 		     get_mepc(), ira, task_get_current());
 #endif
 
+	if (IS_ENABLED(CONFIG_PANIC_ON_WATCHDOG_WARNING))
+		software_panic(PANIC_SW_WATCHDOG, task_get_current());
+
 	if (!wdt_warning_fired++)
 		/*
 		 * Reduce interval of warning timer, so we can print more

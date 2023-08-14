@@ -48,4 +48,7 @@ void watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 	 * messages might not appear but they are useless in that situation. */
 	timer_print_info();
 	task_print_list();
+
+	if (IS_ENABLED(CONFIG_PANIC_ON_WATCHDOG_WARNING))
+		software_panic(PANIC_SW_WATCHDOG, task_get_current());
 }

@@ -1780,6 +1780,15 @@
 #define CONFIG_SYSTEM_SAFE_MODE_PRINT_STACK
 
 /*
+ * Panic on watchdog warning instead of waiting for a regular watchdog.
+ * Combined with with system safe mode, this allows for capturing
+ * extra debug information about the system state.
+ * WATCHDOG_PERIOD_MS should be lengthened when this option is enabled,
+ * since it is effectivley shortened by WATCHDOG_WARNING_LEADING_TIME_MS.
+ */
+#undef CONFIG_PANIC_ON_WATCHDOG_WARNING
+
+/*
  * Provide the default GPIO abstraction layer.
  * You want this unless you are doing a really tiny firmware.
  */
