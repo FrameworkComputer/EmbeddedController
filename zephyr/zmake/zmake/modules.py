@@ -27,7 +27,7 @@ known_modules = {
     "ec": lambda name, checkout: (checkout / "src" / "platform" / "ec"),
     "nanopb": third_party_module,
     "pigweed": lambda name, checkout: (checkout / "src" / "third_party" / name),
-    "hal_intel": third_party_module,
+    "hal_intel_public": third_party_module,
     "ish": third_party_module,
 }
 
