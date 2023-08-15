@@ -120,8 +120,20 @@ void dptf_set_temp_threshold(int sensor_id, int temp, int idx, int enable)
 /*****************************************************************************/
 /* EC-specific thermal controls */
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+__overridable int board_temp_smi_evet(void)
+{
+	/* Do nothing by default. Boards can modify the temps condition */
+	return true;
+}
+#endif
+
 test_mockable_static void smi_sensor_failure_warning(void)
 {
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	if (!board_temp_smi_evet())
+		return;
+#endif
 	CPRINTS("can't read any temp sensors!");
 	host_set_single_event(EC_HOST_EVENT_THERMAL);
 }

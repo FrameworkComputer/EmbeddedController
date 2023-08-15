@@ -19,6 +19,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "system.h"
+#include "temp_sensor.h"
 #include "util.h"
 #include "zephyr_console_shim.h"
 
@@ -187,3 +188,18 @@ static void bios_function_init(void)
 	check_chassis_open();
 }
 DECLARE_HOOK(HOOK_INIT, bios_function_init, HOOK_PRIO_DEFAULT + 1);
+
+/*
+ * at Lotus and azalea all temps sensor power source reference SLP_S3
+ * so don't read any temps sensor when power not ready.
+ */
+__override int board_temp_smi_evet(void)
+{
+	/*
+	 * we don't send thermal smi event to host, if need any
+	 * printing, add log and condition in here, don't need
+	 * return true.
+	 */
+
+	return false;
+}
