@@ -96,6 +96,7 @@
 /* CEC */
 #define CONFIG_CEC
 #define CONFIG_CEC_BITBANG
+#define CONFIG_CEC_IT83XX
 
 /* No Keyboard */
 #undef CONFIG_KEYBOARD_COL2_INVERTED
@@ -161,7 +162,7 @@ enum temp_sensor_id {
 	TEMP_SENSOR_COUNT
 };
 
-enum cec_port { CEC_PORT_0, CEC_PORT_COUNT };
+enum cec_port { CEC_PORT_0, CEC_PORT_1, CEC_PORT_COUNT };
 
 #endif /* !__ASSEMBLER__ */
 
