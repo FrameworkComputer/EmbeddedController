@@ -533,6 +533,31 @@ void cypd_release_port(int controller, int port)
 	}
 }
 
+void cypd_clear_port(int controller, int port)
+{
+	int port_idx = (controller << 1) + port;
+
+	if (cypd_port_3a_status(controller, port)) {
+		pd_3a_set = 0;
+		pd_3a_flag = 0;
+	}
+
+	switch (port_idx) {
+	case 0:
+		pd_port0_1_5A = 0;
+		break;
+	case 1:
+		pd_port1_1_5A = 0;
+		break;
+	case 2:
+		pd_port2_1_5A = 0;
+		break;
+	case 3:
+		pd_port3_1_5A = 0;
+		break;
+	}
+}
+
 /*
  * function for profile check, if profile not change
  * don't send again.
@@ -592,17 +617,38 @@ static void cypd_set_prepare_pdo(int controller, int port)
 	switch (controller) {
 	case 0:
 		if (!port)
-			hook_call_deferred(&pdo_c0p0_deferred_data, 10 * MSEC);
+			hook_call_deferred(&pdo_c0p0_deferred_data, 2000 * MSEC);
 		else
-			hook_call_deferred(&pdo_c0p1_deferred_data, 20 * MSEC);
+			hook_call_deferred(&pdo_c0p1_deferred_data, 2100 * MSEC);
 		break;
 	case 1:
 		if (!port)
-			hook_call_deferred(&pdo_c1p0_deferred_data, 10 * MSEC);
+			hook_call_deferred(&pdo_c1p0_deferred_data, 2000 * MSEC);
 		else
-			hook_call_deferred(&pdo_c1p1_deferred_data, 20 * MSEC);
+			hook_call_deferred(&pdo_c1p1_deferred_data, 2100 * MSEC);
 		break;
 	}
+}
+
+static int cypd_modify_profile(int controller, int port, int profile)
+{
+	int rv;
+
+	if (verbose_msg_logging)
+		CPRINTS("PD Select PDO %s ", profile & 0x02 ? "3A" : "1.5A");
+
+	rv = cypd_select_pdo(controller, port, profile);
+	if (rv != EC_SUCCESS) {
+		CPRINTS("PD Select PDO %s failed", profile & 0x02 ? "3A" : "1.5A");
+		cypd_clear_port(controller, port);
+		cypd_set_prepare_pdo(controller, port);
+		return rv;
+	}
+
+	if (profile == CCG_PD_CMD_SET_TYPEC_1_5A)
+		cypd_port_1_5a_set(controller, port);
+
+	return EC_SUCCESS;
 }
 
 void cypd_set_typec_profile(int controller, int port)
@@ -638,40 +684,16 @@ void cypd_set_typec_profile(int controller, int port)
 				cypd_port_3a_status(controller, port)) {
 				if (!cypd_port_3a_set(controller, port))
 					return;
-				rv = cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_3A);
-				if (rv != EC_SUCCESS) {
-					CPRINTS("PD Select PDO 3A failed");
-					pd_3a_set = 0;
-					cypd_set_prepare_pdo(controller, port);
+				rv = cypd_modify_profile(controller, port, CCG_PD_CMD_SET_TYPEC_3A);
+			} else if (rdo_max_current <= 1500) {
+				if (cypd_profile_check(controller, port))
 					return;
-				}
-			} else if (rdo_max_current <= 1500 &&
-					!cypd_profile_check(controller, port)) {
-				rv = cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_1_5A);
-				if (rv != EC_SUCCESS) {
-					CPRINTS("PD Select PDO 1.5A failed");
-					cypd_set_prepare_pdo(controller, port);
-					return;
-				}
-				cypd_port_1_5a_set(controller, port);
-			} else if (!pd_3a_flag &&
-					cypd_port_3a_set(controller, port)) {
-				rv = cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_3A);
-				if (rv != EC_SUCCESS) {
-					CPRINTS("PD Select PDO 3A failed");
-					pd_3a_set = 0;
-					cypd_set_prepare_pdo(controller, port);
-					return;
-				}
-			} else if (!cypd_profile_check(controller, port)) {
-				rv = cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_1_5A);
-				if (rv != EC_SUCCESS) {
-					CPRINTS("PD Select PDO 1.5A failed");
-					cypd_set_prepare_pdo(controller, port);
-					return;
-				}
-				cypd_port_1_5a_set(controller, port);
-			}
+				rv = cypd_modify_profile(controller, port, CCG_PD_CMD_SET_TYPEC_1_5A);
+			} else if (!pd_3a_flag && cypd_port_3a_set(controller, port))
+				rv = cypd_modify_profile(controller, port, CCG_PD_CMD_SET_TYPEC_3A);
+			else if (!cypd_profile_check(controller, port))
+				rv = cypd_modify_profile(controller, port, CCG_PD_CMD_SET_TYPEC_1_5A);
+
 		} else {
 			cypd_write_reg8(controller, CCG_PD_CONTROL_REG(port),
 				CCG_PD_CMD_SET_TYPEC_1_5A);
