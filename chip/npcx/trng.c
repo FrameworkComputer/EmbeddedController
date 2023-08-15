@@ -207,7 +207,8 @@ uint32_t trng_rand(void)
 		software_panic(PANIC_SW_BAD_RNG, task_get_current());
 	}
 
-	status = NCL_DRBG->generate(NULL, NULL, 0, (uint8_t *)&return_value, 4);
+	status =
+		NCL_DRBG->generate(ctx_p, NULL, 0, (uint8_t *)&return_value, 4);
 	if (status != NCL_STATUS_OK) {
 		ccprintf("ERROR! DRBG generate returned %x\r", status);
 		software_panic(PANIC_SW_BAD_RNG, task_get_current());
