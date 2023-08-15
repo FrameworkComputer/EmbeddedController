@@ -7,6 +7,7 @@
 #include "battery_fuel_gauge.h"
 #include "charge_manager.h"
 #include "charger.h"
+#include "util.h"
 
 #include <zephyr/logging/log.h>
 

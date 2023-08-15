@@ -14,6 +14,12 @@ config BOARD_SCREEBO
 	  Build Google Screebo variant board. The board uses Nuvoton
 	  NPCX9 chip as the EC.
 
+config BOARD_KARIS
+	bool "Google Karis Board"
+	help
+	  Build Google Karis variant board. The board uses Nuvoton
+	  NPCX9 chip as the EC.
+
 module = REX
 module-str = Rex board-specific code
 source "subsys/logging/Kconfig.template.log_config"
