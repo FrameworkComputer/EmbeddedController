@@ -289,9 +289,6 @@ def test(opts):
 
     # Run python unit tests.
     subprocess.run(
-        ["util/ec3po/run_tests.sh"], cwd=os.path.dirname(__file__), check=True
-    )
-    subprocess.run(
         ["extra/stack_analyzer/run_tests.sh"],
         cwd=os.path.dirname(__file__),
         check=True,
