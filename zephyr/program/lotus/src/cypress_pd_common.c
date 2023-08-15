@@ -684,15 +684,19 @@ void cypd_set_typec_profile(int controller, int port)
 				cypd_port_3a_status(controller, port)) {
 				if (!cypd_port_3a_set(controller, port))
 					return;
-				rv = cypd_modify_profile(controller, port, CCG_PD_CMD_SET_TYPEC_3A);
+				rv = cypd_modify_profile(controller, port,
+						CCG_PD_CMD_SET_TYPEC_3A);
 			} else if (rdo_max_current <= 1500) {
 				if (cypd_profile_check(controller, port))
 					return;
-				rv = cypd_modify_profile(controller, port, CCG_PD_CMD_SET_TYPEC_1_5A);
+				rv = cypd_modify_profile(controller, port,
+						CCG_PD_CMD_SET_TYPEC_1_5A);
 			} else if (!pd_3a_flag && cypd_port_3a_set(controller, port))
-				rv = cypd_modify_profile(controller, port, CCG_PD_CMD_SET_TYPEC_3A);
+				rv = cypd_modify_profile(controller, port,
+						CCG_PD_CMD_SET_TYPEC_3A);
 			else if (!cypd_profile_check(controller, port))
-				rv = cypd_modify_profile(controller, port, CCG_PD_CMD_SET_TYPEC_1_5A);
+				rv = cypd_modify_profile(controller, port,
+						CCG_PD_CMD_SET_TYPEC_1_5A);
 
 		} else {
 			cypd_write_reg8(controller, CCG_PD_CONTROL_REG(port),
