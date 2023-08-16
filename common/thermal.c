@@ -7,6 +7,12 @@
  * implementation from the original version that shipped on Link.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 15
+
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
