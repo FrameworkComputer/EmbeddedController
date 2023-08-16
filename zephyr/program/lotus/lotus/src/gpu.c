@@ -266,7 +266,8 @@ void gpu_smart_access_graphic(void)
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL) = gpu_status;
 
 	/* Polling to check the shared memory of the GPU */
-	if (chipset_in_state(CHIPSET_STATE_ON))
+	if (!chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) ||
+	    !chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		hook_call_deferred(&gpu_smart_access_graphic_data, 10 * MSEC);
 }
 
