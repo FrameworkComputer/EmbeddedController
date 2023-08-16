@@ -16,6 +16,22 @@ tests:
     - default/prj.conf
     extra_dtc_overlay_files:
     - default/boards/native_posix.overlay
+  drivers.default.dp21:
+    timeout: 360
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_DEFAULT=y
+    - CONFIG_LINK_TEST_SUITE_USB_MALFUNCTION_SINK=y
+    - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    - CONFIG_PLATFORM_EC_LID_ANGLE_UPDATE=y
+    - CONFIG_PLATFORM_EC_USB_PD_DPS=y
+    - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
+    - CONFIG_PLATFORM_EC_CONSOLE_CMD_TCPC_DUMP=y
+    - CONFIG_PLATFORM_EC_USB_PD_DP21_MODE=y
+    extra_conf_files:
+    - prj.conf
+    - default/prj.conf
+    extra_dtc_overlay_files:
+    - default/boards/native_posix.overlay
   drivers.default.ec_host_cmd:
     timeout: 360
     extra_configs:

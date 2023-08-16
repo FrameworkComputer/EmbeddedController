@@ -14,6 +14,7 @@
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
+#include "usb_dp_alt_mode.h"
 #include "usb_prl_sm.h"
 #include "usb_tc_sm.h"
 
@@ -268,6 +269,84 @@ ZTEST_USER(bb_retimer_no_tasks, test_bb_retimer_set_dp_connection)
 		      "Expected state 0x%02x, got 0x%02x", disable_dp_conn,
 		      conn);
 }
+
+#if defined(EC_USB_PD_DP21_MODE)
+ZTEST_USER(bb_retimer_no_tasks, test_bb_set_dfp_dp_21_cable)
+{
+	union dp_mode_resp_cable cable_resp;
+	union dp_mode_cfg device_resp;
+	struct pd_discovery *disc, *dev_disc;
+	uint32_t conn, exp_conn;
+	const struct emul *emul = EMUL_DT_GET(BB_RETIMER_NODE);
+	bool ack_required;
+
+	set_test_runner_tid();
+
+	tc_set_data_role(USBC_PORT_C1, PD_ROLE_DFP);
+	zassert_equal(PD_ROLE_DFP, pd_get_data_role(USBC_PORT_C1));
+
+	/* Set active cable type */
+	disc = pd_get_am_discovery_and_notify_access(USBC_PORT_C1,
+						     TCPCI_MSG_SOP_PRIME);
+	disc->identity.idh.product_type = IDH_PTYPE_ACABLE;
+	disc->identity.product_t2.a2_rev30.active_elem = ACTIVE_RETIMER;
+	disc->identity.product_t1.p_rev30.ss = USB_R30_SS_U32_U40_GEN2;
+	prl_set_rev(USBC_PORT_C1, TCPCI_MSG_SOP_PRIME, PD_REV30);
+
+	/* Set cable VDO */
+	disc->svid_cnt = 1;
+	disc->svids[0].svid = USB_SID_DISPLAYPORT;
+	disc->svids[0].discovery = PD_DISC_COMPLETE;
+	disc->svids[0].mode_cnt = 1;
+	disc->svdm_vers = SVDM_VER_2_1;
+	cable_resp.dpam_ver = DPAM_VERSION_21;
+	cable_resp.active_comp = DP21_ACTIVE_RETIMER_CABLE;
+	disc->svids[0].mode_vdo[0] = cable_resp.raw_value;
+
+	/* Set device VDO */
+	dev_disc = pd_get_am_discovery_and_notify_access(USBC_PORT_C1,
+							 TCPCI_MSG_SOP);
+	dev_disc->svid_cnt = 1;
+	dev_disc->svids[0].svid = USB_SID_DISPLAYPORT;
+	dev_disc->svids[0].discovery = PD_DISC_COMPLETE;
+	dev_disc->svids[0].mode_cnt = 1;
+	device_resp.dpam_ver = DPAM_VERSION_21;
+	dev_disc->svids[0].mode_vdo[0] = device_resp.raw_value;
+
+	/* Test DP mode with active cable */
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(usb_muxes[USBC_PORT_C1].mux,
+					 USB_PD_MUX_DP_ENABLED, &ack_required),
+		      NULL);
+	zassert_false(ack_required, "ACK is never required for BB retimer");
+	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
+	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
+		   BB_RETIMER_DP_CONNECTION | BB_RETIMER_RE_TIMER_DRIVER |
+		   BB_RETIMER_ACTIVE_PASSIVE |
+		   BB_RETIMER_USB4_TBT_CABLE_SPEED_SUPPORT(DP_HBR3) |
+		   BB_RETIMER_DP_PIN_ASSIGNMENT;
+	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
+		      exp_conn, conn);
+
+	cable_resp.active_comp = DP21_OPTICAL_CABLE;
+	disc->svids[0].mode_vdo[0] = cable_resp.raw_value;
+
+	/* Test DP mode with optical cable */
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(usb_muxes[USBC_PORT_C1].mux,
+					 USB_PD_MUX_DP_ENABLED, &ack_required),
+		      NULL);
+	zassert_false(ack_required, "ACK is never required for BB retimer");
+	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
+	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
+		   BB_RETIMER_DP_CONNECTION | BB_RETIMER_TBT_CABLE_TYPE |
+		   BB_RETIMER_ACTIVE_PASSIVE |
+		   BB_RETIMER_USB4_TBT_CABLE_SPEED_SUPPORT(DP_HBR3) |
+		   BB_RETIMER_DP_PIN_ASSIGNMENT;
+	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
+		      exp_conn, conn);
+}
+#endif
 
 /** Test setting different options for DFP role */
 ZTEST_USER(bb_retimer_no_tasks, test_bb_set_dfp_state)
