@@ -187,6 +187,9 @@
 			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
+		gpio_tchpad_lid_close: tchpad_lid_close {
+			gpios = <&gpio6 3 GPIO_OUTPUT>;
+		};
 	};
 
 	named-i2c-ports {
