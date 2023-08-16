@@ -15,7 +15,13 @@ import unittest
 
 from ec3po import interpreter
 from ec3po import threadproc_shim
-import mock  # pylint:disable=import-error
+
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock  # pylint:disable=import-error
+
 import six
 
 
