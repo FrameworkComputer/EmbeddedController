@@ -315,7 +315,7 @@ ZTEST_USER(bb_retimer_no_tasks, test_bb_set_dfp_state)
 	cable_resp.tbt_cable = TBT_CABLE_NON_OPTICAL;
 	cable_resp.retimer_type = USB_NOT_RETIMER;
 	cable_resp.lsrx_comm = BIDIR_LSRX_COMM;
-	cable_resp.tbt_active_passive = TBT_CABLE_PASSIVE;
+	cable_resp.tbt_active_passive = TBT_CABLE_ACTIVE;
 	disc->svids[0].mode_vdo[0] = cable_resp.raw_value;
 
 	/* Set device VDO */
@@ -342,6 +342,19 @@ ZTEST_USER(bb_retimer_no_tasks, test_bb_set_dfp_state)
 	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
 		   BB_RETIMER_USB_3_CONNECTION | BB_RETIMER_USB_3_SPEED |
 		   BB_RETIMER_RE_TIMER_DRIVER | BB_RETIMER_ACTIVE_PASSIVE;
+	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
+		      exp_conn, conn);
+
+	/* Test DP mode with active cable */
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(usb_muxes[USBC_PORT_C1].mux,
+					 USB_PD_MUX_DP_ENABLED, &ack_required),
+		      NULL);
+	zassert_false(ack_required, "ACK is never required for BB retimer");
+	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
+	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
+		   BB_RETIMER_DP_CONNECTION | BB_RETIMER_RE_TIMER_DRIVER |
+		   BB_RETIMER_ACTIVE_PASSIVE;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 
@@ -388,6 +401,19 @@ ZTEST_USER(bb_retimer_no_tasks, test_bb_set_dfp_state)
 	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
 		   BB_RETIMER_TBT_CONNECTION | BB_RETIMER_TBT_CABLE_TYPE |
 		   BB_RETIMER_ACTIVE_PASSIVE;
+	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
+		      exp_conn, conn);
+
+	/* Test DP mode with optical cable */
+	zassert_equal(EC_SUCCESS,
+		      bb_usb_retimer.set(usb_muxes[USBC_PORT_C1].mux,
+					 USB_PD_MUX_DP_ENABLED, &ack_required),
+		      NULL);
+	zassert_false(ack_required, "ACK is never required for BB retimer");
+	conn = bb_emul_get_reg(emul, BB_RETIMER_REG_CONNECTION_STATE);
+	exp_conn = BB_RETIMER_DATA_CONNECTION_PRESENT |
+		   BB_RETIMER_DP_CONNECTION | BB_RETIMER_TBT_CABLE_TYPE |
+		   BB_RETIMER_ACTIVE_PASSIVE | BB_RETIMER_RE_TIMER_DRIVER;
 	zassert_equal(exp_conn, conn, "Expected state 0x%lx, got 0x%lx",
 		      exp_conn, conn);
 
