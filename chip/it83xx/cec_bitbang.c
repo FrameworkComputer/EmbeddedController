@@ -113,7 +113,7 @@ void cec_tmr_cap_start(int port, enum cec_cap_edge edge, int timeout)
 		 */
 		if (timer_count < 0) {
 			timer_count = 0;
-			CPRINTS("CEC WARNING: timer_count < 0");
+			CPRINTS("CEC%d warning: timer_count < 0", port);
 		}
 
 		/* Start the timer and enable the timer interrupt */

@@ -126,7 +126,7 @@ int cec_process_offline_message(int port, const uint8_t *msg, uint8_t msg_len)
 		return EC_ERROR_INVAL;
 
 	snprintf_hex_buffer(str_buf, sizeof(str_buf), HEX_BUF(msg, msg_len));
-	CPRINTS("MSG: %s", str_buf);
+	CPRINTS("CEC%d offline msg: %s", port, str_buf);
 
 	/* Header-only, e.g. a polling message. No command, so nothing to do */
 	if (msg_len == 1)
@@ -200,7 +200,7 @@ int cec_rx_queue_pop(struct cec_rx_queue *queue, uint8_t *msg, uint8_t *msg_len)
 	if (*msg_len == 0 || *msg_len > MAX_CEC_MSG_LEN) {
 		mutex_unlock(&rx_queue_readoffset_mutex);
 		*msg_len = 0;
-		cprintf(CC_CEC, "Invalid CEC msg size: %u\n", *msg_len);
+		CPRINTS("CEC: Invalid msg size in queue: %u", *msg_len);
 		return -1;
 	}
 
@@ -232,7 +232,7 @@ test_export_static void send_mkbp_event(int port, uint32_t event)
 	 */
 	if ((event & CEC_SEND_RESULTS) &&
 	    (cec_mkbp_events[port] & CEC_SEND_RESULTS)) {
-		CPRINTS("CEC WARNING: host did not clear send result");
+		CPRINTS("CEC%d warning: host did not clear send result", port);
 		atomic_clear_bits(&cec_mkbp_events[port], CEC_SEND_RESULTS);
 	}
 
@@ -427,7 +427,7 @@ static int cec_get_next_msg(uint8_t *out)
 	const int port = 0;
 
 	if (CEC_PORT_COUNT != 1) {
-		CPRINTF("CEC error: cec_message used on device with %d ports\n",
+		CPRINTS("CEC error: cec_message used on device with %d ports",
 			CEC_PORT_COUNT);
 		return -1;
 	}
@@ -465,12 +465,12 @@ static void handle_received_message(int port)
 
 	if (cec_config[port].drv->get_received_message(port, &msg, &msg_len) !=
 	    EC_SUCCESS) {
-		cprints(CC_CEC, "CEC: failed to get received message");
+		CPRINTS("CEC%d failed to get received message", port);
 		return;
 	}
 
 	if (cec_process_offline_message(port, msg, msg_len) == EC_SUCCESS) {
-		CPRINTS("Message consumed offline");
+		CPRINTS("CEC%d message consumed offline", port);
 		/* Continue to queue message and notify AP. */
 	}
 	rv = cec_rx_queue_push(&cec_rx_queue[port], msg, msg_len);
@@ -506,7 +506,7 @@ void cec_task(void *unused)
 	uint32_t events;
 	int port;
 
-	CPRINTF("CEC task starting\n");
+	CPRINTS("CEC task starting");
 
 	while (1) {
 		task_wait_event(-1);
@@ -517,10 +517,10 @@ void cec_task(void *unused)
 			}
 			if (events & CEC_TASK_EVENT_OKAY) {
 				send_mkbp_event(port, EC_MKBP_CEC_SEND_OK);
-				CPRINTS("SEND OKAY");
+				CPRINTS("CEC%d SEND OKAY", port);
 			} else if (events & CEC_TASK_EVENT_FAILED) {
 				send_mkbp_event(port, EC_MKBP_CEC_SEND_FAILED);
-				CPRINTS("SEND FAILED");
+				CPRINTS("CEC%d SEND FAILED", port);
 			}
 		}
 	}

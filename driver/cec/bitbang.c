@@ -383,8 +383,9 @@ static void enter_state(int port, enum cec_state new_state)
 				 * recent one.
 				 */
 				if (cec_rx.received_message_available)
-					CPRINTS("CEC WARNING: received message "
-						"not read out, discarding");
+					CPRINTS("CEC%d: received message not "
+						"read out, discarding",
+						port);
 
 				memcpy(&cec_rx.received_message,
 				       &cec_rx.transfer,
@@ -719,13 +720,13 @@ static int bitbang_cec_set_enable(int port, uint8_t enable)
 
 		cec_enable_timer(port);
 
-		CPRINTF("CEC enabled\n");
+		CPRINTS("CEC%d enabled", port);
 	} else {
 		cec_disable_timer(port);
 
 		enter_state(port, CEC_STATE_DISABLED);
 
-		CPRINTF("CEC disabled\n");
+		CPRINTS("CEC%d disabled", port);
 	}
 
 	return EC_SUCCESS;
@@ -741,7 +742,7 @@ static int bitbang_cec_get_logical_addr(int port, uint8_t *logical_addr)
 static int bitbang_cec_set_logical_addr(int port, uint8_t logical_addr)
 {
 	cec_addr = logical_addr;
-	CPRINTF("CEC address set to: %u\n", cec_addr);
+	CPRINTS("CEC%d address set to: %u", port, cec_addr);
 
 	return EC_SUCCESS;
 }
@@ -759,7 +760,7 @@ static int bitbang_cec_send(int port, const uint8_t *msg, uint8_t len)
 	cec_tx.len = len;
 
 	snprintf_hex_buffer(str_buf, sizeof(str_buf), HEX_BUF(msg, len));
-	CPRINTS("Send CEC: 0x%s", str_buf);
+	CPRINTS("CEC%d send: 0x%s", port, str_buf);
 
 	memcpy(cec_tx.transfer.buf, msg, len);
 
