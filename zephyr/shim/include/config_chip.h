@@ -1119,8 +1119,10 @@ extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 /* USB-C things */
 #ifdef CONFIG_PLATFORM_EC_USBC
 
-/* Zephyr only supports v2 so we always define this */
+#undef CONFIG_USB_PD_TCPMV2
+#ifdef CONFIG_PLATFORM_EC_USB_PD_TCPMV2
 #define CONFIG_USB_PD_TCPMV2
+#endif
 
 /*
  * Define these here for now. They are not actually CONFIG options in the EC

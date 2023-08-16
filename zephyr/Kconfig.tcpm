@@ -4,6 +4,15 @@
 
 if PLATFORM_EC_USBC
 
+config PLATFORM_EC_USB_PD_TCPMV2
+	bool "USB-C Power Delivery TCPM Version 2"
+	default y
+	help
+	  Enable USB-C Power Delivery Type-C Port Manager Version 2. It
+	  implements a layered, state-based design which tracks more closely
+	  with the USB Type-C and USB PD specifications.
+	  Zephyr only supports v2 so we always define this.
+
 config PLATFORM_EC_USB_PD_TCPM_TCPCI
 	bool "TCPCI Compatible Driver"
 	select PLATFORM_EC_USBC_OCP
