@@ -8,6 +8,7 @@
 #include "console.h"
 #include "driver/cec/bitbang.h"
 #include "gpio.h"
+#include "printf.h"
 #include "task.h"
 #include "util.h"
 
@@ -747,7 +748,7 @@ static int bitbang_cec_set_logical_addr(int port, uint8_t logical_addr)
 
 static int bitbang_cec_send(int port, const uint8_t *msg, uint8_t len)
 {
-	int i;
+	char str_buf[hex_str_buf_size(len)];
 
 	if (cec_state == CEC_STATE_DISABLED)
 		return EC_ERROR_BUSY;
@@ -757,9 +758,8 @@ static int bitbang_cec_send(int port, const uint8_t *msg, uint8_t len)
 
 	cec_tx.len = len;
 
-	CPRINTS("Send CEC:");
-	for (i = 0; i < len && i < MAX_CEC_MSG_LEN; i++)
-		CPRINTS(" 0x%02x", msg[i]);
+	snprintf_hex_buffer(str_buf, sizeof(str_buf), HEX_BUF(msg, len));
+	CPRINTS("Send CEC: 0x%s", str_buf);
 
 	memcpy(cec_tx.transfer.buf, msg, len);
 
