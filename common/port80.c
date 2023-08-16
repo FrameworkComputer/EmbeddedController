@@ -59,7 +59,7 @@ DECLARE_DEFERRED(port_80_read_customized);
 void port_80_read_customized(int index)
 {
 	if (has_port_80_data) {
-		CPRINTF("PORT80: %04X\n", (history[writes % ARRAY_SIZE(history)] & 0xFFFF));
+		CPRINTF("PORT80: %04X\n", (history[(writes-1) % ARRAY_SIZE(history)] & 0xFFFF));
 		has_port_80_data = 0;
 	}
 }
