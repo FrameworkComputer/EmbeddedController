@@ -405,15 +405,20 @@ static void cypd_pdo_init(int controller, int port, uint8_t profile)
 		CPRINTS("CLEAR CCG_MEMORY failed");
 }
 
-static int cypd_select_pdo(int controller, int port, uint8_t profile)
+static int cypd_select_rp(int controller, int port, uint8_t profile)
 {
 	int rv;
 
-	if (profile == CCG_PD_CMD_SET_TYPEC_3A) {
-		rv = cypd_write_reg8_wait_ack(controller, CCG_PD_CONTROL_REG(port), profile);
-		if (rv != EC_SUCCESS)
-			CPRINTS("SET TYPEC RP failed");
-	}
+	rv = cypd_write_reg8_wait_ack(controller, CCG_PD_CONTROL_REG(port), profile);
+	if (rv != EC_SUCCESS)
+		CPRINTS("SET TYPEC RP failed");
+
+	return rv;
+}
+
+static int cypd_select_pdo(int controller, int port, uint8_t profile)
+{
+	int rv;
 
 	rv = cypd_write_reg8_wait_ack(controller, CCG_SELECT_SOURCE_PDO_REG(port), profile);
 	if (rv != EC_SUCCESS)
@@ -512,6 +517,8 @@ void cypd_release_port(int controller, int port)
 	int port_idx = (controller << 1) + port;
 
 	/* if port disconnect should set RP and PDO to default */
+
+	cypd_select_rp(controller, port, CCG_PD_CMD_SET_TYPEC_1_5A);
 	cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_3A);
 
 	if (cypd_port_3a_status(controller, port)) {
@@ -639,6 +646,12 @@ static int cypd_modify_profile(int controller, int port, int profile)
 	if (verbose_msg_logging)
 		CPRINTS("PD Select PDO %s ", profile & 0x02 ? "3A" : "1.5A");
 
+	if (profile == CCG_PD_CMD_SET_TYPEC_3A) {
+		rv = cypd_select_rp(controller, port, profile);
+		if (rv != EC_SUCCESS)
+			return rv;
+	}
+
 	rv = cypd_select_pdo(controller, port, profile);
 	if (rv != EC_SUCCESS) {
 		CPRINTS("PD Select PDO %s failed", profile & 0x02 ? "3A" : "1.5A");
@@ -647,6 +660,7 @@ static int cypd_modify_profile(int controller, int port, int profile)
 		return rv;
 	}
 
+	/* Lock 1.5A port  */
 	if (profile == CCG_PD_CMD_SET_TYPEC_1_5A)
 		cypd_port_1_5a_set(controller, port);
 
