@@ -13,7 +13,13 @@
 #include "thermal.h"
 #include "util.h"
 
+#ifdef CONFIG_ZTEST
+#define TEMP_SENSOR_COUNT 1
+#define FAN_CH_COUNT 1
+#define TEMP_CPU 0
+#else
 #define TEMP_CPU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_cpu))
+#endif
 
 struct fan_step {
 	/*
@@ -38,7 +44,6 @@ struct fan_step {
 	},
 static const struct fan_step fan_table[] = { DT_FOREACH_CHILD(
 	DT_NODELABEL(fan_steps), FAN_TABLE_ENTRY) };
-
 static const struct fan_step *fan_step_table = fan_table;
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_table)
 
@@ -86,7 +91,7 @@ int fan_table_to_rpm(int fan, int *temp)
 	return fan_step_table[current_level].rpm[fan];
 }
 
-void board_override_fan_control(int fan, int *temp)
+test_mockable void board_override_fan_control(int fan, int *temp)
 {
 	int prev_rpm;
 	int current_rpm = 0;
