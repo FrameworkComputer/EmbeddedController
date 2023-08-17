@@ -636,16 +636,26 @@ host_cmd_get_next_event_v2(struct ec_response_get_next_event_v1 *response)
 	return host_command_process(&args);
 }
 
-static int get_next_cec_mkbp_event(struct ec_response_get_next_event_v1 *event)
+static int get_next_event(struct ec_response_get_next_event_v1 *event,
+			  enum ec_mkbp_event event_type)
 {
-	/* Read MKBP events until we find one of type CEC_EVENT */
+	/* Read MKBP events until we find one of the right type */
 	while (host_cmd_get_next_event_v2(event) == EC_RES_SUCCESS) {
-		if ((event->event_type & EC_MKBP_EVENT_TYPE_MASK) ==
-		    EC_MKBP_EVENT_CEC_EVENT)
+		if ((event->event_type & EC_MKBP_EVENT_TYPE_MASK) == event_type)
 			return 0;
 	}
 	/* No more events */
 	return -1;
+}
+
+static int get_next_cec_mkbp_event(struct ec_response_get_next_event_v1 *event)
+{
+	return get_next_event(event, EC_MKBP_EVENT_CEC_EVENT);
+}
+
+static int get_next_cec_message(struct ec_response_get_next_event_v1 *event)
+{
+	return get_next_event(event, EC_MKBP_EVENT_CEC_MESSAGE);
 }
 
 static bool cec_event_matches(struct ec_response_get_next_event_v1 *event,
@@ -1030,6 +1040,21 @@ ZTEST_USER_F(cec_common, test_receive_message_multiple_ports)
 		      EC_RES_UNAVAILABLE);
 	zassert_equal(host_cmd_cec_read(TEST_PORT_1, &response),
 		      EC_RES_UNAVAILABLE);
+}
+
+/* cec_message is not supported on devices with more than one port */
+ZTEST_USER_F(cec_common, test_cec_message_error)
+{
+	struct ec_response_get_next_event_v1 event;
+
+	/* This test case should run with more than one port */
+	zassert_true(CEC_PORT_COUNT > 1);
+
+	/* Set cec_message event */
+	mkbp_send_event(EC_MKBP_EVENT_CEC_MESSAGE);
+
+	/* Check no event was sent */
+	zassert_not_equal(get_next_cec_message(&event), 0);
 }
 
 ZTEST_USER_F(cec_common, test_hc_port_count)
