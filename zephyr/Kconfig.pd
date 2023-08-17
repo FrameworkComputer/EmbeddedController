@@ -20,15 +20,6 @@ menuconfig PLATFORM_EC_USB_POWER_DELIVERY
 
 if PLATFORM_EC_USB_POWER_DELIVERY
 
-config PLATFORM_EC_USB_PD_HOST_CMD
-	bool "Host commands related to USB Power Delivery"
-	default y
-	help
-	  This enables host commands which allow finding out the capabilities
-	  of USB PD, checking is status and controlling how it operates. For
-	  devices which support firmware update, this is provided as well,
-	  with the firmware being sent from the AP.
-
 config PLATFORM_EC_CONSOLE_CMD_MFALLOW
 	bool "Console command: mfallow"
 	default y
@@ -349,26 +340,6 @@ config PLATFORM_EC_USB_PD_DECODE_SOP
 	  This enables support for encoding of the message's Start Of Packet
 	  (SOP, SOP' and SOP'', collectively called SOP*) in bits 31-28 of the
 	  32-bit msg header type.
-
-config PLATFORM_EC_HOSTCMD_PD_CONTROL
-	bool "Host command: EC_CMD_PD_CONTROL"
-	default y
-	help
-	  Enable the EC_CMD_PD_CONTROL host command. This allows control
-	  of the USB-PD chip from the AP, including reset, suspend/resume
-	  and enabling power.
-
-	  This host command can be manually executed using the
-	  "ectool pdcontrol" command from the Chromium OS shell.
-
-config PLATFORM_EC_USB_PD_LOGGING
-	bool "Host command: EC_CMD_PD_GET_LOG_ENTRY"
-	help
-	  Enable logging of USB Power Delivery events. The AP can request the
-	  log to see what has happened recently.
-
-	  The log events are stored in a circular buffer, each one being a
-	  struct event_log_entry.
 
 config PLATFORM_EC_USB_PD_PRL_EVENT_LOG
 	bool "Log PRL state changes to a ring buffer"
