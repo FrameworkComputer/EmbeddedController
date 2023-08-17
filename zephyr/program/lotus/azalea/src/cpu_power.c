@@ -232,7 +232,6 @@ static void update_dc_safety_power_limit(void)
 				throttle_ap(THROTTLE_ON, THROTTLE_HARD,
 					THROTTLE_SRC_BAT_DISCHG_CURRENT);
 				dc_safety_power_limit_level = 1;
-				CPRINTF("batt ocp, prochot\n");
 			}
 		} else if (battery_current > (battery_current_limit_mA * 9 / 10)) {
 			/*
@@ -242,7 +241,6 @@ static void update_dc_safety_power_limit(void)
 			if (dc_safety_power_limit_level) {
 				throttle_ap(THROTTLE_OFF, THROTTLE_HARD,
 					THROTTLE_SRC_BAT_DISCHG_CURRENT);
-				CPRINTF("batt ocp, recovery prochot\n");
 				dc_safety_power_limit_level = 0;
 			} else {
 				if (power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL]
