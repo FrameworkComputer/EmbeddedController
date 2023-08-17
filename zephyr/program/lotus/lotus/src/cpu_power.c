@@ -12,6 +12,7 @@
 #include "extpower.h"
 #include "hooks.h"
 #include "math_util.h"
+#include "throttle_ap.h"
 #include "util.h"
 #include "gpu.h"
 
@@ -31,6 +32,7 @@ static int target_func[TYPE_COUNT];
 static int powerlimit_restore;
 static int slider_stt_table;
 static int power_stt_table;
+static int dc_safety_power_limit_level;
 
 static int update_sustained_power_limit(uint32_t mwatt)
 {
@@ -302,8 +304,6 @@ static void update_dc_safety_power_limit(void)
 	if (!(func_ctl & 0x4))
 		return;
 
-	static int powerlimit_level;
-
 	int new_mwatt;
 	int delta;
 	const struct batt_params *batt = charger_current_battery_params();
@@ -344,19 +344,19 @@ static void update_dc_safety_power_limit(void)
 				delta, power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL]);
 
 			if (new_mwatt < 15000) {
-				chipset_throttle_cpu(1);
-				powerlimit_level = 1;
-				CPRINTF("batt ocp, prochot\n");
+				throttle_ap(THROTTLE_ON, THROTTLE_HARD,
+					THROTTLE_SRC_BAT_DISCHG_CURRENT);
+				dc_safety_power_limit_level = 1;
 			}
 		} else if (battery_current > (battery_current_limit_mA * 9 / 10)) {
 			/*
 			 * increase apu power limit by
 			 * (1.2*((battery current - 3.57)* battery voltage)
 			 */
-			if (powerlimit_level) {
-				chipset_throttle_cpu(0);
-				CPRINTF("batt ocp, recovery prochot\n");
-				powerlimit_level = 0;
+			if (dc_safety_power_limit_level) {
+				throttle_ap(THROTTLE_OFF, THROTTLE_HARD,
+					THROTTLE_SRC_BAT_DISCHG_CURRENT);
+				dc_safety_power_limit_level = 0;
 			} else {
 				if (power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL]
 					== power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL]) {
@@ -425,6 +425,11 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		for (int item = TYPE_SPL; item < TYPE_COUNT; item++)
 			power_limit[FUNCTION_SAFETY].mwatt[item] = 0;
 		powerlimit_restore = 0;
+		if (dc_safety_power_limit_level) {
+			throttle_ap(THROTTLE_OFF, THROTTLE_HARD,
+					THROTTLE_SRC_BAT_DISCHG_CURRENT);
+			dc_safety_power_limit_level = 0;
+		}
 	}
 
 	/* when trigger thermal warm, reduce SPL to 15W */
