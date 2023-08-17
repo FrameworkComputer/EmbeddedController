@@ -182,7 +182,8 @@ static void update_os_power_slider(int mode, bool with_dc, int active_mpower)
 	}
 }
 
-static void update_adapter_power_limit(int battery_percent, int active_mpower, bool with_dc, int mode)
+static void update_adapter_power_limit(int battery_percent, int active_mpower,
+				       bool with_dc, int mode)
 {
 	if (!(func_ctl & 0x2))
 		return;
