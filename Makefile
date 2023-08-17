@@ -187,12 +187,12 @@ CFLAGS += -I$(realpath $(out))
 endif
 # Get the CONFIG_ and VARIANT_ options that are defined for this target and make
 # them into variables available to this build script
-_flag_cfg_ro:=$(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
-	-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_RO=$(EMPTY) include/config.h | \
-	grep -o "\#define \(CONFIG\|VARIANT\)_[A-Z0-9_]*" | cut -c9- | sort)
-_flag_cfg_rw:=$(_tsk_cfg_rw) $(shell $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
-	-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_RW=$(EMPTY) include/config.h | \
-	grep -o "\#define \(CONFIG\|VARIANT\)_[A-Z0-9_]*" | cut -c9- | sort)
+# Usage: $(shell $(call cmd_get_configs,<RO|RW>))
+cmd_get_configs = $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
+	-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_$(1)=$(EMPTY) include/config.h | \
+	grep -o "\#define \(CONFIG\|VARIANT\)_[A-Z0-9_]*" | cut -c9- | sort
+_flag_cfg_ro:=$(shell $(call cmd_get_configs,RO))
+_flag_cfg_rw:=$(_tsk_cfg_rw) $(shell $(call cmd_get_configs,RW))
 
 _flag_cfg:= $(filter $(_flag_cfg_ro), $(_flag_cfg_rw))
 _flag_cfg_ro:= $(filter-out $(_flag_cfg), $(_flag_cfg_ro))
