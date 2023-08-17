@@ -119,6 +119,8 @@ struct cec_header {
 #define CEC_MSG_TEXT_VIEW_ON 0x0d
 #define CEC_MSG_REPORT_PHYSICAL_ADDRESS 0x84
 #define CEC_MSG_DEVICE_VENDOR_ID 0x87
+#define CEC_MSG_REQUEST_ACTIVE_SOURCE 0x85
+#define CEC_MSG_SET_STREAM_PATH 0x86
 
 enum cec_action {
 	CEC_ACTION_NONE = 0,

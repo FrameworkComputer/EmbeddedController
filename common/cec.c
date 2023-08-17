@@ -87,11 +87,11 @@ void cec_rx_queue_flush(struct cec_rx_queue *queue)
 
 struct cec_offline_policy cec_default_policy[] = {
 	{
-		.command = CEC_MSG_IMAGE_VIEW_ON,
+		.command = CEC_MSG_REQUEST_ACTIVE_SOURCE,
 		.action = CEC_ACTION_POWER_BUTTON,
 	},
 	{
-		.command = CEC_MSG_TEXT_VIEW_ON,
+		.command = CEC_MSG_SET_STREAM_PATH,
 		.action = CEC_ACTION_POWER_BUTTON,
 	},
 	/* Terminator */
