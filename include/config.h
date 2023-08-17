@@ -2571,6 +2571,15 @@
 /* EC supports EC_CMD_PD_CHIP_INFO */
 #define CONFIG_HOSTCMD_PD_CHIP_INFO
 
+/* EC supports EC_CMD_TYPEC_DISCOVERY */
+#define CONFIG_HOSTCMD_TYPEC_DISCOVERY
+
+/* EC supports EC_CMD_TYPEC_CONTROL */
+#define CONFIG_HOSTCMD_TYPEC_CONTROL
+
+/* EC supports EC_CMD_TYPEC_STATUS */
+#define CONFIG_HOSTCMD_TYPEC_STATUS
+
 /*
  * Use if PD MCU controls charging (selecting charging port and input
  * current limit).

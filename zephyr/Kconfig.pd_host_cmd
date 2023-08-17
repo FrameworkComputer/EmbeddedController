@@ -53,4 +53,34 @@ config PLATFORM_EC_HOSTCMD_RWHASHPD
 	  This host command can be manually executed using the
 	  "ectool rwhashpd" command from the Chromium OS shell.
 
+config PLATFORM_EC_HOSTCMD_TYPEC_DISCOVERY
+	bool "Host command: EC_CMD_TYPEC_DISCOVERY"
+	default y
+	help
+	  Enables EC_CMD_TYPEC_DISCOVERY host command. This allows AP to
+	  get discovery information for port and type.
+
+	  This host command can be manually executed using the
+	  "ectool typecdiscovery" command from the Chromium OS shell.
+
+config PLATFORM_EC_HOSTCMD_TYPEC_CONTROL
+	bool "Host command: EC_CMD_TYPEC_CONTROL"
+	default y
+	help
+	  Enables EC_CMD_TYPEC_CONTROL host command. This allows AP to
+	  control USB PD policy.
+
+	  This host command can be manually executed using the
+	  "ectool typeccontrol" command from the Chromium OS shell.
+
+config PLATFORM_EC_HOSTCMD_TYPEC_STATUS
+	bool "Host command: EC_CMD_TYPEC_STATUS"
+	default y
+	help
+	  Enables EC_CMD_TYPEC_STATUS host command. This allows AP to
+	  get status information of port.
+
+	  This host command can be manually executed using the
+	  "ectool typecstatus" command from the Chromium OS shell.
+
 endif #  PLATFORM_EC_USBC
