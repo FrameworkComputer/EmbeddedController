@@ -2569,7 +2569,7 @@
 #undef CONFIG_HOSTCMD_PD
 
 /* EC supports EC_CMD_PD_CHIP_INFO */
-#define CONFIG_EC_CMD_PD_CHIP_INFO
+#define CONFIG_HOSTCMD_PD_CHIP_INFO
 
 /*
  * Use if PD MCU controls charging (selecting charging port and input

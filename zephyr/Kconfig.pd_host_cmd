@@ -33,4 +33,24 @@ config PLATFORM_EC_USB_PD_LOGGING
 	  The log events are stored in a circular buffer, each one being a
 	  struct event_log_entry.
 
+config PLATFORM_EC_HOSTCMD_PD_CHIP_INFO
+	bool "Host command: EC_CMD_PD_CHIP_INFO"
+	default y
+	help
+	  Enables EC_CMD_PD_CHIP_INFO host command. This allows AP to gather
+	  information of the connected PD chip.
+
+	  This host command can be manually executed using the
+	  "ectool pdchipinfo" command from the Chromium OS shell.
+
+config PLATFORM_EC_HOSTCMD_RWHASHPD
+	bool "Host command: EC_CMD_USB_PD_RW_HASH_ENTRY"
+	default y
+	help
+	  Enables EC_CMD_USB_PD_RW_HASH_ENTRY host command. This allows AP to
+	  set entry in PD MCU's device rw_hash table.
+
+	  This host command can be manually executed using the
+	  "ectool rwhashpd" command from the Chromium OS shell.
+
 endif #  PLATFORM_EC_USBC
