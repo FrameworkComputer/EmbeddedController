@@ -74,6 +74,11 @@ nereid_cx = register_binman_project(
     ],
 )
 
+nokris = register_nissa_project(
+    project_name="nokris",
+    chip="npcx9m3f",
+)
+
 craask = register_nissa_project(
     project_name="craask",
     chip="npcx9m3f",
