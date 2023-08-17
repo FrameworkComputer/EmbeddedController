@@ -31,6 +31,8 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, chipset_resume_hook, HOOK_PRIO_DEFAULT);
 FAKE_VALUE_FUNC(int, system_jumped_late);
 
 #define S5_INACTIVE_SEC 11
+/* S5_INACTIVE_SEC + PMIC_HARD_OFF_DELAY 9.6 sec + 1 sec buffer */
+#define POWER_OFF_DELAY_SEC 21
 
 /* mt8186 is_held flag */
 extern bool is_held;
@@ -118,7 +120,7 @@ static void power_seq_before(void *f)
 	/* Start from G3 */
 	power_set_state(POWER_G3);
 	set_signal_state(POWER_G3);
-	k_sleep(K_SECONDS(S5_INACTIVE_SEC));
+	k_sleep(K_SECONDS(POWER_OFF_DELAY_SEC));
 
 	RESET_FAKE(chipset_pre_init_hook);
 	RESET_FAKE(chipset_startup_hook);
@@ -161,7 +163,7 @@ ZTEST(power_seq, test_power_btn_short_press)
 	 */
 	zassert_equal(chipset_pre_init_hook_fake.call_count, 1);
 	zassert_equal(chipset_startup_hook_fake.call_count, 0);
-	k_sleep(K_SECONDS(S5_INACTIVE_SEC));
+	k_sleep(K_SECONDS(POWER_OFF_DELAY_SEC));
 	zassert_equal(power_get_state(), POWER_G3);
 }
 
@@ -182,7 +184,7 @@ ZTEST(power_seq, test_lid_open)
 	 */
 	zassert_equal(chipset_pre_init_hook_fake.call_count, 1);
 	zassert_equal(chipset_startup_hook_fake.call_count, 0);
-	k_sleep(K_SECONDS(S5_INACTIVE_SEC));
+	k_sleep(K_SECONDS(POWER_OFF_DELAY_SEC));
 	zassert_equal(power_get_state(), POWER_G3);
 }
 
@@ -431,6 +433,7 @@ static void power_chipset_init_subtest(enum power_state signal_state,
 		zassert_equal(power_get_state(), expected_state);
 	} else if (expected_state == POWER_S0 && signal_state == POWER_G3) {
 		/* Expect boot to S0 and fail at S5->S3 */
+		k_sleep(K_SECONDS(POWER_OFF_DELAY_SEC));
 		zassert_equal(chipset_pre_init_hook_fake.call_count, 1,
 			      "test_power_chipset_init line %d failed", line);
 	} else if (expected_state == POWER_G3 && signal_state == POWER_S0) {

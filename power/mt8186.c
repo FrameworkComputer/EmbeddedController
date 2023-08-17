@@ -405,9 +405,11 @@ enum power_state power_handle_state(enum power_state state)
 		GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 1);
 
 		if (power_wait_mask_signals_timeout(0, IN_AP_RST,
-						    PMIC_EN_TIMEOUT))
+						    PMIC_EN_TIMEOUT)) {
 			/* Give up, go back to G3. */
-			return POWER_S5G3;
+			is_shutdown = true;
+			return POWER_S3S5;
+		}
 
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);
