@@ -28,7 +28,7 @@ typedef int (*bsp_send_host_msg_poll_f)(uint32_t drbl, uint8_t *msg,
 typedef int (*bsp_init)(void);
 typedef int (*bsp_ack_host_f)(void);
 
-typedef void (*fwst_set_f)(uint32_t type, uint32_t value);
+typedef void (*set_ready_f)(uint32_t is_ready);
 
 struct heci_bsp_t {
 	uint16_t max_fragment_size;
@@ -44,7 +44,7 @@ struct heci_bsp_t {
 	/* below is must-have interfaces while open poll_write_support */
 	bsp_send_host_msg_poll_f poll_send_msg;
 	/* below is nice-to-have interfaces */
-	fwst_set_f fwst_set;
+	set_ready_f set_ready;
 };
 
 extern struct heci_bsp_t *host_intf;

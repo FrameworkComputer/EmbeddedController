@@ -12,7 +12,6 @@
 
 #include <bsp_helper.h>
 #include <host_bsp_service.h>
-#include <sedi_driver_fwst.h>
 #include <sedi_driver_ipc.h>
 #include <sedi_driver_rtc.h>
 
@@ -168,7 +167,7 @@ static void handle_host_time_sync(uint8_t *data, uint8_t data_len)
 	/* process system time sync  */
 	if (data_len == sizeof(struct host_clock_data)) {
 		/* new sync format, used when host is windows */
-		sedi_rtc_get_us(&saved_time.last_sync_fw_clock);
+		saved_time.last_sync_fw_clock = sedi_rtc_get_us();
 		if (sync_data->time_format.primary_source == TFMT_SYSTEM_TIME) {
 			saved_time.last_sync_host_clock_sys =
 				sync_data->primary_host_time;
@@ -182,7 +181,7 @@ static void handle_host_time_sync(uint8_t *data, uint8_t data_len)
 		}
 	} else if (data_len == sizeof(sync_data->primary_host_time)) {
 		/* old sync format, used when host is linux */
-		sedi_rtc_get_us(&saved_time.last_sync_fw_clock);
+		saved_time.last_sync_fw_clock = sedi_rtc_get_us();
 		saved_time.last_sync_host_clock_sys =
 			sync_data->primary_host_time;
 		saved_time.last_sync_host_clock_utc =
@@ -304,10 +303,8 @@ static int sys_mng_handler(uint32_t drbl)
 		send_reset_to_peer(MNG_RESET_NOTIFY_ACK, rst_msg->reset_id);
 		__fallthrough;
 	case MNG_RESET_NOTIFY_ACK:
-		if (host_intf->fwst_set) {
-			host_intf->fwst_set(ILUP_HOST, 1);
-			host_intf->fwst_set(HECI_READY, 1);
-		}
+		if (host_intf->set_ready)
+			host_intf->set_ready(1);
 		LOG_DBG("link is up");
 		break;
 	case MNG_TIME_UPDATE:

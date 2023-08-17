@@ -8,7 +8,6 @@
 #include "heci_intf.h"
 
 #include <host_bsp_service.h>
-#include <sedi_driver_fwst.h>
 #include <sedi_driver_ipc.h>
 
 #define IPC_NAME DT_LABEL(DT_NODELABEL(ipchost))

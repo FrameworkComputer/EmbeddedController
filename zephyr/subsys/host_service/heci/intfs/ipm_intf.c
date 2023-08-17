@@ -12,7 +12,6 @@
 #include <zephyr/drivers/ipm.h>
 
 #include <host_bsp_service.h>
-#include <sedi_driver_fwst.h>
 #include <sedi_driver_ipc.h>
 
 #define IPM_NAME DEVICE_DT_NAME(DT_NODELABEL(ipmhost))
@@ -46,6 +45,21 @@ static int send_host_ack(void)
 	return 0;
 }
 
+#define FWST_REG_ADDR 0x4100034
+#define FWST_READY 0x3
+void ipm_ready_set(uint32_t is_ready)
+{
+	uint32_t fwst;
+
+	if (is_ready == 0) {
+		/* Not support */
+		return;
+	}
+
+	fwst = sys_read32(FWST_REG_ADDR);
+	sys_write32(fwst | FWST_READY, FWST_REG_ADDR);
+}
+
 HECI_INTF_DEFINE(host)
 struct heci_bsp_t ipm_bsp = { .core_id = CONFIG_HECI_CORE_ID,
 			      .peer_is_host = 1,
@@ -57,7 +71,7 @@ struct heci_bsp_t ipm_bsp = { .core_id = CONFIG_HECI_CORE_ID,
 			      .send_ack = send_host_ack,
 			      .poll_send_msg = NULL,
 			      .init = ipm_intf_init,
-			      .fwst_set = sedi_fwst_set };
+			      .set_ready = ipm_ready_set };
 
 static void ipm_rx_handler(const struct device *dev, void *user_data,
 			   uint32_t id, volatile void *data)

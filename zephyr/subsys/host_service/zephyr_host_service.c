@@ -11,7 +11,6 @@
 
 #include <bsp_helper.h>
 #include <host_bsp_service.h>
-#include <sedi_driver_fwst.h>
 
 LOG_MODULE_REGISTER(host, CONFIG_HECI_LOG_LEVEL);
 
