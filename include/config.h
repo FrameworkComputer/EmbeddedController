@@ -1400,6 +1400,15 @@
 /* Wireless chargers */
 #undef CONFIG_CPS8100
 
+/*
+ * SM5803 PROCHOT configuration
+ * This follow the hardware default value.
+ */
+#define CONFIG_CHARGER_SM5803_PROCHOT_DURATION 2
+#define CONFIG_CHARGER_SM5803_VBUS_MON_SEL 2
+#define CONFIG_CHARGER_SM5803_VSYS_MON_SEL 10
+#define CONFIG_CHARGER_SM5803_IBAT_PHOT_SEL IBAT_SEL_MAX
+
 /*****************************************************************************/
 
 /*

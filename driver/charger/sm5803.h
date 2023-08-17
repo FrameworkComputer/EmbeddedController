@@ -391,6 +391,94 @@ enum sm5803_charger_modes {
 #define SM5803_PHOT1_DURATION_SHIFT 4
 #define SM5803_PHOT1_IRQ_MODE BIT(7)
 
+enum sm5803_phot1_duration {
+	PHOT1_DURATION_100us = 0,
+	PHOT1_DURATION_500us = 1,
+	PHOT1_DURATION_1ms = 2,
+	PHOT1_DURATION_2ms = 4,
+	PHOT1_DURATION_5ms = 6,
+	PHOT1_DURATION_10ms = 7
+};
+
+#define SM5803_REG_PHOT2 0x73
+#define SM5803_PHOT2_VBUS_SEL GENMASK(4, 0)
+
+enum sm5803_phot2_vbus_sel {
+	PHOT2_VBUS_SEL_3V = 0,
+	PHOT2_VBUS_SEL_3P25V,
+	PHOT2_VBUS_SEL_3P5V,
+	PHOT2_VBUS_SEL_3P75V,
+	PHOT2_VBUS_SEL_4V,
+	PHOT2_VBUS_SEL_4P25V,
+	PHOT2_VBUS_SEL_4P5V,
+	PHOT2_VBUS_SEL_4P75V,
+	PHOT2_VBUS_SEL_5V,
+	PHOT2_VBUS_SEL_5P5V,
+	PHOT2_VBUS_SEL_6V,
+	PHOT2_VBUS_SEL_6P5V,
+	PHOT2_VBUS_SEL_7V,
+	PHOT2_VBUS_SEL_7P5V,
+	PHOT2_VBUS_SEL_8V,
+	PHOT2_VBUS_SEL_8P5V,
+	PHOT2_VBUS_SEL_9V,
+	PHOT2_VBUS_SEL_9P5V,
+	PHOT2_VBUS_SEL_10V,
+	PHOT2_VBUS_SEL_10P5V,
+	PHOT2_VBUS_SEL_11V,
+	PHOT2_VBUS_SEL_11P5V,
+	PHOT2_VBUS_SEL_12V,
+	PHOT2_VBUS_SEL_12P5V,
+	PHOT2_VBUS_SEL_13V,
+	PHOT2_VBUS_SEL_13P5V,
+	PHOT2_VBUS_SEL_14V,
+	PHOT2_VBUS_SEL_15V,
+	PHOT2_VBUS_SEL_16V,
+	PHOT2_VBUS_SEL_17V,
+	PHOT2_VBUS_SEL_18V,
+	PHOT2_VBUS_SEL_19V
+};
+
+#define SM5803_REG_PHOT3 0x74
+#define SM5803_PHOT3_VSYS_SEL GENMASK(4, 0)
+
+enum sm5803_phot3_vbus_sel {
+	PHOT3_VSYS_SEL_3V = 0,
+	PHOT3_VSYS_SEL_3P25V,
+	PHOT3_VSYS_SEL_3P5V,
+	PHOT3_VSYS_SEL_3P75V,
+	PHOT3_VSYS_SEL_4V,
+	PHOT3_VSYS_SEL_4P25V,
+	PHOT3_VSYS_SEL_4P5V,
+	PHOT3_VSYS_SEL_4P75V,
+	PHOT3_VSYS_SEL_5V,
+	PHOT3_VSYS_SEL_5P5V,
+	PHOT3_VSYS_SEL_6V,
+	PHOT3_VSYS_SEL_6P5V,
+	PHOT3_VSYS_SEL_7V,
+	PHOT3_VSYS_SEL_7P5V,
+	PHOT3_VSYS_SEL_8V,
+	PHOT3_VSYS_SEL_8P5V,
+	PHOT3_VSYS_SEL_9V,
+	PHOT3_VSYS_SEL_9P5V,
+	PHOT3_VSYS_SEL_10V,
+	PHOT3_VSYS_SEL_10P5V,
+	PHOT3_VSYS_SEL_11V,
+	PHOT3_VSYS_SEL_11P5V,
+	PHOT3_VSYS_SEL_12V,
+	PHOT3_VSYS_SEL_12P5V,
+	PHOT3_VSYS_SEL_13V,
+	PHOT3_VSYS_SEL_13P5V,
+	PHOT3_VSYS_SEL_14V,
+	PHOT3_VSYS_SEL_15V,
+	PHOT3_VSYS_SEL_16V,
+	PHOT3_VSYS_SEL_17V,
+	PHOT3_VSYS_SEL_18V,
+	PHOT3_VSYS_SEL_19V
+};
+
+#define SM5803_REG_PHOT4 0x75
+#define SM5803_PHOT4_IBAT_SEL GENMASK(5, 0)
+
 #define CHARGER_NAME "sm5803"
 
 #define CHARGE_V_MAX 20000
@@ -404,6 +492,14 @@ enum sm5803_charger_modes {
 #define INPUT_I_MAX 3100
 #define INPUT_I_MIN 0
 #define INPUT_I_STEP SM5803_CURRENT_STEP
+
+/*
+ * Maximum IBAT select threshold is [5:0] = 111111
+ * and the value is IBAT_PHOT_SEL * 600 mA
+ */
+#define IBAT_SEL_MAX 37800
+
+#define SM5803_IBAT_PROCHOT_MA_TO_REG(ma) MIN(ma / 600, SM5803_PHOT4_IBAT_SEL)
 
 /* Expose cached Vbus presence */
 int sm5803_is_vbus_present(int chgnum);
@@ -460,4 +556,11 @@ void test_sm5803_set_fast_charge_disabled(bool value);
 bool test_sm5803_get_fast_charge_disabled(void);
 #endif
 
+enum ec_error_list
+sm5803_set_phot_duration(int chgnum, enum sm5803_phot1_duration duration);
+enum ec_error_list
+sm5803_set_vbus_monitor_sel(int chgnum, enum sm5803_phot2_vbus_sel vbus_sel);
+enum ec_error_list
+sm5803_set_vsys_monitor_sel(int chgnum, enum sm5803_phot3_vbus_sel vsys_sel);
+enum ec_error_list sm5803_set_ibat_phot_sel(int chgnum, int ibat_sel);
 #endif

@@ -52,6 +52,12 @@ struct sm5803_emul_data {
 	bool psys_dac_enabled;
 	/** PHOT_REG1 raw value. */
 	uint8_t phot1;
+	/** PHOT_REG2 raw value. */
+	uint8_t phot2;
+	/** PHOT_REG3 raw value. */
+	uint8_t phot3;
+	/** PHOT_REG4 raw value. */
+	uint8_t phot4;
 	/** Raw values of DISCH_CONF_REG* */
 	uint8_t disch_conf1, disch_conf2, disch_conf5, disch_conf6;
 	/** Raw values of PRE_FAST_CONF_REG{1..6} */
@@ -316,6 +322,9 @@ bool sm5803_emul_is_psys_dac_enabled(const struct emul *emul)
 }
 
 SIMPLE_GETTER(phot1, phot1)
+SIMPLE_GETTER(phot2, phot2)
+SIMPLE_GETTER(phot3, phot3)
+SIMPLE_GETTER(phot4, phot4)
 
 void sm5803_emul_set_vbat_sns_mv(const struct emul *emul, uint16_t mv)
 {
@@ -403,6 +412,9 @@ static void sm5803_emul_reset(const struct emul *emul)
 	data->switcher_conf = 1;
 	data->psys_dac_enabled = true;
 	data->phot1 = 0x20;
+	data->phot2 = 0x22;
+	data->phot3 = 0xa;
+	data->phot4 = 0x3f;
 	data->disch_conf5 = 0;
 	data->disch_conf6 = 0;
 	memset(data->pre_fast_conf, 0, sizeof(data->pre_fast_conf));
@@ -596,6 +608,15 @@ static int sm5803_chg_read_byte(const struct emul *target, int reg,
 	case SM5803_REG_PHOT1:
 		*val = data->phot1;
 		return 0;
+	case SM5803_REG_PHOT2:
+		*val = data->phot2;
+		return 0;
+	case SM5803_REG_PHOT3:
+		*val = data->phot3;
+		return 0;
+	case SM5803_REG_PHOT4:
+		*val = data->phot4;
+		return 0;
 	}
 	LOG_INF("SM5803 charger page read of register %#x unhandled", reg);
 	return -ENOTSUP;
@@ -674,6 +695,15 @@ static int sm5803_chg_write_byte(const struct emul *target, int reg,
 		return 0;
 	case SM5803_REG_PHOT1:
 		data->phot1 = val;
+		return 0;
+	case SM5803_REG_PHOT2:
+		data->phot2 = val;
+		return 0;
+	case SM5803_REG_PHOT3:
+		data->phot3 = val;
+		return 0;
+	case SM5803_REG_PHOT4:
+		data->phot4 = val;
 		return 0;
 	case SM5803_REG_CHG_MON_REG:
 		data->chg_mon = val;

@@ -228,21 +228,6 @@ config PLATFORM_EC_CHARGER_RT9490
 	  battery charge management and system power path management device for
 	  1-4 cell Li-Ion and Li-polymer battery.
 
-config PLATFORM_EC_CHARGER_SM5803
-	bool "Use the SM5803 charger"
-	depends on PLATFORM_EC_I2C
-	select PLATFORM_EC_CHARGER_NARROW_VDC
-	help
-	  Enables the driver for the SM5803.
-	  The SM5803 is the Silicon Mitus SM5803 Buck-Boost Charger.
-
-	  This charger is known to be very inefficient when operating in buck-boost
-	  mode (when input voltage is close to output voltage), such that permanent
-	  damage may be done to the charger. Users should exercise caution around
-	  choice of supported configurations: see b:260271871, b:258754576, and
-	  b:230712704 for more information.
-
-
 if PLATFORM_EC_OCPC
 
 config PLATFORM_EC_OCPC_DEF_RBATT_MOHMS
@@ -842,5 +827,7 @@ config PLATFORM_EC_DC_PROCHOT_CURRENT_MA
 config PLATFORM_EC_CHARGER_DUMP_PROCHOT
 	bool "Enable support for prochot status dumping functions"
 	default n
+
+rsource "drivers/sm5803/Kconfig.sm5803"
 
 endif # PLATFORM_EC_CHARGER
