@@ -54,11 +54,6 @@
 
 *   [Detachable Base Verified Boot](./detachable_base_verified_boot.md)
 
-## EC-3PO
-
-*   [EC-3PO overview](./ec-3po.md)
-*   [EC-3PO design doc](./ec-3po-design.md)
-
 ## Zephyr
 
 *   [Zephyr New Board Checklist](./zephyr/zephyr_new_board_checklist.md)
