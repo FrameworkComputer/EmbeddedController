@@ -83,7 +83,7 @@ static bool is_resetting;
 /* indicate MT8186 is AP reset is held by servo or GSC. */
 test_export_static bool is_held;
 /* indicate MT8186 is processing a AP forcing shutdown. */
-test_export_static bool is_shutdown;
+static bool is_shutdown;
 /* indicate MT8186 has been dropped to S5G3 from the last IN_AP_RST state . */
 static bool is_s5g3_passed;
 /*
