@@ -193,8 +193,8 @@ endif
 # Get the CONFIG_ and VARIANT_ options that are defined for this target and make
 # them into variables available to this build script
 # Usage: $(shell $(call cmd_get_configs,<RO|RW>))
-cmd_get_configs = $(CPP) $(CPPFLAGS) -P -dM -Ichip/$(CHIP) \
-	-I$(BASEDIR) -I$(BDIR) -DSECTION_IS_$(1)=$(EMPTY) include/config.h | \
+cmd_get_configs = $(CPP) $(foreach BLD,$(1),$(CPPFLAGS)) -P -dM \
+	-Ichip/$(CHIP) -I$(BASEDIR) -I$(BDIR) include/config.h | \
 	grep -o "\#define \(CONFIG\|VARIANT\)_[A-Z0-9_]*" | cut -c9- | sort
 _flag_cfg_ro:=$(call shell_echo,$(call cmd_get_configs,RO))
 _flag_cfg_rw:=$(_tsk_cfg_rw) $(call shell_echo,$(call cmd_get_configs,RW))
