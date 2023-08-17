@@ -409,9 +409,11 @@ static int cypd_select_pdo(int controller, int port, uint8_t profile)
 {
 	int rv;
 
-	rv = cypd_write_reg8_wait_ack(controller, CCG_PD_CONTROL_REG(port), profile);
-	if (rv != EC_SUCCESS)
-		CPRINTS("SET TYPEC RP failed");
+	if (profile == CCG_PD_CMD_SET_TYPEC_3A) {
+		rv = cypd_write_reg8_wait_ack(controller, CCG_PD_CONTROL_REG(port), profile);
+		if (rv != EC_SUCCESS)
+			CPRINTS("SET TYPEC RP failed");
+	}
 
 	rv = cypd_write_reg8_wait_ack(controller, CCG_SELECT_SOURCE_PDO_REG(port), profile);
 	if (rv != EC_SUCCESS)
