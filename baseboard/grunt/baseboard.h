@@ -25,6 +25,12 @@
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal SPI flash type. */
 
 /*
+ * Increase watchdog period to prevent false positive hangs.
+ */
+#undef CONFIG_WATCHDOG_PERIOD_MS
+#define CONFIG_WATCHDOG_PERIOD_MS 2100
+
+/*
  * Enable 1 slot of secure temporary storage to support
  * suspend/resume with read/write memory training.
  */
