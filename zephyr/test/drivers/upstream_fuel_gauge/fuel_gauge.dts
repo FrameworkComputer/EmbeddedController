@@ -5,8 +5,9 @@
 
 &i2c0 {
 	upstream_battery: smartbattery@40 {
-		compatible = "sbs,sbs-gauge-new-api";
+		compatible =  "sbs,default-sbs-gauge","sbs,sbs-gauge-new-api";
 		reg = <0x40>;
 		status = "okay";
+		battery-cutoff-support;
 	};
 };

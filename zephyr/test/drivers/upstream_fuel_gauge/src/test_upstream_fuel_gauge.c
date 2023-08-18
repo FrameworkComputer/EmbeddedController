@@ -5,7 +5,8 @@
 
 #include "battery.h"
 #include "test/drivers/test_state.h"
-#include "zephyr/device.h"
+
+#include <stdbool.h>
 
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/emul_fuel_gauge.h>
@@ -29,6 +30,17 @@ ZTEST(upstream_fuel_gauge, test_battery_get_params__success)
 
 	zassert_equal(ret_params.voltage, 5000);
 	zassert_equal(ret_params.current, 3000);
+}
+
+ZTEST(upstream_fuel_gauge, test_battery_cutoff)
+{
+	const struct emul *sbs_gauge = BATT_EMUL;
+	bool was_cutoff;
+
+	board_cut_off_battery();
+
+	emul_fuel_gauge_is_battery_cutoff(sbs_gauge, &was_cutoff);
+	zassert_true(was_cutoff);
 }
 
 ZTEST_SUITE(upstream_fuel_gauge, drivers_predicate_post_main, NULL, NULL, NULL,

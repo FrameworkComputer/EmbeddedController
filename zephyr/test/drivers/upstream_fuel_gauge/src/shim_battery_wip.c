@@ -40,3 +40,11 @@ void battery_get_params(struct batt_params *batt)
 	 * TODO(b/271889974): Percolate failed properties to client.
 	 */
 }
+
+int board_cut_off_battery(void)
+{
+	const struct device *dev =
+		DEVICE_DT_GET(DT_NODELABEL(upstream_battery));
+
+	return fuel_gauge_battery_cutoff(dev);
+}

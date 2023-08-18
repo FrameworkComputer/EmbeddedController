@@ -180,6 +180,7 @@ const struct battery_info *battery_get_info(void)
 	return &get_batt_params()->batt_info;
 }
 
+#ifndef CONFIG_FUEL_GAUGE
 /**
  * Battery cut off command via SMBus write block.
  *
@@ -247,6 +248,7 @@ int board_cut_off_battery(void)
 
 	return rv ? EC_RES_ERROR : EC_RES_SUCCESS;
 }
+#endif /* !CONFIG_FUEL_GAUGE */
 
 enum ec_error_list battery_sleep_fuel_gauge(void)
 {
