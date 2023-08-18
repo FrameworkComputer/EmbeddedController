@@ -23,6 +23,7 @@ endif # ZTEST
 
 menuconfig PLATFORM_EC
 	bool "Chromium OS EC shim"
+	imply CRC
 	imply PRINTK
 	imply SHELL
 	help
