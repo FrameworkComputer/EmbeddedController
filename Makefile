@@ -169,9 +169,9 @@ _tsk_lst_flags+=-I$(BDIR) -DBOARD_$(UC_BOARD)=$(EMPTY) -I$(BASEDIR) \
 		-D_MAKEFILE=$(EMPTY) -imacros $(_tsk_lst_file)
 -include private/task_list_flags.mk
 
-_tsk_lst_ro:=$(shell $(CPP) -P -DSECTION_IS_RO=$(EMPTY) \
+_tsk_lst_ro:=$(call shell_echo,$(CPP) -P -DSECTION_IS_RO=$(EMPTY) \
 	$(_tsk_lst_flags) include/task_filter.h)
-_tsk_lst_rw:=$(shell $(CPP) -P -DSECTION_IS_RW=$(EMPTY) \
+_tsk_lst_rw:=$(call shell_echo,$(CPP) -P -DSECTION_IS_RW=$(EMPTY) \
 	$(_tsk_lst_flags) include/task_filter.h)
 
 _tsk_cfg_ro:=$(foreach t,$(_tsk_lst_ro) ,HAS_TASK_$(t))
@@ -222,7 +222,7 @@ _mock_file := $(if $(TEST_FUZZ),fuzz,test)/$(PROJECT).mocklist
 # mocks from mockfile.
 _mock_lst :=
 ifneq ($(and $(TEST_BUILD),$(wildcard $(_mock_file))),)
-	_mock_lst += $(shell $(CPP) -P $(_mock_lst_flags) \
+	_mock_lst += $(call shell_echo,$(CPP) -P $(_mock_lst_flags) \
 		include/mock_filter.h)
 endif
 
@@ -232,8 +232,8 @@ $(foreach c,$(_mock_cfg),$(eval $(c)=y))
 
 ifneq ($(CONFIG_COMMON_RUNTIME),y)
 ifneq ($(CONFIG_DFU_BOOTMANAGER_MAIN),ro)
-	_irq_list:=$(shell $(CPP) $(CPPFLAGS) -P -Ichip/$(CHIP) -I$(BASEDIR) \
-		-I$(BDIR) -D"ENABLE_IRQ(x)=EN_IRQ x" \
+	_irq_list:=$(call shell_echo,$(CPP) $(CPPFLAGS) -P -Ichip/$(CHIP) \
+		-I$(BASEDIR) -I$(BDIR) -D"ENABLE_IRQ(x)=EN_IRQ x" \
 		-imacros chip/$(CHIP)/registers.h \
 		- < $(BDIR)/ec.irqlist | grep "EN_IRQ .*" | cut -c8-)
 	CPPFLAGS+=$(foreach irq,$(_irq_list),\
