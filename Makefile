@@ -290,7 +290,6 @@ include driver/build.mk
 include fuzz/build.mk
 include power/build.mk
 -include private/build.mk
--include private-kandou/build.mk
 ifneq ($(PDIR),)
 include $(PDIR)/build.mk
 endif
@@ -320,7 +319,6 @@ all-obj-$(1)+=$(call objs_from_dir_p,chip/$(CHIP),chip,$(1))
 all-obj-$(1)+=$(call objs_from_dir_p,$(BASEDIR),baseboard,$(1))
 all-obj-$(1)+=$(call objs_from_dir_p,$(BDIR),board,$(1))
 all-obj-$(1)+=$(call objs_from_dir_p,private,private,$(1))
-all-obj-$(1)+=$(call objs_from_dir_p,private-kandou,private-kandou,$(1))
 ifneq ($(PDIR),)
 all-obj-$(1)+=$(call objs_from_dir_p,$(PDIR),$(PDIR),$(1))
 endif
@@ -386,7 +384,7 @@ host-srcs-cxx := $(foreach u,$(host-util-bin-cxx-y), \
 
 dirs=core/$(CORE) chip/$(CHIP) $(BASEDIR) $(BDIR) common fuzz power test \
 	cts/common cts/$(CTS_MODULE) $(out)/gen
-dirs+= private private-kandou $(PDIR) $(PBDIR)
+dirs+= private $(PDIR) $(PBDIR)
 dirs+=$(shell find common -type d)
 dirs+=$(shell find driver -type d)
 ifeq ($(USE_BUILTIN_STDLIB), 1)
