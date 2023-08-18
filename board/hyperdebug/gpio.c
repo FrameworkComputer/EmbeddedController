@@ -345,7 +345,7 @@ static uint32_t extra_alternate_flags(enum gpio_signal signal)
  *
  * @return the signal index, or GPIO_COUNT if no match.
  */
-static enum gpio_signal find_signal_by_name(const char *name)
+enum gpio_signal gpio_find_by_name(const char *name)
 {
 	int i;
 
@@ -372,7 +372,7 @@ static int command_gpio_mode(int argc, const char **argv)
 	if (argc < 3)
 		return EC_ERROR_PARAM_COUNT;
 
-	gpio = find_signal_by_name(argv[1]);
+	gpio = gpio_find_by_name(argv[1]);
 	if (gpio == GPIO_COUNT)
 		return EC_ERROR_PARAM1;
 	flags = gpio_get_flags(gpio);
@@ -421,7 +421,7 @@ static int command_gpio_pull_mode(int argc, const char **argv)
 	if (argc < 3)
 		return EC_ERROR_PARAM_COUNT;
 
-	gpio = find_signal_by_name(argv[1]);
+	gpio = gpio_find_by_name(argv[1]);
 	if (gpio == GPIO_COUNT)
 		return EC_ERROR_PARAM1;
 	flags = gpio_get_flags(gpio);
@@ -477,7 +477,7 @@ static int command_gpio_analog_set(int argc, const char **argv)
 	if (argc < 4)
 		return EC_ERROR_PARAM_COUNT;
 
-	gpio = find_signal_by_name(argv[2]);
+	gpio = gpio_find_by_name(argv[2]);
 	if (gpio == GPIO_COUNT)
 		return EC_ERROR_PARAM2;
 
@@ -500,7 +500,7 @@ static int command_gpio_multiset(int argc, const char **argv)
 	if (argc < 4)
 		return EC_ERROR_PARAM_COUNT;
 
-	gpio = find_signal_by_name(argv[2]);
+	gpio = gpio_find_by_name(argv[2]);
 	if (gpio == GPIO_COUNT)
 		return EC_ERROR_PARAM2;
 	flags = gpio_get_flags(gpio);
@@ -581,7 +581,7 @@ static int command_gpio_monitoring_start(int argc, const char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	for (i = 0; i < gpio_num; i++) {
-		gpios[i] = find_signal_by_name(argv[3 + i]);
+		gpios[i] = gpio_find_by_name(argv[3 + i]);
 		if (gpios[i] == GPIO_COUNT) {
 			rv = EC_ERROR_PARAM3 + i;
 			goto out_partial_cleanup;
@@ -728,7 +728,7 @@ static int command_gpio_monitoring_read(int argc, const char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	for (i = 0; i < gpio_num; i++) {
-		gpios[i] = find_signal_by_name(argv[3 + i]);
+		gpios[i] = gpio_find_by_name(argv[3 + i]);
 		if (gpios[i] == GPIO_COUNT)
 			return EC_ERROR_PARAM3 + i; /* May overflow */
 		slot = monitoring_slots +
@@ -834,7 +834,7 @@ static int command_gpio_monitoring_stop(int argc, const char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	for (i = 0; i < gpio_num; i++) {
-		gpios[i] = find_signal_by_name(argv[3 + i]);
+		gpios[i] = gpio_find_by_name(argv[3 + i]);
 		if (gpios[i] == GPIO_COUNT)
 			return EC_ERROR_PARAM3 + i; /* May overflow */
 		slot = monitoring_slots +
@@ -938,6 +938,8 @@ static int command_reinit(int argc, const char **argv)
 
 	/* Disable any DAC (which would override GPIO function of pins) */
 	STM32_DAC_CR = 0;
+
+	/* TODO: Also reset SPI chip select (and speed) to defaults */
 
 	return EC_SUCCESS;
 }

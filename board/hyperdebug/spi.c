@@ -35,6 +35,11 @@ struct spi_device_t spi_devices[] = {
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
+static int spi_device_default_gpio_cs[ARRAY_SIZE(spi_devices)] = {
+	GPIO_CN9_25,
+	GPIO_CN10_6,
+};
+
 /*
  * Find spi device by name or by number.  Returns an index into spi_devices[],
  * or on error a negative value.
@@ -156,12 +161,38 @@ static int command_spi_set_speed(int argc, const char **argv)
 	return EC_SUCCESS;
 }
 
+static int command_spi_set_cs(int argc, const char **argv)
+{
+	int index;
+	int desired_gpio_cs;
+	if (argc < 5)
+		return EC_ERROR_PARAM_COUNT;
+
+	index = find_spi_by_name(argv[3]);
+	if (index < 0)
+		return EC_ERROR_PARAM3;
+
+	if (!strcasecmp(argv[4], "default")) {
+		desired_gpio_cs = spi_device_default_gpio_cs[index];
+	} else {
+		desired_gpio_cs = gpio_find_by_name(argv[4]);
+		if (desired_gpio_cs == GPIO_COUNT)
+			return EC_ERROR_PARAM4;
+	}
+
+	spi_devices[index].gpio_cs = desired_gpio_cs;
+
+	return EC_SUCCESS;
+}
+
 static int command_spi_set(int argc, const char **argv)
 {
 	if (argc < 3)
 		return EC_ERROR_PARAM_COUNT;
 	if (!strcasecmp(argv[2], "speed"))
 		return command_spi_set_speed(argc, argv);
+	if (!strcasecmp(argv[2], "cs"))
+		return command_spi_set_cs(argc, argv);
 	return EC_ERROR_PARAM2;
 }
 
@@ -177,7 +208,8 @@ static int command_spi(int argc, const char **argv)
 }
 DECLARE_CONSOLE_COMMAND_FLAGS(spi, command_spi,
 			      "info [PORT]"
-			      "\nset speed PORT BPS",
+			      "\nset speed PORT BPS"
+			      "\nset cs PORT PIN",
 			      "SPI bus manipulation", CMD_FLAG_RESTRICTED);
 
 /******************************************************************************
