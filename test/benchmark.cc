@@ -14,7 +14,7 @@ extern "C" {
 /* Sample function for the benchmark */
 static void float_mult()
 {
-	float a = 1.1;
+	volatile float a = 1.1;
 	float b = 1.1;
 	int i;
 
