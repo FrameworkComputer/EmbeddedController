@@ -149,3 +149,15 @@ if(DEFINED CONFIG_BOARD_CRAASKOV)
 	"craaskov/src/keyboard_customization.c"
 	)
 endif()
+if(DEFINED CONFIG_BOARD_QUANDISO)
+	project(quandiso)
+	zephyr_library_sources(
+			"quandiso/src/board.c"
+			"quandiso/src/keyboard.c"
+			"quandiso/src/led.c"
+			"quandiso/src/thermal.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "quandiso/src/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "quandiso/src/fan.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "quandiso/src/usbc.c")
+endif()

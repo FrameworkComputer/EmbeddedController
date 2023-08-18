@@ -96,6 +96,13 @@ config BOARD_CRAASKOV
 	  Build Google Craaskov reference board. Craaskov has Intel ADL-N SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_QUANDISO
+	bool "Google Quandiso Board"
+	help
+	  Build Google Quandiso board. Quandiso has Intel ADL-N SoC
+	  with IT81302 EC.
+
+
 module = NISSA
 module-str = Nissa board-specific code
 source "subsys/logging/Kconfig.template.log_config"
