@@ -187,7 +187,7 @@ const struct cec_config_t cec_config[] = {
 	[CEC_PORT_0] = {
 		.drv = &it83xx_cec_drv,
 		.drv_config = NULL,
-		.offline_policy = NULL,
+		.offline_policy = cec_default_policy,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(cec_config) == CEC_PORT_COUNT);
