@@ -1748,41 +1748,41 @@ static bool source_dpm_requests(int port)
 					 DPM_REQUEST_FRS_DET_ENABLE |
 					 DPM_REQUEST_FRS_DET_DISABLE);
 
-	if (pe[port].dpm_request) {
-		uint32_t dpm_request = pe[port].dpm_request;
+	if (!pe[port].dpm_request)
+		return false;
 
-		PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
+	PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
 
-		if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_PR_SWAP)) {
-			pe_set_dpm_curr_request(port, DPM_REQUEST_PR_SWAP);
-			set_state_pe(port, PE_PRS_SRC_SNK_SEND_SWAP);
-			return true;
-		} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_GOTO_MIN)) {
-			pe_set_dpm_curr_request(port, DPM_REQUEST_GOTO_MIN);
-			set_state_pe(port, PE_SRC_TRANSITION_SUPPLY);
-			return true;
-		} else if (PE_CHK_DPM_REQUEST(port,
-					      DPM_REQUEST_SRC_CAP_CHANGE)) {
-			pe_set_dpm_curr_request(port,
-						DPM_REQUEST_SRC_CAP_CHANGE);
-			set_state_pe(port, PE_SRC_SEND_CAPABILITIES);
-			return true;
-		} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_GET_SRC_CAPS)) {
-			pe_set_dpm_curr_request(port, DPM_REQUEST_GET_SRC_CAPS);
-			set_state_pe(port, PE_DR_SRC_GET_SOURCE_CAP);
-			return true;
-		} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_SEND_PING)) {
-			pe_set_dpm_curr_request(port, DPM_REQUEST_SEND_PING);
-			set_state_pe(port, PE_SRC_PING);
-			return true;
-		} else if (common_src_snk_dpm_requests(port)) {
-			return true;
-		}
-
-		CPRINTF("Unhandled DPM Request %x received\n", dpm_request);
-		PE_CLR_DPM_REQUEST(port, dpm_request);
-		PE_CLR_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
+	if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_PR_SWAP)) {
+		pe_set_dpm_curr_request(port, DPM_REQUEST_PR_SWAP);
+		set_state_pe(port, PE_PRS_SRC_SNK_SEND_SWAP);
+		return true;
+	} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_GOTO_MIN)) {
+		pe_set_dpm_curr_request(port, DPM_REQUEST_GOTO_MIN);
+		set_state_pe(port, PE_SRC_TRANSITION_SUPPLY);
+		return true;
+	} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_SRC_CAP_CHANGE)) {
+		pe_set_dpm_curr_request(port, DPM_REQUEST_SRC_CAP_CHANGE);
+		set_state_pe(port, PE_SRC_SEND_CAPABILITIES);
+		return true;
+	} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_GET_SRC_CAPS)) {
+		pe_set_dpm_curr_request(port, DPM_REQUEST_GET_SRC_CAPS);
+		set_state_pe(port, PE_DR_SRC_GET_SOURCE_CAP);
+		return true;
+	} else if (PE_CHK_DPM_REQUEST(port, DPM_REQUEST_SEND_PING)) {
+		pe_set_dpm_curr_request(port, DPM_REQUEST_SEND_PING);
+		set_state_pe(port, PE_SRC_PING);
+		return true;
+	} else if (common_src_snk_dpm_requests(port)) {
+		return true;
 	}
+
+	const uint32_t dpm_request = pe[port].dpm_request;
+
+	CPRINTF("Unhandled DPM Request %x received\n", dpm_request);
+	PE_CLR_DPM_REQUEST(port, dpm_request);
+	PE_CLR_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
+
 	return false;
 }
 
