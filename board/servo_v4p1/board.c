@@ -121,7 +121,7 @@ static int cmd_dut_usb3(int argc, const char *argv[])
 	}
 
 	ccprintf("USB3 to DUT: %s\n",
-		 usb3_to_dut_enable ? "allowed/enabled" : "disabled");
+		 usb3_to_dut_enable ? "enabled" : "disabled");
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(dut_usb3, cmd_dut_usb3, "dut_usb3 [enable/disable]>",
