@@ -242,15 +242,15 @@ endif
 endif
 
 # Compute RW firmware size and offset
-_rw_off_str:=$(shell echo "CONFIG_RW_MEM_OFF" | $(CPP) $(CPPFLAGS) -P \
-	-Ichip/$(CHIP) -I$(BASEDIR) -I$(BDIR) -imacros include/config.h -)
+# Usage: $(shell $(call cmd_config_eval,<CONFIG_*>))
+cmd_config_eval = echo "$(1)" | $(CPP) $(CPPFLAGS) -P \
+	-Ichip/$(CHIP) -I$(BASEDIR) -I$(BDIR) -imacros include/config.h -
+_rw_off_str:=$(call shell_echo,$(call cmd_config_eval,CONFIG_RW_MEM_OFF))
 _rw_off:=$(shell echo "$$(($(_rw_off_str)))")
-_rw_size_str:=$(shell echo "CONFIG_RW_SIZE" | $(CPP) $(CPPFLAGS) -P \
-	-Ichip/$(CHIP) -I$(BASEDIR) -I$(BDIR) -imacros include/config.h -)
+_rw_size_str:=$(call shell_echo,$(call cmd_config_eval,CONFIG_RW_SIZE))
 _rw_size:=$(shell echo "$$(($(_rw_size_str)))")
-_program_memory_base_str:=$(shell echo "CONFIG_PROGRAM_MEMORY_BASE" | \
-	$(CPP) $(CPPFLAGS) -P \
-	-Ichip/$(CHIP) -I$(BDIR) -I$(BASEDIR) -imacros include/config.h -)
+_program_memory_base_str:=\
+$(call shell_echo,$(call cmd_config_eval,CONFIG_PROGRAM_MEMORY_BASE))
 _program_memory_base=$(shell echo "$$(($(_program_memory_base_str)))")
 
 $(eval BASEBOARD_$(UC_BASEBOARD)=y)
