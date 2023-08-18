@@ -122,11 +122,11 @@
 		 * type-C ports on them.
 		 */
 		gpio_sb_3: sb-3 {
-			gpios = <&gpiof 4 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpiof 5 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
 			no-auto-init;
 		};
 		gpio_sb_4: sb-4 {
-			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpiof 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			no-auto-init;
 		};
 		gpio_fan_enable: fan-enable {

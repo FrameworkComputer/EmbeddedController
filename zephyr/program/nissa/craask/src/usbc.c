@@ -10,9 +10,11 @@
 #include "driver/tcpm/raa489000.h"
 #include "driver/tcpm/tcpci.h"
 #include "hooks.h"
+#include "nissa_hdmi.h"
 #include "system.h"
 #include "usb_mux.h"
 
+#include <zephyr/drivers/pinctrl.h>
 #include <zephyr/logging/log.h>
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
@@ -225,4 +227,16 @@ void usb_interrupt(enum gpio_signal signal)
 	}
 	/* Trigger polling of TCPC and BC1.2 in USB-PD task */
 	schedule_deferred_pd_interrupt(port);
+}
+
+PINCTRL_DT_DEFINE(DT_NODELABEL(i2c5_1));
+
+__override void nissa_configure_hdmi_power_gpios(void)
+{
+	const struct pinctrl_dev_config *pcfg =
+		PINCTRL_DT_DEV_CONFIG_GET(DT_NODELABEL(i2c5_1));
+
+	nissa_configure_hdmi_rails();
+
+	pinctrl_apply_state(pcfg, PINCTRL_STATE_SLEEP);
 }
