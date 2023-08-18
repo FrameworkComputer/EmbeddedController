@@ -130,6 +130,7 @@ if(DEFINED CONFIG_BOARD_GOTHRAX)
 	zephyr_library_sources(
 			"gothrax/src/keyboard.c"
 			"gothrax/src/hdmi.c"
+			"gothrax/src/usb_mux_config.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "gothrax/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "gothrax/src/charger.c")
