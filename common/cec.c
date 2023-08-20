@@ -15,12 +15,15 @@
 #include "task.h"
 #include "util.h"
 
-#ifdef CONFIG_CEC_DEBUG
 #define CPRINTF(format, args...) cprintf(CC_CEC, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_CEC, format, ##args)
+
+#ifdef CONFIG_CEC_DEBUG
+#define DEBUG_CPRINTF(format, args...) cprintf(CC_CEC, format, ##args)
+#define DEBUG_CPRINTS(format, args...) cprints(CC_CEC, format, ##args)
 #else
-#define CPRINTF(...)
-#define CPRINTS(...)
+#define DEBUG_CPRINTF(...)
+#define DEBUG_CPRINTS(...)
 #endif
 
 #define CEC_SEND_RESULTS (EC_MKBP_CEC_SEND_OK | EC_MKBP_CEC_SEND_FAILED)
@@ -126,7 +129,7 @@ int cec_process_offline_message(int port, const uint8_t *msg, uint8_t msg_len)
 		return EC_ERROR_INVAL;
 
 	snprintf_hex_buffer(str_buf, sizeof(str_buf), HEX_BUF(msg, msg_len));
-	CPRINTS("CEC%d offline msg: %s", port, str_buf);
+	DEBUG_CPRINTS("CEC%d offline msg: %s", port, str_buf);
 
 	/* Header-only, e.g. a polling message. No command, so nothing to do */
 	if (msg_len == 1)
@@ -470,7 +473,7 @@ static void handle_received_message(int port)
 	}
 
 	if (cec_process_offline_message(port, msg, msg_len) == EC_SUCCESS) {
-		CPRINTS("CEC%d message consumed offline", port);
+		DEBUG_CPRINTS("CEC%d message consumed offline", port);
 		/* Continue to queue message and notify AP. */
 	}
 	rv = cec_rx_queue_push(&cec_rx_queue[port], msg, msg_len);
@@ -517,10 +520,10 @@ void cec_task(void *unused)
 			}
 			if (events & CEC_TASK_EVENT_OKAY) {
 				send_mkbp_event(port, EC_MKBP_CEC_SEND_OK);
-				CPRINTS("CEC%d SEND OKAY", port);
+				DEBUG_CPRINTS("CEC%d SEND OKAY", port);
 			} else if (events & CEC_TASK_EVENT_FAILED) {
 				send_mkbp_event(port, EC_MKBP_CEC_SEND_FAILED);
-				CPRINTS("CEC%d SEND FAILED", port);
+				DEBUG_CPRINTS("CEC%d SEND FAILED", port);
 			}
 		}
 	}

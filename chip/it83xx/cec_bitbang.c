@@ -13,12 +13,15 @@
 #include "timer.h"
 #include "util.h"
 
-#ifdef CONFIG_CEC_DEBUG
 #define CPRINTF(format, args...) cprintf(CC_CEC, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_CEC, format, ##args)
+
+#ifdef CONFIG_CEC_DEBUG
+#define DEBUG_CPRINTF(format, args...) cprintf(CC_CEC, format, ##args)
+#define DEBUG_CPRINTS(format, args...) cprints(CC_CEC, format, ##args)
 #else
-#define CPRINTF(...)
-#define CPRINTS(...)
+#define DEBUG_CPRINTF(...)
+#define DEBUG_CPRINTS(...)
 #endif
 
 /* Timestamp when the most recent interrupt occurred */

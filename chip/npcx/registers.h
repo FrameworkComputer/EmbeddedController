@@ -69,7 +69,6 @@
 #define DEBUG_CLK 0
 #define DEBUG_LPC 0
 #define DEBUG_ESPI 0
-#define DEBUG_CEC 0
 #define DEBUG_SIB 0
 #define DEBUG_PS2 0
 
