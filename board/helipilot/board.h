@@ -84,8 +84,10 @@
 #define CONFIG_SHAREDLIB_SIZE 0
 
 #define CONFIG_RO_MEM_OFF 0
-#define CONFIG_RO_STORAGE_OFF 0
-#define CONFIG_RO_SIZE (128 * 1024)
+
+/* Need to account for the 64 (0x40) byte long firmware header */
+#define CONFIG_RO_STORAGE_OFF 64
+#define CONFIG_RO_SIZE (128 * 1024 - 0x1000)
 
 #define CONFIG_RO_PUBKEY_READ_ADDR                                      \
 	(CONFIG_MAPPED_STORAGE_BASE + CONFIG_EC_PROTECTED_STORAGE_OFF + \
@@ -111,7 +113,7 @@
 	 CONFIG_FLASH_ERASE_SIZE)
 
 #define CONFIG_EC_PROTECTED_STORAGE_OFF CONFIG_RO_MEM_OFF
-#define CONFIG_EC_PROTECTED_STORAGE_SIZE CONFIG_RO_SIZE
+#define CONFIG_EC_PROTECTED_STORAGE_SIZE (CONFIG_RO_SIZE + 0x1000)
 #define CONFIG_EC_WRITABLE_STORAGE_OFF \
 	(CONFIG_ROLLBACK_OFF + CONFIG_ROLLBACK_SIZE)
 
@@ -259,7 +261,8 @@
 #endif
 
 /* EC rollback protection block */
-#define CONFIG_ROLLBACK_OFF (CONFIG_RO_MEM_OFF + CONFIG_RO_SIZE)
+#define CONFIG_ROLLBACK_OFF \
+	(CONFIG_EC_PROTECTED_STORAGE_OFF + CONFIG_EC_PROTECTED_STORAGE_SIZE)
 #define CONFIG_ROLLBACK_SIZE (128 * 1024 * 2) /* 2 blocks of 128KB each */
 
 /*-------------------------------------------------------------------------*
