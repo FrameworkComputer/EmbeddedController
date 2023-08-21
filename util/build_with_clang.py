@@ -233,7 +233,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "voema",
     "volet",
     "volmar",
-    "volteer",
     "volteer_npcx797fc",
     "voxel",
     "voxel_ecmodeentry",
@@ -304,6 +303,7 @@ RISCV_BOARDS = [
 BOARDS_THAT_FAIL_WITH_CLANG = [
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
     "chocodile_vpdmcu",  # compilation error: b/254710459
+    "volteer",
 ]
 
 # TODO(b/201311714): NDS32 is not supported by LLVM.
