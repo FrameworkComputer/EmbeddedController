@@ -79,6 +79,13 @@ static int usb_power_write_line(struct usb_power_config const *config)
 	/* status + size + timestamps + power list */
 	size_t bytes = USB_POWER_RECORD_SIZE(state->ina_count);
 
+	/* TODO(nsanders): TX can't handle more than about 512 bytes.
+	 * Unfortunately the docs for this chip can't be found, so why is kind
+	 * of a mystery. It may have to do with the tx fifo size or DMA
+	 * continuation. For now just don't send more than 512 bytes.
+	 */
+	int max_records = 512 / bytes;
+
 	/* Check if queue has active data. */
 	if (config->state->reports_head != config->state->reports_tail) {
 		int recordcount = 1;
@@ -91,12 +98,18 @@ static int usb_power_write_line(struct usb_power_config const *config)
 			recordcount =
 				state->max_cached - config->state->reports_tail;
 
+		if (recordcount > max_records) {
+			CPRINTS("Truncate records read to %d from %d",
+				max_records, recordcount);
+			recordcount = max_records;
+		}
+
 		state->reports_xmit_active = state->reports_tail;
 		state->reports_tail =
 			(state->reports_tail + recordcount) % state->max_cached;
 
 		usb_write_ep(config->endpoint, bytes * recordcount, r);
-		return bytes;
+		return bytes * recordcount;
 	}
 
 	return 0;
@@ -606,9 +619,6 @@ static int usb_power_get_samples(struct usb_power_config const *config)
 	if (((state->reports_head + 1) %
 	     USB_POWER_MAX_CACHED(state->ina_count)) ==
 	    state->reports_xmit_active) {
-		CPRINTS("Overflow! h:%d a:%d t:%d (%d)", state->reports_head,
-			state->reports_xmit_active, state->reports_tail,
-			USB_POWER_MAX_CACHED(state->ina_count));
 		return USB_POWER_ERROR_OVERFLOW;
 	}
 
@@ -687,6 +697,8 @@ static int usb_power_get_samples(struct usb_power_config const *config)
 void usb_power_deferred_cap(struct usb_power_config const *config)
 {
 	int ret;
+	/* TODO(nsanders): is there a better global state locaton for this? */
+	static bool no_overflow = true;
 	uint64_t timeout = get_time().val + config->state->integration_us;
 	uint64_t timein;
 
@@ -696,9 +708,12 @@ void usb_power_deferred_cap(struct usb_power_config const *config)
 
 	/* Get samples for this timeslice */
 	ret = usb_power_get_samples(config);
-	if (ret == USB_POWER_ERROR_OVERFLOW) {
-		CPRINTS("[CAP] usb_power_deferred_cap: OVERFLOW");
-		return;
+	if ((ret == USB_POWER_ERROR_OVERFLOW) && no_overflow) {
+		CPRINTS("[CAP] %s: OVERFLOW", __func__);
+		no_overflow = false;
+	} else if ((ret != USB_POWER_ERROR_OVERFLOW) && !no_overflow) {
+		CPRINTS("[CAP] %s: OVERFLOW CLEAR", __func__);
+		no_overflow = true;
 	}
 
 	/* Calculate time remaining until next slice. */
