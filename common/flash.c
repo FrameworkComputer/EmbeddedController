@@ -5,6 +5,12 @@
 
 /* Flash memory module for Chrome EC - common functions */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #include "builtin/assert.h"
 #ifdef CONFIG_ZEPHYR
 #include "cbi_flash.h"
