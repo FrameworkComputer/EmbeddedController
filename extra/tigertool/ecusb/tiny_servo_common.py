@@ -128,7 +128,10 @@ def wait_for_usb_remove(vidpid: Iterable[str], serialname=None, timeout=None):
 
 
 def wait_for_usb(
-    vidpid: Iterable[str], serialname=None, timeout=None, desiredpresence=True
+    vidpid: Iterable[str],
+    serialname: Optional[str] = None,
+    timeout: Optional[float] = None,
+    desiredpresence: bool = True,
 ):
     """Wait for usb device with vidpid to be present/absent.
 
@@ -139,12 +142,19 @@ def wait_for_usb(
       timeout: timeout in seconds, None for no timeout.
       desiredpresence: True for present, False for not present.
 
+    Returns:
+      If devices found, return set of pyUSB device objects
+
     Raises:
       TinyServoError: on timeout.
     """
+    desiredpresence = bool(desiredpresence)
     if timeout:
         finish = datetime.datetime.now() + datetime.timedelta(seconds=timeout)
-    while check_usb(vidpid, serialname) != desiredpresence:
+    while True:
+        devs = set(get_usb_dev(vidpid, serialname))
+        if (len(devs) > 0) == desiredpresence:
+            return devs
         time.sleep(0.1)
         if timeout:
             if datetime.datetime.now() > finish:
