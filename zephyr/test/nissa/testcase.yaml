@@ -7,60 +7,60 @@ common:
 tests:
   nissa.sub_board:
     extra_dtc_overlay_files:
-    - "boards/generic_npcx.dts"
+      - "boards/generic_npcx.dts"
     extra_configs:
-    - CONFIG_TEST_NISSA_SUB_BOARD=y
-    - CONFIG_NISSA_BOARD_HAS_HDMI_SUPPORT=y
+      - CONFIG_TEST_NISSA_SUB_BOARD=y
+      - CONFIG_NISSA_BOARD_HAS_HDMI_SUPPORT=y
   nissa.common:
     extra_dtc_overlay_files:
-    - "boards/generic_npcx.dts"
-    - "boards/chargers.dts"
+      - "boards/generic_npcx.dts"
+      - "boards/chargers.dts"
     extra_conf_files:
-    - "prj.conf"
-    - "charger.conf"
+      - "prj.conf"
+      - "charger.conf"
     extra_configs:
-    - CONFIG_TEST_NISSA_COMMON=y
+      - CONFIG_TEST_NISSA_COMMON=y
   nissa.nivviks:
     extra_dtc_overlay_files:
-    - "boards/generic_npcx.dts"
-    - "boards/chargers.dts"
-    - "boards/nivviks.dts"
+      - "boards/generic_npcx.dts"
+      - "boards/chargers.dts"
+      - "boards/nivviks.dts"
     extra_conf_files:
-    - "prj.conf"
-    - "charger.conf"
+      - "prj.conf"
+      - "charger.conf"
     extra_configs:
-    - CONFIG_TEST_NISSA_NIVVIKS=y
-    - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSO=y
-    - CONFIG_PLATFORM_EC_ACCEL_LIS2DW12=y
+      - CONFIG_TEST_NISSA_NIVVIKS=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSO=y
+      - CONFIG_PLATFORM_EC_ACCEL_LIS2DW12=y
   nissa.nivviks.charger:
     extra_dtc_overlay_files:
-    - "boards/generic_npcx.dts"
-    - "boards/battery.dts"
+      - "boards/generic_npcx.dts"
+      - "boards/battery.dts"
     extra_conf_files:
-    - "prj.conf"
+      - "prj.conf"
     extra_configs:
-    - CONFIG_TEST_NISSA_NIVVIKS_CHARGER=y
-    - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
+      - CONFIG_TEST_NISSA_NIVVIKS_CHARGER=y
+      - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
   nissa.nereid:
     extra_configs:
-    - CONFIG_TEST_NISSA_NEREID=y
-    - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
+      - CONFIG_TEST_NISSA_NEREID=y
+      - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
     extra_dtc_overlay_files:
-    - "boards/nereid.dts"
+      - "boards/nereid.dts"
   nissa.gothrax:
     extra_dtc_overlay_files:
-    - "boards/gothrax.dts"
+      - "boards/gothrax.dts"
     extra_conf_files:
-    - "prj.conf"
+      - "prj.conf"
     extra_configs:
-    - CONFIG_TEST_NISSA_GOTHRAX=y
-    - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
+      - CONFIG_TEST_NISSA_GOTHRAX=y
+      - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
   nissa.joxer:
     extra_configs:
-    - CONFIG_TEST_NISSA_JOXER=y
-    - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
-    - CONFIG_PLATFORM_EC_ACCELGYRO_BMI_COMM_I2C=y
-    - CONFIG_PLATFORM_EC_ACCELGYRO_BMI3XX=y
-    - CONFIG_PLATFORM_EC_ACCEL_BMA4XX=y
+      - CONFIG_TEST_NISSA_JOXER=y
+      - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
+      - CONFIG_PLATFORM_EC_ACCELGYRO_BMI_COMM_I2C=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_BMI3XX=y
+      - CONFIG_PLATFORM_EC_ACCEL_BMA4XX=y
     extra_dtc_overlay_files:
-    - "boards/joxer.dts"
+      - "boards/joxer.dts"
