@@ -89,7 +89,8 @@ CONSOLE_CHANNEL(CC_PCHG,         "pchg")
 CONSOLE_CHANNEL(CC_PWM,          "pwm")
 #endif
 CONSOLE_CHANNEL(CC_SPI,          "spi")
-#if defined(CONFIG_SWITCH) || defined(CONFIG_LID_SWITCH)
+#if defined(CONFIG_SWITCH) || defined(CONFIG_LID_SWITCH) || \
+	defined(CONFIG_HAS_TASK_POWERBTN)
 CONSOLE_CHANNEL(CC_SWITCH,       "switch")
 #endif
 CONSOLE_CHANNEL(CC_SYSTEM,       "system")
