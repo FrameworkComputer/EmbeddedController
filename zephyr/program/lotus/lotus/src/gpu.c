@@ -73,21 +73,11 @@ DECLARE_HOOK(HOOK_AC_CHANGE, update_gpu_ac_power_state, HOOK_PRIO_DEFAULT);
 void update_thermal_configuration(void)
 {
 	if (gpu_present()) {
-		thermal_params[0].temp_fan_max = C_TO_K(65); /* UTH1 */
-		thermal_params[1].temp_fan_max = C_TO_K(64); /* QTH2 */
-		thermal_params[2].temp_fan_max = C_TO_K(67); /* QTH1 */
-
-		thermal_params[0].temp_fan_off = C_TO_K(46); /* UTH1 */
-		thermal_params[1].temp_fan_off = C_TO_K(50); /* QTH2 */
-		thermal_params[2].temp_fan_off = C_TO_K(45); /* QTH1 */
+		thermal_params[2].temp_fan_max = C_TO_K(69); /* QTH1 */
+		thermal_params[2].temp_fan_off = C_TO_K(48); /* QTH1 */
 	} else {
-		thermal_params[0].temp_fan_max = C_TO_K(60); /* UTH1 */
-		thermal_params[1].temp_fan_max = C_TO_K(60); /* QTH2 */
 		thermal_params[2].temp_fan_max = C_TO_K(62); /* QTH1 */
-
-		thermal_params[0].temp_fan_off = C_TO_K(46); /* UTH1 */
-		thermal_params[1].temp_fan_off = C_TO_K(50); /* QTH2 */
-		thermal_params[2].temp_fan_off = C_TO_K(45); /* QTH1 */
+		thermal_params[2].temp_fan_off = C_TO_K(48); /* QTH1 */
 	}
 }
 DECLARE_HOOK(HOOK_INIT, update_thermal_configuration, HOOK_PRIO_DEFAULT + 2);
@@ -300,7 +290,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, reset_mux_status, HOOK_PRIO_DEFAULT);
 static void gpu_board_f75303_initial(void)
 {
 	int idx, rv;
-	uint8_t temp[6] = {100, 100, 100, 110, 110, 110};
+	uint8_t temp[6] = {105, 105, 105, 110, 110, 110};
 	uint8_t reg_arr[6] = {
 		GPU_F75303_REG_LOCAL_ALERT,
 		GPU_F75303_REG_REMOTE1_ALERT,
