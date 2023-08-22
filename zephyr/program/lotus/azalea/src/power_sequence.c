@@ -221,7 +221,7 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 #define VW_NO_READY 0
 void system_hang_detect(void)
 {
-	static int hang_retry_count = 0;
+	static int hang_retry_count;
 	int virtual_wire_ready = get_espi_virtual_wire_channel_status();
 
 	if (virtual_wire_ready == VW_NO_READY && hang_retry_count < 4) {
