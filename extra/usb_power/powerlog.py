@@ -166,7 +166,7 @@ class Spower(object):
         # Find the stm32.
         dev_g = usb.core.find(idVendor=vendor, idProduct=product, find_all=True)
         dev_list = list(dev_g)
-        if dev_list is None:
+        if not dev_list:
             raise Exception("Power", "USB device not found")
 
         # Check if we have multiple stm32s and we've specified the serial.
@@ -1036,7 +1036,7 @@ def main(argv=None):
 
     sync_speed = 0.8
     if args.slow:
-        sync_speed = 1.2
+        sync_speed = 10.2
 
     # Set up logging interface.
     powerlogger = powerlog(
