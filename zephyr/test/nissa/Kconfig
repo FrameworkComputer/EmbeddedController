@@ -14,6 +14,11 @@ choice TEST_TARGET
 		help
 		  The test target that exercises nissa/src/sub_board.c.
 
+	config TEST_NISSA_BOARD_POWER
+		bool "Tests for board_power.c"
+		help
+		  The test target that exercises nissa/src/board_power.c
+
 	config TEST_NISSA_COMMON
 		bool "Tests for common.c"
 		help
@@ -107,6 +112,13 @@ config PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 	  than the top row, and you are looking only for top row customization,
 	  then you should be looking at overriding board_vivaldi_keybd_config()
 	  instead.
+
+config TEST_DISABLE_AP_PWRSEQ
+	bool "Disable CONFIG_AP_PWRSEQ"
+	default n
+	help
+	  This is used to disable CONFIG_AP_PWRSEQ for testing purposes
+	  directly.
 
 module = NISSA
 module-str = Nissa board-specific code (unit tests)

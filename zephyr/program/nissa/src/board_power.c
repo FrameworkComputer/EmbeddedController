@@ -23,7 +23,7 @@ LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
 
 #define X86_NON_DSX_ADLP_NONPWRSEQ_FORCE_SHUTDOWN_TO_MS 5
 
-static bool s0_stable;
+test_export_static bool s0_stable;
 
 static void generate_ec_soc_dsw_pwrok_handler(int delay)
 {
@@ -54,13 +54,15 @@ void board_ap_power_force_shutdown(void)
 		k_msleep(1);
 		timeout_ms--;
 	}
+
+	/* LCOV_EXCL_START messages are informational only */
 	if (power_signal_get(PWR_SLP_SUS) == 0) {
 		LOG_WRN("SLP_SUS is not deasserted! Assuming G3");
 	}
-
 	if (power_signal_get(PWR_RSMRST) == 1) {
 		LOG_WRN("RSMRST is not deasserted! Assuming G3");
 	}
+	/* LCOV_EXCL_STOP */
 
 	power_signal_set(PWR_EN_PP3300_A, 0);
 
@@ -72,8 +74,10 @@ void board_ap_power_force_shutdown(void)
 		timeout_ms--;
 	};
 
+	/* LCOV_EXCL_START informational */
 	if (power_signal_get(PWR_DSW_PWROK))
 		LOG_WRN("DSW_PWROK didn't go low!  Assuming G3.");
+	/* LCOV_EXCL_STOP */
 
 	power_signal_disable(PWR_DSW_PWROK);
 	power_signal_disable(PWR_PG_PP1P05);
