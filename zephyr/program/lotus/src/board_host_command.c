@@ -173,6 +173,13 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 
 	update_apu_ready(1);
 
+	/**
+	 * Even though the protocol returns EC_SUCCESS,
+	 * the system still does not update the power limit.
+	 * So move the update process at here.
+	 */
+	update_soc_power_limit(true, false);
+
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_NON_ACPI_NOTIFY, enter_non_acpi_mode, EC_VER_MASK(0));

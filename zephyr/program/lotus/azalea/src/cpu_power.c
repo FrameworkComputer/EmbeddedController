@@ -306,7 +306,7 @@ static void initial_soc_power_limit(void)
 
 	battery_mwatt_type =
 		(strncmp(battery_static[BATT_IDX_MAIN].model_ext, str, 10) ?
-		BATTERY_55mW : BATTERY_61mW);
+		BATTERY_61mW : BATTERY_55mW);
 	battery_current_limit_mA =
 		((battery_mwatt_type == BATTERY_61mW) ? -3920 : -3570);
 
