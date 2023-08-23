@@ -71,12 +71,12 @@ void update_apu_ready(int status)
 	apu_ready = status;
 }
 
-void get_apu_ready(void)
+int get_apu_ready(void)
 {
 	return apu_ready;
 }
 
-static clear_apu_ready(void)
+static void clear_apu_ready(void)
 {
 	update_apu_ready(0);
 }
