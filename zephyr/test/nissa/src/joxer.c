@@ -8,7 +8,9 @@
 #include "cros_cbi.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "extpower.h"
+#include "hooks.h"
 #include "joxer.h"
+#include "joxer_sub_board.h"
 #include "keyboard_protocol.h"
 #include "motionsense_sensors.h"
 #include "system.h"
@@ -26,6 +28,16 @@ LOG_MODULE_REGISTER(nissa, LOG_LEVEL_INF);
 
 #define TCPC1 EMUL_DT_GET(DT_NODELABEL(tcpci_emul_1))
 #define LID_ACCEL SENSOR_ID(DT_NODELABEL(lid_accel))
+
+#define ASSERT_GPIO_FLAGS(spec, expected)                                  \
+	do {                                                               \
+		gpio_flags_t flags;                                        \
+		zassert_ok(gpio_emul_flags_get((spec)->port, (spec)->pin,  \
+					       &flags));                   \
+		zassert_equal(flags, expected,                             \
+			      "actual value was %#x; expected %#x", flags, \
+			      expected);                                   \
+	} while (0)
 
 FAKE_VALUE_FUNC(enum ec_error_list, sm5803_is_acok, int, bool *);
 FAKE_VALUE_FUNC(bool, sm5803_check_vbus_level, int, enum vbus_level);
@@ -57,6 +69,15 @@ uint8_t board_get_charger_chip_count(void)
 {
 	return 2;
 }
+void board_usb_pd_count_init(void);
+static uint32_t fw_config_value;
+
+/** Set the value of the CBI fw_config field returned by the fake. */
+static void set_fw_config_value(uint32_t value)
+{
+	fw_config_value = value;
+	board_usb_pd_count_init();
+}
 
 static void test_before(void *fixture)
 {
@@ -83,6 +104,10 @@ static void test_before(void *fixture)
 	RESET_FAKE(set_scancode_set2);
 	RESET_FAKE(get_scancode_set2);
 	RESET_FAKE(fan_set_count);
+
+	/* Make the DB is 1C1A as initial */
+	joxer_cached_sub_board = JOXER_SB_C;
+	set_fw_config_value(FW_SUB_BOARD_2);
 }
 
 ZTEST_SUITE(joxer, NULL, NULL, test_before, NULL, NULL);
@@ -480,6 +505,8 @@ ZTEST(joxer, test_fan_present)
 ZTEST(joxer, test_fan_absent)
 {
 	int flags;
+	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_fan_enable),
+			      GPIO_DISCONNECTED);
 
 	cros_cbi_get_fw_config_fake.custom_fake = get_fan_config_absent;
 	fan_init();
@@ -499,6 +526,8 @@ ZTEST(joxer, test_fan_absent)
 ZTEST(joxer, test_fan_cbi_error)
 {
 	int flags;
+	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_fan_enable),
+			      GPIO_DISCONNECTED);
 
 	cros_cbi_get_fw_config_fake.return_val = EINVAL;
 	fan_init();
@@ -556,4 +585,79 @@ ZTEST(joxer, test_lid_sensor_inversion)
 	zassert_equal_ptr(
 		motion_sensors[LID_ACCEL].rot_standard_ref, inverted_rotation,
 		"inverted orientation should use the inverted rotation matrix");
+}
+
+enum joxer_sub_board_type joxer_get_sb_type(void);
+
+static int
+get_fake_sub_board_fw_config_field(enum cbi_fw_config_field_id field_id,
+				   uint32_t *value)
+{
+	*value = fw_config_value;
+	return 0;
+}
+
+ZTEST(joxer, test_db_without_c_a)
+{
+	cros_cbi_get_fw_config_fake.custom_fake =
+		get_fake_sub_board_fw_config_field;
+	/* Reset cached global state. */
+	joxer_cached_sub_board = JOXER_SB_UNKNOWN;
+	fw_config_value = -1;
+
+	/* Set the sub-board, reported configuration is correct. */
+	set_fw_config_value(FW_SUB_BOARD_1);
+	zassert_equal(joxer_get_sb_type(), JOXER_SB);
+	zassert_equal(board_get_usb_pd_port_count(), 1);
+
+	init_gpios(NULL);
+	hook_notify(HOOK_INIT);
+
+	ASSERT_GPIO_FLAGS(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl),
+			  GPIO_PULL_UP | GPIO_INPUT);
+
+	joxer_cached_sub_board = JOXER_SB_C;
+	fw_config_value = -1;
+}
+
+ZTEST(joxer, test_db_with_c)
+{
+	cros_cbi_get_fw_config_fake.custom_fake =
+		get_fake_sub_board_fw_config_field;
+	/* Reset cached global state. */
+	joxer_cached_sub_board = JOXER_SB_UNKNOWN;
+	fw_config_value = -1;
+
+	/* Set the sub-board, reported configuration is correct. */
+	set_fw_config_value(FW_SUB_BOARD_2);
+	zassert_equal(joxer_get_sb_type(), JOXER_SB_C);
+	zassert_equal(board_get_usb_pd_port_count(), 2);
+
+	init_gpios(NULL);
+	hook_notify(HOOK_INIT);
+
+	ASSERT_GPIO_FLAGS(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl),
+			  GPIO_PULL_UP | GPIO_INPUT | GPIO_INT_EDGE_FALLING);
+
+	joxer_cached_sub_board = JOXER_SB_C;
+	fw_config_value = -1;
+}
+
+static int get_fw_config_error(enum cbi_fw_config_field_id field,
+			       uint32_t *value)
+{
+	return EC_ERROR_UNKNOWN;
+}
+
+ZTEST(joxer, test_cbi_error)
+{
+	/*
+	 * Reading fw_config from CBI returns an error, so sub-board is treated
+	 * as unknown.
+	 */
+	joxer_cached_sub_board = JOXER_SB_UNKNOWN;
+	fw_config_value = -1;
+
+	cros_cbi_get_fw_config_fake.custom_fake = get_fw_config_error;
+	zassert_equal(joxer_get_sb_type(), JOXER_SB_UNKNOWN);
 }

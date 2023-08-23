@@ -52,6 +52,16 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "bma4xx_interrupt";
 		};
+		int_usb_c0: usb_c0 {
+			irq-pin = <&gpio_usb_c0_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_c0_interrupt";
+		};
+		int_usb_c1: usb_c1 {
+			irq-pin = <&gpio_usb_c1_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_c1_interrupt";
+		};
 	};
 
 	named-i2c-ports {
@@ -85,6 +95,11 @@
 			tcpc = <&tcpci_emul_1>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+			usb_mux_chain_1_no_mux: usb-mux-chain-1-no-mux {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
 				usb-muxes = <&virtual_mux_1>;
 			};
 		};

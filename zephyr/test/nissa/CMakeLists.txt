@@ -81,5 +81,6 @@ if(CONFIG_TEST_NISSA_JOXER)
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/joxer/src/form_factor.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/joxer/src/keyboard.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/joxer/src/usbc.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/joxer/src/sub_board.c
     )
 endif()

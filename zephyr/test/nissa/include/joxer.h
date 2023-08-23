@@ -14,4 +14,6 @@ void kb_layout_init(void);
 void fan_init(void);
 void form_factor_init(void);
 
+extern enum joxer_sub_board_type joxer_cached_sub_board;
+
 #endif /* ZEPHYR_TEST_NISSA_INCLUDE_JOXER_H_ */
