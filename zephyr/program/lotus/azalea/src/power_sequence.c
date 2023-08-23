@@ -214,8 +214,27 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 	/* unused function, EC doesn't control GPIO_SYS_RESET_L */
 }
 
+/**
+ * AMD recommended EC needs to check whether the system hangs or not,
+ * If EC detect the system hangs, force reset the system then reboot again.
+ */
+#define VW_NO_READY 0
+void system_hang_detect(void)
+{
+	static int hang_retry_count;
+	int virtual_wire_ready = get_espi_virtual_wire_channel_status();
+
+	if (virtual_wire_ready == VW_NO_READY && hang_retry_count < 4) {
+		hang_retry_count++;
+		board_reboot_ap_on_g3();
+		chipset_force_shutdown(CHIPSET_RESET_HANG_REBOOT);
+	}
+}
+DECLARE_DEFERRED(system_hang_detect);
+
 static void chipset_force_g3(void)
 {
+	hook_call_deferred(&system_hang_detect_data, -1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
@@ -245,21 +264,7 @@ enum power_state power_chipset_init(void)
 	return POWER_G3;
 }
 
-/**
- * AMD recommended EC needs to check whether the system hangs or not,
- * If EC detect the system hangs, force reset the system then reboot again.
- */
-#define VW_NO_READY 0
-void system_hang_detect(void)
-{
-	int virtual_wire_ready = get_espi_virtual_wire_channel_status();
 
-	if (virtual_wire_ready == VW_NO_READY) {
-		board_reboot_ap_on_g3();
-		chipset_force_shutdown(CHIPSET_RESET_HANG_REBOOT);
-	}
-}
-DECLARE_DEFERRED(system_hang_detect);
 
 static int chipset_prepare_S3(uint8_t enable)
 {
@@ -405,7 +410,7 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S5S3:
 
 		/* Call hooks now that rails are up */
-		hook_call_deferred(&system_hang_detect_data, 3 * SECOND);
+		hook_call_deferred(&system_hang_detect_data, 5 * SECOND);
 		hook_notify(HOOK_CHIPSET_STARTUP);
 		return POWER_S3;
 

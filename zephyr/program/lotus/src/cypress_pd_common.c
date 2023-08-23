@@ -963,6 +963,19 @@ int cypd_handle_extend_msg(int controller, int port, int len, enum tcpci_msg_typ
 	return rv;
 }
 
+static void clear_port_state(int controller, int port)
+{
+	int port_idx = (controller << 1) + port;
+	pd_port_states[port_idx].pd_state = 0; /*do we have a valid PD contract*/
+	pd_port_states[port_idx].power_role = PD_ROLE_SINK;
+	pd_port_states[port_idx].data_role = PD_ROLE_UFP;
+	pd_port_states[port_idx].vconn = PD_ROLE_VCONN_OFF;
+	pd_port_states[port_idx].epr_active = 0;
+	pd_port_states[port_idx].cc = POLARITY_CC1;
+	pd_port_states[port_idx].c_state = 0;
+	pd_port_states[port_idx].current = 0;
+	pd_port_states[port_idx].voltage = 0;
+}
 static void cypd_update_port_state(int controller, int port)
 {
 	int rv;
@@ -1488,13 +1501,20 @@ void cypd_port_int(int controller, int port)
 
 	response_len = data2[1];
 	switch (data2[0]) {
+	case CCG_RESPONSE_TYPE_C_ERROR_RECOVERY:
 	case CCG_RESPONSE_PORT_DISCONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_DISCONNECT");
 		pd_port_states[port_idx].current = 0;
 		pd_port_states[port_idx].voltage = 0;
+		if (prev_charge_port == port_idx) {
+			board_set_active_charge_port(-1);
+		}
 		pd_set_input_current_limit(port_idx, 0, 0);
 		cypd_release_port(controller, port);
-		cypd_update_port_state(controller, port);
+		clear_port_state(controller, port);
+		charge_manager_set_ceil(port,
+			CEIL_REQUESTOR_PD,
+			CHARGE_CEIL_NONE);
 
 		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 			charge_manager_update_dualrole(port_idx, CAP_UNKNOWN);
@@ -1763,6 +1783,7 @@ __override uint8_t board_get_usb_pd_port_count(void)
  */
 int board_set_active_charge_port(int charge_port)
 {
+	CPRINTS("%s port %d, prev:%d", __func__, charge_port, prev_charge_port);
 
 	/* if battery D-FET not open , EC should not control VBUS FET */
 	if (battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED) {
