@@ -519,6 +519,8 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S0ixS3:
 		CPRINTS("PH S0ixS3");
+		/* make sure next time wake flag not error trigger */
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_DISPLAY_ON) = 0;
 		hook_call_deferred(&key_stuck_wa_data, -1);
 		/* follow power sequence Disable S3 power */
 		chipset_prepare_S3(0);
@@ -537,8 +539,8 @@ enum power_state power_handle_state(enum power_state state)
 		CPRINTS("PH S0ixS0");
 		resume_ms_flag = 0;
 		system_in_s0ix = 0;
+		hook_call_deferred(&key_stuck_ptn_data, 100 * MSEC);
 		lpc_s0ix_resume_restore_masks();
-		hook_call_deferred(&key_stuck_ptn_data, 50 * MSEC);
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
 		CPRINTS("PH S0ixS0->S0");
