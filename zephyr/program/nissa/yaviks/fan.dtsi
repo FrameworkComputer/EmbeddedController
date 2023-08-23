@@ -10,7 +10,7 @@
 			tach = <&tach1>;
 			rpm_min = <2500>;
 			rpm_start = <2500>;
-			rpm_max = <4100>;
+			rpm_max = <4700>;
 			rpm_deviation = <1>;
 			enable_gpio = <&gpio_fan_enable>;
 		};
