@@ -81,6 +81,7 @@ static void clear_apu_ready(void)
 	update_apu_ready(0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, clear_apu_ready, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESET, clear_apu_ready, HOOK_PRIO_DEFAULT);
 
 int set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p3t)
 {

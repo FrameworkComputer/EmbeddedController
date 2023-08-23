@@ -13,6 +13,10 @@
 #include "temp_sensor.h"
 #include "util.h"
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+#include "common_cpu_power.h"
+#endif
+
 /* Debug flag can be toggled with console command: stt debug */
 static bool amd_stt_debug;
 
@@ -77,7 +81,11 @@ static void amd_stt_handler(void)
 #endif
 
 	/* STT interface is only active in S0 */
-	if (!chipset_in_state(CHIPSET_STATE_ON))
+	if (!chipset_in_state(CHIPSET_STATE_ON)
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	|| !get_apu_ready()
+#endif
+	)
 		return;
 
 	/*
