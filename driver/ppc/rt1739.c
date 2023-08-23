@@ -244,6 +244,10 @@ static int rt1739_set_frs_enable(int port, int enable)
 	/* Enable FRS RX detect */
 	RETURN_ERROR(update_reg(port, RT1739_REG_CC_FRS_CTRL1, RT1739_FRS_RX_EN,
 				enable ? MASK_SET : MASK_CLR));
+	/* b/296988176: disable SRCP and OSCS mask while FRS enabled */
+	RETURN_ERROR(update_reg(port, RT1739_REG_VBUS_DEG_TIME,
+				RT1739_FRS_SRCP_MASK | RT1739_FRS_OSCS_MASK,
+				enable ? MASK_SET : MASK_CLR));
 
 	/*
 	 * To enable FRS, turn on FRS_RX interrupt and disable
