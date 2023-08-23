@@ -45,10 +45,23 @@ struct power_limit_details {
 #define POWER_ROP 20000
 #define POWER_PORT_COST 5000
 
+extern struct power_limit_details power_limit[FUNCTION_COUNT];
+extern int target_func[TYPE_COUNT];
+extern bool manual_ctl;
+extern int mode_ctl;
+extern uint8_t func_ctl;
+
+void update_apu_ready(int status);
+int get_apu_ready(void);
+
 void update_soc_power_limit(bool force_update, bool force_no_adapter);
+int set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p3t);
+
+#ifdef CONFIG_BOARD_LOTUS
+int update_apu_only_sppt_limit(uint32_t mwatt);
+#endif
 
 extern bool thermal_warn_trigger(void);
-extern int cypd_get_port_cost(void);
 extern int cypd_get_ac_power(void);
 
 #endif	/* __CROS_EC_CPU_POWER_H */

@@ -506,13 +506,6 @@ int active_charge_pd_chip(void);
 int cypd_vbus_state_check(void);
 
 /**
- * Return total ports cost, return by mW.
- *
- * @return int
- */
-int cypd_get_port_cost(void);
-
-/**
  * Return ac power, return by mW.
  *
  * @return int

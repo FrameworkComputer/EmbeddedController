@@ -10,7 +10,7 @@
 #include "board_function.h"
 #include "chipset.h"
 #include "console.h"
-#include "cpu_power.h"
+#include "common_cpu_power.h"
 #include "customized_shared_memory.h"
 #include "cypress_pd_common.h"
 #include "diagnostics.h"
@@ -167,16 +167,18 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 
 	clear_power_flags();
 
+	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) &= ~ACPI_DRIVER_READY;
+	*host_get_memmap(EC_MEMMAP_POWER_SLIDE) = 0x0;
+	*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER) = 0x0;
+
+	update_apu_ready(1);
+
 	/**
 	 * Even though the protocol returns EC_SUCCESS,
 	 * the system still does not update the power limit.
 	 * So move the update process at here.
 	 */
 	update_soc_power_limit(true, false);
-
-	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) &= ~ACPI_DRIVER_READY;
-	*host_get_memmap(EC_MEMMAP_POWER_SLIDE) = 0x0;
-	*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER) = 0x0;
 
 	return EC_RES_SUCCESS;
 }

@@ -19,7 +19,11 @@
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
+#ifndef CONFIG_CUSTOMIZED_DESIGN
 #define SB_RMI_MAILBOX_TIMEOUT_MS 200
+#else
+#define SB_RMI_MAILBOX_TIMEOUT_MS 25
+#endif
 #define SB_RMI_MAILBOX_RETRY_DELAY_MS 5
 
 /**
