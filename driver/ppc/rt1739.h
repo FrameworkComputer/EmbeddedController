@@ -150,6 +150,11 @@
 #define RT1739_REG_SYS_CTRL1 0x60
 #define RT1739_OSC640K_FORCE_EN BIT(3)
 
+/* RT1739 flags for driver */
+#define RT1739_FLAGS_SOURCE_ENABLED BIT(0)
+#define RT1739_FLAGS_FRS_ENABLED BIT(1)
+#define RT1739_FLAGS_FRS_RX_RECV BIT(2)
+
 extern const struct ppc_drv rt1739_ppc_drv;
 extern const struct bc12_drv rt1739_bc12_drv;
 

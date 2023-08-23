@@ -7,10 +7,17 @@
 #include "emul/emul_rt1739.h"
 #include "test/drivers/test_state.h"
 
+#include <zephyr/fff.h>
 #include <zephyr/ztest.h>
+
+FAKE_VOID_FUNC(pd_got_frs_signal, int);
+
+#define FFF_FAKES_LIST(FAKE) FAKE(pd_got_frs_signal)
 
 #define RT1739_PORT 0
 #define RT1739_NODE DT_NODELABEL(rt1739_emul)
+
+extern int rt1739_get_flag(int port);
 
 const struct emul *rt1739_emul = EMUL_DT_GET(RT1739_NODE);
 
@@ -130,6 +137,12 @@ static void test_vbus_source_enable_reg_settings(bool expected_enabled)
 	}
 }
 
+static void rt1739_test_before(void *data)
+{
+	FFF_FAKES_LIST(RESET_FAKE);
+	FFF_RESET_HISTORY();
+}
+
 static void test_vbus_sink_enable_reg_settings(bool expected_enabled)
 {
 	uint8_t val;
@@ -144,7 +157,8 @@ static void test_vbus_sink_enable_reg_settings(bool expected_enabled)
 	}
 }
 
-ZTEST_SUITE(rt1739_ppc, drivers_predicate_pre_main, NULL, NULL, NULL, NULL);
+ZTEST_SUITE(rt1739_ppc, drivers_predicate_pre_main, NULL, rt1739_test_before,
+	    NULL, NULL);
 
 ZTEST(rt1739_ppc, test_init_common_settings)
 {
@@ -438,4 +452,33 @@ ZTEST(rt1739_ppc, test_frs_settings)
 
 	rt1739_ppc_drv.set_frs_enable(RT1739_PORT, false);
 	test_frs_enable_reg_settings(false);
+}
+
+ZTEST(rt1739_ppc, test_interrupt)
+{
+	/* test FRS invoked */
+	rt1739_ppc_drv.set_frs_enable(RT1739_PORT, true);
+	zassert_equal(RT1739_FLAGS_FRS_ENABLED, rt1739_get_flag(RT1739_PORT));
+	zassert_equal(0, pd_got_frs_signal_fake.call_count);
+	rt1739_ppc_drv.interrupt(RT1739_PORT);
+	zassert_equal(RT1739_FLAGS_FRS_ENABLED | RT1739_FLAGS_FRS_RX_RECV,
+		      rt1739_get_flag(RT1739_PORT));
+	zassert_equal(1, pd_got_frs_signal_fake.call_count);
+	rt1739_ppc_drv.set_frs_enable(RT1739_PORT, false);
+
+	/* test FRS invoked multiple times */
+	zassert_equal(0, rt1739_get_flag(RT1739_PORT));
+	rt1739_ppc_drv.set_frs_enable(RT1739_PORT, true);
+	zassert_equal(RT1739_FLAGS_FRS_ENABLED, rt1739_get_flag(RT1739_PORT));
+
+	rt1739_ppc_drv.interrupt(RT1739_PORT);
+	zassert_equal(2, pd_got_frs_signal_fake.call_count);
+	zassert_equal(RT1739_FLAGS_FRS_ENABLED | RT1739_FLAGS_FRS_RX_RECV,
+		      rt1739_get_flag(RT1739_PORT));
+
+	rt1739_ppc_drv.interrupt(RT1739_PORT);
+	/* should not call pd_got_frs_signal when called */
+	zassert_equal(2, pd_got_frs_signal_fake.call_count);
+	rt1739_ppc_drv.set_frs_enable(RT1739_PORT, false);
+	zassert_equal(0, rt1739_get_flag(RT1739_PORT));
 }

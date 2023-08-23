@@ -960,7 +960,7 @@ void pe_got_hard_reset(int port)
  * If the PE is not running, generate an error recovery to turn off
  * Vbus and get the port back into a known state.
  */
-void pd_got_frs_signal(int port)
+test_mockable void pd_got_frs_signal(int port)
 {
 	if (pe_is_running(port))
 		PE_SET_FLAG(port, PE_FLAGS_FAST_ROLE_SWAP_SIGNALED);
