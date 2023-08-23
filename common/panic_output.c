@@ -82,8 +82,18 @@ void panic_puts(const char *outstr)
 	uart_flush_output();
 
 	/* Put all characters in the output buffer */
-	while (*outstr)
-		panic_txchar(NULL, *outstr++);
+	while (*outstr) {
+		/* Send the message to the UART console */
+		panic_txchar(NULL, *outstr);
+#if defined(CONFIG_USB_CONSOLE) || defined(CONFIG_USB_CONSOLE_STREAM)
+		/*
+		 * Send the message to the USB console
+		 * on platforms which support it.
+		 */
+		usb_puts(outstr);
+#endif
+		++outstr;
+	}
 
 	/* Flush the transmit FIFO */
 	uart_tx_flush();
