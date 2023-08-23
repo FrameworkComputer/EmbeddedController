@@ -453,12 +453,10 @@ def main():
             board, args.file, args.channel
         )
 
-        output = ("board: %s\nchannel: %s\nfirmware: %s") % (
-            board,
-            args.channel,
-            newvers,
-        )
-        print(output)
+        print("board:", board)
+        print("channel:", args.channel)
+        print("firmware:", newvers)
+        print("firmware file:", binfile)
         return
 
     serialno = args.serialno
