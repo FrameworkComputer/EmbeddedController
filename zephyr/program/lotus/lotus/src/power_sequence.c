@@ -613,6 +613,7 @@ enum power_state power_handle_state(enum power_state state)
 		power_state_clear(EC_PS_ENTER_S0ix |
 			EC_PS_RESUME_S0ix | EC_PS_RESUME_S3 | EC_PS_ENTER_S3);
 
+		cypd_set_power_active(POWER_G3);
 		return POWER_G3;
 	default:
 		break;
