@@ -157,7 +157,7 @@ def wait_for_usb(vidpid, serialname=None, timeout=None, desiredpresence=True):
 
     Args:
       vidpid: string representation of the usb vid:pid, eg. '18d1:2001'
-      serialname: serialname if specificed.
+      serialname: serialname if specified.
       timeout: timeout in seconds, None for no timeout.
       desiredpresence: True for present, False for not present.
 
