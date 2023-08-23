@@ -225,7 +225,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	bool with_dc = ((battery_is_present() == BP_YES) ? true : false);
 	int battery_percent = charge_get_percent();
 
-	if (!chipset_in_state(CHIPSET_STATE_ON))
+	if (!chipset_in_state(CHIPSET_STATE_ON) || !get_apu_ready())
 		return;
 
 	if (mode_ctl)

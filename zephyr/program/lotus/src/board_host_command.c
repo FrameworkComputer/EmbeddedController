@@ -171,6 +171,8 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	*host_get_memmap(EC_MEMMAP_POWER_SLIDE) = 0x0;
 	*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER) = 0x0;
 
+	update_apu_ready(1);
+
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_NON_ACPI_NOTIFY, enter_non_acpi_mode, EC_VER_MASK(0));

@@ -51,6 +51,9 @@ extern bool manual_ctl;
 extern int mode_ctl;
 extern uint8_t func_ctl;
 
+void update_apu_ready(int status);
+void get_apu_ready(void);
+
 void update_soc_power_limit(bool force_update, bool force_no_adapter);
 int set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p3t);
 

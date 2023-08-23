@@ -19,6 +19,7 @@
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 struct power_limit_details power_limit[FUNCTION_COUNT];
+static int apu_ready;
 int target_func[TYPE_COUNT];
 bool manual_ctl;
 int mode_ctl;
@@ -64,6 +65,22 @@ static int update_peak_package_power_limit(uint32_t mwatt)
 
 	return sb_rmi_mailbox_xfer(SB_RMI_WRITE_P3T_LIMIT_CMD, msgIn, &msgOut);
 }
+
+void update_apu_ready(int status)
+{
+	apu_ready = status;
+}
+
+void get_apu_ready(void)
+{
+	return apu_ready;
+}
+
+static clear_apu_ready(void)
+{
+	update_apu_ready(0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, clear_apu_ready, HOOK_PRIO_DEFAULT);
 
 int set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p3t)
 {
