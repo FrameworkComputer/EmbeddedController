@@ -244,8 +244,7 @@ static void chipset_force_g3(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_apu_aud_pwr_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
-	/* Do not turn off 1.8VALW otherwise the APU PD mux state will be reset */
-	/* gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 0); */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 0);
 }
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
@@ -604,8 +603,7 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_apu_aud_pwr_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
-		/* Do not turn off 1.8VALW otherwise the APU PD Mux state will be reset */
-		/*gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 0);*/
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 0);
 
 		cypd_set_power_active(POWER_G3);
 
