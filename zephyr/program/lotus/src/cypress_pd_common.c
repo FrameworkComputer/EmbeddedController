@@ -1069,6 +1069,11 @@ static void cypd_update_port_state(int controller, int port)
 		pd_port_states[port_idx].voltage = TYPE_C_VOLTAGE;
 	}
 
+	if (pd_port_states[port_idx].c_state == CCG_STATUS_NOTHING) {
+		pd_port_states[port_idx].current = 0;
+		pd_port_states[port_idx].voltage = 0;
+	}
+
 	if (pd_port_states[port_idx].pd_state) {
 		if (pd_port_states[port_idx].power_role == PD_ROLE_SINK) {
 			pd_set_input_current_limit(port_idx, pd_current, pd_voltage);
@@ -1504,17 +1509,10 @@ void cypd_port_int(int controller, int port)
 	case CCG_RESPONSE_TYPE_C_ERROR_RECOVERY:
 	case CCG_RESPONSE_PORT_DISCONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_DISCONNECT");
-		pd_port_states[port_idx].current = 0;
-		pd_port_states[port_idx].voltage = 0;
-		if (prev_charge_port == port_idx) {
-			board_set_active_charge_port(-1);
-		}
-		pd_set_input_current_limit(port_idx, 0, 0);
+		cypd_update_port_state(controller, port);
 		cypd_release_port(controller, port);
+		/* make sure the type-c state is cleared */
 		clear_port_state(controller, port);
-		charge_manager_set_ceil(port,
-			CEIL_REQUESTOR_PD,
-			CHARGE_CEIL_NONE);
 
 		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 			charge_manager_update_dualrole(port_idx, CAP_UNKNOWN);
