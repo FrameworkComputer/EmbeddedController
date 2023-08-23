@@ -4,12 +4,14 @@
 
 config BOARD_REX
 	bool "Google Rex Baseboard"
+	select BOARD_HAS_INVALID_CHIP_DEVICE_ID_WORKAROUND
 	help
 	  Build Google Rex reference board.  The board uses Nuvoton
 	  NPCX9 chip as the EC.
 
 config BOARD_SCREEBO
 	bool "Google Screebo Board"
+	select BOARD_HAS_INVALID_CHIP_DEVICE_ID_WORKAROUND
 	help
 	  Build Google Screebo variant board. The board uses Nuvoton
 	  NPCX9 chip as the EC.
@@ -19,6 +21,12 @@ config BOARD_KARIS
 	help
 	  Build Google Karis variant board. The board uses Nuvoton
 	  NPCX9 chip as the EC.
+
+config BOARD_HAS_INVALID_CHIP_DEVICE_ID_WORKAROUND
+	bool
+	help
+	  Workaround the board of the Rex family which uses the sample chip
+	  with the incorrect device ID.
 
 module = REX
 module-str = Rex board-specific code

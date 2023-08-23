@@ -379,6 +379,12 @@ static const char *cros_system_npcx_get_chip_name(const struct device *dev)
 	if (chip_id == NPCX_CHIP_ID && device_id == NPCX_DEVICE_ID) {
 		return CONFIG_SOC;
 	}
+
+	if (IS_ENABLED(CONFIG_BOARD_HAS_INVALID_CHIP_DEVICE_ID_WORKAROUND)) {
+		if (chip_id == NPCX_CHIP_ID && device_id == 0x2B) {
+			return CONFIG_SOC;
+		}
+	}
 #endif
 
 	hex2char(chip_id >> 4, p++);
