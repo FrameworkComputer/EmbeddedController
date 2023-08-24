@@ -8235,6 +8235,13 @@ struct ec_params_fp_preload_template {
 	uint8_t data[];
 } __ec_align4;
 
+/* Unlock the fpsensor template with the current nonce context */
+#define EC_CMD_FP_UNLOCK_TEMPLATE 0x0417
+
+struct ec_params_fp_unlock_template {
+	uint16_t fgr_num;
+} __ec_align4;
+
 /*****************************************************************************/
 /* Touchpad MCU commands: range 0x0500-0x05FF */
 

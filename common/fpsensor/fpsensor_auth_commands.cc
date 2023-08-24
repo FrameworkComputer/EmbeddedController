@@ -11,15 +11,19 @@
 #include "fpsensor/fpsensor_auth_crypto.h"
 #include "fpsensor/fpsensor_crypto.h"
 #include "fpsensor/fpsensor_state.h"
+#include "fpsensor/fpsensor_template_state.h"
 #include "fpsensor/fpsensor_utils.h"
 #include "openssl/mem.h"
 #include "openssl/rand.h"
 #include "scoped_fast_cpu.h"
+#include "util.h"
 
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <span>
 #include <utility>
+#include <variant>
 
 namespace
 {
@@ -337,4 +341,108 @@ fp_command_preload_template(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_PRELOAD_TEMPLATE, fp_command_preload_template,
+		     EC_VER_MASK(0));
+
+static enum ec_status unlock_template(uint16_t idx)
+{
+	auto *dec_state =
+		std::get_if<fp_decrypted_template_state>(&template_states[idx]);
+	if (dec_state) {
+		if (safe_memcmp(dec_state->user_id.begin(), user_id,
+				sizeof(user_id)) != 0) {
+			return EC_RES_ACCESS_DENIED;
+		}
+		return EC_RES_SUCCESS;
+	}
+
+	auto *enc_state =
+		std::get_if<fp_encrypted_template_state>(&template_states[idx]);
+	if (!enc_state) {
+		return EC_RES_INVALID_PARAM;
+	}
+
+	ec_fp_template_encryption_metadata &enc_info = enc_state->enc_metadata;
+	if (enc_info.struct_version != 4) {
+		return EC_RES_ACCESS_DENIED;
+	}
+
+	/* We reuse the fp_enc_buffer for the data decryption, because we don't
+	 * want to allocate a huge array on the stack.
+	 * Note: fp_enc_buffer = fp_template || fp_positive_match_salt */
+	constexpr size_t template_size = sizeof(fp_template[0]);
+	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t enc_buffer_size = template_size + salt_size;
+	static_assert(enc_buffer_size <= sizeof(fp_enc_buffer));
+
+	const std::span enc_template(std::begin(fp_enc_buffer),
+				     std::begin(fp_enc_buffer) + template_size);
+	const std::span enc_salt(enc_template.end(),
+				 enc_template.end() + salt_size);
+
+	std::copy(fp_template[idx], fp_template[idx] + template_size,
+		  enc_template.begin());
+	std::copy(fp_positive_match_salt[idx],
+		  fp_positive_match_salt[idx] + salt_size, enc_salt.begin());
+
+	CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > key;
+	if (derive_encryption_key(key.data(), enc_info.encryption_salt) !=
+	    EC_SUCCESS) {
+		fp_clear_finger_context(idx);
+		OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
+		return EC_RES_UNAVAILABLE;
+	}
+
+	if (aes_gcm_decrypt(key.data(), SBP_ENC_KEY_LEN, fp_enc_buffer,
+			    fp_enc_buffer, enc_buffer_size, enc_info.nonce,
+			    FP_CONTEXT_NONCE_BYTES, enc_info.tag,
+			    FP_CONTEXT_TAG_BYTES) != EC_SUCCESS) {
+		fp_clear_finger_context(idx);
+		OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
+		return EC_RES_UNAVAILABLE;
+	}
+
+	std::copy(enc_template.begin(), enc_template.end(), fp_template[idx]);
+
+	std::copy(enc_salt.begin(), enc_salt.end(),
+		  fp_positive_match_salt[idx]);
+
+	fp_init_decrypted_template_state_with_user_id(idx);
+	OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
+	return EC_RES_SUCCESS;
+}
+
+static enum ec_status
+fp_command_unlock_template(struct host_cmd_handler_args *args)
+{
+	const auto *params =
+		static_cast<const ec_params_fp_unlock_template *>(args->params);
+	uint16_t fgr_num = params->fgr_num;
+
+	ScopedFastCpu fast_cpu;
+
+	if (!(fp_encryption_status & FP_CONTEXT_STATUS_NONCE_CONTEXT_SET)) {
+		return EC_RES_ACCESS_DENIED;
+	}
+
+	if (fp_encryption_status & FP_CONTEXT_STATUS_MATCH_PROCESSED_SET) {
+		return EC_RES_ACCESS_DENIED;
+	}
+
+	if (fgr_num > template_states.size()) {
+		return EC_RES_OVERFLOW;
+	}
+
+	for (uint16_t idx = 0; idx < fgr_num; idx++) {
+		enum ec_status res = unlock_template(idx);
+		if (res != EC_RES_SUCCESS) {
+			return res;
+		}
+	}
+
+	fp_encryption_status |= FP_CONTEXT_TEMPLATE_UNLOCKED_SET;
+	templ_valid = fgr_num;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FP_UNLOCK_TEMPLATE, fp_command_unlock_template,
 		     EC_VER_MASK(0));
