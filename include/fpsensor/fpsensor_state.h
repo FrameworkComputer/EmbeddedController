@@ -72,6 +72,11 @@ void fp_clear_finger_context(uint16_t idx);
 void fp_reset_context(void);
 
 /**
+ * Init the decrypted template state with the current user_id.
+ */
+void fp_init_decrypted_template_state_with_user_id(uint16_t idx);
+
+/**
  * Clear all fingerprint templates associated with the current user id and
  * reset the sensor.
  */

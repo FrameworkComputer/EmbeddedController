@@ -182,8 +182,8 @@ fp_command_generate_nonce(struct host_cmd_handler_args *args)
 	ScopedFastCpu fast_cpu;
 
 	if (fp_encryption_status & FP_CONTEXT_STATUS_NONCE_CONTEXT_SET) {
-		/* Invalidate the existing context to prevent leaking the
-		 * existing template. */
+		/* Invalidate the existing context and templates to prevent
+		 * leaking the existing template. */
 		fp_reset_context();
 	}
 

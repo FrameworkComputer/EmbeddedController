@@ -4157,6 +4157,7 @@ struct ec_response_keyboard_factory_test {
 #define EC_MKBP_FP_ERR_MATCH_NO 0
 #define EC_MKBP_FP_ERR_MATCH_NO_INTERNAL 6
 #define EC_MKBP_FP_ERR_MATCH_NO_TEMPLATES 7
+#define EC_MKBP_FP_ERR_MATCH_NO_AUTH_FAIL 8
 #define EC_MKBP_FP_ERR_MATCH_NO_LOW_QUALITY 2
 #define EC_MKBP_FP_ERR_MATCH_NO_LOW_COVERAGE 4
 #define EC_MKBP_FP_ERR_MATCH_YES 1
@@ -8104,6 +8105,8 @@ struct ec_params_fp_seed {
 #define FP_CONTEXT_AUTH_NONCE_SET BIT(3)
 /* FP user_id had been set or not*/
 #define FP_CONTEXT_USER_ID_SET BIT(4)
+/* FP templates are unlocked for nonce context or not */
+#define FP_CONTEXT_TEMPLATE_UNLOCKED_SET BIT(5)
 
 struct ec_response_fp_encryption_status {
 	/* Used bits in encryption engine status */

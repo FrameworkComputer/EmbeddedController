@@ -6,6 +6,7 @@
 #include "compile_time_macros.h"
 
 #include <array>
+#include <variant>
 
 /* Boringssl headers need to be included before extern "C" section. */
 #include "openssl/mem.h"
@@ -28,6 +29,7 @@ extern "C" {
 #include "fpsensor/fpsensor_auth_commands.h"
 #include "fpsensor/fpsensor_crypto.h"
 #include "fpsensor/fpsensor_state.h"
+#include "fpsensor/fpsensor_template_state.h"
 #include "fpsensor/fpsensor_utils.h"
 
 /* Last acquired frame (aligned as it is used by arbitrary binary libraries) */
@@ -46,6 +48,8 @@ uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE] FP_TEMPLATE_SECTION;
 /* Salt used in derivation of positive match secret. */
 uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
 			      [FP_POSITIVE_MATCH_SALT_BYTES];
+/* The states for different fingers. */
+std::array<fp_template_state, FP_MAX_FINGER_COUNT> template_states;
 
 /* LCOV_EXCL_START */
 __test_only void fp_task_simulate(void)
@@ -62,6 +66,7 @@ void fp_clear_finger_context(uint16_t idx)
 	OPENSSL_cleanse(fp_template[idx], sizeof(fp_template[0]));
 	OPENSSL_cleanse(fp_positive_match_salt[idx],
 			sizeof(fp_positive_match_salt[0]));
+	template_states[idx] = std::monostate();
 }
 
 void fp_reset_context()
@@ -74,6 +79,16 @@ void fp_reset_context()
 	OPENSSL_cleanse(user_id, sizeof(user_id));
 	OPENSSL_cleanse(auth_nonce.data(), auth_nonce.size());
 	fp_disable_positive_match_secret(&positive_match_secret_state);
+}
+
+void fp_init_decrypted_template_state_with_user_id(uint16_t idx)
+{
+	std::array<uint32_t, FP_CONTEXT_USERID_WORDS> raw_user_id;
+	std::copy(std::begin(user_id), std::end(user_id),
+		  std::begin(raw_user_id));
+	template_states[idx] = fp_decrypted_template_state{
+		.user_id = raw_user_id,
+	};
 }
 
 /**

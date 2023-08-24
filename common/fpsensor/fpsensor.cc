@@ -11,6 +11,9 @@
 #include <zephyr/shell/shell.h>
 #endif
 
+#include <array>
+#include <variant>
+
 extern "C" {
 #include "atomic.h"
 #include "clock.h"
@@ -34,6 +37,7 @@ extern "C" {
 #include "fpsensor/fpsensor_crypto.h"
 #include "fpsensor/fpsensor_detect.h"
 #include "fpsensor/fpsensor_state.h"
+#include "fpsensor/fpsensor_template_state.h"
 #include "fpsensor/fpsensor_utils.h"
 #include "scoped_fast_cpu.h"
 
@@ -130,6 +134,8 @@ static uint32_t fp_process_enroll(void)
 			template_newly_enrolled = templ_valid;
 			fp_enable_positive_match_secret(
 				templ_valid, &positive_match_secret_state);
+			fp_init_decrypted_template_state_with_user_id(
+				templ_valid);
 			templ_valid++;
 		}
 		sensor_mode &= ~FP_MODE_ENROLL_SESSION;
@@ -137,6 +143,27 @@ static uint32_t fp_process_enroll(void)
 	}
 	return EC_MKBP_FP_ENROLL | EC_MKBP_FP_ERRCODE(res) |
 	       (percent << EC_MKBP_FP_ENROLL_PROGRESS_OFFSET);
+}
+
+static bool authenticate_fp_match_state(void)
+{
+	/* The rate limit is only meanful for the nonce context, and we don't
+	 * have rate limit for the legacy FP user unlock flow. */
+	if (!(fp_encryption_status & FP_CONTEXT_STATUS_NONCE_CONTEXT_SET)) {
+		return true;
+	}
+
+	if (!(fp_encryption_status & FP_CONTEXT_TEMPLATE_UNLOCKED_SET)) {
+		CPRINTS("Cannot process match without unlock template");
+		return false;
+	}
+
+	if (fp_encryption_status & FP_CONTEXT_STATUS_MATCH_PROCESSED_SET) {
+		CPRINTS("Cannot process match twice in nonce context");
+		return false;
+	}
+
+	return true;
 }
 
 static uint32_t fp_process_match(void)
@@ -149,12 +176,17 @@ static uint32_t fp_process_match(void)
 	/* match finger against current templates */
 	fp_disable_positive_match_secret(&positive_match_secret_state);
 
-	if ((fp_encryption_status & FP_CONTEXT_STATUS_NONCE_CONTEXT_SET) &&
-	    (fp_encryption_status & FP_CONTEXT_STATUS_MATCH_PROCESSED_SET)) {
-		CPRINTS("Cannot process match twice in nonce context");
-		return EC_MKBP_FP_ERRCODE(EC_MKBP_FP_ERR_MATCH_NO_INTERNAL);
+	if (!authenticate_fp_match_state()) {
+		res = EC_MKBP_FP_ERR_MATCH_NO_AUTH_FAIL;
+		return EC_MKBP_FP_MATCH | EC_MKBP_FP_ERRCODE(res) |
+		       ((fgr << EC_MKBP_FP_MATCH_IDX_OFFSET) &
+			EC_MKBP_FP_MATCH_IDX_MASK);
 	}
 
+	/* The match processed state will be used to prevent the template unlock
+	 * operation after match processed in a nonce context. If we don't do
+	 * that, the attacker can unlock template multiple times in a single
+	 * nonce context. */
 	fp_encryption_status |= FP_CONTEXT_STATUS_MATCH_PROCESSED_SET;
 
 	CPRINTS("Matching/%d ...", templ_valid);
@@ -636,24 +668,36 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 					      sizeof(fp_positive_match_salt[0]);
 		}
 
-		ret = derive_encryption_key(key, enc_info->encryption_salt);
-		if (ret != EC_SUCCESS) {
-			CPRINTS("fgr%d: Failed to derive key", idx);
-			return EC_RES_UNAVAILABLE;
+		if (fp_encryption_status & FP_CONTEXT_USER_ID_SET) {
+			ret = derive_encryption_key(key,
+						    enc_info->encryption_salt);
+			if (ret != EC_SUCCESS) {
+				CPRINTS("fgr%d: Failed to derive key", idx);
+				return EC_RES_UNAVAILABLE;
+			}
+
+			/* Decrypt the secret blob in-place. */
+			ret = aes_gcm_decrypt(
+				key, SBP_ENC_KEY_LEN, encrypted_template,
+				encrypted_template, encrypted_blob_size,
+				enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
+				enc_info->tag, FP_CONTEXT_TAG_BYTES);
+			OPENSSL_cleanse(key, sizeof(key));
+			if (ret != EC_SUCCESS) {
+				CPRINTS("fgr%d: Failed to decipher template",
+					idx);
+				/* Don't leave bad data in the template buffer
+				 */
+				fp_clear_finger_context(idx);
+				return EC_RES_UNAVAILABLE;
+			}
+			fp_init_decrypted_template_state_with_user_id(idx);
+		} else {
+			template_states[idx] = fp_encrypted_template_state{
+				.enc_metadata = *enc_info,
+			};
 		}
 
-		/* Decrypt the secret blob in-place. */
-		ret = aes_gcm_decrypt(key, SBP_ENC_KEY_LEN, encrypted_template,
-				      encrypted_template, encrypted_blob_size,
-				      enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
-				      enc_info->tag, FP_CONTEXT_TAG_BYTES);
-		OPENSSL_cleanse(key, sizeof(key));
-		if (ret != EC_SUCCESS) {
-			CPRINTS("fgr%d: Failed to decipher template", idx);
-			/* Don't leave bad data in the template buffer */
-			fp_clear_finger_context(idx);
-			return EC_RES_UNAVAILABLE;
-		}
 		memcpy(fp_template[idx], encrypted_template,
 		       sizeof(fp_template[0]));
 		if (template_needs_validation_value(enc_info)) {
