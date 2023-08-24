@@ -220,6 +220,8 @@ void amd_power_before(void *fixture)
 	zassert_equal(power_get_state(), POWER_G3, "power_state=%d",
 		      power_get_state());
 	zassert_equal(power_has_signals(POWER_SIGNAL_MASK(0)), 0);
+
+	amd_stb_dump_finish();
 }
 
 void amd_power_after(void *fixture)
@@ -519,6 +521,28 @@ ZTEST(amd_power, test_power_suspend_hang)
 	zassert_equal(power_get_state(), POWER_S0);
 	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
 	zassert_true(strstr(buffer, "Detected sleep hang!") != NULL);
+}
+
+ZTEST(amd_power, test_power_stb_dump)
+{
+	const struct gpio_dt_spec *ec_sfh_int =
+		GPIO_DT_FROM_NODELABEL(gpio_ec_sfh_int_h);
+	const struct gpio_dt_spec *sfh_ec_int =
+		GPIO_DT_FROM_NODELABEL(gpio_sfh_ec_int_h);
+	int rv;
+
+	amd_stb_dump_trigger();
+	rv = gpio_emul_output_get(ec_sfh_int->port, ec_sfh_int->pin);
+	zassert_equal(rv, 1);
+	zassert_true(amd_stb_dump_in_progress());
+
+	rv = gpio_emul_input_set(sfh_ec_int->port, sfh_ec_int->pin, true);
+	zassert_ok(rv);
+	/* Give the interrupt handler plenty of time to run. */
+	k_msleep(10);
+	zassert_false(amd_stb_dump_in_progress());
+	rv = gpio_emul_output_get(ec_sfh_int->port, ec_sfh_int->pin);
+	zassert_equal(rv, 0);
 }
 
 ZTEST(amd_power, test_power_stb_dump_interrupt)

@@ -5,6 +5,6 @@
 common:
   platform_allow: native_posix
 tests:
-  amd.stb_dump:
+  amd.power:
     extra_configs:
-      - CONFIG_TEST_AMD_STB_DUMP=y
+      - CONFIG_TEST_AMD_POWER=y
