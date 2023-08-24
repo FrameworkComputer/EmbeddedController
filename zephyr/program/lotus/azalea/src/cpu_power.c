@@ -102,7 +102,7 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower, b
 		power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 35000;
 		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = active_mpower * 95 / 100;
 		/* CPB disable */
-		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT) |= CPB_DISABLE;
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT) &= ~CPB_DISABLE;
 	} else if ((battery_percent < 30) && (active_mpower >= 55000)) {
 		/* AC (With Battery) (Battery Capacity < 30%, ADP >= 55W) */
 		power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
