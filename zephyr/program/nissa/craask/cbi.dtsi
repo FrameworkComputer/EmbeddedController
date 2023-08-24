@@ -191,32 +191,5 @@
 				value = <1>;
 			};
 		};
-		/*
-		 * SSFC bit6-9 is defined for TS_SOURCE which is
-		 * not controlled by EC.
-		 */
-		ts_source {
-			enum-name = "TS_SOURCE";
-			size = <4>;
-		};
-		/*
-		 * SSFC field to identify keyboard.
-		 */
-		keyboard {
-			enum-name = "KEYBOARD";
-			size = <1>;
-
-			keyboard_default: keyboard0 {
-				compatible = "cros-ec,cbi-ssfc-value";
-				status = "okay";
-				value = <0>;
-				default;
-			};
-			keyboard_cf: keyboard1 {
-				compatible = "cros-ec,cbi-ssfc-value";
-				status = "okay";
-				value = <1>;
-			};
-		};
 	};
 };
