@@ -13,7 +13,9 @@ zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_SIGNAL_GPIO signal_gpio.c)
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_SIGNAL_VW signal_vw.c)
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_SIGNAL_ADC signal_adc.c)
 
+if (NOT DEFINED CONFIG_EMUL_AP_PWRSEQ_DRIVER)
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_DRIVER ap_pwrseq.c)
+endif()
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_DRIVER ap_pwrseq_sm.c)
 
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_HOST_SLEEP power_host_sleep.c)

@@ -208,7 +208,7 @@ int hook_call_deferred(const struct deferred_data *data, int us)
  * not, a shim is setup to send events either from the legacy hooks to
  * the AP power event callbacks, or vice versa.
  */
-#ifdef CONFIG_AP_PWRSEQ
+#if defined(CONFIG_AP_PWRSEQ) && !defined(CONFIG_EMUL_AP_PWRSEQ_DRIVER)
 
 /*
  * Callback handler, dispatch to hooks

@@ -160,7 +160,8 @@ int ap_pwrseq_sm_run_state(void *const data, uint32_t events)
 	struct ap_pwrseq_sm_data *sm_data = data;
 	int ret;
 
-	if (sm_data->tid != k_current_get()) {
+	if (!IS_ENABLED(CONFIG_EMUL_AP_PWRSEQ_DRIVER) &&
+	    sm_data->tid != k_current_get()) {
 		/* Called by wrong thread */
 		return -EPERM;
 	}
@@ -195,7 +196,8 @@ int ap_pwrseq_sm_set_state(void *const data, enum ap_pwrseq_state state)
 {
 	struct ap_pwrseq_sm_data *sm_data = data;
 
-	if (sm_data->tid != k_current_get()) {
+	if (!IS_ENABLED(CONFIG_EMUL_AP_PWRSEQ_DRIVER) &&
+	    sm_data->tid != k_current_get()) {
 		/* Called by wrong thread */
 		return -EPERM;
 	}
@@ -228,7 +230,8 @@ enum ap_pwrseq_state ap_pwrseq_sm_get_entry_state(void *const data)
 {
 	struct ap_pwrseq_sm_data *sm_data = data;
 
-	if (sm_data->tid != k_current_get()) {
+	if (!IS_ENABLED(CONFIG_EMUL_AP_PWRSEQ_DRIVER) &&
+	    sm_data->tid != k_current_get()) {
 		/* Called by wrong thread */
 		return -EPERM;
 	}
@@ -240,7 +243,8 @@ enum ap_pwrseq_state ap_pwrseq_sm_get_exit_state(void *const data)
 {
 	struct ap_pwrseq_sm_data *sm_data = data;
 
-	if (sm_data->tid != k_current_get()) {
+	if (!IS_ENABLED(CONFIG_EMUL_AP_PWRSEQ_DRIVER) &&
+	    sm_data->tid != k_current_get()) {
 		/* Called by wrong thread */
 		return -EPERM;
 	}
