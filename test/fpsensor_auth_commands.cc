@@ -755,50 +755,6 @@ test_fp_command_read_match_secret_with_pubkey_succeed(void)
 	return EC_SUCCESS;
 }
 
-test_static enum ec_error_list test_fp_command_preload_template(void)
-{
-	enum ec_status rv;
-	struct ec_params_fp_preload_template params = {
-		.offset = 0,
-		.size = 0,
-		.fgr = 65535,
-	};
-
-	rv = test_send_host_command(EC_CMD_FP_PRELOAD_TEMPLATE, 0, &params,
-				    sizeof(params), NULL, 0);
-
-	TEST_EQ(rv, EC_RES_OVERFLOW, "%d");
-
-	params.fgr = 0;
-
-	rv = test_send_host_command(EC_CMD_FP_PRELOAD_TEMPLATE, 0, &params,
-				    sizeof(params), NULL, 0);
-
-	TEST_EQ(rv, EC_RES_SUCCESS, "%d");
-
-	params.size |= FP_TEMPLATE_COMMIT;
-	rv = test_send_host_command(EC_CMD_FP_PRELOAD_TEMPLATE, 0, &params,
-				    sizeof(params), NULL, 0);
-
-	TEST_EQ(rv, EC_RES_SUCCESS, "%d");
-
-	params.size = 0;
-	params.offset = 65535;
-	rv = test_send_host_command(EC_CMD_FP_PRELOAD_TEMPLATE, 0, &params,
-				    sizeof(params), NULL, 0);
-
-	TEST_EQ(rv, EC_RES_INVALID_PARAM, "%d");
-
-	params.size = 1024;
-	params.offset = 0;
-	rv = test_send_host_command(EC_CMD_FP_PRELOAD_TEMPLATE, 0, &params,
-				    sizeof(params), NULL, 0);
-
-	TEST_EQ(rv, EC_RES_REQUEST_TRUNCATED, "%d");
-
-	return EC_SUCCESS;
-}
-
 test_static enum ec_error_list test_fp_command_template_encrypted(void)
 {
 	constexpr size_t head_size = offsetof(ec_params_fp_template, data);
@@ -1325,7 +1281,6 @@ extern "C" void run_test(int argc, const char **argv)
 	RUN_TEST(test_fp_command_nonce_context_limit_twice_2);
 	RUN_TEST(test_fp_command_nonce_context_load_pk_deny);
 	RUN_TEST(test_fp_command_read_match_secret_with_pubkey_succeed);
-	RUN_TEST(test_fp_command_preload_template);
 	RUN_TEST(test_fp_command_template_encrypted);
 	RUN_TEST(test_fp_command_template_decrypted);
 	RUN_TEST(test_fp_command_unlock_template);

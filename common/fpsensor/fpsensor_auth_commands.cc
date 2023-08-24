@@ -24,18 +24,6 @@
 #include <utility>
 #include <variant>
 
-namespace
-{
-/* TODO(b/293412128): Remove the workaround after we have a better solution. */
-constexpr int kMaxPreloadFingerCount = 3;
-} // namespace
-
-/* Store the intermediate encrypted data for transfer & reuse purpose.*/
-/* The data will be copied into fp_enc_buffer after commit. */
-static std::array<std::array<uint8_t, FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE>,
-		  std::min(FP_MAX_FINGER_COUNT, kMaxPreloadFingerCount)>
-	fp_xfer_buffer;
-
 /* The GSC pairing key. */
 static std::array<uint8_t, FP_PAIRING_KEY_LEN> pairing_key;
 
@@ -291,56 +279,6 @@ fp_command_read_match_secret_with_pubkey(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_READ_MATCH_SECRET_WITH_PUBKEY,
 		     fp_command_read_match_secret_with_pubkey, EC_VER_MASK(0));
-
-static enum ec_error_list preload_template(const uint8_t *data, uint32_t size,
-					   uint32_t offset, uint16_t idx,
-					   bool xfer_complete)
-{
-	/* Can we store one more template ? */
-	if (idx >= fp_xfer_buffer.size())
-		return EC_ERROR_OVERFLOW;
-
-	enum ec_error_list ret = validate_fp_buffer_offset(
-		fp_xfer_buffer[0].size(), offset, size);
-	if (ret != EC_SUCCESS)
-		return ret;
-
-	std::copy(data, data + size, fp_xfer_buffer[idx].data() + offset);
-
-	if (xfer_complete) {
-		std::copy(fp_xfer_buffer[idx].begin(),
-			  fp_xfer_buffer[idx].end(), fp_enc_buffer);
-	}
-
-	return EC_SUCCESS;
-}
-
-static enum ec_status
-fp_command_preload_template(struct host_cmd_handler_args *args)
-{
-	const auto *params = static_cast<const ec_params_fp_preload_template *>(
-		args->params);
-
-	ScopedFastCpu fast_cpu;
-
-	uint32_t size = params->size & ~FP_TEMPLATE_COMMIT;
-	bool xfer_complete = params->size & FP_TEMPLATE_COMMIT;
-
-	if (args->params_size !=
-	    size + offsetof(ec_params_fp_preload_template, data))
-		return EC_RES_REQUEST_TRUNCATED;
-
-	enum ec_error_list ret = preload_template(
-		params->data, size, params->offset, params->fgr, xfer_complete);
-	if (ret == EC_ERROR_OVERFLOW)
-		return EC_RES_OVERFLOW;
-	else if (ret != EC_SUCCESS)
-		return EC_RES_INVALID_PARAM;
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_FP_PRELOAD_TEMPLATE, fp_command_preload_template,
-		     EC_VER_MASK(0));
 
 static enum ec_status unlock_template(uint16_t idx)
 {
