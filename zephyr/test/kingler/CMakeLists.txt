@@ -28,6 +28,9 @@ target_sources_ifdef(CONFIG_TEST_FORM_FACTOR_CONVERTIBLE app PRIVATE
                      src/tablet.c)
 target_sources_ifdef(CONFIG_TEST_FORM_FACTOR_CLAMSHELL app PRIVATE
                      src/clamshell.c)
+target_sources_ifdef(CONFIG_TEST_STEELIX_LED app PRIVATE
+		     ${PLATFORM_EC_PROGRAM_DIR}/corsola/steelix/src/led.c
+                     src/steelix_led.c)
 target_sources_ifdef(
         CONFIG_VARIANT_CORSOLA_DB_DETECTION app PRIVATE
         ${PLATFORM_EC_PROGRAM_DIR}/corsola/src/variant_db_detection.c)

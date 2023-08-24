@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <dt-bindings/pwm/pwm.h>
+
 #include "common.dtsi"
 #include "../program/corsola/npcx_interrupts.dtsi"
 #include "../program/corsola/npcx_gpio.dtsi"
@@ -17,5 +19,42 @@
 		 * its own <>_INT_EVENT.
 		 */
 		lsm6dsm-int = &base_accel;
+	};
+
+	/* LEDs need to exist for testing, but aren't actually used. */
+	led-pwms {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		pwm0: pwm@0 {
+			compatible = "cros,pwm-mock";
+			reg = <0 1>;
+			#pwm-cells = <3>;
+		};
+
+		pwm1: pwm@1 {
+			compatible = "cros,pwm-mock";
+			reg = <0 1>;
+			#pwm-cells = <3>;
+		};
+
+		pwm4: pwm@4 {
+			compatible = "cros,pwm-mock";
+			reg = <0 1>;
+			#pwm-cells = <3>;
+		};
+	};
+
+	pwmleds {
+		compatible = "pwm-leds";
+		led_battery_red: ec_led1_odl {
+			pwms = <&pwm0 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+		led_battery_green: ec_led2_odl {
+			pwms = <&pwm1 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+		led_power_white: ec_led3_odl {
+			pwms = <&pwm4 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
 	};
 };

@@ -16,6 +16,13 @@ tests:
     - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM=y
     extra_dtc_overlay_files:
     - kingler.steelix.overlay
+  kingler.steelix_led:
+    extra_configs:
+    - CONFIG_TEST_STEELIX_LED=y
+    - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM=y
+    - CONFIG_PLATFORM_EC_LED_COMMON=y
+    extra_dtc_overlay_files:
+    - kingler.steelix.overlay
   kingler.rusty:
     extra_configs:
     - CONFIG_TEST_STEELIX_RUSTY=y

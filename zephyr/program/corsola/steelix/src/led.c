@@ -179,3 +179,20 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 	return EC_SUCCESS;
 }
+
+/* TODO(yllin): Port LED config to dts and drop this function */
+__override void led_control(enum ec_led_id led_id, enum ec_led_state state)
+{
+	if ((led_id != EC_LED_ID_RECOVERY_HW_REINIT_LED) &&
+	    (led_id != EC_LED_ID_SYSRQ_DEBUG_LED))
+		return;
+
+	if (state == LED_STATE_RESET) {
+		led_auto_control(EC_LED_ID_BATTERY_LED, 1);
+		return;
+	}
+
+	led_auto_control(EC_LED_ID_BATTERY_LED, 0);
+
+	led_set_color_battery(state ? EC_LED_COLOR_RED : EC_LED_COLOR_INVALID);
+}

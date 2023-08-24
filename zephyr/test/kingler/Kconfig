@@ -13,6 +13,12 @@ config TEST_STEELIX_RUSTY
 	  Include board_steelix.c into the binary to test the clamshell and
 	  convertible.
 
+config TEST_STEELIX_LED
+	bool "Run the tests intended for steelix and rusty"
+	help
+	  Include steelix_led.c into the binary to test the LED
+	  functions.
+
 config TEST_FORM_FACTOR_CLAMSHELL
 	bool "Run the tests intended for clamshells"
 	help
