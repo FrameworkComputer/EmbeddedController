@@ -59,12 +59,6 @@ choice INPUT_MODE
 	default INPUT_MODE_SYNCHRONOUS
 endchoice
 
-config CHECK_INIT_PRIORITIES
-	default y if !ZTEST
-
-config CHECK_INIT_PRIORITIES_FAIL_ON_WARNING
-	default y if !ZTEST
-
 config INPUT_NPCX_KBD
 	default n if PLATFORM_EC_KEYBOARD_CROS_EC_RAW_KB
 
