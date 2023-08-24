@@ -53,6 +53,8 @@ enum ec_error_list check_context_cleared()
 		return EC_ERROR_ACCESS_DENIED;
 	if (positive_match_secret_state.template_matched != FP_NO_SUCH_TEMPLATE)
 		return EC_ERROR_ACCESS_DENIED;
+	if (fp_encryption_status & FP_CONTEXT_USER_ID_SET)
+		return EC_ERROR_ACCESS_DENIED;
 	return EC_SUCCESS;
 }
 
@@ -239,6 +241,7 @@ fp_command_nonce_context(struct host_cmd_handler_args *args)
 		  reinterpret_cast<uint8_t *>(user_id));
 
 	fp_encryption_status &= FP_ENC_STATUS_SEED_SET;
+	fp_encryption_status |= FP_CONTEXT_USER_ID_SET;
 	fp_encryption_status |= FP_CONTEXT_STATUS_NONCE_CONTEXT_SET;
 	return EC_RES_SUCCESS;
 }

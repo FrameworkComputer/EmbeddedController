@@ -8067,6 +8067,8 @@ struct ec_params_fp_seed {
 #define FP_CONTEXT_STATUS_MATCH_PROCESSED_SET BIT(2)
 /* FP auth_nonce had been set or not*/
 #define FP_CONTEXT_AUTH_NONCE_SET BIT(3)
+/* FP user_id had been set or not*/
+#define FP_CONTEXT_USER_ID_SET BIT(4)
 
 struct ec_response_fp_encryption_status {
 	/* Used bits in encryption engine status */

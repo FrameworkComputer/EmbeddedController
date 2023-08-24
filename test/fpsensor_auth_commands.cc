@@ -68,9 +68,34 @@ test_static enum ec_error_list test_set_fp_tpm_seed(void)
 	return check_seed_set_result(rv, FP_ENC_STATUS_SEED_SET, &resp);
 }
 
+static enum ec_error_list get_fp_encryption_status(uint32_t *status)
+{
+	struct ec_response_fp_encryption_status resp = { 0 };
+
+	TEST_EQ(test_send_host_command(EC_CMD_FP_ENC_STATUS, 0, NULL, 0, &resp,
+				       sizeof(resp)),
+		EC_RES_SUCCESS, "%d");
+	*status = resp.status;
+
+	return EC_SUCCESS;
+}
+
 test_static enum ec_error_list test_fp_command_check_context_cleared(void)
 {
+	uint32_t status;
 	fp_reset_and_clear_context();
+	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
+	TEST_BITS_CLEARED((int)status, FP_CONTEXT_USER_ID_SET);
+	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
+
+	struct ec_params_fp_context_v1 params_no_id = {
+		.action = FP_CONTEXT_GET_RESULT,
+	};
+	TEST_EQ(test_send_host_command(EC_CMD_FP_CONTEXT, 1, &params_no_id,
+				       sizeof(params_no_id), NULL, 0),
+		EC_RES_SUCCESS, "%d");
+	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
+	TEST_BITS_CLEARED((int)status, FP_CONTEXT_USER_ID_SET);
 	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
 
 	struct ec_params_fp_context_v1 params = {
@@ -80,6 +105,8 @@ test_static enum ec_error_list test_fp_command_check_context_cleared(void)
 	TEST_EQ(test_send_host_command(EC_CMD_FP_CONTEXT, 1, &params,
 				       sizeof(params), NULL, 0),
 		EC_RES_SUCCESS, "%d");
+	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
+	TEST_BITS_SET((int)status, FP_CONTEXT_USER_ID_SET);
 	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
 
 	fp_reset_and_clear_context();
@@ -98,6 +125,12 @@ test_static enum ec_error_list test_fp_command_check_context_cleared(void)
 	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
 
 	positive_match_secret_state.template_matched = 0;
+	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
+
+	fp_reset_and_clear_context();
+	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
+
+	fp_encryption_status |= FP_CONTEXT_USER_ID_SET;
 	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
 
 	fp_reset_and_clear_context();
@@ -367,8 +400,12 @@ test_static enum ec_error_list test_fp_command_nonce_context(void)
 	enum ec_status rv;
 	struct ec_response_fp_generate_nonce nonce_response;
 	struct ec_params_fp_nonce_context nonce_params = {};
+	uint32_t status;
 
 	fp_reset_and_clear_context();
+
+	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
+	TEST_BITS_CLEARED((int)status, FP_CONTEXT_USER_ID_SET);
 
 	templ_valid = 1;
 
@@ -377,10 +414,16 @@ test_static enum ec_error_list test_fp_command_nonce_context(void)
 
 	TEST_EQ(rv, EC_RES_SUCCESS, "%d");
 
+	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
+	TEST_BITS_CLEARED((int)status, FP_CONTEXT_USER_ID_SET);
+
 	rv = test_send_host_command(EC_CMD_FP_NONCE_CONTEXT, 0, &nonce_params,
 				    sizeof(nonce_params), NULL, 0);
 
 	TEST_EQ(rv, EC_RES_SUCCESS, "%d");
+
+	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
+	TEST_BITS_SET((int)status, FP_CONTEXT_USER_ID_SET);
 
 	TEST_EQ(templ_valid, 1u, "%d");
 

@@ -241,6 +241,15 @@ static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 
 		memcpy(user_id, p->userid, sizeof(user_id));
 
+		/* Set the FP_CONTEXT_USER_ID_SET bit if the user_id is
+		 * non-zero. */
+		for (size_t i = 0; i < std::size(user_id); i++) {
+			if (user_id[i] != 0) {
+				fp_encryption_status |= FP_CONTEXT_USER_ID_SET;
+				break;
+			}
+		}
+
 		return EC_RES_SUCCESS;
 	}
 
