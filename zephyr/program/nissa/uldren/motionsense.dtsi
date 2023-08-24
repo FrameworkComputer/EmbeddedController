@@ -43,26 +43,26 @@
 	motionsense-rotation-ref {
 		compatible = "cros-ec,motionsense-rotation-ref";
 		lid_rot_ref: lid-rotation-ref {
-			mat33 = <0 (-1) 0
-				 (-1) 0 0
-				 0 0 (-1)>;
+			mat33 = <0 1 0
+				(-1) 0 0
+				 0 0 1>;
 		};
 
 		base_rot_ref: base-rotation-ref {
-			mat33 = <1 0 0
-				 0 1 0
+			mat33 = <0 (-1) 0
+				 1 0 0
 				 0 0 1>;
 		};
 
 		lid_rot_bma422: lid-rotation-bma {
-			mat33 = <0 (-1) 0
-				 (-1) 0 0
-				 0 0 (-1)>;
+			mat33 = <0 1 0
+				(-1) 0 0
+				 0 0 1>;
 		};
 
 		base_rot_ref_bmi: base-rotation-ref-bmi {
-			mat33 = <0 1 0
-				 (-1) 0 0
+			mat33 = <1 0 0
+				 0 1 0
 				 0 0 1>;
 		};
 	};
