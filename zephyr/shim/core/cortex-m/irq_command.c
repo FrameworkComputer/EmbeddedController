@@ -5,7 +5,7 @@
 
 #include "console.h"
 
-#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
+#include <cmsis_core.h>
 
 /* IRQ counters */
 int irq_count[CONFIG_NUM_IRQS];

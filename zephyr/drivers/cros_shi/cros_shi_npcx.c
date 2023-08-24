@@ -11,7 +11,6 @@
 
 #include <assert.h>
 
-#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
 #include <zephyr/drivers/clock_control.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/pinctrl.h>
@@ -19,6 +18,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 
+#include <cmsis_core.h>
 #include <drivers/cros_shi.h>
 #include <soc.h>
 #include <soc/nuvoton_npcx/reg_def_cros.h>
