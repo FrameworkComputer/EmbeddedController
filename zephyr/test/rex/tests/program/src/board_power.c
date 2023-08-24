@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "ap_power/ap_pwrseq.h"
 #include "gpio/gpio.h"
 #include "gpio_signal.h"
 #include "timer.h"
@@ -19,6 +20,10 @@
 #include <mock/power_signals.h>
 #include <power_signals.h>
 #include <x86_power_signals.h>
+
+#if defined(CONFIG_AP_PWRSEQ_DRIVER)
+#include "ap_power/ap_pwrseq_sm.h"
+#endif
 
 #define X86_NON_DSX_MTL_FORCE_SHUTDOWN_TO_MS 50
 
@@ -120,6 +125,55 @@ void mock_ap_power_ev_send_callbacks(enum ap_power_events event)
 	zassert_equal(event, AP_POWER_PRE_INIT);
 }
 
+#if defined(CONFIG_AP_PWRSEQ_DRIVER)
+static int chipset_run_count;
+
+int mock_power_signal_set_ap_power_action_g3_run_1(enum power_signal signal,
+						   int value)
+{
+	if ((signal == PWR_EN_PP3300_A) && (value == 1)) {
+		return 0;
+	}
+
+	zassert_unreachable("Wrong input received");
+	return -1;
+}
+
+int mock_power_signal_get_ap_power_action_g3_run_1(enum power_signal signal)
+{
+	if (signal == PWR_EN_PP3300_A) {
+		return 1;
+	}
+	zassert_unreachable("Wrong input received");
+	return -1;
+}
+
+int mock_power_signal_get_ap_power_action_g3_run_0(enum power_signal signal)
+{
+	if (signal == PWR_EN_PP3300_A) {
+		return 0;
+	}
+	zassert_unreachable("Wrong input received");
+	return -1;
+}
+
+/**
+ * This will help to verify that function `board_ap_power_action_g3_run` is
+ * returning proper value by evaluating power signals.
+ * This function will only be called when `board_ap_power_action_g3_run`
+ * returns 0 (zero).
+ **/
+static int chipset_ap_power_action_g3_run(void *data)
+{
+	chipset_run_count++;
+
+	return 0;
+}
+
+AP_POWER_CHIPSET_STATE_DEFINE(AP_POWER_STATE_G3, NULL,
+			      chipset_ap_power_action_g3_run, NULL);
+#endif
+
 static void board_power_before(void *fixture)
 {
 	ARG_UNUSED(fixture);
@@ -127,6 +181,9 @@ static void board_power_before(void *fixture)
 	RESET_FAKE(power_signal_get);
 	RESET_FAKE(power_wait_mask_signals_timeout);
 	RESET_FAKE(ap_power_ev_send_callbacks);
+#if defined(CONFIG_AP_PWRSEQ_DRIVER)
+	chipset_run_count = 0;
+#endif
 }
 
 ZTEST_USER(board_power, test_board_ap_power_force_shutdown)
@@ -160,6 +217,46 @@ ZTEST_USER(board_power, test_board_ap_power_force_shutdown_timeout)
 	zassert_true(power_signal_get_fake.call_count > 2);
 }
 
+#if defined(CONFIG_AP_PWRSEQ_DRIVER)
+ZTEST_USER(board_power, test_board_ap_power_action_g3_run_0)
+{
+	const struct device *dev = ap_pwrseq_get_instance();
+
+	ap_pwrseq_start(dev, AP_POWER_STATE_G3);
+
+	power_signal_get_fake.custom_fake =
+		mock_power_signal_get_ap_power_action_g3_run_0;
+
+	ap_pwrseq_post_event(dev, AP_PWRSEQ_EVENT_POWER_SIGNAL);
+	zassert_equal(0, chipset_run_count);
+}
+
+ZTEST_USER(board_power, test_board_ap_power_action_g3_run_1)
+{
+	const struct device *dev = ap_pwrseq_get_instance();
+
+	power_signal_set_fake.custom_fake =
+		mock_power_signal_set_ap_power_action_g3_run_1;
+	power_signal_get_fake.custom_fake =
+		mock_power_signal_get_ap_power_action_g3_run_0;
+
+	ap_pwrseq_post_event(dev, AP_PWRSEQ_EVENT_POWER_STARTUP);
+	zassert_equal(0, chipset_run_count);
+}
+
+ZTEST_USER(board_power, test_board_ap_power_action_g3_run_2)
+{
+	const struct device *dev = ap_pwrseq_get_instance();
+
+	power_signal_set_fake.custom_fake =
+		mock_power_signal_set_ap_power_action_g3_run_1;
+	power_signal_get_fake.custom_fake =
+		mock_power_signal_get_ap_power_action_g3_run_1;
+
+	ap_pwrseq_post_event(dev, AP_PWRSEQ_EVENT_POWER_STARTUP);
+	zassert_equal(1, chipset_run_count);
+}
+#else
 ZTEST_USER(board_power, test_board_ap_power_check_power_rails_enabled_0)
 {
 	power_signal_get_fake.custom_fake =
@@ -209,5 +306,6 @@ ZTEST_USER(board_power, test_board_ap_power_action_g3_s5_1)
 	zassert_equal(1, power_wait_mask_signals_timeout_fake.call_count);
 	zassert_equal(0, ap_power_ev_send_callbacks_fake.call_count);
 }
+#endif /* CONFIG_AP_PWRSEQ_DRIVER */
 
 ZTEST_SUITE(board_power, NULL, NULL, board_power_before, NULL, NULL);
