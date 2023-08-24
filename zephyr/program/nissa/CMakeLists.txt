@@ -38,6 +38,7 @@ if(DEFINED CONFIG_BOARD_NOKRIS)
 			"nokris/src/led.c"
 			"nokris/src/form_factor.c"
 			"nokris/src/keyboard.c"
+			"nokris/src/hdmi.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "nokris/src/fan.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "nokris/src/usbc.c")

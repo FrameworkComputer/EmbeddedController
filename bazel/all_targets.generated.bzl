@@ -1502,6 +1502,11 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "nokris",
+        board = "nokris",
+        extra_modules = ["cmsis"],
+    )
+    ec_target(
         name = "npcx7",
         board = "npcx7",
         extra_modules = ["cmsis"],

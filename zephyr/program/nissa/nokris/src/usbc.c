@@ -5,169 +5,148 @@
 
 #include "charge_state.h"
 #include "chipset.h"
-#include "driver/charger/isl923x_public.h"
-#include "driver/retimer/anx7483_public.h"
-#include "driver/tcpm/raa489000.h"
+#include "driver/tcpm/nct38xx.h"
+#include "driver/tcpm/ps8xxx_public.h"
 #include "driver/tcpm/tcpci.h"
+#include "gpio.h"
 #include "hooks.h"
+#include "nissa_sub_board.h"
 #include "system.h"
 #include "usb_mux.h"
+#include "usbc_ppc.h"
 
 #include <zephyr/logging/log.h>
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
+#define CPRINTSUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
+#define CPRINTFUSB(format, args...) cprintf(CC_USBCHARGE, format, ##args)
+
+enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_C1, USBC_PORT_COUNT };
+
+/* Used by USB charger task with CONFIG_USB_PD_5V_EN_CUSTOM */
 int board_is_sourcing_vbus(int port)
 {
-	int regval;
-
-	tcpc_read(port, TCPC_REG_POWER_STATUS, &regval);
-	return !!(regval & TCPC_REG_POWER_STATUS_SOURCING_VBUS);
+	return board_vbus_source_enabled(port);
 }
 
 int board_set_active_charge_port(int port)
 {
-	int is_real_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
+	int is_valid_port = board_is_usb_pd_port_present(port);
 	int i;
-	int old_port;
 
-	if (!is_real_port && port != CHARGE_PORT_NONE)
-		return EC_ERROR_INVAL;
-
-	old_port = charge_manager_get_active_charge_port();
-
-	LOG_INF("New chg p%d", port);
-
-	/* Disable all ports. */
 	if (port == CHARGE_PORT_NONE) {
-		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-			tcpc_write(i, TCPC_REG_COMMAND,
-				   TCPC_REG_COMMAND_SNK_CTRL_LOW);
-			raa489000_enable_asgate(i, false);
+		CPRINTSUSB("Disabling all charger ports");
+
+		/* Disable all ports. */
+		for (i = 0; i < ppc_cnt; i++) {
+			/*
+			 * Do not return early if one fails otherwise we can
+			 * get into a boot loop assertion failure.
+			 */
+			if (ppc_vbus_sink_enable(i, 0))
+				CPRINTSUSB("Disabling C%d as sink failed.", i);
 		}
 
 		return EC_SUCCESS;
-	}
-
-	/* Check if port is sourcing VBUS. */
-	if (board_is_sourcing_vbus(port)) {
-		LOG_WRN("Skip enable p%d", port);
+	} else if (!is_valid_port) {
 		return EC_ERROR_INVAL;
 	}
+
+	/* Check if the port is sourcing VBUS. */
+	if (board_is_sourcing_vbus(port)) {
+		CPRINTFUSB("Skip enable C%d", port);
+		return EC_ERROR_INVAL;
+	}
+
+	CPRINTSUSB("New charge port: C%d", port);
 
 	/*
 	 * Turn off the other ports' sink path FETs, before enabling the
 	 * requested charge port.
 	 */
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+	for (i = 0; i < ppc_cnt; i++) {
 		if (i == port)
 			continue;
 
-		if (tcpc_write(i, TCPC_REG_COMMAND,
-			       TCPC_REG_COMMAND_SNK_CTRL_LOW))
-			LOG_WRN("p%d: sink path disable failed.", i);
-		raa489000_enable_asgate(i, false);
+		if (ppc_vbus_sink_enable(i, 0))
+			CPRINTSUSB("C%d: sink path disable failed.", i);
 	}
-
-	/*
-	 * Stop the charger IC from switching while changing ports.  Otherwise,
-	 * we can overcurrent the adapter we're switching to. (crbug.com/926056)
-	 */
-	if (old_port != CHARGE_PORT_NONE)
-		charger_discharge_on_ac(1);
 
 	/* Enable requested charge port. */
-	if (raa489000_enable_asgate(port, true) ||
-	    tcpc_write(port, TCPC_REG_COMMAND,
-		       TCPC_REG_COMMAND_SNK_CTRL_HIGH)) {
-		LOG_WRN("p%d: sink path enable failed.", port);
-		charger_discharge_on_ac(0);
+	if (ppc_vbus_sink_enable(port, 1)) {
+		CPRINTSUSB("C%d: sink path enable failed.", port);
 		return EC_ERROR_UNKNOWN;
 	}
-
-	/* Allow the charger IC to begin/continue switching. */
-	charger_discharge_on_ac(0);
 
 	return EC_SUCCESS;
 }
 
-uint16_t tcpc_get_alert_status(void)
+void reset_nct38xx_port(int port)
 {
-	uint16_t status = 0;
-	int regval;
+	const struct gpio_dt_spec *reset_gpio_l;
+	const struct device *ioex_port0, *ioex_port1;
 
-	/*
-	 * The interrupt line is shared between the TCPC and BC1.2 detector IC.
-	 * Therefore, go out and actually read the alert registers to report the
-	 * alert status.
-	 */
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl))) {
-		if (!tcpc_read16(0, TCPC_REG_ALERT, &regval)) {
-			/* The TCPCI Rev 1.0 spec says to ignore bits 14:12. */
-			if (!(tcpc_config[0].flags & TCPC_FLAGS_TCPCI_REV2_0))
-				regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
-
-			if (regval)
-				status |= PD_STATUS_TCPC_ALERT_0;
-		}
+	/* TODO(b/225189538): Save and restore ioex signals */
+	if (port == USBC_PORT_C0) {
+		reset_gpio_l = &tcpc_config[0].rst_gpio;
+		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port0));
+		ioex_port1 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port1));
+#if DT_NODE_EXISTS(DT_NODELABEL(nct3807_C1))
+	} else if (port == USBC_PORT_C1) {
+		reset_gpio_l = &tcpc_config[1].rst_gpio;
+		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c1_port0));
+		ioex_port1 = DEVICE_DT_GET(DT_NODELABEL(ioex_c1_port1));
+#endif
+	} else {
+		/* Invalid port: do nothing */
+		return;
 	}
 
-	if (board_get_usb_pd_port_count() == 2 &&
-	    !gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl))) {
-		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
-			/* TCPCI spec Rev 1.0 says to ignore bits 14:12. */
-			if (!(tcpc_config[1].flags & TCPC_FLAGS_TCPCI_REV2_0))
-				regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
-
-			if (regval)
-				status |= PD_STATUS_TCPC_ALERT_1;
-		}
+	gpio_pin_set_dt(reset_gpio_l, 1);
+	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
+	gpio_pin_set_dt(reset_gpio_l, 0);
+	nct38xx_reset_notify(port);
+	if (NCT3807_RESET_POST_DELAY_MS != 0) {
+		msleep(NCT3807_RESET_POST_DELAY_MS);
 	}
 
-	return status;
+	/* Re-enable the IO expander pins */
+	gpio_reset_port(ioex_port0);
+	gpio_reset_port(ioex_port1);
 }
 
 void pd_power_supply_reset(int port)
 {
-	/* Disable VBUS */
-	tcpc_write(port, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SRC_CTRL_LOW);
+	/* Disable VBUS. */
+	ppc_vbus_source_enable(port, 0);
+
+	/* Enable discharge if we were previously sourcing 5V */
+	if (IS_ENABLED(CONFIG_USB_PD_DISCHARGE))
+		pd_set_vbus_discharge(port, 1);
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
-}
-
-__override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
-{
-	if (port < 0 || port >= CONFIG_USB_PD_PORT_MAX_COUNT)
-		return;
-
-	raa489000_set_output_current(port, rp);
 }
 
 int pd_set_power_supply_ready(int port)
 {
 	int rv;
 
-	if (port >= CONFIG_USB_PD_PORT_MAX_COUNT)
-		return EC_ERROR_INVAL;
-
 	/* Disable charging. */
-	rv = tcpc_write(port, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SNK_CTRL_LOW);
+	rv = ppc_vbus_sink_enable(port, 0);
 	if (rv)
 		return rv;
 
-	/* Our policy is not to source VBUS when the AP is off. */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
-		return EC_ERROR_NOT_POWERED;
+	if (IS_ENABLED(CONFIG_USB_PD_DISCHARGE)) {
+		pd_set_vbus_discharge(port, 0);
+	}
 
 	/* Provide Vbus. */
-	rv = tcpc_write(port, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SRC_CTRL_HIGH);
-	if (rv)
+	rv = ppc_vbus_source_enable(port, 1);
+	if (rv) {
 		return rv;
-
-	rv = raa489000_enable_asgate(port, true);
-	if (rv)
-		return rv;
+	}
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -177,57 +156,29 @@ int pd_set_power_supply_ready(int port)
 
 void board_reset_pd_mcu(void)
 {
-	/*
-	 * TODO(b:147316511): could send a reset command to the TCPC here
-	 * if needed.
-	 */
+	/* Reset TCPC0 */
+	reset_nct38xx_port(USBC_PORT_C0);
+
+	/* Reset TCPC1 */
+	if (nissa_get_sb_type() == NISSA_SB_C_A &&
+	    tcpc_config[1].rst_gpio.port) {
+		gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 1);
+		msleep(PS8XXX_RESET_DELAY_MS);
+		gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 0);
+		msleep(PS8815_FW_INIT_DELAY_MS);
+	}
 }
 
-/*
- * Because the TCPCs and BC1.2 chips share interrupt lines, it's possible
- * for an interrupt to be lost if one asserts the IRQ, the other does the same
- * then the first releases it: there will only be one falling edge to trigger
- * the interrupt, and the line will be held low. We handle this by polling the
- * IRQ GPIO on the USB-PD task after processing TCPC interrupts, synchronously
- * running the BC1.2 interrupt handler to ensure we continue processing
- * interrupts as long as either source is asserting the IRQ.
- */
-void board_process_pd_alert(int port)
+void bc12_interrupt(enum gpio_signal signal)
 {
-	const struct gpio_dt_spec *gpio;
-
-	if (port == 0) {
-		gpio = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl);
-	} else {
-		gpio = GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl);
-	}
-
-	if (!gpio_pin_get_dt(gpio)) {
-		usb_charger_task_set_event_sync(port, USB_CHG_EVENT_BC12);
-	}
-
-	/*
-	 * Immediately schedule another TCPC interrupt if it seems we haven't
-	 * cleared all pending interrupts.
-	 */
-	if (!gpio_pin_get_dt(gpio))
-		schedule_deferred_pd_interrupt(port);
+	if (signal == GPIO_USB_C0_BC12_INT_ODL)
+		usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
+	else
+		usb_charger_task_set_event(1, USB_CHG_EVENT_BC12);
 }
 
-/*
- * LCOV_EXCL_START schedule_deferred_pd_interrupt() can't be verified in tests,
- * but type-C will be obviously broken if this function doesn't work.
- */
-void usb_interrupt(enum gpio_signal signal)
+/* Used by Vbus discharge common code with CONFIG_USB_PD_DISCHARGE */
+int board_vbus_source_enabled(int port)
 {
-	int port;
-
-	if (signal == GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_int_odl))) {
-		port = 0;
-	} else {
-		port = 1;
-	}
-	/* Trigger polling of TCPC and BC1.2 in USB-PD task */
-	schedule_deferred_pd_interrupt(port);
+	return ppc_is_sourcing_vbus(port);
 }
-/* LCOV_EXCL_STOP */

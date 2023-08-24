@@ -30,6 +30,10 @@
 			enum-name = "ADC_TEMP_SENSOR_3";
 			io-channels = <&adc0 10>;
 		};
+		adc_temp_sensor_4: temp_sensor_4 {
+			enum-name = "ADC_TEMP_SENSOR_4";
+			io-channels = <&adc0 11>;
+		};
 	};
 
 	named-gpios {
@@ -60,7 +64,6 @@
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 		};
 		gpio_ec_entering_rw: ec_entering_rw {
-			gpios = <&gpio0 3 GPIO_OUTPUT>;
 			enum-name = "GPIO_ENTERING_RW";
 		};
 		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
@@ -78,9 +81,6 @@
 		};
 		gpio_ec_soc_dsw_pwrok: ec_soc_dsw_pwrok {
 			gpios = <&gpio6 1 GPIO_OUTPUT>;
-		};
-		gpio_ec_soc_hdmi_hpd: ec_soc_hdmi_hpd {
-			gpios = <&gpioe 4 GPIO_OUTPUT>;
 		};
 		gpio_ec_soc_int_odl: ec_soc_int_odl {
 			gpios = <&gpio8 0 GPIO_ODR_HIGH>;
@@ -112,6 +112,9 @@
 			gpios = <&gpioa 0 GPIO_OUTPUT>;
 			enum-name = "GPIO_EN_KEYBOARD_BACKLIGHT";
 		};
+		gpio_en_pp3300_z1: en_pp3300_z1 {
+			gpios = <&gpio8 5 GPIO_OUTPUT>;
+		};
 		gpio_en_pp3300_s5: en_pp3300_s5 {
 			gpios = <&gpiob 6 GPIO_OUTPUT>;
 			enum-name = "GPIO_TEMP_SENSOR_POWER";
@@ -122,24 +125,28 @@
 		gpio_en_pp5000_s5: en_pp5000_s5 {
 			gpios = <&gpio4 0 GPIO_OUTPUT>;
 		};
-		gpio_en_slp_z: en_slp_z {
-			gpios = <&gpioe 1 GPIO_OUTPUT>;
+		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
+			gpios = <&gpioe 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_en_usb_a0_vbus: en_usb_a0_vbus {
-			gpios = <&gpio9 1 GPIO_OUTPUT>;
+			gpios = <&gpio3 6 GPIO_OUTPUT>;
+		};
+		acok_od: acok_od {
+			gpios = <&gpio0 1 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
+			gpios = <&gpio0 0 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
-			gpios = <&gpio0 0 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_POWER_BUTTON_L";
-		};
-		gpio_hdmi_sel: hdmi_sel {
 			gpios = <&gpioc 6 GPIO_OUTPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_imu_int_l: imu_int_l {
 			gpios = <&gpio5 6 GPIO_INPUT>;
 		};
 		gpio_imvp91_vrrdy_od: imvp91_vrrdy_od {
-			gpios = <&gpio4 3 GPIO_INPUT>;
+			gpios = <&gpiob 1 GPIO_INPUT>;
 		};
 		gpio_lid_open: lid_open {
 			gpios = <&gpiod 2 GPIO_INPUT>;
@@ -181,17 +188,37 @@
 			enum-name = "GPIO_TABLET_MODE_L";
 		};
 		gpio_usb_a0_ilimit_sdp: usb_a0_ilimit_sdp {
-			gpios = <&gpio8 5 GPIO_OUTPUT>;
+			gpios = <&gpio3 3 GPIO_OUTPUT>;
 			enum-name = "GPIO_USB1_ILIM_SEL";
 		};
 		gpio_usb_c0_int_odl: usb_c0_int_odl {
-			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpio6 6 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
+		};
+		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
+			gpios = <&gpio4 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
+			gpios = <&gpiob 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
+		};
+		gpio_usb_c0_tcpc_rst_odl: usb_c0_tcpc_rst_l {
+			gpios = <&gpio7 3 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C0_TCPC_RST_L";
+		};
+		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
+			gpios = <&gpio0 2 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
+		};
+		gpio_usb_c1_tcpc_rst_odl: usb_c1_tcpc_rst_l {
+			gpios = <&gpiod 7 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C1_TCPC_RST_L";
 		};
 		gpio_vccin_aux_vid0: vccin_aux_vid0 {
-			gpios = <&gpio9 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpio8 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_vccin_aux_vid1: vccin_aux_vid1 {
-			gpios = <&gpioe 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_voldn_btn_odl: voldn_btn_odl {
 			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
@@ -200,6 +227,9 @@
 		gpio_volup_btn_odl: volup_btn_odl {
 			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		charger_vap_otg_en {
+			gpios = <&gpio6 3 GPIO_OUTPUT_LOW>;
 		};
 	};
 
@@ -214,13 +244,25 @@
 			i2c-port = <&i2c1_0>;
 			enum-names = "I2C_PORT_SENSOR";
 		};
-		i2c_ec_i2c_usb_c0: ec_i2c_usb_c0 {
-			i2c-port = <&i2c3_0>;
+		i2c_ec_i2c_usb_c0_tcpc: ec_i2c_usb_c0_tcpc {
+			i2c-port = <&i2c2_0>;
 			enum-names = "I2C_PORT_USB_C0_TCPC";
 		};
-		i2c_ec_i2c_sub_usb_c1: ec_i2c_sub_usb_c1 {
-			i2c-port = <&i2c5_1>;
+		i2c_ec_i2c_usb_c0: ec_i2c_usb_c0 {
+			i2c-port = <&i2c3_0>;
+			enum-names = "I2C_PORT_USB_C0";
+		};
+		i2c_ec_i2c_sub_usb_c1_tcpc: ec_i2c_sub_usb_c1_tcpc {
+			i2c-port = <&i2c4_1>;
 			enum-names = "I2C_PORT_USB_C1_TCPC";
+		};
+		i2c_ec_i2c_usb_c1: ec_i2c_usb_c1 {
+			i2c-port = <&i2c5_1>;
+			enum-names = "I2C_PORT_USB_C1";
+		};
+		i2c_ec_i2c_charger: ec_i2c_charger {
+			i2c-port = <&i2c6_1>;
+			enum-names = "I2C_PORT_CHARGER";
 		};
 		i2c_ec_i2c_batt: ec_i2c_batt {
 			i2c-port = <&i2c7_0>;
@@ -235,10 +277,10 @@
 		     &adc0_chan1_gp44
 		     &adc0_chan4_gp41
 		     &adc0_chan6_gp34
-		     &adc0_chan10_gpe0>;
+		     &adc0_chan10_gpe0
+		     &adc0_chan11_gpc7>;
 	pinctrl-names = "default";
 };
-
 
 &i2c0_0 {
 	status = "okay";
@@ -252,15 +294,33 @@
 	pinctrl-names = "default";
 };
 
+&i2c2_0 {
+	status = "okay";
+	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
+	pinctrl-names = "default";
+};
+
 &i2c3_0 {
 	status = "okay";
 	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
 	pinctrl-names = "default";
 };
 
+&i2c4_1 {
+	status = "okay";
+	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
+	pinctrl-names = "default";
+};
+
 &i2c5_1 {
 	status = "okay";
 	pinctrl-0 = <&i2c5_1_sda_scl_gpf4_f5>;
+	pinctrl-names = "default";
+};
+
+&i2c6_1 {
+	status = "okay";
+	pinctrl-0 = <&i2c6_1_sda_scl_gpe3_e4>;
 	pinctrl-names = "default";
 };
 
@@ -278,7 +338,15 @@
 	status = "okay";
 };
 
+&i2c_ctrl2 {
+	status = "okay";
+};
+
 &i2c_ctrl3 {
+	status = "okay";
+};
+
+&i2c_ctrl4 {
 	status = "okay";
 };
 
@@ -286,6 +354,36 @@
 	status = "okay";
 };
 
+&i2c_ctrl6 {
+	status = "okay";
+};
+
 &i2c_ctrl7 {
 	status = "okay";
+};
+
+/* Power switch logic input pads */
+/* LID_OPEN_OD */
+&psl_in1_gpd2 {
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
+};
+
+/* EC_PWR_BTN_ODL */
+&psl_in2_gp00 {
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
+};
+
+/* ACOK_EC_OD */
+&psl_in3_gp01 {
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
+};
+
+/* Power domain device controlled by PSL (Power Switch Logic) IO pads */
+&power_ctrl_psl {
+	status = "okay";
+	pinctrl-names = "sleep";
+	pinctrl-0 = <&psl_in1_gpd2 &psl_in2_gp00 &psl_in3_gp01>;
 };
