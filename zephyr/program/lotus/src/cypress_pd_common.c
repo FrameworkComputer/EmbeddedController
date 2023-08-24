@@ -310,7 +310,7 @@ static void enter_epr_mode(void)
 		if ((pd_port_states[port_idx].pd_state) &&
 			(pd_port_states[port_idx].power_role == PD_ROLE_SINK) &&
 			!(pd_port_states[port_idx].epr_active)) {
-			CPRINTS("Initiate EPR entry");
+			CPRINTS("P%d EPR entry", port_idx);
 			cypd_write_reg8((port_idx & 0x2) >> 1,
 					CCG_PD_CONTROL_REG(port_idx & 0x1),
 					CCG_PD_CMD_INITIATE_EPR_ENTRY);
@@ -326,7 +326,7 @@ static void exit_epr_mode(void)
 
 	for (port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
 		if (pd_port_states[port_idx].epr_active) {
-			CPRINTS("Initiate EPR exit");
+			CPRINTS("P%d EPR exit", port_idx);
 			cypd_write_reg8((port_idx & 0x2) >> 1,
 					CCG_PD_CONTROL_REG(port_idx & 0x1),
 					CCG_PD_CMD_INITIATE_EPR_EXIT);
@@ -1334,15 +1334,12 @@ void update_system_power_state(int controller)
 
 }
 
-void cypd_set_power_active(enum power_state power)
+void cypd_set_power_active(void)
 {
 	task_set_event(TASK_ID_CYPD, CCG_EVT_S_CHANGE);
 }
-#ifdef CONFIG_BOARD_LOTUS
-#define CYPD_SETUP_CMDS_LEN 7
-#else
+
 #define CYPD_SETUP_CMDS_LEN 5
-#endif
 static int cypd_setup(int controller)
 {
 	/*
@@ -1365,11 +1362,6 @@ static int cypd_setup(int controller)
 		/* Set the port PDO 1.5A */
 		{ CCG_PD_CONTROL_REG(0), CCG_PD_CMD_SET_TYPEC_1_5A, CCG_PORT0_INTR},
 		{ CCG_PD_CONTROL_REG(1), CCG_PD_CMD_SET_TYPEC_1_5A, CCG_PORT1_INTR},
-#ifdef CONFIG_BOARD_LOTUS
-		/* Set the EPR PDO mask, disable Auto-Enter EPR */
-		{ SELECT_SINK_PDO_EPR_MASK(0), 0x01, CCG_PORT0_INTR},
-		{ SELECT_SINK_PDO_EPR_MASK(1), 0x01, CCG_PORT1_INTR},
-#endif
 		/* Set the port event mask */
 		{ CCG_EVENT_MASK_REG(0), 0x27ffff, 4, CCG_PORT0_INTR},
 		{ CCG_EVENT_MASK_REG(1), 0x27ffff, 4, CCG_PORT1_INTR },
@@ -1738,6 +1730,7 @@ void cypd_interrupt_handler_task(void *p)
 		cypd_enable_interrupt(i, true);
 		task_set_event(TASK_ID_CYPD, CCG_EVT_STATE_CTRL_0<<i);
 	}
+
 
 	while (1) {
 		evt = task_wait_event(10*MSEC);

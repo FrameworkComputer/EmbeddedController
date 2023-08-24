@@ -489,7 +489,7 @@ enum power_state power_handle_state(enum power_state state)
 		peripheral_power_resume();
 
 		/* set the PD chip system power state "S0" */
-		cypd_set_power_active(POWER_S0);
+		cypd_set_power_active();
 
 		clear_rtcwake();
 
@@ -573,7 +573,7 @@ enum power_state power_handle_state(enum power_state state)
 		peripheral_power_suspend();
 
 		/* set the PD chip system power state "S3" */
-		cypd_set_power_active(POWER_S3);
+		cypd_set_power_active();
 		return POWER_S3;
 
 	case POWER_S3S5:
@@ -584,7 +584,7 @@ enum power_state power_handle_state(enum power_state state)
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
 		/* set the PD chip system power state "S5" */
-		cypd_set_power_active(POWER_S5);
+		cypd_set_power_active();
 		return POWER_S5;
 
 	case POWER_S5G3:
@@ -613,7 +613,7 @@ enum power_state power_handle_state(enum power_state state)
 		power_state_clear(EC_PS_ENTER_S0ix |
 			EC_PS_RESUME_S0ix | EC_PS_RESUME_S3 | EC_PS_ENTER_S3);
 
-		cypd_set_power_active(POWER_G3);
+		cypd_set_power_active();
 		return POWER_G3;
 	default:
 		break;

@@ -491,9 +491,8 @@ int pd_get_active_current(int port);
 /**
  * Set system power state
  *
- * @param power		The power state
  */
-void cypd_set_power_active(enum power_state power);
+void cypd_set_power_active(void);
 
 /**
  * Get the active charge pd chip
