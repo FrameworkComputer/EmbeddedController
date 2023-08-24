@@ -545,6 +545,14 @@ ZTEST(amd_power, test_power_stb_dump)
 	zassert_equal(rv, 0);
 }
 
+ZTEST(amd_power, test_power_stb_dump_cmd)
+{
+	zassert_false(amd_stb_dump_in_progress());
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "amdstbdump"));
+	zassert_true(amd_stb_dump_in_progress());
+}
+
 ZTEST(amd_power, test_power_stb_dump_interrupt)
 {
 	struct ec_params_host_sleep_event_v1 host_sleep_ev_p = {
