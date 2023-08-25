@@ -173,7 +173,7 @@ static enum scancode_set_list scancode_set = SCANCODE_SET_2;
  *   the inter-char delay = (2 ** B) * (D + 8) / 240 (sec)
  * Default: 500ms delay, 10.9 chars/sec.
  */
-#define DEFAULT_TYPEMATIC_VALUE (BIT(5) | BIT(3) | (3 << 0))
+#define DEFAULT_TYPEMATIC_VALUE (BIT(5) | (3 << 0))
 static uint8_t typematic_value_from_host;
 static int typematic_first_delay;
 static int typematic_inter_delay;
