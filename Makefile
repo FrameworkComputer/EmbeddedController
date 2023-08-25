@@ -234,7 +234,8 @@ $(foreach c,$(_mock_cfg),$(eval $(c)=y))
 ifneq ($(CONFIG_COMMON_RUNTIME),y)
 ifneq ($(CONFIG_DFU_BOOTMANAGER_MAIN),ro)
 	_irq_list:=$(call shell_echo,$(CPP) $(CPPFLAGS) -P -Ichip/$(CHIP) \
-		-I$(BASEDIR) -I$(BDIR) -D"ENABLE_IRQ(x)=EN_IRQ x" \
+		-I$(BASEDIR) -I$(BDIR) $(if $(HAVE_PRIVATE),-Iprivate) \
+		-D"ENABLE_IRQ(x)=EN_IRQ x" \
 		-imacros chip/$(CHIP)/registers.h \
 		- < $(BDIR)/ec.irqlist | grep "EN_IRQ .*" | cut -c8-)
 	CPPFLAGS+=$(foreach irq,$(_irq_list),\
