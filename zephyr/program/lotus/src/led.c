@@ -530,7 +530,7 @@ static void led_tick(void)
 		return;
 
 	/* Battery disconnect active signal */
-	if (battery_is_cut_off() || (battery_is_present() != BP_YES)) {
+	if (battery_is_cut_off()) {
 		colors[0] = LED_RED;
 		colors[1] = LED_BLUE;
 		colors[2] = LED_OFF;
@@ -541,6 +541,20 @@ static void led_tick(void)
 #endif
 		return;
 	}
+
+	/* Battery is not present, ignored if in standalone mode */
+	if ((battery_is_present() != BP_YES) && !get_standalone_mode()) {
+		colors[0] = LED_RED;
+		colors[1] = LED_BLUE;
+		colors[2] = LED_OFF;
+#ifdef CONFIG_BOARD_LOTUS
+		multifunction_leds_control(colors, 2, 1000);
+#else
+		multifunction_leds_control(colors, 2, 500);
+#endif
+		return;
+	}
+
 
 	/* C cover detect switch open */
 	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0 &&
