@@ -45,3 +45,8 @@ properties:
     type: uint8-array
     description: >-
       Set if the section bytes should be filled with configured byte value.
+  pad-byte:
+    type: int
+    description: >-
+      Set the pad byte to use when padding in the region. It
+      defaults to 0. To use 0xff, you would add 'pad-byte = <0xff>'.

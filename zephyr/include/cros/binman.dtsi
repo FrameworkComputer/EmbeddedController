@@ -29,6 +29,7 @@
 					text-label = "version";
 				};
 			};
+			pad-byte = <0xff>;
 		};
 
 		rollback0 {
@@ -64,6 +65,7 @@
 					size = <32>;
 					text-label = "version";
 				};
+				pad-byte = <0xff>;
 			};
 		};
 	};
