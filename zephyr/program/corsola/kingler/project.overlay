@@ -17,6 +17,7 @@
 #include "../npcx_motionsense.dtsi"
 #include "../npcx_usbc.dtsi"
 #include "../npcx_default_gpio_pinctrl.dtsi"
+#include <dt-bindings/battery.h>
 
 /* board override */
 / {
@@ -29,33 +30,168 @@
 		};
 	};
 
+	led_colors: led-colors {
+		compatible = "cros-ec,led-policy";
+
+		/* kingler LED bat charge */
+		bat-state1-charge {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery display percent range (>= 0, <= 4%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 4>;
+
+			color-0 {
+				led-color = <&color_red>;
+			};
+		};
+
+		bat-state2-charge {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery display percent range (>= 5, <= 96%) */
+			batt-lvl = <BATTERY_LEVEL_CRITICAL 96>;
+
+			color-0 {
+				led-color = <&color_amber>;
+			};
+		};
+
+		bat-state3-charge {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery display percent range (>= 97, <= 99) */
+			batt-lvl = <97 99>;
+
+			color-0 {
+				led-color = <&color_green>;
+			};
+		};
+
+		/* kingler LED bat charge near full */
+		bat-state-charge-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+
+			color-0 {
+				led-color = <&color_green>;
+			};
+		};
+
+		/* kingler LED bat discharge */
+		bat-state-discharge {
+			charge-state = "LED_PWRS_DISCHARGE";
+
+			color-0 {
+				led-color = <&color_battery_off>;
+			};
+		};
+
+		/* kingler LED bat error */
+		bat-state-error {
+			charge-state = "LED_PWRS_ERROR";
+
+			color-0 {
+				led-color = <&color_red>;
+				period-ms = <1000>;
+			};
+			color-1 {
+				led-color = <&color_battery_off>;
+				period-ms = <1000>;
+			};
+		};
+
+		/* kingler LED bat idle */
+		bat-state-idle {
+			charge-state = "LED_PWRS_IDLE";
+
+			color-0 {
+				led-color = <&color_green>;
+			};
+		};
+
+		/* kingler LED bat forced idle */
+		bat-state-forced-idle {
+			charge-state = "LED_PWRS_FORCED_IDLE";
+
+			color-0 {
+				led-color = <&color_red>;
+				period-ms = <2000>;
+			};
+			color-1 {
+				led-color = <&color_green>;
+				period-ms = <2000>;
+			};
+		};
+
+		/* kingler LED power s0 */
+		power-state-s0 {
+			chipset-state = "POWER_S0";
+
+			color-0 {
+				led-color = <&color_amber>;
+			};
+		};
+
+		/* kingler LED power s3 */
+		power-state-s3 {
+			chipset-state = "POWER_S3";
+
+			color-0 {
+				led-color = <&color_amber>;
+				period-ms = <3000>;
+			};
+			color-1 {
+				led-color = <&color_battery_off>;
+				period-ms = <500>;
+			};
+		};
+
+		/* kingler LED power s5 */
+		power-state-s5 {
+			chipset-state = "POWER_S5";
+
+			color-0 {
+				led-color = <&color_battery_off>;
+			};
+		};
+	};
 	pwmleds {
 		compatible = "pwm-leds";
-		pwm_led0: pwm_led_0 {
-			pwms = <&pwm0 0 PWM_HZ(100) PWM_POLARITY_INVERTED
-				&pwm1 0 PWM_HZ(100) PWM_POLARITY_INVERTED
-				&pwm2 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		led_battery_red: ec_led1_odl {
+			pwms = <&pwm0 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+		led_battery_green: ec_led2_odl {
+			pwms = <&pwm1 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+		led_power_white: ec_led3_odl {
+			pwms = <&pwm2 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
 		};
 	};
 
-	cros-pwmleds {
-		compatible = "cros-ec,pwm-leds";
+	pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
 
-		leds = <&pwm_led0>;
+		battery_led: battery-led {
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pwms = <&led_battery_red &led_battery_green &led_power_white>;
 
-		color-map-red    = <100   0   0>;
-		color-map-green  = <  0 100   0>;
-		color-map-amber  = <100  20   0>;
+			color_battery_off: color-battery-off {
+				led-color = "LED_OFF";
+				led-values = <0 0 0>;
+			};
 
-		brightness-range = <255 255 0 0 0 255>;
+			color_red: color-red {
+				led-color = "LED_RED";
+				led-values = <100 0 0>;
+			};
 
-		#address-cells = <1>;
-		#size-cells = <0>;
+			color_amber: color-amber {
+				led-color = "LED_AMBER";
+				led-values = <100 20 0>;
+			};
 
-		pwm_led_0@0 {
-			reg = <0>;
-			ec-led-name = "EC_LED_ID_BATTERY_LED";
+			color_green: color_green {
+				led-color = "LED_GREEN";
+				led-values = <0 100 0>;
+			};
 		};
+
 	};
 };
 
