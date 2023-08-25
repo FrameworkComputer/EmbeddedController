@@ -555,7 +555,6 @@ static void led_tick(void)
 		return;
 	}
 
-
 	/* C cover detect switch open */
 	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0 &&
 		!get_standalone_mode()) {

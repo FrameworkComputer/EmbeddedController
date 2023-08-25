@@ -152,10 +152,6 @@ static void diagnostics_check(void)
 	/* Clear the DIAGNOSTIC_NO_S0 flag if chipset is resume */
 	set_diagnostic(DIAGNOSTICS_NO_S0, false);
 
-	/* Clear the DIAGNOSTICS_HW_NO_BATTERY flag if battery is present */
-	if (battery_is_present() == BP_YES || get_standalone_mode())
-		set_diagnostic(DIAGNOSTICS_HW_NO_BATTERY, false);
-
 	/* Call deferred hook to check the device */
 	project_diagnostics();
 
