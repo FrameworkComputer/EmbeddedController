@@ -45,6 +45,11 @@ choice TEST_TARGET
 	  bool "Tests for Joxer-specific code"
 	  help
 		The test target that exercises nissa/joxer/*.c
+
+	config TEST_NISSA_CRAASK
+	  bool "Tests for Craask-specific code"
+	  help
+		The test target that exercises nissa/craask/*.c
 endchoice
 
 config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
