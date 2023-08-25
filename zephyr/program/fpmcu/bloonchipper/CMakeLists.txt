@@ -3,3 +3,4 @@
 # found in the LICENSE file.
 
 zephyr_library_sources_ifdef(CONFIG_BLOONCHIPPER_EC_RO_QUIRKS "src/ec_quirks.c")
+zephyr_library_sources_ifdef(CONFIG_EC_HOST_CMD "src/fp_transport.c")

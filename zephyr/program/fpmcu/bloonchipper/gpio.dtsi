@@ -42,12 +42,19 @@
 			gpios = <&gpiob 6 GPIO_INPUT>;
 		};
 
-		transport_sel {
+		transport_sel: transport_sel {
 			gpios = <&gpiob 1 GPIO_INPUT>;
 		};
 
 		user_pres_l {
 			gpios = <&gpiob 9 GPIO_ODR_HIGH>;
+		};
+
+		/* Used to the transport layer detection at the beginning of the
+		 * boot.
+		 */
+		div_highside: div_highside {
+			gpios = <&gpiob 8 GPIO_OUTPUT_HIGH>;
 		};
 
 		/* unimplemented GPIOs */

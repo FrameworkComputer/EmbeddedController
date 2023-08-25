@@ -1,0 +1,27 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+choice TEST_BOARD_VARIANT
+	prompt "Select board variant for tests"
+	help
+	  Board variant to use for tests
+
+	config TEST_BOARD_BLOONCHIPPER
+		bool "Enable baseboard-specific tests"
+		help
+		Enable bloonchippers tests.
+
+endchoice # TEST_BOARD_VARIANT
+
+config TEST_BOARD_NAME
+	string "Board name"
+	default "bloonchipper" if TEST_BOARD_BLOONCHIPPER
+
+config TEST_BOARD_TRANSPORT_SPI
+	bool "Enable SPI transport layer tests"
+
+config TEST_BOARD_TRANSPORT_UART
+	bool "Enable UART transport layer tests"
+
+source "Kconfig.zephyr"
