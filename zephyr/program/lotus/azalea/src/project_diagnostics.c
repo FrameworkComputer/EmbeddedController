@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "battery.h"
 #include "board_host_command.h"
 #include "board_adc.h"
 #include "console.h"
@@ -36,6 +37,9 @@ void check_device_deferred(void)
 	int audio = get_hardware_id(ADC_AUDIO_ID);
 	int product_id;
 
+	/* Clear the DIAGNOSTICS_HW_NO_BATTERY flag if battery is present */
+	if (battery_is_present() == BP_YES || get_standalone_mode())
+		set_diagnostic(DIAGNOSTICS_HW_NO_BATTERY, false);
 
 	if ((touchpad <= BOARD_VERSION_1 || touchpad >= BOARD_VERSION_14) &&
 		!get_standalone_mode())

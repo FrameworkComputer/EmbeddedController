@@ -40,6 +40,14 @@
 			};
 		};
 
+		power-state-error_standalone {
+			charge-state = "LED_PWRS_ERROR";
+
+			color-0 {
+				led-color = <&color_white>;
+			};
+		};
+
 		power-state-idle {
 			charge-state = "LED_PWRS_IDLE";
 

@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "battery.h"
 #include "board_host_command.h"
 #include "console.h"
 #include "diagnostics.h"
@@ -26,6 +27,10 @@ DECLARE_DEFERRED(start_fan_deferred);
 
 void check_device_deferred(void)
 {
+	/* Clear the DIAGNOSTICS_HW_NO_BATTERY flag if battery is present */
+	if (battery_is_present() == BP_YES || get_standalone_mode())
+		set_diagnostic(DIAGNOSTICS_HW_NO_BATTERY, false);
+
 	if (gpu_module_fault())
 		set_diagnostic(DIAGNOSTICS_GPU_MODULE_FAULT, true);
 
