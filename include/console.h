@@ -154,7 +154,7 @@ static inline bool console_channel_is_disabled(enum console_channel channel)
 }
 #endif
 
-#ifdef CONFIG_PIGWEED_LOG_TOKENIZED
+#ifdef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
 /**
  * Buffer size in bytes large enough to hold the largest possible timestamp.
  */
@@ -234,7 +234,7 @@ cprintf(enum console_channel channel, const char *format, ...);
  */
 __attribute__((__format__(__printf__, 2, 3))) int
 cprints(enum console_channel channel, const char *format, ...);
-#endif /* CONFIG_PIGWEED_LOG_TOKENIZED */
+#endif /* CONFIG_PIGWEED_LOG_TOKENIZED_LIB */
 
 /**
  * Flush the console output for all channels.

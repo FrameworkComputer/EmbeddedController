@@ -128,7 +128,7 @@ endif()
 
 if (ZEPHYR_PIGWEED_MODULE_DIR)
   include("${ZEPHYR_PIGWEED_MODULE_DIR}/pw_build/pigweed.cmake")
-  if (DEFINED CONFIG_PIGWEED_LOG_TOKENIZED)
+  if (DEFINED CONFIG_PIGWEED_LOG_TOKENIZED_LIB)
     add_library(log_tokenized_config INTERFACE)
     target_compile_options(log_tokenized_config INTERFACE -include
                            ${PLATFORM_EC}/zephyr/include/pigweed/pw_zephyr_tokenized_custom_log.h)
@@ -657,7 +657,7 @@ add_dependencies(app ec_version_header)
 # Include the directory containing the generated header.
 zephyr_include_directories("${CMAKE_CURRENT_BINARY_DIR}/include")
 
-if (DEFINED CONFIG_PIGWEED_LOG_TOKENIZED)
+if (DEFINED CONFIG_PIGWEED_LOG_TOKENIZED_LIB)
   set_property(GLOBAL APPEND PROPERTY extra_post_build_commands
     COMMAND
       ${PYTHON_EXECUTABLE}

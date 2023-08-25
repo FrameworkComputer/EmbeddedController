@@ -41,7 +41,7 @@
 #error Must select only one shell backend
 #endif
 
-#ifdef CONFIG_PIGWEED_LOG_TOKENIZED
+#ifdef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
 char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 #endif
 
@@ -391,7 +391,7 @@ void uart_clear_input(void)
 #endif
 }
 
-#ifndef CONFIG_PIGWEED_LOG_TOKENIZED
+#ifndef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
 static void handle_sprintf_rv(int rv, size_t *len)
 {
 	if (rv < 0) {
@@ -428,13 +428,13 @@ static void zephyr_print(const char *buff, size_t size)
 			printk("%s", buff);
 	}
 }
-#endif /* CONFIG_PIGWEED_LOG_TOKENIZED */
+#endif /* CONFIG_PIGWEED_LOG_TOKENIZED_LIB */
 
 #if defined(CONFIG_USB_CONSOLE) || defined(CONFIG_USB_CONSOLE_STREAM)
 BUILD_ASSERT(0, "USB console is not supported with Zephyr");
 #endif /* defined(CONFIG_USB_CONSOLE) || defined(CONFIG_USB_CONSOLE_STREAM) */
 
-#ifndef CONFIG_PIGWEED_LOG_TOKENIZED
+#ifndef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
 int cputs(enum console_channel channel, const char *outstr)
 {
 	/* Filter out inactive channels */
@@ -502,4 +502,4 @@ int cprints(enum console_channel channel, const char *format, ...)
 
 	return rv > 0 ? EC_SUCCESS : rv;
 }
-#endif /* CONFIG_PIGWEED_LOG_TOKENIZED */
+#endif /* CONFIG_PIGWEED_LOG_TOKENIZED_LIB */
