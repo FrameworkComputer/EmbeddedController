@@ -7,6 +7,11 @@
 #include <dt-bindings/gpio_defines.h>
 
 / {
+	chosen {
+		zephyr,host-cmd-spi-backend = &spi0;
+		zephyr,host-cmd-uart-backend = &euart0;
+	};
+
 	/* GPIOs shared by all boards */
 	named-gpios {
 		compatible = "named-gpios";
@@ -19,8 +24,19 @@
 			gpios = <&gpio0 1 GPIO_OUTPUT_HIGH>;
 		};
 	};
+
+	euart0: uart-emul {
+		compatible = "zephyr,uart-emul";
+		status = "okay";
+
+	};
 };
 
 &gpio0 {
-	ngpios = <2>;
+	ngpios = <3>;
+};
+
+&spi0 {
+	/* This field is used to point at our CS pin */
+	cs-gpios = <&gpio0 2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 };

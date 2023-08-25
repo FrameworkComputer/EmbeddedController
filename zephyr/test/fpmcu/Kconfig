@@ -24,4 +24,25 @@ config TEST_BOARD_TRANSPORT_SPI
 config TEST_BOARD_TRANSPORT_UART
 	bool "Enable UART transport layer tests"
 
+config EC_HOST_CMD_INIT_PRIORITY
+	int "Initialization priority"
+	default 80
+	range 0 99
+
+config EC_HOST_CMD_HANDLER_RX_BUFFER_SIZE
+	int "HC RX buffer size"
+	default 549
+
+config EC_HOST_CMD_HANDLER_TX_BUFFER_SIZE
+	int "HC TX buffer size"
+	default 544
+
+config EC_HOST_CMD_BACKEND_SPI
+	bool "HC SPI backend"
+	default y
+
+config EC_HOST_CMD_BACKEND_UART
+	bool "HC UART backend"
+	default y
+
 source "Kconfig.zephyr"
