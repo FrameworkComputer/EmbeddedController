@@ -518,9 +518,6 @@ ZTEST_USER(bmi3xx, test_bmi_acc_fifo)
 	int acc_range = 2;
 	int event;
 
-	acc = acc;
-	gyr = gyr;
-
 	/* init bmi before test */
 	zassert_equal(EC_RES_SUCCESS, acc->drv->init(acc));
 	zassert_equal(EC_RES_SUCCESS, gyr->drv->init(gyr));
@@ -646,6 +643,31 @@ ZTEST_USER(bmi3xx, test_bmi_acc_fifo)
 
 	/* Trigger irq handler and check results */
 	check_fifo(acc, gyr, f, acc_range, gyr_range);
+}
+
+/** Test irq handler of accelerometer sensor when interrupt register is stuck.
+ */
+ZTEST_USER(bmi3xx, test_bmi_acc_fifo_stuck)
+{
+	uint32_t event = CONFIG_ACCELGYRO_BMI3XX_INT_EVENT;
+
+	/* Enable FIFO */
+	zassert_equal(EC_SUCCESS, acc->drv->set_data_rate(acc, 50000, 0));
+
+	/* Setup interrupts register */
+	bmi_emul_set_reg16(emul, BMI3_REG_INT_STATUS_INT1, BMI3_INT_STATUS_FWM);
+	bmi_emul_set_reg16(emul, BMI3_REG_FIFO_CTRL, ~BMI3_ENABLE);
+
+	/* Read FIFO in driver */
+	zassert_equal(EC_SUCCESS, acc->drv->irq_handler(acc, &event),
+		      "Failed to read FIFO in irq handler");
+
+	zassert_equal(bmi_emul_get_reg16(emul, BMI3_REG_INT_STATUS_INT1),
+		      BMI3_INT_STATUS_FWM);
+	/* Check flush register has been written to. */
+	zassert_equal(bmi_emul_get_reg16(emul, BMI3_REG_FIFO_CTRL) &
+			      BMI3_ENABLE,
+		      BMI3_ENABLE);
 }
 
 ZTEST_USER(bmi3xx, test_bmi_gyr_fifo)

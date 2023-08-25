@@ -1942,6 +1942,26 @@ ZTEST_USER(bmi260, test_bmi_gyr_fifo)
 		      NULL);
 }
 
+/** Test irq handler of accelerometer sensor when interrupt register is stuck.
+ */
+ZTEST_USER(bmi260, test_bmi_acc_fifo_stuck)
+{
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
+	struct motion_sensor_t *ms_acc = &motion_sensors[BMI_ACC_SENSOR_ID];
+	uint32_t event = BMI_INT_EVENT;
+
+	bmi_init_emul();
+
+	/* Setup interrupts register */
+	bmi_emul_set_reg(emul, BMI260_INT_STATUS_0, BMI260_FWM_INT & 0xff);
+	bmi_emul_set_reg(emul, BMI260_INT_STATUS_1,
+			 (BMI260_FWM_INT >> 8) & 0xff);
+
+	/* Read FIFO in driver */
+	zassert_equal(EC_SUCCESS, ms_acc->drv->irq_handler(ms_acc, &event),
+		      "Failed to read FIFO in irq handler");
+}
+
 ZTEST_USER(bmi260, test_unsupported_configs)
 {
 	/*

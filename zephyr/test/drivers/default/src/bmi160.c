@@ -1992,6 +1992,29 @@ ZTEST_USER(bmi160, test_bmi_gyr_fifo)
 		      NULL);
 }
 
+/** Test irq handler of accelerometer sensor when interrupt register is stuck.
+ */
+ZTEST_USER(bmi160, test_bmi_acc_fifo_stuck)
+{
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
+	struct motion_sensor_t *ms_acc = &motion_sensors[BMI_ACC_SENSOR_ID];
+	struct motion_sensor_t *ms_gyr = &motion_sensors[BMI_GYR_SENSOR_ID];
+	uint32_t event = BMI_INT_EVENT;
+
+	/* init bmi before test */
+	zassert_equal(EC_RES_SUCCESS, ms_acc->drv->init(ms_acc));
+	zassert_equal(EC_RES_SUCCESS, ms_gyr->drv->init(ms_gyr));
+
+	/* Setup interrupts register */
+	bmi_emul_set_reg(emul, BMI160_INT_STATUS_0, BMI160_FWM_INT & 0xff);
+	bmi_emul_set_reg(emul, BMI160_INT_STATUS_1,
+			 (BMI160_FWM_INT >> 8) & 0xff);
+
+	/* Read FIFO in driver */
+	zassert_equal(EC_SUCCESS, ms_acc->drv->irq_handler(ms_acc, &event),
+		      "Failed to read FIFO in irq handler");
+}
+
 /** Test reading from compass via `bmi160_sec_raw_read8()` */
 ZTEST_USER(bmi160, test_bmi_sec_raw_read8)
 {

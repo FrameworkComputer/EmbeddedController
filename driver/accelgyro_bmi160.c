@@ -522,19 +522,30 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	uint32_t interrupt;
 	int8_t has_read_fifo = 0;
 	int rv;
+	int i;
 
 	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
 	    (!(*event & CONFIG_ACCELGYRO_BMI160_INT_EVENT)))
 		return EC_ERROR_NOT_HANDLED;
 
-	do {
+	/*
+	 * We have to loop until we see the interrupt status as 0 to avoid
+	 * getting stuck. We use edge triggered interrupts and, once one
+	 * triggers, our irq apparently won't necessarily trigger again until
+	 * we've cleared all interrupt sources and then a new interrupt happens.
+	 *
+	 * However, despite needing to loop, we also don't want to get stuck
+	 * in an infinite loop if there's a bug in the driver or the hardware.
+	 * We'll loop 200 times and then give up if an interrupt is still
+	 * pending.
+	 */
+	for (i = 0; i < 200; i++) {
 		rv = bmi_read16(s->port, s->i2c_spi_addr_flags,
 				BMI160_INT_STATUS_0, &interrupt);
-		/*
-		 * Bail out of this loop there was an error reading the register
-		 */
-		if (rv)
-			return rv;
+
+		/* Bail out if there was an error or no more interrupts. */
+		if (rv || !interrupt)
+			break;
 
 		if (IS_ENABLED(CONFIG_GESTURE_SENSOR_DOUBLE_TAP) &&
 		    (interrupt & BMI160_D_TAP_INT))
@@ -550,7 +561,17 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 		}
 		if (IS_ENABLED(CONFIG_BMI_ORIENTATION_SENSOR))
 			irq_set_orientation(s, interrupt);
-	} while (interrupt != 0);
+	}
+
+	if (i == 200) {
+		CPRINTF("BMI160 irq 0x%04x stuck (%d loops)\n", interrupt, i);
+		bmi_write8(s->port, s->i2c_spi_addr_flags, BMI160_CMD_REG,
+			   BMI160_CMD_FIFO_FLUSH);
+	}
+
+	/* Only return an error if no data was read at all. */
+	if (i == 0 && rv)
+		return rv;
 
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO) && has_read_fifo)
 		motion_sense_fifo_commit_data();
