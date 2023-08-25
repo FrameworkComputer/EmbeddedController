@@ -377,5 +377,5 @@ const struct accelgyro_drv lis2ds_drv = {
 	.get_offset = st_get_offset,
 #ifdef ACCEL_LIS2DS_INT_ENABLE
 	.irq_handler = lis2ds_irq_handler,
-#endif /* CONFIG_ACCEL_INTERRUPTS */
+#endif /* ACCEL_LIS2DS_INT_ENABLE */
 };

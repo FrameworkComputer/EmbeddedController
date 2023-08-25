@@ -28,6 +28,9 @@
 #ifdef CONFIG_PLATFORM_EC_ACCEL_KX022
 #include "kx022-drvinfo.inc"
 #endif
+#ifdef CONFIG_PLATFORM_EC_ACCEL_LIS2DS
+#include "lis2ds-drvinfo.inc"
+#endif
 #ifdef CONFIG_PLATFORM_EC_ACCEL_LIS2DW12
 #include "lis2dw12-drvinfo.inc"
 #endif
