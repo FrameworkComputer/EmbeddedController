@@ -426,7 +426,7 @@ def main():
         f"-x=SYSCALL_INCLUDE_DIRS={str(ec_base / 'zephyr' / 'include' / 'drivers')}",
         f"-x=ZEPHYR_BASE={zephyr_base}",
         f"-x=ZEPHYR_MODULES={';'.join([str(p) for p in zephyr_modules])}",
-        f"-x=PYTHON_EXECUTABLE={sys.executable}",
+        f"-x=Python3_EXECUTABLE={sys.executable}",
     ]
 
     # `-T` flags (used for specifying test directories to build and run)
