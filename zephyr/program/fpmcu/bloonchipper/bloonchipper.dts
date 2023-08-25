@@ -8,6 +8,10 @@
 #include "rwsig.dtsi"
 
 / {
+	chosen {
+		zephyr,host-cmd-spi-backend = &spi1;
+		zephyr,host-cmd-uart-backend = &usart1;
+	};
 
 	named-bbram-regions {
 		compatible = "named-bbram-regions";

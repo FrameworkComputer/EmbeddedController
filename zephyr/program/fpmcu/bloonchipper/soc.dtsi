@@ -40,3 +40,27 @@
 &rng {
 	status = "okay";
 };
+
+&usart1 {
+	pinctrl-0 = <&usart1_tx_pa9 &usart1_rx_pa10>;
+	pinctrl-names = "default";
+	current-speed = <3000000>;
+	dmas = <&dma2 7 4 0x38440 0x03>,
+		<&dma2 2 4 0x38480 0x03>;
+	dma-names = "tx", "rx";
+	status = "okay";
+};
+
+&spi1 {
+	/* Change the compatible string to use the Host Command version of the
+	 * STM32 SPI driver
+	 */
+	compatible = "st,stm32-spi-host-cmd";
+	status = "okay";
+
+	dmas = <&dma2 3 3 0x38440 0x03>,
+		<&dma2 0 3 0x38480 0x03>;
+	dma-names = "tx", "rx";
+	/* This field is used to point at our CS pin */
+	cs-gpios = <&gpioa 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+};
