@@ -271,7 +271,7 @@ const struct gpio_dt_spec *gpio_get_dt_spec(enum gpio_signal signal)
 /* Allow access to this function in tests so we can run it multiple times
  * without having to create a new binary for each run.
  */
-test_export_static int init_gpios(void)
+test_export_static int init_gpios(const struct device *dev)
 {
 	gpio_flags_t flags;
 	bool is_sys_jumped = system_jumped_to_this_image();
@@ -322,7 +322,9 @@ test_export_static int init_gpios(void)
 #if CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY <= CONFIG_KERNEL_INIT_PRIORITY_DEFAULT
 #error "GPIOs must initialize after the kernel default initialization"
 #endif
-SYS_INIT(init_gpios, POST_KERNEL, CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY);
+#define DT_DRV_COMPAT named_gpios
+DEVICE_DT_INST_DEFINE(0, init_gpios, NULL, NULL, NULL, POST_KERNEL,
+		      CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY, NULL);
 
 void gpio_reset(enum gpio_signal signal)
 {
