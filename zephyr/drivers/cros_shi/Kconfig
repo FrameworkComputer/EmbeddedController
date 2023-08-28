@@ -52,7 +52,7 @@ if CROS_SHI_IT8XXX2
 
 config CROS_SHI_IT8XXX2_INIT_PRIORITY
 	int "cros_shi it8xxx2 initialization priority"
-	default 52
+	default 54
 	help
 	  This sets the it8xxx2 cros_shi driver initialization priority.
 	  In the GPIO shim, the alt function of SHI will be configured
