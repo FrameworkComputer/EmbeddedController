@@ -59,6 +59,18 @@ if(CONFIG_TEST_NISSA_NEREID)
     )
 endif()
 
+if(CONFIG_TEST_NISSA_NOKRIS)
+    target_compile_definitions(app PRIVATE CHARGER_PRIMARY=0)
+    target_sources(
+            app PRIVATE
+            src/nokris.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/nokris/src/charger.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/nokris/src/hdmi.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/nokris/src/keyboard.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/nokris/src/usbc.c
+    )
+endif()
+
 if(CONFIG_TEST_NISSA_GOTHRAX)
     target_compile_definitions(app PRIVATE CHARGER_PRIMARY=0 CHARGER_SECONDARY=1)
     target_sources(

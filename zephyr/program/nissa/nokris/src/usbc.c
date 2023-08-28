@@ -161,10 +161,10 @@ void board_reset_pd_mcu(void)
 
 	/* Reset TCPC1 */
 	if (nissa_get_sb_type() == NISSA_SB_C_A &&
-	    tcpc_config[1].rst_gpio.port) {
-		gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 1);
+	    tcpc_config[USBC_PORT_C1].rst_gpio.port) {
+		gpio_pin_set_dt(&tcpc_config[USBC_PORT_C1].rst_gpio, 1);
 		msleep(PS8XXX_RESET_DELAY_MS);
-		gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 0);
+		gpio_pin_set_dt(&tcpc_config[USBC_PORT_C1].rst_gpio, 0);
 		msleep(PS8815_FW_INIT_DELAY_MS);
 	}
 }

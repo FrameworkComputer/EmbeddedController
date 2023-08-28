@@ -47,6 +47,16 @@ tests:
       - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
     extra_dtc_overlay_files:
       - "boards/nereid.dts"
+  nissa.nokris:
+    extra_dtc_overlay_files:
+      - "boards/nokris.dts"
+    extra_conf_files:
+      - "prj.conf"
+    extra_configs:
+      - CONFIG_TEST_NISSA_NOKRIS=y
+      - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=y
+      - CONFIG_PLATFORM_EC_USB_PD_HOST_CMD=y
+      - CONFIG_PLATFORM_EC_USB_PD_TCPM_PS8815=y
   nissa.gothrax:
     extra_dtc_overlay_files:
       - "boards/gothrax.dts"
