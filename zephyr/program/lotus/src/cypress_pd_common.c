@@ -1227,13 +1227,16 @@ static void perform_error_recovery(int controller)
 	int i;
 	if (controller < 2)
 		for (i = 0; i < 2; i++) {
-		if (!((controller*2 + i) == prev_charge_port && battery_is_present() != BP_YES) )
-			cypd_write_reg8(controller, CCG_ERR_RECOVERY_REG, i);
+			if (!((controller*2 + i) == prev_charge_port &&
+			    battery_is_present() != BP_YES) &&
+			    (pd_port_states[i].c_state != CCG_STATUS_NOTHING))
+				cypd_write_reg8(controller, CCG_ERR_RECOVERY_REG, i);
 		}
 	else {
 		/* Hard reset all ports that are not supplying power in dead battery mode */
 		for (i = 0; i < PD_PORT_COUNT; i++) {
-			if (!(i == prev_charge_port && battery_is_present() != BP_YES) ) {
+			if (!(i == prev_charge_port && battery_is_present() != BP_YES) &&
+			    (pd_port_states[i].c_state != CCG_STATUS_NOTHING)) {
 				CPRINTS("Hard reset %d", i);
 				cypd_write_reg8(i >> 1, CCG_ERR_RECOVERY_REG, i & 1);
 			}
