@@ -51,8 +51,16 @@ BUILD_ASSERT(ARRAY_SIZE(fan_table_1) == ARRAY_SIZE(fan_table_2),
 
 bool is_fan_type_2(void)
 {
-	return cros_cbi_ssfc_check_match(
-		CBI_SSFC_VALUE_ID(DT_NODELABEL(fan_type_2)));
+	uint32_t val;
+	/*
+	 * Retrieve the fan type config.
+	 */
+	cros_cbi_get_fw_config(FAN_TYPE, &val);
+
+	if (val == FW_FAN_TYPE_2) {
+		return true;
+	}
+	return false;
 }
 
 int fan_table_to_rpm(int fan, int *temp)
