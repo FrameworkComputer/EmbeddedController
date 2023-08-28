@@ -361,6 +361,7 @@ bool cmd_disp_read(uint8_t *resp_buf, uint32_t resp_size, uint32_t resp_num,
 			"\rReceived packet of size %u bytes, packet [%u] out "
 			"of [%u]",
 			resp_size, resp_num, total_size);
+		fflush(stdout);
 		return true;
 	}
 
