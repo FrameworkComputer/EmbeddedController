@@ -54,29 +54,6 @@ def check_usb(vidpid, serialname=None):
     return False
 
 
-def check_usb_sn(vidpid):
-    """Return the serial number
-
-    Return the serial number of the first USB device with VID:PID vidpid,
-    or None if no device is found. This will not work well with two of
-    the same device attached.
-
-    Args:
-      vidpid: string representation of the usb vid:pid, eg. '18d1:2001'
-
-    Returns:
-      string serial number if found, None otherwise.
-    """
-    dev = get_usb_dev(vidpid)
-
-    if dev:
-        dev_serial = usb.util.get_string(dev, dev.iSerialNumber)
-
-        return dev_serial
-
-    return None
-
-
 def get_usb_dev(vidpid, serialname=None):
     """Return the USB pyusb devie struct
 
