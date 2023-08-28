@@ -36,6 +36,9 @@
 		smp_ap23a7l {
 			compatible = "smp,ap23a7l", "battery-smart";
 		};
+		panasonic_ap23a5l {
+			compatible = "panasonic,ap23a5l", "battery-smart";
+		};
 	};
 
 	hibernate-wake-pins {
