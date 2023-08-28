@@ -101,6 +101,10 @@
 	frs_en_gpio = <&gpio_usb_c0_frs_en>;
 };
 
+&i2c2_0 {
+	/delete-node/ pi3usb9201@5f;
+};
+
 &i2c3_0 {
 	usb_c1_hb_retimer: jhl9040r-c1@54 {
 		compatible = "intel,jhl9040r";
@@ -116,5 +120,14 @@
 };
 
 &i2c6_1 {
+	/delete-node/ pi3usb9201@5f;
 	/delete-node/ usb-c1-hb-retimer@56;
+};
+
+&usbc_port0 {
+	/delete-property/ bc12;
+};
+
+&usbc_port1 {
+	/delete-property/ bc12;
 };
