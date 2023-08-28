@@ -25,7 +25,6 @@ child-binding:
       - LID_SENSOR
       - LIGHTBAR
       - USB_SS_MUX
-      - FAN_TYPE
     size:
       type: int
       required: true
