@@ -156,7 +156,7 @@ def do_reboot(pty, serialname):
     cmd = "reboot"
 
     # Check usb dev number on current instance.
-    devno = c.check_usb_dev(STM_VIDPID, serialname=serialname)
+    devno = c.check_usb_dev([STM_VIDPID], serialname=serialname)
     if not devno:
         c.log("Device not found")
         return False
@@ -168,21 +168,21 @@ def do_reboot(pty, serialname):
         return False
 
     try:
-        c.wait_for_usb_remove(STM_VIDPID, timeout=3.0, serialname=serialname)
+        c.wait_for_usb_remove([STM_VIDPID], timeout=3.0, serialname=serialname)
     except Exception as e:
         # Polling for reboot isn't reliable but if it hasn't happened in 3 seconds
         # it's not going to. This step just goes faster if it's detected.
         pass
 
     try:
-        c.wait_for_usb(STM_VIDPID, timeout=3.0, serialname=serialname)
+        c.wait_for_usb([STM_VIDPID], timeout=3.0, serialname=serialname)
     except Exception as e:
         c.log("Failed to return from reboot: " + str(e))
         return False
 
     # Check that the device had a new device number, i.e. it's
     # disconnected and reconnected.
-    newdevno = c.check_usb_dev(STM_VIDPID, serialname=serialname)
+    newdevno = c.check_usb_dev([STM_VIDPID], serialname=serialname)
     if newdevno == devno:
         c.log("Device didn't reboot")
         return False
@@ -216,14 +216,14 @@ def do_sysjump(region, pty, serialname):
         return False
 
     try:
-        c.wait_for_usb_remove(STM_VIDPID, timeout=3.0, serialname=serialname)
+        c.wait_for_usb_remove([STM_VIDPID], timeout=3.0, serialname=serialname)
     except Exception as e:
         # Polling for reboot isn't reliable but if it hasn't happened in 3 seconds
         # it's not going to. This step just goes faster if it's detected.
         pass
 
     try:
-        c.wait_for_usb(STM_VIDPID, timeout=3.0, serialname=serialname)
+        c.wait_for_usb([STM_VIDPID], timeout=3.0, serialname=serialname)
     except Exception as e:
         c.log("Failed to return from restart: " + str(e))
         return False
@@ -285,7 +285,7 @@ def main(argv):
 
     # Let's make sure there's a tigertail
     # If nothing found in 5 seconds, fail.
-    c.wait_for_usb(STM_VIDPID, timeout=5.0, serialname=opts.serialno)
+    c.wait_for_usb([STM_VIDPID], timeout=5.0, serialname=opts.serialno)
 
     pty = c.setup_tinyservod(STM_VIDPID, 0, serialname=opts.serialno)
 

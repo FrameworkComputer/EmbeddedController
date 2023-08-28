@@ -9,7 +9,7 @@
 import datetime
 import sys
 import time
-from typing import Set, Tuple
+from typing import Iterable, Set, Tuple
 
 import six
 import usb  # pylint:disable=import-error
@@ -39,13 +39,12 @@ def log(output):
     sys.stdout.flush()
 
 
-def check_usb(vidpid, serialname=None):
+def check_usb(vidpid: Iterable[str], serialname=None):
     """Check if |vidpid| is present on the system's USB.
 
     Args:
-      vidpid: string representation of the usb vid:pid, eg. '18d1:2001'
-              or iterable of such string representations in which case any
-              of them can match.
+      vidpid: iterable of string representations of the usb vid:pid,
+              eg. '18d1:2001', all of which can match.
       serialname: serialname if specified.
 
     Returns:
@@ -70,7 +69,7 @@ def _match_device(dev, devs: Set[Tuple[int, int]], serial: str) -> bool:
     )
 
 
-def get_usb_dev(vidpid, serialname=None):
+def get_usb_dev(vidpid: Iterable[str], serialname=None):
     """Return the USB pyusb devie struct
 
     Return the dev struct of the first USB device with VID:PID vidpid,
@@ -78,19 +77,15 @@ def get_usb_dev(vidpid, serialname=None):
     if supplied.
 
     Args:
-      vidpid: string representation of the usb vid:pid, eg. '18d1:2001'
-              or iterable of such string representations in which case any
-              of them can match.
+      vidpid: iterable of string representations of the usb vid:pid,
+              eg. '18d1:2001', all of which can match.
       serialname: serialname if specified.
 
     Returns:
       pyusb device if found, None otherwise.
     """
 
-    if isinstance(vidpid, str):
-        devs = {_parse_vidpid_string(vidpid)}
-    else:
-        devs = set(map(_parse_vidpid_string, vidpid))
+    devs = set(map(_parse_vidpid_string, vidpid))
 
     for device in usb.core.find(
         find_all=True, custom_match=lambda d: _match_device(d, devs, serialname)
@@ -98,7 +93,7 @@ def get_usb_dev(vidpid, serialname=None):
         return device
 
 
-def check_usb_dev(vidpid, serialname=None):
+def check_usb_dev(vidpid: Iterable[str], serialname=None):
     """Return the USB dev number
 
     Return the dev number of the first USB device with VID:PID vidpid,
@@ -106,9 +101,8 @@ def check_usb_dev(vidpid, serialname=None):
     if supplied.
 
     Args:
-      vidpid: string representation of the usb vid:pid, eg. '18d1:2001'
-              or iterable of such string representations in which case any
-              of them can match.
+      vidpid: iterable of string representations of the usb vid:pid,
+              eg. '18d1:2001', all of which can match.
       serialname: serialname if specified.
 
     Returns:
@@ -122,7 +116,7 @@ def check_usb_dev(vidpid, serialname=None):
     return None
 
 
-def wait_for_usb_remove(vidpid, serialname=None, timeout=None):
+def wait_for_usb_remove(vidpid: Iterable[str], serialname=None, timeout=None):
     """Wait for USB device with vidpid to be removed.
 
     Wrapper for wait_for_usb below
@@ -132,13 +126,14 @@ def wait_for_usb_remove(vidpid, serialname=None, timeout=None):
     )
 
 
-def wait_for_usb(vidpid, serialname=None, timeout=None, desiredpresence=True):
+def wait_for_usb(
+    vidpid: Iterable[str], serialname=None, timeout=None, desiredpresence=True
+):
     """Wait for usb device with vidpid to be present/absent.
 
     Args:
-      vidpid: string representation of the usb vid:pid, eg. '18d1:2001'
-              or iterable of such string representations in which case any
-              of them can match.
+      vidpid: iterable of string representations of the usb vid:pid,
+              eg. '18d1:2001', all of which can match.
       serialname: serialname if specified.
       timeout: timeout in seconds, None for no timeout.
       desiredpresence: True for present, False for not present.

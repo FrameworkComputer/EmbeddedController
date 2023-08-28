@@ -446,7 +446,7 @@ def main():
 
     # Make sure device is up.
     print("===== Waiting for USB device =====")
-    c.wait_for_usb(vidpid, serialname=serialno)
+    c.wait_for_usb([vidpid], serialname=serialno)
     # We need a tiny_servod to query some information. Set it up first.
     tinys = tiny_servod.TinyServod(vid, pid, iface, serialno, args.verbose)
 
@@ -481,7 +481,7 @@ def main():
         raise ServoUpdaterException("Can't detect updater version")
 
     # Make sure device is up.
-    c.wait_for_usb(vidpid, serialname=serialno)
+    c.wait_for_usb([vidpid], serialname=serialno)
     # After we have made sure that it's back/available, reconnect the tiny servod.
     tinys.reinitialize()
 
