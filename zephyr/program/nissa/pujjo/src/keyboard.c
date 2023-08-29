@@ -7,7 +7,7 @@
 #include "keyboard_scan.h"
 #include "timer.h"
 
-static const struct ec_response_keybd_config pujjo_kb = {
+const struct ec_response_keybd_config pujjo_kb = {
 	.num_top_row_keys = 10,
 	.action_keys = {
 		TK_BACK,		/* T1 */

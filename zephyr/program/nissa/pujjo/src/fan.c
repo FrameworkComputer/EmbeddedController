@@ -17,7 +17,7 @@ LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 /*
  * Pujjo fan support
  */
-static void fan_init(void)
+test_export_static void fan_init(void)
 {
 	int ret;
 	uint32_t val;

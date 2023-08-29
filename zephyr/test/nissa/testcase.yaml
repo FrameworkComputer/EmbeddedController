@@ -71,6 +71,26 @@ tests:
       - CONFIG_PLATFORM_EC_DYNAMIC_MOTION_SENSOR_COUNT=y
       - CONFIG_PLATFORM_EC_TABLET_MODE=y
       - CONFIG_PLATFORM_EC_GMR_TABLET_MODE=y
+  nissa.pujjo:
+    extra_dtc_overlay_files:
+      - "boards/generic_npcx.dts"
+      - "boards/chargers.dts"
+      - "boards/pujjo.dts"
+    extra_conf_files:
+      - "prj.conf"
+      - "charger.conf"
+    extra_configs:
+      - CONFIG_TEST_NISSA_PUJJO=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM=y
+      - CONFIG_PLATFORM_EC_ACCEL_LIS2DW12=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_BMI_COMM_I2C=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_BMI3XX=y
+      - CONFIG_PLATFORM_EC_ACCEL_BMA4XX=y
+      - CONFIG_PLATFORM_EC_DYNAMIC_MOTION_SENSOR_COUNT=y
+      - CONFIG_PLATFORM_EC_TABLET_MODE=y
+      - CONFIG_PLATFORM_EC_GMR_TABLET_MODE=y
+      - CONFIG_PLATFORM_EC_LED_PWM=n
+      - CONFIG_PLATFORM_EC_LED_COMMON=y
   nissa.joxer:
     extra_configs:
       - CONFIG_TEST_NISSA_JOXER=y

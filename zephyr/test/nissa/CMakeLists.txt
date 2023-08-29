@@ -85,6 +85,18 @@ if(CONFIG_TEST_NISSA_GOTHRAX)
     )
 endif()
 
+if(CONFIG_TEST_NISSA_PUJJO)
+    target_sources(
+            app PRIVATE
+            src/pujjo.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/pujjo/src/fan.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/pujjo/src/form_factor.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/pujjo/src/keyboard.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/pujjo/src/hdmi.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/pujjo/src/led.c
+    )
+endif()
+
 if(CONFIG_TEST_NISSA_JOXER)
     target_compile_definitions(app PRIVATE CHARGER_PRIMARY=0 CHARGER_SECONDARY=1)
     target_sources(
