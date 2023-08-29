@@ -6,9 +6,9 @@ zephyr_library_sources_ifdef(CONFIG_AP_EVENTS ap_events.c)
 
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ
 	ap_power_interface.c
-	power_signals.c
 	)
 
+zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_POWER_SIGNALS power_signals.c)
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_SIGNAL_GPIO signal_gpio.c)
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_SIGNAL_VW signal_vw.c)
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_SIGNAL_ADC signal_adc.c)

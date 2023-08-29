@@ -6,6 +6,7 @@ if ZTEST
 
 config EMUL_POWER_SIGNALS
 	bool "Enable Power Signals Emulator"
+	select AP_PWRSEQ_POWER_SIGNALS
 	help
 	  Power signals emulator imitates the behavior of power signals
 	  that interact with the EC within a given platform. It enables testing
