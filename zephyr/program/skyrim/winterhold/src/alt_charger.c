@@ -3,10 +3,13 @@
  * found in the LICENSE file.
  */
 
+#include "charge_state.h"
 #include "charger_chips.h"
 #include "common.h"
 #include "cros_board_info.h"
 #include "cros_cbi.h"
+#include "driver/charger/isl923x.h"
+#include "extpower.h"
 #include "hooks.h"
 
 #include <zephyr/devicetree.h>
@@ -29,3 +32,22 @@ static void alt_charger_init(void)
 		CHG_ENABLE_ALTERNATE(0);
 }
 DECLARE_HOOK(HOOK_INIT, alt_charger_init, HOOK_PRIO_POST_FIRST);
+
+static void charger_set_frequence_to_1000khz(void)
+{
+	charger_set_frequency(1000);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, charger_set_frequence_to_1000khz,
+	     HOOK_PRIO_DEFAULT);
+
+static void charger_set_frequence_to_635khz(void)
+{
+	if (extpower_is_present() && charge_get_percent() == 100)
+		charger_set_frequency(635);
+	else
+		charger_set_frequency(1000);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, charger_set_frequence_to_635khz,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, charger_set_frequence_to_635khz,
+	     HOOK_PRIO_DEFAULT);
