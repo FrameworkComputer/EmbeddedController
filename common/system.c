@@ -1010,16 +1010,17 @@ int system_is_manual_recovery(void)
 /**
  * Handle a pending reboot command.
  */
-static int handle_pending_reboot(struct ec_params_reboot_ec p)
+static int handle_pending_reboot(struct ec_params_reboot_ec *p)
 {
 	if (IS_ENABLED(CONFIG_POWER_BUTTON_INIT_IDLE) &&
-	    (p.flags & EC_REBOOT_FLAG_CLEAR_AP_IDLE)) {
+	    (p->flags & EC_REBOOT_FLAG_CLEAR_AP_IDLE)) {
 		CPRINTS("Clearing AP_IDLE");
 		chip_save_reset_flags(chip_read_reset_flags() &
 				      ~EC_RESET_FLAG_AP_IDLE);
+		p->flags &= ~(EC_REBOOT_FLAG_CLEAR_AP_IDLE);
 	}
 
-	switch (p.cmd) {
+	switch (p->cmd) {
 	case EC_REBOOT_CANCEL:
 	case EC_REBOOT_NO_OP:
 		return EC_SUCCESS;
@@ -1055,7 +1056,7 @@ static int handle_pending_reboot(struct ec_params_reboot_ec p)
 			board_reset_pd_mcu();
 
 		cflush();
-		if (p.cmd == EC_REBOOT_COLD_AP_OFF)
+		if (p->cmd == EC_REBOOT_COLD_AP_OFF)
 			system_reset(SYSTEM_RESET_HARD |
 				     SYSTEM_RESET_LEAVE_AP_OFF);
 		else
@@ -1129,7 +1130,7 @@ static void system_common_shutdown(void)
 	system_exit_manual_recovery();
 	if (reboot_at_shutdown.cmd)
 		CPRINTF("Reboot at shutdown: %d\n", reboot_at_shutdown.cmd);
-	handle_pending_reboot(reboot_at_shutdown);
+	handle_pending_reboot(&reboot_at_shutdown);
 
 	/* Reset cnt on cold boot */
 	update_ap_boot_time(RESET_CNT);
@@ -1770,7 +1771,7 @@ enum ec_status host_command_reboot(struct host_cmd_handler_args *args)
 #endif
 
 	CPRINTS("Executing host reboot command %d", p.cmd);
-	switch (handle_pending_reboot(p)) {
+	switch (handle_pending_reboot(&p)) {
 	case EC_SUCCESS:
 		return EC_RES_SUCCESS;
 	case EC_ERROR_INVAL:
