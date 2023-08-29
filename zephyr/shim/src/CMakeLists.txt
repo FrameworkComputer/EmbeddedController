@@ -82,7 +82,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPM_NCT38XX
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC        tcpc.c)
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBA        usba.c)
-zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ power_host_sleep_api.c)
+zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ_HOST_SLEEP    power_host_sleep_api.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_MUX     usb_muxes.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB
                                                             bb_retimer_usb_mux.c)
