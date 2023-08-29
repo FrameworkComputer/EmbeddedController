@@ -817,10 +817,15 @@ ZTEST(usb_init_mux, test_usb_mux_set_idle_mode)
 	 * driver's set_idle_mode function.
 	 */
 	const struct emul *tcpci_emul = EMUL_GET_USBC_BINDING(1, tcpc);
-	struct tcpci_partner_data my_drp;
-	struct tcpci_drp_emul_data drp_ext;
-	struct tcpci_src_emul_data src_ext;
-	struct tcpci_snk_emul_data snk_ext;
+
+	/*
+	 * These need to be static, otherwise a failure in this test can lead to
+	 * partner ops pointing into an old stack frame.
+	 */
+	static struct tcpci_partner_data my_drp;
+	static struct tcpci_drp_emul_data drp_ext;
+	static struct tcpci_src_emul_data src_ext;
+	static struct tcpci_snk_emul_data snk_ext;
 
 	zassert_ok(tcpc_config[0].drv->init(0));
 	zassert_ok(tcpci_emul_disconnect_partner(tcpci_emul));
