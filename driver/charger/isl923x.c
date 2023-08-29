@@ -348,6 +348,56 @@ static enum ec_error_list isl923x_device_id(int chgnum, int *id)
 	return EC_SUCCESS;
 }
 
+#ifdef CONFIG_CHARGER_SET_FREQUENCY
+static enum ec_error_list isl923x_set_frequency(int chgnum, int freq_khz)
+{
+	int rv;
+	int reg;
+	int dev_id;
+
+	mutex_lock(&control1_mutex_isl923x);
+
+	rv = isl923x_device_id(chgnum, &dev_id);
+	if (rv) {
+		CPRINTS("Failed to read device ID");
+		return rv;
+	}
+
+	rv = raw_read16(chgnum, ISL923X_REG_CONTROL1, &reg);
+	if (rv) {
+		CPRINTS("Could not read CONTROL1. (rv=%d)", rv);
+		mutex_unlock(&control1_mutex_isl923x);
+		return rv;
+	}
+
+	/* Certain frequencies are only supported by the ISL9237.  */
+	reg &= ~ISL923X_C1_SWITCH_FREQ_MASK;
+	if (freq_khz >= 1000)
+		reg |= ISL923X_C1_SWITCH_FREQ_PROG;
+	else if (freq_khz >= 913 && dev_id == ISL9237_DEV_ID)
+		reg |= ISL9237_C1_SWITCH_FREQ_913K;
+	else if (freq_khz >= 839)
+		reg |= ISL923X_C1_SWITCH_FREQ_839K;
+	else if (freq_khz >= 777 && dev_id == ISL9237_DEV_ID)
+		reg |= ISL9237_C1_SWITCH_FREQ_777K;
+	else if (freq_khz >= 723)
+		reg |= ISL923X_C1_SWITCH_FREQ_723K;
+	else if (freq_khz >= 676 && dev_id == ISL9237_DEV_ID)
+		reg |= ISL9237_C1_SWITCH_FREQ_676K;
+	else if (freq_khz >= 635)
+		reg |= ISL923X_C1_SWITCH_FREQ_635K;
+	else if (freq_khz >= 599 && dev_id == ISL9237_DEV_ID)
+		reg |= ISL9237_C1_SWITCH_FREQ_599K;
+	else
+		reg |= ISL923X_C1_SWITCH_FREQ_PROG;
+
+	rv = raw_write16(chgnum, ISL923X_REG_CONTROL1, reg);
+
+	mutex_unlock(&control1_mutex_isl923x);
+	return rv;
+}
+#endif
+
 static enum ec_error_list isl923x_get_option(int chgnum, int *option)
 {
 	int rv;
@@ -1579,6 +1629,9 @@ const struct charger_drv isl923x_drv = {
 #endif
 	.manufacturer_id = &isl923x_manufacturer_id,
 	.device_id = &isl923x_device_id,
+#ifdef CONFIG_CHARGER_SET_FREQUENCY
+	.set_frequency = &isl923x_set_frequency,
+#endif
 	.get_option = &isl923x_get_option,
 	.set_option = &isl923x_set_option,
 #ifdef CONFIG_CHARGE_RAMP_HW

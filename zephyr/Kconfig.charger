@@ -670,6 +670,11 @@ config PLATFORM_EC_CHARGER_CHGRAMP_BROKEN
 	  This should be enabled by charger drivers which need it. It cannot
 	  be set otherwise, even in prj.conf
 
+config PLATFORM_EC_CHARGER_SET_FREQUENCY
+	bool "Enable control of the charger frequency"
+	help
+	  Enable control of the charger frequency.
+
 choice PLATFORM_EC_CHARGE_RAMP_TYPE
 	prompt "Select the charge-ramp method"
 	optional

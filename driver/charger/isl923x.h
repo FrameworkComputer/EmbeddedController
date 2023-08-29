@@ -339,6 +339,8 @@ enum isl9237_fsm_state {
 #define ISL9237_INFO_ACHOT BIT(12)
 
 #define RAA489000_DEV_ID_B0 0x11
+#define ISL9237_DEV_ID 0x0A
+#define ISL9238_DEV_ID 0x0C
 
 /* DVC - Dynamic Voltage Compensation */
 #define RAA489000_RP1_MAX 156
