@@ -46,14 +46,13 @@
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 30000 /* us */
 #define PD_VCONN_SWAP_DELAY 5000 /* us */
 
-/* The design should support up to 100W. */
-/* TODO(b/197702356): Set the max PD to 60W now and change it
- * to 100W after we verify it.
+/* Not support typec adapter. */
+/* TODO(b/293975611): Set the max PD to 0W.
  */
 #define PD_OPERATING_POWER_MW CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
-#define PD_MAX_POWER_MW 100000
-#define PD_MAX_CURRENT_MA 5000
-#define PD_MAX_VOLTAGE_MV 20000
+#define PD_MAX_POWER_MW 0
+#define PD_MAX_CURRENT_MA 0
+#define PD_MAX_VOLTAGE_MV 5000
 
 /*
  * Macros for GPIO signals used in common code that don't match the
