@@ -93,6 +93,8 @@
 	(0x1032 + ((x) * 0x1000))
 #define CCG_PORT_INTR_STATUS_REG(x) \
 	(0x1034 + ((x) * 0x1000))
+#define SELECT_SINK_PDO_EPR_MASK(x) \
+	(0x1065 + ((x) * 0x1000))
 #define CCG_SINK_PPS_AVS_CTRL_REG(x) \
 	(0x1066 + ((x) * 0x1000))
 #define CCG_PORT_PD_RESPONSE_REG(x) \
@@ -259,6 +261,8 @@ enum ccg_pd_command {
 	CCG_PD_CMD_EC_INIT_COMPLETE = 0x10,
 	CCG_PD_CMD_PORT_DISABLE = 0x11,
 	CCG_PD_CMD_CHANGE_PD_PORT_PARAMS = 0x14,
+	CCG_PD_CMD_INITIATE_EPR_ENTRY = 0x47,
+	CCG_PD_CMD_INITIATE_EPR_EXIT = 0x48,
 };
 
 /************************************************
@@ -487,9 +491,8 @@ int pd_get_active_current(int port);
 /**
  * Set system power state
  *
- * @param power		The power state
  */
-void cypd_set_power_active(enum power_state power);
+void cypd_set_power_active(void);
 
 /**
  * Get the active charge pd chip
