@@ -11,6 +11,7 @@
 #include "driver/charger/isl923x.h"
 #include "extpower.h"
 #include "hooks.h"
+#include "ztest/alt_charger.h"
 
 #include <zephyr/devicetree.h>
 #include <zephyr/logging/log.h>

@@ -148,6 +148,11 @@ tests:
     extra_configs:
     - CONFIG_TEST_BOARD_WINTERHOLD=y
 
+  skyrim.winterhold.alt_charger:
+    extra_configs:
+    - CONFIG_TEST_BOARD_WINTERHOLD=y
+    - CONFIG_TEST_BOARD_ALT_CHARGER_CUSTOM=y
+
   skyrim.winterhold.usb_mux_config:
     extra_configs:
     - CONFIG_TEST_BOARD_WINTERHOLD=y
