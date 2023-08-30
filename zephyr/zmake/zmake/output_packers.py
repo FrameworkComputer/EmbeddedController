@@ -177,10 +177,11 @@ class BinmanPacker(BasePacker):
             rw_dir / "zephyr" / self.rw_file, work_dir / "zephyr_rw.bin"
         )
 
+        version_file_path = work_dir / "version.txt"
         # Version in FRID/FWID can be at most 31 bytes long (32, minus
         # one for null character).
-        if len(version_string) > 31:
-            version_string = version_string[:31]
+        with open(version_file_path, "w", encoding="utf-8") as version_file:
+            version_file.write(version_string[:31].ljust(32, "\0"))
 
         proc = jobclient.popen(
             [
@@ -189,8 +190,6 @@ class BinmanPacker(BasePacker):
                 "-v",
                 "5",
                 "build",
-                "-a",
-                "version={}".format(version_string),
                 "-d",
                 dts_file_path,
                 "-m",

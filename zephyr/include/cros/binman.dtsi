@@ -24,9 +24,9 @@
 				fmap {
 				};
 				ro-frid {
-					type = "text";
+					type = "blob";
 					size = <32>;
-					text-label = "version";
+					filename = "version.txt";
 				};
 			};
 			pad-byte = <0xff>;
@@ -54,16 +54,16 @@
 					filename = "zephyr_rw.bin";
 				};
 				rw-fwid {
-					/* Fix the lcoation of the FWID to the
+					/* Fix the location of the FWID to the
 					 * last 32 bytes of the flash. This
 					 * ensures the RW entries in the FMAP
 					 * stored in the RO section of flash
 					 * are always correct.
 					 */
 					offset = <(0x40000 - 32)>;
-					type = "text";
+					type = "blob";
 					size = <32>;
-					text-label = "version";
+					filename = "version.txt";
 				};
 				pad-byte = <0xff>;
 			};
