@@ -393,6 +393,13 @@ def main():
         help="only print available firmware for board/channel",
     )
     parser.add_argument(
+        "--json",
+        dest="json_only",
+        action="store_true",
+        default=False,
+        help="only emit available firmware for board/channel as JSON",
+    )
+    parser.add_argument(
         "-s",
         "--serialno",
         type=str,
@@ -444,7 +451,10 @@ def main():
 
     # If the user only cares about the information then just print it here,
     # and exit.
-    if args.print_only:
+    if args.print_only or args.json_only:
+        if args.print_only and args.json_only:
+            raise ServoUpdaterException("Can't use both --print and --json.")
+
         board = args.board
         if board is None:
             board = BOARD_SERVO_V4
@@ -453,10 +463,20 @@ def main():
             board, args.file, args.channel
         )
 
-        print("board:", board)
-        print("channel:", args.channel)
-        print("firmware:", newvers)
-        print("firmware file:", binfile)
+        output = {
+            "board": board,
+            "channel": args.channel,
+            "firmware": newvers,
+            "firmware file": binfile,
+        }
+
+        if args.print_only:
+            print("board:", output["board"])
+            print("channel:", output["channel"])
+            print("firmware:", output["firmware"])
+            print("firmware file:", output["firmware file"])
+        elif args.json_only:
+            print(json.dumps(output))
         return
 
     serialno = args.serialno
