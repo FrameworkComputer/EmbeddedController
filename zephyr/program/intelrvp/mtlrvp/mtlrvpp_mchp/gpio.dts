@@ -164,24 +164,6 @@
 			gpios = <&gpio_240_276 2 GPIO_INPUT>;
 			enum-name = "GPIO_CCD_MODE_ODL";
 		}; /* GPIO242 */
-		smb-bs-clk {
-			gpios = <&gpio_000_036 4 GPIO_INPUT>;
-		}; /* GPIO004 */
-		smb-bs-data {
-			gpios = <&gpio_000_036 3 GPIO_INPUT>;
-		}; /* GPIO003 */
-		usbc-tcpc-i2c-clk-aic1 {
-			gpios = <&gpio_140_176 0 GPIO_INPUT>;
-		}; /* GPIO140 */
-		usbc-tcpc-i2c-data-aic1 {
-			gpios = <&gpio_100_136 26 GPIO_INPUT>;
-		}; /* GPIO132 */
-		usbc-tcpc-i2c-clk-aic2 {
-			gpios = <&gpio_000_036 11 GPIO_INPUT>;
-		}; /* GPIO013 */
-		usbc-tcpc-i2c-data-aic2 {
-			gpios = <&gpio_000_036 10 GPIO_INPUT>;
-		}; /* GPIO012 */
 		espi-alert0-n-r {
 			gpios = <&gpio_040_076 19 GPIO_INPUT>;
 		}; /* GPIO063 */
