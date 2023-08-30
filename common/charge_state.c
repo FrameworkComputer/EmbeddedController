@@ -2050,28 +2050,25 @@ charge_command_charge_control(struct host_cmd_handler_args *args)
 	struct ec_response_charge_control *r = args->response;
 	int rv;
 
-	if (args->version >= 2) {
-		if (p->cmd == EC_CHARGE_CONTROL_CMD_SET) {
-			if (p->mode == CHARGE_CONTROL_NORMAL) {
-				rv = battery_sustainer_set(
-					p->sustain_soc.lower,
-					p->sustain_soc.upper);
-				if (rv == EC_RES_UNAVAILABLE)
-					return EC_RES_UNAVAILABLE;
-				if (rv)
-					return EC_RES_INVALID_PARAM;
-			} else {
-				battery_sustainer_disable();
-			}
-		} else if (p->cmd == EC_CHARGE_CONTROL_CMD_GET) {
-			r->mode = get_chg_ctrl_mode();
-			r->sustain_soc.lower = sustain_soc.lower;
-			r->sustain_soc.upper = sustain_soc.upper;
-			args->response_size = sizeof(*r);
-			return EC_RES_SUCCESS;
+	if (p->cmd == EC_CHARGE_CONTROL_CMD_SET) {
+		if (p->mode == CHARGE_CONTROL_NORMAL) {
+			rv = battery_sustainer_set(p->sustain_soc.lower,
+						   p->sustain_soc.upper);
+			if (rv == EC_RES_UNAVAILABLE)
+				return EC_RES_UNAVAILABLE;
+			if (rv)
+				return EC_RES_INVALID_PARAM;
 		} else {
-			return EC_RES_INVALID_PARAM;
+			battery_sustainer_disable();
 		}
+	} else if (p->cmd == EC_CHARGE_CONTROL_CMD_GET) {
+		r->mode = get_chg_ctrl_mode();
+		r->sustain_soc.lower = sustain_soc.lower;
+		r->sustain_soc.upper = sustain_soc.upper;
+		args->response_size = sizeof(*r);
+		return EC_RES_SUCCESS;
+	} else {
+		return EC_RES_INVALID_PARAM;
 	}
 
 	rv = set_chg_ctrl_mode(p->mode);
@@ -2081,7 +2078,7 @@ charge_command_charge_control(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CHARGE_CONTROL, charge_command_charge_control,
-		     EC_VER_MASK(1) | EC_VER_MASK(2));
+		     EC_VER_MASK(2));
 
 static enum ec_status
 charge_command_current_limit(struct host_cmd_handler_args *args)
