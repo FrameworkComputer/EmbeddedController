@@ -2,19 +2,17 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include "charger.h"
+#include "cros_cbi.h"
+#include "hooks.h"
+
 #include <zephyr/devicetree.h>
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
-#include <charger.h>
-#include <cros_cbi.h>
-#include <hooks.h>
-
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
 FAKE_VOID_FUNC(chg_enable_alternate_test, int);
-
-void alt_charger_init(void);
 
 static bool alt_charger;
 static int cros_cbi_get_fw_config_mock(enum cbi_fw_config_field_id field_id,
@@ -36,20 +34,20 @@ static void alt_charger_before(void *fixture)
 	cros_cbi_get_fw_config_fake.custom_fake = cros_cbi_get_fw_config_mock;
 }
 
-ZTEST_SUITE(alt_charger, NULL, NULL, alt_charger_before, NULL, NULL);
+ZTEST_SUITE(alt_charger_common, NULL, NULL, alt_charger_before, NULL, NULL);
 
-ZTEST(alt_charger, test_normal_charger)
+ZTEST(alt_charger_common, test_normal_charger)
 {
 	alt_charger = false;
-	alt_charger_init();
+	hook_notify(HOOK_INIT);
 	/* Test that the alternative charger wasn't enabled. */
 	zassert_equal(chg_enable_alternate_test_fake.call_count, 0);
 }
 
-ZTEST(alt_charger, test_alt_charger)
+ZTEST(alt_charger_common, test_alt_charger)
 {
 	alt_charger = true;
-	alt_charger_init();
+	hook_notify(HOOK_INIT);
 	zassert_equal(chg_enable_alternate_test_fake.call_count, 1);
 	zassert_equal(chg_enable_alternate_test_fake.arg0_val, 0);
 }
