@@ -1251,7 +1251,8 @@ static bool dpm_dfp_enter_mode_msg(int port)
 	    !DPM_CHK_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE) &&
 	    pd_is_mode_discovered_for_svid(port, TCPCI_MSG_SOP,
 					   USB_SID_DISPLAYPORT) &&
-	    dpm_mode_entry_requested(port, TYPEC_MODE_DP)) {
+	    dpm_mode_entry_requested(port, TYPEC_MODE_DP) &&
+	    dp_mode_entry_allowed(port)) {
 		enter_mode_requested = true;
 		vdo_count = ARRAY_SIZE(vdm);
 		status = dp_setup_next_vdm(port, &vdo_count, vdm);

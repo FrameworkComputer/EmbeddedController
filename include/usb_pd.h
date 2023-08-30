@@ -477,6 +477,8 @@ struct pd_discovery {
 	union disc_ident_ack identity;
 	/* Identity VDO count */
 	int identity_cnt;
+	/* svdm version */
+	enum usb_pd_svdm_ver svdm_vers;
 	/* Supported SVIDs and corresponding mode VDOs */
 	struct svid_mode_data svids[SVID_DISCOVERY_MAX];
 	/* index of SVID currently being operated on */
@@ -527,6 +529,7 @@ struct partner_active_modes {
 #define VDO_CMDT(x) (x << 6)
 #define VDO_OPOS_MASK VDO_OPOS(0x7)
 #define VDO_CMDT_MASK VDO_CMDT(0x3)
+#define VDO_SVDM_VERS_MASK (VDO_SVDM_VERS_MAJOR(0x3) | VDO_SVDM_VERS_MINOR(0x3))
 
 #define CMDT_INIT 0
 #define CMDT_RSP_ACK 1
@@ -3343,6 +3346,18 @@ static inline int pd_vdm_get_log_entry(uint32_t *payload)
  * re-awoken the calling task.
  */
 void pd_prepare_sysjump(void);
+
+/**
+ * Compose SVDM Request Header
+ *
+ * @param port The PD port number
+ * @param type The partner to query (SOP, SOP', or SOP'')
+ * @param svid SVID to include in svdm header
+ * @param cmd VDO CMD to send
+ * @return svdm header to send
+ */
+uint32_t pd_compose_svdm_req_header(int port, enum tcpci_msg_type type,
+				    uint16_t svid, int cmd);
 
 /* ----- SVDM handlers ----- */
 

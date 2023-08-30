@@ -416,6 +416,15 @@ union passive_cable_vdo_rev30 {
  *           011b = [USB4] Gen3
  *           100b..111b = Reserved, Shall Not be used
  */
+
+#define VDO_REV30_ACTIVE_1(ss, sop_pp, vbus_cable, vbus_cur, sbu_type,   \
+			   sbu_sup, vbus_vol, cable_term, latency, plug) \
+	((ss & 7) | (sop_pp & 0x1) << 3 | (vbus_cable & 0x1) << 4 |      \
+	 (vbus_cur & 0x3) << 5 | (sbu_type & 0x1) << 7 |                 \
+	 (sbu_sup & 0x1) << 8 | (vbus_vol & 0x3) << 0x9 |                \
+	 (cable_term & 0x3) << 11 | (latency & 0xf) << 13 |              \
+	 (plug & 0x3) << 18)
+
 enum vdo_version {
 	VDO_VERSION_1_3 = 3,
 };
@@ -493,6 +502,15 @@ union active_cable_vdo1_rev30 {
  *           1b = Gen 2 or higher
  *           Note: see VDO1 USB Highest Speed for details of Gen supported.
  */
+
+#define VDO_REV30_ACTIVE_2(gen, iso, lanes, usb32, usb2, usb2_hub, usb4,       \
+			   active, optical, u3, u3_power, shutdown, max_temp)  \
+	((gen & 0x1) | (iso & 0x1) << 2 | (lanes & 0x1) << 3 |                 \
+	 (usb32 & 0x1) << 4 | (usb2 & 0x1) << 5 | (usb2_hub & 0x3) << 6 |      \
+	 (usb4 & 0x1) << 8 | (active & 0x1) << 9 | (optical & 0x1) << 10 |     \
+	 (u3 & 0x1) << 11 | (u3_power & 0x7) << 12 | (shutdown & 0x7f) << 16 | \
+	 (max_temp & 0x7f) << 24)
+
 enum retimer_active_element {
 	ACTIVE_REDRIVER,
 	ACTIVE_RETIMER,
