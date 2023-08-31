@@ -303,10 +303,17 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 static void initial_soc_power_limit(void)
 {
 	char *str = "FRANGWAT01";
+	static int pre_battery_type;
 
 	battery_mwatt_type =
-		(strncmp(battery_static[BATT_IDX_MAIN].model_ext, str, 10) ?
+		(!strncmp(battery_static[BATT_IDX_MAIN].model_ext, str, 10) ?
 		BATTERY_61mW : BATTERY_55mW);
+
+	if (pre_battery_type != battery_mwatt_type)
+		pre_battery_type = battery_mwatt_type;
+	else
+		return;
+
 	battery_current_limit_mA =
 		((battery_mwatt_type == BATTERY_61mW) ? -3920 : -3570);
 
@@ -320,5 +327,5 @@ static void initial_soc_power_limit(void)
 	power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T];
 }
-DECLARE_HOOK(HOOK_INIT, initial_soc_power_limit, HOOK_PRIO_INIT_I2C);
-
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, initial_soc_power_limit, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, initial_soc_power_limit, HOOK_PRIO_DEFAULT);
