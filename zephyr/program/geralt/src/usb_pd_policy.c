@@ -8,6 +8,7 @@
 #include "chipset.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
+#include "usb_pd_policy.h"
 #include "usbc_ppc.h"
 
 int pd_check_vconn_swap(int port)
@@ -86,6 +87,11 @@ int pd_set_power_supply_ready(int port)
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 
 	return EC_SUCCESS;
+}
+
+__override bool port_frs_disable_until_source_on(int port)
+{
+	return true;
 }
 
 int board_vbus_source_enabled(int port)

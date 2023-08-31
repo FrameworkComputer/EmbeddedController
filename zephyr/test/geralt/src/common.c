@@ -27,6 +27,14 @@ ZTEST(geralt_common, test_none)
 	/* placeholder test */
 }
 
+ZTEST(geralt_common, test_port_frs_disable_until_source_on)
+{
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		/* all ports delay the FRS disabled pins */
+		zassert_true(port_frs_disable_until_source_on(i));
+	}
+}
+
 static void geralt_common_before(void *fixture)
 {
 }
