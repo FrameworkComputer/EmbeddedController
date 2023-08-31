@@ -1596,6 +1596,7 @@ function flash_npcx_uut() {
 
 		if [[ "${FLAGS_no_preserve}" == "${FLAGS_FALSE}" ]]; then
 			local CUR_IMG
+			local IMG_CPY
 			local PRESERVE_STATUS
 
 			PRESERVE_STATUS=0
@@ -1603,6 +1604,9 @@ function flash_npcx_uut() {
 			if [[ "${PRESERVE_STATUS}" -eq 0 ]]; then
 				info "Reading current EC firmware image."
 				CUR_IMG="${TEMP_DIR}/ec.cur.bin"
+				IMG_CPY="${TEMP_DIR}/ec.new.cpy.bin"
+				cat "${IMG}" > "${IMG_CPY}"
+				IMG="${IMG_CPY}"
 				local UUT_CUR_RD=( "${NPCX_UUT}" "${UUT_ARGS[@]}"   \
 							"--read-flash" "--file=${CUR_IMG}" )
 				echo "${UUT_CUR_RD[*]}"
