@@ -6,6 +6,7 @@
  */
 
 #include "battery_fuel_gauge.h"
+#include "cbi_fw_config.h"
 #include "charge_state.h"
 #include "common.h"
 
@@ -120,3 +121,36 @@ const struct board_batt_params board_battery_info[] = {
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_CA14J43;
+
+struct board_batt_params default_battery_conf = {
+	.fuel_gauge = {
+		.manuf_name = "PG01LJ3353",
+		.device_name = "CA14J43",
+		.ship_mode = {
+			.reg_addr = 0x00,
+			.reg_data = { 0x0010, 0x0010 },
+		},
+		.fet = {
+			.mfgacc_support = 1,
+			.reg_mask = 0x6000,
+			.disconnect_val = 0x6000,
+		}
+	},
+	.batt_info = {
+		.voltage_max		= 13200, /* mV */
+		.voltage_normal		= 11550, /* mV */
+		.voltage_min		= 9000, /* mV */
+		.precharge_current	= 256,	/* mA */
+		.start_charging_min_c	= 0,
+		.start_charging_max_c	= 50,
+		.charging_min_c		= 0,
+		.charging_max_c		= 60,
+		.discharging_min_c	= -20,
+		.discharging_max_c	= 60,
+	},
+};
+
+__override bool board_batt_conf_enabled(void)
+{
+	return get_cbi_fw_config_bcic_enabled();
+}
