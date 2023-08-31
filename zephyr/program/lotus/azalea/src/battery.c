@@ -123,6 +123,7 @@ void battery_customize(struct charge_state_data *curr_batt)
 	int day = 0;
 	int month = 0;
 	int year = 0;
+	uint32_t batt_os_percentage = get_system_percentage();
 
 	/* manufacture date is static data */
 	if (!read_manuf_date && battery_is_present() == BP_YES) {
@@ -176,6 +177,9 @@ void battery_customize(struct charge_state_data *curr_batt)
 
 		if (old_btp == 0)
 			old_btp = curr_batt->batt.remaining_capacity;
+
+		if (new_btp == 0 && batt_os_percentage < 995)
+			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
 
 		if (new_btp > old_btp && !battery_is_cut_off()) {
 			if (curr_batt->batt.remaining_capacity > new_btp) {
