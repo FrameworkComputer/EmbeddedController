@@ -70,3 +70,20 @@
 	/* This field is used to point at our CS pin */
 	cs-gpios = <&gpioa 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 };
+
+&spi2 {
+	/*
+	 * Exclude spi2_nss_pb12 from pinctrl-0. Without CS pin the driver will
+	 * disable hardware CS management. This is necessary because deasserting
+	 * CS pin clears command context in the sensor.
+	 */
+	pinctrl-0 = <&spi2_sck_pb13 &spi2_miso_pb14
+		     &spi2_mosi_pb15>;
+
+	dmas = <&dma1 4 0 0x38440 0x03>,
+		<&dma1 3 0 0x38480 0x03>;
+	dma-names = "tx", "rx";
+
+	/* Use PB12 pin as a CS for the device (managed by SPI controller) */
+	cs-gpios = <&gpiob 12 GPIO_ACTIVE_LOW>;
+};

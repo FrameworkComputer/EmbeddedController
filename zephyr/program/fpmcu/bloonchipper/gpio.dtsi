@@ -22,15 +22,7 @@
 			gpios = <&gpiob 7 GPIO_INPUT>;
 		};
 
-		fps_int: fps_int {
-			gpios = <&gpioa 0 GPIO_INPUT>;
-		};
-
-		fp_rst_odl {
-			gpios = <&gpiob 10 GPIO_OUTPUT_HIGH>;
-		};
-
-		fp_sensor_sel {
+		fp_sensor_sel: fp_sensor_sel {
 			gpios = <&gpiob 0 GPIO_INPUT>;
 		};
 
@@ -60,17 +52,6 @@
 		/* unimplemented GPIOs */
 		entering-rw {
 			enum-name = "GPIO_ENTERING_RW";
-		};
-	};
-
-
-	gpio-interrupts {
-		compatible = "cros-ec,gpio-interrupts";
-
-		int_fps_int: int_fps_int {
-			irq-pin = <&fps_int>;
-			flags = <GPIO_INT_EDGE_RISING>;
-			//handler = "";
 		};
 	};
 };

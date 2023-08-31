@@ -9,6 +9,7 @@
 
 / {
 	chosen {
+		cros-fp,fingerprint-sensor = &fp_sensor;
 		zephyr,host-cmd-spi-backend = &spi1;
 		zephyr,host-cmd-uart-backend = &usart1;
 	};
@@ -93,5 +94,21 @@
 			label = "rollback1";
 			reg = <0x40000 DT_SIZE_K(128)>;
 		};
+	};
+};
+
+&spi2 {
+	fp_sensor: fpc1025@0 {
+		compatible = "fpc,fpc1025";
+		reg = <0>;
+		spi-max-frequency = <4000000>;
+
+		width = <160>;
+		height = <160>;
+		bits-per-pixel = <8>;
+		v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+
+		irq-gpios = <&gpioa 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+		reset-gpios = <&gpiob 10 GPIO_ACTIVE_LOW>;
 	};
 };
