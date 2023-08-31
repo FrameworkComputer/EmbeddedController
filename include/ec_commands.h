@@ -5613,6 +5613,11 @@ struct ec_params_reboot_ec {
  */
 #define EC_CMD_GET_PANIC_INFO 0x00D3
 
+struct ec_params_get_panic_info_v1 {
+	/* Do not modify PANIC_DATA_FLAG_OLD_HOSTCMD when reading panic info */
+	uint8_t preserve_old_hostcmd_flag;
+} __ec_align1;
+
 /*****************************************************************************/
 /*
  * Special commands

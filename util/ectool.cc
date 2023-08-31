@@ -6880,9 +6880,21 @@ int cmd_keyboard_factory_test(int argc, char *argv[])
 int cmd_panic_info(int argc, char *argv[])
 {
 	int rv;
+	struct ec_params_get_panic_info_v1 params = {
+		.preserve_old_hostcmd_flag = 1,
+	};
 
-	rv = ec_command(EC_CMD_GET_PANIC_INFO, 0, NULL, 0, ec_inbuf,
-			ec_max_insize);
+	/* By default, reading the panic info will set
+	 * PANIC_DATA_FLAG_OLD_HOSTCMD. Prefer to leave this
+	 * flag untouched when supported.
+	 */
+	if (ec_cmd_version_supported(EC_CMD_GET_PANIC_INFO, 1))
+		rv = ec_command(EC_CMD_GET_PANIC_INFO, 1, &params,
+				sizeof(params), ec_inbuf, ec_max_insize);
+	else
+		rv = ec_command(EC_CMD_GET_PANIC_INFO, 0, NULL, 0, ec_inbuf,
+				ec_max_insize);
+
 	if (rv < 0)
 		return rv;
 
