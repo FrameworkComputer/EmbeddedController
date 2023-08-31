@@ -88,11 +88,11 @@ static void update_os_power_slider(int mode, bool with_dc, int active_mpower)
 		break;
 	case EC_AC_BALANCED:
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] =
-			(gpu_present() ? 120000 : 40000);
+			(gpu_present() ? 105000 : 40000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] =
-			(gpu_present() ? 120000 : 50000);
+			(gpu_present() ? 105000 : 50000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
-			(gpu_present() ? 120000 : 60000);
+			(gpu_present() ? 105000 : 60000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT] =
 			(gpu_present() ? 50000 : 0);
 		slider_stt_table = (gpu_present() ? 2 : 9);
@@ -130,9 +130,9 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 		} else if (((active_mpower >= 140000) && with_dc)
 			|| ((active_mpower >= 180000) && (!with_dc))) {
 			if (mode == EC_AC_BEST_PERFORMANCE) {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 120000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 120000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 120000;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 105000;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 105000;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 105000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 50000;
 				power_stt_table = 4;
 			} else if (mode == EC_AC_BALANCED) {
