@@ -137,7 +137,7 @@ GPIO(USB_FS_DP,			PIN(A, 12), GPIO_ALTERNATE)
 GPIO_INT(NUCLEO_LED1,		PIN(C, 7),  GPIO_OUT_HIGH | ANY_EDGE, gpio_edge) /* Green */
 GPIO_INT(NUCLEO_LED2,		PIN(B, 7),  GPIO_OUT_LOW | ANY_EDGE, gpio_edge) /* Blue */
 GPIO_INT(NUCLEO_LED3,		PIN(A, 9),  GPIO_OUT_LOW | ANY_EDGE, gpio_edge) /* Red */
-GPIO_INT(NUCLEO_USER_BTN,	PIN(C, 13), GPIO_INPUT | ANY_EDGE, gpio_edge) /* User button */
+GPIO_INT(NUCLEO_USER_BTN,	PIN(C, 13), GPIO_INPUT | ANY_EDGE, user_button_edge)
 
 /* Unimplemented signals since we are not an EC */
 UNIMPLEMENTED(ENTERING_RW)

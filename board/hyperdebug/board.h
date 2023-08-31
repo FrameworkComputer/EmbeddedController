@@ -238,6 +238,7 @@ enum adc_channel {
 
 /* Interrupt handler, called by common/gpio.c. */
 void gpio_edge(enum gpio_signal signal);
+void user_button_edge(enum gpio_signal signal);
 
 /* Utility method */
 enum gpio_signal gpio_find_by_name(const char *name);

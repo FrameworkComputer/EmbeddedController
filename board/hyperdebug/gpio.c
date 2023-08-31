@@ -56,6 +56,12 @@ static __const_data const struct gpio_alt_flags gpio_alt_flags[] = {
 #undef ALTERNATE
 
 /*
+ * Which pin of the shield is the RESET signal, that should be pulled down if
+ * the blue user button is pressed.
+ */
+static int shield_reset_pin = GPIO_COUNT; /* "no pin" value */
+
+/*
  * A cyclic buffer is used to record events (edges) of one or more GPIO
  * signals.  Each event records the time since the previous event, and the
  * signal that changed (the direction of change is not explicitly recorded).
@@ -277,11 +283,25 @@ void gpio_edge(enum gpio_signal signal)
 	buffer_header->head_time = now;
 }
 
+/*
+ * Blue user button pressed, assert/deassert the user-specified reset signal.
+ */
+void user_button_edge(enum gpio_signal signal)
+{
+	int pressed = gpio_get_level(GPIO_NUCLEO_USER_BTN);
+	if (shield_reset_pin < GPIO_COUNT)
+		gpio_set_level(shield_reset_pin, !pressed); /* Active low */
+}
+
 static void board_gpio_init(void)
 {
 	/* Mark every slot as unused. */
 	for (int i = 0; i < ARRAY_SIZE(monitoring_slots); i++)
 		monitoring_slots[i].gpio_signal = GPIO_COUNT;
+
+	/* Enable handling of the blue user button of Nucleo-L552ZE-Q. */
+	gpio_clear_pending_interrupt(GPIO_NUCLEO_USER_BTN);
+	gpio_enable_interrupt(GPIO_NUCLEO_USER_BTN);
 }
 DECLARE_HOOK(HOOK_INIT, board_gpio_init, HOOK_PRIO_DEFAULT);
 
@@ -310,6 +330,11 @@ static void stop_all_gpio_monitoring(void)
 			atomic_sub(&num_cur_error_conditions, 1);
 		free_cyclic_buffer(buffer_header);
 	}
+
+	/* Ensure handling of the blue user button of Nucleo-L552ZE-Q is
+	 * enabled. */
+	gpio_clear_pending_interrupt(GPIO_NUCLEO_USER_BTN);
+	gpio_enable_interrupt(GPIO_NUCLEO_USER_BTN);
 }
 
 /*
@@ -564,6 +589,30 @@ static int command_gpio_multiset(int argc, const char **argv)
 	return EC_SUCCESS;
 }
 
+/*
+ * Choose the pin that should be pulled low when the blue user button is
+ * pressed.
+ */
+static int command_gpio_set_reset(int argc, const char **argv)
+{
+	int gpio;
+
+	if (argc < 3)
+		return EC_ERROR_PARAM_COUNT;
+
+	if (!strcasecmp(argv[2], "none")) {
+		shield_reset_pin = GPIO_COUNT; /* "no pin" value */
+		return EC_SUCCESS;
+	}
+
+	gpio = gpio_find_by_name(argv[2]);
+	if (gpio == GPIO_COUNT)
+		return EC_ERROR_PARAM2;
+
+	shield_reset_pin = gpio;
+	return EC_SUCCESS;
+}
+
 static int command_gpio_monitoring_start(int argc, const char **argv)
 {
 	BUILD_ASSERT(STM32_IRQ_EXTI15 < 32);
@@ -606,6 +655,13 @@ static int command_gpio_monitoring_start(int argc, const char **argv)
 	if (!buf) {
 		rv = EC_ERROR_BUSY;
 		goto out_cleanup;
+	}
+
+	/* Disable handling of the blue user button while monitoring is ongoing.
+	 */
+	if (!num_cur_monitoring) {
+		gpio_disable_interrupt(GPIO_NUCLEO_USER_BTN);
+		gpio_clear_pending_interrupt(GPIO_NUCLEO_USER_BTN);
 	}
 
 	buf->head = buf->tail = 0;
@@ -877,6 +933,13 @@ static int command_gpio_monitoring_stop(int argc, const char **argv)
 	if (buf->overflow)
 		atomic_sub(&num_cur_error_conditions, 1);
 
+	/* Re-enable handling of the blue user button once monitoring is done.
+	 */
+	if (!num_cur_monitoring) {
+		gpio_clear_pending_interrupt(GPIO_NUCLEO_USER_BTN);
+		gpio_enable_interrupt(GPIO_NUCLEO_USER_BTN);
+	}
+
 	free_cyclic_buffer(buf);
 	return EC_SUCCESS;
 }
@@ -904,12 +967,15 @@ static int command_gpio(int argc, const char **argv)
 		return command_gpio_monitoring(argc, argv);
 	if (!strcasecmp(argv[1], "multiset"))
 		return command_gpio_multiset(argc, argv);
+	if (!strcasecmp(argv[1], "set-reset"))
+		return command_gpio_set_reset(argc, argv);
 	return EC_ERROR_PARAM1;
 }
 DECLARE_CONSOLE_COMMAND_FLAGS(
 	gpio, command_gpio,
 	"multiset name [level] [mode] [pullmode] [milli_volts]"
 	"\nanalog-set name milli_volts"
+	"\nset-reset name"
 	"\nmonitoring start name..."
 	"\nmonitoring read name..."
 	"\nmonitoring stop name...",
@@ -938,6 +1004,13 @@ static int command_reinit(int argc, const char **argv)
 
 	/* Disable any DAC (which would override GPIO function of pins) */
 	STM32_DAC_CR = 0;
+
+	/*
+	 * Default behavior of blue user button is to pull CN10_29 low, as that
+	 * pin is used for RESET on both OpenTitan shield and legacy GSC
+	 * shields.
+	 */
+	shield_reset_pin = GPIO_CN10_29;
 
 	/* TODO: Also reset SPI chip select (and speed) to defaults */
 
