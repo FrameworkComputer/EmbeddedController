@@ -1907,7 +1907,6 @@ int board_set_active_charge_port(int charge_port)
 			 * 1.Disable connect need close CFET
 			 * 2.new power source in still need close FET first
 			 */
-			update_soc_power_limit(false, true);
 			task_set_event(TASK_ID_CYPD, CCG_EVT_CFET_VBUS_OFF);
 		}
 	}
