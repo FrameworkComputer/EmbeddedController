@@ -12,6 +12,10 @@ config BOARD_BLOONCHIPPER
 	bool "Bloonchipper FPMCU Board"
 	select HAS_COVERAGE_SUPPORT
 	select BOARD_FINGERPRINT
+	select FINGERPRINT_SUBSYSTEM if CROS_EC_RW
+	select FINGERPRINT_SENSOR if CROS_EC_RW
+	select FINGERPRINT_SHELL if CROS_EC_RW
+	select PLATFORM_EC_FINGERPRINT if CROS_EC_RW
 	help
 	  Build the bloonchipper FPMCU board. The board uses STM32F412CG MCU
 	  and FPC1025 sensor.
