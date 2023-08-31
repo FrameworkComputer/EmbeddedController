@@ -149,6 +149,16 @@ config EMUL_CROS_FLASH
 	help
 	  This option enables the flash emulator for testing.
 
+config EMUL_FPC1025
+	bool "FPC1025 fingerprint sensor emulator"
+	depends on ZTEST && DT_HAS_FPC_FPC1025_ENABLED
+	default y
+	help
+	  This option enables the FPC1025 fingerprint sensor emulator.
+	  It supports only basic commands (get hardware id, enter low power
+	  mode) that can be issued by the public driver (without FPC private
+	  library)
+
 config EMUL_RTC
 	bool "Emulated RTC driver for Zephyr shim"
 	default y

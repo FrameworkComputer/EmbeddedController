@@ -19,4 +19,56 @@ config FINGERPRINT_SENSOR_INIT_PRIORITY
 	  This initialization priority is used unless the driver implementation
 	  has its own initialization priority.
 
+config FINGERPRINT_SENSOR_FPC1025
+	bool "Fingerprint driver for FPC1025"
+	depends on DT_HAS_FPC_FPC1025_ENABLED
+	default y
+	help
+	  Driver for FPC1025 fingerprint sensor. It requires FPC private library
+	  to implement cros_fingerprint API. If the library is not available it
+	  only supports checking sensor hardware ID and entering low power mode.
+
+if FINGERPRINT_SENSOR_FPC1025
+
+config FINGERPRINT_SENSOR_FPC1025_HEAP_SIZE
+	int "Size of heap for FPC1025 driver"
+	default 65536
+	help
+	  Size of heap to be used by FPC private library. The heap must have
+	  enough size to keep finger templates during matching.
+	  64KB is enough to match 5 templates at once.
+
+config FINGERPRINT_SENSOR_FPC1025_PAL
+	bool "Platform Abstraction Layer for FPC private library"
+	default y if HAVE_FPC1025_PRIVATE_DRIVER
+	help
+	  If enabled, Platform Abstraction Layer for FPC private library will be
+	  compiled. The PAL is used to interact with the sensor (SPI, GPIO) and
+	  the system (heap allocations, printing messages, time functions).
+
+# Enabled in private driver Kconfig
+config HAVE_FPC1025_PRIVATE_DRIVER
+	bool
+	default n
+	help
+	  If enabled, it indicates that the private driver is present.
+
+endif # FINGERPRINT_SENSOR_FPC1025
+
+config FINGERPRINT_SENSOR_IMAGE_SIZE
+	int "Size of fingerprint image data"
+	default 26260 if FINGERPRINT_SENSOR_FPC1025
+	help
+	  This is a size of fingerprint image with an additional metadata.
+	  This size must be at least a size of raw image. For FPC1025,
+	  the size of a raw image is 25600 and the size of metadata is 660, so
+	  the total data is 26260 bytes.
+
+config FINGERPRINT_SENSOR_IMAGE_OFFSET
+	int "Offset of raw image in fingerprint image data"
+	default 400 if FINGERPRINT_SENSOR_FPC1025
+	help
+	  This is an offset of the raw fingerprint image in the image data
+	  buffer.
+
 endif # FINGERPRINT_SENSOR
