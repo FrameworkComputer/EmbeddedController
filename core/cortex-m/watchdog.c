@@ -35,7 +35,7 @@ void __keep watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 	}
 
 	panic_set_reason(PANIC_SW_WATCHDOG, stack[STACK_IDX_REG_PC],
-			 (excep_lr & 0xf) == 1 ? 0xff : task_get_current());
+			 task_get_current());
 
 	/*
 	 * This is our last breath, the last opportunity to sort out all
