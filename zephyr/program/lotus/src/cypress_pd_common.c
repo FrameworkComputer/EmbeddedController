@@ -1511,8 +1511,10 @@ void cypd_port_int(int controller, int port)
 
 	response_len = data2[1];
 	switch (data2[0]) {
-	case CCG_RESPONSE_TYPE_C_ERROR_RECOVERY:
 	case CCG_RESPONSE_PORT_DISCONNECT:
+		record_ucsi_connector_change_event(controller, port);
+		__fallthrough;
+	case CCG_RESPONSE_TYPE_C_ERROR_RECOVERY:
 		CPRINTS("CYPD_RESPONSE_PORT_DISCONNECT");
 		cypd_update_port_state(controller, port);
 		cypd_release_port(controller, port);
@@ -1531,6 +1533,7 @@ void cypd_port_int(int controller, int port)
 		break;
 	case CCG_RESPONSE_PORT_CONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT %d", port_idx);
+		record_ucsi_connector_change_event(controller, port);
 		cypd_set_typec_profile(controller, port);
 		break;
 	case CCG_RESPONSE_EPR_EVENT:
@@ -1599,8 +1602,6 @@ void cypd_interrupt(int controller)
 		ucsi_read_tunnel(controller);
 		cypd_clear_int(controller, CCG_UCSI_INTR);
 	}
-
-
 }
 
 void pd0_chip_interrupt(enum gpio_signal signal)

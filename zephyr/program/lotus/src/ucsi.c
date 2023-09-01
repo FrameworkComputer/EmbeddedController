@@ -42,6 +42,8 @@ static struct pd_chip_ucsi_info_t pd_chip_ucsi_info[] = {
 };
 
 static int ucsi_debug_enable;
+static uint8_t s0ix_connector_change_indicator;
+static bool read_complete;
 
 void ucsi_set_debug(bool enable)
 {
@@ -187,7 +189,73 @@ int ucsi_write_tunnel(void)
 	usleep(50);
 	return rv;
 }
-bool read_complete;
+
+void record_ucsi_connector_change_event(int controller, int port)
+{
+	int cci_port = (controller << 1) + port + 1;
+
+	if (!chipset_in_state(CHIPSET_STATE_ON) && !chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		s0ix_connector_change_indicator |= BIT(cci_port);
+}
+
+static void clear_ucsi_connector_change_event(void)
+{
+	/* UCSI driver will reset PPM, so clear the indicator */
+	s0ix_connector_change_indicator = 0;
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, clear_ucsi_connector_change_event, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, clear_ucsi_connector_change_event, HOOK_PRIO_DEFAULT);
+
+static void resend_ucsi_connector_change_event(void);
+DECLARE_DEFERRED(resend_ucsi_connector_change_event);
+
+static void resend_ucsi_connector_change_event(void)
+{
+	static int process_port = 1;
+	static int resume_flag;
+
+	if (s0ix_connector_change_indicator == 0) {
+		process_port = 1;
+		resume_flag = 0;
+	} else {
+		if (!resume_flag) {
+			/* Wait host driver ready */
+			hook_call_deferred(&resend_ucsi_connector_change_event_data, 500 * MSEC);
+			resume_flag = 1;
+			return;
+		}
+
+		if (s0ix_connector_change_indicator & BIT(process_port)) {
+			pd_chip_ucsi_info[process_port >> 1].cci = (BIT(29) | process_port << 1);
+
+			if (ucsi_debug_enable) {
+				uint32_t cci_reg = pd_chip_ucsi_info[process_port >> 1].cci;
+
+				CPRINTS("Resend: P%d CCI: 0x%08x Port%d, %s%s%s%s%s%s%s",
+				process_port >> 1,
+				cci_reg,
+				(cci_reg >> 1) & 0x07F,
+				cci_reg & CCI_NOT_SUPPORTED_FLAG ? "Not Support " : "",
+				cci_reg & CCI_CANCELED_FLAG ? "Canceled " : "",
+				cci_reg & CCI_RESET_FLAG ? "Reset " : "",
+				cci_reg & CCI_BUSY_FLAG ? "Busy " : "",
+				cci_reg & CCI_ACKNOWLEDGE_FLAG ? "Acknowledge " : "",
+				cci_reg & CCI_ERROR_FLAG ? "Error " : "",
+				cci_reg & CCI_COMPLETE_FLAG ? "Complete " : ""
+				);
+			}
+
+			pd_chip_ucsi_info[process_port >> 1].read_tunnel_complete = 1;
+			read_complete = 1;
+
+			s0ix_connector_change_indicator &= ~BIT(process_port);
+		}
+		process_port++;
+		hook_call_deferred(&resend_ucsi_connector_change_event_data, 150 * MSEC);
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, resend_ucsi_connector_change_event, HOOK_PRIO_DEFAULT);
+
 int ucsi_read_tunnel(int controller)
 {
 	int rv;
@@ -222,8 +290,6 @@ int ucsi_read_tunnel(int controller)
 		memset(pd_chip_ucsi_info[controller].message_in, 0, 16);
 	}
 
-	pd_chip_ucsi_info[controller].read_tunnel_complete = 1;
-
 	if (ucsi_debug_enable) {
 		uint32_t cci_reg = pd_chip_ucsi_info[controller].cci;
 
@@ -243,6 +309,15 @@ int ucsi_read_tunnel(int controller)
 			cypd_print_buff("Message ", pd_chip_ucsi_info[controller].message_in, 16);
 		}
 	}
+
+	/**
+	 * When the system enter sleep mode, EC should record the change indicator then resend when
+	 * the system resume.
+	 */
+	if (!chipset_in_state(CHIPSET_STATE_ON) && !chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return EC_SUCCESS;
+
+	pd_chip_ucsi_info[controller].read_tunnel_complete = 1;
 
 	switch (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND)) {
 	case UCSI_CMD_PPM_RESET:
@@ -330,7 +405,8 @@ void check_ucsi_event_from_host(void)
 	}
 
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
-			(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & UCSI_EVENT)) {
+	    !chipset_in_state(CHIPSET_STATE_ANY_SUSPEND) &&
+	    (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & UCSI_EVENT)) {
 
 		/**
 		 * Following the specification, until the EC reads the VERSION register
