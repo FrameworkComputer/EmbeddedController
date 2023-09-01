@@ -1805,30 +1805,30 @@ int board_set_active_charge_port(int charge_port)
 		return EC_SUCCESS;
 	}
 
-	/*
-	 * 1.Disable connect need close CFET
-	 * 2.new power source in still need close FET first
-	 */
-	if (prev_charge_port != -1 && prev_charge_port != charge_port) {
-		update_soc_power_limit(false, true);
-		task_set_event(TASK_ID_CYPD, CCG_EVT_CFET_VBUS_OFF);
-	}
-
 	/* init VBUS state when wake from EC hibernate or EC reset */
-	if (!init_charge_port && charge_port != -1) {
+	if (!init_charge_port && charge_port == -1) {
 		CPRINTS("Init check %s port %d, prev:%d", __func__, charge_port, prev_charge_port);
 		init_charge_port = 1;
 		prev_charge_port = charge_port;
-		update_soc_power_limit(false, true);
-		task_set_event(TASK_ID_CYPD, CCG_EVT_CFET_VBUS_OFF);
-	}
-
-	/* when all port disconnect power source need reset VBUS for next connection */
-	if (charge_port == -1 && prev_charge_port != charge_port) {
 		task_set_event(TASK_ID_CYPD, CCG_EVT_CFET_FULL_VBUS_ON);
+		return EC_SUCCESS;
 	}
 
-	prev_charge_port = charge_port;
+	/* make sure we only set once */
+	if (prev_charge_port != charge_port) {
+		prev_charge_port = charge_port;
+
+		/* when all port disconnect power source need reset VBUS for next connection */
+		if (charge_port == -1) {
+			task_set_event(TASK_ID_CYPD, CCG_EVT_CFET_FULL_VBUS_ON);
+		} else {
+			/*
+			 * 1.Disable connect need close CFET
+			 * 2.new power source in still need close FET first
+			 */
+			task_set_event(TASK_ID_CYPD, CCG_EVT_CFET_VBUS_OFF);
+		}
+	}
 
 	return EC_SUCCESS;
 }
