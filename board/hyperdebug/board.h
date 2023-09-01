@@ -236,6 +236,16 @@ enum adc_channel {
  */
 #define OCTOSPI_TRANSACTION_TIMEOUT_US (500 * MSEC)
 
+/*
+ * Several modules want to be able to re-initialize to go back to power-on
+ * default settings, as part of "opentitantool transport init".  It is
+ * convenient for each module to be able to register a hook, rather than a
+ * central location to have to know about each of them.  Since HyperDebug does
+ * not control any ChromeOS AP, we can "retrofit" the HOOK_CHIPSET_RESET for
+ * this purpose without ill effect.
+ */
+#define HOOK_REINIT HOOK_CHIPSET_RESET
+
 /* Interrupt handler, called by common/gpio.c. */
 void gpio_edge(enum gpio_signal signal);
 void user_button_edge(enum gpio_signal signal);

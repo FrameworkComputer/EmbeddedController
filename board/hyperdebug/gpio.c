@@ -981,7 +981,7 @@ DECLARE_CONSOLE_COMMAND_FLAGS(
 	"\nmonitoring stop name...",
 	"GPIO manipulation", CMD_FLAG_RESTRICTED);
 
-static int command_reinit(int argc, const char **argv)
+static void gpio_reinit(void)
 {
 	const struct gpio_info *g = gpio_list;
 	int i;
@@ -1011,14 +1011,8 @@ static int command_reinit(int argc, const char **argv)
 	 * shields.
 	 */
 	shield_reset_pin = GPIO_CN10_29;
-
-	/* TODO: Also reset SPI chip select (and speed) to defaults */
-
-	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND_FLAGS(reinit, command_reinit, "",
-			      "Stop any ongoing operation",
-			      CMD_FLAG_RESTRICTED);
+DECLARE_HOOK(HOOK_REINIT, gpio_reinit, HOOK_PRIO_DEFAULT);
 
 static void led_tick(void)
 {

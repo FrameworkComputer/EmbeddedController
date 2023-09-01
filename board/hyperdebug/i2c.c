@@ -7,6 +7,7 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "i2c.h"
 #include "util.h"
 
@@ -153,3 +154,12 @@ DECLARE_CONSOLE_COMMAND_FLAGS(i2c, command_i2c,
 			      "info [PORT]"
 			      "\nset speed PORT BPS",
 			      "I2C bus manipulation", CMD_FLAG_RESTRICTED);
+
+/* Reconfigure I2C ports to power-on default values. */
+static void i2c_reinit(void)
+{
+	for (unsigned int i = 0; i < i2c_ports_used; i++) {
+		i2c_set_freq(i, I2C_FREQ_100KHZ);
+	}
+}
+DECLARE_HOOK(HOOK_REINIT, i2c_reinit, HOOK_PRIO_DEFAULT);

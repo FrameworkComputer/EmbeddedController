@@ -8,6 +8,7 @@
 #include "console.h"
 #include "dma.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "registers.h"
 #include "spi.h"
 #include "stm32-dma.h"
@@ -43,6 +44,11 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 static int spi_device_default_gpio_cs[ARRAY_SIZE(spi_devices)] = {
 	GPIO_CN9_25,
 	GPIO_CN10_6,
+};
+
+static int spi_device_default_div[ARRAY_SIZE(spi_devices)] = {
+	7,
+	255,
 };
 
 /*
@@ -514,3 +520,23 @@ int usb_spi_board_transaction(const struct spi_device_t *spi_device,
 	}
 	return rv;
 }
+
+/* Reconfigure SPI ports to power-on default values. */
+static void spi_reinit(void)
+{
+	for (unsigned int i = 0; i < spi_devices_used; i++) {
+		if (spi_devices[i].usb_flags & USB_SPI_CUSTOM_SPI_DEVICE) {
+			/* Quad SPI controller */
+			spi_devices[i].gpio_cs = spi_device_default_gpio_cs[i];
+			STM32_OCTOSPI_DCR2 = spi_devices[i].div =
+				spi_device_default_div[i];
+		} else {
+			/* "Ordinary" SPI controller */
+			spi_enable(&spi_devices[i], 0);
+			spi_devices[i].gpio_cs = spi_device_default_gpio_cs[i];
+			spi_devices[i].div = spi_device_default_div[i];
+			spi_enable(&spi_devices[i], 1);
+		}
+	}
+}
+DECLARE_HOOK(HOOK_REINIT, spi_reinit, HOOK_PRIO_DEFAULT);

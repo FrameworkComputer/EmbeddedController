@@ -298,6 +298,18 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+static int command_reinit(int argc, const char **argv)
+{
+	/* Let every module know to re-initialize to power-on state. */
+	hook_notify(HOOK_REINIT);
+	return EC_SUCCESS;
+}
+
+DECLARE_CONSOLE_COMMAND_FLAGS(
+	reinit, command_reinit, "",
+	"Stop any ongoing operation, revert to power-on state.",
+	CMD_FLAG_RESTRICTED);
+
 const char *board_read_serial(void)
 {
 	const uint32_t *stm32_unique_id =
