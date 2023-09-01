@@ -302,7 +302,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 
 static void initial_soc_power_limit(void)
 {
-	char *str = "FRANGWAT01";
+	const char *str = "FRANGWAT01";
 	static int pre_battery_type;
 
 	battery_mwatt_type =
