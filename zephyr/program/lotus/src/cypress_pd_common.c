@@ -472,10 +472,7 @@ static int pd_3a_flag;
 static int pd_3a_set;
 static int pd_3a_controller;
 static int pd_3a_port;
-static int pd_port0_1_5A;
-static int pd_port1_1_5A;
-static int pd_port2_1_5A;
-static int pd_port3_1_5A;
+static int pd_ports_1_5A_flag[PD_PORT_COUNT];
 
 int cypd_port_3a_status(int controller, int port)
 {
@@ -506,49 +503,21 @@ int cypd_port_3a_set(int controller, int port)
 void cypd_port_1_5a_set(int controller, int port)
 {
 	int port_idx = (controller << 1) + port;
-
-	switch (port_idx) {
-	case 0:
-		pd_port0_1_5A = 1;
-		break;
-	case 1:
-		pd_port1_1_5A = 1;
-		break;
-	case 2:
-		pd_port2_1_5A = 1;
-		break;
-	case 3:
-		pd_port3_1_5A = 1;
-		break;
-	}
+	pd_ports_1_5A_flag[port_idx] = 1;
 }
 
 int cypd_port_force_3A(int controller, int port)
 {
 	int port_idx = (controller << 1) + port;
-	int port_1_5A_idx;
-
-	port_1_5A_idx = pd_port0_1_5A + pd_port1_1_5A + pd_port2_1_5A + pd_port3_1_5A;
+	int port_1_5A_idx = 0;
+	int i;
+	for (i = 0; i < PD_PORT_COUNT; i++) {
+		port_1_5A_idx += pd_ports_1_5A_flag[i];
+	}
 
 	if (port_1_5A_idx >= 3) {
-		switch (port_idx) {
-		case 0:
-			if (!pd_port0_1_5A)
-				return true;
-			break;
-		case 1:
-			if (!pd_port1_1_5A)
-				return true;
-			break;
-		case 2:
-			if (!pd_port2_1_5A)
-				return true;
-			break;
-		case 3:
-			if (!pd_port3_1_5A)
-				return true;
-			break;
-		}
+		if (!pd_ports_1_5A_flag[port_idx])
+			return true;
 	}
 	return false;
 }
@@ -566,21 +535,7 @@ void cypd_release_port(int controller, int port)
 		pd_3a_set = 0;
 		pd_3a_flag = 0;
 	}
-
-	switch (port_idx) {
-	case 0:
-		pd_port0_1_5A = 0;
-		break;
-	case 1:
-		pd_port1_1_5A = 0;
-		break;
-	case 2:
-		pd_port2_1_5A = 0;
-		break;
-	case 3:
-		pd_port3_1_5A = 0;
-		break;
-	}
+	pd_ports_1_5A_flag[port_idx] = 0;
 }
 
 void cypd_clear_port(int controller, int port)
@@ -591,21 +546,7 @@ void cypd_clear_port(int controller, int port)
 		pd_3a_set = 0;
 		pd_3a_flag = 0;
 	}
-
-	switch (port_idx) {
-	case 0:
-		pd_port0_1_5A = 0;
-		break;
-	case 1:
-		pd_port1_1_5A = 0;
-		break;
-	case 2:
-		pd_port2_1_5A = 0;
-		break;
-	case 3:
-		pd_port3_1_5A = 0;
-		break;
-	}
+	pd_ports_1_5A_flag[port_idx] = 0;
 }
 
 /*
@@ -616,26 +557,7 @@ int cypd_profile_check(int controller, int port)
 {
 	int port_idx = (controller << 1) + port;
 
-	switch (port_idx) {
-	case 0:
-		if (pd_port0_1_5A)
-			return true;
-		break;
-	case 1:
-		if (pd_port1_1_5A)
-			return true;
-		break;
-	case 2:
-		if (pd_port2_1_5A)
-			return true;
-		break;
-	case 3:
-		if (pd_port3_1_5A)
-			return true;
-		break;
-	}
-
-	return false;
+	return pd_ports_1_5A_flag[port_idx] != 0;
 }
 
 static void pdo_c0p0_deferred(void)
@@ -780,10 +702,7 @@ DECLARE_DEFERRED(cypd_pdo_reset_deferred);
 
 static void cypd_ppm_port_clear(void)
 {
-	pd_port0_1_5A = 0;
-	pd_port1_1_5A = 0;
-	pd_port2_1_5A = 0;
-	pd_port3_1_5A = 0;
+	memset(pd_ports_1_5A_flag, 0, sizeof(pd_ports_1_5A_flag));
 	pd_3a_set = 0;
 
 	/* need init PDO again because PD chip will clear PDO data */
@@ -1339,7 +1258,7 @@ void cypd_set_power_active(void)
 	task_set_event(TASK_ID_CYPD, CCG_EVT_S_CHANGE);
 }
 
-#define CYPD_SETUP_CMDS_LEN 5
+#define CYPD_SETUP_CMDS_LEN 3
 static int cypd_setup(int controller)
 {
 	/*
@@ -1359,9 +1278,6 @@ static int cypd_setup(int controller)
 		int length;
 		int status_reg;
 	} const cypd_setup_cmds[] = {
-		/* Set the port PDO 1.5A */
-		{ CCG_PD_CONTROL_REG(0), CCG_PD_CMD_SET_TYPEC_1_5A, CCG_PORT0_INTR},
-		{ CCG_PD_CONTROL_REG(1), CCG_PD_CMD_SET_TYPEC_1_5A, CCG_PORT1_INTR},
 		/* Set the port event mask */
 		{ CCG_EVENT_MASK_REG(0), 0x27ffff, 4, CCG_PORT0_INTR},
 		{ CCG_EVENT_MASK_REG(1), 0x27ffff, 4, CCG_PORT1_INTR },
@@ -1563,6 +1479,9 @@ int cypd_device_int(int controller)
 			pd_chip_config[controller].state = CCG_STATE_POWER_ON;
 			/* Run state handler to set up controller */
 			task_set_event(TASK_ID_CYPD, 4 << controller);
+			break;
+		case CCG_RESPONSE_MESSAGE_QUEUE_OVERFLOW:
+			CPRINTS("PD%d Message Overflow", controller);
 			break;
 		default:
 			CPRINTS("INTR_REG CTRL:%d TODO Device 0x%x", controller, data & 0xFF);
