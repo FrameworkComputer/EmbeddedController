@@ -432,36 +432,60 @@ ZTEST(joxer, test_pd_snk_is_vbus_provided)
 	zassert_equal(sm5803_get_chg_det_fake.arg0_val, 0);
 }
 
-static bool keyboard_layout;
+static int keyboard_layout;
 
 static int cros_cbi_get_fw_config_mock(enum cbi_fw_config_field_id field_id,
 				       uint32_t *value)
 {
-	if (field_id != FW_KB_LAYOUT)
+	if (field_id != FW_KB_FEATURE)
 		return -EINVAL;
 
-	*value = keyboard_layout ? FW_KB_LAYOUT_US2 : FW_KB_LAYOUT_DEFAULT;
+	switch (keyboard_layout) {
+	case 0:
+		*value = FW_KB_FEATURE_BL_ABSENT_DEFAULT;
+		break;
+	case 1:
+		*value = FW_KB_FEATURE_BL_ABSENT_US2;
+		break;
+	case 2:
+		*value = FW_KB_FEATURE_BL_PRESENT_DEFAULT;
+		break;
+	case 3:
+		*value = FW_KB_FEATURE_BL_PRESENT_US2;
+		break;
+	default:
+		return 0;
+	}
 	return 0;
-}
-
-ZTEST(joxer, test_keyboard_config)
-{
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &joxer_kb_legacy);
 }
 
 ZTEST(joxer, test_kb_layout_init)
 {
 	cros_cbi_get_fw_config_fake.custom_fake = cros_cbi_get_fw_config_mock;
 
-	keyboard_layout = false;
+	keyboard_layout = 0;
 	kb_layout_init();
 	zassert_equal(set_scancode_set2_fake.call_count, 0);
 	zassert_equal(get_scancode_set2_fake.call_count, 0);
+	zassert_equal_ptr(board_vivaldi_keybd_config(), &joxer_kb_wo_kb_light);
 
-	keyboard_layout = true;
+	keyboard_layout = 2;
+	kb_layout_init();
+	zassert_equal(set_scancode_set2_fake.call_count, 0);
+	zassert_equal(get_scancode_set2_fake.call_count, 0);
+	zassert_equal_ptr(board_vivaldi_keybd_config(), &joxer_kb_w_kb_light);
+
+	keyboard_layout = 1;
 	kb_layout_init();
 	zassert_equal(set_scancode_set2_fake.call_count, 1);
 	zassert_equal(get_scancode_set2_fake.call_count, 1);
+	zassert_equal_ptr(board_vivaldi_keybd_config(), &joxer_kb_wo_kb_light);
+
+	keyboard_layout = 3;
+	kb_layout_init();
+	zassert_equal(set_scancode_set2_fake.call_count, 2);
+	zassert_equal(get_scancode_set2_fake.call_count, 2);
+	zassert_equal_ptr(board_vivaldi_keybd_config(), &joxer_kb_w_kb_light);
 }
 
 ZTEST(joxer, test_kb_layout_init_cbi_error)
@@ -596,6 +620,8 @@ get_fake_sub_board_fw_config_field(enum cbi_fw_config_field_id field_id,
 	*value = fw_config_value;
 	return 0;
 }
+
+int init_gpios(const struct device *unused);
 
 ZTEST(joxer, test_db_without_c_a)
 {

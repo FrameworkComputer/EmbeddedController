@@ -8,7 +8,8 @@
 
 #include "ec_commands.h"
 
-extern const struct ec_response_keybd_config joxer_kb_legacy;
+extern const struct ec_response_keybd_config joxer_kb_w_kb_light;
+extern const struct ec_response_keybd_config joxer_kb_wo_kb_light;
 
 void kb_layout_init(void);
 void fan_init(void);
