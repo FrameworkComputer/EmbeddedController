@@ -585,7 +585,7 @@ out:
 static uint32_t last_irq_timestamp;
 
 /* Handle IRQ from sensor: schedule read from task context */
-void bma4xx_interrupt(enum gpio_signal signal)
+test_mockable void bma4xx_interrupt(enum gpio_signal signal)
 {
 	__atomic_store_n(&last_irq_timestamp, __hw_clock_source_read(),
 			 __ATOMIC_RELAXED);

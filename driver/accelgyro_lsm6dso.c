@@ -218,7 +218,7 @@ static int accelgyro_config_fifo(const struct motion_sensor_t *s)
 /**
  * lsm6dso_interrupt - interrupt from int1 pin of sensor
  */
-void lsm6dso_interrupt(enum gpio_signal signal)
+test_mockable void lsm6dso_interrupt(enum gpio_signal signal)
 {
 	last_interrupt_timestamp = __hw_clock_source_read();
 

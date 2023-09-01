@@ -166,7 +166,7 @@ static int lis2dw12_get_fifo_samples(struct motion_sensor_t *s, int *nsamples)
  * lis2dw12_interrupt - interrupt from int pin of sensor
  * Schedule Motion Sense Task to manage Interrupts.
  */
-void lis2dw12_interrupt(enum gpio_signal signal)
+test_mockable void lis2dw12_interrupt(enum gpio_signal signal)
 {
 	last_interrupt_timestamp = __hw_clock_source_read();
 

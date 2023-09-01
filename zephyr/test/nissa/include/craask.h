@@ -13,5 +13,9 @@ extern const struct ec_response_keybd_config craask_kb_w_kb_numpad;
 
 void kb_init(void);
 void buttons_init(void);
+void form_factor_init(void);
+void clamshell_init(void);
+void alt_sensor_init(void);
+void fan_init(void);
 
 #endif /* ZEPHYR_TEST_NISSA_INCLUDE_CRAASK_H_ */

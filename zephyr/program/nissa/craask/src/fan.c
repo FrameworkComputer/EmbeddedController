@@ -12,7 +12,7 @@
 #include <zephyr/logging/log.h>
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
-static void fan_init(void)
+test_export_static void fan_init(void)
 {
 	int ret;
 	uint32_t val;

@@ -105,7 +105,7 @@ static void irq_set_orientation(struct motion_sensor_t *s)
  * This is a "top half" interrupt handler, it just asks motion sense ask
  * to schedule the "bottom half", ->irq_handler().
  */
-void bmi3xx_interrupt(enum gpio_signal signal)
+test_mockable void bmi3xx_interrupt(enum gpio_signal signal)
 {
 	last_interrupt_timestamp = __hw_clock_source_read();
 

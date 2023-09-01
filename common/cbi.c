@@ -291,7 +291,7 @@ int cbi_get_fw_config(uint32_t *fw_config)
 				  &size);
 }
 
-int cbi_get_ssfc(uint32_t *ssfc)
+test_mockable int cbi_get_ssfc(uint32_t *ssfc)
 {
 	uint8_t size = sizeof(*ssfc);
 
