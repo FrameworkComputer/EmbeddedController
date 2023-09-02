@@ -259,6 +259,7 @@ _program_memory_base=$(shell echo "$$(($(_program_memory_base_str)))")
 $(eval BASEBOARD_$(UC_BASEBOARD)=y)
 $(eval BOARD_$(UC_BOARD)=y)
 $(eval CHIP_$(UC_CHIP)=y)
+$(eval CORE_$(UC_CORE)=y)
 $(eval CHIP_VARIANT_$(UC_CHIP_VARIANT)=y)
 $(eval CHIP_FAMILY_$(UC_CHIP_FAMILY)=y)
 
