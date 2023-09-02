@@ -711,4 +711,9 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #endif
 
 #endif /* TEST_BUILD */
+
+#ifdef HAVE_PRIVATE
+#include "private_test_config.h"
+#endif /* HAVE_PRIVATE */
+
 #endif /* __TEST_TEST_CONFIG_H */
