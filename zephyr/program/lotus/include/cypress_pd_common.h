@@ -189,11 +189,14 @@
 /************************************************/
 /*  VBUS CONSUMER FET CONTROL                   */
 /************************************************/
-#define CCG_EC_CTRL_EN BIT(0)
-#define CCG_EC_CFET_OPEN 0x03
+#define CCG_EC_VBUS_CTRL_EN BIT(0)
+#define CCG_EC_VBUS_CTRL_ON BIT(1)
 
-
-
+/************************************************/
+/*  HELPER FUNCTIONS                            */
+/************************************************/
+#define PORT_TO_CONTROLLER(x) ((x) >> 1)
+#define PORT_TO_CONTROLLER_PORT(x) ((x) & 0x01)
 
 enum epr_event_type {
 	EPR_MODE_ENTERED,
@@ -230,7 +233,7 @@ enum pd_task_evt {
 	CCG_EVT_UCSI_PPM_RESET = BIT(13),
 	CCG_EVT_CFET_VBUS_OFF = BIT(14),
 	CCG_EVT_CFET_VBUS_ON = BIT(15),
-	CCG_EVT_CFET_FULL_VBUS_ON = BIT(16),
+	CCG_EVT_UNUSED = BIT(16),
 	CCG_EVT_PDO_INIT_0 = BIT(17),
 	CCG_EVT_PDO_INIT_1 = BIT(18),
 	CCG_EVT_PDO_C0P0 = BIT(19),
