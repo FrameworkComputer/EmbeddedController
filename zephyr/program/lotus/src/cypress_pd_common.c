@@ -27,6 +27,10 @@
 #include "util.h"
 #include "zephyr_console_shim.h"
 
+#ifdef CONFIG_BOARD_LOTUS
+#include "gpu.h"
+#endif
+
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
@@ -1494,7 +1498,9 @@ void cypd_port_int(int controller, int port)
 		cypd_release_port(controller, port);
 		/* make sure the type-c state is cleared */
 		clear_port_state(controller, port);
-
+#ifdef CONFIG_BOARD_LOTUS
+		update_gpu_ac_power_state();
+#endif
 		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 			charge_manager_update_dualrole(port_idx, CAP_UNKNOWN);
 		break;
