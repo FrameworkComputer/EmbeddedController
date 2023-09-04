@@ -14,6 +14,8 @@
 
 #define CHARGING_VOLTAGE_MV_SAFE 8400
 #define CHARGING_CURRENT_MA_SAFE 1500
+#define CHARGING_VOLTAGE_MV_ADJUST 8700
+#define CHARGING_CURRENT_MA_ADJUST 3200
 
 /*
  * Battery info for all sasukette battery types. Note that the fields
@@ -106,7 +108,11 @@ int charger_profile_override(struct charge_state_data *curr)
 		return 0;
 
 	current = curr->requested_current;
+	if (current > CHARGING_CURRENT_MA_ADJUST)
+		current = CHARGING_CURRENT_MA_ADJUST;
 	voltage = curr->requested_voltage;
+	if (voltage > CHARGING_VOLTAGE_MV_ADJUST)
+		voltage = CHARGING_VOLTAGE_MV_ADJUST;
 	bat_temp_c = curr->batt.temperature - 2731;
 	batt_info = battery_get_info();
 
@@ -133,12 +139,10 @@ int charger_profile_override(struct charge_state_data *curr)
 		break;
 
 	case TEMP_ZONE_1:
-		voltage += 100;
 		current = CHARGING_CURRENT_MA_SAFE;
 		break;
 
 	case TEMP_ZONE_2:
-		voltage += 100;
 		break;
 
 	case TEMP_ZONE_3:
