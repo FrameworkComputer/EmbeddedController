@@ -46,10 +46,19 @@ enum battery_present battery_is_present(void)
 
 	/* check the battery present pin first */
 	if (board_get_version() >= BOARD_VERSION_7) {
-		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_battery_present)) == 1) {
-			k_timer_stop(&check_battery_timer);
-			power_on_check_batt = 0;
-			return BP_YES;
+		if (board_get_version() == BOARD_VERSION_7) {
+			if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_battery_present)) == 1) {
+				k_timer_stop(&check_battery_timer);
+				power_on_check_batt = 0;
+				return BP_YES;
+			}
+		} else {
+			/* DVT2 changes to low active */
+			if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_battery_present)) == 0) {
+				k_timer_stop(&check_battery_timer);
+				power_on_check_batt = 0;
+				return BP_YES;
+			}
 		}
 	}
 
