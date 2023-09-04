@@ -226,13 +226,15 @@ static void resend_ucsi_connector_change_event(void)
 		}
 
 		if (s0ix_connector_change_indicator & BIT(process_port)) {
-			pd_chip_ucsi_info[process_port >> 1].cci = (BIT(29) | process_port << 1);
+			pd_chip_ucsi_info[(process_port - 1) >> 1].cci =
+				(BIT(29) | process_port << 1);
 
 			if (ucsi_debug_enable) {
-				uint32_t cci_reg = pd_chip_ucsi_info[process_port >> 1].cci;
+				uint32_t cci_reg =
+					pd_chip_ucsi_info[(process_port - 1) >> 1].cci;
 
 				CPRINTS("Resend: P%d CCI: 0x%08x Port%d, %s%s%s%s%s%s%s",
-				process_port >> 1,
+				(process_port - 1) >> 1,
 				cci_reg,
 				(cci_reg >> 1) & 0x07F,
 				cci_reg & CCI_NOT_SUPPORTED_FLAG ? "Not Support " : "",
@@ -245,7 +247,7 @@ static void resend_ucsi_connector_change_event(void)
 				);
 			}
 
-			pd_chip_ucsi_info[process_port >> 1].read_tunnel_complete = 1;
+			pd_chip_ucsi_info[(process_port - 1) >> 1].read_tunnel_complete = 1;
 			read_complete = 1;
 
 			s0ix_connector_change_indicator &= ~BIT(process_port);
