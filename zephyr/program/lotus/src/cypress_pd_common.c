@@ -1525,6 +1525,7 @@ void cypd_port_int(int controller, int port)
 	case CCG_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE:
 		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE %d", port_idx);
 		cypd_update_port_state(controller, port);
+		cypd_set_prepare_pdo(controller, port);
 #ifdef CONFIG_BOARD_LOTUS
 		hook_call_deferred(&enter_epr_mode_data, 100 * MSEC);
 #endif
