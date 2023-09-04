@@ -73,6 +73,7 @@
 /* LED */
 #define CONFIG_LED_PWM
 #define CONFIG_LED_PWM_COUNT 1
+#define CONFIG_LED_PWM_TASK_DISABLED
 
 /* PWM */
 #define CONFIG_PWM
