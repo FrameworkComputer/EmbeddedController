@@ -84,7 +84,7 @@
 			gpios = <&gpio3 1 GPIO_ODR_HIGH>;	/* Reserved */
 		};
 		gpio_gpu_b_gpio01_ec: gpu_b_gpio01_ec {
-			gpios = <&gpio3 0 GPIO_INPUT>;	/* Control 2nd Batt discharge */
+			gpios = <&gpio3 0 GPIO_INPUT>;		/* Control 2nd Batt discharge */
 		};
 		gpio_gpu_b_gpio02_ec: gpu_b_gpio02_ec {
 			gpios = <&gpio2 7 GPIO_OUTPUT_LOW>;	/* PWR switch from AC to DC */
@@ -117,8 +117,8 @@
 		gpio_wlan_en: wlan_en {
 			gpios = <&gpio1 6 GPIO_OUTPUT_LOW>;
 		};
-		gpio_gpu_vsys_vadp_en: gpu_vsys_vadp_en {
-			gpios = <&gpio1 5 GPIO_OUTPUT_LOW>;	/* Enable GPIO Vsys/VADP PWR */
+		gpio_gpu_vsys_en: gpu_vsys_en {
+			gpios = <&gpio1 5 GPIO_OUTPUT_LOW>;	/* Enable GPIO Vsys PWR */
 		};
 		gpio_apu_ec_int_l: apu_ec_int_l {
 			gpios = <&gpio1 4 GPIO_ODR_HIGH>;	/* HID over I2C interrupt */
@@ -129,8 +129,8 @@
 		rtc_dis {
 			gpios = <&gpio1 2 GPIO_OUTPUT_LOW>;	/* RTC discharge */
 		};
-		ec_en20 {
-			gpios = <&gpio1 1 GPIO_OUTPUT_LOW>;
+		gpu_vdp_en {
+			gpios = <&gpio1 1 GPIO_OUTPUT_LOW>;	/* Enable GPIO ADP PWR */
 		};
 		ec_pwm_en_l {
 			gpios = <&gpio1 0 GPIO_OUTPUT_LOW>;	/* Enable EDP mux control chip */
@@ -144,8 +144,8 @@
 		ec_b2b_dis {
 			gpios = <&gpio0 5 GPIO_OUTPUT_LOW>;
 		};
-		ec_en48_28 {
-			gpios = <&gpio0 4 GPIO_OUTPUT_LOW>;	/* Enable LM5143 */
+		gpio_gpu_fan_en: gpu_fan_en {
+			gpios = <&gpio0 4 GPIO_OUTPUT_LOW>;	/* 1: enable; 0: disable */
 		};
 		gpio_usb30_hub_en: usb30_hub_en {
 			gpios = <&gpio8 2 GPIO_OUTPUT_LOW>;
