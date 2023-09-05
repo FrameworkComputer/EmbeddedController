@@ -737,16 +737,16 @@ static uint32_t check_boot_key(const uint8_t *state)
 	if (system_jumped_late())
 		return BOOT_KEY_NONE;
 
-/* If reset was not caused by reset pin, refresh must be held down */
-#ifndef CONFIG_KEYBOARD_MULTIPLE
-	if (!(system_get_reset_flags() & EC_RESET_FLAG_RESET_PIN) &&
-	    !(state[KEYBOARD_COL_REFRESH] & keyboard_mask_refresh))
+	/*
+	 * Boot keys are available only through reset-pin reset, which can be
+	 * issued only by GSC (through refresh+power combo).
+	 *
+	 * If the EC resets differently (e.g. watchdog, power-on, exception),
+	 * we don't want to accidentally enter recovery mode even if a refresh
+	 * key or whatever key is pressed (as previously allowed).
+	 */
+	if (!(system_get_reset_flags() & EC_RESET_FLAG_RESET_PIN))
 		return BOOT_KEY_NONE;
-#else
-	if (!(system_get_reset_flags() & EC_RESET_FLAG_RESET_PIN) &&
-	    !(state[key_typ.col_refresh] & keyboard_mask_refresh))
-		return BOOT_KEY_NONE;
-#endif
 
 	return check_key_list(state);
 }

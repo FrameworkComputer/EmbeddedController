@@ -27,6 +27,9 @@ ZTEST(keyboard_scan, test_boot_key)
 	emul_kb_raw_reset(dev);
 	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_NONE, NULL);
 
+	/* Reset pin reset is required. */
+	system_set_reset_flags(EC_RESET_FLAG_RESET_PIN);
+
 	/* Case 1: refresh + esc -> BOOT_KEY_ESC */
 	emul_kb_raw_reset(dev);
 	zassert_ok(emulate_keystate(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH,
@@ -35,11 +38,11 @@ ZTEST(keyboard_scan, test_boot_key)
 	keyboard_scan_init();
 	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_ESC);
 
-	/* Case 2: esc only -> BOOT_KEY_NONE */
+	/* Case 2: esc only -> BOOT_KEY_ESC */
 	emul_kb_raw_reset(dev);
 	zassert_ok(emulate_keystate(KEYBOARD_ROW_ESC, KEYBOARD_COL_ESC, true));
 	keyboard_scan_init();
-	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_NONE);
+	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_ESC);
 
 	/* Case 3: refresh + arrow down -> BOOT_KEY_DOWN_ARROW */
 	emul_kb_raw_reset(dev);
@@ -76,6 +79,14 @@ ZTEST(keyboard_scan, test_boot_key)
 				    true));
 	zassert_ok(emulate_keystate(KEYBOARD_ROW_LEFT_SHIFT,
 				    KEYBOARD_COL_LEFT_SHIFT, true));
+	keyboard_scan_init();
+	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_NONE);
+	system_jumped_late_fake.return_val = 0;
+
+	/* Case 7: Without reset-pin, boot key scan is canceled. */
+	system_clear_reset_flags(EC_RESET_FLAG_RESET_PIN);
+	emul_kb_raw_reset(dev);
+	zassert_ok(emulate_keystate(KEYBOARD_ROW_ESC, KEYBOARD_COL_ESC, true));
 	keyboard_scan_init();
 	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_NONE);
 }
