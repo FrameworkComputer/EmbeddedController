@@ -311,7 +311,12 @@ void update_dynamic_battery_info(void)
 		&battery_dynamic[BATT_IDX_MAIN];
 
 #ifdef CONFIG_CUSTOMIZED_DESIGN
+	struct battery_static_info *const bs = &battery_static[BATT_IDX_MAIN];
 	static int batt_os_percentage;
+	int rsoc_percentage;
+	int design_percentage;
+	static int brc_retry;
+	static int bfc_retry;
 #endif
 
 	curr = charge_get_status();
@@ -373,11 +378,76 @@ void update_dynamic_battery_info(void)
 		/* Avoid to show the percentage when battery fully charge */
 		else if (curr->ac && (curr->batt.status & STATUS_FULLY_CHARGED))
 			bd->remaining_capacity = curr->batt.full_capacity;
-#endif
+		else {
+
+			/*
+			 * TASK:866aqnw5t
+			 * add workaround to avoid the battery abnormal response
+			 * if new RC - old RC over than dc 2% EC will not update
+			 * it, but if battery send 3 times maybe is battery
+			 * correct data.
+			 *
+			 * example: NRC(90%) 900 - ORC(96%) 960 need lower DC(1000*2/100) 20
+			 * percentage jump too much would not update.
+			 */
+			if (bd->remaining_capacity == 0)
+				bd->remaining_capacity = curr->batt.remaining_capacity;
+			else {
+				rsoc_percentage =
+					curr->batt.remaining_capacity - bd->remaining_capacity;
+				design_percentage = (bs->design_capacity * 2) / 100;
+				if (ABS(rsoc_percentage) < design_percentage) {
+					bd->remaining_capacity = curr->batt.remaining_capacity;
+				} else {
+					brc_retry++;
+					if (brc_retry > 2) {
+						bd->remaining_capacity =
+							curr->batt.remaining_capacity;
+						brc_retry = 0;
+					}
+				}
+			}
+		}
+#else
 		else
 			bd->remaining_capacity = curr->batt.remaining_capacity;
+#endif
 	}
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+
+	/*
+	 * TASK:866aqnw5t
+	 * add workaround to avoid the battery abnormal response
+	 * if new FC - old FC over than dc 2% EC will not update
+	 * it, but if battery send 3 times maybe is battery
+	 * correct data.
+	 *
+	 * example: NFC(100%) 900 - OFC(100%) 960 need lower DC(1000*2/100) 20
+	 * FCC jump too much would not update.
+	 */
+	if (!(curr->batt.flags & BATT_FLAG_BAD_FULL_CAPACITY) &&
+		((curr->batt.full_capacity - bd->full_capacity)
+				<  ((bs->design_capacity * 2) / 100))) {
+		if (curr->batt.full_capacity <=
+		     (bd->full_capacity - LFCC_EVENT_THRESH) ||
+			curr->batt.full_capacity >=
+		     (bd->full_capacity + LFCC_EVENT_THRESH)) {
+			bd->full_capacity = curr->batt.full_capacity;
+			/* Poke the AP if the full_capacity changes. */
+			send_batt_info_event++;
+		}
+	} else if (!(curr->batt.flags & BATT_FLAG_BAD_FULL_CAPACITY) &&
+				((curr->batt.full_capacity - bd->full_capacity)
+					>  ((bs->design_capacity * 2) / 100))) {
+		bfc_retry++;
+		if (bfc_retry > 2) {
+			bd->full_capacity = curr->batt.full_capacity;
+			send_batt_info_event++;
+			bfc_retry = 0;
+		}
+	}
+#else
 	if (!(curr->batt.flags & BATT_FLAG_BAD_FULL_CAPACITY) &&
 	    (curr->batt.full_capacity <=
 		     (bd->full_capacity - LFCC_EVENT_THRESH) ||
@@ -387,6 +457,7 @@ void update_dynamic_battery_info(void)
 		/* Poke the AP if the full_capacity changes. */
 		send_batt_info_event++;
 	}
+#endif
 
 	if (curr->batt.is_present == BP_YES &&
 	    battery_is_below_threshold(BATT_THRESHOLD_TYPE_SHUTDOWN, false))
