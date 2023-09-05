@@ -1780,6 +1780,13 @@
 #define CONFIG_SYSTEM_SAFE_MODE_PRINT_STACK
 
 /*
+ * Enables fetching a memory dump using host commands. This is useful when
+ * debugging panics. May not dump all memory, e.g. sensitive memory will
+ * not be dumped.
+ */
+#undef CONFIG_HOST_COMMAND_MEMORY_DUMP
+
+/*
  * Panic on watchdog warning instead of waiting for a regular watchdog.
  * Combined with with system safe mode, this allows for capturing
  * extra debug information about the system state.

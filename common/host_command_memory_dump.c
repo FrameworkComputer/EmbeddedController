@@ -9,13 +9,9 @@
 #include "host_command_memory_dump.h"
 #include "string.h"
 #include "task.h"
+#include "util.h"
 
 #define MAX_DUMP_ENTRIES 64
-
-#ifndef CONFIG_ZEPHYR
-/* TODO(b/271883902): Add memory dump command support for CrOS EC */
-#error "Memory Dump commands are only supported on Zephyr EC."
-#endif
 
 struct memory_dump_entry {
 	uint32_t address;
