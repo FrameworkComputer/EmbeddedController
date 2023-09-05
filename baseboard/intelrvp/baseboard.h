@@ -252,7 +252,7 @@ struct tcpc_gpio_config_t {
 };
 extern const struct tcpc_gpio_config_t tcpc_gpios[];
 
-struct tcpc_aic_gpio_config_t {
+struct mecc_1_0_tcpc_aic_gpio_config_t {
 	/* TCPC interrupt */
 	enum gpio_signal tcpc_alert;
 	/* PPC interrupt */
@@ -260,7 +260,7 @@ struct tcpc_aic_gpio_config_t {
 	/* PPC interrupt handler */
 	void (*ppc_intr_handler)(int port);
 };
-extern const struct tcpc_aic_gpio_config_t tcpc_aic_gpios[];
+extern const struct mecc_1_0_tcpc_aic_gpio_config_t mecc_1_0_tcpc_aic_gpios[];
 
 void board_charging_enable(int port, int enable);
 void board_vbus_enable(int port, int enable);

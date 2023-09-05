@@ -30,7 +30,7 @@ uint16_t tcpc_get_alert_status(void)
 			continue;
 		}
 
-		if (!gpio_get_level(tcpc_aic_gpios[i].tcpc_alert)) {
+		if (!gpio_get_level(mecc_1_1_tcpc_aic_gpios[i].tcpc_alert)) {
 			status |= PD_STATUS_TCPC_ALERT_0 << i;
 		}
 	}
@@ -38,17 +38,11 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-int ppc_get_alert_status(int port)
-{
-	return ppc_chips[port].drv->interrupt &&
-	       !gpio_get_level(tcpc_aic_gpios[port].ppc_alert);
-}
-
 void board_charging_enable(int port, int enable)
 {
 	int rv;
 
-	if (ppc_chips[port].drv->interrupt) {
+	if (board_port_has_ppc(port)) {
 		rv = ppc_vbus_sink_enable(port, enable);
 	} else {
 		rv = tcpc_config[port].drv->set_snk_ctrl(port, enable);

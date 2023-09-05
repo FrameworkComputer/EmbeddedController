@@ -14,7 +14,7 @@
 
 static inline void board_pd_set_vbus_discharge(int port, bool enable)
 {
-	if (ppc_chips[port].drv->interrupt) {
+	if (board_port_has_ppc(port)) {
 		ppc_discharge_vbus(port, enable);
 	} else {
 		tcpc_discharge_vbus(port, enable);
@@ -26,7 +26,7 @@ int pd_set_power_supply_ready(int port)
 	int rv;
 
 	/* Disable charging. */
-	if (ppc_chips[port].drv->interrupt) {
+	if (board_port_has_ppc(port)) {
 		rv = ppc_vbus_sink_enable(port, 0);
 	} else {
 		rv = tcpc_config[port].drv->set_snk_ctrl(port, 0);
@@ -39,7 +39,7 @@ int pd_set_power_supply_ready(int port)
 	board_pd_set_vbus_discharge(port, false);
 
 	/* Provide Vbus. */
-	if (ppc_chips[port].drv->interrupt) {
+	if (board_port_has_ppc(port)) {
 		rv = ppc_vbus_source_enable(port, 1);
 	} else {
 		tcpc_config[port].drv->set_src_ctrl(port, 1);
@@ -62,7 +62,7 @@ void pd_power_supply_reset(int port)
 	prev_en = board_vbus_source_enabled(port);
 
 	/* Disable VBUS. */
-	if (ppc_chips[port].drv->interrupt) {
+	if (board_port_has_ppc(port)) {
 		ppc_vbus_source_enable(port, 0);
 	} else {
 		tcpc_config[port].drv->set_src_ctrl(port, 0);
@@ -85,7 +85,7 @@ int pd_check_vconn_swap(int port)
 
 int pd_snk_is_vbus_provided(int port)
 {
-	if (ppc_chips[port].drv->interrupt) {
+	if (board_port_has_ppc(port)) {
 		return ppc_is_vbus_present(port);
 	} else {
 		return tcpc_config[port].drv->check_vbus_level(port,
@@ -96,7 +96,7 @@ int pd_snk_is_vbus_provided(int port)
 int board_vbus_source_enabled(int port)
 {
 	if (is_typec_port(port)) {
-		if (ppc_chips[port].drv->interrupt) {
+		if (board_port_has_ppc(port)) {
 			return ppc_is_sourcing_vbus(port);
 		} else {
 			return tcpc_config[port].drv->get_src_ctrl(port);
