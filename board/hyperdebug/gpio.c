@@ -59,7 +59,7 @@ static __const_data const struct gpio_alt_flags gpio_alt_flags[] = {
  * Which pin of the shield is the RESET signal, that should be pulled down if
  * the blue user button is pressed.
  */
-static int shield_reset_pin = GPIO_COUNT; /* "no pin" value */
+int shield_reset_pin = GPIO_COUNT; /* "no pin" value */
 
 /*
  * A cyclic buffer is used to record events (edges) of one or more GPIO
