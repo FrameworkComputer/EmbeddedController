@@ -336,31 +336,6 @@ static int read_matrix(uint8_t *state, bool at_boot)
 			state[c] = keyscan_seq_get_scan(c, state[c]);
 	}
 
-#ifdef KEYBOARD_MASK_PWRBTN
-	/*
-	 * 2. Boot key workaround.
-	 *
-	 * Check if KSI2 or KSI3 is asserted for all columns due to power
-	 * button hold, and ignore it if so.
-	 */
-	if (at_boot) {
-		for (c = 0; c < keyboard_cols; c++) {
-			if (!(state[c] & KEYBOARD_MASK_PWRBTN))
-				break;
-		}
-
-		if (c == keyboard_cols) {
-			for (c = 0; c < keyboard_cols; c++)
-				state[c] &= ~KEYBOARD_MASK_PWRBTN;
-#ifndef CONFIG_KEYBOARD_MULTIPLE
-			state[KEYBOARD_COL_REFRESH] |= KEYBOARD_MASK_PWRBTN;
-#else
-			state[key_typ.col_refresh] |= KEYBOARD_MASK_PWRBTN;
-#endif
-		}
-	}
-#endif
-
 #ifdef CONFIG_KEYBOARD_SCAN_ADC
 	/* Account for the refresh key */
 	keyboard_read_refresh_key(state);

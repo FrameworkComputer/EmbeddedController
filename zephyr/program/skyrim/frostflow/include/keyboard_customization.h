@@ -8,8 +8,6 @@
 #ifndef __KEYBOARD_CUSTOMIZATION_H
 #define __KEYBOARD_CUSTOMIZATION_H
 
-#define KEYBOARD_MASK_PWRBTN KEYBOARD_ROW_TO_MASK(3)
-
 /*
  * KEYBOARD_COLS_MAX has the build time column size. It's used to allocate
  * exact spaces for arrays. Actual keyboard scanning is done using
