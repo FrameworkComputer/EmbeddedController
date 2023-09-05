@@ -210,6 +210,53 @@ class Zmake:
             self._checkout = util.locate_cros_checkout()
         return self._checkout.resolve()
 
+    def _filter_projects(
+        self,
+        project_names,
+        all_projects=False,
+    ):
+        """Filter out projects that are not valid for compare builds
+
+        project_names: List of projects passed in to compare-builds
+        all_projects: Boolean indicating when "-a" flag used
+
+        Returns a tuple containing:
+            set of all projects
+            project_names list (filtered)
+            all_projects bool
+        """
+        projects = self._resolve_projects(
+            project_names,
+            all_projects=all_projects,
+        )
+
+        # TODO: b/299112542 - "zmake compare-builds -a" fails to build
+        # bloonchipper
+        skipped_projects = set(
+            filter(
+                lambda project: project.config.project_name == "bloonchipper",
+                projects,
+            )
+        )
+
+        for project in skipped_projects:
+            self.logger.warning(
+                "Project %s not supported by compare-builds, skipping.",
+                project.config.project_name,
+            )
+
+        projects = projects - skipped_projects
+
+        # Override all_projects setting if any projects are skipped
+        if len(skipped_projects) != 0:
+            all_projects = False
+
+        project_names = []
+        for project in projects:
+            project_names.append(project.config.project_name)
+
+        return projects, project_names, all_projects
+
     def _resolve_projects(
         self,
         project_names,
@@ -360,10 +407,15 @@ class Zmake:
         else:
             self.logger.info("Temporary dir %s will be retained", temp_dir)
 
-        projects = self._resolve_projects(
-            project_names,
-            all_projects=all_projects,
+        # TODO: b/299112542 - "zmake compare-builds -a" fails to build
+        # bloonchipper
+        projects, project_names, all_projects = self._filter_projects(
+            project_names, all_projects
         )
+
+        if (len(project_names)) == 0 and not all_projects:
+            self.logger.info("No projects to compare, exiting.")
+            return 0
 
         self.logger.info("Compare zephyr builds")
 
