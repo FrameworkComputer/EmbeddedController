@@ -86,18 +86,13 @@ __overridable struct keyboard_scan_config keyscan_config = {
 
 #ifdef CONFIG_KEYBOARD_BOOT_KEYS
 #ifndef CONFIG_KEYBOARD_MULTIPLE
-static const struct boot_key_entry boot_key_list[] = {
-	{ KEYBOARD_COL_ESC, KEYBOARD_ROW_ESC }, /* Esc */
-	{ KEYBOARD_COL_DOWN, KEYBOARD_ROW_DOWN }, /* Down-arrow */
-	{ KEYBOARD_COL_LEFT_SHIFT, KEYBOARD_ROW_LEFT_SHIFT }, /* Left-Shift */
-};
-#else
-struct boot_key_entry boot_key_list[] = {
-	{ KEYBOARD_COL_ESC, KEYBOARD_ROW_ESC }, /* Esc */
-	{ KEYBOARD_COL_DOWN, KEYBOARD_ROW_DOWN }, /* Down-arrow */
-	{ KEYBOARD_COL_LEFT_SHIFT, KEYBOARD_ROW_LEFT_SHIFT }, /* Left-Shift */
-};
+static const
 #endif
+	struct boot_key_entry boot_key_list[] = {
+		{ KEYBOARD_COL_ESC, KEYBOARD_ROW_ESC },
+		{ KEYBOARD_COL_DOWN, KEYBOARD_ROW_DOWN }, /* Down-arrow */
+		{ KEYBOARD_COL_LEFT_SHIFT, KEYBOARD_ROW_LEFT_SHIFT },
+	};
 static uint32_t boot_key_value = BOOT_KEY_NONE;
 #endif
 
