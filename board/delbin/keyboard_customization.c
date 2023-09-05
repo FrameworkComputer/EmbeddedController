@@ -146,6 +146,8 @@ void key_choose(void)
 			KEYBOARD2_COL_LEFT_SHIFT;
 		boot_key_list[BOOT_KEY_LEFT_SHIFT].row =
 			KEYBOARD2_ROW_LEFT_SHIFT;
+		boot_key_list[BOOT_KEY_REFRESH].col = KEYBOARD2_COL_REFRESH;
+		boot_key_list[BOOT_KEY_REFRESH].row = KEYBOARD2_ROW_REFRESH;
 
 		scancode_set2 = KB2scancode_set2;
 	} else {

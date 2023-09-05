@@ -29,7 +29,8 @@
 #define CONFIG_POWER_BUTTON_FLAGS 0
 #endif
 
-static int debounced_power_pressed; /* Debounced power button state */
+/* Debounced power button state */
+test_export_static int debounced_power_pressed;
 static int simulate_power_pressed;
 static volatile int power_button_is_stable = 1;
 

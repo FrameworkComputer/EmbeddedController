@@ -71,6 +71,7 @@ enum boot_key {
 	BOOT_KEY_ESC = 0,
 	BOOT_KEY_DOWN_ARROW = 1,
 	BOOT_KEY_LEFT_SHIFT = 2,
+	BOOT_KEY_REFRESH = 3,
 
 	BOOT_KEY_COUNT,
 	/* 31 is reserved for power button. */
