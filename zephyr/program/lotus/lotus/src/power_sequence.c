@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "board_adc.h"
 #include "board_host_command.h"
 #include "chipset.h"
 #include "config.h"
@@ -482,7 +483,8 @@ enum power_state power_handle_state(enum power_state state)
 
 		k_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 1);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en), 1);
+		if (board_get_version() >= BOARD_VERSION_8)
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en), 1);
 
 		lpc_s0ix_resume_restore_masks();
 		/* Call hooks now that rails are up */
@@ -547,7 +549,8 @@ enum power_state power_handle_state(enum power_state state)
 		system_in_s0ix = 0;
 		lpc_s0ix_resume_restore_masks();
 		/* Follow EXIT_CS bit to turn on the fan */
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en), 1);
+		if (board_get_version() >= BOARD_VERSION_8)
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en), 1);
 		hook_notify(HOOK_CHIPSET_RESUME);
 		return POWER_S0;
 
@@ -558,7 +561,8 @@ enum power_state power_handle_state(enum power_state state)
 		system_in_s0ix = 1;
 		lpc_s0ix_suspend_clear_masks();
 		/* Follow ENTER_CS bit to turn off the fan */
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en), 0);
+		if (board_get_version() >= BOARD_VERSION_8)
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en), 0);
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 		return POWER_S0ix;
 
@@ -566,7 +570,8 @@ enum power_state power_handle_state(enum power_state state)
 #endif
 
 	case POWER_S0S3:
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en), 0);
+		if (board_get_version() >= BOARD_VERSION_8)
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
 		k_msleep(85);
