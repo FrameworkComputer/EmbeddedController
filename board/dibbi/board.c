@@ -5,7 +5,7 @@
 
 /* Dibbi board-specific configuration */
 
-#include "adc_chip.h"
+#include "adc.h"
 #include "board.h"
 #include "button.h"
 #include "cec.h"
@@ -68,14 +68,16 @@ const struct adc_t adc_channels[] = {
 				.factor_div = ADC_READ_MAX + 1,
 				.shift = 0,
 				.channel = CHIP_ADC_CH13 },
+	/* 0.01 ohm shunt resistor and 50 V/V INA -> 500 mV/A */
 	[ADC_PPVAR_PWR_IN_IMON] = { .name = "ADC_PPVAR_PWR_IN_IMON",
-				    .factor_mul = ADC_MAX_MVOLT,
+				    .factor_mul = ADC_MAX_MVOLT * 2,
 				    .factor_div = ADC_READ_MAX + 1,
 				    .shift = 0,
 				    .channel = CHIP_ADC_CH15 },
+	/* 5/39 voltage divider */
 	[ADC_SNS_PPVAR_PWR_IN] = { .name = "ADC_SNS_PPVAR_PWR_IN",
-				   .factor_mul = ADC_MAX_MVOLT,
-				   .factor_div = ADC_READ_MAX + 1,
+				   .factor_mul = ADC_MAX_MVOLT * 39,
+				   .factor_div = (ADC_READ_MAX + 1) * 5,
 				   .shift = 0,
 				   .channel = CHIP_ADC_CH16 },
 };
@@ -445,3 +447,169 @@ const struct i2c_port_t i2c_ports[] = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 /* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
+
+/*
+ * Power monitoring and management.
+ *
+ * The overall goal is to gracefully manage the power demand so that the power
+ * budgets are met without letting the system fall into power deficit (perhaps
+ * causing a brownout).
+ *
+ * The actual system power demand is calculated from the VBUS voltage and the
+ * input current (read from a shunt), averaged over 10 readings. The power
+ * budget limit is from the charge manager.
+ *
+ * Throttles which can be applied:
+ *  - Throttle Type-C power from 3A to 1.5A if sourcing.
+ *
+ * The SoC power will also be throttled by PSYS if the system power reaches 97%
+ * of the charger rating. We prefer throttling the Type-C port over throttling
+ * the SoC since this has less user impact.
+ *
+ * The strategy is to determine what the state of the throttles should be, and
+ * to then turn throttles off or on as needed to match this.
+ *
+ * This function runs on demand, or every 2 ms when the CPU is up, and
+ * continually monitors the power usage, applying the throttles when necessary.
+ *
+ * All measurements are in milliwatts.
+ */
+
+/* Throttles we can apply. */
+#define THROT_TYPE_C BIT(0)
+
+/* Power gain if Type-C port is limited. */
+#define POWER_GAIN_TYPE_C 7500
+
+/*
+ * Thresholds at which to start and stop throttling Type-C. Compared against the
+ * gap between current power and max power.
+ *
+ * PSYS will start throttling SoC power when system power reaches 97% of the
+ * charger rating (e.g. 63W for a 65W charger), so the low threshold must be
+ * at least 2W. We use 4W to ensure we throttle Type-C before we start
+ * throttling SoC power.
+ *
+ * We add 5W of hysteresis to avoid switching frequently during minor power
+ * variations.
+ */
+#define THROT_LOW_THRESHOLD 4000
+#define THROT_HIGH_THRESHOLD 9000
+
+/* Power is averaged over 20 ms, with a reading every 2 ms.  */
+#define POWER_DELAY_MS 2
+#define POWER_READINGS (20 / POWER_DELAY_MS)
+
+static void power_monitor(void);
+DECLARE_DEFERRED(power_monitor);
+
+static void power_monitor(void)
+{
+	static uint32_t current_state;
+	static uint32_t history[POWER_READINGS];
+	static uint8_t index;
+	int32_t delay;
+	uint32_t new_state = 0, diff;
+
+	/* If CPU is off or suspended, no need to throttle or restrict power. */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF | CHIPSET_STATE_SUSPEND)) {
+		/* Slow down monitoring, assume no throttling required. */
+		delay = 20 * MSEC;
+
+		/*
+		 * Clear the first entry of the power table so that
+		 * it is re-initilalised when the CPU starts.
+		 */
+		history[0] = 0;
+	} else {
+		int32_t charger_mw;
+
+		delay = POWER_DELAY_MS * MSEC;
+
+		/* Get current charger limit. */
+		charger_mw = charge_manager_get_power_limit_uw() / 1000;
+
+		if (charger_mw == 0) {
+			/*
+			 * If unknown, e.g. charge manager not initialised yet,
+			 * don't change the throttles.
+			 */
+			new_state = current_state;
+		} else {
+			int32_t gap, total, power;
+			int i;
+
+			/* Read power usage. */
+			power = (charge_manager_get_charger_voltage() *
+				 adc_read_channel(ADC_PPVAR_PWR_IN_IMON)) /
+				1000;
+
+			/* Init power table. */
+			if (history[0] == 0) {
+				for (i = 0; i < POWER_READINGS; i++) {
+					history[i] = power;
+				}
+			}
+
+			/* Update power readings and calculate the average. */
+			history[index] = power;
+			index = (index + 1) % POWER_READINGS;
+			total = 0;
+			for (i = 0; i < POWER_READINGS; i++) {
+				total += history[i];
+			}
+			power = total / POWER_READINGS;
+
+			/* Calculate the gap. */
+			gap = charger_mw - power;
+
+			/*
+			 * If the Type-C port is sourcing power, check whether
+			 * it should be throttled.
+			 */
+			bool throt_type_c = false;
+
+			if (ppc_is_sourcing_vbus(0)) {
+				if (current_state & THROT_TYPE_C) {
+					/*
+					 * Stop throttling if the gap without
+					 * throttling would be greater than the
+					 * high threshold.
+					 */
+					throt_type_c = gap - POWER_GAIN_TYPE_C <
+						       THROT_HIGH_THRESHOLD;
+				} else {
+					/*
+					 * Start throttling if the gap is less
+					 * than the low threshold.
+					 */
+					throt_type_c = gap <
+						       THROT_LOW_THRESHOLD;
+				}
+			}
+			if (throt_type_c)
+				new_state |= THROT_TYPE_C;
+		}
+	}
+
+	/* Turn the throttles on or off if they have changed. */
+	diff = new_state ^ current_state;
+	current_state = new_state;
+	if (diff & THROT_TYPE_C) {
+		enum tcpc_rp_value rp = (new_state & THROT_TYPE_C) ?
+						TYPEC_RP_1A5 :
+						TYPEC_RP_3A0;
+
+		ccprints("%s: %s throttling Type-C", __func__,
+			 (new_state & THROT_TYPE_C) ? "start" : "stop");
+
+		ppc_set_vbus_source_current_limit(0, rp);
+		tcpm_select_rp_value(0, rp);
+		pd_update_contract(0);
+	}
+
+	hook_call_deferred(&power_monitor_data, delay);
+}
+
+/* Start power monitoring after ADCs have been initialised. */
+DECLARE_HOOK(HOOK_INIT, power_monitor, HOOK_PRIO_INIT_ADC + 1);
