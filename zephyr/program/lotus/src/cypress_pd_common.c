@@ -80,7 +80,6 @@ struct extended_msg rx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 struct extended_msg tx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int prev_charge_port = -1;
-static int init_charge_port;
 static bool verbose_msg_logging;
 static bool firmware_update;
 
@@ -965,6 +964,26 @@ int cypd_handle_extend_msg(int controller, int port, int len, enum tcpci_msg_typ
 	return rv;
 }
 
+int cypd_cfet_vbus_control(int port, bool enable, bool ec_control)
+{
+	int rv;
+	int pd_controller = PORT_TO_CONTROLLER(port);
+	int pd_port = PORT_TO_CONTROLLER_PORT(port);
+	int regval = (ec_control ? CCG_EC_VBUS_CTRL_EN : 0) |
+				(enable ? CCG_EC_VBUS_CTRL_ON : 0);
+
+	if (port < 0 || port >= PD_PORT_COUNT) {
+		return EC_ERROR_INVAL;
+	}
+
+	rv = cypd_write_reg8_wait_ack(pd_controller, CCG_PORT_VBUS_FET_CONTROL(pd_port),
+		regval);
+	if (rv != EC_SUCCESS)
+		CPRINTS("%s:%d fail:%d", __func__, port, rv);
+
+	return rv;
+}
+
 static void clear_port_state(int controller, int port)
 {
 	int port_idx = (controller << 1) + port;
@@ -1258,7 +1277,7 @@ void cypd_set_power_active(void)
 	task_set_event(TASK_ID_CYPD, CCG_EVT_S_CHANGE);
 }
 
-#define CYPD_SETUP_CMDS_LEN 3
+#define CYPD_SETUP_CMDS_LEN 2
 static int cypd_setup(int controller)
 {
 	/*
@@ -1281,8 +1300,6 @@ static int cypd_setup(int controller)
 		/* Set the port event mask */
 		{ CCG_EVENT_MASK_REG(0), 0x27ffff, 4, CCG_PORT0_INTR},
 		{ CCG_EVENT_MASK_REG(1), 0x27ffff, 4, CCG_PORT1_INTR },
-		/* EC INIT Complete */
-		{ CCG_PD_CONTROL_REG(0), CCG_PD_CMD_EC_INIT_COMPLETE, CCG_PORT0_INTR },
 	};
 	BUILD_ASSERT(ARRAY_SIZE(cypd_setup_cmds) == CYPD_SETUP_CMDS_LEN);
 
@@ -1309,6 +1326,22 @@ static int cypd_setup(int controller)
 		/* clear cmd ack */
 		cypd_clear_int(controller, cypd_setup_cmds[i].status_reg);
 	}
+
+	/* Make sure the vbus fet control is configured before the PD controller
+	 * auto enables one or more ports
+	 */
+	if (prev_charge_port != -1) {
+		for (i = 0; i < PD_PORT_COUNT; i++) {
+			if (PORT_TO_CONTROLLER(i) == controller) {
+				cypd_cfet_vbus_control(i, i == prev_charge_port, true);
+			}
+		}
+	}
+
+	/*Notify the PD controller we are done and it can continue init*/
+	rv = cypd_write_reg8_wait_ack(controller,
+								CCG_PD_CONTROL_REG(0),
+								CCG_PD_CMD_EC_INIT_COMPLETE);
 	return EC_SUCCESS;
 }
 
@@ -1384,66 +1417,8 @@ static void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id,
 	}
 }
 
-static void vbus_on_event_deferred(void)
-{
-	task_set_event(TASK_ID_CYPD, CCG_EVT_CFET_VBUS_ON);
-}
-DECLARE_DEFERRED(vbus_on_event_deferred);
 
-void cypd_cfet_vbus_off(void)
-{
-	int rv, i;
 
-	CPRINTS("Disable all type-c ports sink path");
-	for (i = 0; i < PD_PORT_COUNT; i++) {
-		rv = cypd_write_reg8_wait_ack(i >> 1,
-					CCG_PORT_VBUS_FET_CONTROL(i & 1),
-						CCG_EC_CTRL_EN);
-		if (rv != EC_SUCCESS)
-			CPRINTS("cfet_disable %d fail %d", i, rv);
-	}
-
-	/* turn on VBUS C-FET of chosen port */
-	if (prev_charge_port >= 0) {
-		hook_call_deferred(&vbus_on_event_deferred_data, 250 * MSEC);
-		return;
-	}
-
-	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
-	CPRINTS("Updating %s port %d", __func__, prev_charge_port);
-}
-
-void cypd_cfet_vbus_on(void)
-{
-	int rv;
-	int pd_controller = (prev_charge_port & 0x02) >> 1;
-	int pd_port = prev_charge_port & 0x01;
-
-	rv = cypd_write_reg8_wait_ack(pd_controller, CCG_PORT_VBUS_FET_CONTROL(pd_port),
-		CCG_EC_CFET_OPEN);
-	if (rv != EC_SUCCESS)
-		CPRINTS("%s:%d fail:%d", __func__, prev_charge_port, rv);
-	else {
-		CPRINTS("%s:%d", __func__, prev_charge_port);
-	}
-	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
-}
-
-void cypd_cfet_auto(void)
-{
-	int rv, i;
-
-	CPRINTS(__func__);
-	for (i = 0; i < PD_PORT_COUNT; i++) {
-		rv = cypd_write_reg8_wait_ack(i >> 1,
-				CCG_PORT_VBUS_FET_CONTROL(i & 1),
-				0);
-		if (rv != EC_SUCCESS)
-			CPRINTS("cfet_auto:%d fail %d", i, rv);
-	}
-
-	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
-}
 
 /*****************************************************************************/
 /* Project */
@@ -1718,14 +1693,6 @@ void cypd_interrupt_handler_task(void *p)
 		if (evt & CCG_EVT_UPDATE_PWRSTAT)
 			cypd_update_power_status(2);
 
-		if (evt & CCG_EVT_CFET_VBUS_OFF)
-			cypd_cfet_vbus_off();
-
-		if (evt & CCG_EVT_CFET_VBUS_ON)
-			cypd_cfet_vbus_on();
-
-		if (evt & CCG_EVT_CFET_FULL_VBUS_ON)
-			cypd_cfet_auto();
 
 		if (evt & (CCG_EVT_INT_CTRL_0 | CCG_EVT_INT_CTRL_1 |
 					CCG_EVT_STATE_CTRL_0 | CCG_EVT_STATE_CTRL_1)) {
@@ -1792,45 +1759,28 @@ __override uint8_t board_get_usb_pd_port_count(void)
  */
 int board_set_active_charge_port(int charge_port)
 {
+	int i;
 	CPRINTS("%s port %d, prev:%d", __func__, charge_port, prev_charge_port);
 
-	/* if battery D-FET not open , EC should not control VBUS FET */
-	if (battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED) {
-		/* check if CYPD ready */
-		if (charge_port == -1)
-			return EC_ERROR_TRY_AGAIN;
-
-		/* store current port and update power limit */
-		prev_charge_port = charge_port;
-		hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
-		CPRINTS("Updating %s port %d", __func__, charge_port);
+	if (prev_charge_port == charge_port) {
 		return EC_SUCCESS;
 	}
 
-	/* init VBUS state when wake from EC hibernate or EC reset */
-	if (!init_charge_port && charge_port == -1) {
-		CPRINTS("Init check %s port %d, prev:%d", __func__, charge_port, prev_charge_port);
-		init_charge_port = 1;
-		prev_charge_port = charge_port;
-		task_set_event(TASK_ID_CYPD, CCG_EVT_CFET_FULL_VBUS_ON);
-		return EC_SUCCESS;
+	if (prev_charge_port != -1 &&
+		prev_charge_port != charge_port) {
+		/* Turn off the previous charge port before turning on the next port */
+		cypd_cfet_vbus_control(prev_charge_port, false, true);
 	}
 
-	/* make sure we only set once */
-	if (prev_charge_port != charge_port) {
-		prev_charge_port = charge_port;
-
-		/* when all port disconnect power source need reset VBUS for next connection */
-		if (charge_port == -1) {
-			task_set_event(TASK_ID_CYPD, CCG_EVT_CFET_FULL_VBUS_ON);
-		} else {
-			/*
-			 * 1.Disable connect need close CFET
-			 * 2.new power source in still need close FET first
-			 */
-			task_set_event(TASK_ID_CYPD, CCG_EVT_CFET_VBUS_OFF);
-		}
+	for (i = 0; i < PD_PORT_COUNT; i++) {
+		/* Just brute force all ports, we want to make sure
+		 * we always update all ports in case a PD controller rebooted or some
+		 * other error happens that we are not tracking state with.
+		 */
+		cypd_cfet_vbus_control(i, i == charge_port, true);
 	}
+	prev_charge_port = charge_port;
+	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
 
 	return EC_SUCCESS;
 }
