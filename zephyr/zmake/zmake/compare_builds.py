@@ -210,8 +210,14 @@ class CompareBuilds:
         output_dir1 = self.checkouts[0].modules_dir / output_path
         output_dir2 = self.checkouts[1].modules_dir / output_path
 
-        bin_output1 = output_dir1 / "ec.bin"
-        bin_output2 = output_dir2 / "ec.bin"
+        # The rex-ish target creates an ish_fw.bin artifact instead of ec.bin
+        if project.config.project_name == "rex-ish":
+            bin_name = "ish_fw.bin"
+        else:
+            bin_name = "ec.bin"
+
+        bin_output1 = output_dir1 / bin_name
+        bin_output2 = output_dir2 / bin_name
 
         # ELF executables don't compare due to meta data.  Convert to a binary
         # for the comparison
@@ -227,7 +233,8 @@ class CompareBuilds:
         bin2_path = pathlib.Path(bin_output2)
         if not os.path.isfile(bin1_path) or not os.path.isfile(bin2_path):
             logging.error(
-                "Zephyr EC binary not found for project %s",
+                "Zephyr binary '%s' not found for project %s",
+                bin_name,
                 project.config.project_name,
             )
             return False
