@@ -102,7 +102,7 @@ static int save_log[CHARGE_PORT_COUNT];
 #endif
 
 /* Store current state of port enable / charge current. */
-static int charge_port = CHARGE_PORT_NONE;
+test_export_static int charge_port = CHARGE_PORT_NONE;
 static int charge_current = CHARGE_CURRENT_UNINITIALIZED;
 static int charge_current_uncapped = CHARGE_CURRENT_UNINITIALIZED;
 static int charge_voltage;

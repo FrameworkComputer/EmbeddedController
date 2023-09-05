@@ -86,12 +86,13 @@ if(CONFIG_TEST_NISSA_JOXER)
 endif()
 
 if(CONFIG_TEST_NISSA_CRAASK)
-    target_compile_definitions(app PRIVATE CHARGER_PRIMARY=0 CHARGER_SECONDARY=1)
     target_sources(
 	    app PRIVATE
 	    src/craask.c
+	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/charger.c
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/fan.c
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/form_factor.c
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/keyboard.c
+	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/usbc.c
     )
 endif()

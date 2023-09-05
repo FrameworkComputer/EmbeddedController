@@ -84,4 +84,16 @@
 			enum-names = "I2C_PORT_SENSOR";
 		};
 	};
+
+	batteries {
+		default_battery: lgc {
+			compatible = "lgc,ap18c8k", "battery-smart";
+		};
+		battery_cosmx: cosmx {
+			compatible = "cosmx,ap20cbl", "battery-smart";
+		};
+		battery_cosmx_2: cosmx-2 {
+			compatible = "cosmx,ap20cbl-2", "battery-smart";
+		};
+	};
 };

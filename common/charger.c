@@ -498,7 +498,7 @@ enum ec_error_list charger_set_voltage(int chgnum, int voltage)
 	return chg_chips[chgnum].drv->set_voltage(chgnum, voltage);
 }
 
-enum ec_error_list charger_discharge_on_ac(int enable)
+test_mockable enum ec_error_list charger_discharge_on_ac(int enable)
 {
 	int chgnum;
 	int rv = EC_ERROR_UNIMPLEMENTED;

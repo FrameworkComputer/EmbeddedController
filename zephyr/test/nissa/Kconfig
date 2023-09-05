@@ -48,6 +48,7 @@ choice TEST_TARGET
 
 	config TEST_NISSA_CRAASK
 	  bool "Tests for Craask-specific code"
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	  help
 		The test target that exercises nissa/craask/*.c
 endchoice

@@ -14,7 +14,6 @@
 #include "system.h"
 #include "usb_mux.h"
 
-#include <zephyr/drivers/pinctrl.h>
 #include <zephyr/logging/log.h>
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
@@ -229,6 +228,9 @@ void usb_interrupt(enum gpio_signal signal)
 	schedule_deferred_pd_interrupt(port);
 }
 
+#define I2C5_1_NODE DT_NODELABEL(i2c5_1)
+#if DT_NODE_EXISTS(I2C5_1_NODE)
+#include <zephyr/drivers/pinctrl.h>
 PINCTRL_DT_DEFINE(DT_NODELABEL(i2c5_1));
 
 __override void nissa_configure_hdmi_power_gpios(void)
@@ -240,3 +242,4 @@ __override void nissa_configure_hdmi_power_gpios(void)
 
 	pinctrl_apply_state(pcfg, PINCTRL_STATE_SLEEP);
 }
+#endif /* DT_NODE_EXISTS(I2C5_1_NODE) */
