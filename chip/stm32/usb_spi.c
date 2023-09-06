@@ -310,10 +310,18 @@ static void create_spi_config_response(struct usb_spi_packet_ctx *packet)
 	packet->rsp_config.max_read_count = USB_SPI_MAX_READ_COUNT;
 	/* Set the feature flags. */
 	packet->rsp_config.feature_bitmap = 0;
+	if (current_device->usb_flags & USB_SPI_CUSTOM_SPI_DEVICE) {
+		if (current_device->usb_flags &
+		    USB_SPI_CUSTOM_SPI_DEVICE_FULL_DUPLEX_SUPPORTED) {
+			packet->rsp_config.feature_bitmap |=
+				USB_SPI_FEATURE_FULL_DUPLEX_SUPPORTED;
+		}
+	} else {
 #ifndef CONFIG_SPI_HALFDUPLEX
-	packet->rsp_config.feature_bitmap |=
-		USB_SPI_FEATURE_FULL_DUPLEX_SUPPORTED;
+		packet->rsp_config.feature_bitmap |=
+			USB_SPI_FEATURE_FULL_DUPLEX_SUPPORTED;
 #endif
+	}
 #ifdef CONFIG_USB_SPI_FLASH_EXTENSIONS
 	packet->rsp_config.feature_bitmap |= USB_SPI_FEATURE_FLASH_EXTENSIONS;
 	if (current_device->usb_flags & USB_SPI_FLASH_DUAL_SUPPORT)

@@ -362,6 +362,13 @@
 #define USB_SPI_FLASH_OCTO_SUPPORT BIT(4)
 /* This SPI device supports double transfer rate (data on both clock edges). */
 #define USB_SPI_FLASH_DTR_SUPPORT BIT(5)
+/*
+ * Whether board specific SPI driver supports full duplex.  For SPI devices not
+ * using board-specific driver (most devices), this bit has no meaning, as
+ * whether full duplex is supported or not is controlled through
+ * CONFIG_SPI_HALFDUPLEX.
+ */
+#define USB_SPI_CUSTOM_SPI_DEVICE_FULL_DUPLEX_SUPPORTED BIT(6)
 
 enum packet_id_type {
 	/* Request USB SPI configuration data from device. */
