@@ -376,6 +376,79 @@ def get_files_and_version(cname, fname=None, channel=DEFAULT_CHANNEL):
     return cname, fname, binvers
 
 
+def update(dev, serialno, args, devmap):
+    """Update |dev|'s firmware
+
+    Args:
+        dev: pyUSB object representing the device to update
+        serialno: serial number of the device to update
+        args: arguments passed in by the user
+        devmap: map of devices supported by servo_updater
+    """
+    vid, pid = dev.idVendor, dev.idProduct
+    vidpid = "%04x:%04x" % (vid, pid)
+    board, boardname, iface, brdfile, binfile, newvers = devmap[vidpid]
+
+    # We need a tiny_servod to query some information. Set it up first.
+    tinys = tiny_servod.TinyServod(vid, pid, iface, serialno, args.verbose)
+
+    if not args.force:
+        vers = do_version(tinys)
+        print("Current %s version is   %s" % (boardname, vers))
+        print("Available %s version is %s" % (boardname, newvers))
+
+        if newvers == vers:
+            print("No version update needed")
+            if args.reboot:
+                select(tinys, "ro")
+            return
+        else:
+            print("Updating to recommended version.")
+
+    # Make sure the servo MCU is in RO
+    print("===== Jumping to RO =====")
+    do_with_retries(select, tinys, "ro")
+
+    print("===== Flashing RW =====")
+    vers = do_with_retries(do_updater_version, tinys)
+    # To make sure that the tiny_servod here does not interfere with other
+    # processes, close it out.
+    tinys.close()
+
+    if vers == 2:
+        flash(brdfile, serialno, binfile)
+    elif vers == 6:
+        do_with_retries(flash2, vidpid, serialno, binfile)
+    else:
+        raise ServoUpdaterException("Can't detect updater version")
+
+    # Make sure device is up.
+    c.wait_for_usb([vidpid], serialname=serialno)
+    # After we have made sure that it's back/available, reconnect the tiny servod.
+    tinys.reinitialize()
+
+    # Make sure the servo MCU is in RW
+    print("===== Jumping to RW =====")
+    do_with_retries(select, tinys, "rw")
+
+    print("===== Flashing RO =====")
+    vers = do_with_retries(do_updater_version, tinys)
+
+    if vers == 2:
+        flash(brdfile, serialno, binfile)
+    elif vers == 6:
+        do_with_retries(flash2, vidpid, serialno, binfile)
+    else:
+        raise ServoUpdaterException("Can't detect updater version")
+
+    # Make sure the servo MCU is in RO
+    print("===== Rebooting =====")
+    do_with_retries(select, tinys, "ro")
+    # Perform additional reboot to free USB/UART resources, taken by tiny servod.
+    # See https://issuetracker.google.com/196021317 for background.
+    tinys.pty._issue_cmd("reboot")
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="""
@@ -516,71 +589,6 @@ def main():
         update(dev, serialno, args, devmap)
 
     print("===== Finished =====")
-
-
-def update(dev, serialno, args, devmap):
-    vid, pid = dev.idVendor, dev.idProduct
-    vidpid = "%04x:%04x" % (vid, pid)
-    board, boardname, iface, brdfile, binfile, newvers = devmap[vidpid]
-
-    # We need a tiny_servod to query some information. Set it up first.
-    tinys = tiny_servod.TinyServod(vid, pid, iface, serialno, args.verbose)
-
-    if not args.force:
-        vers = do_version(tinys)
-        print("Current %s version is   %s" % (boardname, vers))
-        print("Available %s version is %s" % (boardname, newvers))
-
-        if newvers == vers:
-            print("No version update needed")
-            if args.reboot:
-                select(tinys, "ro")
-            return
-        else:
-            print("Updating to recommended version.")
-
-    # Make sure the servo MCU is in RO
-    print("===== Jumping to RO =====")
-    do_with_retries(select, tinys, "ro")
-
-    print("===== Flashing RW =====")
-    vers = do_with_retries(do_updater_version, tinys)
-    # To make sure that the tiny_servod here does not interfere with other
-    # processes, close it out.
-    tinys.close()
-
-    if vers == 2:
-        flash(brdfile, serialno, binfile)
-    elif vers == 6:
-        do_with_retries(flash2, vidpid, serialno, binfile)
-    else:
-        raise ServoUpdaterException("Can't detect updater version")
-
-    # Make sure device is up.
-    c.wait_for_usb([vidpid], serialname=serialno)
-    # After we have made sure that it's back/available, reconnect the tiny servod.
-    tinys.reinitialize()
-
-    # Make sure the servo MCU is in RW
-    print("===== Jumping to RW =====")
-    do_with_retries(select, tinys, "rw")
-
-    print("===== Flashing RO =====")
-    vers = do_with_retries(do_updater_version, tinys)
-
-    if vers == 2:
-        flash(brdfile, serialno, binfile)
-    elif vers == 6:
-        do_with_retries(flash2, vidpid, serialno, binfile)
-    else:
-        raise ServoUpdaterException("Can't detect updater version")
-
-    # Make sure the servo MCU is in RO
-    print("===== Rebooting =====")
-    do_with_retries(select, tinys, "ro")
-    # Perform additional reboot to free USB/UART resources, taken by tiny servod.
-    # See https://issuetracker.google.com/196021317 for background.
-    tinys.pty._issue_cmd("reboot")
 
 
 if __name__ == "__main__":
