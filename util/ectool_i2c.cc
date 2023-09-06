@@ -121,9 +121,9 @@ static int do_i2c_xfer(unsigned int port, unsigned int addr, uint8_t *write_buf,
 static void cmd_i2c_help(void)
 {
 	fprintf(stderr,
-		"  Usage: i2cread <8 | 16> <port> <addr8> <offset>\n"
+		"  Usage: i2cread <8|16|32> <port> <addr8> <offset>\n"
 		"  Usage: i2cspeed <port> [speed in kHz]\n"
-		"  Usage: i2cwrite <8 | 16> <port> <addr8> <offset> <data>\n"
+		"  Usage: i2cwrite <8|16|32> <port> <addr8> <offset> <data>\n"
 		"  Usage: i2cxfer <port> <addr7> <read_count> [bytes...]\n"
 		"    <port> i2c port number\n"
 		"    <addr8> 8-bit i2c address\n"
@@ -140,6 +140,7 @@ int cmd_i2c_read(int argc, char *argv[])
 	int read_len, write_len;
 	uint8_t write_buf[1];
 	uint8_t *read_buf = NULL;
+	uint32_t val = 0;
 	char *e;
 	int rv;
 
@@ -149,7 +150,7 @@ int cmd_i2c_read(int argc, char *argv[])
 	}
 
 	read_len = strtol(argv[1], &e, 0);
-	if ((e && *e) || (read_len != 8 && read_len != 16)) {
+	if ((e && *e) || (read_len != 8 && read_len != 16 && read_len != 32)) {
 		fprintf(stderr, "Bad read size.\n");
 		return -1;
 	}
@@ -181,8 +182,10 @@ int cmd_i2c_read(int argc, char *argv[])
 	if (rv < 0)
 		return rv;
 
+	memcpy(&val, read_buf, read_len);
+
 	printf("Read from I2C port %d at 0x%x offset 0x%x = 0x%x\n", port,
-	       addr8, write_buf[0], *(uint16_t *)read_buf);
+	       addr8, write_buf[0], val);
 	return 0;
 }
 
@@ -190,7 +193,7 @@ int cmd_i2c_write(int argc, char *argv[])
 {
 	unsigned int port, addr8, addr7;
 	int write_len;
-	uint8_t write_buf[3];
+	uint8_t write_buf[5];
 	char *e;
 	int rv;
 
@@ -200,7 +203,8 @@ int cmd_i2c_write(int argc, char *argv[])
 	}
 
 	write_len = strtol(argv[1], &e, 0);
-	if ((e && *e) || (write_len != 8 && write_len != 16)) {
+	if ((e && *e) ||
+	    (write_len != 8 && write_len != 16 && write_len != 32)) {
 		fprintf(stderr, "Bad write size.\n");
 		return -1;
 	}
@@ -226,7 +230,7 @@ int cmd_i2c_write(int argc, char *argv[])
 		return -1;
 	}
 
-	*((uint16_t *)&write_buf[1]) = strtol(argv[5], &e, 0);
+	*((uint32_t *)&write_buf[1]) = strtol(argv[5], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad data.\n");
 		return -1;
@@ -238,7 +242,7 @@ int cmd_i2c_write(int argc, char *argv[])
 		return rv;
 
 	printf("Wrote 0x%x to I2C port %d at 0x%x offset 0x%x.\n",
-	       *((uint16_t *)&write_buf[1]), port, addr8, write_buf[0]);
+	       *((uint32_t *)&write_buf[1]), port, addr8, write_buf[0]);
 	return 0;
 }
 
