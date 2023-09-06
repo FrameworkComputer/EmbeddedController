@@ -119,7 +119,7 @@ static int active_charge_port = CHARGE_PORT_NONE;
 static enum charge_supplier active_charge_supplier;
 static uint8_t vbus_rp = TYPEC_RP_RESERVED;
 
-static int cc_config = CC_ALLOW_SRC | CC_EMCA_SERVO;
+static int cc_config = CC_ALLOW_SRC;
 
 /* Voltage thresholds for no connect in DTS mode */
 static int pd_src_vnc_dts[TYPEC_RP_RESERVED][2] = {
