@@ -7703,10 +7703,12 @@ int cmd_charge_control(int argc, char *argv[])
 		}
 		version = 2;
 	} else {
-		fprintf(stderr,
-			"EC doesn't support V2+ of charge control command.\n"
-			"Consider firmware update.\n");
-		return -1;
+		if (argc != 2) {
+			cmd_charge_control_help(
+				argv[0], "Bad arguments or EC is too old");
+			return -1;
+		}
+		version = 1;
 	}
 
 	if (argc == 1) {
