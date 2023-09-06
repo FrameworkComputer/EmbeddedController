@@ -190,6 +190,9 @@
 		gpio_tchpad_lid_close: tchpad_lid_close {
 			gpios = <&gpio6 3 GPIO_OUTPUT>;
 		};
+		gpio_subboard_detect_l: subboard_detect_l {
+			gpios = <&gpioc 6 GPIO_INPUT_PULL_UP>;
+		};
 	};
 
 	named-i2c-ports {

@@ -90,7 +90,11 @@ test_export_static void board_usb_pd_count_init(void)
 
 	case ULDREN_SB_C:
 	case ULDREN_SB_C_LTE:
-		cached_usb_pd_port_count = 2;
+		if (!gpio_pin_get_dt(
+			    GPIO_DT_FROM_NODELABEL(gpio_subboard_detect_l)))
+			cached_usb_pd_port_count = 2;
+		else
+			cached_usb_pd_port_count = 1;
 		break;
 	}
 }
