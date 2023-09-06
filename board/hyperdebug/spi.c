@@ -310,6 +310,18 @@ int usb_spi_board_transaction_async(const struct spi_device_t *spi_device,
 			 * but as all "data".
 			 */
 			flash_flags |= FLASH_FLAG_READ_WRITE_WRITE;
+		} else if (!txlen) {
+			/*
+			 * Receive-only transaction. Not supported by STM32L552,
+			 * as described in ST document ES0448:
+			 * "STM32L552xx/562xx device errata" in the section
+			 * 2.4.12: "Data not sampled correctly on reads without
+			 * DQS and with less than two cycles before the data
+			 * phase".
+			 */
+			cprints(CC_SPI,
+				"Receive-only transaction not supported by OctoSPI hardware");
+			return EC_ERROR_UNIMPLEMENTED;
 		} else if (txlen <= 12) {
 			/*
 			 * Sending of up to 12 bytes, followed by reading a
