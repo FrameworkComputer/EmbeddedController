@@ -29,6 +29,7 @@
 			compatible = "named-usbc-port";
 			status = "okay";
 			reg = <0>;
+			bc12 = <&pi3usb9201_emul0>;
 			chg = <&charger>;
 			tcpc = <&tcpci_emul>;
 			ppc = <&ppc0_emul>;
@@ -47,6 +48,7 @@
 			compatible = "named-usbc-port";
 			status = "okay";
 			reg = <1>;
+			bc12 = <&bc12_port1>;
 			tcpc = <&rt1718s_emul>;
 			ppc = <&ppc1_emul>;
 			usb-mux-chain-1 {
@@ -103,7 +105,12 @@
 &i2c_ctrl0 {
 	status="okay";
 
-	charger: rt9490@53 {
+	pi3usb9201_emul0: pi3usb9201@5f {
+		compatible = "pericom,pi3usb9201";
+		reg = <0x5f>;
+	};
+
+	charger: bc12_port1: rt9490@53 {
 		compatible = "richtek,rt9490", "zephyr,rt9490-emul";
 		status = "okay";
 		reg = <0x53>;
