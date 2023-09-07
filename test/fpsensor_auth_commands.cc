@@ -413,11 +413,15 @@ test_static enum ec_error_list test_fp_command_nonce_context_deny(void)
 
 	TEST_EQ(rv, EC_RES_SUCCESS, "%d");
 
-	// Generate nonce without clear the existing context should fail.
+	// Generate nonce should clear the existing nonce context user ID.
 	rv = test_send_host_command(EC_CMD_FP_GENERATE_NONCE, 0, NULL, 0,
 				    &nonce_response, sizeof(nonce_response));
 
-	TEST_EQ(rv, EC_RES_ACCESS_DENIED, "%d");
+	TEST_EQ(rv, EC_RES_SUCCESS, "%d");
+
+	for (auto user_id_partial : user_id) {
+		TEST_EQ(user_id_partial, 0u, "%d");
+	}
 
 	return EC_SUCCESS;
 }

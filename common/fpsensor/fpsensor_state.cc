@@ -64,6 +64,18 @@ void fp_clear_finger_context(uint16_t idx)
 			sizeof(fp_positive_match_salt[0]));
 }
 
+void fp_reset_context()
+{
+	templ_valid = 0;
+	templ_dirty = 0;
+	template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
+	fp_encryption_status &= FP_ENC_STATUS_SEED_SET;
+	OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
+	OPENSSL_cleanse(user_id, sizeof(user_id));
+	OPENSSL_cleanse(auth_nonce.data(), auth_nonce.size());
+	fp_disable_positive_match_secret(&positive_match_secret_state);
+}
+
 /**
  * @warning |fp_buffer| contains data used by the matching algorithm that must
  * be released by calling fp_sensor_deinit() first. Call
@@ -71,15 +83,8 @@ void fp_clear_finger_context(uint16_t idx)
  */
 static void _fp_clear_context(void)
 {
-	templ_valid = 0;
-	templ_dirty = 0;
-	template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
-	fp_encryption_status &= FP_ENC_STATUS_SEED_SET;
+	fp_reset_context();
 	OPENSSL_cleanse(fp_buffer, sizeof(fp_buffer));
-	OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
-	OPENSSL_cleanse(user_id, sizeof(user_id));
-	OPENSSL_cleanse(auth_nonce.data(), auth_nonce.size());
-	fp_disable_positive_match_secret(&positive_match_secret_state);
 	for (uint16_t idx = 0; idx < FP_MAX_FINGER_COUNT; idx++)
 		fp_clear_finger_context(idx);
 }

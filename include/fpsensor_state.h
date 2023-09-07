@@ -67,6 +67,11 @@ __test_only void fp_task_simulate(void);
 void fp_clear_finger_context(uint16_t idx);
 
 /**
+ * Reset the current user id associated.
+ */
+void fp_reset_context(void);
+
+/**
  * Clear all fingerprint templates associated with the current user id and
  * reset the sensor.
  */

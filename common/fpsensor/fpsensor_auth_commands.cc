@@ -180,13 +180,9 @@ fp_command_generate_nonce(struct host_cmd_handler_args *args)
 	ScopedFastCpu fast_cpu;
 
 	if (fp_encryption_status & FP_CONTEXT_STATUS_NONCE_CONTEXT_SET) {
-		/* If the context is not cleared, reject this request to prevent
-		 * leaking the existing template. */
-		enum ec_error_list ret = check_context_cleared();
-		if (ret != EC_SUCCESS) {
-			CPRINTS("load_pairing_key: Context is not clean");
-			return EC_RES_ACCESS_DENIED;
-		}
+		/* Invalidate the existing context to prevent leaking the
+		 * existing template. */
+		fp_reset_context();
 	}
 
 	RAND_bytes(auth_nonce.data(), auth_nonce.size());
