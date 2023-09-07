@@ -10,7 +10,7 @@
 #define HOOKS_TASK_STACK_SIZE 2048
 
 #define CONFIG_TASK_LIST                                           \
-	TASK_ALWAYS_RO(RWSIG, rwsig_task, NULL, 1280)              \
+	TASK_ALWAYS_RO(RWSIG, rwsig_task, NULL, 2048)              \
 	TASK_ALWAYS(HOOKS, hook_task, NULL, HOOKS_TASK_STACK_SIZE) \
 	TASK_ALWAYS_RW(FPSENSOR, fp_task, NULL, 4096)              \
 	TASK_ALWAYS(HOSTCMD, host_command_task, NULL, 6144)        \
