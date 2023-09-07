@@ -6813,7 +6813,9 @@
  * the system.
  */
 #include "fuzz_config.h"
+#ifdef TEST_BUILD
 #include "test_config.h"
+#endif
 
 /*
  * Validity checks to make sure some of the configs above make sense.

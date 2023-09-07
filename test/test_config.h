@@ -8,8 +8,9 @@
 #ifndef __TEST_TEST_CONFIG_H
 #define __TEST_TEST_CONFIG_H
 
-/* Test config flags only apply for test builds */
-#ifdef TEST_BUILD
+#ifndef TEST_BUILD
+#error test_config.h should not be included in non-test build.
+#endif
 
 #ifndef __ASSEMBLER__
 #include <stdint.h>
@@ -709,8 +710,6 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #ifdef TEST_PANIC
 #undef CONFIG_PANIC_STRIP_GPR
 #endif
-
-#endif /* TEST_BUILD */
 
 #ifdef HAVE_PRIVATE
 #include "private_test_config.h"
