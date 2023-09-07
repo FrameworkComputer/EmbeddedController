@@ -145,7 +145,7 @@ extern const int keyboard_factory_scan_pins_used;
 #endif
 
 #ifdef CONFIG_KEYBOARD_MULTIPLE
-extern struct boot_key_entry boot_key_list[3];
+extern struct boot_key_entry boot_key_list[];
 
 struct keyboard_type {
 	int col_esc;
