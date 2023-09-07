@@ -83,6 +83,12 @@ enum uldren_sub_board_type uldren_get_sb_type(void)
  */
 test_export_static void board_usb_pd_count_init(void)
 {
+	uint32_t board_version = 0;
+
+	if (cbi_get_board_version(&board_version) != EC_SUCCESS) {
+		LOG_ERR("Error retrieving CBI BOARD_VER.");
+	}
+
 	switch (uldren_get_sb_type()) {
 	default:
 		cached_usb_pd_port_count = 1;
@@ -90,11 +96,15 @@ test_export_static void board_usb_pd_count_init(void)
 
 	case ULDREN_SB_C:
 	case ULDREN_SB_C_LTE:
-		if (!gpio_pin_get_dt(
-			    GPIO_DT_FROM_NODELABEL(gpio_subboard_detect_l)))
+		if (board_version < 2) {
 			cached_usb_pd_port_count = 2;
-		else
-			cached_usb_pd_port_count = 1;
+		} else {
+			if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
+				    gpio_subboard_detect_l)))
+				cached_usb_pd_port_count = 2;
+			else
+				cached_usb_pd_port_count = 1;
+		}
 		break;
 	}
 }
