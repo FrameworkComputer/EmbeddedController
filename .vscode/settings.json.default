@@ -39,5 +39,7 @@
     * search these files, so we need to disable the vscode search feature
     * that parses and honors the git ignore files.
     */
-   "search.useIgnoreFiles": false
+   "search.useIgnoreFiles": false,
+   /* We expect a single trailing newline in ChromiumOS. */
+   "files.insertFinalNewline": true
 }
