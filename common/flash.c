@@ -767,12 +767,14 @@ static void flash_abort_or_invalidate_hash(int offset, int size)
 	 * If RW flash has been written to, make sure we do not automatically
 	 * jump to RW after the timeout.
 	 */
-	if ((offset >= CONFIG_RW_MEM_OFF &&
-	     offset < (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)) ||
-	    ((offset + size) > CONFIG_RW_MEM_OFF &&
-	     (offset + size) <= (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)) ||
-	    (offset < CONFIG_RW_MEM_OFF &&
-	     (offset + size) > (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)))
+	if ((offset >= CONFIG_EC_WRITABLE_STORAGE_OFF &&
+	     offset < (CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_SIZE)) ||
+	    ((offset + size) > CONFIG_EC_WRITABLE_STORAGE_OFF &&
+	     (offset + size) <=
+		     (CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_SIZE)) ||
+	    (offset < CONFIG_EC_WRITABLE_STORAGE_OFF &&
+	     (offset + size) >
+		     (CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_SIZE)))
 		rwsig_abort();
 #endif
 }
