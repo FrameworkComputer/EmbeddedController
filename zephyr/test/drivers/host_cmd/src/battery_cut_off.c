@@ -8,6 +8,7 @@
 #include "emul/emul_smart_battery.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "keyboard_scan.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 
@@ -98,6 +99,17 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_at_shutdown)
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected 0, but got %d", rv);
 	zassert_false(battery_is_cut_off(), NULL);
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
+	zassert_true(
+		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
+}
+
+void boot_key_set(enum boot_key key);
+
+ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_by_unplug)
+{
+	boot_key_set(BOOT_KEY_REFRESH);
+	set_ac_enabled(false);
+	hook_notify(HOOK_AC_CHANGE);
 	zassert_true(
 		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
 }

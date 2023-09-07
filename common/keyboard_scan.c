@@ -531,6 +531,40 @@ test_mockable_static void key_state_changed(int row, int col, uint8_t state)
 	keyboard_state_changed(row, col, !!(state & BIT(row)));
 }
 
+#ifdef CONFIG_KEYBOARD_BOOT_KEYS
+#ifdef CONFIG_POWER_BUTTON
+test_export_static void boot_key_set(enum boot_key key)
+{
+	boot_key_value |= BIT(key);
+}
+#endif
+
+static void boot_key_clear(enum boot_key key)
+{
+	boot_key_value &= ~BIT(key);
+	CPRINTS("boot key %d cleared", key);
+}
+
+static void boot_key_released(const uint8_t *state)
+{
+	int b = __builtin_ffs(boot_key_value & ~BIT(BOOT_KEY_POWER));
+
+	while (b) {
+		/*
+		 * __builtin_ffs returns the index of the least significant
+		 * 1-bit plus one. 0x1 -> 1.
+		 */
+		b--;
+
+		if (state[boot_key_list[b].col] & BIT(boot_key_list[b].row))
+			continue;
+		/* Key is released. */
+		boot_key_clear(b);
+		b = __builtin_ffs(boot_key_value & ~BIT(BOOT_KEY_POWER));
+	}
+}
+#endif /* CONFIG_KEYBOARD_BOOT_KEYS */
+
 /**
  * Update keyboard state using low-level interface to read keyboard.
  *
@@ -619,6 +653,10 @@ static int check_keys_changed(uint8_t *state)
 		if (print_state_changes)
 			print_state(state, "state");
 
+#ifdef CONFIG_KEYBOARD_BOOT_KEYS
+		boot_key_released(state);
+#endif
+
 #ifdef CONFIG_KEYBOARD_PRINT_SCAN_TIMES
 		/* Print delta times from now back to each previous scan */
 		char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
@@ -678,16 +716,6 @@ static uint8_t keyboard_scan_column(int column)
 	keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
 
 	return state;
-}
-
-static void boot_key_set(enum boot_key key)
-{
-	boot_key_value |= BIT(key);
-}
-
-static void boot_key_clear(enum boot_key key)
-{
-	boot_key_value &= ~BIT(key);
 }
 
 /**

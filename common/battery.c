@@ -16,6 +16,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "keyboard_scan.h"
 #include "math_util.h"
 #include "timer.h"
 #include "usb_pd.h"
@@ -407,14 +408,24 @@ static void pending_cutoff_deferred(void)
 }
 DECLARE_DEFERRED(pending_cutoff_deferred);
 
-static void clear_pending_cutoff(void)
+static void battery_on_ac_change(void)
 {
 	if (extpower_is_present()) {
-		battery_cutoff_state = BATTERY_CUTOFF_STATE_NORMAL;
-		hook_call_deferred(&pending_cutoff_deferred_data, -1);
+		/* Plugged */
+		if (battery_cutoff_state == BATTERY_CUTOFF_STATE_SCHEDULED)
+			CUTOFFPRINTS("unscheduled");
+		battery_cutoff_clear();
+	} else {
+		/* Unplugged */
+		if (keyboard_scan_get_boot_keys() & BIT(BOOT_KEY_REFRESH)) {
+			CPRINTS("Refresh+Unplug! Scheduling cutoff.");
+			battery_cutoff_state = BATTERY_CUTOFF_STATE_SCHEDULED;
+			hook_call_deferred(&pending_cutoff_deferred_data,
+					   CONFIG_BATTERY_CUTOFF_DELAY_US);
+		}
 	}
 }
-DECLARE_HOOK(HOOK_AC_CHANGE, clear_pending_cutoff, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_AC_CHANGE, battery_on_ac_change, HOOK_PRIO_DEFAULT);
 
 static enum ec_status battery_command_cutoff(struct host_cmd_handler_args *args)
 {
