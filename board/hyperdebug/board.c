@@ -209,6 +209,25 @@ static void board_init(void)
 	/* Configure SPI GPIOs */
 	gpio_config_module(MODULE_SPI, 1);
 
+	/*
+	 * Unlike most SPI, I2C and UARTs, which are configured in their
+	 * alternate mode by default, SPI1 pins are in GPIO input mode on
+	 * HyperDebug power-on, for compatibility with previous firmwares.  In
+	 * the future we may decide to leave even more functions off by default,
+	 * in order for HyperDebug to actively drive as little at possible on
+	 * boot.  It is relatively straightforward to declare pins as "Alternate
+	 * mode" in opentitantool json configuration file, to have them enabled
+	 * by "transport init".
+	 *
+	 * The code below sets up the alternate function "number" for the
+	 * relevant pins, such that when alternate mode is enabled on the pins,
+	 * the result is the particular alternate function that HyperDebug
+	 * firmware has chosen for the pin.
+	 */
+	STM32_GPIO_AFRL(STM32_GPIOA_BASE) |= 0x55000000; /* SPI1: PA6/PA7
+							    HIDO/HODI */
+	STM32_GPIO_AFRL(STM32_GPIOB_BASE) |= 0x00005000; /* SPI1: PB3 SCK */
+
 	/* Enable ADC */
 	STM32_RCC_AHB2ENR |= STM32_RCC_AHB2ENR_ADCEN;
 	/* Initialize the ADC by performing a fake reading */
@@ -216,6 +235,19 @@ static void board_init(void)
 
 	/* Enable DAC */
 	STM32_RCC_APB1ENR |= STM32_RCC_APB1ENR1_DAC1EN;
+
+	/*
+	 * Enable SPI1.
+	 */
+
+	/* Enable clocks to SPI1 module */
+	STM32_RCC_APB2ENR |= STM32_RCC_APB2ENR_SPI1EN;
+
+	/* Reset SPI1 */
+	STM32_RCC_APB2RSTR |= STM32_RCC_APB2RSTR_SPI1RST;
+	STM32_RCC_APB2RSTR &= ~STM32_RCC_APB2RSTR_SPI1RST;
+
+	spi_enable(&spi_devices[2], 1);
 
 	/*
 	 * Enable SPI2.

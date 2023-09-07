@@ -32,6 +32,11 @@ struct spi_device_t spi_devices[] = {
 	  .usb_flags = USB_SPI_ENABLED | USB_SPI_CUSTOM_SPI_DEVICE |
 		       USB_SPI_FLASH_DUAL_SUPPORT | USB_SPI_FLASH_QUAD_SUPPORT |
 		       USB_SPI_FLASH_DTR_SUPPORT },
+	{ .name = "SPI1",
+	  .port = 0,
+	  .div = 7,
+	  .gpio_cs = GPIO_CN7_4,
+	  .usb_flags = USB_SPI_ENABLED },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
