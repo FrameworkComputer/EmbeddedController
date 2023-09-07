@@ -929,8 +929,10 @@
 /*****************************************************************************/
 /* Charger config */
 
+#ifndef CONFIG_ZEPHYR
 /* Compile common charge state code. */
 #undef CONFIG_CHARGER
+#endif
 
 /* Compile charger-specific code for these chargers (pick at most one) */
 #undef CONFIG_CHARGER_BD9995X
