@@ -19,7 +19,7 @@ static void float_mult()
 	int i;
 
 	for (i = 0; i < 1000; ++i)
-		a *= b;
+		a = a * b;
 }
 
 test_static int test_valid_benchmark()
