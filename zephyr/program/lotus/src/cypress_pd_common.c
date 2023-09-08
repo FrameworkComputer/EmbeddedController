@@ -192,17 +192,16 @@ int cypd_clear_int(int controller, int mask)
 	return rv;
 }
 
-int cypd_wait_for_ack(int controller, int timeout_us)
+int cypd_wait_for_ack(int controller, int timeout_ms)
 {
 	int timeout;
 	const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[controller].gpio);
 
-	timeout_us = timeout_us / 10;
 	/* wait for interrupt ack to be asserted */
-	for (timeout = 0; timeout < timeout_us; timeout++) {
+	for (timeout = 0; timeout < timeout_ms; timeout++) {
 		if (gpio_pin_get_dt(intr) == 0)
 			break;
-		usleep(10);
+		usleep(MSEC);
 	}
 	/* make sure response is ok */
 	if (gpio_pin_get_dt(intr) != 0) {
@@ -224,7 +223,7 @@ static int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	if (rv != EC_SUCCESS)
 		CPRINTS("Write Reg8 0x%x fail!", reg);
 
-	if (cypd_wait_for_ack(controller, 100*MSEC) != EC_SUCCESS) {
+	if (cypd_wait_for_ack(controller, 100) != EC_SUCCESS) {
 		CPRINTS("%s timeout on interrupt", __func__);
 		return EC_ERROR_INVAL;
 	}
@@ -1318,7 +1317,7 @@ static int cypd_setup(int controller)
 			return EC_ERROR_INVAL;
 		}
 		/* wait for interrupt ack to be asserted */
-		if (cypd_wait_for_ack(controller, 5000) != EC_SUCCESS) {
+		if (cypd_wait_for_ack(controller, 5) != EC_SUCCESS) {
 			CPRINTS("%s timeout on interrupt", __func__);
 			return EC_ERROR_INVAL;
 		}
@@ -1766,12 +1765,6 @@ int board_set_active_charge_port(int charge_port)
 		return EC_SUCCESS;
 	}
 
-	if (prev_charge_port != -1 &&
-		prev_charge_port != charge_port) {
-		/* Turn off the previous charge port before turning on the next port */
-		cypd_cfet_vbus_control(prev_charge_port, false, true);
-	}
-
 	for (i = 0; i < PD_PORT_COUNT; i++) {
 		/* Just brute force all ports, we want to make sure
 		 * we always update all ports in case a PD controller rebooted or some
@@ -1959,7 +1952,7 @@ static int cmd_cypd_control(int argc, const char **argv)
 		} else if (!strncmp(argv[1], "reset", 5)) {
 			cypd_write_reg8(i, CCG_PDPORT_ENABLE_REG, 0);
 			/*can take up to 650ms to discharge port for disable*/
-			cypd_wait_for_ack(i, 65000);
+			cypd_wait_for_ack(i, 65);
 			cypd_clear_int(i, CCG_DEV_INTR +
 					  CCG_PORT0_INTR +
 					  CCG_PORT1_INTR +

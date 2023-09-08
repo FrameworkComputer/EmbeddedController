@@ -357,7 +357,7 @@ int ucsi_startup(int controller)
 	if (rv != EC_SUCCESS)
 		CPRINTS("UCSI start command fail!");
 
-	if (cypd_wait_for_ack(controller, 100000) != EC_SUCCESS) {
+	if (cypd_wait_for_ack(controller, 100) != EC_SUCCESS) {
 		CPRINTS("%s timeout on interrupt", __func__);
 		return EC_ERROR_INVAL;
 	}
