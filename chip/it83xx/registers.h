@@ -875,6 +875,12 @@ BUILD_ASSERT(ARRAY_SIZE(gpio_group_to_reg) == (COUNT));
 #define GPCR_PORT_PIN_MODE_OUTPUT BIT(6)
 #define GPCR_PORT_PIN_MODE_PULLUP BIT(2)
 #define GPCR_PORT_PIN_MODE_PULLDOWN BIT(1)
+/*
+ * If both PULLUP and PULLDOWN are set to 1b, the corresponding pin would be
+ * configured as tri-state.
+ */
+#define GPCR_PORT_PIN_MODE_TRISTATE \
+	(GPCR_PORT_PIN_MODE_PULLUP | GPCR_PORT_PIN_MODE_PULLDOWN)
 
 /* --- Clock and Power Management (ECPM) --- */
 
