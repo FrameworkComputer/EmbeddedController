@@ -33,7 +33,7 @@
 		 */
 		keyboard-type {
 			enum-name = "FW_KB_TYPE";
-			start = <10>;
+			start = <12>;
 			size = <1>;
 
 			kb-default {
