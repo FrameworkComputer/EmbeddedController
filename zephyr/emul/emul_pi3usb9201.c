@@ -109,7 +109,7 @@ static int pi3usb9201_emul_transfer(const struct emul *emul,
 		return -EIO;
 	}
 
-	i2c_dump_msgs("emul", msgs, num_msgs, addr);
+	i2c_dump_msgs(emul->dev, msgs, num_msgs, addr);
 
 	if (num_msgs == 1) {
 		if (!(((msgs[0].flags & I2C_MSG_RW_MASK) == I2C_MSG_WRITE) &&
