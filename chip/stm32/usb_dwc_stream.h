@@ -80,6 +80,11 @@ extern struct producer_ops const usb_stream_producer_ops;
  *
  * RX_QUEUE and TX_QUEUE are the names of the RX and TX queues that this driver
  * should write to and read from respectively.
+ *
+ * RX_IDX and TX_IDX defined the order in which the OUT(RX) and IN(TX) endpoints
+ * are listed in the interface descriptor.  I most circumstances, the order
+ * makes no difference, but the CMSIS-DAP protocol requires that the OUT
+ * endpoint is the first, and IN is the second.
  */
 
 /*
@@ -94,7 +99,7 @@ extern struct producer_ops const usb_stream_producer_ops;
 #define USB_STREAM_CONFIG_FULL(NAME, INTERFACE, INTERFACE_CLASS,               \
 			       INTERFACE_SUBCLASS, INTERFACE_PROTOCOL,         \
 			       INTERFACE_NAME, ENDPOINT, RX_SIZE, TX_SIZE,     \
-			       RX_QUEUE, TX_QUEUE)                             \
+			       RX_QUEUE, TX_QUEUE, RX_IDX, TX_IDX)             \
                                                                                \
 	static uint8_t CONCAT2(NAME, _buf_rx_)[RX_SIZE];                       \
 	static uint8_t CONCAT2(NAME, _buf_tx_)[TX_SIZE];                       \
@@ -134,7 +139,8 @@ extern struct producer_ops const usb_stream_producer_ops;
 		.bInterfaceProtocol = INTERFACE_PROTOCOL,                      \
 		.iInterface = INTERFACE_NAME,                                  \
 	};                                                                     \
-	const struct usb_endpoint_descriptor USB_EP_DESC(INTERFACE, 0) = {     \
+	const struct usb_endpoint_descriptor USB_EP_DESC(INTERFACE,            \
+							 TX_IDX) = {           \
 		.bLength = USB_DT_ENDPOINT_SIZE,                               \
 		.bDescriptorType = USB_DT_ENDPOINT,                            \
 		.bEndpointAddress = 0x80 | ENDPOINT,                           \
@@ -142,7 +148,8 @@ extern struct producer_ops const usb_stream_producer_ops;
 		.wMaxPacketSize = TX_SIZE,                                     \
 		.bInterval = 10,                                               \
 	};                                                                     \
-	const struct usb_endpoint_descriptor USB_EP_DESC(INTERFACE, 1) = {     \
+	const struct usb_endpoint_descriptor USB_EP_DESC(INTERFACE,            \
+							 RX_IDX) = {           \
 		.bLength = USB_DT_ENDPOINT_SIZE,                               \
 		.bDescriptorType = USB_DT_ENDPOINT,                            \
 		.bEndpointAddress = ENDPOINT,                                  \

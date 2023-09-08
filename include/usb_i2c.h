@@ -167,7 +167,7 @@ extern struct consumer_ops const usb_i2c_consumer_ops;
 			       USB_PROTOCOL_GOOGLE_I2C, INTERFACE_NAME,        \
 			       ENDPOINT, USB_MAX_PACKET_SIZE,                  \
 			       USB_MAX_PACKET_SIZE, CONCAT3(usb_to_, NAME, _), \
-			       CONCAT2(NAME, _to_usb_))                        \
+			       CONCAT2(NAME, _to_usb_), 1, 0)                  \
 	struct usb_i2c_config const NAME = {				\
 		.buffer    = CONCAT2(NAME, _buffer_),			\
 		.deferred  = &CONCAT2(NAME, _deferred__data),		\

@@ -55,7 +55,7 @@ static struct queue const usb_to_update =
 USB_STREAM_CONFIG_FULL(usb_update, USB_IFACE_UPDATE, USB_CLASS_VENDOR_SPEC,
 		       USB_SUBCLASS_GOOGLE_UPDATE, USB_PROTOCOL_GOOGLE_UPDATE,
 		       USB_STR_UPDATE_NAME, USB_EP_UPDATE, USB_MAX_PACKET_SIZE,
-		       USB_MAX_PACKET_SIZE, usb_to_update, update_to_usb)
+		       USB_MAX_PACKET_SIZE, usb_to_update, update_to_usb, 1, 0)
 
 /* The receiver can be in one of the states below. */
 enum rx_state {
