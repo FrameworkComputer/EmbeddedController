@@ -71,7 +71,7 @@ cros_system_it8xxx2_get_chip_revision(const struct device *dev)
 	static char buf[3];
 	uint8_t rev = system_get_chip_version();
 
-	snprintf(buf, sizeof(buf), "%1xx", rev + 0xa);
+	snprintf(buf, sizeof(buf), "%cx", rev + 'a');
 
 	return buf;
 }
