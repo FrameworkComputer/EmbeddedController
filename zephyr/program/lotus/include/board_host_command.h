@@ -312,4 +312,26 @@ struct ec_response_uefi_app_btn_status {
 	uint8_t status;
 } __ec_align1;
 
+/*****************************************************************************/
+/*
+ * Check state of the Expansion Bay
+ */
+#define EC_CMD_EXPANSION_BAY_STATUS	0x3E1B
+
+enum ec_expansion_bay_states {
+	/* Valid module present and switch closed */
+	MODULE_ENABLED	= BIT(0),
+	/* Board ID invalid */
+	MODULE_FAULT	= BIT(1),
+	/* Hatch switch open/closed status */
+	HATCH_SWITCH_CLOSED	= BIT(2),
+};
+
+struct ec_response_expansion_bay_status {
+	/* Check ec_expansion_bay_states */
+	uint8_t state;
+	uint8_t board_id_0;
+	uint8_t board_id_1;
+} __ec_align1;
+
 #endif /* __BOARD_HOST_COMMAND_H */

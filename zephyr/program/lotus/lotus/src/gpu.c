@@ -15,6 +15,7 @@
 #include "gpu.h"
 #include "board_adc.h"
 #include "board_function.h"
+#include "board_host_command.h"
 #include "console.h"
 #include "driver/temp_sensor/f75303.h"
 #include "extpower.h"
@@ -39,6 +40,9 @@ LOG_MODULE_REGISTER(gpu, LOG_LEVEL_DBG);
 
 static int module_present;
 static int module_fault;
+static int gpu_id_0;
+static int gpu_id_1;
+static int switch_status;
 
 bool gpu_present(void)
 {
@@ -84,9 +88,9 @@ DECLARE_HOOK(HOOK_INIT, update_thermal_configuration, HOOK_PRIO_DEFAULT + 2);
 
 void check_gpu_module(void)
 {
-	int gpu_id_0 = get_hardware_id(ADC_GPU_BOARD_ID_0);
-	int gpu_id_1 = get_hardware_id(ADC_GPU_BOARD_ID_1);
-	int switch_status = 0;
+	gpu_id_0 = get_hardware_id(ADC_GPU_BOARD_ID_0);
+	gpu_id_1 = get_hardware_id(ADC_GPU_BOARD_ID_1);
+	switch_status = 0;
 
 	if (board_get_version() >= BOARD_VERSION_7) {
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_beam_open));
@@ -308,3 +312,27 @@ void gpu_power_enable_handler(void)
 		hook_call_deferred(&gpu_board_f75303_initial_data, 500 * MSEC);
 
 }
+
+static enum ec_status host_command_expansion_bay_status(struct host_cmd_handler_args *args)
+{
+	struct ec_response_expansion_bay_status *r = args->response;
+
+	r->state = 0;
+	if (module_present) {
+		r->state |= MODULE_ENABLED;
+	}
+	if (module_fault) {
+		r->state |= MODULE_FAULT;
+	}
+	if (switch_status) {
+		r->state |= HATCH_SWITCH_CLOSED;
+	}
+	r->board_id_0 = gpu_id_0;
+	r->board_id_1 = gpu_id_1;
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_EXPANSION_BAY_STATUS, host_command_expansion_bay_status,
+		EC_VER_MASK(0));
