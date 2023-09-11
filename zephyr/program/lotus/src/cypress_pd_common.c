@@ -1765,6 +1765,13 @@ int board_set_active_charge_port(int charge_port)
 		return EC_SUCCESS;
 	}
 
+
+	if (prev_charge_port != -1 &&
+		prev_charge_port != charge_port) {
+		/* Turn off the previous charge port before turning on the next port */
+		cypd_cfet_vbus_control(prev_charge_port, false, true);
+	}
+
 	for (i = 0; i < PD_PORT_COUNT; i++) {
 		/* Just brute force all ports, we want to make sure
 		 * we always update all ports in case a PD controller rebooted or some
