@@ -229,6 +229,16 @@ __maybe_unused static int nx20p3483_vbus_sink_enable(int port, int enable)
 	if (rv)
 		return rv;
 
+	/*
+	 * The sink overvoltage protection is set to maximum possible value
+	 * after enabling the sink path. In case the threshold should be a lower
+	 * value, it has to be set again after enabling the sink path.
+	 */
+	rv = nx20p348x_set_ovp_limit(port);
+	if (rv) {
+		return rv;
+	}
+
 	for (int i = 0; i < NX20P348X_SWITCH_STATUS_DEBOUNCE_MSEC; ++i) {
 		int ds;
 		bool is_sink;
