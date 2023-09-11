@@ -1,0 +1,9 @@
+common:
+  platform_allow: native_posix
+tests:
+  geralt.default:
+    extra_configs:
+    - CONFIG_TEST_GERALT=y
+    - CONFIG_SHIMMED_TASKS=y
+    extra_dtc_overlay_files:
+    - geralt.default.overlay
