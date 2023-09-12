@@ -5,9 +5,11 @@
 
 #include "ap_power/ap_power_events.h"
 #include "charge_manager.h"
+#include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "extpower.h"
+#include "fan.h"
 #include "hooks.h"
 #include "joxer.h"
 #include "joxer_sub_board.h"
@@ -61,9 +63,9 @@ FAKE_VALUE_FUNC(int, charge_manager_get_active_charge_port);
 FAKE_VOID_FUNC(schedule_deferred_pd_interrupt, int);
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
+FAKE_VALUE_FUNC(int, cbi_get_board_version, uint32_t *);
 FAKE_VOID_FUNC(set_scancode_set2, uint8_t, uint8_t, uint16_t);
 FAKE_VOID_FUNC(get_scancode_set2, uint8_t, uint8_t);
-FAKE_VOID_FUNC(fan_set_count, int);
 
 uint8_t board_get_charger_chip_count(void)
 {
@@ -101,9 +103,9 @@ static void test_before(void *fixture)
 	RESET_FAKE(charge_manager_get_active_charge_port);
 	RESET_FAKE(schedule_deferred_pd_interrupt);
 	RESET_FAKE(cros_cbi_get_fw_config);
+	RESET_FAKE(cbi_get_board_version);
 	RESET_FAKE(set_scancode_set2);
 	RESET_FAKE(get_scancode_set2);
-	RESET_FAKE(fan_set_count);
 
 	/* Make the DB is 1C1A as initial */
 	joxer_cached_sub_board = JOXER_SB_C;
@@ -512,14 +514,26 @@ static int get_fan_config_absent(enum cbi_fw_config_field_id field,
 	return 0;
 }
 
+static int cbi_get_board_version_1(uint32_t *version)
+{
+	*version = 1;
+	return 0;
+}
+
+static int cbi_get_board_version_2(uint32_t *version)
+{
+	*version = 2;
+	return 0;
+}
+
 ZTEST(joxer, test_fan_present)
 {
 	int flags;
 
 	cros_cbi_get_fw_config_fake.custom_fake = get_fan_config_present;
+	cbi_get_board_version_fake.custom_fake = cbi_get_board_version_1;
 	fan_init();
 
-	zassert_equal(fan_set_count_fake.call_count, 0);
 	zassert_ok(gpio_pin_get_config_dt(
 		GPIO_DT_FROM_NODELABEL(gpio_fan_enable), &flags));
 	zassert_equal(flags, GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW,
@@ -533,18 +547,32 @@ ZTEST(joxer, test_fan_absent)
 			      GPIO_DISCONNECTED);
 
 	cros_cbi_get_fw_config_fake.custom_fake = get_fan_config_absent;
+	cbi_get_board_version_fake.custom_fake = cbi_get_board_version_1;
 	fan_init();
 
-	zassert_equal(fan_set_count_fake.call_count, 1,
-		      "function actually called %d times",
-		      fan_set_count_fake.call_count);
-	zassert_equal(fan_set_count_fake.arg0_val, 0, "parameter value was %d",
-		      fan_set_count_fake.arg0_val);
-
-	/* Fan enable is left unconfigured */
+	zassert_equal(fan_get_count(), 0);
 	zassert_ok(gpio_pin_get_config_dt(
 		GPIO_DT_FROM_NODELABEL(gpio_fan_enable), &flags));
 	zassert_equal(flags, 0, "actual GPIO flags were %#x", flags);
+}
+
+ZTEST(joxer, test_fan_config)
+{
+	cros_cbi_get_fw_config_fake.custom_fake = get_fan_config_present;
+	cbi_get_board_version_fake.custom_fake = cbi_get_board_version_1;
+	fan_init();
+
+	zassert_equal_ptr(fan_config[0].tach,
+			  DEVICE_DT_GET(DT_NODELABEL(tach1)),
+			  "fan_config should not change");
+
+	cros_cbi_get_fw_config_fake.custom_fake = get_fan_config_present;
+	cbi_get_board_version_fake.custom_fake = cbi_get_board_version_2;
+	fan_init();
+
+	zassert_equal_ptr(
+		fan_config[0].tach, DEVICE_DT_GET(DT_NODELABEL(tach0)),
+		"fan_config should change to tach0 if board version > 1");
 }
 
 ZTEST(joxer, test_fan_cbi_error)
@@ -556,10 +584,18 @@ ZTEST(joxer, test_fan_cbi_error)
 	cros_cbi_get_fw_config_fake.return_val = EINVAL;
 	fan_init();
 
-	zassert_equal(fan_set_count_fake.call_count, 0);
+	zassert_equal(fan_get_count(), 0);
 	zassert_ok(gpio_pin_get_config_dt(
 		GPIO_DT_FROM_NODELABEL(gpio_fan_enable), &flags));
 	zassert_equal(flags, 0, "actual GPIO flags were %#x", flags);
+
+	cros_cbi_get_fw_config_fake.custom_fake = get_fan_config_present;
+	cbi_get_board_version_fake.return_val = EINVAL;
+	fan_init();
+
+	zassert_equal_ptr(fan_config[0].tach,
+			  DEVICE_DT_GET(DT_NODELABEL(tach1)),
+			  "fan_config should not change");
 }
 
 static int get_base_orientation_normal(enum cbi_fw_config_field_id field,

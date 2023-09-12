@@ -2,6 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include <dt-bindings/pwm/pwm.h>
 #include <it8xxx2_emul.dts>
 #include "../program/nissa/cbi.dtsi"
 #include "../program/nissa/joxer/cbi.dtsi"
@@ -37,6 +38,14 @@
 		gpio_acc_int_l: acc_int_l {
 			gpios = <&gpioc 0 GPIO_INPUT>;
 		};
+		gpio_ec_edp_bl_en_od: ec_edp_bl_en_od {
+			gpios = <&gpiok 4 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_ENABLE_BACKLIGHT";
+		};
+		gpio_lid_open: lid_open {
+			gpios = <&gpiof 3 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
 	};
 
 	gpio-interrupts {
@@ -61,6 +70,11 @@
 			irq-pin = <&gpio_usb_c1_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "usb_c1_interrupt";
+		};
+		int_lid_open: lid_open {
+			irq-pin = <&gpio_lid_open>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
 		};
 	};
 
@@ -112,6 +126,47 @@
 			virtual_mux_1: virtual-mux-1 {
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
+		};
+	};
+
+	fans {
+		compatible = "cros-ec,fans";
+
+		fan0: fan_0 {
+			pwms = <&pwm_fan 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+			rpm_min = <3100>;
+			rpm_start = <3100>;
+			rpm_max = <8000>;
+			tach = <&tach1>;
+			pgood_gpio = <&gpio_fan_enable>;
+		};
+	};
+	pwms {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		pwm_fan: pwm@6 {
+			compatible = "cros,pwm-mock";
+			reg = <6 2>;
+			#pwm-cells = <3>;
+			status = "okay";
+		};
+	};
+	tachs {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		tach0: tach@0 {
+			compatible = "cros,tach-mock";
+			reg = <0 1>;
+			#tach-cells = <3>;
+			status = "okay";
+		};
+		tach1: tach@1 {
+			compatible = "cros,tach-mock";
+			reg = <1 1>;
+			#tach-cells = <3>;
+			status = "okay";
 		};
 	};
 };

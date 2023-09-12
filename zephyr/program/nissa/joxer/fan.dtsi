@@ -60,6 +60,14 @@
 };
 
 /* fan tachometer sensor */
+&tach0 {
+	status = "okay";
+	channel = <IT8XXX2_TACH_CHANNEL_B>;
+	pulses-per-round = <2>;
+	pinctrl-0 = <&tach0b_gpj2_default>;
+	pinctrl-names = "default";
+};
+
 &tach1 {
 	status = "okay";
 	channel = <IT8XXX2_TACH_CHANNEL_A>;
