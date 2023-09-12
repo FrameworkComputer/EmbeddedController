@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 """Module encapsulating Zmake wrapper object."""
+
 import atexit
 import difflib
 import functools
@@ -165,7 +166,7 @@ class Zmake:
         goma=False,
         gomacc="/mnt/host/depot_tools/.cipd_bin/gomacc",
         modules_dir=None,
-        projects_dir=None,
+        projects_dirs=None,
         zephyr_base=None,
     ):
         zmake.multiproc.LogWriter.reset()
@@ -188,10 +189,15 @@ class Zmake:
                 self.checkout
             )
 
-        if projects_dir:
-            self.projects_dir = projects_dir.resolve()
+        if projects_dirs:
+            self.projects_dirs = []
+            for projects_dir in projects_dirs:
+                self.projects_dirs.append(projects_dir.resolve())
         else:
-            self.projects_dir = self.module_paths["ec"] / "zephyr"
+            self.projects_dirs = [
+                self.module_paths["ec"] / "zephyr",
+                self.module_paths["ec"] / "private" / "zephyr",
+            ]
 
         if jobserver:
             self.jobserver = jobserver
@@ -266,7 +272,7 @@ class Zmake:
 
         Returns a list of projects.
         """
-        found_projects = zmake.project.find_projects(self.projects_dir)
+        found_projects = zmake.project.find_projects(self.projects_dirs)
         if all_projects:
             projects = set(found_projects.values())
         else:
@@ -437,7 +443,7 @@ class Zmake:
                 transformed_module = {module_name: new_path}
                 self.module_paths.update(transformed_module)
 
-            self.projects_dir = checkout.projects_dir
+            self.projects_dirs = checkout.projects_dirs
             self.zephyr_base = checkout.zephyr_dir
 
             self.logger.info("Building projects at %s", checkout.ref)
@@ -973,7 +979,7 @@ class Zmake:
         Args:
             fmt: The formatting string to print projects with.
         """
-        for project in zmake.project.find_projects(self.projects_dir).values():
+        for project in zmake.project.find_projects(self.projects_dirs).values():
             print(fmt.format(config=project.config), end="")
 
         return 0

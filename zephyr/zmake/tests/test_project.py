@@ -130,7 +130,7 @@ def test_prune_modules_unavailable():
 
 def test_find_projects_empty(tmp_path):
     """Test the find_projects method when there are no projects."""
-    projects = list(zmake.project.find_projects(tmp_path))
+    projects = list(zmake.project.find_projects([tmp_path]))
     assert len(projects) == 0
 
 
@@ -167,7 +167,7 @@ def test_find_projects(tmp_path):
     cf2_dir.mkdir()
     (cf2_dir / "BUILD.py").write_text(CONFIG_FILE_2)
 
-    projects = zmake.project.find_projects(tmp_path)
+    projects = zmake.project.find_projects([tmp_path])
     assert len(projects) == 5
     assert projects["one"].config.project_dir == cf1_dir
 
@@ -197,7 +197,7 @@ def test_find_projects_name_conflict(tmp_path):
     (cf2_dir / "BUILD.py").write_text(CONFIG_FILE_2)
 
     with pytest.raises(KeyError):
-        zmake.project.find_projects(tmp_path)
+        zmake.project.find_projects([tmp_path])
 
 
 def test_register_variant(tmp_path):
@@ -217,7 +217,7 @@ another = some_variant.variant(
 )
     """
     )
-    projects = zmake.project.find_projects(tmp_path)
+    projects = zmake.project.find_projects([tmp_path])
     assert projects["some"].config.zephyr_board == "foo"
     assert projects["some-variant"].config.zephyr_board == "bar"
     assert projects["another"].config.zephyr_board == "bar"

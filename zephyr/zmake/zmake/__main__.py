@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 """The entry point into zmake."""
+
 import argparse
 import inspect
 import logging
@@ -164,7 +165,10 @@ def get_argparser():
     parser.add_argument(
         "--projects-dir",
         type=pathlib.Path,
-        help="Base directory to search for BUILD.py files.",
+        action="append",
+        dest="projects_dirs",
+        metavar="PROJECTS_DIR",
+        help="Base directory to search for BUILD.py files. Can be repeated.",
     )
     parser.add_argument(
         "--zephyr-base", type=pathlib.Path, help="Path to Zephyr OS repository"

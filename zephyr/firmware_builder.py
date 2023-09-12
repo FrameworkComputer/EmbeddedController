@@ -73,6 +73,7 @@ def build(opts):
 
     zephyr_dir = pathlib.Path(__file__).parent.resolve()
     platform_ec = zephyr_dir.parent
+    private_zephyr_dir = platform_ec / "private" / "zephyr"
     subprocess.run(
         [platform_ec / "util" / "check_clang_format.py"],
         check=True,
@@ -91,7 +92,9 @@ def build(opts):
     log_cmd(cmd)
     subprocess.run(cmd, cwd=zephyr_dir, check=True, stdin=subprocess.DEVNULL)
     if not opts.code_coverage:
-        for project in zmake.project.find_projects(zephyr_dir).values():
+        for project in zmake.project.find_projects(
+            [zephyr_dir, private_zephyr_dir]
+        ).values():
             build_dir = (
                 platform_ec / "build" / "zephyr" / project.config.project_name
             )
@@ -245,7 +248,10 @@ def bundle_firmware(opts):
     bundle_dir = get_bundle_dir(opts)
     zephyr_dir = pathlib.Path(__file__).parent.resolve()
     platform_ec = zephyr_dir.parent
-    for project in zmake.project.find_projects(zephyr_dir).values():
+    private_zephyr_dir = platform_ec / "private" / "zephyr"
+    for project in zmake.project.find_projects(
+        [zephyr_dir, private_zephyr_dir]
+    ).values():
         build_dir = (
             platform_ec / "build" / "zephyr" / project.config.project_name
         )
@@ -293,6 +299,7 @@ def test(opts):
     platform_ec = zephyr_dir.parent
     twister_out_dir = platform_ec / "twister-out-llvm"
     twister_out_dir_gcc = platform_ec / "twister-out-host"
+    private_zephyr_dir = platform_ec / "private" / "zephyr"
 
     if opts.code_coverage:
         build_dir = platform_ec / "build" / "zephyr"
@@ -318,7 +325,9 @@ def test(opts):
             "ALL_FILTERED", metrics, build_dir / "lcov_no_tests.info"
         )
 
-        for project in zmake.project.find_projects(zephyr_dir).values():
+        for project in zmake.project.find_projects(
+            [zephyr_dir, private_zephyr_dir]
+        ).values():
             if project.config.project_name in SPECIAL_BOARDS:
                 _extract_lcov_summary(
                     f"BOARD_{project.config.full_name}".upper(),
