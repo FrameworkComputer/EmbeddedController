@@ -136,16 +136,20 @@ test_mockable_static
 	noreturn
 #endif
 	void
-	complete_panic(int linenum)
+	complete_panic(const char *fname, int linenum)
 {
-	software_panic(PANIC_SW_ASSERT, linenum);
+	/* Top two bytes of info register is first two characters of file name.
+	 * Bottom two bytes of info register is line number.
+	 */
+	software_panic(PANIC_SW_ASSERT, (fname[0] << 24) | (fname[1] << 16) |
+						(linenum & 0xffff));
 }
 
 #ifdef CONFIG_DEBUG_ASSERT_BRIEF
 void panic_assert_fail(const char *fname, int linenum)
 {
 	panic_printf("\nASSERTION FAILURE at %s:%d\n", fname, linenum);
-	complete_panic(linenum);
+	complete_panic(fname, linenum);
 }
 #else
 void panic_assert_fail(const char *msg, const char *func, const char *fname,
@@ -153,7 +157,7 @@ void panic_assert_fail(const char *msg, const char *func, const char *fname,
 {
 	panic_printf("\nASSERTION FAILURE '%s' in %s() at %s:%d\n", msg, func,
 		     fname, linenum);
-	complete_panic(linenum);
+	complete_panic(fname, linenum);
 }
 #endif
 

@@ -71,8 +71,16 @@ ZTEST(panic_output, test_panic_assert_fail)
 		      "Expected software_panic() to be called with "
 		      "reason=%d (PANIC_SW_ASSERT) but got %d",
 		      PANIC_SW_ASSERT, software_panic_fake.arg0_val);
-	zassert_equal(line_num, software_panic_fake.arg1_val,
+	zassert_equal(line_num, software_panic_fake.arg1_val & 0xFFFF,
 		      "Expected software_panic() to be called with "
 		      "line=%d but got %d",
-		      line_num, software_panic_fake.arg1_val);
+		      line_num, software_panic_fake.arg1_val & 0xFFFF);
+	zassert_equal(__FILE__[0], (software_panic_fake.arg1_val >> 24) & 0xFF,
+		      "Expected software_panic() to be called with "
+		      "file[0]=%c but got %c",
+		      __FILE__[0], (software_panic_fake.arg1_val >> 24) & 0xFF);
+	zassert_equal(__FILE__[1], (software_panic_fake.arg1_val >> 16) & 0xFF,
+		      "Expected software_panic() to be called with "
+		      "file[1]=%c but got %c",
+		      __FILE__[1], (software_panic_fake.arg1_val >> 16) & 0xFF);
 }
