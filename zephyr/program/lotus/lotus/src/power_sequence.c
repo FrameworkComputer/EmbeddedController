@@ -662,10 +662,9 @@ static void usb30_hub_reset(void)
 	 * This hook is called when the system warm boots or cold boots,
 	 * adding the delay time to filter the cold boot condition.
 	 */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);
-
-	usleep(200 * MSEC);
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);
+		usleep(200 * MSEC);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 0);
 		usleep(10 * MSEC);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 1);
