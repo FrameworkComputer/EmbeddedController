@@ -425,7 +425,6 @@ static int common_pwr_sm_run(int state)
 	case SYS_POWER_STATE_S5G3:
 		/* Nofity power event after we remove power rails */
 		ap_power_force_shutdown(AP_POWER_SHUTDOWN_G3);
-		ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN_COMPLETE);
 
 		/* Notify power event before we enter G3 */
 		ap_power_ev_send_callbacks(AP_POWER_HARD_OFF);
@@ -596,6 +595,7 @@ static int common_pwr_sm_run(int state)
 		 * If support controlling power of wifi/WWAN/BT devices
 		 * add handling here.
 		 */
+		ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN_COMPLETE);
 
 		/* Always enter into S5 state. The S5 state is required to
 		 * correctly handle global resets which have a bit of delay
