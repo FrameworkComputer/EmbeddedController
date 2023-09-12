@@ -2081,6 +2081,11 @@
 #undef CONFIG_FAN_DYNAMIC
 
 /*
+ * Fan config have non-const configuration.
+ */
+#undef CONFIG_FAN_DYNAMIC_CONFIG
+
+/*
  * Replace the default fan_percent_to_rpm() function with a board-specific
  * implementation in board.c
  */

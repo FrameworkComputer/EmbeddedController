@@ -119,6 +119,13 @@ config PLATFORM_EC_CUSTOM_FAN_CONTROL
 	  Enable fan custom control to let projects define
 	  their own fan control mechanism by EC.
 
+config PLATFORM_EC_FAN_DYNAMIC_CONFIG
+	bool "Fan dynamic config support"
+	default n
+	help
+	  Enable fan dynamic config to let projects define
+	  their own fan control mechanism by EC.
+
 config PLATFORM_EC_CUSTOM_FAN_DUTY_CONTROL
 	bool "Fan custom control support"
 	default n
