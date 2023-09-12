@@ -338,3 +338,5 @@ include $(_common_dir)spi/build.mk
 
 include $(_common_dir)mock/build.mk
 common-y+=$(foreach m,$(mock-y),mock/$(m))
+
+$(eval $(call vars_from_dir,common,usbc,common-usbc))
