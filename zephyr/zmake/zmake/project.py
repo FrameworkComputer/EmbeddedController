@@ -10,12 +10,12 @@ import os
 import pathlib
 import typing
 
-import zmake.build_config as build_config
-import zmake.configlib as configlib
+from zmake import build_config
+from zmake import configlib
+from zmake import signers
+from zmake import toolchains
 import zmake.modules
 import zmake.output_packers
-import zmake.signers as signers
-import zmake.toolchains as toolchains
 
 
 def module_dts_overlay_name(modpath, board_name):
@@ -28,13 +28,7 @@ def module_dts_overlay_name(modpath, board_name):
     Returns:
         A pathlib.Path object to the expected overlay path.
     """
-    return (
-        modpath
-        / "zephyr"
-        / "dts"
-        / "board-overlays"
-        / "{}.dts".format(board_name)
-    )
+    return modpath / "zephyr" / "dts" / "board-overlays" / f"{board_name}.dts"
 
 
 @dataclasses.dataclass
@@ -157,8 +151,8 @@ class Project:
                 result[module] = module_paths[module]
             except KeyError as e:
                 raise KeyError(
-                    "The {!r} module is required by the {} project, but is not "
-                    "available.".format(module, self.config.project_dir)
+                    f"The {module!r} module is required by the "
+                    f"{self.config.project_dir} project, but is not available."
                 ) from e
         return result
 

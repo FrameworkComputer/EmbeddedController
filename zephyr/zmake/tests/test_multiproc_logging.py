@@ -8,8 +8,9 @@ import io
 import logging
 import os
 import threading
-import unittest.mock as mock
+from unittest import mock
 
+# pylint:disable=import-error
 import zmake.multiproc
 
 
@@ -24,7 +25,7 @@ def test_read_output_from_pipe():
         logger, logging.DEBUG, file_desc, job_id=""
     )
     os.write(pipe[1], "Hello\n".encode("utf-8"))
-    semaphore.acquire()
+    semaphore.acquire()  # pylint: disable=consider-using-with
     logger.log.assert_called_with(logging.DEBUG, "Hello")
 
 
@@ -48,11 +49,11 @@ def test_read_output_change_log_level():
         job_id="",
     )
     os.write(pipe[1], "Hello\n".encode("utf-8"))
-    semaphore.acquire()
+    semaphore.acquire()  # pylint: disable=consider-using-with
     os.write(pipe[1], "World\n".encode("utf-8"))
-    semaphore.acquire()
+    semaphore.acquire()  # pylint: disable=consider-using-with
     os.write(pipe[1], "Bye\n".encode("utf-8"))
-    semaphore.acquire()
+    semaphore.acquire()  # pylint: disable=consider-using-with
     logger.log.assert_has_calls(
         [
             mock.call(logging.DEBUG, "Hello"),
@@ -87,7 +88,7 @@ def test_read_output_from_second_pipe():
     )
 
     os.write(pipes[1][1], "Hello\n".encode("utf-8"))
-    semaphore.acquire()
+    semaphore.acquire()  # pylint: disable=consider-using-with
     logger.log.assert_called_with(logging.ERROR, "[%s]%s", "1", "Hello")
 
 
@@ -117,5 +118,5 @@ def test_read_output_after_another_pipe_closed():
 
     fds[0].close()
     os.write(pipes[1][1], "Hello\n".encode("utf-8"))
-    semaphore.acquire()
+    semaphore.acquire()  # pylint: disable=consider-using-with
     logger.log.assert_called_with(logging.ERROR, "[%s]%s", "1", "Hello")

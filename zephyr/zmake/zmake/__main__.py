@@ -11,8 +11,8 @@ import os
 import pathlib
 import sys
 
-import zmake.jobserver as jobserver
-import zmake.multiproc as multiproc
+from zmake import jobserver
+from zmake import multiproc
 import zmake.zmake as zm
 
 

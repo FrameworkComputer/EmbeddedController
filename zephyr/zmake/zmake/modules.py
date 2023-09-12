@@ -4,8 +4,8 @@
 
 """Registry of known Zephyr modules."""
 
-import zmake.build_config as build_config
-import zmake.util as util
+from zmake import build_config
+from zmake import util
 
 
 def third_party_module(name, checkout):

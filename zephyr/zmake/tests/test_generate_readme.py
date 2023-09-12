@@ -2,11 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Tests for the generate_readme.py file.
-"""
+"""Tests for the generate_readme.py file."""
 
-import pytest  # pylint:disable=import-error
+# pylint:disable=import-error
+import pytest
 import zmake.generate_readme as gen_readme
 
 

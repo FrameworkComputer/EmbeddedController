@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 """Configuration to allow pip install."""
+
 import setuptools
 
 

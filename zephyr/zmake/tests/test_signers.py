@@ -7,6 +7,7 @@
 from pathlib import Path
 from unittest import mock
 
+# pylint: disable=import-error
 from zmake import signers
 
 

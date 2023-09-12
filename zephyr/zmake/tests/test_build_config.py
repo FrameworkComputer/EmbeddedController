@@ -10,12 +10,13 @@ import pathlib
 import string
 import tempfile
 
-import hypothesis  # pylint:disable=import-error
-import hypothesis.strategies as st  # pylint:disable=import-error
-import pytest  # pylint:disable=import-error
+# pylint: disable=import-error
+import hypothesis
+import hypothesis.strategies as st
+import pytest
+from zmake import util
 from zmake.build_config import BuildConfig
 import zmake.jobserver
-import zmake.util as util
 
 
 # pylint:disable=redefined-outer-name,unused-argument
@@ -97,10 +98,12 @@ class FakeJobClient(zmake.jobserver.JobClient):
         self.captured_argv = []
         self.captured_env = {}
 
-    def get_job(self):
+    def get_job(self):  # pylint: disable=no-self-use
+        """See base class."""
         return zmake.jobserver.JobHandle(lambda: None)
 
     def popen(self, argv, **kwargs):
+        """See base class."""
         kwargs.setdefault("env", {})
         self.captured_argv = [str(arg) for arg in argv]
         self.captured_env = {str(k): str(v) for k, v in kwargs["env"].items()}

@@ -6,12 +6,13 @@
 
 import datetime
 import subprocess
-import unittest.mock as mock
+from unittest import mock
 
-import pytest  # pylint: disable=import-error
+# pylint: disable=import-error
+import pytest
+from zmake import version
 import zmake.output_packers
 import zmake.project
-import zmake.version as version
 
 
 # pylint:disable=redefined-outer-name,unused-argument

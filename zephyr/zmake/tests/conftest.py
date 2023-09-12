@@ -7,8 +7,9 @@
 import os
 import pathlib
 
-import hypothesis  # pylint:disable=import-error
-import pytest  # pylint:disable=import-error
+# pylint: disable=import-error
+import hypothesis
+import pytest
 import zmake.zmake as zm
 
 

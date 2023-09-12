@@ -289,7 +289,9 @@ class CompareBuilds:
         try:
             data1 = ""
             data2 = ""
-            with open(file1) as fp1, open(file2) as fp2:
+            with open(file1, encoding="utf-8") as fp1, open(
+                file2, encoding="utf-8"
+            ) as fp2:
                 data1 = fp1.read()
                 data2 = fp2.read()
             data1 = data1.replace(self.checkouts[0].full_ref, "")

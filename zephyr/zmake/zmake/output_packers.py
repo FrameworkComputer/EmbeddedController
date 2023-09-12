@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 """Types which provide many builds and composite them into a single binary."""
+
 import logging
 from pathlib import Path
 import shutil
@@ -10,10 +11,10 @@ import subprocess
 import sys
 from typing import Dict, Optional
 
-import zmake.build_config as build_config
+from zmake import build_config
+from zmake import util
 import zmake.jobserver
 import zmake.multiproc
-import zmake.util as util
 
 
 class BasePacker:
@@ -22,8 +23,7 @@ class BasePacker:
     def __init__(self, project):
         self.project = project
 
-    @staticmethod
-    def configs():
+    def configs(self):  # pylint: disable=no-self-use
         """Get all of the build configurations necessary.
 
         Yields:
@@ -59,8 +59,9 @@ class BasePacker:
         """
         raise NotImplementedError("Abstract method not implemented")
 
-    @staticmethod
-    def _get_max_image_bytes(dir_map) -> Optional[int]:
+    def _get_max_image_bytes(  # pylint: disable=no-self-use
+        self, dir_map
+    ) -> Optional[int]:
         """Get the maximum allowed image size (in bytes).
 
         This value will generally be found in CONFIG_FLASH_SIZE but may vary
@@ -87,14 +88,12 @@ class BasePacker:
         Returns:
             The file if it passes the test.
         """
-        max_size = (
-            self._get_max_image_bytes(  # pylint: disable=assignment-from-none
-                dir_map
-            )
+        max_size = (  # pylint: disable=assignment-from-no-return
+            self._get_max_image_bytes(dir_map)
         )
         if max_size is None or file.stat().st_size <= max_size:
             return file
-        raise RuntimeError("Output file ({}) too large".format(file))
+        raise RuntimeError(f"Output file ({file}) too large")
 
 
 class ElfPacker(BasePacker):

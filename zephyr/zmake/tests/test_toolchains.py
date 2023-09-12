@@ -7,10 +7,11 @@
 import os
 import pathlib
 
-import pytest  # pylint:disable=import-error
+# pylint: disable=import-error
+import pytest
+from zmake import project
+from zmake import toolchains
 import zmake.output_packers
-import zmake.project as project
-import zmake.toolchains as toolchains
 
 
 # pylint:disable=redefined-outer-name,unused-argument

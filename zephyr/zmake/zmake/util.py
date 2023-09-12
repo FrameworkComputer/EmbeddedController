@@ -31,7 +31,7 @@ def c_str(input_str):
             "\\": "\\\\",
         }.get(char, char)
 
-    return '"{}"'.format("".join(map(c_chr, input_str)))
+    return f'"{"".join(map(c_chr, input_str))}"'
 
 
 def locate_cros_checkout():
@@ -76,7 +76,7 @@ def read_kconfig_file(path):
         A dictionary of kconfig items to their values.
     """
     result = {}
-    with open(path) as file:
+    with open(path, encoding="utf-8") as file:
         for line in file:
             line, _, _ = line.partition("#")
             line = line.strip()
@@ -96,8 +96,8 @@ def read_kconfig_autoconf_value(path, key):
     Returns:
         The value associated with the key or nothing if the key wasn't found.
     """
-    prog = re.compile(r"^#define\s{}\s(\S+)$".format(key))
-    with open(path / "autoconf.h") as file:
+    prog = re.compile(rf"^#define\s{key}\s(\S+)$")
+    with open(path / "autoconf.h", encoding="utf-8") as file:
         for line in file:
             match = prog.match(line)
             if match:
@@ -117,9 +117,9 @@ def write_kconfig_file(path, config, only_if_changed=True):
     if only_if_changed:
         if path.exists() and read_kconfig_file(path) == config:
             return
-    with open(path, "w") as file:
+    with open(path, "w", encoding="utf-8") as file:
         for name, value in config.items():
-            file.write("{}={}\n".format(name, value))
+            file.write(f"{name}={value}\n")
 
 
 def read_zephyr_version(zephyr_base):
@@ -134,7 +134,7 @@ def read_zephyr_version(zephyr_base):
     version_file = pathlib.Path(zephyr_base) / "VERSION"
 
     file_vars = {}
-    with open(version_file) as file:
+    with open(version_file, encoding="utf-8") as file:
         for line in file:
             key, _, value = line.partition("=")
             file_vars[key.strip()] = value.strip()

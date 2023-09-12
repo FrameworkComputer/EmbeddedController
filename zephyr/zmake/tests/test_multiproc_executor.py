@@ -6,6 +6,7 @@
 
 import threading
 
+# pylint: disable=import-error
 import zmake.multiproc
 
 

@@ -38,22 +38,19 @@ class JobHandle:
 class JobClient:
     """Abstract base class for all job clients."""
 
-    def get_job(self):
+    def get_job(self):  # pylint: disable=no-self-use
         """Claim a job."""
         raise NotImplementedError("Abstract method not implemented")
 
-    @staticmethod
-    def env():
+    def env(self):  # pylint: disable=no-self-use
         """Get the environment variables necessary to share the job server."""
         return {}
 
-    @staticmethod
-    def is_sequential():
+    def is_sequential(self):  # pylint: disable=no-self-use
         """Returns True if the jobserver is using -j1."""
         return False
 
-    @staticmethod
-    def pass_fds():
+    def pass_fds(self):  # pylint: disable=no-self-use
         """Returns the file descriptors that should be passed to subprocesses."""
         return []
 
@@ -216,7 +213,7 @@ class GNUMakeJobClient(JobClient):
         if self.jobs:
             flag += f" -j{self.jobs}"
         if self.jobs != 1 and self._inheritable_pipe is not None:
-            flag += " --jobserver-auth={},{}".format(*self._inheritable_pipe)
+            flag += f" --jobserver-auth={self._inheritable_pipe[0]},{self._inheritable_pipe[1]}"
         return {"MAKEFLAGS": flag}
 
     def is_sequential(self):
