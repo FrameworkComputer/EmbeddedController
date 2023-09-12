@@ -272,7 +272,8 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, start_smart_access_graphic, HOOK_PRIO_DEFAULT)
 static void reset_smart_access_graphic(void)
 {
 	/* smart access graphic default should be hybrid mode */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, reset_smart_access_graphic, HOOK_PRIO_DEFAULT);
 

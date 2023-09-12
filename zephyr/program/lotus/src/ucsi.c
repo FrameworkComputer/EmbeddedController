@@ -201,10 +201,10 @@ void record_ucsi_connector_change_event(int controller, int port)
 static void clear_ucsi_connector_change_event(void)
 {
 	/* UCSI driver will reset PPM, so clear the indicator */
-	s0ix_connector_change_indicator = 0;
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		s0ix_connector_change_indicator = 0;
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, clear_ucsi_connector_change_event, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, clear_ucsi_connector_change_event, HOOK_PRIO_DEFAULT);
 
 static void resend_ucsi_connector_change_event(void);
 DECLARE_DEFERRED(resend_ucsi_connector_change_event);
