@@ -399,6 +399,8 @@ flash_fp_mcu_npcx() {
     echo
     sleep 1
   done
+
+  return "${cmd_exit_status}"
 }
 
 flash_fp_mcu_stm32() {
@@ -477,6 +479,8 @@ flash_fp_mcu_stm32() {
     echo
     sleep 1
   done
+
+  return "${cmd_exit_status}"
 }
 
 flash_fp_mcu_board() {
@@ -562,22 +566,22 @@ flash_fp_mcu_board() {
     return "${EXIT_RUNTIME}"
   fi
 
+  local cmd_exit_status=1
+
   if [[ "${chip_type}" == "STM32" ]]; then
-    local ret
     flash_fp_mcu_stm32 \
       "${transport}"   \
       "${device}"      \
       "${gpio_nrst}"   \
       "${file}"
-    ret=$?
+    cmd_exit_status=$?
   elif [[ "${chip_type}" == "NPCX" ]]; then
-    local ret
     flash_fp_mcu_npcx \
       "${transport}"   \
       "${device}"      \
       "${gpio_nrst}"   \
       "${file}"
-    ret=$?
+    cmd_exit_status=$?
   else
     echo "# Unsupported chip type found: ${chip_type}"
     return "${EXIT_CONFIG}"
