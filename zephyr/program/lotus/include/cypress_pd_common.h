@@ -518,4 +518,10 @@ int cypd_vbus_state_check(void);
  */
 int cypd_get_ac_power(void);
 
+/**
+ * Set disable_epr_mode flag to true
+ *
+ */
+void force_disable_epr_mode(void);
+
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */
