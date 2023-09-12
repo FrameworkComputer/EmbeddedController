@@ -15,6 +15,20 @@ tests:
       - CONFIG_TEST_DISABLE_AP_PWRSEQ=y
       - CONFIG_AP_POWER_EVENTS_MOCK=y
       - CONFIG_POWER_SIGNALS_MOCK=y
+  nissa.board_power.ap_pwrseq_drv:
+    extra_configs:
+      - CONFIG_TEST_NISSA_BOARD_POWER=y
+      - CONFIG_PLATFORM_EC_VBOOT_HASH=n
+      - CONFIG_AP_X86_INTEL_ADL=y
+      - CONFIG_AP_PWRSEQ=y
+      - CONFIG_EMUL_AP_PWRSEQ_DRIVER=y
+      - CONFIG_EMUL_POWER_SIGNALS=y
+      - CONFIG_AP_PWRSEQ_DRIVER=y
+      - CONFIG_PLATFORM_EC_HOSTCMD=y
+      - CONFIG_PLATFORM_EC_BACKLIGHT_LID=n
+    extra_dtc_overlay_files:
+      - "boards/generic_npcx.dts"
+      - "boards/ap_pwrseq_drv_power_signals.dts"
   nissa.sub_board:
     extra_dtc_overlay_files:
       - "boards/generic_npcx.dts"

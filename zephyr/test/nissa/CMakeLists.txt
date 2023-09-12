@@ -16,7 +16,11 @@ target_sources(app PRIVATE src/stubs.c)
 
 if(CONFIG_TEST_NISSA_BOARD_POWER)
     # Test source
-    target_sources(app PRIVATE src/board_power.c)
+    if(CONFIG_AP_PWRSEQ_DRIVER)
+        target_sources(app PRIVATE src/board_ap_pwrseq_drv.c)
+    else()
+        target_sources(app PRIVATE src/board_power.c)
+    endif()
     # Module under test
     target_sources(app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/nissa/src/board_power.c)
 endif()
