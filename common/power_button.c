@@ -110,8 +110,15 @@ int power_button_wait_for_release(int timeout_us)
  */
 static void power_button_init(void)
 {
+	uint32_t boot_keys = keyboard_scan_get_boot_keys();
+
 	if (raw_power_button_pressed())
 		debounced_power_pressed = 1;
+
+	/* Take care of release or press we missed during start-up. */
+	if (((boot_keys & BOOT_KEY_POWER) && !debounced_power_pressed) ||
+	    (!(boot_keys & BOOT_KEY_POWER) && debounced_power_pressed))
+		hook_notify(HOOK_POWER_BUTTON_CHANGE);
 
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(power_button.gpio);
