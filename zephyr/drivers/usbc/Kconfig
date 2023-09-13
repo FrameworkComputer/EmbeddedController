@@ -1,0 +1,15 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USBC
+
+config USBC_INTEL_ALTMODE
+	bool "USB-C Intel alternate mode configuration driver"
+	default y if DT_HAS_INTEL_PD_ALTMODE_ENABLED
+	help
+	  This option enables a driver for communicating between the USB PD
+	  chip and EC for configuring the USB-C alternate mode muxes inside
+	  Intel AP.
+
+endif # PLATFORM_EC_USBC

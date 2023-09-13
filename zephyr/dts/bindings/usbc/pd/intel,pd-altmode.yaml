@@ -1,0 +1,22 @@
+# Copyright 2023 Google LLC
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Intel SoC USBC Alternate mode Compatible PD
+
+compatible: "intel,pd-altmode"
+
+include: ["i2c-device.yaml"]
+
+properties:
+  irq-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      Interrupt line from the PD for data path (zephyr standard GPIO format)
+  irq-shared:
+    type: boolean
+    description: |
+      Interrupt line is shared between ports in a dual port solution.
+      Define it only for the secondary port so that the driver doesn't
+      trigger multiple events.
