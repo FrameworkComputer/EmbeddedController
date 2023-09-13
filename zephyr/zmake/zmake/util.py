@@ -204,5 +204,9 @@ def get_tool_path(program):
     """
     path = os.environ.get(f"TOOL_PATH_{program}")
     if path:
-        return pathlib.Path(path).resolve()
-    return pathlib.Path(shutil.which(program))
+        path = pathlib.Path(path).resolve()
+    else:
+        path = pathlib.Path(shutil.which(program))
+    if not path:
+        raise FileNotFoundError(f"{program} not found in PATH")
+    return path
