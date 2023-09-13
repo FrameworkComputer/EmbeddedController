@@ -63,7 +63,7 @@ def build(opts):
     doing anything but creating the metrics file and giving an informational
     message.
     """
-    metric_list = firmware_pb2.FwBuildMetricList()
+    metric_list = firmware_pb2.FwBuildMetricList()  # pylint: disable=no-member
     ec_dir = pathlib.Path(__file__).parent
 
     # Run formatting checks on all python files.
@@ -228,7 +228,7 @@ def write_metadata(opts, info):
 
 def bundle_coverage(opts):
     """Bundles the artifacts from code coverage into its own tarball."""
-    info = firmware_pb2.FirmwareArtifactInfo()
+    info = firmware_pb2.FirmwareArtifactInfo()  # pylint: disable=no-member
     info.bcs_version_info.version_string = opts.bcs_version
     bundle_dir = get_bundle_dir(opts)
     ec_dir = os.path.dirname(__file__)
@@ -239,7 +239,7 @@ def bundle_coverage(opts):
     meta = info.objects.add()
     meta.file_name = tarball_name
     meta.lcov_info.type = (
-        firmware_pb2.FirmwareArtifactInfo.LcovTarballInfo.LcovType.LCOV
+        firmware_pb2.FirmwareArtifactInfo.LcovTarballInfo.LcovType.LCOV  # pylint: disable=no-member
     )
 
     write_metadata(opts, info)
@@ -247,7 +247,7 @@ def bundle_coverage(opts):
 
 def bundle_firmware(opts):
     """Bundles the artifacts from each target into its own tarball."""
-    info = firmware_pb2.FirmwareArtifactInfo()
+    info = firmware_pb2.FirmwareArtifactInfo()  # pylint: disable=no-member
     info.bcs_version_info.version_string = opts.bcs_version
     bundle_dir = get_bundle_dir(opts)
     ec_dir = os.path.dirname(__file__)
@@ -272,7 +272,7 @@ def bundle_firmware(opts):
         meta = info.objects.add()
         meta.file_name = tarball_name
         meta.tarball_info.type = (
-            firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.EC
+            firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.EC  # pylint: disable=no-member
         )
         # TODO(kmshelton): Populate the rest of metadata contents as it gets
         # defined in infra/proto/src/chromite/api/firmware.proto.
@@ -283,7 +283,7 @@ def bundle_firmware(opts):
 def test(opts):
     """Runs all of the unit tests for EC firmware"""
     # TODO(b/169178847): Add appropriate metric information
-    metrics = firmware_pb2.FwTestMetricList()
+    metrics = firmware_pb2.FwTestMetricList()  # pylint: disable=no-member
     with open(opts.metrics, "w", encoding="utf-8") as file:
         file.write(json_format.MessageToJson(metrics))
 
