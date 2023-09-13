@@ -35,6 +35,15 @@ enum power_limit_function {
 	FUNCTION_COUNT,
 };
 
+enum power_safety_level {
+	LEVEL_NORMAL = 0,
+	LEVEL_STOP_CHARGE,
+	LEVEL_TUNE_PLS,
+	LEVEL_DISABLE_GPU,
+	LEVEL_PROCHOT,
+	LEVEL_COUNT,
+};
+
 struct power_limit_details {
 	int mwatt[TYPE_COUNT];
 } __ec_align1;
@@ -50,6 +59,7 @@ extern int target_func[TYPE_COUNT];
 extern bool manual_ctl;
 extern int mode_ctl;
 extern uint8_t func_ctl;
+extern int my_test_current;
 
 void update_apu_ready(int status);
 int get_apu_ready(void);

@@ -25,6 +25,7 @@ bool manual_ctl;
 int mode_ctl;
 /* disable b[1:1] to disable power table */
 uint8_t func_ctl = 0xff;
+int my_test_current;
 
 static int update_sustained_power_limit(uint32_t mwatt)
 {
@@ -165,6 +166,10 @@ static int cmd_cpupower(int argc, const char **argv)
 		if (!strncmp(argv[1], "function", 8)) {
 			func_ctl = strtoi(argv[2], &e, 0);
 			CPRINTF("func Control");
+		}
+		if (!strncmp(argv[1], "test_current", 8)) {
+			my_test_current = strtoi(argv[2], &e, 0);
+			CPRINTF("current Control");
 		}
 
 	}
