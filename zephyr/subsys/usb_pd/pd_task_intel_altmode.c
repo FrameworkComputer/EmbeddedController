@@ -9,6 +9,7 @@
 
 #include "i2c.h"
 #include "i2c/i2c.h"
+#include "usb_mux.h"
 #include "usbc/utils.h"
 
 #include <stdlib.h>
@@ -109,6 +110,7 @@ static void process_altmode_pd_data(int port)
 {
 	int rv;
 	union data_status_reg status;
+	mux_state_t mux = USB_PD_MUX_NONE;
 	union data_status_reg *prev_status =
 		&intel_altmode_task_data.data_status[port];
 	union data_control_reg control = { .i2c_int_ack = 1 };
@@ -137,7 +139,22 @@ static void process_altmode_pd_data(int port)
 	/* Update the new data */
 	memcpy(prev_status, &status, sizeof(union data_status_reg));
 
-	/* TODO: Process MUX events */
+	/* Process MUX events */
+
+	/* Orientation */
+	if (status.conn_ori)
+		mux |= USB_PD_MUX_POLARITY_INVERTED;
+
+	/* USB status */
+	if (status.usb2 || status.usb3_2)
+		mux |= USB_PD_MUX_USB_ENABLED;
+
+	LOG_INF("Set p%d mux=0x%x", port, mux);
+
+	usb_mux_set(port, mux,
+		    mux == USB_PD_MUX_NONE ? USB_SWITCH_DISCONNECT :
+					     USB_SWITCH_CONNECT,
+		    status.conn_ori);
 }
 
 static void intel_altmode_thread(void *unused1, void *unused2, void *unused3)
