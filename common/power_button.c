@@ -116,8 +116,8 @@ static void power_button_init(void)
 		debounced_power_pressed = 1;
 
 	/* Take care of release or press we missed during start-up. */
-	if (((boot_keys & BOOT_KEY_POWER) && !debounced_power_pressed) ||
-	    (!(boot_keys & BOOT_KEY_POWER) && debounced_power_pressed))
+	if (((boot_keys & BIT(BOOT_KEY_POWER)) && !debounced_power_pressed) ||
+	    (!(boot_keys & BIT(BOOT_KEY_POWER)) && debounced_power_pressed))
 		hook_notify(HOOK_POWER_BUTTON_CHANGE);
 
 	/* Enable interrupts, now that we've initialized */

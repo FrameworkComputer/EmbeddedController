@@ -90,10 +90,13 @@ __overridable struct keyboard_scan_config keyscan_config = {
 static const
 #endif
 	struct boot_key_entry boot_key_list[] = {
-		{ KEYBOARD_COL_ESC, KEYBOARD_ROW_ESC },
-		{ KEYBOARD_COL_DOWN, KEYBOARD_ROW_DOWN }, /* Down-arrow */
-		{ KEYBOARD_COL_LEFT_SHIFT, KEYBOARD_ROW_LEFT_SHIFT },
+		[BOOT_KEY_ESC] = { KEYBOARD_COL_ESC, KEYBOARD_ROW_ESC },
+		[BOOT_KEY_DOWN_ARROW] = { KEYBOARD_COL_DOWN,
+					  KEYBOARD_ROW_DOWN },
+		[BOOT_KEY_LEFT_SHIFT] = { KEYBOARD_COL_LEFT_SHIFT,
+					  KEYBOARD_ROW_LEFT_SHIFT },
 	};
+BUILD_ASSERT(ARRAY_SIZE(boot_key_list) == BOOT_KEY_COUNT);
 static uint32_t boot_key_value = BOOT_KEY_NONE;
 #endif
 
@@ -682,7 +685,7 @@ static uint32_t check_key_list(const uint8_t *state)
 	}
 
 	if (IS_ENABLED(CONFIG_POWER_BUTTON) && power_button_signal_asserted())
-		boot_key_mask |= BOOT_KEY_POWER;
+		boot_key_mask |= BIT(BOOT_KEY_POWER);
 
 	/* If any other key was pressed, ignore all boot keys. */
 	for (c = 0; c < keyboard_cols; c++) {
@@ -820,12 +823,12 @@ void keyboard_scan_init(void)
 	 * If any key other than Esc, Power, or Left_Shift was pressed, do not
 	 * trigger recovery.
 	 */
-	if (boot_key_value &
-	    ~(BOOT_KEY_ESC | BOOT_KEY_LEFT_SHIFT | BOOT_KEY_POWER))
+	if (boot_key_value & ~(BIT(BOOT_KEY_ESC) | BIT(BOOT_KEY_LEFT_SHIFT) |
+			       BIT(BOOT_KEY_POWER)))
 		return;
 
 #ifdef CONFIG_HOSTCMD_EVENTS
-	if (boot_key_value & BOOT_KEY_ESC) {
+	if (boot_key_value & BIT(BOOT_KEY_ESC)) {
 		host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY);
 		/*
 		 * In recovery mode, we should force clamshell mode in order to
@@ -837,7 +840,7 @@ void keyboard_scan_init(void)
 		 */
 		if (IS_ENABLED(CONFIG_TABLET_MODE))
 			tablet_disable();
-		if (boot_key_value & BOOT_KEY_LEFT_SHIFT)
+		if (boot_key_value & BIT(BOOT_KEY_LEFT_SHIFT))
 			host_set_single_event(
 				EC_HOST_EVENT_KEYBOARD_RECOVERY_HW_REINIT);
 	}
