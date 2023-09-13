@@ -4,22 +4,29 @@
  */
 
 #include "battery_fuel_gauge.h"
+#include "board_config.h"
 #include "button.h"
 #include "charge_manager.h"
+#include "chipset.h"
+#include "common.h"
 #include "craask.h"
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "extpower.h"
+#include "fan.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
+#include "led_onoff_states.h"
+#include "led_pwm.h"
 #include "motionsense_sensors.h"
 #include "nissa_sub_board.h"
 #include "tablet_mode.h"
 #include "tcpm/tcpci.h"
+#include "thermal.h"
 
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/fff.h>
@@ -44,7 +51,6 @@ FAKE_VOID_FUNC(bmi3xx_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(lsm6dso_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(bma4xx_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(lis2dw12_interrupt, enum gpio_signal);
-FAKE_VOID_FUNC(fan_set_count, int);
 
 FAKE_VALUE_FUNC(enum ec_error_list, raa489000_is_acok, int, bool *);
 FAKE_VOID_FUNC(raa489000_hibernate, int, bool);
@@ -53,6 +59,7 @@ FAKE_VALUE_FUNC(int, raa489000_set_output_current, int, enum tcpc_rp_value);
 FAKE_VALUE_FUNC(int, chipset_in_state, int);
 FAKE_VOID_FUNC(usb_charger_task_set_event_sync, int, uint8_t);
 FAKE_VALUE_FUNC(enum ec_error_list, charger_discharge_on_ac, int);
+FAKE_VOID_FUNC(set_pwm_led_color, enum pwm_led_id, int);
 
 FAKE_VALUE_FUNC(enum battery_present, battery_is_present);
 FAKE_VOID_FUNC(lpc_keyboard_resume_irq);
@@ -69,13 +76,13 @@ static void test_before(void *fixture)
 	RESET_FAKE(lsm6dso_interrupt);
 	RESET_FAKE(bma4xx_interrupt);
 	RESET_FAKE(lis2dw12_interrupt);
-	RESET_FAKE(fan_set_count);
 	RESET_FAKE(raa489000_is_acok);
 	RESET_FAKE(raa489000_hibernate);
 	RESET_FAKE(raa489000_enable_asgate);
 	RESET_FAKE(raa489000_set_output_current);
 	RESET_FAKE(chipset_in_state);
 	RESET_FAKE(charger_discharge_on_ac);
+	RESET_FAKE(set_pwm_led_color);
 
 	raa489000_is_acok_fake.custom_fake = raa489000_is_acok_absent;
 
@@ -548,12 +555,15 @@ ZTEST(craask, test_fan_present)
 {
 	int flags;
 
+	/* Default fan_count = CONFIG_FANS = CONFIG_PLATFORM_EC_NUM_FANS */
+	fan_set_count(CONFIG_PLATFORM_EC_NUM_FANS);
+
 	cros_cbi_get_fw_config_fake.custom_fake = cbi_get_fan_fw_config;
 
 	fan_present = true;
 	fan_init();
 
-	zassert_equal(fan_set_count_fake.call_count, 0);
+	zassert_equal(fan_get_count(), 1, "only have 1 fan");
 	zassert_ok(gpio_pin_get_config_dt(
 		GPIO_DT_FROM_NODELABEL(gpio_fan_enable), &flags));
 	zassert_equal(flags, GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW,
@@ -564,16 +574,16 @@ ZTEST(craask, test_fan_absent)
 {
 	int flags;
 
+	/* Default fan_count = CONFIG_FANS = CONFIG_PLATFORM_EC_NUM_FANS */
+	fan_set_count(CONFIG_PLATFORM_EC_NUM_FANS);
+
 	cros_cbi_get_fw_config_fake.custom_fake = cbi_get_fan_fw_config;
 
 	fan_present = false;
 	fan_init();
 
-	zassert_equal(fan_set_count_fake.call_count, 1,
-		      "function actually called %d times",
-		      fan_set_count_fake.call_count);
-	zassert_equal(fan_set_count_fake.arg0_val, 0, "parameter value was %d",
-		      fan_set_count_fake.arg0_val);
+	/* call fan_set_count to set 0 to fan_count. */
+	zassert_equal(fan_get_count(), 0);
 
 	/* Fan enable is left unconfigured */
 	zassert_ok(gpio_pin_get_config_dt(
@@ -893,4 +903,239 @@ ZTEST(craask, test_process_pd_alert)
 	zassert_equal(usb_charger_task_set_event_sync_fake.arg0_val, 1);
 	zassert_equal(usb_charger_task_set_event_sync_fake.arg1_val,
 		      USB_CHG_EVENT_BC12);
+}
+
+static bool kb_backlight_sku;
+
+static int cbi_get_kb_bl_fw_config(enum cbi_fw_config_field_id field,
+				   uint32_t *value)
+{
+	zassert_equal(field, FW_KB_BL);
+	*value = kb_backlight_sku ? FW_KB_BL_PRESENT : FW_KB_BL_NOT_PRESENT;
+	return 0;
+}
+
+ZTEST(craask, test_keyboard_backlight)
+{
+	/* For PLATFORM_EC_PWM_KBLIGHT default enabled, EC_FEATURE_PWM_KEYB
+	 * is set.
+	 */
+	uint32_t flags0 = EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB);
+	uint32_t result;
+
+	/* Support keyboard backlight */
+	cros_cbi_get_fw_config_fake.custom_fake = cbi_get_kb_bl_fw_config;
+	kb_backlight_sku = true;
+	result = board_override_feature_flags0(flags0);
+	zassert_equal(result, flags0,
+		      "Support kblight, should keep PWM_KEYB feature.");
+
+	/* Error reading fw_config */
+	RESET_FAKE(cros_cbi_get_fw_config);
+	cros_cbi_get_fw_config_fake.return_val = EINVAL;
+	result = board_override_feature_flags0(flags0);
+	zassert_equal(result, flags0,
+		      "Unchange ec feature, keep PWM_KEYB feature.");
+
+	/* Not support keyboard backlight */
+	cros_cbi_get_fw_config_fake.custom_fake = cbi_get_kb_bl_fw_config;
+	kb_backlight_sku = false;
+	result = board_override_feature_flags0(flags0);
+	zassert_equal(result, 0, "No kblight should clear PWM_KEYB feature.");
+}
+
+ZTEST(craask, test_led_pwm)
+{
+	led_set_color_battery(EC_LED_COLOR_RED);
+	zassert_equal(set_pwm_led_color_fake.arg0_val, PWM_LED0);
+	zassert_equal(set_pwm_led_color_fake.arg1_val, EC_LED_COLOR_RED);
+
+	led_set_color_battery(EC_LED_COLOR_BLUE);
+	zassert_equal(set_pwm_led_color_fake.arg0_val, PWM_LED0);
+	zassert_equal(set_pwm_led_color_fake.arg1_val, EC_LED_COLOR_BLUE);
+
+	led_set_color_battery(EC_LED_COLOR_AMBER);
+	zassert_equal(set_pwm_led_color_fake.arg0_val, PWM_LED0);
+	zassert_equal(set_pwm_led_color_fake.arg1_val, EC_LED_COLOR_AMBER);
+
+	/* Craask unsupport green */
+	led_set_color_battery(EC_LED_COLOR_GREEN);
+	zassert_equal(set_pwm_led_color_fake.arg0_val, PWM_LED0);
+	zassert_equal(set_pwm_led_color_fake.arg1_val, -1);
+}
+
+static int thermal_solution;
+
+static int cbi_get_thermal_fw_config(enum cbi_fw_config_field_id field,
+				     uint32_t *value)
+{
+	zassert_equal(field, FW_THERMAL);
+	*value = thermal_solution;
+	return 0;
+}
+
+static int chipset_state;
+
+static int chipset_in_state_mock(int state_mask)
+{
+	if (state_mask & chipset_state)
+		return 1;
+
+	return 0;
+}
+
+ZTEST(craask, test_6w_thermal_solution)
+{
+	int temp = 35;
+
+	/* Initialize pwm fam (pwm_fan_init) */
+	fan_channel_setup(0, FAN_USE_RPM_MODE);
+	fan_set_enabled(0, 1);
+
+	/* Test fan table for 6W CPU */
+	cros_cbi_get_fw_config_fake.custom_fake = cbi_get_thermal_fw_config;
+	thermal_solution = FW_THERMAL_6W;
+	thermal_init();
+
+	/* Turn on fan when chipset state on. */
+	chipset_in_state_fake.custom_fake = chipset_in_state_mock;
+	chipset_state = CHIPSET_STATE_ON;
+
+	/* level_0 */
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 0);
+
+	/* level_1 */
+	temp = 40;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 2500);
+
+	/* level_2 */
+	temp = 45;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 2800);
+
+	/* level_3 */
+	temp = 50;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 3000);
+
+	/* level_4 */
+	temp = 55;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 3200);
+
+	/* level_5 */
+	temp = 60;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 3600);
+
+	/* level_6 */
+	temp = 65;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 4000);
+
+	/* level_7 */
+	temp = 70;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 4600);
+
+	/* decrase temp to level_7 */
+	temp = 65;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 4600);
+
+	/* Turn off fan when chipset suspend or shutdown */
+	chipset_in_state_fake.custom_fake = chipset_in_state_mock;
+	chipset_state = CHIPSET_STATE_STANDBY;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 0);
+}
+
+ZTEST(craask, test_15w_thermal_solution)
+{
+	int temp = 35;
+
+	/* init fan config, flags = FAN_USE_RPM_MODE */
+	fan_channel_setup(0, FAN_USE_RPM_MODE);
+	fan_set_enabled(0, 1);
+
+	/* Test fan table for 15W CPU */
+	cros_cbi_get_fw_config_fake.custom_fake = cbi_get_thermal_fw_config;
+	thermal_solution = FW_THERMAL_15W;
+	thermal_init();
+
+	/* Turn on fan when chipset state on. */
+	chipset_in_state_fake.custom_fake = chipset_in_state_mock;
+	chipset_state = CHIPSET_STATE_ON;
+
+	/* level_0 */
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 0);
+
+	/* level_1 */
+	temp = 40;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 2500);
+
+	/* level_2 */
+	temp = 45;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 2800);
+
+	/* level_3 */
+	temp = 50;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 3000);
+
+	/* level_5 */
+	temp = 55;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 3600);
+
+	/* level_6 */
+	temp = 60;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 4000);
+
+	/* level_7 */
+	temp = 70;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 4600);
+
+	/* level_9 */
+	temp = 75;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 5500);
+
+	/* decrease temp to level_8 */
+	temp = 70;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 5000);
+
+	/* Turn off fan when chipset suspend or shutdown */
+	chipset_in_state_fake.custom_fake = chipset_in_state_mock;
+	chipset_state = CHIPSET_STATE_STANDBY;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 0);
 }

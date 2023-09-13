@@ -104,7 +104,10 @@ if(CONFIG_TEST_NISSA_CRAASK)
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/charger.c
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/fan.c
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/form_factor.c
+	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/kb_backlight.c
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/keyboard.c
+	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/led.c
+	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/thermal.c
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/usbc.c
     )
 endif()
