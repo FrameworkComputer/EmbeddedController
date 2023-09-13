@@ -559,6 +559,14 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "dochi",
+        baseboard = "brya",
+        board = "dochi",
+        chip = "npcx",
+        core = "cortex-m",
+        zephyr = False,
+    )
+    ec_target(
         name = "dojo",
         baseboard = "cherry",
         board = "dojo",

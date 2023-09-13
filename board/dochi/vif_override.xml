@@ -1,0 +1,148 @@
+<?xml version="1.0" encoding="utf-8"?>
+<vif:VIF xmlns="http://usb.org/VendorInfoFile.xsd">
+  <vif:Product_Revision>2</vif:Product_Revision>
+  <vif:TID>0</vif:TID>
+  <vif:Product>
+    <vif:USB4_Num_Internal_Host_Controllers value="1" />
+    <vif:USB4_Num_PCIe_DN_Bridges value="0" />
+    <vif:USB4RouterList>
+      <vif:Usb4Router>
+        <!--USB4 Router 0-->
+        <vif:USB4_Router_ID value="0" />
+        <vif:USB4_Silicon_VID value="32903">8087</vif:USB4_Silicon_VID>
+        <vif:USB4_Num_Lane_Adapters value="4" />
+        <vif:USB4_Num_USB3_DN_Adapters value="1" />
+        <vif:USB4_Num_DP_IN_Adapters value="1" />
+        <vif:USB4_Num_DP_OUT_Adapters value="0" />
+        <vif:USB4_Num_PCIe_DN_Adapters value="4" />
+        <vif:USB4_TBT3_Not_Supported value="0">TBT3 Compatible</vif:USB4_TBT3_Not_Supported>
+        <vif:USB4_PCIe_Wake_Supported value="true" />
+        <vif:USB4_USB3_Wake_Supported value="false" />
+        <vif:USB4_Num_Unused_Adapters value="0" />
+        <vif:USB4_TBT3_VID value="32903">8087</vif:USB4_TBT3_VID>
+        <vif:USB4_PCIe_Switch_Vendor_ID value="32902">8086</vif:USB4_PCIe_Switch_Vendor_ID>
+        <vif:USB4_PCIe_Switch_Device_ID value="39451">9A1B</vif:USB4_PCIe_Switch_Device_ID>
+      </vif:Usb4Router>
+    </vif:USB4RouterList>
+  </vif:Product>
+
+  <vif:Component>
+    <vif:USB4_Max_Speed value="1">Gen 3 (40Gb)</vif:USB4_Max_Speed>
+
+    <!--;USB Host-->
+
+    <vif:Host_Speed value="4">USB 3.2 Gen 2x2</vif:Host_Speed>
+    <vif:Host_Contains_Captive_Retimer value="true" />
+    <vif:Host_Truncates_DP_For_tDHPResponse value="false" />
+    <vif:Host_Suspend_Supported value="true" />
+
+    <!--;PD Source-->
+    <!-- will we ever clear USB_Suspend_Supported? -->
+    <vif:USB_Suspend_May_Be_Cleared value="true" />
+
+    <!-- remove FR_Swap_* when we enable CONFIG_USB_PD_FRS -->
+    <!--;Dual Role-->
+    <vif:FR_Swap_Supported_As_Initial_Sink value="true" />
+    <!--;PD Source-->
+    <vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="3">3A @ 5V</vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
+    <vif:SrcPdoList>
+      <vif:SrcPDO>
+        <!--Source PDO 1-->
+        <vif:Src_PD_OCP_OC_Debounce value="50">50 msec</vif:Src_PD_OCP_OC_Debounce>
+        <vif:Src_PD_OCP_OC_Threshold value="360">3600 mA</vif:Src_PD_OCP_OC_Threshold>
+      </vif:SrcPDO>
+    </vif:SrcPdoList>
+
+    <!-- SOP Discover ID -->
+    <vif:Product_Type_UFP_SOP value="0">Undefined</vif:Product_Type_UFP_SOP>
+    <vif:Product_Type_DFP_SOP value="2">PDUSB Host</vif:Product_Type_DFP_SOP>
+
+    <!-- USB4 Port -->
+    <vif:USB4_Lane_0_Adapter value="1" />
+    <vif:USB4_UFP_Supported value="false" />
+    <vif:USB4_DFP_Supported value="true" />
+    <vif:USB4_USB3_Tunneling_Supported value="true" />
+    <vif:USB4_DP_Tunneling_Supported value="true" />
+    <vif:USB4_CL1_State_Supported value="true" />
+    <vif:USB4_CL2_State_Supported value="true" />
+    <vif:USB4_Num_Retimers value="1" />
+    <vif:USB4_DP_Bit_Rate value="3">HBR3</vif:USB4_DP_Bit_Rate>
+    <vif:USB4_Num_DP_Lanes value="4">4 Lanes</vif:USB4_Num_DP_Lanes>
+
+  </vif:Component>
+
+  <vif:Component>
+    <vif:USB4_Supported value="false" />
+
+    <!--;USB Host-->
+    <vif:Host_Speed value="2">USB 3.2 Gen 2x1</vif:Host_Speed>
+    <vif:Host_Contains_Captive_Retimer value="true" />
+    <vif:Host_Truncates_DP_For_tDHPResponse value="false" />
+    <vif:Host_Suspend_Supported value="true" />
+
+    <!--;PD Source-->
+    <!-- will we ever clear USB_Suspend_Supported? -->
+    <vif:USB_Suspend_May_Be_Cleared value="true" />
+
+    <!-- remove FR_Swap_* when we enable CONFIG_USB_PD_FRS -->
+    <!--;Dual Role-->
+    <vif:FR_Swap_Supported_As_Initial_Sink value="true" />
+    <!--;PD Source-->
+    <vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="3">3A @ 5V</vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
+    <vif:SrcPdoList>
+      <vif:SrcPDO>
+        <!--Source PDO 1-->
+        <vif:Src_PD_OCP_OC_Debounce value="50">50 msec</vif:Src_PD_OCP_OC_Debounce>
+        <vif:Src_PD_OCP_OC_Threshold value="360">3600 mA</vif:Src_PD_OCP_OC_Threshold>
+      </vif:SrcPDO>
+    </vif:SrcPdoList>
+
+    <!-- SOP Discover ID -->
+    <vif:Product_Type_UFP_SOP value="0">Undefined</vif:Product_Type_UFP_SOP>
+    <vif:Product_Type_DFP_SOP value="2">PDUSB Host</vif:Product_Type_DFP_SOP>
+
+  </vif:Component>
+
+  <vif:Component>
+    <vif:USB4_Max_Speed value="1">Gen 3 (40Gb)</vif:USB4_Max_Speed>
+    <!--;USB Host-->
+    <vif:Host_Speed value="4">USB 3.2 Gen 2x2</vif:Host_Speed>
+    <vif:Host_Contains_Captive_Retimer value="true" />
+    <vif:Host_Truncates_DP_For_tDHPResponse value="false" />
+    <vif:Host_Suspend_Supported value="true" />
+
+    <!--;PD Source-->
+    <!-- will we ever clear USB_Suspend_Supported? -->
+    <vif:USB_Suspend_May_Be_Cleared value="true" />
+
+    <!-- remove FR_Swap_* when we enable CONFIG_USB_PD_FRS -->
+    <!--;Dual Role-->
+    <vif:FR_Swap_Supported_As_Initial_Sink value="true" />
+    <!--;PD Source-->
+    <vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink value="3">3A @ 5V</vif:FR_Swap_Type_C_Current_Capability_As_Initial_Sink>
+    <vif:SrcPdoList>
+      <vif:SrcPDO>
+        <!--Source PDO 1-->
+        <vif:Src_PD_OCP_OC_Debounce value="50">50 msec</vif:Src_PD_OCP_OC_Debounce>
+        <vif:Src_PD_OCP_OC_Threshold value="360">3600 mA</vif:Src_PD_OCP_OC_Threshold>
+      </vif:SrcPDO>
+    </vif:SrcPdoList>
+
+    <!-- SOP Discover ID -->
+    <vif:Product_Type_UFP_SOP value="0">Undefined</vif:Product_Type_UFP_SOP>
+    <vif:Product_Type_DFP_SOP value="2">PDUSB Host</vif:Product_Type_DFP_SOP>
+
+    <!-- USB4 Port -->
+    <vif:USB4_Lane_0_Adapter value="1" />
+    <vif:USB4_UFP_Supported value="false" />
+    <vif:USB4_DFP_Supported value="true" />
+    <vif:USB4_USB3_Tunneling_Supported value="true" />
+    <vif:USB4_DP_Tunneling_Supported value="true" />
+    <vif:USB4_CL1_State_Supported value="true" />
+    <vif:USB4_CL2_State_Supported value="true" />
+    <vif:USB4_Num_Retimers value="1" />
+    <vif:USB4_DP_Bit_Rate value="3">HBR3</vif:USB4_DP_Bit_Rate>
+    <vif:USB4_Num_DP_Lanes value="4">4 Lanes</vif:USB4_Num_DP_Lanes>
+
+  </vif:Component>
+</vif:VIF>

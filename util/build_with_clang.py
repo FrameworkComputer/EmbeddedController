@@ -141,6 +141,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "delbin",
     "dewatt",
     "dirinboz",
+    "dochi",
     "dood",
     "dooly",
     "dratini",
