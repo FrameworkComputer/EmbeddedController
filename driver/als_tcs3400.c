@@ -671,7 +671,7 @@ static int tcs3400_set_data_rate(const struct motion_sensor_t *s, int rate,
 	if (ret)
 		return ret;
 
-	data = (data & TCS_I2C_ENABLE_MASK) | mode;
+	data = (data & ~TCS_I2C_ENABLE_MASK) | mode;
 	ret = tcs3400_i2c_write8(s, TCS_I2C_ENABLE, data);
 
 	return ret;
