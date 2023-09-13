@@ -20,9 +20,15 @@
 
 #include <emul/emul_kb_raw.h>
 
+#define GPIO_DEVICE \
+	DEVICE_DT_GET(DT_GPIO_CTLR(NAMED_GPIOS_GPIO_NODE(ap_rst_l), gpios))
+#define EC_PWR_BTN_ODL_PIN \
+	DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(ec_pwr_btn_odl), gpios)
+
 ZTEST(keyboard_scan, test_boot_key)
 {
 	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(cros_kb_raw));
+	static const struct device *gpio_dev = GPIO_DEVICE;
 
 	emul_kb_raw_reset(dev);
 	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_NONE, NULL);
@@ -72,7 +78,14 @@ ZTEST(keyboard_scan, test_boot_key)
 	keyboard_scan_init();
 	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_NONE);
 
-	/* Case 6: BOOT_KEY_NONE after late sysjump */
+	/* Case 6: Power button -> BOOT_KEY_POWER */
+	emul_kb_raw_reset(dev);
+	gpio_emul_input_set(gpio_dev, EC_PWR_BTN_ODL_PIN, 0);
+	keyboard_scan_init();
+	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_POWER);
+	gpio_emul_input_set(gpio_dev, EC_PWR_BTN_ODL_PIN, 1);
+
+	/* Case 7: BOOT_KEY_NONE after late sysjump */
 	system_jumped_late_fake.return_val = 1;
 	emul_kb_raw_reset(dev);
 	zassert_ok(emulate_keystate(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH,
@@ -83,7 +96,7 @@ ZTEST(keyboard_scan, test_boot_key)
 	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_NONE);
 	system_jumped_late_fake.return_val = 0;
 
-	/* Case 7: Without reset-pin, boot key scan is canceled. */
+	/* Case 8: Without reset-pin, boot key scan is canceled. */
 	system_clear_reset_flags(EC_RESET_FLAG_RESET_PIN);
 	emul_kb_raw_reset(dev);
 	zassert_ok(emulate_keystate(KEYBOARD_ROW_ESC, KEYBOARD_COL_ESC, true));

@@ -70,6 +70,7 @@ enum boot_key {
 	BOOT_KEY_ESC = BIT(0),
 	BOOT_KEY_DOWN_ARROW = BIT(1),
 	BOOT_KEY_LEFT_SHIFT = BIT(2),
+	BOOT_KEY_POWER = BIT(3),
 };
 
 #if defined(HAS_TASK_KEYSCAN) && defined(CONFIG_KEYBOARD_BOOT_KEYS)

@@ -20,6 +20,7 @@
 #include "keyboard_scan.h"
 #include "keyboard_test.h"
 #include "lid_switch.h"
+#include "power_button.h"
 #include "printf.h"
 #include "switch.h"
 #include "system.h"
@@ -680,6 +681,9 @@ static uint32_t check_key_list(const uint8_t *state)
 		}
 	}
 
+	if (IS_ENABLED(CONFIG_POWER_BUTTON) && power_button_signal_asserted())
+		boot_key_mask |= BOOT_KEY_POWER;
+
 	/* If any other key was pressed, ignore all boot keys. */
 	for (c = 0; c < keyboard_cols; c++) {
 		if (curr_state[c]) {
@@ -813,10 +817,11 @@ void keyboard_scan_init(void)
 	boot_key_value = check_boot_key(debounced_state);
 
 	/*
-	 * If any key other than Esc or Left_Shift was pressed, do not trigger
-	 * recovery.
+	 * If any key other than Esc, Power, or Left_Shift was pressed, do not
+	 * trigger recovery.
 	 */
-	if (boot_key_value & ~(BOOT_KEY_ESC | BOOT_KEY_LEFT_SHIFT))
+	if (boot_key_value &
+	    ~(BOOT_KEY_ESC | BOOT_KEY_LEFT_SHIFT | BOOT_KEY_POWER))
 		return;
 
 #ifdef CONFIG_HOSTCMD_EVENTS
