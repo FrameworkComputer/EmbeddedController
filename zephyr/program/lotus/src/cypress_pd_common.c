@@ -1173,11 +1173,13 @@ static int cypd_update_power_status(int controller)
 	int rv = EC_SUCCESS;
 	int power_stat = 0;
 	int pd_controller_is_sink = (prev_charge_port & 0x02) >> 1;
+	bool battery_can_discharge = (battery_is_present() == BP_YES) &
+		battery_get_disconnect_state();
 
 	if (controller < PD_CHIP_COUNT) {
-		if (battery_is_present() == BP_YES)
+		if (battery_can_discharge)
 			power_stat |= BIT(3);
-		if ((extpower_is_present() && battery_is_present() == BP_YES) ||
+		if ((extpower_is_present() && battery_can_discharge) ||
 			(extpower_is_present() && controller != pd_controller_is_sink && prev_charge_port >=0))
 			power_stat |= BIT(1) + BIT(2);
 
@@ -1186,9 +1188,9 @@ static int cypd_update_power_status(int controller)
 	} else {
 		for (i = 0; i < PD_CHIP_COUNT; i++) {
 			power_stat = 0;
-			if (battery_is_present() == BP_YES)
+			if (battery_can_discharge)
 				power_stat |= BIT(3);
-			if ((extpower_is_present() && battery_is_present() == BP_YES) ||
+			if ((extpower_is_present() && battery_can_discharge) ||
 				(extpower_is_present() && i != pd_controller_is_sink && prev_charge_port >=0))
 				power_stat |= BIT(1) + BIT(2);
 			CPRINTS("%s:%d=0x%x", __func__,i, power_stat);
@@ -1206,14 +1208,15 @@ static void perform_error_recovery(int controller)
 	if (controller < 2)
 		for (i = 0; i < 2; i++) {
 			if (!((controller*2 + i) == prev_charge_port &&
-			    battery_is_present() != BP_YES) &&
+				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED) &&
 			    (pd_port_states[i].c_state != CCG_STATUS_NOTHING))
 				cypd_write_reg8(controller, CCG_ERR_RECOVERY_REG, i);
 		}
 	else {
 		/* Hard reset all ports that are not supplying power in dead battery mode */
 		for (i = 0; i < PD_PORT_COUNT; i++) {
-			if (!(i == prev_charge_port && battery_is_present() != BP_YES) &&
+			if (!(i == prev_charge_port &&
+				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED) &&
 			    (pd_port_states[i].c_state != CCG_STATUS_NOTHING)) {
 				CPRINTS("Hard reset %d", i);
 				cypd_write_reg8(i >> 1, CCG_ERR_RECOVERY_REG, i & 1);
