@@ -804,8 +804,7 @@ static uint32_t check_key_list(const uint8_t *state)
 	/* If any other key was pressed, ignore all boot keys. */
 	for (c = 0; c < keyboard_cols; c++) {
 		if (curr_state[c]) {
-			CPRINTS("Undefined boot key: state[%d]=0x%02x", c,
-				curr_state[c]);
+			print_state(curr_state, "undefined boot key");
 			return BOOT_KEY_NONE;
 		}
 	}
