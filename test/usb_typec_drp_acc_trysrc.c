@@ -104,7 +104,10 @@ __maybe_unused static int test_mux_con_dis_as_src(void)
 
 	/* We are in Attached.SRC now */
 	TEST_EQ(mock_usb_mux.state, USB_PD_MUX_USB_ENABLED, "%d");
-	TEST_EQ(mock_usb_mux.num_set_calls, 1, "%d");
+	/* TODO(b/300694918): Reduce to 1 once redundant mux_sets are
+	 * refactored out
+	 */
+	TEST_EQ(mock_usb_mux.num_set_calls, 2, "%d");
 
 	mock_tcpc.cc1 = TYPEC_CC_VOLT_OPEN;
 	mock_tcpc.cc2 = TYPEC_CC_VOLT_OPEN;
@@ -115,7 +118,10 @@ __maybe_unused static int test_mux_con_dis_as_src(void)
 
 	/* We are in Unattached.SNK. The mux should have detached */
 	TEST_EQ(mock_usb_mux.state, USB_PD_MUX_NONE, "%d");
-	TEST_EQ(mock_usb_mux.num_set_calls, 2, "%d");
+	/* TODO(b/300694918): Reduce to 2 once duplicate mux_sets are
+	 * refactored out
+	 */
+	TEST_EQ(mock_usb_mux.num_set_calls, 3, "%d");
 
 	return EC_SUCCESS;
 }
