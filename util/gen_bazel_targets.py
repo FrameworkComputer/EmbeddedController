@@ -17,7 +17,6 @@ from typing import List, Optional
 EC_DIR = Path(__file__).resolve().parent.parent
 LEGACY_EC_BOARDS_DIR = EC_DIR / "board"
 ZEPHYR_DIR = EC_DIR / "zephyr"
-PRIVATE_ZEPHYR_DIR = EC_DIR / "private" / "zephyr"
 ZMAKE_DIR = ZEPHYR_DIR / "zmake"
 DEFAULT_OUTPUT = EC_DIR / "bazel" / "all_targets.generated.bzl"
 
@@ -41,9 +40,10 @@ from chromite.format import formatters  # pylint: disable=wrong-import-position
 
 def _find_zephyr_ec_projects():
     """Find all Zephyr EC projects."""
-    for project in zmake.project.find_projects(
-        [ZEPHYR_DIR, PRIVATE_ZEPHYR_DIR]
-    ).values():
+    modules = zmake.modules.locate_from_checkout(find_checkout())
+    projects_path = zmake.modules.default_projects_dirs(modules)
+
+    for project in zmake.project.find_projects(projects_path).values():
         result = {"board": project.config.project_name}
         extra_modules = [x for x in project.config.modules if x != "ec"]
         if extra_modules:

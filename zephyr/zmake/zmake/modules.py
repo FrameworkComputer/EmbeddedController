@@ -100,3 +100,21 @@ def setup_module_symlinks(output_dir, modules):
             cmake_defs={"ZEPHYR_MODULES": ";".join(map(str, module_links))}
         )
     return build_config.BuildConfig()
+
+
+def default_projects_dirs(modules):
+    """Get the default search path for projects.
+
+    Args:
+        modules: A dictionary of module names mapping to paths.
+
+    Returns:
+        A list of paths that should be searched for projects, if they exist.
+    """
+    ret = []
+    if "ec" in modules:
+        ret.append(modules["ec"] / "zephyr" / "program")
+        ret.append(modules["ec"] / "private" / "zephyr" / "program")
+    if "ish" in modules:
+        ret.append(modules["ish"] / "program")
+    return ret

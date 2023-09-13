@@ -194,10 +194,9 @@ class Zmake:
             for projects_dir in projects_dirs:
                 self.projects_dirs.append(projects_dir.resolve())
         else:
-            self.projects_dirs = [
-                self.module_paths["ec"] / "zephyr",
-                self.module_paths["ec"] / "private" / "zephyr",
-            ]
+            self.projects_dirs = zmake.modules.default_projects_dirs(
+                self.module_paths
+            )
 
         if jobserver:
             self.jobserver = jobserver
