@@ -13,6 +13,7 @@
 #include "keyboard_scan.h"
 #include "lpc.h"
 #include "system.h"
+#include "usbc/pd_task_intel_altmode.h"
 #include "vboot.h"
 #include "watchdog.h"
 #include "zephyr_espi_shim.h"
@@ -130,4 +131,8 @@ void ec_app_main(void)
 		ap_pwrseq_task_start();
 	}
 #endif
+
+	if (IS_ENABLED(CONFIG_USB_PD_ALTMODE_INTEL)) {
+		intel_altmode_task_start();
+	}
 }
