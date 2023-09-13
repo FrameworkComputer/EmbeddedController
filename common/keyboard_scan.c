@@ -36,11 +36,11 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_KEYSCAN, outstr)
 #define CPRINTF(format, args...) cprintf(CC_KEYSCAN, format, ##args)
-#define CPRINTS(format, args...) cprints(CC_KEYSCAN, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_KEYSCAN, "KB " format, ##args)
 
 #ifdef CONFIG_KEYBOARD_DEBUG
 #define CPUTS5(outstr) cputs(CC_KEYSCAN, outstr)
-#define CPRINTS5(format, args...) cprints(CC_KEYBOARD, format, ##args)
+#define CPRINTS5(format, args...) cprints(CC_KEYBOARD, "KB " format, ##args)
 #else
 #define CPUTS5(outstr)
 #define CPRINTS5(format, args...)
@@ -445,13 +445,13 @@ static int check_runtime_keys(const uint8_t *state)
 	/* Check individual keys */
 	if (state[KEYBOARD_COL_KEY_R] == KEYBOARD_MASK_KEY_R) {
 		/* R = reboot */
-		CPRINTS("KB warm reboot");
+		CPRINTS("warm reboot");
 		keyboard_clear_buffer();
 		chipset_reset(CHIPSET_RESET_KB_WARM_REBOOT);
 		return 1;
 	} else if (state[KEYBOARD_COL_KEY_H] == KEYBOARD_MASK_KEY_H) {
 		/* H = hibernate */
-		CPRINTS("KB hibernate");
+		CPRINTS("hibernate");
 		system_enter_hibernate(0, 0);
 		return 1;
 	}
@@ -459,13 +459,13 @@ static int check_runtime_keys(const uint8_t *state)
 	/* Check individual keys */
 	if (state[key_typ.col_key_r] == KEYBOARD_MASK_KEY_R) {
 		/* R = reboot */
-		CPRINTS("KB warm reboot");
+		CPRINTS("warm reboot");
 		keyboard_clear_buffer();
 		chipset_reset(CHIPSET_RESET_KB_WARM_REBOOT);
 		return 1;
 	} else if (state[key_typ.col_key_h] == KEYBOARD_MASK_KEY_H) {
 		/* H = hibernate */
-		CPRINTS("KB hibernate");
+		CPRINTS("hibernate");
 		system_enter_hibernate(0, 0);
 		return 1;
 	}
@@ -689,7 +689,7 @@ static uint32_t check_key_list(const uint8_t *state)
 		}
 	}
 
-	CPRINTS("KB boot key mask %x", boot_key_mask);
+	CPRINTS("boot key mask %x", boot_key_mask);
 	return boot_key_mask;
 }
 
@@ -787,7 +787,7 @@ void keyboard_scan_init(void)
 		 * Strict debouncer is prone to keypress reordering if debounce
 		 * durations for down and up are not equal. crbug.com/547131
 		 */
-		CPRINTS("KB WARN: Debounce durations not equal");
+		CPRINTS("WARN: Debounce durations not equal");
 	}
 
 	/* Configure refresh key matrix */
@@ -856,7 +856,7 @@ void keyboard_scan_task(void *u)
 
 	while (1) {
 		/* Enable all outputs */
-		CPRINTS5("KB wait");
+		CPRINTS5("wait");
 
 		keyboard_raw_enable_interrupt(1);
 
@@ -868,8 +868,7 @@ void keyboard_scan_task(void *u)
 			new_disable_scanning = disable_scanning_mask;
 
 			if (local_disable_scanning != new_disable_scanning)
-				CPRINTS("KB disable_scanning_mask changed: "
-					"0x%08x",
+				CPRINTS("disable_scanning_mask changed: 0x%08x",
 					new_disable_scanning);
 
 			if (!new_disable_scanning) {
@@ -916,7 +915,7 @@ void keyboard_scan_task(void *u)
 		force_poll = 0;
 
 		/* Enter polling mode */
-		CPRINTS5("KB poll");
+		CPRINTS5("poll");
 		keyboard_raw_enable_interrupt(0);
 		keyboard_raw_drive_column(KEYBOARD_COLUMN_NONE);
 
