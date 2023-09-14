@@ -13,6 +13,8 @@
 #include "board_host_command.h"
 #include "charger.h"
 #include "charge_state.h"
+#include "charge_manager.h"
+#include "cypress_pd_common.h"
 #include "console.h"
 #include "customized_shared_memory.h"
 #include "hooks.h"
@@ -328,6 +330,46 @@ __override void board_battery_compensate_params(struct batt_params *batt)
 	batt->flags &= ~BATT_FLAG_BAD_ANY;
 	batt->flags |= BATT_FLAG_RESPONSIVE;
 	batt_cache.flags |= BATT_FLAG_RESPONSIVE;
+}
+
+void board_cut_off(void)
+{
+	const struct board_batt_params *params = get_batt_params();
+	int rv;
+
+	/* If battery is unknown can't send ship mode command */
+	if (!params) {
+		CPRINTS("Battery unknown cutoff failed");
+		return;
+	}
+
+	/* Ship mode command requires writing 2 data values */
+	rv = sb_write(params->fuel_gauge.ship_mode.reg_addr,
+		params->fuel_gauge.ship_mode.reg_data[0]);
+	rv |= sb_write(params->fuel_gauge.ship_mode.reg_addr,
+		params->fuel_gauge.ship_mode.reg_data[1]);
+
+	if (rv == EC_RES_SUCCESS) {
+		CPRINTS("Battery cutoff is successful");
+		set_battery_in_cut_off();
+	} else {
+		CPRINTS("Battery cutoff has failed");
+	}
+}
+DECLARE_DEFERRED(board_cut_off);
+
+__override int board_cut_off_battery(void)
+{
+	int power_uw = charge_manager_get_power_limit_uw();
+
+	if (power_uw < 100000000) {
+		hook_call_deferred(&board_cut_off_data, 0);
+	} else {
+		force_disable_epr_mode();
+		hook_call_deferred(&board_cut_off_data, 1000*MSEC);
+	}
+
+	return EC_RES_ERROR;
 }
 
 /*****************************************************************************/

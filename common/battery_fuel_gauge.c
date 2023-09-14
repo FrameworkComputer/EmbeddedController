@@ -231,7 +231,7 @@ static int cut_off_battery_sb_write(const struct ship_mode_info *ship_mode)
 	return sb_write(ship_mode->reg_addr, ship_mode->reg_data[1]);
 }
 
-int board_cut_off_battery(void)
+__overridable int board_cut_off_battery(void)
 {
 	const struct board_batt_params *params = get_batt_params();
 	int rv;

@@ -292,12 +292,14 @@ static void update_external_cc_mux(int port, int cc)
 	}
 }
 
+static bool disable_epr_mode;
+
 static void enter_epr_mode(void)
 {
 	int port_idx;
 
-	/* We don't need to enter EPR mode at S5/G3 state */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+	/* We don't need to enter EPR mode at S5/G3 state or epr mode disabled*/
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) || disable_epr_mode)
 		return;
 
 	/**
@@ -332,6 +334,12 @@ static void exit_epr_mode(void)
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, exit_epr_mode, HOOK_PRIO_DEFAULT);
+
+void force_disable_epr_mode(void)
+{
+	disable_epr_mode = true;
+	exit_epr_mode();
+}
 #endif
 
 static void pd0_update_state_deferred(void)
