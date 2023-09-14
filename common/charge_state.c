@@ -1932,16 +1932,22 @@ int charge_set_output_current_limit(int chgnum, int ma, int mv)
 }
 #endif
 
-int charge_set_input_current_limit(int ma, int mv)
+static int derate_input_current(int ma)
 {
-	__maybe_unused int chgnum = 0;
-
 #ifdef CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT
 	if (CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT != 0) {
 		ma = (ma * (100 - CONFIG_CHARGER_INPUT_CURRENT_DERATE_PCT)) /
 		     100;
 	}
 #endif
+	return ma;
+}
+
+int charge_set_input_current_limit(int ma, int mv)
+{
+	int chgnum = 0;
+
+	ma = derate_input_current(ma);
 #ifdef CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT
 	if (CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT > 0) {
 		ma = MAX(ma, CONFIG_CHARGER_MIN_INPUT_CURRENT_LIMIT);
@@ -1975,8 +1981,10 @@ int charge_set_input_current_limit(int ma, int mv)
 		 */
 
 		if (mv > 0 &&
-		    mv * curr.desired_input_current > PD_MAX_POWER_MW * 1000)
+		    mv * curr.desired_input_current > PD_MAX_POWER_MW * 1000) {
 			ma = (PD_MAX_POWER_MW * 1000) / mv;
+			ma = derate_input_current(ma);
+		}
 		/*
 		 * If the active charger has already been initialized to at
 		 * least this current level, nothing left to do.
