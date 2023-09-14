@@ -8,4 +8,4 @@
 #include "i2c.dtsi"
 #include "interrupts.dtsi"
 #include "ish.dtsi"
-#include "../motionsense.dtsi"
+#include <program/rex/motionsense.dtsi>
