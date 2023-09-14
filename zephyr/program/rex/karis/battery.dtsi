@@ -8,13 +8,13 @@
 		default_battery: cosmx-2 {
 			compatible = "cosmx,ap20cbl-2", "battery-smart";
 		};
-		cosmx-3 {
+		cosmx_3: cosmx-3 {
 			compatible = "cosmx,ap20cbl-3", "battery-smart";
 		};
-		lges-ap23a8l {
+		lges_ap23a8l: lges-ap23a8l {
 			compatible = "lges,ap23a8l", "battery-smart";
 		};
-		panasonic-ap23a5l {
+		panasonic_ap23a5l: panasonic-ap23a5l {
 			compatible = "panasonic,ap23a5l", "battery-smart";
 		};
 	};

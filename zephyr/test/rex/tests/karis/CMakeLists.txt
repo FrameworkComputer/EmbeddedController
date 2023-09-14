@@ -12,3 +12,7 @@ target_sources_ifdef(CONFIG_TEST_PROJECT_USB_CONFIG app PRIVATE
 target_sources_ifdef(CONFIG_TEST_PROJECT_KEYBOARD app PRIVATE src/keyboard.c)
 target_sources_ifdef(CONFIG_TEST_PROJECT_KEYBOARD app PRIVATE
 	${PLATFORM_EC_PROGRAM_DIR}/rex/karis/src/keyboard.c)
+
+target_sources_ifdef(CONFIG_TEST_PROJECT_CHARGER app PRIVATE src/charger.c)
+target_sources_ifdef(CONFIG_TEST_PROJECT_CHARGER app PRIVATE
+	${PLATFORM_EC_PROGRAM_DIR}/rex/karis/src/charger.c)

@@ -5,3 +5,15 @@
 
 #include "../native_posix.overlay"
 #include "../../../../program/rex/karis/cbi.dtsi"
+
+/ {
+	aliases {
+		gpio-wp = &gpio_ec_wp_l;
+	};
+
+	named-gpios {
+		gpio_ec_wp_l: ec_wp_l {
+			gpios = <&gpio1 13 GPIO_OUTPUT>;
+		};
+	};
+};
