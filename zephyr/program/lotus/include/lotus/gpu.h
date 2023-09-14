@@ -15,4 +15,6 @@ bool gpu_module_fault(void);
 
 void set_host_dp_ready(int ready);
 
+void update_gpu_ac_power_state(void);
+
 #endif /* __BOARD_GPU_H__ */

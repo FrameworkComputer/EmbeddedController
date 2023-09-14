@@ -59,15 +59,15 @@ bool gpu_module_fault(void)
 	return module_fault;
 }
 
-static void update_gpu_ac_power_state(void)
+void update_gpu_ac_power_state(void)
 {
-	if (extpower_is_present() && module_present) {
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) && module_present) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), 1);
 	} else {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), 0);
 	}
 }
-DECLARE_HOOK(HOOK_AC_CHANGE, update_gpu_ac_power_state, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_AC_CHANGE, update_gpu_ac_power_state, HOOK_PRIO_FIRST);
 
 /* After GPU detect, update the thermal configuration */
 void update_thermal_configuration(void)
