@@ -45,7 +45,7 @@ else
   "modprobe."
     ret=0
     sudo rmmod i2c-pseudo &> /dev/null || true
-    sudo insmod i2c-pseudo.ko || ret="$?"
+    sudo insmod drivers/i2c/i2c-pseudo.ko || ret="$?"
     if [ "$ret" -ne 0 ]; then
       make clean
       exit "$ret"
