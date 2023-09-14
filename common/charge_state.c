@@ -1057,22 +1057,14 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, bat_low_voltage_throttle_reset,
 static int get_desired_input_current(enum battery_present batt_present,
 				     const struct charger_info *const info)
 {
-	if (batt_present == BP_YES || system_is_locked() || base_connected()) {
 #ifdef CONFIG_CHARGE_MANAGER
-		int ilim = charge_manager_get_charger_current();
-		return ilim == CHARGE_CURRENT_UNINITIALIZED ?
-			       CHARGE_CURRENT_UNINITIALIZED :
-			       MAX(CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT, ilim);
+	int ilim = charge_manager_get_charger_current();
+	return ilim == CHARGE_CURRENT_UNINITIALIZED ?
+		       CHARGE_CURRENT_UNINITIALIZED :
+		       MAX(CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT, ilim);
 #else
-		return CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT;
+	return CONFIG_CHARGER_DEFAULT_CURRENT_LIMIT;
 #endif
-	} else {
-#ifdef CONFIG_USB_POWER_DELIVERY
-		return MIN(PD_MAX_CURRENT_MA, info->input_current_max);
-#else
-		return info->input_current_max;
-#endif
-	}
 }
 
 static void wakeup_battery(int *need_static)
