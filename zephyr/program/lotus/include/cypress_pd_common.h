@@ -43,7 +43,9 @@
 #define CCG_CUST_C_CTRL_CONTROL_REG	0x003B
 #define CCG_HPI_VERSION			0x003C
 /*User registers from 0x40 to 0x48 are used for BB retimer */
-#define CCG_ERR_RECOVERY_REG		0x0040
+#define CCG_DPM_CMD_REG			0x0040
+#define CCG_MUX_CFG_REG			0x0041
+#define CCG_DEINIT_PORT_REG		0x0042
 #define CCG_ICL_STS_REG			0x0042
 #define CCG_ICL_BB_RETIMER_CMD_REG	0x0046
 #define CCG_ICL_BB_RETIMER_DAT_REG	0x0048
@@ -233,7 +235,7 @@ enum pd_task_evt {
 	CCG_EVT_UCSI_PPM_RESET = BIT(13),
 	CCG_EVT_CFET_VBUS_OFF = BIT(14),
 	CCG_EVT_CFET_VBUS_ON = BIT(15),
-	CCG_EVT_UNUSED = BIT(16),
+	CCG_EVT_DPALT_DISABLE = BIT(16),
 	CCG_EVT_PDO_INIT_0 = BIT(17),
 	CCG_EVT_PDO_INIT_1 = BIT(18),
 	CCG_EVT_PDO_C0P0 = BIT(19),
@@ -267,6 +269,30 @@ enum ccg_pd_command {
 	CCG_PD_CMD_INITIATE_EPR_ENTRY = 0x47,
 	CCG_PD_CMD_INITIATE_EPR_EXIT = 0x48,
 };
+
+/************************************************
+ * USER COMMANDS for register 0x0040
+ ************************************************/
+enum ccg_userreg_command {
+	CCG_PD_USER_CMD_TYPEC_ERR_RECOVERY = 0x04,
+	CCG_PD_USER_CMD_PD_SEND_HARD_RESET = 0x85,
+	CCG_PD_USER_CMD_PD_SEND_SOFT_RESET = 0x86,
+	CCG_PD_USER_CMD_DATA_RECOVERY      = 0xFF
+};
+
+/************************************************
+ * USER MUXCFG for register 0x0041
+ * This allows us to override the PD mux
+ * configuration for a specific port.
+ ************************************************/
+enum ccg_usermux_configuration {
+	CCG_PD_USER_MUX_CONFIG_ISOLATE = 0,
+	CCG_PD_USER_MUX_CONFIG_SAFE,
+	CCG_PD_USER_MUX_CONFIG_SS_ONLY,
+	CCG_PD_USER_MUX_CONFIG_DEBUG_ACCESSORY = 0x0A
+};
+
+
 
 /************************************************
  *	RESPONSE DEFINITION

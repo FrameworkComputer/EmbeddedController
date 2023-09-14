@@ -1205,12 +1205,17 @@ static int cypd_update_power_status(int controller)
 static void perform_error_recovery(int controller)
 {
 	int i;
+	uint8_t data[2] = {0x00, CCG_PD_USER_CMD_TYPEC_ERR_RECOVERY};
+
 	if (controller < 2)
 		for (i = 0; i < 2; i++) {
 			if (!((controller*2 + i) == prev_charge_port &&
 				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED) &&
 			    (pd_port_states[i].c_state != CCG_STATUS_NOTHING))
-				cypd_write_reg8(controller, CCG_ERR_RECOVERY_REG, i);
+				data[0] = PORT_TO_CONTROLLER_PORT(i);
+				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
+									CCG_DPM_CMD_REG,
+									data, 2);
 		}
 	else {
 		/* Hard reset all ports that are not supplying power in dead battery mode */
@@ -1219,12 +1224,27 @@ static void perform_error_recovery(int controller)
 				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED) &&
 			    (pd_port_states[i].c_state != CCG_STATUS_NOTHING)) {
 				CPRINTS("Hard reset %d", i);
-				cypd_write_reg8(i >> 1, CCG_ERR_RECOVERY_REG, i & 1);
+				data[0] = PORT_TO_CONTROLLER_PORT(i);
+				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
+									CCG_DPM_CMD_REG,
+									data, 2);
 			}
 		}
 	}
 	return ;
 }
+
+static void port_to_safe_mode(int port)
+{
+	uint8_t data[2] = {0x00, CCG_PD_USER_MUX_CONFIG_SAFE};
+
+	data[0] = PORT_TO_CONTROLLER_PORT(port);
+	cypd_write_reg_block(PORT_TO_CONTROLLER(port), CCG_MUX_CFG_REG, data, 2);
+	cypd_write_reg_block(PORT_TO_CONTROLLER(port), CCG_DEINIT_PORT_REG, data, 1);
+	CPRINTS("P%d: Safe", port);
+
+}
+
 enum power_state pd_prev_power_state = POWER_G3;
 void update_system_power_state(int controller)
 {
@@ -1469,7 +1489,108 @@ int cypd_device_int(int controller)
 
 	return EC_SUCCESS;
 }
+static bool pending_dp_poweroff[PD_PORT_COUNT];
+static void poweroff_dp_check(void)
+{
+	int i;
+	int alt_active = 0;
 
+	for (i = 0; i < PD_PORT_COUNT; i++) {
+		if (pending_dp_poweroff[i]) {
+			/* see if alt mode is active */
+			cypd_read_reg8(PORT_TO_CONTROLLER(i),
+				CCG_DP_ALT_MODE_CONFIG_REG(PORT_TO_CONTROLLER_PORT(i)),
+				&alt_active);
+			if ((alt_active & BIT(1)) == 0) {
+				port_to_safe_mode(i);
+			}
+			pending_dp_poweroff[i] = 0;
+		}
+	}
+}
+static void poweroff_dp_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CCG_EVT_DPALT_DISABLE);
+
+}
+DECLARE_DEFERRED(poweroff_dp_deferred);
+
+struct framework_dp_ids {
+	uint16_t vid;
+	uint16_t pid;
+} const cypd_altmode_ids[] = {
+	{0x32AC, 0x0002},
+	{0x32AC, 0x0003},
+};
+struct match_vdm_header {
+	uint8_t idx;
+	uint8_t val;
+} const framework_vdm_hdr_match[] = {
+	{0, 0x8f},
+	{1, 0x52},
+	{2, 0},
+	{4, 0x41},
+	{5, 0xa0},
+	{6, 0x00},
+	{7, 0xFF},
+	/*{8, 0xAC}, Framework VID */
+	/*{9, 0x32}, */
+	{10, 0x00},
+	{11, 0x6C}
+};
+
+void cypd_handle_vdm(int controller, int port, uint8_t *data, int len)
+{
+	/* parse vdm
+	 * if we get a DP alt mode VDM that matches our
+	 * HDMI or DP VID/PID we will start a timer
+	 * to set the port mux to safe/isolate
+	 * if we get a enter alt mode later on,
+	 * we will cancel the timer so that PD can
+	 * properly enter the alt mode
+	 *
+	 *                       ID HDR            ProductVDO
+	 *   hdr  SOP R VDMHDR   VDO      VDO      VDO
+	 * HDMI
+	 * 0x8f52 00 00 41a000ff ac32006c 00000000 00000200 18000000
+	 * DP
+	 * 0x8f52 00 00 41a000ff ac32006c 00000000 00000300 18000000
+	 *   0 1  2  3  4        8        12       16
+	 */
+	int i;
+	uint16_t vid, pid;
+	bool trigger_deferred_update = false;
+
+	for (i = 0; i < sizeof(framework_vdm_hdr_match)/sizeof(struct match_vdm_header); i++) {
+		if (framework_vdm_hdr_match[i].idx >= len) {
+			continue;
+		}
+		if (data[framework_vdm_hdr_match[i].idx] !=
+			framework_vdm_hdr_match[i].val) {
+			return;
+			}
+	}
+
+	for (i = 0; i < sizeof(cypd_altmode_ids)/sizeof(struct framework_dp_ids); i++) {
+		vid = cypd_altmode_ids[i].vid;
+		pid = cypd_altmode_ids[i].pid;
+		if ((vid & 0xFF) == data[8] &&
+			((vid>>8) & 0xFF) == data[9] &&
+			(pid & 0xFF) == data[18] &&
+			((pid>>8) & 0xFF) == data[19]
+			) {
+			pending_dp_poweroff[port + (controller<<1)] = true;
+			trigger_deferred_update = true;
+				CPRINTS(" vdm vidpid match");
+
+		}
+
+	}
+	if (trigger_deferred_update) {
+		hook_call_deferred(&poweroff_dp_deferred_data, 5000 * MSEC);
+	}
+
+}
 void cypd_port_int(int controller, int port)
 {
 	int i, rv, response_len;
@@ -1530,6 +1651,12 @@ void cypd_port_int(int controller, int port)
 			sop_type = TCPCI_MSG_SOP_PRIME_PRIME;
 		cypd_handle_extend_msg(controller, port, response_len, sop_type);
 		CPRINTS("CYP_RESPONSE_RX_EXT_MSG");
+		break;
+	case CCG_RESPONSE_VDM_RX:
+		i2c_read_offset16_block(i2c_port, addr_flags,
+			CCG_READ_DATA_MEMORY_REG(port, 0), data2, MIN(response_len, 32));
+		cypd_handle_vdm(controller, port, data2, response_len);
+		CPRINTS("CCG_RESPONSE_VDM_RX");
 		break;
 	default:
 		if (response_len && verbose_msg_logging) {
@@ -1678,6 +1805,10 @@ void cypd_interrupt_handler_task(void *p)
 			cypd_pdo_init(0, 1, CCG_PD_CMD_SET_TYPEC_3A);
 			cypd_pdo_init(1, 1, CCG_PD_CMD_SET_TYPEC_3A);
 			task_wait_event_mask(TASK_EVENT_TIMER, 10);
+		}
+
+		if (evt & CCG_EVT_DPALT_DISABLE) {
+			poweroff_dp_check();
 		}
 
 		if (evt & CCG_EVT_PDO_C0P0)
@@ -1887,13 +2018,15 @@ static int cmd_cypd_get_status(int argc, const char **argv)
 			for (p = 0; p < 2; p++) {
 				CPRINTS("=====Port %d======", p);
 				cypd_read_reg_block(i, CCG_PD_STATUS_REG(p), data16, 4);
-				CPRINTS("PD_STATUS %s DataRole:%s PowerRole:%s Vconn:%s Partner:%s EPR:%s",
+				CPRINTS("PD_STATUS %s DataRole:%s PowerRole:%s Vconn:%s Partner:%s EPR:%s %sCable:%s",
 						data16[1] & BIT(2) ? "Contract" : "NoContract",
 						data16[0] & BIT(6) ? "DFP" : "UFP",
 						data16[1] & BIT(0) ? "Source" : "Sink",
 						data16[1] & BIT(5) ? "En" : "Dis",
 						data16[2] & BIT(3) ? "Un-chunked" : "Chunked",
-						data16[2] & BIT(7) ? "EPR" : "Non EPR");
+						data16[2] & BIT(7) ? "EPR" : "Non EPR",
+						data16[1] & BIT(3) ? "EMCA " : "",
+						data16[2] & BIT(6) ? "Active" : "Passive");
 				cypd_read_reg8(i, CCG_TYPE_C_STATUS_REG(p), &data);
 				CPRINTS("   TYPE_C_STATUS : %s %s %s %s %s",
 							data & 0x1 ? "Connected" : "Not Connected",
