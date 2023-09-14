@@ -149,7 +149,7 @@ void battery_customize(struct charge_state_data *curr_batt)
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BATT_AVER_TEMP) =
 					(curr_batt->batt.temperature - 2731) / 10;
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BATT_PERCENTAGE) =
-					curr_batt->batt.display_charge / 10;
+					batt_os_percentage / 10;
 
 	if (curr_batt->batt.status & STATUS_FULLY_CHARGED)
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BATT_STATUS) |= EC_BATT_FLAG_FULL;
