@@ -114,6 +114,9 @@ static void process_altmode_pd_data(int port)
 	union data_status_reg *prev_status =
 		&intel_altmode_task_data.data_status[port];
 	union data_control_reg control = { .i2c_int_ack = 1 };
+#ifdef CONFIG_PLATFORM_EC_USB_PD_DP_MODE
+	bool prv_hpd_lvl;
+#endif
 
 	LOG_INF("Process p%d data", port);
 
@@ -130,6 +133,11 @@ static void process_altmode_pd_data(int port)
 		LOG_ERR("P%d read Err=%d", port, rv);
 		return;
 	}
+
+#ifdef CONFIG_PLATFORM_EC_USB_PD_DP_MODE
+	/* Store previous HPD tatus */
+	prv_hpd_lvl = prev_status->hpd_lvl;
+#endif
 
 	/* Nothing to do if the data in the status register has not changed */
 	if (!memcmp(&status.raw_value[0], prev_status,
@@ -149,12 +157,31 @@ static void process_altmode_pd_data(int port)
 	if (status.usb2 || status.usb3_2)
 		mux |= USB_PD_MUX_USB_ENABLED;
 
+#ifdef CONFIG_PLATFORM_EC_USB_PD_DP_MODE
+	/* DP status */
+	if (status.dp)
+		mux |= USB_PD_MUX_DP_ENABLED;
+
+	if (status.hpd_lvl)
+		mux |= USB_PD_MUX_HPD_LVL;
+
+	if (status.dp_irq)
+		mux |= USB_PD_MUX_HPD_IRQ;
+#endif
+
 	LOG_INF("Set p%d mux=0x%x", port, mux);
 
 	usb_mux_set(port, mux,
 		    mux == USB_PD_MUX_NONE ? USB_SWITCH_DISCONNECT :
 					     USB_SWITCH_CONNECT,
 		    status.conn_ori);
+
+#ifdef CONFIG_PLATFORM_EC_USB_PD_DP_MODE
+	/* Update the change in HPD level */
+	if (prv_hpd_lvl != status.hpd_lvl)
+		usb_mux_hpd_update(port,
+				   status.hpd_lvl ? USB_PD_MUX_HPD_LVL : 0);
+#endif
 }
 
 static void intel_altmode_thread(void *unused1, void *unused2, void *unused3)
@@ -315,6 +342,13 @@ int pd_is_connected(int port)
 {
 	return intel_altmode_task_data.data_status[port].data_conn;
 }
+
+#ifdef CONFIG_PLATFORM_EC_USB_PD_DP_MODE
+__override uint8_t get_dp_pin_mode(int port)
+{
+	return intel_altmode_task_data.data_status[port].dp_pin << 2;
+}
+#endif
 
 /*
  * To suppress the compilation error, below functions are added with tested
