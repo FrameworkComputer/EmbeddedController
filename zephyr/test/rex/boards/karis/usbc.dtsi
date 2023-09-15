@@ -5,10 +5,15 @@
 
 #include "../native_posix.overlay"
 
+#include <cros/binman.dtsi>
 #include <dt-bindings/gpio_defines.h>
 #include <dt-bindings/usb_pd_tcpm.h>
 
 / {
+	chosen {
+		cros-ec,espi = &espi0;
+	};
+
 	/* Unused Stub */
 	named-i2c-ports {
 		compatible = "named-i2c-ports";

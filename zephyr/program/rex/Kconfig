@@ -28,6 +28,14 @@ config BOARD_HAS_INVALID_CHIP_DEVICE_ID_WORKAROUND
 	  Workaround the board of the Rex family which uses the sample chip
 	  with the incorrect device ID.
 
+config BOARD_REX_USBC_CONFIG
+	bool "Rex board usbc configuration"
+	default y
+	help
+	  Include baseboard rex usbc_config.c into binary. The usbc
+	  usbc configuration is that TCPC C0 is NCT38XX and BC1.2
+	  exists. Additionally, IOEX pins are defined.
+
 module = REX
 module-str = Rex board-specific code
 source "subsys/logging/Kconfig.template.log_config"

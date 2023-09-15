@@ -30,6 +30,9 @@
 		/delete-node/ usb_c0_rt_rst_ls_l;
 		/delete-node/ led_3_l;
 		/delete-node/ led_4_l;
+		/delete-node/ usb_c0_sbu_fault_odl;
+		/delete-node/ usb_c0_bc12_int_odl;
+		/delete-node/ usb_c1_bc12_int_odl;
 
 		gpio_usb_c0_frs_en: usb_c0_frs_en {
 			gpios = <&gpio4 2 GPIO_OUTPUT_LOW>;
@@ -73,6 +76,9 @@
 	gpio-interrupts {
 		/delete-node/ ec_accel;
 		/delete-node/ ec_als_rgb;
+		/delete-node/ c0_sbu_fault;
+		/delete-node/ usb_c0_bc12;
+		/delete-node/ usb_c1_bc12;
 
 		int_imu: ec_imu {
 			irq-pin = <&gpio_ec_imu_int_r_l>;
@@ -83,6 +89,8 @@
 };
 
 &i2c1_0 {
+	/delete-node/ nct38xx@70;
+
 	tcpc_rt1716_port0: rt1716@4e {
 		compatible = "richtek,rt1715-tcpc";
 		reg = <0x4e>;
@@ -126,6 +134,8 @@
 
 &usbc_port0 {
 	/delete-property/ bc12;
+
+	tcpc = <&tcpc_rt1716_port0>;
 };
 
 &usbc_port1 {

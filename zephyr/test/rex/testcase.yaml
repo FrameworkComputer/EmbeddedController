@@ -103,6 +103,7 @@ tests:
       - CONFIG_PLATFORM_EC_USBC_PPC_SYV682C=y
       - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE_PPC=y
       - CONFIG_PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG=y
+      - CONFIG_ESPI=y
   rex.karis.keyboard:
     extra_dtc_overlay_files:
       - boards/karis/karis.dtsi

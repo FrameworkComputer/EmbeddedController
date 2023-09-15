@@ -8,7 +8,7 @@ find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 zephyr_include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ "src/board_power.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY "src/battery_present.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/usbc_config.c")
+zephyr_library_sources_ifdef(CONFIG_BOARD_REX_USBC_CONFIG "src/usbc_config.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/usb_pd_policy.c")
 
 if(DEFINED CONFIG_BOARD_REX)
