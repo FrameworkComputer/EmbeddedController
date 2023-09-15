@@ -2,6 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# Picolibc isn't working in gitlab at the moment, and in any case we
+# don't use it with coreboot-sdk, so just explicitly disable it.
+choice LIBC_IMPLEMENTATION
+    default MINIMAL_LIBC
+endchoice
+
 rsource "app/Kconfig"
 rsource "drivers/Kconfig"
 rsource "emul/Kconfig"
