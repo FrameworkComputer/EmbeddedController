@@ -334,4 +334,16 @@ struct ec_response_expansion_bay_status {
 	uint8_t board_id_1;
 } __ec_align1;
 
+/*****************************************************************************/
+/*
+ * Get hardware diagnostics
+ */
+#define EC_CMD_GET_HW_DIAG 0x3E1C
+
+/* See enum diagnostics_device_idx */
+struct ec_response_get_hw_diag {
+	uint32_t hw_diagnostics;
+	uint8_t bios_complete;
+} __ec_align1;
+
 #endif /* __BOARD_HOST_COMMAND_H */

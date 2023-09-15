@@ -226,6 +226,20 @@ static enum ec_status cmd_diagnosis(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_DIAGNOSIS, cmd_diagnosis,
 			EC_VER_MASK(0));
 
+static enum ec_status cmd_get_hw_diag(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_hw_diag *r = args->response;
+
+	r->hw_diagnostics = get_hw_diagnostic();
+	r->bios_complete = is_bios_complete();
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_HW_DIAG, cmd_get_hw_diag,
+			EC_VER_MASK(0));
+
 #ifdef CONFIG_BOARD_AZALEA
 static enum ec_status update_keyboard_matrix(struct host_cmd_handler_args *args)
 {
