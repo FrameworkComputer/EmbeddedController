@@ -87,6 +87,25 @@ static void update_os_power_slider(int mode, int active_mpower)
 
 static void update_adapter_power_limit(int battery_percent, int active_mpower, bool with_dc)
 {
+	if (with_dc && (battery_percent < 3) && active_mpower > 0) {
+		power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 12000;
+		power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 12000;
+		power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 15000;
+
+		if (active_mpower >= 55000) {
+			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+				(active_mpower * 95 / 100) - 15000 + battery_mwatt_type;
+		} else {
+			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+				power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T];
+		}
+
+		/* CPB enable */
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT) &= ~CPB_DISABLE;
+		CPRINTS("DRAIN BATTERY");
+		return;
+	}
+
 	if ((!with_dc) && (active_mpower >= 100000)) {
 		/* AC (Without Battery) (ADP >= 100W) */
 		power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
