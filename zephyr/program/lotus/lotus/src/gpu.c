@@ -161,24 +161,6 @@ DECLARE_DEFERRED(gpu_interposer_toggle_deferred);
 
 __override void project_chassis_function(enum gpio_signal signal)
 {
-	int open_state = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l));
-
-	/* The dGPU SW is SW3 at DVT phase */
-	if (board_get_version() >= BOARD_VERSION_7)
-		return;
-
-	if (!open_state) {
-		/* Make sure the module is off as fast as possible! */
-		LOG_DBG("Powering off GPU");
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_en), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
-		module_present = 0;
-		update_thermal_configuration();
-	} else {
-		hook_call_deferred(&check_gpu_module_data, 50*MSEC);
-	}
 }
 
 void beam_open_interrupt(enum gpio_signal signal)
@@ -211,6 +193,7 @@ void beam_open_interrupt(enum gpio_signal signal)
 			}
 		} else
 			gpu_interposer_toggle_count = 0;
+			switch_status = 0;
 	} else {
 		hook_call_deferred(&check_gpu_module_data, 50*MSEC);
 	}
