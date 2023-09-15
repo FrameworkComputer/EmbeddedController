@@ -187,3 +187,9 @@ void board_led_init(void)
 }
 
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_led_init, HOOK_PRIO_DEFAULT);
+
+static void board_led_shutdown(void)
+{
+	led_auto_control(EC_LED_ID_POWER_LED, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_led_shutdown, HOOK_PRIO_DEFAULT);
