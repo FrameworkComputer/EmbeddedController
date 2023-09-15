@@ -61,6 +61,8 @@ class ptyDriver(object):
         """Connect to serial device and create pexpect interface."""
         assert self._fd is None
         self._fd = os.open(self._pty_path, os.O_RDWR | os.O_NONBLOCK)
+        # Let the USB device settle, old firmware needs it
+        time.sleep(0.1)
         # Don't allow forked processes to access.
         fcntl.fcntl(
             self._fd,
