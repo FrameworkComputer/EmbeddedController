@@ -4,6 +4,7 @@
 # found in the LICENSE file.
 
 """Build firmware with clang instead of gcc."""
+
 import argparse
 import concurrent
 from concurrent.futures import ThreadPoolExecutor
@@ -156,7 +157,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "fleex",
     "foob",
     "gaelin",
-    "garg",
     "gelarshie",
     "genesis",
     "gimble",
@@ -303,6 +303,8 @@ RISCV_BOARDS = [
 BOARDS_THAT_FAIL_WITH_CLANG = [
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
     "chocodile_vpdmcu",  # compilation error: b/254710459
+    # Boards that use CHIP:=npcx
+    "garg",
     "volteer",
 ]
 
