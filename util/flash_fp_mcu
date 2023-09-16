@@ -496,8 +496,6 @@ flash_fp_mcu_board() {
 
   echo "# Flashing '${chip_type}' with '${file}' over ${transport}"
 
-  check_hardware_write_protect_disabled
-
   if [[ "${transport}" == "UART" ]]; then
     if ! deviceid="$(get_uartid)"; then
       # Failure to get Device ID when transport is UART is not critical.
@@ -1044,6 +1042,9 @@ main() {
     echo "Cannot find GPIO chip: ${GPIO_CHIP}"
     exit "${EXIT_CONFIG}"
   fi
+
+  # Ensure hardware write-protect is disabled.
+  check_hardware_write_protect_disabled
 
   if [[ "${FLAGS_services}" -eq "${FLAGS_TRUE}" ]]; then
     echo "# Stopping biod"
