@@ -762,8 +762,8 @@ static int syv682x_init(int port)
 	if (!syv682x_is_sink(control_1) || (status & SYV682X_STATUS_VSAFE_0V)) {
 		/*
 		 * Disable both power paths,
-		 * set HV_ILIM to 3.3A,
-		 * set 5V_ILIM to 3.3A,
+		 * set HV_ILIM to board default,
+		 * set 5V_ILIM to 1.25A,
 		 * set HV direction to sink,
 		 * select HV channel.
 		 */
