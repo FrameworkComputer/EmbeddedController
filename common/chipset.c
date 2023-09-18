@@ -35,6 +35,17 @@ DECLARE_CONSOLE_COMMAND(apreset, command_apreset, NULL, "Issue AP reset");
 
 static int command_apshutdown(int argc, const char **argv)
 {
+	/*
+	 * TODO: Fix the problem that CHIPSET_SHUTDOWN_CONSOLE_CMD is
+	 * overwritten by CHIPSET_SHUTDOWN_POWERFAIL (in intel_x86.c).
+	 */
+	if (IS_ENABLED(CONFIG_POWER_BUTTON_INIT_IDLE)) {
+		chip_save_reset_flags(chip_read_reset_flags() |
+				      EC_RESET_FLAG_AP_IDLE);
+		system_set_reset_flags(EC_RESET_FLAG_AP_IDLE);
+		CPRINTS("Saved AP_IDLE flag");
+	}
+
 	chipset_force_shutdown(CHIPSET_SHUTDOWN_CONSOLE_CMD);
 	return EC_SUCCESS;
 }
