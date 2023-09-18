@@ -70,7 +70,7 @@ def log_cmd(cmd, env=None):
 
 def find_checkout():
     """Find the path to the base of the checkout (e.g., ~/chromiumos)."""
-    for path in pathlib.Path(__file__).parents:
+    for path in pathlib.Path(__file__).resolve().parents:
         if (path / ".repo").is_dir():
             return path
     raise FileNotFoundError("Unable to locate the root of the checkout")
