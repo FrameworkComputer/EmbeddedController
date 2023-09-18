@@ -49,7 +49,8 @@ void one_wire_uart_enable(const struct device *dev);
  * @param payload Received payload.
  * @param size Size of payload.
  */
-typedef void (*one_wire_uart_msg_received_cb_t)(uint8_t cmd, uint8_t *payload,
+typedef void (*one_wire_uart_msg_received_cb_t)(uint8_t cmd,
+						const uint8_t *payload,
 						int size);
 
 /**

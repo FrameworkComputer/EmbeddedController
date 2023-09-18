@@ -16,7 +16,7 @@
 
 const static struct device *dev = DEVICE_DT_GET(DT_NODELABEL(one_wire_uart));
 
-FAKE_VOID_FUNC(on_message_received, uint8_t, uint8_t *, int);
+FAKE_VOID_FUNC(on_message_received, uint8_t, const uint8_t *, int);
 
 ZTEST(one_wire_uart_driver, test_checksum)
 {
