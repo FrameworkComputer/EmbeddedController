@@ -37,4 +37,8 @@ ZTEST(karis_charger, test_get_leave_safe_mode_delay_ms)
 	battery_fuel_gauge_type_override =
 		BATTERY_TYPE(DT_NODELABEL(panasonic_ap23a5l));
 	zassert_equal(board_get_leave_safe_mode_delay_ms(), 500);
+
+	battery_fuel_gauge_type_override =
+		BATTERY_TYPE(DT_NODELABEL(lgc_ap19b8m));
+	zassert_equal(board_get_leave_safe_mode_delay_ms(), 500);
 }
