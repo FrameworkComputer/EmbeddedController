@@ -84,6 +84,9 @@ static void run_chargen(void)
 	while (uart_getc() != -1 || usb_getc() != -1)
 		; /* Drain received characters, if any. */
 
+#ifdef CONFIG_ZEPHYR
+	k_sched_lock();
+#endif
 	prev_watchdog_time = get_time();
 	while (uart_getc() != 'x' && usb_getc() != 'x') {
 		timestamp_t current_time;
@@ -126,6 +129,9 @@ static void run_chargen(void)
 		else if (c == ('9' + 1))
 			c = 'A';
 	}
+#ifdef CONFIG_ZEPHYR
+	k_sched_unlock();
+#endif
 
 	putc_('\n');
 
