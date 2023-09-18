@@ -2,7 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_USBC
 if PLATFORM_EC_USB_POWER_DELIVERY
 
 choice PLATFORM_EC_USB_DEVICE_TYPE
@@ -36,4 +35,3 @@ config PLATFORM_EC_USB_DRP_ACC_TRYSRC
 endchoice # PLATFORM_EC_USB_DEVICE_TYPE
 
 endif # PLATFORM_EC_USB_POWER_DELIVERY
-endif # PLATFORM_EC_USBC

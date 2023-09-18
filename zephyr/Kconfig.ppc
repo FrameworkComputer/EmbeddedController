@@ -2,8 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_USBC
-
 menuconfig PLATFORM_EC_USBC_PPC
 	bool "USB Type-C Power Path Controller"
 	default y
@@ -203,5 +201,3 @@ config PLATFORM_EC_USBC_PPC_DEDICATED_INT
 	  This function should be provided by the board code.
 
 endif  # PLATFORM_EC_USBC_PPC
-
-endif # PLATFORM_EC_USBC

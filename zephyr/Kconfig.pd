@@ -2,8 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_USBC
-
 menuconfig PLATFORM_EC_USB_POWER_DELIVERY
 	bool "USB Type-C Power Delivery (PD)"
 	default y
@@ -490,5 +488,3 @@ config PLATFORM_EC_USB_PD_RESET_PRESERVE_RECOVERY_FLAGS
 rsource "Kconfig.svdm_rsp"
 
 endif  # PLATFORM_EC_USB_POWER_DELIVERY
-
-endif # PLATFORM_EC_USBC

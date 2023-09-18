@@ -2,8 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_USBC
-
 config PLATFORM_EC_USBC_SS_MUX
 	bool "SuperSpeed mux"
 	default y
@@ -60,5 +58,3 @@ config PLATFORM_EC_USBC_RETIMER_FW_UPDATE
 	   thunderbolt device entries.
 
 endif  # PLATFORM_EC_USBC_SS_MUX
-
-endif #  PLATFORM_EC_USBC

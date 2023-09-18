@@ -2,8 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_USBC
-
 config PLATFORM_EC_USB_PD_HOST_CMD
 	bool "Host commands related to USB Power Delivery & Alternate mode info"
 	default y
@@ -82,5 +80,3 @@ config PLATFORM_EC_HOSTCMD_TYPEC_STATUS
 
 	  This host command can be manually executed using the
 	  "ectool typecstatus" command from the Chromium OS shell.
-
-endif #  PLATFORM_EC_USBC

@@ -2,8 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_USBC
-
 config PLATFORM_EC_USB_CHARGER
 	bool "Support charging from a USB-C port"
 	default y
@@ -105,5 +103,3 @@ config PLATFORM_EC_BC12_SINGLE_DRIVER
 	     };
 
 endif  # PLATFORM_EC_USB_CHARGER
-
-endif # PLATFORM_EC_USBC
