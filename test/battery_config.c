@@ -22,19 +22,41 @@ int batt_conf_read_fuel_gauge_info(struct board_batt_params *info);
 int batt_conf_read_battery_info(struct board_batt_params *info);
 void batt_conf_main(void);
 
-struct board_batt_params default_battery_conf = {};
+const struct board_batt_params board_battery_info[] = {
+	[0] = {
+		.fuel_gauge = {
+			.manuf_name = "AS1GUXd3KB",
+			.device_name = "C214-43",
+			.ship_mode = {
+				.reg_addr = 0x0,
+				.reg_data = { 0x10, 0x10 },
+			},
+			.fet = {
+				.mfgacc_support = 1,
+				.reg_addr = 0x00,
+				.reg_mask = 0x2000,
+				.disconnect_val = 0x2000,
+			},
+		},
+		.batt_info = {
+			.voltage_max = 13200,
+			.voltage_normal = 11550,
+			.voltage_min = 9000,
+			.precharge_current = 256,
+			.start_charging_min_c = 0,
+			.start_charging_max_c = 45,
+			.charging_min_c = 0,
+			.discharging_min_c = 0,
+			.discharging_max_c = 60,
+		},
+	},
+};
 
 static bool init_battery_type_called;
-static bool board_batt_conf_enabled_return = true;
 
 void init_battery_type(void)
 {
 	init_battery_type_called = true;
-}
-
-__override bool board_batt_conf_enabled(void)
-{
-	return board_batt_conf_enabled_return;
 }
 
 static struct board_batt_params conf_in_cbi = {
@@ -302,13 +324,45 @@ DECLARE_EC_TEST(test_read_battery_info)
 	return EC_SUCCESS;
 }
 
+static union ec_common_control mock_common_control;
+static int cbi_get_common_control_return;
+
+int cbi_get_common_control(union ec_common_control *ctrl)
+{
+	*ctrl = mock_common_control;
+
+	return cbi_get_common_control_return;
+}
+
 DECLARE_EC_TEST(test_batt_conf_main)
 {
-	board_batt_conf_enabled_return = false;
-
-	/* Rerun main. */
+	mock_common_control.bcic_enabled = 1;
+	cbi_get_common_control_return = EC_SUCCESS;
+	init_battery_type_called = false;
 	batt_conf_main();
+	/* Check if the first entry is copied to the default. */
+	zassert_equal(memcmp(&board_battery_info[0], &default_battery_conf,
+			     sizeof(default_battery_conf)),
+		      0);
+	zassert_equal(init_battery_type_called, false);
 
+	return EC_SUCCESS;
+}
+
+DECLARE_EC_TEST(test_batt_conf_main_legacy)
+{
+	/* cbi_get_common_ctrl returns error. */
+	mock_common_control.bcic_enabled = 0;
+	cbi_get_common_control_return = EC_ERROR_UNKNOWN;
+	init_battery_type_called = false;
+	batt_conf_main();
+	zassert_equal(init_battery_type_called, true);
+
+	/* BCIC_ENABLED isn't set. */
+	mock_common_control.bcic_enabled = 0;
+	cbi_get_common_control_return = EC_SUCCESS;
+	init_battery_type_called = false;
+	batt_conf_main();
 	zassert_equal(init_battery_type_called, true);
 
 	return EC_SUCCESS;
@@ -325,6 +379,8 @@ TEST_SUITE(test_suite_battery_config)
 		ztest_unit_test_setup_teardown(test_read_battery_info,
 					       test_setup, test_teardown),
 		ztest_unit_test_setup_teardown(test_batt_conf_main, test_setup,
-					       test_teardown));
+					       test_teardown),
+		ztest_unit_test_setup_teardown(test_batt_conf_main_legacy,
+					       test_setup, test_teardown));
 	ztest_run_test_suite(test_battery_config);
 }

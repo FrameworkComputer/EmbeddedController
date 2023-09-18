@@ -26,6 +26,7 @@
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, "BCFG " format, ##args)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, "BCFG " format, ##args)
 
+struct board_batt_params default_battery_conf;
 static char manuf_name[32];
 static char device_name[32];
 
@@ -170,7 +171,12 @@ batt_conf_read_battery_info(struct board_batt_params *info)
 
 __overridable bool board_batt_conf_enabled(void)
 {
-	return true;
+	union ec_common_control ctrl;
+
+	if (cbi_get_common_control(&ctrl) != EC_SUCCESS)
+		return false;
+
+	return !!(ctrl.bcic_enabled);
 }
 
 test_export_static void batt_conf_main(void)
@@ -178,6 +184,7 @@ test_export_static void batt_conf_main(void)
 	CPRINTS("%s", __func__);
 	if (board_batt_conf_enabled()) {
 		CPRINTS("Reading CBI");
+		default_battery_conf = board_battery_info[0];
 		batt_conf_read_fuel_gauge_info(&default_battery_conf);
 		batt_conf_read_battery_info(&default_battery_conf);
 	} else {

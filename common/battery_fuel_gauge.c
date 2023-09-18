@@ -154,6 +154,10 @@ void init_battery_type(void)
 
 const struct board_batt_params *get_batt_params(void)
 {
+	if (IS_ENABLED(TEST_BUILD) && battery_fuel_gauge_type_override >= 0) {
+		return &board_battery_info[battery_fuel_gauge_type_override];
+	}
+
 	return battery_conf;
 }
 
