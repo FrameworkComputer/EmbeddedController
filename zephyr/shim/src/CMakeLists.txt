@@ -41,6 +41,7 @@ zephyr_library_sources_ifdef(CONFIG_X86_NON_DSX_PWRSEQ      chipset_api.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI
                                                             espi.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN         fan.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FINGERPRINT fpsensor.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FLASH_CROS  flash.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_GPIO_ID
 							    gpio_id.c)
