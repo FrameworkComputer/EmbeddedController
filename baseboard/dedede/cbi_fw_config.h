@@ -6,8 +6,6 @@
 #ifndef _DEDEDE_CBI_FW_CONFIG__H_
 #define _DEDEDE_CBI_FW_CONFIG__H_
 
-#include <stdbool.h>
-
 /****************************************************************************
  * Dedede CBI FW Configuration
  */
@@ -92,18 +90,12 @@ enum fw_config_bc12 {
 #define FW_CONFIG_BC12_SUPPORT 20
 #define FW_CONFIG_BC12_MASK GENMASK(20, 20)
 
-/*
- * BCIC Enabled (1 bit)
- */
-#define FW_CONFIG_BCIC_ENABLED BIT(21)
-
 enum fw_config_db get_cbi_fw_config_db(void);
 enum fw_config_stylus get_cbi_fw_config_stylus(void);
 enum fw_config_kblight_type get_cbi_fw_config_kblight(void);
 enum fw_config_tablet_mode_type get_cbi_fw_config_tablet_mode(void);
 enum fw_config_numeric_pad_type get_cbi_fw_config_numeric_pad(void);
 enum fw_config_hdmi_type get_cbi_fw_config_hdmi(void);
-bool get_cbi_fw_config_bcic_enabled(void);
 
 int get_cbi_fw_config_keyboard(void);
 int get_cbi_fw_config_bc_support(void);
