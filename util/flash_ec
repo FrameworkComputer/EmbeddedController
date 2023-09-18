@@ -1740,6 +1740,11 @@ function preserve_sections() {
 		local CUR_IMG
 
 		NEW_FMAP=$(dump_fmap "${NEW_IMG}" -e FMAP)
+		NEW_FMAP_NFIELD=$(echo "${NEW_FMAP}" | awk '{print NF}')
+		if [ "${NEW_FMAP_NFIELD}" -ne 4 ]; then
+			die "The output of dump_fmap is not expected; try update_chroot"
+		fi
+
 		NEW_FMAP_OFFSET=$(echo "${NEW_FMAP}" | awk '{print $2}')
 		NEW_FMAP_SIZE=$(echo "${NEW_FMAP}" | awk '{print $3}')
 		CUR_FMAP_IMG="${TEMP_DIR}/ec.cur.fmap.bin"
