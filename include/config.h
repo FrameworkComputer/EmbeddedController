@@ -6316,6 +6316,12 @@
 #define CONFIG_BATTERY
 #endif
 
+#if defined(CONFIG_CBI_EEPROM) || defined(CONFIG_CBI_FLASH)
+#if defined(CONFIG_BATTERY) && defined(CONFIG_BATTERY_FUEL_GAUGE)
+#define CONFIG_BATTERY_CONFIG_IN_CBI
+#endif
+#endif
+
 /******************************************************************************/
 /*
  * Ensure CONFIG_USB_PD_RESET_PRESERVE_RECOVERY_FLAGS is only used on
