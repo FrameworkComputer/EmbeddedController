@@ -145,7 +145,7 @@ void init_battery_type(void)
 	int type = get_battery_type();
 
 	if (type == BATTERY_TYPE_COUNT) {
-		CPRINTS("battery not found");
+		CPRINTS("battery conf not found");
 		type = board_get_default_battery_type();
 	}
 
