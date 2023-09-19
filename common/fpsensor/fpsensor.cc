@@ -290,6 +290,7 @@ extern "C" void fp_task(void)
 			else
 				timeout_us = -1;
 			if (mode & FP_MODE_ANY_WAIT_IRQ) {
+				gpio_clear_pending_interrupt(GPIO_FPS_INT);
 				gpio_enable_interrupt(GPIO_FPS_INT);
 			} else if (mode & FP_MODE_RESET_SENSOR) {
 				fp_reset_and_clear_context();
@@ -326,8 +327,13 @@ extern "C" void fp_task(void)
 
 			if (sensor_mode & FP_MODE_ANY_WAIT_IRQ) {
 				fp_sensor_configure_detect();
+
+				gpio_clear_pending_interrupt(GPIO_FPS_INT);
 				gpio_enable_interrupt(GPIO_FPS_INT);
 			} else {
+				if (evt & (TASK_EVENT_SENSOR_IRQ))
+					gpio_clear_pending_interrupt(
+						GPIO_FPS_INT);
 				fp_sensor_low_power();
 			}
 		}
