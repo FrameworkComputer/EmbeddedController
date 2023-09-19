@@ -19,7 +19,7 @@ void battery_get_params(struct batt_params *batt)
 	const struct device *dev =
 		DEVICE_DT_GET(DT_NODELABEL(upstream_battery));
 
-	struct fuel_gauge_get_property props[] = {
+	struct fuel_gauge_property props[] = {
 		{
 			.property_type = FUEL_GAUGE_VOLTAGE,
 		},
