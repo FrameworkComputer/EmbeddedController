@@ -174,6 +174,9 @@ uint32_t get_feature_flags1(void)
 #ifdef CONFIG_PLATFORM_EC_AMD_STB_DUMP
 		| EC_FEATURE_MASK_1(EC_FEATURE_AMD_STB_DUMP)
 #endif
+#ifdef CONFIG_HOST_COMMAND_MEMORY_DUMP
+		| EC_FEATURE_MASK_1(EC_FEATURE_MEMORY_DUMP)
+#endif
 		;
 	return board_override_feature_flags1(result);
 }

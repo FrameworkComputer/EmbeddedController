@@ -1650,6 +1650,10 @@ enum ec_feature_code {
 	 * The EC supports triggering an STB dump.
 	 */
 	EC_FEATURE_AMD_STB_DUMP = 50,
+	/*
+	 * The EC supports memory dump commands.
+	 */
+	EC_FEATURE_MEMORY_DUMP = 51,
 };
 
 #define EC_FEATURE_MASK_0(event_code) BIT(event_code % 32)
