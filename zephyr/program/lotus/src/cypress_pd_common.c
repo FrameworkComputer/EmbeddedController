@@ -1637,8 +1637,9 @@ void cypd_port_int(int controller, int port)
 	case CCG_RESPONSE_PORT_DISCONNECT:
 		record_ucsi_connector_change_event(controller, port);
 		__fallthrough;
+	case CCG_RESPONSE_HARD_RESET_RX:
 	case CCG_RESPONSE_TYPE_C_ERROR_RECOVERY:
-		CPRINTS("CYPD_RESPONSE_PORT_DISCONNECT");
+		CPRINTS("TYPE_C_ERROR_RECOVERY");
 		cypd_update_port_state(controller, port);
 		cypd_release_port(controller, port);
 		/* make sure the type-c state is cleared */
@@ -1923,6 +1924,11 @@ int board_set_active_charge_port(int charge_port)
 	CPRINTS("%s port %d, prev:%d", __func__, charge_port, prev_charge_port);
 
 	if (prev_charge_port == charge_port) {
+		/* in the case of hard reset, we do not turn off the old
+		 * port, but the PD will implicitly clear the port
+		 * so we need to turn on the vbus control again.
+		 */
+		cypd_cfet_vbus_control(charge_port, true, true);
 		return EC_SUCCESS;
 	}
 
