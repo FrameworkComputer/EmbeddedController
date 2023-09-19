@@ -197,7 +197,6 @@ test_export_static void batt_conf_main(void)
 DECLARE_HOOK(HOOK_INIT, batt_conf_main, HOOK_PRIO_POST_I2C);
 
 #ifdef CONFIG_CMD_BATTERY_CONFIG
-static struct board_batt_params scratch_battery_conf;
 
 static void batt_conf_dump(const struct board_batt_params *info)
 {
@@ -281,13 +280,15 @@ static void batt_conf_dump(const struct board_batt_params *info)
 
 static int cc_batt_conf(int argc, const char *argv[])
 {
+	static struct board_batt_params scratch_battery_conf;
+
 	if (argc == 1) {
 		batt_conf_dump(&scratch_battery_conf);
 	} else if (argc == 2 && strcasecmp(argv[1], "read") == 0) {
 		batt_conf_read_fuel_gauge_info(&scratch_battery_conf);
 		batt_conf_read_battery_info(&scratch_battery_conf);
 	} else if (argc == 2 && strcasecmp(argv[1], "reset") == 0) {
-		memcpy(&scratch_battery_conf, &default_battery_conf,
+		memcpy(&scratch_battery_conf, get_batt_params(),
 		       sizeof(scratch_battery_conf));
 	} else {
 		return EC_ERROR_PARAM_COUNT;
@@ -297,6 +298,6 @@ static int cc_batt_conf(int argc, const char *argv[])
 DECLARE_CONSOLE_COMMAND(bcfg, cc_batt_conf, "[read | reset]",
 			"\n"
 			"Dump scratch battery config\n"
-			"[reset] Load default config to scratch buffer\n"
+			"[reset] Load effective config to scratch buffer\n"
 			"[read] Load config from CBI to scratch buffer\n");
 #endif /* CONFIG_CMD_BATTERY_CONFIG */
