@@ -33,7 +33,7 @@ if (DEFINED CONFIG_TEST_BOARD_USB_MUX_CONFIG)
 		${PLATFORM_EC}/driver/usb_mux/usb_mux.c
 		${PLATFORM_EC}/zephyr/shim/src/usb_muxes.c
 		src/usb_mux_config.c
-		${PLATFORM_EC_PROGRAM_DIR}/skyrim/${CONFIG_TEST_BOARD_NAME}/src/usb_mux_config.c
+		${PLATFORM_EC_PROGRAM_DIR}/skyrim/src/usb_mux_config.c
 	)
 endif()
 
