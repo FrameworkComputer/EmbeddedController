@@ -37,7 +37,7 @@ def log(msg):
 """Sends firmware update to CROS EC usb endpoint."""
 
 
-class Supdate(object):
+class Supdate:
     """Class to access firmware update endpoints.
 
     Usage:

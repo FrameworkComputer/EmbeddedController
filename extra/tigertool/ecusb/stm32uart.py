@@ -34,7 +34,7 @@ class SuartError(Exception):
         self.value = value
 
 
-class Suart(object):
+class Suart:
     """Provide interface to stm32 serial usb endpoint."""
 
     def __init__(
