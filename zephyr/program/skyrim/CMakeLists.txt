@@ -14,6 +14,7 @@ zephyr_library_sources("src/power_signals.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
 	"src/usb_pd_policy.c"
+	"src/usb_mux_config.c"
 	"src/usbc_config.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led.c")

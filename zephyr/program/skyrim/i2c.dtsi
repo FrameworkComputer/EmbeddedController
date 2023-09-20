@@ -269,11 +269,15 @@
 		compatible = "amd,usbc-mux-amd-fp6";
 		status = "okay";
 		reg = <0x5c>;
+
+		board-set = "board_mux_set";
 	};
 	amd_fp6_port1: amd_fp6@52 {
 		compatible = "amd,usbc-mux-amd-fp6";
 		status = "okay";
 		reg = <0x52>;
+
+		board-set = "board_mux_set";
 	};
 };
 

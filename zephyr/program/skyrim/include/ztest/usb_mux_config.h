@@ -9,6 +9,14 @@
 
 #ifdef CONFIG_ZTEST
 
+/*
+ * This particular enum variant is highly entwined with the power sequencing
+ * code. Define it so test can use it without pulling all that in. The
+ * particular value shouldn't matter, but pick one that is unlikely to conflict
+ * with any others.
+ */
+#define POWER_S0ix 100
+
 #include <zephyr/fff.h>
 
 DECLARE_FAKE_VOID_FUNC(usb_mux_enable_alternative);
