@@ -13,6 +13,8 @@
 #define CBI_VERSION_MAJOR 0
 #define CBI_VERSION_MINOR 0
 
+#define CBI_IMAGE_SIZE_EEPROM 256
+
 #ifdef CONFIG_CBI_GPIO
 /*
  * if CBI is sourced from GPIO, the CBI cache only needs to accomondate
@@ -21,8 +23,10 @@
 #define CBI_IMAGE_SIZE               \
 	(sizeof(struct cbi_header) + \
 	 (2 * (sizeof(struct cbi_data) + sizeof(uint32_t))))
+#elif defined(CONFIG_CBI_FLASH)
+#define CBI_IMAGE_SIZE DT_PROP(DT_NODELABEL(cbi_flash), image_size)
 #else
-#define CBI_IMAGE_SIZE 256
+#define CBI_IMAGE_SIZE CBI_IMAGE_SIZE_EEPROM
 #endif
 
 static const uint8_t cbi_magic[] = { 0x43, 0x42, 0x49 }; /* 'C' 'B' 'I' */

@@ -19,8 +19,10 @@ BUILD_ASSERT(DT_NODE_EXISTS(CBI_FLASH_NODE) == 1,
 	     "CBI flash DT node label not found");
 BUILD_ASSERT((CBI_FLASH_OFFSET % CONFIG_FLASH_ERASE_SIZE) == 0,
 	     "CBI flash section offset is not erase-size aligned");
-BUILD_ASSERT(CBI_FLASH_SIZE > 0,
-	     "CBI flash section size must be greater than zero");
+BUILD_ASSERT(CBI_IMAGE_SIZE > 0,
+	     "CBI image size in EC flash must be greater than zero");
+BUILD_ASSERT(CBI_IMAGE_SIZE >= 256,
+	     "CBI image size in EC flash is less than 256 bytes");
 BUILD_ASSERT(CBI_FLASH_SIZE >= CBI_IMAGE_SIZE,
 	     "CBI flash section size is less than CBI image size");
 

@@ -10,6 +10,10 @@
 
 LOG_MODULE_REGISTER(cbi_transfer, LOG_LEVEL_ERR);
 
+BUILD_ASSERT(
+	CBI_IMAGE_SIZE == CBI_IMAGE_SIZE_EEPROM,
+	"CBI image size in EC flash is not equal to CBI image size in EEPROM");
+
 static bool is_valid_cbi(const uint8_t *cbi)
 {
 	const struct cbi_header *head = (const struct cbi_header *)cbi;
