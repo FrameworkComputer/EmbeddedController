@@ -83,10 +83,10 @@
 			gpios = <&gpio9 4 GPIO_OUTPUT>;
 		};
 		gpio_usb_c0_hbr_rst_l: usb_c0_hbr_rst_l {
-			gpios = <&gpio9 3 GPIO_OUTPUT_HIGH>;
+			gpios = <&gpio9 3 GPIO_OUTPUT_LOW>;
 		};
 		gpio_usb_c1_hbr_rst_l: usb_c1_hbr_rst_l {
-			gpios = <&gpio9 7 GPIO_OUTPUT_HIGH>;
+			gpios = <&gpio9 7 GPIO_OUTPUT_LOW>;
 		};
 		gpio_usb_a_low_pwr_od: usb_a_low_pwr_od {
 			gpios = <&gpioa 2 GPIO_OUTPUT_LOW>;
