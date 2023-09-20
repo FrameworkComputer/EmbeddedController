@@ -189,8 +189,7 @@ class Supdate:
             debuglog("STATUS: 0x%02x" % int(bytesread[0]))
             if read_count == 1:
                 return bytesread[0]
-            else:
-                return bytesread
+            return bytesread
 
         return None
 
@@ -299,7 +298,7 @@ class Supdate:
             raise FwUpdaterException(
                 "Update", "Protocol version 0 not supported"
             )
-        elif len(read) == expected:
+        if len(read) == expected:
             base, version = struct.unpack(">II", read)
             log("Update protocol v. %d" % version)
             log("Available flash region base: %x" % base)
