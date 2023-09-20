@@ -12,6 +12,7 @@
 
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/uart.h>
+#include <zephyr/sys/byteorder.h>
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1);
 
@@ -25,15 +26,36 @@ static int msg_len(const struct one_wire_uart_message *msg)
 	return sizeof(msg->header) + msg->header.payload_len;
 }
 
-test_export_static uint8_t checksum(const uint8_t *data, int len)
+test_export_static uint16_t checksum(const struct one_wire_uart_message *msg)
 {
-	uint8_t sum = 0;
+	uint32_t sum = 0;
+	const uint8_t *data = (const uint8_t *)msg;
+	int len = msg_len(msg);
 
-	for (int i = 0; i < len; i++) {
-		sum += data[i];
+	/* 16-bit one's complement sum */
+	for (int i = 0; i < len; i += 2) {
+		if (i + 1 < len) {
+			sum += sys_le16_to_cpu(*(const uint16_t *)(data + i));
+		} else {
+			/* last byte */
+			sum += data[i];
+		}
+	}
+	/* carry */
+	while (sum > 0xFFFF) {
+		sum = (sum & 0xFFFF) + (sum >> 16);
 	}
 
-	return (uint8_t)(-sum);
+	return sum;
+}
+
+static bool verify_checksum(struct one_wire_uart_message *msg)
+{
+	uint16_t expected = msg->header.checksum;
+
+	msg->header.checksum = 0;
+
+	return checksum(msg) == expected;
 }
 
 int one_wire_uart_send(const struct device *dev, uint8_t cmd,
@@ -61,7 +83,7 @@ int one_wire_uart_send(const struct device *dev, uint8_t cmd,
 	msg.payload[0] = cmd;
 
 	memcpy(msg.payload + 1, payload, size);
-	msg.header.checksum = checksum((uint8_t *)&msg, msg_len(&msg));
+	msg.header.checksum = checksum(&msg);
 
 	ret = k_msgq_put(tx_queue, &msg, K_NO_WAIT);
 
@@ -77,10 +99,11 @@ test_export_static void process_packet(void)
 	struct one_wire_uart_message msg;
 	const struct device *dev = DEVICE_DT_GET(DT_DRV_INST(0));
 	struct one_wire_uart_data *data = dev->data;
-	int last_msg_id = data->last_received_msg_id;
 	struct k_msgq *rx_queue = data->rx_queue;
 
 	while (k_msgq_get(rx_queue, &msg, K_NO_WAIT) == 0) {
+		int last_msg_id = data->last_received_msg_id;
+
 		if (last_msg_id != msg.header.msg_id && data->msg_received_cb) {
 			data->msg_received_cb(msg.payload[0], msg.payload + 1,
 					      msg.header.payload_len - 1);
@@ -91,11 +114,11 @@ test_export_static void process_packet(void)
 DECLARE_DEFERRED(process_packet);
 
 static void gen_ack_response(const struct device *dev,
-			     struct one_wire_uart_header *msg, int msg_id)
+			     struct one_wire_uart_message *msg, int msg_id)
 {
 	const struct one_wire_uart_config *config = dev->config;
 
-	*msg = (struct one_wire_uart_header){
+	msg->header = (struct one_wire_uart_header){
 		.magic = HEADER_MAGIC,
 		.payload_len = 0,
 		.sender = config->id,
@@ -104,8 +127,7 @@ static void gen_ack_response(const struct device *dev,
 		.checksum = 0,
 	};
 
-	msg->checksum =
-		checksum((uint8_t *)msg, sizeof(struct one_wire_uart_header));
+	msg->header.checksum = checksum(msg);
 }
 
 static void wake_tx(void)
@@ -125,6 +147,8 @@ test_export_static void load_next_message(const struct device *dev)
 	struct one_wire_uart_message *msg = &data->resend_cache;
 
 	if (!ring_buf_is_empty(tx_ring_buf)) {
+		data->last_send_time = get_time();
+
 		return;
 	}
 
@@ -227,6 +251,12 @@ test_export_static void process_rx_fifo(const struct device *dev)
 		ring_buf_peek(rx_ring_buf, (uint8_t *)&msg.header,
 			      sizeof(struct one_wire_uart_header));
 
+		/* bad length */
+		if (msg.header.payload_len > ONE_WIRE_UART_MAX_PAYLOAD_SIZE) {
+			ring_buf_get(rx_ring_buf, NULL, 1);
+			continue;
+		}
+
 		/* If the size isn't match the msg_len, then it's an
 		 * incomplete packet.
 		 */
@@ -238,7 +268,7 @@ test_export_static void process_rx_fifo(const struct device *dev)
 		ring_buf_peek(rx_ring_buf, (uint8_t *)&msg, len);
 
 		/* bad checksum, drop 1 byte and loop again */
-		if (checksum((uint8_t *)&msg, len) != 0) {
+		if (!verify_checksum(&msg)) {
 			ring_buf_get(rx_ring_buf, NULL, 1);
 			continue;
 		}
@@ -250,14 +280,14 @@ test_export_static void process_rx_fifo(const struct device *dev)
 			if (msg.header.ack) {
 				data->ack = msg_id;
 			} else {
-				struct one_wire_uart_header ack_resp;
+				struct one_wire_uart_message ack_resp;
 
 				k_msgq_put(rx_queue, &msg, K_NO_WAIT);
 				hook_call_deferred(&process_packet_data, 0);
 
 				gen_ack_response(dev, &ack_resp, msg_id);
 				ring_buf_put(tx_ring_buf, (uint8_t *)&ack_resp,
-					     sizeof(ack_resp));
+					     sizeof(ack_resp.header));
 				uart_irq_tx_enable(bus);
 			}
 		}
@@ -353,11 +383,11 @@ void one_wire_uart_set_callback(const struct device *dev,
 		.bus = DEVICE_DT_GET(DT_INST_PARENT(n)),                     \
 		.id = SELF_ID(n),                                            \
 	};                                                                   \
-	RING_BUF_DECLARE(tx_ring_buf##n, 512);                               \
-	RING_BUF_DECLARE(rx_ring_buf##n, 512);                               \
-	K_MSGQ_DEFINE(rx_queue##n, sizeof(struct one_wire_uart_message), 16, \
+	RING_BUF_DECLARE(tx_ring_buf##n, 128);                               \
+	RING_BUF_DECLARE(rx_ring_buf##n, 128);                               \
+	K_MSGQ_DEFINE(rx_queue##n, sizeof(struct one_wire_uart_message), 32, \
 		      1);                                                    \
-	K_MSGQ_DEFINE(tx_queue##n, sizeof(struct one_wire_uart_message), 16, \
+	K_MSGQ_DEFINE(tx_queue##n, sizeof(struct one_wire_uart_message), 32, \
 		      1);                                                    \
 	static struct one_wire_uart_data one_wire_uart_data##n = {           \
 		.msg_id = 0,                                                 \

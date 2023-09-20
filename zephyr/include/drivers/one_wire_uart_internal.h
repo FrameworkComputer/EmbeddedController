@@ -10,12 +10,12 @@
 
 #include <zephyr/kernel.h>
 
-/* Private structures and methods below, fortesting purpose only */
+/* Private structures and methods below, for testing purpose only */
 
 struct one_wire_uart_header {
 	uint8_t magic;
 	uint8_t payload_len;
-	uint8_t checksum;
+	uint16_t checksum;
 	uint8_t sender : 1;
 	uint8_t reset : 1;
 	uint8_t ack : 1;
@@ -23,14 +23,16 @@ struct one_wire_uart_header {
 } __packed;
 
 #define HEADER_SIZE sizeof(struct one_wire_uart_header)
-BUILD_ASSERT(HEADER_SIZE == 4);
+BUILD_ASSERT(HEADER_SIZE == 5);
 
 #define HEADER_MAGIC 0xEC
 
 struct one_wire_uart_message {
-	struct one_wire_uart_header header;
+	struct one_wire_uart_header __aligned(2) header;
 	uint8_t payload[ONE_WIRE_UART_MAX_PAYLOAD_SIZE + 1];
-} __packed;
+} __packed __aligned(2);
+BUILD_ASSERT(sizeof(struct one_wire_uart_message) ==
+	     HEADER_SIZE + ONE_WIRE_UART_MAX_PAYLOAD_SIZE + 1);
 
 struct one_wire_uart_data {
 	one_wire_uart_msg_received_cb_t msg_received_cb;
@@ -56,7 +58,7 @@ struct one_wire_uart_data {
 };
 
 #ifdef CONFIG_ZTEST
-uint8_t checksum(const uint8_t *data, int len);
+uint16_t checksum(const struct one_wire_uart_message *msg);
 void load_next_message(const struct device *dev);
 void find_header(const struct device *dev);
 void process_rx_fifo(const struct device *dev);
