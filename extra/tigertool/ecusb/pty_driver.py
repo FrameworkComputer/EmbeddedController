@@ -36,7 +36,7 @@ UART_PARAMS = {
 }
 
 
-class ptyDriver(object):
+class ptyDriver:
     """Automate interactive commands on a pty interface."""
 
     def __init__(self, interface, params, fast=False):
