@@ -40,7 +40,7 @@ class Susb:
         product=0x5027,
         interface=1,
         serialname=None,
-        logger=None,
+        _unused_logger=None,
     ):
         """Susb constructor.
 

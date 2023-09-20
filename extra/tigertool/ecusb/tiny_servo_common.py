@@ -53,7 +53,7 @@ def check_usb(vidpid: Iterable[str], serialname=None):
     Returns:
       True if found, False, otherwise.
     """
-    for dev in get_usb_dev(vidpid, serialname):
+    for _unused_dev in get_usb_dev(vidpid, serialname):
         return True
 
     return False

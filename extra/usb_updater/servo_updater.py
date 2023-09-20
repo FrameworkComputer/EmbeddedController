@@ -287,7 +287,9 @@ def get_firmware_channel(bname, version):
     for channel in CHANNELS:
         # Pass |bname| as cname to find the board specific file, and pass None as
         # fname to ensure the default directory is searched
-        _, _, vers = get_files_and_version(bname, None, channel=channel)
+        _unused, _unused, vers = get_files_and_version(
+            bname, None, channel=channel
+        )
         if version == vers:
             return channel
     # None of the channels matched. This firmware is currently unknown.
@@ -334,7 +336,7 @@ def get_files_and_version(cname, fname=None, channel=DEFAULT_CHANNEL):
     Returns:
       cname, fname, version: validated filenames selected from the path.
     """
-    updater_path, firmware_path, configs_path = get_updater_path()
+    _unused_updater_path, firmware_path, configs_path = get_updater_path()
 
     if not os.path.isfile(cname):
         # If not an existing file, try checking on the default path.
@@ -389,7 +391,7 @@ def update(dev, serialno, args, devmap):
     """
     vid, pid = dev.idVendor, dev.idProduct
     vidpid = "%04x:%04x" % (vid, pid)
-    board, boardname, iface, brdfile, binfile, newvers = devmap[vidpid]
+    _unused_board, boardname, iface, brdfile, binfile, newvers = devmap[vidpid]
 
     # We need a tiny_servod to query some information. Set it up first.
     tinys = tiny_servod.TinyServod(vid, pid, iface, serialno, args.verbose)
