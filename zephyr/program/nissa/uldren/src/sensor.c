@@ -25,9 +25,12 @@ static int sensor_fwconfig;
 
 void motion_interrupt(enum gpio_signal signal)
 {
-	if (cbi_boardversion < 2)
-		bmi3xx_interrupt(signal);
-	else {
+	if (cbi_boardversion < 2) {
+		if (sensor_fwconfig == LIS2DW12_LSM6DSO)
+			lsm6dso_interrupt(signal);
+		else
+			bmi3xx_interrupt(signal);
+	} else {
 		if (sensor_fwconfig == BMA422_BMI323 ||
 		    sensor_fwconfig == LIS2DW12_BMI323)
 			bmi3xx_interrupt(signal);
@@ -39,9 +42,12 @@ void motion_interrupt(enum gpio_signal signal)
 
 void lid_accel_interrupt(enum gpio_signal signal)
 {
-	if (cbi_boardversion < 2)
-		bma4xx_interrupt(signal);
-	else {
+	if (cbi_boardversion < 2) {
+		if (sensor_fwconfig == LIS2DW12_LSM6DSO)
+			lis2dw12_interrupt(signal);
+		else
+			bma4xx_interrupt(signal);
+	} else {
 		if (sensor_fwconfig == BMA422_LSM6DSO ||
 		    sensor_fwconfig == BMA422_BMI323)
 			bma4xx_interrupt(signal);
