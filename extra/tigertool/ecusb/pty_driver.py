@@ -170,7 +170,7 @@ class ptyDriver:
                 # Create a tuple which contains the entire matched string and all
                 # the subgroups of the match.
                 result = match.group(*range(lastindex + 1)) if match else None
-                if result:
+                if result is not None:
                     result = tuple(res.decode("utf-8") for res in result)
                 result_list.append(result)
         except pexpect.TIMEOUT:
@@ -212,7 +212,7 @@ class ptyDriver:
                     result = (
                         match.group(*range(lastindex + 1)) if match else None
                     )
-                    if result:
+                    if result is not None:
                         result = tuple(res.decode("utf-8") for res in result)
                     result_list.append(result)
                 except pexpect.TIMEOUT:
