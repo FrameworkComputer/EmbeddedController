@@ -184,7 +184,6 @@ class Supdate:
                     "Unexpected bytes read: %d, expected: %d"
                     % (len(bytesread), read_count)
                 )
-                pass
 
             debuglog("STATUS: 0x%02x" % int(bytesread[0]))
             if read_count == 1:
