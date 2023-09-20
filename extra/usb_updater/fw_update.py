@@ -9,13 +9,11 @@
 from __future__ import print_function
 
 import argparse
-import array
 import json
 import os
 from pprint import pprint
 import struct
 import sys
-import time
 
 from ecusb.stm32usb import SusbError
 import usb  # pylint:disable=import-error
