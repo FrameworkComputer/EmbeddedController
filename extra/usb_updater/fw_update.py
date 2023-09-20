@@ -166,9 +166,6 @@ class Supdate:
         )
 
         # Clean up args from python style to correct types.
-        write_length = 0
-        if write_list:
-            write_length = len(write_list)
         if not read_count:
             read_count = 0
 
