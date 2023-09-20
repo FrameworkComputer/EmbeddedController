@@ -132,7 +132,7 @@ class ptyDriver:
     def _issue_cmd_get_results(
         self, cmds, regex_list, timeout=DEFAULT_UART_TIMEOUT
     ):
-        """Send command to the device and wait for response.
+        r"""Send command to the device and wait for response.
 
         This function waits for response message matching a regular
         expressions.
@@ -152,7 +152,7 @@ class ptyDriver:
               High temp: 37.2
               Low temp: 36.4
             regex_list:
-              ['High temp: (\d+)\.(\d+)', 'Low temp: (\d+)\.(\d+)']
+              [r'High temp: (\d+)\.(\d+)', r'Low temp: (\d+)\.(\d+)']
             returns:
               [('High temp: 37.2', '37', '2'), ('Low temp: 36.4', '36', '4')]
 
