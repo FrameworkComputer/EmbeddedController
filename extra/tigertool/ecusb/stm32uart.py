@@ -106,9 +106,7 @@ class Suart:
 
                     # If we miss some characters on pty disconnect, that's fine.
                     # ep.read() also throws USBError on timeout, which we discard.
-                    except OSError:
-                        pass
-                    except usb.core.USBError:
+                    except (OSError, usb.core.USBError):
                         pass
                 else:
                     time.sleep(0.1)
@@ -132,9 +130,7 @@ class Suart:
                         if r:
                             self._susb._write_ep.write(r, self._susb.TIMEOUT_MS)
 
-                    except OSError:
-                        pass
-                    except usb.core.USBError:
+                    except (OSError, usb.core.USBError):
                         pass
                 else:
                     time.sleep(0.1)
