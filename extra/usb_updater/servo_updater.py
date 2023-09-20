@@ -96,7 +96,7 @@ def do_with_retries(func, *args):
             time.sleep(RETRIES_DELAY)
             continue
 
-    raise Exception(
+    raise ServoUpdaterException(
         "'{}' failed after {} retries".format(func.__name__, RETRIES_COUNT)
     )
 
@@ -175,7 +175,7 @@ def select(tinys, region):
     """
 
     if region not in ["rw", "ro"]:
-        raise Exception("Region must be ro or rw")
+        raise ServoUpdaterException("Region must be ro or rw")
 
     if region == "ro":
         cmd = "reboot"
@@ -191,7 +191,9 @@ def select(tinys, region):
     res = tinys.pty._issue_cmd_get_results("sysinfo", [r"Copy:[\s]+(RO|RW)"])
     current_region = res[0][1].lower()
     if current_region != region:
-        raise Exception("Invalid region: %s/%s" % (current_region, region))
+        raise ServoUpdaterException(
+            "Invalid region: %s/%s" % (current_region, region)
+        )
 
 
 def do_version(tinys):
