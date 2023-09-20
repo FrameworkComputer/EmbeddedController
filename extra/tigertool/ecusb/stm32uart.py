@@ -165,7 +165,7 @@ class Suart:
 
         tty.setraw(self._ptym, termios.TCSADRAIN)
 
-        # Generate a HUP flag on pty slave fd.
+        # Generate a HUP flag on pty secondary fd.
         os.fdopen(s).close()
 
         self._running = True
