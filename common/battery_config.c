@@ -213,7 +213,7 @@ static void batt_conf_dump(const struct board_batt_params *info)
 	ccprintf("%02x:\t.device_name= \"%s\",\n",
 		 CBI_TAG_FUEL_GAUGE_DEVICE_NAME, fg->device_name);
 	ccprintf("%02x:\t.override_nil = %d,\n", CBI_TAG_FUEL_GAUGE_FLAGS,
-		 fg->override_nil & BIT(0));
+		 fg->override_nil & BIT(0) ? 1 : 0);
 
 	ccprintf("   \t.ship_mode = {\n");
 	ccprintf("%02x:\t\t.reg_addr = 0x%02x,\n",
@@ -222,7 +222,7 @@ static void batt_conf_dump(const struct board_batt_params *info)
 		 CBI_TAG_BATT_SHIP_MODE_REG_DATA, ship->reg_data[0],
 		 ship->reg_data[1]);
 	ccprintf("%02x:\t\t.wb_support = %d,\n", CBI_TAG_BATT_SHIP_MODE_FLAGS,
-		 ship->wb_support & BIT(0));
+		 ship->wb_support & BIT(0) ? 1 : 0);
 	ccprintf("   \t},\n");
 
 	ccprintf("   \t.sleep_mode = {\n");
@@ -232,7 +232,7 @@ static void batt_conf_dump(const struct board_batt_params *info)
 		 CBI_TAG_BATT_SLEEP_MODE_REG_DATA, sleep->reg_data);
 	ccprintf("%02x:\t\t.sleep_supported = %d,\n",
 		 CBI_TAG_BATT_SLEEP_MODE_FLAGS,
-		 sleep->sleep_supported & BIT(0));
+		 sleep->sleep_supported & BIT(0) ? 1 : 0);
 	ccprintf("   \t},\n");
 
 	ccprintf("   \t.fet = {\n");
@@ -247,7 +247,7 @@ static void batt_conf_dump(const struct board_batt_params *info)
 	ccprintf("%02x:\t\t.cfet_off_val = 0x%04x,\n",
 		 CBI_TAG_BATT_FET_CFET_OFF_VAL, fet->cfet_off_val);
 	ccprintf("%02x:\t\t.mfgacc_support = %d,\n", CBI_TAG_BATT_FET_FLAGS,
-		 fet->mfgacc_support & BIT(0));
+		 fet->mfgacc_support & BIT(0) ? 1 : 0);
 	ccprintf("   \t},\n");
 
 	ccprintf("   },\n"); /* end of fuel_gauge */
