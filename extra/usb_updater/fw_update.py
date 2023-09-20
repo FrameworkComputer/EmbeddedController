@@ -347,7 +347,7 @@ class Supdate:
         Args:
           brdfile: path to board description file.
         """
-        with open(brdfile) as data_file:
+        with open(brdfile, encoding="utf-8") as data_file:
             data = json.load(data_file)
 
         # TODO(nsanders): validate this data before moving on.
@@ -427,7 +427,7 @@ def main():
         debug = True
 
     # Check for valid JSON data
-    with open(brdfile) as data_file:
+    with open(brdfile, encoding="utf-8") as data_file:
         _unused = json.load(data_file)
 
     p = Supdate()

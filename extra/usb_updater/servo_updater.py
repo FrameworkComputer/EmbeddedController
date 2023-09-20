@@ -144,7 +144,7 @@ def flash2(vidpid, serialno, binfile):
 
     print(cmd)
     help_cmd = "%s --help" % tool
-    with open("/dev/null") as devnull:
+    with open("/dev/null", "rb") as devnull:
         valid_check = subprocess.call(
             help_cmd.split(), stdout=devnull, stderr=devnull
         )
@@ -348,7 +348,7 @@ def get_files_and_version(cname, fname=None, channel=DEFAULT_CHANNEL):
             raise ServoUpdaterException("Can't find config file: %s." % cname)
 
     # Always retrieve the boardname
-    with open(cname) as data_file:
+    with open(cname, encoding="utf-8") as data_file:
         data = json.load(data_file)
     boardname = data["board"]
 
@@ -567,7 +567,7 @@ def main():
             board, args.file, args.channel
         )
 
-        with open(brdfile) as data_file:
+        with open(brdfile, encoding="utf-8") as data_file:
             data = json.load(data_file)
         vid, pid = int(data["vid"], 0), int(data["pid"], 0)
         vidpid = "%04x:%04x" % (vid, pid)
