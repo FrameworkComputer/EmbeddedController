@@ -39,7 +39,7 @@ UART_PARAMS = {
 class ptyDriver:
     """Automate interactive commands on a pty interface."""
 
-    def __init__(self, interface, params, fast=False):
+    def __init__(self, interface, _unused_params, fast=False):
         """Init class variables."""
         self._child = None
         self._fd = None
