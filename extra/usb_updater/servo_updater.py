@@ -581,8 +581,8 @@ def main():
     devs = c.wait_for_usb(vidpids, serialname=serialno, timeout=5.0)
     if len(devs) > 1 and not args.all:
         raise ServoUpdaterException(
-            "Found %d matching devices to update. Use --all if updating multiple devices is intended."
-            % (len(devs),)
+            "Found %d matching devices to update. "
+            "Use --all if updating multiple devices is intended." % (len(devs),)
         )
 
     for dev in devs:
