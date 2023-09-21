@@ -142,6 +142,7 @@ register_intelrvp_project(
         here / "mtlrvp/mtlrvpp_pd/pd_i2c.dts",
         here / "mtlrvp/mtlrvpp_npcx/mtlrvp_npcx_power_signals.dts",
         here / "adlrvp/adlrvp_npcx/temp_sensor.dts",
+        here / "mtlrvp/pd.dts",
     ],
     extra_kconfig_files=[
         here / "zephyr_ap_pwrseq.conf",
