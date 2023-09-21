@@ -283,7 +283,7 @@ int cbi_get_model_id(uint32_t *id)
 	return cbi_get_board_info(CBI_TAG_MODEL_ID, (uint8_t *)id, &size);
 }
 
-int cbi_get_fw_config(uint32_t *fw_config)
+test_mockable int cbi_get_fw_config(uint32_t *fw_config)
 {
 	uint8_t size = sizeof(*fw_config);
 
