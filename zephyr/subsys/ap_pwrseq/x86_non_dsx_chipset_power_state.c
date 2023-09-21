@@ -101,13 +101,11 @@ static void x86_non_dsx_chipset_state_entry_cb(const struct device *dev,
 {
 	switch (entry) {
 	case AP_POWER_STATE_G3:
-		if (exit != AP_POWER_STATE_S5) {
+		if (exit == AP_POWER_STATE_S5) {
+			ap_power_ev_send_callbacks(AP_POWER_HARD_OFF);
+		} else if (exit > AP_POWER_STATE_S5) {
 			/* This may be a forced shutdown */
 			ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN);
-		} else {
-			ap_power_ev_send_callbacks(AP_POWER_HARD_OFF);
-		}
-		if (exit > AP_POWER_STATE_G3) {
 			ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN_COMPLETE);
 		}
 		break;
@@ -115,6 +113,7 @@ static void x86_non_dsx_chipset_state_entry_cb(const struct device *dev,
 	case AP_POWER_STATE_S5:
 		if (exit > AP_POWER_STATE_S5) {
 			ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN);
+			ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN_COMPLETE);
 		}
 		break;
 
