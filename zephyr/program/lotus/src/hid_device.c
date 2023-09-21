@@ -447,6 +447,10 @@ static void irq_als(const struct device *dev)
 
 static void hid_target_als_irq(void)
 {
+	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(i2chid1));
+	struct i2c_hid_target_data *data = dev->data;
+
+	data->report_id = REPORT_ID_SENSOR;
 	irq_als(DEVICE_DT_GET(DT_NODELABEL(i2chid1)));
 }
 
@@ -468,16 +472,16 @@ void i2c_hid_als_init(void)
 DECLARE_HOOK(HOOK_INIT, i2c_hid_als_init, HOOK_PRIO_DEFAULT);
 
 static int als_polling_mode_count;
+static int saved_report_mode;
 void report_illuminance_value(void);
 DECLARE_DEFERRED(report_illuminance_value);
 void report_illuminance_value(void)
 {
 	uint16_t newIlluminaceValue = *(uint16_t *)host_get_memmap(EC_MEMMAP_ALS);
 	static int granularity;
-
 	/* We need to polling the ALS value at least 6 seconds */
-	if (als_polling_mode_count <= 60) {
-		als_polling_mode_count++; /* time base 100ms */
+	if (saved_report_mode == ALS_REPORT_POLLING
+		&& (als_polling_mode_count % 60) == 0) {
 
 		/* bypass the EC_MEMMAP_ALS value to input report */
 		als_sensor.illuminanceValue = newIlluminaceValue;
@@ -488,6 +492,9 @@ void report_illuminance_value(void)
 			hid_target_als_irq();
 		}
 	}
+
+	als_polling_mode_count++; /* time base 100ms */
+
 	/**
 	 * To ensure the best experience the ALS should have a granularity of
 	 * at most 1 lux when the ambient light is below 25 lux and a granularity
@@ -508,13 +515,15 @@ void report_illuminance_value(void)
 
 static void als_report_control(uint8_t report_mode)
 {
-	if (report_mode == 0x01) {
+	saved_report_mode = report_mode;
+	if (report_mode == ALS_REPORT_POLLING) {
 		/* als report mode = polling */
 		hook_call_deferred(&report_illuminance_value_data,
 			((int) als_feature.report_interval) * MSEC);
-	} else if (report_mode == 0x02) {
+	} else if (report_mode == ALS_REPORT_THRES) {
 		/* als report mode = threshold */
-		;
+		hook_call_deferred(&report_illuminance_value_data,
+			((int) als_feature.report_interval) * MSEC);
 	} else {
 		/* stop report als value */
 		hook_call_deferred(&report_illuminance_value_data, -1);
@@ -840,7 +849,7 @@ static int i2c_hid_target_init(const struct device *dev)
 	data->descriptor_size = cfg->descriptor_size;
 	data->report_id = 0;
 
-	als_report_control(ALS_REPORT_POLLING);
+	als_report_control(ALS_REPORT_STOP);
 	return 0;
 }
 
