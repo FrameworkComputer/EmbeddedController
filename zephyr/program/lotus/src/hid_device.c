@@ -490,6 +490,8 @@ void report_illuminance_value(void)
 		if (ABS(als_sensor.illuminanceValue - newIlluminaceValue) > granularity) {
 			als_sensor.illuminanceValue = newIlluminaceValue;
 			hid_target_als_irq();
+			/* reset for next 6 seconds */
+			als_polling_mode_count = 0;
 		}
 	}
 
@@ -531,6 +533,18 @@ static void als_report_control(uint8_t report_mode)
 	}
 }
 
+
+
+static void als_shutdown(void)
+{
+	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(i2chid1));
+	struct i2c_hid_target_data *data = dev->data;
+
+	als_report_control(ALS_REPORT_STOP);
+
+	gpio_pin_set_dt(data->alert_gpio, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, als_shutdown, HOOK_PRIO_DEFAULT);
 
 static void extract_report(size_t len, const uint8_t *buffer, void *data,
 			   size_t data_len)
