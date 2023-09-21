@@ -235,3 +235,21 @@ Breakpoint 1, main (argc=-17520, argv=0xffffbc24) at boards/posix/native_posix/m
 112             posix_init(argc, argv);
 ...
 ```
+
+
+## Trouleshooting the initialization sequence
+
+The `initlevels` cmake target produces a list of the initialization calls as
+defined in the output ELF file, either via `SYS_INIT` or `DEVICE_DEFINE`. This
+can be useful to identify crashes and regression related to changes in the
+initialization call order.
+
+The list can be obtained with:
+
+```
+ninja -C build/zephyr/$PROJECT/build-ro initlevels
+```
+
+Potential fixes of init sequence regressions can be either adding `BUILD_CHECK`
+to validate the sequence in the appropriate files, or converting `SYS_CALL` to
+`DEVICE_DT_DEFINE` if the dependency is already represented in the device tree.
