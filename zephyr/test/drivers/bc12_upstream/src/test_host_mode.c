@@ -19,6 +19,7 @@
 #include "timer.h"
 #include "usb_charge.h"
 #include "usbc/bc12_upstream.h"
+#include "usbc/utils.h"
 
 #include <zephyr/drivers/usb/emul_bc12.h>
 #include <zephyr/drivers/usb/usb_bc12.h>
@@ -90,8 +91,8 @@ ZTEST_F(bc12_upstream_host_mode, test_bc12_host_mode)
 static void *bc12_host_mode_setup(void)
 {
 	static struct bc12_upstream_host_mode_fixture fixture = {
-		.bc12_dev = DEVICE_DT_GET(DT_NODELABEL(pi3usb9201_emul0)),
-		.bc12_emul = EMUL_DT_GET(DT_NODELABEL(pi3usb9201_emul0)),
+		.bc12_dev = DEVICE_GET_USBC_BINDING(0, bc12),
+		.bc12_emul = EMUL_GET_USBC_BINDING(0, bc12),
 		.typec_port = 0,
 	};
 

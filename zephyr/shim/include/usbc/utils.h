@@ -36,6 +36,41 @@
  */
 #define USBC_PORT_FROM_INST(inst) USBC_PORT(DT_DRV_INST(inst))
 
+/**
+ * @brief Helper macro to check for the NTC38xx TCPC. The NCT38xx TCPC
+ * is configured as a child binding under the nuvoton,nc38xx MFD. Grab
+ * the parent phandle when the NCT38xx TCPC is detected, otherwise return
+ * the current node phandle.
+ */
+#define DEVICE_GET_CHIP_BINDING(chip_phandle)                               \
+	COND_CODE_1(DT_NODE_HAS_COMPAT(chip_phandle, nuvoton_nct38xx_tcpc), \
+		    (DEVICE_DT_GET(DT_PARENT(chip_phandle))),               \
+		    (DEVICE_DT_GET(chip_phandle)))
+
+/**
+ * @brief Helper macro for DEVICE_GET_USBC_BINDING. If @p usbc_id has the same
+ *        port number as @p port, then struct device* for @p chip phandle is
+ *        returned.
+ *
+ * @param usbc_id Named usbc port ID
+ * @param port Port number to match with named usbc port
+ * @param chip Name of chip phandle property
+ */
+#define DEVICE_GET_USBC_BINDING_IF_PORT_MATCH(usbc_id, port, chip) \
+	COND_CODE_1(IS_EQ(USBC_PORT_NEW(usbc_id), port),           \
+		    (DEVICE_GET_CHIP_BINDING(DT_PHANDLE(usbc_id, chip))), ())
+
+/**
+ * @brief Get the struct device for a phandle @p chip property of USBC @p port
+ *
+ * @param port Named usbc port number.  The value has to be an integer literal
+ * @param chip Name of the chip property that contains a phandle of the driver.
+ */
+#define DEVICE_GET_USBC_BINDING(port, chip)                                 \
+	DT_FOREACH_STATUS_OKAY_VARGS(named_usbc_port,                       \
+				     DEVICE_GET_USBC_BINDING_IF_PORT_MATCH, \
+				     port, chip)
+
 /*
  * Check that the TCPC interrupt flag defined in the devicetree is the same as
  * the hardware.
