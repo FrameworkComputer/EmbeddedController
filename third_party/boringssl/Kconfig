@@ -4,7 +4,8 @@
 
 config BORINGSSL_CRYPTO
 	bool "BoringSSL support"
-	depends on COMMON_LIBC_MALLOC_ARENA_SIZE >= 2048
+	depends on COMMON_LIBC_MALLOC_ARENA_SIZE >= 2048 || \
+		   NEWLIB_LIBC_MIN_REQUIRED_HEAP_SIZE >= 2048
 	help
 	  This option enables BoringSSL cryptography library.
 	  The library is provided as external module.
