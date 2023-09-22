@@ -20,14 +20,11 @@ GPIO_INT(SLP_S3_L,                       PIN(A, 5), GPIO_INT_BOTH, power_signal_
 GPIO_INT(SLP_SUS_L,                      PIN(F, 1), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(SYS_SLP_S0IX_L,                 PIN(D, 5), GPIO_INT_BOTH, power_signal_interrupt)
 GPIO_INT(TABLET_MODE_L,                  PIN(9, 5), GPIO_INT_BOTH, gmr_tablet_switch_isr)
-GPIO_INT(USB_C0_BC12_INT_ODL,            PIN(C, 6), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C0_C2_TCPC_INT_ODL,         PIN(E, 0), GPIO_INT_FALLING, tcpc_alert_event)
 GPIO_INT(USB_C0_PPC_INT_ODL,             PIN(6, 2), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C0_RT_INT_ODL,              PIN(B, 1), GPIO_INT_FALLING, retimer_interrupt)
-GPIO_INT(USB_C1_BC12_INT_ODL,            PIN(5, 0), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C1_PPC_INT_ODL,             PIN(F, 5), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C1_TCPC_INT_ODL,            PIN(A, 2), GPIO_INT_FALLING, tcpc_alert_event)
-GPIO_INT(USB_C2_BC12_INT_ODL,            PIN(8, 3), GPIO_INT_FALLING, bc12_interrupt)
 GPIO_INT(USB_C2_PPC_INT_ODL,             PIN(7, 0), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C2_RT_INT_ODL,              PIN(4, 1), GPIO_INT_FALLING, retimer_interrupt)
 
@@ -116,10 +113,13 @@ ALTERNATE(PIN_MASK(0, 0x02), 0, MODULE_PMU, GPIO_INT_BOTH | GPIO_HIB_WAKE_LOW) /
 ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_PMU, GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH) /* PSL_IN1_L&GPID2/GPIOD2 */
 
 /* Unused Pins */
+UNUSED(PIN(C, 6))
 UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
 UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
-UNUSED(PIN(6, 6))       /* GPIO66 */
+UNUSED(PIN(5, 0))
 UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
+UNUSED(PIN(6, 6))       /* GPIO66 */
+UNUSED(PIN(8, 3))
 
 /* Pre-configured PSL balls:  J8  K6 */

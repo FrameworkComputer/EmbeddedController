@@ -9,7 +9,6 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
-#include "driver/bc12/pi3usb9201_public.h"
 #include "driver/ppc/nx20p348x.h"
 #include "driver/ppc/syv682x_public.h"
 #include "driver/retimer/bb_retimer_public.h"
@@ -26,7 +25,6 @@
 #include "task.h"
 #include "task_id.h"
 #include "timer.h"
-#include "usb_charge.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
@@ -187,23 +185,6 @@ const struct usb_mux_chain usb_muxes[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == USBC_PORT_COUNT);
 
-/* BC1.2 charger detect configuration */
-const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
-	[USBC_PORT_C0] = {
-		.i2c_port = I2C_PORT_USB_C0_C2_BC12,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-	[USBC_PORT_C1] = {
-		.i2c_port = I2C_PORT_USB_C1_BC12,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_3_FLAGS,
-	},
-	[USBC_PORT_C2] = {
-		.i2c_port = I2C_PORT_USB_C0_C2_BC12,
-		.i2c_addr_flags = PI3USB9201_I2C_ADDR_1_FLAGS,
-	},
-};
-BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
-
 /*
  * USB C0 and C2 uses burnside bridge chips and have their reset
  * controlled by their respective TCPC chips acting as GPIO expanders.
@@ -232,12 +213,6 @@ BUILD_ASSERT(ARRAY_SIZE(ioex_config) == CONFIG_IO_EXPANDER_PORT_COUNT);
 
 #ifdef CONFIG_CHARGE_RAMP_SW
 
-/*
- * TODO(b/181508008): tune this threshold
- */
-
-#define BC12_MIN_VOLTAGE 4400
-
 /**
  * Return true if VBUS is too low
  */
@@ -250,12 +225,6 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 
 	if (voltage == 0) {
 		CPRINTS("%s: must be disconnected", __func__);
-		return 1;
-	}
-
-	if (voltage < BC12_MIN_VOLTAGE) {
-		CPRINTS("%s: port %d: vbus %d lower than %d", __func__, port,
-			voltage, BC12_MIN_VOLTAGE);
 		return 1;
 	}
 
@@ -387,17 +356,12 @@ static void board_tcpc_init(void)
 #ifndef CONFIG_ZEPHYR
 	/* Enable TCPC interrupts. */
 	gpio_enable_interrupt(GPIO_USB_C0_C2_TCPC_INT_ODL);
-
-	/* Enable BC1.2 interrupts. */
-	gpio_enable_interrupt(GPIO_USB_C0_BC12_INT_ODL);
-	gpio_enable_interrupt(GPIO_USB_C2_BC12_INT_ODL);
 #endif /* !CONFIG_ZEPHYR */
 
 	if (ec_cfg_usb_db_type() != DB_USB_ABSENT) {
 		gpio_enable_interrupt(GPIO_USB_C1_PPC_INT_ODL);
 #ifndef CONFIG_ZEPHYR
 		gpio_enable_interrupt(GPIO_USB_C1_TCPC_INT_ODL);
-		gpio_enable_interrupt(GPIO_USB_C1_BC12_INT_ODL);
 #else
 	} else {
 		tcpc_config[1].irq_gpio.port = NULL;
@@ -451,25 +415,6 @@ void tcpc_alert_event(enum gpio_signal signal)
 	}
 }
 #endif
-
-void bc12_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_BC12_INT_ODL:
-		usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
-		break;
-	case GPIO_USB_C1_BC12_INT_ODL:
-		if (ec_cfg_usb_db_type() == DB_USB_ABSENT)
-			break;
-		usb_charger_task_set_event(1, USB_CHG_EVENT_BC12);
-		break;
-	case GPIO_USB_C2_BC12_INT_ODL:
-		usb_charger_task_set_event(2, USB_CHG_EVENT_BC12);
-		break;
-	default:
-		break;
-	}
-}
 
 void ppc_interrupt(enum gpio_signal signal)
 {
