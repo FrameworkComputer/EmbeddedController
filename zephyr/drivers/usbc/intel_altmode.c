@@ -43,8 +43,8 @@ struct pd_altmode_data {
 	intel_altmode_callback isr_cb;
 };
 
-static int intel_altmode_read(const struct device *dev,
-			      union data_status_reg *data)
+static int intel_altmode_read_status(const struct device *dev,
+				     union data_status_reg *data)
 {
 	const struct pd_altmode_config *cfg = dev->config;
 	uint8_t buf[INTEL_ALTMODE_DATA_STATUS_REG_LEN + 1];
@@ -66,8 +66,8 @@ static int intel_altmode_read(const struct device *dev,
 	return 0;
 }
 
-static int intel_altmode_write(const struct device *dev,
-			       union data_control_reg *data)
+static int intel_altmode_write_control(const struct device *dev,
+				       union data_control_reg *data)
 {
 	uint8_t buf[INTEL_ALTMODE_DATA_CONTROL_REG_LEN + 2];
 	const struct pd_altmode_config *cfg = dev->config;
@@ -104,8 +104,8 @@ static void intel_altmode_set_result_cb(const struct device *dev,
 }
 
 static const struct intel_altmode_driver_api intel_pd_altmode_driver_api = {
-	.read = intel_altmode_read,
-	.write = intel_altmode_write,
+	.read_status = intel_altmode_read_status,
+	.write_control = intel_altmode_write_control,
 	.is_interrupted = intel_altmode_is_interrupted,
 	.set_result_cb = intel_altmode_set_result_cb,
 };

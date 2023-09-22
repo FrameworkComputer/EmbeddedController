@@ -116,14 +116,14 @@ static void process_altmode_pd_data(int port)
 	LOG_INF("Process p%d data", port);
 
 	/* Clear the interrupt */
-	rv = pd_altmode_write(pd_config_array[port], &control);
+	rv = pd_altmode_write_control(pd_config_array[port], &control);
 	if (rv) {
 		LOG_ERR("P%d write Err=%d", port, rv);
 		return;
 	}
 
 	/* Read the status register */
-	rv = pd_altmode_read(pd_config_array[port], &status);
+	rv = pd_altmode_read_status(pd_config_array[port], &status);
 	if (rv) {
 		LOG_ERR("P%d read Err=%d", port, rv);
 		return;
@@ -216,7 +216,7 @@ static int cmd_altmode_read(const struct shell *sh, size_t argc, char **argv)
 		return rv;
 
 	/* Read from status register */
-	rv = pd_altmode_read(pd_config_array[port], &status);
+	rv = pd_altmode_read_status(pd_config_array[port], &status);
 	if (rv) {
 		shell_error(sh, "Read failed, rv=%d", rv);
 		return rv;
@@ -256,7 +256,7 @@ static int cmd_altmode_write(const struct shell *sh, size_t argc, char **argv)
 	}
 
 	/* Write to control register */
-	rv = pd_altmode_write(pd_config_array[port], &control);
+	rv = pd_altmode_write_control(pd_config_array[port], &control);
 	if (rv)
 		shell_error(sh, "Write failed, rv=%d", rv);
 

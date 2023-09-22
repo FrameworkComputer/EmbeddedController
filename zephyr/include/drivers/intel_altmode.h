@@ -216,10 +216,10 @@ union data_control_reg {
  * @brief Callback for PD Alternate mode event
  */
 typedef void (*intel_altmode_callback)(void);
-typedef int (*altmode_read)(const struct device *dev,
-			    union data_status_reg *data);
-typedef int (*altmode_write)(const struct device *dev,
-			     union data_control_reg *data);
+typedef int (*altmode_read_status)(const struct device *dev,
+				   union data_status_reg *data);
+typedef int (*altmode_write_control)(const struct device *dev,
+				     union data_control_reg *data);
 typedef bool (*altmode_is_interrupted)(const struct device *dev);
 typedef void (*altmode_set_result_cb)(const struct device *dev,
 				      intel_altmode_callback cb);
@@ -230,8 +230,8 @@ typedef void (*altmode_set_result_cb)(const struct device *dev,
  * These are for internal use only, so skip these in public documentation.
  */
 __subsystem struct intel_altmode_driver_api {
-	altmode_read read;
-	altmode_write write;
+	altmode_read_status read_status;
+	altmode_write_control write_control;
 	altmode_is_interrupted is_interrupted;
 	altmode_set_result_cb set_result_cb;
 };
@@ -248,16 +248,16 @@ __subsystem struct intel_altmode_driver_api {
  * @retval 0 if success or I2C error.
  * @retval -EIO general input/output error.
  */
-__syscall int pd_altmode_read(const struct device *dev,
-			      union data_status_reg *data);
+__syscall int pd_altmode_read_status(const struct device *dev,
+				     union data_status_reg *data);
 
-static inline int z_impl_pd_altmode_read(const struct device *dev,
-					 union data_status_reg *data)
+static inline int z_impl_pd_altmode_read_status(const struct device *dev,
+						union data_status_reg *data)
 {
 	const struct intel_altmode_driver_api *api =
 		(const struct intel_altmode_driver_api *)dev->api;
 
-	return api->read(dev, data);
+	return api->read_status(dev, data);
 }
 
 /**
@@ -268,16 +268,16 @@ static inline int z_impl_pd_altmode_read(const struct device *dev,
  *
  * @retval 0 if success or I2C error.
  */
-__syscall int pd_altmode_write(const struct device *dev,
-			       union data_control_reg *data);
+__syscall int pd_altmode_write_control(const struct device *dev,
+				       union data_control_reg *data);
 
-static inline int z_impl_pd_altmode_write(const struct device *dev,
-					  union data_control_reg *data)
+static inline int z_impl_pd_altmode_write_control(const struct device *dev,
+						  union data_control_reg *data)
 {
 	const struct intel_altmode_driver_api *api =
 		(const struct intel_altmode_driver_api *)dev->api;
 
-	return api->write(dev, data);
+	return api->write_control(dev, data);
 }
 
 /**
