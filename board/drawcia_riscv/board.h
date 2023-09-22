@@ -62,6 +62,8 @@
 
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
+#undef CONFIG_CMD_APTHROTTLE
+#undef CONFIG_CMD_BATTFAKE
 
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
