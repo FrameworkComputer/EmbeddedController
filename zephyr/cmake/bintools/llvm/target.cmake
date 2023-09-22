@@ -22,6 +22,15 @@ if("${ARCH}" STREQUAL "arm")
   set(CMAKE_C_COMPILER_OBJDUMP    "${CROSS_COMPILE}objdump")
   set(CMAKE_C_COMPILER_RANLIB     "${CROSS_COMPILE}ranlib")
   set(CMAKE_C_COMPILER_READELF    "${CROSS_COMPILE}readelf")
+
+  # And for C++
+  set(CMAKE_CXX_COMPILER_AR         "${CROSS_COMPILE}ar")
+  set(CMAKE_CXX_COMPILER_NM         "${CROSS_COMPILE}nm")
+  set(CMAKE_CXX_COMPILER_OBJCOPY    "${CROSS_COMPILE}objcopy")
+  set(CMAKE_CXX_COMPILER_OBJDUMP    "${CROSS_COMPILE}objdump")
+  set(CMAKE_CXX_COMPILER_RANLIB     "${CROSS_COMPILE}ranlib")
+  set(CMAKE_CXX_COMPILER_READELF    "${CROSS_COMPILE}readelf")
+
 endif()
 
 # Include the GNU bintools properties as a base.
