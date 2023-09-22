@@ -1224,19 +1224,18 @@ static void perform_error_recovery(int controller)
 	if (controller < 2)
 		for (i = 0; i < 2; i++) {
 			if (!((controller*2 + i) == prev_charge_port &&
-				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED) &&
-			    (pd_port_states[i].c_state != CCG_STATUS_NOTHING))
-				data[0] = PORT_TO_CONTROLLER_PORT(i);
-				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
-									CCG_DPM_CMD_REG,
-									data, 2);
+				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
+					data[0] = PORT_TO_CONTROLLER_PORT(i);
+					cypd_write_reg_block(PORT_TO_CONTROLLER(i),
+										CCG_DPM_CMD_REG,
+										data, 2);
+				}
 		}
 	else {
 		/* Hard reset all ports that are not supplying power in dead battery mode */
 		for (i = 0; i < PD_PORT_COUNT; i++) {
 			if (!(i == prev_charge_port &&
-			    battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED) &&
-			    ((pd_port_states[i].c_state != CCG_STATUS_NOTHING))) {
+			    battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
 
 				if ((pd_port_states[i].c_state == CCG_STATUS_SOURCE) &&
 				   (batt_os_percentage < 30) && (i == prev_charge_port))
