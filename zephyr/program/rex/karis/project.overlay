@@ -59,6 +59,9 @@
 		gpio_ec_spare_gpio74: gpio_ec_spare_gpio74 {
 			gpios = <&gpio7 4 GPIO_OUTPUT>;
 		};
+		gpio_en_pp5000_usba_r: en_pp5000_usba_r {
+			gpios = <&gpiod 7 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
 	};
 
 	unused-pins {
