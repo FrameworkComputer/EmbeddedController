@@ -177,6 +177,9 @@ DECLARE_EC_TEST(test_all_tags)
 	zassert_equal(cbi_set_board_info(CBI_TAG_FACTORY_CALIBRATION_DATA, &d8,
 					 sizeof(d8)),
 		      EC_SUCCESS, NULL);
+	zassert_equal(cbi_set_board_info(CBI_TAG_COMMON_CONTROL, &d8,
+					 sizeof(d8)),
+		      EC_SUCCESS, NULL);
 
 	/* Read out all */
 	zassert_equal(cbi_get_board_version(&d32), EC_SUCCESS);
@@ -220,6 +223,9 @@ DECLARE_EC_TEST(test_all_tags)
 	zassert_true((unsigned long long)d64 == (unsigned long long)d8,
 		     "0x%llx, 0x%llx", (unsigned long long)d64,
 		     (unsigned long long)d8);
+	zassert_equal(cbi_get_common_control((union ec_common_control *)&d32),
+		      EC_SUCCESS);
+	zassert_equal(d32, d8, "0x%x, 0x%x", d32, d8);
 
 	/* Write protect */
 	write_protect_set(1);
