@@ -8,6 +8,7 @@
 #include "builtin/assert.h"
 #include "console.h"
 #include "flash.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "hwtimer_chip.h"
 #include "registers.h"
@@ -18,6 +19,9 @@
 #include "timer.h"
 #include "util.h"
 #include "watchdog.h"
+
+#define FLASH_SYSJUMP_TAG 0x5750 /* "WP" - Write Protect */
+#define FLASH_HOOK_VERSION 1
 
 static int all_protected; /* Has all-flash protection been requested? */
 static int addr_prot_start;
@@ -35,6 +39,13 @@ static uint8_t saved_sr2;
 
 /* Ensure only one task is accessing flash at a time. */
 static struct mutex flash_lock;
+
+/* The previous write protect state before sys jump */
+struct flash_wp_state {
+	int all_protected;
+	uint8_t saved_sr1;
+	uint8_t saved_sr2;
+};
 
 /*****************************************************************************/
 /* flash internal functions */
@@ -696,6 +707,32 @@ uint32_t crec_flash_physical_get_writable_flags(uint32_t cur_flags)
 	return ret;
 }
 
+int crec_flash_physical_restore_state(void)
+{
+	uint32_t reset_flags = system_get_reset_flags();
+	int version, size;
+	const struct flash_wp_state *prev;
+
+	/*
+	 * If we have already jumped between images, an earlier image
+	 * could have applied write protection. Nothing additional needs
+	 * to be done.
+	 */
+	if (reset_flags & EC_RESET_FLAG_SYSJUMP) {
+		prev = (const struct flash_wp_state *)system_get_jump_tag(
+			FLASH_SYSJUMP_TAG, &version, &size);
+		if (prev && version == FLASH_HOOK_VERSION &&
+		    size == sizeof(*prev)) {
+			all_protected = prev->all_protected;
+			saved_sr1 = prev->saved_sr1;
+			saved_sr2 = prev->saved_sr2;
+		}
+		return 1;
+	}
+
+	return 0;
+}
+
 /*****************************************************************************/
 /* High-level APIs */
 
@@ -730,6 +767,8 @@ int crec_flash_pre_init(void)
 	flash_protect_int_flash(!gpio_get_level(GPIO_WP_L));
 #endif /*CONFIG_WP_ACTIVE_HIGH */
 #endif
+	crec_flash_physical_restore_state();
+
 	return EC_SUCCESS;
 }
 
@@ -835,3 +874,16 @@ static int command_flash_chip(int argc, const char **argv)
 }
 DECLARE_CONSOLE_COMMAND(flashchip, command_flash_chip, NULL,
 			"Print flash chip info");
+
+static void flash_preserve_state(void)
+{
+	struct flash_wp_state state;
+
+	state.all_protected = all_protected;
+	state.saved_sr1 = saved_sr1;
+	state.saved_sr2 = saved_sr2;
+
+	system_add_jump_tag(FLASH_SYSJUMP_TAG, FLASH_HOOK_VERSION,
+			    sizeof(state), &state);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, flash_preserve_state, HOOK_PRIO_DEFAULT);
