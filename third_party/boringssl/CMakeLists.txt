@@ -33,7 +33,7 @@ endif()
 # better way to disable the filesystem, threads and locks usages.
 set(CMAKE_SYSTEM_NAME Linux)
 set(ANDROID TRUE)
-add_definitions(-D__TRUSTY__)
+zephyr_compile_definitions(__TRUSTY__)
 
 # Zephyr defines _XOPEN_SOURCE=600 when compiling 'posix' architecture,
 # but BoringSSL defines _XOPEN_SOURCE=700. Since redefining is not allowed
@@ -48,7 +48,9 @@ set(CMAKE_SKIP_INSTALL_RULES YES)
 # We don't use generated assembly for now.
 set(OPENSSL_NO_ASM "1")
 
+zephyr_include_directories(${BORINGSSL_SOURCES})
 zephyr_include_directories(${BORINGSSL_SOURCES}/include)
+zephyr_include_directories(include)
 
 # Add CMakeLists.txt from BoringSSL. This directory is out-of-tree, so we need
 # to specify binary directory also. BoringSSL defines many CMake targets which
