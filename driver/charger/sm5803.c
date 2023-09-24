@@ -844,9 +844,7 @@ static void sm5803_init(int chgnum)
 	 * b:292038738: Temporarily disable VBAT_SNSP high interrupt since
 	 * the setpoint is not confirmed.
 	 */
-	rv |= main_read8(chgnum, SM5803_REG_INT2_EN, &reg);
-	reg |= SM5803_INT2_TINT;
-	rv |= main_write8(chgnum, SM5803_REG_INT2_EN, reg);
+	rv |= main_write8(chgnum, SM5803_REG_INT2_EN, SM5803_INT2_TINT);
 
 	/*
 	 * Configure CHG_ENABLE to only be set through I2C by setting
