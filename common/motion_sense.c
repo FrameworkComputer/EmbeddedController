@@ -282,7 +282,8 @@ static void motion_sense_switch_sensor_rate(void)
 			 * Initialize or just back the odr/range previously
 			 * set.
 			 */
-			if (sensor->state == SENSOR_INITIALIZED) {
+			if ((sensor->state == SENSOR_INITIALIZED) ||
+			    (sensor->state == SENSOR_READY)) {
 				sensor->drv->set_range(
 					sensor, sensor->current_range, 1);
 				sensor_setup_mask |= BIT(i);
@@ -306,7 +307,8 @@ static void motion_sense_switch_sensor_rate(void)
 			}
 		} else {
 			/* The sensors are being powered off */
-			if (sensor->state == SENSOR_INITIALIZED) {
+			if ((sensor->state == SENSOR_INITIALIZED) ||
+			    (sensor->state == SENSOR_READY)) {
 				/*
 				 * Use mutex to be sure we are not changing the
 				 * ODR in MOTIONSENSE, in case it is running.
@@ -354,7 +356,8 @@ static void motion_sense_switch_sensor_rate(void)
 		while (mask) {
 			i = get_next_bit(&mask);
 			sensor = &motion_sensors[i];
-			if (sensor->state != SENSOR_INITIALIZED)
+			if ((sensor->state != SENSOR_INITIALIZED) &&
+			    (sensor->state != SENSOR_READY))
 				continue;
 			sensor->drv->list_activities(sensor, &enabled,
 						     &disabled);
@@ -547,7 +550,7 @@ static void update_sense_data(uint8_t *lpc_status, int *psample_id)
 
 static int motion_sense_read(struct motion_sensor_t *sensor)
 {
-	ASSERT(sensor->state == SENSOR_INITIALIZED);
+	ASSERT(sensor->state == SENSOR_READY);
 	ASSERT(sensor->drv->get_data_rate(sensor) != 0);
 
 	/*
@@ -638,12 +641,35 @@ static int motion_sense_process(struct motion_sensor_t *sensor, uint32_t *event,
 		atomic_or(&odr_event_required, odr_pending);
 	}
 
+	/*
+	 * If the sensor is in ready state or
+	 * it has been initialized and we have not set its ODR,
+	 * we can proceed.
+	 * Otherwise, we must bail: we may still be using stale data,
+	 * the sensor is not completely set up.
+	 */
+	if (!((sensor->state == SENSOR_READY) ||
+	      (sensor->state == SENSOR_INITIALIZED && is_odr_pending))) {
+		return EC_ERROR_BUSY;
+	}
+
 	if ((*event & TASK_EVENT_MOTION_INTERRUPT_MASK || is_odr_pending) &&
 	    (sensor->drv->irq_handler != NULL)) {
 		ret = sensor->drv->irq_handler(sensor, event);
 		if (ret == EC_SUCCESS)
 			has_data_read = 1;
 	}
+
+	/*
+	 * ODR change was requested: update the collection data rate,
+	 * we may miss a sample, but we won't use stale collection_rate.
+	 */
+	if (is_odr_pending) {
+		if (sensor->state == SENSOR_INITIALIZED)
+			sensor->state = SENSOR_READY;
+		motion_sense_set_data_rate(sensor);
+	}
+
 	if (motion_sensor_in_forced_mode(sensor)) {
 		if (motion_sensor_time_to_read(ts, sensor)) {
 			/*
@@ -673,9 +699,8 @@ static int motion_sense_process(struct motion_sensor_t *sensor, uint32_t *event,
 		}
 	}
 
-	/* ODR change was requested. */
+	/* ODR change was requested, confirm change to AP, after flush.*/
 	if (is_odr_pending) {
-		motion_sense_set_data_rate(sensor);
 		if (IS_ENABLED(CONFIG_ACCEL_FIFO))
 			motion_sense_fifo_insert_async_event(sensor,
 							     ASYNC_EVENT_ODR);
@@ -749,8 +774,7 @@ static void check_and_queue_gestures(uint32_t *event)
 		const struct motion_sensor_t *sensor =
 			&motion_sensors[LID_ACCEL];
 
-		if (SENSOR_ACTIVE(sensor) &&
-		    (sensor->state == SENSOR_INITIALIZED)) {
+		if (SENSOR_ACTIVE(sensor) && (sensor->state == SENSOR_READY)) {
 			struct ec_response_motion_sensor_data vector = {
 				.flags = 0,
 				.activity_data.activity =
@@ -819,10 +843,6 @@ void motion_sense_task(void *u)
 
 			/* if the sensor is active in the current power state */
 			if (SENSOR_ACTIVE(sensor)) {
-				if (sensor->state != SENSOR_INITIALIZED) {
-					continue;
-				}
-
 				ret = motion_sense_process(sensor, &event,
 							   &ts_begin_task);
 				if (ret != EC_SUCCESS)
@@ -944,7 +964,7 @@ static struct motion_sensor_t *host_sensor_id_to_real_sensor(int host_id)
 	sensor = &motion_sensors[host_id];
 
 	/* if sensor is powered and initialized, return match */
-	if (SENSOR_ACTIVE(sensor) && (sensor->state == SENSOR_INITIALIZED))
+	if (SENSOR_ACTIVE(sensor) && (sensor->state == SENSOR_READY))
 		return sensor;
 
 	/* If no match then the EC currently doesn't support ID received. */
@@ -1688,6 +1708,16 @@ static int command_accel_init(int argc, const char **argv)
 
 	sensor = &motion_sensors[id];
 	ret = motion_sense_init(sensor);
+
+	if (ret == EC_SUCCESS) {
+		/*
+		 * We need to reset the ODR information, especially since
+		 * the ODR has been changed.
+		 */
+		atomic_or(&odr_event_required, BIT(id));
+		task_set_event(TASK_ID_MOTIONSENSE,
+			       TASK_EVENT_MOTION_ODR_CHANGE);
+	}
 
 	ccprintf("%s: state %d - %d\n", sensor->name, sensor->state, ret);
 	return EC_SUCCESS;
