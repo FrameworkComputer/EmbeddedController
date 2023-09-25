@@ -65,12 +65,13 @@ test_export_static int batt_conf_read_ship_mode(struct board_batt_params *info)
 test_export_static int batt_conf_read_sleep_mode(struct board_batt_params *info)
 {
 	struct sleep_mode_info *sleep = &info->fuel_gauge.sleep_mode;
+	struct fuel_gauge_reg_addr_data reg;
 
-	batt_conf_read(CBI_TAG_BATT_SLEEP_MODE_REG_ADDR, &sleep->reg_addr,
-		       sizeof(sleep->reg_addr));
-
-	batt_conf_read(CBI_TAG_BATT_SLEEP_MODE_REG_DATA,
-		       (uint8_t *)&sleep->reg_data, sizeof(sleep->reg_data));
+	if (batt_conf_read(CBI_TAG_BATT_SLEEP_MODE, (uint8_t *)&reg,
+			   sizeof(reg)) == EC_SUCCESS) {
+		sleep->reg_addr = reg.addr;
+		sleep->reg_data = reg.data;
+	}
 
 	return EC_SUCCESS;
 }

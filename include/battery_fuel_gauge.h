@@ -28,6 +28,11 @@ struct battery_temperature_range {
 	int8_t max_c;
 } __packed;
 
+struct fuel_gauge_reg_addr_data {
+	uint8_t addr;
+	uint16_t data;
+} __packed;
+
 struct ship_mode_info {
 	/*
 	 * Write Block Support. If wb_support is true, then we use a i2c write

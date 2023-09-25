@@ -103,6 +103,7 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 {
 	struct fuel_gauge_info *info = &conf_in_cbi.fuel_gauge;
 	struct fuel_gauge_info *dflt = &default_battery_conf.fuel_gauge;
+	struct fuel_gauge_reg_addr_data reg;
 	uint32_t u32;
 
 	/* Read without data in CBI. Test ERROR_UNKNOWN is correctly ignored. */
@@ -170,13 +171,10 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 					 sizeof(info->fet.cfet_off_val)),
 		      EC_SUCCESS);
 	/* struct sleep_mode_info */
-	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_SLEEP_MODE_REG_ADDR,
-					 &info->sleep_mode.reg_addr,
-					 sizeof(info->sleep_mode.reg_addr)),
-		      EC_SUCCESS);
-	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_SLEEP_MODE_REG_DATA,
-					 (uint8_t *)&info->sleep_mode.reg_data,
-					 sizeof(info->sleep_mode.reg_data)),
+	reg.addr = info->sleep_mode.reg_addr;
+	reg.data = info->sleep_mode.reg_data;
+	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_SLEEP_MODE,
+					 (uint8_t *)&reg, sizeof(reg)),
 		      EC_SUCCESS);
 	/* struct ship_mode_info */
 	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_SHIP_MODE_REG_ADDR,
