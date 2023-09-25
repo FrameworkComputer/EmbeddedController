@@ -18,6 +18,16 @@
 /* When battery type is not initialized */
 #define BATTERY_TYPE_UNINITIALIZED -1
 
+struct battery_voltage_current {
+	uint16_t mv;
+	uint16_t ma;
+} __packed;
+
+struct battery_temperature_range {
+	int8_t min_c;
+	int8_t max_c;
+} __packed;
+
 struct ship_mode_info {
 	/*
 	 * Write Block Support. If wb_support is true, then we use a i2c write

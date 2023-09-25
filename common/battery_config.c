@@ -138,7 +138,9 @@ batt_conf_read_fuel_gauge_info(struct board_batt_params *info)
 test_export_static int
 batt_conf_read_battery_info(struct board_batt_params *info)
 {
-	const struct battery_info *batt = &info->batt_info;
+	struct battery_info *batt = &info->batt_info;
+	struct battery_voltage_current mvma;
+	struct battery_temperature_range temp;
 
 	batt_conf_read(CBI_TAG_BATT_VOLTAGE_MAX, (uint8_t *)&batt->voltage_max,
 		       sizeof(batt->voltage_max));
@@ -147,30 +149,26 @@ batt_conf_read_battery_info(struct board_batt_params *info)
 		       sizeof(batt->voltage_normal));
 	batt_conf_read(CBI_TAG_BATT_VOLTAGE_MIN, (uint8_t *)&batt->voltage_min,
 		       sizeof(batt->voltage_min));
-	batt_conf_read(CBI_TAG_BATT_PRECHARGE_VOLTAGE,
-		       (uint8_t *)&batt->precharge_voltage,
-		       sizeof(batt->precharge_voltage));
-	batt_conf_read(CBI_TAG_BATT_PRECHARGE_CURRENT,
-		       (uint8_t *)&batt->precharge_current,
-		       sizeof(batt->precharge_current));
-	batt_conf_read(CBI_TAG_BATT_START_CHARGING_MIN_C,
-		       (uint8_t *)&batt->start_charging_min_c,
-		       sizeof(batt->start_charging_min_c));
-	batt_conf_read(CBI_TAG_BATT_START_CHARGING_MAX_C,
-		       (uint8_t *)&batt->start_charging_max_c,
-		       sizeof(batt->start_charging_max_c));
-	batt_conf_read(CBI_TAG_BATT_CHARGING_MIN_C,
-		       (uint8_t *)&batt->charging_min_c,
-		       sizeof(batt->charging_min_c));
-	batt_conf_read(CBI_TAG_BATT_CHARGING_MAX_C,
-		       (uint8_t *)&batt->charging_max_c,
-		       sizeof(batt->charging_max_c));
-	batt_conf_read(CBI_TAG_BATT_DISCHARGING_MIN_C,
-		       (uint8_t *)&batt->discharging_min_c,
-		       sizeof(batt->discharging_min_c));
-	batt_conf_read(CBI_TAG_BATT_DISCHARGING_MAX_C,
-		       (uint8_t *)&batt->discharging_max_c,
-		       sizeof(batt->discharging_max_c));
+	if (batt_conf_read(CBI_TAG_BATT_PRECHARGE_VOLTAGE_CURRENT,
+			   (uint8_t *)&mvma, sizeof(mvma)) == EC_SUCCESS) {
+		batt->precharge_voltage = mvma.mv;
+		batt->precharge_current = mvma.ma;
+	}
+	if (batt_conf_read(CBI_TAG_BATT_START_CHARGING_MIN_MAX_C,
+			   (uint8_t *)&temp, sizeof(temp)) == EC_SUCCESS) {
+		batt->start_charging_min_c = temp.min_c;
+		batt->start_charging_max_c = temp.max_c;
+	}
+	if (batt_conf_read(CBI_TAG_BATT_CHARGING_MIN_MAX_C, (uint8_t *)&temp,
+			   sizeof(temp)) == EC_SUCCESS) {
+		batt->charging_min_c = temp.min_c;
+		batt->charging_max_c = temp.max_c;
+	}
+	if (batt_conf_read(CBI_TAG_BATT_DISCHARGING_MIN_MAX_C, (uint8_t *)&temp,
+			   sizeof(temp)) == EC_SUCCESS) {
+		batt->discharging_min_c = temp.min_c;
+		batt->discharging_max_c = temp.max_c;
+	}
 
 	return EC_SUCCESS;
 }

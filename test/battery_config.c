@@ -238,6 +238,8 @@ DECLARE_EC_TEST(test_read_battery_info)
 	struct battery_info *info = &conf_in_cbi.batt_info;
 	struct battery_info *dflt = &default_battery_conf.batt_info;
 	enum cbi_data_tag tag;
+	struct battery_voltage_current mvma;
+	struct battery_temperature_range temp;
 
 	/* Read without data in CBI. Test ERROR_UNKNOWN is correctly ignored. */
 	zassert_equal(batt_conf_read_battery_info(&default_battery_conf),
@@ -268,43 +270,25 @@ DECLARE_EC_TEST(test_read_battery_info)
 	zassert_equal(cbi_set_board_info(tag, (uint8_t *)&info->voltage_max,
 					 sizeof(info->voltage_max)),
 		      EC_SUCCESS);
-	tag = CBI_TAG_BATT_PRECHARGE_VOLTAGE;
-	zassert_equal(cbi_set_board_info(tag,
-					 (uint8_t *)&info->precharge_voltage,
-					 sizeof(info->precharge_voltage)),
+	tag = CBI_TAG_BATT_PRECHARGE_VOLTAGE_CURRENT;
+	mvma.mv = info->precharge_voltage;
+	mvma.ma = info->precharge_current;
+	zassert_equal(cbi_set_board_info(tag, (uint8_t *)&mvma, sizeof(mvma)),
 		      EC_SUCCESS);
-	tag = CBI_TAG_BATT_PRECHARGE_CURRENT;
-	zassert_equal(cbi_set_board_info(tag,
-					 (uint8_t *)&info->precharge_current,
-					 sizeof(info->precharge_current)),
+	tag = CBI_TAG_BATT_START_CHARGING_MIN_MAX_C;
+	temp.min_c = info->start_charging_min_c;
+	temp.max_c = info->start_charging_max_c;
+	zassert_equal(cbi_set_board_info(tag, (uint8_t *)&temp, sizeof(temp)),
 		      EC_SUCCESS);
-	tag = CBI_TAG_BATT_START_CHARGING_MIN_C;
-	zassert_equal(cbi_set_board_info(tag,
-					 (uint8_t *)&info->start_charging_min_c,
-					 sizeof(info->start_charging_min_c)),
+	tag = CBI_TAG_BATT_CHARGING_MIN_MAX_C;
+	temp.min_c = info->charging_min_c;
+	temp.max_c = info->charging_max_c;
+	zassert_equal(cbi_set_board_info(tag, (uint8_t *)&temp, sizeof(temp)),
 		      EC_SUCCESS);
-	tag = CBI_TAG_BATT_START_CHARGING_MAX_C;
-	zassert_equal(cbi_set_board_info(tag,
-					 (uint8_t *)&info->start_charging_max_c,
-					 sizeof(info->start_charging_max_c)),
-		      EC_SUCCESS);
-	tag = CBI_TAG_BATT_CHARGING_MIN_C;
-	zassert_equal(cbi_set_board_info(tag, (uint8_t *)&info->charging_min_c,
-					 sizeof(info->charging_min_c)),
-		      EC_SUCCESS);
-	tag = CBI_TAG_BATT_CHARGING_MAX_C;
-	zassert_equal(cbi_set_board_info(tag, (uint8_t *)&info->charging_max_c,
-					 sizeof(info->charging_max_c)),
-		      EC_SUCCESS);
-	tag = CBI_TAG_BATT_DISCHARGING_MIN_C;
-	zassert_equal(cbi_set_board_info(tag,
-					 (uint8_t *)&info->discharging_min_c,
-					 sizeof(info->discharging_min_c)),
-		      EC_SUCCESS);
-	tag = CBI_TAG_BATT_DISCHARGING_MAX_C;
-	zassert_equal(cbi_set_board_info(tag,
-					 (uint8_t *)&info->discharging_max_c,
-					 sizeof(info->discharging_max_c)),
+	tag = CBI_TAG_BATT_DISCHARGING_MIN_MAX_C;
+	temp.min_c = info->discharging_min_c;
+	temp.max_c = info->discharging_max_c;
+	zassert_equal(cbi_set_board_info(tag, (uint8_t *)&temp, sizeof(temp)),
 		      EC_SUCCESS);
 
 	/* Read */
