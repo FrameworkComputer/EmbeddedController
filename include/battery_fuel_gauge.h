@@ -49,7 +49,7 @@ struct fet_info {
 struct fuel_gauge_info {
 	char *manuf_name;
 	char *device_name;
-	uint8_t override_nil;
+	uint32_t flags;
 	struct ship_mode_info ship_mode;
 	struct sleep_mode_info sleep_mode;
 	struct fet_info fet;

@@ -115,7 +115,7 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 	/* struct fuel_gauge_info */
 	zassert_is_null(dflt->manuf_name);
 	zassert_is_null(dflt->device_name);
-	zassert_equal(dflt->override_nil, 0);
+	zassert_equal(dflt->flags, 0);
 	/* struct fet_info */
 	zassert_equal(dflt->fet.reg_addr, 0);
 	zassert_equal(dflt->fet.reg_mask, 0);
@@ -215,7 +215,7 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 	zassert_equal(strncmp(dflt->device_name, info->device_name,
 			      strlen(info->device_name)),
 		      0);
-	zassert_equal(dflt->override_nil, 1);
+	zassert_equal(dflt->flags, 1);
 	/* struct fet_info */
 	zassert_equal(dflt->fet.reg_addr, info->fet.reg_addr);
 	zassert_equal(dflt->fet.reg_mask, info->fet.reg_mask);

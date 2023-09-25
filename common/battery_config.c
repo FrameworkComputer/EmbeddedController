@@ -113,7 +113,7 @@ test_export_static int
 batt_conf_read_fuel_gauge_info(struct board_batt_params *info)
 {
 	struct fuel_gauge_info *fg = &info->fuel_gauge;
-	uint8_t d8;
+	uint32_t d32;
 
 	if (batt_conf_read(CBI_TAG_FUEL_GAUGE_MANUF_NAME, (uint8_t *)manuf_name,
 			   sizeof(manuf_name)) == EC_SUCCESS)
@@ -124,9 +124,9 @@ batt_conf_read_fuel_gauge_info(struct board_batt_params *info)
 			   sizeof(device_name)) == EC_SUCCESS)
 		fg->device_name = device_name;
 
-	if (batt_conf_read(CBI_TAG_FUEL_GAUGE_FLAGS, &d8, sizeof(d8)) ==
-	    EC_SUCCESS)
-		fg->override_nil = d8 & BIT(0) ? 1 : 0;
+	if (batt_conf_read(CBI_TAG_FUEL_GAUGE_FLAGS, (uint8_t *)&d32,
+			   sizeof(d32)) == EC_SUCCESS)
+		fg->flags = d32;
 
 	batt_conf_read_ship_mode(info);
 	batt_conf_read_sleep_mode(info);
@@ -212,8 +212,8 @@ static void batt_conf_dump(const struct board_batt_params *info)
 		 CBI_TAG_FUEL_GAUGE_MANUF_NAME, fg->manuf_name);
 	ccprintf("%02x:\t.device_name= \"%s\",\n",
 		 CBI_TAG_FUEL_GAUGE_DEVICE_NAME, fg->device_name);
-	ccprintf("%02x:\t.override_nil = %d,\n", CBI_TAG_FUEL_GAUGE_FLAGS,
-		 fg->override_nil & BIT(0) ? 1 : 0);
+	ccprintf("%02x:\t.flags = 0x%x,\n", CBI_TAG_FUEL_GAUGE_FLAGS,
+		 fg->flags);
 
 	ccprintf("   \t.ship_mode = {\n");
 	ccprintf("%02x:\t\t.reg_addr = 0x%02x,\n",
