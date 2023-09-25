@@ -110,6 +110,10 @@
 			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 			no-auto-init;
 		};
+		gpio_fan_enable: fan-enable {
+			gpios = <&gpio6 3 GPIO_OUTPUT>;
+			no-auto-init;
+		};
 		ec-i2c-sensor-scl {
 			gpios = <&gpio9 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
@@ -219,6 +223,19 @@
 		};
 	};
 
+	fans {
+		compatible = "cros-ec,fans";
+
+		fan_0 {
+			pwms = <&pwm5 5 PWM_KHZ(1) PWM_POLARITY_NORMAL>;
+			rpm_min = <2200>;
+			rpm_start = <2200>;
+			rpm_max = <4200>;
+			tach = <&tach2>;
+			enable_gpio = <&gpio_fan_enable>;
+		};
+	};
+
 	 /*
 	  * Declare unused GPIOs so that they are shut down
 	  * and use minimal power
@@ -318,6 +335,16 @@
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 	pinctrl-0 = <&pwm5_gpb7>;
 	pinctrl-names = "default";
+};
+
+/* Tachometer for fan speed measurement */
+&tach2 {
+	status = "okay";
+	pinctrl-0 = <&ta2_1_in_gp73>;
+	pinctrl-names = "default";
+	port = <NPCX_TACH_PORT_A>; /* port-A is selected */
+	sample-clk = <NPCX_TACH_FREQ_LFCLK>; /* Use LFCLK as sampling clock */
+	pulses-per-round = <2>; /* number of pulses per round of encoder */
 };
 
 /* host interface */
