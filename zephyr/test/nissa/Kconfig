@@ -56,6 +56,12 @@ choice TEST_TARGET
 	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	  help
 		The test target that exercises nissa/craask/*.c
+
+	config TEST_NISSA_PIRRHA
+	  bool "Tests for Pirrha-specific code"
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	  help
+		The test target that exercises nissa/pirrha/*.c
 endchoice
 
 config TEST_DISABLE_INLINE_CHIPSET_IN_STATE

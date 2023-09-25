@@ -5,17 +5,14 @@
 
 #include "charge_state.h"
 #include "chipset.h"
-#include "driver/charger/sm5803.h"
-#include "driver/tcpm/it83xx_pd.h"
-#include "driver/tcpm/ps8xxx_public.h"
+#include "driver/charger/isl923x_public.h"
+#include "driver/tcpm/raa489000.h"
 #include "driver/tcpm/tcpci.h"
 #include "hooks.h"
 #include "system.h"
 #include "usb_mux.h"
 
 #include <zephyr/logging/log.h>
-
-#include <ap_power/ap_power.h>
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
@@ -36,94 +33,57 @@ void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 			!!enabled);
 }
 
-__override bool pd_check_vbus_level(int port, enum vbus_level level)
+int board_is_sourcing_vbus(int port)
 {
-	return sm5803_check_vbus_level(port, level);
+	int regval;
+
+	tcpc_read(port, TCPC_REG_POWER_STATUS, &regval);
+	return !!(regval & TCPC_REG_POWER_STATUS_SOURCING_VBUS);
 }
-
-/*
- * Putting chargers into LPM when in suspend reduces power draw by about 8mW
- * per charger, but also seems critical to correct operation in source mode:
- * if chargers are not in LPM when a sink is first connected, VBUS sourcing
- * works even if the partner is later removed (causing LPM entry) and
- * reconnected (causing LPM exit). If in LPM initially, sourcing VBUS
- * consistently causes the charger to report (apparently spurious) overcurrent
- * failures.
- *
- * In short, this is important to making things work correctly but we don't
- * understand why.
- */
-static void board_chargers_suspend(struct ap_power_ev_callback *const cb,
-				   const struct ap_power_ev_data data)
-{
-	void (*fn)(int chgnum);
-
-	switch (data.event) {
-	case AP_POWER_SUSPEND:
-		fn = sm5803_enable_low_power_mode;
-		break;
-	case AP_POWER_RESUME:
-		fn = sm5803_disable_low_power_mode;
-		break;
-	/* LCOV_EXCL_START can only happen if init doesn't match these cases */
-	default:
-		LOG_WRN("%s: power event %d is not recognized", __func__,
-			data.event);
-		return;
-		/* LCOV_EXCL_STOP */
-	}
-
-	fn(CHARGER_PRIMARY);
-	if (board_get_charger_chip_count() > 1)
-		fn(CHARGER_SECONDARY);
-}
-
-static int board_chargers_suspend_init(void)
-{
-	static struct ap_power_ev_callback cb = {
-		.handler = board_chargers_suspend,
-		.events = AP_POWER_SUSPEND | AP_POWER_RESUME,
-	};
-	ap_power_ev_add_callback(&cb);
-	return 0;
-}
-SYS_INIT(board_chargers_suspend_init, APPLICATION, 0);
 
 int board_set_active_charge_port(int port)
 {
-	int is_real_port = (port >= 0 && port < board_get_usb_pd_port_count());
+	int is_real_port = (port >= 0 && port < CONFIG_USB_PD_PORT_MAX_COUNT);
 	int i;
 	int old_port;
-	int rv;
 
 	if (!is_real_port && port != CHARGE_PORT_NONE)
 		return EC_ERROR_INVAL;
 
 	old_port = charge_manager_get_active_charge_port();
-	LOG_INF("Charge update: p%d -> p%d", old_port, port);
+
+	LOG_INF("New chg p%d", port);
+
+	/* Disable all ports. */
+	if (port == CHARGE_PORT_NONE) {
+		for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+			tcpc_write(i, TCPC_REG_COMMAND,
+				   TCPC_REG_COMMAND_SNK_CTRL_LOW);
+			raa489000_enable_asgate(i, false);
+		}
+
+		return EC_SUCCESS;
+	}
 
 	/* Check if port is sourcing VBUS. */
-	if (port != CHARGE_PORT_NONE && charger_is_sourcing_otg_power(port)) {
-		LOG_WRN("Skip enable p%d: already sourcing", port);
+	if (board_is_sourcing_vbus(port)) {
+		LOG_WRN("Skip enable p%d", port);
 		return EC_ERROR_INVAL;
 	}
 
-	/* Disable sinking on all ports except the desired one */
-	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
+	/*
+	 * Turn off the other ports' sink path FETs, before enabling the
+	 * requested charge port.
+	 */
+	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		if (i == port)
 			continue;
 
-		if (sm5803_vbus_sink_enable(i, 0))
-			/*
-			 * Do not early-return because this can fail during
-			 * power-on which would put us into a loop.
-			 */
+		if (tcpc_write(i, TCPC_REG_COMMAND,
+			       TCPC_REG_COMMAND_SNK_CTRL_LOW))
 			LOG_WRN("p%d: sink path disable failed.", i);
+		raa489000_enable_asgate(i, false);
 	}
-
-	/* Don't enable anything (stop here) if no ports were requested */
-	if ((port == CHARGE_PORT_NONE) || (old_port == port))
-		return EC_SUCCESS;
 
 	/*
 	 * Stop the charger IC from switching while changing ports.  Otherwise,
@@ -133,36 +93,50 @@ int board_set_active_charge_port(int port)
 		charger_discharge_on_ac(1);
 
 	/* Enable requested charge port. */
-	rv = sm5803_vbus_sink_enable(port, 1);
-	if (rv)
-		LOG_WRN("p%d: sink path enable failed: code %d", port, rv);
+	if (raa489000_enable_asgate(port, true) ||
+	    tcpc_write(port, TCPC_REG_COMMAND,
+		       TCPC_REG_COMMAND_SNK_CTRL_HIGH)) {
+		LOG_WRN("p%d: sink path enable failed.", port);
+		charger_discharge_on_ac(0);
+		return EC_ERROR_UNKNOWN;
+	}
 
 	/* Allow the charger IC to begin/continue switching. */
 	charger_discharge_on_ac(0);
 
-	return rv;
+	return EC_SUCCESS;
 }
 
 uint16_t tcpc_get_alert_status(void)
 {
-	/*
-	 * TCPC 0 is embedded in the EC and processes interrupts in the chip
-	 * code (it83xx/intc.c). This function only needs to poll port C1 if
-	 * present.
-	 */
 	uint16_t status = 0;
 	int regval;
 
-	/* Is the C1 port present and its IRQ line asserted? */
+	/*
+	 * The interrupt line is shared between the TCPC and BC1.2 detector IC.
+	 * Therefore, go out and actually read the alert registers to report the
+	 * alert status.
+	 */
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl))) {
+		if (!tcpc_read16(0, TCPC_REG_ALERT, &regval)) {
+			/* The TCPCI Rev 1.0 spec says to ignore bits 14:12. */
+			if (!(tcpc_config[0].flags & TCPC_FLAGS_TCPCI_REV2_0))
+				regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
+
+			if (regval)
+				status |= PD_STATUS_TCPC_ALERT_0;
+		}
+	}
+
 	if (board_get_usb_pd_port_count() == 2 &&
 	    !gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl))) {
-		/*
-		 * C1 IRQ is shared between BC1.2 and TCPC; poll TCPC to see if
-		 * it asserted the IRQ.
-		 */
 		if (!tcpc_read16(1, TCPC_REG_ALERT, &regval)) {
+			/* TCPCI spec Rev 1.0 says to ignore bits 14:12. */
+			if (!(tcpc_config[1].flags & TCPC_FLAGS_TCPCI_REV2_0))
+				regval &= ~((1 << 14) | (1 << 13) | (1 << 12));
+
 			if (regval)
-				status = PD_STATUS_TCPC_ALERT_1;
+				status |= PD_STATUS_TCPC_ALERT_1;
 		}
 	}
 
@@ -171,53 +145,45 @@ uint16_t tcpc_get_alert_status(void)
 
 void pd_power_supply_reset(int port)
 {
-	int prev_en;
-
-	if (port < 0 || port >= board_get_usb_pd_port_count())
-		return;
-
-	prev_en = charger_is_sourcing_otg_power(port);
-
-	/* Disable Vbus */
-	charger_enable_otg_power(port, 0);
-
-	/* Discharge Vbus if previously enabled */
-	if (prev_en)
-		sm5803_set_vbus_disch(port, 1);
+	/* Disable VBUS */
+	tcpc_write(port, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SRC_CTRL_LOW);
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
 }
 
+__override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
+{
+	if (port < 0 || port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+		return;
+
+	raa489000_set_output_current(port, rp);
+}
+
 int pd_set_power_supply_ready(int port)
 {
-	enum ec_error_list rv;
+	int rv;
 
-	if (port < 0 || port > board_get_usb_pd_port_count()) {
-		LOG_WRN("Port C%d does not exist, cannot enable VBUS", port);
+	if (port >= CONFIG_USB_PD_PORT_MAX_COUNT)
 		return EC_ERROR_INVAL;
-	}
 
-	/* Disable sinking */
-	rv = sm5803_vbus_sink_enable(port, 0);
-	if (rv) {
-		LOG_WRN("C%d failed to disable sinking: %d", port, rv);
+	/* Disable charging. */
+	rv = tcpc_write(port, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SNK_CTRL_LOW);
+	if (rv)
 		return rv;
-	}
 
-	/* Disable Vbus discharge */
-	rv = sm5803_set_vbus_disch(port, 0);
-	if (rv) {
-		LOG_WRN("C%d failed to clear VBUS discharge: %d", port, rv);
-		return rv;
-	}
+	/* Our policy is not to source VBUS when the AP is off. */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
+		return EC_ERROR_NOT_POWERED;
 
-	/* Provide Vbus */
-	rv = charger_enable_otg_power(port, 1);
-	if (rv) {
-		LOG_WRN("C%d failed to enable VBUS sourcing: %d", port, rv);
+	/* Provide Vbus. */
+	rv = tcpc_write(port, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SRC_CTRL_HIGH);
+	if (rv)
 		return rv;
-	}
+
+	rv = raa489000_enable_asgate(port, true);
+	if (rv)
+		return rv;
 
 	/* Notify host of power info change. */
 	pd_send_host_event(PD_EVENT_POWER_CHANGE);
@@ -225,111 +191,59 @@ int pd_set_power_supply_ready(int port)
 	return EC_SUCCESS;
 }
 
-__override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
-{
-	int rv;
-	const int current = rp == TYPEC_RP_3A0 ? 3000 : 1500;
-
-	rv = charger_set_otg_current_voltage(port, current, 5000);
-	if (rv != EC_SUCCESS) {
-		LOG_WRN("Failed to set source ilimit on port %d to %d: %d",
-			port, current, rv);
-	}
-}
-
-/* LCOV_EXCL_START function does nothing, but is required for build */
 void board_reset_pd_mcu(void)
 {
 	/*
-	 * Do nothing. The integrated TCPC for C0 lacks a dedicated reset
-	 * command, and C1 (if present) doesn't have a reset pin connected
-	 * to the EC.
+	 * TODO(b:147316511): could send a reset command to the TCPC here
+	 * if needed.
 	 */
 }
-/* LCOV_EXCL_STOP */
-
-#define INT_RECHECK_US 5000
-
-/* C0 interrupt line shared by BC 1.2 and charger */
-
-static void check_c0_line(void);
-DECLARE_DEFERRED(check_c0_line);
-
-static void notify_c0_chips(void)
-{
-	usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
-	sm5803_interrupt(0);
-}
-
-static void check_c0_line(void)
-{
-	/*
-	 * If line is still being held low, see if there's more to process from
-	 * one of the chips
-	 */
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl))) {
-		notify_c0_chips();
-		hook_call_deferred(&check_c0_line_data, INT_RECHECK_US);
-	}
-}
-
-void usb_c0_interrupt(enum gpio_signal s)
-{
-	/* Cancel any previous calls to check the interrupt line */
-	hook_call_deferred(&check_c0_line_data, -1);
-
-	/* Notify all chips using this line that an interrupt came in */
-	notify_c0_chips();
-
-	/* Check the line again in 5ms */
-	hook_call_deferred(&check_c0_line_data, INT_RECHECK_US);
-}
-
-/* C1 interrupt line shared by BC 1.2, TCPC, and charger */
-/* LCOV_EXCL_START schedule_deferred_pd_interrupt() is untestable */
-void usb_c1_interrupt(enum gpio_signal s)
-{
-	/* Charger and BC1.2 are handled in board_process_pd_alert */
-	schedule_deferred_pd_interrupt(1);
-}
-/* LCOV_EXCL_STOP */
 
 /*
- * Handle charger interrupts in the PD task. Not doing so can lead to a priority
- * inversion where we fail to respond to TCPC alerts quickly enough because we
- * don't get another edge on a shared IRQ until the other interrupt is cleared
- * (or the IRQ is polled again), which happens in lower-priority tasks: the
- * high-priority type-C handler is thus blocked on the lower-priority one(s).
- *
- * To avoid that, we run charger and BC1.2 interrupts synchronously alongside
- * PD interrupts so they have the same priority.
+ * Because the TCPCs and BC1.2 chips share interrupt lines, it's possible
+ * for an interrupt to be lost if one asserts the IRQ, the other does the same
+ * then the first releases it: there will only be one falling edge to trigger
+ * the interrupt, and the line will be held low. We handle this by polling the
+ * IRQ GPIO on the USB-PD task after processing TCPC interrupts, synchronously
+ * running the BC1.2 interrupt handler to ensure we continue processing
+ * interrupts as long as either source is asserting the IRQ.
  */
 void board_process_pd_alert(int port)
 {
-	/*
-	 * Port 0 doesn't use an external TCPC, so its interrupts don't need
-	 * this special handling.
-	 */
-	if (port != 1)
-		return;
+	const struct gpio_dt_spec *gpio;
 
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl))) {
-		sm5803_handle_interrupt(port);
-		usb_charger_task_set_event_sync(1, USB_CHG_EVENT_BC12);
+	if (port == 0) {
+		gpio = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl);
+	} else {
+		gpio = GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl);
 	}
+
+	if (!gpio_pin_get_dt(gpio)) {
+		usb_charger_task_set_event_sync(port, USB_CHG_EVENT_BC12);
+	}
+
 	/*
 	 * Immediately schedule another TCPC interrupt if it seems we haven't
 	 * cleared all pending interrupts.
 	 */
-	if (!gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl)))
+	if (!gpio_pin_get_dt(gpio))
 		schedule_deferred_pd_interrupt(port);
 }
 
-int pd_snk_is_vbus_provided(int port)
+/*
+ * LCOV_EXCL_START schedule_deferred_pd_interrupt() can't be verified in tests,
+ * but type-C will be obviously broken if this function doesn't work.
+ */
+void usb_interrupt(enum gpio_signal signal)
 {
-	int chg_det = 0;
+	int port;
 
-	sm5803_get_chg_det(port, &chg_det);
-
-	return chg_det;
+	if (signal == GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_int_odl))) {
+		port = 0;
+	} else {
+		port = 1;
+	}
+	/* Trigger polling of TCPC and BC1.2 in USB-PD task */
+	schedule_deferred_pd_interrupt(port);
 }
+/* LCOV_EXCL_STOP */

@@ -108,6 +108,12 @@ config BOARD_QUANDISO
 	  Build Google Quandiso board. Quandiso has Intel ADL-N SoC
 	  with IT81302 EC.
 
+config BOARD_PIRRHA
+	bool "Google Pirrha Board"
+	help
+	  Build Google Pirrha reference board. Pirrha has Intel ADL-N SoC
+	  with IT81302 EC.
+
 
 module = NISSA
 module-str = Nissa board-specific code

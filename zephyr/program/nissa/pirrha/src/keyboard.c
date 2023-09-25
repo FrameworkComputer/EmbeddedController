@@ -5,7 +5,7 @@
 
 #include "ec_commands.h"
 
-test_export_static const struct ec_response_keybd_config nereid_kb_legacy = {
+test_export_static const struct ec_response_keybd_config pirrha_kb_legacy = {
 	.num_top_row_keys = 10,
 	.action_keys = {
 		TK_BACK,		/* T1 */
@@ -25,5 +25,5 @@ test_export_static const struct ec_response_keybd_config nereid_kb_legacy = {
 __override const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void)
 {
-	return &nereid_kb_legacy;
+	return &pirrha_kb_legacy;
 }

@@ -1,25 +1,7 @@
-/* Copyright 2022 The ChromiumOS Authors
+/* Copyright 2023 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-
-/ {
-	kblight {
-		compatible = "cros-ec,kblight-pwm";
-		/*
-		 * Use 324 Hz so that 32Khz clock source is used,
-		 * which is not gated in power saving mode.
-		 */
-		pwms = <&pwm0 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
-	};
-};
-
-&pwm0 {
-	status = "okay";
-	prescaler-cx = <PWM_PRESCALER_C4>;
-	pinctrl-0 = <&pwm0_gpa0_default>;
-	pinctrl-names = "default";
-};
 
 &cros_kb_raw {
 	status = "okay";

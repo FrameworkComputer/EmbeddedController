@@ -105,3 +105,15 @@ tests:
       - CONFIG_PLATFORM_EC_CHARGER_RAA489000=n
       - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
       - CONFIG_ADC=y
+  nissa.pirrha:
+    extra_dtc_overlay_files:
+      - "boards/pirrha.dts"
+    extra_conf_files:
+      - "prj.conf"
+    extra_configs:
+      - CONFIG_TEST_NISSA_PIRRHA=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM=y
+      - CONFIG_PLATFORM_EC_ACCEL_LIS2DS=y
+      - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
+      - CONFIG_PLATFORM_EC_LED_PWM=n
+      - CONFIG_PLATFORM_EC_LED_COMMON=y

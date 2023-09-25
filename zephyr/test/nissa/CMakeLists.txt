@@ -111,3 +111,18 @@ if(CONFIG_TEST_NISSA_CRAASK)
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/usbc.c
     )
 endif()
+
+if(CONFIG_TEST_NISSA_PIRRHA)
+    zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/nissa/pirrha/include")
+    target_compile_definitions(app PRIVATE CHARGER_PRIMARY=0 CHARGER_SECONDARY=1)
+    target_sources(
+	    app PRIVATE
+	    src/pirrha.c
+	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/pirrha/src/charger.c
+	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/pirrha/src/keyboard.c
+	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/pirrha/src/led.c
+	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/pirrha/src/usbc.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/pirrha/src/battery.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/pirrha/src/board.c
+    )
+endif()

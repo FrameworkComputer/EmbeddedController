@@ -5,8 +5,8 @@
 
 #include "battery.h"
 #include "charger.h"
+#include "charger/isl923x_public.h"
 #include "console.h"
-#include "driver/charger/sm5803.h"
 #include "extpower.h"
 #include "usb_pd.h"
 
@@ -21,7 +21,7 @@ int extpower_is_present(void)
 	bool acok;
 
 	for (port = 0; port < board_get_usb_pd_port_count(); port++) {
-		rv = sm5803_is_acok(port, &acok);
+		rv = raa489000_is_acok(port, &acok);
 		if ((rv == EC_SUCCESS) && acok)
 			return 1;
 	}
@@ -30,7 +30,7 @@ int extpower_is_present(void)
 }
 
 /*
- * Nereid does not have a GPIO indicating whether extpower is present,
+ * Pirrha does not have a GPIO indicating whether extpower is present,
  * so detect using the charger(s).
  */
 __override void board_check_extpower(void)
@@ -48,8 +48,8 @@ __override void board_hibernate(void)
 {
 	/* Shut down the chargers */
 	if (board_get_usb_pd_port_count() == 2)
-		sm5803_hibernate(CHARGER_SECONDARY);
-	sm5803_hibernate(CHARGER_PRIMARY);
+		raa489000_hibernate(CHARGER_SECONDARY, true);
+	raa489000_hibernate(CHARGER_PRIMARY, true);
 	LOG_INF("Charger(s) hibernated");
 	cflush();
 }
