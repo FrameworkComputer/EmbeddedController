@@ -6307,18 +6307,15 @@ enum cbi_data_tag {
 	/* struct ship_mod_info */
 	CBI_TAG_BATT_SHIP_MODE_REG_ADDR,
 	CBI_TAG_BATT_SHIP_MODE_REG_DATA,
-	CBI_TAG_BATT_SHIP_MODE_FLAGS, /* enum ship_mode_flag */
 	/* struct sleep_mode_info */
 	CBI_TAG_BATT_SLEEP_MODE_REG_ADDR,
 	CBI_TAG_BATT_SLEEP_MODE_REG_DATA,
-	CBI_TAG_BATT_SLEEP_MODE_FLAGS, /* enum sleep_mode_flag */
 	/* struct fet_info */
 	CBI_TAG_BATT_FET_REG_ADDR,
 	CBI_TAG_BATT_FET_REG_MASK,
 	CBI_TAG_BATT_FET_DISCONNECT_VAL,
 	CBI_TAG_BATT_FET_CFET_MASK,
 	CBI_TAG_BATT_FET_CFET_OFF_VAL,
-	CBI_TAG_BATT_FET_FLAGS, /* enum batt_fet_flag */
 	/* struct battery_info */
 	CBI_TAG_BATT_VOLTAGE_MAX,
 	CBI_TAG_BATT_VOLTAGE_NORMAL,

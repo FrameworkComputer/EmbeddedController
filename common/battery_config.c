@@ -52,7 +52,6 @@ test_export_static int batt_conf_read(enum cbi_data_tag tag, uint8_t *data,
 test_export_static int batt_conf_read_ship_mode(struct board_batt_params *info)
 {
 	struct ship_mode_info *ship = &info->fuel_gauge.ship_mode;
-	uint8_t d8;
 
 	batt_conf_read(CBI_TAG_BATT_SHIP_MODE_REG_ADDR, &ship->reg_addr,
 		       sizeof(ship->reg_addr));
@@ -60,17 +59,12 @@ test_export_static int batt_conf_read_ship_mode(struct board_batt_params *info)
 	batt_conf_read(CBI_TAG_BATT_SHIP_MODE_REG_DATA,
 		       (uint8_t *)&ship->reg_data, sizeof(ship->reg_data));
 
-	if (batt_conf_read(CBI_TAG_BATT_SHIP_MODE_FLAGS, &d8, sizeof(d8)) ==
-	    EC_SUCCESS)
-		ship->wb_support = d8 & BIT(0) ? 1 : 0;
-
 	return EC_SUCCESS;
 }
 
 test_export_static int batt_conf_read_sleep_mode(struct board_batt_params *info)
 {
 	struct sleep_mode_info *sleep = &info->fuel_gauge.sleep_mode;
-	uint8_t d8;
 
 	batt_conf_read(CBI_TAG_BATT_SLEEP_MODE_REG_ADDR, &sleep->reg_addr,
 		       sizeof(sleep->reg_addr));
@@ -78,17 +72,12 @@ test_export_static int batt_conf_read_sleep_mode(struct board_batt_params *info)
 	batt_conf_read(CBI_TAG_BATT_SLEEP_MODE_REG_DATA,
 		       (uint8_t *)&sleep->reg_data, sizeof(sleep->reg_data));
 
-	if (batt_conf_read(CBI_TAG_BATT_SLEEP_MODE_FLAGS, &d8, sizeof(d8)) ==
-	    EC_SUCCESS)
-		sleep->sleep_supported = d8 & BIT(0) ? 1 : 0;
-
 	return EC_SUCCESS;
 }
 
 test_export_static int batt_conf_read_fet_info(struct board_batt_params *info)
 {
 	struct fet_info *fet = &info->fuel_gauge.fet;
-	uint8_t d8;
 
 	batt_conf_read(CBI_TAG_BATT_FET_REG_ADDR, &fet->reg_addr,
 		       sizeof(fet->reg_addr));
@@ -102,9 +91,6 @@ test_export_static int batt_conf_read_fet_info(struct board_batt_params *info)
 	batt_conf_read(CBI_TAG_BATT_FET_CFET_OFF_VAL,
 		       (uint8_t *)&fet->cfet_off_val,
 		       sizeof(fet->cfet_off_val));
-	if (batt_conf_read(CBI_TAG_BATT_FET_FLAGS, &d8, sizeof(d8)) ==
-	    EC_SUCCESS)
-		fet->mfgacc_support = d8 & BIT(0) ? 1 : 0;
 
 	return EC_SUCCESS;
 }
@@ -125,8 +111,16 @@ batt_conf_read_fuel_gauge_info(struct board_batt_params *info)
 		fg->device_name = device_name;
 
 	if (batt_conf_read(CBI_TAG_FUEL_GAUGE_FLAGS, (uint8_t *)&d32,
-			   sizeof(d32)) == EC_SUCCESS)
+			   sizeof(d32)) == EC_SUCCESS) {
 		fg->flags = d32;
+		fg->ship_mode.wb_support =
+			!!(d32 & FUEL_GAUGE_FLAG_WRITE_BLOCK);
+		fg->sleep_mode.sleep_supported =
+			!!(d32 & FUEL_GAUGE_FLAG_SLEEP_MODE);
+		fg->fet.mfgacc_support = !!(d32 & FUEL_GAUGE_FLAG_MFGACC);
+		fg->fet.mfgacc_smb_block =
+			!!(d32 & FUEL_GAUGE_FLAG_MFGACC_SMB_BLOCK);
+	}
 
 	batt_conf_read_ship_mode(info);
 	batt_conf_read_sleep_mode(info);

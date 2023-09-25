@@ -103,7 +103,7 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 {
 	struct fuel_gauge_info *info = &conf_in_cbi.fuel_gauge;
 	struct fuel_gauge_info *dflt = &default_battery_conf.fuel_gauge;
-	uint8_t d8;
+	uint32_t u32;
 
 	/* Read without data in CBI. Test ERROR_UNKNOWN is correctly ignored. */
 	zassert_equal(batt_conf_read_fuel_gauge_info(&default_battery_conf),
@@ -120,6 +120,7 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 	zassert_equal(dflt->fet.reg_addr, 0);
 	zassert_equal(dflt->fet.reg_mask, 0);
 	zassert_equal(dflt->fet.mfgacc_support, 0);
+	zassert_equal(dflt->fet.mfgacc_smb_block, 0);
 	/* struct sleep_mode_info */
 	zassert_equal(dflt->sleep_mode.reg_addr, 0);
 	zassert_equal(dflt->sleep_mode.reg_data, 0);
@@ -142,14 +143,10 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 					 (uint8_t *)info->device_name,
 					 strlen(info->device_name)),
 		      EC_SUCCESS);
-	d8 = BIT(0);
-	zassert_equal(cbi_set_board_info(CBI_TAG_FUEL_GAUGE_FLAGS, &d8,
-					 sizeof(d8)),
-		      EC_SUCCESS);
-
-	d8 = BIT(0);
-	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_FET_FLAGS, &d8,
-					 sizeof(d8)),
+	u32 = FUEL_GAUGE_FLAG_WRITE_BLOCK | FUEL_GAUGE_FLAG_SLEEP_MODE |
+	      FUEL_GAUGE_FLAG_MFGACC | FUEL_GAUGE_FLAG_MFGACC_SMB_BLOCK;
+	zassert_equal(cbi_set_board_info(CBI_TAG_FUEL_GAUGE_FLAGS,
+					 (uint8_t *)&u32, sizeof(u32)),
 		      EC_SUCCESS);
 	/* struct fet_info */
 	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_FET_REG_ADDR,
@@ -173,10 +170,6 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 					 sizeof(info->fet.cfet_off_val)),
 		      EC_SUCCESS);
 	/* struct sleep_mode_info */
-	d8 = BIT(0);
-	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_SLEEP_MODE_FLAGS, &d8,
-					 sizeof(d8)),
-		      EC_SUCCESS);
 	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_SLEEP_MODE_REG_ADDR,
 					 &info->sleep_mode.reg_addr,
 					 sizeof(info->sleep_mode.reg_addr)),
@@ -186,10 +179,6 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 					 sizeof(info->sleep_mode.reg_data)),
 		      EC_SUCCESS);
 	/* struct ship_mode_info */
-	d8 = BIT(0);
-	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_SHIP_MODE_FLAGS, &d8,
-					 sizeof(d8)),
-		      EC_SUCCESS);
 	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_SHIP_MODE_REG_ADDR,
 					 &info->ship_mode.reg_addr,
 					 sizeof(info->ship_mode.reg_addr)),
@@ -215,11 +204,15 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 	zassert_equal(strncmp(dflt->device_name, info->device_name,
 			      strlen(info->device_name)),
 		      0);
-	zassert_equal(dflt->flags, 1);
+	zassert_equal(dflt->flags, FUEL_GAUGE_FLAG_WRITE_BLOCK |
+					   FUEL_GAUGE_FLAG_SLEEP_MODE |
+					   FUEL_GAUGE_FLAG_MFGACC |
+					   FUEL_GAUGE_FLAG_MFGACC_SMB_BLOCK);
 	/* struct fet_info */
 	zassert_equal(dflt->fet.reg_addr, info->fet.reg_addr);
 	zassert_equal(dflt->fet.reg_mask, info->fet.reg_mask);
 	zassert_equal(dflt->fet.mfgacc_support, 1);
+	zassert_equal(dflt->fet.mfgacc_smb_block, 1);
 	/* struct sleep_mode_info */
 	zassert_equal(dflt->sleep_mode.reg_addr, info->sleep_mode.reg_addr);
 	zassert_equal(dflt->sleep_mode.reg_data, info->sleep_mode.reg_data);

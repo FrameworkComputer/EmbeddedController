@@ -56,6 +56,29 @@ struct fet_info {
 	uint16_t cfet_off_val;
 };
 
+enum fuel_gauge_flags {
+	/*
+	 * Write Block Support. If enabled, we use a i2c write block command
+	 * instead of a 16-bit write. The effective difference is the i2c
+	 * transaction will prefix the length (2).
+	 */
+	FUEL_GAUGE_FLAG_WRITE_BLOCK = BIT(0),
+	/* Sleep command support. fuel_gauge_info.sleep_mode must be defined. */
+	FUEL_GAUGE_FLAG_SLEEP_MODE = BIT(1),
+	/*
+	 * Manufacturer access command support. If enabled, FET status is read
+	 * from the OperationStatus (0x54) register using the
+	 * ManufacturerBlockAccess (0x44).
+	 */
+	FUEL_GAUGE_FLAG_MFGACC = BIT(2),
+	/*
+	 * SMB block protocol support in manufacturer access command. If
+	 * enabled, FET status is read from the OperationStatus (0x54) register
+	 * using the ManufacturerBlockAccess (0x44).
+	 */
+	FUEL_GAUGE_FLAG_MFGACC_SMB_BLOCK = BIT(3),
+};
+
 struct fuel_gauge_info {
 	char *manuf_name;
 	char *device_name;
