@@ -1238,7 +1238,7 @@ static void perform_error_recovery(int controller)
 			    battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
 
 				if ((pd_port_states[i].c_state == CCG_STATUS_SOURCE) &&
-				   (batt_os_percentage < 30) && (i == prev_charge_port))
+				   (batt_os_percentage < 3) && (i == prev_charge_port))
 					continue;
 
 				CPRINTS("Hard reset %d", i);
@@ -1262,7 +1262,7 @@ static void port_to_safe_mode(int port)
 	CPRINTS("P%d: Safe", port);
 
 }
-bool apu_not_initialized;
+bool apu_not_initialized = true;
 void update_system_power_state(int controller)
 {
 	enum power_state ps = power_get_state();
@@ -1276,7 +1276,6 @@ void update_system_power_state(int controller)
 	case POWER_S3S5:
 	case POWER_S4S5:
 		cypd_set_power_state(CCG_POWERSTATE_S5, controller);
-		apu_not_initialized = true;
 		break;
 	case POWER_S3:
 	case POWER_S4S3:
@@ -1310,8 +1309,10 @@ void cypd_set_power_active(void)
 void cypd_port_reset(void)
 {
 	if (apu_not_initialized) {
-		task_set_event(TASK_ID_CYPD, CCG_EVT_PLT_RESET);
+		CPRINTS("PD_PLT_RESET");
+
 		apu_not_initialized = false;
+		task_set_event(TASK_ID_CYPD, CCG_EVT_PLT_RESET);
 	}
 }
 
@@ -1855,6 +1856,7 @@ void cypd_interrupt_handler_task(void *p)
 			cypd_update_power_status(2);
 
 		if (evt & CCG_EVT_PLT_RESET) {
+			CPRINTS("PD Platform reset");
 			perform_error_recovery(2);
 		}
 
