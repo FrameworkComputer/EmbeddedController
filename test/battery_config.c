@@ -99,174 +99,116 @@ DECLARE_EC_TEST(test_batt_conf_read)
 	return EC_SUCCESS;
 }
 
-DECLARE_EC_TEST(test_read_ship_mode)
-{
-	struct ship_mode_info *info = &conf_in_cbi.fuel_gauge.ship_mode;
-	struct ship_mode_info *dflt =
-		&default_battery_conf.fuel_gauge.ship_mode;
-	enum cbi_data_tag tag;
-	uint8_t d8;
-
-	/* Read without data in CBI. Test ERROR_UNKNOWN is correctly ignored. */
-	zassert_equal(batt_conf_read_ship_mode(&default_battery_conf),
-		      EC_SUCCESS);
-
-	/* Validate default info remains unchanged. */
-	zassert_equal(dflt->reg_addr, 0);
-	zassert_equal(dflt->reg_data[0], 0);
-	zassert_equal(dflt->reg_data[1], 0);
-	zassert_equal(dflt->wb_support, 0);
-
-	tag = CBI_TAG_BATT_SHIP_MODE_FLAGS;
-	d8 = BIT(0);
-	zassert_equal(cbi_set_board_info(tag, &d8, sizeof(d8)), EC_SUCCESS);
-	tag = CBI_TAG_BATT_SHIP_MODE_REG_ADDR;
-	zassert_equal(cbi_set_board_info(tag, &info->reg_addr,
-					 sizeof(info->reg_addr)),
-		      EC_SUCCESS);
-	tag = CBI_TAG_BATT_SHIP_MODE_REG_DATA;
-	zassert_equal(cbi_set_board_info(tag, (uint8_t *)&info->reg_data,
-					 sizeof(info->reg_data)),
-		      EC_SUCCESS);
-
-	/* Read */
-	zassert_equal(batt_conf_read_ship_mode(&default_battery_conf),
-		      EC_SUCCESS);
-
-	/* Validate default info == info in cbi. */
-	zassert_equal(dflt->reg_addr, info->reg_addr);
-	zassert_equal(dflt->reg_data[0], info->reg_data[0]);
-	zassert_equal(dflt->reg_data[1], info->reg_data[1]);
-	zassert_equal(dflt->wb_support, 1);
-
-	return EC_SUCCESS;
-}
-
-DECLARE_EC_TEST(test_read_sleep_mode)
-{
-	struct sleep_mode_info *info = &conf_in_cbi.fuel_gauge.sleep_mode;
-	struct sleep_mode_info *dflt =
-		&default_battery_conf.fuel_gauge.sleep_mode;
-	enum cbi_data_tag tag;
-	uint8_t d8;
-
-	/* Read without data in CBI. Test ERROR_UNKNOWN is correctly ignored. */
-	zassert_equal(batt_conf_read_sleep_mode(&default_battery_conf),
-		      EC_SUCCESS);
-
-	/* Validate default info remains unchanged. */
-	zassert_equal(dflt->reg_addr, 0);
-	zassert_equal(dflt->reg_data, 0);
-	zassert_equal(dflt->sleep_supported, 0);
-
-	tag = CBI_TAG_BATT_SLEEP_MODE_FLAGS;
-	d8 = BIT(0);
-	zassert_equal(cbi_set_board_info(tag, &d8, sizeof(d8)), EC_SUCCESS);
-	tag = CBI_TAG_BATT_SLEEP_MODE_REG_ADDR;
-	zassert_equal(cbi_set_board_info(tag, &info->reg_addr,
-					 sizeof(info->reg_addr)),
-		      EC_SUCCESS);
-	tag = CBI_TAG_BATT_SLEEP_MODE_REG_DATA;
-	zassert_equal(cbi_set_board_info(tag, (uint8_t *)&info->reg_data,
-					 sizeof(info->reg_data)),
-		      EC_SUCCESS);
-
-	/* Read */
-	zassert_equal(batt_conf_read_sleep_mode(&default_battery_conf),
-		      EC_SUCCESS);
-
-	/* Validate default info == info in cbi. */
-	zassert_equal(dflt->reg_addr, info->reg_addr);
-	zassert_equal(dflt->reg_data, info->reg_data);
-	zassert_equal(dflt->sleep_supported, 1);
-
-	return EC_SUCCESS;
-}
-
-DECLARE_EC_TEST(test_read_fet_info)
-{
-	struct fet_info *info = &conf_in_cbi.fuel_gauge.fet;
-	struct fet_info *dflt = &default_battery_conf.fuel_gauge.fet;
-	enum cbi_data_tag tag;
-	uint8_t d8;
-
-	/* Read without data in CBI. Test ERROR_UNKNOWN is correctly ignored. */
-	zassert_equal(batt_conf_read_fet_info(&default_battery_conf),
-		      EC_SUCCESS);
-
-	/* Validate default info remains unchanged. */
-	zassert_equal(dflt->reg_addr, 0);
-	zassert_equal(dflt->reg_mask, 0);
-	zassert_equal(dflt->mfgacc_support, 0);
-
-	tag = CBI_TAG_BATT_FET_FLAGS;
-	d8 = BIT(0);
-	zassert_equal(cbi_set_board_info(tag, &d8, sizeof(d8)), EC_SUCCESS);
-	tag = CBI_TAG_BATT_FET_REG_ADDR;
-	zassert_equal(cbi_set_board_info(tag, &info->reg_addr,
-					 sizeof(info->reg_addr)),
-		      EC_SUCCESS);
-	tag = CBI_TAG_BATT_FET_REG_MASK;
-	zassert_equal(cbi_set_board_info(tag, (uint8_t *)&info->reg_mask,
-					 sizeof(info->reg_mask)),
-		      EC_SUCCESS);
-	tag = CBI_TAG_BATT_FET_DISCONNECT_VAL;
-	zassert_equal(cbi_set_board_info(tag, (uint8_t *)&info->disconnect_val,
-					 sizeof(info->disconnect_val)),
-		      EC_SUCCESS);
-	tag = CBI_TAG_BATT_FET_CFET_MASK;
-	zassert_equal(cbi_set_board_info(tag, (uint8_t *)&info->cfet_mask,
-					 sizeof(info->cfet_mask)),
-		      EC_SUCCESS);
-	tag = CBI_TAG_BATT_FET_CFET_OFF_VAL;
-	zassert_equal(cbi_set_board_info(tag, (uint8_t *)&info->cfet_off_val,
-					 sizeof(info->cfet_off_val)),
-		      EC_SUCCESS);
-
-	/* Read */
-	zassert_equal(batt_conf_read_fet_info(&default_battery_conf),
-		      EC_SUCCESS);
-
-	zassert_equal(dflt->reg_addr, info->reg_addr);
-	zassert_equal(dflt->reg_mask, info->reg_mask);
-	zassert_equal(dflt->mfgacc_support, 1);
-
-	return EC_SUCCESS;
-}
-
 DECLARE_EC_TEST(test_read_fuel_gauge_info)
 {
 	struct fuel_gauge_info *info = &conf_in_cbi.fuel_gauge;
 	struct fuel_gauge_info *dflt = &default_battery_conf.fuel_gauge;
-	enum cbi_data_tag tag;
 	uint8_t d8;
 
 	/* Read without data in CBI. Test ERROR_UNKNOWN is correctly ignored. */
 	zassert_equal(batt_conf_read_fuel_gauge_info(&default_battery_conf),
 		      EC_SUCCESS);
 
-	/* Validate default info remains unchanged. */
+	/*
+	 * Validate default info remains unchanged.
+	 */
+	/* struct fuel_gauge_info */
 	zassert_is_null(dflt->manuf_name);
 	zassert_is_null(dflt->device_name);
 	zassert_equal(dflt->override_nil, 0);
+	/* struct fet_info */
+	zassert_equal(dflt->fet.reg_addr, 0);
+	zassert_equal(dflt->fet.reg_mask, 0);
+	zassert_equal(dflt->fet.mfgacc_support, 0);
+	/* struct sleep_mode_info */
+	zassert_equal(dflt->sleep_mode.reg_addr, 0);
+	zassert_equal(dflt->sleep_mode.reg_data, 0);
+	zassert_equal(dflt->sleep_mode.sleep_supported, 0);
+	/* struct ship_mode_info */
+	zassert_equal(dflt->ship_mode.reg_addr, 0);
+	zassert_equal(dflt->ship_mode.reg_data[0], 0);
+	zassert_equal(dflt->ship_mode.reg_data[1], 0);
+	zassert_equal(dflt->ship_mode.wb_support, 0);
 
-	tag = CBI_TAG_FUEL_GAUGE_MANUF_NAME;
-	zassert_equal(cbi_set_board_info(tag, (uint8_t *)info->manuf_name,
+	/*
+	 * Set data in CBI.
+	 */
+	/* struct fuel_gauge_info */
+	zassert_equal(cbi_set_board_info(CBI_TAG_FUEL_GAUGE_MANUF_NAME,
+					 (uint8_t *)info->manuf_name,
 					 strlen(info->manuf_name)),
 		      EC_SUCCESS);
-	tag = CBI_TAG_FUEL_GAUGE_DEVICE_NAME;
-	zassert_equal(cbi_set_board_info(tag, (uint8_t *)info->device_name,
+	zassert_equal(cbi_set_board_info(CBI_TAG_FUEL_GAUGE_DEVICE_NAME,
+					 (uint8_t *)info->device_name,
 					 strlen(info->device_name)),
 		      EC_SUCCESS);
-	tag = CBI_TAG_FUEL_GAUGE_FLAGS;
 	d8 = BIT(0);
-	zassert_equal(cbi_set_board_info(tag, &d8, sizeof(d8)), EC_SUCCESS);
+	zassert_equal(cbi_set_board_info(CBI_TAG_FUEL_GAUGE_FLAGS, &d8,
+					 sizeof(d8)),
+		      EC_SUCCESS);
 
-	/* Read */
+	d8 = BIT(0);
+	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_FET_FLAGS, &d8,
+					 sizeof(d8)),
+		      EC_SUCCESS);
+	/* struct fet_info */
+	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_FET_REG_ADDR,
+					 &info->fet.reg_addr,
+					 sizeof(info->fet.reg_addr)),
+		      EC_SUCCESS);
+	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_FET_REG_MASK,
+					 (uint8_t *)&info->fet.reg_mask,
+					 sizeof(info->fet.reg_mask)),
+		      EC_SUCCESS);
+	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_FET_DISCONNECT_VAL,
+					 (uint8_t *)&info->fet.disconnect_val,
+					 sizeof(info->fet.disconnect_val)),
+		      EC_SUCCESS);
+	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_FET_CFET_MASK,
+					 (uint8_t *)&info->fet.cfet_mask,
+					 sizeof(info->fet.cfet_mask)),
+		      EC_SUCCESS);
+	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_FET_CFET_OFF_VAL,
+					 (uint8_t *)&info->fet.cfet_off_val,
+					 sizeof(info->fet.cfet_off_val)),
+		      EC_SUCCESS);
+	/* struct sleep_mode_info */
+	d8 = BIT(0);
+	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_SLEEP_MODE_FLAGS, &d8,
+					 sizeof(d8)),
+		      EC_SUCCESS);
+	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_SLEEP_MODE_REG_ADDR,
+					 &info->sleep_mode.reg_addr,
+					 sizeof(info->sleep_mode.reg_addr)),
+		      EC_SUCCESS);
+	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_SLEEP_MODE_REG_DATA,
+					 (uint8_t *)&info->sleep_mode.reg_data,
+					 sizeof(info->sleep_mode.reg_data)),
+		      EC_SUCCESS);
+	/* struct ship_mode_info */
+	d8 = BIT(0);
+	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_SHIP_MODE_FLAGS, &d8,
+					 sizeof(d8)),
+		      EC_SUCCESS);
+	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_SHIP_MODE_REG_ADDR,
+					 &info->ship_mode.reg_addr,
+					 sizeof(info->ship_mode.reg_addr)),
+		      EC_SUCCESS);
+	zassert_equal(cbi_set_board_info(CBI_TAG_BATT_SHIP_MODE_REG_DATA,
+					 (uint8_t *)&info->ship_mode.reg_data,
+					 sizeof(info->ship_mode.reg_data)),
+		      EC_SUCCESS);
+
+	/*
+	 * Read
+	 */
 	zassert_equal(batt_conf_read_fuel_gauge_info(&default_battery_conf),
 		      EC_SUCCESS);
 
-	/* Validate default info == info in cbi. */
+	/*
+	 * Validate default info == info in cbi.
+	 */
+	/* struct fuel_gauge_info */
 	zassert_equal(strncmp(dflt->manuf_name, info->manuf_name,
 			      strlen(info->manuf_name)),
 		      0);
@@ -274,6 +216,19 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 			      strlen(info->device_name)),
 		      0);
 	zassert_equal(dflt->override_nil, 1);
+	/* struct fet_info */
+	zassert_equal(dflt->fet.reg_addr, info->fet.reg_addr);
+	zassert_equal(dflt->fet.reg_mask, info->fet.reg_mask);
+	zassert_equal(dflt->fet.mfgacc_support, 1);
+	/* struct sleep_mode_info */
+	zassert_equal(dflt->sleep_mode.reg_addr, info->sleep_mode.reg_addr);
+	zassert_equal(dflt->sleep_mode.reg_data, info->sleep_mode.reg_data);
+	zassert_equal(dflt->sleep_mode.sleep_supported, 1);
+	/* struct ship_mode_info */
+	zassert_equal(dflt->ship_mode.reg_addr, info->ship_mode.reg_addr);
+	zassert_equal(dflt->ship_mode.reg_data[0], info->ship_mode.reg_data[0]);
+	zassert_equal(dflt->ship_mode.reg_data[1], info->ship_mode.reg_data[1]);
+	zassert_equal(dflt->ship_mode.wb_support, 1);
 
 	return EC_SUCCESS;
 }
@@ -389,12 +344,6 @@ TEST_SUITE(test_suite_battery_config)
 	ztest_test_suite(
 		test_battery_config,
 		ztest_unit_test_setup_teardown(test_batt_conf_read, test_setup,
-					       test_teardown),
-		ztest_unit_test_setup_teardown(test_read_ship_mode, test_setup,
-					       test_teardown),
-		ztest_unit_test_setup_teardown(test_read_sleep_mode, test_setup,
-					       test_teardown),
-		ztest_unit_test_setup_teardown(test_read_fet_info, test_setup,
 					       test_teardown),
 		ztest_unit_test_setup_teardown(test_read_fuel_gauge_info,
 					       test_setup, test_teardown),
