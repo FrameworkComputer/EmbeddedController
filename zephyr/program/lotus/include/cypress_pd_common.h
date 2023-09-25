@@ -85,6 +85,10 @@
 	(0x1010 + ((x) * 0x1000))
 #define CCG_CURRENT_RDO_REG(x) \
 	(0x1014 + ((x) * 0x1000))
+#define CCG_ALT_MODE_CMD_REG(x) \
+	(0x101C + ((x) * 0x1000))
+#define CCG_APP_HW_CMD_REG(x) \
+	(0x1020 + ((x) * 0x1000))
 #define CCG_EVENT_MASK_REG(x) \
 	(0x1024 + ((x) * 0x1000))
 #define CCG_VDM_EC_CONTROL_REG(x) \
@@ -95,6 +99,10 @@
 	(0x1032 + ((x) * 0x1000))
 #define CCG_PORT_INTR_STATUS_REG(x) \
 	(0x1034 + ((x) * 0x1000))
+#define CCG_PORT_HOST_CAP_REG(x) \
+	(0x105C + ((x) * 0x1000))
+#define CCG_ALT_MODE_MASK_REG(x) \
+	(0x1060 + ((x) * 0x1000))
 #define SELECT_SINK_PDO_EPR_MASK(x) \
 	(0x1065 + ((x) * 0x1000))
 #define CCG_SINK_PPS_AVS_CTRL_REG(x) \
@@ -289,6 +297,7 @@ enum ccg_usermux_configuration {
 	CCG_PD_USER_MUX_CONFIG_ISOLATE = 0,
 	CCG_PD_USER_MUX_CONFIG_SAFE,
 	CCG_PD_USER_MUX_CONFIG_SS_ONLY,
+	CCG_PD_USER_MUX_CONFIG_DEINIT = 0x09,
 	CCG_PD_USER_MUX_CONFIG_DEBUG_ACCESSORY = 0x0A
 };
 
@@ -475,7 +484,7 @@ struct pd_chip_ucsi_info_t {
 
 int cypd_write_reg8(int controller, int reg, int data);
 
-int cypd_write_reg_block(int controller, int reg, void *data, int len);
+int cypd_write_reg_block(int controller, int reg, const void *data, int len);
 
 int cypd_read_reg_block(int controller, int reg, void *data, int len);
 
@@ -549,5 +558,7 @@ int cypd_get_ac_power(void);
  *
  */
 void force_disable_epr_mode(void);
+
+void cypd_port_reset(void);
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */
