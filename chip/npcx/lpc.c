@@ -663,6 +663,9 @@ void host_register_init(void)
 #ifdef HAS_TASK_KEYPROTO
 	/* LDN = 0x06 : keyboard */
 	sib_write_reg(SIO_OFFSET, 0x07, 0x06);
+#ifdef CONFIG_NCPX_KBC_IRQ_ACTIVE_LOW
+	sib_write_reg(SIO_OFFSET, 0x71, 0x01);
+#endif
 	sib_write_reg(SIO_OFFSET, 0x30, 0x01);
 
 	/* LDN = 0x05 : mouse */
@@ -872,8 +875,13 @@ static void lpc_init(void)
 	 * enable IBF core interrupt
 	 */
 	NPCX_HIPMCTL(PMC_ACPI) |= 0x81;
-	/* Normally Polarity IRQ1,12 type (level + high) setting */
+#ifdef CONFIG_NCPX_KBC_IRQ_ACTIVE_LOW
+	/* Inverted polarity on IRQ1 and IRQ12 (level + low) */
+	NPCX_HIIRQC = 0x40;
+#else
+	/* Normal polarity on IRQ1 and IRQ12 (level + high) */
 	NPCX_HIIRQC = 0x00;
+#endif
 
 	/*
 	 * Init PORT80

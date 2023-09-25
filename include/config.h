@@ -3220,6 +3220,12 @@
  */
 #undef CONFIG_8042_AUX
 
+/*
+ * Invert the IRQ1/IRQ12 interrupts that come from the NPCX keyboard controller
+ * such that they are active low.
+ */
+#undef CONFIG_NCPX_KBC_IRQ_ACTIVE_LOW
+
 /*****************************************************************************/
 
 /*
