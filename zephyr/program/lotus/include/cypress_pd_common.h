@@ -99,6 +99,8 @@
 	(0x1032 + ((x) * 0x1000))
 #define CCG_PORT_INTR_STATUS_REG(x) \
 	(0x1034 + ((x) * 0x1000))
+#define CCG_PORT_CURRENT_REG(x) \
+	(0x1058 + ((x) * 0x1000))
 #define CCG_PORT_HOST_CAP_REG(x) \
 	(0x105C + ((x) * 0x1000))
 #define CCG_ALT_MODE_MASK_REG(x) \

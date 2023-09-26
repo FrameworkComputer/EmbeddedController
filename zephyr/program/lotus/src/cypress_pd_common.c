@@ -199,15 +199,17 @@ int cypd_clear_int(int controller, int mask)
 
 int cypd_wait_for_ack(int controller, int timeout_ms)
 {
-	int timeout;
 	const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[controller].gpio);
+	timestamp_t start = get_time();
 
 	/* wait for interrupt ack to be asserted */
-	for (timeout = 0; timeout < timeout_ms; timeout++) {
+	do
+	{
 		if (gpio_pin_get_dt(intr) == 0)
 			break;
-		usleep(MSEC);
-	}
+		usleep(100);
+	} while (time_since32(start) < (timeout_ms * MSEC));
+
 	/* make sure response is ok */
 	if (gpio_pin_get_dt(intr) != 0) {
 		CPRINTS("%s timeout on interrupt", __func__);
@@ -221,8 +223,20 @@ static int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	int rv = EC_SUCCESS;
 	int intr_status;
 	int event;
-	int cmd_port = reg & 0x2000 ? 1 : 0;
+	int cmd_port = -1;
 	int ack_mask = 0;
+	int expected_ack_mask = 0;
+
+	if (reg < 0x1000) {
+		expected_ack_mask = CCG_DEV_INTR;
+		cmd_port = -1;
+	} else if (reg < 0x2000) {
+		expected_ack_mask = CCG_PORT0_INTR;
+		cmd_port = 0;
+	} else {
+		expected_ack_mask = CCG_PORT1_INTR;
+		cmd_port = 1;
+	}
 
 	rv = cypd_write_reg8(controller, reg, data);
 	if (rv != EC_SUCCESS)
@@ -236,27 +250,34 @@ static int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	if (rv != EC_SUCCESS)
 		CPRINTS("Get INT Fail");
 
-	if (intr_status & CCG_DEV_INTR) {
+	if (intr_status & CCG_DEV_INTR && cmd_port == -1) {
 		rv = cypd_read_reg16(controller, CCG_RESPONSE_REG, &event);
 		if (rv != EC_SUCCESS)
 			CPRINTS("fail to read DEV response");
 		ack_mask = CCG_DEV_INTR;
-	} else if (intr_status & CCG_PORT0_INTR && !cmd_port) {
+	} else if (intr_status & CCG_PORT0_INTR && cmd_port == 0) {
 		rv = cypd_read_reg16(controller, CCG_PORT_PD_RESPONSE_REG(0), &event);
 		if (rv != EC_SUCCESS)
 			CPRINTS("fail to read P0 response");
 		ack_mask = CCG_PORT0_INTR;
-	} else if (intr_status & CCG_PORT1_INTR && cmd_port) {
+	} else if (intr_status & CCG_PORT1_INTR && cmd_port == 1) {
 		rv = cypd_read_reg16(controller, CCG_PORT_PD_RESPONSE_REG(1), &event);
 		if (rv != EC_SUCCESS)
 			CPRINTS("fail to read P1 response");
 		ack_mask = CCG_PORT1_INTR;
+	} else {
+		CPRINTS("%s C:%d Unexpected response 0x%x to reg 0x%x",
+			__func__, controller, intr_status, reg);
 	}
 
 	/* only clear response code let main task handle event code */
 	if (event < 0x80) {
 		cypd_clear_int(controller, ack_mask);
-		rv = event & CCG_RESPONSE_SUCCESS ? EC_SUCCESS : EC_ERROR_INVAL;
+		if (event != CCG_RESPONSE_SUCCESS) {
+			CPRINTS("%s C:%d 0x%x response 0x%x",
+				__func__, controller, reg, event);
+		}
+		rv = (event == CCG_RESPONSE_SUCCESS) ? EC_SUCCESS : EC_ERROR_INVAL;
 	}
 
 	usleep(50);
@@ -1631,10 +1652,15 @@ void cypd_port_int(int controller, int port)
 	switch (data2[0]) {
 	case CCG_RESPONSE_PORT_DISCONNECT:
 		record_ucsi_connector_change_event(controller, port);
+		CPRINTS("PORT_DISCONNECT");
 		__fallthrough;
 	case CCG_RESPONSE_HARD_RESET_RX:
 	case CCG_RESPONSE_TYPE_C_ERROR_RECOVERY:
-		CPRINTS("TYPE_C_ERROR_RECOVERY");
+		if (data2[0] == CCG_RESPONSE_HARD_RESET_RX)
+					CPRINTS("HARD_RESET_RX");
+		if (data2[0] == CCG_RESPONSE_TYPE_C_ERROR_RECOVERY)
+					CPRINTS("TYPE_C_ERROR_RECOVERY");
+
 		cypd_update_port_state(controller, port);
 		cypd_release_port(controller, port);
 		/* make sure the type-c state is cleared */
@@ -2067,6 +2093,10 @@ static int cmd_cypd_get_status(int argc, const char **argv)
 							port_status[(data >> 2) & 0x7],
 							data & 0x20 ? "Ra" : "NoRa",
 							current_level[(data >> 6) & 0x03]);
+				cypd_read_reg8(i, CCG_PORT_VBUS_FET_CONTROL(p), &data);
+				CPRINTS("        VBUS_FET : %s %s",
+											data & 0x1 ? "EC" : "Auto",
+											data & 0x2 ? "On" : "Off");
 				cypd_read_reg_block(i, CCG_CURRENT_RDO_REG(p), data16, 4);
 				CPRINTS("             RDO : Current:%dmA MaxCurrent%dmA 0x%08x",
 						((data16[0] + (data16[1]<<8)) & 0x3FF)*10,
@@ -2080,10 +2110,10 @@ static int cmd_cypd_get_status(int argc, const char **argv)
 						*(uint32_t *)data16);
 				cypd_read_reg8(i, CCG_TYPE_C_VOLTAGE_REG(p), &data);
 				CPRINTS("  TYPE_C_VOLTAGE : %dmV", data*100);
-				cypd_read_reg16(i, CCG_PORT_INTR_STATUS_REG(p), &data);
-				CPRINTS(" INTR_STATUS_REG0: 0x%02x", data);
-				cypd_read_reg16(i, CCG_PORT_INTR_STATUS_REG(p)+2, &data);
-				CPRINTS(" INTR_STATUS_REG1: 0x%02x", data);
+				cypd_read_reg8(i, CCG_PORT_CURRENT_REG(p), &data);
+				CPRINTS("  TYPE_C_CURRENT : %dmA", data*50);
+				cypd_read_reg_block(i, CCG_PORT_INTR_STATUS_REG(p), data16, 4);
+				cypd_print_buff("      INTR_STATUS:", data16, 4);
 				cypd_read_reg16(i, SELECT_SINK_PDO_EPR_MASK(p), &data);
 				CPRINTS(" SINK PDO EPR MASK: 0x%02x", data);
 				/* Flush console to avoid truncating output */
