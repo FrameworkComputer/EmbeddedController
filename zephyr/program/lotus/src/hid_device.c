@@ -72,9 +72,10 @@ LOG_MODULE_REGISTER(hid_target);
  */
 #define ALS_HID_UNIT	0x00
 
-#define HID_ALS_MAX 65535
+#define HID_ALS_MAX 33000
 #define HID_ALS_MIN 0
-#define HID_ALS_SENSITIVITY 10
+/* Note sensitivity is scaled by exponent 0.01*/
+#define HID_ALS_SENSITIVITY 100
 
 /* HID_USAGE_SENSOR_PROPERTY_SENSOR_CONNECTION_TYPE */
 #define HID_INTEGRATED			1
@@ -438,16 +439,14 @@ void hid_airplane(bool pressed)
 }
 #endif
 
-static void irq_als(const struct device *dev)
-{
-	struct i2c_hid_target_data *data = dev->data;
-
-	gpio_pin_set_dt(data->alert_gpio, 0);
-}
 
 static void hid_target_als_irq(void)
 {
-	irq_als(DEVICE_DT_GET(DT_NODELABEL(i2chid1)));
+	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(i2chid1));
+	struct i2c_hid_target_data *data = dev->data;
+
+	data->report_id = REPORT_ID_SENSOR;
+	gpio_pin_set_dt(data->alert_gpio, 0);
 }
 
 void i2c_hid_als_init(void)
@@ -456,7 +455,7 @@ void i2c_hid_als_init(void)
 	als_feature.reporting_state = HID_ALL_EVENTS;
 	als_feature.power_state = HID_D0_FULL_POWER;
 	als_feature.sensor_state = HID_READY;
-	als_feature.report_interval = 100;
+	als_feature.report_interval = 1000;
 	als_feature.sensitivity = HID_ALS_SENSITIVITY;
 	als_feature.maximum = HID_ALS_MAX;
 	als_feature.minimum = HID_ALS_MIN;
@@ -467,61 +466,66 @@ void i2c_hid_als_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, i2c_hid_als_init, HOOK_PRIO_DEFAULT);
 
-static int als_polling_mode_count;
 void report_illuminance_value(void);
 DECLARE_DEFERRED(report_illuminance_value);
 void report_illuminance_value(void)
 {
 	uint16_t newIlluminaceValue = *(uint16_t *)host_get_memmap(EC_MEMMAP_ALS);
-	static int granularity;
-
+	int granularity = als_feature.sensitivity * (HID_ALS_MAX / 10000);
+	uint32_t report_interval = als_feature.report_interval;
 	/* We need to polling the ALS value at least 6 seconds */
-	if (als_polling_mode_count <= 60) {
-		als_polling_mode_count++; /* time base 100ms */
-
-		/* bypass the EC_MEMMAP_ALS value to input report */
+	switch (als_feature.reporting_state) {
+	case HID_ALL_EVENTS:
+	case HID_ALL_EVENTS_WAKE:
 		als_sensor.illuminanceValue = newIlluminaceValue;
 		hid_target_als_irq();
-	} else {
+		break;
+	case HID_THRESHOLD_EVENTS:
+	case HID_THRESHOLD_EVENTS_WAKE:
 		if (ABS(als_sensor.illuminanceValue - newIlluminaceValue) > granularity) {
 			als_sensor.illuminanceValue = newIlluminaceValue;
 			hid_target_als_irq();
 		}
+		break;
+	default:
+		break;
 	}
-	/**
-	 * To ensure the best experience the ALS should have a granularity of
-	 * at most 1 lux when the ambient light is below 25 lux and a granularity
-	 * of at most 4% of the ambient light when it is above 25 lux.
-	 * This enable the adaptive brightness algorithm to perform smooth screen
-	 * brightness transitions.
-	 */
-	if (newIlluminaceValue < 25)
-		granularity = 1;
-	else
-		granularity = newIlluminaceValue*4/100;
 
+	if (report_interval == 0) {
+		/* per hid spec report interval should be sensor default when 0 */
+		report_interval = 250;
+	}
 	hook_call_deferred(&report_illuminance_value_data,
-		((int) als_feature.report_interval) * MSEC);
+		report_interval * MSEC);
 
 }
 
 
 static void als_report_control(uint8_t report_mode)
 {
-	if (report_mode == 0x01) {
-		/* als report mode = polling */
+	if (report_mode) {
 		hook_call_deferred(&report_illuminance_value_data,
 			((int) als_feature.report_interval) * MSEC);
-	} else if (report_mode == 0x02) {
-		/* als report mode = threshold */
-		;
 	} else {
 		/* stop report als value */
 		hook_call_deferred(&report_illuminance_value_data, -1);
-		als_polling_mode_count = 0;
 	}
 }
 
+
+
+static void als_shutdown(void)
+{
+	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(i2chid1));
+	struct i2c_hid_target_data *data = dev->data;
+
+	als_feature.power_state = HID_D4_POWER_OFF;
+
+	als_report_control(ALS_REPORT_STOP);
+
+	gpio_pin_set_dt(data->alert_gpio, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, als_shutdown, HOOK_PRIO_DEFAULT);
 
 static void extract_report(size_t len, const uint8_t *buffer, void *data,
 			   size_t data_len)
@@ -641,6 +645,11 @@ static int hid_target_process_write(struct i2c_target_config *config)
 						data->buffer,
 						&als_feature,
 						sizeof(struct als_feature_report));
+			if (als_feature.power_state == HID_D4_POWER_OFF) {
+				als_shutdown();
+			} else {
+				als_report_control(ALS_REPORT_POLLING);
+			}
 			break;
 		default:
 			break;
@@ -657,7 +666,7 @@ static int hid_target_process_write(struct i2c_target_config *config)
 			i2c_hid_als_init();
 			als_report_control(ALS_REPORT_POLLING);
 		} else
-			als_report_control(ALS_REPORT_STOP);
+			als_shutdown();
 
 		break;
 	default:
@@ -769,6 +778,19 @@ static int hid_target_read_requested(struct i2c_target_config *config,
 }
 
 
+static int cmd_hid_status(int argc, const char **argv)
+{
+	ccprintf("ALS Feature\n");
+	ccprintf(" Power:%d\n", als_feature.power_state);
+	ccprintf(" Interval:%dms\n", als_feature.report_interval);
+	ccprintf(" sensitivity:%d\n", als_feature.sensitivity);
+	ccprintf(" report_state:%d\n", als_feature.reporting_state);
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(hidstatus, cmd_hid_status, "",
+			"Get hid device status");
+
 static int hid_target_stop(struct i2c_target_config *config)
 {
 	struct i2c_hid_target_data *data = CONTAINER_OF(config,
@@ -840,7 +862,7 @@ static int i2c_hid_target_init(const struct device *dev)
 	data->descriptor_size = cfg->descriptor_size;
 	data->report_id = 0;
 
-	als_report_control(ALS_REPORT_POLLING);
+	als_report_control(ALS_REPORT_STOP);
 	return 0;
 }
 
