@@ -99,8 +99,11 @@ static void intel_altmode_set_result_cb(const struct device *dev,
 					intel_altmode_callback cb)
 {
 	struct pd_altmode_data *data = dev->data;
+	const struct pd_altmode_config *cfg = data->dev->config;
 
-	data->isr_cb = cb;
+	if (!cfg->shared_irq) {
+		data->isr_cb = cb;
+	}
 }
 
 static const struct intel_altmode_driver_api intel_pd_altmode_driver_api = {
@@ -115,16 +118,22 @@ static void pd_altmode_gpio_callback(const struct device *dev,
 {
 	struct pd_altmode_data *data =
 		CONTAINER_OF(cb, struct pd_altmode_data, gpio_cb);
+	const struct pd_altmode_config *cfg = data->dev->config;
 
-	k_work_submit(&data->work);
+	if (!cfg->shared_irq) {
+		k_work_submit(&data->work);
+	}
 }
 
 static void pd_altmode_isr_work(struct k_work *item)
 {
 	struct pd_altmode_data *data =
 		CONTAINER_OF(item, struct pd_altmode_data, work);
+	const struct pd_altmode_config *cfg = data->dev->config;
 
-	data->isr_cb();
+	if (!cfg->shared_irq) {
+		data->isr_cb();
+	}
 }
 
 static int intel_altmode_init(const struct device *dev)
