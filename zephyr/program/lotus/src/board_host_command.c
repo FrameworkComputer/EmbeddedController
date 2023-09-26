@@ -173,6 +173,8 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 
 	update_apu_ready(1);
 
+	cypd_port_reset();
+
 	/**
 	 * Even though the protocol returns EC_SUCCESS,
 	 * the system still does not update the power limit.
