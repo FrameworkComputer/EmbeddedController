@@ -62,5 +62,5 @@ def register_ish_project(**kwargs):
     """Register a project that uses IshBinPacker."""
     kwargs.setdefault("supported_toolchains", ["coreboot-sdk", "zephyr"])
     kwargs.setdefault("output_packer", zmake.output_packers.IshBinPacker)
-    kwargs.setdefault("modules", ["ish", "cmsis", "hal_intel_public", "ec"])
+    kwargs.setdefault("modules", ["ec", "cmsis", "hal_intel_public"])
     return _register_project(**kwargs)

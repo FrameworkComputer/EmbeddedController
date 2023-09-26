@@ -28,7 +28,6 @@ known_modules = {
     "nanopb": third_party_module,
     "pigweed": lambda name, checkout: (checkout / "src" / "third_party" / name),
     "hal_intel_public": third_party_module,
-    "ish": third_party_module,
 }
 
 
@@ -115,6 +114,4 @@ def default_projects_dirs(modules):
     if "ec" in modules:
         ret.append(modules["ec"] / "zephyr" / "program")
         ret.append(modules["ec"] / "private" / "zephyr" / "program")
-    if "ish" in modules:
-        ret.append(modules["ish"] / "program")
     return ret

@@ -1822,7 +1822,7 @@ def all_targets():
     ec_target(
         name = "rex-ish",
         board = "rex-ish",
-        extra_modules = ["ish", "cmsis", "hal_intel_public"],
+        extra_modules = ["cmsis", "hal_intel_public"],
     )
     ec_target(
         name = "rex-ish-ec",
