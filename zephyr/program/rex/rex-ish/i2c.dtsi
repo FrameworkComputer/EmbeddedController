@@ -1,0 +1,22 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	aliases {
+		i2c-0 = &i2c0;
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+		i2c_ec_i2c_sensor_scl_r: sensor {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+	};
+};
+
+&i2c0 {
+	status = "okay";
+};

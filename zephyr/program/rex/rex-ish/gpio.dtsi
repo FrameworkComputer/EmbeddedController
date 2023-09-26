@@ -1,0 +1,36 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_ec_accel_int_r_l: ec_accel_int_r_l {
+			gpios = <&gpio0 3 GPIO_INPUT>;
+		};
+		gpio_ec_imu_int_r_l: ec_imu_int_r_l {
+			gpios = <&gpio0 11 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_ec_als_rgb_int_r_l: ec_als_rgb_int_r_l {
+			gpios = <&gpio0 8 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_ec_lid_open_int_r_l: ec_lid_open_int_r_l {
+			gpios = <&gpio0 9 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		gpio_ec_tablet_mode_int_r_l: ec_tablet_mode_int_r_l {
+			gpios = <&gpio0 5 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
+		};
+		gpio_ec_nb_mode_l: ec_nb_mode_l {
+			gpios = <&gpio0 10 GPIO_OUTPUT_LOW>;
+		};
+		ec_entering_rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+
+	};
+};
