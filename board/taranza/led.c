@@ -171,7 +171,7 @@ static void led_init(void)
 	else
 		set_color(EC_LED_ID_POWER_LED, LED_GREEN, 0);
 }
-DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_INIT_PWM);
+DECLARE_HOOK(HOOK_INIT, led_init, HOOK_PRIO_POST_PWM);
 
 void board_led_auto_control(void)
 {
