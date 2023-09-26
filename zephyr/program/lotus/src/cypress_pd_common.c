@@ -498,11 +498,14 @@ static void cypd_pdo_init(int controller, int port, uint8_t profile)
 		CPRINTS("CLEAR CCG_MEMORY failed");
 }
 
-static int cypd_select_rp(int controller, int port, uint8_t profile)
+static int cypd_select_rp(int port, uint8_t profile)
 {
 	int rv;
+	CPRINTF("P:%d SET TYPEC RP=%d", port, profile);
 
-	rv = cypd_write_reg8_wait_ack(controller, CCG_PD_CONTROL_REG(port), profile);
+	rv = cypd_write_reg8_wait_ack(PORT_TO_CONTROLLER(port),
+			CCG_PD_CONTROL_REG(PORT_TO_CONTROLLER_PORT(port)),
+			profile);
 	if (rv != EC_SUCCESS)
 		CPRINTS("SET TYPEC RP failed");
 
@@ -519,6 +522,7 @@ static int cypd_select_pdo(int controller, int port, uint8_t profile)
 
 	return rv;
 }
+
 
 static int pd_3a_flag;
 static int pd_3a_set;
@@ -580,7 +584,7 @@ void cypd_release_port(int controller, int port)
 
 	/* if port disconnect should set RP and PDO to default */
 
-	cypd_select_rp(controller, port, CCG_PD_CMD_SET_TYPEC_1_5A);
+	cypd_select_rp(port_idx, CCG_PD_CMD_SET_TYPEC_1_5A);
 	cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_3A);
 
 	if (cypd_port_3a_status(controller, port)) {
@@ -657,12 +661,13 @@ static void cypd_set_prepare_pdo(int controller, int port)
 static int cypd_modify_profile(int controller, int port, int profile)
 {
 	int rv;
+	int port_idx = (controller << 1) + port;
 
 	if (verbose_msg_logging)
 		CPRINTS("PD Select PDO %s ", profile & 0x02 ? "3A" : "1.5A");
 
 	if (profile == CCG_PD_CMD_SET_TYPEC_3A) {
-		rv = cypd_select_rp(controller, port, profile);
+		rv = cypd_select_rp(port_idx, profile);
 		if (rv != EC_SUCCESS)
 			return rv;
 	}
@@ -1471,7 +1476,7 @@ static void cypd_handle_state(int controller)
 
 			/* Update PDO format after init complete */
 			if (controller)
-				hook_call_deferred(&pdo_init_deferred_data, 1 * MSEC);
+				hook_call_deferred(&pdo_init_deferred_data, 25 * MSEC);
 
 			CPRINTS("CYPD %d Ready!", controller);
 			pd_chip_config[controller].state = CCG_STATE_READY;
@@ -1673,6 +1678,7 @@ void cypd_port_int(int controller, int port)
 	switch (data2[0]) {
 	case CCG_RESPONSE_PORT_DISCONNECT:
 		record_ucsi_connector_change_event(controller, port);
+		cypd_release_port(controller, port);
 		CPRINTS("PORT_DISCONNECT");
 		__fallthrough;
 	case CCG_RESPONSE_HARD_RESET_RX:
@@ -1683,7 +1689,6 @@ void cypd_port_int(int controller, int port)
 			CPRINTS("TYPE_C_ERROR_RECOVERY");
 
 		cypd_update_port_state(controller, port);
-		cypd_release_port(controller, port);
 		/* make sure the type-c state is cleared */
 		clear_port_state(controller, port);
 #ifdef CONFIG_BOARD_LOTUS
