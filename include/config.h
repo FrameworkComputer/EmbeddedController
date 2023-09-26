@@ -6055,7 +6055,7 @@
 #if !defined(CONFIG_USBC_SS_MUX)
 #error CONFIG_USBC_SS_MUX must be enabled for USB4 mode support
 #endif
-#if !defined(CONFIG_USB_PD_ALT_MODE_DFP)
+#if !defined(CONFIG_ZEPHYR) && !defined(CONFIG_USB_PD_ALT_MODE_DFP)
 #error CONFIG_USB_PD_ALT_MODE_DFP must be enabled for USB4 mode support
 #endif
 #endif

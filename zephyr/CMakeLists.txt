@@ -522,10 +522,15 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DPS
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_LOGGING
                                                 "${PLATFORM_EC}/common/event_log.c"
                                                 "${PLATFORM_EC}/common/pd_log.c")
+if (CONFIG_PLATFORM_EC_USB_PD_TCPMV2)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
                                                 "${PLATFORM_EC}/common/usbc/tbt_alt_mode.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_USB4
                                                 "${PLATFORM_EC}/common/usbc/usb_mode.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DP_MODE
+                                                "${PLATFORM_EC}/common/usbc/dp_alt_mode.c")
+endif ()
+
 zephyr_library_sources_ifdef(CONFIG_SVDM_RSP_DFP_ONLY
                                                 "${PLATFORM_EC}/common/usbc/svdm_rsp_dfp_only.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_OCP
@@ -553,8 +558,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_DRP_ACC_TRYSRC
                                                 "${PLATFORM_EC}/common/usbc/usb_pe_drp_sm.c"
                                                 "${PLATFORM_EC}/common/usbc/usb_pd_dpm.c"
 						"${PLATFORM_EC}/common/usbc/usbc_pd_policy.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DP_MODE
-                                                "${PLATFORM_EC}/common/usbc/dp_alt_mode.c")
+
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DP_HPD_GPIO
                                                 "${PLATFORM_EC}/common/usbc/dp_hpd_gpio.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_VDM_AP_CONTROL

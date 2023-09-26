@@ -37,6 +37,7 @@ rsource "Kconfig.pd"
 rsource "Kconfig.ppc"
 rsource "Kconfig.usb_mux"
 rsource "Kconfig.usbc_ss_mux"
+rsource "Kconfig.usbc_common_altmode"
 rsource "Kconfig.usb_charger"
 
 choice PLATFORM_EC_USBC_STACK

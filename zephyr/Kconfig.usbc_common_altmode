@@ -1,0 +1,46 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USB_POWER_DELIVERY || PLATFORM_EC_USB_PD_CONTROLLER
+
+config PLATFORM_EC_USB_PD_DP_MODE
+	bool "EC-driven DP support"
+	depends on !PLATFORM_EC_USB_PD_VDM_AP_CONTROL
+	default y
+	help
+	  This enables support for entering DisplayPort alternate mode as a
+	  DFP from the Embedded Controller directly.  This flag gates all the
+	  on-EC logic for determining specifics such as VDM contents.
+
+config PLATFORM_EC_USB_PD_REV30
+	bool "USB PD Rev3.0 functionality"
+	default y
+	help
+	  Enable this to allow Rev3.0 functionality, including features such as
+	  Fast Role Swap, advertising the available power across all ports of a
+	  multi-port charger, and USB4. If disabled, only USB Power Delivery
+	  Rev2.0 functionality is supported.
+
+	  This defaults to y because PD Rev3.0 is required for USB4
+	  functionality.
+
+config PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
+	bool "Thunderbolt-compatible mode support"
+	depends on PLATFORM_EC_USB_PD_REV30
+	default n
+	help
+	  Enable this to allow entering into Thunderbolt-compatible mode between
+	  two port partners. This does not require that USB4 mode be enabled.
+
+config PLATFORM_EC_USB_PD_USB4
+	bool "USB4 support"
+	depends on PLATFORM_EC_USB_PD_REV30
+	default n
+	help
+	  This enables support for entering into USB4 mode between two port
+	  partners. The provides new features such as higher speeds and more
+	  flexible multiplexing of data on the cable for different purposes,
+	  e.g. attaching multiple displays and storage devices on the same bus.
+
+endif # PLATFORM_EC_USB_POWER_DELIVERY || PLATFORM_EC_USB_PD_CONTROLLER

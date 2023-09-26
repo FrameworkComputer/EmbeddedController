@@ -178,18 +178,6 @@ config PLATFORM_EC_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	  disabled, the USB power delivery task is responsible for manually
 	  toggling the power role.
 
-config PLATFORM_EC_USB_PD_REV30
-	bool "USB PD Rev3.0 functionality"
-	default y
-	help
-	  Enable this to allow Rev3.0 functionality, including features such as
-	  Fast Role Swap, advertising the available power across all ports of a
-	  multi-port charger, and USB4. If disabled, only USB Power Delivery
-	  Rev2.0 functionality is supported.
-
-	  This defaults to y because PD Rev3.0 is required for USB4
-	  functionality.
-
 config PLATFORM_EC_USB_PD_EXTENDED_MESSAGES
 	bool "USB 3.0 Extended Message Support"
 	default y
@@ -371,39 +359,12 @@ config PLATFORM_EC_USB_PD_TRY_SRC
 	  for laptops, for example, since when attaching to a cellphone we want
 	  the laptop to charge the phone, not vice versa.
 
-config PLATFORM_EC_USB_PD_DP_MODE
-	bool "EC-driven DP support"
-	depends on !PLATFORM_EC_USB_PD_VDM_AP_CONTROL
-	default y
-	help
-	  This enables support for entering DisplayPort alternate mode as a
-	  DFP from the Embedded Controller directly.  This flag gates all the
-	  on-EC logic for determining specifics such as VDM contents.
-
 config PLATFORM_EC_USB_PD_DP21_MODE
 	bool "Enable DP2.1 Support"
 	depends on PLATFORM_EC_USB_PD_DP_MODE
 	help
 	  This enables support for entering DisplayPort alternate mode 2.1 as
 	  a DFP from the Embedded Controller directly.
-
-config PLATFORM_EC_USB_PD_USB4
-	bool "USB4 support"
-	depends on PLATFORM_EC_USB_PD_REV30
-	default n
-	help
-	  This enables support for entering into USB4 mode between two port
-	  partners. The provides new features such as higher speeds and more
-	  flexible multiplexing of data on the cable for different purposes,
-	  e.g. attaching multiple displays and storage devices on the same bus.
-
-config PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
-	bool "Thunderbolt-compatible mode support"
-	depends on PLATFORM_EC_USB_PD_REV30
-	default n
-	help
-	  Enable this to allow entering into Thunderbolt-compatible mode between
-	  two port partners. This does not require that USB4 mode be enabled.
 
 config PLATFORM_EC_USB_PD_STARTUP_DELAY_MS
 	int "PD thread startup delay time in milliseconds"
