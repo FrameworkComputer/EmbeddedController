@@ -72,35 +72,35 @@ ZTEST(usb_mux_config, test_board_anx7483_c1_mux_set)
 
 	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_URX1, &eq);
 	zassert_ok(rv);
-	zassert_equal(eq, ANX7483_EQ_SETTING_8_4DB);
+	zassert_equal(eq, ANX7483_EQ_SETTING_10_3DB);
 
 	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_URX2, &eq);
 	zassert_ok(rv);
-	zassert_equal(eq, ANX7483_EQ_SETTING_8_4DB);
+	zassert_equal(eq, ANX7483_EQ_SETTING_10_3DB);
 
 	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_UTX1, &eq);
 	zassert_ok(rv);
-	zassert_equal(eq, ANX7483_EQ_SETTING_8_4DB);
+	zassert_equal(eq, ANX7483_EQ_SETTING_10_3DB);
 
 	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_UTX2, &eq);
 	zassert_ok(rv);
-	zassert_equal(eq, ANX7483_EQ_SETTING_8_4DB);
+	zassert_equal(eq, ANX7483_EQ_SETTING_10_3DB);
 
 	rv = anx7483_emul_get_fg(ANX7483_EMUL1, ANX7483_PIN_URX1, &fg);
 	zassert_ok(rv);
-	zassert_equal(fg, ANX7483_FG_SETTING_0_5DB);
+	zassert_equal(fg, ANX7483_FG_SETTING_1_2DB);
 
 	rv = anx7483_emul_get_fg(ANX7483_EMUL1, ANX7483_PIN_URX2, &fg);
 	zassert_ok(rv);
-	zassert_equal(fg, ANX7483_FG_SETTING_0_5DB);
+	zassert_equal(fg, ANX7483_FG_SETTING_1_2DB);
 
 	rv = anx7483_emul_get_fg(ANX7483_EMUL1, ANX7483_PIN_UTX1, &fg);
 	zassert_ok(rv);
-	zassert_equal(fg, ANX7483_FG_SETTING_0_5DB);
+	zassert_equal(fg, ANX7483_FG_SETTING_1_2DB);
 
 	rv = anx7483_emul_get_fg(ANX7483_EMUL1, ANX7483_PIN_UTX2, &fg);
 	zassert_ok(rv);
-	zassert_equal(fg, ANX7483_FG_SETTING_0_5DB);
+	zassert_equal(fg, ANX7483_FG_SETTING_1_2DB);
 
 	/* Test dock mux state. */
 	usb_mux_set(1, USB_PD_MUX_DOCK, USB_SWITCH_CONNECT, 0);
