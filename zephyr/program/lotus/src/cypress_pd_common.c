@@ -203,8 +203,7 @@ int cypd_wait_for_ack(int controller, int timeout_ms)
 	timestamp_t start = get_time();
 
 	/* wait for interrupt ack to be asserted */
-	do
-	{
+	do {
 		if (gpio_pin_get_dt(intr) == 0)
 			break;
 		usleep(100);
@@ -226,6 +225,7 @@ static int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	int cmd_port = -1;
 	int ack_mask = 0;
 	int expected_ack_mask = 0;
+	const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[controller].gpio);
 
 	if (reg < 0x1000) {
 		expected_ack_mask = CCG_DEV_INTR;
@@ -237,6 +237,20 @@ static int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 		expected_ack_mask = CCG_PORT1_INTR;
 		cmd_port = 1;
 	}
+
+	if (gpio_pin_get_dt(intr) == 0) {
+		/* we may have a pending interrupt */
+		rv = cypd_get_int(controller, &intr_status);
+		CPRINTS("%s pre 0x%x ", __func__, intr_status);
+		if (intr_status & CCG_DEV_INTR) {
+			rv = cypd_read_reg16(controller, CCG_RESPONSE_REG, &event);
+			if (event < 0x80) {
+				cypd_clear_int(controller, CCG_DEV_INTR);
+			}
+			usleep(50);
+		}
+	}
+
 
 	rv = cypd_write_reg8(controller, reg, data);
 	if (rv != EC_SUCCESS)
@@ -268,6 +282,12 @@ static int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	} else {
 		CPRINTS("%s C:%d Unexpected response 0x%x to reg 0x%x",
 			__func__, controller, intr_status, reg);
+		rv = cypd_read_reg16(controller, CCG_RESPONSE_REG, &event);
+		CPRINTS("Dev 0x%x", event);
+		rv = cypd_read_reg16(controller, CCG_PORT_PD_RESPONSE_REG(0), &event);
+		CPRINTS("P0 0x%x", event);
+		rv = cypd_read_reg16(controller, CCG_PORT_PD_RESPONSE_REG(1), &event);
+		CPRINTS("P1 0x%x", event);
 	}
 
 	/* only clear response code let main task handle event code */
@@ -1246,11 +1266,12 @@ static void perform_error_recovery(int controller)
 		for (i = 0; i < 2; i++) {
 			if (!((controller*2 + i) == prev_charge_port &&
 				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
-					data[0] = PORT_TO_CONTROLLER_PORT(i);
-					cypd_write_reg_block(PORT_TO_CONTROLLER(i),
-										CCG_DPM_CMD_REG,
-										data, 2);
-				}
+
+				data[0] = PORT_TO_CONTROLLER_PORT(i);
+				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
+									CCG_DPM_CMD_REG,
+									data, 2);
+			}
 		}
 	else {
 		/* Hard reset all ports that are not supplying power in dead battery mode */
@@ -1657,9 +1678,9 @@ void cypd_port_int(int controller, int port)
 	case CCG_RESPONSE_HARD_RESET_RX:
 	case CCG_RESPONSE_TYPE_C_ERROR_RECOVERY:
 		if (data2[0] == CCG_RESPONSE_HARD_RESET_RX)
-					CPRINTS("HARD_RESET_RX");
+			CPRINTS("HARD_RESET_RX");
 		if (data2[0] == CCG_RESPONSE_TYPE_C_ERROR_RECOVERY)
-					CPRINTS("TYPE_C_ERROR_RECOVERY");
+			CPRINTS("TYPE_C_ERROR_RECOVERY");
 
 		cypd_update_port_state(controller, port);
 		cypd_release_port(controller, port);
@@ -2095,8 +2116,8 @@ static int cmd_cypd_get_status(int argc, const char **argv)
 							current_level[(data >> 6) & 0x03]);
 				cypd_read_reg8(i, CCG_PORT_VBUS_FET_CONTROL(p), &data);
 				CPRINTS("        VBUS_FET : %s %s",
-											data & 0x1 ? "EC" : "Auto",
-											data & 0x2 ? "On" : "Off");
+						data & 0x1 ? "EC" : "Auto",
+						data & 0x2 ? "On" : "Off");
 				cypd_read_reg_block(i, CCG_CURRENT_RDO_REG(p), data16, 4);
 				CPRINTS("             RDO : Current:%dmA MaxCurrent%dmA 0x%08x",
 						((data16[0] + (data16[1]<<8)) & 0x3FF)*10,
