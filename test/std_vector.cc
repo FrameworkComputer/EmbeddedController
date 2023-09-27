@@ -95,8 +95,15 @@ test_static int fill_one_vector()
 
 test_static int fill_multiple_vectors()
 {
-	// This test allocates 64kB of memory in total split in 8 std::vectors
+	// This test allocates a large block of memory split in 8 std::vectors.
+	// Since Helipilot has less available RAM, it will allocate 8KB RAM
+	// (8*1KB), while other targets will allocate 16KB (8*2kB).
+#ifdef BOARD_HELIPILOT
+	constexpr int num_elements = 1024;
+#else
 	constexpr int num_elements = 2 * 1024;
+#endif
+
 	std::array<std::vector<int32_t>, 8> vecs;
 
 	for (int i = 0; i < num_elements; ++i)
