@@ -11,10 +11,12 @@
 
 #include "common.h"
 #include "math_util.h"
+#include "task.h"
 #include "test_util.h"
 
 extern "C" {
 #include "timer.h"
+#include "uart.h"
 #include "watchdog.h"
 }
 
@@ -86,6 +88,55 @@ test_static int test_timestamp_expired_null(void)
 	 * verify not expired */
 	deadline.val = get_time().val + SECOND;
 	TEST_ASSERT(!timestamp_expired(deadline, NULL));
+
+	return EC_SUCCESS;
+}
+
+/* When timestamp_expired is called from an interrupt or when interrupts
+ * are disabled it should call into the delay function instead and print
+ * a warning. The rate of the warnings should be throttled to avoid
+ * filling the uart buffer.
+ */
+test_static int test_usleep_warning(void)
+{
+	const int usleep_warning_interval_ms = (20 * MSEC);
+
+	/* Skip this test if the COMMON_TIMER module isn't being used, as the
+	 * warning isn't printed */
+	if (IS_ENABLED(CONFIG_COMMON_TIMER)) {
+		int32_t pre_test_buffer_used;
+		int32_t delta_buffer_used;
+
+		/* use the delta_buffer_used to determine if the printing
+		 * occurred */
+		interrupt_disable();
+		pre_test_buffer_used = uart_buffer_used();
+		usleep(1);
+		delta_buffer_used = uart_buffer_used() - pre_test_buffer_used;
+		TEST_GE(delta_buffer_used,
+			(int32_t)strlen("Sleeping not allowed"), "%d");
+		interrupt_enable();
+
+		/* calling usleep again immediately shouldn't print because the
+		 * timer didn't expire
+		 */
+		interrupt_disable();
+		pre_test_buffer_used = uart_buffer_used();
+		usleep(1);
+		delta_buffer_used = uart_buffer_used() - pre_test_buffer_used;
+		TEST_EQ(delta_buffer_used, 0, "%d");
+		interrupt_enable();
+
+		/* Calling usleep after a sufficient delay should print again */
+		udelay(usleep_warning_interval_ms);
+		interrupt_disable();
+		pre_test_buffer_used = uart_buffer_used();
+		usleep(1);
+		delta_buffer_used = uart_buffer_used() - pre_test_buffer_used;
+		TEST_GE(delta_buffer_used,
+			(int32_t)strlen("Sleeping not allowed"), "%d");
+		interrupt_enable();
+	}
 
 	return EC_SUCCESS;
 }
