@@ -60,9 +60,6 @@ static void board_init(void)
 		/* Base accel is not stuffed, don't allow line to float */
 		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_imu_int_l),
 				      GPIO_INPUT | GPIO_PULL_DOWN);
-		/* Lid accel is not stuffed, don't allow line to float */
-		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_acc_int_l),
-				      GPIO_INPUT | GPIO_PULL_DOWN);
 		LOG_INF("Clameshell: Disable motion sensors and gmr sensor!");
 	} else
 		LOG_INF("Convertible!!!");

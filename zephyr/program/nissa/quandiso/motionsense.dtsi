@@ -35,8 +35,8 @@
 	motionsense-rotation-ref {
 		compatible = "cros-ec,motionsense-rotation-ref";
 		lid_rot_ref: lid-rotation-ref {
-			mat33 = <1 0 0
-				 0 (-1) 0
+			mat33 = <(-1) 0 0
+				 0 1 0
 				 0 0 (-1)>;
 		};
 
@@ -62,8 +62,8 @@
 			status = "okay";
 		};
 
-		bma422_data: bma4xx-drv-data {
-			compatible = "cros-ec,drvdata-bma4xx";
+		kx022_data: kx022-drv-data {
+			compatible = "cros-ec,drvdata-kionix";
 			status = "okay";
 		};
 	};
@@ -78,7 +78,7 @@
 	 */
 	motionsense-sensor {
 		lid_accel: lid-accel {
-			compatible = "cros-ec,bma4xx";
+			compatible = "cros-ec,kx022";
 			status = "okay";
 
 			active-mask = "SENSOR_ACTIVE_S0_S3";
@@ -87,8 +87,8 @@
 			port = <&i2c_ec_i2c_sensor>;
 			rot-standard-ref = <&lid_rot_ref>;
 			default-range = <2>;
-			drv-data = <&bma422_data>;
-			i2c-spi-addr-flags = "BMA4_I2C_ADDR_PRIMARY";
+			drv-data = <&kx022_data>;
+			i2c-spi-addr-flags = "KX022_ADDR1_FLAGS";
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
@@ -143,6 +143,8 @@
 		 * list of GPIO interrupts that have to
 		 * be enabled at initial stage
 		 */
-		sensor-irqs = <&int_imu &int_acc>;
+		sensor-irqs = <&int_imu>;
+		/* list of sensors in force mode */
+		accel-force-mode-sensors = <&lid_accel>;
 	};
 };
