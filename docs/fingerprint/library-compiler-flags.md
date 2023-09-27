@@ -37,21 +37,23 @@ armv7m-cros-eabi-clang -mcpu=cortex-m7
 -mfloat-abi=hard
 -mno-unaligned-access
 -std=gnu11
+# Reduce code size.
 # https://crrev.com/c/3199737
 -Oz
 -g
 
-# b/256193799: Reduce inline threshold to decrease code size.
+# Decrease code size by reducing inlining.
 # https://crrev.com/c/4545442
--Wl,-inline-threshold=-10
--Wl,-mllvm
+-Wl,-mllvm -Wl,-inline-threshold=-10
 
-# Linker remove unused code.
+# Add ability to remove unused code at link time.
 # https://stackoverflow.com/q/6687630
+# https://crrev.com/c/189224
 -ffunction-sections
 # Generate traps for signed overflow on addition, subtraction, multiplication
 # operations.
 # https://gcc.gnu.org/onlinedocs/gcc/Code-Gen-Options.html#index-ftrapv
+# https://crrev.com/c/4007158
 -ftrapv
 -fno-PIC
 -fno-asynchronous-unwind-tables
@@ -75,6 +77,16 @@ armv7m-cros-eabi-clang -mcpu=cortex-m7
 -Wno-unused-function
 -Wstrict-prototypes
 -Wundef
+```
+
+### LTO Enable Flags
+
+If we compile with `CONFIG_LTO` enabled. the following flag is added to compiler and linker
+[here](https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/core/cortex-m/build.mk;l=39-42;drc=cc1e6b32d29f3061bf5e8a2b8954d6ef1aaaecff):
+
+```bash
+# https://crrev.com/c/271291
+-flto
 ```
 
 ## Example C Compilation Line
