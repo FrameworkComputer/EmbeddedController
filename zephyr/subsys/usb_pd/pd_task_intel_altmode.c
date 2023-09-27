@@ -10,6 +10,7 @@
 #include "i2c.h"
 #include "i2c/i2c.h"
 #include "usb_mux.h"
+#include "usb_pd.h"
 #include "usbc/utils.h"
 
 #include <stdlib.h>
@@ -167,6 +168,17 @@ static void process_altmode_pd_data(int port)
 
 	if (status.dp_irq)
 		mux |= USB_PD_MUX_HPD_IRQ;
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
+	/* TBT status */
+	if (status.tbt)
+		mux |= USB_PD_MUX_TBT_COMPAT_ENABLED;
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_USB_PD_USB4
+	if (status.usb4)
+		mux |= USB_PD_MUX_USB4_ENABLED;
 #endif
 
 	LOG_INF("Set p%d mux=0x%x", port, mux);
@@ -347,6 +359,18 @@ int pd_is_connected(int port)
 __override uint8_t get_dp_pin_mode(int port)
 {
 	return intel_altmode_task_data.data_status[port].dp_pin << 2;
+}
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
+enum tbt_compat_cable_speed get_tbt_cable_speed(int port)
+{
+	return intel_altmode_task_data.data_status[port].cable_speed;
+}
+
+enum tbt_compat_rounded_support get_tbt_rounded_support(int port)
+{
+	return intel_altmode_task_data.data_status[port].cable_gen;
 }
 #endif
 
