@@ -19,22 +19,24 @@ void battery_get_params(struct batt_params *batt)
 	const struct device *dev =
 		DEVICE_DT_GET(DT_NODELABEL(upstream_battery));
 
-	struct fuel_gauge_property props[] = {
-		{
-			.property_type = FUEL_GAUGE_VOLTAGE,
-		},
-		{
-			.property_type = FUEL_GAUGE_CURRENT,
-		},
-	};
+	union fuel_gauge_prop_val raw_voltage;
+	union fuel_gauge_prop_val raw_current;
 
-	int ret = fuel_gauge_get_prop(dev, props, ARRAY_SIZE(props));
+	int ret;
 
-	/* We explicitly expect some properties to fail */
-	ARG_UNUSED(ret);
+	ret = fuel_gauge_get_prop(dev, FUEL_GAUGE_VOLTAGE, &raw_voltage);
+	if (ret) {
+		batt->status = ret;
+		return;
+	}
+	ret = fuel_gauge_get_prop(dev, FUEL_GAUGE_CURRENT, &raw_current);
+	if (ret) {
+		batt->status = ret;
+		return;
+	}
 
-	batt->voltage = props[0].value.voltage / 1000;
-	batt->current = props[1].value.current / 1000;
+	batt->voltage = raw_voltage.voltage / 1000;
+	batt->current = raw_current.current / 1000;
 
 	/*
 	 * TODO(b/271889974): Percolate failed properties to client.
