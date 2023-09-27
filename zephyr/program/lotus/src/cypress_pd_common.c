@@ -1309,18 +1309,20 @@ static void port_to_safe_mode(int port)
 	CPRINTS("P%d: Safe", port);
 
 }
-
+bool cypd_boot_flag;
 void update_system_power_state(int controller)
 {
 	enum power_state ps = power_get_state();
 	switch (ps) {
 	case POWER_G3:
 	case POWER_S5G3:
+		cypd_boot_flag = true;
 		cypd_set_power_state(CCG_POWERSTATE_G3, controller);
 		break;
 	case POWER_S5:
 	case POWER_S3S5:
 	case POWER_S4S5:
+		cypd_boot_flag = true;
 		cypd_set_power_state(CCG_POWERSTATE_S5, controller);
 		break;
 	case POWER_S3:
@@ -1354,7 +1356,10 @@ void cypd_set_power_active(void)
 
 void cypd_port_reset(void)
 {
+	if (cypd_boot_flag) {
 		task_set_event(TASK_ID_CYPD, CCG_EVT_PLT_RESET);
+		cypd_boot_flag = false;
+	}
 }
 
 
