@@ -241,6 +241,11 @@ int uart_buffer_empty(void);
 int uart_buffer_full(void);
 
 /**
+ * Return the number of bytes in the tx buffer
+ */
+int uart_buffer_used(void);
+
+/**
  * Disable the EC console UART and convert the UART RX pin to a generic GPIO
  * with an edge detect interrupt.
  */
