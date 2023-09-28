@@ -428,8 +428,14 @@ static void enter_state(int port, enum cec_state new_state)
 		 */
 	}
 
-	if (gpio >= 0)
+	if (gpio >= 0) {
 		gpio_set_level(drv_config->gpio_out, gpio);
+		/*
+		 * Changing the level of the output gpio triggers an unwanted
+		 * interrupt on the input gpio.
+		 */
+		gpio_clear_pending_interrupt(drv_config->gpio_in);
+	}
 	if (timeout >= 0) {
 		cec_tmr_cap_start(port, cap_edge, timeout);
 	}
