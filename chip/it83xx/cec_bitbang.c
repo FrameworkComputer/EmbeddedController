@@ -94,10 +94,13 @@ void cec_tmr_cap_start(int port, enum cec_cap_edge edge, int timeout)
 	if (timeout > 0) {
 		/*
 		 * Take into account the delay from when the interrupt occurs to
-		 * when we actually get here.
+		 * when we actually get here. Since the timing is done in
+		 * software, there is an additional unknown delay from when the
+		 * interrupt occurs to when the ISR starts. Empirically, this
+		 * seems to be about 100 us, so account for this too.
 		 */
-		int delay =
-			CEC_US_TO_TICKS(get_time().val - interrupt_time.val);
+		int delay = CEC_US_TO_TICKS(get_time().val -
+					    interrupt_time.val + 100);
 		int timer_count = timeout - delay;
 
 		/*
