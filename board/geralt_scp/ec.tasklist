@@ -8,6 +8,8 @@
  */
 #ifdef BOARD_GERALT_SCP_CORE1
 #define FEATURE_TASK_LIST \
+	TASK_ALWAYS(IMG_SERVICE, img_service_task, NULL, 8192) \
+	TASK_ALWAYS(IMG_HANDLER, img_handler_task, NULL, 58368) \
 	TASK_ALWAYS(CAM_SERVICE, cam_service_task, NULL, 6016)
 #else
 #define FEATURE_TASK_LIST

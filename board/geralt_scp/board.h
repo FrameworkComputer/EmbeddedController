@@ -35,7 +35,7 @@
  * The core address 0x0~0x10000 are translated to 0xaf000~0xbf000.
  */
 #define CONFIG_ROM_BASE 0x0
-#define CONFIG_RAM_BASE 0x14000
+#define CONFIG_RAM_BASE 0x10000
 #define CONFIG_ROM_SIZE (CONFIG_RAM_BASE - CONFIG_ROM_BASE)
 #define CONFIG_RAM_SIZE \
 	((CONFIG_IPC_SHARED_OBJ_ADDR & (~(0x400 - 1))) - CONFIG_RAM_BASE)
