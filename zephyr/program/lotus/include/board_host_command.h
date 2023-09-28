@@ -286,5 +286,64 @@ struct ec_response_get_active_charge_pd_chip {
 	uint8_t pd_chip;
 } __ec_align1;
 
+/*****************************************************************************/
+/*
+ * Enable/disable UEFI App mode
+ *
+ * Enable disables the power button functionality and allows to read it via
+ * EC_CMD_UEFI_APP_BTN_STATUS host command instead.
+ * This makes it possible to use it as a software button in a UEFI app.
+ */
+#define EC_CMD_UEFI_APP_MODE	0x3E19
+
+struct ec_params_uefi_app_mode {
+	/* 0x01 to enable, 0x00 to disable UEFI App mode */
+	uint8_t flags;
+} __ec_align1;
+
+/*****************************************************************************/
+/*
+ * Read power button status
+ */
+#define EC_CMD_UEFI_APP_BTN_STATUS	0x3E1A
+
+struct ec_response_uefi_app_btn_status {
+	/* 0x00 if not pressed, 0x01 if pressed */
+	uint8_t status;
+} __ec_align1;
+
+/*****************************************************************************/
+/*
+ * Check state of the Expansion Bay
+ */
+#define EC_CMD_EXPANSION_BAY_STATUS	0x3E1B
+
+enum ec_expansion_bay_states {
+	/* Valid module present and switch closed */
+	MODULE_ENABLED	= BIT(0),
+	/* Board ID invalid */
+	MODULE_FAULT	= BIT(1),
+	/* Hatch switch open/closed status */
+	HATCH_SWITCH_CLOSED	= BIT(2),
+};
+
+struct ec_response_expansion_bay_status {
+	/* Check ec_expansion_bay_states */
+	uint8_t state;
+	uint8_t board_id_0;
+	uint8_t board_id_1;
+} __ec_align1;
+
+/*****************************************************************************/
+/*
+ * Get hardware diagnostics
+ */
+#define EC_CMD_GET_HW_DIAG 0x3E1C
+
+/* See enum diagnostics_device_idx */
+struct ec_response_get_hw_diag {
+	uint32_t hw_diagnostics;
+	uint8_t bios_complete;
+} __ec_align1;
 
 #endif /* __BOARD_HOST_COMMAND_H */

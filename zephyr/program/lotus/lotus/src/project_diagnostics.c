@@ -43,6 +43,8 @@ void check_device_deferred(void)
 	if (!(fan_get_rpm_actual(1) > 100) && !get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_NO_LEFT_FAN, true);
 
+	/* TODO: Add something to know whether check has run or not */
+
 	/* Exit the duty mode and let thermal to control the fan */
 	dptf_set_fan_duty_target(-1);
 

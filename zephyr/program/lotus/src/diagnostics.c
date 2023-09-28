@@ -35,7 +35,7 @@ uint32_t diagnostics_ctr;
 uint32_t bios_code;
 
 uint8_t bios_complete;
-uint8_t fan_seen;
+uint8_t fan_seen; /* TODO: Unused so far */
 uint8_t run_diagnostics;
 
 int standalone_mode;
@@ -157,3 +157,13 @@ static void diagnostics_check(void)
 
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, diagnostics_check, HOOK_PRIO_DEFAULT);
+
+uint32_t get_hw_diagnostic(void)
+{
+	return hw_diagnostics;
+}
+
+uint8_t is_bios_complete(void)
+{
+	return bios_complete;
+}

@@ -15,6 +15,7 @@
 #include "gpu.h"
 #include "board_adc.h"
 #include "board_function.h"
+#include "board_host_command.h"
 #include "console.h"
 #include "driver/temp_sensor/f75303.h"
 #include "extpower.h"
@@ -39,6 +40,9 @@ LOG_MODULE_REGISTER(gpu, LOG_LEVEL_DBG);
 
 static int module_present;
 static int module_fault;
+static int gpu_id_0;
+static int gpu_id_1;
+static int switch_status;
 
 bool gpu_present(void)
 {
@@ -84,9 +88,9 @@ DECLARE_HOOK(HOOK_INIT, update_thermal_configuration, HOOK_PRIO_DEFAULT + 2);
 
 void check_gpu_module(void)
 {
-	int gpu_id_0 = get_hardware_id(ADC_GPU_BOARD_ID_0);
-	int gpu_id_1 = get_hardware_id(ADC_GPU_BOARD_ID_1);
-	int switch_status = 0;
+	gpu_id_0 = get_hardware_id(ADC_GPU_BOARD_ID_0);
+	gpu_id_1 = get_hardware_id(ADC_GPU_BOARD_ID_1);
+	switch_status = 0;
 
 	if (board_get_version() >= BOARD_VERSION_7) {
 		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_beam_open));
@@ -100,15 +104,18 @@ void check_gpu_module(void)
 	case VALID_BOARDID(BOARD_VERSION_12, BOARD_VERSION_12):
 		LOG_DBG("Detected dual interposer device");
 		module_present = 1;
+		module_fault = 0;
 		break;
 	case VALID_BOARDID(BOARD_VERSION_11, BOARD_VERSION_15):
 	case VALID_BOARDID(BOARD_VERSION_13, BOARD_VERSION_15):
 		LOG_DBG("Detected single interposer device");
 		module_present = 1;
+		module_fault = 0;
 		break;
 	case VALID_BOARDID(BOARD_VERSION_15, BOARD_VERSION_15):
 		LOG_DBG("No gpu module detected %d %d", gpu_id_0, gpu_id_1);
 		module_present = 0;
+		module_fault = 0;
 		break;
 	default:
 		LOG_DBG("GPU module Fault");
@@ -161,24 +168,6 @@ DECLARE_DEFERRED(gpu_interposer_toggle_deferred);
 
 __override void project_chassis_function(enum gpio_signal signal)
 {
-	int open_state = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l));
-
-	/* The dGPU SW is SW3 at DVT phase */
-	if (board_get_version() >= BOARD_VERSION_7)
-		return;
-
-	if (!open_state) {
-		/* Make sure the module is off as fast as possible! */
-		LOG_DBG("Powering off GPU");
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_en), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
-		module_present = 0;
-		update_thermal_configuration();
-	} else {
-		hook_call_deferred(&check_gpu_module_data, 50*MSEC);
-	}
 }
 
 void beam_open_interrupt(enum gpio_signal signal)
@@ -211,6 +200,7 @@ void beam_open_interrupt(enum gpio_signal signal)
 			}
 		} else
 			gpu_interposer_toggle_count = 0;
+			switch_status = 0;
 	} else {
 		hook_call_deferred(&check_gpu_module_data, 50*MSEC);
 	}
@@ -322,3 +312,27 @@ void gpu_power_enable_handler(void)
 		hook_call_deferred(&gpu_board_f75303_initial_data, 500 * MSEC);
 
 }
+
+static enum ec_status host_command_expansion_bay_status(struct host_cmd_handler_args *args)
+{
+	struct ec_response_expansion_bay_status *r = args->response;
+
+	r->state = 0;
+	if (module_present) {
+		r->state |= MODULE_ENABLED;
+	}
+	if (module_fault) {
+		r->state |= MODULE_FAULT;
+	}
+	if (switch_status) {
+		r->state |= HATCH_SWITCH_CLOSED;
+	}
+	r->board_id_0 = gpu_id_0;
+	r->board_id_1 = gpu_id_1;
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_EXPANSION_BAY_STATUS, host_command_expansion_bay_status,
+		EC_VER_MASK(0));
