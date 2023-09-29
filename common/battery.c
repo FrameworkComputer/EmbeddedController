@@ -24,7 +24,7 @@
 
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
-#define CUTOFFPRINTS(info) CPRINTS("%s %s", "Battery cut off", info)
+#define CUTOFFPRINTS(fmt, args...) CPRINTS("Battery cutoff " fmt, ##args)
 
 /* See config.h for details */
 const static int batt_host_full_factor = CONFIG_BATT_HOST_FULL_FACTOR;
