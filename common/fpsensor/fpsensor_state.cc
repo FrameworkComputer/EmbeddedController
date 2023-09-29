@@ -10,6 +10,10 @@
 /* Boringssl headers need to be included before extern "C" section. */
 #include "openssl/mem.h"
 
+#ifdef CONFIG_ZEPHYR
+#include <zephyr/shell/shell.h>
+#endif
+
 extern "C" {
 #include "atomic.h"
 #include "common.h"

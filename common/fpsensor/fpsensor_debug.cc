@@ -4,6 +4,10 @@
  */
 #include "compile_time_macros.h"
 
+#ifdef CONFIG_ZEPHYR
+#include <zephyr/shell/shell.h>
+#endif
+
 extern "C" {
 #include "atomic.h"
 #include "clock.h"
