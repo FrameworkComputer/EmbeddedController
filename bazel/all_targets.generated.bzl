@@ -1779,13 +1779,6 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
-        name = "rainier",
-        board = "rainier",
-        chip = "stm32",
-        core = "cortex-m0",
-        zephyr = False,
-    )
-    ec_target(
         name = "rammus",
         board = "rammus",
         chip = "npcx",
@@ -1854,13 +1847,6 @@ def all_targets():
         board = "sasukette",
         chip = "it83xx",
         core = "nds32",
-        zephyr = False,
-    )
-    ec_target(
-        name = "scarlet",
-        board = "scarlet",
-        chip = "stm32",
-        core = "cortex-m0",
         zephyr = False,
     )
     ec_target(

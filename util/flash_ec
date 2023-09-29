@@ -77,7 +77,6 @@ BOARDS_STM32=(
 	oak_pd
 	pit
 	plankton
-	rainier
 	strago_pd
 	zinger
 )
@@ -141,7 +140,6 @@ BOARDS_RAIDEN=(
 	poppy
 	rammus
 	reef
-	scarlet
 	soraka
 )
 

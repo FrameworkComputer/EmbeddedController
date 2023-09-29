@@ -82,8 +82,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "pdeval-stm32f072",
     "plankton",
     "prism",
-    "rainier",
-    "scarlet",
     "servo_micro",
     "servo_v4",
     "servo_v4p1",
