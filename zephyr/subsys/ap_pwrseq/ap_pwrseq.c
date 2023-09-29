@@ -203,7 +203,7 @@ static void ap_pwrseq_thread(void *arg, void *unused1, void *unused2)
 static int ap_pwrseq_driver_init(const struct device *dev);
 
 DEVICE_DEFINE(ap_pwrseq_dev, "ap_pwrseq_drv", ap_pwrseq_driver_init, NULL,
-	      &ap_pwrseq_task_data, NULL, APPLICATION,
+	      &ap_pwrseq_task_data, NULL, POST_KERNEL,
 	      CONFIG_APPLICATION_INIT_PRIORITY, NULL);
 
 K_THREAD_DEFINE(ap_pwrseq_tid, CONFIG_AP_PWRSEQ_STACK_SIZE, ap_pwrseq_thread,
