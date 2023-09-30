@@ -6,15 +6,7 @@
 
 /* Interrupts */
 GPIO_INT(FP_MCU_INT_L,         PIN(B, 0), GPIO_INT_RISING, fps_event)
-
-/* A4 is the assignment on QUINCY, need to use 45 on MRIDER to set pin */
-#ifdef CONFIG_HW_QUINCY
 GPIO_INT(HOST_MCU_WP_OD,       PIN(A, 4), GPIO_INT_BOTH, switch_interrupt)
-#elif defined(CONFIG_HW_MRIDER)
-GPIO_INT(HOST_MCU_WP_OD,       PIN(4, 5), GPIO_INT_BOTH, switch_interrupt)
-#else
-#error "No hardware configured (CONFIG_HW_QUINCY, CONFIG_HW_MRIDER)"
-#endif
 
 /* SHI CS Ready, Low Active. */
 GPIO_INT(SPI_HOST_CS_MCU_ODL,  PIN(5, 3), GPIO_INT_FALLING,shi_cs_event)
