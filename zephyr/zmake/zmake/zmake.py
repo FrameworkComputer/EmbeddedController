@@ -293,6 +293,7 @@ class Zmake:
         bringup=False,
         coverage=False,
         cmake_defs=None,
+        cmake_trace=None,
         allow_warnings=False,
         all_projects=False,
         extra_cflags=None,
@@ -325,6 +326,7 @@ class Zmake:
                     bringup=bringup,
                     coverage=coverage,
                     cmake_defs=cmake_defs,
+                    cmake_trace=cmake_trace,
                     allow_warnings=allow_warnings,
                     extra_cflags=extra_cflags,
                     delete_intermediates=delete_intermediates,
@@ -364,6 +366,7 @@ class Zmake:
         bringup=False,
         coverage=False,
         cmake_defs=None,
+        cmake_trace=None,
         allow_warnings=False,
         all_projects=False,
         extra_cflags=None,
@@ -380,6 +383,7 @@ class Zmake:
             bringup=bringup,
             coverage=coverage,
             cmake_defs=cmake_defs,
+            cmake_trace=cmake_trace,
             allow_warnings=allow_warnings,
             all_projects=all_projects,
             extra_cflags=extra_cflags,
@@ -500,6 +504,7 @@ class Zmake:
         bringup=False,
         coverage=False,
         cmake_defs=None,
+        cmake_trace=None,
         allow_warnings=False,
         extra_cflags=None,
         delete_intermediates=False,
@@ -628,6 +633,7 @@ class Zmake:
                             build_dir=build_dir,
                             build_name=build_name,
                             project=project,
+                            cmake_trace=cmake_trace,
                         )
                     )
                     wait_funcs.append(wait_func)
@@ -659,6 +665,7 @@ class Zmake:
         build_dir,
         build_name,
         project,
+        cmake_trace,
     ):
         """Run cmake and maybe ninja on one build dir."""
         with self.jobserver.get_job():
@@ -696,6 +703,7 @@ class Zmake:
                 project.config.project_dir,
                 output_dir,
                 kconfig_file,
+                cmake_trace,
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,

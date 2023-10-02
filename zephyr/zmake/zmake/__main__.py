@@ -329,6 +329,12 @@ def add_common_configure_args(sub_parser: argparse.ArgumentParser):
         help="Do not treat warnings as errors",
     )
     sub_parser.add_argument(
+        "--cmake-trace",
+        action="store_true",
+        default=False,
+        dest="cmake_trace",
+    )
+    sub_parser.add_argument(
         "-B",
         "--build-dir",
         type=pathlib.Path,

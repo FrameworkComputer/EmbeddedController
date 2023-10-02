@@ -62,6 +62,7 @@ class BuildConfig:
         project_dir,
         build_dir,
         kconfig_path=None,
+        cmake_trace=False,
         **kwargs,
     ):
         """Run Cmake with this config using a jobclient.
@@ -93,19 +94,27 @@ class BuildConfig:
                 }
             )
             return (base_config | conf_file_config).popen_cmake(
-                jobclient, project_dir, build_dir, **kwargs
+                jobclient,
+                project_dir,
+                build_dir,
+                cmake_trace=cmake_trace,
+                **kwargs,
             )
 
+        cmd = [
+            util.get_tool_path("cmake"),
+            "-S",
+            project_dir,
+            "-B",
+            build_dir,
+            "-GNinja",
+            *(f"-D{pair[0]}={pair[1]}" for pair in self.cmake_defs.items()),
+        ]
+        if cmake_trace:
+            cmd.append("--trace")
+
         return jobclient.popen(
-            [
-                util.get_tool_path("cmake"),
-                "-S",
-                project_dir,
-                "-B",
-                build_dir,
-                "-GNinja",
-                *(f"-D{pair[0]}={pair[1]}" for pair in self.cmake_defs.items()),
-            ],
+            cmd,
             **kwargs,
         )
 
