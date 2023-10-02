@@ -88,18 +88,10 @@ static void update_os_power_slider(int mode, int active_mpower)
 static void update_adapter_power_limit(int battery_percent, int active_mpower, bool with_dc)
 {
 	if (with_dc && (battery_percent < 3) && active_mpower > 0) {
-		power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 12000;
-		power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 12000;
-		power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 15000;
-
-		if (active_mpower >= 55000) {
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-				(active_mpower * 95 / 100) - 15000 + battery_mwatt_type;
-		} else {
-			power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T];
-		}
-
+		power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 15000;
+		power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 15000;
+		power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
+		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = active_mpower * 95 / 100;
 		/* CPB enable */
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT) &= ~CPB_DISABLE;
 		CPRINTS("DRAIN BATTERY");
@@ -128,7 +120,7 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower, b
 		power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = (active_mpower * 85 / 100) - 20000;
 		power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = (active_mpower * 85 / 100) - 15000;
 		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-			(active_mpower * 95 / 100) - 15000 + battery_mwatt_type;
+			MIN(176000, (active_mpower * 90 / 100) + 89000);
 		/* CPB enable */
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT) &= ~CPB_DISABLE;
 	} else if ((battery_percent >= 30) && (active_mpower >= 45000)) {
@@ -137,7 +129,7 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower, b
 		power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 35000;
 		power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 53000;
 		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-			(active_mpower * 95 / 100) - 15000 + battery_mwatt_type;
+			MIN(176000, (active_mpower * 90 / 100) + 89000);
 		/* CPB enable */
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT) &= ~CPB_DISABLE;
 	} else {
@@ -146,8 +138,7 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower, b
 		power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 35000;
 		power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = battery_mwatt_type - 15000;
 		/* DC mode p3t should follow os_power_slider */
-		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-			power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T];
+		power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 89000;
 		/* CPB enable */
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT) &= ~CPB_DISABLE;
 	}
