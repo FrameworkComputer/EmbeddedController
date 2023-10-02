@@ -5296,6 +5296,11 @@
 #undef CONFIG_USBC_NX20P348X_RCP_5VSRC_MASK_ENABLE
 
 /*
+ * Setting SYV682X OVP to 15v power profile application
+ */
+#undef CONFIG_USBC_PPC_SYV682X_OVP_SET_15V
+
+/*
  * SYV682x PPC high voltage power path current limit.  Default limit is
  * 3.3A.  See the syv682x header file for permissible values.
  */

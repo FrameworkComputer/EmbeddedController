@@ -81,6 +81,11 @@ static int read_reg(uint8_t port, int reg, int *regval)
 	return i2c_read8(ppc_chips[port].i2c_port,
 			 ppc_chips[port].i2c_addr_flags, reg, regval);
 }
+#ifdef CONFIG_USBC_PPC_SYV682X_OVP_SET_15V
+static const int ovp_val = SYV682X_OVP_17_9;
+#else
+static const int ovp_val = SYV682X_OVP_23_7;
+#endif
 
 #ifdef CONFIG_USBC_PPC_SYV682C
 __overridable int syv682x_board_is_syv682c(int port)
@@ -816,7 +821,7 @@ static int syv682x_init(int port)
 	 *
 	 * Mask Alerts due to Reverse Voltage.
 	 */
-	regval = (SYV682X_OVP_23_7 << SYV682X_OVP_BIT_SHIFT) | SYV682X_RVS_MASK;
+	regval = (ovp_val << SYV682X_OVP_BIT_SHIFT) | SYV682X_RVS_MASK;
 	rv = write_reg(port, SYV682X_CONTROL_3_REG, regval);
 	if (rv)
 		return rv;

@@ -189,6 +189,12 @@ config PLATFORM_EC_USBC_PPC_SYV682X_SMART_DISCHARGE
 	  Earlier revisions of the chip block I2C transactions during smart
 	  discharge, causing USB PD compliance issues.
 
+config PLATFORM_EC_USBC_PPC_SYV682X_OVP_SET_15V
+	bool "15v power profile application"
+	help
+	  Enable 15v power profile application when setting over ovltage protection
+	  for HV channel.
+
 config PLATFORM_EC_USBC_PPC_DEDICATED_INT
 	bool "Power Power Controller has a dedicated interrupt pin"
 	help
