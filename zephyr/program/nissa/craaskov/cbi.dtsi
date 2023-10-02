@@ -7,11 +7,71 @@
 /* Craaskov-specific fw_config fields. */
 	nissa-fw-config {
 		/*
-		 * FW_CONFIG field to describe mainboard orientation in chassis.
+		 * FW_CONFIG field to defined for THERMAL SOLUTION.
+		 */
+		thermal-solution {
+			enum-name = "FW_THERMAL_SOLUTION";
+			start = <0>;
+			size = <1>;
+
+			thermal-solution-6w {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_SOLUTION_6W";
+				value = <0>;
+			};
+			thermal-solution-15w {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_SOLUTION_15W";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for KB TYPE.
+		 */
+		kb-type {
+			enum-name = "FW_KB_TYPE";
+			start = <1>;
+			size = <1>;
+
+			kb-type-default {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_TYPE_DEFAULT";
+				value = <0>;
+			};
+			kb-type-ansi-canadian {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_TYPE_ANSI_CANADIAN";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for SAR ID.
+		 */
+		sar-id {
+			enum-name = "FW_SAR_ID";
+			start = <2>;
+			size = <1>;
+
+			sar-id-0 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SAR_ID_0";
+				value = <0>;
+			};
+			sar-id-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SAR_ID_1";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for SUB BOARD.
 		 */
 		sub-board {
 			enum-name = "FW_SUB_BOARD";
-			start = <0>;
+			start = <3>;
 			size = <2>;
 
 			sub-board-1 {
@@ -28,46 +88,6 @@
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_SUB_BOARD_3";
 				value = <2>;
-			};
-		};
-
-		/*
-		 * FW_CONFIG field to defined for P SENSOR.
-		 */
-		p-sensor {
-			enum-name = "FW_P_SENSOR";
-			start = <2>;
-			size = <1>;
-
-			p-sensor-none {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_P_SENSOR_NONE";
-				value = <0>;
-			};
-			p-sensor-vcnl4200 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_P_SENSOR_VCNL4200";
-				value = <1>;
-			};
-		};
-
-		/*
-		 * FW_CONFIG field to defined for SAR ID.
-		 */
-		sar-id {
-			enum-name = "FW_SAR_ID";
-			start = <3>;
-			size = <1>;
-
-			sar-id-0 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_SAR_ID_0";
-				value = <0>;
-			};
-			sar-id-1 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_SAR_ID_1";
-				value = <1>;
 			};
 		};
 
