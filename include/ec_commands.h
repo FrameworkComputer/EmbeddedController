@@ -1654,6 +1654,10 @@ enum ec_feature_code {
 	 * The EC supports memory dump commands.
 	 */
 	EC_FEATURE_MEMORY_DUMP = 51,
+	/*
+	 * The EC supports DP2.1 capability
+	 */
+	EC_FEATURE_TYPEC_DP2_1 = 52,
 };
 
 #define EC_FEATURE_MASK_0(event_code) BIT(event_code % 32)
