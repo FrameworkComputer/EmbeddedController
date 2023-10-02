@@ -10,7 +10,6 @@
 /* INTERRUPT GPIOs: */
 GPIO_INT(ACOK_OD,                        PIN(0, 0), GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH, extpower_interrupt)
 GPIO_INT(EC_ACCEL_INT_R_L,               PIN(8, 1), GPIO_SEL_1P8V | GPIO_INT_FALLING, lis2dw12_interrupt)
-GPIO_INT(EC_ALS_RGB_INT_R_L,             PIN(D, 4), GPIO_INT_FALLING, tcs3400_interrupt)
 GPIO_INT(EC_IMU_INT_R_L,                 PIN(5, 6), GPIO_SEL_1P8V | GPIO_INT_FALLING, lsm6dso_interrupt)
 GPIO_INT(EC_PROCHOT_IN_L,                PIN(F, 0), GPIO_INT_BOTH, throttle_ap_prochot_input_interrupt)
 GPIO_INT(EC_VOLDN_BTN_ODL,               PIN(9, 3), GPIO_INT_BOTH | GPIO_PULL_UP, button_interrupt)
@@ -113,9 +112,9 @@ ALTERNATE(PIN_MASK(D, 0x04), 0, MODULE_PMU, GPIO_INT_BOTH | GPIO_HIB_WAKE_HIGH) 
 
 /* Unused Pins */
 UNUSED(PIN(0, 2))
-UNUSED(PIN(4, 1))
 UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
 UNUSED(PIN(3, 5))       /* GPO35/CR_SOUT4/TEST_L */
+UNUSED(PIN(4, 1))
 UNUSED(PIN(5, 0))
 UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
 UNUSED(PIN(6, 6))       /* GPIO66 */
@@ -127,6 +126,7 @@ UNUSED(PIN(A, 7))
 UNUSED(PIN(B, 1))
 UNUSED(PIN(C, 6))
 UNUSED(PIN(C, 2))
+UNUSED(PIN(D, 4))
 UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
 /* Pre-configured PSL balls:  J8  K6 */
 
