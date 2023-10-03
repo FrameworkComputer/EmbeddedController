@@ -26,6 +26,8 @@
 /* Track last reported sleep event */
 static enum host_sleep_event host_sleep_state;
 
+#define SYSRQ_WAIT_MSEC 50
+
 /* LCOV_EXCL_START */
 /* Function stub that has no behavior, so ignoring for coverage */
 __overridable void
@@ -249,6 +251,34 @@ void power_sleep_hang_recovery(enum sleep_hang_type hang_type)
 	 */
 	hook_call_deferred(&board_handle_hard_sleep_hang_data,
 			   CONFIG_HARD_SLEEP_HANG_TIMEOUT * MSEC);
+
+	/*
+	 * Always send a host event, in case the AP is stuck in FW.
+	 * This will be ignored if the AP is in the OS.
+	 */
+	CPRINTS("Warning: Detected sleep hang! Waking host up!");
+	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
+
+	if (IS_ENABLED(CONFIG_EMULATED_SYSRQ)) {
+		/*
+		 * Send |SysRq| signal to generate a kernel panic. If the AP is
+		 * in the OS, this will generate stack traces for all of the
+		 * running CPUs and trigger a reboot. A single |SysRq| restarts
+		 * chrome, while two trigger a kernel panic.
+		 * Otherwise, if the AP is not in the kernel, this will do
+		 * nothing, so the device will continue to be hung until the
+		 * timer expires and sysrq_reboot_timeout() is called to
+		 * reboot the AP.
+		 */
+		CPRINTS("Sending SysRq to trigger AP kernel panic and reboot!");
+		host_send_sysrq('x');
+		/*
+		 * Wait a bit so the AP can treat them as separate SysRq
+		 * signals.
+		 */
+		usleep(SYSRQ_WAIT_MSEC * MSEC);
+		host_send_sysrq('x');
+	}
 }
 
 /**
@@ -306,9 +336,6 @@ static void sleep_transition_timeout(void)
 		power_chipset_handle_sleep_hang(timeout_hang_type);
 		power_board_handle_sleep_hang(timeout_hang_type);
 	}
-
-	CPRINTS("Warning: Detected sleep hang! Waking host up!");
-	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
 
 	/*
 	 * Perform the recovery after the chipset/board has had a chance to do
