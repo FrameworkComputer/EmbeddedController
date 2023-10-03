@@ -39,6 +39,12 @@
 #include "usb_pd.h"
 #include "util.h"
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 47
+
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
