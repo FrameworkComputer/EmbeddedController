@@ -252,6 +252,6 @@
 		 */
 		sensor-irqs = <&int_imu &int_als_rgb &int_accel>;
 		/* list of sensors in force mode */
-		accel-force-mode-sensors = <&lid_accel &als_clear>;
+		accel-force-mode-sensors = <&als_clear>;
 	};
 };
