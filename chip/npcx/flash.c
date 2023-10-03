@@ -910,3 +910,66 @@ static void flash_preserve_state(void)
 			    sizeof(state), &state);
 }
 DECLARE_HOOK(HOOK_SYSJUMP, flash_preserve_state, HOOK_PRIO_DEFAULT);
+
+#ifdef NPCX_INT_FLASH_SUPPORT
+static int flash_write_disable(void)
+{
+	uint8_t mask = SPI_FLASH_SR1_WEL;
+	int rv;
+	/* Wait for previous operation to complete */
+	rv = flash_wait_ready();
+	if (rv)
+		return rv;
+
+	/* Write enable command */
+	flash_execute_cmd(CMD_WRITE_DIS, MASK_CMD_ONLY);
+
+	/* Wait for flash is not busy */
+	rv = flash_wait_ready();
+	if (rv)
+		return rv;
+
+	if (NPCX_UMA_DB0 & mask)
+		return EC_SUCCESS;
+	else
+		return EC_ERROR_BUSY;
+}
+
+bool flash_control_register_locked(void)
+{
+	/* The name Flash Control Register lock is based on the stm32
+	 * implementation. The closest analogy is to use the Status Register
+	 * Write Enable Latch (WEL) bit.
+	 *
+	 * Per section 4.27.4 of the datasheet writing is locked until
+	 * SPI_FLASH_SR1_WEL is set to 1
+	 */
+	return is_int_flash_protected() ||
+	       ((NPCX_UMA_DB0 & SPI_FLASH_SR1_WEL) == 0);
+}
+
+void unlock_flash_control_register(void)
+{
+	/* The name Flash Control Register Lock is based on the stm32
+	 * implementation. The closest analogy is to call flash_write_enable
+	 */
+	crec_flash_lock_mapped_storage(1);
+	flash_write_enable();
+	crec_flash_lock_mapped_storage(0);
+}
+
+void lock_flash_control_register(void)
+{
+	/* The name Flash Control Register lock is based on the stm32
+	 * implementation. The closest analogy is to call flash_write_disable
+	 */
+	crec_flash_lock_mapped_storage(1);
+	flash_write_disable();
+	crec_flash_lock_mapped_storage(0);
+}
+
+void disable_flash_control_register(void)
+{
+	flash_protect_int_flash(1);
+}
+#endif /* NPCX_INT_FLASH_SUPPORT */
