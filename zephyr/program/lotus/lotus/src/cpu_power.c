@@ -134,7 +134,7 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 		} else if (active_mpower >= 140000) {
 			if (mode == EC_AC_BEST_PERFORMANCE) {
 				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 95000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 9500;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 95000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 95000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 50000;
 				power_stt_table = 4;
