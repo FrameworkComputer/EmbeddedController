@@ -90,4 +90,16 @@ extern uint8_t keyboard_cols;
 #define KEYBOARD_MASK_LEFT_SHIFT KEYBOARD_ROW_TO_MASK(KEYBOARD_ROW_LEFT_SHIFT)
 
 #endif /* CONFIG_KEYBOARD_CUSTOMIZATION */
+
+/*
+ * GSC may not mask pass-through rows even when the power button is pressed.
+ * Keyscan will clear the corresponding rows.
+ */
+#ifdef CONFIG_KSI0_NOT_MASKED_BY_GSC
+#define KEYBOARD_MASKED_BY_POWERBTN KEYBOARD_MASK_REFRESH
+#else
+#define KEYBOARD_MASKED_BY_POWERBTN \
+	(KEYBOARD_MASK_REFRESH | KEYBOARD_ROW_TO_MASK(0))
+#endif
+
 #endif /* __CROS_EC_KEYBOARD_CONFIG_H */

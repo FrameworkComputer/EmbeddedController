@@ -41,7 +41,7 @@ static const struct button_config power_button = {
 	.flags = CONFIG_POWER_BUTTON_FLAGS,
 };
 
-int power_button_signal_asserted(void)
+test_mockable int power_button_signal_asserted(void)
 {
 	return !!(
 		gpio_get_level(power_button.gpio) ==
