@@ -7,6 +7,8 @@ common:
 tests:
   amd.power:
     extra_configs:
+      - CONFIG_PLATFORM_EC_EMULATED_SYSRQ=y
+      - CONFIG_PLATFORM_EC_MKBP_EVENT=y
       - CONFIG_TEST_AMD_POWER=y
   amd.power_ro:
     extra_args:
@@ -17,4 +19,6 @@ tests:
     extra_args:
       - EXTRA_CFLAGS=-DSECTION_IS_RW
     extra_configs:
+      - CONFIG_PLATFORM_EC_EMULATED_SYSRQ=y
+      - CONFIG_PLATFORM_EC_MKBP_EVENT=y
       - CONFIG_TEST_AMD_POWER=y

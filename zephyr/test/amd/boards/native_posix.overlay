@@ -103,6 +103,11 @@
 		gpio_sfh_ec_int_h: sfh_ec_int_h {
 			gpios = <&gpio0 17 GPIO_INPUT>;
 		};
+
+		gpio_ap_ec_int_l: ap_ec_int_l {
+			gpios = <&gpio0 18 GPIO_OUTPUT_HIGH>;
+			enum-name = "GPIO_EC_INT_L";
+		};
 	};
 
 	gpio-interrupts {
@@ -147,7 +152,7 @@
 };
 
 &gpio0 {
-	ngpios = <18>;
+	ngpios = <19>;
 };
 
 &espi0 {
