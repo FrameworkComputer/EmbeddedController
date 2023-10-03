@@ -539,7 +539,7 @@ test_export_static void boot_key_set(enum boot_key key)
 }
 #endif
 
-static void boot_key_clear(enum boot_key key)
+test_export_static void boot_key_clear(enum boot_key key)
 {
 	boot_key_value &= ~BIT(key);
 	CPRINTS("boot key %d cleared", key);

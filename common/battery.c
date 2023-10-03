@@ -399,7 +399,7 @@ static void pending_cutoff_deferred(void)
 		return;
 	} else if (battery_cutoff_state == BATTERY_CUTOFF_STATE_SCHEDULED) {
 		/* Delayed start */
-		CUTOFFPRINTS("starting shceduled cutoff");
+		CUTOFFPRINTS("starting scheduled cutoff");
 		battery_cutoff_start();
 		return;
 	}
@@ -415,17 +415,46 @@ static void battery_on_ac_change(void)
 		if (battery_cutoff_state == BATTERY_CUTOFF_STATE_SCHEDULED)
 			CUTOFFPRINTS("unscheduled");
 		battery_cutoff_clear();
-	} else {
-		/* Unplugged */
-		if (keyboard_scan_get_boot_keys() & BIT(BOOT_KEY_REFRESH)) {
-			CPRINTS("Refresh+Unplug! Scheduling cutoff.");
-			battery_cutoff_state = BATTERY_CUTOFF_STATE_SCHEDULED;
-			hook_call_deferred(&pending_cutoff_deferred_data,
-					   CONFIG_BATTERY_CUTOFF_DELAY_US);
-		}
 	}
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, battery_on_ac_change, HOOK_PRIO_DEFAULT);
+
+#ifdef CONFIG_CHARGE_MANAGER
+static void power_supply_change(void)
+{
+	static bool had_active_charge_port;
+	int port = charge_manager_get_active_charge_port();
+	bool key = keyboard_scan_get_boot_keys() & BIT(BOOT_KEY_REFRESH);
+
+	if (!key) {
+		/*
+		 * Need to set had_active_charge_port also here because refresh
+		 * boot key can be registered when the power button is released.
+		 */
+		if (port != CHARGE_PORT_NONE)
+			had_active_charge_port = true;
+		return;
+	}
+
+	if (port != CHARGE_PORT_NONE) {
+		had_active_charge_port = true;
+		if (key)
+			CUTOFFPRINTS("backoff: P%d is active", port);
+		return;
+	}
+
+	if (!had_active_charge_port) {
+		CUTOFFPRINTS("backoff: Haven't had active charge port");
+		return;
+	}
+
+	CPRINTS("Refresh+Unplug! Scheduling cutoff.");
+	battery_cutoff_state = BATTERY_CUTOFF_STATE_SCHEDULED;
+	hook_call_deferred(&pending_cutoff_deferred_data,
+			   CONFIG_BATTERY_CUTOFF_DELAY_US);
+}
+DECLARE_HOOK(HOOK_POWER_SUPPLY_CHANGE, power_supply_change, HOOK_PRIO_DEFAULT);
+#endif
 
 static enum ec_status battery_command_cutoff(struct host_cmd_handler_args *args)
 {
