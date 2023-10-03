@@ -50,6 +50,7 @@
 #define CONFIG_USBC_PPC
 #define CONFIG_USBC_PPC_SYV682X
 #define CONFIG_CMD_PPC_DUMP
+#define CONFIG_USBC_PPC_SYV682X_OVP_SET_15V
 
 /* USB Mux and Retimer */
 #define CONFIG_USB_MUX_IT5205 /* C0 C1: ITE Mux */
