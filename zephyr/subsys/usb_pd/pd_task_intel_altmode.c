@@ -239,7 +239,7 @@ static void intel_altmode_thread(void *unused1, void *unused2, void *unused3)
 
 K_THREAD_DEFINE(intel_altmode_tid, CONFIG_TASK_PD_ALTMODE_INTEL_STACK_SIZE,
 		intel_altmode_thread, NULL, NULL, NULL,
-		CONFIG_USBPD_ALTMODE_INTEL_THREAD_PRIORITY, 0, K_TICKS_FOREVER);
+		CONFIG_USBPD_ALTMODE_INTEL_THREAD_PRIORITY, 0, SYS_FOREVER_MS);
 
 void intel_altmode_task_start(void)
 {

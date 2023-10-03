@@ -46,7 +46,7 @@ CROS_EC_TASK_LIST
 /* Statically declare all threads here */
 #define CROS_EC_TASK(name, entry, parameter, stack_size, priority)      \
 	K_THREAD_DEFINE(name, stack_size, entry, parameter, NULL, NULL, \
-			EC_TASK_PRIORITY(priority), 0, -1);
+			EC_TASK_PRIORITY(priority), 0, SYS_FOREVER_MS);
 #define TASK_TEST(name, e, p, size) CROS_EC_TASK(name, e, p, size)
 CROS_EC_TASK_LIST
 #undef CROS_EC_TASK
