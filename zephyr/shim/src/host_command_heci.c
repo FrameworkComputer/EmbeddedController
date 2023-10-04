@@ -4,6 +4,7 @@
  */
 
 #include "common.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "hwtimer.h"
 
@@ -250,3 +251,33 @@ static int cros_ec_ishtp_client_init(void)
 }
 
 SYS_INIT(cros_ec_ishtp_client_init, APPLICATION, 99);
+
+static enum ec_status
+host_command_host_sleep_event(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_host_sleep_event_v1 *p = args->params;
+	enum host_sleep_event state = p->sleep_event;
+
+	switch (state) {
+	case HOST_SLEEP_EVENT_S0IX_SUSPEND:
+	case HOST_SLEEP_EVENT_S3_SUSPEND:
+	case HOST_SLEEP_EVENT_S3_WAKEABLE_SUSPEND:
+		LOG_INF("%s: suspend", __FILE__);
+		hook_notify(HOOK_CHIPSET_SUSPEND);
+		break;
+
+	case HOST_SLEEP_EVENT_S0IX_RESUME:
+	case HOST_SLEEP_EVENT_S3_RESUME:
+		LOG_INF("%s: resume", __FILE__);
+		hook_notify(HOOK_CHIPSET_RESUME);
+		break;
+
+	default:
+		break;
+	}
+
+	return EC_RES_SUCCESS;
+}
+
+DECLARE_HOST_COMMAND(EC_CMD_HOST_SLEEP_EVENT, host_command_host_sleep_event,
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
