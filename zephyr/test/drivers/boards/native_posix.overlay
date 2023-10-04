@@ -609,6 +609,9 @@
 
 		mutex_lis2dw12: lis2dw12-mutex {
 		};
+
+		mutex_bmi160_s0: bmi160-mutex-s0 {
+		};
 	};
 
 	/*
@@ -703,6 +706,11 @@
 					};
 				};
 			};
+		};
+
+		bmi160_data_s0: bmi160-drv-data-s0 {
+			compatible = "cros-ec,drvdata-bmi160";
+			status = "okay";
 		};
 	};
 
@@ -837,6 +845,26 @@
 			location = "MOTIONSENSE_LOC_BASE";
 			default-range = <0x10000>; /* scale = 1x, uscale = 0 */
 			drv-data = <&tcs_rgb_data>;
+		};
+
+		ms_bmi160_accel_s0: ms-bmi160-accel-s0 {
+			compatible = "cros-ec,bmi160-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&mutex_bmi160_s0>;
+			port = <&named_i2c1>;
+			drv-data = <&bmi160_data_s0>;
+			default-range = <4>;
+			i2c-spi-addr-flags = "BMI160_ADDR0_FLAGS";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <10000>;
+				};
+			};
 		};
 	};
 

@@ -72,3 +72,6 @@
 &ms_bmi160_gyro {
 	status = "disabled";
 };
+&ms_bmi160_accel_s0 {
+	status = "disabled";
+};
