@@ -209,6 +209,23 @@ static void button_reset(enum button button_type,
 	gpio_enable_interrupt(button->gpio);
 }
 
+static uint32_t boot_button;
+
+uint32_t button_get_boot_button(void)
+{
+	return boot_button;
+}
+
+test_export_static void boot_button_set(enum button button)
+{
+	boot_button |= BIT(button);
+}
+
+test_export_static void boot_button_clear(enum button button)
+{
+	boot_button &= ~BIT(button);
+}
+
 /*
  * Button initialization.
  */
@@ -228,6 +245,13 @@ void button_init(void)
 		button_check_hw_reinit_required();
 	}
 #endif /* defined(CONFIG_BUTTON_TRIGGERED_RECOVERY) */
+
+	/* Detect boot buttons. */
+	for (i = 0; i < BUTTON_COUNT; i++) {
+		if (raw_button_pressed(&buttons[i]))
+			boot_button_set(i);
+	}
+	CPRINTS("boot buttons: 0x%x", boot_button);
 }
 
 #ifdef CONFIG_BUTTONS_RUNTIME_CONFIG
@@ -309,6 +333,8 @@ static void button_change_deferred(void)
 #endif
 				CPRINTS("Button '%s' was %s", buttons[i].name,
 					new_pressed ? "pressed" : "released");
+				if (!new_pressed)
+					boot_button_clear(i);
 				if (IS_ENABLED(CONFIG_MKBP_INPUT_DEVICES)) {
 					mkbp_button_update(buttons[i].type,
 							   new_pressed);

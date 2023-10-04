@@ -4,6 +4,7 @@
  */
 
 #include "battery.h"
+#include "button.h"
 #include "charge_manager.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_smart_battery.h"
@@ -106,6 +107,8 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_at_shutdown)
 
 void boot_key_set(enum boot_key key);
 void boot_key_clear(enum boot_key key);
+void boot_button_set(enum button button);
+void boot_button_clear(enum button button);
 
 ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_by_unplug)
 {
@@ -133,6 +136,23 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_by_unplug)
 		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
 
 	boot_key_clear(BOOT_KEY_REFRESH);
+
+	/* Plug AC to cancel cutoff. */
+	charge_manager_update_dualrole(0, CAP_DEDICATED);
+	charge_manager_update_charge(CHARGE_SUPPLIER_PD, 0, &charge);
+	set_ac_enabled(true);
+	hook_notify(HOOK_AC_CHANGE);
+	zassert_false(
+		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
+
+	boot_button_set(BUTTON_VOLUME_UP);
+
+	/* Unplug AC to trigger cutoff. */
+	charge_manager_update_charge(CHARGE_SUPPLIER_PD, 0, NULL);
+	zassert_true(
+		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
+
+	boot_button_clear(BUTTON_VOLUME_UP);
 }
 
 ZTEST_USER(host_cmd_battery_cut_off, test_no_cutoff_by_key)

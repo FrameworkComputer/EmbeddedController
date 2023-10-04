@@ -102,6 +102,13 @@ int button_is_adc_detected(enum gpio_signal gpio);
  */
 int adc_to_physical_value(enum gpio_signal gpio);
 
+/**
+ * Get states of buttons pressed on POR.
+ *
+ * @return button states where bit positions correspond to enum button.
+ */
+uint32_t button_get_boot_button(void);
+
 /* Public for testing purposes only, undocumented. */
 enum debug_state {
 	STATE_DEBUG_NONE,
