@@ -235,11 +235,11 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 				power_stt_table = 20;
 			}
 		} else if ((active_mpower < 80000) && (active_mpower > 0)) {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 30000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				power_stt_table = 13;
+			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
+			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 30000;
+			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
+			power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+			power_stt_table = 13;
 		} else {
 			/* DC only */
 			/* limited by update_os_power_slider */
