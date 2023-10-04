@@ -30,6 +30,14 @@ int isl923x_set_ac_prochot(int chgnum, uint16_t ma);
 int isl923x_set_dc_prochot(int chgnum, uint16_t ma);
 
 /**
+ * Set charger level 2 input current limit.
+ *
+ * @param chgnum: Index into charger chips
+ * @param input_current_2: current limit value.
+ */
+int isl923x_set_level_2_input_current_limit(int chgnum, int input_current_2);
+
+/**
  * Set the general comparator output polarity when asserted.
  *
  * @param chgnum: Index into charger chips

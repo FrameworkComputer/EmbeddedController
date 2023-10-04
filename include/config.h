@@ -1403,6 +1403,9 @@
 /* Set trickle charge current by taking integer value */
 #define CONFIG_RAA489000_TRICKLE_CHARGE_CURRENT 128
 
+/* Set two level input current limit function  */
+#undef CONFIG_CHANGER_RAA489000_TWO_LEVEL_CURRENT_LIMIT
+
 /* Wireless chargers */
 #undef CONFIG_CPS8100
 
