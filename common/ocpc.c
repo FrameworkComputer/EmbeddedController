@@ -283,7 +283,7 @@ int ocpc_config_secondary_charger(int *desired_charger_input_current,
 	static int iterations;
 	int i_step;
 	static timestamp_t delay;
-	int i, step, loc;
+	int i, loc;
 	bool icl_reached = false;
 	static timestamp_t precharge_exit;
 
@@ -600,11 +600,10 @@ set_vsys:
 
 	/*
 	 * Print a visualization graph of the actual current vs. the target.
-	 * Each position represents 5% of the target current.
+	 * Each position represents 5% of the target current, i.e. i_ma/20.
 	 */
 	if (i_ma != 0) {
-		step = 5 * i_ma / 100;
-		loc = error / step;
+		loc = error * 20 / i_ma;
 		loc = CLAMP(loc, -10, 10);
 		CPRINT_VIZ("[");
 		for (i = -10; i <= 10; i++) {
