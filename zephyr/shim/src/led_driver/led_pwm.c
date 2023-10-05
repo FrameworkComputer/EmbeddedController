@@ -23,6 +23,7 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 #define PWM_DATA_INIT(node_id)                                       \
 	{                                                            \
 		.pwm_spec = PWM_DT_SPEC_GET(node_id), .pulse_ns = 0, \
+		.transition = LED_TRANSITION_STEP                    \
 	}
 
 #define GEN_PIN_DATA(node_id, prop, idx)                                     \
@@ -84,10 +85,11 @@ const struct led_pins_node_t *pins_node[] = {
  * converted to duty cycle in ns (pulse_ns)
  */
 void led_set_color_with_pins(const struct pwm_pin_t *pwm_pins,
-			     uint8_t pins_count)
+			     uint8_t pins_count, enum led_transition transition)
 {
 	for (int j = 0; j < pins_count; j++) {
 		pwm_pins[j].pwm->pulse_ns = pwm_pins[j].pulse_ns;
+		pwm_pins[j].pwm->transition = transition;
 	}
 }
 
@@ -100,20 +102,90 @@ void led_set_color(enum led_color color, enum ec_led_id led_id)
 		if ((pins_node[i]->led_color == color) &&
 		    (pins_node[i]->led_id == led_id)) {
 			led_set_color_with_pins(pins_node[i]->pwm_pins,
-						pins_node[i]->pins_count);
+						pins_node[i]->pins_count,
+						LED_TRANSITION_STEP);
 			break;
 		}
 	}
 }
 
+/*
+ * Set value for exponential pulsing as a minimum of 10,
+ * because 0 to the power of anything is still 0.
+ * Iterate through LED pins nodes to find the color matching node.
+ */
+#define PWM_MIN_NS 10
+#define MSB(n) __builtin_clz(n)
+
+/*
+ * Currently, because the transitions are still on a 250ms tick rate, the
+ * exponential transition approximates brightness to the closest power of 2.
+ * a typical PWM LED will have pulse_ns at max brightness approximately equal to
+ * 2^17.
+ */
 void led_set_color_with_pattern(const struct led_pattern_node_t *pattern)
 {
 	uint8_t pins_count = pattern->pattern_color[pattern->cur_color]
 				     .led_color_node->pins_count;
-	struct pwm_pin_t *cur_color = pattern->pattern_color[pattern->cur_color]
-					      .led_color_node->pwm_pins;
+	uint8_t duration = pattern->pattern_color[pattern->cur_color].duration;
+	struct pwm_pin_t *next_color =
+		pattern->pattern_color[pattern->cur_color]
+			.led_color_node->pwm_pins;
+	uint8_t prev_color_idx =
+		(pattern->cur_color + pattern->pattern_len - 1) %
+		pattern->pattern_len;
+	struct pwm_pin_t *prev_color =
+		pattern->pattern_color[prev_color_idx].led_color_node->pwm_pins;
+	struct pwm_pin_t cur_color[pins_count];
 
-	led_set_color_with_pins(cur_color, pins_count);
+	for (int i = 0; i < pins_count; i++) {
+		cur_color[i].pwm = next_color[i].pwm;
+
+		if (pattern->transition == LED_TRANSITION_LINEAR) {
+			cur_color[i].pulse_ns = (next_color[i].pulse_ns -
+						 prev_color[i].pulse_ns) *
+							pattern->ticks /
+							duration +
+						prev_color[i].pulse_ns;
+		}
+		/*
+		 * This algorithm first finds the ratio of the starting and end
+		 * delay_ns (where a delay_ns of 0 is replaced with PWM_MIN_NS).
+		 * This ratio is then expressed as a power of 2 by finding the
+		 * Most Significant Bit (MSB). At each tick, the closest power
+		 * of 2 progression is found by 2 ^ (MSB * tick / duration),
+		 * then the previous color is multiplied or divided by this
+		 * power of 2 to find cur_color.pulse_ns (in binary,
+		 * multiplication or division by a power of 2 can by calculated
+		 * by simply bit shifting by the power of 2 exponent).
+		 */
+		else if (pattern->transition == LED_TRANSITION_EXPONENTIAL) {
+			if (next_color[i].pulse_ns > prev_color[i].pulse_ns) {
+				int32_t scale =
+					next_color[i].pulse_ns /
+					MAX(prev_color[i].pulse_ns, PWM_MIN_NS);
+				cur_color[i].pulse_ns =
+					MAX(prev_color[i].pulse_ns, PWM_MIN_NS)
+					<< (MSB(scale) * pattern->ticks /
+					    duration);
+			} else if (next_color[i].pulse_ns <
+				   prev_color[i].pulse_ns) {
+				int32_t scale =
+					prev_color[i].pulse_ns /
+					MAX(next_color[i].pulse_ns, PWM_MIN_NS);
+				cur_color[i].pulse_ns =
+					prev_color[i].pulse_ns >>
+					(MSB(scale) * pattern->ticks /
+					 duration);
+			} else {
+				cur_color[i].pulse_ns = next_color[i].pulse_ns;
+			}
+		} else { /* Default blinking or solid color */
+			cur_color[i].pulse_ns = next_color[i].pulse_ns;
+		}
+	}
+
+	led_set_color_with_pins(cur_color, pins_count, pattern->transition);
 }
 
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)

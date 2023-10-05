@@ -735,6 +735,14 @@ tests:
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
+  drivers.led_pwm_fade:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_LED_PWM_FADE=y
+    extra_conf_files:
+    - prj.conf
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./led_pwm_fade/led_policy.dts
   drivers.locate_chip:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_LOCATE_CHIP_ALTS=y

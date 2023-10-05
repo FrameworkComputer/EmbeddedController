@@ -314,4 +314,7 @@ config LINK_TEST_SUITE_BODY_DETECTION
 	help
 	  Include the test suite exercising body detection behaviors in the binary.
 
+config LINK_TEST_SUITE_LED_PWM_FADE
+	bool "Link and test the led_pwm_fade.c tests"
+
 source "Kconfig.zephyr"

@@ -66,6 +66,7 @@ DT_INST_FOREACH_CHILD_STATUS_OKAY_VARGS(0, DT_FOREACH_CHILD_VARGS,
 	{                                                      \
 		.cur_color = 0,                                \
 		.ticks = 0,                                    \
+		.transition = GET_PROP(node_id, transition),   \
 		.pattern_len = 0 fn(node_id, PLUS_ONE),        \
 		.pattern_color = PATTERN_COLOR_ARRAY(node_id), \
 	},
@@ -156,7 +157,7 @@ static void set_color(int node_idx)
 		if (GET_DURATION(patterns[i], patterns[i].cur_color) != 0)
 			patterns[i].ticks++;
 
-		if (patterns[i].ticks >
+		if (patterns[i].ticks >=
 		    GET_DURATION(patterns[i], patterns[i].cur_color)) {
 			patterns[i].cur_color++;
 			patterns[i].ticks = 0;

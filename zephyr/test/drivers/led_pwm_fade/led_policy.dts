@@ -1,0 +1,93 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	led-colors {
+		compatible = "cros-ec,led-policy";
+
+		s0 {
+			chipset-state = "POWER_S0";
+
+			led-0 {
+				led-id = "EC_LED_ID_LEFT_LED";
+				transition = "LED_TRANSITION_LINEAR";
+
+				color-0 {
+					led-color = "LED_BLUE";
+					period-ms = <4000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <4000>;
+				};
+			};
+			led-1 {
+				led-id = "EC_LED_ID_RIGHT_LED";
+
+				color {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		s3 {
+			chipset-state = "POWER_S3";
+
+			led-0 {
+				led-id = "EC_LED_ID_LEFT_LED";
+
+				color {
+					led-color = "LED_OFF";
+				};
+			};
+			led-1 {
+				led-id = "EC_LED_ID_RIGHT_LED";
+				transition = "LED_TRANSITION_EXPONENTIAL";
+
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <6000>;
+				};
+				color-1 {
+					led-color = "LED_WHITE";
+					period-ms = <2000>;
+				};
+				color-2 {
+					led-color = "LED_OFF";
+					period-ms = <6000>;
+				};
+			};
+		};
+
+		s5 {
+			chipset-state = "POWER_S5";
+
+			led-0 {
+				led-id = "EC_LED_ID_LEFT_LED";
+
+				color {
+					led-color = "LED_OFF";
+				};
+			};
+			led-1 {
+				led-id = "EC_LED_ID_RIGHT_LED";
+				transition = "LED_TRANSITION_LINEAR";
+
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <4000>;
+				};
+				color-1 {
+					led-color = "LED_YELLOW";
+					period-ms = <4000>;
+				};
+				color-2 {
+					led-color = "LED_OFF";
+					period-ms = <4000>;
+				};
+			};
+		};
+	};
+};

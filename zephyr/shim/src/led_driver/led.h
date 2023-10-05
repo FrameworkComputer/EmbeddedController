@@ -45,6 +45,14 @@ BUILD_ASSERT((LED_WHITE - 1) == EC_LED_COLOR_WHITE);
 BUILD_ASSERT((LED_AMBER - 1) == EC_LED_COLOR_AMBER);
 BUILD_ASSERT((LED_COLOR_COUNT - 1) == EC_LED_COLOR_COUNT);
 
+enum led_transition {
+	LED_TRANSITION_STEP,
+	LED_TRANSITION_LINEAR,
+	LED_TRANSITION_EXPONENTIAL,
+
+	LED_TRANSITION_COUNT
+};
+
 #define LED_ENUM(id, enum_name) DT_STRING_TOKEN(id, enum_name)
 #define LED_ENUM_WITH_COMMA(id, enum_name)           \
 	COND_CODE_1(DT_NODE_HAS_PROP(id, enum_name), \
@@ -62,6 +70,7 @@ struct gpio_pin_t {
 struct pwm_data_t {
 	struct pwm_dt_spec pwm_spec;
 	uint32_t pulse_ns;
+	enum led_transition transition;
 };
 
 /*
@@ -119,6 +128,7 @@ struct pattern_color_node_t {
 struct led_pattern_node_t {
 	uint8_t cur_color;
 	uint8_t ticks;
+	enum led_transition transition;
 	struct pattern_color_node_t *pattern_color;
 	uint8_t pattern_len;
 };

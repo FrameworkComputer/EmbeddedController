@@ -101,6 +101,15 @@ child-binding:
           - EC_LED_ID_RIGHT_LED
           - EC_LED_ID_RECOVERY_HW_REINIT_LED
           - EC_LED_ID_SYSRQ_DEBUG_LED
+      transition:
+        description: |
+          This property describes the type of transition this LED will use
+          to transition from one color to the next.
+        type: string
+        enum:
+          - LED_TRANSITION_STEP
+          - LED_TRANSITION_LINEAR
+          - LED_TRANSITION_EXPONENTIAL
     child-binding:
       properties:
         led-color:

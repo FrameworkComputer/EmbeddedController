@@ -1075,6 +1075,10 @@
 				led-color = "LED_WHITE";
 				led-values = <0 100>;
 			};
+			color-yellow {
+				led-color = "LED_YELLOW";
+				led-values = <100 20>;
+			};
 		};
 	};
 
