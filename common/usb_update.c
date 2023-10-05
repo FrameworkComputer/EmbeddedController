@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "byteorder.h"
+#include "builtin/endian.h"
 #include "common.h"
 #include "console.h"
 #include "consumer.h"
