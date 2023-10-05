@@ -98,10 +98,10 @@ zephyr_library_sources_ifdef(CONFIG_HECI
                                                             host_command_heci.c)
 endif()
 
-if(CONFIG_ZEPHYR_PIGWEED_MODULE)
+if(CONFIG_PIGWEED_LOG_TOKENIZED_LIB)
   pw_add_library(platform_ec_log.tokenized_handler STATIC
     HEADERS
-      ../include/zephyr_console_shim.h
+      ${PLATFORM_EC}/zephyr/shim/include/zephyr_console_shim.h
     SOURCES
       pw_log_zephyr_tokenized.cc
     PUBLIC_INCLUDES
