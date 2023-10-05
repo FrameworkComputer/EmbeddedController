@@ -129,12 +129,12 @@ static int hid_handler(const uint8_t *in, int in_size, uint8_t *out)
 	}
 
 	if (reg == CMD_REG) {
-		if (in_size < 5) {
+		if (in_size < 4) {
 			return 0;
 		}
 
-		int cmd = in[3] | (in[4] << 8);
-		int op_code = cmd & 0xF;
+		int cmd = in[2] | (in[3] << 8);
+		int op_code = (cmd >> 8) & 0xF;
 
 		if (op_code == 1) { /* RESET */
 			hid_reset();
