@@ -135,6 +135,28 @@ int cec_tmr_cap_get(int port)
 	return CEC_US_TO_TICKS(interrupt_time.val - prev_interrupt_time.val);
 }
 
+/*
+ * In most states it83xx keeps gpio interrupts enabled to improve timing (see
+ * https://crrev.com/c/4899696). But for the debounce logic to work, gpio
+ * interrupts must be disabled, so we disable them when entering the debounce
+ * state and re-enable them when leaving the state.
+ */
+void cec_debounce_enable(int port)
+{
+	const struct bitbang_cec_config *drv_config =
+		cec_config[port].drv_config;
+
+	gpio_disable_interrupt(drv_config->gpio_in);
+}
+
+void cec_debounce_disable(int port)
+{
+	const struct bitbang_cec_config *drv_config =
+		cec_config[port].drv_config;
+
+	gpio_enable_interrupt(drv_config->gpio_in);
+}
+
 __override void cec_update_interrupt_time(int port)
 {
 	prev_interrupt_time = interrupt_time;

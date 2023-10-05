@@ -338,6 +338,7 @@ static void enter_state(int port, enum cec_state new_state)
 		timeout = CAP_START_HIGH_TICKS;
 		break;
 	case CEC_STATE_FOLLOWER_DEBOUNCE:
+		cec_debounce_enable(port);
 		if (port_data->rx.debounce_count >= DEBOUNCE_CUTOFF) {
 			timeout = DEBOUNCE_WAIT_LONG_TICKS;
 		} else {
@@ -537,9 +538,12 @@ void cec_event_timeout(int port)
 		else
 			enter_state(port, CEC_STATE_FOLLOWER_ACK_FINISH);
 		break;
+	case CEC_STATE_FOLLOWER_DEBOUNCE:
+		cec_debounce_disable(port);
+		enter_state(port, CEC_STATE_IDLE);
+		break;
 	case CEC_STATE_FOLLOWER_START_LOW:
 	case CEC_STATE_FOLLOWER_START_HIGH:
-	case CEC_STATE_FOLLOWER_DEBOUNCE:
 	case CEC_STATE_FOLLOWER_HEADER_INIT_LOW:
 	case CEC_STATE_FOLLOWER_HEADER_INIT_HIGH:
 	case CEC_STATE_FOLLOWER_HEADER_DEST_LOW:

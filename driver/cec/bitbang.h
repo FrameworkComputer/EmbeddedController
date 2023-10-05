@@ -55,6 +55,16 @@ void cec_tmr_cap_stop(int port);
 int cec_tmr_cap_get(int port);
 
 /**
+ * Perform any chip-specific tasks when entering the debounce state.
+ */
+void cec_debounce_enable(int port);
+
+/**
+ * Perform any chip-specific tasks when leaving the debounce state.
+ */
+void cec_debounce_disable(int port);
+
+/**
  * ITE-specific callback to record the interrupt time.
  *
  * @param port		CEC port where the interrupt occurred.

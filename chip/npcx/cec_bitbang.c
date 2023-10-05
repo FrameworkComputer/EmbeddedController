@@ -196,6 +196,18 @@ int cec_tmr_cap_get(int port)
 	return (cec_port->cap_charge + cec_port->cap_delay - *timer->tcr);
 }
 
+/*
+ * Nothing to do. cec_tmr_cap_start() already enables/disables capture
+ * interrupts based on the cap_edge.
+ */
+void cec_debounce_enable(int port)
+{
+}
+
+void cec_debounce_disable(int port)
+{
+}
+
 static void cec_isr(void)
 {
 	const int mdl = NPCX_MFT_MODULE_1;
