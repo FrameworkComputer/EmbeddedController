@@ -121,7 +121,14 @@ uint32_t get_feature_flags1(void)
 		EC_FEATURE_MASK_1(EC_FEATURE_UNIFIED_WAKE_MASKS) |
 		EC_FEATURE_MASK_1(EC_FEATURE_HOST_EVENT64)
 #ifdef CONFIG_EXTERNAL_STORAGE
+/*
+ * TODO: b/304839481 Workaround for crosec-legacy-drv/flashrom -p ec,
+ * we need to report not executing in RAM to get the utility to execute
+ * reboot to RO prior to RW flashing
+ */
+#ifndef CONFIG_FINGERPRINT_MCU
 		| EC_FEATURE_MASK_1(EC_FEATURE_EXEC_IN_RAM)
+#endif
 #endif
 #ifdef CONFIG_CEC
 		| EC_FEATURE_MASK_1(EC_FEATURE_CEC)
