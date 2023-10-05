@@ -22,6 +22,7 @@ struct power_limit_details power_limit[FUNCTION_COUNT];
 static int apu_ready;
 int target_func[TYPE_COUNT];
 bool manual_ctl;
+bool safety_pwr_logging;
 int mode_ctl;
 /* disable b[1:1] to disable power table */
 uint8_t func_ctl = 0xff;
@@ -170,6 +171,10 @@ static int cmd_cpupower(int argc, const char **argv)
 		if (!strncmp(argv[1], "test_current", 8)) {
 			my_test_current = strtoi(argv[2], &e, 0);
 			CPRINTF("current Control");
+		}
+		if (!strncmp(argv[1], "logging", 8)) {
+			safety_pwr_logging = strtoi(argv[2], &e, 0);
+			CPRINTF("safety logging=%d", safety_pwr_logging);
 		}
 
 	}

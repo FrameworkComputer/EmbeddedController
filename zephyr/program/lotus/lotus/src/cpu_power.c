@@ -8,6 +8,7 @@
 #include "common_cpu_power.h"
 #include "customized_shared_memory.h"
 #include "console.h"
+#include "cypress_pd_common.h"
 #include "driver/sb_rmi.h"
 #include "extpower.h"
 #include "hooks.h"
@@ -266,7 +267,8 @@ static void tune_PLs(int delta)
 		= MAX(power_limit[FUNCTION_SAFETY].mwatt[TYPE_P3T] + delta, 20000);
 	if (gpu_present())
 		power_limit[FUNCTION_SAFETY].mwatt[TYPE_APU_ONLY_SPPT]
-			= MAX(power_limit[FUNCTION_SAFETY].mwatt[TYPE_APU_ONLY_SPPT] + delta, 20000);
+			= MAX(power_limit[FUNCTION_SAFETY].mwatt[TYPE_APU_ONLY_SPPT]
+					+ delta, 20000);
 }
 
 static void update_safety_power_limit(int active_mpower)
@@ -277,6 +279,11 @@ static void update_safety_power_limit(int active_mpower)
 	const struct batt_params *batt = charger_current_battery_params();
 	int battery_current = batt->current;
 	int battery_voltage = battery_dynamic[BATT_IDX_MAIN].actual_voltage;
+	int rv;
+	int mw_apu = power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT];
+	static int pd_3a_controller;
+	static int pd_3a_port;
+	static int set_typec_1_5a_flag;
 
 	if (my_test_current != 0)
 		battery_current = my_test_current;
@@ -288,15 +295,17 @@ static void update_safety_power_limit(int active_mpower)
 		level_increase = 0;
 	}
 
-	ccprintf("increase = %d, level = %d, curr = %d\n", level_increase, safety_level, battery_current);
-	CPRINTF("SAFETY, SPL %dmW, fPPT %dmW, sPPT %dmW, p3T %dmW, ",
+	if (safety_pwr_logging) {
+		CPRINTF("increase = %d, level = %d, curr = %d\n", level_increase,
+					safety_level, battery_current);
+		CPRINTF("SAFETY, SPL %dmW, fPPT %dmW, sPPT %dmW, p3T %dmW, ",
 					power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL],
 					power_limit[FUNCTION_SAFETY].mwatt[TYPE_FPPT],
 					power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPPT],
 					power_limit[FUNCTION_SAFETY].mwatt[TYPE_P3T]);
-	CPRINTF("ao_sppt %dmW\n",
+		CPRINTF("ao_sppt %dmW\n",
 					power_limit[FUNCTION_SAFETY].mwatt[TYPE_APU_ONLY_SPPT]);
-
+	}
 
 	switch (safety_level) {
 	case LEVEL_NORMAL:
@@ -335,7 +344,8 @@ static void update_safety_power_limit(int active_mpower)
 			if (level_increase) {
 				tune_PLs((-1) * delta);
 				if ((power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL] <= 60000)
-					|| (power_limit[FUNCTION_SAFETY].mwatt[TYPE_APU_ONLY_SPPT] <= 30000)) {
+					|| (power_limit[FUNCTION_SAFETY].mwatt[TYPE_APU_ONLY_SPPT]
+						<= 30000)) {
 					power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL]
 						= 45000;
 					power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPPT]
@@ -348,9 +358,12 @@ static void update_safety_power_limit(int active_mpower)
 				}
 			} else {
 				tune_PLs(delta);
-				if ((power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL] >= power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL])
-					|| (power_limit[FUNCTION_SAFETY].mwatt[TYPE_APU_ONLY_SPPT] >= power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT]))
-				safety_level--;
+				if ((power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL]
+					 >= power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL])
+					 || (power_limit[FUNCTION_SAFETY].mwatt[TYPE_APU_ONLY_SPPT]
+						 >= mw_apu)) {
+					safety_level--;
+				}
 			}
 		} else {
 			delta = (ABS(battery_current - battery_current_limit_mA)
@@ -361,14 +374,15 @@ static void update_safety_power_limit(int active_mpower)
 					safety_level = LEVEL_PROCHOT;
 			} else {
 				tune_PLs(delta);
-				if (power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL] >= power_limit[FUNCTION_POWER].mwatt[TYPE_SPL])
+				if (power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL]
+					>= power_limit[FUNCTION_POWER].mwatt[TYPE_SPL])
 					safety_level--;
 			}
 		}
 		break;
 	case LEVEL_DISABLE_GPU:
 		/* disable GPU and tune CPU PLs */
-		if(gpu_present()) {
+		if (gpu_present()) {
 			if (level_increase) {
 				tune_PLs(-10000);
 				if (power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL] <= 20000)
@@ -396,6 +410,29 @@ static void update_safety_power_limit(int active_mpower)
 			throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_BAT_DISCHG_CURRENT);
 			power_stt_table = (gpu_present() ? 7 : 14);
 			safety_stt = 1;
+			safety_level--;
+		}
+		break;
+	case LEVEL_TYPEC_1_5A:
+		if (level_increase) {
+			for (int controller = 0; controller < PD_CHIP_COUNT; controller++) {
+				for (int port_idx = 0; port_idx < 2; port_idx++) {
+					if (cypd_port_3a_status(controller, port_idx)) {
+						pd_3a_controller = controller;
+						pd_3a_port = port_idx;
+						rv = cypd_modify_safety_power(pd_3a_controller,
+							pd_3a_port, CCG_PD_CMD_SET_TYPEC_1_5A);
+						set_typec_1_5a_flag = 1;
+					}
+				}
+			}
+			safety_level++;
+		} else {
+			if (set_typec_1_5a_flag) {
+				rv = cypd_modify_safety_power(pd_3a_controller,
+						pd_3a_port, CCG_PD_CMD_SET_TYPEC_3A);
+				set_typec_1_5a_flag = 0;
+			}
 			safety_level--;
 		}
 		break;
@@ -446,7 +483,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 
 	if (func_ctl & 0x2)
 		update_adapter_power_limit(battery_percent, active_mpower, with_dc, mode);
-	
+
 	if (func_ctl & 0x4) {
 		update_safety_power_limit(active_mpower);
 	}
