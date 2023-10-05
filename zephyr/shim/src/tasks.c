@@ -33,16 +33,6 @@ CROS_EC_TASK_LIST
 #undef CROS_EC_TASK
 #undef TASK_TEST
 
-#if defined(__llvm__)
-/*
- * b/303207178 LLVM trigger a harmless division-by-zero on SYS_TIMEOUT_MS, due
- * to an element of z_tmcvt_64 resulting in a "/ ((1000) / (10000))" in some
- * specific tick and clock configuration on some platforms.
- */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdivision-by-zero"
-#endif
-
 /* Statically declare all threads here */
 #define CROS_EC_TASK(name, entry, parameter, stack_size, priority)      \
 	K_THREAD_DEFINE(name, stack_size, entry, parameter, NULL, NULL, \
@@ -51,10 +41,6 @@ CROS_EC_TASK_LIST
 CROS_EC_TASK_LIST
 #undef CROS_EC_TASK
 #undef TASK_TEST
-
-#if defined(__llvm__)
-#pragma GCC diagnostic pop
-#endif
 
 struct task_ctx_base_data {
 	/** A wait-able event that is raised when a new task event is posted */

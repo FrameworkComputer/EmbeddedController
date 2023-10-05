@@ -314,24 +314,10 @@ static void tcpci_partner_delayed_send_thread(void *a, void *b, void *c)
 	}
 }
 
-#if defined(__llvm__)
-/*
- * LLVM trigger a harmless division-by-zero on SYS_TIMEOUT_MS, due to an
- * element of z_tmcvt_64 resulting in a "/ ((1000) / (10000))" in some
- * specific tick and clock configuration on some platforms.
- */
-#pragma GCC diagnostic push
-#pragma GCC diagnostic ignored "-Wdivision-by-zero"
-#endif
-
 /** Thread for sending delayed messages */
 K_THREAD_DEFINE(tcpci_partner_delayed_send_tid, 512 /* stack size */,
 		tcpci_partner_delayed_send_thread, NULL, NULL, NULL,
 		0 /* priority */, 0, 0);
-
-#if defined(__llvm__)
-#pragma GCC diagnostic pop
-#endif
 
 /**
  * @brief Timeout handler which adds TCPCI partner that has pending delayed
