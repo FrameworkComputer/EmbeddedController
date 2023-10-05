@@ -52,12 +52,12 @@ static void board_ina236_init(void)
 	if (rv != EC_SUCCESS)
 		CPRINTS("ina236 write config fail");
 
-	rv = ina2xx_write(0, INA2XX_REG_ALERT, 0x5DC0);
+	rv = ina2xx_write(0, INA2XX_REG_ALERT, 0x3E80);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("ina236 write alert fail");
 
-	rv = ina2xx_write(0, INA2XX_REG_MASK, 0x800A);
+	rv = ina2xx_write(0, INA2XX_REG_MASK, 0x8008);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("ina236 write mask fail");
