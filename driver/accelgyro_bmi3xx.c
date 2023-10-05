@@ -695,25 +695,32 @@ static int get_offset(const struct motion_sensor_t *s, int16_t *offset,
 static int set_offset(const struct motion_sensor_t *s, const int16_t *offset,
 		      int16_t temp)
 {
+	int ret;
 	intv3_t v = { offset[X], offset[Y], offset[Z] };
 	(void)temp;
 
 	rotate_inv(v, *s->rot_standard_ref, v);
 
+	/*
+	 * Lock accel resource to prevent I2C racing condition.
+	 */
+	mutex_lock(s->mutex);
+
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
 		/* Offset should be in units of mg */
-		RETURN_ERROR(set_accel_offset(s, v));
+		ret = set_accel_offset(s, v);
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
 		/* Offset should be in units of mdps */
-		RETURN_ERROR(set_gyro_offset(s, v));
+		ret = set_gyro_offset(s, v);
 		break;
 	default:
-		return EC_RES_INVALID_PARAM;
+		ret = EC_RES_INVALID_PARAM;
 	}
 
-	return EC_SUCCESS;
+	mutex_unlock(s->mutex);
+	return ret;
 }
 
 #ifdef CONFIG_BODY_DETECTION
