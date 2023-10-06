@@ -441,6 +441,7 @@ int battery_manufacturer_access(int cmd);
  * the battery pack, in millivolts.  On error or unimplemented, returns '0'.
  */
 int battery_imbalance_mv(void);
+int battery_bq4050_imbalance_mv(void);
 
 /**
  * Call board-specific cut-off function.

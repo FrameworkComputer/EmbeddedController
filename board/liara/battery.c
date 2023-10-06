@@ -12,6 +12,10 @@
 #include "hooks.h"
 #include "usb_pd.h"
 
+enum battery_imbalance_mv {
+	BATTERY_IMBALANCE_MV_BQ4050 = BIT(0),
+};
+
 /*
  * Battery info for all Liara battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
@@ -51,7 +55,6 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_mask = 0x4000,
 				.disconnect_val = 0x0,
 			},
-			.imbalance_mv = battery_default_imbalance_mv,
 		},
 		.batt_info = {
 			.voltage_max		= 13200,
@@ -83,7 +86,7 @@ const struct board_batt_params board_battery_info[] = {
 				.disconnect_val = 0x6000,
 			},
 			.flags = FUEL_GAUGE_FLAG_MFGACC,
-			.imbalance_mv = battery_bq4050_imbalance_mv,
+			.board_flags = BATTERY_IMBALANCE_MV_BQ4050,
 		},
 		.batt_info = {
 			.voltage_max		= 13200,
@@ -115,7 +118,7 @@ const struct board_batt_params board_battery_info[] = {
 				.disconnect_val = 0x6000,
 			},
 			.flags = FUEL_GAUGE_FLAG_MFGACC,
-			.imbalance_mv = battery_bq4050_imbalance_mv,
+			.board_flags = BATTERY_IMBALANCE_MV_BQ4050,
 		},
 		.batt_info = {
 			.voltage_max		= 13200,
@@ -146,7 +149,6 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_mask = 0x0010,
 				.disconnect_val = 0x0,
 			},
-			.imbalance_mv = battery_default_imbalance_mv,
 		},
 		.batt_info = {
 			.voltage_max		= 13200,
@@ -165,3 +167,11 @@ const struct board_batt_params board_battery_info[] = {
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_PANASONIC;
+
+__override int board_battery_imbalance_mv(const struct board_batt_params *info)
+{
+	if (info->fuel_gauge.board_flags & BATTERY_IMBALANCE_MV_BQ4050)
+		return battery_bq4050_imbalance_mv();
+	else
+		return 0;
+}

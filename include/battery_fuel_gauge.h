@@ -9,6 +9,7 @@
 #define __CROS_EC_BATTERY_FUEL_GAUGE_H
 
 #include "battery.h"
+#include "common.h"
 
 #include <stdbool.h>
 
@@ -78,14 +79,10 @@ struct fuel_gauge_info {
 	char *manuf_name;
 	char *device_name;
 	uint32_t flags;
+	uint32_t board_flags;
 	struct ship_mode_info ship_mode;
 	struct sleep_mode_info sleep_mode;
 	struct fet_info fet;
-
-#ifdef CONFIG_BATTERY_MEASURE_IMBALANCE
-	/* See battery_*_imbalance_mv() for functions which are suitable. */
-	int (*imbalance_mv)(void);
-#endif
 };
 
 struct board_batt_params {
@@ -97,19 +94,6 @@ struct board_batt_params {
 extern struct board_batt_params default_battery_conf;
 extern const struct board_batt_params board_battery_info[];
 extern const enum battery_type DEFAULT_BATTERY_TYPE;
-
-#ifdef CONFIG_BATTERY_MEASURE_IMBALANCE
-/**
- * Report the absolute difference between the highest and lowest cell voltage in
- * the battery pack, in millivolts.  On error or unimplemented, returns '0'.
- */
-int battery_default_imbalance_mv(void);
-
-#ifdef CONFIG_BATTERY_BQ4050
-int battery_bq4050_imbalance_mv(void);
-#endif
-
-#endif
 
 #ifdef CONFIG_BATTERY_TYPE_NO_AUTO_DETECT
 /*
@@ -161,5 +145,12 @@ enum ec_error_list battery_sleep_fuel_gauge(void);
  * @return true if board supports BCIC or false otherwise.
  */
 __override_proto bool board_batt_conf_enabled(void);
+
+/**
+ * Report the absolute difference between the highest and lowest cell voltage in
+ * the battery pack, in millivolts.  On error or unimplemented, returns '0'.
+ */
+__override_proto int
+board_battery_imbalance_mv(const struct board_batt_params *info);
 
 #endif /* __CROS_EC_BATTERY_FUEL_GAUGE_H */
