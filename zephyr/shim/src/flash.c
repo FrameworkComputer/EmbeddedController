@@ -5,6 +5,7 @@
 
 #include "console.h"
 #include "drivers/cros_flash.h"
+#include "hooks.h"
 #include "registers.h"
 #include "task.h"
 #include "util.h"
@@ -344,6 +345,32 @@ int crec_flash_total_banks(void)
 	return flash_get_page_count(flash_ctrl_dev);
 }
 #endif /* CONFIG_PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT */
+
+#ifdef CONFIG_PLATFORM_EC_SHARED_SPI_FLASH
+#define DT_DRV_COMPAT cros_ec_shared_spi_flash
+
+BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) <= 1,
+	     "Unsupported External SPI GPIO");
+
+const struct gpio_dt_spec spi_oe =
+	GPIO_DT_SPEC_GET(DT_INST(0, DT_DRV_COMPAT), spi_oe_gpios);
+
+static void flash_shared_enable_ec_access(void)
+{
+	/* EC to get access to SPI flash  */
+	gpio_pin_set_dt(&spi_oe, 0);
+	/* delay before EC access the external SPI flash */
+	k_msleep(10);
+}
+DECLARE_HOOK(HOOK_SYSJUMP, flash_shared_enable_ec_access, HOOK_PRIO_FIRST);
+
+static void flash_shared_enable_ap_access(void)
+{
+	/* AP to get access to SPI flash */
+	gpio_pin_set_dt(&spi_oe, 1);
+}
+DECLARE_HOOK(HOOK_INIT, flash_shared_enable_ap_access, HOOK_PRIO_FIRST);
+#endif /* CONFIG_PLATFORM_EC_SHARED_SPI_FLASH */
 
 #if IS_ENABLED(CONFIG_SHELL)
 static int command_flashchip(const struct shell *shell, size_t argc,
