@@ -53,10 +53,10 @@
 			sensor = <&gpu_amb_f75303>;
 		};
 		gpu-vr-f75303 {
-			temp_host_warn = <75>;
+			temp_host_warn = <71>;
 			temp_host_release_warn = <60>;
 			temp_fan_off = <50>;
-			temp_fan_max = <80>;
+			temp_fan_max = <74>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_vr_f75303>;
 		};
