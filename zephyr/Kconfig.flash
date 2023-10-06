@@ -152,4 +152,14 @@ config PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT
 	  When enabled, EC will use flash page layout API to get information
 	  about flash sectors (index, offset, and size).
 
+config PLATFORM_EC_SHARED_SPI_FLASH
+	bool "External SPI flash used to store EC & AP firmware"
+	default n
+	depends on PLATFORM_EC_EXTERNAL_STORAGE
+	help
+	  Used when EC image flashed onto external flash chip.
+	  External flash shared between the EC & AP.
+	  Config implements the configurations needed by EC to access
+	  SPI flash on initial boot and while jumping to EC RW/RO firmware.
+
 endif # PLATFORM_EC_FLASH_CROS
