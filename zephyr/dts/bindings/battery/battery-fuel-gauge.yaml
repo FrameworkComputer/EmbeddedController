@@ -22,12 +22,6 @@ properties:
     description: |
       Fuel gauge flags. e.g FG_FLAG_SLEEP_MODE
     type: int
-  ship_mode_wb_support:
-    description: |
-       Write Block support. If this is true, then i2c write block command
-       will be used instead of a 16-bit write
-       Value must be either 0 or 1.
-    type: int
   ship_mode_reg_addr:
     description: |
        Address of register responsible for enabling ship mode.

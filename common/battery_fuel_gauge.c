@@ -245,7 +245,7 @@ int board_cut_off_battery(void)
 	if (!params)
 		return EC_RES_ERROR;
 
-	if (params->fuel_gauge.ship_mode.wb_support)
+	if (params->fuel_gauge.flags & FUEL_GAUGE_FLAG_WRITE_BLOCK)
 		rv = cut_off_battery_block_write(&params->fuel_gauge.ship_mode);
 	else
 		rv = cut_off_battery_sb_write(&params->fuel_gauge.ship_mode);

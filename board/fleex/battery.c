@@ -121,10 +121,10 @@ const struct board_batt_params board_battery_info[] = {
 		.fuel_gauge = {
 			.manuf_name = "LGC-LGC3.685",
 			.ship_mode = {
-				.wb_support = 1,
 				.reg_addr = 0x44,
 				.reg_data = { 0x0010, 0x0010 },
 			},
+			.flags = FUEL_GAUGE_FLAG_WRITE_BLOCK,
 			.fet = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x2000,
@@ -262,10 +262,10 @@ const struct board_batt_params board_battery_info[] = {
 		.fuel_gauge = {
 			.manuf_name = "SWD-ATL3.618",
 			.ship_mode = {
-				.wb_support = 1,
 				.reg_addr = 0x44,
 				.reg_data = { 0x0010, 0x0010 },
 			},
+			.flags = FUEL_GAUGE_FLAG_WRITE_BLOCK,
 			.fet = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x2000,
@@ -291,10 +291,10 @@ const struct board_batt_params board_battery_info[] = {
 		.fuel_gauge = {
 			.manuf_name = "SWD-COS3.634",
 			.ship_mode = {
-				.wb_support = 1,
 				.reg_addr = 0x44,
 				.reg_data = { 0x0010, 0x0010 },
 			},
+			.flags = FUEL_GAUGE_FLAG_WRITE_BLOCK,
 			.fet = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x2000,

@@ -149,7 +149,6 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 	zassert_equal(dflt->ship_mode.reg_addr, 0);
 	zassert_equal(dflt->ship_mode.reg_data[0], 0);
 	zassert_equal(dflt->ship_mode.reg_data[1], 0);
-	zassert_equal(dflt->ship_mode.wb_support, 0);
 
 	/*
 	 * Set data in CBI.
@@ -235,7 +234,6 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 	zassert_equal(dflt->ship_mode.reg_addr, info->ship_mode.reg_addr);
 	zassert_equal(dflt->ship_mode.reg_data[0], info->ship_mode.reg_data[0]);
 	zassert_equal(dflt->ship_mode.reg_data[1], info->ship_mode.reg_data[1]);
-	zassert_equal(dflt->ship_mode.wb_support, 1);
 
 	return EC_SUCCESS;
 }

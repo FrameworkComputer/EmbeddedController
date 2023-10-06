@@ -115,8 +115,6 @@ batt_conf_read_fuel_gauge_info(struct board_batt_params *info)
 	if (batt_conf_read(CBI_TAG_FUEL_GAUGE_FLAGS, (uint8_t *)&d32,
 			   sizeof(d32)) == EC_SUCCESS) {
 		fg->flags = d32;
-		fg->ship_mode.wb_support =
-			!!(d32 & FUEL_GAUGE_FLAG_WRITE_BLOCK);
 	}
 
 	batt_conf_read_ship_mode(info);
@@ -216,8 +214,6 @@ static void batt_conf_dump(const struct board_batt_params *info)
 	ccprintf("%02x:\t\t.reg_data = { 0x%04x, 0x%04x },\n",
 		 CBI_TAG_BATT_SHIP_MODE_REG_DATA, ship->reg_data[0],
 		 ship->reg_data[1]);
-	ccprintf("%02x:\t\t.wb_support = %d,\n", CBI_TAG_BATT_SHIP_MODE_FLAGS,
-		 ship->wb_support & BIT(0) ? 1 : 0);
 	ccprintf("   \t},\n");
 
 	ccprintf("   \t.sleep_mode = {\n");

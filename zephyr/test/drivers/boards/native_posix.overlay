@@ -400,18 +400,18 @@
 		};
 		ap16l5j {
 			compatible = "panasonic,ap16l5j", "battery-smart";
-			ship_mode_wb_support = <1>;
 			flags = <(
 				FG_FLAG_SLEEP_MODE |
-				FG_FLAG_MFGACC)>;
+				FG_FLAG_MFGACC |
+				FG_FLAG_WRITE_BLOCK)>;
 		};
 		ap16l8j {
 			compatible = "lgc,ap16l8j", "battery-smart";
-			ship_mode_wb_support = <1>;
 			fet_cfet_mask = <0>;
 			flags = <(
 				FG_FLAG_SLEEP_MODE |
-				FG_FLAG_MFGACC)>;
+				FG_FLAG_MFGACC |
+				FG_FLAG_WRITE_BLOCK)>;
 		};
 	};
 
