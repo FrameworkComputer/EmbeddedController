@@ -401,15 +401,17 @@
 		ap16l5j {
 			compatible = "panasonic,ap16l5j", "battery-smart";
 			ship_mode_wb_support = <1>;
-			fet_mfgacc_support = <1>;
-			flags = <FG_FLAG_SLEEP_MODE>;
+			flags = <(
+				FG_FLAG_SLEEP_MODE |
+				FG_FLAG_MFGACC)>;
 		};
 		ap16l8j {
 			compatible = "lgc,ap16l8j", "battery-smart";
 			ship_mode_wb_support = <1>;
 			fet_cfet_mask = <0>;
-			fet_mfgacc_support = <1>;
-			flags = <FG_FLAG_SLEEP_MODE>;
+			flags = <(
+				FG_FLAG_SLEEP_MODE |
+				FG_FLAG_MFGACC)>;
 		};
 	};
 

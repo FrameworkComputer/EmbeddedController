@@ -41,11 +41,11 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
 				.reg_addr = 0x0,
 				.reg_mask = 0x6000,
 				.disconnect_val = 0x6000,
 			},
+			.flags = FUEL_GAUGE_FLAG_MFGACC,
 			.imbalance_mv = &battery_bq4050_imbalance_mv,
 		},
 		.batt_info = {
@@ -71,11 +71,11 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
 				.reg_addr = 0x0,
 				.reg_mask = 0x6000,
 				.disconnect_val = 0x6000,
 			},
+			.flags = FUEL_GAUGE_FLAG_MFGACC,
 			.imbalance_mv = &battery_bq4050_imbalance_mv,
 		},
 		.batt_info = {
@@ -101,11 +101,11 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
 				.reg_addr = 0x0,
 				.reg_mask = 0x6000,
 				.disconnect_val = 0x6000,
 			},
+			.flags = FUEL_GAUGE_FLAG_MFGACC,
 			.imbalance_mv = &battery_bq4050_imbalance_mv,
 		},
 		.batt_info = {
@@ -131,11 +131,11 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
 				.reg_addr = 0x0,
 				.reg_mask = 0x6000,
 				.disconnect_val = 0x6000,
 			},
+			.flags = FUEL_GAUGE_FLAG_MFGACC,
 			.imbalance_mv = &battery_default_imbalance_mv,
 		},
 		.batt_info = {
@@ -161,11 +161,11 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
 				.reg_addr = 0x0,
 				.reg_mask = 0x6000,
 				.disconnect_val = 0x6000,
 			},
+			.flags = FUEL_GAUGE_FLAG_MFGACC,
 			.imbalance_mv = &battery_default_imbalance_mv,
 		},
 		.batt_info = {
@@ -191,11 +191,11 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
 				.reg_addr = 0x0,
 				.reg_mask = 0x6000,
 				.disconnect_val = 0x6000,
 			},
+			.flags = FUEL_GAUGE_FLAG_MFGACC,
 			.imbalance_mv = &battery_default_imbalance_mv,
 		},
 		.batt_info = {
@@ -221,11 +221,11 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
 				.reg_addr = 0x0,
 				.reg_mask = 0x6000,
 				.disconnect_val = 0x6000,
 			},
+			.flags = FUEL_GAUGE_FLAG_MFGACC,
 			.imbalance_mv = &battery_default_imbalance_mv,
 		},
 		.batt_info = {
@@ -251,11 +251,11 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
 				.reg_addr = 0x0,
 				.reg_mask = 0x0006,
 				.disconnect_val = 0x0,
 			},
+			.flags = FUEL_GAUGE_FLAG_MFGACC,
 			.imbalance_mv = &battery_default_imbalance_mv,
 		},
 		.batt_info = {

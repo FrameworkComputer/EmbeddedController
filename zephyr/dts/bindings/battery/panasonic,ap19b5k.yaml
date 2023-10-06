@@ -22,7 +22,7 @@ properties:
   ship_mode_reg_data:
     default: [0xC574, 0xC574]
   # Documentation: b/259913834
-  fet_mfgacc_support:
+  flags:
     default: 0
   fet_reg_addr:
     default: 0x0

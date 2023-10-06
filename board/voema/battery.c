@@ -47,7 +47,7 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x6000,
 				.disconnect_val = 0x6000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
@@ -75,7 +75,7 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x4000,
 				.disconnect_val = 0x0,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 13200,

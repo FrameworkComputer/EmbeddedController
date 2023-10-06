@@ -47,7 +47,7 @@ const struct board_batt_params board_battery_info[] = {
 				.disconnect_val = 0x00,
 				.cfet_mask      = 0x08,
 				.cfet_off_val   = 0x00,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max            = 13050,  /* mV */

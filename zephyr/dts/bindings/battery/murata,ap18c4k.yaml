@@ -21,7 +21,7 @@ properties:
   # Manufacturer Access 0x00
   # b14: Charging Disabled (0: Off, 1: On)
   # b13: Discharging Disabled (0: Off, 1: On)
-  fet_mfgacc_support:
+  flags:
     default: 0
   fet_reg_addr:
     default: 0x0

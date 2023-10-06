@@ -117,7 +117,6 @@ batt_conf_read_fuel_gauge_info(struct board_batt_params *info)
 		fg->flags = d32;
 		fg->ship_mode.wb_support =
 			!!(d32 & FUEL_GAUGE_FLAG_WRITE_BLOCK);
-		fg->fet.mfgacc_support = !!(d32 & FUEL_GAUGE_FLAG_MFGACC);
 		fg->fet.mfgacc_smb_block =
 			!!(d32 & FUEL_GAUGE_FLAG_MFGACC_SMB_BLOCK);
 	}
@@ -241,8 +240,6 @@ static void batt_conf_dump(const struct board_batt_params *info)
 		 fet->cfet_mask);
 	ccprintf("%02x:\t\t.cfet_off_val = 0x%04x,\n",
 		 CBI_TAG_BATT_FET_CFET_OFF_VAL, fet->cfet_off_val);
-	ccprintf("%02x:\t\t.mfgacc_support = %d,\n", CBI_TAG_BATT_FET_FLAGS,
-		 fet->mfgacc_support & BIT(0) ? 1 : 0);
 	ccprintf("   \t},\n");
 
 	ccprintf("   },\n"); /* end of fuel_gauge */

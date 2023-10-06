@@ -43,11 +43,10 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0xC574, 0xC574 },
 			},
 			.fet = {
-				.mfgacc_support = 0,
 				.reg_addr = 0x0,
 				.reg_mask = 0x4000,
 				.disconnect_val = 0x0,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max            = 8800,
@@ -72,11 +71,10 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0xC574, 0xC574 },
 			},
 			.fet = {
-				.mfgacc_support = 0,
 				.reg_addr = 0x0,
 				.reg_mask = 0x4000,
 				.disconnect_val = 0x0,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max            = 8800,
@@ -101,11 +99,11 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0xC574, 0xC574 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
 				.reg_addr = 0x0,
 				.reg_mask = 0x0002,
 				.disconnect_val = 0x0,
-			}
+			},
+			.flags = FUEL_GAUGE_FLAG_MFGACC,
 		},
 		.batt_info = {
 			.voltage_max            = 8700,

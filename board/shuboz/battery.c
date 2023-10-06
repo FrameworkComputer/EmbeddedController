@@ -50,7 +50,7 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x99,
 				.reg_mask = 0x000c,
 				.disconnect_val = 0x000c,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 13200, /* mV */

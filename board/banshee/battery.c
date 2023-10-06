@@ -42,11 +42,11 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
 				.reg_addr = 0x0,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
+			.flags = FUEL_GAUGE_FLAG_MFGACC,
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(17600, 5),

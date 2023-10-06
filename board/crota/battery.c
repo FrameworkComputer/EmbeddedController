@@ -43,11 +43,10 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 0,
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 17600,  /* mV */
@@ -72,11 +71,10 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 0,
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 17400,  /* mV */
@@ -101,11 +99,10 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 0,
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 17600,  /* mV */
@@ -130,11 +127,10 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 0,
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 17600,  /* mV */
@@ -159,11 +155,10 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 0,
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 17600,  /* mV */
@@ -188,11 +183,10 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 0,
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 17600,  /* mV */
@@ -217,11 +211,10 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 0,
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 17600,  /* mV */
@@ -246,11 +239,10 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 0,
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 17600,  /* mV */
@@ -275,11 +267,10 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 0,
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 17800,  /* mV */
@@ -304,11 +295,10 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 0,
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 17800,  /* mV */
@@ -333,11 +323,10 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 0,
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 17400,  /* mV */
@@ -362,11 +351,10 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 0,
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 17800,  /* mV */
@@ -391,11 +379,10 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 0,
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 17800,  /* mV */

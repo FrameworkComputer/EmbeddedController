@@ -45,7 +45,7 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,		/* XDSG */
 				.disconnect_val = 0x2000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 13200,
@@ -72,7 +72,7 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,		/* XDSG */
 				.disconnect_val = 0x2000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 13200,
@@ -101,7 +101,7 @@ const struct board_batt_params board_battery_info[] = {
 				.disconnect_val = 0x000C,
 				.cfet_mask = 0x0004,
 				.cfet_off_val = 0x0004,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 13350,

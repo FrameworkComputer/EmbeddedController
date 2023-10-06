@@ -47,7 +47,7 @@ const struct board_batt_params board_battery_info[] = {
 				.disconnect_val = 0x0000,
 				.cfet_mask = 0x0008,
 				.cfet_off_val = 0x0000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 13200, /* mV */
@@ -78,7 +78,7 @@ const struct board_batt_params board_battery_info[] = {
 				.disconnect_val = 0x0000,
 				.cfet_mask = 0x0008,
 				.cfet_off_val = 0x0000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 13200, /* mV */
@@ -109,7 +109,7 @@ const struct board_batt_params board_battery_info[] = {
 				.disconnect_val = 0x0000,
 				.cfet_mask = 0x0008,
 				.cfet_off_val = 0x0000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 13200, /* mV */
@@ -140,7 +140,7 @@ const struct board_batt_params board_battery_info[] = {
 				.disconnect_val = 0x0000,
 				.cfet_mask = 0x0008,
 				.cfet_off_val = 0x0000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 13200, /* mV */
@@ -171,7 +171,7 @@ const struct board_batt_params board_battery_info[] = {
 				.disconnect_val = 0x0000,
 				.cfet_mask = 0x0008,
 				.cfet_off_val = 0x0000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 13200, /* mV */

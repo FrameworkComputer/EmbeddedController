@@ -6,6 +6,7 @@
  */
 
 #include "battery.h"
+#include "battery_fuel_gauge.h"
 #include "battery_smart.h"
 #include "bd9995x.h"
 #include "charge_ramp.h"
@@ -37,30 +38,6 @@ enum battery_type {
 	BATTERY_BYD,
 	BATTERY_SIMPLO,
 	BATTERY_TYPE_COUNT,
-};
-
-struct ship_mode_info {
-	const uint8_t reg_addr;
-	const uint16_t reg_data[SHIP_MODE_WRITES];
-};
-
-struct fet_info {
-	const int mfgacc_support;
-	const uint8_t reg_addr;
-	const uint16_t reg_mask;
-	const uint16_t disconnect_val;
-};
-
-struct fuel_gauge_info {
-	const char *manuf_name;
-	const char *device_name;
-	const struct ship_mode_info ship_mode;
-	const struct fet_info fet;
-};
-
-struct board_batt_params {
-	const struct fuel_gauge_info fuel_gauge;
-	const struct battery_info batt_info;
 };
 
 #define DEFAULT_BATTERY_TYPE BATTERY_SANYO
@@ -105,11 +82,11 @@ static const struct board_batt_params info[] = {
 				.reg_data = { 0xC574, 0xC574 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
 				.reg_addr = 0x0,
 				.reg_mask = 0x0002,
 				.disconnect_val = 0x0,
-			}
+			},
+			.flags = FUEL_GAUGE_FLAG_MFGACC,
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
@@ -134,11 +111,11 @@ static const struct board_batt_params info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
 				.reg_addr = 0x0,
 				.reg_mask = 0x0002,
 				.disconnect_val = 0x0,
-			}
+			},
+			.flags = FUEL_GAUGE_FLAG_MFGACC,
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
@@ -166,7 +143,7 @@ static const struct board_batt_params info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x4000,
 				.disconnect_val = 0x0,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
@@ -194,7 +171,7 @@ static const struct board_batt_params info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x8000,
 				.disconnect_val = 0x8000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
@@ -222,7 +199,7 @@ static const struct board_batt_params info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x4000,
 				.disconnect_val = 0x0,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
@@ -250,7 +227,7 @@ static const struct board_batt_params info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0018,
 				.disconnect_val = 0x0,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(13050, 5),
@@ -278,7 +255,7 @@ static const struct board_batt_params info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0018,
 				.disconnect_val = 0x0,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(13050, 5),
@@ -306,7 +283,7 @@ static const struct board_batt_params info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x0018,
 				.disconnect_val = 0x0,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(13050, 5),
@@ -334,7 +311,7 @@ static const struct board_batt_params info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x6000,
 				.disconnect_val = 0x6000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
@@ -362,7 +339,7 @@ static const struct board_batt_params info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x6000,
 				.disconnect_val = 0x6000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
@@ -390,7 +367,7 @@ static const struct board_batt_params info[] = {
 				.reg_addr = 0x43,
 				.reg_mask = 0x0003,
 				.disconnect_val = 0x0000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
@@ -596,7 +573,8 @@ static int battery_check_disconnect(void)
 	}
 
 	/* Read the status of charge/discharge FETs */
-	if (info[board_battery_type].fuel_gauge.fet.mfgacc_support == 1) {
+	if (info[board_battery_type].fuel_gauge.flags &
+	    FUEL_GAUGE_FLAG_MFGACC) {
 		rv = sb_read_mfgacc(PARAM_OPERATION_STATUS,
 				    SB_ALT_MANUFACTURER_ACCESS, data,
 				    sizeof(data));

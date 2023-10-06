@@ -44,15 +44,6 @@ properties:
     description: |
        Defines value which will be sent to register to go into sleep mode.
     type: int
-  fet_mfgacc_support:
-    description: |
-       Defines if battery supports manufacturer access command.
-       If enabled, FET status is read using the ManufacturerBlockAccess (0x44)
-       to read the OperationStatus (0x54) register.
-       The fet_reg_mask and fet_disconnect_val properties must still be
-       defined.
-       Value must be either 0 or 1.
-    type: int
   fet_mfgacc_smb_block:
     description: |
        Battery supports manufacturer access command.

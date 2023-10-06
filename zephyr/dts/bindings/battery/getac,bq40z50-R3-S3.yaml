@@ -21,7 +21,7 @@ properties:
     default: 0x00
   ship_mode_reg_data:
     default: [0x0010, 0x0010]
-  fet_mfgacc_support:
+  flags:
     default: 0
   fet_reg_addr:
     default: 0x00

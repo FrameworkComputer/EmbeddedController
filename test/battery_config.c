@@ -32,11 +32,11 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x10, 0x10 },
 			},
 			.fet = {
-				.mfgacc_support = 1,
 				.reg_addr = 0x00,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
 			},
+			.flags = FUEL_GAUGE_FLAG_MFGACC,
 		},
 		.batt_info = {
 			.voltage_max = 13200,
@@ -142,7 +142,6 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 	/* struct fet_info */
 	zassert_equal(dflt->fet.reg_addr, 0);
 	zassert_equal(dflt->fet.reg_mask, 0);
-	zassert_equal(dflt->fet.mfgacc_support, 0);
 	zassert_equal(dflt->fet.mfgacc_smb_block, 0);
 	/* struct sleep_mode_info */
 	zassert_equal(dflt->sleep_mode.reg_addr, 0);
@@ -230,7 +229,6 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 	/* struct fet_info */
 	zassert_equal(dflt->fet.reg_addr, info->fet.reg_addr);
 	zassert_equal(dflt->fet.reg_mask, info->fet.reg_mask);
-	zassert_equal(dflt->fet.mfgacc_support, 1);
 	zassert_equal(dflt->fet.mfgacc_smb_block, 1);
 	/* struct sleep_mode_info */
 	zassert_equal(dflt->sleep_mode.reg_addr, info->sleep_mode.reg_addr);

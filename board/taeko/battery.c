@@ -45,7 +45,7 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x34,
 				.reg_mask = 0x0100,
 				.disconnect_val = 0x0100,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 8900, /* mV */
@@ -72,7 +72,7 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x34,
 				.reg_mask = 0x0100,
 				.disconnect_val = 0x0100,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 8900, /* mV */
@@ -99,7 +99,7 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x00,
 				.reg_mask = 0x0018,
 				.disconnect_val = 0x0000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 8800, /* mV */
@@ -126,7 +126,7 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x00,
 				.reg_mask = 0x0018,
 				.disconnect_val = 0x0000,
-			}
+			},
 		},
 		.batt_info = {
 			.voltage_max		= 8800, /* mV */

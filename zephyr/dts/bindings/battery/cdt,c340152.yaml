@@ -22,7 +22,7 @@ properties:
   # Register SBS_PackStatus_ACCESS (0x99)
   # Discharging disabled  Bit-3: XDSG       1 = Active
   # Charging disabled     Bit-2: XCHG       0 = Inactive
-  fet_mfgacc_support:
+  flags:
     default: 0
   fet_reg_addr:
     default: 0x99
