@@ -132,6 +132,23 @@ test_mockable int crec_flash_physical_read(int offset, int size, char *data)
 	return rv;
 }
 
+#if defined(CONFIG_FLASH_EX_OP_ENABLED)
+void crec_flash_reset(void)
+{
+	/*
+	 * Lock the physical flash operation here because, we call the Zephyr
+	 * driver directly.
+	 */
+	crec_flash_lock_mapped_storage(1);
+
+	flash_ex_op(flash_ctrl_dev, FLASH_EX_OP_RESET, (const uintptr_t)NULL,
+		    NULL);
+
+	/* Unlock physical flash operations */
+	crec_flash_lock_mapped_storage(0);
+}
+#endif
+
 static int flash_dev_init(void)
 {
 	if (!device_is_ready(cros_flash_dev) ||
