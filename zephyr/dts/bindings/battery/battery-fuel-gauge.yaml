@@ -18,6 +18,10 @@ properties:
       DeviceName (0x21), which is used to help
       uniquely identify the type of battery.
     type: string
+  flags:
+    description: |
+      Fuel gauge flags. e.g FG_FLAG_SLEEP_MODE
+    type: int
   ship_mode_wb_support:
     description: |
        Write Block support. If this is true, then i2c write block command
@@ -32,11 +36,6 @@ properties:
     description: |
        Values written to register to enable ship mode.
     type: array
-  sleep_mode_support:
-    description: |
-       Defines if battery support fuel gauge sleep command.
-       Value must be either 0 or 1.
-    type: int
   sleep_mode_reg_addr:
     description: |
        Defines address where command will be sent to go into sleep mode.

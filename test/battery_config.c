@@ -147,7 +147,6 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 	/* struct sleep_mode_info */
 	zassert_equal(dflt->sleep_mode.reg_addr, 0);
 	zassert_equal(dflt->sleep_mode.reg_data, 0);
-	zassert_equal(dflt->sleep_mode.sleep_supported, 0);
 	/* struct ship_mode_info */
 	zassert_equal(dflt->ship_mode.reg_addr, 0);
 	zassert_equal(dflt->ship_mode.reg_data[0], 0);
@@ -236,7 +235,6 @@ DECLARE_EC_TEST(test_read_fuel_gauge_info)
 	/* struct sleep_mode_info */
 	zassert_equal(dflt->sleep_mode.reg_addr, info->sleep_mode.reg_addr);
 	zassert_equal(dflt->sleep_mode.reg_data, info->sleep_mode.reg_data);
-	zassert_equal(dflt->sleep_mode.sleep_supported, 1);
 	/* struct ship_mode_info */
 	zassert_equal(dflt->ship_mode.reg_addr, info->ship_mode.reg_addr);
 	zassert_equal(dflt->ship_mode.reg_data[0], info->ship_mode.reg_data[0]);

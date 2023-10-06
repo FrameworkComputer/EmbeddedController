@@ -117,8 +117,6 @@ batt_conf_read_fuel_gauge_info(struct board_batt_params *info)
 		fg->flags = d32;
 		fg->ship_mode.wb_support =
 			!!(d32 & FUEL_GAUGE_FLAG_WRITE_BLOCK);
-		fg->sleep_mode.sleep_supported =
-			!!(d32 & FUEL_GAUGE_FLAG_SLEEP_MODE);
 		fg->fet.mfgacc_support = !!(d32 & FUEL_GAUGE_FLAG_MFGACC);
 		fg->fet.mfgacc_smb_block =
 			!!(d32 & FUEL_GAUGE_FLAG_MFGACC_SMB_BLOCK);
@@ -230,9 +228,6 @@ static void batt_conf_dump(const struct board_batt_params *info)
 		 CBI_TAG_BATT_SLEEP_MODE_REG_ADDR, sleep->reg_addr);
 	ccprintf("%02x:\t\t.reg_data = 0x%04x,\n",
 		 CBI_TAG_BATT_SLEEP_MODE_REG_DATA, sleep->reg_data);
-	ccprintf("%02x:\t\t.sleep_supported = %d,\n",
-		 CBI_TAG_BATT_SLEEP_MODE_FLAGS,
-		 sleep->sleep_supported & BIT(0) ? 1 : 0);
 	ccprintf("   \t},\n");
 
 	ccprintf("   \t.fet = {\n");

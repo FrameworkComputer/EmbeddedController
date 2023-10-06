@@ -265,7 +265,7 @@ enum ec_error_list battery_sleep_fuel_gauge(void)
 
 	sleep_command = &params->fuel_gauge.sleep_mode;
 
-	if (!sleep_command->sleep_supported)
+	if (!(params->fuel_gauge.flags & FUEL_GAUGE_FLAG_SLEEP_MODE))
 		return EC_ERROR_UNIMPLEMENTED;
 
 	return sb_write(sleep_command->reg_addr, sleep_command->reg_data);

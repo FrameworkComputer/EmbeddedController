@@ -6,6 +6,7 @@
 #include <board-overlays/native_posix.dts>
 #include <cros/binman.dtsi>
 #include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/battery.h>
 #include <dt-bindings/gpio_defines.h>
 #include <dt-bindings/pwm/pwm.h>
 #include <dt-bindings/wake_mask_event_defines.h>
@@ -400,15 +401,15 @@
 		ap16l5j {
 			compatible = "panasonic,ap16l5j", "battery-smart";
 			ship_mode_wb_support = <1>;
-			sleep_mode_support = <1>;
 			fet_mfgacc_support = <1>;
+			flags = <FG_FLAG_SLEEP_MODE>;
 		};
 		ap16l8j {
 			compatible = "lgc,ap16l8j", "battery-smart";
 			ship_mode_wb_support = <1>;
-			sleep_mode_support = <1>;
 			fet_cfet_mask = <0>;
 			fet_mfgacc_support = <1>;
+			flags = <FG_FLAG_SLEEP_MODE>;
 		};
 	};
 

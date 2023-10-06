@@ -46,7 +46,6 @@ struct ship_mode_info {
 };
 
 struct sleep_mode_info {
-	bool sleep_supported;
 	uint8_t reg_addr;
 	uint16_t reg_data;
 };

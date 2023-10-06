@@ -39,7 +39,6 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x0010, 0x0010 },
 			},
 			.sleep_mode = {
-				.sleep_supported = true,
 				.reg_addr = 0x00,
 				.reg_data = 0x0011,
 			},
@@ -47,7 +46,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr = 0x0,
 				.reg_mask = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
+			.flags = FUEL_GAUGE_FLAG_SLEEP_MODE,
 		},
 		.batt_info = {
 			.voltage_max          = 8700,	/* mV */
@@ -98,7 +98,6 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_data = { 0x10, 0x10 },
 			},
 			.sleep_mode = {
-				.sleep_supported = true,
 				.reg_addr = 0x00,
 				.reg_data = 0x0011,
 			},
@@ -106,7 +105,8 @@ const struct board_batt_params board_battery_info[] = {
 				.reg_addr       = 0x00,
 				.reg_mask       = 0x2000,
 				.disconnect_val = 0x2000,
-			}
+			},
+			.flags = FUEL_GAUGE_FLAG_SLEEP_MODE,
 		},
 		.batt_info = {
 			.voltage_max          = 8800,	/* mV */
