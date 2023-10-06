@@ -45,7 +45,6 @@ common-$(CONFIG_BASE32)+=base32.o
 common-$(CONFIG_BLINK)+=blink.o
 common-$(CONFIG_DETACHABLE_BASE)+=base_state.o
 common-$(CONFIG_BATTERY)+=battery.o math_util.o
-common-$(CONFIG_BATTERY_CONFIG_IN_CBI)+=battery_config.o
 common-$(CONFIG_BATTERY_V1)+=battery_v1.o
 common-$(CONFIG_BATTERY_V2)+=battery_v2.o
 common-$(CONFIG_BATTERY_FUEL_GAUGE)+=battery_fuel_gauge.o

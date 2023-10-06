@@ -688,7 +688,7 @@ __overridable int battery_get_avg_current(void)
 	return -EC_ERROR_UNIMPLEMENTED;
 }
 
-int battery_manufacturer_name(char *dest, int size)
+test_mockable int battery_manufacturer_name(char *dest, int size)
 {
 	return get_battery_manufacturer_name(dest, size);
 }

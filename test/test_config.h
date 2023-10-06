@@ -40,7 +40,13 @@
 #endif
 
 #ifdef TEST_BATTERY_CONFIG
+#define CONFIG_BATTERY_FUEL_GAUGE
 #define CONFIG_BATTERY_CONFIG_IN_CBI
+enum battery_type {
+	BATTERY_C214,
+	BATTERY_TYPE_COUNT,
+};
+#define CONFIG_FUEL_GAUGE
 #endif
 
 #ifdef TEST_BKLIGHT_LID

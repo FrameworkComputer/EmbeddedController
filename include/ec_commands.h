@@ -6313,33 +6313,9 @@ enum cbi_data_tag {
 	 */
 	CBI_TAG_COMMON_CONTROL = 11,
 
-	/*
-	 * Battery info
-	 */
-	/* struct fuel_gauge_info */
-	CBI_TAG_FUEL_GAUGE_MANUF_NAME = 0x10,
-	CBI_TAG_FUEL_GAUGE_DEVICE_NAME = 0x11,
-	CBI_TAG_FUEL_GAUGE_FLAGS = 0x12,
-	/* struct ship_mod_info */
-	CBI_TAG_BATT_SHIP_MODE_REG_ADDR = 0x13,
-	CBI_TAG_BATT_SHIP_MODE_REG_DATA = 0x14,
-	/* struct sleep_mode_info */
-	CBI_TAG_BATT_SLEEP_MODE = 0x15,
-	/* struct fet_info */
-	CBI_TAG_BATT_FET_REG_ADDR = 0x16,
-	CBI_TAG_BATT_FET_REG_MASK = 0x17,
-	CBI_TAG_BATT_FET_DISCONNECT_VAL = 0x18,
-	CBI_TAG_BATT_FET_CFET_MASK = 0x19,
-	CBI_TAG_BATT_FET_CFET_OFF_VAL = 0x1a,
-	/* struct battery_info */
-	CBI_TAG_BATT_VOLTAGE_MAX = 0x1b,
-	CBI_TAG_BATT_VOLTAGE_NORMAL = 0x1c,
-	CBI_TAG_BATT_VOLTAGE_MIN = 0x1d,
-	CBI_TAG_BATT_PRECHARGE_VOLTAGE_CURRENT = 0x1e,
-	CBI_TAG_BATT_START_CHARGING_MIN_MAX_C = 0x1f,
-	CBI_TAG_BATT_CHARGING_MIN_MAX_C = 0x20,
-	CBI_TAG_BATT_DISCHARGING_MIN_MAX_C = 0x21,
-	/* Reserved for BCIC: 0x22 ~ 0x3f */
+	/* struct board_batt_params */
+	CBI_TAG_BATTERY_CONFIG = 12,
+	/* CBI_TAG_BATTERY_CONFIG_1 ~ 15 will use 13 ~ 27. */
 
 	/* Last entry */
 	CBI_TAG_COUNT,

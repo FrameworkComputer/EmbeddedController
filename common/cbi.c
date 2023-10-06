@@ -493,9 +493,7 @@ static int cc_cbi(int argc, const char **argv)
 			return EC_ERROR_PARAM2;
 
 		if (setter->tag == CBI_TAG_DRAM_PART_NUM ||
-		    setter->tag == CBI_TAG_OEM_NAME ||
-		    setter->tag == CBI_TAG_FUEL_GAUGE_MANUF_NAME ||
-		    setter->tag == CBI_TAG_FUEL_GAUGE_DEVICE_NAME) {
+		    setter->tag == CBI_TAG_OEM_NAME) {
 			setter->size = strlen(argv[3]) + 1;
 			memcpy(setter->data, argv[3], setter->size);
 		} else {

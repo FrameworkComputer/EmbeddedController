@@ -55,6 +55,11 @@ static int mock_write_fn_always_fail(const struct emul *emul, int reg,
 	return 0;
 }
 
+static void isl923x_setup(void)
+{
+	batt_conf_main();
+}
+
 ZTEST(isl923x, test_isl923x_set_current)
 {
 	int expected_current_milli_amps[] = {
@@ -1205,7 +1210,8 @@ ZTEST(isl923x_hibernate, test_isl9238c_resume)
 	}
 }
 
-ZTEST_SUITE(isl923x, drivers_predicate_pre_main, NULL, NULL, NULL, NULL);
+ZTEST_SUITE(isl923x, drivers_predicate_pre_main, isl923x_setup, NULL, NULL,
+	    NULL);
 
 ZTEST_SUITE(isl923x_hibernate, drivers_predicate_post_main, NULL,
 	    isl923x_hibernate_before, isl923x_hibernate_after, NULL);
