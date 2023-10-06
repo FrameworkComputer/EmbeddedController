@@ -95,7 +95,7 @@ static void cypd_update_port_state(int controller, int port);
 static void cypd_pdo_reset_deferred(void);
 static void cypd_set_prepare_pdo(int controller, int port);
 
-int cypd_write_reg_block(int controller, int reg, const void *data, int len)
+int cypd_write_reg_block(int controller, int reg, void *data, int len)
 {
 	int rv;
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
@@ -1309,19 +1309,21 @@ static void port_to_safe_mode(int port)
 	CPRINTS("P%d: Safe", port);
 
 }
-bool apu_not_initialized = true;
+enum power_state pd_prev_power_state = POWER_G3;
 void update_system_power_state(int controller)
 {
 	enum power_state ps = power_get_state();
+
 	switch (ps) {
 	case POWER_G3:
 	case POWER_S5G3:
+		pd_prev_power_state = POWER_G3;
 		cypd_set_power_state(CCG_POWERSTATE_G3, controller);
-		apu_not_initialized = true;
 		break;
 	case POWER_S5:
 	case POWER_S3S5:
 	case POWER_S4S5:
+		pd_prev_power_state = POWER_S5;
 		cypd_set_power_state(CCG_POWERSTATE_S5, controller);
 		break;
 	case POWER_S3:
@@ -1330,11 +1332,19 @@ void update_system_power_state(int controller)
 	case POWER_S0S3:
 	case POWER_S0ixS3: /* S0ix -> S3 */
 		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
+		if (pd_prev_power_state < POWER_S3) {
+			perform_error_recovery(controller);
+			pd_prev_power_state = ps;
+		}
 		break;
 	case POWER_S0:
 	case POWER_S3S0:
 	case POWER_S0ixS0: /* S0ix -> S0 */
 		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
+		if (pd_prev_power_state < POWER_S3) {
+			perform_error_recovery(controller);
+			pd_prev_power_state = ps;
+		}
 		break;
 	case POWER_S0ix:
 	case POWER_S3S0ix: /* S3 -> S0ix */
@@ -1351,16 +1361,6 @@ void update_system_power_state(int controller)
 void cypd_set_power_active(void)
 {
 	task_set_event(TASK_ID_CYPD, CCG_EVT_S_CHANGE);
-}
-
-void cypd_port_reset(void)
-{
-	if (apu_not_initialized) {
-		CPRINTS("PD_PLT_RESET");
-
-		apu_not_initialized = false;
-		task_set_event(TASK_ID_CYPD, CCG_EVT_PLT_RESET);
-	}
 }
 
 
@@ -1469,7 +1469,6 @@ static void cypd_handle_state(int controller)
 			cypd_update_power_status(controller);
 
 			update_system_power_state(controller);
-
 			cypd_setup(controller);
 
 			/* After initial complete, update the type-c port state */
@@ -1906,11 +1905,6 @@ void cypd_interrupt_handler_task(void *p)
 
 		if (evt & CCG_EVT_UPDATE_PWRSTAT)
 			cypd_update_power_status(2);
-
-		if (evt & CCG_EVT_PLT_RESET) {
-			CPRINTS("PD Platform reset");
-			perform_error_recovery(2);
-		}
 
 
 		if (evt & (CCG_EVT_INT_CTRL_0 | CCG_EVT_INT_CTRL_1 |
