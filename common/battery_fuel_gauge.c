@@ -281,7 +281,7 @@ static enum ec_error_list battery_get_fet_status_regval(int *regval)
 
 	/* Read the status of charge/discharge FETs */
 	if (params->fuel_gauge.flags & FUEL_GAUGE_FLAG_MFGACC) {
-		if (params->fuel_gauge.fet.mfgacc_smb_block == 1)
+		if (params->fuel_gauge.flags & FUEL_GAUGE_FLAG_MFGACC_SMB_BLOCK)
 			rv = sb_read_mfgacc_block(PARAM_OPERATION_STATUS,
 						  SB_ALT_MANUFACTURER_ACCESS,
 						  data, sizeof(data));

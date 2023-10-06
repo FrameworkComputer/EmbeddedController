@@ -44,14 +44,6 @@ properties:
     description: |
        Defines value which will be sent to register to go into sleep mode.
     type: int
-  fet_mfgacc_smb_block:
-    description: |
-       Battery supports manufacturer access command.
-       If enabled, Write command by the SMB block protocol.
-       FET status is read using the ManufacturerBlockAccess (0x44)
-       to read the OperationStatus (0x54) register.
-       Value must be either 0 or 1.
-    type: int
   fet_reg_addr:
     description: |
        Address of register which reports charging and discharging FETs status.

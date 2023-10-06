@@ -117,8 +117,6 @@ batt_conf_read_fuel_gauge_info(struct board_batt_params *info)
 		fg->flags = d32;
 		fg->ship_mode.wb_support =
 			!!(d32 & FUEL_GAUGE_FLAG_WRITE_BLOCK);
-		fg->fet.mfgacc_smb_block =
-			!!(d32 & FUEL_GAUGE_FLAG_MFGACC_SMB_BLOCK);
 	}
 
 	batt_conf_read_ship_mode(info);

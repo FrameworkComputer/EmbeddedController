@@ -22,7 +22,6 @@
 		.reg_data = DT_PROP_OR(node, sleep_mode_reg_data, 0), \
 	}, \
 	.fet = { \
-		.mfgacc_smb_block = DT_PROP_OR(node, fet_mfgacc_smb_block, 0), \
 		.reg_addr = DT_PROP_OR(node, fet_reg_addr, 0), \
 		.reg_mask = DT_PROP(node, fet_reg_mask), \
 		.disconnect_val = DT_PROP(node, fet_disconnect_val), \

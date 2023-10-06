@@ -30,5 +30,6 @@
 
 #define FG_FLAG_SLEEP_MODE BIT(1)
 #define FG_FLAG_MFGACC BIT(2)
+#define FG_FLAG_MFGACC_SMB_BLOCK BIT(3)
 
 #endif /* DT_BINDINGS_BATTERY_H_ */
