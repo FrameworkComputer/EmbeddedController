@@ -174,18 +174,18 @@ int battery_get_avg_voltage(void); /* in mV */
 /* Battery constants */
 struct battery_info {
 	/* Operation voltage in mV */
-	int voltage_max;
-	int voltage_normal;
-	int voltage_min;
+	uint16_t voltage_max;
+	uint16_t voltage_normal;
+	uint16_t voltage_min;
 	/* (TODO(chromium:756700): add desired_charging_current */
 	/**
 	 * Pre-charge to fast charge threshold in mV,
 	 * default to voltage_min if not specified.
 	 * This option is only available on isl923x and rt946x.
 	 */
-	int precharge_voltage;
+	uint16_t precharge_voltage;
 	/* Pre-charge current in mA */
-	int precharge_current;
+	uint16_t precharge_current;
 	/* Working temperature ranges in degrees C */
 	int8_t start_charging_min_c;
 	int8_t start_charging_max_c;
