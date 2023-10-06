@@ -193,9 +193,8 @@ struct battery_info {
 	int8_t charging_max_c;
 	int8_t discharging_min_c;
 	int8_t discharging_max_c;
-#ifdef CONFIG_BATTERY_VENDOR_PARAM
+	/* Used only if CONFIG_BATTERY_VENDOR_PARAM is defined. */
 	uint8_t vendor_param_start;
-#endif
 };
 
 /**
