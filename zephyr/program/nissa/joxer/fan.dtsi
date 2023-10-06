@@ -6,11 +6,11 @@
 	fans {
 		compatible = "cros-ec,fans";
 		fan_0 {
-			pwms = <&pwm7 PWM_CHANNEL_7 PWM_KHZ(30) \
+			pwms = <&pwm7 PWM_CHANNEL_7 PWM_KHZ(25) \
 				(PWM_POLARITY_NORMAL | PWM_IT8XXX2_OPEN_DRAIN)>;
 			tach = <&tach1>;
 			rpm_min = <1500>;
-			rpm_start = <2700>;
+			rpm_start = <2500>;
 			rpm_max = <6500>;
 			rpm_deviation = <1>;
 			enable_gpio = <&gpio_fan_enable>;
@@ -19,33 +19,38 @@
 	fan_steps {
 		compatible = "cros-ec,fan-steps";
 		level_0 {
-			temp_on = <45 0 0>;
+			temp_on = <40 0 0>;
 			temp_off = <0 0 0>;
 			rpm_target = <0>;
 		};
 		level_1 {
-			temp_on = <46 0 0>;
-			temp_off = <43 0 0>;
-			rpm_target = <2700>;
+			temp_on = <43 0 0>;
+			temp_off = <38 0 0>;
+			rpm_target = <2500>;
 		};
 		level_2 {
-			temp_on = <48 0 0>;
-			temp_off = <44 0 0>;
-			rpm_target = <3100>;
+			temp_on = <46 0 0>;
+			temp_off = <41 0 0>;
+			rpm_target = <2800>;
 		};
 		level_3 {
-			temp_on = <50 0 0>;
-			temp_off = <45 0 0>;
-			rpm_target = <3500>;
+			temp_on = <49 0 0>;
+			temp_off = <43 0 0>;
+			rpm_target = <3100>;
 		};
 		level_4 {
 			temp_on = <52 0 0>;
-			temp_off = <47 0 0>;
-			rpm_target = <4000>;
+			temp_off = <46 0 0>;
+			rpm_target = <3500>;
 		};
 		level_5 {
-			temp_on = <100 0 0>;
+			temp_on = <65 0 0>;
 			temp_off = <49 0 0>;
+			rpm_target = <4000>;
+		};
+		level_6 {
+			temp_on = <100 0 0>;
+			temp_off = <62 0 0>;
 			rpm_target = <4500>;
 		};
 	};
