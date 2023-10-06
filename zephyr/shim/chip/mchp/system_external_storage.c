@@ -48,12 +48,15 @@ void system_jump_to_booter(void)
 	switch (system_get_shrspi_image_copy()) {
 	case EC_IMAGE_RW:
 		flash_offset =
+			CONFIG_PLATFORM_EC_FW_START_OFFSET_IN_EXT_SPI_FLASH +
 			CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_STORAGE_OFF;
 		flash_used = CONFIG_CROS_EC_RW_SIZE;
 		break;
 	case EC_IMAGE_RO:
 	default: /* Jump to RO by default */
-		flash_offset = CONFIG_PLATFORM_EC_RO_HEADER_OFFSET;
+		flash_offset =
+			CONFIG_PLATFORM_EC_FW_START_OFFSET_IN_EXT_SPI_FLASH +
+			CONFIG_PLATFORM_EC_RO_HEADER_OFFSET;
 		flash_used = CONFIG_CROS_EC_RO_SIZE;
 		break;
 	}
