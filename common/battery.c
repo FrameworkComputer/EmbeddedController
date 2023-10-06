@@ -80,12 +80,26 @@ static int check_print_error(int rv)
 
 static void print_battery_status(void)
 {
+	/*
+	 * STATUS_FULLY_DISCHARGED BIT(4)
+	 * STATUS_FULLY_CHARGED BIT(5)
+	 * STATUS_DISCHARGING BIT(6)
+	 * STATUS_INITIALIZED BIT(7)
+	 */
 	static const char *const st[] = {
 		"EMPTY",
 		"FULL",
 		"DCHG",
 		"INIT",
 	};
+	/*
+	 * STATUS_REMAINING_TIME_ALARM BIT(8)
+	 * STATUS_REMAINING_CAPACITY_ALARM BIT(9)
+	 * STATUS_TERMINATE_DISCHARGE_ALARM BIT(11)
+	 * STATUS_OVERTEMP_ALARM BIT(12)
+	 * STATUS_TERMINATE_CHARGE_ALARM BIT(14)
+	 * STATUS_OVERCHARGED_ALARM BIT(15)
+	 */
 	static const char *const al[] = { "RT", "RC", "--", "TD",
 					  "OT", "--", "TC", "OC" };
 
