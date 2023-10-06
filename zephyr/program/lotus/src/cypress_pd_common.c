@@ -1309,7 +1309,7 @@ static void port_to_safe_mode(int port)
 	CPRINTS("P%d: Safe", port);
 
 }
-
+bool apu_not_initialized = true;
 void update_system_power_state(int controller)
 {
 	enum power_state ps = power_get_state();
@@ -1317,6 +1317,7 @@ void update_system_power_state(int controller)
 	case POWER_G3:
 	case POWER_S5G3:
 		cypd_set_power_state(CCG_POWERSTATE_G3, controller);
+		apu_not_initialized = true;
 		break;
 	case POWER_S5:
 	case POWER_S3S5:
@@ -1354,7 +1355,12 @@ void cypd_set_power_active(void)
 
 void cypd_port_reset(void)
 {
+	if (apu_not_initialized) {
+		CPRINTS("PD_PLT_RESET");
+
+		apu_not_initialized = false;
 		task_set_event(TASK_ID_CYPD, CCG_EVT_PLT_RESET);
+	}
 }
 
 
