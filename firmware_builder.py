@@ -41,6 +41,7 @@ BINARY_SIZE_REGIONS = ["RW_FLASH", "RW_IRAM"]
 # The most recently edited boards that should show binary size changes in
 # gerrit
 BINARY_SIZE_BOARDS = [
+    "dexi",
     "dibbi",
     "gaelin",
     "gladios",

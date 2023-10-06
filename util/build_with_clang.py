@@ -251,6 +251,7 @@ NDS32_BOARDS = [
     "blipper",
     "boten",
     "boxy",
+    "dexi",
     "dibbi",
     "drawcia",
     "galtic",
