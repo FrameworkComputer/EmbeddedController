@@ -1660,7 +1660,7 @@ void cypd_handle_vdm(int controller, int port, uint8_t *data, int len)
 
 	}
 	if (trigger_deferred_update) {
-		hook_call_deferred(&poweroff_dp_deferred_data, 10000 * MSEC);
+		hook_call_deferred(&poweroff_dp_deferred_data, 5000 * MSEC);
 	}
 
 }
