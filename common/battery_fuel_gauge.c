@@ -453,3 +453,116 @@ int battery_imbalance_mv(void)
 {
 	return board_battery_imbalance_mv(get_batt_params());
 }
+
+#ifdef CONFIG_CMD_BATTERY_CONFIG
+
+void batt_conf_dump(const struct board_batt_params *info)
+{
+	const struct fuel_gauge_info *fg = &info->fuel_gauge;
+	const struct ship_mode_info *ship = &info->fuel_gauge.ship_mode;
+	const struct sleep_mode_info *sleep = &info->fuel_gauge.sleep_mode;
+	const struct fet_info *fet = &info->fuel_gauge.fet;
+	const struct battery_info *batt = &info->batt_info;
+
+	ccprintf(".fuel_gauge = {\n");
+
+	ccprintf("\t.manuf_name = \"%s\",\n", fg->manuf_name);
+	ccprintf("\t.device_name= \"%s\",\n", fg->device_name);
+	ccprintf("\t.flags = 0x%x,\n", fg->flags);
+
+	ccprintf("\t.ship_mode = {\n");
+	ccprintf("\t\t.reg_addr = 0x%02x,\n", ship->reg_addr);
+	ccprintf("\t\t.reg_data = { 0x%04x, 0x%04x },\n", ship->reg_data[0],
+		 ship->reg_data[1]);
+	ccprintf("\t},\n");
+
+	ccprintf("\t.sleep_mode = {\n");
+	ccprintf("\t\t.reg_addr = 0x%02x,\n", sleep->reg_addr);
+	ccprintf("\t\t.reg_data = 0x%04x,\n", sleep->reg_data);
+	ccprintf("\t},\n");
+
+	ccprintf("\t.fet = {\n");
+	ccprintf("\t\t.reg_addr = 0x%02x,\n", fet->reg_addr);
+	ccprintf("\t\t.reg_mask = 0x%04x,\n", fet->reg_mask);
+	ccprintf("\t\t.disconnect_val = 0x%04x,\n", fet->disconnect_val);
+	ccprintf("\t\t.cfet_mask = 0x%04x,\n", fet->cfet_mask);
+	ccprintf("\t\t.cfet_off_val = 0x%04x,\n", fet->cfet_off_val);
+	ccprintf("\t},\n");
+
+	ccprintf("},\n"); /* end of fuel_gauge */
+
+	ccprintf(".batt_info = {\n");
+	ccprintf("\t.voltage_max = %d,\n", batt->voltage_max);
+	ccprintf("\t.voltage_normal = %d,\n", batt->voltage_normal);
+	ccprintf("\t.voltage_min = %d,\n", batt->voltage_min);
+	ccprintf("\t.precharge_voltage= %d,\n", batt->precharge_voltage);
+	ccprintf("\t.precharge_current = %d,\n", batt->precharge_current);
+	ccprintf("\t.start_charging_min_c = %d,\n", batt->start_charging_min_c);
+	ccprintf("\t.start_charging_max_c = %d,\n", batt->start_charging_max_c);
+	ccprintf("\t.charging_min_c = %d,\n", batt->charging_min_c);
+	ccprintf("\t.charging_max_c = %d,\n", batt->charging_max_c);
+	ccprintf("\t.discharging_min_c = %d,\n", batt->discharging_min_c);
+	ccprintf("\t.discharging_max_c = %d,\n", batt->discharging_max_c);
+	ccprintf("},\n"); /* end of batt_info */
+}
+
+static int cc_bcfg(int argc, const char *argv[])
+{
+	if (argc == 1) {
+		batt_conf_dump(get_batt_params());
+	} else if (argc == 3) {
+		struct batt_conf_header head = {};
+		uint8_t size = sizeof(head);
+		int index;
+		int rv;
+		char *e;
+
+		index = strtoi(argv[2], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM1;
+
+		if (strcasecmp(argv[1], "get") == 0) {
+			rv = cbi_get_board_info(index + CBI_TAG_BATTERY_CONFIG,
+						(void *)&head, &size);
+			if (rv) {
+				ccprintf("#%d not found (rv=%d)\n", index, rv);
+				return EC_ERROR_UNAVAILABLE;
+			}
+			ccprintf("struct_ver = 0x%02x\n", head.struct_version);
+			ccprintf("manuf = \"%s\"\n", head.manuf_name);
+			ccprintf("name = \"%s\"\n", head.device_name);
+			ccprintf("size = %u (expect %u)\n", size, sizeof(head));
+			batt_conf_dump(&head.config);
+		} else if (strcasecmp(argv[1], "set") == 0) {
+			const struct board_batt_params *conf =
+				get_batt_params();
+			head.struct_version = 0;
+			strncpy(head.manuf_name, conf->fuel_gauge.manuf_name,
+				sizeof(head.manuf_name));
+			if (conf->fuel_gauge.device_name)
+				strncpy(head.device_name,
+					conf->fuel_gauge.device_name,
+					sizeof(head.device_name));
+			memcpy(&head.config, conf, sizeof(head.config));
+			rv = cbi_set_board_info(index + CBI_TAG_BATTERY_CONFIG,
+						(void *)&head, size);
+			if (rv) {
+				ccprintf("Failed to write #%d (rv=%d)\n", index,
+					 rv);
+				return EC_ERROR_UNKNOWN;
+			}
+		} else {
+			return EC_ERROR_PARAM2;
+		}
+	} else {
+		return EC_ERROR_PARAM_COUNT;
+	}
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(
+	bcfg, cc_bcfg, "[get/set <index>]",
+	"\n"
+	"Dump effective battery config or config #<index> in CBI.\n"
+	"Read from or write to CBI effective battery config.\n");
+#endif /* CONFIG_CMD_BATTERY_CONFIG */
