@@ -6,7 +6,7 @@ version of LLVM and flags in use on `Sept 19, 2023`.
 
 ## Toolchain
 
-Fingerprint currently uses clang version `17.0.0`.
+Fingerprint currently uses clang version `17.0.0` and newlib version `4.1.0`.
 
 ## Compiler Flags
 
