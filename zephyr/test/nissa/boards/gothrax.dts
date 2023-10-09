@@ -58,7 +58,7 @@
 			tcpc = <&tcpci_emul_1>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&virtual_mux_1>;
+				usb-muxes = <&virtual_mux_1 &anx7483_port1>;
 			};
 		};
 		port0-muxes {
@@ -87,5 +87,10 @@
 		compatible = "cros,tcpci-generic-emul";
 		status = "okay";
 		reg = <0x84>;
+	};
+	anx7483_port1: anx7483_emul1@3e {
+		compatible = "cros,anx7483-emul", "analogix,anx7483";
+		reg = <0x3e>;
+		board-set = "board_anx7483_c1_mux_set";
 	};
 };

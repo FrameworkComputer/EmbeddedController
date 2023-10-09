@@ -7,6 +7,7 @@
 #include "charge_manager.h"
 #include "driver/charger/isl923x_public.h"
 #include "driver/tcpm/raa489000.h"
+#include "emul/retimer/emul_anx7483.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "extpower.h"
 #include "keyboard_protocol.h"
@@ -17,6 +18,7 @@
 #include "usb_charge.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "usbc/usb_muxes.h"
 
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/fff.h>
@@ -28,6 +30,8 @@
 
 #define TCPC0 EMUL_DT_GET(DT_NODELABEL(tcpci_emul_0))
 #define TCPC1 EMUL_DT_GET(DT_NODELABEL(tcpci_emul_1))
+
+#define ANX7483_EMUL1 EMUL_DT_GET(DT_NODELABEL(anx7483_port1))
 
 LOG_MODULE_REGISTER(nissa, LOG_LEVEL_INF);
 
@@ -381,4 +385,89 @@ ZTEST(gothrax, test_process_pd_alert)
 	zassert_equal(usb_charger_task_set_event_sync_fake.arg0_val, 1);
 	zassert_equal(usb_charger_task_set_event_sync_fake.arg1_val,
 		      USB_CHG_EVENT_BC12);
+}
+
+ZTEST(gothrax, test_board_anx7483_c1_mux_set)
+{
+	int rv;
+	enum anx7483_eq_setting eq;
+
+	usb_mux_init(1);
+
+	/* Test USB mux state. */
+	usb_mux_set(1, USB_PD_MUX_USB_ENABLED, USB_SWITCH_CONNECT, 0);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_URX1, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_12_5DB);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_URX2, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_12_5DB);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_DRX1, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_12_5DB);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_DRX2, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_12_5DB);
+
+	/* Test DP mux state. */
+	usb_mux_set(1, USB_PD_MUX_DP_ENABLED, USB_SWITCH_CONNECT, 0);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_URX1, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_8_4DB);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_URX2, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_8_4DB);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_UTX1, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_8_4DB);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_UTX2, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_8_4DB);
+
+	/* Test dock mux state. */
+	usb_mux_set(1, USB_PD_MUX_DOCK, USB_SWITCH_CONNECT, 0);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_URX1, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_12_5DB);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_URX2, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_8_4DB);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_DRX1, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_12_5DB);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_UTX2, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_8_4DB);
+
+	/* Test flipped dock mux state. */
+	usb_mux_set(1, USB_PD_MUX_DOCK | USB_PD_MUX_POLARITY_INVERTED,
+		    USB_SWITCH_CONNECT, 0);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_URX1, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_8_4DB);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_URX2, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_12_5DB);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_UTX1, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_8_4DB);
+
+	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_DRX2, &eq);
+	zassert_ok(rv);
+	zassert_equal(eq, ANX7483_EQ_SETTING_12_5DB);
 }
