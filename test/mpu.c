@@ -43,6 +43,15 @@ struct mpu_rw_regions expected_rw_regions = { .num_regions = 1,
 					      .addr = { 0x08100000,
 							0x08200000 },
 					      .size = { 0x100000, 0 } };
+#elif defined(CHIP_VARIANT_NPCX9M8S)
+struct mpu_info mpu_info = { .has_mpu = true,
+			     .num_mpu_regions = 8,
+			     .mpu_is_unified = true };
+
+/* unnecessary since NPCX9M8S uses CONFIG_EXTERNAL_STORAGE */
+struct mpu_rw_regions expected_rw_regions = { .num_regions = 0,
+					      .addr = {},
+					      .size = {} };
 #else
 #error "MPU info not defined for this chip. Please add it."
 #endif
@@ -130,20 +139,26 @@ test_static int test_mpu_update_region_invalid_alignment(void)
 
 test_static int test_mpu_lock_ro_flash(void)
 {
-	int rv;
+	if (!IS_ENABLED(CONFIG_EXTERNAL_STORAGE) &&
+	    IS_ENABLED(CONFIG_FLASH_PHYSICAL)) {
+		int rv;
 
-	rv = mpu_lock_ro_flash();
-	TEST_EQ(rv, EC_SUCCESS, "%d");
+		rv = mpu_lock_ro_flash();
+		TEST_EQ(rv, EC_SUCCESS, "%d");
+	}
 
 	return EC_SUCCESS;
 }
 
 test_static int test_mpu_lock_rw_flash(void)
 {
-	int rv;
+	if (!IS_ENABLED(CONFIG_EXTERNAL_STORAGE) &&
+	    IS_ENABLED(CONFIG_FLASH_PHYSICAL)) {
+		int rv;
 
-	rv = mpu_lock_rw_flash();
-	TEST_EQ(rv, EC_SUCCESS, "%d");
+		rv = mpu_lock_rw_flash();
+		TEST_EQ(rv, EC_SUCCESS, "%d");
+	}
 
 	return EC_SUCCESS;
 }
@@ -173,11 +188,14 @@ test_static int test_mpu_protect_code_ram(void)
 
 test_static int test_mpu_get_rw_regions(void)
 {
-	struct mpu_rw_regions rw_regions = mpu_get_rw_regions();
-	int rv = memcmp(&rw_regions, &expected_rw_regions,
-			sizeof(expected_rw_regions));
+	if (!IS_ENABLED(CONFIG_EXTERNAL_STORAGE) &&
+	    IS_ENABLED(CONFIG_FLASH_PHYSICAL)) {
+		struct mpu_rw_regions rw_regions = mpu_get_rw_regions();
+		int rv = memcmp(&rw_regions, &expected_rw_regions,
+				sizeof(expected_rw_regions));
 
-	TEST_EQ(rv, 0, "%d");
+		TEST_EQ(rv, 0, "%d");
+	}
 	return EC_SUCCESS;
 }
 

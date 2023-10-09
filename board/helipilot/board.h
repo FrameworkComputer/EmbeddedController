@@ -78,7 +78,10 @@
 /*
  * Define Data RAM size  = 160KB - 4KB (Reserved for booter).
  */
-#define CONFIG_DATA_RAM_SIZE ((96 + 64) * 1024 - 0x1000)
+#define CONFIG_DATA_RAM_SIZE ((96 + 64) * 1024)
+
+#undef CONFIG_RAM_SIZE
+#define CONFIG_RAM_SIZE (CONFIG_DATA_RAM_SIZE - 0x1000)
 /*-------------------------------------------------------------------------*/
 
 #define CONFIG_SHAREDLIB_SIZE 0
@@ -88,6 +91,9 @@
 /* Need to account for the 64 (0x40) byte long firmware header */
 #define CONFIG_RO_STORAGE_OFF 64
 #define CONFIG_RO_SIZE (128 * 1024 - 0x1000)
+
+#undef CONFIG_CODE_RAM_SIZE
+#define CONFIG_CODE_RAM_SIZE NPCX_PROGRAM_MEMORY_SIZE
 
 #define CONFIG_RO_PUBKEY_READ_ADDR                                      \
 	(CONFIG_MAPPED_STORAGE_BASE + CONFIG_EC_PROTECTED_STORAGE_OFF + \
