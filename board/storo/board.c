@@ -26,6 +26,7 @@
 #include "driver/tcpm/raa489000.h"
 #include "driver/temp_sensor/thermistor.h"
 #include "driver/usb_mux/it5205.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "intc.h"
@@ -928,4 +929,104 @@ __override void lid_angle_peripheral_enable(int enable)
 		if (!chipset_in_s0)
 			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
 	}
+}
+
+void board_charger_setting(void)
+{
+	int reg, port;
+	int chgnum = charge_get_active_chg_chip();
+
+	if (extpower_is_present()) {
+		/* disable SMBUS TIMEOUT */
+		if (i2c_read16(chg_chips[chgnum].i2c_port,
+			       I2C_ADDR_CHARGER_FLAGS, ISL923X_REG_CONTROL0,
+			       &reg) == EC_SUCCESS) {
+			reg |= RAA489000_C0_SMBUT_TIMEOUT;
+			if (i2c_write16(chg_chips[chgnum].i2c_port,
+					I2C_ADDR_CHARGER_FLAGS,
+					ISL923X_REG_CONTROL0, reg))
+				CPRINTF("C%d ISL9238_REG_CONTROL0 write fail!",
+					chgnum);
+		}
+
+		/* enable two level current limit */
+		if (i2c_read16(chg_chips[chgnum].i2c_port,
+			       I2C_ADDR_CHARGER_FLAGS, ISL923X_REG_CONTROL2,
+			       &reg) == EC_SUCCESS) {
+			reg |= ISL923X_C2_2LVL_OVERCURRENT;
+			if (i2c_write16(chg_chips[chgnum].i2c_port,
+					I2C_ADDR_CHARGER_FLAGS,
+					ISL923X_REG_CONTROL2, reg))
+				CPRINTF("C%d ISL923X_REG_CONTROL2 write fail!",
+					chgnum);
+		}
+
+		/* set t2 1ms, t1 20ms */
+		if (i2c_read16(chg_chips[chgnum].i2c_port,
+			       I2C_ADDR_CHARGER_FLAGS, ISL923X_REG_T1_T2,
+			       &reg) == EC_SUCCESS) {
+			reg |= (RAA489000_T2_1000 | RAA489000_T1_20000);
+			if (i2c_write16(chg_chips[chgnum].i2c_port,
+					I2C_ADDR_CHARGER_FLAGS,
+					ISL923X_REG_T1_T2, reg))
+				CPRINTF("C%d ISL9238_REG_T1_T2 write fail!",
+					chgnum);
+		}
+	}
+
+	for (port = 0; port < board_get_usb_pd_port_count(); port++) {
+		if (port == chgnum)
+			continue;
+		/* disable SMBUS TIMEOUT */
+		if (i2c_read16(chg_chips[port].i2c_port, I2C_ADDR_CHARGER_FLAGS,
+			       ISL923X_REG_CONTROL0, &reg) == EC_SUCCESS) {
+			reg &= ~RAA489000_C0_SMBUT_TIMEOUT;
+			if (i2c_write16(chg_chips[port].i2c_port,
+					I2C_ADDR_CHARGER_FLAGS,
+					ISL923X_REG_CONTROL0, reg))
+				CPRINTF("C%d ISL9238_REG_CONTROL0 write fail!",
+					port);
+		}
+
+		/* disable two level current limit */
+		if (i2c_read16(chg_chips[port].i2c_port, I2C_ADDR_CHARGER_FLAGS,
+			       ISL923X_REG_CONTROL2, &reg) == EC_SUCCESS) {
+			reg &= ~ISL923X_C2_2LVL_OVERCURRENT;
+			if (i2c_write16(chg_chips[port].i2c_port,
+					I2C_ADDR_CHARGER_FLAGS,
+					ISL923X_REG_CONTROL2, reg))
+				CPRINTF("C%d ISL923X_REG_CONTROL2 write fail!",
+					port);
+		}
+
+		/* set default value t2 10 us, t1 10ms */
+		if (i2c_read16(chg_chips[port].i2c_port, I2C_ADDR_CHARGER_FLAGS,
+			       ISL923X_REG_T1_T2, &reg) == EC_SUCCESS) {
+			reg &= ((RAA489000_T2_10 | RAA489000_T1_10000) &
+				0xffff);
+			if (i2c_write16(chg_chips[port].i2c_port,
+					I2C_ADDR_CHARGER_FLAGS,
+					ISL923X_REG_T1_T2, reg))
+				CPRINTF("C%d ISL9238_REG_T1_T2 write fail!",
+					port);
+		}
+	}
+}
+DECLARE_HOOK(HOOK_POWER_SUPPLY_CHANGE, board_charger_setting,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_charger_setting, HOOK_PRIO_DEFAULT);
+
+/* Called when the charge manager has switched to a new port. */
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
+{
+	int chgnum = charge_get_active_chg_chip();
+
+	charge_set_input_current_limit(charge_ma, charge_mv);
+
+	if (charge_ma > 400)
+		charge_ma = 400;
+
+	/* set current limit 2 */
+	isl923x_set_level_2_input_current_limit(chgnum, charge_ma);
 }
