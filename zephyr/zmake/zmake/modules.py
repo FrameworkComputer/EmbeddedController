@@ -28,7 +28,6 @@ known_modules = {
     "nanopb": third_party_module,
     "pigweed": lambda name, checkout: (checkout / "src" / "third_party" / name),
     "hal_intel_public": third_party_module,
-    "picolibc": third_party_module,
 }
 
 
