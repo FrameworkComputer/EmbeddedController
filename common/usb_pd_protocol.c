@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+/* LCOV_EXCL_START - TCPMv1 is difficult to meaningfully test: b/304349098. */
+
 #include "atomic.h"
 #include "battery.h"
 #include "battery_smart.h"
@@ -5386,3 +5388,5 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_FW_UPDATE, hc_remote_flash, EC_VER_MASK(0));
 
 #endif /* HAS_TASK_HOSTCMD */
 #endif /* CONFIG_COMMON_RUNTIME */
+
+/* LCOV_EXCL_END */

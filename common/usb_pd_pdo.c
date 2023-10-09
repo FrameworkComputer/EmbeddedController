@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+/* LCOV_EXCL_START - TCPMv1 is difficult to meaningfully test: b/304349098. */
+
 #include "usb_pd.h"
 #include "usb_pd_pdo.h"
 #include "util.h"
@@ -31,3 +33,5 @@ const uint32_t pd_snk_pdo[] = {
 const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
 #endif /* CONFIG_USB_PD_CUSTOM_PDO */
+
+/* LCOV_EXCL_END */

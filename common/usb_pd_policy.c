@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+/* LCOV_EXCL_START - TCPMv1 is difficult to meaningfully test: b/304349098. */
+
 #include "atomic.h"
 #include "builtin/assert.h"
 #include "charge_manager.h"
@@ -1274,3 +1276,5 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DEV_INFO, hc_remote_pd_dev_info,
 #endif /* CONFIG_COMMON_RUNTIME */
 
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
+
+/* LCOV_EXCL_END */
