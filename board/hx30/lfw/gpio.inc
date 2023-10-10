@@ -15,6 +15,8 @@
  */
 GPIO(QMSPI_CS0,	PIN(055),  GPIO_ODR_HIGH)
 
+/* We need to take control of this away from VCI */
+GPIO(EC_ON, PIN(0250), GPIO_OUT_HIGH) /* keep +3VL_EC to power on */
 
 /* Alternate functions GPIO definition */
 
