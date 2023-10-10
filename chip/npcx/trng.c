@@ -118,6 +118,25 @@ struct npcx_trng_state {
 struct npcx_trng_state trng_state = { .trng_init = 0 };
 struct npcx_trng_state *state_p = &trng_state;
 
+uint32_t npcx_trng_power(bool on_off)
+{
+	enum ncl_status status = NCL_STATUS_FAIL;
+
+	status = NCL_DRBG->power(ctx_p, on_off);
+	if (status != NCL_STATUS_OK) {
+		ccprintf("ERROR! DRBG power returned %x\n", status);
+		return status;
+	}
+
+	status = NCL_SHA->power(ctx_p, on_off);
+	if (status != NCL_STATUS_OK) {
+		ccprintf("ERROR! SHA power returned %x\n", status);
+		return status;
+	}
+
+	return status;
+}
+
 void npcx_trng_hw_init(void)
 {
 #ifndef CHIP_VARIANT_NPCX9M8S
@@ -133,15 +152,10 @@ void npcx_trng_hw_init(void)
 		ccprintf("ERROR! Unexpected NCL DRBG context_size = %d\n",
 			 context_size);
 
-	state_p->trng_init = NCL_DRBG->power(ctx_p, true);
+	state_p->trng_init = npcx_trng_power(true);
 	if (state_p->trng_init != NCL_STATUS_OK) {
-		ccprintf("ERROR! DRBG power returned %x\n", state_p->trng_init);
-		return;
-	}
-
-	state_p->trng_init = NCL_SHA->power(ctx_p, true);
-	if (state_p->trng_init != NCL_STATUS_OK) {
-		ccprintf("ERROR! SHA power returned %x\n", state_p->trng_init);
+		ccprintf("ERROR! npcx_trng_power returned %x\n",
+			 state_p->trng_init);
 		return;
 	}
 
@@ -175,13 +189,25 @@ void npcx_trng_hw_init(void)
 			 state_p->trng_init);
 		return;
 	}
+
+	/* Turn off hardware blocks after hw_init, trng_init will power on */
+	state_p->trng_init = npcx_trng_power(false);
+	if (state_p->trng_init != NCL_STATUS_OK) {
+		ccprintf("ERROR! npcx_trng_power returned %x\n",
+			 state_p->trng_init);
+		return;
+	}
 }
 
-/* All initialization is handled at startup by npcx_trng_hw_init. trng_init is
- * provided for compatibility with existing RNG solutions.
- */
 test_mockable void trng_init(void)
 {
+	enum ncl_status status = NCL_STATUS_FAIL;
+
+	status = npcx_trng_power(true);
+	if (status != NCL_STATUS_OK) {
+		ccprintf("ERROR! trng_init failed %x\n", status);
+		software_panic(PANIC_SW_BAD_RNG, task_get_current());
+	}
 }
 
 uint32_t trng_rand(void)
@@ -203,11 +229,13 @@ uint32_t trng_rand(void)
 	return return_value;
 }
 
-/* The TRNG peripheral takes a long time to initialize so this is presently a
- * no-op. It is included for compatibility with existing RNG implementations.
- */
 test_mockable void trng_exit(void)
 {
+	enum ncl_status status = NCL_STATUS_FAIL;
+
+	status = npcx_trng_power(false);
+	if (status != NCL_STATUS_OK)
+		ccprintf("ERROR! trng_exit failed %x\n", status);
 }
 
 /* Shutting down and reinitializing TRNG is time consuming so don't call
@@ -225,11 +253,7 @@ test_mockable void npcx_trng_hw_off(void)
 	if (status != NCL_STATUS_OK)
 		ccprintf("ERROR! DRBG uninstantiate returned %x\r", status);
 
-	status = NCL_DRBG->power(ctx_p, false);
+	status = npcx_trng_power(false);
 	if (status != NCL_STATUS_OK)
-		ccprintf("ERROR! DRBG power returned %x\n", status);
-
-	status = NCL_SHA->power(ctx_p, false);
-	if (status != NCL_STATUS_OK)
-		ccprintf("ERROR! SHA power returned %x\n", status);
+		ccprintf("ERROR! npcx_trng_power returned %x\n", status);
 }
