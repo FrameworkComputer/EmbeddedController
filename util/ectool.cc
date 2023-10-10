@@ -966,6 +966,7 @@ static const char *const ec_feature_names[] = {
 	[EC_FEATURE_TYPEC_AP_VDM_SEND] = "AP directed VDM Request messages",
 	[EC_FEATURE_SYSTEM_SAFE_MODE] = "System Safe Mode support",
 	[EC_FEATURE_ASSERT_REBOOTS] = "Assert reboots",
+	[EC_FEATURE_TOKENIZED_LOGGING] = "Tokenized Logging",
 	[EC_FEATURE_AMD_STB_DUMP] = "AMD STB dump",
 	[EC_FEATURE_MEMORY_DUMP] = "Memory Dump",
 };
