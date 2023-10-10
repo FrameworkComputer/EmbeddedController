@@ -8,6 +8,16 @@ version of LLVM and flags in use on `Sept 19, 2023`.
 
 Fingerprint currently uses clang version `17.0.0` and newlib version `4.1.0`.
 
+Please use toolchain available within the ChromiumOS SDK chroot. See the
+[ChromiumOS Developer Guide](https://chromium.googlesource.com/chromiumos/docs/+/main/developer_guide.md#Building-ChromiumOS)
+for instructions on how to set it up.
+
+-   Prerequisites (most important is depot_tools)
+-   Get the Source
+-   Create a chroot
+-   Run `cros_sdk` from within `~/chromiumos`. The compiler
+    `armv7m-cros-eabi-clang` is available within this chroot.
+
 ## Compiler Flags
 
 The following flags come from the log output from the following build commands:
