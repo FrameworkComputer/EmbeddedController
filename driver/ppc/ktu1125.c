@@ -66,16 +66,25 @@ static int clr_flags(const int port, const int addr, const int flags_to_clear)
 static int set_field(const int port, const int addr, const int shift,
 		     const int field_length, const int field_to_set)
 {
-	int val, rv, mask;
+	int reg_val, new_reg_val;
+	int field_val, field_mask;
+	int rv;
 
-	mask = ((1 << field_length) - 1) << shift;
-	val = (field_to_set << shift) & mask;
-
-	rv = clr_flags(port, addr, mask);
-	if (rv)
+	rv = read_reg(port, addr, &reg_val);
+	if (rv != EC_SUCCESS)
 		return rv;
 
-	return set_flags(port, addr, val);
+	field_mask = (BIT(field_length) - 1) << shift;
+	field_val = (field_to_set << shift) & field_mask;
+
+	new_reg_val = reg_val;
+	new_reg_val &= ~field_mask;
+	new_reg_val |= field_val;
+
+	if (new_reg_val == reg_val)
+		return EC_SUCCESS;
+
+	return write_reg(port, addr, new_reg_val);
 }
 
 #ifdef CONFIG_CMD_PPC_DUMP
