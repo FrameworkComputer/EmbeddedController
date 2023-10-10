@@ -397,21 +397,48 @@ static int ktu1125_set_frs_enable(int port, int enable)
 
 static int ktu1125_vbus_sink_enable(int port, int enable)
 {
-#ifdef CONFIG_USB_PD_VBUS_DETECT_PPC
-	/* Skip if VBUS SNK is already enabled/disabled */
-	if (ktu1125_is_vbus_present(port) == enable)
-		return EC_SUCCESS;
-#endif
+	int sc_reg;
+	int rv;
 
-	/* Select active sink */
-	int rv = clr_flags(port, KTU1125_CTRL_SW_CFG, KTU1125_POW_MODE);
-
-	if (rv) {
-		ppc_err_prints("Could not select SNK path", port, rv);
+	rv = read_reg(port, KTU1125_CTRL_SW_CFG, &sc_reg);
+	if (rv != EC_SUCCESS) {
+		ppc_err_prints("read CTRL_SW_CFG", port, rv);
 		return rv;
 	}
 
-	return ktu1125_power_path_control(port, enable);
+	if (enable) {
+		/* enable sink path */
+		if ((sc_reg & (KTU1125_SW_AB_EN | KTU1125_POW_MODE)) ==
+		    KTU1125_SW_AB_EN) {
+			/* already in sink mode */
+			return EC_SUCCESS;
+		}
+		sc_reg &= ~KTU1125_POW_MODE;
+		sc_reg |= KTU1125_SW_AB_EN;
+	} else {
+		/* disable sink path */
+		if ((sc_reg & KTU1125_SW_AB_EN) == 0) {
+			/* SYSA and SYB power paths already disabled */
+			return EC_SUCCESS;
+		}
+		if (sc_reg & KTU1125_POW_MODE) {
+			/*
+			 * SYSA sink path off, SYSB source path on
+			 * i.e. port in source mode
+			 */
+			return EC_SUCCESS;
+		}
+		/* port in sink mode, shut off power paths */
+		sc_reg &= ~KTU1125_SW_AB_EN;
+	}
+
+	rv = write_reg(port, KTU1125_CTRL_SW_CFG, sc_reg);
+	if (rv != EC_SUCCESS) {
+		ppc_err_prints("write CTRL_SW_CFG", port, rv);
+		return rv;
+	}
+
+	return EC_SUCCESS;
 }
 
 static int ktu1125_vbus_source_enable(int port, int enable)
