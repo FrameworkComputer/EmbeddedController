@@ -81,7 +81,8 @@ armv7m-cros-eabi-clang -mcpu=cortex-m7
 
 ### LTO Enable Flags
 
-If we compile with `CONFIG_LTO` enabled. the following flag is added to compiler and linker
+If we compile with `CONFIG_LTO` enabled. the following flag is added to compiler
+and linker
 [here](https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/core/cortex-m/build.mk;l=39-42;drc=cc1e6b32d29f3061bf5e8a2b8954d6ef1aaaecff):
 
 ```bash
