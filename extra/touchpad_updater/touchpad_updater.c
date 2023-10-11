@@ -11,6 +11,7 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <endian.h>
 #include <getopt.h>
 #include <libusb.h>
 #include <poll.h>
@@ -28,12 +29,13 @@ static char *firmware_binary = "144.0_2.0.bin"; /* firmware blob */
 #define MAX_FW_PAGE_SIZE 512
 #define MAX_FW_PAGE_COUNT 1024
 #define MAX_FW_SIZE (128 * 1024)
+#define I2C_RESPONSE_OFFSET 4
 
 static uint8_t fw_data[MAX_FW_SIZE];
 int fw_page_count;
 int fw_page_size;
 int fw_size;
-uint8_t ic_type;
+uint16_t ic_type;
 int iap_version;
 
 /* Utility functions */
@@ -378,26 +380,17 @@ static int elan_write_cmd(int reg, int cmd)
 }
 
 /* Elan trackpad firmware information related */
+#define ETP_I2C_PATTERN_CMD 0x0100
+#define ETP_I2C_IC_TYPE_CMD 0x0103
 #define ETP_I2C_IAP_VERSION_CMD 0x0110
+#define ETP_I2C_IC_TYPE_P0_CMD 0x0110
+#define ETP_I2C_IAP_VERSION_P0_CMD 0x0111
 #define ETP_I2C_FW_VERSION_CMD 0x0102
 #define ETP_I2C_IAP_CHECKSUM_CMD 0x0315
 #define ETP_I2C_FW_CHECKSUM_CMD 0x030F
-#define ETP_I2C_OSM_VERSION_CMD 0x0103
 
-static int elan_get_version(int is_iap)
+static void elan_get_fw_info(void)
 {
-	elan_read_cmd(is_iap ? ETP_I2C_IAP_VERSION_CMD :
-			       ETP_I2C_FW_VERSION_CMD);
-	return le_bytes_to_int(rx_buf + 4);
-}
-
-static void elan_get_ic_page_count(void)
-{
-	elan_read_cmd(ETP_I2C_OSM_VERSION_CMD);
-
-	ic_type = rx_buf[5];
-	printf("ic_type: %02x\n", ic_type);
-
 	switch (ic_type) {
 	case 0x09:
 		fw_page_count = 768;
@@ -408,14 +401,14 @@ static void elan_get_ic_page_count(void)
 	case 0x00:
 	case 0x10:
 	case 0x14:
+	case 0x15:
 		fw_page_count = 1024;
 		break;
 	default:
 		request_exit("The IC type is not supported.\n");
 	}
 
-	iap_version = elan_get_version(1);
-	if (ic_type == 0x14 && iap_version >= 2) {
+	if ((ic_type == 0x14 || ic_type == 0x15) && iap_version >= 2) {
 		fw_page_count /= 8;
 		fw_page_size = 512;
 	} else if (ic_type >= 0x0D && iap_version >= 1) {
@@ -433,22 +426,52 @@ static int elan_get_checksum(int is_iap)
 	return le_bytes_to_int(rx_buf + 4);
 }
 
-static uint16_t elan_get_fw_info(void)
+static int elan_i2c_get_pattern(void)
 {
-	int fw_version = -1;
-	uint16_t iap_checksum = 0xffff;
-	uint16_t fw_checksum = 0xffff;
+	if (elan_read_cmd(ETP_I2C_PATTERN_CMD) != 0) {
+		return -1;
+	}
 
-	printf("Querying device info...\n");
-	fw_checksum = elan_get_checksum(0);
-	iap_checksum = elan_get_checksum(1);
-	fw_version = elan_get_version(0);
-	iap_version = elan_get_version(1);
-	printf("IAP  version: %4x, FW  version: %4x\n", iap_version,
-	       fw_version);
-	printf("IAP checksum: %4x, FW checksum: %4x\n", iap_checksum,
-	       fw_checksum);
-	return fw_checksum;
+	/*
+	 * Not all versions of firmware implement "get pattern" command. When
+	 * this command is not implemented the device will respond with 0xFFFF,
+	 * which we will treat as "old" pattern 0.
+	 */
+	int response = le16toh(*(uint16_t *)(rx_buf + I2C_RESPONSE_OFFSET));
+
+	return (response == 0xFFFF) ? 0 : rx_buf[1 + I2C_RESPONSE_OFFSET];
+}
+
+static void elan_query_product(void)
+{
+	int pattern = elan_i2c_get_pattern();
+
+	if (pattern == -1) {
+		request_exit("Failed to read ELAN device pattern");
+	}
+	printf("Pattern of ELAN touchpad: %04X\n", pattern);
+
+	if (pattern >= 0x01) {
+		if (elan_read_cmd(ETP_I2C_IC_TYPE_CMD) != 0) {
+			request_exit("Failed to read IC type");
+		}
+		ic_type = be16toh(*(uint16_t *)(rx_buf + I2C_RESPONSE_OFFSET));
+
+		if (elan_read_cmd(ETP_I2C_IAP_VERSION_CMD)) {
+			request_exit("Failed to read IAP version");
+		}
+		iap_version = rx_buf[1 + I2C_RESPONSE_OFFSET];
+	} else {
+		if (elan_read_cmd(ETP_I2C_IC_TYPE_P0_CMD) != 0) {
+			request_exit("Failed to read IC type");
+		}
+		ic_type = rx_buf[0 + I2C_RESPONSE_OFFSET];
+
+		if (elan_read_cmd(ETP_I2C_IAP_VERSION_P0_CMD)) {
+			request_exit("Failed to read IAP version");
+		}
+		iap_version = rx_buf[0 + I2C_RESPONSE_OFFSET];
+	}
 }
 
 /* Update preparation */
@@ -610,10 +633,11 @@ int main(int argc, char *argv[])
 	register_sigaction();
 
 	/*
-	 * Judge IC type  and get page count first.
-	 * Then check the FW file.
+	 * Read pattern , then based on pattern to determine what command to
+	 * send to get IC type, IAP version, etc
 	 */
-	elan_get_ic_page_count();
+	elan_query_product();
+	elan_get_fw_info();
 	fw_size = fw_page_count * fw_page_size;
 	printf("FW has %d bytes x %d pages\n", fw_page_size, fw_page_count);
 
@@ -623,12 +647,6 @@ int main(int argc, char *argv[])
 		request_exit("Cannot find binary: %s\n", firmware_binary);
 	if (fread(fw_data, 1, fw_size, f) != (unsigned int)fw_size)
 		request_exit("binary size mismatch, expect %d\n", fw_size);
-
-	/*
-	 * It is possible that you are not able to get firmware info. This
-	 * might due to an incomplete update last time
-	 */
-	elan_get_fw_info();
 
 	/* Trigger an I2C transaction of expecting reading of 633 bytes. */
 	if (extended_i2c_exercise) {
