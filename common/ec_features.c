@@ -97,7 +97,7 @@ uint32_t get_feature_flags0(void)
 #ifdef CONFIG_HOSTCMD_RTC
 			  | EC_FEATURE_MASK_0(EC_FEATURE_RTC)
 #endif
-#ifdef CONFIG_SPI_FP_PORT
+#if defined(CONFIG_SPI_FP_PORT) || defined(CONFIG_BOARD_FINGERPRINT)
 			  | EC_FEATURE_MASK_0(EC_FEATURE_FINGERPRINT)
 #endif
 #ifdef HAS_TASK_CENTROIDING
