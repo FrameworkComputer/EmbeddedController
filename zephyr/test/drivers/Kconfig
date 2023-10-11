@@ -172,6 +172,12 @@ config LINK_TEST_SUITE_RT1739
 	  Link tests rt1739s test suite for the PPC driver related function
 	  tests.
 
+config LINK_TEST_SUITE_KTU1125
+	bool "Link and test the ktu1125 tests"
+	help
+	  Link tests ktu1125 test suite for the PPC driver related function
+	  tests.
+
 config LINK_TEST_SUITE_RT9490
 	bool "Link and test the rt9490 tests"
 

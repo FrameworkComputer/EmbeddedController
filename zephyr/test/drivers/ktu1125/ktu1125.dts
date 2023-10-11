@@ -1,0 +1,24 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	usbc {
+		port1@1 {
+			compatible = "named-usbc-port";
+			ppc = <&ktu1125_emul>;
+		};
+	};
+};
+
+&i2c2 {
+	status="okay";
+
+	ktu1125_emul: ktu1125@78 {
+		compatible = "zephyr,ktu1125-emul", "kinetic,ktu1125";
+		status = "okay";
+		reg = <0x78>;
+		irq-gpios = <&gpio0 13 GPIO_ACTIVE_LOW>;
+	};
+};
