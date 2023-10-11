@@ -186,6 +186,14 @@
 		reg = <0x00f01cc0 0x0040>;
 	};
 
+	i2c_ctrl3: i2c@f03680 {
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x00f03680 0x0080>;
+	};
+
 	i2c_ctrl4: i2c@f03500 {
 		compatible = "zephyr,i2c-emul-controller";
 		clock-frequency = <I2C_BITRATE_STANDARD>;
