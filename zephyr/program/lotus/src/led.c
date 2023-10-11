@@ -21,6 +21,7 @@
 #include "led.h"
 #include "led_common.h"
 #include "power.h"
+#include "power_sequence.h"
 #include "system.h"
 #include "util.h"
 
@@ -442,7 +443,7 @@ static void board_led_set_power(void)
 		return;
 	}
 
-	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
+	if (check_s0ix_status()) {
 		breath_led_run(1);
 		return;
 	}
