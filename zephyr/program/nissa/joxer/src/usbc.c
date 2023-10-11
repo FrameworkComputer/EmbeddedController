@@ -12,6 +12,7 @@
 #include "hooks.h"
 #include "system.h"
 #include "usb_mux.h"
+#include "watchdog.h"
 
 #include <zephyr/logging/log.h>
 
@@ -334,6 +335,15 @@ void board_process_pd_alert(int port)
 	 */
 	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl)))
 		schedule_deferred_pd_interrupt(port);
+
+	/*
+	 * b:301055899: There are some peripheral display docks will
+	 * issue HPDs in the short time. TCPM must wake up pd_task
+	 * continually to service the events. They may cause the
+	 * watchdog to reset. This patch placates watchdog after
+	 * receiving dp_attention.
+	 */
+	watchdog_reload();
 }
 
 int pd_snk_is_vbus_provided(int port)
