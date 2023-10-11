@@ -506,6 +506,99 @@ int host_cmd_motion_sense_tablet_mode_lid_angle(
 	return ec_cmd_motion_sense_cmd_v1(NULL, &params, response);
 }
 
+int host_cmd_cec_set(int port, enum cec_command cmd, uint8_t val)
+{
+	struct ec_params_cec_set params = {
+		.cmd = cmd,
+		.port = port,
+		.val = val,
+	};
+
+	return ec_cmd_cec_set(NULL, &params);
+}
+
+int host_cmd_cec_get(int port, enum cec_command cmd,
+		     struct ec_response_cec_get *response)
+{
+	struct ec_params_cec_get params = {
+		.cmd = cmd,
+		.port = port,
+	};
+
+	return ec_cmd_cec_get(NULL, &params, response);
+}
+
+int host_cmd_cec_write(const uint8_t *msg, uint8_t msg_len)
+{
+	struct ec_params_cec_write params;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_CEC_WRITE_MSG, 0, params);
+
+	memcpy(params.msg, msg, MIN(msg_len, sizeof(params.msg)));
+	args.params_size = msg_len;
+
+	return host_command_process(&args);
+}
+
+int host_cmd_cec_write_v1(int port, const uint8_t *msg, uint8_t msg_len)
+{
+	struct ec_params_cec_write_v1 params_v1;
+
+	params_v1.port = port;
+	params_v1.msg_len = msg_len;
+	memcpy(params_v1.msg, msg, MIN(msg_len, sizeof(params_v1.msg)));
+
+	return ec_cmd_cec_write_v1(NULL, &params_v1);
+}
+
+int host_cmd_cec_read(int port, struct ec_response_cec_read *response)
+{
+	struct ec_params_cec_read params = {
+		.port = port,
+	};
+
+	return ec_cmd_cec_read(NULL, &params, response);
+}
+
+static int
+host_cmd_get_next_event_v2(struct ec_response_get_next_event_v1 *response)
+{
+	struct host_cmd_handler_args args = BUILD_HOST_COMMAND_RESPONSE(
+		EC_CMD_GET_NEXT_EVENT, 2, *response);
+
+	return host_command_process(&args);
+}
+
+static int get_next_event_of_type(struct ec_response_get_next_event_v1 *event,
+				  enum ec_mkbp_event event_type)
+{
+	/* Read MKBP events until we find one of the right type */
+	while (host_cmd_get_next_event_v2(event) == EC_RES_SUCCESS) {
+		if ((event->event_type & EC_MKBP_EVENT_TYPE_MASK) == event_type)
+			return 0;
+	}
+	/* No more events */
+	return -1;
+}
+
+int get_next_cec_mkbp_event(struct ec_response_get_next_event_v1 *event)
+{
+	return get_next_event_of_type(event, EC_MKBP_EVENT_CEC_EVENT);
+}
+
+int get_next_cec_message(struct ec_response_get_next_event_v1 *event)
+{
+	return get_next_event_of_type(event, EC_MKBP_EVENT_CEC_MESSAGE);
+}
+
+bool cec_event_matches(struct ec_response_get_next_event_v1 *event, int port,
+		       enum mkbp_cec_event events)
+{
+	return ((EC_MKBP_EVENT_CEC_GET_PORT(event->data.cec_events) == port) &&
+		(EC_MKBP_EVENT_CEC_GET_EVENTS(event->data.cec_events) ==
+		 events));
+}
+
 void host_cmd_typec_discovery(int port, enum typec_partner_type partner_type,
 			      void *response, size_t response_size)
 {

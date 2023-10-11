@@ -486,6 +486,83 @@ int host_cmd_motion_sense_tablet_mode_lid_angle(
 	struct ec_response_motion_sense *response);
 
 /**
+ * Run host command to set CEC parameters.
+ *
+ * @param port	  CEC port number
+ * @param cmd	  Parameter to set
+ * @param val	  Value to set the parameter to
+ * @return	  Return value from the host command
+ */
+int host_cmd_cec_set(int port, enum cec_command cmd, uint8_t val);
+
+/**
+ * Run host command to get CEC parameters.
+ *
+ * @param port	    CEC port number
+ * @param cmd	    Parameter to get
+ * @param response  Response struct containing parameter value
+ * @return	    Return value from the host command
+ */
+int host_cmd_cec_get(int port, enum cec_command cmd,
+		     struct ec_response_cec_get *response);
+
+/**
+ * Run v0 host command to write a CEC message.
+ * Note, v0 always operates on port 0.
+ *
+ * @param msg	    Buffer containing the message
+ * @param msg_len   Message length in bytes
+ * @return	    Return value from the host command
+ */
+int host_cmd_cec_write(const uint8_t *msg, uint8_t msg_len);
+
+/**
+ * Run v1 host command to write a CEC message.
+ *
+ * @param port	    CEC port number
+ * @param msg	    Buffer containing the message
+ * @param msg_len   Message length in bytes
+ * @return	    Return value from the host command
+ */
+int host_cmd_cec_write_v1(int port, const uint8_t *msg, uint8_t msg_len);
+
+/**
+ * Run host command to read a CEC message.
+ *
+ * @param port	    CEC port number
+ * @param response  Response struct containing the message read
+ * @return	    Return value from the host command
+ */
+int host_cmd_cec_read(int port, struct ec_response_cec_read *response);
+
+/**
+ * Read MKBP events until we find one of type EC_MKBP_EVENT_CEC_EVENT.
+ *
+ * @param event	    The MKBP event on success
+ * @return	    0 if an event was found, -1 otherwise
+ */
+int get_next_cec_mkbp_event(struct ec_response_get_next_event_v1 *event);
+
+/**
+ * Read MKBP events until we find one of type EC_MKBP_EVENT_CEC_MESSAGE.
+ *
+ * @param event	    The MKBP event on success
+ * @return	    0 if an event was found, -1 otherwise
+ */
+int get_next_cec_message(struct ec_response_get_next_event_v1 *event);
+
+/**
+ * Check if the given MKBP event matches the given port and event type.
+ *
+ * @param event	    An MKBP event of type EC_MKBP_EVENT_CEC_EVENT.
+ * @param port	    Port to match against
+ * @param events    Event type to match against
+ * @return	    true if the event matches, false otherwise
+ */
+bool cec_event_matches(struct ec_response_get_next_event_v1 *event, int port,
+		       enum mkbp_cec_event events);
+
+/**
  * Run the host command to get the PD discovery responses.
  *
  * @param port          The USB-C port number
