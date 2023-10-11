@@ -28,3 +28,7 @@ endif()
 add_subdirectory(zephyr)
 add_subdirectory(common)
 add_subdirectory(third_party)
+
+if (EXISTS "private/fingerprint")
+  add_subdirectory(private/fingerprint)
+endif()

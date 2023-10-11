@@ -5,3 +5,4 @@
 rsource "zephyr/Kconfig"
 rsource "common/Kconfig"
 rsource "third_party/Kconfig"
+orsource "private/fingerprint/Kconfig"
