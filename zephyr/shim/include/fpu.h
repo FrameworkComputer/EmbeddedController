@@ -16,7 +16,7 @@
  * This code is taken from core/cortex-m/include/fpu.h
  */
 
-#ifdef CONFIG_FPU
+#if defined(CONFIG_FPU) && defined(CONFIG_MINIMAL_LIBC)
 
 /* Implementation for Cortex-M */
 #ifdef CONFIG_CPU_CORTEX_M
@@ -61,6 +61,6 @@ static inline float fabsf(float v)
 #error "Unsupported core: please add an implementation"
 #endif
 
-#endif /* CONFIG_FPU */
+#endif /* CONFIG_FPU && CONFIG_MINIMAL_LIBC */
 
 #endif /* __CROS_EC_MATH_H */
