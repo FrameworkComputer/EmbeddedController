@@ -90,6 +90,8 @@ enum corsola_db_type corsola_get_db_type(void)
 		CPRINTS("Error retrieving CBI FW_CONFIG field %d", DB);
 	} else if (val == DB_NONE) {
 		db = CORSOLA_DB_NONE;
+	} else if (val == DB_USBA_HDMI) {
+		db = CORSOLA_DB_HDMI;
 	}
 #endif
 

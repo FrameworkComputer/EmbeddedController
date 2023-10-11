@@ -357,6 +357,10 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "chinchou",
+        board = "chinchou",
+    )
+    ec_target(
         name = "chocodile_vpdmcu",
         board = "chocodile_vpdmcu",
         chip = "stm32",
