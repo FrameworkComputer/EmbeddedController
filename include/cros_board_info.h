@@ -27,10 +27,13 @@ extern "C" {
 #define CBI_IMAGE_SIZE               \
 	(sizeof(struct cbi_header) + \
 	 (2 * (sizeof(struct cbi_data) + sizeof(uint32_t))))
+#define CBI_FLASH_SIZE CBI_IMAGE_SIZE
 #elif defined(CONFIG_CBI_FLASH)
 #define CBI_IMAGE_SIZE DT_PROP(DT_NODELABEL(cbi_flash), image_size)
+#define CBI_FLASH_SIZE DT_PROP(DT_NODELABEL(cbi_flash), size)
 #else
 #define CBI_IMAGE_SIZE CBI_IMAGE_SIZE_EEPROM
+#define CBI_FLASH_SIZE CBI_IMAGE_SIZE
 #endif
 
 static const uint8_t cbi_magic[] = { 0x43, 0x42, 0x49 }; /* 'C' 'B' 'I' */

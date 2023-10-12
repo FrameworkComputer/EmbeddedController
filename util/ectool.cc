@@ -9149,6 +9149,136 @@ static int cmd_cbi(int argc, char *argv[])
 	return -1;
 }
 
+static void cmd_cbi_bin_help(char *cmd)
+{
+	fprintf(stderr,
+		"  Usage: %s read <file> <size>\n"
+		"    read from cbi in flash or EEPROM into file.\n"
+		"  Usage: %s write <file> <size>\n"
+		"    write from file into cbi flash or EEPROM.\n",
+		cmd, cmd);
+}
+
+/*
+ * Read or Write to CBI binary
+ */
+static int cmd_cbi_bin(int argc, char *argv[])
+{
+	char *e;
+	int rv;
+	int packet_max_size = 64;
+
+	if (argc != 4) {
+		fprintf(stderr, "Invalid number of params\n");
+		cmd_cbi_bin_help(argv[0]);
+		return -1;
+	}
+
+	if (!strcasecmp(argv[1], "read")) {
+		struct ec_params_get_cbi_bin p = { 0 };
+		int i;
+
+		FILE *fp = fopen(argv[2], "wb");
+
+		if (!fp) {
+			fprintf(stderr, "\nCan't open %s: %s\n", argv[2],
+				strerror(errno));
+			return -1;
+		}
+
+		int size = strtol(argv[3], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad size\n");
+			return -1;
+		}
+
+		for (i = 0; i < size; i += packet_max_size) {
+			p.size = MIN(packet_max_size, size - i);
+			p.offset = i;
+
+			rv = ec_command(EC_CMD_CBI_BIN_READ, 0, &p, sizeof(p),
+					ec_inbuf, ec_max_insize);
+			if (rv < 0) {
+				fprintf(stderr, "Error code: %d\n", rv);
+				return rv;
+			}
+			if (rv < sizeof(uint8_t)) {
+				fprintf(stderr, "Invalid size: %d\n", rv);
+				return -1;
+			}
+			fwrite((uint8_t *)ec_inbuf, sizeof(uint8_t), p.size,
+			       fp);
+		}
+
+		fclose(fp);
+		printf("Read successful.\n");
+		return 0;
+	} else if (!strcasecmp(argv[1], "write")) {
+		struct ec_params_set_cbi_bin *p =
+			(struct ec_params_set_cbi_bin *)ec_outbuf;
+		uint8_t buffer[packet_max_size];
+		int i;
+
+		FILE *fp = fopen(argv[2], "rb");
+
+		if (!fp) {
+			fprintf(stderr, "\nCan't open %s: %s\n", argv[2],
+				strerror(errno));
+			return -1;
+		}
+
+		int size = strtol(argv[3], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad size\n");
+			return -1;
+		}
+
+		for (i = 0; i < size; i += packet_max_size) {
+			memset(p, 0, ec_max_outsize);
+
+			p->size = MIN(packet_max_size, size - i);
+			p->offset = i;
+			if (p->offset == 0) {
+				p->flags |= EC_CBI_BIN_BUFFER_CLEAR;
+			}
+			if (p->size + p->offset == size) {
+				p->flags |= EC_CBI_BIN_BUFFER_WRITE;
+			}
+
+			uint16_t read_len =
+				fread(buffer, sizeof(*buffer), p->size, fp);
+
+			/*
+			 * p->data is 0 initialized so if size is bigger than
+			 * file length the extra length is padded with 0.
+			 */
+			memcpy(p->data, buffer, read_len);
+
+			rv = ec_command(EC_CMD_CBI_BIN_WRITE, 0, p,
+					sizeof(*p) + p->size, NULL, 0);
+			if (rv < 0) {
+				if (rv == -EC_RES_ACCESS_DENIED - EECRESULT)
+					fprintf(stderr,
+						"Write-protect is enabled or "
+						"EC explicitly refused to change the "
+						"requested field.\n");
+				else
+					fprintf(stderr, "Error code: %d\n", rv);
+				return rv;
+			}
+		}
+
+		fclose(fp);
+		printf("Write successful.\n");
+		return 0;
+	}
+
+	fprintf(stderr, "Invalid sub command: %s\n", argv[1]);
+	cmd_cbi_bin_help(argv[0]);
+
+	return -1;
+}
+
 int cmd_chipinfo(int argc, char *argv[])
 {
 	struct ec_response_get_chip_info info;
@@ -12128,6 +12258,7 @@ const struct command commands[] = {
 	{ "button", cmd_button,
 	  "[vup|vdown|rec] <Delay-ms>\n\tSimulates button press." },
 	{ "cbi", cmd_cbi, "\n\tGet/Set/Remove Cros Board Info." },
+	{ "cbibin", cmd_cbi_bin, "\n\tRead/Write Cros Board Info into file." },
 	{ "cec", cmd_cec, "\n\tRead or write CEC messages and settings." },
 	{ "chargecontrol", cmd_charge_control,
 	  "\n\tForce the battery to stop charging or discharge." },
