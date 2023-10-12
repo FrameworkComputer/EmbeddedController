@@ -182,8 +182,23 @@ static void flash_get_status(uint8_t *sr1, uint8_t *sr2)
 	crec_flash_lock_mapped_storage(0);
 }
 
-static void flash_set_status(uint8_t sr1, uint8_t sr2)
+/* Check if Status Register Protect bit 0 is set */
+static int flash_check_status_reg_srp(void)
 {
+	uint8_t sr1, sr2;
+
+	flash_get_status(&sr1, &sr2);
+
+	return !!(sr1 & SPI_FLASH_SR1_SRP0);
+}
+
+static int flash_set_status(uint8_t sr1, uint8_t sr2)
+{
+	if (flash_check_status_reg_srp() &&
+	    (crec_flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED)) {
+		return EC_ERROR_ACCESS_DENIED;
+	}
+
 	/* Lock physical flash operations */
 	crec_flash_lock_mapped_storage(1);
 
@@ -202,6 +217,8 @@ static void flash_set_status(uint8_t sr1, uint8_t sr2)
 
 	/* Unlock physical flash operations */
 	crec_flash_lock_mapped_storage(0);
+
+	return EC_SUCCESS;
 }
 
 static void flash_set_quad_enable(int enable)
@@ -300,6 +317,8 @@ static void flash_uma_lock(int enable)
 
 static int flash_set_status_for_prot(int reg1, int reg2)
 {
+	int rv;
+
 	/*
 	 * Writing SR regs will fail if our UMA lock is enabled. If WP
 	 * is deasserted then remove the lock and allow the write.
@@ -326,7 +345,11 @@ static int flash_set_status_for_prot(int reg1, int reg2)
 	flash_protect_int_flash(!gpio_get_level(GPIO_WP_L));
 #endif /*_CONFIG_WP_ACTIVE_HIGH_*/
 #endif
-	flash_set_status(reg1, reg2);
+
+	rv = flash_set_status(reg1, reg2);
+	if (rv != EC_SUCCESS) {
+		return rv;
+	}
 
 	spi_flash_reg_to_protect(reg1, reg2, &addr_prot_start,
 				 &addr_prot_length);
