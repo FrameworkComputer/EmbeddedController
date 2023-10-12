@@ -37,6 +37,33 @@ DECLARE_DEFERRED(charger_chips_init_retry);
 static void board_check_current(void);
 DECLARE_DEFERRED(board_check_current);
 
+static void board_ina236_init(void)
+{
+	int rv;
+
+	/* TODO(crosbug.com/p/29730): assume 1mA/LSB, revisit later */
+	rv = ina2xx_write(0, INA2XX_REG_CALIB, 0x0831);
+
+	if (rv != EC_SUCCESS)
+		CPRINTS("ina236 write calib fail");
+
+	rv = ina2xx_write(0, INA2XX_REG_CONFIG, 0x4007);
+
+	if (rv != EC_SUCCESS)
+		CPRINTS("ina236 write config fail");
+
+	rv = ina2xx_write(0, INA2XX_REG_ALERT, 0x3E80);
+
+	if (rv != EC_SUCCESS)
+		CPRINTS("ina236 write alert fail");
+
+	rv = ina2xx_write(0, INA2XX_REG_MASK, 0x8008);
+
+	if (rv != EC_SUCCESS)
+		CPRINTS("ina236 write mask fail");
+}
+
+
 static void charger_chips_init(void)
 {
 	int chip;
@@ -110,6 +137,10 @@ static void charger_chips_init(void)
 	/* TODO: should we need to talk to PD chip after initial complete ? */
 	hook_call_deferred(&board_check_current_data, 10*MSEC);
 	CPRINTS("ISL9241 customized initial complete!");
+
+	/* Initial the INA236 */
+	board_ina236_init();
+
 	return;
 
 init_fail:
