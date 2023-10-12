@@ -23,11 +23,28 @@
 
 		nct38xx_emul: nct38xx-tcpc {
 			compatible = "nuvoton,nct38xx-tcpc";
+			gpio-dev = < &nct3807_C0 >;
 			tcpc-flags = <(
 				TCPC_FLAGS_VBUS_MONITOR |
 				TCPC_FLAGS_ALERT_OD |
 				TCPC_FLAGS_CONTROL_VCONN |
 				TCPC_FLAGS_CONTROL_FRS)>;
+		};
+
+		nct3807_C0: nct38xx-gpio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "nuvoton,nct38xx-gpio";
+
+			ioex_port1: gpio@0 {
+				compatible = "nuvoton,nct38xx-gpio-port";
+				reg = <0x0>;
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <8>;
+				pin_mask = <0xdc>;
+				pinmux_mask = <0xff>;
+			};
 		};
 	};
 };

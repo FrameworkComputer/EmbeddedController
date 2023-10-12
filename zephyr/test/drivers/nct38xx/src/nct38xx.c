@@ -523,3 +523,29 @@ ZTEST(nct38xx, test_nct3807_handle_fault)
 	zassert_ok(rv);
 	zassert_false(val & TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT);
 }
+
+/* Test nct38xx_lock. */
+ZTEST(nct38xx, test_mfd_lock)
+{
+	int rv;
+	uint16_t val;
+	uint8_t reg;
+
+	rv = nct38xx_tcpm_init(NCT38XX_PORT);
+	zassert_ok(rv);
+
+	/* Perform a tcpc_xfer(), which utilizes the multi function device
+	 * locking. This is an indirect test of the locking as there are no
+	 * side effects that we can check to confirm the lock was obtained.
+	 */
+
+	reg = TCPC_REG_ALERT_MASK;
+
+	/* Test reading value using tcpc_xfer() function. We only need
+	 * verify that the operation completed, the data returned is not
+	 * relevant to the test.
+	 */
+	zassert_equal(EC_SUCCESS,
+		      tcpc_xfer(NCT38XX_PORT, &reg, 1, (uint8_t *)&val, 2),
+		      NULL);
+}
