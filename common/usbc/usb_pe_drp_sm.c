@@ -625,6 +625,12 @@ static struct policy_engine {
 	uint32_t ado;
 	mutex_t ado_lock;
 
+	/*
+	 * Flag to indicate that the timeout of the current VDM request should
+	 * be extended
+	 */
+	bool vdm_request_extend_timeout;
+
 	/* Counters */
 
 	/*
@@ -5805,13 +5811,27 @@ static void pe_vdm_send_request_run(int port)
 	if (pd_timer_is_expired(port, PE_TIMER_VDM_RESPONSE)) {
 		CPRINTF("VDM %s Response Timeout\n",
 			pe[port].tx_type == TCPCI_MSG_SOP ? "Port" : "Cable");
-		/*
-		 * Flag timeout so child state can mark appropriate discovery
-		 * item as failed.
-		 */
-		PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_TIMEOUT);
 
-		set_state_pe(port, get_last_state_pe(port));
+		/*
+		 * If timeout expires, extend it and keep waiting.
+		 * Maximum timeout will be approximately 3x the initial,
+		 * spec-compliant timeout (~90ms). This is approximately 2x the
+		 * highest observed time a partner has taken to respond.
+		 */
+		if (!pe[port].vdm_request_extend_timeout) {
+			CPRINTS("No response: extending VDM request timeout");
+			pd_timer_enable(port, PE_TIMER_VDM_RESPONSE,
+					PD_T_VDM_SNDR_RSP * 2);
+			pe[port].vdm_request_extend_timeout = true;
+		} else {
+			/*
+			 * Flag timeout so child state can mark appropriate
+			 * discovery item as failed.
+			 */
+			PE_SET_FLAG(port, PE_FLAGS_VDM_REQUEST_TIMEOUT);
+
+			set_state_pe(port, get_last_state_pe(port));
+		}
 	}
 }
 
@@ -5827,6 +5847,8 @@ static void pe_vdm_send_request_exit(int port)
 	pe[port].tx_type = TCPCI_MSG_INVALID;
 
 	pd_timer_disable(port, PE_TIMER_VDM_RESPONSE);
+
+	pe[port].vdm_request_extend_timeout = false;
 }
 
 uint32_t pd_compose_svdm_req_header(int port, enum tcpci_msg_type type,
