@@ -247,6 +247,12 @@ void s0ix_status_handle(void)
 		task_wake(TASK_ID_CHIPSET);
 }
 DECLARE_HOOK(HOOK_TICK, s0ix_status_handle, HOOK_PRIO_DEFAULT);
+
+int check_s0ix_status(void)
+{
+	return system_in_s0ix;
+}
+
 #endif
 
 void chipset_reset(enum chipset_shutdown_reason reason)
