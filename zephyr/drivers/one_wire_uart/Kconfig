@@ -7,5 +7,22 @@ config PLATFORM_EC_ONE_WIRE_UART
 	depends on DT_HAS_CROS_EC_ONE_WIRE_UART_ENABLED
 	default y
 	help
-	  Enable the driver for communication between tablet and detachable
-	  keyboard over one-wire UART.
+	  Enable the driver for the communication protocol  over one-wire UART.
+
+config PLATFORM_EC_ONE_WIRE_UART_TABLET
+	bool "One-wire uart tablet module"
+	depends on PLATFORM_EC_ONE_WIRE_UART
+	help
+	  Enable the module for tablet device.
+
+	  This module receives input events over one-wire UART from a paired
+	  keyboard device, and forwards the events to AP.
+
+config PLATFORM_EC_ONE_WIRE_UART_KEYBOARD
+	bool "One-wire uart keyboard module"
+	depends on PLATFORM_EC_ONE_WIRE_UART
+	help
+	  Enable the module for keyboard device.
+
+	  This module processes the input events (e.g. keyboard/touchpad) and
+	  send them over one-wire UART to a paired tablet device.

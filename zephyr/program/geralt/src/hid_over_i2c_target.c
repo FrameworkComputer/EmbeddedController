@@ -4,9 +4,8 @@
  */
 
 #include "drivers/one_wire_uart.h"
-#include "hid_over_i2c_target.h"
 #include "hooks.h"
-#include "roach_cmds.h"
+#include "usb_hid_touchpad.h"
 
 #include <string.h>
 
