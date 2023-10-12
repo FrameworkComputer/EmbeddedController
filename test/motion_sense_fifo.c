@@ -424,6 +424,7 @@ static int test_check_ap_interval_set_one_sample(void)
 	int read_count;
 
 	/* The AP needs data every sample (200 Hz). */
+	motion_sensors[0].config[SENSOR_CONFIG_AP].odr = 200000; /* mHz */
 	motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate = 5000; /* us */
 	motion_sensors[0].oversampling_ratio = 1;
 	motion_sense_set_data_period(0, 5000 /* us */);
@@ -462,6 +463,7 @@ static int test_check_ap_interval_set_multiple_sample(void)
 	int read_count;
 
 	/* The AP needs data every 2 samples. */
+	motion_sensors[0].config[SENSOR_CONFIG_AP].odr = 200000; /* mHz */
 	motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate = 10000; /* us */
 	motion_sensors[0].oversampling_ratio = 1;
 	motion_sense_set_data_period(0, 5000 /* us */);

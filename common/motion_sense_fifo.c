@@ -17,14 +17,6 @@
 
 #define CPRINTS(format, args...) cprints(CC_MOTION_SENSE, format, ##args)
 
-/*
- * Adjustment in us to ec rate when calculating interrupt interval:
- * To be sure the EC will send an interrupt even if it finishes processing
- * events slightly earlier than the previous period.
- */
-#define MOTION_SENSOR_INT_ADJUSTMENT_US \
-	(CONFIG_MOTION_MIN_SENSE_WAIT_TIME * MSEC / 10)
-
 /**
  * Staged metadata for the fifo queue.
  * @read_ts: The timestamp at which the staged data was read. This value will
@@ -464,10 +456,36 @@ void motion_sense_fifo_stage_data(struct ec_response_motion_sensor_data *data,
 			fifo_staged.read_ts = __hw_clock_source_read();
 		fifo_stage_timestamp(time, data->sensor_num);
 	}
+	/*
+	 * If there is a sensor associated and the AP needs the sensor data and
+	 * the current timestamp is close to the time we need need to trigger an
+	 * interrupt to the host, mark it. We need to take in account the fact
+	 * the sensor may poll faster that the host asks for:
+	 *
+	 * ts_last_int
+	 * |/event      /event      /current event
+	 * |            |           |
+	 * + <-------- ec_rate ---------->
+	 *                      <--------- time allowed for new interrupt
+	 *
+	 * This is the case when the ODR should be increase a little: for
+	 * instance, if we asks samples every 5ms, but the sensor only support
+	 * 208Hz, we will have an interrupt every 4.8ms. We need to take in
+	 * account that difference. In that case, we should allow interrupt as
+	 * soon as the previous has been sent. The worst case is the ODR twice
+	 * as fast as the expected one.
+	 *
+	 * ts_last_int
+	 * |/event                     /current event
+	 * |  <------- 4.8ms -------> |
+	 * + <-------- ec_rate (5ms) ---------->
+	 *                 <--------- time allowed for new interrupt
+	 */
 	if (sensor && sensor->config[SENSOR_CONFIG_AP].ec_rate > 0 &&
+	    BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr > 0) &&
 	    time_after(time, ts_last_int[id] +
 				     sensor->config[SENSOR_CONFIG_AP].ec_rate -
-				     MOTION_SENSOR_INT_ADJUSTMENT_US)) {
+				     expected_data_periods[id] / 2)) {
 		ap_interrupt_needed = 1;
 	}
 	fifo_stage_unit(data, sensor, valid_data);
