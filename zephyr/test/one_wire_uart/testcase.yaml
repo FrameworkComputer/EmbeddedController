@@ -1,6 +1,0 @@
-common:
-  platform_allow: native_posix
-tests:
-  one_wire_uart.default:
-    extra_dtc_overlay_files:
-      - one_wire_uart.overlay

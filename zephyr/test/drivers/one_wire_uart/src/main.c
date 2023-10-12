@@ -114,6 +114,7 @@ ZTEST(one_wire_uart_driver, test_rx_partial)
 	struct one_wire_uart_data *data = dev->data;
 	struct one_wire_uart_message msg;
 
+	memset(&msg, 0, sizeof(msg));
 	msg.header.magic = 0xEC;
 	msg.header.payload_len = 10;
 	msg.payload[0] = 56;
@@ -139,6 +140,7 @@ ZTEST(one_wire_uart_driver, test_rx_bad_checksum)
 	struct one_wire_uart_data *data = dev->data;
 	struct one_wire_uart_message msg;
 
+	memset(&msg, 0, sizeof(msg));
 	msg.header.magic = 0xEC;
 	msg.header.payload_len = 0;
 	msg.header.sender = 1;
@@ -159,6 +161,7 @@ ZTEST(one_wire_uart_driver, test_rx_ack)
 	struct one_wire_uart_data *data = dev->data;
 	struct one_wire_uart_message msg;
 
+	memset(&msg, 0, sizeof(msg));
 	msg.header.magic = 0xEC;
 	msg.header.payload_len = 0;
 	msg.header.sender = 1;
@@ -228,6 +231,7 @@ ZTEST(one_wire_uart_driver, test_bad_packet_length)
 	struct one_wire_uart_data *data = dev->data;
 	struct one_wire_uart_message msg;
 
+	memset(&msg, 0, sizeof(msg));
 	msg.header.magic = 0xEC;
 	msg.header.payload_len = 255;
 	msg.header.sender = 1;
