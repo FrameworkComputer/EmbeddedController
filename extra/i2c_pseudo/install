@@ -3,7 +3,7 @@
 # This attempts to build and install the i2c-pseudo Linux kernel module.
 # Installs a udev rule making i2c-pseudo devices read-write by users in plugdev.
 #
-# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Copyright 2018 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -20,8 +20,8 @@ if which dkms >/dev/null
 then
   # Install with DKMS
   sudo dkms add ./
-  sudo dkms build i2c-pseudo/1
-  sudo dkms install i2c-pseudo/1
+  sudo dkms build i2c-pseudo/1.1
+  sudo dkms install i2c-pseudo/1.1
   sudo modprobe i2c-pseudo
   echo "SUCCESS: installed i2c-pseudo module with DKMS and loaded"
 else
