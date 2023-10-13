@@ -16,8 +16,7 @@ if getent group plugdev > /dev/null; then
     || echo 1>&2 "NOTICE: Failed to copy udev rules file."
 fi
 
-if which dkms >/dev/null
-then
+if which dkms >/dev/null; then
   # Install with DKMS
   sudo dkms add ./
   sudo dkms build i2c-pseudo/1.1
