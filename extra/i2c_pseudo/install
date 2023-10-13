@@ -1,4 +1,4 @@
-#!/bin/sh
+#!/bin/bash
 #
 # This attempts to build and install the i2c-pseudo Linux kernel module.
 # Installs a udev rule making i2c-pseudo devices read-write by users in plugdev.
@@ -18,9 +18,10 @@ fi
 
 if which dkms >/dev/null; then
   # Install with DKMS
+  package_version="$(. dkms.conf ; echo "$PACKAGE_VERSION")"
   sudo dkms add ./
-  sudo dkms build i2c-pseudo/1.1
-  sudo dkms install i2c-pseudo/1.1
+  sudo dkms build i2c-pseudo/"$package_version"
+  sudo dkms install i2c-pseudo/"$package_version"
   sudo modprobe i2c-pseudo
   echo "SUCCESS: installed i2c-pseudo module with DKMS and loaded"
 else
