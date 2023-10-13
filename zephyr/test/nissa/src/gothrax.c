@@ -5,14 +5,19 @@
 
 #include "ap_power/ap_power_events.h"
 #include "charge_manager.h"
+#include "cros_board_info.h"
 #include "driver/charger/isl923x_public.h"
 #include "driver/tcpm/raa489000.h"
 #include "emul/retimer/emul_anx7483.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "extpower.h"
+#include "gothrax.h"
+#include "gpio/gpio_int.h"
 #include "keyboard_protocol.h"
+#include "motionsense_sensors.h"
 #include "nissa_hdmi.h"
 #include "system.h"
+#include "tablet_mode.h"
 #include "tcpm/tcpci.h"
 #include "typec_control.h"
 #include "usb_charge.h"
@@ -27,7 +32,6 @@
 
 #include <dt-bindings/gpio_defines.h>
 #include <typec_control.h>
-
 #define TCPC0 EMUL_DT_GET(DT_NODELABEL(tcpci_emul_0))
 #define TCPC1 EMUL_DT_GET(DT_NODELABEL(tcpci_emul_1))
 
@@ -51,6 +55,9 @@ FAKE_VALUE_FUNC(enum ec_error_list, charger_discharge_on_ac, int);
 FAKE_VALUE_FUNC(int, chipset_in_state, int);
 FAKE_VOID_FUNC(usb_charger_task_set_event_sync, int, uint8_t);
 
+FAKE_VALUE_FUNC(int, cbi_get_ssfc, uint32_t *);
+FAKE_VOID_FUNC(bmi3xx_interrupt, enum gpio_signal);
+FAKE_VOID_FUNC(bma4xx_interrupt, enum gpio_signal);
 static enum ec_error_list raa489000_is_acok_absent(int charger, bool *acok);
 
 static void test_before(void *fixture)
@@ -470,4 +477,138 @@ ZTEST(gothrax, test_board_anx7483_c1_mux_set)
 	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_DRX2, &eq);
 	zassert_ok(rv);
 	zassert_equal(eq, ANX7483_EQ_SETTING_12_5DB);
+}
+static int ssfc_data;
+static int cbi_get_ssfc_mock(uint32_t *ssfc)
+{
+	*ssfc = ssfc_data;
+	return 0;
+}
+
+ZTEST(gothrax, test_convertible)
+{
+	const struct device *tablet_mode_gpio = DEVICE_DT_GET(
+		DT_GPIO_CTLR(DT_NODELABEL(gpio_tablet_mode_l), gpios));
+	const gpio_port_pins_t tablet_mode_pin =
+		DT_GPIO_PIN(DT_NODELABEL(gpio_tablet_mode_l), gpios);
+	const struct device *base_imu_gpio = DEVICE_DT_GET(
+		DT_GPIO_CTLR(DT_NODELABEL(gpio_imu_int_l), gpios));
+	const gpio_port_pins_t base_imu_pin =
+		DT_GPIO_PIN(DT_NODELABEL(gpio_imu_int_l), gpios);
+	const struct device *lid_accel_gpio = DEVICE_DT_GET(
+		DT_GPIO_CTLR(DT_NODELABEL(gpio_acc_int_l), gpios));
+	const gpio_port_pins_t lid_accel_pin =
+		DT_GPIO_PIN(DT_NODELABEL(gpio_acc_int_l), gpios);
+
+	/* reset tablet mode for initialize status.
+	 * enable int_imu and int_tablet_mode before clashell_init
+	 * for the priorities of sensor_enable_irqs and
+	 * gmr_tablet_switch_init is earlier.
+	 */
+	tablet_reset();
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_tablet_mode));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_imu));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_lid_imu));
+
+	cbi_get_ssfc_fake.custom_fake = cbi_get_ssfc_mock;
+	ssfc_data = 0x05;
+	cros_cbi_ssfc_init();
+	form_factor_init();
+
+	/* Verify gmr_tablet_switch is enabled, by checking the side effects
+	 * of calling tablet_set_mode, and setting gpio_tablet_mode_l.
+	 */
+	zassert_ok(gpio_emul_input_set(tablet_mode_gpio, tablet_mode_pin, 0),
+		   NULL);
+	k_sleep(K_MSEC(100));
+	tablet_set_mode(1, TABLET_TRIGGER_LID);
+	zassert_equal(1, tablet_get_mode(), NULL);
+	zassert_ok(gpio_emul_input_set(tablet_mode_gpio, tablet_mode_pin, 1),
+		   NULL);
+	k_sleep(K_MSEC(100));
+	tablet_set_mode(0, TABLET_TRIGGER_LID);
+	zassert_equal(0, tablet_get_mode(), NULL);
+	zassert_ok(gpio_emul_input_set(tablet_mode_gpio, tablet_mode_pin, 0),
+		   NULL);
+	k_sleep(K_MSEC(100));
+	tablet_set_mode(1, TABLET_TRIGGER_LID);
+	zassert_equal(1, tablet_get_mode(), NULL);
+
+	/* Clear base_imu_irq call count before test */
+	bmi3xx_interrupt_fake.call_count = 0;
+	bma4xx_interrupt_fake.call_count = 0;
+
+	/* Verify base_imu_irq is enabled. Interrupt is configured
+	 * GPIO_INT_EDGE_FALLING, so set high, then set low.
+	 */
+	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 1), NULL);
+	k_sleep(K_MSEC(100));
+	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 0), NULL);
+	k_sleep(K_MSEC(100));
+	zassert_equal(bmi3xx_interrupt_fake.call_count, 1);
+
+	zassert_ok(gpio_emul_input_set(lid_accel_gpio, lid_accel_pin, 1), NULL);
+	k_sleep(K_MSEC(100));
+	zassert_ok(gpio_emul_input_set(lid_accel_gpio, lid_accel_pin, 0), NULL);
+	k_sleep(K_MSEC(100));
+	zassert_equal(bma4xx_interrupt_fake.call_count, 1);
+}
+
+ZTEST(gothrax, test_clamshell)
+{
+	const struct device *tablet_mode_gpio = DEVICE_DT_GET(
+		DT_GPIO_CTLR(DT_NODELABEL(gpio_tablet_mode_l), gpios));
+	const gpio_port_pins_t tablet_mode_pin =
+		DT_GPIO_PIN(DT_NODELABEL(gpio_tablet_mode_l), gpios);
+	const struct device *base_imu_gpio = DEVICE_DT_GET(
+		DT_GPIO_CTLR(DT_NODELABEL(gpio_imu_int_l), gpios));
+	const gpio_port_pins_t base_imu_pin =
+		DT_GPIO_PIN(DT_NODELABEL(gpio_imu_int_l), gpios);
+	int interrupt_count;
+
+	/* reset tablet mode for initialize status.
+	 * enable int_imu and int_tablet_mode before clashell_init
+	 * for the priorities of sensor_enable_irqs and
+	 * gmr_tablet_switch_init is earlier.
+	 */
+	tablet_reset();
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_tablet_mode));
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_imu));
+
+	cbi_get_ssfc_fake.custom_fake = cbi_get_ssfc_mock;
+	ssfc_data = 0x00;
+	cros_cbi_ssfc_init();
+	form_factor_init();
+
+	/* Verify gmr_tablet_switch is disabled, by checking the side effects
+	 * of calling tablet_set_mode, and setting gpio_tablet_mode_l.
+	 */
+	zassert_ok(gpio_emul_input_set(tablet_mode_gpio, tablet_mode_pin, 0),
+		   NULL);
+	k_sleep(K_MSEC(100));
+	tablet_set_mode(1, TABLET_TRIGGER_LID);
+	zassert_equal(0, tablet_get_mode(), NULL);
+	zassert_ok(gpio_emul_input_set(tablet_mode_gpio, tablet_mode_pin, 1),
+		   NULL);
+	k_sleep(K_MSEC(100));
+	tablet_set_mode(0, TABLET_TRIGGER_LID);
+	zassert_equal(0, tablet_get_mode(), NULL);
+	zassert_ok(gpio_emul_input_set(tablet_mode_gpio, tablet_mode_pin, 0),
+		   NULL);
+	k_sleep(K_MSEC(100));
+	tablet_set_mode(1, TABLET_TRIGGER_LID);
+	zassert_equal(0, tablet_get_mode(), NULL);
+
+	/* Clear base_imu_irq call count before test */
+	bmi3xx_interrupt_fake.call_count = 0;
+	bma4xx_interrupt_fake.call_count = 0;
+
+	/* Verify base_imu_irq is disabled. */
+	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 1), NULL);
+	k_sleep(K_MSEC(100));
+	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 0), NULL);
+	k_sleep(K_MSEC(100));
+	interrupt_count = bmi3xx_interrupt_fake.call_count +
+			  bma4xx_interrupt_fake.call_count;
+	zassert_equal(interrupt_count, 0);
 }
