@@ -355,6 +355,16 @@ ovis_coverage:
     PROJECT: "ovis"
   <<: *coverage_template
 
+brox:
+  variables:
+    PROJECT: "brox"
+  <<: *build_template
+
+brox_coverage:
+  variables:
+    PROJECT: "brox"
+  <<: *coverage_template
+
 ec_coverage:
   stage: test
   needs: []
