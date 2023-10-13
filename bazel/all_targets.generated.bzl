@@ -1426,6 +1426,11 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "mtlrvpp_m1723",
+        board = "mtlrvpp_m1723",
+        extra_modules = ["cmsis", "picolibc"],
+    )
+    ec_target(
         name = "mtlrvpp_mchp",
         board = "mtlrvpp_mchp",
         extra_modules = ["cmsis", "picolibc"],

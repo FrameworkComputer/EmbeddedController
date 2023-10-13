@@ -79,6 +79,32 @@ register_intelrvp_project(
 
 
 register_intelrvp_project(
+    project_name="mtlrvpp_m1723",
+    chip="mec1727",
+    extra_dts_overlays=[
+        here / "mtlrvp/mtlrvpp_mchp/fan.dts",
+        here / "mtlrvp/mtlrvpp_mchp/gpio.dts",
+        here / "mtlrvp/mtlrvpp_mchp/keyboard.dts",
+        here / "mtlrvp/mtlrvpp_npcx/interrupts.dts",
+        here / "mtlrvp/mtlrvpp_npcx/tcpc_interrupts.dts",
+        here / "mtlrvp/ioex.dts",
+        here / "mtlrvp/tcpc_ioex.dts",
+        here / "mtlrvp/mtlrvpp_mchp/mtlrvp_mchp.dts",
+        here / "mtlrvp/mtlrvpp_m1723/mtlrvp_flash.dts",
+        here / "mtlrvp/mtlrvpp_mchp/mtlrvp_mchp_power_signals.dts",
+        here / "adlrvp/adlrvp_npcx/temp_sensor.dts",
+        here / "mtlrvp/usbc.dts",
+    ],
+    extra_kconfig_files=[
+        here / "zephyr_ap_pwrseq.conf",
+        here / "mtlrvp/mtlrvpp_m1723/prj.conf",
+        here / "mtlrvp/mtlrvpp_mchp/board_mchp.conf",
+        here / "mtlrvp/tcpc.conf",
+    ],
+)
+
+
+register_intelrvp_project(
     project_name="mtlrvpp_mchp",
     chip="mec1727",
     extra_dts_overlays=[
@@ -97,6 +123,7 @@ register_intelrvp_project(
     extra_kconfig_files=[
         here / "zephyr_ap_pwrseq.conf",
         here / "mtlrvp/mtlrvpp_mchp/prj.conf",
+        here / "mtlrvp/mtlrvpp_mchp/board_mchp.conf",
         here / "mtlrvp/tcpc.conf",
     ],
 )
