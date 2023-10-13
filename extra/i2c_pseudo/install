@@ -20,8 +20,8 @@ if which dkms >/dev/null; then
   # Install with DKMS
   package_version="$(. dkms.conf ; echo "$PACKAGE_VERSION")"
   sudo dkms add ./
-  sudo dkms build i2c-pseudo/"$package_version"
-  sudo dkms install i2c-pseudo/"$package_version"
+  sudo dkms build i2c-pseudo/"$package_version" --force
+  sudo dkms install i2c-pseudo/"$package_version" --force
   sudo modprobe i2c-pseudo
   echo "SUCCESS: installed i2c-pseudo module with DKMS and loaded"
 else
