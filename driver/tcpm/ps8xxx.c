@@ -542,6 +542,7 @@ static int ps8805_make_device_id(int port, int *id)
 		*id = 1;
 		break;
 	case 0xa0: /* A3 chip */
+	case 0x40: /* Corrupted A2/A3 chip */
 		*id = 2;
 		break;
 	default:
@@ -731,8 +732,7 @@ ps8xxx_fill_chip_info(int port, bool live,
 	}
 #endif
 #ifdef CONFIG_USB_PD_TCPM_PS8805_FORCE_DID
-	if (cache->product_id == PS8805_PRODUCT_ID &&
-	    cache->device_id == 0x0001) {
+	if (cache->product_id == PS8805_PRODUCT_ID) {
 		int val;
 
 		rv = ps8805_make_device_id(port, &val);

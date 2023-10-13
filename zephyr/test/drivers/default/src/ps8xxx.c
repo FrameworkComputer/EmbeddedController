@@ -523,19 +523,22 @@ static void test_ps8xxx_get_chip_info(uint16_t current_product_id)
 		emul_tcpci_generic_get_i2c_common_data(ps8xxx_emul);
 
 	struct ec_response_pd_chip_info_v1 info;
-	uint16_t vendor, product, device_id, fw_rev;
+	uint16_t vendor, product, device_id, fw_rev, chip_rev;
 
 	/* Setup chip info */
 	vendor = PS8XXX_VENDOR_ID;
 	/* Get currently used product ID */
 	product = current_product_id;
-	/* Arbitrary choose device ID that doesn't require fixing */
+	/* Arbitrary choose device ID and matching chip_rev */
 	device_id = 0x2;
+	chip_rev = 0xa0;
 	/* Arbitrary revision */
 	fw_rev = 0x32;
 	tcpci_emul_set_reg(ps8xxx_emul, TCPC_REG_VENDOR_ID, vendor);
 	tcpci_emul_set_reg(ps8xxx_emul, TCPC_REG_PRODUCT_ID, product);
 	tcpci_emul_set_reg(ps8xxx_emul, TCPC_REG_BCD_DEV, device_id);
+	ps8xxx_emul_set_chip_rev(ps8xxx_emul, chip_rev);
+
 	tcpci_emul_set_reg(ps8xxx_emul, PS8XXX_REG_FW_REV, fw_rev);
 
 	/* Test fail on reading FW revision */
@@ -673,6 +676,11 @@ ZTEST(ps8805, test_ps8805_get_chip_info_fix_dev_id)
 		{
 			.exp_dev_id = 0x1,
 			.chip_rev = 0x0,
+		},
+		/* Test broken revision, which we treat as A3 */
+		{
+			.exp_dev_id = 0x2,
+			.chip_rev = 0x44,
 		},
 	};
 
