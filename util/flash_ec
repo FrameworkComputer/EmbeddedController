@@ -1445,10 +1445,18 @@ function flash_it83xx() {
 	print_or_run "${ITEFLASH_ARGS[@]}" || die "${ERROR_MSG}"
 }
 
+# Alias for flashing ITE chips over I2C from all servo types.
+function flash_ite_i2c() {
+        flash_it83xx
+}
+
+# Alias for flashing ITE chips over SPI from all servo types.
 function flash_ite_spi() {
 	flash_flashrom
 }
 
+# Flash ITE chips over SPI when using the servod debug connector
+# and over I2C whn using CCD.
 function flash_ite_spi_ccd_i2c() {
 	if [[ "${SERVO_TYPE}" =~ "servo_micro" || \
 	      "${SERVO_TYPE}" =~ "servo_v2" ]] ; then
@@ -1458,6 +1466,8 @@ function flash_ite_spi_ccd_i2c() {
 	fi
 }
 
+# Flash ITE chips over SPI when using the servod debug connector
+# and over I2C whn using CCD.
 function flash_it8xxx2() {
 	flash_ite_spi_ccd_i2c
 }
