@@ -5,7 +5,6 @@
 
 /* Host command module for Chrome EC */
 
-#include "ap_hang_detect.h"
 #include "builtin/assert.h"
 #include "common.h"
 #include "console.h"
@@ -150,11 +149,6 @@ void host_command_received(struct host_cmd_handler_args *args)
 		/* Reset should never return; if it does, post an error */
 		args->result = EC_RES_ERROR;
 	}
-
-#ifdef CONFIG_AP_HANG_DETECT
-	/* If hang detection is enabled, check stop on host command */
-	hang_detect_stop_on_host_command();
-#endif
 
 	if (args->result) {
 		; /* driver has signalled an error, respond now */

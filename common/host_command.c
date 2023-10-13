@@ -5,7 +5,6 @@
 
 /* Host command module for Chrome EC */
 
-#include "ap_hang_detect.h"
 #include "builtin/assert.h"
 #include "common.h"
 #include "console.h"

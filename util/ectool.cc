@@ -196,8 +196,8 @@ const char help_str[] =
 	"      Get the value of GPIO signal\n"
 	"  gpioset <GPIO name>\n"
 	"      Set the value of GPIO signal\n"
-	"  hangdetect <flags> <event_msec> <reboot_msec> | stop | start\n"
-	"      Configure or start/stop the hang detect timer\n"
+	"  hangdetect reload|cancel|set_timeout <reboot_sec>|get_status|clear_status\n"
+	"      Configure the ap hang detect mechanism\n"
 	"  hello\n"
 	"      Checks for basic communication with EC\n"
 	"  hibdelay [sec]\n"
@@ -10462,53 +10462,62 @@ int cmd_tmp006raw(int argc, char *argv[])
 static int cmd_hang_detect(int argc, char *argv[])
 {
 	struct ec_params_hang_detect req;
+	struct ec_response_hang_detect resp;
+	int rv;
 	char *e;
 
 	memset(&req, 0, sizeof(req));
 
-	if (argc == 2 && !strcasecmp(argv[1], "stop")) {
-		req.flags = EC_HANG_STOP_NOW;
+	if (argc == 2 && !strcasecmp(argv[1], "reload")) {
+		req.command = EC_HANG_DETECT_CMD_RELOAD;
 		return ec_command(EC_CMD_HANG_DETECT, 0, &req, sizeof(req),
 				  NULL, 0);
 	}
 
-	if (argc == 2 && !strcasecmp(argv[1], "start")) {
-		req.flags = EC_HANG_START_NOW;
+	if (argc == 2 && !strcasecmp(argv[1], "cancel")) {
+		req.command = EC_HANG_DETECT_CMD_CANCEL;
 		return ec_command(EC_CMD_HANG_DETECT, 0, &req, sizeof(req),
 				  NULL, 0);
 	}
 
-	if (argc == 4) {
-		req.flags = strtol(argv[1], &e, 0);
-		if (e && *e) {
-			fprintf(stderr, "Bad flags.\n");
-			return -1;
-		}
+	if (argc == 3 && !strcasecmp(argv[1], "set_timeout")) {
+		req.command = EC_HANG_DETECT_CMD_SET_TIMEOUT;
 
-		req.host_event_timeout_msec = strtol(argv[2], &e, 0);
-		if (e && *e) {
-			fprintf(stderr, "Bad event timeout.\n");
-			return -1;
-		}
-
-		req.warm_reboot_timeout_msec = strtol(argv[3], &e, 0);
+		req.reboot_timeout_sec = strtol(argv[2], &e, 0);
 		if (e && *e) {
 			fprintf(stderr, "Bad reboot timeout.\n");
 			return -1;
 		}
 
-		printf("hang flags=0x%x\n"
-		       "event_timeout=%d ms\n"
-		       "reboot_timeout=%d ms\n",
-		       req.flags, req.host_event_timeout_msec,
-		       req.warm_reboot_timeout_msec);
+		rv = ec_command(EC_CMD_HANG_DETECT, 0, &req, sizeof(req), NULL,
+				0);
+		if (rv < 0)
+			printf("Couldn't set reboot timeout (rv=%d)\n", rv);
+		else
+			printf("reboot_timeout=%d s\n", req.reboot_timeout_sec);
+		return rv;
+	}
 
+	if (argc == 2 && !strcasecmp(argv[1], "get_status")) {
+		req.command = EC_HANG_DETECT_CMD_GET_STATUS;
+		rv = ec_command(EC_CMD_HANG_DETECT, 0, &req, sizeof(req), &resp,
+				sizeof(resp));
+
+		if (rv < 0)
+			printf("Couldn't get boot status (rv=%d)\n", rv);
+		else
+			printf("boot status=%d\n", resp.status);
+		return rv;
+	}
+
+	if (argc == 2 && !strcasecmp(argv[1], "clear_status")) {
+		req.command = EC_HANG_DETECT_CMD_CLEAR_STATUS;
 		return ec_command(EC_CMD_HANG_DETECT, 0, &req, sizeof(req),
 				  NULL, 0);
 	}
 
 	fprintf(stderr,
-		"Must specify start/stop or <flags> <event_ms> <reboot_ms>\n");
+		"args: reload|cancel|set_timeout <reboot_sec>|get_status|clear_status\n");
 	return -1;
 }
 

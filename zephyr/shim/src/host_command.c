@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include "ap_hang_detect.h"
 #include "console.h"
 #include "hooks.h"
 #include "host_command.h"
@@ -115,11 +114,6 @@ static void ec_host_cmd_user_cb(const struct ec_host_cmd_rx_ctx *rx_ctx,
 	if (rx_header->cmd_id == EC_CMD_REBOOT) {
 		system_reset(SYSTEM_RESET_HARD);
 	}
-
-#ifdef CONFIG_AP_HANG_DETECT
-	/* If hang detection is enabled, check stop on host command */
-	hang_detect_stop_on_host_command();
-#endif
 }
 #endif /* CONFIG_EC_HOST_CMD */
 

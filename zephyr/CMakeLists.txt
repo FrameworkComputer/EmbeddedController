@@ -663,6 +663,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SYSTEM_SAFE_MODE
                                                 "${PLATFORM_EC}/common/system_safe_mode.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOST_COMMAND_MEMORY_DUMP
                                                 "${PLATFORM_EC}/common/host_command_memory_dump.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AP_HANG_DETECT
+                                                "${PLATFORM_EC}/common/ap_hang_detect.c")
 
 # Switch to ec_shim library for all Zephyr sources
 set(ZEPHYR_CURRENT_LIBRARY ec_shim)
