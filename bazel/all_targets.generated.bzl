@@ -269,6 +269,10 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "brox",
+        board = "brox",
+    )
+    ec_target(
         name = "brya",
         baseboard = "brya",
         board = "brya",
