@@ -392,15 +392,6 @@
 	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
 	pinctrl-names = "default";
 
-	cbi_eeprom: eeprom@50 {
-		compatible = "atmel,at24";
-		reg = <0x50>;
-		size = <2048>;
-		pagesize = <16>;
-		address-width = <8>;
-		timeout = <5>;
-	};
-
 	charger: isl9241@9 {
 		compatible = "intersil,isl9241";
 		status = "okay";
