@@ -46,7 +46,7 @@
 			color_green: color-green {
 				led-color = "LED_GREEN";
 				br-color = "EC_LED_COLOR_GREEN";
-				led-values = <0 8 0>;
+				led-values = <0 16 0>;
 			};
 
 			color_blue: color-blue {
