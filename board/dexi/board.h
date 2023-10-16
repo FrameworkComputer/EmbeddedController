@@ -136,7 +136,8 @@ enum charge_port {
 enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_COUNT };
 
 enum pwm_channel {
-	PWM_CH_LED_GREEN,
+	PWM_CH_LED_WHITE,
+	PWM_CH_LED_RED,
 	PWM_CH_COUNT,
 };
 
