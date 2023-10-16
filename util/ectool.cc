@@ -1805,17 +1805,17 @@ int cmd_flash_protect(int argc, char *argv[])
 
 	/* Print returned flags */
 	printf("Flash protect flags: 0x%08x%s\n",
-	       flash_protect_command.GetFlags(),
+	       static_cast<int>(flash_protect_command.GetFlags()),
 	       (ec::FlashProtectCommand::ParseFlags(
 			flash_protect_command.GetFlags()))
 		       .c_str());
 	printf("Valid flags:         0x%08x%s\n",
-	       flash_protect_command.GetValidFlags(),
+	       static_cast<int>(flash_protect_command.GetValidFlags()),
 	       (ec::FlashProtectCommand::ParseFlags(
 			flash_protect_command.GetValidFlags()))
 		       .c_str());
 	printf("Writable flags:      0x%08x%s\n",
-	       flash_protect_command.GetWritableFlags(),
+	       static_cast<int>(flash_protect_command.GetWritableFlags()),
 
 	       (ec::FlashProtectCommand::ParseFlags(
 			flash_protect_command.GetWritableFlags()))
@@ -1826,13 +1826,14 @@ int cmd_flash_protect(int argc, char *argv[])
 		fprintf(stderr,
 			"Unable to set requested flags "
 			"(wanted mask 0x%08x flags 0x%08x)\n",
-			mask, flags);
+			static_cast<int>(mask), static_cast<int>(flags));
 		if ((mask & ~flash_protect_command.GetWritableFlags()) !=
 		    ec::flash_protect::Flags::kNone)
 			fprintf(stderr,
 				"Which is expected, because writable "
 				"mask is 0x%08x.\n",
-				flash_protect_command.GetWritableFlags());
+				static_cast<int>(flash_protect_command
+							 .GetWritableFlags()));
 
 		return -1;
 	}
