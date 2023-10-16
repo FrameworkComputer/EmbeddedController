@@ -180,6 +180,14 @@ test_static int test_vsnprintf_int(void)
 		 * more means that the output was truncated.
 		 */
 		DISABLE_COMPILER_WARNING("-Wformat-truncation");
+		/*
+		 * Clang's `-Wfortify-source` warning will also flag these. This
+		 * warning only exists in Clang though; GCC warns if it
+		 * encounters a `#pragma GCC disable "-W<unknown-warning>"`.
+		 */
+#ifdef __clang__
+		DISABLE_COMPILER_WARNING("-Wfortify-source");
+#endif
 
 		ret = SNPRINTF(output, 4, "%5d", 123);
 		TEST_ASSERT_ARRAY_EQ(output, "  1", 4);
@@ -197,6 +205,9 @@ test_static int test_vsnprintf_int(void)
 		TEST_ASSERT_ARRAY_EQ(output, "000", 4);
 		TEST_EQ(ret, 10, "%d");
 
+#ifdef __clang__
+		ENABLE_COMPILER_WARNING("-Wfortify-source");
+#endif
 		ENABLE_COMPILER_WARNING("-Wformat-truncation");
 	}
 
