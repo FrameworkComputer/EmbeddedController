@@ -735,7 +735,7 @@ else
 	info "Could not find ec build folder to calculate baseboard."
 fi
 # shellcheck disable=SC2181
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 ] && [ -z "${FLAGS_image}" ]; then
 	info "EC build system didn't recognize ${BOARD}. Assuming no baseboard."
 fi
 set -e
