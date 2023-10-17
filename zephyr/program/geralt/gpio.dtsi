@@ -74,7 +74,8 @@
 			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
 		};
 		ec_ap_hid_int_odl: ec-ap-hid-int-odl {
-			gpios = <&gpioi 3 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpioi 3 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
 		};
 		ec_flash_wp_odl: ec-flash-wp-odl {
 			gpios = <&gpioi 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;

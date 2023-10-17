@@ -17,6 +17,9 @@
 const static struct device *one_wire_uart =
 	DEVICE_DT_GET(DT_NODELABEL(one_wire_uart));
 
+const static struct device *touchpad =
+	DEVICE_DT_GET(DT_NODELABEL(hid_i2c_target));
+
 static void recv_cb(uint8_t cmd, const uint8_t *payload, int length)
 {
 	if (cmd == ROACH_CMD_KEYBOARD_MATRIX && length == KEYBOARD_COLS_MAX) {
@@ -25,6 +28,7 @@ static void recv_cb(uint8_t cmd, const uint8_t *payload, int length)
 	if (cmd == ROACH_CMD_TOUCHPAD_REPORT &&
 	    length == sizeof(struct usb_hid_touchpad_report)) {
 		hid_i2c_touchpad_add(
+			touchpad,
 			(const struct usb_hid_touchpad_report *)payload);
 	}
 }

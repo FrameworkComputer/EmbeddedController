@@ -71,7 +71,8 @@ enum RoachCommand {
  *
  * @param report HID report to add
  */
-void hid_i2c_touchpad_add(const struct usb_hid_touchpad_report *report);
+void hid_i2c_touchpad_add(const struct device *dev,
+			  const struct usb_hid_touchpad_report *report);
 
 #ifdef CONFIG_ZTEST
 uint16_t checksum(const struct one_wire_uart_message *msg);

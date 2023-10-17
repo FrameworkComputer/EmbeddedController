@@ -157,5 +157,9 @@
 		/* TODO(b/301380459): allocate pid */
 		vid = <0x18d1>;
 		pid = <0x50ff>;
+
+		/* Zephyr preferred style for specifying ec_ap_hid_int_odl */
+		irq-gpios = <&gpioi 3 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8 |
+			     GPIO_ACTIVE_LOW)>;
 	};
 };

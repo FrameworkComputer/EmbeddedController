@@ -36,3 +36,9 @@ properties:
   pid:
     type: int
     description: Product ID of this HID device
+
+  irq-gpios:
+    type: phandle-array
+    description: |
+      Phandle to the interrupt line to notify the host that the device
+      has new data to report.
