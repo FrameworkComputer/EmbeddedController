@@ -47,6 +47,12 @@ config TEST_PROJECT_KEYBOARD
 	  Include project specific keyboard.c into the binary and test
 	  their functions.
 
+config TEST_PROJECT_BOARD
+	bool "Run the tests intended for board.c"
+	help
+	  Include project specific board.c into the binary and test
+	  their functions.
+
 config TEST_PROJECT_CHARGER
 	bool "Run the tests intended for charger.c"
 	help

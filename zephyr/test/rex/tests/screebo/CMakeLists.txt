@@ -6,3 +6,5 @@ zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/rex/screebo/include")
 
 target_sources_ifdef(CONFIG_TEST_PROJECT_USB_CONFIG app PRIVATE src/usb_config.c)
 target_sources_ifdef(CONFIG_TEST_PROJECT_USB_CONFIG app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/rex/screebo/src/usb_config.c)
+target_sources_ifdef(CONFIG_TEST_PROJECT_BOARD app PRIVATE src/board.c)
+target_sources_ifdef(CONFIG_TEST_PROJECT_BOARD app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/rex/screebo/src/board.c)

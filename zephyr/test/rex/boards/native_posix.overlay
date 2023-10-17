@@ -30,6 +30,9 @@
 			gpios = <&gpio0 6 GPIO_INPUT>;
 			enum-name = "GPIO_BATT_PRES_ODL";
 		};
+		gpio_en_pp5000_usba_r: en_pp5000_usba_r {
+			gpios = <&gpio0 7 GPIO_OUTPUT>;
+		};
 	};
 
 	/*
@@ -47,5 +50,10 @@
 		gpio-controller;
 		#gpio-cells = <2>;
 		ngpios = <32>;
+	};
+
+	usba-port-enable-list {
+		compatible = "cros-ec,usba-port-enable-pins";
+		enable-pins = <&gpio_en_pp5000_usba_r>;
 	};
 };
