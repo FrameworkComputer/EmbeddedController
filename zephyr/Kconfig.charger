@@ -828,6 +828,15 @@ config PLATFORM_EC_CHARGER_DUMP_PROCHOT
 	bool "Enable support for prochot status dumping functions"
 	default n
 
+if PLATFORM_EC_CHARGER_ISL9238
+config PLATFORM_EC_PRECHARGE_DELAY_MS
+	int "Delay time in msec for precharging"
+	default 150
+	help
+	  The delay time to wait for charger stable to set charge current
+	  at precharge.
+endif
+
 rsource "drivers/sm5803/Kconfig.sm5803"
 
 endif # PLATFORM_EC_CHARGER

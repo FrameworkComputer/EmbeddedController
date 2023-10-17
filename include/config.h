@@ -1418,6 +1418,12 @@
 #define CONFIG_CHARGER_SM5803_VSYS_MON_SEL 10
 #define CONFIG_CHARGER_SM5803_IBAT_PHOT_SEL IBAT_SEL_MAX
 
+/*
+ * Precharge delay time to wait for the charger is stable
+ * to set charge current/voltage.
+ */
+#undef CONFIG_PRECHARGE_DELAY_MS
+
 /*****************************************************************************/
 
 /*
@@ -6477,6 +6483,17 @@
 	defined(CONFIG_CHARGER_BQ25710) || defined(CONFIG_CHARGER_BQ25720) ||  \
 	defined(CONFIG_CHARGER_RAA489110)
 #define CONFIG_CHARGER_NARROW_VDC
+#endif
+
+/*****************************************************************************/
+/*
+ * Define CONFIG_PRECHARGE_DELAY_MS 150ms which is the debounce
+ * time after VADP >3.2V for the first time adapter plugged in.
+ */
+#ifdef CONFIG_CHARGER_ISL9238
+#ifndef CONFIG_PRECHARGE_DELAY_MS
+#define CONFIG_PRECHARGE_DELAY_MS 150
+#endif
 #endif
 
 /*****************************************************************************/
