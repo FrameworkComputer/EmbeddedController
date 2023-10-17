@@ -372,7 +372,13 @@ flash_fp_mcu_npcx() {
       return "${EXIT_RUNTIME}"
     fi
 
-    cmd+=" --auto --offset=0 --file ${file}"
+    if [[ "${FLAGS_read}" -eq "${FLAGS_TRUE}" ]]; then
+      # Read from FPMCU to file
+      cmd+=" --read-flash --file ${file}"
+    else
+      # Write to FPMCU from file
+      cmd+=" --auto --offset=0 --file ${file}"
+    fi
   fi
 
   for attempt in $(seq "${FLAGS_retries}"); do
