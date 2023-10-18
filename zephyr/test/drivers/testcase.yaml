@@ -1497,18 +1497,3 @@ tests:
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
-  drivers.one_wire_uart.keyboard:
-    extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
-    - ./one_wire_uart/one_wire_uart.overlay
-    extra_configs:
-    - CONFIG_LINK_TEST_SUITE_ONE_WIRE_UART=y
-    - CONFIG_PLATFORM_EC_ONE_WIRE_UART_KEYBOARD=y
-    - CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP=n
-  drivers.one_wire_uart.tablet:
-    extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
-    - ./one_wire_uart/one_wire_uart.overlay
-    extra_configs:
-    - CONFIG_LINK_TEST_SUITE_ONE_WIRE_UART=y
-    - CONFIG_PLATFORM_EC_ONE_WIRE_UART_TABLET=y

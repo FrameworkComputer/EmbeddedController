@@ -320,7 +320,4 @@ config LINK_TEST_SUITE_BODY_DETECTION
 config LINK_TEST_SUITE_LED_PWM_FADE
 	bool "Link and test the led_pwm_fade.c tests"
 
-config LINK_TEST_SUITE_ONE_WIRE_UART
-	bool "Link and test the one wire uart driver tests"
-
 source "Kconfig.zephyr"
