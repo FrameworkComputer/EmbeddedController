@@ -529,9 +529,15 @@ def main():
         if args.print_only and args.json_only:
             raise ServoUpdaterException("Can't use both --print and --json.")
 
-        board = args.board
-        if board is None:
+        board_list = args.board
+        if board_list is None:
             board = BOARD_SERVO_V4
+        elif len(board_list) > 1:
+            raise ServoUpdaterException(
+                "--print and --json only work with a single board."
+            )
+        else:
+            board = board_list[0]
 
         brdfile, binfile, newvers = get_files_and_version(
             board, args.file, args.channel
