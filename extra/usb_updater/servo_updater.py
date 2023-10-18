@@ -14,6 +14,7 @@ import json
 import os
 import re
 import subprocess
+import sys
 import time
 from typing import Tuple
 
@@ -450,6 +451,61 @@ def update(dev, serialno, args, devmap):
     tinys.pty._issue_cmd("reboot")
 
 
+def print_versions(outfile, boards, file, channel):
+    """Print live firmware versions for given servo boards.
+
+    This directly calls print(), this does not return any information.
+
+    The output format is mean for human readability and is subject to change
+    without notice.  Do NOT parse it from code, use the JSON output option for
+    that.
+
+    Args:
+        outfile: file-like object compatible with print()
+        boards: iterable of str - servo board names from BOARDS
+        file: None or str - firmware binary name
+        channel: str - update channel from CHANNELS
+    """
+    for i, board in enumerate(boards):
+        brdfile, binfile, newvers = get_files_and_version(board, file, channel)
+        if i:
+            print(file=outfile)
+        print("board:", board, file=outfile)
+        print("channel:", channel, file=outfile)
+        print("firmware:", newvers, file=outfile)
+        print("firmware file:", binfile, file=outfile)
+
+
+def print_json(outfile, boards, file, channel):
+    """Print live firmware versions for given servo boards.
+
+    This directly calls print(), this does not return any information.
+
+    The JSON output /structure/ is stable and meant for machine parsing by a
+    JSON parser.  Formatting details that do not change the JSON data meaning
+    are subject to change.
+
+    Args:
+        outfile: file-like object compatible with print()
+        boards: iterable of str - servo board names from BOARDS
+        file: None or str - firmware binary name
+        channel: str - update channel from CHANNELS
+    """
+    output = []
+    for board in boards:
+        brdfile, binfile, newvers = get_files_and_version(board, file, channel)
+        output.append(
+            {
+                "board": board,
+                "channel": channel,
+                "firmware": newvers,
+                "firmware file": binfile,
+            }
+        )
+    # print() gives system-correct trailing newline, unlike json.dump()
+    print(json.dumps(output, indent=2, sort_keys=True), file=outfile)
+
+
 def main():
     parser = argparse.ArgumentParser(
         description="""
@@ -464,14 +520,14 @@ def main():
         dest="print_only",
         action="store_true",
         default=False,
-        help="only print available firmware for board/channel",
+        help="only print available firmware for board/channel (human friendly, do not parse, format subject to change)",
     )
     parser.add_argument(
         "--json",
         dest="json_only",
         action="store_true",
         default=False,
-        help="only emit available firmware for board/channel as JSON",
+        help="only emit available firmware for board/channel as JSON (stable data structure when parsed as JSON, raw printed formatting is subject to change)",
     )
     parser.add_argument(
         "-s",
@@ -484,7 +540,7 @@ def main():
         "-b",
         "--board",
         action="append",
-        help="Board configuration json file",
+        help="servo board name (can be specified more than once)",
         default=None,
         choices=BOARDS,
     )
@@ -523,40 +579,22 @@ def main():
 
     args = parser.parse_args()
 
-    # If the user only cares about the information then just print it here,
-    # and exit.
+    # If the user only wants channel information, just print and return (exit).
     if args.print_only or args.json_only:
         if args.print_only and args.json_only:
             raise ServoUpdaterException("Can't use both --print and --json.")
 
-        board_list = args.board
-        if board_list is None:
-            board = BOARD_SERVO_V4
-        elif len(board_list) > 1:
-            raise ServoUpdaterException(
-                "--print and --json only work with a single board."
-            )
+        if args.board is None:
+            # This is for backwards compatibility from when --board=servo_v4 was
+            # the default.
+            boards = [BOARD_SERVO_V4]
         else:
-            board = board_list[0]
-
-        brdfile, binfile, newvers = get_files_and_version(
-            board, args.file, args.channel
-        )
-
-        output = {
-            "board": board,
-            "channel": args.channel,
-            "firmware": newvers,
-            "firmware file": binfile,
-        }
+            boards = args.board
 
         if args.print_only:
-            print("board:", output["board"])
-            print("channel:", output["channel"])
-            print("firmware:", output["firmware"])
-            print("firmware file:", output["firmware file"])
+            print_versions(sys.stdout, boards, args.file, args.channel)
         elif args.json_only:
-            print(json.dumps(output, indent=2, sort_keys=True))
+            print_json(sys.stdout, boards, args.file, args.channel)
         return
 
     serialno = args.serialno
