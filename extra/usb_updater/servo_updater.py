@@ -579,18 +579,19 @@ def main():
 
     args = parser.parse_args()
 
+    if args.board is None:
+        boards = BOARDS
+    else:
+        boards = args.board
+
     # If the user only wants channel information, just print and return (exit).
     if args.print_only or args.json_only:
         if args.print_only and args.json_only:
             raise ServoUpdaterException("Can't use both --print and --json.")
-
-        if args.board is None:
-            # This is for backwards compatibility from when --board=servo_v4 was
-            # the default.
-            boards = [BOARD_SERVO_V4]
-        else:
-            boards = args.board
-
+        if args.board is None and not args.all:
+            raise ServoUpdaterException(
+                "Use --all if printing info for all boards is intended, or --board to specify specific servo boards."
+            )
         if args.print_only:
             print_versions(sys.stdout, boards, args.file, args.channel)
         elif args.json_only:
@@ -598,11 +599,6 @@ def main():
         return
 
     serialno = args.serialno
-
-    if args.board is None:
-        boards = BOARDS
-    else:
-        boards = args.board
 
     vidpids = set()
     devmap = {}
