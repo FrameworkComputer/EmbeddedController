@@ -1,0 +1,22 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&i2c0 {
+	hid_i2c_target: hid-i2c-target@56 {
+		compatible = "cros-ec,hid-i2c-touchpad";
+
+		reg = <0x56>;
+		max_pressure = <255>;
+		logical_max_x = <2925>;
+		logical_max_y = <1426>;
+		physical_max_x = <929>;
+		physical_max_y = <457>;
+
+		vid = <0x1111>;
+		pid = <0x2222>;
+
+		irq-gpios = <&gpio1 16 GPIO_ACTIVE_LOW>;
+	};
+};

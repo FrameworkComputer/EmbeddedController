@@ -1519,6 +1519,8 @@ tests:
     extra_dtc_overlay_files:
     - ./boards/native_posix.overlay
     - ./one_wire_uart/one_wire_uart.overlay
+    - ./one_wire_uart/one_wire_uart_tablet.overlay
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_ONE_WIRE_UART=y
     - CONFIG_PLATFORM_EC_ONE_WIRE_UART_TABLET=y
+    - CONFIG_I2C_TARGET=y

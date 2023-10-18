@@ -6,6 +6,7 @@
 #include "ap_power/ap_power_events.h"
 #include "drivers/one_wire_uart.h"
 #include "drivers/one_wire_uart_internal.h"
+#include "gpio_signal.h"
 #include "keyboard_config.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
@@ -21,13 +22,14 @@
 
 const static struct device *dev = DEVICE_DT_GET(DT_NODELABEL(one_wire_uart));
 
-FAKE_VOID_FUNC(hid_i2c_touchpad_add, const struct usb_hid_touchpad_report *);
 FAKE_VALUE_FUNC(int, mkbp_keyboard_add, const uint8_t *);
 
 ZTEST(one_wire_uart_tablet, test_keyboard_event)
 {
 	struct one_wire_uart_data *data = dev->data;
 	struct one_wire_uart_message msg;
+	const struct gpio_dt_spec *hid_irq =
+		GPIO_DT_FROM_NODELABEL(gpio_ec_ap_hid_int_odl);
 
 	memset(&msg, 0, sizeof(msg));
 	msg.header.magic = 0xEC;
@@ -43,13 +45,15 @@ ZTEST(one_wire_uart_tablet, test_keyboard_event)
 	process_packet();
 
 	zassert_equal(mkbp_keyboard_add_fake.call_count, 1);
-	zassert_equal(hid_i2c_touchpad_add_fake.call_count, 0);
+	zassert_equal(gpio_emul_output_get(hid_irq->port, hid_irq->pin), 1);
 }
 
 ZTEST(one_wire_uart_tablet, test_touchpad_event)
 {
 	struct one_wire_uart_data *data = dev->data;
 	struct one_wire_uart_message msg;
+	const struct gpio_dt_spec *hid_irq =
+		GPIO_DT_FROM_NODELABEL(gpio_ec_ap_hid_int_odl);
 
 	memset(&msg, 0, sizeof(msg));
 	msg.header.magic = 0xEC;
@@ -65,7 +69,7 @@ ZTEST(one_wire_uart_tablet, test_touchpad_event)
 	process_packet();
 
 	zassert_equal(mkbp_keyboard_add_fake.call_count, 0);
-	zassert_equal(hid_i2c_touchpad_add_fake.call_count, 1);
+	zassert_equal(gpio_emul_output_get(hid_irq->port, hid_irq->pin), 0);
 }
 
 ZTEST(one_wire_uart_tablet, test_ap_power_state)
@@ -86,10 +90,13 @@ ZTEST(one_wire_uart_tablet, test_ap_power_state)
 
 static void tablet_before(void *fixture)
 {
+	const struct gpio_dt_spec *hid_irq =
+		GPIO_DT_FROM_NODELABEL(gpio_ec_ap_hid_int_odl);
+
 	one_wire_uart_reset(dev);
 
-	RESET_FAKE(hid_i2c_touchpad_add);
 	RESET_FAKE(mkbp_keyboard_add);
+	gpio_pin_set_dt(hid_irq, 0);
 }
 
 ZTEST_SUITE(one_wire_uart_tablet, drivers_predicate_post_main, NULL,

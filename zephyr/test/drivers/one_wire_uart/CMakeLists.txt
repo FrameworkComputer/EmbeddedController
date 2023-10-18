@@ -10,4 +10,4 @@ project(one_wire_uart)
 target_sources_ifdef(CONFIG_PLATFORM_EC_ONE_WIRE_UART_KEYBOARD app PRIVATE
 		src/main.c src/keyboard.c)
 target_sources_ifdef(CONFIG_PLATFORM_EC_ONE_WIRE_UART_TABLET app PRIVATE
-		src/tablet.c)
+		src/tablet.c src/hid_i2c_touchpad.c)

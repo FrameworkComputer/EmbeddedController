@@ -6,6 +6,7 @@
 #define DT_DRV_COMPAT cros_ec_hid_i2c_touchpad
 
 #include "drivers/one_wire_uart.h"
+#include "drivers/one_wire_uart_internal.h"
 #include "gpio_signal.h"
 #include "hooks.h"
 #include "usb_hid_touchpad.h"
@@ -13,10 +14,7 @@
 #include <string.h>
 
 #include <zephyr/devicetree.h>
-#include <zephyr/drivers/i2c.h>
 #include <zephyr/kernel.h>
-
-#include <ap_power/ap_power.h>
 
 #if DT_HAS_COMPAT_STATUS_OKAY(DT_DRV_COMPAT)
 
@@ -28,25 +26,6 @@
 #define DATA_REG 0x06
 
 #define HID_DESC_LENGTH 30
-
-struct i2c_target_dev_config {
-	/* I2C alternate configuration */
-	struct i2c_dt_spec bus;
-	struct gpio_dt_spec irq;
-	const uint8_t *report_desc;
-	int report_desc_length;
-	const uint16_t *hid_desc;
-};
-
-struct i2c_target_data {
-	struct i2c_target_config config;
-	const struct device *dev;
-	uint8_t write_buf[256];
-	uint8_t read_buf[2044];
-	int write_buf_len;
-	bool in_reset;
-	struct k_msgq *touchpad_report_queue;
-};
 
 static void hid_reset(const struct device *dev)
 {
