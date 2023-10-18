@@ -145,8 +145,10 @@ static void print_battery_params(void)
 	ccprintf("%08x\n", batt->flags);
 
 	print_item_name("Temp:");
-	ccprintf("0x%04x = %.1d K (%.1d C)\n", batt->temperature,
-		 batt->temperature, batt->temperature - 2731);
+	ccprintf("0x%04x = %d.%d K (%d.%d C)\n", batt->temperature,
+		 batt->temperature / 10, batt->temperature % 10,
+		 (batt->temperature - 2731) / 10,
+		 (batt->temperature - 2731) % 10);
 
 	print_item_name("V:");
 	ccprintf("0x%04x = %d mV\n", batt->voltage, batt->voltage);
