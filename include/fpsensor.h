@@ -77,15 +77,15 @@ void fp_sensor_low_power(void);
  * Send the settings to the sensor, so it is properly configured to detect
  * the presence of a finger.
  */
-void fp_sensor_configure_detect(void);
+void fp_configure_detect(void);
 
 /**
  * Returns the status of the finger on the sensor.
- * (assumes fp_sensor_configure_detect was called before)
+ * (assumes fp_configure_detect was called before)
  *
  * @return finger_state
  */
-enum finger_state fp_sensor_finger_status(void);
+enum finger_state fp_finger_status(void);
 
 /**
  * Image captured but quality is too low
@@ -105,7 +105,7 @@ enum finger_state fp_sensor_finger_status(void);
  * Acquires a fingerprint image.
  *
  * This function is called once the finger has been detected and cover enough
- * area of the sensor (i.e., fp_sensor_finger_status returned FINGER_PRESENT).
+ * area of the sensor (i.e., fp_finger_status returned FINGER_PRESENT).
  * It does the acquisition immediately.
  *
  * @param[out] image_data Image from sensor. Buffer must be allocated by
@@ -117,7 +117,7 @@ enum finger_state fp_sensor_finger_status(void);
  * @return FP_SENSOR_TOO_FAST on finger removed before image was captured
  * @return FP_SENSOR_LOW_SENSOR_COVERAGE on sensor not fully covered by finger
  */
-int fp_sensor_acquire_image(uint8_t *image_data);
+int fp_acquire_image(uint8_t *image_data);
 
 /**
  * Acquires a fingerprint image with specific capture mode.
@@ -133,7 +133,7 @@ int fp_sensor_acquire_image(uint8_t *image_data);
  * @return 0 on success
  * @return negative value on error
  */
-int fp_sensor_acquire_image_with_mode(uint8_t *image_data, int mode);
+int fp_acquire_image_with_mode(uint8_t *image_data, int mode);
 
 /**
  * Runs a test for defective pixels.

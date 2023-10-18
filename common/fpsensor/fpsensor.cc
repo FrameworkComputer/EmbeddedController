@@ -207,8 +207,8 @@ static void fp_process_finger(void)
 	int res;
 
 	CPRINTS("Capturing ...");
-	res = fp_sensor_acquire_image_with_mode(fp_buffer,
-						FP_CAPTURE_TYPE(sensor_mode));
+	res = fp_acquire_image_with_mode(fp_buffer,
+					 FP_CAPTURE_TYPE(sensor_mode));
 	capture_time_us = time_since32(t0);
 	if (!res) {
 		uint32_t evt = EC_MKBP_FP_IMAGE_READY;
@@ -272,14 +272,14 @@ extern "C" void fp_task(void)
 						 FP_MODE_ENROLL_SESSION;
 			}
 			if (is_test_capture(mode)) {
-				fp_sensor_acquire_image_with_mode(
+				fp_acquire_image_with_mode(
 					fp_buffer, FP_CAPTURE_TYPE(mode));
 				sensor_mode &= ~FP_MODE_CAPTURE;
 				send_mkbp_event(EC_MKBP_FP_IMAGE_READY);
 				continue;
 			} else if (sensor_mode & FP_MODE_ANY_DETECT_FINGER) {
 				/* wait for a finger on the sensor */
-				fp_sensor_configure_detect();
+				fp_configure_detect();
 			}
 			if (sensor_mode & FP_MODE_DEEPSLEEP)
 				/* Shutdown the sensor */
@@ -306,7 +306,7 @@ extern "C" void fp_task(void)
 			timestamps_invalid = 0;
 			gpio_disable_interrupt(GPIO_FPS_INT);
 			if (sensor_mode & FP_MODE_ANY_DETECT_FINGER) {
-				st = fp_sensor_finger_status();
+				st = fp_finger_status();
 				if (st == FINGER_PRESENT &&
 				    sensor_mode & FP_MODE_FINGER_DOWN) {
 					CPRINTS("Finger!");
@@ -326,7 +326,7 @@ extern "C" void fp_task(void)
 				fp_process_finger();
 
 			if (sensor_mode & FP_MODE_ANY_WAIT_IRQ) {
-				fp_sensor_configure_detect();
+				fp_configure_detect();
 
 				gpio_clear_pending_interrupt(GPIO_FPS_INT);
 				gpio_enable_interrupt(GPIO_FPS_INT);

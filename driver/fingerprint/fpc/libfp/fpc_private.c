@@ -333,3 +333,23 @@ int fp_maintenance(void)
 {
 	return fpc_fp_maintenance(&errors);
 }
+
+int fp_acquire_image_with_mode(uint8_t *image_data, int mode)
+{
+	return fp_sensor_acquire_image_with_mode(image_data, mode);
+}
+
+int fp_acquire_image(uint8_t *image_data)
+{
+	return fp_sensor_acquire_image(image_data);
+}
+
+enum finger_state fp_finger_status(void)
+{
+	return fp_sensor_finger_status();
+}
+
+void fp_configure_detect(void)
+{
+	return fp_sensor_configure_detect();
+}
