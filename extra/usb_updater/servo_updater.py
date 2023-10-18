@@ -556,7 +556,7 @@ def main():
             print("firmware:", output["firmware"])
             print("firmware file:", output["firmware file"])
         elif args.json_only:
-            print(json.dumps(output))
+            print(json.dumps(output, indent=2, sort_keys=True))
         return
 
     serialno = args.serialno
