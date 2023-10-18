@@ -81,4 +81,14 @@ void connect_partner_to_port(const struct emul *tcpc_emul,
 			     struct tcpci_partner_data *partner_emul,
 			     const struct tcpci_src_emul_data *src_ext);
 
+/** Simulate disconnecting the TCPM and the partner emulator.
+ *
+ * Take enough time to leave a normal connection in a settled state.
+ *
+ * @param tcpc_emul An emulator for the local TCPC
+ * @param charger_emul An emulator for the local charger
+ */
+void disconnect_partner_from_port(const struct emul *tcpc_emul,
+				  const struct emul *charger_emul);
+
 #endif /* ZEPHYR_TEST_DRIVERS_USBC_ALT_MODE_TEST_USBC_ALT_MODE_H_ */

@@ -55,8 +55,8 @@ void connect_partner_to_port(const struct emul *tcpc_emul,
 	k_sleep(K_SECONDS(10));
 }
 
-static void disconnect_partner_from_port(const struct emul *tcpc_emul,
-					 const struct emul *charger_emul)
+void disconnect_partner_from_port(const struct emul *tcpc_emul,
+				  const struct emul *charger_emul)
 {
 	zassert_ok(tcpci_emul_disconnect_partner(tcpc_emul));
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
@@ -533,8 +533,6 @@ static void *usbc_alt_mode_custom_discovery_setup(void)
 	fixture.tcpci_emul = EMUL_GET_USBC_BINDING(TEST_PORT, tcpc);
 	fixture.charger_emul = EMUL_GET_USBC_BINDING(TEST_PORT, chg);
 
-	add_discovery_responses(partner);
-
 	return &fixture;
 }
 
@@ -549,6 +547,7 @@ static void usbc_alt_mode_custom_discovery_before(void *data)
 	struct usbc_alt_mode_custom_discovery_fixture *fixture = data;
 
 	/* Re-populate our usual responses in case a test overrode them */
+	add_discovery_responses(&fixture->partner);
 	add_displayport_mode_responses(&fixture->partner);
 	/* Do not connect to the partner to allow the test to override discovery
 	 * responses.

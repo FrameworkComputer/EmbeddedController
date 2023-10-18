@@ -1633,7 +1633,9 @@ static bool pe_should_send_data_reset(const int port)
 		pd_get_am_discovery(port, TCPCI_MSG_SOP);
 	const enum idh_ptype ufp_ptype = pd_get_product_type(port);
 	const union ufp_vdo_rev30 ufp_vdo = {
-		.raw_value = disc->identity.product_t1.raw_value
+		.raw_value = disc->identity_cnt >= VDO_INDEX_PTYPE_UFP1_VDO ?
+				     disc->identity.product_t1.raw_value :
+				     0
 	};
 
 	return prl_get_rev(port, TCPCI_MSG_SOP) >= PD_REV30 &&

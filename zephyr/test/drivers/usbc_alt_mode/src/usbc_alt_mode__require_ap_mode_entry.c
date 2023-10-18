@@ -162,6 +162,55 @@ ZTEST_F(usbc_alt_mode_custom_discovery, test_hub_no_usb4_no_alt_mode)
 	verify_data_reset_msg(&fixture->partner, false);
 }
 
+ZTEST_F(usbc_alt_mode_custom_discovery, test_hub_no_ufp_vdo)
+{
+	struct tcpci_partner_data *partner = &fixture->partner;
+
+	if (!IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
+		ztest_test_skip();
+	}
+
+	partner->identity_vdm[VDO_INDEX_IDH] = VDO_IDH_REV30(
+		/* USB host */ false, /* USB device */ false, IDH_PTYPE_HUB,
+		/* modal operation */ true, /* DFP type */ 0,
+		/* connector type */ 3, USB_VID_GOOGLE);
+	partner->identity_vdm[VDO_INDEX_PTYPE_UFP1_VDO] = VDO_UFP1(
+		/* Capability */ VDO_UFP1_CAPABILITY_USB4,
+		/* connector type */ 0,
+		/* alternate modes */ VDO_UFP1_ALT_MODE_RECONFIGURE,
+		/* speed */ 1);
+	connect_partner_to_port(fixture->tcpci_emul, fixture->charger_emul,
+				&fixture->partner, &fixture->src_ext);
+	host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
+	k_sleep(K_SECONDS(1));
+	disconnect_partner_from_port(fixture->tcpci_emul,
+				     fixture->charger_emul);
+	k_sleep(K_SECONDS(1));
+
+	/* If the partner has Hub product type but does not send a UFP VDO at
+	 * all, the TCPM should not send Data Reset during mode entry. This
+	 * should be true even if a partner supporting Data Reset was previously
+	 * connected. See b/304935541.
+	 */
+	partner->identity_vdm[VDO_INDEX_IDH] = VDO_IDH_REV30(
+		/* USB host */ false, /* USB device */ false, IDH_PTYPE_HUB,
+		/* modal operation */ true, /* DFP type */ 0,
+		/* connector type */ 3, USB_VID_GOOGLE);
+	partner->identity_vdos = VDO_INDEX_PRODUCT + 1;
+	partner->identity_vdm[VDO_INDEX_PTYPE_UFP1_VDO] = VDO_UFP1(
+		/* Capability */ VDO_UFP1_CAPABILITY_USB32,
+		/* connector type */ 0, /* alternate modes */ 0, /* speed */ 1);
+	connect_partner_to_port(fixture->tcpci_emul, fixture->charger_emul,
+				&fixture->partner, &fixture->src_ext);
+
+	tcpci_partner_common_clear_logged_msgs(&fixture->partner);
+	tcpci_partner_common_enable_pd_logging(&fixture->partner, true);
+	host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
+	k_sleep(K_SECONDS(1));
+
+	verify_data_reset_msg(&fixture->partner, false);
+}
+
 ZTEST_F(usbc_alt_mode_custom_discovery, test_hub_usb4_no_alt_mode)
 {
 	struct tcpci_partner_data *partner = &fixture->partner;
