@@ -3,9 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Program to convert sweetberry config to servod config template.
-"""
+"""Program to convert sweetberry config to servod config template."""
 
 # Note: This is a py2/3 compatible file.
 
@@ -46,7 +44,6 @@ def write_to_file(file, sweetberry, inas):
     """
 
     with open(file, "w") as pyfile:
-
         pyfile.write("inas = [\n")
 
         for rec in inas:

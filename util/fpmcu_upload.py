@@ -33,6 +33,7 @@ Run unit tests
 
   (chroot) python -m unittest util/fpmcu_upload.py
 """
+
 import argparse
 from dataclasses import dataclass
 from enum import Enum

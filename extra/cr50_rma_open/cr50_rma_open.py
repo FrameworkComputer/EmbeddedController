@@ -5,6 +5,7 @@
 # found in the LICENSE file.
 
 # Used to access the cr50 console and handle RMA Open
+
 """Open cr50 using RMA authentication.
 
 Run RMA Open to enable CCD on Cr50. The utility can be used to get a

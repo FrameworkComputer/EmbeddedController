@@ -1,5 +1,4 @@
 #!/usr/bin/env python3
-
 # Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -175,7 +174,6 @@ def flash(jlink_exe, remote, device, interface, cmd_file):
 
 
 def main(argv: list):
-
     parser = argparse.ArgumentParser()
 
     default_jlink = "./JLink_Linux_V684a_x86_64/JLinkExe"

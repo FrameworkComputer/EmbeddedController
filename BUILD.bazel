@@ -12,4 +12,5 @@ load(
 )
 
 legacy_ec.ec_srcs()
+
 all_targets()

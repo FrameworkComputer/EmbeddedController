@@ -359,7 +359,6 @@ class AndesAnalyzer(object):
         return (address, words, opcode, operand_text)
 
     def AnalyzeFunction(self, function_symbol, instructions):
-
         stack_frame = 0
         callsites = []
         for address, words, opcode, operand_text in instructions:
@@ -753,7 +752,6 @@ class RiscvAnalyzer(object):
         return (address, opcode, operand_text)
 
     def AnalyzeFunction(self, function_symbol, instructions):
-
         stack_frame = 0
         callsites = []
         for address, opcode, operand_text in instructions:

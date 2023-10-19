@@ -3,4 +3,3 @@
 # found in the LICENSE file.
 
 target_sources(app PRIVATE src/usbc_dp_mode.c)
-

@@ -4,6 +4,7 @@
 # found in the LICENSE file.
 
 """
+
 Script to program a Microchip EC with erased or a bricked flash.
 
 General usage:

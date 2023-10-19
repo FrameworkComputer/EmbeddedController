@@ -124,10 +124,10 @@ def testcase_to_result(testsuite, testcase, base_tags, config_tags):
         "testMetadata": {"name": testcase["identifier"]},
     }
 
-    for (key, value) in base_tags:
+    for key, value in base_tags:
         result["tags"].append({"key": key, "value": value})
 
-    for (key, value) in config_tags:
+    for key, value in config_tags:
         result["tags"].append({"key": key.lower(), "value": value})
 
     if result["status"] == "FAIL" and "log" in testcase and testcase["log"]:

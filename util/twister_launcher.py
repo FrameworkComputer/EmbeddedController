@@ -3,7 +3,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
+"""Wrapper for invoking Twister
+
 This script is a wrapper for invoking Twister, the Zephyr test runner, using
 default parameters for the ChromiumOS EC project. For an overview of CLI
 parameters that may be used, please consult the Twister documentation.

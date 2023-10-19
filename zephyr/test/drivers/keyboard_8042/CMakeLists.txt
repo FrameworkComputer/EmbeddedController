@@ -5,4 +5,3 @@
 target_sources(app PRIVATE
   src/keyboard_8042.c
 )
-

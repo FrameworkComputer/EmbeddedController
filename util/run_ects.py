@@ -4,7 +4,6 @@
 
 """Run all eCTS tests and publish results."""
 
-
 import argparse
 import logging
 import os
