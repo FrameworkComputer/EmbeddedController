@@ -143,16 +143,19 @@ __overridable void project_chassis_function(enum gpio_signal signal)
 
 static void check_chassis_open(void)
 {
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0
-			&& !chassis_once_flag) {
-
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0) {
 		CPRINTS("Chassis was opened");
 		chassis_once_flag = 1;
 
 		/* Record the chassis was open status in bbram */
-		system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 1);
+		if (!chassis_once_flag)
+			system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 1);
 
-		/* Counter for chasis pin */
+		if (chassis_open_count < 0xFF)
+			chassis_open_count++;
+		system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, chassis_open_count);
+
+		/* Counter for chassis pin */
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 			if (chassis_press_counter < 0xFF)
 				chassis_press_counter++;
