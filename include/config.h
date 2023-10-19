@@ -1778,7 +1778,7 @@
  * capture the EC state after a panic.
  */
 #undef CONFIG_SYSTEM_SAFE_MODE
-#define CONFIG_SYSTEM_SAFE_MODE_TIMEOUT_MSEC 2000
+#define CONFIG_SYSTEM_SAFE_MODE_TIMEOUT_MSEC 4000
 /*
  * Prints the stack of the faulting task to the console buffer in system safe
  * mode.

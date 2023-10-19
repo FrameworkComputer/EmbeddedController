@@ -92,7 +92,7 @@ config PLATFORM_EC_SYSTEM_SAFE_MODE
 
 config PLATFORM_EC_SYSTEM_SAFE_MODE_TIMEOUT_MSEC
 	int "System safe mode timeout"
-	default 2000
+	default 4000
 	depends on PLATFORM_EC_SYSTEM_SAFE_MODE
 	help
 	  Safe mode will force a system reset after this timeout. The system may
