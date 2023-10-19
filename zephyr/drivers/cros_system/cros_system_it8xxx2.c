@@ -99,9 +99,17 @@ static int cros_system_it8xxx2_get_reset_cause(const struct device *dev)
 		/*
 		 * We can't differentiate between power-on and reset pin because
 		 * LRSIWR is set on both ~WRST assertion and power-on, and LRS
-		 * is either 0 or 1 in both cases. Conservatively treat both as
-		 * power-on.
+		 * is either 0 or 1 in both cases.
+		 *
+		 * Some EC code paths care about only one of these options,
+		 * so we force both causes to be reported (via
+		 * system_set_reset_flags() behind our caller's back) even
+		 * though in reality it had to be only one of them because
+		 * being unable to report a hard reset breaks some
+		 * functionality, as would being unable to report power-on
+		 * reset.
 		 */
+		system_set_reset_flags(EC_RESET_FLAG_RESET_PIN);
 		return POWERUP;
 	}
 	return UNKNOWN_RST;
