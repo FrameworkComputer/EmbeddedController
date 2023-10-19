@@ -59,7 +59,7 @@
 		ec_smb_da7 {
 			gpios = <&gpiob 2 GPIO_INPUT>;
 		};
-		mic_sw {
+		gpio_mic_sw: mic_sw {
 			gpios = <&gpioc 1 GPIO_INPUT>;
 		};
 		gpio_on_off_btn_l: on_off_btn_l {
@@ -157,7 +157,7 @@
 		gpio_apu_ec_int2_l: apu_ec_int2_l {
 			gpios = <&gpio7 4 GPIO_ODR_HIGH>;	/* EC notify host HID interrupt 2*/
 		};
-		cam_sw {
+		gpio_cam_sw: cam_sw {
 			gpios = <&gpio9 3 GPIO_INPUT>;
 		};
 		gpio_spok: pwr_3v5v_pg {
