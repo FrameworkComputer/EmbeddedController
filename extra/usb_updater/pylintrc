@@ -1,0 +1,13 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Changes to make pylint and black agree on the formatting.
+
+[General]
+
+# Ignore files that need manual changes (`cros format` is insufficient).  These
+# most likely predated the strict pylint requirement.
+ignore=
+    fw_update.py,
+    servo_updater.py,
