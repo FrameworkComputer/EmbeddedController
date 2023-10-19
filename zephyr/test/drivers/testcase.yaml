@@ -907,6 +907,15 @@ tests:
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
+  drivers.ps8743:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_PS8743=y
+    extra_conf_files:
+    - prj.conf
+    - ps8743/prj.conf
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./ps8743/mux.dts
   drivers.ps8xxx:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_PS8XXX=y

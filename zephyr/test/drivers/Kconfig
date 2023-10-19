@@ -148,6 +148,12 @@ config LINK_TEST_SUITE_PANIC_OUTPUT
 config LINK_TEST_SUITE_POWER_HOST_SLEEP
 	bool "Link and run the power/host_sleep.c specific tests"
 
+config LINK_TEST_SUITE_PS8743
+	bool "Link and test the ps8743 tests"
+	help
+	  Link tests PS8743 test suite for the MUX driver related function
+	  tests.
+
 config LINK_TEST_SUITE_PS8XXX
 	bool "Link and test the ps8xxx tests"
 

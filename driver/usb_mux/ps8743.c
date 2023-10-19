@@ -211,13 +211,27 @@ static enum usb_conn_status ps8743_get_usb_conn_status(const struct usb_mux *me)
 		       USB3_CONNECTED;
 }
 
+static const struct usb_mux *find_mux(const struct usb_mux_chain *chain)
+{
+	while (chain) {
+		if (chain->mux->driver == &ps8743_usb_mux_driver) {
+			return chain->mux;
+		}
+
+		chain = chain->next;
+	}
+
+	return NULL;
+}
+
 static void ps8743_suspend(void)
 {
 	for (int i = 0; i < board_get_usb_pd_port_count(); i++) {
-		const struct usb_mux *mux = usb_muxes[i].mux;
+		const struct usb_mux *mux = find_mux(&usb_muxes[i]);
 
-		if (mux->driver != &ps8743_usb_mux_driver)
+		if (!mux) {
 			continue;
+		}
 
 		saved_usb_conn_status[i] = ps8743_get_usb_conn_status(mux);
 
@@ -233,10 +247,11 @@ DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, ps8743_suspend, HOOK_PRIO_DEFAULT);
 static void ps8743_resume(void)
 {
 	for (int i = 0; i < board_get_usb_pd_port_count(); i++) {
-		const struct usb_mux *mux = usb_muxes[i].mux;
+		const struct usb_mux *mux = find_mux(&usb_muxes[i]);
 
-		if (mux->driver != &ps8743_usb_mux_driver)
+		if (!mux) {
 			continue;
+		}
 
 		if (saved_usb_conn_status[i] != NO_DEVICE) {
 			ps8743_field_update(mux, PS8743_REG_MODE,

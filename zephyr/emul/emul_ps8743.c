@@ -20,7 +20,9 @@ struct ps8743_data {
 };
 
 static const uint8_t default_values[PS8743_REG_MAX + 1] = {
-	[PS8743_REG_USB_EQ_RX] = 0x00,
+	[PS8743_REG_USB_EQ_RX] = 0x00,	  [PS8743_REG_REVISION_ID1] = 0x01,
+	[PS8743_REG_REVISION_ID2] = 0x0b, [PS8743_REG_CHIP_ID1] = 0x41,
+	[PS8743_REG_CHIP_ID2] = 0x87,
 };
 
 void ps8743_emul_reset_regs(const struct emul *emul)
@@ -39,6 +41,18 @@ int ps8743_emul_peek_reg(const struct emul *emul, int reg)
 		return -1;
 	}
 	return regs[reg];
+}
+
+void ps8743_emul_set_reg(const struct emul *emul, int reg, int val)
+{
+	struct ps8743_data *data = (struct ps8743_data *)emul->data;
+	uint8_t *regs = data->regs;
+
+	if (!IN_RANGE(reg, 0, PS8743_REG_MAX)) {
+		return;
+	}
+
+	regs[reg] = val;
 }
 
 static int ps8743_emul_read(const struct emul *emul, int reg, uint8_t *val,
@@ -103,3 +117,8 @@ static int ps8743_emul_init(const struct emul *emul,
 DT_INST_FOREACH_STATUS_OKAY(INIT_PS8743_EMUL)
 
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
+
+struct i2c_common_emul_data *ps8743_get_i2c_common_data(const struct emul *emul)
+{
+	return emul->data;
+}
