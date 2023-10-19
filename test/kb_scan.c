@@ -595,12 +595,28 @@ static int power_button_mask_test(void)
 static int test_check_boot_esc(void)
 {
 	TEST_ASSERT(keyboard_scan_get_boot_keys() == BIT(BOOT_KEY_ESC));
+	mock_key(KEYBOARD_ROW_ESC, KEYBOARD_COL_ESC, 0);
+	task_wake(TASK_ID_KEYSCAN);
+	msleep(40);
+	TEST_ASSERT(keyboard_scan_get_boot_keys() == 0);
 	return EC_SUCCESS;
 }
 
 static int test_check_boot_down(void)
 {
-	TEST_ASSERT(keyboard_scan_get_boot_keys() == BIT(BOOT_KEY_DOWN_ARROW));
+	TEST_ASSERT(keyboard_scan_get_boot_keys() ==
+		    (BIT(BOOT_KEY_DOWN_ARROW) | BIT(BOOT_KEY_REFRESH)));
+
+	mock_key(6, 11, 0);
+	task_wake(TASK_ID_KEYSCAN);
+	msleep(40);
+	TEST_ASSERT(keyboard_scan_get_boot_keys() == BIT(BOOT_KEY_REFRESH));
+
+	mock_key(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH, 0);
+	task_wake(TASK_ID_KEYSCAN);
+	msleep(40);
+	TEST_ASSERT(keyboard_scan_get_boot_keys() == 0);
+
 	return EC_SUCCESS;
 }
 
@@ -621,6 +637,7 @@ void test_init(void)
 		/* Power-F3-Down */
 		system_set_reset_flags(system_get_reset_flags() |
 				       EC_RESET_FLAG_RESET_PIN);
+		mock_key(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH, 1);
 		mock_key(6, 11, 1);
 	}
 }
