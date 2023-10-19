@@ -10,6 +10,7 @@
 #include "temp_sensor.h"
 #include "temp_sensor/temp_sensor.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 #include "timer.h"
 
 #include <math.h>
