@@ -146,6 +146,20 @@ int fp_acquire_image_with_mode(uint8_t *image_data, int mode);
  */
 int fp_maintenance(void);
 
+#ifdef CONFIG_ZEPHYR
+/**
+ * Put the sensor into idle state
+ *
+ * This function is useful if it's necessary e.g. to leave 'detect' mode
+ * due to timeout or user cancel.
+ *
+ * @return 0 on success
+ * @return negative value on error
+ */
+int fp_idle(void);
+
+#endif /* CONFIG_ZEPHYR */
+
 #ifdef __cplusplus
 }
 #endif
