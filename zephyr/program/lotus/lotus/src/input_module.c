@@ -273,8 +273,64 @@ static int inputdeck_cmd(int argc, const char **argv)
 
 			id = get_hardware_id(ADC_HUB_BOARD_ID);
 			mv = adc_read_channel(ADC_HUB_BOARD_ID);
-			ccprintf("    C deck status %d = %d %d mv\n", i, id, mv);
-
+			ccprintf("    C-Deck status %d = %d %d mV", i, id, mv);
+			switch (i) {
+			case TOP_ROW_0:
+				ccprintf(" [X - -    - -]");
+				break;
+			case TOP_ROW_1:
+				ccprintf(" [- X -    - -]");
+				break;
+			case TOP_ROW_2:
+				ccprintf(" [- - X    - -]");
+				break;
+			case TOP_ROW_3:
+				ccprintf(" [- - -    X -]");
+				break;
+			case TOP_ROW_4:
+				ccprintf(" [- - -    - X]");
+				break;
+			case TOUCHPAD:
+				ccprintf(" [Touchpad    ]");
+				break;
+			case TOP_ROW_NOT_CONNECTED:
+				ccprintf(" [Toprow disc.]");
+				break;
+			case HUBBOARD:
+				ccprintf("  [Hubboard    ]");
+				break;
+			default:
+				break;
+			}
+			switch (id) {
+			case INPUT_MODULE_SHORT:
+				ccprintf(" [Short]\n");
+				break;
+			case INPUT_MODULE_GENERIC_A:
+				ccprintf(" [Generic A]\n");
+				break;
+			case INPUT_MODULE_GENERIC_B:
+				ccprintf(" [Generic B]\n");
+				break;
+			case INPUT_MODULE_GENERIC_C:
+				ccprintf(" [Generic C]\n");
+				break;
+			case INPUT_MODULE_KEYBOARD_B:
+				ccprintf(" [Keyboard B]\n");
+				break;
+			case INPUT_MODULE_KEYBOARD_A:
+				ccprintf(" [Keyboard A]\n");
+				break;
+			case INPUT_MODULE_DISCONNECTED:
+				ccprintf(" [Disconnected]\n");
+				break;
+			case INPUT_MODULE_TOUCHPAD:
+				ccprintf(" [Touchpad]\n");
+				break;
+			default:
+				ccprintf(" [Reserved]\n");
+				break;
+			}
 		}
 
 	ccprintf("Input module Overcurrent Events: %d\n", oc_count);

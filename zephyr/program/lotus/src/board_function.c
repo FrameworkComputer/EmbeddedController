@@ -42,6 +42,8 @@ static uint8_t chassis_once_flag;
 
 static uint64_t chassis_open_hibernate_time;
 
+static uint8_t init = 1;
+
 int bios_function_status(uint16_t type, uint16_t addr, uint8_t flag)
 {
 	uint8_t status;
@@ -143,16 +145,29 @@ __overridable void project_chassis_function(enum gpio_signal signal)
 
 static void check_chassis_open(void)
 {
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0
-			&& !chassis_once_flag) {
-
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0) {
 		CPRINTS("Chassis was opened");
+		/* Record the chassis was open status in bbram */
+		if (!chassis_once_flag)
+			system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 1);
+
 		chassis_once_flag = 1;
 
-		/* Record the chassis was open status in bbram */
-		system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_WAS_OPEN, 1);
+		if (init) {
+			system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN,
+				&chassis_vtr_open_count);
+			if (chassis_vtr_open_count < 0xFF)
+				chassis_vtr_open_count++;
+			system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_VTR_OPEN, chassis_vtr_open_count);
+		} else {
+			system_get_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL,
+				&chassis_open_count);
+			if (chassis_open_count < 0xFF)
+				chassis_open_count++;
+			system_set_bbram(SYSTEM_BBRAM_IDX_CHASSIS_TOTAL, chassis_open_count);
+		}
 
-		/* Counter for chasis pin */
+		/* Counter for chassis pin */
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF))
 			if (chassis_press_counter < 0xFF)
 				chassis_press_counter++;
@@ -185,7 +200,10 @@ static void bios_function_init(void)
 	set_detect_mode(flash_storage_get(FLASH_FLAGS_INPUT_MODULE_POWER));
 #endif
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_chassis_open));
+
+	init = 1;
 	check_chassis_open();
+	init = 0;
 }
 DECLARE_HOOK(HOOK_INIT, bios_function_init, HOOK_PRIO_DEFAULT + 1);
 
