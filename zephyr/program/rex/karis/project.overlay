@@ -12,7 +12,6 @@
 #include "../keyboard.dtsi"
 #include "../power_signals.dtsi"
 #include "../rex.dtsi"
-#include "../temp_sensors.dtsi"
 #include "../usbc.dtsi"
 
 /* Karis project DTS includes */
@@ -22,6 +21,7 @@
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
 #include "motionsense.dtsi"
+#include "temp_sensors.dtsi"
 
 / {
 	named-gpios {
@@ -149,6 +149,9 @@
 
 &fan0 {
 	pwms = <&pwm5 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+	rpm_min = <2500>;
+	rpm_start = <2500>;
+	rpm_max = <6000>;
 };
 
 &cbi_flash {
