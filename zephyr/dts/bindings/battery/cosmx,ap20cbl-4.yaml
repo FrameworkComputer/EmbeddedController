@@ -1,30 +1,29 @@
-# Copyright 2023 The ChromiumOS Authors
-# Use of this source code is governed by a BSD-style license that can be
-# found in the LICENSE file.
-
-description: "LGES AP23A8L"
-compatible: "lges,ap23a8l"
+description: "COSMX AP20CBL-4"
+compatible: "cosmx,ap20cbl-4"
 
 include: battery-smart.yaml
 
 properties:
   enum-name:
     type: string
-    default: "lges,ap23a8l"
+    default: "cosmx,ap20cbl-4"
 
-  # Fuel Gauge
+  # Fuel gauge
   manuf_name:
-    default: "LGES KT0030G025"
+    default: "COSMX KT0030B004"
   device_name:
-    default: "AP23A8L"
+    default: "AP20CBL"
   ship_mode_reg_addr:
     default: 0x3A
   ship_mode_reg_data:
     default: [0xC574, 0xC574]
+  # Manufacturer Access 0x00
+  # b15: D-FET
+  # b14: C-FET
   flags:
-    default: 0x0
-  fet_reg_addr:
     default: 0x00
+  fet_reg_addr:
+    default: 0x0
   fet_reg_mask:
     default: 0x8000
   fet_disconnect_val:
@@ -38,7 +37,7 @@ properties:
   voltage_max:
     default: 13200
   voltage_normal:
-    default: 11280
+    default: 11550
   voltage_min:
     default: 9000
   precharge_current:
