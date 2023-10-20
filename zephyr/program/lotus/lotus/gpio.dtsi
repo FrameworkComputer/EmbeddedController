@@ -77,7 +77,7 @@
 		ec_smb_da7 {
 			gpios = <&gpiob 2 GPIO_INPUT>;
 		};
-		mic_sw {
+		gpio_mic_sw: mic_sw {
 			gpios = <&gpioc 1 GPIO_INPUT>;
 		};
 		gpu_b_gpio00_ec {
@@ -257,7 +257,7 @@
 		i2c_int_tp_2 {
 			gpios = <&gpio9 6 GPIO_INPUT>;		/* HUB board TP module */
 		};
-		cam_sw {
+		gpio_cam_sw: cam_sw {
 			gpios = <&gpio9 3 GPIO_INPUT>;
 		};
 		gpio_spok: spok {

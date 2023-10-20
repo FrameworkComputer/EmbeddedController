@@ -417,6 +417,27 @@ static enum ec_status host_command_uefi_app_btn_status(struct host_cmd_handler_a
 DECLARE_HOST_COMMAND(EC_CMD_UEFI_APP_BTN_STATUS, host_command_uefi_app_btn_status, EC_VER_MASK(0));
 #endif /* CONFIG_BOARD_LOTUS */
 
+static enum ec_status privacy_switches_check(struct host_cmd_handler_args *args)
+{
+	struct ec_response_privacy_switches_check *r = args->response;
+
+	/*
+	 * Camera is low when off, microphone is high when off
+	 * Return 0 when off/close and 1 when high/open
+	 */
+	r->microphone = !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_mic_sw));
+	r->camera = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_sw));
+
+	CPRINTS("Microphone switch open: %d", r->microphone);
+	CPRINTS("Camera switch open: %d", r->camera);
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+
+}
+DECLARE_HOST_COMMAND(EC_CMD_PRIVACY_SWITCHES_CHECK_MODE, privacy_switches_check, EC_VER_MASK(0));
+
 /*******************************************************************************/
 /*                       EC console command for Project                        */
 /*******************************************************************************/

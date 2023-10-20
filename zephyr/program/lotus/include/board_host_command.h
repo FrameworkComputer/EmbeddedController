@@ -240,6 +240,16 @@ struct ec_params_standalone_mode {
 	uint8_t enable;
 } __ec_align1;
 
+/*****************************************************************************/
+/*
+ * This command returns the current state of the camera and microphone privacy switches
+ */
+#define EC_CMD_PRIVACY_SWITCHES_CHECK_MODE 0x3E14
+
+struct ec_response_privacy_switches_check {
+	uint8_t microphone;
+	uint8_t camera;
+} __ec_align1;
 
 /*****************************************************************************/
 /*
