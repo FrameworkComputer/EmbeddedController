@@ -92,7 +92,7 @@ static int raw_button_pressed(const struct button_config *button)
 
 #ifdef CONFIG_BUTTON_TRIGGERED_RECOVERY
 
-#ifdef CONFIG_LED_COMMON
+#ifdef CONFIG_DETACHABLE_BASE
 static void button_blink_hw_reinit_led(void)
 {
 	int led_state = LED_STATE_ON;
@@ -148,7 +148,7 @@ static void button_check_hw_reinit_required(void)
 {
 	timestamp_t deadline;
 	timestamp_t now = get_time();
-#ifdef CONFIG_LED_COMMON
+#ifdef CONFIG_DETACHABLE_BASE
 	uint8_t led_on = 0;
 #endif
 
@@ -160,7 +160,7 @@ static void button_check_hw_reinit_required(void)
 		if (!is_recovery_button_pressed() ||
 		    !power_button_signal_asserted()) {
 			CPRINTS("No HW_REINIT request");
-#ifdef CONFIG_LED_COMMON
+#ifdef CONFIG_DETACHABLE_BASE
 			if (led_on)
 				led_control(EC_LED_ID_RECOVERY_HW_REINIT_LED,
 					    LED_STATE_RESET);
@@ -168,7 +168,7 @@ static void button_check_hw_reinit_required(void)
 			return;
 		}
 
-#ifdef CONFIG_LED_COMMON
+#ifdef CONFIG_DETACHABLE_BASE
 		if (!led_on) {
 			led_control(EC_LED_ID_RECOVERY_HW_REINIT_LED,
 				    LED_STATE_ON);
@@ -183,7 +183,7 @@ static void button_check_hw_reinit_required(void)
 	CPRINTS("HW_REINIT requested");
 	host_set_single_event(EC_HOST_EVENT_KEYBOARD_RECOVERY_HW_REINIT);
 
-#ifdef CONFIG_LED_COMMON
+#ifdef CONFIG_DETACHABLE_BASE
 	button_blink_hw_reinit_led();
 #endif
 }
@@ -592,20 +592,20 @@ static int debug_button_pressed(int mask)
 	return debug_button_mask() == mask;
 }
 
-#ifdef CONFIG_LED_COMMON
+#ifdef CONFIG_DETACHABLE_BASE
 static int debug_mode_blink_led(void)
 {
 	return ((curr_debug_state != STATE_DEBUG_NONE) &&
 		(curr_debug_state != STATE_DEBUG_CHECK));
 }
-#endif
+#endif /* CONFIG_DETACHABLE_BASE */
 
 static void debug_mode_transition(enum debug_state next_state)
 {
 	timestamp_t now = get_time();
-#ifdef CONFIG_LED_COMMON
+#ifdef CONFIG_DETACHABLE_BASE
 	int curr_blink_state = debug_mode_blink_led();
-#endif
+#endif /* CONFIG_DETACHABLE_BASE */
 
 	/* Cancel any deferred calls. */
 	hook_call_deferred(&debug_mode_handle_data, -1);
@@ -678,10 +678,10 @@ static void debug_mode_transition(enum debug_state next_state)
 	next_debug_state = STATE_DEBUG_NONE;
 	debug_state_deadline.val = 0;
 	debug_button_hit_count = 0;
-#ifdef CONFIG_LED_COMMON
+#ifdef CONFIG_DETACHABLE_BASE
 	if (curr_blink_state)
 		led_control(EC_LED_ID_SYSRQ_DEBUG_LED, LED_STATE_RESET);
-#endif
+#endif /* CONFIG_DETACHABLE_BASE */
 }
 
 __test_only void reset_button_debug_state(void)
@@ -835,7 +835,7 @@ static void debug_mode_handle(void)
 	}
 }
 
-#ifdef CONFIG_LED_COMMON
+#ifdef CONFIG_DETACHABLE_BASE
 static void debug_led_tick(void)
 {
 	static int led_state = LED_STATE_OFF;
@@ -846,7 +846,7 @@ static void debug_led_tick(void)
 	}
 }
 DECLARE_HOOK(HOOK_TICK, debug_led_tick, HOOK_PRIO_DEFAULT);
-#endif /* CONFIG_LED_COMMON */
+#endif /* CONFIG_DETACHABLE_BASE */
 
 #endif /* !CONFIG_DEDICATED_RECOVERY_BUTTON */
 #endif /* CONFIG_EMULATED_SYSRQ */
