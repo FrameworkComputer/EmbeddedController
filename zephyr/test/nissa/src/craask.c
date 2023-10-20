@@ -439,6 +439,7 @@ ZTEST(craask, test_alt_sensor_base_lsm6dso)
 	/* Clear base_imu_irq call count before test */
 	bmi3xx_interrupt_fake.call_count = 0;
 	lsm6dso_interrupt_fake.call_count = 0;
+	bma4xx_interrupt_fake.call_count = 0;
 
 	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 1), NULL);
 	k_sleep(K_MSEC(100));
@@ -447,6 +448,7 @@ ZTEST(craask, test_alt_sensor_base_lsm6dso)
 
 	zassert_equal(bmi3xx_interrupt_fake.call_count, 0);
 	zassert_equal(lsm6dso_interrupt_fake.call_count, 1);
+	zassert_equal(bma4xx_interrupt_fake.call_count, 0);
 }
 
 ZTEST(craask, test_alt_sensor_base_bmi323)
@@ -469,6 +471,7 @@ ZTEST(craask, test_alt_sensor_base_bmi323)
 	/* Clear base_imu_irq call count before test */
 	bmi3xx_interrupt_fake.call_count = 0;
 	lsm6dso_interrupt_fake.call_count = 0;
+	bma4xx_interrupt_fake.call_count = 0;
 
 	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 1), NULL);
 	k_sleep(K_MSEC(100));
@@ -477,6 +480,39 @@ ZTEST(craask, test_alt_sensor_base_bmi323)
 
 	zassert_equal(bmi3xx_interrupt_fake.call_count, 1);
 	zassert_equal(lsm6dso_interrupt_fake.call_count, 0);
+	zassert_equal(bma4xx_interrupt_fake.call_count, 0);
+}
+
+ZTEST(craask, test_alt_sensor_base_bma422)
+{
+	const struct device *base_imu_gpio = DEVICE_DT_GET(
+		DT_GPIO_CTLR(DT_NODELABEL(gpio_imu_int_l), gpios));
+	const gpio_port_pins_t base_imu_pin =
+		DT_GPIO_PIN(DT_NODELABEL(gpio_imu_int_l), gpios);
+
+	/* Initial ssfc data for BMA422 base sensor. */
+	cbi_get_ssfc_fake.custom_fake = cbi_get_ssfc_mock;
+	ssfc_data = 0x20;
+	cros_cbi_ssfc_init();
+
+	/* sensor_enable_irqs enable the interrupt int_imu */
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_imu));
+
+	alt_sensor_init();
+
+	/* Clear base_imu_irq call count before test */
+	bmi3xx_interrupt_fake.call_count = 0;
+	lsm6dso_interrupt_fake.call_count = 0;
+	bma4xx_interrupt_fake.call_count = 0;
+
+	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 1), NULL);
+	k_sleep(K_MSEC(100));
+	zassert_ok(gpio_emul_input_set(base_imu_gpio, base_imu_pin, 0), NULL);
+	k_sleep(K_MSEC(100));
+
+	zassert_equal(bmi3xx_interrupt_fake.call_count, 0);
+	zassert_equal(lsm6dso_interrupt_fake.call_count, 0);
+	zassert_equal(bma4xx_interrupt_fake.call_count, 1);
 }
 
 ZTEST(craask, test_alt_sensor_lid_lis2dw12)

@@ -211,6 +211,11 @@
 				status = "okay";
 				value = <1>;
 			};
+			base_sensor_2: bma422 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <2>;
+			};
 		};
 	};
 };
