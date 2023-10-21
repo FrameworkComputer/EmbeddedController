@@ -109,13 +109,13 @@
 &i2c4_1 {
 	/delete-node/ rt1716@4e;
 
-	nct3807_C1: nct38xx@73 {
+	nct3807_c1: nct38xx@73 {
 		compatible = "nuvoton,nct38xx";
 		reg = <0x73>;
 
 		tcpc_nct38xx_port1: nct38xx-tcpc {
 			compatible = "nuvoton,nct38xx-tcpc";
-			gpio-dev = <&nct3807_C1>;
+			gpio-dev = <&nct3807_c1>;
 			tcpc-flags = <(
 				TCPC_FLAGS_TCPCI_REV2_0 |
 				TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
