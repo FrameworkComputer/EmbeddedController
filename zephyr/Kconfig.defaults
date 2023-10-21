@@ -62,4 +62,7 @@ endchoice
 config INPUT_NPCX_KBD
 	default n if PLATFORM_EC_KEYBOARD_CROS_EC_RAW_KB
 
+config OUTPUT_DISASSEMBLY
+	default y
+
 orsource "Kconfig.defaults-$(ARCH)"
