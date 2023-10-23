@@ -6,7 +6,7 @@
 #include <zephyr/fff.h>
 #include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test_new.h>
+#include <zephyr/ztest_test.h>
 
 #include <console.h>
 #include <ec_commands.h>

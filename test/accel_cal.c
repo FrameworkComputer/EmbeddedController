@@ -10,6 +10,8 @@
 
 #include <math.h>
 
+#include <zephyr/ztest.h>
+
 struct motion_sensor_t motion_sensors[] = {};
 const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
@@ -38,7 +40,14 @@ static bool accumulate(float x, float y, float z, float temperature)
 	       accel_cal_accumulate(&cal, 1000 * MSEC, x, y, z, temperature);
 }
 
-DECLARE_EC_TEST(test_calibrated_correctly_with_kasa)
+static void test_accel_cal_before(const struct ztest_unit_test *test,
+				  void *fixture)
+{
+	cal.still_det = STILL_DET(0.00025f, 800 * MSEC, 1200 * MSEC, 5);
+	accel_cal_reset(&cal);
+}
+
+ZTEST(test_accel_cal, test_calibrated_correctly_with_kasa)
 {
 	bool has_bias;
 
@@ -55,11 +64,9 @@ DECLARE_EC_TEST(test_calibrated_correctly_with_kasa)
 	zassert_within(cal.bias[X], 0.01f, 0.0001f, "%f", cal.bias[X]);
 	zassert_within(cal.bias[Y], 0.01f, 0.0001f, "%f", cal.bias[Y]);
 	zassert_within(cal.bias[Z], 0.01f, 0.0001f, "%f", cal.bias[Z]);
-
-	return EC_SUCCESS;
 }
 
-DECLARE_EC_TEST(test_calibrated_correctly_with_newton)
+ZTEST(test_accel_cal, test_calibrated_correctly_with_newton)
 {
 	bool has_bias = false;
 	struct kasa_fit kasa;
@@ -94,11 +101,9 @@ DECLARE_EC_TEST(test_calibrated_correctly_with_newton)
 				   powf(kasa_bias[Y] - 0.01f, 2.0f) +
 				   powf(kasa_bias[Z] - 0.01f, 2.0f)),
 		     NULL);
-
-	return EC_SUCCESS;
 }
 
-DECLARE_EC_TEST(test_temperature_gates)
+ZTEST(test_accel_cal, test_temperature_gates)
 {
 	bool has_bias;
 
@@ -112,31 +117,6 @@ DECLARE_EC_TEST(test_temperature_gates)
 	has_bias = accumulate(-0.6971f, -0.6971f, -0.6971f, 31.0f);
 
 	zassert_false(has_bias);
-
-	return EC_SUCCESS;
 }
 
-void before_test(void)
-{
-	cal.still_det = STILL_DET(0.00025f, 800 * MSEC, 1200 * MSEC, 5);
-	accel_cal_reset(&cal);
-}
-
-void after_test(void)
-{
-}
-
-TEST_MAIN()
-{
-	ztest_test_suite(test_accel_cal,
-			 ztest_unit_test_setup_teardown(
-				 test_calibrated_correctly_with_kasa,
-				 before_test, after_test),
-			 ztest_unit_test_setup_teardown(
-				 test_calibrated_correctly_with_newton,
-				 before_test, after_test),
-			 ztest_unit_test_setup_teardown(test_temperature_gates,
-							before_test,
-							after_test));
-	ztest_run_test_suite(test_accel_cal);
-}
+ZTEST_SUITE(test_accel_cal, NULL, NULL, NULL, test_accel_cal_before, NULL);

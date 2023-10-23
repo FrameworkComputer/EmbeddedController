@@ -11,7 +11,7 @@
 #include <zephyr/pm/policy.h>
 #include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test_new.h>
+#include <zephyr/ztest_test.h>
 
 /* LCOV_EXCL_START */
 void pm_state_set(enum pm_state state, uint8_t substate_id)

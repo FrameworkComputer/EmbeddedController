@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 #include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test_new.h>
+#include <zephyr/ztest_test.h>
 
 #include <openssl/crypto.h>
 #include <openssl/rand.h>

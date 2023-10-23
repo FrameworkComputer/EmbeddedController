@@ -10,20 +10,17 @@ tests:
       - CONFIG_HAS_TEST_TASKS=y
   tasks.extra_tasks:
     extra_configs:
-      - CONFIG_ZTEST_NEW_API=y
       - CONFIG_SHIMMED_TASKS=y
       - CONFIG_ASSERT_TEST=y
       - CONFIG_PLATFORM_EC_HOSTCMD=n
   tasks.extra_tasks.hostcmd_main:
     extra_configs:
-      - CONFIG_ZTEST_NEW_API=y
       - CONFIG_SHIMMED_TASKS=y
       - CONFIG_ASSERT_TEST=y
       - CONFIG_PLATFORM_EC_HOSTCMD=y
       - CONFIG_TASK_HOSTCMD_THREAD_MAIN=y
   tasks.extra_tasks.hostcmd_dedicated:
     extra_configs:
-      - CONFIG_ZTEST_NEW_API=y
       - CONFIG_SHIMMED_TASKS=y
       - CONFIG_ASSERT_TEST=y
       - CONFIG_PLATFORM_EC_HOSTCMD=y

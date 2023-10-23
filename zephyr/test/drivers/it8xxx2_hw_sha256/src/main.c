@@ -4,7 +4,7 @@
  */
 
 #include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test_new.h>
+#include <zephyr/ztest_test.h>
 
 #include <sha256.h>
 

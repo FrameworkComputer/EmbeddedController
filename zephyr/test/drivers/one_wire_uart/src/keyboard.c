@@ -13,7 +13,7 @@
 #include <zephyr/device.h>
 #include <zephyr/fff.h>
 #include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test_new.h>
+#include <zephyr/ztest_test.h>
 
 const static struct device *dev = DEVICE_DT_GET(DT_NODELABEL(one_wire_uart));
 

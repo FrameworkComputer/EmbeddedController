@@ -8,7 +8,7 @@ menu "Tasks"
 
 config TASKS_SET_TEST_RUNNER_TID_RULE
 	bool "Automatically call set_test_runner_tid() for each test"
-	depends on ZTEST && ZTEST_NEW_API
+	depends on ZTEST
 	help
 	  This enables the test rule which will run before each unit test and
 	  call set_test_runner_tid(). This function is needed to allow-list the

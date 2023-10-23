@@ -84,12 +84,17 @@ static void set_event_before_task_start2(void)
 	/* Do nothing */
 }
 
-static void test_set_event_before_task_start(void)
+static void *tasks_setup(void)
+{
+	start_ec_tasks();
+
+	return NULL;
+}
+
+ZTEST(test_task_shim, test_set_event_before_task_start)
 {
 	/* Send event before tasks start */
 	task_set_event(TASK_ID_TASK_1, 0xAAAA);
-
-	start_ec_tasks();
 
 	run_test(set_event_before_task_start1, set_event_before_task_start2);
 }
@@ -104,7 +109,7 @@ static void task_get_current2(void)
 	zassert_equal(task_get_current(), TASK_ID_TASK_2, "ID matches");
 }
 
-static void test_task_get_current(void)
+ZTEST(test_task_shim, test_task_get_current)
 {
 	run_test(&task_get_current1, &task_get_current2);
 }
@@ -124,7 +129,7 @@ static void timeout2(void)
 	/* Do nothing */
 }
 
-static void test_timeout(void)
+ZTEST(test_task_shim, test_timeout)
 {
 	run_test(&timeout1, &timeout2);
 }
@@ -170,7 +175,7 @@ static void timer_task_2(void)
 	/* Do nothing */
 }
 
-static void test_timer(void)
+ZTEST(test_task_shim, test_timer)
 {
 	run_test(timer_task_1, timer_task_2);
 	zassert_equal(k_sem_take(&check_timer_finished, K_SECONDS(4 * 1000)), 0,
@@ -197,7 +202,7 @@ static void event_delivered2(void)
 	task_set_event(TASK_ID_TASK_1, 0x1234);
 }
 
-static void test_event_delivered(void)
+ZTEST(test_task_shim, test_event_delivered)
 {
 	run_test(&event_delivered1, &event_delivered2);
 }
@@ -221,7 +226,7 @@ static void event_mask_not_delivered2(void)
 	zassert_equal(leftover_events, 0x007F, "All events should be waiting");
 }
 
-static void test_event_mask_not_delivered(void)
+ZTEST(test_task_shim, test_event_mask_not_delivered)
 {
 	run_test(&event_mask_not_delivered1, &event_mask_not_delivered2);
 }
@@ -247,7 +252,7 @@ static void event_mask_extra2(void)
 	zassert_equal(leftover_events, 0x00FE, "All events should be waiting");
 }
 
-static void test_event_mask_extra(void)
+ZTEST(test_task_shim, test_event_mask_extra)
 {
 	run_test(&event_mask_extra1, &event_mask_extra2);
 }
@@ -286,28 +291,14 @@ static void check_task_2_mapping(void)
 	zassert_equal(k_current_get(), task_id_to_thread_id(TASK_ID_TASK_2));
 }
 
-static void test_thread_to_task_mapping(void)
+ZTEST(test_task_shim, test_thread_to_task_mapping)
 {
 	run_test(&check_task_1_mapping, &check_task_2_mapping);
 }
 
-static void test_empty_set_mask(void)
+ZTEST(test_task_shim, test_empty_set_mask)
 {
 	run_test(&empty_set_mask1, &empty_set_mask2);
 }
 
-void test_main(void)
-{
-	/* Note that test_set_event_before_task_start calls start_ec_tasks */
-	ztest_test_suite(test_task_shim,
-			 ztest_unit_test(test_set_event_before_task_start),
-			 ztest_unit_test(test_task_get_current),
-			 ztest_unit_test(test_timeout),
-			 ztest_unit_test(test_timer),
-			 ztest_unit_test(test_event_delivered),
-			 ztest_unit_test(test_event_mask_not_delivered),
-			 ztest_unit_test(test_event_mask_extra),
-			 ztest_unit_test(test_empty_set_mask),
-			 ztest_unit_test(test_thread_to_task_mapping));
-	ztest_run_test_suite(test_task_shim);
-}
+ZTEST_SUITE(test_task_shim, NULL, tasks_setup, NULL, NULL, NULL);

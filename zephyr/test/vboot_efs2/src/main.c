@@ -23,7 +23,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test_new.h>
+#include <zephyr/ztest_test.h>
 
 #define SERIAL_BUFFER_SIZE DT_PROP(DT_NODELABEL(test_uart), buffer_size)
 

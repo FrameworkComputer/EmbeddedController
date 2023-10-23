@@ -11,7 +11,7 @@
 #include <zephyr/device.h>
 #include <zephyr/fff.h>
 #include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test_new.h>
+#include <zephyr/ztest_test.h>
 
 ZTEST_SUITE(host_cmd_get_boot_time, NULL, NULL, NULL, NULL, NULL);
 

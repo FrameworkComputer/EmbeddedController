@@ -477,7 +477,7 @@ struct i2c_emul_api i2c_rt1718s_emul_api = {
 
 DT_INST_FOREACH_STATUS_OKAY(RT1718S_EMUL)
 
-#ifdef CONFIG_ZTEST_NEW_API
+#ifdef CONFIG_ZTEST
 #define RT1718S_EMUL_RESET_RULE_BEFORE(n) \
 	rt1718s_emul_reset(EMUL_DT_GET(DT_DRV_INST(n)))
 static void rt1718s_emul_reset_rule_before(const struct ztest_unit_test *test,
@@ -488,6 +488,6 @@ static void rt1718s_emul_reset_rule_before(const struct ztest_unit_test *test,
 	DT_INST_FOREACH_STATUS_OKAY(RT1718S_EMUL_RESET_RULE_BEFORE);
 }
 ZTEST_RULE(RT1718S_emul_reset, rt1718s_emul_reset_rule_before, NULL);
-#endif /* CONFIG_ZTEST_NEW_API */
+#endif /* CONFIG_ZTEST */
 
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
