@@ -2088,7 +2088,7 @@ void pd_request_power_swap(int port)
 }
 
 /* The function returns true if there is a PE state change, false otherwise */
-static bool port_try_vconn_swap(int port)
+static bool port_try_vconn_swap_on(int port)
 {
 	if (pe[port].vconn_swap_counter < N_VCONN_SWAP_COUNT) {
 		pd_dpm_request(port, DPM_REQUEST_VCONN_SWAP);
@@ -5776,7 +5776,7 @@ static void pe_vdm_send_request_entry(int port)
 	     * about VCONN role policy.
 	     */
 	    port_discovery_vconn_swap_policy(port, true)) {
-		if (port_try_vconn_swap(port))
+		if (port_try_vconn_swap_on(port))
 			return;
 	}
 
@@ -6678,7 +6678,7 @@ static void pe_enter_usb_entry(int port)
 	if ((pe[port].tx_type == TCPCI_MSG_SOP_PRIME ||
 	     pe[port].tx_type == TCPCI_MSG_SOP_PRIME_PRIME) &&
 	    !tc_is_vconn_src(port)) {
-		if (port_try_vconn_swap(port))
+		if (port_try_vconn_swap_on(port))
 			return;
 	}
 
