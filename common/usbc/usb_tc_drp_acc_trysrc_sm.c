@@ -1927,11 +1927,6 @@ void pd_request_vconn_swap_on(int port)
 		task_wake(PD_PORT_TO_TASK_ID(port));
 	}
 }
-
-void pd_request_vconn_swap(int port)
-{
-	pd_dpm_request(port, DPM_REQUEST_VCONN_SWAP);
-}
 #endif
 
 int tc_is_vconn_src(int port)
