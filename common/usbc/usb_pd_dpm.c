@@ -70,6 +70,10 @@ static struct {
 	enum tcpci_msg_type req_type;
 	mutex_t vdm_req_mutex;
 	enum dpm_pd_button_state pd_button_state;
+	/* The desired VCONN role for an upcoming VCONN Swap. Only meaningful if
+	 * DPM_FLAG_VCONN_SWAP is set.
+	 */
+	enum pd_vconn_role desired_vconn_role;
 } dpm[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 __overridable const struct svdm_response svdm_rsp = {
@@ -254,6 +258,9 @@ __overridable bool board_is_tbt_usb4_port(int port)
 
 void pd_request_vconn_swap(int port)
 {
+	dpm[port].desired_vconn_role = pd_get_vconn_state(port) ?
+					       PD_ROLE_VCONN_OFF :
+					       PD_ROLE_VCONN_SRC;
 	DPM_SET_FLAG(port, DPM_FLAG_VCONN_SWAP);
 }
 
@@ -1435,6 +1442,7 @@ static void dpm_waiting_run(const int port)
 static bool dpm_vconn_swap_policy(int port)
 {
 	if (DPM_CHK_FLAG(port, DPM_FLAG_VCONN_SWAP)) {
+		pe_set_requested_vconn_role(port, dpm[port].desired_vconn_role);
 		pd_dpm_request(port, DPM_REQUEST_VCONN_SWAP);
 		DPM_CLR_FLAG(port, DPM_FLAG_VCONN_SWAP);
 		set_state_dpm(port, DPM_WAITING);

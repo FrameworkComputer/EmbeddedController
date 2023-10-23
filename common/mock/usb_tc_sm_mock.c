@@ -216,6 +216,11 @@ void pd_request_vconn_swap_on(int port)
 {
 }
 
+bool pd_get_vconn_state(int port)
+{
+	return false;
+}
+
 bool pd_alt_mode_capable(int port)
 {
 	return false;

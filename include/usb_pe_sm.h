@@ -177,6 +177,14 @@ const char *pe_get_current_state(int port);
 uint32_t pe_get_flags(int port);
 
 /**
+ * Sets the requested VCONN role for a forthcoming VCONN Swap DPM request.
+ *
+ * @param port USB-C port number
+ * @param role Desired VCONN role after the swap
+ */
+void pe_set_requested_vconn_role(int port, enum pd_vconn_role role);
+
+/**
  * Sets the Alert Data Object (ADO) in the PE state
  *
  * @param port USB-C port number
