@@ -1410,6 +1410,9 @@ void tcpci_partner_common_clear_logged_msgs(struct tcpci_partner_data *data)
 void tcpci_partner_common_set_ams_ctrl_msg(struct tcpci_partner_data *data,
 					   enum pd_ctrl_msg_type msg_type)
 {
+	/* TODO(b/307386769): This assert seems to leave a mutex locked in
+	 * i2c_controller.
+	 */
 	/* Make sure we handle one CTRL request at a time */
 	zassert_equal(data->cur_ams_ctrl_req, PD_CTRL_INVALID,
 		      "More than one CTRL msg handled in parallel"
