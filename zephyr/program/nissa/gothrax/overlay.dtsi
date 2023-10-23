@@ -45,6 +45,9 @@
 		default_battery: pow-tech_sg20 {
 			compatible = "pow-tech,sg20", "battery-smart";
 		};
+		gfl_mfp-466894 {
+			compatible = "gfl,mfp-466894", "battery-smart";
+		};
 	};
 
 	hibernate-wake-pins {

@@ -45,6 +45,7 @@ properties:
       - "getac,bq40z50-R3-S3"
       - "getac,bq40z50-R3-S2"
       - "gfl,mfp-549358"
+      - "gfl,mfp-466894"
       - "gfl,nb0299-485489"
       - "lgc,ac17a8m"
       - "lgc,ap16l8j"
