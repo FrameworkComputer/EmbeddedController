@@ -52,7 +52,7 @@ static void board_ina236_init(void)
 	if (rv != EC_SUCCESS)
 		CPRINTS("ina236 write config fail");
 
-	rv = ina2xx_write(0, INA2XX_REG_ALERT, 0x3E80);
+	rv = ina2xx_write(0, INA2XX_REG_ALERT, 0x5DC0);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("ina236 write alert fail");
