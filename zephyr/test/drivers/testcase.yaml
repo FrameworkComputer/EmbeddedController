@@ -722,6 +722,16 @@ tests:
     - ./boards/native_posix.overlay
     - ./led_driver/led_pins.dts
     - ./led_driver/led_policy.dts
+  drivers.led_driver_alias:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_LED_DRIVER_ALIAS_LED=y
+    extra_conf_files:
+    - prj.conf
+    - led_driver/prj.conf
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./led_driver/led_pins.dts
+    - ./led_driver/led_policy_alias.dts
   drivers.led_driver.ec_host_cmd:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_LED_DRIVER=y

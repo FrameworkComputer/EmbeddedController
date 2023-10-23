@@ -275,19 +275,31 @@ void led_control(enum ec_led_id led_id, enum ec_led_state state)
 {
 	enum led_color color;
 
-	if ((led_id != EC_LED_ID_RECOVERY_HW_REINIT_LED) &&
-	    (led_id != EC_LED_ID_SYSRQ_DEBUG_LED))
+	switch (led_id) {
+	case EC_LED_ID_RECOVERY_HW_REINIT_LED:
+		led_id = DT_INST_STRING_TOKEN(0, recovery_hw_reinit_alias);
+		color = state ? DT_INST_STRING_TOKEN(
+					0,
+					recovery_hw_reinit_led_control_color) :
+				LED_OFF;
+		break;
+	case EC_LED_ID_SYSRQ_DEBUG_LED:
+		led_id = DT_INST_STRING_TOKEN(0, sysrq_alias);
+		color = state ? DT_INST_STRING_TOKEN(0,
+						     sysrq_led_control_color) :
+				LED_OFF;
+		break;
+	default:
 		return;
+	}
 
 	if (state == LED_STATE_RESET) {
-		led_auto_control(EC_LED_ID_BATTERY_LED, 1);
+		led_auto_control(led_id, 1);
 		board_led_set_color();
 		return;
 	}
 
-	color = state ? LED_BLUE : LED_OFF;
-
-	led_auto_control(EC_LED_ID_BATTERY_LED, 0);
+	led_auto_control(led_id, 0);
 
 	led_set_color(color, led_id);
 }

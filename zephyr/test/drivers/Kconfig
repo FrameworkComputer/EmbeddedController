@@ -122,6 +122,9 @@ config LINK_TEST_SUITE_KEYBOARD_SCAN
 config LINK_TEST_SUITE_LED_DRIVER
 	bool "Link and test the led_driver tests"
 
+config LINK_TEST_SUITE_LED_DRIVER_ALIAS_LED
+	bool "Link and test the led_driver tests with alias LEDs defined"
+
 config LINK_TEST_SUITE_LOCATE_CHIP_ALTS
 	bool "Link tests for alternate operations of the locate chip host cmd"
 	help
