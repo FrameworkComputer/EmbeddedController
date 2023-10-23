@@ -212,7 +212,9 @@ class BinmanPacker(BasePacker):
 
         yield work_dir / "ec.bin", "ec.bin"
         yield ro_dir / "zephyr" / "zephyr.elf", "zephyr.ro.elf"
+        yield ro_dir / "zephyr" / "zephyr.lst", "zephyr.ro.lst"
         yield rw_dir / "zephyr" / "zephyr.elf", "zephyr.rw.elf"
+        yield rw_dir / "zephyr" / "zephyr.lst", "zephyr.rw.lst"
 
 
 class NpcxPacker(BinmanPacker):
