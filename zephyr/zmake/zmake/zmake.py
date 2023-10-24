@@ -815,7 +815,9 @@ class Zmake:
                     unsigned_files, packer_work_dir, self.jobserver
                 ):
                     shutil.copy2(output_file, output_dir / output_name)
-                    self.logger.debug("Output file '%s' created.", output_file)
+                    self.logger.debug(
+                        "Output file '%s' created.", output_dir / output_name
+                    )
 
             if delete_intermediates:
                 outdir = build_dir / "output"
