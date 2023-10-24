@@ -211,6 +211,7 @@ class BinmanPacker(BasePacker):
             raise OSError("Failed to run binman")
 
         yield work_dir / "ec.bin", "ec.bin"
+        yield rw_dir / "zephyr" / ".config", "ec.config"
         yield ro_dir / "zephyr" / "zephyr.elf", "zephyr.ro.elf"
         yield ro_dir / "zephyr" / "zephyr.lst", "zephyr.ro.lst"
         yield rw_dir / "zephyr" / "zephyr.elf", "zephyr.rw.elf"
