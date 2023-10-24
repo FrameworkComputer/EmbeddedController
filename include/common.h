@@ -30,6 +30,12 @@
 #endif /* CONFIG_ZEPHYR */
 
 /*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 37
+
+/*
  * Define a new macro (FIXED_SECTION) to abstract away the linker details
  * between platform/ec builds and Zephyr. Each build has a slightly different
  * way of ensuring that the given section is in the same relative location in
