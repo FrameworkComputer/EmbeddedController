@@ -355,6 +355,14 @@ void dpm_init(int port)
 	dpm[port].pd_button_state = DPM_PD_BUTTON_IDLE;
 	ap_vdm_init(port);
 
+	/* If the TCPM is not Source/DFP/VCONN Source at the time of Attach,
+	 * trigger a VCONN Swap to VCONN Source as soon as possible.
+	 */
+	if (pd_get_vconn_state(port) == PD_ROLE_VCONN_OFF) {
+		dpm[port].desired_vconn_role = PD_ROLE_VCONN_SRC;
+		DPM_SET_FLAG(port, DPM_FLAG_VCONN_SWAP);
+	}
+
 	/* Ensure that DPM state machine gets reset */
 	set_state_dpm(port, DPM_WAITING);
 }

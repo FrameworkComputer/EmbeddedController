@@ -2168,16 +2168,6 @@ __maybe_unused static bool pe_attempt_port_discovery(int port)
 		return false;
 	}
 
-	/* Apply Port Discovery VCONN Swap Policy */
-	if (IS_ENABLED(CONFIG_USBC_VCONN) &&
-	    port_discovery_vconn_swap_policy(
-		    port, PE_CHK_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON))) {
-		PE_SET_FLAG(port, PE_FLAGS_LOCALLY_INITIATED_AMS);
-		PE_CLR_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON);
-		set_state_pe(port, PE_VCS_SEND_SWAP);
-		return true;
-	}
-
 	/*
 	 * Run discovery functions when the timer indicating either cable
 	 * discovery spacing or BUSY spacing runs out.
@@ -3365,7 +3355,6 @@ static void pe_snk_startup_entry(int port)
 		 * Mark that we'd like to try being Vconn source and DFP
 		 */
 		PE_SET_FLAG(port, PE_FLAGS_DR_SWAP_TO_DFP);
-		PE_SET_FLAG(port, PE_FLAGS_VCONN_SWAP_TO_ON);
 	}
 
 	/*
@@ -5789,11 +5778,9 @@ static void pe_vdm_send_request_entry(int port)
 	    !tc_is_vconn_src(port) &&
 	    /* TODO(b/188578923): Passing true indicates that the PE wants to
 	     * swap to VCONN Source at this time. It would make more sense to
-	     * pass the current value of PE_FLAGS_VCONN_SWAP_TO_ON, but the PE
-	     * does not actually set the flag when it wants to send a message to
-	     * the cable. The existing mechanisms to control the VCONN role are
-	     * clunky and hard to get right. The DPM should centralize logic
-	     * about VCONN role policy.
+	     * pass the current value of a PE flag, but the PE no longer
+	     * maintains a flag for this purpose. This logic should move into
+	     * the DPM with the other VCONN policy logic.
 	     */
 	    port_discovery_vconn_swap_policy(port, true)) {
 		if (port_try_vconn_swap_on(port))
