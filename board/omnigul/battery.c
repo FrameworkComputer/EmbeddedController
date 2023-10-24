@@ -77,10 +77,9 @@ const struct board_batt_params board_battery_info[] = {
 			},
 			.fet = {
 				.reg_addr = 0x0,
-				.reg_mask = 0x0006,	/* D-FET C-FET */
+				.reg_mask = 0xC000,	/* D-FET C-FET */
 				.disconnect_val = 0x0000,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
 		},
 		.batt_info = {
 			.voltage_max		= 13200,
@@ -108,10 +107,9 @@ const struct board_batt_params board_battery_info[] = {
 			},
 			.fet = {
 				.reg_addr = 0x0,
-				.reg_mask = 0x0006,	/* D-FET C-FET */
+				.reg_mask = 0xC000,	/* D-FET C-FET */
 				.disconnect_val = 0x0000,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
 		},
 		.batt_info = {
 			.voltage_max		= 13200,
@@ -140,10 +138,9 @@ const struct board_batt_params board_battery_info[] = {
 			},
 			.fet = {
 				.reg_addr = 0x0,
-				.reg_mask = 0x0006,	/* D-FET C-FET */
+				.reg_mask = 0xC000,	/* D-FET C-FET */
 				.disconnect_val = 0x0000,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
 		},
 		.batt_info = {
 			.voltage_max		= 13200,
