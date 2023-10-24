@@ -315,7 +315,7 @@ static const struct board_batt_params info[] = {
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
-			.voltage_normal		= 114000, /* mV */
+			.voltage_normal		= 11400, /* mV */
 			.voltage_min		= 9000, /* mV */
 			.precharge_current	= 256,	/* mA */
 			.start_charging_min_c	= 0,
@@ -343,7 +343,7 @@ static const struct board_batt_params info[] = {
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
-			.voltage_normal		= 114000, /* mV */
+			.voltage_normal		= 11400, /* mV */
 			.voltage_min		= 9000, /* mV */
 			.precharge_current	= 256,	/* mA */
 			.start_charging_min_c	= 0,
@@ -371,7 +371,7 @@ static const struct board_batt_params info[] = {
 		},
 		.batt_info = {
 			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
-			.voltage_normal		= 114900, /* mV */
+			.voltage_normal		= 11490, /* mV */
 			.voltage_min		= 9000, /* mV */
 			.precharge_current	= 256,	/* mA */
 			.start_charging_min_c	= 0,
