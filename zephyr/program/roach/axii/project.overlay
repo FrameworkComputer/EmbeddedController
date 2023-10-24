@@ -3,39 +3,59 @@
  * found in the LICENSE file.
  */
 
-#include <dt-bindings/gpio_defines.h>
+/* Axii program common DTS includes */
+
+#include "../adc.dtsi"
+#include "../uart.dtsi"
 
 / {
 	aliases {
 		gpio-wp = &ec_flash_wp_odl;
+		usb-hid-tp = &usb_hid_tp;
+	};
+
+	usb_hid_tp: usb-hid-tp {
+		compatible = "cros-ec,hid-i2c-touchpad";
+
+		/* TODO: find a way to probe touchpad parameters
+		 * dynamically.
+		 */
+		logical_max_x = <2925>;
+		logical_max_y = <1440>;
+		physical_max_x = <929>;
+		physical_max_y = <457>;
+		max_pressure = <511>;
+
+		/* unused */
+		vid = <0>;
+		pid = <0>;
 	};
 
 	named-gpios {
 		compatible = "named-gpios";
 
-		en_kb_bl: en_kb_bl {
-			gpios = <&gpioa 1 GPIO_OUTPUT>;
-			enum-name = "GPIO_EN_KEYBOARD_BACKLIGHT";
+		prst_base: prst-base {
+			gpios = <&gpioa 2 GPIO_OUTPUT_LOW>;
 		};
 
-		ec_flash_wp_odl: ec_flash_wp_odl {
+		ec_uart_pu_tester: ec-uart-pu-tester {
+			gpios = <&gpioj 0 GPIO_INPUT>;
+		};
+
+		en_pp3300_base: en-pp3300-base {
+			gpios = <&gpioa 1 GPIO_OUTPUT_LOW>;
+		};
+
+		ec_flash_wp_odl: ec-flash-wp-odl {
 			gpios = <&gpioi 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 
-		base_accel_int_l: base_accel_int_l {
-			gpios = <&gpioh 1 GPIO_INPUT>;
-		};
-
-		en_ec_id_odl: en_ec_id_odl {
+		en_ec_id_odl: en-ec-id-odl {
 			gpios = <&gpioh 4 GPIO_ODR_HIGH>;
 		};
 
-		tchpad_int_odl: tchpad_int_odl {
-			gpios = <&gpiob 2 GPIO_OPEN_DRAIN>;
-		};
-
-		en_pp3300_tchpad_odl: en_pp3300_tchpad_odl {
-			gpios = <&gpiob 5 GPIO_OUTPUT>;
+		pg_pp3300_usb: pg-pp3300-usb {
+			gpios = <&gpioa 0 GPIO_INPUT>;
 		};
 
 		/* TODO: unimplemented GPIOs */
@@ -45,12 +65,17 @@
 		};
 	};
 
+	named-adc-channels {
+		adc-base-det {
+			enum-name = "ADC_BASE_DET";
+			io-channels = <&adc0 0>;
+		};
+	};
+
 	unused-pins {
 		compatible = "unused-gpios";
 
 		unused-gpios =
-			/* gpioa2 */
-			<&gpioa 2 GPIO_INPUT_PULL_DOWN>,
 			/* gpioa3 */
 			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
 			/* gpioa6 */
@@ -58,6 +83,10 @@
 			/* gpioa7 */
 			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
 
+			/* gpiob2 */
+			<&gpiob 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpiob5 */
+			<&gpiob 5 GPIO_INPUT_PULL_DOWN>,
 			/* gpiob6 */
 			<&gpiob 6 GPIO_INPUT_PULL_DOWN>,
 			/* gpiob7 */
@@ -134,15 +163,11 @@
 
 			/* gpioh0 */
 			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpioh1 */
+			<&gpioh 1 GPIO_INPUT_PULL_DOWN>,
 			/* gpioh3 */
 			<&gpioh 3 GPIO_INPUT_PULL_DOWN>,
-			/* TODO: gpioh5: EC_USB2_N */
-			<&gpioh 5 GPIO_INPUT_PULL_DOWN>,
-			/* TODO: gpioh6: EC_USB2_P */
-			<&gpioh 6 GPIO_INPUT_PULL_DOWN>,
 
-			/* gpioi0 */
-			<&gpioi 0 GPIO_INPUT_PULL_DOWN>,
 			/* gpioi2 */
 			<&gpioi 2 GPIO_INPUT_PULL_DOWN>,
 			/* gpioi3 */
@@ -154,8 +179,6 @@
 			/* gpioi7 */
 			<&gpioi 7 GPIO_INPUT_PULL_DOWN>,
 
-			/* gpioj0 */
-			<&gpioj 0 GPIO_INPUT_PULL_DOWN>,
 			/* gpioj1 */
 			<&gpioj 1 GPIO_INPUT_PULL_DOWN>,
 			/* gpioj2 */
@@ -187,3 +210,23 @@
 			<&gpiom 6 GPIO_INPUT_PULL_DOWN>;
 	};
 };
+
+&i2c0 {
+	status = "disabled";
+};
+
+&i2c2 {
+	status = "disabled";
+};
+
+&usb0 {
+	status = "okay";
+	pinctrl-0 = <&usb0_dm_gph5_default
+		     &usb0_dp_gph6_default>;
+	pinctrl-names = "default";
+};
+
+&one_wire_uart {
+	id = <1>;
+};
+

@@ -5,8 +5,14 @@
 """Define zmake projects for roach."""
 
 
-def register_variant(project_name):
+def register_variant(project_name, rwsig_sign=True):
     """Register a variant of Roach."""
+
+    signer_kwarg = {}
+    if rwsig_sign:
+        # pylint: disable=undefined-variable
+        signer_kwarg["signer"] = signers.RwsigSigner(here / "dev_key.pem")
+
     register_binman_project(
         project_name=project_name,
         zephyr_board="it82202ax-512",
@@ -15,10 +21,9 @@ def register_variant(project_name):
             here / "program.conf",
             here / project_name / "project.conf",
         ],
-        signer=signers.RwsigSigner(  # pylint: disable=undefined-variable
-            here / "dev_key.pem"
-        ),
+        **signer_kwarg,
     )
 
 
 register_variant("roach")
+register_variant("axii", rwsig_sign=False)

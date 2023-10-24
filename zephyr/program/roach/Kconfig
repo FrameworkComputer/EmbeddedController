@@ -8,4 +8,10 @@ config BOARD_ROACH
 	  Build Google Roach reference board. Roach is a keyboard EC
 	  using ITE it82202-ax.
 
+config BOARD_AXII
+	bool "Google Axii Board"
+	help
+	  Build Google Axii board. Axii is a test fixture for testing
+	  Roach devices.
+
 source "Kconfig.zephyr"
