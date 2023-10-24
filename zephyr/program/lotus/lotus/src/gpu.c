@@ -106,12 +106,12 @@ void check_gpu_module(void)
 		module_present = 1;
 		module_fault = 0;
 		break;
-	case VALID_BOARDID(BOARD_VERSION_11, BOARD_VERSION_15):
-	case VALID_BOARDID(BOARD_VERSION_13, BOARD_VERSION_15):
+	case VALID_BOARDID(BOARD_VERSION_15, BOARD_VERSION_11):
 		LOG_DBG("Detected single interposer device");
 		module_present = 1;
 		module_fault = 0;
 		break;
+	case VALID_BOARDID(BOARD_VERSION_15, BOARD_VERSION_13):
 	case VALID_BOARDID(BOARD_VERSION_15, BOARD_VERSION_15):
 		LOG_DBG("No gpu module detected %d %d", gpu_id_0, gpu_id_1);
 		module_present = 0;
