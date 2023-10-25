@@ -3,21 +3,19 @@
  * found in the LICENSE file.
  */
 
-#ifndef __BOARD_BRYA_FW_CONFIG_H_
-#define __BOARD_BRYA_FW_CONFIG_H_
+#ifndef __BOARD_DOCHI_FW_CONFIG_H_
+#define __BOARD_DOCHI_FW_CONFIG_H_
 
 #include <stdint.h>
 
 /****************************************************************************
- * CBI FW_CONFIG layout for Brya board.
+ * CBI FW_CONFIG layout for Dochi board.
  *
- * Source of truth is the project/brya/brya/config.star configuration file.
+ * Source of truth is the project/brya/dochi/config.star configuration file.
  */
 
 enum ec_cfg_usb_db_type {
 	DB_USB_ABSENT = 0,
-	DB_USB3_PS8815 = 1,
-	DB_USB_ABSENT2 = 15
 };
 
 enum ec_cfg_keyboard_backlight_type {
@@ -25,14 +23,25 @@ enum ec_cfg_keyboard_backlight_type {
 	KEYBOARD_BACKLIGHT_ENABLED = 1
 };
 
-union brya_cbi_fw_config {
+enum ec_cfg_tabletmode_type { TABLETMODE_DISABLED = 0, TABLETMODE_ENABLED = 1 };
+
+enum ec_cfg_fan_type { FAN_ABSENT = 0, FAN_PRSENT = 1 };
+
+enum ec_cfg_stylus_type { STYLUS_ABSENT = 0, STYLUS_PRSENT = 1 };
+
+union dochi_cbi_fw_config {
 	struct {
-		enum ec_cfg_usb_db_type usb_db : 4;
-		uint32_t sd_db : 2;
-		uint32_t lte_db : 1;
+		enum ec_cfg_usb_db_type usb_db : 2;
 		enum ec_cfg_keyboard_backlight_type kb_bl : 1;
-		uint32_t audio : 3;
-		uint32_t reserved_1 : 21;
+		enum ec_cfg_tabletmode_type tablet_mode : 1;
+		enum ec_cfg_fan_type fan_type : 1;
+		uint32_t thermal_solution : 2;
+		uint32_t kb_type : 2;
+		uint32_t fpmcu : 2;
+		uint32_t wifi_sar : 2;
+		enum ec_cfg_stylus_type stylus : 1;
+		uint32_t reserved : 16;
+		uint32_t storge : 2;
 	};
 	uint32_t raw_value;
 };
@@ -42,7 +51,7 @@ union brya_cbi_fw_config {
  *
  * @return the FW_CONFIG for the board.
  */
-union brya_cbi_fw_config get_fw_config(void);
+union dochi_cbi_fw_config get_fw_config(void);
 
 /**
  * Get the USB daughter board type from FW_CONFIG.
@@ -51,4 +60,4 @@ union brya_cbi_fw_config get_fw_config(void);
  */
 enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void);
 
-#endif /* __BOARD_BRYA_FW_CONFIG_H_ */
+#endif /* __BOARD_DOCHI_FW_CONFIG_H_ */
