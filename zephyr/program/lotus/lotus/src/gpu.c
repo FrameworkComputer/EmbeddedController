@@ -38,15 +38,20 @@ LOG_MODULE_REGISTER(gpu, LOG_LEVEL_DBG);
 #define GPU_F75303_REG_REMOTE2_THERM 0x1A
 #define GPU_F75303_REG_LOCAL_THERM   0x21
 
-static int module_present;
 static int module_fault;
 static int gpu_id_0;
 static int gpu_id_1;
 static int switch_status;
 
+static uint8_t interposer_device;
+#define INTERPOSER_NONE		BIT(0)
+#define INTERPOSER_FAN		BIT(1)
+#define INTERPOSER_GPU		BIT(2)
+#define INTERPOSER_FAULT	BIT(3)
+
 bool gpu_present(void)
 {
-	return module_present;
+	return (interposer_device == INTERPOSER_GPU) ? true : false;
 }
 
 bool gpu_power_enable(void)
@@ -63,9 +68,19 @@ bool gpu_module_fault(void)
 	return module_fault;
 }
 
+void gpu_fan_control(int enable)
+{
+	/**
+	 * Only control the gpu_fan_en when EC detect the GPU module,
+	 * even if SW4 is open or not.
+	 */
+	if (!(interposer_device & (INTERPOSER_NONE | INTERPOSER_FAULT)))
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en), enable);
+}
+
 void update_gpu_ac_power_state(void)
 {
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) && module_present) {
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) && gpu_present()) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), 1);
 	} else {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio02_ec), 0);
@@ -103,32 +118,40 @@ void check_gpu_module(void)
 	switch (VALID_BOARDID(gpu_id_1, gpu_id_0)) {
 	case VALID_BOARDID(BOARD_VERSION_12, BOARD_VERSION_12):
 		LOG_DBG("Detected dual interposer device");
-		module_present = 1;
+		interposer_device = INTERPOSER_GPU;
 		module_fault = 0;
 		break;
 	case VALID_BOARDID(BOARD_VERSION_15, BOARD_VERSION_11):
 		LOG_DBG("Detected single interposer device");
-		module_present = 1;
+		interposer_device = INTERPOSER_GPU;
 		module_fault = 0;
 		break;
 	case VALID_BOARDID(BOARD_VERSION_15, BOARD_VERSION_13):
-	case VALID_BOARDID(BOARD_VERSION_15, BOARD_VERSION_15):
-		LOG_DBG("No gpu module detected %d %d", gpu_id_0, gpu_id_1);
-		module_present = 0;
+		LOG_DBG("Fans module detected %d %d", gpu_id_0, gpu_id_1);
+		interposer_device = INTERPOSER_FAN;
 		module_fault = 0;
+		break;
+	case VALID_BOARDID(BOARD_VERSION_15, BOARD_VERSION_15):
+		LOG_DBG("No module detected %d %d", gpu_id_0, gpu_id_1);
+		interposer_device = INTERPOSER_NONE;
+		module_fault = 0;
+		/* Forced off the fans if interposer does not connect */
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en), 0);
 		break;
 	default:
 		LOG_DBG("GPU module Fault");
-		module_present = 0;
+		interposer_device = INTERPOSER_FAULT;
+		/* Forced off the fans if interposer is fault */
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en), 0);
 		module_fault = 1;
 	break;
 	}
 
 	/* The chassis or f_beam is opened, turn off the power */
 	if (!switch_status)
-		module_present = 0;
+		interposer_device &= ~INTERPOSER_GPU;
 
-	if (module_present) {
+	if (interposer_device == INTERPOSER_GPU) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 1);
 		/* vsys_vadp_en should follow the syson to enable */
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_syson)))
@@ -187,11 +210,13 @@ void beam_open_interrupt(enum gpio_signal signal)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_edp_mux_pwm_sw), 0);
-		module_present = 0;
+		interposer_device &= ~INTERPOSER_GPU;
 		update_thermal_configuration();
 
 		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 			gpu_interposer_toggle_count++;
+
+			/* TODO: add debounce time to avoid the abnormal signal trigger cutoff */
 
 			if (!cutoff && gpu_interposer_toggle_count >= 10) {
 				hook_call_deferred(&gpu_interposer_toggle_deferred_data,
@@ -200,7 +225,8 @@ void beam_open_interrupt(enum gpio_signal signal)
 			}
 		} else
 			gpu_interposer_toggle_count = 0;
-			switch_status = 0;
+
+		switch_status = 0;
 	} else {
 		hook_call_deferred(&check_gpu_module_data, 50*MSEC);
 	}
@@ -318,7 +344,7 @@ static enum ec_status host_command_expansion_bay_status(struct host_cmd_handler_
 	struct ec_response_expansion_bay_status *r = args->response;
 
 	r->state = 0;
-	if (module_present) {
+	if (gpu_present()) {
 		r->state |= MODULE_ENABLED;
 	}
 	if (module_fault) {

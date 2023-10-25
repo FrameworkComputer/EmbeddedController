@@ -13,6 +13,8 @@ bool gpu_power_enable(void);
 
 bool gpu_module_fault(void);
 
+void gpu_fan_control(int enable);
+
 void set_host_dp_ready(int ready);
 
 void update_gpu_ac_power_state(void);
