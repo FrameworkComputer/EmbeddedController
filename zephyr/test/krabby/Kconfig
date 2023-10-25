@@ -28,6 +28,12 @@ config TEST_STARMIE
 	  Include temp_starmie test into the binary to test temperature
 	  threshold trigger current control.
 
+config TEST_CHINCHOU
+	bool "Run the tests intended for chincou"
+	help
+	  Include board_chinchou test into the binary to test distinguish
+	  between clamshell and convertible.
+
 endchoice
 
 source "Kconfig.zephyr"

@@ -1,0 +1,119 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "common.dtsi"
+#include "../program/corsola/ite_gpio.dtsi"
+#include "../program/corsola/ite_interrupts.dtsi"
+#include "../program/corsola/power_signal.dtsi"
+
+/* remove pinctrl to avoid pull in too many unwanted dependency */
+/delete-node/ &pinctrl;
+
+/delete-node/ &int_usb_c0_ppc_bc12;
+/delete-node/ &int_volume_up;
+/delete-node/ &int_volume_down;
+/delete-node/ &int_tablet_mode;
+/delete-node/ &int_xhci;
+/delete-node/ &int_wp;
+/delete-node/ &int_spi0_cs;
+/delete-node/ &int_x_ec_gpio2;
+/delete-node/ &int_ccd_mode_odl;
+/delete-node/ &int_base_imu;
+/delete-node/ &int_lid_imu;
+
+&{/aliases} {
+	/delete-property/ int-wp;
+};
+
+/ {
+	aliases {
+		bma4xx-int = &lid_accel;
+	};
+
+	gpio-interrupts {
+		int_base_imu: base_imu {
+			irq-pin = <&base_imu_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bmi3xx_interrupt";
+		};
+	};
+
+	motionsense-sensor-data {
+		bma4xx_data: bma4xx-drv-data {
+			compatible = "cros-ec,drvdata-bma4xx";
+			status = "okay";
+		};
+		bmi3xx_data: bmi3xx-drv-data {
+			compatible = "cros-ec,drvdata-bmi3xx";
+			status = "okay";
+		};
+	};
+
+	motionsense-sensor {
+		lid_accel: lid-accel {
+			compatible = "cros-ec,bma4xx";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			drv-data = <&bma4xx_data>;
+		};
+
+		base_accel: base-accel {
+			compatible = "cros-ec,bmi3xx-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			drv-data = <&bmi3xx_data>;
+		};
+
+		base_gyro: base-gyro {
+			compatible = "cros-ec,bmi3xx-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			drv-data = <&bmi3xx_data>;
+		};
+	};
+	Chinchou-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		/*
+		 * FW_CONFIG field to indicate the device is clamshell
+		 * or convertible.
+		 */
+		form_factor {
+			enum-name = "FORM_FACTOR";
+			start = <13>;
+			size = <3>;
+
+			convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CONVERTIBLE";
+				value = <1>;
+			};
+			clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CLAMSHELL";
+				value = <0>;
+			};
+		};
+	};
+};
+
+/* open-drain is not supported in gpio emul, re-config to push-pull  */
+&ec_pmic_en_odl {
+	gpios = <&gpiod 0 (GPIO_OUTPUT_HIGH | GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+};
+&sys_rst_odl {
+	gpios = <&gpiog 1 GPIO_OUTPUT_LOW>;
+};
+
+/* set default gpio-emul state */
+&power_button_l {
+	gpios = <&gpioe 4 (GPIO_INPUT | GPIO_PULL_UP)>;
+};
