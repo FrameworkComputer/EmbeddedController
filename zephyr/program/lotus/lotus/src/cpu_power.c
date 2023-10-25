@@ -137,19 +137,22 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 95000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 95000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 95000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 50000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						50000;
 					power_stt_table = 4;
 				} else if (mode == EC_AC_BALANCED) {
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 85000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 85000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 85000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 40000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						40000;
 					power_stt_table = 15;
 				} else {
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 60000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						30000;
 					power_stt_table = 17;
 				}
 			} else {
@@ -157,19 +160,22 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 60000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						30000;
 					power_stt_table = 26;
 				} else if (mode == EC_AC_BALANCED) {
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 50000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 50000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 50000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						20000;
 					power_stt_table = 27;
 				} else {
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 30000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						30000;
 					power_stt_table = 28;
 				}
 			}
@@ -179,13 +185,15 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 85000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 85000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 85000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 40000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						40000;
 					power_stt_table = 5;
 				} else {
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 60000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						30000;
 					power_stt_table = 16;
 				}
 			} else {
@@ -193,13 +201,15 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 50000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 50000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 50000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						20000;
 					power_stt_table = 29;
 				} else {
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 30000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						30000;
 					power_stt_table = 30;
 				}
 			}
