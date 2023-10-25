@@ -16,9 +16,6 @@
 /* Number of writes needed to invoke battery cutoff command */
 #define SHIP_MODE_WRITES 2
 
-/* When battery type is not initialized */
-#define BATTERY_TYPE_UNINITIALIZED -1
-
 struct ship_mode_info {
 	uint8_t reg_addr;
 	uint16_t reg_data[SHIP_MODE_WRITES];

@@ -71,6 +71,9 @@ test_export_static bool authenticate_battery_type(int index,
 
 #ifdef CONFIG_BATTERY_TYPE_NO_AUTO_DETECT
 
+/* When battery type is not initialized */
+#define BATTERY_TYPE_UNINITIALIZED -1
+
 /* Variable to decide the battery type */
 static int fixed_battery_type = BATTERY_TYPE_UNINITIALIZED;
 
