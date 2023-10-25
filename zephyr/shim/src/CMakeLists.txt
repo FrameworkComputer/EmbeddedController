@@ -28,6 +28,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BATTERY
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BC12_DETECT_RT9490
                                                             bc12_rt9490.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CEC         cec.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CEC_BITBANG
+                                                            cec_bitbang.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER_RT9490
                                                             chg_rt9490.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER     charger.c)

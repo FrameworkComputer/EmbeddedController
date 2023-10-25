@@ -226,3 +226,9 @@ int gpio_disable_interrupt(enum gpio_signal signal)
 
 	return gpio_disable_dt_interrupt(ic);
 }
+
+int gpio_clear_pending_interrupt(enum gpio_signal signal)
+{
+	/* TODO(b/308721415): Implement this */
+	return EC_SUCCESS;
+}

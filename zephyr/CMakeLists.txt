@@ -298,6 +298,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI_GPIO
                                                 "${PLATFORM_EC}/common/cbi_gpio.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CEC
                                                 "${PLATFORM_EC}/common/cec.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CEC_BITBANG
+                                                "${PLATFORM_EC}/driver/cec/bitbang.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CEC_IT83XX
                                                 "${PLATFORM_EC}/driver/cec/it83xx.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CONSOLE_CMD_MEM

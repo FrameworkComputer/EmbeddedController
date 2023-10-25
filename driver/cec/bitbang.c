@@ -218,6 +218,11 @@ struct cec_port_data {
 /* TODO(b/296813751): Implement a common data structure for CEC drivers */
 static struct cec_port_data cec_port_data[CEC_PORT_COUNT];
 
+__test_only int cec_get_state(int port)
+{
+	return cec_port_data[port].state;
+}
+
 static void enter_state(int port, enum cec_state new_state)
 {
 	const struct bitbang_cec_config *drv_config =

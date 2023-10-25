@@ -5,7 +5,8 @@
 #ifndef __CROS_EC_DRIVER_CEC_BITBANG_H
 #define __CROS_EC_DRIVER_CEC_BITBANG_H
 
-#include "gpio.h"
+#include "common.h"
+#include "gpio_signal.h"
 
 /* Edge to trigger capture timer interrupt on */
 enum cec_cap_edge {
@@ -127,5 +128,10 @@ void cec_event_tx(int port);
  * Interrupt handler for rising and falling edges on the CEC line.
  */
 void cec_gpio_interrupt(enum gpio_signal signal);
+
+/**
+ * Get the current state.
+ */
+__test_only int cec_get_state(int port);
 
 #endif /* __CROS_EC_DRIVER_CEC_BITBANG_H */
