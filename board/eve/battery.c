@@ -44,7 +44,7 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
-struct board_batt_params {
+struct eve_batt_params {
 	const char *manuf_name;
 	const struct battery_info *batt_info;
 };
@@ -111,7 +111,7 @@ static const struct battery_info batt_info_lishen = {
 	.discharging_max_c = 60,
 };
 
-static const struct board_batt_params info[] = {
+static const struct eve_batt_params info[] = {
 	[BATTERY_LG] = {
 		.manuf_name = "LG A50",
 		.batt_info = &batt_info_lg,
