@@ -492,7 +492,7 @@ static enum ec_status hc_battery_config(struct host_cmd_handler_args *args)
 
 	r->struct_version = EC_BATTERY_CONFIG_STRUCT_VERSION;
 	r->manuf_name_size = strlen(batt->manuf_name);
-	r->device_name_size = strlen(batt->device_name);
+	r->device_name_size = batt->device_name ? strlen(batt->device_name) : 0;
 	p += sizeof(*r);
 	memcpy(p, batt->manuf_name, r->manuf_name_size);
 	p += r->manuf_name_size;
