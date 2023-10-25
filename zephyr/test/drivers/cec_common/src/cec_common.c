@@ -5,6 +5,8 @@
 
 #include "cec.h"
 #include "chipset.h"
+#include "driver/cec/it83xx.h"
+#include "mkbp_event.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
 
@@ -13,6 +15,8 @@
 
 #define TEST_PORT 0
 #define TEST_PORT_1 1
+
+struct mock_it83xx_cec_regs mock_it83xx_cec_regs;
 
 FAKE_VALUE_FUNC(int, mock_init, int);
 FAKE_VALUE_FUNC(int, mock_get_enable, int, uint8_t *);

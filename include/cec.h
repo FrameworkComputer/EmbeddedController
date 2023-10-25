@@ -240,3 +240,13 @@ int cec_process_offline_message(int port, const uint8_t *msg, uint8_t msg_len);
  * @param event		Event type (CEC_TASK_EVENT_*)
  */
 void cec_task_set_event(int port, uint32_t event);
+
+#ifdef TEST_BUILD
+/**
+ * Send a CEC MKBP event to the AP.
+ *
+ * @param port		Port the event occurred on
+ * @param event		Event type (enum mkbp_cec_event)
+ */
+void send_mkbp_event(int port, uint32_t event);
+#endif

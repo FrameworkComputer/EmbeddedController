@@ -5,18 +5,19 @@
 
 / {
 	cec {
+		compatible = "cros-ec,cec";
+
 		#address-cells = <1>;
 		#size-cells = <0>;
 
 		cec0@0 {
-			compatible = "cros-ec,cec";
+			compatible = "cros-ec,cec-it83xx";
 			reg = <0>;
 		};
 
 		cec1@1 {
-			compatible = "cros-ec,cec";
+			compatible = "cros-ec,cec-it83xx";
 			reg = <1>;
 		};
 	};
 };
-

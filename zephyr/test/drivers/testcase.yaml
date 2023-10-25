@@ -357,6 +357,7 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_CEC_COMMON=y
     - CONFIG_PLATFORM_EC_CEC=y
+    - CONFIG_PLATFORM_EC_CEC_IT83XX=y
     - CONFIG_PLATFORM_EC_CEC_DEBUG=y
     extra_dtc_overlay_files:
     - ./boards/native_posix.overlay
@@ -365,6 +366,7 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_CEC_COMMON=y
     - CONFIG_PLATFORM_EC_CEC=y
+    - CONFIG_PLATFORM_EC_CEC_IT83XX=y
     - CONFIG_PLATFORM_EC_CEC_DEBUG=y
     extra_dtc_overlay_files:
     - ./boards/native_posix.overlay
@@ -380,7 +382,7 @@ tests:
     - CONFIG_PLATFORM_EC_CEC_DEBUG=y
     extra_dtc_overlay_files:
     - ./boards/native_posix.overlay
-    - ./cec_it83xx/cec_it83xx.dts
+    - ./cec_common/cec_common.dts
   drivers.common_charger:
     extra_configs:
     - CONFIG_PLATFORM_EC_CHARGER_INPUT_CURRENT_DERATE_PCT=5

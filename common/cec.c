@@ -449,12 +449,8 @@ static void cec_init(void)
 {
 	int port;
 
-	/* TODO(b/270507438): Remove once zephyr shims are added for drivers */
-	if (!IS_ENABLED(CONFIG_ZEPHYR)) {
-		for (port = 0; port < CEC_PORT_COUNT; port++) {
-			cec_config[port].drv->init(port);
-		}
-	}
+	for (port = 0; port < CEC_PORT_COUNT; port++)
+		cec_config[port].drv->init(port);
 
 	CPRINTS("CEC initialized");
 }

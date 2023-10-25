@@ -4,25 +4,27 @@
  */
 
 #include "cec.h"
-#ifdef CONFIG_PLATFORM_EC_CEC_IT83XX
 #include "driver/cec/it83xx.h"
-#endif
 
 #include <zephyr/devicetree.h>
 
-/* TODO(b/287558802): Remove once shim is added for bitbang_cec_drv */
-#define CEC_DRV(node_id)                            \
-	COND_CODE_1(DT_NODE_HAS_PROP(node_id, drv), \
-		    (&DT_STRING_TOKEN(node_id, drv)), (NULL))
+#define CEC_IT83XX_COMPAT cros_ec_cec_it83xx
 
-#define CEC_PORT(node_id)                \
-	[CEC_PORT_ID(node_id)] = {       \
-		.drv = CEC_DRV(node_id), \
-		.drv_config = NULL,      \
-		.offline_policy = NULL,  \
-	},
+#define CEC_CONFIG_IT83XX(node_id)                          \
+	{                                                   \
+		.drv = &it83xx_cec_drv, .drv_config = NULL, \
+		.offline_policy = NULL,                     \
+	}
 
-test_overridable_const struct cec_config_t cec_config[] = {
-	DT_FOREACH_STATUS_OKAY(cros_ec_cec, CEC_PORT)
-};
+#define CHECK_COMPAT(node_id, compat, config) \
+	COND_CODE_1(DT_NODE_HAS_COMPAT(node_id, compat), (config(node_id)), ())
+
+#define CEC_CONFIG_FIND(node_id) \
+	CHECK_COMPAT(node_id, CEC_IT83XX_COMPAT, CEC_CONFIG_IT83XX)
+
+#define CEC_CONFIG_ENTRY(node_id) \
+	[CEC_PORT_ID(node_id)] = CEC_CONFIG_FIND(node_id),
+
+test_overridable_const struct cec_config_t cec_config[] = { DT_FOREACH_CHILD(
+	CEC_NODE, CEC_CONFIG_ENTRY) };
 BUILD_ASSERT(ARRAY_SIZE(cec_config) == CEC_PORT_COUNT);
