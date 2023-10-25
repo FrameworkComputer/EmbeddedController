@@ -37,6 +37,7 @@ uint32_t bios_code;
 uint8_t bios_complete;
 uint8_t fan_seen; /* TODO: Unused so far */
 uint8_t run_diagnostics;
+uint8_t device_complete;
 
 int standalone_mode;
 
@@ -63,6 +64,7 @@ void reset_diagnostics(void)
 	bios_code = 0;
 	diagnostic_tick = 0;
 	fan_seen = 0;
+	device_complete = 0;
 }
 
 void cancel_diagnostics(void)
@@ -98,6 +100,11 @@ void set_bios_diagnostic(uint8_t code)
 		set_diagnostic(DIAGNOSTICS_NO_DDR, true);
 	if (code == CODE_NO_EDP && !get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_NO_EDP, true);
+}
+
+void set_device_complete(int done)
+{
+	device_complete = done;
 }
 
 bool diagnostics_tick(void)
@@ -166,4 +173,9 @@ uint32_t get_hw_diagnostic(void)
 uint8_t is_bios_complete(void)
 {
 	return bios_complete;
+}
+
+uint8_t is_device_complete(void)
+{
+	return device_complete;
 }

@@ -48,8 +48,14 @@ enum diagnostics_device_idx {
  */
 void set_diagnostic(enum diagnostics_device_idx idx, bool error);
 
+/*
+ * Set it to true means ec has done the device detecting
+ */
+void set_device_complete(int done);
+
 uint32_t get_hw_diagnostic(void);
 uint8_t is_bios_complete(void);
+uint8_t is_device_complete(void);
 
 void set_bios_diagnostic(uint8_t code);
 

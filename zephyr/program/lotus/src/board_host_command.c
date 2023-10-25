@@ -232,6 +232,7 @@ static enum ec_status cmd_get_hw_diag(struct host_cmd_handler_args *args)
 
 	r->hw_diagnostics = get_hw_diagnostic();
 	r->bios_complete = is_bios_complete();
+	r->device_complete = is_device_complete();
 
 	args->response_size = sizeof(*r);
 

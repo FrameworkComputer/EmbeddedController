@@ -38,6 +38,7 @@ static void check_fan_ready_deferred(void)
 		count = 0;
 		flag_right_fan_ready = 0;
 		flag_left_fan_ready = 0;
+		set_device_complete(true);
 	} else if (count < 15) {
 		count++;
 		hook_call_deferred(&check_fan_ready_deferred_data, 500 * MSEC);
@@ -50,6 +51,7 @@ static void check_fan_ready_deferred(void)
 		count = 0;
 		flag_right_fan_ready = 0;
 		flag_left_fan_ready = 0;
+		set_device_complete(true);
 	}
 }
 
@@ -72,15 +74,15 @@ void check_device_deferred(void)
 	if (get_deck_state() != DECK_ON && !get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_INPUT_MODULE_FAULT, true);
 
-	if (!get_standalone_mode())
-		hook_call_deferred(&check_fan_ready_deferred_data, 0);
-	else
-		dptf_set_fan_duty_target(-1);
-
-	/* TODO: Add something to know whether check has run or not */
-
 	if (amd_ddr_initialized_check())
 		set_bios_diagnostic(CODE_DDR_FAIL);
+
+	if (!get_standalone_mode())
+		hook_call_deferred(&check_fan_ready_deferred_data, 0);
+	else {
+		set_device_complete(true);
+		dptf_set_fan_duty_target(-1);
+	}
 }
 DECLARE_DEFERRED(check_device_deferred);
 

@@ -344,6 +344,7 @@ struct ec_response_expansion_bay_status {
 struct ec_response_get_hw_diag {
 	uint32_t hw_diagnostics;
 	uint8_t bios_complete;
+	uint8_t device_complete;
 } __ec_align1;
 
 #endif /* __BOARD_HOST_COMMAND_H */
