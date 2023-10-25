@@ -48,6 +48,9 @@
 		smp_cosrf9h3 {
 			compatible = "smp,cosrf9h3", "battery-smart";
 		};
+		smp_hptrf9h3 {
+			compatible = "smp,hptrf9h3", "battery-smart";
+		};
 	};
 
 	hibernate-wake-pins {
