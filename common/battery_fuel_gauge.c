@@ -484,6 +484,29 @@ int battery_imbalance_mv(void)
 	return board_battery_imbalance_mv(get_batt_params());
 }
 
+static enum ec_status hc_battery_config(struct host_cmd_handler_args *args)
+{
+	struct batt_conf_header *r = args->response;
+	const struct batt_conf_embed *batt = get_batt_conf();
+	uint8_t *p = (void *)r;
+
+	r->struct_version = EC_BATTERY_CONFIG_STRUCT_VERSION;
+	r->manuf_name_size = strlen(batt->manuf_name);
+	r->device_name_size = strlen(batt->device_name);
+	p += sizeof(*r);
+	memcpy(p, batt->manuf_name, r->manuf_name_size);
+	p += r->manuf_name_size;
+	memcpy(p, batt->device_name, r->device_name_size);
+	p += r->device_name_size;
+	memcpy(p, &batt->config, sizeof(batt->config));
+
+	args->response_size = sizeof(*r) + r->manuf_name_size +
+			      r->device_name_size + sizeof(batt->config);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CONFIG, hc_battery_config, EC_VER_MASK(0));
+
 #ifdef CONFIG_CMD_BATTERY_CONFIG
 
 void batt_conf_dump(const struct batt_conf_export *conf)

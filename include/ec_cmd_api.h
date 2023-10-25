@@ -45,6 +45,12 @@ extern "C" {
  * Please keep this list sorted by function name.
  */
 
+static inline int ec_cmd_battery_config(CROS_EC_COMMAND_INFO *h, uint8_t *r)
+{
+	return CROS_EC_COMMAND(h, EC_CMD_BATTERY_CONFIG, 0, NULL, 0, r,
+			       BATT_CONF_MAX_SIZE);
+}
+
 static inline int ec_cmd_get_sku_id(CROS_EC_COMMAND_INFO *h,
 				    struct ec_sku_id_info *r)
 {
