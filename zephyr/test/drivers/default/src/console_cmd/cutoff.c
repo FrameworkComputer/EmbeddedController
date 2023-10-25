@@ -66,8 +66,7 @@ ZTEST_USER(console_cmd_cutoff, test_at_shutdown)
 		      EC_RES_SUCCESS, rv);
 	zassert_false(battery_is_cut_off(), NULL);
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
-	zassert_true(WAIT_FOR(battery_cutoff_in_progress(), 1500000,
-			      k_msleep(250)),
+	zassert_true(WAIT_FOR(battery_is_cut_off(), 1500000, k_msleep(250)),
 		     NULL);
 }
 

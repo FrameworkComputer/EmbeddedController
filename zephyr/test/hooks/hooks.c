@@ -143,6 +143,52 @@ ZTEST(hooks_tests, test_deferred_func_cancel)
 		"The deferred function was called, but should not have been");
 }
 
+static void deferred_cancels_and_reschedules_self(void);
+DECLARE_DEFERRED(deferred_cancels_and_reschedules_self);
+
+static bool cancelled_and_rescheduled_ok;
+
+static void deferred_cancels_and_reschedules_self(void)
+{
+	static bool executed;
+
+	if (!executed) {
+		executed = true;
+		/*
+		 * Cancelling this task while it's running puts it in CANCELING
+		 * state which causes k_work_reschedule to return an error if
+		 * the delay is K_NO_WAIT.
+		 */
+		zassert_ok(hook_call_deferred(
+			&deferred_cancels_and_reschedules_self_data, -1));
+
+		/*
+		 * Run this again with a value that becomes K_NO_WAIT if we're
+		 * not careful.
+		 */
+		const int reschedule_delay = 0;
+
+		zassert_true(
+			K_TIMEOUT_EQ(K_NO_WAIT, K_USEC(reschedule_delay)),
+			"Delay for rescheduling must translate to K_NO_WAIT for"
+			" this test to operate as intended.");
+		zassert_ok(hook_call_deferred(
+			&deferred_cancels_and_reschedules_self_data,
+			reschedule_delay));
+	} else {
+		cancelled_and_rescheduled_ok = true;
+	}
+}
+
+ZTEST(hooks_tests, test_deferred_avoids_k_no_wait)
+{
+	zassert_ok(hook_call_deferred(
+		&deferred_cancels_and_reschedules_self_data, 0));
+	k_usleep(2 * DEFERRED_DELAY_US);
+
+	zassert_true(cancelled_and_rescheduled_ok);
+}
+
 /*
  * Structure passed to event listeners.
  */

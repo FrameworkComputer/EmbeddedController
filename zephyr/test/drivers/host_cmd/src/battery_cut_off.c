@@ -37,6 +37,11 @@ static void host_cmd_battery_cut_off_before(void *f)
 {
 	ARG_UNUSED(f);
 	test_set_battery_level(75);
+
+	/* Tests assume AC is initially connected. */
+	set_ac_enabled(true);
+	hook_notify(HOOK_AC_CHANGE);
+	k_msleep(1000);
 }
 
 static void host_cmd_battery_cut_off_after(void *f)
@@ -45,14 +50,19 @@ static void host_cmd_battery_cut_off_after(void *f)
 
 	i2c_common_emul_set_write_fail_reg(fixture->i2c_emul,
 					   I2C_COMMON_EMUL_NO_FAIL_REG);
+}
+
+static void host_cmd_battery_cut_off_teardown(void *f)
+{
+	/* Apply external power again to clear battery cutoff. */
 	set_ac_enabled(true);
 	hook_notify(HOOK_AC_CHANGE);
-	k_msleep(500);
+	k_msleep(1000);
 }
 
 ZTEST_SUITE(host_cmd_battery_cut_off, drivers_predicate_post_main,
 	    host_cmd_battery_cut_off_setup, host_cmd_battery_cut_off_before,
-	    host_cmd_battery_cut_off_after, NULL);
+	    host_cmd_battery_cut_off_after, host_cmd_battery_cut_off_teardown);
 
 ZTEST_USER_F(host_cmd_battery_cut_off, test_fail_sb_write)
 {
@@ -100,9 +110,8 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_at_shutdown)
 	rv = ec_cmd_battery_cut_off_v1(NULL, &params);
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected 0, but got %d", rv);
 	zassert_false(battery_is_cut_off(), NULL);
-	hook_notify(HOOK_CHIPSET_SHUTDOWN);
-	zassert_true(
-		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
+	test_set_chipset_to_g3();
+	zassert_true(WAIT_FOR(battery_is_cut_off(), 1500000, k_msleep(250)));
 }
 
 void boot_key_set(enum boot_key key);
@@ -122,6 +131,7 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_by_unplug)
 	/* This fails because !had_active_charge_port. */
 	hook_notify(HOOK_POWER_SUPPLY_CHANGE);
 	zassert_false(battery_cutoff_in_progress());
+	zassert_false(battery_is_cut_off());
 
 	/* Plug AC. */
 	charge_manager_update_dualrole(0, CAP_DEDICATED);
@@ -130,14 +140,23 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_by_unplug)
 	zassert_false(
 		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
 
-	/* Unplug AC. */
+	/*
+	 * Unplug AC to start scheduled cutoff (that will fail because the
+	 * system doesn't brown out after cutting off the battery despite not
+	 * having external power connected).
+	 */
+	set_ac_enabled(false);
+	hook_notify(HOOK_AC_CHANGE);
 	charge_manager_update_charge(CHARGE_SUPPLIER_PD, 0, NULL);
 	zassert_true(
 		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
 
 	boot_key_clear(BOOT_KEY_REFRESH);
 
-	/* Plug AC to cancel cutoff. */
+	/*
+	 * Plug AC to cancel cutoff, before the operation started by AC unplug
+	 * times out and cancels automatically.
+	 */
 	charge_manager_update_dualrole(0, CAP_DEDICATED);
 	charge_manager_update_charge(CHARGE_SUPPLIER_PD, 0, &charge);
 	set_ac_enabled(true);
@@ -147,10 +166,9 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_by_unplug)
 
 	boot_button_set(BUTTON_VOLUME_UP);
 
-	/* Unplug AC to trigger cutoff. */
+	/* Unplug AC to trigger cutoff, which completes with AC connected. */
 	charge_manager_update_charge(CHARGE_SUPPLIER_PD, 0, NULL);
-	zassert_true(
-		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
+	zassert_true(WAIT_FOR(battery_is_cut_off(), 1500000, k_msleep(250)));
 
 	boot_button_clear(BUTTON_VOLUME_UP);
 }

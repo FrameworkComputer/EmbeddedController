@@ -166,7 +166,26 @@ int hook_call_deferred(const struct deferred_data *data, int us)
 	if (us == -1) {
 		k_work_cancel_delayable(work);
 	} else if (us >= 0) {
-		rv = k_work_reschedule(work, K_USEC(us));
+		k_timeout_t delay = K_USEC(us);
+
+		rv = k_work_reschedule(work, delay);
+		/*
+		 * 0 delay for hook_call_deferred is "run as soon as possible",
+		 * but Zephyr has no direct equivalent. K_NO_WAIT is the nearest
+		 * equivalent, but has additional meaning to Zephyr work
+		 * scheduling that can cause scheduling to fail depending on
+		 * the work item's current state. hook_call_deferred never
+		 * fails unless the given deferred_data is invalid, in contrast.
+		 *
+		 * To prevent spurious failure, if the numeric value we were
+		 * given happens to become K_NO_WAIT (at the time of writing,
+		 * K_NO_WAIT is zero) and the reschedule attempt fails as a
+		 * result, then instead request a minimum delay.
+		 */
+		if (rv == -EBUSY && K_TIMEOUT_EQ(delay, K_NO_WAIT)) {
+			rv = k_work_reschedule(work, K_TICKS(1));
+		}
+
 		/*
 		 * LCOV_EXCL_START k_work_reschedule only returns errors
 		 * if queue is stopped or unspecified, and the system
