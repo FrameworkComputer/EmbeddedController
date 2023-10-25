@@ -148,8 +148,6 @@ DECLARE_EC_TEST(test_batt_conf_main)
 	/* On POR, no config in CBI. Legacy mode should choose conf[0]. */
 	zassert_equal_ptr(get_batt_params(), &board_battery_info[0].config);
 
-	ccprintf("sizeof(struct batt_conf_export) = %lu)\n",
-		 sizeof(struct batt_conf_export));
 	ccprintf("sizeof(struct batt_batt_params) = %lu)\n", sizeof(*conf));
 
 	/* Enable BCIC. */

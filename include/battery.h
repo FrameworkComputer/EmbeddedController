@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "compiler.h"
+#include "ec_commands.h"
 #include "host_command.h"
 
 /*
@@ -170,33 +171,6 @@ int battery_get_avg_voltage(void); /* in mV */
 
 /* The flag of prechare when the battery voltage is lower than voltage_min */
 #define BATT_FLAG_DEEP_CHARGE 0x00010000
-
-/* Battery constants */
-struct battery_info {
-	/* Operation voltage in mV */
-	uint16_t voltage_max;
-	uint16_t voltage_normal;
-	uint16_t voltage_min;
-	/* (TODO(chromium:756700): add desired_charging_current */
-	/**
-	 * Pre-charge to fast charge threshold in mV,
-	 * default to voltage_min if not specified.
-	 * This option is only available on isl923x and rt946x.
-	 */
-	uint16_t precharge_voltage;
-	/* Pre-charge current in mA */
-	uint16_t precharge_current;
-	/* Working temperature ranges in degrees C */
-	int8_t start_charging_min_c;
-	int8_t start_charging_max_c;
-	int8_t charging_min_c;
-	int8_t charging_max_c;
-	int8_t discharging_min_c;
-	int8_t discharging_max_c;
-	/* Used only if CONFIG_BATTERY_VENDOR_PARAM is defined. */
-	uint8_t vendor_param_start;
-	uint8_t reserved;
-} __packed __aligned(2);
 
 /**
  * Return vendor-provided battery constants.
