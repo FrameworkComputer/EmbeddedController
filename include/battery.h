@@ -195,7 +195,8 @@ struct battery_info {
 	int8_t discharging_max_c;
 	/* Used only if CONFIG_BATTERY_VENDOR_PARAM is defined. */
 	uint8_t vendor_param_start;
-};
+	uint8_t reserved;
+} __packed __aligned(2);
 
 /**
  * Return vendor-provided battery constants.
