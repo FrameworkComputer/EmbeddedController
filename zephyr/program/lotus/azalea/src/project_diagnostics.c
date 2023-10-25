@@ -62,7 +62,7 @@ void check_device_deferred(void)
 
 	if (amd_ddr_initialized_check())
 		set_bios_diagnostic(CODE_DDR_FAIL);
-	
+
 	set_device_complete(true);
 }
 DECLARE_DEFERRED(check_device_deferred);
