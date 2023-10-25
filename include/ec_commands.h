@@ -7640,6 +7640,9 @@ struct ec_response_typec_vdm_response {
  * Battery configuration
  */
 
+/* Version of struct batt_conf_header and its internals. */
+#define EC_BATTERY_CONFIG_STRUCT_VERSION 0x00
+
 /* Number of writes needed to invoke battery cutoff command */
 #define SHIP_MODE_WRITES 2
 

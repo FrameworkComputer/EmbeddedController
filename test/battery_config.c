@@ -220,11 +220,11 @@ DECLARE_EC_TEST(test_batt_conf_main_invalid)
 	 * Version mismatch
 	 */
 	ccprintf("\nVersion mismatch\n");
-	head.struct_version = 0x01;
+	head.struct_version = EC_BATTERY_CONFIG_STRUCT_VERSION + 1;
 	cbi_set_board_info(CBI_TAG_BATTERY_CONFIG, (void *)&head, sizeof(head));
 	batt_conf_main();
 	zassert_equal_ptr(get_batt_params(), &board_battery_info[0].config);
-	head.struct_version = 0x00;
+	head.struct_version = EC_BATTERY_CONFIG_STRUCT_VERSION;
 
 	/*
 	 * Size mismatch

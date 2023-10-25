@@ -223,7 +223,7 @@ static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 		tag++;
 
 		head = (struct batt_conf_header *)buf;
-		if (head->struct_version > 0) {
+		if (head->struct_version > EC_BATTERY_CONFIG_STRUCT_VERSION) {
 			BCFGPRT("Version mismatch: 0x%x", head->struct_version);
 			continue;
 		}
