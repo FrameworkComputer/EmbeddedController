@@ -42,6 +42,12 @@ config BOARD_NOKRIS
           Build Google Nokris reference board. Nokris has Intel ADL-N SoC
           with NPCX993FA0BX EC.
 
+config BOARD_NAKTAL
+        bool "Google Naktal Board"
+        help
+          Build Google Naktal reference board. Naktal has Intel ADL-N Soc
+	      with IT81302 EC.
+
 config BOARD_CRAASK
 	bool "Google Craask Board"
 	help

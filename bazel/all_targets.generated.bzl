@@ -1471,6 +1471,10 @@ def all_targets():
         extra_modules = ["cmsis", "picolibc", "pigweed"],
     )
     ec_target(
+        name = "naktal",
+        board = "naktal",
+    )
+    ec_target(
         name = "nami",
         board = "nami",
         chip = "npcx",

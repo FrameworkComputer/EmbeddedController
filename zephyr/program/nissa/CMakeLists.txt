@@ -44,6 +44,16 @@ if(DEFINED CONFIG_BOARD_NOKRIS)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "nokris/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "nokris/src/charger.c")
 endif()
+if(DEFINED CONFIG_BOARD_NAKTAL)
+        project(naktal)
+        zephyr_library_sources(
+                        "naktal/src/led.c"
+                        "naktal/src/keyboard.c"
+                        "naktal/src/hdmi.c"
+        )
+        zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "naktal/src/usbc.c")
+        zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "naktal/src/charger.c")
+endif()
 if(DEFINED CONFIG_BOARD_CRAASK)
 	zephyr_library_sources(
 			"craask/src/fan.c"
