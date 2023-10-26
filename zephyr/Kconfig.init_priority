@@ -11,7 +11,7 @@ config PLATFORM_EC_FLASH_INIT_PRIORITY
 
 config PLATFORM_EC_GPIO_INIT_PRIORITY
   int "Init priority of the GPIO module"
-  default 68 if MFD
+  default 88 if MFD
   default 53
   help
     The initialization priority of the GPIO module. This should always happen
