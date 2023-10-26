@@ -25,7 +25,7 @@
 			gpios = <&gpio0 5 GPIO_INPUT>;
 			enum-name = "GPIO_TABLET_MODE_L";
 		};
-		gpio_ec_nb_mode_l: ec_nb_mode_l {
+		gpio_soc_ec_ish_nb_mode_l: soc_ec_ish_nb_mode_l {
 			gpios = <&gpio0 10 GPIO_OUTPUT_LOW>;
 		};
 		ec_entering_rw {

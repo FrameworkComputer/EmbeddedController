@@ -22,6 +22,11 @@ choice TEST_PROJECT_TYPE
 		help
 		Enable tests for karis variant.
 
+	config TEST_PROJECT_REX_ISH
+		bool "Enable rex ISH tests"
+		help
+		Enable tests for rex ISH project. Rex ISH handles motion
+		sensors.
 endchoice # TEST_PROJECT_TYPE
 
 config TEST_PROJECT_NAME
