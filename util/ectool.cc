@@ -94,6 +94,8 @@ const char help_str[] =
 	"      Cut off battery output power\n"
 	"  batteryparam\n"
 	"      Read or write board-specific battery parameter\n"
+	"  bcfg\n"
+	"      Print an active battery config.\n"
 	"  boardversion\n"
 	"      Prints the board version\n"
 	"  button [vup|vdown|rec] <Delay-ms>\n"
@@ -8524,6 +8526,113 @@ cmd_battery_vendor_param_usage:
 	return -1;
 }
 
+static void batt_conf_dump(const struct board_batt_params *conf)
+{
+	const struct fuel_gauge_info *fg = &conf->fuel_gauge;
+	const struct ship_mode_info *ship = &conf->fuel_gauge.ship_mode;
+	const struct sleep_mode_info *sleep = &conf->fuel_gauge.sleep_mode;
+	const struct fet_info *fet = &conf->fuel_gauge.fet;
+	const struct battery_info *info = &conf->batt_info;
+
+	printf(".config = {\n");
+	printf("\t.fuel_gauge = {\n");
+	printf("\t\t.flags = 0x%x,\n", fg->flags);
+
+	printf("\t\t.ship_mode = {\n");
+	printf("\t\t\t.reg_addr = 0x%02x,\n", ship->reg_addr);
+	printf("\t\t\t.reg_data = { 0x%04x, 0x%04x },\n", ship->reg_data[0],
+	       ship->reg_data[1]);
+	printf("\t\t},\n");
+
+	printf("\t\t.sleep_mode = {\n");
+	printf("\t\t\t.reg_addr = 0x%02x,\n", sleep->reg_addr);
+	printf("\t\t\t.reg_data = 0x%04x,\n", sleep->reg_data);
+	printf("\t\t},\n");
+
+	printf("\t\t.fet = {\n");
+	printf("\t\t\t.reg_addr = 0x%02x,\n", fet->reg_addr);
+	printf("\t\t\t.reg_mask = 0x%04x,\n", fet->reg_mask);
+	printf("\t\t\t.disconnect_val = 0x%04x,\n", fet->disconnect_val);
+	printf("\t\t\t.cfet_mask = 0x%04x,\n", fet->cfet_mask);
+	printf("\t\t\t.cfet_off_val = 0x%04x,\n", fet->cfet_off_val);
+	printf("\t\t},\n");
+
+	printf("\t},\n"); /* end of fuel_gauge */
+
+	printf("\t.batt_info = {\n");
+	printf("\t\t.voltage_max = %d,\n", info->voltage_max);
+	printf("\t\t.voltage_normal = %d,\n", info->voltage_normal);
+	printf("\t\t.voltage_min = %d,\n", info->voltage_min);
+	printf("\t\t.precharge_voltage= %d,\n", info->precharge_voltage);
+	printf("\t\t.precharge_current = %d,\n", info->precharge_current);
+	printf("\t\t.start_charging_min_c = %d,\n", info->start_charging_min_c);
+	printf("\t\t.start_charging_max_c = %d,\n", info->start_charging_max_c);
+	printf("\t\t.charging_min_c = %d,\n", info->charging_min_c);
+	printf("\t\t.charging_max_c = %d,\n", info->charging_max_c);
+	printf("\t\t.discharging_min_c = %d,\n", info->discharging_min_c);
+	printf("\t\t.discharging_max_c = %d,\n", info->discharging_max_c);
+	printf("\t},\n"); /* end of batt_info */
+
+	printf("},\n"); /* end of board_batt_params */
+}
+
+static int cmd_battery_config(int argc, char *argv[])
+{
+	const uint8_t struct_version = EC_BATTERY_CONFIG_STRUCT_VERSION;
+	struct batt_conf_header *head;
+	struct board_batt_params conf;
+	uint8_t *p;
+	int expected;
+	int rv;
+
+	if (argc != 1) {
+		fprintf(stderr, "Invalid param count\n");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_BATTERY_CONFIG, 0, NULL, 0, ec_inbuf,
+			ec_max_insize);
+	if (rv < 0)
+		return rv;
+
+	head = (struct batt_conf_header *)ec_inbuf;
+	printf("\n");
+	printf(".struct_version = 0x%02x,\n", head->struct_version);
+
+	if (head->struct_version > struct_version) {
+		fprintf(stderr,
+			"Struct version mismatch. Supported: 0x00 ~ 0x%02x.\n",
+			struct_version);
+		return -1;
+	}
+
+	/* Now we know it's ok to read the rest of the header. */
+
+	expected = sizeof(*head) + head->manuf_name_size +
+		   head->device_name_size + sizeof(struct board_batt_params);
+	if (rv != expected) {
+		fprintf(stderr, "Size mismatch: %d (expected=%d)\n", rv,
+			expected);
+		fprintf(stderr, ".manuf_name_size = %d\n",
+			head->manuf_name_size);
+		fprintf(stderr, ".device_name_size = %d\n",
+			head->device_name_size);
+		return -1;
+	}
+
+	/* Now we know it's ok to parse the payload. */
+	p = (uint8_t *)head;
+	p += sizeof(*head);
+	printf(".manuf_name = \"%*s\",\n", head->manuf_name_size, p);
+	p += head->manuf_name_size;
+	printf(".device_name = \"%*s\",\n", head->device_name_size, p);
+	p += head->device_name_size;
+	memcpy(&conf, p, sizeof(conf));
+	batt_conf_dump(&conf);
+
+	return 0;
+}
+
 int cmd_board_version(int argc, char *argv[])
 {
 	struct ec_response_board_version response;
@@ -11660,6 +11769,7 @@ const struct command commands[] = {
 	{ "battery", cmd_battery },
 	{ "batterycutoff", cmd_battery_cut_off },
 	{ "batteryparam", cmd_battery_vendor_param },
+	{ "bcfg", cmd_battery_config },
 	{ "boardversion", cmd_board_version },
 	{ "boottime", cmd_boottime },
 	{ "button", cmd_button },
