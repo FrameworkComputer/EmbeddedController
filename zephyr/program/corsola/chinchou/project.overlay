@@ -184,7 +184,7 @@
 		compatible = "cros-ec,keyscan";
 
 		actual-key-mask = <
-			0x1c	/* C0 */
+			0x48	/* C0 */
 			0xff	/* C1 */
 			0xff	/* C2 */
 			0xff	/* C3 */
@@ -194,12 +194,12 @@
 			0xa4	/* C7 */
 			0xff	/* C8 */
 			0xff	/* C9 */
-			0x15	/* C10 */
+			0x55	/* C10 */
 			0xff	/* C11 */
-			0xca	/* C12 */
-			0xc4    /*C13 */
-			0x0a    /*C14 */
-			>;
+			0xff	/* C12 */
+			0x40    /* C13 */
+			0x0a    /* C14 */
+		>;
 	};
 
 	Chinchou-fw-config {
