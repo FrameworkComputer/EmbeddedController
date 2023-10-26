@@ -100,12 +100,27 @@
 		int_usb_c0: usb_c0 {
 			irq-pin = <&gpio_usb_c0_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "usb_c0_interrupt";
+			handler = "bc12_interrupt";
 		};
 		int_usb_c1: usb_c1 {
 			irq-pin = <&gpio_sb_1>;
 			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "usb_c1_interrupt";
+			handler = "bc12_interrupt";
+		};
+		int_usb_c0_ppc: usb_c0_ppc {
+			irq-pin = <&gpio_usb_c1_ppc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+		int_usb_c1_ppc: usb_c1_ppc {
+			irq-pin = <&gpio_usb_c1_ppc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+		int_ac_present: ac_present {
+			irq-pin = <&gpio_ec_acok_d_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
 		};
 	};
 
@@ -115,8 +130,7 @@
 			       <&gpiod 4 0>,
 			       <&gpiod 7 0>,
 			       <&gpioh 2 0>,
-			       <&gpioj 7 0>,
-			       <&gpiol 4 0>;
+			       <&gpioj 7 0>;
 	};
 
 	named-gpios {
@@ -125,10 +139,6 @@
 		 * due to fault, but this definition is useful for hardware
 		 * testing.
 		 */
-		gpio_usb_c0_prot_fault_odl: usb_c0_prot_fault_odl {
-			gpios = <&gpiok 6 GPIO_INPUT_PULL_UP>;
-		};
-
 		gpio_sb_1: sb_1 {
 			gpios = <&gpioe 6 0>;
 			no-auto-init;
@@ -220,6 +230,7 @@
 			bc12 = <&bc12_port0>;
 			chg = <&chg_port0>;
 			tcpc = <&usbpd0>;
+			ppc = <&ppc_port0>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_0>;
@@ -234,8 +245,8 @@
 			compatible = "named-usbc-port";
 			reg = <1>;
 			bc12 = <&bc12_port1>;
-			chg = <&chg_port1>;
 			tcpc = <&tcpc_port1>;
+			ppc = <&ppc_port1>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_1 &tcpci_mux_1>;
@@ -343,50 +354,64 @@
 	label = "I2C_SENSOR";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c2_clk_gpf6_default
-		     &i2c2_data_gpf7_default>;
+		&i2c2_data_gpf7_default>;
 	pinctrl-names = "default";
 };
 
+&i2c3 {
+	label = "I2C_USB_C1_TCPC";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+	pinctrl-0 = <&i2c3_clk_gph1_default
+		&i2c3_data_gph2_default>;
+	pinctrl-names = "default";
+	tcpc_port1: ps8xxx@b {
+		compatible = "parade,ps8xxx";
+		reg = <0xb>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
+			TCPC_FLAGS_CONTROL_VCONN |
+			TCPC_FLAGS_CONTROL_FRS)>;
+		/* a duplicate of the <&gpio_usb_c1_tcpc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+
+		irq-gpios = <&gpiok 6 GPIO_ACTIVE_LOW>;
+		/* a duplicate of the <&gpio_usb_c1_rt_rst_r_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		rst-gpios = <&gpioh 6 (GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+		is-alt;
+	};
+};
+
 &i2c4 {
-	label = "I2C_SUB_C1_TCPC";
+	label = "I2C_USB_C1";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 	pinctrl-0 = <&i2c4_clk_gpe0_default
-		     &i2c4_data_gpe7_default>;
+		&i2c4_data_gpe7_default>;
 	pinctrl-1 = <&i2c4_clk_gpe0_sleep
-		     &i2c4_data_gpe7_sleep>;
+		&i2c4_data_gpe7_sleep>;
 	pinctrl-names = "default", "sleep";
-
 	bc12_port1: pi3usb9201@5f {
 		compatible = "pericom,pi3usb9201";
 		status = "okay";
 		reg = <0x5f>;
+		irq = <&int_usb_c1>;
 	};
-
-	chg_port1: sm5803@32 {
-		compatible = "siliconmitus,sm5803";
+	ppc_port1: syv682@40 {
+		compatible = "silergy,syv682x";
 		status = "okay";
-		reg = <0x32>;
+		reg = <0x40>;
+		irq = <&int_usb_c1_ppc>;
 	};
 
-	tcpc_port1: ps8745@b {
-		compatible = "parade,ps8xxx";
-		reg = <0xb>;
-		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
-	};
-};
-
-&i2c_ec_i2c_sub_usb_c1 {
-	/*
-	 * Dynamic speed setting is used for AP-controlled firmware update
-	 * of PS8745 TCPC/redriver: the AP lowers speed to 400 kHz in order
-	 * to use more efficient window programming, then sets it back when
-	 * done.
-	 */
-	dynamic-speed;
 };
 
 &i2c5 {
-	label = "I2C_USB_C0_TCPC";
+	label = "I2C_USB_C0";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 	pinctrl-0 = <&i2c5_clk_gpa4_default
 		     &i2c5_data_gpa5_default>;
@@ -396,12 +421,19 @@
 		compatible = "pericom,pi3usb9201";
 		status = "okay";
 		reg = <0x5f>;
+		irq = <&int_usb_c0>;
 	};
-
-	chg_port0: sm5803@32 {
-		compatible = "siliconmitus,sm5803";
+	ppc_port0: syv682@40 {
+		compatible = "silergy,syv682x";
 		status = "okay";
-		reg = <0x32>;
+		reg = <0x40>;
+		frs_en_gpio = <&gpio_usb_c0_frs_en>;
+		irq = <&int_usb_c0_ppc>;
+	};
+	chg_port0: bq25710@9 {
+		compatible = "ti,bq25710";
+		status = "okay";
+		reg = <0x9>;
 	};
 };
 
