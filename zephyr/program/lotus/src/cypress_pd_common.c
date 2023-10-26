@@ -687,6 +687,26 @@ static int cypd_modify_profile(int controller, int port, int profile)
 	return EC_SUCCESS;
 }
 
+int cypd_modify_safety_power(int controller, int port, int profile)
+{
+	int rv;
+	int port_idx = (controller << 1) + port;
+
+	if (verbose_msg_logging)
+		CPRINTS("PD Select PDO %s ", profile & 0x02 ? "3A" : "1.5A");
+
+	rv = cypd_select_rp(port_idx, profile);
+	rv = cypd_select_pdo(controller, port, profile);
+	if (rv != EC_SUCCESS) {
+		CPRINTS("PD Select PDO %s failed", profile & 0x02 ? "3A" : "1.5A");
+		cypd_clear_port(controller, port);
+		cypd_set_prepare_pdo(controller, port);
+		return rv;
+	}
+
+	return EC_SUCCESS;
+}
+
 void cypd_set_typec_profile(int controller, int port)
 {
 	int rv;

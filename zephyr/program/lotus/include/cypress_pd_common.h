@@ -556,4 +556,8 @@ int cypd_get_ac_power(void);
  */
 void force_disable_epr_mode(void);
 
+int cypd_modify_safety_power(int controller, int port, int profile);
+
+int cypd_port_3a_status(int controller, int port);
+
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */
