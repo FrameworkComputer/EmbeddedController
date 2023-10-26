@@ -9,13 +9,13 @@
 
 def register_intelrvp_project(
     project_name,
-    chip="npcx9m3f",
+    chip,
     extra_dts_overlays=(),
     extra_kconfig_files=(),
 ):
     """Register a variant of intelrvp."""
     register_func = register_binman_project
-    if chip.startswith("mec1727"):
+    if chip.startswith("mec172"):
         register_func = register_mchp_project
     elif chip.startswith("npcx"):
         register_func = register_npcx_project
@@ -80,7 +80,7 @@ register_intelrvp_project(
 
 register_intelrvp_project(
     project_name="mtlrvpp_m1723",
-    chip="mec1727",
+    chip="mec1723",
     extra_dts_overlays=[
         here / "mtlrvp/mtlrvpp_mchp/fan.dts",
         here / "mtlrvp/mtlrvpp_mchp/gpio.dts",

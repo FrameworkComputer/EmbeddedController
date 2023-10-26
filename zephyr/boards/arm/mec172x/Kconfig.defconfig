@@ -2,10 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if BOARD_MEC1727
+if BOARD_MEC172X
 
 config BOARD
-	default "mec1727"
+	default "mec172x"
 
 # Zephyr internal stack sizes
 
@@ -32,4 +32,4 @@ config TASK_PD_INT_STACK_SIZE
 config TASK_USB_CHG_STACK_SIZE
 	default 1024
 
-endif # BOARD_MEC1727
+endif # BOARD_MEC172X

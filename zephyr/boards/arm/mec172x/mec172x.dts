@@ -3,18 +3,15 @@
  * found in the LICENSE file.
  */
 
-/dts-v1/;
-
-#include <cros/microchip/mec1727.dtsi>
+#include <cros/microchip/mec172x.dtsi>
 #include <cros/thermistor/thermistor.dtsi>
 #include <dt-bindings/gpio_defines.h>
-#include <microchip/mec1727nsz.dtsi>
 #include <zephyr/dt-bindings/pwm/pwm.h>
 
 #define GPIO_VOLTAGE_1P8 (1U << 11)
 
 / {
-	model = "MEC1727";
+	model = "MEC172X";
 
 	chosen {
 		zephyr,sram = &sram0;
@@ -133,31 +130,6 @@
 	current-speed = <115200>;
 	pinctrl-0 = <&uart0_tx_gpio104 &uart0_rx_gpio105>;
 	pinctrl-names = "default";
-};
-
-&spi0 {
-	status = "okay";
-	compatible = "microchip,xec-qmspi-ldma";
-	clock-frequency = <12000000>;
-	lines = <2>;
-	chip-select = <0>;
-	pinctrl-0 = < &gpspi_cs_n_gpio116
-		      &gpspi_clk_gpio117
-		      &gpspi_io0_gpio074
-		      &gpspi_io1_gpio075
-		      &gpspi_wp_n_gpio076 >;
-	pinctrl-names = "default";
-
-	int_flash: sst25pf040@0 {
-		compatible ="jedec,spi-nor";
-		/*  4194304 bits = 512K Bytes */
-		size = <0x400000>;
-		label = "SST25PF040";
-		reg = <0>;
-		spi-max-frequency = <40000000>;
-		status = "okay";
-		jedec-id = [62 06 13];
-	};
 };
 
 /* Chrome design: KSI02 to H1 has not pull-up resistor */

@@ -5,13 +5,14 @@
 
 #include <cros/binman.dtsi>
 #include <microchip/mec172xnsz.dtsi>
+#include <microchip/mec172x/mec172xnsz-pinctrl.dtsi>
 
 / {
 	chosen {
 		cros-ec,adc = &adc0;
 		cros-ec,bbram = &bbram;
 		cros-ec,espi = &espi0;
-		cros-ec,flash = &int_flash;
+		cros-ec,flash = &flash1;
 		cros-ec,flash-controller = &fiu0;
 		cros-ec,raw-kb = &cros_kb_raw;
 		cros-ec,watchdog = &wdog;
@@ -65,9 +66,40 @@
 			offset = <0x40>;
 			size = <0x04>;
 		};
+		ec_img_load {
+			offset = <0x44>;
+			size = <0x01>;
+		};
 	};
 
 	fiu0: cros-flash {
 		compatible = "microchip,xec-cros-flash";
+	};
+
+/*
+ * flash:
+ * Zephyr ChromeOS requires a separate node to describe the SPI flash for
+ * internal and external flash devices.
+ * The reason is:
+ *	<cros_base>/ec/zephyr/Kconfig.flash
+
+ * Kconfig item:
+
+ * DT_CHOSEN_CROS_FLASH := cros-ec,flash
+
+ * config PLATFORM_EC_FLASH_SIZE_BYTES
+ *  hex "flash size"
+ *	default $(dt_chosen_reg_size_hex,$(DT_CHOSEN_CROS_FLASH))
+ *	help
+ *	  Total size of writable flash.
+
+ * The above Kconfig gets the flash size from the size of the Device Tree
+ * register property.
+
+ * Zephyr Flash SPI NOR driver uses a separate "size" property to specify
+ * the flash size.
+ */
+	flash1: flash@60000000 {
+		reg = <0x60000000 DT_SIZE_K(512)>;
 	};
 };

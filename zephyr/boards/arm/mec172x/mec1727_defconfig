@@ -7,7 +7,7 @@ CONFIG_SOC_SERIES_MEC172X=y
 
 # Platform Configuration
 CONFIG_SOC_MEC172X_NSZ=y
-CONFIG_BOARD_MEC1727=y
+CONFIG_BOARD_MEC172X=y
 CONFIG_RTOS_TIMER=y
 CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC=32768
 CONFIG_SYS_CLOCK_TICKS_PER_SEC=32768
@@ -47,6 +47,6 @@ CONFIG_SPI=y
 
 # Flash
 CONFIG_FLASH=y
-# disabling this causes build error: calling function to read JEDEC ID
-# MEC1727 internal SST25PF040 does not support SFDP
+# SPI NOR driver implements read_jedec_id() and read_sfdp() public API’s
+# Both API's can be called by application
 CONFIG_FLASH_JESD216_API=y
