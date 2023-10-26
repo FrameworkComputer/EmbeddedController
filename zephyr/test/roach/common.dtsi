@@ -1,0 +1,19 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <it8xxx2_emul.dts>
+
+/ {
+	pinctrl: pinctrl {
+		compatible = "ite,it8xxx2-pinctrl";
+		status = "disabled";
+	};
+};
+
+&uart2 {
+	status = "okay";
+	compatible = "zephyr,uart-emul";
+	latch-buffer-size = <16>;
+};

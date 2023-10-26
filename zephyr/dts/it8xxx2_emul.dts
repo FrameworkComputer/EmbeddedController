@@ -216,4 +216,14 @@
 		ref-internal-mv = <3300>;
 		#io-channel-cells = <1>;
 	};
+
+	uart2: uart@f02800 {
+		compatible = "zephyr,uart-emul";
+		reg = <0x00f02800 0x0020>;
+		status = "disabled";
+	};
+
+	ite_uart2_wrapper: uartwrapper@f02820 {
+		reg = <0xf02820 0x20>;
+	};
 };
