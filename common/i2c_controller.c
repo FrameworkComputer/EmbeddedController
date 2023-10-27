@@ -11,13 +11,9 @@
  */
 #line 13
 
-#include "battery.h"
 #include "builtin/assert.h"
-#include "charge_state.h"
-#include "clock.h"
 #include "console.h"
 #include "crc8.h"
-#include "gpio.h"
 #include "host_command.h"
 #include "i2c.h"
 #include "i2c_bitbang.h"
@@ -25,11 +21,7 @@
 #include "printf.h"
 #include "system.h"
 #include "task.h"
-#include "usb_pd.h"
-#include "usb_pd_tcpm.h"
 #include "util.h"
-#include "virtual_battery.h"
-#include "watchdog.h"
 
 #ifdef CONFIG_ZEPHYR
 #include "i2c/i2c.h"
