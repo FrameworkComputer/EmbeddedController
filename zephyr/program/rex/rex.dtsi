@@ -135,6 +135,10 @@
 	pinctrl-names = "default";
 };
 
+&sha0 {
+	status = "okay";
+};
+
 /* Power switch logic input pads */
 &psl_in1_gpd2 {
 	/* LID_OPEN */
