@@ -69,6 +69,10 @@
 /* This port allows changing speed at runtime */
 #define I2C_PORT_FLAG_DYNAMIC_SPEED BIT(0)
 
+#ifndef CONFIG_I2C_BITBANG
+#define I2C_BITBANG_PORT_COUNT 0
+#endif
+
 /*
  * Supported I2C CLK frequencies.
  * TODO(crbug.com/549286): Use this enum in i2c_port_t.

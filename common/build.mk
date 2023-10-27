@@ -106,6 +106,7 @@ common-$(CONFIG_I2C_DEBUG)+=i2c_trace.o
 common-$(CONFIG_I2C_HID_TOUCHPAD)+=i2c_hid_touchpad.o
 common-$(CONFIG_I2C_CONTROLLER)+=i2c_controller.o
 common-$(CONFIG_I2C_CONTROLLER)+=i2c_controller_cros_ec.o
+common-$(CONFIG_I2C_CONTROLLER)+=i2c_passthru.o
 common-$(CONFIG_I2C_PERIPHERAL)+=i2c_peripheral.o
 common-$(CONFIG_I2C_BITBANG)+=i2c_bitbang.o
 common-$(CONFIG_I2C_VIRTUAL_BATTERY)+=virtual_battery.o
