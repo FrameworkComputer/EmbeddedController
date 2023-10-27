@@ -189,45 +189,51 @@ static int16_t usb_i2c_map_error(int error)
 static void usb_i2c_execute(unsigned int expected_size)
 {
 	uint32_t count = queue_remove_units(&cmsis_dap_rx_queue, rx_buffer,
-					    expected_size);
-	uint16_t *i2c_buffer = (uint16_t *)&rx_buffer[0];
+					    expected_size + 1) -
+			 1;
+	uint16_t i2c_status = 0;
 	/* Payload is ready to execute. */
-	int portindex = (i2c_buffer[0] >> 0) & 0xf;
-	uint16_t addr_flags = (i2c_buffer[0] >> 8) & 0x7f;
-	int write_count = ((i2c_buffer[0] << 4) & 0xf00) |
-			  ((i2c_buffer[1] >> 0) & 0xff);
-	int read_count = (i2c_buffer[1] >> 8) & 0xff;
+	int portindex = rx_buffer[1] & 0xf;
+	uint16_t addr_flags = rx_buffer[2] & 0x7f;
+	int write_count = ((rx_buffer[1] << 4) & 0xf00) | rx_buffer[3];
+	int read_count = rx_buffer[4];
 	int offset = 0; /* Offset for extended reading header. */
 
-	i2c_buffer[0] = 0;
-	i2c_buffer[1] = 0;
+	rx_buffer[1] = 0;
+	rx_buffer[2] = 0;
+	rx_buffer[3] = 0;
+	rx_buffer[4] = 0;
 
 	if (read_count & 0x80) {
-		read_count = ((i2c_buffer[2] & 0xff) << 7) |
-			     (read_count & 0x7f);
+		read_count = (rx_buffer[5] << 7) | (read_count & 0x7f);
 		offset = 2;
 	}
 
 	if (!usb_i2c_board_is_enabled()) {
-		i2c_buffer[0] = USB_I2C_DISABLED;
+		i2c_status = USB_I2C_DISABLED;
 	} else if (!read_count && !write_count) {
 		/* No-op, report as success */
-		i2c_buffer[0] = USB_I2C_SUCCESS;
+		i2c_status = USB_I2C_SUCCESS;
 	} else if (write_count > CONFIG_USB_I2C_MAX_WRITE_COUNT ||
 		   write_count != (count - 4 - offset)) {
-		i2c_buffer[0] = USB_I2C_WRITE_COUNT_INVALID;
+		i2c_status = USB_I2C_WRITE_COUNT_INVALID;
 	} else if (read_count > CONFIG_USB_I2C_MAX_READ_COUNT) {
-		i2c_buffer[0] = USB_I2C_READ_COUNT_INVALID;
+		i2c_status = USB_I2C_READ_COUNT_INVALID;
 	} else if (portindex >= i2c_ports_used) {
-		i2c_buffer[0] = USB_I2C_PORT_INVALID;
+		i2c_status = USB_I2C_PORT_INVALID;
 	} else {
 		int ret = i2c_xfer(i2c_ports[portindex].port, addr_flags,
-				   (uint8_t *)(i2c_buffer + 2) + offset,
-				   write_count, (uint8_t *)(i2c_buffer + 2),
-				   read_count);
-		i2c_buffer[0] = usb_i2c_map_error(ret);
+				   rx_buffer + 5 + offset, write_count,
+				   rx_buffer + 5, read_count);
+		i2c_status = usb_i2c_map_error(ret);
 	}
-	queue_add_units(&cmsis_dap_tx_queue, i2c_buffer, read_count + 4);
+	rx_buffer[1] = i2c_status & 0xFF;
+	rx_buffer[2] = i2c_status >> 8;
+	/*
+	 * Send one byte of CMSIS-DAP header, four bytes of Google I2C header,
+	 * followed by any data received via I2C.
+	 */
+	queue_add_units(&cmsis_dap_tx_queue, rx_buffer, 1 + 4 + read_count);
 }
 
 /*
@@ -639,8 +645,6 @@ static void dap_goog_i2c(size_t peek_c)
 	expected_size += (((size_t)rx_buffer[1] & 0xf0) << 4) | rx_buffer[3];
 
 	if (queue_count(&cmsis_dap_rx_queue) >= expected_size + 1) {
-		queue_remove_unit(&cmsis_dap_rx_queue, rx_buffer);
-		queue_add_unit(&cmsis_dap_tx_queue, rx_buffer);
 		usb_i2c_execute(expected_size);
 	}
 }
