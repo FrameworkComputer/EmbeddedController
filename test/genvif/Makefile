@@ -5,6 +5,7 @@
 
 CC=gcc
 CFLAGS=-O2 -Isrc -I../../include
+CFLAGS+= -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
 
 genvif: ../../util/genvif.c src/helper.c
 	@$(CC) -o $@ $^ $(CFLAGS)

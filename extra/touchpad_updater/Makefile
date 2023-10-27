@@ -26,6 +26,7 @@ CFLAGS  := -std=gnu99 \
 #
 LIBS    += $(shell $(PKG_CONFIG) --libs   libusb-1.0)
 CFLAGS  += $(shell $(PKG_CONFIG) --cflags libusb-1.0)
+CFLAGS  += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
 
 $(PROGRAM): $(SOURCE) Makefile
 	$(CC) $(CFLAGS) $(SOURCE) $(LFLAGS) $(LIBS) -o $@
