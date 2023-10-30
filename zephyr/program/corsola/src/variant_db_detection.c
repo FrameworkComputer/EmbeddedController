@@ -180,17 +180,10 @@ DECLARE_DEFERRED(ps185_hdmi_hpd_deferred);
 
 #define HPD_SINK_ABSENCE_DEBOUNCE (2 * MSEC)
 
-void hdmi_hpd_interrupt(enum gpio_signal signal)
+static void hdmi_hpd_interrupt_deferred(void)
 {
 	const int hpd =
 		gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_ec_dp_hpd));
-
-	if (!hpd) {
-		hook_call_deferred(&ps185_hdmi_hpd_deferred_data,
-				   HPD_SINK_ABSENCE_DEBOUNCE);
-	} else {
-		hook_call_deferred(&ps185_hdmi_hpd_deferred_data, -1);
-	}
 
 	/* C0 DP is muxed, we should not send HPD to the AP */
 	if (!corsola_is_dp_muxable(USBC_PORT_C1)) {
@@ -209,4 +202,20 @@ void hdmi_hpd_interrupt(enum gpio_signal signal)
 	}
 
 	svdm_set_hpd_gpio(USBC_PORT_C1, hpd);
+}
+DECLARE_DEFERRED(hdmi_hpd_interrupt_deferred);
+
+void hdmi_hpd_interrupt(enum gpio_signal signal)
+{
+	const int hpd =
+		gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_ps185_ec_dp_hpd));
+
+	if (!hpd) {
+		hook_call_deferred(&ps185_hdmi_hpd_deferred_data,
+				   HPD_SINK_ABSENCE_DEBOUNCE);
+	} else {
+		hook_call_deferred(&ps185_hdmi_hpd_deferred_data, -1);
+	}
+
+	hook_call_deferred(&hdmi_hpd_interrupt_deferred_data, 0);
 }
