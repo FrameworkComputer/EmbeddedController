@@ -1,0 +1,22 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menuconfig FINGERPRINT_SENSOR
+	bool "Fingerprint sensor drivers"
+	help
+	  Enable support for fingerprint sensors. The driver must implement
+	  cros_fingerprint API.
+
+if FINGERPRINT_SENSOR
+
+config FINGERPRINT_SENSOR_INIT_PRIORITY
+	int "Fingerprint sensor init priority"
+	default 99
+	range 0 99
+	help
+	  Fingerprint sensor driver device initialization priority.
+	  This initialization priority is used unless the driver implementation
+	  has its own initialization priority.
+
+endif # FINGERPRINT_SENSOR
