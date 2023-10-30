@@ -186,6 +186,12 @@ DEFINE_boolean zephyr "${FLAGS_FALSE}" \
 	"Program a Zephyr EC image instead of a CrOS EC image"
 DEFINE_boolean no_preserve "${FLAGS_FALSE}" \
 	"Avoid preserving the sections of firmware image with preserve property"
+DEFINE_boolean try_apshutdown "${FLAGS_FALSE}" \
+	"Shutdown the AP immediately after flashing. It does not guarantee a " \
+	"successful AP shutdown for all devices or in all situations. You need" \
+	" to understand the limitations when you build a solution on it. "
+DEFINE_integer try_apshutdown_count 16 \
+	"Number of attempts to shutdown the AP immediately after flashing."
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
@@ -688,6 +694,15 @@ cleanup() {
 
 	if ! on_raiden || servo_has_cold_reset; then
 		ec_reset
+	fi
+
+	if [[ "${FLAGS_try_apshutdown}" == "${FLAGS_TRUE}" ]]; then
+		info "Attempting to shut down the AP..."
+		dut_control ec_uart_regexp:None
+		for (( i = 0; i < "${FLAGS_try_apshutdown_count}"; i++ )); do
+			dut_control ec_uart_cmd:apshutdown
+			sleep 1
+		done
 	fi
 }
 trap cleanup EXIT
