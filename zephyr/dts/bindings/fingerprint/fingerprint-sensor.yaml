@@ -1,0 +1,47 @@
+# Copyright 2023 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Common fields for fingerprint sensors
+
+properties:
+  width:
+    type: int
+    required: true
+    description: |
+      Fingerprint sensor width in pixels.
+
+  height:
+    type: int
+    required: true
+    description: |
+      Fingerprint sensor height in pixels.
+
+  bits-per-pixel:
+    type: int
+    required: true
+    description: |
+      Pixel resolution in bits.
+
+  v4l2-pixel-format:
+    type: string
+    required: true
+    enum:
+      # Grey-scale image. It's a Y'CbCr format which contains no Cb or Cr data.
+      # https://docs.kernel.org/userspace-api/media/v4l/pixfmt-yuv-luma.html
+      - V4L2_PIX_FMT_GREY
+    description: |
+     Video4Linux2 pixel format type. List of pixel formats can be found at
+     https://docs.kernel.org/userspace-api/media/v4l/pixfmt.html.
+
+  irq-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      This property specifies the connection for sensor interrupt.
+
+  reset-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      This property specifies the connection for sensor reset.
