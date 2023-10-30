@@ -7649,7 +7649,11 @@ struct ec_response_typec_vdm_response {
 /*****************************************************************************/
 /* Fingerprint MCU commands: range 0x0400-0x040x */
 
-/* Fingerprint SPI sensor passthru command: prototyping ONLY */
+/*
+ * Fingerprint SPI sensor passthru command
+ *
+ * This command was used for prototyping and it's now deprecated.
+ */
 #define EC_CMD_FP_PASSTHRU 0x0400
 
 #define EC_FP_FLAG_NOT_COMPLETE 0x1

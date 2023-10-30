@@ -347,40 +347,6 @@ extern "C" void fp_task(void)
 #endif /* !HAVE_FP_PRIVATE_DRIVER */
 }
 
-static enum ec_status fp_command_passthru(struct host_cmd_handler_args *args)
-{
-	const auto *params =
-		static_cast<const ec_params_fp_passthru *>(args->params);
-	auto *out = static_cast<uint8_t *>(args->response);
-	int rc;
-	enum ec_status ret = EC_RES_SUCCESS;
-
-	if (system_is_locked())
-		return EC_RES_ACCESS_DENIED;
-
-	if (params->len >
-		    args->params_size +
-			    offsetof(struct ec_params_fp_passthru, data) ||
-	    params->len > args->response_max)
-		return EC_RES_INVALID_PARAM;
-
-	rc = spi_transaction_async(&spi_devices[0], params->data, params->len,
-				   out, SPI_READBACK_ALL);
-	if (params->flags & EC_FP_FLAG_NOT_COMPLETE)
-		rc |= spi_transaction_wait(&spi_devices[0]);
-	else
-		rc |= spi_transaction_flush(&spi_devices[0]);
-
-	if (rc == EC_ERROR_TIMEOUT)
-		ret = EC_RES_TIMEOUT;
-	else if (rc)
-		ret = EC_RES_ERROR;
-
-	args->response_size = params->len;
-	return ret;
-}
-DECLARE_HOST_COMMAND(EC_CMD_FP_PASSTHRU, fp_command_passthru, EC_VER_MASK(0));
-
 static enum ec_status fp_command_info(struct host_cmd_handler_args *args)
 {
 	auto *r = static_cast<ec_response_fp_info *>(args->response);
