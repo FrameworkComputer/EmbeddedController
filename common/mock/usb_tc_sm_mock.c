@@ -56,10 +56,6 @@ void typec_select_src_collision_rp(int port, enum tcpc_rp_value rp)
 	mock_tc_port[port].lcl_rp = rp;
 }
 
-void typec_select_src_current_limit_rp(int port, enum tcpc_rp_value rp)
-{
-}
-
 int tc_is_attached_src(int port)
 {
 	return mock_tc_port[port].attached_src;
@@ -82,6 +78,21 @@ void tc_prs_src_snk_assert_rd(int port)
 	mock_tc_port[port].attached_src = 0;
 }
 
+int tc_is_vconn_src(int port)
+{
+	return mock_tc_port[port].vconn_src;
+}
+
+void tc_hard_reset_request(int port)
+{
+	mock_tc_port_reset();
+}
+
+/* LCOV_EXCL_START These functions only serve to allow tests to link. */
+void typec_select_src_current_limit_rp(int port, enum tcpc_rp_value rp)
+{
+}
+
 int typec_update_cc(int port)
 {
 	return EC_SUCCESS;
@@ -95,17 +106,6 @@ int tc_check_vconn_swap(int port)
 void tc_ctvpd_detected(int port)
 {
 }
-
-int tc_is_vconn_src(int port)
-{
-	return mock_tc_port[port].vconn_src;
-}
-
-void tc_hard_reset_request(int port)
-{
-	mock_tc_port_reset();
-}
-
 void tc_partner_dr_data(int port, int en)
 {
 }
@@ -220,3 +220,4 @@ bool pd_alt_mode_capable(int port)
 {
 	return false;
 }
+/* LCOV_EXCL_STOP */
