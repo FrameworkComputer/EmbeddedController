@@ -180,9 +180,11 @@ void charger_update(void)
 			CPRINTS("read charger control3 fail");
 
 		if (extpower_is_present() && !battery_is_present())
-			val |= ISL9241_CONTROL3_INPUT_CURRENT_LIMIT_LOOP;
+			i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL3,
+				ISL9241_CONTROL3_INPUT_CURRENT_LIMIT_LOOP, MASK_SET);
 		else
-			val &= ~ISL9241_CONTROL3_INPUT_CURRENT_LIMIT_LOOP;
+			i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL3,
+				ISL9241_CONTROL3_INPUT_CURRENT_LIMIT_LOOP, MASK_CLR);
 
 		/**
 		 * Update the DC prochot current limit
