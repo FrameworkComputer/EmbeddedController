@@ -498,6 +498,15 @@ def main(argv):
             prunelist,
             [],
         )
+        merge_repo(
+            os.path.join(opts.srcbase, "src/third_party/zephyr/picolibc"),
+            cros_main,
+            cmd_checkout,
+            strategy,
+            cmd,
+            prunelist,
+            [],
+        )
         # cmsis repo has different remote
         cros_main = opts.remote_prefix + "/" + "chromeos-main"
         merge_repo(
