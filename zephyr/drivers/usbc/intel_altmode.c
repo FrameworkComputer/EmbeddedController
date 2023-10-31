@@ -131,7 +131,11 @@ static void pd_altmode_isr_work(struct k_work *item)
 		CONTAINER_OF(item, struct pd_altmode_data, work);
 	const struct pd_altmode_config *cfg = data->dev->config;
 
-	if (!cfg->shared_irq) {
+	/*
+	 * Trigger ISR callback on non-shared interrupt port only
+	 * and only after the application has registered the callback.
+	 */
+	if (!cfg->shared_irq && data->isr_cb) {
 		data->isr_cb();
 	}
 }
