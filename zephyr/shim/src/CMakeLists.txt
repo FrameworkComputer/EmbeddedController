@@ -114,8 +114,6 @@ if(CONFIG_PIGWEED_LOG_TOKENIZED_LIB)
                               platform_ec_log.tokenized_handler
   )
 
-  zephyr_library_sources_ifdef(CONFIG_PIGWEED_LOG_TOKENIZED_LIB console_buffer.c)
-
   include("${ZEPHYR_PIGWEED_MODULE_DIR}/pw_log_tokenized/backend.cmake")
   pw_set_backend(pw_log_tokenized.handler platform_ec_log.tokenized_handler)
 

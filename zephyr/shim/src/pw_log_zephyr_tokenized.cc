@@ -47,7 +47,10 @@ extern "C" void pw_log_tokenized_HandleLog(uint32_t metadata,
 
 	// On DUT, timberslide doesn't receive console raw text, okay to send
 	// base64 message without end delimiter
-	console_buf_notify_chars(base64_string.c_str(), base64_string.size());
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE)) {
+		console_buf_notify_chars(base64_string.c_str(),
+					 base64_string.size());
+	}
 	base64_string += kEndDelimiter;
 
 	// TODO(asemjonovs):
