@@ -12,6 +12,11 @@ config BOARD_AXII
 	bool "Google Axii Board"
 	help
 	  Build Google Axii board. Axii is a test fixture for testing
+
+config BOARD_KELPIE
+	bool "Google Kelpie Board"
+	help
+	  Build Google Kelpie board. Kelpie is a variant board of
 	  Roach devices.
 
 source "Kconfig.zephyr"

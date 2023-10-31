@@ -27,3 +27,4 @@ def register_variant(project_name, rwsig_sign=True):
 
 register_variant("roach")
 register_variant("axii", rwsig_sign=False)
+register_variant("kelpie")
