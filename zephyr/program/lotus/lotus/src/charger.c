@@ -295,6 +295,7 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 	isl9241_set_ac_prochot(0, prochot_ma);
 }
 
+bool log_ina236;
 void board_check_current(void)
 {
 	int16_t sv = ina2xx_read(0, INA2XX_REG_SHUNT_VOLT);
@@ -325,6 +326,11 @@ void board_check_current(void)
 	else
 		shunt_register = 5;
 
+	if (log_ina236) {
+		CPRINTS("INA236 %d mA %d mV", INA2XX_SHUNT_UV(sv) / shunt_register,
+				INA2XX_BUS_MV((int)ina2xx_read(0, INA2XX_REG_BUS_VOLT)));
+	}
+
 	if (ABS(INA2XX_SHUNT_UV(sv) / shunt_register) > (active_current * 120 / 100) &&
 		(INA2XX_SHUNT_UV(sv) > 0) && (active_current != 0)) {
 		curr_status = EC_ASSERTED_PROCHOT;
@@ -350,6 +356,23 @@ void board_check_current(void)
 	pre_status = curr_status;
 	pre_active_port = active_port;
 }
+
+/* EC console command */
+static int ina236_cmd(int argc, const char **argv)
+{
+	if (argc >= 2) {
+		if (!strncmp(argv[1], "en", 2)) {
+			log_ina236 = true;
+		} else if (!strncmp(argv[1], "dis", 3)) {
+			log_ina236 = false;
+		} else {
+			return EC_ERROR_PARAM1;
+		}
+	}
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(ina236, ina236_cmd, "[en/dis]",
+			"Enable or disable ina236 logging");
 
 /* EC console command */
 static int chgbypass_cmd(int argc, const char **argv)
