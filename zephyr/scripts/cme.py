@@ -191,6 +191,27 @@ def find_i2c_portmap(edtlib, edt):
     return i2c_portmap
 
 
+def compatible_name_parser(ctype, name):
+    """Parses the compatible into actual component name.
+
+    Args:
+        ctype: type of component
+        name: compatible name for component
+
+    Returns:
+        Corrected component name
+    """
+    compatible = name.rsplit("-", 1)
+    if len(compatible) > 1:
+        if compatible[1] != ctype:
+            # it is valid for compatibles to have a hyphen without ctype
+            return name
+
+    # TODO: add more cases for other compatibles as need arrises.
+
+    return compatible[0]
+
+
 def insert_i2c_component(ctype, node, usbc_port, i2c_portmap, manifest):
     """Insert the I2C component to the manifest.
 
@@ -212,9 +233,6 @@ def insert_i2c_component(ctype, node, usbc_port, i2c_portmap, manifest):
         )
         return
 
-    # TODO(b/308028808): Check if the name needs to be modified. The compatible
-    # may not be the same as the component name.
-
     # TODO(b/308031064): Add the probe methods if multiple components share the
     # same compatible. These components need to be identified.
 
@@ -222,7 +240,7 @@ def insert_i2c_component(ctype, node, usbc_port, i2c_portmap, manifest):
 
     manifest.insert_component(
         ctype,
-        node.props["compatible"].val[0],
+        compatible_name_parser(ctype, node.props["compatible"].val[0]),
         i2c_portmap[node.parent.name],
         node.props["reg"].val[0],
         usbc_port,
