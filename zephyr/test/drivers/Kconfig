@@ -332,4 +332,7 @@ config LINK_TEST_SUITE_LED_PWM_FADE
 config LINK_TEST_SUITE_ONE_WIRE_UART
 	bool "Link and test the one wire uart driver tests"
 
+config LINK_TEST_SUITE_SMART_BATTERY
+	bool "Link and test the smart battery driver tests"
+
 source "Kconfig.zephyr"

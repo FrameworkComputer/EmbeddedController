@@ -333,7 +333,7 @@ test_mockable int battery_is_cut_off(void)
 	return (battery_cutoff_state == BATTERY_CUTOFF_STATE_CUT_OFF);
 }
 
-int battery_cutoff_in_progress(void)
+test_mockable int battery_cutoff_in_progress(void)
 {
 	return (battery_cutoff_state == BATTERY_CUTOFF_STATE_IN_PROGRESS);
 }

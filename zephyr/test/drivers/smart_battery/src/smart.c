@@ -12,12 +12,16 @@
 #include "i2c.h"
 #include "test/drivers/test_state.h"
 
+#include <zephyr/fff.h>
 #include <zephyr/kernel.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/shell/shell_uart.h>
 #include <zephyr/ztest.h>
 
 #define BATTERY_NODE DT_NODELABEL(battery)
+
+FAKE_VALUE_FUNC(int, battery_is_cut_off);
+FAKE_VALUE_FUNC(int, battery_cutoff_in_progress);
 
 /** Test all simple getters */
 ZTEST_USER(smart_battery, test_battery_getters)
@@ -523,11 +527,6 @@ ZTEST_USER(smart_battery, test_battery_fake_charge)
 		      batt.remaining_capacity);
 }
 
-static void reset_battfake(void *data)
-{
-	shell_execute_cmd(get_ec_shell(), "battfake -1");
-}
-
 /** Test battery fake temperature set and read */
 ZTEST_USER(smart_battery, test_battery_fake_temperature)
 {
@@ -584,6 +583,48 @@ ZTEST_USER(smart_battery, test_battery_fake_temperature)
 	zassert_equal(flags, batt.flags, "0x%x != 0x%x", flags, batt.flags);
 	zassert_equal(bat->temp, batt.temperature, "%d != %d", bat->temp,
 		      batt.temperature);
+}
+
+/* Test that accesses to battery properties are prevented during cutoff. */
+ZTEST_USER(smart_battery, test_battery_access_cutoff)
+{
+	struct batt_params params = {};
+	char str[64];
+
+	/*
+	 * Accesses are blocked because
+	 * they might wake the battery up from cutoff.
+	 */
+	battery_is_cut_off_fake.return_val = 1;
+	battery_get_params(&params);
+	zassert_equal(params.flags, BATT_FLAG_BAD_ANY, "actual flags were %#x",
+		      params.flags);
+	zassert_equal(get_battery_manufacturer_name(str, sizeof(str)),
+		      EC_ERROR_ACCESS_DENIED);
+	zassert_equal(sb_read_sized_block(0, NULL, 0), EC_ERROR_ACCESS_DENIED);
+	/*
+	 * Writes are blocked after cutoff but are allowed while in progress
+	 * because we need to write to the battery to complete cutoff.
+	 */
+	zassert_equal(sb_write(0, 0), EC_ERROR_ACCESS_DENIED);
+	zassert_equal(sb_write_block(0, NULL, 0), EC_ERROR_ACCESS_DENIED);
+
+	/* Same behavior if cutoff is in progress. */
+	RESET_FAKE(battery_is_cut_off);
+	battery_cutoff_in_progress_fake.return_val = 1;
+	battery_get_params(&params);
+	zassert_equal(params.flags, BATT_FLAG_BAD_ANY, "actual flags were %#x",
+		      params.flags);
+	zassert_equal(get_battery_manufacturer_name(str, sizeof(str)),
+		      EC_ERROR_ACCESS_DENIED);
+	zassert_equal(sb_read_sized_block(0, str, 1), EC_ERROR_ACCESS_DENIED);
+}
+
+static void reset_battfake(void *data)
+{
+	RESET_FAKE(battery_is_cut_off);
+	RESET_FAKE(battery_cutoff_in_progress);
+	shell_execute_cmd(get_ec_shell(), "battfake -1");
 }
 
 ZTEST_SUITE(smart_battery, drivers_predicate_post_main, NULL, NULL,

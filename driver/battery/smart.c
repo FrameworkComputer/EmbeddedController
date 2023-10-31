@@ -73,7 +73,7 @@ test_mockable int sb_read(int cmd, int *param)
 	 * Some batteries would wake up after cut-off if we talk to it.
 	 */
 	if (battery_is_cut_off())
-		return EC_RES_ACCESS_DENIED;
+		return EC_ERROR_ACCESS_DENIED;
 #endif
 
 	ADDR_FLAGS_FOR_PEC(&addr_flags);
@@ -89,7 +89,7 @@ test_mockable int sb_write(int cmd, int param)
 	 * Some batteries would wake up after cut-off if we talk to it.
 	 */
 	if (battery_is_cut_off())
-		return EC_RES_ACCESS_DENIED;
+		return EC_ERROR_ACCESS_DENIED;
 #endif
 
 	ADDR_FLAGS_FOR_PEC(&addr_flags);
@@ -113,7 +113,7 @@ int sb_read_string(int offset, uint8_t *data, int len)
 	 * Some batteries would wake up after cut-off if we talk to it.
 	 */
 	if (battery_is_cut_off())
-		return EC_RES_ACCESS_DENIED;
+		return EC_ERROR_ACCESS_DENIED;
 #endif
 
 	ADDR_FLAGS_FOR_PEC(&addr_flags);
@@ -138,7 +138,7 @@ int sb_read_sized_block(int offset, uint8_t *data, int len)
 		 * Some batteries would wake up after cut-off if we talk to it.
 		 */
 		if (battery_is_cut_off())
-			return EC_RES_ACCESS_DENIED;
+			return EC_ERROR_ACCESS_DENIED;
 	}
 
 	ADDR_FLAGS_FOR_PEC(&addr_flags);
@@ -222,7 +222,7 @@ int sb_write_block(int reg, const uint8_t *val, int len)
 	 * Some batteries would wake up after cut-off if we talk to it.
 	 */
 	if (battery_is_cut_off())
-		return EC_RES_ACCESS_DENIED;
+		return EC_ERROR_ACCESS_DENIED;
 #endif
 
 	ADDR_FLAGS_FOR_PEC(&addr_flags);

@@ -40,7 +40,6 @@ target_sources(app PRIVATE
     src/ppc_sn5s330.c
     src/ppc_syv682x.c
     src/ps8xxx.c
-    src/smart.c
     src/stm_mems_common.c
     src/tablet_mode.c
     src/task.c

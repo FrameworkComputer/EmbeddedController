@@ -1544,3 +1544,12 @@ tests:
     - CONFIG_LINK_TEST_SUITE_ONE_WIRE_UART=y
     - CONFIG_PLATFORM_EC_ONE_WIRE_UART_TABLET=y
     - CONFIG_I2C_TARGET=y
+  drivers.smart_battery:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_SMART_BATTERY=y
+    - CONFIG_PLATFORM_EC_BATTERY_CUT_OFF=y
+    extra_conf_files:
+    - prj.conf
+    - default/prj.conf
+    extra_dtc_overlay_files:
+    - default/boards/native_posix.overlay
