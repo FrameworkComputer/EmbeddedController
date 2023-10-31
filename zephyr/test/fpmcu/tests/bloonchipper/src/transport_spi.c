@@ -15,6 +15,8 @@
 #include <zephyr/mgmt/ec_host_cmd/ec_host_cmd.h>
 #include <zephyr/ztest.h>
 
+static struct ec_host_cmd hc;
+
 #define SPI_MAX_REQUEST_SIZE 0x220
 #define SPI_MAX_RESPONSE_SIZE 0x220
 
@@ -23,6 +25,7 @@ FAKE_VALUE_FUNC(struct ec_host_cmd_backend *, ec_host_cmd_backend_get_uart,
 FAKE_VALUE_FUNC(struct ec_host_cmd_backend *, ec_host_cmd_backend_get_spi,
 		struct gpio_dt_spec *);
 FAKE_VALUE_FUNC(int, ec_host_cmd_init, struct ec_host_cmd_backend *);
+FAKE_VALUE_FUNC(const struct ec_host_cmd *, ec_host_cmd_get_hc);
 
 enum ec_host_cmd_status
 host_command_protocol_info(struct ec_host_cmd_handler_args *args);
@@ -38,7 +41,9 @@ static void *transport_setup(void)
 	RESET_FAKE(ec_host_cmd_backend_get_uart);
 	RESET_FAKE(ec_host_cmd_backend_get_spi);
 	RESET_FAKE(ec_host_cmd_init);
+	RESET_FAKE(ec_host_cmd_get_hc);
 
+	ec_host_cmd_get_hc_fake.return_val = &hc;
 	/* Set the transport sel pin */
 	gpio_emul_input_set(transport_sel_gpio, transport_sel_pin, 1);
 
@@ -72,6 +77,8 @@ ZTEST(transport, test_protocol_info)
 	memset(&args, 0, sizeof(args));
 	memset(&protocol_info, 0, sizeof(protocol_info));
 	args.output_buf = &protocol_info;
+	hc.rx_ctx.len_max = SPI_MAX_REQUEST_SIZE;
+	hc.tx.len_max = SPI_MAX_RESPONSE_SIZE;
 
 	/* SPI */
 	host_command_protocol_info(&args);
