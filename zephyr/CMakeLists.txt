@@ -306,6 +306,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_DPTF
                                                 "${PLATFORM_EC}/common/dptf.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_POWERSEQ
                                                 "${PLATFORM_EC}/common/chipset.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AP_RESET_LOG
+                                                "${PLATFORM_EC}/common/ap_reset_log.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI
                                                 "${PLATFORM_EC}/common/espi.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_EXTPOWER

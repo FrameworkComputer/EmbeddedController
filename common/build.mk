@@ -211,6 +211,7 @@ common-$(CONFIG_VSTORE)+=vstore.o
 common-$(CONFIG_WEBUSB_URL)+=webusb_desc.o
 common-$(CONFIG_WIRELESS)+=wireless.o
 common-$(HAS_TASK_CHIPSET)+=chipset.o
+common-$(CONFIG_CMD_AP_RESET_LOG)+=ap_reset_log.o
 common-$(HAS_TASK_CONSOLE)+=console.o console_output.o
 common-$(HAS_TASK_CONSOLE)+=uart_buffering.o uart_hostcmd.o uart_printf.o
 common-$(CONFIG_CMD_MEM)+=memory_commands.o

@@ -13,6 +13,7 @@
 #ifndef __CROS_EC_CHIPSET_H
 #define __CROS_EC_CHIPSET_H
 
+#include "ap_reset_log.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "ec_commands.h"
@@ -121,11 +122,6 @@ void chipset_handle_espi_reset_assert(void);
  */
 void chipset_pre_init_callback(void);
 
-/**
- * Initialize reset logs and next reset log.
- */
-void init_reset_log(void);
-
 #else /* !CONFIG_AP_POWER_CONTROL */
 
 #if defined(CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE) || \
@@ -182,10 +178,6 @@ static inline void chipset_power_good_interrupt(enum gpio_signal signal)
 {
 }
 static inline void chipset_watchdog_interrupt(enum gpio_signal signal)
-{
-}
-
-static inline void init_reset_log(void)
 {
 }
 
@@ -251,68 +243,5 @@ void chipset_watchdog_interrupt(enum gpio_signal signal);
 __override_proto enum critical_shutdown
 board_system_is_idle(uint64_t last_shutdown_time, uint64_t *target,
 		     uint64_t now);
-
-#ifdef CONFIG_CMD_AP_RESET_LOG
-
-/**
- * Report that the AP is being reset to the reset log.
- */
-void report_ap_reset(enum chipset_shutdown_reason reason);
-
-/**
- * Get statistics about AP resets.
- *
- * @param reset_log_entries       Pointer to array of log entries.
- * @param num_reset_log_entries   Number of items in reset_log_entries.
- * @param resets_since_ec_boot    Number of AP resets since EC boot.
- */
-enum ec_error_list
-get_ap_reset_stats(struct ap_reset_log_entry *reset_log_entries,
-		   size_t num_reset_log_entries,
-		   uint32_t *resets_since_ec_boot);
-
-/**
- * Check the reason given in the last call to report_ap_reset() .
- *
- * @return Reason argument that was passed to the last call to
- * report_ap_reset(). Zero if report_ap_reset() has not been called.
- */
-enum chipset_shutdown_reason chipset_get_shutdown_reason(void);
-
-#else
-
-static inline void report_ap_reset(enum chipset_shutdown_reason reason)
-{
-}
-
-test_mockable_static_inline enum ec_error_list
-get_ap_reset_stats(struct ap_reset_log_entry *reset_log_entries,
-		   size_t num_reset_log_entries, uint32_t *resets_since_ec_boot)
-{
-	return EC_SUCCESS;
-}
-
-static inline enum chipset_shutdown_reason chipset_get_shutdown_reason(void)
-{
-	return CHIPSET_RESET_UNKNOWN;
-}
-
-#endif /* !CONFIG_CMD_AP_RESET_LOG */
-
-#ifdef TEST_BUILD
-/**
- * @brief Gets the number of AP resets since the EC booted. Takes the reset log
- *        mutex for thread safety.
- *
- * @return uint32_t AP reset count
- */
-uint32_t test_chipset_get_ap_resets_since_ec_boot(void);
-
-/**
- * @brief Corrupts the stored reset log checksum, which forces init_reset_log()
- *        to wipe the log and fully reset.
- */
-void test_chipset_corrupt_reset_log_checksum(void);
-#endif /* TEST_BUILD */
 
 #endif /* __CROS_EC_CHIPSET_H */
