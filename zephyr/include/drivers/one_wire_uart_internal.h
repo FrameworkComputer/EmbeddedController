@@ -94,6 +94,13 @@ struct i2c_target_data {
 void hid_i2c_touchpad_add(const struct device *dev,
 			  const struct usb_hid_touchpad_report *report);
 
+/**
+ * Reset the internal state of the driver
+ *
+ * @param dev One-Wire UART device instance.
+ */
+void one_wire_uart_reset(const struct device *dev);
+
 #ifdef CONFIG_ZTEST
 uint16_t checksum(const struct one_wire_uart_message *msg);
 void load_next_message(const struct device *dev);
@@ -101,7 +108,6 @@ void find_header(const struct device *dev);
 void process_rx_fifo(const struct device *dev);
 void process_packet(void);
 void process_tx_irq(const struct device *dev);
-void one_wire_uart_reset(const struct device *dev);
 #endif
 
 #endif /* ZEPHYR_INCLUDE_DRIVERS_ONE_WIRE_UART_INTERNAL_H_ */

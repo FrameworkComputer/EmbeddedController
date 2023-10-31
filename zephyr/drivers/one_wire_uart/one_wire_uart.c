@@ -78,11 +78,40 @@ int one_wire_uart_send(const struct device *dev, uint8_t cmd,
 		.sender = config->id,
 		.msg_id = data->msg_id++ % 32,
 		.ack = 0,
+		.reset = 0,
 		.checksum = 0,
 	};
 	msg.payload[0] = cmd;
 
 	memcpy(msg.payload + 1, payload, size);
+	msg.header.checksum = checksum(&msg);
+
+	ret = k_msgq_put(tx_queue, &msg, K_NO_WAIT);
+
+	if (!ret) {
+		uart_irq_tx_enable(bus);
+	}
+	return ret;
+}
+
+static int one_wire_uart_send_reset(const struct device *dev)
+{
+	struct one_wire_uart_message msg;
+	const struct one_wire_uart_config *config = dev->config;
+	const struct device *bus = config->bus;
+	struct one_wire_uart_data *data = dev->data;
+	struct k_msgq *tx_queue = data->tx_queue;
+	int ret;
+
+	msg.header = (struct one_wire_uart_header){
+		.magic = HEADER_MAGIC,
+		.payload_len = 0,
+		.sender = config->id,
+		.msg_id = 0,
+		.ack = 0,
+		.reset = 1,
+		.checksum = 0,
+	};
 	msg.header.checksum = checksum(&msg);
 
 	ret = k_msgq_put(tx_queue, &msg, K_NO_WAIT);
@@ -124,6 +153,7 @@ static void gen_ack_response(const struct device *dev,
 		.sender = config->id,
 		.msg_id = msg_id,
 		.ack = 1,
+		.reset = 0,
 		.checksum = 0,
 	};
 
@@ -282,6 +312,10 @@ test_export_static void process_rx_fifo(const struct device *dev)
 			} else {
 				struct one_wire_uart_message ack_resp;
 
+				if (msg.header.reset) {
+					one_wire_uart_reset(dev);
+				}
+
 				k_msgq_put(rx_queue, &msg, K_NO_WAIT);
 				hook_call_deferred(&process_packet_data, 0);
 
@@ -365,6 +399,7 @@ void one_wire_uart_enable(const struct device *dev)
 	one_wire_uart_reset(dev);
 	uart_irq_callback_user_data_set(bus, uart_handler, (void *)dev);
 	uart_irq_rx_enable(bus);
+	one_wire_uart_send_reset(dev);
 }
 
 void one_wire_uart_set_callback(const struct device *dev,

@@ -248,6 +248,35 @@ ZTEST(one_wire_uart_driver, test_bad_packet_length)
 	zassert_equal(ring_buf_size_get(data->rx_ring_buf), 0);
 }
 
+ZTEST(one_wire_uart_driver, test_reset)
+{
+	struct one_wire_uart_data *data = dev->data;
+	struct one_wire_uart_message msg;
+
+	memset(&msg, 0, sizeof(msg));
+	msg.header.magic = 0xEC;
+	msg.header.sender = 1;
+	msg.header.msg_id = 11;
+	msg.header.reset = 1;
+	msg.header.checksum = 0;
+	msg.header.checksum = checksum(&msg);
+	ring_buf_put(data->rx_ring_buf, (uint8_t *)&msg, sizeof(msg.header));
+
+	ring_buf_put(data->tx_ring_buf, "123", 3);
+
+	process_rx_fifo(dev);
+
+	/* expect that
+	 * 1. the junk data in tx_ring_buf is cleared
+	 * 2. an ack message is push into tx_ring_buf
+	 */
+	zassert_equal(ring_buf_size_get(data->tx_ring_buf), sizeof(msg.header));
+	ring_buf_get(data->tx_ring_buf, (uint8_t *)&msg, sizeof(msg.header));
+	zassert_equal(msg.header.ack, 1);
+	zassert_equal(msg.header.msg_id, 11);
+	zassert_equal(msg.header.reset, 0);
+}
+
 static void one_wire_uart_driver_before(void *fixture)
 {
 	one_wire_uart_reset(dev);
