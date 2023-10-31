@@ -660,9 +660,14 @@ ZTEST_USER(bmi3xx, test_bmi_gyr_fifo)
 
 ZTEST_USER(bmi3xx, test_irq_handler)
 {
+	struct i2c_common_emul_data *common_data =
+		emul_bmi_get_i2c_common_data(emul);
+	struct fifo_func_data func_data;
 	struct bmi_emul_frame f;
 
 	zassert_ok(acc->drv->init(acc));
+	/* Set custom function for FIFO test */
+	i2c_common_emul_set_read_func(common_data, emul_fifo_func, &func_data);
 
 	/* test no events */
 	bmi3xx_interrupt(0);
@@ -676,8 +681,9 @@ ZTEST_USER(bmi3xx, test_irq_handler)
 	f.next = NULL;
 	bmi_emul_append_frame(emul, &f);
 
-	bmi_emul_set_reg16(emul, BMI3_REG_INT_STATUS_INT1,
-			   BMI3_INT_STATUS_ORIENTATION | BMI3_INT_STATUS_FFULL);
+	/* Setup interrupts register */
+	func_data.interrupts = BMI3_INT_STATUS_ORIENTATION |
+			       BMI3_INT_STATUS_FFULL;
 
 	bmi3xx_interrupt(0);
 

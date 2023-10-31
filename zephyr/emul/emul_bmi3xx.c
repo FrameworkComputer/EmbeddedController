@@ -421,7 +421,6 @@ static int bmi3xx_emul_finish_read(uint8_t *regs, const struct emul *emul,
 	switch (reg) {
 	/* Read clear registers */
 	case BMI3_REG_STATUS:
-	case BMI3_REG_INT_STATUS_INT1:
 		regs16[reg] = 0x0;
 		break;
 	default:
