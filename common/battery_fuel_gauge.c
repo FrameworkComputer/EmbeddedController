@@ -18,14 +18,19 @@
 #define BCFGPRT(format, args...) cprints(CC_CHARGER, "BCFG " format, ##args)
 
 /*
- * Pointer to effective config (default_battery_conf or board_battery_info[]).
+ * Pointer to an active config. It's default_battery_conf if a config is found
+ * in CBI or board_battery_info[x] if a config is found in FW.
  */
-const struct board_batt_params *battery_conf;
+const struct batt_conf_embed *battery_conf;
+
+static char batt_manuf_name[SBS_MAX_STRING_SIZE];
+static char batt_device_name[SBS_MAX_STRING_SIZE];
 
 /* Copies of config and strings of a matching battery found in CBI. */
-test_export_static struct board_batt_params default_battery_conf;
-static char manuf_name[member_size(struct batt_conf_header, manuf_name)];
-static char device_name[member_size(struct batt_conf_header, device_name)];
+test_export_static struct batt_conf_embed default_battery_conf = {
+	.manuf_name = batt_manuf_name,
+	.device_name = batt_device_name,
+};
 
 /*
  * Authenticate the battery connected.
@@ -40,8 +45,7 @@ test_export_static bool authenticate_battery_type(int index,
 {
 	char device_name[32];
 
-	const struct fuel_gauge_info *const fuel_gauge =
-		&board_battery_info[index].fuel_gauge;
+	const struct batt_conf_embed *const conf = &board_battery_info[index];
 	int len = 0;
 
 	/* check for valid index */
@@ -49,23 +53,23 @@ test_export_static bool authenticate_battery_type(int index,
 		return false;
 
 	/* manufacturer name mismatch */
-	if (strcasecmp(manuf_name, fuel_gauge->manuf_name))
+	if (strcasecmp(manuf_name, conf->manuf_name))
 		return false;
 
 	/* device name is specified in table */
-	if (fuel_gauge->device_name != NULL) {
+	if (conf->device_name != NULL) {
 		/* Get the device name */
 		if (battery_device_name(device_name, sizeof(device_name)))
 			return false;
 
-		len = strlen(fuel_gauge->device_name);
+		len = strlen(conf->device_name);
 
 		/* device name mismatch */
-		if (strncasecmp(device_name, fuel_gauge->device_name, len))
+		if (strncasecmp(device_name, conf->device_name, len))
 			return false;
 	}
 
-	CPRINTS("found batt:%s", fuel_gauge->manuf_name);
+	CPRINTS("found batt:%s", conf->manuf_name);
 	return true;
 }
 
@@ -163,13 +167,17 @@ void init_battery_type(void)
 	battery_conf = &board_battery_info[type];
 }
 
-const struct board_batt_params *get_batt_params(void)
+const struct batt_conf_embed *get_batt_conf(void)
 {
-	if (IS_ENABLED(TEST_BUILD) && battery_fuel_gauge_type_override >= 0) {
+	if (IS_ENABLED(TEST_BUILD) && battery_fuel_gauge_type_override >= 0)
 		return &board_battery_info[battery_fuel_gauge_type_override];
-	}
 
 	return battery_conf;
+}
+
+const struct board_batt_params *get_batt_params(void)
+{
+	return get_batt_conf() ? &get_batt_conf()->config : NULL;
 }
 
 const struct battery_info *battery_get_info(void)
@@ -177,7 +185,7 @@ const struct battery_info *battery_get_info(void)
 	return &get_batt_params()->batt_info;
 }
 
-static int bcfg_search_in_cbi(struct board_batt_params *info)
+static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 {
 	char manuf[32];
 	char device[32];
@@ -197,11 +205,11 @@ static int bcfg_search_in_cbi(struct board_batt_params *info)
 	BCFGPRT("Battery says %s,%s", manuf, device);
 
 	while (1) {
-		struct batt_conf_header head;
-		uint8_t size = sizeof(head);
+		struct batt_conf_export tmp;
+		uint8_t size = sizeof(tmp);
 		int rv;
 
-		rv = cbi_get_board_info(tag, (void *)&head, &size);
+		rv = cbi_get_board_info(tag, (void *)&tmp, &size);
 		if (rv) {
 			BCFGPRT("No more configs (%d)", rv);
 			return rv;
@@ -209,34 +217,24 @@ static int bcfg_search_in_cbi(struct board_batt_params *info)
 		BCFGPRT("Checking config #%d...", tag - CBI_TAG_BATTERY_CONFIG);
 		tag++;
 
-		if (head.struct_version > 0) {
-			BCFGPRT("Version mismatch: 0x%x", head.struct_version);
+		if (tmp.struct_version > 0) {
+			BCFGPRT("Version mismatch: 0x%x", tmp.struct_version);
 			continue;
 		}
 
-		if (strcasecmp(head.manuf_name, manuf)) {
-			BCFGPRT("Manuf mismatch: %s", head.manuf_name);
+		if (strcasecmp(tmp.manuf_name, manuf)) {
+			BCFGPRT("Manuf mismatch: %s", tmp.manuf_name);
 			continue;
 		}
 
 		/* "" means a wild card (or don't care). */
-		if (head.device_name[0] &&
-		    strcasecmp(head.device_name, device)) {
-			BCFGPRT("Name mismatch: %s", head.device_name);
+		if (tmp.device_name[0] && strcasecmp(tmp.device_name, device)) {
+			BCFGPRT("Name mismatch: %s", tmp.device_name);
 			continue;
 		}
 
 		BCFGPRT("Matched");
-		memcpy(info, &head.config, sizeof(*info));
-		strncpy(manuf_name, head.manuf_name, sizeof(manuf_name));
-		info->fuel_gauge.manuf_name = manuf_name;
-		if (head.device_name[0]) {
-			strncpy(device_name, head.device_name,
-				sizeof(device_name));
-			info->fuel_gauge.device_name = device_name;
-		} else {
-			info->fuel_gauge.device_name = NULL;
-		}
+		memcpy(&batt->conf, &tmp, sizeof(batt->config));
 
 		return EC_SUCCESS;
 	}
@@ -459,18 +457,18 @@ int battery_imbalance_mv(void)
 
 #ifdef CONFIG_CMD_BATTERY_CONFIG
 
-void batt_conf_dump(const struct board_batt_params *info)
+void batt_conf_dump(const struct batt_conf_export *conf)
 {
+	const struct board_batt_params *info = &conf->config;
 	const struct fuel_gauge_info *fg = &info->fuel_gauge;
 	const struct ship_mode_info *ship = &info->fuel_gauge.ship_mode;
 	const struct sleep_mode_info *sleep = &info->fuel_gauge.sleep_mode;
 	const struct fet_info *fet = &info->fuel_gauge.fet;
 	const struct battery_info *batt = &info->batt_info;
 
+	ccprintf(".manuf_name = \"%s\",\n", conf->manuf_name);
+	ccprintf(".device_name= \"%s\",\n", conf->device_name);
 	ccprintf(".fuel_gauge = {\n");
-
-	ccprintf("\t.manuf_name = \"%s\",\n", fg->manuf_name);
-	ccprintf("\t.device_name= \"%s\",\n", fg->device_name);
 	ccprintf("\t.flags = 0x%x,\n", fg->flags);
 
 	ccprintf("\t.ship_mode = {\n");

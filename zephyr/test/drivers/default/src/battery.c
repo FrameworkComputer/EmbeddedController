@@ -95,13 +95,13 @@ ZTEST(battery, test_authenticate_battery_type)
 	/* Invalid index */
 	zassert_false(authenticate_battery_type(BATTERY_TYPE_COUNT, NULL));
 	/* Use fuel-gauge 1's manufacturer name for index 0 */
-	zassert_false(authenticate_battery_type(
-		0, board_battery_info[1].fuel_gauge.manuf_name));
+	zassert_false(
+		authenticate_battery_type(0, board_battery_info[1].manuf_name));
 	/* Use the correct manufacturer name, but wrong device name (because the
 	 * index is 1 and not 0)
 	 */
-	zassert_false(authenticate_battery_type(
-		1, board_battery_info[1].fuel_gauge.manuf_name));
+	zassert_false(
+		authenticate_battery_type(1, board_battery_info[1].manuf_name));
 }
 
 ZTEST(battery, test_board_get_default_battery_type)

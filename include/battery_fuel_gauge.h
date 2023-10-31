@@ -61,13 +61,6 @@ enum fuel_gauge_flags {
 };
 
 struct fuel_gauge_info {
-#if defined(__x86_64__) && !defined(TEST_BUILD)
-	/* These shouldn't be used on the (__x86_64__) host. */
-	uint32_t reserved[2];
-#else
-	char *manuf_name;
-	char *device_name;
-#endif
 	uint32_t flags;
 	uint32_t board_flags;
 	struct ship_mode_info ship_mode;
@@ -80,9 +73,29 @@ struct board_batt_params {
 	struct battery_info batt_info;
 } __packed __aligned(4);
 
-struct batt_conf_header {
-	/* Version of struct batt_conf_header and its internals. */
+/**
+ * Represent a battery config embedded in FW.
+ */
+struct batt_conf_embed {
+	char *manuf_name;
+	char *device_name;
+	struct board_batt_params config;
+};
+
+#define SBS_MAX_STRING_SIZE 32
+
+/**
+ * Struct used to export a battery config from/to AP. Only struct_version has
+ * size and position independent of struct_version. The rest varies as
+ * struct_version changes.
+ *
+ * This is also used to represent an active battery config in RAM. For that,
+ * buffers are allocated to the strings and board_batt_params is aligned.
+ */
+struct batt_conf_export {
+	/* Version independent field. It's always here as a uint8_t. */
 	uint8_t struct_version;
+	/* Version 0 */
 	uint8_t reserved[3];
 	char manuf_name[16];
 	char device_name[16];
@@ -90,7 +103,7 @@ struct batt_conf_header {
 } __packed __aligned(4);
 
 /* Forward declare board specific data used by common code */
-extern const struct board_batt_params board_battery_info[];
+extern const struct batt_conf_embed board_battery_info[];
 extern const enum battery_type DEFAULT_BATTERY_TYPE;
 
 #ifdef CONFIG_BATTERY_TYPE_NO_AUTO_DETECT
@@ -118,6 +131,11 @@ void init_battery_type(void);
  * Return struct board_batt_params of the battery.
  */
 const struct board_batt_params *get_batt_params(void);
+
+/**
+ * Return pointer to active battery config.
+ */
+const struct batt_conf_embed *get_batt_conf(void);
 
 /**
  * Return 1 if CFET is disabled, 0 if enabled. -1 if an error was encountered.
