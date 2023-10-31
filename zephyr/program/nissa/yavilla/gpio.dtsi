@@ -237,7 +237,7 @@
 		compatible = "named-i2c-ports";
 
 		i2c_ec_i2c_eeprom: ec_i2c_eeprom {
-			i2c-port = <&i2c0>;
+			i2c-port = <&i2c2>;
 			enum-names = "I2C_PORT_EEPROM";
 		};
 		i2c_ec_i2c_batt: ec_i2c_batt {
@@ -245,7 +245,7 @@
 			enum-names = "I2C_PORT_BATTERY";
 		};
 		i2c_ec_i2c_sensor: ec_i2c_sensor {
-			i2c-port = <&i2c2>;
+			i2c-port = <&i2c0>;
 			enum-names = "I2C_PORT_SENSOR";
 		};
 		i2c_ec_i2c_sub_usb_c1: ec_i2c_sub_usb_c1 {
