@@ -5,6 +5,8 @@
 if(DEFINED CONFIG_PLATFORM_EC AND EXISTS "${EDT_PICKLE}")
   message(STATUS "Performing EC specific devicetree checks")
 
+  set(ENV{PYTHONPATH} "${PLATFORM_EC}/zephyr/")
+
   # Zephyr's gen_defines.py creates an EDT object of the final devicetree,
   # saving it as pickle file in the build directory.
   set(NAMED_GPIOS_SCRIPT ${PLATFORM_EC}/zephyr/scripts/named_gpios.py)

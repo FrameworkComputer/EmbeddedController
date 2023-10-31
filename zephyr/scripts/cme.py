@@ -4,81 +4,20 @@
 
 """Component Manifest Engine"""
 
-import argparse
-import inspect
 import json
 import logging
 from pathlib import Path
-import pickle
-import site
 import sys
 from typing import List, Optional
 
-
-def _load_edt(zephyr_base, edt_pickle):
-    """Load an EDT object from a pickle file source.
-
-    Args:
-        zephyr_base: pathlib.Path pointing to the Zephyr OS repository.
-        edt_pickle: pathlib.Path pointing to the EDT object, stored as a pickle
-            file.
-
-    Returns:
-        A 2-field tuple: (edtlib, edt)
-            edtlib: module object for the edtlib
-            edt: EDT object of the devicetree
-
-        Returns None if the edtlib pickle file doesn't exist.
-    """
-    zephyr_devicetree_path = (
-        zephyr_base / "scripts" / "dts" / "python-devicetree" / "src"
-    )
-
-    # Add Zephyr's python-devicetree into the source path.
-    site.addsitedir(zephyr_devicetree_path)
-
-    try:
-        with open(edt_pickle, "rb") as edt_file:
-            edt = pickle.load(edt_file)
-    except FileNotFoundError:
-        # Skip the all EC specific checks if the edt_pickle file doesn't exist.
-        # UnpicklingErrors will raise an exception and fail the build.
-        return None, None
-
-    edtlib = inspect.getmodule(edt)
-
-    return edtlib, edt
-
-
-# Dictionary used to map log level strings to their corresponding int values.
-log_level_map = {
-    "DEBUG": logging.DEBUG,
-    "INFO": logging.INFO,
-    "WARNING": logging.WARNING,
-    "ERROR": logging.ERROR,
-    "CRITICAL": logging.CRITICAL,
-}
+from scripts import util
 
 
 def parse_args(argv: Optional[List[str]] = None):
     """Returns parsed command-line arguments"""
-    parser = argparse.ArgumentParser(
-        prog="named_gpios",
-        description="Zephyr EC specific devicetree checks",
-    )
-
-    parser.add_argument(
-        "--zephyr-base",
-        type=Path,
-        help="Path to Zephyr OS repository",
-        required=True,
-    )
-
-    parser.add_argument(
-        "--edt-pickle",
-        type=Path,
-        help="EDT object file, in pickle format",
-        required=True,
+    parser = util.EdtArgumentParser(
+        prog="component_manifest_engine",
+        description="Zephyr EC component manifest gereration",
     )
 
     parser.add_argument(
@@ -86,16 +25,6 @@ def parse_args(argv: Optional[List[str]] = None):
         type=Path,
         help="Path to the component manifest JSON file in JSON format",
         required=True,
-    )
-
-    parser.add_argument(
-        "-l",
-        "--log-level",
-        choices=log_level_map.values(),
-        metavar=f"{{{','.join(log_level_map)}}}",
-        type=lambda x: log_level_map[x],
-        default=logging.INFO,
-        help="Set the logging level (default=INFO)",
     )
 
     return parser.parse_args(argv)
@@ -304,7 +233,7 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
     log_format = "%(levelname)s: %(message)s"
     logging.basicConfig(format=log_format, level=args.log_level)
 
-    edtlib, edt = _load_edt(args.zephyr_base, args.edt_pickle)
+    edtlib, edt, _unused = util.load_edt(args.zephyr_base, args.edt_pickle)
     if edtlib is None:
         return 0
 
