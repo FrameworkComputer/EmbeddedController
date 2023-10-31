@@ -517,7 +517,6 @@ ZTEST_USER(bmi3xx, test_bmi_acc_fifo)
 	int gyr_range = 125;
 	int acc_range = 2;
 	int event;
-	int rv;
 
 	acc = acc;
 	gyr = gyr;
@@ -537,9 +536,6 @@ ZTEST_USER(bmi3xx, test_bmi_acc_fifo)
 	event = CONFIG_ACCELGYRO_BMI3XX_INT_EVENT;
 
 	/* Test fail to read interrupt status registers */
-	set_read_fail_reg(common_data, BMI3_REG_INT_STATUS_INT1);
-	rv = acc->drv->irq_handler(acc, &event);
-	zassert_equal(EC_ERROR_INVAL, acc->drv->irq_handler(acc, &event));
 	set_read_fail_reg(common_data, BMI3_REG_INT_STATUS_INT1);
 	zassert_equal(EC_ERROR_INVAL, acc->drv->irq_handler(acc, &event));
 	set_read_fail_reg(common_data, I2C_COMMON_EMUL_NO_FAIL_REG);
@@ -650,9 +646,6 @@ ZTEST_USER(bmi3xx, test_bmi_acc_fifo)
 
 	/* Trigger irq handler and check results */
 	check_fifo(acc, gyr, f, acc_range, gyr_range);
-
-	/* Remove custom emulator read function */
-	i2c_common_emul_set_read_func(common_data, NULL, NULL);
 }
 
 ZTEST_USER(bmi3xx, test_bmi_gyr_fifo)
@@ -729,8 +722,6 @@ ZTEST_USER(bmi3xx, test_read_fifo)
 
 	bmi_emul_append_frame(emul, f);
 
-	bmi_emul_set_reg16(emul, BMI3_REG_INT_STATUS_INT1,
-			   BMI3_INT_STATUS_ORIENTATION | BMI3_INT_STATUS_FFULL);
 	bmi_emul_set_reg16(emul, BMI3_REG_INT_STATUS_INT1,
 			   BMI3_INT_STATUS_ORIENTATION | BMI3_INT_STATUS_FFULL);
 	zassert_ok(acc->drv->irq_handler(acc, &event));
