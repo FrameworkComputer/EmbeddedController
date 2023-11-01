@@ -25,7 +25,7 @@
 #include "timer.h"
 #include "util.h"
 #include "gpu.h"
-
+#include "gpu_configuration.h"
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ##args)
 
@@ -98,6 +98,8 @@ static void peripheral_power_suspend(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_invpwr), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 0);
+	set_gpu_gpio(GPIO_FUNC_SSD1_POWER, 0);
+	set_gpu_gpio(GPIO_FUNC_SSD2_POWER, 0);
 }
 
 static int keep_pch_power(void)
@@ -470,8 +472,7 @@ enum power_state power_handle_state(enum power_state state)
 		 * power up from S5.
 		 */
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 1);
-		if (gpu_present())
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_en), 1);
+		set_gpu_gpio(GPIO_FUNC_GPU_PWR, 1);
 
 		k_msleep(20);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 1);
@@ -489,8 +490,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		k_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 1);
-		if (board_get_version() >= BOARD_VERSION_8)
-			gpu_fan_control(1);
+		set_gpu_gpio(GPU_FAN_EN, 1);
 
 		lpc_s0ix_resume_restore_masks();
 		/* Call hooks now that rails are up */
@@ -555,8 +555,7 @@ enum power_state power_handle_state(enum power_state state)
 		system_in_s0ix = 0;
 		lpc_s0ix_resume_restore_masks();
 		/* Follow EXIT_CS bit to turn on the fan */
-		if (board_get_version() >= BOARD_VERSION_8)
-			gpu_fan_control(1);
+		set_gpu_gpio(GPU_FAN_EN, 1);
 		hook_notify(HOOK_CHIPSET_RESUME);
 		return POWER_S0;
 
@@ -567,8 +566,7 @@ enum power_state power_handle_state(enum power_state state)
 		system_in_s0ix = 1;
 		lpc_s0ix_suspend_clear_masks();
 		/* Follow ENTER_CS bit to turn off the fan */
-		if (board_get_version() >= BOARD_VERSION_8)
-			gpu_fan_control(0);
+		set_gpu_gpio(GPU_FAN_EN, 0);
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 		return POWER_S0ix;
 
@@ -576,8 +574,7 @@ enum power_state power_handle_state(enum power_state state)
 #endif
 
 	case POWER_S0S3:
-		if (board_get_version() >= BOARD_VERSION_8)
-			gpu_fan_control(0);
+		set_gpu_gpio(GPU_FAN_EN, 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
 		k_msleep(85);
@@ -597,7 +594,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks before we remove power rails */
 		power_s5_up_control(0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_en), 0);
+		/*set_gpu_gpio(GPIO_FUNC_GPU_PWR, 0);*/
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
 		/* set the PD chip system power state "S5" */
@@ -638,23 +635,26 @@ enum power_state power_handle_state(enum power_state state)
 	return state;
 }
 
-void system_check_d3cold(void)
+void system_check_ssd_status(void)
 {
-	int enter_d3cold_flag =
-		(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) & ENTER_D3COLD);
-	int exit_d3cold_flag =
-		(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) & EXIT_D3COLD);
+	int ssd_power_states = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT);
 
-	if (enter_d3cold_flag && !d3cold_is_entry) {
-		d3cold_is_entry = 1;
-		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) &= ~ENTER_D3COLD;
-	} else if (exit_d3cold_flag && d3cold_is_entry) {
-		d3cold_is_entry = 0;
+	if (ssd_power_states & JSSD2_POWER_ON) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);
-		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) &= ~EXIT_D3COLD;
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) &= ~JSSD2_POWER_ON;
+	}
+
+	if (ssd_power_states & EXT_SSD1_POWER_ON) {
+		set_gpu_gpio(GPIO_FUNC_SSD1_POWER, 1);
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) &= ~EXT_SSD1_POWER_ON;
+	}
+
+	if (ssd_power_states & EXT_SSD2_POWER_ON) {
+		set_gpu_gpio(GPIO_FUNC_SSD2_POWER, 1);
+		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT) &= ~EXT_SSD2_POWER_ON;
 	}
 }
-DECLARE_HOOK(HOOK_TICK, system_check_d3cold, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_TICK, system_check_ssd_status, HOOK_PRIO_DEFAULT);
 
 void chipset_throttle_cpu(int throttle)
 {
@@ -670,6 +670,8 @@ static void usb30_hub_reset(void)
 	 */
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);
+		set_gpu_gpio(GPIO_FUNC_SSD1_POWER, 1);
+		set_gpu_gpio(GPIO_FUNC_SSD2_POWER, 1);
 		usleep(200 * MSEC);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb30_hub_en), 0);
 		usleep(10 * MSEC);

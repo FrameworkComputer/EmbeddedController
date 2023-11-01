@@ -32,8 +32,12 @@
  */
 #define RTCWAKE  BIT(0)
 #define USBWAKE  BIT(1)
-#define ENTER_D3COLD	BIT(6)
-#define EXIT_D3COLD	BIT(7)
+#define JSSD2_POWER_OFF		BIT(2)
+#define EXT_SSD1_POWER_OFF	BIT(3)
+#define EXT_SSD2_POWER_OFF	BIT(4)
+#define JSSD2_POWER_ON		BIT(5)
+#define EXT_SSD1_POWER_ON	BIT(6)
+#define EXT_SSD2_POWER_ON	BIT(7)
 
 /* Battery */
 #define EC_CUSTOMIZED_MEMMAP_BATT_AVER_TEMP	0x103
@@ -79,6 +83,13 @@
 #define GPU_PRESENT     BIT(3) /* 0:gpu no exist; 1:gpu exist*/
 #define ASSERTED_EDP_RESET      BIT(4)
 #define DEASSERTED_EDP_RESET    BIT(5)
+#define GPU_EDP_MASK			(BIT(4) + BIT(5))
+#define GPU_PCIE_MASK			(BIT(6) + BIT(7))
+#define GPU_PCIE_8X1			(0)
+#define GPU_PCIE_4X2			(BIT(6))
+#define GPU_PCIE_RESERVED		(BIT(7))
+#define GPU_PCIE_DIS			(BIT(6) + BIT(7))
+
 
 #define EC_MEMMAP_POWER_SLIDE               0x151
 enum power_slide_mode {
@@ -98,5 +109,7 @@ enum power_slide_mode {
 
 #define EC_CUSTOMIZED_MEMMAP_POWER_LIMIT_EVENT	0x155
 #define CPB_DISABLE	BIT(0) /* 0: enable; 1: disable */
+
+#define EC_CUSTOMIZED_MEMMAP_GPU_TYPE	0x157
 
 #endif /* __BOARD_CUSTOMIZED_SHARED_MEMORY_H */

@@ -357,4 +357,56 @@ struct ec_response_get_hw_diag {
 	uint8_t device_complete;
 } __ec_align1;
 
+/*****************************************************************************/
+/*
+ * This command returns the serial of the GPU module
+ * set params idx to the serial offset you want to query.
+ * if idx == 0, this will query the header serial number.
+ */
+#define EC_CMD_GET_GPU_SERIAL	0x3E1D
+
+struct ec_params_gpu_serial {
+	uint8_t idx;
+} __ec_align1;
+struct ec_response_get_gpu_serial {
+	uint8_t idx;
+	uint8_t valid;
+	char serial[20];
+} __ec_align1;
+
+/*****************************************************************************/
+/*
+ * This command returns the PCIE configuration of the GPU module
+ *   PCIE_8X1 = 0,
+ *   PCIE_4X1 = 1,
+ *   PCIE_4X2 = 2,
+ *   it will also return the GPU vendor type
+ *   GPU_AMD_R23M = 0,
+ *   GPU_PCIE_ACCESSORY = 0xFF
+ */
+#define EC_CMD_GET_GPU_PCIE	0x3E1E
+
+struct ec_response_get_gpu_config {
+	uint8_t gpu_pcie_config;
+	uint8_t gpu_vendor;
+} __ec_align1;
+
+/*****************************************************************************/
+/*
+ * This command programs the GPU serial
+ * set magic = 0x0D for GPU structure
+ * set magic = 0x55 for SSD structure
+ * currently only idx = 0 is supported to program the header serial number.
+ */
+#define EC_CMD_PROGRAM_GPU_EEPROM	0x3E1F
+
+struct ec_params_program_gpu_serial {
+	uint8_t magic;
+	uint8_t idx;
+	char serial[20];
+} __ec_align1;
+struct ec_response_program_gpu_serial {
+	uint8_t valid;
+} __ec_align1;
+
 #endif /* __BOARD_HOST_COMMAND_H */

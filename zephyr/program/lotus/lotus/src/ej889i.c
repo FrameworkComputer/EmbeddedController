@@ -18,6 +18,7 @@
 #include "power.h"
 #include "temp_sensor/temp_sensor.h"
 #include "util.h"
+#include "gpu_configuration.h"
 
 #define EJ899I_ADDR	0x60
 
@@ -25,12 +26,31 @@
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 static int host_dp_ready;
+uint8_t ej889i_address;
+const struct gpio_int_config *ej889i_pd_interrupt;
+const struct gpio_int_config *ej889i_hpd_interrupt;
+
+int ej889i_init(struct gpu_subsys_pd *init)
+{
+	if (init) {
+		ej889i_hpd_interrupt = gpu_gpio_to_dt_int(init->gpio_hpd);
+		ej889i_pd_interrupt = gpu_gpio_to_dt_int(init->gpio_interrupt);
+		ej889i_address = init->address;
+
+	} else {
+		ej889i_address = 0;
+		ej889i_hpd_interrupt = 0;
+		ej889i_pd_interrupt = 0;
+	}
+
+	return EC_SUCCESS;
+}
 
 int ej889i_read_reg8(int reg, int *data)
 {
 	int rv;
 
-	rv = i2c_read_offset16(I2C_PORT_GPU0, EJ899I_ADDR, reg, data, 1);
+	rv = i2c_read_offset16(I2C_PORT_GPU0, ej889i_address, reg, data, 1);
 	if (rv != EC_SUCCESS)
 		CPRINTS("%s failed: reg=0x%02x", __func__, reg);
 	return rv;
@@ -40,7 +60,7 @@ int ej889i_write_reg8(int reg, int data)
 {
 	int rv;
 
-	rv = i2c_write_offset16(I2C_PORT_GPU0, EJ899I_ADDR, reg, data, 1);
+	rv = i2c_write_offset16(I2C_PORT_GPU0, ej889i_address, reg, data, 1);
 	if (rv != EC_SUCCESS)
 		CPRINTS("%s failed: reg=0x%02x", __func__, reg);
 	return rv;
@@ -105,19 +125,23 @@ void set_host_dp_ready(int ready)
 {
 	host_dp_ready = ready;
 
-	if (ready) {
+	if (ready && ej889i_address) {
 		CPRINTS("ready to send the Qevent 58!");
-		gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_dp_hot_plug));
+		if (ej889i_hpd_interrupt)
+			gpio_enable_dt_interrupt(ej889i_hpd_interrupt);
 
-		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio01_ec)))
+		if (get_gpu_gpio(GPIO_FUNC_HPD))
 			host_set_single_event(EC_HOST_EVENT_DGPU_TYPEC_NOTIFY);
-	} else
-		gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_dp_hot_plug));
+	} else {
+		if (ej889i_hpd_interrupt)
+			gpio_disable_dt_interrupt(ej889i_hpd_interrupt);
+
+	}
 }
 
 void dp_hot_plug_interrupt(enum gpio_signal signal)
 {
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_b_gpio01_ec)))
+	if (get_gpu_gpio(GPIO_FUNC_HPD))
 		host_set_single_event(EC_HOST_EVENT_DGPU_TYPEC_NOTIFY);
 }
 

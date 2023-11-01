@@ -80,7 +80,7 @@
 		gpio_mic_sw: mic_sw {
 			gpios = <&gpioc 1 GPIO_INPUT>;
 		};
-		gpu_b_gpio00_ec {
+		gpio_gpu_b_gpio00_ec: gpu_b_gpio00_ec {
 			gpios = <&gpio3 1 GPIO_ODR_HIGH>;	/* Reserved */
 		};
 		gpio_gpu_b_gpio01_ec: gpu_b_gpio01_ec {
@@ -89,7 +89,7 @@
 		gpio_gpu_b_gpio02_ec: gpu_b_gpio02_ec {
 			gpios = <&gpio2 7 GPIO_OUTPUT_LOW>;	/* PWR switch from AC to DC */
 		};
-		gpu_b_gpio03_ec {
+		gpio_gpu_b_gpio03_ec: gpu_b_gpio03_ec {
 			gpios = <&gpio2 6 GPIO_ODR_HIGH>;	/* Reserved */
 		};
 		gpio_usb3_ec_p2_cc1: usb3_ec_p2_cc1 {
@@ -129,10 +129,10 @@
 		rtc_dis {
 			gpios = <&gpio1 2 GPIO_OUTPUT_LOW>;	/* RTC discharge */
 		};
-		gpu_vdp_en {
+		gpio_gpu_vdap_en: gpu_vdap_en {
 			gpios = <&gpio1 1 GPIO_OUTPUT_LOW>;	/* Enable GPIO ADP PWR */
 		};
-		ec_pwm_en_l {
+		gpio_ec_pwm_en_l: ec_pwm_en_l {
 			gpios = <&gpio1 0 GPIO_OUTPUT_LOW>;	/* Enable EDP mux control chip */
 		};
 		ac_present_pd_l {
@@ -156,7 +156,7 @@
 		gpio_ec_edp_reset: ec_edp_reset {
 			gpios = <&gpio0 3 GPIO_OUTPUT_LOW>;
 		};
-		gpu_alert_l {
+		gpio_gpu_alert_l: gpu_alert_l {
 			gpios = <&gpiob 1 GPIO_INPUT>;
 		};
 		gpio_on_off_btn_l: on_off_btn_l {

@@ -40,6 +40,10 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 			"lotus/src/amd_r23m.c"
 			"lotus/src/ej889i.c"
 			"lotus/src/thermal.c"
+			"lotus/src/gpu_configuration.c"
+			"lotus/src/gpu_f75303.c"
+
+
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
 	"lotus/src/stt.c")
