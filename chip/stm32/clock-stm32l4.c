@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Clocks and power management settings for STM32L4xx as well as STM32L5xx. */
+/* Clocks and power management settings for STM32L4xx. */
 
 #include "builtin/assert.h"
 #include "chipset.h"
@@ -490,34 +490,6 @@ test_mockable void clock_enable_module(enum module_id module, int enable)
 		else if ((new_mask &
 			  (BIT(MODULE_SPI) | BIT(MODULE_SPI_CONTROLLER))) == 0)
 			STM32_RCC_APB2ENR &= ~STM32_RCC_APB2ENR_SPI1EN;
-	} else if (module == MODULE_USB) {
-#ifdef CHIP_FAMILY_STM32L5
-		if (enable) {
-			/* Keep USB subsystem under reset for now. */
-			STM32_RCC_APB1RSTR2 |= STM32_RCC_APB1RSTR2_USBFSRST;
-
-			/* Enable power to the USB domain. */
-			STM32_PWR_CR2 |= STM32_PWR_CR2_USV;
-
-			/* Enable internal 48 MHz RC oscillator. */
-			wait_for_ready(&STM32_RCC_CRRCR,
-				       STM32_RCC_CRRCR_HSI48ON,
-				       STM32_RCC_CRRCR_HSI48RDY);
-
-			/* Enable USB device clock. */
-			STM32_RCC_APB1ENR2 |= STM32_RCC_APB1ENR2_USBFSEN;
-
-			/* 48 MHz clock is stable, release USB reset. */
-			STM32_RCC_APB1RSTR2 &= ~STM32_RCC_APB1RSTR2_USBFSRST;
-
-		} else {
-			STM32_RCC_APB1ENR2 &= ~STM32_RCC_APB1ENR2_USBFSEN;
-			STM32_CRS_CR &=
-				~(STM32_CRS_CR_CEN | STM32_CRS_CR_AUTOTRIMEN);
-			STM32_RCC_CRRCR &= ~STM32_RCC_CRRCR_HSI48ON;
-			STM32_PWR_CR2 &= ~STM32_PWR_CR2_USV;
-		}
-#endif
 	}
 
 	clock_mask = new_mask;
