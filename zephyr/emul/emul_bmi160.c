@@ -739,22 +739,6 @@ static int bmi160_emul_handle_read(uint8_t *regs, const struct emul *emul,
 	return 0;
 }
 
-static int bmi160_emul_finish_read(uint8_t *regs, const struct emul *emul,
-				   int reg, int bytes)
-{
-	int i;
-
-	switch (reg) {
-	case BMI160_INT_STATUS_0:
-		/* Clear interrupt status after reading. */
-		for (i = 0; i < bytes; ++i) {
-			regs[BMI160_INT_STATUS_0 + i] = 0;
-		}
-		break;
-	}
-	return 0;
-}
-
 /** Registers backed in NVM by BMI160 */
 const int bmi160_nvm_reg[] = {
 	BMI160_NV_CONF,		 BMI160_OFFSET_ACC70,	BMI160_OFFSET_ACC70 + 1,
@@ -770,7 +754,7 @@ struct bmi_emul_type_data bmi160_emul = {
 	.finish_write = NULL,
 	.start_read = NULL,
 	.handle_read = bmi160_emul_handle_read,
-	.finish_read = bmi160_emul_finish_read,
+	.finish_read = NULL,
 	.access_reg = bmi160_emul_access_reg,
 	.reset = bmi160_emul_reset,
 	.rsvd_mask = bmi_emul_160_rsvd_mask,
