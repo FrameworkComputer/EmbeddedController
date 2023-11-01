@@ -93,7 +93,7 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 	/* LGC AP19B8K Battery Information */
-	 [BATTERY_LGC_AP19B8K] = {
+	[BATTERY_LGC_AP19B8K] = {
 		.fuel_gauge = {
 			.manuf_name = "LGC KT0030G022",
 			.device_name = "AP19B8K",
@@ -121,7 +121,7 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 	/* COSMX AP20CBL Battery Information */
-	 [BATTERY_COSMX_AP20CBL] = {
+	[BATTERY_COSMX_AP20CBL] = {
 		.fuel_gauge = {
 			.manuf_name = "COSMX KT0030B002",
 			.device_name = "AP20CBL",
@@ -150,7 +150,7 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 	/* SMP AP18C7K Battery Information */
-	 [BATTERY_SMP_AP18C7K] = {
+	[BATTERY_SMP_AP18C7K] = {
 		.fuel_gauge = {
 			.manuf_name = "SMP KT00307010",
 			.device_name = "AP18C7K",

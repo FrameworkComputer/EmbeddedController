@@ -36,7 +36,7 @@ const struct board_batt_params board_battery_info[] = {
 		/* C21N2018 Battery Information
 		 * TODO(b:196506846):Need to be verified on the Proto
 		 */
-	 [BATTERY_C21N2018] = {
+	[BATTERY_C21N2018] = {
 		.fuel_gauge = {
 			.manuf_name = "AS3GXXD3KA",
 			.device_name = "C110160",

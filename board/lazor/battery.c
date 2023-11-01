@@ -119,7 +119,7 @@ const struct board_batt_params board_battery_info[] = {
 		},
 	},
 	/* LGC AP18C8K Battery Information */
-	 [BATTERY_LGC_AP18C8K] = {
+	[BATTERY_LGC_AP18C8K] = {
 		.fuel_gauge = {
 			.manuf_name = "LGC KT0030G020",
 			.device_name = "AP18C8K",

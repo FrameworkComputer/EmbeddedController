@@ -66,7 +66,7 @@ const struct board_batt_params board_battery_info[] = {
 			.discharging_min_c	= -20,
 			.discharging_max_c	= 70,
 		},
-	}
+	},
 };
 
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
