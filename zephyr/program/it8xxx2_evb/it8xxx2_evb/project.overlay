@@ -1,0 +1,14 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ /* Main devictree overlay for the it8xxx2_evb project */
+#include "adc.dtsi"
+#include "fan.dtsi"
+#include "gpio.dtsi"
+#include "gpio.dtsi"
+#include "i2c.dtsi"
+#include "interrupts.dtsi"
+#include "pwm.dtsi"
+#include "shi.dtsi"
