@@ -67,6 +67,11 @@ choice TEST_TARGET
 	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	  help
 		The test target that exercises nissa/pirrha/*.c
+
+	config TEST_NISSA_ANRAGGAR
+	  bool "Tests for Anraggar-specific code"
+	  help
+		The test target that exercises nissa/anraggar/*.c
 endchoice
 
 config TEST_DISABLE_INLINE_CHIPSET_IN_STATE

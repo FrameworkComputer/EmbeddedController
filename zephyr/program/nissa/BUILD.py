@@ -138,3 +138,7 @@ pirrha = register_nissa_project(
 quandiso = register_nissa_project(
     project_name="quandiso",
 )
+anraggar = register_nissa_project(
+    project_name="anraggar",
+    chip="it81302bx",
+)

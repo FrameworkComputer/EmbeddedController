@@ -120,6 +120,11 @@ config BOARD_PIRRHA
 	  Build Google Pirrha reference board. Pirrha has Intel ADL-N SoC
 	  with IT81302 EC.
 
+config BOARD_ANRAGGAR
+	bool "Google Anraggar Board"
+	help
+	  Build Google Anraggar reference board. Anraggar has Intel ADL-N SoC
+	  with IT81302 EC.
 
 module = NISSA
 module-str = Nissa board-specific code

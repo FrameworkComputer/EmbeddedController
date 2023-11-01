@@ -140,3 +140,15 @@ if(CONFIG_TEST_NISSA_PIRRHA)
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/pirrha/src/board.c
     )
 endif()
+
+if(CONFIG_TEST_NISSA_ANRAGGAR)
+    target_compile_definitions(app PRIVATE CHARGER_PRIMARY=0 CHARGER_SECONDARY=1)
+    target_sources(
+            app PRIVATE
+            src/anraggar.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/anraggar/src/charger.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/anraggar/src/hdmi.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/anraggar/src/keyboard.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/anraggar/src/usbc.c
+    )
+endif()

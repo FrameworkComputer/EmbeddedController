@@ -199,3 +199,13 @@ if(DEFINED CONFIG_BOARD_PIRRHA)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "pirrha/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "pirrha/src/charger.c")
 endif()
+if(DEFINED CONFIG_BOARD_ANRAGGAR)
+	project(anraggar)
+	zephyr_library_sources(
+			"src/led.c"
+			"anraggar/src/keyboard.c"
+			"anraggar/src/hdmi.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "anraggar/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "anraggar/src/charger.c")
+endif()
