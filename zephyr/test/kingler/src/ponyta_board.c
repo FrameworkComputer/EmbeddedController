@@ -26,6 +26,8 @@
 static int interrupt_count;
 static int interrupt_id;
 
+extern uint8_t board_is_clamshell;
+
 #define SSFC_MAIM_SENSORS (SSFC_LID_MAIN_SENSOR | SSFC_BASE_MAIN_SENSOR)
 #define SSFC_ALT_SENSORS (SSFC_LID_ALT_SENSOR | SSFC_BASE_ALT_SENSOR)
 
@@ -44,10 +46,23 @@ int mock_cros_cbi_get_fw_config_clamshell(enum cbi_fw_config_field_id field_id,
 	return 0;
 }
 
+int mock_cros_cbi_get_fw_config_converible(enum cbi_fw_config_field_id field_id,
+					   uint32_t *value)
+{
+	*value = CONVERTIBLE;
+	return 0;
+}
+
 int mock_cros_cbi_get_fw_config_error(enum cbi_fw_config_field_id field_id,
 				      uint32_t *value)
 {
 	return -1;
+}
+
+static void teardown(void *unused)
+{
+	/* Reset board globals */
+	board_is_clamshell = false;
 }
 
 static void *clamshell_setup(void)
@@ -65,7 +80,7 @@ static void *clamshell_setup(void)
 	return NULL;
 }
 
-ZTEST_SUITE(ponyta_clamshell, NULL, clamshell_setup, NULL, NULL, NULL);
+ZTEST_SUITE(ponyta_clamshell, NULL, clamshell_setup, NULL, NULL, teardown);
 
 ZTEST(ponyta_clamshell, test_gmr_tablet_switch_disabled)
 {
@@ -140,13 +155,16 @@ static void *use_alt_sensor_setup(void)
 	zassert_ok(gpio_emul_input_set(wp_gpio, wp_pin, 1), NULL);
 	/* Set SSFC to enable alt sensors. */
 	zassert_ok(cbi_set_ssfc(SSFC_ALT_SENSORS), NULL);
+	/* Set form factor to CONVERTIBLE to enable motion sense interrupts. */
+	cros_cbi_get_fw_config_fake.custom_fake =
+		mock_cros_cbi_get_fw_config_converible;
 	/* Run init hooks to initialize cbi. */
 	hook_notify(HOOK_INIT);
 
 	return NULL;
 }
 
-ZTEST_SUITE(use_alt_sensor, NULL, use_alt_sensor_setup, NULL, NULL, NULL);
+ZTEST_SUITE(use_alt_sensor, NULL, use_alt_sensor_setup, NULL, NULL, teardown);
 
 ZTEST(use_alt_sensor, test_use_alt_sensor)
 {
@@ -173,13 +191,16 @@ static void *no_alt_sensor_setup(void)
 	zassert_ok(gpio_emul_input_set(wp_gpio, wp_pin, 1), NULL);
 	/* Set SSFC to disable alt sensors. */
 	zassert_ok(cbi_set_ssfc(SSFC_MAIM_SENSORS), NULL);
+	/* Set form factor to CONVERTIBLE to enable motion sense interrupts. */
+	cros_cbi_get_fw_config_fake.custom_fake =
+		mock_cros_cbi_get_fw_config_converible;
 	/* Run init hooks to initialize cbi. */
 	hook_notify(HOOK_INIT);
 
 	return NULL;
 }
 
-ZTEST_SUITE(no_alt_sensor, NULL, no_alt_sensor_setup, NULL, NULL, NULL);
+ZTEST_SUITE(no_alt_sensor, NULL, no_alt_sensor_setup, NULL, NULL, teardown);
 
 ZTEST(no_alt_sensor, test_no_alt_sensor)
 {
@@ -196,7 +217,7 @@ ZTEST(no_alt_sensor, test_no_alt_sensor)
 	zassert_equal(interrupt_id, 1, "interrupt_id=%d", interrupt_id);
 }
 
-ZTEST_SUITE(customize_vol_up_key, NULL, NULL, NULL, NULL, NULL);
+ZTEST_SUITE(customize_vol_up_key, NULL, NULL, NULL, NULL, teardown);
 
 ZTEST(customize_vol_up_key, test_customize_vol_up_key)
 {

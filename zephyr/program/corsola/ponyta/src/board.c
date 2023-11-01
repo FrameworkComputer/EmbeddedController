@@ -24,7 +24,7 @@
 
 LOG_MODULE_REGISTER(board_init, LOG_LEVEL_ERR);
 
-static bool board_is_clamshell;
+test_export_static bool board_is_clamshell;
 
 static void board_setup_init(void)
 {

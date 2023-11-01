@@ -32,6 +32,8 @@ static void *use_alt_sensor_setup(void)
 	zassert_ok(gpio_emul_input_set(wp_gpio, wp_pin, 1), NULL);
 	/* Set SSFC to enable alt sensors. */
 	zassert_ok(cbi_set_ssfc(SSFC_ALT_SENSORS), NULL);
+	/* Set form factor to CONVERTIBLE to enable motion sense interrupts. */
+	zassert_ok(cbi_set_fw_config(CONVERTIBLE << 13), NULL);
 	/* Run init hooks to initialize cbi. */
 	hook_notify(HOOK_INIT);
 
@@ -50,6 +52,8 @@ static void *no_alt_sensor_setup(void)
 	zassert_ok(gpio_emul_input_set(wp_gpio, wp_pin, 1), NULL);
 	/* Set SSFC to disable alt sensors. */
 	zassert_ok(cbi_set_ssfc(SSFC_MAIM_SENSORS), NULL);
+	/* Set form factor to CONVERTIBLE to enable motion sense interrupts. */
+	zassert_ok(cbi_set_fw_config(CONVERTIBLE << 13), NULL);
 	/* Run init hooks to initialize cbi. */
 	hook_notify(HOOK_INIT);
 

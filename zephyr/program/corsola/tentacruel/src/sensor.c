@@ -15,8 +15,8 @@
 #include "motionsense_sensors.h"
 #include "tablet_mode.h"
 
-static bool base_is_none;
-static bool lid_is_none;
+test_export_static bool base_is_none;
+test_export_static bool lid_is_none;
 
 void base_sensor_interrupt(enum gpio_signal signal)
 {
