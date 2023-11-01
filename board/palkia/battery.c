@@ -31,32 +31,34 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* Simplo Battery Information */
 	[BATTERY_DYNAPACK_UX48144] = {
-		.fuel_gauge = {
-			.manuf_name = "AS3GVQC3KC",
-			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x10, 0x10 },
+		.manuf_name = "AS3GVQC3KC",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x0,
+					.reg_data = { 0x10, 0x10 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x2000,
+					.disconnect_val = 0x2000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
+			.batt_info = {
+				.voltage_max		= 17600, /* mV */
+				.voltage_normal		= 15400, /* mV */
+				.voltage_min		= 12000,  /* mV */
+				.precharge_current	= 444,   /* mA */
+				.start_charging_min_c	= 1,
+				.start_charging_max_c	= 45,
+				.charging_min_c		= 1,
+				.charging_max_c		= 60,
+				.discharging_min_c	= 0,
+				.discharging_max_c	= 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 17600, /* mV */
-			.voltage_normal		= 15400, /* mV */
-			.voltage_min		= 12000,  /* mV */
-			.precharge_current	= 444,   /* mA */
-			.start_charging_min_c	= 1,
-			.start_charging_max_c	= 45,
-			.charging_min_c		= 1,
-			.charging_max_c		= 60,
-			.discharging_min_c	= 0,
-			.discharging_max_c	= 60,
 		},
 	},
 };

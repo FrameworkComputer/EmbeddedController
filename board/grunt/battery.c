@@ -31,32 +31,34 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* Panasonic AP15O5L Battery Information */
 	[BATTERY_PANASONIC] = {
-		.fuel_gauge = {
-			.manuf_name = "PANASONIC",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "PANASONIC",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x4000,
+					.disconnect_val = 0x0,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x4000,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max		= 13200,
+				.voltage_normal		= 11550, /* mV */
+				.voltage_min		= 9000, /* mV */
+				.precharge_current	= 256,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= 0,
+				.discharging_max_c	= 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11550, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= 0,
-			.discharging_max_c	= 60,
 		},
 	},
 };

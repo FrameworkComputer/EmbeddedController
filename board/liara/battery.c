@@ -38,35 +38,37 @@ enum battery_imbalance_mv {
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/*
 	 * Panasonic AP15O5L battery information from the Grunt reference
 	 * design.
 	 */
 	[BATTERY_PANASONIC] = {
-		.fuel_gauge = {
-			.manuf_name = "PANASONIC",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "PANASONIC",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x4000,
+					.disconnect_val = 0x0,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x4000,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max		= 13200,
+				.voltage_normal		= 11550, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 256,   /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= 0,
+				.discharging_max_c	= 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11550, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 256,   /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= 0,
-			.discharging_max_c	= 60,
 		},
 	},
 	/*
@@ -74,31 +76,33 @@ const struct board_batt_params board_battery_info[] = {
 	 * Gauge IC: TI BQ40Z697A
 	 */
 	[BATTERY_SUNWODA] = {
-		.fuel_gauge = {
-			.manuf_name = "Sunwoda 2018",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "Sunwoda 2018",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0000,
+					.reg_mask = 0x6000,
+					.disconnect_val = 0x6000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
+				.board_flags = BATTERY_IMBALANCE_MV_BQ4050,
 			},
-			.fet = {
-				.reg_addr = 0x0000,
-				.reg_mask = 0x6000,
-				.disconnect_val = 0x6000,
+			.batt_info = {
+				.voltage_max		= 13200,
+				.voltage_normal		= 11520, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 200,   /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 70,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-			.board_flags = BATTERY_IMBALANCE_MV_BQ4050,
-		},
-		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11520, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 200,   /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 70,
 		},
 	},
 	/*
@@ -106,31 +110,33 @@ const struct board_batt_params board_battery_info[] = {
 	 * Gauge IC: TI BQ40Z695A
 	 */
 	[BATTERY_SIMPLO] = {
-		.fuel_gauge = {
-			.manuf_name = "SMP2018",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "SMP2018",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0000,
+					.reg_mask = 0x6000,
+					.disconnect_val = 0x6000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
+				.board_flags = BATTERY_IMBALANCE_MV_BQ4050,
 			},
-			.fet = {
-				.reg_addr = 0x0000,
-				.reg_mask = 0x6000,
-				.disconnect_val = 0x6000,
+			.batt_info = {
+				.voltage_max		= 13200,
+				.voltage_normal		= 11520, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 247,   /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 70,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-			.board_flags = BATTERY_IMBALANCE_MV_BQ4050,
-		},
-		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11520, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 247,   /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 70,
 		},
 	},
 	/*
@@ -138,29 +144,31 @@ const struct board_batt_params board_battery_info[] = {
 	 * Gauge IC: Renesas RAJ240047A20DNP
 	 */
 	[BATTERY_LGC] = {
-		.fuel_gauge = {
-			.manuf_name = "LGC2018",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "LGC2018",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0010,
+					.disconnect_val = 0x0,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x0010,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max		= 13200,
+				.voltage_normal		= 11520, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 256,   /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 70,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11520, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 256,   /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 70,
 		},
 	},
 };

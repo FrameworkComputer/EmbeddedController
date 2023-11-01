@@ -31,90 +31,96 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	[BATTERY_C140254] = {
-		.fuel_gauge = {
-			.manuf_name = "AS3GXXE3KA",
-			.device_name = "C140254",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "AS3GXXE3KA",
+		.device_name = "C140254",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x99,
+					.reg_mask = 0x000C,
+					.disconnect_val = 0x000C,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x99,
-				.reg_mask = 0x000C,
-				.disconnect_val = 0x000C,
+			.batt_info = {
+				.voltage_max		= 8900, /* mV */
+				.voltage_normal		= 7970, /* mV */
+				.voltage_min		= 6000, /* mV */
+				.precharge_current	= 256,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 45,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 8900, /* mV */
-			.voltage_normal		= 7970, /* mV */
-			.voltage_min		= 6000, /* mV */
-			.precharge_current	= 256,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
 		},
 	},
 	[BATTERY_C340184] = {
-		.fuel_gauge = {
-			.manuf_name = "AS3GXXH3KD",
-			.device_name = "C340184",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "AS3GXXH3KD",
+		.device_name = "C340184",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x99,
+					.reg_mask = 0x000C,
+					.disconnect_val = 0x000C,
+					.cfet_mask = 0x0004,
+					.cfet_off_val = 0x0004,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x99,
-				.reg_mask = 0x000C,
-				.disconnect_val = 0x000C,
-				.cfet_mask = 0x0004,
-				.cfet_off_val = 0x0004,
+			.batt_info = {
+				.voltage_max            = 8900, /* mV */
+				.voltage_normal         = 7960, /* mV */
+				.voltage_min            = 6000, /* mV */
+				.precharge_current      = 256,  /* mA */
+				.start_charging_min_c   = 0,
+				.start_charging_max_c   = 45,
+				.charging_min_c         = 0,
+				.charging_max_c         = 60,
+				.discharging_min_c      = -20,
+				.discharging_max_c      = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max            = 8900, /* mV */
-			.voltage_normal         = 7960, /* mV */
-			.voltage_min            = 6000, /* mV */
-			.precharge_current      = 256,  /* mA */
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 45,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 60,
 		},
 	},
 	[BATTERY_C140243] = {
-		.fuel_gauge = {
-			.manuf_name = "AS3GXXD3KB",
-			.device_name = "C140243",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "AS3GXXD3KB",
+		.device_name = "C140243",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x99,
+					.reg_mask = 0x000C,
+					.disconnect_val = 0x000C,
+					.cfet_mask = 0x0004,
+					.cfet_off_val = 0x0004,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x99,
-				.reg_mask = 0x000C,
-				.disconnect_val = 0x000C,
-				.cfet_mask = 0x0004,
-				.cfet_off_val = 0x0004,
+			.batt_info = {
+				.voltage_max            = 13200, /* mV */
+				.voltage_normal         = 11880, /* mV */
+				.voltage_min            = 9000, /* mV */
+				.precharge_current      = 256,  /* mA */
+				.start_charging_min_c   = 0,
+				.start_charging_max_c   = 45,
+				.charging_min_c         = 0,
+				.charging_max_c         = 60,
+				.discharging_min_c      = -20,
+				.discharging_max_c      = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max            = 13200, /* mV */
-			.voltage_normal         = 11880, /* mV */
-			.voltage_min            = 9000, /* mV */
-			.precharge_current      = 256,  /* mA */
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 45,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 60,
 		},
 	},
 };

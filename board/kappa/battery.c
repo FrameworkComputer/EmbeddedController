@@ -7,91 +7,97 @@
 #include "battery_fuel_gauge.h"
 #include "gpio.h"
 
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* Dynapack HIGHPOWER DAK124960-W110703HT Battery Information */
 	[BATTERY_DYNAPACK_HIGHPOWER] = {
-		.fuel_gauge = {
-			.manuf_name = "333-2D-14-A",
-			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "333-2D-14-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x0,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0006,
+					.disconnect_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max = 8700,		/* mV */
+				.voltage_normal = 7600,		/* mV */
+				.voltage_min = 6000,		/* mV */
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
+				.vendor_param_start = 0x70,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max = 8700,		/* mV */
-			.voltage_normal = 7600,		/* mV */
-			.voltage_min = 6000,		/* mV */
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
-			.vendor_param_start = 0x70,
 		},
 	},
 	/* Dynapack CosMX DAK124960-W0P0707HT Battery Information */
 	[BATTERY_DYNAPACK_COS] = {
-		.fuel_gauge = {
-			.manuf_name = "333-2C-14-A",
-			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "333-2C-14-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x0,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0006,
+					.disconnect_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max = 8700,		/* mV */
+				.voltage_normal = 7600,		/* mV */
+				.voltage_min = 6000,		/* mV */
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
+				.vendor_param_start = 0x70,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max = 8700,		/* mV */
-			.voltage_normal = 7600,		/* mV */
-			.voltage_min = 6000,		/* mV */
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
-			.vendor_param_start = 0x70,
 		},
 	},
 	/* LGC MPPHPPFO021C Battery Information, BMU RAJ240045 */
 	[BATTERY_LGC] = {
-		.fuel_gauge = {
-			.manuf_name = "313-42-14-A",
-			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "313-42-14-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x0,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x43,
+					.reg_mask = 0x0003,
+					.disconnect_val = 0x0,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x43,
-				.reg_mask = 0x0003,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max = 8700,		/* mV */
+				.voltage_normal = 7520,		/* mV */
+				.voltage_min = 6000,		/* mV */
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
+				.vendor_param_start = 0x70,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 8700,		/* mV */
-			.voltage_normal = 7520,		/* mV */
-			.voltage_min = 6000,		/* mV */
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
-			.vendor_param_start = 0x70,
 		},
 	},
 };

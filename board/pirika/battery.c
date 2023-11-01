@@ -31,89 +31,95 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/*COSMX  CA14J43 Battery Information */
 	[BATTERY_CA14J43] = {
-		.fuel_gauge = {
-			.manuf_name = "PG01LJ3353",
-			.device_name = "CA14J43",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "PG01LJ3353",
+		.device_name = "CA14J43",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_mask = 0x6000,
+					.disconnect_val = 0x6000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_mask = 0x6000,
-				.disconnect_val = 0x6000,
+			.batt_info = {
+				.voltage_max		= 13200, /* mV */
+				.voltage_normal		= 11550, /* mV */
+				.voltage_min		= 9000, /* mV */
+				.precharge_current	= 256,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max		= 13200, /* mV */
-			.voltage_normal		= 11550, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
 		},
 	},
 	/*COSMX CA11J58 Battery Information */
 	[BATTERY_CA11J58] = {
-		.fuel_gauge = {
-			.manuf_name = "PG01NL3353",
-			.device_name = "CA11J58",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "PG01NL3353",
+		.device_name = "CA11J58",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_mask = 0x6000,
+					.disconnect_val = 0x6000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_mask = 0x6000,
-				.disconnect_val = 0x6000,
+			.batt_info = {
+				.voltage_max		= 8800, /* mV */
+				.voltage_normal		= 7700, /* mV */
+				.voltage_min		= 6000, /* mV */
+				.precharge_current	= 256,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 45,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max		= 8800, /* mV */
-			.voltage_normal		= 7700, /* mV */
-			.voltage_min		= 6000, /* mV */
-			.precharge_current	= 256,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
 		},
 	},
 	/*COSMX CA11J34 Battery Information */
 	[BATTERY_CA11J34] = {
-		.fuel_gauge = {
-			.manuf_name = "PG01JH3353",
-			.device_name = "CA11J34",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "PG01JH3353",
+		.device_name = "CA11J34",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_mask = 0x6000,
+					.disconnect_val = 0x6000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_mask = 0x6000,
-				.disconnect_val = 0x6000,
+			.batt_info = {
+				.voltage_max		= 8800, /* mV */
+				.voltage_normal		= 7700, /* mV */
+				.voltage_min		= 6000, /* mV */
+				.precharge_current	= 128,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 45,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 70,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max		= 8800, /* mV */
-			.voltage_normal		= 7700, /* mV */
-			.voltage_min		= 6000, /* mV */
-			.precharge_current	= 128,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 70,
 		},
 	},
 };

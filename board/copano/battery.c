@@ -31,33 +31,35 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	[BATTERY_C433] = {
-		.fuel_gauge = {
-			.manuf_name = "AS1GVPc3KB",
-			.device_name = "C433-41",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x10, 0x10 },
+		.manuf_name = "AS1GVPc3KB",
+		.device_name = "C433-41",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x10, 0x10 },
+				},
+				.fet = {
+					.reg_addr = 0x44,
+					.reg_mask = 0x6000,
+					.disconnect_val = 0x6000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_addr = 0x44,
-				.reg_mask = 0x6000,
-				.disconnect_val = 0x6000,
+			.batt_info = {
+				.voltage_max		= 13200,
+				.voltage_normal		= 11550, /* mV */
+				.voltage_min		= 9000, /* mV */
+				.precharge_current	= 256,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 45,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11550, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
 		},
 	},
 };

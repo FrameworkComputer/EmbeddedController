@@ -42,65 +42,69 @@
  *  b'11 - dfet : off / cfet : on
  *  The value b'10 is disconnect_val, so we can use b'01 for cfet_off_val
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* SDI Battery Information */
 	[BATTERY_SDI] = {
-		.fuel_gauge = {
-			.manuf_name = "SDI",
-			.device_name = "4432D53",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "SDI",
+		.device_name = "4432D53",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0xc000,
+					.disconnect_val = 0x8000,
+					.cfet_mask = 0xc000,
+					.cfet_off_val = 0x2000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x00,
-				.reg_mask = 0xc000,
-				.disconnect_val = 0x8000,
-				.cfet_mask = 0xc000,
-				.cfet_off_val = 0x2000,
+			.batt_info = {
+				.voltage_max            = 8760,
+				.voltage_normal         = 7720, /* mV */
+				.voltage_min            = 6000, /* mV */
+				.precharge_current      = 200,  /* mA */
+				.start_charging_min_c   = 0,
+				.start_charging_max_c   = 45,
+				.charging_min_c         = 0,
+				.charging_max_c         = 50,
+				.discharging_min_c      = -20,
+				.discharging_max_c      = 70,
 			},
-		},
-		.batt_info = {
-			.voltage_max            = 8760,
-			.voltage_normal         = 7720, /* mV */
-			.voltage_min            = 6000, /* mV */
-			.precharge_current      = 200,  /* mA */
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 45,
-			.charging_min_c         = 0,
-			.charging_max_c         = 50,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 70,
 		},
 	},
 	/* SWD(Sunwoda) Battery Information */
 	[BATTERY_SWD] = {
-		.fuel_gauge = {
-			.manuf_name = "SWD",
-			.device_name = "4432W53",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "SWD",
+		.device_name = "4432W53",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0xc000,
+					.disconnect_val = 0x8000,
+					.cfet_mask = 0xc000,
+					.cfet_off_val = 0x2000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x00,
-				.reg_mask = 0xc000,
-				.disconnect_val = 0x8000,
-				.cfet_mask = 0xc000,
-				.cfet_off_val = 0x2000,
+			.batt_info = {
+				.voltage_max            = 8760,
+				.voltage_normal         = 7720, /* mV */
+				.voltage_min            = 6000, /* mV */
+				.precharge_current      = 200,  /* mA */
+				.start_charging_min_c   = 0,
+				.start_charging_max_c   = 45,
+				.charging_min_c         = 0,
+				.charging_max_c         = 50,
+				.discharging_min_c      = -20,
+				.discharging_max_c      = 70,
 			},
-		},
-		.batt_info = {
-			.voltage_max            = 8760,
-			.voltage_normal         = 7720, /* mV */
-			.voltage_min            = 6000, /* mV */
-			.precharge_current      = 200,  /* mA */
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 45,
-			.charging_min_c         = 0,
-			.charging_max_c         = 50,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 70,
 		},
 	},
 };

@@ -32,59 +32,63 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* Simplo Coslight Battery Information */
 	[BATTERY_SIMPLO_COS] = {
-		.fuel_gauge = {
-			.manuf_name = "333-1C-DA-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "333-1C-DA-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0006,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
+			.batt_info = {
+				.voltage_max = 8800,	/* mV */
+				.voltage_normal = 7600,
+				.voltage_min = 6000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = 0,
+				.discharging_max_c = 60,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7600,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = 0,
-			.discharging_max_c = 60,
 		},
 	},
 	/* 916Q2303H Simplo CosMX Battery Information */
 	[BATTERY_SIMPLO_COS2] = {
-		.fuel_gauge = {
-			.manuf_name = "133-1C-39-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "133-1C-39-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0006,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
+			.batt_info = {
+				.voltage_max = 8860,	/* mV */
+				.voltage_normal = 7720,
+				.voltage_min = 6000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 51,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max = 8860,	/* mV */
-			.voltage_normal = 7720,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 51,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
 		},
 	},
 };

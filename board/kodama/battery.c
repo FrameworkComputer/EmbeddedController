@@ -16,59 +16,63 @@
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
 
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	[BATTERY_SIMPLO] = {
-		.fuel_gauge = {
-			.manuf_name = "SMP",
-			.device_name = "L19M3PG0",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "SMP",
+		.device_name = "L19M3PG0",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x34,
+					.reg_mask = 0x0100,
+					.disconnect_val = 0x0100,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x34,
-				.reg_mask = 0x0100,
-				.disconnect_val = 0x0100,
+			.batt_info = {
+				.voltage_max		= 4400,
+				.voltage_normal		= 3840,
+				.voltage_min		= 3000,
+				.precharge_current	= 256,
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 45,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 4400,
-			.voltage_normal		= 3840,
-			.voltage_min		= 3000,
-			.precharge_current	= 256,
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
 		},
 	},
 	[BATTERY_CELXPERT] = {
-		.fuel_gauge = {
-			.manuf_name = "Celxpert",
-			.device_name = "L19C3PG0",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "Celxpert",
+		.device_name = "L19C3PG0",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x34,
+					.reg_mask = 0x0100,
+					.disconnect_val = 0x0100,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x34,
-				.reg_mask = 0x0100,
-				.disconnect_val = 0x0100,
+			.batt_info = {
+				.voltage_max		= 4400,
+				.voltage_normal		= 3840,
+				.voltage_min		= 2800,
+				.precharge_current	= 404,
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 45,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 4400,
-			.voltage_normal		= 3840,
-			.voltage_min		= 2800,
-			.precharge_current	= 404,
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
 		},
 	},
 };

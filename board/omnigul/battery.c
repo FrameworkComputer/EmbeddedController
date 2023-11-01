@@ -32,36 +32,38 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* LGC AP19B8M Battery Information */
 	/*
 	 * Battery info provided by ODM on b/263691095, comment #2
 	 */
 	[BATTERY_AP19B8M] = {
-		.fuel_gauge = {
-			.manuf_name = "LGC KT0030G024",
-			.device_name = "AP19B8M",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "LGC KT0030G024",
+		.device_name = "AP19B8M",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x43,
+					.reg_mask = 0x0003, /* D-FET C-FET */
+					.disconnect_val = 0x0000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x43,
-				.reg_mask = 0x0003,	/* D-FET C-FET */
-				.disconnect_val = 0x0000,
+			.batt_info = {
+				.voltage_max		= 13350,
+				.voltage_normal		= 11610, /* mV */
+				.voltage_min		= 9000, /* mV */
+				.precharge_current	= 256,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 75,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 13350,
-			.voltage_normal		= 11610, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 75,
 		},
 	},
 	/* COSMX AP20CBL Battery Information */
@@ -69,29 +71,31 @@ const struct board_batt_params board_battery_info[] = {
 	 * Battery info provided by ODM on b/263691095, comment #2
 	 */
 	[BATTERY_AP20CBL] = {
-		.fuel_gauge = {
-			.manuf_name = "COSMX KT0030B004",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "COSMX KT0030B004",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0xC000, /* D-FET C-FET */
+					.disconnect_val = 0x0000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0xC000,	/* D-FET C-FET */
-				.disconnect_val = 0x0000,
+			.batt_info = {
+				.voltage_max		= 13200,
+				.voltage_normal		= 11550, /* mV */
+				.voltage_min		= 9000, /* mV */
+				.precharge_current	= 256,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 75,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11550, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 75,
 		},
 	},
 	/* LGES AP23A8L Battery Information */
@@ -99,29 +103,31 @@ const struct board_batt_params board_battery_info[] = {
 	 * Battery info provided by ODM on b/290149136, comment #2
 	 */
 	[BATTERY_AP23A8L] = {
-		.fuel_gauge = {
-			.manuf_name = "LGES KT0030G025",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "LGES KT0030G025",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0xC000, /* D-FET C-FET */
+					.disconnect_val = 0x0000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0xC000,	/* D-FET C-FET */
-				.disconnect_val = 0x0000,
+			.batt_info = {
+				.voltage_max		= 13200,
+				.voltage_normal		= 11280, /* mV */
+				.voltage_min		= 9000, /* mV */
+				.precharge_current	= 256,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 75,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11280, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 75,
 		},
 	},
 
@@ -130,29 +136,31 @@ const struct board_batt_params board_battery_info[] = {
 	 * Battery info provided by ODM on b/290149136, comment #2
 	 */
 	[BATTERY_AP23A7L] = {
-		.fuel_gauge = {
-			.manuf_name = "SMP KT00307012",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "SMP KT00307012",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0xC000, /* D-FET C-FET */
+					.disconnect_val = 0x0000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0xC000,	/* D-FET C-FET */
-				.disconnect_val = 0x0000,
+			.batt_info = {
+				.voltage_max		= 13200,
+				.voltage_normal		= 11250, /* mV */
+				.voltage_min		= 9000, /* mV */
+				.precharge_current	= 256,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 45,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 75,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11250, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 75,
 		},
 	},
 };

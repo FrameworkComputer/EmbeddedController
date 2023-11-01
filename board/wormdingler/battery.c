@@ -32,65 +32,69 @@
  * address, mask, and disconnect value need to be provided.
  */
 
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* Sunwoda L21D2PG2 */
 	[BATTERY_L21D2PG2] = {
-		.fuel_gauge = {
-			.manuf_name = "Sunwoda",
-			.device_name = "L21D2PG2",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "Sunwoda",
+		.device_name = "L21D2PG2",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x34,
+					.reg_mask = 0x0100,
+					.disconnect_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_addr = 0x34,
-				.reg_mask = 0x0100,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max            = 8860, /* mV */
+				.voltage_normal         = 7700, /* mV */
+				.voltage_min            = 6000, /* mV */
+				.precharge_current      = 200,  /* mA */
+				.start_charging_min_c   = 0,
+				.start_charging_max_c   = 50,
+				.charging_min_c         = 0,
+				.charging_max_c         = 63,
+				.discharging_min_c      = -20,
+				.discharging_max_c      = 63,
+				.vendor_param_start     = 0x70,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max            = 8860, /* mV */
-			.voltage_normal         = 7700, /* mV */
-			.voltage_min            = 6000, /* mV */
-			.precharge_current      = 200,  /* mA */
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 63,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 63,
-			.vendor_param_start     = 0x70,
 		},
 	},
 	/* BYD L21B2PG2 */
 	[BATTERY_L21B2PG2] = {
-		.fuel_gauge = {
-			.manuf_name = "BYD",
-			.device_name = "L21B2PG2",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "BYD",
+		.device_name = "L21B2PG2",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x34,
+					.reg_mask = 0x0100,
+					.disconnect_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_addr = 0x34,
-				.reg_mask = 0x0100,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max            = 8860, /* mV */
+				.voltage_normal         = 7700, /* mV */
+				.voltage_min            = 6000, /* mV */
+				.precharge_current      = 256,  /* mA */
+				.start_charging_min_c   = 0,
+				.start_charging_max_c   = 50,
+				.charging_min_c         = 0,
+				.charging_max_c         = 60,
+				.discharging_min_c      = -20,
+				.discharging_max_c      = 60,
+				.vendor_param_start     = 0x70,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max            = 8860, /* mV */
-			.voltage_normal         = 7700, /* mV */
-			.voltage_min            = 6000, /* mV */
-			.precharge_current      = 256,  /* mA */
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 60,
-			.vendor_param_start     = 0x70,
 		},
 	},
 };

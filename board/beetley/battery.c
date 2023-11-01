@@ -31,159 +31,169 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* SMP L20M3PG0 Battery Information */
 	[BATTERY_SMP1] = {
-		.fuel_gauge = {
-			.manuf_name = "SMP",
-			.device_name = "L20M3PG0",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "SMP",
+		.device_name = "L20M3PG0",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0x0018,
+					.disconnect_val = 0x0000,
+					.cfet_mask = 0x0008,
+					.cfet_off_val = 0x0000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x00,
-				.reg_mask = 0x0018,
-				.disconnect_val = 0x0000,
-				.cfet_mask = 0x0008,
-				.cfet_off_val = 0x0000,
+			.batt_info = {
+				.voltage_max		= 13200, /* mV */
+				.voltage_normal		= 11520, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 256,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 13200, /* mV */
-			.voltage_normal		= 11520, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 256,	 /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
 		},
 	},
 
 	/* SMP L20M3PG3 Battery Information */
 	[BATTERY_SMP2] = {
-		.fuel_gauge = {
-			.manuf_name = "SMP",
-			.device_name = "L20M3PG3",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "SMP",
+		.device_name = "L20M3PG3",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0x0018,
+					.disconnect_val = 0x0000,
+					.cfet_mask = 0x0008,
+					.cfet_off_val = 0x0000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x00,
-				.reg_mask = 0x0018,
-				.disconnect_val = 0x0000,
-				.cfet_mask = 0x0008,
-				.cfet_off_val = 0x0000,
+			.batt_info = {
+				.voltage_max		= 13200, /* mV */
+				.voltage_normal		= 11520, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 256,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 13200, /* mV */
-			.voltage_normal		= 11520, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 256,	 /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
 		},
 	},
 
 	/* LGC L20L3PG0 Battery Information */
 	[BATTERY_LGC] = {
-		.fuel_gauge = {
-			.manuf_name = "LGC",
-			.device_name = "L20L3PG0",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "LGC",
+		.device_name = "L20L3PG0",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0x0018,
+					.disconnect_val = 0x0000,
+					.cfet_mask = 0x0008,
+					.cfet_off_val = 0x0000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x00,
-				.reg_mask = 0x0018,
-				.disconnect_val = 0x0000,
-				.cfet_mask = 0x0008,
-				.cfet_off_val = 0x0000,
+			.batt_info = {
+				.voltage_max		= 13200, /* mV */
+				.voltage_normal		= 11520, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 256,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 73,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 13200, /* mV */
-			.voltage_normal		= 11520, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 256,	 /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 73,
 		},
 	},
 
 	/* Sunwoda L20D3PG0 Battery Information */
 	[BATTERY_SUNWODA] = {
-		.fuel_gauge = {
-			.manuf_name = "Sunwoda",
-			.device_name = "L20D3PG0",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "Sunwoda",
+		.device_name = "L20D3PG0",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0x0018,
+					.disconnect_val = 0x0000,
+					.cfet_mask = 0x0008,
+					.cfet_off_val = 0x0000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x00,
-				.reg_mask = 0x0018,
-				.disconnect_val = 0x0000,
-				.cfet_mask = 0x0008,
-				.cfet_off_val = 0x0000,
+			.batt_info = {
+				.voltage_max		= 13200, /* mV */
+				.voltage_normal		= 11520, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 205,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 13200, /* mV */
-			.voltage_normal		= 11520, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 205,	 /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
 		},
 	},
 
 	/* Celxert L20C3PG0 Battery Information */
 	[BATTERY_CELXPERT] = {
-		.fuel_gauge = {
-			.manuf_name = "Celxpert",
-			.device_name = "L20C3PG0",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "Celxpert",
+		.device_name = "L20C3PG0",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0x0018,
+					.disconnect_val = 0x0000,
+					.cfet_mask = 0x0008,
+					.cfet_off_val = 0x0000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x00,
-				.reg_mask = 0x0018,
-				.disconnect_val = 0x0000,
-				.cfet_mask = 0x0008,
-				.cfet_off_val = 0x0000,
+			.batt_info = {
+				.voltage_max		= 13200, /* mV */
+				.voltage_normal		= 11520, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 200,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 13200, /* mV */
-			.voltage_normal		= 11520, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 200,	 /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
 		},
 	},
 };

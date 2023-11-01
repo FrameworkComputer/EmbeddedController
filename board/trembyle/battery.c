@@ -31,32 +31,34 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* AP18F4M */
 	[BATTERY_AP18F4M] = {
-		.fuel_gauge = {
-			.manuf_name = "Murata KT00404001",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "Murata KT00404001",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x2000,
+					.disconnect_val = 0x2000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
+			.batt_info = {
+				.voltage_max          = 8700,
+				.voltage_normal       = 7600,
+				.voltage_min          = 5500,
+				.precharge_current    = 256,
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 50,
+				.charging_min_c       = 0,
+				.charging_max_c       = 60,
+				.discharging_min_c    = -20,
+				.discharging_max_c    = 75,
 			},
-		},
-		.batt_info = {
-			.voltage_max          = 8700,
-			.voltage_normal       = 7600,
-			.voltage_min          = 5500,
-			.precharge_current    = 256,
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 50,
-			.charging_min_c       = 0,
-			.charging_max_c       = 60,
-			.discharging_min_c    = -20,
-			.discharging_max_c    = 75,
 		},
 	},
 };

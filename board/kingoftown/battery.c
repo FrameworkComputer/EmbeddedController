@@ -32,94 +32,100 @@
  * address, mask, and disconnect value need to be provided.
  */
 
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* DynaPack HIGHPOWER Battery Information */
 	[BATTERY_DYNAPACK_HIGHPOWER] = {
-		.fuel_gauge = {
-			.manuf_name = "333-2D-0D-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "333-2D-0D-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0006,
+					.disconnect_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max = 8800,	/* mV */
+				.voltage_normal = 7700,
+				.voltage_min = 6000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
+				.vendor_param_start = 0x70,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
-			.vendor_param_start = 0x70,
 		},
 	},
 
 	/* DynaPack BYD Battery Information */
 	[BATTERY_DYNAPACK_BYD] = {
-		.fuel_gauge = {
-			.manuf_name = "333-2E-0D-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "333-2E-0D-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0006,
+					.disconnect_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max = 8800,	/* mV */
+				.voltage_normal = 7700,
+				.voltage_min = 6000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
+				.vendor_param_start = 0x70,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
-			.vendor_param_start = 0x70,
 		},
 	},
 
 	/* CosMX Battery Information */
 	[BATTERY_COS] = {
-		.fuel_gauge = {
-			.manuf_name = "333-AC-0D-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "333-AC-0D-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0006,
+					.disconnect_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max = 8800,	/* mV */
+				.voltage_normal = 7700,
+				.voltage_min = 6000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
+				.vendor_param_start = 0x70,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
-			.vendor_param_start = 0x70,
 		},
 	},
 
@@ -127,30 +133,32 @@ const struct board_batt_params board_battery_info[] = {
 	 * Gauge IC : RAJ240045
 	 */
 	[BATTERY_ATL] = {
-		.fuel_gauge = {
-			.manuf_name = "313-B7-0D-A",
-			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "313-B7-0D-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x0,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x43,
+					.reg_mask = 0x0003,
+					.disconnect_val = 0x0,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x43,
-				.reg_mask = 0x0003,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max = 8800,		/* mV */
+				.voltage_normal = 7700,		/* mV */
+				.voltage_min = 6000,		/* mV */
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
+				.vendor_param_start = 0x70,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 8800,		/* mV */
-			.voltage_normal = 7700,		/* mV */
-			.voltage_min = 6000,		/* mV */
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
-			.vendor_param_start = 0x70,
 		},
 	},
 };

@@ -32,33 +32,35 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* NVT Battery Information */
 	[BATTERY_NVT] = {
-		.fuel_gauge = {
-			.manuf_name = "NVT",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "NVT",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x2000,
+					.disconnect_val = 0x2000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
+			.batt_info = {
+				.voltage_max = TARGET_WITH_MARGIN(17600, 5),
+				.voltage_normal		= 15400, /* mV */
+				.voltage_min		= 12000, /* mV */
+				.precharge_current	= 72,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 55,
+				.charging_min_c		= 0,
+				.charging_max_c		= 55,
+				.discharging_min_c	= 0,
+				.discharging_max_c	= 70,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max		= TARGET_WITH_MARGIN(17600, 5),
-			.voltage_normal		= 15400, /* mV */
-			.voltage_min		= 12000, /* mV */
-			.precharge_current	= 72,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 55,
-			.charging_min_c		= 0,
-			.charging_max_c		= 55,
-			.discharging_min_c	= 0,
-			.discharging_max_c	= 70,
 		},
 	},
 };

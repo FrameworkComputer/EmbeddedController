@@ -36,124 +36,132 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* COSMX AP20CBL Battery Information */
 	[BATTERY_COSMX_AP20CBL] = {
-		.fuel_gauge = {
-			.manuf_name = "COSMX KT0030B002",
-			.device_name = "AP20CBL",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "COSMX KT0030B002",
+		.device_name = "AP20CBL",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x2000,
+					.disconnect_val = 0x2000,
+					.cfet_mask = 0x4000,
+					.cfet_off_val = 0x4000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
-				.cfet_mask = 0x4000,
-				.cfet_off_val = 0x4000,
+			.batt_info = {
+				.voltage_max            = 13200,
+				.voltage_normal         = 11550,
+				.voltage_min            = 9000,
+				.precharge_current      = 256,
+				.start_charging_min_c   = 0,
+				.start_charging_max_c   = 50,
+				.charging_min_c         = 0,
+				.charging_max_c         = 60,
+				.discharging_min_c      = -20,
+				.discharging_max_c      = 75,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max            = 13200,
-			.voltage_normal         = 11550,
-			.voltage_min            = 9000,
-			.precharge_current      = 256,
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 75,
 		},
 	},
 	/* COSMX AP20CBL Battery Information (new firmware ver) */
 	[BATTERY_COSMX_AP20CBL_004] = {
-		.fuel_gauge = {
-			.manuf_name = "COSMX KT0030B004",
-			.device_name = "AP20CBL",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "COSMX KT0030B004",
+		.device_name = "AP20CBL",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x2000,
+					.disconnect_val = 0x2000,
+					.cfet_mask = 0x4000,
+					.cfet_off_val = 0x4000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
-				.cfet_mask = 0x4000,
-				.cfet_off_val = 0x4000,
+			.batt_info = {
+				.voltage_max            = 13200,
+				.voltage_normal         = 11550,
+				.voltage_min            = 9000,
+				.precharge_current      = 256,
+				.start_charging_min_c   = 0,
+				.start_charging_max_c   = 50,
+				.charging_min_c         = 0,
+				.charging_max_c         = 60,
+				.discharging_min_c      = -20,
+				.discharging_max_c      = 75,
 			},
-			.flags = FUEL_GAUGE_FLAG_MFGACC,
-		},
-		.batt_info = {
-			.voltage_max            = 13200,
-			.voltage_normal         = 11550,
-			.voltage_min            = 9000,
-			.precharge_current      = 256,
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 75,
 		},
 	},
 	/* LGC AP18C8K Battery Information */
 	[BATTERY_LGC_AP18C8K] = {
-		.fuel_gauge = {
-			.manuf_name = "LGC KT0030G020",
-			.device_name = "AP18C8K",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "LGC KT0030G020",
+		.device_name = "AP18C8K",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x43,
+					.reg_mask = 0x0001,
+					.disconnect_val = 0x0,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x43,
-				.reg_mask = 0x0001,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max            = 13050,
+				.voltage_normal         = 11250,
+				.voltage_min            = 9000,
+				.precharge_current      = 256,
+				.start_charging_min_c   = 0,
+				.start_charging_max_c   = 50,
+				.charging_min_c         = 0,
+				.charging_max_c         = 60,
+				.discharging_min_c      = -20,
+				.discharging_max_c      = 75,
 			},
-		},
-		.batt_info = {
-			.voltage_max            = 13050,
-			.voltage_normal         = 11250,
-			.voltage_min            = 9000,
-			.precharge_current      = 256,
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 75,
 		},
 	},
 	/* LGC AP19B8M Battery Information */
 	[BATTERY_AP19B8M] = {
-		.fuel_gauge = {
-			.manuf_name = "LGC KT0030G024",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "LGC KT0030G024",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x43,
+					.reg_mask = 0x0001,
+					.disconnect_val = 0x0,
+					.cfet_mask = 0x0002,
+					.cfet_off_val = 0x0000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x43,
-				.reg_mask = 0x0001,
-				.disconnect_val = 0x0,
-				.cfet_mask = 0x0002,
-				.cfet_off_val = 0x0000,
+			.batt_info = {
+				.voltage_max          = 13350,
+				.voltage_normal       = 11610,
+				.voltage_min          = 9000,
+				.precharge_current    = 256,
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 50,
+				.charging_min_c       = 0,
+				.charging_max_c       = 60,
+				.discharging_min_c    = -20,
+				.discharging_max_c    = 75,
 			},
-		},
-		.batt_info = {
-			.voltage_max          = 13350,
-			.voltage_normal       = 11610,
-			.voltage_min          = 9000,
-			.precharge_current    = 256,
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 50,
-			.charging_min_c       = 0,
-			.charging_max_c       = 60,
-			.discharging_min_c    = -20,
-			.discharging_max_c    = 75,
 		},
 	},
 };
