@@ -176,8 +176,9 @@ void __hw_timer_enable_clock(int n, int enable)
 		*reg &= ~mask;
 }
 
-#if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32L4) || \
-	defined(CHIP_FAMILY_STM32F4) || defined(CHIP_FAMILY_STM32H7)
+#if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32L4) ||      \
+	defined(CHIP_FAMILY_STM32L5) || defined(CHIP_FAMILY_STM32F4) || \
+	defined(CHIP_FAMILY_STM32H7)
 /* for families using a variable clock feeding the timer */
 static void update_prescaler(void)
 {
