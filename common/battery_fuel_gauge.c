@@ -234,7 +234,7 @@ static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 		}
 
 		BCFGPRT("Matched");
-		memcpy(&batt->conf, &tmp, sizeof(batt->config));
+		memcpy(&batt->config, &tmp.config, sizeof(batt->config));
 
 		return EC_SUCCESS;
 	}
