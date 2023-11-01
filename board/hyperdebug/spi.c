@@ -22,7 +22,7 @@
 /*
  * List of SPI devices that can be controlled via USB.
  *
- * SPI1 and SPI2 use PCLK (110 MHz) as base frequency.
+ * SPI1 and SPI2 use PCLK (27.5 MHz) as base frequency.
  * QSPI uses either SYSCLK (110 MHz) or MSI (variable) as base frequency.
  *
  * Divisors below result in default SPI clock of approx. 430 kHz for all
@@ -30,7 +30,7 @@
 struct spi_device_t spi_devices[] = {
 	{ .name = "SPI2",
 	  .port = 1,
-	  .div = 7,
+	  .div = 5,
 	  .gpio_cs = GPIO_CN9_25,
 	  .usb_flags = USB_SPI_ENABLED },
 	{ .name = "QSPI",
@@ -42,7 +42,7 @@ struct spi_device_t spi_devices[] = {
 		       USB_SPI_FLASH_DTR_SUPPORT },
 	{ .name = "SPI1",
 	  .port = 0,
-	  .div = 7,
+	  .div = 5,
 	  .gpio_cs = GPIO_CN7_4,
 	  .usb_flags = USB_SPI_ENABLED },
 };
@@ -82,7 +82,7 @@ uint32_t octospi_clock(void)
 
 uint32_t spi_clock(void)
 {
-	return clock_get_freq();
+	return clock_get_apb_freq();
 }
 
 /*

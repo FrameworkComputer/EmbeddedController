@@ -25,6 +25,9 @@ void board_config_pre_init(void)
 {
 	/* We know VDDIO2 is present, enable the GPIO circuit. */
 	STM32_PWR_CR2 |= STM32_PWR_CR2_IOSV;
+
+	/* Peripheral clock derived by dividing core clock by 4. */
+	STM32_RCC_CFGR = STM32_RCC_CFGR_PPRE1_DIV4 | STM32_RCC_CFGR_PPRE2_DIV4;
 }
 
 /******************************************************************************
