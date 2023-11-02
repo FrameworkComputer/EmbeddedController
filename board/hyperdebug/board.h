@@ -42,18 +42,18 @@
 /*
  * PLL configuration. Freq = STM32_HSE_CLOCK or HSI (16MHz) * N / M / R.
  *
- * In our case, 16MHz * 13 / 1 / 2 = 104MHz.
+ * In our case, 16MHz * 55 / 4 / 2 = 110MHz.
  */
 
 #undef STM32_PLLM
 #undef STM32_PLLN
 #undef STM32_PLLR
-#define STM32_PLLM 1
-#define STM32_PLLN 13
+#define STM32_PLLM 4
+#define STM32_PLLN 55
 #define STM32_PLLR 2
 
 #define STM32_USE_PLL
-#define CPU_CLOCK 104000000
+#define CPU_CLOCK 110000000
 
 #define CONFIG_ADC
 #define CONFIG_ADC_SAMPLE_TIME STM32_ADC_SMPR_247_5_CY
