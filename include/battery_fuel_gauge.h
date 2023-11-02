@@ -68,6 +68,9 @@ struct fuel_gauge_info {
 	struct fet_info fet;
 } __packed __aligned(4);
 
+/**
+ * The 'config' of a battery.
+ */
 struct board_batt_params {
 	struct fuel_gauge_info fuel_gauge;
 	struct battery_info batt_info;
@@ -97,10 +100,54 @@ struct batt_conf_export {
 	uint8_t struct_version;
 	/* Version 0 */
 	uint8_t reserved[3];
-	char manuf_name[16];
-	char device_name[16];
+	char manuf_name[SBS_MAX_STRING_SIZE];
+	char device_name[SBS_MAX_STRING_SIZE];
 	struct board_batt_params config;
 } __packed __aligned(4);
+
+/**
+ * Header describing a battery config stored in CBI. Only struct_version has
+ * size and position independent of struct_version. The rest varies as
+ * struct_version changes.
+ *
+ * Version 0
+ * Layout:
+ *  +-------------+
+ *  | header      |
+ *  +-------------+
+ *  |             | ^
+ *  | manuf_name  | | manuf_name_size
+ *  |             | v
+ *  +-------------+
+ *  | device_name | ^
+ *  |             | | device_name_size
+ *  |             | v
+ *  +-------------+
+ *  | config      | ^
+ *  |             | |
+ *  |             | | cbi data size
+ *  |             | |    - (header_size+manuf_name_size+device_name_size)
+ *  |             | |
+ *  |             | v
+ *  +-------------+
+ * Note:
+ * - manuf_name and device_name are not null-terminated.
+ * - The config isn't aligned. It'll be aligned when it's copied to struct
+ *   batt_conf_export.
+ */
+struct batt_conf_header {
+	/* Version independent field. It's always here as a uint8_t. */
+	uint8_t struct_version;
+	/* Version 0 members */
+	uint8_t manuf_name_size;
+	uint8_t device_name_size;
+	uint8_t reserved;
+	/* manuf_name, device_name, board_batt_params follow after this. */
+} __packed;
+
+#define BATT_CONF_MAX_SIZE                                           \
+	(sizeof(struct batt_conf_header) + SBS_MAX_STRING_SIZE * 2 + \
+	 sizeof(struct board_batt_params))
 
 /* Forward declare board specific data used by common code */
 extern const struct batt_conf_embed board_battery_info[];
