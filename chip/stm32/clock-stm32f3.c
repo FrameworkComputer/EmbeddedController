@@ -6,8 +6,8 @@
 /* Clocks and power management settings */
 
 #include "chipset.h"
-#include "clock-f.h"
 #include "clock.h"
+#include "clock_chip.h"
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
@@ -99,12 +99,12 @@ static int dsleep_recovery_margin_us = 1000000;
 #define US_GCD (1000000 / RTC_GCD)
 #define RTC_FREQ_GCD (RTC_FREQ / RTC_GCD)
 
-int32_t rtcss_to_us(uint32_t rtcss)
+uint32_t rtcss_to_us(uint32_t rtcss)
 {
 	return ((RTC_PREDIV_S - (rtcss & 0x7fff)) * US_GCD) / RTC_FREQ_GCD;
 }
 
-uint32_t us_to_rtcss(int32_t us)
+uint32_t us_to_rtcss(uint32_t us)
 {
 	return RTC_PREDIV_S - us * RTC_FREQ_GCD / US_GCD;
 }

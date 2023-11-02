@@ -1,25 +1,17 @@
-/* Copyright 2016 The ChromiumOS Authors
+/* Copyright 2021 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
 
 /* Clocks and power management settings */
 
-#ifndef __CROS_EC_CLOCK_F_H
-#define __CROS_EC_CLOCK_F_H
+#ifndef __CROS_EC_CLOCK_L4_H
+#define __CROS_EC_CLOCK_L4_H
 
-#include "chipset.h"
-#include "clock.h"
-#include "common.h"
-#include "console.h"
-#include "cpu.h"
-#include "hooks.h"
 #include "hwtimer.h"
 #include "registers.h"
 #include "system.h"
-#include "task.h"
 #include "timer.h"
-#include "util.h"
 
 /* Lock and unlock RTC write access */
 static inline void rtc_lock_regs(void)
@@ -51,10 +43,10 @@ uint32_t rtc_to_sec(const struct rtc_time_reg *rtc);
 void sec_to_rtc(uint32_t sec, struct rtc_time_reg *rtc);
 
 /* Calculate microseconds from rtc sub-second register. */
-int32_t rtcss_to_us(uint32_t rtcss);
+uint32_t rtcss_to_us(uint32_t rtcss);
 
 /* Calculate rtc sub-second register value from microseconds. */
-uint32_t us_to_rtcss(int32_t us);
+uint32_t us_to_rtcss(uint32_t us);
 
 /* Return sub-10-sec time diff between two rtc readings */
 uint32_t get_rtc_diff(const struct rtc_time_reg *rtc0,
@@ -82,9 +74,6 @@ uint32_t get_rtc_alarm(void);
 /* RTC init */
 void rtc_init(void);
 
-/* Init clock blocks and functionality */
-void clock_init(void);
-
 /* Init high speed clock config */
 void config_hispeed_clock(void);
 
@@ -95,9 +84,13 @@ int clock_get_timer_freq(void);
  * Return 1 if host_wake_time is nonzero and the saved host_wake_time
  * is expired at a given time, ts.
  */
-int is_host_wake_alarm_expired(timestamp_t ts);
+bool is_host_wake_alarm_expired(timestamp_t ts);
 
 /* Set RTC wakeup based on the value saved in host_wake_time */
 void restore_host_wake_alarm(void);
 
-#endif /* __CROS_EC_CLOCK_F_H */
+#ifdef CONFIG_LOW_POWER_IDLE
+void low_power_init(void);
+#endif
+
+#endif /* __CROS_EC_CLOCK_L4_H */

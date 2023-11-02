@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "clock-f.h"
+#include "clock_chip.h"
 #include "test_util.h"
 
 static uint32_t rtc_fired;

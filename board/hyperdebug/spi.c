@@ -6,6 +6,7 @@
 
 #include "board_util.h"
 #include "clock.h"
+#include "clock_chip.h"
 #include "common.h"
 #include "console.h"
 #include "dma.h"

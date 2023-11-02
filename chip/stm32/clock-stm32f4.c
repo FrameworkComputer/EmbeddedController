@@ -7,8 +7,8 @@
 
 #include "builtin/assert.h"
 #include "chipset.h"
-#include "clock-f.h"
 #include "clock.h"
+#include "clock_chip.h"
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
@@ -349,13 +349,13 @@ test_mockable void clock_enable_module(enum module_id module, int enable)
  */
 #define SCALING 1000
 
-int32_t rtcss_to_us(uint32_t rtcss)
+uint32_t rtcss_to_us(uint32_t rtcss)
 {
 	return ((RTC_PREDIV_S - rtcss) * (SECOND / SCALING) /
 		(RTC_FREQ / SCALING));
 }
 
-uint32_t us_to_rtcss(int32_t us)
+uint32_t us_to_rtcss(uint32_t us)
 {
 	return (RTC_PREDIV_S -
 		(us * (RTC_FREQ / SCALING) / (SECOND / SCALING)));

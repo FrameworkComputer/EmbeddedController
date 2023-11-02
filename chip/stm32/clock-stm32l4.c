@@ -7,8 +7,8 @@
 
 #include "builtin/assert.h"
 #include "chipset.h"
-#include "clock-l4.h"
 #include "clock.h"
+#include "clock_chip.h"
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
@@ -16,6 +16,7 @@
 #include "host_command.h"
 #include "registers.h"
 #include "rtc.h"
+#include "task.h"
 #include "timer.h"
 #include "uart.h"
 #include "util.h"
@@ -23,6 +24,9 @@
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
 #define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
+
+#define STM32L4_RTC_REQ 1000000
+#define STM32L4_LSI_CLOCK 32000
 
 /* High-speed oscillator is 16 MHz */
 #define STM32_HSI_CLOCK 16000000
