@@ -16,10 +16,10 @@
 #include "host_command.h"
 #include "lid_angle.h"
 #include "lid_switch.h"
-#include "stdbool.h"
 #include "tablet_mode.h"
 #include "timer.h"
 
+#include <stdbool.h>
 #include <string.h>
 
 #define CPRINTS(format, args...) cprints(CC_MOTION_LID, format, ##args)
