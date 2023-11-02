@@ -41,15 +41,8 @@ struct spi_device_t spi_devices[] = {
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
-static int spi_device_default_gpio_cs[ARRAY_SIZE(spi_devices)] = {
-	GPIO_CN9_25,
-	GPIO_CN10_6,
-};
-
-static int spi_device_default_div[ARRAY_SIZE(spi_devices)] = {
-	7,
-	255,
-};
+static int spi_device_default_gpio_cs[ARRAY_SIZE(spi_devices)];
+static int spi_device_default_div[ARRAY_SIZE(spi_devices)];
 
 /*
  * Find spi device by name or by number.  Returns an index into spi_devices[],
@@ -557,6 +550,12 @@ DECLARE_HOOK(HOOK_REINIT, spi_reinit, HOOK_PRIO_DEFAULT);
 static void spi_init(void)
 {
 	timestamp_t deadline;
+
+	/* Record initial values for use by `spi_reinit()` above. */
+	for (unsigned int i = 0; i < spi_devices_used; i++) {
+		spi_device_default_gpio_cs[i] = spi_devices[i].gpio_cs;
+		spi_device_default_div[i] = spi_devices[i].div;
+	}
 
 	/* Structured endpoints */
 	usb_spi_enable(1);
