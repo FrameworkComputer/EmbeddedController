@@ -27,10 +27,14 @@ static void check_fan_ready_deferred(void)
 	static bool flag_left_fan_ready;
 	static int count;
 
-	if ((fan_get_rpm_actual(0) > 100))
+	if ((fan_get_rpm_actual(0) > 100) && !flag_right_fan_ready) {
 		flag_right_fan_ready = true;
-	if ((fan_get_rpm_actual(1) > 100))
+		set_diagnostic(DIAGNOSTICS_NO_RIGHT_FAN, false);
+	}
+	if ((fan_get_rpm_actual(1) > 100) && !flag_left_fan_ready) {
 		flag_left_fan_ready = true;
+		set_diagnostic(DIAGNOSTICS_NO_LEFT_FAN, false);
+	}
 
 	if (flag_right_fan_ready && flag_left_fan_ready) {
 		/* Exit the duty mode and let thermal to control the fan */
@@ -44,10 +48,6 @@ static void check_fan_ready_deferred(void)
 		hook_call_deferred(&check_fan_ready_deferred_data, 500 * MSEC);
 	} else {
 		dptf_set_fan_duty_target(-1);
-		if (!flag_right_fan_ready)
-			set_diagnostic(DIAGNOSTICS_NO_RIGHT_FAN, true);
-		if (!flag_left_fan_ready)
-			set_diagnostic(DIAGNOSTICS_NO_LEFT_FAN, true);
 		count = 0;
 		flag_right_fan_ready = 0;
 		flag_left_fan_ready = 0;
