@@ -47,7 +47,7 @@ static void board_ina236_init(void)
 	if (rv != EC_SUCCESS)
 		CPRINTS("ina236 write calib fail");
 
-	rv = ina2xx_write(0, INA2XX_REG_CONFIG, 0x4007);
+	rv = ina2xx_write(0, INA2XX_REG_CONFIG, 0x4027);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("ina236 write config fail");
