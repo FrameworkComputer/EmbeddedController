@@ -34,6 +34,11 @@ struct image_data {
 	char cros_fwid[32];
 	uint32_t cookie3;
 } __packed;
+/*
+ * The offset is used in zephyr/include/cros/integrated_fwid.dtsi.
+ * Be mindful of the FMAP's RO state when changing the offset.
+ */
+BUILD_ASSERT(offsetof(struct image_data, version) == 4);
 
 extern const struct image_data current_image_data;
 extern const char build_info[];

@@ -49,9 +49,11 @@
 			size = <0x40000>;
 			rw-fw {
 				type = "section";
-				zephyr-rw {
+				zephyr_rw: zephyr-rw {
 					type = "blob";
 					filename = "zephyr_rw.bin";
+					elf-filename = "zephyr_rw.elf";
+					elf-base-sym = "rom_start";
 				};
 				rw-fwid {
 					/* Fix the location of the FWID to the

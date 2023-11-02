@@ -173,7 +173,13 @@ class BinmanPacker(BasePacker):
             ro_dir / "zephyr" / self.ro_file, work_dir / "zephyr_ro.bin"
         )
         shutil.copy2(
+            ro_dir / "zephyr" / "zephyr.elf", work_dir / "zephyr_ro.elf"
+        )
+        shutil.copy2(
             rw_dir / "zephyr" / self.rw_file, work_dir / "zephyr_rw.bin"
+        )
+        shutil.copy2(
+            rw_dir / "zephyr" / "zephyr.elf", work_dir / "zephyr_rw.elf"
         )
 
         version_file_path = work_dir / "version.txt"

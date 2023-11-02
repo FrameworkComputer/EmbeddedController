@@ -1,0 +1,27 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&binman {
+	ec-rw {
+		rw-fw {
+			rw-fwid {
+				/* Delete the offset property which is a
+				 * fixed location at the end of the RW_FW.
+				 */
+				/delete-property/ offset;
+
+				/* Point the FWID section to
+				 * current_image_data.version[32].
+				 * The offset of version is 4.
+				 */
+				offset-from-elf = <&zephyr_rw>,
+					"current_image_data", <4>;
+
+				/* As a result, it overlaps with the other. */
+				overlap;
+			};
+		};
+	};
+};
