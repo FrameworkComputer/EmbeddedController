@@ -478,14 +478,14 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 50000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 20000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-					MIN(75000, (active_mpower * 918 / 1000) - 30000 - 50000);
+					75000;
 			} else if (active_mpower >= 100000) {
 				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 30000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 30000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
-					MIN(75000, (active_mpower * 6885 / 10000) - 30000 - 30000);
+					75000;
 			} else {
 				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 0;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 0;
@@ -585,8 +585,35 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 65000;
 				}
+			} else if (active_mpower >= 5000) {
+				/* DC + AC under 65W */
+				if (battery_percent > 30) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 118000;
+				} else if (battery_percent > 25) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 36000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 44000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 65000;
+				} else if (battery_percent > 20) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 24000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 29000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 65000;
+				} else {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 65000;
+				}
 			} else {
-				/* DC + AC under 65W .or. DC only */
+				/*  DC only */
 				if (battery_percent > 30) {
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
