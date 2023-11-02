@@ -29,6 +29,7 @@ enum power_limit_type {
 enum power_limit_function {
 	FUNCTION_DEFAULT = 0,
 	FUNCTION_SLIDER = 0,
+	FUNCTION_THERMAL_PMF,
 	FUNCTION_SAFETY,
 	FUNCTION_POWER,
 	FUNCTION_THERMAL,

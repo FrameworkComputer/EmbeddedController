@@ -4,6 +4,7 @@
 #include "charge_state.h"
 #include "charger.h"
 #include "charge_manager.h"
+#include "board_function.h"
 #include "chipset.h"
 #include "common_cpu_power.h"
 #include "customized_shared_memory.h"
@@ -23,9 +24,10 @@
 
 static int battery_current_limit_mA;
 static int slider_stt_table;
-static int power_stt_table;
+static int thermal_stt_table;
 static int safety_stt;
 
+/* Update PL for thermal table pmf sheet : slider default */
 static void update_os_power_slider(int mode, bool with_dc, int active_mpower)
 {
 	switch (mode) {
@@ -116,7 +118,8 @@ static void update_os_power_slider(int mode, bool with_dc, int active_mpower)
 	}
 }
 
-static void update_adapter_power_limit(int battery_percent, int active_mpower,
+/* Update PL for thermal table pmf sheet : pmf */
+static void update_thermal_power_limit(int battery_percent, int active_mpower,
 				       bool with_dc, int mode)
 {
 	if (gpu_present()) {
@@ -125,190 +128,521 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 120000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 120000;
 			power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 50000;
-			power_stt_table = 32;
+			thermal_stt_table = 32;
 		} else if ((active_mpower >= 180000) && with_dc) {
 			/* limited by update_os_power_slider */
-			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] =
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] =
 				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
-			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] =
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] =
 				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
-			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] =
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] =
 				power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
-			power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] =
 				power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT];
-			power_stt_table = slider_stt_table;
+			thermal_stt_table = slider_stt_table;
 		} else if (active_mpower >= 140000) {
 			if (with_dc) {
 				if (mode == EC_AC_BEST_PERFORMANCE) {
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 95000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 95000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 95000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						50000;
-					power_stt_table = 4;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 95000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 95000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 95000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
+						= 50000;
+					thermal_stt_table = 4;
 				} else if (mode == EC_AC_BALANCED) {
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 85000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 85000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 85000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						40000;
-					power_stt_table = 15;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 85000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 85000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 85000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
+						= 40000;
+					thermal_stt_table = 15;
 				} else {
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						30000;
-					power_stt_table = 17;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 60000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 60000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 60000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] 
+						= 30000;
+					thermal_stt_table = 17;
 				}
 			} else {
 				if (mode == EC_AC_BEST_PERFORMANCE) {
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 60000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						30000;
-					power_stt_table = 26;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 60000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 60000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 60000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
+						= 30000;
+					thermal_stt_table = 26;
 				} else if (mode == EC_AC_BALANCED) {
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 50000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 50000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 50000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						20000;
-					power_stt_table = 27;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 50000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 50000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 50000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
+						= 20000;
+					thermal_stt_table = 27;
 				} else {
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 30000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
-					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-						30000;
-					power_stt_table = 28;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 30000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 30000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 30000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
+						= 30000;
+					thermal_stt_table = 28;
 				}
 			}
 		} else if (active_mpower >= 100000) {
 			if (with_dc) {
 				if (mode == EC_AC_BEST_PERFORMANCE) {
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 85000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 85000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 85000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
+						= 40000;
+					thermal_stt_table = 5;
+				} else {
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 60000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 60000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 60000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
+						= 30000;
+					thermal_stt_table = 16;
+				}
+			} else {
+				if ((mode == EC_AC_BEST_PERFORMANCE) || (mode == EC_AC_BALANCED)) {
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 50000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 50000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 50000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
+						= 20000;
+					thermal_stt_table = 29;
+				} else {
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 30000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 30000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 30000;
+					power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
+						= 30000;
+					thermal_stt_table = 30;
+				}
+			}
+		} else if ((active_mpower < 100000) && (active_mpower > 0)) {
+			if (with_dc) {
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 60000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 60000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 60000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 30000;
+				thermal_stt_table = 6;
+			} else {
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 30000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 30000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 30000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 30000;
+				thermal_stt_table = 31;
+			}
+		} else {
+			/* DC only */
+			/* limited by update_os_power_slider */
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] =
+				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] =
+				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] =
+				power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] =
+				power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT];
+			thermal_stt_table = slider_stt_table;
+		}
+	} else {
+		/* UMA */
+		if (active_mpower >= 180000) {
+			/* limited by update_os_power_slider */
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] =
+				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] =
+				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] =
+				power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+			thermal_stt_table = slider_stt_table;
+		} else if (active_mpower > 100000) {
+			if (mode == EC_AC_BEST_PERFORMANCE) {
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 45000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 54000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 65000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+				thermal_stt_table = 11;
+			} else if (mode == EC_AC_BALANCED) {
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 40000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 48000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 58000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+				thermal_stt_table = 18;
+			} else {
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 30000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 36000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 44000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+				thermal_stt_table = 19;
+			}
+		} else if (active_mpower >= 80000) {
+			if (mode == EC_AC_BEST_PERFORMANCE) {
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 30000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 36000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 44000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+				thermal_stt_table = 12;
+			} else {
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 30000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 36000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 44000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+				thermal_stt_table = 20;
+			}
+		} else if ((active_mpower < 80000) && (active_mpower > 0)) {
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 30000;
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 30000;
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 30000;
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+			thermal_stt_table = 13;
+		} else {
+			/* DC only */
+			/* limited by update_os_power_slider */
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] =
+				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] =
+				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] =
+				power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
+			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+			thermal_stt_table = slider_stt_table;
+		}
+	}
+}
+
+static void update_adapter_power_limit(int battery_percent, int active_mpower,
+				       bool with_dc, int mode)
+{
+	if (gpu_present()) {
+		if (with_dc) {
+			if (active_mpower >= 180000) {
+				if (battery_percent > 30) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 145000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 145000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 145000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						54000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(145000, (active_mpower * 918 / 1000) +
+						133740 - 30000 - 125000);
+				} else if (battery_percent > 25) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 95000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 95000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 95000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						50000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(95000, (active_mpower * 918 / 1000) +
+						55000 - 30000 - 95000);
+				} else if (battery_percent > 20) {
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 85000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 85000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 85000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
 						40000;
-					power_stt_table = 5;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(85000, (active_mpower * 918 / 1000) +
+						35000 - 30000 - 85000);
 				} else {
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 60000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 60000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
 						30000;
-					power_stt_table = 16;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(75000, (active_mpower * 918 / 1000) -
+						30000 - 60000);
 				}
-			} else {
-				if ((mode == EC_AC_BEST_PERFORMANCE) || (mode == EC_AC_BALANCED)) {
+			} else if (active_mpower >= 140000) {
+				if (battery_percent > 30) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 95000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 95000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 95000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						50000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(138000, (active_mpower * 918 / 1000) +
+						123000 - 30000 - 120000);
+				} else if (battery_percent > 25) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 85000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 85000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 85000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						40000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(120000, (active_mpower * 918 / 1000) +
+						75000 - 30000 - 85000);
+				} else if (battery_percent > 20) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 60000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 60000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(110000, (active_mpower * 918 / 1000) +
+						35000 - 30000 - 60000);
+				} else {
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 50000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 50000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 50000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
 						20000;
-					power_stt_table = 29;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(84000, (active_mpower * 918 / 1000) -
+						30000 - 50000);
+				}
+			} else if (active_mpower >= 100000) {
+				if (battery_percent > 30) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 60000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 60000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(120000, (active_mpower * 918 / 1000) +
+						123000 - 30000 - 100000);
+				} else if (battery_percent > 25) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 50000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 50000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 50000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(100000, (active_mpower * 918 / 1000) +
+						75000 - 30000 - 75000);
+				} else if (battery_percent > 20) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 40000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 40000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 40000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(93000, (active_mpower * 918 / 1000) +
+						35000 - 30000 - 40000);
 				} else {
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 30000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
 					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
 						30000;
-					power_stt_table = 30;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(93000, (active_mpower * 918 / 1000) - 30000);
+				}
+			} else {
+				/* DC + AC under 100W .or. DC only */
+				if (battery_percent > 30) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 60000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 60000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
+						30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 118000;
+				} else if (battery_percent > 25) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 50000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 50000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 50000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 100000;
+				} else if (battery_percent > 20) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 50000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 50000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 50000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 100000;
+				} else {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 65000;
 				}
 			}
-		} else if ((active_mpower < 100000) && (active_mpower > 0)) {
-			if (with_dc) {
+		} else {
+		/* AC only */
+			if (active_mpower >= 180000) {
 				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 60000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 60000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 60000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 30000;
-				power_stt_table = 6;
-			} else {
+				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+					MIN(75000, (active_mpower * 918 / 1000) - 30000 - 60000);
+			} else if (active_mpower >= 140000) {
+				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 50000;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 50000;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 50000;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 20000;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+					MIN(75000, (active_mpower * 918 / 1000) - 30000 - 50000);
+			} else if (active_mpower >= 100000) {
 				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 30000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 30000;
-				power_stt_table = 31;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+					MIN(75000, (active_mpower * 6885 / 10000) - 30000 - 30000);
+			} else {
+				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 0;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 0;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 0;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 65000;
 			}
-		} else {
-			/* DC only */
-			/* limited by update_os_power_slider */
-			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
-			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
-			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
-			power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT];
-			power_stt_table = slider_stt_table;
 		}
 	} else {
 		/* UMA */
-		if (active_mpower >= 180000) {
-			/* limited by update_os_power_slider */
-			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
-			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
-			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
-			power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-			power_stt_table = slider_stt_table;
-		} else if (active_mpower > 100000) {
-			if (mode == EC_AC_BEST_PERFORMANCE) {
+		if (with_dc) {
+			if (active_mpower >= 180000) {
+				if (battery_percent > 30) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(227000, (active_mpower * 918 / 1000) + 133740 - 30000);
+				} else if (battery_percent > 25) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(170000, (active_mpower * 918 / 1000) + 40000 - 30000);
+				} else if (battery_percent > 20) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(161000, (active_mpower * 918 / 1000) + 26000 - 30000);
+				} else {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(135000, (active_mpower * 918 / 1000) - 30000);
+				}
+			} else if (active_mpower >= 140000) {
+				if (battery_percent > 30) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(227000, (active_mpower * 918 / 1000) + 133740 - 30000);
+				} else if (battery_percent > 25) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 40000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 48000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 58000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(175000, (active_mpower * 918 / 1000) + 40000 - 30000);
+				} else if (battery_percent > 20) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 36000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 44000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(160000, (active_mpower * 918 / 1000) + 26000 - 30000);
+				} else {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 36000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 44000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(134000, (active_mpower * 918 / 1000) - 30000);
+				}
+			} else if (active_mpower >= 65000) {
+				if (battery_percent > 30) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(187000, (active_mpower * 6885 / 10000) + 148600 - 30000);
+				} else if (battery_percent > 25) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 36000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 44000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+						MIN(175000, (active_mpower * 6885 / 10000) + 45000 - 30000);
+				} else if (battery_percent > 20) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 100000;
+				} else {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 65000;
+				}
+			} else {
+				/* DC + AC under 65W .or. DC only */
+				if (battery_percent > 30) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 118000;
+				} else if (battery_percent > 25) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 36000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 44000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 100000;
+				} else if (battery_percent > 20) {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 24000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 29000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 100000;
+				} else {
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 20000;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+					power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 65000;
+				}
+			}
+		} else {
+		/* AC only */
+			if (active_mpower >= 180000) {
 				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				power_stt_table = 11;
-			} else if (mode == EC_AC_BALANCED) {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 40000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 48000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 58000;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+					MIN(135000, (active_mpower * 918 / 1000) - 30000);
+			} else if (active_mpower >= 140000) {
+				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 45000;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 54000;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 65000;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				power_stt_table = 18;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+					MIN(100000, (active_mpower * 918 / 1000) - 30000);
+			} else if (active_mpower >= 65000) {
+				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 20000;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 20000;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 35000;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] =
+					MIN(100000, (active_mpower * 6885 / 10000) - 30000);
 			} else {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 36000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 44000;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 0;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 0;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 0;
 				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				power_stt_table = 19;
+				power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 65000;
 			}
-		} else if (active_mpower >= 80000) {
-			if (mode == EC_AC_BEST_PERFORMANCE) {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 36000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 44000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				power_stt_table = 12;
-			} else {
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 36000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 44000;
-				power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-				power_stt_table = 20;
-			}
-		} else if ((active_mpower < 80000) && (active_mpower > 0)) {
-			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 30000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 30000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 30000;
-			power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-			power_stt_table = 13;
-		} else {
-			/* DC only */
-			/* limited by update_os_power_slider */
-			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
-			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
-			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] =
-				power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
-			power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 0;
-			power_stt_table = slider_stt_table;
 		}
 	}
 }
@@ -375,7 +709,7 @@ static void update_safety_power_limit(int active_mpower)
 		power_limit[FUNCTION_SAFETY].mwatt[TYPE_FPPT]
 			= power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
 		power_limit[FUNCTION_SAFETY].mwatt[TYPE_P3T]
-			= power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T];
+			= power_limit[FUNCTION_POWER].mwatt[TYPE_P3T];
 		if (gpu_present())
 			power_limit[FUNCTION_SAFETY].mwatt[TYPE_APU_ONLY_SPPT]
 				= power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT];
@@ -433,7 +767,7 @@ static void update_safety_power_limit(int active_mpower)
 			} else {
 				tune_PLs(delta);
 				if (power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL]
-					>= power_limit[FUNCTION_POWER].mwatt[TYPE_SPL])
+					>= power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL])
 					safety_level--;
 			}
 		}
@@ -461,12 +795,12 @@ static void update_safety_power_limit(int active_mpower)
 		/* prochot */
 		if (level_increase) {
 			throttle_ap(THROTTLE_ON, THROTTLE_HARD, THROTTLE_SRC_BAT_DISCHG_CURRENT);
-			power_stt_table = (gpu_present() ? 7 : 14);
+			thermal_stt_table = (gpu_present() ? 7 : 14);
 			safety_stt = 1;
 			safety_level++;
 		} else {
 			throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_BAT_DISCHG_CURRENT);
-			power_stt_table = (gpu_present() ? 7 : 14);
+			thermal_stt_table = (gpu_present() ? 7 : 14);
 			safety_stt = 1;
 			safety_level--;
 		}
@@ -495,7 +829,7 @@ static void update_safety_power_limit(int active_mpower)
 		}
 		break;
 	case LEVEL_COUNT:
-		power_stt_table = (gpu_present() ? 7 : 14);
+		thermal_stt_table = (gpu_present() ? 7 : 14);
 		if (!level_increase)
 			safety_level--;
 		break;
@@ -518,7 +852,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	int mode = *host_get_memmap(EC_MEMMAP_POWER_SLIDE);
 	int active_mpower = cypd_get_ac_power();
 	bool with_dc = ((battery_is_present() == BP_YES) ? true : false);
-	int battery_percent = charge_get_percent();
+	int battery_percent = get_system_percentage() / 10;
 
 	if ((*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER)) == 0)
 		old_stt_table = 0;
@@ -539,6 +873,9 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 			update_os_power_slider(mode, with_dc, active_mpower);
 	}
 
+	if (func_ctl & 0x1)
+		update_thermal_power_limit(battery_percent, active_mpower, with_dc, mode);
+
 	if (func_ctl & 0x2)
 		update_adapter_power_limit(battery_percent, active_mpower, with_dc, mode);
 
@@ -546,9 +883,9 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		update_safety_power_limit(active_mpower);
 	}
 
-	if ((mode != 0) && (old_stt_table != power_stt_table) && (power_stt_table != 0)) {
-		*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER) = power_stt_table;
-		old_stt_table = power_stt_table;
+	if ((mode != 0) && (old_stt_table != thermal_stt_table) && (thermal_stt_table != 0)) {
+		*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER) = thermal_stt_table;
+		old_stt_table = thermal_stt_table;
 		host_set_single_event(EC_HOST_EVENT_STT_UPDATE);
 	}
 
@@ -572,9 +909,6 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 				target_func[item] = func;
 		}
 	}
-
-	/* p3t follow power table */
-	target_func[TYPE_P3T] = FUNCTION_POWER;
 
 	if (power_limit[target_func[TYPE_SPL]].mwatt[TYPE_SPL] != old_sustain_power_limit
 		|| power_limit[target_func[TYPE_FPPT]].mwatt[TYPE_FPPT] != old_fast_ppt_limit
@@ -610,8 +944,7 @@ static void initial_soc_power_limit(void)
 	power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] = 60000;
 	power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] = 60000;
 	power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] = 60000;
-	power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T] = 60000;
-	power_limit[FUNCTION_POWER].mwatt[TYPE_P3T] = 170000;
+	power_limit[FUNCTION_SLIDER].mwatt[TYPE_P3T] = 227000;
 	power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT] = 60000;
 }
 DECLARE_HOOK(HOOK_INIT, initial_soc_power_limit, HOOK_PRIO_INIT_I2C);
