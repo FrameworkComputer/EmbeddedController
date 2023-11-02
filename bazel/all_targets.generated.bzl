@@ -999,6 +999,10 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "it82002_evb",
+        board = "it82002_evb",
+    )
+    ec_target(
         name = "it83xx_evb",
         baseboard = "ite_evb",
         board = "it83xx_evb",
