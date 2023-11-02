@@ -120,7 +120,13 @@ static void update_adapter_power_limit(int battery_percent, int active_mpower,
 				       bool with_dc, int mode)
 {
 	if (gpu_present()) {
-		if ((active_mpower >= 180000) && with_dc) {
+		if ((active_mpower >= 240000) && with_dc && (mode == EC_AC_BALANCED)) {
+			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] = 120000;
+			power_limit[FUNCTION_POWER].mwatt[TYPE_SPPT] = 120000;
+			power_limit[FUNCTION_POWER].mwatt[TYPE_FPPT] = 120000;
+			power_limit[FUNCTION_POWER].mwatt[TYPE_APU_ONLY_SPPT] = 50000;
+			power_stt_table = 32;
+		} else if ((active_mpower >= 180000) && with_dc) {
 			/* limited by update_os_power_slider */
 			power_limit[FUNCTION_POWER].mwatt[TYPE_SPL] =
 				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
