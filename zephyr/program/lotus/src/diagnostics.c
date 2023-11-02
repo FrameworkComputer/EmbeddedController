@@ -163,6 +163,8 @@ bool diagnostics_tick(void)
 
 static void diagnostics_check(void)
 {
+	if (device_complete)
+		return;
 	/* Clear the DIAGNOSTIC_NO_S0 flag if chipset is resume */
 	set_diagnostic(DIAGNOSTICS_NO_S0, false);
 
