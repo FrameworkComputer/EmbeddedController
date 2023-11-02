@@ -77,7 +77,13 @@ void rtc_init(void);
 /* Init high speed clock config */
 void config_hispeed_clock(void);
 
-/* Get timer clock frequency (for STM32 only) */
+/* Get AHB peripheral clock frequency */
+int clock_get_ahb_freq(void);
+
+/* Get APB peripheral clock frequency (except timers) */
+int clock_get_apb_freq(void);
+
+/* Get timer clock frequency */
 int clock_get_timer_freq(void);
 
 /*
