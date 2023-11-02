@@ -441,6 +441,8 @@ enum power_state power_handle_state(enum power_state state)
 
 			/* enable the ssd2 power when the system power on from S5 */
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 1);
+			set_gpu_gpio(GPIO_FUNC_SSD1_POWER, 1);
+			set_gpu_gpio(GPIO_FUNC_SSD2_POWER, 1);
 
 			/* Power up to next state */
 			k_msleep(10);
