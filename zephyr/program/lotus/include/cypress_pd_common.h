@@ -207,7 +207,7 @@
 #define PORT_TO_CONTROLLER_PORT(x) ((x) & 0x01)
 
 enum epr_event_type {
-	EPR_MODE_ENTERED,
+	EPR_MODE_ENTERED = 1,
 	EPR_MODE_EXITED,
 	EPR_MODE_ENTER_FAILED,
 };
@@ -536,6 +536,8 @@ void cypd_set_power_active(void);
  */
 int active_charge_pd_chip(void);
 
+int get_active_charge_pd_port(void);
+
 /**
  * Return Power source port state
  *
@@ -556,8 +558,12 @@ int cypd_get_ac_power(void);
  */
 void force_disable_epr_mode(void);
 
+void release_disable_epr_mode(void);
+
 int cypd_modify_safety_power(int controller, int port, int profile);
 
 int cypd_port_3a_status(int controller, int port);
+
+uint8_t cypd_get_cfet_status(void);
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

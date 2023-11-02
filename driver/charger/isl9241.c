@@ -770,10 +770,14 @@ static enum ec_error_list isl9241_bypass_to_bat(int chgnum)
 		       MASK_CLR);
 
 	/* 6: Set ACOK reference to normal value. TODO: Revisit. */
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
+		      ISL9241_MV_TO_ACOK_REFERENCE(4500));
+#else
 	isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
 		      ISL9241_MV_TO_ACOK_REFERENCE(
 			      ISL9241_ACOK_REF_LOW_VOLTAGE_ADAPTER_MV));
-
+#endif
 	mutex_unlock(&control3_mutex_isl9241);
 	return EC_SUCCESS;
 }
@@ -804,9 +808,13 @@ static enum ec_error_list isl9241_bypass_chrg_to_bat(int chgnum)
 	isl9241_update(chgnum, ISL9241_REG_CONTROL1, ISL9241_CONTROL1_BGATE_OFF,
 		       MASK_CLR);
 	/* 7: Set ACOK reference to normal value. TODO: Revisit. */
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
+		      ISL9241_MV_TO_ACOK_REFERENCE(4500));
+#else
 	isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
 		      ISL9241_MV_TO_ACOK_REFERENCE(3600));
-
+#endif
 	mutex_unlock(&control3_mutex_isl9241);
 	return EC_SUCCESS;
 }

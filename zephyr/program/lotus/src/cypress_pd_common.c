@@ -85,6 +85,7 @@ struct extended_msg rx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 struct extended_msg tx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int prev_charge_port = -1;
+static uint8_t pd_c_fet_active_port;
 static bool verbose_msg_logging;
 static bool firmware_update;
 
@@ -385,6 +386,12 @@ void force_disable_epr_mode(void)
 {
 	disable_epr_mode = true;
 	exit_epr_mode();
+}
+
+void release_disable_epr_mode(void)
+{
+	disable_epr_mode = false;
+	enter_epr_mode();
 }
 #endif
 
@@ -1042,6 +1049,11 @@ int cypd_handle_extend_msg(int controller, int port, int len, enum tcpci_msg_typ
 	return rv;
 }
 
+uint8_t cypd_get_cfet_status(void)
+{
+	return pd_c_fet_active_port;
+}
+
 int cypd_cfet_vbus_control(int port, bool enable, bool ec_control)
 {
 	int rv;
@@ -1058,6 +1070,11 @@ int cypd_cfet_vbus_control(int port, bool enable, bool ec_control)
 		regval);
 	if (rv != EC_SUCCESS)
 		CPRINTS("%s:%d fail:%d", __func__, port, rv);
+
+	if (enable)
+		pd_c_fet_active_port |= BIT(port);
+	else
+		pd_c_fet_active_port &= ~BIT(port);
 
 	return rv;
 }
@@ -2035,6 +2052,16 @@ int active_charge_pd_chip(void)
 		return 0xff;
 
 	return (prev_charge_port < 2) ? 0 : 1;
+}
+
+int get_active_charge_pd_port(void)
+{
+	/**
+	 * charge_manager_get_active_charge_port() return the charger port too late,
+	 * we need to get the active port status immediately.
+	 */
+
+	return prev_charge_port;
 }
 
 void set_pd_fw_update(bool is_update)

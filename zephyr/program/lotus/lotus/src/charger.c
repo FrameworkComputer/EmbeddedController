@@ -26,6 +26,8 @@
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
 
+static int last_extpower_present;
+
 #ifdef CONFIG_PLATFORM_EC_CHARGER_INIT_CUSTOM
 static void charger_chips_init(void);
 static void charger_chips_init_retry(void)
@@ -131,7 +133,7 @@ static void charger_chips_init(void)
 
 	/* According to Power team suggest, Set ACOK reference to 4.704V */
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4704)))
+		ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4500)))
 		goto init_fail;
 
 	/* TODO: should we need to talk to PD chip after initial complete ? */
@@ -355,6 +357,55 @@ void board_check_current(void)
 
 	pre_status = curr_status;
 	pre_active_port = active_port;
+}
+
+__overridable int extpower_is_present(void)
+{
+	return last_extpower_present;
+}
+
+__override void board_check_extpower(void)
+{
+	static int pre_active_port = -1;
+	int pd_active_port = get_active_charge_pd_port();
+	int hw_extpower_status = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in));
+	int extpower_present = hw_extpower_status;
+	uint8_t c_fet_status = cypd_get_cfet_status();
+
+	/*
+	 * AC status
+	 *
+	 * +--------------+---------+---------------+------------+--------------------+
+	 * |   extpower   |  C fet  |  active port  |   result   |       status       |
+	 * +--------------+---------+---------------+------------+--------------------+
+	 * |     High     |  Close  |   non-active  |   HW pin   | Leakage            |
+	 * |     High     |  Close  |     active    |   HW pin   | Leakage            |
+	 * |     High     |  Open   |   non-active  |   HW pin   | Leakage            |
+	 * |     High     |  Open   |     active    |  PD state  | Normal             |
+	 * |     Low      |  Close  |   non-active  |  PD state  | Normal             |
+	 * |     Low      |  Close  |     active    |   HW pin   | VBUS control fail  |
+	 * |     Low      |  Open   |   non-active  |   HW pin   | VBUS control fail  |
+	 * |     Low      |  Open   |     active    |   HW pin   | Multi-ports switch |
+	 * |     Low      |  Open   |     active    |  PD state  | EPR mode switch    |
+	 * +--------------+---------+---------------+------------+--------------------+
+	 */
+
+	if ((pre_active_port == pd_active_port) &&
+		(((pd_active_port != -1) && c_fet_status) ||
+		((pd_active_port == -1) && !c_fet_status)))
+		extpower_present = (pd_active_port == -1) ? 0 : 1;
+
+	if (last_extpower_present != extpower_present) {
+		/**
+		 * last extpower present is a return value in function "extpower_is_present()",
+		 * must update the value before extpower_handle_update();
+		 */
+		last_extpower_present = extpower_present;
+		extpower_handle_update(extpower_present);
+	} else
+		last_extpower_present = extpower_present;
+
+	pre_active_port = pd_active_port;
 }
 
 /* EC console command */
