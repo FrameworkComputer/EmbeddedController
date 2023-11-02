@@ -299,6 +299,17 @@ tests:
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
+  drivers.button.detachable:
+    timeout: 360
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_BUTTON=y
+    - CONFIG_PLATFORM_EC_CMD_BUTTON=y
+    - CONFIG_PLATFORM_EC_VOLUME_BUTTONS=y
+    - CONFIG_PLATFORM_EC_EMULATED_SYSRQ=y
+    - CONFIG_PLATFORM_EC_DETACHABLE_BASE=y
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./button/detachable_led.overlay
   drivers.cbi_flash:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_CBI_FLASH=y
