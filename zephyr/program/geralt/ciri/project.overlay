@@ -1,0 +1,20 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Geralt program common DTS includes */
+
+#include "../adc.dtsi"
+#include "../gpio.dtsi"
+#include "../i2c.dtsi"
+#include "../interrupts.dtsi"
+#include "../keyboard.dtsi"
+#include "../mkbp.dtsi"
+#include "../motionsense.dtsi"
+#include "../power_signal.dtsi"
+#include "../uart.dtsi"
+#include "../usbc.dtsi"
+#include "../shi.dtsi"
+#include "battery.dtsi"
+#include "led.dtsi"

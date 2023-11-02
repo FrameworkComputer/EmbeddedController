@@ -33,4 +33,6 @@ zephyr_include_directories(
 
 if(DEFINED CONFIG_BOARD_GERALT)
 	project(geralt)
+elseif(DEFINED CONFIG_BOARD_CIRI)
+	project(ciri)
 endif()
