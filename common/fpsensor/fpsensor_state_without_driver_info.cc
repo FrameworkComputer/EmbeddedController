@@ -19,7 +19,7 @@ struct positive_match_secret_state
 /* Index of the last enrolled but not retrieved template. */
 uint16_t template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
 /* Number of used templates */
-uint16_t templ_valid;
+test_mockable uint16_t templ_valid;
 /* Bitmap of the templates with local modifications */
 uint32_t templ_dirty;
 /* Current user ID */
