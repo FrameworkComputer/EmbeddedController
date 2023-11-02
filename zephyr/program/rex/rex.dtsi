@@ -4,6 +4,7 @@
  */
 
 #include <dt-bindings/usb_pd_tcpm.h>
+#include <cros/integrated_fwid.dtsi>
 
 / {
 	aliases {
