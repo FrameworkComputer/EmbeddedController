@@ -2,7 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include "fpsensor_detect.h"
+#include "fpsensor/fpsensor_detect.h"
 
 const char *fp_transport_type_to_str(enum fp_transport_type type)
 {

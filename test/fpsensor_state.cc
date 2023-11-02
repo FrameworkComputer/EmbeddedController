@@ -5,7 +5,7 @@
 
 #include "common.h"
 #include "ec_commands.h"
-#include "fpsensor_state.h"
+#include "fpsensor/fpsensor_state.h"
 #include "mock/fpsensor_state_mock.h"
 #include "test_util.h"
 #include "util.h"

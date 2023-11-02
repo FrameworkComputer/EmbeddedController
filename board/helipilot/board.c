@@ -8,7 +8,7 @@
 #include "clock.h"
 #include "common.h"
 #include "console.h"
-#include "fpsensor_detect.h"
+#include "fpsensor/fpsensor_detect.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"

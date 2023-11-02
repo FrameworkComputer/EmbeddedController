@@ -11,7 +11,7 @@
 #include <zephyr/mgmt/ec_host_cmd/ec_host_cmd.h>
 
 #include <ec_commands.h>
-#include <fpsensor_detect.h>
+#include <fpsensor/fpsensor_detect.h>
 #include <gpio_signal.h>
 
 enum fp_transport_type get_fp_transport_type(void)

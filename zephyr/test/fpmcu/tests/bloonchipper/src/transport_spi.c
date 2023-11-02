@@ -4,7 +4,7 @@
  */
 
 #include "ec_commands.h"
-#include "fpsensor_detect.h"
+#include "fpsensor/fpsensor_detect.h"
 #include "gpio_signal.h"
 #include "hooks.h"
 #include "zephyr/kernel.h"

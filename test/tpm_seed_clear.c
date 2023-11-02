@@ -10,7 +10,7 @@
 #include "test_util.h"
 
 #ifdef SECTION_IS_RW
-#include "fpsensor_state.h"
+#include "fpsensor/fpsensor_state.h"
 #endif
 
 #include <stdint.h>

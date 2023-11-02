@@ -5,8 +5,8 @@
 
 /* Fingerprint sensor type identifiers */
 
-#ifndef __CROS_EC_FPSENSOR_TYPES_H
-#define __CROS_EC_FPSENSOR_TYPES_H
+#ifndef __CROS_EC_FPSENSOR_FPSENSOR_TYPES_H
+#define __CROS_EC_FPSENSOR_FPSENSOR_TYPES_H
 
 enum fp_sensor_type {
 	FP_SENSOR_TYPE_UNKNOWN = -1,
@@ -32,4 +32,4 @@ enum finger_state {
 	FINGER_PRESENT = 2,
 };
 
-#endif /* __CROS_EC_FPSENSOR_TYPES_H */
+#endif /* __CROS_EC_FPSENSOR_FPSENSOR_TYPES_H */

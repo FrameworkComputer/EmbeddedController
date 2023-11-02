@@ -5,8 +5,8 @@
 
 /* Fingerprint sensor states interface without driver info */
 
-#ifndef __CROS_EC_FPSENSOR_STATE_WITHOUT_DRIVER_INFO_H
-#define __CROS_EC_FPSENSOR_STATE_WITHOUT_DRIVER_INFO_H
+#ifndef __CROS_EC_FPSENSOR_FPSENSOR_STATE_WITHOUT_DRIVER_INFO_H
+#define __CROS_EC_FPSENSOR_FPSENSOR_STATE_WITHOUT_DRIVER_INFO_H
 
 #include "atomic.h"
 #include "ec_commands.h"
@@ -63,4 +63,4 @@ int fp_tpm_seed_is_set(void);
 }
 #endif
 
-#endif /* __CROS_EC_FPSENSOR_STATE_WITHOUT_DRIVER_INFO_H */
+#endif /* __CROS_EC_FPSENSOR_FPSENSOR_STATE_WITHOUT_DRIVER_INFO_H */

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "fpsensor_detect.h"
+#include "fpsensor/fpsensor_detect.h"
 
 enum fp_sensor_type fpsensor_detect_get_type(void)
 {

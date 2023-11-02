@@ -4,9 +4,9 @@
  */
 
 #include "aes_gcm_helpers.h"
-#include "fpsensor_crypto.h"
-#include "fpsensor_state_without_driver_info.h"
-#include "fpsensor_utils.h"
+#include "fpsensor/fpsensor_crypto.h"
+#include "fpsensor/fpsensor_state_without_driver_info.h"
+#include "fpsensor/fpsensor_utils.h"
 #include "openssl/aes.h"
 #include "openssl/mem.h"
 

@@ -18,7 +18,7 @@
 #error "Sensor type not defined!"
 #endif
 
-#include <fpsensor_types.h>
+#include "fpsensor/fpsensor_types.h"
 
 /**
  * Runs a test for defective pixels.

@@ -5,8 +5,8 @@
 
 /* Fingerprint sensor interface */
 
-#ifndef __CROS_EC_FPSENSOR_AUTH_COMMANDS_H
-#define __CROS_EC_FPSENSOR_AUTH_COMMANDS_H
+#ifndef __CROS_EC_FPSENSOR_FPSENSOR_AUTH_COMMANDS_H
+#define __CROS_EC_FPSENSOR_FPSENSOR_AUTH_COMMANDS_H
 
 #include <array>
 
@@ -25,4 +25,4 @@ extern std::array<uint8_t, FP_CK_AUTH_NONCE_LEN> auth_nonce;
  */
 enum ec_error_list check_context_cleared();
 
-#endif /* __CROS_EC_FPSENSOR_AUTH_COMMANDS_H */
+#endif /* __CROS_EC_FPSENSOR_FPSENSOR_AUTH_COMMANDS_H */

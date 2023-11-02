@@ -5,8 +5,8 @@
 
 /* Fingerprint sensor detection (transport and sensor). */
 
-#ifndef __CROS_EC_FPSENSOR_DETECT_H
-#define __CROS_EC_FPSENSOR_DETECT_H
+#ifndef __CROS_EC_FPSENSOR_FPSENSOR_DETECT_H
+#define __CROS_EC_FPSENSOR_FPSENSOR_DETECT_H
 
 #ifdef __cplusplus
 extern "C" {
@@ -25,4 +25,4 @@ enum fp_sensor_spi_select fpsensor_detect_get_spi_select(void);
 }
 #endif
 
-#endif /* __CROS_EC_FPSENSOR_DETECT_H */
+#endif /* __CROS_EC_FPSENSOR_FPSENSOR_DETECT_H */

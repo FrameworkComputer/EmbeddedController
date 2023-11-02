@@ -4,7 +4,7 @@
  */
 
 #include "common.h"
-#include "fpsensor_detect.h"
+#include "fpsensor/fpsensor_detect.h"
 #include "host_command.h"
 #include "shi_chip.h"
 #include "uart_host_command.h"

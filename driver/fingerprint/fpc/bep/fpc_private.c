@@ -5,8 +5,8 @@
 
 #include "driver/fingerprint/fpc/fpc_sensor.h"
 #include "fpc_bio_algorithm.h"
-#include "fpsensor.h"
-#include "fpsensor_utils.h"
+#include "fpsensor/fpsensor.h"
+#include "fpsensor/fpsensor_utils.h"
 #include "gpio.h"
 #include "spi.h"
 #include "system.h"

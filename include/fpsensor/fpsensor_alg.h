@@ -5,8 +5,8 @@
 
 /* Fingerprint sensor interface */
 
-#ifndef __CROS_EC_FPSENSOR_ALG_H
-#define __CROS_EC_FPSENSOR_ALG_H
+#ifndef __CROS_EC_FPSENSOR_FPSENSOR_ALG_H
+#define __CROS_EC_FPSENSOR_FPSENSOR_ALG_H
 
 #include <stdint.h>
 
@@ -83,4 +83,4 @@ int fp_finger_enroll(uint8_t *image, int *completion);
 }
 #endif
 
-#endif /* __CROS_EC_FPSENSOR_ALG_H */
+#endif /* __CROS_EC_FPSENSOR_FPSENSOR_ALG_H */

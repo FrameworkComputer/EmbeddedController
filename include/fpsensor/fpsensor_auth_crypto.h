@@ -5,8 +5,8 @@
 
 /* Fingerprint sensor interface */
 
-#ifndef __CROS_EC_FPSENSOR_AUTH_CRYPTO_H
-#define __CROS_EC_FPSENSOR_AUTH_CRYPTO_H
+#ifndef __CROS_EC_FPSENSOR_FPSENSOR_AUTH_CRYPTO_H
+#define __CROS_EC_FPSENSOR_FPSENSOR_AUTH_CRYPTO_H
 
 #include "openssl/ec.h"
 
@@ -199,4 +199,4 @@ enum ec_error_list encrypt_data_with_ecdh_key_in_place(
 	size_t data_size, uint8_t *iv, size_t iv_size,
 	struct fp_elliptic_curve_public_key &out_pubkey);
 
-#endif /* __CROS_EC_FPSENSOR_AUTH_CRYPTO_H */
+#endif /* __CROS_EC_FPSENSOR_FPSENSOR_AUTH_CRYPTO_H */

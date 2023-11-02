@@ -5,8 +5,8 @@
 
 /* Fingerprint sensor interface */
 
-#ifndef __CROS_EC_FPSENSOR_H
-#define __CROS_EC_FPSENSOR_H
+#ifndef __CROS_EC_FPSENSOR_FPSENSOR_H
+#define __CROS_EC_FPSENSOR_FPSENSOR_H
 
 #include "common.h"
 #include "ec_commands.h"
@@ -150,4 +150,4 @@ int fp_maintenance(void);
 }
 #endif
 
-#endif /* __CROS_EC_FPSENSOR_H */
+#endif /* __CROS_EC_FPSENSOR_FPSENSOR_H */

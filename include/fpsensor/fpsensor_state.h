@@ -5,8 +5,8 @@
 
 /* Fingerprint sensor interface */
 
-#ifndef __CROS_EC_FPSENSOR_STATE_H
-#define __CROS_EC_FPSENSOR_STATE_H
+#ifndef __CROS_EC_FPSENSOR_FPSENSOR_STATE_H
+#define __CROS_EC_FPSENSOR_FPSENSOR_STATE_H
 
 #include "atomic.h"
 #include "common.h"
@@ -124,4 +124,4 @@ enum ec_status fp_read_match_secret(
 }
 #endif
 
-#endif /* __CROS_EC_FPSENSOR_STATE_H */
+#endif /* __CROS_EC_FPSENSOR_FPSENSOR_STATE_H */

@@ -5,8 +5,8 @@
 
 /* Fingerprint sensor crypto operations */
 
-#ifndef __CROS_EC_FPSENSOR_CRYPTO_H
-#define __CROS_EC_FPSENSOR_CRYPTO_H
+#ifndef __CROS_EC_FPSENSOR_FPSENSOR_CRYPTO_H
+#define __CROS_EC_FPSENSOR_FPSENSOR_CRYPTO_H
 
 #include "compile_time_macros.h"
 
@@ -104,4 +104,4 @@ enum ec_error_list aes_gcm_decrypt(const uint8_t *key, int key_size,
 }
 #endif
 
-#endif /* __CROS_EC_FPSENSOR_CRYPTO_H */
+#endif /* __CROS_EC_FPSENSOR_FPSENSOR_CRYPTO_H */

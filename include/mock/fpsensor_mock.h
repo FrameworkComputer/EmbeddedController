@@ -12,7 +12,7 @@
 #define __MOCK_FPSENSOR_MOCK_H
 
 #include "common.h"
-#include "fpsensor.h"
+#include "fpsensor/fpsensor.h"
 
 struct mock_ctrl_fp_sensor {
 	int fp_sensor_init_return;

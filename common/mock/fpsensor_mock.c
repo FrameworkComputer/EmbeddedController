@@ -9,7 +9,7 @@
  */
 
 #include "common.h"
-#include "fpsensor.h"
+#include "fpsensor/fpsensor.h"
 #include "mock/fpsensor_mock.h"
 
 #include <stdlib.h>

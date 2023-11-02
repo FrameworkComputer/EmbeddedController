@@ -23,7 +23,7 @@ extern "C" {
 #include "sha256.h"
 }
 
-#include "fpsensor_auth_crypto.h"
+#include "fpsensor/fpsensor_auth_crypto.h"
 
 std::optional<fp_elliptic_curve_public_key>
 create_pubkey_from_ec_key(const EC_KEY &key)

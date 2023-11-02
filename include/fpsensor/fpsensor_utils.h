@@ -5,8 +5,8 @@
 
 /* Misc utilities for fingerprint management */
 
-#ifndef __CROS_EC_FPSENSOR_UTILS_H
-#define __CROS_EC_FPSENSOR_UTILS_H
+#ifndef __CROS_EC_FPSENSOR_FPSENSOR_UTILS_H
+#define __CROS_EC_FPSENSOR_FPSENSOR_UTILS_H
 
 #include <stdbool.h>
 #include <stdint.h>
@@ -41,4 +41,4 @@ enum ec_error_list validate_fp_buffer_offset(uint32_t buffer_size,
 
 bool fp_match_success(int match_result);
 
-#endif /* __CROS_EC_FPSENSOR_UTILS_H */
+#endif /* __CROS_EC_FPSENSOR_FPSENSOR_UTILS_H */

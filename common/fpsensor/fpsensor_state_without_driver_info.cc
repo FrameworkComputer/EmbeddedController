@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "fpsensor_state_without_driver_info.h"
+#include "fpsensor/fpsensor_state_without_driver_info.h"
 
 /* TODO(b/286119221): Refactor fingerprint sensor state. */
 
