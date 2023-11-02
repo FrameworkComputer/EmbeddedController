@@ -10,6 +10,9 @@ from pathlib import Path
 import sys
 from typing import List, Optional
 
+import zmake.modules
+import zmake.version
+
 from scripts import util
 
 
@@ -33,8 +36,12 @@ def parse_args(argv: Optional[List[str]] = None):
 class Manifest:
     """Manifest class to operate the component manifest."""
 
-    def __init__(self):
-        self.manifest = {"version": 1, "component_list": []}
+    def __init__(self, ec_version):
+        self.manifest = {
+            "manifest_version": 1,
+            "ec_version": ec_version,
+            "component_list": [],
+        }
 
     def insert_component(self, ctype, name, i2c_port, i2c_addr, usbc_port):
         """Insert the component inform to the component manifest.
@@ -233,14 +240,24 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
     log_format = "%(levelname)s: %(message)s"
     logging.basicConfig(format=log_format, level=args.log_level)
 
-    edtlib, edt, _unused = util.load_edt(args.zephyr_base, args.edt_pickle)
+    edtlib, edt, build_dir = util.load_edt(args.zephyr_base, args.edt_pickle)
     if edtlib is None:
         return 0
 
     logging.info("Running CME, outputting to %s", args.manifest_file)
     i2c_portmap = find_i2c_portmap(edtlib, edt)
 
-    manifest = Manifest()
+    # Compute the version string.
+    if util.is_test(args.edt_pickle):
+        ec_version_string = "test_build"
+    else:
+        ec_version_string = zmake.version.get_version_string(
+            build_dir.name,
+            build_dir / "zephyr_base",
+            zmake.modules.locate_from_directory(build_dir / "modules"),
+            static=False,
+        )
+    manifest = Manifest(ec_version_string)
 
     iterate_usbc_components(edtlib, edt, i2c_portmap, manifest)
 

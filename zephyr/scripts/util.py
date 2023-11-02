@@ -13,6 +13,23 @@ import re
 import site
 
 
+def is_test(edt_pickle):
+    """Determines if the script is running on a project or test from
+       the pickle file source.
+
+    Args:
+        edt_pickle: pathlib.Path pointing to the EDT object, stored as a pickle
+            file.
+
+    Returns:
+        A boolean: true if the script is running on a test, false if it is
+            a project.
+    """
+    twister_test = re.compile(r"twister-out")
+
+    return twister_test.search(edt_pickle.as_posix())
+
+
 def load_edt(zephyr_base, edt_pickle):
     """Load an EDT object from a pickle file source.
 
@@ -22,10 +39,10 @@ def load_edt(zephyr_base, edt_pickle):
             file.
 
     Returns:
-        A 3-field tuple: (edtlib, edt, project_name)
+        A 3-field tuple: (edtlib, edt, project_dir)
             edtlib: module object for the edtlib
             edt: EDT object of the devicetree
-            project_name: string containing the name of the project or test.
+            project_dir: string containing the directory of the project or test.
 
         Returns None if the edtlib pickle file doesn't exist.
     """
@@ -44,20 +61,18 @@ def load_edt(zephyr_base, edt_pickle):
         # UnpicklingErrors will raise an exception and fail the build.
         return None, None, None
 
-    is_test = re.compile(r"twister-out")
-
-    if is_test.search(edt_pickle.as_posix()):
+    if is_test(edt_pickle):
         # For tests built with twister, the edt.pickle file is located in a
         # path ending <test_name>/zephyr/.
-        project_name = edt_pickle.parents[1].name
+        project_dir = edt_pickle.parents[1]
     else:
         # For Zephyr EC project, the edt.pickle file is located in a path
         # ending <project>/build-[ro|rw|single-image]/zephyr/.
-        project_name = edt_pickle.parents[2].name
+        project_dir = edt_pickle.parents[2]
 
     edtlib = inspect.getmodule(edt)
 
-    return edtlib, edt, project_name
+    return edtlib, edt, project_dir
 
 
 class EdtArgumentParser(argparse.ArgumentParser):

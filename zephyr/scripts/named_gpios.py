@@ -234,15 +234,15 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
 
     logging.basicConfig(format=log_format, level=args.log_level)
 
-    edtlib, edt, project_name = util.load_edt(args.zephyr_base, args.edt_pickle)
+    edtlib, edt, project_dir = util.load_edt(args.zephyr_base, args.edt_pickle)
 
     if edtlib is None:
         return 0
 
-    if not verify_no_duplicates(edtlib, edt, project_name):
+    if not verify_no_duplicates(edtlib, edt, project_dir.name):
         return 1
 
-    if not verify_gpios_flags_match(edtlib, edt, project_name):
+    if not verify_gpios_flags_match(edtlib, edt, project_dir.name):
         return 1
 
     return 0
