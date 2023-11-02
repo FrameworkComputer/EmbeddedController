@@ -369,11 +369,11 @@ __override int board_cut_off_battery(void)
 {
 	int power_uw = charge_manager_get_power_limit_uw();
 
-	if (power_uw < 100000000) {
+	if (power_uw <= 100000000) {
 		hook_call_deferred(&board_cut_off_data, 0);
 	} else {
 		force_disable_epr_mode();
-		hook_call_deferred(&board_cut_off_data, 1000*MSEC);
+		hook_call_deferred(&board_cut_off_data, 700*MSEC);
 	}
 
 	return EC_RES_ERROR;
@@ -415,4 +415,16 @@ static enum ec_status cmd_charging_limit_control(struct host_cmd_handler_args *a
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_CHARGE_LIMIT_CONTROL, cmd_charging_limit_control,
+			EC_VER_MASK(0));
+
+static enum ec_status cmd_get_cutoff_status(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_cutoff_status *r = args->response;
+
+	r->status = battery_is_cut_off();
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_CUTOFF_STATUS, cmd_get_cutoff_status,
 			EC_VER_MASK(0));

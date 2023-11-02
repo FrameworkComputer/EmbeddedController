@@ -98,11 +98,11 @@
 		gpio_usb3_ec_p2_cc2: usb3_ec_p2_cc2 {
 			gpios = <&gpio2 4 GPIO_OUTPUT_LOW>;	/* Control GL3590 type-c orientation */
 		};
-		ec_sbub {
-			gpios = <&gpio2 3 GPIO_OUTPUT_HIGH>;	/* CCG8 debug mode use */
+		gpio_fp_en: fp_en {
+			gpios = <&gpio2 3 GPIO_OUTPUT_LOW>;
 		};
-		ec_sbua {
-			gpios = <&gpio2 2 GPIO_OUTPUT_HIGH>;	/* CCG8 debug mode use */
+		gpio_5valw_c_en: 5valw_c_en {
+			gpios = <&gpio2 2 GPIO_OUTPUT_LOW>;
 		};
 		gpu_b_dp_hpd {
 			gpios = <&gpio2 1 GPIO_OUTPUT_LOW>;	/* From GPU ALWS SMBus detect HPD than output to APU */

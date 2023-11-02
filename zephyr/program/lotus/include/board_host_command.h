@@ -409,4 +409,25 @@ struct ec_response_program_gpu_serial {
 	uint8_t valid;
 } __ec_align1;
 
+/*****************************************************************************/
+/*
+ * Used the host command to control the fingerprint power
+ */
+#define EC_CMD_FP_CONTROL	0x3E20
+
+struct ec_params_fingerprint_control {
+	/* 0x01 to enable, 0x00 to disable fingerprint power */
+	uint8_t enable;
+} __ec_align1;
+
+/*****************************************************************************/
+/*
+ * Get cutoff status
+ */
+#define EC_CMD_GET_CUTOFF_STATUS 0x3E21
+
+struct ec_response_get_cutoff_status {
+	uint8_t status;
+} __ec_align1;
+
 #endif /* __BOARD_HOST_COMMAND_H */

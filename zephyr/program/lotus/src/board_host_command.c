@@ -416,6 +416,20 @@ static enum ec_status host_command_uefi_app_btn_status(struct host_cmd_handler_a
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_UEFI_APP_BTN_STATUS, host_command_uefi_app_btn_status, EC_VER_MASK(0));
+
+static enum ec_status hc_fingerprint_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_fingerprint_control *p = args->params;
+	int enable = 1;
+
+	if (p->enable)
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_fp_en), enable);
+	else
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_fp_en), !enable);
+
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FP_CONTROL, hc_fingerprint_control, EC_VER_MASK(0));
 #endif /* CONFIG_BOARD_LOTUS */
 
 static enum ec_status privacy_switches_check(struct host_cmd_handler_args *args)

@@ -270,8 +270,10 @@ static void chipset_force_g3(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75vs_pwr_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_fp_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_5valw_c_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_apu_aud_pwr_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_edp_reset), 0);
@@ -351,12 +353,14 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_G3S5:
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_5valw_c_en), 1);
+
 		if (power_wait_signals(X86_3VALW_PG)) {
 			/* something wrong, turn off power and force to g3 */
 			chipset_force_g3();
 			return POWER_G3;
 		}
-
+		k_msleep(20);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 1);
 		k_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_apu_aud_pwr_en), 1);
@@ -472,6 +476,7 @@ enum power_state power_handle_state(enum power_state state)
 		 * power up from S5.
 		 */
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_fp_en), 1);
 		set_gpu_gpio(GPIO_FUNC_GPU_PWR, 1);
 
 		k_msleep(20);
@@ -594,6 +599,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks before we remove power rails */
 		power_s5_up_control(0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_fp_en), 0);
 		/*set_gpu_gpio(GPIO_FUNC_GPU_PWR, 0);*/
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
@@ -616,6 +622,7 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 0);
 		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_5valw_c_en), 0);
 		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_apu_aud_pwr_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
