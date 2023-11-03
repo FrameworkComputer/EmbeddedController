@@ -323,9 +323,6 @@ static void clock_set_osc(enum clock_osc osc, enum clock_osc pll_osc)
 		break;
 
 	case OSC_MSI:
-		/* Switch to MSI @ 1MHz */
-		STM32_RCC_CR = (STM32_RCC_CR & ~STM32_RCC_ICSCR_MSIRANGE_MASK) |
-			       STM32_RCC_ICSCR_MSIRANGE_1MHZ;
 		/* Ensure that MSI is ON */
 		clock_enable_osc(osc);
 
