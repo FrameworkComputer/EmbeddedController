@@ -128,7 +128,7 @@ config PLATFORM_EC_ACPI
 config PLATFORM_EC_AP_RESET_LOG
 	bool "Enable the Application Processor reset log"
 	depends on PLATFORM_EC_HOSTCMD_GET_UPTIME_INFO
-	default y if PLATFORM_EC_POWERSEQ
+	default y
 	help
 	  Enable logging of AP reset events. This information is provided in
 	  response to the EC_CMD_GET_UPTIME_INFO host command.

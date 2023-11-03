@@ -28,13 +28,6 @@ void pm_state_exit_post_ops(enum pm_state state, uint8_t substate_id)
 }
 /* LCOV_EXCL_STOP */
 
-#ifdef CONFIG_CMD_AP_RESET_LOG
-ZTEST(ec_app_tests, test_init_reset_log)
-{
-	zassert_unreachable("TODO: Implement this test.");
-}
-#endif
-
 #ifdef CONFIG_HOSTCMD_X86
 ZTEST(ec_app_tests, test_lpc_init_mask)
 {
