@@ -24,9 +24,20 @@ properties:
       uses this for.
   offset:
     type: int
-    required: true
     description: >-
       The offset of the flash region from the base of the flash.
+  offset-from-elf:
+    type: compound
+    description: >-
+      The offset of an entry based on a symbol value in an another entry.
+      The format is <&phandle>, "sym_name", <offset> where phandle is the entry
+      containing the blob (with associated ELF file providing symbols), <sym_name>
+      is the symbol to lookup (relative to elf-base-sym) and <offset> is an offset
+      to add to that value.
+
+      Note that this format is not a supported pattern in Zephyr. Use the type
+      "compound" which a dummy type for properties that don't fit any of the
+      supported patterns.
   size:
     type: int
     required: true
@@ -41,6 +52,13 @@ properties:
     description: >-
       Set if the section should be preserved when updating firmware. This is
       just a signal. Enforcement of this is upto the updater.
+  overlap:
+    type: boolean
+    description: >-
+      Indicates that this entry overlaps with others in the same section. These
+      entries should appear at the end of the section. Overlapping entries are not
+      packed with other entries, but their contents are written over other entries
+      in the section. Overlapping entries must have an explicit offset and size.
   fill-byte:
     type: uint8-array
     description: >-
@@ -50,6 +68,13 @@ properties:
     description: >-
       Set the pad byte to use when padding in the region. It
       defaults to 0. To use 0xff, you would add 'pad-byte = <0xff>'.
+  filename:
+    type: string
+    description: >-
+      This allows the contents of the section to be written to a file in the
+      output directory. This can sometimes be useful to use the data in one
+      section in different image, since there is currently no way to share data
+      beteen images other than through files.
   image-size:
     type: int
     description: >-

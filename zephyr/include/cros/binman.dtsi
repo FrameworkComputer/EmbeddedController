@@ -56,6 +56,7 @@
 					elf-base-sym = "rom_start";
 				};
 				rw-fwid {
+					compatible = "cros-ec,flash-layout";
 					/* Fix the location of the FWID to the
 					 * last 32 bytes of the flash. This
 					 * ensures the RW entries in the FMAP
