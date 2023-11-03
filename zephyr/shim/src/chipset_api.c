@@ -43,11 +43,6 @@ void chipset_throttle_cpu(int throttle)
 {
 }
 
-void init_reset_log(void)
-{
-	ap_power_init_reset_log();
-}
-
 bool board_ap_power_is_startup_ok(void)
 {
 	/*
