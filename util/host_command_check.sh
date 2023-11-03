@@ -4,7 +4,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-excludes=( --exclude-dir=build --exclude=TAGS )
+ec_commands_file_in="include/ec_commands.h"
 
 #######################################
 # Test if the following conditions hold for the ec host command
@@ -83,18 +83,14 @@ should_check() {
 
 main() {
 
-  # Do not run the check unless an EC_[xxx]CMD change is present.
-  if [[ -z "$(git diff --no-ext-diff "${PRESUBMIT_COMMIT}~" \
-          "${PRESUBMIT_COMMIT}" -U0 |
-      grep -E 'EC_[^ ]*CMD')" ]]; then
-    exit 0
-  fi
+  # Check if ec_commands.h has changed.
+  echo ${PRESUBMIT_FILES} | grep -q "${ec_commands_file_in}" || exit 0
 
   ec_errors=()
   ei=0
   # Search all file occurrences of "EC_CMD" and store in array
   IFS=$'\n'
-  ec_cmds=($(grep "${excludes[@]}" -r "EC_CMD"))
+  ec_cmds=($(grep -H "EC_CMD" "${ec_commands_file_in}"))
 
   # Loop through and find valid occurrences of "EC_CMD" to check
   length=${#ec_cmds[@]}
@@ -109,7 +105,7 @@ main() {
 
   # Search all file occurrances of "EC_PRV_CMD" and store in array
   IFS=$'\n'
-  ec_prv_cmds=($(grep "${excludes[@]}" -r "EC_PRV_CMD"))
+  ec_prv_cmds=($(grep -H "EC_PRV_CMD" "${ec_commands_file_in}"))
 
   # Loop through and find valid occurrences of "EC_PRV_CMD" to check
   length=${#ec_prv_cmds[@]}
