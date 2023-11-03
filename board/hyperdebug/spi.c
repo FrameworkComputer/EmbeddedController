@@ -4,6 +4,8 @@
  */
 /* HyperDebug SPI logic and console commands */
 
+#include "board_util.h"
+#include "clock.h"
 #include "common.h"
 #include "console.h"
 #include "dma.h"
@@ -16,10 +18,14 @@
 #include "usb_spi.h"
 #include "util.h"
 
-#define OCTOSPI_CLOCK (CPU_CLOCK)
-#define SPI_CLOCK (CPU_CLOCK)
-
-/* SPI devices, default to 406 kb/s for all. */
+/*
+ * List of SPI devices that can be controlled via USB.
+ *
+ * SPI1 and SPI2 use PCLK (110 MHz) as base frequency.
+ * QSPI uses either SYSCLK (110 MHz) or MSI (variable) as base frequency.
+ *
+ * Divisors below result in default SPI clock of approx. 430 kHz for all
+ */
 struct spi_device_t spi_devices[] = {
 	{ .name = "SPI2",
 	  .port = 1,
@@ -43,6 +49,40 @@ const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
 static int spi_device_default_gpio_cs[ARRAY_SIZE(spi_devices)];
 static int spi_device_default_div[ARRAY_SIZE(spi_devices)];
+
+static const size_t NUM_MSI_FREQUENCIES = 12;
+
+/*
+ * List of possible base frequencies for the OCTOSPI controller, the first
+ * NUM_MSI_FREQUENCIES entries correspond to the options of the MSI oscillator.
+ * The last one is SYSCLK, and will be dynamically populated.
+ */
+static uint32_t base_frequencies[13] = {
+	100000,	 200000,   400000,   800000,   1000000,	 2000000,    4000000,
+	8000000, 16000000, 24000000, 32000000, 48000000, 0xFFFFFFFF,
+};
+
+uint32_t octospi_clock(void)
+{
+	switch (STM32_RCC_CCIPR2 & STM32_RCC_CCIPR2_OSPISEL_MSK) {
+	case STM32_RCC_CCIPR2_OSPISEL_SYSCLK:
+		return clock_get_freq();
+	case STM32_RCC_CCIPR2_OSPISEL_MSI: {
+		size_t msi_freq = (STM32_RCC_CR & STM32_RCC_CR_MSIRANGE_MSK) >>
+				  STM32_RCC_CR_MSIRANGE_POS;
+		if (msi_freq < NUM_MSI_FREQUENCIES)
+			return base_frequencies[msi_freq];
+		return 0;
+	}
+	default:
+		return 0;
+	}
+}
+
+uint32_t spi_clock(void)
+{
+	return clock_get_freq();
+}
 
 /*
  * Find spi device by name or by number.  Returns an index into spi_devices[],
@@ -72,10 +112,11 @@ static void print_spi_info(int index)
 
 	if (spi_devices[index].usb_flags & USB_SPI_CUSTOM_SPI_DEVICE) {
 		// OCTOSPI as 8 bit prescaler, dividing clock by 1..256.
-		bits_per_second = OCTOSPI_CLOCK / (spi_devices[index].div + 1);
+		bits_per_second =
+			octospi_clock() / (spi_devices[index].div + 1);
 	} else {
 		// Other SPIs have prescaler by power of two 2, 4, 8, ..., 256.
-		bits_per_second = SPI_CLOCK / (2 << spi_devices[index].div);
+		bits_per_second = spi_clock() / (2 << spi_devices[index].div);
 	}
 
 	ccprintf("  %d %s %d bps\n", index, spi_devices[index].name,
@@ -129,16 +170,63 @@ static int command_spi_set_speed(int argc, const char **argv)
 		return EC_ERROR_PARAM4;
 
 	if (spi_devices[index].usb_flags & USB_SPI_CUSTOM_SPI_DEVICE) {
+		/* Turn off MSI oscillator (in order to allow modification). */
+		STM32_RCC_CR &= ~STM32_RCC_CR_MSION;
+
 		/*
 		 * Find prescaler value by division, rounding up in order to get
 		 * slightly slower speed than requested, if it cannot be matched
 		 * exactly.
+		 *
+		 * The OCTOSPI peripheral can derive clock from either SYSCLK
+		 * (110 MHz) or the variable MSI, attempt calculation with all
+		 * possible frequencies, and see which one gets closest to the
+		 * requested frequency, without exceeding it.
 		 */
-		int divisor =
-			(OCTOSPI_CLOCK + desired_speed - 1) / desired_speed - 1;
-		if (divisor >= 256)
-			divisor = 255;
-		STM32_OCTOSPI_DCR2 = spi_devices[index].div = divisor;
+		uint8_t best_divisor;
+		size_t best_base_frequency_index;
+
+		/* Populate current SYSCLK. */
+		base_frequencies[NUM_MSI_FREQUENCIES] = clock_get_freq();
+
+		find_best_divisor(desired_speed, base_frequencies,
+				  NUM_MSI_FREQUENCIES + 1, &best_divisor,
+				  &best_base_frequency_index);
+
+		if (best_base_frequency_index < NUM_MSI_FREQUENCIES) {
+			/*
+			 * Either the requested SPI clock frequency is too slow
+			 * for SYSCLK source, or the MSI source would be able to
+			 * get closer to the requested frequency.  Select MSI as
+			 * OCTOSPI clock source
+			 */
+
+			/* Select MSI frequency */
+			STM32_RCC_CR =
+				(STM32_RCC_CR & ~STM32_RCC_CR_MSIRANGE_MSK) |
+				(best_base_frequency_index
+				 << STM32_RCC_CR_MSIRANGE_POS) |
+				STM32_RCC_CR_MSIRGSEL;
+
+			/* Enable MSI and wait for MSI to be ready */
+			wait_for_ready(&STM32_RCC_CR, STM32_RCC_CR_MSION,
+				       STM32_RCC_CR_MSIRDY);
+
+			/* Choose MSI as clock source for OCTOSPI */
+			STM32_RCC_CCIPR2 = (STM32_RCC_CCIPR2 &
+					    ~STM32_RCC_CCIPR2_OSPISEL_MSK) |
+					   STM32_RCC_CCIPR2_OSPISEL_MSI;
+		} else {
+			/*
+			 * The SYSCLK source is able to get closer to the
+			 * requested SPI clock frequency, select SYSCLK as
+			 * OCTOSPI clock source
+			 */
+			STM32_RCC_CCIPR2 = (STM32_RCC_CCIPR2 &
+					    ~STM32_RCC_CCIPR2_OSPISEL_MSK) |
+					   STM32_RCC_CCIPR2_OSPISEL_SYSCLK;
+		}
+		STM32_OCTOSPI_DCR2 = spi_devices[index].div = best_divisor;
 	} else {
 		int divisor = 7;
 		/*
@@ -146,7 +234,8 @@ static int command_spi_set_speed(int argc, const char **argv)
 		 * than what was requested.
 		 */
 		while (divisor > 0) {
-			if (SPI_CLOCK / (2 << (divisor - 1)) > desired_speed) {
+			if (spi_clock() / (2 << (divisor - 1)) >
+			    desired_speed) {
 				/* One step further would make the clock too
 				 * fast, stop here. */
 				break;
@@ -535,6 +624,11 @@ static void spi_reinit(void)
 			spi_devices[i].gpio_cs = spi_device_default_gpio_cs[i];
 			STM32_OCTOSPI_DCR2 = spi_devices[i].div =
 				spi_device_default_div[i];
+			/* Select SYSCLK clock source */
+			STM32_RCC_CCIPR2 = (STM32_RCC_CCIPR2 &
+					    ~STM32_RCC_CCIPR2_OSPISEL_MSK) |
+					   STM32_RCC_CCIPR2_OSPISEL_SYSCLK;
+
 		} else {
 			/* "Ordinary" SPI controller */
 			spi_enable(&spi_devices[i], 0);
@@ -638,6 +732,9 @@ static void spi_init(void)
 			     STM32_OCTOSPI_DCR1_DEVSIZE_MSK;
 	/* Clock prescaler (max value 255) */
 	STM32_OCTOSPI_DCR2 = spi_devices[1].div;
+
+	/* Turn off MSI, not used initially. */
+	STM32_RCC_CR &= ~STM32_RCC_CR_MSION;
 
 	/* Select DMA channel */
 	dma_select_channel(STM32_DMAC_CH13, DMAMUX_REQ_OCTOSPI1);

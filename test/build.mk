@@ -54,6 +54,7 @@ test-list-host += gettimeofday
 test-list-host += gyro_cal
 test-list-host += hooks
 test-list-host += host_command
+test-list-host += hyperdebug
 test-list-host += i2c_bitbang
 test-list-host += inductive_charging
 # This test times out in the CQ, and generally doesn't seem useful.
@@ -218,6 +219,7 @@ global_initialization-y=global_initialization.o
 gyro_cal-y=gyro_cal.o gyro_cal_init_for_test.o
 hooks-y=hooks.o
 host_command-y=host_command.o
+hyperdebug-y=hyperdebug.o
 i2c_bitbang-y=i2c_bitbang.o
 inductive_charging-y=inductive_charging.o
 interrupt-y=interrupt.o
