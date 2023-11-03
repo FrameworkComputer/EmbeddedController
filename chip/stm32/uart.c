@@ -257,7 +257,8 @@ static void uart_freq_change(void)
 
 #if defined(CHIP_FAMILY_STM32L) || defined(CHIP_FAMILY_STM32F0) ||      \
 	defined(CHIP_FAMILY_STM32F3) || defined(CHIP_FAMILY_STM32L4) || \
-	defined(CHIP_FAMILY_STM32F4) || defined(CHIP_FAMILY_STM32G4)
+	defined(CHIP_FAMILY_STM32L5) || defined(CHIP_FAMILY_STM32F4) || \
+	defined(CHIP_FAMILY_STM32G4)
 	if (div / 16 > 0) {
 		/*
 		 * CPU clock is high enough to support x16 oversampling.
