@@ -32,9 +32,9 @@ void run_test(int argc, const char **argv)
 		return;
 	}
 
-	if (strncmp(argv[1], "debugger", sizeof("debugger")) == 0)
+	if (strcmp(argv[1], "debugger") == 0) {
 		debugger_connected = true;
-	else if (strncmp(argv[1], "no_debugger", sizeof("no_debugger")) == 0) {
+	} else if (strcmp(argv[1], "no_debugger") == 0) {
 		debugger_connected = false;
 	} else {
 		print_usage();
