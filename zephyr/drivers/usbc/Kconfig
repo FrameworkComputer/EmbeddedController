@@ -13,3 +13,15 @@ config USBC_INTEL_ALTMODE
 	  Intel AP.
 
 endif # PLATFORM_EC_USBC
+
+# TODO: move this inside the PLATFORM_EC_USBC guard
+# This is here for testing register access to the RTS545X part.
+config USBC_PDC_RTS545X
+	bool "Realtek RTS545x Power Delivery Controller driver"
+	default y
+	depends on DT_HAS_REALTEK_RTS545X_ENABLED
+	help
+	  This option enable the Realtek RTS545x Power Delivery Controller. This
+	  chip family supports both single port and multiple port
+	  configurations. For multiple port configurations, each port must
+	  create a separate devicetree entry.
