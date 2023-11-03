@@ -19,3 +19,192 @@
 #include "../shi.dtsi"
 #include "battery.dtsi"
 #include "led.dtsi"
+
+/* ciri board override */
+
+/ {
+	named-gpios {
+		/delete-node/ als-rgb-int-odl;
+		/delete-node/ usb-c0-ppc-bc12-int-odl;
+
+		usb_c0_frs_en: usb-c0-frs-en {
+			gpios = <&gpioa 3 GPIO_OUTPUT_LOW>;
+		};
+		ec_ap_hid_int_odl: ec-ap-hid-int-odl {
+			gpios = <&gpioa 6 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+		};
+		usb_c0_ppc_int_odl: usb-c0-ppc-int-odl {
+			gpios = <&gpiod 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		dp_path_sel: dp-path-sel {
+			gpios = <&gpiog 0 (GPIO_OUTPUT_LOW | GPIO_ACTIVE_LOW)>;
+		};
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+
+		unused-gpios =
+			/* unnamed nc pins */
+			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
+			/* pg_pp5000_z1_od */
+			<&gpiod 2 GPIO_INPUT>,
+			/* CHARGE_EN DNS */
+			<&gpioe 1 GPIO_INPUT_PULL_DOWN>,
+			/* als_rgb_int_odl not used */
+			<&gpiof 1 GPIO_INPUT_PULL_DOWN>,
+			/* spi_clk_gpg6 */
+			<&gpiog 6 GPIO_INPUT_PULL_UP>,
+			/* spi_mosi_gpg4 */
+			<&gpiog 4 GPIO_OUTPUT_LOW>,
+			/* spi_miso_gpg5 */
+			<&gpiog 5 GPIO_OUTPUT_LOW>,
+			/* spi_cs_gpg7 */
+			<&gpiog 7 GPIO_OUTPUT_LOW>,
+			/* Input w/o I-PULL for unused GPIO w/ Ex-PU
+			 * EC_AP_RSVD0_ODL
+			 */
+			<&gpioh 0 GPIO_INPUT>,
+			<&gpiom 2 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>,
+			<&gpiom 6 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>;
+	};
+
+	named-adc-channels {
+		adc-temp-sensor-pp5000-z1 {
+			enum-name = "ADC_TEMP_SENSOR_PP5000_Z1";
+			io-channels = <&adc0 3>;
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_lid_imu: lid-imu {
+			handler = "lsm6dsm_interrupt";
+		};
+	};
+
+	usbc {
+		port0@0 {
+			usb-mux-chain-0 {
+				usb-muxes = <&ps8743_mux_0 &virtual_mux_0>;
+			};
+		};
+	};
+
+	aliases {
+		/*
+		 * motion sense's <>_INT_EVENT is handled
+		 * by alias. Using the alias, each driver creates
+		 * its own <>_INT_EVENT.
+		 */
+		lsm6dsm-int = &lid_accel;
+	};
+
+	/* Rotation matrix used by drivers. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <0 1 0
+				 (-1) 0 0
+				 0 0 1>;
+		};
+	};
+
+	/*
+	 * Driver specific data. A driver-specific data can be shared with
+	 * different motion sensors while they are using the same driver.
+	 *
+	 * If a node's compatible starts with "cros-ec,accelgyro-", it is for
+	 * a common structure defined in accelgyro.h.
+	 * e.g) compatible = "cros-ec,accelgyro-als-drv-data" is for
+	 * "struct als_drv_data_t" in accelgyro.h
+	 */
+	motionsense-sensor-data {
+		/delete-node/ bmi323-drv-data;
+
+		lsm6dsm_data_accel: lsm6dsm-accel-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dsm";
+			status = "okay";
+		};
+		lsm6dsm_data_gyro: lsm6dsm-gyro-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dsm";
+			status = "okay";
+		};
+	};
+
+	/*
+	 * List of motion sensors that creates motion_sensors array.
+	 * The nodelabel "lid_accel" and "base_accel" are used to indicate
+	 * motion sensor IDs for lid angle calculation.
+	 */
+	motionsense-sensor {
+		lid_accel: lid-accel {
+			compatible = "cros-ec,lsm6dsm-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref>;
+			drv-data = <&lsm6dsm_data_accel>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+					ec-rate = <(100 * USEC_PER_MSEC)>;
+				};
+				ec-s3 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+					ec-rate = <0>;
+				};
+			};
+		};
+
+		lid_gyro: lid-gyro {
+			compatible = "cros-ec,lsm6dsm-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref>;
+			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
+			drv-data = <&lsm6dsm_data_gyro>;
+		};
+	};
+};
+
+&i2c2 {
+	/delete-node/ rt1739@70;
+	/delete-node/ tusb546-mux-0@44;
+
+	ppc_port0: syv682x@42 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x42>;
+		frs_en_gpio = <&usb_c0_frs_en>;
+		/* a duplicate of the <&usb_c0_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiod 1 GPIO_ACTIVE_LOW>;
+	};
+
+	ps8743_mux_0: ps8743-mux-0@11 {
+		compatible = "parade,ps8743";
+		reg = <0x11>;
+	};
+};
+
+&i2c4 {
+	hid_i2c_target: hid-i2c-target@56 {
+		/* Zephyr preferred style for specifying ec_ap_hid_int_odl */
+		irq-gpios = <&gpioa 6 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8 |
+			     GPIO_ACTIVE_LOW)>;
+	};
+};

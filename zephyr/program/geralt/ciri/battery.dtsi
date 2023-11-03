@@ -8,5 +8,11 @@
 		default_battery: smp_l21m4pg0 {
 			compatible = "smp,l21m4pg0", "battery-smart";
 		};
+		byd_l21b2pg2 {
+			compatible = "byd,l21b2pg2", "battery-smart";
+		};
+		sunwoda_l21d2pg2 {
+			compatible = "sunwoda,l21d2pg2", "battery-smart";
+		};
 	};
 };
