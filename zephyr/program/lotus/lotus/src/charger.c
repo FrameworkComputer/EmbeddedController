@@ -19,6 +19,7 @@
 #include "hooks.h"
 #include "i2c.h"
 #include "math_util.h"
+#include "power.h"
 #include "system.h"
 #include "throttle_ap.h"
 #include "util.h"
@@ -65,6 +66,116 @@ static void board_ina236_init(void)
 		CPRINTS("ina236 write mask fail");
 }
 
+static void charge_gate_onoff(bool status)
+{
+	if (status) {
+		/* Clear Control0 register bit 12; NGATE on */
+		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL0,
+			ISL9241_CONTROL0_NGATE_OFF, MASK_CLR);
+
+		/* Clear Control1 register bit 6; BGATE on */
+		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL1,
+			ISL9241_CONTROL1_BGATE_OFF, MASK_CLR);
+
+	} else {
+		/* Set Control0 register bit 12; NGATE off */
+		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL0,
+			ISL9241_CONTROL0_NGATE_OFF, MASK_SET);
+
+		/* Set Control1 register bit 6; BGATE off */
+		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL1,
+			ISL9241_CONTROL1_BGATE_OFF, MASK_SET);
+	}
+}
+
+static  void charger_psys_enable(bool status)
+{
+	if (status) {
+
+		i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4500));
+
+		/* Clear Control1 register bit 5; Enable IMON */
+		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL1,
+			ISL9241_CONTROL1_IMON, MASK_CLR);
+
+		/* Clear Control4 register bit 12; Enable all mode */
+		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL4,
+			ISL9241_CONTROL4_GP_COMPARATOR, MASK_CLR);
+
+	} else {
+
+		i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(0));
+
+		/* Set Control1 register bit 5; Disable IMON */
+		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL1,
+			ISL9241_CONTROL1_IMON, MASK_SET);
+
+		/* Set Control4 register bit 12; Disable for battery only mode */
+		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL4,
+			ISL9241_CONTROL4_GP_COMPARATOR, MASK_SET);
+	}
+}
+
+void charger_input_current_limit_control(enum power_state state)
+{
+	int acin = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in));
+
+	if ((state == POWER_S5 && !acin) ||
+		 (acin && battery_is_present() != BP_YES)) {
+		/**
+		 * Set Control3 register bit 5;
+		 * Condition 1: DC mode S5
+		 * Condition 2: AC only
+		 */
+		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL3,
+			ISL9241_CONTROL3_INPUT_CURRENT_LIMIT, MASK_SET);
+	} else {
+		/* Clear Control3 register bit 5; */
+		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL3,
+			ISL9241_CONTROL3_INPUT_CURRENT_LIMIT, MASK_CLR);
+	}
+}
+
+static void board_charger_lpm_control(void)
+{
+	enum power_state ps = power_get_state();
+	static enum power_state pre_power_state = POWER_G3;
+
+	switch (ps) {
+	case POWER_G3:
+	case POWER_G3S5:
+	case POWER_S5:
+	case POWER_S3S5:
+	case POWER_S4S5:
+		if (pre_power_state != ps)
+			charger_psys_enable(false);
+		charger_input_current_limit_control(POWER_S5);
+		break;
+	case POWER_S0:
+	case POWER_S3S0:
+	case POWER_S5S3:
+	case POWER_S3:
+		if (pre_power_state != ps)
+			charger_psys_enable(true);
+		charger_input_current_limit_control(POWER_S0);
+		break;
+	default:
+		break;
+	}
+
+	pre_power_state = ps;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_charger_lpm_control, HOOK_PRIO_DEFAULT+1);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_charger_lpm_control, HOOK_PRIO_DEFAULT+1);
+
+__override void board_hibernate(void)
+{
+	/* for i2c analyze, re-write again */
+	board_charger_lpm_control();
+	charge_gate_onoff(false);
+}
 
 static void charger_chips_init(void)
 {
@@ -98,8 +209,8 @@ static void charger_chips_init(void)
 		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL3, ISL9241_CONTROL3_ACLIM_RELOAD |
-		ISL9241_CONTROL3_BATGONE))
+		ISL9241_REG_CONTROL3,
+		(ISL9241_CONTROL3_ACLIM_RELOAD | ISL9241_CONTROL3_BATGONE)))
 		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
@@ -109,9 +220,6 @@ static void charger_chips_init(void)
 	val = ISL9241_CONTROL1_PROCHOT_REF_6000;
 	val |= ((ISL9241_CONTROL1_SWITCHING_FREQ_656KHZ << 7) &
 			ISL9241_CONTROL1_SWITCHING_FREQ_MASK);
-
-	/* make sure battery FET is enabled on EC on */
-	val &= ~ISL9241_CONTROL1_BGATE_OFF;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL1, val))
@@ -131,10 +239,12 @@ static void charger_chips_init(void)
 		ISL9241_REG_OTG_CURRENT, 0x0000))
 		goto init_fail;
 
-	/* According to Power team suggest, Set ACOK reference to 4.704V */
+	/* According to Power team suggest, Set ACOK reference to 4.500V */
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4500)))
 		goto init_fail;
+
+	board_charger_lpm_control();
 
 	/* TODO: should we need to talk to PD chip after initial complete ? */
 	hook_call_deferred(&board_check_current_data, 10*MSEC);
@@ -155,38 +265,13 @@ void charger_update(void)
 {
 	static int pre_ac_state;
 	static int pre_dc_state;
-	int val = 0x0000;
 
 	if (pre_ac_state != extpower_is_present() ||
 		pre_dc_state != battery_is_present()) {
 		CPRINTS("update charger!!");
 
-		if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_CONTROL1, &val))
-			CPRINTS("read charger control1 fail");
-
-		val &= ~ISL9241_CONTROL1_SWITCHING_FREQ_MASK;
-		val |= ((ISL9241_CONTROL1_SWITCHING_FREQ_656KHZ << 7) &
-			ISL9241_CONTROL1_SWITCHING_FREQ_MASK);
-
-		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_CONTROL1, val))
-			CPRINTS("Update charger control1 fail");
-
-		/**
-		 * Update the isl9241 control3
-		 * AC only need to disable the input current limit loop
-		 */
-		if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_CONTROL3, &val))
-			CPRINTS("read charger control3 fail");
-
-		if (extpower_is_present() && !battery_is_present())
-			i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL3,
-				ISL9241_CONTROL3_INPUT_CURRENT_LIMIT_LOOP, MASK_SET);
-		else
-			i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL3,
-				ISL9241_CONTROL3_INPUT_CURRENT_LIMIT_LOOP, MASK_CLR);
+		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL1,
+				(ISL9241_CONTROL1_SWITCHING_FREQ_656KHZ << 7), MASK_SET);
 
 		/**
 		 * Update the DC prochot current limit
@@ -199,6 +284,8 @@ void charger_update(void)
 
 		pre_ac_state = extpower_is_present();
 		pre_dc_state = battery_is_present();
+
+		board_charger_lpm_control();
 	}
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);

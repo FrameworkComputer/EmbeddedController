@@ -364,7 +364,7 @@ static void enter_epr_mode(void)
 		}
 	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, enter_epr_mode, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, enter_epr_mode, HOOK_PRIO_FIRST);
 DECLARE_DEFERRED(enter_epr_mode);
 
 static void exit_epr_mode(void)
@@ -380,7 +380,7 @@ static void exit_epr_mode(void)
 		}
 	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, exit_epr_mode, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, exit_epr_mode, HOOK_PRIO_FIRST);
 
 void force_disable_epr_mode(void)
 {
