@@ -383,6 +383,7 @@ tests:
     - CONFIG_PLATFORM_EC_CEC_IT83XX=y
     - CONFIG_PLATFORM_EC_CEC_BITBANG=y
     - CONFIG_PLATFORM_EC_CEC_DEBUG=y
+    - CONFIG_SYS_CLOCK_TICKS_PER_SEC=100000
     extra_dtc_overlay_files:
     - ./boards/native_posix.overlay
     - ./cec_common/cec_common.dts

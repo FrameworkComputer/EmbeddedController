@@ -21,11 +21,11 @@ test_mockable int cec_tmr_cap_get(int port)
 	return 0;
 }
 
-void cec_debounce_enable(int port)
+test_mockable void cec_debounce_enable(int port)
 {
 }
 
-void cec_debounce_disable(int port)
+test_mockable void cec_debounce_disable(int port)
 {
 }
 

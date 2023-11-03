@@ -31,6 +31,7 @@
 #define TEST_PORT 1
 
 #define CEC_STATE_INITIATOR_ACK_LOW 13
+#define CEC_STATE_FOLLOWER_ACK_LOW 25
 
 struct mock_it83xx_cec_regs mock_it83xx_cec_regs;
 
@@ -79,6 +80,8 @@ K_TIMER_DEFINE(ack_timer, ack_low_time_complete, NULL);
  */
 void cec_tmr_cap_start(int port, enum cec_cap_edge edge, int timeout)
 {
+	int state = cec_get_state(TEST_PORT);
+
 	expected_cap_edge = edge;
 
 	if (timeout > 0) {
@@ -86,12 +89,12 @@ void cec_tmr_cap_start(int port, enum cec_cap_edge edge, int timeout)
 		k_timer_start(&timer, K_USEC(timeout), K_NO_WAIT);
 	}
 
-	if (cec_get_state(TEST_PORT) == CEC_STATE_INITIATOR_ACK_LOW &&
-	    mock_ack) {
+	if (mock_ack && (state == CEC_STATE_INITIATOR_ACK_LOW ||
+			 state == CEC_STATE_FOLLOWER_ACK_LOW)) {
 		/*
-		 * If we're sending, mock the ACK bit from the follower if
-		 * requested. Pull the gpio low at the start of the ACK bit, and
-		 * release it after 0-bit low time.
+		 * If requested, mock the ACK bit from the follower. Pull the
+		 * gpio low at the start of the ACK bit, and release it after
+		 * 0-bit low time.
 		 */
 		gpio_set_level(CEC_OUT_SIGNAL, 0);
 		k_timer_start(&ack_timer, K_USEC(CEC_DATA_ZERO_LOW_US),
@@ -102,6 +105,18 @@ void cec_tmr_cap_start(int port, enum cec_cap_edge edge, int timeout)
 int cec_tmr_cap_get(int port)
 {
 	return get_time().val - start_time.val;
+}
+
+static int debounce_enable_calls;
+void cec_debounce_enable(int port)
+{
+	debounce_enable_calls++;
+}
+
+static int debounce_disable_calls;
+void cec_debounce_disable(int port)
+{
+	debounce_disable_calls++;
 }
 
 void cec_trigger_send(int port)
@@ -316,11 +331,122 @@ static void check_gpio_recording(const uint8_t *msg, uint8_t msg_len)
 			check_gpio_state(i++, 1, CEC_DATA_ZERO_HIGH_US);
 		}
 
-		/* ACK bit is set */
-		check_gpio_state(i++, 0, CEC_DATA_ZERO_LOW_US);
-		if (byte < msg_len - 1)
-			check_gpio_state(i++, 1, CEC_DATA_ZERO_HIGH_US);
+		if ((msg[0] & 0x0f) == CEC_BROADCAST_ADDR) {
+			/* Broadcast - ACK means NACK, so expect ACK not set */
+			check_gpio_state(i++, 0, CEC_DATA_ONE_LOW_US);
+			if (byte < msg_len - 1)
+				check_gpio_state(i++, 1, CEC_DATA_ONE_HIGH_US);
+		} else {
+			/* Expect ACK bit set */
+			check_gpio_state(i++, 0, CEC_DATA_ZERO_LOW_US);
+			if (byte < msg_len - 1)
+				check_gpio_state(i++, 1, CEC_DATA_ZERO_HIGH_US);
+		}
 	}
+}
+
+static void receive_start_bit(void)
+{
+	edge_received(CEC_CAP_EDGE_FALLING);
+	k_sleep(K_USEC(CEC_START_BIT_LOW_US));
+	edge_received(CEC_CAP_EDGE_RISING);
+	k_sleep(K_USEC(CEC_START_BIT_HIGH_US));
+}
+
+static void receive_byte(const uint8_t *msg, uint8_t msg_len, int byte,
+			 bool should_ack)
+{
+	/* Receive data bits */
+	for (int bit = 7; bit >= 0; bit--) {
+		if (msg[byte] & BIT(bit)) {
+			/* 1 bit */
+			edge_received(CEC_CAP_EDGE_FALLING);
+			k_sleep(K_USEC(CEC_DATA_ONE_LOW_US));
+			edge_received(CEC_CAP_EDGE_RISING);
+			k_sleep(K_USEC(CEC_DATA_ONE_HIGH_US));
+		} else {
+			/* 0 bit */
+			edge_received(CEC_CAP_EDGE_FALLING);
+			k_sleep(K_USEC(CEC_DATA_ZERO_LOW_US));
+			edge_received(CEC_CAP_EDGE_RISING);
+			k_sleep(K_USEC(CEC_DATA_ZERO_HIGH_US));
+		}
+	}
+
+	if (byte == msg_len - 1) {
+		/* EOM is set */
+		edge_received(CEC_CAP_EDGE_FALLING);
+		k_sleep(K_USEC(CEC_DATA_ONE_LOW_US));
+		edge_received(CEC_CAP_EDGE_RISING);
+		k_sleep(K_USEC(CEC_DATA_ONE_HIGH_US));
+	} else {
+		/* EOM is cleared */
+		edge_received(CEC_CAP_EDGE_FALLING);
+		k_sleep(K_USEC(CEC_DATA_ZERO_LOW_US));
+		edge_received(CEC_CAP_EDGE_RISING);
+		k_sleep(K_USEC(CEC_DATA_ZERO_HIGH_US));
+	}
+
+	/* ACK bit falling edge */
+	edge_received(CEC_CAP_EDGE_FALLING);
+
+	/*
+	 * If the message is destined to us, the driver should assert the ACK
+	 * bit, otherwise it should not. Wait until the safe sample time and
+	 * check the GPIO state.
+	 */
+	k_sleep(K_USEC(CEC_NOMINAL_SAMPLE_TIME_US));
+	zassert_equal(gpio_emul_output_get(CEC_OUT_PORT, CEC_OUT_PIN),
+		      should_ack ? 0 : 1);
+	k_sleep(K_USEC(CEC_NOMINAL_BIT_PERIOD_US - CEC_NOMINAL_SAMPLE_TIME_US));
+}
+
+static void receive_message(const uint8_t *msg, uint8_t msg_len,
+			    bool should_ack)
+{
+	receive_start_bit();
+
+	for (int byte = 0; byte < msg_len; byte++) {
+		receive_byte(msg, msg_len, byte, should_ack);
+	}
+}
+
+static void check_message_received(const uint8_t *msg, uint8_t msg_len)
+{
+	struct ec_response_get_next_event_v1 event;
+	struct ec_response_cec_read response;
+
+	/* Check HAVE_DATA event is sent, and there are no more events */
+	zassert_ok(get_next_cec_mkbp_event(&event));
+	zassert_true(
+		cec_event_matches(&event, TEST_PORT, EC_MKBP_CEC_HAVE_DATA));
+	zassert_not_equal(get_next_cec_mkbp_event(&event), 0);
+
+	/* Send read command and check response contains the correct message */
+	zassert_ok(host_cmd_cec_read(TEST_PORT, &response));
+	zassert_equal(response.msg_len, msg_len);
+	zassert_ok(memcmp(response.msg, msg, msg_len));
+}
+
+static void check_send_ok(void)
+{
+	struct ec_response_get_next_event_v1 event;
+
+	/* Check SEND_OK event is sent, and there are no more events */
+	zassert_ok(get_next_cec_mkbp_event(&event));
+	zassert_true(cec_event_matches(&event, TEST_PORT, EC_MKBP_CEC_SEND_OK));
+	zassert_not_equal(get_next_cec_mkbp_event(&event), 0);
+}
+
+static void check_send_failed(void)
+{
+	struct ec_response_get_next_event_v1 event;
+
+	/* Check SEND_FAILED event is sent, and there are no more events */
+	zassert_ok(get_next_cec_mkbp_event(&event));
+	zassert_true(
+		cec_event_matches(&event, TEST_PORT, EC_MKBP_CEC_SEND_FAILED));
+	zassert_not_equal(get_next_cec_mkbp_event(&event), 0);
 }
 
 ZTEST_USER(cec_bitbang, test_send_success)
@@ -328,7 +454,6 @@ ZTEST_USER(cec_bitbang, test_send_success)
 	const struct cec_drv *drv = cec_config[TEST_PORT].drv;
 	const uint8_t msg[] = { 0x40, 0x04 };
 	const uint8_t msg_len = ARRAY_SIZE(msg);
-	struct ec_response_get_next_event_v1 event;
 	static struct gpio_callback callback;
 	int ret;
 
@@ -356,13 +481,192 @@ ZTEST_USER(cec_bitbang, test_send_success)
 	 */
 	k_sleep(K_SECONDS(1));
 
-	/* Check SEND_OK MKBP event was sent */
-	zassert_ok(get_next_cec_mkbp_event(&event));
-	zassert_true(cec_event_matches(&event, TEST_PORT, EC_MKBP_CEC_SEND_OK));
-	zassert_not_equal(get_next_cec_mkbp_event(&event), 0);
-
-	/* Validate the recorded gpio state */
+	/* Check message was sent successfully */
+	check_send_ok();
 	check_gpio_recording(msg, msg_len);
+
+	/* Remove the callback */
+	gpio_remove_callback(CEC_OUT_PORT, &callback);
+}
+
+ZTEST_USER(cec_bitbang, test_send_postponed)
+{
+	const struct cec_drv *drv = cec_config[TEST_PORT].drv;
+	const uint8_t rx_msg[] = { 0x04, 0x8f };
+	const uint8_t rx_msg_len = ARRAY_SIZE(rx_msg);
+	const uint8_t tx_msg[] = { 0x40, 0x04 };
+	const uint8_t tx_msg_len = ARRAY_SIZE(tx_msg);
+	static struct gpio_callback callback;
+	int ret;
+
+	/* Set up callback to record gpio state */
+	gpio_init_callback(&callback, gpio_out_callback, BIT(CEC_OUT_PIN));
+	gpio_add_callback(CEC_OUT_PORT, &callback);
+
+	/* Enable CEC and set logical address */
+	drv->set_enable(TEST_PORT, 1);
+	drv->set_logical_addr(TEST_PORT, 0x4);
+
+	/* Receive the first byte of a message */
+	receive_start_bit();
+	receive_byte(rx_msg, rx_msg_len, 0, true);
+
+	/* Send a message. The driver should queue it but keep receiving. */
+	ret = drv->send(TEST_PORT, tx_msg, tx_msg_len);
+	zassert_equal(ret, EC_SUCCESS);
+
+	/* Receive the second byte of the message, and check it's received */
+	receive_byte(rx_msg, rx_msg_len, 1, true);
+	check_message_received(rx_msg, rx_msg_len);
+
+	/*
+	 * When the receive finishes, the driver will start transmitting.
+	 * Start recording gpio state and mock ACK bit from follower.
+	 */
+	gpio_index = 0;
+	mock_ack = true;
+
+	/* Wait for driver to send message */
+	k_sleep(K_SECONDS(1));
+
+	/* Check message was sent successfully */
+	check_send_ok();
+	check_gpio_recording(tx_msg, tx_msg_len);
+
+	/* Remove the callback */
+	gpio_remove_callback(CEC_OUT_PORT, &callback);
+}
+
+ZTEST_USER(cec_bitbang, test_send_retransmit_success)
+{
+	const struct cec_drv *drv = cec_config[TEST_PORT].drv;
+	const uint8_t msg[] = { 0x40, 0x04 };
+	const uint8_t msg_len = ARRAY_SIZE(msg);
+	static struct gpio_callback callback;
+	int ret;
+
+	/* Set up callback to record gpio state */
+	gpio_init_callback(&callback, gpio_out_callback, BIT(CEC_OUT_PIN));
+	gpio_add_callback(CEC_OUT_PORT, &callback);
+
+	/* Enable CEC and set logical address */
+	drv->set_enable(TEST_PORT, 1);
+	drv->set_logical_addr(TEST_PORT, 0x4);
+
+	/* Start sending, without mocking ACK bit from follower */
+	ret = drv->send(TEST_PORT, msg, msg_len);
+	zassert_equal(ret, EC_SUCCESS);
+
+	/* First transmission attempt will fail. Wait for it to complete. */
+	k_sleep(K_USEC(CEC_FREE_TIME_NI_US - CEC_NOMINAL_BIT_PERIOD_US +
+		       CEC_START_BIT_LOW_US + CEC_START_BIT_HIGH_US +
+		       CEC_NOMINAL_BIT_PERIOD_US * 10));
+
+	/* Start recording gpio state */
+	gpio_index = 0;
+
+	/* Now mock the ACK bit. Second transmission attempt should succeed. */
+	mock_ack = true;
+
+	/* Check message was sent successfully */
+	k_sleep(K_SECONDS(1));
+	check_send_ok();
+	check_gpio_recording(msg, msg_len);
+
+	/* Remove the callback */
+	gpio_remove_callback(CEC_OUT_PORT, &callback);
+}
+
+ZTEST_USER(cec_bitbang, test_send_max_retransmissions)
+{
+	const struct cec_drv *drv = cec_config[TEST_PORT].drv;
+	const uint8_t msg[] = { 0x40, 0x04 };
+	const uint8_t msg_len = ARRAY_SIZE(msg);
+	int ret;
+
+	/* Enable CEC and set logical address */
+	drv->set_enable(TEST_PORT, 1);
+	drv->set_logical_addr(TEST_PORT, 0x4);
+
+	/* Start sending, without mocking ACK bit from follower */
+	ret = drv->send(TEST_PORT, msg, msg_len);
+	zassert_equal(ret, EC_SUCCESS);
+
+	/* Driver will retransmit 5 times then give up */
+	k_sleep(K_SECONDS(1));
+
+	/* Check SEND_FAILED MKBP event was sent */
+	check_send_failed();
+}
+
+ZTEST_USER(cec_bitbang, test_send_broadcast_success)
+{
+	const struct cec_drv *drv = cec_config[TEST_PORT].drv;
+	const uint8_t msg[] = { 0x4f, 0x85 };
+	const uint8_t msg_len = ARRAY_SIZE(msg);
+	static struct gpio_callback callback;
+	int ret;
+
+	/* Set up callback to record gpio state */
+	gpio_init_callback(&callback, gpio_out_callback, BIT(CEC_OUT_PIN));
+	gpio_add_callback(CEC_OUT_PORT, &callback);
+
+	/* Enable CEC and set logical address */
+	drv->set_enable(TEST_PORT, 1);
+	drv->set_logical_addr(TEST_PORT, 0x4);
+
+	/* Start recording gpio state */
+	gpio_index = 0;
+
+	/*
+	 * For broadcast ACK asserted means NACK, so don't mock the ACK bit from
+	 * the follower.
+	 */
+
+	/* Start sending */
+	ret = drv->send(TEST_PORT, msg, msg_len);
+	zassert_equal(ret, EC_SUCCESS);
+
+	/* Check message was sent successfully */
+	k_sleep(K_SECONDS(1));
+	check_send_ok();
+	check_gpio_recording(msg, msg_len);
+
+	/* Remove the callback */
+	gpio_remove_callback(CEC_OUT_PORT, &callback);
+}
+
+ZTEST_USER(cec_bitbang, test_send_broadcast_nack)
+{
+	const struct cec_drv *drv = cec_config[TEST_PORT].drv;
+	const uint8_t msg[] = { 0x4f, 0x85 };
+	const uint8_t msg_len = ARRAY_SIZE(msg);
+	static struct gpio_callback callback;
+	int ret;
+
+	/* Set up callback to record gpio state */
+	gpio_init_callback(&callback, gpio_out_callback, BIT(CEC_OUT_PIN));
+	gpio_add_callback(CEC_OUT_PORT, &callback);
+
+	/* Enable CEC and set logical address */
+	drv->set_enable(TEST_PORT, 1);
+	drv->set_logical_addr(TEST_PORT, 0x4);
+
+	/* Start recording gpio state */
+	gpio_index = 0;
+
+	/* Set ACK bit. This means a follower NACKed the message. */
+	mock_ack = true;
+
+	/* Start sending */
+	ret = drv->send(TEST_PORT, msg, msg_len);
+	zassert_equal(ret, EC_SUCCESS);
+
+	/* Driver will retransmit 5 times then give up */
+	k_sleep(K_SECONDS(1));
+
+	/* Check SEND_FAILED MKBP event was sent */
+	check_send_failed();
 
 	/* Remove the callback */
 	gpio_remove_callback(CEC_OUT_PORT, &callback);
@@ -373,80 +677,123 @@ ZTEST_USER(cec_bitbang, test_receive_success)
 	const struct cec_drv *drv = cec_config[TEST_PORT].drv;
 	const uint8_t msg[] = { 0x04, 0x8f };
 	const uint8_t msg_len = ARRAY_SIZE(msg);
-	struct ec_response_get_next_event_v1 event;
-	struct ec_response_cec_read response;
 
 	/* Enable CEC and set logical address */
 	drv->set_enable(TEST_PORT, 1);
 	drv->set_logical_addr(TEST_PORT, 0x4);
 
-	/* Receive start bit */
-	edge_received(CEC_CAP_EDGE_FALLING);
-	k_sleep(K_USEC(CEC_START_BIT_LOW_US));
-	edge_received(CEC_CAP_EDGE_RISING);
-	k_sleep(K_USEC(CEC_START_BIT_HIGH_US));
+	receive_message(msg, msg_len, true);
 
-	for (int byte = 0; byte < msg_len; byte++) {
-		/* Receive data bits */
-		for (int bit = 7; bit >= 0; bit--) {
-			if (msg[byte] & BIT(bit)) {
-				/* 1 bit */
-				edge_received(CEC_CAP_EDGE_FALLING);
-				k_sleep(K_USEC(CEC_DATA_ONE_LOW_US));
-				edge_received(CEC_CAP_EDGE_RISING);
-				k_sleep(K_USEC(CEC_DATA_ONE_HIGH_US));
-			} else {
-				/* 0 bit */
-				edge_received(CEC_CAP_EDGE_FALLING);
-				k_sleep(K_USEC(CEC_DATA_ZERO_LOW_US));
-				edge_received(CEC_CAP_EDGE_RISING);
-				k_sleep(K_USEC(CEC_DATA_ZERO_HIGH_US));
-			}
-		}
-
-		if (byte == msg_len - 1) {
-			/* EOM is set */
-			edge_received(CEC_CAP_EDGE_FALLING);
-			k_sleep(K_USEC(CEC_DATA_ONE_LOW_US));
-			edge_received(CEC_CAP_EDGE_RISING);
-			k_sleep(K_USEC(CEC_DATA_ONE_HIGH_US));
-		} else {
-			/* EOM is cleared */
-			edge_received(CEC_CAP_EDGE_FALLING);
-			k_sleep(K_USEC(CEC_DATA_ZERO_LOW_US));
-			edge_received(CEC_CAP_EDGE_RISING);
-			k_sleep(K_USEC(CEC_DATA_ZERO_HIGH_US));
-		}
-
-		/* ACK bit falling edge */
-		edge_received(CEC_CAP_EDGE_FALLING);
-
-		/*
-		 * Message is destined to us, so the driver should assert the
-		 * ACK bit. Wait until the safe sample time and check the GPIO
-		 * is low.
-		 */
-		k_sleep(K_USEC(CEC_NOMINAL_SAMPLE_TIME_US));
-		zassert_equal(gpio_emul_output_get(CEC_OUT_PORT, CEC_OUT_PIN),
-			      0);
-		k_sleep(K_USEC(CEC_NOMINAL_BIT_PERIOD_US -
-			       CEC_NOMINAL_SAMPLE_TIME_US));
-	}
-
-	/*
-	 * Message complete, so driver will set CEC_TASK_EVENT_RECEIVED_DATA and
-	 * CEC task will send MKBP event.
-	 */
+	/* Check message was received successfully */
 	k_sleep(K_SECONDS(1));
-	zassert_ok(get_next_cec_mkbp_event(&event));
-	zassert_true(
-		cec_event_matches(&event, TEST_PORT, EC_MKBP_CEC_HAVE_DATA));
+	check_message_received(msg, msg_len);
+}
+
+ZTEST_USER(cec_bitbang, test_receive_not_destined_to_us)
+{
+	const struct cec_drv *drv = cec_config[TEST_PORT].drv;
+	const uint8_t msg1[] = { 0x05, 0x8f };
+	const uint8_t msg2[] = { 0x04, 0x8f };
+	const uint8_t msg1_len = ARRAY_SIZE(msg1);
+	const uint8_t msg2_len = ARRAY_SIZE(msg2);
+	struct ec_response_get_next_event_v1 event;
+
+	/* Enable CEC and set logical address */
+	drv->set_enable(TEST_PORT, 1);
+	drv->set_logical_addr(TEST_PORT, 0x4);
+
+	/* Receive message not destined to us */
+	receive_message(msg1, msg1_len, false);
+
+	/* Check driver did not send HAVE_DATA event */
 	zassert_not_equal(get_next_cec_mkbp_event(&event), 0);
 
-	/* Send read command and check response contains the correct message */
-	zassert_ok(host_cmd_cec_read(TEST_PORT, &response));
-	zassert_equal(response.msg_len, msg_len);
-	zassert_ok(memcmp(response.msg, msg, msg_len));
+	/* Receive message destined to us */
+	receive_message(msg2, msg2_len, true);
+
+	/* Check message was received successfully */
+	check_message_received(msg2, msg2_len);
+}
+
+ZTEST_USER(cec_bitbang, test_receive_broadcast)
+{
+	const struct cec_drv *drv = cec_config[TEST_PORT].drv;
+	const uint8_t msg1[] = { 0x0f, 0x36 };
+	const uint8_t msg2[] = { 0x0f, 0x85 };
+	const uint8_t msg1_len = ARRAY_SIZE(msg1);
+	const uint8_t msg2_len = ARRAY_SIZE(msg2);
+
+	/* Enable CEC and set logical address */
+	drv->set_enable(TEST_PORT, 1);
+	drv->set_logical_addr(TEST_PORT, 0x4);
+
+	/* Mock a follower NACKing the message (asserting the ACK bit) */
+	mock_ack = true;
+
+	/* Receive the first byte. The driver will see the NACK and abort. */
+	receive_start_bit();
+	receive_byte(msg1, msg1_len, 0, true);
+
+	/* Now receive another broadcast message successfully (not NACKed) */
+	mock_ack = false;
+	receive_message(msg2, msg2_len, false);
+
+	/* Check message was received successfully */
+	k_sleep(K_SECONDS(1));
+	check_message_received(msg2, msg2_len);
+}
+
+ZTEST_USER(cec_bitbang, test_receive_during_free_time)
+{
+	const struct cec_drv *drv = cec_config[TEST_PORT].drv;
+	const uint8_t rx_msg[] = { 0x04, 0x8f };
+	const uint8_t rx_msg_len = ARRAY_SIZE(rx_msg);
+	const uint8_t tx_msg[] = { 0x40, 0x04 };
+	const uint8_t tx_msg_len = ARRAY_SIZE(tx_msg);
+	static struct gpio_callback callback;
+	int ret;
+
+	/* Set up callback to record gpio state */
+	gpio_init_callback(&callback, gpio_out_callback, BIT(CEC_OUT_PIN));
+	gpio_add_callback(CEC_OUT_PORT, &callback);
+
+	/* Enable CEC and set logical address */
+	drv->set_enable(TEST_PORT, 1);
+	drv->set_logical_addr(TEST_PORT, 0x4);
+
+	/*
+	 * Start sending a message and wait for free time to start but not
+	 * complete. Free time is 9.6 ms, so wait for 1 ms.
+	 */
+	ret = drv->send(TEST_PORT, tx_msg, tx_msg_len);
+	zassert_equal(ret, EC_SUCCESS);
+	k_sleep(K_MSEC(1));
+
+	/*
+	 * Start receiving a message. Driver will abort the free time and start
+	 * receiving instead.
+	 */
+	receive_message(rx_msg, rx_msg_len, true);
+
+	/* Check message was received successfully */
+	check_message_received(rx_msg, rx_msg_len);
+
+	/*
+	 * When the receive finishes, the driver restarts sending.
+	 * Start recording gpio state and mock ACK bit from follower.
+	 */
+	gpio_index = 0;
+	mock_ack = true;
+
+	/* Wait for driver to send message */
+	k_sleep(K_SECONDS(1));
+
+	/* Check message was sent successfully */
+	check_send_ok();
+	check_gpio_recording(tx_msg, tx_msg_len);
+
+	/* Remove the callback */
+	gpio_remove_callback(CEC_OUT_PORT, &callback);
 }
 
 ZTEST_USER(cec_bitbang, test_receive_unavailable)
@@ -462,6 +809,60 @@ ZTEST_USER(cec_bitbang, test_receive_unavailable)
 	 */
 	ret = drv->get_received_message(TEST_PORT, &msg, &msg_len);
 	zassert_equal(ret, EC_ERROR_UNAVAILABLE);
+}
+
+ZTEST_USER(cec_bitbang, test_debounce)
+{
+	const struct cec_drv *drv = cec_config[TEST_PORT].drv;
+	const uint8_t msg[] = { 0x04, 0x8f };
+	const uint8_t msg_len = ARRAY_SIZE(msg);
+
+	/* Enable CEC and set logical address */
+	drv->set_enable(TEST_PORT, 1);
+	drv->set_logical_addr(TEST_PORT, 0x4);
+
+	/* Receive 3 short pulses */
+	for (int i = 0; i < 3; i++) {
+		debounce_enable_calls = 0;
+		debounce_disable_calls = 0;
+
+		edge_received(CEC_CAP_EDGE_FALLING);
+		k_sleep(K_USEC(100));
+		edge_received(CEC_CAP_EDGE_RISING);
+		zassert_equal(debounce_enable_calls, 1);
+		zassert_equal(debounce_disable_calls, 0);
+
+		k_sleep(K_USEC(100));
+		zassert_equal(debounce_enable_calls, 1);
+		zassert_equal(debounce_disable_calls, 1);
+	}
+
+	/* After 3 short pulses, the debounce period increases to 500 us */
+
+	debounce_enable_calls = 0;
+	debounce_disable_calls = 0;
+
+	/* Receive another short pulse */
+	edge_received(CEC_CAP_EDGE_FALLING);
+	k_sleep(K_USEC(100));
+	edge_received(CEC_CAP_EDGE_RISING);
+	zassert_equal(debounce_enable_calls, 1);
+	zassert_equal(debounce_disable_calls, 0);
+
+	/* Wait for 100 us, check cec_debounce_disable() is not called yet. */
+	k_sleep(K_USEC(100));
+	zassert_equal(debounce_enable_calls, 1);
+	zassert_equal(debounce_disable_calls, 0);
+
+	/* Wait another 400 us, now cec_debounce_disable() is called. */
+	k_sleep(K_USEC(400));
+	zassert_equal(debounce_enable_calls, 1);
+	zassert_equal(debounce_disable_calls, 1);
+
+	/* Now check we can still receive a valid message */
+	receive_message(msg, msg_len, true);
+	k_sleep(K_SECONDS(1));
+	check_message_received(msg, msg_len);
 }
 
 ZTEST_SUITE(cec_bitbang, drivers_predicate_post_main, cec_bitbang_setup,
