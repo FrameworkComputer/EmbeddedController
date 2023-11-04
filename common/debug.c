@@ -11,3 +11,8 @@ __overridable bool debugger_is_connected(void)
 {
 	return false;
 }
+
+__overridable bool debugger_was_connected(void)
+{
+	return false;
+}
