@@ -35,16 +35,13 @@ set verbose on
 python
 import distutils.util
 import os
+import pathlib
 
 BOARD = os.getenv('BOARD', '')
+# PROJECT can be changed to be the name of a unit test, such as "sha256"
+PROJECT = os.getenv('PROJECT', 'ec')
 GDBSERVER = os.getenv('GDBSERVER', 'openocd')
 USING_CLION = distutils.util.strtobool(os.getenv('USING_CLION', 'FALSE'))
-# BIN_NAME can be changed to be the name of a unit test, such as "sha256"
-BIN_NAME = os.getenv('BIN_NAME', 'ec')
-
-BIN_DIR = ''
-if BIN_NAME != 'ec':
-  BIN_DIR = BIN_NAME
 
 if GDBSERVER == "openocd":
     DEFAULT_GDB_PORT = '3333'
@@ -53,43 +50,52 @@ else:
 
 GDBPORT = os.getenv('GDBPORT', DEFAULT_GDB_PORT)
 
-EC_DIR = os.getenv('EC_DIR', os.path.join(os.getenv('HOME'),
-                   'chromiumos/src/platform/ec'))
+EC_DIR = pathlib.Path(os.getenv('EC_DIR', os.path.join(os.getenv('HOME'),
+                   'chromiumos/src/platform/ec')))
 
-if not os.path.isdir(EC_DIR):
-    print('Error - EC_DIR "' + EC_DIR + '" doesn\'t exist. Aborting.')
+if not EC_DIR.is_dir():
+    print(f"Error - EC_DIR {EC_DIR} doesn't exist. Aborting.")
     gdb.execute('quit')
-
-# Monitor commands must be run after connecting to the remote target
-# See https://stackoverflow.com/a/39828850
-# https://youtrack.jetbrains.com/issue/CPP-7322
-# https://sourceware.org/gdb/onlinedocs/gdb/Hooks.html
-post_remote_hook='''
-define target hookpost-remote
-    echo \ Flashing EC binary
-    load {EC_DIR}/build/{BOARD}/{BIN_DIR}/{BIN_NAME}.obj
-    echo \ Resetting target
-    monitor reset
-    echo \ Setting breakpoint on main
-    b main
-end\n
-'''.format(BOARD=BOARD, EC_DIR=EC_DIR, BIN_DIR=BIN_DIR, BIN_NAME=BIN_NAME)
 
 gdb.execute('set $BOARD = "%s"'%BOARD)
 gdb.execute('set $GDBSERVER = "%s"'%GDBSERVER)
 gdb.execute('set $GDBPORT = "%s"'%GDBPORT)
 
-build = os.path.join(EC_DIR, 'build', BOARD)
 if BOARD != "":
-    if not os.path.isdir(build):
-        print('Error - Build path "' + build + '" doesn\'t exist. Aborting.')
-        gdb.execute('quit')
+    print('# Setting up symbol files.')
+    build_dir = EC_DIR / 'build' / BOARD
+    if PROJECT != "ec":
+        build_dir = build_dir / PROJECT
+
+    obj_elf = build_dir / (PROJECT + '.obj')
+    ro_elf = build_dir / 'RO' / (PROJECT + '.RO.elf')
+    rw_elf = build_dir / 'RW' / (PROJECT + '.RW.elf')
+
+    for path in [obj_elf, ro_elf, rw_elf]:
+        if not path.exists():
+            print(f"Error - {path} doesn't exist. Aborting.")
+            gdb.execute('quit')
+
+    # Monitor commands must be run after connecting to the remote target
+    # See https://stackoverflow.com/a/39828850
+    # https://youtrack.jetbrains.com/issue/CPP-7322
+    # https://sourceware.org/gdb/onlinedocs/gdb/Hooks.html
+    post_remote_hook='''
+    define target hookpost-remote
+        echo \ Flashing EC binary
+        load {obj_elf}
+        echo \ Resetting target
+        monitor reset
+        echo \ Setting breakpoint on main
+        b main
+    end\n
+    '''.format(obj_elf=obj_elf)
 
     # When using gdb from CLion, this kills gdb.
     if not USING_CLION:
-        gdb.execute('file ' + os.path.join(build, 'ec.obj'))
-    gdb.execute('add-symbol-file ' + os.path.join(build, BIN_DIR, 'RO', BIN_NAME + '.RO.elf'))
-    gdb.execute('add-symbol-file ' + os.path.join(build, BIN_DIR, 'RW', BIN_NAME + '.RW.elf'))
+        gdb.execute(f'file {obj_elf}')
+    gdb.execute(f'add-symbol-file {ro_elf}')
+    gdb.execute(f'add-symbol-file {rw_elf}')
 
 if GDBSERVER == "openocd":
     gdb.execute('set $GDBSERVER_OPENOCD = 1')
@@ -97,7 +103,8 @@ if GDBSERVER == "openocd":
 elif GDBSERVER == "segger":
     gdb.execute('set $GDBSERVER_OPENOCD = 0')
     gdb.execute('set $GDBSERVER_SEGGER = 1')
-    gdb.execute(post_remote_hook)
+    if BOARD != "":
+        gdb.execute(post_remote_hook)
 else:
     print('Error - GDBSERVER="' + GDBSERVER + '" is invalid.')
     gdb.execute('quit')
