@@ -241,7 +241,7 @@ static void uart_freq_change(void)
 	freq = 8000000;
 #elif defined(CHIP_FAMILY_STM32H7)
 	freq = 64000000; /* from 64 Mhz HSI */
-#elif defined(CHIP_FAMILY_STM32L4)
+#elif defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
 	/* UART clocked from HSI 16 */
 	freq = 16000000;
 #else
@@ -279,7 +279,18 @@ static void uart_freq_change(void)
 	STM32_USART_BRR(UARTN_BASE) = div;
 #endif
 }
+
+#if (defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3)) && \
+	(UARTN <= 2)
+/* Constant clock */
+#elif defined(CHIP_FAMILY_STM32H7)
+/* Constant clock */
+#elif defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
+/* Constant clock */
+#else
+/* Clock based on SYSCLK, which may change at runtime */
 DECLARE_HOOK(HOOK_FREQ_CHANGE, uart_freq_change, HOOK_PRIO_DEFAULT);
+#endif
 
 void uart_init(void)
 {
@@ -296,17 +307,26 @@ void uart_init(void)
 #else
 	STM32_RCC_D2CCIP2R |= STM32_RCC_D2CCIP2_USART234578SEL_HSI;
 #endif /* UARTN */
-#elif defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32G4)
-	/* USART1 clock source from SYSCLK */
-	STM32_RCC_CCIPR &= ~STM32_RCC_CCIPR_USART1SEL_MASK;
-#ifdef CHIP_FAMILY_STM32L4
+#elif defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
+#if UARTN != 9
+	/* USARTn clock source from HSI16 */
+	STM32_RCC_CCIPR &=
+		~(0x03 << CONCAT3(STM32_RCC_CCIPR_USART, UARTN, SEL_SHIFT));
 	/* For STM32L4, use HSI for UART, to wake up from low power mode */
 	STM32_RCC_CCIPR |=
-		(STM32_RCC_CCIPR_UART_HSI16 << STM32_RCC_CCIPR_USART1SEL_SHIFT);
+		(STM32_RCC_CCIPR_UART_HSI16
+		 << CONCAT3(STM32_RCC_CCIPR_USART, UARTN, SEL_SHIFT));
 #else
+	/* LPUART1 clock source from HSI16 */
+	STM32_RCC_CCIPR &= ~STM32_RCC_CCIPR_LPUART1SEL_MASK;
+	STM32_RCC_CCIPR |= (STM32_RCC_CCIPR_UART_HSI16
+			    << STM32_RCC_CCIPR_LPUART1SEL_SHIFT);
+#endif /* UARTN == 9 */
+#elif defined(CHIP_FAMILY_STM32G4)
+	/* USART1 clock source from SYSCLK */
+	STM32_RCC_CCIPR &= ~STM32_RCC_CCIPR_USART1SEL_MASK;
 	STM32_RCC_CCIPR |= (STM32_RCC_CCIPR_UART_SYSCLK
 			    << STM32_RCC_CCIPR_USART1SEL_SHIFT);
-#endif
 	/* LPUART1 clock source from SYSCLK */
 	STM32_RCC_CCIPR &= ~STM32_RCC_CCIPR_LPUART1SEL_MASK;
 	STM32_RCC_CCIPR |= (STM32_RCC_CCIPR_UART_SYSCLK
