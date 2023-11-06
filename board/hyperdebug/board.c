@@ -23,9 +23,6 @@
 
 void board_config_pre_init(void)
 {
-	/* enable SYSCFG clock */
-	STM32_RCC_APB2ENR |= STM32_RCC_SYSCFGEN;
-
 	/* We know VDDIO2 is present, enable the GPIO circuit. */
 	STM32_PWR_CR2 |= STM32_PWR_CR2_IOSV;
 }
