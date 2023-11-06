@@ -123,6 +123,17 @@ __override int pd_is_valid_input_voltage(int mv)
 }
 #endif
 
+#ifdef CONFIG_SOC_IT8XXX2
+static void it8xxx2_i2c_swap_default(void)
+{
+	/* Channel A and B are located at SMCLK0/SMDAT0 and SMCLK1/SMDAT1. */
+	IT8XXX2_SMB_SMB01CHS = 0x10;
+	/* Channel C and D are located at SMCLK2/SMDAT2 and SMCLK3/SMDAT3. */
+	IT8XXX2_SMB_SMB23CHS = 0x32;
+}
+DECLARE_HOOK(HOOK_SYSJUMP, it8xxx2_i2c_swap_default, HOOK_PRIO_DEFAULT);
+#endif /* CONFIG_SOC_IT8XXX2 */
+
 /* Trigger shutdown by enabling the Z-sleep circuit */
 __override void board_hibernate_late(void)
 {
