@@ -250,8 +250,8 @@
 
 		bat-power-state-charge-1 {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery display percent range (>= 0, <= 97%) */
-			batt-lvl = <BATTERY_LEVEL_EMPTY 97>;
+			/* Battery display percent range (>= Empty, <= 94%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 94>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
@@ -264,8 +264,8 @@
 
 		bat-power-state-charge-2 {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery display percent range (>= 98, <= 99%) */
-			batt-lvl = <98 99>;
+			/* Battery display percent range (>= 95) */
+			batt-lvl = <95 100>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
@@ -291,6 +291,8 @@
 		bat-power-state-discharge-s0 {
 			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S0";
+			/* Battery display percent range (>= 11%, <= 100%) */
+			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
@@ -335,7 +337,8 @@
 		bat-power-state-discharge-s0-bat-low {
 			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S0";
-			batt-lvl = <BATTERY_LEVEL_EMPTY 7>;
+			/* Battery display percent range (>= 0, <= 10%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
@@ -403,12 +406,13 @@
 		/* Chinchou LED power idle */
 		power-state-idle {
 			charge-state = "LED_PWRS_IDLE";
+			chipset-state = "POWER_S5";
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_WHITE";
+					led-color = "LED_OFF";
 				};
 			};
 		};
