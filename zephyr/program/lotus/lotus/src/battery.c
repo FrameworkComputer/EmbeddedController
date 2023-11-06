@@ -9,6 +9,7 @@
 #include "battery_smart.h"
 #include "battery_fuel_gauge.h"
 #include "board_adc.h"
+#include "board_charger.h"
 #include "board_function.h"
 #include "board_host_command.h"
 #include "charger.h"
@@ -347,6 +348,12 @@ void board_cut_off(void)
 	/* If battery is unknown can't send ship mode command */
 	if (!params) {
 		CPRINTS("Battery unknown cutoff failed");
+		return;
+	}
+
+	/* update charger setting to avoid B+ voltage wake up the battery */
+	if (update_charger_in_cutoff_mode()) {
+		CPRINTS("Update chg fail before cutoff");
 		return;
 	}
 

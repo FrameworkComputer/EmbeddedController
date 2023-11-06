@@ -11,6 +11,7 @@
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "chipset.h"
+#include "common.h"
 #include "console.h"
 #include "cypress_pd_common.h"
 #include "driver/charger/isl9241.h"
@@ -143,6 +144,9 @@ static void board_charger_lpm_control(void)
 	enum power_state ps = power_get_state();
 	static enum power_state pre_power_state = POWER_G3;
 
+	if (battery_cutoff_in_progress() || battery_is_cut_off())
+		return;
+
 	switch (ps) {
 	case POWER_G3:
 	case POWER_G3S5:
@@ -175,6 +179,23 @@ __override void board_hibernate(void)
 	/* for i2c analyze, re-write again */
 	board_charger_lpm_control();
 	charge_gate_onoff(false);
+
+}
+
+int update_charger_in_cutoff_mode(void)
+{
+	/* Turn off the charger NGATE */
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_CONTROL0, (ISL9241_CONTROL0_NGATE_OFF |
+			ISL9241_CONTROL0_BGATE_FORCE_ON)))
+		return EC_ERROR_UNKNOWN;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_CONTROL3, (ISL9241_CONTROL3_ACLIM_RELOAD |
+			ISL9241_CONTROL3_BATGONE)))
+		return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
 }
 
 static void charger_chips_init(void)
