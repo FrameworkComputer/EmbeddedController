@@ -172,6 +172,10 @@ struct default_gpu_cfg {
 	struct gpu_block_header hdr7;
 	struct gpu_cfg_custom_temp custom_temp;
 
+	struct gpu_block_header hdr8;
+	struct gpu_subsys_serial pcba_serial;
+
+
 } __packed;
 
 static struct default_gpu_cfg gpu_cfg = {
@@ -182,8 +186,8 @@ static struct default_gpu_cfg gpu_cfg = {
 		.descriptor_version_minor = 1,
 		.hardware_version = 0x0008,
 		.hardware_revision = 0,
-		.serial = {'F', 'R', 'A', 'G', 'M', 'A', 'S', 'P', '8', '1',
-					'3', '3', '1', 'D', 'U', 'M', 'M', 'Y', '\0', '\0'},
+		.serial = {'F', 'R', 'A', 'K', 'M', 'B', 'C', 'P', '8', '1',
+					'3', '3', '1', 'A', 'S', 'S', 'Y', '0', '\0', '\0'},
 		.descriptor_length = sizeof(struct default_gpu_cfg) - sizeof(struct gpu_cfg_descriptor),
 		.descriptor_crc32 = 0,
 		.crc32 = 0
@@ -225,6 +229,10 @@ static struct default_gpu_cfg gpu_cfg = {
 
 	.hdr7 = {.block_type = GPUCFG_TYPE_CUSTOM_TEMP, .block_length = sizeof(struct gpu_cfg_custom_temp)},
 	.custom_temp = {.idx = 2, .temp_fan_off = C_TO_K(48), .temp_fan_max = C_TO_K(69)},
+
+	.hdr8 = {.block_type = GPUCFG_TYPE_SUBSYS, .block_length = sizeof(struct gpu_subsys_serial)},
+	.pcba_serial = {.gpu_subsys = GPU_PCB, .serial = {'F', 'R', 'A', 'G', 'M', 'A', 'S', 'P', '8', '1',
+					'3', '3', '1', 'P', 'C', 'B', '0', '0', '\0', '\0'},}
 };
 
 struct default_ssd_cfg {
@@ -784,7 +792,7 @@ int parse_gpu_eeprom(void)
 		case GPUCFG_TYPE_SUBSYS:
 			{
 				struct gpu_subsys_serial *subsys = (struct gpu_subsys_serial *)gpu_read_buff;
-				if (subsys->gpu_subsys < GPU_SUBSYS_MAX) {
+				if (subsys->gpu_subsys && subsys->gpu_subsys < GPU_SUBSYS_MAX) {
 					memcpy(gpu_subsys_serials[subsys->gpu_subsys-1], subsys->serial, sizeof(subsys->serial));
 				}
 			}
@@ -991,7 +999,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PROGRAM_GPU_EEPROM, hc_program_gpu_eeprom, EC_VER_MA
 static int cmd_gpucfg(int argc, const char **argv)
 {
 	struct gpu_cfg_descriptor descriptor; 
-
+	int i;
 	if (argc > 1) {
 		if (!strncmp(argv[1], "read", 4)) {
 			parse_gpu_eeprom();
@@ -1026,6 +1034,12 @@ static int cmd_gpucfg(int argc, const char **argv)
 			CPRINTS("    Len: %d Dcrc32:0x%X",
 					gpu_descriptor.descriptor_length,
 					gpu_descriptor.descriptor_crc32);
+
+			CPRINTS(" SN: %s", gpu_descriptor.serial);
+			for (i = 0; i < GPU_SUBSYS_MAX; i++) {
+				if (gpu_subsys_serials[i][0])
+					CPRINTS(" SubsysSN%d: %s", i, &gpu_subsys_serials[i][0]);
+			}
 
 			CPRINTS(" MMIO GPU_CONTROL=0x%X", *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL));
 			CPRINTS(" MMIO GPU_TYPE   =0x%X", *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_TYPE));

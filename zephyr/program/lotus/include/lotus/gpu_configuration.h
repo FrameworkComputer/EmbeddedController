@@ -182,7 +182,7 @@ struct gpu_cfg_battery {
 
 
 enum gpu_subsys_type {
-	GPU_ASSEMBLY = 0,
+	GPU_ASSEMBLY = 0, /* Populated in header, not valid for extended structure */
 	GPU_PCB = 1,
 	GPU_LEFT_FAN = 2,
 	GPU_RIGHT_FAN = 3,
