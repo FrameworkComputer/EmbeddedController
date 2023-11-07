@@ -15,6 +15,8 @@
 #define GPIO_PG_PATH NAMED_GPIOS_GPIO_NODE(test)
 #define GPIO_PG_PORT DT_GPIO_PIN(GPIO_PG_PATH, gpios)
 
+void pwm_fan_init(void);
+
 struct fan_common_fixture {
 	const struct device *pwm_mock;
 	const struct device *tach_mock;
@@ -315,4 +317,24 @@ ZTEST(fan_common, test_fan_hc_set_auto_fan_v1_bad_fan)
 		BUILD_HOST_COMMAND_PARAMS(EC_CMD_THERMAL_AUTO_FAN_CTRL, 1, p);
 
 	zassert_equal(host_command_process(&args), EC_RES_ERROR);
+}
+
+ZTEST(fan_common, test_memmap_not_present)
+{
+	uint16_t *mapped = (uint16_t *)host_get_memmap(EC_MEMMAP_FAN);
+
+	/* Initial reported speeds are zero. */
+	for (int i = 0; i < EC_FAN_SPEED_ENTRIES; i++) {
+		mapped[i] = 0;
+	}
+
+	/* Reported speeds are set to NOT_PRESENT as appropriate. */
+	fan_set_count(0);
+	pwm_fan_init();
+	for (int i = 0; i < EC_FAN_SPEED_ENTRIES; i++) {
+		zassert_equal(
+			mapped[i], EC_FAN_SPEED_NOT_PRESENT,
+			"Fan %d reports speed %d but should not be present", i,
+			mapped[i]);
+	}
 }
