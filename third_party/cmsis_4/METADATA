@@ -1,0 +1,15 @@
+name: "CMSIS Version 4"
+description:
+    "Cortex Microcontroller Software Interface Standard"
+
+third_party {
+  url {
+    type: GIT
+    value: "https://github.com/ARM-software/CMSIS_4"
+  }
+  version: "b94b8ff1cc5aa7e054bdc4b1bf76a2069fb1fde4"
+  last_upgrade_date { year: 2015 month: 6 day: 16 }
+  license_type: NOTICE
+  local_modifications: "Created LICENSE file."
+    "Adapted code to work with Microchip second loader."
+}
