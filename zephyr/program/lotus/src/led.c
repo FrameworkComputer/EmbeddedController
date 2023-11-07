@@ -439,6 +439,7 @@ static void board_led_set_power(void)
 
 	/* turn off led when lid is close*/
 	if (!lid_is_open()) {
+		breath_led_run(0);
 		led_set_color(LED_OFF, EC_LED_ID_POWER_LED);
 		return;
 	}
