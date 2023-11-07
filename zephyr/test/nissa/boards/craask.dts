@@ -46,6 +46,12 @@
 			gpios = <&gpio6 3 GPIO_OUTPUT>;
 			no-auto-init;
 		};
+		gpio_ec_touch_en: ec_touch_en {
+			gpios = <&gpio8 3 GPIO_OUTPUT_LOW>;
+		};
+		gpio_soc_edp_bl_en: soc_edp_bl_en {
+			gpios = <&gpioc 7 GPIO_INPUT>;
+		};
 	};
 
 	gpio-interrupts {
@@ -78,6 +84,11 @@
 			irq-pin = <&gpio_tablet_mode_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "gmr_tablet_switch_isr";
+		};
+		int_soc_edp_bl_en: soc_edp_bl_en {
+			irq-pin = <&gpio_soc_edp_bl_en>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "soc_edp_bl_interrupt";
 		};
 	};
 

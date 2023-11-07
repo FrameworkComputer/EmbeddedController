@@ -105,6 +105,11 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "usb_interrupt";
 		};
+		int_soc_edp_bl_en: soc_edp_bl_en {
+			irq-pin = <&gpio_soc_edp_bl_en>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "soc_edp_bl_interrupt";
+		};
 	};
 
 	named-gpios {
@@ -287,11 +292,9 @@
 			<&gpio6 3 0>,
 			<&gpio6 6 0>,
 			<&gpio7 3 0>,
-			<&gpio8 3 0>,
 			<&gpio8 6 0>,
 			<&gpiob 1 0>,
 			<&gpiob 7 0>,
-			<&gpioc 7 0>,
 			<&gpiof 2 0>,
 			<&gpiof 3 0>;
 	 };

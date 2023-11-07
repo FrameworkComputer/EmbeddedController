@@ -104,6 +104,9 @@
 		gpio_ec_soc_vccst_pwrgd_od: ec_soc_vccst_pwrgd_od {
 			gpios = <&gpioa 4 GPIO_ODR_HIGH>;
 		};
+		gpio_ec_touch_en: ec_touch_en {
+			gpios = <&gpio8 3 GPIO_OUTPUT_LOW>;
+		};
 		gpio_ec_wp_odl: ec_wp_odl {
 			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
@@ -199,6 +202,9 @@
 		gpio_volup_btn_odl: volup_btn_odl {
 			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		gpio_soc_edp_bl_en: soc_edp_bl_en {
+			gpios = <&gpioc 7 GPIO_INPUT>;
 		};
 	};
 
