@@ -6521,6 +6521,9 @@
 #define CONFIG_LED_PWM_CHARGE_STATE_ONLY
 #endif
 
+/* Define for to turn off power LED in suspend for boards shipped after 2022 */
+#undef CONFIG_LED_PWM_OFF_IN_SUSPEND
+
 /*****************************************************************************/
 /*
  * Define derived configuration options for EC-EC communication

@@ -239,8 +239,16 @@ static int show_chipset_state(void)
 		/* The LED must be on in the Active state. */
 		set_led_color(CONFIG_LED_PWM_SOC_ON_COLOR);
 	} else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)) {
+#ifdef CONFIG_LED_PWM_OFF_IN_SUSPEND
+		/*
+		 * New devices from 2022 onwards require LED to be off during
+		 * suspend. Older devices follow the old standard of pulsing.
+		 */
+		set_led_color(-1);
+#else
 		/* The power LED must pulse in the suspend state. */
 		pulse_leds(CONFIG_LED_PWM_SOC_SUSPEND_COLOR, 4, 16);
+#endif /* CONFIG_POWER_LED_OFF_IN_SUSPEND */
 	} else {
 		/* Chipset is off, no need to show anything for this. */
 		return 0;
