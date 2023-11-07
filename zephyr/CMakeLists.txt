@@ -354,6 +354,17 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN
                                                 "${PLATFORM_EC}/common/fan.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FLASH_CROS
                                                 "${PLATFORM_EC}/common/flash.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FINGERPRINT
+						"${PLATFORM_EC}/common/fpsensor/fpsensor.cc"
+						"${PLATFORM_EC}/common/fpsensor/fpsensor_state.cc"
+						"${PLATFORM_EC}/common/fpsensor/fpsensor_state_without_driver_info.cc"
+						"${PLATFORM_EC}/common/fpsensor/fpsensor_crypto.cc"
+						"${PLATFORM_EC}/common/fpsensor/fpsensor_debug.cc"
+						"${PLATFORM_EC}/common/fpsensor/fpsensor_auth_commands.cc"
+						"${PLATFORM_EC}/common/fpsensor/fpsensor_auth_crypto_stateful.cc"
+						"${PLATFORM_EC}/common/fpsensor/fpsensor_auth_crypto_stateless.cc"
+						"${PLATFORM_EC}/common/fpsensor/fpsensor_detect_strings.cc"
+						"${PLATFORM_EC}/crypto/elliptic_curve_key.cc")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD
                                                 "${PLATFORM_EC}/common/host_command.c")
 if (NOT DEFINED CONFIG_EC_HOST_CMD)
