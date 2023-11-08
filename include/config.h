@@ -3238,11 +3238,6 @@
 /* Support common LED interface */
 #undef CONFIG_LED_COMMON
 
-/* Standard LED behavior according to spec given that we have a red-green
- * bicolor led for charging and one power led
- */
-#undef CONFIG_LED_POLICY_STD
-
 #ifndef CONFIG_ZEPHYR
 /*
  * Support common PWM-controlled LEDs that conform to the Chrome OS LED

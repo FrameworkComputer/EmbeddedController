@@ -120,7 +120,6 @@ common-$(CONFIG_KEYBOARD_VIVALDI)+=keyboard_vivaldi.o
 common-$(CONFIG_MKBP_INPUT_DEVICES)+=mkbp_input_devices.o mkbp_fifo.o \
 	mkbp_info.o
 common-$(CONFIG_LED_COMMON)+=led_common.o
-common-$(CONFIG_LED_POLICY_STD)+=led_policy_std.o
 common-$(CONFIG_LED_PWM)+=led_pwm.o
 common-$(CONFIG_LED_ONOFF_STATES)+=led_onoff_states.o
 common-$(CONFIG_LID_ANGLE)+=motion_lid.o math_util.o
