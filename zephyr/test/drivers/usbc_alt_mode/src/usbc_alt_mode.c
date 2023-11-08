@@ -209,7 +209,7 @@ static void usbc_alt_mode_after(void *data)
 				     fixture->charger_emul);
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_discovery)
+ZTEST_F(usbc_alt_mode, test_discovery)
 {
 	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
 	struct ec_response_typec_discovery *discovery =
@@ -240,7 +240,7 @@ ZTEST_F(usbc_alt_mode, test_verify_discovery)
 		      "DP mode VDOs did not match");
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_discovery_params_too_small)
+ZTEST_F(usbc_alt_mode, test_discovery_params_too_small)
 {
 	struct ec_response_typec_discovery discovery;
 
@@ -285,7 +285,7 @@ void verify_data_reset_msg(struct tcpci_partner_data *partner, bool want)
 		zassert_true(sent_data_reset);
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_displayport_mode_entry)
+ZTEST_F(usbc_alt_mode, test_displayport_mode_entry)
 {
 	const struct gpio_dt_spec *gpio =
 		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
@@ -343,7 +343,7 @@ ZTEST_F(usbc_alt_mode, test_verify_displayport_mode_entry)
 	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 1);
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_bad_hpd_irq_reject)
+ZTEST_F(usbc_alt_mode, test_bad_hpd_irq_reject)
 {
 	const struct gpio_dt_spec *gpio =
 		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
@@ -384,7 +384,7 @@ ZTEST_F(usbc_alt_mode, test_verify_bad_hpd_irq_reject)
 	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_hpd_clear)
+ZTEST_F(usbc_alt_mode, test_hpd_clear)
 {
 	const struct gpio_dt_spec *gpio =
 		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
@@ -442,7 +442,7 @@ ZTEST_F(usbc_alt_mode, test_verify_hpd_clear)
 	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_hpd_irq_set)
+ZTEST_F(usbc_alt_mode, test_hpd_irq_set)
 {
 	const struct gpio_dt_spec *gpio =
 		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
@@ -503,7 +503,7 @@ ZTEST_F(usbc_alt_mode, test_verify_hpd_irq_set)
 	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 1);
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_discovery_via_pd_host_cmd)
+ZTEST_F(usbc_alt_mode, test_discovery_via_pd_host_cmd)
 {
 	struct ec_params_usb_pd_info_request params = { .port = TEST_PORT };
 	struct ec_params_usb_pd_discovery_entry response;
@@ -615,7 +615,7 @@ static void usbc_alt_mode_dp_unsupported_after(void *data)
  * When the partner advertises DP mode support but refuses to enter, discovery
  * should still work as if the partner were compliant.
  */
-ZTEST_F(usbc_alt_mode_dp_unsupported, test_verify_discovery)
+ZTEST_F(usbc_alt_mode_dp_unsupported, test_discovery)
 {
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
 		host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
@@ -655,7 +655,7 @@ ZTEST_F(usbc_alt_mode_dp_unsupported, test_verify_discovery)
  * When the partner advertises DP support but refuses to enter DP mode, the TCPM
  * should try once and then give up.
  */
-ZTEST_F(usbc_alt_mode_dp_unsupported, test_verify_displayport_mode_nonentry)
+ZTEST_F(usbc_alt_mode_dp_unsupported, test_displayport_mode_nonentry)
 {
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
 		host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
