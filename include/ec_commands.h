@@ -7780,6 +7780,22 @@ struct batt_conf_header {
 	(sizeof(struct batt_conf_header) + SBS_MAX_STRING_SIZE * 2 + \
 	 sizeof(struct board_batt_params))
 
+/*
+ * Record the current AP firmware state. This is used to help testing, such as
+ * with FAFT (Fully-Automated Firmware Test), which likes to know which firmware
+ * screen is currently displayed.
+ */
+
+#define EC_CMD_AP_FW_STATE 0x013E
+
+struct ec_params_ap_fw_state {
+	/*
+	 * Value which indicates the state. This is not decoded by the EC, so
+	 * its meaning is entirely outside this code base.
+	 */
+	uint32_t state;
+} __ec_align1;
+
 /*****************************************************************************/
 /* The command range 0x200-0x2FF is reserved for Rotor. */
 

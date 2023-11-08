@@ -6,6 +6,7 @@
 #include "ec_commands.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
+#include "uart.h"
 
 #include <zephyr/ztest.h>
 
@@ -133,6 +134,29 @@ ZTEST(host_cmd_host_commands, test_hello)
 		zassert_equal(params_to_test[i] + 0x01020304, response.out_data,
 			      "in_data: %x", params_to_test[i]);
 	}
+}
+
+ZTEST(host_cmd_host_commands, test_ap_fw_state)
+{
+	const struct shell *shell_zephyr = get_ec_shell();
+	struct ec_params_ap_fw_state params;
+	struct host_cmd_handler_args args =
+		BUILD_HOST_COMMAND_PARAMS(EC_CMD_AP_FW_STATE, 0, params);
+	const char *outbuffer;
+	size_t buffer_size;
+	int rv;
+
+	/* Flush the console buffer before we start. */
+	shell_backend_dummy_clear_output(shell_zephyr);
+
+	params.state = 0x12345678;
+	rv = host_command_process(&args);
+	zassert_ok(rv, "Got %d", rv);
+
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+
+	zassert_true(strstr(outbuffer, "AP_FW 12345678") != NULL,
+		     "Invalid console output %s", outbuffer);
 }
 
 ZTEST_SUITE(host_cmd_host_commands, drivers_predicate_post_main, NULL, NULL,

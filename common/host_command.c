@@ -261,3 +261,16 @@ host_command_get_s0ix_cnt(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_GET_S0IX_COUNTER, host_command_get_s0ix_cnt,
 		     EC_VER_MASK(0));
 #endif
+
+static enum ec_status
+host_command_ap_fw_state(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_ap_fw_state *p = args->params;
+
+	ccprintf("AP_FW %x\n", p->state);
+	args->response_size = 0;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_AP_FW_STATE, host_command_ap_fw_state,
+		     EC_VER_MASK(0));

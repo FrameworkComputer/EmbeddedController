@@ -238,6 +238,7 @@ ec_cmd_usb_pd_set_amode(CROS_EC_COMMAND_INFO *h,
 
 _CROS_EC_C0_F_PF_RF(EC_CMD_ADC_READ, adc_read);
 _CROS_EC_CV_F_P(EC_CMD_ADD_ENTROPY, 0, add_entropy, rollback_add_entropy);
+_CROS_EC_C0_F_PF(EC_CMD_AP_FW_STATE, ap_fw_state);
 _CROS_EC_C0_F(EC_CMD_AP_RESET, ap_reset);
 _CROS_EC_CV_F_P(EC_CMD_BATTERY_CUT_OFF, 1, battery_cut_off_v1, battery_cutoff);
 _CROS_EC_C0_F(EC_CMD_BATTERY_CUT_OFF, battery_cut_off);
