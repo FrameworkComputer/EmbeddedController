@@ -3881,6 +3881,11 @@
 #undef CONFIG_KBLIGHT_ENABLE_PIN
 
 /*
+ * Call keyboard backlight init function during init hook instead of start-up
+ */
+#undef CONFIG_KBLIGHT_HOOK_INIT
+
+/*
  * RGB Keyboard
  */
 #undef CONFIG_RGB_KEYBOARD

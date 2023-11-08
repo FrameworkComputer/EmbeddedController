@@ -273,6 +273,12 @@ config PLATFORM_EC_KBLIGHT_ENABLE_PIN
 	  Enables control of the keyboard backlight through a GPIO enable and
 	  disable pin.  This pin must be defined as GPIO_EN_KEYBOARD_BACKLIGHT.
 
+config PLATFORM_EC_KBLIGHT_HOOK_INIT
+	bool "Keyboard backlight during init hook"
+	help
+	  Keyboard backlight init function gets called during init hook instead of
+	  start up hook.
+
 config PLATFORM_EC_KEYBOARD_STRICT_DEBOUNCE
 	bool "Keyboard strict debouncer"
 	help
