@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "ap_reset_log.h"
 #include "system_boot_time.h"
 #include "zephyr_console_shim.h"
 
@@ -268,6 +269,9 @@ void ap_power_force_shutdown(enum ap_power_shutdown_reason reason)
 		return;
 	}
 #endif /* CONFIG_AP_PWRSEQ_DEBUG_MODE_COMMAND */
+
+	report_ap_reset((enum chipset_shutdown_reason)reason);
+
 	board_ap_power_force_shutdown();
 }
 
@@ -297,6 +301,8 @@ void ap_power_reset(enum ap_power_shutdown_reason reason)
 		LOG_DBG("Chipset is in reset state");
 		return;
 	}
+
+	report_ap_reset((enum chipset_shutdown_reason)reason);
 
 	power_signal_set(PWR_SYS_RST, 1);
 	/*

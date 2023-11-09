@@ -21,3 +21,6 @@ target_sources_ifdef(CONFIG_X86_NON_DSX_PWRSEQ_ADL app PRIVATE
 
 target_sources_ifdef(CONFIG_X86_NON_DSX_PWRSEQ_MTL app PRIVATE
 		     src/boards/meteorlake.c)
+
+target_sources_ifdef(CONFIG_X86_NON_DSX_PWRSEQ_CONSOLE app PRIVATE
+		     src/pwrseq_console.c)

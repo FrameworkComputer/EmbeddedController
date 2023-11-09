@@ -23,6 +23,7 @@ tests:
     - CONFIG_AP_X86_INTEL_MTL=y
     - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S4=y
     - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S5=y
+    - CONFIG_X86_NON_DSX_PWRSEQ_CONSOLE=y
   ap_power_drv.alderlake:
     extra_dtc_overlay_files:
     - boards/native_posix.overlay
