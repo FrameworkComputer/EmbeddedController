@@ -56,13 +56,7 @@ int get_standalone_mode(void)
 void reset_diagnostics(void)
 {
 	/* Diagnostic always reset at G3/S5 */
-#ifdef CONFIG_BOARD_LOTUS
-	hw_diagnostics =
-		BIT(DIAGNOSTICS_NO_RIGHT_FAN) | BIT(DIAGNOSTICS_NO_LEFT_FAN) |
-		BIT(DIAGNOSTICS_NO_S0) | BIT(DIAGNOSTICS_HW_NO_BATTERY);
-#else
 	hw_diagnostics = BIT(DIAGNOSTICS_NO_S0) | BIT(DIAGNOSTICS_HW_NO_BATTERY);
-#endif
 
 	run_diagnostics = 1;
 

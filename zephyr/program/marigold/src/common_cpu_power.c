@@ -94,18 +94,6 @@ int set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p3t)
 	return EC_SUCCESS;
 }
 
-#ifdef CONFIG_BOARD_LOTUS
-int update_apu_only_sppt_limit(uint32_t mwatt)
-{
-	uint32_t msgIn = 0;
-	uint32_t msgOut;
-
-	msgIn = mwatt;
-
-	return sb_rmi_mailbox_xfer(SB_RMI_WRITE_APU_ONLY_SPPT_CMD, msgIn, &msgOut);
-}
-#endif
-
 void update_soc_power_limit_hook(void)
 {
 	if (!manual_ctl)
@@ -126,14 +114,6 @@ static int cmd_cpupower(int argc, const char **argv)
 		target_func[TYPE_FPPT], power_limit[target_func[TYPE_FPPT]].mwatt[TYPE_FPPT],
 		target_func[TYPE_P3T], power_limit[target_func[TYPE_P3T]].mwatt[TYPE_P3T]);
 
-#ifdef CONFIG_BOARD_LOTUS
-	CPRINTF("FUNC = %d, ao_sppt %dmW\n",
-		target_func[TYPE_APU_ONLY_SPPT],
-		power_limit[target_func[TYPE_APU_ONLY_SPPT]].mwatt[TYPE_APU_ONLY_SPPT]);
-
-	CPRINTF("stt_table = %d\n", (*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER)));
-#endif
-
 	if (argc >= 2) {
 		if (!strncmp(argv[1], "auto", 4)) {
 			manual_ctl = false;
@@ -153,10 +133,6 @@ static int cmd_cpupower(int argc, const char **argv)
 					power_limit[i].mwatt[TYPE_FPPT],
 					power_limit[i].mwatt[TYPE_SPPT],
 					power_limit[i].mwatt[TYPE_P3T]);
-#ifdef CONFIG_BOARD_LOTUS
-				CPRINTF("ao_sppt %dmW\n",
-					power_limit[i].mwatt[TYPE_APU_ONLY_SPPT]);
-#endif
 			}
 		}
 

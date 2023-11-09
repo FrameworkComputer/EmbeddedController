@@ -2,20 +2,14 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-config BOARD_LOTUS
-	bool "Framework Lotus Board"
+config BOARD_MARIGOLD
+	bool "Framework Marigold Board"
 	help
-	  Build Framework Lotus reference board. Lotus has AMD SoC
+	  Build Framework Marigold reference board. Marigold has AMD SoC
 	  with NPCX993FA0BX EC.
 
-config BOARD_AZALEA
-	bool "Framework Azalea Board"
-	help
-	  Build Framework Azalea reference board. Azalea has AMD SoC
-	  with NPCX993FA0BX EC.
-
-module = LOTUS
-module-str = Lotus board-specific code
+module = MARIGOLD
+module-str = Marigold board-specific code
 source "subsys/logging/Kconfig.template.log_config"
 
 source "Kconfig.zephyr"

@@ -30,12 +30,6 @@
 #include "diagnostics.h"
 #include "lid_switch.h"
 
-#ifdef CONFIG_BOARD_LOTUS
-#include "gpu.h"
-#include "input_module.h"
-#endif
-
-
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/logging/log.h>
@@ -536,11 +530,7 @@ static void led_tick(void)
 		colors[0] = LED_RED;
 		colors[1] = LED_BLUE;
 		colors[2] = LED_OFF;
-#ifdef CONFIG_BOARD_LOTUS
-		multifunction_leds_control(colors, 2, 1000);
-#else
 		multifunction_leds_control(colors, 2, 500);
-#endif
 		return;
 	}
 
@@ -549,11 +539,7 @@ static void led_tick(void)
 		colors[0] = LED_RED;
 		colors[1] = LED_BLUE;
 		colors[2] = LED_OFF;
-#ifdef CONFIG_BOARD_LOTUS
-		multifunction_leds_control(colors, 2, 1000);
-#else
 		multifunction_leds_control(colors, 2, 500);
-#endif
 		return;
 	}
 
@@ -566,37 +552,6 @@ static void led_tick(void)
 		multifunction_leds_control(colors, 2, 1000);
 		return;
 	}
-
-#ifdef CONFIG_BOARD_LOTUS
-	/* GPU bay cover detect switch open */
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_f_beam_open_l)) == 0 &&
-		!get_standalone_mode()) {
-		colors[0] = LED_RED;
-		colors[1] = LED_AMBER;
-		colors[2] = LED_OFF;
-		multifunction_leds_control(colors, 3, 1000);
-		return;
-	}
-
-	/* GPU Bay Module Fault */
-	if (gpu_module_fault() && extpower_is_present()) {
-		colors[0] = LED_RED;
-		colors[1] = LED_AMBER;
-		colors[2] = LED_OFF;
-		multifunction_leds_control(colors, 3, 1000);
-		return;
-	}
-
-	/* Input Deck not fully populated */
-	if (!input_deck_is_fully_populated() && !get_standalone_mode() &&
-		!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		colors[0] = LED_RED;
-		colors[1] = LED_BLUE;
-		colors[2] = LED_OFF;
-		multifunction_leds_control(colors, 3, 500);
-		return;
-	}
-#endif
 
 	board_led_set_color();
 }
