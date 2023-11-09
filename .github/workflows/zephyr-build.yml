@@ -11,7 +11,7 @@ on:
       - 'zephyr/program/marigold/**'
   #pull_request:
   #  branches:
-  #    - lotus-zephyr
+  #    - marigold
   workflow_dispatch:
 
 jobs:
@@ -62,7 +62,7 @@ jobs:
           git reset --hard github-private/lotus-zephyr
           popd
 
-      - name: Build Lotus
+      - name: Build ${{ matrix.platform }}
         run: |
           cros_sdk zmake build ${{ matrix.platform }}
           echo Built ${{ matrix.platform }} EC
