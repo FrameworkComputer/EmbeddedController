@@ -123,7 +123,7 @@ __override void board_check_extpower(void)
 }
 
 atomic_t pp3300_a_pgood;
-__override int intel_x86_get_pg_ec_dsw_pwrok(void)
+static int get_pg_ec_dsw_pwrok(void)
 {
 	/*
 	 * The PP3300_A rail is an input to generate DPWROK.  Assuming that
@@ -177,7 +177,7 @@ static void baseboard_prepare_power_signals(void)
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_prepare_power_signals, HOOK_PRIO_FIRST);
 
-__override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
+static int get_pg_ec_all_sys_pwrgd(void)
 {
 	/*
 	 * SLP_S3_L is a qualifying input signal to ALL_SYS_PWRGD logic.
@@ -197,10 +197,10 @@ __override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
 __override int power_signal_get_level(enum gpio_signal signal)
 {
 	if (signal == GPIO_PG_EC_DSW_PWROK)
-		return intel_x86_get_pg_ec_dsw_pwrok();
+		return get_pg_ec_dsw_pwrok();
 
 	if (signal == GPIO_PG_EC_ALL_SYS_PWRGD)
-		return intel_x86_get_pg_ec_all_sys_pwrgd();
+		return get_pg_ec_all_sys_pwrgd();
 
 	if (IS_ENABLED(CONFIG_HOST_INTERFACE_ESPI)) {
 		/* Check signal is from GPIOs or VWs */

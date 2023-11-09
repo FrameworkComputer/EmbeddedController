@@ -96,7 +96,7 @@ struct intel_x86_pwrok_signal {
  *
  * ALL_SYS_PWRGD can be implemented as a single GPIO if the platform power logic
  * combines the above power good signals. Otherwise your board can override
- * intel_x86_get_pg_ec_all_sys_pwrgd() to check multiple power good signals.
+ * power_signal_get_level() to check multiple power good signals.
  */
 extern const struct intel_x86_pwrok_signal pwrok_signal_assert_list[];
 extern const int pwrok_signal_assert_count;
