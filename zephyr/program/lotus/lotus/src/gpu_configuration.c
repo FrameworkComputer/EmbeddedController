@@ -571,13 +571,6 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, set_gpu_gpios_powerstate, HOOK_PRIO_DEFAULT)
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, set_gpu_gpios_powerstate, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, set_gpu_gpios_powerstate, HOOK_PRIO_DEFAULT);
 
-void set_gpu_ac(void)
-{
-	int level = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in));
-	set_gpu_gpio(GPIO_FUNC_ACDC, level);
-}
-DECLARE_HOOK(HOOK_AC_CHANGE, set_gpu_ac, HOOK_PRIO_FIRST);
-
 void reset_mux_status(void)
 {
 	uint8_t gpu_status = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_GPU_CONTROL);

@@ -866,6 +866,16 @@ static void update_safety_power_limit(int active_mpower)
 	}
 }
 
+void clear_prochot(void)
+{
+	bool wait_pmf_update = !!(get_pd_progress_flags() & BIT(PD_PROGRESS_DISCONNECTED));
+
+	if (wait_pmf_update) {
+		throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_UPDATE_PMF);
+		update_pd_progress_flags(PD_PROGRESS_DISCONNECTED, 1);
+	}
+}
+
 void update_soc_power_limit(bool force_update, bool force_no_adapter)
 {
 	static uint32_t old_sustain_power_limit;
@@ -884,8 +894,10 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	if ((*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER)) == 0)
 		old_stt_table = 0;
 
-	if (!chipset_in_state(CHIPSET_STATE_ON) || !get_apu_ready())
+	if (!chipset_in_state(CHIPSET_STATE_ON) || !get_apu_ready()) {
+		clear_prochot();
 		return;
+	}
 
 	if (mode_ctl)
 		mode = mode_ctl;
@@ -961,6 +973,8 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		if (!set_pl_limit)
 			set_pl_limit = update_apu_only_sppt_limit(old_ao_sppt);
 	}
+
+	clear_prochot();
 }
 
 static void initial_soc_power_limit(void)

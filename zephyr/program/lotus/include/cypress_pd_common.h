@@ -441,6 +441,11 @@ enum pd_port {
 	PD_PORT_COUNT
 };
 
+enum pd_progress {
+	PD_PROGRESS_IDLE = 0,
+	PD_PROGRESS_DISCONNECTED,
+};
+
 struct pd_chip_config_t {
 	uint16_t i2c_port;
 	uint16_t addr_flags;
@@ -565,5 +570,9 @@ int cypd_modify_safety_power(int controller, int port, int profile);
 int cypd_port_3a_status(int controller, int port);
 
 uint8_t cypd_get_cfet_status(void);
+
+uint8_t get_pd_progress_flags(void);
+
+void update_pd_progress_flags(int bit, int clear);
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

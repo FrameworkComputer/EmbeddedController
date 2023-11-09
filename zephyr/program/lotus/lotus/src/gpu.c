@@ -10,6 +10,7 @@
 #include "battery.h"
 #include "chipset.h"
 #include "customized_shared_memory.h"
+#include "extpower.h"
 #include "gpio/gpio_int.h"
 #include "gpio.h"
 #include "gpu.h"
@@ -52,11 +53,13 @@ bool gpu_module_fault(void)
 
 void update_gpu_ac_power_state(void)
 {
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in))) {
-		set_gpu_gpio(GPIO_FUNC_ACDC, 1);
-	} else {
-		set_gpu_gpio(GPIO_FUNC_ACDC, 0);
-	}
+	int level = extpower_is_present();
+
+	/**
+	 * The chagrer ACOK status will be off -> on -> off after the adapter is removed.
+	 * We need to use the customized extpower_is_present to get the correct status.
+	 */
+	set_gpu_gpio(GPIO_FUNC_ACDC, level);
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, update_gpu_ac_power_state, HOOK_PRIO_FIRST);
 

@@ -6,6 +6,7 @@
 #include <atomic.h>
 #include <zephyr/init.h>
 #include "gpio/gpio_int.h"
+
 #include "battery.h"
 #include "board_function.h"
 #include "charge_manager.h"
@@ -26,6 +27,7 @@
 #include "usb_emsg.h"
 #include "usb_tc_sm.h"
 #include "util.h"
+#include "throttle_ap.h"
 #include "zephyr_console_shim.h"
 
 #ifdef CONFIG_BOARD_LOTUS
@@ -88,6 +90,7 @@ static int prev_charge_port = -1;
 static uint8_t pd_c_fet_active_port;
 static bool verbose_msg_logging;
 static bool firmware_update;
+static uint8_t pd_progress_status;
 
 /*****************************************************************************/
 /* Internal functions */
@@ -528,6 +531,19 @@ static int cypd_select_pdo(int controller, int port, uint8_t profile)
 		CPRINTS("SET CCG_SELECT_REG failed");
 
 	return rv;
+}
+
+uint8_t get_pd_progress_flags(void)
+{
+	return pd_progress_status;
+}
+
+void update_pd_progress_flags(int bit, int clear)
+{
+	if (clear)
+		pd_progress_status &= ~BIT(bit);
+	else
+		pd_progress_status |= BIT(bit);
 }
 
 
@@ -1733,11 +1749,16 @@ void cypd_port_int(int controller, int port)
 		cypd_update_port_state(controller, port);
 		/* make sure the type-c state is cleared */
 		clear_port_state(controller, port);
-#ifdef CONFIG_BOARD_LOTUS
-		update_gpu_ac_power_state();
-#endif
+
 		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 			charge_manager_update_dualrole(port_idx, CAP_UNKNOWN);
+
+		/* Assert prochot until the PMF is updated */
+		if (!((pd_progress_status & BIT(PD_PROGRESS_DISCONNECTED)) ==
+			BIT(PD_PROGRESS_DISCONNECTED))) {
+			pd_progress_status = BIT(PD_PROGRESS_DISCONNECTED);
+			throttle_ap(THROTTLE_ON, THROTTLE_HARD, THROTTLE_SRC_UPDATE_PMF);
+		}
 		break;
 	case CCG_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE:
 		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE %d", port_idx);
