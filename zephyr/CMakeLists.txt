@@ -635,7 +635,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_PPC_RT1718S
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_VBOOT_HASH
                                                 "${PLATFORM_EC}/common/vboot_hash.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_VOLUME_BUTTONS
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BUTTON
                                                 "${PLATFORM_EC}/common/button.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_VBOOT_EFS2

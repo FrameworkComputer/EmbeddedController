@@ -201,6 +201,7 @@ config PLATFORM_EC_KEYBOARD_SCAN_ADC
 
 config PLATFORM_EC_VOLUME_BUTTONS
 	bool "Board has volume-up and volume-down buttons"
+	select PLATFORM_EC_BUTTON
 	help
 	  Enable this if the board has physical buttons for the volume controls.
 	  These are buttons controlled by GPIOs and are not part of the keyboard
@@ -220,13 +221,6 @@ config PLATFORM_EC_CMD_BUTTON
 	help
 	  This command simulates button press. The buttons are like volume-up,
 	  volume-down, and recovery buttons.
-
-config PLATFORM_EC_BUTTON_TRIGGERED_RECOVERY
-	bool "Support entering recovery mode using buttons"
-	help
-	  Support for entering recovery mode using the volume buttons or a
-	  dedicated recovery button. Note that these are *buttons* and not keys
-	  in the keyboard matrix.
 
 config PLATFORM_EC_CONSOLE_CMD_KEYBOARD
 	bool "Console command: ksstate, kbpress, 8042"

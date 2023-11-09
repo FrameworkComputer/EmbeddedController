@@ -80,6 +80,7 @@ properties:
       - GPIO_POWER_BUTTON_L
       - GPIO_POWER_GOOD
       - GPIO_PS_HOLD
+      - GPIO_RECOVERY_L
       - GPIO_S0_PGOOD
       - GPIO_S5_PGOOD
       - GPIO_SLP_SUS_L

@@ -204,6 +204,21 @@ config PLATFORM_EC_BRINGUP
 	  - And more!  You can search the codebase for CONFIG_BRINGUP
             to see all of the features this flag will toggle.
 
+config PLATFORM_EC_BUTTON
+	bool "Enable button support"
+	help
+	  Enable Chrome EC button library support. It is required for keyboard
+	  and dedicated recovery button support.
+
+config PLATFORM_EC_BUTTON_TRIGGERED_RECOVERY
+	bool "Support entering recovery mode using buttons"
+	default y
+	depends on PLATFORM_EC_DEDICATED_RECOVERY_BUTTON
+	help
+	  Support for entering recovery mode using the volume buttons or a
+	  dedicated recovery button. Note that these are *buttons* and not keys
+	  in the keyboard matrix.
+
 config PLATFORM_EC_CHIPSET_RESET_HOOK
 	bool "Provide a hook for when the AP resets"
 	default y
@@ -344,6 +359,35 @@ config PLATFORM_EC_DEBUG_ASSERT
 
 	  Note: There is also ASSERT() which is an alias of assert(), used in
 	  host code where cstdlib is used.
+
+config PLATFORM_EC_DEDICATED_RECOVERY_BUTTON
+	bool "Enable dedicated recovery button"
+	select PLATFORM_EC_BUTTON
+	help
+	  Indicates there is a dedicated recovery button.  Note, that if there
+	  are volume buttons, a dedicated recovery button is not needed.
+	  This is intended because if a board has volume buttons, they can do
+	  everything a dedicated recovery button can do.
+
+config PLATFORM_EC_DEDICATED_RECOVERY_BUTTON_ACTIVE_HIGH
+	bool "Recovery button is active high"
+	depends on PLATFORM_EC_DEDICATED_RECOVERY_BUTTON
+	help
+	  Configure recovery button to use high state as active.
+
+config PLATFORM_EC_DEDICATED_RECOVERY_BUTTON_2
+	bool "Enable second dedicated recovery button"
+	select PLATFORM_EC_BUTTON
+	help
+	  Enable use of second dedicated recovery button.
+	  For various reasons, on some platforms there may be multiple
+	  recovery inputs. See b/149967026.
+
+config PLATFORM_EC_DEDICATED_RECOVERY_BUTTON_2_ACTIVE_HIGH
+	bool "Second recovery button is active high"
+	depends on PLATFORM_EC_DEDICATED_RECOVERY_BUTTON_2
+	help
+	  Configure second recovery button to use high state as active.
 
 config PLATFORM_EC_DP_REDRIVER_TDP142
 	bool "Include TDP142 DisplayPort redriver driver"
