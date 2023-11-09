@@ -57,8 +57,14 @@ static void set_board_id_5_gpios(void)
 }
 DECLARE_HOOK(HOOK_INIT, set_board_id_5_gpios, HOOK_PRIO_POST_FIRST);
 
-__override int intel_x86_get_pg_ec_all_sys_pwrgd(void)
+__override int board_get_all_sys_pgood(void)
 {
+	/*
+	 * board_id < 6 uses GPIO D7, which does not support interrupts. So
+	 * power_signal_interrupt is not triggered when the pin changes, and the
+	 * common power code state is not updated. So we need to read the gpio
+	 * directly instead of using power_get_signals(), etc.
+	 */
 	if (get_board_id() < 6)
 		return gpio_get_level(GPIO_ID_5_SEQ_EC_ALL_SYS_PG);
 
