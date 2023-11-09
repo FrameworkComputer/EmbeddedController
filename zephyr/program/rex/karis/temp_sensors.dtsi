@@ -21,11 +21,6 @@
 		thermistor = <&thermistor_3V3_30K9_47K_4050B>;
 		adc = <&adc_temp_sensor_3>;
 	};
-	temp_wwan: wwan {
-		compatible = "cros-ec,temp-sensor-thermistor";
-		thermistor = <&thermistor_3V3_30K9_47K_4050B>;
-		adc = <&adc_temp_sensor_4>;
-	};
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
@@ -49,13 +44,6 @@
 			temp_host_release_high = <70>;
 			temp_host_release_halt = <80>;
 			sensor = <&temp_charger>;
-		};
-		wwan {
-			temp_host_high = <75>;
-			temp_host_halt = <85>;
-			temp_host_release_high = <70>;
-			temp_host_release_halt = <80>;
-			sensor = <&temp_wwan>;
 		};
 	};
 };
