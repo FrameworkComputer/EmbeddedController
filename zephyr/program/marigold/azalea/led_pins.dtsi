@@ -1,0 +1,126 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	pwmleds {
+		compatible = "pwm-leds";
+
+		pwm_b: pwm_b {
+			pwms = <&pwm2 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
+		};
+
+		pwm_r: pwm_r {
+			pwms = <&pwm3 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
+		};
+
+		pwm_g: pwm_g {
+			pwms = <&pwm4 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
+		};
+
+		pwm_power_w: pwm_power_w {
+			pwms = <&pwm5 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
+		};
+	};
+
+	pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		battery_led: battery-led {
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pwms = <&pwm_r &pwm_g &pwm_b>;
+
+
+			color_off: color-off {
+				led-color = "LED_OFF";
+				led-values = <0 0 0>;
+			};
+
+			color_red: color-red {
+				led-color = "LED_RED";
+				br-color = "EC_LED_COLOR_RED";
+				led-values = <8 0 0>;
+			};
+
+			color_green: color-green {
+				led-color = "LED_GREEN";
+				br-color = "EC_LED_COLOR_GREEN";
+				led-values = <0 16 0>;
+			};
+
+			color_blue: color-blue {
+				led-color = "LED_BLUE";
+				br-color = "EC_LED_COLOR_BLUE";
+				led-values = <0 0 8>;
+			};
+
+			color_yellow: color-yellow {
+				led-color = "LED_YELLOW";
+				br-color = "EC_LED_COLOR_YELLOW";
+				led-values = <4 5 0>;
+			};
+
+			color_white: color-white {
+				led-color = "LED_WHITE";
+				br-color = "EC_LED_COLOR_WHITE";
+				led-values = <4 10 5>;
+			};
+
+			color_amber: color-amber {
+				led-color = "LED_AMBER";
+				br-color = "EC_LED_COLOR_AMBER";
+				led-values = <9 1 0>;
+			};
+
+		};
+
+		power_led: power-led {
+			led-id = "EC_LED_ID_POWER_LED";
+			led-pwms = <&pwm_power_w>;
+
+			color_power_off: color-power-off {
+				led-color = "LED_OFF";
+				led-values = <0>;
+			};
+
+			color_power_white: color-power-white {
+				led-color = "LED_WHITE";
+				br-color = "EC_LED_COLOR_WHITE";
+				led-values = <55>;
+			};
+		};
+	};
+};
+
+/* Battery charging Blue LED */
+&pwm2 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm2_gpc4>;
+	pinctrl-names = "default";
+};
+
+/* Battery charging Red LED */
+&pwm3 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm3_gp80>;
+	pinctrl-names = "default";
+};
+
+/* Battery charging Green LED */
+&pwm4 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm4_gpb6>;
+	pinctrl-names = "default";
+};
+
+/* Finger Printer White LED */
+&pwm5 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm5_gpb7>;
+	pinctrl-names = "default";
+};

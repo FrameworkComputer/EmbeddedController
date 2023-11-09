@@ -1,12 +1,14 @@
-name: build lotus, azalea firmware
+name: Build Framework Zephyr EC firmware
 
 on:
   push:
     branches:
+      - marigold*
       - lotus*
       - azalea*
     paths:
       - 'zephyr/program/lotus/**'
+      - 'zephyr/program/marigold/**'
   #pull_request:
   #  branches:
   #    - lotus-zephyr
@@ -14,14 +16,14 @@ on:
 
 jobs:
   build:
-    name: Build lotus/azalea
+    name: Build Framework platforms
     runs-on: [self-hosted]
 
     strategy:
       # Only build one at a time because we have only one working directory
       max-parallel: 1
       matrix:
-        platform: [lotus, azalea]
+        platform: [marigold, lotus, azalea]
 
     # Build not in $GITHUB_HOME but in the chroot env
     defaults:
