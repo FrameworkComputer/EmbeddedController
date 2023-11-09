@@ -7,7 +7,6 @@
 import datetime
 import getpass
 import io
-import os
 import platform
 import subprocess
 
@@ -64,61 +63,88 @@ def _get_revision(repo):
             encoding="utf-8",
         )
     except subprocess.CalledProcessError:
-        # Fall back to the VCSID provided by the packaging system.
-        # Format is 0.0.1-r425-032666c418782c14fe912ba6d9f98ffdf0b941e9 for
-        # releases and 9999-032666c418782c14fe912ba6d9f98ffdf0b941e9 for
-        # 9999 ebuilds.
-        vcsid = os.environ.get("VCSID", "9999-unknown")
-        revision = vcsid.rsplit("-", 1)[1]
+        revision = "unknown"
     else:
-        revision = result.stdout
+        revision = result.stdout[:7]
 
     return revision
 
 
-def get_version_string(project, zephyr_base, modules, static=False):
+def _is_tree_dirty(repo):
+    """Check if the tree is dirty.
+
+    Args:
+        repo: The path to the git repo.
+
+    Returns:
+        A bool to indicate if the tree is dirty.
+    """
+    try:
+        result = subprocess.run(
+            [
+                "git",
+                "-C",
+                repo,
+                "ls-files",
+                "-z",
+                "--modified",
+                "-o",
+                "--exclude-standard",
+            ],
+            check=True,
+            stdout=subprocess.PIPE,
+            stderr=subprocess.DEVNULL,
+            encoding="utf-8",
+        )
+    except subprocess.CalledProcessError:
+        dirty = False
+    else:
+        dirty = len(result.stdout) > 0
+
+    return dirty
+
+
+def get_version_string(
+    project="unknown",
+    version=None,
+    static=False,
+    git_path=None,
+):
     """Get the version string associated with a build.
 
     Args:
         project: a string project name
-        zephyr_base: the path to the zephyr directory
-        modules: a dictionary mapping module names to module paths
+        version: a build version string
+        git_path: the path to get the git revision.
         static: if set, create a version string not dependent on git
             commits, thus allowing binaries to be compared between two
-            commits.
+            commits. The official builds have this flag set.
 
     Returns:
         A version string which can be placed in FRID, FWID, or used in
         the build for the OS.
     """
-    major_version, minor_version, *_ = util.read_zephyr_version(zephyr_base)
-    num_commits = 0
+    if not version:
+        version = "0.0.0"
+
+    result = f"{project}-{version}"
 
     if static:
-        vcs_hashes = "STATIC"
-    else:
-        repos = {
-            "os": zephyr_base,
-            **modules,
-        }
+        return result
 
-        for repo in repos.values():
-            num_commits += _get_num_commits(repo)
+    # dev build
+    result += datetime.datetime.now().strftime("-d%Y.%m.%d.%H%M%S")
 
-        vcs_hashes = ",".join(
-            f"{name}:{_get_revision(repo)[:6]}"
-            for name, repo in sorted(
-                repos.items(),
-                # Put the EC module first, then Zephyr OS kernel, as
-                # these are probably the most important hashes to
-                # developers.
-                key=lambda p: (p[0] != "ec", p[0] != "os", p),
-            )
-        )
+    if not git_path:
+        git_path = "."
+    revision = _get_revision(git_path)
+    commit = f"-{revision}"
+    result += commit
 
-    return (
-        f"{project}_v{major_version}.{minor_version}.{num_commits}-{vcs_hashes}"
-    )
+    if _is_tree_dirty(git_path):
+        result += "+"
+
+    return result
 
 
 def write_version_header(version_str, output_path, tool, static=False):

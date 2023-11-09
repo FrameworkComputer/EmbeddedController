@@ -251,10 +251,11 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
     if util.is_test(args.edt_pickle):
         ec_version_string = "test_build"
     else:
+        # TODO(b/308497935): The API no longer work as it requires passing the
+        # `version` and `static` arguments that CME doesn't know.
         ec_version_string = zmake.version.get_version_string(
             build_dir.name,
-            build_dir / "zephyr_base",
-            zmake.modules.locate_from_directory(build_dir / "modules"),
+            version=None,
             static=False,
         )
     manifest = Manifest(ec_version_string)

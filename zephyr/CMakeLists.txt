@@ -667,6 +667,9 @@ add_subdirectory("fake")
 add_subdirectory("mock")
 add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
 
+separate_arguments(EXTRA_EC_VERSION_FLAGS_LIST UNIX_COMMAND
+		   ${EXTRA_EC_VERSION_FLAGS})
+
 # Use external script to generate the ec_version.h header and add as
 # a dependency to the EC application library.
 add_custom_target(
@@ -675,10 +678,8 @@ add_custom_target(
   "PYTHONPATH=${PLATFORM_EC}/zephyr/zmake/" ${PYTHON_EXECUTABLE}
   "${PLATFORM_EC}/zephyr/zmake/zephyr_build_tools/generate_ec_version.py"
   "${CMAKE_CURRENT_BINARY_DIR}/include/ec_version.h"
-  "--base" "${ZEPHYR_BASE}"
   "--name" "${CMAKE_PROJECT_NAME}"
-  "--module" "${ZEPHYR_MODULES}"
-  ${EXTRA_EC_VERSION_FLAGS}
+  ${EXTRA_EC_VERSION_FLAGS_LIST}
 )
 add_dependencies(app ec_version_header)
 
