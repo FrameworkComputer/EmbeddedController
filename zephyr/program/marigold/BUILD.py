@@ -2,11 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-def register_lotus_project(
+def register_marigold_project(
     project_name,
     chip="npcx9m3f",
 ):
-    """Register a variant of lotus."""
+    """Register a variant of marigold."""
     register_func = register_npcx_project
 
     return register_func(
@@ -19,12 +19,7 @@ def register_lotus_project(
         ],
     )
 
-lotus = register_lotus_project(
-    project_name="lotus",
-    chip="npcx9m3f",
-)
-
-azalea = register_lotus_project(
-    project_name="azalea",
+marigold = register_marigold_project(
+    project_name="marigold",
     chip="npcx9m3f",
 )

@@ -28,10 +28,6 @@
 #include "util.h"
 #include "zephyr_console_shim.h"
 
-#ifdef CONFIG_BOARD_LOTUS
-#include "gpu.h"
-#endif
-
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
@@ -316,84 +312,6 @@ void cypd_print_buff(const char *msg, void *buff, int len)
 	}
 	CPRINTF("\n");
 }
-
-#ifdef CONFIG_BOARD_LOTUS
-static void update_external_cc_mux(int port, int cc)
-{
-	if (port == 1) {
-		switch(cc) {
-			case POLARITY_CC1:
-				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb3_ec_p2_cc1), 1);
-				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb3_ec_p2_cc2), 0);
-				break;
-
-			case POLARITY_CC2:
-				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb3_ec_p2_cc1), 0);
-				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb3_ec_p2_cc2), 1);
-				break;
-
-			default:
-				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb3_ec_p2_cc1), 0);
-				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_usb3_ec_p2_cc2), 0);
-		}
-	}
-}
-
-static bool disable_epr_mode;
-
-static void enter_epr_mode(void)
-{
-	int port_idx;
-
-	/* We don't need to enter EPR mode at S5/G3 state or epr mode disabled*/
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) || disable_epr_mode)
-		return;
-
-	/**
-	 * PD negotiation completed and in Sink Role,
-	 * execute the CCG command to enter the EPR mode
-	 */
-	for (port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
-		if ((pd_port_states[port_idx].pd_state) &&
-			(pd_port_states[port_idx].power_role == PD_ROLE_SINK) &&
-			!(pd_port_states[port_idx].epr_active)) {
-			CPRINTS("P%d EPR entry", port_idx);
-			cypd_write_reg8((port_idx & 0x2) >> 1,
-					CCG_PD_CONTROL_REG(port_idx & 0x1),
-					CCG_PD_CMD_INITIATE_EPR_ENTRY);
-		}
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, enter_epr_mode, HOOK_PRIO_FIRST);
-DECLARE_DEFERRED(enter_epr_mode);
-
-static void exit_epr_mode(void)
-{
-	int port_idx;
-
-	for (port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
-		if (pd_port_states[port_idx].epr_active) {
-			CPRINTS("P%d EPR exit", port_idx);
-			cypd_write_reg8((port_idx & 0x2) >> 1,
-					CCG_PD_CONTROL_REG(port_idx & 0x1),
-					CCG_PD_CMD_INITIATE_EPR_EXIT);
-		}
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, exit_epr_mode, HOOK_PRIO_FIRST);
-
-void force_disable_epr_mode(void)
-{
-	disable_epr_mode = true;
-	exit_epr_mode();
-}
-
-void release_disable_epr_mode(void)
-{
-	disable_epr_mode = false;
-	enter_epr_mode();
-}
-#endif
 
 static void pd0_update_state_deferred(void)
 {
@@ -1135,9 +1053,6 @@ static void cypd_update_port_state(int controller, int port)
 		type_c_current = 3000;
 		break;
 	}
-#ifdef CONFIG_BOARD_LOTUS
-	update_external_cc_mux(port_idx,pd_port_states[port_idx].c_state == CCG_STATUS_NOTHING ? 0xFF : pd_port_states[port_idx].cc);
-#endif
 
 	rv = cypd_read_reg_block(controller, CCG_CURRENT_PDO_REG(port), &pdo_reg, 4);
 	switch (pdo_reg & PDO_TYPE_MASK) {
@@ -1733,9 +1648,6 @@ void cypd_port_int(int controller, int port)
 		cypd_update_port_state(controller, port);
 		/* make sure the type-c state is cleared */
 		clear_port_state(controller, port);
-#ifdef CONFIG_BOARD_LOTUS
-		update_gpu_ac_power_state();
-#endif
 		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 			charge_manager_update_dualrole(port_idx, CAP_UNKNOWN);
 		break;
@@ -1743,9 +1655,6 @@ void cypd_port_int(int controller, int port)
 		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE %d", port_idx);
 		cypd_update_port_state(controller, port);
 		cypd_set_prepare_pdo(controller, port);
-#ifdef CONFIG_BOARD_LOTUS
-		hook_call_deferred(&enter_epr_mode_data, 100 * MSEC);
-#endif
 		break;
 	case CCG_RESPONSE_PORT_CONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT %d", port_idx);

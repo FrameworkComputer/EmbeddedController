@@ -20,9 +20,6 @@ enum power_limit_type {
 	TYPE_SPPT,
 	TYPE_FPPT,
 	TYPE_P3T,
-#ifdef CONFIG_BOARD_LOTUS
-	TYPE_APU_ONLY_SPPT,
-#endif
 	TYPE_COUNT,
 };
 
@@ -69,10 +66,6 @@ int get_apu_ready(void);
 
 void update_soc_power_limit(bool force_update, bool force_no_adapter);
 int set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p3t);
-
-#ifdef CONFIG_BOARD_LOTUS
-int update_apu_only_sppt_limit(uint32_t mwatt);
-#endif
 
 extern bool thermal_warn_trigger(void);
 extern int cypd_get_ac_power(void);

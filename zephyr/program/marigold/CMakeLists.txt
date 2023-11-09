@@ -23,46 +23,20 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led.c")
 
-if(DEFINED CONFIG_BOARD_LOTUS)
-	project(lotus)
-	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_LOTUS include)
-	zephyr_include_directories("include/lotus")
+if(DEFINED CONFIG_BOARD_MARIGOLD)
+	project(marigold)
+	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_MARIGOLD include)
+	zephyr_include_directories("include/marigold")
 	zephyr_library_sources(
-			"lotus/src/battery.c"
-			"lotus/src/charger.c"
-			"lotus/src/cpu_power.c"
-			"lotus/src/input_module.c"
-			"lotus/src/gpu.c"
-			"lotus/src/power_sequence.c"
-			"lotus/src/f75303.c"
-			"lotus/src/project_diagnostics.c"
-			"lotus/src/power_button_x86.c"
-			"lotus/src/amd_r23m.c"
-			"lotus/src/ej889i.c"
-			"lotus/src/thermal.c"
-			"lotus/src/gpu_configuration.c"
-			"lotus/src/gpu_f75303.c"
-
-
+			"marigold/src/battery.c"
+			"marigold/src/charger.c"
+			"marigold/src/cpu_power.c"
+			"marigold/src/power_sequence.c"
+			"marigold/src/keyboard_customization.c"
+			"marigold/src/project_diagnostics.c"
+			"marigold/src/power_button_x86.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
-	"lotus/src/stt.c")
-
-endif()
-if(DEFINED CONFIG_BOARD_AZALEA)
-	project(azalea)
-	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_AZALEA include)
-	zephyr_include_directories("include/azalea")
-	zephyr_library_sources(
-			"azalea/src/battery.c"
-			"azalea/src/charger.c"
-			"azalea/src/cpu_power.c"
-			"azalea/src/power_sequence.c"
-			"azalea/src/keyboard_customization.c"
-			"azalea/src/project_diagnostics.c"
-			"azalea/src/power_button_x86.c"
-	)
-	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
-	"azalea/src/stt.c")
+	"marigold/src/stt.c")
 
 endif()

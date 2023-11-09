@@ -31,10 +31,6 @@
 #include "util.h"
 #include "zephyr_console_shim.h"
 
-#ifdef CONFIG_BOARD_LOTUS
-#include "gpu.h"
-#endif
-
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ##args)
@@ -42,24 +38,12 @@
 static void sci_enable(void);
 DECLARE_DEFERRED(sci_enable);
 
-#ifdef CONFIG_BOARD_LOTUS
-static void gpu_typec_detect(void)
-{
-	set_host_dp_ready(1);
-}
-DECLARE_DEFERRED(gpu_typec_detect);
-#endif
-
 static void sci_enable(void)
 {
 	if (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & ACPI_DRIVER_READY) {
 		/* when host set EC driver ready flag, EC need to enable SCI */
 		lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, SCI_HOST_EVENT_MASK);
 		bios_function_detect();
-#ifdef CONFIG_BOARD_LOTUS
-		/* hook_call_deferred(&gpu_typec_detect_data, 500 * MSEC); */
-		gpu_typec_detect();
-#endif
 	} else
 		hook_call_deferred(&sci_enable_data, 250 * MSEC);
 }
@@ -67,9 +51,6 @@ static void sci_enable(void)
 static void sci_disable(void)
 {
 	lpc_set_host_event_mask(LPC_HOST_EVENT_SCI, 0);
-#ifdef CONFIG_BOARD_LOTUS
-	set_host_dp_ready(0);
-#endif
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, sci_disable, HOOK_PRIO_DEFAULT);
 
@@ -241,7 +222,7 @@ static enum ec_status cmd_get_hw_diag(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_GET_HW_DIAG, cmd_get_hw_diag,
 			EC_VER_MASK(0));
 
-#ifdef CONFIG_BOARD_AZALEA
+#ifdef CONFIG_BOARD_MARIGOLD
 static enum ec_status update_keyboard_matrix(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_update_keyboard_matrix *p = args->params;
@@ -389,48 +370,6 @@ static enum ec_status get_active_charge_pd_chip(struct host_cmd_handler_args *ar
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_ACTIVE_CHARGE_PD_CHIP, get_active_charge_pd_chip, EC_VER_MASK(0));
-
-#ifdef CONFIG_BOARD_LOTUS
-static enum ec_status host_command_uefi_app_mode(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_uefi_app_mode *p = args->params;
-	int enable = 1;
-
-	if (p->flags)
-		uefi_app_mode_setting(enable);
-	else
-		uefi_app_mode_setting(!enable);
-
-	return EC_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_UEFI_APP_MODE, host_command_uefi_app_mode, EC_VER_MASK(0));
-
-static enum ec_status host_command_uefi_app_btn_status(struct host_cmd_handler_args *args)
-{
-	struct ec_response_uefi_app_btn_status *r = args->response;
-
-	r->status = uefi_app_btn_status();
-
-	args->response_size = sizeof(*r);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_UEFI_APP_BTN_STATUS, host_command_uefi_app_btn_status, EC_VER_MASK(0));
-
-static enum ec_status hc_fingerprint_control(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_fingerprint_control *p = args->params;
-	int enable = 1;
-
-	if (p->enable)
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_fp_en), enable);
-	else
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_fp_en), !enable);
-
-	return EC_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_FP_CONTROL, hc_fingerprint_control, EC_VER_MASK(0));
-#endif /* CONFIG_BOARD_LOTUS */
 
 static enum ec_status privacy_switches_check(struct host_cmd_handler_args *args)
 {
