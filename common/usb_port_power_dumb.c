@@ -62,8 +62,8 @@ static void usb_port_all_ports_off(void)
 /*****************************************************************************/
 /* Host commands */
 
-int usb_charge_set_mode(int port_id, enum usb_charge_mode mode,
-			enum usb_suspend_charge inhibit_charge)
+test_mockable int usb_charge_set_mode(int port_id, enum usb_charge_mode mode,
+				      enum usb_suspend_charge inhibit_charge)
 {
 	CPRINTS("USB port p%d %d", port_id, mode);
 

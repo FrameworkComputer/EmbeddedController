@@ -14,11 +14,12 @@ FAKE_VOID_FUNC(power_signal_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(chipset_watchdog_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(extpower_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(switch_interrupt, enum gpio_signal);
-#if !(defined(CONFIG_TEST_KINGLER_USBC) || \
-      defined(CONFIG_TEST_DB_DETECTION_USB_COUNT))
+#if (!(defined(CONFIG_TEST_KINGLER_USBC) ||             \
+       defined(CONFIG_TEST_DB_DETECTION_USB_COUNT))) && \
+	!defined(CONFIG_TEST_CORSOLA_USBC)
 FAKE_VOID_FUNC(xhci_interrupt, enum gpio_signal);
 #endif
-#ifndef CONFIG_TEST_KINGLER_USBC
+#if !defined(CONFIG_TEST_KINGLER_USBC) && !defined(CONFIG_TEST_CORSOLA_USBC)
 FAKE_VOID_FUNC(lid_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(usb_a0_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(tcpc_alert_event, enum gpio_signal);

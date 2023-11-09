@@ -805,7 +805,7 @@ uint32_t tc_get_flags(int port)
 	return tc[port].flags;
 }
 
-int tc_is_attached_src(int port)
+test_mockable int tc_is_attached_src(int port)
 {
 	return IS_ATTACHED_SRC(port);
 }

@@ -1,6 +1,15 @@
 common:
   platform_allow: native_posix
 tests:
+  corsola.usbc:
+    extra_configs:
+    - CONFIG_TEST_CORSOLA_USBC=y
+    - CONFIG_VARIANT_CORSOLA_DB_DETECTION=y
+    extra_dtc_overlay_files:
+    - kingler.usbc.overlay
+    extra_conf_files:
+    - prj.conf
+    - kingler.usbc.conf
   kingler.usbc:
     extra_configs:
     - CONFIG_TEST_KINGLER_USBC=y

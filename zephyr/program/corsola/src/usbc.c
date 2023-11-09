@@ -28,10 +28,10 @@
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 /* a flag for indicating the tasks are inited. */
-static bool tasks_inited;
+test_export_static bool tasks_inited;
 
 /* Baseboard */
-static void baseboard_init(void)
+test_export_static void baseboard_init(void)
 {
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_xhci));
 
@@ -177,7 +177,7 @@ static void tasks_init_deferred(void)
 DECLARE_DEFERRED(tasks_init_deferred);
 
 #ifdef CONFIG_VARIANT_CORSOLA_DB_DETECTION
-static void baseboard_x_ec_gpio2_init(void)
+test_export_static void baseboard_x_ec_gpio2_init(void)
 {
 	static struct ppc_drv virtual_ppc_drv = { 0 };
 	static struct tcpm_drv virtual_tcpc_drv = { 0 };

@@ -2,6 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config TEST_CORSOLA_USBC
+	bool "Run the tests intended for corsola"
+	help
+	  Include USB-C tests into the binary.
+
 config TEST_KINGLER_USBC
 	bool "Run the tests intended for kingler"
 	help
