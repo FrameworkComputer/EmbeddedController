@@ -182,6 +182,7 @@
 		};
 		gpio_gsc_ec_rec_btn_odl:  gsc_ec_rec_btn_odl {
 			gpios = <&gpio2 2 GPIO_INPUT>;
+			enum-name = "GPIO_RECOVERY_L";
 		};
 		gpio_gsc_flash_wp_odl: gsc_flash_wp_odl {
 			gpios = <&gpio6 0 GPIO_ODR_HIGH>;
