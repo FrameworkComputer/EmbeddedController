@@ -4,7 +4,19 @@
  */
 
 /* Brox program common DTS includes */
-#include "../brox_stub.dts"
+
+/* Arbitrage generates an incorrect node label when using alternate pins.
+ * Create a 2nd node label on I2C3 as a workaround.
+ * TODO: b/310227384 - I2C alternate selection not detected automatically.
+ */
+i2c3ALT: &i2c3 {
+};
+
+#include "../generated.dtsi"
+#include "../adc.dtsi"
+#include "../brox.dtsi"
+#include "../gpio.dtsi"
+#include "../i2c.dtsi"
 
 /* Brox project DTS includes*/
 

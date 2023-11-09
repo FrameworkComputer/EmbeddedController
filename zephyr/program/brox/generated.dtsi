@@ -1,0 +1,179 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * This file is auto-generated - do not edit!
+ */
+
+/ {
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_charger_amon: charger_amon {
+			enum-name = "ADC_AMON_BMON";
+			io-channels = <&adc0 1>;
+		};
+		adc_temp_sensor_1: temp_sensor_1 {
+			enum-name = "ADC_TEMP_SENSOR_DDR_SOC";
+			io-channels = <&adc0 4>;
+		};
+		adc_temp_sensor_2: temp_sensor_2 {
+			enum-name = "ADC_TEMP_SENSOR_FAN";
+			io-channels = <&adc0 5>;
+		};
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_acok_ec_od: acok_ec_od {
+			gpios = <&gpiob 0 GPIO_INPUT>;
+		};
+		gpio_all_sys_pg: all_sys_pg {
+			gpios = <&gpiob 3 GPIO_INPUT>;
+		};
+		gpio_bat_disconnect_ec_odl: bat_disconnect_ec_odl {
+			gpios = <&gpioc 0 GPIO_ODR_LOW>;
+		};
+		gpio_ccd_mode_odl: ccd_mode_odl {
+			gpios = <&gpioe 6 GPIO_ODR_LOW>;
+		};
+		gpio_ec_accel_mb_int_l: ec_accel_mb_int_l {
+			gpios = <&gpioj 0 GPIO_INPUT>;
+		};
+		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
+			gpios = <&gpioi 7 GPIO_INPUT>;
+		};
+		gpio_ec_dsw_pwrok: ec_dsw_pwrok {
+			gpios = <&gpiod 3 GPIO_OUTPUT>;
+		};
+		gpio_ec_en_edp_bl: ec_en_edp_bl {
+			gpios = <&gpioh 0 GPIO_OUTPUT>;
+		};
+		gpio_ec_en_pp3300_wlan: ec_en_pp3300_wlan {
+			gpios = <&gpioi 3 GPIO_OUTPUT>;
+		};
+		gpio_ec_gpg2: ec_gpg2 {
+			gpios = <&gpiog 2 GPIO_INPUT>;
+		};
+		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
+			gpios = <&gpioe 3 GPIO_OUTPUT>;
+		};
+		gpio_ec_i2c_pmc_pd_int_odl: ec_i2c_pmc_pd_int_odl {
+			gpios = <&gpioj 1 GPIO_INPUT>;
+		};
+		gpio_ec_pch_pwrok: ec_pch_pwrok {
+			gpios = <&gpiob 5 GPIO_OUTPUT>;
+		};
+		gpio_ec_pch_pwr_btn_odl: ec_pch_pwr_btn_odl {
+			gpios = <&gpiob 2 GPIO_ODR_LOW>;
+		};
+		gpio_ec_pch_rtcrst: ec_pch_rtcrst {
+			gpios = <&gpioh 5 GPIO_OUTPUT>;
+		};
+		gpio_ec_pch_sys_pwrok: ec_pch_sys_pwrok {
+			gpios = <&gpiod 5 GPIO_OUTPUT>;
+		};
+		gpio_ec_prochot_odl: ec_prochot_odl {
+			gpios = <&gpioi 0 GPIO_ODR_LOW>;
+		};
+		gpio_ec_rsmrst_l: ec_rsmrst_l {
+			gpios = <&gpioi 6 GPIO_OUTPUT>;
+		};
+		gpio_ec_slp_s3_l: ec_slp_s3_l {
+			gpios = <&gpioc 6 GPIO_INPUT>;
+		};
+		gpio_ec_slp_s4_l: ec_slp_s4_l {
+			gpios = <&gpioc 4 GPIO_INPUT>;
+		};
+		gpio_ec_slp_sus_l: ec_slp_sus_l {
+			gpios = <&gpioe 5 GPIO_OUTPUT>;
+		};
+		gpio_ec_voldn_btn_odl: ec_voldn_btn_odl {
+			gpios = <&gpiod 4 GPIO_INPUT>;
+		};
+		gpio_ec_volup_btn_odl: ec_volup_btn_odl {
+			gpios = <&gpiod 7 GPIO_INPUT>;
+		};
+		gpio_ec_wp_odl: ec_wp_odl {
+			gpios = <&gpioj 3 GPIO_INPUT>;
+		};
+		gpio_en_pp5000_usba: en_pp5000_usba {
+			gpios = <&gpiof 4 GPIO_OUTPUT>;
+		};
+		gpio_en_slp_z: en_slp_z {
+			gpios = <&gpioa 0 GPIO_OUTPUT>;
+		};
+		gpio_en_z1_rails_r: en_z1_rails_r {
+			gpios = <&gpiob 4 GPIO_OUTPUT>;
+		};
+		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
+			gpios = <&gpioe 4 GPIO_INPUT>;
+		};
+		gpio_lid_open: lid_open {
+			gpios = <&gpiob 1 GPIO_INPUT>;
+		};
+		gpio_sen_mode1_ec_pch_wake_odl: sen_mode1_ec_pch_wake_odl {
+			gpios = <&gpiob 6 GPIO_ODR_LOW>;
+		};
+		gpio_sys_rst_odl: sys_rst_odl {
+			gpios = <&gpiog 0 GPIO_ODR_LOW>;
+		};
+		gpio_sys_slp_s0ix_l: sys_slp_s0ix_l {
+			gpios = <&gpioj 5 GPIO_INPUT>;
+		};
+		gpio_usb_pd_int_odl: usb_pd_int_odl {
+			gpios = <&gpiof 5 GPIO_INPUT>;
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_pd_prog: ec_i2c_pd_prog {
+			i2c-port = <&i2c1>;
+			enum-names = "I2C_PORT_PD";
+		};
+		i2c_ish_i2c_e: ish_i2c_e {
+			i2c-port = <&i2c2>;
+			enum-names = "I2C_PORT_ISH";
+		};
+		i2c_i2c_ec_pmc_pd: i2c_ec_pmc_pd {
+			i2c-port = <&i2c3ALT>;
+			enum-names = "I2C_PORT_PMC_PD";
+		};
+		i2c_ec_i2c_charger: ec_i2c_charger {
+			i2c-port = <&i2c4>;
+			enum-names = "I2C_PORT_CHARGER";
+		};
+		i2c_ec_i2c_sensor: ec_i2c_sensor {
+			i2c-port = <&i2c5>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+};
+
+&i2c1 {
+	status = "okay";
+};
+
+&i2c2 {
+	status = "okay";
+};
+
+&i2c3ALT {
+	status = "okay";
+};
+
+&i2c4 {
+	status = "okay";
+};
+
+&i2c5 {
+	status = "okay";
+};
