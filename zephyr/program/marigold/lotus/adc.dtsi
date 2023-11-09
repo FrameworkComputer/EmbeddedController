@@ -1,0 +1,43 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+
+/ {
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_main_boardid: main-boardid {
+			enum-name = "ADC_MAIN_BOARD_ID";
+			io-channels = <&adc0 0>;
+		};
+		adc_hub_boardid: hub-boardid {
+			enum-name = "ADC_HUB_BOARD_ID";
+			io-channels = <&adc0 1>;
+		};
+		adc_gpu_boardid0: gpu-boardid0 {
+			enum-name = "ADC_GPU_BOARD_ID_0";
+			io-channels = <&adc0 2>;
+		};
+		adc_gpu_boardid1: gpu-boardid1 {
+			enum-name = "ADC_GPU_BOARD_ID_1";
+			io-channels = <&adc0 3>;
+		};
+		adc_i_adp: i-adp {
+			enum-name = "ADC_ADAPTER_CURRENT";
+			io-channels = <&adc0 5>;
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_chan0_gp45
+		     &adc0_chan1_gp44
+		     &adc0_chan2_gp43
+		     &adc0_chan3_gp42
+		     &adc0_chan5_gp37>;
+	pinctrl-names = "default";
+};

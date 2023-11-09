@@ -1,0 +1,337 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_ec_soc_rsmrst_l: ec_soc_rsmrst_l {
+			gpios = <&gpio5 6 (GPIO_OUTPUT_LOW | GPIO_VOLTAGE_1P8)>;
+		};
+		ec_espi_rst_l {
+			gpios = <&gpio5 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_edp_mux_pwm_sw: edp_mux_pwm_sw {
+			gpios = <&gpioc 6 GPIO_OUTPUT_LOW>;	/* Reserved */
+		};
+		gpio_ec_sci_l: ec_sci_l {
+			gpios = <&gpio7 6 GPIO_ODR_LOW>;	/* Reserved */
+		};
+		ovp {
+			gpios = <&gpioc 5 GPIO_INPUT>;		/* SYS report Fault even to EC */
+		};
+		ec_smb_ck0 {
+			gpios = <&gpiob 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec_smb_da0 {
+			gpios = <&gpiob 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec_smb_ck1 {
+			gpios = <&gpio9 0 GPIO_INPUT>;
+		};
+		ec_smb_da1 {
+			gpios = <&gpio8 7 GPIO_INPUT>;
+		};
+		ec_smb_ck2 {
+			gpios = <&gpio9 2 GPIO_INPUT>;
+		};
+		ec_smb_da2 {
+			gpios = <&gpio9 1 GPIO_INPUT>;
+		};
+		ec_smb_ck3 {
+			gpios = <&gpiod 1 GPIO_INPUT>;
+		};
+		ec_smb_da3 {
+			gpios = <&gpiod 0 GPIO_INPUT>;
+		};
+		ec_smb_ck4 {
+			gpios = <&gpiof 3 GPIO_ODR_LOW>;
+		};
+		ec_smb_da4 {
+			gpios = <&gpiof 2 GPIO_ODR_LOW>;
+		};
+		ec_smb_s0_ck5 {
+			gpios = <&gpio3 3 GPIO_INPUT>;
+		};
+		ec_smb_s0_da5 {
+			gpios = <&gpio3 6 GPIO_INPUT>;
+		};
+		gpio_ssd2_pwr_en: ssd2_pwr_en {
+			gpios = <&gpiof 5 GPIO_OUTPUT_LOW>; /* control JSSD2 PWR */
+		};
+		gpio_ssd_gpu_sel: ssd_gpu_sel {
+			gpios = <&gpiof 4 GPIO_OUTPUT_HIGH>; /* L:GPU; H:SSD */
+		};
+		ec_smb_ck6 {
+			gpios = <&gpioe 4 GPIO_ODR_LOW>;
+		};
+		ec_smb_da6 {
+			gpios = <&gpioe 3 GPIO_ODR_LOW>;
+		};
+		ec_smb_ck7 {
+			gpios = <&gpiob 3 GPIO_INPUT>;
+		};
+		ec_smb_da7 {
+			gpios = <&gpiob 2 GPIO_INPUT>;
+		};
+		gpio_mic_sw: mic_sw {
+			gpios = <&gpioc 1 GPIO_INPUT>;
+		};
+		gpio_gpu_b_gpio00_ec: gpu_b_gpio00_ec {
+			gpios = <&gpio3 1 GPIO_ODR_HIGH>;	/* Reserved */
+		};
+		gpio_gpu_b_gpio01_ec: gpu_b_gpio01_ec {
+			gpios = <&gpio3 0 GPIO_INPUT>;		/* Control 2nd Batt discharge */
+		};
+		gpio_gpu_b_gpio02_ec: gpu_b_gpio02_ec {
+			gpios = <&gpio2 7 GPIO_OUTPUT_LOW>;	/* PWR switch from AC to DC */
+		};
+		gpio_gpu_b_gpio03_ec: gpu_b_gpio03_ec {
+			gpios = <&gpio2 6 GPIO_ODR_HIGH>;	/* Reserved */
+		};
+		gpio_usb3_ec_p2_cc1: usb3_ec_p2_cc1 {
+			gpios = <&gpio2 5 GPIO_OUTPUT_LOW>;	/* Control GL3590 type-c orientation */
+		};
+		gpio_usb3_ec_p2_cc2: usb3_ec_p2_cc2 {
+			gpios = <&gpio2 4 GPIO_OUTPUT_LOW>;	/* Control GL3590 type-c orientation */
+		};
+		gpio_fp_en: fp_en {
+			gpios = <&gpio2 3 GPIO_OUTPUT_LOW>;
+		};
+		gpio_5valw_c_en: 5valw_c_en {
+			gpios = <&gpio2 2 GPIO_OUTPUT_LOW>;
+		};
+		gpu_b_dp_hpd {
+			gpios = <&gpio2 1 GPIO_OUTPUT_LOW>;	/* From GPU ALWS SMBus detect HPD than output to APU */
+		};
+		gpio_ec_mute_l: ec_mute_l {
+			gpios = <&gpio2 0 GPIO_ODR_LOW>;
+		};
+		gpio_gpu_3v_5v_en: gpu_3v_5v_en {
+			/* Detect GPU/B then enable 3V/5V PWR output H */
+			gpios = <&gpio1 7 GPIO_OUTPUT_LOW>;
+		};
+		gpio_wlan_en: wlan_en {
+			gpios = <&gpio1 6 GPIO_OUTPUT_LOW>;
+		};
+		gpio_gpu_vsys_en: gpu_vsys_en {
+			gpios = <&gpio1 5 GPIO_OUTPUT_LOW>;	/* Enable GPIO Vsys PWR */
+		};
+		gpio_apu_ec_int_l: apu_ec_int_l {
+			gpios = <&gpio1 4 GPIO_ODR_HIGH>;	/* HID over I2C interrupt */
+		};
+		ec_disen2 {
+			gpios = <&gpio1 3 GPIO_OUTPUT_LOW>;	/* Disable LM5143 Ph2 */
+		};
+		rtc_dis {
+			gpios = <&gpio1 2 GPIO_OUTPUT_LOW>;	/* RTC discharge */
+		};
+		gpio_gpu_vdap_en: gpu_vdap_en {
+			gpios = <&gpio1 1 GPIO_OUTPUT_LOW>;	/* Enable GPIO ADP PWR */
+		};
+		gpio_ec_pwm_en_l: ec_pwm_en_l {
+			gpios = <&gpio1 0 GPIO_OUTPUT_LOW>;	/* Enable EDP mux control chip */
+		};
+		ac_present_pd_l {
+			gpios = <&gpio0 7 GPIO_INPUT>;		/* Monitor AC present from PD */
+		};
+		gpio_sm_panel_bken_ec: sm_panel_bken_ec {
+			gpios = <&gpio0 6 GPIO_OUTPUT_LOW>;
+		};
+		ec_b2b_dis {
+			gpios = <&gpio0 5 GPIO_OUTPUT_LOW>;
+		};
+		gpio_gpu_fan_en: gpu_fan_en {
+			gpios = <&gpio0 4 GPIO_OUTPUT_LOW>;	/* 1: enable; 0: disable */
+		};
+		gpio_usb30_hub_en: usb30_hub_en {
+			gpios = <&gpio8 2 GPIO_OUTPUT_LOW>;
+		};
+		gpio_module_oc_interrupt: module_oc_l {
+			gpios = <&gpio8 3 GPIO_INPUT>;		/* Detect Hub/B 3V/5V OCP event */
+		};
+		gpio_ec_edp_reset: ec_edp_reset {
+			gpios = <&gpio0 3 GPIO_OUTPUT_LOW>;
+		};
+		gpio_gpu_alert_l: gpu_alert_l {
+			gpios = <&gpiob 1 GPIO_INPUT>;
+		};
+		gpio_on_off_btn_l: on_off_btn_l {
+			gpios = <&gpiod 2 GPIO_INPUT>;		/* PSL in1 signal, power button */
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_chassis_open_l: chassis_open_l {
+			gpios = <&gpio0 0 GPIO_INPUT>;		/* PSL in2 signal, chassis open */
+		};
+		gpio_hw_acav_in: hw_acav_in {
+			gpios = <&gpio0 1 GPIO_INPUT>;		/* PSL in3 signal, ac present pin */
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_lid_sw_l: lid_sw_l {
+			gpios = <&gpio0 2 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		gpio_0p75_1p8valw_pwren: 0p75_1p8valw_pwren {
+			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
+		};
+		gpio_hub_b_pwr_en: hub_b_pwr_en {
+			gpios = <&gpio8 6 GPIO_OUTPUT_LOW>;
+		};
+		als_int_l {
+			gpios = <&gpio7 5 GPIO_INPUT>;
+		};
+		gpio_pch_pwr_en: pch_pwr_en {
+			gpios = <&gpiod 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_h_prochot_l: h_prochot_l {
+			gpios = <&gpioa 1 GPIO_ODR_HIGH>;
+		};
+		gpio_slp_s3_l: slp_s3_l {
+			gpios = <&gpioa 3 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S3_L";
+		};
+		gpio_slp_s5_l: slp_s5_l {
+			gpios = <&gpio9 5 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S5_L";
+		};
+		gpio_cam_en: cam_en {
+			gpios = <&gpio6 7 GPIO_OUTPUT_LOW>;
+		};
+		gpio_sys_pwrgd_ec: sys_pwrgd_ec {
+			gpios = <&gpio7 0 GPIO_OUTPUT_LOW>;
+		};
+		gpio_vr_on: vr_on {
+			gpios = <&gpio6 2 GPIO_OUTPUT_LOW>;
+		};
+		gpio_susp_l: susp_l {
+			gpios = <&gpio6 3 GPIO_OUTPUT_LOW>;
+		};
+		gpio_left_side: left_side {
+			gpios = <&gpio4 0 GPIO_OUTPUT_LOW>;	/* left side LED follow IFGA3 */
+		};
+		gpio_right_side: right_side {
+			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;	/* right side LED follow IFGA3 */
+		};
+		gpio_syson: syson {
+			gpios = <&gpioa 6 GPIO_OUTPUT_LOW>;
+		};
+		ec_edp_pwm {
+			gpios = <&gpioc 0 GPIO_INPUT>;
+		};
+		fp_control {
+			gpios = <&gpio6 0 GPIO_INPUT>;		/* Finger Printer feature */
+		};
+		gpio_battery_present: battery_present {
+			gpios = <&gpio4 1 GPIO_INPUT>;
+		};
+		gpio_mux_a0: mux_a0 {
+			gpios = <&gpio3 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_mux_a1: mux_a1 {
+			gpios = <&gpioe 1 GPIO_OUTPUT_LOW>;
+		};
+		gpio_mux_a2: mux_a2 {
+			gpios = <&gpiof 1 GPIO_OUTPUT_LOW>;
+		};
+		gpio_f_beam_open_l: f_beam_open_l {
+			gpios = <&gpiof 0 GPIO_INPUT>;
+		};
+		gpio_enblk_apu: enbkl_apu {
+			gpios = <&gpioe 0 GPIO_INPUT>;		/* monitor APU EDP BKL */
+		};
+		gpio_dgpu_pwr_en: dgpu_pwr_en {
+			gpios = <&gpioc 7 GPIO_INPUT>;
+		};
+		gpio_0p75vs_pwr_en: 0p75vs_pwr_en {
+			gpios = <&gpioa 2 GPIO_OUTPUT_LOW>;
+		};
+		gpio_apu_aud_pwr_en: apu_aud_pwr_en {
+			gpios = <&gpioa 0 GPIO_OUTPUT_LOW>;
+		};
+		i2c_int_tp_1 {
+			gpios = <&gpioa 4 GPIO_INPUT>;		/* HUB board TP module */
+		};
+		i2c_int_tp_2 {
+			gpios = <&gpio9 6 GPIO_INPUT>;		/* HUB board TP module */
+		};
+		gpio_cam_sw: cam_sw {
+			gpios = <&gpio9 3 GPIO_INPUT>;
+		};
+		gpio_spok: spok {
+			gpios = <&gpio9 4 GPIO_INPUT>;		/* Monitor 3VALW PWR OK */
+			enum-name = "GPIO_POWER_GOOD_3VALW";
+		};
+		gpio_vr_pwrgd: vr_pwrgd {
+			gpios = <&gpio9 7 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_GOOD_VR";
+		};
+		gpio_gpu_i2c_s5_int: gpu_i2c_s5_int {
+			gpios = <&gpioa 5 GPIO_INPUT>;
+		};
+		gpio_usb_hub_re_en: usb_hub_re_en {
+			gpios = <&gpiob 0 GPIO_OUTPUT_LOW>;
+		};
+		gpio_wl_rst_l: wl_rst_l {
+			gpios = <&gpio6 1 GPIO_OUTPUT_LOW>;
+		};
+		ec_sense_al {
+			gpios = <&gpio7 2 GPIO_INPUT>;
+		};
+		gpio_en_invpwr: en_invpwr {
+			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_sleep_l: sleep_l {
+			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;
+		};
+		gpio_pd_chip1_interrupt: pd_b_i2c_int_ec_l {
+			gpios = <&gpioe 2 GPIO_INPUT>;
+			enum-name = "GPIO_EC_PD_INTB_L";
+		};
+		gpio_pd_chip0_interrupt: pd_a_i2c_int_ec_l {
+			gpios = <&gpioe 5 GPIO_INPUT>;
+			enum-name = "GPIO_EC_PD_INTA_L";
+		};
+		gpio_pbtn_out: pbtn_out_l {
+			gpios = <&gpio5 0 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		thermtrip {
+			gpios = <&gpio8 1 GPIO_INPUT>;
+		};
+		/* unimplemented GPIOs */
+		entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+};
+
+/* PSL input pads*/
+&psl_in1_gpd2 {
+	/* Power button */
+	psl-in-mode = "edge";
+	psl-in-pol = "low-falling";
+};
+
+&psl_in3_gp01 {
+	/* ac present */
+	psl-in-mode = "edge";
+	psl-in-pol = "high-rising";
+};
+
+/* Power domain device controlled by PSL (Power Switch Logic) IO pads */
+/* Ignored the PSL in 2 (chassis open) at proto phase */
+&power_ctrl_psl {
+	status = "okay";
+	pinctrl-names = "sleep";
+	pinctrl-0 = <&psl_in1_gpd2 &psl_in3_gp01>;
+};
+
+/* host interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};

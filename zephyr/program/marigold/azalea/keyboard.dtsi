@@ -1,0 +1,18 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	kblight {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm1 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
+	};
+};
+
+&pwm1 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm1_gpc2>;
+	pinctrl-names = "default";
+};

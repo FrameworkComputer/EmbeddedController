@@ -1,0 +1,163 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <freq.h>
+
+
+/ {
+	named-gpios {
+		/* Lotus-specific GPIO customizations */
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		local-f75303 {
+			temp_host_warn = <70>;
+			temp_host_high = <80>;
+			temp_host_halt = <120>;
+			temp_host_release_warn = <50>;
+			temp_host_release_high = <55>;
+			temp_host_release_halt = <115>;
+			temp_fan_off = <40>;
+			temp_fan_max = <70>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&local_f75303>;
+		};
+		cpu-f75303 {
+			temp_host_warn = <70>;
+			temp_host_high = <80>;
+			temp_host_halt = <120>;
+			temp_host_release_warn = <53>;
+			temp_host_release_high = <55>;
+			temp_host_release_halt = <115>;
+			temp_fan_off = <46>;
+			temp_fan_max = <54>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&cpu_f75303>;
+		};
+		ddr-f75303 {
+			temp_host_warn = <70>;
+			temp_host_high = <80>;
+			temp_host_halt = <120>;
+			temp_host_release_warn = <50>;
+			temp_host_release_high = <55>;
+			temp_host_release_halt = <115>;
+			temp_fan_off = <128>;
+			temp_fan_max = <128>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&ddr_f75303>;
+		};
+		amd-apu {
+			temp_host_warn = <108>;
+			temp_host_high = <115>;
+			temp_host_halt = <127>;
+			temp_host_release_warn = <103>;
+			temp_host_release_high = <110>;
+			temp_host_release_halt = <122>;
+			temp_fan_off = <103>;
+			temp_fan_max = <105>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&temp_cpu>;
+		};
+	};
+
+	typec-port {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		/*
+		 * If the CHARGER_SINGLE_CHIP config is enabled, only
+		 * one charger chip must be defined.
+		 *
+		 * In the Zephyer OS, the CONFIG_USB_PD_PORT_MAX_COUNT will check
+		 * the device tree compatible "named-usbc-port"
+		 */
+		usbc_port0: port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			chg = <&charger>;
+		};
+		usbc_port1: port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+		};
+		usbc_port2: port2@2 {
+			compatible = "named-usbc-port";
+			reg = <2>;
+		};
+		usbc_port3: port3@3 {
+			compatible = "named-usbc-port";
+			reg = <3>;
+		};
+	};
+
+	named-bbram-regions {
+		compatible = "named-bbram-regions";
+
+		charge_limit_max {
+			offset = <0x44>;
+			size = <0x01>;
+		};
+		fp_led_level {
+			offset = <0x45>;
+			size = <0x01>;
+		};
+		kb_status {
+			offset = <0x46>;
+			size = <0x01>;
+		};
+		bios_function {
+			offset = <0x47>;
+			size = <0x01>;
+		};
+		chassis_was_open {
+			offset = <0x48>;
+			size = <0x01>;
+		};
+		chassis_magic {
+			offset = <0x49>;
+			size = <0x01>;
+		};
+		chassis_total {
+			offset = <0x4a>;
+			size = <0x01>;
+		};
+		chassis_vtr_open {
+			offset = <0x4b>;
+			size = <0x01>;
+		};
+	};
+};
+
+&cros_kb_raw {
+	status = "okay";
+	pinctrl-0 = <
+		&ksi0_gp31
+		&ksi1_gp30
+		&ksi2_gp27
+		&ksi3_gp26
+		&ksi4_gp25
+		&ksi5_gp24
+		&ksi6_gp23
+		&ksi7_gp22
+		&kso00_gp21
+		&kso01_gp20
+		&kso02_gp17
+		&kso03_gp16
+		&kso04_gp15
+		&kso05_gp14
+		&kso06_gp13
+		&kso07_gp12
+		&kso08_gp11
+		&kso09_gp10
+		&kso10_gp07
+		&kso11_gp06
+		&kso12_gp05
+		&kso13_gp04
+		&kso14_gp82
+		&kso15_gp83
+	>;
+	pinctrl-names = "default";
+};
