@@ -134,6 +134,7 @@ uint8_t gpu_read_buff[GPU_MAX_BLOCK_LEN];
 uint8_t gpu_subsys_serials[GPU_SUBSYS_MAX][20];
 enum gpu_pcie_cfg gpu_pcie_configuration;
 enum gpu_vendor  gpu_vendor;
+static int power_enable;
 
 uint8_t address = 0x50;
 
@@ -162,6 +163,7 @@ struct default_gpu_cfg {
 	struct gpu_cfg_gpio     gpio3;
 	struct gpu_cfg_gpio     gpio_vsys;
 	struct gpu_cfg_gpio     gpio_fan;
+	struct gpu_cfg_gpio     gpu_3v_5v_en;
 
 	struct gpu_block_header hdr5;
 	struct gpu_subsys_pd    pd;
@@ -204,7 +206,7 @@ static struct default_gpu_cfg gpu_cfg = {
 	.hdr3 = {.block_type = GPUCFG_TYPE_VENDOR, .block_length = sizeof(gpu_vendor)},
 	.vendor = GPU_AMD_R23M,
 
-	.hdr4 = {.block_type = GPUCFG_TYPE_GPIO, .block_length = (sizeof(struct gpu_cfg_gpio) * 6)},
+	.hdr4 = {.block_type = GPUCFG_TYPE_GPIO, .block_length = (sizeof(struct gpu_cfg_gpio) * 7)},
 	/* Critical temperature fault input */
 	.gpio0 = {.gpio = GPU_1G1_GPIO0_EC, .function = GPIO_FUNC_TEMPFAULT, .flags = GPIO_INPUT, .power_domain = POWER_S3},
 	/* DP HPD status from PD */
@@ -217,6 +219,8 @@ static struct default_gpu_cfg gpu_cfg = {
 	.gpio_vsys = {.gpio = GPU_VSYS_EN, .function = GPIO_FUNC_GPU_PWR, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S3},
 
 	.gpio_fan = {.gpio = GPU_FAN_EN, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S0},
+
+	.gpu_3v_5v_en = {.gpio = GPU_3V_5V_EN, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S5},
 
 	.hdr5 = {.block_type = GPUCFG_TYPE_PD, .block_length = sizeof(struct gpu_subsys_pd)},
 	.pd = {.gpu_pd_type = PD_TYPE_ETRON_EJ889I, .address = 0x60,
@@ -258,7 +262,7 @@ struct default_ssd_cfg {
 	struct gpu_cfg_gpio     gpio_edpaux;
 	struct gpu_cfg_gpio     gpio_vsys;
 	struct gpu_cfg_gpio     gpio_fan;
-
+	struct gpu_cfg_gpio     gpu_3v_5v_en;
 
 } __packed;
 
@@ -289,7 +293,7 @@ static struct default_ssd_cfg ssd_cfg = {
 	.vendor = GPU_SSD,
 
 	/* Power enable for SSD1 */
-	.hdr4 = {.block_type = GPUCFG_TYPE_GPIO, .block_length = sizeof(struct gpu_cfg_gpio) * 7},
+	.hdr4 = {.block_type = GPUCFG_TYPE_GPIO, .block_length = sizeof(struct gpu_cfg_gpio) * 8},
 	.gpio0 = {.gpio = GPU_1G1_GPIO0_EC, .function = GPIO_FUNC_SSD1_POWER, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S3},
 	/* Power enable for SSD2 */
 	.gpio1 = {.gpio = GPU_1H1_GPIO1_EC, .function = GPIO_FUNC_SSD2_POWER, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S3},
@@ -304,6 +308,7 @@ static struct default_ssd_cfg ssd_cfg = {
 
 	.gpio_fan = {.gpio = GPU_FAN_EN, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S0},
 
+	.gpu_3v_5v_en = {.gpio = GPU_3V_5V_EN, .function = GPIO_FUNC_HIGH, .flags = GPIO_OUTPUT_LOW, .power_domain = POWER_S5},
 };
 
 const struct gpio_dt_spec * gpu_gpio_to_dt(enum gpu_gpio_idx gpio_idx)
@@ -333,6 +338,8 @@ const struct gpio_dt_spec * gpu_gpio_to_dt(enum gpu_gpio_idx gpio_idx)
 		return GPIO_DT_FROM_NODELABEL(gpio_gpu_vsys_en);
 	case GPU_VADP_EN:
 		return GPIO_DT_FROM_NODELABEL(gpio_gpu_vdap_en);
+	case GPU_3V_5V_EN:
+		return GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en);
 	case GPU_FAN_EN:
 		if (board_get_version() >= BOARD_VERSION_8)
 			return GPIO_DT_FROM_NODELABEL(gpio_gpu_fan_en);
@@ -390,6 +397,8 @@ const char * gpu_gpio_idx_to_name(enum gpu_gpio_idx idx)
 		return "VADP_EN";
 	case GPU_FAN_EN:
 		return "FAN_EN";
+	case GPU_3V_5V_EN:
+		return "GPU_3V_5V_EN";
 	default:
 		return "UNKNOWN IDX";
 	}
@@ -438,6 +447,19 @@ bool gpu_present(void)
 		default:
 			return false;
 	}
+}
+
+void control_5valw_power(enum power_request_source_t pwr, bool enable)
+{
+	if (enable)
+		power_enable |= BIT(pwr);
+	else
+		power_enable &= ~BIT(pwr);
+
+	if (power_enable)
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_5valw_c_en), 1);
+	else
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_5valw_c_en), 0);
 }
 
 const struct gpio_int_config * gpu_gpio_to_dt_int(enum gpu_gpio_idx gpio_idx)
@@ -522,13 +544,40 @@ void set_gpu_gpios_configuration(void)
 		gpio_pin_configure_dt(dt_gpio, gpu_gpio_cfgs[i].flags);
 	}
 }
-/*
- * 
- */
+
+void set_gpu_gpio_powerstate(enum gpu_gpio_idx idx, enum power_state ps)
+{
+	const struct gpio_dt_spec * dt_gpio;
+
+	dt_gpio = gpu_gpio_to_dt(gpu_gpio_cfgs[idx].gpio);
+
+	if (dt_gpio == NULL)
+		return;
+
+	if (ps >= gpu_gpio_cfgs[idx].power_domain) {
+		if (gpu_gpio_cfgs[idx].function ==GPIO_FUNC_HIGH) {
+			if (gpio_pin_get_dt(dt_gpio) == 0) {
+				if (gpu_verbose)
+					CPRINTS("GPU %s=HIGH", gpu_gpio_idx_to_name(gpu_gpio_cfgs[idx].gpio));
+				if (idx == GPU_3V_5V_EN)
+					control_5valw_power(POWER_REQ_GPU_3V_5V, 1);
+				gpio_pin_set_dt(dt_gpio, 1);
+			}
+		}
+	} else {
+		if (gpio_pin_get_dt(dt_gpio) == 1) {
+			if (gpu_verbose)
+				CPRINTS("GPU %s=LOW", gpu_gpio_idx_to_name(gpu_gpio_cfgs[idx].gpio));
+			gpio_pin_set_dt(dt_gpio, 0);
+			if (idx == GPU_3V_5V_EN)
+				control_5valw_power(POWER_REQ_GPU_3V_5V, 0);
+		}
+	}
+}
+
 void set_gpu_gpios_powerstate(void)
 {
 	int i;
-	const struct gpio_dt_spec * dt_gpio;
 	enum power_state ps = power_get_state();
 
 	switch(ps) {
@@ -544,26 +593,19 @@ void set_gpu_gpios_powerstate(void)
 	case POWER_S0ixS0:
 		ps = POWER_S0;
 		break;
+	case POWER_S5G3:
+	case POWER_G3:
+		ps = POWER_G3;
+		break;
 	default:
 		break;
 	}
 
-	for(i = 0; i < GPU_GPIO_MAX; i++) {
-		dt_gpio = gpu_gpio_to_dt(gpu_gpio_cfgs[i].gpio);
-		if (dt_gpio == NULL)
-			continue;
+	/* Workaround: ensure gpu_3v_5v_en turn on first */
+	set_gpu_gpio_powerstate(GPU_3V_5V_EN, ps);
 
-		if (ps >= gpu_gpio_cfgs[i].power_domain) {
-			if (gpu_gpio_cfgs[i].function ==GPIO_FUNC_HIGH) {
-				if (gpu_verbose)
-					CPRINTS("GPU %s=HIGH", gpu_gpio_idx_to_name(gpu_gpio_cfgs[i].gpio));
-				gpio_pin_set_dt(dt_gpio, 1);
-			}
-		} else {
-			if (gpu_verbose)
-				CPRINTS("GPU %s=0", gpu_gpio_idx_to_name(gpu_gpio_cfgs[i].gpio));
-			gpio_pin_set_dt(dt_gpio, 0);
-		}
+	for(i = 0; i < GPU_GPIO_MAX; i++) {
+		set_gpu_gpio_powerstate(i, ps);
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, set_gpu_gpios_powerstate, HOOK_PRIO_DEFAULT);
@@ -707,6 +749,7 @@ int parse_gpu_eeprom(void)
 									(void *)&hdr, sizeof(hdr));
 		if (rv != EC_SUCCESS) {
 			CPRINTS("block read failed");
+			control_5valw_power(POWER_REQ_INIT, 0);
 			return EC_ERROR_INVAL;
 		}
 		crc = crc_update(crc, &hdr, sizeof(hdr));
@@ -729,6 +772,7 @@ int parse_gpu_eeprom(void)
 
 		if (rv != EC_SUCCESS) {
 			CPRINTS("block read failed");
+			control_5valw_power(POWER_REQ_INIT, 0);
 			return EC_ERROR_INVAL;
 		}
 		switch (hdr.block_type) {
@@ -800,6 +844,7 @@ int parse_gpu_eeprom(void)
 			break;
 		default:
 			CPRINTS("descriptor block unknown type: %d", hdr.block_type);
+			control_5valw_power(POWER_REQ_INIT, 0);
 			return EC_ERROR_UNIMPLEMENTED;
 			break;
 		}
@@ -808,6 +853,7 @@ int parse_gpu_eeprom(void)
 	crc = crc_finalize(crc);
 	if (crc != gpu_descriptor.descriptor_crc32 && load_from == 0) {
 		CPRINTS("CRC fail!: %X != %X", crc, gpu_descriptor.descriptor_crc32);
+		control_5valw_power(POWER_REQ_INIT, 0);
 		return EC_ERROR_CRC;
 	}
 	gpu_cfg_descriptor_valid = true;
@@ -816,6 +862,9 @@ int parse_gpu_eeprom(void)
 	set_gpu_gpios_configuration();
 
 	set_gpu_gpios_powerstate();
+
+	control_5valw_power(POWER_REQ_INIT, 0);
+
 	return EC_SUCCESS;
 }
 DECLARE_DEFERRED(parse_gpu_eeprom);
@@ -876,6 +925,11 @@ void deinit_gpu_module(void)
 void init_gpu_module(void)
 {
 	deinit_gpu_module();
+
+	control_5valw_power(POWER_REQ_INIT, 1);
+
+	/* do not turn on the 5valw_c_en and gpu_3v_5v_en at the same time */
+	k_msleep(10);
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 1);
 	/* wait for power to come up to GPU PD and EEPROM */
@@ -1059,6 +1113,7 @@ static int cmd_gpucfg(int argc, const char **argv)
 			CPRINTS("   ECPWM_EN  %d", gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_pwm_en_l)));
 			CPRINTS("   ALW_EN    %d", gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en)));
 			CPRINTS("   BAY DOOR  %s", get_gpu_latch() ? "Closed" : "Open");
+			CPRINTS("   5VALW_REQ 0x%02x", power_enable);
 	}
 
 	return EC_SUCCESS;

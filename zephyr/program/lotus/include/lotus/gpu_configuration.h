@@ -108,6 +108,7 @@ enum gpu_gpio_idx {
 	GPU_VSYS_EN,
 	GPU_VADP_EN,
 	GPU_FAN_EN,
+	GPU_3V_5V_EN,
 	GPU_GPIO_MAX
 } __packed;
 
@@ -127,6 +128,14 @@ enum gpu_gpio_purpose {
 	GPIO_FUNC_GPU_PWR,
 	GPIO_FUNC_MAX,
 };
+
+enum power_request_source_t {
+	POWER_REQ_INIT,
+	POWER_REQ_POWER_ON,
+	POWER_REQ_GPU_3V_5V,
+	POWER_REQ_COUNT,
+};
+
 struct gpu_cfg_gpio {
 	uint8_t gpio;
 	uint8_t function;
@@ -232,6 +241,8 @@ void init_uma_fan(void);
 void deinit_gpu_module(void);
 void gpu_module_gpio_safe(void);
 int parse_gpu_eeprom(void);
+void set_gpu_gpios_powerstate(void);
+void control_5valw_power(enum power_request_source_t pwr, bool enable);
 
 const struct gpio_dt_spec *gpu_gpio_to_dt(enum gpu_gpio_idx gpio_idx);
 const struct gpio_int_config *gpu_gpio_to_dt_int(enum gpu_gpio_idx gpio_idx);

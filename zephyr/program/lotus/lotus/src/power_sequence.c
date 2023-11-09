@@ -190,6 +190,12 @@ void clear_power_flags(void)
 	d3cold_is_entry = 0;
 }
 
+void chipset_g3_deferred(void)
+{
+	set_gpu_gpios_powerstate();
+}
+DECLARE_DEFERRED(chipset_g3_deferred);
+
 #ifdef CONFIG_PLATFORM_EC_POWERSEQ_S0IX
 /*
  * Backup copies of SCI mask to preserve across S0ix suspend/resume
@@ -274,7 +280,7 @@ static void chipset_force_g3(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_fp_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_5valw_c_en), 0);
+	control_5valw_power(POWER_REQ_POWER_ON, 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_apu_aud_pwr_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_edp_reset), 0);
@@ -358,7 +364,8 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_G3S5:
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_5valw_c_en), 1);
+
+		control_5valw_power(POWER_REQ_POWER_ON, 1);
 
 		if (power_wait_signals(X86_3VALW_PG)) {
 			/* something wrong, turn off power and force to g3 */
@@ -626,11 +633,13 @@ enum power_state power_handle_state(enum power_state state)
 		if (keep_pch_power())
 			return POWER_S5;
 
+		hook_call_deferred(&chipset_g3_deferred_data, 5 * MSEC);
+
 		/* Don't need to keep pch power, turn off the pch power and power down to G3*/
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 0);
 		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_5valw_c_en), 0);
+		control_5valw_power(POWER_REQ_POWER_ON, 0);
 		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_apu_aud_pwr_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
