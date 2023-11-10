@@ -252,7 +252,6 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_SEVEN_SEG_DISPLAY | `seg` | |
 | | CONFIG_CMD_SHA256_TEST | `???` | |
 | x | CONFIG_CMD_SHMEM | `shmem` | Used by firmware_ECSharedMem |
-| | CONFIG_CMD_SLEEP | `sleep` | used only lm4 |
 | | CONFIG_CMD_SLEEPMASK | `sleepmask` | Only used for Cr50 tests |
 | | CONFIG_CMD_SLEEPMASK_SET | | Adds options to `sleepmask` |
 | | CONFIG_CMD_SPI_FLASH | `spi_flasherase`<br>`spi_flashwrite`<br>`spi_flashread`<br>`spi_flash_rsr`<br>`spi_flash_wsr`<br>`spi_flash_wsr` | |
