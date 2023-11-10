@@ -1,0 +1,144 @@
+/* Copyright 2025 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "soc.dtsi"
+#include "gpio.dtsi"
+#include "rwsig.dtsi"
+
+#include <cros/integrated_fwid.dtsi>
+
+/ {
+	chosen {
+		cros-fp,fingerprint-sensor = &fp_sensor;
+		zephyr,host-cmd-shi-backend = &shi0;
+		zephyr,host-cmd-uart-backend = &uart2;
+		zephyr,shell-uart = &uart1;
+	};
+
+	binman {
+		/* First 128 kB (uniform 4 kB sectors) used for RO */
+		wp-ro {
+			offset = <0x0>;
+			size = <0x20000>;
+			ec-ro {
+				pad-byte = <0xff>;
+			};
+		};
+
+		/* Two rollback sections (64 kB each) */
+		rollback0 {
+			offset = <0x20000>;
+			size = <0x10000>;
+			type = "blob";
+			filename = "../build-rw/rollback_initial_data.bin";
+		};
+
+		rollback1 {
+			offset = <0x30000>;
+			size = <0x10000>;
+			type = "blob";
+			filename = "../build-rw/rollback_initial_data.bin";
+		};
+
+		/* 320 kB used for RW - helipilot ECOS flash size */
+		ec-rw {
+			offset = <0x40000>;
+			size = <0x50000>;
+			rw-fw {
+				/*
+				 * Clang doesn't emit STT_SECTION symbols (also
+				 * called 'section symbols'), so 'rom_start'
+				 * symbol is not available. Fortunately, Zephyr
+				 * linker scripts provide '__rom_start_address'
+				 * symbol which points to the beginning of
+				 * 'rom_start' section.
+				 */
+				zephyr-rw {
+					elf-base-sym = "__rom_start_address";
+				};
+			};
+		};
+		pad-byte = <0xff>;
+	};
+};
+
+/*
+ * Due to a rounding bug in ECOS helipilot, the size of RW now baked into
+ * RO is 320 kB (0x50000). This change updates the code RAM to 320 kB
+ * correspondingly, freeing up additional data memory. This results in the
+ * following memory map for Zephyr Helipilot:
+ *
+ *           ┌──────────────┐
+ *           │   Reserved   │
+ *           │     4KB      │
+ *           ├──────────────┤0x200D7000
+ *           │              │
+ *           │              │
+ *           │   Data RAM   │
+ *           │     188KB    │
+ *           │              │
+ *           │              │
+ * 0x100A8000├──────────────┤0x200A8000
+ *           │              │
+ *           │              │
+ *           │              │
+ *           │              │
+ *           │   Code RAM   │
+ *           │     320KB    │
+ *           │              │
+ *           │              │
+ *           │              │
+ *           │              │
+ *           │              │
+ * 0x10058000└──────────────┘
+ */
+&flash0 {
+    reg = <0x10058000 DT_SIZE_K(320)>;
+};
+
+/delete-node/ &sram0;
+
+/ {
+	sram0: memory@200a8000 {
+		compatible = "mmio-sram";
+		reg = <0x200A8000 DT_SIZE_K(188)>;
+	};
+};
+
+&qspi_fiu0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		/* First rollback section */
+		rollback0: partition@20000 {
+			label = "rollback0";
+			reg = <0x20000 DT_SIZE_K(64)>;
+		};
+
+		/* Second rollback section */
+		rollback1: partition@30000 {
+			label = "rollback1";
+			reg = <0x30000 DT_SIZE_K(64)>;
+		};
+	};
+};
+
+&spip0 {
+	fp_sensor: fpc1025@0 {
+		compatible = "fpc,fpc1025";
+		reg = <0>;
+		spi-max-frequency = <4000000>;
+
+		width = <160>;
+		height = <160>;
+		bits-per-pixel = <8>;
+		v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+
+		irq-gpios = <&gpiob 0 GPIO_ACTIVE_HIGH>;
+		reset-gpios = <&gpio9 6 GPIO_ACTIVE_LOW>;
+	};
+};

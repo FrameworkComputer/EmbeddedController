@@ -35,6 +35,33 @@ config BLOONCHIPPER_EC_RO_QUIRKS
 
 endif
 
+config BOARD_HELIPILOT
+	bool "Helipilot FPMCU Board"
+	select HAS_COVERAGE_SUPPORT
+	select BOARD_FINGERPRINT
+	select FINGERPRINT_SUBSYSTEM if CROS_EC_RW
+	select FINGERPRINT_SENSOR if CROS_EC_RW
+	select FINGERPRINT_SHELL if CROS_EC_RW
+	select PLATFORM_EC_FINGERPRINT if CROS_EC_RW
+
+	# Make sure RSA parameters for helipilot are correct.
+	depends on PLATFORM_EC_RSA_KEY_SIZE = 3072
+	depends on PLATFORM_EC_RSA_EXPONENT_3
+	help
+	  Build the helipilot FPMCU board. The board uses NPCX99FPA0BX MCU
+	  and FPC1025 sensor.
+
+if BOARD_HELIPILOT
+
+config HELIPILOT_EC_RO_QUIRKS
+	bool "Quirks required by helipilot EC RO"
+	default n
+	help
+	  Include additional code that fixes problems when using EC RO and
+	  Zephyr RW.
+
+endif
+
 # Override default RSA parameters.
 # Make sure that these configs are placed ABOVE 'source "Kconfig.zephyr"' line.
 config PLATFORM_EC_RSA_KEY_SIZE

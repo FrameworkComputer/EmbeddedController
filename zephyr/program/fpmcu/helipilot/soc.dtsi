@@ -1,0 +1,92 @@
+/* Copyright 2025 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/nuvoton/npcx9_cros.dtsi>
+#include <nuvoton/npcx/npcx9/npcx9-pinctrl.dtsi>
+
+
+/ {
+       soc {
+              itim5: timer@400b8000 {
+                     compatible = "nuvoton,npcx-itim-timer";
+                     reg = <0x400b8000 0x2000>;
+                     clocks = <&pcc NPCX_CLOCK_BUS_LFCLK NPCX_PWDWN_CTL6 1>;
+                     interrupts = <44 1>; /* Event timer interrupt */
+              };
+       };
+};
+
+/* DRBG: Deterministic Random Bit Generator */
+&drbg0 {
+	status = "okay";
+};
+
+/*
+ * RAM Memory Map used in ECOS Helipilot:
+ *
+ *           ┌──────────────┐
+ *           │   Reserved   │
+ *           │     4KB      │
+ *           ├──────────────┤0x200D7000
+ *           │              │
+ *           │              │
+ *           │   Data RAM   │
+ *           │     156KB    │
+ *           │              │
+ *           │              │
+ * 0x100B0000├──────────────┤0x200B0000
+ *           │              │
+ *           │              │
+ *           │              │
+ *           │              │
+ *           │   Code RAM   │
+ *           │     352KB    │
+ *           │              │
+ *           │              │
+ *           │              │
+ *           │              │
+ *           │              │
+ * 0x10058000└──────────────┘
+ */
+&flash0 {
+    reg = <0x10058000 DT_SIZE_K(352)>;
+};
+
+/delete-node/ &sram0;
+
+/ {
+	sram0: memory@200b0000 {
+		compatible = "mmio-sram";
+		reg = <0x200B0000 DT_SIZE_K(156)>;
+	};
+};
+
+/* UART1: Servo UART (console) */
+&uart1 {
+      /* Use UART1_SL2 ie. PIN64.65 */
+       pinctrl-0 = <&uart1_2_sin_gp64
+                    &uart1_2_sout_gp65>;
+       pinctrl-names = "default";
+       current-speed = <115200>;
+};
+
+/* UART2: AP UART (Host Commands and MKBP) */
+&uart2 {
+       pinctrl-0 = <&uart2_sin_gp75
+                        &uart2_sout_gp86>;
+       pinctrl-names = "default";
+       current-speed = <3000000>;
+};
+
+/*
+ * SPI0: communication with the fingerprint sensor
+ */
+&spip0 {
+	pinctrl-0 = <&spip_sclk_mosi_miso_gp95_gpa1_gpa3_gpa5_sl
+		     &spip_sclk_mosi_miso_gp95_gpa1_gpa3_gpa5_no_spip_inv>;
+	pinctrl-names = "default";
+	cs-gpios = <&gpioa 6 GPIO_ACTIVE_LOW>;
+	status = "okay";
+};

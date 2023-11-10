@@ -1,0 +1,39 @@
+/* Copyright 2025 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include <cros/binman.dtsi>
+
+&binman {
+	wp-ro {
+		ec-ro {
+			key-ro {
+				compatible = "cros-ec,flash-layout";
+				type = "section";
+				offset = <0x1ec40>;
+				size = <0x400>;
+			};
+		};
+	};
+
+	ec-rw {
+		rw-fw {
+			rw-rbver {
+				size = <4>;
+				type = "section";
+				/* points to
+				 * current_image_data.rollback_version
+				 */
+				offset-from-elf = <&zephyr_rw>,
+					"current_image_data", <40>;
+				overlap;
+			};
+			sig-rw {
+				type = "section";
+				offset = <0x4fc00>;
+				size = <0x400>;
+			};
+			pad-byte = <0xff>;
+		};
+	};
+};

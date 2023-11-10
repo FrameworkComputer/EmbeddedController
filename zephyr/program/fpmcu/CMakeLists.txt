@@ -19,4 +19,9 @@ if (DEFINED CONFIG_BOARD_BLOONCHIPPER)
 	project(bloonchipper)
 endif()
 
+if (DEFINED CONFIG_BOARD_HELIPILOT)
+	add_subdirectory(helipilot)
+	project(helipilot)
+endif()
+
 zephyr_library_sources_ifdef(CONFIG_EC_HOST_CMD "src/fp_transport.c")
