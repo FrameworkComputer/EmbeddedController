@@ -202,7 +202,8 @@ end
 # validation step that forces the MCU to stay in the RO section.
 # This function needs improvements to not be dependent on line numbers.
 define ec-stayro
-    break common/rwsig.c:282
+    # https://crsrc.org/o/src/platform/ec/common/rwsig.c;l=285;drc=0cfd0c67574c0022fe9af2bee63f117f643df74a
+    break common/rwsig.c:285
     commands
         set evt = 1
         printf "Continuing as RO\n"
