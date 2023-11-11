@@ -67,6 +67,15 @@ tests:
       - CONFIG_TEST_PROJECT_REX=y
       - CONFIG_TEST_PROJECT_USB_MUX_CONFIG=y
 
+  rex.rex.i2c_policy:
+    extra_dtc_overlay_files:
+      - boards/native_posix.overlay
+      - boards/rex/rex.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROJECT_REX=y
+      - CONFIG_TEST_PROGRAM_I2C_POLICY=y
+      - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
+
   # Screebo project tests
   rex.screebo:
     extra_configs:
@@ -107,6 +116,12 @@ tests:
       - CONFIG_PLATFORM_EC_HOOKS=y
       - CONFIG_PLATFORM_EC_USBA=y
       - CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB_CUSTOM_HOOK=y
+
+  rex.screebo.i2c_policy:
+    extra_configs:
+      - CONFIG_TEST_PROJECT_SCREEBO=y
+      - CONFIG_TEST_PROGRAM_I2C_POLICY=y
+      - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
 
   # Karis project tests
   rex.karis:
@@ -149,3 +164,9 @@ tests:
       - CONFIG_PLATFORM_EC_USB_PD_VBUS_MEASURE_NOT_PRESENT=y
       - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE=n
       - CONFIG_PLATFORM_EC_VBOOT_HASH=n
+
+  rex.karis.i2c_policy:
+    extra_configs:
+      - CONFIG_TEST_PROJECT_KARIS=y
+      - CONFIG_TEST_PROGRAM_I2C_POLICY=y
+      - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y

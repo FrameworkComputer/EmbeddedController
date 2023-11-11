@@ -15,6 +15,18 @@
 			i2c-port = <&i2c0>;
 			enum-names = "I2C_PORT_USB_MUX";
 		};
+		named_i2c3_0: i2c3_0 {
+			i2c-port = <&i2c3_0>;
+			enum-names = "I2C_PORT_USB_C0_RT";
+		};
+		named_i2c4_1: i2c4_1 {
+			i2c-port = <&i2c4_1>;
+			enum-names = "I2C_PORT_USB_C1_TCPC";
+		};
+		named_i2c6_1: i2c6_1 {
+			i2c-port = <&i2c6_1>;
+			enum-names = "I2C_PORT_USB_1_MIX";
+		};
 	};
 
 	usbc {
@@ -50,4 +62,43 @@
 		hb-usb-c1-frs-en = &gpio_usb_c1_frs_en;
 	};
 
+};
+
+&i2c3_0 {
+	status="okay";
+
+	/*
+	 * Use the PS8811 retimer as a place-holder for the
+	 * Intel HBR retimer for now.
+	 */
+	usb_c0_hb_retimer: ps8811_emul@56 {
+		compatible = "cros,ps8811-emul";
+		reg = <0x56>;
+	};
+};
+
+&i2c4_1 {
+	status="okay";
+
+	/*
+	 * Use the PS8811 retimer as a place-holder for the
+	 * PS8815 TCPC for now.
+	 */
+	tcpc_ps8815_port1: ps8811_emul@b {
+		compatible = "cros,ps8811-emul";
+		reg = <0x0b>;
+	};
+};
+
+&i2c6_1 {
+	status="okay";
+
+	/*
+	 * Use the PS8811 retimer as a place-holder for the
+	 * Intel HBR retimer for now.
+	 */
+	usb_c1_hb_retimer: ps8811_emul@56 {
+		compatible = "cros,ps8811-emul";
+		reg = <0x56>;
+	};
 };

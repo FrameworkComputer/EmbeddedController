@@ -107,6 +107,11 @@ config TEST_DISABLE_AP_PWRSEQ
 	  This is used to disable CONFIG_AP_PWRSEQ for testing purposes
 	  directly.
 
+config TEST_PROGRAM_I2C_POLICY
+	bool "Run the tests intended for i2c_policy"
+	help
+	  Include i2c_policy.c into the binary and test their functions.
+
 module = REX
 module-str = Rex board-specific code
 source "subsys/logging/Kconfig.template.log_config"

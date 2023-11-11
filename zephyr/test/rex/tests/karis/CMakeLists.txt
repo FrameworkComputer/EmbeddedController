@@ -16,3 +16,7 @@ target_sources_ifdef(CONFIG_TEST_PROJECT_KEYBOARD app PRIVATE
 target_sources_ifdef(CONFIG_TEST_PROJECT_CHARGER app PRIVATE src/charger.c)
 target_sources_ifdef(CONFIG_TEST_PROJECT_CHARGER app PRIVATE
 	${PLATFORM_EC_PROGRAM_DIR}/rex/karis/src/charger.c)
+
+target_sources_ifdef(CONFIG_TEST_PROGRAM_I2C_POLICY app PRIVATE src/i2c_policy.c)
+target_sources_ifdef(CONFIG_TEST_PROGRAM_I2C_POLICY app PRIVATE
+	${PLATFORM_EC_PROGRAM_DIR}/rex/karis/src/i2c_policy.c)
