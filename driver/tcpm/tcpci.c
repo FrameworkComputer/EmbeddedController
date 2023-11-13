@@ -5,6 +5,12 @@
 
 /* Type-C port manager */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #include "anx74xx.h"
 #include "atomic.h"
 #include "compile_time_macros.h"
