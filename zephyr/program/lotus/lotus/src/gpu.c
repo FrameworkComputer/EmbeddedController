@@ -62,6 +62,8 @@ void update_gpu_ac_power_state(void)
 	set_gpu_gpio(GPIO_FUNC_ACDC, level);
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, update_gpu_ac_power_state, HOOK_PRIO_FIRST);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, update_gpu_ac_power_state, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, update_gpu_ac_power_state, HOOK_PRIO_DEFAULT);
 
 
 /* After GPU detect, update the thermal configuration */
