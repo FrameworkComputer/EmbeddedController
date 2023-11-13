@@ -164,14 +164,6 @@ config CHIPSET_ALDERLAKE_SLG4BD44540
           Use this for AlderLake power sequencing with the
           Silego chips.
 
-config PLATFORM_EC_POWERSEQ_METEORLAKE
-	bool "Use common Meteorlake code for power sequencing"
-	depends on AP_X86_INTEL_MTL
-	default n
-	help
-	  Use the Meteorlake common code for power sequencing. Note that
-	  this applies to Meteorlake and potentially future SoCs.
-
 menuconfig PLATFORM_EC_POWERSEQ_ICELAKE
 	bool "Use common Icelake code for power sequencing"
 	depends on AP_X86_INTEL_TGL

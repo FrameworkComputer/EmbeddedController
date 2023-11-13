@@ -25,8 +25,6 @@
 #include "cometlake-discrete.h"
 #elif defined(CONFIG_CHIPSET_ICELAKE)
 #include "icelake.h"
-#elif defined(CONFIG_CHIPSET_METEORLAKE)
-#include "meteorlake.h"
 #elif defined(CONFIG_CHIPSET_SKYLAKE)
 #include "skylake.h"
 #endif
