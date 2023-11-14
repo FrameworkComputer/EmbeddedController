@@ -28,9 +28,23 @@ test_static int test_panic_data(void)
 	TEST_EQ(pdata->cm.regs[CORTEX_PANIC_REGISTER_R4], PANIC_SW_ASSERT,
 		"%08x");
 
-	/* Check panic info. */
-	TEST_EQ(pdata->cm.regs[CORTEX_PANIC_REGISTER_R5], get_assert_line(),
-		"%d");
+	/*
+	 * Upper two bytes of panic info are the first two characters of the
+	 * filename. The name of this file is "test/panic_data.c", so we look
+	 * for "te".
+	 */
+	TEST_EQ((pdata->cm.regs[CORTEX_PANIC_REGISTER_R5] & 0xff000000) >> 24,
+		't', "%c");
+
+	TEST_EQ((pdata->cm.regs[CORTEX_PANIC_REGISTER_R5] & 0x00ff0000) >> 16,
+		'e', "%c");
+
+	/*
+	 * The lower 16 bits of the panic info is the line number of the
+	 * ASSERT call.
+	 */
+	TEST_EQ(pdata->cm.regs[CORTEX_PANIC_REGISTER_R5] & 0xffff,
+		get_assert_line(), "%d");
 
 	/*
 	 * Check panic exception - it should be always 0 because panic didn't
