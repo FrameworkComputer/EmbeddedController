@@ -3,16 +3,17 @@
  * found in the LICENSE file.
  */
 
+#include "cmsis-dap.h"
 #include "common.h"
 #include "consumer.h"
 #include "gpio.h"
-#include "i2c.h"
 #include "producer.h"
 #include "queue.h"
 #include "queue_policies.h"
+#include "registers.h"
+#include "task.h"
 #include "timer.h"
 #include "usb-stream.h"
-#include "usb_i2c.h"
 
 static const uint32_t DEFAULT_JTAG_CLOCK_HZ = 100000;
 static const uint32_t OVERHEAD_CLOCK_CYCLES = 50;
@@ -138,11 +139,11 @@ const uint8_t SEQ_CaptureTdo = 0x80;
  * Incoming and outgoing byte streams.
  */
 
-static struct queue const cmsis_dap_tx_queue;
-static struct queue const cmsis_dap_rx_queue;
+struct queue const cmsis_dap_tx_queue;
+struct queue const cmsis_dap_rx_queue;
 
-static uint8_t rx_buffer[256];
-static uint8_t tx_buffer[256];
+uint8_t rx_buffer[256];
+uint8_t tx_buffer[256];
 
 /*
  * JTAG state
@@ -167,74 +168,6 @@ static int saved_pin_flags[JTAG_INVALID];
 static bool jtag_enabled = false;
 static uint16_t jtag_half_period_count =
 	CPU_CLOCK / DEFAULT_JTAG_CLOCK_HZ / 2 - OVERHEAD_CLOCK_CYCLES;
-
-/*
- * A few routines mostly copied from usb_i2c.c.
- */
-
-static int16_t usb_i2c_map_error(int error)
-{
-	switch (error) {
-	case EC_SUCCESS:
-		return USB_I2C_SUCCESS;
-	case EC_ERROR_TIMEOUT:
-		return USB_I2C_TIMEOUT;
-	case EC_ERROR_BUSY:
-		return USB_I2C_BUSY;
-	default:
-		return USB_I2C_UNKNOWN_ERROR | (error & 0x7fff);
-	}
-}
-
-static void usb_i2c_execute(unsigned int expected_size)
-{
-	uint32_t count = queue_remove_units(&cmsis_dap_rx_queue, rx_buffer,
-					    expected_size + 1) -
-			 1;
-	uint16_t i2c_status = 0;
-	/* Payload is ready to execute. */
-	int portindex = rx_buffer[1] & 0xf;
-	uint16_t addr_flags = rx_buffer[2] & 0x7f;
-	int write_count = ((rx_buffer[1] << 4) & 0xf00) | rx_buffer[3];
-	int read_count = rx_buffer[4];
-	int offset = 0; /* Offset for extended reading header. */
-
-	rx_buffer[1] = 0;
-	rx_buffer[2] = 0;
-	rx_buffer[3] = 0;
-	rx_buffer[4] = 0;
-
-	if (read_count & 0x80) {
-		read_count = (rx_buffer[5] << 7) | (read_count & 0x7f);
-		offset = 2;
-	}
-
-	if (!usb_i2c_board_is_enabled()) {
-		i2c_status = USB_I2C_DISABLED;
-	} else if (!read_count && !write_count) {
-		/* No-op, report as success */
-		i2c_status = USB_I2C_SUCCESS;
-	} else if (write_count > CONFIG_USB_I2C_MAX_WRITE_COUNT ||
-		   write_count != (count - 4 - offset)) {
-		i2c_status = USB_I2C_WRITE_COUNT_INVALID;
-	} else if (read_count > CONFIG_USB_I2C_MAX_READ_COUNT) {
-		i2c_status = USB_I2C_READ_COUNT_INVALID;
-	} else if (portindex >= i2c_ports_used) {
-		i2c_status = USB_I2C_PORT_INVALID;
-	} else {
-		int ret = i2c_xfer(i2c_ports[portindex].port, addr_flags,
-				   rx_buffer + 5 + offset, write_count,
-				   rx_buffer + 5, read_count);
-		i2c_status = usb_i2c_map_error(ret);
-	}
-	rx_buffer[1] = i2c_status & 0xFF;
-	rx_buffer[2] = i2c_status >> 8;
-	/*
-	 * Send one byte of CMSIS-DAP header, four bytes of Google I2C header,
-	 * followed by any data received via I2C.
-	 */
-	queue_add_units(&cmsis_dap_tx_queue, rx_buffer, 1 + 4 + read_count);
-}
 
 /*
  * Implementation of handler routines for each CMSIS-DAP command.
@@ -624,31 +557,6 @@ static void dap_goog_info(size_t peek_c)
 	}
 }
 
-/* Vendor command (HyperDebug): I2C forwarding. */
-static void dap_goog_i2c(size_t peek_c)
-{
-	unsigned int expected_size;
-
-	if (peek_c < 5)
-		return;
-
-	/*
-	 * The first four bytes of the packet (following the CMSIS-DAP one-byte
-	 * header) will describe its expected size.
-	 */
-	if (rx_buffer[4] & 0x80)
-		expected_size = 6;
-	else
-		expected_size = 4;
-
-	/* write count */
-	expected_size += (((size_t)rx_buffer[1] & 0xf0) << 4) | rx_buffer[3];
-
-	if (queue_count(&cmsis_dap_rx_queue) >= expected_size + 1) {
-		usb_i2c_execute(expected_size);
-	}
-}
-
 /* Map from CMSIS-DAP command byte to handler routine. */
 static void (*dispatch_table[256])(size_t peek_c) = {
 	[DAP_Info] = dap_info,
@@ -761,8 +669,8 @@ struct consumer const cmsis_dap_consumer = {
 	.ops = &cmsis_dap_consumer_ops,
 };
 
-static struct queue const cmsis_dap_tx_queue = QUEUE_DIRECT(
+struct queue const cmsis_dap_tx_queue = QUEUE_DIRECT(
 	sizeof(tx_buffer), uint8_t, null_producer, cmsis_dap_usb.consumer);
 
-static struct queue const cmsis_dap_rx_queue = QUEUE_DIRECT(
+struct queue const cmsis_dap_rx_queue = QUEUE_DIRECT(
 	sizeof(rx_buffer), uint8_t, cmsis_dap_usb.producer, cmsis_dap_consumer);

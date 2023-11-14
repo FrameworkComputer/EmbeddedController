@@ -4,12 +4,15 @@
  */
 /* HyperDebug I2C logic and console commands */
 
+#include "cmsis-dap.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "registers.h"
+#include "usb-stream.h"
+#include "usb_i2c.h"
 #include "util.h"
 
 /* I2C ports */
@@ -46,6 +49,101 @@ static uint32_t i2c_ports_bits_per_second[ARRAY_SIZE(i2c_ports)];
 int usb_i2c_board_is_enabled(void)
 {
 	return 1;
+}
+
+/*
+ * A few routines mostly copied from usb_i2c.c.
+ */
+
+static int16_t usb_i2c_map_error(int error)
+{
+	switch (error) {
+	case EC_SUCCESS:
+		return USB_I2C_SUCCESS;
+	case EC_ERROR_TIMEOUT:
+		return USB_I2C_TIMEOUT;
+	case EC_ERROR_BUSY:
+		return USB_I2C_BUSY;
+	default:
+		return USB_I2C_UNKNOWN_ERROR | (error & 0x7fff);
+	}
+}
+
+static void usb_i2c_execute(unsigned int expected_size)
+{
+	uint32_t count = queue_remove_units(&cmsis_dap_rx_queue, rx_buffer,
+					    expected_size + 1) -
+			 1;
+	uint16_t i2c_status = 0;
+	/* Payload is ready to execute. */
+	int portindex = rx_buffer[1] & 0xf;
+	uint16_t addr_flags = rx_buffer[2] & 0x7f;
+	int write_count = ((rx_buffer[1] << 4) & 0xf00) | rx_buffer[3];
+	int read_count = rx_buffer[4];
+	int offset = 0; /* Offset for extended reading header. */
+
+	rx_buffer[1] = 0;
+	rx_buffer[2] = 0;
+	rx_buffer[3] = 0;
+	rx_buffer[4] = 0;
+
+	if (read_count & 0x80) {
+		read_count = (rx_buffer[5] << 7) | (read_count & 0x7f);
+		offset = 2;
+	}
+
+	if (!usb_i2c_board_is_enabled()) {
+		i2c_status = USB_I2C_DISABLED;
+	} else if (!read_count && !write_count) {
+		/* No-op, report as success */
+		i2c_status = USB_I2C_SUCCESS;
+	} else if (write_count > CONFIG_USB_I2C_MAX_WRITE_COUNT ||
+		   write_count != (count - 4 - offset)) {
+		i2c_status = USB_I2C_WRITE_COUNT_INVALID;
+	} else if (read_count > CONFIG_USB_I2C_MAX_READ_COUNT) {
+		i2c_status = USB_I2C_READ_COUNT_INVALID;
+	} else if (portindex >= i2c_ports_used) {
+		i2c_status = USB_I2C_PORT_INVALID;
+	} else {
+		int ret = i2c_xfer(i2c_ports[portindex].port, addr_flags,
+				   rx_buffer + 5 + offset, write_count,
+				   rx_buffer + 5, read_count);
+		i2c_status = usb_i2c_map_error(ret);
+	}
+	rx_buffer[1] = i2c_status & 0xFF;
+	rx_buffer[2] = i2c_status >> 8;
+	/*
+	 * Send one byte of CMSIS-DAP header, four bytes of Google I2C header,
+	 * followed by any data received via I2C.
+	 */
+	queue_add_units(&cmsis_dap_tx_queue, rx_buffer, 1 + 4 + read_count);
+}
+
+/*
+ * Entry point for CMSIS-DAP vendor command for I2C forwarding.
+ */
+void dap_goog_i2c(size_t peek_c)
+{
+	unsigned int expected_size;
+
+	if (peek_c < 5)
+		return;
+
+	/*
+	 * The first four bytes of the packet (following the CMSIS-DAP one-byte
+	 * header) will describe its expected size.
+	 */
+	if (rx_buffer[4] & 0x80)
+		expected_size = 6;
+	else
+		expected_size = 4;
+
+	/* write count */
+	expected_size += (((size_t)rx_buffer[1] & 0xf0) << 4) | rx_buffer[3];
+
+	if (queue_count(&cmsis_dap_rx_queue) >= expected_size + 1) {
+		usb_i2c_execute(expected_size);
+	}
 }
 
 /*
