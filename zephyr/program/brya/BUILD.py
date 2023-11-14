@@ -43,3 +43,10 @@ brya = register_npcx9_variant(
     extra_dts_overlays=[here / "brya.dts"],
     extra_kconfig_files=[here / "prj_brya.conf"],
 )
+
+brya_pdc = register_npcx_project(
+    project_name="brya_pdc",
+    zephyr_board="npcx9m3f",
+    dts_overlays=[here / "brya_pdc" / "project.overlay"],
+    kconfig_files=[here / "prj.conf", here / "brya_pdc" / "project.conf"],
+)

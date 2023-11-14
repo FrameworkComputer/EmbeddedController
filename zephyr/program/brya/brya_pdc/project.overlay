@@ -1,0 +1,87 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../adc.dts"
+#include "../battery.dts"
+#include "../fan.dts"
+#include "../gpio.dts"
+#include "../i2c.dts"
+#include "../interrupts.dts"
+#include "../keyboard.dts"
+#include "../motionsense.dts"
+#include "../pwm_leds.dts"
+#include "../temp_sensors.dts"
+
+/ {
+	model = "Google Brya PDC";
+
+	chosen {
+		cros,rtc = &mtc;
+	};
+
+	ec-console {
+		compatible = "ec-console";
+		disabled = "events", "lpc", "hostcmd";
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		/* Configure just the DB port
+		 */
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			chg = <&charger>;
+			// alt-mode = <&pd_port0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+		port1-muxes {
+			/* This port needs to be remapped when communicating
+			 * with the AP
+			 */
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};
+
+/* host interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};
+
+/* Remove undefined interrupts */
+/delete-node/ &int_usb_c0_bc12;
+/delete-node/ &int_usb_c1_bc12;
+/delete-node/ &int_usb_c2_bc12;
+/delete-node/ &int_usb_c0_rt;
+/delete-node/ &int_usb_c2_rt;
+
+/* Remove devices that use TPCMv2 */
+/delete-node/ &tcpc_port0;
+/delete-node/ &ppc_port0;
+/delete-node/ &bc12_port0;
+/delete-node/ &usb_c0_bb_retimer;
+
+/delete-node/ &tcpc_port2;
+/delete-node/ &ppc_port2;
+/delete-node/ &bc12_port2;
+/delete-node/ &usb_c2_bb_retimer;
+
+/delete-node/ &tcpc_port1;
+/delete-node/ &ppc_port1;
+/delete-node/ &bc12_port1;
+
+/* Remove LED support, which requires charge manager support */
+/delete-node/ &{/cros-pwmleds};
+/delete-node/ &{/pwmleds};
