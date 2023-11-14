@@ -133,8 +133,6 @@ def get_version_string(
         return result
 
     # dev build
-    result += datetime.datetime.now().strftime("-d%Y.%m.%d.%H%M%S")
-
     if not git_path:
         git_path = "."
     revision = _get_revision(git_path)
