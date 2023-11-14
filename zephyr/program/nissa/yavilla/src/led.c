@@ -439,6 +439,22 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, pwr_led_resume, HOOK_PRIO_DEFAULT);
 
 /*
  * Since power led is controlled by functions called only when power state
+ * change, we need to make sure that power led is in right state when EC
+ * init, especially for sysjump case.
+ */
+static void pwr_led_init(void)
+{
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		pwr_led_resume();
+	else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
+		pwr_led_suspend_hook();
+	else
+		pwr_led_shutdown_hook();
+}
+DECLARE_HOOK(HOOK_INIT, pwr_led_init, HOOK_PRIO_DEFAULT);
+
+/*
+ * Since power led is controlled by functions called only when power state
  * change, we need to restore it to previous state when led auto control
  * is enabled.
  */
