@@ -489,7 +489,31 @@ void set_gpu_gpio(enum gpu_gpio_purpose gpiofn, int level)
 	const struct gpio_dt_spec * dt_gpio;
 	enum power_state ps = power_get_state();
 
+	switch (ps) {
+	case POWER_G3S5:
+	case POWER_S3S5:
+		ps = POWER_S5;
+		break;
+	case POWER_S5S3:
+	case POWER_S0S3:
+	case POWER_S0ixS3:
+		ps = POWER_S3;
+		break;
+	case POWER_S3S0:
+	case POWER_S0ixS0:
+	case POWER_S3S0ix:
+		ps = POWER_S0;
+		break;
+	case POWER_S5G3:
+	case POWER_G3:
+		ps = POWER_G3;
+		break;
+	default:
+		break;
+	}
+
 	if (gpiofn >= GPIO_FUNC_MAX) {
+		CPRINTS("Unsupported GPIO %d", gpiofn);
 		return;
 	}
 	for(i = 0; i < GPU_GPIO_MAX; i++) {
@@ -515,6 +539,7 @@ int get_gpu_gpio(enum gpu_gpio_purpose gpiofn)
 	const struct gpio_dt_spec * dt_gpio;
 
 	if (gpiofn >= GPIO_FUNC_MAX) {
+		CPRINTS("Unsupported GPIO %d", gpiofn);
 		return -1;
 	}
 	for(i = 0; i < GPU_GPIO_MAX; i++) {
@@ -580,17 +605,19 @@ void set_gpu_gpios_powerstate(void)
 	int i;
 	enum power_state ps = power_get_state();
 
-	switch(ps) {
+	switch (ps) {
 	case POWER_G3S5:
 	case POWER_S3S5:
 		ps = POWER_S5;
 		break;
 	case POWER_S5S3:
 	case POWER_S0S3:
+	case POWER_S0ixS3:
 		ps = POWER_S3;
 		break;
 	case POWER_S3S0:
 	case POWER_S0ixS0:
+	case POWER_S3S0ix:
 		ps = POWER_S0;
 		break;
 	case POWER_S5G3:

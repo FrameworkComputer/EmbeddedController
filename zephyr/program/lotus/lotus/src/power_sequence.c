@@ -510,7 +510,6 @@ enum power_state power_handle_state(enum power_state state)
 
 		k_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 1);
-		set_gpu_gpio(GPU_FAN_EN, 1);
 
 		lpc_s0ix_resume_restore_masks();
 		/* Call hooks now that rails are up */
@@ -563,19 +562,19 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0ixS3:
 		/* follow power sequence Disable S3 power */
 		chipset_prepare_S3(0);
+		set_gpu_gpios_powerstate();
 		return POWER_S3;
 
 	case POWER_S3S0ix:
 		/* Enable power for CPU check system */
 		chipset_prepare_S3(1);
+		set_gpu_gpios_powerstate();
 		return POWER_S0ix;
 
 	case POWER_S0ixS0:
 		resume_ms_flag = 0;
 		system_in_s0ix = 0;
 		lpc_s0ix_resume_restore_masks();
-		/* Follow EXIT_CS bit to turn on the fan */
-		set_gpu_gpio(GPU_FAN_EN, 1);
 		hook_notify(HOOK_CHIPSET_RESUME);
 		return POWER_S0;
 
@@ -585,8 +584,6 @@ enum power_state power_handle_state(enum power_state state)
 		enter_ms_flag = 0;
 		system_in_s0ix = 1;
 		lpc_s0ix_suspend_clear_masks();
-		/* Follow ENTER_CS bit to turn off the fan */
-		set_gpu_gpio(GPU_FAN_EN, 0);
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 		return POWER_S0ix;
 
@@ -594,7 +591,6 @@ enum power_state power_handle_state(enum power_state state)
 #endif
 
 	case POWER_S0S3:
-		set_gpu_gpio(GPU_FAN_EN, 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
 		k_msleep(85);
