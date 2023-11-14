@@ -1646,22 +1646,23 @@ struct framework_dp_ids {
 } const cypd_altmode_ids[] = {
 	{0x32AC, 0x0002},
 	{0x32AC, 0x0003},
+	{0x32AC, 0x000E},
 };
 struct match_vdm_header {
 	uint8_t idx;
 	uint8_t val;
 } const framework_vdm_hdr_match[] = {
 	{0, 0x8f},
-	{1, 0x52},
+	/*{1, 0x52},*/
 	{2, 0},
 	{4, 0x41},
-	{5, 0xa0},
+	/*{5, 0xa0},*/
 	{6, 0x00},
 	{7, 0xFF},
 	/*{8, 0xAC}, Framework VID */
 	/*{9, 0x32}, */
-	{10, 0x00},
-	{11, 0x6C}
+	/*{10, 0x00},*/
+	/*{11, 0x6C}*/
 };
 
 void cypd_handle_vdm(int controller, int port, uint8_t *data, int len)
@@ -1681,6 +1682,8 @@ void cypd_handle_vdm(int controller, int port, uint8_t *data, int len)
 	 * DP
 	 * 0x8f52 00 00 41a000ff ac32006c 00000000 00000300 18000000
 	 *   0 1  2  3  4        8        12       16
+	 * 180W Power Adapter
+	 * 0x8f59 00 00 41a800ff ac32c001 00000000 00000e00 01008020
 	 */
 	int i;
 	uint16_t vid, pid;
@@ -1795,7 +1798,7 @@ void cypd_port_int(int controller, int port)
 			CCG_READ_DATA_MEMORY_REG(port, 0), data2, MIN(response_len, 32));
 		cypd_handle_vdm(controller, port, data2, response_len);
 		CPRINTS("CCG_RESPONSE_VDM_RX");
-		break;
+		__fallthrough;
 	default:
 		if (response_len && verbose_msg_logging) {
 			CPRINTF("Port:%d Data:0x", port_idx);
