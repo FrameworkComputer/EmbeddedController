@@ -22,4 +22,10 @@ config PLATFORM_EC_TOUCHPAD_VIRTUAL_OFF
 	  Enable touchpad FW update over USB update protocol, and define
 	  the virtual address of the touchpad firmware.
 
+config PLATFORM_EC_USB_PAIRING
+	bool "Pairing support"
+	select PLATFORM_EC_CURVE25519
+	help
+	  Add support for pairing over the USB update interface
+
 endif #PLATFORM_EC_USB_UPDATE
