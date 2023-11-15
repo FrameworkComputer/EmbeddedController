@@ -236,7 +236,7 @@ static int parse_integer_field(const char *arg, struct integer_field *f)
 {
 	uint64_t val;
 	char *e;
-	char *ch;
+	const char *ch;
 
 	val = strtoull(arg, &e, 0);
 	if (val > UINT32_MAX || !*arg || (e && *e && *e != ':')) {
@@ -271,7 +271,7 @@ static int parse_uint64_field(const char *arg, struct long_integer_field *f)
 {
 	uint64_t val;
 	char *e;
-	char *ch;
+	const char *ch;
 
 	val = strtoul(arg, &e, 0);
 	/* strtoul sets an errno for invalid input. If the value read is out of
