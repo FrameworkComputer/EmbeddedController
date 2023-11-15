@@ -10,6 +10,27 @@ tests:
     extra_conf_files:
     - prj.conf
     - kingler.usbc.conf
+  corsola.usb_pd_policy:
+    extra_configs:
+    - CONFIG_TEST_CORSOLA_USB_PD_POLICY=y
+    - CONFIG_TEST_BUILD_FAKE=n
+    - CONFIG_AP_ARM_MTK_MT8186=y
+    - CONFIG_PLATFORM_EC_POWERSEQ=y
+    - CONFIG_PLATFORM_EC_POWERSEQ_PP5000_CONTROL=n
+    - CONFIG_SHIMMED_TASKS=y
+    - CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK=y
+    - CONFIG_PLATFORM_EC_EXTPOWER_GPIO=y
+    - CONFIG_PLATFORM_EC_POWER_BUTTON=y
+    - CONFIG_PLATFORM_EC_USB_PD_DP_HPD_GPIO=y
+    - CONFIG_PLATFORM_EC_USB_PD_DP_HPD_GPIO_CUSTOM=y
+    - CONFIG_PLATFORM_EC_USBC_PPC=n
+    - CONFIG_PLATFORM_EC_USB_CHARGER=n
+    - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE=n
+    extra_dtc_overlay_files:
+    - kingler.usbc.overlay
+    extra_conf_files:
+    - prj.conf
+    - kingler.usbc.conf
   kingler.usbc:
     extra_configs:
     - CONFIG_TEST_KINGLER_USBC=y

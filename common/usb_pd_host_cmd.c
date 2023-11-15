@@ -404,7 +404,7 @@ DECLARE_HOST_COMMAND(EC_CMD_PD_CONTROL, pd_control, EC_VER_MASK(0));
  */
 static atomic_t pd_host_event_status __aligned(4);
 
-void pd_send_host_event(int mask)
+test_mockable void pd_send_host_event(int mask)
 {
 	/* mask must be set */
 	if (!mask)

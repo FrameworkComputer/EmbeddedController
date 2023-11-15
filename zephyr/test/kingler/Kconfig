@@ -5,7 +5,12 @@
 config TEST_CORSOLA_USBC
 	bool "Run the tests intended for corsola"
 	help
-	  Include USB-C tests into the binary.
+	  Include USB-C usbc.c into the binary.
+
+config TEST_CORSOLA_USB_PD_POLICY
+	bool "Run the tests intended for corsola"
+	help
+	  Include USB-C usb_pd_policy.c tests into the binary.
 
 config TEST_KINGLER_USBC
 	bool "Run the tests intended for kingler"
@@ -100,5 +105,11 @@ config TEST_PONYTA
 	help
 	  Include ponyta_boart.c into the binary to test the alt sensor probe via
 	  SSFC and clamshell or convertible.
+
+config TEST_BUILD_FAKE
+	bool "Build fakes.c"
+	default y
+	help
+	  Add common fake functions fakes.c to the test
 
 source "Kconfig.zephyr"

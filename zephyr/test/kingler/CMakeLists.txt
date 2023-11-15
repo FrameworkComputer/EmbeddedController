@@ -11,7 +11,7 @@ add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/corsola/include")
 zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/../test/drivers/common/include")
 
-target_sources(app PRIVATE src/fakes.c)
+target_sources_ifdef(CONFIG_TEST_BUILD_FAKE app PRIVATE src/fakes.c)
 
 target_sources_ifdef(
         CONFIG_TEST_KINGLER_USBC
@@ -26,6 +26,10 @@ target_sources_ifdef(
 target_sources_ifdef(CONFIG_TEST_CORSOLA_USBC app PRIVATE
                      ${PLATFORM_EC_PROGRAM_DIR}/corsola/src/usbc.c
                      src/corsola_usbc.c)
+
+target_sources_ifdef(CONFIG_TEST_CORSOLA_USB_PD_POLICY app PRIVATE
+                     ${PLATFORM_EC_PROGRAM_DIR}/corsola/src/usb_pd_policy.c
+                     src/corsola_usb_pd_policy.c)
 
 target_sources_ifdef(CONFIG_TEST_STEELIX_RUSTY app PRIVATE
                      ${PLATFORM_EC_PROGRAM_DIR}/corsola/steelix/src/board.c)
