@@ -168,7 +168,7 @@ struct i2c_interface {
 };
 
 static int spi_flash_command_short(struct common_hnd *chnd, uint8_t cmd,
-				   char *desc);
+				   const char *desc);
 
 static void null_and_free(void **ptr)
 {
@@ -783,7 +783,7 @@ static int dbgr_disable_protect_path(struct common_hnd *chnd)
 }
 
 /* Enter follow mode and FSCE# high level */
-static int spi_flash_follow_mode(struct common_hnd *chnd, char *desc)
+static int spi_flash_follow_mode(struct common_hnd *chnd, const char *desc)
 {
 	int ret = 0;
 
@@ -802,7 +802,7 @@ static int spi_flash_follow_mode(struct common_hnd *chnd, char *desc)
 }
 
 /* Exit follow mode */
-static int spi_flash_follow_mode_exit(struct common_hnd *chnd, char *desc)
+static int spi_flash_follow_mode_exit(struct common_hnd *chnd, const char *desc)
 {
 	int ret = 0;
 
@@ -833,7 +833,7 @@ static int dbgr_stop_ec(struct common_hnd *chnd)
 
 /* SPI Flash generic command, short version */
 static int spi_flash_command_short(struct common_hnd *chnd, uint8_t cmd,
-				   char *desc)
+				   const char *desc)
 {
 	int ret = 0;
 
@@ -851,7 +851,7 @@ static int spi_flash_command_short(struct common_hnd *chnd, uint8_t cmd,
 
 /* SPI Flash set erase page */
 static int spi_flash_set_erase_page(struct common_hnd *chnd, int page,
-				    char *desc)
+				    const char *desc)
 {
 	int ret = 0;
 
@@ -867,7 +867,7 @@ static int spi_flash_set_erase_page(struct common_hnd *chnd, int page,
 }
 
 /* Poll SPI Flash Read Status register until BUSY is reset */
-static int spi_poll_busy(struct common_hnd *chnd, char *desc)
+static int spi_poll_busy(struct common_hnd *chnd, const char *desc)
 {
 	uint8_t reg = 0xff;
 	int ret = -EIO;
@@ -894,7 +894,7 @@ failed_read_status:
 	return ret;
 }
 
-static int spi_check_write_enable(struct common_hnd *chnd, char *desc)
+static int spi_check_write_enable(struct common_hnd *chnd, const char *desc)
 {
 	uint8_t reg = 0xff;
 	int ret = -EIO;
