@@ -30,6 +30,7 @@ def register_npcx9_variant(
         kconfig_files=[
             # Common to all projects.
             here / "prj.conf",
+            here / "tcpc.conf",
             # Project-specific KConfig customization.
             *extra_kconfig_files,
         ],
