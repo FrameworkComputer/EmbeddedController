@@ -688,7 +688,7 @@ static long i2cp_cdev_unlocked_ioctl(struct file *filep, unsigned int cmd,
 	case I2CP_IOCTL_SHUTDOWN:
 		return i2cp_cdev_ioctl_shutdown(filep, arg);
 	}
-	return -ENOTTY;
+	return -ENOIOCTLCMD;
 }
 
 /*
