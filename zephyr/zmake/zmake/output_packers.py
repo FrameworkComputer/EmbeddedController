@@ -5,6 +5,7 @@
 """Types which provide many builds and composite them into a single binary."""
 
 import logging
+import os
 from pathlib import Path
 import shutil
 import subprocess
@@ -226,6 +227,15 @@ class BinmanPacker(BasePacker):
             rw_dir / "zephyr" / "component_manifest.json",
             "component_manifest.json",
         )
+
+        token_db_name = "database.bin"
+        token_paths = [
+            ro_dir / token_db_name,
+            rw_dir / token_db_name,
+        ]
+        if os.path.exists(token_paths[0]):
+            util.merge_token_databases(token_paths, work_dir / token_db_name)
+            yield work_dir / token_db_name, token_db_name
 
 
 class NpcxPacker(BinmanPacker):

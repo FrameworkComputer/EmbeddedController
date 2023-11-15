@@ -9,6 +9,10 @@ import pathlib
 import re
 import shlex
 import shutil
+import sys
+
+import zmake.jobserver
+import zmake.multiproc
 
 
 def c_str(input_str):
@@ -210,3 +214,39 @@ def get_tool_path(program):
     if not path:
         raise FileNotFoundError(f"{program} not found in PATH")
     return path
+
+
+def merge_token_databases(databases, merged_db):
+    """Merge token databases
+
+    Args:
+    databases: Array of token databases to be merged
+    merged_db: Merged token database output path.
+    """
+    checkout = locate_cros_checkout()
+    modules = zmake.modules.locate_from_checkout(pathlib.Path("."))
+    jobclient = zmake.jobserver.GNUMakeJobServer()
+
+    proc = jobclient.popen(
+        [
+            sys.executable,
+            checkout
+            / modules["pigweed"]
+            / "pw_tokenizer"
+            / "py"
+            / "pw_tokenizer"
+            / "database.py",
+            "create",
+            "--type",
+            "binary",
+            "--force",
+            "--database",
+            merged_db,
+            *databases,
+        ],
+        cwd=os.path.dirname(merged_db),
+        encoding="utf-8",
+    )
+
+    if proc.wait(timeout=60):
+        raise OSError("Failed to run PW database.py")
