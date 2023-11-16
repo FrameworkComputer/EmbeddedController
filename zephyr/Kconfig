@@ -547,6 +547,15 @@ config PLATFORM_EC_LID_SWITCH
 
 	  This requires a GPIO named GPIO_LID_OPEN to be defined or aliased.
 
+config PLATFORM_EC_CONSOLE_CMD_MMAPINFO
+	bool "Console command: mmapinfo"
+	default y
+	depends on PLATFORM_EC_LID_SWITCH
+	help
+	  Enable the 'mmapinfo' console command. This command prints the
+	  current switches state (lid, power button, write protect, etc)
+	  that is accesible by the host using the memmory mapped interface.
+
 config MKBP_PROTOCOL
 	bool "MKBP protocol support"
 	help
