@@ -8672,7 +8672,7 @@ static void cmd_cbi_help(char *cmd)
 	fprintf(stderr,
 		"  Usage: %s get <tag> [get_flag]\n"
 		"  Usage: %s set <tag> <value> <size> [set_flag]\n"
-		"  Usage: %s set <tag> <string> <*> [set_flag]\n"
+		"  Usage: %s set <tag> <string/hex> <*> [set_flag]\n"
 		"  Usage: %s remove <tag> [set_flag]\n"
 		"    <tag> is one of:\n"
 		"      0: BOARD_VERSION\n"
@@ -8687,10 +8687,12 @@ static void cmd_cbi_help(char *cmd)
 		"      9: REWORK_ID\n"
 		"      10: FACTORY_CALIBRATION_DATA\n"
 		"      11: COMMON_CONTROL\n"
+		"      12: BATTERY_CONFIG (hex)\n"
 		"    <size> is the size of the data in byte. It should be zero for\n"
 		"      string types.\n"
 		"    <value/string> is an integer or a string to be set\n"
 		"    <*> is unused but must be present (e.g. '0')\n"
+		"    <hex> is a hex string\n"
 		"    [get_flag] is combination of:\n"
 		"      01b: Invalidate cache and reload data from EEPROM\n"
 		"    [set_flag] is combination of:\n"
@@ -8704,6 +8706,11 @@ static int cmd_cbi_is_string_field(enum cbi_data_tag tag)
 	return tag == CBI_TAG_DRAM_PART_NUM || tag == CBI_TAG_OEM_NAME;
 }
 
+static int cmd_cbi_is_binary_field(enum cbi_data_tag tag)
+{
+	return tag == CBI_TAG_BATTERY_CONFIG;
+}
+
 /*
  * Write value to CBI
  *
@@ -8714,6 +8721,7 @@ static int cmd_cbi(int argc, char *argv[])
 	enum cbi_data_tag tag;
 	char *e;
 	int rv;
+	int i;
 
 	if (argc < 3) {
 		fprintf(stderr, "Invalid number of params\n");
@@ -8730,7 +8738,6 @@ static int cmd_cbi(int argc, char *argv[])
 
 	if (!strcasecmp(argv[1], "get")) {
 		struct ec_params_get_cbi p = { 0 };
-		int i;
 
 		p.tag = tag;
 		if (argc > 3) {
@@ -8752,6 +8759,11 @@ static int cmd_cbi(int argc, char *argv[])
 		}
 		if (cmd_cbi_is_string_field(tag)) {
 			printf("%.*s", rv, (const char *)ec_inbuf);
+		} else if (cmd_cbi_is_binary_field(tag)) {
+			const uint8_t *const buf =
+				(const uint8_t *const)(ec_inbuf);
+			for (i = 0; i < rv; i++)
+				printf("%02x", buf[i]);
 		} else {
 			const uint8_t *const buffer =
 				(const uint8_t *const)(ec_inbuf);
@@ -8778,6 +8790,8 @@ static int cmd_cbi(int argc, char *argv[])
 		uint64_t val = 0;
 		size_t size;
 		uint8_t bad_size = 0;
+		uint8_t *buf = NULL;
+
 		if (argc < 5) {
 			fprintf(stderr, "Invalid number of params\n");
 			cmd_cbi_help(argv[0]);
@@ -8789,6 +8803,37 @@ static int cmd_cbi(int argc, char *argv[])
 		if (cmd_cbi_is_string_field(tag)) {
 			val_ptr = argv[3];
 			size = strlen((char *)(val_ptr)) + 1;
+		} else if (cmd_cbi_is_binary_field(tag)) {
+			const char *p = argv[3];
+
+			size = strlen(p);
+			if (size % 2) {
+				fprintf(stderr,
+					"\n<hex> length must be even.\n");
+				return -1;
+			}
+
+			size /= 2;
+			buf = (uint8_t *)malloc(size);
+			if (!buf) {
+				fprintf(stderr,
+					"\nFailed to allocate buffer.\n");
+				return -1;
+			}
+			for (i = 0; i < size; i++) {
+				char t[3] = {};
+
+				memcpy(t, p, 2);
+				buf[i] = strtoul(t, &e, 16);
+				if (e && *e) {
+					fprintf(stderr, "\nBad value: '%s'\n",
+						t);
+					free(buf);
+					return -1;
+				}
+				p += 2;
+			}
+			val_ptr = buf;
 		} else {
 			val = strtoul(argv[3], &e, 0);
 			/* strtoul sets an errno for invalid input. If the value
@@ -8825,6 +8870,8 @@ static int cmd_cbi(int argc, char *argv[])
 		}
 		/* Little endian */
 		memcpy(p->data, val_ptr, size);
+		free(buf);
+		val_ptr = NULL;
 		p->size = size;
 		if (argc > 5) {
 			p->flag = strtol(argv[5], &e, 0);
