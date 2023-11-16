@@ -183,7 +183,7 @@
 			};
 		};
 
-		power-state-idle {
+		power-state-idle-s5 {
 			charge-state = "LED_PWRS_IDLE";
 			chipset-state = "POWER_S5";
 
@@ -193,6 +193,38 @@
 				/* LED off when S5, others do not change */
 				color-0 {
 					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		power-state-idle-s0 {
+			charge-state = "LED_PWRS_IDLE";
+			chipset-state = "POWER_S0";
+
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		power-state-idle-s3 {
+			charge-state = "LED_PWRS_IDLE";
+			chipset-state = "POWER_S3";
+
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* White 1 sec on, 3 sec off */
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
 				};
 			};
 		};
