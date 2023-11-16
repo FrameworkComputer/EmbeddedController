@@ -110,5 +110,17 @@
 				};
 			};
 		};
+
+		power-state-idle {
+			charge-state = "LED_PWRS_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_BLUE";
+				};
+			};
+		};
 	};
 };
