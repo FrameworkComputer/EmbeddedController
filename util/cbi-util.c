@@ -160,7 +160,7 @@ static void print_help(void)
 	print_help_show();
 }
 
-static int write_file(const char *filename, const char *buf, int size)
+static int write_file(const char *filename, const uint8_t *buf, int size)
 {
 	FILE *f;
 	int i;
