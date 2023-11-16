@@ -171,8 +171,8 @@ terminate_usb_findit:
 	return -1;
 }
 
-int usb_trx(struct usb_endpoint *uep, void *outbuf, int outlen, void *inbuf,
-	    int inlen, int allow_less, size_t *rxed_count)
+int usb_trx(struct usb_endpoint *uep, uint8_t *outbuf, int outlen,
+	    uint8_t *inbuf, int inlen, int allow_less, size_t *rxed_count)
 {
 	int r, actual;
 
