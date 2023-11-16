@@ -31,6 +31,11 @@ struct image_data {
 	uint32_t size;
 	int32_t rollback_version;
 	uint32_t cookie2;
+
+	/*
+	 * Used by legacy EC code to make it easier to correlate EC and AP
+	 * versions, deprecated and unused with zephyr.
+	 */
 	char cros_fwid[32];
 	uint32_t cookie3;
 } __packed;

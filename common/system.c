@@ -833,8 +833,6 @@ const char *system_get_cros_fwid(enum ec_image copy)
 		if (data && (data->cookie3 & CROS_EC_IMAGE_DATA_COOKIE3_MASK) ==
 				    CROS_EC_IMAGE_DATA_COOKIE3)
 			return data->cros_fwid;
-		else
-			return CROS_FWID_MISSING_STR;
 	}
 	return "";
 }

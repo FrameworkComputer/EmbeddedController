@@ -150,7 +150,6 @@ EXPECTED_HEADER = (
     '#define CROS_EC_VERSION32 "prj-123.456.789-c0d52f1"\n'
     '#define BUILDER "toukmond@pokey"\n'
     '#define DATE "2021-06-28 03:18:53"\n'
-    "#define CROS_FWID32 CROS_FWID_MISSING_STR\n"
 )
 HEADER_VERSION_STR_STATIC = "prj-123.456.789"
 EXPECTED_HEADER_STATIC = (
@@ -159,7 +158,6 @@ EXPECTED_HEADER_STATIC = (
     '#define CROS_EC_VERSION32 "prj-123.456.789"\n'
     '#define BUILDER "reproducible@build"\n'
     '#define DATE "STATIC_VERSION_DATE"\n'
-    "#define CROS_FWID32 CROS_FWID_MISSING_STR\n"
 )
 
 

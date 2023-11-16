@@ -41,10 +41,10 @@ ZTEST(host_cmd_get_version, test_get_version_v1)
 		      args.response_size);
 	zassert_equal(strcmp(r.version_string_rw, "version-rw"), 0,
 		      "version_string_rw: %s", r.version_string_rw);
-	zassert_equal(strcmp(r.cros_fwid_ro, "CROS_FWID_MISSING"), 0,
-		      "cros_fwid_ro: %s", r.cros_fwid_ro);
-	zassert_equal(strcmp(r.cros_fwid_rw, "CROS_FWID_MISSING"), 0,
-		      "cros_fwid_ro: %s", r.cros_fwid_rw);
+	zassert_equal(strcmp(r.cros_fwid_ro, ""), 0, "cros_fwid_ro: %s",
+		      r.cros_fwid_ro);
+	zassert_equal(strcmp(r.cros_fwid_rw, ""), 0, "cros_fwid_ro: %s",
+		      r.cros_fwid_rw);
 	zassert_equal(r.current_image, EC_IMAGE_UNKNOWN, "current_image: %s",
 		      r.current_image);
 }
