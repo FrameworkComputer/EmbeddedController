@@ -23,7 +23,6 @@
 
 	/* Override keyboard scanning */
 	soc {
-		/delete-node/ kscan@f01d00;
 		/delete-node/ kbd@f01d00;
 	};
 };
