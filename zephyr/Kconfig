@@ -900,6 +900,15 @@ config PLATFORM_EC_VBOOT_HASH
 	  hash itself. If the hash is incorrect, new code is write to the EC's
 	  read/write area.
 
+config PLATFORM_EC_CONSOLE_CMD_HASH
+	bool "Console command: hash"
+	default y
+	depends on PLATFORM_EC_VBOOT_HASH
+	help
+	  Enable the 'hash' console command. Use this command to request a hash
+	  recomputation of the RO or RW image.  You can also request a hash
+	  computation over an arbitrary memory range.
+
 config PLATFORM_EC_VSTORE
 	bool "Secure temporary storage for verified boot"
 	default y
