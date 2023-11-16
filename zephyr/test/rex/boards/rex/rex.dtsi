@@ -64,8 +64,21 @@
 
 };
 
+&i2c1_0 {
+	status = "okay";
+
+	/*
+	 * Use the PS8811 retimer as a place-holder for the
+	 * NCT3807 TCPC for now.
+	 */
+	tcpc_port0: ps8811_emul@70 {
+		compatible = "cros,ps8811-emul";
+		reg = <0x70>;
+	};
+};
+
 &i2c3_0 {
-	status="okay";
+	status = "okay";
 
 	/*
 	 * Use the PS8811 retimer as a place-holder for the
@@ -78,7 +91,7 @@
 };
 
 &i2c4_1 {
-	status="okay";
+	status = "okay";
 
 	/*
 	 * Use the PS8811 retimer as a place-holder for the
@@ -91,7 +104,16 @@
 };
 
 &i2c6_1 {
-	status="okay";
+	status = "okay";
+
+	/*
+	 * Use the PS8811 retimer as a place-holder for the
+	 * ANX7452 retimer for now.
+	 */
+	usb_c1_anx7452_retimer: ps8811_emul@10 {
+		compatible = "cros,ps8811-emul";
+		reg = <0x10>;
+	};
 
 	/*
 	 * Use the PS8811 retimer as a place-holder for the
