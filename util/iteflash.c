@@ -1026,7 +1026,7 @@ static int ftdi_send_special_waveform(struct common_hnd *chnd)
 	struct ftdi_context *ftdi = chnd->ftdi_hnd;
 	uint8_t release_lines[] = { SET_BITS_LOW, 0, 0 };
 
-	wave = malloc(SPECIAL_BUFFER_SIZE);
+	wave = (uint64_t *)malloc(SPECIAL_BUFFER_SIZE);
 	if (!wave) {
 		fprintf(stderr, "malloc(%zu) failed\n",
 			(size_t)SPECIAL_BUFFER_SIZE);
@@ -1558,7 +1558,7 @@ static int read_flash(struct common_hnd *chnd)
 		}
 	}
 
-	buffer = malloc(size);
+	buffer = (uint8_t *)malloc(size);
 	if (!buffer) {
 		fprintf(stderr, "Cannot allocate %zd bytes\n", size);
 		return -ENOMEM;
@@ -1591,7 +1591,7 @@ static int write_flash(struct common_hnd *chnd, const char *filename,
 	int res, written;
 	FILE *hnd;
 	int size = chnd->flash_size;
-	uint8_t *buffer = malloc(size);
+	uint8_t *buffer = (uint8_t *)malloc(size);
 
 	if (!buffer) {
 		fprintf(stderr, "%s: Cannot allocate %d bytes\n", __func__,
@@ -1647,7 +1647,7 @@ static int write_flash2(struct common_hnd *chnd, const char *filename,
 	int size = chnd->flash_size;
 	int cnt, two_bytes_sent, ret;
 	uint8_t addr_h, addr_m, addr_l, data_ff = 0xff;
-	uint8_t *buffer = malloc(size);
+	uint8_t *buffer = (uint8_t *)malloc(size);
 
 	if (!buffer) {
 		fprintf(stderr, "%s: Cannot allocate %d bytes\n", __func__,
@@ -1778,7 +1778,7 @@ static int write_flash3(struct common_hnd *chnd, const char *filename,
 	FILE *hnd;
 	int size = chnd->flash_size;
 	int cnt;
-	uint8_t *buf = malloc(size);
+	uint8_t *buf = (uint8_t *)malloc(size);
 
 	if (!buf) {
 		fprintf(stderr, "%s: Cannot allocate %d bytes\n", __func__,
@@ -1851,8 +1851,8 @@ static int verify_flash(struct common_hnd *chnd, const char *filename,
 	int res;
 	int file_size;
 	FILE *hnd;
-	uint8_t *buffer = malloc(chnd->flash_size);
-	uint8_t *buffer2 = malloc(chnd->flash_size);
+	uint8_t *buffer = (uint8_t *)malloc(chnd->flash_size);
+	uint8_t *buffer2 = (uint8_t *)malloc(chnd->flash_size);
 
 	if (!buffer || !buffer2) {
 		fprintf(stderr, "%s: Cannot allocate %d bytes\n", __func__,
@@ -1907,7 +1907,7 @@ static struct ftdi_context *open_ftdi_device(int vid, int pid, int interface,
 		return NULL;
 	}
 
-	ret = ftdi_set_interface(ftdi, interface);
+	ret = ftdi_set_interface(ftdi, (enum ftdi_interface)interface);
 	if (ret < 0) {
 		fprintf(stderr, "cannot set ftdi interface %d: %s(%d)\n",
 			interface, ftdi_get_error_string(ftdi), ret);

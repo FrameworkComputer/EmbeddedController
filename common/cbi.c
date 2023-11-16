@@ -61,7 +61,7 @@ uint8_t *cbi_set_string(uint8_t *p, enum cbi_data_tag tag, const char *str)
 struct cbi_data *cbi_find_tag(const void *buf, enum cbi_data_tag tag)
 {
 	struct cbi_data *d;
-	const struct cbi_header *h = buf;
+	const struct cbi_header *h = (struct cbi_header *)buf;
 	const uint8_t *p;
 	for (p = h->data; p + sizeof(*d) < (uint8_t *)buf + h->total_size;) {
 		d = (struct cbi_data *)p;

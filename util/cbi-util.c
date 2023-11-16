@@ -204,7 +204,7 @@ static uint8_t *read_file(const char *filename, uint32_t *size_ptr)
 		return NULL;
 	}
 
-	buf = malloc(size);
+	buf = (uint8_t *)malloc(size);
 	if (!buf) {
 		fclose(f);
 		return NULL;
@@ -421,7 +421,7 @@ static int cmd_create(int argc, char **argv)
 		return -1;
 	}
 
-	cbi = malloc(size);
+	cbi = (uint8_t *)malloc(size);
 	if (!cbi) {
 		fprintf(stderr, "Failed to allocate memory\n");
 		return -1;
