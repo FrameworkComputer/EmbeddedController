@@ -95,6 +95,21 @@
 			};
 		};
 
+		/* Voltorb LED bat charge, full batt-lvl */
+		bat-power-state-charge-full {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery display percent range (100%) */
+			batt-lvl = <BATTERY_LEVEL_FULL BATTERY_LEVEL_FULL>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_BLUE";
+				};
+			};
+		};
+
 		/* Voltorb LED bat charge near full */
 		bat-power-state-charge-near-full {
 			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
