@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <stdint.h>
+
 #include <rollback.h>
 #include <rollback_private.h>
 
@@ -14,3 +16,6 @@ struct rollback_data rollback_initial_data = {
 #endif
 	.cookie = CROS_EC_ROLLBACK_COOKIE,
 };
+
+const int32_t rollback_version __attribute__((section(".rw_rbver"))) =
+	CONFIG_PLATFORM_EC_ROLLBACK_VERSION;
