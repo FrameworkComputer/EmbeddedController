@@ -8774,7 +8774,7 @@ static int cmd_cbi(int argc, char *argv[])
 			(struct ec_params_set_cbi *)ec_outbuf;
 		void *val_ptr;
 		uint64_t val = 0;
-		uint8_t size;
+		size_t size;
 		uint8_t bad_size = 0;
 		if (argc < 5) {
 			fprintf(stderr, "Invalid number of params\n");
@@ -8809,7 +8809,7 @@ static int cmd_cbi(int argc, char *argv[])
 					bad_size = 1;
 			}
 			if (bad_size == 1) {
-				fprintf(stderr, "Bad size: %d\n", size);
+				fprintf(stderr, "Bad size: %zu\n", size);
 				return -1;
 			}
 
@@ -8817,7 +8817,7 @@ static int cmd_cbi(int argc, char *argv[])
 		}
 
 		if (size > ec_max_outsize - sizeof(*p)) {
-			fprintf(stderr, "Size exceeds parameter buffer: %d\n",
+			fprintf(stderr, "Size exceeds parameter buffer: %zu\n",
 				size);
 			return -1;
 		}
