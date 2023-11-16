@@ -81,4 +81,11 @@ config PLATFORM_EC_CBI_GPIO
 	  CBI for AP to query.
 endchoice
 
+config PLATFORM_EC_CONSOLE_CMD_CBI
+	bool "Console command: cbi"
+	default y
+	help
+	  Enable the 'cbi' console command. This command is used to display or
+	  change the CBI information in the persistent storage.
+
 endif # PLATFORM_EC_CBI
