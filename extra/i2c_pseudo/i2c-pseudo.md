@@ -57,7 +57,8 @@ Sample usage:
 
 ```
 $ sudo modprobe i2c-pseudo
-$ cc -o i2c-adapter-example i2c-adapter-example.c
+$ cd samples/i2c-pseudo
+$ make i2c-adapter-example
 $ ./i2c-adapter-example < /dev/urandom
 adapter_num=13
 ```
