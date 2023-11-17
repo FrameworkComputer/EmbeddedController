@@ -45,6 +45,31 @@ except ImportError:
 NEW_ALLOWED_FNAME = pathlib.Path("/tmp/new_config_allowed.txt")
 
 
+def prefix_adhoc_tuple(arg_string):
+    """Replace argument type
+
+    Args:
+        arg_string: Command line argument string containing comma separated
+        prefix/adhoc replacement pattern.
+
+    Returns:
+        Tuple of the Kconfig prefix following the adhoc replacement string.
+    """
+    try:
+        prefix_tuple = tuple(arg_string.split(","))
+    except:
+        raise argparse.ArgumentTypeError(
+            "Replace argument must 'prefix,replace`"
+        )
+
+    if len(prefix_tuple) != 2:
+        raise argparse.ArgumentTypeError(
+            "Replace argument must 'prefix,replace`"
+        )
+
+    return prefix_tuple
+
+
 def parse_args(argv):
     """Parse the program arguments
 
@@ -98,11 +123,14 @@ a corresponding Kconfig option for Zephyr"""
         help="Search paths to look for Kconfigs",
     )
     parser.add_argument(
-        "-p",
-        "--prefix",
-        type=str,
-        default="PLATFORM_EC_",
-        help="Prefix to string from Kconfig options",
+        "-r",
+        "--replace",
+        metavar="prefix,adhoc",
+        dest="replace_list",
+        default=[("PLATFORM_EC_", "")],
+        type=prefix_adhoc_tuple,
+        nargs="+",
+        help="Replace a prefix string from Kconfig with an ad-hoc string",
     )
     parser.add_argument(
         "-s",
@@ -274,14 +302,34 @@ class KconfigCheck:
         return kconfig_files
 
     @classmethod
+    def fixup_symbols(cls, symbols, replace_list):
+        """Fixup all Kconfig symbols using the prefix/adhoc replacement rules"""
+        if replace_list is not None:
+            for replace in replace_list:
+                # Replace tuples are a Kconfig prefix and the adhoc
+                # substitution.
+                re_drop_prefix = re.compile(f"^{replace[0]}")
+                symbols = [
+                    re_drop_prefix.sub(repl=replace[1], string=name)
+                    for name in symbols
+                ]
+        return symbols
+
+    @classmethod
     def scan_kconfigs(
-        cls, srcdir, prefix="", search_paths=None, try_kconfiglib=True
+        cls,
+        srcdir,
+        replace_list=None,
+        search_paths=None,
+        try_kconfiglib=True,
     ):
         """Scan a source tree for Kconfig options
 
         Args:
             srcdir: Directory to scan (containing top-level Kconfig file)
-            prefix: Prefix to strip from the name (e.g. 'PLATFORM_EC_')
+            replace_list: List of prefix/adhoc tuples.  The "prefix" is removed
+                from Kconfig symbols and replaced by "adhoc".
+                e.g. ('PLATFORM_EC, '')
             search_paths: List of project paths to search for Kconfig files, in
                 addition to the current directory
             try_kconfiglib: Use kconfiglib if available
@@ -317,20 +365,21 @@ class KconfigCheck:
                     if isinstance(node.item, kconfiglib.Symbol)
                 ]
 
-                if prefix:
-                    re_drop_prefix = re.compile(r"^%s" % prefix)
-                    symbols = [re_drop_prefix.sub("", name) for name in symbols]
+                symbols = cls.fixup_symbols(symbols, replace_list)
+
                 kconfigs += symbols
         else:
+            symbols = []
             kconfigs = []
             # Remove the prefix if present
-            expr = re.compile(
-                r"\n(config|menuconfig) (%s)?([A-Za-z0-9_]*)\n" % prefix
-            )
+            expr = re.compile(r"\n(config|menuconfig) ([A-Za-z0-9_]*)\n")
             for fname in cls.find_kconfigs(srcdir):
                 with open(fname) as inf:
                     found = re.findall(expr, inf.read())
-                    kconfigs += [name for kctype, _, name in found]
+                    symbols += [name for kctype, name in found]
+
+            symbols = cls.fixup_symbols(symbols, replace_list)
+            kconfigs += symbols
         return sorted(kconfigs)
 
     def check_adhoc_configs(
@@ -338,7 +387,7 @@ class KconfigCheck:
         configs_file,
         srcdir,
         allowed_file,
-        prefix="",
+        replace_list=None,
         use_defines=False,
         search_paths=None,
     ):
@@ -348,8 +397,9 @@ class KconfigCheck:
             configs_file: Filename containing CONFIG options to check
             srcdir: Source directory to scan for Kconfig files
             allowed_file: File containing allowed CONFIG options
-            prefix: Prefix to strip from the start of each Kconfig
-                (e.g. 'PLATFORM_EC_')
+            replace_list: List of prefix/adhoc tuples.  The "prefix" is removed
+                from Kconfig symbols and replaced by "adhoc".
+                e.g. ('PLATFORM_EC, '')
             use_defines: True if each line of the file starts with #define
             search_paths: List of project paths to search for Kconfig files, in
                 addition to the current directory
@@ -365,14 +415,17 @@ class KconfigCheck:
         """
         configs = self.read_configs(configs_file, use_defines)
         try:
-            kconfigs = self.scan_kconfigs(srcdir, prefix, search_paths)
+            kconfigs = self.scan_kconfigs(srcdir, replace_list, search_paths)
         except kconfiglib.KconfigError:
             # If we don't actually have access to the full Kconfig then we may
             # get an error. Fall back to using manual methods.
             print("WARNING: kconfiglib failed", file=sys.stderr)
             traceback.print_exc()
             kconfigs = self.scan_kconfigs(
-                srcdir, prefix, search_paths, try_kconfiglib=False
+                srcdir,
+                replace_list,
+                search_paths,
+                try_kconfiglib=False,
             )
 
         allowed = self.read_allowed(allowed_file)
@@ -386,7 +439,7 @@ class KconfigCheck:
         configs_file,
         srcdir,
         allowed_file,
-        prefix,
+        replace_list,
         use_defines,
         search_paths,
         ignore=None,
@@ -397,8 +450,9 @@ class KconfigCheck:
             configs_file: Filename containing CONFIG options to check
             srcdir: Source directory to scan for Kconfig files
             allowed_file: File containing allowed CONFIG options
-            prefix: Prefix to strip from the start of each Kconfig
-                (e.g. 'PLATFORM_EC_')
+            replace_list: List of prefix,adhoc tuples.  The prefix is stripped
+                from each Kconfig and replaced with the adhoc string prior to
+                comparison.  (e.e. ['PLATFORM_EC',''])
             use_defines: True if each line of the file starts with #define
             search_paths: List of project paths to search for Kconfig files, in
                 addition to the current directory
@@ -413,7 +467,7 @@ class KconfigCheck:
             configs_file,
             srcdir,
             allowed_file,
-            prefix,
+            replace_list,
             use_defines,
             search_paths,
         )
@@ -467,7 +521,7 @@ update in your CL:
         configs_file,
         srcdir,
         allowed_file,
-        prefix,
+        replace_list,
         use_defines,
         search_paths,
     ):
@@ -477,8 +531,9 @@ update in your CL:
             configs_file: Filename containing CONFIG options to check
             srcdir: Source directory to scan for Kconfig files
             allowed_file: File containing allowed CONFIG options
-            prefix: Prefix to strip from the start of each Kconfig
-                (e.g. 'PLATFORM_EC_')
+            replace_list: List of prefix,adhoc tuples.  The prefix is stripped
+                from each Kconfig and replaced with the adhoc string prior to
+                comparison.  (e.e. ['PLATFORM_EC',''])
             use_defines: True if each line of the file starts with #define
             search_paths: List of project paths to search for Kconfig files, in
                 addition to the current directory
@@ -490,7 +545,7 @@ update in your CL:
             configs_file,
             srcdir,
             allowed_file,
-            prefix,
+            replace_list,
             use_defines,
             search_paths,
         )
@@ -516,7 +571,11 @@ update in your CL:
         Returns:
             Exit code: 0 if OK, 1 if a problem was found
         """
-        kconfigs = set(self.scan_kconfigs(srcdir, "", search_paths))
+        kconfigs = set(
+            self.scan_kconfigs(
+                srcdir=srcdir, replace_list=None, search_paths=search_paths
+            )
+        )
 
         if_re = re.compile(r"^\s*#\s*if(ndef CONFIG_ZEPHYR)?")
         endif_re = re.compile(r"^\s*#\s*endif")
@@ -569,12 +628,20 @@ def main(argv):
     if not args.debug:
         sys.tracebacklimit = 0
     checker = KconfigCheck()
+
+    # Sort the prefix,adhoc tuples by prefix length, longest first.
+    # This ensures that the PLATFORM_EC_CONSOLE_CMD_ replacements
+    # happen before the PLATFORM_EC_ replacement.
+    replace_list = sorted(
+        args.replace_list, reverse=True, key=lambda item: len(item[0])
+    )
+
     if args.cmd == "check":
         return checker.do_check(
             configs_file=args.configs,
             srcdir=args.srctree,
             allowed_file=args.allowed,
-            prefix=args.prefix,
+            replace_list=replace_list,
             use_defines=args.use_defines,
             search_paths=args.search_path,
             ignore=args.ignore,
@@ -584,7 +651,7 @@ def main(argv):
             configs_file=args.configs,
             srcdir=args.srctree,
             allowed_file=args.allowed,
-            prefix=args.prefix,
+            replace_list=replace_list,
             use_defines=args.use_defines,
             search_paths=args.search_path,
         )

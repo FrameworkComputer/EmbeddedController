@@ -16,9 +16,13 @@ import unittest
 import kconfig_check
 
 
-# Prefix that we strip from each Kconfig option, when considering whether it is
-# equivalent to a CONFIG option with the same name
+# Prefixes that we strip from each Kconfig option, when considering whether it
+# is equivalent to a CONFIG option with the same name.
 PREFIX = "PLATFORM_EC_"
+CONSOLE_PREFIX = "PLATFORM_EC_CONSOLE_CMD_"
+PREFIX_TUPLES = [(PREFIX, ""), (CONSOLE_PREFIX, "CMD_")]
+REPLACE_ARG_1 = PREFIX_TUPLES[0][0] + "," + PREFIX_TUPLES[0][1]
+REPLACE_ARG_2 = PREFIX_TUPLES[1][0] + "," + PREFIX_TUPLES[1][1]
 
 
 @contextlib.contextmanager
@@ -113,7 +117,13 @@ rsource "subdir/Kconfig.wibble"
         subdir = os.path.join(srctree, "subdir")
         os.mkdir(subdir)
         with open(os.path.join(subdir, "Kconfig.wibble"), "w") as out:
-            out.write("menuconfig %sMENU_KCONFIG\n" % PREFIX)
+            out.write(
+                f"""menuconfig {PREFIX}MENU_KCONFIG
+
+config {CONSOLE_PREFIX}WIBBLE
+\tbool "Console command: wibble"
+"""
+            )
 
         # Add a directory which should be ignored
         bad_subdir = os.path.join(subdir, "Kconfig")
@@ -166,12 +176,13 @@ rsource "subdir/Kconfig.wobble"
                 self.setup_srctree(srctree)
                 self.assertEqual(
                     [
+                        "CONSOLE_CMD_WIBBLE",
                         "MENU_KCONFIG",
                         "MY_KCONFIG",
                         "WOBBLE_MENU_KCONFIG",
                         "ZCONFIG",
                     ],
-                    checker.scan_kconfigs(srctree, PREFIX),
+                    checker.scan_kconfigs(srctree, PREFIX_TUPLES),
                 )
 
     @classmethod
@@ -186,10 +197,15 @@ rsource "subdir/Kconfig.wobble"
             add_new_one: True to add CONFIG_NEW_ONE to the configs_fname file
         """
         with open(allowed_fname, "w") as out:
+            out.write("CONFIG_CMD_WIBBLE\n")
             out.write("CONFIG_OLD_ONE\n")
             out.write("CONFIG_MENU_KCONFIG\n")
         with open(configs_fname, "w") as out:
-            to_add = ["CONFIG_OLD_ONE", "CONFIG_MY_KCONFIG"]
+            to_add = [
+                "CONFIG_OLD_ONE",
+                "CONFIG_MY_KCONFIG",
+                "CONFIG_CMD_WIBBLE",
+            ]
             if add_new_one:
                 to_add.append("CONFIG_NEW_ONE")
             out.write("\n".join(to_add))
@@ -212,11 +228,13 @@ rsource "subdir/Kconfig.wobble"
                             unneeded_adhoc,
                             updated_adhoc,
                         ) = checker.check_adhoc_configs(
-                            configs.name, srctree, allowed.name, PREFIX
+                            configs.name, srctree, allowed.name, PREFIX_TUPLES
                         )
                         self.assertEqual(["NEW_ONE"], new_adhoc)
                         self.assertEqual(["MENU_KCONFIG"], unneeded_adhoc)
-                        self.assertEqual(["OLD_ONE"], updated_adhoc)
+                        self.assertEqual(
+                            ["CMD_WIBBLE", "OLD_ONE"], updated_adhoc
+                        )
 
     def test_check(self):
         """Test running the 'check' subcommand"""
@@ -239,10 +257,11 @@ rsource "subdir/Kconfig.wobble"
                                 configs.name,
                                 "-s",
                                 srctree,
+                                "-r",
+                                REPLACE_ARG_1,
+                                REPLACE_ARG_2,
                                 "-a",
                                 allowed.name,
-                                "-p",
-                                PREFIX,
                                 "check",
                             ]
                         )
@@ -295,17 +314,18 @@ rsource "subdir/Kconfig.wobble"
                                     configs.name,
                                     "-s",
                                     srctree,
+                                    "-r",
+                                    REPLACE_ARG_1,
+                                    REPLACE_ARG_2,
                                     "-a",
                                     allowed.name,
-                                    "-p",
-                                    PREFIX,
                                     "check",
                                 ]
                             )
                             self.assertEqual(1, ret_code)
         self.assertEqual("", stderr.getvalue())
         found = re.findall("(CONFIG_.*)", stdout.getvalue())
-        self.assertEqual(["CONFIG_MENU_KCONFIG"], found)
+        self.assertEqual(["CONFIG_CMD_WIBBLE", "CONFIG_MENU_KCONFIG"], found)
         allowed = kconfig_check.NEW_ALLOWED_FNAME.read_text().splitlines()
         self.assertEqual(["CONFIG_OLD_ONE"], allowed)
 

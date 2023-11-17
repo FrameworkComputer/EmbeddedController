@@ -270,7 +270,8 @@ conflicting_options := \
 	UART_CONSOLE
 
 cmd_check_allowed = ./util/kconfig_check.py -c ${config} \
-	 -a util/config_allowed.txt -p PLATFORM_EC_ -s "" \
+	 -a util/config_allowed.txt \
+	 -r PLATFORM_EC_, PLATFORM_EC_CONSOLE_CMD_,CMD_ -s "" \
 	 -I "${ZEPHYR_BASE}" \
 	 $(foreach opt,$(conflicting_options),-i $(opt)) check
 cmd_check_undef = ./util/kconfig_check.py -s "" -I "${ZEPHYR_BASE}" \
