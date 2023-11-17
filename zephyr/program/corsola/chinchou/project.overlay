@@ -23,7 +23,6 @@
 
 / {
 	aliases {
-		bma4xx-int = &lid_accel;
 		lsm6dsm-int = &base_accel;
 	};
 
@@ -67,16 +66,12 @@
 	gpio-interrupts {
 		/delete-node/ x_ec_gpio2;
 		/delete-node/ usb_c1_bc12_charger;
+		/delete-node/ lid_imu;
 
 		int_base_imu: base_imu {
 			irq-pin = <&base_imu_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "motion_interrupt";
-		};
-		int_lid_imu: lid_imu {
-			irq-pin = <&lid_accel_int_l>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "bma4xx_interrupt";
 		};
 		int_x_ec_gpio2: x_ec_gpio2 {
 			irq-pin = <&gpio_x_ec_gpio2>;
@@ -100,6 +95,7 @@
 		/delete-node/ entering_rw;
 		/delete-node/ usb_c0_ppc_frsinfo;
 		/delete-node/ usb_c1_bc12_charger_int_odl;
+		/delete-node/ lid_accel_int_l;
 
 		ec_en_pp3300_ucam: ec_en_pp3300_ucam{
 			gpios = <&gpioa 2 GPIO_OUTPUT_HIGH>;
@@ -151,6 +147,7 @@
 			<&gpioi 3 GPIO_INPUT_PULL_DOWN>,
 			<&gpioi 5 GPIO_INPUT_PULL_DOWN>,
 			<&gpioi 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpiom 2 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>,
 			<&gpiom 6 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>;
 	};
 
