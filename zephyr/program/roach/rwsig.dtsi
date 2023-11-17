@@ -3,27 +3,56 @@
  * found in the LICENSE file.
  */
 
+#include <cros/integrated_fwid.dtsi>
+
 &binman {
 	wp-ro {
+		size = <0x3e000>;
+
 		ec-ro {
+			size = <0x3d000>;
+
 			key-ro {
 				type = "section";
-				offset = <(0x40000 - 4096 - 1024)>;
+				offset = <(0x3e000 - 4096 - 1024)>;
 				size = <1024>;
 			};
 			pad-byte = <0xff>;
 		};
+
+		pstate {
+			offset = <0x3d000>;
+		};
+	};
+
+	rollback0 {
+		size = <4096>;
+		type = "blob";
+		filename = "../build-rw/rollback_initial_data.bin";
+	};
+
+	rollback1 {
+		size = <4096>;
+		type = "blob";
+		filename = "../build-rw/rollback_initial_data.bin";
 	};
 
 	ec-rw {
 		rw-fw {
-			rw-fwid {
-				offset = <(0x40000 - 1024 - 32)>;
-				size = <32>;
+			rw-rbver {
+				size = <4>;
+				type = "section";
+				/* points to
+				 * current_image_data.rollback_version
+				 */
+				offset-from-elf = <&zephyr_rw>,
+					"current_image_data", <40>;
+				overlap;
 			};
 
 			sig-rw {
 				type = "section";
+				offset = <(0x40000 - 1024)>;
 				size = <1024>;
 			};
 
@@ -31,6 +60,24 @@
 			 * sig-rw are filled with 0xff.
 			 */
 			pad-byte = <0xff>;
+		};
+	};
+};
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		rollback0: partition@3e000 {
+			label = "rollback0";
+			reg = <0x3e000 DT_SIZE_K(4)>;
+		};
+
+		rollback1: partition@3f000 {
+			label = "rollback1";
+			reg = <0x3f000 DT_SIZE_K(4)>;
 		};
 	};
 };
