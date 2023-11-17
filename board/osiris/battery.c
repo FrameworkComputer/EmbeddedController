@@ -50,11 +50,10 @@ const struct batt_conf_embed board_battery_info[] = {
 				.fet = {
 					.reg_addr = 0x0,
 					.reg_mask = 0x8000,
-					.disconnect_val = 0x8000,
+					.disconnect_val = 0x0000,
 					.cfet_mask = 0x4000,
 					.cfet_off_val = 0x4000,
 				},
-				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
 			.batt_info = {
 				.voltage_max            = 13440,
