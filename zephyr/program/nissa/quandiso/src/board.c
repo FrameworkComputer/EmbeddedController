@@ -23,10 +23,6 @@
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
-__override uint8_t board_get_usb_pd_port_count(void)
-{
-	return 2;
-}
 /*
  * Enable interrupts
  */
@@ -43,12 +39,6 @@ static void board_init(void)
 		LOG_ERR("Error retrieving CBI FW_CONFIG field %d", FW_TABLET);
 		return;
 	}
-
-	/*
-	 * Enable USB-C interrupts.
-	 */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0));
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1));
 
 	/*
 	 * Disable tablet related interrupts for tablet absent DUT.

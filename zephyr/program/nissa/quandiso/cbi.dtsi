@@ -8,6 +8,37 @@
 	nissa-fw-config {
 		compatible = "cros-ec,cbi-fw-config";
 		/*
+		 * FW_CONFIG field to indicate which sub-board
+		 * is attached.
+		 */
+		sub-board {
+			enum-name = "FW_SUB_BOARD";
+			start = <0>;
+			size = <2>;
+
+			sub-board-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_1";
+				value = <0>;
+			};
+			sub-board-2 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_2";
+				value = <1>;
+			};
+			sub-board-3 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_3";
+				value = <2>;
+			};
+			sub-board-4 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_4";
+				value = <3>;
+			};
+		};
+
+		/*
 		 * FW_CONFIG field for multiple wi-fi SAR.
 		 *
 		 *	start = <2>;

@@ -178,6 +178,7 @@ if(DEFINED CONFIG_BOARD_QUANDISO)
 	project(quandiso)
 	zephyr_library_sources(
 			"quandiso/src/board.c"
+			"quandiso/src/sub_board.c"
 			"quandiso/src/keyboard.c"
 			"quandiso/src/led.c"
 			"quandiso/src/thermal.c"
