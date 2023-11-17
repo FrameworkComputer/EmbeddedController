@@ -198,15 +198,18 @@ define ec-tasks
 end
 
 # Usage: ec-stayro
-# Adds magic breakpoint that changes the outcome of the RW signature
-# validation step that forces the MCU to stay in the RO section.
-# This function needs improvements to not be dependent on line numbers.
+# Adds a magic breakpoint that automatically forces the rwsig_jump_now function
+# to return without completing the jump to RW and, thus, staying in RO.
 define ec-stayro
-    # https://crsrc.org/o/src/platform/ec/common/rwsig.c;l=285;drc=0cfd0c67574c0022fe9af2bee63f117f643df74a
-    break common/rwsig.c:285
+    break rwsig_jump_now
     commands
-        set evt = 1
-        printf "Continuing as RO\n"
+        # We don't need to set rwsig_status, but it might be nice to act like
+        # we were instructed to abort.
+        printf "Setting rwsig_status to RWSIG_ABORTED.\n"
+        set rwsig_status = RWSIG_ABORTED
+        printf "Forcing the rwsig_jump_now function to abort and return.\n"
+        return
+        printf "Continuing as RO.\n"
         continue
     end
 end
