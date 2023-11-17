@@ -79,6 +79,8 @@ struct rts5453_ic_status {
 	uint8_t reserved_3[16];
 } __attribute__((__packed__)) ic_status;
 
+typedef int (*fw_update_op)(const struct shell *sh, size_t argc, char **argv);
+
 static int rts545x_ping_status(const struct device *dev, uint8_t *status_byte)
 {
 	const struct rts545x_config *cfg = dev->config;
@@ -421,6 +423,29 @@ static int rts545x_flash_erase(const struct shell *sh, size_t argc, char **argv)
 	return ret;
 }
 
+static int rts545x_firmware_update(const struct shell *sh, size_t argc,
+				   char **argv)
+{
+	int ret;
+	char *s_dev_name = argv[ARGV_DEV];
+	fw_update_op ops[] = {
+		rts545x_vendor_cmd_enable,   rts545x_get_ic_status,
+		rts545x_flash_access_enable, rts545x_flash_write,
+		rts545x_vendor_cmd_enable,   rts545x_validate_isp,
+		rts545x_reset_to_flash
+	};
+
+	for (int i = 0; i < ARRAY_SIZE(ops); i++) {
+		ret = ops[i](sh, argc, argv);
+		if (ret)
+			return ret;
+	}
+
+	shell_print(sh, "%s, Firmware update done, sleeping 5s", s_dev_name);
+	k_msleep(5000);
+	return 0;
+}
+
 static void rts545x_get_name(size_t idx, struct shell_static_entry *entry)
 {
 	const struct device *dev = NULL;
@@ -485,6 +510,10 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Reset to flash\n"
 		      "Usage: reset_to_flash <device>",
 		      rts545x_reset_to_flash, 2, 0),
+	SHELL_CMD_ARG(firmware_update, &dsub_device_name,
+		      "Update the firmware\n"
+		      "Usage: firmware_update <device>",
+		      rts545x_firmware_update, 2, 0),
 	SHELL_SUBCMD_SET_END /* Array terminated. */
 );
 
