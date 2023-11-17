@@ -21,7 +21,7 @@ main() {
   # Nightlies: https://builds.renode.io/
   local url="https://builds.renode.io/renode-latest.deb"
 
-  local deb="${download_dir}/renode-latest.deb"
+  local deb="${download_dir}/renode.deb"
 
   local wget_opts=( -o - --progress=dot:giga )
   wget_opts+=( --compression=auto ) # default is "none"
