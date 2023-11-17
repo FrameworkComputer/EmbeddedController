@@ -6,3 +6,11 @@ common:
   platform_allow: native_posix
 tests:
   rollback.default: {}
+  rollback.secure_clear_o2:
+    extra_configs:
+      - CONFIG_NO_OPTIMIZATIONS=n
+      - CONFIG_SIZE_OPTIMIZATIONS=y
+  rollback.secure_clear_os:
+    extra_configs:
+      - CONFIG_NO_OPTIMIZATIONS=n
+      - CONFIG_SPEED_OPTIMIZATIONS=y
