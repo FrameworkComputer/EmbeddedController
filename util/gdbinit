@@ -28,89 +28,10 @@
 
 set verbose on
 
-# Start of python code
-
 # Setup environment and pull in object files for the particular BOARD.
 # This requires setting the environment variables mentioned above.
-python
-import distutils.util
-import os
-import pathlib
-
-BOARD = os.getenv('BOARD', '')
-# PROJECT can be changed to be the name of a unit test, such as "sha256"
-PROJECT = os.getenv('PROJECT', 'ec')
-GDBSERVER = os.getenv('GDBSERVER', 'openocd')
-USING_CLION = distutils.util.strtobool(os.getenv('USING_CLION', 'FALSE'))
-
-if GDBSERVER == "openocd":
-    DEFAULT_GDB_PORT = '3333'
-else:
-    DEFAULT_GDB_PORT = '2331'
-
-GDBPORT = os.getenv('GDBPORT', DEFAULT_GDB_PORT)
-
-EC_DIR = pathlib.Path(os.getenv('EC_DIR', os.path.join(os.getenv('HOME'),
-                   'chromiumos/src/platform/ec')))
-
-if not EC_DIR.is_dir():
-    print(f"Error - EC_DIR {EC_DIR} doesn't exist. Aborting.")
-    gdb.execute('quit')
-
-gdb.execute('set $BOARD = "%s"'%BOARD)
-gdb.execute('set $GDBSERVER = "%s"'%GDBSERVER)
-gdb.execute('set $GDBPORT = "%s"'%GDBPORT)
-
-if BOARD != "":
-    print('# Setting up symbol files.')
-    build_dir = EC_DIR / 'build' / BOARD
-    if PROJECT != "ec":
-        build_dir = build_dir / PROJECT
-
-    obj_elf = build_dir / (PROJECT + '.obj')
-    ro_elf = build_dir / 'RO' / (PROJECT + '.RO.elf')
-    rw_elf = build_dir / 'RW' / (PROJECT + '.RW.elf')
-
-    for path in [obj_elf, ro_elf, rw_elf]:
-        if not path.exists():
-            print(f"Error - {path} doesn't exist. Aborting.")
-            gdb.execute('quit')
-
-    # Monitor commands must be run after connecting to the remote target
-    # See https://stackoverflow.com/a/39828850
-    # https://youtrack.jetbrains.com/issue/CPP-7322
-    # https://sourceware.org/gdb/onlinedocs/gdb/Hooks.html
-    post_remote_hook='''
-    define target hookpost-remote
-        echo \ Flashing EC binary
-        load {obj_elf}
-        echo \ Resetting target
-        monitor reset
-        echo \ Setting breakpoint on main
-        b main
-    end\n
-    '''.format(obj_elf=obj_elf)
-
-    # When using gdb from CLion, this kills gdb.
-    if not USING_CLION:
-        gdb.execute(f'file {obj_elf}')
-    gdb.execute(f'add-symbol-file {ro_elf}')
-    gdb.execute(f'add-symbol-file {rw_elf}')
-
-if GDBSERVER == "openocd":
-    gdb.execute('set $GDBSERVER_OPENOCD = 1')
-    gdb.execute('set $GDBSERVER_SEGGER = 0')
-elif GDBSERVER == "segger":
-    gdb.execute('set $GDBSERVER_OPENOCD = 0')
-    gdb.execute('set $GDBSERVER_SEGGER = 1')
-    if BOARD != "":
-        gdb.execute(post_remote_hook)
-else:
-    print('Error - GDBSERVER="' + GDBSERVER + '" is invalid.')
-    gdb.execute('quit')
-
-# End of python code
-end
+echo # Sourcing initialization logic from util/gdbinit.py.\n
+source util/gdbinit.py
 
 # OpenOCD specific config
 if $GDBSERVER_OPENOCD
