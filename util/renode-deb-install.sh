@@ -11,7 +11,21 @@ msg-run() {
   "$@"
 }
 
+# check-installed [commands...]
+check-installed() {
+  local cmd
+
+  for cmd in "$@"; do
+    if ! which "${cmd}" &>/dev/null; then
+      echo "Error - The ${cmd} command is not installed." >&2
+      return 1
+    fi
+  done
+}
+
 main() {
+  check-installed wget sudo apt || return 1
+
   local download_dir
   download_dir="$(mktemp -d "/tmp/renode-pkg-upgrade.XXX")"
 
@@ -26,7 +40,7 @@ main() {
   local wget_opts=( -o - --progress=dot:giga )
   wget_opts+=( --compression=auto ) # default is "none"
 
-  msg-run wget "${url}" -O "${deb}" "${wget_opts[@]}"
+  msg-run wget "${url}" -O "${deb}" "${wget_opts[@]}" || return 1
   echo
 
   msg-run sudo apt install -f "${deb}"
