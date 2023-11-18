@@ -23,21 +23,6 @@ typedef enum {
 } fpc_pal_irq_t;
 
 /**
- * @brief Write sensor access buffer to SPI interface
- *
- * Unused by staticlib.
- *
- * @param[in] device             Client's device handle.
- * @param[in] access_buffer      Buffer holding data to write.
- * @param[in] access_buffer_size Size of the access buffer.
- *
- * @return 0 on success.
- *         negative value on error.
- */
-int fpc_pal_spi_write(fpc_device_t device, uint8_t *access_buffer,
-		      uint32_t access_buffer_size);
-
-/**
  * @brief Write and read sensor access buffer to SPI interface
  *
  * SPI transfers always write the same number of bytes as they read,
@@ -92,21 +77,6 @@ __staticlib_hook int fpc_pal_get_time(uint64_t *time_us);
  *         negative value on error.
  */
 __staticlib_hook int fpc_pal_delay_us(uint64_t us);
-
-/**
- * @brief Get platform SPI clock frequency
- *
- * Unused by staticlib.
- *
- * @param[in]  device   Client's device handle.
- * @param[out] speed_hz SPI frequency in hertz.
- *
- * Required by platform for adaptive SPI calculations.
- *
- * @return 0 on success.
- *         negative value on error.
- */
-int fpc_pal_spi_get_speed_hz(fpc_device_t device, uint32_t *speed_hz);
 
 /**
  * @brief Print SDK log strings

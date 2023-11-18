@@ -24,7 +24,3 @@ __staticlib_hook void fpc_timebase_busy_wait(uint32_t ms)
 {
 	udelay(ms * 1000);
 }
-
-__staticlib_hook void fpc_timebase_init(void)
-{
-}
