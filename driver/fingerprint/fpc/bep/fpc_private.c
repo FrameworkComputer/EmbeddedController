@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "common.h"
 #include "driver/fingerprint/fpc/fpc_sensor.h"
 #include "fpc_bio_algorithm.h"
 #include "fpsensor/fpsensor.h"
@@ -22,14 +23,14 @@ static uint8_t
 static uint16_t errors;
 
 /* FPC specific initialization and de-initialization functions */
-int fp_sensor_open(void);
-int fp_sensor_close(void);
+__staticlib int fp_sensor_open(void);
+__staticlib int fp_sensor_close(void);
 
 /* Get FPC library version code.*/
-const char *fp_sensor_get_version(void);
+__staticlib const char *fp_sensor_get_version(void);
 
 /* Get FPC library build info.*/
-const char *fp_sensor_get_build_info(void);
+__staticlib const char *fp_sensor_get_build_info(void);
 
 /* Sensor description */
 static struct ec_response_fp_info ec_fp_sensor_info = {

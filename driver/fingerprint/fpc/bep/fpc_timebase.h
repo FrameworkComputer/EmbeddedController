@@ -29,7 +29,7 @@
  *
  * @return Tick count since fpc_timebase_init() call. [ms]
  */
-uint32_t __unused fpc_timebase_get_tick(void);
+__staticlib_hook uint32_t fpc_timebase_get_tick(void);
 
 /**
  * @brief Busy wait.
@@ -38,11 +38,11 @@ uint32_t __unused fpc_timebase_get_tick(void);
  * 0 => return immediately
  * 1 => wait at least 1ms etc.
  */
-void __unused fpc_timebase_busy_wait(uint32_t ms);
+__staticlib_hook void fpc_timebase_busy_wait(uint32_t ms);
 
 /**
  * @brief Initializes timebase. Starts system tick counter.
  */
-void __unused fpc_timebase_init(void);
+__staticlib_hook void fpc_timebase_init(void);
 
 #endif /* __CROS_EC_FPC_TIMEBASE_H */

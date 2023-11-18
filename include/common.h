@@ -200,6 +200,18 @@
 #define __overridable __attribute__((weak))
 
 /*
+ * Mark a symbol that is provided by a precompiled static library, without
+ * source code.
+ */
+#define __staticlib extern
+
+/*
+ * Mark a function that is defined purely as a hook to be used by a static
+ * library.
+ */
+#define __staticlib_hook __unused
+
+/*
  * Attribute that will generate a compiler warning if the return value is not
  * used.
  */

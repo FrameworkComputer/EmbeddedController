@@ -14,6 +14,8 @@
  * fingerprint sensor.
  */
 
+#include "common.h"
+
 #include <stdbool.h>
 #include <stddef.h>
 #include <stdint.h>
@@ -39,8 +41,9 @@ typedef bool (*fpc_wfi_check_t)(void);
  *                                           return.
  * @return ::fpc_bep_result_t
  */
-int __unused fpc_sensor_spi_write_read(uint8_t *write, uint8_t *read,
-				       size_t size, bool leave_cs_asserted);
+__staticlib_hook int fpc_sensor_spi_write_read(uint8_t *write, uint8_t *read,
+					       size_t size,
+					       bool leave_cs_asserted);
 
 /**
  * @brief Read sensor IRQ status.
@@ -49,7 +52,7 @@ int __unused fpc_sensor_spi_write_read(uint8_t *write, uint8_t *read,
  *
  * @return true if the sensor IRQ is currently active, otherwise false.
  */
-bool __unused fpc_sensor_spi_check_irq(void);
+__staticlib_hook bool fpc_sensor_spi_check_irq(void);
 
 /**
  * @brief Read sensor IRQ status and then set status to false.
@@ -58,7 +61,7 @@ bool __unused fpc_sensor_spi_check_irq(void);
  *
  * @return true if the sensor IRQ has been active, otherwise false.
  */
-bool __unused fpc_sensor_spi_read_irq(void);
+__staticlib_hook bool fpc_sensor_spi_read_irq(void);
 
 /**
  * @brief Set sensor reset state.
@@ -69,7 +72,7 @@ bool __unused fpc_sensor_spi_read_irq(void);
  *                  true  => reset sensor, i.e. low GPIO state
  *                  false => normal operation, i.e. high GPIO state
  */
-void __unused fpc_sensor_spi_reset(bool state);
+__staticlib_hook void fpc_sensor_spi_reset(bool state);
 
 /**
  * @brief Initializes SPI controller.
@@ -78,7 +81,7 @@ void __unused fpc_sensor_spi_reset(bool state);
  *                      (unit Hz).
  *
  */
-void __unused fpc_sensor_spi_init(uint32_t speed_hz);
+__staticlib_hook void fpc_sensor_spi_init(uint32_t speed_hz);
 
 /**
  * @brief Set system in WFI mode while waiting sensor IRQ.
@@ -94,7 +97,8 @@ void __unused fpc_sensor_spi_init(uint32_t speed_hz);
  *                           by enter_wfi.
  * @return FPC_RESULT_OK, FPC_RESULT_TIMEOUT
  */
-int __unused fpc_sensor_wfi(uint16_t timeout_ms, fpc_wfi_check_t enter_wfi,
-			    bool enter_wfi_mode);
+__staticlib_hook int fpc_sensor_wfi(uint16_t timeout_ms,
+				    fpc_wfi_check_t enter_wfi,
+				    bool enter_wfi_mode);
 
 #endif /* __CROS_EC_FPC_SENSOR_SPI_H */

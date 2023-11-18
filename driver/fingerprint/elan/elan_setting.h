@@ -6,6 +6,8 @@
 #ifndef ELAN_SETTING_H
 #define ELAN_SETTING_H
 
+#include "common.h"
+
 #include <stdint.h>
 
 /* The hardware ID information and FW version */
@@ -87,7 +89,7 @@
  * @return 0 on success.
  *         negative value on error.
  */
-int register_initialization(void);
+__staticlib int register_initialization(void);
 
 /**
  * To calibrate ELAN fingerprint sensor and keep the calibration results
@@ -96,6 +98,6 @@ int register_initialization(void);
  * @return 0 on success.
  *         negative value on error.
  */
-int calibration(void);
+__staticlib int calibration(void);
 
 #endif /* _ELAN_SETTING_H */

@@ -37,7 +37,7 @@ int fpc_fp_maintenance(uint16_t *error_state);
  * Send the settings to the sensor, so it is properly configured to detect
  * the presence of a finger.
  */
-void fp_sensor_configure_detect(void);
+__staticlib void fp_sensor_configure_detect(void);
 
 /**
  * Returns the status of the finger on the sensor.
@@ -45,7 +45,7 @@ void fp_sensor_configure_detect(void);
  *
  * @return finger_state
  */
-enum finger_state fp_sensor_finger_status(void);
+__staticlib enum finger_state fp_sensor_finger_status(void);
 
 /**
  * Acquires a fingerprint image.
@@ -63,7 +63,7 @@ enum finger_state fp_sensor_finger_status(void);
  * @return FP_SENSOR_TOO_FAST on finger removed before image was captured
  * @return FP_SENSOR_LOW_SENSOR_COVERAGE on sensor not fully covered by finger
  */
-int fp_sensor_acquire_image(uint8_t *image_data);
+__staticlib int fp_sensor_acquire_image(uint8_t *image_data);
 
 /**
  * Acquires a fingerprint image with specific capture mode.
@@ -79,6 +79,7 @@ int fp_sensor_acquire_image(uint8_t *image_data);
  * @return 0 on success
  * @return negative value on error
  */
-int fp_sensor_acquire_image_with_mode(uint8_t *image_data, int mode);
+__staticlib int fp_sensor_acquire_image_with_mode(uint8_t *image_data,
+						  int mode);
 
 #endif /* __CROS_EC_DRIVER_FINGERPRINT_FPC_FPC_SENSOR_H_ */

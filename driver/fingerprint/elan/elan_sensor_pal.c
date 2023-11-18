@@ -25,6 +25,7 @@
 static uint8_t tx_buf[CONFIG_SPI_TX_BUF_SIZE] __uncached;
 static uint8_t rx_buf[CONFIG_SPI_RX_BUF_SIZE] __uncached;
 
+/* Unused by staticlib. */
 int elan_write_cmd(uint8_t fp_cmd)
 {
 	int rc = 0;
@@ -38,7 +39,7 @@ int elan_write_cmd(uint8_t fp_cmd)
 	return rc;
 }
 
-int elan_read_cmd(uint8_t fp_cmd, uint8_t *regdata)
+__staticlib_hook int elan_read_cmd(uint8_t fp_cmd, uint8_t *regdata)
 {
 	int ret = 0;
 
@@ -53,6 +54,7 @@ int elan_read_cmd(uint8_t fp_cmd, uint8_t *regdata)
 	return ret;
 }
 
+/* Unused by staticlib. */
 int elan_spi_transaction(uint8_t *tx, int tx_len, uint8_t *rx, int rx_len)
 {
 	int ret = 0;
@@ -67,7 +69,7 @@ int elan_spi_transaction(uint8_t *tx, int tx_len, uint8_t *rx, int rx_len)
 	return ret;
 }
 
-int elan_write_register(uint8_t regaddr, uint8_t regdata)
+__staticlib_hook int elan_write_register(uint8_t regaddr, uint8_t regdata)
 {
 	int ret = 0;
 
@@ -81,7 +83,7 @@ int elan_write_register(uint8_t regaddr, uint8_t regdata)
 	return ret;
 }
 
-int elan_write_page(uint8_t page)
+__staticlib_hook int elan_write_page(uint8_t page)
 {
 	int ret = 0;
 
@@ -96,7 +98,7 @@ int elan_write_page(uint8_t page)
 	return ret;
 }
 
-int elan_write_reg_vector(const uint8_t *reg_table, int length)
+__staticlib_hook int elan_write_reg_vector(const uint8_t *reg_table, int length)
 {
 	int ret = 0;
 	int i = 0;
@@ -113,7 +115,7 @@ int elan_write_reg_vector(const uint8_t *reg_table, int length)
 	return ret;
 }
 
-int raw_capture(uint16_t *short_raw)
+__staticlib_hook int raw_capture(uint16_t *short_raw)
 {
 	int ret = 0, i = 0, image_index = 0, index = 0;
 	int cnt_timer = 0;
@@ -190,7 +192,7 @@ exit:
 	return ret;
 }
 
-int elan_execute_calibration(void)
+__staticlib_hook int elan_execute_calibration(void)
 {
 	int retry_time = 0;
 	int ret = 0;
@@ -246,7 +248,7 @@ int elan_fp_maintenance(uint16_t *error_state)
 	return EC_SUCCESS;
 }
 
-void __unused elan_sensor_set_rst(bool state)
+__staticlib_hook void elan_sensor_set_rst(bool state)
 {
 	gpio_set_level(GPIO_FP_RST_ODL, state ? 0 : 1);
 }
