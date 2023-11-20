@@ -26,4 +26,6 @@ int get_gpu_gpio(enum gpu_gpio_purpose gpu_gpio);
 
 int get_gpu_latch(void);
 
+bool gpu_fan_board_present(void);
+
 #endif /* __BOARD_GPU_H__ */

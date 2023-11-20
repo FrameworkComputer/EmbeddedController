@@ -51,6 +51,11 @@ bool gpu_module_fault(void)
 	return module_fault;
 }
 
+bool gpu_fan_board_present(void)
+{
+	return fan_present;
+}
+
 void update_gpu_ac_power_state(void)
 {
 	int level = extpower_is_present();

@@ -979,18 +979,25 @@ static enum ec_status get_gpu_serial(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_gpu_serial *p = args->params;
 	struct ec_response_get_gpu_serial *r = args->response;
-	if (!gpu_cfg_descriptor_valid) {
-		return EC_RES_UNAVAILABLE;
-	}
 
-	r->idx = p->idx;
-	r->valid = true;
-	if (p->idx == 0) {
-		memcpy(r->serial, gpu_descriptor.serial, sizeof(r->serial));
-	} else if (p->idx < GPU_SUBSYS_MAX){
-		memcpy(r->serial, gpu_subsys_serials[p->idx-1], sizeof(r->serial));
+	memset(r->serial, 0x00, GPU_SERIAL_LEN);
+	if (gpu_cfg_descriptor_valid) {
+		r->idx = p->idx;
+		r->valid = true;
+		if (p->idx == 0) {
+			memcpy(r->serial, gpu_descriptor.serial, sizeof(r->serial));
+		} else if (p->idx < GPU_SUBSYS_MAX) {
+			memcpy(r->serial, gpu_subsys_serials[p->idx-1], sizeof(r->serial));
+		}
+	} else if (gpu_fan_board_present()) {
+		r->idx  = 0;
+		r->valid = true;
+		memcpy(r->serial, "UMA FAN", sizeof("UMA FAN"));
+	} else {
+		r->idx  = 0;
+		r->valid = true;
+		memcpy(r->serial, "Not detected", sizeof("Not detected"));
 	}
-	
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
@@ -1040,7 +1047,6 @@ static int program_eeprom(const char * serial, struct gpu_cfg_descriptor * descr
 			k_msleep(5);
 			rv = i2c_read8(I2C_PORT_GPU0, 0x50, 0x00, &d);   
 		} while(++i < 32 && rv != EC_SUCCESS);
-		
 	}
 	return rv;
 }
@@ -1052,6 +1058,10 @@ static enum ec_status hc_program_gpu_eeprom(struct host_cmd_handler_args *args)
 
 	if (p->magic == 0x0D) {
 		r->valid = 1;
+		/* copy PCBA serial to output struct */
+		if (gpu_cfg_descriptor_valid) {
+			memcpy(gpu_cfg.pcba_serial.serial, gpu_subsys_serials[0], GPU_SERIAL_LEN);
+		}
 		program_eeprom(p->serial, (void *)&gpu_cfg, sizeof(gpu_cfg));
 	} else if (p->magic == 0x55) {
 		r->valid = 1;
@@ -1059,7 +1069,6 @@ static enum ec_status hc_program_gpu_eeprom(struct host_cmd_handler_args *args)
 	} else {
 		r->valid = 0;
 	}
-
 	
 	args->response_size = sizeof(*r);
 
