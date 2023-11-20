@@ -101,7 +101,3 @@
 &mdc {
 	status = "okay";
 };
-
-&shi0 {
-	shi-cs-wui =<&wui_io53>;
-};

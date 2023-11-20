@@ -8,7 +8,8 @@ config CROS_SHI_NPCX
 	bool
 	default y
 	depends on !EC_HOST_CMD
-	depends on DT_HAS_NUVOTON_NPCX_SHI_ENABLED
+	depends on DT_HAS_NUVOTON_NPCX_SHI_ENABLED || \
+		   DT_HAS_NUVOTON_NPCX_SHI_ENHANCED_ENABLED
 	help
 	  This option enables Serial Host Interface driver for the NPCX family
 	  of processors. This is used for host-command communication on the
@@ -31,6 +32,13 @@ config CROS_SHI_MAX_RESPONSE
 	  This option indicates maximum data size for a version 3 response
 	  packet. This must be big enough to handle a response header of host
 	  command, flash read offset/size, and 512 bytes of flash data.
+
+config CROS_SHI_NPCX_ENHANCED_BUF_MODE
+	def_bool DT_HAS_NUVOTON_NPCX_SHI_ENHANCED_ENABLED
+	help
+	   In this mode, besides the original 128-bytes FIFO, an additional
+	   single-byte output buffer can be selected/switched to generate a
+	   response to simultaneous Read/Write transactions.
 
 config CROS_SHI_NPCX_DEBUG
 	bool "Enable SHI debug"
