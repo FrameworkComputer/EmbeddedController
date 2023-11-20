@@ -1,0 +1,43 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USBC
+
+rsource "Kconfig.usbc_altmode"
+
+menuconfig USB_PDC_POWER_MGMT
+	bool "Configure USB-C PD Controller"
+	depends on PLATFORM_EC_USB_PD_CONTROLLER
+	depends on PLATFORM_EC_CHARGER
+	default y
+	select SMF
+	select SMF_ANCESTOR_SUPPORT
+	select EVENTS
+	help
+	  Enable this to support configuring the USB-C power management
+	  when using Power Delivery Controllers.
+
+config PDC_POWER_MGMT_INIT_PRIORITY
+	int "USB-C stack init priority"
+	default 90
+	help
+	  Initialization priority of the USB-C in POST_KERNEL.
+
+config PDC_POWER_MGMT_THREAD_PRIORTY
+	int "USB-C thread priority"
+	default 0
+	help
+	  Set thread priority of the USB-C
+
+config PDC_POWER_MGMT_STACK_SIZE
+	int "USB-C thread stack size"
+	default 1024
+	help
+	  Stack size of thread created for each instance.
+
+module = USB_PDC
+module-str = USB PDC
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # PLATFORM_EC_USBC
