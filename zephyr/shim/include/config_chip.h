@@ -1183,6 +1183,11 @@ extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 #define CONFIG_USB_PD_TCPMV2
 #endif
 
+#undef CONFIG_USB_PD_CONTROLLER
+#ifdef CONFIG_PLATFORM_EC_USB_PD_CONTROLLER
+#define CONFIG_USB_PD_CONTROLLER
+#endif
+
 /*
  * Define these here for now. They are not actually CONFIG options in the EC
  * code base. Ideally they would be defined in the devicetree (perhaps for a
@@ -1791,7 +1796,8 @@ extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 #undef CONFIG_USB_PD_PORT_MAX_COUNT
 #define CONFIG_USB_PD_PORT_MAX_COUNT DT_NUM_INST_STATUS_OKAY(named_usbc_port)
 
-#ifdef CONFIG_PLATFORM_EC_USB_POWER_DELIVERY
+#if defined(CONFIG_PLATFORM_EC_USB_POWER_DELIVERY) && \
+	defined(CONFIG_PLATFORM_EC_USB_PD_TCPMV2)
 /* USBC-PD Port 0 */
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 0
 #define HAS_TASK_PD_C0 1

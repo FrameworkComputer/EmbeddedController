@@ -4597,6 +4597,7 @@
  * When this config option is enabled, one of the following must be enabled:
  *	CONFIG_USB_PD_TCPMV1 - legacy power delivery state machine
  *	CONFIG_USB_PD_TCPMV2 - current power delivery state machine
+ *	CONFIG_USB_PD_CONTROLLER - power delivery controller state machine
  */
 #undef CONFIG_USB_POWER_DELIVERY
 
@@ -4619,6 +4620,11 @@
  * enabled otherwise an error will be emitted.
  */
 #undef CONFIG_USB_PD_TCPMV2
+
+/*
+ * Enables the Power Delivery Controller state machine.
+ */
+#undef CONFIG_USB_PD_CONTROLLER
 
 /*
  * Enable dynamic PDO selection.
@@ -6062,8 +6068,9 @@
 #if defined(CONFIG_USB_PD_TCPMV1) && defined(CONFIG_USB_PD_TCPMV2)
 #error Only one version of the USB PD State Machine can be enabled.
 #endif
-#if !defined(CONFIG_USB_PD_TCPMV1) && !defined(CONFIG_USB_PD_TCPMV2)
-#error Please enable CONFIG_USB_PD_TCPMV1 or CONFIG_USB_PD_TCPMV2.
+#if !defined(CONFIG_USB_PD_TCPMV1) && !defined(CONFIG_USB_PD_TCPMV2) && \
+	!defined(CONFIG_USB_PD_CONTROLLER)
+#error Please enable CONFIG_USB_PD_TCPMV1 or CONFIG_USB_PD_TCPMV2 or CONFIG_USB_PD_CONTROLLER.
 #endif
 #if defined(CONFIG_USB_PD_TCPMV2) && !defined(CONFIG_USB_PD_DECODE_SOP)
 #error CONFIG_USB_PD_DECODE_SOP must be enabled with the TCPMV2 PD state machine
