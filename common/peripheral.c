@@ -30,7 +30,8 @@ static enum ec_status hc_locate_chip(struct host_cmd_handler_args *args)
 #endif /* CONFIG_CBI_EEPROM */
 		break;
 	case EC_CHIP_TYPE_TCPC:
-#if defined(CONFIG_USB_POWER_DELIVERY) && \
+#if !defined(CONFIG_USB_PD_CONTROLLER) &&     \
+	defined(CONFIG_USB_POWER_DELIVERY) && \
 	defined(CONFIG_USB_PD_PORT_MAX_COUNT) && !defined(CONFIG_USB_PD_TCPC)
 		if (params->index >= board_get_usb_pd_port_count())
 			return EC_RES_OVERFLOW;
@@ -45,6 +46,14 @@ static enum ec_status hc_locate_chip(struct host_cmd_handler_args *args)
 		/* Not reachable in new boards. */
 		return EC_RES_UNAVAILABLE; /* LCOV_EXCL_LINE */
 #endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
+		break;
+	case EC_CHIP_TYPE_PDC:
+#if defined(CONFIG_USB_PD_CONTROLLER)
+		/* TODO: Add support for PDC Chip Type */
+#else
+		/* Only available on boards that use PD_CONTROLLER */
+		return EC_RES_UNAVAILABLE; /* LCOV_EXCL_LINE */
+#endif /* CONFIG_USB_PD_CONTROLLER */
 		break;
 	default:
 		/* The type was unrecognized */
