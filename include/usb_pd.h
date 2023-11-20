@@ -702,6 +702,7 @@ BUILD_ASSERT(sizeof(struct rmdo) == 4);
 enum pd_stack_version {
 	TCPMV1 = 1,
 	TCPMV2,
+	PD_CONTROLLER,
 };
 
 /* Protocol revision */
@@ -721,6 +722,8 @@ enum pd_rev_type {
 #define PD_STACK_VERSION TCPMV1
 #elif defined(CONFIG_USB_PD_TCPMV2)
 #define PD_STACK_VERSION TCPMV2
+#elif defined(CONFIG_USB_PD_CONTROLLER)
+#define PD_STACK_VERSION PD_CONTROLLER
 #endif
 
 /* Cable structure for storing cable attributes */
