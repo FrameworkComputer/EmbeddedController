@@ -6602,6 +6602,7 @@ struct ec_response_rollback_info {
 enum ec_chip_type {
 	EC_CHIP_TYPE_CBI_EEPROM = 0,
 	EC_CHIP_TYPE_TCPC = 1,
+	EC_CHIP_TYPE_PDC = 2,
 	EC_CHIP_TYPE_COUNT,
 	EC_CHIP_TYPE_MAX = 0xFF,
 };
