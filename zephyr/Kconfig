@@ -1015,4 +1015,9 @@ config SYSTEM_BOOT_TIME_LOGGING
 	  This config enables boot time logging functionality in EC which
 	  is used for calculating system boot time.
 
+config PLATFORM_EC_CURVE25519
+	bool "curve25519 public key crypto"
+	help
+	  Support curve25519 public key cryptography.
+
 endif # PLATFORM_EC
