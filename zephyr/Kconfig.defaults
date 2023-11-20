@@ -34,22 +34,7 @@ config SHELL_THREAD_PRIORITY
 config EXTRA_EXCEPTION_INFO
 	default y if ARCH_HAS_EXTRA_EXCEPTION_INFO
 
-config EEPROM_SHELL
-	default n
-
-config PWM_SHELL
-	default n
-
-config SENSOR_SHELL
-	default n
-
 config FLASH_PAGE_LAYOUT
-	default n
-
-config FLASH_SHELL
-	default n
-
-config WDT_SHELL
 	default n
 
 config ESPI_NPCX_PERIPHERAL_DEBUG_PORT_80_MULTI_BYTE
