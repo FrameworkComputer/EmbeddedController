@@ -283,10 +283,15 @@ static void i2c_passthru_protect_tcpc_ports(void)
 	}
 
 	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
+#ifdef CONFIG_USB_PD_CONTROLLER
+		/* TODO:b/294550823 - Create an allow list for I2C passthru
+		 * commands */
+#else
 		/* TCPC tunnel not configured. No need to protect anything */
 		if (!I2C_STRIP_FLAGS(tcpc_config[i].i2c_info.addr_flags))
 			continue;
 		i2c_passthru_protect_port(tcpc_config[i].i2c_info.port);
+#endif
 	}
 #endif
 }
