@@ -64,6 +64,20 @@ const struct power_signal_info power_signal_list[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
+
+static void inputdeck_resume(void)
+{
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, inputdeck_resume, HOOK_PRIO_DEFAULT);
+
+
+static void inputdeck_suspend(void)
+{
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, inputdeck_suspend, HOOK_PRIO_DEFAULT);
+
 static void peripheral_power_startup(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 1);
@@ -79,7 +93,6 @@ static void peripheral_power_resume(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_invpwr), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 1);
 }
 
 static void peripheral_power_shutdown(void)
@@ -97,7 +110,6 @@ static void peripheral_power_suspend(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_invpwr), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ssd2_pwr_en), 0);
 	set_gpu_gpio(GPIO_FUNC_SSD1_POWER, 0);
 	set_gpu_gpio(GPIO_FUNC_SSD2_POWER, 0);
@@ -271,6 +283,7 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 
 static void chipset_force_g3(void)
 {
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
