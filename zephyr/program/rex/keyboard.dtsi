@@ -80,4 +80,11 @@
 	pinctrl-names = "default";
 	row-size = <8>;
 	col-size = <13>;
+	settle-time-us = <80>;
+
+	kso-gpio {
+		compatible = "cros-ec,col-gpio";
+		col-num = <2>;
+		col-gpios = <&gpio1 7 GPIO_ACTIVE_HIGH>;
+	};
 };
