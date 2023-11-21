@@ -224,7 +224,7 @@
 			gpios = <&gpiob 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
-			gpios = <&gpio1 7 (GPIO_OUTPUT_LOW | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 	};
 

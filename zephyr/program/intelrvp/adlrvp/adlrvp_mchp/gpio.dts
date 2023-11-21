@@ -229,8 +229,8 @@
 			gpios = <&gpio_000_036 27 GPIO_INPUT>;
 		}; /* GPIO033 */
 		gpio_ec_kso_02_inv: ec-kso-02-inv {
-			gpios = <&gpio_040_076 6 (GPIO_OUTPUT_LOW
-				| GPIO_ACTIVE_LOW)>;
+			gpios = <&gpio_040_076 6 (GPIO_OUTPUT
+				| GPIO_ACTIVE_HIGH)>;
 		}; /* GPIO046 */
 
 		usb_c0_bb_retimer_rst: usb-c0-bb-retimer-rst {

@@ -66,7 +66,7 @@
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
-			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 			enum-name = "GPIO_KBD_KSO2";
 		};
 		gpio_ec_pch_wake_odl: ec_pch_wake_odl {
