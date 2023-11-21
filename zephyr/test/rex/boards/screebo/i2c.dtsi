@@ -1,0 +1,57 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../native_posix.overlay"
+#include "../../../../program/rex/screebo/cbi.dtsi"
+
+/ {
+	/* Unused Stub */
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		named_i2c0: i2c0 {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_USB_MUX";
+		};
+	};
+};
+
+&i2c1_0 {
+	status = "okay";
+
+	/*
+	 * Use the PS8811 retimer as a place-holder for the
+	 * NCT3807 TCPC for now.
+	 */
+	 tcpc_port0: ps8811_emul@70 {
+		compatible = "cros,ps8811-emul";
+		reg = <0x70>;
+	};
+};
+
+&i2c3_0 {
+	status = "okay";
+
+	usb_c0_hb_retimer: jhl9040r-c0@56 {
+		compatible = "intel,jhl8040r";
+		reg = <0x56>;
+		reset-pin = <&gpio_usb_c1_rst_odl>;
+	};
+	usb_c1_hb_retimer: jhl9040r-c1@54 {
+		compatible = "intel,jhl8040r";
+		reg = <0x54>;
+		reset-pin = <&gpio_usb_c1_rst_odl>;
+	};
+};
+
+&i2c4_1 {
+	status = "okay";
+
+	tcpc_ps8815_port1: ps8xxx@b1 {
+		compatible = "parade,ps8xxx", "cros,i2c-mock";
+		reg = <0xb1>;
+	};
+};
+
