@@ -117,7 +117,7 @@
 		gpio_sen_mode1_ec_pch_wake_odl: sen_mode1_ec_pch_wake_odl {
 			gpios = <&gpiob 6 GPIO_ODR_LOW>;
 		};
-		gpio_sys_rst_odl: sys_rst_odl {
+		gpio_sys_rst_r_odl: sys_rst_r_odl {
 			gpios = <&gpiog 0 GPIO_ODR_LOW>;
 		};
 		gpio_sys_slp_s0ix_l: sys_slp_s0ix_l {

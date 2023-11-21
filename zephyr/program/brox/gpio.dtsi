@@ -4,6 +4,22 @@
  */
 
 /*
+ * Arbitrage instructions:
+ *	1. Determine latest Brox schematic version "arb list -project brox"
+ *	2. Copy the arbitrage console command from cell A1 of the Brox EC pinout
+ *	   and make the following modfication
+ *		a. Add "--force --output=zephyr/program/brox/generated.dtsi"
+ *		   before the "project:version" argument
+ *		b. Replace "project:version" with "brox:<latest schematic>"
+ *		c. Execute the arbitrage command
+ *	3. Check the terminal for errors.  "Net not found" and "No matchin GPIO"
+ *	   errors are expected. Update the comment below to match.
+ *	4. Make changes to the manual GPIO overrides as needed.
+ */
+
+/*
+ * Updated for schematic version 0.10.
+ *
  * The command "arb export-ec-devicetree-csv" generates the following
  * errors. Reference b/308208621
  *
@@ -27,6 +43,7 @@
  * row: 32, net: GSC_EC_FLASH_SEL
  * row: 52, net: EC_PCH_INT_ODL
  * row: 56, net: EC_KB_BL_EN
+ * row: 58, net: EC_ESPI_ALERT_L_NC
  * row: 81, net: PCBEEP_EC_NC
  * row: 101, net: ADP_DET_NC
  * row: 107, net: TABLET_MODE_L
