@@ -572,9 +572,11 @@
  */
 extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 #define CONFIG_RAM_BASE 0x0
+/* clang-format off */
 #define CONFIG_DATA_RAM_SIZE            \
 	(((uintptr_t)&mock_jump_data) + \
 	 CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE)
+/* clang-format on */
 #else
 #error "A zephyr,sram device must be chosen in the device tree"
 #endif
