@@ -181,7 +181,12 @@ enum temp_sensor_id {
 
 enum sensor_id { LID_ACCEL = 0, BASE_ACCEL, BASE_GYRO, SENSOR_COUNT };
 
-enum battery_type { BATTERY_POWER_TECH, BATTERY_LGC011, BATTERY_TYPE_COUNT };
+enum battery_type {
+	BATTERY_POWER_TECH,
+	BATTERY_LGC011,
+	BATTERY_COSMX_AP20CBL_004,
+	BATTERY_TYPE_COUNT
+};
 
 enum pwm_channel {
 	PWM_CH_KBLIGHT = 0, /* PWM3 */
