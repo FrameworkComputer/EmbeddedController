@@ -10,7 +10,6 @@ from pathlib import Path
 import sys
 from typing import List, Optional
 
-import zmake.modules
 import zmake.version
 
 from scripts import util
@@ -87,6 +86,18 @@ def parse_args(argv: Optional[List[str]] = None):
         required=True,
     )
 
+    parser.add_argument(
+        "-v",
+        "--version",
+        help="Base version string to use in build",
+    )
+
+    parser.add_argument(
+        "--static",
+        action="store_true",
+        dest="static_version",
+        help="Generate static version information for reproducible builds and official builds",
+    )
     return parser.parse_args(argv)
 
 
@@ -396,12 +407,10 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
     if util.is_test(args.edt_pickle):
         ec_version_string = "test_build"
     else:
-        # TODO(b/308497935): The API no longer work as it requires passing the
-        # `version` and `static` arguments that CME doesn't know.
         ec_version_string = zmake.version.get_version_string(
             build_dir.name,
-            version=None,
-            static=False,
+            version=args.version,
+            static=args.static_version,
         )
     manifest = Manifest(ec_version_string)
 

@@ -2,6 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+separate_arguments(EXTRA_EC_VERSION_FLAGS_LIST UNIX_COMMAND
+		   ${EXTRA_EC_VERSION_FLAGS})
+
 if(DEFINED CONFIG_PLATFORM_EC AND EXISTS "${EDT_PICKLE}")
   message(STATUS "Performing EC specific devicetree checks")
 
@@ -25,6 +28,7 @@ if(DEFINED CONFIG_PLATFORM_EC AND EXISTS "${EDT_PICKLE}")
     --zephyr-base ${ZEPHYR_BASE}
     --edt-pickle ${EDT_PICKLE}
     --manifest-file "${CMAKE_BINARY_DIR}/zephyr/component_manifest.json"
+    ${EXTRA_EC_VERSION_FLAGS_LIST}
   )
   execute_process(COMMAND ${CMD_CME} RESULT_VARIABLE ret)
   if(NOT "${ret}" STREQUAL "0")
@@ -677,9 +681,6 @@ add_subdirectory("emul")
 add_subdirectory("fake")
 add_subdirectory("mock")
 add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
-
-separate_arguments(EXTRA_EC_VERSION_FLAGS_LIST UNIX_COMMAND
-		   ${EXTRA_EC_VERSION_FLAGS})
 
 # Use external script to generate the ec_version.h header and add as
 # a dependency to the EC application library.
