@@ -23,7 +23,6 @@
 
 &cros_kb_raw {
 	status = "okay";
-	/* No KSO2 (it's inverted and implemented by GPIO) */
 	pinctrl-0 = <&ksi0_default
 		     &ksi1_default
 		     &ksi2_default
@@ -34,6 +33,7 @@
 		     &ksi7_default
 		     &kso0_default
 		     &kso1_default
+		     &kso2_default
 		     &kso3_default
 		     &kso4_default
 		     &kso5_default
