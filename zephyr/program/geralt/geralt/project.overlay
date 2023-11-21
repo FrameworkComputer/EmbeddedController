@@ -3,9 +3,10 @@
  * found in the LICENSE file.
  */
 
-/* Geralt program common DTS includes */
+/* Geralt DTS includes */
 
 #include "../adc.dtsi"
+#include "../geralt_common.dtsi"
 #include "../gpio.dtsi"
 #include "../i2c.dtsi"
 #include "../interrupts.dtsi"
