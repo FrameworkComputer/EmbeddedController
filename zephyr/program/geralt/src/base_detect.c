@@ -9,6 +9,7 @@
 #include "chipset.h"
 #include "console.h"
 #include "hooks.h"
+#include "lid_switch.h"
 #include "tablet_mode.h"
 
 #include <zephyr/drivers/gpio.h>
@@ -20,15 +21,37 @@
 #define ATTACH_MAX_THRESHOLD_MV 300
 #define DETACH_MIN_THRESHOLD_MV 3000
 
+enum power_status {
+	POWER_STATUS_NOCHANGE = 0,
+	POWER_STATUS_STARTUP = 1,
+	POWER_STATUS_SHUTDOWN = 2,
+};
+static enum power_status power_status_change = POWER_STATUS_NOCHANGE;
+
 static void base_update(bool attached)
 {
 	const struct gpio_dt_spec *en_cc_lid_base_pu =
 		GPIO_DT_FROM_NODELABEL(en_cc_lid_base_pu);
 
+	if (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED)) {
+		enable_lid_detect(attached);
+		if (power_status_change == POWER_STATUS_SHUTDOWN ||
+		    chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_ppvar_base_x),
+					false);
+		} else {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_ppvar_base_x),
+					attached);
+		}
+		power_status_change = POWER_STATUS_NOCHANGE;
+	} else {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_ppvar_base_x),
+				attached);
+	}
+
 	base_set_state(attached);
 	tablet_set_mode(!attached, TABLET_TRIGGER_BASE);
 
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_ppvar_base_x), attached);
 	gpio_pin_configure(en_cc_lid_base_pu->port, en_cc_lid_base_pu->pin,
 			   attached ? GPIO_OUTPUT_HIGH : GPIO_INPUT);
 }
@@ -48,7 +71,9 @@ static void base_detect_tick(void)
 			debouncing = false;
 			base_update(false);
 		}
-	} else if (mv <= ATTACH_MAX_THRESHOLD_MV && !base_get_state()) {
+	} else if ((mv <= ATTACH_MAX_THRESHOLD_MV && !base_get_state()) ||
+		   (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED) &&
+		    power_status_change)) {
 		if (!debouncing) {
 			debouncing = true;
 		} else {
@@ -78,9 +103,16 @@ static void base_startup_hook(struct ap_power_ev_callback *cb,
 	switch (data.event) {
 	case AP_POWER_STARTUP:
 		base_detect_enable(true);
+		if (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED)) {
+			power_status_change = POWER_STATUS_STARTUP;
+		}
 		break;
 	case AP_POWER_SHUTDOWN:
-		base_detect_enable(false);
+		if (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED)) {
+			power_status_change = POWER_STATUS_SHUTDOWN;
+		} else {
+			base_detect_enable(false);
+		}
 		break;
 	default:
 		return;
@@ -105,6 +137,15 @@ static int base_init(void)
 }
 
 SYS_INIT(base_init, APPLICATION, 1);
+
+void base_init_setting(void)
+{
+	if (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED)) {
+		base_update(false);
+		base_detect_enable(true);
+	}
+}
+DECLARE_HOOK(HOOK_INIT, base_init_setting, HOOK_PRIO_DEFAULT);
 
 void base_force_state(enum ec_set_base_state_cmd state)
 {

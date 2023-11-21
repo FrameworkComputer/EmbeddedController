@@ -23,4 +23,10 @@ config BOARD_CIRI
 
 endchoice
 
+config GERALT_LID_DETECTION_SELECTED
+	bool "Geralt Platform lid detect Selection"
+	help
+	  Disable lid detection when base detach. This is a workaround for
+	  machine stack issue.
+
 source "Kconfig.zephyr"
