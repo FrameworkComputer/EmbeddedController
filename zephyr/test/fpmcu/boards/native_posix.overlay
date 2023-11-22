@@ -23,17 +23,33 @@
 		div_highside: div_highside {
 			gpios = <&gpio0 1 GPIO_OUTPUT_HIGH>;
 		};
+
+		slp_l: slp_l {
+			gpios = <&gpio0 3 GPIO_INPUT>;
+		};
+
+		slp_alt_l: slp_alt_l {
+			gpios = <&gpio0 4 GPIO_INPUT>;
+		};
 	};
 
 	euart0: uart-emul {
 		compatible = "zephyr,uart-emul";
 		status = "okay";
+	};
 
+	power-states {
+		suspend_to_idle: suspend_to_idle {
+			compatible = "zephyr,power-state";
+			power-state-name = "suspend-to-idle";
+			substate-id = <0>;
+			min-residency-us = <500>;
+		};
 	};
 };
 
 &gpio0 {
-	ngpios = <3>;
+	ngpios = <5>;
 };
 
 &spi0 {

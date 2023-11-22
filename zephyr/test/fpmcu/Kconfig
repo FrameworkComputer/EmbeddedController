@@ -45,4 +45,12 @@ config EC_HOST_CMD_BACKEND_UART
 	bool "HC UART backend"
 	default y
 
+config TEST_BOARD_POWER
+	bool "Board power tests"
+
+config TEST_PROVIDE_PM_HOOKS
+	bool "Provide PM hooks for test purposes"
+	default y
+	select HAS_PM
+
 source "Kconfig.zephyr"
