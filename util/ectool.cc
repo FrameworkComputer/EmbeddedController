@@ -34,12 +34,16 @@
 #include <time.h>
 
 #include <getopt.h>
+#include <iomanip>
+#include <iostream>
+#include <libchrome/base/json/json_reader.h>
 #include <libec/add_entropy_command.h>
 #include <libec/ec_panicinfo.h>
 #include <libec/fingerprint/fp_encryption_status_command.h>
 #include <libec/flash_protect_command.h>
 #include <libec/rand_num_command.h>
 #include <libec/versions_command.h>
+#include <string>
 #include <unistd.h>
 #include <vector>
 
@@ -8576,20 +8580,204 @@ static void batt_conf_dump(const struct board_batt_params *conf)
 	printf("},\n"); /* end of board_batt_params */
 }
 
-static int cmd_battery_config(int argc, char *argv[])
+static int read_u32_from_json(base::Value::Dict *dict, const char *key,
+			      uint32_t *value)
 {
-	const uint8_t struct_version = EC_BATTERY_CONFIG_STRUCT_VERSION;
+	std::string *str = dict->FindString(key);
+	char *e;
+
+	if (str == nullptr) {
+		printf("Key '%s' not found\n", key);
+		return 0;
+	}
+
+	*value = strtoul(str->c_str(), &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Failed to parse '%s: %s'\n", key,
+			str->c_str());
+		return -1;
+	}
+
+	return 0;
+}
+
+static int read_u16_from_json(base::Value::Dict *dict, const char *key,
+			      uint16_t *value)
+{
+	std::string *str = dict->FindString(key);
+	char *e;
+
+	if (str == nullptr) {
+		printf("Key '%s' not found\n", key);
+		return 0;
+	}
+
+	*value = strtoul(str->c_str(), &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Failed to parse '%s: %s'\n", key,
+			str->c_str());
+		return -1;
+	}
+
+	return 0;
+}
+
+static int read_u8_from_json(base::Value::Dict *dict, const char *key,
+			     uint8_t *value)
+{
+	const std::string *str = dict->FindString(key);
+	char *e;
+
+	if (str == nullptr) {
+		printf("Key '%s' not found\n", key);
+		return 0;
+	}
+
+	*value = strtoul(str->c_str(), &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Failed to parse '%s: %s'\n", key,
+			str->c_str());
+		return -1;
+	}
+
+	return 0;
+}
+
+static int read_battery_config_from_json(base::Value::Dict *root_dict,
+					 struct board_batt_params *config)
+{
+	int i;
+	char *e;
+
+	base::Value::Dict *fuel_gauge = root_dict->FindDict("fuel_gauge");
+	if (fuel_gauge == nullptr) {
+		fprintf(stderr, "Error. fuel_gauge not found.\n");
+		return -1;
+	}
+	if (read_u32_from_json(fuel_gauge, "flags", &config->fuel_gauge.flags))
+		return -1;
+	if (read_u32_from_json(fuel_gauge, "board_flags",
+			       &config->fuel_gauge.board_flags))
+		return -1;
+
+	base::Value::Dict *ship_mode = fuel_gauge->FindDict("ship_mode");
+	if (ship_mode != nullptr) {
+		struct ship_mode_info *sm = &config->fuel_gauge.ship_mode;
+
+		if (read_u8_from_json(ship_mode, "reg_addr", &sm->reg_addr))
+			return -1;
+
+		base::Value::List *reg_data = ship_mode->FindList("reg_data");
+		for (i = 0; i < reg_data->size() && i < SHIP_MODE_WRITES; ++i) {
+			const std::string *str = (*reg_data)[i].GetIfString();
+			sm->reg_data[i] = strtoul(str->c_str(), &e, 0);
+			if (e && *e) {
+				fprintf(stderr,
+					"Failed to parse reg_data: %s\n",
+					str->c_str());
+				return -1;
+			}
+		};
+	}
+
+	base::Value::Dict *sleep_mode = fuel_gauge->FindDict("sleep_mode");
+	if (sleep_mode != nullptr) {
+		struct sleep_mode_info *sm = &config->fuel_gauge.sleep_mode;
+
+		if (read_u8_from_json(sleep_mode, "reg_addr", &sm->reg_addr))
+			return -1;
+		if (read_u16_from_json(sleep_mode, "reg_data", &sm->reg_data))
+			return -1;
+	}
+
+	base::Value::Dict *fet = fuel_gauge->FindDict("fet");
+	if (fet != nullptr) {
+		struct fet_info *fi = &config->fuel_gauge.fet;
+
+		if (read_u8_from_json(fet, "reg_addr", &fi->reg_addr))
+			return -1;
+		if (read_u16_from_json(fet, "reg_mask", &fi->reg_mask))
+			return -1;
+		if (read_u16_from_json(fet, "disconnect_val",
+				       &fi->disconnect_val))
+			return -1;
+		if (read_u16_from_json(fet, "cfet_mask", &fi->cfet_mask))
+			return -1;
+		if (read_u16_from_json(fet, "cfet_off_val", &fi->cfet_off_val))
+			return -1;
+	}
+
+	base::Value::Dict *batt_info = root_dict->FindDict("batt_info");
+	if (batt_info == nullptr) {
+		fprintf(stderr, "Error. batt_info not found.\n");
+		return -1;
+	}
+
+	struct battery_info *bi = &config->batt_info;
+	absl::optional<int> voltage_max = batt_info->FindInt("voltage_max");
+	absl::optional<int> voltage_normal =
+		batt_info->FindInt("voltage_normal");
+	absl::optional<int> voltage_min = batt_info->FindInt("voltage_min");
+	absl::optional<int> precharge_voltage =
+		batt_info->FindInt("precharge_voltage");
+	absl::optional<int> precharge_current =
+		batt_info->FindInt("precharge_current");
+	absl::optional<int> start_charging_min_c =
+		batt_info->FindInt("start_charging_min_c");
+	absl::optional<int> start_charging_max_c =
+		batt_info->FindInt("start_charging_max_c");
+	absl::optional<int> charging_min_c =
+		batt_info->FindInt("charging_min_c");
+	absl::optional<int> charging_max_c =
+		batt_info->FindInt("charging_max_c");
+	absl::optional<int> discharging_min_c =
+		batt_info->FindInt("discharging_min_c");
+	absl::optional<int> discharging_max_c =
+		batt_info->FindInt("discharging_max_c");
+	absl::optional<int> vendor_param_start =
+		batt_info->FindInt("vendor_param_start");
+	bi->voltage_max = voltage_max.value();
+	bi->voltage_normal = voltage_normal.value();
+	bi->voltage_min = voltage_min.value();
+	bi->precharge_voltage = precharge_voltage.value();
+	bi->precharge_current = precharge_current.value();
+	bi->start_charging_min_c = start_charging_min_c.value();
+	bi->start_charging_max_c = start_charging_max_c.value();
+	bi->charging_min_c = charging_min_c.value();
+	bi->charging_max_c = charging_max_c.value();
+	bi->discharging_min_c = discharging_min_c.value();
+	bi->discharging_max_c = discharging_max_c.value();
+	if (vendor_param_start != absl::nullopt)
+		bi->vendor_param_start = vendor_param_start.value();
+
+	return 0;
+}
+
+static void cmd_battery_config_help(char *cmd)
+{
+	fprintf(stderr,
+		"\n"
+		"Usage: %s\n"
+		"    Print active battery config.\n"
+		"\n"
+		"Usage: %s <json_file> <manuf_name> <device_name>\n"
+		"    Copy battery config from file to CBI.\n"
+		"\n"
+		"    json_file: Path to JSON file containing battery configs\n"
+		"    manuf_name: Manufacturer's name. Up to 31 chars.\n"
+		"    device_name: Battery's name. Up to 31 chars.\n"
+		"\n"
+		"    Run `ectool battery` for <manuf_name> and <device_name>\n",
+		cmd, cmd);
+}
+
+static int cmd_battery_config_get(void)
+{
 	struct batt_conf_header *head;
 	struct board_batt_params conf;
 	uint8_t *p;
 	int expected;
 	int rv;
-
-	if (argc != 1) {
-		fprintf(stderr, "Invalid param count\n");
-		return -1;
-	}
-
 	rv = ec_command(EC_CMD_BATTERY_CONFIG, 0, NULL, 0, ec_inbuf,
 			ec_max_insize);
 	if (rv < 0)
@@ -8599,10 +8787,10 @@ static int cmd_battery_config(int argc, char *argv[])
 	printf("\n");
 	printf(".struct_version = 0x%02x,\n", head->struct_version);
 
-	if (head->struct_version > struct_version) {
+	if (head->struct_version > EC_BATTERY_CONFIG_STRUCT_VERSION) {
 		fprintf(stderr,
 			"Struct version mismatch. Supported: 0x00 ~ 0x%02x.\n",
-			struct_version);
+			EC_BATTERY_CONFIG_STRUCT_VERSION);
 		return -1;
 	}
 
@@ -8631,6 +8819,134 @@ static int cmd_battery_config(int argc, char *argv[])
 	batt_conf_dump(&conf);
 
 	return 0;
+}
+
+static int cmd_battery_config_set(int argc, char *argv[])
+{
+	FILE *fp = NULL;
+	int size;
+	char *json = NULL;
+	const char *json_file = argv[1];
+	const char *manuf_name = argv[2];
+	const char *device_name = argv[3];
+	char identifier[SBS_MAX_STRING_SIZE * 2];
+	struct board_batt_params config;
+	struct ec_params_set_cbi *p = (struct ec_params_set_cbi *)ec_outbuf;
+	struct batt_conf_header *header = (struct batt_conf_header *)p->data;
+	uint8_t *d = (uint8_t *)header;
+	int rv;
+
+	/* In SBS, actual max string length is 32 - 1. */
+	if (strlen(manuf_name) > SBS_MAX_STRING_SIZE - 1) {
+		fprintf(stderr, "manuf_name is too long.");
+		return -1;
+	}
+
+	if (strlen(device_name) > SBS_MAX_STRING_SIZE - 1) {
+		fprintf(stderr, "device_name is too long.");
+		return -1;
+	}
+
+	fp = fopen(json_file, "rb");
+	if (!fp) {
+		fprintf(stderr, "Can't open %s: %s\n", json_file,
+			strerror(errno));
+		return -1;
+	}
+	fseek(fp, 0, SEEK_END);
+	size = ftell(fp);
+	rewind(fp);
+
+	json = (char *)malloc(size);
+	if (!json) {
+		fprintf(stderr, "Failed to allocate memory.\n");
+		fclose(fp);
+		return -1;
+	}
+
+	if (fread(json, 1, size, fp) != size) {
+		fprintf(stderr, "Failed to read %s\n", json_file);
+		fclose(fp);
+		free(json);
+		return -1;
+	}
+
+	fclose(fp);
+
+	absl::optional<base::Value> root =
+		base::JSONReader::Read(json, base::JSON_ALLOW_TRAILING_COMMAS);
+	if (root == absl::nullopt) {
+		fprintf(stderr, "File %s isn't properly formed JSON file.\n",
+			json_file);
+		free(json);
+		return -1;
+	}
+	base::Value::Dict *dict = root->GetIfDict();
+	if (dict == nullptr) {
+		fprintf(stderr, "Failed to get dictionary from JSON file.\n");
+		free(json);
+		return -1;
+	}
+
+	/* Clear the dst to ensure it'll be null-terminated. */
+	memset(identifier, 0, sizeof(identifier));
+	sprintf(identifier, "%s,%s", manuf_name, device_name);
+	base::Value::Dict *root_dict = dict->FindDict(identifier);
+	if (root_dict == nullptr) {
+		fprintf(stderr,
+			"Config matching identifier=%s not found in %s.\n",
+			identifier, json_file);
+		free(json);
+		return -1;
+	}
+
+	/* Clear config to ensure unspecified (optional) fields are 0. */
+	memset(&config, 0, sizeof(config));
+	if (read_battery_config_from_json(root_dict, &config)) {
+		return -1;
+	}
+
+	header->struct_version = EC_BATTERY_CONFIG_STRUCT_VERSION;
+	header->manuf_name_size = strlen(manuf_name);
+	header->device_name_size = strlen(device_name);
+	d += sizeof(*header);
+	memcpy(d, manuf_name, header->manuf_name_size);
+	d += header->manuf_name_size;
+	memcpy(d, device_name, header->device_name_size);
+	d += header->device_name_size;
+	memcpy(d, &config, sizeof(config));
+
+	p->tag = CBI_TAG_BATTERY_CONFIG;
+	p->size = sizeof(struct batt_conf_header) + header->manuf_name_size +
+		  header->device_name_size + sizeof(config);
+	size = sizeof(*p);
+	size += p->size;
+
+	rv = ec_command(EC_CMD_SET_CROS_BOARD_INFO, 0, p, size, NULL, 0);
+	if (rv < 0) {
+		if (rv == -EC_RES_ACCESS_DENIED - EECRESULT)
+			fprintf(stderr, "Failed. CBI is write-protected.\n");
+		else
+			fprintf(stderr, "Error code: %d\n", rv);
+	} else {
+		printf("Successfully wrote battery config in CBI\n");
+	}
+
+	free(json);
+
+	return rv;
+}
+
+static int cmd_battery_config(int argc, char *argv[])
+{
+	if (argc == 1)
+		return cmd_battery_config_get();
+	else if (/* argc == 3 || */ argc == 4)
+		return cmd_battery_config_set(argc, argv);
+
+	fprintf(stderr, "Invalid param count\n");
+	cmd_battery_config_help(argv[0]);
+	return -1;
 }
 
 int cmd_board_version(int argc, char *argv[])
