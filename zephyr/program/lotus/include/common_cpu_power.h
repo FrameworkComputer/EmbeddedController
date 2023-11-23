@@ -72,6 +72,7 @@ int set_pl_limits(uint32_t spl, uint32_t fppt, uint32_t sppt, uint32_t p3t);
 
 #ifdef CONFIG_BOARD_LOTUS
 int update_apu_only_sppt_limit(uint32_t mwatt);
+void update_pmf_events(uint8_t pd_event, int enable);
 #endif
 
 extern bool thermal_warn_trigger(void);

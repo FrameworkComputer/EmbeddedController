@@ -90,7 +90,7 @@ static int prev_charge_port = -1;
 static uint8_t pd_c_fet_active_port;
 static bool verbose_msg_logging;
 static bool firmware_update;
-static uint8_t pd_progress_status;
+static uint8_t pd_epr_in_progress;
 
 /*****************************************************************************/
 /* Internal functions */
@@ -342,14 +342,58 @@ static void update_external_cc_mux(int port, int cc)
 	}
 }
 
-static bool disable_epr_mode;
+#define EXIT_EPR BIT(4)
+#define ENTER_EPR BIT(5)
+#define EPR_PROCESS_MASK (EXIT_EPR + ENTER_EPR)
 
-static void enter_epr_mode(void)
+static void epr_flow_pending_deferred(void)
+{
+	static int retry_count;
+
+	/**
+	 * Sometimes, EC does not receive the EPR event/NOT support event from PD chip.
+	 * Retry the last action.
+	 */
+
+	if (!!(pd_epr_in_progress & ~EPR_PROCESS_MASK)) {
+		if (retry_count > 4) {
+			/* restore the input current limit if we retry 4 times */
+			retry_count = 0;
+			pd_epr_in_progress &= EPR_PROCESS_MASK;
+			if (prev_charge_port != -1)
+				cypd_update_port_state((prev_charge_port & 0x02) >> 1,
+					prev_charge_port & BIT(0));
+		}
+
+		if (pd_epr_in_progress & EXIT_EPR) {
+			CPRINTS("Exit EPR stuck, retry!");
+			exit_epr_mode();
+			retry_count++;
+		}
+
+		if (pd_epr_in_progress & ENTER_EPR) {
+			CPRINTS("enter EPR stuck, retry!");
+			enter_epr_mode();
+			retry_count++;
+		}
+
+	} else
+		retry_count = 0;
+}
+DECLARE_DEFERRED(epr_flow_pending_deferred);
+
+void enter_epr_mode(void)
 {
 	int port_idx;
 
-	/* We don't need to enter EPR mode at S5/G3 state or epr mode disabled*/
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) || disable_epr_mode)
+	/**
+	 * Only enter EPR mode when the system in S0 state.
+	 * 1. Resume from S0i3 mode
+	 * 2. Power up from S5/G3 state (after error recovery, will enter EPR mode automatically)
+	 * 3. battery in normal mode
+	 */
+	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) ||
+		battery_is_cut_off() || battery_cutoff_in_progress())
 		return;
 
 	/**
@@ -359,43 +403,71 @@ static void enter_epr_mode(void)
 	for (port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
 		if ((pd_port_states[port_idx].pd_state) &&
 			(pd_port_states[port_idx].power_role == PD_ROLE_SINK) &&
-			!(pd_port_states[port_idx].epr_active)) {
-			CPRINTS("P%d EPR entry", port_idx);
+			(pd_port_states[port_idx].epr_active == 0) &&
+			(pd_port_states[port_idx].epr_support == 1)) {
+
+			/* BIT(4): epr in progress, BIT(1) - BIT(3) which port */
+			pd_epr_in_progress |= (BIT(port_idx) + ENTER_EPR);
+
+			/* avoid the pmf is higher when the system resume from S0ix */
+			update_pmf_events(PD_PROGRESS_EPR_MODE,
+				!!(pd_epr_in_progress & ~EPR_PROCESS_MASK));
+
+			/* Enable learn mode to discharge on AC */
+			board_discharge_on_ac(1);
+
+			/* Set input current to 0mA */
+			charger_set_input_current_limit(0, 0);
+
 			cypd_write_reg8((port_idx & 0x2) >> 1,
 					CCG_PD_CONTROL_REG(port_idx & 0x1),
 					CCG_PD_CMD_INITIATE_EPR_ENTRY);
+
+			hook_call_deferred(&epr_flow_pending_deferred_data, 200 * MSEC);
 		}
 	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, enter_epr_mode, HOOK_PRIO_FIRST);
 DECLARE_DEFERRED(enter_epr_mode);
 
-static void exit_epr_mode(void)
+void enter_epr_mode_without_battery(void)
+{
+	if ((battery_get_disconnect_state() == BATTERY_DISCONNECTED) ||
+	    (battery_is_present() != BP_YES))
+		enter_epr_mode();
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, enter_epr_mode_without_battery, HOOK_PRIO_DEFAULT);
+
+void exit_epr_mode(void)
 {
 	int port_idx;
 
 	for (port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
-		if (pd_port_states[port_idx].epr_active) {
-			CPRINTS("P%d EPR exit", port_idx);
+		if (pd_port_states[port_idx].epr_active == 1) {
+
+			/* BIT(4): epr in progress, BIT(1) - BIT(3) which port */
+			pd_epr_in_progress |= (BIT(port_idx) + EXIT_EPR);
+
+			/* do not set learn mode when battery is cut off */
+			if (!battery_cutoff_in_progress() && !battery_is_cut_off()) {
+				/* Enable learn mode to discharge on AC */
+				board_discharge_on_ac(1);
+
+				/* Set input current to 0mA */
+				charger_set_input_current_limit(0, 0);
+			} else {
+				update_pmf_events(PD_PROGRESS_EPR_MODE,
+						!!(pd_epr_in_progress & ~EPR_PROCESS_MASK));
+			}
+
 			cypd_write_reg8((port_idx & 0x2) >> 1,
 					CCG_PD_CONTROL_REG(port_idx & 0x1),
 					CCG_PD_CMD_INITIATE_EPR_EXIT);
+
+			hook_call_deferred(&epr_flow_pending_deferred_data, 500 * MSEC);
 		}
 	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, exit_epr_mode, HOOK_PRIO_FIRST);
-
-void force_disable_epr_mode(void)
-{
-	disable_epr_mode = true;
-	exit_epr_mode();
-}
-
-void release_disable_epr_mode(void)
-{
-	disable_epr_mode = false;
-	enter_epr_mode();
-}
 #endif
 
 static void pd0_update_state_deferred(void)
@@ -532,20 +604,6 @@ static int cypd_select_pdo(int controller, int port, uint8_t profile)
 
 	return rv;
 }
-
-uint8_t get_pd_progress_flags(void)
-{
-	return pd_progress_status;
-}
-
-void update_pd_progress_flags(int bit, int clear)
-{
-	if (clear)
-		pd_progress_status &= ~BIT(bit);
-	else
-		pd_progress_status |= BIT(bit);
-}
-
 
 static int pd_3a_flag;
 static int pd_3a_set;
@@ -1103,6 +1161,7 @@ static void clear_port_state(int controller, int port)
 	pd_port_states[port_idx].data_role = PD_ROLE_UFP;
 	pd_port_states[port_idx].vconn = PD_ROLE_VCONN_OFF;
 	pd_port_states[port_idx].epr_active = 0;
+	pd_port_states[port_idx].epr_support = 0;
 	pd_port_states[port_idx].cc = POLARITY_CC1;
 	pd_port_states[port_idx].c_state = 0;
 	pd_port_states[port_idx].current = 0;
@@ -1120,6 +1179,9 @@ static void cypd_update_port_state(int controller, int port)
 	int rdo_max_current = 0;
 	int type_c_current = 0;
 	int port_idx = (controller << 1) + port;
+#ifdef CONFIG_BOARD_LOTUS
+	int64_t calculate_ma;
+#endif
 
 	rv = cypd_read_reg_block(controller, CCG_PD_STATUS_REG(port), pd_status_reg, 4);
 	if (rv != EC_SUCCESS)
@@ -1132,7 +1194,8 @@ static void cypd_update_port_state(int controller, int port)
 		pd_status_reg[0] & BIT(6) ? PD_ROLE_DFP : PD_ROLE_UFP;
 	pd_port_states[port_idx].vconn =
 		pd_status_reg[1] & BIT(5) ? PD_ROLE_VCONN_SRC : PD_ROLE_VCONN_OFF;
-	pd_port_states[port_idx].epr_active = pd_status_reg[2] & BIT(7) ? 1 : 0;
+	if (pd_port_states[port_idx].epr_active != 0xff)
+		pd_port_states[port_idx].epr_active = pd_status_reg[2] & BIT(7) ? 1 : 0;
 
 	rv = cypd_read_reg8(controller, CCG_TYPE_C_STATUS_REG(port), &typec_status_reg);
 	if (rv != EC_SUCCESS)
@@ -1226,6 +1289,27 @@ static void cypd_update_port_state(int controller, int port)
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER)) {
 		charge_manager_update_dualrole(port_idx, CAP_DEDICATED);
 	}
+
+#ifdef CONFIG_BOARD_LOTUS
+	if (!!(pd_epr_in_progress & EPR_PROCESS_MASK) &&
+	    !(pd_epr_in_progress & ~EPR_PROCESS_MASK)) {
+
+		/* Handle EPR converstion through the buck switcher */
+		if (pd_voltage > 20000) {
+			/**
+			 * (charge_ma * charge_mv / 20000 ) * 0.9 * 0.94
+			 */
+			calculate_ma =
+				(int64_t)pd_current * (int64_t)pd_voltage * 90 * 95 / 200000000;
+		} else {
+			calculate_ma = (int64_t)pd_current * 88 / 100;
+		}
+
+		board_discharge_on_ac(0);
+		charger_set_input_current_limit(0, (int)calculate_ma);
+		pd_epr_in_progress &= ~EPR_PROCESS_MASK;
+	}
+#endif
 }
 
 int cypd_set_power_state(int power_state, int controller)
@@ -1254,6 +1338,7 @@ static void cypd_update_epr_state(int controller, int port, int response_len)
 	uint8_t data[16];
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
+	int port_idx = (controller << 1) + port;
 
 	rv = i2c_read_offset16_block(i2c_port, addr_flags,
 		CCG_READ_DATA_MEMORY_REG(port, 0), data, MIN(response_len, 16));
@@ -1271,12 +1356,15 @@ static void cypd_update_epr_state(int controller, int port, int response_len)
 			break;
 		case EPR_MODE_ENTER_FAILED:
 		default:
-		/* see epr_event_failure_type*/
+			/* see epr_event_failure_type*/
 			CPRINTS("EPR failed %d", data[1]);
+			/* EPR fail, do not retry */
+			pd_port_states[port_idx].epr_active = 0xff;
 		}
 	}
 
 	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
+	pd_epr_in_progress &= ~BIT((controller << 1) + port);
 }
 
 static int cypd_update_power_status(int controller)
@@ -1715,7 +1803,7 @@ void cypd_handle_vdm(int controller, int port, uint8_t *data, int len)
 
 	}
 	if (trigger_deferred_update) {
-		hook_call_deferred(&poweroff_dp_deferred_data, 5000 * MSEC);
+		hook_call_deferred(&poweroff_dp_deferred_data, 30000 * MSEC);
 	}
 
 }
@@ -1744,10 +1832,22 @@ void cypd_port_int(int controller, int port)
 		__fallthrough;
 	case CCG_RESPONSE_HARD_RESET_RX:
 	case CCG_RESPONSE_TYPE_C_ERROR_RECOVERY:
+	case CCG_RESPONSE_HARD_RESET_SENT:
 		if (data2[0] == CCG_RESPONSE_HARD_RESET_RX)
 			CPRINTS("HARD_RESET_RX");
 		if (data2[0] == CCG_RESPONSE_TYPE_C_ERROR_RECOVERY)
 			CPRINTS("TYPE_C_ERROR_RECOVERY");
+		if (data2[0] == CCG_RESPONSE_HARD_RESET_SENT)
+			CPRINTS("CCG_RESPONSE_HARD_RESET_SENT");
+
+#ifdef CONFIG_BOARD_LOTUS
+		/* Assert prochot until the PMF is updated (Only sink role needs to do this) */
+		if (pd_port_states[(controller << 1) + port].power_role == PD_ROLE_SINK)
+			update_pmf_events(BIT(PD_PROGRESS_DISCONNECTED), 1);
+
+		/* clear the EPR progress when the adapter is removed */
+		pd_epr_in_progress &= EPR_PROCESS_MASK;
+#endif
 
 		cypd_update_port_state(controller, port);
 		/* make sure the type-c state is cleared */
@@ -1756,25 +1856,30 @@ void cypd_port_int(int controller, int port)
 		if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
 			charge_manager_update_dualrole(port_idx, CAP_UNKNOWN);
 
-		/* Assert prochot until the PMF is updated */
-		if (!((pd_progress_status & BIT(PD_PROGRESS_DISCONNECTED)) ==
-			BIT(PD_PROGRESS_DISCONNECTED))) {
-			pd_progress_status = BIT(PD_PROGRESS_DISCONNECTED);
-			throttle_ap(THROTTLE_ON, THROTTLE_HARD, THROTTLE_SRC_UPDATE_PMF);
-		}
 		break;
 	case CCG_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE:
 		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE %d", port_idx);
 		cypd_update_port_state(controller, port);
 		cypd_set_prepare_pdo(controller, port);
 #ifdef CONFIG_BOARD_LOTUS
-		hook_call_deferred(&enter_epr_mode_data, 100 * MSEC);
+		/* make sure enter EPR mode only process in S0 state */
+		if (chipset_in_state(CHIPSET_STATE_ON))
+			hook_call_deferred(&enter_epr_mode_data, 100 * MSEC);
 #endif
 		break;
 	case CCG_RESPONSE_PORT_CONNECT:
 		CPRINTS("CYPD_RESPONSE_PORT_CONNECT %d", port_idx);
 		record_ucsi_connector_change_event(controller, port);
 		cypd_set_typec_profile(controller, port);
+		break;
+	case CCG_RESPONSE_SOURCE_CAP_MSG_RX:
+		i2c_read_offset16_block(i2c_port, addr_flags,
+				CCG_READ_DATA_MEMORY_REG(port, 0), data2, MIN(response_len, 32));
+
+		if (data2[6] & BIT(7)) {
+			pd_port_states[port_idx].epr_support = 1;
+			CPRINTS("P%d EPR mode capable", port_idx);
+		}
 		break;
 	case CCG_RESPONSE_EPR_EVENT:
 		CPRINTS("CCG_RESPONSE_EPR_EVENT %d", port_idx);
@@ -1793,6 +1898,18 @@ void cypd_port_int(int controller, int port)
 		cypd_handle_extend_msg(controller, port, response_len, sop_type);
 		CPRINTS("CYP_RESPONSE_RX_EXT_MSG");
 		break;
+#ifdef CONFIG_BOARD_LOTUS
+	case CCG_RESPONSE_INVALID_COMMAND:
+		if (pd_epr_in_progress) {
+			CPRINTS("P%d EPR NO SUPPORT", ((controller << 1) + port));
+			pd_epr_in_progress &= ~BIT((controller << 1) + port);
+			update_pmf_events(PD_PROGRESS_EPR_MODE,
+				!!(pd_epr_in_progress & ~EPR_PROCESS_MASK));
+			cypd_update_port_state(controller, port);
+		}
+
+		break;
+#endif
 	case CCG_RESPONSE_VDM_RX:
 		i2c_read_offset16_block(i2c_port, addr_flags,
 			CCG_READ_DATA_MEMORY_REG(port, 0), data2, MIN(response_len, 32));

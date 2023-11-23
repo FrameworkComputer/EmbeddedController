@@ -347,9 +347,8 @@ static int chipset_prepare_S3(uint8_t enable)
 		peripheral_power_suspend();
 		/* only exit epr when battery connect */
 		if (battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED)
-			force_disable_epr_mode();
+			exit_epr_mode();
 	} else {
-		release_disable_epr_mode();
 		k_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75vs_pwr_en), 1);
@@ -577,8 +576,11 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S0ixS3;
 		}
 
-		if (check_s0ix_statsus() == CS_EXIT_S0ix)
+		if (check_s0ix_statsus() == CS_EXIT_S0ix) {
+			/* We should enter EPR mode when the system actually resume to S0 state */
+			enter_epr_mode();
 			return POWER_S0ixS0;
+		}
 
 		break;
 

@@ -26,6 +26,13 @@ static int battery_current_limit_mA;
 static int slider_stt_table;
 static int thermal_stt_table;
 static int safety_stt;
+static uint8_t events;
+
+enum clear_reasons {
+	PROCHOT_CLEAR_REASON_SUCCESS,
+	PROCHOT_CLEAR_REASON_NOT_POWER,
+	PROCHOT_CLEAR_REASON_FORCE,
+};
 
 /* Update PL for thermal table pmf sheet : slider default */
 static void update_os_power_slider(int mode, bool with_dc, int active_mpower)
@@ -889,13 +896,34 @@ static void update_safety_power_limit(int active_mpower)
 	}
 }
 
-void clear_prochot(void)
+void update_pmf_events(uint8_t pd_event, int enable)
 {
-	bool wait_pmf_update = !!(get_pd_progress_flags() & BIT(PD_PROGRESS_DISCONNECTED));
+	static uint8_t pre_events;
 
-	if (wait_pmf_update) {
-		throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_UPDATE_PMF);
-		update_pd_progress_flags(PD_PROGRESS_DISCONNECTED, 1);
+	/* We should not need to assert the prochot before apu ready to update pmf */
+	if (!get_apu_ready())
+		return;
+
+	if (enable)
+		events |= pd_event;
+	else
+		events &= ~pd_event;
+
+	if (pre_events != events) {
+		if (events)
+			throttle_ap(THROTTLE_ON, THROTTLE_HARD, THROTTLE_SRC_UPDATE_PMF);
+		else
+			throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_UPDATE_PMF);
+
+		pre_events = events;
+	}
+}
+
+void clear_prochot(enum clear_reasons reason)
+{
+	if (events) {
+		CPRINTS("release pmf prochot reason:%d", reason);
+		update_pmf_events(events, 0);
 	}
 }
 
@@ -911,14 +939,15 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	static int old_stt_table;
 	int mode = *host_get_memmap(EC_MEMMAP_POWER_SLIDE);
 	int active_mpower = cypd_get_ac_power();
-	bool with_dc = ((battery_is_present() == BP_YES) ? true : false);
+	bool with_dc = (((battery_is_present() == BP_YES) &&
+			!battery_cutoff_in_progress() && !battery_is_cut_off()) ? true : false);
 	int battery_percent = get_system_percentage() / 10;
 
 	if ((*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER)) == 0)
 		old_stt_table = 0;
 
 	if (!chipset_in_state(CHIPSET_STATE_ON) || !get_apu_ready()) {
-		clear_prochot();
+		clear_prochot(PROCHOT_CLEAR_REASON_NOT_POWER);
 		return;
 	}
 
@@ -978,26 +1007,31 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		|| power_limit[target_func[TYPE_P3T]].mwatt[TYPE_P3T] != old_p3t_limit
 		|| (power_limit[target_func[TYPE_APU_ONLY_SPPT]].mwatt[TYPE_APU_ONLY_SPPT]
 			!= old_ao_sppt)
-		|| set_pl_limit || force_update) {
+		|| set_pl_limit || force_update || events) {
 		/* only set PL when it is changed */
 		old_sustain_power_limit = power_limit[target_func[TYPE_SPL]].mwatt[TYPE_SPL];
 		old_slow_ppt_limit = power_limit[target_func[TYPE_SPPT]].mwatt[TYPE_SPPT];
 		old_fast_ppt_limit = power_limit[target_func[TYPE_FPPT]].mwatt[TYPE_FPPT];
 		old_p3t_limit = power_limit[target_func[TYPE_P3T]].mwatt[TYPE_P3T];
 
-		CPRINTF("Change SOC Power Limit: SPL %dmW, sPPT %dmW, fPPT %dmW, p3T %dmW, ",
-			old_sustain_power_limit, old_slow_ppt_limit,
-			old_fast_ppt_limit, old_p3t_limit);
 		set_pl_limit = set_pl_limits(old_sustain_power_limit, old_fast_ppt_limit,
 			old_slow_ppt_limit, old_p3t_limit);
-		old_ao_sppt =
-			power_limit[target_func[TYPE_APU_ONLY_SPPT]].mwatt[TYPE_APU_ONLY_SPPT];
-		CPRINTF("ao_sppt %dmW\n", old_ao_sppt);
-		if (!set_pl_limit)
-			set_pl_limit = update_apu_only_sppt_limit(old_ao_sppt);
-	}
 
-	clear_prochot();
+		if (!set_pl_limit) {
+			old_ao_sppt =
+			power_limit[target_func[TYPE_APU_ONLY_SPPT]].mwatt[TYPE_APU_ONLY_SPPT];
+			set_pl_limit = update_apu_only_sppt_limit(old_ao_sppt);
+		}
+
+		if (!set_pl_limit) {
+			/* Update PMF success, print the setting and de-asssert the prochot */
+			CPRINTS("PMF: SPL %dmW, sPPT %dmW, fPPT %dmW, p3T %dmW, ao_sppt %dmW",
+			old_sustain_power_limit, old_slow_ppt_limit,
+			old_fast_ppt_limit, old_p3t_limit, old_ao_sppt);
+
+			clear_prochot(PROCHOT_CLEAR_REASON_SUCCESS);
+		}
+	}
 }
 
 static void initial_soc_power_limit(void)

@@ -272,6 +272,7 @@ enum ccg_pd_command {
 	CCG_PD_CMD_EC_INIT_COMPLETE = 0x10,
 	CCG_PD_CMD_PORT_DISABLE = 0x11,
 	CCG_PD_CMD_CHANGE_PD_PORT_PARAMS = 0x14,
+	CCG_PD_CMD_READ_SRC_PDO = 0x20,
 	CCG_PD_CMD_INITIATE_EPR_ENTRY = 0x47,
 	CCG_PD_CMD_INITIATE_EPR_EXIT = 0x48,
 };
@@ -444,6 +445,7 @@ enum pd_port {
 enum pd_progress {
 	PD_PROGRESS_IDLE = 0,
 	PD_PROGRESS_DISCONNECTED,
+	PD_PROGRESS_EPR_MODE,
 };
 
 struct pd_chip_config_t {
@@ -462,6 +464,7 @@ struct pd_port_current_state_t {
 	uint8_t pd_state;
 	uint8_t cc;
 	uint8_t epr_active;
+	uint8_t epr_support;
 
 	enum pd_power_role power_role;
 	enum pd_data_role data_role;
@@ -557,22 +560,14 @@ int cypd_vbus_state_check(void);
  */
 int cypd_get_ac_power(void);
 
-/**
- * Set disable_epr_mode flag to true
- *
- */
-void force_disable_epr_mode(void);
+void exit_epr_mode(void);
 
-void release_disable_epr_mode(void);
+void enter_epr_mode(void);
 
 int cypd_modify_safety_power(int controller, int port, int profile);
 
 int cypd_port_3a_status(int controller, int port);
 
 uint8_t cypd_get_cfet_status(void);
-
-uint8_t get_pd_progress_flags(void);
-
-void update_pd_progress_flags(int bit, int clear);
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */
