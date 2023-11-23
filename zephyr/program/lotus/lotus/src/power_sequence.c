@@ -283,6 +283,7 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 
 static void chipset_force_g3(void)
 {
+	input_modules_powerdown();
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrgd_ec), 0);

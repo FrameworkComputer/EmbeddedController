@@ -251,8 +251,8 @@
 		gpio_apu_aud_pwr_en: apu_aud_pwr_en {
 			gpios = <&gpioa 0 GPIO_OUTPUT_LOW>;
 		};
-		i2c_int_tp_1 {
-			gpios = <&gpioa 4 GPIO_INPUT>;		/* HUB board TP module */
+		gpio_i2c_int_tp_1: i2c_int_tp_1 {
+			gpios = <&gpioa 4 GPIO_ODR_HIGH>;		/* HUB board TP module */
 		};
 		i2c_int_tp_2 {
 			gpios = <&gpio9 6 GPIO_INPUT>;		/* HUB board TP module */

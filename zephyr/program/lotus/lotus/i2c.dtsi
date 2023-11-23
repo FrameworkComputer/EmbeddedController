@@ -135,7 +135,14 @@
 	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
 	pinctrl-names = "default";
 
-	/* TODO: Add the device on this bus */
+	i2chid2: i2chid@2c {
+		compatible = "cros-ec,i2c-target-hid";
+		reg = <0x2c>;
+		alert_gpios = <&gpioa 4 GPIO_OPEN_DRAIN>;
+		max_report_size = <32>;
+		hid_descriptor = "touchpad_hid_desc";
+		hid_report_descriptor = "touchpad_report_desc";
+	};
 };
 
 &i2c_ctrl4 {
