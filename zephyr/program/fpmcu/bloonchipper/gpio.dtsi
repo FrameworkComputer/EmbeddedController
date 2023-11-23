@@ -67,9 +67,9 @@
 	gpio-interrupts {
 		compatible = "cros-ec,gpio-interrupts";
 
-		int_slp_alt_l: int_slp_alt_l {
-			irq-pin = <&slp_alt_l>;
-			flags = <GPIO_INT_EDGE_BOTH>;
+		int_fps_int: int_fps_int {
+			irq-pin = <&fps_int>;
+			flags = <GPIO_INT_EDGE_RISING>;
 			//handler = "";
 		};
 	};
