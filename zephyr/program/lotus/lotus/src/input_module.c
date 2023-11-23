@@ -7,6 +7,7 @@
 #include <zephyr/init.h>
 #include "gpio/gpio_int.h"
 #include "board_host_command.h"
+#include "chipset.h"
 #include "console.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -20,6 +21,7 @@
 
 #include "board_adc.h"
 #include "flash_storage.h"
+#include "lid_switch.h"
 
 LOG_MODULE_REGISTER(inputmodule, LOG_LEVEL_INF);
 
@@ -127,6 +129,23 @@ bool input_deck_is_fully_populated(void)
 
 	return true;
 }
+
+/* Make sure the inputdeck is sleeping when lid is closed */
+static void inputdeck_lid_change(void)
+{
+	/* If suspend or off we don't want to turn on input module LEDs even if the lid is open */
+	if (!chipset_in_state(CHIPSET_STATE_ON))
+		return;
+
+	if (lid_is_open()) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 1);
+	} else {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 0);
+	}
+
+}
+DECLARE_HOOK(HOOK_LID_CHANGE, inputdeck_lid_change, HOOK_PRIO_DEFAULT);
+
 
 static void poll_c_deck(void)
 {
