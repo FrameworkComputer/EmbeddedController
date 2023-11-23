@@ -51,6 +51,12 @@
 	status = "okay";
 };
 
+&usart2 {
+	dmas = <&dma1 6 4 0x08440 0x03>,
+		<&dma1 5 4 0x08480 0x03>;
+	dma-names = "tx", "rx";
+};
+
 &spi1 {
 	/* Change the compatible string to use the Host Command version of the
 	 * STM32 SPI driver
