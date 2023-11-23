@@ -745,7 +745,7 @@ int parse_gpu_eeprom(void)
 	if (rv != EC_SUCCESS) {
 		/* run device detection */
 		/* check if GPU PD is present */
-		rv = i2c_read8(I2C_PORT_GPU0, 0x60, 0x800E, &i);
+		rv = i2c_read_offset16(I2C_PORT_GPU0, 0x60, 0x800E, &i, 1);
 		if (rv == EC_SUCCESS) {
 			/* assume R23M GPU */
 			CPRINTS("Detected EEPROM and PD: Defaulting to R23M");
