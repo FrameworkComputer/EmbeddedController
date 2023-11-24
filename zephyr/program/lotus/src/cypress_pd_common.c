@@ -413,11 +413,13 @@ void enter_epr_mode(void)
 			update_pmf_events(PD_PROGRESS_EPR_MODE,
 				!!(pd_epr_in_progress & ~EPR_PROCESS_MASK));
 
-			/* Enable learn mode to discharge on AC */
-			board_discharge_on_ac(1);
+			if (battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED) {
+				/* Enable learn mode to discharge on AC */
+				board_discharge_on_ac(1);
 
-			/* Set input current to 0mA */
-			charger_set_input_current_limit(0, 0);
+				/* Set input current to 0mA */
+				charger_set_input_current_limit(0, 0);
+			}
 
 			cypd_write_reg8((port_idx & 0x2) >> 1,
 					CCG_PD_CONTROL_REG(port_idx & 0x1),
@@ -448,7 +450,8 @@ void exit_epr_mode(void)
 			pd_epr_in_progress |= (BIT(port_idx) + EXIT_EPR);
 
 			/* do not set learn mode when battery is cut off */
-			if (!battery_cutoff_in_progress() && !battery_is_cut_off()) {
+			if (!battery_cutoff_in_progress() && !battery_is_cut_off() &&
+				(battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED)) {
 				/* Enable learn mode to discharge on AC */
 				board_discharge_on_ac(1);
 

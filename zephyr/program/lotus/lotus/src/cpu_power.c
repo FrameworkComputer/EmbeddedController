@@ -901,7 +901,7 @@ void update_pmf_events(uint8_t pd_event, int enable)
 	static uint8_t pre_events;
 
 	/* We should not need to assert the prochot before apu ready to update pmf */
-	if (!get_apu_ready())
+	if (!chipset_in_state(CHIPSET_STATE_ON) || !get_apu_ready())
 		return;
 
 	if (enable)
