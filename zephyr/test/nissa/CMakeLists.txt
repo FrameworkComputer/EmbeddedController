@@ -142,13 +142,11 @@ if(CONFIG_TEST_NISSA_PIRRHA)
 endif()
 
 if(CONFIG_TEST_NISSA_ANRAGGAR)
-    target_compile_definitions(app PRIVATE CHARGER_PRIMARY=0 CHARGER_SECONDARY=1)
+    zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/nissa/anraggar/include")
+    target_compile_definitions(app PRIVATE CHARGER_PRIMARY=0)
     target_sources(
             app PRIVATE
             src/anraggar.c
-            ${PLATFORM_EC_PROGRAM_DIR}/nissa/anraggar/src/charger.c
-            ${PLATFORM_EC_PROGRAM_DIR}/nissa/anraggar/src/hdmi.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/anraggar/src/keyboard.c
-            ${PLATFORM_EC_PROGRAM_DIR}/nissa/anraggar/src/usbc.c
     )
 endif()

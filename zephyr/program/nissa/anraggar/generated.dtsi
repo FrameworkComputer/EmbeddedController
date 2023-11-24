@@ -30,14 +30,15 @@
 			enum-name = "ADC_TEMP_SENSOR_3";
 			io-channels = <&adc0 13>;
 		};
+		adc_temp_sensor_4: temp_sensor_4 {
+			enum-name = "ADC_TEMP_SENSOR_4";
+			io-channels = <&adc0 15>;
+		};
 	};
 
 	named-gpios {
 		compatible = "named-gpios";
 
-		gpio_acc_int_l: acc_int_l {
-			gpios = <&gpioc 0 GPIO_INPUT>;
-		};
 		gpio_all_sys_pwrgd: all_sys_pwrgd {
 			gpios = <&gpiob 7 GPIO_INPUT>;
 		};
@@ -60,7 +61,6 @@
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 		};
 		gpio_ec_entering_rw: ec_entering_rw {
-			gpios = <&gpioc 7 GPIO_OUTPUT>;
 			enum-name = "GPIO_ENTERING_RW";
 		};
 		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
@@ -104,10 +104,6 @@
 		};
 		gpio_ec_wp_odl: ec_wp_odl {
 			gpios = <&gpioa 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-		};
-		gpio_en_kb_bl: en_kb_bl {
-			gpios = <&gpioj 3 GPIO_OUTPUT>;
-			enum-name = "GPIO_EN_KEYBOARD_BACKLIGHT";
 		};
 		gpio_en_pp3300_s5: en_pp3300_s5 {
 			gpios = <&gpioc 5 GPIO_OUTPUT>;
@@ -206,6 +202,28 @@
 		gpio_volup_btn_odl: volup_btn_odl {
 			gpios = <&gpioi 7 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		gpio_led_1_l: led_1_l {
+			gpios = <&gpioa 0 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_led_2_l: led_2_l {
+			gpios = <&gpioa 1 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_led_3_l: led_3_l {
+			gpios = <&gpioa 2 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_led_4_l: led_4_l {
+			gpios = <&gpioa 3 GPIO_OUTPUT_HIGH>;
+		};
+		/* TODO: need to confirm control logic */
+		gpio_tp_en: tp_en {
+			gpios = <&gpioj 3 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_cam_fw_wp: cam_fw_wp {
+			gpios = <&gpioc 7 GPIO_INPUT>;
+		};
+		gpio_wwan_sar_det_odl: wwan_sar_det_odl {
+			// gpios = <&gpioe 6 GPIO_INPUT>;
 		};
 	};
 

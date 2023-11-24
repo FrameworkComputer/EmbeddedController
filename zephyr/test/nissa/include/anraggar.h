@@ -6,6 +6,6 @@
 #ifndef ZEPHYR_TEST_NISSA_INCLUDE_ANRAGGAR_H_
 #define ZEPHYR_TEST_NISSA_INCLUDE_ANRAGGAR_H_
 
-extern const struct ec_response_keybd_config nereid_kb_legacy;
+extern const struct ec_response_keybd_config anraggar_kb;
 
 #endif /* ZEPHYR_TEST_NISSA_INCLUDE_ANRAGGAR_H_ */

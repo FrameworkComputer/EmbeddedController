@@ -11,8 +11,10 @@
 		/*
 		 * Interrupt bindings for sensor devices.
 		 */
-		bmi3xx-int = &base_accel;
 		bma4xx-int = &lid_accel;
+		bmi3xx-int = &base_accel;
+		lis2dw12-int = &lid_accel;
+		lsm6dsm-int = &base_accel;
 	};
 
 	/*
@@ -41,8 +43,20 @@
 		};
 
 		base_rot_ref: base-rotation-ref {
-			mat33 = <0 1 0
+			mat33 = <1 0 0
+				 0 1 0
+				 0 0 1>;
+		};
+
+		lid_rot_lis2dw12: lid-rotation-ref-lis2dw12 {
+			mat33 = <0 (-1) 0
 				 (-1) 0 0
+				 0 0 (-1)>;
+		};
+
+		base_rot_lsm6dsm: base-rotation-ref-lsm6dsm {
+			mat33 = <0 (-1) 0
+				 1 0 0
 				 0 0 1>;
 		};
 	};
@@ -57,13 +71,27 @@
 	 * "struct als_drv_data_t" in accelgyro.h
 	 */
 	motionsense-sensor-data {
+		bma422_data: bma422-drv-data {
+			compatible = "cros-ec,drvdata-bma4xx";
+			status = "okay";
+		};
+
 		bmi323_data: bmi323-drv-data {
 			compatible = "cros-ec,drvdata-bmi3xx";
 			status = "okay";
 		};
 
-		bma422_data: bma422-drv-data {
-			compatible = "cros-ec,drvdata-bma4xx";
+		lis2dw12_data: lis2dw12-drv-data {
+			compatible = "cros-ec,drvdata-lis2dw12";
+			status = "okay";
+		};
+
+		lsm6dsm_accel_data: lsm6dsm-accel-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dsm";
+			status = "okay";
+		};
+		lsm6dsm_gyro_data: lsm6dsm-gyro-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dsm";
 			status = "okay";
 		};
 	};
@@ -135,6 +163,72 @@
 		};
 	};
 
+	motionsense-sensor-alt {
+		alt_lid_accel: alt-lid-accel {
+			compatible = "cros-ec,lis2dw12";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex>;
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&lid_rot_lis2dw12>;
+			default-range = <2>;
+			drv-data = <&lis2dw12_data>;
+			i2c-spi-addr-flags = "LIS2DWL_ADDR0_FLAGS";
+			alternate-for = <&lid_accel>;
+			alternate-ssfc-indicator = <&lid_sensor_lis2dw12>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
+		alt_base_accel: alt-base-accel {
+			compatible = "cros-ec,lsm6dsm-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&base_rot_lsm6dsm>;
+			drv-data = <&lsm6dsm_accel_data>;
+			alternate-for = <&base_accel>;
+			alternate-ssfc-indicator = <&base_sensor_lsm6dsm>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
+		alt_base_gyro: alt-base-gyro {
+			compatible = "cros-ec,lsm6dsm-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&base_rot_lsm6dsm>;
+			drv-data = <&lsm6dsm_gyro_data>;
+			alternate-for = <&base_gyro>;
+			alternate-ssfc-indicator = <&base_sensor_lsm6dsm>;
+		};
+	};
+
 	motionsense-sensor-info {
 		compatible = "cros-ec,motionsense-sensor-info";
 
@@ -142,6 +236,8 @@
 		 * list of GPIO interrupts that have to
 		 * be enabled at initial stage
 		 */
-		sensor-irqs = <&int_imu &int_lid_imu>;
+		sensor-irqs = <&int_imu>;
+		/* list of sensors in force mode */
+		accel-force-mode-sensors = <&lid_accel>;
 	};
 };

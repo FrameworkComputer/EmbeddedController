@@ -42,7 +42,7 @@
 
 	batteries {
 		default_battery: smp {
-			compatible = "smp,l20m3pg0", "battery-smart";
+			compatible = "smp,c31n2005", "battery-smart";
 		};
 	};
 
@@ -90,12 +90,7 @@
 		int_imu: ec_imu {
 			irq-pin = <&gpio_imu_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "bmi3xx_interrupt";
-		};
-		int_lid_imu: lid_imu {
-			irq-pin = <&gpio_acc_int_l>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "bma4xx_interrupt";
+			handler = "motion_interrupt";
 		};
 		int_usb_c0: usb_c0 {
 			irq-pin = <&gpio_usb_c0_int_odl>;
@@ -148,12 +143,12 @@
 		};
 	};
 
-	temp_memory: memory {
+	temp_cpu_vr: cpu_vr {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 		adc = <&adc_temp_sensor_1>;
 	};
-	temp_charger: charger {
+	temp_cpu: cpu {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 		adc = <&adc_temp_sensor_2>;
@@ -163,35 +158,41 @@
 		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 		adc = <&adc_temp_sensor_3>;
 	};
+	temp_charger: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_4>;
+	};
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		memory {
-			temp_fan_off = <35>;
-			temp_fan_max = <60>;
+		cpu_vr {
 			temp_host_high = <85>;
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
-			sensor = <&temp_memory>;
+			sensor = <&temp_cpu_vr>;
 		};
-		charger {
-			temp_fan_off = <35>;
-			temp_fan_max = <60>;
+		cpu {
 			temp_host_high = <85>;
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
-			sensor = <&temp_charger>;
+			sensor = <&temp_cpu>;
 		};
 		ambient {
-			temp_fan_off = <35>;
-			temp_fan_max = <60>;
 			temp_host_high = <85>;
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_ambient>;
+		};
+		charger {
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_charger>;
 		};
 	};
 
@@ -257,9 +258,6 @@
 	};
 };
 
-&gpio_acc_int_l {
-	gpios = <&gpioc 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-};
 &gpio_imu_int_l {
 	gpios = <&gpioj 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 };
@@ -295,7 +293,8 @@
 		     &adc0_ch2_gpi2_default
 		     &adc0_ch3_gpi3_default
 		     &adc0_ch13_gpl0_default
-		     &adc0_ch14_gpl1_default>;
+		     &adc0_ch14_gpl1_default
+		     &adc0_ch15_gpl2_default>;
 	pinctrl-names = "default";
 };
 

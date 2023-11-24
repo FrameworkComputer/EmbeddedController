@@ -86,6 +86,22 @@ config NISSA_BOARD_HAS_HDMI_SUPPORT
 	  Enable board code for managing the state of hdmi connections
 	  for nissa/src/sub_board.c.
 
+config PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+	bool "Support keyboard customization"
+	help
+	  Enable support for customization keyboard, some boards need to custom matrix
+	  because those board keyboard layout doesn't follow a common matrix.
+
+	  If define, the board layer
+	  needs to implement:
+	  1. the scancode_set2 and keycap_label array
+	  2. keyboard_customization.h which is similar to keyboard_config.h
+
+	  Note that if your board has the standard chromeos keyboard layout other
+	  than the top row, and you are looking only for top row customization,
+	  then you should be looking at overriding board_vivaldi_keybd_config()
+	  instead.
+
 module = NISSA
 module-str = Nissa board-specific code (unit tests)
 source "subsys/logging/Kconfig.template.log_config"
