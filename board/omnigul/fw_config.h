@@ -36,6 +36,21 @@ enum ec_cfg_sar_id { SAR_ID_0 = 0, SAR_ID_1 = 1 };
 
 enum ec_cfg_keyboard_layout { KEYBOARD_DEFAULT = 0, KEYBOARD_ANSI = 1 };
 
+enum ec_cfg_keyboard_numpad {
+	KEYBOARD_NUMPAD_ABSENT = 0,
+	KEYBOARD_NUMPAD_PRESENT = 1
+};
+
+enum ec_cfg_fingerprint_type {
+	FINGERPRINT_DISABLE = 0,
+	FINGERPRINT_ENABLE = 1
+};
+
+enum ec_cfg_thermal_solution_type {
+	OMNIGUL_SOLUTION = 0,
+	OMNIKNIGHT_SOLUTION = 1
+};
+
 union omnigul_cbi_fw_config {
 	struct {
 		enum ec_cfg_keyboard_backlight_type kb_bl : 1;
@@ -44,7 +59,10 @@ union omnigul_cbi_fw_config {
 		enum ec_cfg_audio_type aud : 1;
 		enum ec_cfg_sar_id sar_id : 1;
 		enum ec_cfg_keyboard_layout kb_layout : 2;
-		uint32_t reserved_1 : 24;
+		enum ec_cfg_keyboard_numpad kb_numpd : 1;
+		enum ec_cfg_fingerprint_type fp : 1;
+		enum ec_cfg_thermal_solution_type thermal_solution : 2;
+		uint32_t reserved_1 : 20;
 	};
 	uint32_t raw_value;
 };
