@@ -9,6 +9,7 @@
 #include "hooks.h"
 #include "keyboard_8042_sharedlib.h"
 #include "keyboard_customization.h"
+#include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "timer.h"
 
@@ -45,10 +46,30 @@ static const struct ec_response_keybd_config omnigul_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
+static const struct ec_response_keybd_config omniknight_kb = {
+	.num_top_row_keys = 10,
+	.action_keys = {
+		TK_BACK,		/* T1 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
+		TK_BRIGHTNESS_DOWN,	/* T6 */
+		TK_BRIGHTNESS_UP,	/* T7 */
+		TK_VOL_MUTE,		/* T8 */
+		TK_VOL_DOWN,		/* T9 */
+		TK_VOL_UP,		/* T10 */
+	},
+	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
+};
+
 __override const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void)
 {
-	return &omnigul_kb;
+	if (!ec_cfg_has_keyboard_numpad())
+		return &omnigul_kb;
+	else
+		return &omniknight_kb;
 }
 
 /*
@@ -80,9 +101,22 @@ BUILD_ASSERT(ARRAY_SIZE(vivaldi_keys) == MAX_TOP_ROW_KEYS);
 
 void kb_init(void)
 {
+	set_keyboard_scancode_set2();
+
+	if (!ec_cfg_has_keyboard_numpad()) {
+		/* Disable scanning KSO13 and 14 if keypad isn't present */
+		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);
+	} else {
+		/* Setting scan mask KSO11, KSO12, KSO13 and KSO14 */
+		keyscan_config.actual_key_mask[11] = 0xfe;
+		keyscan_config.actual_key_mask[12] = 0xff;
+		keyscan_config.actual_key_mask[13] = 0xff;
+		keyscan_config.actual_key_mask[14] = 0xff;
+	}
+
 	if (ec_cfg_keyboard_layout() == KEYBOARD_ANSI) {
 		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
 		set_scancode_set2(3, 11, get_scancode_set2(4, 10));
 	}
 }
-DECLARE_HOOK(HOOK_INIT, kb_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, kb_init, HOOK_PRIO_PRE_DEFAULT);

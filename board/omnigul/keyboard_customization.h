@@ -17,8 +17,11 @@
 #undef KEYBOARD_COLS_MAX
 #undef KEYBOARD_ROWS
 
-#define KEYBOARD_COLS_MAX 13
+#define KEYBOARD_COLS_MAX 15
 #define KEYBOARD_ROWS 8
+
+#define KEYBOARD_COLS_NO_KEYPAD 13
+
 #endif
 
 /*
@@ -74,5 +77,7 @@ extern uint8_t keyboard_cols;
 #define KEYBOARD_COL_LEFT_SHIFT 7
 #define KEYBOARD_ROW_LEFT_SHIFT 5
 #define KEYBOARD_MASK_LEFT_SHIFT KEYBOARD_ROW_TO_MASK(KEYBOARD_ROW_LEFT_SHIFT)
+
+void set_keyboard_scancode_set2(void);
 
 #endif /* __KEYBOARD_CUSTOMIZATION_H */
