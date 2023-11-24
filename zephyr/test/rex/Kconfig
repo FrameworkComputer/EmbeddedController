@@ -117,6 +117,11 @@ config TEST_PROGRAM_I2C_POLICY
 	help
 	  Include i2c_policy.c into the binary and test their functions.
 
+config TEST_PROJECT_TOUCH_PANEL
+	bool "Run the tests intended for touch_panel.c"
+	help
+	  Include touch_panel.c into the binary and test their functions.
+
 module = REX
 module-str = Rex board-specific code
 source "subsys/logging/Kconfig.template.log_config"

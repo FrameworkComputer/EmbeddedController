@@ -20,3 +20,7 @@ target_sources_ifdef(CONFIG_TEST_PROJECT_CHARGER app PRIVATE
 target_sources_ifdef(CONFIG_TEST_PROGRAM_I2C_POLICY app PRIVATE src/i2c_policy.c)
 target_sources_ifdef(CONFIG_TEST_PROGRAM_I2C_POLICY app PRIVATE
 	${PLATFORM_EC_PROGRAM_DIR}/rex/karis/src/i2c_policy.c)
+
+target_sources_ifdef(CONFIG_TEST_PROJECT_TOUCH_PANEL app PRIVATE src/touch_panel.c)
+target_sources_ifdef(CONFIG_TEST_PROJECT_TOUCH_PANEL app PRIVATE
+	${PLATFORM_EC_PROGRAM_DIR}/rex/karis/src/touch_panel.c)

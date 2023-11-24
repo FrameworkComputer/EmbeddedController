@@ -173,6 +173,15 @@ tests:
       - CONFIG_TEST_PROGRAM_I2C_POLICY=y
       - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
 
+  rex.karis.touch_panel:
+    extra_dtc_overlay_files:
+      - boards/karis/karis.dtsi
+      - boards/karis/touch.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROJECT_KARIS=y
+      - CONFIG_TEST_PROJECT_TOUCH_PANEL=y
+      - CONFIG_PLATFORM_EC_LID_SWITCH=y
+
   # ISH project tests
   rex.ish:
     extra_dtc_overlay_files:

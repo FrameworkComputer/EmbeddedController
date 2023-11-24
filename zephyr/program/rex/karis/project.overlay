@@ -28,6 +28,7 @@
 		/delete-node/ ec_spare_gpio42;
 		/delete-node/ ec_spare_gpioc7;
 		/delete-node/ ec_spare_gpioa4;
+		/delete-node/ ec_spare_gpiob1;
 		/delete-node/ usb_c1_rst_odl;
 		/delete-node/ usb_c0_rt_rst_ls_l;
 		/delete-node/ led_3_l;
@@ -66,6 +67,16 @@
 			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 			enum-name = "GPIO_KBD_KSO2";
 		};
+		/*
+		 * touch panel enable and soc backlight enable
+		 * to control the touch enable timing
+		 */
+		gpio_ec_touch_en: ec_touch_en {
+			gpios = <&gpiob 1 GPIO_OUTPUT_LOW>;
+		};
+		gpio_soc_3v3_edp_bl_en: soc_3v3_edp_bl_en {
+			gpios = <&gpioc 6 GPIO_INPUT>;
+		};
 	};
 
 	unused-pins {
@@ -93,6 +104,11 @@
 			irq-pin = <&gpio_ec_imu_int_r_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "bma4xx_interrupt";
+		};
+		int_soc_edp_bl_en: soc_edp_bl_en {
+			irq-pin = <&gpio_soc_3v3_edp_bl_en>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "soc_edp_bl_interrupt";
 		};
 	};
 };
