@@ -28,6 +28,7 @@ GPIO_INT(USB_C0_C2_TCPC_INT_ODL,         PIN(E, 0), GPIO_INT_FALLING, tcpc_alert
 GPIO_INT(USB_C0_PPC_INT_ODL,             PIN(6, 2), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C1_PPC_INT_ODL,             PIN(F, 5), GPIO_INT_FALLING, ppc_interrupt)
 GPIO_INT(USB_C1_TCPC_INT_ODL,            PIN(A, 2), GPIO_INT_FALLING, tcpc_alert_event)
+GPIO_INT(PCH_EDP_BL_EN,                  PIN(C, 2), GPIO_INT_BOTH, pch_edp_bl_interrupt)
 
 /* USED GPIOs: */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
@@ -73,6 +74,7 @@ GPIO(USB_C1_OC_ODL,                  PIN(E, 1), GPIO_ODR_HIGH)
 GPIO(VCCST_PWRGD_OD,                 PIN(A, 4), GPIO_ODR_LOW)
 GPIO(LED_1_L,                        PIN(C, 4), GPIO_OUT_HIGH)
 GPIO(LED_2_L,                        PIN(C, 3), GPIO_OUT_HIGH)
+GPIO(EC_TOUCH_EN,                    PIN(8, 3), GPIO_OUT_LOW)
 
 /* UART alternate functions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)              /* GPIO64/CR_SIN1, GPO65/CR_SOUT1/FLPRG1_L */
@@ -117,13 +119,11 @@ UNUSED(PIN(5, 0))
 UNUSED(PIN(5, 7))       /* GPIO57/SER_IRQ/ESPI_ALERT_L */
 UNUSED(PIN(6, 6))       /* GPIO66 */
 UNUSED(PIN(7, 0))
-UNUSED(PIN(8, 3))
 UNUSED(PIN(9, 6))
 UNUSED(PIN(A, 0))
 UNUSED(PIN(A, 7))
 UNUSED(PIN(B, 1))
 UNUSED(PIN(C, 6))
-UNUSED(PIN(C, 2))
 UNUSED(PIN(D, 0))       /* GPIOD0/I2C3_SDA0 */
 UNUSED(PIN(D, 1))       /* GPIOD1/I2C3_SCL0 */
 UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
