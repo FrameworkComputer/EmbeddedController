@@ -21,12 +21,3 @@ add_custom_target(initial_rollback_binary ALL
   DEPENDS rollback_initial
   VERBATIM
 )
-
-add_custom_target(rw_rbver_binary ALL
-  COMMAND ${CMAKE_OBJCOPY} -Obinary --only-section .rw_rbver
-	$<TARGET_OBJECTS:rollback_initial>
-	${CMAKE_BINARY_DIR}/rw_rbver.bin
-  COMMENT "Generating RW_RBVER section content"
-  DEPENDS rollback_initial
-  VERBATIM
-)
