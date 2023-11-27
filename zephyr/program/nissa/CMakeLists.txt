@@ -206,7 +206,7 @@ if(DEFINED CONFIG_BOARD_ANRAGGAR)
 	zephyr_library_sources(
 			"anraggar/src/board.c"
 			"anraggar/src/keyboard.c"
-			"anraggar/src/hdmi.c"
+			"anraggar/src/sub_board.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "anraggar/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "anraggar/src/charger.c")
