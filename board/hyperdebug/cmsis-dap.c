@@ -648,6 +648,22 @@ DECLARE_CONSOLE_COMMAND_FLAGS(jtag, command_jtag, "",
 			      "set-pins <TCLK> <TMS> <TDI> <TDO> <TRSTn>",
 			      CMD_FLAG_RESTRICTED);
 
+static void cmsis_dap_reinit(void)
+{
+	/* Discard any partial requests in the CMSIS-DAP incoming queue. */
+	queue_advance_head(&cmsis_dap_rx_queue,
+			   queue_count(&cmsis_dap_rx_queue));
+	/*
+	 * In case JTAG was enabled in dap_connect(), but not properly disabled
+	 * with dap_disconnect(), the affected GPIO pins will be restored to
+	 * default input setting by hook in `gpio.c`.  In order for next
+	 * dap_connect() to have proper effect, below we record the fact that
+	 * JTAG connection has been disabled.
+	 */
+	jtag_enabled = false;
+}
+DECLARE_HOOK(HOOK_REINIT, cmsis_dap_reinit, HOOK_PRIO_DEFAULT);
+
 /*
  * Declare USB interface for CMSIS-DAP.
  */
