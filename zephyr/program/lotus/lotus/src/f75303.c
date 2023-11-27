@@ -33,13 +33,33 @@ static int raw_read8(int sensor, const int offset, int *data)
 static int get_temp(int sensor, const int offset, int *temp)
 {
 	int rv;
+	int data = 0;
 	int temp_raw = 0;
 
-	rv = raw_read8(sensor, offset, &temp_raw);
+	/* read high byte (1 degree) and low byte (0.125 degree)*/
+	switch (offset) {
+	case F75303_TEMP_LOCAL_REGISTER:
+		rv = raw_read8(sensor, offset, &temp_raw);
+		rv = raw_read8(sensor, F75303_TEMP_LOCAL_LOW_REGISTER, &data);
+		break;
+	case F75303_TEMP_REMOTE1_REGISTER:
+		rv = raw_read8(sensor, offset, &temp_raw);
+		rv = raw_read8(sensor, F75303_TEMP_REMOTE1_LOW_REGISTER, &data);
+		break;
+	case F75303_TEMP_REMOTE2_REGISTER:
+		rv = raw_read8(sensor, offset, &temp_raw);
+		rv = raw_read8(sensor, F75303_TEMP_REMOTE2_LOW_REGISTER, &data);
+		break;
+	default:
+		rv = EC_ERROR_INVAL;
+	}
+
 	if (rv != 0)
 		return rv;
 
-	*temp = CELSIUS_TO_MILLI_KELVIN(temp_raw);
+	temp_raw = (temp_raw * 1000) + ((data >> 4) * 125);
+	*temp = MILLI_CELSIUS_TO_MILLI_KELVIN(temp_raw);
+
 	return EC_SUCCESS;
 }
 
