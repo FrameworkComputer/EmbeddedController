@@ -433,7 +433,6 @@ static void dap_jtag_sequence(size_t peek_c)
 {
 	if (peek_c < 3)
 		return;
-	unsigned int tdo_cnt = 0;
 	int c = queue_count(&cmsis_dap_rx_queue);
 
 	/* Check whether a complete request is in queue. */
@@ -492,6 +491,7 @@ static void dap_jtag_sequence(size_t peek_c)
 	 * during this sequence, and whether to record TDO during this sequence.
 	 */
 	const uint8_t *ptr = rx_buffer + 2;
+	uint8_t *tx_ptr = tx_buffer + 2;
 	const uint8_t *const end = rx_buffer + offset;
 	while (ptr < end) {
 		/* Consume and decode header byte for this one "sequence". */
@@ -513,9 +513,7 @@ static void dap_jtag_sequence(size_t peek_c)
 			*jtag_clk_bsrr = jtag_clk_mask_set;
 			uint32_t tdo_val = !!(*jtag_tdo_idr & jtag_tdo_mask);
 			if (capture_tdo) {
-				tx_buffer[2 + tdo_cnt / 8] |= tdo_val
-							      << (tdo_cnt % 8);
-				tdo_cnt++;
+				tx_ptr[i / 8] |= tdo_val << (i % 8);
 			} else {
 				/*
 				 * Spend time comparable to memory access above.
@@ -526,18 +524,19 @@ static void dap_jtag_sequence(size_t peek_c)
 				 * bits, that is, into the bit range that was
 				 * already zero'ed by memset().
 				 */
-				tx_buffer[2 + tdo_cnt / 8] &=
-					~(0xFF << (tdo_cnt % 8));
+				tx_ptr[i / 8] &= ~(0xFF << (i % 8));
 			}
 			half_clock_delay();
 			*jtag_clk_bsrr = jtag_clk_mask_clear;
 		}
 		/* Consume the data bytes of this one "sequence". */
 		ptr += (bit_count + 7) / 8;
+		if (capture_tdo)
+			tx_ptr += (bit_count + 7) / 8;
 	}
 
 	tx_buffer[1] = STATUS_Ok;
-	queue_add_units(&cmsis_dap_tx_queue, tx_buffer, 2 + (tdo_cnt + 7) / 8);
+	queue_add_units(&cmsis_dap_tx_queue, tx_buffer, tx_ptr - tx_buffer);
 }
 
 /* Vendor command (HyperDebug): Discover Google-specific capabilities. */
