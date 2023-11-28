@@ -29,6 +29,9 @@ macro reset
     # sysbus LoadSymbolsFrom $elf_rw
     cpu FpuEnabled true
     cpu PC 0x0
+    # Set the image type of currently loaded image to RO by default. Software will
+    # update the flag while jumping between image types.
+    image_type WriteByte 0x0 0x40
 """
 
 runMacro $reset

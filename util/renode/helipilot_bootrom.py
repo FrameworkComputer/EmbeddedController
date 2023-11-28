@@ -8,6 +8,17 @@ import ctypes
 from Antmicro.Renode.Peripherals.CPU import RegisterValue
 
 
+try:
+    # The additional CLR reference is required on dotnet
+    clr.AddReference("System.Security.Cryptography.Algorithms")
+except:
+    pass
+
+from System.Security.Cryptography import SHA256
+from System.Security.Cryptography import SHA384
+from System.Security.Cryptography import SHA512
+
+
 def register_bootrom_hook(addr, func):
     self.Machine["sysbus.cpu"].AddHook(addr, func)
     # Fill the bootrom's function pointer entry with the address that the hook is registered to.
@@ -59,16 +70,24 @@ def register_bootloader():
     register_bootrom_hook(0x0, bootloader)
 
 
-# Based on: https://chromium.googlesource.com/chromiumos/platform/ec/+/6898a6542ed0238cc182948f56e3811534db1a38/chip/npcx/trng.c
-def register_trng_functions():
+# Based on:
+# - https://chromium.googlesource.com/chromiumos/platform/ec/+/6898a6542ed0238cc182948f56e3811534db1a38/chip/npcx/trng.c
+# - https://chromium.googlesource.com/chromiumos/platform/ec/+/6898a6542ed0238cc182948f56e3811534db1a38/chip/npcx/sha256_chip.c
+def register_ncl_functions():
     DRGB_BASE_ADDRESS = 0x00000110
-    SHA_BASE_ADDRESS = 0x0000015C
+    SHA_BASE_ADDRESS = 0x0000013C
 
     POINTER_SIZE = 0x4
 
     DRBG_CONTEXT_SIZE = 240
 
     NCL_STATUS_OK = 0xA5A5
+    NCL_STATUS_FAIL = (0x5A5A,)
+    NCL_STATUS_INVALID_PARAM = (0x02,)
+
+    NCL_SHA_TYPE_2_256 = 0
+    NCL_SHA_TYPE_2_384 = 1
+    NCL_SHA_TYPE_2_512 = 2
 
     def create_hook(name, return_value=NCL_STATUS_OK):
         def hook(cpu, addr):
@@ -80,6 +99,19 @@ def register_trng_functions():
 
         return hook
 
+    rng = Antmicro.Renode.Core.PseudorandomNumberGenerator()
+
+    def trng_generate(cpu, addr):
+        out_buff = cpu.GetRegisterUnsafe(3).RawValue
+        out_buff_len = self.Machine.SystemBus.ReadDoubleWord(cpu.SP.RawValue)
+
+        data = System.Array[System.Byte](range(out_buff_len))
+        rng.NextBytes(data)
+        self.Machine.SystemBus.WriteBytes(data, out_buff)
+
+        cpu.SetRegisterUnsafe(0, RegisterValue.Create(NCL_STATUS_OK, 32))
+        cpu.PC = cpu.LR
+
     DRGB_FUNCTIONS = [
         create_hook("get_context_size", DRBG_CONTEXT_SIZE),
         create_hook("init_context"),
@@ -90,12 +122,76 @@ def register_trng_functions():
         create_hook("instantiate"),
         create_hook("uninstantiate"),
         create_hook("reseed"),
-        create_hook("generate"),
+        trng_generate,
         create_hook("clear"),
     ]
 
+    class SHAContext:
+        sha_buffer = System.Collections.Generic.List[System.Byte]()
+        sha_type = None
+
+    def sha_start(cpu, addr):
+        status = NCL_STATUS_OK
+        sha_type = cpu.GetRegisterUnsafe(1).RawValue
+        if sha_type in [
+            NCL_SHA_TYPE_2_256,
+            NCL_SHA_TYPE_2_384,
+            NCL_SHA_TYPE_2_512,
+        ]:
+            SHAContext.sha_type = sha_type
+        else:
+            status = NCL_STATUS_INVALID_PARAM
+        cpu.SetRegisterUnsafe(0, RegisterValue.Create(status, 32))
+        cpu.PC = cpu.LR
+
+    def sha_finish(cpu, addr):
+        try:
+            if SHAContext.sha_type == NCL_SHA_TYPE_2_256:
+                sha_instance = SHA256.Create()
+            elif SHAContext.sha_type == NCL_SHA_TYPE_2_384:
+                sha_instance = SHA384.Create()
+            elif SHAContext.sha_type == NCL_SHA_TYPE_2_512:
+                sha_instance = SHA512.Create()
+            else:
+                cpu.SetRegisterUnsafe(
+                    0, RegisterValue.Create(NCL_STATUS_FAIL, 32)
+                )
+                cpu.PC = cpu.LR
+                return
+
+            hash = sha_instance.ComputeHash(SHAContext.sha_buffer.ToArray())
+            SHAContext.sha_buffer.Clear()
+
+            data_addr = cpu.GetRegisterUnsafe(1).RawValue
+            self.Machine.SystemBus.WriteBytes(hash, data_addr)
+
+            cpu.SetRegisterUnsafe(0, RegisterValue.Create(NCL_STATUS_OK, 32))
+            cpu.PC = cpu.LR
+        finally:
+            if sha_instance is not None:
+                sha_instance.Dispose()
+
+    def sha_update(cpu, addr):
+        data_addr = cpu.GetRegisterUnsafe(1).RawValue
+        length = cpu.GetRegisterUnsafe(2).RawValue
+        data = self.Machine.SystemBus.ReadBytes(data_addr, length)
+
+        SHAContext.sha_buffer.AddRange(data)
+
+        cpu.SetRegisterUnsafe(0, RegisterValue.Create(NCL_STATUS_OK, 32))
+        cpu.PC = cpu.LR
+
     SHA_FUNCTIONS = [
-        create_hook("ncl_sha"),
+        create_hook("get_context_size"),
+        create_hook("init_context"),
+        create_hook("finalize_context"),
+        create_hook("init"),
+        sha_start,
+        sha_update,
+        sha_finish,
+        create_hook("calc"),
+        create_hook("power"),
+        create_hook("reset"),
     ]
 
     for base, collection in [
@@ -106,6 +202,31 @@ def register_trng_functions():
             register_bootrom_hook(base + i * POINTER_SIZE, func)
 
 
+# Based on: https://chromium.googlesource.com/chromiumos/platform/ec/+/6898a6542ed0238cc182948f56e3811534db1a38/chip/npcx/rom_chip.h
+def register_download_from_flash():
+    def download_from_flash(cpu, addr):
+        src_offset = cpu.GetRegisterUnsafe(0).RawValue
+        dest_addr = cpu.GetRegisterUnsafe(1).RawValue
+        size = cpu.GetRegisterUnsafe(2).RawValue
+        exe_addr = self.Machine.SystemBus.ReadDoubleWord(cpu.SP.RawValue)
+
+        data = self.Machine["sysbus.internal_flash"].ReadBytes(src_offset, size)
+        self.Machine.SystemBus.WriteBytes(data, dest_addr)
+
+        cpu.PC = RegisterValue.Create(exe_addr, 32)
+
+        cpu.InfoLog(
+            "Downloading from flash offset 0x{0:X} to 0x{1:X} ({2} bytes) and jumping to 0x{3:X}",
+            src_offset,
+            dest_addr,
+            size,
+            exe_addr,
+        )
+
+    register_bootrom_hook(0x40, download_from_flash)
+
+
 def mc_register_bootrom_functions():
     register_bootloader()
-    register_trng_functions()
+    register_ncl_functions()
+    register_download_from_flash()

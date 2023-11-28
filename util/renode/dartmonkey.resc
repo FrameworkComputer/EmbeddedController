@@ -27,7 +27,7 @@ macro reset
     sysbus LoadBinary $bin 0x08000000
     sysbus LoadSymbolsFrom $elf_ro
     sysbus LoadSymbolsFrom $elf_rw
-    cpu PC 0x80002ed
+    cpu VectorTableOffset 0x8000000
 """
 
 runMacro $reset

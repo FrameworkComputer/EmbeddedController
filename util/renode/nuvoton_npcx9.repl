@@ -35,7 +35,43 @@ internal_flash: Memory.MappedMemory @ sysbus 0x64000000
     size: 0x100000
 
 cr_uart1: UART.NPCX_UART @ sysbus 0x400E0000
-    ->nvic@33
+    -> nvic@33
+
+cr_uart2: UART.NPCX_UART @ sysbus 0x400E2000
+    -> nvic@32
+
+cr_uart3: UART.NPCX_UART @ sysbus 0x400E4000
+    -> nvic@38
+
+cr_uart4: UART.NPCX_UART @ sysbus 0x400E6000
+    -> nvic@39
+
+itim32_1: Timers.NPCX_ITIM32 @ sysbus 0x400B0000
+    apb2Frequency: 1000000
+    -> nvic@28
+
+itim32_2: Timers.NPCX_ITIM32 @ sysbus 0x400B2000
+    apb2Frequency: 1000000
+    -> nvic@27
+
+itim32_3: Timers.NPCX_ITIM32 @ sysbus 0x400B4000
+    apb2Frequency: 1000000
+    -> nvic@17
+
+itim32_4: Timers.NPCX_ITIM32 @ sysbus 0x400B6000
+    apb2Frequency: 1000000
+    -> nvic@43
+
+itim32_5: Timers.NPCX_ITIM32 @ sysbus 0x400B8000
+    apb2Frequency: 1000000
+    -> nvic@44
+
+itim32_6: Timers.NPCX_ITIM32 @ sysbus 0x400BA000
+    apb2Frequency: 1000000
+    -> nvic@45
+
+image_type: Memory.ArrayMemory @ sysbus 0x4000C009
+    size: 0x1
 
 sysbus:
     init:
@@ -73,12 +109,6 @@ sysbus:
         Tag <0x400E1000 0x100> "MTF16-1"
         Tag <0x400E3000 0x100> "MTF16-2"
         Tag <0x400E5000 0x100> "MTF16-3"
-        Tag <0x400B0000 0x100> "ITIM32-1"
-        Tag <0x400B2000 0x100> "ITIM32-2"
-        Tag <0x400B4000 0x100> "ITIM32-3"
-        Tag <0x400B6000 0x100> "ITIM32-4"
-        Tag <0x400B8000 0x100> "ITIM32-5"
-        Tag <0x400BA000 0x100> "ITIM32-6"
         Tag <0x400BE000 0x100> "ITIM64"
         Tag <0x400B7000 0x100> "MTC"
         Tag <0x400D7000 0x100> "LTC"
@@ -90,9 +120,6 @@ sysbus:
         Tag <0x4008A000 0x100> "PWM5"
         Tag <0x4008C000 0x100> "PWM6"
         Tag <0x4008E000 0x100> "PWM7"
-        Tag <0x400E2000 0x100> "CR_UART2"
-        Tag <0x400E4000 0x100> "CR_UART3"
-        Tag <0x400E6000 0x100> "CR_UART4"
         Tag <0x400D8000 0x100> "TWD"
         Tag <0x400D1000 0x100> "ADC"
         Tag <0x40009000 0x100> "SMBUS0"
