@@ -116,3 +116,7 @@
 			<&gpiod 0 0>;
 		};
 };
+
+/* The eSPI shim requires this GPIO nodelabel */
+gpio_ec_pch_wake_odl: &gpio_sen_mode1_ec_pch_wake_odl {
+};

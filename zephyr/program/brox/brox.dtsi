@@ -33,3 +33,7 @@
 		     &uart2_tx_gpf1_default>;
 	pinctrl-names = "default";
 };
+
+&espi0 {
+	status = "okay";
+};
