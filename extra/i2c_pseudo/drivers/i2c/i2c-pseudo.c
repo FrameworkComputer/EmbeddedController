@@ -331,8 +331,8 @@ static inline long i2cp_set_functionality(u32 functionality,
 {
 	if ((functionality & I2C_FUNC_I2C) != I2C_FUNC_I2C ||
 	    (functionality &
-	     ~(I2C_FUNC_I2C | I2C_FUNC_SMBUS_EMUL | I2C_FUNC_10BIT_ADDR |
-	       I2C_FUNC_PROTOCOL_MANGLING | I2C_FUNC_SLAVE)))
+	     ~(I2C_FUNC_I2C | I2C_FUNC_10BIT_ADDR | I2C_FUNC_PROTOCOL_MANGLING |
+	       I2C_FUNC_SMBUS_EMUL)))
 		return -EINVAL;
 	pdata->functionality = functionality;
 	return 0;
@@ -844,7 +844,7 @@ MODULE_DESCRIPTION("Driver for userspace I2C adapters");
 MODULE_LICENSE("GPL");
 /* TODO: upstream patch: remove comment about dkms.conf */
 /* Keep dkms.conf PACKAGE_VERSION in sync with this. */
-MODULE_VERSION("2.0");
+MODULE_VERSION("2.1");
 
 module_init(i2cp_init);
 module_exit(i2cp_exit);
