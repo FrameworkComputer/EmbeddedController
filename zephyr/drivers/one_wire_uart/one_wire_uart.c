@@ -314,10 +314,11 @@ test_export_static void process_rx_fifo(const struct device *dev)
 
 				if (msg.header.reset) {
 					one_wire_uart_reset(dev);
+				} else {
+					k_msgq_put(rx_queue, &msg, K_NO_WAIT);
+					hook_call_deferred(&process_packet_data,
+							   0);
 				}
-
-				k_msgq_put(rx_queue, &msg, K_NO_WAIT);
-				hook_call_deferred(&process_packet_data, 0);
 
 				gen_ack_response(dev, &ack_resp, msg_id);
 				ring_buf_put(tx_ring_buf, (uint8_t *)&ack_resp,
