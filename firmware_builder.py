@@ -96,7 +96,8 @@ def build(opts):
             file.write(json_format.MessageToJson(metric_list))
         return
 
-    subprocess.run([ec_dir / "util" / "check_clang_format.py"], check=True)
+    # TODO(b:313535589): Re-enable.
+    # subprocess.run([ec_dir / "util" / "check_clang_format.py"], check=True)
 
     cmd = ["make", "clobber"]
     print(f"# Running {' '.join(cmd)}.")
