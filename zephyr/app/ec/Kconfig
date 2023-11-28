@@ -201,4 +201,14 @@ config SHELL_HELP
 
 config KERNEL_SHELL
   default y
+
+config EEPROM_SHELL
+	default y if EEPROM
+
+config PWM_SHELL
+	default y if PWM
+
+config WDT_SHELL
+	default y if WATCHDOG
+
 endif # CROS_EC
