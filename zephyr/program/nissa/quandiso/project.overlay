@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "../shi.dtsi"
+#include "../ite_espi.dtsi"
 
 #include "cbi.dtsi"
 #include "fan.dtsi"
