@@ -34,10 +34,10 @@ for non-blocking behavior. Other ioctl commands are unaffected by ``O_NONBLOCK``
 and never block indefinitely.
 
 Polling is supported, in blocking or non-blocking mode. ``EPOLLIN`` indicates an
-I2C transaction is available for ``I2CP_IOCTL_XFER_REQ``. ``EPOLLOUT`` indicates
-``I2CP_IOCTL_XFER_REPLY`` will not block, which is always the case and so is
-never worth polling for. ``EPOLLHUP`` indicates ``I2CP_IOCTL_SHUTDOWN`` has been
-called.
+I2C transfer is available for ``I2CP_IOCTL_XFER_REQ``. ``EPOLLOUT`` indicates an
+I2C transfer is waiting for ``I2CP_IOCTL_XFER_REPLY``, which is always the case
+immediately after successful ``I2CP_IOCTL_XFER_REQ`` and so is never worth
+polling for. ``EPOLLHUP`` indicates ``I2CP_IOCTL_SHUTDOWN`` has been called.
 
 While polling is fully functional in blocking mode, it cannot be used to avoid
 blocking. If a pending I2C transaction request times out between receiving

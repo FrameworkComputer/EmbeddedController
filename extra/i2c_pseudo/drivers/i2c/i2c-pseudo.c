@@ -556,6 +556,8 @@ check_xfer_state:
 	if (ret >= 0) {
 		WRITE_ONCE(pdata->xfer_state, I2CP_STATE_WAIT_FOR_REPLY);
 		wake_up_interruptible_sync(&pdata->state_wait_queue);
+		wake_up_interruptible_sync_poll(&pdata->poll_wait_queue,
+						EPOLLOUT);
 	}
 
 unlock:
@@ -693,11 +695,12 @@ static long i2cp_cdev_unlocked_ioctl(struct file *filep, unsigned int cmd,
 
 /*
  * EPOLLIN indicates xfer request waiting for I2CP_IOCTL_XFER_REQ. This is what
- * pollers will normally want to wait for.
+ * pollers will normally wait for in conjunction with O_NONBLOCK.
  *
- * EPOLLOUT indicates I2CP_IOCTL_XFER_REPLY will not block, which is always the
- * case. Waiting for this before I2CP_IOCTL_XFER_REPLY is functionally safe but
- * completely unnecessary.
+ * EPOLLOUT indicates xfer request waiting for I2CP_IOCTL_XFER_REPLY. This is
+ * is always the case immediately after successful I2CP_IOCTL_XFER_REQ, so
+ * polling for this is unnecessary, it is safe and recommended to call
+ * I2CP_IOCTL_XFER_REPLY as soon as a reply is ready.
  *
  * EPOLLHUP indicates I2CP_IOCTL_SHUTDOWN was called.
  */
@@ -712,14 +715,17 @@ static __poll_t i2cp_cdev_poll(struct file *filep, poll_table *ptp)
 	mutex_lock(&pdata->xfer_lock);
 	switch (pdata->xfer_state) {
 	case I2CP_STATE_WAIT_FOR_REQ:
-		poll_ret = EPOLLOUT | EPOLLIN;
+		poll_ret = EPOLLIN;
+		break;
+	case I2CP_STATE_WAIT_FOR_REPLY:
+		poll_ret = EPOLLOUT;
 		break;
 	case I2CP_STATE_RETURN_THEN_SHUTDOWN:
 	case I2CP_STATE_SHUTDOWN:
-		poll_ret = EPOLLOUT | EPOLLHUP;
+		poll_ret = EPOLLHUP;
 		break;
 	default:
-		poll_ret = EPOLLOUT;
+		poll_ret = 0;
 	}
 	mutex_unlock(&pdata->xfer_lock);
 
@@ -844,7 +850,7 @@ MODULE_DESCRIPTION("Driver for userspace I2C adapters");
 MODULE_LICENSE("GPL");
 /* TODO: upstream patch: remove comment about dkms.conf */
 /* Keep dkms.conf PACKAGE_VERSION in sync with this. */
-MODULE_VERSION("2.1");
+MODULE_VERSION("2.2");
 
 module_init(i2cp_init);
 module_exit(i2cp_exit);
