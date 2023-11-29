@@ -5,7 +5,6 @@
 #include <zephyr/drivers/gpio.h>
 
 #include "battery.h"
-#include "battery_fuel_gauge.h"
 #include "board_adc.h"
 #include "board_charger.h"
 #include "charger.h"
@@ -201,9 +200,9 @@ int update_charger_in_cutoff_mode(void)
 
 static void charger_chips_init(void)
 {
-	uint16_t val = 0x0000; /* default ac setting */
+	int chip;
+	uint16_t val = 0x0000; /*default ac setting */
 	uint32_t data = 0;
-	int value;
 
 	const struct battery_info *bi = battery_get_info();
 
@@ -218,57 +217,21 @@ static void charger_chips_init(void)
 		return;
 	}
 
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL4, ISL9241_CONTROL4_WOCP_FUNCTION |
-		ISL9241_CONTROL4_VSYS_SHORT_CHECK |
-		ISL9241_CONTROL4_ACOK_BATGONE_DEBOUNCE_25US))
-		goto init_fail;
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL3,
-		(ISL9241_CONTROL3_ACLIM_RELOAD | ISL9241_CONTROL3_BATGONE)))
-		goto init_fail;
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_OTG_VOLTAGE, 0x0000))
-		goto init_fail;
-
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_OTG_CURRENT, 0x0000))
-		goto init_fail;
-
-	value = battery_is_charge_fet_disabled();
-
-	/* reverse the flag if no error */
-	if (value != -1)
-		value = !value;
-
-	/* According to Power team suggest, Set ACOK reference to 4.500V */
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4500)))
-		goto init_fail;
-
-	/*
-	 * Set the MaxSystemVoltage to battery maximum,
-	 * 0x00=disables switching charger states
-	 */
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_MAX_SYSTEM_VOLTAGE, bi->voltage_max))
-		goto init_fail;
-
-	/*
-	 * Set the MinSystemVoltage to battery minimum,
-	 * 0x00=disables all battery charging
-	 */
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_MIN_SYSTEM_VOLTAGE, bi->voltage_min))
-		goto init_fail;
+	for (chip = 0; chip < board_get_charger_chip_count(); chip++) {
+		if (chg_chips[chip].drv->init)
+			chg_chips[chip].drv->init(chip);
+	}
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL2,
 		ISL9241_CONTROL2_TRICKLE_CHG_CURR(bi->precharge_current) |
 		ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR |
 		ISL9241_CONTROL2_PROCHOT_DEBOUNCE_500))
+		goto init_fail;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL3,
+		(ISL9241_CONTROL3_ACLIM_RELOAD | ISL9241_CONTROL3_BATGONE)))
 		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
@@ -281,6 +244,25 @@ static void charger_chips_init(void)
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL1, val))
+		goto init_fail;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL4, ISL9241_CONTROL4_WOCP_FUNCTION |
+		ISL9241_CONTROL4_VSYS_SHORT_CHECK |
+		ISL9241_CONTROL4_ACOK_BATGONE_DEBOUNCE_25US))
+		goto init_fail;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_OTG_VOLTAGE, 0x0000))
+		goto init_fail;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_OTG_CURRENT, 0x0000))
+		goto init_fail;
+
+	/* According to Power team suggest, Set ACOK reference to 4.500V */
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4500)))
 		goto init_fail;
 
 	board_charger_lpm_control();
