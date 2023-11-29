@@ -6,6 +6,7 @@
 #include "fpsensor/fpsensor.h"
 #include "fpsensor/fpsensor_state.h"
 #include "fpsensor/fpsensor_utils.h"
+#include "timer.h"
 
 #include <stddef.h>
 #if defined(CONFIG_FP_SENSOR_FPC1025) || defined(CONFIG_FP_SENSOR_FPC1035)
