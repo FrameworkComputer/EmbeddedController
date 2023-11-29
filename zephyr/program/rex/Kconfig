@@ -18,6 +18,7 @@ config BOARD_SCREEBO
 
 config BOARD_KARIS
 	bool "Google Karis Board"
+	select BOARD_HAS_INVALID_CHIP_DEVICE_ID_WORKAROUND
 	help
 	  Build Google Karis variant board. The board uses Nuvoton
 	  NPCX9 chip as the EC.
