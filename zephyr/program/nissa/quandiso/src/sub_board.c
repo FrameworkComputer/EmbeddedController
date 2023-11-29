@@ -50,19 +50,19 @@ enum quandiso_sub_board_type quandiso_get_sb_type(void)
 	switch (val) {
 	case FW_SUB_BOARD_1:
 		quandiso_cached_sub_board = QUANDISO_SB_ABSENT;
-		LOG_INF("SB: Absent");
+		LOG_INF("SubBoard: Absent");
 		break;
 	case FW_SUB_BOARD_2:
 		quandiso_cached_sub_board = QUANDISO_SB_C_A;
-		LOG_INF("SB: USB type C, USB type A");
+		LOG_INF("SubBoard: USB type C, USB type A");
 		break;
 	case FW_SUB_BOARD_3:
-		quandiso_cached_sub_board = QUANDISO_SB_C_A;
-		LOG_INF("SB: Only USB type C");
+		quandiso_cached_sub_board = QUANDISO_SB_LTE;
+		LOG_INF("SubBoard: Only LTE");
 		break;
 	case FW_SUB_BOARD_4:
 		quandiso_cached_sub_board = QUANDISO_SB_C_LTE;
-		LOG_INF("SB: USB type C + LTE");
+		LOG_INF("SubBoard: USB type C + LTE");
 		break;
 	default:
 		break;
@@ -78,6 +78,7 @@ test_export_static void board_usb_pd_count_init(void)
 {
 	switch (quandiso_get_sb_type()) {
 	case QUANDISO_SB_ABSENT:
+	case QUANDISO_SB_LTE:
 		cached_usb_pd_port_count = 1;
 		break;
 	default:
@@ -95,11 +96,14 @@ DECLARE_HOOK(HOOK_INIT, board_usb_pd_count_init, HOOK_PRIO_INIT_I2C);
  */
 static void quandiso_subboard_config(void)
 {
-	enum quandiso_sub_board_type sb = quandiso_get_sb_type();
-
-	if (sb == QUANDISO_SB_ABSENT) {
+	switch (quandiso_get_sb_type()) {
+	case QUANDISO_SB_ABSENT:
+	case QUANDISO_SB_LTE:
 		/* Port doesn't exist, doesn't need muxing */
 		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_chain_1_no_mux);
+		break;
+	default:
+		break;
 	}
 }
 DECLARE_HOOK(HOOK_INIT, quandiso_subboard_config, HOOK_PRIO_POST_FIRST);
