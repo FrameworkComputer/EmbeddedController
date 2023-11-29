@@ -17,6 +17,7 @@
 #include "host_command.h"
 #include "host_command_heci.h"
 #include "hwtimer.h"
+#include "keyboard_config.h"
 #include "link_defs.h"
 #include "mkbp_event.h"
 #include "mkbp_fifo.h"
@@ -425,11 +426,12 @@ static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 {
 	static int last;
 	int i, evt;
-	struct ec_response_get_next_event *r = args->response;
+	struct ec_response_get_next_event_v1 *r = args->response;
 	const struct mkbp_event_source *src;
 
 	int data_size = -EC_ERROR_BUSY;
 
+	memset(args->response, 0, args->response_max);
 	do {
 		/*
 		 * Find the next event to service.  We do this in a round-robin
@@ -472,6 +474,16 @@ static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 			mutex_unlock(&state.lock);
 		}
 	} while (data_size == -EC_ERROR_BUSY);
+
+	/* Drop last 3 columns if we send a key matrix with numpad to a v0
+	 * request.
+	 */
+	if (r->event_type == EC_MKBP_EVENT_KEY_MATRIX && args->version == 0) {
+		size_t max_size = member_size(union ec_response_get_next_data,
+					      key_matrix);
+
+		data_size = MIN(data_size, max_size);
+	}
 
 	/* If there are no more events and we support the "more" flag, set it */
 	if (!set_inactive_if_no_events() && args->version >= 2)
