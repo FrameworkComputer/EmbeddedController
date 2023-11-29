@@ -19,6 +19,7 @@ source "subsys/logging/Kconfig.template.log_config"
 
 config AP_PWRSEQ_DRIVER
 	bool "AP Power sequencing driver support"
+	default y
 	select SMF
 	select SMF_ANCESTOR_SUPPORT
 	select EVENTS
@@ -26,6 +27,10 @@ config AP_PWRSEQ_DRIVER
 	  AP power sequence driver establishes an underlaying framework to
 	  easily add or extend AP Power Sequence action handler routines, it is
 	  designed to follow the zephyr's State Machine Framework (SMF).
+
+	  This version of power sequencing offers improved APIs when compared
+	  to the alternatives and is meant to be the long-term default
+	  solution. If in doubt, leave it enabled.
 
 config AP_PWRSEQ_POWER_SIGNALS
 	bool
