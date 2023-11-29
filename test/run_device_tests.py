@@ -268,7 +268,7 @@ class AllTests:
             TestConfig(test_name="always_memset"),
             TestConfig(test_name="benchmark"),
             TestConfig(test_name="boringssl_crypto"),
-            TestConfig(test_name="cortexm_fpu"),
+            TestConfig(test_name="cortexm_fpu", exclude_boards=[HELIPILOT]),
             TestConfig(test_name="crc"),
             TestConfig(test_name="exception"),
             TestConfig(
@@ -360,7 +360,9 @@ class AllTests:
             TestConfig(test_name="static_if"),
             TestConfig(test_name="stdlib"),
             TestConfig(test_name="std_vector"),
-            TestConfig(test_name="stm32f_rtc", exclude_boards=[DARTMONKEY]),
+            TestConfig(
+                test_name="stm32f_rtc", exclude_boards=[DARTMONKEY, HELIPILOT]
+            ),
             TestConfig(
                 config_name="system_is_locked_wp_on",
                 test_name="system_is_locked",

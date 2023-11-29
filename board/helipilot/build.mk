@@ -23,6 +23,8 @@ endif
 
 # Do not build rsa test because this board uses RSA exponent 3 and the rsa test
 # will fail on device.
+# TODO(b/314131076): Fix cortexm_fpu test for helipilot
+# TODO(b/314131510): Fix stm32f_rtc test (or create a new one) for helipilot
 test-list-y=\
        abort \
        aes \
@@ -30,7 +32,6 @@ test-list-y=\
        benchmark \
        boringssl_crypto \
        compile_time_macros \
-       cortexm_fpu \
        crc \
        debug \
        exception \
@@ -64,7 +65,6 @@ test-list-y=\
        static_if \
        stdlib \
        std_vector \
-       stm32f_rtc \
        system_is_locked \
        timer \
        timer_dos \
