@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "battery_fuel_gauge.h"
 #include "button.h"
 #include "cbi.h"
 #include "charge_ramp.h"
@@ -23,6 +24,7 @@
 #include "tablet_mode.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
+#include "util.h"
 
 /* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
@@ -55,3 +57,15 @@ static void board_chipset_suspend(void)
 		gpio_set_level(GPIO_EC_KB_BL_EN_L, 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, board_chipset_suspend, HOOK_PRIO_DEFAULT);
+
+__override int board_get_leave_safe_mode_delay_ms(void)
+{
+	const struct batt_conf_embed *batt = get_batt_conf();
+
+	/* If it's COSMX battery, there's need more delay time. */
+	if (!strcasecmp(batt->manuf_name, "COSMX KT0030B002") ||
+	    !strcasecmp(batt->manuf_name, "COSMX KT0030B004"))
+		return 2000;
+	else
+		return 500;
+}
