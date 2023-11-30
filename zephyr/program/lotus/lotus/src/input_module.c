@@ -7,6 +7,7 @@
 #include <zephyr/init.h>
 #include "gpio/gpio_int.h"
 #include "board_host_command.h"
+#include "chipset.h"
 #include "console.h"
 #include "extpower.h"
 #include "gpio.h"
@@ -20,10 +21,12 @@
 
 #include "board_adc.h"
 #include "flash_storage.h"
+#include "lid_switch.h"
+#include "hid_device.h"
 
 LOG_MODULE_REGISTER(inputmodule, LOG_LEVEL_INF);
-
-#define INPUT_MODULE_POWER_ON_DELAY (2)
+#define INPUT_MODULE_POLL_INTERVAL 10*MSEC
+#define INPUT_MODULE_POWER_ON_DELAY (300*MSEC)
 #define INPUT_MODULE_MUX_DELAY_US 2
 
 int oc_count;
@@ -89,8 +92,10 @@ static void board_input_module_init(void)
 		deck_state = DECK_FORCE_ON;
 	else if (detect_mode == 0x04)
 		deck_state = DECK_FORCE_OFF;
-	else
+	else {
+		hid_target_register(DEVICE_DT_GET(DT_NODELABEL(i2chid2)));
 		deck_state = DECK_OFF;
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_input_module_init, HOOK_PRIO_DEFAULT + 2);
 
@@ -128,15 +133,42 @@ bool input_deck_is_fully_populated(void)
 	return true;
 }
 
+/* Make sure the inputdeck is sleeping when lid is closed */
+static void inputdeck_lid_change(void)
+{
+	/* If suspend or off we don't want to turn on input module LEDs even if the lid is open */
+	if (!chipset_in_state(CHIPSET_STATE_ON))
+		return;
+
+	if (lid_is_open()) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 1);
+	} else {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sleep_l), 0);
+	}
+
+}
+DECLARE_HOOK(HOOK_LID_CHANGE, inputdeck_lid_change, HOOK_PRIO_DEFAULT);
+
+
+static void poll_c_deck(void);
+DECLARE_DEFERRED(poll_c_deck);
 static void poll_c_deck(void)
 {
 	static int turning_on_count;
-	
+	static int current_adc_ch = 0;
+
+	hub_board_id[current_adc_ch] = get_hardware_id(ADC_HUB_BOARD_ID);
+	current_adc_ch = (current_adc_ch + 1) % 8;
+	set_hub_mux(current_adc_ch);
+
+	if (current_adc_ch != 0) {
+		hook_call_deferred(&poll_c_deck_data, INPUT_MODULE_POLL_INTERVAL);
+		return;
+	}
 	switch (deck_state) {
 	case DECK_OFF:
 		break;
 	case DECK_DISCONNECTED:
-		scan_c_deck(true);
 		/* TODO only poll touchpad and currently connected B1/C1 modules
 		 * if c deck state is ON as these must be removed first
 		 */
@@ -147,9 +179,9 @@ static void poll_c_deck(void)
 		break;
 	case DECK_TURNING_ON:
 		turning_on_count++;
-		scan_c_deck(true);
 		if (input_deck_is_fully_populated() &&
-			turning_on_count > INPUT_MODULE_POWER_ON_DELAY) {
+			turning_on_count > (INPUT_MODULE_POWER_ON_DELAY / (INPUT_MODULE_POLL_INTERVAL*8))) {
+			hid_target_unregister(DEVICE_DT_GET(DT_NODELABEL(i2chid2)));
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
 			deck_state = DECK_ON;
 			LOG_INF("Input modules on");
@@ -161,10 +193,10 @@ static void poll_c_deck(void)
 		/* TODO Add lid detection,
 		 * if lid is closed input modules cannot be removed
 		 */
-
-		scan_c_deck(true);
 		if (!input_deck_is_fully_populated()) {
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+			/* enable TP emulation */
+			hid_target_register(DEVICE_DT_GET(DT_NODELABEL(i2chid2)));
 			deck_state = DECK_DISCONNECTED;
 			LOG_INF("Input modules off");
 		}
@@ -174,8 +206,9 @@ static void poll_c_deck(void)
 	default:
 		break;
 	}
+
+	hook_call_deferred(&poll_c_deck_data, INPUT_MODULE_POLL_INTERVAL);
 }
-DECLARE_HOOK(HOOK_TICK, poll_c_deck, HOOK_PRIO_DEFAULT);
 
 static void input_modules_powerup(void)
 {
@@ -184,6 +217,7 @@ static void input_modules_powerup(void)
 	else if (deck_state != DECK_FORCE_ON && deck_state != DECK_FORCE_ON)
 		deck_state = DECK_DISCONNECTED;
 
+	hook_call_deferred(&poll_c_deck_data, INPUT_MODULE_POLL_INTERVAL);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, input_modules_powerup, HOOK_PRIO_DEFAULT);
 
@@ -197,6 +231,8 @@ void input_modules_powerdown(void)
 		/* Hub mux input 6 is NC, so lower power draw  by disconnecting all PD */
 		set_hub_mux(TOP_ROW_NOT_CONNECTED);
 	}
+
+	hook_call_deferred(&poll_c_deck_data, -1);
 }
 
 int get_deck_state(void)
@@ -218,6 +254,8 @@ static enum ec_status check_deck_state(struct host_cmd_handler_args *args)
 	} else if (p->mode == 0x02) {
 		deck_state = DECK_FORCE_ON;
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
+		hid_target_unregister(DEVICE_DT_GET(DT_NODELABEL(i2chid2)));
+
 	} else if (p->mode == 0x04) {
 		deck_state = DECK_FORCE_OFF;
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);

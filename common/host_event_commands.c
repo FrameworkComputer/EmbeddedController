@@ -151,6 +151,12 @@ int lpc_get_next_host_event(void)
 		host_event_set_bit(&ev, evt_idx);
 		host_clear_events(ev);
 	}
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	else {
+		/* Workaround, call function to clear SCI event when index = 0") */
+		lpc_update_host_event_status();
+	}
+#endif
 	return evt_idx;
 }
 

@@ -16,6 +16,7 @@
 #include "charge_state.h"
 #include "charge_manager.h"
 #include "cypress_pd_common.h"
+#include "common_cpu_power.h"
 #include "console.h"
 #include "customized_shared_memory.h"
 #include "hooks.h"
@@ -379,7 +380,7 @@ __override int board_cut_off_battery(void)
 	if (power_uw <= 100000000) {
 		hook_call_deferred(&board_cut_off_data, 0);
 	} else {
-		force_disable_epr_mode();
+		exit_epr_mode();
 		hook_call_deferred(&board_cut_off_data, 700*MSEC);
 	}
 

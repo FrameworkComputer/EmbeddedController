@@ -33,6 +33,10 @@
 #include "math_util.h"
 
 
+#ifdef CONFIG_BOARD_LOTUS
+#include "touchpad_descriptor.h"
+#endif
+
 #define DT_DRV_COMPAT cros_ec_i2c_target_hid
 
 #define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
@@ -207,6 +211,7 @@ static struct i2c_hid_descriptor keyboard_hid_desc = {
 };
 
 #endif
+
 
 static struct als_input_report als_sensor;
 static struct als_feature_report als_feature;
@@ -389,7 +394,6 @@ struct i2c_hid_target_data {
 	size_t report_descriptor_size;
 	const struct i2c_hid_descriptor *descriptor;
 	size_t descriptor_size;
-
 };
 
 struct i2c_hid_target_config {
@@ -607,35 +611,50 @@ static int hid_target_process_write(struct i2c_target_config *config)
 		break;
 	case I2C_HID_CMD_GET_REPORT:
 		data->report_id = report_id;
-		switch (report_id) {
-#ifdef CONFIG_BOARD_AZALEA
-		case REPORT_ID_RADIO:
-				response_size = fill_report(data->buffer, report_id,
-						&radio_button,
-						sizeof(struct radio_report));
-			break;
-		case REPORT_ID_CONSUMER:
-				response_size = fill_report(data->buffer, report_id,
-						&consumer_button,
-						sizeof(struct consumer_button_report));
-			break;
-#endif
-		case REPORT_ID_SENSOR:
-			if (report_type == 0x01) {
-				response_size = fill_report(data->buffer, report_id,
-					&als_sensor,
-					sizeof(struct als_input_report));
-			} else if (report_type == 0x03) {
-				response_size = fill_report(data->buffer, report_id,
-					&als_feature,
-					sizeof(struct als_feature_report));
+#ifdef CONFIG_BOARD_LOTUS
+		if (data->descriptor->wCommandRegister == I2C_TOUCHPAD_HID_COMMAND_REGISTER) {
+			switch (report_id) {
+			case 2:
+				static const uint8_t touchpad_feature_2[] = {0x04, 0x00, 0x02, 0x05, 0x00, 0x00, 0x00, 0x00};
+				memcpy(data->buffer, touchpad_feature_2, sizeof(touchpad_feature_2));
+				break;
+			default:
+				memset(data->buffer, 0, data->buffer_size);
+				break;
 			}
-			break;
-		default:
-			response_size = fill_report(data->buffer, 0,
-				NULL,
-				0);
-			break;
+		} else
+#endif /* CONFIG_BOARD_LOTUS */
+		{
+			switch (report_id) {
+	#ifdef CONFIG_BOARD_AZALEA
+			case REPORT_ID_RADIO:
+					response_size = fill_report(data->buffer, report_id,
+							&radio_button,
+							sizeof(struct radio_report));
+				break;
+			case REPORT_ID_CONSUMER:
+					response_size = fill_report(data->buffer, report_id,
+							&consumer_button,
+							sizeof(struct consumer_button_report));
+				break;
+	#endif
+			case REPORT_ID_SENSOR:
+				if (report_type == 0x01) {
+					response_size = fill_report(data->buffer, report_id,
+						&als_sensor,
+						sizeof(struct als_input_report));
+				} else if (report_type == 0x03) {
+					response_size = fill_report(data->buffer, report_id,
+						&als_feature,
+						sizeof(struct als_feature_report));
+				}
+				break;
+			default:
+				response_size = fill_report(data->buffer, 0,
+					NULL,
+					0);
+				break;
+			}
 		}
 		break;
 	case I2C_HID_CMD_SET_REPORT:
@@ -690,6 +709,9 @@ static int hid_target_read_processed(struct i2c_target_config *config,
 	}
 
 	switch (target_register) {
+#ifdef CONFIG_BOARD_LOTUS
+	case I2C_TOUCHPAD_HID_DESC_REGISTER:
+#endif
 	case I2C_HID_MEDIAKEYS_HID_DESC_REGISTER:
 		if (data->buffer_idx < data->descriptor_size) {
 			*val = ((uint8_t *)data->descriptor)[data->buffer_idx++];
@@ -697,6 +719,9 @@ static int hid_target_read_processed(struct i2c_target_config *config,
 			ret = -ENOBUFS;
 		}
 		break;
+#ifdef CONFIG_BOARD_LOTUS
+	case I2C_TOUCHPAD_HID_REPORT_DESC_REGISTER:
+#endif
 	case I2C_HID_REPORT_DESC_REGISTER:
 		if (data->buffer_idx < data->report_descriptor_size) {
 			*val = data->report_descriptor[data->buffer_idx++];
@@ -704,6 +729,7 @@ static int hid_target_read_processed(struct i2c_target_config *config,
 			ret = -ENOBUFS;
 		}
 		break;
+
 	default:
 		/* Other registers are populated in the write rx*/
 		if (data->buffer_idx < data->buffer_size)
@@ -740,7 +766,12 @@ static int hid_target_read_requested(struct i2c_target_config *config,
 		target_register = I2C_HID_INPUT_REPORT_REGISTER;
 	}
 
-	if (target_register == I2C_HID_COMMAND_REGISTER) {
+	if (target_register == I2C_HID_COMMAND_REGISTER
+#ifdef CONFIG_BOARD_LOTUS
+		|| target_register == I2C_TOUCHPAD_HID_COMMAND_REGISTER
+#endif
+		)
+	{
 		if (data->buffer_idx) {
 			hid_target_process_write(config);
 			data->buffer_idx = 0;
@@ -800,7 +831,11 @@ static int hid_target_stop(struct i2c_target_config *config)
 	/* Clear the interrupt when we have processed the packet */
 	gpio_pin_set_dt(data->alert_gpio, 1);
 
-	if (data->target_register == I2C_HID_COMMAND_REGISTER) {
+	if (data->target_register == I2C_HID_COMMAND_REGISTER
+#ifdef CONFIG_BOARD_LOTUS
+		|| data->target_register == I2C_TOUCHPAD_HID_COMMAND_REGISTER
+#endif
+	) {
 		if (data->buffer_idx) {
 			hid_target_process_write(config);
 		}
@@ -813,7 +848,7 @@ static int hid_target_stop(struct i2c_target_config *config)
 	return 0;
 }
 
-static int hid_target_register(const struct device *dev)
+int hid_target_register(const struct device *dev)
 {
 	const struct i2c_hid_target_config *cfg = dev->config;
 	struct i2c_hid_target_data *data = dev->data;
@@ -821,7 +856,7 @@ static int hid_target_register(const struct device *dev)
 	return i2c_target_register(cfg->bus.bus, &data->config);
 }
 
-static int hid_target_unregister(const struct device *dev)
+int hid_target_unregister(const struct device *dev)
 {
 	const struct i2c_hid_target_config *cfg = dev->config;
 	struct i2c_hid_target_data *data = dev->data;

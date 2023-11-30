@@ -346,7 +346,12 @@ static void breath_led_pwm_deferred(void)
 	uint8_t led_duty_percentage;
 	uint8_t bbram_led_level;
 
-	system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &bbram_led_level);
+#ifdef CONFIG_BOARD_LOTUS
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		bbram_led_level = FP_LED_LOW;
+	else
+#endif
+		system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &bbram_led_level);
 
 	switch (bbram_led_level) {
 	case FP_LED_LOW:
