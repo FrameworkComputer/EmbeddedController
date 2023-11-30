@@ -18,6 +18,7 @@
 /* Chip ID for all variants */
 #define NPCX996F_CHIP_ID 0x21
 #define NPCX993F_CHIP_ID 0x25
+#define NPCX99FP_CHIP_ID 0x2b
 
 /*****************************************************************************/
 /* Hardware features */
