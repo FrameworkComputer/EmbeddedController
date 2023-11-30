@@ -1,0 +1,9 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Realtek RTS5453P Type-C Power Delivery Controller Emulator
+
+compatible: "realtek,rts5453p-emul"
+
+include: base.yaml

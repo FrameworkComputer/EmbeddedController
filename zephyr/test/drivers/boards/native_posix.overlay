@@ -1237,6 +1237,10 @@
 		battery = <&battery>;
 	};
 
+	rts5453p_emul: rts5453p@aa {
+		compatible = "realtek,rts5453p-emul";
+		reg = <0xaa>;
+	};
 
 };
 
