@@ -10,11 +10,6 @@
 
 #include "compile_time_macros.h"
 
-/*
- * Early dochi boards are not set up for vivaldi
- */
-#undef CONFIG_KEYBOARD_VIVALDI
-
 /* Baseboard features */
 #include "baseboard.h"
 
