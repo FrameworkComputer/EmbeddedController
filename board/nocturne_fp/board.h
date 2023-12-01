@@ -19,6 +19,7 @@
 #undef CONFIG_SYSTEM_UNLOCKED
 
 #define CONFIG_ALLOW_UNALIGNED_ACCESS
+#define CONFIG_LTO
 
 /*
  * These allow console commands to be flagged as restricted.
