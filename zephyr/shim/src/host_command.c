@@ -192,4 +192,27 @@ EC_HOST_CMD_HANDLER(EC_CMD_GET_CMD_VERSIONS, host_command_get_cmd_versions,
 		    struct ec_params_get_cmd_versions,
 		    struct ec_response_get_cmd_versions);
 
+test_export_static enum ec_host_cmd_status
+host_command_protocol_info(struct ec_host_cmd_handler_args *args)
+{
+	struct ec_response_get_protocol_info *r = args->output_buf;
+	const struct ec_host_cmd *hc = ec_host_cmd_get_hc();
+
+	r->protocol_versions = BIT(3);
+	r->flags = 0
+#if defined(CONFIG_HOST_COMMAND_STATUS) && \
+	defined(CONFIG_EC_HOST_CMD_IN_PROGRESS_STATUS)
+		   | EC_PROTOCOL_INFO_IN_PROGRESS_SUPPORTED
+#endif
+		;
+
+	r->max_request_packet_size = hc->rx_ctx.len_max;
+	r->max_response_packet_size = hc->tx.len_max;
+
+	args->output_buf_size = sizeof(*r);
+
+	return EC_HOST_CMD_SUCCESS;
+}
+EC_HOST_CMD_HANDLER_UNBOUND(EC_CMD_GET_PROTOCOL_INFO,
+			    host_command_protocol_info, EC_VER_MASK(0));
 #endif

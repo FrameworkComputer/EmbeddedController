@@ -115,6 +115,7 @@ static void shi_init(void)
 /* Call hook after chipset sets initial power state */
 DECLARE_HOOK(HOOK_INIT, shi_init, HOOK_PRIO_POST_CHIPSET);
 
+#ifndef CONFIG_EC_HOST_CMD
 /* Get protocol information */
 static enum ec_status shi_get_protocol_info(struct host_cmd_handler_args *args)
 {
@@ -122,15 +123,8 @@ static enum ec_status shi_get_protocol_info(struct host_cmd_handler_args *args)
 
 	memset(r, '\0', sizeof(*r));
 	r->protocol_versions = BIT(3);
-#ifndef CONFIG_EC_HOST_CMD
 	r->max_request_packet_size = CONFIG_CROS_SHI_MAX_REQUEST;
 	r->max_response_packet_size = CONFIG_CROS_SHI_MAX_RESPONSE;
-#else
-	r->max_request_packet_size =
-		CONFIG_EC_HOST_CMD_BACKEND_SHI_MAX_RESPONSE;
-	r->max_response_packet_size =
-		CONFIG_EC_HOST_CMD_BACKEND_SHI_MAX_RESPONSE;
-#endif
 	r->flags = EC_PROTOCOL_INFO_IN_PROGRESS_SUPPORTED;
 
 	args->response_size = sizeof(*r);
@@ -139,3 +133,4 @@ static enum ec_status shi_get_protocol_info(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, shi_get_protocol_info,
 		     EC_VER_MASK(0));
+#endif /* !CONFIG_EC_HOST_CMD */

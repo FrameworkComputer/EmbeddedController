@@ -523,7 +523,25 @@ static void handle_host_write(uint32_t data)
 	host_packet_receive(&lpc_packet);
 	return;
 }
-#endif
+
+/* Get protocol information */
+static enum ec_status lpc_get_protocol_info(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_protocol_info *r = args->response;
+
+	memset(r, 0, sizeof(*r));
+	r->protocol_versions = BIT(3);
+	r->max_request_packet_size = EC_LPC_HOST_PACKET_SIZE;
+	r->max_response_packet_size = EC_LPC_HOST_PACKET_SIZE;
+	r->flags = 0;
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, lpc_get_protocol_info,
+		     EC_VER_MASK(0));
+#endif /* !CONFIG_EC_HOST_CMD */
 
 void lpc_set_acpi_status_mask(uint8_t mask)
 {
@@ -558,24 +576,6 @@ void lpc_clear_acpi_status_mask(uint8_t mask)
 		LOG_ERR("ESPI write failed: EACPI_WRITE_STS = %d", rv);
 	}
 }
-
-/* Get protocol information */
-static enum ec_status lpc_get_protocol_info(struct host_cmd_handler_args *args)
-{
-	struct ec_response_get_protocol_info *r = args->response;
-
-	memset(r, 0, sizeof(*r));
-	r->protocol_versions = BIT(3);
-	r->max_request_packet_size = EC_LPC_HOST_PACKET_SIZE;
-	r->max_response_packet_size = EC_LPC_HOST_PACKET_SIZE;
-	r->flags = 0;
-
-	args->response_size = sizeof(*r);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, lpc_get_protocol_info,
-		     EC_VER_MASK(0));
 
 /*
  * This function is needed only for the obsolete platform which uses the GPIO

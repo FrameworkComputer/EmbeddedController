@@ -41,10 +41,15 @@ ZTEST_USER(espi, test_host_command_get_protocol_info)
 	zassert_ok(ec_cmd_get_protocol_info(&args, &response));
 	zassert_equal(args.response_size, sizeof(response));
 	zassert_equal(response.protocol_versions, BIT(3));
+	/* Don't check max sizes for upstream, because it is adjusted
+	 * to buffer sizes set by a backend.
+	 */
+#ifndef CONFIG_EC_HOST_CMD
 	zassert_equal(response.max_request_packet_size, EC_LPC_HOST_PACKET_SIZE,
 		      NULL);
 	zassert_equal(response.max_response_packet_size,
 		      EC_LPC_HOST_PACKET_SIZE, NULL);
+#endif
 	zassert_equal(response.flags, 0);
 }
 

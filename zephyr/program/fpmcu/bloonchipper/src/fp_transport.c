@@ -43,33 +43,6 @@ enum fp_transport_type get_fp_transport_type(void)
 BUILD_ASSERT(0, "Both backends are not enabled");
 #endif
 
-/**
- * Get protocol information
- */
-test_export_static enum ec_host_cmd_status
-host_command_protocol_info(struct ec_host_cmd_handler_args *args)
-{
-	struct ec_response_get_protocol_info *r = args->output_buf;
-	const struct ec_host_cmd *hc = ec_host_cmd_get_hc();
-
-	r->protocol_versions = BIT(3);
-	r->flags = EC_PROTOCOL_INFO_IN_PROGRESS_SUPPORTED;
-
-	if (get_fp_transport_type() != FP_TRANSPORT_TYPE_UNKNOWN) {
-		r->max_request_packet_size = hc->rx_ctx.len_max;
-		r->max_response_packet_size = hc->tx.len_max;
-	} else {
-		r->max_request_packet_size = 0;
-		r->max_response_packet_size = 0;
-	}
-
-	args->output_buf_size = sizeof(*r);
-
-	return EC_HOST_CMD_SUCCESS;
-}
-EC_HOST_CMD_HANDLER_UNBOUND(EC_CMD_GET_PROTOCOL_INFO,
-			    host_command_protocol_info, EC_VER_MASK(0));
-
 test_export_static int fp_transport_init(void)
 {
 #ifdef CONFIG_EC_HOST_CMD_BACKEND_UART
