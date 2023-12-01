@@ -99,64 +99,47 @@ const struct fan_t fans[FAN_CH_COUNT] = {
  * 130 C.  However, sensor is located next to DDR, so we need to use the lower
  * DDR temperature limit (85 C)
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CPU              \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(68), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(70), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(58), \
-		}, \
-		.temp_fan_off = C_TO_K(40), \
-		.temp_fan_max = C_TO_K(60), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
+const static struct ec_thermal_config thermal_cpu = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(70),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(58),
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(60),
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CHARGER          \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(78), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(68), \
-		}, \
-		.temp_fan_off = C_TO_K(40), \
-		.temp_fan_max = C_TO_K(70), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_charger =
-	THERMAL_CHARGER;
+const static struct ec_thermal_config thermal_charger = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(70),
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_REGULATOR        \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(68), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(70), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(58), \
-		}, \
-		.temp_fan_off = C_TO_K(40), \
-		.temp_fan_max = C_TO_K(55), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_regulator =
-	THERMAL_REGULATOR;
+const static struct ec_thermal_config thermal_regulator = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(70),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(58),
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(55),
+};
 
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_CHARGER] = THERMAL_CHARGER,
-	[TEMP_SENSOR_2_PP3300_REGULATOR] = THERMAL_REGULATOR,
-	[TEMP_SENSOR_3_DDR_SOC] = THERMAL_CPU,
-	[TEMP_SENSOR_4_FAN] = THERMAL_CPU,
+	[TEMP_SENSOR_1_CHARGER] = thermal_charger,
+	[TEMP_SENSOR_2_PP3300_REGULATOR] = thermal_regulator,
+	[TEMP_SENSOR_3_DDR_SOC] = thermal_cpu,
+	[TEMP_SENSOR_4_FAN] = thermal_cpu,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 

@@ -398,46 +398,36 @@ BUILD_ASSERT(ARRAY_SIZE(mft_channels) == MFT_CH_COUNT);
 
 /******************************************************************************/
 /* Thermal control; drive fan based on temperature sensors. */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_A                \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(68), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(78), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(58), \
-			[EC_TEMP_THRESH_HALT] = 0, \
-		}, \
-		.temp_fan_off = C_TO_K(41), \
-		.temp_fan_max = C_TO_K(72), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_a = THERMAL_A;
+const static struct ec_thermal_config thermal_a = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(78),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(58),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(41),
+	.temp_fan_max = C_TO_K(72),
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_B                \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(78), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
-			[EC_TEMP_THRESH_HALT] = 0, \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_b = THERMAL_B;
+const static struct ec_thermal_config thermal_b = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+};
 
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_CORE] = THERMAL_A,
+	[TEMP_SENSOR_CORE] = thermal_a,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 

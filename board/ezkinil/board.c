@@ -760,40 +760,29 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_THERMISTOR       \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(95), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
-		}, \
-		.temp_fan_off = 0, \
-		.temp_fan_max = 0, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_thermistor =
-	THERMAL_THERMISTOR;
+const static struct ec_thermal_config thermal_thermistor = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(95),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+	},
+	.temp_fan_off = 0,
+	.temp_fan_max = 0,
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_SOC              \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-		}, \
-		.temp_fan_off = C_TO_K(32), \
-		.temp_fan_max = C_TO_K(75), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_soc = THERMAL_SOC;
+const static struct ec_thermal_config thermal_soc = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+	.temp_fan_off = C_TO_K(32),
+	.temp_fan_max = C_TO_K(75),
+};
 
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 
