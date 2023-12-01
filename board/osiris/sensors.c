@@ -67,41 +67,33 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  * For real temperature in fan control table, set temp_fan_off
  * and temp_fan_max to 0 and 99.
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CPU              \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(78), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-		}, \
-		.temp_fan_off = C_TO_K(0), \
-		.temp_fan_max = C_TO_K(99), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
+static const struct ec_thermal_config thermal_cpu = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+	},
+	.temp_fan_off = C_TO_K(0),
+	.temp_fan_max = C_TO_K(99),
+};
 
-#define THERMAL_UNUSED           \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = 0, \
-			[EC_TEMP_THRESH_HALT] = 0, \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = 0, \
-		}, \
-		.temp_fan_off = 0, \
-		.temp_fan_max = 0, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_unused =
-	THERMAL_UNUSED;
+static const struct ec_thermal_config thermal_unused = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = 0,
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = 0,
+	},
+	.temp_fan_off = 0,
+	.temp_fan_max = 0,
+};
 
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_DDR_SOC] = THERMAL_CPU,
-	[TEMP_SENSOR_2_AMBIENT] = THERMAL_UNUSED,
-	[TEMP_SENSOR_3_CHARGER] = THERMAL_UNUSED,
+	[TEMP_SENSOR_1_DDR_SOC] = thermal_cpu,
+	[TEMP_SENSOR_2_AMBIENT] = thermal_unused,
+	[TEMP_SENSOR_3_CHARGER] = thermal_unused,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
