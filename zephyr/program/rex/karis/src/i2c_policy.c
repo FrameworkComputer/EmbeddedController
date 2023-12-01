@@ -9,8 +9,9 @@
 int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
 {
 	/*
-	 * TODO(b/311282759): Add permissions check
+	 * Karis doesn't use tcpc ps8815 and retimer anx7452.
+	 * All targets are not allowed
 	 */
 
-	return true;
+	return false;
 }
