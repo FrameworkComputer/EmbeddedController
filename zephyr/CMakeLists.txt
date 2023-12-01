@@ -705,7 +705,7 @@ if (DEFINED CONFIG_PIGWEED_LOG_TOKENIZED_LIB)
       ${ZEPHYR_PIGWEED_MODULE_DIR}/pw_tokenizer/py/pw_tokenizer/database.py
       create
       --force
-      --type csv
+      --type binary
       -d ${CMAKE_BINARY_DIR}/database.bin
       ${CMAKE_BINARY_DIR}/zephyr/zephyr_pre0.elf
   )
