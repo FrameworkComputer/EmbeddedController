@@ -8757,10 +8757,10 @@ static void cmd_battery_config_help(char *cmd)
 {
 	fprintf(stderr,
 		"\n"
-		"Usage: %s\n"
+		"Usage: %s get\n"
 		"    Print active battery config.\n"
 		"\n"
-		"Usage: %s <json_file> <manuf_name> <device_name>\n"
+		"Usage: %s set <json_file> <manuf_name> <device_name>\n"
 		"    Copy battery config from file to CBI.\n"
 		"\n"
 		"    json_file: Path to JSON file containing battery configs\n"
@@ -8771,7 +8771,7 @@ static void cmd_battery_config_help(char *cmd)
 		cmd, cmd);
 }
 
-static int cmd_battery_config_get(void)
+static int cmd_battery_config_get(int argc, char *argv[])
 {
 	struct batt_conf_header *head;
 	struct board_batt_params conf;
@@ -8939,12 +8939,13 @@ static int cmd_battery_config_set(int argc, char *argv[])
 
 static int cmd_battery_config(int argc, char *argv[])
 {
-	if (argc == 1)
-		return cmd_battery_config_get();
-	else if (/* argc == 3 || */ argc == 4)
-		return cmd_battery_config_set(argc, argv);
+	if (argc > 1 && !strcasecmp(argv[1], "get"))
+		return cmd_battery_config_get(--argc, ++argv);
+	else if (argc > 1 && !strcasecmp(argv[1], "set"))
+		return cmd_battery_config_set(--argc, ++argv);
 
-	fprintf(stderr, "Invalid param count\n");
+	fprintf(stderr, "Invalid sub-command '%s'\n",
+		argv[1] ? argv[1] : "(null)");
 	cmd_battery_config_help(argv[0]);
 	return -1;
 }
