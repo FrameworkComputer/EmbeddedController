@@ -3,7 +3,7 @@
 # BSD-style license that can be found in the LICENSE file.
 
 # Chinchou Makeifile
-
+zephyr_include_directories("include")
 zephyr_library_sources("../src/ite_hooks.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C "../src/ite_i2c.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
