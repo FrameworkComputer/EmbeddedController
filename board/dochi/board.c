@@ -10,8 +10,6 @@
 #include "charger.h"
 #include "common.h"
 #include "console.h"
-#include "driver/accel_lis2dw12.h"
-#include "driver/accelgyro_lsm6dso.h"
 #include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
