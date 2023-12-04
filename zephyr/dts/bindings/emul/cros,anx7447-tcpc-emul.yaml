@@ -18,3 +18,8 @@ properties:
     type: phandle-array
     description: |
       TCPC reset line
+  spi-addr:
+    type: int
+    default: 0x3f
+    description:
+      The hidden SPI address.
