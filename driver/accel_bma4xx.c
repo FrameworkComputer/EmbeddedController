@@ -680,6 +680,7 @@ const struct accelgyro_drv bma4_accel_drv = {
 	.get_offset = get_offset,
 	.perform_calib = perform_calib,
 #ifdef BMA4XX_USE_INTERRUPTS
+	.interrupt = bma4xx_interrupt,
 	.irq_handler = irq_handler,
 #endif
 };
