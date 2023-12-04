@@ -52,12 +52,14 @@ DECLARE_HOOK(HOOK_INIT, form_factor_init, HOOK_PRIO_POST_I2C);
 
 static void touchpad_enable_switch(void)
 {
-	if (lid_is_open())
+	if (lid_is_open() && (chipset_in_state(CHIPSET_STATE_ON) ||
+			      chipset_in_state(CHIPSET_STATE_ANY_SUSPEND)))
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_tchpad_lid_close),
 				1);
 	else
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_tchpad_lid_close),
 				0);
 }
-DECLARE_HOOK(HOOK_INIT, touchpad_enable_switch, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, touchpad_enable_switch, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, touchpad_enable_switch, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_LID_CHANGE, touchpad_enable_switch, HOOK_PRIO_DEFAULT);
