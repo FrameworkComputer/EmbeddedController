@@ -170,7 +170,7 @@ int nct38xx_init(int port)
 			nct38xx_get_gpio_device_from_port(port);
 
 		if (!device_is_ready(dev)) {
-			CPRINTS("C%d: device is not ready", port);
+			CPRINTS("device %s not ready", dev->name);
 			return EC_ERROR_BUSY;
 		}
 #endif /* CONFIG_ZEPHYR */

@@ -344,7 +344,7 @@ static int check_reset_cause(void)
 test_export_static int system_preinitialize(void)
 {
 	if (bbram_dev && !device_is_ready(bbram_dev)) {
-		LOG_ERR("Error: device %s is not ready", bbram_dev->name);
+		LOG_ERR("device %s not ready", bbram_dev->name);
 		return -1;
 	}
 

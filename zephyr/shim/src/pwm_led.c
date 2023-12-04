@@ -55,7 +55,7 @@ static void pwm_led_set_duty(const struct pwm_dt_spec *pwm, int percent)
 	int rv;
 
 	if (!device_is_ready(pwm->dev)) {
-		LOG_ERR("PWM device %s not ready", pwm->dev->name);
+		LOG_ERR("device %s not ready", pwm->dev->name);
 		return;
 	}
 

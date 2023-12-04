@@ -104,7 +104,7 @@ static int watchdog_init_device(const struct watchdog_info *info)
 	int chan, err;
 
 	if (!device_is_ready(wdt_dev)) {
-		LOG_ERR("Error: device %s is not ready", wdt_dev->name);
+		LOG_ERR("device %s not ready", wdt_dev->name);
 		return -ENODEV;
 	}
 

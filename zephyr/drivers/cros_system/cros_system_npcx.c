@@ -96,7 +96,7 @@ static int system_npcx_watchdog_stop(void)
 		const struct device *wdt_dev =
 			DEVICE_DT_GET(DT_NODELABEL(twd0));
 		if (!device_is_ready(wdt_dev)) {
-			LOG_ERR("Error: device %s is not ready", wdt_dev->name);
+			LOG_ERR("device %s not ready", wdt_dev->name);
 			return -ENODEV;
 		}
 

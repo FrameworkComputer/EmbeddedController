@@ -284,8 +284,7 @@ test_export_static int init_gpios(const struct device *dev)
 			continue;
 
 		if (!device_is_ready(configs[i].spec.port)) {
-			LOG_ERR("%s: Not found (%s)", __func__,
-				configs[i].name);
+			LOG_ERR("device %s not ready", configs[i].name);
 			continue;
 		}
 

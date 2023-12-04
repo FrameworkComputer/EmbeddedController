@@ -29,7 +29,7 @@ static void shi_enable(void)
 	const struct device *cros_shi_dev = DEVICE_DT_GET(SHI_NODE);
 
 	if (!device_is_ready(cros_shi_dev)) {
-		LOG_ERR("Error: device %s is not ready", cros_shi_dev->name);
+		LOG_ERR("device %s not ready", cros_shi_dev->name);
 		return;
 	}
 
@@ -46,7 +46,7 @@ static void shi_disable(void)
 	const struct device *cros_shi_dev = DEVICE_DT_GET(SHI_NODE);
 
 	if (!device_is_ready(cros_shi_dev)) {
-		LOG_ERR("Error: device %s is not ready", cros_shi_dev->name);
+		LOG_ERR("device %s not ready", cros_shi_dev->name);
 		return;
 	}
 

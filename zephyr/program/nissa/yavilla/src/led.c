@@ -70,7 +70,7 @@ static void pwr_led_pwm_set_duty(const struct board_led_pwm_dt_channel *ch,
 	int rv;
 
 	if (!device_is_ready(ch->dev)) {
-		LOG_ERR("PWM device %s not ready", ch->dev->name);
+		LOG_ERR("device %s not ready", ch->dev->name);
 		return;
 	}
 
