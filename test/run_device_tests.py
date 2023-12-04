@@ -763,15 +763,14 @@ def process_console_output_line(line: bytes, test: TestConfig):
 
 def run_test(
     test: TestConfig,
-    build_board: str,
+    board_config: BoardConfig,
     console: io.FileIO,
-    reboot_timeout: float,
     executor: ThreadPoolExecutor,
 ) -> bool:
     """Run specified test."""
     start = time.time()
 
-    board_config = BOARD_CONFIGS[build_board]
+    reboot_timeout = board_config.reboot_timeout
     logging.debug("Calling pre-test callback")
     if not test.pre_test_callback(board_config):
         logging.error("pre-test callback failed, aborting")
@@ -939,9 +938,8 @@ def flash_and_run_test(
 
         return run_test(
             test,
-            build_board,
+            board_config,
             console,
-            board_config.reboot_timeout,
             executor=executor,
         )
 
