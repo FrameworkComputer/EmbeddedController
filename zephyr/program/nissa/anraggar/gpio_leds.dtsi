@@ -210,5 +210,18 @@ led-colors {
 				};
 			};
 		};
+
+		power-state-idle {
+			charge-state = "LED_PWRS_IDLE";
+			chipset-state = "POWER_S5";
+
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				/* LED off when S5, others do not change */
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
 	};
 };
