@@ -464,8 +464,11 @@ static void power_supply_change(void)
 
 	if (port != CHARGE_PORT_NONE) {
 		had_active_charge_port = true;
-		if (key)
+		if (key) {
+			/* Cancel cutoff if AC is backoff again */
+			hook_call_deferred(&pending_cutoff_deferred_data, -1);
 			CUTOFFPRINTS("backoff: P%d is active", port);
+		}
 		return;
 	}
 
