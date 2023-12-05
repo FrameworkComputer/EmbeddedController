@@ -307,15 +307,13 @@ enum dpm_msg_setup_status dp_setup_next_vdm(int port, int *vdo_count,
 		dp_state[port] = DP_PREPARE_CONFIG;
 
 		/*
-		 * Place the USB Type-C pins that are to be re-configured to
-		 * DisplayPort Configuration into the Safe state. For
-		 * USB_PD_MUX_DOCK, the superspeed signals can remain
-		 * connected. For USB_PD_MUX_DP_ENABLED, disconnect the
-		 * superspeed signals here, before the pins are re-configured
-		 * to DisplayPort (in svdm_dp_post_config, when we receive
-		 * the config ack).
+		 * According to VESA DisplayPort Alt Mode on USB Type-C Standard
+		 * Version 2.0., 5.2.4 DisplayPort Configure Command.
+		 * Before issuing the command, the DFP_U shall place the USB-C
+		 * pins that are to be reconfigured to DisplayPort Configuration
+		 * into the Safe state, as specified in USB-C.
 		 */
-		if (svdm_dp_get_mux_mode(port) == USB_PD_MUX_DP_ENABLED) {
+		if (svdm_dp_get_mux_mode(port) & USB_PD_MUX_DP_ENABLED) {
 			usb_mux_set_safe_mode(port);
 			return MSG_SETUP_MUX_WAIT;
 		}
