@@ -1,0 +1,96 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "generic_npcx.dts"
+#include <dt-bindings/pwm/pwm.h>
+#include "../program/nissa/uldren/cbi.dtsi"
+#include "../program/nissa/uldren/motionsense.dtsi"
+
+/ {
+    aliases {
+		gpio-usb-c1-int-odl = &gpio_sb_1;
+		gpio-en-rails-odl = &gpio_sb_1;
+		gpio-en-sub-s5-rails = &gpio_sb_2;
+    };
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_imu: ec_imu {
+			irq-pin = <&gpio_imu_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "motion_interrupt";
+		};
+		int_lid_imu: lid_imu {
+			irq-pin = <&gpio_acc_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lid_accel_interrupt";
+		};
+		int_tablet_mode: tablet_mode {
+			irq-pin = <&gpio_tablet_mode_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "gmr_tablet_switch_isr";
+		};
+	};
+    named-gpios {
+		compatible = "named-gpios";
+
+		/delete-node/ hdmi_sel;
+
+		gpio_subboard_detect_l: subboard_detect_l {
+			gpios = <&gpioc 6 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_sb_2: sb-2 {
+			gpios = <&gpiod 4 GPIO_OUTPUT>;
+			no-auto-init;
+		};
+		gpio_imu_int_l: imu_int_l {
+			gpios = <&gpio5 6 GPIO_INPUT>;
+		};
+		gpio_acc_int_l: acc_int_l {
+			gpios = <&gpio5 0 GPIO_INPUT>;
+		};
+		gpio_tablet_mode_l: tablet_mode_l {
+			gpios = <&gpio9 5 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
+		};
+    };
+    usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			tcpc = <&tcpci_emul_1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1 &anx7483_port1>;
+			};
+		};
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+	named-i2c-ports {
+		i2c_ec_i2c_sensor: ec_i2c_sensor {
+			i2c-port = <&i2c_ctrl1>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+	};
+};
+&i2c_ctrl5 {
+    tcpci_emul_1: tcpci_emul@84 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x84>;
+	};
+	anx7483_port1: anx7483_emul1@3e {
+		compatible = "cros,anx7483-emul", "analogix,anx7483";
+		reg = <0x3e>;
+		board-set = "board_anx7483_c1_mux_set";
+	};
+};
