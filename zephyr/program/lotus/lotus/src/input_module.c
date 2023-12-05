@@ -85,6 +85,22 @@ static void scan_c_deck(bool full_scan)
 	set_hub_mux(TOP_ROW_NOT_CONNECTED);
 }
 
+static void enable_touchpad_emulate(int enable)
+{
+	static int is_emulate;
+
+	if (is_emulate != enable) {
+		if (enable) {
+			hid_target_register(DEVICE_DT_GET(DT_NODELABEL(i2chid2)));
+			LOG_INF("hid target register");
+		} else {
+			hid_target_unregister(DEVICE_DT_GET(DT_NODELABEL(i2chid2)));
+			LOG_INF("hid target unregister");
+		}
+		is_emulate = enable;
+	}
+}
+
 static void board_input_module_init(void)
 {
 	/* need to wait bios_function_init() to update detect mode */
@@ -93,7 +109,7 @@ static void board_input_module_init(void)
 	else if (detect_mode == 0x04)
 		deck_state = DECK_FORCE_OFF;
 	else {
-		hid_target_register(DEVICE_DT_GET(DT_NODELABEL(i2chid2)));
+		enable_touchpad_emulate(1);
 		deck_state = DECK_OFF;
 	}
 }
@@ -175,17 +191,20 @@ static void poll_c_deck(void)
 		if (input_deck_is_fully_populated()) {
 			turning_on_count = 0;
 			deck_state = DECK_TURNING_ON;
+		} else {
+			enable_touchpad_emulate(1);
 		}
 		break;
 	case DECK_TURNING_ON:
 		turning_on_count++;
 		if (input_deck_is_fully_populated() &&
 			turning_on_count > (INPUT_MODULE_POWER_ON_DELAY / (INPUT_MODULE_POLL_INTERVAL*8))) {
-			hid_target_unregister(DEVICE_DT_GET(DT_NODELABEL(i2chid2)));
+			enable_touchpad_emulate(0);
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
 			deck_state = DECK_ON;
 			LOG_INF("Input modules on");
 		} else if (hub_board_id[TOUCHPAD] != INPUT_MODULE_TOUCHPAD) {
+			enable_touchpad_emulate(1);
 			deck_state = DECK_DISCONNECTED;
 		}
 		break;
@@ -196,7 +215,7 @@ static void poll_c_deck(void)
 		if (!input_deck_is_fully_populated()) {
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
 			/* enable TP emulation */
-			hid_target_register(DEVICE_DT_GET(DT_NODELABEL(i2chid2)));
+			enable_touchpad_emulate(1);
 			deck_state = DECK_DISCONNECTED;
 			LOG_INF("Input modules off");
 		}
@@ -251,10 +270,11 @@ static enum ec_status check_deck_state(struct host_cmd_handler_args *args)
 	if (p->mode == 0x01) {
 		deck_state = DECK_DISCONNECTED;
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 0);
+		enable_touchpad_emulate(1);
 	} else if (p->mode == 0x02) {
 		deck_state = DECK_FORCE_ON;
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_hub_b_pwr_en), 1);
-		hid_target_unregister(DEVICE_DT_GET(DT_NODELABEL(i2chid2)));
+		enable_touchpad_emulate(0);
 
 	} else if (p->mode == 0x04) {
 		deck_state = DECK_FORCE_OFF;
