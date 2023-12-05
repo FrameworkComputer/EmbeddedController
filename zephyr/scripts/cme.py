@@ -381,6 +381,16 @@ def iterate_motionsensor_components(edtlib, edt, i2c_portmap, manifest):
     for node in mss.children.values():
         insert_motionsense_component(node, i2c_portmap, manifest)
 
+    try:
+        mss_alt = edt.get_node("/motionsense-sensor-alt")
+    except edtlib.EDTError:
+        # If the motionsense-sensor-alt node doesn't exist, return success.
+        logging.info("No motionsense-sensor-alt node found")
+        return
+
+    for node in mss_alt.children.values():
+        insert_motionsense_component(node, i2c_portmap, manifest)
+
 
 def main(argv: Optional[List[str]] = None) -> Optional[int]:
     """The main function.
