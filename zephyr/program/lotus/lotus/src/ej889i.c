@@ -17,6 +17,7 @@
 #include "lotus/amd_r23m.h"
 #include "power.h"
 #include "temp_sensor/temp_sensor.h"
+#include "timer.h"
 #include "util.h"
 #include "gpu_configuration.h"
 
@@ -139,10 +140,17 @@ void set_host_dp_ready(int ready)
 	}
 }
 
-void dp_hot_plug_interrupt(enum gpio_signal signal)
+void dgpu_hot_plug_deferred(void)
 {
 	if (get_gpu_gpio(GPIO_FUNC_HPD))
 		host_set_single_event(EC_HOST_EVENT_DGPU_TYPEC_NOTIFY);
+}
+DECLARE_DEFERRED(dgpu_hot_plug_deferred);
+
+void dp_hot_plug_interrupt(enum gpio_signal signal)
+{
+	/* add debounce time to avoid EC panic */
+	hook_call_deferred(&dgpu_hot_plug_deferred_data, 100 * MSEC);
 }
 
 /* Currently, the GPU pd interrupt does not function */
