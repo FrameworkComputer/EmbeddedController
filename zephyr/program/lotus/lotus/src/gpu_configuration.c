@@ -886,6 +886,13 @@ int parse_gpu_eeprom(void)
 	gpu_cfg_descriptor_valid = true;
 	CPRINTS("GPU descriptor read complete");
 
+	return EC_SUCCESS;
+}
+
+int init_parse_gpu_eeprom(void)
+{
+	parse_gpu_eeprom();
+
 	set_gpu_gpios_configuration();
 
 	set_gpu_gpios_powerstate();
@@ -894,7 +901,7 @@ int parse_gpu_eeprom(void)
 
 	return EC_SUCCESS;
 }
-DECLARE_DEFERRED(parse_gpu_eeprom);
+DECLARE_DEFERRED(init_parse_gpu_eeprom);
 
 void gpu_module_gpio_safe(void)
 {
@@ -960,7 +967,7 @@ void init_gpu_module(void)
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_gpu_3v_5v_en), 1);
 	/* wait for power to come up to GPU PD and EEPROM */
-	hook_call_deferred(&parse_gpu_eeprom_data, 150*MSEC);
+	hook_call_deferred(&init_parse_gpu_eeprom_data, 150*MSEC);
 
 }
 
@@ -979,6 +986,8 @@ static enum ec_status get_gpu_serial(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_gpu_serial *p = args->params;
 	struct ec_response_get_gpu_serial *r = args->response;
+
+	parse_gpu_eeprom();
 
 	memset(r->serial, 0x00, GPU_SERIAL_LEN);
 	if (gpu_cfg_descriptor_valid) {
