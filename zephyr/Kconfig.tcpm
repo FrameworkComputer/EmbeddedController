@@ -291,6 +291,7 @@ config PLATFORM_EC_USB_PD_TCPM_RT1715
 	bool "Richtek RT1715 Type-C Port Controller"
 	default y
 	depends on DT_HAS_RICHTEK_RT1715_TCPC_ENABLED
+	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	help
 	  The RT1715 is a USB Type-C controller, integrating a complete Type-C
 	  Transceiver including the Rp and Rd resistors. It does the USB Type-C
