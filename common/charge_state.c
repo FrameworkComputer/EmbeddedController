@@ -1497,8 +1497,12 @@ int calculate_sleep_dur(int battery_critical, int sleep_usec)
 			    output_current == 0)
 				sleep_usec = CHARGE_POLL_PERIOD_VERY_LONG;
 			else
+#ifndef CONFIG_CUSTOMIZED_DESIGN
 				/* Discharging, not too urgent */
 				sleep_usec = CHARGE_POLL_PERIOD_LONG;
+#else
+				sleep_usec = CHARGE_POLL_PERIOD_CHARGE;
+#endif
 		} else {
 			/* AC present, so pay closer attention */
 			sleep_usec = CHARGE_POLL_PERIOD_CHARGE;

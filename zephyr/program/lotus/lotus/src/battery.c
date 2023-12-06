@@ -28,6 +28,7 @@
 
 #define CACHE_INVALIDATION_TIME_US (3 * SECOND)
 
+static int battery_current_array[4];
 static uint8_t charging_maximum_level = EC_CHARGE_LIMIT_RESTORE;
 static int old_btp;
 static int power_on_check_batt;
@@ -150,6 +151,17 @@ static void battery_percentage_control(void)
 DECLARE_HOOK(HOOK_AC_CHANGE, battery_percentage_control, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, battery_percentage_control, HOOK_PRIO_DEFAULT);
 
+int get_average_battery_current(void)
+{
+	int idx;
+	int average_battery_current = 0;
+
+	for (idx = 0; idx < 4; idx++)
+		average_battery_current += battery_current_array[idx];
+
+	return (average_battery_current / 4);
+}
+
 void battery_customize(struct charge_state_data *curr_batt)
 {
 	char text[32];
@@ -159,6 +171,7 @@ void battery_customize(struct charge_state_data *curr_batt)
 	int rv;
 	static int batt_state;
 	static int read_manuf_date;
+	static int idx;
 	int day = 0;
 	int month = 0;
 	int year = 0;
@@ -240,6 +253,11 @@ void battery_customize(struct charge_state_data *curr_batt)
 		host_set_single_event(EC_HOST_EVENT_BATTERY);
 		batt_state = curr_batt->batt.is_present;
 	}
+
+	/* Put the battery current in the array for safety funciton */
+	battery_current_array[idx++] = curr_batt->batt.current;
+	if (idx >= 4)
+		idx = 0;
 }
 
 static void fix_single_param(int flag, int *cached, int *curr)

@@ -4,6 +4,7 @@
 #include "charge_state.h"
 #include "charger.h"
 #include "charge_manager.h"
+#include "board_battery.h"
 #include "board_function.h"
 #include "chipset.h"
 #include "common_cpu_power.h"
@@ -749,36 +750,31 @@ static void update_safety_power_limit(int active_mpower)
 	static uint8_t safety_level;
 	static uint8_t level_increase;
 	int delta;
-	const struct batt_params *batt = charger_current_battery_params();
-	int battery_current = batt->current;
+	int average_current = get_average_battery_current();
 	int battery_voltage = battery_dynamic[BATT_IDX_MAIN].actual_voltage;
 	int rv;
 	int mw_apu = power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT];
 	static int pd_3a_controller;
 	static int pd_3a_port;
 	static int set_typec_1_5a_flag;
+	static timestamp_t wait_stable_time;
+	static timestamp_t update_safety_timer;
+	timestamp_t now = get_time();
+
+	if (!timestamp_expired(wait_stable_time, &now) ||
+		!timestamp_expired(update_safety_timer, &now))
+		return;
 
 	if (my_test_current != 0)
-		battery_current = my_test_current;
+		average_current = my_test_current;
 
-	/* discharge, value compare based on negative*/
-	if (battery_current < battery_current_limit_mA) {
+	/* discharge, value compare based on negative */
+	if (average_current < battery_current_limit_mA)
 		level_increase = 1;
-	} else if (battery_current > (battery_current_limit_mA * 9 / 10)) {
+	else if (average_current > (battery_current_limit_mA * 75 / 100))
 		level_increase = 0;
-	}
-
-	if (safety_pwr_logging) {
-		CPRINTF("increase = %d, level = %d, curr = %d\n", level_increase,
-					safety_level, battery_current);
-		CPRINTF("SAFETY, SPL %dmW, fPPT %dmW, sPPT %dmW, p3T %dmW, ",
-					power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL],
-					power_limit[FUNCTION_SAFETY].mwatt[TYPE_FPPT],
-					power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPPT],
-					power_limit[FUNCTION_SAFETY].mwatt[TYPE_P3T]);
-		CPRINTF("ao_sppt %dmW\n",
-					power_limit[FUNCTION_SAFETY].mwatt[TYPE_APU_ONLY_SPPT]);
-	}
+	else
+		return;
 
 	switch (safety_level) {
 	case LEVEL_NORMAL:
@@ -839,8 +835,8 @@ static void update_safety_power_limit(int active_mpower)
 				}
 			}
 		} else {
-			delta = (ABS(battery_current - battery_current_limit_mA)
-				* battery_voltage) * 12 / 10 / 1000;
+			delta = (ABS(average_current - battery_current_limit_mA)
+				* battery_voltage) * 8 / 10 / 1000;
 			if (level_increase) {
 				tune_PLs((-1) * delta);
 				if (power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL] <= 20000)
@@ -852,6 +848,9 @@ static void update_safety_power_limit(int active_mpower)
 					safety_level--;
 			}
 		}
+
+		/* wait the system stable */
+		wait_stable_time.val = get_time().val + (5 * SECOND);
 		break;
 	case LEVEL_DISABLE_GPU:
 		/* disable GPU and tune CPU PLs */
@@ -865,6 +864,9 @@ static void update_safety_power_limit(int active_mpower)
 				if (power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL] >= 60000)
 					safety_level--;
 			}
+
+			/* wait the system stable */
+			wait_stable_time.val = get_time().val + (5 * SECOND);
 		} else {
 			if (level_increase)
 				safety_level++;
@@ -915,8 +917,21 @@ static void update_safety_power_limit(int active_mpower)
 			safety_level--;
 		break;
 	default:
-
 		break;
+	}
+
+	/* only check safety function per second */
+	update_safety_timer.val = get_time().val + (1 * SECOND);
+
+	if (safety_pwr_logging) {
+		CPRINTS("increase = %d, level = %d, curr = %d", level_increase,
+					safety_level, average_current);
+		CPRINTS("SAFETY, SPL %dmW, fPPT %dmW, sPPT %dmW, p3T %dmW, ao_sppt %dmW",
+					power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPL],
+					power_limit[FUNCTION_SAFETY].mwatt[TYPE_FPPT],
+					power_limit[FUNCTION_SAFETY].mwatt[TYPE_SPPT],
+					power_limit[FUNCTION_SAFETY].mwatt[TYPE_P3T],
+					power_limit[FUNCTION_SAFETY].mwatt[TYPE_APU_ONLY_SPPT]);
 	}
 }
 
