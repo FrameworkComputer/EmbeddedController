@@ -640,6 +640,8 @@ enum power_state power_handle_state(enum power_state state)
 		/*set_gpu_gpio(GPIO_FUNC_GPU_PWR, 0);*/
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
+		input_modules_powerdown();
+
 		/* set the PD chip system power state "S5" */
 		cypd_set_power_active();
 		return POWER_S5;

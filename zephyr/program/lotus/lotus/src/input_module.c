@@ -240,6 +240,12 @@ static void input_modules_powerup(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, input_modules_powerup, HOOK_PRIO_DEFAULT);
 
+void input_modules_reset(void)
+{
+	input_modules_powerdown();
+	input_modules_powerup();
+}
+
 void input_modules_powerdown(void)
 {
 	if (deck_state == DECK_FORCE_ON)

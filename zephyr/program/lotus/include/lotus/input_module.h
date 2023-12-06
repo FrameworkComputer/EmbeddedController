@@ -52,6 +52,8 @@ bool input_deck_is_fully_populated(void);
 
 void input_modules_powerdown(void);
 
+void input_modules_reset(void);
+
 void set_detect_mode(int mode);
 
 int get_detect_mode(void);

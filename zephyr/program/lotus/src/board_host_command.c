@@ -33,6 +33,7 @@
 
 #ifdef CONFIG_BOARD_LOTUS
 #include "gpu.h"
+#include "input_module.h"
 #endif
 
 /* Console output macros */
@@ -319,6 +320,12 @@ DECLARE_HOST_COMMAND(EC_CMD_CHASSIS_OPEN_CHECK, chassis_open_check, EC_VER_MASK(
 static enum ec_status enter_acpi_mode(struct host_cmd_handler_args *args)
 {
 	hook_call_deferred(&sci_enable_data, 250 * MSEC);
+
+#ifdef CONFIG_BOARD_LOTUS
+	/* Need to cleanly enumerate keyboard in OS, otherwise NKRO won't work without hotplug */
+	/* So we reset the input modules right on entry to OS */
+	input_modules_reset();
+#endif
 
 	return EC_RES_SUCCESS;
 }
