@@ -12,6 +12,26 @@ config USBC_INTEL_ALTMODE
 	  chip and EC for configuring the USB-C alternate mode muxes inside
 	  Intel AP.
 
+config USBC_PDC_RTS54XX
+	bool "Realtek RTS545x Power Delivery Controller driver"
+	default y if DT_HAS_REALTEK_RTS54_PDC_ENABLED
+	help
+	  This option enables the Realtek RTS545x Power Delivery Controller.
+
+config USBC_PDC_RTS54XX_STACK_SIZE
+        int "USB-C Realtek RTS545x PDC thread stack size"
+        default 1024
+	depends on USBC_PDC_RTS54XX
+        help
+          Stack size of thread created for each instance.
+
+config USBC_PDC_RTS54XX_THREAD_PRIORITY
+        int "USB-C Realtek RTS545x PDC thread priority"
+        default 0
+	depends on USBC_PDC_RTS54XX
+        help
+          Set thread priority of the USB-C PDC
+
 endif # PLATFORM_EC_USBC
 
 # TODO: move this inside the PLATFORM_EC_USBC guard
