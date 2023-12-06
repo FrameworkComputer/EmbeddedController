@@ -56,3 +56,7 @@ properties:
     type: phandle
     description: |
       PD chip for configuring the alternate modes of the USB-C port.
+  pdc:
+    type: phandle
+    description: |
+      PD chip for managing Power Delivery
