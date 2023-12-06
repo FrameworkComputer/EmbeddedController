@@ -51,15 +51,6 @@ config CROS_EC_KEYBOARD_INPUT
 	  `cros-ec,keyboard` chosen property pointing at the desired input
 	  device node.
 
-config CROS_EC_COL_GPIO_DRIVE
-	bool "GPIO driven column keyboard matrix hook"
-	depends on CROS_EC_KEYBOARD_INPUT
-	depends on DT_HAS_CROS_EC_COL_GPIO_ENABLED
-	default y
-	select INPUT_KBD_DRIVE_COLUMN_HOOK
-	help
-	  Implemnt the hook to handle a keyboard matrix column using a GPIO.
-
 endchoice # PLATFORM_EC_KEYBOARD_DRIVER
 
 config CROS_EC_KEYSCAN
