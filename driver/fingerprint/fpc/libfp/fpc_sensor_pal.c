@@ -51,7 +51,11 @@ __staticlib_hook int fpc_pal_wait_irq(fpc_device_t device,
 
 __staticlib_hook int32_t FpcMalloc(void **data, size_t size)
 {
-	return shared_mem_acquire(size, (char **)data);
+	int ret = shared_mem_acquire(size, (char **)data);
+
+	if (ret != EC_SUCCESS)
+		CPRINTS("Error - %s of size %zu failed.", __func__, size);
+	return ret;
 }
 
 __staticlib_hook void FpcFree(void **data)

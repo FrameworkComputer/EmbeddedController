@@ -6,6 +6,8 @@
 /* FPC Platform Abstraction Layer */
 
 #include "common.h"
+#include "console.h"
+#include "fpsensor/fpsensor_utils.h"
 #include "shared_mem.h"
 #include "uart.h"
 
@@ -21,8 +23,10 @@ __staticlib_hook void *fpc_malloc(uint32_t size)
 
 	if (rc == EC_SUCCESS)
 		return data;
-	else
+	else {
+		CPRINTS("Error - %s of size %u failed.", __func__, size);
 		return NULL;
+	}
 }
 
 __staticlib_hook void fpc_free(void *data)
