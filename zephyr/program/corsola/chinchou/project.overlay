@@ -17,6 +17,7 @@
 #include "../npcx_motionsense.dtsi"
 #include "../ite_usbc.dtsi"
 #include "../ite_shi.dtsi"
+#include "thermistor.dtsi"
 
 #include <cros/thermistor/thermistor.dtsi>
 #include <dt-bindings/battery.h>
@@ -170,6 +171,9 @@
 		compatible = "cros-ec,temp-sensors";
 		temp_sensor_1 {
 			sensor = <&temp_sensor_1_thermistor>;
+		};
+		temp_charger: charger {
+			sensor = <&charger_bc12_port1>;
 		};
 	};
 
@@ -680,6 +684,7 @@
 		reg = <0x53>;
 		irq = <&int_usb_c0_bc12_charger>;
 		mivr = <4000>;
+		thermistor = <&thermistor_rt9490>;
 	};
 };
 
