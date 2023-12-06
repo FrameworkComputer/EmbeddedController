@@ -3,16 +3,16 @@
 # found in the LICENSE file.
 
 load(
-    "@cros_firmware//platform/ec/bazel:zephyr_ec.bzl",
-    "ec_binary",
+    "@cros_firmware//platform/ec/bazel:flash_ec.bzl",
+    "flash_ec",
 )
 load(
     "@cros_firmware//platform/ec/bazel:legacy_ec.bzl",
     "legacy_ec",
 )
 load(
-    "@cros_firmware//platform/ec/bazel:flash_ec.bzl",
-    "flash_ec",
+    "@cros_firmware//platform/ec/bazel:zephyr_ec.bzl",
+    "ec_binary",
 )
 
 def ec_target(

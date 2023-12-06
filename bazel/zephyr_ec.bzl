@@ -4,8 +4,8 @@
 
 def _impl(ctx):
     envs = {
-        "TOOL_PATH_binman": ctx.file._binman_path.path,
         "COREBOOT_SDK_ROOT": ctx.file._coreboot_root.path,
+        "TOOL_PATH_binman": ctx.file._binman_path.path,
     }
 
     build_dir = ctx.actions.declare_file("ec_{}".format(ctx.attr.name))
@@ -56,14 +56,14 @@ ec_binary = rule(
     implementation = _impl,
     doc = "Build an EC binary for a given firmware target <name>",
     attrs = {
+        "board": attr.string(),
         "extra_modules": attr.string_list(
             doc = "Extra modules, e.g. cmsis to be included for this ec binary",
         ),
-        "board": attr.string(),
         "_binman_path": attr.label(default = "@u_boot//:binman_path", allow_single_file = True),
-        "_ec": attr.label(default = "@ec//:src", allow_files = True),
         "_cmsis": attr.label(default = "@cmsis//:src", allow_files = True),
         "_coreboot_root": attr.label(default = "@coreboot_sdk//:coreboot_sdk_root", allow_single_file = True),
+        "_ec": attr.label(default = "@ec//:src", allow_files = True),
         "_zmake": attr.label(default = "@zephyr//:src", allow_files = True),
         "_zmake_bin": attr.label(
             executable = True,

@@ -256,14 +256,13 @@
  */
 #define CELSIUS_TO_DECI_KELVIN(temp_c) \
 	(round_divide(CELSIUS_TO_MILLI_KELVIN(temp_c), 100))
-#define DECI_KELVIN_TO_CELSIUS(temp_dk) \
-	(MILLI_KELVIN_TO_CELSIUS((temp_dk) * 100))
+#define DECI_KELVIN_TO_CELSIUS(temp_dk) (MILLI_KELVIN_TO_CELSIUS((temp_dk)*100))
 #define MILLI_KELVIN_TO_MILLI_CELSIUS(temp_mk) ((temp_mk)-273150)
 #define MILLI_CELSIUS_TO_MILLI_KELVIN(temp_mc) ((temp_mc) + 273150)
 #define MILLI_KELVIN_TO_KELVIN(temp_mk) (round_divide((temp_mk), 1000))
-#define KELVIN_TO_MILLI_KELVIN(temp_k) ((temp_k) * 1000)
+#define KELVIN_TO_MILLI_KELVIN(temp_k) ((temp_k)*1000)
 #define CELSIUS_TO_MILLI_KELVIN(temp_c) \
-	(MILLI_CELSIUS_TO_MILLI_KELVIN((temp_c) * 1000))
+	(MILLI_CELSIUS_TO_MILLI_KELVIN((temp_c)*1000))
 #define MILLI_KELVIN_TO_CELSIUS(temp_mk) \
 	(round_divide(MILLI_KELVIN_TO_MILLI_CELSIUS(temp_mk), 1000))
 
@@ -271,7 +270,7 @@
  * TARGET_WITH_MARGIN(X, 5) returns X' where X' * 100.5% is almost equal to
  * but does not exceed X. */
 #define TARGET_WITH_MARGIN(target, tenths_percent) \
-	(((target) * 1000) / (1000 + (tenths_percent)))
+	(((target)*1000) / (1000 + (tenths_percent)))
 
 /* Call a function, and return the error value unless it returns EC_SUCCESS. */
 #define RETURN_ERROR(fn)                 \

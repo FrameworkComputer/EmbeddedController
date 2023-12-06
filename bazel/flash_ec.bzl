@@ -13,9 +13,9 @@ def _gen_shell_wrapper(argv, env):
 
 def _flash_ec(ctx):
     env = {
+        "BAZEL_DUT_CONTROL": ctx.executable._dut_control.short_path,
         "PATH": "%s/usr/bin:/usr/bin:/bin" % ctx.files._ec_devutils[0].path,
         "SHFLAGS": "%s/usr/share/misc/shflags" % ctx.files._shflags[0].path,
-        "BAZEL_DUT_CONTROL": ctx.executable._dut_control.short_path,
     }
 
     script = ctx.actions.declare_file("flash_ec_wrapper.sh")
@@ -61,27 +61,27 @@ flash_ec = rule(
             allow_single_file = True,
         ),
         "zephyr": attr.bool(doc = "True if it's a Zephyr board."),
-        "_flash_ec": attr.label(
-            doc = "The flash_ec script to run.",
-            allow_single_file = True,
-            default = Label("@cros_firmware//platform/ec:util/flash_ec"),
-        ),
-        "_ec_devutils": attr.label(
-            doc = "The devutils bundle path.",
-            allow_single_file = True,
-            default = Label("@ec_devutils//:bundle"),
-        ),
-        "_shflags": attr.label(
-            doc = "The shflags bundle path.",
-            allow_files = True,
-            default = Label("@shflags//:bundle"),
-        ),
         "_dut_control": attr.label(
             doc = "The dut_control binary to use.",
             executable = True,
             cfg = "exec",
             allow_files = True,
             default = Label("@hdctools//:dut_control"),
+        ),
+        "_ec_devutils": attr.label(
+            doc = "The devutils bundle path.",
+            allow_single_file = True,
+            default = Label("@ec_devutils//:bundle"),
+        ),
+        "_flash_ec": attr.label(
+            doc = "The flash_ec script to run.",
+            allow_single_file = True,
+            default = Label("@cros_firmware//platform/ec:util/flash_ec"),
+        ),
+        "_shflags": attr.label(
+            doc = "The shflags bundle path.",
+            allow_files = True,
+            default = Label("@shflags//:bundle"),
         ),
     },
     executable = True,
