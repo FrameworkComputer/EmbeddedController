@@ -211,7 +211,7 @@ led-colors {
 			};
 		};
 
-		power-state-idle {
+		power-state-idle-s5 {
 			charge-state = "LED_PWRS_IDLE";
 			chipset-state = "POWER_S5";
 
@@ -220,6 +220,32 @@ led-colors {
 				/* LED off when S5, others do not change */
 				color-0 {
 					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		power-state-idle-s0 {
+			charge-state = "LED_PWRS_IDLE";
+			chipset-state = "POWER_S0";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		power-state-idle-s3 {
+			charge-state = "LED_PWRS_IDLE";
+			chipset-state = "POWER_S3";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
 				};
 			};
 		};
