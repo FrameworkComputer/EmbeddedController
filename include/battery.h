@@ -49,9 +49,6 @@
 /* Full-capacity change reqd for host event */
 #define LFCC_EVENT_THRESH 5
 
-/* Max string size in the SB spec is 31. */
-#define SB_MAX_STR_SIZE 31
-
 /* Battery index, only used with CONFIG_BATTERY_V2. */
 enum battery_index {
 	BATT_IDX_INVALID = -1,
@@ -104,12 +101,12 @@ struct battery_static_info {
 	 * char device_name[32];
 	 * char chemistry[32];
 	 */
-	char manufacturer_ext[SB_MAX_STR_SIZE + 1]; /* SB_MANUFACTURER_NAME */
-	char model_ext[SB_MAX_STR_SIZE + 1]; /* SB_DEVICE_NAME */
-	char serial_ext[SB_MAX_STR_SIZE + 1]; /* SB_SERIAL_NUMBER */
-	char type_ext[SB_MAX_STR_SIZE + 1]; /* SB_DEVICE_CHEMISTRY */
+	char manufacturer_ext[SBS_MAX_STR_OBJ_SIZE]; /* SB_MANUFACTURER_NAME */
+	char model_ext[SBS_MAX_STR_OBJ_SIZE]; /* SB_DEVICE_NAME */
+	char serial_ext[SBS_MAX_STR_OBJ_SIZE]; /* SB_SERIAL_NUMBER */
+	char type_ext[SBS_MAX_STR_OBJ_SIZE]; /* SB_DEVICE_CHEMISTRY */
 #ifdef CONFIG_BATTERY_VENDOR_PARAM
-	uint8_t vendor_param[SB_MAX_STR_SIZE + 1];
+	uint8_t vendor_param[SBS_MAX_STR_OBJ_SIZE];
 #endif
 };
 

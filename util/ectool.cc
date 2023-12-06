@@ -8833,8 +8833,8 @@ static int cmd_battery_config_get(int argc, char *argv[])
 {
 	struct batt_conf_header *head;
 	struct board_batt_params conf;
-	char manuf_name[SBS_MAX_STRING_SIZE];
-	char device_name[SBS_MAX_STRING_SIZE];
+	char manuf_name[SBS_MAX_STR_OBJ_SIZE];
+	char device_name[SBS_MAX_STR_OBJ_SIZE];
 	uint8_t *p;
 	int expected;
 	bool in_json = true;
@@ -8914,20 +8914,19 @@ static int cmd_battery_config_set(int argc, char *argv[])
 	const char *json_file = argv[1];
 	const char *manuf_name = argv[2];
 	const char *device_name = argv[3];
-	char identifier[SBS_MAX_STRING_SIZE * 2];
+	char identifier[SBS_MAX_STR_OBJ_SIZE * 2];
 	struct board_batt_params config;
 	struct ec_params_set_cbi *p = (struct ec_params_set_cbi *)ec_outbuf;
 	struct batt_conf_header *header = (struct batt_conf_header *)p->data;
 	uint8_t *d = (uint8_t *)header;
 	int rv;
 
-	/* In SBS, actual max string length is 32 - 1. */
-	if (strlen(manuf_name) > SBS_MAX_STRING_SIZE - 1) {
+	if (strlen(manuf_name) > SBS_MAX_STR_SIZE) {
 		fprintf(stderr, "manuf_name is too long.");
 		return -1;
 	}
 
-	if (strlen(device_name) > SBS_MAX_STRING_SIZE - 1) {
+	if (strlen(device_name) > SBS_MAX_STR_SIZE) {
 		fprintf(stderr, "device_name is too long.");
 		return -1;
 	}

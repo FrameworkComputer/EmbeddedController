@@ -23,8 +23,8 @@
  */
 const struct batt_conf_embed *battery_conf;
 
-static char batt_manuf_name[SBS_MAX_STRING_SIZE];
-static char batt_device_name[SBS_MAX_STRING_SIZE];
+static char batt_manuf_name[SBS_MAX_STR_OBJ_SIZE];
+static char batt_device_name[SBS_MAX_STR_OBJ_SIZE];
 
 /* Copies of config and strings of a matching battery found in CBI. */
 test_export_static struct batt_conf_embed default_battery_conf = {
@@ -43,7 +43,7 @@ test_export_static struct batt_conf_embed default_battery_conf = {
 test_export_static bool authenticate_battery_type(int index,
 						  const char *manuf_name)
 {
-	char device_name[32];
+	char device_name[SBS_MAX_STR_OBJ_SIZE];
 
 	const struct batt_conf_embed *const conf = &board_battery_info[index];
 	int len = 0;
@@ -114,7 +114,7 @@ test_export_static int battery_fuel_gauge_type_override = -1;
 /* Get type of the battery connected on the board */
 static int get_battery_type(void)
 {
-	char manuf_name[32];
+	char manuf_name[SBS_MAX_STR_OBJ_SIZE];
 	int i;
 	static enum battery_type battery_type = BATTERY_TYPE_COUNT;
 
@@ -187,8 +187,8 @@ const struct battery_info *battery_get_info(void)
 
 static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 {
-	char manuf[32];
-	char device[32];
+	char manuf[SBS_MAX_STR_OBJ_SIZE];
+	char device[SBS_MAX_STR_OBJ_SIZE];
 	int tag = CBI_TAG_BATTERY_CONFIG;
 
 	if (battery_manufacturer_name(manuf, sizeof(manuf))) {

@@ -7770,7 +7770,20 @@ struct board_batt_params {
 	struct battery_info batt_info;
 } __packed __aligned(4);
 
-#define SBS_MAX_STRING_SIZE 32
+/*
+ * The SBS defines a string object as a block of chars, 32 byte maximum, where
+ * the first byte indicates the number of chars in the block (excluding the
+ * first byte).
+ *
+ * Thus, the actual string length (i.e. the value strlen returns) is limited to
+ * 31 (=SBS_MAX_STR_SIZE).
+ *
+ * SBS_MAX_STR_OBJ_SIZE can be used as the size of a buffer for an SBS string
+ * object but also as a buffer for a c-lang string because the null terminating
+ * char also takes one byte.
+ */
+#define SBS_MAX_STR_SIZE 31
+#define SBS_MAX_STR_OBJ_SIZE (SBS_MAX_STR_SIZE + 1)
 
 /**
  * Header describing a battery config stored in CBI. Only struct_version has
@@ -7813,7 +7826,7 @@ struct batt_conf_header {
 } __packed;
 
 #define BATT_CONF_MAX_SIZE                                           \
-	(sizeof(struct batt_conf_header) + SBS_MAX_STRING_SIZE * 2 + \
+	(sizeof(struct batt_conf_header) + SBS_MAX_STR_OBJ_SIZE * 2 + \
 	 sizeof(struct board_batt_params))
 
 /*
