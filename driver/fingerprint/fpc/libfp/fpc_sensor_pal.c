@@ -49,12 +49,12 @@ __staticlib_hook int fpc_pal_wait_irq(fpc_device_t device,
 	return EC_SUCCESS; /* just lie about it, libfpsensor prefers... */
 }
 
-int32_t FpcMalloc(void **data, size_t size)
+__staticlib_hook int32_t FpcMalloc(void **data, size_t size)
 {
 	return shared_mem_acquire(size, (char **)data);
 }
 
-void FpcFree(void **data)
+__staticlib_hook void FpcFree(void **data)
 {
 	shared_mem_release(*data);
 	*data = NULL;
