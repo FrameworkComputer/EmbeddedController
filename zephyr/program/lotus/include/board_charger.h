@@ -32,4 +32,8 @@ enum ec_prochot_status {
 
 int update_charger_in_cutoff_mode(void);
 
+#ifdef CONFIG_BOARD_LOTUS
+int charger_in_bypass_mode(void);
+#endif
+
 #endif	/* __CROS_EC_BOARD_CHARGER_H */

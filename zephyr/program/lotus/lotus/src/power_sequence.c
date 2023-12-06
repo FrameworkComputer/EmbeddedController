@@ -577,11 +577,8 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S0ixS3;
 		}
 
-		if (check_s0ix_statsus() == CS_EXIT_S0ix) {
-			/* We should enter EPR mode when the system actually resume to S0 state */
-			enter_epr_mode();
+		if (check_s0ix_statsus() == CS_EXIT_S0ix)
 			return POWER_S0ixS0;
-		}
 
 		break;
 
@@ -600,6 +597,10 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0ixS0:
 		resume_ms_flag = 0;
 		system_in_s0ix = 0;
+
+		/* We should enter EPR mode when the system actually resume to S0 state */
+		enter_epr_mode();
+
 		lpc_s0ix_resume_restore_masks();
 		hook_notify(HOOK_CHIPSET_RESUME);
 		return POWER_S0;

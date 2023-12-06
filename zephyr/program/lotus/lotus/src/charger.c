@@ -12,11 +12,13 @@
 #include "charge_state.h"
 #include "chipset.h"
 #include "common.h"
+#include "common_cpu_power.h"
 #include "console.h"
 #include "cypress_pd_common.h"
 #include "driver/charger/isl9241.h"
 #include "driver/ina2xx.h"
 #include "extpower.h"
+#include "gpu.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "math_util.h"
@@ -94,7 +96,7 @@ static  void charger_psys_enable(bool status)
 	if (status) {
 
 		i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4500));
+			ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4000));
 
 		/* Clear Control1 register bit 5; Enable IMON */
 		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL1,
@@ -351,6 +353,24 @@ int board_want_change_mode(void)
 		return false;
 }
 
+int charger_in_bypass_mode(void)
+{
+	int reg;
+	int rv;
+
+	rv = i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL0, &reg);
+
+	/* read register fail */
+	if (rv)
+		return 0;
+
+	/* charer not enter bypass mode */
+	if ((reg & ISL9241_CONTROL0_EN_BYPASS_GATE) != ISL9241_CONTROL0_EN_BYPASS_GATE)
+		return 0;
+
+	return 1;
+}
+
 int board_discharge_on_ac(int enable)
 {
 	int chgnum;
@@ -512,6 +532,16 @@ __override void board_check_extpower(void)
 		extpower_handle_update(extpower_present);
 	} else
 		last_extpower_present = extpower_present;
+
+	/* we should update the PMF as soon as possible after the typec port state is changed */
+	update_soc_power_limit(false, false);
+
+	/**
+	 * set the GPU to ac mode if the adapter power = 100w,
+	 * more than 100w will be controlled by enter EPR mode.
+	 */
+	if (pd_active_port && cypd_get_ac_power() == 100000)
+		set_gpu_gpio(GPIO_FUNC_ACDC, 1);
 
 	pre_active_port = pd_active_port;
 }

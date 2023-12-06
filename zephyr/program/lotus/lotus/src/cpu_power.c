@@ -4,6 +4,7 @@
 #include "charge_state.h"
 #include "charger.h"
 #include "charge_manager.h"
+#include "board_charger.h"
 #include "board_battery.h"
 #include "board_function.h"
 #include "chipset.h"
@@ -13,8 +14,10 @@
 #include "cypress_pd_common.h"
 #include "driver/sb_rmi.h"
 #include "extpower.h"
+#include "gpu.h"
 #include "hooks.h"
 #include "math_util.h"
+#include "power.h"
 #include "throttle_ap.h"
 #include "util.h"
 #include "gpu.h"
@@ -938,9 +941,20 @@ static void update_safety_power_limit(int active_mpower)
 void update_pmf_events(uint8_t pd_event, int enable)
 {
 	static uint8_t pre_events;
+	int power;
+
+	switch (power_get_state()) {
+	case POWER_S0:
+	case POWER_S3S0:
+	case POWER_S0ixS0: /* S0ix -> S0 */
+		power = 1;
+		break;
+	default:
+		power = 0;
+	}
 
 	/* We should not need to assert the prochot before apu ready to update pmf */
-	if (!chipset_in_state(CHIPSET_STATE_ON) || !get_apu_ready())
+	if (!power || !get_apu_ready())
 		return;
 
 	if (enable)
@@ -949,10 +963,15 @@ void update_pmf_events(uint8_t pd_event, int enable)
 		events &= ~pd_event;
 
 	if (pre_events != events) {
-		if (events)
+		if (events) {
 			throttle_ap(THROTTLE_ON, THROTTLE_HARD, THROTTLE_SRC_UPDATE_PMF);
-		else
+			if (pd_event == BIT(PD_PROGRESS_ENTER_EPR_MODE))
+				set_gpu_gpio(GPIO_FUNC_ACDC, 0);
+		} else {
 			throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_UPDATE_PMF);
+			if (pd_event == BIT(PD_PROGRESS_ENTER_EPR_MODE))
+				set_gpu_gpio(GPIO_FUNC_ACDC, 1);
+		}
 
 		pre_events = events;
 	}
@@ -960,10 +979,17 @@ void update_pmf_events(uint8_t pd_event, int enable)
 
 void clear_prochot(enum clear_reasons reason)
 {
-	if (events) {
-		CPRINTS("release pmf prochot reason:%d", reason);
-		update_pmf_events(events, 0);
+	if (events & BIT(PD_PROGRESS_ENTER_EPR_MODE) && (cypd_get_ac_power() > 100000)) {
+		/* wait charger to entry the bypass mode */
+		if (charger_in_bypass_mode())
+			update_pmf_events(BIT(PD_PROGRESS_ENTER_EPR_MODE), 0);
 	}
+
+	if (events & BIT(PD_PROGRESS_EXIT_EPR_MODE))
+		update_pmf_events(BIT(PD_PROGRESS_EXIT_EPR_MODE), 0);
+
+	if (events & BIT(PD_PROGRESS_DISCONNECTED))
+		update_pmf_events(BIT(PD_PROGRESS_DISCONNECTED), 0);
 }
 
 void update_soc_power_limit(bool force_update, bool force_no_adapter)

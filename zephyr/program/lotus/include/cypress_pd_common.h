@@ -445,7 +445,8 @@ enum pd_port {
 enum pd_progress {
 	PD_PROGRESS_IDLE = 0,
 	PD_PROGRESS_DISCONNECTED,
-	PD_PROGRESS_EPR_MODE,
+	PD_PROGRESS_ENTER_EPR_MODE,
+	PD_PROGRESS_EXIT_EPR_MODE,
 };
 
 struct pd_chip_config_t {

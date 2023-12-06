@@ -410,7 +410,7 @@ void enter_epr_mode(void)
 			pd_epr_in_progress |= (BIT(port_idx) + ENTER_EPR);
 
 			/* avoid the pmf is higher when the system resume from S0ix */
-			update_pmf_events(PD_PROGRESS_EPR_MODE,
+			update_pmf_events(BIT(PD_PROGRESS_ENTER_EPR_MODE),
 				!!(pd_epr_in_progress & ~EPR_PROCESS_MASK));
 
 			if (battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED) {
@@ -458,7 +458,7 @@ void exit_epr_mode(void)
 				/* Set input current to 0mA */
 				charger_set_input_current_limit(0, 0);
 			} else {
-				update_pmf_events(PD_PROGRESS_EPR_MODE,
+				update_pmf_events(BIT(PD_PROGRESS_EXIT_EPR_MODE),
 						!!(pd_epr_in_progress & ~EPR_PROCESS_MASK));
 			}
 
@@ -489,7 +489,6 @@ DECLARE_DEFERRED(pd1_update_state_deferred);
 static void update_power_state_deferred(void)
 {
 	task_set_event(TASK_ID_CYPD, CCG_EVT_UPDATE_PWRSTAT);
-	update_soc_power_limit(false, false);
 }
 DECLARE_DEFERRED(update_power_state_deferred);
 
@@ -1366,7 +1365,6 @@ static void cypd_update_epr_state(int controller, int port, int response_len)
 		}
 	}
 
-	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
 	pd_epr_in_progress &= ~BIT((controller << 1) + port);
 }
 
@@ -1810,6 +1808,7 @@ void cypd_handle_vdm(int controller, int port, uint8_t *data, int len)
 	}
 
 }
+
 void cypd_port_int(int controller, int port)
 {
 	int i, rv, response_len;
@@ -1845,11 +1844,13 @@ void cypd_port_int(int controller, int port)
 
 #ifdef CONFIG_BOARD_LOTUS
 		/* Assert prochot until the PMF is updated (Only sink role needs to do this) */
-		if (pd_port_states[(controller << 1) + port].power_role == PD_ROLE_SINK)
+		if (pd_port_states[(controller << 1) + port].power_role == PD_ROLE_SINK &&
+		   (prev_charge_port == (controller << 1) + port))
 			update_pmf_events(BIT(PD_PROGRESS_DISCONNECTED), 1);
 
 		/* clear the EPR progress when the adapter is removed */
 		pd_epr_in_progress &= EPR_PROCESS_MASK;
+		set_gpu_gpio(GPIO_FUNC_ACDC, 0);
 #endif
 
 		cypd_update_port_state(controller, port);
@@ -1868,6 +1869,7 @@ void cypd_port_int(int controller, int port)
 		/* make sure enter EPR mode only process in S0 state */
 		if (chipset_in_state(CHIPSET_STATE_ON))
 			hook_call_deferred(&enter_epr_mode_data, 100 * MSEC);
+
 #endif
 		break;
 	case CCG_RESPONSE_PORT_CONNECT:
@@ -1901,18 +1903,6 @@ void cypd_port_int(int controller, int port)
 		cypd_handle_extend_msg(controller, port, response_len, sop_type);
 		CPRINTS("CYP_RESPONSE_RX_EXT_MSG");
 		break;
-#ifdef CONFIG_BOARD_LOTUS
-	case CCG_RESPONSE_INVALID_COMMAND:
-		if (pd_epr_in_progress) {
-			CPRINTS("P%d EPR NO SUPPORT", ((controller << 1) + port));
-			pd_epr_in_progress &= ~BIT((controller << 1) + port);
-			update_pmf_events(PD_PROGRESS_EPR_MODE,
-				!!(pd_epr_in_progress & ~EPR_PROCESS_MASK));
-			cypd_update_port_state(controller, port);
-		}
-
-		break;
-#endif
 	case CCG_RESPONSE_VDM_RX:
 		i2c_read_offset16_block(i2c_port, addr_flags,
 			CCG_READ_DATA_MEMORY_REG(port, 0), data2, MIN(response_len, 32));

@@ -28,4 +28,6 @@ int get_gpu_latch(void);
 
 bool gpu_fan_board_present(void);
 
+void update_gpu_ac_mode_deferred(int times);
+
 #endif /* __BOARD_GPU_H__ */
