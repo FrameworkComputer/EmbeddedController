@@ -8166,11 +8166,11 @@ static int get_battery_command_print_info(
 
 	if (!is_string_printable(static_r->manufacturer))
 		goto cmd_error;
-	printf("  OEM name:               %s\n", static_r->manufacturer);
+	printf("  Manufacturer:           %s\n", static_r->manufacturer);
 
 	if (!is_string_printable(static_r->device_name))
 		goto cmd_error;
-	printf("  Model number:           %s\n", static_r->device_name);
+	printf("  Device name:            %s\n", static_r->device_name);
 
 	if (!is_string_printable(static_r->chemistry))
 		goto cmd_error;
