@@ -19,7 +19,7 @@ __staticlib_hook void *fpc_malloc(uint32_t size)
 
 	rc = shared_mem_acquire(size, &data);
 
-	if (rc == 0)
+	if (rc == EC_SUCCESS)
 		return data;
 	else
 		return NULL;
