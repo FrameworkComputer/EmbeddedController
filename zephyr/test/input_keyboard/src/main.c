@@ -93,9 +93,12 @@ ZTEST(keyboard_input, test_kso_gpio)
 	gpio_pin_t pin = DT_GPIO_PIN(DT_NODELABEL(kso_gpio), col_gpios);
 	int col_num = DT_PROP(DT_NODELABEL(kso_gpio), col_num);
 
-	zassert_equal(gpio_emul_output_get(gpio_dev, pin), 0);
+	zassert_equal(gpio_emul_output_get(gpio_dev, pin), 1);
 
 	input_kbd_matrix_drive_column_hook(NULL, col_num);
+	zassert_equal(gpio_emul_output_get(gpio_dev, pin), 1);
+
+	input_kbd_matrix_drive_column_hook(fake_dev, col_num + 1);
 	zassert_equal(gpio_emul_output_get(gpio_dev, pin), 0);
 
 	input_kbd_matrix_drive_column_hook(fake_dev, col_num);

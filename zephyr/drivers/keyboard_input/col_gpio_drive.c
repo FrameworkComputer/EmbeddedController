@@ -52,7 +52,7 @@ static int col_gpio_init(const struct device *dev)
 		return -ENODEV;
 	}
 
-	ret = gpio_pin_configure_dt(&cfg->gpio, GPIO_OUTPUT_INACTIVE);
+	ret = gpio_pin_configure_dt(&cfg->gpio, GPIO_OUTPUT_ACTIVE);
 	if (ret != 0) {
 		LOG_ERR("Pin configuration failed: %d", ret);
 		return ret;
