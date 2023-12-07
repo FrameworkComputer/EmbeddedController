@@ -18,6 +18,7 @@
 #include "gpio/gpio_int.h"
 #include "gpio.h"
 #include "hooks.h"
+#include "power_button.h"
 #include "system.h"
 #include "temp_sensor.h"
 #include "util.h"
@@ -97,6 +98,42 @@ int chassis_cmd_clear(int type)
 		return press;
 	}
 	return -1;
+}
+
+static int power_button_state;
+static void power_button_signal_deferred(void);
+DECLARE_DEFERRED(power_button_signal_deferred);
+
+static void power_button_signal_deferred(void)
+{
+#if DT_NODE_EXISTS(DT_ALIAS(gpio_check_fp_control))
+
+	static timestamp_t stime;
+
+	if (!stime.val)
+		stime = get_time();
+
+	/* ignore the power button signal when fp control enable */
+	if (gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_check_fp_control))) {
+		if ((get_time().val < stime.val + 4 * SECOND) && !power_button_state) {
+			hook_call_deferred(&power_button_signal_deferred_data, 100 * MSEC);
+			return;
+		} else if ((get_time().val > stime.val + 4 * SECOND) && !power_button_state)
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_BOARD_CUSTOM);
+		else
+			stime.val = 0;
+	}
+
+	stime.val = 0;
+#endif
+	/* power_button_interrupt may not use the signal variant, so always set 0 */
+	power_button_interrupt(0);
+}
+
+void board_power_button_interrupt(enum gpio_signal signal)
+{
+	power_button_state = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_on_off_btn_l));
+	hook_call_deferred(&power_button_signal_deferred_data, 50);
 }
 
 static void chassis_open_hibernate(void)

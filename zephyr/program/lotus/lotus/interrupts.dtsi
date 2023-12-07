@@ -10,7 +10,7 @@
 		int_powerbtn: powerbtn {
 			irq-pin = <&gpio_on_off_btn_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "power_button_interrupt";
+			handler = "board_power_button_interrupt";
 		};
 		int_slp_s3: slp_s3 {
 			irq-pin = <&gpio_slp_s3_l>;
