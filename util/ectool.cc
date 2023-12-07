@@ -5327,7 +5327,7 @@ static int ms_help(const char *cmd)
 	printf("  %s odr NUM [ODR [ROUNDUP]]      - set/get sensor ODR\n", cmd);
 	printf("  %s range NUM [RANGE [ROUNDUP]]  - set/get sensor range\n",
 	       cmd);
-	printf("  %s offset NUM [-- X Y Z [TEMP]] - set/get sensor offset\n",
+	printf("  %s offset NUM [X Y Z [TEMP]]    - set/get sensor offset\n",
 	       cmd);
 	printf("  %s kb_wake NUM                  - set/get KB wake ang\n",
 	       cmd);
@@ -5346,9 +5346,9 @@ static int ms_help(const char *cmd)
 	printf("  %s get_activity ACT             - get activity status\n",
 	       cmd);
 	printf("  %s lid_angle                    - print lid angle\n", cmd);
-	printf("  %s spoof -- NUM [0/1] [X Y Z]   - enable/disable spoofing\n",
+	printf("  %s spoof NUM [0/1] [X Y Z]      - enable/disable spoofing\n",
 	       cmd);
-	printf("  %s spoof -- NUM activity ACT [0/1] [STATE] - enable/disable "
+	printf("  %s spoof NUM activity ACT [0/1] [STATE] - enable/disable "
 	       "activity spoofing\n",
 	       cmd);
 	printf("  %s tablet_mode_angle ANG HYS    - set/get tablet mode "
