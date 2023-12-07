@@ -1,4 +1,4 @@
-/* Copyright 2022 The ChromiumOS Authors
+/* Copyright 2023 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -11,9 +11,7 @@
 		/*
 		 * Interrupt bindings for sensor devices.
 		 */
-		bma4xx-int = &lid_accel;
 		bmi3xx-int = &base_accel;
-		lis2dw12-int = &lid_accel;
 		lsm6dsm-int = &base_accel;
 	};
 
