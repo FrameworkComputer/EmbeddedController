@@ -218,8 +218,6 @@ const char help_str[] =
 	"      Return the list of supported features\n"
 	"  kbfactorytest\n"
 	"      Scan out keyboard if any pins are shorted\n"
-	"  kbid\n"
-	"      Get keyboard ID of supported keyboards\n"
 	"  kbinfo\n"
 	"      Dump keyboard matrix dimensions\n"
 	"  kbpress\n"
