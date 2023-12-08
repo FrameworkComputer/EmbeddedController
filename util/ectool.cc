@@ -8537,7 +8537,8 @@ cmd_battery_vendor_param_usage:
 }
 
 static void batt_conf_dump(const struct board_batt_params *conf,
-			   const char *manuf_name, const char *device_name)
+			   const char *manuf_name, const char *device_name,
+			   uint8_t struct_version)
 {
 	const struct fuel_gauge_info *fg = &conf->fuel_gauge;
 	const struct ship_mode_info *ship = &conf->fuel_gauge.ship_mode;
@@ -8547,6 +8548,7 @@ static void batt_conf_dump(const struct board_batt_params *conf,
 
 	printf("{\n"); /* Start of root */
 	printf("\t\"%s,%s\": {\n", manuf_name, device_name);
+	printf("\t\t\"struct_version\": \"0x%02x\",\n", struct_version);
 	printf("\t\t\"fuel_gauge\": {\n");
 	printf("\t\t\t\"flags\": \"0x%x\",\n", fg->flags);
 
@@ -8593,7 +8595,8 @@ static void batt_conf_dump(const struct board_batt_params *conf,
 }
 
 static void batt_conf_dump_in_c(const struct board_batt_params *conf,
-				const char *manuf_name, const char *device_name)
+				const char *manuf_name, const char *device_name,
+				uint8_t struct_version)
 {
 	const struct fuel_gauge_info *fg = &conf->fuel_gauge;
 	const struct ship_mode_info *ship = &conf->fuel_gauge.ship_mode;
@@ -8601,6 +8604,7 @@ static void batt_conf_dump_in_c(const struct board_batt_params *conf,
 	const struct fet_info *fet = &conf->fuel_gauge.fet;
 	const struct battery_info *info = &conf->batt_info;
 
+	printf("// struct_version = 0x%02x\n", struct_version);
 	printf(".manuf_name = \"%s\",\n", manuf_name);
 	printf(".device_name = \"%s\",\n", device_name);
 
@@ -8910,9 +8914,11 @@ static int cmd_battery_config_get(int argc, char *argv[])
 	p += head->device_name_size;
 	memcpy(&conf, p, sizeof(conf));
 	if (in_json)
-		batt_conf_dump(&conf, manuf_name, device_name);
+		batt_conf_dump(&conf, manuf_name, device_name,
+			       head->struct_version);
 	else
-		batt_conf_dump_in_c(&conf, manuf_name, device_name);
+		batt_conf_dump_in_c(&conf, manuf_name, device_name,
+				    head->struct_version);
 
 	return 0;
 }
