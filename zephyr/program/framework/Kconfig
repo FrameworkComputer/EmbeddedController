@@ -1,0 +1,27 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_LOTUS
+	bool "Framework Lotus Board"
+	help
+	  Build Framework Lotus reference board. Lotus has AMD SoC
+	  with NPCX993FA0BX EC.
+
+config BOARD_AZALEA
+	bool "Framework Azalea Board"
+	help
+	  Build Framework Azalea reference board. Azalea has AMD SoC
+	  with NPCX993FA0BX EC.
+
+config BOARD_MARIGOLD
+	bool "Framework Marigold Board"
+	help
+	  Build Framework Marigold reference board. Marigold has Intel SoC
+	  with NPCX993FA0BX EC.
+
+module = FRAMEWORK
+module-str = FRAMEWORK board-specific code
+source "subsys/logging/Kconfig.template.log_config"
+
+source "Kconfig.zephyr"

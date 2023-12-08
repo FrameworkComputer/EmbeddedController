@@ -368,10 +368,15 @@ void host_clear_events(host_event_t mask)
 	/* ignore host events the rest of board doesn't care about */
 	mask &= CONFIG_HOST_EVENT_REPORT_MASK;
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+	/* return early if nothing changed */
+	if (!(lpc_host_events & mask))
+		return;
+#else
 	/* return early if nothing changed */
 	if (!(events & mask))
 		return;
-
+#endif
 	HOST_EVENT_CPRINTS("event clear", mask);
 
 	host_events_atomic_clear(&events, mask);

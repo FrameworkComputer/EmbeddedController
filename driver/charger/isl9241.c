@@ -772,7 +772,7 @@ static enum ec_error_list isl9241_bypass_to_bat(int chgnum)
 	/* 6: Set ACOK reference to normal value. TODO: Revisit. */
 #ifdef CONFIG_CUSTOMIZED_DESIGN
 	isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
-		      ISL9241_MV_TO_ACOK_REFERENCE(4500));
+		      ISL9241_MV_TO_ACOK_REFERENCE(4000));
 #else
 	isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
 		      ISL9241_MV_TO_ACOK_REFERENCE(
@@ -810,7 +810,7 @@ static enum ec_error_list isl9241_bypass_chrg_to_bat(int chgnum)
 	/* 7: Set ACOK reference to normal value. TODO: Revisit. */
 #ifdef CONFIG_CUSTOMIZED_DESIGN
 	isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
-		      ISL9241_MV_TO_ACOK_REFERENCE(4500));
+		      ISL9241_MV_TO_ACOK_REFERENCE(4000));
 #else
 	isl9241_write(chgnum, ISL9241_REG_ACOK_REFERENCE,
 		      ISL9241_MV_TO_ACOK_REFERENCE(3600));
