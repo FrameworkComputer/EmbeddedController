@@ -32,6 +32,7 @@
 
 #define CONFIG_USB_PD_PPC
 #define CONFIG_USB_PD_TCPM_PS8815
+#define CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
 #define CONFIG_USBC_PPC_NX20P3483 /* Compatible with Silicon Mitus SM5360A */
 
 /* TODO: b/177608416 - measure and check these values on brya */
