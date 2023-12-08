@@ -33,15 +33,3 @@ properties:
     description: |
      Video4Linux2 pixel format type. List of pixel formats can be found at
      https://docs.kernel.org/userspace-api/media/v4l/pixfmt.html.
-
-  irq-gpios:
-    type: phandle-array
-    required: true
-    description: |
-      This property specifies the connection for sensor interrupt.
-
-  reset-gpios:
-    type: phandle-array
-    required: true
-    description: |
-      This property specifies the connection for sensor reset.
