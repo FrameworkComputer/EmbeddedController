@@ -56,7 +56,7 @@ config HAVE_FPC1025_PRIVATE_DRIVER
 endif # FINGERPRINT_SENSOR_FPC1025
 
 config FINGERPRINT_SENSOR_IMAGE_SIZE
-	int "Size of fingerprint image data"
+	int
 	default 26260 if FINGERPRINT_SENSOR_FPC1025
 	help
 	  This is a size of fingerprint image with an additional metadata.
@@ -64,11 +64,17 @@ config FINGERPRINT_SENSOR_IMAGE_SIZE
 	  the size of a raw image is 25600 and the size of metadata is 660, so
 	  the total data is 26260 bytes.
 
+	  If provided, the value will be used as a size of image buffer.
+	  Otherwise it will be obtained from width, height and bits per pixel
+	  properties.
+
 config FINGERPRINT_SENSOR_IMAGE_OFFSET
-	int "Offset of raw image in fingerprint image data"
+	int
 	default 400 if FINGERPRINT_SENSOR_FPC1025
 	help
 	  This is an offset of the raw fingerprint image in the image data
 	  buffer.
+
+	  This option overrides the default offset (0).
 
 endif # FINGERPRINT_SENSOR
