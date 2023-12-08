@@ -8653,7 +8653,8 @@ static int read_u32_from_json(base::Value::Dict *dict, const char *key,
 	char *e;
 
 	if (str == nullptr) {
-		printf("Key '%s' not found\n", key);
+		if (verbose)
+			printf("Key '%s' not found. Ignored.\n", key);
 		return 0;
 	}
 
@@ -8674,7 +8675,8 @@ static int read_u16_from_json(base::Value::Dict *dict, const char *key,
 	char *e;
 
 	if (str == nullptr) {
-		printf("Key '%s' not found\n", key);
+		if (verbose)
+			printf("Key '%s' not found. Ignored.\n", key);
 		return 0;
 	}
 
@@ -8695,7 +8697,8 @@ static int read_u8_from_json(base::Value::Dict *dict, const char *key,
 	char *e;
 
 	if (str == nullptr) {
-		printf("Key '%s' not found\n", key);
+		if (verbose)
+			printf("Key '%s' not found. Ignored.\n", key);
 		return 0;
 	}
 
