@@ -196,6 +196,8 @@ void clear_power_flags(void)
 	 */
 	power_s5_up_control(1);
 
+	input_modules_reset();
+
 	power_state_clear(EC_PS_ENTER_S4 | EC_PS_RESUME_S4 |
 		EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
 
@@ -402,6 +404,7 @@ enum power_state power_handle_state(enum power_state state)
 		k_msleep(20);
 		CPRINTS("PCH PBTN HIGH");
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 1);
+		input_modules_reset();
 
 		/* Exit SOC G3 */
 		CPRINTS("Exit SOC G3");
