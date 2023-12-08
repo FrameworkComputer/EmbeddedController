@@ -294,11 +294,6 @@ class MchpPacker(BinmanPacker):
     """
 
     ro_file = "zephyr.mchp.bin"
-    second_loader = "second_loader_fw.bin"
-
-    def pack_firmware(self, work_dir, jobclient, dir_map, version_string=""):
-        ro_dir = dir_map["ro"]
-        yield ro_dir / self.second_loader, self.second_loader
 
 
 # A dictionary mapping packer config names to classes.
