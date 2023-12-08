@@ -4,7 +4,6 @@
 # found in the LICENSE file.
 
 """
-
 Script to program a Microchip EC with erased or a bricked flash.
 
 General usage:
@@ -51,6 +50,7 @@ DELAY_50_MS = 0.05
 IMG_LEN_ENCRYPTION = 512
 IMG_LEN_NO_ENCRYPTION = 384
 RESPONSE_STATUS_IMAGE_INVA_MASK = 0x06
+RESPONSE_STATUS_CRC_MISMATCH_MASK = 0x01
 RESPONSE_PACKET_ERROR_MASK = 0x80
 ACK_TIMEOUT_SECS = 22
 
@@ -240,9 +240,9 @@ def transfer(prop_obj):
         # Size: 6Bytes
         #    0th byte -> Rxd Command | 0x80
         #    1st byte -> Status byte
-        #        0th bit -> CRC failure
-        #        1st bit -> Incorrect payload length
-        #        2nd bit -> Incorrect header offset
+        #       The script provides a retry function exclusively for CRC
+        #       failures. Any other types of failures will result in the
+        #       termination of the script.
         #    2nd to 5th bytes -> CRC
 
         if rf_cont_disp != resp_bytes:
@@ -252,10 +252,11 @@ def transfer(prop_obj):
                 sys.exit(1)
             elif rf_cont_disp[0] & RESPONSE_PACKET_ERROR_MASK:
                 # Check for Host -> EC packet error
-                # Since its Failure response, read one more byte.
-                rf_cont_disp.append(prop_obj.uart_handle.read(1))
-                # Check status for Incorrect payload length or header offset
-                if rf_cont_disp[1] & RESPONSE_STATUS_IMAGE_INVA_MASK:
+                # Since its Failure response, read one more byte
+                # and ignore it.
+                _ = prop_obj.uart_handle.read(1)
+
+                if not rf_cont_disp[1] & RESPONSE_STATUS_CRC_MISMATCH_MASK:
                     logging.critical("Image not valid")
                     sys.exit(1)
 
@@ -289,9 +290,9 @@ def second_loader_image_transfer(uart_handle, spi_file):
 
     hdr_addr = tag_base_addr
     header_len = HEADER_LENGTH
-    img_offset = hdr_addr + header_len
     hdr_file_data = image[tag_base_addr : tag_base_addr + header_len]
     encryption_enable = struct.unpack("B", hdr_file_data[0x06:0x07])[0]
+    img_offset = hdr_addr + (struct.unpack("<I", hdr_file_data[0x14:0x18]))[0]
     img_len = (
         struct.unpack("<H", hdr_file_data[0x10:0x12])[0]
     ) * IMAGE_CHUNK_LENGTH
