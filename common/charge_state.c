@@ -219,13 +219,20 @@ void reset_prev_disp_charge(void)
 	prev_disp_charge = -1;
 }
 
+test_export_static bool battery_sustainer_enabled(void)
+{
+	return sustain_soc.lower != -1 && sustain_soc.upper != -1;
+}
+
 static int battery_sustainer_set(int8_t lower, int8_t upper)
 {
 	if (lower == -1 || upper == -1) {
-		CPRINTS("Sustainer disabled");
-		sustain_soc.lower = -1;
-		sustain_soc.upper = -1;
-		sustain_soc.flags = 0;
+		if (battery_sustainer_enabled()) {
+			CPRINTS("Sustainer disabled");
+			sustain_soc.lower = -1;
+			sustain_soc.upper = -1;
+			sustain_soc.flags = 0;
+		}
 		return EC_SUCCESS;
 	}
 
@@ -233,9 +240,14 @@ static int battery_sustainer_set(int8_t lower, int8_t upper)
 		/* Currently sustainer requires discharge_on_ac. */
 		if (!IS_ENABLED(CONFIG_CHARGER_DISCHARGE_ON_AC))
 			return EC_RES_UNAVAILABLE;
+		if (battery_sustainer_enabled())
+			CPRINTS("Sustainer updated: %d ~ %d%% (from %d ~ %d%%)",
+				lower, upper, sustain_soc.lower,
+				sustain_soc.upper);
+		else
+			CPRINTS("Sustainer enabled: %d ~ %d%%", lower, upper);
 		sustain_soc.lower = lower;
 		sustain_soc.upper = upper;
-		CPRINTS("Sustainer set: %d%% ~ %d%%", lower, upper);
 		return EC_SUCCESS;
 	}
 
@@ -246,11 +258,6 @@ static int battery_sustainer_set(int8_t lower, int8_t upper)
 static void battery_sustainer_disable(void)
 {
 	battery_sustainer_set(-1, -1);
-}
-
-test_export_static bool battery_sustainer_enabled(void)
-{
-	return sustain_soc.lower != -1 && sustain_soc.upper != -1;
 }
 
 static const char *const state_list[] = { "idle", "discharge", "charge",
