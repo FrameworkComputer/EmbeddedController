@@ -49,6 +49,7 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 	"lotus/src/stt.c")
 
 endif()
+
 if(DEFINED CONFIG_BOARD_AZALEA)
 	project(azalea)
 	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_AZALEA include)
@@ -64,5 +65,21 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
 	"azalea/src/stt.c")
+
+endif()
+
+if(DEFINED CONFIG_BOARD_MARIGOLD)
+	project(marigold)
+	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_MARIGOLD include)
+	zephyr_include_directories("include/marigold")
+	zephyr_library_sources(
+			"marigold/src/battery.c"
+			"marigold/src/charger.c"
+			"marigold/src/cpu_power.c"
+			"marigold/src/power_sequence.c"
+			"marigold/src/keyboard_customization.c"
+			"marigold/src/project_diagnostics.c"
+			"marigold/src/power_button_x86.c"
+	)
 
 endif()

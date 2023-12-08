@@ -28,3 +28,8 @@ azalea = register_framework_project(
     project_name="azalea",
     chip="npcx9m3f",
 )
+
+marigold = register_framework_project(
+    project_name="marigold",
+    chip="npcx9m3f",
+)

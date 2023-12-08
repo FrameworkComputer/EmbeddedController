@@ -149,7 +149,7 @@ struct als_feature_report {
 } __packed;
 
 
-#ifdef CONFIG_BOARD_AZALEA
+#ifndef CONFIG_BOARD_LOTUS
 
 static struct radio_report radio_button;
 static struct consumer_button_report consumer_button;
@@ -408,7 +408,7 @@ struct i2c_hid_target_config {
 
 
 };
-#ifdef CONFIG_BOARD_AZALEA
+#ifndef CONFIG_BOARD_LOTUS
 void irq_keyboard(void)
 {
 	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(i2chid0));
@@ -626,7 +626,7 @@ static int hid_target_process_write(struct i2c_target_config *config)
 #endif /* CONFIG_BOARD_LOTUS */
 		{
 			switch (report_id) {
-	#ifdef CONFIG_BOARD_AZALEA
+	#ifndef CONFIG_BOARD_LOTUS
 			case REPORT_ID_RADIO:
 					response_size = fill_report(data->buffer, report_id,
 							&radio_button,
@@ -779,7 +779,7 @@ static int hid_target_read_requested(struct i2c_target_config *config,
 	} else if (target_register == I2C_HID_INPUT_REPORT_REGISTER) {
 		/* Common input report requests. */
 		switch (data->report_id) {
-#ifdef CONFIG_BOARD_AZALEA
+#ifndef CONFIG_BOARD_LOTUS
 		case REPORT_ID_RADIO:
 			fill_report(data->buffer, REPORT_ID_RADIO,
 					&radio_button,

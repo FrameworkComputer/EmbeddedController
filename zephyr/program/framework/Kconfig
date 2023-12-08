@@ -14,6 +14,12 @@ config BOARD_AZALEA
 	  Build Framework Azalea reference board. Azalea has AMD SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_MARIGOLD
+	bool "Framework Marigold Board"
+	help
+	  Build Framework Marigold reference board. Marigold has Intel SoC
+	  with NPCX993FA0BX EC.
+
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code
 source "subsys/logging/Kconfig.template.log_config"
