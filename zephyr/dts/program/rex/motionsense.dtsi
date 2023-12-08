@@ -214,7 +214,7 @@
 			compatible = "cros-ec,tcs3400-clear";
 			status = "okay";
 
-			active-mask = "SENSOR_ACTIVE_S0_S3";
+			active-mask = "SENSOR_ACTIVE_S0";
 			location = "MOTIONSENSE_LOC_LID";
 			port = <&i2c_ec_i2c_sensor_scl_r>;
 			default-range = <0x10000>;
@@ -234,7 +234,7 @@
 			compatible = "cros-ec,tcs3400-rgb";
 			status = "okay";
 
-			active-mask = "SENSOR_ACTIVE_S0_S3";
+			active-mask = "SENSOR_ACTIVE_S0";
 			location = "MOTIONSENSE_LOC_LID";
 			default-range = <0x10000>; /* scale = 1x, uscale = 0 */
 			drv-data = <&tcs_rgb_data>;
