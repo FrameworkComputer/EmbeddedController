@@ -8963,6 +8963,7 @@ static int cmd_battery_config_set(int argc, char *argv[])
 	struct ec_params_set_cbi *p = (struct ec_params_set_cbi *)ec_outbuf;
 	struct batt_conf_header *header = (struct batt_conf_header *)p->data;
 	uint8_t *d = (uint8_t *)header;
+	uint8_t struct_version = EC_BATTERY_CONFIG_STRUCT_VERSION;
 	int rv;
 	int index = 0;
 
@@ -9033,6 +9034,8 @@ static int cmd_battery_config_set(int argc, char *argv[])
 		free(json);
 		return -1;
 	}
+	if (read_u8_from_json(dict, "struct_version", &struct_version))
+		return -1;
 
 	/* Clear the dst to ensure it'll be null-terminated. */
 	memset(identifier, 0, sizeof(identifier));
@@ -9045,14 +9048,15 @@ static int cmd_battery_config_set(int argc, char *argv[])
 		free(json);
 		return -1;
 	}
+	if (read_u8_from_json(root_dict, "struct_version", &struct_version))
+		return -1;
 
 	/* Clear config to ensure unspecified (optional) fields are 0. */
 	memset(&config, 0, sizeof(config));
-	if (read_battery_config_from_json(root_dict, &config)) {
+	if (read_battery_config_from_json(root_dict, &config))
 		return -1;
-	}
 
-	header->struct_version = EC_BATTERY_CONFIG_STRUCT_VERSION;
+	header->struct_version = struct_version;
 	header->manuf_name_size = strlen(manuf_name);
 	header->device_name_size = strlen(device_name);
 	d += sizeof(*header);
