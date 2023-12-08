@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-def register_lotus_project(
+def register_framework_project(
     project_name,
     chip="npcx9m3f",
 ):
@@ -19,12 +19,12 @@ def register_lotus_project(
         ],
     )
 
-lotus = register_lotus_project(
+lotus = register_framework_project(
     project_name="lotus",
     chip="npcx9m3f",
 )
 
-azalea = register_lotus_project(
+azalea = register_framework_project(
     project_name="azalea",
     chip="npcx9m3f",
 )

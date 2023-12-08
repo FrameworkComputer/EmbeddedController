@@ -14,8 +14,8 @@ config BOARD_AZALEA
 	  Build Framework Azalea reference board. Azalea has AMD SoC
 	  with NPCX993FA0BX EC.
 
-module = LOTUS
-module-str = Lotus board-specific code
+module = FRAMEWORK
+module-str = FRAMEWORK board-specific code
 source "subsys/logging/Kconfig.template.log_config"
 
 source "Kconfig.zephyr"
