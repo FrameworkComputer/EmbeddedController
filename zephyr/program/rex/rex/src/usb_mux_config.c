@@ -92,7 +92,8 @@ static void setup_runtime_gpios(void)
 				      GPIO_INPUT);
 		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(hb_usb_c1_rt_rst_odl),
 				      GPIO_OUTPUT_LOW);
-		gpio_unused(GPIO_DT_FROM_ALIAS(hb_usb_c1_frs_en));
+		gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(hb_usb_c1_frs_en),
+				      GPIO_OUTPUT_LOW);
 		break;
 
 	default:
