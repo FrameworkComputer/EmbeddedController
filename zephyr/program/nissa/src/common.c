@@ -64,7 +64,11 @@ int pd_check_vconn_swap(int port)
  */
 __override uint8_t board_get_charger_chip_count(void)
 {
+#ifdef CONFIG_PLATFORM_EC_CHARGER_SINGLE_CHIP
+	return CHARGER_NUM;
+#else
 	return board_get_usb_pd_port_count();
+#endif /* CONFIG_PLATFORM_EC_CHARGER_SINGLE_CHIP */
 }
 
 __override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
