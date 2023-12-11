@@ -39,6 +39,14 @@ config PD_CHIP_CCG8
 	  Framework project which uses the CCG8 PD chips.
 	  Enable CCG8 PD feature.
 
+config PD_CCG8_EPR
+	bool "Enable Cypress CCG8 EPR"
+	default n
+	depends on PD_CHIP_CCG8
+	help
+		Support Cypress CCG8 EPR function, this featurn can
+		support more higer powerful adp.
+
 config PD_CHIP_CCG6
 	bool "Select CCG6 PD chip"
 	help

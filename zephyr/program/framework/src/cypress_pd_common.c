@@ -52,7 +52,7 @@
  * 7. UCSI handler
  */
 
-static struct pd_chip_config_t pd_chip_config[] = {
+struct pd_chip_config_t pd_chip_config[] = {
 	[PD_CHIP_0] = {
 		.i2c_port = I2C_PORT_PD_MCU0,
 		.addr_flags = CCG_I2C_CHIP0 | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
@@ -68,7 +68,7 @@ static struct pd_chip_config_t pd_chip_config[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pd_chip_config) == PD_CHIP_COUNT);
 
-static struct pd_port_current_state_t pd_port_states[] = {
+struct pd_port_current_state_t pd_port_states[] = {
 	[PD_PORT_0] = {
 
 	},
@@ -111,7 +111,7 @@ int cypd_write_reg_block(int controller, int reg, void *data, int len)
 	return rv;
 }
 
-static int cypd_write_reg16(int controller, int reg, int data)
+int cypd_write_reg16(int controller, int reg, int data)
 {
 	int rv;
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
@@ -147,7 +147,7 @@ int cypd_read_reg_block(int controller, int reg, void *data, int len)
 	return rv;
 }
 
-static int cypd_read_reg16(int controller, int reg, int *data)
+int cypd_read_reg16(int controller, int reg, int *data)
 {
 	int rv;
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
@@ -159,7 +159,7 @@ static int cypd_read_reg16(int controller, int reg, int *data)
 	return rv;
 }
 
-static int cypd_read_reg8(int controller, int reg, int *data)
+int cypd_read_reg8(int controller, int reg, int *data)
 {
 	int rv;
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
@@ -221,7 +221,7 @@ int cypd_wait_for_ack(int controller, int timeout_ms)
 	return EC_SUCCESS;
 }
 
-static int cypd_write_reg8_wait_ack(int controller, int reg, int data)
+__overridable int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 {
 	int rv = EC_SUCCESS;
 	int intr_status;

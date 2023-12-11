@@ -165,6 +165,7 @@
 #define CCG_P0_CY_P1_OFF		0xA2
 #define CCG_P0P1_TURN_OFF_C_CTRL	0xA3
 
+
 /************************************************/
 /*  DM CONTROL DEFINATION                       */
 /************************************************/
@@ -205,6 +206,15 @@
 /************************************************/
 #define PORT_TO_CONTROLLER(x) ((x) >> 1)
 #define PORT_TO_CONTROLLER_PORT(x) ((x) & 0x01)
+
+/************************************************/
+/*  CCG6 Specfic setting                        */
+/************************************************/
+#ifdef CONFIG_PD_CCG6
+
+#define CCG6_AC_AT_PORT				0xC4
+
+#endif
 
 enum epr_event_type {
 	EPR_MODE_ENTERED = 1,
@@ -330,6 +340,12 @@ enum ccg_response {
 	CCG_RESPONSE_DISCOVER_MODE_RESPONSE = 0x1A,
 	CCG_RESPONSE_CABLE_COMM_NOT_ALLOWED = 0x1B,
 	CCG_RESPONSE_EXT_SNK_CAP = 0x1C,
+#ifdef CONFIG_PD_CCG6
+	CCG6_RESPONSE_AC_AT_P0 = 0x33,
+	CCG6_RESPONSE_AC_AT_P1 = 0x34,
+	CCG6_RESPONSE_NO_AC = 0x35,
+	CCG6_RESPONSE_EC_MODE = 0x36,
+#endif
 	CCG_RESPONSE_FWCT_IDENT_INVALID = 0x40,
 	CCG_RESPONSE_FWCT_INVALID_GUID = 0x41,
 	CCG_RESPONSE_FWCT_INVALID_VERSION = 0x42,
@@ -461,6 +477,7 @@ struct pd_port_current_state_t {
 	enum ccg_port_state port_state;
 	int voltage;
 	int current;
+	int ac_port;
 	enum ccg_c_state c_state; /* What device is attached on the other side */
 	uint8_t pd_state;
 	uint8_t cc;
@@ -488,10 +505,15 @@ struct pd_chip_ucsi_info_t {
 	int wait_ack;
 };
 
-int cypd_write_reg8(int controller, int reg, int data);
+extern struct pd_chip_config_t pd_chip_config[];
+extern struct pd_port_current_state_t pd_port_states[];
 
+int cypd_write_reg8(int controller, int reg, int data);
+int cypd_write_reg16(int controller, int reg, int data);
 int cypd_write_reg_block(int controller, int reg, void *data, int len);
 
+int cypd_read_reg8(int controller, int reg, int *data);
+int cypd_read_reg16(int controller, int reg, int *data);
 int cypd_read_reg_block(int controller, int reg, void *data, int len);
 
 int cypd_clear_int(int controller, int mask);
@@ -499,6 +521,8 @@ int cypd_clear_int(int controller, int mask);
 void cypd_usci_ppm_reset(void);
 
 int cypd_wait_for_ack(int controller, int timeout_us);
+
+__override_proto int cypd_write_reg8_wait_ack(int controller, int reg, int data);
 
 void cypd_print_buff(const char *msg, void *buff, int len);
 
