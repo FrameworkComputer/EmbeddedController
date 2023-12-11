@@ -20,7 +20,7 @@ struct rollback_info {
  * config headers, so that if the headers are accidentally changed we can catch
  * it.
  */
-#if defined(CHIP_VARIANT_STM32F412) || defined(CHIP_VARIANT_NPCX9M8S)
+#if defined(CHIP_VARIANT_STM32F412) || defined(CHIP_VARIANT_NPCX9MFP)
 struct rollback_info rollback_info = {
 	.region_0_offset = 0x20000,
 	.region_1_offset = 0x40000,

@@ -43,12 +43,12 @@ struct mpu_rw_regions expected_rw_regions = { .num_regions = 1,
 					      .addr = { 0x08100000,
 							0x08200000 },
 					      .size = { 0x100000, 0 } };
-#elif defined(CHIP_VARIANT_NPCX9M8S)
+#elif defined(CHIP_VARIANT_NPCX9MFP)
 struct mpu_info mpu_info = { .has_mpu = true,
 			     .num_mpu_regions = 8,
 			     .mpu_is_unified = true };
 
-/* unnecessary since NPCX9M8S uses CONFIG_EXTERNAL_STORAGE */
+/* unnecessary since NPCX9MFP uses CONFIG_EXTERNAL_STORAGE */
 struct mpu_rw_regions expected_rw_regions = { .num_regions = 0,
 					      .addr = {},
 					      .size = {} };

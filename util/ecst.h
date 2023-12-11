@@ -168,7 +168,7 @@ enum npcx_chip_ram_variant {
 	NPCX9M3 = 5,
 	NPCX9M6 = 6,
 	NPCX9M7 = 7,
-	NPCX9M8 = 8,
+	NPCX9MFP = 8,
 	NPCX_CHIP_RAM_VAR_NONE
 };
 
@@ -191,8 +191,8 @@ enum npcx_chip_ram_variant {
 #define NPCX9M3X_RAM_SIZE 0x50000
 #define NPCX9M6X_RAM_ADDR 0x10090000
 #define NPCX9M6X_RAM_SIZE 0x40000
-#define NPCX9M8X_RAM_ADDR 0x10058000
-#define NPCX9M8X_RAM_SIZE 0x80000
+#define NPCX9MFP_RAM_ADDR 0x10058000
+#define NPCX9MFP_RAM_SIZE 0x80000
 
 /*---------------------------------------------------------------------------
   Typedefs

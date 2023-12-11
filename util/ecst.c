@@ -46,7 +46,7 @@ struct chip_info chip_info[] = {
 	[NPCX7M7] = { NPCX7M7X_RAM_ADDR, NPCX7M7X_RAM_SIZE },
 	[NPCX9M3] = { NPCX9M3X_RAM_ADDR, NPCX9M3X_RAM_SIZE },
 	[NPCX9M6] = { NPCX9M6X_RAM_ADDR, NPCX9M6X_RAM_SIZE },
-	[NPCX9M8] = { NPCX9M8X_RAM_ADDR, NPCX9M8X_RAM_SIZE },
+	[NPCX9MFP] = { NPCX9MFP_RAM_ADDR, NPCX9MFP_RAM_SIZE },
 };
 BUILD_ASSERT(ARRAY_SIZE(chip_info) == NPCX_CHIP_RAM_VAR_NONE);
 
@@ -54,7 +54,7 @@ BUILD_ASSERT(ARRAY_SIZE(chip_info) == NPCX_CHIP_RAM_VAR_NONE);
 const char *supported_chips =
 	"npcx5m5g, npcx5m6g, npcx7m5g, npcx7m6g, "
 	"npcx7m6f, npcx7m6fb, npcx7m6fc, npcx7m7fc, npcx7m7wb, "
-	"npcx7m7wc, npcx9m3f, npcx9m6f or npcx9m8s";
+	"npcx7m7wc, npcx9m3f, npcx9m6f or npcx9mfp";
 
 static unsigned int calc_api_csum_bin(void);
 static unsigned int initialize_crc_32(void);
@@ -114,8 +114,8 @@ static enum npcx_chip_ram_variant chip_to_ram_var(const char *chip_name)
 		return NPCX9M6;
 	else if (str_cmp_no_case(chip_name, "npcx9m3f") == 0)
 		return NPCX9M3;
-	else if (str_cmp_no_case(chip_name, "npcx9m8s") == 0)
-		return NPCX9M8;
+	else if (str_cmp_no_case(chip_name, "npcx9mfp") == 0)
+		return NPCX9MFP;
 	else if (str_cmp_no_case(chip_name, "npcx7m7wb") == 0)
 		return NPCX7M7;
 	else if (str_cmp_no_case(chip_name, "npcx7m7wc") == 0)
