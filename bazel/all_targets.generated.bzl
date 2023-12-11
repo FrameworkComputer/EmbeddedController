@@ -313,6 +313,14 @@ def all_targets():
         extra_modules = ["cmsis", "picolibc", "pigweed"],
     )
     ec_target(
+        name = "buccaneer",
+        baseboard = "helipilot",
+        board = "buccaneer",
+        chip = "npcx",
+        core = "cortex-m",
+        zephyr = False,
+    )
+    ec_target(
         name = "bugzzy",
         baseboard = "dedede",
         board = "bugzzy",
