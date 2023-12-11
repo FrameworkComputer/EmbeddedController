@@ -18,6 +18,23 @@
  * needs to be moved to Zephyr upstream
  */
 
+/* The FIU module version of NPCX4.
+ * As npcx4 has some changes for the FIU module , it is not fully compatible
+ * with the old FIU module. We need to read the FIU version of the chip in use
+ * before any flash access.
+ */
+#define NPCX_FIU_VER_NUM_NPCX4 0x0C
+/*
+ * The base of the mapped address space for FIU0 in the chip families which have
+ * only one FIU module.
+ */
+#define MAPPED_STORAGE_BASE_SINGLE_FIU_FIU0 0x64000000
+/*
+ * The base of the mapped address space for FIU0 in the chip families which have
+ * more than one FIU modules.
+ */
+#define MAPPED_STORAGE_BASE_MULTI_FIU_FIU0 0x60000000
+
 /*****************************************************************************/
 /* spi flash internal functions */
 void sspi_flash_pinmux(int enable)
@@ -63,13 +80,20 @@ void sspi_flash_execute_cmd(uint8_t code, uint8_t cts)
 
 void sspi_flash_cs_level(int level)
 {
+	uint8_t sw_cs;
+
+	if (NPCX_FIU_VER >= NPCX_FIU_VER_NUM_NPCX4) {
+		sw_cs = NPCX_UMA_ECTS_SW_CS0;
+	} else {
+		sw_cs = NPCX_UMA_ECTS_SW_CS1;
+	}
 	/* level is high */
 	if (level) {
 		/* Set chip select to high */
-		SET_BIT(NPCX_UMA_ECTS, NPCX_UMA_ECTS_SW_CS1);
+		SET_BIT(NPCX_UMA_ECTS, sw_cs);
 	} else { /* level is low */
 		/* Set chip select to low */
-		CLEAR_BIT(NPCX_UMA_ECTS, NPCX_UMA_ECTS_SW_CS1);
+		CLEAR_BIT(NPCX_UMA_ECTS, sw_cs);
 	}
 }
 
@@ -109,9 +133,9 @@ void sspi_flash_set_address(uint32_t dest_addr)
 {
 	uint8_t *addr = (uint8_t *)&dest_addr;
 	/* Write address */
-	NPCX_UMA_AB2 = addr[2];
-	NPCX_UMA_AB1 = addr[1];
-	NPCX_UMA_AB0 = addr[0];
+	NPCX_UMA_DB0 = addr[2];
+	NPCX_UMA_DB1 = addr[1];
+	NPCX_UMA_DB2 = addr[0];
 }
 
 void sspi_flash_burst_write(unsigned int dest_addr, unsigned int bytes,
@@ -123,7 +147,7 @@ void sspi_flash_burst_write(unsigned int dest_addr, unsigned int bytes,
 	/* Set erase address */
 	sspi_flash_set_address(dest_addr);
 	/* Start write */
-	sspi_flash_execute_cmd(CMD_FLASH_PROGRAM, MASK_CMD_WR_ADR);
+	sspi_flash_execute_cmd(CMD_FLASH_PROGRAM, MASK_CMD_WR_3BYTE);
 	for (i = 0; i < bytes; i++) {
 		sspi_flash_execute_cmd(*data, MASK_CMD_WR_ONLY);
 		data++;
@@ -210,7 +234,7 @@ void sspi_flash_physical_erase(int offset, int size)
 		/* Set erase address */
 		sspi_flash_set_address(offset);
 		/* Start erase */
-		sspi_flash_execute_cmd(CMD_SECTOR_ERASE, MASK_CMD_ADR);
+		sspi_flash_execute_cmd(CMD_SECTOR_ERASE, MASK_CMD_WR_3BYTE);
 
 		/* Wait erase completed */
 		sspi_flash_wait_ready();
@@ -227,7 +251,14 @@ int sspi_flash_verify(int offset, int size, const char *data)
 	uint8_t *ptr_mram;
 	uint8_t cmp_data;
 
-	ptr_flash = (uint8_t *)(CONFIG_MAPPED_STORAGE_BASE + offset);
+	if (NPCX_FIU_VER >= NPCX_FIU_VER_NUM_NPCX4) {
+		ptr_flash = (uint8_t *)(MAPPED_STORAGE_BASE_MULTI_FIU_FIU0 +
+					offset);
+	} else {
+		ptr_flash = (uint8_t *)(MAPPED_STORAGE_BASE_SINGLE_FIU_FIU0 +
+					offset);
+	}
+
 	ptr_mram = (uint8_t *)data;
 	result = 1;
 
@@ -309,6 +340,12 @@ sspi_flash_upload(int spi_offset, int spi_size)
 	else
 		/* Set pinmux first */
 		sspi_flash_pinmux(1);
+
+	/*
+	 * As we no loner use the ADDR field, set it to zero in case the
+	 * defult value is not zero.
+	 */
+	SET_FIELD(NPCX_UMA_ECTS, NPCX_UMA_ECTS_UMA_ADDR_SIZE, 0);
 
 	/* Get size of image automatically */
 	if (sz_image == 0)
