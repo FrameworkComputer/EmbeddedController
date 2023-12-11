@@ -19,6 +19,8 @@
 #include "driver/ina2xx.h"
 #include "extpower.h"
 #include "gpu.h"
+#include "gpio.h"
+#include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "i2c.h"
 #include "math_util.h"
@@ -47,6 +49,8 @@ static void board_ina236_init(void)
 {
 	int rv;
 
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_ina236_alert));
+
 	/* TODO(crosbug.com/p/29730): assume 1mA/LSB, revisit later */
 	rv = ina2xx_write(0, INA2XX_REG_CALIB, 0x0831);
 
@@ -63,10 +67,28 @@ static void board_ina236_init(void)
 	if (rv != EC_SUCCESS)
 		CPRINTS("ina236 write alert fail");
 
-	rv = ina2xx_write(0, INA2XX_REG_MASK, 0x8008);
+	rv = ina2xx_write(0, INA2XX_REG_MASK, 0x8009);
 
 	if (rv != EC_SUCCESS)
 		CPRINTS("ina236 write mask fail");
+
+}
+
+static void ina236_alert_release(void)
+{
+	int rv;
+
+	rv = ina2xx_read(0, INA2XX_REG_MASK);
+
+	if (rv == 0x0bad)
+		CPRINTS("ina236 read mask fail");
+
+}
+DECLARE_DEFERRED(ina236_alert_release);
+
+void ina236_alert_interrupt(void)
+{
+	hook_call_deferred(&ina236_alert_release_data, 6 * MSEC);
 }
 
 static void charge_gate_onoff(bool status)

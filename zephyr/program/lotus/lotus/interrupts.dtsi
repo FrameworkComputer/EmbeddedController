@@ -77,5 +77,10 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "gpu_power_enable_handler";
 		};
+		int_ina236_alert: ina236_alert {
+			irq-pin = <&gpio_ec_sense_al>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ina236_alert_interrupt";
+		};
 	};
 };

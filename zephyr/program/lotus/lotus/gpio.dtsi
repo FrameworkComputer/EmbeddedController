@@ -280,7 +280,7 @@
 		gpio_wl_rst_l: wl_rst_l {
 			gpios = <&gpio6 1 GPIO_OUTPUT_LOW>;
 		};
-		ec_sense_al {
+		gpio_ec_sense_al: ec_sense_al {
 			gpios = <&gpio7 2 GPIO_INPUT>;
 		};
 		gpio_en_invpwr: en_invpwr {
