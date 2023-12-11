@@ -17,6 +17,7 @@ i2c3ALT: &i2c3 {
 #include "../brox.dtsi"
 #include "../gpio.dtsi"
 #include "../i2c.dtsi"
+#include "../motionsense.dtsi"
 
 /* Brox project DTS includes*/
 
