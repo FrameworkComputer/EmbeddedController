@@ -636,6 +636,11 @@
 #undef CONFIG_SB_PASSTHROUGH
 
 /*
+ * Customize the battery behavior.
+ */
+#undef CONFIG_BATT_CUSTOM_SETTING
+
+/*
  * Expose some data when it is needed.
  * For example, battery disconnect state
  */
