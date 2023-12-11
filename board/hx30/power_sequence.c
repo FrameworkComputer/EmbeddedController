@@ -36,7 +36,6 @@
 #define CPUTS(outstr) cputs(CC_CHIPSET, outstr)
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ## args)
 
-static int forcing_shutdown;  /* Forced shutdown in progress? */
 static int custom_forcing_shutdown;
 
 /*
@@ -80,7 +79,6 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	 */
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		report_ap_reset(reason);
-		forcing_shutdown = 1;
 		custom_forcing_shutdown = 1;
 		chipset_force_g3();
 		/* we need to clear the wake source to avoid the wrong power state */
@@ -92,17 +90,10 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 void chipset_handle_espi_reset_assert(void)
 {
 	/*
-	 * If eSPI_Reset# pin is asserted without SLP_SUS# being asserted, then
-	 * it means that there is an unexpected power loss (global reset
-	 * event). In this case, check if shutdown was being forced by pressing
-	 * power button. If yes, release power button.
+	 * remove unused function, because we still need
+	 * keep PB state when PCH_RESET or chip set shutdown
+	 * for next PB action(EC chip Reset)
 	 */
-	if ((power_get_signals() & IN_PCH_SLP_SUS_DEASSERTED) &&
-		forcing_shutdown) {
-		power_button_pch_release();
-		forcing_shutdown = 0;
-
-	}
 }
 
 /*
