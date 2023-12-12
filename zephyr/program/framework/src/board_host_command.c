@@ -461,6 +461,18 @@ static enum ec_status privacy_switches_check(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_PRIVACY_SWITCHES_CHECK_MODE, privacy_switches_check, EC_VER_MASK(0));
 
 #ifdef CONFIG_CHIPSET_INTEL
+static enum ec_status disable_ps2_mouse_emulation(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_ps2_emulation_control *p = args->params;
+
+	/**
+	 * TODO: ps2 mouse emulation
+	 * set_ps2_mouse_emulation(p->disable);
+	 */
+	CPRINTS("TODO: ps2 mouse emulation %d", p->disable);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_DISABLE_PS2_EMULATION, disable_ps2_mouse_emulation, EC_VER_MASK(0));
 
 #endif
 /*******************************************************************************/
