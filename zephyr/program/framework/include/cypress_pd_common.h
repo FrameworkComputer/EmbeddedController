@@ -211,9 +211,16 @@
 /*  CCG6 Specfic setting                        */
 /************************************************/
 #ifdef CONFIG_PD_CCG6
-
 #define CCG6_AC_AT_PORT				0xC4
+#endif
 
+/************************************************/
+/*  CCG8 Specfic setting                        */
+/************************************************/
+#ifdef CONFIG_PD_CCG8_EPR
+#define EXIT_EPR BIT(4)
+#define ENTER_EPR BIT(5)
+#define EPR_PROCESS_MASK (EXIT_EPR + ENTER_EPR)
 #endif
 
 enum epr_event_type {
@@ -589,9 +596,21 @@ void exit_epr_mode(void);
 
 void enter_epr_mode(void);
 
+void cypd_enter_epr_mode(int delay);
+
 int cypd_modify_safety_power(int controller, int port, int profile);
 
 int cypd_port_3a_status(int controller, int port);
+
+int epr_progress_status(void);
+
+void clear_erp_progress_mask(void);
+
+void clear_erp_progress(void);
+
+void cypd_update_epr_state(int controller, int port, int response_len);
+
+void cypd_update_port_state(int controller, int port);
 
 uint8_t cypd_get_cfet_status(void);
 
