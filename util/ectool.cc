@@ -8833,8 +8833,9 @@ static void cmd_battery_config_help(const char *cmd)
 {
 	fprintf(stderr,
 		"\n"
-		"Usage: %s get [-c]\n"
+		"Usage: %s get [-c] [<index>]\n"
 		"    Print active battery config in JSON or C-struct (-c).\n"
+		"    If <index> is specified, a config is read from CBI.\n"
 		"\n"
 		"Usage: %s set <json_file> <manuf_name> <device_name>\n"
 		"    Copy battery config from file to CBI.\n"
@@ -8842,6 +8843,7 @@ static void cmd_battery_config_help(const char *cmd)
 		"    json_file: Path to JSON file containing battery configs\n"
 		"    manuf_name: Manufacturer's name. Up to 31 chars.\n"
 		"    device_name: Battery's name. Up to 31 chars.\n"
+		"    index: Index of config in CBI to be get.\n"
 		"\n"
 		"    Run `ectool battery` for <manuf_name> and <device_name>\n",
 		cmd, cmd);
@@ -8858,6 +8860,7 @@ static int cmd_battery_config_get(int argc, char *argv[])
 	bool in_json = true;
 	int rv;
 	int c;
+	int index = -1;
 
 	while ((c = getopt(argc, argv, "c")) != -1) {
 		switch (c) {
@@ -8874,13 +8877,34 @@ static int cmd_battery_config_get(int argc, char *argv[])
 	}
 
 	if (optind < argc) {
+		char *e;
+		index = strtol(argv[optind], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad index: '%s'\n", argv[optind]);
+			return -1;
+		}
+		optind++;
+	}
+
+	if (optind < argc) {
 		fprintf(stderr, "Unknown argument '%s'\n", argv[optind]);
 		cmd_battery_config_help("bcfg");
 		return -1;
 	}
 
-	rv = ec_command(EC_CMD_BATTERY_CONFIG, 0, NULL, 0, ec_inbuf,
-			ec_max_insize);
+	if (index < 0) {
+		rv = ec_command(EC_CMD_BATTERY_CONFIG, 0, NULL, 0, ec_inbuf,
+				ec_max_insize);
+	} else {
+		struct ec_params_get_cbi pa = { 0 };
+
+		pa.tag = index + CBI_TAG_BATTERY_CONFIG;
+		rv = ec_command(EC_CMD_GET_CROS_BOARD_INFO, 0, &pa, sizeof(pa),
+				ec_inbuf, ec_max_insize);
+		if (rv == -EC_RES_INVALID_PARAM - EECRESULT)
+			fprintf(stderr, "Config[%d] not found in CBI.\n",
+				index);
+	}
 	if (rv < 0)
 		return rv;
 
