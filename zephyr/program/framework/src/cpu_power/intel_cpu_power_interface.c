@@ -10,7 +10,6 @@
 #include "common_cpu_power.h"
 #include "customized_shared_memory.h"
 #include "console.h"
-#include "driver/sb_rmi.h"
 #include "extpower.h"
 #include "hooks.h"
 #include "math_util.h"
