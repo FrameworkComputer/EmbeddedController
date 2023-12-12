@@ -242,7 +242,7 @@ static enum ec_status cmd_get_hw_diag(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_GET_HW_DIAG, cmd_get_hw_diag,
 			EC_VER_MASK(0));
 
-#ifdef CONFIG_BOARD_AZALEA
+#ifdef CONFIG_PLATFORM_EC_KEYBOARD
 static enum ec_status update_keyboard_matrix(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_update_keyboard_matrix *p = args->params;
