@@ -11,6 +11,7 @@
 #include "cypress_pd_common.h"
 #include "diagnostics.h"
 #include "espi.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "gpio/gpio_int.h"
@@ -64,9 +65,14 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 static int keep_pch_power(void)
 {
 	int wake_source = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT);
+	uint8_t vpro_change;
+
+	system_get_bbram(SYSTEM_BBRAM_IDX_VPRO_STATUS, &vpro_change);
 
 	/* This feature only use on the ODM stress test tool */
 	if (wake_source & RTCWAKE)
+		return true;
+	else if (extpower_is_present() && vpro_change)
 		return true;
 	else
 		return false;
@@ -704,4 +710,21 @@ static enum ec_status me_control(struct host_cmd_handler_args *args)
 	return EC_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_ME_CONTROL, me_control,
+			EC_VER_MASK(0));
+
+static enum ec_status vpro_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_vpro_control *p = args->params;
+	uint8_t status;
+
+	if (p->vpro_mode & VPRO_ON)
+		status = VPRO_ON;
+	else
+		status = VPRO_OFF;
+
+	system_set_bbram(SYSTEM_BBRAM_IDX_VPRO_STATUS, status);
+	CPRINTS("Receive Vpro %s\n", (p->vpro_mode & VPRO_ON) == VPRO_ON ? "on" : "off");
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_VPRO_CONTROL, vpro_control,
 			EC_VER_MASK(0));
