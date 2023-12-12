@@ -34,6 +34,7 @@ static int ap_boot_delay = 9;	/* For global reset to wait SLP_S5 signal de-asser
 static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int force_g3_flags;	/* Chipset force to g3 immediately when chipset force shutdown */
 static int stress_test_enable;
+static int me_change;
 
 /* Power Signal Input List */
 const struct power_signal_info power_signal_list[] = {
@@ -146,6 +147,10 @@ void clear_power_flags(void)
 		EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
 }
 
+void update_me_change(int change)
+{
+	me_change = change;
+}
 
 #ifdef CONFIG_PLATFORM_EC_POWERSEQ_S0IX
 /*
@@ -678,4 +683,25 @@ static enum ec_status set_ap_reboot_delay(struct host_cmd_handler_args *args)
 	return EC_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_SET_AP_REBOOT_DELAY, set_ap_reboot_delay,
+			EC_VER_MASK(0));
+
+static enum ec_status me_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_me_control *p = args->params;
+
+	power_s5_up_control(0); /* power down pch to process ME change */
+
+	/* CPU change ME mode based on ME_EN while RSMRST rising.
+	 * So, when we received ME control command, we need to change ME_EN when power on.
+	 * ME_EN low = lock.
+	 */
+	if (p->me_mode & ME_UNLOCK)
+		update_me_change(ME_UNLOCK);
+	else
+		update_me_change(ME_LOCK);
+
+	CPRINTS("Receive ME %s\n", (p->me_mode & ME_UNLOCK) == ME_UNLOCK ? "unlock" : "lock");
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_ME_CONTROL, me_control,
 			EC_VER_MASK(0));
