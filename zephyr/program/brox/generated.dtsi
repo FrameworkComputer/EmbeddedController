@@ -33,11 +33,17 @@
 		gpio_all_sys_pg: all_sys_pg {
 			gpios = <&gpiob 3 GPIO_INPUT>;
 		};
+		gpio_amp_mute_l: amp_mute_l {
+			gpios = <&gpioj 6 GPIO_OUTPUT>;
+		};
 		gpio_bat_disconnect_ec_odl: bat_disconnect_ec_odl {
 			gpios = <&gpioc 0 GPIO_ODR_LOW>;
 		};
 		gpio_ccd_mode_odl: ccd_mode_odl {
 			gpios = <&gpioe 6 GPIO_ODR_LOW>;
+		};
+		gpio_ec_accel_db_int_l: ec_accel_db_int_l {
+			gpios = <&gpioj 7 GPIO_INPUT>;
 		};
 		gpio_ec_accel_mb_int_l: ec_accel_mb_int_l {
 			gpios = <&gpioj 0 GPIO_INPUT>;
@@ -68,9 +74,7 @@
 		};
 		gpio_ec_pch_pwr_btn_odl: ec_pch_pwr_btn_odl {
 			gpios = <&gpiob 2 GPIO_ODR_LOW>;
-		};
-		gpio_ec_pch_rtcrst: ec_pch_rtcrst {
-			gpios = <&gpioh 5 GPIO_OUTPUT>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 		gpio_ec_pch_sys_pwrok: ec_pch_sys_pwrok {
 			gpios = <&gpiod 5 GPIO_OUTPUT>;
@@ -102,6 +106,9 @@
 		gpio_en_pp5000_usba: en_pp5000_usba {
 			gpios = <&gpiof 4 GPIO_OUTPUT>;
 		};
+		gpio_en_s5_rails: en_s5_rails {
+			gpios = <&gpiof 2 GPIO_OUTPUT>;
+		};
 		gpio_en_slp_z: en_slp_z {
 			gpios = <&gpioa 0 GPIO_OUTPUT>;
 		};
@@ -110,6 +117,7 @@
 		};
 		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
 			gpios = <&gpioe 4 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_lid_open: lid_open {
 			gpios = <&gpiob 1 GPIO_INPUT>;
