@@ -11,6 +11,7 @@
 #include "cypress_pd_common.h"
 #include "diagnostics.h"
 #include "espi.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "gpio/gpio_int.h"
@@ -34,6 +35,7 @@ static int ap_boot_delay = 9;	/* For global reset to wait SLP_S5 signal de-asser
 static int s5_exit_tries;	/* For global reset to wait SLP_S5 signal de-asserts */
 static int force_g3_flags;	/* Chipset force to g3 immediately when chipset force shutdown */
 static int stress_test_enable;
+static int me_change;
 
 /* Power Signal Input List */
 const struct power_signal_info power_signal_list[] = {
@@ -63,9 +65,14 @@ BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 static int keep_pch_power(void)
 {
 	int wake_source = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_WAKE_EVENT);
+	uint8_t vpro_change;
+
+	system_get_bbram(SYSTEM_BBRAM_IDX_VPRO_STATUS, &vpro_change);
 
 	/* This feature only use on the ODM stress test tool */
 	if (wake_source & RTCWAKE)
+		return true;
+	else if (extpower_is_present() && vpro_change)
 		return true;
 	else
 		return false;
@@ -146,6 +153,10 @@ void clear_power_flags(void)
 		EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
 }
 
+void update_me_change(int change)
+{
+	me_change = change;
+}
 
 #ifdef CONFIG_PLATFORM_EC_POWERSEQ_S0IX
 /*
@@ -678,4 +689,42 @@ static enum ec_status set_ap_reboot_delay(struct host_cmd_handler_args *args)
 	return EC_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_SET_AP_REBOOT_DELAY, set_ap_reboot_delay,
+			EC_VER_MASK(0));
+
+static enum ec_status me_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_me_control *p = args->params;
+
+	power_s5_up_control(0); /* power down pch to process ME change */
+
+	/* CPU change ME mode based on ME_EN while RSMRST rising.
+	 * So, when we received ME control command, we need to change ME_EN when power on.
+	 * ME_EN low = lock.
+	 */
+	if (p->me_mode & ME_UNLOCK)
+		update_me_change(ME_UNLOCK);
+	else
+		update_me_change(ME_LOCK);
+
+	CPRINTS("Receive ME %s\n", (p->me_mode & ME_UNLOCK) == ME_UNLOCK ? "unlock" : "lock");
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_ME_CONTROL, me_control,
+			EC_VER_MASK(0));
+
+static enum ec_status vpro_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_vpro_control *p = args->params;
+	uint8_t status;
+
+	if (p->vpro_mode & VPRO_ON)
+		status = VPRO_ON;
+	else
+		status = VPRO_OFF;
+
+	system_set_bbram(SYSTEM_BBRAM_IDX_VPRO_STATUS, status);
+	CPRINTS("Receive Vpro %s\n", (p->vpro_mode & VPRO_ON) == VPRO_ON ? "on" : "off");
+	return EC_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_VPRO_CONTROL, vpro_control,
 			EC_VER_MASK(0));

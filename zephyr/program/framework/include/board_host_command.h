@@ -127,15 +127,41 @@ struct ec_response_ap_reboot_delay {
 
 /*****************************************************************************/
 /*
+ * This command uses to control the ME enable status.
+ */
+#define EC_CMD_ME_CONTROL		0x3E06
+enum ec_mecontrol_modes {
+	ME_LOCK		= BIT(0),
+	ME_UNLOCK	= BIT(1),
+};
+
+struct ec_params_me_control {
+	uint8_t me_mode;
+} __ec_align1;
+
+
+
+/*****************************************************************************/
+/*
  * This command uses to notify the EC that the system is in non-ACPI mode.
  */
 #define EC_CMD_NON_ACPI_NOTIFY		0x3E07
 
 /*****************************************************************************/
 /*
+ * This command uses to control the PS2 emulation.
+ */
+#define EC_CMD_DISABLE_PS2_EMULATION	0x3E08
+
+struct ec_params_ps2_emulation_control {
+	uint8_t disable;
+} __ec_align1;
+
+/*****************************************************************************/
+/*
  * This command uses for BIOS check Chassis.
  */
-#define EC_CMD_CHASSIS_INTRUSION 0x3E09
+#define EC_CMD_CHASSIS_INTRUSION	0x3E09
 #define EC_PARAM_CHASSIS_INTRUSION_MAGIC 0xCE
 #define EC_PARAM_CHASSIS_BBRAM_MAGIC 0xEC
 
@@ -153,9 +179,38 @@ struct ec_response_chassis_intrusion_control {
 
 /*****************************************************************************/
 /*
+ * This command uses to control the BBR status.
+ */
+#define EC_CMD_BB_RETIMER_CONTROL	0x3E0A
+
+enum bb_retimer_control_mode {
+	/* entry bb retimer firmware update mode */
+	BB_ENTRY_FW_UPDATE_MODE = BIT(0),
+	/* exit bb retimer firmware update mode */
+	BB_EXIT_FW_UPDATE_MODE = BIT(1),
+	/* enable compliance mode */
+	BB_ENABLE_COMPLIANCE_MODE = BIT(2),
+	/* disable compliance mode */
+	BB_DISABLE_COMPLIANCE_MODE = BIT(3),
+	/* Check fw update mode */
+	BB_CHECK_STATUS	= BIT(7),
+};
+
+struct ec_params_bb_retimer_control_mode {
+	uint8_t controller;
+	/* See enum bb_retimer_control_mode */
+	uint8_t modes;
+} __ec_align1;
+
+struct ec_response_bb_retimer_control_mode {
+	uint8_t status;
+} __ec_align1;
+
+/*****************************************************************************/
+/*
  * This command uses for BIOS boot check.
  */
-#define EC_CMD_DIAGNOSIS 0x3E0B
+#define EC_CMD_DIAGNOSIS		0x3E0B
 
 enum ec_params_diagnosis_code {
 	/* type: DDR */
@@ -175,7 +230,7 @@ struct ec_params_diagnosis {
 /*
  * This command uses to Swap Control Fn key for the system BIOS menu option.
  */
-#define EC_CMD_UPDATE_KEYBOARD_MATRIX 0x3E0C
+#define EC_CMD_UPDATE_KEYBOARD_MATRIX	0x3E0C
 struct keyboard_matrix_map {
 	uint8_t row;
 	uint8_t col;
@@ -187,6 +242,20 @@ struct ec_params_update_keyboard_matrix {
 	struct keyboard_matrix_map scan_update[32];
 } __ec_align1;
 
+/*****************************************************************************/
+/*
+ * This command uses to check the vpro status.
+ */
+#define EC_CMD_VPRO_CONTROL		0x3E0D
+
+enum ec_vpro_control_modes {
+	VPRO_OFF = 0,
+	VPRO_ON = 1,
+};
+
+struct ec_params_vpro_control {
+	uint8_t vpro_mode;
+} __ec_align1;
 
 /*****************************************************************************/
 /*
