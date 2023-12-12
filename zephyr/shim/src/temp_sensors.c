@@ -15,6 +15,10 @@
 #include "temp_sensor/thermistor.h"
 #include "temp_sensor/tmp112.h"
 
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+#include "lotus/amd_r23m.h"
+#endif /* CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN */
+
 #if DT_HAS_COMPAT_STATUS_OKAY(TEMP_SENSORS_COMPAT)
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(TEMP_SENSORS_COMPAT) == 1,
@@ -240,6 +244,44 @@ const struct f75303_sensor_t f75303_sensors[F75303_IDX_COUNT] = {
 	DT_FOREACH_STATUS_OKAY(F75303_COMPAT, DEFINE_F75303_DATA)
 };
 
+
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
+#if DT_HAS_COMPAT_STATUS_OKAY(AMDR23M_COMPAT)
+/* The function maybe unused because a temperature sensor can be added to dts
+ * without a reference in the cros_ec_temp_sensors node.
+ */
+__maybe_unused static int amdr23m_get_temp(const struct temp_sensor_t *sensor,
+					  int *temp_ptr)
+{
+	return amdr23m_get_val_k(sensor->idx, temp_ptr);
+}
+#endif /* AMDR23M_COMPAT_COMPAT */
+
+#define DEFINE_AMDR23M_DATA(node_id)                     \
+	[AMDR23M_SENSOR_ID(node_id)] = {                 \
+		.i2c_port = I2C_PORT_BY_DEV(node_id),   \
+		.i2c_addr_flags = DT_REG_ADDR(node_id), \
+	},
+
+#define GET_ZEPHYR_TEMP_SENSOR_AMDR23M(named_id, sensor_id)        \
+	(&(const struct zephyr_temp_sensor){                     \
+		.read = &amdr23m_get_temp,                        \
+		.thermistor = NULL,                              \
+		.update_temperature = amdr23m_update_temperature, \
+		FILL_POWER_GOOD(named_id) })
+
+#define TEMP_AMDR23M(named_id, sensor_id)                                \
+	[TEMP_SENSOR_ID(named_id)] = {                                  \
+		.name = DT_NODE_FULL_NAME(sensor_id),                   \
+		.idx = AMDR23M_SENSOR_ID(sensor_id),                     \
+		.type = TEMP_SENSOR_TYPE_BOARD,                         \
+		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_AMDR23M(named_id, sensor_id), \
+	}
+
+const struct amdr23m_sensor_t amdr23m_sensors[AMDR23M_COUNT] = {
+	DT_FOREACH_STATUS_OKAY(AMDR23M_COMPAT, DEFINE_AMDR23M_DATA)
+};
+#endif /* CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN */
 
 /* There can be only one thermistor on RT9490 with current driver */
 #define ADD_ONE(node_id) 1 +
