@@ -26,9 +26,9 @@ zephyr_library_sources_ifdef(CONFIG_CHIPSET_AMD
 zephyr_library_sources_ifdef(CONFIG_CHIPSET_INTEL
 	"src/cpu_power/intel_cpu_power_interface.c")
 
-zephyr_library_sources_ifdef(CONFIG_PD_CCG8
+zephyr_library_sources_ifdef(CONFIG_PD_CHIP_CCG8
 	"src/cypd_ccg8.c")
-zephyr_library_sources_ifdef(CONFIG_PD_CCG6
+zephyr_library_sources_ifdef(CONFIG_PD_CHIP_CCG6
 	"src/cypd_ccg6.c")
 
 if(DEFINED CONFIG_BOARD_LOTUS)

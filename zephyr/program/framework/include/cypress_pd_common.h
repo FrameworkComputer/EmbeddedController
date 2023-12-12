@@ -210,7 +210,7 @@
 /************************************************/
 /*  CCG6 Specfic setting                        */
 /************************************************/
-#ifdef CONFIG_PD_CCG6
+#ifdef CONFIG_PD_CHIP_CCG6
 #define CCG6_AC_AT_PORT				0xC4
 #endif
 
@@ -347,7 +347,7 @@ enum ccg_response {
 	CCG_RESPONSE_DISCOVER_MODE_RESPONSE = 0x1A,
 	CCG_RESPONSE_CABLE_COMM_NOT_ALLOWED = 0x1B,
 	CCG_RESPONSE_EXT_SNK_CAP = 0x1C,
-#ifdef CONFIG_PD_CCG6
+#ifdef CONFIG_PD_CHIP_CCG6
 	CCG6_RESPONSE_AC_AT_P0 = 0x33,
 	CCG6_RESPONSE_AC_AT_P1 = 0x34,
 	CCG6_RESPONSE_NO_AC = 0x35,
