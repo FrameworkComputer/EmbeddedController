@@ -8,8 +8,12 @@
 			charge-state = "LED_PWRS_CHARGE";
 			/* Battery percent range (>= 0, < 96) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY 95>;
-			color-0 {
-				led-color = <&color_amber>;
+
+			battery_led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_AMBER";
+				};
 			};
 		};
 
@@ -18,16 +22,22 @@
 			/* Battery percent range (>= 96%, <= 100%) */
 			batt-lvl = <96 100>;
 
-			color-0 {
-				led-color = <&color_white>;
+			battery_led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
 		power-state-discharge {
 			charge-state = "LED_PWRS_DISCHARGE";
 
-			color-0 {
-				led-color = <&color_off>;
+			power_led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
@@ -35,56 +45,77 @@
 			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 			/* Battery percent range (>= 97, <= 100) */
 		
-			color-0 {
-				led-color = <&color_white>;
+			battery_led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
 		power-state-error_standalone {
 			charge-state = "LED_PWRS_ERROR";
 
-			color-0 {
-				led-color = <&color_white>;
+			battery_led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
 		power-state-idle {
 			charge-state = "LED_PWRS_IDLE";
 
-			color-0 {
-				led-color = <&color_white>;
+			battery_led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
 		power-state-forced-idle {
 			charge-state = "LED_PWRS_FORCED_IDLE";
 
-			color-0 {
-				led-color = <&color_white>;
+			battery_led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
 		power-state-s0 {
 			chipset-state = "POWER_S0";
 
-			color-0 {
-				led-color = <&color_power_white>;
+			power_led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
 		power-state-s3 {
 			chipset-state = "POWER_S3";
 
-			color-0 {
-				led-color = <&color_power_off>;
+			power_led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
 		power-state-s5 {
 			chipset-state = "POWER_S5";
 
-			color-0 {
-				led-color = <&color_power_off>;
+			power_led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 	};

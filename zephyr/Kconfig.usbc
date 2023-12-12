@@ -23,6 +23,14 @@ config TEST_DISABLE_PLATFORM_EC_USBC
 
 rsource "Kconfig.retimer"
 
+config PLATFORM_EC_STANDALONE_PD_CHIP
+	bool "The project uses the standalone PD chip"
+	default n
+	select HAS_TASK_CYPD
+	help
+	  Enable if project use the standalone PD chip instead of the structure of
+	  TCPC + TCPM.
+
 if PLATFORM_EC_USBC
 
 rsource "Kconfig.pd_int_shared"

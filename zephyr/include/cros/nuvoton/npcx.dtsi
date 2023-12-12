@@ -90,9 +90,9 @@
 	};
 };
 
-&suspend_to_idle0 {
+/*&suspend_to_idle0 {
 	min-residency-us = <500>;
-};
+};*/
 
 &bbram {
 	status = "okay";

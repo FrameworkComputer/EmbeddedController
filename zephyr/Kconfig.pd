@@ -449,11 +449,3 @@ config PLATFORM_EC_USB_PD_RESET_PRESERVE_RECOVERY_FLAGS
 rsource "Kconfig.svdm_rsp"
 
 endif  # PLATFORM_EC_USB_POWER_DELIVERY
-
-config PLATFORM_EC_STANDALONE_PD_CHIP
-	bool "The project uses the standalone PD chip"
-	default n
-	select HAS_TASK_CYPD
-	help
-	  Enable if project use the standalone PD chip instead of the structure of
-	  TCPC + TCPM.
