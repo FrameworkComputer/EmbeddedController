@@ -460,6 +460,9 @@ static enum ec_status privacy_switches_check(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_PRIVACY_SWITCHES_CHECK_MODE, privacy_switches_check, EC_VER_MASK(0));
 
+#ifdef CONFIG_CHIPSET_INTEL
+
+#endif
 /*******************************************************************************/
 /*                       EC console command for Project                        */
 /*******************************************************************************/
