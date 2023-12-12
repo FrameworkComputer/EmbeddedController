@@ -3,8 +3,33 @@
  * found in the LICENSE file.
  */
 
- / {
+/ {
 	aliases {
 		gpio-wp = &gpio_ec_wp_odl;
 	};
+	chosen {
+		zephyr,console = &uart2;
+		zephyr,shell-uart = &uart2;
+	};
+};
+
+/* UART interface is SIN1/SOUT1 pins, which ITE maps to devicetree uart2 */
+&uart1 {
+	status = "disabled";
+};
+
+&ite_uart1_wrapper {
+	status = "disabled";
+};
+
+&uart2 {
+	status = "okay";
+	current-speed = <115200>;
+};
+
+&ite_uart2_wrapper {
+	status = "okay";
+	pinctrl-0 = <&uart2_rx_gpf0_default
+		     &uart2_tx_gpf1_default>;
+	pinctrl-names = "default";
 };
