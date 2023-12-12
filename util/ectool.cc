@@ -43,6 +43,7 @@
 #include <libec/flash_protect_command.h>
 #include <libec/rand_num_command.h>
 #include <libec/versions_command.h>
+#include <memory>
 #include <string>
 #include <unistd.h>
 #include <vector>
@@ -5387,9 +5388,11 @@ static int cmd_motionsense(int argc, char **argv)
 	int i, rv, status_only = (argc == 2);
 	struct ec_params_motion_sense param;
 	/* The largest size using resp as a response buffer */
-	uint8_t resp_buffer[ms_command_sizes[MOTIONSENSE_CMD_DUMP].insize];
+	std::unique_ptr<uint8_t[]> resp_buffer_ptr =
+		std::make_unique<uint8_t[]>(
+			ms_command_sizes[MOTIONSENSE_CMD_DUMP].insize);
 	struct ec_response_motion_sense *resp =
-		(struct ec_response_motion_sense *)resp_buffer;
+		(struct ec_response_motion_sense *)resp_buffer_ptr.get();
 	char *e;
 	/*
 	 * Warning: the following strings printed out are read in an
