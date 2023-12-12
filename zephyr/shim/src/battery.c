@@ -9,21 +9,16 @@
 
 #define NODE_FUEL_GAUGE(node) \
 	{ \
-	.manuf_name = DT_PROP(node, manuf_name), \
-	.device_name = DT_PROP(node, device_name), \
+	.flags = DT_PROP_OR(node, flags, 0), \
 	.ship_mode = { \
-		.wb_support = DT_PROP_OR(node, ship_mode_wb_support, 0), \
 		.reg_addr = DT_PROP(node, ship_mode_reg_addr), \
 		.reg_data = DT_PROP(node, ship_mode_reg_data), \
 	}, \
 	.sleep_mode = { \
-		.sleep_supported = DT_PROP_OR(node, sleep_mode_support, 0), \
 		.reg_addr = DT_PROP_OR(node, sleep_mode_reg_addr, 0), \
 		.reg_data = DT_PROP_OR(node, sleep_mode_reg_data, 0), \
 	}, \
 	.fet = { \
-		.mfgacc_support = DT_PROP_OR(node, fet_mfgacc_support, 0), \
-		.mfgacc_smb_block = DT_PROP_OR(node, fet_mfgacc_smb_block, 0), \
 		.reg_addr = DT_PROP_OR(node, fet_reg_addr, 0), \
 		.reg_mask = DT_PROP(node, fet_reg_mask), \
 		.disconnect_val = DT_PROP(node, fet_disconnect_val), \
@@ -50,13 +45,17 @@
 		.discharging_max_c = DT_PROP(node, discharging_max_c),       \
 	},
 
-#define NODE_BATT_PARAMS(node)                            \
-	{ .fuel_gauge = NODE_FUEL_GAUGE(node).batt_info = \
-		  NODE_BATT_INFO(node) },
+#define NODE_BATT_PARAMS(node)                                              \
+	{                                                                   \
+		.manuf_name = DT_PROP(node, manuf_name),                    \
+		.device_name = DT_PROP(node, device_name),                  \
+		.config = { .fuel_gauge = NODE_FUEL_GAUGE(node).batt_info = \
+				    NODE_BATT_INFO(node) },                 \
+	},
 
 #if DT_HAS_COMPAT_STATUS_OKAY(battery_smart)
 
-const struct board_batt_params board_battery_info[] = { DT_FOREACH_STATUS_OKAY(
+const struct batt_conf_embed board_battery_info[] = { DT_FOREACH_STATUS_OKAY(
 	battery_smart, NODE_BATT_PARAMS) };
 
 #if DT_NODE_EXISTS(DT_NODELABEL(default_battery))

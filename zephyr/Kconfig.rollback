@@ -1,0 +1,45 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_ROLLBACK
+	bool "Rollback support"
+	help
+	  Enable rollback support. Rollback mechanism is used to manage minimal
+	  version of RW firmware that can be booted (to block downgrade attacks
+	  when old firmware have vulnerabilities) and to keep secret (used by
+	  fingerprint functionality).
+
+config PLATFORM_EC_ROLLBACK_VERSION
+	int "Rollback version stored in the image data"
+	default 0
+	help
+	  This value is used by the RW signature verification to check if RW
+	  part of firmware wasn't downgraded to vulnerable version. Minimal
+	  rollback version is stored in rollback regions.
+
+if PLATFORM_EC_ROLLBACK
+
+config PLATFORM_EC_ROLLBACK_SECRET_SIZE
+	int "Size of rollback secret"
+	default 32
+	help
+	  Size of the rollback secret.
+
+config PLATFORM_EC_ROLLBACK_UPDATE
+	bool "Allow rollback contents updating"
+	default y if CROS_EC_RO
+	help
+	  If enabled, the contents of the rollback region can be updated
+	  (e.g. by adding more entropy to the secret or changing minimal
+	  RW version).
+
+config PLATFORM_EC_ROLLBACK_MPU_PROTECT
+	bool "Enable MPU protection of rollback regions"
+	depends on MPU
+	default y
+	help
+	  If enabled, flash area that contains rollback data will be protected
+	  against unwanted read/write.
+
+endif  # PLATFORM_EC_ROLLBACK

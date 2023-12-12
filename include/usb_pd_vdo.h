@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_USB_PD_VDO_H
 #define __CROS_EC_USB_PD_VDO_H
 
+#include <stdint.h>
+
 /*
  * NOTE: Throughout the file, some of the bit fields in the structures are for
  * information purpose, they might not be actually used in the current code.
@@ -97,12 +99,13 @@ struct product_vdo {
 
 /*****************************************************************************/
 /*
- * Table 6-35 UFP VDO 1
+ * USB PD r 3.1 v 1.8 Table 6-39 UFP VDO
  * -------------------------------------------------------------
  * <31:29> : UFP VDO version
  *           Version 1.0 = 000b
  *           Version 1.1 = 001b
- *           Values 010b...111b are Reserved and Shall Not be used
+ *           Version 1.3 = 011b
+ *           Values 100b...111b are Reserved and Shall Not be used
  * <28>    : Reserved
  * <27:24> : Device Capability
  *           0001b = USB2.0 Device capable
@@ -110,11 +113,30 @@ struct product_vdo {
  *           0100b = USB3.2 Device capable
  *           1000b = USB4 Device Capable
  * <23:22> : Connector Type
+ *           As of PD r 3.1 v 1.8, this field is legacy and Shall be set to 00b
+ *           Values as of PD r 3.0 v 2.0
  *           00b = Reserved, Shall Not be used
  *           01b = Reserved, Shall Not be used
  *           10b = USB Type-C Receptacle
  *           11b = USB Type-C Captive Plug
- * <21:6>  : Reserved
+ * <21:11> : Reserved
+ * <10:8>  : VCONN Power
+ *           000b = 1W
+ *           001b = 1.5W
+ *           010b = 2W
+ *           011b = 3W
+ *           100b = 4W
+ *           101b = 5W
+ *           110b = 6W
+ *           111b = Reserved, Shall Not be used
+ *           When VCONN Required field is set to No, the VCONN Power Field is
+ *           Reserved and Shall be set to zero.
+ * <7>     : VCONN Required
+ *           0 = No
+ *           1 = Yes
+ * <6>     : VBUS Required
+ *           0 = No
+ *           1 = Yes
  * <5:3>   : Alternate Modes
  *           001b = Supports TBT3 alternate mode
  *           010b = Supports Alternate Modes that reconfigure
@@ -130,6 +152,44 @@ struct product_vdo {
  *           011b = USB4 Gen3
  *           100b…111b = Reserved, Shall Not be used
  */
+
+enum usb_rev30_ss {
+	USB_R30_SS_U2_ONLY,
+	USB_R30_SS_U32_U40_GEN1,
+	USB_R30_SS_U32_U40_GEN2,
+	USB_R30_SS_U40_GEN3,
+	USB_R30_SS_RES_4,
+	USB_R30_SS_RES_5,
+	USB_R30_SS_RES_6,
+	USB_R30_SS_RES_7,
+};
+
+enum usb_pd_vconn_power {
+	USB_PD_VCONN_POWER_1W = 0,
+	USB_PD_VCONN_POWER_1_5W,
+	USB_PD_VCONN_POWER_2W,
+	USB_PD_VCONN_POWER_3W,
+	USB_PD_VCONN_POWER_4W,
+	USB_PD_VCONN_POWER_5W,
+	USB_PD_VCONN_POWER_6W,
+};
+
+union ufp_vdo_rev30 {
+	struct {
+		enum usb_rev30_ss usb_highest_speed : 3;
+		unsigned int alternate_modes : 3;
+		unsigned int vbus_required : 1;
+		unsigned int vconn_required : 1;
+		enum usb_pd_vconn_power vconn_power : 3;
+		unsigned int reserved1 : 11;
+		unsigned int connector_type : 2;
+		unsigned int device_capability : 4;
+		unsigned int reserved2 : 1;
+		unsigned int ufp_vdo_version : 3;
+	};
+	uint32_t raw_value;
+};
+
 #define PD_PRODUCT_IS_USB4(vdo) ((vdo) >> 24 & BIT(3))
 #define PD_PRODUCT_IS_TBT3(vdo) ((vdo) >> 3 & BIT(0))
 
@@ -142,12 +202,14 @@ struct product_vdo {
 #define VDO_UFP1_ALT_MODE_TBT3 BIT(0)
 #define VDO_UFP1_ALT_MODE_RECONFIGURE BIT(1)
 #define VDO_UFP1_ALT_MODE_NO_RECONFIGURE BIT(2)
+#define VDO_UFP1_ALT_MODE_MASK (0x7 << 3)
 
 /* UFP VDO 1 Device Capability */
 #define VDO_UFP1_CAPABILITY_USB20 BIT(0)
 #define VDO_UFP1_CAPABILITY_USB20_BILLBOARD BIT(1)
 #define VDO_UFP1_CAPABILITY_USB32 BIT(2)
 #define VDO_UFP1_CAPABILITY_USB4 BIT(3)
+
 /*****************************************************************************/
 /*
  * Table 6-37 DFP VDO
@@ -258,17 +320,6 @@ enum usb_rev30_latency {
 	USB_REV30_LATENCY_6m = 6,
 };
 
-enum usb_rev30_ss {
-	USB_R30_SS_U2_ONLY,
-	USB_R30_SS_U32_U40_GEN1,
-	USB_R30_SS_U32_U40_GEN2,
-	USB_R30_SS_U40_GEN3,
-	USB_R30_SS_RES_4,
-	USB_R30_SS_RES_5,
-	USB_R30_SS_RES_6,
-	USB_R30_SS_RES_7,
-};
-
 enum usb_vbus_cur {
 	USB_VBUS_CUR_RES_0,
 	USB_VBUS_CUR_3A,
@@ -365,6 +416,15 @@ union passive_cable_vdo_rev30 {
  *           011b = [USB4] Gen3
  *           100b..111b = Reserved, Shall Not be used
  */
+
+#define VDO_REV30_ACTIVE_1(ss, sop_pp, vbus_cable, vbus_cur, sbu_type,   \
+			   sbu_sup, vbus_vol, cable_term, latency, plug) \
+	((ss & 7) | (sop_pp & 0x1) << 3 | (vbus_cable & 0x1) << 4 |      \
+	 (vbus_cur & 0x3) << 5 | (sbu_type & 0x1) << 7 |                 \
+	 (sbu_sup & 0x1) << 8 | (vbus_vol & 0x3) << 0x9 |                \
+	 (cable_term & 0x3) << 11 | (latency & 0xf) << 13 |              \
+	 (plug & 0x3) << 18)
+
 enum vdo_version {
 	VDO_VERSION_1_3 = 3,
 };
@@ -442,6 +502,15 @@ union active_cable_vdo1_rev30 {
  *           1b = Gen 2 or higher
  *           Note: see VDO1 USB Highest Speed for details of Gen supported.
  */
+
+#define VDO_REV30_ACTIVE_2(gen, iso, lanes, usb32, usb2, usb2_hub, usb4,       \
+			   active, optical, u3, u3_power, shutdown, max_temp)  \
+	((gen & 0x1) | (iso & 0x1) << 2 | (lanes & 0x1) << 3 |                 \
+	 (usb32 & 0x1) << 4 | (usb2 & 0x1) << 5 | (usb2_hub & 0x3) << 6 |      \
+	 (usb4 & 0x1) << 8 | (active & 0x1) << 9 | (optical & 0x1) << 10 |     \
+	 (u3 & 0x1) << 11 | (u3_power & 0x7) << 12 | (shutdown & 0x7f) << 16 | \
+	 (max_temp & 0x7f) << 24)
+
 enum retimer_active_element {
 	ACTIVE_REDRIVER,
 	ACTIVE_RETIMER,
@@ -608,7 +677,7 @@ enum vpd_cts_support {
  *           001b = PDUSB Hub
  *           010b = PDUSB Peripheral
  *           011b = PSD (PD 3.0)
- *           101b = Alternate Mode Adapter (AMA)
+ *           101b = Alternate Mode Adapter (AMA) - deprecated in PD r3.1
  *           110b = Vconn-Powered USB Device (VPD, PD 3.0)
  *           Product Type (Cable Plug):
  *           000b = Undefined

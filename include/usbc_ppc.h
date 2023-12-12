@@ -172,6 +172,9 @@ struct ppc_config_t {
 	uint16_t i2c_addr_flags;
 	const struct ppc_drv *drv;
 	int frs_en;
+#ifdef CONFIG_ZEPHYR
+	struct gpio_dt_spec irq_gpio;
+#endif
 };
 
 extern struct ppc_config_t ppc_chips[];

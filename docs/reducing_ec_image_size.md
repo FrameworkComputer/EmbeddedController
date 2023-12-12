@@ -233,7 +233,7 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_PD_DEV_DUMP_INFO | | Not supported by TCPMv2 |
 | | CONFIG_CMD_PD_FLASH | `pd flash` | Not supported by TCPMv2 |
 | | CONFIG_CMD_PD_SRCCAPS_REDUCED_SIZE | `pd <port> srccaps` | Defining this reduces the verbosity of this command, saving bytes |
-| | CONFIG_CMD_PECI | `peci` | firmware_ECThermal uses `ectool tempsinfo` |
+| | CONFIG_CMD_PECI | `peci` | |
 | | CONFIG_CMD_PLL | `pll` | only used by lm4 chip |
 | | CONFIG_CMD_POWERINDEBUG | `powerindebug` | |
 | | CONFIG_CMD_POWERLED | `powerled` | |
@@ -252,7 +252,6 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_SEVEN_SEG_DISPLAY | `seg` | |
 | | CONFIG_CMD_SHA256_TEST | `???` | |
 | x | CONFIG_CMD_SHMEM | `shmem` | Used by firmware_ECSharedMem |
-| | CONFIG_CMD_SLEEP | `sleep` | used only lm4 |
 | | CONFIG_CMD_SLEEPMASK | `sleepmask` | Only used for Cr50 tests |
 | | CONFIG_CMD_SLEEPMASK_SET | | Adds options to `sleepmask` |
 | | CONFIG_CMD_SPI_FLASH | `spi_flasherase`<br>`spi_flashwrite`<br>`spi_flashread`<br>`spi_flash_rsr`<br>`spi_flash_wsr`<br>`spi_flash_wsr` | |

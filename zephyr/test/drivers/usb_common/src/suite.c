@@ -6,7 +6,7 @@
 #include "suite.h"
 
 #include <zephyr/fff.h>
-#include <zephyr/ztest_test_new.h>
+#include <zephyr/ztest_test.h>
 
 DEFINE_FAKE_VALUE_FUNC(int, board_vbus_source_enabled, int);
 DEFINE_FAKE_VALUE_FUNC(int, ppc_discharge_vbus, int, int);

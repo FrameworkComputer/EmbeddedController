@@ -5,6 +5,7 @@
 target_sources(app PRIVATE
     src/adc.c
     src/battery_cut_off.c
+    src/battery_config.c
     src/battery_display_soc.c
     src/battery_v2.c
     src/charge_manager.c
@@ -30,3 +31,5 @@ add_subdirectory(
     ${PLATFORM_EC}/zephyr/test/drivers/mock_panic_output
     mock_panic_output
 )
+
+zephyr_library_sources_ifdef(CONFIG_EC_HOST_CMD src/system.c)

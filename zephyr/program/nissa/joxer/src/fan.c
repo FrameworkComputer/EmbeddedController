@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "fan.h"
 #include "gpio/gpio.h"
@@ -17,7 +18,7 @@ LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 /*
  * Joxer fan support
  */
-static void fan_init(void)
+test_export_static void fan_init(void)
 {
 	int ret;
 	uint32_t val;
@@ -36,6 +37,15 @@ static void fan_init(void)
 		/* Configure the fan enable GPIO */
 		gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_fan_enable),
 				      GPIO_OUTPUT);
+	}
+
+	ret = cbi_get_board_version(&val);
+	if (ret != EC_SUCCESS) {
+		LOG_ERR("Error retrieving CBI BOARD_VER.");
+		return;
+	}
+	if (val > 1) {
+		fan_config[0].tach = DEVICE_DT_GET(DT_NODELABEL(tach0));
 	}
 }
 DECLARE_HOOK(HOOK_INIT, fan_init, HOOK_PRIO_POST_FIRST);

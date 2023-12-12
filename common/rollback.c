@@ -30,7 +30,15 @@
 #include "cryptoc/util.h"
 #define secure_clear(buffer, size) always_memset(buffer, 0, size)
 #else
-#error One of CONFIG_BORINGSSL_CRYPTO or CONFIG_LIBCRYPTOC should be defined
+/* Copied from OpenSSL crypto/mem_clr.c
+ * Function call through volatile pointer should survive through optimization.
+ */
+static void *(*volatile memset_fn)(void *, int, size_t) = memset;
+
+test_export_static void secure_clear(void *buffer, size_t size)
+{
+	memset_fn(buffer, 0, size);
+}
 #endif
 #endif
 

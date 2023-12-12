@@ -5,14 +5,22 @@
  * Event handling in MKBP keyboard protocol
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #include "atomic.h"
 #include "chipset.h"
 #include "gpio.h"
 #include "host_command.h"
 #include "host_command_heci.h"
 #include "hwtimer.h"
+#include "keyboard_config.h"
 #include "link_defs.h"
 #include "mkbp_event.h"
+#include "mkbp_fifo.h"
 #include "power.h"
 #include "timer.h"
 #include "util.h"
@@ -418,11 +426,12 @@ static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 {
 	static int last;
 	int i, evt;
-	struct ec_response_get_next_event *r = args->response;
+	struct ec_response_get_next_event_v1 *r = args->response;
 	const struct mkbp_event_source *src;
 
 	int data_size = -EC_ERROR_BUSY;
 
+	memset(args->response, 0, args->response_max);
 	do {
 		/*
 		 * Find the next event to service.  We do this in a round-robin
@@ -465,6 +474,16 @@ static enum ec_status mkbp_get_next_event(struct host_cmd_handler_args *args)
 			mutex_unlock(&state.lock);
 		}
 	} while (data_size == -EC_ERROR_BUSY);
+
+	/* Drop last 3 columns if we send a key matrix with numpad to a v0
+	 * request.
+	 */
+	if (r->event_type == EC_MKBP_EVENT_KEY_MATRIX && args->version == 0) {
+		size_t max_size = member_size(union ec_response_get_next_data,
+					      key_matrix);
+
+		data_size = MIN(data_size, max_size);
+	}
 
 	/* If there are no more events and we support the "more" flag, set it */
 	if (!set_inactive_if_no_events() && args->version >= 2)
@@ -614,5 +633,14 @@ void mkbp_event_clear_all(void)
 #ifdef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
 	mkbp_host_event_wake_mask = CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK;
 #endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
+}
+#endif
+
+#ifdef CONFIG_EMULATED_SYSRQ
+void host_send_sysrq(uint8_t key)
+{
+	uint32_t value = key;
+
+	mkbp_fifo_add(EC_MKBP_EVENT_SYSRQ, (const uint8_t *)&value);
 }
 #endif

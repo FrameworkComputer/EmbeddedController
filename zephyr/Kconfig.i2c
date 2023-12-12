@@ -7,6 +7,7 @@ config PLATFORM_EC_I2C
 	default y
 	depends on DT_HAS_NAMED_I2C_PORTS_ENABLED
 	select I2C
+	select I2C_SHELL
 	help
 	  Enable compilation of the EC i2c module. Once enabled, it will be
 	  possible to make calls using the old platform/ec i2c APIs defined

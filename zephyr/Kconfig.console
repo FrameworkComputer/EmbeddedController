@@ -101,3 +101,17 @@ config PLATFORM_EC_LOG_BACKEND_CONSOLE_BUFFER_TMP_BUF_SIZE
 	  The logging subsystem will buffer up to this many bytes before calling
 	  the backend in deferred logging mode. Ideally this will be large
 	  enough to fit an entire log line.
+
+config PLATFORM_EC_LOG_TOKENIZED
+	bool "Use tokenized logging for EC"
+	depends on PIGWEED_LOG_TOKENIZED_LIB
+	depends on CPP
+	depends on STD_CPP17 # coreboot g++ __cplusplus 201703L
+	depends on EXTERNAL_MODULE_LIBCPP
+	depends on PIGWEED_MINIMAL_CPP_STDLIB
+	depends on PICOLIBC
+	depends on PICOLIBC_USE_MODULE
+	help
+	  Enable tokenized logging in EC.  Log format strings are converted to
+	  32 bit tokens reducing image size.  A token database for detokenizing
+	  is generated in the build directory.

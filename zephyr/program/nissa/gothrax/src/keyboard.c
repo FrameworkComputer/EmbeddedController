@@ -5,14 +5,14 @@
 
 #include "ec_commands.h"
 
-static const struct ec_response_keybd_config gothrax_kb_legacy = {
+test_export_static const struct ec_response_keybd_config gothrax_kb_legacy = {
 	.num_top_row_keys = 10,
 	.action_keys = {
 		TK_BACK,		/* T1 */
-		TK_FORWARD,		/* T2 */
-		TK_REFRESH,		/* T3 */
-		TK_FULLSCREEN,		/* T4 */
-		TK_OVERVIEW,		/* T5 */
+		TK_REFRESH,		/* T2 */
+		TK_FULLSCREEN,		/* T3 */
+		TK_OVERVIEW,		/* T4 */
+		TK_SNAPSHOT,		/* T5 */
 		TK_BRIGHTNESS_DOWN,	/* T6 */
 		TK_BRIGHTNESS_UP,	/* T7 */
 		TK_VOL_MUTE,		/* T8 */

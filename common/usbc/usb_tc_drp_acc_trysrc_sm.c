@@ -787,16 +787,6 @@ bool pd_capable(int port)
 	return !!TC_CHK_FLAG(port, TC_FLAGS_PARTNER_PD_CAPABLE);
 }
 
-/*
- * Return true if we transition through Unattached.SNK, but we're still waiting
- * to receive source caps from the partner. This indicates that the PD
- * capabilities are not yet known.
- */
-bool pd_waiting_on_partner_src_caps(int port)
-{
-	return !pd_get_src_cap_cnt(port);
-}
-
 enum pd_dual_role_states pd_get_dual_role(int port)
 {
 	return drp_state[port];
@@ -815,7 +805,7 @@ uint32_t tc_get_flags(int port)
 	return tc[port].flags;
 }
 
-int tc_is_attached_src(int port)
+test_mockable int tc_is_attached_src(int port)
 {
 	return IS_ATTACHED_SRC(port);
 }
@@ -1937,11 +1927,6 @@ void pd_request_vconn_swap_on(int port)
 		task_wake(PD_PORT_TO_TASK_ID(port));
 	}
 }
-
-void pd_request_vconn_swap(int port)
-{
-	pd_dpm_request(port, DPM_REQUEST_VCONN_SWAP);
-}
 #endif
 
 int tc_is_vconn_src(int port)
@@ -2483,7 +2468,28 @@ static void tc_attached_snk_entry(const int port)
 		tc[port].polarity = get_snk_polarity(cc1, cc2);
 		typec_set_polarity(port, tc[port].polarity);
 
+		/*
+		 * TODO(b/300694918): SuperSpeed mux will be set as part of
+		 * setting the data role, which will be redundant as
+		 * the mux is explicitly set below. The following mux set should
+		 * take priority.
+		 */
 		tc_set_data_role(port, PD_ROLE_UFP);
+
+		/*
+		 * Attached.SNK requirements from the
+		 * "Universal Serial Bus Type-C Cable and Connector
+		 * Specification" Release 2.2 paragraph 4.5.2.2.5.1:
+		 *
+		 * "If the port supports signaling on USB TX/RX pairs,
+		 * it shall functionally connect the USB TX/RX pairs and
+		 * maintain the connection during and after a USB PD PR_Swap."
+		 *
+		 * This allows for support of the Android Debug Bridge.
+		 */
+		if (IS_ENABLED(CONFIG_USBC_SS_MUX))
+			usb_mux_set(port, USB_PD_MUX_USB_ENABLED,
+				    USB_SWITCH_CONNECT, tc[port].polarity);
 
 		hook_notify(HOOK_USB_PD_CONNECT);
 
@@ -3016,9 +3022,24 @@ static void tc_attached_src_entry(const int port)
 
 			/*
 			 * Initial data role for sink is DFP
-			 * This also sets the usb mux
+			 * This also sets the usb mux, which will be overridden
+			 * by the following usb_mux_set call: TODO(b/300694918)
 			 */
 			tc_set_data_role(port, PD_ROLE_DFP);
+
+			/*
+			 * Attached.SRC requirements from the
+			 * "Universal Serial Bus Type-C Cable and Connector
+			 * Specification" Release 2.2 paragraph 4.5.2.2.9.1:
+			 *
+			 * "If the port supports signaling on USB TX/RX pairs,
+			 * it shall:" with supplying Vconn, "Functionally
+			 * connect the USB TX/RX pairs"
+			 */
+			if (IS_ENABLED(CONFIG_USBC_SS_MUX))
+				usb_mux_set(port, USB_PD_MUX_USB_ENABLED,
+					    USB_SWITCH_CONNECT,
+					    tc[port].polarity);
 
 			/*
 			 * Start sourcing Vconn before Vbus to ensure
@@ -3032,7 +3053,9 @@ static void tc_attached_src_entry(const int port)
 
 			/* Enable VBUS */
 			if (tc_src_power_on(port)) {
-				/* Stop sourcing Vconn if Vbus failed */
+				/* Stop sourcing Vconn if Vbus failed
+				 * TODO(b/300691956): Take action on failure
+				 */
 				if (IS_ENABLED(CONFIG_USBC_VCONN))
 					set_vconn(port, 0);
 
@@ -3067,9 +3090,23 @@ static void tc_attached_src_entry(const int port)
 
 		/*
 		 * Initial data role for sink is DFP
-		 * This also sets the usb mux
+		 * This also sets the usb mux, which will be overridden
+		 * by the following usb_mux_set call: TODO(b/300694918)
 		 */
 		tc_set_data_role(port, PD_ROLE_DFP);
+
+		/*
+		 * Attached.SRC requirements from the
+		 * "Universal Serial Bus Type-C Cable and Connector
+		 * Specification" Release 2.2 paragraph 4.5.2.2.9.1:
+		 *
+		 * "If the port supports signaling on USB TX/RX pairs, it
+		 * shall:" along with supplying Vconn, "Functionally connect
+		 * the USB TX/RX pairs"
+		 */
+		if (IS_ENABLED(CONFIG_USBC_SS_MUX))
+			usb_mux_set(port, USB_PD_MUX_USB_ENABLED,
+				    USB_SWITCH_CONNECT, tc[port].polarity);
 
 		/*
 		 * Start sourcing Vconn before Vbus to ensure
@@ -3083,7 +3120,9 @@ static void tc_attached_src_entry(const int port)
 
 		/* Enable VBUS */
 		if (tc_src_power_on(port)) {
-			/* Stop sourcing Vconn if Vbus failed */
+			/* Stop sourcing Vconn if Vbus failed
+			 * TODO(b/300691956): Take action on failure
+			 */
 			if (IS_ENABLED(CONFIG_USBC_VCONN))
 				set_vconn(port, 0);
 

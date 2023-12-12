@@ -1,0 +1,84 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* Anraggar-specific fw_config fields. */
+	nissa-fw-config {
+		/*
+		 * FW_CONFIG field to describe Clamshell/Convertible.
+		 */
+		form_factor {
+			enum-name = "FORM_FACTOR";
+			start = <14>;
+			size = <1>;
+
+			/*
+			 * 0: clamshell, 1: convertible
+			 */
+			clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CLAMSHELL";
+				value = <0>;
+			};
+			convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CONVERTIBLE";
+				value = <1>;
+			};
+		};
+	};
+
+	/* Anraggar-specific ssfc fields. */
+	cbi-ssfc {
+		compatible = "cros-ec,cbi-ssfc";
+		/*
+		 * SSFC field to identify BASE motion sensor.
+		 */
+		base-sensor {
+			enum-name = "BASE_SENSOR";
+			size = <2>;
+
+			base_sensor_none: none {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <0>;
+			};
+			base_sensor_bmi323: bmi323 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+				default;
+			};
+			base_sensor_lsm6dsm: lsm6dsm {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <2>;
+			};
+		};
+
+		/* SSFC field to identify LID motion sensor. */
+		lid-sensor {
+			enum-name = "LID_SENSOR";
+			size = <2>;
+
+			lid_sensor_none: none {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <0>;
+			};
+			lid_sensor_bma422: bma422 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+				default;
+			};
+			lid_sensor_lis2dw12: lis2dw12 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <2>;
+			};
+		};
+	};
+};

@@ -12,37 +12,38 @@
 
 #ifdef CONFIG_BATTERY_TYPE_NO_AUTO_DETECT
 /* Battery configuration */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/*
 	 * 3S based battery configuration
 	 * Getac Battery (Getac SMP-HHP-408) Information
 	 * Fuel gauge: BQ40Z50-R3
 	 */
 	[BATTERY_GETAC_SMP_HHP_408_3S] = {
-		.fuel_gauge = {
-			.manuf_name = "Getac",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "Getac",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x6000,
+					.disconnect_val = 0x6000,
+				}
 			},
-
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x6000,
-				.disconnect_val = 0x6000,
-			}
-		},
-		.batt_info = {
-			.voltage_max = 13050,        /* mV */
-			.voltage_normal = 11400,
-			.voltage_min = 9000,
-			.precharge_current = 256,   /* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = 0,
-			.discharging_max_c = 60,
+			.batt_info = {
+				.voltage_max = 13050,        /* mV */
+				.voltage_normal = 11400,
+				.voltage_min = 9000,
+				.precharge_current = 256,   /* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = 0,
+				.discharging_max_c = 60,
+			},
 		},
 	},
 	/*
@@ -51,29 +52,31 @@ const struct board_batt_params board_battery_info[] = {
 	 * Fuel gauge: BQ40Z50-R3
 	 */
 	[BATTERY_GETAC_SMP_HHP_408_2S] = {
-		.fuel_gauge = {
-			.manuf_name = "Getac",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "Getac",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x6000,
+					.disconnect_val = 0x6000,
+				}
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x6000,
-				.disconnect_val = 0x6000,
-			}
-		},
-		.batt_info = {
-			.voltage_max = 8800,        /* mV */
-			.voltage_normal = 7700,
-			.voltage_min = 6000,
-			.precharge_current = 256,   /* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = 0,
-			.discharging_max_c = 60,
+			.batt_info = {
+				.voltage_max = 8800,        /* mV */
+				.voltage_normal = 7700,
+				.voltage_min = 6000,
+				.precharge_current = 256,   /* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = 0,
+				.discharging_max_c = 60,
+			},
 		},
 	},
 };

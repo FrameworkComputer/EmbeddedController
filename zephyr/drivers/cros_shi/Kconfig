@@ -7,7 +7,9 @@ if PLATFORM_EC_HOST_INTERFACE_SHI
 config CROS_SHI_NPCX
 	bool
 	default y
-	depends on DT_HAS_NUVOTON_NPCX_SHI_ENABLED
+	depends on !EC_HOST_CMD
+	depends on DT_HAS_NUVOTON_NPCX_SHI_ENABLED || \
+		   DT_HAS_NUVOTON_NPCX_SHI_ENHANCED_ENABLED
 	help
 	  This option enables Serial Host Interface driver for the NPCX family
 	  of processors. This is used for host-command communication on the
@@ -31,6 +33,13 @@ config CROS_SHI_MAX_RESPONSE
 	  packet. This must be big enough to handle a response header of host
 	  command, flash read offset/size, and 512 bytes of flash data.
 
+config CROS_SHI_NPCX_ENHANCED_BUF_MODE
+	def_bool DT_HAS_NUVOTON_NPCX_SHI_ENHANCED_ENABLED
+	help
+	   In this mode, besides the original 128-bytes FIFO, an additional
+	   single-byte output buffer can be selected/switched to generate a
+	   response to simultaneous Read/Write transactions.
+
 config CROS_SHI_NPCX_DEBUG
 	bool "Enable SHI debug"
 	help
@@ -41,6 +50,7 @@ endif # CROS_SHI_NPCX
 config CROS_SHI_IT8XXX2
 	bool
 	default y
+	depends on !EC_HOST_CMD
 	depends on DT_HAS_ITE_IT8XXX2_SHI_ENABLED
 	help
 	  This option enables spi host interface driver which is required to
@@ -50,7 +60,7 @@ if CROS_SHI_IT8XXX2
 
 config CROS_SHI_IT8XXX2_INIT_PRIORITY
 	int "cros_shi it8xxx2 initialization priority"
-	default 52
+	default 54
 	help
 	  This sets the it8xxx2 cros_shi driver initialization priority.
 	  In the GPIO shim, the alt function of SHI will be configured

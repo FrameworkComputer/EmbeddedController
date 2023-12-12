@@ -91,8 +91,6 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 	 */
 	if (flags & GPIO_OPEN_DRAIN)
 		STM32_GPIO_OTYPER(port) |= mask;
-	else
-		STM32_GPIO_OTYPER(port) &= ~mask;
 
 	val = STM32_GPIO_MODER(port) & ~mask2;
 	if (flags & GPIO_OUTPUT) {
@@ -122,6 +120,13 @@ void gpio_set_flags_by_mask(uint32_t port, uint32_t mask, uint32_t flags)
 		val |= 0xaaaaaaaa & mask2;
 		STM32_GPIO_MODER(port) = val;
 	}
+
+	/*
+	 * De-select open drain last, so that we don't glitch the signal when
+	 * changing the line to no longer be an output.
+	 */
+	if (!(flags & GPIO_OPEN_DRAIN))
+		STM32_GPIO_OTYPER(port) &= ~mask;
 
 	/* Set up interrupts if necessary */
 	ASSERT(!(flags & (GPIO_INT_F_LOW | GPIO_INT_F_HIGH)));

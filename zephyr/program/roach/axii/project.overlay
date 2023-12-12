@@ -1,0 +1,232 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Axii program common DTS includes */
+
+#include "../adc.dtsi"
+#include "../uart.dtsi"
+
+/ {
+	aliases {
+		gpio-wp = &ec_flash_wp_odl;
+		usb-hid-tp = &usb_hid_tp;
+	};
+
+	usb_hid_tp: usb-hid-tp {
+		compatible = "cros-ec,hid-i2c-touchpad";
+
+		/* TODO: find a way to probe touchpad parameters
+		 * dynamically.
+		 */
+		logical_max_x = <2925>;
+		logical_max_y = <1440>;
+		physical_max_x = <929>;
+		physical_max_y = <457>;
+		max_pressure = <511>;
+
+		/* unused */
+		vid = <0>;
+		pid = <0>;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		prst_base: prst-base {
+			gpios = <&gpioa 2 GPIO_OUTPUT_LOW>;
+		};
+
+		ec_uart_pu_tester: ec-uart-pu-tester {
+			gpios = <&gpioj 0 GPIO_INPUT>;
+		};
+
+		en_pp3300_base: en-pp3300-base {
+			gpios = <&gpioa 1 GPIO_OUTPUT_LOW>;
+		};
+
+		ec_flash_wp_odl: ec-flash-wp-odl {
+			gpios = <&gpioi 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+
+		en_ec_id_odl: en-ec-id-odl {
+			gpios = <&gpioh 4 GPIO_ODR_HIGH>;
+		};
+
+		pg_pp3300_usb: pg-pp3300-usb {
+			gpios = <&gpioa 0 GPIO_INPUT>;
+		};
+
+		/* TODO: unimplemented GPIOs */
+		/* system.c related */
+		entering_rw: entering_rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+
+	named-adc-channels {
+		adc-base-det {
+			enum-name = "ADC_BASE_DET";
+			io-channels = <&adc0 0>;
+		};
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+
+		unused-gpios =
+			/* gpioa3 */
+			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpioa6 */
+			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
+			/* gpioa7 */
+			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpiob2 */
+			<&gpiob 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpiob5 */
+			<&gpiob 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpiob6 */
+			<&gpiob 6 GPIO_INPUT_PULL_DOWN>,
+			/* gpiob7 */
+			<&gpiob 7 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpioc0 */
+			<&gpioc 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc1 */
+			<&gpioc 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc2 */
+			<&gpioc 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc3 */
+			<&gpioc 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc4 */
+			<&gpioc 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc5 */
+			<&gpioc 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc6 */
+			<&gpioc 6 GPIO_INPUT_PULL_DOWN>,
+			/* gpioc7 */
+			<&gpioc 7 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpiod0 */
+			<&gpiod 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod1 */
+			<&gpiod 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod2 */
+			<&gpiod 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod3 */
+			<&gpiod 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod4 */
+			<&gpiod 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod5 */
+			<&gpiod 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod6 */
+			<&gpiod 6 GPIO_INPUT_PULL_DOWN>,
+			/* gpiod7 */
+			<&gpiod 7 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpioe0 */
+			<&gpioe 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe1 */
+			<&gpioe 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe2 */
+			<&gpioe 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe3 */
+			<&gpioe 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe4 */
+			<&gpioe 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe5 */
+			<&gpioe 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe6 */
+			<&gpioe 6 GPIO_INPUT_PULL_DOWN>,
+			/* gpioe7 */
+			<&gpioe 7 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpiof2 */
+			<&gpiof 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpiof3 */
+			<&gpiof 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpiof4 */
+			<&gpiof 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpiof5 */
+			<&gpiof 5 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpiog0 */
+			<&gpiog 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpiog1 */
+			<&gpiog 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpiog2 */
+			<&gpiog 2 GPIO_INPUT>,
+			/* gpiog3 */
+			<&gpiog 3 GPIO_INPUT>,
+
+			/* gpioh0 */
+			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpioh1 */
+			<&gpioh 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpioh3 */
+			<&gpioh 3 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpioi2 */
+			<&gpioi 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpioi3 */
+			<&gpioi 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpioi5 */
+			<&gpioi 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpioi6 */
+			<&gpioi 6 GPIO_INPUT_PULL_DOWN>,
+			/* gpioi7 */
+			<&gpioi 7 GPIO_INPUT_PULL_DOWN>,
+
+			/* gpioj1 */
+			<&gpioj 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj2 */
+			<&gpioj 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj3 */
+			<&gpioj 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj4 */
+			<&gpioj 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj5 */
+			<&gpioj 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpioj6 */
+			<&gpioj 6 GPIO_OUTPUT_LOW>,
+			/* gpioj7 */
+			<&gpioj 7 GPIO_OUTPUT_LOW>,
+
+			/* gpiom0 */
+			<&gpiom 0 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom1 */
+			<&gpiom 1 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom2 */
+			<&gpiom 2 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom3 */
+			<&gpiom 3 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom4 */
+			<&gpiom 4 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom5 */
+			<&gpiom 5 GPIO_INPUT_PULL_DOWN>,
+			/* gpiom6 */
+			<&gpiom 6 GPIO_INPUT_PULL_DOWN>;
+	};
+};
+
+&i2c0 {
+	status = "disabled";
+};
+
+&i2c2 {
+	status = "disabled";
+};
+
+&usb0 {
+	status = "okay";
+	pinctrl-0 = <&usb0_dm_gph5_default
+		     &usb0_dp_gph6_default>;
+	pinctrl-names = "default";
+};
+
+&one_wire_uart {
+	id = <1>;
+};
+

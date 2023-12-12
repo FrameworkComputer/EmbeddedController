@@ -35,13 +35,21 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
                 linenum, line2 = next(line_iter)
                 line += line2.rstrip("\n")
                 match = ZTEST_RE.search(line)
-            if match and not match.group(2).startswith("test_"):
-                print(
-                    "error: 'test_' prefix missing from test function name"
-                    f"\n{filename}:{linenum}: {match.group(2)}",
-                    file=sys.stderr,
-                )
-                return_code = 1
+            if match:
+                if not match.group(2).startswith("test_"):
+                    print(
+                        "error: 'test_' prefix missing from test function name"
+                        f"\n{filename}:{linenum}: {match.group(2)}",
+                        file=sys.stderr,
+                    )
+                    return_code = 1
+                if "__" in match.group(1):
+                    print(
+                        "error: suite names should not contain __"
+                        f"\n{filename}:{linenum}: {match.group(1)}",
+                        file=sys.stderr,
+                    )
+                    return_code = 1
 
     return return_code
 

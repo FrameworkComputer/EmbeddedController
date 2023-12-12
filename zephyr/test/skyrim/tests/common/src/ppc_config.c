@@ -9,21 +9,10 @@
 #include <gpio.h>
 #include <usbc_ppc.h>
 
-FAKE_VOID_FUNC(aoz1380_interrupt, int);
-FAKE_VOID_FUNC(nx20p348x_interrupt, int);
-
-static void ppc_config_before(void *fixture)
-{
-	ARG_UNUSED(fixture);
-	RESET_FAKE(aoz1380_interrupt);
-	RESET_FAKE(nx20p348x_interrupt);
-}
-
-void ppc_interrupt(enum gpio_signal signal);
 int board_aoz1380_set_vbus_source_current_limit(int port,
 						enum tcpc_rp_value rp);
 
-ZTEST_SUITE(ppc_config, NULL, NULL, ppc_config_before, NULL, NULL);
+ZTEST_SUITE(ppc_config, NULL, NULL, NULL, NULL, NULL);
 
 ZTEST(ppc_config, test_board_aoz1380_set_vbus_source_current_limit)
 {
@@ -46,17 +35,4 @@ ZTEST(ppc_config, test_board_aoz1380_set_vbus_source_current_limit)
 	/* Only port0 is supported. */
 	rv = board_aoz1380_set_vbus_source_current_limit(1, TYPEC_RP_1A5);
 	zassert_equal(rv, EC_ERROR_INVAL);
-}
-
-ZTEST(ppc_config, test_ppc_interrupt)
-{
-	ppc_interrupt(GPIO_USB_C0_PPC_INT_ODL);
-	zassert_equal(aoz1380_interrupt_fake.call_count, 1);
-	/* port */
-	zassert_equal(aoz1380_interrupt_fake.arg0_val, 0);
-
-	ppc_interrupt(GPIO_USB_C1_PPC_INT_ODL);
-	zassert_equal(nx20p348x_interrupt_fake.call_count, 1);
-	/* port */
-	zassert_equal(nx20p348x_interrupt_fake.arg0_val, 1);
 }

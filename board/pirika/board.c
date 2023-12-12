@@ -444,8 +444,9 @@ void board_hibernate(void)
 
 __override void board_ocpc_init(struct ocpc_data *ocpc)
 {
-	/* There's no provision to measure Isys */
-	ocpc->chg_flags[CHARGER_SECONDARY] |= OCPC_NO_ISYS_MEAS_CAP;
+	if (get_cbi_fw_config_db() != DB_NONE)
+		/* There's no provision to measure Isys */
+		ocpc->chg_flags[CHARGER_SECONDARY] |= OCPC_NO_ISYS_MEAS_CAP;
 }
 
 void board_reset_pd_mcu(void)
@@ -464,7 +465,8 @@ __override void board_power_5v_enable(int enable)
 	 */
 	gpio_set_level(GPIO_EN_PP5000, !!enable);
 	gpio_set_level(GPIO_EN_USB_A0_VBUS, !!enable);
-	if (isl923x_set_comparator_inversion(1, !!enable))
+	if ((get_cbi_fw_config_db() != DB_NONE) &&
+	    (isl923x_set_comparator_inversion(1, !!enable)))
 		CPRINTS("Failed to %sable sub rails!", enable ? "en" : "dis");
 }
 
@@ -694,56 +696,37 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CHARGER          \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(68), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(50), \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_charger =
-	THERMAL_CHARGER;
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_VCORE            \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(53), \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_vcore =
-	THERMAL_VCORE;
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_AMBIENT          \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(50), \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_ambient =
-	THERMAL_AMBIENT;
-
+const static struct ec_thermal_config thermal_charger = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(50),
+	},
+};
+const static struct ec_thermal_config thermal_vcore = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(53),
+	},
+};
+const static struct ec_thermal_config thermal_ambient = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(50),
+	},
+};
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1] = THERMAL_CHARGER,
-	[TEMP_SENSOR_2] = THERMAL_VCORE,
-	[TEMP_SENSOR_3] = THERMAL_AMBIENT,
+	[TEMP_SENSOR_1] = thermal_charger,
+	[TEMP_SENSOR_2] = thermal_vcore,
+	[TEMP_SENSOR_3] = thermal_ambient,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
@@ -786,4 +769,25 @@ __override void board_pulse_entering_rw(void)
 	usleep(MSEC);
 	gpio_set_level(GPIO_EC_ENTERING_RW, 0);
 	gpio_set_level(GPIO_EC_ENTERING_RW2, 0);
+}
+
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	if (get_cbi_fw_config_db() == DB_NONE)
+		return 1;
+	else
+		return 2;
+}
+
+__override uint8_t board_get_charger_chip_count(void)
+{
+	if (get_cbi_fw_config_db() == DB_NONE)
+		return 1;
+	else
+		return 2;
+}
+
+__override bool board_usb_charger_support(void)
+{
+	return (get_cbi_fw_config_bc_support() == BC12_SUPPORT);
 }

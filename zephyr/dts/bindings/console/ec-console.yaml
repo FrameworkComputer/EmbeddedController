@@ -8,7 +8,6 @@ compatible: "ec-console"
 
 properties:
   disabled:
-    required: false
     type: string-array
     description:
       List of EC channel names that are disabled in the output by default.

@@ -31,252 +31,268 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* DynaPack CosMX Battery Information */
 	[BATTERY_DYNAPACK_COS] = {
-		.fuel_gauge = {
-			.manuf_name = "333-2C-DA-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "333-2C-DA-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0006,
+					.disconnect_val = 0x0,
+					.cfet_mask = 0x0004,
+					.cfet_off_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
-				.cfet_mask = 0x0004,
-				.cfet_off_val = 0x0,
+			.batt_info = {
+				.voltage_max = 8800,	/* mV */
+				.voltage_normal = 7700,
+				.voltage_min = 6000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
 		},
 	},
 
 	/* DynaPack ATL Battery Information */
 	[BATTERY_DYNAPACK_ATL] = {
-		.fuel_gauge = {
-			.manuf_name = "333-27-DA-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "333-27-DA-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0006,
+					.disconnect_val = 0x0,
+					.cfet_mask = 0x0004,
+					.cfet_off_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
-				.cfet_mask = 0x0004,
-				.cfet_off_val = 0x0,
+			.batt_info = {
+				.voltage_max = 8800,	/* mV */
+				.voltage_normal = 7700,
+				.voltage_min = 6000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
 		},
 	},
 
 	/* Simplo CosMX Battery Information */
 	[BATTERY_SIMPLO_COS] = {
-		.fuel_gauge = {
-			.manuf_name = "333-1C-DA-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "333-1C-DA-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0006,
+					.disconnect_val = 0x0,
+					.cfet_mask = 0x0004,
+					.cfet_off_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
-				.cfet_mask = 0x0004,
-				.cfet_off_val = 0x0,
+			.batt_info = {
+				.voltage_max = 8800,	/* mV */
+				.voltage_normal = 7700,
+				.voltage_min = 6000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
 		},
 	},
 
 	/* Simplo HIGHPOWER Battery Information */
 	[BATTERY_SIMPLO_HIGHPOWER] = {
-		.fuel_gauge = {
-			.manuf_name = "333-1D-DA-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "333-1D-DA-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0006,
+					.disconnect_val = 0x0,
+					.cfet_mask = 0x0004,
+					.cfet_off_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
-				.cfet_mask = 0x0004,
-				.cfet_off_val = 0x0,
+			.batt_info = {
+				.voltage_max = 8800,	/* mV */
+				.voltage_normal = 7700,
+				.voltage_min = 6000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
 		},
 	},
 
 	/* CosMX B00C4473A9D0002 Battery Information */
 	[BATTERY_COS] = {
-		.fuel_gauge = {
-			.manuf_name = "333-AC-DA-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "333-AC-DA-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0006,
+					.disconnect_val = 0x0,
+					.cfet_mask = 0x0004,
+					.cfet_off_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
-				.cfet_mask = 0x0004,
-				.cfet_off_val = 0x0,
+			.batt_info = {
+				.voltage_max = 8800,	/* mV */
+				.voltage_normal = 7700,
+				.voltage_min = 6000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
 		},
 	},
 
 	/* DynaPack CosMX DAK125720-W0P0701HT Battery Information */
 	[BATTERY_DYNAPACK_COS_44WH] = {
-		.fuel_gauge = {
-			.manuf_name = "333-2C-DB-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "333-2C-DB-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0006,
+					.disconnect_val = 0x0,
+					.cfet_mask = 0x0004,
+					.cfet_off_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
-				.cfet_mask = 0x0004,
-				.cfet_off_val = 0x0,
+			.batt_info = {
+				.voltage_max = 8800,	/* mV */
+				.voltage_normal = 7700,
+				.voltage_min = 6000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
 		},
 	},
 
 	/* DynaPack ATL DAK125720-W0G0701HT Battery Information */
 	[BATTERY_DYNAPACK_ATL_44WH] = {
-		.fuel_gauge = {
-			.manuf_name = "333-27-DB-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "333-27-DB-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0006,
+					.disconnect_val = 0x0,
+					.cfet_mask = 0x0004,
+					.cfet_off_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
-				.cfet_mask = 0x0004,
-				.cfet_off_val = 0x0,
+			.batt_info = {
+				.voltage_max = 8800,	/* mV */
+				.voltage_normal = 7700,
+				.voltage_min = 6000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
 		},
 	},
 
 	/* Simplo HIGHPOWER 996Q4242H Battery Information */
 	[BATTERY_SIMPLO_HIGHPOWER_44WH] = {
-		.fuel_gauge = {
-			.manuf_name = "333-1D-DB-A",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "333-1D-DB-A",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0006,
+					.disconnect_val = 0x0,
+					.cfet_mask = 0x0004,
+					.cfet_off_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0006,
-				.disconnect_val = 0x0,
-				.cfet_mask = 0x0004,
-				.cfet_off_val = 0x0,
+			.batt_info = {
+				.voltage_max = 8800,	/* mV */
+				.voltage_normal = 7700,
+				.voltage_min = 6000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -10,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 8800,	/* mV */
-			.voltage_normal = 7700,
-			.voltage_min = 6000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -10,
-			.discharging_max_c = 60,
 		},
 	},
 };

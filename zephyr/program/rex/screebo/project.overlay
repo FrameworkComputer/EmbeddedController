@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <cros/cbi_flash.dtsi>
+
 /* Rex program common DTSI includes */
 #include "../fan.dtsi"
 #include "gpio.dtsi"
@@ -43,8 +45,6 @@
 			<&gpio5 6 0>, /* ec_imu_int_r_l */
 			<&gpiod 4 0>, /* ec_als_rgb_int_r_l */
 			<&gpio8 1 0>, /* ec_accel_int_r_l */
-			<&gpio9 7 0>, /* ec_volup_btn_odl */
-			<&gpio9 3 0>, /* ec_voldn_btn_odl */
 			<&gpio9 5 0>, /* tablet_mode_l */
 			<&gpio6 0 0>; /* led_4_l */
 	};
@@ -55,12 +55,6 @@
 		/delete-node/ ec_accel;
 		/delete-node/ volume_up;
 		/delete-node/ volume_down;
-		usb_c0_ppc {
-			handler = "screebo_ppc_interrupt";
-		};
-		usb_c1_ppc {
-			handler = "screebo_ppc_interrupt";
-		};
 	};
 
 	batteries {
@@ -104,65 +98,65 @@
 		reg = <0x54>;
 		ls-en-pin = <&gpio_usb_c1_rt_3p3_sx_en>;
 		int-pin = <&gpio_usb_c1_rt_int_odl>;
-		reset-pin = <&ioex_usb_c1_rt_rst_ls_l>;
+		reset-pin = <&gpio_usb_c1_hbr_rst_l>;
 	};
+};
+
+&usb_c0_hb_retimer {
+	reset-pin = <&gpio_usb_c0_hbr_rst_l>;
 };
 
 &i2c4_1 {
 	/delete-node/ rt1716@4e;
 
-	tcpc_nct38xx_port1: nct38xx@73 {
+	nct3807_c1: nct38xx@73 {
 		compatible = "nuvoton,nct38xx";
-		gpio-dev = <&nct3807_C1>;
 		reg = <0x73>;
-		tcpc-flags = <(
-			TCPC_FLAGS_TCPCI_REV2_0 |
-			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
-		/* a duplicate of the <&gpio_usb_c1_tcpc_int_odl> node in
-		 * "named-gpios". This is the Zephyr preferred style,
-		 * the "named-gpios" node will be dealt with at a later date.
-		 */
-		irq-gpios = <&gpio3 4 GPIO_ACTIVE_LOW>;
-		/* a duplicate of the <&gpio_usb_c1_rst_odl> node in
-		 * "named-gpios". This is the Zephyr preferred style,
-		 * the "named-gpios" node will be dealt with at a later date.
-		 */
-		rst-gpios = <&gpio3 7 0>;
-	};
 
-	nct3807_C1: nct3807_C1@73 {
-		#address-cells = <1>;
-		#size-cells = <0>;
-		compatible = "nuvoton,nct38xx-gpio";
-		reg = <0x73>;
-		label = "NCT3807_C1";
-
-		ioex_c1_port0: gpio@0 {
-			compatible = "nuvoton,nct38xx-gpio-port";
-			reg = <0x0>;
-			label = "NCT3807_C1_GPIO0";
-			gpio-controller;
-			#gpio-cells = <2>;
-			ngpios = <8>;
-			pin_mask = <0xff>;
-			pinmux_mask = <0xf7>;
+		tcpc_nct38xx_port1: nct38xx-tcpc {
+			compatible = "nuvoton,nct38xx-tcpc";
+			gpio-dev = <&nct3807_c1>;
+			tcpc-flags = <(
+				TCPC_FLAGS_TCPCI_REV2_0 |
+				TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
+			/* a duplicate of the <&gpio_usb_c1_tcpc_int_odl> node in
+			* "named-gpios". This is the Zephyr preferred style,
+			* the "named-gpios" node will be dealt with at a later date.
+			*/
+			irq-gpios = <&gpio3 4 GPIO_ACTIVE_LOW>;
+			/* a duplicate of the <&gpio_usb_c1_rst_odl> node in
+			* "named-gpios". This is the Zephyr preferred style,
+			* the "named-gpios" node will be dealt with at a later date.
+			*/
+			rst-gpios = <&gpio3 7 0>;
 		};
-		ioex_c1_port1: gpio@1 {
-			compatible = "nuvoton,nct38xx-gpio-port";
-			reg = <0x1>;
-			label = "NCT3807_C1_GPIO1";
-			gpio-controller;
-			#gpio-cells = <2>;
-			ngpios = <8>;
-			pin_mask = <0xff>;
-		};
-	};
 
-	nct3808_alert_1 {
-		compatible = "nuvoton,nct38xx-gpio-alert";
-		irq-gpios = <&gpio3 4 GPIO_ACTIVE_LOW>;
-		nct38xx-dev = <&nct3807_C1>;
-		label = "NCT3807_ALERT_0";
+		nct38xx-gpio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "nuvoton,nct38xx-gpio";
+			label = "NCT3807_C1";
+
+			ioex_c1_port0: gpio@0 {
+				compatible = "nuvoton,nct38xx-gpio-port";
+				reg = <0x0>;
+				label = "NCT3807_C1_GPIO0";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <8>;
+				pin_mask = <0xff>;
+				pinmux_mask = <0xf7>;
+			};
+			ioex_c1_port1: gpio@1 {
+				compatible = "nuvoton,nct38xx-gpio-port";
+				reg = <0x1>;
+				label = "NCT3807_C1_GPIO1";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <8>;
+				pin_mask = <0xff>;
+			};
+		};
 	};
 
 	tcpc_ps8815_port1: ps8xxx@b {
@@ -192,12 +186,18 @@
 	/delete-node/ ktu1125@38;
 	/delete-node/ ppc_syv@40;
 	/delete-node/ usb-c1-anx7452-retimer@10;
+	/delete-node/ usb-c1-hb-retimer@56;
 
 	ppc_syv_port1: ppc_syv@40 {
 		compatible = "silergy,syv682x";
 		status = "okay";
 		reg = <0x40>;
 		frs_en_gpio = <&ioex_usb_c1_frs_en>;
+		/* a duplicate of the <&gpio_usb_c1_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
 	};
 };
 
@@ -218,4 +218,35 @@
 	usb-mux-chain-1 {
 		usb-muxes = <&usb_c1_hb_retimer &virtual_mux_c1>;
 	};
+};
+
+&fan0 {
+	pwms = <&pwm5 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+	rpm_min = <1710>;
+	rpm_start = <1710>;
+	rpm_max = <5700>;
+};
+
+&i2c7_0 {
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+};
+
+&cbi_flash {
+	/*
+	 * CBI section size is 0x1000 bytes, the CBI portion lies at the end of
+	 * EC_RO section. EC_RO section ends at 0x50000 byte which is the offset
+	 */
+	offset = <0x50000>;
+	size = <0x1000>;
+};
+
+&kblight {
+	pwms = <&pwm3 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
 };

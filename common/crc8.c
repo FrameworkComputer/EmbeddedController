@@ -5,7 +5,7 @@
 #include "common.h"
 #include "crc8.h"
 
-inline uint8_t cros_crc8(const uint8_t *data, int len)
+uint8_t cros_crc8(const uint8_t *data, int len)
 {
 	return cros_crc8_arg(data, len, 0);
 }

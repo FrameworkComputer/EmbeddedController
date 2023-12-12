@@ -7,6 +7,8 @@
 #ifndef ELAN_SENSOR_PAL_H_
 #define ELAN_SENSOR_PAL_H_
 
+#include "common.h"
+
 /* ELAN error codes */
 enum elan_error_code {
 	ELAN_ERROR_NONE = 0,
@@ -27,6 +29,8 @@ typedef struct {
 /**
  * @brief Write fp command to the sensor
  *
+ * Unused by staticlib.
+ *
  * @param[in] fp_cmd     One byte fp command to write
  *
  * @return 0 on success.
@@ -43,10 +47,12 @@ int elan_write_cmd(uint8_t fp_cmd);
  * @return 0 on success.
  *         negative value on error.
  */
-int elan_read_cmd(uint8_t fp_cmd, uint8_t *regdata);
+__staticlib_hook int elan_read_cmd(uint8_t fp_cmd, uint8_t *regdata);
 
 /**
  * @brief Transfers and receives SPI data.
+ *
+ * Unused by staticlib.
  *
  * @param[in]   tx              The buffer to transfer
  * @param[in]   tx_len          The length to transfer
@@ -66,7 +72,7 @@ int elan_spi_transaction(uint8_t *tx, int tx_len, uint8_t *rx, int rx_len);
  * @return 0 on success.
  *         negative value on error.
  */
-int elan_write_register(uint8_t regaddr, uint8_t regdata);
+__staticlib_hook int elan_write_register(uint8_t regaddr, uint8_t regdata);
 
 /**
  * @brief Select sensor RAM page of register
@@ -76,7 +82,7 @@ int elan_write_register(uint8_t regaddr, uint8_t regdata);
  * @return 0 on success.
  *         negative value on error.
  */
-int elan_write_page(uint8_t page);
+__staticlib_hook int elan_write_page(uint8_t page);
 
 /**
  * @brief Write register table to fp sensor
@@ -91,7 +97,8 @@ int elan_write_page(uint8_t page);
  * @return 0 on success.
  *         negative value on error.
  */
-int elan_write_reg_vector(const uint8_t *reg_table, int length);
+__staticlib_hook int elan_write_reg_vector(const uint8_t *reg_table,
+					   int length);
 
 /**
  * Get 14bits raw image data from ELAN fingerprint sensor
@@ -103,7 +110,7 @@ int elan_write_reg_vector(const uint8_t *reg_table, int length);
  * @return 0 on success.
  *         negative value on error.
  */
-int raw_capture(uint16_t *short_raw);
+__staticlib_hook int raw_capture(uint16_t *short_raw);
 
 /**
  * Execute calibrate ELAN fingerprint sensor flow.
@@ -111,12 +118,12 @@ int raw_capture(uint16_t *short_raw);
  * @return 0 on success.
  *         negative value on error.
  */
-int elan_execute_calibration(void);
+__staticlib_hook int elan_execute_calibration(void);
 
 /**
  * Execute reset ELAN fingerprint sensor flow.
  */
-void elan_execute_reset(void);
+__staticlib void elan_execute_reset(void);
 
 /**
  * Runs a test for defective pixels.
@@ -126,7 +133,7 @@ void elan_execute_reset(void);
  * @return 0 on success.
  *         negative value on error.
  */
-int fp_sensor_maintenance(fp_sensor_info_t *fp_sensor_info);
+__staticlib int fp_sensor_maintenance(fp_sensor_info_t *fp_sensor_info);
 
 /**
  * @brief Set sensor reset state.
@@ -137,5 +144,5 @@ int fp_sensor_maintenance(fp_sensor_info_t *fp_sensor_info);
  *                  true  => reset sensor, i.e. low GPIO state
  *                  false => normal operation, i.e. high GPIO state
  */
-void __unused elan_sensor_set_rst(bool state);
+__staticlib_hook void elan_sensor_set_rst(bool state);
 #endif

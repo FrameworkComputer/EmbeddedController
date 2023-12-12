@@ -35,9 +35,11 @@ static struct panic_data *const pdata_ptr = PANIC_DATA_PTR;
 
 /* Common SW Panic reasons strings */
 const char *const panic_sw_reasons[] = {
-	"PANIC_SW_DIV_ZERO",   "PANIC_SW_STACK_OVERFLOW", "PANIC_SW_PD_CRASH",
-	"PANIC_SW_ASSERT",     "PANIC_SW_WATCHDOG",	  "PANIC_SW_RNG",
-	"PANIC_SW_PMIC_FAULT",
+	"PANIC_SW_DIV_ZERO",	 "PANIC_SW_STACK_OVERFLOW",
+	"PANIC_SW_PD_CRASH",	 "PANIC_SW_ASSERT",
+	"PANIC_SW_WATCHDOG",	 "PANIC_SW_RNG",
+	"PANIC_SW_PMIC_FAULT",	 "PANIC_SW_EXIT",
+	"PANIC_SW_WATCHDOG_WARN"
 };
 
 /**
@@ -80,8 +82,18 @@ void panic_puts(const char *outstr)
 	uart_flush_output();
 
 	/* Put all characters in the output buffer */
-	while (*outstr)
-		panic_txchar(NULL, *outstr++);
+	while (*outstr) {
+		/* Send the message to the UART console */
+		panic_txchar(NULL, *outstr);
+#if defined(CONFIG_USB_CONSOLE) || defined(CONFIG_USB_CONSOLE_STREAM)
+		/*
+		 * Send the message to the USB console
+		 * on platforms which support it.
+		 */
+		usb_puts(outstr);
+#endif
+		++outstr;
+	}
 
 	/* Flush the transmit FIFO */
 	uart_tx_flush();
@@ -124,16 +136,20 @@ test_mockable_static
 	noreturn
 #endif
 	void
-	complete_panic(int linenum)
+	complete_panic(const char *fname, int linenum)
 {
-	software_panic(PANIC_SW_ASSERT, linenum);
+	/* Top two bytes of info register is first two characters of file name.
+	 * Bottom two bytes of info register is line number.
+	 */
+	software_panic(PANIC_SW_ASSERT, (fname[0] << 24) | (fname[1] << 16) |
+						(linenum & 0xffff));
 }
 
 #ifdef CONFIG_DEBUG_ASSERT_BRIEF
 void panic_assert_fail(const char *fname, int linenum)
 {
 	panic_printf("\nASSERTION FAILURE at %s:%d\n", fname, linenum);
-	complete_panic(linenum);
+	complete_panic(fname, linenum);
 }
 #else
 void panic_assert_fail(const char *msg, const char *func, const char *fname,
@@ -141,7 +157,7 @@ void panic_assert_fail(const char *msg, const char *func, const char *fname,
 {
 	panic_printf("\nASSERTION FAILURE '%s' in %s() at %s:%d\n", msg, func,
 		     fname, linenum);
-	complete_panic(linenum);
+	complete_panic(fname, linenum);
 }
 #endif
 
@@ -371,10 +387,12 @@ static int command_crash(int argc, const char **argv)
 		ccprintf("%08x", 1U / zero);
 	} else if (!strcasecmp(argv[1], "stack")) {
 		stack_overflow_recurse(1);
+#ifndef CONFIG_ALLOW_UNALIGNED_ACCESS
 	} else if (!strcasecmp(argv[1], "unaligned")) {
 		volatile intptr_t unaligned_ptr = 0xcdef;
 		cflush();
 		ccprintf("%08x", *(volatile int *)unaligned_ptr);
+#endif /* !CONFIG_ALLOW_UNALIGNED_ACCESS */
 	} else if (!strcasecmp(argv[1], "watchdog")) {
 		while (1) {
 /* Yield on native posix to avoid locking up the simulated sys clock */
@@ -460,6 +478,7 @@ DECLARE_CONSOLE_COMMAND(panicinfo, command_panicinfo, "[clear]",
 static enum ec_status
 host_command_panic_info(struct host_cmd_handler_args *args)
 {
+	const struct ec_params_get_panic_info_v1 *p = args->params;
 	uint32_t pdata_size = get_panic_data_size();
 	uintptr_t pdata_start = get_panic_data_start();
 	struct panic_data *pdata = panic_get_data();
@@ -477,7 +496,8 @@ host_command_panic_info(struct host_cmd_handler_args *args)
 		memcpy(args->response, (void *)pdata_start, pdata_size);
 		args->response_size = pdata_size;
 
-		if (pdata) {
+		if (pdata &&
+		    !(args->version > 0 && p->preserve_old_hostcmd_flag)) {
 			/* Data has now been returned */
 			pdata->flags |= PANIC_DATA_FLAG_OLD_HOSTCMD;
 		}
@@ -486,4 +506,4 @@ host_command_panic_info(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_GET_PANIC_INFO, host_command_panic_info,
-		     EC_VER_MASK(0));
+		     EC_VER_MASK(0) | EC_VER_MASK(1));

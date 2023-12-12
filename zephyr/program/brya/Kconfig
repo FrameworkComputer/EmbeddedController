@@ -8,4 +8,15 @@ config BOARD_BRYA
 	  Build Google Brya reference board. The board uses the Nuvuton NPCX9
 	  chip as the EC.
 
+config BOARD_BRYA_PDC
+	bool "Google Brya"
+	help
+	  Build Google Brya board with PD controller.
+
+# Override the default USB-C stack choice baseed on the board type.
+# This must be done before including Kconfig.zephyr below.
+choice PLATFORM_EC_USBC_STACK
+	default PLATFORM_EC_USB_PD_CONTROLLER if BOARD_BRYA_PDC
+endchoice
+
 source "Kconfig.zephyr"

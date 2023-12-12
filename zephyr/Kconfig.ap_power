@@ -4,7 +4,7 @@
 
 config AP_POWER_CONTROL
     bool
-    default y if PLATFORM_EC_POWERSEQ || AP_PWRSEQ
+    default y if PLATFORM_EC_POWERSEQ || (AP_PWRSEQ && !EMUL_AP_PWRSEQ_DRIVER)
     help
       Whether the EC has control over AP power states.
 

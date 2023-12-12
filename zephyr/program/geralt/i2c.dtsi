@@ -90,6 +90,11 @@
 		compatible = "richtek,rt1739-ppc";
 		status = "okay";
 		reg = <0x70>;
+		/* a duplicate of the <&usb_c0_ppc_bc12_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiod 1 GPIO_ACTIVE_LOW>;
 	};
 
 	tusb546_mux_0: tusb546-mux-0@44 {
@@ -102,6 +107,11 @@
 		status = "okay";
 		reg = <0x40>;
 		frs_en_gpio = <&usb_c1_frs_en>;
+		/* a duplicate of the <&usb_c1_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiob 2 GPIO_ACTIVE_LOW>;
 	};
 
 	ps8743_mux_1: ps8743-mux-1@10 {
@@ -124,7 +134,6 @@
 	prescale-scl-low = <1>;
 };
 
-/* TODO(b/260377762): peripheral mode */
 &i2c4 {
 	/* I2C_DETACHABLE_BASE */
 	status = "okay";
@@ -133,4 +142,24 @@
 		     &i2c4_data_gpe7_default>;
 	pinctrl-names = "default";
 	prescale-scl-low = <1>;
+
+	target-enable;
+	hid_i2c_target: hid-i2c-target@56 {
+		compatible = "cros-ec,hid-i2c-touchpad";
+
+		reg = <0x56>;
+		max_pressure = <255>;
+		logical_max_x = <2925>;
+		logical_max_y = <1426>;
+		physical_max_x = <929>;
+		physical_max_y = <457>;
+
+		/* TODO(b/301380459): allocate pid */
+		vid = <0x18d1>;
+		pid = <0x50ff>;
+
+		/* Zephyr preferred style for specifying ec_ap_hid_int_odl */
+		irq-gpios = <&gpioi 3 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8 |
+			     GPIO_ACTIVE_LOW)>;
+	};
 };

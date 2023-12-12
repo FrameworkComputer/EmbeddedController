@@ -15,6 +15,12 @@
 
 #include <sys/types.h>
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 23
+
 #if !defined(CONFIG_ACCELGYRO_ICM_COMM_SPI) && \
 	!defined(CONFIG_ACCELGYRO_ICM_COMM_I2C)
 #error "ICM must use either SPI or I2C communication"

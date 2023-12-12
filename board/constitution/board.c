@@ -6,6 +6,7 @@
 #include "builtin/assert.h"
 #include "button.h"
 #include "cec.h"
+#include "cec_bitbang_chip.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
@@ -61,9 +62,29 @@ BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 /******************************************************************************/
 
 /* CEC ports */
+static const struct bitbang_cec_config bitbang_cec_config_b = {
+	.gpio_out = GPIO_HDMIB_CEC_OUT,
+	.gpio_in = GPIO_HDMIB_CEC_IN,
+	.gpio_pull_up = GPIO_HDMIB_CEC_PULL_UP,
+	.timer = NPCX_CEC_BITBANG_TIMER_A,
+};
+
+static const struct bitbang_cec_config bitbang_cec_config_a = {
+	.gpio_out = GPIO_HDMIA_CEC_OUT,
+	.gpio_in = GPIO_HDMIA_CEC_IN,
+	.gpio_pull_up = GPIO_HDMIA_CEC_PULL_UP,
+	.timer = NPCX_CEC_BITBANG_TIMER_B,
+};
+
 const struct cec_config_t cec_config[] = {
 	[CEC_PORT_0] = {
 		.drv = &bitbang_cec_drv,
+		.drv_config = &bitbang_cec_config_b,
+		.offline_policy = NULL,
+	},
+	[CEC_PORT_1] = {
+		.drv = &bitbang_cec_drv,
+		.drv_config = &bitbang_cec_config_a,
 		.offline_policy = NULL,
 	},
 };
@@ -118,7 +139,8 @@ int board_set_active_charge_port(int port)
 	case CHARGE_PORT_TYPEC0:
 	case CHARGE_PORT_TYPEC1:
 	case CHARGE_PORT_TYPEC2:
-		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 1);
+		pd_set_power_supply_ready(port);
+		gpio_set_level(GPIO_EN_PPVAR_BJ_ADP_L, 0);
 		break;
 	case CHARGE_PORT_BARRELJACK:
 		/* Make sure BJ adapter is sourcing power */

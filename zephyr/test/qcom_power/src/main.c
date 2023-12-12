@@ -329,9 +329,11 @@ ZTEST(qcom_power, test_request_sleep_timeout)
 	k_sleep(K_SECONDS(16));
 	zassert_equal(power_get_state(), POWER_S0);
 	buffer = shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+#if defined(SECTION_IS_RW)
 	zassert_true(strstr(buffer, "Detected sleep hang!") != NULL,
 		     "Invalid console output %s", buffer);
 	zassert_true(host_is_event_set(EC_HOST_EVENT_HANG_DETECT));
+#endif /* SECTION_IS_RW */
 }
 
 ZTEST(qcom_power, test_chipset_force_shutdown)
@@ -369,7 +371,7 @@ ZTEST(qcom_power, test_power_button)
 
 ZTEST(qcom_power, test_power_button_input_event)
 {
-	const struct device *dev = DEVICE_DT_GET_ONE(zephyr_gpio_keys);
+	const struct device *dev = DEVICE_DT_GET_ONE(gpio_keys);
 
 	zassert_equal(power_button_is_pressed(), 0);
 

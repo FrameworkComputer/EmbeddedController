@@ -1,0 +1,53 @@
+description: "Gfl MFP-466894"
+compatible: "gfl,mfp-466894"
+
+include: battery-smart.yaml
+
+properties:
+  enum-name:
+    type: string
+    default: "gfl,mfp-466894"
+
+  # Fuel gauge
+  manuf_name:
+    default: "GFL"
+  device_name:
+    default: "MFP-466894"
+  ship_mode_reg_addr:
+    default: 0x00
+  ship_mode_reg_data:
+    default: [0x0010, 0x0010]
+  flags:
+    default: 0x04
+  fet_reg_addr:
+    default: 0x54
+  fet_reg_mask:
+    default: 0x0006
+  fet_disconnect_val:
+    default: 0x0000
+  fet_cfet_mask:
+    default: 0x4000
+  fet_cfet_off_val:
+    default: 0x4000
+
+  # Battery info 41w
+  voltage_max:
+    default: 8800
+  voltage_normal:
+    default: 7700
+  voltage_min:
+    default: 6000
+  precharge_current:
+    default: 100
+  start_charging_min_c:
+    default: 0
+  start_charging_max_c:
+    default: 50
+  charging_min_c:
+    default: 0
+  charging_max_c:
+    default: 60
+  discharging_min_c:
+    default: -20
+  discharging_max_c:
+    default: 60

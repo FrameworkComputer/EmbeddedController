@@ -13,4 +13,3 @@ elseif (DEFINED CONFIG_SOC_FAMILY_STM32)
 else ()
 	add_subdirectory(stub)
 endif()
-

@@ -13,6 +13,34 @@ tests:
     - CONFIG_SHIMMED_TASKS=y
     extra_dtc_overlay_files:
     - krabby.default.overlay
+  krabby.default_ro:
+    extra_args:
+    - EXTRA_CFLAGS=-DSECTION_IS_RO
+    extra_configs:
+    - CONFIG_TEST_KRABBY=y
+    - CONFIG_AP_ARM_MTK_MT8186=y
+    - CONFIG_MUX_INIT_ADC=y
+    - CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK=y
+    - CONFIG_PLATFORM_EC_EXTPOWER_GPIO=y
+    - CONFIG_PLATFORM_EC_POWERSEQ=y
+    - CONFIG_PLATFORM_EC_POWERSEQ_PP5000_CONTROL=n
+    - CONFIG_SHIMMED_TASKS=y
+    extra_dtc_overlay_files:
+    - krabby.default.overlay
+  krabby.default_rw:
+    extra_args:
+    - EXTRA_CFLAGS=-DSECTION_IS_RW
+    extra_configs:
+    - CONFIG_TEST_KRABBY=y
+    - CONFIG_AP_ARM_MTK_MT8186=y
+    - CONFIG_MUX_INIT_ADC=y
+    - CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK=y
+    - CONFIG_PLATFORM_EC_EXTPOWER_GPIO=y
+    - CONFIG_PLATFORM_EC_POWERSEQ=y
+    - CONFIG_PLATFORM_EC_POWERSEQ_PP5000_CONTROL=n
+    - CONFIG_SHIMMED_TASKS=y
+    extra_dtc_overlay_files:
+    - krabby.default.overlay
   krabby.tentacruel:
     extra_configs:
     - CONFIG_TEST_TENTACRUEL=y
@@ -28,6 +56,29 @@ tests:
     - CONFIG_PLATFORM_EC_ACCELGYRO_BMI260=y
     - CONFIG_PLATFORM_EC_ACCELGYRO_BMI_COMM_I2C=y
     - CONFIG_PLATFORM_EC_USBC_PPC_RT1739=y
-    - CONFIG_PLATFORM_EC_BC12_SINGLE_DRIVER=n
     extra_dtc_overlay_files:
     - krabby.tentacruel.overlay
+  krabby.starmie:
+    extra_configs:
+    - CONFIG_TEST_STARMIE=y
+    - CONFIG_AP_ARM_MTK_MT8188=y
+    - CONFIG_PLATFORM_EC_CHARGER_PROFILE_OVERRIDE=y
+    - CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK=y
+    - CONFIG_PLATFORM_EC_EXTPOWER_GPIO=y
+    - CONFIG_PLATFORM_EC_POWERSEQ=y
+    - CONFIG_PLATFORM_EC_POWERSEQ_PP5000_CONTROL=n
+    - CONFIG_SHIMMED_TASKS=y
+    extra_dtc_overlay_files:
+    - krabby.starmie.overlay
+  krabby.chinchou:
+    extra_configs:
+    - CONFIG_TEST_CHINCHOU=y
+    - CONFIG_PLATFORM_EC_DYNAMIC_MOTION_SENSOR_COUNT=y
+    - CONFIG_PLATFORM_EC_GMR_TABLET_MODE=y
+    - CONFIG_PLATFORM_EC_TABLET_MODE=y
+    - CONFIG_EEPROM=y
+    - CONFIG_PLATFORM_EC_CBI_EEPROM=y
+    - CONFIG_PLATFORM_EC_EEPROM_CBI_WP=y
+    - CONFIG_EMUL_EEPROM_AT2X=y
+    extra_dtc_overlay_files:
+    - krabby.chinchou.overlay

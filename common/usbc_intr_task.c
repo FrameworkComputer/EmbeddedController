@@ -40,7 +40,7 @@
 
 static uint8_t pd_int_task_id[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-void schedule_deferred_pd_interrupt(const int port)
+test_mockable void schedule_deferred_pd_interrupt(const int port)
 {
 	/*
 	 * Don't set event to idle task if task id is 0. This happens when
@@ -212,6 +212,10 @@ void pd_shared_alert_task(void *p)
 					continue;
 				}
 				service_one_port(port);
+			}
+			for (port = 0; port < CONFIG_USB_PD_PORT_MAX_COUNT;
+			     ++port) {
+				board_process_pd_alert(port);
 			}
 		} while (have_alerts != 0);
 	}

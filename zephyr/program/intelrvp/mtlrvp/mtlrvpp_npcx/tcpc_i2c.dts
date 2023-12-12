@@ -1,0 +1,181 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-i2c-ports {
+		typec_aic1: typec-aic1{
+			i2c-port = <&i2c0_0>;
+			enum-names = "I2C_PORT_TYPEC_AIC_1";
+		};
+		typec_aic2: typec-aic2{
+			i2c-port = <&i2c1_0>;
+			enum-names = "I2C_PORT_TYPEC_AIC_2";
+		};
+	};
+};
+
+/* typec_aic1 */
+&i2c0_0 {
+	label = "I2C_USB_C0_C1_TCPC";
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
+
+	nct38xx_c0: nct38xx@73 {
+		compatible = "nuvoton,nct38xx";
+		reg = <0x73>;
+
+		tcpc_port0: nct38xx-tcpc {
+			compatible = "nuvoton,nct38xx-tcpc";
+			gpio-dev = <&nct38xx_c0>;
+			tcpc-flags = <(
+				TCPC_FLAGS_TCPCI_REV2_0 |
+				TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
+			int-pin = <&usbc_tcpc_alrt_p0>;
+		};
+
+		nct38xx-gpio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "nuvoton,nct38xx-gpio";
+			label = "NCT38XX_C0";
+
+			ioex_c0: gpio@0 {
+				compatible = "nuvoton,nct38xx-gpio-port";
+				reg = <0x0>;
+				label = "NCT38XX_C0_GPIO0";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <8>;
+				pin_mask = <0xdc>;
+				pinmux_mask = <0xff>;
+			};
+		};
+	};
+
+	nct38xx_c1: nct38xx_c1@77 {
+		compatible = "nuvoton,nct38xx";
+		reg = <0x77>;
+
+		tcpc_port1: nct38xx-tcpc {
+			compatible = "nuvoton,nct38xx-tcpc";
+			gpio-dev = <&nct38xx_c1>;
+			tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+			int-pin = <&usbc_tcpc_alrt_p0>;
+		};
+
+		nct38xx-gpio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "nuvoton,nct38xx-gpio";
+			label = "NCT38XX_C1";
+
+			ioex_c1: gpio@0 {
+				compatible = "nuvoton,nct38xx-gpio-port";
+				reg = <0x0>;
+				label = "NCT38XX_C1_GPIO0";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <8>;
+				pin_mask = <0xdc>;
+				pinmux_mask = <0xff>;
+			};
+		};
+	};
+
+	ppc_port0: sn5s330@40 {
+		compatible = "ti,sn5s330";
+		status = "okay";
+		reg = <0x40>;
+		/* a duplicate of the <&usbc_tcpc_ppc_alrt_p0> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiod 1 GPIO_ACTIVE_LOW>;
+	};
+
+	ppc_port1: sn5s330@41 {
+		compatible = "ti,sn5s330";
+		status = "okay";
+		reg = <0x41>;
+		/* a duplicate of the <&usbc_tcpc_ppc_alrt_p1> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpioe 4 GPIO_ACTIVE_LOW>;
+	};
+
+	usb_c0_hb_retimer: jhl9040r-c0@56 {
+		compatible = "intel,jhl9040r";
+		reg = <0x56>;
+		reset-pin = <&usb_c0_hb_retimer_rst>;
+		ls-en-pin = <&usb_c0_hb_retimer_ls_en>;
+	};
+
+	usb_c1_hb_retimer: jhl9040r-c1@57 {
+		compatible = "intel,jhl9040r";
+		reg = <0x57>;
+		reset-pin = <&usb_c1_hb_retimer_rst>;
+		ls-en-pin = <&usb_c1_hb_retimer_ls_en>;
+	};
+};
+
+&i2c_ctrl0 {
+	status = "okay";
+};
+
+/* typec_aic2 */
+&i2c1_0 {
+	label = "I2C_USB_C2_C3_TCPC";
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
+	pinctrl-names = "default";
+
+	tcpc_port2: ccgxxf@b {
+		compatible = "cypress,ccgxxf";
+		reg = <0xb>;
+		int-pin = <&usbc_tcpc_alrt_p2>;
+	};
+
+	tcpc_port3: ccgxxf@1b {
+		compatible = "cypress,ccgxxf";
+		reg = <0x1b>;
+		int-pin = <&usbc_tcpc_alrt_p3>;
+	};
+
+	usb_c2_hb_retimer: jhl9040r-c2@58 {
+		compatible = "intel,jhl9040r";
+		reg = <0x58>;
+		reset-pin = <&usb_c2_hb_retimer_rst>;
+		ls-en-pin = <&usb_c2_hb_retimer_ls_en>;
+	};
+
+	usb_c2_alt_hb_retimer: jhl9040r-c2@56 {
+		compatible = "intel,jhl9040r";
+		reg = <0x56>;
+		reset-pin = <&usb_c2_hb_retimer_rst>;
+		ls-en-pin = <&usb_c2_hb_retimer_ls_en>;
+	};
+
+	usb_c3_hb_retimer: jhl9040r-c3@59 {
+		compatible = "intel,jhl9040r";
+		reg = <0x59>;
+		reset-pin = <&usb_c3_hb_retimer_rst>;
+		ls-en-pin = <&usb_c3_hb_retimer_ls_en>;
+	};
+
+	usb_c3_alt_hb_retimer: jhl9040r-c3@57 {
+		compatible = "intel,jhl9040r";
+		reg = <0x57>;
+		reset-pin = <&usb_c3_hb_retimer_rst>;
+		ls-en-pin = <&usb_c3_hb_retimer_ls_en>;
+	};
+};
+
+&i2c_ctrl1 {
+	status = "okay";
+};

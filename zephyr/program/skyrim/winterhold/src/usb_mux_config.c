@@ -14,6 +14,7 @@
 #include "ioexpander.h"
 #include "usb_mux.h"
 #include "usbc/usb_muxes.h"
+#include "ztest/usb_mux_config.h"
 
 #include <zephyr/drivers/gpio.h>
 
@@ -149,7 +150,8 @@ int board_anx7483_c1_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 int charger_profile_override(struct charge_state_data *curr)
 {
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		curr->requested_current = MIN(curr->requested_current, 1152);
+		curr->requested_current = MIN(curr->requested_current,
+					      WINTERHOLD_CHARGE_CURRENT_MAX);
 	}
 
 	return 0;

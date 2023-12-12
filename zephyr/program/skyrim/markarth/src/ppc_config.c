@@ -31,19 +31,3 @@ int board_aoz1380_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp)
 
 	return rv;
 }
-
-void ppc_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_PPC_INT_ODL:
-		aoz1380_interrupt(0);
-		break;
-
-	case GPIO_USB_C1_PPC_INT_ODL:
-		nx20p348x_interrupt(1);
-		break;
-
-	default:
-		break;
-	}
-}

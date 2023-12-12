@@ -1,0 +1,30 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_FINGERPRINT
+	bool
+	help
+	  Indicates that this is the FPMCU board. This config is enabled in RO
+	  and RW, so it can be used to control fingerprint flag in EC features.
+
+config BOARD_BLOONCHIPPER
+	bool "Bloonchipper FPMCU Board"
+	select HAS_COVERAGE_SUPPORT
+	select BOARD_FINGERPRINT
+	help
+	  Build the bloonchipper FPMCU board. The board uses STM32F412CG MCU
+	  and FPC1025 sensor.
+
+if BOARD_BLOONCHIPPER
+
+config BLOONCHIPPER_EC_RO_QUIRKS
+	bool "Quirks required by bloonchipper EC RO"
+	default n
+	help
+	  Include additional code that fixes problems when using EC RO and
+	  Zephyr RW.
+
+endif
+
+source "Kconfig.zephyr"

@@ -4,6 +4,7 @@
  */
 
 #include <dt-bindings/usb_pd_tcpm.h>
+#include <cros/integrated_fwid.dtsi>
 
 / {
 	aliases {
@@ -54,6 +55,12 @@
 		usb_c0_tcpc_rst_odl {
 			gpios = <&gpio6 7 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
 		};
+		usb_c0_ppc_int_odl {
+			gpios = <&gpio6 2 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		usb_c1_ppc_int_odl {
+			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
 	};
 
 	named-gpios {
@@ -90,19 +97,23 @@
 		/* GPIO37 */
 		kb-usb-c1-rst-odl = &gpio_usb_c1_rst_odl;
 		anx-usb-c1-rt-hpd-in = &gpio_usb_c1_rst_odl;
+		hb-usb-c1-rst-odl = &gpio_usb_c1_rst_odl;
 
 		/* GPIO72 */
 		kb-usb-c1-dp-mode = &gpio_usb_c1_rt_int_odl;
 		anx-usb-c1-rt-dp-en = &gpio_usb_c1_rt_int_odl;
+		hb-usb-c1-int-odl = &gpio_usb_c1_rt_int_odl;
 
 		/* GPIO74 */
 		ps-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
 		kb-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
 		anx-usb-c1-rt-usb-en = &gpio_usb_c1_rt_rst_r_odl;
+		hb-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
 
 		/* GPIO83 */
 		kb-usb-c1-frs-alert = &gpio_usb_c1_frs_en;
 		anx-usb-c1-frs-en = &gpio_usb_c1_frs_en;
+		hb-usb-c1-frs-en = &gpio_usb_c1_frs_en;
 	};
 
 	/* Special I2C port attribute */
@@ -123,6 +134,10 @@
 	status = "okay";
 	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
 	pinctrl-names = "default";
+};
+
+&sha0 {
+	status = "okay";
 };
 
 /* Power switch logic input pads */
@@ -175,58 +190,57 @@
 	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
 	pinctrl-names = "default";
 
-	tcpc_port0: nct38xx@70 {
+	nct3807_C0: nct38xx@70 {
 		compatible = "nuvoton,nct38xx";
-		gpio-dev = <&nct3807_C0>;
 		reg = <0x70>;
-		tcpc-flags = <(
-			TCPC_FLAGS_TCPCI_REV2_0 |
-			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
-		/* a duplicate of the <&gpio_usb_c0_tcpc_int_odl> node in
-		 * "named-gpios". This is the Zephyr preferred style,
-		 * the "named-gpios" node will be dealt with at a later date.
-		 */
-		irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
-		/* a duplicate of the <&gpio_usb_c0_tcpc_rst_odl> node in
-		 * "named-gpios". This is the Zephyr preferred style,
-		 * the "named-gpios" node will be dealt with at a later date.
-		 */
-		rst-gpios = <&gpio6 7 (GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
-	};
 
-	nct3807_C0: nct3807_C0@70 {
-		#address-cells = <1>;
-		#size-cells = <0>;
-		compatible = "nuvoton,nct38xx-gpio";
-		reg = <0x70>;
-		label = "NCT3807_C0";
-
-		ioex_c0_port0: gpio@0 {
-			compatible = "nuvoton,nct38xx-gpio-port";
-			reg = <0x0>;
-			label = "NCT3807_C0_GPIO0";
-			gpio-controller;
-			#gpio-cells = <2>;
-			ngpios = <8>;
-			pin_mask = <0xff>;
-			pinmux_mask = <0xf7>;
+		tcpc_port0: nct38xx-tcpc {
+			compatible = "nuvoton,nct38xx-tcpc";
+			gpio-dev = <&nct3807_C0>;
+			tcpc-flags = <(
+				TCPC_FLAGS_TCPCI_REV2_0 |
+				TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
+			/* a duplicate of the <&gpio_usb_c0_tcpc_int_odl> node
+			 * in "named-gpios". This is the Zephyr preferred style,
+			 * the "named-gpios" node will be dealt with at a later
+			 * date.
+			 */
+			irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
+			/* a duplicate of the <&gpio_usb_c0_tcpc_rst_odl> node
+			 * in "named-gpios". This is the Zephyr preferred style,
+			 * the "named-gpios" node will be dealt with at a later
+			 * date.
+			 */
+			rst-gpios = <&gpio6 7
+				     (GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
 		};
-		ioex_c0_port1: gpio@1 {
-			compatible = "nuvoton,nct38xx-gpio-port";
-			reg = <0x1>;
-			label = "NCT3807_C0_GPIO1";
-			gpio-controller;
-			#gpio-cells = <2>;
-			ngpios = <8>;
-			pin_mask = <0xff>;
-		};
-	};
 
-	nct3808_alert_0 {
-		compatible = "nuvoton,nct38xx-gpio-alert";
-		irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
-		nct38xx-dev = <&nct3807_C0>;
-		label = "NCT3807_ALERT_0";
+		nct38xx-gpio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "nuvoton,nct38xx-gpio";
+			label = "NCT3807_C0";
+
+			ioex_c0_port0: gpio@0 {
+				compatible = "nuvoton,nct38xx-gpio-port";
+				reg = <0x0>;
+				label = "NCT3807_C0_GPIO0";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <8>;
+				pin_mask = <0xff>;
+				pinmux_mask = <0xf7>;
+			};
+			ioex_c0_port1: gpio@1 {
+				compatible = "nuvoton,nct38xx-gpio-port";
+				reg = <0x1>;
+				label = "NCT3807_C0_GPIO1";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <8>;
+				pin_mask = <0xff>;
+			};
+		};
 	};
 };
 
@@ -249,6 +263,11 @@
 		status = "okay";
 		reg = <0x40>;
 		frs_en_gpio = <&ioex_usb_c0_frs_en>;
+		/* a duplicate of the <&gpio_usb_c0_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio6 2 GPIO_ACTIVE_LOW>;
 	};
 };
 
@@ -315,6 +334,11 @@
 		compatible = "kinetic,ktu1125";
 		status = "okay";
 		reg = <0x38>;
+		/* a duplicate of the <&gpio_usb_c1_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
 		is-alt;
 	};
 
@@ -322,6 +346,11 @@
 		compatible = "nxp,nx20p348x";
 		status = "okay";
 		reg = <0x72>;
+		/* a duplicate of the <&gpio_usb_c1_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
 		is-alt;
 	};
 
@@ -330,6 +359,11 @@
 		status = "okay";
 		reg = <0x40>;
 		frs_en_gpio = <&gpio_usb_c1_frs_en>;
+		/* a duplicate of the <&gpio_usb_c1_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
 		is-alt;
 	};
 
@@ -345,6 +379,15 @@
 		reg = <0x08>;
 		reset-pin = <&gpio_usb_c1_rt_rst_r_odl>;
 	};
+
+	usb_c1_hb_retimer: usb-c1-hb-retimer@56 {
+		compatible = "intel,jhl9040r";
+		reg = <0x56>;
+		ls-en-pin = <&gpio_usb_c1_rst_odl>;
+		int-pin = <&gpio_usb_c1_rt_int_odl>;
+		reset-pin = <&gpio_usb_c1_rt_rst_r_odl>;
+	};
+
 };
 
 &i2c7_0 {
@@ -353,15 +396,6 @@
 
 	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
 	pinctrl-names = "default";
-
-	cbi_eeprom: eeprom@50 {
-		compatible = "atmel,at24";
-		reg = <0x50>;
-		size = <2048>;
-		pagesize = <16>;
-		address-width = <8>;
-		timeout = <5>;
-	};
 
 	charger: isl9241@9 {
 		compatible = "intersil,isl9241";

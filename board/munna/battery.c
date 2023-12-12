@@ -7,90 +7,96 @@
 #include "battery_fuel_gauge.h"
 #include "gpio.h"
 
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* LGC L20L3PG2, Gauge IC: RAJ240047A20DNP. */
 	[BATTERY_LGC] = {
-		.fuel_gauge = {
-			.manuf_name = "LGC",
-			.device_name = "L20L3PG2",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "LGC",
+		.device_name = "L20L3PG2",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x34,
+					.reg_mask = 0x0100,
+					.disconnect_val = 0x0100,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x34,
-				.reg_mask = 0x0100,
-				.disconnect_val = 0x0100,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= 13050,   /* mV */
-			.voltage_normal		= 11400,   /* mV */
-			.voltage_min		= 9000,    /* mV */
-			.precharge_current	= 256,     /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 73,
+			.batt_info = {
+				.voltage_max		= 13050,   /* mV */
+				.voltage_normal		= 11400,   /* mV */
+				.voltage_min		= 9000,    /* mV */
+				.precharge_current	= 256,     /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 73,
+			},
 		},
 	},
 	/* Sunwoda L20D3PG2, Gauge IC: BQ40Z697A. */
 	[BATTERY_SUNWODA] = {
-		.fuel_gauge = {
-			.manuf_name = "Sunwoda",
-			.device_name = "L20D3PG2",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "Sunwoda",
+		.device_name = "L20D3PG2",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x34,
+					.reg_mask = 0x0100,
+					.disconnect_val = 0x0100,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x34,
-				.reg_mask = 0x0100,
-				.disconnect_val = 0x0100,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= 13050, /* mV */
-			.voltage_normal		= 11250, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 200,	 /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
+			.batt_info = {
+				.voltage_max		= 13050, /* mV */
+				.voltage_normal		= 11250, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 200,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
+			},
 		},
 	},
 
 	/* SIMPLO L20M3PG2, Gauge IC: BQ40Z697A. */
 	[BATTERY_SMP] = {
-		.fuel_gauge = {
-			.manuf_name = "SMP",
-			.device_name = "L20M3PG2",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "SMP",
+		.device_name = "L20M3PG2",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x34,
+					.reg_mask = 0x0100,
+					.disconnect_val = 0x0100,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x34,
-				.reg_mask = 0x0100,
-				.disconnect_val = 0x0100,
+			.batt_info = {
+				.voltage_max		= 13050, /* mV */
+				.voltage_normal		= 11250, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 256,   /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 45,
+				.charging_min_c		= 0,
+				.charging_max_c		= 45,
+				.discharging_min_c	= -40,
+				.discharging_max_c	= 73,
 			},
-		},
-		.batt_info = {
-			.voltage_max		= 13050, /* mV */
-			.voltage_normal		= 11250, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 256,   /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
-			.charging_min_c		= 0,
-			.charging_max_c		= 45,
-			.discharging_min_c	= -40,
-			.discharging_max_c	= 73,
 		},
 	},
 };

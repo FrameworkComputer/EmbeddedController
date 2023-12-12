@@ -34,11 +34,16 @@
 #include <time.h>
 
 #include <getopt.h>
+#include <iomanip>
+#include <iostream>
+#include <libchrome/base/json/json_reader.h>
 #include <libec/add_entropy_command.h>
 #include <libec/ec_panicinfo.h>
 #include <libec/fingerprint/fp_encryption_status_command.h>
 #include <libec/flash_protect_command.h>
 #include <libec/rand_num_command.h>
+#include <libec/versions_command.h>
+#include <string>
 #include <unistd.h>
 #include <vector>
 
@@ -61,6 +66,7 @@ enum {
 	OPT_ASCII,
 	OPT_I2C_BUS,
 	OPT_DEVICE,
+	OPT_VERBOSE,
 };
 
 static struct option long_opts[] = { { "dev", 1, 0, OPT_DEV },
@@ -69,6 +75,8 @@ static struct option long_opts[] = { { "dev", 1, 0, OPT_DEV },
 				     { "ascii", 0, 0, OPT_ASCII },
 				     { "i2c_bus", 1, 0, OPT_I2C_BUS },
 				     { "device", 1, 0, OPT_DEVICE },
+				     { "verbose", no_argument, NULL,
+				       OPT_VERBOSE },
 				     { NULL, 0, 0, 0 } };
 
 #define GEC_LOCK_TIMEOUT_SECS 30 /* 30 secs */
@@ -93,6 +101,8 @@ const char help_str[] =
 	"      Cut off battery output power\n"
 	"  batteryparam\n"
 	"      Read or write board-specific battery parameter\n"
+	"  bcfg\n"
+	"      Print an active battery config.\n"
 	"  boardversion\n"
 	"      Prints the board version\n"
 	"  button [vup|vdown|rec] <Delay-ms>\n"
@@ -211,8 +221,6 @@ const char help_str[] =
 	"      Return the list of supported features\n"
 	"  kbfactorytest\n"
 	"      Scan out keyboard if any pins are shorted\n"
-	"  kbid\n"
-	"      Get keyboard ID of supported keyboards\n"
 	"  kbinfo\n"
 	"      Dump keyboard matrix dimensions\n"
 	"  kbpress\n"
@@ -398,6 +406,9 @@ BUILD_ASSERT(ARRAY_SIZE(led_names) == EC_LED_ID_COUNT);
 /* ASCII mode for printing, default off */
 int ascii_mode;
 
+/* Message verbosity */
+static int verbose = 0;
+
 /* Check SBS numerical value range */
 int is_battery_range(int val)
 {
@@ -463,8 +474,9 @@ static int find_enum_from_text(const char *str,
 
 void print_help(const char *prog, int print_cmds)
 {
-	printf("Usage: %s [--dev=n] "
-	       "[--interface=dev|i2c|lpc] [--i2c_bus=n] [--device=vid:pid] ",
+	printf("Usage: %s [--dev=n]"
+	       " [--interface=dev|i2c|lpc] [--i2c_bus=n] [--device=vid:pid]"
+	       " --verbose",
 	       prog);
 	printf("[--name=cros_ec|cros_fp|cros_pd|cros_scp|cros_ish] [--ascii] ");
 	printf("<command> [params]\n\n");
@@ -474,6 +486,7 @@ void print_help(const char *prog, int print_cmds)
 	printf("  --interface Specifies the interface.\n\n");
 	printf("  --device    Specifies USB endpoint by vendor ID and product\n"
 	       "              ID (e.g. 18d1:5022).\n\n");
+	printf("  --verbose   Print more messages.\n\n");
 	if (print_cmds)
 		puts(help_str);
 	else
@@ -531,13 +544,13 @@ static int read_mapped_string(uint8_t offset, char *buffer, int max_size)
 	return ret;
 }
 
-static int wait_event(long event_type,
-		      struct ec_response_get_next_event_v1 *buffer,
-		      size_t buffer_size, long timeout)
+static int wait_event_mask(unsigned long event_mask,
+			   struct ec_response_get_next_event_v1 *buffer,
+			   size_t buffer_size, long timeout)
 {
 	int rv;
 
-	rv = ec_pollevent(1 << event_type, buffer, buffer_size, timeout);
+	rv = ec_pollevent(event_mask, buffer, buffer_size, timeout);
 	if (rv == 0) {
 		fprintf(stderr, "Timeout waiting for MKBP event\n");
 		return -ETIMEDOUT;
@@ -547,6 +560,13 @@ static int wait_event(long event_type,
 	}
 
 	return rv;
+}
+
+static int wait_event(long event_type,
+		      struct ec_response_get_next_event_v1 *buffer,
+		      size_t buffer_size, long timeout)
+{
+	return wait_event_mask(1 << event_type, buffer, buffer_size, timeout);
 }
 
 int cmd_adc_read(int argc, char *argv[])
@@ -958,6 +978,9 @@ static const char *const ec_feature_names[] = {
 	[EC_FEATURE_TYPEC_AP_VDM_SEND] = "AP directed VDM Request messages",
 	[EC_FEATURE_SYSTEM_SAFE_MODE] = "System Safe Mode support",
 	[EC_FEATURE_ASSERT_REBOOTS] = "Assert reboots",
+	[EC_FEATURE_TOKENIZED_LOGGING] = "Tokenized Logging",
+	[EC_FEATURE_AMD_STB_DUMP] = "AMD STB dump",
+	[EC_FEATURE_MEMORY_DUMP] = "Memory Dump",
 };
 
 int cmd_inventory(int argc, char *argv[])
@@ -1768,7 +1791,24 @@ int cmd_flash_protect(int argc, char *argv[])
 			mask |= ec::flash_protect::Flags::kRoAtBoot;
 	}
 
-	ec::FlashProtectCommand_v1 flash_protect_command(flags, mask);
+	// TODO(b/287519577) Use FlashProtectCommandFactory after removing its
+	// dependency on CrosFpDeviceInterface.
+	uint32_t version = 1;
+	ec::VersionsCommand flash_protect_versions_command(
+		EC_CMD_FLASH_PROTECT);
+
+	if (!flash_protect_versions_command.RunWithMultipleAttempts(
+		    comm_get_fd(), 20)) {
+		fprintf(stderr, "Flash Protect Versions Command failed:\n");
+		return -1;
+	}
+
+	if (flash_protect_versions_command.IsVersionSupported(2) ==
+	    ec::EcCmdVersionSupportStatus::SUPPORTED) {
+		version = 2;
+	}
+
+	ec::FlashProtectCommand flash_protect_command(flags, mask, version);
 	if (!flash_protect_command.Run(comm_get_fd())) {
 		int rv = -EECRESULT - flash_protect_command.Result();
 		fprintf(stderr, "Flash protect returned with errors: %d\n", rv);
@@ -1777,17 +1817,17 @@ int cmd_flash_protect(int argc, char *argv[])
 
 	/* Print returned flags */
 	printf("Flash protect flags: 0x%08x%s\n",
-	       flash_protect_command.GetFlags(),
+	       static_cast<int>(flash_protect_command.GetFlags()),
 	       (ec::FlashProtectCommand::ParseFlags(
 			flash_protect_command.GetFlags()))
 		       .c_str());
 	printf("Valid flags:         0x%08x%s\n",
-	       flash_protect_command.GetValidFlags(),
+	       static_cast<int>(flash_protect_command.GetValidFlags()),
 	       (ec::FlashProtectCommand::ParseFlags(
 			flash_protect_command.GetValidFlags()))
 		       .c_str());
 	printf("Writable flags:      0x%08x%s\n",
-	       flash_protect_command.GetWritableFlags(),
+	       static_cast<int>(flash_protect_command.GetWritableFlags()),
 
 	       (ec::FlashProtectCommand::ParseFlags(
 			flash_protect_command.GetWritableFlags()))
@@ -1798,13 +1838,14 @@ int cmd_flash_protect(int argc, char *argv[])
 		fprintf(stderr,
 			"Unable to set requested flags "
 			"(wanted mask 0x%08x flags 0x%08x)\n",
-			mask, flags);
+			static_cast<int>(mask), static_cast<int>(flags));
 		if ((mask & ~flash_protect_command.GetWritableFlags()) !=
 		    ec::flash_protect::Flags::kNone)
 			fprintf(stderr,
 				"Which is expected, because writable "
 				"mask is 0x%08x.\n",
-				flash_protect_command.GetWritableFlags());
+				static_cast<int>(flash_protect_command
+							 .GetWritableFlags()));
 
 		return -1;
 	}
@@ -5294,7 +5335,7 @@ static int ms_help(const char *cmd)
 	printf("  %s odr NUM [ODR [ROUNDUP]]      - set/get sensor ODR\n", cmd);
 	printf("  %s range NUM [RANGE [ROUNDUP]]  - set/get sensor range\n",
 	       cmd);
-	printf("  %s offset NUM [-- X Y Z [TEMP]] - set/get sensor offset\n",
+	printf("  %s offset NUM [X Y Z [TEMP]]    - set/get sensor offset\n",
 	       cmd);
 	printf("  %s kb_wake NUM                  - set/get KB wake ang\n",
 	       cmd);
@@ -5313,9 +5354,9 @@ static int ms_help(const char *cmd)
 	printf("  %s get_activity ACT             - get activity status\n",
 	       cmd);
 	printf("  %s lid_angle                    - print lid angle\n", cmd);
-	printf("  %s spoof -- NUM [0/1] [X Y Z]   - enable/disable spoofing\n",
+	printf("  %s spoof NUM [0/1] [X Y Z]      - enable/disable spoofing\n",
 	       cmd);
-	printf("  %s spoof -- NUM activity ACT [0/1] [STATE] - enable/disable "
+	printf("  %s spoof NUM activity ACT [0/1] [STATE] - enable/disable "
 	       "activity spoofing\n",
 	       cmd);
 	printf("  %s tablet_mode_angle ANG HYS    - set/get tablet mode "
@@ -6854,9 +6895,21 @@ int cmd_keyboard_factory_test(int argc, char *argv[])
 int cmd_panic_info(int argc, char *argv[])
 {
 	int rv;
+	struct ec_params_get_panic_info_v1 params = {
+		.preserve_old_hostcmd_flag = 1,
+	};
 
-	rv = ec_command(EC_CMD_GET_PANIC_INFO, 0, NULL, 0, ec_inbuf,
-			ec_max_insize);
+	/* By default, reading the panic info will set
+	 * PANIC_DATA_FLAG_OLD_HOSTCMD. Prefer to leave this
+	 * flag untouched when supported.
+	 */
+	if (ec_cmd_version_supported(EC_CMD_GET_PANIC_INFO, 1))
+		rv = ec_command(EC_CMD_GET_PANIC_INFO, 1, &params,
+				sizeof(params), ec_inbuf, ec_max_insize);
+	else
+		rv = ec_command(EC_CMD_GET_PANIC_INFO, 0, NULL, 0, ec_inbuf,
+				ec_max_insize);
+
 	if (rv < 0)
 		return rv;
 
@@ -7650,31 +7703,42 @@ static void cmd_charge_control_help(const char *cmd, const char *msg)
 		"    Get current settings.\n"
 		"  Usage: %s normal|idle|discharge\n"
 		"    Set charge mode (and disable battery sustainer).\n"
-		"  Usage: %s normal <lower> <upper>\n"
+		"  Usage: %s normal <lower> <upper> [<flags>]\n"
 		"    Enable battery sustainer. <lower> and <upper> are battery SoC\n"
 		"    between which EC tries to keep the battery level.\n"
+		"    <flags> are supported in v3+\n."
 		"\n",
 		cmd, cmd, cmd);
 }
 
 int cmd_charge_control(int argc, char *argv[])
 {
-	struct ec_params_charge_control p;
+	struct ec_params_charge_control p = {};
 	struct ec_response_charge_control r;
-	int version = 2;
+	int version;
 	const char *const charge_mode_text[] = EC_CHARGE_MODE_TEXT;
 	char *e;
 	int rv;
 
-	if (!ec_cmd_version_supported(EC_CMD_CHARGE_CONTROL, 2))
-		version = 1;
-
-	if (argc == 1) {
-		if (version < 2) {
+	if (ec_cmd_version_supported(EC_CMD_CHARGE_CONTROL, 3)) {
+		version = 3;
+	} else if (ec_cmd_version_supported(EC_CMD_CHARGE_CONTROL, 2)) {
+		if (argc > 4) {
 			cmd_charge_control_help(argv[0],
-						"Old EC doesn't support GET.");
+						"<flags> not supported by EC");
 			return -1;
 		}
+		version = 2;
+	} else {
+		if (argc != 2) {
+			cmd_charge_control_help(
+				argv[0], "Bad arguments or EC is too old");
+			return -1;
+		}
+		version = 1;
+	}
+
+	if (argc == 1) {
 		p.cmd = EC_CHARGE_CONTROL_CMD_GET;
 		rv = ec_command(EC_CMD_CHARGE_CONTROL, version, &p, sizeof(p),
 				&r, sizeof(r));
@@ -7702,13 +7766,7 @@ int cmd_charge_control(int argc, char *argv[])
 		if (argc == 2) {
 			p.sustain_soc.lower = -1;
 			p.sustain_soc.upper = -1;
-		} else if (argc == 4) {
-			if (version < 2) {
-				cmd_charge_control_help(
-					argv[0],
-					"Old EC doesn't support sustainer.");
-				return -1;
-			}
+		} else if (argc > 3) {
 			p.sustain_soc.lower = strtol(argv[2], &e, 0);
 			if (e && *e) {
 				cmd_charge_control_help(
@@ -7720,6 +7778,15 @@ int cmd_charge_control(int argc, char *argv[])
 				cmd_charge_control_help(
 					argv[0], "Bad character in <upper>");
 				return -1;
+			}
+			if (argc == 5) {
+				p.flags = strtoul(argv[4], &e, 0);
+				if (e && *e) {
+					cmd_charge_control_help(
+						argv[0],
+						"Bad character in <flags>");
+					return -1;
+				}
 			}
 		} else {
 			cmd_charge_control_help(argv[0], "Bad arguments");
@@ -8107,11 +8174,11 @@ static int get_battery_command_print_info(
 
 	if (!is_string_printable(static_r->manufacturer))
 		goto cmd_error;
-	printf("  OEM name:               %s\n", static_r->manufacturer);
+	printf("  Manufacturer:           %s\n", static_r->manufacturer);
 
 	if (!is_string_printable(static_r->device_name))
 		goto cmd_error;
-	printf("  Model number:           %s\n", static_r->device_name);
+	printf("  Device name:            %s\n", static_r->device_name);
 
 	if (!is_string_printable(static_r->chemistry))
 		goto cmd_error;
@@ -8469,6 +8536,512 @@ cmd_battery_vendor_param_usage:
 	return -1;
 }
 
+static void batt_conf_dump(const struct board_batt_params *conf,
+			   const char *manuf_name, const char *device_name)
+{
+	const struct fuel_gauge_info *fg = &conf->fuel_gauge;
+	const struct ship_mode_info *ship = &conf->fuel_gauge.ship_mode;
+	const struct sleep_mode_info *sleep = &conf->fuel_gauge.sleep_mode;
+	const struct fet_info *fet = &conf->fuel_gauge.fet;
+	const struct battery_info *info = &conf->batt_info;
+
+	printf("{\n"); /* Start of root */
+	printf("\t\"%s,%s\": {\n", manuf_name, device_name);
+	printf("\t\t\"fuel_gauge\": {\n");
+	printf("\t\t\t\"flags\": \"0x%x\",\n", fg->flags);
+
+	printf("\t\t\t\"ship_mode\": {\n");
+	printf("\t\t\t\t\"reg_addr\": \"0x%02x\",\n", ship->reg_addr);
+	printf("\t\t\t\t\"reg_data\": [ \"0x%04x\", \"0x%04x\" ],\n",
+	       ship->reg_data[0], ship->reg_data[1]);
+	printf("\t\t\t},\n");
+
+	printf("\t\t\t\"sleep_mode\": {\n");
+	printf("\t\t\t\t\"reg_addr\": \"0x%02x\",\n", sleep->reg_addr);
+	printf("\t\t\t\t\"reg_data\": \"0x%04x\",\n", sleep->reg_data);
+	printf("\t\t\t},\n");
+
+	printf("\t\t\t\"fet\": {\n");
+	printf("\t\t\t\t\"reg_addr\": \"0x%02x\",\n", fet->reg_addr);
+	printf("\t\t\t\t\"reg_mask\": \"0x%04x\",\n", fet->reg_mask);
+	printf("\t\t\t\t\"disconnect_val\": \"0x%04x\",\n",
+	       fet->disconnect_val);
+	printf("\t\t\t\t\"cfet_mask\": \"0x%04x\",\n", fet->cfet_mask);
+	printf("\t\t\t\t\"cfet_off_val\": \"0x%04x\",\n", fet->cfet_off_val);
+	printf("\t\t\t},\n");
+
+	printf("\t\t},\n"); /* end of fuel_gauge */
+
+	printf("\t\t\"batt_info\": {\n");
+	printf("\t\t\t\"voltage_max\": %d,\n", info->voltage_max);
+	printf("\t\t\t\"voltage_normal\": %d,\n", info->voltage_normal);
+	printf("\t\t\t\"voltage_min\": %d,\n", info->voltage_min);
+	printf("\t\t\t\"precharge_voltage\": %d,\n", info->precharge_voltage);
+	printf("\t\t\t\"precharge_current\": %d,\n", info->precharge_current);
+	printf("\t\t\t\"start_charging_min_c\": %d,\n",
+	       info->start_charging_min_c);
+	printf("\t\t\t\"start_charging_max_c\": %d,\n",
+	       info->start_charging_max_c);
+	printf("\t\t\t\"charging_min_c\": %d,\n", info->charging_min_c);
+	printf("\t\t\t\"charging_max_c\": %d,\n", info->charging_max_c);
+	printf("\t\t\t\"discharging_min_c\": %d,\n", info->discharging_min_c);
+	printf("\t\t\t\"discharging_max_c\": %d,\n", info->discharging_max_c);
+	printf("\t\t},\n"); /* end of batt_info */
+
+	printf("\t},\n"); /* end of board_batt_params */
+	printf("}\n"); /* End of root */
+}
+
+static void batt_conf_dump_in_c(const struct board_batt_params *conf,
+				const char *manuf_name, const char *device_name)
+{
+	const struct fuel_gauge_info *fg = &conf->fuel_gauge;
+	const struct ship_mode_info *ship = &conf->fuel_gauge.ship_mode;
+	const struct sleep_mode_info *sleep = &conf->fuel_gauge.sleep_mode;
+	const struct fet_info *fet = &conf->fuel_gauge.fet;
+	const struct battery_info *info = &conf->batt_info;
+
+	printf(".manuf_name = \"%s\",\n", manuf_name);
+	printf(".device_name = \"%s\",\n", device_name);
+
+	printf(".config = {\n");
+	printf("\t.fuel_gauge = {\n");
+	printf("\t\t.flags = 0x%x,\n", fg->flags);
+
+	printf("\t\t.ship_mode = {\n");
+	printf("\t\t\t.reg_addr = 0x%02x,\n", ship->reg_addr);
+	printf("\t\t\t.reg_data = { 0x%04x, 0x%04x },\n", ship->reg_data[0],
+	       ship->reg_data[1]);
+	printf("\t\t},\n");
+
+	printf("\t\t.sleep_mode = {\n");
+	printf("\t\t\t.reg_addr = 0x%02x,\n", sleep->reg_addr);
+	printf("\t\t\t.reg_data = 0x%04x,\n", sleep->reg_data);
+	printf("\t\t},\n");
+
+	printf("\t\t.fet = {\n");
+	printf("\t\t\t.reg_addr = 0x%02x,\n", fet->reg_addr);
+	printf("\t\t\t.reg_mask = 0x%04x,\n", fet->reg_mask);
+	printf("\t\t\t.disconnect_val = 0x%04x,\n", fet->disconnect_val);
+	printf("\t\t\t.cfet_mask = 0x%04x,\n", fet->cfet_mask);
+	printf("\t\t\t.cfet_off_val = 0x%04x,\n", fet->cfet_off_val);
+	printf("\t\t},\n");
+
+	printf("\t},\n"); /* end of fuel_gauge */
+
+	printf("\t.batt_info = {\n");
+	printf("\t\t.voltage_max = %d,\n", info->voltage_max);
+	printf("\t\t.voltage_normal = %d,\n", info->voltage_normal);
+	printf("\t\t.voltage_min = %d,\n", info->voltage_min);
+	printf("\t\t.precharge_voltage= %d,\n", info->precharge_voltage);
+	printf("\t\t.precharge_current = %d,\n", info->precharge_current);
+	printf("\t\t.start_charging_min_c = %d,\n", info->start_charging_min_c);
+	printf("\t\t.start_charging_max_c = %d,\n", info->start_charging_max_c);
+	printf("\t\t.charging_min_c = %d,\n", info->charging_min_c);
+	printf("\t\t.charging_max_c = %d,\n", info->charging_max_c);
+	printf("\t\t.discharging_min_c = %d,\n", info->discharging_min_c);
+	printf("\t\t.discharging_max_c = %d,\n", info->discharging_max_c);
+	printf("\t},\n"); /* end of batt_info */
+
+	printf("},\n"); /* end of board_batt_params */
+}
+
+static int read_u32_from_json(base::Value::Dict *dict, const char *key,
+			      uint32_t *value)
+{
+	std::string *str = dict->FindString(key);
+	char *e;
+
+	if (str == nullptr) {
+		printf("Key '%s' not found\n", key);
+		return 0;
+	}
+
+	*value = strtoul(str->c_str(), &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Failed to parse '%s: %s'\n", key,
+			str->c_str());
+		return -1;
+	}
+
+	return 0;
+}
+
+static int read_u16_from_json(base::Value::Dict *dict, const char *key,
+			      uint16_t *value)
+{
+	std::string *str = dict->FindString(key);
+	char *e;
+
+	if (str == nullptr) {
+		printf("Key '%s' not found\n", key);
+		return 0;
+	}
+
+	*value = strtoul(str->c_str(), &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Failed to parse '%s: %s'\n", key,
+			str->c_str());
+		return -1;
+	}
+
+	return 0;
+}
+
+static int read_u8_from_json(base::Value::Dict *dict, const char *key,
+			     uint8_t *value)
+{
+	const std::string *str = dict->FindString(key);
+	char *e;
+
+	if (str == nullptr) {
+		printf("Key '%s' not found\n", key);
+		return 0;
+	}
+
+	*value = strtoul(str->c_str(), &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Failed to parse '%s: %s'\n", key,
+			str->c_str());
+		return -1;
+	}
+
+	return 0;
+}
+
+static int read_battery_config_from_json(base::Value::Dict *root_dict,
+					 struct board_batt_params *config)
+{
+	int i;
+	char *e;
+
+	base::Value::Dict *fuel_gauge = root_dict->FindDict("fuel_gauge");
+	if (fuel_gauge == nullptr) {
+		fprintf(stderr, "Error. fuel_gauge not found.\n");
+		return -1;
+	}
+	if (read_u32_from_json(fuel_gauge, "flags", &config->fuel_gauge.flags))
+		return -1;
+	if (read_u32_from_json(fuel_gauge, "board_flags",
+			       &config->fuel_gauge.board_flags))
+		return -1;
+
+	base::Value::Dict *ship_mode = fuel_gauge->FindDict("ship_mode");
+	if (ship_mode != nullptr) {
+		struct ship_mode_info *sm = &config->fuel_gauge.ship_mode;
+
+		if (read_u8_from_json(ship_mode, "reg_addr", &sm->reg_addr))
+			return -1;
+
+		base::Value::List *reg_data = ship_mode->FindList("reg_data");
+		for (i = 0; i < reg_data->size() && i < SHIP_MODE_WRITES; ++i) {
+			const std::string *str = (*reg_data)[i].GetIfString();
+			sm->reg_data[i] = strtoul(str->c_str(), &e, 0);
+			if (e && *e) {
+				fprintf(stderr,
+					"Failed to parse reg_data: %s\n",
+					str->c_str());
+				return -1;
+			}
+		};
+	}
+
+	base::Value::Dict *sleep_mode = fuel_gauge->FindDict("sleep_mode");
+	if (sleep_mode != nullptr) {
+		struct sleep_mode_info *sm = &config->fuel_gauge.sleep_mode;
+
+		if (read_u8_from_json(sleep_mode, "reg_addr", &sm->reg_addr))
+			return -1;
+		if (read_u16_from_json(sleep_mode, "reg_data", &sm->reg_data))
+			return -1;
+	}
+
+	base::Value::Dict *fet = fuel_gauge->FindDict("fet");
+	if (fet != nullptr) {
+		struct fet_info *fi = &config->fuel_gauge.fet;
+
+		if (read_u8_from_json(fet, "reg_addr", &fi->reg_addr))
+			return -1;
+		if (read_u16_from_json(fet, "reg_mask", &fi->reg_mask))
+			return -1;
+		if (read_u16_from_json(fet, "disconnect_val",
+				       &fi->disconnect_val))
+			return -1;
+		if (read_u16_from_json(fet, "cfet_mask", &fi->cfet_mask))
+			return -1;
+		if (read_u16_from_json(fet, "cfet_off_val", &fi->cfet_off_val))
+			return -1;
+	}
+
+	base::Value::Dict *batt_info = root_dict->FindDict("batt_info");
+	if (batt_info == nullptr) {
+		fprintf(stderr, "Error. batt_info not found.\n");
+		return -1;
+	}
+
+	struct battery_info *bi = &config->batt_info;
+	absl::optional<int> voltage_max = batt_info->FindInt("voltage_max");
+	absl::optional<int> voltage_normal =
+		batt_info->FindInt("voltage_normal");
+	absl::optional<int> voltage_min = batt_info->FindInt("voltage_min");
+	absl::optional<int> precharge_voltage =
+		batt_info->FindInt("precharge_voltage");
+	absl::optional<int> precharge_current =
+		batt_info->FindInt("precharge_current");
+	absl::optional<int> start_charging_min_c =
+		batt_info->FindInt("start_charging_min_c");
+	absl::optional<int> start_charging_max_c =
+		batt_info->FindInt("start_charging_max_c");
+	absl::optional<int> charging_min_c =
+		batt_info->FindInt("charging_min_c");
+	absl::optional<int> charging_max_c =
+		batt_info->FindInt("charging_max_c");
+	absl::optional<int> discharging_min_c =
+		batt_info->FindInt("discharging_min_c");
+	absl::optional<int> discharging_max_c =
+		batt_info->FindInt("discharging_max_c");
+	absl::optional<int> vendor_param_start =
+		batt_info->FindInt("vendor_param_start");
+	bi->voltage_max = voltage_max.value();
+	bi->voltage_normal = voltage_normal.value();
+	bi->voltage_min = voltage_min.value();
+	bi->precharge_voltage = precharge_voltage.value();
+	bi->precharge_current = precharge_current.value();
+	bi->start_charging_min_c = start_charging_min_c.value();
+	bi->start_charging_max_c = start_charging_max_c.value();
+	bi->charging_min_c = charging_min_c.value();
+	bi->charging_max_c = charging_max_c.value();
+	bi->discharging_min_c = discharging_min_c.value();
+	bi->discharging_max_c = discharging_max_c.value();
+	if (vendor_param_start != absl::nullopt)
+		bi->vendor_param_start = vendor_param_start.value();
+
+	return 0;
+}
+
+static void cmd_battery_config_help(const char *cmd)
+{
+	fprintf(stderr,
+		"\n"
+		"Usage: %s get [-c]\n"
+		"    Print active battery config in JSON or C-struct (-c).\n"
+		"\n"
+		"Usage: %s set <json_file> <manuf_name> <device_name>\n"
+		"    Copy battery config from file to CBI.\n"
+		"\n"
+		"    json_file: Path to JSON file containing battery configs\n"
+		"    manuf_name: Manufacturer's name. Up to 31 chars.\n"
+		"    device_name: Battery's name. Up to 31 chars.\n"
+		"\n"
+		"    Run `ectool battery` for <manuf_name> and <device_name>\n",
+		cmd, cmd);
+}
+
+static int cmd_battery_config_get(int argc, char *argv[])
+{
+	struct batt_conf_header *head;
+	struct board_batt_params conf;
+	char manuf_name[SBS_MAX_STR_OBJ_SIZE];
+	char device_name[SBS_MAX_STR_OBJ_SIZE];
+	uint8_t *p;
+	int expected;
+	bool in_json = true;
+	int rv;
+	int c;
+
+	while ((c = getopt(argc, argv, "c")) != -1) {
+		switch (c) {
+		case 'c':
+			in_json = false;
+			break;
+		case '?':
+			/* getopt prints error message. */
+			cmd_battery_config_help("bcfg");
+			return -1;
+		default:
+			return -1;
+		}
+	}
+
+	if (optind < argc) {
+		fprintf(stderr, "Unknown argument '%s'\n", argv[optind]);
+		cmd_battery_config_help("bcfg");
+		return -1;
+	}
+
+	rv = ec_command(EC_CMD_BATTERY_CONFIG, 0, NULL, 0, ec_inbuf,
+			ec_max_insize);
+	if (rv < 0)
+		return rv;
+
+	head = (struct batt_conf_header *)ec_inbuf;
+	if (head->struct_version > EC_BATTERY_CONFIG_STRUCT_VERSION) {
+		fprintf(stderr,
+			"Struct version mismatch. Supported: 0x00 ~ 0x%02x.\n",
+			EC_BATTERY_CONFIG_STRUCT_VERSION);
+		return -1;
+	}
+
+	/* Now we know it's ok to read the rest of the header. */
+
+	expected = sizeof(*head) + head->manuf_name_size +
+		   head->device_name_size + sizeof(struct board_batt_params);
+	if (rv != expected) {
+		fprintf(stderr, "Size mismatch: %d (expected=%d)\n", rv,
+			expected);
+		fprintf(stderr, ".manuf_name_size = %d\n",
+			head->manuf_name_size);
+		fprintf(stderr, ".device_name_size = %d\n",
+			head->device_name_size);
+		return -1;
+	}
+
+	/* Now we know it's ok to parse the payload. */
+	p = (uint8_t *)head;
+	p += sizeof(*head);
+	memset(manuf_name, 0, sizeof(manuf_name));
+	memcpy(manuf_name, p, head->manuf_name_size);
+	p += head->manuf_name_size;
+	memset(device_name, 0, sizeof(device_name));
+	memcpy(device_name, p, head->device_name_size);
+	p += head->device_name_size;
+	memcpy(&conf, p, sizeof(conf));
+	if (in_json)
+		batt_conf_dump(&conf, manuf_name, device_name);
+	else
+		batt_conf_dump_in_c(&conf, manuf_name, device_name);
+
+	return 0;
+}
+
+static int cmd_battery_config_set(int argc, char *argv[])
+{
+	FILE *fp = NULL;
+	int size;
+	char *json = NULL;
+	const char *json_file = argv[1];
+	const char *manuf_name = argv[2];
+	const char *device_name = argv[3];
+	char identifier[SBS_MAX_STR_OBJ_SIZE * 2];
+	struct board_batt_params config;
+	struct ec_params_set_cbi *p = (struct ec_params_set_cbi *)ec_outbuf;
+	struct batt_conf_header *header = (struct batt_conf_header *)p->data;
+	uint8_t *d = (uint8_t *)header;
+	int rv;
+
+	if (strlen(manuf_name) > SBS_MAX_STR_SIZE) {
+		fprintf(stderr, "manuf_name is too long.");
+		return -1;
+	}
+
+	if (strlen(device_name) > SBS_MAX_STR_SIZE) {
+		fprintf(stderr, "device_name is too long.");
+		return -1;
+	}
+
+	fp = fopen(json_file, "rb");
+	if (!fp) {
+		fprintf(stderr, "Can't open %s: %s\n", json_file,
+			strerror(errno));
+		return -1;
+	}
+	fseek(fp, 0, SEEK_END);
+	size = ftell(fp);
+	rewind(fp);
+
+	json = (char *)malloc(size);
+	if (!json) {
+		fprintf(stderr, "Failed to allocate memory.\n");
+		fclose(fp);
+		return -1;
+	}
+
+	if (fread(json, 1, size, fp) != size) {
+		fprintf(stderr, "Failed to read %s\n", json_file);
+		fclose(fp);
+		free(json);
+		return -1;
+	}
+
+	fclose(fp);
+
+	absl::optional<base::Value> root =
+		base::JSONReader::Read(json, base::JSON_ALLOW_TRAILING_COMMAS);
+	if (root == absl::nullopt) {
+		fprintf(stderr, "File %s isn't properly formed JSON file.\n",
+			json_file);
+		free(json);
+		return -1;
+	}
+	base::Value::Dict *dict = root->GetIfDict();
+	if (dict == nullptr) {
+		fprintf(stderr, "Failed to get dictionary from JSON file.\n");
+		free(json);
+		return -1;
+	}
+
+	/* Clear the dst to ensure it'll be null-terminated. */
+	memset(identifier, 0, sizeof(identifier));
+	sprintf(identifier, "%s,%s", manuf_name, device_name);
+	base::Value::Dict *root_dict = dict->FindDict(identifier);
+	if (root_dict == nullptr) {
+		fprintf(stderr,
+			"Config matching identifier=%s not found in %s.\n",
+			identifier, json_file);
+		free(json);
+		return -1;
+	}
+
+	/* Clear config to ensure unspecified (optional) fields are 0. */
+	memset(&config, 0, sizeof(config));
+	if (read_battery_config_from_json(root_dict, &config)) {
+		return -1;
+	}
+
+	header->struct_version = EC_BATTERY_CONFIG_STRUCT_VERSION;
+	header->manuf_name_size = strlen(manuf_name);
+	header->device_name_size = strlen(device_name);
+	d += sizeof(*header);
+	memcpy(d, manuf_name, header->manuf_name_size);
+	d += header->manuf_name_size;
+	memcpy(d, device_name, header->device_name_size);
+	d += header->device_name_size;
+	memcpy(d, &config, sizeof(config));
+
+	p->tag = CBI_TAG_BATTERY_CONFIG;
+	p->size = sizeof(struct batt_conf_header) + header->manuf_name_size +
+		  header->device_name_size + sizeof(config);
+	size = sizeof(*p);
+	size += p->size;
+
+	rv = ec_command(EC_CMD_SET_CROS_BOARD_INFO, 0, p, size, NULL, 0);
+	if (rv < 0) {
+		if (rv == -EC_RES_ACCESS_DENIED - EECRESULT)
+			fprintf(stderr, "Failed. CBI is write-protected.\n");
+		else
+			fprintf(stderr, "Error code: %d\n", rv);
+	} else {
+		printf("Successfully wrote battery config in CBI\n");
+	}
+
+	free(json);
+
+	return rv;
+}
+
+static int cmd_battery_config(int argc, char *argv[])
+{
+	if (argc > 1 && !strcasecmp(argv[1], "get"))
+		return cmd_battery_config_get(--argc, ++argv);
+	else if (argc > 1 && !strcasecmp(argv[1], "set"))
+		return cmd_battery_config_set(--argc, ++argv);
+
+	fprintf(stderr, "Invalid sub-command '%s'\n",
+		argv[1] ? argv[1] : "(null)");
+	cmd_battery_config_help(argv[0]);
+	return -1;
+}
+
 int cmd_board_version(int argc, char *argv[])
 {
 	struct ec_response_board_version response;
@@ -8507,7 +9080,8 @@ static void cmd_cbi_help(char *cmd)
 {
 	fprintf(stderr,
 		"  Usage: %s get <tag> [get_flag]\n"
-		"  Usage: %s set <tag> <value/string> <size> [set_flag]\n"
+		"  Usage: %s set <tag> <value> <size> [set_flag]\n"
+		"  Usage: %s set <tag> <string/hex> <*> [set_flag]\n"
 		"  Usage: %s remove <tag> [set_flag]\n"
 		"    <tag> is one of:\n"
 		"      0: BOARD_VERSION\n"
@@ -8521,22 +9095,29 @@ static void cmd_cbi_help(char *cmd)
 		"      8: SSFC\n"
 		"      9: REWORK_ID\n"
 		"      10: FACTORY_CALIBRATION_DATA\n"
+		"      11: COMMON_CONTROL\n"
+		"      12: BATTERY_CONFIG (hex)\n"
 		"    <size> is the size of the data in byte. It should be zero for\n"
 		"      string types.\n"
 		"    <value/string> is an integer or a string to be set\n"
+		"    <*> is unused but must be present (e.g. '0')\n"
+		"    <hex> is a hex string\n"
 		"    [get_flag] is combination of:\n"
 		"      01b: Invalidate cache and reload data from EEPROM\n"
 		"    [set_flag] is combination of:\n"
 		"      01b: Skip write to EEPROM. Use for back-to-back writes\n"
 		"      10b: Set all fields to defaults first\n",
-		cmd, cmd, cmd);
+		cmd, cmd, cmd, cmd);
 }
 
 static int cmd_cbi_is_string_field(enum cbi_data_tag tag)
 {
-	return tag == CBI_TAG_DRAM_PART_NUM || tag == CBI_TAG_OEM_NAME ||
-	       tag == CBI_TAG_FUEL_GAUGE_MANUF_NAME ||
-	       tag == CBI_TAG_FUEL_GAUGE_DEVICE_NAME;
+	return tag == CBI_TAG_DRAM_PART_NUM || tag == CBI_TAG_OEM_NAME;
+}
+
+static int cmd_cbi_is_binary_field(enum cbi_data_tag tag)
+{
+	return tag == CBI_TAG_BATTERY_CONFIG;
 }
 
 /*
@@ -8549,6 +9130,7 @@ static int cmd_cbi(int argc, char *argv[])
 	enum cbi_data_tag tag;
 	char *e;
 	int rv;
+	int i;
 
 	if (argc < 3) {
 		fprintf(stderr, "Invalid number of params\n");
@@ -8565,7 +9147,6 @@ static int cmd_cbi(int argc, char *argv[])
 
 	if (!strcasecmp(argv[1], "get")) {
 		struct ec_params_get_cbi p = { 0 };
-		int i;
 
 		p.tag = tag;
 		if (argc > 3) {
@@ -8587,6 +9168,11 @@ static int cmd_cbi(int argc, char *argv[])
 		}
 		if (cmd_cbi_is_string_field(tag)) {
 			printf("%.*s", rv, (const char *)ec_inbuf);
+		} else if (cmd_cbi_is_binary_field(tag)) {
+			const uint8_t *const buf =
+				(const uint8_t *const)(ec_inbuf);
+			for (i = 0; i < rv; i++)
+				printf("%02x", buf[i]);
 		} else {
 			const uint8_t *const buffer =
 				(const uint8_t *const)(ec_inbuf);
@@ -8611,8 +9197,10 @@ static int cmd_cbi(int argc, char *argv[])
 			(struct ec_params_set_cbi *)ec_outbuf;
 		void *val_ptr;
 		uint64_t val = 0;
-		uint8_t size;
+		size_t size;
 		uint8_t bad_size = 0;
+		uint8_t *buf = NULL;
+
 		if (argc < 5) {
 			fprintf(stderr, "Invalid number of params\n");
 			cmd_cbi_help(argv[0]);
@@ -8624,6 +9212,37 @@ static int cmd_cbi(int argc, char *argv[])
 		if (cmd_cbi_is_string_field(tag)) {
 			val_ptr = argv[3];
 			size = strlen((char *)(val_ptr)) + 1;
+		} else if (cmd_cbi_is_binary_field(tag)) {
+			const char *p = argv[3];
+
+			size = strlen(p);
+			if (size % 2) {
+				fprintf(stderr,
+					"\n<hex> length must be even.\n");
+				return -1;
+			}
+
+			size /= 2;
+			buf = (uint8_t *)malloc(size);
+			if (!buf) {
+				fprintf(stderr,
+					"\nFailed to allocate buffer.\n");
+				return -1;
+			}
+			for (i = 0; i < size; i++) {
+				char t[3] = {};
+
+				memcpy(t, p, 2);
+				buf[i] = strtoul(t, &e, 16);
+				if (e && *e) {
+					fprintf(stderr, "\nBad value: '%s'\n",
+						t);
+					free(buf);
+					return -1;
+				}
+				p += 2;
+			}
+			val_ptr = buf;
 		} else {
 			val = strtoul(argv[3], &e, 0);
 			/* strtoul sets an errno for invalid input. If the value
@@ -8646,7 +9265,7 @@ static int cmd_cbi(int argc, char *argv[])
 					bad_size = 1;
 			}
 			if (bad_size == 1) {
-				fprintf(stderr, "Bad size: %d\n", size);
+				fprintf(stderr, "Bad size: %zu\n", size);
 				return -1;
 			}
 
@@ -8654,12 +9273,14 @@ static int cmd_cbi(int argc, char *argv[])
 		}
 
 		if (size > ec_max_outsize - sizeof(*p)) {
-			fprintf(stderr, "Size exceeds parameter buffer: %d\n",
+			fprintf(stderr, "Size exceeds parameter buffer: %zu\n",
 				size);
 			return -1;
 		}
 		/* Little endian */
 		memcpy(p->data, val_ptr, size);
+		free(buf);
+		val_ptr = NULL;
 		p->size = size;
 		if (argc > 5) {
 			p->flag = strtol(argv[5], &e, 0);
@@ -11210,66 +11831,114 @@ int cmd_wait_event(int argc, char *argv[])
 	return 0;
 }
 
-static void cmd_cec_help(const char *cmd)
+static void cmd_cec_help(void)
 {
-	fprintf(stderr,
-		"  Usage: %s write [write bytes...]\n"
-		"    Write message on the CEC bus\n"
-		"  Usage: %s read [timeout]\n"
-		"    [timeout] in seconds\n"
-		"  Usage: %s get <param>\n"
-		"  Usage: %s set <param> <val>\n"
-		"    <param> is one of:\n"
-		"      address: CEC receive address\n"
-		"        <val> is the new CEC address\n"
-		"      enable: Enable or disable CEC\n"
-		"        <val> is 1 to enable, 0 to disable\n",
-		cmd, cmd, cmd, cmd);
+	fprintf(stderr, "  Usage: cec <port> write [write bytes...]\n"
+			"    Write message on the CEC bus\n"
+			"  Usage: cec <port> read [timeout]\n"
+			"    [timeout] in seconds\n"
+			"  Usage: cec <port> get <param>\n"
+			"  Usage: cec <port> set <param> <val>\n"
+			"    <param> is one of:\n"
+			"      address: CEC receive address\n"
+			"        <val> is the new CEC address\n"
+			"      enable: Enable or disable CEC\n"
+			"        <val> is 1 to enable, 0 to disable\n");
 }
 
-static int cmd_cec_write(int argc, char *argv[])
+static long timespec_diff_ms(const struct timespec *t1,
+			     const struct timespec *t2)
+{
+	return ((t1->tv_sec - t2->tv_sec) * 1000 +
+		(t1->tv_nsec - t2->tv_nsec) / 1000000);
+}
+
+static int cmd_cec_write(int port, int argc, char *argv[])
 {
 	char *e;
 	long val;
 	int rv, i, msg_len;
 	struct ec_params_cec_write p;
+	struct ec_params_cec_write_v1 p_v1;
 	struct ec_response_get_next_event_v1 buffer;
+	int version;
+	uint8_t *msg_param;
+	struct timespec start, now;
+	const long timeout_ms = 1000; /* How long to wait for the send result */
+	long elapsed_ms;
+	uint32_t event_port, events;
 
 	if (argc < 3 || argc > 18) {
 		fprintf(stderr, "Invalid number of params\n");
-		cmd_cec_help(argv[0]);
+		cmd_cec_help();
 		return -1;
 	}
 
 	msg_len = argc - 2;
+
+	rv = get_latest_cmd_version(EC_CMD_CEC_WRITE_MSG, &version);
+	if (rv < 0)
+		return rv;
+
+	if (version == 0) {
+		msg_param = p.msg;
+	} else {
+		p_v1.port = port;
+		p_v1.msg_len = msg_len;
+		msg_param = p_v1.msg;
+	}
+
 	for (i = 0; i < msg_len; i++) {
 		val = strtol(argv[i + 2], &e, 16);
 		if (e && *e)
 			return -1;
 		if (val < 0 || val > 0xff)
 			return -1;
-		p.msg[i] = (uint8_t)val;
+		msg_param[i] = (uint8_t)val;
 	}
 
 	printf("Write to CEC: ");
 	for (i = 0; i < msg_len; i++)
-		printf("0x%02x ", p.msg[i]);
+		printf("0x%02x ", msg_param[i]);
 	printf("\n");
 
-	rv = ec_command(EC_CMD_CEC_WRITE_MSG, 0, &p, msg_len, NULL, 0);
+	if (version == 0)
+		rv = ec_command(EC_CMD_CEC_WRITE_MSG, 0, &p, msg_len, NULL, 0);
+	else
+		rv = ec_command(EC_CMD_CEC_WRITE_MSG, version, &p_v1,
+				sizeof(p_v1), NULL, 0);
 	if (rv < 0)
 		return rv;
 
-	rv = wait_event(EC_MKBP_EVENT_CEC_EVENT, &buffer, sizeof(buffer), 1000);
-	if (rv < 0)
-		return rv;
+	/*
+	 * Wait for a send OK or send failed event. Retry multiple times since
+	 * we might receive other events or events for other ports.
+	 */
+	clock_gettime(CLOCK_REALTIME, &start);
+	while (true) {
+		clock_gettime(CLOCK_REALTIME, &now);
+		elapsed_ms = timespec_diff_ms(&now, &start);
+		if (elapsed_ms >= timeout_ms)
+			break;
 
-	if (buffer.data.cec_events & EC_MKBP_CEC_SEND_OK)
-		return 0;
+		rv = wait_event(EC_MKBP_EVENT_CEC_EVENT, &buffer,
+				sizeof(buffer), timeout_ms - elapsed_ms);
+		if (rv < 0)
+			return rv;
 
-	if (buffer.data.cec_events & EC_MKBP_CEC_SEND_FAILED) {
-		fprintf(stderr, "Send failed\n");
-		return -1;
+		event_port = EC_MKBP_EVENT_CEC_GET_PORT(buffer.data.cec_events);
+		events = EC_MKBP_EVENT_CEC_GET_EVENTS(buffer.data.cec_events);
+
+		if (event_port != port)
+			continue;
+
+		if (events & EC_MKBP_CEC_SEND_OK)
+			return 0;
+
+		if (events & EC_MKBP_CEC_SEND_FAILED) {
+			fprintf(stderr, "Send failed\n");
+			return -1;
+		}
 	}
 
 	fprintf(stderr, "No send result received\n");
@@ -11277,12 +11946,58 @@ static int cmd_cec_write(int argc, char *argv[])
 	return -1;
 }
 
-static int cmd_cec_read(int argc, char *argv[])
+static int cec_read_handle_cec_event(int port, uint32_t cec_events,
+				     uint8_t *msg, uint8_t *msg_len)
+{
+	int rv;
+	uint32_t event_port, events;
+	struct ec_params_cec_read p;
+	struct ec_response_cec_read r;
+
+	/* Extract the port and events */
+	event_port = EC_MKBP_EVENT_CEC_GET_PORT(cec_events);
+	events = EC_MKBP_EVENT_CEC_GET_EVENTS(cec_events);
+
+	/* Check if it's the HAVE_DATA event we're waiting for */
+	if (event_port != port || !(events & EC_MKBP_CEC_HAVE_DATA)) {
+		*msg_len = 0;
+		return 0;
+	}
+
+	/* Data is ready, so send the read command */
+	p.port = port;
+	rv = ec_command(EC_CMD_CEC_READ_MSG, 0, &p, sizeof(p), &r, sizeof(r));
+	if (rv < 0) {
+		/*
+		 * When the kernel driver is enabled it may read the data out
+		 * first, so the queue will be empty and the command will
+		 * returns EC_RES_UNAVAILABLE. The ectool read command is still
+		 * useful for testing if the kernel driver is not enabled.
+		 */
+		printf("Note: `cec read` doesn't work if the cros_ec_cec "
+		       "kernel driver is running\n");
+		return rv;
+	}
+
+	/* Message received successfully */
+	memcpy(msg, r.msg, r.msg_len);
+	*msg_len = r.msg_len;
+	return 0;
+}
+
+static int cmd_cec_read(int port, int argc, char *argv[])
 {
 	int i, rv;
 	char *e;
 	struct ec_response_get_next_event_v1 buffer;
-	long timeout = 5000;
+	long timeout_ms = 5000;
+	unsigned long event_mask;
+	struct timespec start, now;
+	long elapsed_ms;
+	int event_size;
+	bool received = false;
+	uint8_t msg[MAX_CEC_MSG_LEN];
+	uint8_t msg_len;
 
 	if (!ec_pollevent) {
 		fprintf(stderr, "Polling for MKBP event not supported\n");
@@ -11290,21 +12005,68 @@ static int cmd_cec_read(int argc, char *argv[])
 	}
 
 	if (argc >= 3) {
-		timeout = strtol(argv[2], &e, 0);
+		timeout_ms = strtol(argv[2], &e, 0);
 		if (e && *e) {
 			fprintf(stderr, "Bad timeout value '%s'.\n", argv[2]);
 			return -1;
 		}
 	}
 
-	rv = wait_event(EC_MKBP_EVENT_CEC_MESSAGE, &buffer, sizeof(buffer),
-			timeout);
-	if (rv < 0)
-		return rv;
+	/*
+	 * There are two ways of receiving CEC messages:
+	 * 1. Old EC firmware which only supports one port sends the data in a
+	 *    cec_message MKBP event.
+	 * 2. New EC firmware which supports multiple ports sends
+	 *    EC_MKBP_CEC_HAVE_DATA to notify that data is ready, then
+	 *    EC_CMD_CEC_READ_MSG is used to read it.
+	 * To make ectool compatible with both, we wait for either
+	 * EC_MKBP_EVENT_CEC_MESSAGE or EC_MKBP_CEC_HAVE_DATA.
+	 */
+	event_mask = BIT(EC_MKBP_EVENT_CEC_EVENT) |
+		     BIT(EC_MKBP_EVENT_CEC_MESSAGE);
+	clock_gettime(CLOCK_REALTIME, &start);
+	while (true) {
+		clock_gettime(CLOCK_REALTIME, &now);
+		elapsed_ms = timespec_diff_ms(&now, &start);
+		if (elapsed_ms >= timeout_ms)
+			break;
+
+		rv = wait_event_mask(event_mask, &buffer, sizeof(buffer),
+				     timeout_ms - elapsed_ms);
+		if (rv < 0)
+			return rv;
+		event_size = rv;
+
+		if (buffer.event_type == EC_MKBP_EVENT_CEC_EVENT) {
+			rv = cec_read_handle_cec_event(
+				port, buffer.data.cec_events, msg, &msg_len);
+			if (rv < 0)
+				return rv;
+
+			/* Message received successfully */
+			if (msg_len) {
+				received = true;
+				break;
+			}
+			/* No message received, continue waiting */
+
+		} else if (buffer.event_type == EC_MKBP_EVENT_CEC_MESSAGE) {
+			/* Message received successfully */
+			received = true;
+			msg_len = event_size - 1;
+			memcpy(msg, buffer.data.cec_message, msg_len);
+			break;
+		}
+	}
+
+	if (!received) {
+		fprintf(stderr, "Timed out waiting for message\n");
+		return -1;
+	}
 
 	printf("CEC data: ");
-	for (i = 0; i < rv - 1; i++)
-		printf("0x%02x ", buffer.data.cec_message[i]);
+	for (i = 0; i < msg_len; i++)
+		printf("0x%02x ", msg[i]);
 	printf("\n");
 
 	return 0;
@@ -11319,7 +12081,7 @@ static int cec_cmd_from_str(const char *str)
 	return -1;
 }
 
-static int cmd_cec_set(int argc, char *argv[])
+static int cmd_cec_set(int port, int argc, char *argv[])
 {
 	char *e;
 	struct ec_params_cec_set p;
@@ -11328,7 +12090,7 @@ static int cmd_cec_set(int argc, char *argv[])
 
 	if (argc != 4) {
 		fprintf(stderr, "Invalid number of params\n");
-		cmd_cec_help(argv[0]);
+		cmd_cec_help();
 		return -1;
 	}
 
@@ -11344,12 +12106,13 @@ static int cmd_cec_set(int argc, char *argv[])
 		return -1;
 	}
 	p.cmd = cmd;
+	p.port = port;
 	p.val = val;
 
 	return ec_command(EC_CMD_CEC_SET, 0, &p, sizeof(p), NULL, 0);
 }
 
-static int cmd_cec_get(int argc, char *argv[])
+static int cmd_cec_get(int port, int argc, char *argv[])
 {
 	int rv, cmd;
 	struct ec_params_cec_get p;
@@ -11357,7 +12120,7 @@ static int cmd_cec_get(int argc, char *argv[])
 
 	if (argc != 3) {
 		fprintf(stderr, "Invalid number of params\n");
-		cmd_cec_help(argv[0]);
+		cmd_cec_help();
 		return -1;
 	}
 
@@ -11367,6 +12130,7 @@ static int cmd_cec_get(int argc, char *argv[])
 		return -1;
 	}
 	p.cmd = cmd;
+	p.port = port;
 
 	rv = ec_command(EC_CMD_CEC_GET, 0, &p, sizeof(p), &r, sizeof(r));
 	if (rv < 0)
@@ -11379,22 +12143,35 @@ static int cmd_cec_get(int argc, char *argv[])
 
 int cmd_cec(int argc, char *argv[])
 {
-	if (argc < 2) {
+	int port;
+	char *e;
+
+	if (argc < 3) {
 		fprintf(stderr, "Invalid number of params\n");
-		cmd_cec_help(argv[0]);
+		cmd_cec_help();
 		return -1;
 	}
+
+	port = strtol(argv[1], &e, 0);
+	if (e && *e) {
+		fprintf(stderr, "Invalid port: %s\n", argv[1]);
+		cmd_cec_help();
+		return -1;
+	}
+	argc--;
+	argv++;
+
 	if (!strcmp(argv[1], "write"))
-		return cmd_cec_write(argc, argv);
+		return cmd_cec_write(port, argc, argv);
 	if (!strcmp(argv[1], "read"))
-		return cmd_cec_read(argc, argv);
+		return cmd_cec_read(port, argc, argv);
 	if (!strcmp(argv[1], "get"))
-		return cmd_cec_get(argc, argv);
+		return cmd_cec_get(port, argc, argv);
 	if (!strcmp(argv[1], "set"))
-		return cmd_cec_set(argc, argv);
+		return cmd_cec_set(port, argc, argv);
 
 	fprintf(stderr, "Invalid sub command: %s\n", argv[1]);
-	cmd_cec_help(argv[0]);
+	cmd_cec_help();
 
 	return -1;
 }
@@ -11450,6 +12227,7 @@ const struct command commands[] = {
 	{ "battery", cmd_battery },
 	{ "batterycutoff", cmd_battery_cut_off },
 	{ "batteryparam", cmd_battery_vendor_param },
+	{ "bcfg", cmd_battery_config },
 	{ "boardversion", cmd_board_version },
 	{ "boottime", cmd_boottime },
 	{ "button", cmd_button },
@@ -11605,7 +12383,7 @@ int main(int argc, char *argv[])
 
 	BUILD_ASSERT(ARRAY_SIZE(lb_command_paramcount) == LIGHTBAR_NUM_CMDS);
 
-	while ((i = getopt_long(argc, argv, "?", long_opts, NULL)) != -1) {
+	while ((i = getopt_long(argc, argv, "+v?", long_opts, NULL)) != -1) {
 		switch (i) {
 		case '?':
 			/* Unhandled option */
@@ -11656,6 +12434,10 @@ int main(int argc, char *argv[])
 			break;
 		case OPT_ASCII:
 			ascii_mode = 1;
+			break;
+		case OPT_VERBOSE:
+		case 'v':
+			verbose = 1;
 			break;
 		}
 	}

@@ -138,17 +138,17 @@
 		};
 	};
 
-	temp_memory: memory {
+	temp_memory_thermistor: memory {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 		adc = <&adc_temp_sensor_1>;
 	};
-	temp_charger: charger {
+	temp_charger_thermistor: charger {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 		adc = <&adc_temp_sensor_2>;
 	};
-	temp_ambient: ambient {
+	temp_ambient_thermistor: ambient {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
 		adc = <&adc_temp_sensor_3>;
@@ -156,32 +156,32 @@
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		memory {
+		temp_memory: memory {
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
-			temp_host_high = <85>;
-			temp_host_halt = <90>;
-			temp_host_release_high = <80>;
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
-			sensor = <&temp_memory>;
+			sensor = <&temp_memory_thermistor>;
 		};
-		charger {
+		temp_charger: charger {
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
-			temp_host_high = <85>;
-			temp_host_halt = <90>;
-			temp_host_release_high = <80>;
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
-			sensor = <&temp_charger>;
+			sensor = <&temp_charger_thermistor>;
 		};
-		ambient {
+		temp_ambient: ambient {
 			temp_fan_off = <35>;
 			temp_fan_max = <60>;
-			temp_host_high = <85>;
-			temp_host_halt = <90>;
-			temp_host_release_high = <80>;
+			temp_host_high = <70>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <60>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
-			sensor = <&temp_ambient>;
+			sensor = <&temp_ambient_thermistor>;
 		};
 	};
 
@@ -238,18 +238,6 @@
 			};
 		};
 	};
-	fans {
-		compatible = "cros-ec,fans";
-
-		fan_0 {
-			pwms = <&pwm7 PWM_CHANNEL_7 PWM_KHZ(30) PWM_POLARITY_NORMAL>;
-			tach = <&tach1>;
-			rpm_min = <1500>;
-			rpm_start = <1500>;
-			rpm_max = <6500>;
-			enable_gpio = <&gpio_fan_enable>;
-		};
-	};
 };
 
 &gpio_acc_int_l {
@@ -304,7 +292,7 @@
 };
 
 
-&i2c0 {
+&i2c2 {
 	label = "I2C_EEPROM";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
@@ -319,6 +307,9 @@
 	pinctrl-0 = <&i2c0_clk_gpb3_default
 		     &i2c0_data_gpb4_default>;
 	pinctrl-names = "default";
+	scl-gpios = <&gpiob 3 0>;
+	sda-gpios = <&gpiob 4 0>;
+	channel-switch-sel = <I2C_CHA_LOCATE>;
 };
 
 &i2c1 {
@@ -329,12 +320,15 @@
 	pinctrl-names = "default";
 };
 
-&i2c2 {
+&i2c0 {
 	label = "I2C_SENSOR";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c2_clk_gpf6_default
 		     &i2c2_data_gpf7_default>;
 	pinctrl-names = "default";
+	scl-gpios = <&gpiof 6 0>;
+	sda-gpios = <&gpiof 7 0>;
+	channel-switch-sel = <I2C_CHC_LOCATE>;
 };
 
 &i2c4 {
@@ -379,23 +373,6 @@
 		status = "okay";
 		reg = <0x32>;
 	};
-};
-
-/* pwm for fan */
-&pwm7 {
-	status = "okay";
-	prescaler-cx = <PWM_PRESCALER_C6>;
-	pinctrl-0 = <&pwm7_gpa7_default>;
-	pinctrl-names = "default";
-};
-
-/* fan tachometer sensor */
-&tach1 {
-	status = "okay";
-	channel = <IT8XXX2_TACH_CHANNEL_A>;
-	pulses-per-round = <2>;
-	pinctrl-0 = <&tach1a_gpd7_default>;
-	pinctrl-names = "default";
 };
 
 &usbpd0 {

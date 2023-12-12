@@ -1,6 +1,36 @@
 common:
   platform_allow: native_posix
 tests:
+  corsola.usbc:
+    extra_configs:
+    - CONFIG_TEST_CORSOLA_USBC=y
+    - CONFIG_VARIANT_CORSOLA_DB_DETECTION=y
+    extra_dtc_overlay_files:
+    - kingler.usbc.overlay
+    extra_conf_files:
+    - prj.conf
+    - kingler.usbc.conf
+  corsola.usb_pd_policy:
+    extra_configs:
+    - CONFIG_TEST_CORSOLA_USB_PD_POLICY=y
+    - CONFIG_TEST_BUILD_FAKE=n
+    - CONFIG_AP_ARM_MTK_MT8186=y
+    - CONFIG_PLATFORM_EC_POWERSEQ=y
+    - CONFIG_PLATFORM_EC_POWERSEQ_PP5000_CONTROL=n
+    - CONFIG_SHIMMED_TASKS=y
+    - CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK=y
+    - CONFIG_PLATFORM_EC_EXTPOWER_GPIO=y
+    - CONFIG_PLATFORM_EC_POWER_BUTTON=y
+    - CONFIG_PLATFORM_EC_USB_PD_DP_HPD_GPIO=y
+    - CONFIG_PLATFORM_EC_USB_PD_DP_HPD_GPIO_CUSTOM=y
+    - CONFIG_PLATFORM_EC_USBC_PPC=n
+    - CONFIG_PLATFORM_EC_USB_CHARGER=n
+    - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE=n
+    extra_dtc_overlay_files:
+    - kingler.usbc.overlay
+    extra_conf_files:
+    - prj.conf
+    - kingler.usbc.conf
   kingler.usbc:
     extra_configs:
     - CONFIG_TEST_KINGLER_USBC=y
@@ -14,6 +44,13 @@ tests:
     - CONFIG_TEST_STEELIX_RUSTY=y
     - CONFIG_TEST_FORM_FACTOR_CONVERTIBLE=y
     - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM=y
+    extra_dtc_overlay_files:
+    - kingler.steelix.overlay
+  kingler.steelix_led:
+    extra_configs:
+    - CONFIG_TEST_STEELIX_LED=y
+    - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSM=y
+    - CONFIG_PLATFORM_EC_LED_COMMON=y
     extra_dtc_overlay_files:
     - kingler.steelix.overlay
   kingler.rusty:
@@ -63,3 +100,11 @@ tests:
     - CONFIG_TEST_DB_DETECTION_USB_COUNT=y
     extra_dtc_overlay_files:
     - kingler.default.overlay
+  kingler.ponyta:
+    extra_configs:
+    - CONFIG_TEST_PONYTA=y
+    - CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP=y
+    - CONFIG_PLATFORM_EC_MKBP_EVENT=y
+    extra_dtc_overlay_files:
+    - kingler.ponyta.overlay
+    - boards/ponyta.dtsi

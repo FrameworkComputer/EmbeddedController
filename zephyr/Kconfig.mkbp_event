@@ -58,4 +58,13 @@ config PLATFORM_EC_MKBP_USE_GPIO_ACTIVE_HIGH
     help
       Select if HW invert the SOC_INT signal on EC side.
 
+config PLATFORM_EC_EMULATED_SYSRQ
+    bool "Enable Emulated SysRq MKBP Events"
+    default n
+    depends on PLATFORM_EC_MKBP_EVENT
+    help
+      Select to enable sending emulated SysRq MKBP events.
+      Emulated SysRq events are used during AP sleep hang recovery to trigger
+      stack dumps of all active AP cores, to help debug sleep hang issues.
+
 endif # PLATFORM_EC_MKBP_EVENT

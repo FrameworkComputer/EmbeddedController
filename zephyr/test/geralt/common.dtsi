@@ -1,0 +1,198 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <it8xxx2_emul.dts>
+
+/ {
+	pinctrl: pinctrl {
+		compatible = "ite,it8xxx2-pinctrl";
+		status = "disabled";
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		battery {
+			i2c-port = <&i2c_ctrl0>;
+			remote-port = <1>;
+			enum-names = "I2C_PORT_BATTERY",
+				"I2C_PORT_VIRTUAL_BATTERY";
+		};
+		i2c_charger: charger {
+			i2c-port = <&i2c_ctrl0>;
+			enum-names = "I2C_PORT_CHARGER",
+				"I2C_PORT_EEPROM";
+		};
+		i2c_sensor: sensor {
+			i2c-port = <&i2c_ctrl2>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+		i2c_usb_c: usb-c {
+			i2c-port = <&i2c_ctrl2>;
+			enum-names = "I2C_PORT_USB_C";
+		};
+		i2c_detachable_base: detachable-base {
+			i2c-port = <&i2c_ctrl4>;
+			enum-names = "I2C_PORT_DETACHABLE_BASE";
+		};
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0@0 {
+			compatible = "named-usbc-port";
+			status = "okay";
+			reg = <0>;
+			chg = <&charger>;
+			tcpc = <&tcpci_emul0>;
+			ppc = <&ppc_port0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&tusb546_mux_0 &virtual_mux_0>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		port1@1 {
+			compatible = "named-usbc-port";
+			status = "okay";
+			reg = <1>;
+			tcpc = <&tcpci_emul1>;
+			ppc = <&ppc_port1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&ps8743_mux_1 &virtual_mux_1>;
+			};
+		};
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+
+	batteries {
+		default_battery: lgc_ac17a8m {
+			compatible = "lgc,ac17a8m", "battery-smart";
+			/**
+			 * this has to be strictly lower than the desired
+			 * voltage in smart battery emulator (5000mV).
+			 */
+			voltage_min = <4000>;
+		};
+	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_vbus_c0 {
+			enum-name = "ADC_VBUS_C0";
+			io-channels = <&adc0 0>;
+			mul = <10>;
+		};
+		adc_board_id0 {
+			enum-name = "ADC_BOARD_ID_0";
+			io-channels = <&adc0 1>;
+		};
+		adc_board_id1 {
+			enum-name = "ADC_BOARD_ID_1";
+			io-channels = <&adc0 2>;
+		};
+		adc_vbus_c1 {
+			enum-name = "ADC_VBUS_C1";
+			io-channels = <&adc0 7>;
+			mul = <10>;
+		};
+		adc_charger: charger {
+			enum-name = "ADC_TEMP_SENSOR_CHARGER";
+			io-channels = <&adc0 5>;
+		};
+	};
+};
+
+&i2c_ctrl0 {
+	/* I2C_BATTERY */
+	battery: sb@b {
+		compatible = "zephyr,smart-battery-emul";
+		reg = <0xb>;
+		cycle-count = <99>;
+		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
+		/* Real battery voltages are multiples of 4.4V. */
+		desired-charg-volt = <5000>;
+		desired-charg-cur = <1000>;
+		mf-name = "LGC";
+		dev-name = "AC17A8M";
+	};
+
+	/* I2C_PWR_CBI */
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	charger: rt9490@53 {
+		compatible = "richtek,rt9490", "zephyr,rt9490-emul";
+		status = "okay";
+		reg = <0x53>;
+	};
+
+	tcpci_emul0: tcpci_emul@82 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x82>;
+	};
+};
+
+&i2c_ctrl2 {
+	/* I2C_USB_C */
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	/delete-property/ fifo-enable;
+
+	tcpci_emul1: tcpci_emul@82 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x82>;
+	};
+
+	ppc_port0: rt1739@70 {
+		compatible = "zephyr,rt1739-emul", "richtek,rt1739-ppc";
+		status = "okay";
+		reg = <0x70>;
+	};
+
+	tusb546_mux_0: tusb546-mux-0@44 {
+		compatible = "zephyr,tusb1064-emul";
+		reg = <0x44>;
+	};
+
+	ppc_port1: syv682x@40 {
+		compatible = "zephyr,syv682x-emul";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&usb_c1_frs_en>;
+		alert_gpio = <&usb_c1_ppc_int_odl>;
+	};
+
+	ps8743_mux_1: ps8743-mux-1@10 {
+		compatible = "zephyr,ps8743-emul";
+		reg = <0x10>;
+		// board-init = "ps8743_eq_c1_setting";
+	};
+};
+
+/* TODO(b/260377762): peripheral mode */
+&i2c_ctrl4 {
+	/* I2C_DETACHABLE_BASE */
+	status = "okay";
+};
+
+&adc0 {
+	status = "okay";
+};

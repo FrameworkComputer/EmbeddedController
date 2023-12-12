@@ -12,7 +12,6 @@ menuconfig PLATFORM_EC_LED_COMMON
 if PLATFORM_EC_LED_COMMON
 
 # TODO: Add other choices
-#  CONFIG_LED_POLICY_STD
 #  CONFIG_LED_PWM_CHARGE_STATE_ONLY
 #  CONFIG_LED_PWM_ACTIVE_CHARGE_PORT_ONLY
 #  CONFIG_LED_ONOFF_STATES
@@ -145,6 +144,13 @@ config PLATFORM_EC_LED_PWM_LOW_BATT_COLOR
 	    5 - EC_LED_COLOR_AMBER
 
 	  This value is mapped directly to enum ec_led_colors.
+
+config PLATFORM_EC_LED_PWM_OFF_IN_SUSPEND
+	bool "Enables power LED to be off in suspend (S0ix or S3)"
+	help
+	  Turns power LED off in suspend instead of pulsing this is the new
+	  requirement after 2022. Boards that are already shipped maintain the
+	  old requirement of pulse in suspend.
 
 endif # PLATFORM_EC_LED_PWM
 

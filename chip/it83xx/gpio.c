@@ -137,7 +137,7 @@ static const struct {
 	[IT83XX_IRQ_WKO63] = { GPIO_H, BIT(3), 6, BIT(3) },
 	[IT83XX_IRQ_WKO64] = { GPIO_F, BIT(4), 6, BIT(4) },
 	[IT83XX_IRQ_WKO65] = { GPIO_F, BIT(5), 6, BIT(5) },
-	[IT83XX_IRQ_WKO65] = { GPIO_F, BIT(6), 6, BIT(6) },
+	[IT83XX_IRQ_WKO66] = { GPIO_F, BIT(6), 6, BIT(6) },
 	[IT83XX_IRQ_WKO67] = { GPIO_F, BIT(7), 6, BIT(7) },
 	[IT83XX_IRQ_WKO70] = { GPIO_E, BIT(0), 7, BIT(0) },
 	[IT83XX_IRQ_WKO71] = { GPIO_E, BIT(1), 7, BIT(1) },
@@ -422,6 +422,25 @@ static void gpio_1p8v_3p3v_sel_by_pin(uint8_t port, uint8_t pin, int sel_1p8v)
 		*reg_1p8v &= ~sel;
 }
 
+static void it83xx_enable_tristate_on_adc(uint32_t port, uint32_t pin,
+					  enum gpio_alternate_func fn)
+{
+	/* GPIOL pin 0/1/2/3: ADC 13/14/15/16 */
+	if ((port == GPIO_L) && (pin < 4)) {
+		/*
+		 * On IT8320/IT81302, enabling ADC ALT function on group I also
+		 * automatically enable tri-state on the pins. But this
+		 * mechanism is not vailable for GPIOL 0~3 (ADC 13 ~ 16).
+		 * Therefore, enable tri-state on these pins automatically and
+		 * making measurement accurate.
+		 */
+		if ((fn == GPIO_ALT_FUNC_DEFAULT) || (fn == GPIO_ALT_FUNC_1)) {
+			IT83XX_GPIO_CTRL(port, pin) |=
+				GPCR_PORT_PIN_MODE_TRISTATE;
+		}
+	}
+}
+
 static inline void it83xx_set_alt_func(uint32_t port, uint32_t pin,
 				       enum gpio_alternate_func func)
 {
@@ -429,13 +448,15 @@ static inline void it83xx_set_alt_func(uint32_t port, uint32_t pin,
 	 * If func is not ALT_FUNC_NONE, set for alternate function.
 	 * Otherwise, turn the pin into an input as it's default.
 	 */
-	if (func != GPIO_ALT_FUNC_NONE)
+	if (func != GPIO_ALT_FUNC_NONE) {
 		IT83XX_GPIO_CTRL(port, pin) &=
 			~(GPCR_PORT_PIN_MODE_OUTPUT | GPCR_PORT_PIN_MODE_INPUT);
-	else
+		it83xx_enable_tristate_on_adc(port, pin, func);
+	} else {
 		IT83XX_GPIO_CTRL(port, pin) = (IT83XX_GPIO_CTRL(port, pin) |
 					       GPCR_PORT_PIN_MODE_INPUT) &
 					      ~GPCR_PORT_PIN_MODE_OUTPUT;
+	}
 }
 
 void gpio_set_alternate_function(uint32_t port, uint32_t mask,

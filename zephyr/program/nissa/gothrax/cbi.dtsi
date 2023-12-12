@@ -1,0 +1,49 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* gothrax-specific ssfc fields. */
+	cbi-ssfc {
+		compatible = "cros-ec,cbi-ssfc";
+		/*
+		 * SSFC field to identify LID motion sensor.
+		 */
+		lid-sensor {
+			enum-name = "LID_SENSOR";
+			size = <2>;
+
+			lid_sensor_none: none {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <0>;
+				default;
+			};
+			lid_sensor_bma422: bma422 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+			};
+		};
+		/*
+		 * SSFC field to identify BASE motion sensor.
+		 */
+		base-sensor {
+			enum-name = "BASE_SENSOR";
+			size = <2>;
+
+			base_sensor_none: none {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <0>;
+				default;
+			};
+			base_sensor_bmi323: bmi323 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+			};
+		};
+	};
+};

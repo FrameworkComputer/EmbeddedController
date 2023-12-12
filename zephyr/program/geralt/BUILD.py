@@ -22,3 +22,4 @@ def register_geralt_project(
 
 
 geralt = register_geralt_project(project_name="geralt")
+ciri = register_geralt_project(project_name="ciri")

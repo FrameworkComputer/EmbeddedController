@@ -48,6 +48,9 @@
 		smp_cosrf9h3 {
 			compatible = "smp,cosrf9h3", "battery-smart";
 		};
+		smp_hptrf9h3 {
+			compatible = "smp,hptrf9h3", "battery-smart";
+		};
 	};
 
 	hibernate-wake-pins {
@@ -84,12 +87,12 @@
 		int_imu: ec_imu {
 			irq-pin = <&gpio_imu_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "bmi3xx_interrupt";
+			handler = "motion_interrupt";
 		};
 		int_lid_imu: lid_imu {
 			irq-pin = <&gpio_acc_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "bma4xx_interrupt";
+			handler = "lid_accel_interrupt";
 		};
 		int_vol_down: vol_down {
 			irq-pin = <&gpio_voldn_btn_odl>;
@@ -156,10 +159,6 @@
 		gpio-usb-c1-int-odl = &gpio_sb_1;
 		gpio-en-rails-odl = &gpio_sb_1;
 		/*
-		 * Sub-board with type A USB, enable.
-		 */
-		gpio-en-usb-a1-vbus = &gpio_sb_2;
-		/*
 		 * Enable S5 rails for LTE sub-board
 		 */
 		gpio-en-sub-s5-rails = &gpio_sb_2;
@@ -185,22 +184,25 @@
 		compatible = "cros-ec,temp-sensors";
 		memory {
 			temp_host_high = <85>;
-			temp_host_halt = <90>;
+			temp_host_halt = <99>;
 			temp_host_release_high = <80>;
+			temp_host_release_halt = <98>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_memory>;
 		};
 		charger {
 			temp_host_high = <85>;
-			temp_host_halt = <90>;
+			temp_host_halt = <99>;
 			temp_host_release_high = <80>;
+			temp_host_release_halt = <98>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_charger>;
 		};
 		ambient {
 			temp_host_high = <85>;
-			temp_host_halt = <90>;
+			temp_host_halt = <99>;
 			temp_host_release_high = <80>;
+			temp_host_release_halt = <98>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_ambient>;
 		};
@@ -208,16 +210,8 @@
 
 	usba {
 		compatible = "cros-ec,usba-port-enable-pins";
-		/*
-		 * sb_2 is only configured as GPIO when USB-A1 is present,
-		 * but it's still safe to control when disabled.
-		 *
-		 * ILIM_SEL pins are referred to by legacy enum name,
-		 * GPIO_USB*_ILIM_SEL. The one for port A1 is unused on
-		 * sub-boards that don't have USB-A so is safe to control
-		 * regardless of system configuration.
-		 */
-		enable-pins = <&gpio_en_usb_a0_vbus &gpio_sb_2>;
+
+		enable-pins = <&gpio_en_usb_a0_vbus>;
 		status = "okay";
 	};
 
@@ -228,7 +222,6 @@
 		port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
-			bc12 = <&bc12_port0>;
 			chg = <&chg_port0>;
 			tcpc = <&tcpc_port0>;
 			usb-mux-chain-0 {
@@ -248,7 +241,6 @@
 		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
-			bc12 = <&bc12_port1>;
 			chg = <&chg_port1>;
 			tcpc = <&tcpc_port1>;
 			usb-mux-chain-1 {
@@ -276,11 +268,11 @@
 		compatible = "unused-gpios";
 		unused-gpios =
 			<&gpio3 2 0>,
+			<&gpio3 3 0>,
 			<&gpio3 5 0>,
 			<&gpio3 6 0>,
 			<&gpio5 7 0>,
 			<&gpio6 0 0>,
-			<&gpio6 3 0>,
 			<&gpio6 6 0>,
 			<&gpio7 3 0>,
 			<&gpio8 1 0>,
@@ -290,8 +282,8 @@
 			<&gpiob 1 0>,
 			<&gpiob 7 0>,
 			<&gpioc 0 0>,
-			<&gpioc 6 0>,
 			<&gpioc 7 0>,
+			<&gpiod 5 0>,
 			<&gpioe 4 0>,
 			<&gpiof 2 0>,
 			<&gpiof 3 0>;
@@ -332,22 +324,17 @@
 &i2c1_0 {
 	label = "I2C_SENSOR";
 	clock-frequency = <I2C_BITRATE_FAST>;
+
+	pmic_mp2964: pmic_mp2964@20 {
+			compatible = "mps,mp2964";
+			reg = <0x20>;
+			label = "I2C_ADDR_MP2964_FLAGS";
+	};
 };
 
 &i2c3_0 {
 	label = "I2C_USB_C0_TCPC";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
-
-	bc12_port0: pi3usb9201@5f {
-		compatible = "pericom,pi3usb9201";
-		status = "okay";
-		reg = <0x5f>;
-		/*
-		 * BC1.2 interrupt is shared with TCPC, so
-		 * IRQ is not specified here and handled by
-		 * usb_c0_interrupt.
-		 */
-	};
 
 	chg_port0: isl923x@9 {
 		compatible = "intersil,isl923x";
@@ -368,12 +355,6 @@
 	label = "I2C_SUB_C1_TCPC";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 
-	bc12_port1: pi3usb9201@5f {
-		compatible = "pericom,pi3usb9201";
-		status = "okay";
-		reg = <0x5f>;
-	};
-
 	chg_port1: isl923x@9 {
 		compatible = "intersil,isl923x";
 		status = "okay";
@@ -391,7 +372,7 @@
 	anx7483_mux_1: anx7483-mux-1@3e {
 		compatible = "analogix,anx7483";
 		reg = <0x3e>;
-		board-set = "anx7483_set_default_tuning";
+		board-set = "board_anx7483_c1_mux_set";
 		flags = <USB_MUX_FLAG_RESETS_IN_G3>;
 	};
 };

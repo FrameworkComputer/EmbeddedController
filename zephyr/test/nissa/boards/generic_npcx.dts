@@ -135,7 +135,7 @@
 		port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
-			tcpc = <&tcpci_emul_0>;
+			tcpc = <&tcpc_port0>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_0>;
@@ -144,7 +144,7 @@
 		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
-			tcpc = <&tcpci_emul_1>;
+			tcpc = <&tcpc_port1>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_1>;
@@ -169,7 +169,7 @@
 };
 
 &i2c_ctrl0 {
-	tcpci_emul_0: tcpci_emul@82 {
+	tcpc_port0: tcpci_emul@82 {
 		compatible = "cros,tcpci-generic-emul";
 		status = "okay";
 		reg = <0x82>;
@@ -177,7 +177,7 @@
 };
 
 &i2c_ctrl1 {
-	tcpci_emul_1: tcpci_emul@84 {
+	tcpc_port1: tcpci_emul@84 {
 		compatible = "cros,tcpci-generic-emul";
 		status = "okay";
 		reg = <0x84>;

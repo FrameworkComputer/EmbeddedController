@@ -11,7 +11,7 @@
 
 TWISTER_COMMAND=cd $(PLATFORM_EC) && ./twister --outdir \
 	twister-out-$(TOOLCHAIN) -v -i --no-upload-cros-rdb --toolchain \
-	$(TOOLCHAIN)
+	$(TOOLCHAIN) --coverage-formats=lcov
 ifdef COVERAGE
 TWISTER_COMMAND+=--coverage
 endif
@@ -67,7 +67,7 @@ test: $(BUILD)/zephyr/lcov_no_tests.info # ALL_FILTERED
 test: $(BUILD)/zephyr/lcov_rpt # html artifact
 test: special_boards # BOARD_ metric and html artifact
 else
-test: twister_host twister_llvm
+test: twister_host twister_llvm zephyr_check_compliance_unittest
 endif
 
 ifdef COVERAGE
@@ -77,6 +77,9 @@ else
 zmake_unit_tests:
 	zmake/run_tests.sh
 endif
+
+zephyr_check_compliance_unittest:
+	$(PLATFORM_EC)/util/zephyr_check_compliance_unittest.py
 
 twister_host $(PLATFORM_EC)/twister-out-host/coverage.info: TOOLCHAIN=host
 twister_host $(PLATFORM_EC)/twister-out-host/coverage.info:

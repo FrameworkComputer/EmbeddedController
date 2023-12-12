@@ -1,0 +1,85 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+menu "host_service"
+
+config HOST_SERVICE
+	bool "HOST_SERVICE support"
+	default n
+	help
+	  This option enables local-host communication support. If enabled,
+	  local firmware can communicate with host SW. This function helps
+	  managing the lower layer protocols and is transparent for
+	  applications.
+
+config HECI_CORE_ID
+	int "heci core id for multiple cores system"
+	default 0
+	range 0 15
+	help
+	  HECI core id for multiple cores system.
+
+if HOST_SERVICE
+
+config HOST_SERVICE_BOOT_DELAY
+	int "Host Service Boot Delay"
+	default 0
+	help
+	  Seconds to delay before starting Host Service. It is for boot
+	  timeout issue of host drivers on platforms with slow booting,
+	  liking FPGA.
+
+config SYS_MNG
+	bool "System Management Protocol support"
+	select HECI
+	default y
+	help
+	  Local-host system management commands handling, which includes
+	  logic layer synchronization between local and host. This flag
+	  should be set if there is no hal level synchronization.
+
+config HECI
+	bool "HECI Protocol support"
+	default y
+	help
+	  Host HECI protocol. HECI (Host Embedded Controller Interface) is
+	  used as a transport protocol for communication of main FW with the
+	  host.
+	  HECI provides a bi-directional fully asynchronous communications
+	  interface between host software and firmware. HECI “Client” refers
+	  to the software endpoints that send and receive messages via HECI.
+	  The HECI Client Message Link refers to the connection between a host
+	  client and a FW client. Clients can be drivers, services, or
+	  applications depending upon the architecture of the software stack
+	  interfacing with HECI.
+
+config HECI_ROUTER
+	bool "HECI ROUTER function support"
+	default n
+	help
+	  heci router offers capability that fw can forward message between
+	  host and another core fw, which can be used for cross core heci
+	  functions
+
+config RTD3
+	bool "rtd3, run time d3 support"
+	default n
+	depends on PM
+	help
+	  Run time d3 offers capability that host drivers could enter d3 on run
+	  time, to avoid device access during that time
+
+if HECI
+rsource "heci/Kconfig"
+endif
+
+config HOST_TIME_SYNC
+	bool "sync host utc time"
+	default y
+	help
+	  Sync host utc time. If enabled, HOST driver will send utc time to
+	  sync with FW, which may be applied on sensor's timestamping.
+
+endif
+endmenu

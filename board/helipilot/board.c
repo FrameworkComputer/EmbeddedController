@@ -3,10 +3,12 @@
  * found in the LICENSE file.
  */
 
+#include "chip/npcx/trng_hw.h"
 #include "chipset.h"
+#include "clock.h"
 #include "common.h"
 #include "console.h"
-#include "fpsensor_detect.h"
+#include "fpsensor/fpsensor_detect.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "registers.h"
@@ -16,6 +18,7 @@
 #include "system.h"
 #include "task.h"
 #include "uart.h"
+#include "uart_host_command.h"
 #include "uartn.h"
 
 /* TODO(b/279096907): Investigate de-duping with other FPMCU boards*/
@@ -86,9 +89,7 @@ static void board_init_transport(void)
 
 		/* Check if CONFIG_USART_HOST_COMMAND is enabled. */
 		if (IS_ENABLED(CONFIG_USART_HOST_COMMAND))
-			/*TODO (b/279035335): implement protocol */
-			ccprints("TODO: CONFIG_USART_HOST_COMMAND protocol not "
-				 "yet implemented on helipilot");
+			uart_host_command_init();
 		else
 			ccprints("ERROR: UART not supported in fw build.");
 
@@ -112,6 +113,12 @@ static void board_init(void)
 	/* Run until the first S3 entry */
 	disable_sleep(SLEEP_MASK_AP_RUN);
 
+	/* TOOD(b/291273378): Depending on the outcome of b/291273378, we may
+	 * want to change the method of speeding up CPU.
+	 */
+	/* Turn on FAST_CPU mode */
+	clock_enable_module(MODULE_FAST_CPU, 1);
+
 	board_init_transport();
 
 	/* Enable interrupt on PCH power signals */
@@ -121,6 +128,11 @@ static void board_init(void)
 	if (IS_ENABLED(SECTION_IS_RW)) {
 		board_init_rw();
 	}
+
+	/* Initialize trng peripheral before kicking off the application to
+	 * avoid incurring that cost when generating random numbers
+	 */
+	npcx_trng_hw_init();
 
 	/*
 	 * Enable the SPI slave interface if the PCH is up.

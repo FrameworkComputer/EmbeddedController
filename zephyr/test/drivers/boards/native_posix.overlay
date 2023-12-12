@@ -6,6 +6,7 @@
 #include <board-overlays/native_posix.dts>
 #include <cros/binman.dtsi>
 #include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/battery.h>
 #include <dt-bindings/gpio_defines.h>
 #include <dt-bindings/pwm/pwm.h>
 #include <dt-bindings/wake_mask_event_defines.h>
@@ -176,7 +177,7 @@
 			gpios = <&gpio0 12 (GPIO_OUTPUT_HIGH | GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_usb_c1_ppc_int: usb_c1_ppc_int {
-			gpios = <&gpio0 13 GPIO_INPUT>;
+			gpios = <&gpio0 13 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_usb_c0_ppc_int: usb_c0_ppc_int {
 			gpios = <&gpio0 14 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
@@ -286,10 +287,10 @@
 			gpios = <&gpio1 9 GPIO_OUTPUT>;
 		};
 		gpio_usb_c0_bc12_int_l: usb_c0_bc12_int_l {
-			gpios = <&gpio1 10 GPIO_INPUT>;
+			gpios = <&gpio1 10 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 		gpio_usb_c1_bc12_int_l: usb_c1_bc12_int_l {
-			gpios = <&gpio1 11 GPIO_INPUT>;
+			gpios = <&gpio1 11 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
                 gpio_usb_c0_hpd: usb_c0_hpd {
                         gpios = <&gpio1 12 (GPIO_OUTPUT_LOW | GPIO_INPUT)>;
@@ -305,6 +306,18 @@
 		usb_c1_dp_en: usb_c1_dp_en {
 			gpios = <&gpio1 15 GPIO_OUTPUT_LOW>;
 		};
+		gpio_ec_ap_hid_int_odl: ec_ap_hid_int_odl {
+			gpios = <&gpio1 16 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_hdmi_cec_out: gpio_hdmi_cec_out {
+			gpios = <&gpio1 17 (GPIO_INPUT | GPIO_OUTPUT_HIGH)>;
+		};
+		gpio_hdmi_cec_in: gpio_hdmi_cec_in {
+			gpios = <&gpio1 18 GPIO_INPUT>;
+		};
+		gpio_hdmi_cec_pull_up: gpio_hdmi_cec_pull_up {
+			gpios = <&gpio1 19 GPIO_OUTPUT_HIGH>;
+		};
 	};
 
 	gpio1: gpio@101 {
@@ -317,7 +330,7 @@
 		low-level;
 		gpio-controller;
 		#gpio-cells = <2>;
-		ngpios = <16>;
+		ngpios = <20>;
 	};
 
 	gpio-interrupts {
@@ -327,16 +340,6 @@
 			irq-pin = <&gpio_acok_od>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "extpower_interrupt";
-		};
-		int_usb_c0_ppc: usb_c0_ppc {
-			irq-pin = <&gpio_usb_c0_ppc_int>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "ppc_alert";
-		};
-		int_usb_c1_ppc: usb_c1_ppc {
-			irq-pin = <&gpio_usb_c1_ppc_int>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "ppc_alert";
 		};
 		int_switchcap_pg: switchcap_pg {
 			irq-pin = <&gpio_switchcap_pg_int_l>;
@@ -409,16 +412,18 @@
 		};
 		ap16l5j {
 			compatible = "panasonic,ap16l5j", "battery-smart";
-			ship_mode_wb_support = <1>;
-			sleep_mode_support = <1>;
-			fet_mfgacc_support = <1>;
+			flags = <(
+				FG_FLAG_SLEEP_MODE |
+				FG_FLAG_MFGACC |
+				FG_FLAG_WRITE_BLOCK)>;
 		};
 		ap16l8j {
 			compatible = "lgc,ap16l8j", "battery-smart";
-			ship_mode_wb_support = <1>;
-			sleep_mode_support = <1>;
 			fet_cfet_mask = <0>;
-			fet_mfgacc_support = <1>;
+			flags = <(
+				FG_FLAG_SLEEP_MODE |
+				FG_FLAG_MFGACC |
+				FG_FLAG_WRITE_BLOCK)>;
 		};
 	};
 
@@ -604,6 +609,9 @@
 
 		mutex_lis2dw12: lis2dw12-mutex {
 		};
+
+		mutex_bmi160_s0: bmi160-mutex-s0 {
+		};
 	};
 
 	/*
@@ -698,6 +706,11 @@
 					};
 				};
 			};
+		};
+
+		bmi160_data_s0: bmi160-drv-data-s0 {
+			compatible = "cros-ec,drvdata-bmi160";
+			status = "okay";
 		};
 	};
 
@@ -833,6 +846,26 @@
 			default-range = <0x10000>; /* scale = 1x, uscale = 0 */
 			drv-data = <&tcs_rgb_data>;
 		};
+
+		ms_bmi160_accel_s0: ms-bmi160-accel-s0 {
+			compatible = "cros-ec,bmi160-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&mutex_bmi160_s0>;
+			port = <&named_i2c1>;
+			drv-data = <&bmi160_data_s0>;
+			default-range = <4>;
+			i2c-spi-addr-flags = "BMI160_ADDR0_FLAGS";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <10000>;
+				};
+			};
+		};
 	};
 
 	motionsense-sensor-info {
@@ -896,6 +929,7 @@
 			compatible = "cros,sn5s330-emul";
 			reg = <0x40>;
 			int-pin = <&gpio_usb_c0_ppc_int>;
+			irq-gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
 		};
 
 		tcpci_emul: tcpci_emul@82 {
@@ -926,6 +960,7 @@
 			reg = <0x41>;
 			frs_en_gpio = <&gpio_usb_c1_frs_en>;
 			alert_gpio = <&gpio_usb_c1_ppc_int>;
+			irq-gpios = <&gpio0 13 GPIO_ACTIVE_LOW>;
 		};
 
 		usb_c1_bb_retimer_emul: bbretimer@42 {
@@ -1056,12 +1091,10 @@
 			};
 			color-blue {
 				led-color = "LED_BLUE";
-				br-color = "EC_LED_COLOR_BLUE";
 				led-values = <100 0>;
 			};
 			color-white {
 				led-color = "LED_WHITE";
-				br-color = "EC_LED_COLOR_WHITE";
 				led-values = <0 100>;
 			};
 		};
@@ -1076,13 +1109,15 @@
 			};
 			color-amber {
 				led-color = "LED_AMBER";
-				br-color = "EC_LED_COLOR_AMBER";
 				led-values = <100 0>;
 			};
 			color-white {
 				led-color = "LED_WHITE";
-				br-color = "EC_LED_COLOR_WHITE";
 				led-values = <0 100>;
+			};
+			color-yellow {
+				led-color = "LED_YELLOW";
+				led-values = <100 20>;
 			};
 		};
 	};

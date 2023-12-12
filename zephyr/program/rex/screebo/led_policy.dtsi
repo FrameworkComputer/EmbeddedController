@@ -10,8 +10,12 @@
 			/* Battery display percent range (>= Empty, <= 94%) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY 94>;
 
-			color-0 {
-				led-color = <&color_amber>;
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+				};
 			};
 		};
 
@@ -21,16 +25,24 @@
 			/* Battery display percent range (>= 95) */
 			batt-lvl = <95 100>;
 
-			color-0 {
-				led-color = <&color_white>;
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
 		power-state-near-full {
 			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 
-			color-0 {
-				led-color = <&color_white>;
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
@@ -40,8 +52,12 @@
 			/* Battery display percent range (>= 11%, <= 100%) */
 			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
 
-			color-0 {
-				led-color = <&color_white>;
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
@@ -51,14 +67,18 @@
 			/* Battery display percent range (>= 0, <= 10%) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
 
-			/* Amber 1 sec on, 3 sec off */
-			color-0 {
-				led-color = <&color_amber>;
-				period-ms = <1000>;
-			};
-			color-1 {
-				led-color = <&color_off>;
-				period-ms = <3000>;
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* Amber 1 sec on, 3 sec off */
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
 			};
 		};
 
@@ -66,14 +86,18 @@
 			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S3";
 
-			/* White 1 sec on, 3 sec off */
-			color-0 {
-				led-color = <&color_white>;
-				period-ms = <1000>;
-			};
-			color-1 {
-				led-color = <&color_off>;
-				period-ms = <3000>;
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* White 1 sec on, 3 sec off */
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
 			};
 		};
 
@@ -81,36 +105,50 @@
 			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S5";
 
-			color-0 {
-				led-color = <&color_off>;
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
 		power-state-error-s0 {
 			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S0";
-			/* Amber 1 sec on, 1 sec off */
-			color-0 {
-				led-color = <&color_amber>;
-				period-ms = <1000>;
-			};
-			color-1 {
-				led-color = <&color_off>;
-				period-ms = <1000>;
+
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* Amber 1 sec on, 1 sec off */
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
 			};
 		};
 
 		power-state-error-s3 {
 			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S3";
-			/* White 1 sec on, 3 sec off */
-			color-0 {
-				led-color = <&color_white>;
-				period-ms = <1000>;
-			};
-			color-1 {
-				led-color = <&color_off>;
-				period-ms = <3000>;
+
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* White 1 sec on, 3 sec off */
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
 			};
 		};
 
@@ -118,32 +156,76 @@
 			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S5";
 
-			color-0 {
-				led-color = <&color_off>;
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
 		power-state-forced-idle {
 			charge-state = "LED_PWRS_FORCED_IDLE";
 
-			/* White 2 sec on, Amber 2 sec on */
-			color-0 {
-				led-color = <&color_white>;
-				period-ms = <2000>;
-			};
-			color-1 {
-				led-color = <&color_amber>;
-				period-ms = <2000>;
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* White 2 sec on, Amber 2 sec on */
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <2000>;
+				};
+				color-1 {
+					led-color = "LED_AMBER";
+					period-ms = <2000>;
+				};
 			};
 		};
 
-		power-state-idle {
+		power-state-idle-s5 {
 			charge-state = "LED_PWRS_IDLE";
 			chipset-state = "POWER_S5";
 
-			/* LED off when S5, others do not change */
-			color-0 {
-				led-color = <&color_off>;
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* LED off when S5, others do not change */
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		power-state-idle-s0 {
+			charge-state = "LED_PWRS_IDLE";
+			chipset-state = "POWER_S0";
+
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		power-state-idle-s3 {
+			charge-state = "LED_PWRS_IDLE";
+			chipset-state = "POWER_S3";
+
+			combo-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* White 1 sec on, 3 sec off */
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
 			};
 		};
 	};

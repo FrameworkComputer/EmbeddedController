@@ -285,22 +285,17 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  * 130 C.  However, sensor is located next to DDR, so we need to use the lower
  * DDR temperature limit (85 C)
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CPU              \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
-		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(60), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
+static const struct ec_thermal_config thermal_cpu = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+	},
+	.temp_fan_off = C_TO_K(35),
+	.temp_fan_max = C_TO_K(60),
+};
 
 /*
  * TODO(b/180681346): update for Alder Lake/brya
@@ -315,23 +310,17 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
  * Inductors: limit of 125c
  * PCB: limit is 80c
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_AMBIENT          \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
-		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(60), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_ambient =
-	THERMAL_AMBIENT;
+static const struct ec_thermal_config thermal_ambient = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+	},
+	.temp_fan_off = C_TO_K(35),
+	.temp_fan_max = C_TO_K(60),
+};
 
 /*
  * Inductor limits - used for both charger and PP3300 regulator
@@ -344,49 +333,37 @@ __maybe_unused static const struct ec_thermal_config thermal_ambient =
  * Inductors: limit of 125c
  * PCB: limit is 80c
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CHARGER          \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(105), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(120), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
-		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(65), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_charger =
-	THERMAL_CHARGER;
+const static struct ec_thermal_config thermal_charger = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(105),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(120),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+	},
+	.temp_fan_off = C_TO_K(35),
+	.temp_fan_max = C_TO_K(65),
+};
 
 /*
  * TODO(b/180681346): update for brya WWAN module
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_WWAN             \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(130), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(130), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(100), \
-		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(60), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_wwan =
-	THERMAL_WWAN;
+static const struct ec_thermal_config thermal_wwan = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(130),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(130),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(100),
+	},
+	.temp_fan_off = C_TO_K(35),
+	.temp_fan_max = C_TO_K(60),
+};
 
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_DDR_SOC] = THERMAL_CPU,
-	[TEMP_SENSOR_2_AMBIENT] = THERMAL_AMBIENT,
-	[TEMP_SENSOR_3_CHARGER] = THERMAL_CHARGER,
-	[TEMP_SENSOR_4_WWAN] = THERMAL_WWAN,
+	[TEMP_SENSOR_1_DDR_SOC] = thermal_cpu,
+	[TEMP_SENSOR_2_AMBIENT] = thermal_ambient,
+	[TEMP_SENSOR_3_CHARGER] = thermal_charger,
+	[TEMP_SENSOR_4_WWAN] = thermal_wwan,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);

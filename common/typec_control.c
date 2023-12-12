@@ -6,6 +6,7 @@
 /* Type-C control logic source */
 
 #include "tcpm/tcpm.h"
+#include "typec_control.h"
 #include "usbc_ocp.h"
 #include "usbc_ppc.h"
 

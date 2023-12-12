@@ -68,7 +68,7 @@
 			enum-name = "GPIO_PACKET_MODE_EN";
 		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
-			gpios = <&gpio1 7 (GPIO_OUTPUT_LOW | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_pch_wake_odl: ec_pch_wake_odl {
 			gpios = <&gpiob 0 GPIO_ODR_LOW>;
@@ -163,20 +163,12 @@
 		gpio_slp_sus_l: slp_sus_l {
 			gpios = <&gpio6 2 GPIO_INPUT>;
 		};
-		gpio_sub_usb_a1_ilimit_sdp: sub_usb_a1_ilimit_sdp {
-			gpios = <&gpiod 5 GPIO_OUTPUT>;
-			enum-name = "GPIO_USB2_ILIM_SEL";
-		};
 		gpio_sys_rst_odl: sys_rst_odl {
 			gpios = <&gpioc 5 GPIO_ODR_HIGH>;
 		};
 		gpio_tablet_mode_l: tablet_mode_l {
 			gpios = <&gpio9 5 GPIO_INPUT>;
 			enum-name = "GPIO_TABLET_MODE_L";
-		};
-		gpio_usb_a0_ilimit_sdp: usb_a0_ilimit_sdp {
-			gpios = <&gpio3 3 GPIO_OUTPUT>;
-			enum-name = "GPIO_USB1_ILIM_SEL";
 		};
 		gpio_usb_c0_int_odl: usb_c0_int_odl {
 			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
@@ -195,6 +187,12 @@
 			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
+		gpio_tchpad_lid_close: tchpad_lid_close {
+			gpios = <&gpio6 3 GPIO_OUTPUT>;
+		};
+		gpio_subboard_detect_l: subboard_detect_l {
+			gpios = <&gpioc 6 GPIO_INPUT_PULL_UP>;
+		};
 	};
 
 	named-i2c-ports {
@@ -206,7 +204,8 @@
 		};
 		i2c_ec_i2c_sensor: ec_i2c_sensor {
 			i2c-port = <&i2c1_0>;
-			enum-names = "I2C_PORT_SENSOR";
+			enum-names = "I2C_PORT_SENSOR",
+						 "I2C_PORT_MP2964";
 		};
 		i2c_ec_i2c_usb_c0: ec_i2c_usb_c0 {
 			i2c-port = <&i2c3_0>;

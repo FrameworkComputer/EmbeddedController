@@ -1,0 +1,38 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+  Nuvoton NCT38XX USB TCPC binding
+
+  This NCT38xx TCPC binding must be child-node under the "nuvoton,nct38xx"
+  multi-function device node.
+
+compatible: "nuvoton,nct38xx-tcpc"
+
+include: ["tcpc-device.yaml"]
+
+properties:
+  gpio-dev:
+    type: phandle
+    description: |
+      Pointer to the NCT38XX GPIO device. This is used to binding the Cros TCPC
+      port index to Zephyr NCT38XX GPIO device.
+
+  irq-gpios:
+    type: phandle-array
+    description: |
+      Interrupt from TCPC using shim driver
+
+  rst-gpios:
+    type: phandle-array
+    description: |
+      TCPC reset line while using shim driver
+
+  int-pin:
+    type: phandles
+    deprecated: true
+    description: |
+      Interrupt from TCPC using gpio-int. This property should only be used when
+      CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n and should be removed when the chip
+      uses the common TCPC driver.

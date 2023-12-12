@@ -3,17 +3,23 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #include "bbram.h"
 #include "gpio/gpio_int.h"
 #include "system.h"
 #include "system_chip.h"
 
-#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
 #include <zephyr/drivers/interrupt_controller/intc_mchp_xec_ecia.h>
 #include <zephyr/drivers/watchdog.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
 
+#include <cmsis_core.h>
 #include <drivers/cros_system.h>
 #include <soc.h>
 #include <soc/microchip_xec/reg_def_cros.h>
@@ -84,7 +90,7 @@ static int system_xec_watchdog_stop(void)
 		const struct device *wdt_dev =
 			DEVICE_DT_GET(DT_NODELABEL(wdog));
 		if (!device_is_ready(wdt_dev)) {
-			LOG_ERR("Error: device %s is not ready", wdt_dev->name);
+			LOG_ERR("device %s not ready", wdt_dev->name);
 			return -ENODEV;
 		}
 

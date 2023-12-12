@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 #include "console.h"
+#include "hooks.h"
 #include "host_command.h"
 #include "keyboard_scan.h"
 #include "keyboard_test_utils.h"
@@ -20,57 +21,59 @@
 
 #include <emul/emul_kb_raw.h>
 
+#define GPIO_DEVICE \
+	DEVICE_DT_GET(DT_GPIO_CTLR(NAMED_GPIOS_GPIO_NODE(ap_rst_l), gpios))
+#define EC_PWR_BTN_ODL_PIN \
+	DT_GPIO_PIN(NAMED_GPIOS_GPIO_NODE(ec_pwr_btn_odl), gpios)
+
+extern int debounced_power_pressed;
+extern uint8_t keyboard_scan_task_started;
+
 ZTEST(keyboard_scan, test_boot_key)
 {
 	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(cros_kb_raw));
-	const int kb_cols = DT_PROP(DT_NODELABEL(cros_kb_raw), cols);
+	static const struct device *gpio_dev = GPIO_DEVICE;
 
 	emul_kb_raw_reset(dev);
 	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_NONE, NULL);
 
-	/* Case 1: refresh + esc -> BOOT_KEY_ESC */
+	/* Reset pin reset is required. */
+	system_set_reset_flags(EC_RESET_FLAG_RESET_PIN);
+
+	/* Case 1: refresh + esc -> BOOT_KEY_ESC + REFRESH */
 	emul_kb_raw_reset(dev);
 	zassert_ok(emulate_keystate(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH,
 				    true));
 	zassert_ok(emulate_keystate(KEYBOARD_ROW_ESC, KEYBOARD_COL_ESC, true));
 	keyboard_scan_init();
-	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_ESC);
+	zassert_equal(keyboard_scan_get_boot_keys(),
+		      BIT(BOOT_KEY_ESC) | BIT(BOOT_KEY_REFRESH));
 
-	/*
-	 * Case 1.5:
-	 * GSC may hold ksi2 when power button is pressed, simulate this
-	 * behavior and verify boot key detection again.
-	 */
-	zassert_true(IS_ENABLED(CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2), NULL);
-	for (int i = 0; i < kb_cols; i++) {
-		zassert_ok(emulate_keystate(KEYBOARD_ROW_REFRESH, i, true));
-	}
-	keyboard_scan_init();
-	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_ESC);
-
-	/* Case 2: esc only -> BOOT_KEY_NONE */
+	/* Case 2: esc only -> BOOT_KEY_ESC */
 	emul_kb_raw_reset(dev);
 	zassert_ok(emulate_keystate(KEYBOARD_ROW_ESC, KEYBOARD_COL_ESC, true));
 	keyboard_scan_init();
-	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_NONE);
+	zassert_equal(keyboard_scan_get_boot_keys(), BIT(BOOT_KEY_ESC));
 
-	/* Case 3: refresh + arrow down -> BOOT_KEY_DOWN_ARROW */
+	/* Case 3: refresh + arrow down -> BOOT_KEY_DOWN_ARROW + REFRESH */
 	emul_kb_raw_reset(dev);
 	zassert_ok(emulate_keystate(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH,
 				    true));
 	zassert_ok(
 		emulate_keystate(KEYBOARD_ROW_DOWN, KEYBOARD_COL_DOWN, true));
 	keyboard_scan_init();
-	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_DOWN_ARROW);
+	zassert_equal(keyboard_scan_get_boot_keys(),
+		      BIT(BOOT_KEY_DOWN_ARROW) | BIT(BOOT_KEY_REFRESH));
 
-	/* Case 4: refresh + L shift -> BOOT_KEY_LEFT_SHIFT */
+	/* Case 4: refresh + L shift -> BOOT_KEY_LEFT_SHIFT + REFRESH */
 	emul_kb_raw_reset(dev);
 	zassert_ok(emulate_keystate(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH,
 				    true));
 	zassert_ok(emulate_keystate(KEYBOARD_ROW_LEFT_SHIFT,
 				    KEYBOARD_COL_LEFT_SHIFT, true));
 	keyboard_scan_init();
-	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_LEFT_SHIFT);
+	zassert_equal(keyboard_scan_get_boot_keys(),
+		      BIT(BOOT_KEY_LEFT_SHIFT) | BIT(BOOT_KEY_REFRESH));
 
 	/* Case 5: refresh + esc + other random key -> BOOT_KEY_NONE */
 	emul_kb_raw_reset(dev);
@@ -82,7 +85,14 @@ ZTEST(keyboard_scan, test_boot_key)
 	keyboard_scan_init();
 	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_NONE);
 
-	/* Case 6: BOOT_KEY_NONE after late sysjump */
+	/* Case 6: Power button -> BOOT_KEY_POWER */
+	emul_kb_raw_reset(dev);
+	gpio_emul_input_set(gpio_dev, EC_PWR_BTN_ODL_PIN, 0);
+	keyboard_scan_init();
+	zassert_equal(keyboard_scan_get_boot_keys(), BIT(BOOT_KEY_POWER));
+	gpio_emul_input_set(gpio_dev, EC_PWR_BTN_ODL_PIN, 1);
+
+	/* Case 7: BOOT_KEY_NONE after late sysjump */
 	system_jumped_late_fake.return_val = 1;
 	emul_kb_raw_reset(dev);
 	zassert_ok(emulate_keystate(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH,
@@ -91,6 +101,79 @@ ZTEST(keyboard_scan, test_boot_key)
 				    KEYBOARD_COL_LEFT_SHIFT, true));
 	keyboard_scan_init();
 	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_NONE);
+	system_jumped_late_fake.return_val = 0;
+
+	/* Case 8: Without reset-pin, boot key scan is canceled. */
+	system_clear_reset_flags(EC_RESET_FLAG_RESET_PIN);
+	emul_kb_raw_reset(dev);
+	zassert_ok(emulate_keystate(KEYBOARD_ROW_ESC, KEYBOARD_COL_ESC, true));
+	keyboard_scan_init();
+	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_NONE);
+}
+
+ZTEST(keyboard_scan, test_boot_key_late_detection)
+{
+	const struct device *dev = DEVICE_DT_GET(DT_NODELABEL(cros_kb_raw));
+	static const struct device *gpio_dev = GPIO_DEVICE;
+
+	/* Reset pin reset is required. */
+	system_set_reset_flags(EC_RESET_FLAG_RESET_PIN);
+
+	/* Case 1A: (Power, Refresh) = (1, 1) -> (0, 1) */
+	emul_kb_raw_reset(dev);
+	gpio_emul_input_set(gpio_dev, EC_PWR_BTN_ODL_PIN, 0);
+	keyboard_scan_init();
+	/* Only POWER, no REFRESH (because ROW2 is masked). */
+	zassert_equal(keyboard_scan_get_boot_keys(), BIT(BOOT_KEY_POWER));
+	/* Pretend refresh was masked and is now unmasked. */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "kbpress 2 2 1"));
+	/* Release power button and let the hook run. */
+	gpio_emul_input_set(gpio_dev, EC_PWR_BTN_ODL_PIN, 1);
+	hook_notify(HOOK_POWER_BUTTON_CHANGE);
+	/* REFRESH is detected (and POWER is cancelled). */
+	zassert_equal(keyboard_scan_get_boot_keys(), BIT(BOOT_KEY_REFRESH));
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "kbpress 2 2 0"));
+
+	/* Case 1B: Same as 1A but before scan task starts. */
+	keyboard_scan_task_started = 0;
+	emul_kb_raw_reset(dev);
+	gpio_emul_input_set(gpio_dev, EC_PWR_BTN_ODL_PIN, 0);
+	keyboard_scan_init();
+	/* Only POWER, no REFRESH (because ROW2 is masked). */
+	zassert_equal(keyboard_scan_get_boot_keys(), BIT(BOOT_KEY_POWER));
+	/* Pretend refresh was masked and is now unmasked. */
+	zassert_ok(emulate_keystate(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH,
+				    true));
+	/* Release power button and let the hook run. */
+	gpio_emul_input_set(gpio_dev, EC_PWR_BTN_ODL_PIN, 1);
+	hook_notify(HOOK_POWER_BUTTON_CHANGE);
+	/* REFRESH is detected (and POWER is cancelled). */
+	zassert_equal(keyboard_scan_get_boot_keys(), BIT(BOOT_KEY_REFRESH));
+	zassert_ok(emulate_keystate(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH,
+				    false));
+	keyboard_scan_task_started = 1;
+
+	/* Case 2: Fail because POWER isn't detected as a boot key. */
+	emul_kb_raw_reset(dev);
+	keyboard_scan_init();
+	zassert_ok(emulate_keystate(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH,
+				    true));
+	hook_notify(HOOK_POWER_BUTTON_CHANGE);
+	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_NONE);
+
+	/* Case 3: Fail because power is still pressed (when hook is called). */
+	emul_kb_raw_reset(dev);
+	gpio_emul_input_set(gpio_dev, EC_PWR_BTN_ODL_PIN, 0);
+	keyboard_scan_init();
+	zassert_ok(emulate_keystate(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH,
+				    true));
+	debounced_power_pressed = 1;
+	hook_notify(HOOK_POWER_BUTTON_CHANGE);
+	zassert_equal(keyboard_scan_get_boot_keys(), BIT(BOOT_KEY_POWER));
+
+	/* Release power button. */
+	gpio_emul_input_set(gpio_dev, EC_PWR_BTN_ODL_PIN, 1);
+	debounced_power_pressed = 0;
 }
 
 ZTEST(keyboard_scan, test_press_enter)

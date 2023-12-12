@@ -6,6 +6,8 @@
 #ifndef __CROS_EC_FPC_BIO_ALGORITHM_H
 #define __CROS_EC_FPC_BIO_ALGORITHM_H
 
+#include "common.h"
+
 #include <stdint.h>
 
 /*
@@ -38,7 +40,7 @@ typedef struct {
  *
  * Returns 0 on success, negative error code (such as -ENOMEM) on failure.
  */
-int bio_algorithm_init(void);
+__staticlib int bio_algorithm_init(void);
 /*
  * Instructs the biometric library to release all resources in preparation
  * for the process termination (or unloading the library). Regardless of
@@ -46,7 +48,7 @@ int bio_algorithm_init(void);
  *
  * Returns 0 on success, negative error code (such as -ENOMEM) on failure.
  */
-int bio_algorithm_exit(void);
+__staticlib int bio_algorithm_exit(void);
 /*
  * Compares given biometric image against a list of enrolled template(s).
  * In case the image match a template the match_index will indicate which
@@ -73,16 +75,18 @@ int bio_algorithm_exit(void);
 #define BIO_TEMPLATE_LOW_QUALITY 2
 #define BIO_TEMPLATE_LOW_COVERAGE 4
 
-int bio_template_image_match_list(bio_template_t templ, uint32_t num_templ,
-				  bio_image_t image, int32_t *match_index,
-				  uint32_t *updated_templ);
+__staticlib int bio_template_image_match_list(bio_template_t templ,
+					      uint32_t num_templ,
+					      bio_image_t image,
+					      int32_t *match_index,
+					      uint32_t *updated_templ);
 /*
  * Initiates biometric data enrollment process. Algorithm library returns
  * 'enrollment handle' that is used for all subsequent enrollment operations.
  *
  * Returns 0 on success, negative error code (such as -ENOMEM) on failure.
  */
-int bio_enrollment_begin(bio_enrollment_t *enrollment);
+__staticlib int bio_enrollment_begin(bio_enrollment_t *enrollment);
 /*
  * Adds fingerprint image to an enrollment.
  *
@@ -109,7 +113,8 @@ int bio_enrollment_begin(bio_enrollment_t *enrollment);
 
 /* Can be used to detect if image was usable for enrollment or not. */
 #define BIO_ENROLLMENT_PROBLEM_MASK 1
-int bio_enrollment_add_image(bio_enrollment_t enrollment, bio_image_t image);
+__staticlib int bio_enrollment_add_image(bio_enrollment_t enrollment,
+					 bio_image_t image);
 /*
  * Returns percent of coverage accumulated during enrollment process.
  * Optional method. Regardless of value returned by this call user should call
@@ -118,7 +123,8 @@ int bio_enrollment_add_image(bio_enrollment_t enrollment, bio_image_t image);
  *
  * Returns value in the range 0..100, or negative error (such as -EINVAL);
  */
-int bio_enrollment_get_percent_complete(bio_enrollment_t enrollment);
+__staticlib int
+bio_enrollment_get_percent_complete(bio_enrollment_t enrollment);
 /*
  * Indicates that given enrollment process is complete, and algorithm library
  * should generate an active template that can be used in subsequent calls
@@ -131,6 +137,7 @@ int bio_enrollment_get_percent_complete(bio_enrollment_t enrollment);
  *
  * Returns 0 on success, negative error code (such as -EINVAL) on failure.
  */
-int bio_enrollment_finish(bio_enrollment_t enrollment, bio_template_t *templ);
+__staticlib int bio_enrollment_finish(bio_enrollment_t enrollment,
+				      bio_template_t *templ);
 
 #endif /* __CROS_EC_FPC_BIO_ALGORITHM_H */

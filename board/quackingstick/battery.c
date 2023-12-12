@@ -32,63 +32,67 @@
  * address, mask, and disconnect value need to be provided.
  */
 
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* COSMX AP21CBI Battery information */
 	[BATTERY_AP21CBI] = {
-		.fuel_gauge = {
-			.manuf_name = "COSMX KT0020B001",
-			.device_name = "AP21CBI",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "COSMX KT0020B001",
+		.device_name = "AP21CBI",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x8000,
+					.disconnect_val = 0x0,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x8000,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max            = 8800, /* mV */
+				.voltage_normal         = 7700, /* mV */
+				.voltage_min            = 6000, /* mV */
+				.precharge_current      = 256,  /* mA */
+				.start_charging_min_c   = 0,
+				.start_charging_max_c   = 50,
+				.charging_min_c         = 0,
+				.charging_max_c         = 60,
+				.discharging_min_c      = -20,
+				.discharging_max_c      = 75,
+				.vendor_param_start     = 0x70,
 			},
-		},
-		.batt_info = {
-			.voltage_max            = 8800, /* mV */
-			.voltage_normal         = 7700, /* mV */
-			.voltage_min            = 6000, /* mV */
-			.precharge_current      = 256,  /* mA */
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 75,
-			.vendor_param_start     = 0x70,
 		},
 	},
 	/* COSMX AP21CBI Battery information */
 	[BATTERY_AP21CBI_VER0] = {
-		.fuel_gauge = {
-			.manuf_name = "AP21CBI",
-			.device_name = "COSMX KT0020B001",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "AP21CBI",
+		.device_name = "COSMX KT0020B001",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x8000,
+					.disconnect_val = 0x0,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x8000,
-				.disconnect_val = 0x0,
-			}
-		},
-		.batt_info = {
-			.voltage_max            = 8800, /* mV */
-			.voltage_normal         = 7700, /* mV */
-			.voltage_min            = 6000, /* mV */
-			.precharge_current      = 256,  /* mA */
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 75,
-			.vendor_param_start     = 0x70,
+			.batt_info = {
+				.voltage_max            = 8800, /* mV */
+				.voltage_normal         = 7700, /* mV */
+				.voltage_min            = 6000, /* mV */
+				.precharge_current      = 256,  /* mA */
+				.start_charging_min_c   = 0,
+				.start_charging_max_c   = 50,
+				.charging_min_c         = 0,
+				.charging_max_c         = 60,
+				.discharging_min_c      = -20,
+				.discharging_max_c      = 75,
+				.vendor_param_start     = 0x70,
+			},
 		},
 	},
 };

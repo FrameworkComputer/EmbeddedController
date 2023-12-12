@@ -28,82 +28,10 @@
 
 set verbose on
 
-# Start of python code
-
 # Setup environment and pull in object files for the particular BOARD.
 # This requires setting the environment variables mentioned above.
-python
-import distutils.util
-import os
-
-BOARD = os.getenv('BOARD', '')
-GDBSERVER = os.getenv('GDBSERVER', 'openocd')
-USING_CLION = distutils.util.strtobool(os.getenv('USING_CLION', 'FALSE'))
-# BIN_NAME can be changed to be the name of a unit test, such as "sha256"
-BIN_NAME = os.getenv('BIN_NAME', 'ec')
-
-BIN_DIR = ''
-if BIN_NAME != 'ec':
-  BIN_DIR = BIN_NAME
-
-if GDBSERVER == "openocd":
-    DEFAULT_GDB_PORT = '3333'
-else:
-    DEFAULT_GDB_PORT = '2331'
-
-GDBPORT = os.getenv('GDBPORT', DEFAULT_GDB_PORT)
-
-EC_DIR = os.getenv('EC_DIR', os.path.join(os.getenv('HOME'),
-                   'chromiumos/src/platform/ec'))
-
-if not os.path.isdir(EC_DIR):
-    print('Error - EC_DIR "' + EC_DIR + '" doesn\'t exist. Aborting.')
-    gdb.execute('quit')
-
-# Monitor commands must be run after connecting to the remote target
-# See https://stackoverflow.com/a/39828850
-# https://youtrack.jetbrains.com/issue/CPP-7322
-# https://sourceware.org/gdb/onlinedocs/gdb/Hooks.html
-post_remote_hook='''
-define target hookpost-remote
-    echo \ Flashing EC binary
-    load {EC_DIR}/build/{BOARD}/{BIN_DIR}/{BIN_NAME}.obj
-    echo \ Resetting target
-    monitor reset
-    echo \ Setting breakpoint on main
-    b main
-end\n
-'''.format(BOARD=BOARD, EC_DIR=EC_DIR, BIN_DIR=BIN_DIR, BIN_NAME=BIN_NAME)
-
-gdb.execute('set $BOARD = "%s"'%BOARD)
-gdb.execute('set $GDBSERVER = "%s"'%GDBSERVER)
-gdb.execute('set $GDBPORT = "%s"'%GDBPORT)
-
-build = os.path.join(EC_DIR, 'build', BOARD)
-if BOARD != "":
-    if not os.path.isdir(build):
-        print('Error - Build path "' + build + '" doesn\'t exist. Aborting.')
-        gdb.execute('quit')
-
-    # When using gdb from CLion, this kills gdb.
-    if not USING_CLION:
-        gdb.execute('file ' + os.path.join(build, 'ec.obj'))
-    gdb.execute('add-symbol-file ' + os.path.join(build, BIN_DIR, 'RO', BIN_NAME + '.RO.elf'))
-    gdb.execute('add-symbol-file ' + os.path.join(build, BIN_DIR, 'RW', BIN_NAME + '.RW.elf'))
-
-if GDBSERVER == "openocd":
-    gdb.execute('set $GDBSERVER_OPENOCD = 1')
-    gdb.execute('set $GDBSERVER_SEGGER = 0')
-elif GDBSERVER == "segger":
-    gdb.execute('set $GDBSERVER_OPENOCD = 0')
-    gdb.execute('set $GDBSERVER_SEGGER = 1')
-    gdb.execute(post_remote_hook)
-else:
-    print('Error - GDBSERVER="' + GDBSERVER + '" is invalid.')
-    gdb.execute('quit')
-
-# End of python code
-end
+echo # Sourcing initialization logic from util/gdbinit.py.\n
+source util/gdbinit.py
 
 # OpenOCD specific config
 if $GDBSERVER_OPENOCD
@@ -198,14 +126,18 @@ define ec-tasks
 end
 
 # Usage: ec-stayro
-# Adds magic breakpoint that changes the outcome of the RW signature
-# validation step that forces the MCU to stay in the RO section.
-# This function needs improvements to not be dependent on line numbers.
+# Adds a magic breakpoint that automatically forces the rwsig_jump_now function
+# to return without completing the jump to RW and, thus, staying in RO.
 define ec-stayro
-    break common/rwsig.c:282
+    break rwsig_jump_now
     commands
-        set evt = 1
-        printf "Continuing as RO\n"
+        # We don't need to set rwsig_status, but it might be nice to act like
+        # we were instructed to abort.
+        printf "Setting rwsig_status to RWSIG_ABORTED.\n"
+        set rwsig_status = RWSIG_ABORTED
+        printf "Forcing the rwsig_jump_now function to abort and return.\n"
+        return
+        printf "Continuing as RO.\n"
         continue
     end
 end

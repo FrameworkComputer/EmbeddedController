@@ -24,8 +24,11 @@
 		default_battery: lgc_ap19b8m-2 {
 			compatible = "lgc,ap19b8m", "battery-smart";
 		};
-		cosmx_ap20cbl-3 {
-			compatible = "cosmx,ap20cbl-3", "battery-smart";
+		cosmx_ap20cbl-4 {
+			compatible = "cosmx,ap20cbl-4", "battery-smart";
+		};
+		lges_ap23a8l {
+			compatible = "lges,ap23a8l", "battery-smart";
 		};
 	};
 
@@ -149,6 +152,26 @@
 				value = <1>;
 			};
 		};
+
+		/*
+		 * FW_CONFIG field to set keyboard layout.
+		 */
+		keyboard {
+			enum-name = "FW_KB_LAYOUT";
+			start = <2>;
+			size = <2>;
+
+			keyboard-default {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "KEYBOARD_DEFAULT";
+				value = <0>;
+			};
+			keyboard-ansi {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "KEYBOARD_ANSI";
+				value = <1>;
+			};
+		};
 	};
 
 	/* Rotation matrices for motion sensors. */
@@ -170,6 +193,11 @@
 	ppc_port0: aoz1380 {
 		compatible = "aoz,aoz1380";
 		status = "okay";
+		/* a duplicate of the <&gpio_usb_c0_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio7 5 GPIO_ACTIVE_LOW>;
 	};
 };
 

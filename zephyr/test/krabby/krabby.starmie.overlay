@@ -1,0 +1,124 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "common.dtsi"
+#include "../program/corsola/ite_gpio.dtsi"
+#include "../program/corsola/ite_interrupts.dtsi"
+#include "../program/corsola/power_signal.dtsi"
+#include "../program/corsola/starmie/thermistor.dtsi"
+#include <cros/thermistor/thermistor.dtsi>
+
+/* remove pinctrl to avoid pull in too many unwanted dependency */
+/delete-node/ &pinctrl;
+
+/delete-node/ &int_usb_c0_ppc_bc12;
+/delete-node/ &int_volume_up;
+/delete-node/ &int_volume_down;
+/delete-node/ &int_tablet_mode;
+/delete-node/ &int_xhci;
+/delete-node/ &int_wp;
+/delete-node/ &int_spi0_cs;
+/delete-node/ &int_x_ec_gpio2;
+/delete-node/ &int_ccd_mode_odl;
+/delete-node/ &int_base_imu;
+/delete-node/ &int_lid_imu;
+
+&{/aliases} {
+	/delete-property/ int-wp;
+};
+
+/ {
+	usbc {
+		/delete-node/ port1@1;
+		/delete-node/ port1-muxes;
+	};
+
+	charger_bc12_port1: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+
+		thermistor = <&thermistor_rt9490>;
+		adc = <&adc_charger>;
+	};
+
+	temp_sensor_1_thermistor: temp_sensor_1_thermistor {
+		compatible = "cros-ec,temp-sensor-thermistor";
+
+		thermistor = <&thermistor_1V8_100K_100K_4250B>;
+		adc = <&adc_temp_sensor_1>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_charger: charger {
+			status = "okay";
+			sensor = <&charger_bc12_port1>;
+		};
+
+		lcd_thermistor: lcd_thermistor {
+			sensor = <&temp_sensor_1_thermistor>;
+		};
+	};
+
+	named-adc-channels {
+		adc_temp_sensor_1: adc-temp-sensor-1 {
+			enum-name = "ADC_TEMP_SENSOR_1";
+			/*
+			 * channel is different from the design due to
+			 * the maximum channel in native-posix channel
+			 * is 5.
+			 */
+			io-channels = <&adc0 4>;
+		};
+	};
+
+	named-gpios {
+		en_pp4200_s5: en-pp4200-s5 {
+			gpios = <&gpiod 2 GPIO_OUTPUT_LOW>;
+		};
+
+		pg_pp4200_s5_od: pg-pp4200-s5-od {
+			gpios = <&gpioe 1 GPIO_INPUT>;
+			enum-name = "GPIO_PG_PP4200_S5_OD";
+		};
+
+		pmic_ec_resetb: pmic-ec-resetb {
+			gpios = <&gpioh 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_PMIC_EC_RESETB";
+		};
+	};
+
+	power_signal_list: power-signal-list {
+		 compatible = "mediatek,mt8188-power-signal-list";
+
+		 pg_pp4200_s5 {
+			power-enum-name = "PG_PP4200_S5";
+			power-gpio-pin = <&pg_pp4200_s5_od>;
+		};
+		 pmic_ap_reset {
+			power-enum-name = "PMIC_AP_RST";
+			power-gpio-pin = <&pmic_ec_resetb>;
+		};
+	};
+
+	/delete-node/ unused-pins;
+};
+
+&thermistor_1V8_100K_100K_4250B {
+	status = "okay";
+};
+
+/* open-drain is not supported in gpio emul, re-config to push-pull  */
+&ec_pmic_en_odl {
+	gpios = <&gpiod 0 (GPIO_OUTPUT_HIGH | GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+};
+&sys_rst_odl {
+	gpios = <&gpiog 1 GPIO_OUTPUT_LOW>;
+};
+
+/* set default gpio-emul state */
+&power_button_l {
+	gpios = <&gpioe 4 (GPIO_INPUT | GPIO_PULL_UP)>;
+};

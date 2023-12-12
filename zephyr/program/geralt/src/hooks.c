@@ -11,6 +11,7 @@
 #include "hooks.h"
 
 #include <zephyr/drivers/gpio.h>
+#include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/pinctrl.h>
 #include <zephyr/init.h>
 
@@ -58,6 +59,8 @@ static void board_suspend_handler(struct ap_power_ev_callback *cb,
 				  struct ap_power_ev_data data)
 {
 	int value;
+	const struct device *touchpad =
+		DEVICE_DT_GET(DT_NODELABEL(hid_i2c_target));
 
 	switch (data.event) {
 	default:
@@ -65,10 +68,12 @@ static void board_suspend_handler(struct ap_power_ev_callback *cb,
 
 	case AP_POWER_RESUME:
 		value = 1;
+		i2c_target_driver_register(touchpad);
 		break;
 
 	case AP_POWER_SUSPEND:
 		value = 0;
+		i2c_target_driver_unregister(touchpad);
 		break;
 	}
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_usm), value);

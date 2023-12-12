@@ -3,6 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# shellcheck source=../../../scripts/lib/shflags/shflags
 . /usr/share/misc/shflags
 
 readonly DEFAULT_RETRIES=${DEFAULT_RETRIES:-4}
@@ -20,7 +21,7 @@ DEFINE_integer 'retries' "${DEFAULT_RETRIES}" 'Specify number of retries' 'R'
 DEFINE_integer 'baudrate' "${STM32MON_SERIAL_BAUDRATE}" 'Specify UART baudrate' 'B'
 DEFINE_boolean 'hello' "${FLAGS_FALSE}" 'Only ping the bootloader' 'H'
 DEFINE_boolean 'services' "${FLAGS_TRUE}" \
-  'Stop and restart conflicting fingerprint services' 's'
+  'Stop the biod service before flashing and then resume it afterwards' 's'
 FLAGS_HELP="Usage: ${0} [flags] [ec.bin]"
 
 #        EXIT_SUCCESS=0
@@ -62,16 +63,13 @@ check_hardware_write_protect_disabled() {
 # Get the gpiochip base number from sysfs that matches
 # a device path
 get_sysfs_gpiochip_base() {
-  local match="${1}"
+  local match="$1"
 
-  for chip in /sys/class/gpio/gpiochip*
-  do
-    case "$(readlink ${chip})" in
-     ${match})
+  for chip in /sys/class/gpio/gpiochip*; do
+    if [[ "$(readlink "${chip}")" =~ ${match} ]]; then
       echo "${chip#/sys/class/gpio/gpiochip}"
       return 0
-      ;;
-    esac
+    fi
   done
 
   return 1
@@ -214,7 +212,7 @@ match_kernel_regex() {
   local match_exp=$1
   local kversion
   kversion=$(uname -r)
-  [[ $kversion =~ $match_exp ]]
+  [[ ${kversion} =~ ${match_exp} ]]
   return $?
 }
 
@@ -244,6 +242,24 @@ platform_base_name() {
 
   # Remove any numbers from the base name.
   echo "${base_name//[0-9]/}"
+}
+
+get_chip() {
+  local board
+  board="$(cros_config /fingerprint board)"
+
+  case "${board}" in
+    bloonchipper|dartmonkey|nocturne_fp|nami_fp)
+      echo "STM32"
+      ;;
+    helipilot)
+      echo "NPCX"
+      ;;
+    *)
+      echo "Error - Unknown board '${board}'." >&2
+      return "${EXIT_CONFIG}"
+      ;;
+  esac
 }
 
 get_default_fw() {
@@ -285,30 +301,135 @@ proc_open_file() {
   return "${PIPESTATUS[1]}"
 }
 
+flash_fp_mcu_npcx() {
+  local transport="${1}"
+  local device="${2}"
+  local gpio_nrst="${3}"
+  local file="${4}"
+
+  local cmd_flags=""
+
+  if [[ "${transport}" == "SPI" ]]; then
+    cmd_flags+=" -p linux_spi:dev=${device},spispeed=250k"
+
+    if [[ "${FLAGS_read}" -eq "${FLAGS_TRUE}" ]]; then
+      # Read from FPMCU to file
+      if [[ -e "${file}" ]]; then
+        echo "Output file already exists: ${file}"
+        return "${EXIT_PRECONDITION}"
+      fi
+      echo "# Reading to '${file}' over ${transport}"
+      cmd_flags+=" -r ${file}"
+    else
+      # Write to FPMCU from file
+      if [[ ! -f "${file}" ]]; then
+        echo "Invalid image file: ${file}"
+        return "${EXIT_PRECONDITION}"
+      fi
+      echo "# Flashing '${file}' over ${transport}"
+      cmd_flags+=" -w ${file}"
+    fi
+  elif [[ "${transport}" == "UART" ]]; then
+    local port="${device#/dev/}"
+    cmd_flags+="--port=${port} --baudrate ${FLAGS_baudrate}"
+  fi
+
+  echo "# cmd flags= '${cmd_flags}'"
+
+  local attempt=0
+  local cmd_exit_status=1
+  local cmd=""
+
+  if [[ "${transport}" == "SPI" ]]; then
+    cmd="flashrom ${cmd_flags}"
+  elif [[ "${transport}" == "UART" ]]; then
+    # need to flash monitor first before flashing image over UART
+    cmd="uartupdatetool ${cmd_flags}"
+
+    local cmd_flash_monitor=${cmd}
+    cmd_flash_monitor+=" --opr=wr --addr=0x200c3020"
+
+    #TODO(b/294944527): Make sure this file is available in image
+    cmd_flash_monitor+=" --file /opt/google/biod/fw/npcx_monitor.bin"
+
+    # Reset sequence to enter bootloader mode
+    gpio 0 "${gpio_nrst}"
+    sleep 0.01
+
+    # Release reset as the UART bus is now ready
+    gpio 1 "${gpio_nrst}"
+
+    # Print out the actual underlying command we're running and run it
+    echo "# ${cmd_flash_monitor}"
+    ${cmd_flash_monitor}
+    cmd_exit_status=$?
+
+    if [[ "${cmd_exit_status}" -eq 0 ]]; then
+      echo "# NPCX: Flashing monitor PASSED"
+    else
+      # No point to continue if flashing the monitor failed
+      echo "# NPCX: Flashing monitor FAILED!"
+      return "${EXIT_RUNTIME}"
+    fi
+
+    if [[ "${FLAGS_read}" -eq "${FLAGS_TRUE}" ]]; then
+      # Read from FPMCU to file
+      cmd+=" --read-flash --file ${file}"
+    else
+      # Write to FPMCU from file
+      cmd+=" --auto --offset=0 --file ${file}"
+    fi
+  fi
+
+  for attempt in $(seq "${FLAGS_retries}"); do
+    # Reset sequence to enter bootloader mode
+    gpio 0 "${gpio_nrst}"
+    sleep 0.01
+
+    # Release reset as the SPI bus is now ready
+    gpio 1 "${gpio_nrst}"
+
+    # Keeping some margin, add delay of 100 ms to consider minimum bootloader
+    # startup time after the reset for npcx devices.
+    sleep 0.1
+
+    # Print out the actual underlying command we're running and run it
+    echo "# ${cmd}"
+    ${cmd}
+    cmd_exit_status=$?
+
+    if [[ "${cmd_exit_status}" -eq 0 ]]; then
+      break
+    fi
+    echo "# Attempt ${attempt} failed."
+    echo
+    sleep 1
+  done
+
+  return "${cmd_exit_status}"
+}
+
 flash_fp_mcu_stm32() {
   local transport="${1}"
   local device="${2}"
   local gpio_nrst="${3}"
-  local gpio_boot0="${4}"
-  local gpio_pwren="${5}"
-  local file="${6}"
-  local deviceid
+  local file="${4}"
 
-  local stm32mon_flags="-p --retries ${STM32MON_CONNECT_RETRIES}"
+  local cmd_flags="-p --retries ${STM32MON_CONNECT_RETRIES}"
 
   if [[ "${transport}" == "UART" ]]; then
-    stm32mon_flags+=" --baudrate ${FLAGS_baudrate} --device ${device}"
+    cmd_flags+=" --baudrate ${FLAGS_baudrate} --device ${device}"
   else
-    stm32mon_flags+=" -s ${device}"
+    cmd_flags+=" -s ${device}"
   fi
 
   if [[ "${FLAGS_hello}" -eq "${FLAGS_FALSE}" ]]; then
     if [[ "${FLAGS_remove_flash_write_protect}" -eq "${FLAGS_TRUE}" ]]; then
-      stm32mon_flags+=" -u"
+      cmd_flags+=" -u"
     fi
 
     if [[ "${FLAGS_remove_flash_read_protect}" -eq "${FLAGS_TRUE}" ]]; then
-      stm32mon_flags+=" -U"
+      cmd_flags+=" -U"
     fi
 
     if [[ "${FLAGS_read}" -eq "${FLAGS_TRUE}" ]]; then
@@ -318,7 +439,7 @@ flash_fp_mcu_stm32() {
         return "${EXIT_PRECONDITION}"
       fi
       echo "# Reading to '${file}' over ${transport}"
-      stm32mon_flags+=" -r ${file}"
+      cmd_flags+=" -r ${file}"
     else
       # Write to FPMCU from file
       if [[ ! -f "${file}" ]]; then
@@ -326,14 +447,60 @@ flash_fp_mcu_stm32() {
         return "${EXIT_PRECONDITION}"
       fi
       echo "# Flashing '${file}' over ${transport}"
-      stm32mon_flags+=" -e -w ${file}"
+      cmd_flags+=" -e -w ${file}"
     fi
   else
     echo "# Saying hello over ${transport}"
   fi
 
+  local attempt=0
+  local cmd_exit_status=1
+  local cmd="stm32mon ${cmd_flags}"
 
-  check_hardware_write_protect_disabled
+  for attempt in $(seq "${FLAGS_retries}"); do
+    # Reset sequence to enter bootloader mode
+    gpio 0 "${gpio_nrst}"
+    sleep 0.01
+
+    # Release reset as the SPI bus is now ready
+    gpio 1 "${gpio_nrst}"
+
+    # As per section '68: Bootloader timings' from application note below:
+    # https://www.st.com/resource/en/application_note/cd00167594-stm32-microcontroller-system-memory-boot-mode-stmicroelectronics.pdf
+    # bootloader startup time is 16.63 ms for STM32F74xxx/75xxx and 53.975 ms
+    # for STM32H74xxx/75xxx. SPI needs 1 us delay for one SPI byte sending.
+    # Keeping some margin, add delay of 100 ms to consider minimum bootloader
+    # startup time after the reset for stm32 devices.
+    sleep 0.1
+
+    # Print out the actual underlying command we're running and run it
+    echo "# ${cmd}"
+    ${cmd}
+    cmd_exit_status=$?
+
+    if [[ "${cmd_exit_status}" -eq 0 ]]; then
+      break
+    fi
+    echo "# Attempt ${attempt} failed."
+    echo
+    sleep 1
+  done
+
+  return "${cmd_exit_status}"
+}
+
+flash_fp_mcu_board() {
+  local transport="${1}"
+  local device="${2}"
+  local gpio_nrst="${3}"
+  local gpio_boot0="${4}"
+  local gpio_pwren="${5}"
+  local file="${6}"
+  local chip_type="${7}"
+
+  local deviceid=""
+
+  echo "# Flashing '${chip_type}' with '${file}' over ${transport}"
 
   if [[ "${transport}" == "UART" ]]; then
     if ! deviceid="$(get_uartid)"; then
@@ -357,7 +524,7 @@ flash_fp_mcu_stm32() {
   fi
 
   # Unbind cros-ec driver
-  if [[ ! -z "${deviceid}" ]]; then
+  if [[ -n "${deviceid}" ]]; then
     klog "Unbinding cros-ec driver"
     if [[ "${transport}" == "UART" ]]; then
       echo "${deviceid}" > /sys/bus/serial/drivers/cros-ec-uart/unbind
@@ -403,38 +570,26 @@ flash_fp_mcu_stm32() {
     return "${EXIT_RUNTIME}"
   fi
 
-  local attempt=0
   local cmd_exit_status=1
-  local cmd="stm32mon ${stm32mon_flags}"
 
-  for attempt in $(seq "${FLAGS_retries}"); do
-    # Reset sequence to enter bootloader mode
-    gpio 0 "${gpio_nrst}"
-    sleep 0.01
-
-    # Release reset as the SPI bus is now ready
-    gpio 1 "${gpio_nrst}"
-
-    # As per section '68: Bootloader timings' from application note below:
-    # https://www.st.com/resource/en/application_note/cd00167594-stm32-microcontroller-system-memory-boot-mode-stmicroelectronics.pdf
-    # bootloader startup time is 16.63 ms for STM32F74xxx/75xxx and 53.975 ms
-    # for STM32H74xxx/75xxx. SPI needs 1 us delay for one SPI byte sending.
-    # Keeping some margin, add delay of 100 ms to consider minimum bootloader
-    # startup time after the reset for stm32 devices.
-    sleep 0.1
-
-    # Print out the actual underlying command we're running and run it
-    echo "# ${cmd}"
-    ${cmd}
+  if [[ "${chip_type}" == "STM32" ]]; then
+    flash_fp_mcu_stm32 \
+      "${transport}"   \
+      "${device}"      \
+      "${gpio_nrst}"   \
+      "${file}"
     cmd_exit_status=$?
-
-    if [[ "${cmd_exit_status}" -eq 0 ]]; then
-      break
-    fi
-    echo "# Attempt ${attempt} failed."
-    echo
-    sleep 1
-  done
+  elif [[ "${chip_type}" == "NPCX" ]]; then
+    flash_fp_mcu_npcx \
+      "${transport}"   \
+      "${device}"      \
+      "${gpio_nrst}"   \
+      "${file}"
+    cmd_exit_status=$?
+  else
+    echo "# Unsupported chip type found: ${chip_type}"
+    return "${EXIT_CONFIG}"
+  fi
 
   # unload device
   if [[ "${transport}" != "UART" ]]; then
@@ -473,7 +628,6 @@ flash_fp_mcu_stm32() {
   # TODO(b/179839337): Make this the default and properly support
   # open-drain outputs on other platforms.
   if [[ "${PLATFORM_BASE_NAME}" != "strongbad" ]] &&
-     [[ "${PLATFORM_BASE_NAME}" != "herobrine" ]] &&
      [[ "${PLATFORM_BASE_NAME}" != "zork" ]] &&
      [[ "${PLATFORM_BASE_NAME}" != "myst" ]] &&
      [[ "${PLATFORM_BASE_NAME}" != "skyrim" ]]; then
@@ -527,7 +681,7 @@ config_hatch() {
   # Examine `cat /sys/kernel/debug/pinctrl/INT34BB:00/gpio-ranges` on a hatch
   # device to determine gpio number from pin number.
 
-  local gpiochip_dev_path="*/pci0000\:00/INT34BB\:00/gpio/*"
+  local gpiochip_dev_path="pci0000:00/INT34BB:00/gpio"
   local gpiobase
   if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
     echo "Unable to find gpio chip base"
@@ -551,7 +705,7 @@ config_herobrine() {
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev9.0"
 
-  local dev_path="*/platform/soc@0/f100000.pinctrl/gpio/*"
+  local dev_path="platform/soc@0/f100000.pinctrl/gpio"
   local gpiobase
   if ! gpiobase=$(get_sysfs_gpiochip_base "${dev_path}"); then
     echo "Unable to find gpio chip base"
@@ -560,12 +714,12 @@ config_herobrine() {
 
   readonly GPIO_CHIP="gpiochip${gpiobase}"
   # FPMCU RST_ODL is $(gpiofind FP_RST_L) is gpiochip0 22
-  readonly GPIO_NRST=$((${gpiobase} + $(gpiofind FP_RST_L|cut -f2 -d" ")))
+  readonly GPIO_NRST=$((gpiobase + $(gpiofind FP_RST_L|cut -f2 -d" ")))
   # FPMCU BOOT0 is $(gpiofind FPMCU_BOOT0) is gpiochip0 10
-  readonly GPIO_BOOT0=$((${gpiobase} + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
+  readonly GPIO_BOOT0=$((gpiobase + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
 
   # EN FP RAILS is $(gpiofind EN_FP_RAILS) is gpiochip0 42
-  readonly GPIO_PWREN=$((${gpiobase} + $(gpiofind EN_FP_RAILS|cut -f2 -d" ")))
+  readonly GPIO_PWREN=$((gpiobase + $(gpiofind EN_FP_RAILS|cut -f2 -d" ")))
 }
 
 config_nami() {
@@ -606,7 +760,7 @@ config_strongbad() {
   readonly TRANSPORT="SPI"
   readonly DEVICE="/dev/spidev10.0"
 
-  local dev_path="*/platform/soc@0/3500000.pinctrl/gpio/*"
+  local dev_path="platform/soc@0/3500000.pinctrl/gpio"
   local gpiobase
   if ! gpiobase=$(get_sysfs_gpiochip_base "${dev_path}"); then
     echo "Unable to find gpio chip base"
@@ -615,14 +769,14 @@ config_strongbad() {
 
   readonly GPIO_CHIP="gpiochip${gpiobase}"
   # FPMCU RST_ODL is $(gpiofind FP_RST_L) is gpiochip0 22
-  readonly GPIO_NRST=$((${gpiobase} + $(gpiofind FP_RST_L|cut -f2 -d" ")))
+  readonly GPIO_NRST=$((gpiobase + $(gpiofind FP_RST_L|cut -f2 -d" ")))
   # FPMCU BOOT0 is $(gpiofind FPMCU_BOOT0) is gpiochip0 10
-  readonly GPIO_BOOT0=$((${gpiobase} + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
+  readonly GPIO_BOOT0=$((gpiobase + $(gpiofind FPMCU_BOOT0|cut -f2 -d" ")))
 
   # EN FP RAILS is $(gpiofind EN_FP_RAILS) is gpiochip0 74 (if available)
   local en_fp_rails
   if en_fp_rails=$(gpiofind EN_FP_RAILS); then
-    readonly GPIO_PWREN=$((${gpiobase} + $(echo $en_fp_rails|cut -f2 -d" ")))
+    readonly GPIO_PWREN=$((gpiobase + $(echo "${en_fp_rails}"|cut -f2 -d" ")))
   else
     readonly GPIO_PWREN=-1
   fi
@@ -640,7 +794,7 @@ config_volteer() {
   # the pin number is 194. From the gpio-ranges, the gpio value is
   # 920 + (194-171) = 943. The relative gpio value is 943 - 664 = 279.
 
-  local gpiochip_dev_path="*/pci0000\:00/INT34C5\:00/gpio/*"
+  local gpiochip_dev_path="pci0000:00/INT34C5:00/gpio"
   local gpiobase
   if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
     echo "Unable to find gpio chip base"
@@ -672,25 +826,24 @@ config_brya() {
   # the pin number is 100 from the pinctrl-tigerlake.c.
   # From the gpio-ranges, the gpio value is 824 + (100-99) = 825
 
-  local gpiochip="gpiochip664"
-  # Support kernel version 5.10 during transition to 5.15+
-  match_kernel_regex "^5\.10\." && gpiochip="gpiochip152"
-  readonly GPIO_CHIP="${gpiochip}"
+  local gpiochip_dev_path="pci0000:00/INTC1055:00/gpio"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
 
-  local offset=0
-  # Support kernel version 5.10 during transition to 5.15+
-  # v5.10 has GPIOs that are offset by -512
-  match_kernel_regex "^5\.10\." && offset=512
+  local GPIO_CHIP="gpiochip${gpiobase}"
 
-  # FPMCU RST_ODL is on GPP_D1 = 824 + (100 - 99) = 825
-  local gpionrst=825
-  readonly GPIO_NRST=$(( gpionrst - offset ))
-  # FPMCU BOOT0 is on GPP_D0 = 824 + (99 - 99) = 824
-  local gpioboot=824
-  readonly GPIO_BOOT0=$(( gpioboot - offset ))
-  # FP_PWR_EN is on GPP_D2 = 824 + (101 - 99) = 826
-  local gpiopwren=826
-  readonly GPIO_PWREN=$(( gpiopwren - offset ))
+  # FPMCU RST_ODL is on GPP_D1 = 160 + (100 - 99) = 161
+  local gpionrst=161
+  readonly GPIO_NRST=$(( gpionrst + gpiobase ))
+  # FPMCU BOOT0 is on GPP_D0 = 160 + (99 - 99) = 160
+  local gpioboot=160
+  readonly GPIO_BOOT0=$(( gpioboot + gpiobase ))
+  # FP_PWR_EN is on GPP_D2 = 160 + (101 - 99) = 162
+  local gpiopwren=162
+  readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
 }
 
 config_brask() {
@@ -714,7 +867,7 @@ config_rex() {
   # For example: GPP_B11, the pin number is 215 from the pinctrl-meteorlake.c.
   # From the gpio-ranges, the gpio value is 925 + (215-204) = 936
 
-  local gpiochip_dev_path="*/pci0000:00/INTC1083\:00/gpio/*"
+  local gpiochip_dev_path="pci0000:00/INTC1083:00/gpio"
   local gpiobase
   if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
     echo "Unable to find gpio chip base"
@@ -723,9 +876,10 @@ config_rex() {
 
   readonly GPIO_CHIP="gpiochip${gpiobase}"
 
-  local model=$(cros_config / name)
+  local model
+  model=$(cros_config / name)
   case "${model}" in
-    screebo)
+    (screebo | screebo4es)
       # Screebo is based off Rex but with different pins for FPMCU
       # FPMCU RST_ODL is on GPP_C21 = 64 + (50 - 29) = 85
       local gpionrst=85
@@ -780,7 +934,7 @@ config_guybrush() {
   readonly TRANSPORT="UART"
   readonly DEVICE="/dev/ttyS1"
 
-  local gpiochip_dev_path="*/platform/AMD0030\:00/gpio/*"
+  local gpiochip_dev_path="platform/AMD0030:00/gpio"
   local gpiobase
   if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
     echo "Unable to find gpio chip base"
@@ -830,6 +984,7 @@ config_myst() {
 
 main() {
   local filename="$1"
+  local chip_type
 
   # print out canonical path to differentiate between /usr/local/bin and
   # /usr/bin installs
@@ -893,11 +1048,15 @@ main() {
     exit "${EXIT_CONFIG}"
   fi
 
+  # Ensure hardware write-protect is disabled.
+  check_hardware_write_protect_disabled
+
   if [[ "${FLAGS_services}" -eq "${FLAGS_TRUE}" ]]; then
-    echo "# Stopping biod and timberslide"
+    echo "# Stopping biod"
     stop biod
-    stop timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
   fi
+  echo "# Stopping timberslide"
+  stop timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
 
   # If cros-ec driver isn't bound on startup, this means the final rebinding
   # may fail.
@@ -928,19 +1087,27 @@ main() {
     echo "See b/188985272." >&2
   fi
 
+  if ! chip_type="$(get_chip)"; then
+    echo "Failed to get chip type." >&2
+    exit "${EXIT_CONFIG}"
+  fi
+  echo "Detected chip ${chip_type}."
+
   local ret
-  flash_fp_mcu_stm32 \
+  flash_fp_mcu_board \
     "${TRANSPORT}"   \
     "${DEVICE}"      \
     "${GPIO_NRST}"   \
     "${GPIO_BOOT0}"  \
     "${GPIO_PWREN}"  \
-    "${filename}"
+    "${filename}"    \
+    "${chip_type}"
   ret=$?
 
   if [[ "${FLAGS_services}" -eq "${FLAGS_TRUE}" ]]; then
-    echo "# Restarting biod and timberslide"
-    start timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
+  echo "# Restarting timberslide"
+  start timberslide LOG_PATH=/sys/kernel/debug/cros_fp/console_log
+    echo "# Restarting biod"
     start biod
   fi
 

@@ -1,0 +1,33 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+using sysbus
+$name?="bloonchipper"
+mach create $name
+
+machine LoadPlatformDescription $ORIGIN/stm32f412.repl
+
+
+$bin?=$ORIGIN/bloonchipper/ec.bin
+$elf_ro?=$ORIGIN/bloonchipper/ec.RO.elf
+$elf_rw?=$ORIGIN/bloonchipper/ec.RW.elf
+
+
+showAnalyzer usart2
+
+
+# Uncomment the lines below for additional logging
+#cpu LogFunctionNames true true
+#sysbus LogAllPeripheralsAccess true
+
+
+macro reset
+"""
+    sysbus LoadBinary $bin 0x08000000
+    sysbus LoadSymbolsFrom $elf_ro
+    sysbus LoadSymbolsFrom $elf_rw
+    cpu VectorTableOffset 0x8000000
+"""
+
+runMacro $reset

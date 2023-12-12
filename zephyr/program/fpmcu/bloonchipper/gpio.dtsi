@@ -1,0 +1,57 @@
+/* Copyright 2023 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	aliases {
+		gpio-wp = &ec_wp_l;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		ap_ec_int_l {
+			gpios = <&gpioa 1 GPIO_OUTPUT_HIGH>;
+			enum-name = "GPIO_EC_INT_L";
+		};
+
+		ec_wp_l: write-protect {
+			gpios = <&gpiob 7 GPIO_INPUT>;
+		};
+
+		fp_sensor_sel: fp_sensor_sel {
+			gpios = <&gpiob 0 GPIO_INPUT>;
+		};
+
+		slp_l: slp_l {
+			gpios = <&gpioa 8 GPIO_INPUT>;
+		};
+
+		slp_alt_l: slp_alt_l {
+			gpios = <&gpiob 6 GPIO_INPUT>;
+		};
+
+		transport_sel: transport_sel {
+			gpios = <&gpiob 1 GPIO_INPUT>;
+		};
+
+		user_pres_l {
+			gpios = <&gpiob 9 GPIO_ODR_HIGH>;
+		};
+
+		/* Used to the transport layer detection at the beginning of the
+		 * boot.
+		 */
+		div_highside: div_highside {
+			gpios = <&gpiob 8 GPIO_OUTPUT_HIGH>;
+		};
+
+		/* unimplemented GPIOs */
+		entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+};

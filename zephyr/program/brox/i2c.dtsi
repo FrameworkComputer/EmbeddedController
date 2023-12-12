@@ -1,0 +1,53 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&i2c1 {
+	pinctrl-0 = <&i2c1_clk_gpc1_default
+		     &i2c1_data_gpc2_default>;
+	pinctrl-names = "default";
+
+	label = "I2C_PORT_PD";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c2 {
+	/* I2C2 uses SMCLK2 on GPC7 amd SMDAT2ALT on GPH7*/
+	pinctrl-0 = <&i2c2_clk_gpc7_default
+		     &i2c2_data_gpf7_default>;
+	pinctrl-names = "default";
+
+	scl-gpios = <&gpioc 7 0>;
+	sda-gpios = <&gpiof 7 0>;
+
+	label = "I2C_PORT_ISH";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c3 {
+	pinctrl-0 = <&i2c3_clk_gph1_default
+		     &i2c3_data_gph2_default>;
+	pinctrl-names = "default";
+
+	label = "I2C_PORT_PMC_PD";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c4 {
+	pinctrl-0 = <&i2c4_clk_gpe0_default
+		     &i2c4_data_gpe7_default>;
+	pinctrl-names = "default";
+
+	label = "I2C_PORT_CHARGER";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&i2c5 {
+	pinctrl-0 = <&i2c5_clk_gpe1_default
+		     &i2c5_data_gpe2_default>;
+	pinctrl-names = "default";
+
+	label = "I2C_PORT_SENSOR";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};

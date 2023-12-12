@@ -37,6 +37,6 @@ inline enum corsola_db_type corsola_get_db_type(void)
 
 /* return the adjusted port count for board overridden usbc/charger functions.
  */
-uint8_t board_get_adjusted_usb_pd_port_count(void);
+test_mockable uint8_t board_get_adjusted_usb_pd_port_count(void);
 
 #endif /* __CROS_EC_CORSOLA_DB_DETECTION_H */

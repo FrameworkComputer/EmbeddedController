@@ -16,7 +16,7 @@
 #define PCT2075_COMPAT nxp_pct2075
 #define TMP112_COMPAT cros_ec_temp_sensor_tmp112
 #define F75303_COMPAT cros_ec_temp_sensor_f75303
-#define SB_TSI_COMPAT amd_sb_tsi
+#define SB_TSI_COMPAT cros_ec_temp_sensor_sb_tsi
 #define THERMISTOR_COMPAT cros_ec_temp_sensor_thermistor
 #define TEMP_SENSORS_COMPAT cros_ec_temp_sensors
 #define AMDR23M_COMPAT cros_ec_temp_sensor_amdr23m

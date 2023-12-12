@@ -20,6 +20,8 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/logging/log.h>
 
+#include <dt-bindings/buttons.h>
+
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 static bool use_alt_sensor;
@@ -41,7 +43,7 @@ void lid_accel_interrupt(enum gpio_signal signal)
 		bma4xx_interrupt(signal);
 }
 
-static void sensor_init(void)
+test_export_static void sensor_init(void)
 {
 	int ret;
 	uint32_t val;

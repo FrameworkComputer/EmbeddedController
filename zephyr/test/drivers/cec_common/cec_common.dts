@@ -1,0 +1,26 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	cec {
+		compatible = "cros-ec,cec";
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		cec0@0 {
+			compatible = "cros-ec,cec-it83xx";
+			reg = <0>;
+		};
+
+		cec1@1 {
+			compatible = "cros-ec,cec-bitbang";
+			reg = <1>;
+			gpio-out = <&gpio_hdmi_cec_out>;
+			gpio-in = <&gpio_hdmi_cec_in>;
+			gpio-pull-up = <&gpio_hdmi_cec_pull_up>;
+		};
+	};
+};

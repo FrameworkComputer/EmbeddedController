@@ -122,7 +122,7 @@ void board_override_fan_control(int fan, int *temp)
 	}
 }
 
-static void thermal_init(void)
+test_export_static void thermal_init(void)
 {
 	int ret;
 	uint32_t val;

@@ -43,9 +43,13 @@ static const struct {
 			.voltage = 19000,
 			.current = 3420
 	},
-	[BJ_135W] = { /* 4 - 135W */
+	[BJ_135W] = { /* 3 - 135W */
 			.voltage = 19500,
 			.current = 6920
+	},
+	[BJ_90W] = { /* 4 - 90W */
+			.voltage = 19000,
+			.current = 4740
 	}
 };
 
@@ -64,7 +68,8 @@ void ec_bj_power(uint32_t *voltage, uint32_t *current)
 {
 	unsigned int bj;
 
-	bj = fw_config.bj_power;
+	bj = fw_config.bj_power | (fw_config.bj_power_extended << 2);
+
 	/* Out of range value defaults to 0 */
 	if (bj >= ARRAY_SIZE(bj_power))
 		bj = 0;
@@ -75,4 +80,9 @@ void ec_bj_power(uint32_t *voltage, uint32_t *current)
 bool ec_cfg_has_peripheral_charger(void)
 {
 	return (fw_config.peripheral_charger == PERIPHERAL_CHARGER_ENABLE);
+}
+
+enum conf_mb_usbc_type get_mb_usbc_type(void)
+{
+	return fw_config.usbc_type;
 }

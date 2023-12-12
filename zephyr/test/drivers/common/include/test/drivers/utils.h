@@ -22,6 +22,17 @@
 #include <zephyr/ztest.h>
 
 /**
+ * @brief Helper macro to check for the NTC38xx TCPC. The NCT38xx TCPC
+ * is configured as a child binding under the nuvoton,nc38xx MFD. Grab
+ * the parent phanlde when the NCT38xx TCPC is detected, otherwise return
+ * the current node phandle.
+ */
+#define EMUL_GET_CHIP_BINDING(chip_phandle)                                 \
+	COND_CODE_1(DT_NODE_HAS_COMPAT(chip_phandle, nuvoton_nct38xx_tcpc), \
+		    (EMUL_DT_GET(DT_PARENT(chip_phandle))),                 \
+		    (EMUL_DT_GET(chip_phandle)))
+
+/**
  * @brief Helper macro for EMUL_GET_USBC_BINDING. If @p usbc_id has the same
  *        port number as @p port, then struct emul* for @p chip phandle is
  *        returned.
@@ -32,7 +43,7 @@
  */
 #define EMUL_GET_USBC_BINDING_IF_PORT_MATCH(usbc_id, port, chip) \
 	COND_CODE_1(IS_EQ(USBC_PORT_NEW(usbc_id), port),         \
-		    (EMUL_DT_GET(DT_PHANDLE(usbc_id, chip))), ())
+		    (EMUL_GET_CHIP_BINDING(DT_PHANDLE(usbc_id, chip))), ())
 
 /**
  * @brief Get struct emul from phandle @p chip property of USBC @p port
@@ -475,6 +486,83 @@ int host_cmd_motion_sense_tablet_mode_lid_angle(
 	struct ec_response_motion_sense *response);
 
 /**
+ * Run host command to set CEC parameters.
+ *
+ * @param port	  CEC port number
+ * @param cmd	  Parameter to set
+ * @param val	  Value to set the parameter to
+ * @return	  Return value from the host command
+ */
+int host_cmd_cec_set(int port, enum cec_command cmd, uint8_t val);
+
+/**
+ * Run host command to get CEC parameters.
+ *
+ * @param port	    CEC port number
+ * @param cmd	    Parameter to get
+ * @param response  Response struct containing parameter value
+ * @return	    Return value from the host command
+ */
+int host_cmd_cec_get(int port, enum cec_command cmd,
+		     struct ec_response_cec_get *response);
+
+/**
+ * Run v0 host command to write a CEC message.
+ * Note, v0 always operates on port 0.
+ *
+ * @param msg	    Buffer containing the message
+ * @param msg_len   Message length in bytes
+ * @return	    Return value from the host command
+ */
+int host_cmd_cec_write(const uint8_t *msg, uint8_t msg_len);
+
+/**
+ * Run v1 host command to write a CEC message.
+ *
+ * @param port	    CEC port number
+ * @param msg	    Buffer containing the message
+ * @param msg_len   Message length in bytes
+ * @return	    Return value from the host command
+ */
+int host_cmd_cec_write_v1(int port, const uint8_t *msg, uint8_t msg_len);
+
+/**
+ * Run host command to read a CEC message.
+ *
+ * @param port	    CEC port number
+ * @param response  Response struct containing the message read
+ * @return	    Return value from the host command
+ */
+int host_cmd_cec_read(int port, struct ec_response_cec_read *response);
+
+/**
+ * Read MKBP events until we find one of type EC_MKBP_EVENT_CEC_EVENT.
+ *
+ * @param event	    The MKBP event on success
+ * @return	    0 if an event was found, -1 otherwise
+ */
+int get_next_cec_mkbp_event(struct ec_response_get_next_event_v1 *event);
+
+/**
+ * Read MKBP events until we find one of type EC_MKBP_EVENT_CEC_MESSAGE.
+ *
+ * @param event	    The MKBP event on success
+ * @return	    0 if an event was found, -1 otherwise
+ */
+int get_next_cec_message(struct ec_response_get_next_event_v1 *event);
+
+/**
+ * Check if the given MKBP event matches the given port and event type.
+ *
+ * @param event	    An MKBP event of type EC_MKBP_EVENT_CEC_EVENT.
+ * @param port	    Port to match against
+ * @param events    Event type to match against
+ * @return	    true if the event matches, false otherwise
+ */
+bool cec_event_matches(struct ec_response_get_next_event_v1 *event, int port,
+		       enum mkbp_cec_event events);
+
+/**
  * Run the host command to get the PD discovery responses.
  *
  * @param port          The USB-C port number
@@ -674,4 +762,10 @@ void test_set_chipset_to_g3_then_transition_to_s5(void);
 			  __LINE__)
 void check_console_cmd(const char *cmd, const char *expected_output,
 		       const int expected_rv, const char *file, const int line);
+
+/* The upstream struct ec_host_cmd_handler_args omits the result field, so skip
+ * checks of the result when using the upstream host commands.
+ */
+#define CHECK_ARGS_RESULT(args) \
+	COND_CODE_0(CONFIG_EC_HOST_CMD, (zassert_ok(args.result, NULL);), ())
 #endif /* ZEPHYR_TEST_DRIVERS_INCLUDE_UTILS_H_ */

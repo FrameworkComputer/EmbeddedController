@@ -30,7 +30,7 @@ uint16_t tcpc_get_alert_status(void)
 			continue;
 		}
 
-		if (!gpio_get_level(tcpc_aic_gpios[i].tcpc_alert)) {
+		if (!gpio_get_level(mecc_1_1_tcpc_aic_gpios[i].tcpc_alert)) {
 			status |= PD_STATUS_TCPC_ALERT_0 << i;
 		}
 	}
@@ -38,31 +38,11 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-int ppc_get_alert_status(int port)
-{
-	return tcpc_aic_gpios[port].ppc_intr_handler &&
-	       !gpio_get_level(tcpc_aic_gpios[port].ppc_alert);
-}
-
-/* PPC support routines */
-void ppc_interrupt(enum gpio_signal signal)
-{
-	int i;
-
-	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		if (tcpc_aic_gpios[i].ppc_intr_handler &&
-		    signal == tcpc_aic_gpios[i].ppc_alert) {
-			tcpc_aic_gpios[i].ppc_intr_handler(i);
-			break;
-		}
-	}
-}
-
 void board_charging_enable(int port, int enable)
 {
 	int rv;
 
-	if (tcpc_aic_gpios[port].ppc_intr_handler) {
+	if (board_port_has_ppc(port)) {
 		rv = ppc_vbus_sink_enable(port, enable);
 	} else {
 		rv = tcpc_config[port].drv->set_snk_ctrl(port, enable);

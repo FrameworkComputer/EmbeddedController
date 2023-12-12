@@ -13,7 +13,7 @@
 
 LOG_MODULE_REGISTER(button, CONFIG_GPIO_LOG_LEVEL);
 
-#define DT_DRV_COMPAT zephyr_gpio_keys
+#define DT_DRV_COMPAT gpio_keys
 
 static void buttons_cb_handler(struct input_event *evt)
 {
@@ -33,5 +33,4 @@ static void buttons_cb_handler(struct input_event *evt)
 		break;
 	}
 }
-INPUT_LISTENER_CB_DEFINE(DEVICE_DT_GET_ONE(zephyr_gpio_keys),
-			 buttons_cb_handler);
+INPUT_CALLBACK_DEFINE(DEVICE_DT_GET_ONE(gpio_keys), buttons_cb_handler);

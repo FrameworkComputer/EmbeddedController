@@ -8,9 +8,6 @@
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
 
-/* Free up flash space. */
-#undef CONFIG_CMD_KEYBOARD
-
 #define VARIANT_KUKUI_JACUZZI
 #define VARIANT_KUKUI_BATTERY_SMART
 #define VARIANT_KUKUI_CHARGER_ISL9238
@@ -21,6 +18,9 @@
 #endif /* SECTION_IS_RW */
 
 #include "baseboard.h"
+
+/* Free up flash space. */
+#undef CONFIG_CMD_KEYBOARD
 
 #undef CONFIG_CHIPSET_POWER_SEQ_VERSION
 #define CONFIG_CHIPSET_POWER_SEQ_VERSION 1

@@ -1,6 +1,6 @@
 #include <zephyr/linker/iterable_sections.h>
 
-#ifdef CONFIG_PLATFORM_EC_HOSTCMD
+#if defined(CONFIG_PLATFORM_EC_HOSTCMD) && !defined(CONFIG_EC_HOST_CMD)
 ITERABLE_SECTION_ROM(host_command, 4)
 #endif
 

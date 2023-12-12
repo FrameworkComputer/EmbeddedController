@@ -8,19 +8,14 @@
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "hooks.h"
+#include "ztest/alt_charger.h"
 
 #include <zephyr/devicetree.h>
 #include <zephyr/logging/log.h>
 
-#ifdef CONFIG_ZTEST
-#undef CHG_ENABLE_ALTERNATE
-void chg_enable_alternate_test(int port);
-#define CHG_ENABLE_ALTERNATE(x) chg_enable_alternate_test(x)
-#endif /* CONFIG_ZTEST */
-
 LOG_MODULE_DECLARE(skyrim, CONFIG_SKYRIM_LOG_LEVEL);
 
-test_export_static void alt_charger_init(void)
+void alt_charger_init(void)
 {
 	int ret;
 	uint32_t val;

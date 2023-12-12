@@ -18,6 +18,7 @@ target_sources(app PRIVATE
     src/integration/usbc/usb_5v_3a_pd_sink.c
     src/integration/usbc/usb_5v_3a_pd_source.c
     src/integration/usbc/usb_attach_src_snk.c
+    src/integration/usbc/usb_charging_policy.c
     src/integration/usbc/usb_hard_reset.c
     src/integration/usbc/usb_pd_bist_shared.c
     src/integration/usbc/usb_pd_ctrl_msg.c
@@ -39,7 +40,6 @@ target_sources(app PRIVATE
     src/ppc_sn5s330.c
     src/ppc_syv682x.c
     src/ps8xxx.c
-    src/smart.c
     src/stm_mems_common.c
     src/tablet_mode.c
     src/task.c

@@ -21,8 +21,8 @@ properties:
   # ManufacturerAccess() 0x0054 OperationStatus
   # CHG (Bit 2): CHG FET status (1 = Active 0 = Inactive)
   # DSG (Bit 1): DSG FET status (1 = Active 0 = Inactive)
-  fet_mfgacc_support:
-    default: 1
+  flags:
+    default: 0x04
   fet_reg_mask:
     default: 0x0002
   fet_disconnect_val:

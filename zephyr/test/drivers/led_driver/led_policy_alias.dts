@@ -1,0 +1,18 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/battery.h>
+
+/ {
+	led-colors {
+		compatible = "cros-ec,led-policy";
+
+		sysrq-alias = "EC_LED_ID_RIGHT_LED";
+		sysrq-led-control-color = "LED_WHITE";
+
+		recovery-hw-reinit-alias = "EC_LED_ID_RIGHT_LED";
+		recovery-hw-reinit-led-control-color = "LED_BLUE";
+	};
+};

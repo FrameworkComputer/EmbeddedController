@@ -12,6 +12,7 @@
 		cros-ec,flash = &flash0;
 		cros-ec,flash-controller = &fiu0;
 		cros-ec,raw-kb = &cros_kb_raw;
+		cros-ec,sha = &sha0;
 		cros-ec,watchdog = &twd0;
 	};
 

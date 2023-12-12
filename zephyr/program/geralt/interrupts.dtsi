@@ -31,11 +31,6 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "chipset_watchdog_interrupt";
 		};
-		int_usb_c0_ppc_bc12: usb-c0-ppc-bc12 {
-			irq-pin = <&usb_c0_ppc_bc12_int_odl>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "ppc_interrupt";
-		};
 		int_volume_up: volume-up {
 			irq-pin = <&volume_up_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
@@ -90,11 +85,6 @@
 			irq-pin = <&spi0_cs>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "spi_event";
-		};
-		int_usb_c1_ppc: usb-c1-ppc {
-			irq-pin = <&usb_c1_ppc_int_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "ppc_interrupt";
 		};
 		int_ccd_mode_odl: ccd-mode-odl {
 			irq-pin = <&gpio_ccd_mode_odl>;

@@ -21,6 +21,7 @@
 
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/kernel.h>
+#include <zephyr/sys/byteorder.h>
 #include <zephyr/ztest.h>
 
 #include <gpio.h>
@@ -33,10 +34,10 @@
 
 BUILD_ASSERT(TEST_PORT == USBC_PORT_C0);
 
-static void connect_partner_to_port(const struct emul *tcpc_emul,
-				    const struct emul *charger_emul,
-				    struct tcpci_partner_data *partner_emul,
-				    const struct tcpci_src_emul_data *src_ext)
+void connect_partner_to_port(const struct emul *tcpc_emul,
+			     const struct emul *charger_emul,
+			     struct tcpci_partner_data *partner_emul,
+			     const struct tcpci_src_emul_data *src_ext)
 {
 	/*
 	 * TODO(b/221439302) Updating the TCPCI emulator registers, updating the
@@ -54,8 +55,8 @@ static void connect_partner_to_port(const struct emul *tcpc_emul,
 	k_sleep(K_SECONDS(10));
 }
 
-static void disconnect_partner_from_port(const struct emul *tcpc_emul,
-					 const struct emul *charger_emul)
+void disconnect_partner_from_port(const struct emul *tcpc_emul,
+				  const struct emul *charger_emul)
 {
 	zassert_ok(tcpci_emul_disconnect_partner(tcpc_emul));
 	isl923x_emul_set_adc_vbus(charger_emul, 0);
@@ -172,7 +173,7 @@ static void *usbc_alt_mode_setup(void)
 	struct tcpci_partner_data *partner = &fixture.partner;
 	struct tcpci_src_emul_data *src_ext = &fixture.src_ext;
 
-	tcpci_partner_init(partner, PD_REV20);
+	tcpci_partner_init(partner, PD_REV30);
 	partner->extensions = tcpci_src_emul_init(src_ext, partner, NULL);
 
 	/* Get references for the emulators */
@@ -208,7 +209,7 @@ static void usbc_alt_mode_after(void *data)
 				     fixture->charger_emul);
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_discovery)
+ZTEST_F(usbc_alt_mode, test_discovery)
 {
 	uint8_t response_buffer[EC_LPC_HOST_PACKET_SIZE];
 	struct ec_response_typec_discovery *discovery =
@@ -239,7 +240,7 @@ ZTEST_F(usbc_alt_mode, test_verify_discovery)
 		      "DP mode VDOs did not match");
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_discovery_params_too_small)
+ZTEST_F(usbc_alt_mode, test_discovery_params_too_small)
 {
 	struct ec_response_typec_discovery discovery;
 
@@ -252,15 +253,54 @@ ZTEST_F(usbc_alt_mode, test_verify_discovery_params_too_small)
 	zassert_equal(discovery.svid_count, 0);
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_displayport_mode_entry)
+void verify_data_reset_msg(struct tcpci_partner_data *partner, bool want)
+{
+	struct tcpci_partner_log_msg *msg;
+	bool sent_data_reset = false;
+
+	SYS_SLIST_FOR_EACH_CONTAINER(&partner->msg_log, msg, node)
+	{
+		uint16_t header = sys_get_le16(msg->buf);
+
+		/* Ignore messages from partner */
+		if (msg->sender == TCPCI_PARTNER_SENDER_PARTNER)
+			continue;
+
+		/* Data messages and extended messages are not of interest. */
+		if ((PD_HEADER_CNT(header) != 0) ||
+		    (PD_HEADER_EXT(header) != 0)) {
+			continue;
+		}
+
+		if (want) {
+			if (PD_HEADER_TYPE(header) == PD_CTRL_DATA_RESET)
+				sent_data_reset = true;
+		} else {
+			zassert_not_equal(PD_HEADER_TYPE(header),
+					  PD_CTRL_DATA_RESET);
+		}
+	}
+
+	if (want)
+		zassert_true(sent_data_reset);
+}
+
+ZTEST_F(usbc_alt_mode, test_displayport_mode_entry)
 {
 	const struct gpio_dt_spec *gpio =
 		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
 
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
+		tcpci_partner_common_clear_logged_msgs(&fixture->partner);
+		tcpci_partner_common_enable_pd_logging(&fixture->partner, true);
 		host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
 		k_sleep(K_SECONDS(1));
 	}
+	/*
+	 * For SOP Product Type == Alt Mode Adapter (typical legacy DP adapter)
+	 * as simulated here, the TCPM should not issue a Data Reset.
+	 */
+	verify_data_reset_msg(&fixture->partner, false);
 
 	/* Verify host command when VDOs are present. */
 	struct ec_response_typec_status status;
@@ -303,7 +343,7 @@ ZTEST_F(usbc_alt_mode, test_verify_displayport_mode_entry)
 	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 1);
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_bad_hpd_irq_reject)
+ZTEST_F(usbc_alt_mode, test_bad_hpd_irq_reject)
 {
 	const struct gpio_dt_spec *gpio =
 		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
@@ -344,7 +384,7 @@ ZTEST_F(usbc_alt_mode, test_verify_bad_hpd_irq_reject)
 	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_hpd_clear)
+ZTEST_F(usbc_alt_mode, test_hpd_clear)
 {
 	const struct gpio_dt_spec *gpio =
 		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
@@ -402,7 +442,7 @@ ZTEST_F(usbc_alt_mode, test_verify_hpd_clear)
 	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 0);
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_hpd_irq_set)
+ZTEST_F(usbc_alt_mode, test_hpd_irq_set)
 {
 	const struct gpio_dt_spec *gpio =
 		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hpd);
@@ -463,7 +503,7 @@ ZTEST_F(usbc_alt_mode, test_verify_hpd_irq_set)
 	zassert_equal(gpio_emul_output_get(gpio->port, gpio->pin), 1);
 }
 
-ZTEST_F(usbc_alt_mode, test_verify_discovery_via_pd_host_cmd)
+ZTEST_F(usbc_alt_mode, test_discovery_via_pd_host_cmd)
 {
 	struct ec_params_usb_pd_info_request params = { .port = TEST_PORT };
 	struct ec_params_usb_pd_discovery_entry response;
@@ -479,6 +519,53 @@ ZTEST_F(usbc_alt_mode, test_verify_discovery_via_pd_host_cmd)
 
 ZTEST_SUITE(usbc_alt_mode, drivers_predicate_post_main, usbc_alt_mode_setup,
 	    usbc_alt_mode_before, usbc_alt_mode_after, NULL);
+
+static void *usbc_alt_mode_custom_discovery_setup(void)
+{
+	static struct usbc_alt_mode_custom_discovery_fixture fixture;
+	struct tcpci_partner_data *partner = &fixture.partner;
+	struct tcpci_src_emul_data *src_ext = &fixture.src_ext;
+
+	tcpci_partner_init(partner, PD_REV30);
+	partner->extensions = tcpci_src_emul_init(src_ext, partner, NULL);
+
+	/* Get references for the emulators */
+	fixture.tcpci_emul = EMUL_GET_USBC_BINDING(TEST_PORT, tcpc);
+	fixture.charger_emul = EMUL_GET_USBC_BINDING(TEST_PORT, chg);
+
+	return &fixture;
+}
+
+static void usbc_alt_mode_custom_discovery_before(void *data)
+{
+	/* Set chipset to ON, this will set TCPM to DRP */
+	test_set_chipset_to_s0();
+
+	/* TODO(b/214401892): Check why need to give time TCPM to spin */
+	k_sleep(K_SECONDS(1));
+
+	struct usbc_alt_mode_custom_discovery_fixture *fixture = data;
+
+	/* Re-populate our usual responses in case a test overrode them */
+	add_discovery_responses(&fixture->partner);
+	add_displayport_mode_responses(&fixture->partner);
+	/* Do not connect to the partner to allow the test to override discovery
+	 * responses.
+	 */
+}
+
+static void usbc_alt_mode_custom_discovery_after(void *data)
+{
+	struct usbc_alt_mode_custom_discovery_fixture *fixture = data;
+
+	disconnect_partner_from_port(fixture->tcpci_emul,
+				     fixture->charger_emul);
+}
+
+ZTEST_SUITE(usbc_alt_mode_custom_discovery, drivers_predicate_post_main,
+	    usbc_alt_mode_custom_discovery_setup,
+	    usbc_alt_mode_custom_discovery_before,
+	    usbc_alt_mode_custom_discovery_after, NULL);
 
 static void *usbc_alt_mode_dp_unsupported_setup(void)
 {
@@ -528,7 +615,7 @@ static void usbc_alt_mode_dp_unsupported_after(void *data)
  * When the partner advertises DP mode support but refuses to enter, discovery
  * should still work as if the partner were compliant.
  */
-ZTEST_F(usbc_alt_mode_dp_unsupported, test_verify_discovery)
+ZTEST_F(usbc_alt_mode_dp_unsupported, test_discovery)
 {
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
 		host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);
@@ -568,7 +655,7 @@ ZTEST_F(usbc_alt_mode_dp_unsupported, test_verify_discovery)
  * When the partner advertises DP support but refuses to enter DP mode, the TCPM
  * should try once and then give up.
  */
-ZTEST_F(usbc_alt_mode_dp_unsupported, test_verify_displayport_mode_nonentry)
+ZTEST_F(usbc_alt_mode_dp_unsupported, test_displayport_mode_nonentry)
 {
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_USB_PD_REQUIRE_AP_MODE_ENTRY)) {
 		host_cmd_typec_control_enter_mode(TEST_PORT, TYPEC_MODE_DP);

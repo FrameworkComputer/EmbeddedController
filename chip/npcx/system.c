@@ -1068,6 +1068,8 @@ const char *system_get_chip_name(void)
 		return "NPCX996F";
 	case NPCX993F_CHIP_ID:
 		return "NPCX993F";
+	case NPCX99FP_CHIP_ID:
+		return "NPCX99FP";
 #endif
 	default:
 		*p = system_to_hex(chip_id >> 4);

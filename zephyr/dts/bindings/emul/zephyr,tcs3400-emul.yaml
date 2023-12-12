@@ -11,7 +11,6 @@ include: base.yaml
 properties:
   device-id:
     type: string
-    required: false
     enum:
       - TCS340015_DEVICE_ID
       - TCS340037_DEVICE_ID
@@ -20,7 +19,6 @@ properties:
 
   revision:
     type: int
-    required: false
     default: 0
     description: Wafer die revision level that is set in the register.
 

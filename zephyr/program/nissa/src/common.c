@@ -64,7 +64,11 @@ int pd_check_vconn_swap(int port)
  */
 __override uint8_t board_get_charger_chip_count(void)
 {
+#ifdef CONFIG_PLATFORM_EC_CHARGER_SINGLE_CHIP
+	return CHARGER_NUM;
+#else
 	return board_get_usb_pd_port_count();
+#endif /* CONFIG_PLATFORM_EC_CHARGER_SINGLE_CHIP */
 }
 
 __override void ocpc_get_pid_constants(int *kp, int *kp_div, int *ki,
@@ -123,14 +127,27 @@ __override int pd_is_valid_input_voltage(int mv)
 }
 #endif
 
+#ifdef CONFIG_SOC_IT8XXX2
+static void it8xxx2_i2c_swap_default(void)
+{
+	/* Channel A and B are located at SMCLK0/SMDAT0 and SMCLK1/SMDAT1. */
+	IT8XXX2_SMB_SMB01CHS = 0x10;
+	/* Channel C and D are located at SMCLK2/SMDAT2 and SMCLK3/SMDAT3. */
+	IT8XXX2_SMB_SMB23CHS = 0x32;
+}
+DECLARE_HOOK(HOOK_SYSJUMP, it8xxx2_i2c_swap_default, HOOK_PRIO_DEFAULT);
+#endif /* CONFIG_SOC_IT8XXX2 */
+
 /* Trigger shutdown by enabling the Z-sleep circuit */
 __override void board_hibernate_late(void)
 {
+#ifndef CONFIG_PLATFORM_EC_HIBERNATE_PSL
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_slp_z), 1);
 	/*
 	 * The system should hibernate, but there may be
 	 * a small delay, so return.
 	 */
+#endif
 }
 
 #ifdef CONFIG_OCPC
@@ -143,3 +160,21 @@ __override void board_ocpc_init(struct ocpc_data *ocpc)
 	}
 }
 #endif
+
+int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
+{
+	/*
+	 * AP tunneling to I2C is default-forbidden, but allowed for
+	 * type-C ports because these can be used to update TCPC or retimer
+	 * firmware. AP firmware separately sends a command to block tunneling
+	 * to these ports after it's done updating chips.
+	 */
+	return false
+#if DT_NODE_EXISTS(DT_NODELABEL(tcpc_port0))
+	       || (cmd_desc->port == I2C_PORT_BY_DEV(DT_NODELABEL(tcpc_port0)))
+#endif
+#if DT_NODE_EXISTS(DT_NODELABEL(tcpc_port1))
+	       || (cmd_desc->port == I2C_PORT_BY_DEV(DT_NODELABEL(tcpc_port1)))
+#endif
+		;
+}

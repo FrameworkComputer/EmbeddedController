@@ -24,6 +24,7 @@ CFLAGS = \
         -Wredundant-decls \
         -Wmissing-declarations
 
+CFLAGS += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
 CFLAGS += -I../../include -I${MPSSE_DIR} -I${PLATFORM2}
 
 CFLAGS += $(shell pkg-config --cflags libusb-1.0 libftdi1)

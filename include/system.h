@@ -23,6 +23,12 @@
 
 #include <stdnoreturn.h>
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 31
+
 #ifdef CONFIG_ZEPHYR
 #ifdef CONFIG_CPU_CORTEX_M
 /*
@@ -125,6 +131,20 @@ void system_encode_save_flags(int flags, uint32_t *save_flags);
  * @return Reset flags (EC_RESET_FLAG_*), or 0 if the cause is unknown.
  */
 uint32_t system_get_reset_flags(void);
+
+/**
+ * Set the reboot command to be executed on shutdown.
+ *
+ * @param p: Pointer to a reboot command to be executed.
+ */
+void system_set_reboot_at_shutdown(const struct ec_params_reboot_ec *p);
+
+/**
+ * Get the reboot command to be executed on shutdown.
+ *
+ * @return Pointer to a reboot command to be executed.
+ */
+const struct ec_params_reboot_ec *system_get_reboot_at_shutdown(void);
 
 /**
  * Set reset flags.

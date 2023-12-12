@@ -1,0 +1,89 @@
+/* Copyright 2023 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/st/stm32.dtsi>
+
+&iwdg {
+	status = "okay";
+};
+
+&timers9 {
+	/*
+	 * The counter has 16 bits. TIMPRE bit in RCC_DCKCFGR is 0 by default.
+	 * On Dragonclaw board APB2 prescaler is set to 2. In this case APB2
+	 * clock is 48Mhz, but TIM9 input clock is doubled, because TIMPRE=0
+	 * and APB2 prescaler > 1. Effectively TIM9 is clocked with 96Mhz clock.
+	 * Setting prescaler to 16384 will give about 11.2s maximum timeout.
+	 */
+	st,prescaler = <0x4000>;
+	status = "okay";
+	wdg_helper_counter: counter {
+		status = "okay";
+	};
+};
+
+&wdg_helper {
+	counter = <&wdg_helper_counter>;
+	status = "okay";
+};
+
+&dma1 {
+	status = "okay";
+};
+
+&dma2 {
+	status = "okay";
+};
+
+&rng {
+	status = "okay";
+};
+
+&usart1 {
+	pinctrl-0 = <&usart1_tx_pa9 &usart1_rx_pa10>;
+	pinctrl-names = "default";
+	current-speed = <3000000>;
+	dmas = <&dma2 7 4 0x38440 0x03>,
+		<&dma2 2 4 0x38480 0x03>;
+	dma-names = "tx", "rx";
+	status = "okay";
+};
+
+&usart2 {
+	dmas = <&dma1 6 4 0x08440 0x03>,
+		<&dma1 5 4 0x08480 0x03>;
+	dma-names = "tx", "rx";
+};
+
+&spi1 {
+	/* Change the compatible string to use the Host Command version of the
+	 * STM32 SPI driver
+	 */
+	compatible = "st,stm32-spi-host-cmd";
+	status = "okay";
+
+	dmas = <&dma2 3 3 0x38440 0x03>,
+		<&dma2 0 3 0x38480 0x03>;
+	dma-names = "tx", "rx";
+	/* This field is used to point at our CS pin */
+	cs-gpios = <&gpioa 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+};
+
+&spi2 {
+	/*
+	 * Exclude spi2_nss_pb12 from pinctrl-0. Without CS pin the driver will
+	 * disable hardware CS management. This is necessary because deasserting
+	 * CS pin clears command context in the sensor.
+	 */
+	pinctrl-0 = <&spi2_sck_pb13 &spi2_miso_pb14
+		     &spi2_mosi_pb15>;
+
+	dmas = <&dma1 4 0 0x38440 0x03>,
+		<&dma1 3 0 0x38480 0x03>;
+	dma-names = "tx", "rx";
+
+	/* Use PB12 pin as a CS for the device (managed by SPI controller) */
+	cs-gpios = <&gpiob 12 GPIO_ACTIVE_LOW>;
+};

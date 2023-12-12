@@ -1,9 +1,9 @@
-#!/bin/sh
+#!/bin/bash
 #
 # This attempts to build and install the i2c-pseudo Linux kernel module.
 # Installs a udev rule making i2c-pseudo devices read-write by users in plugdev.
 #
-# Copyright 2022 The Chromium OS Authors. All rights reserved.
+# Copyright 2018 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
@@ -16,12 +16,13 @@ if getent group plugdev > /dev/null; then
     || echo 1>&2 "NOTICE: Failed to copy udev rules file."
 fi
 
-if which dkms >/dev/null
-then
+if which dkms >/dev/null; then
   # Install with DKMS
+  package_version="$(. dkms.conf ; echo "$PACKAGE_VERSION")"
   sudo dkms add ./
-  sudo dkms build i2c-pseudo/1
-  sudo dkms install i2c-pseudo/1
+  sudo dkms build i2c-pseudo/"$package_version" --force
+  sudo dkms install i2c-pseudo/"$package_version" --force
+  sudo rmmod i2c-pseudo &> /dev/null || true
   sudo modprobe i2c-pseudo
   echo "SUCCESS: installed i2c-pseudo module with DKMS and loaded"
 else
@@ -34,6 +35,7 @@ else
   if [ "$ret" -eq 0 ]; then
     make clean
     sudo depmod -a
+    sudo rmmod i2c-pseudo &> /dev/null || true
     sudo modprobe i2c-pseudo
     echo "SUCCESS: installed and loaded i2c-pseudo module"
   else
@@ -42,7 +44,8 @@ else
     echo 1>&2 "Will still attempt to load the module, using insmod instead of "\
   "modprobe."
     ret=0
-    sudo insmod i2c-pseudo.ko || ret="$?"
+    sudo rmmod i2c-pseudo &> /dev/null || true
+    sudo insmod drivers/i2c/i2c-pseudo.ko || ret="$?"
     if [ "$ret" -ne 0 ]; then
       make clean
       exit "$ret"

@@ -7,6 +7,13 @@
 /* Boringssl headers need to be included before extern "C" section. */
 #include "openssl/mem.h"
 
+#ifdef CONFIG_ZEPHYR
+#include <zephyr/shell/shell.h>
+#endif
+
+#include <array>
+#include <variant>
+
 extern "C" {
 #include "atomic.h"
 #include "clock.h"
@@ -26,11 +33,12 @@ extern "C" {
 #include "watchdog.h"
 }
 
-#include "fpsensor.h"
-#include "fpsensor_crypto.h"
-#include "fpsensor_detect.h"
-#include "fpsensor_state.h"
-#include "fpsensor_utils.h"
+#include "fpsensor/fpsensor.h"
+#include "fpsensor/fpsensor_crypto.h"
+#include "fpsensor/fpsensor_detect.h"
+#include "fpsensor/fpsensor_state.h"
+#include "fpsensor/fpsensor_template_state.h"
+#include "fpsensor/fpsensor_utils.h"
 #include "scoped_fast_cpu.h"
 
 #if !defined(CONFIG_RNG)
@@ -126,6 +134,8 @@ static uint32_t fp_process_enroll(void)
 			template_newly_enrolled = templ_valid;
 			fp_enable_positive_match_secret(
 				templ_valid, &positive_match_secret_state);
+			fp_init_decrypted_template_state_with_user_id(
+				templ_valid);
 			templ_valid++;
 		}
 		sensor_mode &= ~FP_MODE_ENROLL_SESSION;
@@ -133,6 +143,27 @@ static uint32_t fp_process_enroll(void)
 	}
 	return EC_MKBP_FP_ENROLL | EC_MKBP_FP_ERRCODE(res) |
 	       (percent << EC_MKBP_FP_ENROLL_PROGRESS_OFFSET);
+}
+
+static bool authenticate_fp_match_state(void)
+{
+	/* The rate limit is only meanful for the nonce context, and we don't
+	 * have rate limit for the legacy FP user unlock flow. */
+	if (!(fp_encryption_status & FP_CONTEXT_STATUS_NONCE_CONTEXT_SET)) {
+		return true;
+	}
+
+	if (!(fp_encryption_status & FP_CONTEXT_TEMPLATE_UNLOCKED_SET)) {
+		CPRINTS("Cannot process match without unlock template");
+		return false;
+	}
+
+	if (fp_encryption_status & FP_CONTEXT_STATUS_MATCH_PROCESSED_SET) {
+		CPRINTS("Cannot process match twice in nonce context");
+		return false;
+	}
+
+	return true;
 }
 
 static uint32_t fp_process_match(void)
@@ -144,6 +175,20 @@ static uint32_t fp_process_match(void)
 
 	/* match finger against current templates */
 	fp_disable_positive_match_secret(&positive_match_secret_state);
+
+	if (!authenticate_fp_match_state()) {
+		res = EC_MKBP_FP_ERR_MATCH_NO_AUTH_FAIL;
+		return EC_MKBP_FP_MATCH | EC_MKBP_FP_ERRCODE(res) |
+		       ((fgr << EC_MKBP_FP_MATCH_IDX_OFFSET) &
+			EC_MKBP_FP_MATCH_IDX_MASK);
+	}
+
+	/* The match processed state will be used to prevent the template unlock
+	 * operation after match processed in a nonce context. If we don't do
+	 * that, the attacker can unlock template multiple times in a single
+	 * nonce context. */
+	fp_encryption_status |= FP_CONTEXT_STATUS_MATCH_PROCESSED_SET;
+
 	CPRINTS("Matching/%d ...", templ_valid);
 	if (templ_valid) {
 		res = fp_finger_match(fp_template[0], templ_valid, fp_buffer,
@@ -194,12 +239,13 @@ static void fp_process_finger(void)
 	int res;
 
 	CPRINTS("Capturing ...");
-	res = fp_sensor_acquire_image_with_mode(fp_buffer,
-						FP_CAPTURE_TYPE(sensor_mode));
+	res = fp_acquire_image_with_mode(fp_buffer,
+					 FP_CAPTURE_TYPE(sensor_mode));
 	capture_time_us = time_since32(t0);
 	if (!res) {
 		uint32_t evt = EC_MKBP_FP_IMAGE_READY;
 
+#ifndef CONFIG_ZEPHYR
 		/* Clean up SPI before clocking up to avoid hang on the dsb
 		 * in dma_go. Ignore the return value to let the WDT reboot
 		 * the MCU (and avoid getting trapped in the loop).
@@ -207,6 +253,7 @@ static void fp_process_finger(void)
 		res = spi_transaction_flush(&spi_devices[0]);
 		if (res)
 			CPRINTS("Failed to flush SPI: 0x%x", res);
+#endif
 
 		/* we need CPU power to do the computations */
 		ScopedFastCpu fast_cpu;
@@ -259,14 +306,14 @@ extern "C" void fp_task(void)
 						 FP_MODE_ENROLL_SESSION;
 			}
 			if (is_test_capture(mode)) {
-				fp_sensor_acquire_image_with_mode(
+				fp_acquire_image_with_mode(
 					fp_buffer, FP_CAPTURE_TYPE(mode));
 				sensor_mode &= ~FP_MODE_CAPTURE;
 				send_mkbp_event(EC_MKBP_FP_IMAGE_READY);
 				continue;
 			} else if (sensor_mode & FP_MODE_ANY_DETECT_FINGER) {
 				/* wait for a finger on the sensor */
-				fp_sensor_configure_detect();
+				fp_configure_detect();
 			}
 			if (sensor_mode & FP_MODE_DEEPSLEEP)
 				/* Shutdown the sensor */
@@ -277,7 +324,16 @@ extern "C" void fp_task(void)
 			else
 				timeout_us = -1;
 			if (mode & FP_MODE_ANY_WAIT_IRQ) {
+				/*
+				 * FP_MODE_ANY_WAIT_IRQ is a subset of
+				 * FP_MODE_ANY_DETECT_FINGER. In Zephyr FPMCU
+				 * interrupts are enabled by the sensor driver
+				 * when configuring finger detection.
+				 */
+#ifndef CONFIG_ZEPHYR
+				gpio_clear_pending_interrupt(GPIO_FPS_INT);
 				gpio_enable_interrupt(GPIO_FPS_INT);
+#endif
 			} else if (mode & FP_MODE_RESET_SENSOR) {
 				fp_reset_and_clear_context();
 				sensor_mode &= ~FP_MODE_RESET_SENSOR;
@@ -292,7 +348,7 @@ extern "C" void fp_task(void)
 			timestamps_invalid = 0;
 			gpio_disable_interrupt(GPIO_FPS_INT);
 			if (sensor_mode & FP_MODE_ANY_DETECT_FINGER) {
-				st = fp_sensor_finger_status();
+				st = fp_finger_status();
 				if (st == FINGER_PRESENT &&
 				    sensor_mode & FP_MODE_FINGER_DOWN) {
 					CPRINTS("Finger!");
@@ -312,9 +368,26 @@ extern "C" void fp_task(void)
 				fp_process_finger();
 
 			if (sensor_mode & FP_MODE_ANY_WAIT_IRQ) {
-				fp_sensor_configure_detect();
+				fp_configure_detect();
+
+				/* In Zephyr FPMCU interrupts are enabled by the
+				 * sensor driver when configuring finger
+				 * detection.
+				 */
+#ifndef CONFIG_ZEPHYR
+				gpio_clear_pending_interrupt(GPIO_FPS_INT);
 				gpio_enable_interrupt(GPIO_FPS_INT);
+#endif
 			} else {
+				/*
+				 * In Zephyr FPMCU interrupts are managed by
+				 * the driver.
+				 */
+#ifndef CONFIG_ZEPHYR
+				if (evt & (TASK_EVENT_SENSOR_IRQ))
+					gpio_clear_pending_interrupt(
+						GPIO_FPS_INT);
+#endif
 				fp_sensor_low_power();
 			}
 		}
@@ -327,40 +400,6 @@ extern "C" void fp_task(void)
 	}
 #endif /* !HAVE_FP_PRIVATE_DRIVER */
 }
-
-static enum ec_status fp_command_passthru(struct host_cmd_handler_args *args)
-{
-	const auto *params =
-		static_cast<const ec_params_fp_passthru *>(args->params);
-	auto *out = static_cast<uint8_t *>(args->response);
-	int rc;
-	enum ec_status ret = EC_RES_SUCCESS;
-
-	if (system_is_locked())
-		return EC_RES_ACCESS_DENIED;
-
-	if (params->len >
-		    args->params_size +
-			    offsetof(struct ec_params_fp_passthru, data) ||
-	    params->len > args->response_max)
-		return EC_RES_INVALID_PARAM;
-
-	rc = spi_transaction_async(&spi_devices[0], params->data, params->len,
-				   out, SPI_READBACK_ALL);
-	if (params->flags & EC_FP_FLAG_NOT_COMPLETE)
-		rc |= spi_transaction_wait(&spi_devices[0]);
-	else
-		rc |= spi_transaction_flush(&spi_devices[0]);
-
-	if (rc == EC_ERROR_TIMEOUT)
-		ret = EC_RES_TIMEOUT;
-	else if (rc)
-		ret = EC_RES_ERROR;
-
-	args->response_size = params->len;
-	return ret;
-}
-DECLARE_HOST_COMMAND(EC_CMD_FP_PASSTHRU, fp_command_passthru, EC_VER_MASK(0));
 
 static enum ec_status fp_command_info(struct host_cmd_handler_args *args)
 {
@@ -629,24 +668,36 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 					      sizeof(fp_positive_match_salt[0]);
 		}
 
-		ret = derive_encryption_key(key, enc_info->encryption_salt);
-		if (ret != EC_SUCCESS) {
-			CPRINTS("fgr%d: Failed to derive key", idx);
-			return EC_RES_UNAVAILABLE;
+		if (fp_encryption_status & FP_CONTEXT_USER_ID_SET) {
+			ret = derive_encryption_key(key,
+						    enc_info->encryption_salt);
+			if (ret != EC_SUCCESS) {
+				CPRINTS("fgr%d: Failed to derive key", idx);
+				return EC_RES_UNAVAILABLE;
+			}
+
+			/* Decrypt the secret blob in-place. */
+			ret = aes_gcm_decrypt(
+				key, SBP_ENC_KEY_LEN, encrypted_template,
+				encrypted_template, encrypted_blob_size,
+				enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
+				enc_info->tag, FP_CONTEXT_TAG_BYTES);
+			OPENSSL_cleanse(key, sizeof(key));
+			if (ret != EC_SUCCESS) {
+				CPRINTS("fgr%d: Failed to decipher template",
+					idx);
+				/* Don't leave bad data in the template buffer
+				 */
+				fp_clear_finger_context(idx);
+				return EC_RES_UNAVAILABLE;
+			}
+			fp_init_decrypted_template_state_with_user_id(idx);
+		} else {
+			template_states[idx] = fp_encrypted_template_state{
+				.enc_metadata = *enc_info,
+			};
 		}
 
-		/* Decrypt the secret blob in-place. */
-		ret = aes_gcm_decrypt(key, SBP_ENC_KEY_LEN, encrypted_template,
-				      encrypted_template, encrypted_blob_size,
-				      enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
-				      enc_info->tag, FP_CONTEXT_TAG_BYTES);
-		OPENSSL_cleanse(key, sizeof(key));
-		if (ret != EC_SUCCESS) {
-			CPRINTS("fgr%d: Failed to decipher template", idx);
-			/* Don't leave bad data in the template buffer */
-			fp_clear_finger_context(idx);
-			return EC_RES_UNAVAILABLE;
-		}
 		memcpy(fp_template[idx], encrypted_template,
 		       sizeof(fp_template[0]));
 		if (template_needs_validation_value(enc_info)) {

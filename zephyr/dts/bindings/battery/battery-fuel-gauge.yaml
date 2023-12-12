@@ -18,11 +18,9 @@ properties:
       DeviceName (0x21), which is used to help
       uniquely identify the type of battery.
     type: string
-  ship_mode_wb_support:
+  flags:
     description: |
-       Write Block support. If this is true, then i2c write block command
-       will be used instead of a 16-bit write
-       Value must be either 0 or 1.
+      Fuel gauge flags. e.g FG_FLAG_SLEEP_MODE
     type: int
   ship_mode_reg_addr:
     description: |
@@ -32,11 +30,6 @@ properties:
     description: |
        Values written to register to enable ship mode.
     type: array
-  sleep_mode_support:
-    description: |
-       Defines if battery support fuel gauge sleep command.
-       Value must be either 0 or 1.
-    type: int
   sleep_mode_reg_addr:
     description: |
        Defines address where command will be sent to go into sleep mode.
@@ -44,23 +37,6 @@ properties:
   sleep_mode_reg_data:
     description: |
        Defines value which will be sent to register to go into sleep mode.
-    type: int
-  fet_mfgacc_support:
-    description: |
-       Defines if battery supports manufacturer access command.
-       If enabled, FET status is read using the ManufacturerBlockAccess (0x44)
-       to read the OperationStatus (0x54) register.
-       The fet_reg_mask and fet_disconnect_val properties must still be
-       defined.
-       Value must be either 0 or 1.
-    type: int
-  fet_mfgacc_smb_block:
-    description: |
-       Battery supports manufacturer access command.
-       If enabled, Write command by the SMB block protocol.
-       FET status is read using the ManufacturerBlockAccess (0x44)
-       to read the OperationStatus (0x54) register.
-       Value must be either 0 or 1.
     type: int
   fet_reg_addr:
     description: |

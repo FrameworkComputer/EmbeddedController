@@ -1,5 +1,4 @@
 #!/usr/bin/env vpython3
-
 # Copyright 2023 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -35,6 +34,42 @@
 # wheel: <
 #   name: "infra/python/wheels/lxml/${vpython_platform}"
 #   version: "version:4.6.3"
+# >
+# wheel: <
+#   name: "infra/python/wheels/west-py3"
+#   version: "version:1.1.0"
+# >
+# wheel: <
+#   name: "infra/python/wheels/colorama-py2_py3"
+#   version: "version:0.4.1"
+# >
+# wheel: <
+#   name: "infra/python/wheels/packaging-py3"
+#   version: "version:23.0"
+# >
+# wheel: <
+#   name: "infra/python/wheels/pykwalify-py2_py3"
+#   version: "version:1.8.0"
+# >
+# wheel: <
+#   name: "infra/python/wheels/ruamel_yaml-py3"
+#   version: "version:0.17.16"
+# >
+# wheel: <
+#   name: "infra/python/wheels/python-dateutil-py2_py3"
+#   version: "version:2.8.1"
+# >
+# wheel: <
+#   name: "infra/python/wheels/docopt-py2_py3"
+#   version: "version:0.6.2"
+# >
+# wheel: <
+#   name: "infra/python/wheels/six-py2_py3"
+#   version: "version:1.16.0"
+# >
+# wheel: <
+#   name: "infra/python/wheels/ruamel_yaml_clib/${vpython_platform}"
+#   version: "version:0.2.6"
 # >
 # [VPYTHON:END]
 
@@ -125,6 +160,8 @@ def main(argv):
             "--no-case-output",
             "-m",
             "YAMLLint",
+            "-m",
+            "DevicetreeBindings",
             "-c",
             commit_range,
         ]

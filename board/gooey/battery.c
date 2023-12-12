@@ -31,88 +31,94 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* SMP L18D3PG1 Battery Information */
 	[BATTERY_SMP] = {
-		.fuel_gauge = {
-			.manuf_name = "SMP",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "SMP",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0x0018,
+					.disconnect_val = 0x0000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x00,
-				.reg_mask = 0x0018,
-				.disconnect_val = 0x0000,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= 13050, /* mV */
-			.voltage_normal		= 11250, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 256,	 /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
+			.batt_info = {
+				.voltage_max		= 13050, /* mV */
+				.voltage_normal		= 11250, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 256,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
+			},
 		},
 	},
 
 	/* LGC L17L3PB0 Battery Information */
 	[BATTERY_LGC] = {
-		.fuel_gauge = {
-			.manuf_name = "LGC",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "LGC",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0x0018,
+					.disconnect_val = 0x0000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x00,
-				.reg_mask = 0x0018,
-				.disconnect_val = 0x0000,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= 13050, /* mV */
-			.voltage_normal		= 11400, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 256,	 /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 73,
+			.batt_info = {
+				.voltage_max		= 13050, /* mV */
+				.voltage_normal		= 11400, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 256,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 73,
+			},
 		},
 	},
 
 	/* Sunwoda L17M3PB0 Battery Information */
 	[BATTERY_SUNWODA] = {
-		.fuel_gauge = {
-			.manuf_name = "SUNWODA",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "SUNWODA",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0x0018,
+					.disconnect_val = 0x0000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x00,
-				.reg_mask = 0x0018,
-				.disconnect_val = 0x0000,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= 13050, /* mV */
-			.voltage_normal		= 11250, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 186,	 /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
+			.batt_info = {
+				.voltage_max		= 13050, /* mV */
+				.voltage_normal		= 11250, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 186,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
+			},
 		},
 	},
 };

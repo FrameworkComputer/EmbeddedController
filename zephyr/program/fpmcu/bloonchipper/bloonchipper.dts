@@ -1,0 +1,114 @@
+/* Copyright 2023 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "soc.dtsi"
+#include "gpio.dtsi"
+#include "rwsig.dtsi"
+
+/ {
+	chosen {
+		cros-fp,fingerprint-sensor = &fp_sensor;
+		zephyr,host-cmd-spi-backend = &spi1;
+		zephyr,host-cmd-uart-backend = &usart1;
+	};
+
+	named-bbram-regions {
+		compatible = "named-bbram-regions";
+
+		scratchpad {
+			offset = <0x00>;
+			size = <0x02>;
+		};
+		saved-reset-flags {
+			offset = <0x02>;
+			size = <0x04>;
+		};
+		saved-panic-reason {
+			offset = <0x06>;
+			size = <0x02>;
+		};
+		saved-panic-info {
+			offset = <0x08>;
+			size = <0x02>;
+		};
+		saved-panic-exception {
+			offset = <0x0a>;
+			size = <0x02>;
+		};
+		saved-panic-flags {
+			offset = <0x0c>;
+			size = <0x02>;
+		};
+	};
+
+	binman {
+		/* First 5 sectors (4 x 16KB, 1 x 64KB) used for RO */
+		wp-ro {
+			offset = <0x0>;
+			size = <0x20000>;
+			ec-ro {
+				pad-byte = <0xff>;
+			};
+		};
+
+		/* Two sectors used for rollback (128KB each) */
+		rollback0 {
+			offset = <0x20000>;
+			size = <0x20000>;
+			type = "blob";
+			filename = "../build-rw/rollback_initial_data.bin";
+		};
+
+		rollback1 {
+			offset = <0x40000>;
+			size = <0x20000>;
+			type = "blob";
+			filename = "../build-rw/rollback_initial_data.bin";
+		};
+
+		/* Remaining 5 sectors (128KB each) used for RW */
+		ec-rw {
+			offset = <0x60000>;
+			size = <0xa0000>;
+		};
+		pad-byte = <0xff>;
+	};
+};
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		/* Sixth sector is used as first rollback sector. */
+		rollback0: partition@20000 {
+			label = "rollback0";
+			reg = <0x20000 DT_SIZE_K(128)>;
+		};
+
+		/* Seventh sector is used as second rollback sector. */
+		rollback1: partition@40000 {
+			label = "rollback1";
+			reg = <0x40000 DT_SIZE_K(128)>;
+		};
+	};
+};
+
+&spi2 {
+	fp_sensor: fpc1025@0 {
+		compatible = "fpc,fpc1025";
+		reg = <0>;
+		spi-max-frequency = <4000000>;
+
+		width = <160>;
+		height = <160>;
+		bits-per-pixel = <8>;
+		v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+
+		irq-gpios = <&gpioa 0 (GPIO_ACTIVE_HIGH | GPIO_PULL_DOWN)>;
+		reset-gpios = <&gpiob 10 GPIO_ACTIVE_LOW>;
+	};
+};

@@ -258,6 +258,18 @@ static int test_sim_button_press_both(void)
 	return EC_SUCCESS;
 }
 
+static int test_button_init(void)
+{
+	TEST_ASSERT(button_get_boot_button() == 0);
+
+	gpio_set_level(button_vol_down->gpio, 0);
+	msleep(100);
+	button_init();
+	TEST_ASSERT(button_get_boot_button() == BIT(BUTTON_VOLUME_DOWN));
+
+	return EC_SUCCESS;
+}
+
 static void button_test_init(void)
 {
 	int i;
@@ -277,6 +289,9 @@ void run_test(int argc, const char **argv)
 	test_reset();
 
 	button_init();
+
+	button_test_init();
+	RUN_TEST(test_button_init);
 
 	button_test_init();
 	RUN_TEST(test_button_press);

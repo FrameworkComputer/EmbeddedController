@@ -149,12 +149,30 @@ config EMUL_CROS_FLASH
 	help
 	  This option enables the flash emulator for testing.
 
+config EMUL_FPC1025
+	bool "FPC1025 fingerprint sensor emulator"
+	depends on ZTEST && DT_HAS_FPC_FPC1025_ENABLED
+	default y
+	help
+	  This option enables the FPC1025 fingerprint sensor emulator.
+	  It supports only basic commands (get hardware id, enter low power
+	  mode) that can be issued by the public driver (without FPC private
+	  library)
+
 config EMUL_RTC
 	bool "Emulated RTC driver for Zephyr shim"
 	default y
 	depends on DT_HAS_CROS_EC_RTC_EMUL_ENABLED
 	help
 	  This options enables the RTC emulator for testing.
+
+config EMUL_RT1739
+	bool "RT1739 PPC emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_RT1739_EMUL_ENABLED
+	help
+	  Enable the RT1739 PPC emulator. This driver use emulated I2C bus.
+	  Emulator API is available in zephyr/include/emul/emul_rt1739.h.
 
 config EMUL_RT9490
 	bool "Rt9490 charger emulator"
@@ -172,6 +190,14 @@ config PWM_MOCK
 	help
 	  Enable the PWM mock. This driver is a pure mock and does nothing by
 	  default.
+
+config TACH_MOCK
+	bool "Mock implementation of a tachometer"
+	default y
+	depends on DT_HAS_CROS_TACH_MOCK_ENABLED
+	help
+	  Enable the tachometer mock.  This driver does nothing by default but
+	  provides an interface to set the tachometer reading value as needed.
 
 config VCMP_MOCK
 	bool "Generic voltage comparator device mock implementation"
@@ -221,6 +247,7 @@ config EMUL_ICM42607
 rsource "Kconfig.ln9310"
 rsource "Kconfig.lis2dw12"
 rsource "Kconfig.i2c_mock"
+rsource "Kconfig.gpio_controller_mock"
 rsource "Kconfig.isl923x"
 rsource "Kconfig.clock_control"
 rsource "Kconfig.sm5803"

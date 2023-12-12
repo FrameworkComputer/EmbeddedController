@@ -145,15 +145,6 @@ static void mkbp_report_switch_on_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, mkbp_report_switch_on_init, HOOK_PRIO_LAST);
 
-#ifdef CONFIG_EMULATED_SYSRQ
-void host_send_sysrq(uint8_t key)
-{
-	uint32_t value = key;
-
-	mkbp_fifo_add(EC_MKBP_EVENT_SYSRQ, (const uint8_t *)&value);
-}
-#endif
-
 /*****************************************************************************/
 /* Events */
 

@@ -3,6 +3,12 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #include "common.h"
 #include "ec_tasks.h"
 #include "host_command.h"
@@ -30,7 +36,7 @@ CROS_EC_TASK_LIST
 /* Statically declare all threads here */
 #define CROS_EC_TASK(name, entry, parameter, stack_size, priority)      \
 	K_THREAD_DEFINE(name, stack_size, entry, parameter, NULL, NULL, \
-			EC_TASK_PRIORITY(priority), 0, -1);
+			EC_TASK_PRIORITY(priority), 0, SYS_FOREVER_MS);
 #define TASK_TEST(name, e, p, size) CROS_EC_TASK(name, e, p, size)
 CROS_EC_TASK_LIST
 #undef CROS_EC_TASK
@@ -107,10 +113,17 @@ k_tid_t get_main_thread(void)
 test_mockable k_tid_t get_hostcmd_thread(void)
 {
 #ifdef HAS_TASK_HOSTCMD
-	if (IS_ENABLED(CONFIG_TASK_HOSTCMD_THREAD_MAIN)) {
-		return get_main_thread();
-	}
+#ifdef CONFIG_TASK_HOSTCMD_THREAD_MAIN
+	return get_main_thread();
+#else
+#ifndef CONFIG_EC_HOST_CMD
 	return task_to_k_tid[TASK_ID_HOSTCMD];
+#else
+	const struct ec_host_cmd *hc = ec_host_cmd_get_hc();
+
+	return (k_tid_t)&hc->thread;
+#endif /* CONFIG_EC_HOST_CMD */
+#endif /* CONFIG_TASK_HOSTCMD_THREAD_MAIN */
 #endif /* HAS_TASK_HOSTCMD */
 	__ASSERT(false, "HOSTCMD task is not enabled");
 	return NULL;
@@ -433,6 +446,11 @@ void task_clear_pending_irq(int irq)
 void task_enable_irq(int irq)
 {
 	arch_irq_enable(irq);
+}
+
+void task_disable_irq(int irq)
+{
+	arch_irq_disable(irq);
 }
 
 inline bool in_interrupt_context(void)

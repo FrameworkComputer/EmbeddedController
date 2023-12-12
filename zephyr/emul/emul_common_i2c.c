@@ -284,7 +284,7 @@ int i2c_common_emul_transfer_workhorse(const struct emul *target,
 		return -EIO;
 	}
 
-	i2c_dump_msgs(cfg->dev_label, msgs, num_msgs, addr);
+	i2c_dump_msgs(target->dev, msgs, num_msgs, addr);
 
 	for (; num_msgs > 0; num_msgs--, msgs++) {
 		read = msgs->flags & I2C_MSG_READ;

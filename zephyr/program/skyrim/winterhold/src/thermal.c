@@ -19,149 +19,98 @@
 #define TEMP_SOC TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_soc))
 #define TEMP_CPU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_cpu))
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_DESKTOP_LID_OPEN \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(43), \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(97), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(98), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(39), \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(87), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(88), \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_desktop_lid_open =
-	THERMAL_DESKTOP_LID_OPEN;
+static const struct ec_thermal_config thermal_desktop_lid_open = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(43),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(97),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(98),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(39),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(87),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(88),
+	},
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_DESKTOP_LID_CLOSE \
-	{                         \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(43), \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(97), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(98), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(39), \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(87), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(88), \
-		},  \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_desktop_lid_close =
-	THERMAL_DESKTOP_LID_CLOSE;
+static const struct ec_thermal_config thermal_desktop_lid_close = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(43),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(97),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(98),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(39),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(87),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(88),
+	},
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_LAPTOP           \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(42), \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(97), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(98), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(38), \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(87), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(88), \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_laptop =
-	THERMAL_LAPTOP;
+static const struct ec_thermal_config thermal_laptop = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(42),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(97),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(98),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(38),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(87),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(88),
+	},
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define FAN_SOC_DESKTOP_LID_OPEN \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(97), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(98), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(87), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(88), \
-		}, \
-		.temp_fan_off = C_TO_K(55), \
-		.temp_fan_max = C_TO_K(72), \
-	}
-__maybe_unused static const struct ec_thermal_config fan_soc_desktop_lid_open =
-	FAN_SOC_DESKTOP_LID_OPEN;
+static const struct ec_thermal_config fan_soc_desktop_lid_open = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(97),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(98),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(87),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(88),
+	},
+	.temp_fan_off = C_TO_K(55),
+	.temp_fan_max = C_TO_K(72),
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define FAN_SOC_DESKTOP_LID_CLOSE \
-	{                         \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(97), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(98), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(87), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(88), \
-		}, \
-		.temp_fan_off = C_TO_K(55), \
-		.temp_fan_max = C_TO_K(72),  \
-	}
-__maybe_unused static const struct ec_thermal_config fan_soc_desktop_lid_close =
-	FAN_SOC_DESKTOP_LID_CLOSE;
+static const struct ec_thermal_config fan_soc_desktop_lid_close = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(97),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(98),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(87),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(88),
+	},
+	.temp_fan_off = C_TO_K(55),
+	.temp_fan_max = C_TO_K(72),
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define FAN_SOC_LAPTOP           \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(97), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(98), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(87), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(88), \
-		}, \
-		.temp_fan_off = C_TO_K(51), \
-		.temp_fan_max = C_TO_K(68), \
-	}
-__maybe_unused static const struct ec_thermal_config fan_soc_laptop =
-	FAN_SOC_LAPTOP;
+static const struct ec_thermal_config fan_soc_laptop = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(97),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(98),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(87),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(88),
+	},
+	.temp_fan_off = C_TO_K(51),
+	.temp_fan_max = C_TO_K(68),
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define FAN_CPU_DESKTOP_LID_OPEN                                        \
-	{                                                               \
-		.temp_fan_off = C_TO_K(72), .temp_fan_max = C_TO_K(82), \
-	}
-__maybe_unused static const struct ec_thermal_config fan_cpu_desktop_lid_open =
-	FAN_CPU_DESKTOP_LID_OPEN;
+static const struct ec_thermal_config fan_cpu_desktop_lid_open = {
+	.temp_fan_off = C_TO_K(72),
+	.temp_fan_max = C_TO_K(82),
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define FAN_CPU_DESKTOP_LID_CLOSE                                       \
-	{                                                               \
-		.temp_fan_off = C_TO_K(72), .temp_fan_max = C_TO_K(82), \
-	}
-__maybe_unused static const struct ec_thermal_config fan_cpu_desktop_lid_close =
-	FAN_CPU_DESKTOP_LID_CLOSE;
+static const struct ec_thermal_config fan_cpu_desktop_lid_close = {
+	.temp_fan_off = C_TO_K(72),
+	.temp_fan_max = C_TO_K(82),
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define FAN_CPU_LAPTOP                                                  \
-	{                                                               \
-		.temp_fan_off = C_TO_K(68), .temp_fan_max = C_TO_K(78), \
-	}
-__maybe_unused static const struct ec_thermal_config fan_cpu_laptop =
-	FAN_CPU_LAPTOP;
+static const struct ec_thermal_config fan_cpu_laptop = {
+	.temp_fan_off = C_TO_K(68),
+	.temp_fan_max = C_TO_K(78),
+};
 
 static int last_amb_temp = -1;
 

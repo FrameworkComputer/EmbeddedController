@@ -1,6 +1,0 @@
-common:
-  platform_allow: native_posix
-tests:
-  amd_power.default:
-    extra_dtc_overlay_files:
-    - boards/native_posix.overlay

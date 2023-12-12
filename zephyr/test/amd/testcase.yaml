@@ -5,6 +5,20 @@
 common:
   platform_allow: native_posix
 tests:
-  amd.stb_dump:
+  amd.power:
     extra_configs:
-      - CONFIG_TEST_AMD_STB_DUMP=y
+      - CONFIG_PLATFORM_EC_EMULATED_SYSRQ=y
+      - CONFIG_PLATFORM_EC_MKBP_EVENT=y
+      - CONFIG_TEST_AMD_POWER=y
+  amd.power_ro:
+    extra_args:
+      - EXTRA_CFLAGS=-DSECTION_IS_RO
+    extra_configs:
+      - CONFIG_TEST_AMD_POWER=y
+  amd.power_rw:
+    extra_args:
+      - EXTRA_CFLAGS=-DSECTION_IS_RW
+    extra_configs:
+      - CONFIG_PLATFORM_EC_EMULATED_SYSRQ=y
+      - CONFIG_PLATFORM_EC_MKBP_EVENT=y
+      - CONFIG_TEST_AMD_POWER=y

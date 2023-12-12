@@ -108,6 +108,11 @@ extern struct producer_ops const usb_stream_producer_ops;
  *
  * RX_QUEUE and TX_QUEUE are the names of the RX and TX queues that this driver
  * should write to and read from respectively.
+ *
+ * RX_IDX and TX_IDX defined the order in which the OUT(RX) and IN(TX) endpoints
+ * are listed in the interface descriptor.  I most circumstances, the order
+ * makes no difference, but the CMSIS-DAP protocol requires that the OUT
+ * endpoint is the first, and IN is the second.
  */
 /*
  * The following assertions can not be made because they require access to
@@ -121,7 +126,7 @@ extern struct producer_ops const usb_stream_producer_ops;
 #define USB_STREAM_CONFIG_FULL(NAME, INTERFACE, INTERFACE_CLASS,               \
 			       INTERFACE_SUBCLASS, INTERFACE_PROTOCOL,         \
 			       INTERFACE_NAME, ENDPOINT, RX_SIZE, TX_SIZE,     \
-			       RX_QUEUE, TX_QUEUE)                             \
+			       RX_QUEUE, TX_QUEUE, RX_IDX, TX_IDX)             \
                                                                                \
 	BUILD_ASSERT(RX_SIZE <= USB_MAX_PACKET_SIZE);                          \
 	BUILD_ASSERT(TX_SIZE <= USB_MAX_PACKET_SIZE);                          \
@@ -165,7 +170,8 @@ extern struct producer_ops const usb_stream_producer_ops;
 		.bInterfaceProtocol = INTERFACE_PROTOCOL,                      \
 		.iInterface = INTERFACE_NAME,                                  \
 	};                                                                     \
-	const struct usb_endpoint_descriptor USB_EP_DESC(INTERFACE, 0) = {     \
+	const struct usb_endpoint_descriptor USB_EP_DESC(INTERFACE,            \
+							 TX_IDX) = {           \
 		.bLength = USB_DT_ENDPOINT_SIZE,                               \
 		.bDescriptorType = USB_DT_ENDPOINT,                            \
 		.bEndpointAddress = 0x80 | ENDPOINT,                           \
@@ -173,7 +179,8 @@ extern struct producer_ops const usb_stream_producer_ops;
 		.wMaxPacketSize = TX_SIZE,                                     \
 		.bInterval = 10,                                               \
 	};                                                                     \
-	const struct usb_endpoint_descriptor USB_EP_DESC(INTERFACE, 1) = {     \
+	const struct usb_endpoint_descriptor USB_EP_DESC(INTERFACE,            \
+							 RX_IDX) = {           \
 		.bLength = USB_DT_ENDPOINT_SIZE,                               \
 		.bDescriptorType = USB_DT_ENDPOINT,                            \
 		.bEndpointAddress = ENDPOINT,                                  \
@@ -201,12 +208,13 @@ extern struct producer_ops const usb_stream_producer_ops;
 	}
 
 /* This is a short version for declaring Google serial endpoints */
-#define USB_STREAM_CONFIG(NAME, INTERFACE, INTERFACE_NAME, ENDPOINT, RX_SIZE, \
-			  TX_SIZE, RX_QUEUE, TX_QUEUE)                        \
-	USB_STREAM_CONFIG_FULL(NAME, INTERFACE, USB_CLASS_VENDOR_SPEC,        \
-			       USB_SUBCLASS_GOOGLE_SERIAL,                    \
-			       USB_PROTOCOL_GOOGLE_SERIAL, INTERFACE_NAME,    \
-			       ENDPOINT, RX_SIZE, TX_SIZE, RX_QUEUE, TX_QUEUE)
+#define USB_STREAM_CONFIG(NAME, INTERFACE, INTERFACE_NAME, ENDPOINT, RX_SIZE,  \
+			  TX_SIZE, RX_QUEUE, TX_QUEUE)                         \
+	USB_STREAM_CONFIG_FULL(NAME, INTERFACE, USB_CLASS_VENDOR_SPEC,         \
+			       USB_SUBCLASS_GOOGLE_SERIAL,                     \
+			       USB_PROTOCOL_GOOGLE_SERIAL, INTERFACE_NAME,     \
+			       ENDPOINT, RX_SIZE, TX_SIZE, RX_QUEUE, TX_QUEUE, \
+			       1, 0)
 
 /* Declare a utility interface for setting parity/baud. */
 #define USB_USART_IFACE(NAME, INTERFACE, USART_CFG)                      \
@@ -219,14 +227,14 @@ extern struct producer_ops const usb_stream_producer_ops;
 	USB_DECLARE_IFACE(INTERFACE, CONCAT2(NAME, _interface_))
 
 /* This is a medium version for declaring Google serial endpoints */
-#define USB_STREAM_CONFIG_USART_IFACE(NAME, INTERFACE, INTERFACE_NAME,      \
-				      ENDPOINT, RX_SIZE, TX_SIZE, RX_QUEUE, \
-				      TX_QUEUE, USART_CFG)                  \
-	USB_STREAM_CONFIG_FULL(NAME, INTERFACE, USB_CLASS_VENDOR_SPEC,      \
-			       USB_SUBCLASS_GOOGLE_SERIAL,                  \
-			       USB_PROTOCOL_GOOGLE_SERIAL, INTERFACE_NAME,  \
-			       ENDPOINT, RX_SIZE, TX_SIZE, RX_QUEUE,        \
-			       TX_QUEUE);                                   \
+#define USB_STREAM_CONFIG_USART_IFACE(NAME, INTERFACE, INTERFACE_NAME,         \
+				      ENDPOINT, RX_SIZE, TX_SIZE, RX_QUEUE,    \
+				      TX_QUEUE, USART_CFG)                     \
+	USB_STREAM_CONFIG_FULL(NAME, INTERFACE, USB_CLASS_VENDOR_SPEC,         \
+			       USB_SUBCLASS_GOOGLE_SERIAL,                     \
+			       USB_PROTOCOL_GOOGLE_SERIAL, INTERFACE_NAME,     \
+			       ENDPOINT, RX_SIZE, TX_SIZE, RX_QUEUE, TX_QUEUE, \
+			       1, 0);                                          \
 	USB_USART_IFACE(NAME, INTERFACE, USART_CFG)
 
 /*

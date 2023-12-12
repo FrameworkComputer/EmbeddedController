@@ -26,10 +26,23 @@ struct flash_info flash_info = {
 	.write_protect_bank_offset = 0,
 	.write_protect_bank_count = 6,
 };
+#elif defined(CHIP_VARIANT_NPCX9M8S)
+struct flash_info flash_info = {
+	.num_flash_banks = 16,
+	.write_protect_bank_offset = 0,
+	/* Helipilot's CONFIG_RO_SIZE is 128 KB and write protect size is 64 KB,
+	 * so there should be 2 banks
+	 */
+	.write_protect_bank_count = 2,
+};
 #else
 #error "Flash info not defined for this chip. Please add it."
 #endif
 
+/* The Option Bytes are stm32 specific and there is no real analog in
+ * NPCX chip.
+ */
+#ifndef CHIP_NPCX
 test_static int test_lock_option_bytes(void)
 {
 	TEST_EQ(flash_option_bytes_locked(), true, "%d");
@@ -69,6 +82,7 @@ test_static int test_disable_option_bytes(void)
 
 	return EC_SUCCESS;
 }
+#endif
 
 test_static int test_lock_flash_control_register(void)
 {
@@ -123,8 +137,12 @@ void run_test(int argc, const char **argv)
 	ccprintf("Running flash physical test\n");
 	RUN_TEST(test_flash_config);
 
+/* The Helipilot NPCX board does not support option bytes from STM32 chips */
+#ifndef BOARD_HELIPILOT
 	RUN_TEST(test_lock_option_bytes);
 	RUN_TEST(test_disable_option_bytes);
+#endif
+
 	RUN_TEST(test_lock_flash_control_register);
 	RUN_TEST(test_disable_flash_control_register);
 	test_print_result();

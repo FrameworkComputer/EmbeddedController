@@ -4,8 +4,11 @@
  */
 
 #include "motion_sense.h"
+#include "motion_sense_fifo.h"
+#include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
 
+#include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
 extern enum chipset_state_mask sensor_active;
@@ -48,4 +51,27 @@ ZTEST_USER(motion_sense, test_ec_motion_sense_get_ec_config)
 	zassert_equal(motion_sense_get_ec_config(), SENSOR_CONFIG_EC_S3);
 	sensor_active = SENSOR_ACTIVE_S5;
 	zassert_equal(motion_sense_get_ec_config(), SENSOR_CONFIG_EC_S5);
+}
+
+void fifo_stage_unit(struct ec_response_motion_sensor_data *data,
+		     struct motion_sensor_t *sensor, int valid_data);
+/*
+ * Validate that the fifo parsing logic can skip invalid entries.
+ * See b/290725559 for details.
+ */
+ZTEST_USER(motion_sense, test_fifo_data_validation)
+{
+	struct ec_response_motion_sensor_data data;
+
+	/* Insert just one data entry, no timestamp. */
+	data.flags = 0;
+	data.sensor_num = 0;
+
+	fifo_stage_unit(&data, NULL, 0);
+	motion_sense_fifo_commit_data();
+
+	/*
+	 * This test fails if the function above crashes.
+	 * Nothing to do here.
+	 */
 }

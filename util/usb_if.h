@@ -34,8 +34,8 @@ int usb_findit(const char *serialno, uint16_t vid, uint16_t pid,
  * pointer, if provided along with 'allow_less', lets the caller know how many
  * bytes were received.
  */
-int usb_trx(struct usb_endpoint *uep, void *outbuf, int outlen, void *inbuf,
-	    int inlen, int allow_less, size_t *rxed_count);
+int usb_trx(struct usb_endpoint *uep, uint8_t *outbuf, int outlen,
+	    uint8_t *inbuf, int inlen, int allow_less, size_t *rxed_count);
 
 /*
  * This function should be called for graceful tear down of the USB interface

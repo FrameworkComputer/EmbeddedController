@@ -140,6 +140,49 @@
 				value = <1>;
 			};
 		};
+
+		/*
+		 * FW_CONFIG field to change scancode setting for special
+		 * keyboard type.
+		 */
+		kb-type {
+			enum-name = "FW_KB_TYPE";
+			start = <19>;
+			size = <2>;
+
+			kb-type-default {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_TYPE_DEFAULT";
+				value = <0>;
+			};
+			kb-type-ca-fr {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_TYPE_CA_FR";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to enable touch panel power sequence
+		 * control or not.
+		 */
+		touch-en {
+			enum-name = "FW_TOUCH_EN";
+			start = <21>;
+			size = <1>;
+
+			touch-en-disable {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TOUCH_EN_DISABLE";
+				value = <0>;
+			};
+			touch-en-enable {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TOUCH_EN_ENABLE";
+				value = <1>;
+			};
+		};
+
 	};
 	/* Craask-specific ssfc fields. */
 	cbi-ssfc {
@@ -189,6 +232,11 @@
 				compatible = "cros-ec,cbi-ssfc-value";
 				status = "okay";
 				value = <1>;
+			};
+			base_sensor_2: bma422 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <2>;
 			};
 		};
 	};

@@ -8,8 +8,9 @@
 #ifndef __TEST_TEST_CONFIG_H
 #define __TEST_TEST_CONFIG_H
 
-/* Test config flags only apply for test builds */
-#ifdef TEST_BUILD
+#ifndef TEST_BUILD
+#error test_config.h should not be included in non-test build.
+#endif
 
 #ifndef __ASSEMBLER__
 #include <stdint.h>
@@ -39,7 +40,13 @@
 #endif
 
 #ifdef TEST_BATTERY_CONFIG
+#define CONFIG_BATTERY_FUEL_GAUGE
 #define CONFIG_BATTERY_CONFIG_IN_CBI
+enum battery_type {
+	BATTERY_C214,
+	BATTERY_TYPE_COUNT,
+};
+#define CONFIG_FUEL_GAUGE
 #endif
 
 #ifdef TEST_BKLIGHT_LID
@@ -372,12 +379,6 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define I2C_PORT_MASTER 0
 #define I2C_PORT_BATTERY 0
 #define I2C_PORT_CHARGER 0
-#endif
-
-#ifdef TEST_CEC
-#define CONFIG_CEC
-#define CONFIG_MKBP_EVENT
-#define CONFIG_MKBP_USE_GPIO
 #endif
 
 #ifdef TEST_LIGHTBAR
@@ -716,5 +717,8 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #undef CONFIG_PANIC_STRIP_GPR
 #endif
 
-#endif /* TEST_BUILD */
+#ifdef HAVE_PRIVATE
+#include "private_test_config.h"
+#endif /* HAVE_PRIVATE */
+
 #endif /* __TEST_TEST_CONFIG_H */

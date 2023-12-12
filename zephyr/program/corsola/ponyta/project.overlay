@@ -1,0 +1,456 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Corsola program common DTS includes */
+
+#include "../common.dtsi"
+#include "../power_signal.dtsi"
+#include "../usba.dtsi"
+#include "../npcx_adc.dtsi"
+#include "../npcx_gpio.dtsi"
+#include "../npcx_host_interface.dtsi"
+#include "../npcx_i2c.dtsi"
+#include "../npcx_interrupts.dtsi"
+#include "../npcx_keyboard.dtsi"
+#include "../npcx_motionsense.dtsi"
+#include "../npcx_usbc.dtsi"
+#include "../npcx_default_gpio_pinctrl.dtsi"
+#include <dt-bindings/battery.h>
+
+/* Projrect level DTS shared with tests */
+#include "./cbi.dtsi"
+#include "./interrupts.dtsi"
+
+/* board override */
+/ {
+	aliases {
+		/*
+		 * motion sense's <>_INT_EVENT is handled
+		 * by alias. Using the alias, each driver creates
+		 * its own <>_INT_EVENT.
+		 */
+		lsm6dsm-int = &base_accel;
+	};
+
+	named-gpios {
+ 		en_pp5000_usb_a1_vbus: en_pp5000_usb_a1_vbus_x {
+			gpios = <&gpiof 5 GPIO_OUTPUT_LOW>;
+		};
+		usb_a1_fault_odl {
+			gpios = <&gpiof 4 GPIO_INPUT>;
+		};
+	};
+
+	batteries {
+		default_battery: gfl_nb0299-485489 {
+			compatible = "gfl,nb0299-485489", "battery-smart";
+		};
+	};
+
+
+	/* Rotation matrix used by drivers. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		base_rot_ref_lsm6dsm: base-rotation-ref-lsm6dsm {
+			mat33 = <0 1 0
+				 1 0 0
+				 0 0 (-1)>;
+		};
+	};
+
+	/*
+	 * Driver specific data. A driver-specific data can be shared with
+	 * different motion sensors while they are using the same driver.
+	 *
+	 * If a node's compatible starts with "cros-ec,accelgyro-", it is for
+	 * a common structure defined in accelgyro.h.
+	 * e.g) compatible = "cros-ec,accelgyro-als-drv-data" is for
+	 * "struct als_drv_data_t" in accelgyro.h
+	 */
+	motionsense-sensor-data {
+		lis2dw12_data: lis2dw12-drv-data {
+			compatible = "cros-ec,drvdata-lis2dw12";
+			status = "okay";
+		};
+		lsm6dsm_data_accel: lsm6dsm-accel-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dsm";
+			status = "okay";
+		};
+		lsm6dsm_data_gyro: lsm6dsm-gyro-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dsm";
+			status = "okay";
+		};
+	};
+
+	motionsense-sensor-alt {
+		alt_lid_accel: alt-lid-accel {
+			compatible = "cros-ec,lis2dw12";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref>;
+			default-range = <2>;
+			drv-data = <&lis2dw12_data>;
+			i2c-spi-addr-flags = "LIS2DWL_ADDR0_FLAGS";
+			alternate-for = <&lid_accel>;
+			alternate-ssfc-indicator = <&lid_sensor_1>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
+		alt_base_accel: alt-base-accel {
+			compatible = "cros-ec,lsm6dsm-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&base_rot_ref_lsm6dsm>;
+			drv-data = <&lsm6dsm_data_accel>;
+			alternate-for = <&base_accel>;
+			alternate-ssfc-indicator = <&base_sensor_1>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+					ec-rate = <(100 * USEC_PER_MSEC)>;
+				};
+				ec-s3 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+					ec-rate = <0>;
+				};
+			};
+		};
+
+		alt_base_gyro: alt-base-gyro {
+			compatible = "cros-ec,lsm6dsm-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&base_rot_ref_lsm6dsm>;
+			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
+			drv-data = <&lsm6dsm_data_gyro>;
+			alternate-for = <&base_gyro>;
+			alternate-ssfc-indicator = <&base_sensor_1>;
+		};
+	};
+
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+
+		debounce-down = <15000>;
+		debounce-up = <15000>;
+
+		actual-key-mask = <
+			0x1c	/* C0 */
+			0xff	/* C1 */
+			0xff	/* C2 */
+			0xff	/* C3 */
+			0xff	/* C4 */
+			0xf7	/* C5 */
+			0xff	/* C6 */
+			0xa4	/* C7 */
+			0xff	/* C8 */
+			0xfe	/* C9 */
+			0x55	/* C10 */
+			0xfa	/* C11 */
+			0xca	/* C12 */
+			>;
+	};
+
+	led-colors {
+		compatible = "cros-ec,led-policy";
+
+		/* ponyta LED bat charge */
+		bat-state1-charge {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery display percent range (>= 0, <= 4%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 4>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_RED";
+				};
+			};
+		};
+
+		bat-state2-charge {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery display percent range (>= 5, <= 96%) */
+			batt-lvl = <BATTERY_LEVEL_CRITICAL 96>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+				};
+			};
+		};
+
+		bat-state3-charge {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery display percent range (>= 97, <= 99) */
+			batt-lvl = <97 99>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_GREEN";
+				};
+			};
+		};
+
+		/* ponyta LED bat charge near full */
+		bat-state-charge-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_GREEN";
+				};
+			};
+		};
+
+		/* ponyta LED bat discharge */
+		bat-state-discharge {
+			charge-state = "LED_PWRS_DISCHARGE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		/* ponyta LED bat error */
+		bat-state-error {
+			charge-state = "LED_PWRS_ERROR";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_RED";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		/* ponyta LED bat idle */
+		bat-state-idle {
+			charge-state = "LED_PWRS_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_GREEN";
+				};
+			};
+		};
+
+		/* ponyta LED bat forced idle */
+		bat-state-forced-idle {
+			charge-state = "LED_PWRS_FORCED_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_RED";
+					period-ms = <2000>;
+				};
+				color-1 {
+					led-color = "LED_GREEN";
+					period-ms = <2000>;
+				};
+			};
+		};
+
+		/* ponyta LED power s0 */
+		power-state-s0 {
+			chipset-state = "POWER_S0";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		/* ponyta LED power s3 */
+		power-state-s3 {
+			chipset-state = "POWER_S3";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <3000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <500>;
+				};
+			};
+		};
+
+		/* ponyta LED power s5 */
+		power-state-s5 {
+			chipset-state = "POWER_S5";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+	};
+
+	pwmleds {
+		compatible = "pwm-leds";
+		led_battery_red: ec_led1_odl {
+			pwms = <&pwm0 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+		led_battery_green: ec_led2_odl {
+			pwms = <&pwm1 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+		led_power_white: ec_led3_odl {
+			pwms = <&pwm4 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		battery_led: battery-led {
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pwms = <&led_battery_red &led_battery_green>;
+
+			color-off {
+				led-color = "LED_OFF";
+				led-values = <0 0>;
+			};
+
+			color-red {
+				led-color = "LED_RED";
+				led-values = <100 0>;
+			};
+
+			color-amber {
+				led-color = "LED_AMBER";
+				led-values = <100 20>;
+			};
+
+			color-green {
+				led-color = "LED_GREEN";
+				led-values = <0 100>;
+			};
+		};
+
+		power_led: power-led {
+			led-id = "EC_LED_ID_POWER_LED";
+			led-pwms = <&led_power_white>;
+
+			color-white {
+				led-color = "LED_WHITE";
+				led-values = <100>;
+			};
+
+			color-off {
+				led-color = "LED_OFF";
+				led-values = <0>;
+			};
+		};
+	};
+};
+
+/* Red LED */
+&pwm0_gpc3 {
+	drive-open-drain;
+};
+
+&pwm0 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm0_gpc3>;
+	pinctrl-names = "default";
+};
+
+/* Green LED */
+&pwm1_gpc2 {
+	drive-open-drain;
+};
+
+&pwm1 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm1_gpc2>;
+	pinctrl-names = "default";
+};
+
+/* White LED */
+&pwm4_gpb6 {
+	drive-open-drain;
+};
+
+&pwm4 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm4_gpb6>;
+	pinctrl-names = "default";
+};
+
+/* inherit the rot_ref from Kingler and overwrite it */
+&lid_rot_ref {
+	mat33 = <0 1 0
+		1 0 0
+		0 0 (-1)>;
+};
+
+&base_rot_ref {
+	mat33 = <1 0 0
+		0 (-1) 0
+		0 0 (-1)>;
+};
+
+/* ponyta usba port enable config */
+&usba_port_enable_list {
+	enable-pins = <&en_pp5000_usb_a0_vbus
+		       &en_pp5000_usb_a1_vbus>;
+};

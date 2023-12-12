@@ -4,8 +4,8 @@
  */
 
 #include "compile_time_macros.h"
-#include "fpsensor_crypto.h"
-#include "fpsensor_state.h"
+#include "fpsensor/fpsensor_crypto.h"
+#include "fpsensor/fpsensor_state.h"
 
 extern "C" {
 #include "builtin/assert.h"

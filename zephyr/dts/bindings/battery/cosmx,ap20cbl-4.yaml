@@ -1,0 +1,56 @@
+description: "COSMX AP20CBL-4"
+compatible: "cosmx,ap20cbl-4"
+
+include: battery-smart.yaml
+
+properties:
+  enum-name:
+    type: string
+    default: "cosmx,ap20cbl-4"
+
+  # Fuel gauge
+  manuf_name:
+    default: "COSMX KT0030B004"
+  device_name:
+    default: "AP20CBL"
+  ship_mode_reg_addr:
+    default: 0x3A
+  ship_mode_reg_data:
+    default: [0xC574, 0xC574]
+  # Manufacturer Access 0x00
+  # b15: D-FET
+  # b14: C-FET
+  flags:
+    default: 0x00
+  fet_reg_addr:
+    default: 0x0
+  fet_reg_mask:
+    default: 0x8000
+  fet_disconnect_val:
+    default: 0x0000
+  fet_cfet_mask:
+    default: 0x4000
+  fet_cfet_off_val:
+    default: 0x0000
+
+  # Battery info
+  voltage_max:
+    default: 13200
+  voltage_normal:
+    default: 11550
+  voltage_min:
+    default: 9000
+  precharge_current:
+    default: 256
+  start_charging_min_c:
+    default: 0
+  start_charging_max_c:
+    default: 50
+  charging_min_c:
+    default: 0
+  charging_max_c:
+    default: 60
+  discharging_min_c:
+    default: -20
+  discharging_max_c:
+    default: 75

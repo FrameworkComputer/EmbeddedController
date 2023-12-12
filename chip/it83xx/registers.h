@@ -875,6 +875,12 @@ BUILD_ASSERT(ARRAY_SIZE(gpio_group_to_reg) == (COUNT));
 #define GPCR_PORT_PIN_MODE_OUTPUT BIT(6)
 #define GPCR_PORT_PIN_MODE_PULLUP BIT(2)
 #define GPCR_PORT_PIN_MODE_PULLDOWN BIT(1)
+/*
+ * If both PULLUP and PULLDOWN are set to 1b, the corresponding pin would be
+ * configured as tri-state.
+ */
+#define GPCR_PORT_PIN_MODE_TRISTATE \
+	(GPCR_PORT_PIN_MODE_PULLUP | GPCR_PORT_PIN_MODE_PULLDOWN)
 
 /* --- Clock and Power Management (ECPM) --- */
 
@@ -1682,6 +1688,5 @@ extern int hibernate_wake_pins_used;
 #define IT83XX_CIR_BASE 0x00F02300
 #define IT83XX_DBGR_BASE 0x00F02500
 #define IT83XX_OW_BASE 0x00F02A00
-#define IT83XX_CEC_BASE 0x00F02E00
 
 #endif /* __CROS_EC_REGISTERS_H */

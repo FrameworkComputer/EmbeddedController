@@ -5,7 +5,6 @@
 cros_ec_library_include_directories_ifdef(CONFIG_BOARD_CRYSTALDRIFT include)
 zephyr_library_sources(
 		"src/usb_mux_config.c"
-		"src/ppc_config.c"
 		"src/form_factor.c"
 		"src/keyboard.c"
 		"src/board.c"

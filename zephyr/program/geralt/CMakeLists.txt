@@ -14,7 +14,6 @@ zephyr_library_sources(
 	"src/backlight.c"
 	"src/hibernate.c"
 	"src/hooks.c"
-	"src/ppc.c"
 )
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_I2C "src/i2c.c")
@@ -27,6 +26,13 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_DETACHABLE_BASE
 			"src/base_detect.c"
 )
 
+zephyr_include_directories(
+			"include"
+			"../roach/include"
+)
+
 if(DEFINED CONFIG_BOARD_GERALT)
 	project(geralt)
+elseif(DEFINED CONFIG_BOARD_CIRI)
+	project(ciri)
 endif()

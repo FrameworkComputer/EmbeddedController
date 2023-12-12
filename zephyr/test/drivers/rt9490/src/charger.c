@@ -242,10 +242,15 @@ ZTEST(rt9490_chg, test_misc_info)
 	zassert_equal(status, CHARGER_RES_COLD | CHARGER_RES_UR, NULL);
 }
 
+static void rt9490_chg_setup(void)
+{
+	batt_conf_main();
+}
+
 static void reset_emul(void *fixture)
 {
 	rt9490_emul_reset_regs(emul);
 	rt9490_drv.init(chgnum);
 }
 
-ZTEST_SUITE(rt9490_chg, NULL, NULL, reset_emul, NULL, NULL);
+ZTEST_SUITE(rt9490_chg, NULL, rt9490_chg_setup, reset_emul, NULL, NULL);

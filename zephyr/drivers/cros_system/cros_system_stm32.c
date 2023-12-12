@@ -95,7 +95,8 @@ static int cros_system_stm32_soc_reset(const struct device *dev)
 	return 0;
 }
 
-static uint64_t cros_system_stm32_deep_sleep_ticks(const struct device *dev)
+__maybe_unused static uint64_t
+cros_system_stm32_deep_sleep_ticks(const struct device *dev)
 {
 	/* Deep sleep is not supported for now */
 	return 0;

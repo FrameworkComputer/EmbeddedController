@@ -3,65 +3,10 @@
  * found in the LICENSE file.
  */
 
-/ {
-	#address-cells = <1>;
-	#size-cells = <1>;
-	binman {
-		filename = "ec.bin";
-		pad-byte = <0x1d>;
-		wp-ro {
-			compatible = "cros-ec,flash-layout";
-			type = "section";
-			offset = <0x0>;
-			size = <0x40000>;
-			read-only;
-			ec-ro {
-				type = "section";
-				ro-fw {
-					type = "blob";
-					filename = "zephyr_ro.bin";
-				};
-				fmap {
-				};
-				ro-frid {
-					type = "text";
-					size = <32>;
-					text-label = "version";
-				};
-			};
-			cbi_flash: cbi {
-				compatible = "cros-ec,flash-layout";
-				type = "fill";
-				offset = <(0x40000 - 0x1000)>;
-				size = <0x1000>;
-				fill-byte = [ff];
-				preserve;
-			};
-		};
-		ec-rw {
-			compatible = "cros-ec,flash-layout";
-			type = "section";
-			offset = <0x40000>;
-			size = <0x40000>;
-			rw-fw {
-				type = "section";
-				zephyr-rw {
-					type = "blob";
-					filename = "zephyr_rw.bin";
-				};
-				rw-fwid {
-					/* Fix the lcoation of the FWID to the
-					 * last 32 bytes of the flash. This
-					 * ensures the RW entries in the FMAP
-					 * stored in the RO section of flash
-					 * are always correct.
-					 */
-					offset = <(0x40000 - 32)>;
-					type = "text";
-					size = <32>;
-					text-label = "version";
-				};
-			};
-		};
-	};
+#include <cros/binman.dtsi>
+#include <cros/cbi_flash.dtsi>
+
+&cbi_flash {
+	offset = <(0x40000 - 0x1000)>;
+	size = <0x1000>;
 };

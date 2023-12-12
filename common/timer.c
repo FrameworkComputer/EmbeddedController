@@ -34,6 +34,8 @@ extern __error("k_usleep() should only be called from Zephyr code") int32_t
 
 #define TIMER_SYSJUMP_TAG 0x4d54 /* "TM" */
 
+#define USLEEP_WARNING_INTERVAL_MS (20 * MSEC)
+
 /* High 32-bits of the 64-bit timestamp counter. */
 STATIC_IF_NOT(CONFIG_HWTIMER_64BIT) volatile uint32_t clksrc_high;
 
@@ -199,7 +201,15 @@ void usleep(unsigned int us)
 
 	/* If in interrupt context or interrupts are disabled, use udelay() */
 	if (!is_interrupt_enabled() || in_interrupt_context()) {
-		CPRINTS("Sleeping not allowed");
+		/* Avoid printing warning too frequently */
+		static timestamp_t next_print_deadline = { .val = 0 };
+
+		if (timestamp_expired(next_print_deadline, NULL)) {
+			next_print_deadline.val =
+				get_time().val + USLEEP_WARNING_INTERVAL_MS;
+			CPRINTS("Sleeping not allowed");
+		}
+
 		udelay(us);
 		return;
 	}

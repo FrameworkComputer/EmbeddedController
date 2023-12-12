@@ -350,22 +350,17 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  * 130 C.  However, sensor is located next to DDR, so we need to use the lower
  * DDR temperature limit (100 C)
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CPU              \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
-		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(70), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
+static const struct ec_thermal_config thermal_cpu = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(100),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
+	},
+	.temp_fan_off = C_TO_K(35),
+		.temp_fan_max = C_TO_K(70),
+};
 
 /*
  * TODO(b/201021109): update for Alder Lake/brya
@@ -380,29 +375,24 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
  * Inductors: limit of 125c
  * PCB: limit is 100c
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_FAN              \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(100), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
-		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(70), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_fan = THERMAL_FAN;
+static const struct ec_thermal_config thermal_fan = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(100),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
+	},
+	.temp_fan_off = C_TO_K(35),
+		.temp_fan_max = C_TO_K(70),
+};
 
 /* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_DDR_SOC] = THERMAL_CPU,
-	[TEMP_SENSOR_2_FAN] = THERMAL_FAN,
-	[TEMP_SENSOR_3_CHARGER] = THERMAL_FAN,
-	[TEMP_SENSOR_4_CPUCHOKE] = THERMAL_FAN,
+	[TEMP_SENSOR_1_DDR_SOC] = thermal_cpu,
+	[TEMP_SENSOR_2_FAN] = thermal_fan,
+	[TEMP_SENSOR_3_CHARGER] = thermal_fan,
+	[TEMP_SENSOR_4_CPUCHOKE] = thermal_fan,
 };
 
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);

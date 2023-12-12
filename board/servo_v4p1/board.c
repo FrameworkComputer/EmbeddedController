@@ -83,7 +83,7 @@ static int cmd_dut_usb3(int argc, const char *argv[])
 	if (argc > 2)
 		return EC_ERROR_PARAM_COUNT;
 
-	if (!strcasecmp(argv[1], "enable")) {
+	if (!strcasecmp(argv[1], "enabled") || !strcasecmp(argv[1], "enable")) {
 		/*
 		 * Need to set this flag before usb_mux_set to prevent
 		 * calling additional set in board_tusb1064_set.
@@ -102,7 +102,8 @@ static int cmd_dut_usb3(int argc, const char *argv[])
 		/* Delay enabling DUT hub to avoid enumeration problems. */
 		usleep(MSEC);
 		gpio_set_level(GPIO_DUT_HUB_USB_RESET_L, 1);
-	} else if (!strcasecmp(argv[1], "disable")) {
+	} else if (!strcasecmp(argv[1], "disabled") ||
+		   !strcasecmp(argv[1], "disable")) {
 		/*
 		 * Make sure this flag is set to avoid calling additional
 		 * mux set operation in board specific routine.
@@ -121,12 +122,12 @@ static int cmd_dut_usb3(int argc, const char *argv[])
 	}
 
 	ccprintf("USB3 to DUT: %s\n",
-		 usb3_to_dut_enable ? "allowed/enabled" : "disabled");
+		 usb3_to_dut_enable ? "enabled" : "disabled");
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(dut_usb3, cmd_dut_usb3, "dut_usb3 [enable/disable]>",
+DECLARE_CONSOLE_COMMAND(dut_usb3, cmd_dut_usb3, "dut_usb3 [enabled/disabled]>",
 			"Enable or disable USB3 to DUT. Note that after every "
-			"'dut_usb3 enable' USB3 is enabled once and than only "
+			"'dut_usb3 enabled' USB3 is enabled once and than only "
 			"allowed, not forced. Some other part of servo logic "
 			"(e.g. pd stack) can still enable/disable it.");
 

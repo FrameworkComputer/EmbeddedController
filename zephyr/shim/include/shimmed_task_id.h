@@ -32,6 +32,7 @@ enum {
 	EC_TASK_USB_CHG_PRIO,
 	EC_TASK_DPS_PRIO,
 	EC_TASK_CHARGER_PRIO,
+	EC_TASK_CEC_PRIO,
 	EC_TASK_CHIPSET_PRIO,
 	EC_TASK_MOTIONSENSE_PRIO,
 	EC_TASK_USB_MUX_PRIO,
@@ -98,7 +99,7 @@ enum {
 		   (CROS_EC_TASK(USB_MUX, usb_mux_task, 0,                 \
 				 CONFIG_TASK_USB_MUX_STACK_SIZE,           \
 				 EC_TASK_USB_MUX_PRIO)))                   \
-	COND_CODE_1(CONFIG_TASK_HOSTCMD_THREAD_DEDICATED,                  \
+	COND_CODE_1(HAS_TASK_HOSTCMD_DEDICATED,                            \
 		    (CROS_EC_TASK(HOSTCMD, host_command_task, 0,           \
 				  CONFIG_TASK_HOSTCMD_STACK_SIZE,          \
 				  EC_TASK_HOSTCMD_PRIO)),                  \
@@ -182,6 +183,11 @@ enum {
 		    (CROS_EC_TASK(RWSIG, rwsig_task, 0,                    \
 				  CONFIG_TASK_RWSIG_STACK_SIZE,            \
 				  EC_TASK_RWSIG_PRIO)),                    \
+		    ())                                                    \
+	COND_CODE_1(HAS_TASK_CEC,                                          \
+		    (CROS_EC_TASK(CEC, cec_task, 0,                        \
+				  CONFIG_TASK_CEC_STACK_SIZE,              \
+				  EC_TASK_CEC_PRIO)),                      \
 		    ())
 #elif defined(CONFIG_HAS_TEST_TASKS)
 #include "shimmed_test_tasks.h"
@@ -223,9 +229,9 @@ enum {
 	CROS_EC_TASK(PD_INT_C2, NULL, 2, 0, EC_TASK_PD_INT_C2_PRIO)         \
 	CROS_EC_TASK(PD_INT_C3, NULL, 3, 0, EC_TASK_PD_INT_C3_PRIO)         \
 	CROS_EC_TASK(CYPD, NULL, 0, 0, EC_TASK_CYPD_PRIO)                   \
-	CROS_EC_TASK(ALS, NULL, 0, 0, EC_TASK_ALS_PRIO)                   \
+	CROS_EC_TASK(ALS, NULL, 0, 0, EC_TASK_ALS_PRIO)                     \
 	CROS_EC_TASK(TOUCHPAD, NULL, 0, 0, EC_TASK_TOUCHPAD_PRIO)           \
-
+	CROS_EC_TASK(CEC, NULL, 0, 0, EC_TASK_CEC_PRIO)
 
 #endif /* CONFIG_SHIMMED_TASKS */
 
@@ -262,6 +268,8 @@ enum {
 #define CROS_EC_EXTRA_TASKS(fn)                                         \
 	COND_CODE_1(CONFIG_TASK_HOSTCMD_THREAD_MAIN, (fn(HOSTCMD)),     \
 		(fn(MAIN)))                                             \
+	COND_CODE_1(CONFIG_TASK_HOSTCMD_THREAD_DEDICATED,               \
+		(IF_ENABLED(CONFIG_EC_HOST_CMD, (fn(HOSTCMD)))), ())    \
 	COND_CODE_1(CONFIG_SHELL_BACKEND_SERIAL, (fn(SHELL)),           \
 		(COND_CODE_1(CONFIG_SHELL_BACKEND_DUMMY, (fn(SHELL)),   \
 		())))							\

@@ -7,8 +7,8 @@
 
 #include "builtin/assert.h"
 #include "chipset.h"
-#include "clock-f.h"
 #include "clock.h"
+#include "clock_chip.h"
 #include "common.h"
 #include "console.h"
 #include "cpu.h"

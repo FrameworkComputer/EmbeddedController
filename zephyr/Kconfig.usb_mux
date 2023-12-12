@@ -2,8 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_USBC
-
 menuconfig PLATFORM_EC_USB_MUX
 	bool "USB muxes"
 	default y
@@ -42,6 +40,14 @@ config PLATFORM_EC_USB_MUX_AMD_FP6
 	depends on DT_HAS_AMD_USBC_MUX_AMD_FP6_ENABLED
 	help
 	  Integrated AMD FP6 mux for USB and DP.  Mux control happens over
+	  an i2c channel.
+
+config PLATFORM_EC_USB_MUX_AMD_FP8
+	bool "AMD FP8 integrated mux"
+	default y
+	depends on DT_HAS_AMD_USBC_MUX_AMD_FP8_ENABLED
+	help
+	  Integrated AMD FP8 mux for USB, DP, and USB4.  Mux control happens over
 	  an i2c channel.
 
 config PLATFORM_EC_USB_MUX_IT5205
@@ -99,5 +105,3 @@ config PLATFORM_EC_USB_MUX_TUSB1064
 endchoice # PLATFORM_EC_USB_MUX_TUSB_TYPE
 
 endif # PLATFORM_EC_USB_MUX
-
-endif # PLATFORM_EC_USBC

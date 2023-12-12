@@ -3,6 +3,12 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #include "acpi.h"
 #include "chipset.h"
 #include "common.h"
@@ -56,12 +62,14 @@ LOG_MODULE_REGISTER(espi_shim, CONFIG_ESPI_LOG_LEVEL);
  */
 
 /* host command packet handler structure */
+#ifndef CONFIG_EC_HOST_CMD
 static struct host_packet lpc_packet;
 /*
  * For the eSPI host command, request & response use the same share memory.
  * This is for input request temp buffer.
  */
 static uint8_t params_copy[EC_LPC_HOST_PACKET_SIZE] __aligned(4);
+#endif
 static bool init_done;
 
 /*
@@ -486,6 +494,7 @@ static void handle_acpi_write(uint32_t data)
 	lpc_generate_sci();
 }
 
+#ifndef CONFIG_EC_HOST_CMD
 static void lpc_send_response_packet(struct host_packet *pkt)
 {
 	uint32_t data;
@@ -538,6 +547,25 @@ static void handle_host_write(uint32_t data)
 	return;
 }
 
+/* Get protocol information */
+static enum ec_status lpc_get_protocol_info(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_protocol_info *r = args->response;
+
+	memset(r, 0, sizeof(*r));
+	r->protocol_versions = BIT(3);
+	r->max_request_packet_size = EC_LPC_HOST_PACKET_SIZE;
+	r->max_response_packet_size = EC_LPC_HOST_PACKET_SIZE;
+	r->flags = 0;
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, lpc_get_protocol_info,
+		     EC_VER_MASK(0));
+#endif /* !CONFIG_EC_HOST_CMD */
+
 void lpc_set_acpi_status_mask(uint8_t mask)
 {
 	uint32_t status;
@@ -571,24 +599,6 @@ void lpc_clear_acpi_status_mask(uint8_t mask)
 		LOG_ERR("ESPI write failed: EACPI_WRITE_STS = %d", rv);
 	}
 }
-
-/* Get protocol information */
-static enum ec_status lpc_get_protocol_info(struct host_cmd_handler_args *args)
-{
-	struct ec_response_get_protocol_info *r = args->response;
-
-	memset(r, 0, sizeof(*r));
-	r->protocol_versions = BIT(3);
-	r->max_request_packet_size = EC_LPC_HOST_PACKET_SIZE;
-	r->max_response_packet_size = EC_LPC_HOST_PACKET_SIZE;
-	r->flags = 0;
-
-	args->response_size = sizeof(*r);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_GET_PROTOCOL_INFO, lpc_get_protocol_info,
-		     EC_VER_MASK(0));
 
 /*
  * This function is needed only for the obsolete platform which uses the GPIO
@@ -766,10 +776,12 @@ static void espi_peripheral_handler(const struct device *dev,
 		handle_acpi_write(event.evt_data);
 	}
 
+#ifndef CONFIG_EC_HOST_CMD
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOSTCMD) &&
 	    event_type == ESPI_PERIPHERAL_EC_HOST_CMD) {
 		handle_host_write(event.evt_data);
 	}
+#endif
 
 	if (IS_ENABLED(CONFIG_ESPI_PERIPHERAL_8042_KBC) &&
 	    IS_ENABLED(HAS_TASK_KEYPROTO) &&

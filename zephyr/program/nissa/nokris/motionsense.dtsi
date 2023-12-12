@@ -1,0 +1,166 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/motionsense/utils.h>
+
+
+/ {
+	aliases {
+		/*
+		 * Interrupt bindings for sensor devices.
+		 */
+		lsm6dso-int = &base_accel;
+		lis2dw12-int = &lid_accel;
+	};
+
+	/*
+	 * Declare mutexes used by sensor drivers.
+	 * A mutex node is used to create an instance of mutex_t.
+	 * A mutex node is referenced by a sensor node if the
+	 * corresponding sensor driver needs to use the
+	 * instance of the mutex.
+	 */
+	motionsense-mutex {
+		compatible = "cros-ec,motionsense-mutex";
+		lid_mutex: lid-mutex {
+		};
+
+		base_mutex: base-mutex {
+		};
+	};
+
+	/* Rotation matrix used by drivers. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <(-1) 0 0
+				 0 1 0
+				 0 0 (-1)>;
+		};
+
+		base_rot_ref: base-rot-ref {
+			mat33 = <(-1) 0 0
+				 0 (-1) 0
+				 0 0 1>;
+		};
+
+		base_rot_inverted: base-rotation-inverted {
+			mat33 = <1 0 0
+				 0 (-1) 0
+				 0 0 (-1)>;
+		};
+	};
+
+	/*
+	 * Driver specific data. A driver-specific data can be shared with
+	 * different motion sensors while they are using the same driver.
+	 *
+	 * If a node's compatible starts with "cros-ec,accelgyro-", it is for
+	 * a common structure defined in accelgyro.h.
+	 * e.g) compatible = "cros-ec,accelgyro-als-drv-data" is for
+	 * "struct als_drv_data_t" in accelgyro.h
+	 */
+	motionsense-sensor-data {
+		lsm6dso_accel_data: lsm6dso-accel-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dso";
+			status = "okay";
+		};
+
+		lsm6dso_gyro_data: lsm6dso-gyro-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dso";
+			status = "okay";
+		};
+
+		lis2dw12_data: lis2dw12-drv-data {
+			compatible = "cros-ec,drvdata-lis2dw12";
+			status = "okay";
+		};
+	};
+
+	/*
+	 * List of motion sensors that creates motion_sensors array.
+	 * The nodelabel "lid_accel" and "base_accel" are used to indicate
+	 * motion sensor IDs for lid angle calculation.
+	 * TODO(b/238139272): The first entries of the array must be
+	 * accelerometers,then gyroscope. Fix this dependency in the DTS
+	 * processing which makes the devicetree entries independent.
+	 */
+	motionsense-sensor {
+		lid_accel: lid-accel {
+			compatible = "cros-ec,lis2dw12";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex>;
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref>;
+			default-range = <2>;
+			drv-data = <&lis2dw12_data>;
+			i2c-spi-addr-flags = "LIS2DWL_ADDR0_FLAGS";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
+		base_accel: base-accel {
+			compatible = "cros-ec,lsm6dso-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_ec_i2c_sensor>;
+			/*
+			 * May be replaced by alternate depending
+			 * on board config.
+			 */
+			rot-standard-ref = <&base_rot_ref>;
+			drv-data = <&lsm6dso_accel_data>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
+		base_gyro: base-gyro {
+			compatible = "cros-ec,lsm6dso-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&base_rot_ref>;
+			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
+			drv-data = <&lsm6dso_gyro_data>;
+		};
+	};
+
+	motionsense-sensor-info {
+		compatible = "cros-ec,motionsense-sensor-info";
+
+		/*
+		 * list of GPIO interrupts that have to
+		 * be enabled at initial stage
+		 */
+		sensor-irqs = <&int_imu>;
+		/* list of sensors in force mode */
+		accel-force-mode-sensors = <&lid_accel>;
+	};
+};

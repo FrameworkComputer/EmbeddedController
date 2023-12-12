@@ -12,9 +12,6 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
-#include "driver/accel_lis2dw12.h"
-#include "driver/accelgyro_lsm6dso.h"
-#include "driver/als_tcs3400.h"
 #include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
@@ -26,9 +23,9 @@
 #include "registers.h"
 #include "rgb_keyboard.h"
 #include "switch.h"
-#include "tablet_mode.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
+#include "util.h"
 
 /* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"

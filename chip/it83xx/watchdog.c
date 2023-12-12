@@ -39,26 +39,26 @@ static void watchdog_set_warning_timer(int32_t ms, int init)
 void watchdog_warning_irq(void)
 {
 	/*
-	 * Why we directly use the PANIC_DATA_PTR:
-	 *
-	 * We don't get the panic data pointer from get_panic_data_write()
-	 * because this interrupt fires on a warning and we don't want to
-	 * initialize a panic with only a warning. We also don't use
-	 * panic_get_data() because that function returns a NULL pointer if
-	 * panic data was never prior initialized.
-	 *
 	 * Why we fill ipc/mepc here in the watchdog bark/warning interrupt:
 	 *
 	 * In ITE, a full watchdog bite results in an EC reset that bypasses all
-	 * exception handlers. We save the program counter now (during a
-	 * warning) before a full watchdog bite occurs so it is accessible after
-	 * the bite.
+	 * exception handlers. We save the program counter and current task now
+	 * (during a warning) before a full watchdog bite occurs so it is
+	 * accessible after the bite.
+	 *
+	 * Why we set set PANIC_SW_WATCHDOG_WARN reason:
+	 *
+	 * The PANIC_SW_WATCHDOG_WARN reason will be changed to a regular
+	 * PANIC_SW_WATCHDOG in system_common_pre_init if a watchdog reset
+	 * actually occurs. If no watchdog reset occurs, this watchdog warning
+	 * panic may still be collected by the kernel and handled as a
+	 * non-fatal EC panic.
 	 */
-	struct panic_data *const pdata_ptr = PANIC_DATA_PTR;
 #if defined(CHIP_CORE_NDS32)
-	pdata_ptr->nds_n8.ipc = get_ipc();
+	panic_set_reason(PANIC_SW_WATCHDOG_WARN, get_ipc(), task_get_current());
 #elif defined(CHIP_CORE_RISCV)
-	pdata_ptr->riscv.mepc = get_mepc();
+	panic_set_reason(PANIC_SW_WATCHDOG_WARN, get_mepc(),
+			 task_get_current());
 #endif
 	/* clear interrupt status */
 	task_clear_pending_irq(et_ctrl_regs[WDT_EXT_TIMER].irq);
@@ -82,6 +82,9 @@ void watchdog_warning_irq(void)
 	panic_printf("Pre-WDT warning! MEPC:%08x RA:%08x TASK_ID:%d\n",
 		     get_mepc(), ira, task_get_current());
 #endif
+
+	if (IS_ENABLED(CONFIG_PANIC_ON_WATCHDOG_WARNING))
+		software_panic(PANIC_SW_WATCHDOG, task_get_current());
 
 	if (!wdt_warning_fired++)
 		/*

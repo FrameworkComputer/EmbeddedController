@@ -97,7 +97,7 @@ uint32_t get_feature_flags0(void)
 #ifdef CONFIG_HOSTCMD_RTC
 			  | EC_FEATURE_MASK_0(EC_FEATURE_RTC)
 #endif
-#ifdef CONFIG_SPI_FP_PORT
+#if defined(CONFIG_SPI_FP_PORT) || defined(CONFIG_BOARD_FINGERPRINT)
 			  | EC_FEATURE_MASK_0(EC_FEATURE_FINGERPRINT)
 #endif
 #ifdef HAS_TASK_CENTROIDING
@@ -121,7 +121,14 @@ uint32_t get_feature_flags1(void)
 		EC_FEATURE_MASK_1(EC_FEATURE_UNIFIED_WAKE_MASKS) |
 		EC_FEATURE_MASK_1(EC_FEATURE_HOST_EVENT64)
 #ifdef CONFIG_EXTERNAL_STORAGE
+/*
+ * TODO: b/304839481 Workaround for crosec-legacy-drv/flashrom -p ec,
+ * we need to report not executing in RAM to get the utility to execute
+ * reboot to RO prior to RW flashing
+ */
+#ifndef CONFIG_FINGERPRINT_MCU
 		| EC_FEATURE_MASK_1(EC_FEATURE_EXEC_IN_RAM)
+#endif
 #endif
 #ifdef CONFIG_CEC
 		| EC_FEATURE_MASK_1(EC_FEATURE_CEC)
@@ -167,6 +174,18 @@ uint32_t get_feature_flags1(void)
 #endif
 #ifdef CONFIG_DEBUG_ASSERT_REBOOTS
 		| EC_FEATURE_MASK_1(EC_FEATURE_ASSERT_REBOOTS)
+#endif
+#ifdef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
+		| EC_FEATURE_MASK_1(EC_FEATURE_TOKENIZED_LOGGING)
+#endif
+#ifdef CONFIG_PLATFORM_EC_AMD_STB_DUMP
+		| EC_FEATURE_MASK_1(EC_FEATURE_AMD_STB_DUMP)
+#endif
+#ifdef CONFIG_HOST_COMMAND_MEMORY_DUMP
+		| EC_FEATURE_MASK_1(EC_FEATURE_MEMORY_DUMP)
+#endif
+#ifdef CONFIG_USB_PD_DP21_MODE
+		| EC_FEATURE_MASK_1(EC_FEATURE_TYPEC_DP2_1)
 #endif
 		;
 	return board_override_feature_flags1(result);

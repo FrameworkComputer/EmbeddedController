@@ -2,7 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_USBC
 if PLATFORM_EC_USB_POWER_DELIVERY
 
 config PLATFORM_EC_USB_PD_FRS
@@ -47,4 +46,3 @@ endchoice # PLATFORM_EC_USB_PD_FRS_MODE
 endif # PLATFORM_EC_USB_PD_FRS
 
 endif # PLATFORM_EC_USB_POWER_DELIVERY
-endif # PLATFORM_EC_USBC

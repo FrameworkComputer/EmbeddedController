@@ -8,15 +8,18 @@ import logging
 import os
 import pathlib
 import re
+from typing import List, Union
 import unittest.mock
 
-import pytest  # pylint:disable=import-error
-from testfixtures import LogCapture  # pylint:disable=import-error
+# pylint: disable=import-error
+import pytest
+from testfixtures import LogCapture
+from zmake import multiproc
 import zmake.build_config
 import zmake.jobserver
-import zmake.multiproc as multiproc
 import zmake.output_packers
 import zmake.project
+import zmake.signers
 import zmake.toolchains
 
 
@@ -36,7 +39,9 @@ class FakeProject:
             supported_toolchains=["llvm"],
             output_packer=zmake.output_packers.ElfPacker,
             project_dir=pathlib.Path("FakeProjectDir"),
+            signer=zmake.signers.NullSigner(),
         )
+        self.signer = self.config.signer
 
     @staticmethod
     def iter_builds():
@@ -76,28 +81,26 @@ class FakeJobserver(zmake.jobserver.GNUMakeJobServer):
         super().__init__(jobs=2)
         self.fnames = fnames
 
-    def get_job(self):
+    def get_job(self):  # pylint: disable=no-self-use
         """Fake implementation of get_job(), which returns a real JobHandle()"""
         return zmake.jobserver.JobHandle(unittest.mock.Mock())
 
-    # pylint: disable=arguments-differ
-    def popen(self, cmd, *args, **kwargs):
+    def popen(self, argv: List[Union[str, pathlib.PosixPath]], **kwargs):
         """Ignores the provided command and just runs 'cat' instead"""
+        # Convert to a list of strings
+        cmd: List[str] = [
+            isinstance(c, pathlib.PosixPath) and c.as_posix() or c for c in argv
+        ]  # type: ignore
         for pattern, filename in self.fnames.items():
-            # Convert to a list of strings
-            cmd = [
-                isinstance(c, pathlib.PosixPath) and c.as_posix() or c
-                for c in cmd
-            ]
             if pattern.match(" ".join(cmd)):
                 new_cmd = ["cat", filename]
                 break
         else:
-            raise Exception('No pattern matched "%s"' % " ".join(cmd))
+            raise Exception(f'No pattern matched "{" ".join(cmd)}"')
         kwargs["env"] = {}
-        return super().popen(new_cmd, *args, **kwargs)
+        return super().popen(new_cmd, **kwargs)
 
-    def env(self):
+    def env(self):  # pylint: disable=no-self-use
         """Runs test commands with an empty environment for simpler logs."""
         return {}
 
@@ -111,7 +114,7 @@ def get_test_filepath(suffix):
     Returns:
         Full path to the test file
     """
-    return os.path.join(OUR_PATH, "files", "sample_{}.txt".format(suffix))
+    return os.path.join(OUR_PATH, "files", f"sample_{suffix}.txt")
 
 
 def do_test_with_log_level(zmake_factory_from_dir, log_level, fnames=None):
@@ -175,22 +178,18 @@ class TestFilters:
         expected = {
             "Configuring fakeproject:rw.",
             "Configuring fakeproject:ro.",
-            "Building fakeproject in {}/ec/build/zephyr/fakeproject.".format(
-                tmp_path
-            ),
-            "Building fakeproject:ro: /usr/bin/ninja -C {}-ro".format(
-                tmp_path / "ec/build/zephyr/fakeproject/build"
-            ),
-            "Building fakeproject:rw: /usr/bin/ninja -C {}-rw".format(
-                tmp_path / "ec/build/zephyr/fakeproject/build"
-            ),
+            f"Building fakeproject in {tmp_path}/ec/build/zephyr/fakeproject.",
+            "Building fakeproject:ro: /usr/bin/ninja -C "
+            f"{tmp_path / 'ec/build/zephyr/fakeproject/build'}-ro",
+            "Building fakeproject:rw: /usr/bin/ninja -C "
+            f"{tmp_path / 'ec/build/zephyr/fakeproject/build'}-rw",
         }
         for suffix in ["ro", "rw"]:
-            with open(get_test_filepath("%s_INFO" % suffix)) as file:
+            with open(
+                get_test_filepath(f"{suffix}_INFO"), encoding="utf-8"
+            ) as file:
                 for line in file:
-                    expected.add(
-                        "[fakeproject:{}]{}".format(suffix, line.strip())
-                    )
+                    expected.add(f"[fakeproject:{suffix}]{line.strip()}")
         # This produces an easy-to-read diff if there is a difference
         assert expected == set(recs)
 
@@ -206,24 +205,18 @@ class TestFilters:
         expected = {
             "Configuring fakeproject:rw.",
             "Configuring fakeproject:ro.",
-            "Building fakeproject in {}/ec/build/zephyr/fakeproject.".format(
-                tmp_path
-            ),
-            "Building fakeproject:ro: /usr/bin/ninja -C {}-ro".format(
-                tmp_path / "ec/build/zephyr/fakeproject/build"
-            ),
-            "Building fakeproject:rw: /usr/bin/ninja -C {}-rw".format(
-                tmp_path / "ec/build/zephyr/fakeproject/build"
-            ),
-            "Running `env -i cat {}/files/sample_ro.txt`".format(OUR_PATH),
-            "Running `env -i cat {}/files/sample_rw.txt`".format(OUR_PATH),
+            f"Building fakeproject in {tmp_path}/ec/build/zephyr/fakeproject.",
+            "Building fakeproject:ro: /usr/bin/ninja -C "
+            f"{tmp_path / 'ec/build/zephyr/fakeproject/build'}-ro",
+            f"Building fakeproject:rw: /usr/bin/ninja -C "
+            f"{tmp_path / 'ec/build/zephyr/fakeproject/build'}-rw",
+            f"Running `env -i cat {OUR_PATH}/files/sample_ro.txt`",
+            f"Running `env -i cat {OUR_PATH}/files/sample_rw.txt`",
         }
         for suffix in ["ro", "rw"]:
-            with open(get_test_filepath(suffix)) as file:
+            with open(get_test_filepath(suffix), encoding="utf-8") as file:
                 for line in file:
-                    expected.add(
-                        "[fakeproject:{}]{}".format(suffix, line.strip())
-                    )
+                    expected.add(f"[fakeproject:{suffix}]{line.strip()}")
         # This produces an easy-to-read diff if there is a difference
         assert expected == set(recs)
 
@@ -304,7 +297,9 @@ def test_list_projects(
         for name in project_names
     }
 
-    zmk = zmake_factory_from_dir(projects_dir=search_dir)
+    zmk = zmake_factory_from_dir(
+        projects_dirs=[search_dir] if search_dir else None
+    )
     with unittest.mock.patch(
         "zmake.project.find_projects",
         autospec=True,

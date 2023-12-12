@@ -18,10 +18,14 @@ if PLATFORM_EC_BATTERY
 
 config PLATFORM_EC_BATTERY_CONFIG_IN_CBI
 	bool "Support battery-config-in-CBI"
-	depends on CBI_EEPROM
+	default y
+	depends on PLATFORM_EC_CBI_EEPROM_OR_FLASH
+	depends on PLATFORM_EC_BATTERY && PLATFORM_EC_BATTERY_FUEL_GAUGE
 	help
-	  If this is enabled, a board reads battery config from CBI and updates
-	  each param in the default battery info using discovered data.
+	  If this is enabled, the EC reads battery config from CBI and overrides
+	  the default battery config. If BCIC isn't enabled in
+	  CBI_TAG_COMMON_CONTROL, the device falls back to the legacy
+	  configuration mode.
 
 config PLATFORM_EC_CONSOLE_CMD_BATTERY_CONFIG
 	bool "Console commands: bcfg"
@@ -146,6 +150,14 @@ config PLATFORM_EC_BATTERY_CUT_OFF
 	  console command and the EC_CMD_BATTERY_CUT_OFF host command.
 	  Once defined, a board specific board_cut_off_battery() function
 	  has to be provided.
+
+config PLATFORM_EC_BATTERY_CUTOFF_TIMEOUT_MSEC
+	int "Timeout for battery cutoff completion"
+	depends on PLATFORM_EC_BATTERY_CUT_OFF
+	default 8000
+	help
+	  After the EC executes battery cutoff, it'll wait for this amount of
+	  time in msec before deciding the cutoff failed.
 
 config PLATFORM_EC_BATTERY_FUEL_GAUGE
 	bool "Board supplies battery info"

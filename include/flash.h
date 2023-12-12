@@ -421,6 +421,14 @@ const char *crec_flash_read_pstate_mac_addr(void);
  */
 int crec_flash_write_pstate_mac_addr(const char *mac_addr);
 
+#ifdef CONFIG_FLASH_EX_OP_ENABLED
+/**
+ * Flash device register's reset.
+ *
+ */
+void crec_flash_reset(void);
+#endif
+
 /**
  * Lock or unlock HW necessary for mapped storage read.
  *

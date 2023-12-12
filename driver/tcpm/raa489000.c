@@ -344,6 +344,9 @@ const struct tcpm_drv raa489000_tcpm_drv = {
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.check_vbus_level = &tcpci_tcpm_check_vbus_level,
 #endif
+#ifdef CONFIG_USB_PD_VBUS_MEASURE_TCPC
+	.get_vbus_voltage = &tcpci_get_vbus_voltage,
+#endif
 	.select_rp_value = &tcpci_tcpm_select_rp_value,
 	.set_cc = &raa489000_tcpm_set_cc,
 	.set_polarity = &tcpci_tcpm_set_polarity,

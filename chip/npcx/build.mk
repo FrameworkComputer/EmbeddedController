@@ -50,9 +50,16 @@ chip-$(CONFIG_PS2)+=ps2.o
 # Only npcx9 or later chip family can support LCT module
 ifneq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),npcx5 npcx7))
 chip-y+=lct.o
+chip-y+=uartn_dma.o
 endif
 
 chip-$(CONFIG_SHA256_HW_ACCELERATE)+=sha256_chip.o
+
+chip-$(CONFIG_USART_HOST_COMMAND)+=uart_host_command.o
+
+ifneq (,$(filter y,$(CONFIG_FINGERPRINT_MCU) $(CONFIG_HOST_INTERFACE_SHI)))
+chip-y+=host_command_common.o
+endif
 
 # spi monitor program fw for openocd and UUT(UART Update Tool)
 npcx-monitor-fw=chip/npcx/spiflashfw/npcx_monitor

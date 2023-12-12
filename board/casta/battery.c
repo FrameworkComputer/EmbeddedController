@@ -38,33 +38,34 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	[BATTERY_SDI] = {
-		.fuel_gauge = {
-			.manuf_name = "SDI",
-			.device_name = "4402D51",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "SDI",
+		.device_name = "4402D51",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0xc000,
+					.disconnect_val = 0x8000,
+				},
 			},
-			.fet = {
-				.mfgacc_support = 0,
-				.reg_addr = 0x00,
-				.reg_mask = 0xc000,
-				.disconnect_val = 0x8000,
-			}
-		},
-		.batt_info = {
-			.voltage_max            = 8600,
-			.voltage_normal         = 7700, /* mV */
-			.voltage_min            = 6000, /* mV */
-			.precharge_current      = 200,  /* mA */
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 45,
-			.charging_min_c         = 0,
-			.charging_max_c         = 50,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 70,
+			.batt_info = {
+				.voltage_max            = 8600,
+				.voltage_normal         = 7700, /* mV */
+				.voltage_min            = 6000, /* mV */
+				.precharge_current      = 200,  /* mA */
+				.start_charging_min_c   = 0,
+				.start_charging_max_c   = 45,
+				.charging_min_c         = 0,
+				.charging_max_c         = 50,
+				.discharging_min_c      = -20,
+				.discharging_max_c      = 70,
+			},
 		},
 	},
 };

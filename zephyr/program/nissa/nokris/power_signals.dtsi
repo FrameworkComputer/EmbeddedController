@@ -1,0 +1,220 @@
+/* Copyright 2023The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	chosen {
+		intel-ap-pwrseq,espi = &espi0;
+	};
+
+	common-pwrseq {
+		compatible = "intel,ap-pwrseq";
+
+		sys-pwrok-delay = <10>;
+		all-sys-pwrgd-timeout = <20>;
+	};
+
+	pwr-en-pp5000-s5 {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PP5000_S5 enable output to regulator";
+		enum-name = "PWR_EN_PP5000_A";
+		gpios = <&gpio4 0 0>;
+		output;
+	};
+	pwr-en-pp3300-s5 {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PP3300_S5 enable output to LS";
+		enum-name = "PWR_EN_PP3300_A";
+		gpios = <&gpiob 6 0>;
+		output;
+	};
+	pwr-pg-ec-rsmrst-od {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "RSMRST power good from regulator";
+		enum-name = "PWR_RSMRST";
+		gpios = <&gpio9 4 0>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	pwr-ec-pch-rsmrst-odl {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "RSMRST output to PCH";
+		enum-name = "PWR_EC_PCH_RSMRST";
+		gpios = <&gpioa 6 0>;
+		output;
+	};
+	pwr-slp-s0-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SLP_S0_L input from PCH";
+		enum-name = "PWR_SLP_S0";
+		gpios = <&gpio9 7 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	pwr-slp-s3-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SLP_S3_L input from PCH";
+		enum-name = "PWR_SLP_S3";
+		gpios = <&gpioa 5 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	pwr-slp-sus-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SLP_SUS_L input from PCH";
+		enum-name = "PWR_SLP_SUS";
+		gpios = <&gpio6 2 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	pwr-ec-soc-dsw-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "DSW_PWROK output to PCH";
+		enum-name = "PWR_EC_SOC_DSW_PWROK";
+		gpios = <&gpio6 1 0>;
+		output;
+	};
+	pwr-vccst-pwrgd-od {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "VCCST_PWRGD output to PCH";
+		enum-name = "PWR_VCCST_PWRGD";
+		gpios = <&gpioa 4 GPIO_OPEN_DRAIN>;
+		output;
+	};
+	pwr-imvp9-vrrdy-od {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "VRRDY input from IMVP9";
+		enum-name = "PWR_IMVP9_VRRDY";
+		gpios = <&gpio4 3 0>;
+	};
+	pwr-pch-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PCH_PWROK output to PCH";
+		enum-name = "PWR_PCH_PWROK";
+		gpios = <&gpio7 2 GPIO_OPEN_DRAIN>;
+		output;
+	};
+	pwr-ec-pch-sys-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SYS_PWROK output to PCH";
+		enum-name = "PWR_EC_PCH_SYS_PWROK";
+		gpios = <&gpio3 7 0>;
+		output;
+	};
+	pwr-sys-rst-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SYS_RESET# output to PCH";
+		enum-name = "PWR_SYS_RST";
+		gpios = <&gpioc 5 (GPIO_ACTIVE_LOW|GPIO_OPEN_DRAIN)>;
+		output;
+	};
+	pwr-slp-s4 {
+		compatible = "intel,ap-pwrseq-vw";
+		dbg-label = "SLP_S4 virtual wire input from PCH";
+		enum-name = "PWR_SLP_S4";
+		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S4";
+		vw-invert;
+	};
+	pwr-slp-s5 {
+		compatible = "intel,ap-pwrseq-vw";
+		dbg-label = "SLP_S5 virtual wire input from PCH";
+		enum-name = "PWR_SLP_S5";
+		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S5";
+		vw-invert;
+	};
+	pwr-all-sys-pwrgd {
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "Combined all power good";
+		enum-name = "PWR_ALL_SYS_PWRGD";
+	};
+	pwr-adc-pp3300 {
+		compatible = "intel,ap-pwrseq-adc";
+		dbg-label = "PP3300 PWROK (from ADC)";
+		enum-name = "PWR_DSW_PWROK";
+		trigger-high = <&cmp_pp3300_s5_high>;
+		trigger-low = <&cmp_pp3300_s5_low>;
+	};
+	pwr-adc-pp1p05 {
+		compatible = "intel,ap-pwrseq-adc";
+		dbg-label = "PP1P05 PWROK (from ADC)";
+		enum-name = "PWR_PG_PP1P05";
+		trigger-high = <&cmp_pp1p05_high>;
+		trigger-low = <&cmp_pp1p05_low>;
+	};
+
+	adc-cmp {
+		cmp_pp3300_s5_high: pp3300_high {
+			compatible = "nuvoton,adc-cmp";
+			io-channels = <&adc0 6>;
+			comparison = "ADC_CMP_NPCX_GREATER";
+			/*
+			 * This is 90% of nominal voltage considering voltage
+			 * divider on ADC input.
+			 */
+			threshold-mv = <2448>;
+		};
+		cmp_pp3300_s5_low: pp3300_low {
+			compatible = "nuvoton,adc-cmp";
+			io-channels = <&adc0 6>;
+			comparison = "ADC_CMP_NPCX_LESS_OR_EQUAL";
+			threshold-mv = <2448>;
+		};
+		cmp_pp1p05_high: pp1p05_high {
+			compatible = "nuvoton,adc-cmp";
+			io-channels = <&adc0 4>;
+			comparison = "ADC_CMP_NPCX_GREATER";
+			/* Setting at 90% of nominal voltage */
+			threshold-mv = <945>;
+		};
+		cmp_pp1p05_low: pp1p05_low {
+			compatible = "nuvoton,adc-cmp";
+			io-channels = <&adc0 4>;
+			comparison = "ADC_CMP_NPCX_LESS_OR_EQUAL";
+			threshold-mv = <945>;
+		};
+	};
+};
+
+/*
+ * Because the power signals directly reference the GPIOs,
+ * the correspinding named-gpios need to have no-auto-init set.
+ */
+&gpio_ec_soc_dsw_pwrok {
+	no-auto-init;
+};
+&gpio_ec_soc_pch_pwrok_od {
+	no-auto-init;
+};
+&gpio_ec_soc_rsmrst_l {
+	no-auto-init;
+};
+&gpio_ec_soc_sys_pwrok {
+	no-auto-init;
+};
+&gpio_ec_soc_vccst_pwrgd_od {
+	no-auto-init;
+};
+&gpio_en_pp3300_s5 {
+	no-auto-init;
+};
+&gpio_en_pp5000_s5 {
+	no-auto-init;
+};
+&gpio_imvp91_vrrdy_od {
+	no-auto-init;
+};
+&gpio_rsmrst_pwrgd_l {
+	no-auto-init;
+};
+&gpio_slp_s0_l {
+	no-auto-init;
+};
+&gpio_slp_s3_l {
+	no-auto-init;
+};
+&gpio_slp_s4_l {
+	no-auto-init;
+};
+&gpio_slp_sus_l {
+	no-auto-init;
+};
+&gpio_sys_rst_odl {
+	no-auto-init;
+};

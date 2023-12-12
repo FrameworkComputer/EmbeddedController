@@ -1,0 +1,31 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_USB_UPDATE
+	bool "USB update protocol support"
+	help
+	  Enable the firmware update protocol (see docs/usb_updater.md)
+	  over USB interface.
+
+if PLATFORM_EC_USB_UPDATE
+
+config PLATFORM_EC_TOUCHPAD_VIRTUAL_SIZE
+	int "Touchpad virtual size"
+	help
+	  Enable touchpad FW update over USB update protocol, and define
+	  the size of the touchpad firmware.
+
+config PLATFORM_EC_TOUCHPAD_VIRTUAL_OFF
+	int "Touchpad virtual address"
+	help
+	  Enable touchpad FW update over USB update protocol, and define
+	  the virtual address of the touchpad firmware.
+
+config PLATFORM_EC_USB_PAIRING
+	bool "Pairing support"
+	select PLATFORM_EC_CURVE25519
+	help
+	  Add support for pairing over the USB update interface
+
+endif #PLATFORM_EC_USB_UPDATE

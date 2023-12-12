@@ -2,6 +2,21 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# Picolibc isn't working in gitlab at the moment, and in any case we
+# don't use it with coreboot-sdk, so just explicitly disable it.
+choice LIBC_IMPLEMENTATION
+    default MINIMAL_LIBC
+endchoice
+
+# Default to compiler-rt runtime library when compiling using LLVM (the check
+# for this is hidden under COMPILER_RT_SUPPORTED).
+# This doesn't make a difference really because in our cmake scripts we don't
+# change the implementation, so we always use the default (compiler-rt), but
+# this could be checked in some places, so it's better to say the truth.
+choice RTLIB_IMPLEMENTATION
+    default COMPILER_RT_RTLIB if COMPILER_RT_SUPPORTED
+endchoice
+
 rsource "app/Kconfig"
 rsource "drivers/Kconfig"
 rsource "emul/Kconfig"
@@ -23,6 +38,7 @@ endif # ZTEST
 
 menuconfig PLATFORM_EC
 	bool "Chromium OS EC shim"
+	imply CRC
 	imply PRINTK
 	imply SHELL
 	help
@@ -70,14 +86,17 @@ rsource "Kconfig.mkbp_event"
 rsource "Kconfig.motionsense"
 rsource "Kconfig.random"
 rsource "Kconfig.rsa"
+rsource "Kconfig.rollback"
 rsource "Kconfig.rtc"
 rsource "Kconfig.stacks"
 rsource "Kconfig.system"
 rsource "Kconfig.tasks"
 rsource "Kconfig.temperature"
+rsource "Kconfig.test"
 rsource "Kconfig.timer"
 rsource "Kconfig.throttle_ap"
 rsource "Kconfig.touchpad"
+rsource "Kconfig.usb_update"
 rsource "Kconfig.usba"
 rsource "Kconfig.usbc"
 rsource "Kconfig.watchdog"
@@ -125,7 +144,7 @@ config PLATFORM_EC_ACPI
 config PLATFORM_EC_AP_RESET_LOG
 	bool "Enable the Application Processor reset log"
 	depends on PLATFORM_EC_HOSTCMD_GET_UPTIME_INFO
-	default y if PLATFORM_EC_POWERSEQ
+	default y
 	help
 	  Enable logging of AP reset events. This information is provided in
 	  response to the EC_CMD_GET_UPTIME_INFO host command.
@@ -200,6 +219,21 @@ config PLATFORM_EC_BRINGUP
 	    for each power signal change.
 	  - And more!  You can search the codebase for CONFIG_BRINGUP
             to see all of the features this flag will toggle.
+
+config PLATFORM_EC_BUTTON
+	bool "Enable button support"
+	help
+	  Enable Chrome EC button library support. It is required for keyboard
+	  and dedicated recovery button support.
+
+config PLATFORM_EC_BUTTON_TRIGGERED_RECOVERY
+	bool "Support entering recovery mode using buttons"
+	default y
+	depends on PLATFORM_EC_DEDICATED_RECOVERY_BUTTON
+	help
+	  Support for entering recovery mode using the volume buttons or a
+	  dedicated recovery button. Note that these are *buttons* and not keys
+	  in the keyboard matrix.
 
 config PLATFORM_EC_CHIPSET_RESET_HOOK
 	bool "Provide a hook for when the AP resets"
@@ -320,10 +354,10 @@ config PLATFORM_EC_CONSOLE_CMD_SHMEM
 
 config PLATFORM_EC_CROS_FWID_VERSION
 	bool "Include CrOS FWID version"
-	default n
+	select DEPRECATED
 	help
-	  Include Chrome OS FWID in version output. The CrOS FWID will be common
-	  across OS, AP firmware and EC firmware when built together.
+	  Include Chrome OS FWID in version output. The CrOS FWID will
+	  be common across OS, AP firmware and EC firmware when built together.
 
 config PLATFORM_EC_DEBUG_ASSERT
 	bool "Enable assertion failures"
@@ -341,6 +375,35 @@ config PLATFORM_EC_DEBUG_ASSERT
 
 	  Note: There is also ASSERT() which is an alias of assert(), used in
 	  host code where cstdlib is used.
+
+config PLATFORM_EC_DEDICATED_RECOVERY_BUTTON
+	bool "Enable dedicated recovery button"
+	select PLATFORM_EC_BUTTON
+	help
+	  Indicates there is a dedicated recovery button.  Note, that if there
+	  are volume buttons, a dedicated recovery button is not needed.
+	  This is intended because if a board has volume buttons, they can do
+	  everything a dedicated recovery button can do.
+
+config PLATFORM_EC_DEDICATED_RECOVERY_BUTTON_ACTIVE_HIGH
+	bool "Recovery button is active high"
+	depends on PLATFORM_EC_DEDICATED_RECOVERY_BUTTON
+	help
+	  Configure recovery button to use high state as active.
+
+config PLATFORM_EC_DEDICATED_RECOVERY_BUTTON_2
+	bool "Enable second dedicated recovery button"
+	select PLATFORM_EC_BUTTON
+	help
+	  Enable use of second dedicated recovery button.
+	  For various reasons, on some platforms there may be multiple
+	  recovery inputs. See b/149967026.
+
+config PLATFORM_EC_DEDICATED_RECOVERY_BUTTON_2_ACTIVE_HIGH
+	bool "Second recovery button is active high"
+	depends on PLATFORM_EC_DEDICATED_RECOVERY_BUTTON_2
+	help
+	  Configure second recovery button to use high state as active.
 
 config PLATFORM_EC_DP_REDRIVER_TDP142
 	bool "Include TDP142 DisplayPort redriver driver"
@@ -499,6 +562,15 @@ config PLATFORM_EC_LID_SWITCH
 	  automatically power on.
 
 	  This requires a GPIO named GPIO_LID_OPEN to be defined or aliased.
+
+config PLATFORM_EC_CONSOLE_CMD_MMAPINFO
+	bool "Console command: mmapinfo"
+	default y
+	depends on PLATFORM_EC_LID_SWITCH
+	help
+	  Enable the 'mmapinfo' console command. This command prints the
+	  current switches state (lid, power button, write protect, etc)
+	  that is accesible by the host using the memmory mapped interface.
 
 config MKBP_PROTOCOL
 	bool "MKBP protocol support"
@@ -814,6 +886,13 @@ menuconfig PLATFORM_EC_TIMER
 	  This option is needed by many features in the EC. Disabling it will
 	  likely cause build errors.
 
+
+config PLATFORM_EC_ALLOW_UNALIGNED_ACCESS
+	bool "Allow Unaligned Access"
+	help
+	  Allow unaligned access by removing the unaligned trap. This can allow
+	  enabling this configuration for different boards.
+
 config PLATFORM_EC_VBOOT_EFS2
 	bool "EFS2 verified EC boot"
 	default y if !SOC_POSIX
@@ -836,6 +915,15 @@ config PLATFORM_EC_VBOOT_HASH
 	  that it is an incorrect version. It detects this by asking the EC to
 	  hash itself. If the hash is incorrect, new code is write to the EC's
 	  read/write area.
+
+config PLATFORM_EC_CONSOLE_CMD_HASH
+	bool "Console command: hash"
+	default y
+	depends on PLATFORM_EC_VBOOT_HASH
+	help
+	  Enable the 'hash' console command. Use this command to request a hash
+	  recomputation of the RO or RW image.  You can also request a hash
+	  computation over an arbitrary memory range.
 
 config PLATFORM_EC_VSTORE
 	bool "Secure temporary storage for verified boot"
@@ -908,12 +996,6 @@ config PLATFORM_EC_AMD_STB_DUMP
 	help
 	  Enable STB dumping when AP hangs during suspend/resume.
 
-config PLATFORM_EC_AMD_STB_DUMP_CMD
-	bool "Enable `amdstbdump` console command"
-	depends on PLATFORM_EC_AMD_STB_DUMP
-	help
-	  Enables the `amdstbdump` command to manually trigger an STB dump.
-
 config PLATFORM_EC_AMD_STT
 	bool "Enable driver for AMD STT interface"
 	depends on PLATFORM_EC_AMD_SB_RMI
@@ -954,5 +1036,10 @@ config SYSTEM_BOOT_TIME_LOGGING
 	help
 	  This config enables boot time logging functionality in EC which
 	  is used for calculating system boot time.
+
+config PLATFORM_EC_CURVE25519
+	bool "curve25519 public key crypto"
+	help
+	  Support curve25519 public key cryptography.
 
 endif # PLATFORM_EC

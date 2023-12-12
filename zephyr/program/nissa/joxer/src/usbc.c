@@ -12,6 +12,7 @@
 #include "hooks.h"
 #include "system.h"
 #include "usb_mux.h"
+#include "watchdog.h"
 
 #include <zephyr/logging/log.h>
 
@@ -65,10 +66,12 @@ static void board_chargers_suspend(struct ap_power_ev_callback *const cb,
 	case AP_POWER_RESUME:
 		fn = sm5803_disable_low_power_mode;
 		break;
+	/* LCOV_EXCL_START can only happen if init doesn't match these cases */
 	default:
 		LOG_WRN("%s: power event %d is not recognized", __func__,
 			data.event);
 		return;
+		/* LCOV_EXCL_STOP */
 	}
 
 	fn(CHARGER_PRIMARY);
@@ -235,6 +238,26 @@ __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 	}
 }
 
+__override void board_set_charge_limit(int port, int supplier, int charge_ma,
+				       int max_ma, int charge_mv)
+{
+	/*
+	 * Joxer C1 port is OCPC (One Charger IC Per Type-C)
+	 * architecture, The charging current is controlled by increasing Vsys.
+	 * However, the charger SM5803 is not limit current while Vsys
+	 * increasing, we can see the current overshoot to ~3.6A to cause
+	 * C1 port brownout with low power charger (5V). To avoid C1 port
+	 * brownout at low power charger connected. Limit charge current to 2A.
+	 */
+	if (charge_mv <= 5000 && port == 1)
+		charge_ma = MIN(charge_ma, 2000);
+	else
+		charge_ma = charge_ma * 96 / 100;
+
+	charge_set_input_current_limit(charge_ma, charge_mv);
+}
+
+/* LCOV_EXCL_START function does nothing, but is required for build */
 void board_reset_pd_mcu(void)
 {
 	/*
@@ -243,6 +266,7 @@ void board_reset_pd_mcu(void)
 	 * to the EC.
 	 */
 }
+/* LCOV_EXCL_STOP */
 
 /* C0 interrupt can only be triggered by the charger */
 void usb_c0_interrupt(enum gpio_signal s)
@@ -256,6 +280,32 @@ void usb_c1_interrupt(enum gpio_signal s)
 	/* Charger is handled in board_process_pd_alert */
 	schedule_deferred_pd_interrupt(1);
 }
+
+/*
+ * Check state of IRQ lines at startup, ensuring an IRQ that happened before
+ * the EC started up won't get lost (leaving the IRQ line asserted and blocking
+ * any further interrupts on the port).
+ *
+ * Although the PD task will check for pending TCPC interrupts on startup,
+ * the charger sharing the IRQ will not be polled automatically.
+ */
+void board_handle_initial_typec_irq(void)
+{
+	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl))) {
+		/* Only charger IRQ has to be checked on C0 interrupt */
+		sm5803_interrupt(0);
+	}
+
+	/*
+	 * C1 port IRQ already handled by board_process_pd_alert(), we don't
+	 * need check IRQ here at initial.
+	 */
+}
+/*
+ * This must run after sub-board detection (which happens in EC main()),
+ * but isn't depended on by anything else either.
+ */
+DECLARE_HOOK(HOOK_INIT, board_handle_initial_typec_irq, HOOK_PRIO_LAST);
 
 /*
  * Handle charger interrupts in the PD task. Not doing so can lead to a priority
@@ -285,6 +335,15 @@ void board_process_pd_alert(int port)
 	 */
 	if (!gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_int_odl)))
 		schedule_deferred_pd_interrupt(port);
+
+	/*
+	 * b:301055899: There are some peripheral display docks will
+	 * issue HPDs in the short time. TCPM must wake up pd_task
+	 * continually to service the events. They may cause the
+	 * watchdog to reset. This patch placates watchdog after
+	 * receiving dp_attention.
+	 */
+	watchdog_reload();
 }
 
 int pd_snk_is_vbus_provided(int port)

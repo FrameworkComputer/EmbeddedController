@@ -5,6 +5,12 @@
 
 /* Debug console for Chrome EC */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #ifndef __CROS_EC_CONSOLE_H
 #define __CROS_EC_CONSOLE_H
 
@@ -154,6 +160,54 @@ static inline bool console_channel_is_disabled(enum console_channel channel)
 }
 #endif
 
+#ifdef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
+/**
+ * Buffer size in bytes large enough to hold the largest possible timestamp.
+ */
+#define PRINTF_TIMESTAMP_BUF_SIZE 22
+int snprintf_timestamp_now(char *str, size_t size);
+#if 0
+/* TODO(b/289215486)
+ * console_channel_is_disabled checks don't give space savings,
+ * See if we can add this but still get tokenized space savings
+ */
+#define cputs(channel, outstr)                               \
+	do {                                                 \
+		if (!console_channel_is_disabled(channel)) { \
+			PW_LOG_INFO("%s", outstr);           \
+		}                                            \
+	} while (false)
+
+#define cprintf(channel, format, ...)                        \
+	do {                                                 \
+		if (!console_channel_is_disabled(channel)) { \
+			PW_LOG_INFO(format, ##__VA_ARGS__);  \
+		}                                            \
+	} while (false)
+
+#define cprints(channel, format, ...)                                   \
+	do {                                                            \
+		if (!console_channel_is_disabled(channel)) {            \
+			char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];         \
+			snprintf_timestamp_now(ts_str, sizeof(ts_str)); \
+			PW_LOG_INFO("[%s " format "]\n", ts_str,        \
+				    ##__VA_ARGS__);                     \
+		}                                                       \
+	} while (false)
+#endif
+
+#define cputs(channel, outstr) PW_LOG_INFO("%s", outstr)
+
+#define cprintf(channel, format, ...) PW_LOG_INFO(format, ##__VA_ARGS__)
+
+#define cprints(channel, format, ...)                                    \
+	do {                                                             \
+		char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];                  \
+		snprintf_timestamp_now(ts_str, sizeof(ts_str));          \
+		PW_LOG_INFO("[%s " format "]\n", ts_str, ##__VA_ARGS__); \
+	} while (false)
+#else
+
 /**
  * Put a string to the console channel.
  *
@@ -186,6 +240,7 @@ cprintf(enum console_channel channel, const char *format, ...);
  */
 __attribute__((__format__(__printf__, 2, 3))) int
 cprints(enum console_channel channel, const char *format, ...);
+#endif /* CONFIG_PIGWEED_LOG_TOKENIZED_LIB */
 
 /**
  * Flush the console output for all channels.

@@ -10,7 +10,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test_new.h>
+#include <zephyr/ztest_test.h>
 
 LOG_MODULE_REGISTER(test);
 

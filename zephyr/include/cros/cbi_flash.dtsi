@@ -11,6 +11,7 @@
 			offset = <0x40000>;
 			size = <0>;
 			fill-byte = [ff];
+			image-size = <256>;
 			preserve;
 		};
 	};

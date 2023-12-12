@@ -159,6 +159,7 @@ config SHIMMED_TASKS
 	bool "Add support for shimming in platform/ec tasks as Zephyr threads"
 	default n if ARCH_POSIX
 	default y if PLATFORM_EC_USB_CHARGER
+	default y if HAS_TASK_CEC
 	default y if HAS_TASK_CHARGER
 	default y if HAS_TASK_CHG_RAMP
 	default y if HAS_TASK_CHIPSET
@@ -200,4 +201,14 @@ config SHELL_HELP
 
 config KERNEL_SHELL
   default y
+
+config EEPROM_SHELL
+	default y if EEPROM
+
+config PWM_SHELL
+	default y if PWM
+
+config WDT_SHELL
+	default y if WATCHDOG
+
 endif # CROS_EC

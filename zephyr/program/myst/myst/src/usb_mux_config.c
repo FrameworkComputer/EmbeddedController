@@ -41,29 +41,6 @@ __override uint8_t board_get_usb_pd_port_count(void)
 		return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
 
-void ppc_interrupt(enum gpio_signal signal)
-{
-	uint32_t io_db_type = get_io_db_type_from_cached_cbi();
-
-	switch (signal) {
-	case GPIO_USB_C0_PPC_INT_ODL:
-		ktu1125_interrupt(USBC_PORT_C0);
-		break;
-
-	case GPIO_USB_C1_PPC_INT_ODL:
-		if (io_db_type == FW_IO_DB_SKU_A) {
-			nx20p348x_interrupt(USBC_PORT_C1);
-		}
-		if (io_db_type == FW_IO_DB_SKU_B) {
-			ktu1125_interrupt(USBC_PORT_C1);
-		}
-		break;
-
-	default:
-		break;
-	}
-}
-
 static void setup_mux(void)
 {
 	switch (get_io_db_type_from_cached_cbi()) {
@@ -82,6 +59,8 @@ static void setup_mux(void)
 
 	case FW_IO_DB_SKU_B:
 		LOG_INF("USB DB: Setting SKU_B DB");
+		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_chain_port0_ps8828);
+		USB_MUX_ENABLE_ALTERNATIVE(usb_mux_chain_port1_tcpci);
 		TCPC_ENABLE_ALTERNATE_BY_NODELABEL(USBC_PORT_C1,
 						   tcpc_ps8815_port1);
 		PPC_ENABLE_ALTERNATE_BY_NODELABEL(USBC_PORT_C1,

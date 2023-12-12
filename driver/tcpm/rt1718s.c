@@ -98,7 +98,7 @@ int rt1718s_read16(int port, int reg, int *val)
 	return rt1718s_read(port, reg, val, 2);
 }
 
-int rt1718s_sw_reset(int port)
+test_mockable int rt1718s_sw_reset(int port)
 {
 	int rv;
 
@@ -449,7 +449,8 @@ static int rt1718s_enter_low_power_mode(int port)
 }
 #endif
 
-int rt1718s_get_adc(int port, enum rt1718s_adc_channel channel, int *adc_val)
+test_mockable int rt1718s_get_adc(int port, enum rt1718s_adc_channel channel,
+				  int *adc_val)
 {
 	int rv;
 	const int max_wait_times = 30;
@@ -491,14 +492,16 @@ int rt1718s_get_adc(int port, enum rt1718s_adc_channel channel, int *adc_val)
 	if (rv)
 		goto out;
 
-	/*
-	 * The resolution of VBUS1 ADC is 12.5mV,
-	 * other channels are 4mV.
-	 */
-	if (channel == RT1718S_ADC_VBUS1)
+	if (channel == RT1718S_ADC_VBUS1) {
+		/* 12.5mV / LSB */
 		*adc_val = *adc_val * 125 / 10;
-	else
+	} else if (channel == RT1718S_ADC_VBUS_CURRENT) {
+		/* 33mA / LSB */
+		*adc_val *= 33;
+	} else {
+		/* other channels are 4mV / LSB */
 		*adc_val *= 4;
+	}
 
 out:
 	/* Cleanup: disable adc and clear interrupt. Error ignored. */

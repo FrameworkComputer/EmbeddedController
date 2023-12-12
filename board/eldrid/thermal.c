@@ -26,20 +26,15 @@
  * TODO(b/170143672): Have different sensor placement. The temperature need to
  * be changed.
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CPU              \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
+const static struct ec_thermal_config thermal_cpu = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+};
 
 /*
  * Inductor limits - used for both charger and PP3300 regulator
@@ -52,27 +47,21 @@ __maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
  * Inductors: limit of 125c
  * PCB: limit is 80c
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_INDUCTOR         \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_inductor =
-	THERMAL_INDUCTOR;
+const static struct ec_thermal_config thermal_inductor = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+};
 
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_CHARGER] = THERMAL_INDUCTOR,
-	[TEMP_SENSOR_2_PP3300_REGULATOR] = THERMAL_INDUCTOR,
-	[TEMP_SENSOR_3_DDR_SOC] = THERMAL_CPU,
-	[TEMP_SENSOR_4_FAN] = THERMAL_CPU,
+	[TEMP_SENSOR_1_CHARGER] = thermal_inductor,
+	[TEMP_SENSOR_2_PP3300_REGULATOR] = thermal_inductor,
+	[TEMP_SENSOR_3_DDR_SOC] = thermal_cpu,
+	[TEMP_SENSOR_4_FAN] = thermal_cpu,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 

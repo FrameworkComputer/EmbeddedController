@@ -124,7 +124,7 @@ static
 				pd_dpm_request(port, DPM_REQUEST_DR_SWAP);
 			else if (IS_ENABLED(CONFIG_USBC_VCONN_SWAP) &&
 				 !strcasecmp(argv[3], "vconn"))
-				pd_dpm_request(port, DPM_REQUEST_VCONN_SWAP);
+				pd_request_vconn_swap(port);
 			else
 				return EC_ERROR_PARAM3;
 		} else if (!strcasecmp(argv[2], "dualrole")) {

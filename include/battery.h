@@ -10,6 +10,7 @@
 
 #include "common.h"
 #include "compiler.h"
+#include "ec_commands.h"
 #include "host_command.h"
 
 /*
@@ -48,9 +49,6 @@
 /* Full-capacity change reqd for host event */
 #define LFCC_EVENT_THRESH 5
 
-/* Max string size in the SB spec is 31. */
-#define SB_MAX_STR_SIZE 31
-
 /* Battery index, only used with CONFIG_BATTERY_V2. */
 enum battery_index {
 	BATT_IDX_INVALID = -1,
@@ -69,16 +67,21 @@ FORWARD_DECLARE_ENUM(battery_present){
 	BP_NOT_SURE,
 };
 
-/*
- * BATTERY_CUTOFF_STATE_IN_PROGRESS: Battery cutoff has begun but not completed.
- * BATTERY_CUTOFF_STATE_PENDING: Battery cutoff is requested by the
- * AP but hasn't started.
- */
 enum battery_cutoff_states {
+	/* Cutoff is not started or scheduled. */
 	BATTERY_CUTOFF_STATE_NORMAL = 0,
+	/* Cutoff has begun but not completed. */
 	BATTERY_CUTOFF_STATE_IN_PROGRESS,
+	/*
+	 * Cutoff has been completed. This state is effectively unused if AC is
+	 * unplugged because the EC will brown out when cutoff completes.
+	 */
 	BATTERY_CUTOFF_STATE_CUT_OFF,
-	BATTERY_CUTOFF_STATE_PENDING,
+	/*
+	 * Cutoff is scheduled but hasn't started. Cutoff is deferred or the EC
+	 * is waiting for a shutdown.
+	 */
+	BATTERY_CUTOFF_STATE_SCHEDULED,
 };
 
 enum battery_disconnect_state {
@@ -98,12 +101,12 @@ struct battery_static_info {
 	 * char device_name[32];
 	 * char chemistry[32];
 	 */
-	char manufacturer_ext[SB_MAX_STR_SIZE + 1]; /* SB_MANUFACTURER_NAME */
-	char model_ext[SB_MAX_STR_SIZE + 1]; /* SB_DEVICE_NAME */
-	char serial_ext[SB_MAX_STR_SIZE + 1]; /* SB_SERIAL_NUMBER */
-	char type_ext[SB_MAX_STR_SIZE + 1]; /* SB_DEVICE_CHEMISTRY */
+	char manufacturer_ext[SBS_MAX_STR_OBJ_SIZE]; /* SB_MANUFACTURER_NAME */
+	char model_ext[SBS_MAX_STR_OBJ_SIZE]; /* SB_DEVICE_NAME */
+	char serial_ext[SBS_MAX_STR_OBJ_SIZE]; /* SB_SERIAL_NUMBER */
+	char type_ext[SBS_MAX_STR_OBJ_SIZE]; /* SB_DEVICE_CHEMISTRY */
 #ifdef CONFIG_BATTERY_VENDOR_PARAM
-	uint8_t vendor_param[SB_MAX_STR_SIZE + 1];
+	uint8_t vendor_param[SBS_MAX_STR_OBJ_SIZE];
 #endif
 };
 
@@ -165,33 +168,6 @@ int battery_get_avg_voltage(void); /* in mV */
 
 /* The flag of prechare when the battery voltage is lower than voltage_min */
 #define BATT_FLAG_DEEP_CHARGE 0x00010000
-
-/* Battery constants */
-struct battery_info {
-	/* Operation voltage in mV */
-	int voltage_max;
-	int voltage_normal;
-	int voltage_min;
-	/* (TODO(chromium:756700): add desired_charging_current */
-	/**
-	 * Pre-charge to fast charge threshold in mV,
-	 * default to voltage_min if not specified.
-	 * This option is only available on isl923x and rt946x.
-	 */
-	int precharge_voltage;
-	/* Pre-charge current in mA */
-	int precharge_current;
-	/* Working temperature ranges in degrees C */
-	int8_t start_charging_min_c;
-	int8_t start_charging_max_c;
-	int8_t charging_min_c;
-	int8_t charging_max_c;
-	int8_t discharging_min_c;
-	int8_t discharging_max_c;
-#ifdef CONFIG_BATTERY_VENDOR_PARAM
-	uint8_t vendor_param_start;
-#endif
-};
 
 /**
  * Return vendor-provided battery constants.
@@ -436,6 +412,7 @@ int battery_manufacturer_access(int cmd);
  * the battery pack, in millivolts.  On error or unimplemented, returns '0'.
  */
 int battery_imbalance_mv(void);
+int battery_bq4050_imbalance_mv(void);
 
 /**
  * Call board-specific cut-off function.

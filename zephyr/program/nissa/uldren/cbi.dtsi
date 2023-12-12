@@ -70,6 +70,43 @@
 				value = <1>;
 			};
 		};
+
+		/*
+		 * FW_CONFIG field to identify motion sensor.
+		 */
+		motionsense-sensor {
+			enum-name = "MOTIONSENSE_SENSOR";
+			start = <15>;
+			size = <3>;
+
+			no-motionsense-sensor {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "MOTIONSENSE_SENSOR_NOT_PRESENT";
+				value = <0>;
+				default;
+			};
+			bma422-lsm6dso {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "BMA422_LSM6DSO";
+				value = <1>;
+			};
+			bma422-bmi323 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "BMA422_BMI323";
+				value = <2>;
+			};
+			lis2dw12-bmi323 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "LIS2DW12_BMI323";
+				value = <3>;
+			};
+			lis2dw12-lsm6dso {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "LIS2DW12_LSM6DSO";
+				value = <4>;
+			};
+		};
+
 /delete-node/ fan;
 	};
 };

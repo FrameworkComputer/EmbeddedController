@@ -118,7 +118,7 @@
 			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
-			gpios = <&gpio1 7 (GPIO_OUTPUT_LOW | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_pch_wake_odl: ec_pch_wake_r_odl {
 			gpios = <&gpioc 0 GPIO_ODR_HIGH>;
@@ -216,15 +216,15 @@
 			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
 		};
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
-			gpios = <&gpio6 2 GPIO_INPUT>;
+			gpios = <&gpio6 2 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 		};
 		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
-			gpios = <&gpiof 5 GPIO_INPUT>;
+			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
 		};
 		gpio_usb_c2_ppc_int_odl: usb_c2_ppc_int_odl {
-			gpios = <&gpio7 0 GPIO_INPUT>;
+			gpios = <&gpio7 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C2_PPC_INT_ODL";
 		};
 		gpio_usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {

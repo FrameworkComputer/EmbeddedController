@@ -29,3 +29,11 @@ config PLATFORM_EC_RO_HEADER_SIZE
 	help
 	  The size of the RO header in bytes. This values should come from the
 	  datasheet of the chip being used.
+
+config PLATFORM_EC_FW_START_OFFSET_IN_EXT_SPI_FLASH
+	hex "EC FW start offset in external SPI flash"
+	default 0x0
+	help
+	  Firmware of EC & AP are stored in shared external SPI flash.
+	  Address/offset(in bytes) at which the EC firmware starts in external
+	  SPI flash. This offset remains "0" when EC uses internal SPI flash.

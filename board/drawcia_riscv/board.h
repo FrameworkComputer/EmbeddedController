@@ -17,6 +17,9 @@
 #define VARIANT_DEDEDE_EC_IT8320
 #include "baseboard.h"
 
+/* Save some flash space */
+#undef CONFIG_POWER_SLEEP_FAILURE_DETECTION
+
 #define CONFIG_LTO
 
 /*
@@ -56,9 +59,6 @@
 #define CONFIG_ACCELGYRO_LSM6DSM /* Base accel */
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK BIT(LID_ACCEL)
-
-#define CONFIG_CMD_ACCELS
-#define CONFIG_CMD_ACCEL_INFO
 
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
@@ -107,6 +107,19 @@
 
 /* Reduce flash image footprint */
 #undef CONFIG_CMD_ACCELS
+#undef CONFIG_CMD_ACCEL_INFO
+#undef CONFIG_CMD_APTHROTTLE
+#undef CONFIG_CMD_BATTFAKE
+#undef CONFIG_CMD_BATT_MFG_ACCESS
+#undef CONFIG_CMD_CHARGER_DUMP
+#undef CONFIG_CMD_CHARGER_PROFILE_OVERRIDE
+#undef CONFIG_CMD_CHARGER_PROFILE_OVERRIDE_TEST
+#undef CONFIG_CMD_DEVICE_EVENT
+#undef CONFIG_CMD_FASTCHARGE
+#undef CONFIG_CMD_GETTIME
+#undef CONFIG_CMD_IDLE_STATS
+#undef CONFIG_CMD_INA
+#undef CONFIG_CMD_MD
 
 #ifndef __ASSEMBLER__
 

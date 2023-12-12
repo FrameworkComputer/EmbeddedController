@@ -77,6 +77,14 @@ config PLATFORM_EC_INTERNAL_STORAGE
 
 endchoice
 
+config PLATFORM_EC_RW_FWID_OVERLAP
+	bool "The EC RW_FWID fmap overlaps with the firmware blob"
+	default $(dt_node_bool_prop,/binman/ec-rw/rw-fw/rw-fwid,overlap)
+	help
+	  This indicates the RW_FWID fmap overlaps with the firmware blob,
+	  because the fmap points to the current_image_data.version[32],
+	  instead of a separate region at the end of the EC_RW.
+
 config PLATFORM_EC_RW_TOTAL_IMAGE_SIZE
 	hex
 	default $(dt_node_int_prop_hex,/binman/ec-rw,size)
@@ -95,7 +103,7 @@ config PLATFORM_EC_FLASH_SIZE_BYTES
 
 config PLATFORM_EC_MAPPED_STORAGE
 	bool "Flash is mapped into the EC's address space"
-	default y if SOC_FAMILY_NPCX || SOC_FAMILY_RISCV_ITE
+	default y if SOC_FAMILY_NPCX || SOC_FAMILY_RISCV_ITE || SOC_FAMILY_STM32
 	help
 	  This indicates that the EC's flash is directly mapped into
 	  its address space. This makes it easier to read and write the flash.
@@ -159,5 +167,25 @@ config PLATFORM_EC_USE_ZEPHYR_FLASH_PAGE_LAYOUT
 	help
 	  When enabled, EC will use flash page layout API to get information
 	  about flash sectors (index, offset, and size).
+
+config PLATFORM_EC_SHARED_SPI_FLASH
+	bool "External SPI flash used to store EC & AP firmware"
+	default y
+	depends on DT_HAS_CROS_EC_SHARED_SPI_FLASH_ENABLED
+	depends on PLATFORM_EC_EXTERNAL_STORAGE
+	select FLASH_EX_OP_ENABLED
+	help
+	  Used when EC image flashed onto external flash chip.
+	  External flash shared between the EC & AP.
+	  Config implements the configurations needed by EC to access
+	  SPI flash on initial boot and while jumping to EC RW/RO firmware.
+
+config PLATFORM_EC_SPI_CLOCK_DIVIDE
+	int "SPI clock divider"
+	default 2
+	help
+	  SPI output clock is derived from source clock, divided by the SPI
+	  clock  divider value. Clock divide value depends on the spi length
+	  from EC to flashchip.
 
 endif # PLATFORM_EC_FLASH_CROS

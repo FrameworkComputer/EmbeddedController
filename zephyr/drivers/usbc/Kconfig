@@ -1,0 +1,27 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USBC
+
+config USBC_INTEL_ALTMODE
+	bool "USB-C Intel alternate mode configuration driver"
+	default y if DT_HAS_INTEL_PD_ALTMODE_ENABLED
+	help
+	  This option enables a driver for communicating between the USB PD
+	  chip and EC for configuring the USB-C alternate mode muxes inside
+	  Intel AP.
+
+endif # PLATFORM_EC_USBC
+
+# TODO: move this inside the PLATFORM_EC_USBC guard
+# This is here for testing register access to the RTS545X part.
+config USBC_PDC_RTS545X
+	bool "Realtek RTS545x Power Delivery Controller driver"
+	default y
+	depends on DT_HAS_REALTEK_RTS545X_ENABLED
+	help
+	  This option enable the Realtek RTS545x Power Delivery Controller. This
+	  chip family supports both single port and multiple port
+	  configurations. For multiple port configurations, each port must
+	  create a separate devicetree entry.

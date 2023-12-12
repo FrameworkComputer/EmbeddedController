@@ -1,0 +1,66 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/pwm/pwm.h>
+
+#include "../program/nissa/pujjo/cbi.dtsi"
+#include "../program/nissa/pujjo/motionsense.dtsi"
+
+/ {
+	named-gpios {
+		gpio_fan_enable: fan-enable {
+			gpios = <&gpio6 3 GPIO_OUTPUT>;
+			no-auto-init;
+		};
+		gpio_imu_int_l: imu_int_l {
+			gpios = <&gpio5 6 GPIO_INPUT>;
+		};
+		gpio_tablet_mode_l: tablet_mode_l {
+			gpios = <&gpio9 5 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
+		};
+		gpio_power_led: power_led {
+			gpios = <&gpioc 2 GPIO_OUTPUT_LOW>;
+		};
+		gpio_led_1_odl: led_1_odl {
+			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_led_2_odl: led_2_odl {
+			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+		i2c_ec_i2c_usb_c0: ec_i2c_usb_c0 {
+			i2c-port = <&i2c_ctrl0>;
+			enum-names = "I2C_PORT_USB_C0_TCPC";
+		};
+
+		i2c_ec_i2c_sensor: ec_i2c_sensor {
+			i2c-port = <&i2c_ctrl1>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_imu: ec_imu {
+			irq-pin = <&gpio_imu_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "motion_interrupt";
+		};
+
+		int_usb_c0: usb_c0 {
+			irq-pin = <&gpio_usb_c0_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_interrupt_c0";
+		};
+	};
+
+	/* Sensors need to exist for this test but aren't actually used. */
+	/delete-node/ motionsense-sensor-info;
+};

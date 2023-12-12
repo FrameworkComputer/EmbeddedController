@@ -63,6 +63,12 @@ int tc_is_vconn_src(int port)
 	return 0;
 }
 
+void pd_request_vconn_swap(int port)
+{
+	test_port = port;
+	pd_dpm_request(port, DPM_REQUEST_VCONN_SWAP);
+}
+
 enum pd_power_role pd_get_power_role(int port)
 {
 	pd_get_power_role_called = true;

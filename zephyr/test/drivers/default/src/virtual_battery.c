@@ -10,6 +10,7 @@
 #include "gpio.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 #include "virtual_battery.h"
 
 #include <zephyr/drivers/emul.h>
@@ -64,7 +65,7 @@ static void i2c_passthru_xfer(uint8_t port, uint8_t addr, uint8_t *write_buf,
 
 	/* Execute the I2C passthru host command */
 	zassert_ok(host_command_process(&args), NULL);
-	zassert_ok(args.result, NULL);
+	CHECK_ARGS_RESULT(args)
 	zassert_ok(response->i2c_status, NULL);
 	zassert_equal(args.response_size, sizeof(*response) + read_len, NULL);
 
@@ -183,19 +184,19 @@ ZTEST_USER(virtual_battery, test_read_regs)
 	zassert_equal(bat->cap, word, "%d != %d", bat->cap, word);
 
 	len = virtual_battery_read_str(SB_MANUFACTURER_NAME, &str,
-				       SB_MAX_STR_SIZE);
+				       SBS_MAX_STR_SIZE);
 	zassert_equal(bat->mf_name_len, len, "%d != %d", bat->mf_name_len, len);
 	zassert_mem_equal(str, bat->mf_name, bat->mf_name_len, "%s != %s", str,
 			  bat->mf_name);
 
-	len = virtual_battery_read_str(SB_DEVICE_NAME, &str, SB_MAX_STR_SIZE);
+	len = virtual_battery_read_str(SB_DEVICE_NAME, &str, SBS_MAX_STR_SIZE);
 	zassert_equal(bat->dev_name_len, len, "%d != %d", bat->dev_name_len,
 		      len);
 	zassert_mem_equal(str, bat->dev_name, bat->dev_name_len, "%s != %s",
 			  str, bat->dev_name);
 
 	len = virtual_battery_read_str(SB_DEVICE_CHEMISTRY, &str,
-				       SB_MAX_STR_SIZE);
+				       SBS_MAX_STR_SIZE);
 	zassert_equal(bat->dev_chem_len, len, "%d != %d", bat->dev_chem_len,
 		      len);
 	zassert_mem_equal(str, bat->dev_chem, bat->dev_chem_len, "%s != %s",

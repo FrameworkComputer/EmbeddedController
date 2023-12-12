@@ -1,0 +1,8 @@
+common:
+  platform_allow: native_posix
+tests:
+  roach.axii:
+    extra_configs:
+    - CONFIG_TEST_AXII=y
+    extra_dtc_overlay_files:
+    - axii.default.overlay

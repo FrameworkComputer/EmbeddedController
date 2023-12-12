@@ -18,6 +18,8 @@
 #include "compiler.h"
 #include "ec_commands.h"
 
+#include <stdbool.h>
+
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -51,6 +53,10 @@ struct host_cmd_handler_args {
 	 */
 	uint16_t response_size;
 
+/* The upstream version of this structure doesn't have the result field.
+ * Drop it for the compatibility.
+ */
+#ifndef CONFIG_EC_HOST_CMD
 	/*
 	 * This is the result returned by command and therefore the status to
 	 * be reported from the command execution to the host. The driver
@@ -66,6 +72,7 @@ struct host_cmd_handler_args {
 	 * by this field.
 	 */
 	uint16_t result;
+#endif
 };
 
 /* Args for host packet handler */
@@ -143,6 +150,14 @@ typedef uint64_t host_event_t;
 #define HOST_EVENT_CCPRINTF(str, e) ccprintf("%s 0x%016" PRIx64 "\n", str, e)
 
 /**
+ * Initialize Host Command
+ *
+ * Initialize memmap memory and set needed host event. This function does not
+ * initialize Host Command communication itself.
+ */
+void host_command_init(void);
+
+/**
  * Return a pointer to the memory-mapped buffer.
  *
  * This buffer is EC_MEMMAP_SIZE bytes long, is writable at any time, and the
@@ -191,6 +206,14 @@ host_event_t host_get_events(void);
  * @return true if <event> is set or false otherwise
  */
 int host_is_event_set(enum host_event_code event);
+
+/**
+ * Find a command by command number.
+ *
+ * @param command	Command number to find
+ * @return The command structure, or NULL if no match found.
+ */
+const struct host_command *find_host_command(int command);
 
 #ifdef CONFIG_HOSTCMD_X86
 
@@ -247,6 +270,22 @@ int host_request_expected_size(const struct ec_host_request *r);
  * @param packet	Host packet args
  */
 void host_packet_receive(struct host_packet *pkt);
+
+/**
+ * Check if a Host Command that sent EC_HOST_CMD_IN_PROGRESS status has ended.
+ *
+ * @return True if the command has ended, False if not.
+ */
+bool host_command_in_process_ended(void);
+
+/**
+ * Get saved result of the command that has sent IN_PROGRESS status.
+ *
+ * This routine returns the save result and clears it.
+ *
+ * @return Save result.
+ */
+uint8_t host_command_get_saved_result(void);
 
 /**
  * Find the handler for a command in Zephyr OS.
@@ -405,11 +444,15 @@ static inline int CROS_EC_COMMAND(CROS_EC_COMMAND_INFO *handle,
 	handle->response = response;
 	handle->response_max = response_size;
 	handle->response_size = 0;
+#ifndef CONFIG_EC_HOST_CMD
 	handle->result = 0;
+#endif
 
 	rv = host_command_process(handle);
+#ifndef CONFIG_EC_HOST_CMD
 	if (handle->result != EC_RES_SUCCESS)
 		return handle->result;
+#endif
 
 	return rv;
 }

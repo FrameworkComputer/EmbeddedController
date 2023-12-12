@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_KEYBOARD
+if PLATFORM_EC_KEYBOARD_CROS_EC_RAW_KB
 
 menuconfig CROS_KB_RAW_NPCX
 	bool "Nuvoton NPCX raw-keyboard-scan driver for the Zephyr shim"

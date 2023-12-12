@@ -26,6 +26,16 @@
 static int base_interrupt_id;
 static int lid_interrupt_id;
 
+extern uint8_t base_is_none;
+extern uint8_t lid_is_none;
+
+static void teardown(void *unused)
+{
+	/* Reset board globals */
+	base_is_none = false;
+	lid_is_none = false;
+}
+
 static void *clamshell_setup(void)
 {
 	uint32_t val;
@@ -54,7 +64,7 @@ static void *clamshell_setup(void)
 	return NULL;
 }
 
-ZTEST_SUITE(tentacruel_clamshell, NULL, clamshell_setup, NULL, NULL, NULL);
+ZTEST_SUITE(tentacruel_clamshell, NULL, clamshell_setup, NULL, NULL, teardown);
 
 static void *main_sensor_setup(void)
 {
@@ -84,7 +94,8 @@ static void *main_sensor_setup(void)
 	return NULL;
 }
 
-ZTEST_SUITE(tentacruel_main_sensor, NULL, main_sensor_setup, NULL, NULL, NULL);
+ZTEST_SUITE(tentacruel_main_sensor, NULL, main_sensor_setup, NULL, NULL,
+	    teardown);
 
 static void *alt_sensor_setup(void)
 {
@@ -114,7 +125,8 @@ static void *alt_sensor_setup(void)
 	return NULL;
 }
 
-ZTEST_SUITE(tentacruel_alt_sensor, NULL, alt_sensor_setup, NULL, NULL, NULL);
+ZTEST_SUITE(tentacruel_alt_sensor, NULL, alt_sensor_setup, NULL, NULL,
+	    teardown);
 
 /* Main gyro sensor. */
 void icm42607_interrupt(enum gpio_signal signal)

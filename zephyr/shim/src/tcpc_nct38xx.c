@@ -17,8 +17,8 @@
 		    ([USBC_PORT_NEW(usbc_id)] = GPIO_DEV_WITH_COMMA(tcpc_id)), \
 		    ())
 
-#define NCT38XX_CHECK(usbc_id, tcpc_id)                           \
-	COND_CODE_1(DT_NODE_HAS_COMPAT(tcpc_id, nuvoton_nct38xx), \
+#define NCT38XX_CHECK(usbc_id, tcpc_id)                               \
+	COND_CODE_1(DT_NODE_HAS_COMPAT(tcpc_id, NCT38XX_TCPC_COMPAT), \
 		    (GPIO_DEV_BINDING(usbc_id, tcpc_id)), ())
 
 #define NCT38XX_GPIO(usbc_id)                        \

@@ -10,18 +10,25 @@
 
 #include <zephyr/devicetree.h>
 
-#define NCT38XX_TCPC_COMPAT nuvoton_nct38xx
+#define NCT38XX_TCPC_COMPAT nuvoton_nct38xx_tcpc
+
+#ifdef CONFIG_MFD_NCT38XX
+#define TCPC_MFD_PARENT(id) .mfd_parent = DEVICE_DT_GET(DT_PARENT(id)),
+#else
+#define TCPC_MFD_PARENT(id)
+#endif
 
 /* clang-format off */
 #define TCPC_CONFIG_NCT38XX(id)                                                \
 	{                                                                      \
 		.bus_type = EC_BUS_TYPE_I2C,                                   \
 		.i2c_info = {                                                  \
-			.port = I2C_PORT_BY_DEV(id),                           \
-			.addr_flags = DT_REG_ADDR(id),                         \
+			.port = I2C_PORT_BY_DEV(DT_PARENT(id)),                \
+			.addr_flags = DT_REG_ADDR(DT_PARENT(id)),              \
 		},                                                             \
 		.drv = &nct38xx_tcpm_drv,                                      \
 		.flags = DT_PROP(id, tcpc_flags),                              \
+		TCPC_MFD_PARENT(id)                                            \
 		COND_CODE_1(CONFIG_PLATFORM_EC_TCPC_INTERRUPT,                 \
 			(.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {}),   \
 			 .rst_gpio = GPIO_DT_SPEC_GET_OR(id, rst_gpios, {})),  \

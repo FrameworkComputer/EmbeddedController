@@ -30,6 +30,12 @@
 #endif /* CONFIG_ZEPHYR */
 
 /*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 37
+
+/*
  * Define a new macro (FIXED_SECTION) to abstract away the linker details
  * between platform/ec builds and Zephyr. Each build has a slightly different
  * way of ensuring that the given section is in the same relative location in
@@ -194,6 +200,18 @@
 #define __overridable __attribute__((weak))
 
 /*
+ * Mark a symbol that is provided by a precompiled static library, without
+ * source code.
+ */
+#define __staticlib extern
+
+/*
+ * Mark a function that is defined purely as a hook to be used by a static
+ * library.
+ */
+#define __staticlib_hook __unused
+
+/*
  * Attribute that will generate a compiler warning if the return value is not
  * used.
  */
@@ -283,6 +301,7 @@
 #define test_mockable_static_noreturn noreturn __attribute__((weak))
 #endif
 #define test_export_static
+#define test_overridable_const
 #else
 #define test_mockable
 #define test_mockable_static static
@@ -290,6 +309,7 @@
 #define test_mockable_noreturn noreturn
 #define test_mockable_static_noreturn static noreturn
 #define test_export_static static
+#define test_overridable_const const
 #endif
 
 /* Include top-level configuration file */
@@ -365,6 +385,9 @@ enum ec_error_list {
 
 	/* Operation was successful but completion is pending. */
 	EC_SUCCESS_IN_PROGRESS = 27,
+
+	/* No response available */
+	EC_ERROR_UNAVAILABLE = 28,
 
 	/* Verified boot errors */
 	EC_ERROR_VBOOT_SIGNATURE = 0x1000, /* 4096 */

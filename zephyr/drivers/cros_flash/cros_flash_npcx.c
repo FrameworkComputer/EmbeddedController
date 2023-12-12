@@ -12,6 +12,7 @@
 #include "write_protect.h"
 
 #include <zephyr/drivers/flash.h>
+#include <zephyr/drivers/flash/npcx_flash_api_ex.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/spi.h>
 #include <zephyr/kernel.h>
@@ -31,13 +32,9 @@ static uint8_t saved_sr2;
 /* Device data */
 struct cros_flash_npcx_data {
 	const struct device *flash_dev;
-	const struct device *spi_ctrl_dev;
 };
 
-static struct spi_config spi_cfg;
-
 #define FLASH_DEV DT_CHOSEN(zephyr_flash_controller)
-#define SPI_CONTROLLER_DEV DT_NODELABEL(spi_fiu0)
 
 #define DRV_DATA(dev) ((struct cros_flash_npcx_data *)(dev)->data)
 
@@ -45,38 +42,22 @@ static struct spi_config spi_cfg;
 
 /* cros ec flash local functions */
 static int cros_flash_npcx_get_status_reg(const struct device *dev,
-					  uint8_t cmd_code, uint8_t *data)
+					  uint8_t cmd_code, uint8_t *reg)
 {
-	uint8_t opcode;
-	struct cros_flash_npcx_data *dev_data = DRV_DATA(dev);
-
-	struct spi_buf spi_buf[2] = {
-		[0] = {
-			.buf = &opcode,
-			.len = 1,
-		},
-		[1] = {
-			.buf = data,
-			.len = 1,
-		}
+	struct npcx_ex_ops_uma_in op_in = {
+		.opcode = cmd_code,
+		.tx_count = 0,
+		.addr_count = 0,
+		.rx_count = 1,
 	};
-
-	const struct spi_buf_set tx_set = {
-		.buffers = spi_buf,
-		.count = 2,
+	struct npcx_ex_ops_uma_out op_out = {
+		.rx_buf = reg,
 	};
+	struct cros_flash_npcx_data *data = DRV_DATA(dev);
 
-	const struct spi_buf_set rx_set = {
-		.buffers = spi_buf,
-		.count = 2,
-	};
-
-	if (data == 0)
-		return -EINVAL;
-
-	opcode = cmd_code;
-	return spi_transceive(dev_data->spi_ctrl_dev, &spi_cfg, &tx_set,
-			      &rx_set);
+	/* Execute UMA transaction */
+	return flash_ex_op(data->flash_dev, FLASH_NPCX_EX_OP_EXEC_UMA,
+			   (uintptr_t)&op_in, &op_out);
 }
 
 static int cros_flash_npcx_wait_ready(const struct device *dev)
@@ -126,102 +107,106 @@ static int cros_flash_npcx_wait_ready_and_we(const struct device *dev)
 static int cros_flash_npcx_set_write_enable(const struct device *dev)
 {
 	int ret;
-	uint8_t opcode = SPI_NOR_CMD_WREN;
+	struct npcx_ex_ops_uma_in op_in = {
+		.opcode = SPI_NOR_CMD_WREN,
+		.tx_count = 0,
+		.addr_count = 0,
+	};
 	struct cros_flash_npcx_data *data = DRV_DATA(dev);
-
-	struct spi_buf spi_buf = {
-		.buf = &opcode,
-		.len = 1,
-	};
-
-	const struct spi_buf_set tx_set = {
-		.buffers = &spi_buf,
-		.count = 1,
-	};
 
 	/* Wait for previous operation to complete */
 	ret = cros_flash_npcx_wait_ready(dev);
-	if (ret != 0)
+	if (ret != 0) {
 		return ret;
+	}
 
-	/* Write enable command */
-	ret = spi_transceive(data->spi_ctrl_dev, &spi_cfg, &tx_set, NULL);
-	if (ret != 0)
+	/* Execute write enable command */
+	ret = flash_ex_op(data->flash_dev, FLASH_NPCX_EX_OP_EXEC_UMA,
+			  (uintptr_t)&op_in, NULL);
+	if (ret != 0) {
 		return ret;
+	}
 
 	/* Wait for flash is not busy */
 	return cros_flash_npcx_wait_ready_and_we(dev);
 }
 
 static int cros_flash_npcx_set_status_reg(const struct device *dev,
-					  uint8_t *data)
+					  uint8_t *reg)
 {
-	uint8_t opcode = SPI_NOR_CMD_WRSR;
-	int ret = 0;
-	struct cros_flash_npcx_data *dev_data = DRV_DATA(dev);
-
-	struct spi_buf spi_buf[2] = {
-		[0] = {
-			.buf = &opcode,
-			.len = 1,
-		},
-		[1] = {
-			.buf = data,
-			.len = 2,
-		}
+	int ret;
+	struct npcx_ex_ops_uma_in op_in = {
+		.opcode = SPI_NOR_CMD_WRSR,
+		.tx_buf = reg,
+		.tx_count = 2,
+		.addr_count = 0,
 	};
-
-	const struct spi_buf_set tx_set = {
-		.buffers = spi_buf,
-		.count = 2,
-	};
+	struct cros_flash_npcx_data *data = DRV_DATA(dev);
 
 	if (data == 0) {
 		return -EINVAL;
 	}
 
-	/* Enable write */
+	/* Enable write first */
 	ret = cros_flash_npcx_set_write_enable(dev);
-	if (ret != 0)
+	if (ret != 0) {
 		return ret;
+	}
 
-	ret = spi_transceive(dev_data->spi_ctrl_dev, &spi_cfg, &tx_set, NULL);
-	if (ret != 0)
+	/* Write status regs */
+	ret = flash_ex_op(data->flash_dev, FLASH_NPCX_EX_OP_EXEC_UMA,
+			  (uintptr_t)&op_in, NULL);
+	if (ret != 0) {
 		return ret;
+	}
+
 	return cros_flash_npcx_wait_ready(dev);
 }
 
 static int cros_flash_npcx_write_protection_set(const struct device *dev,
 						bool enable)
 {
-	int ret = 0;
+	struct npcx_ex_ops_qspi_oper_in oper_in = {
+		.enable = true,
+		.mask = NPCX_EX_OP_INT_FLASH_WP,
+	};
+	struct cros_flash_npcx_data *data = DRV_DATA(dev);
 
 	/* Write protection can be cleared only by core domain reset */
 	if (!enable) {
 		LOG_ERR("WP can be disabled only via core domain reset ");
 		return -ENOTSUP;
 	}
-	ret = npcx_pinctrl_flash_write_protect_set();
 
-	return ret;
+	return flash_ex_op(data->flash_dev, FLASH_NPCX_EX_OP_SET_QSPI_OPER,
+			   (uintptr_t)&oper_in, NULL);
 }
 
 static int cros_flash_npcx_write_protection_is_set(const struct device *dev)
 {
-	return npcx_pinctrl_flash_write_protect_is_set();
+	int ret;
+	struct npcx_ex_ops_qspi_oper_out oper_out;
+	struct cros_flash_npcx_data *data = DRV_DATA(dev);
+
+	ret = flash_ex_op(data->flash_dev, FLASH_NPCX_EX_OP_GET_QSPI_OPER,
+			  (uintptr_t)NULL, &oper_out);
+	if (ret != 0) {
+		return ret;
+	}
+
+	return (oper_out.oper & NPCX_EX_OP_INT_FLASH_WP) != 0 ? 1 : 0;
 }
 
 static int cros_flash_npcx_uma_lock(const struct device *dev, bool enable)
 {
+	struct npcx_ex_ops_qspi_oper_in oper_in = {
+		.mask = NPCX_EX_OP_LOCK_UMA,
+	};
 	struct cros_flash_npcx_data *data = DRV_DATA(dev);
 
-	if (enable) {
-		spi_cfg.operation |= SPI_LOCK_ON;
-	} else {
-		spi_cfg.operation &= ~SPI_LOCK_ON;
-	}
-
-	return spi_transceive(data->spi_ctrl_dev, &spi_cfg, NULL, NULL);
+	oper_in.enable = enable;
+	return flash_ex_op(data->flash_dev, FLASH_NPCX_EX_OP_SET_QSPI_OPER,
+			   (uintptr_t)&oper_in, NULL);
 }
 
 static void flash_get_status(const struct device *dev, uint8_t *sr1,
@@ -467,6 +452,7 @@ static int cros_flash_npcx_erase(const struct device *dev, int offset, int size)
 {
 	int ret = 0;
 	struct cros_flash_npcx_data *data = DRV_DATA(dev);
+	size_t reload_size = CONFIG_FLASH_ERASE_SIZE;
 
 	/* check protection */
 	if (all_protected)
@@ -476,20 +462,26 @@ static int cros_flash_npcx_erase(const struct device *dev, int offset, int size)
 	if (flash_check_prot_range(offset, size))
 		return EC_ERROR_ACCESS_DENIED;
 
-	/* address must be aligned to erase size */
-	if ((offset % CONFIG_FLASH_ERASE_SIZE) != 0) {
+	/*
+	 * Offset must be positive, it's alignment check is done in the Zephyr
+	 * flash driver
+	 */
+	if (offset < 0) {
 		return -EINVAL;
 	}
 
-	/* Erase size must be a non-zero multiple of sectors */
-	if ((size == 0) || (size % CONFIG_FLASH_ERASE_SIZE) != 0) {
+	/*
+	 * Erase size must be positive, its alignment check is done in the
+	 * Zephyr flash driver
+	 */
+	if (size <= 0) {
 		return -EINVAL;
 	}
 
 	/* Lock physical flash operations */
 	crec_flash_lock_mapped_storage(1);
 
-	for (; size > 0; size -= CONFIG_FLASH_ERASE_SIZE) {
+	for (; size > 0; size -= reload_size) {
 		/*
 		 * Reload the watchdog timer, so that erasing many flash pages
 		 * doesn't cause a watchdog reset
@@ -499,11 +491,11 @@ static int cros_flash_npcx_erase(const struct device *dev, int offset, int size)
 
 		/* Start erase */
 		ret = flash_erase(data->flash_dev, offset,
-				  CONFIG_FLASH_ERASE_SIZE);
+				  MIN(reload_size, size));
 		if (ret)
 			break;
 
-		offset += CONFIG_FLASH_ERASE_SIZE;
+		offset += reload_size;
 	}
 
 	/* Unlock physical flash operations */
@@ -641,22 +633,16 @@ static int flash_npcx_init(const struct device *dev)
 
 	data->flash_dev = DEVICE_DT_GET(FLASH_DEV);
 	if (!device_is_ready(data->flash_dev)) {
-		LOG_ERR("%s device not ready", data->flash_dev->name);
-		return -ENODEV;
-	}
-
-	data->spi_ctrl_dev = DEVICE_DT_GET(SPI_CONTROLLER_DEV);
-	if (!device_is_ready(data->spi_ctrl_dev)) {
-		LOG_ERR("%s device not ready", data->spi_ctrl_dev->name);
+		LOG_ERR("device %s not ready", data->flash_dev->name);
 		return -ENODEV;
 	}
 
 	return EC_SUCCESS;
 }
 
-#if CONFIG_CROS_FLASH_NPCX_INIT_PRIORITY <= CONFIG_SPI_NOR_INIT_PRIORITY
+#if CONFIG_CROS_FLASH_NPCX_INIT_PRIORITY <= CONFIG_FLASH_NPCX_FIU_NOR_INIT
 #error "CONFIG_CROS_FLASH_NPCX_INIT_PRIORITY must be greater than" \
-	"CONFIG_SPI_NOR_INIT_PRIORITY."
+	"CONFIG_FLASH_NPCX_FIU_NOR_INIT."
 #endif
 static struct cros_flash_npcx_data cros_flash_data;
 DEVICE_DT_INST_DEFINE(0, flash_npcx_init, NULL, &cros_flash_data, NULL,

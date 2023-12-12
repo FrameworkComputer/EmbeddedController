@@ -70,6 +70,9 @@ test-list-y=\
        timer \
        timer_dos \
        tpm_seed_clear \
+       uart \
+       unaligned_access \
+       unaligned_access_benchmark \
        utils \
        utils_str \
 

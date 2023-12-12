@@ -52,7 +52,7 @@ ZTEST(port80, test_port80_write)
 	/* Get the buffer info */
 	params.subcmd = EC_PORT80_GET_INFO;
 	zassert_ok(host_command_process(&args), NULL);
-	zassert_ok(args.result, NULL);
+	CHECK_ARGS_RESULT(args)
 	zassert_equal(args.response_size, sizeof(response.get_info), NULL);
 	zassert_equal(response.get_info.writes, 2, NULL);
 	/* Read the buffer */
@@ -60,7 +60,7 @@ ZTEST(port80, test_port80_write)
 	params.read_buffer.offset = 0;
 	params.read_buffer.num_entries = 2;
 	zassert_ok(host_command_process(&args), NULL);
-	zassert_ok(args.result, NULL);
+	CHECK_ARGS_RESULT(args)
 	zassert_equal(args.response_size, sizeof(uint16_t) * 2, NULL);
 	zassert_equal(response.data.codes[0], 0x12, NULL);
 	zassert_equal(response.data.codes[1], 0x34, NULL);
@@ -118,7 +118,7 @@ ZTEST(port80, test_port80_special)
 	port_80_write(PORT_80_EVENT_RESET);
 	/* Check the buffer using the host cmd version 0*/
 	zassert_ok(host_command_process(&args), NULL);
-	zassert_ok(args.result, NULL);
+	CHECK_ARGS_RESULT(args)
 	zassert_equal(args.response_size, sizeof(response), NULL);
 	zassert_equal(response.code, 0xAA, NULL);
 }
@@ -164,7 +164,7 @@ ZTEST(port80, test_port80_wrap)
 	/* Get the history array size */
 	params.subcmd = EC_PORT80_GET_INFO;
 	zassert_ok(host_command_process(&args), NULL);
-	zassert_ok(args.result, NULL);
+	CHECK_ARGS_RESULT(args)
 	zassert_equal(args.response_size, sizeof(response.get_info), NULL);
 	size = response.get_info.history_size;
 	count = size + size / 2; /* Ensure write will wrap the history */
@@ -179,7 +179,7 @@ ZTEST(port80, test_port80_wrap)
 	params.read_buffer.offset = 0;
 	params.read_buffer.num_entries = 1;
 	zassert_ok(host_command_process(&args), NULL);
-	zassert_ok(args.result, NULL);
+	CHECK_ARGS_RESULT(args)
 	zassert_equal(args.response_size, sizeof(uint16_t), NULL);
 	zassert_equal(response.data.codes[0], size, NULL);
 }

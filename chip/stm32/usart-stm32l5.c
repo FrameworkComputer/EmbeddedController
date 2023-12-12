@@ -30,6 +30,11 @@ static void usart_variant_enable(struct usart_config const *config)
 	/* Use single-bit sampling */
 	STM32_USART_CR3(config->hw->base) |= STM32_USART_CR3_ONEBIT;
 
+	/* Set clock source of the particular UART to 16MHz HSI */
+	STM32_RCC_CCIPR1 &= ~(3 << (2 * config->hw->index));
+	STM32_RCC_CCIPR1 |=
+		(STM32_RCC_CCIPR_UART_HSI16 << (2 * config->hw->index));
+
 	/*
 	 * Make sure we register this config before enabling the HW.
 	 * If we did it the other way around the FREQ_CHANGE hook could be
@@ -38,7 +43,7 @@ static void usart_variant_enable(struct usart_config const *config)
 	 */
 	configs[config->hw->index] = config;
 
-	usart_set_baud_f0_l(config, config->baud, clock_get_freq());
+	usart_set_baud_f0_l(config, config->baud, 16000000);
 
 	task_enable_irq(config->hw->irq);
 }
@@ -55,18 +60,6 @@ static struct usart_hw_ops const usart_variant_hw_ops = {
 	.disable = usart_variant_disable,
 };
 
-static void freq_change(void)
-{
-	size_t i;
-
-	for (i = 0; i < ARRAY_SIZE(configs); ++i)
-		if (configs[i])
-			usart_set_baud_f0_l(configs[i], configs[i]->baud,
-					    clock_get_freq());
-}
-
-DECLARE_HOOK(HOOK_FREQ_CHANGE, freq_change, HOOK_PRIO_DEFAULT);
-
 void usart_clear_tc(struct usart_config const *config)
 {
 	STM32_USART_SR(config->hw->base) &= ~STM32_USART_SR_TC;
@@ -78,7 +71,7 @@ void usart_clear_tc(struct usart_config const *config)
  */
 #if defined(CONFIG_STREAM_USART1)
 struct usart_hw_config const usart1_hw = {
-	.index = 0,
+	.index = 0, /* Must match position of this UART in RCC_CCIPR1 */
 	.base = STM32_USART1_BASE,
 	.irq = STM32_IRQ_USART1,
 	.clock_register = &STM32_RCC_APB2ENR,
@@ -96,7 +89,7 @@ DECLARE_IRQ(STM32_IRQ_USART1, usart1_interrupt, 2);
 
 #if defined(CONFIG_STREAM_USART2)
 struct usart_hw_config const usart2_hw = {
-	.index = 1,
+	.index = 1, /* Must match position of this UART in RCC_CCIPR1 */
 	.base = STM32_USART2_BASE,
 	.irq = STM32_IRQ_USART2,
 	.clock_register = &STM32_RCC_APB1ENR,
@@ -114,7 +107,7 @@ DECLARE_IRQ(STM32_IRQ_USART2, usart2_interrupt, 2);
 
 #if defined(CONFIG_STREAM_USART3)
 struct usart_hw_config const usart3_hw = {
-	.index = 2,
+	.index = 2, /* Must match position of this UART in RCC_CCIPR1 */
 	.base = STM32_USART3_BASE,
 	.irq = STM32_IRQ_USART3,
 	.clock_register = &STM32_RCC_APB1ENR,
@@ -132,7 +125,7 @@ DECLARE_IRQ(STM32_IRQ_USART3, usart3_interrupt, 2);
 
 #if defined(CONFIG_STREAM_USART4)
 struct usart_hw_config const usart4_hw = {
-	.index = 3,
+	.index = 3, /* Must match position of this UART in RCC_CCIPR1 */
 	.base = STM32_USART4_BASE,
 	.irq = STM32_IRQ_USART4,
 	.clock_register = &STM32_RCC_APB1ENR,
@@ -150,7 +143,7 @@ DECLARE_IRQ(STM32_IRQ_USART4, usart4_interrupt, 2);
 
 #if defined(CONFIG_STREAM_USART5)
 struct usart_hw_config const usart5_hw = {
-	.index = 4,
+	.index = 4, /* Must match position of this UART in RCC_CCIPR1 */
 	.base = STM32_USART5_BASE,
 	.irq = STM32_IRQ_USART5,
 	.clock_register = &STM32_RCC_APB1ENR,
@@ -168,7 +161,7 @@ DECLARE_IRQ(STM32_IRQ_USART5, usart5_interrupt, 2);
 
 #if defined(CONFIG_STREAM_USART9)
 struct usart_hw_config const usart9_hw = {
-	.index = 5,
+	.index = 5, /* Must match position of this UART in RCC_CCIPR1 */
 	.base = STM32_USART9_BASE,
 	.irq = STM32_IRQ_USART9,
 	.clock_register = &STM32_RCC_APB1ENR2,

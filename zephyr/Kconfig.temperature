@@ -53,7 +53,7 @@ config PLATFORM_EC_TEMP_SENSOR_PCT2075
 config PLATFORM_EC_TEMP_SENSOR_SB_TSI
 	bool "SB TSI support"
 	default y
-	depends on DT_HAS_AMD_SB_TSI_ENABLED
+	depends on DT_HAS_CROS_EC_TEMP_SENSOR_SB_TSI_ENABLED
 	help
 	  Enables support for the Side Band Temperature Sensor Interface,
 	  an i2c peripheral available on AMD platforms.
@@ -125,6 +125,13 @@ config PLATFORM_EC_CUSTOM_FAN_CONTROL
 	default n
 	help
 	  Enable fan custom control to let projects define
+	  their own fan control mechanism by EC.
+
+config PLATFORM_EC_FAN_DYNAMIC_CONFIG
+	bool "Fan dynamic config support"
+	default n
+	help
+	  Enable fan dynamic config to let projects define
 	  their own fan control mechanism by EC.
 
 config PLATFORM_EC_CUSTOM_FAN_DUTY_CONTROL

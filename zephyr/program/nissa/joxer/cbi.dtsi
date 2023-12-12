@@ -8,24 +8,55 @@
 		compatible = "cros-ec,cbi-fw-config";
 
 		/*
+		 * FW_CONFIG field to indicate which sub-board
+		 * is attached.
+		 */
+		sub-board {
+			enum-name = "FW_SUB_BOARD";
+			start = <0>;
+			size = <2>;
+
+			sub-board-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_1";
+				value = <0>;
+			};
+			sub-board-2 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_2";
+				value = <1>;
+			};
+		};
+
+		/*
 		 * FW_CONFIG field to indicate which keyboard layout
 		 * should be used.
 		 */
 		keyboard {
-			enum-name = "FW_KB_LAYOUT";
+			enum-name = "FW_KB_FEATURE";
 			start = <3>;
 			size = <2>;
 
 			layout-1 {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_KB_LAYOUT_DEFAULT";
+				enum-name = "FW_KB_FEATURE_BL_ABSENT_DEFAULT";
 				value = <0>;
 				default;
 			};
 			layout-2 {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_KB_LAYOUT_US2";
+				enum-name = "FW_KB_FEATURE_BL_ABSENT_US2";
 				value = <1>;
+			};
+			layout-3 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_FEATURE_BL_PRESENT_DEFAULT";
+				value = <2>;
+			};
+			layout-4 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_FEATURE_BL_PRESENT_US2";
+				value = <3>;
 			};
 		};
 

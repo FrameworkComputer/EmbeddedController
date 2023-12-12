@@ -4,10 +4,14 @@
  */
 /* HyperDebug SPI logic and console commands */
 
+#include "board_util.h"
+#include "clock.h"
+#include "clock_chip.h"
 #include "common.h"
 #include "console.h"
 #include "dma.h"
 #include "gpio.h"
+#include "hooks.h"
 #include "registers.h"
 #include "spi.h"
 #include "stm32-dma.h"
@@ -15,14 +19,18 @@
 #include "usb_spi.h"
 #include "util.h"
 
-#define OCTOSPI_CLOCK (CPU_CLOCK)
-#define SPI_CLOCK (CPU_CLOCK)
-
-/* SPI devices, default to 406 kb/s for all. */
+/*
+ * List of SPI devices that can be controlled via USB.
+ *
+ * SPI1 and SPI2 use PCLK (27.5 MHz) as base frequency.
+ * QSPI uses either SYSCLK (110 MHz) or MSI (variable) as base frequency.
+ *
+ * Divisors below result in default SPI clock of approx. 430 kHz for all
+ */
 struct spi_device_t spi_devices[] = {
 	{ .name = "SPI2",
 	  .port = 1,
-	  .div = 7,
+	  .div = 5,
 	  .gpio_cs = GPIO_CN9_25,
 	  .usb_flags = USB_SPI_ENABLED },
 	{ .name = "QSPI",
@@ -32,8 +40,50 @@ struct spi_device_t spi_devices[] = {
 	  .usb_flags = USB_SPI_ENABLED | USB_SPI_CUSTOM_SPI_DEVICE |
 		       USB_SPI_FLASH_DUAL_SUPPORT | USB_SPI_FLASH_QUAD_SUPPORT |
 		       USB_SPI_FLASH_DTR_SUPPORT },
+	{ .name = "SPI1",
+	  .port = 0,
+	  .div = 5,
+	  .gpio_cs = GPIO_CN7_4,
+	  .usb_flags = USB_SPI_ENABLED },
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
+
+static int spi_device_default_gpio_cs[ARRAY_SIZE(spi_devices)];
+static int spi_device_default_div[ARRAY_SIZE(spi_devices)];
+
+static const size_t NUM_MSI_FREQUENCIES = 12;
+
+/*
+ * List of possible base frequencies for the OCTOSPI controller, the first
+ * NUM_MSI_FREQUENCIES entries correspond to the options of the MSI oscillator.
+ * The last one is SYSCLK, and will be dynamically populated.
+ */
+static uint32_t base_frequencies[13] = {
+	100000,	 200000,   400000,   800000,   1000000,	 2000000,    4000000,
+	8000000, 16000000, 24000000, 32000000, 48000000, 0xFFFFFFFF,
+};
+
+uint32_t octospi_clock(void)
+{
+	switch (STM32_RCC_CCIPR2 & STM32_RCC_CCIPR2_OSPISEL_MSK) {
+	case STM32_RCC_CCIPR2_OSPISEL_SYSCLK:
+		return clock_get_freq();
+	case STM32_RCC_CCIPR2_OSPISEL_MSI: {
+		size_t msi_freq = (STM32_RCC_CR & STM32_RCC_CR_MSIRANGE_MSK) >>
+				  STM32_RCC_CR_MSIRANGE_POS;
+		if (msi_freq < NUM_MSI_FREQUENCIES)
+			return base_frequencies[msi_freq];
+		return 0;
+	}
+	default:
+		return 0;
+	}
+}
+
+uint32_t spi_clock(void)
+{
+	return clock_get_apb_freq();
+}
 
 /*
  * Find spi device by name or by number.  Returns an index into spi_devices[],
@@ -63,10 +113,11 @@ static void print_spi_info(int index)
 
 	if (spi_devices[index].usb_flags & USB_SPI_CUSTOM_SPI_DEVICE) {
 		// OCTOSPI as 8 bit prescaler, dividing clock by 1..256.
-		bits_per_second = OCTOSPI_CLOCK / (spi_devices[index].div + 1);
+		bits_per_second =
+			octospi_clock() / (spi_devices[index].div + 1);
 	} else {
 		// Other SPIs have prescaler by power of two 2, 4, 8, ..., 256.
-		bits_per_second = SPI_CLOCK / (2 << spi_devices[index].div);
+		bits_per_second = spi_clock() / (2 << spi_devices[index].div);
 	}
 
 	ccprintf("  %d %s %d bps\n", index, spi_devices[index].name,
@@ -120,16 +171,63 @@ static int command_spi_set_speed(int argc, const char **argv)
 		return EC_ERROR_PARAM4;
 
 	if (spi_devices[index].usb_flags & USB_SPI_CUSTOM_SPI_DEVICE) {
+		/* Turn off MSI oscillator (in order to allow modification). */
+		STM32_RCC_CR &= ~STM32_RCC_CR_MSION;
+
 		/*
 		 * Find prescaler value by division, rounding up in order to get
 		 * slightly slower speed than requested, if it cannot be matched
 		 * exactly.
+		 *
+		 * The OCTOSPI peripheral can derive clock from either SYSCLK
+		 * (110 MHz) or the variable MSI, attempt calculation with all
+		 * possible frequencies, and see which one gets closest to the
+		 * requested frequency, without exceeding it.
 		 */
-		int divisor =
-			(OCTOSPI_CLOCK + desired_speed - 1) / desired_speed - 1;
-		if (divisor >= 256)
-			divisor = 255;
-		STM32_OCTOSPI_DCR2 = spi_devices[index].div = divisor;
+		uint8_t best_divisor;
+		size_t best_base_frequency_index;
+
+		/* Populate current SYSCLK. */
+		base_frequencies[NUM_MSI_FREQUENCIES] = clock_get_freq();
+
+		find_best_divisor(desired_speed, base_frequencies,
+				  NUM_MSI_FREQUENCIES + 1, &best_divisor,
+				  &best_base_frequency_index);
+
+		if (best_base_frequency_index < NUM_MSI_FREQUENCIES) {
+			/*
+			 * Either the requested SPI clock frequency is too slow
+			 * for SYSCLK source, or the MSI source would be able to
+			 * get closer to the requested frequency.  Select MSI as
+			 * OCTOSPI clock source
+			 */
+
+			/* Select MSI frequency */
+			STM32_RCC_CR =
+				(STM32_RCC_CR & ~STM32_RCC_CR_MSIRANGE_MSK) |
+				(best_base_frequency_index
+				 << STM32_RCC_CR_MSIRANGE_POS) |
+				STM32_RCC_CR_MSIRGSEL;
+
+			/* Enable MSI and wait for MSI to be ready */
+			wait_for_ready(&STM32_RCC_CR, STM32_RCC_CR_MSION,
+				       STM32_RCC_CR_MSIRDY);
+
+			/* Choose MSI as clock source for OCTOSPI */
+			STM32_RCC_CCIPR2 = (STM32_RCC_CCIPR2 &
+					    ~STM32_RCC_CCIPR2_OSPISEL_MSK) |
+					   STM32_RCC_CCIPR2_OSPISEL_MSI;
+		} else {
+			/*
+			 * The SYSCLK source is able to get closer to the
+			 * requested SPI clock frequency, select SYSCLK as
+			 * OCTOSPI clock source
+			 */
+			STM32_RCC_CCIPR2 = (STM32_RCC_CCIPR2 &
+					    ~STM32_RCC_CCIPR2_OSPISEL_MSK) |
+					   STM32_RCC_CCIPR2_OSPISEL_SYSCLK;
+		}
+		STM32_OCTOSPI_DCR2 = spi_devices[index].div = best_divisor;
 	} else {
 		int divisor = 7;
 		/*
@@ -137,7 +235,8 @@ static int command_spi_set_speed(int argc, const char **argv)
 		 * than what was requested.
 		 */
 		while (divisor > 0) {
-			if (SPI_CLOCK / (2 << (divisor - 1)) > desired_speed) {
+			if (spi_clock() / (2 << (divisor - 1)) >
+			    desired_speed) {
 				/* One step further would make the clock too
 				 * fast, stop here. */
 				break;
@@ -156,12 +255,38 @@ static int command_spi_set_speed(int argc, const char **argv)
 	return EC_SUCCESS;
 }
 
+static int command_spi_set_cs(int argc, const char **argv)
+{
+	int index;
+	int desired_gpio_cs;
+	if (argc < 5)
+		return EC_ERROR_PARAM_COUNT;
+
+	index = find_spi_by_name(argv[3]);
+	if (index < 0)
+		return EC_ERROR_PARAM3;
+
+	if (!strcasecmp(argv[4], "default")) {
+		desired_gpio_cs = spi_device_default_gpio_cs[index];
+	} else {
+		desired_gpio_cs = gpio_find_by_name(argv[4]);
+		if (desired_gpio_cs == GPIO_COUNT)
+			return EC_ERROR_PARAM4;
+	}
+
+	spi_devices[index].gpio_cs = desired_gpio_cs;
+
+	return EC_SUCCESS;
+}
+
 static int command_spi_set(int argc, const char **argv)
 {
 	if (argc < 3)
 		return EC_ERROR_PARAM_COUNT;
 	if (!strcasecmp(argv[2], "speed"))
 		return command_spi_set_speed(argc, argv);
+	if (!strcasecmp(argv[2], "cs"))
+		return command_spi_set_cs(argc, argv);
 	return EC_ERROR_PARAM2;
 }
 
@@ -177,7 +302,8 @@ static int command_spi(int argc, const char **argv)
 }
 DECLARE_CONSOLE_COMMAND_FLAGS(spi, command_spi,
 			      "info [PORT]"
-			      "\nset speed PORT BPS",
+			      "\nset speed PORT BPS"
+			      "\nset cs PORT PIN",
 			      "SPI bus manipulation", CMD_FLAG_RESTRICTED);
 
 /******************************************************************************
@@ -267,6 +393,18 @@ int usb_spi_board_transaction_async(const struct spi_device_t *spi_device,
 			 * but as all "data".
 			 */
 			flash_flags |= FLASH_FLAG_READ_WRITE_WRITE;
+		} else if (!txlen) {
+			/*
+			 * Receive-only transaction. Not supported by STM32L552,
+			 * as described in ST document ES0448:
+			 * "STM32L552xx/562xx device errata" in the section
+			 * 2.4.12: "Data not sampled correctly on reads without
+			 * DQS and with less than two cycles before the data
+			 * phase".
+			 */
+			cprints(CC_SPI,
+				"Receive-only transaction not supported by OctoSPI hardware");
+			return EC_ERROR_UNIMPLEMENTED;
 		} else if (txlen <= 12) {
 			/*
 			 * Sending of up to 12 bytes, followed by reading a
@@ -477,3 +615,129 @@ int usb_spi_board_transaction(const struct spi_device_t *spi_device,
 	}
 	return rv;
 }
+
+/* Reconfigure SPI ports to power-on default values. */
+static void spi_reinit(void)
+{
+	for (unsigned int i = 0; i < spi_devices_used; i++) {
+		if (spi_devices[i].usb_flags & USB_SPI_CUSTOM_SPI_DEVICE) {
+			/* Quad SPI controller */
+			spi_devices[i].gpio_cs = spi_device_default_gpio_cs[i];
+			STM32_OCTOSPI_DCR2 = spi_devices[i].div =
+				spi_device_default_div[i];
+			/* Select SYSCLK clock source */
+			STM32_RCC_CCIPR2 = (STM32_RCC_CCIPR2 &
+					    ~STM32_RCC_CCIPR2_OSPISEL_MSK) |
+					   STM32_RCC_CCIPR2_OSPISEL_SYSCLK;
+
+		} else {
+			/* "Ordinary" SPI controller */
+			spi_enable(&spi_devices[i], 0);
+			spi_devices[i].gpio_cs = spi_device_default_gpio_cs[i];
+			spi_devices[i].div = spi_device_default_div[i];
+			spi_enable(&spi_devices[i], 1);
+		}
+	}
+}
+DECLARE_HOOK(HOOK_REINIT, spi_reinit, HOOK_PRIO_DEFAULT);
+
+/* Initialize board for SPI. */
+static void spi_init(void)
+{
+	timestamp_t deadline;
+
+	/* Record initial values for use by `spi_reinit()` above. */
+	for (unsigned int i = 0; i < spi_devices_used; i++) {
+		spi_device_default_gpio_cs[i] = spi_devices[i].gpio_cs;
+		spi_device_default_div[i] = spi_devices[i].div;
+	}
+
+	/* Structured endpoints */
+	usb_spi_enable(1);
+
+	/* Configure SPI GPIOs */
+	gpio_config_module(MODULE_SPI, 1);
+
+	/*
+	 * Unlike most SPI, I2C and UARTs, which are configured in their
+	 * alternate mode by default, SPI1 pins are in GPIO input mode on
+	 * HyperDebug power-on, for compatibility with previous firmwares.  In
+	 * the future we may decide to leave even more functions off by default,
+	 * in order for HyperDebug to actively drive as little at possible on
+	 * boot.  It is relatively straightforward to declare pins as "Alternate
+	 * mode" in opentitantool json configuration file, to have them enabled
+	 * by "transport init".
+	 *
+	 * The code below sets up the alternate function "number" for the
+	 * relevant pins, such that when alternate mode is enabled on the pins,
+	 * the result is the particular alternate function that HyperDebug
+	 * firmware has chosen for the pin.
+	 */
+	STM32_GPIO_AFRL(STM32_GPIOA_BASE) |= 0x55000000; /* SPI1: PA6/PA7
+							    HIDO/HODI */
+	STM32_GPIO_AFRL(STM32_GPIOB_BASE) |= 0x00005000; /* SPI1: PB3 SCK */
+
+	/*
+	 * Enable SPI1.
+	 */
+
+	/* Enable clocks to SPI1 module */
+	STM32_RCC_APB2ENR |= STM32_RCC_APB2ENR_SPI1EN;
+
+	/* Reset SPI1 */
+	STM32_RCC_APB2RSTR |= STM32_RCC_APB2RSTR_SPI1RST;
+	STM32_RCC_APB2RSTR &= ~STM32_RCC_APB2RSTR_SPI1RST;
+
+	spi_enable(&spi_devices[2], 1);
+
+	/*
+	 * Enable SPI2.
+	 */
+
+	/* Enable clocks to SPI2 module */
+	STM32_RCC_APB1ENR1 |= STM32_RCC_APB1ENR1_SPI2EN;
+
+	/* Reset SPI2 */
+	STM32_RCC_APB1RSTR1 |= STM32_RCC_APB1RSTR1_SPI2RST;
+	STM32_RCC_APB1RSTR1 &= ~STM32_RCC_APB1RSTR1_SPI2RST;
+
+	spi_enable(&spi_devices[0], 1);
+
+	/*
+	 * Enable OCTOSPI, no driver for this in chip/stm32.
+	 */
+	deadline.val = get_time().val + OCTOSPI_INIT_TIMEOUT_US;
+
+	STM32_RCC_AHB3ENR |= STM32_RCC_AHB3ENR_QSPIEN;
+	while (STM32_OCTOSPI_SR & STM32_OCTOSPI_SR_BUSY) {
+		timestamp_t now = get_time();
+		if (timestamp_expired(deadline, &now)) {
+			/*
+			 * Ideally, the USB host would have a way of
+			 * discovering our failure to initialize OctoSPI.  But
+			 * for now, log and move on, this would happen only on
+			 * code bug or hardware failure.
+			 */
+			cprints(CC_SPI, "Initialization of OctoSPI failed");
+			break;
+		}
+	}
+
+	/*
+	 * Declare that a "Standard" SPI flash device, maximum size is connected
+	 * to OCTOSPI.  This allows the controller to send arbitrary 32-bit
+	 * addresses, which is needed as we use the instruction and address
+	 * bytes as arbitrary data to send via SPI.
+	 */
+	STM32_OCTOSPI_DCR1 = STM32_OCTOSPI_DCR1_MTYP_STANDARD |
+			     STM32_OCTOSPI_DCR1_DEVSIZE_MSK;
+	/* Clock prescaler (max value 255) */
+	STM32_OCTOSPI_DCR2 = spi_devices[1].div;
+
+	/* Turn off MSI, not used initially. */
+	STM32_RCC_CR &= ~STM32_RCC_CR_MSION;
+
+	/* Select DMA channel */
+	dma_select_channel(STM32_DMAC_CH13, DMAMUX_REQ_OCTOSPI1);
+}
+DECLARE_HOOK(HOOK_INIT, spi_init, HOOK_PRIO_DEFAULT + 1);

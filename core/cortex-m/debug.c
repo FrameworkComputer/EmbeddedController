@@ -3,10 +3,12 @@
  * found in the LICENSE file.
  */
 
+#include "common.h"
 #include "debug.h"
+#include "debug_regs.h"
 #include "stdbool.h"
 
-bool debugger_is_connected(void)
+__override bool debugger_is_connected(void)
 {
 	return CPU_DHCSR & DHCSR_C_DEBUGEN;
 }

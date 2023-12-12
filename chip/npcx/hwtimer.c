@@ -65,20 +65,24 @@ void init_hw_timer(int itim_no, enum ITIM_SOURCE_CLOCK_T source)
 void __hw_clock_event_set(uint32_t deadline)
 {
 	fp_t inv_evt_tick = FLOAT_TO_FP(INT_32K_CLOCK / (float)SECOND);
-	int32_t evt_cnt_us;
+	uint32_t evt_cnt_us, current;
 	/* Is deadline min value? */
 	if (evt_expired_us != 0 && evt_expired_us < deadline)
 		return;
 
 	/* mark min event value */
 	evt_expired_us = deadline;
-	evt_cnt_us = deadline - __hw_clock_source_read();
-#if DEBUG_TMR
-	evt_cnt_us_dbg = deadline - __hw_clock_source_read();
-#endif
+
+	current = __hw_clock_source_read();
 	/* Deadline is behind current timer */
-	if (evt_cnt_us < 0)
+	if (deadline < current) {
 		evt_cnt_us = 1;
+	} else {
+		evt_cnt_us = deadline - current;
+	}
+#if DEBUG_TMR
+	evt_cnt_us_dbg = evt_cnt_us;
+#endif
 
 	/* Event module disable */
 	CLEAR_BIT(NPCX_ITCTS(ITIM_EVENT_NO), NPCX_ITCTS_ITEN);

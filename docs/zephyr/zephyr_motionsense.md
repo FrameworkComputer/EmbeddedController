@@ -173,7 +173,6 @@ compatible string.
 motionsense-mutex {
   compatible = "cros-ec,motionsense-mutex";
   lid_mutex: lid-mutex {
-    label = "LID_MUTEX";
   };
 };
 ```
@@ -216,7 +215,6 @@ motionsense-sensor {
   lid_accel: lid-accel {
     compatible = "cros-ec,bmi260-accel";
     status = "okay";
-    label = "Lid Accel";
     /* Set the active mask so this sensor will be on in both S0 and S3 */
     active-mask = "SENSOR_ACTIVE_S0_S3";
     /* Set the location of the sensor */
@@ -231,7 +229,6 @@ motionsense-sensor {
   lid_gyro: lid-gyro {
     compatible = "cros-ec,bmi260-gyro";
     status = "okay";
-    label = "Lid Gyro";
     active-mask = "SENSOR_ACTIVE_S0_S3";
     location = "MOTIONSENSE_LOC_LID";
     mutex = <&lid_mutex>;
@@ -255,11 +252,9 @@ lid_accel: lid-accel {
   configs {
     compatible = "cros-ec,motionsense-sensor-config";
     ec-s0 {
-      label = "SENSOR_CONFIG_EC_S0";
       odr = <(10000 | ROUND_UP_FLAG)>;
     };
     ec-s3 {
-      label = "SENSOR_CONFIG_EC_S3";
       odr = <(10000 | ROUND_UP_FLAG)>;
     };
   };

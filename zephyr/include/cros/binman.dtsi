@@ -24,12 +24,24 @@
 				fmap {
 				};
 				ro-frid {
-					type = "text";
+					type = "blob";
 					size = <32>;
-					text-label = "version";
+					filename = "version.txt";
 				};
 			};
+			pad-byte = <0xff>;
 		};
+
+		rollback0 {
+			type = "null";
+			size = <0x0>;
+		};
+
+		rollback1 {
+			type = "null";
+			size = <0x0>;
+		};
+
 		ec-rw {
 			compatible = "cros-ec,flash-layout";
 			type = "section";
@@ -37,22 +49,26 @@
 			size = <0x40000>;
 			rw-fw {
 				type = "section";
-				zephyr-rw {
+				zephyr_rw: zephyr-rw {
 					type = "blob";
 					filename = "zephyr_rw.bin";
+					elf-filename = "zephyr_rw.elf";
+					elf-base-sym = "rom_start";
 				};
 				rw-fwid {
-					/* Fix the lcoation of the FWID to the
+					compatible = "cros-ec,flash-layout";
+					/* Fix the location of the FWID to the
 					 * last 32 bytes of the flash. This
 					 * ensures the RW entries in the FMAP
 					 * stored in the RO section of flash
 					 * are always correct.
 					 */
 					offset = <(0x40000 - 32)>;
-					type = "text";
+					type = "blob";
 					size = <32>;
-					text-label = "version";
+					filename = "version.txt";
 				};
+				pad-byte = <0xff>;
 			};
 		};
 	};

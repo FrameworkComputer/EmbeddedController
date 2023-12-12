@@ -7,6 +7,7 @@
 
 #include "battery.h"
 #include "battery_fuel_gauge.h"
+#include "button.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "common.h"
@@ -16,6 +17,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "keyboard_scan.h"
 #include "math_util.h"
 #include "timer.h"
 #include "usb_pd.h"
@@ -24,7 +26,7 @@
 
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
-#define CUTOFFPRINTS(info) CPRINTS("%s %s", "Battery cut off", info)
+#define CUTOFFPRINTS(fmt, args...) CPRINTS("Battery cutoff " fmt, ##args)
 
 /* See config.h for details */
 const static int batt_host_full_factor = CONFIG_BATT_HOST_FULL_FACTOR;
@@ -78,12 +80,26 @@ static int check_print_error(int rv)
 
 static void print_battery_status(void)
 {
+	/*
+	 * STATUS_FULLY_DISCHARGED BIT(4)
+	 * STATUS_FULLY_CHARGED BIT(5)
+	 * STATUS_DISCHARGING BIT(6)
+	 * STATUS_INITIALIZED BIT(7)
+	 */
 	static const char *const st[] = {
 		"EMPTY",
 		"FULL",
 		"DCHG",
 		"INIT",
 	};
+	/*
+	 * STATUS_REMAINING_TIME_ALARM BIT(8)
+	 * STATUS_REMAINING_CAPACITY_ALARM BIT(9)
+	 * STATUS_TERMINATE_DISCHARGE_ALARM BIT(11)
+	 * STATUS_OVERTEMP_ALARM BIT(12)
+	 * STATUS_TERMINATE_CHARGE_ALARM BIT(14)
+	 * STATUS_OVERCHARGED_ALARM BIT(15)
+	 */
 	static const char *const al[] = { "RT", "RC", "--", "TD",
 					  "OT", "--", "TC", "OC" };
 
@@ -144,8 +160,10 @@ static void print_battery_params(void)
 	ccprintf("%08x\n", batt->flags);
 
 	print_item_name("Temp:");
-	ccprintf("0x%04x = %.1d K (%.1d C)\n", batt->temperature,
-		 batt->temperature, batt->temperature - 2731);
+	ccprintf("0x%04x = %d.%d K (%d.%d C)\n", batt->temperature,
+		 batt->temperature / 10, batt->temperature % 10,
+		 (batt->temperature - 2731) / 10,
+		 (batt->temperature - 2731) % 10);
 
 	print_item_name("V:");
 	ccprintf("0x%04x = %d mV\n", batt->voltage, batt->voltage);
@@ -318,75 +336,183 @@ void set_battery_in_cut_off(void)
 }
 #endif
 
-int battery_is_cut_off(void)
+test_mockable int battery_is_cut_off(void)
 {
 	return (battery_cutoff_state == BATTERY_CUTOFF_STATE_CUT_OFF);
 }
 
-int battery_cutoff_in_progress(void)
+test_mockable int battery_cutoff_in_progress(void)
 {
 	return (battery_cutoff_state == BATTERY_CUTOFF_STATE_IN_PROGRESS);
 }
 
-static void pending_cutoff_deferred(void)
+const struct deferred_data __keep pending_cutoff_deferred_data;
+/* Cutoff timeout */
+static timestamp_t cutoff_timeout;
+/* Interval between cutoff completion checks. */
+static const int cutoff_poll_msec = 250;
+
+static void battery_cutoff_clear(void)
+{
+	battery_cutoff_state = BATTERY_CUTOFF_STATE_NORMAL;
+	hook_call_deferred(&pending_cutoff_deferred_data, -1);
+}
+
+static int battery_cutoff_start(void)
 {
 	int rv;
 
-	battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
-	rv = board_cut_off_battery();
+	/* Reset previous attempt */
+	battery_cutoff_clear();
 
+	/* Send a request to the battery. */
+	rv = board_cut_off_battery();
 	if (rv == EC_RES_SUCCESS) {
-		CUTOFFPRINTS("succeeded.");
-		battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
+		battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
+		cutoff_timeout.val = get_time().val +
+				     CONFIG_BATTERY_CUTOFF_TIMEOUT_MSEC * MSEC;
+		CUTOFFPRINTS("started (timeout in %u msec)",
+			     CONFIG_BATTERY_CUTOFF_TIMEOUT_MSEC);
+		/* Start monitor loop. */
+		hook_call_deferred(&pending_cutoff_deferred_data, 0);
 	} else {
-		CUTOFFPRINTS("failed!");
 		battery_cutoff_state = BATTERY_CUTOFF_STATE_NORMAL;
+		CUTOFFPRINTS("failed");
 	}
+
+	return rv;
+}
+
+/*
+ * This is supposed to be called in the following cases:
+ * 1. Before cutoff starts (SCHEDULED):
+ *    This is used to delay start of cutoff for some reason.
+ * 2. Immediately after the battery accepts a cutoff request (NORMAL):
+ *    This is called by battery_cutoff_start.
+ * 3. Subsequent calls after #2 (IN_PROGRESS):
+ *    It recursively schedules itself until cutoff completes or timer expires.
+ */
+static void pending_cutoff_deferred(void)
+{
+	if (battery_cutoff_state == BATTERY_CUTOFF_STATE_IN_PROGRESS) {
+		if (timestamp_expired(cutoff_timeout, NULL)) {
+			battery_cutoff_state = BATTERY_CUTOFF_STATE_NORMAL;
+			CUTOFFPRINTS("failed");
+			return;
+		}
+
+		if (extpower_is_present()) {
+			/*
+			 * Since we're on AC, we'll keep running even after the
+			 * battery is cut off.
+			 *
+			 * TODO: Communicate with the battery to learn whether
+			 * cutoff has completed or not. Fall through until
+			 * cutoff is complete.
+			 */
+			battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
+			CUTOFFPRINTS("complete");
+			return;
+		}
+
+		/* Cutoff is still taking place. May brown out any time. */
+		CUTOFFPRINTS("waiting for completion (%llu)",
+			     (cutoff_timeout.val - get_time().val) / MSEC);
+		cflush();
+		hook_call_deferred(&pending_cutoff_deferred_data,
+				   cutoff_poll_msec * MSEC);
+		return;
+	} else if (battery_cutoff_state == BATTERY_CUTOFF_STATE_SCHEDULED) {
+		/* Delayed start */
+		CUTOFFPRINTS("starting scheduled cutoff");
+		battery_cutoff_start();
+		return;
+	}
+
+	CUTOFFPRINTS("Bad call to %s (%d)", __func__, battery_cutoff_state);
 }
 DECLARE_DEFERRED(pending_cutoff_deferred);
 
-static void clear_pending_cutoff(void)
+static void battery_on_ac_change(void)
 {
 	if (extpower_is_present()) {
-		battery_cutoff_state = BATTERY_CUTOFF_STATE_NORMAL;
-		hook_call_deferred(&pending_cutoff_deferred_data, -1);
+		/* Plugged */
+		if (battery_cutoff_state == BATTERY_CUTOFF_STATE_SCHEDULED)
+			CUTOFFPRINTS("unscheduled");
+		battery_cutoff_clear();
 	}
 }
-DECLARE_HOOK(HOOK_AC_CHANGE, clear_pending_cutoff, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_AC_CHANGE, battery_on_ac_change, HOOK_PRIO_DEFAULT);
+
+#ifdef CONFIG_CHARGE_MANAGER
+static void power_supply_change(void)
+{
+	static bool had_active_charge_port;
+	int port = charge_manager_get_active_charge_port();
+	bool key = false;
+
+	if (IS_ENABLED(HAS_TASK_KEYSCAN))
+		key = keyboard_scan_get_boot_keys() & BIT(BOOT_KEY_REFRESH);
+
+#ifdef CONFIG_VOLUME_BUTTONS
+	if (!key)
+		/* Strictly vol-up only. */
+		key = button_get_boot_button() == BIT(BUTTON_VOLUME_UP);
+#endif
+
+	if (!key) {
+		/*
+		 * Need to set had_active_charge_port also here because refresh
+		 * boot key can be registered when the power button is released.
+		 */
+		if (port != CHARGE_PORT_NONE)
+			had_active_charge_port = true;
+		return;
+	}
+
+	if (port != CHARGE_PORT_NONE) {
+		had_active_charge_port = true;
+		if (key)
+			CUTOFFPRINTS("backoff: P%d is active", port);
+		return;
+	}
+
+	if (!had_active_charge_port) {
+		CUTOFFPRINTS("backoff: Haven't had active charge port");
+		return;
+	}
+
+	CPRINTS("Refresh+Unplug! Scheduling cutoff.");
+	battery_cutoff_state = BATTERY_CUTOFF_STATE_SCHEDULED;
+	hook_call_deferred(&pending_cutoff_deferred_data,
+			   CONFIG_BATTERY_CUTOFF_DELAY_US);
+}
+DECLARE_HOOK(HOOK_POWER_SUPPLY_CHANGE, power_supply_change, HOOK_PRIO_DEFAULT);
+#endif
 
 static enum ec_status battery_command_cutoff(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_battery_cutoff *p;
-	int rv;
 
 	if (args->version == 1) {
 		p = args->params;
 		if (p->flags & EC_BATTERY_CUTOFF_FLAG_AT_SHUTDOWN) {
-			battery_cutoff_state = BATTERY_CUTOFF_STATE_PENDING;
+			battery_cutoff_state = BATTERY_CUTOFF_STATE_SCHEDULED;
 			CUTOFFPRINTS("at-shutdown is scheduled");
 			return EC_RES_SUCCESS;
 		}
 	}
 
-	battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
-	rv = board_cut_off_battery();
-	if (rv == EC_RES_SUCCESS) {
-		CUTOFFPRINTS("is successful.");
-		battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
-	} else {
-		CUTOFFPRINTS("has failed.");
-	}
-
-	return rv;
+	return battery_cutoff_start();
 }
 DECLARE_HOST_COMMAND(EC_CMD_BATTERY_CUT_OFF, battery_command_cutoff,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 
 static void check_pending_cutoff(void)
 {
-	if (battery_cutoff_state == BATTERY_CUTOFF_STATE_PENDING) {
-		CPRINTS("Cutting off battery in %d second(s)",
-			CONFIG_BATTERY_CUTOFF_DELAY_US / SECOND);
+	if (battery_cutoff_state == BATTERY_CUTOFF_STATE_SCHEDULED) {
+		CUTOFFPRINTS("deferred for %d secs",
+			     CONFIG_BATTERY_CUTOFF_DELAY_US / SECOND);
 		hook_call_deferred(&pending_cutoff_deferred_data,
 				   CONFIG_BATTERY_CUTOFF_DELAY_US);
 	}
@@ -395,31 +521,22 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, check_pending_cutoff, HOOK_PRIO_LAST);
 
 static int command_cutoff(int argc, const char **argv)
 {
-	int rv;
-
 	if (argc > 1) {
 		if (!strcasecmp(argv[1], "at-shutdown")) {
-			battery_cutoff_state = BATTERY_CUTOFF_STATE_PENDING;
+			battery_cutoff_state = BATTERY_CUTOFF_STATE_SCHEDULED;
 			return EC_SUCCESS;
 		} else {
 			return EC_ERROR_INVAL;
 		}
 	}
 
-	battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
-	rv = board_cut_off_battery();
-	if (rv == EC_RES_SUCCESS) {
-		ccprints("Battery cut off");
-		battery_cutoff_state = BATTERY_CUTOFF_STATE_CUT_OFF;
-		return EC_SUCCESS;
-	}
-
-	return EC_ERROR_UNKNOWN;
+	return battery_cutoff_start() == EC_RES_SUCCESS ? EC_SUCCESS :
+							  EC_ERROR_UNKNOWN;
 }
 DECLARE_CONSOLE_COMMAND(cutoff, command_cutoff, "[at-shutdown]",
 			"Cut off the battery output");
 #else
-int battery_is_cut_off(void)
+test_mockable int battery_is_cut_off(void)
 {
 	return 0; /* Always return NOT cut off */
 }
@@ -605,7 +722,7 @@ __overridable int battery_get_avg_current(void)
 	return -EC_ERROR_UNIMPLEMENTED;
 }
 
-int battery_manufacturer_name(char *dest, int size)
+test_mockable int battery_manufacturer_name(char *dest, int size)
 {
 	return get_battery_manufacturer_name(dest, size);
 }

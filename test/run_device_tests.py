@@ -36,6 +36,7 @@ Run the script on the remote machine:
 (remote chroot) ./test/run_device_tests.py --remote 127.0.0.1 \
                 --jlink_port 19020 --console_port 10000
 """
+
 # pylint: enable=line-too-long
 # TODO(b/267800058): refactor into multiple modules
 # pylint: disable=too-many-lines
@@ -55,7 +56,7 @@ import socket
 import subprocess
 import sys
 import time
-from typing import BinaryIO, Dict, List, Optional, Tuple
+from typing import BinaryIO, Callable, Dict, List, Optional, Tuple
 
 # pylint: disable=import-error
 import colorama  # type: ignore[import]
@@ -102,6 +103,9 @@ DATA_ACCESS_VIOLATION_64020000_REGEX = re.compile(
 )
 DATA_ACCESS_VIOLATION_64040000_REGEX = re.compile(
     r"Data access violation, mfar = 64040000\r\n"
+)
+DATA_ACCESS_VIOLATION_200B0000_REGEX = re.compile(
+    r"Data access violation, mfar = 200b0000\r\n"
 )
 
 PRINTF_CALLED_REGEX = re.compile(r"printf called\r\n")
@@ -154,7 +158,16 @@ class ApplicationType(Enum):
     PRODUCTION = 2
 
 
+class FPSensorType(Enum):
+    """Fingerprint sensor types."""
+
+    ELAN = 0
+    FPC = 1
+    UNKNOWN = -1
+
+
 @dataclass
+# pylint: disable-next=too-many-instance-attributes
 class BoardConfig:
     """Board-specific configuration."""
 
@@ -164,6 +177,7 @@ class BoardConfig:
     rollback_region0_regex: object
     rollback_region1_regex: object
     mpu_regex: object
+    reboot_timeout: float
     variants: Dict
 
 
@@ -190,6 +204,14 @@ class TestConfig:
     passed: bool = field(init=False, default=False)
     num_passes: int = field(init=False, default=0)
     num_fails: int = field(init=False, default=0)
+
+    # The callbacks below are called before and after a test is executed and
+    # may be used for additional test setup, post test activities, or other tasks
+    # that do not otherwise fit into the test workflow. The default behavior is
+    # to simply return True and if either callback returns False then the test
+    # is reported a failure.
+    pre_test_callback: Callable = field(init=True, default=lambda board: True)
+    post_test_callback: Callable = field(init=True, default=lambda board: True)
 
     def __post_init__(self):
         if self.finish_regexes is None:
@@ -246,7 +268,7 @@ class AllTests:
             TestConfig(test_name="always_memset"),
             TestConfig(test_name="benchmark"),
             TestConfig(test_name="boringssl_crypto"),
-            TestConfig(test_name="cortexm_fpu"),
+            TestConfig(test_name="cortexm_fpu", exclude_boards=[HELIPILOT]),
             TestConfig(test_name="crc"),
             TestConfig(test_name="exception"),
             TestConfig(
@@ -266,7 +288,9 @@ class AllTests:
                 exclude_boards=[BLOONCHIPPER],
             ),
             TestConfig(test_name="fpsensor_auth_crypto_stateless"),
-            TestConfig(test_name="fpsensor_hw"),
+            TestConfig(
+                test_name="fpsensor_hw", pre_test_callback=fp_sensor_sel
+            ),
             TestConfig(
                 config_name="fpsensor_spi_ro",
                 test_name="fpsensor",
@@ -336,7 +360,9 @@ class AllTests:
             TestConfig(test_name="static_if"),
             TestConfig(test_name="stdlib"),
             TestConfig(test_name="std_vector"),
-            TestConfig(test_name="stm32f_rtc", exclude_boards=[DARTMONKEY]),
+            TestConfig(
+                test_name="stm32f_rtc", exclude_boards=[DARTMONKEY, HELIPILOT]
+            ),
             TestConfig(
                 config_name="system_is_locked_wp_on",
                 test_name="system_is_locked",
@@ -354,11 +380,29 @@ class AllTests:
             TestConfig(test_name="timer"),
             TestConfig(test_name="timer_dos"),
             TestConfig(test_name="tpm_seed_clear"),
+            TestConfig(test_name="uart"),
+            TestConfig(test_name="unaligned_access"),
+            TestConfig(test_name="unaligned_access_benchmark"),
             TestConfig(test_name="utils", timeout_secs=20),
             TestConfig(test_name="utils_str"),
         ]
 
-        # Run panic data tests for all boards and RO versions.
+        # Run unaligned access tests for all boards and RO versions.
+        for variant_name, variant_info in board_config.variants.items():
+            tests.append(
+                TestConfig(
+                    config_name="unaligned_access_" + variant_name,
+                    test_name="unaligned_access",
+                    fail_regexes=[
+                        SINGLE_CHECK_FAILED_REGEX,
+                        ALL_TESTS_FAILED_REGEX,
+                    ],
+                    ro_image=variant_info.get("ro_image_path"),
+                    build_board=variant_info.get("build_board"),
+                )
+            )
+
+        # Run panic data test for all boards and RO versions.
         for variant_name, variant_info in board_config.variants.items():
             tests.append(
                 TestConfig(
@@ -404,6 +448,7 @@ BLOONCHIPPER_CONFIG = BoardConfig(
     name=BLOONCHIPPER,
     servo_uart_name="raw_fpmcu_console_uart_pty",
     servo_power_enable="fpmcu_pp3300",
+    reboot_timeout=1.0,
     rollback_region0_regex=DATA_ACCESS_VIOLATION_8020000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_8040000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_20000000_REGEX,
@@ -421,6 +466,7 @@ DARTMONKEY_CONFIG = BoardConfig(
     name=DARTMONKEY,
     servo_uart_name="raw_fpmcu_console_uart_pty",
     servo_power_enable="fpmcu_pp3300",
+    reboot_timeout=1.0,
     rollback_region0_regex=DATA_ACCESS_VIOLATION_80C0000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_80E0000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_24000000_REGEX,
@@ -443,10 +489,10 @@ HELIPILOT_CONFIG = BoardConfig(
     name=HELIPILOT,
     servo_uart_name="raw_fpmcu_console_uart_pty",
     servo_power_enable="fpmcu_pp3300",
-    # TODO(b/286537264): Double check these values and ensure rollback tests pass
+    reboot_timeout=1.5,
     rollback_region0_regex=DATA_ACCESS_VIOLATION_64020000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_64040000_REGEX,
-    mpu_regex=DATA_ACCESS_VIOLATION_20000000_REGEX,
+    mpu_regex=DATA_ACCESS_VIOLATION_200B0000_REGEX,
     variants={},
 )
 
@@ -563,8 +609,33 @@ def power_cycle(board_config: BoardConfig) -> None:
     """power_cycle the boards."""
     logging.debug("power_cycling board")
     power(board_config, power_on=False)
-    time.sleep(1)
+    time.sleep(board_config.reboot_timeout)
     power(board_config, power_on=True)
+    time.sleep(board_config.reboot_timeout)
+
+
+def fp_sensor_sel(
+    board_config: BoardConfig, sensor_type: FPSensorType = FPSensorType.FPC
+) -> None:
+    """
+    Explicitly select the appropriate fingerprint sensor.
+    This function assumes that the fp_sensor_sel servo control is connected to
+    the proper gpio on the development board. This is not the case on some
+    older development boards. This should not result in any failures but also
+    may have not actually change the selected sensor.
+    """
+
+    cmd = [
+        "dut-control",
+        "fp_sensor_sel" + ":" + str(sensor_type.value),
+    ]
+
+    logging.debug('Running command: "%s"', " ".join(cmd))
+    subprocess.run(cmd, check=False).check_returncode()
+
+    # power cycle after setting sensor type to ensure detection
+    power_cycle(board_config)
+    return True
 
 
 def hw_write_protect(enable: bool) -> None:
@@ -691,17 +762,26 @@ def process_console_output_line(line: bytes, test: TestConfig):
 
 
 def run_test(
-    test: TestConfig, console: io.FileIO, executor: ThreadPoolExecutor
+    test: TestConfig,
+    board_config: BoardConfig,
+    console: io.FileIO,
+    executor: ThreadPoolExecutor,
 ) -> bool:
     """Run specified test."""
     start = time.time()
 
+    reboot_timeout = board_config.reboot_timeout
+    logging.debug("Calling pre-test callback")
+    if not test.pre_test_callback(board_config):
+        logging.error("pre-test callback failed, aborting")
+        return False
+
     # Wait for boot to finish
-    time.sleep(1)
+    time.sleep(reboot_timeout)
     console.write("\n".encode())
     if test.imagetype_to_use == ImageType.RO:
         console.write("reboot ro\n".encode())
-        time.sleep(1)
+        time.sleep(reboot_timeout)
 
     # Skip runtest if using standard app type
     if test.apptype_to_use != ApplicationType.PRODUCTION:
@@ -740,7 +820,9 @@ def run_test(
                 for line in lines:
                     process_console_output_line(line, test)
 
-                return test.num_fails == 0
+                logging.debug("Calling post-test callback")
+                post_cb_passed = test.post_test_callback(board_config)
+                return test.num_fails == 0 and post_cb_passed
 
 
 def get_test_list(
@@ -823,7 +905,7 @@ def flash_and_run_test(
         ):
             flash_succeeded = True
             break
-        time.sleep(1)
+        time.sleep(board_config.reboot_timeout)
 
     if not flash_succeeded:
         logging.debug(
@@ -833,6 +915,9 @@ def flash_and_run_test(
 
     if test.toggle_power:
         power_cycle(board_config)
+    else:
+        # In some cases flash_ec leaves the board off, so just ensure it is on
+        power(board_config, power_on=True)
 
     hw_write_protect(test.enable_hw_write_protect)
 
@@ -851,7 +936,12 @@ def flash_and_run_test(
             console_file = open(get_console(board_config), "wb+", buffering=0)
             console = stack.enter_context(console_file)
 
-        return run_test(test, console, executor=executor)
+        return run_test(
+            test,
+            board_config,
+            console,
+            executor=executor,
+        )
 
 
 def parse_remote_arg(remote: str) -> str:

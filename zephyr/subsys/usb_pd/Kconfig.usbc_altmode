@@ -1,0 +1,56 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USB_PD_CONTROLLER
+
+menuconfig USB_PD_ALTMODE
+	bool "Configure USB-C Alternate modes"
+	default y
+	help
+	  Enables the alternate modes of USB-C when using dedicated power
+	  delivery controllers in PD mode.
+
+module = USB_PD_ALTMODE
+module-str = USB PD Alternate Mode
+source "subsys/logging/Kconfig.template.log_config"
+
+if USB_PD_ALTMODE
+
+menuconfig USB_PD_ALTMODE_INTEL
+	bool "Configure USB-C Alternate modes on Intel SoC"
+	default y if DT_HAS_INTEL_PD_ALTMODE_ENABLED
+	select EVENTS
+	help
+	  Enable this to support configuring the USB-C alternate modes on
+	  Intel SoC when using PD chips in PD mode.
+
+if USB_PD_ALTMODE_INTEL
+
+config TASK_PD_ALTMODE_INTEL_STACK_SIZE
+	int "USB PD Alternate mode thread stack size (in bytes)"
+	help
+	  This option specifies the size of the stack used by the
+	  USB PD Alternate mode thread.
+
+config USBPD_ALTMODE_INTEL_THREAD_PRIORITY
+	int "USB PD Alternate mode thread priority"
+	default 8
+	help
+	  This option determines the USB PD alternate mode thread priority,
+	  this number must be selected in such way thread priority is lower
+	  than the USB PD task that handles the power delivery aspects.
+
+config CONSOLE_CMD_USBPD_INTEL_ALTMODE
+	bool "Console command: altmode"
+	default y
+	help
+	  Enable this to read/write to the status/control registers of
+	  PD that are compliant with Intel alternate mode configuration
+	  specification.
+
+endif # USB_PD_ALTMODE_INTEL
+
+endif # USB_PD_ALTMODE
+
+endif # PLATFORM_EC_USB_PD_CONTROLLER

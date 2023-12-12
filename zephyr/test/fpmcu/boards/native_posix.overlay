@@ -1,0 +1,58 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_posix.dts>
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	chosen {
+		zephyr,host-cmd-spi-backend = &spi0;
+		zephyr,host-cmd-uart-backend = &euart0;
+	};
+
+	/* GPIOs shared by all boards */
+	named-gpios {
+		compatible = "named-gpios";
+
+		transport_sel: transport_sel {
+			gpios = <&gpio0 0 GPIO_INPUT>;
+		};
+
+		div_highside: div_highside {
+			gpios = <&gpio0 1 GPIO_OUTPUT_HIGH>;
+		};
+
+		slp_l: slp_l {
+			gpios = <&gpio0 3 GPIO_INPUT>;
+		};
+
+		slp_alt_l: slp_alt_l {
+			gpios = <&gpio0 4 GPIO_INPUT>;
+		};
+	};
+
+	euart0: uart-emul {
+		compatible = "zephyr,uart-emul";
+		status = "okay";
+	};
+
+	power-states {
+		suspend_to_idle: suspend_to_idle {
+			compatible = "zephyr,power-state";
+			power-state-name = "suspend-to-idle";
+			substate-id = <0>;
+			min-residency-us = <500>;
+		};
+	};
+};
+
+&gpio0 {
+	ngpios = <5>;
+};
+
+&spi0 {
+	/* This field is used to point at our CS pin */
+	cs-gpios = <&gpio0 2 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
+};

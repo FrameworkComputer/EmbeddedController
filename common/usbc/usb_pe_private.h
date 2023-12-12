@@ -72,8 +72,6 @@ enum {
 	PE_FLAGS_FIRST_MSG_FN,
 	/* Flag to continue a VDM request if it was interrupted */
 	PE_FLAGS_VDM_REQUEST_CONTINUE_FN,
-	/* TODO: POLICY decision: Triggers a Vconn SWAP attempt to on */
-	PE_FLAGS_VCONN_SWAP_TO_ON_FN,
 	/* FLAG to track that VDM request to port partner timed out */
 	PE_FLAGS_VDM_REQUEST_TIMEOUT_FN,
 	/* FLAG to note message was discarded due to incoming message */

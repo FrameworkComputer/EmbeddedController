@@ -4,8 +4,8 @@
 
 """Registry of known Zephyr modules."""
 
-import zmake.build_config as build_config
-import zmake.util as util
+from zmake import build_config
+from zmake import util
 
 
 def third_party_module(name, checkout):
@@ -27,8 +27,8 @@ known_modules = {
     "ec": lambda name, checkout: (checkout / "src" / "platform" / "ec"),
     "nanopb": third_party_module,
     "pigweed": lambda name, checkout: (checkout / "src" / "third_party" / name),
-    "hal_intel": third_party_module,
-    "ish": third_party_module,
+    "hal_intel_public": third_party_module,
+    "picolibc": third_party_module,
 }
 
 
@@ -100,3 +100,19 @@ def setup_module_symlinks(output_dir, modules):
             cmake_defs={"ZEPHYR_MODULES": ";".join(map(str, module_links))}
         )
     return build_config.BuildConfig()
+
+
+def default_projects_dirs(modules):
+    """Get the default search path for projects.
+
+    Args:
+        modules: A dictionary of module names mapping to paths.
+
+    Returns:
+        A list of paths that should be searched for projects, if they exist.
+    """
+    ret = []
+    if "ec" in modules:
+        ret.append(modules["ec"] / "zephyr" / "program")
+        ret.append(modules["ec"] / "private" / "zephyr" / "program")
+    return ret

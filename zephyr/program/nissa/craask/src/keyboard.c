@@ -3,16 +3,20 @@
  * found in the LICENSE file.
  */
 
+#include "button.h"
+#include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "ec_commands.h"
 #include "hooks.h"
+#include "keyboard_8042_sharedlib.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
+#include "nissa_sub_board.h"
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 static bool key_pad = FW_KB_NUMERIC_PAD_ABSENT;
-static const struct ec_response_keybd_config craask_kb = {
+test_export_static const struct ec_response_keybd_config craask_kb = {
 	.num_top_row_keys = 10,
 	.action_keys = {
 		TK_BACK,		/* T1 */
@@ -29,7 +33,8 @@ static const struct ec_response_keybd_config craask_kb = {
 	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
 };
 
-static const struct ec_response_keybd_config craask_kb_w_kb_numpad = {
+test_export_static const struct ec_response_keybd_config
+				craask_kb_w_kb_numpad = {
 	.num_top_row_keys = 10,
 	.action_keys = {
 		TK_BACK,		/* T1 */
@@ -58,7 +63,7 @@ board_vivaldi_keybd_config(void)
 /*
  * Keyboard function decided by FW config.
  */
-static void kb_init(void)
+test_export_static void kb_init(void)
 {
 	int ret;
 	uint32_t val;
@@ -82,8 +87,54 @@ static void kb_init(void)
 		keyscan_config.actual_key_mask[13] = 0xff;
 		keyscan_config.actual_key_mask[14] = 0xff;
 	}
+
+	ret = cros_cbi_get_fw_config(FW_KB_TYPE, &val);
+
+	if (ret != 0) {
+		LOG_ERR("Error retrieving CBI FW_CONFIG field %d", FW_KB_TYPE);
+	}
+
+	if (val == FW_KB_TYPE_CA_FR) {
+		/*
+		 * Canadian French keyboard (US type),
+		 *   \|:     0x0061->0x61->0x56
+		 *   r-ctrl: 0xe014->0x14->0x1d
+		 */
+		uint16_t tmp = get_scancode_set2(4, 0);
+
+		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
+		set_scancode_set2(2, 7, tmp);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, kb_init, HOOK_PRIO_POST_FIRST);
+
+test_export_static void buttons_init(void)
+{
+	int ret;
+	uint32_t val;
+	enum nissa_sub_board_type sb = nissa_get_sb_type();
+
+	ret = cbi_get_board_version(&val);
+	if (ret != EC_SUCCESS) {
+		LOG_ERR("Error retrieving CBI BOARD_VER.");
+		return;
+	}
+	/*
+	 * The volume up/down button are exchanged on ver3 USB
+	 * sub board.
+	 *
+	 * LTE:
+	 *   volup -> gpioa2, voldn -> gpio93
+	 * USB:
+	 *   volup -> gpio93, voldn -> gpioa2
+	 */
+	if (val == 3 && sb == NISSA_SB_C_A) {
+		LOG_INF("Volume up/down btn exchanged on ver3 USB sku");
+		buttons[BUTTON_VOLUME_UP].gpio = GPIO_VOLUME_DOWN_L;
+		buttons[BUTTON_VOLUME_DOWN].gpio = GPIO_VOLUME_UP_L;
+	}
+}
+DECLARE_HOOK(HOOK_INIT, buttons_init, HOOK_PRIO_DEFAULT);
 
 /*
  * We have total 30 pins for keyboard connecter {-1, -1} mean

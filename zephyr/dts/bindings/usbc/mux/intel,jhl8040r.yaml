@@ -15,8 +15,6 @@ properties:
 
   int-pin:
     type: phandle
-    required: false
 
   ls-en-pin:
     type: phandle
-    required: false

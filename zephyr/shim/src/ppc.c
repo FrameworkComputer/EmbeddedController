@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "hooks.h"
 #include "usbc/ppc.h"
 #include "usbc/ppc_aoz1380.h"
 #include "usbc/ppc_ktu1125.h"
@@ -13,6 +14,9 @@
 #include "usbc_ppc.h"
 
 #include <zephyr/devicetree.h>
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(ppc, CONFIG_GPIO_LOG_LEVEL);
 
 #define PPC_CHIP_ENTRY(usbc_id, ppc_id, config_fn) \
 	[USBC_PORT_NEW(usbc_id)] = config_fn(ppc_id),
@@ -101,3 +105,69 @@ struct ppc_config_t ppc_chips_alt[] = { DT_FOREACH_STATUS_OKAY(named_usbc_port,
  * "is-alt" property set.
  */
 DT_FOREACH_USBC_DRIVER_STATUS_OK_VARGS(PPC_ALT_DEFINE, PPC_DRIVERS)
+
+BUILD_ASSERT(ARRAY_SIZE(ppc_chips) == CONFIG_USB_PD_PORT_MAX_COUNT);
+
+struct gpio_callback int_ppc_cb[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+static void ppc_int_gpio_callback(const struct device *dev,
+				  struct gpio_callback *cb, uint32_t pins)
+{
+	/*
+	 * Retrieve the array index from the callback pointer, and
+	 * use that to get the port number.
+	 */
+	int port = cb - &int_ppc_cb[0];
+
+	ppc_chips[port].drv->interrupt(port);
+}
+
+/*
+ * Enable all ppc interrupts from devicetree bindings.
+ * Check whether the callback is already installed, and if
+ * not, init and add the callback before enabling the
+ * interrupt.
+ */
+void ppc_enable_interrupt(void)
+{
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		/*
+		 * Check whether the interrupt pin has been configured
+		 * by the devicetree.
+		 */
+		if (!ppc_chips[i].irq_gpio.port)
+			continue;
+		/*
+		 * Check whether the gpio pin is ready
+		 */
+		if (!gpio_is_ready_dt(&ppc_chips[i].irq_gpio)) {
+			LOG_ERR("tcpc port #%i interrupt not ready.", i);
+			return;
+		}
+		/*
+		 * TODO(b/267537103): Once named-gpios support is dropped,
+		 * evaluate if this code should call gpio_pin_configure_dt()
+		 *
+		 * Check whether callback has been initialised
+		 */
+		if (!int_ppc_cb[i].handler) {
+			/*
+			 * Initialise and add the callback.
+			 */
+			gpio_init_callback(&int_ppc_cb[i],
+					   ppc_int_gpio_callback,
+					   BIT(ppc_chips[i].irq_gpio.pin));
+			gpio_add_callback(ppc_chips[i].irq_gpio.port,
+					  &int_ppc_cb[i]);
+		}
+
+		gpio_pin_interrupt_configure_dt(&ppc_chips[i].irq_gpio,
+						GPIO_INT_EDGE_TO_ACTIVE);
+	}
+}
+
+/*
+ * priority set to POST_I2C + 1 so projects can make local edits to
+ * ppc_chips as needed at POST_I2C before the interrupts are enabled.
+ */
+DECLARE_HOOK(HOOK_INIT, ppc_enable_interrupt, HOOK_PRIO_POST_I2C + 1);

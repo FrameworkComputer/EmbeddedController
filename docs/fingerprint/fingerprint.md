@@ -322,100 +322,122 @@ a lot easier during both development and testing.
 ## Power
 
 See [Measuring Power] for instructions on how to measure power with the
-fingerprint development boards. *Make sure that any debuggers are completely
-disconnected.*
+fingerprint development boards.
+
+<!-- mdformat off(b/139308852) -->
+*** note
+**NOTE**: Make sure that any debuggers are completely disconnected when
+measuring power.
+***
+<!-- mdformat on -->
 
 ### Dragonclaw v0.3
 
+<!-- mdformat off(b/139308852) -->
+*** note
+**NOTE**: Make sure that any debuggers are completely disconnected when
+measuring power.
+***
+<!-- mdformat on -->
+
 ```bash
-(chroot) $ dut-control -t 60 pp3300_dx_mcu_mv pp3300_dx_fp_mv pp1800_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw pp1800_dx_fp_mw
+(chroot) $ dut-control -t 60 ppvar_fp_mw ppvar_fp_mv ppvar_mcu_mw ppvar_mcu_mv pp1800_fp_mw pp1800_fp_mv
 ```
 
 **Firmware Version**:
-`bloonchipper_v2.0.4277-9f652bb3-RO_v2.0.14348-e5fb0b9-RW.bin`
+`bloonchipper_v2.0.4277-9f652bb3-RO_v2.0.21769-3757a66-RW.bin`
 
 #### MCU is idle
 
 ```
-(chroot) $ dut-control fpmcu_slp_alt:off
+(chroot) $ dut-control fpmcu_slp:off
 ```
 
 ```
-@@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
-@@       sample_msecs    478   125.49   26.02   431.96    92.23
-@@    pp1800_dx_fp_mv    478  1800.00    0.00  1800.00  1800.00
-@@    pp1800_dx_fp_mw    478     0.00    0.00     0.00     0.00
-@@    pp3300_dx_fp_mv    478  3280.00    0.00  3280.00  3280.00
-@@    pp3300_dx_fp_mw    478     0.00    0.03     0.26     0.00
-@@   pp3300_dx_mcu_mv    478  3280.00    0.00  3280.00  3280.00
-@@   pp3300_dx_mcu_mw    478    21.78    0.06    23.09    21.78
+@@           NAME  COUNT    AVERAGE  STDDEV        MAX        MIN
+@@   sample_msecs   2379    25.2017  3.1648    38.4002    19.7706
+@@   pp1800_fp_mv   2379  1792.0303  0.4911  1800.0000  1792.0000
+@@   pp1800_fp_mw   2379     0.0000  0.0000     0.0000     0.0000
+@@    ppvar_fp_mv   2379  3268.7314  1.6473  3272.0000  3264.0000
+@@    ppvar_fp_mw   2379     0.7081  0.5254     3.1751     0.1000
+@@   ppvar_mcu_mv   2379  3256.0000  0.0000  3256.0000  3256.0000
+@@   ppvar_mcu_mw   2379    16.0525  0.1395    17.1917    15.8893
 ```
 
 #### MCU in low power mode (suspend)
 
 ```
-(chroot) $ dut-control fpmcu_slp_alt:on
+(chroot) $ dut-control fpmcu_slp:on
 ```
 
 ```
-@@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
-@@       sample_msecs    488   122.99   26.37   458.47    92.69
-@@    pp1800_dx_fp_mv    488  1800.00    0.00  1800.00  1800.00
-@@    pp1800_dx_fp_mw    488     0.00    0.00     0.00     0.00
-@@    pp3300_dx_fp_mv    488  3287.79    1.29  3288.00  3280.00
-@@    pp3300_dx_fp_mw    488     0.01    0.04     0.26     0.00
-@@   pp3300_dx_mcu_mv    488  3283.38    3.95  3288.00  3280.00
-@@   pp3300_dx_mcu_mw    488     1.57    0.59     9.73     1.31
+@@           NAME  COUNT    AVERAGE  STDDEV        MAX        MIN
+@@   sample_msecs   2359    25.4208  3.2038    38.8474    19.5994
+@@   pp1800_fp_mv   2359  1792.0712  0.7514  1800.0000  1792.0000
+@@   pp1800_fp_mw   2359     0.0000  0.0000     0.0000     0.0000
+@@    ppvar_fp_mv   2359  3270.5553  1.9529  3276.0000  3268.0000
+@@    ppvar_fp_mw   2359     0.6903  0.5118     3.1751     0.1000
+@@   ppvar_mcu_mv   2359  3256.0000  0.0000  3256.0000  3256.0000
+@@   ppvar_mcu_mw   2359     0.5296  0.3512     7.0330     0.2605
 ```
 
 ### Icetower v3
 
 <!-- mdformat off(b/139308852) -->
 *** note
-**NOTE**: Icetower v0.1 has a hardware bug in the INA connections, so you cannot
-measure the 1.8V fingerprint sensor rail. See http://b/178098140.
-
-Additionally, before https://crrev.com/c/2689101, the sleep GPIOs were not
+**NOTE**: Before https://crrev.com/c/2689101, the sleep GPIOs were not
 configured correctly, so the change needs to be cherry-picked in order to
 measure releases before that point.
 ***
 <!-- mdformat on -->
 
+<!-- mdformat off(b/139308852) -->
+*** note
+**NOTE**: Make sure that any debuggers are completely disconnected when
+measuring power.
+***
+<!-- mdformat on -->
+
 ```bash
-(chroot) $ dut-control -t 60 pp3300_dx_mcu_mv pp3300_dx_fp_mv pp3300_dx_mcu_mw pp3300_dx_fp_mw
+(chroot) $ dut-control -t 60 ppvar_fp_mw ppvar_fp_mv ppvar_mcu_mw ppvar_mcu_mv pp1800_fp_mw pp1800_fp_mv
 ```
 
 **Firmware Version**:
-`dartmonkey_v2.0.2887-311310808-RO_v2.0.14340-6c1587ca7-RW.bin`
+`dartmonkey_v2.0.2887-311310808-RO_v2.0.21761-e1e012ee3-RW.bin`
 
 #### MCU is idle
 
 ```
-(chroot) $ dut-control fpmcu_slp_alt:off
+(chroot) $ dut-control fpmcu_slp:off
 ```
 
 ```
-@@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
-@@       sample_msecs    523   114.85   18.33   386.55    88.95
-@@    pp3300_dx_fp_mv    523  3256.00    0.00  3256.00  3256.00
-@@    pp3300_dx_fp_mw    523     0.00    0.00     0.00     0.00
-@@   pp3300_dx_mcu_mv    523  3248.00    0.00  3248.00  3248.00
-@@   pp3300_dx_mcu_mw    523    43.86    0.10    43.91    43.65
+@@           NAME  COUNT    AVERAGE  STDDEV        MAX        MIN
+@@   sample_msecs   1047    57.2882  6.6254    78.7930    43.7489
+@@   pp1800_fp_mv   1047  1809.7788  0.3202  1810.5469  1808.5938
+@@   pp1800_fp_mw   1047     1.1289  0.0526     1.2805     0.9614
+@@    ppvar_fp_mv   1047  3238.2607  0.3740  3239.2578  3237.3047
+@@    ppvar_fp_mw   1047     0.0331  0.0523     0.2764     0.0000
+@@   ppvar_mcu_mv   1047  3238.4156  0.3826  3239.2578  3237.3047
+@@   ppvar_mcu_mw   1047    42.6689  0.3530    43.5451    41.6941
+
 ```
 
 #### MCU in low power mode (suspend)
 
 ```
-(chroot) $ dut-control fpmcu_slp_alt:on
+(chroot) $ dut-control fpmcu_slp:on
 ```
 
 ```
-@@               NAME  COUNT  AVERAGE  STDDEV      MAX      MIN
-@@       sample_msecs    501   119.79   14.72   381.92    89.22
-@@    pp3300_dx_fp_mv    501  3256.00    0.00  3256.00  3256.00
-@@    pp3300_dx_fp_mw    501     0.00    0.00     0.00     0.00
-@@   pp3300_dx_mcu_mv    501  3256.00    0.00  3256.00  3256.00
-@@   pp3300_dx_mcu_mw    501     5.74    0.28    11.98     5.73
+@@           NAME  COUNT    AVERAGE  STDDEV        MAX        MIN
+@@   sample_msecs   1032    58.1142  6.0990    74.6982    43.6194
+@@   pp1800_fp_mv   1032  1809.7634  0.3269  1810.5469  1809.0820
+@@   pp1800_fp_mw   1032     1.1320  0.0529     1.2819     0.9604
+@@    ppvar_fp_mv   1032  3243.6192  0.4019  3245.1172  3242.1875
+@@    ppvar_fp_mw   1032     0.0324  0.0524     0.3164     0.0000
+@@   ppvar_mcu_mv   1032  3243.7285  0.4072  3244.6289  3241.2109
+@@   ppvar_mcu_mw   1032     4.4560  0.2319     5.4980     2.5824
 ```
 
 ## ChromeOS Build (portage / ebuild)

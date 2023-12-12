@@ -16,13 +16,16 @@ cros-ec	The Chromium OS Embedded Controller Project
 cros	The Chromium OS Embedded Controller Project
 dynapack	Battery vendor
 fairchild	Fairchild Semiconductor
+fpc	Fingerprint Cards AB
 ganfeng	Battery vendor
 getac	Battery vendor
 gfl	Battery vendor
 intersil	Intersil
 kandou		Kandou
 lgc	LG Chem
+lges	Battery vendor
 powertech	Battery vendor
 pow-tech	Battery vendor
 smp	Battery vendor
 sunwoda	Battery vendor
+sdi	Samsung SDI

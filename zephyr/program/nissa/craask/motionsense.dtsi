@@ -37,6 +37,9 @@
 
 		base_mutex_bmi323: bmi323-mutex {
 		};
+
+		base_mutex_bma422: base_bma422-mutex {
+		};
 	};
 
 	/* Rotation matrix used by drivers. */
@@ -71,6 +74,11 @@
 				 (-1) 0 0
 				 0 0 (-1)>;
 		};
+		base_rot_bma422: base-rotation-bma422 {
+			mat33 = <0 (-1) 0
+				 1 0 0
+				 0 0 1>;
+		};
 	};
 
 	/*
@@ -99,6 +107,11 @@
 		};
 
 		bma422_data: bma4xx-drv-data {
+			compatible = "cros-ec,drvdata-bma4xx";
+			status = "okay";
+		};
+
+		bma422_data_base: bma4xx-drv-data-base {
 			compatible = "cros-ec,drvdata-bma4xx";
 			status = "okay";
 		};
@@ -241,6 +254,32 @@
 			drv-data = <&bmi323_data>;
 			alternate-for = <&base_gyro>;
 			alternate-ssfc-indicator = <&base_sensor_1>;
+		};
+
+		alt_base_accel_2: alt-base-accel_2 {
+			compatible = "cros-ec,bma4xx";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex_bma422>;
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&base_rot_bma422>;
+			default-range = <2>;
+			drv-data = <&bma422_data_base>;
+			i2c-spi-addr-flags = "BMA4_I2C_ADDR_SECONDARY";
+			alternate-for = <&base_accel>;
+			alternate-ssfc-indicator = <&base_sensor_2>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
 		};
 	};
 

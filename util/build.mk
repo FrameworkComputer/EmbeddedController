@@ -7,8 +7,8 @@
 #
 
 # See Makefile for description.
-host-util-bin-y += cbi-util iteflash
-host-util-bin-cxx-y += ectool ec_parse_panicinfo lbplay stm32mon lbcc
+host-util-bin-cxx-y += ectool ec_parse_panicinfo lbplay stm32mon lbcc iteflash \
+	cbi-util
 build-util-art-y += util/export_taskinfo.so
 
 build-util-bin-$(CHIP_NPCX) += ecst

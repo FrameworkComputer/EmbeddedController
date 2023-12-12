@@ -42,18 +42,18 @@
 /*
  * PLL configuration. Freq = STM32_HSE_CLOCK or HSI (16MHz) * N / M / R.
  *
- * In our case, 16MHz * 13 / 1 / 2 = 104MHz.
+ * In our case, 16MHz * 55 / 4 / 2 = 110MHz.
  */
 
 #undef STM32_PLLM
 #undef STM32_PLLN
 #undef STM32_PLLR
-#define STM32_PLLM 1
-#define STM32_PLLN 13
+#define STM32_PLLM 4
+#define STM32_PLLN 55
 #define STM32_PLLR 2
 
 #define STM32_USE_PLL
-#define CPU_CLOCK 104000000
+#define CPU_CLOCK 110000000
 
 #define CONFIG_ADC
 #define CONFIG_ADC_SAMPLE_TIME STM32_ADC_SMPR_247_5_CY
@@ -117,7 +117,7 @@
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_CONSOLE 0
 #define USB_IFACE_SPI 1
-#define USB_IFACE_I2C 2
+#define USB_IFACE_CMSIS_DAP 2
 #define USB_IFACE_USART2_STREAM 3
 #define USB_IFACE_USART3_STREAM 4
 #define USB_IFACE_USART4_STREAM 5
@@ -129,7 +129,7 @@
 #define USB_EP_CONTROL 0
 #define USB_EP_CONSOLE 1
 #define USB_EP_SPI 2
-#define USB_EP_I2C 3
+#define USB_EP_CMSIS_DAP 3
 #define USB_EP_USART2_STREAM 4
 #define USB_EP_USART3_STREAM 5
 #define USB_EP_USART4_STREAM 6
@@ -152,8 +152,12 @@
 #define CONFIG_STM32_SPI1_CONTROLLER
 #define CONFIG_SPI_MUTABLE_DEVICE_LIST
 
-/* Enable control of I2C over USB */
-#define CONFIG_USB_I2C
+/*
+ * Control of I2C over USB happens via board-specific CMSIS-DAP protocol. Do
+ * not enable common EC code for USB forwarding, but do enable low level I2C
+ * support for use by board-specific forwarding code.
+ */
+#undef CONFIG_USB_I2C
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
 
@@ -194,7 +198,7 @@ enum usb_strings {
 	USB_STR_VERSION,
 	USB_STR_CONSOLE_NAME,
 	USB_STR_SPI_NAME,
-	USB_STR_I2C_NAME,
+	USB_STR_CMSIS_DAP_NAME,
 	USB_STR_USART2_STREAM_NAME,
 	USB_STR_USART3_STREAM_NAME,
 	USB_STR_USART4_STREAM_NAME,
@@ -236,8 +240,24 @@ enum adc_channel {
  */
 #define OCTOSPI_TRANSACTION_TIMEOUT_US (500 * MSEC)
 
+/*
+ * Several modules want to be able to re-initialize to go back to power-on
+ * default settings, as part of "opentitantool transport init".  It is
+ * convenient for each module to be able to register a hook, rather than a
+ * central location to have to know about each of them.  Since HyperDebug does
+ * not control any ChromeOS AP, we can "retrofit" the HOOK_CHIPSET_RESET for
+ * this purpose without ill effect.
+ */
+#define HOOK_REINIT HOOK_CHIPSET_RESET
+
 /* Interrupt handler, called by common/gpio.c. */
 void gpio_edge(enum gpio_signal signal);
+void user_button_edge(enum gpio_signal signal);
+
+/* Utility method */
+enum gpio_signal gpio_find_by_name(const char *name);
+
+extern int shield_reset_pin;
 
 #endif /* !__ASSEMBLER__ */
 #endif /* __CROS_EC_BOARD_H */

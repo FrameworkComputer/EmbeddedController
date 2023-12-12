@@ -5,8 +5,8 @@
 /* tiny substitute of the runtime layer */
 
 #include "atomic.h"
-#include "chip/stm32/clock-f.h"
 #include "clock.h"
+#include "clock_chip.h"
 #include "common.h"
 #include "cpu.h"
 #include "debug_printf.h"

@@ -14,7 +14,6 @@ child-binding:
     # this GPIO as unimplemented.
     gpios:
       type: phandle-array
-      required: false
     no-auto-init:
       description:
         When set, the GPIO is not initialised, and can be
@@ -24,7 +23,6 @@ child-binding:
         When not set, the GPIO h/w is configured and initialised at startup
         according to the flags in the gpios node.
       type: boolean
-      required: false
     alias:
       description:
         When set, defines an alias for this GPIO's enum-name.
@@ -32,4 +30,3 @@ child-binding:
         This is to allow common or generic names in legacy code to map
         to the particular board's GPIO name.
       type: string
-      required: false

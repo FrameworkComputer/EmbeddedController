@@ -585,7 +585,7 @@ out:
 static uint32_t last_irq_timestamp;
 
 /* Handle IRQ from sensor: schedule read from task context */
-void bma4xx_interrupt(enum gpio_signal signal)
+test_mockable void bma4xx_interrupt(enum gpio_signal signal)
 {
 	__atomic_store_n(&last_irq_timestamp, __hw_clock_source_read(),
 			 __ATOMIC_RELAXED);
@@ -680,6 +680,7 @@ const struct accelgyro_drv bma4_accel_drv = {
 	.get_offset = get_offset,
 	.perform_calib = perform_calib,
 #ifdef BMA4XX_USE_INTERRUPTS
+	.interrupt = bma4xx_interrupt,
 	.irq_handler = irq_handler,
 #endif
 };

@@ -8,8 +8,8 @@
 #include "driver/fingerprint/fpc/fpc_sensor.h"
 #include "fpc_bio_algorithm.h"
 #include "fpc_private.h"
-#include "fpsensor.h"
-#include "fpsensor_utils.h"
+#include "fpsensor/fpsensor.h"
+#include "fpsensor/fpsensor_utils.h"
 #include "gpio.h"
 #include "link_defs.h"
 #include "spi.h"
@@ -293,14 +293,15 @@ int fp_sensor_get_info(struct ec_response_fp_info *resp)
 	return EC_SUCCESS;
 }
 
-int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
-		    int32_t *match_index, uint32_t *update_bitmap)
+__overridable int fp_finger_match(void *templ, uint32_t templ_count,
+				  uint8_t *image, int32_t *match_index,
+				  uint32_t *update_bitmap)
 {
 	return bio_template_image_match_list(templ, templ_count, image,
 					     match_index, update_bitmap);
 }
 
-int fp_enrollment_begin(void)
+__overridable int fp_enrollment_begin(void)
 {
 	int rc;
 	bio_enrollment_t p = enroll_ctx;
@@ -311,14 +312,14 @@ int fp_enrollment_begin(void)
 	return rc;
 }
 
-int fp_enrollment_finish(void *templ)
+__overridable int fp_enrollment_finish(void *templ)
 {
 	bio_template_t pt = templ;
 
 	return bio_enrollment_finish(enroll_ctx, templ ? &pt : NULL);
 }
 
-int fp_finger_enroll(uint8_t *image, int *completion)
+__overridable int fp_finger_enroll(uint8_t *image, int *completion)
 {
 	int rc = bio_enrollment_add_image(enroll_ctx, image);
 
@@ -331,4 +332,24 @@ int fp_finger_enroll(uint8_t *image, int *completion)
 int fp_maintenance(void)
 {
 	return fpc_fp_maintenance(&errors);
+}
+
+int fp_acquire_image_with_mode(uint8_t *image_data, int mode)
+{
+	return fp_sensor_acquire_image_with_mode(image_data, mode);
+}
+
+int fp_acquire_image(uint8_t *image_data)
+{
+	return fp_sensor_acquire_image(image_data);
+}
+
+enum finger_state fp_finger_status(void)
+{
+	return fp_sensor_finger_status();
+}
+
+void fp_configure_detect(void)
+{
+	return fp_sensor_configure_detect();
 }

@@ -188,7 +188,7 @@ bool enter_usb_cable_is_capable(int port)
 		const struct pd_discovery *disc_sop_prime =
 			pd_get_am_discovery(port, TCPCI_MSG_SOP_PRIME);
 
-		if (pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME) >= VDM_VER20 &&
+		if (pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME) >= SVDM_VER_2_0 &&
 		    disc_sop_prime->identity.product_t1.a_rev30.vdo_ver >=
 			    VDO_VERSION_1_3) {
 			union active_cable_vdo2_rev30 a2_rev30 =
@@ -289,7 +289,7 @@ uint32_t enter_usb_setup_next_msg(int port, enum tcpci_msg_type *type)
 		 */
 		usb_mux_set_safe_mode(port);
 
-		if (pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME) < VDM_VER20 ||
+		if (pd_get_vdo_ver(port, TCPCI_MSG_SOP_PRIME) < SVDM_VER_2_0 ||
 		    disc_sop_prime->identity.product_t1.a_rev30.vdo_ver <
 			    VDO_VERSION_1_3 ||
 		    get_usb_pd_cable_type(port) == IDH_PTYPE_PCABLE) {

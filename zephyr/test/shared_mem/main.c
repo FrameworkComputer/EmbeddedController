@@ -4,7 +4,7 @@
  */
 #include "shared_mem.h"
 
-#include <zephyr/ztest_test_new.h>
+#include <zephyr/ztest_test.h>
 
 ZTEST_SUITE(shared_mem, NULL, NULL, NULL, NULL, NULL);
 

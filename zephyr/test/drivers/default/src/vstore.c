@@ -8,6 +8,7 @@
 #include "system.h"
 #include "system_fake.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 #include "vstore.h"
 
 #include <setjmp.h>
@@ -27,7 +28,7 @@ ZTEST_USER(vstore, test_vstore_info)
 		BUILD_HOST_COMMAND_RESPONSE(EC_CMD_VSTORE_INFO, 0, response);
 
 	zassert_ok(host_command_process(&args), NULL);
-	zassert_ok(args.result, NULL);
+	CHECK_ARGS_RESULT(args)
 	zassert_equal(args.response_size, sizeof(response), NULL);
 	zassert_equal(response.slot_count, CONFIG_VSTORE_SLOT_COUNT,
 		      "response.slot_count = %d", response.slot_count);
@@ -46,7 +47,7 @@ ZTEST_USER(vstore, test_vstore_read)
 	uint8_t expect[EC_VSTORE_SLOT_SIZE] = {}; /* data should start as 0 */
 
 	zassert_ok(host_command_process(&args), NULL);
-	zassert_ok(args.result, NULL);
+	CHECK_ARGS_RESULT(args)
 	zassert_equal(args.response_size, sizeof(response), NULL);
 	zassert_mem_equal(expect, response.data, EC_VSTORE_SLOT_SIZE,
 			  "response.data did not match");
@@ -102,7 +103,7 @@ static void do_vstore_write_read(unsigned int slot)
 
 	/* Check that it is now locked */
 	zassert_ok(host_command_process(&info_args), NULL);
-	zassert_ok(info_args.result, NULL);
+	CHECK_ARGS_RESULT(info_args)
 	zassert_equal(info_args.response_size, sizeof(info_response), NULL);
 	zassert_equal(info_response.slot_count, CONFIG_VSTORE_SLOT_COUNT,
 		      "response.slot_count = %d", info_response.slot_count);
@@ -111,7 +112,7 @@ static void do_vstore_write_read(unsigned int slot)
 
 	/* Read to check data */
 	zassert_ok(host_command_process(&read_args), NULL);
-	zassert_ok(read_args.result, NULL);
+	CHECK_ARGS_RESULT(read_args)
 	zassert_equal(read_args.response_size, sizeof(read_response), NULL);
 	zassert_mem_equal(write_params.data, read_response.data,
 			  EC_VSTORE_SLOT_SIZE, "response.data did not match");
@@ -124,7 +125,7 @@ static void do_vstore_write_read(unsigned int slot)
 
 	/* Check that it is still locked after that attempt */
 	zassert_ok(host_command_process(&info_args), NULL);
-	zassert_ok(info_args.result, NULL);
+	CHECK_ARGS_RESULT(info_args)
 	zassert_equal(info_args.response_size, sizeof(info_response), NULL);
 	zassert_equal(info_response.slot_count, CONFIG_VSTORE_SLOT_COUNT,
 		      "response.slot_count = %d", info_response.slot_count);
@@ -133,7 +134,7 @@ static void do_vstore_write_read(unsigned int slot)
 
 	/* Read to check the data didn't change */
 	zassert_ok(host_command_process(&read_args), NULL);
-	zassert_ok(read_args.result, NULL);
+	CHECK_ARGS_RESULT(read_args)
 	zassert_equal(read_args.response_size, sizeof(read_response), NULL);
 	zassert_mem_equal(write_params.data, read_response.data,
 			  EC_VSTORE_SLOT_SIZE, "response.data did not match");
@@ -145,7 +146,7 @@ static void do_vstore_write_read(unsigned int slot)
 
 	/* Check that it is now locked */
 	zassert_ok(host_command_process(&info_args), NULL);
-	zassert_ok(info_args.result, NULL);
+	CHECK_ARGS_RESULT(info_args)
 	zassert_equal(info_args.response_size, sizeof(info_response), NULL);
 	zassert_equal(info_response.slot_count, CONFIG_VSTORE_SLOT_COUNT,
 		      "response.slot_count = %d", info_response.slot_count);
@@ -154,7 +155,7 @@ static void do_vstore_write_read(unsigned int slot)
 
 	/* Read to check the data changed */
 	zassert_ok(host_command_process(&read_args), NULL);
-	zassert_ok(read_args.result, NULL);
+	CHECK_ARGS_RESULT(read_args)
 	zassert_equal(read_args.response_size, sizeof(read_response), NULL);
 	zassert_mem_equal(write_params.data, read_response.data,
 			  EC_VSTORE_SLOT_SIZE, "response.data did not match");
@@ -172,6 +173,7 @@ ZTEST_USER(vstore, test_vstore_write_read)
 	do_vstore_write_read(1);
 }
 
+enum ec_status host_command_reboot(struct host_cmd_handler_args *args);
 ZTEST_USER(vstore, test_vstore_state)
 {
 	struct ec_params_vstore_write write_params = {
@@ -203,16 +205,19 @@ ZTEST_USER(vstore, test_vstore_state)
 	if (!setjmp(env)) {
 		system_fake_setenv(&env);
 
+#ifndef CONFIG_EC_HOST_CMD
 		/* Reboot to RW  */
 		zassert_ok(host_command_process(&reboot_args), NULL);
-
+#else
+		host_command_reboot(&reboot_args);
+#endif
 		/* Does not return unless something went wrong */
 		zassert_unreachable("Failed to reboot");
 	}
 
 	/* the reboot should end up here: check the slot is still locked */
 	zassert_ok(host_command_process(&info_args), NULL);
-	zassert_ok(info_args.result, NULL);
+	CHECK_ARGS_RESULT(info_args)
 	zassert_equal(info_args.response_size, sizeof(info_response), NULL);
 	zassert_equal(info_response.slot_count, CONFIG_VSTORE_SLOT_COUNT,
 		      "response.slot_count = %d", info_response.slot_count);

@@ -30,6 +30,7 @@ def register_npcx9_variant(
         kconfig_files=[
             # Common to all projects.
             here / "prj.conf",
+            here / "tcpc.conf",
             # Project-specific KConfig customization.
             *extra_kconfig_files,
         ],
@@ -41,4 +42,11 @@ brya = register_npcx9_variant(
     project_name="brya",
     extra_dts_overlays=[here / "brya.dts"],
     extra_kconfig_files=[here / "prj_brya.conf"],
+)
+
+brya_pdc = register_npcx_project(
+    project_name="brya_pdc",
+    zephyr_board="npcx9m3f",
+    dts_overlays=[here / "brya_pdc" / "project.overlay"],
+    kconfig_files=[here / "prj.conf", here / "brya_pdc" / "project.conf"],
 )

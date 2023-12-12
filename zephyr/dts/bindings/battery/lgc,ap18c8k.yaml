@@ -21,7 +21,7 @@ properties:
   # Command Code: 0x43
   # Bit 0 - DFET - Condition of D-FET ( 0=OFF, 1=ON )
   # Bit 1 - CFET - Condition of C-FET ( 0=OFF, 1=ON )
-  fet_mfgacc_support:
+  flags:
     default: 0
   fet_reg_addr:
     default: 0x43

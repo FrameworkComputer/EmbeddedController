@@ -1,0 +1,18 @@
+/ {
+	usbc {
+		port0@0 {
+			chg = <&charger>;
+		};
+	};
+
+	batteries {
+		default_battery: lgc_ac17a8m {
+			compatible = "lgc,ac17a8m", "battery-smart";
+			/**
+			 * this has to be strictly lower than the desired
+			 * voltage in smart battery emulator (5000mV).
+			 */
+			voltage_min = <4000>;
+		};
+	};
+};

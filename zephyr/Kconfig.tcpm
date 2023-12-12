@@ -2,8 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_USBC
-
 config PLATFORM_EC_USB_PD_TCPM_TCPCI
 	bool "TCPCI Compatible Driver"
 	select PLATFORM_EC_USBC_OCP
@@ -153,8 +151,9 @@ config PLATFORM_EC_USB_PD_TCPM_FUSB302
 config PLATFORM_EC_USB_PD_TCPM_NCT38XX
 	bool "Nuvoton 3807/8 Single/Dual Port Controller with Power Delivery"
 	default y
-	depends on DT_HAS_NUVOTON_NCT38XX_ENABLED
+	depends on DT_HAS_NUVOTON_NCT38XX_TCPC_ENABLED
 	select PLATFORM_EC_USB_PD_TCPM_TCPCI
+        select MFD
 	help
 	  The NCT38n7/8 is a single/dual-port, USB Type-C Port Controller
 	  (TCPC). It incorporates a Power Delivery (PD) PHY with BMC encoding,
@@ -162,6 +161,8 @@ config PLATFORM_EC_USB_PD_TCPM_NCT38XX
 
 config PLATFORM_EC_USB_PD_TCPM_PS8XXX
 	bool
+	default y
+	depends on DT_HAS_PARADE_PS8XXX_ENABLED || DT_HAS_CROS_PS8XXX_EMUL_ENABLED
 	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	select PLATFORM_EC_USB_PD_TCPM_MUX
 	imply PLATFORM_EC_HOSTCMD_I2C_CONTROL
@@ -170,7 +171,6 @@ config PLATFORM_EC_USB_PD_TCPM_PS8XXX
 	  USB Type-C Port Controller (TCPC) for USB Type-C Host and DisplayPort
 	  applications. They support Power Delivery and the DisplayPort Alt
 	  Mode.
-
 	  Support for specific devices in the driver (below) must also be
 	  enabled.
 
@@ -291,6 +291,7 @@ config PLATFORM_EC_USB_PD_TCPM_RT1715
 	bool "Richtek RT1715 Type-C Port Controller"
 	default y
 	depends on DT_HAS_RICHTEK_RT1715_TCPC_ENABLED
+	select PLATFORM_EC_USB_PD_TCPM_TCPCI
 	help
 	  The RT1715 is a USB Type-C controller, integrating a complete Type-C
 	  Transceiver including the Rp and Rd resistors. It does the USB Type-C
@@ -350,5 +351,3 @@ config PLATFORM_EC_CONSOLE_CMD_TCPC_DUMP
 	  basically a list of registers and their values. By reference to the
 	  Universal Serial Bus Type-C Port Controller Interface Specification
 	  this can help you figure out what is going on.
-
-endif  # PLATFORM_EC_USBC

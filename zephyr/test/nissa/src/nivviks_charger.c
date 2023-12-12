@@ -19,8 +19,8 @@
 #include <dt-bindings/gpio_defines.h>
 #include <typec_control.h>
 
-#define TCPC0 EMUL_DT_GET(DT_NODELABEL(tcpci_emul_0))
-#define TCPC1 EMUL_DT_GET(DT_NODELABEL(tcpci_emul_1))
+#define TCPC0 EMUL_DT_GET(DT_NODELABEL(tcpc_port0))
+#define TCPC1 EMUL_DT_GET(DT_NODELABEL(tcpc_port1))
 
 LOG_MODULE_REGISTER(nissa, LOG_LEVEL_INF);
 

@@ -119,7 +119,7 @@ static int active_charge_port = CHARGE_PORT_NONE;
 static enum charge_supplier active_charge_supplier;
 static uint8_t vbus_rp = TYPEC_RP_RESERVED;
 
-static int cc_config = CC_ALLOW_SRC | CC_EMCA_SERVO;
+static int cc_config = CC_ALLOW_SRC;
 
 /* Voltage thresholds for no connect in DTS mode */
 static int pd_src_vnc_dts[TYPEC_RP_RESERVED][2] = {
@@ -568,11 +568,18 @@ static int board_set_rp(int rp)
 			return EC_ERROR_INVAL;
 		}
 
-		/* TODO: Verify this (CC_EMCA_SERVO) statement works */
-		if (cc_config & CC_EMCA_SERVO)
-			DUT_INACTIVE_CC_PD(RA);
-		else
-			DUT_INACTIVE_CC_OPEN(RA);
+		/*
+		 * Logic for EMCA emulation in non-DTS mode
+		 *
+		 * TODO(b/279522279): Separate DUT-side, Servo-side disconnect
+		 * TODO(b/171291442): Add full eMarker SOP' responder emulation
+		 */
+		if (rp != TYPEC_RP_RESERVED) {
+			if (cc_config & CC_EMCA_SERVO)
+				DUT_INACTIVE_CC_PD(RA);
+			else
+				DUT_INACTIVE_CC_OPEN(RA);
+		}
 	} else {
 		/* DTS mode is enabled. The rp parameter is used to select the
 		 * Type C current limit to advertise. The combinations of Rp on

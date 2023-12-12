@@ -5,7 +5,7 @@
 """Define zmake projects for nissa."""
 
 # Nivviks and Craask, Pujjo, Xivu, Xivur, Uldren has NPCX993F, Nereid
-# and Joxer, Yaviks, Yavilla has ITE81302
+# and Joxer, Yaviks, Yavilla, Quandiso has ITE81302
 
 
 def register_nissa_project(
@@ -74,6 +74,16 @@ nereid_cx = register_binman_project(
     ],
 )
 
+nokris = register_nissa_project(
+    project_name="nokris",
+    chip="npcx9m3f",
+)
+
+naktal = register_nissa_project(
+    project_name="naktal",
+    chip="it81302bx",
+)
+
 craask = register_nissa_project(
     project_name="craask",
     chip="npcx9m3f",
@@ -115,5 +125,20 @@ uldren = register_nissa_project(
 )
 gothrax = register_nissa_project(
     project_name="gothrax",
+    chip="it81302bx",
+)
+craaskov = register_nissa_project(
+    project_name="craaskov",
+    chip="npcx9m3f",
+)
+pirrha = register_nissa_project(
+    project_name="pirrha",
+    chip="it81302bx",
+)
+quandiso = register_nissa_project(
+    project_name="quandiso",
+)
+anraggar = register_nissa_project(
+    project_name="anraggar",
     chip="it81302bx",
 )

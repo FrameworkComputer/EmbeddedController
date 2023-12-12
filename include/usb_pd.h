@@ -465,12 +465,20 @@ enum pd_alternate_modes {
 #define AMODE_TYPE_COUNT (TCPCI_MSG_SOP + 1)
 #endif
 
+enum usb_pd_svdm_ver {
+	SVDM_VER_1_0,
+	SVDM_VER_2_0,
+	SVDM_VER_2_1,
+};
+
 /* Discovery results for a port partner (SOP) or cable plug (SOP') */
 struct pd_discovery {
 	/* Identity data */
 	union disc_ident_ack identity;
 	/* Identity VDO count */
 	int identity_cnt;
+	/* svdm version */
+	enum usb_pd_svdm_ver svdm_vers;
 	/* Supported SVIDs and corresponding mode VDOs */
 	struct svid_mode_data svids[SVID_DISCOVERY_MAX];
 	/* index of SVID currently being operated on */
@@ -497,9 +505,6 @@ struct partner_active_modes {
  */
 #define VDO_HDR_SIZE 1
 
-#define VDM_VER10 0
-#define VDM_VER20 1
-
 #define PD_VDO_INVALID -1
 
 /*
@@ -507,8 +512,8 @@ struct partner_active_modes {
  * ----------
  * <31:16>  :: SVID
  * <15>     :: VDM type ( 1b == structured, 0b == unstructured )
- * <14:13>  :: Structured VDM version (00b == Rev 2.0, 01b == Rev 3.0 )
- * <12:11>  :: reserved
+ * <14:13>  :: SVDM version major (00b == <= Vers 2.0, 01b == Vers 2.(minor))
+ * <12:11>  :: SVDM version minor (00b == <= Vers 2.0, 01b == Vers 2.1)
  * <10:8>   :: object position (1-7 valid ... used for enter/exit mode only)
  * <7:6>    :: command type (SVDM only?)
  * <5>      :: reserved (SVDM), command type (UVDM)
@@ -518,11 +523,13 @@ struct partner_active_modes {
 	(((vid) << 16) | ((type) << 15) | ((custom)&0x7FFF))
 
 #define VDO_SVDM_TYPE BIT(15)
-#define VDO_SVDM_VERS(x) (x << 13)
+#define VDO_SVDM_VERS_MAJOR(x) (x << 13)
+#define VDO_SVDM_VERS_MINOR(x) (x << 11)
 #define VDO_OPOS(x) (x << 8)
 #define VDO_CMDT(x) (x << 6)
 #define VDO_OPOS_MASK VDO_OPOS(0x7)
 #define VDO_CMDT_MASK VDO_CMDT(0x3)
+#define VDO_SVDM_VERS_MASK (VDO_SVDM_VERS_MAJOR(0x3) | VDO_SVDM_VERS_MINOR(0x3))
 
 #define CMDT_INIT 0
 #define CMDT_RSP_ACK 1
@@ -563,6 +570,8 @@ struct partner_active_modes {
 #define PD_VDO_OPOS(vdo) (((vdo) >> 8) & 0x7)
 #define PD_VDO_CMD(vdo) ((vdo)&0x1f)
 #define PD_VDO_CMDT(vdo) (((vdo) >> 6) & 0x3)
+#define PD_VDO_SVDM_VERS_MAJOR(vdo) (((vdo) >> 13) & 0x3)
+#define PD_VDO_SVDM_VERS_MINOR(vdo) (((vdo) >> 11) & 0x3)
 
 /*
  * SVDM Identity request -> response
@@ -1564,8 +1573,8 @@ int pd_get_rev(int port, enum tcpci_msg_type type);
  *
  * @param port USB-C port number
  * @param type USB-C port partner
- * @return VDM_VER10 for VDM Version 1.0
- *         VDM_VER20 for VDM Version 2.0
+ * @return SVDM_VER_1_0 for VDM Version 1.0
+ *         SVDM_VER_2_0 for VDM Version 2.0
  */
 int pd_get_vdo_ver(int port, enum tcpci_msg_type type);
 
@@ -3097,16 +3106,6 @@ void pd_set_new_power_request(int port);
 bool pd_capable(int port);
 
 /**
- * Return true if we transition through Unattached.SNK, but we're still waiting
- * to receive source caps from the partner. This indicates that the PD
- * capabilities are not yet known.
- *
- * @param port USB-C port number
- * @return true if partner is SRC, but PD capability not known
- */
-bool pd_waiting_on_partner_src_caps(int port);
-
-/**
  * Returns the source caps list
  *
  * @param port USB-C port number
@@ -3347,6 +3346,18 @@ static inline int pd_vdm_get_log_entry(uint32_t *payload)
  * re-awoken the calling task.
  */
 void pd_prepare_sysjump(void);
+
+/**
+ * Compose SVDM Request Header
+ *
+ * @param port The PD port number
+ * @param type The partner to query (SOP, SOP', or SOP'')
+ * @param svid SVID to include in svdm header
+ * @param cmd VDO CMD to send
+ * @return svdm header to send
+ */
+uint32_t pd_compose_svdm_req_header(int port, enum tcpci_msg_type type,
+				    uint16_t svid, int cmd);
 
 /* ----- SVDM handlers ----- */
 

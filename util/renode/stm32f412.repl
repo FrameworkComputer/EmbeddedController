@@ -1,0 +1,109 @@
+// Copyright 2023 The ChromiumOS Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+cpu: CPU.CortexM @ sysbus
+    cpuType: "cortex-m4f"
+    nvic: nvic
+    fpuInterruptNumber: 81
+
+flash0: Memory.MappedMemory @ sysbus 0x08000000
+    size: 0x80000  // 0x100000
+
+eeprom: Memory.MappedMemory @ sysbus 0x08080000
+    size: 0x80000  // 0x1800
+
+flashController: MTD.STM32F4_FlashController @ {
+        sysbus 0x40023c00;
+        sysbus new Bus.BusMultiRegistration { address: 0x1FFFC000; size: 0x100; region: "optionBytes" }
+    }
+    flash: flash0
+
+nvic: IRQControllers.NVIC @ sysbus 0xE000E000
+    -> cpu@0
+
+exti: IRQControllers.STM32F4_EXTI @ sysbus 0x40013C00
+    numberOfOutputLines: 23
+    [0-4] -> nvic@[6-10]
+    [5-9] -> nvicInput23@[0-4]
+    [10-15] -> nvicInput40@[0-5]
+    [16, 17, 18, 22] -> nvic@[1, 41, 42, 3]
+
+nvicInput23: Miscellaneous.CombinedInput @ none
+    numberOfInputs: 5
+    -> nvic@23
+
+nvicInput40: Miscellaneous.CombinedInput @ none
+    numberOfInputs: 6
+    -> nvic@40
+
+syscfg: Miscellaneous.STM32_SYSCFG @ sysbus 0x40013800
+    [0-15] -> exti@[0-15]
+
+sram0: Memory.MappedMemory @ sysbus 0x20000000
+    size: 0x40000
+
+crc: CRC.STM32F4_CRC @ sysbus 0x40023000
+
+gpioa: GPIOPort.STM32_GPIOPort @ sysbus <0x40020000, +0x400>
+
+gpiob: GPIOPort.STM32_GPIOPort @ sysbus <0x40020400, +0x400>
+
+gpioc: GPIOPort.STM32_GPIOPort @ sysbus <0x40020800, +0x400>
+
+gpiod: GPIOPort.STM32_GPIOPort @ sysbus <0x40020C00, +0x400>
+
+gpioe: GPIOPort.STM32_GPIOPort @ sysbus <0x40021000, +0x400>
+
+gpiof: GPIOPort.STM32_GPIOPort @ sysbus <0x40021400, +0x400>
+
+gpiog: GPIOPort.STM32_GPIOPort @ sysbus <0x40021800, +0x400>
+
+gpioh: GPIOPort.STM32_GPIOPort @ sysbus <0x40021C00, +0x400>
+
+GPIO_WP: Miscellaneous.Button @ gpiob 7
+    invert: true
+    -> gpiob@7
+
+rcc: Miscellaneous.STM32F4_RCC @ sysbus 0x40023800
+    rtcPeripheral: rtc
+
+rtc: Timers.STM32F4_RTC @ sysbus 0x40002800
+    wakeupTimerFrequency: 32000
+    AlarmIRQ->exti@17
+    WakeupIRQ->exti@22
+
+rng: Miscellaneous.STM32F4_RNG @ sysbus 0x50060800
+    -> nvic@80
+
+spi1: SPI.STM32SPI @ sysbus 0x40013000
+    IRQ->nvic@35
+
+timers2: Timers.STM32_Timer @ sysbus <0x40000000, +0x400>
+    frequency: 96000000
+    initialLimit: 0xFFFFFFFF
+    ->nvic@28
+
+usart1: UART.STM32_UART @ sysbus <0x40011000, +0x400>
+    ->nvic@37
+
+usart2: UART.STM32_UART @ sysbus <0x40004400, +0x400>
+    ->nvic@38
+
+usart6: UART.STM32_UART @ sysbus <0x40011400, +0x400>
+    ->nvic@71
+
+usart3: UART.STM32_UART @ sysbus <0x40004800, +0x400>
+    ->nvic@39
+
+iwdg: Timers.STM32_IndependentWatchdog @ sysbus 0x40003000
+    frequency: 32000
+    windowOption: false
+    defaultPrescaler: 0x4
+
+dwt: Miscellaneous.DWT @ sysbus 0xE0001000
+    frequency: 72000000
+
+sysbus:
+    init:
+        ApplySVD @https://dl.antmicro.com/projects/renode/svd/STM32F40x.svd.gz

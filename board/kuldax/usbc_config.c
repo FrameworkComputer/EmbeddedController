@@ -13,6 +13,7 @@
 #include "driver/tcpm/rt1715.h"
 #include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"
+#include "fw_config.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "hooks.h"
@@ -57,7 +58,7 @@ struct ppc_config_t ppc_chips[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 unsigned int ppc_cnt = ARRAY_SIZE(ppc_chips);
 
 /* USBC mux configuration - Alder Lake includes internal mux */
-static const struct usb_mux_chain usbc0_tcss_usb_mux = {
+static struct usb_mux_chain usbc0_tcss_usb_mux = {
 	.mux =
 		&(const struct usb_mux){
 			.usb_port = USBC_PORT_C0,
@@ -65,8 +66,7 @@ static const struct usb_mux_chain usbc0_tcss_usb_mux = {
 			.hpd_update = &virtual_hpd_update,
 		},
 };
-
-const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
+struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.mux = &(const struct usb_mux) {
 			.usb_port = USBC_PORT_C0,
@@ -78,6 +78,19 @@ const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 		.next = &usbc0_tcss_usb_mux,
 	},
 };
+BUILD_ASSERT(ARRAY_SIZE(usb_muxes) == CONFIG_USB_PD_PORT_MAX_COUNT);
+
+const struct usb_mux_chain usb_muxes_c2[] = {
+	[USBC_PORT_C0] = {
+		.mux = &(const struct usb_mux) {
+			.usb_port = USBC_PORT_C0,
+			.driver = &virtual_usb_mux_driver,
+			.hpd_update = virtual_hpd_update,
+		},
+		.next = &usbc0_tcss_usb_mux,
+	},
+};
+BUILD_ASSERT(ARRAY_SIZE(usb_muxes_c2) == CONFIG_USB_PD_PORT_MAX_COUNT);
 
 /* BC1.2 charger detect configuration */
 const struct pi3usb9201_config_t
@@ -223,7 +236,7 @@ __override bool board_is_dts_port(int port)
 
 __override bool board_is_tbt_usb4_port(int port)
 {
-	return true;
+	return (get_mb_usbc_type() == MB_TC_USB4);
 }
 
 __override enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
@@ -232,4 +245,9 @@ __override enum tbt_compat_cable_speed board_get_max_tbt_speed(int port)
 		return TBT_SS_RES_0;
 
 	return TBT_SS_TBT_GEN3;
+}
+
+void mb_update_usb4_tbt_config(void)
+{
+	memcpy(usb_muxes, usb_muxes_c2, sizeof(usb_muxes_c2));
 }

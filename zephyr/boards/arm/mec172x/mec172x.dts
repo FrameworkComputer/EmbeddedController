@@ -1,0 +1,149 @@
+/* Copyright 2022 Microchip Technology Inc. All rights reserved.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/microchip/mec172x.dtsi>
+#include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/gpio_defines.h>
+#include <zephyr/dt-bindings/pwm/pwm.h>
+
+#define GPIO_VOLTAGE_1P8 (1U << 11)
+
+/ {
+	model = "MEC172X";
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,console = &uart0;
+		zephyr,shell-uart = &uart0;
+		zephyr,flash = &flash0;
+		zephyr,flash-controller = &int_flash;
+	};
+
+	/* MEC172x Chrome design - 256KB code size */
+	flash0: flash@c0000 {
+		reg = <0x000C0000 0x40000>;
+	};
+
+	named-pwms {
+		compatible = "named-pwms";
+	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_ddr_soc: ddr_soc {
+			enum-name = "ADC_TEMP_SENSOR_1_DDR_SOC";
+			io-channels = <&adc0 5>;
+		};
+		adc_ambient: ambient {
+			enum-name = "ADC_TEMP_SENSOR_2_AMBIENT";
+			io-channels = <&adc0 3>;
+		};
+		adc_charger: charger {
+			enum-name = "ADC_TEMP_SENSOR_3_CHARGER";
+			io-channels = <&adc0 0>;
+		};
+		adc_wwan: wwan {
+			enum-name = "ADC_TEMP_SENSOR_4_WWAN";
+			io-channels = <&adc0 4>;
+		};
+	};
+
+	soc {
+		/* Upstream nodes that would clash with the downstream ones. */
+		/delete-node/ rtc@400f5000;
+		/delete-node/ kscan@40009c00;
+		/delete-node/ kbd@40009c00;
+
+		crtc: cros-rtc@400f5000 {
+			compatible = "microchip,xec-cros-rtc";
+			reg = <0x400f5000 0x100>;
+			interrupts = <119 0>, <120 0>;
+			label = "CRTC";
+		};
+
+		cros_kb_raw: cros-kb-raw@40009c00 {
+			compatible = "microchip,xec-cros-kb-raw";
+			reg = <0x40009c00 0x18>;
+			interrupts = <135 0>;
+			status = "disabled";
+		};
+	};
+};
+
+&bbram {
+	status = "okay";
+};
+
+&ecia {
+	status = "okay";
+};
+
+/* Enable aggregated GIRQ24/25 for eSPI virtual wires */
+&girq24 {
+	status = "okay";
+};
+
+&girq25 {
+	status = "okay";
+};
+
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_reset_n_gpio061
+		     &espi_cs_n_gpio066
+		     &espi_clk_gpio065
+		     &espi_io0_gpio070
+		     &espi_io1_gpio071
+		     &espi_io2_gpio072
+		     &espi_io3_gpio073>;
+	pinctrl-names = "default";
+};
+
+/* Host facing devices on eSPI bus */
+&kbc0 {
+	status = "okay";
+};
+
+&acpi_ec0 {
+	status = "okay";
+};
+
+&acpi_ec1 {
+	status = "okay";
+};
+
+&emi0 {
+	status = "okay";
+};
+
+&p80bd0 {
+	status = "okay";
+};
+
+&crtc {
+	status = "okay";
+};
+
+&uart0 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&uart0_tx_gpio104 &uart0_rx_gpio105>;
+	pinctrl-names = "default";
+};
+
+/* Chrome design: KSI02 to H1 has not pull-up resistor */
+&ksi2_gpio021 {
+	bias-pull-up;
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc00_gpio200
+		     &adc03_gpio203
+		     &adc04_gpio204
+		     &adc05_gpio205>;
+	pinctrl-names = "default";
+};

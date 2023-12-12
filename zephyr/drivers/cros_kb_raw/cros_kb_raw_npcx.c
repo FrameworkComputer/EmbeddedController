@@ -127,40 +127,32 @@ static int cros_kb_raw_npcx_drive_column(const struct device *dev, int col)
 {
 	struct kbs_reg *const inst = HAL_INSTANCE(dev);
 
-	/*
-	 * Nuvoton 'Keyboard Scan' module supports 18x8 matrix
-	 * It also support automatic scan functionality.
-	 */
+	/* Nuvoton 'Keyboard Scan' module supports 18x8 matrix. */
 	uint32_t mask, col_out;
 
 	/* Add support for CONFIG_KEYBOARD_KSO_BASE shifting */
 	col_out = col + CONFIG_KEYBOARD_KSO_BASE;
 
-	/* Drive all lines to high. ie. Key detection is disabled. */
+	/*
+	 * Selected lines are set to 0 (i.e. drive low), not selected one are
+	 * set to 1 (high impedance). COL2 is set to logical 1 one selected,
+	 * the actual value depends on how the corresponding GPIO is defined.
+	 */
 	if (col == KEYBOARD_COLUMN_NONE) {
 		mask = ~0;
-		/* Set logical level high on COL2 */
-		cros_kb_raw_set_col2(1);
-	}
-	/* Drive all lines to low for detection any key press */
-	else if (col == KEYBOARD_COLUMN_ALL) {
-		mask = ~(BIT(keyboard_cols) - 1);
-		/* Set logical level low on COL2 */
 		cros_kb_raw_set_col2(0);
-	}
-	/* Drive one line to low for determining which key's state changed. */
-	else {
+	} else if (col == KEYBOARD_COLUMN_ALL) {
+		mask = ~(BIT(keyboard_cols) - 1);
+		cros_kb_raw_set_col2(1);
+	} else {
 		if (col == 2) {
-			/* Set logical level low on COL2 */
-			cros_kb_raw_set_col2(0);
-		} else {
-			/* Set logical level high on COL2 */
 			cros_kb_raw_set_col2(1);
+		} else {
+			cros_kb_raw_set_col2(0);
 		}
 		mask = ~BIT(col_out);
 	}
 
-	/* Set KBSOUT */
 	inst->KBSOUT0 = (mask & 0xFFFF);
 	inst->KBSOUT1 = ((mask >> 16) & 0x03);
 
@@ -261,6 +253,10 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1);
 DEVICE_DT_INST_DEFINE(0, kb_raw_npcx_init, NULL, NULL, &cros_kb_raw_cfg,
 		      PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEFAULT,
 		      &cros_kb_raw_npcx_driver_api);
+
+BUILD_ASSERT(
+	!IS_ENABLED(CONFIG_INPUT_NPCX_KBD),
+	"cros_kb_raw_npcx can't be enabled at the same time as input_npcx_kbd");
 
 /* KBS register structure check */
 NPCX_REG_SIZE_CHECK(kbs_reg, 0x010);

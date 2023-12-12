@@ -1,0 +1,12 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-gpios {
+		pd_p0p1_intr: tp-gpio95 {
+			gpios = <&gpio9 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+	};
+};

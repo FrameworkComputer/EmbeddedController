@@ -13,6 +13,8 @@
 #include <string.h>
 
 #include <endian.h>
+#include <libec/i2c_passthru_command.h>
+#include <vector>
 
 int cmd_i2c_protect(int argc, char *argv[])
 {
@@ -59,61 +61,46 @@ int cmd_i2c_protect(int argc, char *argv[])
 static int do_i2c_xfer(unsigned int port, unsigned int addr, uint8_t *write_buf,
 		       int write_len, uint8_t **read_buf, int read_len)
 {
-	struct ec_params_i2c_passthru *p =
-		(struct ec_params_i2c_passthru *)ec_outbuf;
-	struct ec_response_i2c_passthru *r =
-		(struct ec_response_i2c_passthru *)ec_inbuf;
-	struct ec_params_i2c_passthru_msg *msg = p->msg;
-	uint8_t *pdata;
-	int size;
-	int rv;
-
-	p->port = port;
-	p->num_msgs = (read_len != 0) + (write_len != 0);
-
-	size = sizeof(*p) + p->num_msgs * sizeof(*msg);
+	int num_msgs = (read_len != 0) + (write_len != 0);
+	int size = sizeof(struct ec_params_i2c_passthru) +
+		   num_msgs * sizeof(struct ec_params_i2c_passthru_msg);
 	if (size + write_len > ec_max_outsize) {
 		fprintf(stderr, "Params too large for buffer\n");
 		return -1;
 	}
-	if (sizeof(*r) + read_len > ec_max_insize) {
+	if (sizeof(struct ec_response_i2c_passthru) + read_len >
+	    ec_max_insize) {
 		fprintf(stderr, "Read length too big for buffer\n");
 		return -1;
 	}
 
-	pdata = (uint8_t *)p + size;
-	if (write_len) {
-		msg->addr_flags = addr;
-		msg->len = write_len;
-
-		memcpy(pdata, write_buf, write_len);
-		msg++;
+	auto cmd = ec::I2cPassthruCommand::Create(
+		port, addr,
+		std::vector<uint8_t>(write_buf, write_buf + write_len),
+		read_len);
+	if (!cmd->Run(comm_get_fd())) {
+		int rv = cmd->Result();
+		if (rv < 0) {
+			return rv;
+		}
+		if (cmd->I2cStatus() &
+		    (EC_I2C_STATUS_NAK | EC_I2C_STATUS_TIMEOUT)) {
+			fprintf(stderr, "Transfer failed with status=0x%x\n",
+				cmd->I2cStatus());
+			return -1;
+		}
+		if (cmd->Result() <
+		    sizeof(struct ec_response_i2c_passthru) + read_len) {
+			fprintf(stderr, "Truncated read response\n");
+			return -1;
+		}
 	}
 
 	if (read_len) {
-		msg->addr_flags = addr | EC_I2C_FLAG_READ;
-		msg->len = read_len;
+		*read_buf = static_cast<uint8_t *>(ec_inbuf);
+		std::copy(cmd->RespData().begin(), cmd->RespData().end(),
+			  *read_buf);
 	}
-
-	rv = ec_command(EC_CMD_I2C_PASSTHRU, 0, p, size + write_len, r,
-			sizeof(*r) + read_len);
-	if (rv < 0)
-		return rv;
-
-	/* Parse response */
-	if (r->i2c_status & (EC_I2C_STATUS_NAK | EC_I2C_STATUS_TIMEOUT)) {
-		fprintf(stderr, "Transfer failed with status=0x%x\n",
-			r->i2c_status);
-		return -1;
-	}
-
-	if (rv < sizeof(*r) + read_len) {
-		fprintf(stderr, "Truncated read response\n");
-		return -1;
-	}
-
-	if (read_len)
-		*read_buf = r->data;
 
 	return 0;
 }
@@ -121,9 +108,9 @@ static int do_i2c_xfer(unsigned int port, unsigned int addr, uint8_t *write_buf,
 static void cmd_i2c_help(void)
 {
 	fprintf(stderr,
-		"  Usage: i2cread <8 | 16> <port> <addr8> <offset>\n"
+		"  Usage: i2cread <8|16|32> <port> <addr8> <offset>\n"
 		"  Usage: i2cspeed <port> [speed in kHz]\n"
-		"  Usage: i2cwrite <8 | 16> <port> <addr8> <offset> <data>\n"
+		"  Usage: i2cwrite <8|16|32> <port> <addr8> <offset> <data>\n"
 		"  Usage: i2cxfer <port> <addr7> <read_count> [bytes...]\n"
 		"    <port> i2c port number\n"
 		"    <addr8> 8-bit i2c address\n"
@@ -140,6 +127,7 @@ int cmd_i2c_read(int argc, char *argv[])
 	int read_len, write_len;
 	uint8_t write_buf[1];
 	uint8_t *read_buf = NULL;
+	uint32_t val = 0;
 	char *e;
 	int rv;
 
@@ -149,7 +137,7 @@ int cmd_i2c_read(int argc, char *argv[])
 	}
 
 	read_len = strtol(argv[1], &e, 0);
-	if ((e && *e) || (read_len != 8 && read_len != 16)) {
+	if ((e && *e) || (read_len != 8 && read_len != 16 && read_len != 32)) {
 		fprintf(stderr, "Bad read size.\n");
 		return -1;
 	}
@@ -181,8 +169,10 @@ int cmd_i2c_read(int argc, char *argv[])
 	if (rv < 0)
 		return rv;
 
+	memcpy(&val, read_buf, read_len);
+
 	printf("Read from I2C port %d at 0x%x offset 0x%x = 0x%x\n", port,
-	       addr8, write_buf[0], *(uint16_t *)read_buf);
+	       addr8, write_buf[0], val);
 	return 0;
 }
 
@@ -190,7 +180,7 @@ int cmd_i2c_write(int argc, char *argv[])
 {
 	unsigned int port, addr8, addr7;
 	int write_len;
-	uint8_t write_buf[3];
+	uint8_t write_buf[5];
 	char *e;
 	int rv;
 
@@ -200,7 +190,8 @@ int cmd_i2c_write(int argc, char *argv[])
 	}
 
 	write_len = strtol(argv[1], &e, 0);
-	if ((e && *e) || (write_len != 8 && write_len != 16)) {
+	if ((e && *e) ||
+	    (write_len != 8 && write_len != 16 && write_len != 32)) {
 		fprintf(stderr, "Bad write size.\n");
 		return -1;
 	}
@@ -226,7 +217,7 @@ int cmd_i2c_write(int argc, char *argv[])
 		return -1;
 	}
 
-	*((uint16_t *)&write_buf[1]) = strtol(argv[5], &e, 0);
+	*((uint32_t *)&write_buf[1]) = strtol(argv[5], &e, 0);
 	if (e && *e) {
 		fprintf(stderr, "Bad data.\n");
 		return -1;
@@ -238,7 +229,7 @@ int cmd_i2c_write(int argc, char *argv[])
 		return rv;
 
 	printf("Wrote 0x%x to I2C port %d at 0x%x offset 0x%x.\n",
-	       *((uint16_t *)&write_buf[1]), port, addr8, write_buf[0]);
+	       *((uint32_t *)&write_buf[1]), port, addr8, write_buf[0]);
 	return 0;
 }
 

@@ -4,6 +4,7 @@
  */
 
 #include "common.h"
+#include "cros_cbi.h"
 #include "fan.h"
 #include "temp_sensor/temp_sensor.h"
 #include "thermal.h"
@@ -37,8 +38,30 @@ struct fan_step {
 		.rpm = DT_PROP(nd, rpm_target), \
 	},
 
-static const struct fan_step fan_step_table[] = { DT_FOREACH_CHILD(
-	DT_INST(0, cros_ec_fan_steps), FAN_TABLE_ENTRY) };
+static const struct fan_step fan_table_1[] = { DT_FOREACH_CHILD(
+	DT_NODELABEL(fan_steps_1), FAN_TABLE_ENTRY) };
+
+static const struct fan_step fan_table_2[] = { DT_FOREACH_CHILD(
+	DT_NODELABEL(fan_steps_2), FAN_TABLE_ENTRY) };
+
+static const struct fan_step *fan_step_table;
+BUILD_ASSERT(ARRAY_SIZE(fan_table_1) == ARRAY_SIZE(fan_table_2),
+	     "fan tables must have the same size");
+#define NUM_FAN_LEVELS ARRAY_SIZE(fan_table_1)
+
+bool is_fan_type_2(void)
+{
+	uint32_t val;
+	/*
+	 * Retrieve the fan type config.
+	 */
+	cros_cbi_get_fw_config(FAN_TYPE, &val);
+
+	if (val == FW_FAN_TYPE_2) {
+		return true;
+	}
+	return false;
+}
 
 int fan_table_to_rpm(int fan, int *temp)
 {
@@ -47,6 +70,12 @@ int fan_table_to_rpm(int fan, int *temp)
 	/* previous sensor temperature */
 	static int prev_tmp[TEMP_SENSOR_COUNT];
 	int i;
+
+	if (is_fan_type_2()) {
+		fan_step_table = fan_table_2;
+	} else
+		fan_step_table = fan_table_1;
+
 	/*
 	 * Compare the current and previous temperature, we have
 	 * the three paths :
@@ -73,7 +102,7 @@ int fan_table_to_rpm(int fan, int *temp)
 	} else if (temp[TEMP_CPU] > prev_tmp[TEMP_CPU] ||
 		   temp[TEMP_5V] > prev_tmp[TEMP_5V] ||
 		   temp[TEMP_CHARGER] > prev_tmp[TEMP_CHARGER]) {
-		for (i = current_level; i < ARRAY_SIZE(fan_step_table); i++) {
+		for (i = current_level; i < NUM_FAN_LEVELS; i++) {
 			if (temp[TEMP_CPU] > fan_step_table[i].on[TEMP_CPU] ||
 			    (temp[TEMP_5V] > fan_step_table[i].on[TEMP_5V] &&
 			     temp[TEMP_CHARGER] >
@@ -86,8 +115,8 @@ int fan_table_to_rpm(int fan, int *temp)
 	if (current_level < 0)
 		current_level = 0;
 
-	if (current_level >= ARRAY_SIZE(fan_step_table))
-		current_level = ARRAY_SIZE(fan_step_table) - 1;
+	if (current_level >= NUM_FAN_LEVELS)
+		current_level = NUM_FAN_LEVELS - 1;
 
 	for (i = 0; i < TEMP_SENSOR_COUNT; ++i)
 		prev_tmp[i] = temp[i];

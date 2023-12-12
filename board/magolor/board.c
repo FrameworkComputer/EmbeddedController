@@ -334,41 +334,31 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_A                \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-			[EC_TEMP_THRESH_HALT] = 0, \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_a = THERMAL_A;
+const static struct ec_thermal_config thermal_a = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_B                \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(73), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-			[EC_TEMP_THRESH_HALT] = 0, \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_b = THERMAL_B;
+const static struct ec_thermal_config thermal_b = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(73),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+};
 
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 
@@ -1148,12 +1138,11 @@ __override void lid_angle_peripheral_enable(int enable)
 
 __override int board_get_leave_safe_mode_delay_ms(void)
 {
-	const struct fuel_gauge_info *const fuel_gauge =
-		&get_batt_params()->fuel_gauge;
+	const struct batt_conf_embed *const batt = get_batt_conf();
 
 	/* If it's COSMX battery, there's need more delay time. */
-	if (!strcasecmp(fuel_gauge->manuf_name, "COSMX KT0030B002") ||
-	    !strcasecmp(fuel_gauge->manuf_name, "COSMX KT0030B004"))
+	if (!strcasecmp(batt->manuf_name, "COSMX KT0030B002") ||
+	    !strcasecmp(batt->manuf_name, "COSMX KT0030B004"))
 		return 2000;
 	else
 		return 500;

@@ -21,6 +21,7 @@
 #define VDEC_CAP_HEVC_SLICE BIT(12)
 #define VDEC_CAP_IRQ_IN_SCP BIT(16)
 #define VDEC_CAP_INNER_RACING BIT(17)
+#define VDEC_CAP_IS_SUPPORT_10BIT BIT(18)
 
 /*
  * Video encoder supported capability:

@@ -542,15 +542,81 @@ static int lid_test(void)
 }
 #endif
 
+static int power_button_counter_divider;
+static int power_button_counter;
+
+int power_button_signal_asserted(void)
+{
+	if (!power_button_counter_divider)
+		return 0;
+
+	return !(power_button_counter++ % power_button_counter_divider);
+}
+
+static int power_button_mask_test(void)
+{
+	/*
+	 * Make power_button_raw_pressed return 1 every 28 calls: 1, 0, 0, ....
+	 * The first two calls are for column 0. The next two are also for
+	 * column 0 but for debounce-rescan. Since there are 13 columns, there
+	 * will be 13x2 + 2 = 28 calls for scanning a whole matrix.
+	 */
+	ccprintf("\nTest power button change during a single column scan.");
+	power_button_counter_divider = 28;
+	power_button_counter = 0;
+	reset_key_state();
+	msleep(40);
+	mock_key(1, 1, 1);
+	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
+
+	/*
+	 * Make power_button_raw_pressed return 1 continuously. Refresh key row
+	 * should be masked by the scanner because it can't tell whether it's
+	 * for the column it's driving or other columns driven by the GSC.
+	 */
+	ccprintf("\nTest continuous power button press.\n");
+	power_button_counter_divider = 1;
+	power_button_counter = 0;
+	reset_key_state();
+	msleep(40);
+	mock_key(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH, 1);
+	mock_key(1, 1, 1);
+	task_wake(TASK_ID_KEYSCAN);
+	msleep(40);
+	TEST_EQ(key_state_change[KEYBOARD_ROW_REFRESH][KEYBOARD_COL_REFRESH], 0,
+		"%d");
+	TEST_EQ(key_state_change[1][1], 1, "%d");
+
+	power_button_counter_divider = 0;
+
+	return EC_SUCCESS;
+}
+
 static int test_check_boot_esc(void)
 {
-	TEST_ASSERT(keyboard_scan_get_boot_keys() == BOOT_KEY_ESC);
+	TEST_ASSERT(keyboard_scan_get_boot_keys() == BIT(BOOT_KEY_ESC));
+	mock_key(KEYBOARD_ROW_ESC, KEYBOARD_COL_ESC, 0);
+	task_wake(TASK_ID_KEYSCAN);
+	msleep(40);
+	TEST_ASSERT(keyboard_scan_get_boot_keys() == 0);
 	return EC_SUCCESS;
 }
 
 static int test_check_boot_down(void)
 {
-	TEST_ASSERT(keyboard_scan_get_boot_keys() == BOOT_KEY_DOWN_ARROW);
+	TEST_ASSERT(keyboard_scan_get_boot_keys() ==
+		    (BIT(BOOT_KEY_DOWN_ARROW) | BIT(BOOT_KEY_REFRESH)));
+
+	mock_key(6, 11, 0);
+	task_wake(TASK_ID_KEYSCAN);
+	msleep(40);
+	TEST_ASSERT(keyboard_scan_get_boot_keys() == BIT(BOOT_KEY_REFRESH));
+
+	mock_key(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH, 0);
+	task_wake(TASK_ID_KEYSCAN);
+	msleep(40);
+	TEST_ASSERT(keyboard_scan_get_boot_keys() == 0);
+
 	return EC_SUCCESS;
 }
 
@@ -559,6 +625,8 @@ void test_init(void)
 	uint32_t state;
 
 	system_get_scratchpad(&state);
+
+	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
 
 	if (state & TEST_STATE_MASK(TEST_STATE_STEP_2)) {
 		/* Power-F3-ESC */
@@ -569,6 +637,7 @@ void test_init(void)
 		/* Power-F3-Down */
 		system_set_reset_flags(system_get_reset_flags() |
 				       EC_RESET_FLAG_RESET_PIN);
+		mock_key(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH, 1);
 		mock_key(6, 11, 1);
 	}
 }
@@ -595,6 +664,8 @@ static void run_test_step1(void)
 #ifdef CONFIG_LID_SWITCH
 	RUN_TEST(lid_test);
 #endif
+
+	RUN_TEST(power_button_mask_test);
 
 	if (test_get_error_count())
 		test_reboot_to_next_step(TEST_STATE_FAILED);

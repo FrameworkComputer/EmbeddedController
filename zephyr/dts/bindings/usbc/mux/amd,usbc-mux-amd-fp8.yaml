@@ -1,0 +1,19 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: USB-C AMD-FP8 mux
+
+include: ["i2c-device.yaml", "cros-ec,usbc-mux.yaml"]
+
+compatible: "amd,usbc-mux-amd-fp8"
+
+properties:
+  irq-gpios:
+    type: phandle-array
+    required: true
+    description: Interrupt from SoC
+
+  fixed:
+    type: int
+    description: Fixed mux state to always apply

@@ -3,6 +3,12 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #include "bbram.h"
 #include "common.h"
 #include "console.h"
@@ -410,7 +416,7 @@ static int check_reset_cause(void)
 test_export_static int system_preinitialize(void)
 {
 	if (bbram_dev && !device_is_ready(bbram_dev)) {
-		LOG_ERR("Error: device %s is not ready", bbram_dev->name);
+		LOG_ERR("device %s not ready", bbram_dev->name);
 		return -1;
 	}
 

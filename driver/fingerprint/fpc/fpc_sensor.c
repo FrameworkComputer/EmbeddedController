@@ -3,11 +3,12 @@
  * found in the LICENSE file.
  */
 
-#include <stddef.h>
+#include "fpsensor/fpsensor.h"
+#include "fpsensor/fpsensor_state.h"
+#include "fpsensor/fpsensor_utils.h"
+#include "timer.h"
 
-#include <include/fpsensor.h>
-#include <include/fpsensor_state.h>
-#include <include/fpsensor_utils.h>
+#include <stddef.h>
 #if defined(CONFIG_FP_SENSOR_FPC1025) || defined(CONFIG_FP_SENSOR_FPC1035)
 #include "bep/fpc_private.h"
 #elif defined(CONFIG_FP_SENSOR_FPC1145)

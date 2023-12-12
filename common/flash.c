@@ -5,6 +5,12 @@
 
 /* Flash memory module for Chrome EC - common functions */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #include "builtin/assert.h"
 #ifdef CONFIG_ZEPHYR
 #include "cbi_flash.h"
@@ -680,7 +686,7 @@ int crec_flash_is_erased(uint32_t offset, int size)
 static bool check_cbi_section_overlap(int offset, int size)
 {
 	int cbi_start = CBI_FLASH_OFFSET;
-	int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+	int cbi_end = CBI_FLASH_OFFSET + CBI_FLASH_SIZE;
 	int sec_start = offset;
 	int sec_end = offset + size;
 
@@ -697,7 +703,7 @@ static bool check_cbi_section_overlap(int offset, int size)
 static void protect_cbi_overlapped_section(int offset, int size, char *data)
 {
 	if (check_cbi_section_overlap(offset, size)) {
-		int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+		int cbi_end = CBI_FLASH_OFFSET + CBI_FLASH_SIZE;
 		int sec_end = offset + size;
 		int cbi_fill_start = MAX(CBI_FLASH_OFFSET, offset);
 		int cbi_fill_size = MIN(cbi_end, sec_end) - cbi_fill_start;
@@ -761,12 +767,14 @@ static void flash_abort_or_invalidate_hash(int offset, int size)
 	 * If RW flash has been written to, make sure we do not automatically
 	 * jump to RW after the timeout.
 	 */
-	if ((offset >= CONFIG_RW_MEM_OFF &&
-	     offset < (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)) ||
-	    ((offset + size) > CONFIG_RW_MEM_OFF &&
-	     (offset + size) <= (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)) ||
-	    (offset < CONFIG_RW_MEM_OFF &&
-	     (offset + size) > (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)))
+	if ((offset >= CONFIG_EC_WRITABLE_STORAGE_OFF &&
+	     offset < (CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_SIZE)) ||
+	    ((offset + size) > CONFIG_EC_WRITABLE_STORAGE_OFF &&
+	     (offset + size) <=
+		     (CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_SIZE)) ||
+	    (offset < CONFIG_EC_WRITABLE_STORAGE_OFF &&
+	     (offset + size) >
+		     (CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_SIZE)))
 		rwsig_abort();
 #endif
 }
@@ -780,7 +788,7 @@ int crec_flash_write(int offset, int size, const char *data)
 
 #if defined(CONFIG_ZEPHYR) && defined(CONFIG_PLATFORM_EC_CBI_FLASH)
 	if (check_cbi_section_overlap(offset, size)) {
-		int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+		int cbi_end = CBI_FLASH_OFFSET + CBI_FLASH_SIZE;
 		int sec_end = offset + size;
 
 		if (offset < CBI_FLASH_OFFSET) {
@@ -809,7 +817,7 @@ int crec_flash_erase(int offset, int size)
 
 #if defined(CONFIG_ZEPHYR) && defined(CONFIG_PLATFORM_EC_CBI_FLASH)
 	if (check_cbi_section_overlap(offset, size)) {
-		int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+		int cbi_end = CBI_FLASH_OFFSET + CBI_FLASH_SIZE;
 		int sec_end = offset + size;
 
 		if (offset < CBI_FLASH_OFFSET) {
@@ -1545,8 +1553,14 @@ static enum ec_status flash_command_erase(struct host_cmd_handler_args *args)
 	switch (cmd) {
 	case FLASH_ERASE_SECTOR:
 #if defined(HAS_TASK_HOSTCMD) && defined(CONFIG_HOST_COMMAND_STATUS)
+#ifndef CONFIG_EC_HOST_CMD
 		args->result = EC_RES_IN_PROGRESS;
 		host_send_response(args);
+#else
+		ec_host_cmd_send_response(
+			EC_HOST_CMD_IN_PROGRESS,
+			(struct ec_host_cmd_handler_args *)args);
+#endif
 #endif
 		if (crec_flash_erase(offset, p->size))
 			return EC_RES_ERROR;
@@ -1615,7 +1629,7 @@ flash_command_protect_v2(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_protect_v2 *p = args->params;
 	struct ec_response_flash_protect *r = args->response;
-	int rc = EC_RES_SUCCESS;
+	int rc;
 
 	flash_protect_async_data.mask = p->mask;
 	flash_protect_async_data.flags = p->flags;
@@ -1629,12 +1643,11 @@ flash_command_protect_v2(struct host_cmd_handler_args *args)
 
 	switch (p->action) {
 	case FLASH_PROTECT_ASYNC:
+		rc = flash_protect_async_data.rc;
+		if (rc == EC_RES_BUSY) {
+			return rc;
+		}
 		if (p->mask) {
-			rc = flash_protect_async_data.rc;
-			if (rc != EC_RES_SUCCESS) {
-				rc = EC_RES_BUSY;
-				break;
-			}
 			hook_call_deferred(
 				&crec_flash_set_protect_deferred_data,
 				100 * MSEC);
@@ -1654,8 +1667,15 @@ flash_command_protect_v2(struct host_cmd_handler_args *args)
 		 * the actual result.
 		 */
 		rc = flash_protect_async_data.rc;
-		if (rc == EC_RES_BUSY || rc == EC_RES_ERROR)
+		if (rc == EC_RES_ERROR) {
+			/* Ready for another command */
+			flash_protect_async_data.rc = EC_RES_SUCCESS;
 			break;
+		}
+
+		if (rc == EC_RES_BUSY) {
+			break;
+		}
 
 		r->flags = crec_flash_get_protect();
 
@@ -1670,8 +1690,6 @@ flash_command_protect_v2(struct host_cmd_handler_args *args)
 
 		args->response_size = sizeof(*r);
 
-		/* Ready for another command */
-		flash_protect_async_data.rc = EC_RES_SUCCESS;
 		break;
 
 	default:

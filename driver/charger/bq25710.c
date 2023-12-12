@@ -204,22 +204,6 @@ static inline enum ec_error_list raw_write16(int chgnum, int offset, int value)
 			   chg_chips[chgnum].i2c_addr_flags, offset, value);
 }
 
-#if defined(CONFIG_CHARGE_RAMP_HW) || \
-	defined(CONFIG_USB_PD_VBUS_MEASURE_CHARGER)
-static int bq25710_get_low_power_mode(int chgnum, int *mode)
-{
-	int rv;
-	int reg;
-
-	rv = raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_0, &reg);
-	if (rv)
-		return rv;
-
-	*mode = !!(reg & BQ_FIELD_MASK(BQ257X0, CHARGE_OPTION_0, EN_LWPWR));
-
-	return EC_SUCCESS;
-}
-
 static int bq25710_set_low_power_mode(int chgnum, int enable)
 {
 	int rv;
@@ -261,21 +245,20 @@ static int bq25710_set_low_power_mode(int chgnum, int enable)
 	return EC_SUCCESS;
 }
 
-static int co1_set_psys_sensing(int reg, bool enable)
+#if defined(CONFIG_CHARGE_RAMP_HW) || \
+	defined(CONFIG_USB_PD_VBUS_MEASURE_CHARGER)
+static int bq25710_get_low_power_mode(int chgnum, int *mode)
 {
-	if (IS_ENABLED(CONFIG_CHARGER_BQ25720)) {
-		if (enable)
-			reg = SET_BQ_FIELD_BY_NAME(BQ25720, CHARGE_OPTION_1,
-						   PSYS_CONFIG, PBUS_PBAT, reg);
-		else
-			reg = SET_BQ_FIELD_BY_NAME(BQ25720, CHARGE_OPTION_1,
-						   PSYS_CONFIG, OFF, reg);
-	} else if (IS_ENABLED(CONFIG_CHARGER_BQ25710)) {
-		reg = SET_BQ_FIELD(BQ25710, CHARGE_OPTION_1, EN_PSYS, enable,
-				   reg);
-	}
+	int rv;
+	int reg;
 
-	return reg;
+	rv = raw_read16(chgnum, BQ25710_REG_CHARGE_OPTION_0, &reg);
+	if (rv)
+		return rv;
+
+	*mode = !!(reg & BQ_FIELD_MASK(BQ257X0, CHARGE_OPTION_0, EN_LWPWR));
+
+	return EC_SUCCESS;
 }
 
 static int bq25710_adc_start(int chgnum, int adc_en_mask)
@@ -325,6 +308,23 @@ static int bq25710_adc_start(int chgnum, int adc_en_mask)
 	return EC_SUCCESS;
 }
 #endif
+
+static int co1_set_psys_sensing(int reg, bool enable)
+{
+	if (IS_ENABLED(CONFIG_CHARGER_BQ25720)) {
+		if (enable)
+			reg = SET_BQ_FIELD_BY_NAME(BQ25720, CHARGE_OPTION_1,
+						   PSYS_CONFIG, PBUS_PBAT, reg);
+		else
+			reg = SET_BQ_FIELD_BY_NAME(BQ25720, CHARGE_OPTION_1,
+						   PSYS_CONFIG, OFF, reg);
+	} else if (IS_ENABLED(CONFIG_CHARGER_BQ25710)) {
+		reg = SET_BQ_FIELD(BQ25710, CHARGE_OPTION_1, EN_PSYS, enable,
+				   reg);
+	}
+
+	return reg;
+}
 
 static int bq257x0_init_charge_option_1(int chgnum)
 {
@@ -1013,7 +1013,9 @@ const struct charger_drv bq25710_drv = {
 	.get_voltage = &bq25710_get_voltage,
 	.set_voltage = &bq25710_set_voltage,
 	.discharge_on_ac = &bq25710_discharge_on_ac,
+#ifdef CONFIG_USB_PD_VBUS_MEASURE_CHARGER
 	.get_vbus_voltage = &bq25710_get_vbus_voltage,
+#endif
 	.set_input_current_limit = &bq25710_set_input_current_limit,
 	.get_input_current_limit = &bq25710_get_input_current_limit,
 	.manufacturer_id = &bq25710_manufacturer_id,

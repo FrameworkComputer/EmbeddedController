@@ -7,7 +7,7 @@
 #define CROS_EC_DRIVER_FINGERPRINT_ELAN_ELAN_SENSOR_H
 #include "common.h"
 #include "ec_commands.h"
-#include "fpsensor_types.h"
+#include "fpsensor/fpsensor_types.h"
 
 /* Sensor pixel resolution */
 #if defined(CONFIG_FP_SENSOR_ELAN80)
@@ -41,7 +41,7 @@
  * @return 0 on success.
  *         negative value on error.
  */
-int elan_woe_mode(void);
+__staticlib int elan_woe_mode(void);
 
 /**
  * Set ELAN fingerprint sensor into the image sensing mode
@@ -49,13 +49,13 @@ int elan_woe_mode(void);
  * @return 0 on success.
  *         negative value on error.
  */
-int elan_sensing_mode(void);
+__staticlib int elan_sensing_mode(void);
 
 /**
  * To initialize parameters of the ELAN matching algorithm
  *
  */
-void algorithm_parameter_setting(void);
+__staticlib void algorithm_parameter_setting(void);
 
 /**
  * Compares given finger image against enrolled templates.
@@ -79,8 +79,8 @@ void algorithm_parameter_setting(void);
  * - EC_MKBP_FP_ERR_MATCH_LOW_COVERAGE when matching could not be performed
  *   due to finger covering too little area of the sensor
  */
-int elan_match(void *templ, uint32_t templ_count, uint8_t *image,
-	       int32_t *match_index, uint32_t *update_bitmap);
+__staticlib int elan_match(void *templ, uint32_t templ_count, uint8_t *image,
+			   int32_t *match_index, uint32_t *update_bitmap);
 
 /**
  * start a finger enrollment session and initialize enrollment data
@@ -88,7 +88,7 @@ int elan_match(void *templ, uint32_t templ_count, uint8_t *image,
  * @return 0 on success.
  *
  */
-int elan_enrollment_begin(void);
+__staticlib int elan_enrollment_begin(void);
 
 /**
  * Adds fingerprint image to the current enrollment session.
@@ -105,7 +105,7 @@ int elan_enrollment_begin(void);
  * - EC_MKBP_FP_ERR_ENROLL_LOW_COVERAGE when image could not be used due to
  *   finger covering too little area of the sensor
  */
-int elan_enroll(uint8_t *image, int *completion);
+__staticlib int elan_enroll(uint8_t *image, int *completion);
 
 /**
  * Acquires a fingerprint image with specific capture mode.
@@ -130,7 +130,8 @@ int elan_enroll(uint8_t *image, int *completion);
  * - FP_SENSOR_TOO_FAST on finger removed before image was captured
  * - FP_SENSOR_LOW_SENSOR_COVERAGE on sensor not fully covered by finger
  */
-int elan_sensor_acquire_image_with_mode(uint8_t *image_data, int mode);
+__staticlib int elan_sensor_acquire_image_with_mode(uint8_t *image_data,
+						    int mode);
 
 /**
  * Returns the status of the finger on the sensor.
@@ -140,7 +141,7 @@ int elan_sensor_acquire_image_with_mode(uint8_t *image_data, int mode);
  * - FINGER_PARTIAL
  * - FINGER_PRESENT
  */
-enum finger_state elan_sensor_finger_status(void);
+__staticlib enum finger_state elan_sensor_finger_status(void);
 
 /**
  * Generate a template from the finger whose enrollment has just being
@@ -152,7 +153,7 @@ enum finger_state elan_sensor_finger_status(void);
  *
  * @return 0 on success or a negative error code.
  */
-int elan_enrollment_finish(void *templ);
+__staticlib int elan_enrollment_finish(void *templ);
 
 /**
  * Fill the 'ec_response_fp_alg_info' buffer with the sensor alg information
@@ -161,10 +162,12 @@ int elan_enrollment_finish(void *templ);
  *
  * @return EC_SUCCESS on success otherwise error.
  */
-int elan_sensor_get_alg_info(struct ec_response_fp_info *resp);
+__staticlib int elan_sensor_get_alg_info(struct ec_response_fp_info *resp);
 
 /**
  * Runs a test for defective pixels.
+ *
+ * Unused by staticlib.
  *
  * Should be triggered periodically by the client. The maintenance command can
  * take several hundred milliseconds to run.
@@ -179,5 +182,5 @@ int elan_fp_maintenance(uint16_t *error_state);
  *
  * @return EC_SUCCESS on success otherwise error.
  */
-int elan_fp_deinit(void);
+__staticlib int elan_fp_deinit(void);
 #endif

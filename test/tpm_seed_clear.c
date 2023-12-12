@@ -10,7 +10,7 @@
 #include "test_util.h"
 
 #ifdef SECTION_IS_RW
-#include "fpsensor_state.h"
+#include "fpsensor/fpsensor_state.h"
 #endif
 
 #include <stdint.h>
@@ -55,7 +55,7 @@ test_static int test_tpm_seed_after_reboot(void)
 
 test_static void run_test_step1(void)
 {
-	ccprints("Step 1: tpm_seed_clear\n");
+	ccprints("Step 1: tpm_seed_clear");
 	cflush();
 
 	RUN_TEST(test_tpm_seed_before_reboot);
@@ -69,7 +69,7 @@ test_static void run_test_step1(void)
 
 test_static void run_test_step2(void)
 {
-	ccprints("Step 2: tpm_seed_clear\n");
+	ccprints("Step 2: tpm_seed_clear");
 	cflush();
 
 	RUN_TEST(test_tpm_seed_after_reboot);

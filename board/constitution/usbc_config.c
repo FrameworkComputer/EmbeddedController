@@ -34,6 +34,8 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
+static bool pd_reset_on_resume = false;
+
 /* USBC TCPC configuration */
 const struct tcpc_config_t tcpc_config[] = {
 	[USBC_PORT_C0] = {
@@ -244,6 +246,44 @@ void board_reset_pd_mcu(void)
 
 	msleep(50);
 }
+
+void pd_reset_deferred(void)
+{
+	/* Only reset port c0 */
+	pd_execute_hard_reset(USBC_PORT_C0);
+}
+DECLARE_DEFERRED(pd_reset_deferred);
+
+void pd_enter_suspend_setting(void)
+{
+	pd_reset_on_resume = true;
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pd_enter_suspend_setting, HOOK_PRIO_DEFAULT);
+
+void pd_reset_resume(void)
+{
+	/*
+	 * Reset the port 0 (TBT port) PD connection 30 seconds after resume to
+	 * ensure correct TBT init.
+	 * TODO(b/296493322): Craft a more targeted fix.
+	 */
+	if (pd_reset_on_resume) {
+		hook_call_deferred(&pd_reset_deferred_data, 30 * SECOND);
+		pd_reset_on_resume = false;
+	}
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, pd_reset_resume, HOOK_PRIO_DEFAULT);
+
+void pd_reset_reboot(void)
+{
+	/*
+	 * Reset the port 0 (TBT port) PD connection 30 seconds after reboot to
+	 * ensure correct TBT init.
+	 * TODO(b/296493322): Craft a more targeted fix.
+	 */
+	hook_call_deferred(&pd_reset_deferred_data, 30 * SECOND);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESET, pd_reset_reboot, HOOK_PRIO_DEFAULT);
 
 static void enable_ioex(int ioex)
 {

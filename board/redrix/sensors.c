@@ -306,78 +306,56 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_DDR              \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_ddr = THERMAL_DDR;
+static const struct ec_thermal_config thermal_ddr = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+	},
+};
 
 /*
  * Tiger Lake specifies 100 C as maximum TDP temperature.  THRMTRIP# occurs at
  * 130 C.  However, sensor is located next to SOC, so we need to use the lower
  * SOC temperature limit (85 C)
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CPU              \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
+static const struct ec_thermal_config thermal_cpu = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+	},
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CHARGER          \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_charger =
-	THERMAL_CHARGER;
+static const struct ec_thermal_config thermal_charger = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+	},
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_REGULATOR        \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_regulator =
-	THERMAL_REGULATOR;
+static const struct ec_thermal_config thermal_regulator = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+	},
+};
 
 /* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_DDR] = THERMAL_DDR,
-	[TEMP_SENSOR_2_SOC] = THERMAL_CPU,
-	[TEMP_SENSOR_3_CHARGER] = THERMAL_CHARGER,
-	[TEMP_SENSOR_4_REGULATOR] = THERMAL_REGULATOR,
+	[TEMP_SENSOR_1_DDR] = thermal_ddr,
+	[TEMP_SENSOR_2_SOC] = thermal_cpu,
+	[TEMP_SENSOR_3_CHARGER] = thermal_charger,
+	[TEMP_SENSOR_4_REGULATOR] = thermal_regulator,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);

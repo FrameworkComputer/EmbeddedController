@@ -82,6 +82,7 @@ def get_crash_cause(cause: int) -> str:
         0xDEAD6665: "bad-rng",
         0xDEAD6666: "pmic-fault",
         0xDEAD6667: "exit",
+        0xDEAD6668: "watchdog-warning",
     }
 
     if cause in causes:
@@ -258,6 +259,9 @@ def process_log_file(file_name: str) -> tuple:
                 # Get EC version.
                 # There could be more than one "fw_version". Only the first one
                 # corresponds to the EC version.
+                if line.startswith("RW version") and ec_ver is None:
+                    _, ec_ver = line.split(":")
+                    ec_ver = ec_ver.strip(" \n")
                 if line.startswith("fw_version") and ec_ver is None:
                     _, ec_ver = line.split("|")
                     ec_ver = ec_ver.strip(" \n")

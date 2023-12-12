@@ -2,8 +2,6 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_USBC
-
 config PLATFORM_EC_USB_CHARGER
 	bool "Support charging from a USB-C port"
 	default y
@@ -25,6 +23,7 @@ config PLATFORM_EC_USB_CHARGER_SINGLE_TASK
 
 config PLATFORM_EC_BC12_DETECT_DATA_ROLE_TRIGGER
 	bool
+	default y if USB_BC12_PI3USB9201
 	help
 	  This is a helper symbol that indicates the BC1.2 chip needs to be
 	  triggered on data role swaps in addition to VBUS changes.
@@ -89,21 +88,4 @@ config PLATFORM_EC_MT6360_BC12_GPIO
 	  a GPIO: GPIO_BC12_DET_EN. Assert GPIO_BC12_DET_EN to detect a BC1.2
 	  device, and deassert GPIO_BC12_DET_EN to mux the USB-PHY back.
 
-config PLATFORM_EC_BC12_SINGLE_DRIVER
-	bool "Only support a single BC12 driver"
-	default y
-	help
-	  Enable this if the board only needs one BC12 driver. This includes
-	  the case that has multiple chips that use the same driver.
-
-	  If undefined, the board should define a bc12_ports[] array which
-	  associates each port to its bc12 driver:
-
-	     struct bc12_config bc12_ports[CONFIG_USB_PD_PORT_MAX_COUNT] = {
-	        { .drv = &xxx_drv },
-	        { .drv = &yyy_drv },
-	     };
-
 endif  # PLATFORM_EC_USB_CHARGER
-
-endif # PLATFORM_EC_USBC

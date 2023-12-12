@@ -13,6 +13,7 @@
 #include "keyboard_scan.h"
 #include "lpc.h"
 #include "system.h"
+#include "usbc/pd_task_intel_altmode.h"
 #include "vboot.h"
 #include "watchdog.h"
 #include "zephyr_espi_shim.h"
@@ -89,6 +90,17 @@ void ec_app_main(void)
 		vboot_main();
 	}
 
+#ifdef CONFIG_AP_PWRSEQ_DRIVER
+	/*
+	 * Some components query AP power state during initialization, AP power
+	 * sequence driver thread needs to be started earlier in order to
+	 * determine current AP power state.
+	 */
+	if (IS_ENABLED(CONFIG_AP_PWRSEQ)) {
+		ap_pwrseq_task_start();
+	}
+#endif
+
 	/* Call init hooks before main tasks start */
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOOKS)) {
 		hook_notify(HOOK_INIT);
@@ -113,7 +125,14 @@ void ec_app_main(void)
 	if (IS_ENABLED(CONFIG_SHIMMED_TASKS)) {
 		start_ec_tasks();
 	}
+
+#ifndef CONFIG_AP_PWRSEQ_DRIVER
 	if (IS_ENABLED(CONFIG_AP_PWRSEQ)) {
 		ap_pwrseq_task_start();
+	}
+#endif
+
+	if (IS_ENABLED(CONFIG_USB_PD_ALTMODE_INTEL)) {
+		intel_altmode_task_start();
 	}
 }

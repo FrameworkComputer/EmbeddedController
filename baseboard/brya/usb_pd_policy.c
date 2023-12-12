@@ -94,16 +94,31 @@ static const union tbt_mode_resp_device vdo_tbt_modes[1] = { {
 	.vendor_spec_b1 = 0,
 } };
 
-static const uint32_t vdo_idh = VDO_IDH(1, /* Data caps as USB host     */
-					0, /* Not a USB device   */
-					IDH_PTYPE_PERIPH, 1, /* Supports alt
-								modes */
-					USB_VID_GOOGLE);
+static const uint32_t vdo_idh_no_ufp = VDO_IDH(1, /* Data caps as USB host */
+					       0, /* Not a USB device */
+					       IDH_PTYPE_UNDEF, 0, /* No UFP
+								    * modal
+								    * operation
+								    */
+					       USB_VID_GOOGLE);
 
-static const uint32_t vdo_idh_rev30 =
-	VDO_IDH_REV30(1, /* Data caps as USB host     */
-		      0, /* Not a USB device   */
-		      IDH_PTYPE_PERIPH, 1, /* Supports alt modes */
+static const uint32_t vdo_idh_tbt = VDO_IDH(1, /* Data caps as USB host */
+					    0, /* Not a USB device */
+					    IDH_PTYPE_PERIPH, 1, /* UFP modal
+								  * operation
+								  */
+					    USB_VID_GOOGLE);
+
+static const uint32_t vdo_idh_rev30_no_ufp =
+	VDO_IDH_REV30(1, /* Data caps as USB host */
+		      0, /* Not a USB device */
+		      IDH_PTYPE_UNDEF, 0, /* No UFP modal operation */
+		      IDH_PTYPE_DFP_HOST, USB_TYPEC_RECEPTACLE, USB_VID_GOOGLE);
+
+static const uint32_t vdo_idh_rev30_tbt =
+	VDO_IDH_REV30(1, /* Data caps as USB host */
+		      0, /* Not a USB device */
+		      IDH_PTYPE_PERIPH, 1, /* UFP modal operation */
 		      IDH_PTYPE_DFP_HOST, USB_TYPEC_RECEPTACLE, USB_VID_GOOGLE);
 
 static const uint32_t vdo_product =
@@ -119,6 +134,9 @@ static const uint32_t vdo_dfp =
 		 VDO_DFP_HOST_CAPABILITY_USB4),
 		USB_TYPEC_RECEPTACLE, 1 /* Port 1 */);
 
+/* Track whether we've been enabled to ACK TBT EnterModes requests */
+static bool tbt_ufp_ack_allowed[CONFIG_USB_PD_PORT_MAX_COUNT];
+
 static int svdm_tbt_compat_response_identity(int port, uint32_t *payload)
 {
 	/*
@@ -132,16 +150,24 @@ static int svdm_tbt_compat_response_identity(int port, uint32_t *payload)
 
 		if (pd_get_rev(port, TCPCI_MSG_SOP) == PD_REV30) {
 			/* PD Revision 3.0 */
-			payload[VDO_I(IDH)] = vdo_idh_rev30;
-			payload[VDO_I(PTYPE_UFP1_VDO)] = vdo_ufp1;
-			/* TODO(b/181620145): Customize for brya */
+			if (tbt_ufp_ack_allowed[port]) {
+				payload[VDO_I(IDH)] = vdo_idh_rev30_tbt;
+				payload[VDO_I(PTYPE_UFP1_VDO)] = vdo_ufp1;
+			} else {
+				payload[VDO_I(IDH)] = vdo_idh_rev30_no_ufp;
+				payload[VDO_I(PTYPE_UFP1_VDO)] = 0;
+			}
 			payload[VDO_I(PTYPE_UFP2_VDO)] = 0;
 			payload[VDO_I(PTYPE_DFP_VDO)] = vdo_dfp;
 			return VDO_I(PTYPE_DFP_VDO) + 1;
 		}
 
 		/* PD Revision 2.0 */
-		payload[VDO_I(IDH)] = vdo_idh;
+		if (tbt_ufp_ack_allowed[port]) {
+			payload[VDO_I(IDH)] = vdo_idh_tbt;
+		} else {
+			payload[VDO_I(IDH)] = vdo_idh_no_ufp;
+		}
 		return VDO_I(PRODUCT) + 1;
 	} else {
 		return 0; /* NAK */
@@ -154,7 +180,7 @@ static int svdm_tbt_compat_response_svids(int port, uint32_t *payload)
 	 * For PD 3.1 compliance test TEST.PD.VDM.SRC.2,
 	 * we should return NAK if we cannot recognized the incoming SVID.
 	 */
-	if (PD_VDO_VID(payload[0]) == USB_SID_PD) {
+	if (PD_VDO_VID(payload[0]) == USB_SID_PD && tbt_ufp_ack_allowed[port]) {
 		payload[1] = VDO_SVID(USB_VID_INTEL, 0);
 		return 2;
 	} else {
@@ -164,16 +190,14 @@ static int svdm_tbt_compat_response_svids(int port, uint32_t *payload)
 
 static int svdm_tbt_compat_response_modes(int port, uint32_t *payload)
 {
-	if (PD_VDO_VID(payload[0]) == USB_VID_INTEL) {
+	if (PD_VDO_VID(payload[0]) == USB_VID_INTEL &&
+	    tbt_ufp_ack_allowed[port]) {
 		memcpy(payload + 1, vdo_tbt_modes, sizeof(vdo_tbt_modes));
 		return ARRAY_SIZE(vdo_tbt_modes) + 1;
 	} else {
 		return 0; /* NAK */
 	}
 }
-
-/* Track whether we've been enabled to ACK TBT EnterModes requests */
-static bool tbt_ufp_ack_allowed[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 __override enum ec_status
 board_set_tbt_ufp_reply(int port, enum typec_tbt_ufp_reply reply)

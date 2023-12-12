@@ -1,0 +1,188 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include <dt-bindings/pwm/pwm.h>
+#include <it8xxx2_emul.dts>
+#include "../program/nissa/cbi.dtsi"
+#include "../program/nissa/joxer/cbi.dtsi"
+#include "../program/nissa/joxer/motionsense.dtsi"
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_ec_entering_rw: ec_entering_rw {
+			gpios = <&gpioc 7 GPIO_OUTPUT>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		gpio_en_usb_c0_cc1_vconn: en_usb_c0_cc1_vconn {
+			gpios = <&gpioh 4 GPIO_OUTPUT>;
+		};
+		gpio_en_usb_c0_cc2_vconn: en_usb_c0_cc2_vconn {
+			gpios = <&gpioh 6 GPIO_OUTPUT>;
+		};
+		gpio_usb_c0_int_odl: usb_c0_int_odl {
+			gpios = <&gpiok 0 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_usb_c1_int_odl: usb_c1_int_odl {
+			gpios = <&gpioe 6 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_fan_enable: fan-enable {
+			gpios = <&gpiol 4 GPIO_OUTPUT>;
+			no-auto-init;
+		};
+		gpio_imu_int_l: imu_int_l {
+			gpios = <&gpioj 0 GPIO_INPUT>;
+		};
+		gpio_acc_int_l: acc_int_l {
+			gpios = <&gpioc 0 GPIO_INPUT>;
+		};
+		gpio_ec_edp_bl_en_od: ec_edp_bl_en_od {
+			gpios = <&gpiok 4 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_ENABLE_BACKLIGHT";
+		};
+		gpio_lid_open: lid_open {
+			gpios = <&gpiof 3 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_imu: ec_imu {
+			irq-pin = <&gpio_imu_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bmi3xx_interrupt";
+		};
+		int_lid_accel: ec_lid_accel {
+			irq-pin = <&gpio_acc_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bma4xx_interrupt";
+		};
+		int_usb_c0: usb_c0 {
+			irq-pin = <&gpio_usb_c0_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_c0_interrupt";
+		};
+		int_usb_c1: usb_c1 {
+			irq-pin = <&gpio_usb_c1_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_c1_interrupt";
+		};
+		int_lid_open: lid_open {
+			irq-pin = <&gpio_lid_open>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_batt: ec_i2c_batt {
+			i2c-port = <&i2c_ctrl0>;
+			enum-names = "I2C_PORT_BATTERY";
+		};
+		i2c_ec_i2c_sensor: ec_i2c_sensor {
+			i2c-port = <&i2c_ctrl2>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			tcpc = <&tcpci_emul_0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			tcpc = <&tcpci_emul_1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+			usb_mux_chain_1_no_mux: usb-mux-chain-1-no-mux {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+
+	fans {
+		compatible = "cros-ec,fans";
+
+		fan0: fan_0 {
+			pwms = <&pwm_fan 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+			rpm_min = <3100>;
+			rpm_start = <3100>;
+			rpm_max = <8000>;
+			tach = <&tach1>;
+			pgood_gpio = <&gpio_fan_enable>;
+		};
+	};
+	pwms {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		pwm_fan: pwm@6 {
+			compatible = "cros,pwm-mock";
+			reg = <6 2>;
+			#pwm-cells = <3>;
+			status = "okay";
+		};
+	};
+	tachs {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		tach0: tach@0 {
+			compatible = "cros,tach-mock";
+			reg = <0 1>;
+			#tach-cells = <3>;
+			status = "okay";
+		};
+		tach1: tach@1 {
+			compatible = "cros,tach-mock";
+			reg = <1 1>;
+			#tach-cells = <3>;
+			status = "okay";
+		};
+	};
+};
+
+&i2c_ctrl4 {
+	tcpci_emul_0: tcpci_emul@82 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x82>;
+	};
+};
+
+&i2c_ctrl4 {
+	tcpci_emul_1: tcpci_emul@84 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x84>;
+	};
+};

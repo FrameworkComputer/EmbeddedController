@@ -18,7 +18,7 @@ static void chip_bbram_status_check(void)
 
 	bbram_dev = DEVICE_DT_GET(DT_NODELABEL(bbram));
 	if (!device_is_ready(bbram_dev)) {
-		LOG_ERR("Error: device %s is not ready", bbram_dev->name);
+		LOG_ERR("device %s not ready", bbram_dev->name);
 		return;
 	}
 

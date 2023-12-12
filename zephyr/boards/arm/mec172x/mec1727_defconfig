@@ -1,0 +1,52 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Zephyr Kernel Configuration
+CONFIG_SOC_SERIES_MEC172X=y
+
+# Platform Configuration
+CONFIG_SOC_MEC172X_NSZ=y
+CONFIG_BOARD_MEC172X=y
+CONFIG_RTOS_TIMER=y
+CONFIG_SYS_CLOCK_HW_CYCLES_PER_SEC=32768
+CONFIG_SYS_CLOCK_TICKS_PER_SEC=32768
+
+# Serial Drivers
+CONFIG_SERIAL=y
+CONFIG_UART_INTERRUPT_DRIVEN=y
+
+# Enable console
+CONFIG_CONSOLE=y
+CONFIG_UART_CONSOLE=y
+
+# Pinctrl Driver
+CONFIG_PINCTRL=y
+
+# GPIO Controller
+CONFIG_GPIO=y
+CONFIG_GPIO_GET_CONFIG=y
+
+# Clock configuration
+CONFIG_CLOCK_CONTROL=y
+
+# WATCHDOG configuration
+CONFIG_WATCHDOG=y
+
+# Power Management
+#CONFIG_PM=y
+#CONFIG_PM_POLICY_APP=y
+#CONFIG_UART_CONSOLE_INPUT_EXPIRED=y
+
+# BBRAM
+CONFIG_BBRAM=y
+
+# SPI
+CONFIG_SPI=y
+# MCHP build config error CONFIG_SPI_FLASH=y
+
+# Flash
+CONFIG_FLASH=y
+# SPI NOR driver implements read_jedec_id() and read_sfdp() public API’s
+# Both API's can be called by application
+CONFIG_FLASH_JESD216_API=y

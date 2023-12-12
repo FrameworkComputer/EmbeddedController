@@ -1,0 +1,34 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-gpios {
+		gpio_ec_touch_en: ec_touch_en {
+			gpios = <&gpio1 14 GPIO_OUTPUT>;
+		};
+		gpio_soc_3v3_edp_bl_en: soc_3v3_edp_bl_en {
+			gpios = <&gpio1 15 GPIO_INPUT>;
+		};
+		gpio_lid_open: lid_open {
+			gpios = <&gpio1 16 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_soc_edp_bl_en: soc_edp_bl_en {
+			irq-pin = <&gpio_soc_3v3_edp_bl_en>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "soc_edp_bl_interrupt";
+		};
+		int_lid_open: lid_open {
+			irq-pin = <&gpio_lid_open>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+	};
+};

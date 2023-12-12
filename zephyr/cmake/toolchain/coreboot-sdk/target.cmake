@@ -25,14 +25,16 @@ if(NOT DEFINED COREBOOT_SDK_ROOT)
 endif()
 
 set(CC gcc)
-set(CROSS_COMPILE "${COREBOOT_SDK_ROOT}/bin/${CROSS_COMPILE_TARGET}-")
+set(C++ g++)
+set(TOOLCHAIN_HOME "${COREBOOT_SDK_ROOT}/bin/")
+set(CROSS_COMPILE "${CROSS_COMPILE_TARGET}-")
 
-set(CMAKE_AR         "${CROSS_COMPILE}ar")
-set(CMAKE_NM         "${CROSS_COMPILE}nm")
-set(CMAKE_OBJCOPY    "${CROSS_COMPILE}objcopy")
-set(CMAKE_OBJDUMP    "${CROSS_COMPILE}objdump")
-set(CMAKE_RANLIB     "${CROSS_COMPILE}ranlib")
-set(CMAKE_READELF    "${CROSS_COMPILE}readelf")
+set(CMAKE_AR         "${TOOLCHAIN_HOME}/${CROSS_COMPILE}ar")
+set(CMAKE_NM         "${TOOLCHAIN_HOME}/${CROSS_COMPILE}nm")
+set(CMAKE_OBJCOPY    "${TOOLCHAIN_HOME}/${CROSS_COMPILE}objcopy")
+set(CMAKE_OBJDUMP    "${TOOLCHAIN_HOME}/${CROSS_COMPILE}objdump")
+set(CMAKE_RANLIB     "${TOOLCHAIN_HOME}/${CROSS_COMPILE}ranlib")
+set(CMAKE_READELF    "${TOOLCHAIN_HOME}/${CROSS_COMPILE}readelf")
 
 # On ARM, we don't use libgcc: It's built against a fixed target (e.g.
 # used instruction set, ABI, ISA extensions) and doesn't adapt when

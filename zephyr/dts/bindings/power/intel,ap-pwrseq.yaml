@@ -12,7 +12,6 @@ compatible: "intel,ap-pwrseq"
 properties:
   dsw-pwrok-delay:
     type: int
-    required: false
     default: 10
     description: |
       Delay to set DSW_PWROK high to PCH after 3.3V rail stable,
@@ -20,14 +19,12 @@ properties:
 
   rsmrst-delay:
     type: int
-    required: false
     default: 10
     description: |
       Delay to set RSMRST from EC to SoC, in milliseconds.
 
   sys-pwrok-delay:
     type: int
-    required: false
     default: 45
     description: |
       Delay from PG_EC_ALL_SYS_PWRGD high to set EC_PCH_SYS_PWROK high,
@@ -35,21 +32,18 @@ properties:
 
   pm-pwrbtn-delay:
     type: int
-    required: false
     default: 200
     description: |
       Power button delay, in milliseconds.
 
   pch-pwrok-delay:
     type: int
-    required: false
     default: 2
     description: |
       Delay in ms from IMVP9_VRRDY high to PCH_PWROK high delay.
 
   vccst-pwrgd-delay:
     type: int
-    required: false
     default: 2
     description: |
       Delay in ms from PG_EC_ALL_SYS_PWRGD high
@@ -57,34 +51,29 @@ properties:
 
   sys-reset-delay:
     type: int
-    required: false
     default: 32
     description: Debounce time for SYS_RESET_L.
 
   vrrdy-timeout:
     type: int
-    required: false
     default: 50
     description: |
       Timeout in ms for IMVP9_VRRDY high.
 
   all-sys-pwrgd-timeout:
     type: int
-    required: false
     default: 0
     description: |
       Timeout in ms for ALL_SYS_PWRGD input to EC to be high.
 
   wait-signal-timeout:
     type: int
-    required: false
     default: 1000
     description: |
       Timeout in ms for monitoring power signals.
 
   s5-inactivity-timeout:
     type: int
-    required: false
     default: 10
     description: |
       Timeout in seconds for dropping back from S5 to G3.

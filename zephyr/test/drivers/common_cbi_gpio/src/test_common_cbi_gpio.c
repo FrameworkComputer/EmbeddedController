@@ -15,7 +15,7 @@ FAKE_VALUE_FUNC(int, cbi_set_board_info, enum cbi_data_tag, const uint8_t *,
 
 ZTEST(cbi_gpio, test_cbio_is_write_protected)
 {
-	zassert_true(cbi_config.drv->is_protected());
+	zassert_true(cbi_config->drv->is_protected());
 }
 
 ZTEST(cbi_gpio, test_cbi_gpio_read__negative_board_id)
@@ -25,8 +25,8 @@ ZTEST(cbi_gpio, test_cbi_gpio_read__negative_board_id)
 	uint8_t unused_len = 0;
 
 	system_get_board_version_fake.return_val = -1;
-	zassert_equal(cbi_config.drv->load(unused_offset, &unused_data,
-					   unused_len),
+	zassert_equal(cbi_config->drv->load(unused_offset, &unused_data,
+					    unused_len),
 		      EC_ERROR_UNKNOWN);
 }
 
@@ -38,8 +38,8 @@ ZTEST(cbi_gpio, test_cbi_gpio_read__bad_board_info_set)
 
 	/* Arbitrary nonzero to indicate failure */
 	cbi_set_board_info_fake.return_val = 1;
-	zassert_equal(cbi_config.drv->load(unused_offset, &unused_data,
-					   unused_len),
+	zassert_equal(cbi_config->drv->load(unused_offset, &unused_data,
+					    unused_len),
 		      EC_ERROR_UNKNOWN);
 }
 
@@ -55,8 +55,8 @@ ZTEST(cbi_gpio, test_cbi_gpio_read__negative_board_id_then_bad_board_info_set)
 
 	/* Arbitrary nonzero to indicate failure */
 	cbi_set_board_info_fake.return_val = 1;
-	zassert_equal(cbi_config.drv->load(unused_offset, &unused_data,
-					   unused_len),
+	zassert_equal(cbi_config->drv->load(unused_offset, &unused_data,
+					    unused_len),
 		      EC_ERROR_UNKNOWN);
 }
 

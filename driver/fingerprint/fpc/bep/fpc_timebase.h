@@ -27,9 +27,9 @@
  *                   old time (uint32_t) = 30 ticks before overflow of uint32_t
  *          current_time - old_time = 10 - (2**32 - 30) -> wraps around to 40
  *
- * @return Tick count since fpc_timebase_init() call. [ms]
+ * @return Tick count since system startup. [ms]
  */
-uint32_t __unused fpc_timebase_get_tick(void);
+__staticlib_hook uint32_t fpc_timebase_get_tick(void);
 
 /**
  * @brief Busy wait.
@@ -38,11 +38,6 @@ uint32_t __unused fpc_timebase_get_tick(void);
  * 0 => return immediately
  * 1 => wait at least 1ms etc.
  */
-void __unused fpc_timebase_busy_wait(uint32_t ms);
-
-/**
- * @brief Initializes timebase. Starts system tick counter.
- */
-void __unused fpc_timebase_init(void);
+__staticlib_hook void fpc_timebase_busy_wait(uint32_t ms);
 
 #endif /* __CROS_EC_FPC_TIMEBASE_H */

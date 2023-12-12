@@ -1,0 +1,91 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include <it8xxx2_emul.dts>
+
+/ {
+	aliases {
+		gpio-usb-c1-int-odl = &gpio_sb_1;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_ec_entering_rw: ec_entering_rw {
+			gpios = <&gpioc 7 GPIO_OUTPUT>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		gpio_en_usb_c0_cc1_vconn: en_usb_c0_cc1_vconn {
+			gpios = <&gpioh 4 GPIO_OUTPUT>;
+		};
+		gpio_en_usb_c0_cc2_vconn: en_usb_c0_cc2_vconn {
+			gpios = <&gpioh 6 GPIO_OUTPUT>;
+		};
+		gpio_usb_c0_int_odl: usb_c0_int_odl {
+			gpios = <&gpiok 0 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_sb_1: sb_1 {
+			gpios = <&gpioe 6 0>;
+			no-auto-init;
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_batt: ec_i2c_batt {
+			i2c-port = <&i2c_ctrl0>;
+			enum-names = "I2C_PORT_BATTERY";
+		};
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			tcpc = <&tcpci_emul_0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			tcpc = <&tcpci_emul_1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};
+
+&i2c_ctrl4 {
+	tcpci_emul_0: tcpci_emul@82 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x82>;
+	};
+};
+
+&i2c_ctrl4 {
+	tcpci_emul_1: tcpci_emul@84 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x84>;
+	};
+};

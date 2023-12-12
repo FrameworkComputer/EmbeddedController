@@ -7,10 +7,11 @@
 import pathlib
 import tempfile
 
-import hypothesis  # pylint:disable=import-error
-import hypothesis.strategies as st  # pylint:disable=import-error
-import pytest  # pylint:disable=import-error
-import zmake.util as util
+# pylint:disable=import-error
+import hypothesis
+import hypothesis.strategies as st
+import pytest
+from zmake import util
 
 
 # Strategies for use with hypothesis
@@ -23,11 +24,13 @@ version_tuples = st.tuples(version_integers, version_integers, version_integers)
 def test_read_zephyr_version(version_tuple):
     """Test reading the zephyr version."""
     with tempfile.TemporaryDirectory() as zephyr_base:
-        with open(pathlib.Path(zephyr_base) / "VERSION", "w") as file:
+        with open(
+            pathlib.Path(zephyr_base) / "VERSION", "w", encoding="utf-8"
+        ) as file:
             for name, value in zip(
                 ("VERSION_MAJOR", "VERSION_MINOR", "PATCHLEVEL"), version_tuple
             ):
-                file.write("{} = {}\n".format(name, value))
+                file.write(f"{name} = {value}\n")
 
         assert util.read_zephyr_version(zephyr_base) == version_tuple
 
@@ -38,8 +41,8 @@ def test_read_kconfig_autoconf_value(value):
     """Test reading the kconfig autoconf."""
     with tempfile.TemporaryDirectory() as temp_dir:
         path = pathlib.Path(temp_dir)
-        with open(path / "autoconf.h", "w") as file:
-            file.write("#define TEST {}".format(value))
+        with open(path / "autoconf.h", "w", encoding="utf-8") as file:
+            file.write(f"#define TEST {value}")
         read_value = util.read_kconfig_autoconf_value(path, "TEST")
         assert int(read_value) == value
 

@@ -1,0 +1,261 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+#include <it8xxx2_emul.dts>
+#include <dt-bindings/usb_pd_tcpm.h>
+#include "../program/nissa/cbi.dtsi"
+
+/ {
+	aliases {
+		gpio-cbi-wp = &gpio_ec_cbi_wp;
+		gpio-wp = &gpio_ec_wp_odl;
+		/*
+		 * USB-C: interrupt input.
+		 * I2C pins are on i2c_ec_i2c_sub_usb_c1
+		 */
+		gpio-usb-c1-int-odl = &gpio_sb_1;
+		/*
+		 * USB-A: VBUS enable output
+		 * LTE: power enable output
+		 */
+		gpio-en-usb-a1-vbus = &gpio_sb_2;
+		/*
+		 * HDMI: power enable output, HDMI enable output,
+		 * and HPD input
+		 */
+		gpio-en-rails-odl = &gpio_sb_1;
+		gpio-hdmi-en-odl = &gpio_sb_4;
+		gpio-hpd-odl = &gpio_sb_3;
+		/*
+		 * Enable S5 rails for LTE sub-board
+		 */
+		gpio-en-sub-s5-rails = &gpio_sb_2;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		/delete-node/ tablet_mode_l;
+		/delete-node/ pen_detect_odl;
+		/delete-node/ ec_gsc_packet_mode;
+		/delete-node/ espi_ec_alert_soc_l;
+		/delete-node/ hdmi_sel;
+		/delete-node/ en_kb_bl;
+		/delete-node/ pwm_kb_bl;
+
+		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
+			gpios = <&gpioa 7 GPIO_OUTPUT>;
+			enum-name = "GPIO_PACKET_MODE_EN";
+		};
+
+		gpio_sb_1: sb_1 {
+			gpios = <&gpioe 6 0>;
+			no-auto-init;
+		};
+		gpio_sb_2: sb_2 {
+			gpios = <&gpiof 0 0>;
+			no-auto-init;
+		};
+
+		gpio_sb_3: sb_3 {
+			gpios = <&gpioe 7 0>;
+			no-auto-init;
+		};
+		gpio_sb_4: sb_4 {
+			gpios = <&gpioe 0 0>;
+			no-auto-init;
+		};
+
+		gpio_ec_chg_led_r: ec_chg_led_r {
+			gpios = <&gpioa 1 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_ec_chg_led_g: ec_chg_led_g {
+			gpios = <&gpioa 2 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_ec_chg_led_b: ec_chg_led_b {
+			gpios = <&gpioa 3 GPIO_OUTPUT_HIGH>;
+		};
+
+		gpio_ec_en_pp1800_panel_x: ec_en_pp1800_panel_x {
+			gpios = <&gpiod 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_ec_tsp_ta: ec_tsp_ta {
+			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
+		};
+		gpio_lcd_rst_n: lcd_rst_n {
+			gpios = <&gpioj 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+
+		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
+			gpios = <&gpioe 2 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_voldn_btn_odl: voldn_btn_odl {
+			gpios = <&gpioi 6 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		gpio_volup_btn_odl: volup_btn_odl {
+			gpios = <&gpioi 7 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		gpio_ec_wp_odl: ec_wp_odl {
+			gpios = <&gpioa 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_lid_open: lid_open {
+			gpios = <&gpiof 3 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		gpio_imu_int_l: imu_int_l {
+			gpios = <&gpioj 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_acc_int_l: acc_int_l {
+			gpios = <&gpioc 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_usb_c0_int_odl: usb_c0_int_odl {
+			gpios = <&gpiok 0 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_en_usb_a0_vbus: en_usb_a0_vbus {
+			gpios = <&gpiol 6 GPIO_OUTPUT>;
+		};
+		gpio_ec_entering_rw: ec_entering_rw {
+			gpios = <&gpioc 7 GPIO_OUTPUT>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		gpio_en_usb_c0_cc1_vconn: en_usb_c0_cc1_vconn {
+			gpios = <&gpioh 4 GPIO_OUTPUT>;
+		};
+		gpio_en_usb_c0_cc2_vconn: en_usb_c0_cc2_vconn {
+			gpios = <&gpioh 6 GPIO_OUTPUT>;
+		};
+		gpio_ec_cbi_wp: ec_cbi_wp {
+			gpios = <&gpioj 5 GPIO_OUTPUT>;
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_usb_c0: usb_c0 {
+			irq-pin = <&gpio_usb_c0_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_interrupt";
+		};
+		int_usb_c1: usb_c1 {
+			irq-pin = <&gpio_sb_1>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_interrupt";
+		};
+		int_pannel_power_change: pannel_power_change {
+			irq-pin = <&gpio_ec_en_pp1800_panel_x>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "panel_power_change_interrupt";
+		};
+		int_lcd_rst_n: lcd_rst_n {
+			irq-pin = <&gpio_lcd_rst_n>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lcd_reset_change_interrupt";
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_batt: ec_i2c_batt {
+			i2c-port = <&i2c_ctrl0>;
+			enum-names = "I2C_PORT_BATTERY";
+		};
+		i2c_ec_i2c_sub_usb_c1: ec_i2c_sub_usb_c1 {
+			i2c-port = <&i2c_ctrl4>;
+			enum-names = "I2C_PORT_USB_C1_TCPC";
+		};
+		i2c_ec_i2c_usb_c0: ec_i2c_usb_c0 {
+			i2c-port = <&i2c_ctrl5>;
+			enum-names = "I2C_PORT_USB_C0_TCPC";
+		};
+	};
+
+	usba {
+		compatible = "cros-ec,usba-port-enable-pins";
+		/*
+		 * sb_2 is only configured as GPIO when USB-A1 is present,
+		 * but it's still safe to control when disabled.
+		 *
+		 * ILIM_SEL pins are referred to by legacy enum name,
+		 * GPIO_USB*_ILIM_SEL. The one for port A1 is unused on
+		 * sub-boards that don't have USB-A so is safe to control
+		 * regardless of system configuration.
+		 */
+		enable-pins = <&gpio_en_usb_a0_vbus &gpio_sb_2>;
+		status = "okay";
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			tcpc = <&tcpci_emul_0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			tcpc = <&tcpci_emul_1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1 &virtual_mux_1>;
+			};
+			usb_mux_chain_1_no_mux: usb-mux-chain-1-no-mux {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};
+
+&i2c_ctrl3 {
+	status = "okay";
+
+	lcdctrl: lcd_port@29 {
+		compatible = "cros,i2c-mock";
+		reg = <0x29>;
+	};
+};
+
+&i2c_ctrl4 {
+	status = "okay";
+
+	tcpci_emul_1: tcpci_emul@84 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x84>;
+	};
+};
+
+&i2c_ctrl5 {
+	status = "okay";
+
+	tcpci_emul_0: tcpci_emul@82 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x82>;
+	};
+};

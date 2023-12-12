@@ -1,0 +1,14 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Common location for test related Kconfigs
+
+if ZTEST
+
+config PLATFORM_EC_TEST_CC_USBPD
+    bool "Enable USBPD console channel"
+    help
+      Enable USBPD console channel
+
+endif # ZTEST

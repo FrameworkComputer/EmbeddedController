@@ -95,19 +95,19 @@ static int cros_kb_raw_xec_drive_column(const struct device *dev, int col)
 	struct cros_kb_raw_xec_config const *cfg = dev->config;
 	struct kscan_regs *const inst = (struct kscan_regs *)cfg->base;
 
-	/* Drive all lines to high. i.e. Key detection is disabled. */
+	/*
+	 * Selected lines are driven low, not selected one are set to high
+	 * impedance. COL2 is set to logical 1 one selected, the actual value
+	 * depends on how the corresponding GPIO is defined.
+	 */
 	if (col == KEYBOARD_COLUMN_NONE) {
 		inst->KSO_SEL = MCHP_KSCAN_KSO_EN;
-		/* Set logical level high on COL2 */
-		cros_kb_raw_set_col2(1);
-	}
-	/* Drive all lines to low for detection any key press */
-	else if (col == KEYBOARD_COLUMN_ALL) {
+		cros_kb_raw_set_col2(0);
+	} else if (col == KEYBOARD_COLUMN_ALL) {
 		mchp_soc_ecia_girq_src_dis(MCHP_GIRQ21_ID,
 					   MCHP_KEYSCAN_GIRQ_POS);
 		inst->KSO_SEL = MCHP_KSCAN_KSO_ALL;
-		/* Set logical level low on COL2 */
-		cros_kb_raw_set_col2(0);
+		cros_kb_raw_set_col2(1);
 
 		/*
 		 * Fix glitches on KSIs pins as all KSOs are driven low
@@ -124,19 +124,13 @@ static int cros_kb_raw_xec_drive_column(const struct device *dev, int col)
 		}
 		mchp_soc_ecia_girq_src_en(MCHP_GIRQ21_ID,
 					  MCHP_KEYSCAN_GIRQ_POS);
-	}
-	/* Drive one line to low for determining
-	 * which key's state changed.
-	 */
-	else if (IS_ENABLED(CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED)) {
+	} else if (IS_ENABLED(CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED)) {
 		if (col == 2) {
 			inst->KSO_SEL = MCHP_KSCAN_KSO_EN;
-			/* Set logical level low on COL2 */
-			cros_kb_raw_set_col2(0);
+			cros_kb_raw_set_col2(1);
 		} else {
 			inst->KSO_SEL = col + CONFIG_KEYBOARD_KSO_BASE;
-			/* Set logical level high on COL2 */
-			cros_kb_raw_set_col2(1);
+			cros_kb_raw_set_col2(0);
 		}
 	} else {
 		inst->KSO_SEL = col + CONFIG_KEYBOARD_KSO_BASE;

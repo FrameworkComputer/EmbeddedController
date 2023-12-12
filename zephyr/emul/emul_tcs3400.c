@@ -620,7 +620,7 @@ static int tcs_emul_init(const struct emul *emul, const struct device *parent)
 
 DT_INST_FOREACH_STATUS_OKAY(TCS3400_EMUL)
 
-#ifdef CONFIG_ZTEST_NEW_API
+#ifdef CONFIG_ZTEST
 #define TCS3400_EMUL_RESET_RULE_BEFORE(n) \
 	tcs_emul_reset(EMUL_DT_GET(DT_DRV_INST(n)));
 
@@ -632,7 +632,7 @@ static void emul_tcs3400_reset_rule_before(const struct ztest_unit_test *test,
 	DT_INST_FOREACH_STATUS_OKAY(TCS3400_EMUL_RESET_RULE_BEFORE);
 }
 ZTEST_RULE(emul_tcs3400_reset, emul_tcs3400_reset_rule_before, NULL);
-#endif /* CONFIG_ZTEST_NEW_API */
+#endif /* CONFIG_ZTEST */
 
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
 

@@ -5,6 +5,12 @@
 
 /* Version number for Chrome EC */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #ifndef __CROS_EC_VERSION_H
 #define __CROS_EC_VERSION_H
 
@@ -25,9 +31,19 @@ struct image_data {
 	uint32_t size;
 	int32_t rollback_version;
 	uint32_t cookie2;
+
+	/*
+	 * Used by legacy EC code to make it easier to correlate EC and AP
+	 * versions, deprecated and unused with zephyr.
+	 */
 	char cros_fwid[32];
 	uint32_t cookie3;
 } __packed;
+/*
+ * The offset is used in zephyr/include/cros/integrated_fwid.dtsi.
+ * Be mindful of the FMAP's RO state when changing the offset.
+ */
+BUILD_ASSERT(offsetof(struct image_data, version) == 4);
 
 extern const struct image_data current_image_data;
 extern const char build_info[];

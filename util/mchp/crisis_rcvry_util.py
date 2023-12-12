@@ -4,6 +4,7 @@
 # found in the LICENSE file.
 
 """
+
 Script to program a Microchip EC with erased or a bricked flash.
 
 General usage:
@@ -24,6 +25,7 @@ Refer to the Microchip Crisis_Mode-cmdSequence document for full details.
 import argparse
 import binascii
 from dataclasses import dataclass
+import enum
 import logging
 import os
 import struct
@@ -38,7 +40,7 @@ CRC_LENGTH = 4
 HEADER_WRITE_CMD_ID = 0x65
 FW_IMAGE_WRITE_CMD_ID = 0x67
 SRAM_EXE_CMD_ID = 0x69
-EC_RESPONSE_BYTES_COUNT = 262272
+EC_FW_TRANS_WAIT_BYTE = 262144
 IMAGE_CHUNK_LENGTH = 128
 HEADER_CHUNK_LENGTH = 64
 HEADER_LENGTH = 320
@@ -50,6 +52,7 @@ IMG_LEN_ENCRYPTION = 512
 IMG_LEN_NO_ENCRYPTION = 384
 RESPONSE_STATUS_IMAGE_INVA_MASK = 0x06
 RESPONSE_PACKET_ERROR_MASK = 0x80
+ACK_TIMEOUT_SECS = 22
 
 HOST_NEGO_CMD_SEQ = b"\x55\xAA"
 HOST_NEGO_CMD_RESP_SEQ = b"\x5A\xA5"
@@ -75,6 +78,15 @@ MCHP_TERM_ID_END = MCHP_TERM_ID_START + len(TERMINATOR_ID)
 logging.basicConfig(level=logging.INFO)
 
 
+class Transfer(enum.Enum):
+    """A class for holding transfer type"""
+
+    SECOND_LOADER_HDR = 1
+    SECOND_LOADER_FW = 2
+    EC_HDR = 3
+    EC_FW = 4
+
+
 @dataclass
 class PacketProperties:
     """A class for holding transfer method argument"""
@@ -84,7 +96,7 @@ class PacketProperties:
     max_write_length: int
     payload_length: int
     payload: bytearray
-    bootloader_active: bool
+    transfer_type: enum.Enum
 
 
 def update_progress(curr_val, max_val):
@@ -136,7 +148,7 @@ def ec_image_transfer(uart_handle, ec_file):
         PRG_HDR_TOTAL_LEN,
         PRG_HDR_TOTAL_LEN,
         header_gen,
-        False,
+        Transfer.EC_HDR,
     )
     transfer(trans_prop)
     logging.info("EC program header transfer completed")
@@ -152,7 +164,7 @@ def ec_image_transfer(uart_handle, ec_file):
         IMAGE_CHUNK_LENGTH,
         max_len,
         image,
-        False,
+        Transfer.EC_FW,
     )
     transfer(trans_prop)
     logging.info("EC FW image transfer completed")
@@ -192,12 +204,29 @@ def transfer(prop_obj):
 
         prop_obj.uart_handle.write(cmd_bytes)
 
-        if prop_obj.bootloader_active:
+        if prop_obj.transfer_type in (
+            Transfer.SECOND_LOADER_HDR,
+            Transfer.SECOND_LOADER_FW,
+        ):
             # Bootloader need some time to generate response
             # It runs slower than the Second loader that execute from SRAM
             time.sleep(DELAY_50_MS)
 
         prop_obj.uart_handle.reset_input_buffer()
+
+        # Second loader buffers the received bytes till reaches 256Kbytes.
+        # Once it reaches, second loader transfer it to FLASH
+        # Required some delay to complete this transfer.
+        if prop_obj.transfer_type == Transfer.EC_FW:
+            byte_transferred = offset + program_length
+            if (byte_transferred >= prop_obj.payload_length) or (
+                byte_transferred == EC_FW_TRANS_WAIT_BYTE
+            ):
+                logging.info(
+                    "Waiting for EC to program. Will take about %ss.",
+                    ACK_TIMEOUT_SECS,
+                )
+                time.sleep(ACK_TIMEOUT_SECS)
 
         rf_cont_disp = prop_obj.uart_handle.read(RESPONSE_LENGTH)
 
@@ -279,7 +308,7 @@ def second_loader_image_transfer(uart_handle, spi_file):
         HEADER_CHUNK_LENGTH,
         header_len,
         image[hdr_addr : hdr_addr + header_len],
-        True,
+        Transfer.SECOND_LOADER_HDR,
     )
     transfer(trans_prop)
     logging.info("Second loader header transfer completed")
@@ -291,7 +320,7 @@ def second_loader_image_transfer(uart_handle, spi_file):
         IMAGE_CHUNK_LENGTH,
         img_len,
         image[img_offset : img_offset + img_len],
-        True,
+        Transfer.SECOND_LOADER_FW,
     )
     transfer(trans_prop)
     logging.info("Second loader FW image transfer completed")

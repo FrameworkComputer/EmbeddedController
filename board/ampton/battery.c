@@ -34,114 +34,122 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	[BATTERY_C214] = {
-		.fuel_gauge = {
-			.manuf_name = "AS1GUXd3KB",
-			.device_name = "C214-43",
-			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x10, 0x10 },
+		.manuf_name = "AS1GUXd3KB",
+		.device_name = "C214-43",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x0,
+					.reg_data = { 0x10, 0x10 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0x2000,
+					.disconnect_val = 0x2000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x00,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
+			.batt_info = {
+				.voltage_max = 13200,
+				.voltage_normal = 11550,
+				.voltage_min = 9000,
+				.precharge_current = 256,
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.discharging_min_c = 0,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 13200,
-			.voltage_normal = 11550,
-			.voltage_min = 9000,
-			.precharge_current = 256,
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.discharging_min_c = 0,
-			.discharging_max_c = 60,
 		},
 	},
 	[BATTERY_C204EE] = {
-		.fuel_gauge = {
-			.manuf_name = "AS1GVCD3KB",
-			.device_name = "C204-35",
-			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x10, 0x10 },
+		.manuf_name = "AS1GVCD3KB",
+		.device_name = "C204-35",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x0,
+					.reg_data = { 0x10, 0x10 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0x2000,
+					.disconnect_val = 0x2000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x00,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
+			.batt_info = {
+				.voltage_max = 13200,
+				.voltage_normal = 11550,
+				.voltage_min = 9000,
+				.precharge_current = 256,
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.discharging_min_c = 0,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 13200,
-			.voltage_normal = 11550,
-			.voltage_min = 9000,
-			.precharge_current = 256,
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.discharging_min_c = 0,
-			.discharging_max_c = 60,
 		},
 	},
 	[BATTERY_C424] = {
-		.fuel_gauge = {
-			.manuf_name = "AS2GVID3jB",
-			.device_name = "C424-35",
-			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x10, 0x10 },
+		.manuf_name = "AS2GVID3jB",
+		.device_name = "C424-35",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x0,
+					.reg_data = { 0x10, 0x10 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0x2000,
+					.disconnect_val = 0x2000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x00,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
+			.batt_info = {
+				.voltage_max = 13200,
+				.voltage_normal = 11550,
+				.voltage_min = 9000,
+				.precharge_current = 256,
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.discharging_min_c = 0,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 13200,
-			.voltage_normal = 11550,
-			.voltage_min = 9000,
-			.precharge_current = 256,
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.discharging_min_c = 0,
-			.discharging_max_c = 60,
 		},
 	},
 	[BATTERY_C204_SECOND] = {
-		.fuel_gauge = {
-			.manuf_name = "AS3FXXd3KB",
-			.device_name = "C214-43",
-			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x10, 0x10 },
+		.manuf_name = "AS3FXXd3KB",
+		.device_name = "C214-43",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x0,
+					.reg_data = { 0x10, 0x10 },
+				},
+				.fet = {
+					.reg_addr = 0x99,
+					.reg_mask = 0x000C,
+					.disconnect_val = 0x000C,
+					.cfet_mask = 0x0004,
+					.cfet_off_val = 0x0004
+				},
 			},
-			.fet = {
-				.reg_addr = 0x99,
-				.reg_mask = 0x000C,
-				.disconnect_val = 0x000C,
-				.cfet_mask = 0x0004,
-				.cfet_off_val = 0x0004
+			.batt_info = {
+				.voltage_max = 13200,
+				.voltage_normal = 11550,
+				.voltage_min = 9000,
+				.precharge_current = 256,
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.discharging_min_c = -20,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 13200,
-			.voltage_normal = 11550,
-			.voltage_min = 9000,
-			.precharge_current = 256,
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.discharging_min_c = -20,
-			.discharging_max_c = 60,
 		},
 	},
 };

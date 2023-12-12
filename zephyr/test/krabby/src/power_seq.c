@@ -31,6 +31,8 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, chipset_resume_hook, HOOK_PRIO_DEFAULT);
 FAKE_VALUE_FUNC(int, system_jumped_late);
 
 #define S5_INACTIVE_SEC 11
+/* S5_INACTIVE_SEC + PMIC_HARD_OFF_DELAY 9.6 sec + 1 sec buffer */
+#define POWER_OFF_DELAY_SEC 21
 
 /* mt8186 is_held flag */
 extern bool is_held;
@@ -68,6 +70,48 @@ static void set_signal_state(enum power_state state)
 	k_sleep(K_SECONDS(1));
 }
 
+#ifdef CONFIG_AP_ARM_MTK_MT8188
+static void pp4200_handler(const struct device *port, struct gpio_callback *cb,
+			   gpio_port_pins_t pins)
+{
+	const struct gpio_dt_spec *en_pp4200_s5 =
+		GPIO_DT_FROM_NODELABEL(en_pp4200_s5);
+	const struct gpio_dt_spec *pg_pp4200_s5_od =
+		GPIO_DT_FROM_NODELABEL(pg_pp4200_s5_od);
+	int en = gpio_emul_output_get(en_pp4200_s5->port, en_pp4200_s5->pin);
+
+	gpio_emul_input_set(pg_pp4200_s5_od->port, pg_pp4200_s5_od->pin, en);
+}
+
+static struct gpio_callback pp4200_callback = {
+	.handler = pp4200_handler,
+	.pin_mask = BIT(DT_GPIO_PIN(DT_NODELABEL(en_pp4200_s5), gpios)),
+};
+
+static void *power_seq_setup(void)
+{
+	zassert_ok(gpio_add_callback_dt(GPIO_DT_FROM_NODELABEL(en_pp4200_s5),
+					&pp4200_callback));
+
+	return NULL;
+}
+
+static void power_seq_teardown(void *f)
+{
+	zassert_ok(gpio_remove_callback_dt(GPIO_DT_FROM_NODELABEL(en_pp4200_s5),
+					   &pp4200_callback));
+}
+#else
+static void *power_seq_setup(void)
+{
+	return NULL;
+}
+
+static void power_seq_teardown(void *f)
+{
+}
+#endif /* CONFIG_AP_ARM_MTK_MT8188 */
+
 static void power_seq_before(void *f)
 {
 	/* Required for deferred callbacks to work */
@@ -76,7 +120,7 @@ static void power_seq_before(void *f)
 	/* Start from G3 */
 	power_set_state(POWER_G3);
 	set_signal_state(POWER_G3);
-	k_sleep(K_SECONDS(S5_INACTIVE_SEC));
+	k_sleep(K_SECONDS(POWER_OFF_DELAY_SEC));
 
 	RESET_FAKE(chipset_pre_init_hook);
 	RESET_FAKE(chipset_startup_hook);
@@ -119,7 +163,7 @@ ZTEST(power_seq, test_power_btn_short_press)
 	 */
 	zassert_equal(chipset_pre_init_hook_fake.call_count, 1);
 	zassert_equal(chipset_startup_hook_fake.call_count, 0);
-	k_sleep(K_SECONDS(S5_INACTIVE_SEC));
+	k_sleep(K_SECONDS(POWER_OFF_DELAY_SEC));
 	zassert_equal(power_get_state(), POWER_G3);
 }
 
@@ -140,7 +184,7 @@ ZTEST(power_seq, test_lid_open)
 	 */
 	zassert_equal(chipset_pre_init_hook_fake.call_count, 1);
 	zassert_equal(chipset_startup_hook_fake.call_count, 0);
-	k_sleep(K_SECONDS(S5_INACTIVE_SEC));
+	k_sleep(K_SECONDS(POWER_OFF_DELAY_SEC));
 	zassert_equal(power_get_state(), POWER_G3);
 }
 
@@ -188,8 +232,10 @@ ZTEST(power_seq, test_host_sleep_hang)
 			      .sleep_event = HOST_SLEEP_EVENT_S3_SUSPEND }));
 	k_sleep(K_SECONDS(30));
 
+#if defined(SECTION_IS_RW)
 	/* Verify that EC_HOST_EVENT_HANG_DETECT is triggered */
 	zassert_true(host_is_event_set(EC_HOST_EVENT_HANG_DETECT));
+#endif /* SECTION_IS_RW */
 }
 
 /* Shutdown from EC, S0 -> power key press (8 secs) -> S3S5 (8 secs) -> S5 -> G3
@@ -389,6 +435,7 @@ static void power_chipset_init_subtest(enum power_state signal_state,
 		zassert_equal(power_get_state(), expected_state);
 	} else if (expected_state == POWER_S0 && signal_state == POWER_G3) {
 		/* Expect boot to S0 and fail at S5->S3 */
+		k_sleep(K_SECONDS(POWER_OFF_DELAY_SEC));
 		zassert_equal(chipset_pre_init_hook_fake.call_count, 1,
 			      "test_power_chipset_init line %d failed", line);
 	} else if (expected_state == POWER_G3 && signal_state == POWER_S0) {
@@ -448,5 +495,5 @@ ZTEST(power_seq, test_power_chipset_init)
 				   POWER_S0, __LINE__);
 }
 
-ZTEST_SUITE(power_seq, krabby_predicate_post_main, NULL, power_seq_before, NULL,
-	    NULL);
+ZTEST_SUITE(power_seq, krabby_predicate_post_main, power_seq_setup,
+	    power_seq_before, NULL, power_seq_teardown);

@@ -21,9 +21,6 @@
 /* HDMI CEC */
 #define CONFIG_CEC
 #define CONFIG_CEC_BITBANG
-#define CEC_GPIO_OUT GPIO_HDMI_CEC_OUT
-#define CEC_GPIO_IN GPIO_HDMI_CEC_IN
-#define CEC_GPIO_PULL_UP GPIO_HDMI_CEC_PULL_UP
 
 /* USB Type A Features */
 #define USB_PORT_COUNT 4
@@ -35,6 +32,7 @@
 
 #define CONFIG_USB_PD_PPC
 #define CONFIG_USB_PD_TCPM_PS8815
+#define CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
 #define CONFIG_USBC_PPC_NX20P3483 /* Compatible with Silicon Mitus SM5360A */
 
 /* TODO: b/177608416 - measure and check these values on brya */

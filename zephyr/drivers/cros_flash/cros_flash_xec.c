@@ -576,13 +576,13 @@ static int flash_xec_init(const struct device *dev)
 
 	data->flash_dev = DEVICE_DT_GET(FLASH_DEV);
 	if (!device_is_ready(data->flash_dev)) {
-		LOG_ERR("%s device not ready", data->flash_dev->name);
+		LOG_ERR("device %s not ready", data->flash_dev->name);
 		return -ENODEV;
 	}
 
 	data->spi_ctrl_dev = DEVICE_DT_GET(SPI_CONTROLLER_DEV);
 	if (!device_is_ready(data->spi_ctrl_dev)) {
-		LOG_ERR("%s device not ready", data->spi_ctrl_dev->name);
+		LOG_ERR("device %s not ready", data->spi_ctrl_dev->name);
 		return -ENODEV;
 	}
 

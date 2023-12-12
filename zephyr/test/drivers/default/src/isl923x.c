@@ -55,6 +55,11 @@ static int mock_write_fn_always_fail(const struct emul *emul, int reg,
 	return 0;
 }
 
+static void isl923x_setup(void)
+{
+	batt_conf_main();
+}
+
 ZTEST(isl923x, test_isl923x_set_current)
 {
 	int expected_current_milli_amps[] = {
@@ -760,6 +765,129 @@ ZTEST(isl923x, test_isl923x_enable_asgate)
 		      "RAA489000_C8_ASGATE_ON_READY bit set in Control Reg 8");
 }
 
+ZTEST(isl923x, test_isl923x_set_frequency)
+{
+	int rv;
+	uint16_t val;
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+
+	zassert_true(isl923x_drv.set_frequency);
+
+	isl923x_emul_set_device_id(isl923x_emul, ISL9237_DEV_ID);
+
+	/* Test our direct paths. */
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 1000);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_false(val & ISL923X_C1_SWITCH_FREQ_PROG);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 913);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_false(val & ISL9237_C1_SWITCH_FREQ_913K);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 839);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_true(val & ISL923X_C1_SWITCH_FREQ_839K);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 777);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_true(val & ISL9237_C1_SWITCH_FREQ_777K);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 723);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_true(val & ISL923X_C1_SWITCH_FREQ_723K);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 676);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_true(val & ISL9237_C1_SWITCH_FREQ_676K);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 635);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_true(val & ISL923X_C1_SWITCH_FREQ_635K);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 599);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_true(val & ISL9237_C1_SWITCH_FREQ_599K);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 598);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_false(val & ISL923X_C1_SWITCH_FREQ_MASK);
+
+	/* A higher frequency should round down to the nearest supported. */
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 1001);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_false(val & ISL923X_C1_SWITCH_FREQ_PROG);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 914);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_false(val & ISL9237_C1_SWITCH_FREQ_913K);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 840);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_true(val & ISL923X_C1_SWITCH_FREQ_839K);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 778);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_true(val & ISL9237_C1_SWITCH_FREQ_777K);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 724);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_true(val & ISL923X_C1_SWITCH_FREQ_723K);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 677);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_true(val & ISL9237_C1_SWITCH_FREQ_676K);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 636);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_true(val & ISL923X_C1_SWITCH_FREQ_635K);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 600);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_true(val & ISL9237_C1_SWITCH_FREQ_599K);
+}
+
+ZTEST(isl923x, test_isl9238_set_frequency)
+{
+	int rv;
+	uint16_t val;
+	const struct emul *isl923x_emul = ISL923X_EMUL;
+
+	/* The ISL9238 only supports a subset of charger frequencies. */
+	isl923x_emul_set_device_id(isl923x_emul, ISL9238_DEV_ID);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 913);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_true(val & ISL923X_C1_SWITCH_FREQ_839K);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 777);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_true(val & ISL923X_C1_SWITCH_FREQ_723K);
+
+	rv = isl923x_drv.set_frequency(CHARGER_NUM, 676);
+	zassert_ok(rv);
+	val = isl923x_emul_peek_reg(isl923x_emul, ISL923X_REG_CONTROL1);
+	zassert_true(val & ISL923X_C1_SWITCH_FREQ_635K);
+}
+
 /* Mock read and write functions to use in the hibernation test */
 FAKE_VALUE_FUNC(int, hibernate_mock_read_fn, const struct emul *, int,
 		uint8_t *, int, void *);
@@ -1082,7 +1210,8 @@ ZTEST(isl923x_hibernate, test_isl9238c_resume)
 	}
 }
 
-ZTEST_SUITE(isl923x, drivers_predicate_pre_main, NULL, NULL, NULL, NULL);
+ZTEST_SUITE(isl923x, drivers_predicate_pre_main, isl923x_setup, NULL, NULL,
+	    NULL);
 
 ZTEST_SUITE(isl923x_hibernate, drivers_predicate_post_main, NULL,
 	    isl923x_hibernate_before, isl923x_hibernate_after, NULL);

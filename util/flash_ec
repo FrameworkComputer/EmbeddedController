@@ -13,7 +13,8 @@ if [[ "$(basename "${EC_DIR}")" != "ec" ]]; then
 fi
 
 # Loads script libraries.
-. "/usr/share/misc/shflags" || exit 1
+# shellcheck source=/dev/null
+. "${SHFLAGS:-/usr/share/misc/shflags}" || exit 1
 
 # Redirects tput to stderr, and drop any error messages.
 tput2() {
@@ -76,7 +77,6 @@ BOARDS_STM32=(
 	oak_pd
 	pit
 	plankton
-	rainier
 	strago_pd
 	zinger
 )
@@ -122,6 +122,7 @@ BOARDS_NPCX_SPI=(
 BOARDS_NPCX_INT_SPI=(
 	adlrvpp_npcx
 	mtlrvpp_npcx
+	mtlrvpp_pd
 )
 
 BOARDS_SPI_1800MV=(
@@ -139,7 +140,6 @@ BOARDS_RAIDEN=(
 	poppy
 	rammus
 	reef
-	scarlet
 	soraka
 )
 
@@ -186,6 +186,12 @@ DEFINE_boolean zephyr "${FLAGS_FALSE}" \
 	"Program a Zephyr EC image instead of a CrOS EC image"
 DEFINE_boolean no_preserve "${FLAGS_FALSE}" \
 	"Avoid preserving the sections of firmware image with preserve property"
+DEFINE_boolean try_apshutdown "${FLAGS_FALSE}" \
+	"Shutdown the AP immediately after flashing. It does not guarantee a " \
+	"successful AP shutdown for all devices or in all situations. You need" \
+	" to understand the limitations when you build a solution on it. "
+DEFINE_integer try_apshutdown_count 16 \
+	"Number of attempts to shutdown the AP immediately after flashing."
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
@@ -199,10 +205,17 @@ fi
 MSG_PROGRAM_FAIL="Failed to flash EC firmware image"
 MSG_READ_FAIL="Failed to read EC firmware image"
 MSG_VERIFY_FAIL="Failed to verify EC firmware image."
+MSG_CHIP_READ_INVALID="Invalid chip type passed to be read"
 
 set -e
 
-DUT_CONTROL_CMD=( "dut-control" "--port=${FLAGS_port}" )
+if [[ -n "${BAZEL_DUT_CONTROL}" ]]; then
+	DUT_CONTROL_CMD=( "${BAZEL_DUT_CONTROL}" )
+else
+	DUT_CONTROL_CMD=( "dut-control" )
+fi
+DUT_CONTROL_CMD+=( "--port=${FLAGS_port}" )
+
 DUT_CTRL_PREFIX=""
 
 # Run a command which mutates the state of an attached device.
@@ -682,6 +695,15 @@ cleanup() {
 	if ! on_raiden || servo_has_cold_reset; then
 		ec_reset
 	fi
+
+	if [[ "${FLAGS_try_apshutdown}" == "${FLAGS_TRUE}" ]]; then
+		info "Attempting to shut down the AP..."
+		dut_control ec_uart_regexp:None
+		for (( i = 0; i < "${FLAGS_try_apshutdown_count}"; i++ )); do
+			dut_control ec_uart_cmd:apshutdown
+			sleep 1
+		done
+	fi
 }
 trap cleanup EXIT
 
@@ -728,7 +750,7 @@ else
 	info "Could not find ec build folder to calculate baseboard."
 fi
 # shellcheck disable=SC2181
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 ] && [ -z "${FLAGS_image}" ]; then
 	info "EC build system didn't recognize ${BOARD}. Assuming no baseboard."
 fi
 set -e
@@ -1438,10 +1460,18 @@ function flash_it83xx() {
 	print_or_run "${ITEFLASH_ARGS[@]}" || die "${ERROR_MSG}"
 }
 
+# Alias for flashing ITE chips over I2C from all servo types.
+function flash_ite_i2c() {
+        flash_it83xx
+}
+
+# Alias for flashing ITE chips over SPI from all servo types.
 function flash_ite_spi() {
 	flash_flashrom
 }
 
+# Flash ITE chips over SPI when using the servod debug connector
+# and over I2C whn using CCD.
 function flash_ite_spi_ccd_i2c() {
 	if [[ "${SERVO_TYPE}" =~ "servo_micro" || \
 	      "${SERVO_TYPE}" =~ "servo_v2" ]] ; then
@@ -1451,6 +1481,8 @@ function flash_ite_spi_ccd_i2c() {
 	fi
 }
 
+# Flash ITE chips over SPI when using the servod debug connector
+# and over I2C whn using CCD.
 function flash_it8xxx2() {
 	flash_ite_spi_ccd_i2c
 }
@@ -1588,22 +1620,13 @@ function flash_npcx_uut() {
 		fi
 
 		if [[ "${FLAGS_no_preserve}" == "${FLAGS_FALSE}" ]]; then
-			local CUR_IMG
-			local PRESERVE_STATUS
+			local IMG_CPY
 
-			PRESERVE_STATUS=0
-			is_preservation_needed "${IMG}" "${TEMP_DIR}" || PRESERVE_STATUS=$?
-			if [[ "${PRESERVE_STATUS}" -eq 0 ]]; then
-				info "Reading current EC firmware image."
-				CUR_IMG="${TEMP_DIR}/ec.cur.bin"
-				local UUT_CUR_RD=( "${NPCX_UUT}" "${UUT_ARGS[@]}"   \
-							"--read-flash" "--file=${CUR_IMG}" )
-				echo "${UUT_CUR_RD[*]}"
-				print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
-					"${UUT_CUR_RD[@]}" || die "${MSG_READ_FAIL}"
-
-				preserve_sections "${CUR_IMG}" "${IMG}" "${TEMP_DIR}"
-			fi
+			IMG_CPY="${TEMP_DIR}/ec.new.cpy.bin"
+			cat "${IMG}" > "${IMG_CPY}"
+			IMG="${IMG_CPY}"
+			preserve_sections "${CHIP}" "${IMG}" "${TEMP_DIR}"    \
+				"${NPCX_UUT} ${UUT_ARGS[*]}" || die "${MSG_PROGRAM_FAIL}"
 		fi
 
 		info "Programming EC firmware image."
@@ -1721,40 +1744,201 @@ if [ "${NEED_SERVO}" != "no" ] ; then
 	servo_save
 fi
 
-function is_preservation_needed() {
+function preserve_sections() {
+	local CHIP_TYPE
 	local NEW_IMG
 	local TEMP_DIR
+	local CHIP_CMD_PREFIX
 
-	NEW_IMG=${1:?"missing arg 1: EC image path"}
+	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
+	NEW_IMG=${2:?"missing arg 2: New EC image path"}
 	NEW_IMG=$(readlink -f "${NEW_IMG}")
-	TEMP_DIR=${2:?"missing arg 2: Temp directory path"}
-
+	TEMP_DIR=${3:?"missing arg 3: Temp directory path"}
+	CHIP_CMD_PREFIX=${4:?"missing arg 4: Chip command prefix"}
 	(
 		cd "${TEMP_DIR}"
-		dump_fmap "${NEW_IMG}" -e | grep -q ' preserve'
+		local NEW_FMAP
+		local NEW_FMAP_OFFSET
+		local NEW_FMAP_SIZE
+		local CUR_FMAP_IMG
+		local CUR_IMG
+
+		NEW_FMAP=$(dump_fmap "${NEW_IMG}" -e FMAP)
+		NEW_FMAP_NFIELD=$(echo "${NEW_FMAP}" | awk '{print NF}')
+		if [ "${NEW_FMAP_NFIELD}" -ne 4 ]; then
+			die "The output of dump_fmap is not expected; try update_chroot"
+		fi
+
+		NEW_FMAP_OFFSET=$(echo "${NEW_FMAP}" | awk '{print $2}')
+		NEW_FMAP_SIZE=$(echo "${NEW_FMAP}" | awk '{print $3}')
+		CUR_FMAP_IMG="${TEMP_DIR}/ec.cur.fmap.bin"
+		CUR_IMG="${TEMP_DIR}/ec.cur.bin"
+		info "Reading FMAP section from EC chip"
+		read_chip_partially "${CHIP_TYPE}" "${CHIP_CMD_PREFIX}"  \
+			"${NEW_FMAP_OFFSET}" "${NEW_FMAP_SIZE}" "${CUR_FMAP_IMG}"
+		if [[ -z "$(dump_fmap "${CUR_FMAP_IMG}" -e FMAP)" ]]; then
+			info "FMAP section read failed, reading complete image"
+			read_chip "${CHIP_TYPE}" "${CHIP_CMD_PREFIX}" "${CUR_IMG}"
+			check_preserve_sections_not_present "${CUR_IMG}"  \
+				"${NEW_IMG}" "${TEMP_DIR}" || die
+			preserve_sections_with_cur_image "${CUR_IMG}" "${NEW_IMG}" "${TEMP_DIR}"
+		else
+			info "FMAP read is successful from EC flash"
+			check_preserve_sections_not_present "${CUR_FMAP_IMG}"  \
+				"${NEW_IMG}" "${TEMP_DIR}" || die
+			preserve_sections_with_fmap_image "${CUR_FMAP_IMG}"  \
+				"${NEW_IMG}" "${TEMP_DIR}" "${CHIP_TYPE}"  \
+				"${CHIP_CMD_PREFIX}"
+		fi
 	)
 }
 
-function preserve_sections() {
+function check_preserve_sections_not_present() {
 	local CUR_IMG
 	local NEW_IMG
 	local TEMP_DIR
 
 	CUR_IMG=${1:?"missing arg 1: Cur EC image path"}
 	NEW_IMG=${2:?"missing arg 2: New EC image path"}
-	NEW_IMG=$(readlink -f "${NEW_IMG}")
 	TEMP_DIR=${3:?"missing arg 3: Temp directory path"}
+
+	if ! dump_fmap "${CUR_IMG}" -e | grep -q ' preserve'; then
+		info "No sections are being preserved"
+	else
+		check_preserve_sections_presence "${CUR_IMG}" "${NEW_IMG}" "${TEMP_DIR}"
+	fi
+}
+
+function preserve_sections_with_fmap_image() {
+	local CUR_FMAP_IMG
+	local NEW_IMG
+	local TEMP_DIR
+	local CHIP_TYPE
+	local CHIP_CMD_PREFIX
+
+	CUR_FMAP_IMG=${1:?"missing arg 1: Cur EC FMAP image path"}
+	NEW_IMG=${2:?"missing arg 2: New EC image path"}
+	TEMP_DIR=${3:?"missing arg 3: Temp directory path"}
+	CHIP_TYPE=${4:?"missing arg 4: Chip type"}
+	CHIP_CMD_PREFIX=${5:?"missing arg 5: Chip command prefix"}
 	(
 		cd "${TEMP_DIR}"
-		dump_fmap "${NEW_IMG}" -e | grep ' preserve' | cut \
+		dump_fmap "${CUR_FMAP_IMG}" -e | grep ' preserve' | cut \
 			-f1 -d' ' |
 		while read -r line
 		do
-			info "Preserving ${line} section on EC chip"
-			local SEC_IMG="${TEMP_DIR}/ec.cur.${line}.bin"
+			local SEC_IMG
+			local SEC_FMAP_DUMP
+			local SEC_OFFSET
+			local SEC_SIZE
 
+			SEC_IMG="${TEMP_DIR}/ec.cur.${line}.bin"
+			SEC_FMAP_DUMP=$(dump_fmap "${CUR_FMAP_IMG}" -e "${line}")
+			SEC_OFFSET=$(echo "${SEC_FMAP_DUMP}" | awk '{print $2}')
+			SEC_SIZE=$(echo "${SEC_FMAP_DUMP}" | awk '{print $3}')
+			info "Reading ${line} section from EC chip"
+			read_chip_partially "${CHIP_TYPE}" "${CHIP_CMD_PREFIX}"  \
+				"${SEC_OFFSET}" "${SEC_SIZE}" "${SEC_IMG}"
+			info "Preserving ${line} section in new image"
+			cbfstool "${NEW_IMG}" write -r "${line}" -f "${SEC_IMG}"
+		done
+	)
+}
+
+function preserve_sections_with_cur_image() {
+	local CUR_IMG
+	local NEW_IMG
+	local TEMP_DIR
+
+	CUR_IMG=${1:?"missing arg 1: Cur EC image path"}
+	NEW_IMG=${2:?"missing arg 2: New EC image path"}
+	TEMP_DIR=${3:?"missing arg 3: Temp directory path"}
+	(
+		cd "${TEMP_DIR}"
+		dump_fmap "${CUR_IMG}" -e | grep ' preserve' | cut \
+			-f1 -d' ' |
+		while read -r line
+		do
+			local SEC_IMG
+
+			info "Preserving ${line} section on EC chip"
+			SEC_IMG="${TEMP_DIR}/ec.cur.${line}.bin"
 			cbfstool "${CUR_IMG}" read -r "${line}" -f "${SEC_IMG}"
 			cbfstool "${NEW_IMG}" write -r "${line}" -f "${SEC_IMG}"
+		done
+	)
+}
+
+function read_chip_partially() {
+	local CHIP_TYPE
+	local CHIP_CMD_PREFIX
+	local OFFSET
+	local SIZE
+	local FILE_PATH
+	local NPCX_BASE_ADDR
+
+	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
+	CHIP_CMD_PREFIX=${2:?"missing arg 2: Prefix of command"}
+	CHIP_CMD_PREFIX=(${CHIP_CMD_PREFIX})
+	OFFSET=${3:?"missing arg 3: Offset"}
+	SIZE=${4:?"missing arg 4: Size"}
+	FILE_PATH=${5:?"missing arg 5: Image storage path"}
+	NPCX_BASE_ADDR=0x64000000
+
+	if [ "${CHIP_TYPE}" = "npcx_uut" ]; then
+		local UUT_CUR_FMAP_RD
+
+		OFFSET=$(("${NPCX_BASE_ADDR}" + "${OFFSET}"))
+		UUT_CUR_FMAP_RD=( "${CHIP_CMD_PREFIX[@]}" "--opr=rd"  \
+			"--addr=${OFFSET}" "--size=${SIZE}"  \
+			"--file=${FILE_PATH}" )
+		echo "${UUT_CUR_FMAP_RD[*]}"
+		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
+					"${UUT_CUR_FMAP_RD[@]}" || die "${MSG_READ_FAIL}"
+	else
+		die "${MSG_CHIP_READ_INVALID}"
+	fi
+}
+
+function read_chip() {
+	local CHIP_TYPE
+	local CHIP_CMD_PREFIX
+	local FILE_PATH
+
+	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
+	CHIP_CMD_PREFIX=${2:?"missing arg 2: Prefix of command"}
+	CHIP_CMD_PREFIX=(${CHIP_CMD_PREFIX})
+	FILE_PATH=${3:?"missing arg 3: Image storage path"}
+
+	if [ "${CHIP_TYPE}" = "npcx_uut" ]; then
+		local UUT_CUR_RD
+
+		UUT_CUR_RD=( "${CHIP_CMD_PREFIX[@]}" "--read-flash" "--file=${FILE_PATH}" )
+		echo "${UUT_CUR_RD[*]}"
+		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
+					"${UUT_CUR_RD[@]}" || die "${MSG_READ_FAIL}"
+	else
+		die "${MSG_CHIP_READ_INVALID}"
+	fi
+}
+
+function check_preserve_sections_presence() {
+	local CUR_IMG
+	local NEW_IMG
+	local TEMP_DIR
+
+	CUR_IMG=${1:?"missing arg 1: Cur EC image path"}
+	NEW_IMG=${2:?"missing arg 2: New EC image path"}
+	TEMP_DIR=${3:?"missing arg 3: Temp directory path"}
+	(
+		cd "${TEMP_DIR}"
+		dump_fmap "${CUR_IMG}" -e | grep ' preserve' | cut \
+			-f1 -d' ' |
+		while read -r line
+		do
+			if [[ -z "$(dump_fmap "${NEW_IMG}" -e "${line}")" ]]; then
+				die "New image don't contain the ${line} section"
+			fi
 		done
 	)
 }

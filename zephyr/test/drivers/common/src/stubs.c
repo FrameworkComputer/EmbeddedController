@@ -171,20 +171,6 @@ uint16_t tcpc_get_alert_status(void)
 }
 #endif
 
-void ppc_alert(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_ppc_int)):
-		ppc_chips[USBC_PORT_C0].drv->interrupt(USBC_PORT_C0);
-		break;
-	case GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c1_ppc_int)):
-		ppc_chips[USBC_PORT_C1].drv->interrupt(USBC_PORT_C1);
-		break;
-	default:
-		return;
-	}
-}
-
 /* TODO: This code should really be generic, and run based on something in
  * the dts.
  */
@@ -208,10 +194,6 @@ static void stubs_interrupt_init(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(usb_c1_tcpc_rst_l), 1);
 	msleep(PS8XXX_RESET_DELAY_MS);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(usb_c1_tcpc_rst_l), 0);
-
-	/* Enable PPC interrupts. */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_ppc));
 
 	/* Enable SwitchCap interrupt */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_switchcap_pg));

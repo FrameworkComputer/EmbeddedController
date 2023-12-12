@@ -18,4 +18,3 @@ To build the `native_posix` example, run:
 ``` shellsession
 (chroot) $ zmake build dev-posix
 ```
-

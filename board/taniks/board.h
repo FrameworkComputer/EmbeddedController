@@ -43,43 +43,6 @@
 /* LED */
 #define CONFIG_LED_ONOFF_STATES
 
-/* Sensors */
-#define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
-
-/* Change Request (b/211078551)
- * GYRO sensor change from ST LSM6DSOETR3TR to ST LSM6DS3TR-C
- *	LSM6DSOETR3TR base accel/gyro if board id = 0
- *	LSM6DS3TR-C Base accel/gyro if board id > 0
- */
-#define CONFIG_ACCELGYRO_LSM6DSO /* Base accel */
-#define CONFIG_ACCEL_LSM6DSO_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-#define CONFIG_ACCELGYRO_LSM6DSM
-#define CONFIG_ACCEL_LSM6DSM_INT_EVENT \
-	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
-
-/* Enable sensor fifo, must also define the _SIZE and _THRES */
-#define CONFIG_ACCEL_FIFO
-/* FIFO size is in power of 2. */
-#define CONFIG_ACCEL_FIFO_SIZE 256
-/* Depends on how fast the AP boots and typical ODRs */
-#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
-
-/* Sensors without hardware FIFO are in forced mode */
-#define CONFIG_ACCEL_FORCE_MODE_MASK (BIT(LID_ACCEL))
-
-/* Lid accel */
-#define CONFIG_LID_ANGLE
-#define CONFIG_LID_ANGLE_UPDATE
-#define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
-#define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
-#define CONFIG_ACCEL_BMA4XX
-#define CONFIG_ACCEL_LIS2DWL
-
-/* Sensor console commands */
-#define CONFIG_CMD_ACCELS
-#define CONFIG_CMD_ACCEL_INFO
-
 /* USB Type A Features */
 #define USB_PORT_COUNT 1
 #define CONFIG_USB_PORT_POWER_DUMB
@@ -179,7 +142,6 @@
 #define CONFIG_KEYBOARD_BACKLIGHT
 
 /* I2C Bus Configuration */
-#define I2C_PORT_SENSOR NPCX_I2C_PORT0_0
 #define I2C_PORT_USB_C0_TCPC NPCX_I2C_PORT1_0
 #define I2C_PORT_USB_C1_TCPC NPCX_I2C_PORT4_1
 #define I2C_PORT_USB_C0_PPC NPCX_I2C_PORT2_0
@@ -275,8 +237,6 @@ enum temp_sensor_id {
 	TEMP_SENSOR_4_CPUCHOKE,
 	TEMP_SENSOR_COUNT
 };
-
-enum sensor_id { LID_ACCEL = 0, BASE_ACCEL, BASE_GYRO, SENSOR_COUNT };
 
 enum ioex_port { IOEX_C0_NCT38XX = 0, IOEX_PORT_COUNT };
 

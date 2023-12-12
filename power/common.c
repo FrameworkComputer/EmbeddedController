@@ -807,8 +807,11 @@ DECLARE_HOOK(HOOK_AC_CHANGE, power_ac_change, HOOK_PRIO_DEFAULT);
 
 #ifdef CONFIG_BRINGUP
 #define MAX_SIGLOG_ENTRIES 24
+#define PTR2IDX(x) ((x) % (MAX_SIGLOG_ENTRIES))
 
-static unsigned int siglog_entries;
+/* circular buffer maintained by head and tail pointers */
+static unsigned int siglog_head;
+static unsigned int siglog_tail;
 static unsigned int siglog_truncated;
 
 static struct {
@@ -819,28 +822,27 @@ static struct {
 
 static void siglog_deferred(void)
 {
-	unsigned int i;
 	timestamp_t tdiff = { .val = 0 };
+	const unsigned int tmp_siglog_head = siglog_head;
+	const unsigned int tmp_siglog_tail = siglog_tail;
+	const unsigned int tmp_siglog_truncated = siglog_truncated;
+	const unsigned int tmp_siglog_entries = (tmp_siglog_tail - siglog_head);
 
-	/* Disable interrupts for input signals while we print stuff.*/
-	for (i = 0; i < POWER_SIGNAL_COUNT; i++)
-		power_signal_disable_interrupt(power_signal_list[i].gpio);
-
-	CPRINTF("%d signal changes:\n", siglog_entries);
-	for (i = 0; i < siglog_entries; i++) {
-		if (i)
-			tdiff.val = siglog[i].time.val - siglog[i - 1].time.val;
-		CPRINTF("  %.6lld  +%.6lld  %s => %d\n", siglog[i].time.val,
-			tdiff.val, power_signal_get_name(siglog[i].signal),
-			siglog[i].level);
+	CPRINTF("%d signal changes:\n", tmp_siglog_entries);
+	for (; siglog_head < tmp_siglog_tail; siglog_head++) {
+		if (siglog_head != tmp_siglog_head)
+			tdiff.val = siglog[PTR2IDX(siglog_head)].time.val -
+				    siglog[PTR2IDX(siglog_head - 1)].time.val;
+		CPRINTF("  %.6lld  +%.6lld  %s => %d\n",
+			siglog[PTR2IDX(siglog_head)].time.val, tdiff.val,
+			power_signal_get_name(
+				siglog[PTR2IDX(siglog_head)].signal),
+			siglog[PTR2IDX(siglog_head)].level);
 	}
-	if (siglog_truncated)
+	if (tmp_siglog_truncated)
 		CPRINTF("  SIGNAL LOG TRUNCATED...\n");
-	siglog_entries = siglog_truncated = 0;
 
-	/* Okay, turn 'em on again. */
-	for (i = 0; i < POWER_SIGNAL_COUNT; i++)
-		power_signal_enable_interrupt(power_signal_list[i].gpio);
+	siglog_truncated = 0;
 }
 DECLARE_DEFERRED(siglog_deferred);
 
@@ -848,6 +850,7 @@ static void siglog_add(enum gpio_signal signal)
 {
 	const struct power_signal_info *s = power_signal_list;
 	int i;
+	const unsigned int siglog_entries = siglog_tail - siglog_head;
 
 	for (i = 0; i < POWER_SIGNAL_COUNT; i++, s++) {
 		if (s->gpio == signal && s->flags & POWER_SIGNAL_NO_LOG) {
@@ -860,10 +863,10 @@ static void siglog_add(enum gpio_signal signal)
 		return;
 	}
 
-	siglog[siglog_entries].time = get_time();
-	siglog[siglog_entries].signal = signal;
-	siglog[siglog_entries].level = power_signal_get_level(signal);
-	siglog_entries++;
+	siglog[PTR2IDX(siglog_tail)].time = get_time();
+	siglog[PTR2IDX(siglog_tail)].signal = signal;
+	siglog[PTR2IDX(siglog_tail)].level = power_signal_get_level(signal);
+	siglog_tail++;
 
 	hook_call_deferred(&siglog_deferred_data, SECOND);
 }

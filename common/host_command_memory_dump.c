@@ -9,13 +9,9 @@
 #include "host_command_memory_dump.h"
 #include "string.h"
 #include "task.h"
+#include "util.h"
 
 #define MAX_DUMP_ENTRIES 64
-
-#ifndef CONFIG_ZEPHYR
-/* TODO(b/271883902): Add memory dump command support for CrOS EC */
-#error "Memory Dump commands are only supported on Zephyr EC."
-#endif
 
 struct memory_dump_entry {
 	uint32_t address;
@@ -87,6 +83,7 @@ memory_dump_get_entry_info(struct host_cmd_handler_args *args)
 	mutex_lock(&memory_dump_mutex);
 
 	if (p->memory_dump_entry_index >= memory_dump_entry_count) {
+		mutex_unlock(&memory_dump_mutex);
 		return EC_RES_INVALID_PARAM;
 	}
 
@@ -111,13 +108,16 @@ static enum ec_status read_memory_dump(struct host_cmd_handler_args *args)
 	mutex_lock(&memory_dump_mutex);
 
 	if (p->memory_dump_entry_index >= memory_dump_entry_count) {
+		mutex_unlock(&memory_dump_mutex);
 		return EC_RES_INVALID_PARAM;
 	}
 
 	entry = entries[p->memory_dump_entry_index];
 
-	if (p->address < entry.address ||
-	    p->address + p->size > entry.address + entry.size) {
+	if (p->address < entry.address || /* lower bound check */
+	    entry.address + entry.size < p->address + p->size || /* upper */
+	    p->address + p->size < p->address /* wraparound check */) {
+		mutex_unlock(&memory_dump_mutex);
 		return EC_RES_INVALID_PARAM;
 	}
 

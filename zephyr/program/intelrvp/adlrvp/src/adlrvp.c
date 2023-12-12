@@ -33,7 +33,7 @@
 #define CPRINTS(format, args...) cprints(CC_COMMAND, format, ##args)
 
 /* TCPC AIC GPIO Configuration */
-const struct tcpc_aic_gpio_config_t tcpc_aic_gpios[] = {
+const struct mecc_1_0_tcpc_aic_gpio_config_t mecc_1_0_tcpc_aic_gpios[] = {
 	[TYPE_C_PORT_0] = {
 		.tcpc_alert = GPIO_SIGNAL(DT_NODELABEL(usbc_tcpc_alrt_p0)),
 		.ppc_alert = GPIO_SIGNAL(DT_NODELABEL(usbc_tcpc_ppc_alrt_p0)),
@@ -61,7 +61,8 @@ const struct tcpc_aic_gpio_config_t tcpc_aic_gpios[] = {
 	},
 #endif
 };
-BUILD_ASSERT(ARRAY_SIZE(tcpc_aic_gpios) == CONFIG_USB_PD_PORT_MAX_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(mecc_1_0_tcpc_aic_gpios) ==
+	     CONFIG_USB_PD_PORT_MAX_COUNT);
 
 /* Cache BB retimer power state */
 static bool cache_bb_enable[CONFIG_USB_PD_PORT_MAX_COUNT];

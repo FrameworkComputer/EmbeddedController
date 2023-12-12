@@ -18,6 +18,7 @@
 /* Chip ID for all variants */
 #define NPCX996F_CHIP_ID 0x21
 #define NPCX993F_CHIP_ID 0x25
+#define NPCX99FP_CHIP_ID 0x2b
 
 /*****************************************************************************/
 /* Hardware features */
@@ -31,7 +32,7 @@
 #define NPCX_UART_FIFO_SUPPORT
 /* Number of UART modules. */
 #define NPCX_SECOND_UART
-#define UART_MODULE_COUNT 2
+#define UART_MODULE_COUNT 4
 
 /*
  * For NPCX9, PS2_2 & PS2_3 pins also support other alternate functions

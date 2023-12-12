@@ -11,7 +11,9 @@ import pathlib
 import shlex
 import subprocess
 import sys
+from typing import List
 
+import zmake.modules
 from zmake.output_packers import packer_registry
 
 
@@ -137,14 +139,17 @@ class CheckoutConfig:
     work_dir: pathlib.Path = dataclasses.field(default_factory=pathlib.Path)
     zephyr_dir: pathlib.Path = dataclasses.field(default_factory=pathlib.Path)
     modules_dir: pathlib.Path = dataclasses.field(default_factory=pathlib.Path)
-    projects_dir: pathlib.Path = dataclasses.field(default_factory=pathlib.Path)
+    projects_dirs: List[pathlib.Path] = dataclasses.field(default_factory=list)
 
     def __post_init__(self):
         self.full_ref = get_git_hash(self.ref)
         self.work_dir = pathlib.Path(self.temp_dir) / self.full_ref
         self.zephyr_dir = self.work_dir / "zephyr-base"
         self.modules_dir = self.work_dir / "modules"
-        self.projects_dir = self.modules_dir / "ec" / "zephyr"
+        modules = {
+            key: self.modules_dir / key for key in zmake.modules.known_modules
+        }
+        self.projects_dirs = zmake.modules.default_projects_dirs(modules)
 
         os.mkdir(self.work_dir)
 
@@ -210,8 +215,14 @@ class CompareBuilds:
         output_dir1 = self.checkouts[0].modules_dir / output_path
         output_dir2 = self.checkouts[1].modules_dir / output_path
 
-        bin_output1 = output_dir1 / "ec.bin"
-        bin_output2 = output_dir2 / "ec.bin"
+        # The rex-ish target creates an ish_fw.bin artifact instead of ec.bin
+        if project.config.project_name == "rex-ish":
+            bin_name = "ish_fw.bin"
+        else:
+            bin_name = "ec.bin"
+
+        bin_output1 = output_dir1 / bin_name
+        bin_output2 = output_dir2 / bin_name
 
         # ELF executables don't compare due to meta data.  Convert to a binary
         # for the comparison
@@ -227,7 +238,8 @@ class CompareBuilds:
         bin2_path = pathlib.Path(bin_output2)
         if not os.path.isfile(bin1_path) or not os.path.isfile(bin2_path):
             logging.error(
-                "Zephyr EC binary not found for project %s",
+                "Zephyr binary '%s' not found for project %s",
+                bin_name,
                 project.config.project_name,
             )
             return False
@@ -278,7 +290,9 @@ class CompareBuilds:
         try:
             data1 = ""
             data2 = ""
-            with open(file1) as fp1, open(file2) as fp2:
+            with open(file1, encoding="utf-8") as fp1, open(
+                file2, encoding="utf-8"
+            ) as fp2:
                 data1 = fp1.read()
                 data2 = fp2.read()
             data1 = data1.replace(self.checkouts[0].full_ref, "")

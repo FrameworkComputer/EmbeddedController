@@ -7,12 +7,14 @@
 #include "gpio.h"
 #include "hooks.h"
 
+#ifndef CONFIG_PLATFORM_EC_SHARED_SPI_FLASH
 static void board_init(void)
 {
 	/* Enable SOC SPI */
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(ec_spi_oe_mecc), 1);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_LAST);
+#endif
 
 __override void intel_x86_sys_reset_delay(void)
 {

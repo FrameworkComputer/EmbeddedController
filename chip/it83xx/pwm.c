@@ -266,8 +266,10 @@ static void pwm_init(void)
 {
 	int ch;
 
-	for (ch = 0; ch < PWM_CH_COUNT; ch++)
+	for (ch = 0; ch < PWM_CH_COUNT; ch++) {
 		pwm_ch_freq(ch);
+		pwm_set_duty(ch, 0);
+	}
 
 	/*
 	 * The cycle timer1 of chip 8320 later series was enhanced from

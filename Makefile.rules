@@ -103,8 +103,8 @@ cmd_c_to_o = $(CC) -std=gnu11 $(C_WARN) $(CFLAGS) -MMD -MP -MF $@.d -c $< \
 		-MT $(@D)/$(@F) -o $(@D)/$(@F)
 cmd_c_to_s = $(CC) -S $(C_WARN) $(CFLAGS) -fno-lto -MMD -MP -MF $@.d -c $< \
 		-MT $(@D)/$(@F) -o $(@D)/$(@F)
-cmd_cxx_to_o = $(CXX) -std=gnu++17 $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $@.d -c $< \
-		      -MT $(@D)/$(@F) -o $(@D)/$(@F)
+cmd_cxx_to_o = $(CXX) -std=gnu++2a $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $@.d \
+		      -c $< -MT $(@D)/$(@F) -o $(@D)/$(@F)
 cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $(wildcard $*.c)) \
 	         $(BUILD_LDFLAGS) \
@@ -113,7 +113,7 @@ cmd_c_to_vif = $(BUILDCC) $(BUILD_CFLAGS) $(STANDALONE_FLAGS) \
 		-MMD -MF $@.d -c $< -flto -MT $@ -o $@
 cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d -MT $@ -o $@ \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $(wildcard $*.c)) $(HOST_LDFLAGS)
-cmd_cxx_to_host = $(HOSTCXX) -std=gnu++17 $(HOST_CXXFLAGS) \
+cmd_cxx_to_host = $(HOSTCXX) -std=gnu++2a $(HOST_CXXFLAGS) \
 		-MMD -MF $@.d -MT $@ -o $@ \
 		$(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.cc)) $(wildcard $*.cc)) $(HOST_LDFLAGS)
 cmd_o_to_a = $(AR) rcs $@ $^
@@ -270,7 +270,8 @@ conflicting_options := \
 	UART_CONSOLE
 
 cmd_check_allowed = ./util/kconfig_check.py -c ${config} \
-	 -a util/config_allowed.txt -p PLATFORM_EC_ -s "" \
+	 -a util/config_allowed.txt \
+	 -r PLATFORM_EC_, PLATFORM_EC_CONSOLE_CMD_,CMD_ -s "" \
 	 -I "${ZEPHYR_BASE}" \
 	 $(foreach opt,$(conflicting_options),-i $(opt)) check
 cmd_check_undef = ./util/kconfig_check.py -s "" -I "${ZEPHYR_BASE}" \

@@ -1,9 +1,10 @@
 #!/usr/bin/env vpython3
-
 # Copyright 2022 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-"""
+
+"""Twister tag management.
+
 Script that contains definitions for Twister test tags while also checking
 testcase.yaml files to see if they only used predefined tags.
 """

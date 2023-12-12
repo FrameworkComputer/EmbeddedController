@@ -352,7 +352,7 @@ static int renesas_rtc_idt1337ag_init(const struct device *dev)
 	int ret;
 
 	if (!device_is_ready(config->bus)) {
-		LOG_ERR("Device %s is not ready", config->bus->name);
+		LOG_ERR("device %s not ready", config->bus->name);
 		return -ENODEV;
 	}
 

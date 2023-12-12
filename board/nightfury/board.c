@@ -373,30 +373,25 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  * for Nightfury. They matter when the EC is controlling the fan as opposed to
  * DPTF control.
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_A                \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-			[EC_TEMP_THRESH_HALT] = 0, \
-		}, \
-		.temp_fan_off = C_TO_K(25), \
-		.temp_fan_max = C_TO_K(50), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_a = THERMAL_A;
+const static struct ec_thermal_config thermal_a = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(25),
+	.temp_fan_max = C_TO_K(50),
+};
 
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1] = THERMAL_A,
-	[TEMP_SENSOR_2] = THERMAL_A,
-	[TEMP_SENSOR_3] = THERMAL_A,
+	[TEMP_SENSOR_1] = thermal_a,
+	[TEMP_SENSOR_2] = thermal_a,
+	[TEMP_SENSOR_3] = thermal_a,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 

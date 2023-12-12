@@ -25,7 +25,6 @@ child-binding:
       description:
         Maximum fan speed (in RPM)
     rpm_deviation:
-      required: false
       default: 7
       type: int
       description:
@@ -37,27 +36,22 @@ child-binding:
         PWM channel to control the fan
     tach:
       type: phandle
-      required: false
       description:
         Tachometer to measure the fan speed
     not_use_rpm_mode:
-      required: false
       type: boolean
       description:
         Disable automatic RPM control using tachometer input
     use_fast_start:
-      required: false
       type: boolean
       description:
         Fan requires a higher duty cycle to start up than to keep
         running
     pgood_gpio:
-      required: false
       type: phandle
       description:
         Active high input GPIO which signals the power is good
     enable_gpio:
-      required: false
       type: phandle
       description:
         Active high output GPIO to enable the power

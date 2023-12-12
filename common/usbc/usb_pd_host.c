@@ -19,6 +19,7 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
+#ifdef CONFIG_HOSTCMD_TYPEC_DISCOVERY
 /* Retrieve all discovery results for the given port and transmit type */
 static enum ec_status hc_typec_discovery(struct host_cmd_handler_args *args)
 {
@@ -100,6 +101,7 @@ static enum ec_status hc_typec_discovery(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_TYPEC_DISCOVERY, hc_typec_discovery,
 		     EC_VER_MASK(0));
+#endif /* CONFIG_HOSTCMD_TYPEC_DISCOVERY */
 
 /* Default to feature unavailable, with boards supporting it overriding */
 __overridable enum ec_status
@@ -108,6 +110,7 @@ board_set_tbt_ufp_reply(int port, enum typec_tbt_ufp_reply reply)
 	return EC_RES_UNAVAILABLE;
 }
 
+#ifdef CONFIG_HOSTCMD_TYPEC_CONTROL
 static enum ec_status hc_typec_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_typec_control *p = args->params;
@@ -177,7 +180,9 @@ static enum ec_status hc_typec_control(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_TYPEC_CONTROL, hc_typec_control, EC_VER_MASK(0));
+#endif /* CONFIG_HOSTCMD_TYPEC_CONTROL */
 
+#ifdef CONFIG_HOSTCMD_TYPEC_STATUS
 /*
  * Validate ec_response_typec_status_v0's binary compatibility with
  * ec_response_typec_status, which is being deprecated.
@@ -285,3 +290,4 @@ static enum ec_status hc_typec_status(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_TYPEC_STATUS, hc_typec_status,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
+#endif /* CONFIG_HOSTCMD_TYPEC_STATUS */

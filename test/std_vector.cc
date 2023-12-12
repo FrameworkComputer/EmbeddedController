@@ -75,8 +75,8 @@ test_static int push_back_elements()
 
 test_static int fill_one_vector()
 {
-	// This test allocates 64kB of memory in total in a single std::vector
-	constexpr int num_elements = 16 * 1024;
+	// This test allocates 8kB of memory in total in a single std::vector
+	constexpr int num_elements = 2 * 1024;
 	std::vector<int32_t> vec;
 
 	for (int i = 0; i < num_elements; ++i)
@@ -95,8 +95,15 @@ test_static int fill_one_vector()
 
 test_static int fill_multiple_vectors()
 {
-	// This test allocates 64kB of memory in total split in 8 std::vectors
+	// This test allocates a large block of memory split in 8 std::vectors.
+	// Since Helipilot has less available RAM, it will allocate 8KB RAM
+	// (8*1KB), while other targets will allocate 16KB (8*2kB).
+#ifdef BOARD_HELIPILOT
+	constexpr int num_elements = 1024;
+#else
 	constexpr int num_elements = 2 * 1024;
+#endif
+
 	std::array<std::vector<int32_t>, 8> vecs;
 
 	for (int i = 0; i < num_elements; ++i)
@@ -115,10 +122,10 @@ test_static int fill_multiple_vectors()
 
 test_static int create_and_destroy_two_vectors()
 {
-	// This allocates 64kB of memory twice.
+	// This allocates 8kB of memory twice.
 	// The first vector is declared in a local scope and the memory is
 	// free'd at the end of the block.
-	constexpr int num_elements = 16 * 1024;
+	constexpr int num_elements = 2 * 1024;
 	{
 		std::vector<int32_t> vec;
 		for (int i = 0; i < num_elements; ++i)

@@ -45,15 +45,15 @@ enum temp_range {
 	TEMP_RANGE_4,
 };
 
-struct ship_mode_info {
+struct reef_ship_mode_info {
 	const int ship_mode_reg;
 	const int ship_mode_data;
 	int (*batt_init)(void);
 };
 
-struct board_batt_params {
+struct reef_batt_params {
 	const char *manuf_name;
-	const struct ship_mode_info *ship_mode_inf;
+	const struct reef_ship_mode_info *ship_mode_inf;
 	const struct battery_info *batt_info;
 	const struct fast_charge_params *fast_chg_params;
 };
@@ -446,31 +446,31 @@ static int batt_c22n1626_init(void)
 		       !!(batt_status & C22N1626_DISCHARGE_ENABLE_FET_BIT);
 }
 
-static const struct ship_mode_info ship_mode_info_smp_cos4870 = {
+static const struct reef_ship_mode_info ship_mode_info_smp_cos4870 = {
 	.ship_mode_reg = 0x00,
 	.ship_mode_data = 0x0010,
 	.batt_init = batt_smp_cos4870_init,
 };
 
-static const struct ship_mode_info ship_mode_info_sonycorp = {
+static const struct reef_ship_mode_info ship_mode_info_sonycorp = {
 	.ship_mode_reg = 0x3A,
 	.ship_mode_data = 0xC574,
 	.batt_init = batt_sony_corp_init,
 };
 
-static const struct ship_mode_info ship_mode_info_panasonic = {
+static const struct reef_ship_mode_info ship_mode_info_panasonic = {
 	.ship_mode_reg = 0x3A,
 	.ship_mode_data = 0xC574,
 	.batt_init = batt_panasonic_init,
 };
 
-static const struct ship_mode_info ship_mode_info_c22n1626 = {
+static const struct reef_ship_mode_info ship_mode_info_c22n1626 = {
 	.ship_mode_reg = 0x00,
 	.ship_mode_data = 0x0010,
 	.batt_init = batt_c22n1626_init,
 };
 
-static const struct board_batt_params info[] = {
+static const struct reef_batt_params info[] = {
 	/* BQ40Z555 SONY CORP BATTERY battery specific configurations */
 	[BATTERY_SONY_CORP] = {
 		.manuf_name = "SONYCorp",
@@ -513,7 +513,7 @@ static const struct board_batt_params info[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(info) == BATTERY_TYPE_COUNT);
 
-static inline const struct board_batt_params *board_get_batt_params(void)
+static inline const struct reef_batt_params *board_get_batt_params(void)
 {
 	return &info[board_battery_type == BATTERY_TYPE_COUNT ?
 			     DEFAULT_BATTERY_TYPE :
@@ -575,7 +575,7 @@ const struct battery_info *battery_get_info(void)
 int board_cut_off_battery(void)
 {
 	int rv;
-	const struct ship_mode_info *ship_mode_inf =
+	const struct reef_ship_mode_info *ship_mode_inf =
 		board_get_batt_params()->ship_mode_inf;
 
 	/* Ship mode command must be sent twice to take effect */

@@ -9,6 +9,7 @@
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "driver/ppc/nx20p348x.h"
+#include "driver/retimer/bb_retimer_public.h"
 #include "driver/tcpm/ps8xxx_public.h"
 #include "hooks.h"
 #include "ppc/syv682x_public.h"
@@ -30,24 +31,6 @@ LOG_MODULE_REGISTER(screebo, LOG_LEVEL_INF);
 
 uint32_t usb_db_type;
 uint32_t usb_mb_type;
-
-void screebo_ppc_interrupt(enum gpio_signal signal)
-{
-	switch (signal) {
-	case GPIO_USB_C0_PPC_INT_ODL:
-		syv682x_interrupt(USBC_PORT_C0);
-		break;
-	case GPIO_USB_C1_PPC_INT_ODL:
-		if (usb_db_type == FW_USB_DB_USB3) {
-			nx20p348x_interrupt(USBC_PORT_C1);
-		} else {
-			syv682x_interrupt(USBC_PORT_C1);
-		}
-		break;
-	default:
-		break;
-	}
-}
 
 void board_reset_pd_mcu(void)
 {
@@ -177,3 +160,29 @@ __override uint8_t board_get_usb_pd_port_count(void)
 		return 1;
 	}
 }
+
+static void hbr_rst_runtime_config(void)
+{
+	int ret;
+	uint32_t board_version;
+
+	ret = cbi_get_board_version(&board_version);
+	if (ret != EC_SUCCESS) {
+		LOG_ERR("Error retrieving CBI board version");
+		return;
+	}
+
+	/* Only proto board use the ioex */
+	if (board_version == 0) {
+		gpio_unused(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_hbr_rst_l));
+		gpio_unused(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_hbr_rst_l));
+		bb_controls[USBC_PORT_C0].retimer_rst_gpio =
+			GPIO_SIGNAL(DT_NODELABEL(ioex_usb_c0_rt_rst_ls_l));
+		bb_controls[USBC_PORT_C1].retimer_rst_gpio =
+			GPIO_SIGNAL(DT_NODELABEL(ioex_usb_c1_rt_rst_ls_l));
+	} else {
+		gpio_unused(GPIO_DT_FROM_NODELABEL(ioex_usb_c0_rt_rst_ls_l));
+		gpio_unused(GPIO_DT_FROM_NODELABEL(ioex_usb_c1_rt_rst_ls_l));
+	}
+}
+DECLARE_HOOK(HOOK_INIT, hbr_rst_runtime_config, HOOK_PRIO_POST_I2C);

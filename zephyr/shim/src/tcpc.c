@@ -3,6 +3,12 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #include "hooks.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
@@ -152,7 +158,7 @@ uint16_t tcpc_get_alert_status(void)
 	return status;
 }
 
-struct gpio_callback int_gpio_cb[CONFIG_USB_PD_PORT_MAX_COUNT];
+struct gpio_callback int_tcpc_cb[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static void tcpc_int_gpio_callback(const struct device *dev,
 				   struct gpio_callback *cb, uint32_t pins)
@@ -161,7 +167,7 @@ static void tcpc_int_gpio_callback(const struct device *dev,
 	 * Retrieve the array index from the callback pointer, and
 	 * use that to get the port number.
 	 */
-	int port = cb - &int_gpio_cb[0];
+	int port = cb - &int_tcpc_cb[0];
 
 	schedule_deferred_pd_interrupt(port);
 }
@@ -194,15 +200,15 @@ void tcpc_enable_interrupt(void)
 		 *
 		 * Check whether callback has been initialised
 		 */
-		if (!int_gpio_cb[i].handler) {
+		if (!int_tcpc_cb[i].handler) {
 			/*
 			 * Initialise and add the callback.
 			 */
-			gpio_init_callback(&int_gpio_cb[i],
+			gpio_init_callback(&int_tcpc_cb[i],
 					   tcpc_int_gpio_callback,
 					   BIT(tcpc_config[i].irq_gpio.pin));
 			gpio_add_callback(tcpc_config[i].irq_gpio.port,
-					  &int_gpio_cb[i]);
+					  &int_tcpc_cb[i]);
 		}
 
 		gpio_pin_interrupt_configure_dt(&tcpc_config[i].irq_gpio,

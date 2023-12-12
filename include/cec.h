@@ -4,6 +4,11 @@
  */
 
 #include "ec_commands.h"
+#include "task.h"
+
+#ifdef CONFIG_ZEPHYR
+#include <zephyr_cec.h>
+#endif
 
 /* Size of the buffer inside the rx queue */
 #define CEC_RX_BUFFER_SIZE 20
@@ -19,17 +24,45 @@
 #define CEC_TASK_EVENT_OKAY TASK_EVENT_CUSTOM_BIT(1)
 #define CEC_TASK_EVENT_FAILED TASK_EVENT_CUSTOM_BIT(2)
 
-/* CEC broadcast address. Also the highest possible CEC address */
+/*
+ * CEC broadcast address (when used as destination). Also the highest possible
+ * CEC address.
+ */
 #define CEC_BROADCAST_ADDR 15
 
-/* Address to indicate that no logical address has been set */
-#define CEC_UNREGISTERED_ADDR 255
+/*
+ * Unregistered logical address (when used as initiator). Used when a device has
+ * no valid physical address (e.g. it's unplugged), or as a fallback when no
+ * type-specific logical addresses are available.
+ */
+#define CEC_UNREGISTERED_ADDR 15
+
+/* Address to indicate that no logical address has been set. */
+#define CEC_INVALID_ADDR 255
 
 /*
  * The CEC specification requires at least one and a maximum of
  * five resends attempts
  */
 #define CEC_MAX_RESENDS 5
+
+/* Bit timing */
+#define CEC_NOMINAL_BIT_PERIOD_US 2400
+#define CEC_NOMINAL_SAMPLE_TIME_US 1050
+#define CEC_START_BIT_LOW_US 3700
+#define CEC_START_BIT_HIGH_US 800
+#define CEC_DATA_ZERO_LOW_US 1500
+#define CEC_DATA_ZERO_HIGH_US 900
+#define CEC_DATA_ONE_LOW_US 600
+#define CEC_DATA_ONE_HIGH_US 1800
+
+/* Free time timing */
+/* Resend */
+#define CEC_FREE_TIME_RS_US (3 * (CEC_NOMINAL_BIT_PERIOD_US))
+/* New initiator */
+#define CEC_FREE_TIME_NI_US (5 * (CEC_NOMINAL_BIT_PERIOD_US))
+/* Present initiator */
+#define CEC_FREE_TIME_PI_US (7 * (CEC_NOMINAL_BIT_PERIOD_US))
 
 /* All return EC_SUCCESS if successful, non-zero if error. */
 struct cec_drv {
@@ -93,6 +126,8 @@ struct cec_header {
 #define CEC_MSG_TEXT_VIEW_ON 0x0d
 #define CEC_MSG_REPORT_PHYSICAL_ADDRESS 0x84
 #define CEC_MSG_DEVICE_VENDOR_ID 0x87
+#define CEC_MSG_REQUEST_ACTIVE_SOURCE 0x85
+#define CEC_MSG_SET_STREAM_PATH 0x86
 
 enum cec_action {
 	CEC_ACTION_NONE = 0,
@@ -115,6 +150,10 @@ struct cec_offline_policy {
  */
 struct cec_config_t {
 	const struct cec_drv *drv;
+
+	/* Optional driver-specific configuration data */
+	const void *drv_config;
+
 	/*
 	 * Actions taken on message received when the system is off.
 	 * Last entry must be null terminated.
@@ -123,7 +162,7 @@ struct cec_config_t {
 };
 
 /* CEC config definition. */
-extern const struct cec_config_t cec_config[];
+extern test_overridable_const struct cec_config_t cec_config[];
 
 /**
  * Default policy provided for convenience.
@@ -187,10 +226,27 @@ int cec_rx_queue_pop(struct cec_rx_queue *queue, uint8_t *msg,
 /**
  * Process a CEC message when the AP is off.
  *
- * @param queue		Queue to retrieve message from
- * @param msg		Buffer to store retrieved message in
+ * @param port		CEC port the message was received on
+ * @param msg		Buffer containing the message to process
  * @param msg_len	Number of data bytes in msg
  * @return EC_SUCCESS if the message is consumed or EC_ERROR_* otherwise.
  */
-int cec_process_offline_message(struct cec_rx_queue *queue, const uint8_t *msg,
-				uint8_t msg_len);
+int cec_process_offline_message(int port, const uint8_t *msg, uint8_t msg_len);
+
+/**
+ * Set a given task event for a given CEC port.
+ *
+ * @param port		Port the event occurred on
+ * @param event		Event type (CEC_TASK_EVENT_*)
+ */
+void cec_task_set_event(int port, uint32_t event);
+
+#ifdef TEST_BUILD
+/**
+ * Send a CEC MKBP event to the AP.
+ *
+ * @param port		Port the event occurred on
+ * @param event		Event type (enum mkbp_cec_event)
+ */
+void send_mkbp_event(int port, uint32_t event);
+#endif
