@@ -141,19 +141,19 @@ struct tss_entry {
  * flags: 8bit flags
  */
 #define GEN_GDT_DESC_LO(base, limit, flags) \
-	((((limit) >> 12) & 0xFFFF) | (((base)&0xFFFF) << 16))
+	((((limit) >> 12) & 0xFFFF) | (((base) & 0xFFFF) << 16))
 
 #define GEN_GDT_DESC_UP(base, limit, flags)                    \
 	((((base) >> 16) & 0xFF) | (((flags) << 8) & 0xFF00) | \
-	 (((limit) >> 12) & 0xFF0000) | ((base)&0xFF000000) | 0xc00000)
+	 (((limit) >> 12) & 0xFF0000) | ((base) & 0xFF000000) | 0xc00000)
 
 /**
  * macro helper to create a IDT entry descriptor
  */
 #define GEN_IDT_DESC_LO(offset, selector, flags) \
-	(((uint32_t)(offset)&0xFFFF) | (((selector)&0xFFFF) << 16))
+	(((uint32_t)(offset) & 0xFFFF) | (((selector) & 0xFFFF) << 16))
 
 #define GEN_IDT_DESC_UP(offset, selector, flags) \
-	(((uint32_t)(offset)&0xFFFF0000) | (((flags)&0xFF) << 8))
+	(((uint32_t)(offset) & 0xFFFF0000) | (((flags) & 0xFF) << 8))
 
 #endif /* __CROS_EC_IA_STRUCTS_H */

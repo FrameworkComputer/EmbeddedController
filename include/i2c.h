@@ -40,9 +40,9 @@
 /* BIT(15) SPI_FLAG - used in motion_sense to overload address */
 #define I2C_FLAG_ADDR_IS_SPI BIT(15)
 
-#define I2C_STRIP_FLAGS(addr_flags) ((addr_flags)&I2C_ADDR_MASK)
-#define I2C_USE_PEC(addr_flags) ((addr_flags)&I2C_FLAG_PEC)
-#define I2C_IS_BIG_ENDIAN(addr_flags) ((addr_flags)&I2C_FLAG_BIG_ENDIAN)
+#define I2C_STRIP_FLAGS(addr_flags) ((addr_flags) & I2C_ADDR_MASK)
+#define I2C_USE_PEC(addr_flags) ((addr_flags) & I2C_FLAG_PEC)
+#define I2C_IS_BIG_ENDIAN(addr_flags) ((addr_flags) & I2C_FLAG_BIG_ENDIAN)
 
 /*
  * All 7-bit addresses in the following formats

@@ -69,11 +69,11 @@ enum ina2xx_conv_time {
 /* Calibration value to get current LSB = 1mA */
 #define INA2XX_CALIB_1MA(rsense_mohm) (5120 / (rsense_mohm))
 /* Bus voltage: mV per LSB */
-#define INA2XX_BUS_MV(reg) ((reg)*125 / 100)
+#define INA2XX_BUS_MV(reg) ((reg) * 125 / 100)
 /* Shunt voltage: uV per LSB */
-#define INA2XX_SHUNT_UV(reg) ((reg)*25 / 10)
+#define INA2XX_SHUNT_UV(reg) ((reg) * 25 / 10)
 /* Power LSB: mW per current LSB */
-#define INA2XX_POW_MW(reg) ((reg)*25 * 1 /*Current mA/LSB*/)
+#define INA2XX_POW_MW(reg) ((reg) * 25 * 1 /*Current mA/LSB*/)
 
 #else /* CONFIG_INA219 */
 
@@ -82,9 +82,9 @@ enum ina2xx_conv_time {
 /* Bus voltage: mV per LSB */
 #define INA2XX_BUS_MV(reg) ((reg) / 2)
 /* Shunt voltage: uV */
-#define INA2XX_SHUNT_UV(reg) ((reg)*10)
+#define INA2XX_SHUNT_UV(reg) ((reg) * 10)
 /* Power LSB: mW per current LSB */
-#define INA2XX_POW_MW(reg) ((reg)*20 * 1 /*Current mA/LSB*/)
+#define INA2XX_POW_MW(reg) ((reg) * 20 * 1 /*Current mA/LSB*/)
 
 #endif
 

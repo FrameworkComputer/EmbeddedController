@@ -71,9 +71,9 @@
  * d bits[4:0] = register bit position
  */
 #define MCHP_PCR_SLP_EN_DEV(d) \
-	(MCHP_PCR_SLP_EN(((d) >> 8) & 0x07) |= (1ul << ((d)&0x1f)))
+	(MCHP_PCR_SLP_EN(((d) >> 8) & 0x07) |= (1ul << ((d) & 0x1f)))
 #define MCHP_PCR_SLP_DIS_DEV(d) \
-	(MCHP_PCR_SLP_EN(((d) >> 8) & 0x07) &= ~(1ul << ((d)&0x1f)))
+	(MCHP_PCR_SLP_EN(((d) >> 8) & 0x07) &= ~(1ul << ((d) & 0x1f)))
 /*
  * Set/clear bit pattern specified by mask in a single PCR sleep enable
  * register.
@@ -178,13 +178,13 @@
  * 8 update fields numbered 0 - 7
  */
 #define MCHP_BBLED_UPD_STEP_MASK0 0x0Ful
-#define MCHP_BBLED_UPD_STEP_MASK(u) (0x0Ful << (((u)&0x07) + 4))
+#define MCHP_BBLED_UPD_STEP_MASK(u) (0x0Ful << (((u) & 0x07) + 4))
 /*
  * BBLED Update Interval Register
  * 8 interval fields numbered 0 - 7
  */
 #define MCHP_BBLED_UPD_INTV_MASK0 0x0Ful
-#define MCHP_BBLED_UPD_INTV_MASK(i) (0x0Ful << (((i)&0x07) + 4))
+#define MCHP_BBLED_UPD_INTV_MASK(i) (0x0Ful << (((i) & 0x07) + 4))
 
 /* EMI */
 #define MCHP_EMI_H2E_MBX(n) REG8(MCHP_EMI_BASE(n) + 0x0)
@@ -299,7 +299,7 @@
 #define MCHP_ADC_STS REG32(MCHP_ADC_BASE + 0x8)
 #define MCHP_ADC_SINGLE REG32(MCHP_ADC_BASE + 0xc)
 #define MCHP_ADC_REPEAT REG32(MCHP_ADC_BASE + 0x10)
-#define MCHP_ADC_READ(x) REG32(MCHP_ADC_BASE + 0x14 + ((x)*0x4))
+#define MCHP_ADC_READ(x) REG32(MCHP_ADC_BASE + 0x14 + ((x) * 0x4))
 
 /* Hibernation timer */
 #define MCHP_HTIMER_PRELOAD(x) REG16(MCHP_HTIMER_ADDR(x) + 0x0)
@@ -338,7 +338,7 @@
 #define MCHP_QMSPI0_RX_FIFO8 REG8(MCHP_QMSPI0_BASE + 0x24)
 #define MCHP_QMSPI0_RX_FIFO16 REG16(MCHP_QMSPI0_BASE + 0x24)
 #define MCHP_QMSPI0_RX_FIFO32 REG32(MCHP_QMSPI0_BASE + 0x24)
-#define MCHP_QMSPI0_DESCR(x) REG32(MCHP_QMSPI0_BASE + 0x30 + ((x)*4))
+#define MCHP_QMSPI0_DESCR(x) REG32(MCHP_QMSPI0_BASE + 0x30 + ((x) * 4))
 /* Bits in MCHP_QMSPI0_MODE */
 #define MCHP_QMSPI_M_ACTIVATE BIT(0)
 #define MCHP_QMSPI_M_SOFT_RESET BIT(1)
@@ -549,20 +549,20 @@
  * b[13:8]=Logical Device Number RO
  * b[7:0]=mask
  */
-#define MCHP_ESPI_IO_BAR_CTL(x) REG32(MCHP_ESPI_IO_BASE + ((x)*4) + 0x134)
+#define MCHP_ESPI_IO_BAR_CTL(x) REG32(MCHP_ESPI_IO_BASE + ((x) * 4) + 0x134)
 /* access mask field of eSPI IO BAR Control register */
-#define MCHP_ESPI_IO_BAR_CTL_MASK(x) REG8(MCHP_ESPI_IO_BASE + ((x)*4) + 0x134)
+#define MCHP_ESPI_IO_BAR_CTL_MASK(x) REG8(MCHP_ESPI_IO_BASE + ((x) * 4) + 0x134)
 /*
  * IO BAR's starting at offset 0x334
  * b[31:16] = I/O address
  * b[15:1]=0 reserved
  * b[0] = valid
  */
-#define MCHP_ESPI_IO_BAR(x) REG32(MCHP_ESPI_IO_BASE + ((x)*4) + 0x334)
-#define MCHP_ESPI_IO_BAR_VALID(x) REG8(MCHP_ESPI_IO_BASE + ((x)*4) + 0x334)
-#define MCHP_ESPI_IO_BAR_ADDR_LSB(x) REG8(MCHP_ESPI_IO_BASE + ((x)*4) + 0x336)
-#define MCHP_ESPI_IO_BAR_ADDR_MSB(x) REG8(MCHP_ESPI_IO_BASE + ((x)*4) + 0x337)
-#define MCHP_ESPI_IO_BAR_ADDR(x) REG16(MCHP_ESPI_IO_BASE + ((x)*4) + 0x336)
+#define MCHP_ESPI_IO_BAR(x) REG32(MCHP_ESPI_IO_BASE + ((x) * 4) + 0x334)
+#define MCHP_ESPI_IO_BAR_VALID(x) REG8(MCHP_ESPI_IO_BASE + ((x) * 4) + 0x334)
+#define MCHP_ESPI_IO_BAR_ADDR_LSB(x) REG8(MCHP_ESPI_IO_BASE + ((x) * 4) + 0x336)
+#define MCHP_ESPI_IO_BAR_ADDR_MSB(x) REG8(MCHP_ESPI_IO_BASE + ((x) * 4) + 0x337)
+#define MCHP_ESPI_IO_BAR_ADDR(x) REG16(MCHP_ESPI_IO_BASE + ((x) * 4) + 0x336)
 /* eSPI Serial IRQ registers */
 #define MCHP_ESPI_IO_SERIRQ_REG(x) REG8(MCHP_ESPI_IO_BASE + 0x3ac + (x))
 /* eSPI Virtual Wire Error Register */
@@ -575,15 +575,15 @@
  * b[15:1]=0(reserved)
  * b[79:16]=eSPI bus memory address(Host address space)
  */
-#define MCHP_ESPI_MBAR_VALID(x) REG8(MCHP_ESPI_MEM_BASE + ((x)*10) + 0x130)
+#define MCHP_ESPI_MBAR_VALID(x) REG8(MCHP_ESPI_MEM_BASE + ((x) * 10) + 0x130)
 #define MCHP_ESPI_MBAR_HOST_ADDR_0_15(x) \
-	REG16(MCHP_ESPI_MEM_BASE + ((x)*10) + 0x132)
+	REG16(MCHP_ESPI_MEM_BASE + ((x) * 10) + 0x132)
 #define MCHP_ESPI_MBAR_HOST_ADDR_16_31(x) \
-	REG16(MCHP_ESPI_MEM_BASE + ((x)*10) + 0x134)
+	REG16(MCHP_ESPI_MEM_BASE + ((x) * 10) + 0x134)
 #define MCHP_ESPI_MBAR_HOST_ADDR_32_47(x) \
-	REG16(MCHP_ESPI_MEM_BASE + ((x)*10) + 0x136)
+	REG16(MCHP_ESPI_MEM_BASE + ((x) * 10) + 0x136)
 #define MCHP_ESPI_MBAR_HOST_ADDR_48_63(x) \
-	REG16(MCHP_ESPI_MEM_BASE + ((x)*10) + 0x138)
+	REG16(MCHP_ESPI_MEM_BASE + ((x) * 10) + 0x138)
 /*
  * eSPI SRAM BAR's
  * b[0,3,8:15] = 0 reserved
@@ -591,15 +591,15 @@
  * b[7:4] = size
  * b[79:16] = Host address
  */
-#define MCHP_ESPI_SRAM_BAR_CFG(x) REG8(MCHP_ESPI_MEM_BASE + ((x)*10) + 0x1ac)
+#define MCHP_ESPI_SRAM_BAR_CFG(x) REG8(MCHP_ESPI_MEM_BASE + ((x) * 10) + 0x1ac)
 #define MCHP_ESPI_SRAM_BAR_ADDR_0_15(x) \
-	REG16(MCHP_ESPI_MEM_BASE + ((x)*10) + 0x1ae)
+	REG16(MCHP_ESPI_MEM_BASE + ((x) * 10) + 0x1ae)
 #define MCHP_ESPI_SRAM_BAR_ADDR_16_31(x) \
-	REG16(MCHP_ESPI_MEM_BASE + ((x)*10) + 0x1b0)
+	REG16(MCHP_ESPI_MEM_BASE + ((x) * 10) + 0x1b0)
 #define MCHP_ESPI_SRAM_BAR_ADDR_32_47(x) \
-	REG16(MCHP_ESPI_MEM_BASE + ((x)*10) + 0x1b2)
+	REG16(MCHP_ESPI_MEM_BASE + ((x) * 10) + 0x1b2)
 #define MCHP_ESPI_SRAM_BAR_ADDR_48_63(x) \
-	REG16(MCHP_ESPI_MEM_BASE + ((x)*10) + 0x1b4)
+	REG16(MCHP_ESPI_MEM_BASE + ((x) * 10) + 0x1b4)
 /* eSPI Memory Bus Master Registers */
 #define MCHP_ESPI_BM_STATUS REG32(MCHP_ESPI_MEM_BASE + 0x200)
 #define MCHP_ESPI_BM_IEN REG32(MCHP_ESPI_MEM_BASE + 0x204)
@@ -624,13 +624,14 @@
  *
  * BAR's start at offset 0x330
  */
-#define MCHP_ESPI_MBAR_EC_VSIZE(x) REG32(MCHP_ESPI_MEM_BASE + ((x)*10) + 0x330)
+#define MCHP_ESPI_MBAR_EC_VSIZE(x) \
+	REG32(MCHP_ESPI_MEM_BASE + ((x) * 10) + 0x330)
 #define MCHP_ESPI_MBAR_EC_ADDR_0_15(x) \
-	REG16(MCHP_ESPI_MEM_BASE + ((x)*10) + 0x332)
+	REG16(MCHP_ESPI_MEM_BASE + ((x) * 10) + 0x332)
 #define MCHP_ESPI_MBAR_EC_ADDR_16_31(x) \
-	REG16(MCHP_ESPI_MEM_BASE + ((x)*10) + 0x334)
+	REG16(MCHP_ESPI_MEM_BASE + ((x) * 10) + 0x334)
 #define MCHP_ESPI_MBAR_EC_ADDR_32_47(x) \
-	REG16(MCHP_ESPI_MEM_BASE + ((x)*10) + 0x336)
+	REG16(MCHP_ESPI_MEM_BASE + ((x) * 10) + 0x336)
 
 /* eSPI Virtual Wire registers */
 #define MCHP_ESPI_MSVW_LEN 12
@@ -668,46 +669,48 @@
 #define MSVW_MAX 11
 
 /* Access 32-bit word in 96-bit MSVW register. 0 <= w <= 2 */
-#define MSVW(id, w) REG32(MCHP_ESPI_MSVW_BASE + ((id)*12) + (((w)&0x03) * 4))
+#define MSVW(id, w) \
+	REG32(MCHP_ESPI_MSVW_BASE + ((id) * 12) + (((w) & 0x03) * 4))
 /* Access index value in byte 0 */
-#define MCHP_ESPI_VW_M2S_INDEX(id) REG8(MCHP_ESPI_VW_BASE + ((id)*12))
+#define MCHP_ESPI_VW_M2S_INDEX(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 12))
 /*
  * Access MTOS_SOURCE and MTOS_STATE in byte 1
  * MTOS_SOURCE = b[1:0] specifies reset source
  * MTOS_STATE = b[7:4] are states loaded into SRC[0:3] on reset event
  */
-#define MCHP_ESPI_VW_M2S_MTOS(id) REG8(MCHP_ESPI_VW_BASE + 1 + ((id)*12))
+#define MCHP_ESPI_VW_M2S_MTOS(id) REG8(MCHP_ESPI_VW_BASE + 1 + ((id) * 12))
 /*
  * Access Index, MTOS Source, and MTOS State as 16-bit quantity.
  * Index in b[7:0]
  * MTOS Source in b[9:8]
  * MTOS State in b[15:12]
  */
-#define MCHP_ESPI_VW_M2S_INDEX_MTOS(id) REG16(MCHP_ESPI_VW_BASE + ((id)*12))
+#define MCHP_ESPI_VW_M2S_INDEX_MTOS(id) REG16(MCHP_ESPI_VW_BASE + ((id) * 12))
 /* Access SRCn IRQ Select bit fields */
-#define MCHP_ESPI_VW_M2S_IRQSEL0(id) REG8(MCHP_ESPI_VW_BASE + ((id)*12) + 4)
-#define MCHP_ESPI_VW_M2S_IRQSEL1(id) REG8(MCHP_ESPI_VW_BASE + ((id)*12) + 5)
-#define MCHP_ESPI_VW_M2S_IRQSEL2(id) REG8(MCHP_ESPI_VW_BASE + ((id)*12) + 6)
-#define MCHP_ESPI_VW_M2S_IRQSEL3(id) REG8(MCHP_ESPI_VW_BASE + ((id)*12) + 7)
+#define MCHP_ESPI_VW_M2S_IRQSEL0(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 12) + 4)
+#define MCHP_ESPI_VW_M2S_IRQSEL1(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 12) + 5)
+#define MCHP_ESPI_VW_M2S_IRQSEL2(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 12) + 6)
+#define MCHP_ESPI_VW_M2S_IRQSEL3(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 12) + 7)
 #define MCHP_ESPI_VW_M2S_IRQSEL(id, src) \
-	REG8(MCHP_ESPI_VW_BASE + ((id)*12) + 4 + ((src)&0x03))
-#define MCHP_ESPI_VW_M2S_IRQSEL_ALL(id) REG32(MCHP_ESPI_VW_BASE + ((id)*12) + 4)
+	REG8(MCHP_ESPI_VW_BASE + ((id) * 12) + 4 + ((src) & 0x03))
+#define MCHP_ESPI_VW_M2S_IRQSEL_ALL(id) \
+	REG32(MCHP_ESPI_VW_BASE + ((id) * 12) + 4)
 /* Access individual source bits */
-#define MCHP_ESPI_VW_M2S_SRC0(id) REG8(MCHP_ESPI_VW_BASE + ((id)*12) + 8)
-#define MCHP_ESPI_VW_M2S_SRC1(id) REG8(MCHP_ESPI_VW_BASE + ((id)*12) + 9)
-#define MCHP_ESPI_VW_M2S_SRC2(id) REG8(MCHP_ESPI_VW_BASE + ((id)*12) + 10)
-#define MCHP_ESPI_VW_M2S_SRC3(id) REG8(MCHP_ESPI_VW_BASE + ((id)*12) + 11)
+#define MCHP_ESPI_VW_M2S_SRC0(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 12) + 8)
+#define MCHP_ESPI_VW_M2S_SRC1(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 12) + 9)
+#define MCHP_ESPI_VW_M2S_SRC2(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 12) + 10)
+#define MCHP_ESPI_VW_M2S_SRC3(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 12) + 11)
 /*
  * Access all four Source bits as 32-bit value, Source bits are located
  * at bits[0, 8, 16, 24] of 32-bit word.
  */
-#define MCHP_ESPI_VW_M2S_SRC_ALL(id) REG32(MCHP_ESPI_VW_BASE + 8 + ((id)*12))
+#define MCHP_ESPI_VW_M2S_SRC_ALL(id) REG32(MCHP_ESPI_VW_BASE + 8 + ((id) * 12))
 /*
  * Access an individual Source bit as byte where
  * bit[0] contains the source bit.
  */
 #define MCHP_ESPI_VW_M2S_SRC(id, src) \
-	REG8(MCHP_ESPI_VW_BASE + 8 + ((id)*8) + ((src)&0x03))
+	REG8(MCHP_ESPI_VW_BASE + 8 + ((id) * 8) + ((src) & 0x03))
 
 /*
  * Indices of Slave to Master Virtual Wire registers.
@@ -733,64 +736,65 @@
 
 /* Access 32-bit word of 64-bit SMVW register, 0 <= w <= 1 */
 #define SMVW(id, w) \
-	REG32(MCHP_ESPI_VW_BASE + ((id)*8) + 0x200 + (((w)&0x01) * 4))
+	REG32(MCHP_ESPI_VW_BASE + ((id) * 8) + 0x200 + (((w) & 0x01) * 4))
 /* Access Index in b[7:0] of byte 0 */
-#define MCHP_ESPI_VW_S2M_INDEX(id) REG8(MCHP_ESPI_VW_BASE + ((id)*8) + 0x200)
+#define MCHP_ESPI_VW_S2M_INDEX(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 8) + 0x200)
 /* Access STOM_SOURCE and STOM_STATE in byte 1
  * STOM_SOURCE = b[1:0]
  * STOM_STATE = b[7:4]
  */
-#define MCHP_ESPI_VW_S2M_STOM(id) REG8(MCHP_ESPI_VW_BASE + ((id)*8) + 0x201)
+#define MCHP_ESPI_VW_S2M_STOM(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 8) + 0x201)
 /* Access Index, STOM_SOURCE, and STOM_STATE in bytes[1:0]
  * Index = b[7:0]
  * STOM_SOURCE = b[9:8]
  * STOM_STATE = [15:12]
  */
 #define MCHP_ESPI_VW_S2M_INDEX_STOM(id) \
-	REG16(MCHP_ESPI_VW_BASE + ((id)*8) + 0x200)
+	REG16(MCHP_ESPI_VW_BASE + ((id) * 8) + 0x200)
 /* Access Change[0:3] RO bits. Set to 1 if any of SRC[0:3] change */
-#define MCHP_ESPI_VW_S2M_CHANGE(id) REG8(MCHP_ESPI_VW_BASE + ((id)*8) + 0x202)
+#define MCHP_ESPI_VW_S2M_CHANGE(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 8) + 0x202)
 /* Access individual SRC bits
  * bit[0] = SRCn
  */
-#define MCHP_ESPI_VW_S2M_SRC0(id) REG8(MCHP_ESPI_VW_BASE + ((id)*8) + 0x204)
-#define MCHP_ESPI_VW_S2M_SRC1(id) REG8(MCHP_ESPI_VW_BASE + ((id)*8) + 0x205)
-#define MCHP_ESPI_VW_S2M_SRC2(id) REG8(MCHP_ESPI_VW_BASE + ((id)*8) + 0x206)
-#define MCHP_ESPI_VW_S2M_SRC3(id) REG8(MCHP_ESPI_VW_BASE + ((id)*8) + 0x207)
+#define MCHP_ESPI_VW_S2M_SRC0(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 8) + 0x204)
+#define MCHP_ESPI_VW_S2M_SRC1(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 8) + 0x205)
+#define MCHP_ESPI_VW_S2M_SRC2(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 8) + 0x206)
+#define MCHP_ESPI_VW_S2M_SRC3(id) REG8(MCHP_ESPI_VW_BASE + ((id) * 8) + 0x207)
 /*
  * Access specified source bit as byte read/write.
  * Source bit is in bit[0] of byte.
  */
 #define MCHP_ESPI_VW_S2M_SRC(id, src) \
-	REG8(MCHP_ESPI_VW_BASE + 0x204 + ((id)*8) + ((src)&0x03))
+	REG8(MCHP_ESPI_VW_BASE + 0x204 + ((id) * 8) + ((src) & 0x03))
 /* Access SRC[0:3] as 32-bit word
  * SRC0 = b[0]
  * SRC1 = b[8]
  * SRC2 = b[16]
  * SRC3 = b[24]
  */
-#define MCHP_ESPI_VW_S2M_SRC_ALL(id) REG32(MCHP_ESPI_VW_BASE + ((id)*8) + 0x204)
+#define MCHP_ESPI_VW_S2M_SRC_ALL(id) \
+	REG32(MCHP_ESPI_VW_BASE + ((id) * 8) + 0x204)
 
 /* DMA */
 #define MCHP_DMA_MAIN_CTRL REG8(MCHP_DMA_BASE + 0x00)
 #define MCHP_DMA_MAIN_PKT_RO REG32(MCHP_DMA_BASE + 0x04)
 #define MCHP_DMA_MAIN_FSM_RO REG8(MCHP_DMA_BASE + 0x08)
 /* DMA Channel Registers */
-#define MCHP_DMA_CH_ACT(n) REG8(MCHP_DMA_CH_BASE + ((n)*MCHP_DMA_CH_OFS))
+#define MCHP_DMA_CH_ACT(n) REG8(MCHP_DMA_CH_BASE + ((n) * MCHP_DMA_CH_OFS))
 #define MCHP_DMA_CH_MEM_START(n) \
-	REG32(MCHP_DMA_CH_BASE + ((n)*MCHP_DMA_CH_OFS) + 0x04)
+	REG32(MCHP_DMA_CH_BASE + ((n) * MCHP_DMA_CH_OFS) + 0x04)
 #define MCHP_DMA_CH_MEM_END(n) \
-	REG32(MCHP_DMA_CH_BASE + ((n)*MCHP_DMA_CH_OFS) + 0x08)
+	REG32(MCHP_DMA_CH_BASE + ((n) * MCHP_DMA_CH_OFS) + 0x08)
 #define MCHP_DMA_CH_DEV_ADDR(n) \
-	REG32(MCHP_DMA_CH_BASE + ((n)*MCHP_DMA_CH_OFS) + 0x0c)
+	REG32(MCHP_DMA_CH_BASE + ((n) * MCHP_DMA_CH_OFS) + 0x0c)
 #define MCHP_DMA_CH_CTRL(n) \
-	REG32(MCHP_DMA_CH_BASE + ((n)*MCHP_DMA_CH_OFS) + 0x10)
+	REG32(MCHP_DMA_CH_BASE + ((n) * MCHP_DMA_CH_OFS) + 0x10)
 #define MCHP_DMA_CH_ISTS(n) \
-	REG32(MCHP_DMA_CH_BASE + ((n)*MCHP_DMA_CH_OFS) + 0x14)
+	REG32(MCHP_DMA_CH_BASE + ((n) * MCHP_DMA_CH_OFS) + 0x14)
 #define MCHP_DMA_CH_IEN(n) \
-	REG32(MCHP_DMA_CH_BASE + ((n)*MCHP_DMA_CH_OFS) + 0x18)
+	REG32(MCHP_DMA_CH_BASE + ((n) * MCHP_DMA_CH_OFS) + 0x18)
 #define MCHP_DMA_CH_FSM_RO(n) \
-	REG32(MCHP_DMA_CH_BASE + ((n)*MCHP_DMA_CH_OFS) + 0x1c)
+	REG32(MCHP_DMA_CH_BASE + ((n) * MCHP_DMA_CH_OFS) + 0x1c)
 /*
  * DMA Channel 0 implements CRC-32 feature
  */

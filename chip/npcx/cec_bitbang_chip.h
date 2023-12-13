@@ -10,7 +10,7 @@
 extern uint32_t apb1_freq_div_10k;
 
 /* Time in us to timer clock ticks */
-#define CEC_US_TO_TICKS(t) ((t)*apb1_freq_div_10k / 100)
+#define CEC_US_TO_TICKS(t) ((t) * apb1_freq_div_10k / 100)
 #ifdef CONFIG_CEC_DEBUG
 /* Timer clock ticks to us */
 #define CEC_TICKS_TO_US(ticks) (100 * (ticks) / apb1_freq_div_10k)

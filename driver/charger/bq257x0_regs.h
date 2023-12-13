@@ -278,9 +278,9 @@
  *  _x		the initial value of the register
  */
 
-#define SET_BQ_FIELD(_chip, _reg, _field, _v, _x)                 \
-	(((_x) & ~BQ_FIELD_MASK(_chip, _reg, _field)) |           \
-	 (((_v)&GENMASK(_chip##_##_reg##_##_field##_BITS - 1, 0)) \
+#define SET_BQ_FIELD(_chip, _reg, _field, _v, _x)                   \
+	(((_x) & ~BQ_FIELD_MASK(_chip, _reg, _field)) |             \
+	 (((_v) & GENMASK(_chip##_##_reg##_##_field##_BITS - 1, 0)) \
 	  << _chip##_##_reg##_##_field##_SHIFT))
 
 /*

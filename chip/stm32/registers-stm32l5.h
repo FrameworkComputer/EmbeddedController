@@ -2165,7 +2165,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define FLASH_CR_OBL_LAUNCH BIT(27)
 #define FLASH_CR_OPTLOCK BIT(30)
 #define FLASH_CR_LOCK BIT(31)
-#define FLASH_CR_PNB(sec) (((sec)&0xff) << 3)
+#define FLASH_CR_PNB(sec) (((sec) & 0xff) << 3)
 #define FLASH_CR_PNB_MASK FLASH_CR_PNB(0xff)
 #define STM32_FLASH_ECCR REG32(STM32_FLASH_REGS_BASE + 0x30)
 #define STM32_FLASH_OPTR REG32(STM32_FLASH_REGS_BASE + 0x40)
@@ -2370,7 +2370,7 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 	(STM32_DMA_REGS(channel)->isr =                                \
 		 ((STM32_DMA_REGS(channel)->isr &                      \
 		   ~(STM32_DMA_ALL << STM32_DMA_CH_OFFSET(channel))) | \
-		  (((val)&STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
+		  (((val) & STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
 #define STM32_DMA_GET_IFCR(channel)                                        \
 	((STM32_DMA_REGS(channel)->ifcr >> STM32_DMA_CH_OFFSET(channel)) & \
 	 STM32_DMA_ALL)
@@ -2378,7 +2378,7 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 	(STM32_DMA_REGS(channel)->ifcr =                               \
 		 ((STM32_DMA_REGS(channel)->ifcr &                     \
 		   ~(STM32_DMA_ALL << STM32_DMA_CH_OFFSET(channel))) | \
-		  (((val)&STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
+		  (((val) & STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
 
 /* Bits for DMA channel regs */
 #define STM32_DMA_CCR_EN BIT(0)

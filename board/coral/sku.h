@@ -8,7 +8,7 @@
 #ifndef __CROS_EC_SKU_H
 #define __CROS_EC_SKU_H
 
-#define SKU_CONVERTIBLE(id) (1 << ((id)&0x7))
+#define SKU_CONVERTIBLE(id) (1 << ((id) & 0x7))
 
 /*
  * There are 256 possible SKUs for Coral. This table is used to map a given SKU
@@ -86,6 +86,6 @@ static const uint8_t form_factor[32] = {
 	0x00,
 };
 
-#define SKU_IS_CONVERTIBLE(id) ((form_factor[(id) >> 3] >> ((id)&0x7)) & 1)
+#define SKU_IS_CONVERTIBLE(id) ((form_factor[(id) >> 3] >> ((id) & 0x7)) & 1)
 
 #endif /* __CROS_EC_SKU_H */

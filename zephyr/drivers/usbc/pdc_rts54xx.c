@@ -19,7 +19,7 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 
 #define DT_DRV_COMPAT realtek_rts54_pdc
 
-#define BYTE0(n) ((n)&0xff)
+#define BYTE0(n) ((n) & 0xff)
 #define BYTE1(n) (((n) >> 8) & 0xff)
 #define BYTE2(n) (((n) >> 16) & 0xff)
 #define BYTE3(n) (((n) >> 24) & 0xff)

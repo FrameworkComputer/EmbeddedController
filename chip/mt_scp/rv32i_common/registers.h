@@ -21,11 +21,11 @@
 /* system clock counter value */
 #define SCP_CLK_SYS_VAL REG32(SCP_CLK_CTRL_BASE + 0x0014)
 #define CLK_SYS_VAL_MASK (0x3ff << 0)
-#define CLK_SYS_VAL_VAL(v) ((v)&CLK_SYS_VAL_MASK)
+#define CLK_SYS_VAL_VAL(v) ((v) & CLK_SYS_VAL_MASK)
 /* ULPOSC clock counter value */
 #define SCP_CLK_HIGH_VAL REG32(SCP_CLK_CTRL_BASE + 0x0018)
 #define CLK_HIGH_VAL_MASK (0x1f << 0)
-#define CLK_HIGH_VAL_VAL(v) ((v)&CLK_HIGH_VAL_MASK)
+#define CLK_HIGH_VAL_VAL(v) ((v) & CLK_HIGH_VAL_MASK)
 /* sleep mode control */
 #define SCP_SLEEP_CTRL REG32(SCP_CLK_CTRL_BASE + 0x0020)
 #define SLP_CTRL_EN BIT(0)
@@ -70,14 +70,14 @@
 #define SCP_UART_CK_SEL REG32(SCP_CLK_CTRL_BASE + 0x0044)
 #define UART0_CK_SEL_SHIFT 0
 #define UART0_CK_SEL_MASK (0x3 << UART0_CK_SEL_SHIFT)
-#define UART0_CK_SEL_VAL(v) ((v)&UART0_CK_SEL_MASK)
+#define UART0_CK_SEL_VAL(v) ((v) & UART0_CK_SEL_MASK)
 #define UART0_CK_SW_STATUS_MASK (0xf << 8)
-#define UART0_CK_SW_STATUS_VAL(v) ((v)&UART0_CK_SW_STATUS_MASK)
+#define UART0_CK_SW_STATUS_VAL(v) ((v) & UART0_CK_SW_STATUS_MASK)
 #define UART1_CK_SEL_SHIFT 16
 #define UART1_CK_SEL_MASK (0x3 << UART1_CK_SEL_SHIFT)
-#define UART1_CK_SEL_VAL(v) ((v)&UART1_CK_SEL_MASK)
+#define UART1_CK_SEL_VAL(v) ((v) & UART1_CK_SEL_MASK)
 #define UART1_CK_SW_STATUS_MASK (0xf << 24)
-#define UART1_CK_SW_STATUS_VAL(v) ((v)&UART1_CK_SW_STATUS_MASK)
+#define UART1_CK_SW_STATUS_VAL(v) ((v) & UART1_CK_SW_STATUS_MASK)
 #define UART_CK_SEL_26M 0
 #define UART_CK_SEL_32K 1
 #define UART_CK_SEL_ULPOSC 2
@@ -146,7 +146,7 @@
 
 /* INTC */
 #define SCP_INTC_WORD(irq) ((irq) >> 5) /* word length = 2^5 */
-#define SCP_INTC_BIT(irq) ((irq)&0x1F) /* bit shift =LSB[0:4] */
+#define SCP_INTC_BIT(irq) ((irq) & 0x1F) /* bit shift =LSB[0:4] */
 #define SCP_INTC_GRP_COUNT 15
 #define SCP_INTC_GRP_GAP 4
 

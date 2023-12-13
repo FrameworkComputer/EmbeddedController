@@ -15,9 +15,9 @@ struct hciCmdHdr {
 	uint8_t paramLen;
 } __packed;
 #define CMD_MAKE_OPCODE(ogf, ocf) \
-	((((uint16_t)((ogf)&0x3f)) << 10) | ((ocf)&0x03ff))
+	((((uint16_t)((ogf) & 0x3f)) << 10) | ((ocf) & 0x03ff))
 #define CMD_GET_OGF(opcode) (((opcode) >> 10) & 0x3f)
-#define CMD_GET_OCF(opcode) ((opcode)&0x03ff)
+#define CMD_GET_OCF(opcode) ((opcode) & 0x03ff)
 
 struct hciAclHdr {
 	uint16_t hdr;

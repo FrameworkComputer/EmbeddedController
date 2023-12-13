@@ -144,7 +144,7 @@ enum pd_rx_errors {
 	 PDO_AUG_MAX_CURR(max_ma) | PDO_TYPE_AUGMENTED)
 
 /* RDO : Request Data Object */
-#define RDO_OBJ_POS(n) (((n)&0xF) << 28)
+#define RDO_OBJ_POS(n) (((n) & 0xF) << 28)
 #define RDO_POS(rdo) (((rdo) >> 28) & 0xF)
 #define RDO_GIVE_BACK BIT(27)
 #define RDO_CAP_MISMATCH BIT(26)
@@ -184,10 +184,10 @@ enum pd_rx_errors {
 #define BDO_MODE_SHARED_ENTER (BIST_SHARED_MODE_ENTER << 28)
 #define BDO_MODE_SHARED_EXIT (BIST_SHARED_MODE_EXIT << 28)
 
-#define BDO(mode, cnt) ((mode) | ((cnt)&0xFFFF))
+#define BDO(mode, cnt) ((mode) | ((cnt) & 0xFFFF))
 
 #define BIST_MODE(n) ((n) >> 28)
-#define BIST_ERROR_COUNTER(n) ((n)&0xffff)
+#define BIST_ERROR_COUNTER(n) ((n) & 0xffff)
 #define BIST_RECEIVER_MODE 0
 #define BIST_TRANSMIT_MODE 1
 #define BIST_RETURNED_COUNTER 2
@@ -520,7 +520,7 @@ struct partner_active_modes {
  * <4:0>    :: command
  */
 #define VDO(vid, type, custom) \
-	(((vid) << 16) | ((type) << 15) | ((custom)&0x7FFF))
+	(((vid) << 16) | ((type) << 15) | ((custom) & 0x7FFF))
 
 #define VDO_SVDM_TYPE BIT(15)
 #define VDO_SVDM_VERS_MAJOR(x) (x << 13)
@@ -568,7 +568,7 @@ struct partner_active_modes {
 #define PD_VDO_VID(vdo) ((vdo) >> 16)
 #define PD_VDO_SVDM(vdo) (((vdo) >> 15) & 1)
 #define PD_VDO_OPOS(vdo) (((vdo) >> 8) & 0x7)
-#define PD_VDO_CMD(vdo) ((vdo)&0x1f)
+#define PD_VDO_CMD(vdo) ((vdo) & 0x1f)
 #define PD_VDO_CMDT(vdo) (((vdo) >> 6) & 0x3)
 #define PD_VDO_SVDM_VERS_MAJOR(vdo) (((vdo) >> 13) & 0x3)
 #define PD_VDO_SVDM_VERS_MINOR(vdo) (((vdo) >> 11) & 0x3)
@@ -606,23 +606,23 @@ struct partner_active_modes {
 #define VDO_I(name) VDO_INDEX_##name
 
 /* PD Rev 2.0 ID Header VDO */
-#define VDO_IDH(usbh, usbd, ptype, is_modal, vid)            \
-	((usbh) << 31 | (usbd) << 30 | ((ptype)&0x7) << 27 | \
-	 (is_modal) << 26 | ((vid)&0xffff))
+#define VDO_IDH(usbh, usbd, ptype, is_modal, vid)              \
+	((usbh) << 31 | (usbd) << 30 | ((ptype) & 0x7) << 27 | \
+	 (is_modal) << 26 | ((vid) & 0xffff))
 
 /* PD Rev 3.0 ID Header VDO */
-#define VDO_IDH_REV30(usbh, usbd, ptype_u, is_modal, ptype_d, ctype, vid)      \
-	(VDO_IDH(usbh, usbd, ptype_u, is_modal, vid) | ((ptype_d)&0x7) << 23 | \
-	 ((ctype)&0x3) << 21)
+#define VDO_IDH_REV30(usbh, usbd, ptype_u, is_modal, ptype_d, ctype, vid) \
+	(VDO_IDH(usbh, usbd, ptype_u, is_modal, vid) |                    \
+	 ((ptype_d) & 0x7) << 23 | ((ctype) & 0x3) << 21)
 
 #define PD_IDH_PTYPE(vdo) (((vdo) >> 27) & 0x7)
 #define PD_IDH_IS_MODAL(vdo) (((vdo) >> 26) & 0x1)
-#define PD_IDH_VID(vdo) ((vdo)&0xffff)
+#define PD_IDH_VID(vdo) ((vdo) & 0xffff)
 
-#define VDO_CSTAT(tid) ((tid)&0xfffff)
-#define PD_CSTAT_TID(vdo) ((vdo)&0xfffff)
+#define VDO_CSTAT(tid) ((tid) & 0xfffff)
+#define PD_CSTAT_TID(vdo) ((vdo) & 0xfffff)
 
-#define VDO_PRODUCT(pid, bcd) (((pid)&0xffff) << 16 | ((bcd)&0xffff))
+#define VDO_PRODUCT(pid, bcd) (((pid) & 0xffff) << 16 | ((bcd) & 0xffff))
 #define PD_PRODUCT_PID(vdo) (((vdo) >> 16) & 0xffff)
 
 /* Max Attention length is header + 1 VDO */
@@ -759,9 +759,9 @@ struct pd_cable {
  * mark the end of SVIDs.  If more than 12 SVIDs are supported command SHOULD be
  * repeated.
  */
-#define VDO_SVID(svid0, svid1) (((svid0)&0xffff) << 16 | ((svid1)&0xffff))
+#define VDO_SVID(svid0, svid1) (((svid0) & 0xffff) << 16 | ((svid1) & 0xffff))
 #define PD_VDO_SVID_SVID0(vdo) ((vdo) >> 16)
-#define PD_VDO_SVID_SVID1(vdo) ((vdo)&0xffff)
+#define PD_VDO_SVID_SVID1(vdo) ((vdo) & 0xffff)
 
 /*
  * Google modes capabilities
@@ -791,9 +791,9 @@ struct pd_cable {
  *           Other bits are reserved.
  * <1:0>   : signal direction ( 00b=rsv, 01b=sink, 10b=src 11b=both )
  */
-#define VDO_MODE_DP(snkp, srcp, usb, gdr, sign, sdir)                \
-	(((snkp)&0xff) << 16 | ((srcp)&0xff) << 8 | ((usb)&1) << 7 | \
-	 ((gdr)&1) << 6 | ((sign)&0xF) << 2 | ((sdir)&0x3))
+#define VDO_MODE_DP(snkp, srcp, usb, gdr, sign, sdir)                      \
+	(((snkp) & 0xff) << 16 | ((srcp) & 0xff) << 8 | ((usb) & 1) << 7 | \
+	 ((gdr) & 1) << 6 | ((sign) & 0xF) << 2 | ((sdir) & 0x3))
 
 #define MODE_DP_DFP_PIN_SHIFT 8
 #define MODE_DP_UFP_PIN_SHIFT 16
@@ -847,10 +847,10 @@ struct pd_cable {
  * <1:0>  : connect status : 00b ==  no (DFP|UFP)_D is connected or disabled.
  *          01b == DFP_D connected, 10b == UFP_D connected, 11b == both.
  */
-#define VDO_DP_STATUS(irq, lvl, amode, usbc, mf, en, lp, conn)             \
-	(((irq)&1) << 8 | ((lvl)&1) << 7 | ((amode)&1) << 6 |              \
-	 ((usbc)&1) << 5 | ((mf)&1) << 4 | ((en)&1) << 3 | ((lp)&1) << 2 | \
-	 ((conn & 0x3) << 0))
+#define VDO_DP_STATUS(irq, lvl, amode, usbc, mf, en, lp, conn)      \
+	(((irq) & 1) << 8 | ((lvl) & 1) << 7 | ((amode) & 1) << 6 | \
+	 ((usbc) & 1) << 5 | ((mf) & 1) << 4 | ((en) & 1) << 3 |    \
+	 ((lp) & 1) << 2 | ((conn & 0x3) << 0))
 
 #define PD_VDO_DPSTS_MF_MASK BIT(4)
 
@@ -875,7 +875,7 @@ struct pd_cable {
  * <1:0>   : cfg : 00 == USB, 01 == DFP_D, 10 == UFP_D, 11 == reserved
  */
 #define VDO_DP_CFG(pin, sig, cfg) \
-	(((pin)&0xff) << 8 | ((sig)&0xf) << 2 | ((cfg)&0x3))
+	(((pin) & 0xff) << 8 | ((sig) & 0xf) << 2 | ((cfg) & 0x3))
 
 #define PD_DP_CFG_DPON(x) (((x & 0x3) == 1) || ((x & 0x3) == 2))
 /*
@@ -904,12 +904,12 @@ struct pd_cable {
  * SW Debug Version: Software version useful for debugging (15 bits)
  * IS RW: True if currently in RW, False otherwise (1 bit)
  */
-#define VDO_INFO(id, id_minor, ver, is_rw)                             \
-	((id_minor) << 26 | ((id)&0x3ff) << 16 | ((ver)&0x7fff) << 1 | \
-	 ((is_rw)&1))
+#define VDO_INFO(id, id_minor, ver, is_rw)                                 \
+	((id_minor) << 26 | ((id) & 0x3ff) << 16 | ((ver) & 0x7fff) << 1 | \
+	 ((is_rw) & 1))
 #define VDO_INFO_HW_DEV_ID(x) ((x) >> 16)
 #define VDO_INFO_SW_DBG_VER(x) (((x) >> 1) & 0x7fff)
-#define VDO_INFO_IS_RW(x) ((x)&1)
+#define VDO_INFO_IS_RW(x) ((x) & 1)
 
 #define HW_DEV_ID_MAJ(x) (x & 0x3ff)
 #define HW_DEV_ID_MIN(x) ((x) >> 10)
@@ -1279,7 +1279,7 @@ enum pd_ctrl_msg_type {
 
 /* Battery Status Data Object fields for REV 3.0 */
 #define BSDO_CAP_UNKNOWN 0xffff
-#define BSDO_CAP(n) (((n)&0xffff) << 16)
+#define BSDO_CAP(n) (((n) & 0xffff) << 16)
 #define BSDO_INVALID BIT(8)
 #define BSDO_PRESENT BIT(9)
 #define BSDO_DISCHARGING BIT(10)
@@ -1495,7 +1495,7 @@ enum cable_outlet {
  * NOTE: bit 4 was added in PD 3.0, and should be reserved and set to 0 in PD
  * 2.0 messages
  */
-#define PD_HEADER_TYPE(header) ((header)&0x1F)
+#define PD_HEADER_TYPE(header) ((header) & 0x1F)
 #define PD_HEADER_ID(header) (((header) >> 9) & 7)
 #define PD_HEADER_PROLE(header) (((header) >> 8) & 1)
 #define PD_HEADER_REV(header) (((header) >> 6) & 3)
@@ -1507,13 +1507,13 @@ enum cable_outlet {
  * NOTE: This is not part of the PD spec.
  */
 #define PD_HEADER_GET_SOP(header) (((header) >> 28) & 0xf)
-#define PD_HEADER_SOP(sop) (((sop)&0xf) << 28)
+#define PD_HEADER_SOP(sop) (((sop) & 0xf) << 28)
 
 /* Used for processing pd extended header */
 #define PD_EXT_HEADER_CHUNKED(header) (((header) >> 15) & 1)
 #define PD_EXT_HEADER_CHUNK_NUM(header) (((header) >> 11) & 0xf)
 #define PD_EXT_HEADER_REQ_CHUNK(header) (((header) >> 10) & 1)
-#define PD_EXT_HEADER_DATA_SIZE(header) ((header)&0x1ff)
+#define PD_EXT_HEADER_DATA_SIZE(header) ((header) & 0x1ff)
 
 /* Used to get extended header from the first 32-bit word of the message */
 #define GET_EXT_HEADER(msg) (msg & 0xffff)

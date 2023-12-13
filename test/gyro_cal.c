@@ -26,7 +26,7 @@ int kDefaultTemperatureKelvin = 298;
 
 #define MSEC_TO_NANOS(x) ((uint64_t)((x) * (uint64_t)(1000000)))
 #define SEC_TO_NANOS(x) MSEC_TO_NANOS((x) * (uint64_t)(1000))
-#define HZ_TO_PERIOD_NANOS(hz) (SEC_TO_NANOS(1024) / ((uint64_t)((hz)*1024)))
+#define HZ_TO_PERIOD_NANOS(hz) (SEC_TO_NANOS(1024) / ((uint64_t)((hz) * 1024)))
 
 struct motion_sensor_t motion_sensors[] = {
 	[BASE] = {},

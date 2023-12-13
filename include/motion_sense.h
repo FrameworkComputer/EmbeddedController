@@ -103,9 +103,9 @@ enum sensor_config {
 #define ACCEL_MK_SPI_ADDR_FLAGS(addr) ((addr) | I2C_FLAG_ADDR_IS_SPI)
 
 #define ACCEL_GET_I2C_ADDR(addr_flags) (I2C_STRIP_FLAGS(addr_flags))
-#define ACCEL_GET_SPI_ADDR(addr_flags) ((addr_flags)&I2C_ADDR_MASK)
+#define ACCEL_GET_SPI_ADDR(addr_flags) ((addr_flags) & I2C_ADDR_MASK)
 
-#define ACCEL_ADDR_IS_SPI(addr_flags) ((addr_flags)&I2C_FLAG_ADDR_IS_SPI)
+#define ACCEL_ADDR_IS_SPI(addr_flags) ((addr_flags) & I2C_FLAG_ADDR_IS_SPI)
 
 /*
  * Define the frequency to use in max_frequency based on the maximal frequency

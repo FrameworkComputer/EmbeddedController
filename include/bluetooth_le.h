@@ -106,11 +106,11 @@ struct ble_adv_header {
 #define BLE_ADV_HEADER_RXADD_SHIFT 7
 #define BLE_ADV_HEADER_LENGTH_SHIFT 8
 
-#define BLE_ADV_HEADER(type, tx, rx, length)                           \
-	((uint16_t)((((length)&0x3f) << BLE_ADV_HEADER_LENGTH_SHIFT) | \
-		    (((rx)&0x1) << BLE_ADV_HEADER_RXADD_SHIFT) |       \
-		    (((tx)&0x1) << BLE_ADV_HEADER_TXADD_SHIFT) |       \
-		    (((type)&0xf) << BLE_ADV_HEADER_PDU_TYPE_SHIFT)))
+#define BLE_ADV_HEADER(type, tx, rx, length)                             \
+	((uint16_t)((((length) & 0x3f) << BLE_ADV_HEADER_LENGTH_SHIFT) | \
+		    (((rx) & 0x1) << BLE_ADV_HEADER_RXADD_SHIFT) |       \
+		    (((tx) & 0x1) << BLE_ADV_HEADER_TXADD_SHIFT) |       \
+		    (((type) & 0xf) << BLE_ADV_HEADER_PDU_TYPE_SHIFT)))
 
 #define BLE_ADV_HEADER_PDU_TYPE_ADV_IND 0
 #define BLE_ADV_HEADER_PDU_TYPE_ADV_DIRECT_IND 1
@@ -176,12 +176,12 @@ struct ble_data_header {
 #define BLE_DATA_HEADER_LLID_DATASTART 2
 #define BLE_DATA_HEADER_LLID_CONTROL 3
 
-#define BLE_DATA_HEADER(llid, nesn, sn, md, length)                     \
-	((uint16_t)((((length)&0x1f) << BLE_DATA_HEADER_LENGTH_SHIFT) | \
-		    (((MD)&0x1) << BLE_DATA_HEADER_MD_SHIFT) |          \
-		    (((SN)&0x1) << BLE_DATA_HEADER_SN_SHIFT) |          \
-		    (((NESN)&0x1) << BLE_DATA_HEADER_NESN_SHIFT) |      \
-		    (((llid)&0x3) << BLE_DATA_HEADER_LLID_SHIFT)))
+#define BLE_DATA_HEADER(llid, nesn, sn, md, length)                       \
+	((uint16_t)((((length) & 0x1f) << BLE_DATA_HEADER_LENGTH_SHIFT) | \
+		    (((MD) & 0x1) << BLE_DATA_HEADER_MD_SHIFT) |          \
+		    (((SN) & 0x1) << BLE_DATA_HEADER_SN_SHIFT) |          \
+		    (((NESN) & 0x1) << BLE_DATA_HEADER_NESN_SHIFT) |      \
+		    (((llid) & 0x3) << BLE_DATA_HEADER_LLID_SHIFT)))
 
 #define BLE_MAX_DATA_PAYLOAD_OCTETS 31
 #define BLE_MAX_PAYLOAD_OCTETS BLE_MAX_ADV_PAYLOAD_OCTETS

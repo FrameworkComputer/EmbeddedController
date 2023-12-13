@@ -46,11 +46,11 @@
 #define HEADER_GET_MNG_CMD(drbl_reg) \
 	(((drbl_reg) >> HEADER_MNG_CMD_OFFSET) & HEADER_MNG_CMD_MASK)
 
-#define BUILD_DRBL(length, protocol)                                 \
-	(((1 << DRBL_BUSY_OFFS) |                                    \
-	  (CONFIG_HECI_CORE_ID << HEADER_CORE_OFFSET) |              \
-	  ((protocol) << HEADER_PROTOCOL_OFFSET) |                   \
-	  (((length)&HEADER_LENGTH_MASK) << HEADER_LENGTH_OFFSET)) | \
+#define BUILD_DRBL(length, protocol)                                   \
+	(((1 << DRBL_BUSY_OFFS) |                                      \
+	  (CONFIG_HECI_CORE_ID << HEADER_CORE_OFFSET) |                \
+	  ((protocol) << HEADER_PROTOCOL_OFFSET) |                     \
+	  (((length) & HEADER_LENGTH_MASK) << HEADER_LENGTH_OFFSET)) | \
 	 (((length) >> HEADER_PROTOCOL_OFFSET) << HEADER_LENGTH1_OFFSET))
 
 #define BUILD_MNG_DRBL(cmd, length)                     \

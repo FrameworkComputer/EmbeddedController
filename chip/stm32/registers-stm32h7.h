@@ -705,7 +705,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define FLASH_CR_PSIZE_MASK (3 << 4)
 #define FLASH_CR_FW BIT(6)
 #define FLASH_CR_STRT BIT(7)
-#define FLASH_CR_SNB(sec) (((sec)&0x7) << 8)
+#define FLASH_CR_SNB(sec) (((sec) & 0x7) << 8)
 #define FLASH_CR_SNB_MASK FLASH_CR_SNB(0x7)
 #define STM32_FLASH_SR(bank) STM32_FLASH_REG(bank, 0x10)
 #define FLASH_SR_BUSY BIT(0)
@@ -966,12 +966,12 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 	(STM32_DMA_REGS(channel)->ifcr[STM32_DMA_CH_LH(channel)] =          \
 		 (STM32_DMA_REGS(channel)->ifcr[STM32_DMA_CH_LH(channel)] & \
 		  ~(0x3f << STM32_DMA_CH_OFFSET(channel))) |                \
-		 (((val)&0x3f) << STM32_DMA_CH_OFFSET(channel)))
+		 (((val) & 0x3f) << STM32_DMA_CH_OFFSET(channel)))
 #define STM32_DMA_SET_ISR(channel, val)                                    \
 	(STM32_DMA_REGS(channel)->isr[STM32_DMA_CH_LH(channel)] =          \
 		 (STM32_DMA_REGS(channel)->isr[STM32_DMA_CH_LH(channel)] & \
 		  ~(0x3f << STM32_DMA_CH_OFFSET(channel))) |               \
-		 (((val)&0x3f) << STM32_DMA_CH_OFFSET(channel)))
+		 (((val) & 0x3f) << STM32_DMA_CH_OFFSET(channel)))
 
 #define STM32_DMA_FEIF BIT(0)
 #define STM32_DMA_DMEIF BIT(2)
@@ -1119,7 +1119,7 @@ enum dmamux1_request {
 #define STM32_PMSE_IER REG32(STM32_PMSE_BASE + 0x18)
 #define STM32_PMSE_SR REG32(STM32_PMSE_BASE + 0x1c)
 #define STM32_PMSE_IFCR REG32(STM32_PMSE_BASE + 0x20)
-#define STM32_PMSE_PxPMR(x) REG32(STM32_PMSE_BASE + 0x2c + (x)*4)
+#define STM32_PMSE_PxPMR(x) REG32(STM32_PMSE_BASE + 0x2c + (x) * 4)
 #define STM32_PMSE_PAPMR REG32(STM32_PMSE_BASE + 0x2c)
 #define STM32_PMSE_PBPMR REG32(STM32_PMSE_BASE + 0x30)
 #define STM32_PMSE_PCPMR REG32(STM32_PMSE_BASE + 0x34)

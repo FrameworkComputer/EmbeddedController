@@ -70,7 +70,7 @@ extern const struct ioexpander_drv it8801_ioexpander_drv;
 #define IT8801_REG_GPIO_SOVR(port) (0x05 + (port))
 /* Control register */
 #define IT8801_REG_GPIO_CR(port, mask) \
-	(0x0A + (port)*8 + GPIO_MASK_TO_NUM(mask))
+	(0x0A + (port) * 8 + GPIO_MASK_TO_NUM(mask))
 /* Interrupt status register */
 #define IT8801_REG_GPIO_ISR(port) (0x32 + (port))
 /* Interrupt enable register */

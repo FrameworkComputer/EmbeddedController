@@ -100,12 +100,12 @@
 #define NPCX_TWD_BASE_ADDR 0x400D8000
 
 /* Multi-Modules Map */
-#define NPCX_PWM_BASE_ADDR(mdl) (0x40080000 + ((mdl)*0x2000L))
-#define NPCX_GPIO_BASE_ADDR(mdl) (0x40081000 + ((mdl)*0x2000L))
-#define NPCX_ITIM_BASE_ADDR(mdl) (0x400B0000 + ((mdl)*0x2000L))
-#define NPCX_MIWU_BASE_ADDR(mdl) (0x400BB000 + ((mdl)*0x2000L))
-#define NPCX_MFT_BASE_ADDR(mdl) (0x400E1000 + ((mdl)*0x2000L))
-#define NPCX_PM_CH_BASE_ADDR(mdl) (0x400C9000 + ((mdl)*0x2000L))
+#define NPCX_PWM_BASE_ADDR(mdl) (0x40080000 + ((mdl) * 0x2000L))
+#define NPCX_GPIO_BASE_ADDR(mdl) (0x40081000 + ((mdl) * 0x2000L))
+#define NPCX_ITIM_BASE_ADDR(mdl) (0x400B0000 + ((mdl) * 0x2000L))
+#define NPCX_MIWU_BASE_ADDR(mdl) (0x400BB000 + ((mdl) * 0x2000L))
+#define NPCX_MFT_BASE_ADDR(mdl) (0x400E1000 + ((mdl) * 0x2000L))
+#define NPCX_PM_CH_BASE_ADDR(mdl) (0x400C9000 + ((mdl) * 0x2000L))
 
 /*
  * NPCX-IRQ numbers

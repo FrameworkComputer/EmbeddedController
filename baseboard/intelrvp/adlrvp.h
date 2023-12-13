@@ -22,7 +22,7 @@
 #define ADLN_LP5_RVP_SKU_BOARD_ID 0x07
 #define ADLP_DDR5_RVP_SKU_BOARD_ID 0x12
 #define ADLP_LP5_T4_RVP_SKU_BOARD_ID 0x13
-#define ADL_RVP_BOARD_ID(id) ((id)&0x3F)
+#define ADL_RVP_BOARD_ID(id) ((id) & 0x3F)
 
 /* MECC config */
 #define CONFIG_INTEL_RVP_MECC_VERSION_1_0

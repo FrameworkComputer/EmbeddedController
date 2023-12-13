@@ -126,9 +126,9 @@
 #define ICM42607_ACCEL_LP_CLK_SEL BIT(7)
 #define ICM42607_IDLE BIT(4)
 #define ICM42607_GYRO_MODE_MASK GENMASK(3, 2)
-#define ICM42607_GYRO_MODE(_m) (((_m)&0x03) << 2)
+#define ICM42607_GYRO_MODE(_m) (((_m) & 0x03) << 2)
 #define ICM42607_ACCEL_MODE_MASK GENMASK(1, 0)
-#define ICM42607_ACCEL_MODE(_m) ((_m)&0x03)
+#define ICM42607_ACCEL_MODE(_m) ((_m) & 0x03)
 
 enum icm42607_sensor_mode {
 	ICM42607_MODE_OFF,
@@ -140,9 +140,9 @@ enum icm42607_sensor_mode {
 #define ICM42607_REG_GYRO_CONFIG0 0x0020
 #define ICM42607_REG_ACCEL_CONFIG0 0x0021
 #define ICM42607_FS_MASK GENMASK(6, 5)
-#define ICM42607_FS_SEL(_fs) (((_fs)&0x03) << 5)
+#define ICM42607_FS_SEL(_fs) (((_fs) & 0x03) << 5)
 #define ICM42607_ODR_MASK GENMASK(3, 0)
-#define ICM42607_ODR(_odr) ((_odr)&0x0F)
+#define ICM42607_ODR(_odr) ((_odr) & 0x0F)
 
 #define ICM42607_REG_TEMP_CONFIG0 0x0022
 
@@ -169,9 +169,9 @@ enum icm42607_ui_filt_bw {
 #define ICM42607_REG_GYRO_CONFIG1 0x0023
 #define ICM42607_REG_ACCEL_CONFIG1 0x0024
 #define ICM42607_UI_AVG_MASK GENMASK(6, 4)
-#define ICM42607_UI_AVG_SET(_avg) (((_avg)&0x07) << 4)
+#define ICM42607_UI_AVG_SET(_avg) (((_avg) & 0x07) << 4)
 #define ICM42607_UI_FILT_BW_MASK GENMASK(2, 0)
-#define ICM42607_UI_FILT_BW_SET(_filt) ((_filt)&0x07)
+#define ICM42607_UI_FILT_BW_SET(_filt) ((_filt) & 0x07)
 
 #define ICM42607_REG_FIFO_CONFIG1 0x0028
 #define ICM42607_REG_FIFO_CONFIG2 0x0029

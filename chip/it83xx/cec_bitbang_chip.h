@@ -12,7 +12,7 @@
 #define CEC_CLOCK_FREQ_HZ 32768
 
 /* Time in us to timer clock ticks */
-#define CEC_US_TO_TICKS(t) ((t)*CEC_CLOCK_FREQ_HZ / 1000000)
+#define CEC_US_TO_TICKS(t) ((t) * CEC_CLOCK_FREQ_HZ / 1000000)
 #ifdef CONFIG_CEC_DEBUG
 /* Timer clock ticks to us */
 #define CEC_TICKS_TO_US(ticks) (1000000 * (ticks) / CEC_CLOCK_FREQ_HZ)

@@ -297,13 +297,13 @@
 #define STM32_CRS_CR_CEN BIT(5)
 #define STM32_CRS_CR_AUTOTRIMEN BIT(6)
 #define STM32_CRS_CR_SWSYNC BIT(7)
-#define STM32_CRS_CR_TRIM(n) (((n)&0x3f) << 8)
+#define STM32_CRS_CR_TRIM(n) (((n) & 0x3f) << 8)
 
 #define STM32_CRS_CFGR REG32(STM32_CRS_BASE + 0x04) /* STM32F0XX */
-#define STM32_CRS_CFGR_RELOAD(n) (((n)&0xffff) << 0)
-#define STM32_CRS_CFGR_FELIM(n) (((n)&0xff) << 16)
-#define STM32_CRS_CFGR_SYNCDIV(n) (((n)&7) << 24)
-#define STM32_CRS_CFGR_SYNCSRC(n) (((n)&3) << 28)
+#define STM32_CRS_CFGR_RELOAD(n) (((n) & 0xffff) << 0)
+#define STM32_CRS_CFGR_FELIM(n) (((n) & 0xff) << 16)
+#define STM32_CRS_CFGR_SYNCDIV(n) (((n) & 7) << 24)
+#define STM32_CRS_CFGR_SYNCSRC(n) (((n) & 3) << 28)
 #define STM32_CRS_CFGR_SYNCPOL BIT(31)
 
 #define STM32_CRS_ISR REG32(STM32_CRS_BASE + 0x08) /* STM32F0XX */
@@ -785,7 +785,7 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 	(STM32_DMA_REGS(channel)->isr =                                \
 		 ((STM32_DMA_REGS(channel)->isr &                      \
 		   ~(STM32_DMA_ALL << STM32_DMA_CH_OFFSET(channel))) | \
-		  (((val)&STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
+		  (((val) & STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
 #define STM32_DMA_GET_IFCR(channel)                                        \
 	((STM32_DMA_REGS(channel)->ifcr >> STM32_DMA_CH_OFFSET(channel)) & \
 	 STM32_DMA_ALL)
@@ -793,7 +793,7 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 	(STM32_DMA_REGS(channel)->ifcr =                               \
 		 ((STM32_DMA_REGS(channel)->ifcr &                     \
 		   ~(STM32_DMA_ALL << STM32_DMA_CH_OFFSET(channel))) | \
-		  (((val)&STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
+		  (((val) & STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
 
 /* Bits for DMA channel regs */
 #define STM32_DMA_CCR_EN BIT(0)

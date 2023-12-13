@@ -82,14 +82,14 @@ static timestamp_t fault_deadline;
 /* The current sensing op-amp has a x100 gain */
 #define CURR_GAIN 100
 /* convert VBUS voltage in raw ADC value */
-#define VBUS_MV(mv) ((mv)*ADC_SCALE / VOLT_DIV / VDDA_MV)
+#define VBUS_MV(mv) ((mv) * ADC_SCALE / VOLT_DIV / VDDA_MV)
 /* convert VBUS current in raw ADC value */
-#define VBUS_MA(ma) ((ma)*ADC_SCALE * R_SENSE / 1000 * CURR_GAIN / VDDA_MV)
+#define VBUS_MA(ma) ((ma) * ADC_SCALE * R_SENSE / 1000 * CURR_GAIN / VDDA_MV)
 /* convert raw ADC value to mA */
 #define ADC_TO_CURR_MA(vbus) \
-	((vbus)*1000 / (ADC_SCALE * R_SENSE) * VDDA_MV / CURR_GAIN)
+	((vbus) * 1000 / (ADC_SCALE * R_SENSE) * VDDA_MV / CURR_GAIN)
 /* convert raw ADC value to mV */
-#define ADC_TO_VOLT_MV(vbus) ((vbus)*VOLT_DIV * VDDA_MV / ADC_SCALE)
+#define ADC_TO_VOLT_MV(vbus) ((vbus) * VOLT_DIV * VDDA_MV / ADC_SCALE)
 
 /* Max current : 20% over rated current */
 #define MAX_CURRENT VBUS_MA(RATED_CURRENT * 6 / 5)
@@ -102,11 +102,11 @@ static timestamp_t fault_deadline;
 #define SINK_IDLE_CURRENT VBUS_MA(500 /* mA */)
 
 /* Under-voltage limit is 0.8x Vnom */
-#define UVP_MV(mv) VBUS_MV((mv)*8 / 10)
+#define UVP_MV(mv) VBUS_MV((mv) * 8 / 10)
 /* Over-voltage limit is 1.2x Vnom */
-#define OVP_MV(mv) VBUS_MV((mv)*12 / 10)
+#define OVP_MV(mv) VBUS_MV((mv) * 12 / 10)
 /* Over-voltage recovery threshold is 1.1x Vnom */
-#define OVP_REC_MV(mv) VBUS_MV((mv)*11 / 10)
+#define OVP_REC_MV(mv) VBUS_MV((mv) * 11 / 10)
 
 /* Maximum discharging delay */
 #define DISCHARGE_TIMEOUT (275 * MSEC)

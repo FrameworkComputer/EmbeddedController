@@ -74,14 +74,14 @@
 #define STM32_TIM_CR1_DIR_MASK BIT(4)
 #define STM32_TIM_CR1_DIR_UP 0
 #define STM32_TIM_CR1_DIR_DOWN BIT(4)
-#define STM32_TIM_CR1_CMS (((n)&0x3) << 5)
+#define STM32_TIM_CR1_CMS (((n) & 0x3) << 5)
 #define STM32_TIM_CR1_CMS_MASK STM32_TIM_CR1_CMS(~0)
 #define STM32_TIM_CR1_CMS_EDGE STM32_TIM_CR1_CMS(0)
 #define STM32_TIM_CR1_CMS_CENTER1 STM32_TIM_CR1_CMS(1)
 #define STM32_TIM_CR1_CMS_CENTER2 STM32_TIM_CR1_CMS(2)
 #define STM32_TIM_CR1_CMS_CENTER3 STM32_TIM_CR1_CMS(3)
 #define STM32_TIM_CR1_ARPE BIT(7)
-#define STM32_TIM_CR1_CKD (((n)&0x3) << 8)
+#define STM32_TIM_CR1_CKD (((n) & 0x3) << 8)
 #define STM32_TIM_CR1_CKD_MASK STM32_TIM_CR1_CKD(~0)
 #define STM32_TIM_CR1_CKD_DIV1 STM32_TIM_CR1_CKD(0)
 #define STM32_TIM_CR1_CKD_DIV2 STM32_TIM_CR1_CKD(1)
@@ -96,7 +96,7 @@
 #define STM32_TIM_CCMR1(n) STM32_TIM_REG(n, 0x18)
 #define STM32_TIM_CCMR1_OC1PE BIT(2)
 /* Use in place of TIM_CCMR1_OC1M_0 through 2 from STM documentation. */
-#define STM32_TIM_CCMR1_OC1M(n) (((n)&0x7) << 4)
+#define STM32_TIM_CCMR1_OC1M(n) (((n) & 0x7) << 4)
 #define STM32_TIM_CCMR1_OC1M_MASK STM32_TIM_CCMR1_OC1M(~0)
 #define STM32_TIM_CCMR1_OC1M_FROZEN STM32_TIM_CCMR1_OC1M(0x0)
 #define STM32_TIM_CCMR1_OC1M_ACTIVE_ON_MATCH STM32_TIM_CCMR1_OC1M(0x1)
@@ -214,13 +214,13 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_FMPI2C4_PORT 3
 
 #if defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
-#define stm32_i2c_reg(port, offset)                                        \
-	((uint16_t *)(((port) == 3 ? STM32_I2C4_BASE :                     \
-				     (STM32_I2C1_BASE + ((port)*0x400))) + \
+#define stm32_i2c_reg(port, offset)                                          \
+	((uint16_t *)(((port) == 3 ? STM32_I2C4_BASE :                       \
+				     (STM32_I2C1_BASE + ((port) * 0x400))) + \
 		      (offset)))
 #else
 #define stm32_i2c_reg(port, offset) \
-	((uint16_t *)((STM32_I2C1_BASE + ((port)*0x400)) + (offset)))
+	((uint16_t *)((STM32_I2C1_BASE + ((port) * 0x400)) + (offset)))
 #endif
 
 /* --- Power / Reset / Clocks --- */
@@ -382,7 +382,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_PMSE_IER REG32(STM32_PMSE_BASE + 0x18)
 #define STM32_PMSE_SR REG32(STM32_PMSE_BASE + 0x1c)
 #define STM32_PMSE_IFCR REG32(STM32_PMSE_BASE + 0x20)
-#define STM32_PMSE_PxPMR(x) REG32(STM32_PMSE_BASE + 0x2c + (x)*4)
+#define STM32_PMSE_PxPMR(x) REG32(STM32_PMSE_BASE + 0x2c + (x) * 4)
 #define STM32_PMSE_PAPMR REG32(STM32_PMSE_BASE + 0x2c)
 #define STM32_PMSE_PBPMR REG32(STM32_PMSE_BASE + 0x30)
 #define STM32_PMSE_PCPMR REG32(STM32_PMSE_BASE + 0x34)
@@ -396,7 +396,7 @@ typedef volatile struct timer_ctlr timer_ctlr_t;
 #define STM32_PMSE_MCCR REG32(STM32_PMSE_BASE + 0x104)
 
 /* --- USB --- */
-#define STM32_USB_EP(n) REG16(STM32_USB_FS_BASE + (n)*4)
+#define STM32_USB_EP(n) REG16(STM32_USB_FS_BASE + (n) * 4)
 
 #define STM32_USB_CNTR REG16(STM32_USB_FS_BASE + 0x40)
 

@@ -231,7 +231,7 @@
  * GPIO(PCH_SLP_S0_L, PIN(0x89), GPIO_INPUT | GPIO_PULL_DOWN)
  */
 #define GPIO_BANK(index) ((index) >> 5)
-#define GPIO_BANK_MASK(index) (1ul << ((index)&0x1F))
+#define GPIO_BANK_MASK(index) (1ul << ((index) & 0x1F))
 
 #define GPIO_PIN(index) GPIO_BANK(index), GPIO_BANK_MASK(index)
 #define GPIO_PIN_MASK(p, m) .port = (p), .mask = (m)

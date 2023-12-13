@@ -77,8 +77,8 @@ enum kb800x_eb {
 	KB800X_EB6
 };
 
-#define KB800X_FLIP_SS_LANE(x) ((x) + 1 - 2 * ((x)&0x1))
-#define KB800X_LANE_NUMBER_FROM_PHY(x) ((x)&0x1)
+#define KB800X_FLIP_SS_LANE(x) ((x) + 1 - 2 * ((x) & 0x1))
+#define KB800X_LANE_NUMBER_FROM_PHY(x) ((x) & 0x1)
 #define KB800X_PHY_IS_AB(x) ((x) <= KB800X_B1)
 
 struct kb800x_control_t {

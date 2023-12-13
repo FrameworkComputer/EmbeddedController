@@ -75,7 +75,7 @@ LOG_MODULE_REGISTER(isl923x_emul, CONFIG_ISL923X_EMUL_LOG_LEVEL);
 
 #define DEFAULT_R_SNS 10
 #define R_SNS CONFIG_CHARGER_SENSE_RESISTOR
-#define REG_TO_CURRENT(REG) ((REG)*DEFAULT_R_SNS / R_SNS)
+#define REG_TO_CURRENT(REG) ((REG) * DEFAULT_R_SNS / R_SNS)
 
 struct isl923x_emul_data {
 	/** Common I2C data */
@@ -232,7 +232,7 @@ void raa489000_emul_set_state_machine_state(const struct emul *emulator,
 	do {                                                     \
 		__ASSERT_NO_MSG((BYTES) == 0 || (BYTES) == 1);   \
 		if ((BYTES) == 0)                                \
-			*(OUT) = (uint8_t)((REG)&0xff);          \
+			*(OUT) = (uint8_t)((REG) & 0xff);        \
 		else                                             \
 			*(OUT) = (uint8_t)(((REG) >> 8) & 0xff); \
 		break;                                           \

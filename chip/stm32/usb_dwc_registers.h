@@ -135,7 +135,7 @@ extern struct dwc_usb usb_ctl;
 #define GR_USB_GHWCFG3 GR_USB_REG(GC_USB_GHWCFG3_OFFSET)
 #define GR_USB_GHWCFG4 GR_USB_REG(GC_USB_GHWCFG4_OFFSET)
 #define GR_USB_GDFIFOCFG GR_USB_REG(GC_USB_GDFIFOCFG_OFFSET)
-#define GR_USB_DIEPTXF(n) GR_USB_REG(GC_USB_DIEPTXF1_OFFSET - 4 + (n)*4)
+#define GR_USB_DIEPTXF(n) GR_USB_REG(GC_USB_DIEPTXF1_OFFSET - 4 + (n) * 4)
 #define GR_USB_DCFG GR_USB_REG(GC_USB_DCFG_OFFSET)
 #define GR_USB_DCTL GR_USB_REG(GC_USB_DCTL_OFFSET)
 #define GR_USB_DSTS GR_USB_REG(GC_USB_DSTS_OFFSET)
@@ -153,8 +153,8 @@ extern struct dwc_usb usb_ctl;
 #define DTHRCTL_NONISOTHREN BIT(0)
 #define GR_USB_DIEPEMPMSK GR_USB_REG(GC_USB_DIEPEMPMSK_OFFSET)
 
-#define GR_USB_EPIREG(off, n) GR_USB_REG(0x900 + (n)*0x20 + (off))
-#define GR_USB_EPOREG(off, n) GR_USB_REG(0xb00 + (n)*0x20 + (off))
+#define GR_USB_EPIREG(off, n) GR_USB_REG(0x900 + (n) * 0x20 + (off))
+#define GR_USB_EPOREG(off, n) GR_USB_REG(0xb00 + (n) * 0x20 + (off))
 #define GR_USB_DIEPCTL(n) GR_USB_EPIREG(0x00, n)
 #define GR_USB_DIEPINT(n) GR_USB_EPIREG(0x08, n)
 #define GR_USB_DIEPTSIZ(n) GR_USB_EPIREG(0x10, n)
@@ -310,7 +310,7 @@ extern struct dwc_usb usb_ctl;
 #define DOEPDMA_SR BIT(24)
 #define DOEPDMA_MTRF BIT(23)
 #define DOEPDMA_NAK BIT(16)
-#define DOEPDMA_RXBYTES(n) (((n)&0xFFFF) << 0)
+#define DOEPDMA_RXBYTES(n) (((n) & 0xFFFF) << 0)
 #define DOEPDMA_RXBYTES_MASK (0xFFFF << 0)
 
 #define DIEPDMA_BS_HOST_RDY (0 << 30)
@@ -322,7 +322,7 @@ extern struct dwc_usb usb_ctl;
 #define DIEPDMA_LAST BIT(27)
 #define DIEPDMA_SP BIT(26)
 #define DIEPDMA_IOC BIT(25)
-#define DIEPDMA_TXBYTES(n) (((n)&0xFFFF) << 0)
+#define DIEPDMA_TXBYTES(n) (((n) & 0xFFFF) << 0)
 #define DIEPDMA_TXBYTES_MASK (0xFFFF << 0)
 
 /* Register defs referenced from DWC block in CR50. This is not a native

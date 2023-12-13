@@ -26,7 +26,7 @@ struct heci_header {
 } __packed;
 #define HECI_MSG_CMPL_SHIFT 15
 #define HECI_MSG_LENGTH_MASK 0x01FF
-#define HECI_MSG_LENGTH(length) ((length)&HECI_MSG_LENGTH_MASK)
+#define HECI_MSG_LENGTH(length) ((length) & HECI_MSG_LENGTH_MASK)
 #define HECI_MSG_IS_COMPLETED(length) \
 	(!!((length) & (0x01 << HECI_MSG_CMPL_SHIFT)))
 

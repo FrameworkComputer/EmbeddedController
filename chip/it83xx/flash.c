@@ -17,9 +17,9 @@
 #include "util.h"
 #include "watchdog.h"
 
-#define FLASH_DMA_START ((uint32_t)&__flash_dma_start)
+#define FLASH_DMA_START ((uint32_t) & __flash_dma_start)
 #define FLASH_DMA_CODE __attribute__((section(".flash_direct_map")))
-#define FLASH_ILM0_ADDR ((uint32_t)&__ilm0_ram_code)
+#define FLASH_ILM0_ADDR ((uint32_t) & __ilm0_ram_code)
 
 /* erase size of sector is 1KB or 4KB */
 #define FLASH_SECTOR_ERASE_SIZE CONFIG_FLASH_ERASE_SIZE
@@ -49,7 +49,7 @@
 #define FLASH_CMD_RS 0x05
 
 #if (CONFIG_FLASH_SIZE_BYTES == 0x80000) && defined(CHIP_CORE_NDS32)
-#define FLASH_TEXT_START ((uint32_t)&__flash_text_start)
+#define FLASH_TEXT_START ((uint32_t) & __flash_text_start)
 /* Apply workaround of the issue (b:111808417) */
 #define IMMU_CACHE_TAG_INVALID
 /* The default tag index of immu. */

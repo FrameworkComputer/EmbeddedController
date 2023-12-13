@@ -45,7 +45,7 @@
 #define FINGERPRINT_ERROR_DEAD_PIXELS_MASK GENMASK(9, 0)
 /** Number of dead pixels detected on the last maintenance. */
 #define FINGERPRINT_ERROR_DEAD_PIXELS(errors) \
-	((errors)&FINGERPRINT_ERROR_DEAD_PIXELS_MASK)
+	((errors) & FINGERPRINT_ERROR_DEAD_PIXELS_MASK)
 /** Unknown number of dead pixels detected on the last maintenance. */
 #define FINGERPRINT_ERROR_DEAD_PIXELS_UNKNOWN FINGERPRINT_ERROR_DEAD_PIXELS_MASK
 /** No interrupt from the sensor. */

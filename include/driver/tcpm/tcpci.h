@@ -72,7 +72,7 @@
 
 #define TCPC_REG_TCPC_CTRL 0x19
 #define TCPC_REG_TCPC_CTRL_SET(polarity) (polarity)
-#define TCPC_REG_TCPC_CTRL_POLARITY(reg) ((reg)&0x1)
+#define TCPC_REG_TCPC_CTRL_POLARITY(reg) ((reg) & 0x1)
 /*
  * In TCPCI Rev 2.0, this bit must be set this to generate CC status alerts when
  * a connection is found.
@@ -90,11 +90,11 @@
 	((((drp) << 6) & TCPC_REG_ROLE_CTRL_DRP_MASK) | \
 	 (((rp) << 4) & TCPC_REG_ROLE_CTRL_RP_MASK) |   \
 	 (((cc2) << 2) & TCPC_REG_ROLE_CTRL_CC2_MASK) | \
-	 ((cc1)&TCPC_REG_ROLE_CTRL_CC1_MASK))
-#define TCPC_REG_ROLE_CTRL_DRP(reg) (((reg)&TCPC_REG_ROLE_CTRL_DRP_MASK) >> 6)
-#define TCPC_REG_ROLE_CTRL_RP(reg) (((reg)&TCPC_REG_ROLE_CTRL_RP_MASK) >> 4)
-#define TCPC_REG_ROLE_CTRL_CC2(reg) (((reg)&TCPC_REG_ROLE_CTRL_CC2_MASK) >> 2)
-#define TCPC_REG_ROLE_CTRL_CC1(reg) ((reg)&TCPC_REG_ROLE_CTRL_CC1_MASK)
+	 ((cc1) & TCPC_REG_ROLE_CTRL_CC1_MASK))
+#define TCPC_REG_ROLE_CTRL_DRP(reg) (((reg) & TCPC_REG_ROLE_CTRL_DRP_MASK) >> 6)
+#define TCPC_REG_ROLE_CTRL_RP(reg) (((reg) & TCPC_REG_ROLE_CTRL_RP_MASK) >> 4)
+#define TCPC_REG_ROLE_CTRL_CC2(reg) (((reg) & TCPC_REG_ROLE_CTRL_CC2_MASK) >> 2)
+#define TCPC_REG_ROLE_CTRL_CC1(reg) ((reg) & TCPC_REG_ROLE_CTRL_CC1_MASK)
 
 #define TCPC_REG_FAULT_CTRL 0x1b
 #define TCPC_REG_FAULT_CTRL_VBUS_OVP_FAULT_DIS BIT(1)
@@ -107,7 +107,7 @@
 #define TCPC_REG_POWER_CTRL_AUTO_DISCHARGE_DISCONNECT BIT(4)
 #define TCPC_REG_POWER_CTRL_FORCE_DISCHARGE BIT(2)
 #define TCPC_REG_POWER_CTRL_SET(vconn) (vconn)
-#define TCPC_REG_POWER_CTRL_VCONN(reg) ((reg)&0x1)
+#define TCPC_REG_POWER_CTRL_VCONN(reg) ((reg) & 0x1)
 
 #define TCPC_REG_CC_STATUS 0x1d
 #define TCPC_REG_CC_STATUS_LOOK4CONNECTION_MASK BIT(5)
@@ -115,14 +115,14 @@
 #define TCPC_REG_CC_STATUS_CC2_STATE_MASK (BIT(3) | BIT(2))
 #define TCPC_REG_CC_STATUS_CC1_STATE_MASK (BIT(1) | BIT(0))
 #define TCPC_REG_CC_STATUS_SET(term, cc1, cc2) \
-	((term) << 4 | ((cc2)&0x3) << 2 | ((cc1)&0x3))
+	((term) << 4 | ((cc2) & 0x3) << 2 | ((cc1) & 0x3))
 #define TCPC_REG_CC_STATUS_LOOK4CONNECTION(reg) \
 	((reg & TCPC_REG_CC_STATUS_LOOK4CONNECTION_MASK) >> 5)
 #define TCPC_REG_CC_STATUS_TERM(reg) \
-	(((reg)&TCPC_REG_CC_STATUS_CONNECT_RESULT_MASK) >> 4)
+	(((reg) & TCPC_REG_CC_STATUS_CONNECT_RESULT_MASK) >> 4)
 #define TCPC_REG_CC_STATUS_CC2(reg) \
-	(((reg)&TCPC_REG_CC_STATUS_CC2_STATE_MASK) >> 2)
-#define TCPC_REG_CC_STATUS_CC1(reg) ((reg)&TCPC_REG_CC_STATUS_CC1_STATE_MASK)
+	(((reg) & TCPC_REG_CC_STATUS_CC2_STATE_MASK) >> 2)
+#define TCPC_REG_CC_STATUS_CC1(reg) ((reg) & TCPC_REG_CC_STATUS_CC1_STATE_MASK)
 
 #define TCPC_REG_POWER_STATUS 0x1e
 #define TCPC_REG_POWER_STATUS_MASK_ALL 0xff
@@ -217,8 +217,8 @@
 #define TCPC_REG_MSG_HDR_INFO 0x2e
 #define TCPC_REG_MSG_HDR_INFO_SET(drole, prole) \
 	((drole) << 3 | (PD_REV20 << 1) | (prole))
-#define TCPC_REG_MSG_HDR_INFO_DROLE(reg) (((reg)&0x8) >> 3)
-#define TCPC_REG_MSG_HDR_INFO_PROLE(reg) ((reg)&0x1)
+#define TCPC_REG_MSG_HDR_INFO_DROLE(reg) (((reg) & 0x8) >> 3)
+#define TCPC_REG_MSG_HDR_INFO_PROLE(reg) ((reg) & 0x1)
 
 #define TCPC_REG_RX_DETECT 0x2f
 #define TCPC_REG_RX_DETECT_MSG_DISABLE_DISCONNECT BIT(7)
@@ -253,8 +253,8 @@
 #define TCPC_REG_TRANSMIT_SET_WITH_RETRY(retries, type) \
 	((retries) << 4 | (type))
 #define TCPC_REG_TRANSMIT_SET_WITHOUT_RETRY(type) (type)
-#define TCPC_REG_TRANSMIT_RETRY(reg) (((reg)&0x30) >> 4)
-#define TCPC_REG_TRANSMIT_TYPE(reg) ((reg)&0x7)
+#define TCPC_REG_TRANSMIT_RETRY(reg) (((reg) & 0x30) >> 4)
+#define TCPC_REG_TRANSMIT_TYPE(reg) ((reg) & 0x7)
 
 /* TCPCI Rev 1.0 transmit registers */
 #define TCPC_REG_TX_BYTE_CNT 0x51
@@ -281,8 +281,9 @@
  * 11: reserved
  */
 #define TCPC_REG_VBUS_VOLTAGE_SCALE(x) \
-	(1 << (((x)&TCPC_REG_VBUS_VOLTAGE_SCALE_FACTOR) >> 10))
-#define TCPC_REG_VBUS_VOLTAGE_MEASURE(x) ((x)&TCPC_REG_VBUS_VOLTAGE_MEASUREMENT)
+	(1 << (((x) & TCPC_REG_VBUS_VOLTAGE_SCALE_FACTOR) >> 10))
+#define TCPC_REG_VBUS_VOLTAGE_MEASURE(x) \
+	((x) & TCPC_REG_VBUS_VOLTAGE_MEASUREMENT)
 #define TCPC_REG_VBUS_VOLTAGE_VBUS(x)                                        \
 	(TCPC_REG_VBUS_VOLTAGE_SCALE(x) * TCPC_REG_VBUS_VOLTAGE_MEASURE(x) * \
 	 TCPC_REG_VBUS_VOLTAGE_LSB)

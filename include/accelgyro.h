@@ -249,6 +249,6 @@ struct als_drv_data_t {
 	(((_input) * (uint64_t)(_scale)) / MOTION_SENSE_DEFAULT_SCALE)
 
 /* Individual channel scale value between 0 and 2 represented in 16 bits */
-#define ALS_CHANNEL_SCALE(_x) ((_x)*MOTION_SENSE_DEFAULT_SCALE)
+#define ALS_CHANNEL_SCALE(_x) ((_x) * MOTION_SENSE_DEFAULT_SCALE)
 
 #endif /* __CROS_EC_ACCELGYRO_H */

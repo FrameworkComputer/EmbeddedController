@@ -56,7 +56,7 @@
 #define PI3USB9281_CHG_APPLE_2A BIT(3)
 #define PI3USB9281_CHG_APPLE_2_4A BIT(4)
 /* Check if charge status has any connection */
-#define PI3USB9281_CHG_STATUS_ANY(x) (((x)&0x1f) > 1)
+#define PI3USB9281_CHG_STATUS_ANY(x) (((x) & 0x1f) > 1)
 
 /* Define configuration of one pi3usb9281 part */
 struct pi3usb9281_config {

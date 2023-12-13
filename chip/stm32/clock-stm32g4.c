@@ -24,7 +24,7 @@
 #define CPUTS(outstr) cputs(CC_CLOCK, outstr)
 #define CPRINTS(format, args...) cprints(CC_CLOCK, format, ##args)
 
-#define MHZ(x) ((x)*1000000)
+#define MHZ(x) ((x) * 1000000)
 #define WAIT_STATE_FREQ_STEP_HZ MHZ(20)
 /* PLL configuration constants */
 #define STM32G4_SYSCLK_MAX_HZ MHZ(170)

@@ -59,7 +59,7 @@ const struct i2c_port_t i2c_ports[] = {
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
 #define GPIO_SET_HS(bank, number) \
-	(STM32_GPIO_OSPEEDR(GPIO_##bank) |= (0x3 << ((number)*2)))
+	(STM32_GPIO_OSPEEDR(GPIO_##bank) |= (0x3 << ((number) * 2)))
 
 void board_config_post_gpio_init(void)
 {

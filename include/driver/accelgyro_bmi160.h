@@ -266,7 +266,7 @@
  * x = a * 1000 / range * 1953
  */
 #define BMI160_MOTION_TH(_s, _mg) \
-	(MIN(((_mg)*1000) / ((_s)->current_range * 1953), 0xff))
+	(MIN(((_mg) * 1000) / ((_s)->current_range * 1953), 0xff))
 #define BMI160_INT_MOTION_2 0x61
 #define BMI160_INT_MOTION_3 0x62
 #define BMI160_MOTION_NO_MOT_SEL BIT(0)
@@ -289,7 +289,7 @@
 
 #define BMI160_INT_TAP_1 0x64
 #define BMI160_TAP_TH(_s, _mg) \
-	(MIN(((_mg)*1000) / ((_s)->current_range * 31250), 0x1f))
+	(MIN(((_mg) * 1000) / ((_s)->current_range * 31250), 0x1f))
 
 #define BMI160_INT_ORIENT_0 0x65
 
