@@ -42,7 +42,7 @@ properties:
    start_charging_min_c:
       default: 0
    start_charging_max_c:
-      default: 55
+      default: 45
    charging_min_c:
       default: 0
    charging_max_c:
