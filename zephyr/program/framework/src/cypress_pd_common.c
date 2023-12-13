@@ -1318,7 +1318,7 @@ __overridable int cypd_setup(int controller)
 	return EC_SUCCESS;
 }
 
-__overridable void cypd_customize_setup(int controller)
+__overridable void cypd_customize_app_setup(int controller)
 {
 	/*
 	 * CCG Chip behavior is different,
@@ -1364,7 +1364,7 @@ static void cypd_handle_state(int controller)
 			update_system_power_state(controller);
 			cypd_setup(controller);
 
-			cypd_customize_setup(controller);
+			cypd_customize_app_setup(controller);
 
 			/* After initial complete, update the type-c port state */
 			cypd_update_port_state(controller, 0);

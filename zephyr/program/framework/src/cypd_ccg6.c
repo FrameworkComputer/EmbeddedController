@@ -203,7 +203,7 @@ void cypd_update_ac_status(int controller)
 		CPRINTS("CYPD Read AC status fail");
 }
 
-__override void cypd_customize_setup(int controller)
+__override void cypd_customize_app_setup(int controller)
 {
 	/* After cypd setup complete, check the AC status */
 	cypd_update_ac_status(controller);

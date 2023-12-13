@@ -513,52 +513,174 @@ struct pd_chip_ucsi_info_t {
 	int wait_ack;
 };
 
+/**
+ * extern struct for ccg6 or ccg8 use.
+ */
 extern struct pd_chip_config_t pd_chip_config[];
 extern struct pd_port_current_state_t pd_port_states[];
 
+/**
+ * cypress i2c write functions
+ *
+ * @param controller	PD chip controller
+ * @param reg			PD i2c register
+ * @param data			PD i2c data
+ * @param len			PD i2c data size
+ * @return int
+ */
 int cypd_write_reg8(int controller, int reg, int data);
 int cypd_write_reg16(int controller, int reg, int data);
 int cypd_write_reg_block(int controller, int reg, void *data, int len);
 
+/**
+ * cypress i2c read functions
+ *
+ * @param controller	PD chip controller
+ * @param reg			PD i2c register
+ * @param data			PD i2c data
+ * @param len			PD i2c data size
+ * @return int
+ */
 int cypd_read_reg8(int controller, int reg, int *data);
 int cypd_read_reg16(int controller, int reg, int *data);
 int cypd_read_reg_block(int controller, int reg, void *data, int len);
 
+/**
+ * Clear PD interrupt event mask
+ *
+ * @param controller	PD chip controller
+ * @param mask			interrupt event mask
+ * @return int
+ */
 int cypd_clear_int(int controller, int mask);
 
-void cypd_usci_ppm_reset(void);
-
-int cypd_wait_for_ack(int controller, int timeout_us);
-
-__override_proto int cypd_write_reg8_wait_ack(int controller, int reg, int data);
-
-void cypd_print_buff(const char *msg, void *buff, int len);
-
+/**
+ * Get PD interrupt event
+ *
+ * @param controller	PD chip controller
+ * @param mask			interrupt event
+ * @return int
+ */
 int cypd_get_int(int controller, int *intreg);
 
+/**
+ * Function will execute when ucsi ppm reset
+ */
+void cypd_usci_ppm_reset(void);
+
+/**
+ * Function for wait PD response
+ *
+ * @param controller	PD chip controller
+ * @param timeout_us	wait delay time
+ * @return int
+ */
+int cypd_wait_for_ack(int controller, int timeout_us);
+
+/**
+ * Project customize PD response event when write cmd
+ *
+ * @param controller	PD chip controller
+ * @param reg			write register address
+ * @param data			write register data
+ * @return int
+ */
+__override_proto int cypd_write_reg8_wait_ack(int controller, int reg, int data);
+
+/**
+ * Customize EC console log print
+ *
+ * @param msg			Print message title
+ * @param buff			Print i2c read data
+ * @param len			i2c read data size
+ */
+void cypd_print_buff(const char *msg, void *buff, int len);
+
+/**
+ * Set PD power state for sync system status
+ *
+ * @param power_state	Set PD power state
+ * @param controller	PD chip controller
+ * @return int
+ */
 int cypd_set_power_state(int power_state, int controller);
 
 #ifdef CONFIG_PD_CHIP_CCG6
-/* compliance mode and fw update mode control */
+/**
+ * command PD let retimer into compliance
+ * and fw update mode
+ *
+ * @param controller	PD chip controller
+ */
 void enable_compliance_mode(int controller);
+
+/**
+ * command PD let retimer leave compliance
+ * and fw update mode
+ *
+ * @param controller	PD chip controller
+ */
 void disable_compliance_mode(int controller);
 
+/**
+ * command PD let retimer force in TBT mode
+ *
+ * @param controller	PD chip controller
+ */
 void entry_tbt_mode(int controller);
 
+/**
+ * command PD let retimer leave TBT mode
+ *
+ * @param controller	PD chip controller
+ */
 void exit_tbt_mode(int controller);
 
-
+#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
+/**
+ * Function can cmd PD to do disconnect both ports.
+ *
+ * @param controller	PD chip controller
+ * @return int
+ */
 int cypd_reconnect_port_disable(int controller);
 
+/**
+ * Function can cmd PD to do connect both ports.
+ *
+ * @param controller	PD chip controller
+ * @return int
+ */
 int cypd_reconnect_port_enable(int controller);
 
+/**
+ * Delay 100 MSEC execution PD event CCG_EVT_PORT_DISABLE
+ */
 void cypd_reconnect(void);
-#endif
 
-__override_proto void cypd_customize_setup(int controller);
+#endif /* CONFIG_PD_CCG6_ERROR_RECOVERY */
+#endif /* CONFIG_PD_CHIP_CCG6 */
 
+/**
+ * Project can customize app_setup behavior
+ *
+ * @param controller	PD chip controller
+ */
+__override_proto void cypd_customize_app_setup(int controller);
+
+/**
+ * Project can set the PD setup(init) status
+ *
+ * @param controller	PD chip controller
+ * @return int
+ */
 __override_proto int cypd_setup(int controller);
 
+/**
+ * Project can set the PD action when system change.
+ *
+ * @param controller	PD chip controller
+ */
 __override_proto void update_system_power_state(int controller);
 
 /**
@@ -602,6 +724,11 @@ void cypd_set_power_active(void);
  */
 int active_charge_pd_chip(void);
 
+/**
+ * Get the active charge port
+ *
+ * @return int
+ */
 int get_active_charge_pd_port(void);
 
 /**
@@ -618,28 +745,90 @@ int cypd_vbus_state_check(void);
  */
 int cypd_get_ac_power(void);
 
-void exit_epr_mode(void);
-
-void enter_epr_mode(void);
-
-void cypd_enter_epr_mode(int delay);
-
+/**
+ * Set Pdo profile for safety action
+ *
+ * @param controller	PD chip controller
+ * @param port			PD controller port
+ * @param profile		Pdo profile
+ * @return int
+ */
 int cypd_modify_safety_power(int controller, int port, int profile);
 
+/**
+ * return type-c port is 3A or not
+ *
+ * @param controller	PD chip controller
+ * @param port			PD controller port
+ * @return int
+ */
 int cypd_port_3a_status(int controller, int port);
 
-int epr_progress_status(void);
-
-void clear_erp_progress_mask(void);
-
-void clear_erp_progress(void);
-
-void cypd_update_epr_state(int controller, int port, int response_len);
-
+/**
+ * Update Port status set pdo and power limit
+ *
+ * @param controller	PD chip controller
+ * @param port			PD controller port
+ */
 void cypd_update_port_state(int controller, int port);
 
+/**
+ * return active port cfet status
+ *
+ * @return uint8_t
+ */
 uint8_t cypd_get_cfet_status(void);
 
+/**
+ * Set PD task event CCG_EVT_UPDATE_PWRSTAT
+ */
 void update_power_state_deferred(void);
+
+#ifdef CONFIG_PD_CCG8_EPR
+
+/**
+ * Command PD exit EPR mode
+ */
+void exit_epr_mode(void);
+
+/**
+ * Command PD into EPR mode
+ */
+void enter_epr_mode(void);
+
+/**
+ * Delay enter EPR mode
+ *
+ * @param delay		Delay MSEC
+ */
+void cypd_enter_epr_mode(int delay);
+
+/**
+ * return PD EPR status
+ *
+ * @return int
+ */
+int epr_progress_status(void);
+
+/**
+ * Clear EPR statue by &= ~EPR_PROCESS_MASK
+ */
+void clear_erp_progress_mask(void);
+
+/**
+ * fully clear EPR Status
+ */
+void clear_erp_progress(void);
+
+/**
+ * Update EPR Progress status when epr event trigger
+ *
+ * @param controller	PD chip controller
+ * @param port			PD controller port
+ * @param response_len	EPR event response len
+ */
+void cypd_update_epr_state(int controller, int port, int response_len);
+
+#endif /* CONFIG_PD_CCG8_EPR */
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */
