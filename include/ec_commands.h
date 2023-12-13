@@ -7762,7 +7762,7 @@ struct battery_info {
 	uint8_t reserved;
 } __packed __aligned(2);
 
-/**
+/*
  * The 'config' of a battery.
  */
 struct board_batt_params {
@@ -7785,7 +7785,7 @@ struct board_batt_params {
 #define SBS_MAX_STR_SIZE 31
 #define SBS_MAX_STR_OBJ_SIZE (SBS_MAX_STR_SIZE + 1)
 
-/**
+/*
  * Header describing a battery config stored in CBI. Only struct_version has
  * size and position independent of struct_version. The rest varies as
  * struct_version changes.
