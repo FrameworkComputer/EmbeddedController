@@ -14,13 +14,14 @@ i2c3ALT: &i2c3 {
 
 #include <cros/cbi_flash.dtsi>
 
-#include "../generated.dtsi"
 #include "../adc.dtsi"
 #include "../brox.dtsi"
+#include "../generated.dtsi"
 #include "../gpio.dtsi"
 #include "../i2c.dtsi"
 #include "../interrupts.dtsi"
 #include "../motionsense.dtsi"
+#include "../power_signals.dtsi"
 
 /* Brox project DTS includes*/
 
