@@ -193,6 +193,20 @@ __overridable int cypd_setup(int controller)
 	return EC_SUCCESS;
 }
 
+void cypd_update_ac_status(int controller)
+{
+	CPRINTS("Check C%d AC status!", controller);
+	if (cypd_write_reg8_wait_ack(controller,
+		CCG_CUST_C_CTRL_CONTROL_REG, CCG6_AC_AT_PORT))
+		CPRINTS("CYPD Read AC status fail");
+}
+
+__override void cypd_customize_setup(int controller)
+{
+	/* After cypd setup complete, check the AC status */
+	cypd_update_ac_status(controller);
+}
+
 /**
  * Set active charge port -- only one port can be active at a time.
  *

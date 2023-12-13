@@ -212,6 +212,7 @@
 /************************************************/
 #ifdef CONFIG_PD_CHIP_CCG6
 #define CCG6_AC_AT_PORT				0xC4
+
 #endif
 
 /************************************************/
@@ -544,6 +545,8 @@ int cypd_reconnect_port_enable(int controller);
 
 void cypd_reconnect(void);
 #endif
+
+__override_proto void cypd_customize_setup(int controller);
 
 __override_proto int cypd_setup(int controller);
 

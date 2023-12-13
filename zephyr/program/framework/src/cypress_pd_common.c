@@ -1318,6 +1318,14 @@ __overridable int cypd_setup(int controller)
 	return EC_SUCCESS;
 }
 
+__overridable void cypd_customize_setup(int controller)
+{
+	/*
+	 * CCG Chip behavior is different,
+	 * use this function to customize setting
+	 */
+}
+
 static void cypd_handle_state(int controller)
 {
 	int data;
@@ -1355,6 +1363,8 @@ static void cypd_handle_state(int controller)
 
 			update_system_power_state(controller);
 			cypd_setup(controller);
+
+			cypd_customize_setup(controller);
 
 			/* After initial complete, update the type-c port state */
 			cypd_update_port_state(controller, 0);
@@ -1792,6 +1802,7 @@ void cypd_interrupt_handler_task(void *p)
 		}
 
 #ifdef CONFIG_PD_CHIP_CCG6
+
 		if (evt & CCG_EVT_PORT_DISABLE) {
 			CPRINTS("CCG_EVT_PORT_DISABLE");
 			cypd_reconnect_port_disable(0);
