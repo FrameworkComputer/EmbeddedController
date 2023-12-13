@@ -8837,13 +8837,13 @@ static void cmd_battery_config_help(const char *cmd)
 		"    Print active battery config in JSON or C-struct (-c).\n"
 		"    If <index> is specified, a config is read from CBI.\n"
 		"\n"
-		"Usage: %s set <json_file> <manuf_name> <device_name>\n"
+		"Usage: %s set <json_file> <manuf_name> <device_name> [<index>]\n"
 		"    Copy battery config from file to CBI.\n"
 		"\n"
 		"    json_file: Path to JSON file containing battery configs\n"
 		"    manuf_name: Manufacturer's name. Up to 31 chars.\n"
 		"    device_name: Battery's name. Up to 31 chars.\n"
-		"    index: Index of config in CBI to be get.\n"
+		"    index: Index of config in CBI to be get or set.\n"
 		"\n"
 		"    Run `ectool battery` for <manuf_name> and <device_name>\n",
 		cmd, cmd);
@@ -8964,11 +8964,19 @@ static int cmd_battery_config_set(int argc, char *argv[])
 	struct batt_conf_header *header = (struct batt_conf_header *)p->data;
 	uint8_t *d = (uint8_t *)header;
 	int rv;
+	int index = 0;
 
-	if (argc < 4 || 4 < argc) {
+	if (argc < 4 || 5 < argc) {
 		fprintf(stderr, "Invalid number of arguments.\n");
 		cmd_battery_config_help("bcfg");
 		return -1;
+	} else if (argc == 5) {
+		char *e;
+		index = strtol(argv[4], &e, 0);
+		if (e && *e) {
+			fprintf(stderr, "Bad index: '%s'\n", argv[4]);
+			return -1;
+		}
 	}
 
 	json_file = argv[1];
@@ -9054,7 +9062,7 @@ static int cmd_battery_config_set(int argc, char *argv[])
 	d += header->device_name_size;
 	memcpy(d, &config, sizeof(config));
 
-	p->tag = CBI_TAG_BATTERY_CONFIG;
+	p->tag = index + CBI_TAG_BATTERY_CONFIG;
 	p->size = sizeof(struct batt_conf_header) + header->manuf_name_size +
 		  header->device_name_size + sizeof(config);
 	size = sizeof(*p);
