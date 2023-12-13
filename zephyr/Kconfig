@@ -213,8 +213,7 @@ config PLATFORM_EC_BUTTON
 
 config PLATFORM_EC_BUTTON_TRIGGERED_RECOVERY
 	bool "Support entering recovery mode using buttons"
-	default y
-	depends on PLATFORM_EC_DEDICATED_RECOVERY_BUTTON
+	select PLATFORM_EC_BUTTON
 	help
 	  Support for entering recovery mode using the volume buttons or a
 	  dedicated recovery button. Note that these are *buttons* and not keys
@@ -363,7 +362,7 @@ config PLATFORM_EC_DEBUG_ASSERT
 
 config PLATFORM_EC_DEDICATED_RECOVERY_BUTTON
 	bool "Enable dedicated recovery button"
-	select PLATFORM_EC_BUTTON
+	select PLATFORM_EC_BUTTON_TRIGGERED_RECOVERY
 	help
 	  Indicates there is a dedicated recovery button.  Note, that if there
 	  are volume buttons, a dedicated recovery button is not needed.
@@ -378,7 +377,7 @@ config PLATFORM_EC_DEDICATED_RECOVERY_BUTTON_ACTIVE_HIGH
 
 config PLATFORM_EC_DEDICATED_RECOVERY_BUTTON_2
 	bool "Enable second dedicated recovery button"
-	select PLATFORM_EC_BUTTON
+	select PLATFORM_EC_BUTTON_TRIGGERED_RECOVERY
 	help
 	  Enable use of second dedicated recovery button.
 	  For various reasons, on some platforms there may be multiple

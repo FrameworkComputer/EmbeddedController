@@ -575,7 +575,7 @@ static int debug_button_mask(void)
 	/* Get power button state */
 	if (power_button_is_pressed())
 		mask |= DEBUG_BTN_POWER;
-
+#ifdef CONFIG_VOLUME_BUTTONS
 	/* Get volume up state */
 	if (state[BUTTON_VOLUME_UP].debounced_pressed)
 		mask |= DEBUG_BTN_VOL_UP;
@@ -583,7 +583,7 @@ static int debug_button_mask(void)
 	/* Get volume down state */
 	if (state[BUTTON_VOLUME_DOWN].debounced_pressed)
 		mask |= DEBUG_BTN_VOL_DN;
-
+#endif /* CONFIG_VOLUME_BUTTONS */
 	return mask;
 }
 
