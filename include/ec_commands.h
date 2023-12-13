@@ -6352,6 +6352,7 @@ enum cbi_data_tag {
 	/* struct board_batt_params */
 	CBI_TAG_BATTERY_CONFIG = 12,
 	/* CBI_TAG_BATTERY_CONFIG_1 ~ 15 will use 13 ~ 27. */
+	CBI_TAG_BATTERY_CONFIG_15 = 27,
 
 	/* Last entry */
 	CBI_TAG_COUNT,

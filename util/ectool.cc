@@ -9175,7 +9175,8 @@ static int cmd_cbi_is_string_field(enum cbi_data_tag tag)
 
 static int cmd_cbi_is_binary_field(enum cbi_data_tag tag)
 {
-	return tag == CBI_TAG_BATTERY_CONFIG;
+	return CBI_TAG_BATTERY_CONFIG <= tag &&
+	       tag <= CBI_TAG_BATTERY_CONFIG_15;
 }
 
 /*
