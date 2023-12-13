@@ -21,6 +21,7 @@
 #include <linux/kernel.h>
 #include <linux/kobject.h>
 #include <linux/module.h>
+#include <linux/moduleparam.h>
 #include <linux/mutex.h>
 #include <linux/poll.h>
 #include <linux/slab.h>
@@ -43,25 +44,25 @@ static const struct kernel_param_ops param_ops_u32_max = {
 };
 #define param_check_u32_max(name, p) __param_check(name, p, unsigned int)
 
-/* Maximum number of concurrent userspace I2C adapters. */
 static unsigned int max_adapters = 1 << 7;
 module_param(max_adapters, uint, 0444);
+MODULE_PARM_DESC(max_adapters, "Maximum number of concurrent userspace I2C adapters");
 
-/* Maximum number of I2C messages per master_xfer transaction. */
 static unsigned int max_msgs_per_xfer = 1 << 7;
 module_param(max_msgs_per_xfer, u32_max, 0444);
+MODULE_PARM_DESC(max_msgs_per_xfer, "Maximum number of I2C messages per master_xfer transaction");
 
-/* Maximum total size of all buffers per master_xfer transaction. */
 static unsigned int max_total_data_per_xfer = 1 << 15;
 module_param(max_total_data_per_xfer, u32_max, 0444);
+MODULE_PARM_DESC(max_total_data_per_xfer, "Maximum total size of all buffers per master_xfer transaction");
 
-/* Default I2C transaction timeout, in milliseconds. 0 for subsystem default. */
 static unsigned int default_timeout_ms = 3 * MSEC_PER_SEC;
 module_param(default_timeout_ms, u32_max, 0444);
+MODULE_PARM_DESC(default_timeout_ms, "Default I2C transaction timeout, in milliseconds. 0 for subsystem default");
 
-/* Maximum I2C transaction timeout, in milliseconds. */
 static unsigned int max_timeout_ms = 10 * MSEC_PER_SEC;
 module_param(max_timeout_ms, u32_max, 0444);
+MODULE_PARM_DESC(max_timeout_ms, "Maximum I2C transaction timeout, in milliseconds");
 
 static struct class *i2cp_class;
 static dev_t i2cp_cdev_num;
@@ -864,7 +865,7 @@ MODULE_DESCRIPTION("Driver for userspace I2C adapters");
 MODULE_LICENSE("GPL");
 /* TODO: upstream patch: remove comment about dkms.conf */
 /* Keep dkms.conf PACKAGE_VERSION in sync with this. */
-MODULE_VERSION("2.3");
+MODULE_VERSION("2.4");
 
 module_init(i2cp_init);
 module_exit(i2cp_exit);
