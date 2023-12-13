@@ -212,7 +212,7 @@
 /************************************************/
 #ifdef CONFIG_PD_CHIP_CCG6
 #define CCG6_AC_AT_PORT				0xC4
-
+#define CCG_ICL_CTRL_REG	0x0040
 #endif
 
 /************************************************/
@@ -539,6 +539,15 @@ int cypd_get_int(int controller, int *intreg);
 int cypd_set_power_state(int power_state, int controller);
 
 #ifdef CONFIG_PD_CHIP_CCG6
+/* compliance mode and fw update mode control */
+void enable_compliance_mode(int controller);
+void disable_compliance_mode(int controller);
+
+void entry_tbt_mode(int controller);
+
+void exit_tbt_mode(int controller);
+
+
 int cypd_reconnect_port_disable(int controller);
 
 int cypd_reconnect_port_enable(int controller);

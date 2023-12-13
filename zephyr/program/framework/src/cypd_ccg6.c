@@ -28,8 +28,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-static bool reconnect_flag;
-
 DECLARE_DEFERRED(update_power_state_deferred);
 
 __override int cypd_write_reg8_wait_ack(int controller, int reg, int data)
@@ -207,6 +205,24 @@ __override void cypd_customize_setup(int controller)
 	cypd_update_ac_status(controller);
 }
 
+int check_power_on_port(void)
+{
+	int port;
+	/* only read CYPD when it ready */
+	if (!(pd_chip_config[0].state == CCG_STATE_READY &&
+		pd_chip_config[1].state == CCG_STATE_READY)) {
+		CPRINTS("CYPD not ready, just delay 100ms to wait");
+		usleep(100 * MSEC);
+	}
+
+	for (port = 0; port < PD_PORT_COUNT; port++)
+		if (pd_port_states[port].ac_port == 1)
+			return port;
+
+	/* if no ac port is checked return -1 */
+	return -1;
+}
+
 /**
  * Set active charge port -- only one port can be active at a time.
  *
@@ -264,6 +280,9 @@ int board_set_active_charge_port(int charge_port)
 	return EC_SUCCESS;
 }
 
+
+#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
+static bool reconnect_flag;
 void cypd_set_error_recovery(void)
 {
 	int i;
@@ -387,20 +406,72 @@ void cypd_reconnect(void)
 		task_set_event(TASK_ID_CYPD, CCG_EVT_PORT_DISABLE);
 }
 
-int check_power_on_port(void)
+#endif /* PD_CCG6_ERROR_RECOVERY */
+
+void enable_compliance_mode(int controller)
 {
-	int port;
-	/* only read CYPD when it ready */
-	if (!(pd_chip_config[0].state == CCG_STATE_READY &&
-		pd_chip_config[1].state == CCG_STATE_READY)) {
-		CPRINTS("CYPD not ready, just delay 100ms to wait");
-		usleep(100 * MSEC);
-	}
+	int rv;
+	uint32_t debug_register = 0xD0000000;
+	int debug_ctl = 0x0100;
 
-	for (port = 0; port < PD_PORT_COUNT; port++)
-		if (pd_port_states[port].ac_port == 1)
-			return port;
+	/* Write 0xD0000000 to address 0x0048 */
+	rv = cypd_write_reg_block(controller, CCG_ICL_BB_RETIMER_DAT_REG,
+			(void *) &debug_register, 4);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_BB_RETIMER_DAT_REG fail");
 
-	/* if no ac port is checked return -1 */
-	return -1;
+	/* Write 0x0100 to address 0x0046 */
+	rv = cypd_write_reg16(controller, CCG_ICL_BB_RETIMER_CMD_REG, debug_ctl);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_BB_RETIMER_CMD_REG fail");
+}
+
+void disable_compliance_mode(int controller)
+{
+	int rv;
+	uint32_t debug_register = 0x00000000;
+	int debug_ctl = 0x0000;
+
+	/* Write 0x00000000 to address 0x0048 */
+	rv = cypd_write_reg_block(controller, CCG_ICL_BB_RETIMER_DAT_REG,
+			(void *) &debug_register, 4);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_BB_RETIMER_DAT_REG fail");
+
+	/* Write 0x0000 to address 0x0046 */
+	rv = cypd_write_reg16(controller, CCG_ICL_BB_RETIMER_CMD_REG, debug_ctl);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_BB_RETIMER_CMD_REG fail");
+}
+
+void entry_tbt_mode(int controller)
+{
+	int rv;
+	uint8_t force_tbt_mode = 0x01;
+
+	rv = cypd_write_reg8(controller, CCG_ICL_CTRL_REG, force_tbt_mode);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_CTRL_REG fail");
+}
+
+void exit_tbt_mode(int controller)
+{
+	int rv;
+	uint8_t force_tbt_mode = 0x00;
+
+	rv = cypd_write_reg8(controller, CCG_ICL_CTRL_REG, force_tbt_mode);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_CTRL_REG fail");
+}
+
+int check_tbt_mode(int controller)
+{
+	int rv;
+	int data;
+
+	rv = cypd_read_reg8(controller, CCG_ICL_STS_REG, &data);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Read CYP5525_ICL_STS_REG fail");
+
+	return data;
 }

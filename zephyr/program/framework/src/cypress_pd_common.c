@@ -1463,7 +1463,7 @@ static void poweroff_dp_check(void)
 				CCG_DP_ALT_MODE_CONFIG_REG(PORT_TO_CONTROLLER_PORT(i)),
 				&alt_active);
 			/* DP_ALT should be on bit 1 always, but there is a bug
-			 * in the PD stack that if a port does not have TBT mode
+			 * in the PD stack that if a port does not have TBT mode#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
 			 * enabled, it will shift the DP alt mode enable bit to
 			 * bit 0. Since we only whitelist DP alt mode cards, just
 			 * mask on both as a workaround.
@@ -1748,9 +1748,9 @@ static int ucsi_tunnel_disabled;
 void cypd_interrupt_handler_task(void *p)
 {
 	int i, j, evt;
-#ifdef CONFIG_PD_CHIP_CCG6
+#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
 	int events;
-#endif
+#endif /* CONFIG_PD_CCG6_ERROR_RECOVERY */
 	/* Initialize all charge suppliers to 0 */
 	for (i = 0; i < CHARGE_PORT_COUNT; i++) {
 		for (j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
@@ -1801,7 +1801,7 @@ void cypd_interrupt_handler_task(void *p)
 			task_wait_event_mask(TASK_EVENT_TIMER,10);
 		}
 
-#ifdef CONFIG_PD_CHIP_CCG6
+#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
 
 		if (evt & CCG_EVT_PORT_DISABLE) {
 			CPRINTS("CCG_EVT_PORT_DISABLE");
@@ -1822,7 +1822,7 @@ void cypd_interrupt_handler_task(void *p)
 			cypd_reconnect_port_enable(0);
 			cypd_reconnect_port_enable(1);
 		}
-#endif /* CONFIG_PD_CHIP_CCG6 */
+#endif /* CONFIG_PD_CCG6_ERROR_RECOVERY */
 
 		if (evt & CCG_EVT_PDO_INIT_0) {
 			/* update new PDO format to select pdo register */
