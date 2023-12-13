@@ -87,7 +87,6 @@ struct extended_msg rx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 struct extended_msg tx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int prev_charge_port = -1;
-static uint8_t pd_c_fet_active_port;
 static bool verbose_msg_logging;
 static bool firmware_update;
 
@@ -354,11 +353,10 @@ static void pd1_update_state_deferred(void)
 }
 DECLARE_DEFERRED(pd1_update_state_deferred);
 
-static void update_power_state_deferred(void)
+void update_power_state_deferred(void)
 {
 	task_set_event(TASK_ID_CYPD, CCG_EVT_UPDATE_PWRSTAT);
 }
-DECLARE_DEFERRED(update_power_state_deferred);
 
 static void cypd_enable_interrupt(int controller, int enable_ndisable)
 {
@@ -993,36 +991,6 @@ int cypd_handle_extend_msg(int controller, int port, int len, enum tcpci_msg_typ
 	return rv;
 }
 
-uint8_t cypd_get_cfet_status(void)
-{
-	return pd_c_fet_active_port;
-}
-
-int cypd_cfet_vbus_control(int port, bool enable, bool ec_control)
-{
-	int rv;
-	int pd_controller = PORT_TO_CONTROLLER(port);
-	int pd_port = PORT_TO_CONTROLLER_PORT(port);
-	int regval = (ec_control ? CCG_EC_VBUS_CTRL_EN : 0) |
-				(enable ? CCG_EC_VBUS_CTRL_ON : 0);
-
-	if (port < 0 || port >= PD_PORT_COUNT) {
-		return EC_ERROR_INVAL;
-	}
-
-	rv = cypd_write_reg8_wait_ack(pd_controller, CCG_PORT_VBUS_FET_CONTROL(pd_port),
-		regval);
-	if (rv != EC_SUCCESS)
-		CPRINTS("%s:%d fail:%d", __func__, port, rv);
-
-	if (enable)
-		pd_c_fet_active_port |= BIT(port);
-	else
-		pd_c_fet_active_port &= ~BIT(port);
-
-	return rv;
-}
-
 static void clear_port_state(int controller, int port)
 {
 	int port_idx = (controller << 1) + port;
@@ -1202,8 +1170,6 @@ int cypd_set_power_state(int power_state, int controller)
 	return rv;
 }
 
-
-
 static int cypd_update_power_status(int controller)
 {
 	int i;
@@ -1239,44 +1205,6 @@ static int cypd_update_power_status(int controller)
 	return rv;
 }
 
-static void perform_error_recovery(int controller)
-{
-	int i;
-	uint8_t data[2] = {0x00, CCG_PD_USER_CMD_TYPEC_ERR_RECOVERY};
-	uint32_t batt_os_percentage = get_system_percentage();
-
-	if (controller < 2)
-		for (i = 0; i < 2; i++) {
-			if (!((controller*2 + i) == prev_charge_port &&
-				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
-
-				data[0] = PORT_TO_CONTROLLER_PORT(i);
-				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
-									CCG_DPM_CMD_REG,
-									data, 2);
-			}
-		}
-	else {
-		/* Hard reset all ports that are not supplying power in dead battery mode */
-		for (i = 0; i < PD_PORT_COUNT; i++) {
-			if (!(i == prev_charge_port &&
-			    battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
-
-				if ((pd_port_states[i].c_state == CCG_STATUS_SOURCE) &&
-				   (batt_os_percentage < 3) && (i == prev_charge_port))
-					continue;
-
-				CPRINTS("Hard reset %d", i);
-				data[0] = PORT_TO_CONTROLLER_PORT(i);
-				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
-									CCG_DPM_CMD_REG,
-									data, 2);
-			}
-		}
-	}
-	return ;
-}
-
 static void port_to_safe_mode(int port)
 {
 	uint8_t data[2] = {0x00, CCG_PD_USER_MUX_CONFIG_SAFE};
@@ -1287,21 +1215,19 @@ static void port_to_safe_mode(int port)
 	CPRINTS("P%d: Safe", port);
 
 }
-enum power_state pd_prev_power_state = POWER_G3;
-void update_system_power_state(int controller)
+
+__overridable void update_system_power_state(int controller)
 {
 	enum power_state ps = power_get_state();
 
 	switch (ps) {
 	case POWER_G3:
 	case POWER_S5G3:
-		pd_prev_power_state = POWER_G3;
 		cypd_set_power_state(CCG_POWERSTATE_G3, controller);
 		break;
 	case POWER_S5:
 	case POWER_S3S5:
 	case POWER_S4S5:
-		pd_prev_power_state = POWER_S5;
 		cypd_set_power_state(CCG_POWERSTATE_S5, controller);
 		break;
 	case POWER_S3:
@@ -1310,19 +1236,11 @@ void update_system_power_state(int controller)
 	case POWER_S0S3:
 	case POWER_S0ixS3: /* S0ix -> S3 */
 		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
-		if (pd_prev_power_state < POWER_S3) {
-			perform_error_recovery(controller);
-			pd_prev_power_state = ps;
-		}
 		break;
 	case POWER_S0:
 	case POWER_S3S0:
 	case POWER_S0ixS0: /* S0ix -> S0 */
 		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
-		if (pd_prev_power_state < POWER_S3) {
-			perform_error_recovery(controller);
-			pd_prev_power_state = ps;
-		}
 		break;
 	case POWER_S0ix:
 	case POWER_S3S0ix: /* S3 -> S0ix */
@@ -1344,7 +1262,7 @@ void cypd_set_power_active(void)
 
 
 #define CYPD_SETUP_CMDS_LEN 2
-static int cypd_setup(int controller)
+__overridable int cypd_setup(int controller)
 {
 	/*
 	 * 1. CCG notifies EC with "RESET Complete event after Reset/Power up/JUMP_TO_BOOT
@@ -1391,17 +1309,6 @@ static int cypd_setup(int controller)
 
 		/* clear cmd ack */
 		cypd_clear_int(controller, cypd_setup_cmds[i].status_reg);
-	}
-
-	/* Make sure the vbus fet control is configured before the PD controller
-	 * auto enables one or more ports
-	 */
-	if (prev_charge_port != -1) {
-		for (i = 0; i < PD_PORT_COUNT; i++) {
-			if (PORT_TO_CONTROLLER(i) == controller) {
-				cypd_cfet_vbus_control(i, i == prev_charge_port, true);
-			}
-		}
 	}
 
 	/*Notify the PD controller we are done and it can continue init*/
@@ -1831,7 +1738,9 @@ static int ucsi_tunnel_disabled;
 void cypd_interrupt_handler_task(void *p)
 {
 	int i, j, evt;
-
+#ifdef CONFIG_PD_CHIP_CCG6
+	int events;
+#endif
 	/* Initialize all charge suppliers to 0 */
 	for (i = 0; i < CHARGE_PORT_COUNT; i++) {
 		for (j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
@@ -1881,6 +1790,28 @@ void cypd_interrupt_handler_task(void *p)
 			cypd_handle_state(1);
 			task_wait_event_mask(TASK_EVENT_TIMER,10);
 		}
+
+#ifdef CONFIG_PD_CHIP_CCG6
+		if (evt & CCG_EVT_PORT_DISABLE) {
+			CPRINTS("CCG_EVT_PORT_DISABLE");
+			cypd_reconnect_port_disable(0);
+			cypd_reconnect_port_disable(1);
+			/*
+			 * In the specification section 4.2.3.14, stopping an active
+			 * PD port can take a long time (~1 second) in case VBus is
+			 * being provided andneeds to be discharged
+			 */
+			events = task_wait_event_mask(TASK_EVENT_TIMER, 1000*MSEC);
+			if (events & TASK_EVENT_TIMER)
+				task_set_event(TASK_ID_CYPD, CCG_EVT_PORT_ENABLE);
+		}
+
+		if (evt & CCG_EVT_PORT_ENABLE) {
+			CPRINTS("CCG_EVT_PORT_ENABLE");
+			cypd_reconnect_port_enable(0);
+			cypd_reconnect_port_enable(1);
+		}
+#endif /* CONFIG_PD_CHIP_CCG6 */
 
 		if (evt & CCG_EVT_PDO_INIT_0) {
 			/* update new PDO format to select pdo register */
@@ -1972,47 +1903,7 @@ __override uint8_t board_get_usb_pd_port_count(void)
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
 
-/**
- * Set active charge port -- only one port can be active at a time.
- *
- * @param charge_port   Charge port to enable.
- *
- * Returns EC_SUCCESS if charge port is accepted and made active,
- * EC_ERROR_* otherwise.
- */
-int board_set_active_charge_port(int charge_port)
-{
-	int i;
-	CPRINTS("%s port %d, prev:%d", __func__, charge_port, prev_charge_port);
 
-	if (prev_charge_port == charge_port) {
-		/* in the case of hard reset, we do not turn off the old
-		 * port, but the PD will implicitly clear the port
-		 * so we need to turn on the vbus control again.
-		 */
-		cypd_cfet_vbus_control(charge_port, true, true);
-		return EC_SUCCESS;
-	}
-
-
-	if (prev_charge_port != -1 &&
-		prev_charge_port != charge_port) {
-		/* Turn off the previous charge port before turning on the next port */
-		cypd_cfet_vbus_control(prev_charge_port, false, true);
-	}
-
-	for (i = 0; i < PD_PORT_COUNT; i++) {
-		/* Just brute force all ports, we want to make sure
-		 * we always update all ports in case a PD controller rebooted or some
-		 * other error happens that we are not tracking state with.
-		 */
-		cypd_cfet_vbus_control(i, i == charge_port, true);
-	}
-	prev_charge_port = charge_port;
-	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
-
-	return EC_SUCCESS;
-}
 
 uint8_t *get_pd_version(int controller)
 {

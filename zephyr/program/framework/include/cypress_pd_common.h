@@ -535,6 +535,20 @@ void cypd_print_buff(const char *msg, void *buff, int len);
 
 int cypd_get_int(int controller, int *intreg);
 
+int cypd_set_power_state(int power_state, int controller);
+
+#ifdef CONFIG_PD_CHIP_CCG6
+int cypd_reconnect_port_disable(int controller);
+
+int cypd_reconnect_port_enable(int controller);
+
+void cypd_reconnect(void);
+#endif
+
+__override_proto int cypd_setup(int controller);
+
+__override_proto void update_system_power_state(int controller);
+
 /**
  * If PD chip is doing the firmware update, we should disable the PD task
  *
@@ -613,5 +627,7 @@ void cypd_update_epr_state(int controller, int port, int response_len);
 void cypd_update_port_state(int controller, int port);
 
 uint8_t cypd_get_cfet_status(void);
+
+void update_power_state_deferred(void);
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */
