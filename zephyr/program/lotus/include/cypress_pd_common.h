@@ -565,7 +565,14 @@ void exit_epr_mode(void);
 
 void enter_epr_mode(void);
 
-int cypd_modify_safety_power(int controller, int port, int profile);
+/**
+ * Safety level LEVEL_TYPEC_1_5A trigger, modify sink 3A port to 1.5A
+ *
+ * @param controller	PD chip controller
+ * @param	port		port id
+ * @return int	EC_SUCCESS
+ */
+int cypd_modify_safety_power_1_5A(int controller, int port);
 
 int cypd_port_3a_status(int controller, int port);
 

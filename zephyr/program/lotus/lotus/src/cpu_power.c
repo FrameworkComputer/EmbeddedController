@@ -12,6 +12,7 @@
 #include "customized_shared_memory.h"
 #include "console.h"
 #include "cypress_pd_common.h"
+#include "cpu_power.h"
 #include "driver/sb_rmi.h"
 #include "extpower.h"
 #include "gpu.h"
@@ -31,6 +32,7 @@ static int slider_stt_table;
 static int thermal_stt_table;
 static int safety_stt;
 static uint8_t events;
+static bool force_typec_1_5a_flag;
 
 enum clear_reasons {
 	PROCHOT_CLEAR_REASON_SUCCESS,
@@ -757,9 +759,6 @@ static void update_safety_power_limit(int active_mpower)
 	int battery_voltage = battery_dynamic[BATT_IDX_MAIN].actual_voltage;
 	int rv;
 	int mw_apu = power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT];
-	static int pd_3a_controller;
-	static int pd_3a_port;
-	static int set_typec_1_5a_flag;
 	static timestamp_t wait_stable_time;
 	static timestamp_t update_safety_timer;
 	timestamp_t now = get_time();
@@ -893,24 +892,21 @@ static void update_safety_power_limit(int active_mpower)
 		break;
 	case LEVEL_TYPEC_1_5A:
 		if (level_increase) {
+			force_typec_1_5a_flag = 1;
 			for (int controller = 0; controller < PD_CHIP_COUNT; controller++) {
-				for (int port_idx = 0; port_idx < 2; port_idx++) {
-					if (cypd_port_3a_status(controller, port_idx)) {
-						pd_3a_controller = controller;
-						pd_3a_port = port_idx;
-						rv = cypd_modify_safety_power(pd_3a_controller,
-							pd_3a_port, CCG_PD_CMD_SET_TYPEC_1_5A);
-						set_typec_1_5a_flag = 1;
+				for (int port = 0; port < 2; port++) {
+					if (cypd_port_3a_status(controller, port)) {
+						/*if device is 3A sink device
+						 * foce current to 1.5A
+						 */
+						rv = cypd_modify_safety_power_1_5A(controller,
+							port);
 					}
 				}
 			}
 			safety_level++;
 		} else {
-			if (set_typec_1_5a_flag) {
-				rv = cypd_modify_safety_power(pd_3a_controller,
-						pd_3a_port, CCG_PD_CMD_SET_TYPEC_3A);
-				set_typec_1_5a_flag = 0;
-			}
+			force_typec_1_5a_flag = 0;
 			safety_level--;
 		}
 		break;
@@ -1111,3 +1107,8 @@ static void initial_soc_power_limit(void)
 	power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT] = 60000;
 }
 DECLARE_HOOK(HOOK_INIT, initial_soc_power_limit, HOOK_PRIO_INIT_I2C);
+
+bool safety_force_typec_1_5A(void)
+{
+	return force_typec_1_5a_flag;
+}

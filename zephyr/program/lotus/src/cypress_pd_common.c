@@ -32,6 +32,7 @@
 
 #ifdef CONFIG_BOARD_LOTUS
 #include "gpu.h"
+#include "cpu_power.h"
 #endif
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
@@ -770,22 +771,25 @@ static int cypd_modify_profile(int controller, int port, int profile)
 	return EC_SUCCESS;
 }
 
-int cypd_modify_safety_power(int controller, int port, int profile)
+int cypd_modify_safety_power_1_5A(int controller, int port)
 {
 	int rv;
 	int port_idx = (controller << 1) + port;
 
 	if (verbose_msg_logging)
-		CPRINTS("PD Select PDO %s ", profile & 0x02 ? "3A" : "1.5A");
+		CPRINTS("Safety level trigger force PDO 1.5A");
 
-	rv = cypd_select_rp(port_idx, profile);
-	rv = cypd_select_pdo(controller, port, profile);
+	rv = cypd_select_rp(port_idx, CCG_PD_CMD_SET_TYPEC_1_5A);
+	rv = cypd_select_pdo(controller, port, CCG_PD_CMD_SET_TYPEC_1_5A);
 	if (rv != EC_SUCCESS) {
-		CPRINTS("PD Select PDO %s failed", profile & 0x02 ? "3A" : "1.5A");
 		cypd_clear_port(controller, port);
 		cypd_set_prepare_pdo(controller, port);
 		return rv;
 	}
+
+	pd_3a_set = 0;
+	pd_3a_flag = 0;
+	pd_ports_1_5A_flag[port_idx] = 1;
 
 	return EC_SUCCESS;
 }
@@ -810,6 +814,18 @@ void cypd_set_typec_profile(int controller, int port)
 
 	if (pd_port_states[port_idx].power_role == PD_ROLE_SOURCE) {
 		if (pd_port_states[port_idx].pd_state) {
+
+#ifdef CONFIG_BOARD_LOTUS
+			/*
+			 * If safety level(LEVEL_TYPEC_1_5A) is triggered,
+			 * force 1.5A pdo to device.
+			 */
+			if (safety_force_typec_1_5A()) {
+				rv = cypd_modify_profile(controller, port,
+							CCG_PD_CMD_SET_TYPEC_1_5A);
+				return;
+			}
+#endif
 			/*
 			 * first time set 3A PDO to device
 			 * when device request RDO <= 1.5A
