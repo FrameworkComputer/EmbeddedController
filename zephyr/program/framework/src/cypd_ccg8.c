@@ -28,13 +28,14 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-#ifdef CONFIG_PD_CCG8_EPR
-static uint8_t pd_epr_in_progress;
+DECLARE_DEFERRED(update_power_state_deferred);
 
-#endif
+
+/*****************************************************************
+ * Charger Port C-FET control Functions
+ ****************************************************************/
 
 static uint8_t pd_c_fet_active_port;
-DECLARE_DEFERRED(update_power_state_deferred);
 
 int cypd_cfet_vbus_control(int port, bool enable, bool ec_control)
 {
@@ -65,6 +66,54 @@ uint8_t cypd_get_cfet_status(void)
 {
 	return pd_c_fet_active_port;
 }
+
+/**
+ * Set active charge port -- only one port can be active at a time.
+ *
+ * @param charge_port   Charge port to enable.
+ *
+ * Returns EC_SUCCESS if charge port is accepted and made active,
+ * EC_ERROR_* otherwise.
+ */
+int board_set_active_charge_port(int charge_port)
+{
+	int i;
+    int next_charge_port = get_active_charge_pd_port();
+
+	CPRINTS("%s port %d, prev:%d", __func__, charge_port, next_charge_port);
+
+	if (next_charge_port == charge_port) {
+		/* in the case of hard reset, we do not turn off the old
+		 * port, but the PD will implicitly clear the port
+		 * so we need to turn on the vbus control again.
+		 */
+		cypd_cfet_vbus_control(charge_port, true, true);
+		return EC_SUCCESS;
+	}
+
+
+	if (next_charge_port != -1 &&
+		next_charge_port != charge_port) {
+		/* Turn off the previous charge port before turning on the next port */
+		cypd_cfet_vbus_control(next_charge_port, false, true);
+	}
+
+	for (i = 0; i < PD_PORT_COUNT; i++) {
+		/* Just brute force all ports, we want to make sure
+		 * we always update all ports in case a PD controller rebooted or some
+		 * other error happens that we are not tracking state with.
+		 */
+		cypd_cfet_vbus_control(i, i == charge_port, true);
+	}
+	next_charge_port = charge_port;
+	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
+
+	return EC_SUCCESS;
+}
+
+/*****************************************************************
+ * CCG8 Setup Functions
+ ****************************************************************/
 
 #define CYPD_SETUP_CMDS_LEN 2
 __overridable int cypd_setup(int controller)
@@ -134,50 +183,9 @@ __overridable int cypd_setup(int controller)
 	return EC_SUCCESS;
 }
 
-
-/**
- * Set active charge port -- only one port can be active at a time.
- *
- * @param charge_port   Charge port to enable.
- *
- * Returns EC_SUCCESS if charge port is accepted and made active,
- * EC_ERROR_* otherwise.
- */
-int board_set_active_charge_port(int charge_port)
-{
-	int i;
-    int next_charge_port = get_active_charge_pd_port();
-
-	CPRINTS("%s port %d, prev:%d", __func__, charge_port, next_charge_port);
-
-	if (next_charge_port == charge_port) {
-		/* in the case of hard reset, we do not turn off the old
-		 * port, but the PD will implicitly clear the port
-		 * so we need to turn on the vbus control again.
-		 */
-		cypd_cfet_vbus_control(charge_port, true, true);
-		return EC_SUCCESS;
-	}
-
-
-	if (next_charge_port != -1 &&
-		next_charge_port != charge_port) {
-		/* Turn off the previous charge port before turning on the next port */
-		cypd_cfet_vbus_control(next_charge_port, false, true);
-	}
-
-	for (i = 0; i < PD_PORT_COUNT; i++) {
-		/* Just brute force all ports, we want to make sure
-		 * we always update all ports in case a PD controller rebooted or some
-		 * other error happens that we are not tracking state with.
-		 */
-		cypd_cfet_vbus_control(i, i == charge_port, true);
-	}
-	next_charge_port = charge_port;
-	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
-
-	return EC_SUCCESS;
-}
+/*****************************************************************
+ * Error Recovery Functions
+ ****************************************************************/
 
 static void perform_error_recovery(int controller)
 {
@@ -267,6 +275,13 @@ __override void update_system_power_state(int controller)
 }
 
 #ifdef CONFIG_PD_CCG8_EPR
+
+/*****************************************************************
+ * CCG8 EPR Functions
+ ****************************************************************/
+
+static uint8_t pd_epr_in_progress;
+
 int epr_progress_status(void)
 {
     return pd_epr_in_progress;

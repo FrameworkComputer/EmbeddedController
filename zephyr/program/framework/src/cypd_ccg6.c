@@ -132,6 +132,10 @@ __override int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 	return rv;
 }
 
+/*****************************************************************
+ * CCG6 Setup Functions
+ ****************************************************************/
+
 #define CYPD_SETUP_CMDS_LEN 4
 __overridable int cypd_setup(int controller)
 {
@@ -204,6 +208,10 @@ __override void cypd_customize_setup(int controller)
 	/* After cypd setup complete, check the AC status */
 	cypd_update_ac_status(controller);
 }
+
+/*****************************************************************
+ * Charger Port C-FET control Functions
+ ****************************************************************/
 
 int check_power_on_port(void)
 {
@@ -282,6 +290,11 @@ int board_set_active_charge_port(int charge_port)
 
 
 #ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
+
+/*****************************************************************
+ * Error Recovery Functions
+ ****************************************************************/
+
 static bool reconnect_flag;
 void cypd_set_error_recovery(void)
 {
@@ -407,6 +420,11 @@ void cypd_reconnect(void)
 }
 
 #endif /* PD_CCG6_ERROR_RECOVERY */
+
+
+/*****************************************************************
+ * BB Retimer Functions
+ ****************************************************************/
 
 void enable_compliance_mode(int controller)
 {
