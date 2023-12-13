@@ -551,12 +551,6 @@ void anx7447_tcpc_update_hpd_status(const struct usb_mux *me,
 	hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
 }
 
-void anx7447_tcpc_clear_hpd_status(int port)
-{
-	anx7447_hpd_output_en(port);
-	anx7447_set_hpd_level(port, 0);
-}
-
 #ifdef CONFIG_USB_PD_TCPM_MUX
 static int anx7447_mux_init(const struct usb_mux *me)
 {
@@ -793,13 +787,6 @@ static int anx7447_set_cc(int port, int pull)
 			  TCPC_REG_ROLE_CTRL_SET(0, rp, pull, pull));
 }
 
-/* Override for tcpci_tcpm_set_polarity */
-static int anx7447_set_polarity(int port, enum tcpc_cc_polarity polarity)
-{
-	return tcpc_update8(port, TCPC_REG_TCPC_CTRL, TCPC_REG_TCPC_CTRL_SET(1),
-			    polarity_rm_dts(polarity) ? MASK_SET : MASK_CLR);
-}
-
 #ifdef CONFIG_CMD_TCPC_DUMP
 static const struct tcpc_reg_dump_map anx7447_regs[] = {
 	{
@@ -977,7 +964,7 @@ const struct tcpm_drv anx7447_tcpm_drv = {
 	.get_vbus_voltage = &tcpci_get_vbus_voltage_no_check,
 	.select_rp_value = &tcpci_tcpm_select_rp_value,
 	.set_cc = &anx7447_set_cc,
-	.set_polarity = &anx7447_set_polarity,
+	.set_polarity = &tcpci_tcpm_set_polarity,
 #ifdef CONFIG_USB_PD_DECODE_SOP
 	.sop_prime_enable = &tcpci_tcpm_sop_prime_enable,
 #endif
