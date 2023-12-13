@@ -173,7 +173,9 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	*host_get_memmap(EC_MEMMAP_POWER_SLIDE) = 0x0;
 	*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER) = 0x0;
 
+#ifdef CONFIG_CHIPSET_AMD
 	update_apu_ready(1);
+#endif
 
 	/**
 	 * Even though the protocol returns EC_SUCCESS,

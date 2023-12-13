@@ -1,5 +1,7 @@
-
-
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
 
 #include "charge_state.h"
 #include "charger.h"
@@ -13,7 +15,6 @@
 #include "hooks.h"
 #include "math_util.h"
 #include "util.h"
-
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)

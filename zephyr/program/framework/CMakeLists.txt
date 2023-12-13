@@ -16,12 +16,15 @@ zephyr_library_sources("src/diagnostics.c")
 zephyr_library_sources("src/ucsi.c")
 zephyr_library_sources("src/als.c")
 zephyr_library_sources("src/hid_device.c")
-zephyr_library_sources("src/common_cpu_power.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led_pwm.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led.c")
+zephyr_library_sources_ifdef(CONFIG_CHIPSET_AMD
+	"src/cpu_power/amd_cpu_power_interface.c")
+zephyr_library_sources_ifdef(CONFIG_CHIPSET_INTEL
+	"src/cpu_power/intel_cpu_power_interface.c")
 
 if(DEFINED CONFIG_BOARD_LOTUS)
 	project(lotus)
