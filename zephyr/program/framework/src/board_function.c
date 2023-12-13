@@ -113,8 +113,15 @@ static void power_button_signal_deferred(void)
 	if (!stime.val)
 		stime = get_time();
 
-	/* ignore the power button signal when fp control enable */
-	if (gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_check_fp_control))) {
+	/**
+	 * Ignore the power button signal when fp control enable
+	 *
+	 * If user removes the fingerprint module, the fp control signal is always high.
+	 * Only enable this feature when the system does not enable the standalone mode,
+	 * and system state in S0.
+	 */
+	if (gpio_pin_get_dt(GPIO_DT_FROM_ALIAS(gpio_check_fp_control)) &&
+		chipset_in_state(CHIPSET_STATE_ON) && !get_standalone_mode()) {
 		if ((get_time().val < stime.val + 4 * SECOND) && !power_button_state) {
 			hook_call_deferred(&power_button_signal_deferred_data, 100 * MSEC);
 			return;
