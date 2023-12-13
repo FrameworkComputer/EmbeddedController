@@ -386,3 +386,21 @@ void cypd_reconnect(void)
 	if (events & TASK_EVENT_TIMER)
 		task_set_event(TASK_ID_CYPD, CCG_EVT_PORT_DISABLE);
 }
+
+int check_power_on_port(void)
+{
+	int port;
+	/* only read CYPD when it ready */
+	if (!(pd_chip_config[0].state == CCG_STATE_READY &&
+		pd_chip_config[1].state == CCG_STATE_READY)) {
+		CPRINTS("CYPD not ready, just delay 100ms to wait");
+		usleep(100 * MSEC);
+	}
+
+	for (port = 0; port < PD_PORT_COUNT; port++)
+		if (pd_port_states[port].ac_port == 1)
+			return port;
+
+	/* if no ac port is checked return -1 */
+	return -1;
+}
