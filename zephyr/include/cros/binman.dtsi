@@ -14,6 +14,7 @@
 			type = "section";
 			offset = <0x0>;
 			size = <0x40000>;
+			pad-byte = <0xff>;
 			read-only;
 			ec-ro {
 				type = "section";
@@ -29,7 +30,6 @@
 					filename = "version.txt";
 				};
 			};
-			pad-byte = <0xff>;
 		};
 
 		rollback0 {
@@ -47,8 +47,10 @@
 			type = "section";
 			offset = <0x40000>;
 			size = <0x40000>;
+			pad-byte = <0xff>;
 			rw-fw {
 				type = "section";
+				pad-byte = <0xff>;
 				zephyr_rw: zephyr-rw {
 					type = "blob";
 					filename = "zephyr_rw.bin";
@@ -68,7 +70,6 @@
 					size = <32>;
 					filename = "version.txt";
 				};
-				pad-byte = <0xff>;
 			};
 		};
 	};
