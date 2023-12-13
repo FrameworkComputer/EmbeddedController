@@ -30,6 +30,7 @@ static int start_adapter(int fd)
 		.timeout_ms = 5000,
 		.name = "example userspace I2C adapter",
 	};
+
 	if (ioctl(fd, I2CP_IOCTL_START, &start_arg) < 0) {
 		ret = errno;
 		perror("I2CP_IOCTL_START failed");
@@ -44,6 +45,7 @@ static int start_adapter(int fd)
 static int fill_read_buf(struct i2c_msg *msg)
 {
 	int ret;
+
 	for (int i = 0; i < msg->len; i += ret) {
 		ret = read(0, &msg->buf[i], msg->len - i);
 		if (ret < 0) {
@@ -59,6 +61,7 @@ static int fill_read_buf(struct i2c_msg *msg)
 static int print_msg(struct i2c_msg *msg)
 {
 	int ret;
+
 	printf("addr=0x%02hx flags=0x%02hx len=%hu ", (short)msg->addr,
 	       (short)msg->flags, (short)msg->len);
 	if (!(msg->flags & I2C_M_RD)) {
@@ -138,7 +141,9 @@ static int xfer_loop(int fd)
 
 int main(void)
 {
-	int fd = open("/dev/i2c-pseudo", O_RDWR);
+	int fd;
+
+	fd = open("/dev/i2c-pseudo", O_RDWR);
 	if (fd < 0) {
 		perror("Failed to open() i2c-pseudo device file");
 		return 1;
