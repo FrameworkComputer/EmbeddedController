@@ -79,9 +79,9 @@ __override int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 
 	if (intr_status & CCG_DEV_INTR && cmd_port == -1) {
 		if (data == CCG6_AC_AT_PORT) {
-            rv = cypd_read_reg16(controller, CCG_RESPONSE_REG, &event);
-            if (rv != EC_SUCCESS)
-                CPRINTS("fail to read DEV response");
+			rv = cypd_read_reg16(controller, CCG_RESPONSE_REG, &event);
+			if (rv != EC_SUCCESS)
+				CPRINTS("fail to read DEV response");
 			switch (event) {
 			case CCG6_RESPONSE_AC_AT_P0:
 				pd_port_states[(controller * 2) + 0].ac_port = 1;
@@ -157,8 +157,10 @@ __overridable int cypd_setup(int controller)
 		int status_reg;
 	} const cypd_setup_cmds[] = {
 		/* Set the port event mask */
-        { CCG_PD_CONTROL_REG(0), CCG_PD_CMD_SET_TYPEC_1_5A, CCG_PORT0_INTR},	/* Set the port 0 PDO 1.5A */
-		{ CCG_PD_CONTROL_REG(1), CCG_PD_CMD_SET_TYPEC_1_5A, CCG_PORT1_INTR},	/* Set the port 1 PDO 1.5A */
+		/* Set the port 0 PDO 1.5A */
+		{ CCG_PD_CONTROL_REG(0), CCG_PD_CMD_SET_TYPEC_1_5A, CCG_PORT0_INTR},
+		/* Set the port 1 PDO 1.5A */
+		{ CCG_PD_CONTROL_REG(1), CCG_PD_CMD_SET_TYPEC_1_5A, CCG_PORT1_INTR},
 		{ CCG_EVENT_MASK_REG(0), 0x27ffff, 4, CCG_PORT0_INTR},
 		{ CCG_EVENT_MASK_REG(1), 0x27ffff, 4, CCG_PORT1_INTR },
 	};
@@ -241,8 +243,8 @@ int check_power_on_port(void)
  */
 int board_set_active_charge_port(int charge_port)
 {
-    int next_charge_port = get_active_charge_pd_port();
-    bool battery_can_discharge = (battery_is_present() == BP_YES) &
+	int next_charge_port = get_active_charge_pd_port();
+	bool battery_can_discharge = (battery_is_present() == BP_YES) &
 		battery_get_disconnect_state();
 
 	/* if no battery, EC should not control C_CTRL */
@@ -270,9 +272,10 @@ int board_set_active_charge_port(int charge_port)
 	next_charge_port = charge_port;
 
 	/* turn on VBUS C-FET of chosen port */
-	if (charge_port >=0 ) {
+	if (charge_port >= 0) {
 		int pd_controller = (charge_port & 0x02) >> 1;
 		int pd_port = charge_port & 0x01;
+
 		cypd_write_reg8((~pd_controller) & 0x01, CCG_CUST_C_CTRL_CONTROL_REG,
 			CCG_P0P1_TURN_OFF_C_CTRL);
 		cypd_write_reg8(pd_controller, CCG_CUST_C_CTRL_CONTROL_REG,
@@ -322,7 +325,7 @@ __override void update_system_power_state(int controller)
 	case POWER_S3S5:
 	case POWER_S4S5:
 		cypd_set_power_state(CCG_POWERSTATE_S5, controller);
-        reconnect_flag = true;
+		reconnect_flag = true;
 		break;
 	case POWER_S3:
 	case POWER_S4S3:
@@ -334,9 +337,9 @@ __override void update_system_power_state(int controller)
 	case POWER_S0:
 	case POWER_S3S0:
 	case POWER_S0ixS0: /* S0ix -> S0 */
-        cypd_set_error_recovery();
+		cypd_set_error_recovery();
 		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
-        if (reconnect_flag) {
+		if (reconnect_flag) {
 			CPRINTS("CYPD reconnect");
 			cypd_reconnect();
 			reconnect_flag = false;
@@ -360,8 +363,8 @@ int cypd_reconnect_port_disable(int controller)
 	uint8_t pd_status_reg[4];
 	int port_power_role;
 	int portEnable = 0; /* default disable all port*/
-    bool battery_can_discharge = (battery_is_present() == BP_YES) &
-		    battery_get_disconnect_state();
+	bool battery_can_discharge = (battery_is_present() == BP_YES) &
+			battery_get_disconnect_state();
 
 	/* check the first port's status */
 	rv = cypd_read_reg_block(controller, CCG_PD_STATUS_REG(0), pd_status_reg, 4);

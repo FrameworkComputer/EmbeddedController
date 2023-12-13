@@ -78,7 +78,7 @@ uint8_t cypd_get_cfet_status(void)
 int board_set_active_charge_port(int charge_port)
 {
 	int i;
-    int next_charge_port = get_active_charge_pd_port();
+	int next_charge_port = get_active_charge_pd_port();
 
 	CPRINTS("%s port %d, prev:%d", __func__, charge_port, next_charge_port);
 
@@ -222,7 +222,6 @@ static void perform_error_recovery(int controller)
 			}
 		}
 	}
-	return ;
 }
 
 enum power_state pd_prev_power_state = POWER_G3;
@@ -284,7 +283,7 @@ static uint8_t pd_epr_in_progress;
 
 int epr_progress_status(void)
 {
-    return pd_epr_in_progress;
+	return pd_epr_in_progress;
 }
 
 void clear_erp_progress_mask(void)
@@ -385,7 +384,7 @@ DECLARE_DEFERRED(enter_epr_mode);
 
 void cypd_enter_epr_mode(int delay)
 {
-    hook_call_deferred(&enter_epr_mode_data, delay * MSEC);
+	hook_call_deferred(&enter_epr_mode_data, delay * MSEC);
 }
 
 void enter_epr_mode_without_battery(void)

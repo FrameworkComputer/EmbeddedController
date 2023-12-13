@@ -208,7 +208,7 @@
 #define PORT_TO_CONTROLLER_PORT(x) ((x) & 0x01)
 
 /************************************************/
-/*  CCG6 Specfic setting                        */
+/*  CCG6 special setting                        */
 /************************************************/
 #ifdef CONFIG_PD_CHIP_CCG6
 #define CCG6_AC_AT_PORT				0xC4
@@ -216,7 +216,7 @@
 #endif
 
 /************************************************/
-/*  CCG8 Specfic setting                        */
+/*  CCG8 special setting                        */
 /************************************************/
 #ifdef CONFIG_PD_CCG8_EPR
 #define EXIT_EPR BIT(4)

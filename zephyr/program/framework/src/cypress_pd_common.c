@@ -1462,8 +1462,9 @@ static void poweroff_dp_check(void)
 			cypd_read_reg8(PORT_TO_CONTROLLER(i),
 				CCG_DP_ALT_MODE_CONFIG_REG(PORT_TO_CONTROLLER_PORT(i)),
 				&alt_active);
-			/* DP_ALT should be on bit 1 always, but there is a bug
-			 * in the PD stack that if a port does not have TBT mode#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
+			/*
+			 * DP_ALT should be on bit 1 always, but there is a bug
+			 * in the PD stack that if a port does not have TBT mode
 			 * enabled, it will shift the DP alt mode enable bit to
 			 * bit 0. Since we only whitelist DP alt mode cards, just
 			 * mask on both as a workaround.
