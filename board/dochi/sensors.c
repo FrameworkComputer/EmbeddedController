@@ -180,14 +180,15 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  */
 static const struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
 	},
-	.temp_fan_off = C_TO_K(35),
-	.temp_fan_max = C_TO_K(60),
+	.temp_fan_off = 0,
+	.temp_fan_max = 0,
 };
 
 /*
@@ -205,14 +206,15 @@ static const struct ec_thermal_config thermal_cpu = {
  */
 static const struct ec_thermal_config thermal_ambient = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
 	},
-	.temp_fan_off = C_TO_K(35),
-	.temp_fan_max = C_TO_K(60),
+	.temp_fan_off = C_TO_K(38),
+	.temp_fan_max = C_TO_K(75),
 };
 
 /*
@@ -228,14 +230,15 @@ static const struct ec_thermal_config thermal_ambient = {
  */
 static const struct ec_thermal_config thermal_charger =	{
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(105),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(120),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
 	},
-	.temp_fan_off = C_TO_K(35),
-	.temp_fan_max = C_TO_K(65),
+	.temp_fan_off = 0,
+	.temp_fan_max = 0,
 };
 
 struct ec_thermal_config thermal_params[] = {
