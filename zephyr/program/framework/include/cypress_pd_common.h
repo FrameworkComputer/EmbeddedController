@@ -806,14 +806,13 @@ int cypd_get_ac_power(void);
 int cypd_get_active_port_voltage(void);
 
 /**
- * Set Pdo profile for safety action
+ * Safety level LEVEL_TYPEC_1_5A trigger, modify sink 3A port to 1.5A
  *
  * @param controller	PD chip controller
- * @param port			PD controller port
- * @param profile		Pdo profile
- * @return int
+ * @param	port		port id
+ * @return int	EC_SUCCESS
  */
-int cypd_modify_safety_power(int controller, int port, int profile);
+int cypd_modify_safety_power_1_5A(int controller, int port);
 
 /**
  * return type-c port is 3A or not
