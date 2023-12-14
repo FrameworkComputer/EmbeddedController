@@ -60,6 +60,20 @@ enum pdo_offset_t {
 };
 
 /**
+ * @brief USB Type-C Current
+ */
+enum usb_typec_current_t {
+	/** PPM defined default */
+	TC_CURRENT_PPM_DEFINED = 0,
+	/** Rp set to 3.0A */
+	TC_CURRENT_3_0A = 1,
+	/** Rp set to 1.5A */
+	TC_CURRENT_1_5A = 2,
+	/** Rp set to USB default */
+	TC_CURRENT_USB_DEFAULT = 3
+};
+
+/**
  * @brief Type of source caps
  */
 enum source_caps_t {
