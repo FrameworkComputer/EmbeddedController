@@ -206,7 +206,7 @@
 #define __staticlib extern
 
 /*
- * Mark a function that is defined purely as a hook to be used by a static
+ * Mark a symbol that is defined purely as a hook to be used by a static
  * library.
  */
 #define __staticlib_hook __unused

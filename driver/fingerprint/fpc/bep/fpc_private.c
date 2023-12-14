@@ -56,30 +56,30 @@ typedef struct {
 
 #if defined(CONFIG_FP_SENSOR_FPC1025)
 
-extern const fpc_bep_sensor_t fpc_bep_sensor_1025;
-extern const fpc_bep_algorithm_t fpc_bep_algorithm_pfe_1025;
+__staticlib const fpc_bep_sensor_t fpc_bep_sensor_1025;
+__staticlib const fpc_bep_algorithm_t fpc_bep_algorithm_pfe_1025;
 
-const fpc_sensor_info_t fpc_sensor_info = {
+__staticlib_hook const fpc_sensor_info_t fpc_sensor_info = {
 	.sensor = &fpc_bep_sensor_1025,
 	.image_buffer_size = FP_SENSOR_IMAGE_SIZE_FPC,
 };
 
-const fpc_bio_info_t fpc_bio_info = {
+__staticlib_hook const fpc_bio_info_t fpc_bio_info = {
 	.algorithm = &fpc_bep_algorithm_pfe_1025,
 	.template_size = FP_ALGORITHM_TEMPLATE_SIZE_FPC,
 };
 
 #elif defined(CONFIG_FP_SENSOR_FPC1035)
 
-extern const fpc_bep_sensor_t fpc_bep_sensor_1035;
-extern const fpc_bep_algorithm_t fpc_bep_algorithm_pfe_1035;
+__staticlib const fpc_bep_sensor_t fpc_bep_sensor_1035;
+__staticlib const fpc_bep_algorithm_t fpc_bep_algorithm_pfe_1035;
 
-const fpc_sensor_info_t fpc_sensor_info = {
+__staticlib_hook const fpc_sensor_info_t fpc_sensor_info = {
 	.sensor = &fpc_bep_sensor_1035,
 	.image_buffer_size = FP_SENSOR_IMAGE_SIZE_FPC,
 };
 
-const fpc_bio_info_t fpc_bio_info = {
+__staticlib_hook const fpc_bio_info_t fpc_bio_info = {
 	.algorithm = &fpc_bep_algorithm_pfe_1035,
 	.template_size = FP_ALGORITHM_TEMPLATE_SIZE_FPC,
 };
