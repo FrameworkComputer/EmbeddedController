@@ -12,6 +12,8 @@
 #include "common.h"
 #include "ec_commands.h"
 #include "fpsensor_driver.h"
+#include "fpsensor_matcher.h"
+#include "fpsensor_state_driver.h"
 #include "fpsensor_state_without_driver_info.h"
 #include "link_defs.h"
 #include "timer.h"
@@ -41,8 +43,6 @@ extern "C" {
 
 /* --- Global variables defined in fpsensor_state.c --- */
 
-/* Last acquired frame (aligned as it is used by arbitrary binary libraries) */
-extern uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE];
 /* Fingers templates for the current user */
 extern uint8_t fp_template[FP_MAX_FINGER_COUNT][FP_ALGORITHM_TEMPLATE_SIZE];
 /* Encryption/decryption buffer */

@@ -41,11 +41,4 @@
 /* Opaque FPC context */
 #define FP_SENSOR_CONTEXT_SIZE_FPC 4944
 
-/* Algorithm buffer sizes */
-#define FP_ALGORITHM_ENROLLMENT_SIZE_FPC 28
-#define FP_ALGORITHM_TEMPLATE_SIZE_FPC 47552
-
-/* Max number of templates stored / matched against */
-#define FP_MAX_FINGER_COUNT_FPC 5
-
 #endif /* __CROS_EC_FPC1145_PRIVATE_H */

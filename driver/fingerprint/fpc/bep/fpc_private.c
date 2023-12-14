@@ -4,6 +4,8 @@
  */
 
 #include "common.h"
+#include "fpc_bep_matcher.h"
+#include "fpc_bep_sensor.h"
 #include "fpc_bio_algorithm.h"
 #include "fpc_sensor.h"
 #include "fpsensor/fpsensor.h"
