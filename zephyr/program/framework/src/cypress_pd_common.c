@@ -1940,6 +1940,11 @@ int get_active_charge_pd_port(void)
 	return prev_charge_port;
 }
 
+void update_active_charge_pd_port(int update_charger_port)
+{
+	prev_charge_port = update_charger_port;
+}
+
 void set_pd_fw_update(bool is_update)
 {
 	firmware_update = is_update;

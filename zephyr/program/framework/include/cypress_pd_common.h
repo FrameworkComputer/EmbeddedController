@@ -732,6 +732,13 @@ int active_charge_pd_chip(void);
 int get_active_charge_pd_port(void);
 
 /**
+ * Get the active charge port
+ *
+ * @param update_charger_port	update prev charger port
+ */
+void update_active_charge_pd_port(int update_charger_port);
+
+/**
  * Return Power source port state
  *
  * @return int

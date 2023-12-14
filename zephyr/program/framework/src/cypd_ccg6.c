@@ -254,7 +254,7 @@ int board_set_active_charge_port(int charge_port)
 			return EC_ERROR_TRY_AGAIN;
 
 		/* store current port and update power limit */
-		next_charge_port = charge_port;
+		update_active_charge_pd_port(charge_port);
 		hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
 		CPRINTS("Updating %s port %d", __func__, charge_port);
 		return EC_SUCCESS;
@@ -269,7 +269,7 @@ int board_set_active_charge_port(int charge_port)
 		usleep(250*MSEC);
 	}
 
-	next_charge_port = charge_port;
+	update_active_charge_pd_port(charge_port);
 
 	/* turn on VBUS C-FET of chosen port */
 	if (charge_port >= 0) {

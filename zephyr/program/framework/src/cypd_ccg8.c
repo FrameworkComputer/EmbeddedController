@@ -105,7 +105,7 @@ int board_set_active_charge_port(int charge_port)
 		 */
 		cypd_cfet_vbus_control(i, i == charge_port, true);
 	}
-	next_charge_port = charge_port;
+	update_active_charge_pd_port(charge_port);
 	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
 
 	return EC_SUCCESS;
