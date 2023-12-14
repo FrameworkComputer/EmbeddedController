@@ -11,6 +11,7 @@
 #include "util.h"
 
 #include <stdbool.h>
+#include <string.h>
 
 test_static enum ec_error_list test_fp_enc_status_valid_flags(void)
 {

@@ -18,6 +18,7 @@
 #include "util.h"
 
 #include <stddef.h>
+#include <string.h>
 
 #include <sys/types.h>
 
