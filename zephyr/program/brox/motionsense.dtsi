@@ -12,7 +12,7 @@
 		 * motion sense's <>_INT_EVENT is handled by alias. Using the
 		 * alias, each driver creates its own <>_INT_EVENT.
 		 */
-		 bma422-int = &lid_accel;
+		 bma4xx-int = &lid_accel;
 	};
 
 	/*
@@ -104,10 +104,9 @@
 		 * List of GPIO interrupts that have to be enabled at initial
 		 * stage.
 		 */
-		/* TODO: b/315839391 - Brox: configure EC interrupts */
-		/* sensor-irqs = <>; */
+		sensor-irqs = <&int_lid_imu>;
 
 		/* List of sensors in force mode */
-		/* accel-force-mode-sensors = <>; */
+		accel-force-mode-sensors = <&base_accel>;
 	};
 };
