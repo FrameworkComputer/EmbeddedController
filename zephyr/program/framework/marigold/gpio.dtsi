@@ -22,6 +22,7 @@
 		};
 		gpio_prim_pwr_ok: prim_pwr_ok {
 			gpios = <&gpio7 6 GPIO_INPUT>;	/* Monitor PCH Prim power ok */
+			enum-name = "GPIO_POWER_GOOD_PRIM_PWR";
 		};
 		otg_en {
 			gpios = <&gpioc 5 GPIO_OUTPUT_LOW>;
@@ -148,7 +149,7 @@
 		gpio_fp_control: fp_ctrl {
 			gpios = <&gpio3 4 GPIO_INPUT>;		/* Finger Printer feature */
 		};
-		soc_enbkl_ls {
+		gpio_soc_enbkl_ls: soc_enbkl_ls {
 			gpios = <&gpioe 0 GPIO_INPUT>;		/* monitor CPU EDP BKLEN */
 		};
 		gpio_sm_panel_bken_ec: ec_bkoff_l {
@@ -159,6 +160,7 @@
 		};
 		gpio_slp_s4_l: pm_slp_s4_l {
 			gpios = <&gpioa 0 GPIO_INPUT>;	/*Monitor CPU entry/leave S4 */
+			enum-name = "GPIO_PCH_SLP_S4_L";
 		};
 		soc_tp_int_l {
 			gpios = <&gpioa 4 GPIO_INPUT>;	/* Interrupt of TP module  */

@@ -72,5 +72,10 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "chassis_interrupt_handler";
 		};
+		int_soc_enkbl: soc_enbkl {
+			irq-pin = <&gpio_soc_enbkl_ls>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "soc_signal_interrupt";
+		};
 	};
 };
