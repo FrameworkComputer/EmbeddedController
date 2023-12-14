@@ -95,6 +95,10 @@ def build(opts):
     #     stdin=subprocess.DEVNULL,
     # )
 
+    # Validate board targets are reflected as Bazel targets
+    cmd = ["pytest", "-v", "bazel/test_gen_bazel_targets.py"]
+    subprocess.run(cmd, cwd=platform_ec, check=True, stdin=subprocess.DEVNULL)
+
     # Start with a clean build environment
     cmd = ["make", "clobber"]
     log_cmd(cmd)

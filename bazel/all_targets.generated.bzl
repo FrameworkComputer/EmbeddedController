@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 # This file is auto-generated.  To update, run:
-# ./util/gen_bazel_targets.py
+# ./bazel/gen_bazel_targets.py
 
 load(":ec_target.bzl", "ec_target")
 

@@ -116,7 +116,7 @@ def _gen_bazel_lines():
     yield ""
 
     yield "# This file is auto-generated.  To update, run:"
-    yield "# ./util/gen_bazel_targets.py"
+    yield "# ./bazel/gen_bazel_targets.py"
     yield ""
 
     yield 'load(":ec_target.bzl", "ec_target")'
