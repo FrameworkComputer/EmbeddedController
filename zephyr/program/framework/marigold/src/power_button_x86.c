@@ -233,6 +233,9 @@ static void set_initial_pwrbtn_state(void)
  */
 static void board_extpower(void)
 {
+	/* AC present to CPU */
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ac_present), extpower_is_present());
+
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
 		extpower_is_present() && ac_boot_status()) {
 		CPRINTS("Power on from boot on AC present");

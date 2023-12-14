@@ -12,6 +12,7 @@
 		i2c-2 = &i2c2_0;
 		i2c-3 = &i2c3_0;
 		i2c-4 = &i2c4_1;
+		i2c-6 = &i2c6_1;
 		i2c-7 = &i2c7_0;
 	};
 
@@ -40,11 +41,13 @@
 			enum-names = "I2C_PORT_TOUCHPAD";
 			dynamic-speed;
 		};
-		i2c_sensor: sensor {
+		i2c_thermal_sensor: thermal_sensor {
+			i2c-port = <&i2c6_1>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+		i2c_als: als {
 			i2c-port = <&i2c7_0>;
-			enum-names =  "I2C_PORT_SENSOR",
-				"I2C_PORT_THERMAL_AP",
-				"I2C_PORT_ALS";
+			enum-names = "I2C_PORT_ALS";
 		};
 	};
 };
@@ -68,7 +71,7 @@
 	i2chid1: i2chid@51 {
 		compatible = "cros-ec,i2c-target-hid";
 		reg = <0x51>;
-		alert_gpios = <&gpio7 4 GPIO_OPEN_DRAIN>;
+		alert_gpios = <&gpiof 5 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
 		max_report_size = <32>;
 		hid_descriptor = "als_hid_desc";
 		hid_report_descriptor = "als_report_desc";
@@ -141,13 +144,12 @@
 	status = "okay";
 };
 
-&i2c7_0 {
+&i2c6_1 {
 	status = "okay";
-	label = "I2C_PORT7";
+	label = "I2C_PORT6";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
+	pinctrl-0 = <&i2c6_1_sda_scl_gpe3_e4>;
 	pinctrl-names = "default";
-
 
 	/* Qth1 */
 	cpu_f75303: cpu_f75303@4d {
@@ -170,10 +172,19 @@
 		reg = <0x4d>;
 	};
 
-	temp_cpu: cpu@4c {
-		compatible = "amd,sb-tsi";
-		reg = <0x4c>;
-	};
+	//TODO: Add thermal sensor F75309 to this bus
+};
+
+&i2c_ctrl6 {
+	status = "okay";
+};
+
+&i2c7_0 {
+	status = "okay";
+	label = "I2C_PORT7";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
+	pinctrl-names = "default";
 
 	als_cm32183: als-cm32183@29 {
 		compatible = "nxp,cm32183";

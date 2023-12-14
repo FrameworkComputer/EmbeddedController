@@ -49,18 +49,6 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&ddr_f75303>;
 		};
-		amd-apu {
-			temp_host_warn = <108>;
-			temp_host_high = <115>;
-			temp_host_halt = <127>;
-			temp_host_release_warn = <103>;
-			temp_host_release_high = <110>;
-			temp_host_release_halt = <122>;
-			temp_fan_off = <103>;
-			temp_fan_max = <105>;
-			power-good-pin = <&gpio_slp_s3_l>;
-			sensor = <&temp_cpu>;
-		};
 	};
 
 	typec-port {
