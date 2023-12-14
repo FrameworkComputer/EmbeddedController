@@ -61,6 +61,11 @@ config PD_CCG6_ERROR_RECOVERY
 		Enable Cypress CCG6 special error recovery, when bootup to S0
 		will execute reconnect port.
 
+config PD_COMMON_VBUS_CONTROL
+	bool "Enable CCG common vbus control"
+	help
+		Enable Cypress CCG common vbus control, if not enable please modify
+		board_set_active_charge_port at board for customize vbus control.
 
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code

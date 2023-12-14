@@ -28,7 +28,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-DECLARE_DEFERRED(update_power_state_deferred);
 
 __override int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 {
@@ -214,6 +213,8 @@ __override void cypd_customize_app_setup(int controller)
 /*****************************************************************
  * Charger Port C-FET control Functions
  ****************************************************************/
+#ifndef CONFIG_PD_COMMON_VBUS_CONTROL
+DECLARE_DEFERRED(update_power_state_deferred);
 
 int check_power_on_port(void)
 {
@@ -290,7 +291,7 @@ int board_set_active_charge_port(int charge_port)
 
 	return EC_SUCCESS;
 }
-
+#endif /* CONFIG_PD_COMMON_VBUS_CONTROL */
 
 #ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
 

@@ -838,4 +838,8 @@ void cypd_update_epr_state(int controller, int port, int response_len);
 
 #endif /* CONFIG_PD_CCG8_EPR */
 
+#ifdef CONFIG_PD_COMMON_VBUS_CONTROL
+int cypd_cfet_vbus_control(int port, bool enable, bool ec_control);
+#endif /* CONFIG_PD_CCG8_EPR */
+
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */
