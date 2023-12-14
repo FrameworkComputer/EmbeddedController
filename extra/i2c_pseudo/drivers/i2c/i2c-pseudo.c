@@ -331,7 +331,9 @@ static inline long i2cp_set_functionality(u32 functionality,
 {
 	if ((functionality & I2C_FUNC_I2C) != I2C_FUNC_I2C ||
 	    (functionality &
-	     ~(I2C_FUNC_I2C | I2C_FUNC_10BIT_ADDR | I2C_FUNC_PROTOCOL_MANGLING |
+	     ~(I2C_FUNC_I2C |
+	       I2C_FUNC_10BIT_ADDR |
+	       I2C_FUNC_PROTOCOL_MANGLING |
 	       I2C_FUNC_SMBUS_EMUL)))
 		return -EINVAL;
 	pdata->functionality = functionality;
@@ -457,8 +459,8 @@ static bool i2cp_xfer_req_copy_data(struct i2c_msg *msgs_copy, u32 num_msgs,
 		return true;
 	}
 
-	data_buf_copy =
-		kzalloc(sizeof(*data_buf_copy) * total_buf_len, GFP_KERNEL);
+	data_buf_copy = kzalloc(sizeof(*data_buf_copy) * total_buf_len,
+				GFP_KERNEL);
 	if (!data_buf_copy) {
 		*ret = -ENOMEM;
 		return false;
@@ -480,8 +482,8 @@ static long i2cp_xfer_req_copy_msgs(struct i2c_msg *xfer_msgs, u32 num_msgs,
 	long ret = 0;
 	struct i2c_msg *msgs_copy;
 
-	msgs_copy =
-		kmemdup(xfer_msgs, sizeof(*xfer_msgs) * num_msgs, GFP_KERNEL);
+	msgs_copy = kmemdup(xfer_msgs, sizeof(*xfer_msgs) * num_msgs,
+			    GFP_KERNEL);
 	if (!msgs_copy)
 		return -ENOMEM;
 	if (i2cp_xfer_req_copy_data(msgs_copy, num_msgs, arg_copy->data_buf,
@@ -630,7 +632,7 @@ static long i2cp_cdev_ioctl_xfer_reply(struct file *filep, unsigned long arg)
 		if ((msgs_copy[i].flags & I2C_M_RD) &&
 		    copy_from_user(pdata->xfer_msgs[i].buf, msgs_copy[i].buf,
 				   pdata->xfer_msgs[i].len *
-					   sizeof(*(msgs_copy[i].buf)))) {
+				   sizeof(*(msgs_copy[i].buf)))) {
 			ret = -EFAULT;
 			goto unlock;
 		}
@@ -660,9 +662,7 @@ static long i2cp_cdev_ioctl_get_counters(struct file *filep, unsigned long arg)
 
 	mutex_lock(&pdata->xfer_lock);
 	ret = copy_to_user(user_arg, &pdata->xfer_counters,
-			   sizeof(pdata->xfer_counters)) ?
-		      -EFAULT :
-		      0;
+			   sizeof(pdata->xfer_counters)) ? -EFAULT : 0;
 	mutex_unlock(&pdata->xfer_lock);
 	return ret;
 }
