@@ -7,5 +7,5 @@ Description:
 	This shows utilization of a resource whose limit is set by
 	i2c-pseudo module max_adapters parameter.
 
-	This may be less than the number of i2c-pseudo i2c adapters
-	because those are only created after a specific ioctl call.
+	This may be greater than the number of extant pseudo adapters
+	because an adapter is only created after a specific ioctl call.
