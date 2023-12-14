@@ -134,6 +134,12 @@
 		};
 	};
 
+	usba {
+		compatible = "cros-ec,usba-port-enable-pins";
+		status = "okay";
+		enable-pins = <&gpio_en_usb_a0_vbus &gpio_en_usb_a1_vbus>;
+	};
+
 	usbc {
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -275,15 +281,12 @@
 		tcpc-flags = <(
 			TCPC_FLAGS_TCPCI_REV2_0 |
 			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
-			TCPC_FLAGS_VBUS_MONITOR |
 			TCPC_FLAGS_CONTROL_FRS)>;
 		/* a duplicate of the <&gpio_usb_c1_tcpc_int_odl> node in
 		 * "named-gpios". This is the Zephyr preferred style,
 		 * the "named-gpios" node will be dealt with at a later date.
 		 */
-
 		irq-gpios = <&gpiok 6 GPIO_ACTIVE_LOW>;
-		is-alt;
 	};
 
 	ppc_port1: ppc_syv@40 {
