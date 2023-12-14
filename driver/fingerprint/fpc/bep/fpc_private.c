@@ -76,12 +76,12 @@ extern const fpc_bep_algorithm_t fpc_bep_algorithm_pfe_1035;
 
 const fpc_sensor_info_t fpc_sensor_info = {
 	.sensor = &fpc_bep_sensor_1035,
-	.image_buffer_size = FP_SENSOR_IMAGE_SIZE,
+	.image_buffer_size = FP_SENSOR_IMAGE_SIZE_FPC,
 };
 
 const fpc_bio_info_t fpc_bio_info = {
 	.algorithm = &fpc_bep_algorithm_pfe_1035,
-	.template_size = FP_ALGORITHM_TEMPLATE_SIZE,
+	.template_size = FP_ALGORITHM_TEMPLATE_SIZE_FPC,
 };
 #else
 #error "Sensor type not defined!"
