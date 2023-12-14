@@ -33,6 +33,7 @@ properties:
       - "cosmx,gh02047xl"
       - "cosmx,si03058xl"
       - "cosmx,l22x3pg0"
+      - "cosmx,li7"
       - "cosmx,mvk11"
       - "dynapack,atl_gh02047xl"
       - "dynapack,byd_gg02047xl"
