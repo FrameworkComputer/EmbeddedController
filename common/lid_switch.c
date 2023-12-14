@@ -130,7 +130,6 @@ void enable_lid_detect(bool enable)
 #define LID_GPIO(gpio) gpio_disable_interrupt(gpio);
 		CONFIG_LID_SWITCH_GPIO_LIST
 #undef LID_GPIO
-		lid_switch_open();
 	}
 }
 
