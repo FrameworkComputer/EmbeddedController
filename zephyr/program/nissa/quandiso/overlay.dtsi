@@ -20,16 +20,7 @@
 
 	batteries {
 		default_battery: cosmx {
-			compatible = "cosmx,gg02047xl", "battery-smart";
-		};
-		dynapack_byd_gg02047xl {
-			compatible = "dynapack,byd_gg02047xl", "battery-smart";
-		};
-		dynapack_hpp_gg02047xl {
-			compatible = "dynapack,hpp_gg02047xl", "battery-smart";
-		};
-		atl_gb-s20-4473a9 {
-			compatible = "atl,gb-s20-4473a9", "battery-smart";
+			compatible = "cosmx,li7", "battery-smart";
 		};
 	};
 
