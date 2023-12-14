@@ -20,6 +20,8 @@
 #include "battery.dtsi"
 #include "led.dtsi"
 
+#include <cros/thermistor/thermistor.dtsi>
+
 /* ciri board override */
 
 / {
@@ -71,9 +73,31 @@
 	};
 
 	named-adc-channels {
-		adc-temp-sensor-pp5000-z1 {
+		pp5000_z1_temp_sensor: adc-temp-sensor-pp5000-z1 {
 			enum-name = "ADC_TEMP_SENSOR_PP5000_Z1";
 			io-channels = <&adc0 3>;
+		};
+	};
+
+	charger_temp_thermistor: sensor-charger-thermistor {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&charger_temp_sensor>;
+	};
+
+	pp5000_z1_temp_thermistor: sensor-pp5000-z1-thermistor {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
+		adc = <&pp5000_z1_temp_sensor>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_sensor_charger {
+			sensor = <&charger_temp_thermistor>;
+		};
+		temp_sensor_pp5000_z1 {
+			sensor = <&pp5000_z1_temp_thermistor>;
 		};
 	};
 
@@ -179,6 +203,18 @@
 	};
 };
 
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_ch0_gpi0_default
+		     &adc0_ch1_gpi1_default
+		     &adc0_ch2_gpi2_default
+		     &adc0_ch3_gpi3_default
+		     &adc0_ch5_gpi5_default
+		     &adc0_ch6_gpi6_default
+		     &adc0_ch7_gpi7_default>;
+	pinctrl-names = "default";
+};
+
 &i2c2 {
 	/delete-node/ rt1739@70;
 	/delete-node/ tusb546-mux-0@44;
@@ -207,4 +243,8 @@
 		irq-gpios = <&gpioa 6 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8 |
 			     GPIO_ACTIVE_LOW)>;
 	};
+};
+
+&thermistor_3V3_100K_100K_4250B {
+	status = "okay";
 };

@@ -23,7 +23,7 @@
 			enum-name = "ADC_BASE_DET";
 			io-channels = <&adc0 5>;
 		};
-		adc-temp-sensor-charger {
+		charger_temp_sensor: adc-temp-sensor-charger {
 			enum-name = "ADC_TEMP_SENSOR_CHARGER";
 			io-channels = <&adc0 6>;
 		};
