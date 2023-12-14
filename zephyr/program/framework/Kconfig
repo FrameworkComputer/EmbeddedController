@@ -58,7 +58,7 @@ config PD_CCG6_ERROR_RECOVERY
 	default n
 	depends on PD_CHIP_CCG6
 	help
-		Enable Cypress CCG6 Specific error recovery, when bootup to S0
+		Enable Cypress CCG6 special error recovery, when bootup to S0
 		will execute reconnect port.
 
 
