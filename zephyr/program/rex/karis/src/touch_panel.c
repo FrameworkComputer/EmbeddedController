@@ -19,6 +19,8 @@ LOG_MODULE_DECLARE(rex, CONFIG_REX_LOG_LEVEL);
 #define TOUCH_ENABLE_DELAY_MS (500 * MSEC)
 #define TOUCH_DISABLE_DELAY_MS (0 * MSEC)
 
+static bool touch_sequence_enable;
+
 void touch_disable(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_touch_en), 0);
@@ -51,6 +53,9 @@ void soc_edp_bl_interrupt(enum gpio_signal signal)
 
 static void touch_lid_change(void)
 {
+	if (!touch_sequence_enable)
+		return;
+
 	if (!lid_is_open()) {
 		LOG_INF("%s: disable touch", __func__);
 		hook_call_deferred(&touch_disable_data, TOUCH_DISABLE_DELAY_MS);
@@ -72,6 +77,8 @@ static void touch_enable_init(void)
 	int ret;
 	uint32_t val;
 
+	touch_sequence_enable = false;
+
 	ret = cros_cbi_get_fw_config(FW_TOUCH_EN, &val);
 	if (ret != 0) {
 		LOG_ERR("Error retrieving CBI FW_CONFIG field %d", FW_TOUCH_EN);
@@ -84,6 +91,7 @@ static void touch_enable_init(void)
 	if (val != FW_TOUCH_EN_ENABLE)
 		return;
 
+	touch_sequence_enable = true;
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_edp_bl_en));
 }
 DECLARE_HOOK(HOOK_INIT, touch_enable_init, HOOK_PRIO_DEFAULT);

@@ -75,7 +75,7 @@
 			gpios = <&gpiob 1 GPIO_OUTPUT_LOW>;
 		};
 		gpio_soc_3v3_edp_bl_en: soc_3v3_edp_bl_en {
-			gpios = <&gpioc 6 GPIO_INPUT>;
+			gpios = <&gpioc 6 GPIO_INPUT_PULL_DOWN>;
 		};
 	};
 

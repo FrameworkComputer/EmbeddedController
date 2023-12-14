@@ -55,12 +55,12 @@ ZTEST(karis_touch, test_touch_enable_config)
 	const struct gpio_dt_spec *lid_open =
 		GPIO_DT_FROM_NODELABEL(gpio_lid_open);
 
+	/* lid is open before init at first boot up */
+	zassert_ok(gpio_emul_input_set(lid_open->port, lid_open->pin, 1), NULL);
+
 	cbi_touch_en = true;
 	cbi_read_fail = false;
 	cros_cbi_get_fw_config_fake.custom_fake = cbi_get_touch_en_config;
-
-	/* lid is open before init at first boot up */
-	zassert_ok(gpio_emul_input_set(lid_open->port, lid_open->pin, 1), NULL);
 
 	hook_notify(HOOK_INIT);
 
@@ -111,8 +111,8 @@ ZTEST(karis_touch, test_touch_lid_change)
 	const struct gpio_dt_spec *lid_open =
 		GPIO_DT_FROM_NODELABEL(gpio_lid_open);
 
-	cbi_touch_en = true;
-	cbi_read_fail = false;
+	/* touch_en keep low if fw_config read fail */
+	cbi_read_fail = true;
 	cros_cbi_get_fw_config_fake.custom_fake = cbi_get_touch_en_config;
 
 	/* lid is open before init at first boot up */
@@ -122,7 +122,39 @@ ZTEST(karis_touch, test_touch_lid_change)
 
 	hook_notify(HOOK_INIT);
 
-	zassert_equal(lid_is_open(), 1);
+	zassert_equal(gpio_emul_output_get(touch_en->port, touch_en->pin), 0);
+
+	zassert_ok(gpio_emul_input_set(lid_open->port, lid_open->pin, 0), NULL);
+	k_sleep(K_MSEC(TEST_LID_DEBOUNCE_MS));
+	zassert_equal(gpio_emul_output_get(touch_en->port, touch_en->pin), 0);
+
+	zassert_ok(gpio_emul_input_set(lid_open->port, lid_open->pin, 1), NULL);
+	k_sleep(K_MSEC(TEST_LID_DEBOUNCE_MS));
+	zassert_equal(gpio_emul_output_get(touch_en->port, touch_en->pin), 0);
+
+	/* touch_en keep low if fw_config is not enabled */
+	cbi_touch_en = false;
+	cbi_read_fail = false;
+	cros_cbi_get_fw_config_fake.custom_fake = cbi_get_touch_en_config;
+
+	hook_notify(HOOK_INIT);
+
+	zassert_equal(gpio_emul_output_get(touch_en->port, touch_en->pin), 0);
+
+	zassert_ok(gpio_emul_input_set(lid_open->port, lid_open->pin, 0), NULL);
+	k_sleep(K_MSEC(TEST_LID_DEBOUNCE_MS));
+	zassert_equal(gpio_emul_output_get(touch_en->port, touch_en->pin), 0);
+
+	zassert_ok(gpio_emul_input_set(lid_open->port, lid_open->pin, 1), NULL);
+	k_sleep(K_MSEC(TEST_LID_DEBOUNCE_MS));
+	zassert_equal(gpio_emul_output_get(touch_en->port, touch_en->pin), 0);
+
+	/* touch_en changed if fw_config is enabled */
+	cbi_touch_en = true;
+	cbi_read_fail = false;
+	cros_cbi_get_fw_config_fake.custom_fake = cbi_get_touch_en_config;
+
+	hook_notify(HOOK_INIT);
 
 	/* touch_en become high after TOUCH_ENABLE_DELAY_MS delay */
 	zassert_ok(gpio_emul_input_set(bl_en->port, bl_en->pin, 1), NULL);
