@@ -1123,7 +1123,14 @@ void cypd_update_port_state(int controller, int port)
 	} else {
 		pd_set_input_current_limit(port_idx, 0, 0);
 	}
-
+#ifdef CONFIG_PD_CHIP_CCG6
+	if (pd_port_states[0].c_state == CCG_STATUS_DEBUG ||
+		pd_port_states[3].c_state == CCG_STATUS_DEBUG) {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_mux_sub_uart_flip), 1);
+	} else {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_mux_sub_uart_flip), 0);
+	}
+#endif /* CONFIG_PD_CHIP_CCG6 */
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER)) {
 		charge_manager_update_dualrole(port_idx, CAP_DEDICATED);
 	}

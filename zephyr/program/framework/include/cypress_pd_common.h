@@ -14,7 +14,7 @@
 #ifdef CONFIG_PD_CHIP_CCG8
 #define CCG_I2C_CHIP0	0x42
 #define CCG_I2C_CHIP1	0x40
-#elif define(CONFIG_PD_CHIP_CCG6)
+#elif defined(CONFIG_PD_CHIP_CCG6)
 #define CCG_I2C_CHIP0	0x08
 #define CCG_I2C_CHIP1	0x40
 #endif
