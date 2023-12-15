@@ -591,7 +591,7 @@ int cypd_wait_for_ack(int controller, int timeout_us);
  * @param data			write register data
  * @return int
  */
-__override_proto int cypd_write_reg8_wait_ack(int controller, int reg, int data);
+int cypd_write_reg8_wait_ack(int controller, int reg, int data);
 
 /**
  * Customize EC console log print
@@ -680,14 +680,14 @@ __override_proto void cypd_customize_app_setup(int controller);
  * @param controller	PD chip controller
  * @return int
  */
-__override_proto int cypd_setup(int controller);
+int cypd_setup(int controller);
 
 /**
  * Project can set the PD action when system change.
  *
  * @param controller	PD chip controller
  */
-__override_proto void update_system_power_state(int controller);
+void update_system_power_state(int controller);
 
 /**
  * If PD chip is doing the firmware update, we should disable the PD task

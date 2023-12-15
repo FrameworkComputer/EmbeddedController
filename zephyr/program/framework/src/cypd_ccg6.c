@@ -29,7 +29,7 @@
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 
-__override int cypd_write_reg8_wait_ack(int controller, int reg, int data)
+int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 {
 	int rv = EC_SUCCESS;
 	int intr_status;
@@ -136,7 +136,7 @@ __override int cypd_write_reg8_wait_ack(int controller, int reg, int data)
  ****************************************************************/
 
 #define CYPD_SETUP_CMDS_LEN 4
-__overridable int cypd_setup(int controller)
+int cypd_setup(int controller)
 {
 	/*
 	 * 1. CCG notifies EC with "RESET Complete event after Reset/Power up/JUMP_TO_BOOT
@@ -313,7 +313,7 @@ void cypd_set_error_recovery(void)
 	}
 }
 
-__override void update_system_power_state(int controller)
+void update_system_power_state(int controller)
 {
 	enum power_state ps = power_get_state();
 
@@ -421,6 +421,45 @@ void cypd_reconnect(void)
 	events = task_wait_event_mask(TASK_EVENT_TIMER, 100*MSEC);
 	if (events & TASK_EVENT_TIMER)
 		task_set_event(TASK_ID_CYPD, CCG_EVT_PORT_DISABLE);
+}
+#else
+
+void update_system_power_state(int controller)
+{
+	enum power_state ps = power_get_state();
+
+	switch (ps) {
+	case POWER_G3:
+	case POWER_S5G3:
+		cypd_set_power_state(CCG_POWERSTATE_G3, controller);
+		break;
+	case POWER_S5:
+	case POWER_S3S5:
+	case POWER_S4S5:
+		cypd_set_power_state(CCG_POWERSTATE_S5, controller);
+		break;
+	case POWER_S3:
+	case POWER_S4S3:
+	case POWER_S5S3:
+	case POWER_S0S3:
+	case POWER_S0ixS3: /* S0ix -> S3 */
+		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
+		break;
+	case POWER_S0:
+	case POWER_S3S0:
+	case POWER_S0ixS0: /* S0ix -> S0 */
+		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
+		break;
+	case POWER_S0ix:
+	case POWER_S3S0ix: /* S3 -> S0ix */
+	case POWER_S0S0ix: /* S0 -> S0ix */
+		cypd_set_power_state(CCG_POWERSTATE_S0ix, controller);
+		break;
+
+	default:
+		break;
+	}
+
 }
 
 #endif /* PD_CCG6_ERROR_RECOVERY */
