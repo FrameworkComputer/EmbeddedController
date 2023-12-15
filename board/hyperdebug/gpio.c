@@ -18,6 +18,11 @@
 #include "timer.h"
 #include "util.h"
 
+/* Size of buffer used for gpio monitoring. */
+#define CYCLIC_BUFFER_SIZE 65536
+/* Number of concurrent gpio monitoring operations supported. */
+#define NUM_CYCLIC_BUFFERS 3
+
 struct dac_t {
 	uint32_t enable_mask;
 	volatile uint32_t *data_register;
@@ -160,32 +165,34 @@ struct monitoring_slot_t {
 struct monitoring_slot_t monitoring_slots[16];
 
 /*
- * Memory area used for allocation of cyclic buffers.  (Currently the
- * implementation supports only a single allocation.)
+ * Memory area used for allocation of cyclic buffers.
  */
-uint8_t buffer_area[sizeof(struct cyclic_buffer_header_t) + 8192];
-bool buffer_area_in_use = false;
+uint8_t buffer_area[NUM_CYCLIC_BUFFERS]
+		   [sizeof(struct cyclic_buffer_header_t) + CYCLIC_BUFFER_SIZE];
 
 static struct cyclic_buffer_header_t *allocate_cyclic_buffer(size_t size)
 {
-	struct cyclic_buffer_header_t *res =
-		(struct cyclic_buffer_header_t *)buffer_area;
-	if (buffer_area_in_use) {
-		/* No support for multiple smaller allocations, yet. */
-		return NULL;
+	for (int i = 0; i < NUM_CYCLIC_BUFFERS; i++) {
+		struct cyclic_buffer_header_t *res =
+			(struct cyclic_buffer_header_t *)buffer_area[i];
+		if (res->num_signals)
+			continue;
+		if (sizeof(struct cyclic_buffer_header_t) + size >
+		    sizeof(buffer_area[i])) {
+			/* Requested size exceeds the capacity of the area. */
+			return NULL;
+		}
+		/* Will be overwritten with another non-zero value by caller */
+		res->num_signals = 0xFF;
+		return res;
 	}
-	if (sizeof(struct cyclic_buffer_header_t) + size >
-	    sizeof(buffer_area)) {
-		/* Requested size exceeds the capacity of the area. */
-		return NULL;
-	}
-	buffer_area_in_use = true;
-	return res;
+	/* No free buffers */
+	return NULL;
 }
 
 static void free_cyclic_buffer(struct cyclic_buffer_header_t *buf)
 {
-	buffer_area_in_use = false;
+	buf->num_signals = 0;
 }
 
 /*
@@ -666,7 +673,8 @@ static int command_gpio_monitoring_start(int argc, const char **argv)
 	timestamp_t now;
 	int rv;
 	uint32_t nvic_mask;
-	size_t cyclic_buffer_size = 8192; /* Maybe configurable by parameter */
+	/* Maybe configurable by parameter */
+	size_t cyclic_buffer_size = CYCLIC_BUFFER_SIZE;
 	struct cyclic_buffer_header_t *buf;
 	struct monitoring_slot_t *slot;
 
