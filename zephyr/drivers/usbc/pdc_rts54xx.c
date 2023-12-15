@@ -40,6 +40,11 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 #define N_RETRY_COUNT 200
 
 /**
+ * @brief VBUS Voltage Scale Factor is 50mV
+ */
+#define VOLTAGE_SCALE_FACTOR 50
+
+/**
  * @brief SMbus Command struct for Realtek commands
  */
 struct smbus_cmd_t {
@@ -691,8 +696,15 @@ static void st_read_run(void *o)
 			(data->pdc_pd_version & 0xffff));
 		break;
 	case CMD_GET_VBUS_VOLTAGE:
+		/*
+		 * Realtek Voltage reading is on Byte16 and Byte17, but
+		 * the READ_RTK_STATUS command was issued with reading
+		 * 2-bytes from offset 16, so the data is read from
+		 * rd_buf at Byte1 and Byte2.
+		 */
 		*(uint16_t *)data->user_buf =
-			(data->rd_buf[1] << 8 | data->rd_buf[0]) * 50;
+			((data->rd_buf[2] << 8) | data->rd_buf[1]) *
+			VOLTAGE_SCALE_FACTOR;
 		break;
 	case CMD_GET_CONNECTOR_STATUS:
 		/* Map Realtek GET_RTK_STATUS bits to UCSI GET_CONNECTOR_STATUS
