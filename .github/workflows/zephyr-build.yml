@@ -17,7 +17,7 @@ on:
 jobs:
   build:
     name: Build Framework platforms
-    runs-on: [self-hosted]
+    runs-on: [marigold-builders]
 
     strategy:
       # Only build one at a time because we have only one working directory
