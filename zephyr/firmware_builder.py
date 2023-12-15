@@ -38,6 +38,7 @@ SPECIAL_BOARDS = [
     "roach",
     "ovis",
     "brox",
+    "rauru",
     # Nissa variants
     "nereid",
     "nivviks",

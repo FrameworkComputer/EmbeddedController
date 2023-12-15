@@ -365,6 +365,16 @@ brox_coverage:
     PROJECT: "brox"
   <<: *coverage_template
 
+rauru:
+  variables:
+    PROJECT: "rauru"
+  <<: *build_template
+
+rauru_coverage:
+  variables:
+    PROJECT: "rauru"
+  <<: *coverage_template
+
 ec_coverage:
   stage: test
   needs: []
