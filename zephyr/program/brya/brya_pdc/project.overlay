@@ -36,6 +36,7 @@
 			compatible = "named-usbc-port";
 			reg = <0>;
 			chg = <&charger>;
+			pdc = <&pdc_power_p0p1>;
 			// alt-mode = <&pd_port0>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
@@ -50,6 +51,14 @@
 				compatible = "cros-ec,usbc-mux-virtual";
 			};
 		};
+	};
+};
+
+&i2c4_1 {
+	pdc_power_p0p1: rts@66 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x66>;
+		irq-gpios = <&gpioa 2 GPIO_ACTIVE_LOW>;
 	};
 };
 
