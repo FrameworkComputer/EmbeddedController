@@ -652,6 +652,7 @@ static void charge_manager_get_best_charge_port(int *new_port,
 	int best_port_power = -1, candidate_port_power;
 	int i, j;
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
 #ifndef CONFIG_PD_COMMON_VBUS_CONTROL
 	/* If system initially power on w/o dc, CYPD will control C_CTRL */
 	if ((charge_port == CHARGE_SUPPLIER_NONE) && ((battery_is_present() == BP_YES) &
@@ -664,7 +665,7 @@ static void charge_manager_get_best_charge_port(int *new_port,
 		return;
 	}
 #endif /* CONFIG_PD_COMMON_VBUS_CONTROL */
-
+#endif /* CONFIG_CUSTOMIZED_DESIGN */
 	/* Skip port selection on OVERRIDE_DONT_CHARGE. */
 	if (override_port != OVERRIDE_DONT_CHARGE) {
 		/*
