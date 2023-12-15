@@ -9,6 +9,7 @@
 #include "test_util.h"
 
 #include <stddef.h>
+#include <stdint.h>
 #include <string.h>
 
 #ifndef TEST_BUILD
