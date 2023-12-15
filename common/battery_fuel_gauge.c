@@ -242,7 +242,7 @@ static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 		/* Check length explicitly because 'm' isn't null terminated. */
 		if (head->manuf_name_size != strlen(manuf) ||
 		    strncasecmp(m, manuf, strlen(manuf))) {
-			BCFGPRT("Manuf mismatch: %*s", head->manuf_name_size,
+			BCFGPRT("Manuf mismatch: %.*s", head->manuf_name_size,
 				m);
 			continue;
 		}
@@ -254,7 +254,7 @@ static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 		if (head->device_name_size != 0 &&
 		    (head->device_name_size != strlen(device) ||
 		     strncasecmp(d, device, strlen(device)))) {
-			BCFGPRT("Name mismatch: %*s", head->device_name_size,
+			BCFGPRT("Name mismatch: %.*s", head->device_name_size,
 				d);
 			continue;
 		}
