@@ -294,6 +294,39 @@ class MchpPacker(BinmanPacker):
     """
 
     ro_file = "zephyr.mchp.bin"
+    second_loader = "second_loader_fw.bin"
+
+    def _get_max_image_bytes(self, dir_map):
+        ro_dir = dir_map["ro"]
+        rw_dir = dir_map["rw"]
+        ro_size = util.read_kconfig_autoconf_value(
+            ro_dir / "zephyr" / "include" / "generated",
+            "CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES",
+        )
+        rw_size = util.read_kconfig_autoconf_value(
+            rw_dir / "zephyr" / "include" / "generated",
+            "CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES",
+        )
+        return max(int(ro_size, 0), int(rw_size, 0))
+
+    def pack_firmware(self, work_dir, jobclient, dir_map, version_string=""):
+        ro_dir = dir_map["ro"]
+        for path, output_file in super().pack_firmware(
+            work_dir,
+            jobclient,
+            dir_map,
+            version_string=version_string,
+        ):
+            if output_file == "ec.bin":
+                yield (
+                    self._check_packed_file_size(path, dir_map),
+                    "ec.bin",
+                )
+            else:
+                yield path, output_file
+
+        # Include the MCHP second loader file as an output artifact.
+        yield ro_dir / self.second_loader, self.second_loader
 
 
 # A dictionary mapping packer config names to classes.
