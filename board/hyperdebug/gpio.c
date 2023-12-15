@@ -6,6 +6,7 @@
 
 #include "atomic.h"
 #include "builtin/assert.h"
+#include "cmsis-dap.h"
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
@@ -826,6 +827,23 @@ out_partial_cleanup:
 	return rv;
 }
 
+static const uint8_t *
+traverse_buffer(struct cyclic_buffer_header_t *buf, int gpio_signals_by_no[],
+		timestamp_t now, size_t limit,
+		void (*process_event)(uint8_t, timestamp_t, bool));
+
+static timestamp_t traverse_until;
+
+static void print_event(uint8_t signal_no, timestamp_t event_time, bool rising)
+{
+	/* To conserve bandwidth, timestamps are relative to `traverse_until`.
+	 */
+	ccprintf("  %d %lld %s\n", signal_no,
+		 event_time.val - traverse_until.val, rising ? "R" : "F");
+	/* Flush console to avoid truncating output */
+	cflush();
+}
+
 static int command_gpio_monitoring_read(int argc, const char **argv)
 {
 	int gpios[16];
@@ -834,9 +852,6 @@ static int command_gpio_monitoring_read(int argc, const char **argv)
 	struct cyclic_buffer_header_t *buf = NULL;
 	struct monitoring_slot_t *slot;
 	int gpio_signals_by_no[16];
-	uint8_t signal_bits;
-	const uint8_t *tail, *head;
-	timestamp_t tail_time, now;
 
 	if (gpio_num <= 0 || gpio_num > 16)
 		return EC_ERROR_PARAM_COUNT;
@@ -874,27 +889,49 @@ static int command_gpio_monitoring_read(int argc, const char **argv)
 	}
 
 	/*
-	 * We read current time, before taking a snapshot of the head pointer as
-	 * set by the interrupt handler.  This way, we can guarantee that the
-	 * transcript will include any edge happening at or before the `now`
-	 * timestamp.  If an interrupt happens between the two lines below,
-	 * causing our head pointer to include an event that happened after
-	 * "now", then it will be skipped in the loop below, and kept for the
-	 * next invocation of `gpio monitoring read`.
-	 */
-	now = get_time();
-	head = buf->head;
-
-	ccprintf("  @%lld\n", now.val);
-	signal_bits = buf->signal_bits;
-	tail = buf->tail;
-	tail_time = buf->tail_time;
-	/*
 	 * Print at most 32 lines at a time, since `cflush()` seems to not
 	 * prevent overflow.
 	 */
-	i = 32;
-	while (tail != head && i-- > 0) {
+	traverse_until = get_time();
+	ccprintf("  @%lld\n", traverse_until.val);
+	buf->tail = traverse_buffer(buf, gpio_signals_by_no, traverse_until, 32,
+				    &print_event);
+	if (buf->tail != buf->head)
+		ccprintf("Warning: more data\n");
+	if (buf->overrun)
+		ccprintf("Error: Buffer overrun\n");
+	return EC_SUCCESS;
+}
+
+/*
+ * This routine iterates through buffered entries starting from buf->tail,
+ * stopping when there are no more entries before the `now` timestamp, or when
+ * having processed a certain number of entries given by `limit`, whichever
+ * comes first.  The return value indicate a new value which the caller must put
+ * into buf->tail.  As soon as the caller does this, the traversed range is free
+ * to be overwritten by the interrupt handler.
+ */
+static const uint8_t *
+traverse_buffer(struct cyclic_buffer_header_t *buf, int gpio_signals_by_no[],
+		timestamp_t now, size_t limit,
+		void (*process_event)(uint8_t, timestamp_t, bool))
+{
+	/*
+	 * We have read the current time, before taking a snapshot of the head
+	 * pointer as set by the interrupt handler.  This way, we can guarantee
+	 * that the transcript will include any edge happening at or before the
+	 * `now` timestamp.  If an interrupt happens after `now` was captured,
+	 * but before the line below, causing our head pointer to include an
+	 * event that happened after "now", then it and any further entries will
+	 * be excluded from the traversal, and remain in the cyclic buffer for
+	 * the next invocation of `gpio monitoring read`.
+	 */
+	const uint8_t *head = buf->head;
+
+	int8_t signal_bits = buf->signal_bits;
+	const uint8_t *tail = buf->tail;
+	timestamp_t tail_time = buf->tail_time;
+	while (tail != head && limit-- > 0) {
 		const uint8_t *const buf_start = buf->data;
 		timestamp_t diff;
 		uint8_t byte;
@@ -925,23 +962,12 @@ static int command_gpio_monitoring_read(int argc, const char **argv)
 		tail_time.val += diff.val;
 		mask = gpio_list[gpio_signals_by_no[signal_no]].mask;
 		slot = monitoring_slots + GPIO_MASK_TO_NUM(mask);
-		/* To conserve bandwidth, timestamps are relative to `now`. */
-		ccprintf("  %d %lld %s\n", signal_no, tail_time.val - now.val,
-			 slot->tail_level ? "F" : "R");
-		/* Flush console to avoid truncating output */
-		cflush();
 		slot->tail_level ^= mask;
+		if (process_event)
+			process_event(signal_no, tail_time, slot->tail_level);
 	}
-	buf->tail = tail;
 	buf->tail_time = tail_time;
-	if (tail != head) {
-		ccprintf("Warning: more data\n");
-	}
-	if (buf->overrun) {
-		ccprintf("Error: Buffer overrun\n");
-	}
-
-	return EC_SUCCESS;
+	return tail;
 }
 
 static int command_gpio_monitoring_stop(int argc, const char **argv)
@@ -1106,3 +1132,220 @@ static void led_tick(void)
 	}
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
+
+size_t queue_add_units(struct queue const *q, const void *src, size_t count);
+
+static void queue_blocking_add(struct queue const *q, const void *src,
+			       size_t count)
+{
+	while (true) {
+		size_t progress = queue_add_units(q, src, count);
+		src += progress;
+		if (progress >= count)
+			return;
+		count -= progress;
+		/*
+		 * Wait for queue consumer to wake up this task, when there is
+		 * more room in the queue.
+		 */
+		task_wait_event(0);
+	}
+}
+
+static void queue_blocking_remove(struct queue const *q, void *dest,
+				  size_t count)
+{
+	while (true) {
+		size_t progress = queue_remove_units(q, dest, count);
+		dest += progress;
+		if (progress >= count)
+			return;
+		count -= progress;
+		/*
+		 * Wait for queue consumer to wake up this task, when there is
+		 * more data in the queue.
+		 */
+		task_wait_event(0);
+	}
+}
+
+/*
+ * Declaration of header used in the binary USB protocol (Google HyperDebug
+ * extensions to CMSIS-DAP protocol.)
+ */
+struct gpio_monitoring_header_t {
+	/* Size of this struct, including the size field. */
+	uint16_t transcript_offset;
+
+	/*
+	 * Non-zero status indicates an error processing the request, in such
+	 * case the other fields may not be valid.
+	 */
+	uint16_t status;
+
+	/* Bitfield of the level of each of the signals at the beginning of this
+	 * transcript. */
+	uint16_t start_levels;
+
+	/* Number of bytes of transcript following this struct. */
+	uint16_t transcript_size;
+
+	/* Time window covered by this transcript. */
+	uint64_t start_timestamp;
+	uint64_t end_timestamp;
+};
+
+/* Sub-requests */
+const uint8_t GPIO_REQ_MONITORING_READ = 0x00;
+
+/* Values for gpio_monitoring_header_t::status */
+const uint16_t MON_SUCCESS = 0;
+/* Specified GPIO not recognized by HyperDebug */
+const uint16_t MON_UNKNOWN_GPIO = 1;
+/* Specified GPIO not being monitored */
+const uint16_t MON_GPIO_NOT_MONITORED = 2;
+/* Specified list of GPIOs span several monitoring groups */
+const uint16_t MON_GPIO_MIXED = 3;
+/* Specified list of GPIOs fails to include some pins from the group */
+const uint16_t MON_GPIO_MISSING = 4;
+/* Buffer overrun, returned data is incomplete */
+const uint16_t MON_BUFFER_OVERRUN = 5;
+
+/*
+ * Entry point for CMSIS-DAP vendor command for GPIO monitoring.
+ */
+void dap_goog_gpio_monitoring(size_t peek_c)
+{
+	/*
+	 * We need to inspect sub-command on second byte below, in order to
+	 * start decoding.
+	 */
+	if (peek_c < 2)
+		return;
+
+	switch (rx_buffer[1]) {
+	case GPIO_REQ_MONITORING_READ: {
+		/*
+		 * Essentially the same as console command `gpio monitoring
+		 * read`, but with binary protocol for greatly improved
+		 * efficiency.
+		 */
+		if (peek_c < 3)
+			return;
+		int gpio_num = rx_buffer[2];
+		int gpios[16];
+		struct cyclic_buffer_header_t *buf = NULL;
+		int gpio_signals_by_no[16];
+		queue_remove_units(&cmsis_dap_rx_queue, rx_buffer, 3);
+		for (int i = 0; i < gpio_num; i++) {
+			uint8_t str_len;
+			queue_blocking_remove(&cmsis_dap_rx_queue, &str_len, 1);
+			queue_blocking_remove(&cmsis_dap_rx_queue, rx_buffer,
+					      str_len);
+			rx_buffer[str_len] = '\0';
+			gpios[i] = gpio_find_by_name(rx_buffer);
+		}
+
+		/*
+		 * Start the one-byte CMSIS-DAP encapsulation header at offset 7
+		 * in tx_buffer, such that our header struct which follows it
+		 * will be 8-byte aligned.
+		 */
+		struct gpio_monitoring_header_t *header =
+			(struct gpio_monitoring_header_t *)(tx_buffer + 8);
+		uint8_t *const encapsulated_header = tx_buffer + 7;
+		const size_t encapsulated_header_size = 1 + sizeof(*header);
+		encapsulated_header[0] = tx_buffer[0];
+		memset(header, 0, sizeof(*header));
+		header->transcript_offset = sizeof(*header);
+		header->status = MON_SUCCESS;
+
+		for (int i = 0; i < gpio_num; i++) {
+			if (gpios[i] == GPIO_COUNT)
+				header->status = MON_UNKNOWN_GPIO;
+			struct monitoring_slot_t *slot =
+				monitoring_slots +
+				GPIO_MASK_TO_NUM(gpio_list[gpios[i]].mask);
+			if (slot->gpio_signal != gpios[i]) {
+				header->status = MON_GPIO_NOT_MONITORED;
+			}
+			if (buf == NULL) {
+				buf = slot->buffer;
+			} else if (buf != slot->buffer) {
+				header->status = MON_GPIO_MIXED;
+			}
+			gpio_signals_by_no[slot->signal_no] = gpios[i];
+		}
+		if (gpio_num != buf->num_signals) {
+			header->status = MON_GPIO_MISSING;
+		}
+
+		if (header->status != 0) {
+			/* Report error processing the request. */
+			queue_add_units(&cmsis_dap_tx_queue,
+					encapsulated_header,
+					encapsulated_header_size);
+			return;
+		}
+
+		uint32_t start_levels = 0;
+		for (uint8_t signal_no = 0; signal_no < buf->num_signals;
+		     signal_no++) {
+			uint32_t mask =
+				gpio_list[gpio_signals_by_no[signal_no]].mask;
+			struct monitoring_slot_t *slot =
+				monitoring_slots + GPIO_MASK_TO_NUM(mask);
+			if (slot->tail_level)
+				start_levels |= 1 << signal_no;
+		}
+		header->start_levels = start_levels;
+		header->start_timestamp = buf->tail_time.val;
+		timestamp_t now = get_time();
+		header->end_timestamp = now.val;
+
+		const uint8_t *tail = traverse_buffer(buf, gpio_signals_by_no,
+						      now, (size_t)-1, NULL);
+
+		if (buf->overrun) {
+			/*
+			 * Report overrun, but still transmit the events that we
+			 * managed to capture.
+			 */
+			header->status = MON_BUFFER_OVERRUN;
+		}
+
+		/*
+		 * Having found the byte range that corresponds to the time
+		 * interval in the header, and having updated `tail_level` and
+		 * `tail_time` to match the end of the interval, we can now
+		 * transmit all the raw bytes of the range.  If it wraps around
+		 * the cyclic buffer, we need two calls to `queue_add_units` (in
+		 * addition to first call to transmit the header).
+		 */
+
+		if (buf->tail <= tail) {
+			/* One contiguous range */
+			header->transcript_size = tail - buf->tail;
+			queue_add_units(&cmsis_dap_tx_queue,
+					encapsulated_header,
+					encapsulated_header_size);
+			queue_blocking_add(&cmsis_dap_tx_queue, buf->tail,
+					   header->transcript_size);
+		} else {
+			/* Data wraps around */
+			header->transcript_size =
+				tail - buf->data + buf->end - buf->tail;
+			queue_add_units(&cmsis_dap_tx_queue,
+					encapsulated_header,
+					encapsulated_header_size);
+			queue_blocking_add(&cmsis_dap_tx_queue, buf->tail,
+					   buf->end - buf->tail);
+			queue_blocking_add(&cmsis_dap_tx_queue, buf->data,
+					   tail - buf->data);
+		}
+
+		buf->tail = tail;
+		return;
+	}
+	}
+}
