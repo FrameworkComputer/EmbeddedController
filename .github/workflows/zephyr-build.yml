@@ -65,7 +65,7 @@ jobs:
           pushd src/third_party/zephyr/main
           git fetch github-private
           git clean -ffdx
-          git reset --hard github-private/lotus-zephyr
+          git reset --hard github-private/marigold
           popd
 
       - name: Build ${{ matrix.platform.name }}
