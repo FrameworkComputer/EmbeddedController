@@ -192,6 +192,10 @@ DEFINE_boolean try_apshutdown "${FLAGS_FALSE}" \
 	" to understand the limitations when you build a solution on it. "
 DEFINE_integer try_apshutdown_count 16 \
 	"Number of attempts to shutdown the AP immediately after flashing."
+DEFINE_string dut_ip "" \
+	"DUT IP address"
+DEFINE_string token_db "${EC_DIR}/build/tokens.bin" \
+	"Full pathname of the EC tokenized database to copy to DUT."
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
@@ -734,6 +738,13 @@ if [[ -n "${EC_DIR}" ]]; then
 	fi
 fi
 
+LOCAL_TOKEN_DB=
+if [[ -n "${EC_DIR}" ]]; then
+	if [ -f "${EC_DIR}/build/tokens.bin" ] ; then
+		LOCAL_TOKEN_DB="${EC_DIR}/build/tokens.bin"
+	fi
+fi
+
 # Get baseboard from build system if present
 BASEBOARD=
 
@@ -782,6 +793,40 @@ function ec_image() {
 		fi
 	fi
 	die "no EC image found : build one or specify one."
+}
+
+function ec_token_database() {
+	# No token database specified on command line, try default location
+	if [[ -n "${FLAGS_token_db}" ]] ; then
+		if [ -e "${FLAGS_token_db}" ] || \
+		   [ "${FLAGS_token_db}" == "-" ]; then
+			echo "${FLAGS_token_db}"
+			return
+		fi
+		die "Invalid image path : ${FLAGS_token_db}"
+	else
+		if [ -f "${LOCAL_TOKEN_DB}" ]; then
+			echo "${LOCAL_TOKEN_DB}"
+			return
+		fi
+	fi
+	die "no token database found : specify one."
+}
+
+function load_token_db() {
+	local TOKEN_DB
+	local DUT_IP
+
+	TOKEN_DB="$(ec_token_database)"
+	DUT_IP="${FLAGS_dut_ip}"
+
+	info "TOKEN_DB=${TOKEN_DB}"
+	info "DUT_IP=${DUT_IP}"
+
+	ssh root@"${DUT_IP}" 'mkdir -p /usr/local/cros_ec/'
+	scp "${TOKEN_DB}" root@"${DUT_IP}":/usr/local/cros_ec/tokens.bin
+
+	return
 }
 
 # Find the Loader image to use
@@ -1942,6 +1987,11 @@ function check_preserve_sections_presence() {
 		done
 	)
 }
+
+if [[ -n "${FLAGS_dut_ip}" ]] ; then
+	info "Updating token database"
+	load_token_db
+fi
 
 info "Flashing chip ${CHIP}."
 flash_"${CHIP}"
