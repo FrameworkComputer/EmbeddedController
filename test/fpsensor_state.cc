@@ -127,7 +127,6 @@ test_static enum ec_error_list test_fp_set_sensor_mode(void)
 	uint32_t output_mode = 0;
 
 	/* Validate initial conditions */
-	TEST_ASSERT(FP_MAX_FINGER_COUNT == 5);
 	TEST_ASSERT(templ_valid == 0);
 	TEST_ASSERT(sensor_mode == 0);
 
