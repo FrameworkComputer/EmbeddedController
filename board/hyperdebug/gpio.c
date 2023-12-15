@@ -350,15 +350,19 @@ static void stop_all_gpio_monitoring(void)
 		if (!slot->buffer)
 			continue;
 
-		/* Disable interrupts for all signals feeding into the same
-		 * cyclic buffer. */
+		/*
+		 * Disable interrupts for all signals feeding into the same
+		 * cyclic buffer, and clear `slot->buffer` to make sure they are
+		 * not discovered by next iteration of the outer loop.
+		 */
 		buffer_header = slot->buffer;
 		for (int j = i; j < ARRAY_SIZE(monitoring_slots); j++) {
-			slot = monitoring_slots + i;
+			slot = monitoring_slots + j;
 			if (slot->buffer != buffer_header)
 				continue;
 			gpio_disable_interrupt(slot->gpio_signal);
 			slot->gpio_signal = GPIO_COUNT;
+			slot->buffer = NULL;
 		}
 		/* Deallocate this one cyclic buffer. */
 		num_cur_monitoring--;
