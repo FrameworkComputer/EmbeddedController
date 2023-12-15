@@ -15,18 +15,22 @@ on:
 jobs:
   build:
     name: Build lotus/azalea
-    runs-on: [self-hosted]
+    runs-on: [lotus-azalea-builders]
 
     strategy:
       # Only build one at a time because we have only one working directory
       max-parallel: 1
       matrix:
-        platform: [lotus, azalea]
+        platform: [
+          {name: lotus, folder: data },
+          {name: azalea, folder: data },
+        ]
+
 
     # Build not in $GITHUB_HOME but in the chroot env
     defaults:
       run:
-        working-directory: /data/ec_home/chromiumos
+        working-directory: /${{ matrix.platform.folder }}/ec_home/chromiumos
 
     steps:
       # Need to use git
@@ -60,13 +64,13 @@ jobs:
           git reset --hard github-private/lotus-zephyr
           popd
 
-      - name: Build Lotus
+      - name: Build ${{ matrix.platform.name }}
         run: |
-          cros_sdk zmake build ${{ matrix.platform }}
-          echo Built ${{ matrix.platform }} EC
+          cros_sdk zmake build ${{ matrix.platform.name }}
+          echo Built ${{ matrix.platform.name }} EC
 
       - name: File sha256
-        run: sha256sum src/platform/ec/build/zephyr/${{ matrix.platform }}/output/ec.bin
+        run: sha256sum src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output/ec.bin
 
       - name: Generate artifact version
         run: |
@@ -74,5 +78,5 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.platform }}.${{ env.VERSIONINFO }}
-          path: /data/ec_home/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform }}/output
+          name: ${{ matrix.platform.name }}.${{ env.VERSIONINFO }}
+          path: /${{ matrix.platform.folder }}/ec_home/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output
