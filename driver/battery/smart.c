@@ -16,7 +16,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr);
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, "SBS " format, ##args)
 
 #define BATTERY_NO_RESPONSE_TIMEOUT (1000 * MSEC)
 
