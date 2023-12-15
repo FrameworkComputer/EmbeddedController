@@ -17,18 +17,24 @@ on:
 jobs:
   build:
     name: Build Framework platforms
-    runs-on: [self-hosted]
+    runs-on: [marigold-builders]
 
     strategy:
       # Only build one at a time because we have only one working directory
       max-parallel: 1
       matrix:
-        platform: [marigold, lotus, azalea]
+        platform: [
+          # Build marigold only on marigold builder and folder
+          {name: marigold, folder: marigold },
+          {name: lotus, folder: marigold },
+          {name: azalea, folder: marigold },
+        ]
+
 
     # Build not in $GITHUB_HOME but in the chroot env
     defaults:
       run:
-        working-directory: /data/ec_home/chromiumos
+        working-directory: /${{ matrix.platform.folder }}/ec_home/chromiumos
 
     steps:
       # Need to use git
@@ -59,16 +65,16 @@ jobs:
           pushd src/third_party/zephyr/main
           git fetch github-private
           git clean -ffdx
-          git reset --hard github-private/lotus-zephyr
+          git reset --hard github-private/marigold
           popd
 
-      - name: Build ${{ matrix.platform }}
+      - name: Build ${{ matrix.platform.name }}
         run: |
-          cros_sdk zmake build ${{ matrix.platform }}
-          echo Built ${{ matrix.platform }} EC
+          cros_sdk zmake build ${{ matrix.platform.name }}
+          echo Built ${{ matrix.platform.name }} EC
 
       - name: File sha256
-        run: sha256sum src/platform/ec/build/zephyr/${{ matrix.platform }}/output/ec.bin
+        run: sha256sum src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output/ec.bin
 
       - name: Generate artifact version
         run: |
@@ -76,5 +82,5 @@ jobs:
 
       - uses: actions/upload-artifact@v3
         with:
-          name: ${{ matrix.platform }}.${{ env.VERSIONINFO }}
-          path: /data/ec_home/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform }}/output
+          name: ${{ matrix.platform.name }}.${{ env.VERSIONINFO }}
+          path: /${{ matrix.platform.folder }}/ec_home/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output
