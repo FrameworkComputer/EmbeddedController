@@ -7,6 +7,7 @@
 
 	aliases {
 		gpio-check-fp-control = &gpio_fp_control;
+		gpio-mux-uart-flip = &gpio_mux_sub_uart_flip;
 	};
 	named-gpios {
 		compatible = "named-gpios";

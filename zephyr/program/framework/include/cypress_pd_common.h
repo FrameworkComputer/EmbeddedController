@@ -11,6 +11,7 @@
 #include "usb_pd.h"
 
 /* 7 bit address  */
+/* TODO: create a i2c ccg yaml to define the i2c address */
 #ifdef CONFIG_PD_CHIP_CCG8
 #define CCG_I2C_CHIP0	0x42
 #define CCG_I2C_CHIP1	0x40
