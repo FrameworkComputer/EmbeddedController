@@ -12,7 +12,8 @@ ec_commands_file_in="include/ec_commands.h"
 ec_commands_file_out="build/kernel/include/linux/mfd/cros_ec_commands.h"
 
 # Check if ec_commands.h has changed.
-echo ${PRESUBMIT_FILES} | grep -q "${ec_commands_file_in}" || exit 0
+echo "${PRESUBMIT_FILES:?}" | xargs -d'\n' -- grep -q \
+  "${ec_commands_file_in}" || exit 0
 
 if [ ! -f "${ec_commands_file_out}" ]; then
   echo "A new cros_ec_commands.h must be generated."
@@ -26,4 +27,5 @@ if [ "${ec_commands_file_out}" -ot "${ec_commands_file_in}" ]; then
   exit 1
 fi
 
-"${ZEPHYR_BASE}/scripts/checkpatch.pl" -f "${ec_commands_file_out}"
+"${ZEPHYR_BASE}/scripts/checkpatch.pl" -f "${ec_commands_file_out}" \
+  --ignore=BRACKET_SPACE
