@@ -586,11 +586,6 @@ int get_next_cec_mkbp_event(struct ec_response_get_next_event_v1 *event)
 	return get_next_event_of_type(event, EC_MKBP_EVENT_CEC_EVENT);
 }
 
-int get_next_cec_message(struct ec_response_get_next_event_v1 *event)
-{
-	return get_next_event_of_type(event, EC_MKBP_EVENT_CEC_MESSAGE);
-}
-
 bool cec_event_matches(struct ec_response_get_next_event_v1 *event, int port,
 		       enum mkbp_cec_event events)
 {

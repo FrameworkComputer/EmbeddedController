@@ -544,14 +544,6 @@ int host_cmd_cec_read(int port, struct ec_response_cec_read *response);
 int get_next_cec_mkbp_event(struct ec_response_get_next_event_v1 *event);
 
 /**
- * Read MKBP events until we find one of type EC_MKBP_EVENT_CEC_MESSAGE.
- *
- * @param event	    The MKBP event on success
- * @return	    0 if an event was found, -1 otherwise
- */
-int get_next_cec_message(struct ec_response_get_next_event_v1 *event);
-
-/**
  * Check if the given MKBP event matches the given port and event type.
  *
  * @param event	    An MKBP event of type EC_MKBP_EVENT_CEC_EVENT.

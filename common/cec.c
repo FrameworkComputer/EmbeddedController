@@ -422,29 +422,6 @@ static int cec_get_next_event(uint8_t *out)
 }
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_CEC_EVENT, cec_get_next_event);
 
-static int cec_get_next_msg(uint8_t *out)
-{
-	int rv;
-	uint8_t msg_len, msg[MAX_CEC_MSG_LEN];
-	/* cec_message is only used on devices with one CEC port */
-	const int port = 0;
-
-	if (CEC_PORT_COUNT != 1) {
-		CPRINTS("CEC error: cec_message used on device with %d ports",
-			CEC_PORT_COUNT);
-		return -1;
-	}
-
-	rv = cec_rx_queue_pop(&cec_rx_queue[port], msg, &msg_len);
-	if (rv != 0)
-		return -1;
-
-	memcpy(out, msg, msg_len);
-
-	return msg_len;
-}
-DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_CEC_MESSAGE, cec_get_next_msg);
-
 static void cec_init(void)
 {
 	int port;
@@ -481,23 +458,7 @@ static void handle_received_message(int port)
 	if (rv != EC_SUCCESS)
 		return;
 
-	/*
-	 * There are two ways of transferring received messages to the AP:
-	 * 1. Old EC / kernel which only support one port send the data in a
-	 *    cec_message MKBP event.
-	 * 2. New EC / kernel which support multiple ports use a HAVE_DATA
-	 *    event + read command.
-	 * On devices with only one CEC port, the EC will continue to use
-	 * cec_message for now. This allows new EC firmware to work with old
-	 * kernels, which makes migration easier since it doesn't matter if the
-	 * EC or kernel changes land first. This can be removed once the kernel
-	 * changes to support multiple ports have landed on all relevant kernel
-	 * branches.
-	 */
-	if (CEC_PORT_COUNT == 1)
-		mkbp_send_event(EC_MKBP_EVENT_CEC_MESSAGE);
-	else
-		send_mkbp_event(port, EC_MKBP_CEC_HAVE_DATA);
+	send_mkbp_event(port, EC_MKBP_CEC_HAVE_DATA);
 }
 
 void cec_task(void *unused)
