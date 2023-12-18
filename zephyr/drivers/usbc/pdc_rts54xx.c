@@ -1862,6 +1862,7 @@ static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 			rts54xx_thread, (void *)dev, 0, 0,                    \
 			CONFIG_USBC_PDC_RTS54XX_THREAD_PRIORITY, K_ESSENTIAL, \
 			K_NO_WAIT);                                           \
+		k_thread_name_set(data->thread, "RTS54XX" STRINGIFY(inst));   \
 	}                                                                     \
                                                                               \
 	static struct pdc_data_t pdc_data_##inst;                             \
