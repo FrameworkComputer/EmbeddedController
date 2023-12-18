@@ -1,22 +1,242 @@
-/* Copyright 2023 The ChromiumOS Authors
+/* Copyright 2024 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
+ *
+ * This file is auto-generated - do not edit!
  */
 
 / {
-	aliases {
-		gpio-wp = &ec_wp_l;
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_charger_amon_q: charger_amon_q {
+			enum-name = "ADC_AMON_BMON";
+			io-channels = <&adc0 2>;
+		};
+		adc_charger_pmon_q: charger_pmon_q {
+			enum-name = "ADC_PSYS";
+			io-channels = <&adc0 3>;
+		};
+		adc_ec_usb_c0_vbus_sense: ec_usb_c0_vbus_sense {
+			enum-name = "ADC_VBUS_C0";
+			io-channels = <&adc0 0>;
+		};
+		adc_ec_usb_c1_vbus_sense: ec_usb_c1_vbus_sense {
+			enum-name = "ADC_VBUS_C1";
+			io-channels = <&adc0 1>;
+		};
+		adc_temp_sensor1: temp_sensor1 {
+			enum-name = "ADC_TEMP_SENSOR_1";
+			io-channels = <&adc0 4>;
+		};
 	};
 
 	named-gpios {
 		compatible = "named-gpios";
 
-		ec_wp_l: write-protect {
-			gpios = <&gpioa 0 GPIO_INPUT>;
+		gpio_als_int_odl: als_int_odl {
+			gpios = <&gpiob 6 GPIO_INPUT>;
 		};
-		/* unimplemented GPIOs */
-		entering-rw {
-			enum-name = "GPIO_ENTERING_RW";
+		gpio_ap_ec_sysrst_odl: ap_ec_sysrst_odl {
+			gpios = <&gpioj 2 GPIO_INPUT>;
+		};
+		gpio_ap_ec_warm_rst_req: ap_ec_warm_rst_req {
+			gpios = <&gpiom 3 GPIO_INPUT>;
+		};
+		gpio_ap_ec_wdtrst_l: ap_ec_wdtrst_l {
+			gpios = <&gpioj 3 GPIO_INPUT>;
+		};
+		gpio_ap_in_sleep_l: ap_in_sleep_l {
+			gpios = <&gpiom 2 GPIO_INPUT>;
+		};
+		gpio_ap_xhci_init_done: ap_xhci_init_done {
+			gpios = <&gpioj 4 GPIO_INPUT>;
+		};
+		gpio_ccd_mode_odl: ccd_mode_odl {
+			gpios = <&gpioe 5 GPIO_INPUT>;
+		};
+		gpio_charger_prochot_odl: charger_prochot_odl {
+			gpios = <&gpioc 0 GPIO_INPUT>;
+		};
+		gpio_dp_path_hdmi_en: dp_path_hdmi_en {
+			gpios = <&gpioi 6 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_dp_path_usb_c1_en: dp_path_usb_c1_en {
+			gpios = <&gpiog 0 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_ap_dp_hpd_l: ec_ap_dp_hpd_l {
+			gpios = <&gpiof 3 GPIO_OUTPUT>;
+		};
+		gpio_ec_ap_hid_int_odl: ec_ap_hid_int_odl {
+			gpios = <&gpiod 7 GPIO_ODR_HIGH>;
+		};
+		gpio_ec_ap_int_odl: ec_ap_int_odl {
+			gpios = <&gpiom 6 GPIO_ODR_HIGH>;
+		};
+		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
+			gpios = <&gpioc 3 GPIO_INPUT>;
+		};
+		gpio_ec_bl_en_od: ec_bl_en_od {
+			gpios = <&gpiod 2 GPIO_ODR_LOW>;
+		};
+		gpio_ec_cbi_wp: ec_cbi_wp {
+			gpios = <&gpioc 5 GPIO_OUTPUT>;
+		};
+		gpio_ec_flash_wp_odl: ec_flash_wp_odl {
+			gpios = <&gpioc 4 GPIO_INPUT>;
+		};
+		gpio_ec_gpa7_test: ec_gpa7_test {
+			gpios = <&gpioa 7 GPIO_INPUT>;
+		};
+		gpio_ec_gsc_packet_mode_en: ec_gsc_packet_mode_en {
+			gpios = <&gpioe 6 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_led1_odl: ec_led1_odl {
+			gpios = <&gpioa 0 GPIO_ODR_HIGH>;
+		};
+		gpio_ec_led2_odl: ec_led2_odl {
+			gpios = <&gpioa 1 GPIO_ODR_HIGH>;
+		};
+		gpio_ec_pmic_en_odl: ec_pmic_en_odl {
+			gpios = <&gpioj 0 GPIO_ODR_HIGH>;
+		};
+		gpio_ec_voldn_btn_odl: ec_voldn_btn_odl {
+			gpios = <&gpioe 3 GPIO_INPUT>;
+		};
+		gpio_ec_volup_btn_odl: ec_volup_btn_odl {
+			gpios = <&gpioe 4 GPIO_INPUT>;
+		};
+		gpio_en_hdmi_pwr: en_hdmi_pwr {
+			gpios = <&gpioi 5 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_en_kb_bl: en_kb_bl {
+			gpios = <&gpiog 2 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_en_pp3700_s5: en_pp3700_s5 {
+			gpios = <&gpioh 5 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_en_pp5000_fan: en_pp5000_fan {
+			gpios = <&gpioa 6 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_en_pp5000_pen_l: en_pp5000_pen_l {
+			gpios = <&gpiog 3 GPIO_OUTPUT>;
+		};
+		gpio_en_pp5000_usba_vbus: en_pp5000_usba_vbus {
+			gpios = <&gpiog 1 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_en_pp5000_z1: en_pp5000_z1 {
+			gpios = <&gpioh 3 GPIO_OUTPUT>;
+		};
+		gpio_en_ulp: en_ulp {
+			gpios = <&gpioh 0 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_gsc_acok_od: gsc_acok_od {
+			gpios = <&gpioe 1 GPIO_INPUT>;
+		};
+		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
+			gpios = <&gpioe 2 GPIO_INPUT>;
+		};
+		gpio_hdmi_ec_hpd: hdmi_ec_hpd {
+			gpios = <&gpioi 7 GPIO_INPUT>;
+		};
+		gpio_imu_int_l: imu_int_l {
+			gpios = <&gpiod 0 GPIO_INPUT>;
+		};
+		gpio_lid_360_l: lid_360_l {
+			gpios = <&gpioc 7 GPIO_INPUT>;
+		};
+		gpio_lid_accel_int_l: lid_accel_int_l {
+			gpios = <&gpiod 1 GPIO_INPUT>;
+		};
+		gpio_lid_open_3v3: lid_open_3v3 {
+			gpios = <&gpioc 6 GPIO_INPUT>;
+		};
+		gpio_pg_pp3700_s5_od: pg_pp3700_s5_od {
+			gpios = <&gpioh 6 GPIO_INPUT>;
+		};
+		gpio_pg_pp5000_z1_od: pg_pp5000_z1_od {
+			gpios = <&gpioh 4 GPIO_INPUT>;
+		};
+		gpio_pmic_ec_resetb: pmic_ec_resetb {
+			gpios = <&gpioj 1 GPIO_INPUT>;
+		};
+		gpio_sys_rst_odl: sys_rst_odl {
+			gpios = <&gpioj 5 GPIO_OUTPUT>;
+		};
+		gpio_usb_c0_dp_in_hpd: usb_c0_dp_in_hpd {
+			gpios = <&gpiof 2 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_usb_c0_frs_en: usb_c0_frs_en {
+			gpios = <&gpiof 0 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
+			gpios = <&gpiof 1 GPIO_INPUT>;
+		};
+		gpio_usb_c1_dp_in_hpd: usb_c1_dp_in_hpd {
+			gpios = <&gpiod 5 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_usb_c1_frs_en: usb_c1_frs_en {
+			gpios = <&gpiod 3 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
+			gpios = <&gpiod 4 GPIO_INPUT>;
 		};
 	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_pwr_cbi_scl_3v3: ec_i2c_pwr_cbi_scl_3v3 {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_POWER", "I2C_PORT_EEPROM";
+		};
+		i2c_ec_smb_batt_scl_3v3: ec_smb_batt_scl_3v3 {
+			i2c-port = <&i2c1>;
+			enum-names = "I2C_PORT_BATTERY", "I2C_PORT_VIRTUAL_BATTERY";
+		};
+		i2c_ec_i2c_usb_c0_scl_3v3: ec_i2c_usb_c0_scl_3v3 {
+			i2c-port = <&i2c2ALT>;
+			enum-names = "I2C_PORT_USB_C0";
+		};
+		i2c_ec_i2c_sensor_scl_1v8: ec_i2c_sensor_scl_1v8 {
+			i2c-port = <&i2c3>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+		i2c_ec_i2c_usb_c1_scl_3v3: ec_i2c_usb_c1_scl_3v3 {
+			i2c-port = <&i2c4>;
+			enum-names = "I2C_PORT_USB_C1";
+		};
+		i2c_ec_i2c5: ec_i2c5 {
+			i2c-port = <&i2c5ALT>;
+		};
+	};
+};
+
+&adc0 {
+	status = "okay";
+};
+
+&i2c0 {
+	status = "okay";
+};
+
+&i2c1 {
+	status = "okay";
+};
+
+&i2c2ALT {
+	status = "okay";
+};
+
+&i2c3 {
+	status = "okay";
+};
+
+&i2c4 {
+	status = "okay";
+};
+
+&i2c5ALT {
+	status = "okay";
 };

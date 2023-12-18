@@ -3,8 +3,9 @@
  * found in the LICENSE file.
  */
 
-#include "../arbitrage.dtsi"
-#include "../usbc.dtsi"
-#include "generated.dtsi"
-#include "motionsense.dtsi"
-#include "overlay.dtsi"
+#include <dt-bindings/motionsense/utils.h>
+
+/ {
+	motionsense-sensor {
+	};
+};
