@@ -1,8 +1,7 @@
 # GWSQ enabled alias to assign reviews. See code_reviews.md.
 cros-ec-reviewers@google.com
 
-# Allow anyone to approve changes.
-*
+include chromiumos/owners:v1:/firmware/OWNERS.cros_ec
 
 # Don't inherit owners from elsewhere in the manifest
 set noparent
