@@ -20,6 +20,35 @@ config BOARD_MARIGOLD
 	  Build Framework Marigold reference board. Marigold has Intel SoC
 	  with NPCX993FA0BX EC.
 
+# Project Configuration
+config CHIPSET_INTEL
+	bool "Framework Intel project"
+	default n
+	help
+	  Framework project which uses the Intel chipset.
+	  Enable the Intel feature.
+
+config CHIPSET_AMD
+	bool "Framework AMD project"
+	default n
+	help
+	  Framework project which uses the AMD chipset.
+	  Enable the AMD feature.
+
+config PD_CHIP_CCG8
+	bool "Select CCG8 PD chip"
+	default n
+	help
+	  Framework project which uses the CCG8 PD chips.
+	  Enable CCG8 PD feature.
+
+config PD_CHIP_CCG6
+	bool "Select CCG6 PD chip"
+	default n
+	help
+	  Framework project which uses the CCG6 PD chips.
+	  Enable CCG6 PD feature.
+
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code
 source "subsys/logging/Kconfig.template.log_config"

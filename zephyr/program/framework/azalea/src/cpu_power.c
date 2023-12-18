@@ -19,6 +19,9 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+#define BATTERY_55mW 55000
+#define BATTERY_61mW 61000
+
 static int battery_mwatt_type;
 static int battery_current_limit_mA;
 static int powerlimit_restore;

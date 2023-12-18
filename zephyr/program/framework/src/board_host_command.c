@@ -173,7 +173,9 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	*host_get_memmap(EC_MEMMAP_POWER_SLIDE) = 0x0;
 	*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER) = 0x0;
 
+#ifdef CONFIG_CHIPSET_AMD
 	update_apu_ready(1);
+#endif
 
 	/**
 	 * Even though the protocol returns EC_SUCCESS,
@@ -242,7 +244,7 @@ static enum ec_status cmd_get_hw_diag(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_GET_HW_DIAG, cmd_get_hw_diag,
 			EC_VER_MASK(0));
 
-#ifdef CONFIG_BOARD_AZALEA
+#ifdef CONFIG_PLATFORM_EC_KEYBOARD
 static enum ec_status update_keyboard_matrix(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_update_keyboard_matrix *p = args->params;
@@ -460,6 +462,61 @@ static enum ec_status privacy_switches_check(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_PRIVACY_SWITCHES_CHECK_MODE, privacy_switches_check, EC_VER_MASK(0));
 
+#ifdef CONFIG_CHIPSET_INTEL
+static enum ec_status disable_ps2_mouse_emulation(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_ps2_emulation_control *p = args->params;
+
+	/**
+	 * TODO: ps2 mouse emulation
+	 * set_ps2_mouse_emulation(p->disable);
+	 */
+	CPRINTS("TODO: ps2 mouse emulation %d", p->disable);
+	return EC_RES_UNAVAILABLE;
+}
+DECLARE_HOST_COMMAND(EC_CMD_DISABLE_PS2_EMULATION, disable_ps2_mouse_emulation, EC_VER_MASK(0));
+
+#ifdef PD_CHIP_CCG6
+static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_bb_retimer_control_mode *p = args->params;
+	struct ec_response_bb_retimer_control_mode *r = args->response;
+
+	CPRINTS("TODO: bb-retimer interface :%d", p->controller);
+	r->status = 0;
+	args->response_size = sizeof(*r);
+
+	/**
+	 * TODO: wait CCG6 interface
+	 * Note: retimer control register is multi declared in CCG8 and CCG6
+	 */
+
+	/*switch (p->modes) {
+	case BB_ENTRY_FW_UPDATE_MODE:
+		entry_tbt_mode(p->controller);
+		break;
+	case BB_EXIT_FW_UPDATE_MODE:
+		exit_tbt_mode(p->controller);
+		break;
+	case BB_ENABLE_COMPLIANCE_MODE:
+		enable_compliance_mode(p->controller);
+		break;
+	case BB_DISABLE_COMPLIANCE_MODE:
+		disable_compliance_mode(p->controller);
+		break;
+	case BB_CHECK_STATUS:
+		r->status = check_tbt_mode(p->controller);
+		args->response_size = sizeof(*r);
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}*/
+
+	return EC_RES_UNAVAILABLE;
+}
+DECLARE_HOST_COMMAND(EC_CMD_BB_RETIMER_CONTROL, bb_retimer_control, EC_VER_MASK(0));
+#endif /* PD_CHIP_CCG6 */
+#endif /* CONFIG_CHIPSET_INTEL */
 /*******************************************************************************/
 /*                       EC console command for Project                        */
 /*******************************************************************************/
