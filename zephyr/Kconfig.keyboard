@@ -116,8 +116,9 @@ config PLATFORM_EC_KEYBOARD_KEYPAD
 	  commonly used symbols, to help speed up numeric data entry.
 
 config PLATFORM_EC_KEYBOARD_VIVALDI
-	bool "Vivaldi keyboard support"
+	bool "Vivaldi keyboard support (legacy)"
 	depends on PLATFORM_EC_KEYBOARD_PROTOCOL_8042
+	depends on !CROS_EC_VIVALDI_KBD
 	default y
 	help
 	  Enable code for Vivaldi keyboard (standard for new Chromium OS
