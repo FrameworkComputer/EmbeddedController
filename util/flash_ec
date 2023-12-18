@@ -1879,7 +1879,7 @@ function read_chip_partially() {
 
 	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
 	CHIP_CMD_PREFIX=${2:?"missing arg 2: Prefix of command"}
-	CHIP_CMD_PREFIX=("${CHIP_CMD_PREFIX}")
+	readarray -t -d " " CHIP_CMD_PREFIX <<< "${CHIP_CMD_PREFIX}"
 	OFFSET=${3:?"missing arg 3: Offset"}
 	SIZE=${4:?"missing arg 4: Size"}
 	FILE_PATH=${5:?"missing arg 5: Image storage path"}
@@ -1907,7 +1907,7 @@ function read_chip() {
 
 	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
 	CHIP_CMD_PREFIX=${2:?"missing arg 2: Prefix of command"}
-	CHIP_CMD_PREFIX=("${CHIP_CMD_PREFIX}")
+	readarray -t -d " " CHIP_CMD_PREFIX <<< "${CHIP_CMD_PREFIX}"
 	FILE_PATH=${3:?"missing arg 3: Image storage path"}
 
 	if [ "${CHIP_TYPE}" = "npcx_uut" ]; then
