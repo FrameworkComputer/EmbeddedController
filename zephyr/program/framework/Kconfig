@@ -23,24 +23,28 @@ config BOARD_MARIGOLD
 # Project Configuration
 config CHIPSET_INTEL
 	bool "Framework Intel project"
+	default n
 	help
 	  Framework project which uses the Intel chipset.
 	  Enable the Intel feature.
 
 config CHIPSET_AMD
 	bool "Framework AMD project"
+	default n
 	help
 	  Framework project which uses the AMD chipset.
 	  Enable the AMD feature.
 
 config PD_CHIP_CCG8
 	bool "Select CCG8 PD chip"
+	default n
 	help
 	  Framework project which uses the CCG8 PD chips.
 	  Enable CCG8 PD feature.
 
 config PD_CHIP_CCG6
 	bool "Select CCG6 PD chip"
+	default n
 	help
 	  Framework project which uses the CCG6 PD chips.
 	  Enable CCG6 PD feature.
