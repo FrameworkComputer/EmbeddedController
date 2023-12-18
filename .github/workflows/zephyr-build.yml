@@ -7,8 +7,7 @@ on:
       - lotus*
       - azalea*
     paths:
-      - 'zephyr/program/lotus/**'
-      - 'zephyr/program/marigold/**'
+      - 'zephyr/program/framework/**'
   #pull_request:
   #  branches:
   #    - marigold
