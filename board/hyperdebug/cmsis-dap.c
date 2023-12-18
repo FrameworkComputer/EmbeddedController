@@ -549,7 +549,6 @@ static void dap_goog_info(size_t peek_c)
 	queue_remove_units(&cmsis_dap_rx_queue, rx_buffer, 2);
 	switch (rx_buffer[1]) {
 	case GOOG_INFO_Capabilities:
-		queue_remove_unit(&cmsis_dap_rx_queue, rx_buffer);
 		tx_buffer[1] = sizeof(CAPABILITIES);
 		memcpy(tx_buffer + 2, &CAPABILITIES, sizeof(CAPABILITIES));
 		queue_add_units(&cmsis_dap_tx_queue, tx_buffer,
