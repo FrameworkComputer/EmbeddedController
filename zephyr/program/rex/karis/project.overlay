@@ -18,6 +18,7 @@
 #include "battery.dtsi"
 #include "cbi.dtsi"
 #include "i2c.dtsi"
+#include "keyboard.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
 #include "motionsense.dtsi"

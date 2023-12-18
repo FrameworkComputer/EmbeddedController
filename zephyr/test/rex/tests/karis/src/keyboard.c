@@ -36,13 +36,6 @@ static void keyboard_config_before(void *fixture)
 
 ZTEST_SUITE(karis_keyboard, NULL, NULL, keyboard_config_before, NULL, NULL);
 
-ZTEST(karis_keyboard, test_keyboard_configuration)
-{
-	extern const struct ec_response_keybd_config karis_kb;
-
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &karis_kb);
-}
-
 ZTEST(karis_keyboard, test_keyboard_type_init)
 {
 	cros_cbi_get_fw_config_fake.custom_fake = cros_cbi_get_fw_config_mock;

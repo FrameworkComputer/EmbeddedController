@@ -6,6 +6,7 @@
 #include <dt-bindings/gpio_defines.h>
 #include <dt-bindings/gpio/nuvoton-npcx-gpio.h>
 #include <nuvoton/npcx/npcx9/npcx9-pinctrl.dtsi>
+#include <cros/vivaldi_kbd_default.dtsi>
 
 #define GPIO_VOLTAGE_1P8 NPCX_GPIO_VOLTAGE_1P8
 
