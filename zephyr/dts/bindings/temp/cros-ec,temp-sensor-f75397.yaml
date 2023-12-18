@@ -1,0 +1,20 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: >
+  Properties for a F75397 I2C temperature sensor
+
+compatible: "cros-ec,temp-sensor-f75397"
+
+include: i2c-device.yaml
+
+properties:
+  temperature-type:
+    type: string
+    required: true
+    description:
+      One temperature sensor have three sensor type.
+    enum:
+      - F75397_IDX_LOCAL
+      - F75397_IDX_REMOTE1

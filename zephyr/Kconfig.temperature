@@ -74,6 +74,14 @@ config PLATFORM_EC_TEMP_SENSOR_F75303
 	  Enables support for the CrosEC F75303 driver, an i2c peripheral
 	  temperature sensor from TI.
 
+config PLATFORM_EC_TEMP_SENSOR_F75397
+	bool "F75397 support"
+	default y
+	depends on DT_HAS_CROS_EC_TEMP_SENSOR_F75397_ENABLED
+	help
+	  Enables support for the CrosEC F75397 driver, an i2c peripheral
+	  temperature sensor from TI.
+
 config PLATFORM_EC_TEMP_SENSOR_AMD_R23M
 	bool "AMD R23M support"
 	default y

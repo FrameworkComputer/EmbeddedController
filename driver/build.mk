@@ -137,6 +137,7 @@ driver-$(CONFIG_TEMP_SENSOR_ADT7481)+=temp_sensor/adt7481.o
 driver-$(CONFIG_TEMP_SENSOR_BD99992GW)+=temp_sensor/bd99992gw.o
 driver-$(CONFIG_TEMP_SENSOR_EC_ADC)+=temp_sensor/ec_adc.o
 driver-$(CONFIG_TEMP_SENSOR_F75303)+=temp_sensor/f75303.o
+driver-$(CONFIG_TEMP_SENSOR_F75397)+=temp_sensor/f75397.o
 driver-$(CONFIG_TEMP_SENSOR_G753)+=temp_sensor/g753.o
 driver-$(CONFIG_TEMP_SENSOR_G781)+=temp_sensor/g78x.o
 driver-$(CONFIG_TEMP_SENSOR_G782)+=temp_sensor/g78x.o

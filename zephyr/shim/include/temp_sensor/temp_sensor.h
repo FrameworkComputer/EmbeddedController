@@ -16,6 +16,7 @@
 #define PCT2075_COMPAT nxp_pct2075
 #define TMP112_COMPAT cros_ec_temp_sensor_tmp112
 #define F75303_COMPAT cros_ec_temp_sensor_f75303
+#define F75397_COMPAT cros_ec_temp_sensor_f75397
 #define SB_TSI_COMPAT amd_sb_tsi
 #define THERMISTOR_COMPAT cros_ec_temp_sensor_thermistor
 #define TEMP_SENSORS_COMPAT cros_ec_temp_sensors
@@ -30,6 +31,7 @@
 	DT_FOREACH_STATUS_OKAY(PCT2075_COMPAT, fn)                          \
 	DT_FOREACH_STATUS_OKAY(TMP112_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(F75303_COMPAT, fn)                           \
+	DT_FOREACH_STATUS_OKAY(F75397_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(AMDR23M_COMPAT, fn)                          \
 	DT_FOREACH_STATUS_OKAY_VARGS(RT9490_CHG_COMPAT, TEMP_RT9490_FN, fn) \
 	DT_FOREACH_STATUS_OKAY(SB_TSI_COMPAT, fn)                           \
@@ -160,6 +162,18 @@ enum tmp112_sensor {
  * @param node_id: node id of a hardware F75303 sensor node
  */
 #define F75303_SENSOR_ID(node_id) DT_STRING_TOKEN(node_id, temperature_type)
+
+/* F75397 access array */
+/*
+ * Get the F75397 sensor ID.
+ *
+ * The F75397 driver only supports a single device instance on the board. Each
+ * device supports 3 temperature sensor types: local, remote1, and remote2.
+ * Use the temperature sensor type as the sensor ID.
+ *
+ * @param node_id: node id of a hardware F75397 sensor node
+ */
+#define F75397_SENSOR_ID(node_id) DT_STRING_TOKEN(node_id, temperature_type)
 
 /* AMDR23M access array */
 /*
