@@ -127,6 +127,22 @@ enum state_t {
 };
 
 /**
+ * @brief Init sub-states
+ */
+enum init_state_t {
+	/** Enable the PDC */
+	INIT_PDC_ENABLE,
+	/** Get the PDC IC Status */
+	INIT_PDC_GET_IC_STATUS,
+	/** Set the PDC Notifications */
+	INIT_PDC_SET_NOTIFICATION_ENABLE,
+	/** Reset the PDC */
+	INIT_PDC_RESET,
+	/** Initialization complete */
+	INIT_PDC_COMPLETE
+};
+
+/**
  * @brief Sub-states of the ST_IRQ state
  */
 enum irq_state_t {
@@ -144,6 +160,8 @@ enum irq_state_t {
 enum cmd_t {
 	/** No command */
 	CMD_NONE,
+	/** CMD_TRIGGER_PDC_RESET */
+	CMD_TRIGGER_PDC_RESET,
 	/** PDC Enable */
 	CMD_VENDOR_ENABLE,
 	/** Set Notification Enable */
@@ -208,6 +226,10 @@ struct pdc_config_t {
 struct pdc_data_t {
 	/** State machine context */
 	struct smf_ctx ctx;
+	/** Init's local state variable */
+	enum init_state_t init_local_state;
+	/** PDC's last state */
+	enum state_t last_state;
 	/** PDC device structure */
 	const struct device *dev;
 	/** PDC command */
@@ -302,17 +324,23 @@ static const char *const state_names[] = {
 
 static volatile bool irq_pending;
 static const struct smf_state states[];
+static int rts54_enable(const struct device *dev);
 static int rts54_get_ic_status(const struct device *dev, uint8_t offset,
 			       uint8_t len, enum cmd_t cmd);
-
-static void set_state(struct pdc_data_t *data, const enum state_t next_state)
-{
-	smf_set_state(SMF_CTX(data), &states[next_state]);
-}
+static int rts54_reset(const struct device *dev);
+static int rts54_set_notification_enable(const struct device *dev,
+					 union notification_enable_t bits,
+					 uint16_t ext_bits);
 
 static enum state_t get_state(struct pdc_data_t *data)
 {
 	return data->ctx.current - &states[0];
+}
+
+static void set_state(struct pdc_data_t *data, const enum state_t next_state)
+{
+	data->last_state = get_state(data);
+	smf_set_state(SMF_CTX(data), &states[next_state]);
 }
 
 static void print_current_state(struct pdc_data_t *data)
@@ -338,6 +366,22 @@ static int get_ara(const struct device *dev, uint8_t *ara)
 	const struct pdc_config_t *cfg = dev->config;
 
 	return i2c_read(cfg->i2c.bus, ara, 1, SMBUS_ADDRESS_ARA);
+}
+
+static void perform_pdc_init(struct pdc_data_t *data)
+{
+	/* Set initial local state of Init */
+	data->init_local_state = INIT_PDC_ENABLE;
+	set_state(data, ST_INIT);
+}
+
+static void return_to_init_or_idle_state(struct pdc_data_t *data)
+{
+	if (data->init_local_state != INIT_PDC_COMPLETE) {
+		set_state(data, ST_INIT);
+	} else {
+		set_state(data, ST_IDLE);
+	}
 }
 
 static int get_ping_status(const struct device *dev)
@@ -402,8 +446,32 @@ static void st_init_entry(void *o)
 static void st_init_run(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
+	union notification_enable_t bits;
 
-	rts54_get_ic_status(data->dev, 0, 26, CMD_GET_IC_STATUS);
+	switch (data->init_local_state) {
+	case INIT_PDC_ENABLE:
+		rts54_enable(data->dev);
+		data->init_local_state = INIT_PDC_GET_IC_STATUS;
+		break;
+	case INIT_PDC_GET_IC_STATUS:
+		rts54_get_ic_status(data->dev, 0, 26, CMD_GET_IC_STATUS);
+		data->init_local_state = INIT_PDC_SET_NOTIFICATION_ENABLE;
+		break;
+	case INIT_PDC_SET_NOTIFICATION_ENABLE:
+		bits.raw_value = 0xDBE7; /* TODO: Read from device tree */
+		rts54_set_notification_enable(data->dev, bits, 0);
+		data->init_local_state = INIT_PDC_RESET;
+		break;
+	case INIT_PDC_RESET:
+		rts54_reset(data->dev);
+		data->init_local_state = INIT_PDC_COMPLETE;
+		break;
+	case INIT_PDC_COMPLETE:
+		/* Init is complete, so transition to Idle state */
+		set_state(data, ST_IDLE);
+		return;
+	}
+
 	set_state(data, ST_WRITE);
 }
 
@@ -420,8 +488,15 @@ static void st_idle_run(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
 
-	/* Interrupts have higher priority over commands */
-	if (irq_pending) {
+	/*
+	 * Priority of events:
+	 *  1: CMD_TRIGGER_PDC_RESET
+	 *  2: Interrupt
+	 *  3: Non-Reset command
+	 */
+	if (data->cmd == CMD_TRIGGER_PDC_RESET) {
+		perform_pdc_init(data);
+	} else if (irq_pending) {
 		set_state(data, ST_IRQ);
 	} else if (data->cmd != CMD_NONE) {
 		set_state(data, ST_WRITE);
@@ -469,8 +544,11 @@ static void st_write_run(void *o)
 			/* Notify system of status change */
 			call_cci_event_cb(data);
 
-			/* All done, return to idle state */
-			set_state(data, ST_IDLE);
+			/*
+			 * This state can only be entered from the Init or
+			 * Idle state, so return to one of them.
+			 */
+			return_to_init_or_idle_state(data);
 		}
 		return;
 	}
@@ -525,7 +603,10 @@ static void st_ping_status_run(void *o)
 			/* Notify system of status change */
 			call_cci_event_cb(data);
 
-			/* All done, return to idle state */
+			/*
+			 * An error occurred, return to idle state, so
+			 * the subsystem can take action.
+			 */
 			set_state(data, ST_IDLE);
 		}
 		return;
@@ -557,6 +638,11 @@ static void st_ping_status_run(void *o)
 
 			/* Notify system of status change */
 			call_cci_event_cb(data);
+
+			/*
+			 * An error occurred, return to idle state, so
+			 * the subsystem can take action.
+			 */
 			set_state(data, ST_IDLE);
 		} else {
 			/*
@@ -577,9 +663,9 @@ static void st_ping_status_run(void *o)
 			data->cci_event.reset_completed = 1;
 			/* Notify system of status change */
 			call_cci_event_cb(data);
-
-			/* All done, return to idle state */
-			set_state(data, ST_IDLE);
+			LOG_DBG("Realtek PDC reset complete");
+			/* All done, return to Init or Idle state */
+			return_to_init_or_idle_state(data);
 		} else {
 			LOG_DBG("ping_status: %02x",
 				data->ping_status.raw_value);
@@ -597,8 +683,8 @@ static void st_ping_status_run(void *o)
 				/* Inform the system of the event */
 				call_cci_event_cb(data);
 
-				/* All done, return to idle state */
-				set_state(data, ST_IDLE);
+				/* Return to Idle or Init state */
+				return_to_init_or_idle_state(data);
 			}
 		}
 		break;
@@ -614,7 +700,10 @@ static void st_ping_status_run(void *o)
 		/* Notify system of status change */
 		call_cci_event_cb(data);
 
-		/* All done, return to idle state */
+		/*
+		 * An error occurred, return to idle state, so
+		 * the subsystem can take action.
+		 */
 		set_state(data, ST_IDLE);
 		break;
 	}
@@ -656,7 +745,10 @@ static void st_read_run(void *o)
 		/* Notify system of status change */
 		call_cci_event_cb(data);
 
-		/* All done, return to idle state */
+		/*
+		 * An error occurred, return to idle state, so
+		 * the subsystem can take action.
+		 */
 		set_state(data, ST_IDLE);
 		return;
 	}
@@ -804,8 +896,10 @@ static void st_read_run(void *o)
 		es->swap_rejected = 0;
 		es->reverse_current_protection = 0;
 
-		/* NOTE: Vendor Specific Error were already set in previous
-		 * states */
+		/*
+		 * NOTE: Vendor Specific Error were already set in previous
+		 * states
+		 */
 		break;
 	default:
 		/* No preprocessing needed for the user data */
@@ -824,8 +918,8 @@ static void st_read_run(void *o)
 	data->cci_event.command_completed = 1;
 	/* Inform the system of the event */
 	call_cci_event_cb(data);
-	/* All done, return to idle state */
-	set_state(data, ST_IDLE);
+	/* All done, return to Init or Idle state */
+	return_to_init_or_idle_state(data);
 }
 
 static void st_irq_entry(void *o)
@@ -847,9 +941,9 @@ static void st_irq_run(void *o)
 
 	switch (data->irq_state) {
 	case IRQ_READ_ARA:
-		/* Return to Idle state if IRQ was handled */
+		/* Return to Init or Idle state if IRQ was handled */
 		if (irq_pending == false) {
-			set_state(data, ST_IDLE);
+			return_to_init_or_idle_state(data);
 		}
 
 		/*
@@ -885,7 +979,10 @@ static void st_irq_run(void *o)
 				data->cci_event.error = 1;
 				/* Notify system of status change */
 				call_cci_event_cb(data);
-				/* Return to Idle State */
+				/*
+				 * An error occurred, return to idle state, so
+				 * the subsystem can take action.
+				 */
 				set_state(data, ST_IDLE);
 				/* Clear pending IRQ */
 				irq_pending = false;
@@ -902,15 +999,15 @@ static void st_irq_run(void *o)
 		data->cci_event.vendor_defined_indicator = 1;
 		/* Notify system of status change */
 		call_cci_event_cb(data);
-		/* Return to Idle State */
-		set_state(data, ST_IDLE);
+		/* All done, return to Init or Idle state */
+		return_to_init_or_idle_state(data);
 		/* Clear pending IRQ */
 		irq_pending = false;
 		break;
 	case IRQ_OTHER_PORT_WAIT:
 		/* Wait until the interrupt is handled */
 		if (irq_pending == false) {
-			set_state(data, ST_IDLE);
+			return_to_init_or_idle_state(data);
 		}
 	}
 }
@@ -1002,7 +1099,8 @@ static int rts54_enable(const struct device *dev)
 {
 	struct pdc_data_t *data = dev->data;
 
-	if (get_state(data) != ST_IDLE) {
+	/* Can only be called from Init State */
+	if (get_state(data) != ST_INIT) {
 		return -EBUSY;
 	}
 
@@ -1066,11 +1164,25 @@ static int rts54_reconnect(const struct device *dev)
 	return 0;
 }
 
-static int rts54_reset(const struct device *dev)
+static int rts54_pdc_reset(const struct device *dev)
 {
 	struct pdc_data_t *data = dev->data;
 
 	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	data->cmd = CMD_TRIGGER_PDC_RESET;
+
+	return 0;
+}
+
+static int rts54_reset(const struct device *dev)
+{
+	struct pdc_data_t *data = dev->data;
+
+	/* Can only be called from Init State */
+	if (get_state(data) != ST_INIT) {
 		return -EBUSY;
 	}
 
@@ -1189,7 +1301,8 @@ static int rts54_set_notification_enable(const struct device *dev,
 {
 	struct pdc_data_t *data = dev->data;
 
-	if (get_state(data) != ST_IDLE) {
+	/* Can only be called from Init State */
+	if (get_state(data) != ST_INIT) {
 		return -EBUSY;
 	}
 
@@ -1613,11 +1726,9 @@ static int rts54_get_current_pdo(const struct device *dev, uint32_t *pdo)
 }
 
 static const struct pdc_driver_api_t pdc_driver_api = {
-	.enable = rts54_enable,
 	.get_ucsi_version = rts54_get_ucsi_version,
-	.reset = rts54_reset,
+	.reset = rts54_pdc_reset,
 	.connector_reset = rts54_connector_reset,
-	.set_notification_enable = rts54_set_notification_enable,
 	.get_capability = rts54_get_capability,
 	.get_connector_capability = rts54_get_connector_capability,
 	.set_ccom = rts54_set_ccom,
@@ -1702,6 +1813,7 @@ static int pdc_init(const struct device *dev)
 	data->cmd = CMD_NONE;
 
 	/* Set initial state */
+	data->init_local_state = INIT_PDC_ENABLE;
 	smf_set_initial(SMF_CTX(data), &states[ST_INIT]);
 
 	/* Create the thread for this port */

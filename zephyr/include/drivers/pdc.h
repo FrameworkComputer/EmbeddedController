@@ -27,15 +27,11 @@ extern "C" {
  * @typedef
  * @brief These are the API function types
  */
-typedef int (*pdc_enable_t)(const struct device *dev);
 typedef int (*pdc_get_ucsi_version_t)(const struct device *dev,
 				      uint16_t *version);
 typedef int (*pdc_reset_t)(const struct device *dev);
 typedef int (*pdc_connector_reset_t)(const struct device *dev,
 				     enum connector_reset_t type);
-typedef int (*pdc_set_notification_enable_t)(const struct device *dev,
-					     union notification_enable_t bits,
-					     uint16_t ext_bits);
 typedef int (*pdc_get_capability_t)(const struct device *dev,
 				    struct capability_t *caps);
 typedef int (*pdc_get_connector_capability_t)(
@@ -80,11 +76,9 @@ typedef int (*pdc_get_current_flash_bank_t)(const struct device *dev,
  * These are for internal use only, so skip these in public documentation.
  */
 __subsystem struct pdc_driver_api_t {
-	pdc_enable_t enable;
 	pdc_get_ucsi_version_t get_ucsi_version;
 	pdc_reset_t reset;
 	pdc_connector_reset_t connector_reset;
-	pdc_set_notification_enable_t set_notification_enable;
 	pdc_get_capability_t get_capability;
 	pdc_get_connector_capability_t get_connector_capability;
 	pdc_set_ccom_t set_ccom;
@@ -111,26 +105,6 @@ __subsystem struct pdc_driver_api_t {
 /**
  * @endcond
  */
-
-/**
- * @brief Enable the PDC. Usually the first function that needs to be called
- * @note  CCI Events
- *            <none>
- *
- * @param dev PDC device structure pointer
- *
- * @retval 0 on API call success
- * @retval -EIO on failure
- */
-static inline int pdc_enable(const struct device *dev)
-{
-	const struct pdc_driver_api_t *api =
-		(const struct pdc_driver_api_t *)dev->api;
-
-	__ASSERT(api->enable != NULL, "ENABLE is not optional");
-
-	return api->enable(dev);
-}
 
 /**
  * @brief Trigger the PDC to read the power level when in Source mode.
@@ -247,33 +221,6 @@ static inline int pdc_set_sink_path(const struct device *dev, bool en)
 	__ASSERT(api->set_sink_path != NULL, "SET_SINK_PATH is not optional");
 
 	return api->set_sink_path(dev, en);
-}
-
-/**
- * @brief Sets the list of asynchronous events that the PDC may send
- *        notifications about.
- * @note CCI Events set
- *           busy: if PDC is busy
- *           error: command was unsuccessful
- *           command_commpleted: notifications were enabled
- *
- * @param dev PDC device structure pointer
- * @param bits a bitmask of the notifications.
- *
- * @retval 0 on success
- * @retval -EBUSY if not ready to execute the command
- */
-static inline int pdc_set_notification_enable(const struct device *dev,
-					      union notification_enable_t bits,
-					      uint16_t ext_bits)
-{
-	const struct pdc_driver_api_t *api =
-		(const struct pdc_driver_api_t *)dev->api;
-
-	__ASSERT(api->set_notification_enable != NULL,
-		 "SET_NOTIFICATION_ENABLE is not optional");
-
-	return api->set_notification_enable(dev, bits, ext_bits);
 }
 
 /**
