@@ -47,6 +47,17 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 #define VOLTAGE_SCALE_FACTOR 50
 
 /**
+ * @brief FORCE_SET_POWER_SWITCH enable
+ *	  Bits [0:1] 00 VBSIN_EN off
+ *	             11 VBSIN_EN on
+ *	  Bits [2:5] Set to 0
+ *	  Bits [6]   VBSIN_EN control: set to 1
+ *	  Bits [7]   Set to 0
+ */
+#define VBSIN_EN_ON 0x43
+#define VBSIN_EN_OFF 0x40
+
+/**
  * @brief SMbus Command struct for Realtek commands
  */
 struct smbus_cmd_t {
@@ -1286,9 +1297,9 @@ static int rts54_set_sink_path(const struct device *dev, bool en)
 	}
 
 	if (en) {
-		byte = 0x8c;
+		byte = VBSIN_EN_ON;
 	} else {
-		byte = 0x80;
+		byte = VBSIN_EN_OFF;
 	}
 
 	k_mutex_lock(&data->mtx, K_FOREVER);
