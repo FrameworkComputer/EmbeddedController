@@ -810,8 +810,14 @@ static int command_i2c_set_mode(int argc, const char **argv)
 		if (*e)
 			return EC_ERROR_PARAM5;
 		STM32_I2C_CR1(index) = STM32_I2C_CR1_PE | I2C_CR1_DEVICE_FLAGS;
-		STM32_I2C_OAR1(index) = 0x8000 | (i2c_addr << 1);
 		STM32_I2C_TIMEOUTR(index) = 0x00008FFF;
+		/*
+		 * "Own address" cannot be modified while active, so first
+		 * disable, then set desired address while enabling, for the
+		 * case the bus was already in device mode with another address.
+		 */
+		STM32_I2C_OAR1(index) = 0;
+		STM32_I2C_OAR1(index) = 0x8000 | (i2c_addr << 1);
 	} else {
 		return EC_ERROR_PARAM4;
 	}
@@ -851,6 +857,9 @@ static void i2c_reinit(void)
 	for (unsigned int i = 0; i < i2c_ports_used; i++) {
 		board_i2c_set_speed(i, i2c_ports[i].kbps * 1000);
 		i2c_port_state[i].bits_per_second = i2c_ports[i].kbps * 1000;
+		/* Switch to host-only mode. */
+		STM32_I2C_CR1(i) = STM32_I2C_CR1_PE;
+		STM32_I2C_OAR1(i) = 0;
 	}
 }
 DECLARE_HOOK(HOOK_REINIT, i2c_reinit, HOOK_PRIO_DEFAULT);
