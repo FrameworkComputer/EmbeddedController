@@ -199,6 +199,25 @@
 		 */
 		irq-gpios = <&gpio7 5 GPIO_ACTIVE_LOW>;
 	};
+
+       cros-keyscan {
+		compatible = "cros-ec,keyscan";
+		actual-key-mask = <
+			0x1c  /* C0 */
+			0xff  /* C1 */
+			0xff  /* C2 */
+			0xff  /* C3 */
+			0xff  /* C4 */
+			0xff  /* C5 */
+			0xff  /* C6 */
+			0xa4  /* C7 */
+			0xff  /* C8 */
+			0xf7  /* C9 */
+			0x55  /* C10 */
+			0xfb  /* C11 */
+			0xca  /* C12 */
+		>;
+	};
 };
 
 /* i2c overrides */

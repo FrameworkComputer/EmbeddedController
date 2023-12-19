@@ -220,6 +220,27 @@
 			};
 		};
 	};
+
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+		actual-key-mask = <
+			0x1c /* C0 */
+			0xff /* C1 */
+			0xff /* C2 */
+			0xff /* C3 */
+			0xff /* C4 */
+			0xff /* C5 */
+			0xff /* C6 */
+			0x86 /* C7 */
+			0xff /* C8 */
+			0xff /* C9 */
+			0x55 /* C10 */
+			0xff /* C11 */
+			0xff /* C12 */
+			0xff /* C13 */
+			0xff /* C13 */
+		>;
+	};
 };
 
 /* i2c overrides */
