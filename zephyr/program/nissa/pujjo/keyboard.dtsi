@@ -8,6 +8,26 @@
 		compatible = "cros-ec,kblight-pwm";
 		pwms = <&pwm6 6 PWM_KHZ(20) PWM_POLARITY_NORMAL>;
 	};
+
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+		debounce-down = <15000>;
+		actual-key-mask = <
+			0x1c /* C0 */
+			0xff /* C1 */
+			0xff /* C2 */
+			0xff /* C3 */
+			0xff /* C4 */
+			0xf5 /* C5 */
+			0xff /* C6 */
+			0xa4 /* C6 */
+			0xff /* C8 */
+			0xfe /* C9 */
+			0x55 /* C10 */
+			0xfa /* C11 */
+			0xca /* C12 */
+		>;
+	};
 };
 
 &pwm6 {
