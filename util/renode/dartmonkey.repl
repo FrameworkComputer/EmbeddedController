@@ -1,0 +1,15 @@
+// Copyright 2023 The ChromiumOS Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+using "platforms/cpus/stm32h743.repl"
+
+GPIO_WP: Miscellaneous.Button @ gpioPortB 7
+    invert: true
+    -> gpioPortB@7
+
+fpsensor: Sensors.GenericSPISensor @ spi4
+
+sysbus:
+    init:
+        Tag <0x58024818, 0x58024820> "PWR_D3CR" 0x00002000

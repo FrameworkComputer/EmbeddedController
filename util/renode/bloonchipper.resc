@@ -6,7 +6,7 @@ using sysbus
 $name?="bloonchipper"
 mach create $name
 
-machine LoadPlatformDescription $ORIGIN/stm32f412.repl
+machine LoadPlatformDescription $ORIGIN/bloonchipper.repl
 
 
 $bin?=$ORIGIN/bloonchipper/ec.bin
