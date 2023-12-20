@@ -1,0 +1,48 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * Because the power signals directly reference the GPIOs,
+ * the correspinding named-gpios need to have no-auto-init set.
+ */
+&gpio_ec_dsw_pwrok {
+	no-auto-init;
+};
+&gpio_ec_pch_pwrok {
+	no-auto-init;
+};
+&gpio_ec_rsmrst_l {
+	no-auto-init;
+};
+&gpio_ec_pch_sys_pwrok {
+	no-auto-init;
+};
+&gpio_pg_vccin_aux_od {
+	no-auto-init;
+};
+&gpio_en_s5_rails {
+	no-auto-init;
+};
+&gpio_imvp9_vrrdy_od {
+	no-auto-init;
+};
+&gpio_imvp9_vrrdy_od {
+	no-auto-init;
+};
+&gpio_sys_slp_s0ix_l {
+	no-auto-init;
+};
+&gpio_ec_slp_s4_l {
+	no-auto-init;
+};
+&gpio_ec_slp_s3_l {
+	no-auto-init;
+};
+&gpio_ec_slp_sus_l {
+	no-auto-init;
+};
+&gpio_sys_rst_r_odl {
+	no-auto-init;
+};
