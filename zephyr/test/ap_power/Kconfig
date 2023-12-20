@@ -16,4 +16,10 @@ config TEST_AP_POWER_MTL
 	  This is a generic Meteorlake implementation that doesn't
 	  match a particular board.
 
+config TEST_AP_POWER_BROX
+	bool "AP Power sequence tests for Brox project"
+	help
+	  Run the AP power sequence tests using the Brox devicetree
+	  configuration and the Brox project specific source files.
+
 source "Kconfig.zephyr"

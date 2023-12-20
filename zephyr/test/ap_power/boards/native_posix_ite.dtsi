@@ -1,0 +1,128 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* Instantiate GPIO emulators with nodelabels matching the ITE EC */
+	gpioa: gpio@101 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x101 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpiob: gpio@201 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x201 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpioc: gpio@301 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x301 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpiod: gpio@401 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x401 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpioe: gpio@501 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x501 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpiof: gpio@601 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x601 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpiog: gpio@701 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x701 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpioh: gpio@801 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x801 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpioi: gpio@901 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x901 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpioj: gpio@a01 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0xa01 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+};
