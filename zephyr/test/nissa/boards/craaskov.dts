@@ -1,0 +1,18 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "generic_npcx.dts"
+#include <dt-bindings/pwm/pwm.h>
+#include "../program/nissa/craaskov/cbi.dtsi"
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+		/delete-node/ hdmi_sel;
+		gpio_ec_acok_otg_c0: ec_acok_otg_c0 {
+			gpios = <&gpioc 6 GPIO_OUTPUT>;
+		};
+	};
+};

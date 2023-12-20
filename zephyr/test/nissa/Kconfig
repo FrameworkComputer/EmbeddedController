@@ -62,6 +62,12 @@ choice TEST_TARGET
 	  help
 		The test target that exercises nissa/craask/*.c
 
+	config TEST_NISSA_CRAASKOV
+	  bool "Tests for Craaskov-specific code"
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	  help
+		The test target that exercises nissa/craaskov/*.c
+
 	config TEST_NISSA_PIRRHA
 	  bool "Tests for Pirrha-specific code"
 	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE

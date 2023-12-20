@@ -13,7 +13,7 @@
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
-static const struct ec_response_keybd_config craaskov_kb = {
+test_export_static const struct ec_response_keybd_config craaskov_kb = {
 	.num_top_row_keys = 10,
 	.action_keys = {
 		TK_BACK,		/* T1 */
@@ -66,7 +66,7 @@ BUILD_ASSERT(ARRAY_SIZE(vivaldi_keys) == MAX_TOP_ROW_KEYS);
 /*
  * Keyboard layout decided by FW config.
  */
-static void kb_layout_init(void)
+test_export_static void kb_layout_init(void)
 {
 	int ret;
 	uint32_t val;

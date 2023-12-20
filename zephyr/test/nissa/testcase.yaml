@@ -150,3 +150,15 @@ tests:
       - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
     extra_dtc_overlay_files:
       - "boards/anraggar.dts"
+  nissa.craaskov:
+    extra_dtc_overlay_files:
+      - "boards/craaskov.dts"
+      - "boards/chargers.dts"
+    extra_conf_files:
+      - "prj.conf"
+      - "charger.conf"
+    extra_configs:
+      - CONFIG_TEST_NISSA_CRAASKOV=y
+      - CONFIG_PLATFORM_EC_CHARGER_RAA489000=n
+      - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
+      - CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION=y
