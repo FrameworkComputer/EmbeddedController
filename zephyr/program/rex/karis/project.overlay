@@ -94,7 +94,6 @@
 	};
 
 	gpio-interrupts {
-		/delete-node/ ec_accel;
 		/delete-node/ ec_als_rgb;
 		/delete-node/ c0_sbu_fault;
 		/delete-node/ usb_c0_bc12;
@@ -109,6 +108,11 @@
 			irq-pin = <&gpio_soc_3v3_edp_bl_en>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "soc_edp_bl_interrupt";
+		};
+		int_accel: ec_accel {
+			irq-pin = <&gpio_ec_accel_int_r_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bma4xx_interrupt";
 		};
 	};
 };

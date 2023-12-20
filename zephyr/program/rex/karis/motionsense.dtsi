@@ -13,7 +13,7 @@
 		 * by alias. Using the alias, each driver creates
 		 * its own <>_INT_EVENT.
 		 */
-		bma4xx-int = &base_accel;
+		bma4xx-int = &lid_accel;
 	};
 
 	/*
@@ -114,11 +114,9 @@
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
 					odr = <(10000 | ROUND_UP_FLAG)>;
-					ec-rate = <(100 * USEC_PER_MSEC)>;
 				};
 				ec-s3 {
 					odr = <(10000 | ROUND_UP_FLAG)>;
-					ec-rate = <(100 * USEC_PER_MSEC)>;
 				};
 			};
 		};
@@ -131,8 +129,6 @@
 		 * list of GPIO interrupts that have to
 		 * be enabled at initial stage
 		 */
-		sensor-irqs = <&int_imu>;
-		/* list of sensors in force mode */
-		accel-force-mode-sensors = <&lid_accel>;
+		sensor-irqs = <&int_imu &int_accel>;
 	};
 };
