@@ -20,6 +20,7 @@
 #include <zephyr/ztest.h>
 
 #include <ap_power/ap_pwrseq.h>
+#include <ap_power_override_functions.h>
 
 static struct ap_power_ev_callback test_cb;
 static int power_resume_count;
@@ -28,6 +29,11 @@ static int power_hard_off_count;
 static int power_shutdown_count;
 static int power_shutdown_complete_count;
 static int power_suspend_count;
+
+#define S5_INACTIVITY_TIMEOUT_MS                                               \
+	COND_CODE_0(                                                           \
+		AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout), (2 * MSEC_PER_SEC), \
+		(AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout) * MSEC_PER_SEC))
 
 #ifdef CONFIG_AP_PWRSEQ_DRIVER
 static void ap_pwrseq_wake(void)
@@ -209,7 +215,7 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_2)
 		"Unable to load test platform `tp_sys_g3_to_s0_power_down`");
 
 	ap_power_exit_hardoff();
-	k_msleep(2000);
+	k_sleep(K_MSEC(S5_INACTIVITY_TIMEOUT_MS * 1.5));
 	zassert_equal(1, power_shutdown_count,
 		      "AP_POWER_SHUTDOWN event not generated");
 	zassert_equal(1, power_shutdown_complete_count,
@@ -294,7 +300,7 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_6)
 		"Unable to load test platform `tp_sys_s3_dsw_pwrok_fail`");
 
 	ap_power_exit_hardoff();
-	k_msleep(1500);
+	k_sleep(K_MSEC(S5_INACTIVITY_TIMEOUT_MS * 1.5));
 
 #if defined(CONFIG_AP_X86_INTEL_ADL)
 	zassert_equal(1, power_hard_off_count,
