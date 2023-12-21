@@ -133,7 +133,7 @@ void panic_reboot(void)
 /* Complete the processing of a panic, after the initial message is shown */
 test_mockable_static
 #if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
-	noreturn
+	__noreturn
 #endif
 	void
 	complete_panic(const char *fname, int linenum)

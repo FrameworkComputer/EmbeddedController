@@ -23,8 +23,6 @@
 #include "timer.h"
 #include "util.h"
 
-#include <stdnoreturn.h>
-
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
 #define CPRINTS(format, args...) cprints(CC_LPC, format, ##args)
 
@@ -214,7 +212,7 @@ void chip_save_reset_flags(uint32_t flags)
 	MCHP_VBAT_RAM(HIBDATA_INDEX_SAVED_RESET_FLAGS) = flags;
 }
 
-noreturn void _system_reset(int flags, int wake_from_hibernate)
+__noreturn void _system_reset(int flags, int wake_from_hibernate)
 {
 	uint32_t save_flags = 0;
 

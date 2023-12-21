@@ -8,10 +8,8 @@
 #ifndef __CROS_EC_REBOOT_H
 #define __CROS_EC_REBOOT_H
 
-#include <stdnoreturn.h>
-
 #if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
-noreturn
+__noreturn
 #endif
 	void
 	emulator_reboot(void);

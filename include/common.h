@@ -228,6 +228,15 @@
 #define __fallthrough __attribute__((fallthrough))
 #endif
 
+/**
+ * @brief Attribute used to annotate functions that will never return, like
+ * panic.
+ *
+ * See https://clang.llvm.org/docs/AttributeReference.html#noreturn-noreturn and
+ * https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-noreturn-function-attribute.
+ */
+#define __noreturn __attribute__((noreturn))
+
 /*
  * Macros for combining bytes into larger integers. _LE and _BE signify little
  * and big endian versions respectively.
@@ -298,8 +307,8 @@
 #define test_mockable_noreturn __attribute__((weak))
 #define test_mockable_static_noreturn __attribute__((weak))
 #else
-#define test_mockable_noreturn noreturn __attribute__((weak))
-#define test_mockable_static_noreturn noreturn __attribute__((weak))
+#define test_mockable_noreturn __noreturn __attribute__((weak))
+#define test_mockable_static_noreturn __noreturn __attribute__((weak))
 #endif
 #define test_export_static
 #define test_overridable_const
@@ -307,8 +316,8 @@
 #define test_mockable
 #define test_mockable_static static
 #define test_mockable_static_inline static inline
-#define test_mockable_noreturn noreturn
-#define test_mockable_static_noreturn static noreturn
+#define test_mockable_noreturn __noreturn
+#define test_mockable_static_noreturn static __noreturn
 #define test_export_static static
 #define test_overridable_const const
 #endif

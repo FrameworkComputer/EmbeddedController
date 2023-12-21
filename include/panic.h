@@ -16,8 +16,6 @@
 #include <stdarg.h>
 #include <stdint.h>
 
-#include <stdnoreturn.h>
-
 #ifdef __cplusplus
 extern "C" {
 #endif
@@ -75,13 +73,13 @@ void panic_data_ccprint(const struct panic_data *pdata);
  */
 #ifdef CONFIG_DEBUG_ASSERT_BRIEF
 #if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
-noreturn
+__noreturn
 #endif
 	void
 	panic_assert_fail(const char *fname, int linenum);
 #else
 #if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
-noreturn
+__noreturn
 #endif
 	void
 	panic_assert_fail(const char *msg, const char *func, const char *fname,
@@ -94,7 +92,7 @@ noreturn
  * @param msg	Panic message
  */
 #if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
-noreturn
+__noreturn
 #endif
 	void
 	panic(const char *msg);
@@ -103,7 +101,7 @@ noreturn
  * Display a default message and reset
  */
 #if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
-noreturn
+__noreturn
 #endif
 	void
 	panic_reboot(void);
@@ -113,7 +111,7 @@ noreturn
  * stack overflow or assertion failure.
  */
 #if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
-noreturn
+__noreturn
 #endif
 	void
 	software_panic(uint32_t reason, uint32_t info);

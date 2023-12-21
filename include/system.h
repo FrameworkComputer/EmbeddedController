@@ -21,8 +21,6 @@
 #include "ec_commands.h"
 #include "timer.h"
 
-#include <stdnoreturn.h>
-
 /*
  * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
  * #line marks the *next* line, so it is off by one.
@@ -399,13 +397,10 @@ const char *system_get_build_info(void);
  * @param flags		Reset flags; see SYSTEM_RESET_* above.
  */
 #if !(defined(TEST_FUZZ) || defined(CONFIG_ZTEST))
-#if defined(__cplusplus) && !defined(__clang__)
-[[noreturn]]
-#else
-noreturn
+__noreturn
 #endif
-#endif
-	void system_reset(int flags);
+	void
+	system_reset(int flags);
 
 /**
  * Set a scratchpad register to the specified value.
