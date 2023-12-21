@@ -168,6 +168,9 @@
 };
 
 &i2c0 {
+	data-hold-time = <9>;
+	prescale-scl-low = <4>;
+
 	touchpad@15 {
 		logical_max_x = <2644>;
 		logical_max_y = <1440>;
