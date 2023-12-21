@@ -34,7 +34,6 @@ rsource "Kconfig.pd_console_cmd"
 rsource "Kconfig.pd_host_cmd"
 rsource "Kconfig.pd_usbc_device_type"
 rsource "Kconfig.pd"
-rsource "Kconfig.ppc"
 rsource "Kconfig.usb_mux"
 rsource "Kconfig.usbc_ss_mux"
 rsource "Kconfig.usbc_common_altmode"
@@ -63,6 +62,7 @@ config PLATFORM_EC_USB_PD_CONTROLLER
 endchoice
 
 if PLATFORM_EC_USB_PD_TCPMV2
+rsource "Kconfig.ppc"
 rsource "Kconfig.tcpm"
 endif # PLATFORM_EC_USB_PD_TCPMV2
 

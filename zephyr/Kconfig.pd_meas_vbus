@@ -3,7 +3,6 @@
 # found in the LICENSE file.
 
 if PLATFORM_EC_USBC
-if PLATFORM_EC_USB_POWER_DELIVERY
 
 choice PLATFORM_EC_USB_PD_VBUS_MEASURE_MODE
 	prompt "Select how VBUS voltage is measured"
@@ -47,5 +46,4 @@ config PLATFORM_EC_CMD_VBUS
 	  Support console command vbus to print the VBUS on each port
 	  respectively.
 
-endif # PLATFORM_EC_USB_POWER_DELIVERY
 endif # PLATFORM_EC_USBC
