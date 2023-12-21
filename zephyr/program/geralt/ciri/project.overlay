@@ -237,6 +237,10 @@
 	};
 };
 
+&i2c3 {
+	prescale-scl-low = <4>;
+};
+
 &i2c4 {
 	hid_i2c_target: hid-i2c-target@56 {
 		/* Zephyr preferred style for specifying ec_ap_hid_int_odl */
