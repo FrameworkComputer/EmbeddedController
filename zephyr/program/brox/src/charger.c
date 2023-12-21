@@ -3,12 +3,18 @@
  * found in the LICENSE file.
  */
 #include "charger.h"
+#include "charger/isl923x_public.h"
 
 int extpower_is_present(void)
 {
-	/* TODO: b/305014156 - Brox: configure charger
-	 * Update with PDC specific calls to get the AC state on all ports.
-	 */
+	int rv;
+	bool acok;
 
-	return 1;
+	/* raa489000_is_acok() is part of the common isl923x driver. */
+	rv = raa489000_is_acok(0, &acok);
+	if ((rv == EC_SUCCESS) && acok) {
+		return 1;
+	}
+
+	return 0;
 }
