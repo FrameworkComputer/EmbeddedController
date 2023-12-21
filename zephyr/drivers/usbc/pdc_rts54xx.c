@@ -285,17 +285,8 @@ struct pdc_data_t {
 	pdc_cci_handler_cb_t cci_cb;
 	/** CCI Event callback data */
 	void *cb_data;
-	/** Realtek's FW version */
-	uint32_t pdc_fw_version;
-	/** Realtek's VID:PID */
-	uint32_t pdc_vid_pid;
-	/** Realtek's flash bank in use */
-	uint8_t pdc_running_flash_bank;
-	/** Realtek's PD Version */
-	uint32_t pdc_pd_version;
-	/** True if PDC is executing from flash, else False if executing from
-	 * ROM */
-	bool is_running_flash_code;
+	/** Information about the PDC */
+	struct pdc_info_t info;
 };
 
 /**
@@ -338,12 +329,11 @@ static const char *const state_names[] = {
 static volatile bool irq_pending;
 static const struct smf_state states[];
 static int rts54_enable(const struct device *dev);
-static int rts54_get_ic_status(const struct device *dev, uint8_t offset,
-			       uint8_t len, enum cmd_t cmd);
 static int rts54_reset(const struct device *dev);
 static int rts54_set_notification_enable(const struct device *dev,
 					 union notification_enable_t bits,
 					 uint16_t ext_bits);
+static int rts54_get_info(const struct device *dev, struct pdc_info_t *info);
 
 static enum state_t get_state(struct pdc_data_t *data)
 {
@@ -467,7 +457,7 @@ static void st_init_run(void *o)
 		data->init_local_state = INIT_PDC_GET_IC_STATUS;
 		break;
 	case INIT_PDC_GET_IC_STATUS:
-		rts54_get_ic_status(data->dev, 0, 26, CMD_GET_IC_STATUS);
+		rts54_get_info(data->dev, &data->info);
 		data->init_local_state = INIT_PDC_SET_NOTIFICATION_ENABLE;
 		break;
 	case INIT_PDC_SET_NOTIFICATION_ENABLE:
@@ -784,30 +774,37 @@ static void st_read_run(void *o)
 	/* Copy the received data to the user's buffer */
 	switch (data->cmd) {
 	case CMD_GET_IC_STATUS:
+		struct pdc_info_t *info = (struct pdc_info_t *)data->user_buf;
+
 		/* Realtek Is running flash code: Byte 1 */
-		data->is_running_flash_code = data->rd_buf[1];
+		info->is_running_flash_code = data->rd_buf[1];
 
-		/* Realtek FW main version: Byte4, Byte5, Byte6 */
-		data->pdc_fw_version = data->rd_buf[4] << 16 |
-				       data->rd_buf[5] << 8 | data->rd_buf[6];
+		/* Realtek FW main version: Byte4, Byte5, Byte6 (little-endian)
+		 */
+		info->fw_version = data->rd_buf[6] << 16 |
+				   data->rd_buf[5] << 8 | data->rd_buf[4];
 
-		/* Realtek VID PID: Byte10, Byte11, Byte12, Byte13 */
-		data->pdc_vid_pid = data->rd_buf[10] << 24 |
-				    data->rd_buf[11] << 16 |
-				    data->rd_buf[12] << 8 | data->rd_buf[13];
+		/* Realtek VID PID: Byte10, Byte11, Byte12, Byte13
+		 * (little-endian) */
+		info->vid_pid = data->rd_buf[11] << 24 |
+				data->rd_buf[10] << 16 | data->rd_buf[13] << 8 |
+				data->rd_buf[12];
 
 		/* Realtek Running flash bank offset: Byte15 */
-		data->pdc_running_flash_bank = data->rd_buf[15];
+		info->running_in_flash_bank = data->rd_buf[15];
 
-		/* Realtek PD Version: Byte23, Byte24, Byte25, Byte26 */
-		data->pdc_pd_version = data->rd_buf[23] << 24 |
-				       data->rd_buf[24] << 16 |
-				       data->rd_buf[25] << 8 | data->rd_buf[26];
+		/* Realtek PD Revision: Byte23, Byte24 (big-endian) */
+		info->pd_revision = data->rd_buf[23] << 8 | data->rd_buf[24];
 
-		LOG_INF("Realtek: FW Version: %04x", data->pdc_fw_version);
-		LOG_INF("Realtek: PD Version: %04x, Rev %04x",
-			(data->pdc_pd_version >> 16),
-			(data->pdc_pd_version & 0xffff));
+		/* Realtek PD Version: Byte25, Byte26 (big-endian) */
+		info->pd_version = data->rd_buf[25] << 8 | data->rd_buf[26];
+
+		/* Only print this log on init */
+		if (data->init_local_state != INIT_PDC_COMPLETE) {
+			LOG_INF("Realtek: FW Version: %04x", info->fw_version);
+			LOG_INF("Realtek: PD Version: %04x, Rev %04x",
+				info->pd_version, info->pd_revision);
+		}
 		break;
 	case CMD_GET_VBUS_VOLTAGE:
 		/*
@@ -1044,31 +1041,6 @@ static const struct smf_state states[] = {
 	[ST_READ] = SMF_CREATE_STATE(st_read_entry, st_read_run, NULL, NULL),
 	[ST_IRQ] = SMF_CREATE_STATE(st_irq_entry, st_irq_run, NULL, NULL),
 };
-
-static int rts54_get_ic_status(const struct device *dev, uint8_t offset,
-			       uint8_t len, enum cmd_t cmd)
-{
-	struct pdc_data_t *data = dev->data;
-
-	/* Can only be called from Init State */
-	if (get_state(data) != ST_INIT) {
-		return -EBUSY;
-	}
-
-	k_mutex_lock(&data->mtx, K_FOREVER);
-
-	data->wr_buf[0] = GET_IC_STATUS.cmd;
-	data->wr_buf[1] = GET_IC_STATUS.len;
-	data->wr_buf[2] = GET_IC_STATUS.sub + offset;
-	data->wr_buf[3] = 0x00;
-	data->wr_buf[4] = len;
-	data->wr_buf_len = 5;
-	data->cmd = cmd;
-
-	k_mutex_unlock(&data->mtx);
-
-	return 0;
-}
 
 static int rts54_get_rtk_status(const struct device *dev, uint8_t offset,
 				uint8_t len, enum cmd_t cmd, uint8_t *buf)
@@ -1542,67 +1514,30 @@ static int rts54_get_pdos(const struct device *dev, enum pdo_type_t pdo_type,
 	return 0;
 }
 
-static int rts54_is_flash_code(const struct device *dev, uint8_t *is_flash_code)
+static int rts54_get_info(const struct device *dev, struct pdc_info_t *info)
 {
 	struct pdc_data_t *data = dev->data;
 
-	if (is_flash_code == NULL) {
+	if ((get_state(data) != ST_IDLE) && (get_state(data) != ST_INIT)) {
+		return -EBUSY;
+	}
+
+	if (info == NULL) {
 		return -EINVAL;
 	}
 
-	*is_flash_code = data->is_running_flash_code;
+	k_mutex_lock(&data->mtx, K_FOREVER);
 
-	return 0;
-}
+	data->wr_buf[0] = GET_IC_STATUS.cmd;
+	data->wr_buf[1] = GET_IC_STATUS.len;
+	data->wr_buf[2] = GET_IC_STATUS.sub;
+	data->wr_buf[3] = 0x00;
+	data->wr_buf[4] = 26;
+	data->wr_buf_len = 5;
+	data->user_buf = (uint8_t *)info;
+	data->cmd = CMD_GET_IC_STATUS;
 
-static int rts54_get_vid_pid(const struct device *dev, uint32_t *vidpid)
-{
-	struct pdc_data_t *data = dev->data;
-
-	if (vidpid == NULL) {
-		return -EINVAL;
-	}
-
-	*vidpid = data->pdc_vid_pid;
-
-	return 0;
-}
-
-static int rts54_get_current_flash_bank(const struct device *dev, uint8_t *bank)
-{
-	struct pdc_data_t *data = dev->data;
-
-	if (bank == NULL) {
-		return -EINVAL;
-	}
-
-	*bank = data->pdc_running_flash_bank;
-
-	return 0;
-}
-
-static int rts54_get_fw_version(const struct device *dev, uint32_t *fw_version)
-{
-	struct pdc_data_t *data = dev->data;
-
-	if (fw_version == NULL) {
-		return -EINVAL;
-	}
-
-	*fw_version = data->pdc_fw_version;
-
-	return 0;
-}
-
-static int rts54_get_pd_version(const struct device *dev, uint32_t *pd_version)
-{
-	struct pdc_data_t *data = dev->data;
-
-	if (pd_version == NULL) {
-		return -EINVAL;
-	}
-
-	*pd_version = data->pdc_pd_version;
+	k_mutex_unlock(&data->mtx);
 
 	return 0;
 }
@@ -1766,11 +1701,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.get_current_pdo = rts54_get_current_pdo,
 	.set_handler_cb = rts54_set_handler_cb,
 	.read_power_level = rts54_read_power_level,
-	.is_flash_code = rts54_is_flash_code,
-	.get_current_flash_bank = rts54_get_current_flash_bank,
-	.get_fw_version = rts54_get_fw_version,
-	.get_vid_pid = rts54_get_vid_pid,
-	.get_pd_version = rts54_get_pd_version,
+	.get_info = rts54_get_info,
 	.set_power_level = rts54_set_power_level,
 	.reconnect = rts54_reconnect,
 };
