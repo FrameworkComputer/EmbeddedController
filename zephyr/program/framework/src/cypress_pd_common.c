@@ -52,7 +52,7 @@
  * 7. UCSI handler
  */
 
-static struct pd_chip_config_t pd_chip_config[] = {
+struct pd_chip_config_t pd_chip_config[] = {
 	[PD_CHIP_0] = {
 		.i2c_port = I2C_PORT_PD_MCU0,
 		.addr_flags = CCG_I2C_CHIP0 | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
@@ -68,7 +68,7 @@ static struct pd_chip_config_t pd_chip_config[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(pd_chip_config) == PD_CHIP_COUNT);
 
-static struct pd_port_current_state_t pd_port_states[] = {
+struct pd_port_current_state_t pd_port_states[] = {
 	[PD_PORT_0] = {
 
 	},
@@ -87,15 +87,12 @@ struct extended_msg rx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 struct extended_msg tx_emsg[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 static int prev_charge_port = -1;
-static uint8_t pd_c_fet_active_port;
 static bool verbose_msg_logging;
 static bool firmware_update;
-static uint8_t pd_epr_in_progress;
 
 /*****************************************************************************/
 /* Internal functions */
 
-static void cypd_update_port_state(int controller, int port);
 static void cypd_pdo_reset_deferred(void);
 static void cypd_set_prepare_pdo(int controller, int port);
 
@@ -111,7 +108,7 @@ int cypd_write_reg_block(int controller, int reg, void *data, int len)
 	return rv;
 }
 
-static int cypd_write_reg16(int controller, int reg, int data)
+int cypd_write_reg16(int controller, int reg, int data)
 {
 	int rv;
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
@@ -147,7 +144,7 @@ int cypd_read_reg_block(int controller, int reg, void *data, int len)
 	return rv;
 }
 
-static int cypd_read_reg16(int controller, int reg, int *data)
+int cypd_read_reg16(int controller, int reg, int *data)
 {
 	int rv;
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
@@ -159,7 +156,7 @@ static int cypd_read_reg16(int controller, int reg, int *data)
 	return rv;
 }
 
-static int cypd_read_reg8(int controller, int reg, int *data)
+int cypd_read_reg8(int controller, int reg, int *data)
 {
 	int rv;
 	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
@@ -221,93 +218,6 @@ int cypd_wait_for_ack(int controller, int timeout_ms)
 	return EC_SUCCESS;
 }
 
-static int cypd_write_reg8_wait_ack(int controller, int reg, int data)
-{
-	int rv = EC_SUCCESS;
-	int intr_status;
-	int event;
-	int cmd_port = -1;
-	int ack_mask = 0;
-	int expected_ack_mask = 0;
-	const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[controller].gpio);
-
-	if (reg < 0x1000) {
-		expected_ack_mask = CCG_DEV_INTR;
-		cmd_port = -1;
-	} else if (reg < 0x2000) {
-		expected_ack_mask = CCG_PORT0_INTR;
-		cmd_port = 0;
-	} else {
-		expected_ack_mask = CCG_PORT1_INTR;
-		cmd_port = 1;
-	}
-
-	if (gpio_pin_get_dt(intr) == 0) {
-		/* we may have a pending interrupt */
-		rv = cypd_get_int(controller, &intr_status);
-		CPRINTS("%s pre 0x%x ", __func__, intr_status);
-		if (intr_status & CCG_DEV_INTR) {
-			rv = cypd_read_reg16(controller, CCG_RESPONSE_REG, &event);
-			if (event < 0x80) {
-				cypd_clear_int(controller, CCG_DEV_INTR);
-			}
-			usleep(50);
-		}
-	}
-
-
-	rv = cypd_write_reg8(controller, reg, data);
-	if (rv != EC_SUCCESS)
-		CPRINTS("Write Reg8 0x%x fail!", reg);
-
-	if (cypd_wait_for_ack(controller, 100) != EC_SUCCESS) {
-		CPRINTS("%s timeout on interrupt", __func__);
-		return EC_ERROR_INVAL;
-	}
-	rv = cypd_get_int(controller, &intr_status);
-	if (rv != EC_SUCCESS)
-		CPRINTS("Get INT Fail");
-
-	if (intr_status & CCG_DEV_INTR && cmd_port == -1) {
-		rv = cypd_read_reg16(controller, CCG_RESPONSE_REG, &event);
-		if (rv != EC_SUCCESS)
-			CPRINTS("fail to read DEV response");
-		ack_mask = CCG_DEV_INTR;
-	} else if (intr_status & CCG_PORT0_INTR && cmd_port == 0) {
-		rv = cypd_read_reg16(controller, CCG_PORT_PD_RESPONSE_REG(0), &event);
-		if (rv != EC_SUCCESS)
-			CPRINTS("fail to read P0 response");
-		ack_mask = CCG_PORT0_INTR;
-	} else if (intr_status & CCG_PORT1_INTR && cmd_port == 1) {
-		rv = cypd_read_reg16(controller, CCG_PORT_PD_RESPONSE_REG(1), &event);
-		if (rv != EC_SUCCESS)
-			CPRINTS("fail to read P1 response");
-		ack_mask = CCG_PORT1_INTR;
-	} else {
-		CPRINTS("%s C:%d Unexpected response 0x%x to reg 0x%x",
-			__func__, controller, intr_status, reg);
-		rv = cypd_read_reg16(controller, CCG_RESPONSE_REG, &event);
-		CPRINTS("Dev 0x%x", event);
-		rv = cypd_read_reg16(controller, CCG_PORT_PD_RESPONSE_REG(0), &event);
-		CPRINTS("P0 0x%x", event);
-		rv = cypd_read_reg16(controller, CCG_PORT_PD_RESPONSE_REG(1), &event);
-		CPRINTS("P1 0x%x", event);
-	}
-
-	/* only clear response code let main task handle event code */
-	if (event < 0x80) {
-		cypd_clear_int(controller, ack_mask);
-		if (event != CCG_RESPONSE_SUCCESS) {
-			CPRINTS("%s C:%d 0x%x response 0x%x",
-				__func__, controller, reg, event);
-		}
-		rv = (event == CCG_RESPONSE_SUCCESS) ? EC_SUCCESS : EC_ERROR_INVAL;
-	}
-
-	usleep(50);
-	return rv;
-}
-
 void cypd_print_buff(const char *msg, void *buff, int len)
 {
 	int i;
@@ -341,136 +251,6 @@ static void update_external_cc_mux(int port, int cc)
 		}
 	}
 }
-
-#define EXIT_EPR BIT(4)
-#define ENTER_EPR BIT(5)
-#define EPR_PROCESS_MASK (EXIT_EPR + ENTER_EPR)
-
-static void epr_flow_pending_deferred(void)
-{
-	static int retry_count;
-
-	/**
-	 * Sometimes, EC does not receive the EPR event/NOT support event from PD chip.
-	 * Retry the last action.
-	 */
-
-	if (!!(pd_epr_in_progress & ~EPR_PROCESS_MASK)) {
-		if (retry_count > 4) {
-			/* restore the input current limit if we retry 4 times */
-			retry_count = 0;
-			pd_epr_in_progress &= EPR_PROCESS_MASK;
-			if (prev_charge_port != -1)
-				cypd_update_port_state((prev_charge_port & 0x02) >> 1,
-					prev_charge_port & BIT(0));
-		}
-
-		if (pd_epr_in_progress & EXIT_EPR) {
-			CPRINTS("Exit EPR stuck, retry!");
-			exit_epr_mode();
-			retry_count++;
-		}
-
-		if (pd_epr_in_progress & ENTER_EPR) {
-			CPRINTS("enter EPR stuck, retry!");
-			enter_epr_mode();
-			retry_count++;
-		}
-
-	} else
-		retry_count = 0;
-}
-DECLARE_DEFERRED(epr_flow_pending_deferred);
-
-void enter_epr_mode(void)
-{
-	int port_idx;
-
-	/**
-	 * Only enter EPR mode when the system in S0 state.
-	 * 1. Resume from S0i3 mode
-	 * 2. Power up from S5/G3 state (after error recovery, will enter EPR mode automatically)
-	 * 3. battery in normal mode
-	 */
-	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) ||
-		battery_is_cut_off() || battery_cutoff_in_progress())
-		return;
-
-	/**
-	 * PD negotiation completed and in Sink Role,
-	 * execute the CCG command to enter the EPR mode
-	 */
-	for (port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
-		if ((pd_port_states[port_idx].pd_state) &&
-			(pd_port_states[port_idx].power_role == PD_ROLE_SINK) &&
-			(pd_port_states[port_idx].epr_active == 0) &&
-			(pd_port_states[port_idx].epr_support == 1)) {
-
-			/* BIT(4): epr in progress, BIT(1) - BIT(3) which port */
-			pd_epr_in_progress |= (BIT(port_idx) + ENTER_EPR);
-
-			/* avoid the pmf is higher when the system resume from S0ix */
-			update_pmf_events(BIT(PD_PROGRESS_ENTER_EPR_MODE),
-				!!(pd_epr_in_progress & ~EPR_PROCESS_MASK));
-
-			if (battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED) {
-				/* Enable learn mode to discharge on AC */
-				board_discharge_on_ac(1);
-
-				/* Set input current to 0mA */
-				charger_set_input_current_limit(0, 0);
-			}
-
-			cypd_write_reg8((port_idx & 0x2) >> 1,
-					CCG_PD_CONTROL_REG(port_idx & 0x1),
-					CCG_PD_CMD_INITIATE_EPR_ENTRY);
-
-			hook_call_deferred(&epr_flow_pending_deferred_data, 200 * MSEC);
-		}
-	}
-}
-DECLARE_DEFERRED(enter_epr_mode);
-
-void enter_epr_mode_without_battery(void)
-{
-	if ((battery_get_disconnect_state() == BATTERY_DISCONNECTED) ||
-	    (battery_is_present() != BP_YES))
-		enter_epr_mode();
-}
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, enter_epr_mode_without_battery, HOOK_PRIO_DEFAULT);
-
-void exit_epr_mode(void)
-{
-	int port_idx;
-
-	for (port_idx = 0; port_idx < PD_PORT_COUNT; port_idx++) {
-		if (pd_port_states[port_idx].epr_active == 1) {
-
-			/* BIT(4): epr in progress, BIT(1) - BIT(3) which port */
-			pd_epr_in_progress |= (BIT(port_idx) + EXIT_EPR);
-
-			/* do not set learn mode when battery is cut off */
-			if (!battery_cutoff_in_progress() && !battery_is_cut_off() &&
-				(battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED)) {
-				/* Enable learn mode to discharge on AC */
-				board_discharge_on_ac(1);
-
-				/* Set input current to 0mA */
-				charger_set_input_current_limit(0, 0);
-			} else {
-				update_pmf_events(BIT(PD_PROGRESS_EXIT_EPR_MODE),
-						!!(pd_epr_in_progress & ~EPR_PROCESS_MASK));
-			}
-
-			cypd_write_reg8((port_idx & 0x2) >> 1,
-					CCG_PD_CONTROL_REG(port_idx & 0x1),
-					CCG_PD_CMD_INITIATE_EPR_EXIT);
-
-			hook_call_deferred(&epr_flow_pending_deferred_data, 500 * MSEC);
-		}
-	}
-}
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, exit_epr_mode, HOOK_PRIO_FIRST);
 #endif
 
 static void pd0_update_state_deferred(void)
@@ -486,11 +266,10 @@ static void pd1_update_state_deferred(void)
 }
 DECLARE_DEFERRED(pd1_update_state_deferred);
 
-static void update_power_state_deferred(void)
+void update_power_state_deferred(void)
 {
 	task_set_event(TASK_ID_CYPD, CCG_EVT_UPDATE_PWRSTAT);
 }
-DECLARE_DEFERRED(update_power_state_deferred);
 
 static void cypd_enable_interrupt(int controller, int enable_ndisable)
 {
@@ -1125,36 +904,6 @@ int cypd_handle_extend_msg(int controller, int port, int len, enum tcpci_msg_typ
 	return rv;
 }
 
-uint8_t cypd_get_cfet_status(void)
-{
-	return pd_c_fet_active_port;
-}
-
-int cypd_cfet_vbus_control(int port, bool enable, bool ec_control)
-{
-	int rv;
-	int pd_controller = PORT_TO_CONTROLLER(port);
-	int pd_port = PORT_TO_CONTROLLER_PORT(port);
-	int regval = (ec_control ? CCG_EC_VBUS_CTRL_EN : 0) |
-				(enable ? CCG_EC_VBUS_CTRL_ON : 0);
-
-	if (port < 0 || port >= PD_PORT_COUNT) {
-		return EC_ERROR_INVAL;
-	}
-
-	rv = cypd_write_reg8_wait_ack(pd_controller, CCG_PORT_VBUS_FET_CONTROL(pd_port),
-		regval);
-	if (rv != EC_SUCCESS)
-		CPRINTS("%s:%d fail:%d", __func__, port, rv);
-
-	if (enable)
-		pd_c_fet_active_port |= BIT(port);
-	else
-		pd_c_fet_active_port &= ~BIT(port);
-
-	return rv;
-}
-
 static void clear_port_state(int controller, int port)
 {
 	int port_idx = (controller << 1) + port;
@@ -1169,7 +918,7 @@ static void clear_port_state(int controller, int port)
 	pd_port_states[port_idx].current = 0;
 	pd_port_states[port_idx].voltage = 0;
 }
-static void cypd_update_port_state(int controller, int port)
+void cypd_update_port_state(int controller, int port)
 {
 	int rv;
 	uint8_t pd_status_reg[4];
@@ -1181,7 +930,7 @@ static void cypd_update_port_state(int controller, int port)
 	int rdo_max_current = 0;
 	int type_c_current = 0;
 	int port_idx = (controller << 1) + port;
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PD_CCG8_EPR
 	int64_t calculate_ma;
 #endif
 
@@ -1287,14 +1036,21 @@ static void cypd_update_port_state(int controller, int port)
 	} else {
 		pd_set_input_current_limit(port_idx, 0, 0);
 	}
-
+#if DT_NODE_EXISTS(DT_ALIAS(gpio_mux_uart_flip))
+	if (pd_port_states[0].c_state == CCG_STATUS_DEBUG ||
+		pd_port_states[3].c_state == CCG_STATUS_DEBUG) {
+		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_mux_uart_flip), 1);
+	} else {
+		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_mux_uart_flip), 0);
+	}
+#endif /* CONFIG_PD_CHIP_CCG6 */
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_CHARGE_MANAGER)) {
 		charge_manager_update_dualrole(port_idx, CAP_DEDICATED);
 	}
 
-#ifdef CONFIG_BOARD_LOTUS
-	if (!!(pd_epr_in_progress & EPR_PROCESS_MASK) &&
-	    !(pd_epr_in_progress & ~EPR_PROCESS_MASK)) {
+#ifdef CONFIG_PD_CCG8_EPR
+	if (!!(epr_progress_status() & EPR_PROCESS_MASK) &&
+	    !(epr_progress_status() & ~EPR_PROCESS_MASK)) {
 
 		/* Handle EPR converstion through the buck switcher */
 		if (pd_voltage > 20000) {
@@ -1309,7 +1065,7 @@ static void cypd_update_port_state(int controller, int port)
 
 		board_discharge_on_ac(0);
 		charger_set_input_current_limit(0, (int)calculate_ma);
-		pd_epr_in_progress &= ~EPR_PROCESS_MASK;
+		clear_erp_progress_mask();
 	}
 #endif
 }
@@ -1332,40 +1088,6 @@ int cypd_set_power_state(int power_state, int controller)
 		}
 	}
 	return rv;
-}
-
-static void cypd_update_epr_state(int controller, int port, int response_len)
-{
-	int rv;
-	uint8_t data[16];
-	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
-	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
-	int port_idx = (controller << 1) + port;
-
-	rv = i2c_read_offset16_block(i2c_port, addr_flags,
-		CCG_READ_DATA_MEMORY_REG(port, 0), data, MIN(response_len, 16));
-
-	if (rv != EC_SUCCESS)
-		CPRINTS("CCG_READ_DATA_MEMORY_REG failed");
-
-	if ((data[0] & EPR_EVENT_POWER_ROLE_MASK) == EPR_EVENT_POWER_ROLE_SINK) {
-		switch (data[0] & EPR_EVENT_TYPE_MASK) {
-		case EPR_MODE_ENTERED:
-			CPRINTS("Entered EPR");
-			break;
-		case EPR_MODE_EXITED:
-			CPRINTS("Exited EPR");
-			break;
-		case EPR_MODE_ENTER_FAILED:
-		default:
-			/* see epr_event_failure_type*/
-			CPRINTS("EPR failed %d", data[1]);
-			/* EPR fail, do not retry */
-			pd_port_states[port_idx].epr_active = 0xff;
-		}
-	}
-
-	pd_epr_in_progress &= ~BIT((controller << 1) + port);
 }
 
 static int cypd_update_power_status(int controller)
@@ -1403,44 +1125,6 @@ static int cypd_update_power_status(int controller)
 	return rv;
 }
 
-static void perform_error_recovery(int controller)
-{
-	int i;
-	uint8_t data[2] = {0x00, CCG_PD_USER_CMD_TYPEC_ERR_RECOVERY};
-	uint32_t batt_os_percentage = get_system_percentage();
-
-	if (controller < 2)
-		for (i = 0; i < 2; i++) {
-			if (!((controller*2 + i) == prev_charge_port &&
-				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
-
-				data[0] = PORT_TO_CONTROLLER_PORT(i);
-				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
-									CCG_DPM_CMD_REG,
-									data, 2);
-			}
-		}
-	else {
-		/* Hard reset all ports that are not supplying power in dead battery mode */
-		for (i = 0; i < PD_PORT_COUNT; i++) {
-			if (!(i == prev_charge_port &&
-			    battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
-
-				if ((pd_port_states[i].c_state == CCG_STATUS_SOURCE) &&
-				   (batt_os_percentage < 3) && (i == prev_charge_port))
-					continue;
-
-				CPRINTS("Hard reset %d", i);
-				data[0] = PORT_TO_CONTROLLER_PORT(i);
-				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
-									CCG_DPM_CMD_REG,
-									data, 2);
-			}
-		}
-	}
-	return ;
-}
-
 static void port_to_safe_mode(int port)
 {
 	uint8_t data[2] = {0x00, CCG_PD_USER_MUX_CONFIG_SAFE};
@@ -1451,128 +1135,18 @@ static void port_to_safe_mode(int port)
 	CPRINTS("P%d: Safe", port);
 
 }
-enum power_state pd_prev_power_state = POWER_G3;
-void update_system_power_state(int controller)
-{
-	enum power_state ps = power_get_state();
-
-	switch (ps) {
-	case POWER_G3:
-	case POWER_S5G3:
-		pd_prev_power_state = POWER_G3;
-		cypd_set_power_state(CCG_POWERSTATE_G3, controller);
-		break;
-	case POWER_S5:
-	case POWER_S3S5:
-	case POWER_S4S5:
-		pd_prev_power_state = POWER_S5;
-		cypd_set_power_state(CCG_POWERSTATE_S5, controller);
-		break;
-	case POWER_S3:
-	case POWER_S4S3:
-	case POWER_S5S3:
-	case POWER_S0S3:
-	case POWER_S0ixS3: /* S0ix -> S3 */
-		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
-		if (pd_prev_power_state < POWER_S3) {
-			perform_error_recovery(controller);
-			pd_prev_power_state = ps;
-		}
-		break;
-	case POWER_S0:
-	case POWER_S3S0:
-	case POWER_S0ixS0: /* S0ix -> S0 */
-		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
-		if (pd_prev_power_state < POWER_S3) {
-			perform_error_recovery(controller);
-			pd_prev_power_state = ps;
-		}
-		break;
-	case POWER_S0ix:
-	case POWER_S3S0ix: /* S3 -> S0ix */
-	case POWER_S0S0ix: /* S0 -> S0ix */
-		cypd_set_power_state(CCG_POWERSTATE_S0ix, controller);
-		break;
-
-	default:
-		break;
-	}
-
-}
 
 void cypd_set_power_active(void)
 {
 	task_set_event(TASK_ID_CYPD, CCG_EVT_S_CHANGE);
 }
 
-
-
-#define CYPD_SETUP_CMDS_LEN 2
-static int cypd_setup(int controller)
+__overridable void cypd_customize_app_setup(int controller)
 {
 	/*
-	 * 1. CCG notifies EC with "RESET Complete event after Reset/Power up/JUMP_TO_BOOT
-	 * 2. EC Reads DEVICE_MODE register does not in Boot Mode
-	 * 3. CCG will enters 100ms timeout window and waits for "EC Init Complete" command
-	 * 4. EC sets Source and Sink PDO mask if required
-	 * 5. EC sets Event mask if required
-	 * 6. EC sends EC Init Complete Command
+	 * CCG Chip behavior is different,
+	 * use this function to customize setting
 	 */
-
-	int rv, data, i;
-	const struct gpio_dt_spec *intr = gpio_get_dt_spec(pd_chip_config[controller].gpio);
-	struct {
-		int reg;
-		int value;
-		int length;
-		int status_reg;
-	} const cypd_setup_cmds[] = {
-		/* Set the port event mask */
-		{ CCG_EVENT_MASK_REG(0), 0x27ffff, 4, CCG_PORT0_INTR},
-		{ CCG_EVENT_MASK_REG(1), 0x27ffff, 4, CCG_PORT1_INTR },
-	};
-	BUILD_ASSERT(ARRAY_SIZE(cypd_setup_cmds) == CYPD_SETUP_CMDS_LEN);
-
-	/* Make sure the interrupt is not asserted before we start */
-	if (gpio_pin_get_dt(intr) == 0) {
-		rv = cypd_get_int(controller, &data);
-		CPRINTS("%s int already pending 0x%04x", __func__, data);
-		cypd_clear_int(controller,
-			CCG_DEV_INTR + CCG_PORT0_INTR + CCG_PORT1_INTR + CCG_UCSI_INTR);
-	}
-	for (i = 0; i < CYPD_SETUP_CMDS_LEN; i++) {
-		rv = cypd_write_reg_block(controller, cypd_setup_cmds[i].reg,
-		(void *)&cypd_setup_cmds[i].value, cypd_setup_cmds[i].length);
-		if (rv != EC_SUCCESS) {
-			CPRINTS("%s command: 0x%04x failed", __func__, cypd_setup_cmds[i].reg);
-			return EC_ERROR_INVAL;
-		}
-		/* wait for interrupt ack to be asserted */
-		if (cypd_wait_for_ack(controller, 5) != EC_SUCCESS) {
-			CPRINTS("%s timeout on interrupt", __func__);
-			return EC_ERROR_INVAL;
-		}
-
-		/* clear cmd ack */
-		cypd_clear_int(controller, cypd_setup_cmds[i].status_reg);
-	}
-
-	/* Make sure the vbus fet control is configured before the PD controller
-	 * auto enables one or more ports
-	 */
-	if (prev_charge_port != -1) {
-		for (i = 0; i < PD_PORT_COUNT; i++) {
-			if (PORT_TO_CONTROLLER(i) == controller) {
-				cypd_cfet_vbus_control(i, i == prev_charge_port, true);
-			}
-		}
-	}
-
-	/*Notify the PD controller we are done and it can continue init*/
-	rv = cypd_write_reg8_wait_ack(controller,
-								CCG_PD_CONTROL_REG(0),
-								CCG_PD_CMD_EC_INIT_COMPLETE);
-	return EC_SUCCESS;
 }
 
 static void cypd_handle_state(int controller)
@@ -1613,6 +1187,8 @@ static void cypd_handle_state(int controller)
 			update_system_power_state(controller);
 			cypd_setup(controller);
 
+			cypd_customize_app_setup(controller);
+
 			/* After initial complete, update the type-c port state */
 			cypd_update_port_state(controller, 0);
 			cypd_update_port_state(controller, 1);
@@ -1634,6 +1210,86 @@ static void cypd_handle_state(int controller)
 	}
 
 }
+
+
+#ifdef CONFIG_PD_COMMON_VBUS_CONTROL
+static uint8_t pd_c_fet_active_port;
+
+DECLARE_DEFERRED(update_power_state_deferred);
+
+int cypd_cfet_vbus_control(int port, bool enable, bool ec_control)
+{
+	int rv;
+	int pd_controller = PORT_TO_CONTROLLER(port);
+	int pd_port = PORT_TO_CONTROLLER_PORT(port);
+	int regval = (ec_control ? CCG_EC_VBUS_CTRL_EN : 0) |
+				(enable ? CCG_EC_VBUS_CTRL_ON : 0);
+
+	if (port < 0 || port >= PD_PORT_COUNT) {
+		return EC_ERROR_INVAL;
+	}
+
+	rv = cypd_write_reg8_wait_ack(pd_controller, CCG_PORT_VBUS_FET_CONTROL(pd_port),
+		regval);
+	if (rv != EC_SUCCESS)
+		CPRINTS("%s:%d fail:%d", __func__, port, rv);
+
+	if (enable)
+		pd_c_fet_active_port |= BIT(port);
+	else
+		pd_c_fet_active_port &= ~BIT(port);
+
+	return rv;
+}
+
+uint8_t cypd_get_cfet_status(void)
+{
+	return pd_c_fet_active_port;
+}
+
+/**
+ * Set active charge port -- only one port can be active at a time.
+ *
+ * @param charge_port   Charge port to enable.
+ *
+ * Returns EC_SUCCESS if charge port is accepted and made active,
+ * EC_ERROR_* otherwise.
+ */
+int board_set_active_charge_port(int charge_port)
+{
+	int i;
+
+	CPRINTS("%s port %d, prev:%d", __func__, charge_port, prev_charge_port);
+
+	if (prev_charge_port == charge_port) {
+		/* in the case of hard reset, we do not turn off the old
+		 * port, but the PD will implicitly clear the port
+		 * so we need to turn on the vbus control again.
+		 */
+		cypd_cfet_vbus_control(charge_port, true, true);
+		return EC_SUCCESS;
+	}
+
+
+	if (prev_charge_port != -1 &&
+		prev_charge_port != charge_port) {
+		/* Turn off the previous charge port before turning on the next port */
+		cypd_cfet_vbus_control(prev_charge_port, false, true);
+	}
+
+	for (i = 0; i < PD_PORT_COUNT; i++) {
+		/* Just brute force all ports, we want to make sure
+		 * we always update all ports in case a PD controller rebooted or some
+		 * other error happens that we are not tracking state with.
+		 */
+		cypd_cfet_vbus_control(i, i == charge_port, true);
+	}
+	prev_charge_port = charge_port;
+	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
+
+	return EC_SUCCESS;
+}
+#endif /* CONFIG_PD_COMMON_VBUS_CONTROL */
 
 static void print_pd_response_code(uint8_t controller, uint8_t port, uint8_t id, int len)
 {
@@ -1709,7 +1365,8 @@ static void poweroff_dp_check(void)
 			cypd_read_reg8(PORT_TO_CONTROLLER(i),
 				CCG_DP_ALT_MODE_CONFIG_REG(PORT_TO_CONTROLLER_PORT(i)),
 				&alt_active);
-			/* DP_ALT should be on bit 1 always, but there is a bug
+			/*
+			 * DP_ALT should be on bit 1 always, but there is a bug
 			 * in the PD stack that if a port does not have TBT mode
 			 * enabled, it will shift the DP alt mode enable bit to
 			 * bit 0. Since we only whitelist DP alt mode cards, just
@@ -1848,8 +1505,9 @@ void cypd_port_int(int controller, int port)
 		   (prev_charge_port == (controller << 1) + port))
 			update_pmf_events(BIT(PD_PROGRESS_DISCONNECTED), 1);
 
-		/* clear the EPR progress when the adapter is removed */
-		pd_epr_in_progress &= EPR_PROCESS_MASK;
+#ifdef CONFIG_PD_CCG8_EPR
+		clear_erp_progress();
+#endif
 		set_gpu_gpio(GPIO_FUNC_ACDC, 0);
 #endif
 
@@ -1865,10 +1523,10 @@ void cypd_port_int(int controller, int port)
 		CPRINTS("CYPD_RESPONSE_PD_CONTRACT_NEGOTIATION_COMPLETE %d", port_idx);
 		cypd_update_port_state(controller, port);
 		cypd_set_prepare_pdo(controller, port);
-#ifdef CONFIG_BOARD_LOTUS
+#ifdef CONFIG_PD_CCG8_EPR
 		/* make sure enter EPR mode only process in S0 state */
 		if (chipset_in_state(CHIPSET_STATE_ON))
-			hook_call_deferred(&enter_epr_mode_data, 100 * MSEC);
+			cypd_enter_epr_mode(100);
 
 #endif
 		break;
@@ -1886,11 +1544,13 @@ void cypd_port_int(int controller, int port)
 			CPRINTS("P%d EPR mode capable", port_idx);
 		}
 		break;
+#ifdef CONFIG_PD_CCG8_EPR
 	case CCG_RESPONSE_EPR_EVENT:
 		CPRINTS("CCG_RESPONSE_EPR_EVENT %d", port_idx);
 		cypd_update_epr_state(controller, port, response_len);
 		cypd_update_port_state(controller, port);
 		break;
+#endif
 	case CCG_RESPONSE_EXT_MSG_SOP_RX:
 	case CCG_RESPONSE_EXT_SOP1_RX:
 	case CCG_RESPONSE_EXT_SOP2_RX:
@@ -1992,7 +1652,9 @@ static int ucsi_tunnel_disabled;
 void cypd_interrupt_handler_task(void *p)
 {
 	int i, j, evt;
-
+#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
+	int events;
+#endif /* CONFIG_PD_CCG6_ERROR_RECOVERY */
 	/* Initialize all charge suppliers to 0 */
 	for (i = 0; i < CHARGE_PORT_COUNT; i++) {
 		for (j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
@@ -2042,6 +1704,29 @@ void cypd_interrupt_handler_task(void *p)
 			cypd_handle_state(1);
 			task_wait_event_mask(TASK_EVENT_TIMER,10);
 		}
+
+#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
+
+		if (evt & CCG_EVT_PORT_DISABLE) {
+			CPRINTS("CCG_EVT_PORT_DISABLE");
+			cypd_reconnect_port_disable(0);
+			cypd_reconnect_port_disable(1);
+			/*
+			 * In the specification section 4.2.3.14, stopping an active
+			 * PD port can take a long time (~1 second) in case VBus is
+			 * being provided andneeds to be discharged
+			 */
+			events = task_wait_event_mask(TASK_EVENT_TIMER, 1000*MSEC);
+			if (events & TASK_EVENT_TIMER)
+				task_set_event(TASK_ID_CYPD, CCG_EVT_PORT_ENABLE);
+		}
+
+		if (evt & CCG_EVT_PORT_ENABLE) {
+			CPRINTS("CCG_EVT_PORT_ENABLE");
+			cypd_reconnect_port_enable(0);
+			cypd_reconnect_port_enable(1);
+		}
+#endif /* CONFIG_PD_CCG6_ERROR_RECOVERY */
 
 		if (evt & CCG_EVT_PDO_INIT_0) {
 			/* update new PDO format to select pdo register */
@@ -2133,47 +1818,7 @@ __override uint8_t board_get_usb_pd_port_count(void)
 	return CONFIG_USB_PD_PORT_MAX_COUNT;
 }
 
-/**
- * Set active charge port -- only one port can be active at a time.
- *
- * @param charge_port   Charge port to enable.
- *
- * Returns EC_SUCCESS if charge port is accepted and made active,
- * EC_ERROR_* otherwise.
- */
-int board_set_active_charge_port(int charge_port)
-{
-	int i;
-	CPRINTS("%s port %d, prev:%d", __func__, charge_port, prev_charge_port);
 
-	if (prev_charge_port == charge_port) {
-		/* in the case of hard reset, we do not turn off the old
-		 * port, but the PD will implicitly clear the port
-		 * so we need to turn on the vbus control again.
-		 */
-		cypd_cfet_vbus_control(charge_port, true, true);
-		return EC_SUCCESS;
-	}
-
-
-	if (prev_charge_port != -1 &&
-		prev_charge_port != charge_port) {
-		/* Turn off the previous charge port before turning on the next port */
-		cypd_cfet_vbus_control(prev_charge_port, false, true);
-	}
-
-	for (i = 0; i < PD_PORT_COUNT; i++) {
-		/* Just brute force all ports, we want to make sure
-		 * we always update all ports in case a PD controller rebooted or some
-		 * other error happens that we are not tracking state with.
-		 */
-		cypd_cfet_vbus_control(i, i == charge_port, true);
-	}
-	prev_charge_port = charge_port;
-	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
-
-	return EC_SUCCESS;
-}
 
 uint8_t *get_pd_version(int controller)
 {
@@ -2196,6 +1841,11 @@ int get_active_charge_pd_port(void)
 	 */
 
 	return prev_charge_port;
+}
+
+void update_active_charge_pd_port(int update_charger_port)
+{
+	prev_charge_port = update_charger_port;
 }
 
 void set_pd_fw_update(bool is_update)

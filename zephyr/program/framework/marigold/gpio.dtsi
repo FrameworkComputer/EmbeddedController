@@ -7,6 +7,7 @@
 
 	aliases {
 		gpio-check-fp-control = &gpio_fp_control;
+		gpio-mux-uart-flip = &gpio_mux_sub_uart_flip;
 	};
 	named-gpios {
 		compatible = "named-gpios";
@@ -196,7 +197,7 @@
 			/* ME flash, strap default low before PLT_PWROK*/
 			gpios = <&gpio7 4 (GPIO_OUTPUT_LOW | GPIO_VOLTAGE_1P8)>;
 		};
-		mux_sub_uart_flip {
+		gpio_mux_sub_uart_flip: mux_sub_uart_flip {
 			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;	/*TBT SBU MUX*/
 		};
 		gpio_pd_chip1_interrupt: ec_pd_intb_l {
