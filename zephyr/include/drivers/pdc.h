@@ -85,6 +85,7 @@ typedef int (*pdc_set_power_level_t)(const struct device *dev,
 typedef int (*pdc_reconnect_t)(const struct device *dev);
 typedef int (*pdc_get_current_flash_bank_t)(const struct device *dev,
 					    uint8_t *bank);
+typedef int (*pdc_update_retimer_fw_t)(const struct device *dev, bool enable);
 
 /**
  * @cond INTERNAL_HIDDEN
@@ -114,6 +115,7 @@ __subsystem struct pdc_driver_api_t {
 	pdc_set_power_level_t set_power_level;
 	pdc_reconnect_t reconnect;
 	pdc_get_current_flash_bank_t get_current_flash_bank;
+	pdc_update_retimer_fw_t update_retimer;
 };
 /**
  * @endcond
@@ -681,6 +683,28 @@ static inline int pdc_get_current_flash_bank(const struct device *dev,
 	}
 
 	return api->get_current_flash_bank(dev, bank);
+}
+
+/**
+ * @brief Command PD chip to enter retimer firmware update mode.
+ *
+ * @param enable True->enter, False->exit retimer firmware update mode.
+ *
+ * @retval 0 if success or I2C error.
+ * @retval -EIO if input/output error.
+ * @retval -ENOSYS if API not implemented.
+ */
+static inline int pdc_update_retimer_fw(const struct device *dev, bool enable)
+{
+	const struct pdc_driver_api_t *api =
+		(const struct pdc_driver_api_t *)dev->api;
+
+	/* Temporarily optional feature, so it might not be implemented */
+	if (api->update_retimer == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->update_retimer(dev, enable);
 }
 
 #ifdef __cplusplus
