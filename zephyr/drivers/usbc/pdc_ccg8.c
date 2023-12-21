@@ -23,6 +23,13 @@
 
 #define PD_MAX_READ_WRITE_SIZE 4
 
+/*
+ * Retimer firmware update register: Send 0x01 command to go to firmware update
+ * mode for all the retimers(single/dual port PD) controlled by a CCG8 PD.
+ */
+#define PD_ICL_CTRL_REG 0x0040
+#define PD_ICL_CTRL_REG_LEN 1
+
 #define DT_DRV_COMPAT infineon_ccg8
 
 #define PD_CHIP_ENTRY(usbc_id, pd_id) \
@@ -210,6 +217,12 @@ static int ccg_reconnect(const struct device *dev)
 	return 0;
 }
 
+static int ccg_update_retimer(const struct device *dev, bool enable)
+{
+	return ccg_write(dev, PD_ICL_CTRL_REG, PD_ICL_CTRL_REG_LEN,
+			 (uint8_t *)&enable);
+}
+
 static const struct pdc_driver_api_t pdc_driver_api = {
 	.get_ucsi_version = ccg_get_ucsi_version,
 	.reset = ccg_reset,
@@ -232,6 +245,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.get_info = ccg_get_info,
 	.set_power_level = ccg_set_power_level,
 	.reconnect = ccg_reconnect,
+	.update_retimer = ccg_update_retimer,
 };
 
 /*
