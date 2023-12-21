@@ -17,6 +17,7 @@
 #include <zephyr/drivers/watchdog.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
+#include <zephyr/toolchain.h>
 
 #include <cmsis_core.h>
 #include <soc.h>
@@ -224,7 +225,7 @@ static void system_npcx_set_wakeup_gpios_before_hibernate(void)
  * Do not use global variables or call functions since we have turned off
  * the other ram blocks.
  */
-noreturn void __keep __attribute__((section(".lfw.hiber")))
+FUNC_NORETURN void __keep __attribute__((section(".lfw.hiber")))
 system_npcx_hibernate_by_lfw_in_last_ram(const struct device *dev,
 					 uint32_t pd_ram_mask)
 {

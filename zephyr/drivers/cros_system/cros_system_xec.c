@@ -18,6 +18,7 @@
 #include <zephyr/drivers/watchdog.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
+#include <zephyr/toolchain.h>
 
 #include <cmsis_core.h>
 #include <drivers/cros_system.h>
@@ -155,7 +156,7 @@ static int cros_system_xec_init(const struct device *dev)
 	return 0;
 }
 
-noreturn static int cros_system_xec_soc_reset(const struct device *dev)
+FUNC_NORETURN static int cros_system_xec_soc_reset(const struct device *dev)
 {
 	struct pcr_regs *const pcr = HAL_PCR_INST(dev);
 
@@ -288,9 +289,9 @@ static void system_set_htimer_alarm(uint32_t seconds, uint32_t microseconds)
 }
 
 /* Put the EC in hibernate (lowest EC power state). */
-noreturn static int cros_system_xec_hibernate(const struct device *dev,
-					      uint32_t seconds,
-					      uint32_t microseconds)
+FUNC_NORETURN static int cros_system_xec_hibernate(const struct device *dev,
+						   uint32_t seconds,
+						   uint32_t microseconds)
 {
 	struct pcr_regs *const pcr = HAL_PCR_INST(dev);
 #ifdef CONFIG_ADC_XEC_V2
