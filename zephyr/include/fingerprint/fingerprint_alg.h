@@ -208,7 +208,6 @@ fingerprint_enroll_finish(const struct fingerprint_algorithm *const alg,
 			  void *templ)
 {
 	__ASSERT_NO_MSG(alg != NULL);
-	__ASSERT_NO_MSG(templ != NULL);
 	if (alg->api->enroll_finish == NULL) {
 		return -ENOTSUP;
 	}
