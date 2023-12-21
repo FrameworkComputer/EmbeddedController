@@ -934,6 +934,13 @@ static void update_safety_power_limit(int active_mpower)
 	}
 }
 
+void force_clear_pmf_prochot(void)
+{
+	CPRINTS("pmf update timeout");
+	update_pmf_events(0, 255);
+}
+DECLARE_DEFERRED(force_clear_pmf_prochot);
+
 void update_pmf_events(uint8_t pd_event, int enable)
 {
 	static uint8_t pre_events;
@@ -950,8 +957,14 @@ void update_pmf_events(uint8_t pd_event, int enable)
 	}
 
 	/* We should not need to assert the prochot before apu ready to update pmf */
-	if (!power || !get_apu_ready())
+	if (!power || !get_apu_ready() || (enable == 255)) {
+		pre_events = 0;
+		pd_event = 0;
+		events = 0;
+		throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_UPDATE_PMF);
+		set_gpu_gpio(GPIO_FUNC_ACDC, 0);
 		return;
+	}
 
 	if (enable)
 		events |= pd_event;
@@ -959,14 +972,17 @@ void update_pmf_events(uint8_t pd_event, int enable)
 		events &= ~pd_event;
 
 	if (pre_events != events) {
+		CPRINTS("events = %d, pre_events = %d", events, pre_events);
 		if (events) {
 			throttle_ap(THROTTLE_ON, THROTTLE_HARD, THROTTLE_SRC_UPDATE_PMF);
 			if (pd_event == BIT(PD_PROGRESS_ENTER_EPR_MODE))
 				set_gpu_gpio(GPIO_FUNC_ACDC, 0);
+			hook_call_deferred(&force_clear_pmf_prochot_data, 3 * SECOND);
 		} else {
 			throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_UPDATE_PMF);
 			if (pd_event == BIT(PD_PROGRESS_ENTER_EPR_MODE))
 				set_gpu_gpio(GPIO_FUNC_ACDC, 1);
+			hook_call_deferred(&force_clear_pmf_prochot_data, -1);
 		}
 
 		pre_events = events;
@@ -984,8 +1000,10 @@ void clear_prochot(enum clear_reasons reason)
 	if (events & BIT(PD_PROGRESS_EXIT_EPR_MODE))
 		update_pmf_events(BIT(PD_PROGRESS_EXIT_EPR_MODE), 0);
 
-	if (events & BIT(PD_PROGRESS_DISCONNECTED))
-		update_pmf_events(BIT(PD_PROGRESS_DISCONNECTED), 0);
+	if (events & BIT(PD_PROGRESS_DISCONNECTED)) {
+		/* if the adapter is disconnected, we should clear all events */
+		update_pmf_events(0xff, 0);
+	}
 }
 
 void update_soc_power_limit(bool force_update, bool force_no_adapter)
