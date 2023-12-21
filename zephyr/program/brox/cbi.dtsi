@@ -1,0 +1,35 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	brox-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		/*
+		 * FW_CONFIG used to indicate the motherboard USB configuration.
+		 */
+		sub-board {
+			enum-name = "FW_MLB_USB";
+			start = <0>;
+			size = <2>;
+
+			sub-board-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_MLB_UNKNOWN";
+				value = <0>;
+			};
+			sub-board-2 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_MLB_RETIMER_BYPASS";
+				value = <1>;
+			};
+			sub-board-3 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_MLB_RETIMER_JHL8040";
+				value = <2>;
+			};
+		};
+	};
+};

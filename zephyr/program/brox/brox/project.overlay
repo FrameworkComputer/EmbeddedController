@@ -12,6 +12,8 @@
 i2c3ALT: &i2c3 {
 };
 
+#include <cros/cbi_flash.dtsi>
+
 #include "../generated.dtsi"
 #include "../adc.dtsi"
 #include "../brox.dtsi"
@@ -23,3 +25,19 @@ i2c3ALT: &i2c3 {
 /* Brox project DTS includes*/
 
 /* Brox overrides follow... */
+
+/*
+ * When CBI in flash is enabled, setup RO flash layout as follows:
+ *   RO binary:    0x00000:0x5DFFF
+ *   PSTATE block: 0x5E000:0x5EFFF
+ *   CBI flash:    0x5F000:0x5FFFF
+ */
+&pstate {
+    offset = <(0x60000 - (0x1000 * 2))>;
+    size = <0x1000>;
+};
+
+&cbi_flash {
+	offset = <(0x60000 - (0x1000 * 1))>;
+	size = <0x1000>;
+};
