@@ -33,21 +33,16 @@
  * row: 11, net: SPI_EC_DI_BIOS_DO_NC
  * row: 12, net: SPI_EC_CS_BIOS_L_NC
  * row: 13, net: EC_PCH_RTCRST_NC
- * row: 14, net: IMVP9_VRRDY_OD
  * row: 15, net: EC_PCH_PECI_NC
- * row: 16, net: PG_VCCIN_AUX_OD
  * row: 19, net: EN_PP5000_FAN
  * row: 23, net: SPI_EC_CLK_NC
  * row: 24, net: SPI_EC_DO_BIOS_DI_NC
  * row: 25, net: EC_EN_IMVP91_NC
- * row: 26, net: VCCST_PWRGD_OD
- * row: 32, net: GSC_EC_FLASH_SEL
  * row: 52, net: EC_PCH_INT_ODL
  * row: 56, net: EC_KB_BL_EN
  * row: 58, net: EC_ESPI_ALERT_L_NC
  * row: 81, net: PCBEEP_EC_NC
  * row: 101, net: ADP_DET_NC
- * row: 107, net: TABLET_MODE_L
  *
  * Signals with the "_NC" suffix are no-connects and handled by the
  * unused-gpios node.
@@ -59,29 +54,17 @@
 	named-gpios {
 		compatible = "named-gpios";
 
-		gpio_imvp9_vrrdy_od: gpio_imvp9_vrrdy_od {
-			gpios = <&gpioh 3 GPIO_INPUT>;
-		};
 		gpio_pg_vccin_aux_od: pg_vccin_aux_od {
 			gpios = <&gpiof 3 GPIO_INPUT>;
 		};
 		gpio_en_pp5000_fan: en_pp5000_fan {
 			gpios = <&gpioj 4 GPIO_INPUT>;
 		};
-		gpio_vccst_pwrgd_od: vccst_pwrgd_od {
-			gpios = <&gpioh 4 GPIO_ODR_LOW>;
-		};
-		gpio_gsc_ec_flash_sel: gsc_ec_flash_sel {
-			gpios = <&gpiog 6 GPIO_INPUT>;
-		};
 		gpio_ec_pch_int_odl: ec_pch_int_odl {
 			gpios = <&gpiog 1 GPIO_ODR_LOW>;
 		};
 		gpio_ec_kb_bl_en: ec_kb_bl_en {
 			gpios = <&gpioi 2 GPIO_OUTPUT_LOW>;
-		};
-		gpio_tablet_mode_l: tablet_mode_l {
-			gpios = <&gpiod 1 GPIO_INPUT>;
 		};
 
 		/* The legacy system code requires GPIO_ENTERING_RW symbol */

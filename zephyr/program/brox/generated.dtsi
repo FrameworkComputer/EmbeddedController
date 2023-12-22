@@ -1,4 +1,4 @@
-/* Copyright 2023 The ChromiumOS Authors
+/* Copyright 2024 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  *
@@ -50,6 +50,7 @@
 		};
 		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
 			gpios = <&gpioi 7 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
 		};
 		gpio_ec_dsw_pwrok: ec_dsw_pwrok {
 			gpios = <&gpiod 3 GPIO_OUTPUT>;
@@ -115,9 +116,15 @@
 		gpio_en_z1_rails_r: en_z1_rails_r {
 			gpios = <&gpiob 4 GPIO_OUTPUT>;
 		};
+		gpio_gsc_ec_flash_sel: gsc_ec_flash_sel {
+			gpios = <&gpiog 6 GPIO_INPUT>;
+		};
 		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
 			gpios = <&gpioe 4 GPIO_INPUT>;
 			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_imvp9_vrrdy_od: imvp9_vrrdy_od {
+			gpios = <&gpioh 3 GPIO_INPUT>;
 		};
 		gpio_lid_open: lid_open {
 			gpios = <&gpiob 1 GPIO_INPUT>;
@@ -131,8 +138,14 @@
 		gpio_sys_slp_s0ix_l: sys_slp_s0ix_l {
 			gpios = <&gpioj 5 GPIO_INPUT>;
 		};
+		gpio_tablet_mode_l: tablet_mode_l {
+			gpios = <&gpiod 1 GPIO_INPUT>;
+		};
 		gpio_usb_pd_int_odl: usb_pd_int_odl {
 			gpios = <&gpiof 5 GPIO_INPUT>;
+		};
+		gpio_vccst_pwrgd_od: vccst_pwrgd_od {
+			gpios = <&gpioh 4 GPIO_ODR_LOW>;
 		};
 	};
 
@@ -153,7 +166,7 @@
 		};
 		i2c_ec_i2c_charger: ec_i2c_charger {
 			i2c-port = <&i2c4>;
-			enum-names = "I2C_PORT_CHARGER";
+			enum-names = "I2C_PORT_BATTERY";
 		};
 		i2c_ec_i2c_sensor: ec_i2c_sensor {
 			i2c-port = <&i2c5>;
