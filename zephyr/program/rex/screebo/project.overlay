@@ -55,6 +55,7 @@
 		/delete-node/ ec_accel;
 		/delete-node/ volume_up;
 		/delete-node/ volume_down;
+		/delete-node/ tablet_mode;
 	};
 
 	batteries {
