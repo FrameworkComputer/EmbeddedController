@@ -516,6 +516,11 @@ def main():
         "--help",
         action="store_true",
     )
+    parser.add_argument(
+        "-C",
+        "--coverage",
+        action="store_true",
+    )
 
     intercepted_args, other_args = parser.parse_known_args()
 
@@ -528,6 +533,12 @@ def main():
             Path.cwd(),
             sandbox_debug=intercepted_args.sandbox_debug,
         )
+
+    # Zephyr upstream defaults to using gcovr, but this isn't
+    # available in the chroot.  Force our runs to use lcov.
+    if intercepted_args.coverage:
+        twister_cli.append("--coverage")
+        twister_cli.extend(["--coverage-tool", "lcov"])
 
     for _ in range(intercepted_args.verbose):
         # Pass verbosity setting through to twister
