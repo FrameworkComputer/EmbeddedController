@@ -151,14 +151,6 @@ static int battery_seems_dead;
 
 static int battery_seems_disconnected;
 
-/*
- * Was battery removed?  Set when we see BP_NO, cleared after the battery is
- * reattached and becomes responsive.  Used to indicate an error state after
- * removal and trigger re-reading the battery static info when battery is
- * reattached and responsive.
- */
-static int battery_was_removed;
-
 static int problems_exist;
 
 static const char *const prob_text[] = {
@@ -345,7 +337,6 @@ static void dump_charge_state(void)
 	ccprintf("battery_seems_dead = %d\n", battery_seems_dead);
 	ccprintf("battery_seems_disconnected = %d\n",
 		 battery_seems_disconnected);
-	ccprintf("battery_was_removed = %d\n", battery_was_removed);
 	ccprintf("debug output = %s\n", debugging() ? "on" : "off");
 	ccprintf("Battery sustainer = %s (%d%% ~ %d%%)\n",
 		 battery_sustainer_enabled() ? "on" : "off", sustain_soc.lower,
@@ -1176,15 +1167,14 @@ static void revive_battery(int *need_static)
 		CPRINTS("found battery in disconnect state");
 		curr.requested_voltage = batt_info->voltage_max;
 		curr.requested_current = batt_info->precharge_current;
-	} else if (curr.state == ST_PRECHARGE || battery_seems_dead ||
-		   battery_was_removed) {
+	} else if (curr.state == ST_PRECHARGE || battery_seems_dead) {
 		CPRINTS("battery woke up");
 		/* Update the battery-specific values */
 		batt_info = battery_get_info();
 		*need_static = 1;
 	}
 
-	battery_seems_dead = battery_was_removed = 0;
+	battery_seems_dead = 0;
 }
 
 /* Set up the initial state of the charger task */
@@ -1332,7 +1322,6 @@ static void decide_charge_state(int *need_staticp, int *battery_criticalp)
 			CPRINTS("running with no battery and no AC");
 		set_charge_state(ST_IDLE);
 		curr.batt_is_charging = 0;
-		battery_was_removed = 1;
 		return;
 	}
 
