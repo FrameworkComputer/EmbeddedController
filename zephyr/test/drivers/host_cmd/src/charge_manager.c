@@ -74,10 +74,6 @@ ZTEST_USER(charge_manager, test_charge_state_get_debug_params)
 	zassert_ok(ec_cmd_charge_state(NULL, &params, &response));
 	zassert_equal(0, response.get_param.value);
 
-	params.get_param.param = CS_PARAM_DEBUG_BATT_REMOVED;
-	zassert_ok(ec_cmd_charge_state(NULL, &params, &response));
-	zassert_equal(0, response.get_param.value);
-
 	params.get_param.param = CS_PARAM_DEBUG_MAX;
 	zassert_equal(EC_ERROR_INVAL,
 		      ec_cmd_charge_state(NULL, &params, &response));

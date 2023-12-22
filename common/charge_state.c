@@ -2225,8 +2225,6 @@ static int charge_get_charge_state_debug(int param, uint32_t *value)
 		*value = battery_seems_disconnected;
 		break;
 	case CS_PARAM_DEBUG_BATT_REMOVED:
-		*value = battery_was_removed;
-		break;
 	default:
 		*value = 0;
 		return EC_ERROR_INVAL;
