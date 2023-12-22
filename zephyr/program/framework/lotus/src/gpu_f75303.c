@@ -67,6 +67,7 @@ static void gpu_board_f75303_poweron_config(void)
 
 			k_msleep(1);
 		}
+		LOG_INF("GPU BOCO Exit");
 	}
 }
 DECLARE_DEFERRED(gpu_board_f75303_poweron_config);

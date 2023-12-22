@@ -13,7 +13,7 @@
 			rpm_min = <1000>;
 			rpm_start = <1000>;
 			rpm_max = <4000>;
-			rpm_deviation = <3>;
+			rpm_deviation = <5>;
 			pgood_gpio = <&gpio_slp_s3_l>;
 		};
 
@@ -23,7 +23,7 @@
 			rpm_min = <1000>;
 			rpm_start = <1000>;
 			rpm_max = <3700>;
-			rpm_deviation = <3>;
+			rpm_deviation = <5>;
 			pgood_gpio = <&gpio_slp_s3_l>;
 		};
 	};
