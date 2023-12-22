@@ -35,6 +35,7 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 			"lotus/src/gpu.c"
 			"lotus/src/power_sequence.c"
 			"lotus/src/f75303.c"
+			"lotus/src/fan.c"
 			"lotus/src/project_diagnostics.c"
 			"lotus/src/power_button_x86.c"
 			"lotus/src/amd_r23m.c"

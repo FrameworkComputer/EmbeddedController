@@ -202,18 +202,8 @@ enum fan_status fan_smart_control(int ch)
 	/* Record previous rpm */
 	data->rpm_pre = rpm_actual;
 
-	/*
-	 * A specific type of fan needs a longer time to output the TACH
-	 * signal to EC after EC outputs the PWM signal to the fan.
-	 * During this period, the driver will read two consecutive RPM = 0.
-	 * In this case, don't step the PWM duty too aggressively.
-	 */
-	if (data->rpm_pre == 0 && rpm_actual == 0 &&
-	    IS_ENABLED(CONFIG_PLATFORM_EC_FAN_BYPASS_SLOW_RESPONSE)) {
-		rpm_diff = (rpm_target * deviation / 100) + 1;
-	} else {
-		rpm_diff = rpm_target - rpm_actual;
-	}
+	/* Adjust PWM duty */
+	rpm_diff = rpm_target - rpm_actual;
 
 	duty = fan_get_duty(ch);
 	if (duty == 0 && rpm_target == 0) {

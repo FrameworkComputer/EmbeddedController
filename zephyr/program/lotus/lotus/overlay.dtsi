@@ -28,7 +28,7 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&charger_f75303>;
 		};
-		apu-f75303 {
+		temp_sensor_apu: apu-f75303 {
 			temp_host_warn = <90>;
 			temp_host_high = <90>;
 			temp_host_halt = <105>;
@@ -52,7 +52,7 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_amb_f75303>;
 		};
-		gpu-vr-f75303 {
+		temp_sensor_gpu: gpu-vr-f75303 {
 			temp_host_warn = <71>;
 			temp_host_release_warn = <60>;
 			temp_fan_off = <50>;
