@@ -49,11 +49,6 @@ __override_proto int board_get_default_battery_type(void);
 void init_battery_type(void);
 
 /**
- * Return struct board_batt_params of the battery.
- */
-const struct board_batt_params *get_batt_params(void);
-
-/**
  * Return pointer to active battery config.
  */
 const struct batt_conf_embed *get_batt_conf(void);

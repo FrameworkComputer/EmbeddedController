@@ -168,7 +168,7 @@ const struct batt_conf_embed *get_batt_conf(void)
 	return battery_conf;
 }
 
-const struct board_batt_params *get_batt_params(void)
+test_export_static const struct board_batt_params *get_batt_params(void)
 {
 	return get_batt_conf() ? &get_batt_conf()->config : NULL;
 }

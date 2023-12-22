@@ -15,6 +15,7 @@
 #include "write_protect.h"
 
 void batt_conf_main(void);
+const struct board_batt_params *get_batt_params(void);
 
 const struct batt_conf_embed board_battery_info[] = {
 	[BATTERY_C214] = {
