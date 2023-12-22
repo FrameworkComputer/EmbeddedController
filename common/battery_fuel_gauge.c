@@ -116,18 +116,11 @@ static int get_battery_type(void)
 {
 	char manuf_name[SBS_MAX_STR_OBJ_SIZE];
 	int i;
-	static enum battery_type battery_type = BATTERY_TYPE_COUNT;
+	enum battery_type battery_type = BATTERY_TYPE_COUNT;
 
 	if (IS_ENABLED(TEST_BUILD) && battery_fuel_gauge_type_override >= 0) {
 		return battery_fuel_gauge_type_override;
 	}
-
-	/*
-	 * If battery_type is not the default value, then can return here
-	 * as there is no need to query the fuel gauge.
-	 */
-	if (battery_type != BATTERY_TYPE_COUNT)
-		return battery_type;
 
 	/* Get the manufacturer name. If can't read then just exit */
 	if (battery_manufacturer_name(manuf_name, sizeof(manuf_name)))
