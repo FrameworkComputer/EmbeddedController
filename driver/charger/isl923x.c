@@ -633,6 +633,7 @@ static void isl923x_init(int chgnum)
 {
 	int reg;
 	const struct battery_info *bi = battery_get_info();
+	int precharge_current;
 	int precharge_voltage = bi->precharge_voltage ? bi->precharge_voltage :
 							bi->voltage_min;
 
@@ -794,10 +795,13 @@ static void isl923x_init(int chgnum)
 	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
 		if (raw_read16(chgnum, ISL923X_REG_CONTROL2, &reg))
 			goto init_fail;
-		/* Set trickle charge current bits. */
+		/* Set trickle charge current bits by battery info. */
+		precharge_current =
+			bi->precharge_current ?
+				bi->precharge_current :
+				CONFIG_RAA489000_TRICKLE_CHARGE_CURRENT;
 		reg &= ~GENMASK(15, 13);
-		reg |= ((CONFIG_RAA489000_TRICKLE_CHARGE_CURRENT - 32) / 32)
-		       << 13;
+		reg |= ((precharge_current - 32) / 32) << 13;
 		if (raw_write16(chgnum, ISL923X_REG_CONTROL2, reg))
 			goto init_fail;
 	}
