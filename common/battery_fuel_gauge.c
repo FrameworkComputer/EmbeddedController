@@ -147,37 +147,6 @@ __overridable int board_get_default_battery_type(void)
 	return DEFAULT_BATTERY_TYPE;
 }
 
-void init_battery_type(void)
-{
-	int type = get_battery_type();
-
-	if (type == BATTERY_TYPE_COUNT) {
-		BCFGPRT("Config not found");
-		type = board_get_default_battery_type();
-	}
-	BCFGPRT("Found config #%d", type);
-
-	battery_conf = &board_battery_info[type];
-}
-
-const struct batt_conf_embed *get_batt_conf(void)
-{
-	if (IS_ENABLED(TEST_BUILD) && battery_fuel_gauge_type_override >= 0)
-		return &board_battery_info[battery_fuel_gauge_type_override];
-
-	return battery_conf;
-}
-
-test_export_static const struct board_batt_params *get_batt_params(void)
-{
-	return get_batt_conf() ? &get_batt_conf()->config : NULL;
-}
-
-const struct battery_info *battery_get_info(void)
-{
-	return &get_batt_params()->batt_info;
-}
-
 static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 {
 	char manuf[SBS_MAX_STR_OBJ_SIZE];
@@ -262,6 +231,52 @@ static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 	}
 }
 
+void init_battery_type(void)
+{
+	int type;
+
+	if (IS_ENABLED(CONFIG_BATTERY_CONFIG_IN_CBI) &&
+	    board_batt_conf_enabled()) {
+		BCFGPRT("Searching in CBI");
+		if (bcfg_search_in_cbi(&battery_conf_cache) == EC_SUCCESS) {
+			battery_conf = &battery_conf_cache;
+			return;
+		}
+	}
+
+	/* Battery config isn't in CBI. */
+	BCFGPRT("Searching in FW");
+
+	type = get_battery_type();
+
+	if (type == BATTERY_TYPE_COUNT) {
+		BCFGPRT("Config not found");
+		type = board_get_default_battery_type();
+	}
+	BCFGPRT("Found config #%d", type);
+
+	battery_conf = &board_battery_info[type];
+}
+DECLARE_HOOK(HOOK_INIT, init_battery_type, HOOK_PRIO_BATTERY_INIT);
+
+const struct batt_conf_embed *get_batt_conf(void)
+{
+	if (IS_ENABLED(TEST_BUILD) && battery_fuel_gauge_type_override >= 0)
+		return &board_battery_info[battery_fuel_gauge_type_override];
+
+	return battery_conf;
+}
+
+test_export_static const struct board_batt_params *get_batt_params(void)
+{
+	return get_batt_conf() ? &get_batt_conf()->config : NULL;
+}
+
+const struct battery_info *battery_get_info(void)
+{
+	return &get_batt_params()->batt_info;
+}
+
 __overridable bool board_batt_conf_enabled(void)
 {
 	union ec_common_control ctrl;
@@ -271,22 +286,6 @@ __overridable bool board_batt_conf_enabled(void)
 
 	return !!(ctrl.bcic_enabled);
 }
-
-test_export_static void batt_conf_main(void)
-{
-	if (IS_ENABLED(CONFIG_BATTERY_CONFIG_IN_CBI) &&
-	    board_batt_conf_enabled()) {
-		BCFGPRT("Searching in CBI");
-		if (bcfg_search_in_cbi(&battery_conf_cache) == EC_SUCCESS) {
-			battery_conf = &battery_conf_cache;
-			return;
-		}
-	}
-	/* Battery config isn't in CBI. */
-	BCFGPRT("Searching in FW");
-	init_battery_type();
-}
-DECLARE_HOOK(HOOK_INIT, batt_conf_main, HOOK_PRIO_BATTERY_INIT);
 
 #ifndef CONFIG_FUEL_GAUGE
 /**

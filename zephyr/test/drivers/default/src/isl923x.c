@@ -57,7 +57,7 @@ static int mock_write_fn_always_fail(const struct emul *emul, int reg,
 
 static void isl923x_setup(void)
 {
-	batt_conf_main();
+	init_battery_type();
 }
 
 ZTEST(isl923x, test_isl923x_set_current)

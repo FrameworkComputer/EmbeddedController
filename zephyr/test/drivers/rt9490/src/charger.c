@@ -244,7 +244,7 @@ ZTEST(rt9490_chg, test_misc_info)
 
 static void rt9490_chg_setup(void)
 {
-	batt_conf_main();
+	init_battery_type();
 }
 
 static void reset_emul(void *fixture)

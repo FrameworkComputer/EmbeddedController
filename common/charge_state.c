@@ -12,6 +12,7 @@
 #line 13
 
 #include "battery.h"
+#include "battery_fuel_gauge.h"
 #include "battery_smart.h"
 #include "builtin/assert.h"
 #include "charge_manager.h"
@@ -1282,7 +1283,12 @@ static void process_battery_present_change(const struct charger_info *info,
 {
 	prev_bp = curr.batt.is_present;
 
-	/* Update battery info due to change of battery */
+	if (curr.batt.is_present && IS_ENABLED(CONFIG_BATTERY_FUEL_GAUGE)) {
+		/* Identify the attached battery. */
+		CPRINTS("Battery now present");
+		init_battery_type();
+	}
+
 	batt_info = battery_get_info();
 
 	curr.desired_input_current = get_desired_input_current(info);
