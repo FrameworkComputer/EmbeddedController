@@ -3,6 +3,8 @@ cros-ec-reviewers@google.com
 
 include chromiumos/owners:v1:/firmware/OWNERS.cros_ec
 
+include chromiumos/owners:v1:/firmware/OWNERS.cros_fp
+
 # Allow SIEs to maintain ec
 include chromiumos/owners:v1:/sie/OWNERS.chromeos_sie
 
