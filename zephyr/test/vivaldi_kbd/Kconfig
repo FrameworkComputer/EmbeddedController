@@ -1,0 +1,15 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config CROS_EC_VIVALDI_KBD
+	default y
+
+config VIVALDI_KBD_TEST_USE_IDX
+	bool "Implement a board_vivaldi_keybd_idx function"
+
+config VIVALDI_KBD_TEST_IDX_VALUE
+	int "Value to return for board_vivaldi_keybd_idx"
+	depends on VIVALDI_KBD_TEST_USE_IDX
+
+source "Kconfig.zephyr"
