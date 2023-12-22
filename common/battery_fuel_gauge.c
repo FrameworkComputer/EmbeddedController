@@ -18,7 +18,7 @@
 #define BCFGPRT(format, args...) cprints(CC_CHARGER, "BCFG " format, ##args)
 
 /*
- * Pointer to an active config. It's default_battery_conf if a config is found
+ * Pointer to an active config. It's battery_conf_cache if a config is found
  * in CBI or board_battery_info[x] if a config is found in FW.
  */
 const struct batt_conf_embed *battery_conf;
@@ -27,7 +27,7 @@ static char batt_manuf_name[SBS_MAX_STR_OBJ_SIZE];
 static char batt_device_name[SBS_MAX_STR_OBJ_SIZE];
 
 /* Copies of config and strings of a matching battery found in CBI. */
-test_export_static struct batt_conf_embed default_battery_conf = {
+static struct batt_conf_embed battery_conf_cache = {
 	.manuf_name = batt_manuf_name,
 	.device_name = batt_device_name,
 };
@@ -284,8 +284,8 @@ test_export_static void batt_conf_main(void)
 	if (IS_ENABLED(CONFIG_BATTERY_CONFIG_IN_CBI) &&
 	    board_batt_conf_enabled()) {
 		BCFGPRT("Searching in CBI");
-		if (bcfg_search_in_cbi(&default_battery_conf) == EC_SUCCESS) {
-			battery_conf = &default_battery_conf;
+		if (bcfg_search_in_cbi(&battery_conf_cache) == EC_SUCCESS) {
+			battery_conf = &battery_conf_cache;
 			return;
 		}
 	}
