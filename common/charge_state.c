@@ -1067,8 +1067,7 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, bat_low_voltage_throttle_reset,
 	     HOOK_PRIO_DEFAULT);
 #endif
 
-static int get_desired_input_current(enum battery_present batt_present,
-				     const struct charger_info *const info)
+static int get_desired_input_current(const struct charger_info *const info)
 {
 #ifdef CONFIG_CHARGE_MANAGER
 	int ilim = charge_manager_get_charger_current();
@@ -1214,8 +1213,7 @@ static void charger_setup(const struct charger_info *info)
 	 * as needed.
 	 */
 	prev_bp = BP_NOT_INIT;
-	curr.desired_input_current =
-		get_desired_input_current(curr.batt.is_present, info);
+	curr.desired_input_current = get_desired_input_current(info);
 
 	if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV)) {
 		/* init battery desired power */
@@ -1297,7 +1295,7 @@ static void process_battery_present_change(const struct charger_info *info,
 	/* Update battery info due to change of battery */
 	batt_info = battery_get_info();
 
-	curr.desired_input_current = get_desired_input_current(prev_bp, info);
+	curr.desired_input_current = get_desired_input_current(info);
 	if (curr.desired_input_current != CHARGE_CURRENT_UNINITIALIZED)
 		charger_set_input_current_limit(chgnum,
 						curr.desired_input_current);
