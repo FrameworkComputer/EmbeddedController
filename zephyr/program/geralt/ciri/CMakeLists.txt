@@ -6,4 +6,4 @@ cmake_minimum_required(VERSION 3.13.1)
 
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 
-zephyr_library_sources("src/board_config.c" "src/usbc.c")
+zephyr_library_sources("src/board_config.c" "src/power_config.c" "src/usbc.c")
