@@ -286,7 +286,7 @@ test_export_static void batt_conf_main(void)
 	BCFGPRT("Searching in FW");
 	init_battery_type();
 }
-DECLARE_HOOK(HOOK_INIT, batt_conf_main, HOOK_PRIO_POST_I2C);
+DECLARE_HOOK(HOOK_INIT, batt_conf_main, HOOK_PRIO_BATTERY_INIT);
 
 #ifndef CONFIG_FUEL_GAUGE
 /**
