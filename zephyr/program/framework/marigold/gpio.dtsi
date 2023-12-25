@@ -81,16 +81,16 @@
 		gpio_cap_led: cap_led {
 			gpios = <&gpiob 1 GPIO_OUTPUT_LOW>;
 		};
-		gpio_on_off_btn_l: on_off_btn_l {
+		gpio_hw_acav_in: adp_in {
 			gpios = <&gpiod 2 GPIO_INPUT>;		/* PSL in1 signal, power button */
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_on_off_btn_l: on_off_btn_l {
+			gpios = <&gpio0 0 GPIO_INPUT>;		/* PSL in2 signal, chassis open */
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_chassis_open_l: chassis_open_l {
-			gpios = <&gpio0 0 GPIO_INPUT>;		/* PSL in2 signal, chassis open */
-		};
-		gpio_hw_acav_in: adp_in {
 			gpios = <&gpio0 1 GPIO_INPUT>;		/* PSL in3 signal, ac present pin */
-			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_lid_sw_l: lid_sw_l {
 			gpios = <&gpio0 2 GPIO_INPUT>;
@@ -230,13 +230,13 @@
 };
 
 /* PSL input pads*/
-&psl_in1_gpd2 {
+&psl_in2_gp00 {
 	/* Power button */
 	psl-in-mode = "edge";
 	psl-in-pol = "low-falling";
 };
 
-&psl_in3_gp01 {
+&psl_in1_gpd2 {
 	/* ac present */
 	psl-in-mode = "edge";
 	psl-in-pol = "high-rising";
@@ -247,7 +247,7 @@
 &power_ctrl_psl {
 	status = "okay";
 	pinctrl-names = "sleep";
-	pinctrl-0 = <&psl_in1_gpd2 &psl_in3_gp01>;
+	pinctrl-0 = <&psl_in1_gpd2 &psl_in2_gp00>;
 };
 
 /* host interface */

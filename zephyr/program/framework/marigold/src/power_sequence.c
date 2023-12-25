@@ -287,7 +287,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		k_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 1);
-		
+
 		/* Customizes power button out signal without PB task for powering on. */
 		k_msleep(30);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
