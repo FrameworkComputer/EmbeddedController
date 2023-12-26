@@ -14,23 +14,6 @@
 		usb-hid-tp = &usb_hid_tp;
 	};
 
-	usb_hid_tp: usb-hid-tp {
-		compatible = "cros-ec,hid-i2c-touchpad";
-
-		/* TODO: find a way to probe touchpad parameters
-		 * dynamically.
-		 */
-		logical_max_x = <2925>;
-		logical_max_y = <1440>;
-		physical_max_x = <929>;
-		physical_max_y = <457>;
-		max_pressure = <511>;
-
-		/* unused */
-		vid = <0>;
-		pid = <0>;
-	};
-
 	named-gpios {
 		compatible = "named-gpios";
 
@@ -224,6 +207,20 @@
 	pinctrl-0 = <&usb0_dm_gph5_default
 		     &usb0_dp_gph6_default>;
 	pinctrl-names = "default";
+
+	usb_hid_tp: usb-hid-tp {
+		compatible = "cros-ec,usb-hid-touchpad";
+
+		/* TODO: find a way to probe touchpad parameters
+		 * dynamically.
+		 */
+		logical_max_x = <2925>;
+		logical_max_y = <1440>;
+		physical_max_x = <929>;
+		physical_max_y = <457>;
+		max_pressure = <511>;
+	};
+
 };
 
 &one_wire_uart {
