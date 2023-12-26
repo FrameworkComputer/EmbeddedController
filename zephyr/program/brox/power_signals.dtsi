@@ -37,11 +37,13 @@
 	pwr-ec-pch-rsmrst-odl {
 		/* EC should delay RSMRST by 10ms on rising edge of
 		 * PG_VCCIN_AUX_OD.
+		 * TODO: b/317810253 - Zephyr: Fix active low handling for
+		 * RSMRST
 		 */
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "EC_RSMRST_L output to PCH";
 		enum-name = "PWR_EC_PCH_RSMRST";
-		gpios = <&gpioi 6 GPIO_ACTIVE_LOW>;
+		gpios = <&gpioi 6 0>;
 		output;
 	};
 	pwr-slp-s0-l {
