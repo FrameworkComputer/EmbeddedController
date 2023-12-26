@@ -23,6 +23,16 @@
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
 	pinctrl-names = "default";
+	pd_pow_port0: ccgP0@08 {
+		compatible = "infineon,ccg8";
+		reg = <0x08>;
+		irq-gpios = <&gpio4 0 GPIO_ACTIVE_LOW>;
+	};
+	pd_pow_port1: ccgP1@08 {
+		compatible = "infineon,ccg8";
+		reg = <0x08>;
+		irq-gpios = <&gpio4 0 GPIO_ACTIVE_LOW>;
+	};
 };
 
 &i2c_ctrl0 {

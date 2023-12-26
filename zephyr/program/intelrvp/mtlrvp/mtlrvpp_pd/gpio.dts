@@ -8,5 +8,8 @@
 		pd_p0p1_intr: tp-gpio95 {
 			gpios = <&gpio9 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
+		pdpow_p0p1_intr: usbc-tcpc-alrt-p0 {
+			gpios = <&gpio4 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
 	};
 };
