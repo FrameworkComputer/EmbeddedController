@@ -9042,6 +9042,8 @@ static int cmd_battery_config_set(int argc, char *argv[])
 	if (read_battery_config_from_json(root_dict, &config))
 		return -1;
 
+	/* Data is ready. Create a packet for EC_CMD_SET_CROS_BOARD_INFO. */
+	memset(p, 0, ec_max_outsize);
 	header->struct_version = struct_version;
 	header->manuf_name_size = strlen(manuf_name);
 	header->device_name_size = strlen(device_name);
