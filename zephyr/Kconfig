@@ -5,7 +5,9 @@
 # Picolibc isn't working in gitlab at the moment, and in any case we
 # don't use it with coreboot-sdk, so just explicitly disable it.
 choice LIBC_IMPLEMENTATION
-    default MINIMAL_LIBC
+	prompt "C Library Implementation"
+	default EXTERNAL_LIBC if NATIVE_BUILD && !(NATIVE_LIBRARY && POSIX_API)
+	default MINIMAL_LIBC
 endchoice
 
 # Default to compiler-rt runtime library when compiling using LLVM (the check
