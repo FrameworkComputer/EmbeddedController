@@ -12,6 +12,22 @@ config USBC_INTEL_ALTMODE
 	  chip and EC for configuring the USB-C alternate mode muxes inside
 	  Intel AP.
 
+config USBC_PDC_CCG8
+	bool "Infineon CCG8 Power Delivery Controller driver"
+	default y if DT_HAS_INFINEON_CCG8_ENABLED
+	help
+	  This option enable the Infineon CCG8 Power Delivery Controller. This
+	  chip family supports both single port and multiple port
+	  configurations. For multiple port configurations, each port must
+	  create a separate devicetree entry.
+
+config CONSOLE_CMD_PDC_CCG8
+	bool "Console command: CCG8 read/write"
+	default y if USBC_PDC_CCG8
+	help
+	  Enable console command to read/write to the power path registers of
+	  CCG8 Power Delivery chip.
+
 config USBC_PDC_RTS54XX
 	bool "Realtek RTS545x Power Delivery Controller driver"
 	default y if DT_HAS_REALTEK_RTS54_PDC_ENABLED
