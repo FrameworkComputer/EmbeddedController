@@ -132,10 +132,18 @@ struct power_signal_emul_node {
 					 ())))                                 \
 	}
 
+#ifdef CONFIG_AP_PWRSEQ_SIGNAL_DEBUG_NAMES
+#define ENUM_DBGNAME(inst, dir)         \
+	"(" DT_PROP(DT_PROP(inst, dir), \
+		    enum_name) ") " DT_PROP(DT_PROP(inst, dir), dbg_label)
+#else
+#define ENUM_DBGNAME(inst, dir) DT_PROP(DT_PROP(inst, dir), enum_name)
+#endif
+
 #define EMUL_POWER_SIGNAL_GET_SIGNAL(inst, dir)                             \
 	{                                                                   \
 		.enum_id = PWR_SIGNAL_ENUM(DT_PROP(inst, dir)),             \
-		.name = DT_PROP(DT_PROP(inst, dir), enum_name),             \
+		.name = ENUM_DBGNAME(inst, dir),                            \
 		.source = EMUL_POWER_SIGNAL_GET_SOURCE(DT_PROP(inst, dir)), \
 		.spec = EMUL_POWER_SIGNAL_GET_SIGNAL_SPEC(inst, dir),       \
 	}
