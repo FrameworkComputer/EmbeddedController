@@ -156,6 +156,7 @@
 
 /* Keyboard */
 #define CONFIG_KEYBOARD_REFRESH_ROW3
+#define CONFIG_KEYBOARD_FACTORY_TEST
 
 #ifndef __ASSEMBLER__
 
@@ -198,6 +199,11 @@ enum pwm_channel {
 enum fan_channel { FAN_CH_0 = 0, FAN_CH_COUNT };
 
 enum mft_channel { MFT_CH_0 = 0, MFT_CH_COUNT };
+
+#ifdef CONFIG_KEYBOARD_FACTORY_TEST
+extern const int keyboard_factory_scan_pins[][2];
+extern const int keyboard_factory_scan_pins_used;
+#endif
 
 void pch_edp_bl_interrupt(enum gpio_signal signal);
 
