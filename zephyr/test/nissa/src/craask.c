@@ -707,17 +707,14 @@ ZTEST(craask, test_charger_hibernate)
 ZTEST(craask, test_get_leave_safe_mode_delay_ms)
 {
 	/* Not cosmx battery would use defaut delay time 500ms. */
-	battery_fuel_gauge_type_override =
-		BATTERY_TYPE(DT_NODELABEL(default_battery));
+	battery_conf = &board_battery_info[0];
 	zassert_equal(board_get_leave_safe_mode_delay_ms(), 500);
 
 	/* cosmx battery should delay 2000ms to leave safe mode. */
-	battery_fuel_gauge_type_override =
-		BATTERY_TYPE(DT_NODELABEL(battery_cosmx));
+	battery_conf = &board_battery_info[1];
 	zassert_equal(board_get_leave_safe_mode_delay_ms(), 2000);
 
-	battery_fuel_gauge_type_override =
-		BATTERY_TYPE(DT_NODELABEL(battery_cosmx_2));
+	battery_conf = &board_battery_info[2];
 	zassert_equal(board_get_leave_safe_mode_delay_ms(), 2000);
 }
 

@@ -11,7 +11,7 @@
 extern const struct ec_response_keybd_config craask_kb;
 extern const struct ec_response_keybd_config craask_kb_w_kb_numpad;
 
-extern int battery_fuel_gauge_type_override;
+extern const struct batt_conf_embed *battery_conf;
 extern int charge_port;
 
 void kb_init(void);

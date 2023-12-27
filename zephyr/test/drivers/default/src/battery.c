@@ -28,7 +28,7 @@ FAKE_VALUE_FUNC(int, battery2_read_func, const struct emul *, int, uint8_t *,
 
 bool authenticate_battery_type(int index, const char *manuf_name);
 
-extern int battery_fuel_gauge_type_override;
+extern const struct batt_conf_embed *battery_conf;
 
 struct battery_fixture {
 	struct i2c_common_emul_data *battery_i2c_common;
@@ -65,7 +65,6 @@ static void battery_after(void *data)
 
 	/* Set default state (battery is present) */
 	gpio_emul_input_set(dev, GPIO_BATT_PRES_ODL_PORT, 0);
-	battery_fuel_gauge_type_override = -1;
 
 	i2c_common_emul_set_write_func(fixture->battery_i2c_common, NULL, NULL);
 	i2c_common_emul_set_read_func(fixture->battery_i2c_common, NULL, NULL);
@@ -116,7 +115,6 @@ ZTEST_F(battery, test_board_cutoff_actuates_driver)
 	 */
 
 	/* Setup error conditions for battery 1*/
-	battery_fuel_gauge_type_override = 1;
 	fixture->battery_i2c_common->finish_write = NULL;
 	i2c_common_emul_set_write_func(fixture->battery_i2c_common,
 				       battery2_write_func, NULL);
@@ -133,11 +131,11 @@ ZTEST_F(battery, test_board_cutoff_actuates_driver)
 ZTEST_F(battery, test_sleep)
 {
 	/* Check 1st battery (lgc,ac17a8m) */
-	battery_fuel_gauge_type_override = 0;
+	battery_conf = &board_battery_info[0];
 	zassert_equal(EC_ERROR_UNIMPLEMENTED, battery_sleep_fuel_gauge());
 
 	/* Check 2nd battery (panasonic,ap15l5j) */
-	battery_fuel_gauge_type_override = 1;
+	battery_conf = &board_battery_info[1];
 	fixture->battery_i2c_common->finish_write = NULL;
 	i2c_common_emul_set_write_func(fixture->battery_i2c_common,
 				       battery2_write_func, NULL);
@@ -163,14 +161,14 @@ static int battery2_read(const struct emul *target, int reg, uint8_t *val,
 
 ZTEST(battery, test_is_charge_fet_disabled__cfet_mask_is_0)
 {
-	battery_fuel_gauge_type_override = 2;
+	battery_conf = &board_battery_info[2];
 	zassert_equal(0, battery_is_charge_fet_disabled());
 }
 
 ZTEST_F(battery, test_is_charge_fet_disabled__i2c_error)
 {
 	/* Set the battery to battery 1 */
-	battery_fuel_gauge_type_override = 1;
+	battery_conf = &board_battery_info[1];
 
 	/* Override the finish_write common callback since we don't actually
 	 * want to be messing with the emulator.
@@ -252,7 +250,7 @@ ZTEST_F(battery, test_is_charge_fet_disabled)
 ZTEST_F(battery, test_get_disconnect_state__fail_i2c_read)
 {
 	/* Use battery 0 */
-	battery_fuel_gauge_type_override = 0;
+	battery_conf = &board_battery_info[0];
 
 	/* Configure i2c to fail on read */
 	battery2_read_func_fake.return_val = -1;
@@ -273,7 +271,7 @@ ZTEST_F(battery, test_get_disconnect_state)
 	};
 
 	/* Use battery 0 */
-	battery_fuel_gauge_type_override = 0;
+	battery_conf = &board_battery_info[0];
 
 	/* TODO(b/279203401): This code should actually live in an API to tell
 	 * the emulator what an expected response is, rather than in the test

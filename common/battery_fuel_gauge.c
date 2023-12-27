@@ -21,7 +21,7 @@
  * Pointer to an active config. It's battery_conf_cache if a config is found
  * in CBI or board_battery_info[x] if a config is found in FW.
  */
-const struct batt_conf_embed *battery_conf;
+test_export_static const struct batt_conf_embed *battery_conf;
 
 static char batt_manuf_name[SBS_MAX_STR_OBJ_SIZE];
 static char batt_device_name[SBS_MAX_STR_OBJ_SIZE];
@@ -104,12 +104,6 @@ void battery_set_fixed_battery_type(int type)
 #endif /* CONFIG_BATTERY_TYPE_NO_AUTO_DETECT */
 
 /**
- * Allows us to override the battery in order to select the battery which has
- * the right configuration for the test.
- */
-test_export_static int battery_fuel_gauge_type_override = -1;
-
-/**
  * Find a config for the battery from board_battery_info[].
  *
  * This is supposed to be called only if batt_manuf_name is populated.
@@ -118,10 +112,6 @@ static int get_battery_type(void)
 {
 	int i;
 	enum battery_type battery_type = BATTERY_TYPE_COUNT;
-
-	if (IS_ENABLED(TEST_BUILD) && battery_fuel_gauge_type_override >= 0) {
-		return battery_fuel_gauge_type_override;
-	}
 
 #if defined(CONFIG_BATTERY_TYPE_NO_AUTO_DETECT)
 	i = battery_get_fixed_battery_type();
@@ -262,9 +252,6 @@ DECLARE_HOOK(HOOK_INIT, init_battery_type, HOOK_PRIO_BATTERY_INIT);
 
 const struct batt_conf_embed *get_batt_conf(void)
 {
-	if (IS_ENABLED(TEST_BUILD) && battery_fuel_gauge_type_override >= 0)
-		return &board_battery_info[battery_fuel_gauge_type_override];
-
 	return battery_conf;
 }
 

@@ -41,6 +41,7 @@ void test_set_battery_level(int percentage)
 	bat = sbat_emul_get_bat_data(emul);
 
 	bat->cap = bat->full_cap * percentage / 100;
+	init_battery_type();
 	bat->volt = battery_get_info()->voltage_normal;
 	bat->design_mv = bat->volt;
 

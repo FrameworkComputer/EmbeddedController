@@ -9,7 +9,7 @@
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
-extern int battery_fuel_gauge_type_override;
+extern const struct batt_conf_embed *battery_conf;
 
 FAKE_VALUE_FUNC(int, board_set_active_charge_port, int);
 FAKE_VALUE_FUNC(int, power_button_is_pressed);
@@ -22,23 +22,19 @@ ZTEST_SUITE(karis_charger, NULL, NULL, NULL, NULL, NULL);
 ZTEST(karis_charger, test_get_leave_safe_mode_delay_ms)
 {
 	/* cosmx battery should delay 2000ms to leave safe mode. */
-	battery_fuel_gauge_type_override =
-		BATTERY_TYPE(DT_NODELABEL(default_battery));
+	battery_conf = &board_battery_info[0];
 	zassert_equal(board_get_leave_safe_mode_delay_ms(), 2000);
 
-	battery_fuel_gauge_type_override = BATTERY_TYPE(DT_NODELABEL(cosmx_3));
+	battery_conf = &board_battery_info[1];
 	zassert_equal(board_get_leave_safe_mode_delay_ms(), 2000);
 
 	/* Not cosmx battery would use defaut delay time 500ms. */
-	battery_fuel_gauge_type_override =
-		BATTERY_TYPE(DT_NODELABEL(lges_ap23a8l));
+	battery_conf = &board_battery_info[2];
 	zassert_equal(board_get_leave_safe_mode_delay_ms(), 500);
 
-	battery_fuel_gauge_type_override =
-		BATTERY_TYPE(DT_NODELABEL(panasonic_ap23a5l));
+	battery_conf = &board_battery_info[3];
 	zassert_equal(board_get_leave_safe_mode_delay_ms(), 500);
 
-	battery_fuel_gauge_type_override =
-		BATTERY_TYPE(DT_NODELABEL(lgc_ap19b8m));
+	battery_conf = &board_battery_info[4];
 	zassert_equal(board_get_leave_safe_mode_delay_ms(), 500);
 }
