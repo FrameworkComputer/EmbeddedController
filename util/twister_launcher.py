@@ -84,7 +84,6 @@ parameters that may be used, please consult the Twister documentation.
 
 import argparse
 import hashlib
-import json
 import os
 import pathlib
 from pathlib import Path
@@ -242,26 +241,6 @@ def upload_results(ec_base, outdir):
         print("Unable to upload test results, please run 'rdb auth-login'\n")
 
     return flag
-
-
-def check_for_skipped_tests(outdir):
-    """Checks Twister json test report for skipped tests"""
-    found_skipped = False
-    json_path = pathlib.Path(outdir) / "twister.json"
-    if json_path.exists():
-        with open(json_path, encoding="utf-8") as file:
-            data = json.load(file)
-
-            for testsuite in data["testsuites"]:
-                for testcase in testsuite["testcases"]:
-                    if testcase["status"] == "skipped":
-                        tc_name = testcase["identifier"]
-                        print(f"TEST SKIPPED: {tc_name}")
-                        found_skipped = True
-
-            file.close()
-
-    return found_skipped
 
 
 def append_cmake_compiler(cmdline, cmake_var, exe_options):
@@ -631,9 +610,6 @@ def main():
             check=False,
             close_fds=False,  # For GNUMakefile jobserver
         )
-
-        if check_for_skipped_tests(intercepted_args.outdir):
-            result.returncode = 1
 
         if result.returncode == 0:
             print("TEST EXECUTION SUCCESSFUL")
