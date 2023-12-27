@@ -11,9 +11,9 @@
 
 TWISTER_COMMAND=cd $(PLATFORM_EC) && ./twister --outdir \
 	twister-out-$(TOOLCHAIN) -v -i --no-upload-cros-rdb --toolchain \
-	$(TOOLCHAIN) --coverage-formats=lcov
+	$(TOOLCHAIN)
 ifdef COVERAGE
-TWISTER_COMMAND+=--coverage
+TWISTER_COMMAND+=--coverage --coverage-formats=lcov
 endif
 
 PLATFORM_EC=$(abspath ..)
