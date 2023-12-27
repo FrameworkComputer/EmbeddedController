@@ -246,6 +246,7 @@ NDS32_BOARDS = [
     "boxy",
     "dexi",
     "dibbi",
+    "dita",
     "drawcia",
     "galtic",
     "gooey",

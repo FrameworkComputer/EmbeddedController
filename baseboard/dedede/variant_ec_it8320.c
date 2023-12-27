@@ -74,7 +74,7 @@ BUILD_ASSERT(ARRAY_SIZE(vcmp_list) <= CHIP_VCMP_COUNT);
 BUILD_ASSERT(ARRAY_SIZE(vcmp_list) == VCMP_COUNT);
 
 #if !defined(BOARD_DIBBI) && !defined(BOARD_TARANZA) && \
-	!defined(BOARD_BOXY) && !defined(BOARD_DEXI)
+	!defined(BOARD_BOXY) && !defined(BOARD_DEXI) && !defined(BOARD_DITA)
 /* I2C Ports */
 const struct i2c_port_t i2c_ports[] = {
 	{ .name = "eeprom",

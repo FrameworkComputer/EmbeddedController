@@ -43,6 +43,7 @@ BINARY_SIZE_REGIONS = ["RW_FLASH", "RW_IRAM"]
 BINARY_SIZE_BOARDS = [
     "dexi",
     "dibbi",
+    "dita",
     "gaelin",
     "gladios",
     "lisbon",
