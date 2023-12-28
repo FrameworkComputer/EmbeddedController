@@ -30,8 +30,6 @@
 #define ADLP_LP5_T4_RVP_SKU_BOARD_ID 0x13
 #define ADL_RVP_BOARD_ID(id) ((id) & 0x3F)
 
-#define CONFIG_BATTERY_TYPE_NO_AUTO_DETECT
-
 enum adlrvp_charge_ports {
 	TYPE_C_PORT_0,
 #if defined(HAS_TASK_PD_C1)

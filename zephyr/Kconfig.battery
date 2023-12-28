@@ -312,14 +312,6 @@ config PLATFORM_EC_HOSTCMD_BATTERY_V2
 
 endif # PLATFORM_EC_BATTERY_V2
 
-config PLATFORM_EC_BATTERY_TYPE_NO_AUTO_DETECT
-	bool "Disable battery auto detection"
-	help
-	  Enable this option when the battery type cannot be distinguished
-	  based on only the manufacturer and device name. Your board code
-	  must call battery_set_fixed_battery_type() to set the fixed battery
-	  type, during board initialization.
-
 if PLATFORM_EC_I2C_VIRTUAL_BATTERY
 
 config PLATFORM_EC_SMART_BATTERY_OPTIONAL_MFG_FUNC

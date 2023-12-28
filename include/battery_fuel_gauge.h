@@ -27,15 +27,6 @@ struct batt_conf_embed {
 extern const struct batt_conf_embed board_battery_info[];
 extern const enum battery_type DEFAULT_BATTERY_TYPE;
 
-#ifdef CONFIG_BATTERY_TYPE_NO_AUTO_DETECT
-/*
- * Set the battery type, when auto-detection cannot be used.
- *
- * @param type	Battery type
- */
-void battery_set_fixed_battery_type(int type);
-#endif
-
 /**
  * Return the board-specific default battery type.
  *
