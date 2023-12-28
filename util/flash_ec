@@ -130,6 +130,11 @@ BOARDS_SPI_1800MV=(
 	reef
 )
 
+# hold cold_reset:on when using debug header (e.g. servo header)
+BOARDS_HOLD_COLD_RESET_DBG_HDR=(
+	reef
+)
+
 BOARDS_RAIDEN=(
 	coral
 	eve
@@ -1092,7 +1097,9 @@ function flash_flashrom() {
 			# Set GP_SEL# as low then start ec
 			dut_control fw_up:on
 			sleep 0.2
-			dut_control cold_reset:off
+			if ! in_array "${BOARDS_HOLD_COLD_RESET_DBG_HDR[@]}" "${BOARD}"; then
+				dut_control cold_reset:off
+			fi
 		# Gang programmer mode for npcx_spi requires using dev_mode
 		# rather than fw_up
 		elif [[ "${CHIP}" == "npcx_spi" ]]; then
@@ -1100,7 +1107,9 @@ function flash_flashrom() {
 
 			dut_control dev_mode:on
 			sleep 0.2
-			dut_control cold_reset:off
+			if ! in_array "${BOARDS_HOLD_COLD_RESET_DBG_HDR[@]}" "${BOARD}"; then
+				dut_control cold_reset:off
+			fi
 		fi
 
 		# Enable SPI programming mode.
