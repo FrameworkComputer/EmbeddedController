@@ -253,8 +253,35 @@ AP_POWER_CHIPSET_STATE_DEFINE(AP_POWER_STATE_S3, x86_non_dsx_adlp_s3_entry,
 
 static int x86_non_dsx_adlp_s0_run(void *data)
 {
+	int all_sys_pwrgd = power_signal_get(PWR_ALL_SYS_PWRGD);
+
 	if (!power_signal_get(PWR_DSW_PWROK) || power_signal_get(PWR_SLP_SUS)) {
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_G3);
+	}
+
+	if (power_signal_get(PWR_SLP_S3)) {
+		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S3);
+	}
+
+	if (power_signal_get(PWR_VCCST_PWRGD) != all_sys_pwrgd) {
+		if (all_sys_pwrgd) {
+			k_msleep(AP_PWRSEQ_DT_VALUE(vccst_pwrgd_delay));
+		}
+		power_signal_set(PWR_VCCST_PWRGD, all_sys_pwrgd);
+	}
+
+	if (power_signal_get(PWR_PCH_PWROK) != all_sys_pwrgd) {
+		if (all_sys_pwrgd) {
+			k_msleep(AP_PWRSEQ_DT_VALUE(pch_pwrok_delay));
+		}
+		power_signal_set(PWR_PCH_PWROK, all_sys_pwrgd);
+	}
+
+	if (power_signal_get(PWR_EC_PCH_SYS_PWROK) != all_sys_pwrgd) {
+		if (all_sys_pwrgd) {
+			k_msleep(AP_PWRSEQ_DT_VALUE(sys_pwrok_delay));
+		}
+		power_signal_set(PWR_EC_PCH_SYS_PWROK, all_sys_pwrgd);
 	}
 
 	return 0;
