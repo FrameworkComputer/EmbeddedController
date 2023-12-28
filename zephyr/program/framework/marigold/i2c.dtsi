@@ -151,28 +151,27 @@
 	pinctrl-0 = <&i2c6_1_sda_scl_gpe3_e4>;
 	pinctrl-names = "default";
 
-	/* Qth1 */
-	cpu_f75303: cpu_f75303@4d {
+	/* QN1 */
+	ddr_f75303: ddr_f75303@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
 		temperature-type = "F75303_IDX_REMOTE1";
 		reg = <0x4d>;
 	};
 
-	/* Qth2 */
-	ddr_f75303: ddr_f75303@4d {
+	/* QN2 */
+	cpu_f75303: cpu_f75303@4d {
 		compatible = "cros-ec,temp-sensor-f75303";
 		temperature-type = "F75303_IDX_REMOTE2";
 		reg = <0x4d>;
 	};
 
-	/* Uth1 */
-	local_f75303: local_f75303@4d {
-		compatible = "cros-ec,temp-sensor-f75303";
-		temperature-type = "F75303_IDX_LOCAL";
-		reg = <0x4d>;
+	//TODO: Add thermal sensor F75397 to this bus
+	/* QN3 */
+	local_f75397: local_f75397@4c {
+		compatible = "cros-ec,temp-sensor-f75397";
+		temperature-type = "F75397_IDX_LOCAL";
+		reg = <0x4c>;
 	};
-
-	//TODO: Add thermal sensor F75309 to this bus
 };
 
 &i2c_ctrl6 {
