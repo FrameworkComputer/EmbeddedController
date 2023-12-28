@@ -41,7 +41,7 @@ LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
  * S0->S3->S5->S3->S0, causing the LED to turn on/off/on, so
  * delay turning off power LED during suspend/shutdown.
  */
-#define PWR_LED_CPU_DELAY_MS (2000 * MSEC)
+#define PWR_LED_CPU_DELAY K_MSEC(2000)
 
 static bool power_led_support;
 
@@ -338,6 +338,16 @@ DECLARE_HOOK(HOOK_TICK, battery_led_tick, HOOK_PRIO_DEFAULT);
 /* 30 msec for nice and smooth transition. */
 #define PWR_LED_PULSE_TICK_US (30 * MSEC)
 
+enum power_led_mode {
+	MODE_NO_CHANGE = 0,
+	MODE_NORMAL = 1,
+	MODE_SUSPEND = 2,
+	MODE_OFF = 3,
+};
+
+static void pwr_led_tick(void);
+DECLARE_DEFERRED(pwr_led_tick);
+
 /*
  * When pulsing is enabled, brightness is incremented by <duty_inc> every
  * <interval> usec from 0 to 100% in LED_PULSE_US usec. Then it's decremented
@@ -350,6 +360,14 @@ static struct {
 	uint32_t off_time;
 	int duty;
 } pwr_led_pulse;
+
+static atomic_t next_mode;
+
+static void pwr_led_change_mode(enum power_led_mode mode)
+{
+	atomic_set(&next_mode, mode);
+	hook_call_deferred(&pwr_led_tick_data, 0);
+}
 
 #define PWR_LED_CONFIG_TICK(interval, color)                                   \
 	pwr_led_config_tick((interval), 100 / (PWR_LED_PULSE_US / (interval)), \
@@ -365,10 +383,35 @@ static void pwr_led_config_tick(uint32_t interval, int duty_inc,
 	pwr_led_pulse.duty = 0;
 }
 
-static void pwr_led_tick(void);
-DECLARE_DEFERRED(pwr_led_tick);
 static void pwr_led_tick(void)
 {
+	static enum power_led_mode current_mode;
+	enum power_led_mode new_mode = atomic_clear(&next_mode);
+
+	if (new_mode != MODE_NO_CHANGE && new_mode != current_mode) {
+		current_mode = new_mode;
+		switch (current_mode) {
+		case MODE_NO_CHANGE:
+			break; /* LCOV_EXCL_LINE excluded by above condition */
+		case MODE_NORMAL:
+			if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+				led_set_color_power(LED_WHITE, 100);
+			break;
+		case MODE_SUSPEND:
+			PWR_LED_CONFIG_TICK(PWR_LED_PULSE_TICK_US, LED_WHITE);
+			break;
+		case MODE_OFF:
+			if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+				led_set_color_power(LED_OFF, 0);
+			break;
+		}
+	}
+
+	if (current_mode != MODE_SUSPEND) {
+		/* Other modes are constant on or off. */
+		return;
+	}
+
 	uint32_t elapsed;
 	uint32_t next = 0;
 	uint32_t start = get_time().le.lo;
@@ -391,49 +434,48 @@ static void pwr_led_tick(void)
 	hook_call_deferred(&pwr_led_tick_data, next);
 }
 
-static void pwr_led_suspend(void)
-{
-	PWR_LED_CONFIG_TICK(PWR_LED_PULSE_TICK_US, LED_WHITE);
-	pwr_led_tick();
-}
-DECLARE_DEFERRED(pwr_led_suspend);
+/*
+ * Timer for handling delays on suspend and shutdown. This needs
+ * to be cancellable from non-workqueue threads, so it uses a timer
+ * rather than deferred work because deferred work may be impossible
+ * to cancel if currently running because it was preempted.
+ */
+K_TIMER_DEFINE(shutdown_timer, NULL, NULL);
 
-static void pwr_led_shutdown(void)
+static void pwr_led_suspend(struct k_timer *unused_timer)
 {
-	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
-		led_set_color_power(LED_OFF, 0);
+	pwr_led_change_mode(MODE_SUSPEND);
 }
-DECLARE_DEFERRED(pwr_led_shutdown);
+
+static void pwr_led_shutdown(struct k_timer *unused_timer)
+{
+	pwr_led_change_mode(MODE_OFF);
+}
 
 static void pwr_led_shutdown_hook(void)
 {
-	hook_call_deferred(&pwr_led_tick_data, -1);
-	hook_call_deferred(&pwr_led_suspend_data, -1);
-	hook_call_deferred(&pwr_led_shutdown_data, PWR_LED_CPU_DELAY_MS);
+	k_timer_stop(&shutdown_timer);
+	k_timer_init(&shutdown_timer, pwr_led_shutdown, NULL);
+	k_timer_start(&shutdown_timer, PWR_LED_CPU_DELAY, K_FOREVER);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pwr_led_shutdown_hook, HOOK_PRIO_DEFAULT);
 
 static void pwr_led_suspend_hook(void)
 {
-	hook_call_deferred(&pwr_led_shutdown_data, -1);
-	hook_call_deferred(&pwr_led_suspend_data, PWR_LED_CPU_DELAY_MS);
+	k_timer_stop(&shutdown_timer);
+	k_timer_init(&shutdown_timer, pwr_led_suspend, NULL);
+	k_timer_start(&shutdown_timer, PWR_LED_CPU_DELAY, K_FOREVER);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pwr_led_suspend_hook, HOOK_PRIO_DEFAULT);
 
 static void pwr_led_resume(void)
 {
 	/*
-	 * Assume there is no race condition with pwr_led_tick, which also
-	 * runs in hook_task.
-	 */
-	hook_call_deferred(&pwr_led_tick_data, -1);
-	/*
 	 * Avoid invoking the suspend/shutdown delayed hooks.
 	 */
-	hook_call_deferred(&pwr_led_suspend_data, -1);
-	hook_call_deferred(&pwr_led_shutdown_data, -1);
-	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
-		led_set_color_power(LED_WHITE, 100);
+	k_timer_stop(&shutdown_timer);
+
+	pwr_led_change_mode(MODE_NORMAL);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pwr_led_resume, HOOK_PRIO_DEFAULT);
 
