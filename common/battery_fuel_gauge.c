@@ -184,17 +184,26 @@ static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 		/* (Optional) Check device name. */
 		p += head->manuf_name_size;
 		d = (char *)p;
-		/* If config has no device name, it's a wild card. */
+		/*
+		 * If config has no device name, it's a wild card.
+		 *
+		 * We do partial match. As long as the battery's device name
+		 * starts with the config's device name, it's considered as a
+		 * match. The characters in the battery's device name after that
+		 * are ignored.
+		 */
 		if (head->device_name_size != 0 &&
-		    (head->device_name_size != strlen(batt_device_name) ||
-		     strncasecmp(d, batt_device_name,
-				 strlen(batt_device_name)))) {
-			BCFGPRT("Name mismatch: %.*s", head->device_name_size,
-				d);
+		    strncasecmp(d, batt_device_name, head->device_name_size)) {
+			BCFGPRT("Device name mismatch: %.*s",
+				head->device_name_size, d);
 			continue;
 		}
 
 		BCFGPRT("Matched");
+
+		/* Save config in cache. */
+		memset(batt->manuf_name, 0, SBS_MAX_STR_OBJ_SIZE);
+		memset(batt->device_name, 0, SBS_MAX_STR_OBJ_SIZE);
 		strncpy(batt->manuf_name, m, head->manuf_name_size);
 		strncpy(batt->device_name, d, head->device_name_size);
 		p += head->device_name_size;

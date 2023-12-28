@@ -192,6 +192,17 @@ DECLARE_EC_TEST(test_batt_conf_main)
 	zassert_equal(strcmp(get_batt_conf()->device_name, "C214-43"), 0);
 
 	/*
+	 * Battery's device name contains extra chars.
+	 */
+	ccprintf("\nmanuf_name == manuf_name && device_name has extra chars\n");
+	device_in_batt = "C214-43 xyz";
+	init_battery_type();
+	conf = get_batt_params();
+	zassert_equal(memcmp(conf, &conf_in_cbi, sizeof(*conf)), 0);
+	zassert_equal(strcmp(get_batt_conf()->manuf_name, "AS1GUXd3KB"), 0);
+	zassert_equal(strcmp(get_batt_conf()->device_name, "C214-43"), 0);
+
+	/*
 	 * Manuf name not found in battery.
 	 */
 	ccprintf("\nManuf name not found.\n");
