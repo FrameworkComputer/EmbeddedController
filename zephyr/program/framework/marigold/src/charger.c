@@ -16,6 +16,7 @@
 #include "extpower.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "power_sequence.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
