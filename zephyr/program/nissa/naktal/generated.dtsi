@@ -103,7 +103,7 @@
 		gpio_ec_soc_vccst_pwrgd_od: ec_soc_vccst_pwrgd_od {
 			gpios = <&gpioe 5 GPIO_ODR_HIGH>;
 		};
-		gpio_ec_acok_d_od: ec_acok_d_od {
+		gpio_ec_acok_od: ec_acok_od {
 			gpios = <&gpiol 4 GPIO_OUTPUT>;
 			enum-name = "GPIO_AC_PRESENT";
 		};

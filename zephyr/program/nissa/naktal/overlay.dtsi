@@ -118,7 +118,7 @@
 			handler = "ppc_interrupt";
 		};
 		int_ac_present: ac_present {
-			irq-pin = <&gpio_ec_acok_d_od>;
+			irq-pin = <&gpio_ec_acok_od>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "extpower_interrupt";
 		};
@@ -405,7 +405,7 @@
 		compatible = "silergy,syv682x";
 		status = "okay";
 		reg = <0x40>;
-		irq = <&int_usb_c1_ppc>;
+		irq-gpios = <&gpiok 7 GPIO_ACTIVE_LOW>;
 	};
 
 };

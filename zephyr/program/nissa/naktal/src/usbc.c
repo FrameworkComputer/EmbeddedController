@@ -34,8 +34,15 @@ void board_pd_vconn_ctrl(int port, enum usbpd_cc_pin cc_pin, int enabled)
 	 */
 }
 
+enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_C1, USBC_PORT_COUNT };
+
 /* Used by USB charger task with CONFIG_USB_PD_5V_EN_CUSTOM */
 int board_is_sourcing_vbus(int port)
+{
+	return ppc_is_sourcing_vbus(port);
+}
+
+int board_vbus_source_enabled(int port)
 {
 	return ppc_is_sourcing_vbus(port);
 }
@@ -136,6 +143,10 @@ int pd_set_power_supply_ready(int port)
 	return EC_SUCCESS;
 }
 
+__override int pd_snk_is_vbus_provided(int port)
+{
+	return ppc_is_vbus_present(port);
+}
 __override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
 {
 	int rv;
