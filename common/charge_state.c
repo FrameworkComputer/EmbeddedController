@@ -44,7 +44,7 @@
  * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
  * #line marks the *next* line, so it is off by one.
  */
-#line 47
+#line 48
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr)
