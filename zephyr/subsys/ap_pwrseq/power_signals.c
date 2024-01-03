@@ -160,9 +160,6 @@ void power_signal_interrupt(enum power_signal signal, int value)
 int power_wait_mask_signals_timeout(power_signal_mask_t mask,
 				    power_signal_mask_t want, int timeout)
 {
-	if (mask == 0) {
-		return 0;
-	}
 	want &= mask;
 	while (timeout-- > 0) {
 		if ((power_get_signals() & mask) == want) {

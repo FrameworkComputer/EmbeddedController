@@ -51,7 +51,7 @@ void board_ap_power_action_g3_s5(void)
 
 	update_ap_boot_time(ARAIL);
 
-	if (!power_wait_signals_timeout(
+	if (!power_wait_signals_on_timeout(
 		    IN_PGOOD_ALL_CORE,
 		    AP_PWRSEQ_DT_VALUE(wait_signal_timeout))) {
 		ap_power_ev_send_callbacks(AP_POWER_PRE_INIT);

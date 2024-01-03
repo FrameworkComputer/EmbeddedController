@@ -87,7 +87,7 @@ static int x86_non_dsx_mtl_g3_run(void *data)
 	 * Power rail must be enabled by application, now check if chipset is
 	 * ready.
 	 */
-	if (power_wait_signals_timeout(
+	if (power_wait_signals_on_timeout(
 		    POWER_SIGNAL_MASK(PWR_RSMRST_PWRGD),
 		    AP_PWRSEQ_DT_VALUE(wait_signal_timeout))) {
 		return 1;

@@ -86,7 +86,7 @@ void board_ap_power_action_g3_s5(void)
 	power_signal_set(PWR_EN_PP3300_A, 1);
 	power_signal_set(PWR_EN_PP5000_A, 1);
 
-	power_wait_signals_timeout(IN_PGOOD_ALL_CORE, 100 * MSEC);
+	power_wait_signals_on_timeout(IN_PGOOD_ALL_CORE, 100 * MSEC);
 
 	generate_ec_soc_dsw_pwrok_handler();
 }
@@ -118,7 +118,7 @@ static int board_ap_power_g3_run(void *data)
 		power_signal_set(PWR_EN_PP5000_A, 1);
 		power_signal_set(PWR_EN_PP3300_A, 1);
 
-		power_wait_signals_timeout(
+		power_wait_signals_on_timeout(
 			POWER_SIGNAL_MASK(PWR_DSW_PWROK),
 			AP_PWRSEQ_DT_VALUE(wait_signal_timeout));
 	}
