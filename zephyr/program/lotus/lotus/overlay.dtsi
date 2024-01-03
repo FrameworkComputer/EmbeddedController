@@ -139,3 +139,21 @@
 	pinctrl-names = "default";
 };
 
+&binman {
+	ec-rw {
+		/*
+		 * Lotus uses the last 0x1000 bytes of flash for non-volatile settings storage.
+		 * Shrink the RW region by that much so that there is no conflict between RW_FWID
+		 * or RW text and non-volatile settings.
+		 */
+		size = <0x3f000>;
+		rw-fw {
+			rw-fwid {
+				offset = <(0x3f000 - 32)>;
+			};
+		};
+	};
+	/* The remaining 0x1000 bytes will be used for non-volatile settings storage. */
+	pad-after = <0x1000>;
+	pad-byte = <0xFF>;
+};
