@@ -1786,7 +1786,7 @@ bool charge_prevent_power_on(bool power_button_pressed)
 			      ));
 #endif /* CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON */
 
-#ifdef CONFIG_CHARGE_MANAGER
+#if defined(CONFIG_CHARGE_MANAGER) && !defined(CONFIG_USB_PD_CONTROLLER)
 	/* Always prevent power on until charge current is initialized */
 	if (extpower_is_present() && (charge_manager_get_charger_current() ==
 				      CHARGE_CURRENT_UNINITIALIZED))
