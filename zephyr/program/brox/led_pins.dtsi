@@ -1,0 +1,70 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	pwmleds {
+		compatible = "pwm-leds";
+
+		led_battery_charge_amber: ec_led1 {
+			pwms = <&pwm2 PWM_CHANNEL_2 PWM_HZ(324) 0>;
+		};
+		led_battery_full_blue: ec_led2 {
+			pwms = <&pwm3 PWM_CHANNEL_3 PWM_HZ(324) 0>;
+		};
+		led_suspend_amber: ec_led3_l {
+			pwms = <&pwm4 PWM_CHANNEL_4 PWM_HZ(324)
+				PWM_POLARITY_INVERTED>;
+		};
+		led_power_blue: ec_led4_l {
+			pwms = <&pwm5 PWM_CHANNEL_5 PWM_HZ(324)
+				PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		battery_led: combo-battery-led {
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pwms = <&led_battery_charge_amber
+				    &led_battery_full_blue>;
+
+			color-battery-off {
+				led-color = "LED_OFF";
+				led-values = <0 0>;
+			};
+
+			color-battery-amber {
+				led-color = "LED_AMBER";
+				led-values = <100 0>;
+			};
+
+			color-battery-blue {
+				led-color = "LED_BLUE";
+				led-values = <0 100>;
+			};
+		};
+
+		power_led: combo-power-led {
+			led-id = "EC_LED_ID_POWER_LED";
+			led-pwms = <&led_suspend_amber &led_power_blue>;
+
+			color-battery-off {
+				led-color = "LED_OFF";
+				led-values = <0 0>;
+			};
+
+			color-battery-amber {
+				led-color = "LED_AMBER";
+				led-values = <100 0>;
+			};
+
+			color-battery-blue {
+				led-color = "LED_BLUE";
+				led-values = <0 100>;
+			};
+		};
+	};
+};

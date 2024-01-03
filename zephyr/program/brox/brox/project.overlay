@@ -20,10 +20,13 @@ i2c3ALT: &i2c3 {
 #include "../gpio.dtsi"
 #include "../i2c.dtsi"
 #include "../interrupts.dtsi"
+#include "../led_pins.dtsi"
+#include "../led_policy.dtsi"
 #include "../keyboard.dtsi"
 #include "../motionsense.dtsi"
 #include "../power_signals.dtsi"
 #include "../power_signals_gpios.dtsi"
+#include "../pwm.dtsi"
 #include "../usb_typec.dtsi"
 
 /* Brox project DTS includes*/
