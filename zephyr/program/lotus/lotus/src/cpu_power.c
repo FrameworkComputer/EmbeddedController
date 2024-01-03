@@ -962,7 +962,6 @@ void update_pmf_events(uint8_t pd_event, int enable)
 		pd_event = 0;
 		events = 0;
 		throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_UPDATE_PMF);
-		set_gpu_gpio(GPIO_FUNC_ACDC, 0);
 		return;
 	}
 
@@ -1029,6 +1028,12 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		clear_prochot(PROCHOT_CLEAR_REASON_NOT_POWER);
 		return;
 	}
+
+#ifdef CONFIG_BOARD_LOTUS
+	if (force_update && charger_in_bypass_mode() && !get_gpu_gpio(GPIO_FUNC_ACDC))
+		set_gpu_gpio(GPIO_FUNC_ACDC, 1);
+
+#endif
 
 	if (mode_ctl)
 		mode = mode_ctl;
