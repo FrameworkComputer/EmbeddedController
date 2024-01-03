@@ -326,15 +326,20 @@ void rsmrst_pass_thru_handler(void)
 {
 	/* Handle RSMRST passthrough */
 	/* TODO: Add additional conditions for RSMRST handling */
-	int in_sig_val = power_signal_get(PWR_RSMRST_PWRGD);
-	int out_sig_val = power_signal_get(PWR_EC_PCH_RSMRST);
-
-	if (in_sig_val != out_sig_val) {
-		if (in_sig_val)
+	if (power_signal_get(PWR_RSMRST_PWRGD)) {
+		if (power_signal_get(PWR_EC_PCH_RSMRST)) {
+			/*
+			 * Delay `PWR_EC_PCH_RSMRST` de-assertion for at least
+			 * `rsmrst_delay` after detecting that power wells are
+			 * stable.
+			 */
 			k_msleep(AP_PWRSEQ_DT_VALUE(rsmrst_delay));
-		LOG_DBG("Setting PWR_EC_PCH_RSMRST to %d", in_sig_val);
-		power_signal_set(PWR_EC_PCH_RSMRST, in_sig_val);
-		update_ap_boot_time(RSMRST);
+			LOG_DBG("Deasserting PWR_EC_PCH_RSMRST");
+			power_signal_set(PWR_EC_PCH_RSMRST, 0);
+			update_ap_boot_time(RSMRST);
+		}
+	} else {
+		power_signal_set(PWR_EC_PCH_RSMRST, 1);
 	}
 }
 
@@ -842,7 +847,7 @@ static int x86_non_dsx_s5_run(void *data)
 	 * have already checked that required power rails are OK.
 	 */
 	rsmrst_pass_thru_handler();
-	if (power_signal_get(PWR_EC_PCH_RSMRST)) {
+	if (!power_signal_get(PWR_EC_PCH_RSMRST)) {
 		if (signals_valid_and_off(IN_PCH_SLP_S5)) {
 			return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S4);
 		}
