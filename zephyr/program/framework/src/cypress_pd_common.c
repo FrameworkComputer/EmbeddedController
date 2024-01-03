@@ -1603,14 +1603,16 @@ void cypd_port_int(int controller, int port)
 #ifdef CONFIG_BOARD_LOTUS
 		/* Assert prochot until the PMF is updated (Only sink role needs to do this) */
 		if (pd_port_states[(controller << 1) + port].power_role == PD_ROLE_SINK &&
-		   (prev_charge_port == (controller << 1) + port))
+		   (prev_charge_port == (controller << 1) + port)) {
 			update_pmf_events(BIT(PD_PROGRESS_DISCONNECTED), 1);
 
 #ifdef CONFIG_PD_CCG8_EPR
-		clear_erp_progress();
-#endif
-		set_gpu_gpio(GPIO_FUNC_ACDC, 0);
-#endif
+			/* clear the EPR progress when the adapter is removed */
+			clear_erp_progress();
+#endif /* CONFIG_PD_CCG8_EPR */
+			set_gpu_gpio(GPIO_FUNC_ACDC, 0);
+		}
+#endif /* CONFIG_BOARD_LOTUS */
 
 		cypd_update_port_state(controller, port);
 		/* make sure the type-c state is cleared */
