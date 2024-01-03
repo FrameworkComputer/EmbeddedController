@@ -148,8 +148,7 @@ void charger_input_current_limit_control(enum power_state state)
 {
 	int acin = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in));
 
-	if ((state == POWER_S5 && !acin) ||
-		 (acin && battery_is_present() != BP_YES)) {
+	if (acin && (battery_is_present() != BP_YES)) {
 		/**
 		 * Set Control3 register bit 5;
 		 * Condition 1: DC mode S5
