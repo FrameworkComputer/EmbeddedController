@@ -930,8 +930,9 @@ class Zmake:
             self.logger.info("Running (initial) lcov on %s.", build_dir)
         else:
             self.logger.info("Running lcov on %s.", build_dir)
+        lcov = util.get_tool_path("lcov")
         cmd = [
-            util.get_tool_path("lcov"),
+            lcov,
             "--gcov-tool",
             gcov,
             "-q",
@@ -942,9 +943,7 @@ class Zmake:
             build_dir,
             "-t",
             build_dir.stem,
-            "--rc",
-            "lcov_branch_coverage=1",
-        ]
+        ] + util.get_lcov_options(lcov)
         if initial:
             cmd += ["-i"]
         proc = self.jobserver.popen(
@@ -982,13 +981,12 @@ class Zmake:
             all_lcov_files.append(project_build_dir / "output" / "zephyr.info")
         # Merge info files into a single lcov.info
         self.logger.info("Merging coverage data into %s.", output_file)
+        lcov = util.get_tool_path("lcov")
         cmd = [
-            util.get_tool_path("lcov"),
+            lcov,
             "-o",
             output_file,
-            "--rc",
-            "lcov_branch_coverage=1",
-        ]
+        ] + util.get_lcov_options(lcov)
         for info in all_lcov_files:
             cmd += ["-a", info]
         proc = self.jobserver.popen(
