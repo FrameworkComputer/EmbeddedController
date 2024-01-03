@@ -13,6 +13,7 @@
 #include <zephyr/fff.h>
 #include <zephyr/mgmt/ec_host_cmd/backend.h>
 #include <zephyr/mgmt/ec_host_cmd/ec_host_cmd.h>
+#include <zephyr/pm/device.h>
 #include <zephyr/ztest.h>
 
 FAKE_VALUE_FUNC(struct ec_host_cmd_backend *, ec_host_cmd_backend_get_uart,
@@ -20,6 +21,8 @@ FAKE_VALUE_FUNC(struct ec_host_cmd_backend *, ec_host_cmd_backend_get_uart,
 FAKE_VALUE_FUNC(struct ec_host_cmd_backend *, ec_host_cmd_backend_get_spi,
 		struct gpio_dt_spec *);
 FAKE_VALUE_FUNC(int, ec_host_cmd_init, struct ec_host_cmd_backend *);
+FAKE_VALUE_FUNC(int, pm_device_action_run, const struct device *,
+		enum pm_device_action);
 
 int fp_transport_init(void);
 
@@ -33,6 +36,7 @@ static void *transport_setup(void)
 	RESET_FAKE(ec_host_cmd_backend_get_uart);
 	RESET_FAKE(ec_host_cmd_backend_get_spi);
 	RESET_FAKE(ec_host_cmd_init);
+	RESET_FAKE(pm_device_action_run);
 
 	/* Set the transport sel pin */
 	gpio_emul_input_set(transport_sel_gpio, transport_sel_pin, 0);
@@ -64,6 +68,8 @@ ZTEST(transport, test_hc_init)
 	const struct device *const dev_uart =
 		DEVICE_DT_GET(DT_CHOSEN(zephyr_host_cmd_uart_backend));
 	struct ec_host_cmd_backend *backend;
+	const struct device *const dev_spi =
+		DEVICE_DT_GET(DT_CHOSEN(zephyr_host_cmd_spi_backend));
 
 	/* UART */
 	backend = (struct ec_host_cmd_backend *)0xABCD;
@@ -72,4 +78,5 @@ ZTEST(transport, test_hc_init)
 	zassert_equal(ec_host_cmd_backend_get_uart_fake.arg0_history[0],
 		      dev_uart);
 	zassert_equal(ec_host_cmd_init_fake.arg0_history[0], backend);
+	zassert_equal(pm_device_action_run_fake.arg0_history[0], dev_spi);
 }
