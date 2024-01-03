@@ -20,6 +20,7 @@ i2c3ALT: &i2c3 {
 #include "../gpio.dtsi"
 #include "../i2c.dtsi"
 #include "../interrupts.dtsi"
+#include "../keyboard.dtsi"
 #include "../motionsense.dtsi"
 #include "../power_signals.dtsi"
 #include "../power_signals_gpios.dtsi"
