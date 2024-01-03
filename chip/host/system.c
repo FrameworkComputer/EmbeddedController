@@ -287,3 +287,19 @@ get_ap_reset_stats(struct ap_reset_log_entry *reset_log_entries,
 {
 	return EC_ERROR_INVAL;
 }
+
+__attribute__((weak)) void panic_printf(const char *format, ...)
+{
+	va_list args;
+
+	va_start(args, format);
+	vprintf(format, args);
+	va_end(args);
+
+	cflush();
+}
+
+__attribute__((weak)) void software_panic(uint32_t reason, uint32_t info)
+{
+	__builtin_unreachable();
+}
