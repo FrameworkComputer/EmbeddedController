@@ -280,6 +280,52 @@ ZTEST(one_wire_uart_driver, test_reset)
 	zassert_equal(msg.header.reset, 0);
 }
 
+ZTEST(one_wire_uart_driver, test_max_retry_count)
+{
+	struct one_wire_uart_data *data = dev->data;
+	struct one_wire_uart_message msg;
+	const int MAX_RETRY = 10;
+	const k_timeout_t RESEND_DELAY = K_MSEC(3);
+
+	memset(&msg, 0, sizeof(msg));
+	msg.header.magic = 0xEC;
+	msg.header.sender = 1;
+	msg.header.msg_id = 11;
+	msg.header.checksum = 0;
+	msg.header.checksum = checksum(&msg);
+	k_msgq_put(data->tx_queue, &msg, K_NO_WAIT);
+
+	for (int i = 0; i < MAX_RETRY; i++) {
+		ring_buf_reset(data->tx_ring_buf);
+		k_sleep(RESEND_DELAY);
+		process_tx_irq(dev);
+		zassert_equal(data->retry_count, i + 1);
+	}
+
+	/* expect that RESET message is queued */
+	ring_buf_reset(data->tx_ring_buf);
+	k_sleep(RESEND_DELAY);
+	process_tx_irq(dev);
+	/* wait for deferred task */
+	k_sleep(K_SECONDS(1));
+	zassert_ok(k_msgq_peek(data->tx_queue, &msg));
+	zassert_equal(msg.header.reset, 1);
+
+	/* send RETRY 10 times */
+	for (int i = 0; i < MAX_RETRY; i++) {
+		ring_buf_reset(data->tx_ring_buf);
+		k_sleep(RESEND_DELAY);
+		process_tx_irq(dev);
+		zassert_equal(data->retry_count, i + 1);
+	}
+
+	/* expect that nothing queued when failed to send RETRY */
+	ring_buf_reset(data->tx_ring_buf);
+	k_sleep(RESEND_DELAY);
+	process_tx_irq(dev);
+	zassert_equal(k_msgq_num_used_get(data->tx_queue), 0);
+}
+
 struct one_wire_uart_fixture {
 	one_wire_uart_msg_received_cb_t orig_cb;
 };

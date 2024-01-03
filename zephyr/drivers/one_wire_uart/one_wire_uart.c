@@ -168,6 +168,14 @@ DECLARE_DEFERRED(wake_tx);
 
 /* retry every 2.5ms */
 #define RETRY_INTERVAL (5 * MSEC / 2)
+#define MAX_RETRY 10
+
+static void start_error_recovery(void)
+{
+	ccprints("one_wire_uart: reached max retry count, trying reset");
+	one_wire_uart_send_reset(DEVICE_DT_GET(DT_DRV_INST(0)));
+}
+DECLARE_DEFERRED(start_error_recovery);
 
 test_export_static void load_next_message(const struct device *dev)
 {
@@ -194,15 +202,24 @@ test_export_static void load_next_message(const struct device *dev)
 
 	if (data->msg_pending) {
 		unsigned int elapsed = time_since32(data->last_send_time);
+		bool can_send = data->retry_count == 0 ||
+				elapsed >= RETRY_INTERVAL;
 
-		if (data->retry_count == 0 || elapsed >= RETRY_INTERVAL) {
+		if (can_send && data->retry_count >= MAX_RETRY) {
+			one_wire_uart_reset(dev);
+
+			/* if the failed message is not a RESET message, try to
+			 * reset remote first. Otherwise, silently stop ourself.
+			 */
+			if (!msg->header.reset) {
+				hook_call_deferred(&start_error_recovery_data,
+						   0);
+			}
+		} else if (can_send) {
 			int len = msg_len(msg);
 
 			ring_buf_put(tx_ring_buf, (uint8_t *)msg, len);
 			data->last_send_time = get_time();
-			/* TODO: implement error recovery when retry count
-			 * exceeds some threshold
-			 */
 			++data->retry_count;
 		} else {
 			hook_call_deferred(&wake_tx_data,
