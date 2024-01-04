@@ -147,6 +147,42 @@ enum pdo_type_t {
 };
 
 /**
+ * @brief Port Partner Connection Type
+ */
+enum conn_partner_type_t {
+	/** DFP_ATTACHED */
+	DFP_ATTACHED = 1,
+	/** UFP_ATTACHED */
+	UFP_ATTACHED = 2,
+	/** POWERED_CABLE_NO_UFP_ATTACHED */
+	POWERED_CABLE_NO_UFP_ATTACHED = 3,
+	/** POWERED_CABLE_UFP_ATTACHED */
+	POWERED_CABLE_UFP_ATTACHED = 4,
+	/** DEBUG_ACCESSORY_ATTACHED */
+	DEBUG_ACCESSORY_ATTACHED = 5,
+	/** AUDIO_ADAPTER_ACCESSORY_ATTACHED */
+	AUDIO_ADAPTER_ACCESSORY_ATTACHED = 6
+};
+
+/**
+ * @brief Power Operation Mode
+ */
+enum power_operation_mode_t {
+	/** USB_DEFAULT_OPERATION */
+	USB_DEFAULT_OPERATION = 1,
+	/** BC_OPERATION */
+	BC_OPERATION = 2,
+	/** PD_OPERATION */
+	PD_OPERATION = 3,
+	/** USB_TC_CURRENT_1_5A */
+	USB_TC_CURRENT_1_5A = 4,
+	/** USB_TC_CURRENT_3A */
+	USB_TC_CURRENT_3A = 5,
+	/** USB_TC_CURRENT_5A */
+	USB_TC_CURRENT_5A = 6,
+};
+
+/**
  * @brief CCI - USB Type-C Command Status and Connector Change Indication
  */
 union cci_event_t {
@@ -539,16 +575,8 @@ struct connector_status_t {
 	 * This field is only valid when the Connect Status field is set to
 	 * one. This field shall indicate the current power operation
 	 * mode of the connector.
-	 *  0 - Reserved
-	 *  1 - USB Default Operation
-	 *  2 - BC
-	 *  3 - PD
-	 *  4 - USB Type-C Current - 1.5A
-	 *  5 - USB Type-C Current - 3A
-	 *  6 - USB Type-C Current - 5A
-	 *  7 - Reserved
 	 */
-	uint8_t power_operation_mode;
+	enum power_operation_mode_t power_operation_mode;
 	/**
 	 * This field indicates the current connect status of the
 	 * connector. This field shall be set to one when a device is
@@ -581,16 +609,8 @@ struct connector_status_t {
 	 * This field is only valid when the Connect Status field is set to
 	 * one. This field indicates the type of connector partner
 	 * detected on this connector.
-	 *  0 - Reserved
-	 *  1 - DFP attached
-	 *  2 - UFP attached
-	 *  3 - Powered cable/No UFP attached
-	 *  4 - Powered cable/UFP attached
-	 *  5 - Debug Accessory attached
-	 *  6 - Audio Adapter Accessory attached
-	 *  7 - Reserved
 	 */
-	uint8_t conn_partner_type;
+	enum conn_partner_type_t conn_partner_type;
 	/**
 	 * This field is only valid when the Connect Status field is set to
 	 * one and the Power Operation Mode field is set to PD.
