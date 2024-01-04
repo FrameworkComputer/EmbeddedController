@@ -116,7 +116,7 @@ static bool amd_fp8_mux_supports_usb4(uint8_t addr, uint8_t port)
 static int amd_fp8_set_mux_unsafe(struct amd_fp8_mux_state *amd_mux,
 				  mux_state_t mux_state)
 {
-	uint8_t ctrl;
+	uint8_t ctrl = 0;
 	uint8_t payload[AMD_FP8_WRITE1_USB4_LEN];
 	uint8_t payload_len = AMD_FP8_WRITE1_USB3_LEN;
 	int rv;
@@ -336,7 +336,7 @@ void amd_fp8_mux_interrupt_handler(void)
 	uint8_t unused;
 	uint8_t mux_status;
 	int rv;
-	int int_asserted;
+	int int_asserted = 0;
 
 	k_mutex_lock(&amd_fp8_lock, K_FOREVER);
 	for (size_t i = 0; i < ARRAY_SIZE(amd_fp8_muxes); i++) {
