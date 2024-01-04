@@ -53,4 +53,7 @@ config TEST_PROVIDE_PM_HOOKS
 	default y
 	select HAS_PM
 
+config TEST_BOARD_EC_QUIRKS
+	bool "Board EC quirks tests"
+
 source "Kconfig.zephyr"

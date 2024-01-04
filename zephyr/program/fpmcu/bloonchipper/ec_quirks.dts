@@ -11,17 +11,3 @@
 &flash {
 	st,rdp1-enable-byte = <0x00>;
 };
-
-/*
- * Old FPMCU RO (EC based) uses TIM2 to measure system uptime and schedule
- * tasks. Zephyr uses different counter for these purposes, but we still want to
- * enable TIM2, because FPMCU RO doesn't stop the counter. If the counter is
- * enabled, Zephyr will perform initialization, so we won't get any unexpected
- * interrupts.
- */
-&timers2 {
-	status = "okay";
-	counter {
-		status = "okay";
-	};
-};
