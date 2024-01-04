@@ -3,6 +3,17 @@
  * found in the LICENSE file.
  */
 
+/* Keyboard backlight - separate prescaler reference */
+&pwm1 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C6>;
+	pinctrl-0 = <&pwm1_gpa1_default>;
+	pinctrl-names = "default";
+};
+
+/* Board LEDs - share one prescaler reference, all clocks must be configure
+ * for 324 Hz or lower so LEDs work in low power mode.
+ */
 &pwm2 {
 	status = "okay";
 	prescaler-cx = <PWM_PRESCALER_C4>;

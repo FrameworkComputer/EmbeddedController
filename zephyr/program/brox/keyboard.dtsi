@@ -3,6 +3,14 @@
  * found in the LICENSE file.
  */
 
+/ {
+	kblight: kblight {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
+	};
+};
+
+
 &cros_kb_raw {
 	status = "okay";
 	pinctrl-0 = <&ksi0_default
