@@ -380,6 +380,11 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_G3S5:
+#if CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
+		if (!system_can_boot_ap())
+			return POWER_G3;
+#endif
+
 #if DT_NODE_EXISTS(DT_NODELABEL(en_pp4200_s5))
 		power_signal_enable_interrupt(GPIO_PMIC_EC_RESETB);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_pp4200_s5), 1);
@@ -387,11 +392,6 @@ enum power_state power_handle_state(enum power_state state)
 						    IN_PG_PP4200_S5,
 						    PG_PP4200_S5_DELAY))
 			return POWER_S5G3;
-#endif
-
-#if CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
-		if (!system_can_boot_ap())
-			return POWER_G3;
 #endif
 
 		return POWER_S5;
