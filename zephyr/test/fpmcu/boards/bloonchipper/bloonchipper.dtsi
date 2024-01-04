@@ -50,4 +50,28 @@
 			st,prescaler = <0>;
 		};
 	};
+
+	gpioc: gpio@804 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x804 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
+
+	gpioh: gpio@808 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x808 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+	};
 };
