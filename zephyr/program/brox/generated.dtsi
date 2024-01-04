@@ -67,6 +67,7 @@
 		};
 		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
 			gpios = <&gpioe 3 GPIO_OUTPUT>;
+			enum-name = "GPIO_PACKET_MODE_EN";
 		};
 		gpio_ec_i2c_pmc_pd_int_odl: ec_i2c_pmc_pd_int_odl {
 			gpios = <&gpioj 1 GPIO_INPUT>;
