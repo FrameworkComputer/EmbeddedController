@@ -57,6 +57,7 @@
 		};
 		gpio_ec_en_edp_bl: ec_en_edp_bl {
 			gpios = <&gpioh 0 GPIO_OUTPUT>;
+			enum-name = "GPIO_ENABLE_BACKLIGHT";
 		};
 		gpio_ec_en_pp3300_wlan: ec_en_pp3300_wlan {
 			gpios = <&gpioi 3 GPIO_OUTPUT>;
@@ -128,6 +129,7 @@
 		};
 		gpio_lid_open: lid_open {
 			gpios = <&gpiob 1 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
 		};
 		gpio_sen_mode1_ec_pch_wake_odl: sen_mode1_ec_pch_wake_odl {
 			gpios = <&gpiob 6 GPIO_ODR_LOW>;
