@@ -358,6 +358,12 @@ def main(args):
     try:
         opts.func(opts)
     except subprocess.CalledProcessError:
+        ec_dir = os.path.dirname(__file__)
+        failed_dir = os.path.join(ec_dir, ".failedboards")
+        if os.path.isdir(failed_dir):
+            print("Failed boards/tests:")
+            for fail in os.listdir(failed_dir):
+                print(f"\t{fail}")
         return 1
     else:
         return 0
