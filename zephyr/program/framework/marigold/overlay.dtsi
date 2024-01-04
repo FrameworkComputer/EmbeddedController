@@ -49,6 +49,15 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&ddr_f75303>;
 		};
+		battery-temp {
+			temp_host_high = <50>;
+			temp_host_halt = <60>;
+			temp_host_release_high = <40>;
+			temp_fan_off = <40>;
+			temp_fan_max = <50>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&battery_temp>;
+		};
 	};
 
 	typec-port {
