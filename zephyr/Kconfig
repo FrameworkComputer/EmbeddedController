@@ -139,6 +139,7 @@ config PLATFORM_EC_AP_RESET_LOG
 config PLATFORM_EC_BACKLIGHT_LID
 	bool "Control the display backlight based on the lid switch"
 	depends on PLATFORM_EC_HOSTCMD
+	depends on PLATFORM_EC_LID_SWITCH
 	default y
 	help
 	  Support controlling the display backlight based on the state of the
