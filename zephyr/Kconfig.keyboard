@@ -254,6 +254,7 @@ config PLATFORM_EC_PWM_KBLIGHT
 	bool "PWM keyboard backlight"
 	default y
 	depends on DT_HAS_CROS_EC_KBLIGHT_PWM_ENABLED
+	depends on PLATFORM_EC_LID_SWITCH
 	select PWM
 	select PLATFORM_EC_PWM_HC
 	select PLATFORM_EC_KEYBOARD_BACKLIGHT
