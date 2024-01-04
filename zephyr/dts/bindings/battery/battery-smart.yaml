@@ -82,6 +82,7 @@ properties:
       - "smp,c31n2005"
       - "smp,cosrf9h3"
       - "smp,cos26jgk"
+      - "smp,kyogre2s"
       - "smp,l20m3pg0"
       - "smp,l20m3pg1"
       - "smp,l20m3pg2"

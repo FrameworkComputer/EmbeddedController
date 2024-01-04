@@ -1304,6 +1304,11 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "kyogre",
+        board = "kyogre",
+        extra_modules = ["cmsis"],
+    )
+    ec_target(
         name = "lalala",
         baseboard = "keeby",
         board = "lalala",

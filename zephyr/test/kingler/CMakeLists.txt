@@ -75,3 +75,5 @@ target_sources_ifdef(
         PRIVATE
         ${PLATFORM_EC_PROGRAM_DIR}/corsola/ponyta/src/board.c
         src/ponyta_board.c)
+
+target_sources_ifdef(CONFIG_TEST_KYOGRE_SENSOR_PROBE app PRIVATE src/kyogre_sensor.c)
