@@ -23,7 +23,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led.c")
 zephyr_library_sources_ifdef(CONFIG_CHIPSET_AMD
 	"src/cpu_power/amd_cpu_power_interface.c")
-zephyr_library_sources_ifdef(CONFIG_CHIPSET_INTEL
+zephyr_library_sources_ifdef(CONFIG_PECI_NPCX
 	"src/cpu_power/intel_cpu_power_interface.c")
 
 zephyr_library_sources_ifdef(CONFIG_PD_CHIP_CCG8

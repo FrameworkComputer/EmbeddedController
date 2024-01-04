@@ -15,8 +15,144 @@
 #include "math_util.h"
 #include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
-#define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
+#include <zephyr/drivers/peci.h>
+#include <zephyr/drivers/espi.h>
+
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ## args)
+#define CPRINTF(format, args...) cprintf(CC_THERMAL, format, ## args)
+
+#define PECI_HOST_ADDR		0x30	/* PECI Host address */
+#define CONFIG_PECI_TJMAX	110	/* PECI TJMAX value */
+
+#define ESPI_OOB_SMB_SLAVE_SRC_ADDR_EC 0x0F
+#define ESPI_OOB_SMB_SLAVE_DEST_ADDR_PMC_FW 0x20
+#define ESPI_OOB_PECI_CMD 0x01
+#define MAX_ESPI_BUF_LEN 80
+
+static const struct device *const espi_dev = DEVICE_DT_GET(DT_NODELABEL(espi0));
+
+static bool espi_verbose = false;
+
+struct peci_over_espi_buffer {
+	uint8_t dest_slave_addr;
+	uint8_t oob_cmd_code;
+	uint8_t byte_cnt;
+	uint8_t src_slave_addr;
+	/* PECI data format */
+	uint8_t addr;
+	uint8_t tx_size;
+	uint8_t rx_size;
+	enum peci_command_code cmd_code;
+} __ec_align1;
+
+static int request_temp(void)
+{
+	struct peci_over_espi_buffer oob_buff = {0};
+	struct espi_oob_packet req_pckt;
+	int ret;
+
+	oob_buff.dest_slave_addr = ESPI_OOB_SMB_SLAVE_DEST_ADDR_PMC_FW;
+	oob_buff.oob_cmd_code = ESPI_OOB_PECI_CMD;
+	oob_buff.byte_cnt = 5;
+	oob_buff.src_slave_addr = ESPI_OOB_SMB_SLAVE_SRC_ADDR_EC;
+	oob_buff.addr = PECI_HOST_ADDR;
+	oob_buff.cmd_code = PECI_CMD_GET_TEMP0;
+	oob_buff.tx_size = PECI_GET_TEMP_WR_LEN;
+	oob_buff.rx_size = PECI_GET_TEMP_RD_LEN;
+
+	/* Packetize OOB request */
+	req_pckt.buf = (uint8_t *)&oob_buff;
+	req_pckt.len = sizeof(struct peci_over_espi_buffer);
+
+	ret = espi_send_oob(espi_dev, &req_pckt);
+
+	if (ret) {
+		CPRINTS("OOB Tx failed %d", ret);
+		return ret;
+	}
+
+	return EC_SUCCESS;
+}
+
+static int retrieve_packet(uint8_t *buf)
+{
+	int ret;
+	struct espi_oob_packet resp_pckt;
+
+	resp_pckt.buf = buf;
+	resp_pckt.len = MAX_ESPI_BUF_LEN;
+
+	ret = espi_receive_oob(espi_dev, &resp_pckt);
+
+	if (ret) {
+		CPRINTS("OOB Rx failed %d", ret);
+		return ret;
+	}
+
+	if (espi_verbose) {
+		CPRINTS("OOB transaction completed rcvd: %d bytes", resp_pckt.len);
+		for (int i = 0; i < resp_pckt.len; i++) {
+			CPRINTS("data[%d]: 0x%02x", i, buf[i]);
+		}
+	}
+
+	return EC_SUCCESS;
+}
+
+static int peci_get_cpu_temp(int *cpu_temp)
+{
+	int ret;
+	uint8_t get_temp_buf[7];
+
+	ret = request_temp();
+	if (ret) {
+		CPRINTS("OOB req failed %d", ret);
+		return EC_ERROR_UNKNOWN;
+	}
+
+	ret = retrieve_packet(get_temp_buf);
+	if (ret) {
+		CPRINTS("OOB retrieve failed %d", ret);
+		return EC_ERROR_UNKNOWN;
+	}
+
+	/* Get relative raw data of temperature. */
+	*cpu_temp = (get_temp_buf[6] << 8) | get_temp_buf[5];
+
+	/* 2's complement convert relative raw data to degrees C. */
+	*cpu_temp = ((*cpu_temp ^ 0xFFFF) + 1) >> 6;
+
+	/* TODO: calculate the fractional value (PECI spec figure 5.1)*/
+
+	if (*cpu_temp >= CONFIG_PECI_TJMAX)
+		return EC_ERROR_UNKNOWN;
+
+	CPRINTS("cpu_temp: %d", CONFIG_PECI_TJMAX - *cpu_temp);
+
+	return EC_SUCCESS;
+}
+
+int peci_temp_sensor_get_val(int idx, int *temp_ptr)
+{
+	int i, rv;
+
+	if (!chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_STANDBY))
+		return EC_ERROR_NOT_POWERED;
+
+	/*
+	 * Retry reading PECI CPU temperature if the first sample is
+	 * invalid or failed to obtain.
+	 */
+	for (i = 0; i < 2; i++) {
+		rv = peci_get_cpu_temp(temp_ptr);
+		if (!rv)
+			break;
+	}
+
+	return rv;
+}
+
+/* */
 
 int pl1_watt;
 int pl2_watt;
