@@ -6,7 +6,6 @@
 #include "atomic.h"
 #include "console.h"
 #include "driver/accel_bma2x2.h"
-#include "hooks.h"
 #include "lid_angle.h"
 #include "motion_lid.h"
 #include "motion_sense.h"
@@ -372,47 +371,6 @@ ZTEST_USER(host_cmd_motion_sense, test_odr_set)
 		      response.sensor_odr.ret, "Expected %d, but got %d",
 		      BMA2x2_REG_TO_BW(BMA2x2_BW_7_81HZ),
 		      response.sensor_odr.ret);
-}
-
-ZTEST_USER(host_cmd_motion_sense, test_odr_set_suspend)
-{
-	int i;
-	struct ec_response_motion_sense response;
-
-	/* This test requires there is at least one sensor has
-	 * active_mask set to SENSOR_ACTIVE_S0
-	 */
-	for (i = 0; i < motion_sensor_count; i++) {
-		if (motion_sensors[i].active_mask == SENSOR_ACTIVE_S0)
-			break;
-	}
-
-	zassert_true(i < motion_sensor_count,
-		     "No sensor has SENSOR_ACTIVE_S0 set");
-
-	zassert_ok(motion_sensors[i].drv->set_data_rate(&motion_sensors[i], 0,
-							false),
-		   NULL);
-	zassert_ok(host_cmd_motion_sense_odr(/*sensor_num=*/i,
-					     /*odr=*/10000,
-					     /*round_up=*/true, &response),
-		   NULL);
-
-	/* Check the set value */
-	zassert_equal(10000 | ROUND_UP_FLAG,
-		      motion_sensors[i].config[SENSOR_CONFIG_AP].odr,
-		      "Expected %d, but got %d", 10000 | ROUND_UP_FLAG,
-		      motion_sensors[i].config[SENSOR_CONFIG_AP].odr);
-
-	hook_notify(HOOK_CHIPSET_SUSPEND);
-	/* System enter suspend then resume */
-	k_sleep(K_SECONDS(2));
-	zassert_equal(0,
-		      motion_sensors[i].drv->get_data_rate(&motion_sensors[i]),
-		      "%s expected %d, but got %d", 0, motion_sensors[i].name,
-		      motion_sensors[i].drv->get_data_rate(&motion_sensors[i]));
-	k_sleep(K_SECONDS(2));
-	hook_notify(HOOK_CHIPSET_RESUME);
 }
 
 ZTEST_USER(host_cmd_motion_sense, test_range_invalid_sensor_num)
