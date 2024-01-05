@@ -281,6 +281,10 @@ def all_targets():
         board = "brox",
     )
     ec_target(
+        name = "brox-ish-ec",
+        board = "brox-ish-ec",
+    )
+    ec_target(
         name = "brya",
         baseboard = "brya",
         board = "brya",

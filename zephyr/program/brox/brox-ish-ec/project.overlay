@@ -1,0 +1,61 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Brox-ish-ec program common DTS includes */
+
+/* Arbitrage generates an incorrect node label when using alternate pins.
+ * Create a 2nd node label on I2C3 as a workaround.
+ * TODO: b/310227384 - I2C alternate selection not detected automatically.
+ */
+i2c3ALT: &i2c3 {
+};
+
+#include <cros/cbi_flash.dtsi>
+
+#include "../adc.dtsi"
+#include "../brox.dtsi"
+#include "../fan.dtsi"
+#include "../generated.dtsi"
+#include "../gpio.dtsi"
+#include "../i2c.dtsi"
+#include "../interrupts.dtsi"
+#include "../led_pins.dtsi"
+#include "../led_policy.dtsi"
+#include "../keyboard.dtsi"
+#include "../power_signals.dtsi"
+#include "../power_signals_gpios.dtsi"
+#include "../pwm.dtsi"
+#include "../temp_sensors.dtsi"
+#include "../usb_typec.dtsi"
+
+/* Brox-ish-ec project DTS includes*/
+
+/* Brox-ish-ec overrides follow... */
+
+/{
+        batteries {
+                default_battery: lgc_ap18c8k {
+                        compatible = "lgc,ap18c8k", "battery-smart";
+                };
+        };
+};
+
+/*
+ * When CBI in flash is enabled, setup RO flash layout as follows:
+ *   RO binary:    0x00000:0x5DFFF
+ *   PSTATE block: 0x5E000:0x5EFFF
+ *   CBI flash:    0x5F000:0x5FFFF
+ */
+&pstate {
+    offset = <(0x60000 - (0x1000 * 2))>;
+    size = <0x1000>;
+};
+
+&cbi_flash {
+	offset = <(0x60000 - (0x1000 * 1))>;
+	size = <0x1000>;
+};
+
+/delete-node/ &int_lid_imu;

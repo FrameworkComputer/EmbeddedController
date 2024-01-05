@@ -7,8 +7,17 @@
 
 def register_brox_project(
     project_name,
+    kconfig_files=None,
 ):
     """Register a variant of brox."""
+    if kconfig_files is None:
+        kconfig_files = [
+            # Common to all projects.
+            here / "program.conf",
+            # Project-specific KConfig customization.
+            here / project_name / "project.conf",
+        ]
+
     register_binman_project(
         project_name=project_name,
         zephyr_board="it82002aw",
@@ -27,4 +36,16 @@ def register_brox_project(
 
 register_brox_project(
     project_name="brox",
+)
+
+register_brox_project(
+    project_name="brox-ish-ec",
+    kconfig_files=[
+        # Common to all projects.
+        here / "program.conf",
+        # Parent project's config
+        here / "brox" / "project.conf",
+        # Project-specific KConfig customization.
+        here / "brox-ish-ec" / "project.conf",
+    ],
 )
