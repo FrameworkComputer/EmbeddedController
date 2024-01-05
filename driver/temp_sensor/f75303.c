@@ -128,6 +128,7 @@ void f75303_update_temperature(int idx)
 
 	if (idx >= F75303_IDX_COUNT)
 		return;
+
 	switch (idx) {
 	case F75303_IDX_LOCAL:
 		rv = get_temp(idx, F75303_TEMP_LOCAL_REGISTER, &temp_reg);
@@ -138,9 +139,13 @@ void f75303_update_temperature(int idx)
 	case F75303_IDX_REMOTE2:
 		rv = get_temp(idx, F75303_TEMP_REMOTE2_REGISTER, &temp_reg);
 		break;
+	default:
+		rv = EC_ERROR_INVAL;
 	}
-	if (rv == EC_SUCCESS)
+
+	if (rv == EC_SUCCESS) {
 		temps[idx] = temp_reg;
+	}
 }
 #endif /* CONFIG_ZEPHYR */
 
