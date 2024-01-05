@@ -6,6 +6,7 @@
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_realtek_rts54xx.h"
 #include "emul/emul_stub_device.h"
+#include "zephyr/sys/util.h"
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
@@ -38,39 +39,238 @@ rts5453p_emul_get_pdc_data(const struct emul *emul)
 	return &data->pdc_data;
 }
 
-/**
- * @brief Function which handles read messages. It expects that data->cur_cmd
- *        is set to command number which should be handled. It guarantee that
- *        data->num_to_read is set to number of bytes in data->msg_buf on
- *        successful handling read request. On error, data->num_to_read is
- *        always set to 0.
- *
- * @param emul Pointer to RTS5453P emulator
- * @param reg Command selected by last write message. If data->cur_cmd is
- *            different than NO_CMD, then reg should equal to
- *            data->cur_cmd
- *
- * @return 0 on success
- * @return -EIO on error
- */
-static int rts5453p_emul_handle_read_msg(const struct emul *emul, int reg)
+static void set_ping_status(struct rts5453p_emul_pdc_data *data,
+			    enum cmd_sts_t status, uint8_t length)
 {
+	LOG_DBG("ping status=0x%x, length=%d", status, length);
+	data->read_ping = true;
+	data->ping_status.cmd_sts = status;
+	data->ping_status.data_len = length;
+}
+
+typedef int (*handler)(struct rts5453p_emul_pdc_data *data,
+		       const union rts54_request *req);
+
+static int unsupported(struct rts5453p_emul_pdc_data *data,
+		       const union rts54_request *req)
+{
+	LOG_ERR("cmd=0x%X, subcmd=0x%X is not supported",
+		req->req_subcmd.command_code, req->req_subcmd.sub_cmd);
+
+	set_ping_status(data, CMD_ERROR, 0);
+	return -EIO;
+}
+
+static int vendor_cmd_enable(struct rts5453p_emul_pdc_data *data,
+			     const union rts54_request *req)
+{
+	data->vnd_command.raw = req->vendor_cmd_enable.sub_cmd3.raw;
+
+	LOG_INF("VENDOR_CMD_ENABLE SMBUS=%d, FLASH=%d", data->vnd_command.smbus,
+		data->vnd_command.flash);
+	set_ping_status(data, CMD_COMPLETE, 0);
+
 	return 0;
 }
 
+static int set_notification_enable(struct rts5453p_emul_pdc_data *data,
+				   const union rts54_request *req)
+{
+	uint8_t port = req->set_notification_enable.port_num;
+
+	data->notification_data[port] = req->set_notification_enable.data;
+	LOG_INF("SET_NOTIFICATION_ENABLE port=%d, data=0x%X", port,
+		data->notification_data[port]);
+
+	set_ping_status(data, CMD_COMPLETE, 0);
+
+	return 0;
+}
+
+static int get_ic_status(struct rts5453p_emul_pdc_data *data,
+			 const union rts54_request *req)
+{
+	LOG_INF("%s", __func__);
+
+	data->response.ic_status = data->ic_status;
+
+	set_ping_status(data, CMD_COMPLETE, sizeof(struct rts54_ic_status));
+
+	return 0;
+}
+
+static int block_read(struct rts5453p_emul_pdc_data *data,
+		      const union rts54_request *req)
+{
+	data->read_ping = false;
+	return 0;
+}
+
+static int ppm_reset(struct rts5453p_emul_pdc_data *data,
+		     const union rts54_request *req)
+{
+	LOG_INF("PPM_RESET port=%d", req->ppm_reset.port_num);
+
+	set_ping_status(data, CMD_COMPLETE, 0);
+
+	return 0;
+}
+
+static int tcpm_reset(struct rts5453p_emul_pdc_data *data,
+		      const union rts54_request *req)
+{
+	LOG_INF("%s", __func__);
+
+	set_ping_status(data, CMD_COMPLETE, 0);
+
+	return 0;
+}
+
+struct commands {
+	uint8_t code;
+	enum {
+		HANDLER = 0,
+		SUBCMD = 1,
+	} type;
+	union {
+		struct {
+			uint8_t num_cmds;
+			const struct commands *sub_cmd;
+		};
+		handler fn;
+	};
+};
+
+#define SUBCMD_DEF(subcmd) \
+	.type = SUBCMD, .sub_cmd = subcmd, .num_cmds = ARRAY_SIZE(subcmd)
+#define HANDLER_DEF(handler) .type = HANDLER, .fn = handler
+
+/* Data Sheet:
+ * Realtek Power Delivery Command Interface By Realtek Version 3.3.18
+ */
+const struct commands sub_cmd_x01[] = {
+	{ .code = 0xDA, HANDLER_DEF(vendor_cmd_enable) },
+};
+
+const struct commands sub_cmd_x08[] = {
+	{ .code = 0x00, HANDLER_DEF(tcpm_reset) },
+	{ .code = 0x01, HANDLER_DEF(set_notification_enable) },
+	{ .code = 0x03, HANDLER_DEF(unsupported) },
+	{ .code = 0x04, HANDLER_DEF(unsupported) },
+	{ .code = 0x44, HANDLER_DEF(unsupported) },
+	{ .code = 0x05, HANDLER_DEF(unsupported) },
+	{ .code = 0x19, HANDLER_DEF(unsupported) },
+	{ .code = 0x1A, HANDLER_DEF(unsupported) },
+	{ .code = 0x1D, HANDLER_DEF(unsupported) },
+	{ .code = 0x1F, HANDLER_DEF(unsupported) },
+	{ .code = 0x20, HANDLER_DEF(unsupported) },
+	{ .code = 0x21, HANDLER_DEF(unsupported) },
+	{ .code = 0x23, HANDLER_DEF(unsupported) },
+	{ .code = 0x24, HANDLER_DEF(unsupported) },
+	{ .code = 0x26, HANDLER_DEF(unsupported) },
+	{ .code = 0x27, HANDLER_DEF(unsupported) },
+	{ .code = 0x28, HANDLER_DEF(unsupported) },
+	{ .code = 0x2B, HANDLER_DEF(unsupported) },
+	{ .code = 0x83, HANDLER_DEF(unsupported) },
+	{ .code = 0x84, HANDLER_DEF(unsupported) },
+	{ .code = 0x85, HANDLER_DEF(unsupported) },
+	{ .code = 0x99, HANDLER_DEF(unsupported) },
+	{ .code = 0x9A, HANDLER_DEF(unsupported) },
+	{ .code = 0x9D, HANDLER_DEF(unsupported) },
+	{ .code = 0xA2, HANDLER_DEF(unsupported) },
+	{ .code = 0xF0, HANDLER_DEF(unsupported) },
+	{ .code = 0xA6, HANDLER_DEF(unsupported) },
+	{ .code = 0xA7, HANDLER_DEF(unsupported) },
+	{ .code = 0xA8, HANDLER_DEF(unsupported) },
+	{ .code = 0xA9, HANDLER_DEF(unsupported) },
+	{ .code = 0xAA, HANDLER_DEF(unsupported) },
+};
+
+const struct commands sub_cmd_x0E[] = {
+	{ .code = 0x01, HANDLER_DEF(ppm_reset) },
+	{ .code = 0x03, HANDLER_DEF(unsupported) },
+	{ .code = 0x06, HANDLER_DEF(unsupported) },
+	{ .code = 0x07, HANDLER_DEF(unsupported) },
+	{ .code = 0x09, HANDLER_DEF(unsupported) },
+	{ .code = 0x0B, HANDLER_DEF(unsupported) },
+	{ .code = 0x0C, HANDLER_DEF(unsupported) },
+	{ .code = 0x0D, HANDLER_DEF(unsupported) },
+	{ .code = 0x0E, HANDLER_DEF(unsupported) },
+	{ .code = 0x0F, HANDLER_DEF(unsupported) },
+	{ .code = 0x10, HANDLER_DEF(unsupported) },
+	{ .code = 0x11, HANDLER_DEF(unsupported) },
+	{ .code = 0x12, HANDLER_DEF(unsupported) },
+	{ .code = 0x13, HANDLER_DEF(unsupported) },
+};
+
+const struct commands sub_cmd_x12[] = {
+	{ .code = 0x01, HANDLER_DEF(unsupported) },
+	{ .code = 0x02, HANDLER_DEF(unsupported) },
+};
+
+const struct commands sub_cmd_x20[] = {
+	{ .code = 0x00, HANDLER_DEF(unsupported) },
+};
+
+const struct commands rts54_commands[] = {
+	{ .code = 0x01, SUBCMD_DEF(sub_cmd_x01) },
+	{ .code = 0x08, SUBCMD_DEF(sub_cmd_x08) },
+	{ .code = 0x09, HANDLER_DEF(unsupported) },
+	{ .code = 0x0A, HANDLER_DEF(unsupported) },
+	{ .code = 0x0E, SUBCMD_DEF(sub_cmd_x0E) },
+	{ .code = 0x12, SUBCMD_DEF(sub_cmd_x12) },
+	{ .code = 0x20, SUBCMD_DEF(sub_cmd_x20) },
+	{ .code = 0x3A, HANDLER_DEF(get_ic_status) },
+	{ .code = 0x80, HANDLER_DEF(block_read) },
+};
+
+const int num_rts54_commands = ARRAY_SIZE(rts54_commands);
+
+int process_request(struct rts5453p_emul_pdc_data *data,
+		    const union rts54_request *req, uint8_t code,
+		    const struct commands *cmds, int num_cmds)
+{
+	int i;
+
+	LOG_INF("process request code=0x%X", code);
+
+	set_ping_status(data, CMD_BUSY, 0);
+
+	for (i = 0; i < num_cmds; i++) {
+		if (cmds[i].code == code) {
+			if (cmds[i].type == HANDLER) {
+				return cmds[i].fn(data, req);
+			} else {
+				return process_request(data, req,
+						       req->req_subcmd.sub_cmd,
+						       cmds[i].sub_cmd,
+						       cmds[i].num_cmds);
+			}
+		}
+	}
+
+	return unsupported(data, req);
+}
+
 /**
- * @brief Function which finalize write messages.
+ * @brief Handle I2C start write message.
  *
  * @param emul Pointer to RTS5453P emulator
  * @param reg First byte of write message, usually selected command
- * @param bytes Number of bytes received in data->msg_buf
  *
  * @return 0 on success
  * @return -EIO on error
  */
-static int rts5453p_emul_finalize_write_msg(const struct emul *emul, int reg,
-					    int bytes)
+static int rts5453p_emul_start_write(const struct emul *emul, int reg)
 {
+	struct rts5453p_emul_pdc_data *data = rts5453p_emul_get_pdc_data(emul);
+
+	LOG_DBG("start_write cmd=%d", reg);
+
+	memset(&data->request, 0, sizeof(union rts54_request));
+
+	data->request.raw_data[0] = reg;
+
 	return 0;
 }
 
@@ -88,6 +288,54 @@ static int rts5453p_emul_finalize_write_msg(const struct emul *emul, int reg,
 static int rts5453p_emul_write_byte(const struct emul *emul, int reg,
 				    uint8_t val, int bytes)
 {
+	struct rts5453p_emul_pdc_data *data = rts5453p_emul_get_pdc_data(emul);
+
+	LOG_DBG("write_byte reg=%d, val=0x%X, bytes=%d", reg, val, bytes);
+	data->request.raw_data[bytes] = val;
+
+	return 0;
+}
+
+/**
+ * @brief Function which finalize write messages.
+ *
+ * @param emul Pointer to RTS5453P emulator
+ * @param reg First byte of write message, usually selected command
+ * @param bytes Number of bytes received in data->msg_buf
+ *
+ * @return 0 on success
+ * @return -EIO on error
+ */
+static int rts5453p_emul_finish_write(const struct emul *emul, int reg,
+				      int bytes)
+{
+	struct rts5453p_emul_pdc_data *data = rts5453p_emul_get_pdc_data(emul);
+
+	LOG_DBG("finish_write reg=%d, bytes=%d", reg, bytes);
+
+	return process_request(data, &data->request,
+			       data->request.request.command_code,
+			       rts54_commands, num_rts54_commands);
+}
+
+/**
+ * @brief Function which handles read messages. It expects that data->cur_cmd
+ *        is set to command number which should be handled. It guarantees that
+ *        data->num_to_read is set to number of bytes in data->msg_buf on
+ *        successful handling read request. On error, data->num_to_read is
+ *        always set to 0.
+ *
+ * @param emul Pointer to RTS5453P emulator
+ * @param reg Command selected by last write message. If data->cur_cmd is
+ *            different than NO_CMD, then reg should equal to
+ *            data->cur_cmd
+ *
+ * @return 0 on success
+ * @return -EIO on error
+ */
+static int rts5453p_emul_start_read(const struct emul *emul, int reg)
+{
+	LOG_DBG("start_read reg=%d", reg);
 	return 0;
 }
 
@@ -105,9 +353,39 @@ static int rts5453p_emul_write_byte(const struct emul *emul, int reg,
 static int rts5453p_emul_read_byte(const struct emul *emul, int reg,
 				   uint8_t *val, int bytes)
 {
+	struct rts5453p_emul_pdc_data *data = rts5453p_emul_get_pdc_data(emul);
+
+	LOG_DBG("read_byte reg=0x%X, bytes=%d", reg, bytes);
+
+	if (data->read_ping) {
+		LOG_DBG("READING ping_raw_value=0x%X", data->ping_raw_value);
+		*val = data->ping_raw_value;
+		data->read_ping = false;
+	} else {
+		*val = data->response.raw_data[bytes];
+	}
+
 	return 0;
 }
 
+/**
+ * @brief Function type that is used by I2C device emulator at the end of
+ *        I2C read message.
+ *
+ * @param target Pointer to emulator
+ * @param reg Address which is now accessed by read command (first byte of last
+ *            I2C write message)
+ * @param bytes Number of bytes responeded to the I2C read message
+ *
+ * @return 0 on success
+ * @return -EIO on error
+ */
+static int rts5453p_emul_finish_read(const struct emul *target, int reg,
+				     int bytes)
+{
+	LOG_DBG("finish_read reg=%d, bytes=%d", reg, bytes);
+	return 0;
+}
 /**
  * @brief Get currently accessed register, which always equals to selected
  *        command.
@@ -149,18 +427,24 @@ static int rts5453p_emul_init(const struct emul *emul,
 
 	i2c_common_emul_init(&data->common);
 
+	data->pdc_data.ic_status.fw_main_version = 0xAB;
+	data->pdc_data.ic_status.pd_version[0] = 0xCD;
+	data->pdc_data.ic_status.pd_revision[0] = 0xEF;
+	data->pdc_data.ic_status.byte_count =
+		sizeof(struct rts54_ic_status) - 1;
+
 	return 0;
 }
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \
 	static struct rts5453p_emul_data rts5453p_emul_data_##n = {	\
 		.common = {						\
-			.start_write = NULL,				\
+			.start_write = rts5453p_emul_start_write,	\
 			.write_byte = rts5453p_emul_write_byte,		\
-			.finish_write = rts5453p_emul_finalize_write_msg,\
-			.start_read = rts5453p_emul_handle_read_msg,	\
+			.finish_write = rts5453p_emul_finish_write,\
+			.start_read = rts5453p_emul_start_read,	\
 			.read_byte = rts5453p_emul_read_byte,		\
-			.finish_read = NULL,				\
+			.finish_read = rts5453p_emul_finish_read,	\
 			.access_reg = rts5453p_emul_access_reg,		\
 		},							\
 	};       \

@@ -31,6 +31,8 @@ ZTEST_USER(pdc_api, test_get_ucsi_version)
 {
 	uint16_t version = 0;
 
+	zassert_not_ok(pdc_get_ucsi_version(dev, NULL));
+
 	zassert_ok(pdc_get_ucsi_version(dev, &version));
 	zassert_equal(version, UCSI_VERSION);
 }
