@@ -16,6 +16,7 @@ i2c3ALT: &i2c3 {
 
 #include "../adc.dtsi"
 #include "../brox.dtsi"
+#include "../fan.dtsi"
 #include "../generated.dtsi"
 #include "../gpio.dtsi"
 #include "../i2c.dtsi"
