@@ -157,7 +157,7 @@ def node_is_valid(node, i2c_node, i2c_portmap):
         logging.error("Compatible not found: %s", node.name)
         return False
 
-    if i2c_node and i2c_node.name not in i2c_portmap:
+    if i2c_node is None or i2c_node.name not in i2c_portmap:
         logging.info(
             "Component %s(%s) not on I2C bus, skip it",
             node.name,
@@ -340,7 +340,17 @@ def insert_i2c_component(ctype, node, usbc_port, i2c_portmap, manifest):
         i2c_portmap: Dict of the mapping from I2C name to remote port number.
         manifest: Manifest object.
     """
-    if not node_is_valid(node, node.parent, i2c_portmap):
+
+    # go up the devicetree to find the i2c ancestor node
+    i2c_node = node.parent
+    while i2c_node and i2c_node.name not in i2c_portmap:
+        i2c_node = i2c_node.parent
+
+    reg_node = node
+    while reg_node and "reg" not in reg_node.props:
+        reg_node = reg_node.parent
+
+    if not node_is_valid(node, i2c_node, i2c_portmap):
         return
 
     # TODO(b/308031064): Add the probe methods if multiple components share the
@@ -351,8 +361,8 @@ def insert_i2c_component(ctype, node, usbc_port, i2c_portmap, manifest):
     manifest.insert_component(
         ctype,
         compatible_name_parser(ctype, node.props["compatible"].val[0]),
-        i2c_portmap[node.parent.name],
-        node.props["reg"].val[0],
+        i2c_portmap[i2c_node.name],
+        reg_node.props["reg"].val[0],
         usbc_port,
     )
 
