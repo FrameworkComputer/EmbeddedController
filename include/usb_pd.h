@@ -102,6 +102,9 @@ enum pd_rx_errors {
  *
  * Note: Some bits and decode macros are defined in ec_commands.h
  */
+
+#define PDO_GET_TYPE(pdo) (((pdo) >> 30) & 3)
+
 #define PDO_FIXED_SUSPEND BIT(28) /* USB Suspend supported */
 /* Higher capability in vSafe5V sink PDO */
 #define PDO_FIXED_SNK_HIGHER_CAP BIT(28)
@@ -115,6 +118,9 @@ enum pd_rx_errors {
 #define PDO_FIXED_CURR(ma) (((ma) / 10) << 0) /* Max current in 10mA units */
 #define PDO_FIXED_GET_VOLT(pdo) (((pdo >> 10) & 0x3FF) * 50)
 #define PDO_FIXED_GET_CURR(pdo) ((pdo & 0x3FF) * 10)
+#define PDO_FIXED_GET_DRP BIT(29)
+#define PDO_FIXED_GET_UNCONSTRAINED_PWR BIT(27)
+#define PDO_FIXED_GET_USB_COMM_CAPABLE BIT(26)
 
 #define PDO_FIXED(mv, ma, flags) \
 	(PDO_FIXED_VOLT(mv) | PDO_FIXED_CURR(ma) | (flags))
