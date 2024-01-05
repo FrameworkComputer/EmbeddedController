@@ -12,9 +12,6 @@
 
 #include <unistd.h>
 
-// We should define the getentropy for boringssl 24.
-#if BORINGSSL_API_VERSION >= 24
-
 // We don't want to conflict with the linux getentropy.
 #if !defined(__linux__)
 int getentropy(void *buffer, size_t length)
@@ -35,20 +32,3 @@ int getentropy(void *buffer, size_t length)
 	return 0;
 }
 #endif // !defined(__linux__)
-
-// TDOD(b/273639386): Remove this after we uprev the boringssl.
-#else
-
-void CRYPTO_sysrand(uint8_t *out, size_t requested)
-{
-	trng_init();
-	trng_rand_bytes(out, requested);
-	trng_exit();
-}
-
-void CRYPTO_sysrand_for_seed(uint8_t *out, size_t requested)
-{
-	return CRYPTO_sysrand(out, requested);
-}
-
-#endif // BORINGSSL_API_VERSION >= 24

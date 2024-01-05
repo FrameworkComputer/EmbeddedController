@@ -46,16 +46,17 @@ ZTEST(boringssl_crypto, test_rand)
 	zassert_true(memcmp(buf1, buf2, sizeof(buf1)) != 0);
 }
 
-ZTEST(boringssl_crypto, test_rand_too_big_request)
+ZTEST(boringssl_crypto, test_rand_large_request)
 {
-	uint8_t *buffer = malloc(UINT16_MAX + 1);
-
 	/*
-	 * Requests bigger than UINT16_MAX causes k_oops() due to
-	 * Zephyr Entropy API limits.
+	 * Requests bigger than UINT16_MAX are not supported
+	 * by the Zephyr Entropy API. Make sure that BoringSSL can successfully
+	 * request more.
 	 */
-	expected_reason = K_ERR_KERNEL_OOPS;
-	CRYPTO_sysrand(buffer, UINT16_MAX + 1);
+	const int buf_size = UINT16_MAX + 1;
+	uint8_t *buffer = calloc(buf_size, 1);
+	uint8_t *zeroes = calloc(buf_size, 1);
 
-	ztest_test_fail();
+	CRYPTO_sysrand(buffer, buf_size);
+	zassert_true(memcmp(buffer, zeroes, buf_size) != 0);
 }

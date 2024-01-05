@@ -100,9 +100,7 @@ CPPFLAGS += -I$(shell pwd)/third_party/boringssl/include
 
 # Disable the unsupported features to prevent the usage of pthread & socket
 # related types in headers.
-# TODO(b/273639386): Remove these workarounds when the upstream supports
-# better way to disable the filesystem, threads and locks usages.
-CPPFLAGS += -D__TRUSTY__
+CPPFLAGS += -DCROS_EC
 
 $(out)/RO/ec.RO.elf $(out)/RO/ec.RO_B.elf: LDFLAGS_EXTRA += $(BORINGSSL_LDFLAGS)
 $(out)/RO/ec.RO.elf $(out)/RO/ec.RO_B.elf: $(BORINGSSL_OUTDIR)/libcrypto.a
