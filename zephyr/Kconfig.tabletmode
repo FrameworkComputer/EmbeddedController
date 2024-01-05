@@ -27,4 +27,14 @@ config PLATFORM_EC_GMR_TABLET_MODE
       the sensor and direct its mapping to gmr_tablet_switch_isr
       in common/tablet_mode.c.
 
+config PLATFORM_EC_DPTF_MOTION_LID_NO_GMR_SENSOR
+    bool
+    default y
+    depends on !PLATFORM_EC_GMR_TABLET_MODE
+    depends on PLATFORM_EC_MOTIONSENSE
+    help
+      Enable lid angle calculation as the only source of the tablet mode switch.
+      For this to work, we must have enabled tablet mode, not have a GMR sensor,
+      and have motionsense enabled.
+
 endif # PLATFORM_EC_TABLET_MODE
