@@ -67,6 +67,11 @@ BUILD_ASSERT(ARRAY_SIZE(pd_config_array) == CONFIG_USB_PD_PORT_MAX_COUNT);
 /* Store the task data */
 static struct intel_altmode_data intel_altmode_task_data;
 
+/*
+ *Store pd_intel_altmode_task thread state- suspended(false) or resumed(true)
+ */
+static bool thread_state;
+
 static void intel_altmode_post_event(enum intel_altmode_event event)
 {
 	k_event_post(&intel_altmode_task_data.evt, BIT(event));
@@ -244,6 +249,37 @@ K_THREAD_DEFINE(intel_altmode_tid, CONFIG_TASK_PD_ALTMODE_INTEL_STACK_SIZE,
 void intel_altmode_task_start(void)
 {
 	k_thread_start(intel_altmode_tid);
+
+	/* Resume thread state */
+	thread_state = true;
+}
+
+void suspend_pd_intel_altmode_task(void)
+{
+	k_thread_suspend(intel_altmode_tid);
+
+	/* Suspend thread state */
+	thread_state = false;
+}
+
+void resume_pd_intel_altmode_task(void)
+{
+	k_thread_resume(intel_altmode_tid);
+
+	/* Resume thread state */
+	thread_state = true;
+
+	/*
+	 * Suspended PD altmode task can miss the altmode events.
+	 * Therefore, explicitly post event so PD altmode task updates
+	 * the mux status after resuming.
+	 */
+	intel_altmode_post_event(INTEL_ALTMODE_EVENT_FORCE);
+}
+
+bool is_pd_intel_altmode_task_suspended(void)
+{
+	return !thread_state;
 }
 
 #ifdef CONFIG_CONSOLE_CMD_USBPD_INTEL_ALTMODE

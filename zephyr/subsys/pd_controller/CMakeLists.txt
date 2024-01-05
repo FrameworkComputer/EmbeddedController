@@ -4,3 +4,5 @@ zephyr_library_include_directories(include)
 
 zephyr_library_sources_ifdef(CONFIG_USB_PD_ALTMODE_INTEL
 	pd_task_intel_altmode.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_FW_UPDATE
+	retimer_fw_update.c)
