@@ -107,3 +107,23 @@ bool pd_capable(int port)
 {
 	return true;
 }
+
+void pd_set_new_power_request(int port)
+{
+}
+
+__override bool board_is_usb_pd_port_present(int port)
+{
+	if (port == 0)
+		return true;
+	return false;
+}
+
+void pd_request_power_swap(int port)
+{
+}
+
+int board_set_active_charge_port(int charge_port)
+{
+	return EC_SUCCESS;
+}
