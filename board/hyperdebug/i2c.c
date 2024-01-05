@@ -810,7 +810,7 @@ static int command_i2c_set_mode(int argc, const char **argv)
 		if (*e)
 			return EC_ERROR_PARAM5;
 		STM32_I2C_CR1(index) = STM32_I2C_CR1_PE | I2C_CR1_DEVICE_FLAGS;
-		STM32_I2C_TIMEOUTR(index) = 0x00008FFF;
+		STM32_I2C_TIMEOUTR(index) = 0x8FFF0000;
 		/*
 		 * "Own address" cannot be modified while active, so first
 		 * disable, then set desired address while enabling, for the
