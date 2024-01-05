@@ -8,6 +8,5 @@ zephyr_library_sources(
 		"src/ppc_config.c"
 		"src/form_factor.c"
 		"src/alt_charger.c"
-		"src/keyboard.c"
 )
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "src/fan.c")

@@ -5,7 +5,6 @@
 zephyr_library_sources(
 	"src/usb_mux_config.c"
 	"src/kb_backlight.c"
-	"src/keyboard.c"
 	"src/sensor.c"
 	"src/battery_present.c"
 	"src/alt_charger.c"
