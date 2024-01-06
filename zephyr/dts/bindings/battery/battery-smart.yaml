@@ -18,6 +18,7 @@ properties:
       - "byd,yt39x"
       - "byd,l21b2pg2"
       - "byd,l22b3pg0"
+      - "byd,l23b2pg5"
       - "byd,x0y5m"
       - "byd,wv3k8"
       - "cdt,c340152"
@@ -96,4 +97,5 @@ properties:
       - "sunwoda,l21d2pg2"
       - "sunwoda,l22d3pg0"
       - "sunwoda,l22d3pg1"
+      - "sunwoda,l23d2pg5"
       - "sunwoda,ctgkt"

@@ -1,0 +1,53 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: "SUNWODA L23D2PG5"
+compatible: "sunwoda,l23d2pg5"
+
+include: battery-smart.yaml
+
+properties:
+  enum-name:
+    type: string
+    default: "sunwoda,l23d2pg5"
+
+  # Fuel gauge
+  manuf_name:
+    default: "Sunwoda"
+  device_name:
+    default: "L23D2PG5"
+  ship_mode_reg_addr:
+    default: 0x34
+  ship_mode_reg_data:
+    default: [0x0000, 0x1000]
+  flags:
+    default: 0x00
+  fet_reg_addr:
+    default: 0x34
+  fet_reg_mask:
+    default: 0x0100
+  fet_disconnect_val:
+    default: 0x0100
+
+  # Battery info
+  voltage_max:
+    default: 8860
+  voltage_normal:
+    default: 7700
+  voltage_min:
+    default: 6000
+  precharge_current:
+    default: 190
+  start_charging_min_c:
+    default: 0
+  start_charging_max_c:
+    default: 50
+  charging_min_c:
+    default: 0
+  charging_max_c:
+    default: 63
+  discharging_min_c:
+    default: -20
+  discharging_max_c:
+    default: 63
