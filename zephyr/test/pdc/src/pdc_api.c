@@ -87,3 +87,23 @@ ZTEST_USER(pdc_api, test_get_capability)
 	zassert_equal(out.bcdPDVersion, in.bcdPDVersion);
 	zassert_equal(out.bcdUSBTypeCVersion, in.bcdUSBTypeCVersion);
 }
+
+ZTEST_USER(pdc_api, test_get_connector_capability)
+{
+	union connector_capability_t in, out;
+
+	in.op_mode_rp_only = 1;
+	in.op_mode_rd_only = 0;
+	in.op_mode_usb2 = 1;
+	zassert_ok(emul_pdc_set_connector_capability(emul, &in));
+
+	zassert_ok(pdc_get_connector_capability(dev, &out),
+		   "Failed to get connector capability");
+
+	k_sleep(K_MSEC(100));
+
+	/* Verify data from emulator */
+	zassert_equal(out.op_mode_rp_only, in.op_mode_rp_only);
+	zassert_equal(out.op_mode_rd_only, in.op_mode_rd_only);
+	zassert_equal(out.op_mode_usb2, in.op_mode_usb2);
+}

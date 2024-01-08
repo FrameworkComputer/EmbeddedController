@@ -148,6 +148,21 @@ static int get_capability(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int get_connector_capability(struct rts5453p_emul_pdc_data *data,
+				    const union rts54_request *req)
+{
+	LOG_INF("GET_CONNECTOR_CAPABILITY port=%d",
+		req->get_capability.port_num);
+
+	data->response.capability.byte_count =
+		sizeof(union connector_capability_t);
+	data->response.connector_capability.caps = data->connector_capability;
+
+	send_response(data);
+
+	return 0;
+}
+
 static int tcpm_reset(struct rts5453p_emul_pdc_data *data,
 		      const union rts54_request *req)
 {
@@ -250,7 +265,7 @@ const struct commands sub_cmd_x0E[] = {
 	{ .code = 0x01, HANDLER_DEF(ppm_reset) },
 	{ .code = 0x03, HANDLER_DEF(connector_reset) },
 	{ .code = 0x06, HANDLER_DEF(get_capability) },
-	{ .code = 0x07, HANDLER_DEF(unsupported) },
+	{ .code = 0x07, HANDLER_DEF(get_connector_capability) },
 	{ .code = 0x09, HANDLER_DEF(unsupported) },
 	{ .code = 0x0B, HANDLER_DEF(unsupported) },
 	{ .code = 0x0C, HANDLER_DEF(unsupported) },
@@ -498,6 +513,8 @@ static int rts5453p_emul_init(const struct emul *emul,
 	data->pdc_data.capability.bcdPDVersion = 0xBEEF;
 	data->pdc_data.capability.bcdUSBTypeCVersion = 0xCAFE;
 
+	data->pdc_data.connector_capability.op_mode_usb3 = 1;
+
 	k_work_init_delayable(&data->pdc_data.delay_work,
 			      delayable_work_handler);
 
@@ -538,10 +555,23 @@ static int emul_realtek_rts54xx_set_capability(const struct emul *target,
 	return 0;
 }
 
+static int emul_realtek_rts54xx_set_connector_capability(
+	const struct emul *target, const union connector_capability_t *caps)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	data->connector_capability = *caps;
+
+	return 0;
+}
+
 struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.set_response_delay = emul_realtek_rts54xx_set_response_delay,
 	.get_connector_reset = emul_realtek_rts54xx_get_connector_reset,
 	.set_capability = emul_realtek_rts54xx_set_capability,
+	.set_connector_capability =
+		emul_realtek_rts54xx_set_connector_capability,
 };
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \

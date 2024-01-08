@@ -110,6 +110,11 @@ union rts54_request {
 		struct rts54_subcommand_header header;
 		uint8_t port_num;
 	} get_capability;
+
+	struct get_connector_capability_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+	} get_connector_capability;
 };
 
 union rts54_response {
@@ -140,6 +145,11 @@ union rts54_response {
 		uint8_t byte_count;
 		struct capability_t caps;
 	} __packed capability;
+
+	struct get_connector_capability_response {
+		uint8_t byte_count;
+		union connector_capability_t caps;
+	} __packed connector_capability;
 };
 
 enum cmd_sts_t {
@@ -168,6 +178,8 @@ struct rts5453p_emul_pdc_data {
 	union set_notification_data notification_data[2];
 	struct rts54_ic_status ic_status;
 	struct capability_t capability;
+	union connector_capability_t connector_capability;
+
 	union rts54_request request;
 
 	bool read_ping;
