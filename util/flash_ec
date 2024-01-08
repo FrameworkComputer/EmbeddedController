@@ -473,6 +473,10 @@ servo_has_dut_i2c_mux() {
 	dut_control -i dut_i2c_mux >/dev/null 2>&1
 }
 
+servo_has_dut_i2c_en() {
+	dut_control -i dut_i2c_en >/dev/null 2>&1
+}
+
 servo_ec_hard_reset_or_die() {
 	dut_control_or_die cold_reset:on
 	dut_control_or_die cold_reset:off
@@ -1435,6 +1439,14 @@ function flash_it83xx() {
 		info "Switching DUT I2C Mux to ${CHIP}"
 		servo_save_add "dut_i2c_mux"
 		dut_control dut_i2c_mux:ec_prog
+	fi
+
+	# The board overlay defines "dut_i2c_en" if there is a signal that
+	# must be asserted to access the I2C programming pins on the dut.
+	if servo_has_dut_i2c_en; then
+		info "Enabling I2C programming to ${CHIP}"
+		servo_save_add "dut_i2c_en"
+		dut_control dut_i2c_en:on
 	fi
 
 	# We need to send the special waveform very soon after the EC powers on
