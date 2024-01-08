@@ -14,6 +14,7 @@
 #define __EMUL_REALTEK_RTS5453P_H
 
 #include "emul/emul_common_i2c.h"
+#include "zephyr/kernel.h"
 
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
@@ -90,6 +91,19 @@ union rts54_request {
 		struct rts54_subcommand_header header;
 		uint8_t port_num;
 	} ppm_reset;
+
+	struct tcpm_reset_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+		uint8_t reset_type : 2;
+		uint8_t reserved : 6;
+	} tcpm_reset;
+
+	struct connector_reset_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+		uint8_t hard_reset;
+	} connector_reset;
 };
 
 union rts54_response {
@@ -139,6 +153,7 @@ struct ping_status {
 struct rts5453p_emul_pdc_data {
 	uint16_t ucsi_version;
 	union vendor_cmd vnd_command;
+	uint8_t connector_reset_type;
 	union set_notification_data notification_data[2];
 	struct rts54_ic_status ic_status;
 	union rts54_request request;

@@ -15,6 +15,8 @@
 typedef int (*emul_pdc_set_ucsi_version_t)(const struct emul *target,
 					   uint16_t version);
 typedef int (*emul_pdc_reset_t)(const struct emul *target);
+typedef int (*emul_pdc_get_connector_reset_t)(const struct emul *dev,
+					      enum connector_reset_t *type);
 typedef int (*emul_pdc_set_capability_t)(const struct emul *target,
 					 const struct capability_t *caps);
 typedef int (*emul_pdc_set_connector_capability_t)(
@@ -53,6 +55,7 @@ __subsystem struct emul_pdc_api_t {
 	emul_pdc_set_response_delay_t set_response_delay;
 	emul_pdc_set_ucsi_version_t set_ucsi_version;
 	emul_pdc_reset_t reset;
+	emul_pdc_get_connector_reset_t get_connector_reset;
 	emul_pdc_set_capability_t set_capability;
 	emul_pdc_set_connector_capability_t set_connector_capability;
 	emul_pdc_get_ccom_t get_ccom;
@@ -96,6 +99,22 @@ static inline int emul_pdc_reset(const struct emul *target)
 
 	if (api->reset) {
 		return api->reset(target);
+	}
+	return -ENOTSUP;
+}
+
+static inline int emul_pdc_get_connector_reset(const struct emul *target,
+					       enum connector_reset_t *type)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	struct emul_pdc_api_t *api =
+		(struct emul_pdc_api_t *)target->backend_api;
+
+	if (api->get_connector_reset) {
+		return api->get_connector_reset(target, type);
 	}
 	return -ENOTSUP;
 }

@@ -7,6 +7,7 @@
 #include "console.h"
 #include "drivers/pdc.h"
 #include "emul/emul_common_i2c.h"
+#include "emul/emul_pdc.h"
 #include "emul/emul_realtek_rts54xx.h"
 #include "i2c.h"
 
@@ -25,7 +26,12 @@ LOG_MODULE_REGISTER(test_pdc_api, LOG_LEVEL_INF);
 const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
 const struct device *dev = DEVICE_DT_GET(RTS5453P_NODE);
 
-ZTEST_SUITE(pdc_api, NULL, NULL, NULL, NULL, NULL);
+void pdc_before_test(void *data)
+{
+	emul_pdc_set_response_delay(emul, 0);
+}
+
+ZTEST_SUITE(pdc_api, NULL, NULL, pdc_before_test, NULL, NULL);
 
 ZTEST_USER(pdc_api, test_get_ucsi_version)
 {
@@ -39,7 +45,24 @@ ZTEST_USER(pdc_api, test_get_ucsi_version)
 
 ZTEST_USER(pdc_api, test_reset)
 {
-	/* TODO - why is PDC in IRQ state upon startup?
-	 * zassert_ok(pdc_reset(dev), "Failed to reset PDC");
-	 */
+	zassert_ok(pdc_reset(dev), "Failed to reset PDC");
+
+	k_sleep(K_MSEC(500));
+}
+
+ZTEST_USER(pdc_api, test_connector_reset)
+{
+	enum connector_reset_t type = 0;
+
+	emul_pdc_set_response_delay(emul, 50);
+	zassert_ok(pdc_connector_reset(dev, PD_HARD_RESET),
+		   "Failed to reset PDC");
+
+	k_sleep(K_MSEC(5));
+	emul_pdc_get_connector_reset(emul, &type);
+	zassert_not_equal(type, PD_HARD_RESET);
+
+	k_sleep(K_MSEC(100));
+	emul_pdc_get_connector_reset(emul, &type);
+	zassert_equal(type, PD_HARD_RESET);
 }

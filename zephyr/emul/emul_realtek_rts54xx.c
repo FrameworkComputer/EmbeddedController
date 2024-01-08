@@ -122,11 +122,24 @@ static int ppm_reset(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int connector_reset(struct rts5453p_emul_pdc_data *data,
+			   const union rts54_request *req)
+{
+	LOG_INF("CONNECTOR_RESET port=%d, hard_reset=%d",
+		req->connector_reset.port_num, req->connector_reset.hard_reset);
+
+	data->connector_reset_type = req->connector_reset.hard_reset;
+	memset(&data->response, 0, sizeof(union rts54_response));
+	send_response(data);
+
+	return 0;
+}
+
 static int tcpm_reset(struct rts5453p_emul_pdc_data *data,
 		      const union rts54_request *req)
 {
-	LOG_INF("%s", __func__);
-
+	LOG_INF("TCPM_RESET port=%d, reset_type=0x%X", req->tcpm_reset.port_num,
+		req->tcpm_reset.reset_type);
 	memset(&data->response, 0, sizeof(union rts54_response));
 	send_response(data);
 
@@ -222,7 +235,7 @@ const struct commands sub_cmd_x08[] = {
 
 const struct commands sub_cmd_x0E[] = {
 	{ .code = 0x01, HANDLER_DEF(ppm_reset) },
-	{ .code = 0x03, HANDLER_DEF(unsupported) },
+	{ .code = 0x03, HANDLER_DEF(connector_reset) },
 	{ .code = 0x06, HANDLER_DEF(unsupported) },
 	{ .code = 0x07, HANDLER_DEF(unsupported) },
 	{ .code = 0x09, HANDLER_DEF(unsupported) },
@@ -461,6 +474,7 @@ static int rts5453p_emul_init(const struct emul *emul,
 
 	i2c_common_emul_init(&data->common);
 
+	data->pdc_data.connector_reset_type = 0xFF;
 	data->pdc_data.ic_status.fw_main_version = 0xAB;
 	data->pdc_data.ic_status.pd_version[0] = 0xCD;
 	data->pdc_data.ic_status.pd_revision[0] = 0xEF;
@@ -479,13 +493,26 @@ static int emul_realtek_rts54xx_set_response_delay(const struct emul *target,
 	struct rts5453p_emul_pdc_data *data =
 		rts5453p_emul_get_pdc_data(target);
 
+	LOG_INF("set_response_delay delay_ms=%d", delay_ms);
 	data->delay_ms = delay_ms;
+
+	return 0;
+}
+static int
+emul_realtek_rts54xx_get_connector_reset(const struct emul *target,
+					 enum connector_reset_t *type)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	*type = data->connector_reset_type;
 
 	return 0;
 }
 
 struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.set_response_delay = emul_realtek_rts54xx_set_response_delay,
+	.get_connector_reset = emul_realtek_rts54xx_get_connector_reset,
 };
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \
