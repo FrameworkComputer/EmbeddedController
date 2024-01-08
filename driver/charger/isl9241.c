@@ -144,7 +144,7 @@ static enum ec_error_list isl9241_set_frequency(int chgnum, int freq_khz)
 	rv = isl9241_read(chgnum, ISL9241_REG_CONTROL1, &reg);
 	if (rv) {
 		CPRINTS("Could not read CONTROL1. (rv=%d)", rv);
-		return rv;
+		goto error;
 	}
 	/* 000 = 1420kHz */
 	/* 001 = 1180kHz */
@@ -174,11 +174,15 @@ static enum ec_error_list isl9241_set_frequency(int chgnum, int freq_khz)
 	reg &= ~ISL9241_CONTROL1_SWITCHING_FREQ_MASK;
 	reg |= (freq << 7);
 	rv = isl9241_write(chgnum, ISL9241_REG_CONTROL1, reg);
-	if (rv)
-		return rv;
+	if (rv) {
+		CPRINTS("Could not write CONTROL1. (rv=%d)", rv);
+		goto error;
+	}
 
+error:
 	mutex_unlock(&control1_mutex_isl9241);
-	return EC_SUCCESS;
+
+	return rv;
 }
 
 static enum ec_error_list isl9241_get_option(int chgnum, int *option)
