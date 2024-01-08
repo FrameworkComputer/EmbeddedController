@@ -11,8 +11,6 @@
 
 #include <unistd.h>
 
-// We don't want to conflict with the linux getentropy.
-#if !defined(__linux__)
 int getentropy(void *buffer, size_t length)
 {
 	if (!buffer) {
@@ -30,4 +28,3 @@ int getentropy(void *buffer, size_t length)
 	trng_exit();
 	return 0;
 }
-#endif // !defined(__linux__)
