@@ -4,7 +4,7 @@
  */
 
 #include "emul/emul_common_i2c.h"
-#include "emul/emul_realtek_rts5453p.h"
+#include "emul/emul_realtek_rts54xx.h"
 #include "emul/emul_stub_device.h"
 
 #include <zephyr/device.h>
@@ -17,7 +17,7 @@
 #include <zephyr/ztest.h>
 #endif
 
-#define DT_DRV_COMPAT realtek_rts5453p_emul
+#define DT_DRV_COMPAT realtek_rts54_pdc
 
 #define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
 LOG_MODULE_REGISTER(realtek_rts5453_emul);
@@ -174,8 +174,6 @@ static int rts5453p_emul_init(const struct emul *emul,
 			    NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(RTS5453P_EMUL_DEFINE)
-
-DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
 
 struct i2c_common_emul_data *
 rts5453p_emul_get_i2c_common_data(const struct emul *emul)

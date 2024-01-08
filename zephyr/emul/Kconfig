@@ -159,10 +159,10 @@ config EMUL_FPC1025
 	  mode) that can be issued by the public driver (without FPC private
 	  library)
 
-config EMUL_REALTEK_RTS5453P
+config EMUL_REALTEK_RTS54_PDC
 	bool "Realtek RTS5453P Type-C Power Delivery Controller emulator"
 	default y
-	depends on DT_HAS_REALTEK_RTS5453P_EMUL_ENABLED
+	depends on DT_HAS_REALTEK_RTS54_PDC_ENABLED && EMUL
 	select EMUL_COMMON_I2C
 	help
 	  Enable the Realtek RTS5453P emulator. This driver use emulated I2C bus.

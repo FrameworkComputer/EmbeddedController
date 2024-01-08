@@ -22,7 +22,7 @@ enum tcpc_cc_polarity pd_get_polarity(int port)
 
 enum pd_data_role pd_get_data_role(int port)
 {
-	return EC_PD_DATA_ROLE_UFP;
+	return PD_ROLE_UFP;
 }
 
 int pd_is_connected(int port)

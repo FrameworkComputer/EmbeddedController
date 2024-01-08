@@ -1208,12 +1208,6 @@
 		reg = <0x9>;
 		battery = <&battery>;
 	};
-
-	rts5453p_emul: rts5453p@aa {
-		compatible = "realtek,rts5453p-emul";
-		reg = <0xaa>;
-	};
-
 };
 
 /* Enable all thermistors for testing */

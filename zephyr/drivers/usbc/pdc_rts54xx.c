@@ -773,7 +773,7 @@ static void st_read_run(void *o)
 
 	/* Copy the received data to the user's buffer */
 	switch (data->cmd) {
-	case CMD_GET_IC_STATUS:
+	case CMD_GET_IC_STATUS: {
 		struct pdc_info_t *info = (struct pdc_info_t *)data->user_buf;
 
 		/* Realtek Is running flash code: Byte 1 */
@@ -806,6 +806,7 @@ static void st_read_run(void *o)
 				info->pd_version, info->pd_revision);
 		}
 		break;
+	}
 	case CMD_GET_VBUS_VOLTAGE:
 		/*
 		 * Realtek Voltage reading is on Byte16 and Byte17, but
@@ -817,7 +818,7 @@ static void st_read_run(void *o)
 			((data->rd_buf[2] << 8) | data->rd_buf[1]) *
 			VOLTAGE_SCALE_FACTOR;
 		break;
-	case CMD_GET_CONNECTOR_STATUS:
+	case CMD_GET_CONNECTOR_STATUS: {
 		/* Map Realtek GET_RTK_STATUS bits to UCSI GET_CONNECTOR_STATUS
 		 */
 		struct connector_status_t *cs =
@@ -882,7 +883,8 @@ static void st_read_run(void *o)
 		 * byte) */
 		cs->voltage_reading = data->rd_buf[18] << 8 | data->rd_buf[17];
 		break;
-	case CMD_GET_ERROR_STATUS:
+	}
+	case CMD_GET_ERROR_STATUS: {
 		/* Map Realtek GET_ERROR_STATUS bits to UCSI GET_ERROR_STATUS */
 		union error_status_t *es =
 			(union error_status_t *)data->user_buf;
@@ -920,6 +922,7 @@ static void st_read_run(void *o)
 		 * states
 		 */
 		break;
+	}
 	default:
 		/* No preprocessing needed for the user data */
 		memcpy(data->user_buf, data->rd_buf + offset, len);

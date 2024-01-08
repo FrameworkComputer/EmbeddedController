@@ -31,6 +31,8 @@ config CONSOLE_CMD_PDC_CCG8
 config USBC_PDC_RTS54XX
 	bool "Realtek RTS545x Power Delivery Controller driver"
 	default y if DT_HAS_REALTEK_RTS54_PDC_ENABLED
+	select SMF
+	select SMF_ANCESTOR_SUPPORT
 	help
 	  This option enables the Realtek RTS545x Power Delivery Controller.
 

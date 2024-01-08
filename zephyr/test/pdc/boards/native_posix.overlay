@@ -1,0 +1,38 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_posix.dts>
+
+/ {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		/* Configure just the DB port
+		 */
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			pdc = <&rts5453p_emul>;
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_usb_c0: ec_i2c_usb_c0 {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_USB_C0_TCPC";
+		};
+	};
+};
+
+&i2c0 {
+	rts5453p_emul: rts5453p@66 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x66>;
+		irq-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+	};
+};
