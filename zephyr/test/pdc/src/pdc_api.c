@@ -6,6 +6,7 @@
 #include "common.h"
 #include "console.h"
 #include "drivers/pdc.h"
+#include "drivers/ucsi_v3.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_pdc.h"
 #include "emul/emul_realtek_rts54xx.h"
@@ -56,7 +57,7 @@ ZTEST_USER(pdc_api, test_connector_reset)
 
 	emul_pdc_set_response_delay(emul, 50);
 	zassert_ok(pdc_connector_reset(dev, PD_HARD_RESET),
-		   "Failed to reset PDC");
+		   "Failed to reset connector");
 
 	k_sleep(K_MSEC(5));
 	emul_pdc_get_connector_reset(emul, &type);
@@ -65,4 +66,24 @@ ZTEST_USER(pdc_api, test_connector_reset)
 	k_sleep(K_MSEC(100));
 	emul_pdc_get_connector_reset(emul, &type);
 	zassert_equal(type, PD_HARD_RESET);
+}
+
+ZTEST_USER(pdc_api, test_get_capability)
+{
+	struct capability_t in, out;
+
+	in.bcdBCVersion = 0x12;
+	in.bcdPDVersion = 0x34;
+	in.bcdUSBTypeCVersion = 0x56;
+
+	zassert_ok(emul_pdc_set_capability(emul, &in));
+
+	zassert_ok(pdc_get_capability(dev, &out), "Failed to get capability");
+
+	k_sleep(K_MSEC(500));
+
+	/* Verify versioning from emulator */
+	zassert_equal(out.bcdBCVersion, in.bcdBCVersion);
+	zassert_equal(out.bcdPDVersion, in.bcdPDVersion);
+	zassert_equal(out.bcdUSBTypeCVersion, in.bcdUSBTypeCVersion);
 }
