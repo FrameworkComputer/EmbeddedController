@@ -10,7 +10,14 @@
 
 #define CONFIG_FLASH_WRITE_SIZE 0x1 /* minimum write size */
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE 256 /* one page size for write */
-#define CONFIG_FLASH_ERASE_SIZE 0x10000
+/*
+ * This flash erase size is used for alignment check only. The actual erase
+ * is done in the Zephyr upstream driver, which doesn't use this CONFIG value.
+ * Instead, it dynamically picks the best erase size from 4KB(SE) or 64KB(BE).
+ *
+ * So use the smallest one for alignment check.
+ */
+#define CONFIG_FLASH_ERASE_SIZE 0x1000
 /*
  * The smallest protection bank size is 1/8 of 512 KB or 1/16 of 1M flash,
  * i.e. 64KB.
