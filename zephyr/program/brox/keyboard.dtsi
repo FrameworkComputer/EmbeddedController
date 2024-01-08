@@ -33,11 +33,6 @@
 		     &kso9_default
 		     &kso10_default
 		     &kso11_default
-		     &kso12_default
-		     &kso13_default
-		     &kso14_default
-		     &kso15_default
-		     &kso16_gpc3_default
-		     &kso17_gpc5_default>;
+		     &kso12_default>;
 	pinctrl-names = "default";
 };
