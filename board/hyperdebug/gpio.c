@@ -204,8 +204,10 @@ __attribute__((noinline)) void overrun(struct monitoring_slot_t *slot)
 {
 	struct cyclic_buffer_header_t *buffer_header = slot->buffer;
 	gpio_disable_interrupt(slot->gpio_signal);
-	buffer_header->overrun = 1;
-	atomic_add(&num_cur_error_conditions, 1);
+	if (!buffer_header->overrun) {
+		buffer_header->overrun = 1;
+		atomic_add(&num_cur_error_conditions, 1);
+	}
 }
 
 /*
@@ -299,7 +301,8 @@ __attribute((section(".bss.vector_table"))) void (*sram_vectors[125])(void);
 
 static void board_gpio_init(void)
 {
-	size_t interrupt_handler_size = &edge_int_end - &edge_int;
+	size_t interrupt_handler_size = THUMB_CODE_TO_DATA_PTR(&edge_int_end) -
+					THUMB_CODE_TO_DATA_PTR(&edge_int);
 	ASSERT(interrupt_handler_size <= sizeof(monitoring_slots[0].code));
 
 	/* Mark every slot as unused. */
