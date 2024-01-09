@@ -95,7 +95,7 @@
 			gpios = <&gpioc 4 GPIO_INPUT>;
 		};
 		gpio_ec_slp_sus_l: ec_slp_sus_l {
-			gpios = <&gpioe 5 GPIO_OUTPUT>;
+			gpios = <&gpioe 5 GPIO_INPUT>;
 		};
 		gpio_ec_voldn_btn_odl: ec_voldn_btn_odl {
 			gpios = <&gpiod 4 GPIO_INPUT>;
@@ -128,6 +128,12 @@
 		gpio_imvp9_vrrdy_od: imvp9_vrrdy_od {
 			gpios = <&gpioh 3 GPIO_INPUT>;
 		};
+		gpio_ish_i2c_ec_scl: ish_i2c_ec_scl {
+			gpios = <&gpioc 7 GPIO_INPUT>;
+		};
+		gpio_ish_i2c_ec_sda: ish_i2c_ec_sda {
+			gpios = <&gpiof 7 GPIO_INPUT>;
+		};
 		gpio_lid_open: lid_open {
 			gpios = <&gpiob 1 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
@@ -159,10 +165,6 @@
 			i2c-port = <&i2c1>;
 			enum-names = "I2C_PORT_PD";
 		};
-		i2c_ish_i2c_e: ish_i2c_e {
-			i2c-port = <&i2c2>;
-			enum-names = "I2C_PORT_ISH";
-		};
 		i2c_i2c_ec_pmc_pd: i2c_ec_pmc_pd {
 			i2c-port = <&i2c3ALT>;
 			enum-names = "I2C_PORT_PMC_PD";
@@ -183,10 +185,6 @@
 };
 
 &i2c1 {
-	status = "okay";
-};
-
-&i2c2 {
 	status = "okay";
 };
 
