@@ -109,6 +109,10 @@ __override void svdm_dp_post_config(int port)
 			    polarity_rm_dts(pd_get_polarity(port)));
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL |
 						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+	} else {
+		usb_mux_set(port, mux_mode & USB_PD_MUX_USB_ENABLED,
+			    USB_SWITCH_CONNECT,
+			    polarity_rm_dts(pd_get_polarity(port)));
 	}
 
 	dp_flags[port] |= DP_FLAGS_DP_ON;
