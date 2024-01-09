@@ -18,7 +18,7 @@ def register_brox_project(
             here / project_name / "project.conf",
         ]
 
-    register_binman_project(
+    return register_binman_project(
         project_name=project_name,
         zephyr_board="it82002aw",
         dts_overlays=[
@@ -34,7 +34,7 @@ def register_brox_project(
     )
 
 
-register_brox_project(
+brox = register_brox_project(
     project_name="brox",
 )
 
@@ -48,4 +48,12 @@ register_brox_project(
         # Project-specific KConfig customization.
         here / "brox-ish-ec" / "project.conf",
     ],
+)
+
+brox.variant(
+    project_name="brox-tokenized",
+    kconfig_files=[
+        here / "brox-tokenized" / "project.conf",
+    ],
+    modules=["picolibc", "ec", "pigweed"],
 )
