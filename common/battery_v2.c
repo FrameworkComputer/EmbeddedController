@@ -302,8 +302,8 @@ void update_dynamic_battery_info(void)
 {
 	static int batt_present;
 	uint8_t tmp;
-	int send_batt_status_event = 0;
-	int send_batt_info_event = 0;
+	__maybe_unused int send_batt_status_event = 0;
+	__maybe_unused int send_batt_info_event = 0;
 	struct charge_state_data *curr;
 	struct ec_response_battery_dynamic_info *const bd =
 		&battery_dynamic[BATT_IDX_MAIN];

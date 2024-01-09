@@ -56,7 +56,7 @@ static int gpspi_wait_byte(const int ctrl)
 /* NOTE: auto-read must be disabled before calling this routine! */
 static void gpspi_rx_fifo_clean(const int ctrl)
 {
-	uint8_t unused = 0;
+	__maybe_unused uint8_t unused = 0;
 
 	/* If ACTIVE and/or RXFF then clean it */
 	if ((MCHP_SPI_SR(ctrl) & 0x4) == 0x4)
