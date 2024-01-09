@@ -59,7 +59,7 @@ static int disable_tim2(void)
 	struct stm32_pclken pclken = { .bus = DT_CLOCKS_CELL(TIMER2_NODE, bus),
 				       .enr = DT_CLOCKS_CELL(TIMER2_NODE,
 							     bits) };
-	LL_TIM_DisableCounter(DT_REG_ADDR(TIMER2_NODE));
+	LL_TIM_DisableCounter((TIM_TypeDef *)(DT_REG_ADDR(TIMER2_NODE)));
 	irq_disable(DT_IRQN(TIMER2_NODE));
 
 	clock_control_off(DEVICE_DT_GET(STM32_CLOCK_CONTROL_NODE),
