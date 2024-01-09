@@ -123,7 +123,7 @@ static int gpio_mock_controller_port_get_direction(const struct device *port,
 	return -ENOTSUP;
 }
 #endif
-/* LCOV_EXCL_END */
+/* LCOV_EXCL_STOP */
 
 static int gpio_mock_controller_init(const struct device *dev)
 {

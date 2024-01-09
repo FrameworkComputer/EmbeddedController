@@ -34,4 +34,4 @@ const int pd_snk_pdo_cnt = ARRAY_SIZE(pd_snk_pdo);
 
 #endif /* CONFIG_USB_PD_CUSTOM_PDO */
 
-/* LCOV_EXCL_END */
+/* LCOV_EXCL_STOP */
