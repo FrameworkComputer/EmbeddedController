@@ -72,7 +72,7 @@
 
 		tcpc_port0: nct38xx-tcpc {
 			compatible = "nuvoton,nct38xx-tcpc";
-			gpio-dev = <&nct3808_0_P1>;
+			gpio-dev = <&nct38xx_gpio_0_P1>;
 			tcpc-flags = <(
 				TCPC_FLAGS_TCPCI_REV2_0 |
 				TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
@@ -84,7 +84,7 @@
 			irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
 		};
 
-		nct38xx-gpio {
+		nct38xx_gpio_0_P1: nct38xx-gpio {
 			#address-cells = <1>;
 			#size-cells = <0>;
 			compatible = "nuvoton,nct38xx-gpio";
@@ -109,7 +109,7 @@
 
 		tcpc_port2: nct38xx-tcpc {
 			compatible = "nuvoton,nct38xx-tcpc";
-			gpio-dev = <&nct3808_0_P2>;
+			gpio-dev = <&nct38xx_gpio_0_P2>;
 			tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
 			/* a duplicate of the <&gpio_usb_c0_c2_tcpc_int_odl>
 			 * node in "named-gpios". This is the Zephyr preferred
@@ -119,7 +119,7 @@
 			irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
 		};
 
-		nct38xx-gpio {
+		nct38xx_gpio_0_P2: nct38xx-gpio {
 			#address-cells = <1>;
 			#size-cells = <0>;
 			compatible = "nuvoton,nct38xx-gpio";
