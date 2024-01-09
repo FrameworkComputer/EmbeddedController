@@ -115,6 +115,11 @@ union rts54_request {
 		struct rts54_subcommand_header header;
 		uint8_t port_num;
 	} get_connector_capability;
+
+	struct get_error_status_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+	} get_error_status;
 };
 
 union rts54_response {
@@ -150,6 +155,18 @@ union rts54_response {
 		uint8_t byte_count;
 		union connector_capability_t caps;
 	} __packed connector_capability;
+
+	struct get_error_status_response {
+		uint8_t byte_count;
+		uint8_t unrecognized_command : 1;
+		uint8_t non_existent_connector_number : 1;
+		uint8_t invalid_command_specific_param : 1;
+		uint8_t incompatible_connector_partner : 1;
+		uint8_t cc_communication_error : 1;
+		uint8_t cmd_unsuccessful_dead_batt : 1;
+		uint8_t contract_negotiation_failed : 1;
+		uint8_t reserved : 1;
+	} error_status;
 };
 
 enum cmd_sts_t {
@@ -179,6 +196,7 @@ struct rts5453p_emul_pdc_data {
 	struct rts54_ic_status ic_status;
 	struct capability_t capability;
 	union connector_capability_t connector_capability;
+	union error_status_t error;
 
 	union rts54_request request;
 

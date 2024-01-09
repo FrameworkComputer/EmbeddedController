@@ -107,3 +107,30 @@ ZTEST_USER(pdc_api, test_get_connector_capability)
 	zassert_equal(out.op_mode_rd_only, in.op_mode_rd_only);
 	zassert_equal(out.op_mode_usb2, in.op_mode_usb2);
 }
+
+ZTEST_USER(pdc_api, test_get_error_status)
+{
+	union error_status_t in, out;
+
+	in.unrecognized_command = 1;
+	in.contract_negotiation_failed = 0;
+	in.invalid_command_specific_param = 1;
+	zassert_ok(emul_pdc_set_error_status(emul, &in));
+
+	zassert_ok(pdc_get_error_status(dev, &out),
+		   "Failed to get connector capability");
+	/* TODO(b/319730714) - back 2 back calls should provide EBUSY error but
+	 * driver thread doesn't become active to move out of IDLE state.
+	 * zassert_equal(pdc_get_error_status(dev, &out), -EBUSY);
+	 */
+	k_sleep(K_MSEC(100));
+
+	/* Verify data from emulator */
+	zassert_equal(out.unrecognized_command, in.unrecognized_command);
+	zassert_equal(out.contract_negotiation_failed,
+		      in.contract_negotiation_failed);
+	zassert_equal(out.invalid_command_specific_param,
+		      in.invalid_command_specific_param);
+
+	zassert_equal(pdc_get_error_status(dev, NULL), -EINVAL);
+}

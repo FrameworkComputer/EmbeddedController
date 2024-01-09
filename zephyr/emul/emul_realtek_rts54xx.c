@@ -174,6 +174,33 @@ static int tcpm_reset(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int get_error_status(struct rts5453p_emul_pdc_data *data,
+			    const union rts54_request *req)
+{
+	LOG_INF("GET_ERROR_STATUS port=%d", req->get_error_status.port_num);
+
+	data->response.error_status.byte_count =
+		sizeof(struct get_error_status_response) - 1;
+	data->response.error_status.unrecognized_command =
+		data->error.unrecognized_command;
+	data->response.error_status.non_existent_connector_number =
+		data->error.non_existent_connector_number;
+	data->response.error_status.invalid_command_specific_param =
+		data->error.invalid_command_specific_param;
+	data->response.error_status.incompatible_connector_partner =
+		data->error.incompatible_connector_partner;
+	data->response.error_status.cc_communication_error =
+		data->error.cc_communication_error;
+	data->response.error_status.cmd_unsuccessful_dead_batt =
+		data->error.cmd_unsuccessful_dead_batt;
+	data->response.error_status.contract_negotiation_failed =
+		data->error.contract_negotiation_failed;
+
+	send_response(data);
+
+	return 0;
+}
+
 static bool send_response(struct rts5453p_emul_pdc_data *data)
 {
 	if (data->delay_ms > 0) {
@@ -275,7 +302,7 @@ const struct commands sub_cmd_x0E[] = {
 	{ .code = 0x10, HANDLER_DEF(unsupported) },
 	{ .code = 0x11, HANDLER_DEF(unsupported) },
 	{ .code = 0x12, HANDLER_DEF(unsupported) },
-	{ .code = 0x13, HANDLER_DEF(unsupported) },
+	{ .code = 0x13, HANDLER_DEF(get_error_status) },
 };
 
 const struct commands sub_cmd_x12[] = {
@@ -566,12 +593,24 @@ static int emul_realtek_rts54xx_set_connector_capability(
 	return 0;
 }
 
+static int emul_realtek_rts54xx_set_error_status(const struct emul *target,
+						 const union error_status_t *es)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	data->error = *es;
+
+	return 0;
+}
+
 struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.set_response_delay = emul_realtek_rts54xx_set_response_delay,
 	.get_connector_reset = emul_realtek_rts54xx_get_connector_reset,
 	.set_capability = emul_realtek_rts54xx_set_capability,
 	.set_connector_capability =
 		emul_realtek_rts54xx_set_connector_capability,
+	.set_error_status = emul_realtek_rts54xx_set_error_status,
 };
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \
