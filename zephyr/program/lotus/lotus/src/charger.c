@@ -46,6 +46,23 @@ DECLARE_DEFERRED(charger_chips_init_retry);
 static void board_check_current(void);
 DECLARE_DEFERRED(board_check_current);
 
+void ina236_alert_current(int voltage, int current)
+{
+	int value, rv, watt;
+
+	watt = (int64_t)current * (int64_t)voltage / 1000000;
+
+	if (watt == 180)
+		value = current * 4 * 12 / 10;
+	else
+		value = current * 4;
+
+	rv = ina2xx_write(0, INA2XX_REG_ALERT, value);
+
+	if (rv != EC_SUCCESS)
+		CPRINTS("ina236 write alert fail");
+}
+
 static void board_ina236_init(void)
 {
 	int rv;
@@ -437,7 +454,6 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 		charge_ma = CONFIG_PLATFORM_EC_CHARGER_DEFAULT_CURRENT_LIMIT;
 	}
 
-
 	/* Handle EPR converstion through the buck switcher */
 	if (charge_mv > 20000) {
 		/**
@@ -459,6 +475,8 @@ __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 		 */
 		prochot_ma += 853;
 	}
+
+	ina236_alert_current(charge_mv, charge_ma);
 
 	charge_set_input_current_limit((int)calculate_ma, charge_mv);
 	/* sync-up ac prochot with current change */
