@@ -43,6 +43,8 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 			"lotus/src/thermal.c"
 			"lotus/src/gpu_configuration.c"
 			"lotus/src/gpu_f75303.c"
+			"src/temperature_filter.c"
+
 
 
 	)
