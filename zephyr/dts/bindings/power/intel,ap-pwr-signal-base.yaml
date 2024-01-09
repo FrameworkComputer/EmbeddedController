@@ -31,7 +31,7 @@ properties:
     - PWR_IMVP9_VRRDY
     - PWR_PCH_PWROK
     - PWR_PG_PP1P05
-    - PWR_RSMRST
+    - PWR_RSMRST_PWRGD
     - PWR_SLP_S0
     - PWR_SLP_S3
     - PWR_SLP_S4

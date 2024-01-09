@@ -69,7 +69,7 @@ static int x86_non_dsx_mtl_g3_run(void *data)
 	 * ready.
 	 */
 	if (power_wait_signals_timeout(
-		    POWER_SIGNAL_MASK(PWR_RSMRST),
+		    POWER_SIGNAL_MASK(PWR_RSMRST_PWRGD),
 		    AP_PWRSEQ_DT_VALUE(wait_signal_timeout))) {
 		return 1;
 	}
@@ -92,7 +92,7 @@ static int x86_non_dsx_mtl_s3_run(void *data)
 {
 	int all_sys_pwrgd_in = power_signal_get(PWR_ALL_SYS_PWRGD);
 
-	if (power_signal_get(PWR_RSMRST) == 0) {
+	if (power_signal_get(PWR_RSMRST_PWRGD) == 0) {
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_G3);
 	}
 
@@ -125,7 +125,7 @@ AP_POWER_CHIPSET_STATE_DEFINE(AP_POWER_STATE_S3, x86_non_dsx_mtl_s3_entry,
 
 static int x86_non_dsx_mtl_s0_run(void *data)
 {
-	if (power_signal_get(PWR_RSMRST) == 0) {
+	if (power_signal_get(PWR_RSMRST_PWRGD) == 0) {
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_G3);
 	}
 
@@ -157,7 +157,7 @@ static int x86_non_dsx_mtl_s0ix_run(void *data)
 		 * before leaving S0ix.
 		 */
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S0);
-	} else if (!power_signals_on(POWER_SIGNAL_MASK(PWR_RSMRST))) {
+	} else if (!power_signals_on(POWER_SIGNAL_MASK(PWR_RSMRST_PWRGD))) {
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_G3);
 	}
 

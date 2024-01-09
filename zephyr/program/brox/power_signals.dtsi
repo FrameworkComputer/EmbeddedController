@@ -30,7 +30,7 @@
 	pwr-pg-vccin-aux-od {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "PG_VCCIN_AUX_OD power good from regulator";
-		enum-name = "PWR_RSMRST";
+		enum-name = "PWR_RSMRST_PWRGD";
 		gpios = <&gpiof 3 0>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};

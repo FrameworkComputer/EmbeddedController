@@ -34,12 +34,12 @@ void board_ap_power_force_shutdown(void)
 	power_signal_set(PWR_EN_PP3300_A, 0);
 
 	/* Wait RSMRST to be off. */
-	while (power_signal_get(PWR_RSMRST) && (timeout_ms > 0)) {
+	while (power_signal_get(PWR_RSMRST_PWRGD) && (timeout_ms > 0)) {
 		k_msleep(1);
 		timeout_ms--;
 	};
 
-	if (power_signal_get(PWR_RSMRST))
+	if (power_signal_get(PWR_RSMRST_PWRGD))
 		LOG_WRN("RSMRST_ODL didn't go low!  Assuming G3.");
 }
 

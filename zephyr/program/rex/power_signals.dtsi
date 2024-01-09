@@ -25,7 +25,7 @@
 	pwr-pg-ec-rsmrst-od {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "RSMRST power good from regulator";
-		enum-name = "PWR_RSMRST";
+		enum-name = "PWR_RSMRST_PWRGD";
 		gpios = <&gpioe 2 GPIO_ACTIVE_HIGH>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};

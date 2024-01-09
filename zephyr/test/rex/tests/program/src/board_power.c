@@ -63,7 +63,7 @@ int mock_power_signal_set_ap_power_action_g3_s5(enum power_signal signal,
 
 int mock_power_signal_get_ap_force_shutdown_retries(enum power_signal signal)
 {
-	if (signal == PWR_RSMRST) {
+	if (signal == PWR_RSMRST_PWRGD) {
 		return 1;
 	}
 	zassert_unreachable("Wrong input received");
@@ -72,7 +72,7 @@ int mock_power_signal_get_ap_force_shutdown_retries(enum power_signal signal)
 
 int mock_power_signal_get_ap_force_shutdown(enum power_signal signal)
 {
-	if (signal == PWR_RSMRST) {
+	if (signal == PWR_RSMRST_PWRGD) {
 		if (power_signal_get_fake.call_count <= 5) {
 			return 1;
 		}

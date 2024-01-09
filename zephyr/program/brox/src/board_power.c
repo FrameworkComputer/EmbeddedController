@@ -30,7 +30,7 @@ void board_ap_power_force_shutdown(void)
 	power_signal_set(PWR_EC_PCH_RSMRST, 0);
 
 	/* TODO: replace with power_wait_signals_timeout()? */
-	while (power_signal_get(PWR_RSMRST) == 0 &&
+	while (power_signal_get(PWR_RSMRST_PWRGD) == 0 &&
 	       power_signal_get(PWR_SLP_SUS) == 0 && timeout_ms > 0) {
 		k_msleep(1);
 		timeout_ms--;
@@ -39,7 +39,7 @@ void board_ap_power_force_shutdown(void)
 		LOG_WRN("SLP_SUS is not deasserted! Assuming G3");
 	}
 
-	if (power_signal_get(PWR_RSMRST) == 1) {
+	if (power_signal_get(PWR_RSMRST_PWRGD) == 1) {
 		LOG_WRN("RSMRST is not deasserted! Assuming G3");
 	}
 
