@@ -32,6 +32,7 @@ test-list-y=\
        benchmark \
        boringssl_crypto \
        compile_time_macros \
+       cortexm_fpu \
        crc \
        debug \
        exception \
