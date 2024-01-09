@@ -18,6 +18,7 @@
 #include "../usbc.dtsi"
 #include "../shi.dtsi"
 #include "battery.dtsi"
+#include "cbi.dtsi"
 #include "led.dtsi"
 
 #include <cros/thermistor/thermistor.dtsi>
@@ -105,7 +106,7 @@
 		compatible = "cros-ec,gpio-interrupts";
 
 		int_lid_imu: lid-imu {
-			handler = "lsm6dsm_interrupt";
+			handler = "motion_interrupt";
 		};
 	};
 
@@ -129,7 +130,7 @@
 	/* Rotation matrix used by drivers. */
 	motionsense-rotation-ref {
 		compatible = "cros-ec,motionsense-rotation-ref";
-		lid_rot_ref: lid-rotation-ref {
+		lid_rot_ref_lsm6dsm: lid-rotation-ref-lsm6dsm {
 			mat33 = <0 1 0
 				 (-1) 0 0
 				 0 0 1>;
@@ -146,8 +147,6 @@
 	 * "struct als_drv_data_t" in accelgyro.h
 	 */
 	motionsense-sensor-data {
-		/delete-node/ bmi323-drv-data;
-
 		lsm6dsm_data_accel: lsm6dsm-accel-drv-data {
 			compatible = "cros-ec,drvdata-lsm6dsm";
 			status = "okay";
@@ -163,8 +162,8 @@
 	 * The nodelabel "lid_accel" and "base_accel" are used to indicate
 	 * motion sensor IDs for lid angle calculation.
 	 */
-	motionsense-sensor {
-		lid_accel: lid-accel {
+	motionsense-sensor-alt {
+		alt_lid_accel: alt-lid-accel {
 			compatible = "cros-ec,lsm6dsm-accel";
 			status = "okay";
 
@@ -172,8 +171,10 @@
 			location = "MOTIONSENSE_LOC_LID";
 			mutex = <&lid_mutex>;
 			port = <&i2c_sensor>;
-			rot-standard-ref = <&lid_rot_ref>;
+			rot-standard-ref = <&lid_rot_ref_lsm6dsm>;
 			drv-data = <&lsm6dsm_data_accel>;
+			alternate-for = <&lid_accel>;
+			alternate-ssfc-indicator = <&lid_sensor_1>;
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
@@ -188,7 +189,7 @@
 			};
 		};
 
-		lid_gyro: lid-gyro {
+		alt_lid_gyro: alt-lid-gyro {
 			compatible = "cros-ec,lsm6dsm-gyro";
 			status = "okay";
 
@@ -196,9 +197,11 @@
 			location = "MOTIONSENSE_LOC_LID";
 			mutex = <&lid_mutex>;
 			port = <&i2c_sensor>;
-			rot-standard-ref = <&lid_rot_ref>;
+			rot-standard-ref = <&lid_rot_ref_lsm6dsm>;
 			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
 			drv-data = <&lsm6dsm_data_gyro>;
+			alternate-for = <&lid_gyro>;
+			alternate-ssfc-indicator = <&lid_sensor_1>;
 		};
 	};
 };
@@ -247,6 +250,13 @@
 		irq-gpios = <&gpioa 6 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8 |
 			     GPIO_ACTIVE_LOW)>;
 	};
+};
+
+/* overwrite the rot_ref from Geralt */
+&lid_rot_ref {
+	mat33 = <(-1) 0 0
+		0 (-1) 0
+		0 0 1>;
 };
 
 &thermistor_3V3_100K_100K_4250B {
