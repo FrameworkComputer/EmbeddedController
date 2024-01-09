@@ -13,6 +13,14 @@
 static volatile uint32_t fpscr;
 static volatile bool fpu_irq_handled;
 
+static uint32_t _read_fpscr(void)
+{
+	uint32_t val;
+
+	asm volatile("vmrs %0, fpscr" : "=r"(val));
+	return val;
+}
+
 /* Override default FPU interrupt handler. */
 void __keep fpu_irq(uint32_t excep_lr, uint32_t excep_sp)
 {
