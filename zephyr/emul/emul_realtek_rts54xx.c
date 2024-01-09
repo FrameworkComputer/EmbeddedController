@@ -4,8 +4,8 @@
  */
 
 #include "emul/emul_common_i2c.h"
+#include "emul/emul_pdc.h"
 #include "emul/emul_realtek_rts54xx.h"
-#include "emul/emul_stub_device.h"
 #include "zephyr/sys/util.h"
 
 #include <zephyr/device.h>
@@ -22,6 +22,8 @@
 
 #define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
 LOG_MODULE_REGISTER(realtek_rts5453_emul);
+
+static bool send_response(struct rts5453p_emul_pdc_data *data);
 
 struct rts5453p_emul_data {
 	/** Common I2C data */
@@ -68,7 +70,9 @@ static int vendor_cmd_enable(struct rts5453p_emul_pdc_data *data,
 
 	LOG_INF("VENDOR_CMD_ENABLE SMBUS=%d, FLASH=%d", data->vnd_command.smbus,
 		data->vnd_command.flash);
-	set_ping_status(data, CMD_COMPLETE, 0);
+
+	memset(&data->response, 0, sizeof(union rts54_response));
+	send_response(data);
 
 	return 0;
 }
@@ -82,7 +86,8 @@ static int set_notification_enable(struct rts5453p_emul_pdc_data *data,
 	LOG_INF("SET_NOTIFICATION_ENABLE port=%d, data=0x%X", port,
 		data->notification_data[port]);
 
-	set_ping_status(data, CMD_COMPLETE, 0);
+	memset(&data->response, 0, sizeof(union rts54_response));
+	send_response(data);
 
 	return 0;
 }
@@ -94,7 +99,7 @@ static int get_ic_status(struct rts5453p_emul_pdc_data *data,
 
 	data->response.ic_status = data->ic_status;
 
-	set_ping_status(data, CMD_COMPLETE, sizeof(struct rts54_ic_status));
+	send_response(data);
 
 	return 0;
 }
@@ -111,7 +116,8 @@ static int ppm_reset(struct rts5453p_emul_pdc_data *data,
 {
 	LOG_INF("PPM_RESET port=%d", req->ppm_reset.port_num);
 
-	set_ping_status(data, CMD_COMPLETE, 0);
+	memset(&data->response, 0, sizeof(union rts54_response));
+	send_response(data);
 
 	return 0;
 }
@@ -121,9 +127,37 @@ static int tcpm_reset(struct rts5453p_emul_pdc_data *data,
 {
 	LOG_INF("%s", __func__);
 
-	set_ping_status(data, CMD_COMPLETE, 0);
+	memset(&data->response, 0, sizeof(union rts54_response));
+	send_response(data);
 
 	return 0;
+}
+
+static bool send_response(struct rts5453p_emul_pdc_data *data)
+{
+	if (data->delay_ms > 0) {
+		/* Simulate work and defer completion status */
+		set_ping_status(data, CMD_DEFERRED, 0);
+		k_work_schedule(&data->delay_work, K_MSEC(data->delay_ms));
+		return true;
+	}
+
+	set_ping_status(
+		data, CMD_COMPLETE,
+		data->response.byte_count ? data->response.byte_count + 1 : 0);
+
+	return false;
+}
+
+static void delayable_work_handler(struct k_work *w)
+{
+	struct k_work_delayable *dwork = k_work_delayable_from_work(w);
+	struct rts5453p_emul_pdc_data *data =
+		CONTAINER_OF(dwork, struct rts5453p_emul_pdc_data, delay_work);
+
+	set_ping_status(
+		data, CMD_COMPLETE,
+		data->response.byte_count ? data->response.byte_count + 1 : 0);
 }
 
 struct commands {
@@ -433,8 +467,26 @@ static int rts5453p_emul_init(const struct emul *emul,
 	data->pdc_data.ic_status.byte_count =
 		sizeof(struct rts54_ic_status) - 1;
 
+	k_work_init_delayable(&data->pdc_data.delay_work,
+			      delayable_work_handler);
+
 	return 0;
 }
+
+static int emul_realtek_rts54xx_set_response_delay(const struct emul *target,
+						   uint32_t delay_ms)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	data->delay_ms = delay_ms;
+
+	return 0;
+}
+
+struct emul_pdc_api_t emul_realtek_rts54xx_api = {
+	.set_response_delay = emul_realtek_rts54xx_set_response_delay,
+};
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \
 	static struct rts5453p_emul_data rts5453p_emul_data_##n = {	\
@@ -455,7 +507,7 @@ static int rts5453p_emul_init(const struct emul *emul,
 	};                                                                  \
 	EMUL_DT_INST_DEFINE(n, rts5453p_emul_init, &rts5453p_emul_data_##n, \
 			    &rts5453p_emul_cfg_##n, &i2c_common_emul_api,   \
-			    NULL)
+			    &emul_realtek_rts54xx_api)
 
 DT_INST_FOREACH_STATUS_OKAY(RTS5453P_EMUL_DEFINE)
 

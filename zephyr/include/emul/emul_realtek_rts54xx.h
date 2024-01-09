@@ -92,8 +92,9 @@ union rts54_request {
 	} ppm_reset;
 };
 
-union rts54xx_response {
+union rts54_response {
 	uint8_t raw_data[0];
+	uint8_t byte_count;
 	struct rts54_ic_status {
 		uint8_t byte_count;
 		uint8_t is_flash_code;
@@ -136,6 +137,7 @@ struct ping_status {
 
 /** @brief Emulated properties */
 struct rts5453p_emul_pdc_data {
+	uint16_t ucsi_version;
 	union vendor_cmd vnd_command;
 	union set_notification_data notification_data[2];
 	struct rts54_ic_status ic_status;
@@ -146,7 +148,10 @@ struct rts5453p_emul_pdc_data {
 		struct ping_status ping_status;
 		uint8_t ping_raw_value;
 	};
-	union rts54xx_response response;
+	union rts54_response response;
+
+	uint16_t delay_ms;
+	struct k_work_delayable delay_work;
 };
 
 /**
