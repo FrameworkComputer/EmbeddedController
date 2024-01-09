@@ -254,7 +254,7 @@ static void ps8743_resume(void)
 		}
 
 		if (ps8743_port_is_usb_mode_only(mux) &&
-		    saved_usb_conn_status[i] != NO_DEVICE) {
+		    saved_usb_conn_status[i] == USB2_CONNECTED) {
 			ps8743_field_update(mux, PS8743_REG_MODE,
 					    PS8743_MODE_USB_ENABLE,
 					    PS8743_MODE_USB_ENABLE);
