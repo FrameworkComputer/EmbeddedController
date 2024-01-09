@@ -251,7 +251,16 @@ def get_lcov_options(tool_path):
     # 2.0 deprecated the lcov_ prefix from rc options and began treating
     # many previously-ignored errors as fatal, some of which need to be
     # ignored.
-    return ["--rc", "branch_coverage=1", "--filter", "range"]
+    return [
+        "--rc",
+        "branch_coverage=1",
+        "--filter",
+        "range",
+        "--ignore-errors",
+        "inconsistent",
+        "--ignore-errors",
+        "gcov,gcov",
+    ]
 
 
 def merge_token_databases(databases, merged_db):
