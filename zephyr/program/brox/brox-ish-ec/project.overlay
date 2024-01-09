@@ -35,11 +35,11 @@ i2c3ALT: &i2c3 {
 /* Brox-ish-ec overrides follow... */
 
 /{
-        batteries {
-                default_battery: lgc_ap18c8k {
-                        compatible = "lgc,ap18c8k", "battery-smart";
-                };
-        };
+	batteries {
+		default_battery: lgc_ap18c8k {
+			compatible = "lgc,ap18c8k", "battery-smart";
+		};
+	};
 };
 
 /*
@@ -49,8 +49,8 @@ i2c3ALT: &i2c3 {
  *   CBI flash:    0x5F000:0x5FFFF
  */
 &pstate {
-    offset = <(0x60000 - (0x1000 * 2))>;
-    size = <0x1000>;
+	offset = <(0x60000 - (0x1000 * 2))>;
+	size = <0x1000>;
 };
 
 &cbi_flash {
