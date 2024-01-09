@@ -12,7 +12,16 @@
 			compatible = "named-usbc-port";
 			reg = <0>;
 			chg = <&charger>;
+			pdc = <&pdc_power_p0>;
 		};
+	};
+};
+
+&i2c1 {
+	pdc_power_p0: rts54-pdc@67 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x67>;
+		irq-gpios = <&gpioa 2 GPIO_ACTIVE_LOW>;
 	};
 };
 
