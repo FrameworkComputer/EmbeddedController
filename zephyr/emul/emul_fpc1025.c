@@ -128,27 +128,10 @@ ZTEST_RULE(fpc1025_emul_reset, NULL, fpc1025_emul_reset_rule_after);
 
 #endif /* CONFIG_ZTEST */
 
-/*
- * Emulated SPI bus doesn't support 'release' operation and SPI API doesn't
- * check if the function was provided. As a result every attempt to call
- * spi_release() results in a NULL pointer dereference.
- *
- * Since it's required by FPC1025 driver we can provide this function here util
- * it's fixed in upstream.
- */
-static int fpc1025_spi_release(const struct device *dev,
-			       const struct spi_config *config)
-{
-	return 0;
-}
-
 static int fpc1025_emul_init(const struct emul *target,
 			     const struct device *parent)
 {
-	struct spi_driver_api *spi_api = (struct spi_driver_api *)parent->api;
-
-	/* Set fpc1025_spi_release as a handler for 'release' operation */
-	spi_api->release = fpc1025_spi_release;
+	ARG_UNUSED(parent);
 
 	fpc1025_emul_reset(target);
 
