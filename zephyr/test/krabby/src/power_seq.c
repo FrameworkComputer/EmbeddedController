@@ -29,6 +29,7 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, chipset_startup_hook, HOOK_PRIO_DEFAULT);
 FAKE_VOID_FUNC(chipset_resume_hook);
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, chipset_resume_hook, HOOK_PRIO_DEFAULT);
 FAKE_VALUE_FUNC(int, system_jumped_late);
+FAKE_VALUE_FUNC(int, system_can_boot_ap);
 
 #define S5_INACTIVE_SEC 11
 /* S5_INACTIVE_SEC + PMIC_HARD_OFF_DELAY 9.6 sec + 1 sec buffer */
@@ -126,6 +127,8 @@ static void power_seq_before(void *f)
 	RESET_FAKE(chipset_startup_hook);
 	RESET_FAKE(chipset_resume_hook);
 	RESET_FAKE(system_jumped_late);
+	RESET_FAKE(system_can_boot_ap);
+	system_can_boot_ap_fake.return_val = 1;
 	FFF_RESET_HISTORY();
 }
 
@@ -493,6 +496,13 @@ ZTEST(power_seq, test_power_chipset_init)
 				   POWER_G3, __LINE__);
 	power_chipset_init_subtest(POWER_S0, false, EC_RESET_FLAG_AP_IDLE,
 				   POWER_S0, __LINE__);
+}
+
+ZTEST(power_seq, test_low_battery_boot)
+{
+	system_can_boot_ap_fake.return_val = 0;
+	/* Don't boot AP if system_can_boot_ap says no */
+	power_chipset_init_subtest(POWER_G3, false, 0, POWER_G3, __LINE__);
 }
 
 ZTEST_SUITE(power_seq, krabby_predicate_post_main, power_seq_setup,

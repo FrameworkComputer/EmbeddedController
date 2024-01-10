@@ -78,6 +78,12 @@
 #error Must have dt node en_pp4200_s5 for MT8188 power sequence
 #endif
 
+/* The timeout of the check if the system can boot AP */
+#define CAN_BOOT_AP_CHECK_TIMEOUT (1600 * MSEC)
+
+/* Wait for polling if the system can boot AP */
+#define CAN_BOOT_AP_CHECK_WAIT (200 * MSEC)
+
 /* indicate MT8186 is processing a chipset reset. */
 static bool is_resetting;
 /* indicate MT8186 is AP reset is held by servo or GSC. */
@@ -94,6 +100,20 @@ static bool is_exiting_off;
 
 /* forward declaration */
 static enum power_state power_get_signal_state(void);
+
+static bool power_is_enough(void)
+{
+	timestamp_t poll_deadline;
+
+	poll_deadline.val = get_time().val + CAN_BOOT_AP_CHECK_TIMEOUT;
+
+	while (!system_can_boot_ap() &&
+	       !timestamp_expired(poll_deadline, NULL)) {
+		usleep(CAN_BOOT_AP_CHECK_WAIT);
+	}
+
+	return system_can_boot_ap();
+}
 
 /* Turn on the PMIC power source to AP, this also boots AP. */
 static void set_pmic_pwron(void)
@@ -381,7 +401,7 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_G3S5:
 #if CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
-		if (!system_can_boot_ap())
+		if (!power_is_enough())
 			return POWER_G3;
 #endif
 
