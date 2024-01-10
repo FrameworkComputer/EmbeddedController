@@ -691,7 +691,7 @@ void test_main(void)
 	/* Fake sleep long enough to go to S5 and back to G3 again. */
 	k_sleep(K_SECONDS(11));
 
-	ztest_run_test_suites(NULL);
+	ztest_run_test_suites(NULL, false, 1, 1);
 
 	ztest_verify_all_test_suites_ran();
 }
