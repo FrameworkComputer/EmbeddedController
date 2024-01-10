@@ -460,13 +460,15 @@ cov-test-targets=$(foreach t,$(cov-test-list-host),build/coverage/$(t).info)
 cov-initial-targets=$(foreach t,$(cov-boards),build/coverage/initial-$(t).info)
 bldversion=$(shell (./util/getversion.sh ; echo VERSION) | $(CPP) -P -)
 
-cmd_lcov=lcov --rc lcov_branch_coverage=1 --gcov-tool \
+cmd_lcov=lcov --rc branch_coverage=1 --gcov-tool \
 	$(HOSTGCOV) -q -o $@ -c -d build/coverage/$* -t $* \
-	--exclude '*/ec/test/*' --exclude '*/ec/include/tests/*'
-cmd_lcov-initial=lcov --rc lcov_branch_coverage=1 --gcov-tool \
+	--exclude '*/ec/test/*' --exclude '*/ec/include/tests/*' \
+	--ignore-errors unused
+cmd_lcov-initial=lcov --rc branch_coverage=1 --gcov-tool \
 	$(GCOV) -q -o $@ -c -d build/coverage/initial-$* \
-	-i -t $* --exclude '*/ec/test/*' --exclude '*/ec/include/tests/*'
-cmd_merge_cov=lcov --rc lcov_branch_coverage=1 -o build/coverage/lcov.info \
+	-i -t $* --exclude '*/ec/test/*' --exclude '*/ec/include/tests/*' \
+	--ignore-errors unused
+cmd_merge_cov=lcov --rc branch_coverage=1 -o build/coverage/lcov.info \
 	$(foreach info,$^,-a ${info})
 cmd_report_cov=genhtml --branch-coverage -q -o build/coverage/coverage_rpt -t \
 	       "EC Unittest "$(bldversion) -s $^
