@@ -18,6 +18,8 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/smf.h>
 LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
+#include "usbc/utils.h"
+
 #include <drivers/pdc.h>
 
 #define DT_DRV_COMPAT realtek_rts54_pdc
@@ -1763,7 +1765,8 @@ static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 	static const struct pdc_config_t pdc_config##inst = {                 \
 		.i2c = I2C_DT_SPEC_INST_GET(inst),                            \
 		.irq_gpios = GPIO_DT_SPEC_INST_GET(inst, irq_gpios),          \
-		.connector_number = 1, /* TODO: Read from DT */               \
+		.connector_number =                                           \
+			USBC_PORT_FROM_DRIVER_NODE(DT_DRV_INST(inst), pdc),   \
 		.create_thread = create_thread_##inst,                        \
 	};                                                                    \
                                                                               \
