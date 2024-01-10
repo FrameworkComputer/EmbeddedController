@@ -133,6 +133,12 @@ union rts54_request {
 		uint8_t port_num;
 		uint8_t sts_len;
 	} get_rtk_status;
+
+	struct set_uor_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+		union uor_t uor;
+	} set_uor;
 };
 
 union rts54_response {
@@ -285,6 +291,7 @@ struct rts5453p_emul_pdc_data {
 	struct capability_t capability;
 	union connector_capability_t connector_capability;
 	struct connector_status_t connector_status;
+	union uor_t uor;
 	union error_status_t error;
 
 	union rts54_request request;

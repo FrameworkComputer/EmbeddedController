@@ -172,3 +172,18 @@ ZTEST_USER(pdc_api, test_get_connector_status)
 	zassert_equal(out.conn_partner_type, in.conn_partner_type);
 	zassert_equal(out.rdo, in.rdo);
 }
+
+ZTEST_USER(pdc_api, test_set_uor)
+{
+	union uor_t in, out;
+
+	in.accept_dr_swap = 1;
+	in.swap_to_ufp = 1;
+
+	zassert_ok(pdc_set_uor(dev, in), "Failed to set uor");
+
+	k_sleep(K_MSEC(100));
+	zassert_ok(emul_pdc_get_uor(emul, &out));
+
+	zassert_equal(out.raw_value, in.raw_value);
+}
