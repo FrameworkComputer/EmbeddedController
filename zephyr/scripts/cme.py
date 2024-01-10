@@ -362,7 +362,7 @@ def insert_i2c_component(ctype, node, usbc_port, i2c_portmap, manifest):
         ctype,
         compatible_name_parser(ctype, node.props["compatible"].val[0]),
         i2c_portmap[i2c_node.name],
-        reg_node.props["reg"].val[0],
+        hex(reg_node.props["reg"].val[0]),
         usbc_port,
     )
 
