@@ -1572,3 +1572,10 @@ tests:
     - default/prj.conf
     extra_dtc_overlay_files:
     - default/boards/native_posix.overlay
+  drivers.tabletmode_interrupt:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_TABLETMODE_INTERRUPT=y
+    - CONFIG_LINK_TEST_SUITE_KEYBOARD_SCAN=y
+    extra_dtc_overlay_files:
+    - ./boards/native_posix.overlay
+    - ./tabletmode_interrupt/boards/native_posix.overlay

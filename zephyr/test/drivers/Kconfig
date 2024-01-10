@@ -338,4 +338,10 @@ config LINK_TEST_SUITE_ONE_WIRE_UART
 config LINK_TEST_SUITE_SMART_BATTERY
 	bool "Link and test the smart battery driver tests"
 
+config LINK_TEST_SUITE_TABLETMODE_INTERRUPT
+	bool "Link and test the tabletmode interrupt driver tests"
+	help
+	  Verifies a singleton driver which handles an external interrupt
+	  signaling to the EC when to switch in or out of tablet mode.
+
 source "Kconfig.zephyr"

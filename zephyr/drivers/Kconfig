@@ -4,6 +4,7 @@
 
 rsource "cros_flash/Kconfig"
 rsource "cros_kb_raw/Kconfig"
+rsource "cros_tabletmode_interrupt/Kconfig"
 rsource "cros_rtc/Kconfig"
 rsource "cros_shi/Kconfig"
 rsource "cros_system/Kconfig"

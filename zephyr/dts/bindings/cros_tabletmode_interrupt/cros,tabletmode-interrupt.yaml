@@ -1,0 +1,14 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Interrupt driver for changing in/out of tablet mode
+
+compatible: "cros,tabletmode-interrupt"
+
+properties:
+  irq-gpios:
+    type: phandle-array
+    description: |
+      The GPIO configuration (device, pin, and flags) to use for determining
+      if the device is in laptop or tablet mode.
