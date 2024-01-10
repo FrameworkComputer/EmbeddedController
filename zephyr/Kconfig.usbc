@@ -214,7 +214,7 @@ config PLATFORM_EC_USB_PD_TCPC_VCONN
 
 config PLATFORM_EC_USB_PD_CLEAR_HARD_RESET_STATUS
 	bool "Clear PD hard reset status when PD setup completes"
-	default y if SOC_SERIES_RISCV32_IT8XXX2
+	default y if SOC_SERIES_ITE_IT8XXX2
 	help
 	  Enabling this config will clear the Hard Reset event status
 	  after the PD connection is finished initialization,

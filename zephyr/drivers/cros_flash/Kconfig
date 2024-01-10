@@ -28,7 +28,7 @@ endif # CROS_FLASH_NPCX
 
 config CROS_FLASH_IT8XXX2
 	bool "ITE IT81202 flash driver for the Zephyr shim"
-	depends on SOC_FAMILY_RISCV_ITE
+	depends on SOC_FAMILY_ITE_EC
 	default y
 	select PLATFORM_EC_FLASH_CROS
 	help
