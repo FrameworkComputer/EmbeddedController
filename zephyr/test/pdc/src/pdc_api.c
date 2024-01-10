@@ -134,3 +134,41 @@ ZTEST_USER(pdc_api, test_get_error_status)
 
 	zassert_equal(pdc_get_error_status(dev, NULL), -EINVAL);
 }
+
+ZTEST_USER(pdc_api, test_get_connector_status)
+{
+	struct connector_status_t in, out;
+
+	in.conn_status_change_bits.external_supply_change = 1;
+	in.conn_status_change_bits.connector_partner = 1;
+	in.conn_status_change_bits.connect_change = 1;
+	in.power_operation_mode = PD_OPERATION;
+	in.connect_status = 1;
+	in.power_direction = 0;
+	in.conn_partner_flags = 1;
+	in.conn_partner_type = UFP_ATTACHED;
+	in.rdo = 0x01234567;
+
+	zassert_ok(emul_pdc_set_connector_status(emul, &in));
+
+	zassert_ok(pdc_get_connector_status(dev, &out),
+		   "Failed to get connector capability");
+
+	k_sleep(K_MSEC(100));
+
+	/* Verify data from emulator */
+	zassert_equal(out.conn_status_change_bits.external_supply_change,
+		      in.conn_status_change_bits.external_supply_change);
+	zassert_equal(out.conn_status_change_bits.connector_partner,
+		      in.conn_status_change_bits.connector_partner);
+	zassert_equal(out.conn_status_change_bits.connect_change,
+		      in.conn_status_change_bits.connect_change);
+	zassert_equal(out.power_operation_mode, in.power_operation_mode);
+	zassert_equal(out.connect_status, in.connect_status);
+	zassert_equal(out.power_direction, in.power_direction);
+	zassert_equal(out.conn_partner_flags, in.conn_partner_flags,
+		      "out=0x%X != in=0x%X", out.conn_partner_flags,
+		      in.conn_partner_flags);
+	zassert_equal(out.conn_partner_type, in.conn_partner_type);
+	zassert_equal(out.rdo, in.rdo);
+}

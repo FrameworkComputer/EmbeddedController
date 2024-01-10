@@ -849,7 +849,7 @@ static void st_read_run(void *o)
 		cs->conn_partner_flags = data->rd_buf[6];
 
 		/* Realtek Connector Partner Type: Byte11, Bit0:2 */
-		cs->conn_partner_flags = (data->rd_buf[11] & 7);
+		cs->conn_partner_type = (data->rd_buf[11] & 7);
 
 		/* Realtek RDO: Bytes [7:10] */
 		cs->rdo = data->rd_buf[10] << 24 | data->rd_buf[9] << 16 |

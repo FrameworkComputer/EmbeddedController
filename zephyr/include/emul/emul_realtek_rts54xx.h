@@ -21,6 +21,43 @@
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
 
+union pd_status_t {
+	uint32_t raw_value;
+	struct {
+		uint32_t command_complete : 1;
+		uint32_t external_supply_charge : 1;
+		uint32_t power_operation_mode_change : 1;
+		uint32_t reserved0 : 2;
+		uint32_t provider_capabilities_change : 1;
+		uint32_t negotiated_power_level_change : 1;
+		uint32_t pd_reset_complete : 1;
+		uint32_t supported_cam_change : 1;
+		uint32_t battery_charging_status_change : 1;
+		uint32_t reserved1 : 1;
+		uint32_t port_partner_changed : 1;
+		uint32_t power_direction_changed : 1;
+		uint32_t reserved2 : 1;
+		uint32_t connect_change : 1;
+		uint32_t error : 1;
+		uint32_t ir_drop : 1;
+		uint32_t soft_reset_completed : 1;
+		uint32_t error_recovery_occurred : 1;
+		uint32_t pd_pio_status_change : 1;
+		uint32_t alternate_flow_change : 1;
+		uint32_t dp_status_change : 1;
+		uint32_t dfp_ocp_change : 1;
+		uint32_t port_operation_mode_change : 1;
+		uint32_t power_control_request : 1;
+		uint32_t vdm_received : 1;
+		uint32_t source_sink_cap_received : 1;
+		uint32_t data_message_received : 1;
+		uint32_t reserved3 : 1;
+		uint32_t system_misc_change : 1;
+		uint32_t reserved4 : 1;
+		uint32_t pd_ams_change : 1;
+	};
+};
+
 union rts54_request {
 	uint8_t raw_data[0];
 	struct rts54_command {
@@ -50,42 +87,7 @@ union rts54_request {
 	struct set_notification_enable_req {
 		struct rts54_subcommand_header header;
 		uint8_t port_num;
-		union set_notification_data {
-			uint32_t raw;
-			struct {
-				uint32_t command_complete : 1;
-				uint32_t external_supply_charge : 1;
-				uint32_t power_operation_mode_change : 1;
-				uint32_t reserved0 : 2;
-				uint32_t provider_capabilities_change : 1;
-				uint32_t negotiated_power_level_change : 1;
-				uint32_t pd_reset_complete : 1;
-				uint32_t supported_cam_change : 1;
-				uint32_t battery_charging_status_change : 1;
-				uint32_t reserved1 : 1;
-				uint32_t port_partner_changed : 1;
-				uint32_t power_direction_changed : 1;
-				uint32_t reserved2 : 1;
-				uint32_t connect_change : 1;
-				uint32_t error : 1;
-				uint32_t ir_drop : 1;
-				uint32_t soft_reset_completed : 1;
-				uint32_t error_recovery_occurred : 1;
-				uint32_t pd_pio_status_change : 1;
-				uint32_t alternate_flow_change : 1;
-				uint32_t dp_status_change : 1;
-				uint32_t dfp_ocp_change : 1;
-				uint32_t port_operation_mode_change : 1;
-				uint32_t power_control_request : 1;
-				uint32_t vdm_received : 1;
-				uint32_t source_sink_cap_received : 1;
-				uint32_t data_message_received : 1;
-				uint32_t reserved3 : 1;
-				uint32_t system_misc_change : 1;
-				uint32_t reserved4 : 1;
-				uint32_t pd_ams_change : 1;
-			};
-		} data;
+		union pd_status_t data;
 	} set_notification_enable;
 
 	struct ppm_reset_req {
@@ -120,6 +122,17 @@ union rts54_request {
 		struct rts54_subcommand_header header;
 		uint8_t port_num;
 	} get_error_status;
+
+	struct get_connector_status_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+	} get_connector_status;
+
+	struct get_rtk_status_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+		uint8_t sts_len;
+	} get_rtk_status;
 };
 
 union rts54_response {
@@ -167,6 +180,81 @@ union rts54_response {
 		uint8_t contract_negotiation_failed : 1;
 		uint8_t reserved : 1;
 	} error_status;
+
+	struct get_connector_status_response {
+		uint8_t byte_count;
+		union {
+			uint16_t raw_value;
+			struct {
+				uint16_t reserved0 : 1;
+				uint16_t external_supply_change : 1;
+				uint16_t pwr_operation_mode : 1;
+				uint16_t reserved1 : 2;
+				uint16_t supported_provider_caps : 1;
+				uint16_t negotiated_power_level : 1;
+				uint16_t pd_reset_complete : 1;
+				uint16_t supported_cam : 1;
+				uint16_t battery_charging_status : 1;
+				uint16_t reserved2 : 1;
+				uint16_t port_partner : 1;
+				uint16_t pwr_direction : 1;
+				uint16_t reserved3 : 1;
+				uint16_t connect_change : 1;
+				uint16_t error : 1;
+			};
+		} pd_status;
+		uint16_t port_operation_mode : 3;
+		uint16_t connect_status : 1;
+		uint16_t power_direction : 1;
+		uint16_t port_partner_flags : 8;
+		uint16_t port_partner_type : 3;
+		uint32_t request_data_object;
+		uint8_t battery_charging_status : 2;
+		uint8_t provider_capabilities_limited_reason : 4;
+		uint8_t reserved : 2;
+	} __packed connector_status;
+
+	struct get_rtk_status_response {
+		/* BYTE 0 */
+		uint8_t byte_count;
+		/* BYTE 1-4 */
+		union pd_status_t pd_status;
+		/* BYTE 5 */
+		uint8_t supply : 1;
+		uint8_t port_operation_mode : 3;
+		uint8_t insertion_detect : 1;
+		uint8_t pd_capable_cable : 1;
+		uint8_t power_direction : 1;
+		uint8_t connect_status : 1;
+		/* BYTE 6 */
+		uint8_t port_partner_flags;
+		/* BYTE 7-10 */
+		uint32_t request_data_object;
+		/* BYTE 11 */
+		uint8_t port_partner_type : 3;
+		uint8_t battery_charging_status : 2;
+		uint8_t pd_sourcing_vconn : 1;
+		uint8_t pd_responsible_vconn : 1;
+		uint8_t pd_ams_in_progress : 1;
+		/* BYTE 12 */
+		uint8_t last_or_current_pd_ams : 4;
+		uint8_t port_partner_not_support_pd : 1;
+		uint8_t plug_direction : 1;
+		uint8_t dp_role : 1;
+		uint8_t pd_connected : 1;
+		/* BYTE 13 */
+		uint8_t vbsin_en_switch_status : 2;
+		uint8_t lp_en_switch_status : 2;
+		uint8_t cable_spec_version : 2;
+		uint8_t port_partner_spec_version : 2;
+		/* BYTE 14 */
+		uint8_t alt_mode_related_status : 3;
+		uint8_t dp_lane_swap : 1;
+		uint8_t contract_valid : 1;
+		uint8_t unchunked_message_support : 1;
+		uint8_t fr_swap_support : 1;
+		uint8_t reserved : 1;
+	} __packed rtk_status;
 };
 
 enum cmd_sts_t {
@@ -192,10 +280,11 @@ struct rts5453p_emul_pdc_data {
 	uint16_t ucsi_version;
 	union vendor_cmd vnd_command;
 	uint8_t connector_reset_type;
-	union set_notification_data notification_data[2];
+	union pd_status_t notification_data[2];
 	struct rts54_ic_status ic_status;
 	struct capability_t capability;
 	union connector_capability_t connector_capability;
+	struct connector_status_t connector_status;
 	union error_status_t error;
 
 	union rts54_request request;
