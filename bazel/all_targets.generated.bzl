@@ -536,6 +536,11 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "deku",
+        board = "deku",
+        extra_modules = ["cmsis", "picolibc", "pigweed"],
+    )
+    ec_target(
         name = "delbin",
         baseboard = "volteer",
         board = "delbin",

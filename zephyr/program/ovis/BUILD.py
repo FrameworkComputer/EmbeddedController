@@ -32,3 +32,6 @@ def register_ovis_project(
 register_ovis_project(
     project_name="ovis",
 )
+register_ovis_project(
+    project_name="deku",
+)

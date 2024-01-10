@@ -7,6 +7,11 @@ config BOARD_OVIS
 	help
 	  Build Google Ovis reference board.  The board uses Nuvoton
 	  NPCX9 chip as the EC.
+config BOARD_DEKU
+	bool "Google Deku Board"
+	help
+	  Build Google Deku reference board.  The board uses Nuvoton
+	  NPCX9 chip as the EC.
 
 module = OVIS
 module-str = Ovis board-specific code
