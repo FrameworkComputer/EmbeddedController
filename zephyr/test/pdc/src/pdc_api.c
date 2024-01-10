@@ -187,3 +187,18 @@ ZTEST_USER(pdc_api, test_set_uor)
 
 	zassert_equal(out.raw_value, in.raw_value);
 }
+
+ZTEST_USER(pdc_api, test_set_pdr)
+{
+	union pdr_t in, out;
+
+	in.accept_pr_swap = 1;
+	in.swap_to_src = 1;
+
+	zassert_ok(pdc_set_pdr(dev, in), "Failed to set pdr");
+
+	k_sleep(K_MSEC(100));
+	zassert_ok(emul_pdc_get_pdr(emul, &out));
+
+	zassert_equal(out.raw_value, in.raw_value);
+}
