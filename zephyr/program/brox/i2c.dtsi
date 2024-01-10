@@ -35,6 +35,9 @@
 		     &i2c5_data_gpe2_default>;
 	pinctrl-names = "default";
 
+	scl-gpios = <&gpioe 1 0>;
+	sda-gpios = <&gpioe 2 0>;
+
 	label = "I2C_PORT_SENSOR";
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
