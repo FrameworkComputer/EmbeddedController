@@ -196,7 +196,7 @@ int snprintf_timestamp_now(char *str, size_t size);
 	} while (false)
 #endif
 
-#define cputs(channel, outstr) PW_LOG_INFO("%s", outstr)
+#define cputs(channel, outstr) PW_LOG_INFO(outstr)
 
 #define cprintf(channel, format, ...) PW_LOG_INFO(format, ##__VA_ARGS__)
 
