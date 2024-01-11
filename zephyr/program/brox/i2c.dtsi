@@ -30,7 +30,28 @@
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 };
 
+
+/*
+ * TODO: b/319267575 - [Brox Proto1] PP3300_S5 has leakage in Z1
+ * Disable I2C sensor bus and configure pins as input.
+ */
+/delete-node/ &i2c_ec_i2c_sensor;
+/ {
+	named-gpios {
+		gpio_ec_i2c_sensor_scl: ec_i2c_sensor_scl {
+			gpios = <&gpioe 1 GPIO_INPUT>;
+		};
+		gpio_ec_i2c_sensor_sda: ec_i2c_sensor_sda {
+			gpios = <&gpioe 2 GPIO_INPUT>;
+		};
+	};
+};
+
+
 &i2c5 {
+	/* TODO: b/319267575 - [Brox Proto1] PP3300_S5 has leakage in Z1 */
+	status = "disabled";
+
 	pinctrl-0 = <&i2c5_clk_gpe1_default
 		     &i2c5_data_gpe2_default>;
 	pinctrl-names = "default";

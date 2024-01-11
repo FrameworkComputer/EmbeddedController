@@ -8,6 +8,12 @@
 		compatible = "cros-ec,gpio-interrupts";
 
 		int_lid_imu: int-lid-imu {
+			/*
+			 * TODO: b/319267575 - [Brox Proto1] PP3300_S5 has
+			 * leakage in Z1
+			 * Disable I2C sensor bus and configure pins as input.
+			 */
+			status = "disabled";
 			irq-pin = <&gpio_ec_accel_db_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "bma4xx_interrupt";
