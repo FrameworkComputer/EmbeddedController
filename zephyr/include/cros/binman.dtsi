@@ -18,16 +18,17 @@
 			read-only;
 			ec-ro {
 				type = "section";
+				pad-byte = <0xff>;
 				ro-fw {
 					type = "blob";
 					filename = "zephyr_ro.bin";
-				};
-				fmap {
 				};
 				ro-frid {
 					type = "blob";
 					size = <32>;
 					filename = "version.txt";
+				};
+				fmap {
 				};
 			};
 		};
