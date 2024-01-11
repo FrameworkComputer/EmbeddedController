@@ -127,6 +127,17 @@ struct accelgyro_drv {
 	int (*probe)(const struct motion_sensor_t *s);
 
 	/**
+	 * @brief Enable/disable data interrupts
+	 *
+	 * If supported, enable or disable the data ready interrupts.
+	 *
+	 * @param s Pointer to sensor data
+	 * @param enable Whether to enable or disable the interrupts
+	 * @return EC_SUCCESS if the interrupt was configured
+	 */
+	int (*enable_interrupt)(const struct motion_sensor_t *s, bool enable);
+
+	/**
 	 * Interrupt handler for GPIO pin.
 	 *
 	 * @signal Signal which caused interrupt.
