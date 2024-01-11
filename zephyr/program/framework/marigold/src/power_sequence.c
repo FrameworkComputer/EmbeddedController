@@ -280,10 +280,11 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 1);
 
-		/* Wait prim power ok */
-		/*if (power_wait_signals(X86_PRIM_PWR)) {
+		/* TODO: need confirm sequence
+		if (power_wait_signals(POWER_SIGNAL_MASK(X86_PRIM_PWR))) {
 			return POWER_G3;
-		}*/
+		}
+		*/
 
 		k_msleep(50);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 1);
