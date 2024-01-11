@@ -40,6 +40,10 @@ i2c3ALT: &i2c3 {
 			compatible = "lgc,ap18c8k", "battery-smart";
 		};
 	};
+	tabletmode_interrupt: tabletmode-interrupt {
+		compatible = "cros,tabletmode-interrupt";
+		irq-gpios = <&gpioc 7 GPIO_ACTIVE_LOW>;
+	};
 };
 
 /*
@@ -59,3 +63,5 @@ i2c3ALT: &i2c3 {
 };
 
 /delete-node/ &int_lid_imu;
+
+/delete-node/ &gpio_ish_i2c_ec_scl;
