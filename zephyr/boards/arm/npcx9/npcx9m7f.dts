@@ -24,6 +24,15 @@
 		 */
 		offset = <0x0>;
 		size = <0x80000>;
+		ec-ro {
+			fmap {
+				offset = <(0x50000 - 0x400)>;
+				/*
+				 * don't specify 'size = <0x400>' here so
+				 * it is auto-assigned to the fmap size.
+				 */
+			};
+		};
 	};
 	ec-rw {
 		offset = <0x80000>;
