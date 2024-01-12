@@ -295,6 +295,7 @@ struct pdc_data_t {
  */
 static const char *const cmd_names[] = {
 	[CMD_NONE] = "",
+	[CMD_TRIGGER_PDC_RESET] = "TRIGGER_PDC_RESET",
 	[CMD_VENDOR_ENABLE] = "VENDOR_ENABLE",
 	[CMD_SET_NOTIFICATION_ENABLE] = "SET_NOTIFICATION_ENABLE",
 	[CMD_PPM_RESET] = "PPM_RESET",
