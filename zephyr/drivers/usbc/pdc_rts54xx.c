@@ -1343,7 +1343,7 @@ static int rts54_get_capability(const struct device *dev,
 	};
 
 	return rts54_post_command(dev, CMD_GET_CAPABILITY, payload,
-				  ARRAY_SIZE(payload), NULL);
+				  ARRAY_SIZE(payload), (uint8_t *)caps);
 }
 
 static int rts54_get_connector_capability(const struct device *dev,
@@ -1367,7 +1367,7 @@ static int rts54_get_connector_capability(const struct device *dev,
 	};
 
 	return rts54_post_command(dev, CMD_GET_CONNECTOR_CAPABILITY, payload,
-				  ARRAY_SIZE(payload), NULL);
+				  ARRAY_SIZE(payload), (uint8_t *)caps);
 }
 
 static int rts54_get_connector_status(const struct device *dev,
