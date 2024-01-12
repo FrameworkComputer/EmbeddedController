@@ -40,7 +40,8 @@
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "RSMRST output to PCH";
 		enum-name = "PWR_EC_PCH_RSMRST";
-		gpios = <&gpioh 0 0>;
+		gpios = <&gpioh 0 GPIO_ACTIVE_LOW>;
+		reset-val = <1>;
 		output;
 	};
 	pwr-slp-s0-l {
