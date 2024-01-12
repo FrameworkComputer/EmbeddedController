@@ -25,6 +25,13 @@
 #include <soc_dt.h>
 LOG_MODULE_REGISTER(cros_kb_raw, LOG_LEVEL_ERR);
 
+#if !defined(CONFIG_SOC_IT8XXX2_REG_SET_V1) && \
+	defined(CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED)
+#if !DT_NODE_EXISTS(KBD_KSO2_NODE)
+#error gpio_kbd_kso2 alias has to point to the keyboard column 2 output pin.
+#endif
+#endif
+
 #define KEYBOARD_KSI_PIN_COUNT IT8XXX2_DT_INST_WUCCTRL_LEN(0)
 #define KSOH_PIN_MASK (((1 << (KEYBOARD_COLS_MAX - 8)) - 1) & 0xff)
 
@@ -93,6 +100,37 @@ static int cros_kb_raw_ite_read_row(const struct device *dev)
 	/* Bits are active-low, so invert returned levels */
 	return ((inst->KBS_KSI) ^ 0xff);
 }
+
+#ifdef CONFIG_SOC_IT8XXX2_REG_SET_V1
+static void kb_raw_ite_drive_column_reg_set_v1(const struct device *dev)
+{
+	const struct cros_kb_raw_ite_config *config = dev->config;
+	struct kscan_it8xxx2_regs *const inst = config->base;
+	unsigned int key;
+
+#ifdef CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED
+	/* KSO[2] output high, others output low. */
+	inst->KBS_KSOL = BIT(2);
+	/* Enable KSO2's push-pull */
+	inst->KBS_KSOLGCTRL |= IT8XXX2_KBS_KSO2GCTRL;
+	inst->KBS_KSOLGOEN |= IT8XXX2_KBS_KSO2GOEN;
+#else
+	/* KSO[7:0] pins output low. */
+	inst->KBS_KSOL = 0x00;
+#endif
+	/* critical section with interrupts off */
+	key = irq_lock();
+	/*
+	 * KSO[COLS_MAX:8] pins low.
+	 * NOTE: KSO[15:8] pins can part be enabled for keyboard function and
+	 *       rest be configured as GPIO output mode. In this case that we
+	 *       disable the ISR in critical section to avoid race condition.
+	 */
+	inst->KBS_KSOH1 &= ~KSOH_PIN_MASK;
+	/* restore interrupts */
+	irq_unlock(key);
+}
+#endif
 
 static int cros_kb_raw_ite_drive_column(const struct device *dev, int col)
 {
@@ -182,10 +220,8 @@ static void cros_kb_raw_ite_ksi_isr(const struct device *dev)
 
 static int cros_kb_raw_ite_init(const struct device *dev)
 {
-	unsigned int key;
 	const struct cros_kb_raw_ite_config *config = dev->config;
 	struct cros_kb_raw_ite_data *data = dev->data;
-	struct kscan_it8xxx2_regs *const inst = config->base;
 	int status;
 
 	/* Ensure top-level interrupt is disabled */
@@ -202,27 +238,11 @@ static int cros_kb_raw_ite_init(const struct device *dev)
 		return status;
 	}
 
-#ifdef CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED
-	/* KSO[2] output high, others output low. */
-	inst->KBS_KSOL = BIT(2);
-	/* Enable KSO2's push-pull */
-	inst->KBS_KSOLGCTRL |= IT8XXX2_KBS_KSO2GCTRL;
-	inst->KBS_KSOLGOEN |= IT8XXX2_KBS_KSO2GOEN;
+#ifdef CONFIG_SOC_IT8XXX2_REG_SET_V1
+	kb_raw_ite_drive_column_reg_set_v1(dev);
 #else
-	/* KSO[7:0] pins output low. */
-	inst->KBS_KSOL = 0x00;
+	cros_kb_raw_ite_drive_column(dev, KEYBOARD_COLUMN_ALL);
 #endif
-	/* critical section with interrupts off */
-	key = irq_lock();
-	/*
-	 * KSO[COLS_MAX:8] pins low.
-	 * NOTE: KSO[15:8] pins can part be enabled for keyboard function and
-	 *       rest be configured as GPIO output mode. In this case that we
-	 *       disable the ISR in critical section to avoid race condition.
-	 */
-	inst->KBS_KSOH1 &= ~KSOH_PIN_MASK;
-	/* restore interrupts */
-	irq_unlock(key);
 
 	for (int i = 0; i < KEYBOARD_KSI_PIN_COUNT; i++) {
 		/* Select wakeup interrupt falling-edge triggered of KSI[7:0] */
