@@ -25,6 +25,7 @@ struct ps_gpio_int {
 	uint8_t signal;
 	unsigned int output : 1;
 	unsigned int no_enable : 1;
+	unsigned int reset_val : 1;
 };
 
 #define INIT_GPIO_CONFIG(inst)                                      \
@@ -33,6 +34,7 @@ struct ps_gpio_int {
 		.signal = PWR_DT_INST_SIGNAL_ENUM(inst),            \
 		.no_enable = DT_INST_PROP(inst, no_enable),         \
 		.output = DT_INST_PROP(inst, output),               \
+		.reset_val = !!DT_INST_PROP(inst, reset_val),       \
 	},
 
 const static struct ps_gpio_int gpio_config[] = { DT_INST_FOREACH_STATUS_OKAY(
@@ -143,16 +145,18 @@ int power_signal_gpio_set(enum pwr_sig_gpio index, int value)
 }
 void power_signal_gpio_init(void)
 {
-	/*
-	 * If there has been a sysjump, do not set the output
-	 * to the deasserted state.
-	 */
-	gpio_flags_t out_flags = system_jumped_to_this_image() ?
-					 GPIO_OUTPUT :
-					 GPIO_OUTPUT_INACTIVE;
-
 	for (int i = 0; i < ARRAY_SIZE(gpio_config); i++) {
 		if (gpio_config[i].output) {
+			gpio_flags_t out_flags = GPIO_OUTPUT;
+			/*
+			 * If there has not been a sysjump, set the output pin
+			 * to corresponding assertion reset value.
+			 */
+			if (!system_jumped_to_this_image()) {
+				out_flags = gpio_config[i].reset_val ?
+						    GPIO_OUTPUT_ACTIVE :
+						    GPIO_OUTPUT_INACTIVE;
+			}
 			gpio_pin_configure_dt(&spec[i], out_flags);
 		} else {
 			gpio_pin_configure_dt(&spec[i], GPIO_INPUT);
