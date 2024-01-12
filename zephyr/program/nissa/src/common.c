@@ -161,7 +161,8 @@ __override void board_ocpc_init(struct ocpc_data *ocpc)
 }
 #endif
 
-int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
+__overridable int
+board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
 {
 	/*
 	 * AP tunneling to I2C is default-forbidden, but allowed for

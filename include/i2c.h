@@ -496,7 +496,8 @@ void i2c_init(void);
  *
  * @return true, if passthru should be allowed on the I2C command.
  */
-int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc);
+__override_proto int
+board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc);
 
 /**
  * Board level function that can indicate if a particular i2c bus is known to be
