@@ -110,3 +110,22 @@ __override void board_power_change(struct ap_power_ev_callback *cb,
 		break;
 	}
 }
+
+__override int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
+{
+	/*
+	 * AP tunneling to I2C is default-forbidden, but allowed for
+	 * type-C and battery ports because these can be used to update TCPC or
+	 * retimer firmware or specific battery access such as get battery
+	 * vendor parameter. AP firmware separately sends a command to block
+	 * tunneling to these ports after it's done updating chips.
+	 */
+	return false || (cmd_desc->port == I2C_PORT_BATTERY)
+#if DT_NODE_EXISTS(DT_NODELABEL(tcpc_port0))
+	       || (cmd_desc->port == I2C_PORT_BY_DEV(DT_NODELABEL(tcpc_port0)))
+#endif
+#if DT_NODE_EXISTS(DT_NODELABEL(tcpc_port1))
+	       || (cmd_desc->port == I2C_PORT_BY_DEV(DT_NODELABEL(tcpc_port1)))
+#endif
+		;
+}
