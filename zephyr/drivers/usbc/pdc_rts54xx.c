@@ -1098,8 +1098,7 @@ static int rts54_get_rtk_status(const struct device *dev, uint8_t offset,
 		len,
 	};
 
-	return rts54_post_command(dev, CMD_VENDOR_ENABLE, payload,
-				  ARRAY_SIZE(payload), buf);
+	return rts54_post_command(dev, cmd, payload, ARRAY_SIZE(payload), buf);
 }
 
 static int rts54_get_ucsi_version(const struct device *dev, uint16_t *version)
