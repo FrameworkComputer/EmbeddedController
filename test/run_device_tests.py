@@ -357,6 +357,9 @@ class AllTests:
             ),
             TestConfig(test_name="rtc"),
             TestConfig(
+                test_name="rtc_npcx9", exclude_boards=[BLOONCHIPPER, DARTMONKEY]
+            ),
+            TestConfig(
                 test_name="rtc_stm32f4", exclude_boards=[DARTMONKEY, HELIPILOT]
             ),
             TestConfig(test_name="sbrk", imagetype_to_use=ImageType.RO),

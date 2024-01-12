@@ -59,6 +59,7 @@ test-list-y=\
        rollback_entropy \
        rsa3 \
        rtc \
+       rtc_npcx9 \
        sbrk \
        scratchpad \
        sha256 \

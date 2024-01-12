@@ -266,6 +266,7 @@ rollback_secret-y=rollback_secret.o
 rsa-y=rsa.o
 rsa3-y=rsa.o
 rtc-y=rtc.o
+rtc_npcx9-y=rtc_npcx9.o
 rtc_stm32f4-y=rtc_stm32f4.o
 scratchpad-y=scratchpad.o
 sbrk-y=sbrk.o
