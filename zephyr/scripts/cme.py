@@ -154,7 +154,7 @@ def node_is_valid(node, i2c_node, i2c_portmap):
         i2c_portmap: Dict of the mapping from I2C name to remote port number.
     """
     if "compatible" not in node.props:
-        logging.error("Compatible not found: %s", node.name)
+        logging.info("Compatible not found: %s", node.name)
         return False
 
     if i2c_node is None or i2c_node.name not in i2c_portmap:
@@ -192,6 +192,7 @@ def find_i2c_portmap(edtlib, edt):
         "ite,enhance-i2c",
         "microchip,xec-i2c-v2",
         "zephyr,i2c-emul-controller",
+        "intel,sedi-i2c",
     ]
 
     # Append all I2C chip names to a list; its index is the port number.
@@ -201,7 +202,7 @@ def find_i2c_portmap(edtlib, edt):
             i2c_chip_names.append(node.name)
 
     if not i2c_chip_names:
-        logging.error("No I2C port found")
+        logging.info("No I2C port found")
         return {}
 
     # Find the mapping of the remote_port.
@@ -380,7 +381,7 @@ def iterate_usbc_components(edtlib, edt, i2c_portmap, manifest):
         usbc = edt.get_node("/usbc")
     except edtlib.EDTError:
         # If the usbc node doesn't exist, return success.
-        logging.error("No usbc node found")
+        logging.info("No usbc node found")
         return
 
     for node in usbc.children.values():
@@ -486,7 +487,7 @@ def iterate_motionsensor_components(
         mss = edt.get_node("/motionsense-sensor")
     except edtlib.EDTError:
         # If the motionsense-sensor node doesn't exist, return success.
-        logging.error("No motionsense-sensor node found")
+        logging.info("No motionsense-sensor node found")
         return
 
     for node in mss.children.values():
