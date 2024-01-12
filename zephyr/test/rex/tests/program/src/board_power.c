@@ -36,7 +36,7 @@ DEFINE_FAKE_VOID_FUNC(ap_power_ev_send_callbacks, enum ap_power_events);
 int mock_power_signal_set_ap_force_shutdown(enum power_signal signal, int value)
 {
 	if (power_signal_set_fake.call_count == 1) {
-		zassert_true(signal == PWR_EC_PCH_RSMRST && value == 0,
+		zassert_true(signal == PWR_EC_PCH_RSMRST && value == 1,
 			     "First call signal: %d, value: %d", signal, value);
 		return 0;
 	} else if (power_signal_set_fake.call_count == 2) {
