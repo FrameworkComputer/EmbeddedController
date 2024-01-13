@@ -49,6 +49,7 @@ def main() -> int:
                         and not "src/third_party/zephyr/main/subsys/testsuite/ztest/"
                         in active_name
                         and not "platform/ec/zephyr/test/" in active_name
+                        and not "platform/ec/build/" in active_name
                     ):
                         active_file = open(  # pylint: disable=R1732
                             active_name, encoding="utf-8"

@@ -23,7 +23,8 @@ BUILD=$(PLATFORM_EC)/build
 GENERATED_AND_SYSTEM_PATTERNS='$(PLATFORM_EC)/build/**' \
 	'$(PLATFORM_EC)/twister-out*/**' \
 	'/usr/include/**' \
-	'/usr/lib/**'
+	'/usr/lib/**' \
+	'**/picolibc/picolibc/include/**'
 TEST_PATTERNS='$(PLATFORM_EC)/test/**' \
 	'$(PLATFORM_EC)/include/tests/**' \
 	'$(PLATFORM_EC)/private/test/**' \
