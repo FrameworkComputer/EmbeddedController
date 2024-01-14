@@ -29,7 +29,8 @@ void power_signal_espi_cb(const struct device *dev, struct espi_callback *cb,
 /*
  * The ESPI bus events required for the power signal ESPI callback.
  */
-#define POWER_SIGNAL_ESPI_BUS_EVENTS \
-	(ESPI_BUS_EVENT_CHANNEL_READY | ESPI_BUS_EVENT_VWIRE_RECEIVED)
+#define POWER_SIGNAL_ESPI_BUS_EVENTS                                    \
+	(ESPI_BUS_EVENT_CHANNEL_READY | ESPI_BUS_EVENT_VWIRE_RECEIVED | \
+	 ESPI_BUS_RESET)
 
 #endif /* __AP_POWER_AP_POWER_ESPI_H__ */
