@@ -6,8 +6,7 @@
 #include "accelgyro.h"
 #include "adc.h"
 #include "common.h"
-#include "driver/accel_bma422.h"
-#include "driver/accel_bma4xx.h"
+#include "driver/accel_lis2dh.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "motion_sense.h"
@@ -50,35 +49,37 @@ BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
 K_MUTEX_DEFINE(g_lid_accel_mutex);
 K_MUTEX_DEFINE(g_base_accel_mutex);
-static struct accelgyro_saved_data_t bma422_lid_data;
-static struct accelgyro_saved_data_t bma422_base_data;
+/* Lid accel private data */
+static struct stprivate_data g_lis2dh_lid_data;
+/* Base accel private data */
+static struct stprivate_data g_lis2dh_base_data;
 
 /* calibrate the orientation matrix on board stage */
-static const mat33_fp_t lid_standard_ref = { { 1, FLOAT_TO_FP(0), 0 },
-					     { FLOAT_TO_FP(0), -1, 0 },
+static const mat33_fp_t lid_standard_ref = { { FLOAT_TO_FP(-1), 0, 0 },
+					     { 0, FLOAT_TO_FP(1), 0 },
 					     { 0, 0, FLOAT_TO_FP(-1) } };
 
 /* verify orientation matrix */
-static const mat33_fp_t base_standard_ref = { { FLOAT_TO_FP(0), -1, 0 },
-					      { 1, FLOAT_TO_FP(0), 0 },
+static const mat33_fp_t base_standard_ref = { { 0, FLOAT_TO_FP(1), 0 },
+					      { FLOAT_TO_FP(-1), 0, 0 },
 					      { 0, 0, FLOAT_TO_FP(1) } };
 
 struct motion_sensor_t motion_sensors[] = {
 	[LID_ACCEL] = {
 		.name = "Lid Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMA422,
+		.chip = MOTIONSENSE_CHIP_LIS2DH,
 		.type = MOTIONSENSE_TYPE_ACCEL,
 		.location = MOTIONSENSE_LOC_LID,
-		.drv = &bma4_accel_drv,
+		.drv = &lis2dh_drv,
 		.mutex = &g_lid_accel_mutex,
-		.drv_data = &bma422_lid_data,
+		.drv_data = &g_lis2dh_lid_data,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMA4_I2C_ADDR_PRIMARY,
+		.i2c_spi_addr_flags = LIS2DH_ADDR0_FLAGS,
 		.rot_standard_ref = &lid_standard_ref, /* identity matrix */
 		.default_range = 2, /* g */
-		.min_frequency = BMA4_ACCEL_MIN_FREQ,
-		.max_frequency = BMA4_ACCEL_MAX_FREQ,
+		.min_frequency = LIS2DH_ODR_MIN_VAL,
+		.max_frequency = LIS2DH_ODR_MAX_VAL,
 		.config = {
 			/* EC use accel for angle detection */
 			[SENSOR_CONFIG_EC_S0] = {
@@ -90,22 +91,21 @@ struct motion_sensor_t motion_sensors[] = {
 			},
 		},
 	},
-
 	[BASE_ACCEL] = {
 		.name = "Base Accel",
 		.active_mask = SENSOR_ACTIVE_S0_S3,
-		.chip = MOTIONSENSE_CHIP_BMA422,
+		.chip = MOTIONSENSE_CHIP_LIS2DH,
 		.type = MOTIONSENSE_TYPE_ACCEL,
 		.location = MOTIONSENSE_LOC_BASE,
-		.drv = &bma4_accel_drv,
+		.drv = &lis2dh_drv,
 		.mutex = &g_base_accel_mutex,
-		.drv_data = &bma422_base_data,
+		.drv_data = &g_lis2dh_base_data,
 		.port = I2C_PORT_SENSOR,
-		.i2c_spi_addr_flags = BMA4_I2C_ADDR_SECONDARY,
+		.i2c_spi_addr_flags = LIS2DH_ADDR1_FLAGS,
 		.rot_standard_ref = &base_standard_ref,
 		.default_range = 2,  /* g */
-		.min_frequency = BMA4_ACCEL_MIN_FREQ,
-		.max_frequency = BMA4_ACCEL_MAX_FREQ,
+		.min_frequency = LIS2DH_ODR_MIN_VAL,
+		.max_frequency = LIS2DH_ODR_MAX_VAL,
 		.config = {
 			[SENSOR_CONFIG_EC_S0] = {
 				.odr = 12500 | ROUND_UP_FLAG,
@@ -237,7 +237,6 @@ DECLARE_HOOK(HOOK_INIT, board_sensors_init, HOOK_PRIO_INIT_I2C + 1);
 
 void motion_interrupt(enum gpio_signal signal)
 {
-	bma4xx_interrupt(signal);
 }
 
 void lid_accel_interrupt(enum gpio_signal signal)
