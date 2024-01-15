@@ -29,6 +29,12 @@ static void process(const struct log_backend *const backend,
 		    union log_msg_generic *msg)
 {
 	uint32_t flags = log_backend_std_get_flags();
+
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_LOG_BACKEND_CONSOLE_BUFFER_REDUCED)) {
+		flags = (flags & ~LOG_OUTPUT_FLAG_LEVEL) |
+			LOG_OUTPUT_FLAG_SKIP_SOURCE;
+	}
+
 	log_format_func_t log_output_func =
 		log_format_func_t_get(LOG_OUTPUT_TEXT);
 	log_output_func(&log_output_console_buffer, &msg->log, flags);
