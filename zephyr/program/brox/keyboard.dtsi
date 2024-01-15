@@ -12,6 +12,14 @@
 		compatible = "cros-ec,kblight-pwm";
 		pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
 	};
+
+	boot-keys {
+		compatible = "cros-ec,boot-keys";
+		down-arrow-rc = <KBD_RC(6, 11)>;
+		esc-rc = <KBD_RC(1, 1)>;
+		left-shift-rc = <KBD_RC(5, 7)>;
+		refresh-rc = <KBD_RC(3, 2)>;
+	};
 };
 
 &cros_kb_raw {
