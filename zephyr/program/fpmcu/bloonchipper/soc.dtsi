@@ -43,7 +43,8 @@
 
 &usart1 {
 	pinctrl-0 = <&usart1_tx_pa9 &usart1_rx_pa10>;
-	pinctrl-names = "default";
+	pinctrl-1 = <&analog_pa9 &analog_pa10>;
+	pinctrl-names = "default", "sleep";
 	current-speed = <3000000>;
 	dmas = <&dma2 7 4 0x38440 0x03>,
 		<&dma2 2 4 0x38480 0x03>;
@@ -52,12 +53,16 @@
 };
 
 &usart2 {
+	pinctrl-1 = <&analog_pa2 &analog_pa3>;
+	pinctrl-names = "default", "sleep";
 	dmas = <&dma1 6 4 0x08440 0x03>,
 		<&dma1 5 4 0x08480 0x03>;
 	dma-names = "tx", "rx";
 };
 
 &spi1 {
+	pinctrl-1 = <&analog_pa4 &analog_pa5 &analog_pa6 &analog_pa7>;
+	pinctrl-names = "default", "sleep";
 	/* Change the compatible string to use the Host Command version of the
 	 * STM32 SPI driver
 	 */
