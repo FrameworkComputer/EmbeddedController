@@ -382,8 +382,6 @@ struct pdc_port_t {
 	struct pdc_info_t info;
 	/** Public API block counter */
 	uint8_t block_counter;
-	/** True when the CCAPS temp variable has valid data */
-	bool ccaps_ready;
 	/** Command mutex */
 	struct k_mutex mtx;
 	/** PDC command to send */
@@ -656,7 +654,6 @@ static void pdc_unattached_entry(void *obj)
 
 	set_attached_flag(port, UNATTACHED_FLAG);
 
-	port->ccaps_ready = false;
 	port->send_cmd.intern.pending = false;
 
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
@@ -1128,9 +1125,6 @@ static void pdc_send_cmd_wait_exit(void *obj)
 				port->snk_policy.pdos[i] = 0;
 			}
 		}
-		break;
-	case CMD_PDC_GET_CONNECTOR_CAPABILITY:
-		port->ccaps_ready = true;
 		break;
 	default:
 	}
@@ -1607,15 +1601,6 @@ bool pdc_power_mgmt_get_partner_dual_role_power(int port)
 		return false;
 	}
 
-	/*
-	 * The subsystem is in an attached state, so wait until the
-	 * connector capabilities are read.
-	 */
-	while (!pdc_data[port]->port.ccaps_ready) {
-		k_sleep(K_MSEC(LOOP_DELAY_MS));
-	}
-
-	/* Return DRP capability */
 	return pdc_data[port]->port.ccaps.op_mode_drp;
 }
 
@@ -1624,14 +1609,6 @@ bool pdc_power_mgmt_get_partner_data_swap_capable(int port)
 	/* Make sure port is connected */
 	if (!pdc_power_mgmt_is_connected(port)) {
 		return false;
-	}
-
-	/*
-	 * The subsystem is in an attached state, so wait until the
-	 * connector capabilities are read.
-	 */
-	while (!pdc_data[port]->port.ccaps_ready) {
-		k_sleep(K_MSEC(LOOP_DELAY_MS));
 	}
 
 	/* Make sure port partner is DRP, RP only, or RD only */
