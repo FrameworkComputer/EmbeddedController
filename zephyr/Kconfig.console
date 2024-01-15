@@ -122,3 +122,10 @@ config PLATFORM_EC_LOG_BACKEND_CONSOLE_BUFFER_REDUCED
 	help
 	  Skip logging the logging level and the source to the console buffer.
 	  It reduces the amount data stored in the console buffer.
+
+config PLATFORM_EC_LOG_CUSTOM_TIMESTAMP
+	bool "Use EC format of timestamp"
+	depends on LOG_OUTPUT_FORMAT_CUSTOM_TIMESTAMP
+	help
+	  Change the default format of the timestamp, to the one EC uses -
+	  "[s.us]" at the beginning of a log.
