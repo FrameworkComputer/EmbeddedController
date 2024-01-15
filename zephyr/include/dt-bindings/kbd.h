@@ -8,4 +8,7 @@
 
 #define KBD_RC(row, col) ((((row) & 0xff) << 8) | ((col) & 0xff))
 
+#define KBD_RC_ROW(rc) ((rc >> 8) & 0xff)
+#define KBD_RC_COL(rc) (rc & 0xff)
+
 #endif /* DT_BINDINGS_KBD_H_ */

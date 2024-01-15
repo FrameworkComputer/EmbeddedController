@@ -94,7 +94,8 @@ enum boot_key {
 };
 BUILD_ASSERT(BOOT_KEY_COUNT < 31);
 
-#if defined(HAS_TASK_KEYSCAN) && defined(CONFIG_KEYBOARD_BOOT_KEYS)
+#if (defined(HAS_TASK_KEYSCAN) && defined(CONFIG_KEYBOARD_BOOT_KEYS)) || \
+	defined(CONFIG_CROS_EC_BOOT_KEYS)
 /**
  * Returns mask of all the keys held down at boot time in addition to the
  * keyboard-controlled reset keys. If more than one boot key is held, mask bits
