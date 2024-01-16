@@ -152,6 +152,8 @@ enum snk_attached_local_state_t {
  * @brief SRC Attached Local States
  */
 enum src_attached_local_state_t {
+	/** SRC_ATTACHED_GET_CONNECTOR_CAPABILITY */
+	SRC_ATTACHED_GET_CONNECTOR_CAPABILITY,
 	/** SRC_ATTACHED_SET_SINK_PATH_OFF */
 	SRC_ATTACHED_SET_SINK_PATH_OFF,
 	/** SRC_ATTACHED_SET_DR_SWAP_POLICY */
@@ -726,7 +728,7 @@ static void pdc_src_attached_entry(void *obj)
 				SRC_ATTACHED_SET_SINK_PATH_OFF;
 		} else {
 			port->src_attached_local_state =
-				SRC_ATTACHED_SET_DR_SWAP_POLICY;
+				SRC_ATTACHED_GET_CONNECTOR_CAPABILITY;
 		}
 	}
 }
@@ -759,8 +761,13 @@ static void pdc_src_attached_run(void *obj)
 	switch (port->src_attached_local_state) {
 	case SRC_ATTACHED_SET_SINK_PATH_OFF:
 		port->src_attached_local_state =
-			SRC_ATTACHED_SET_DR_SWAP_POLICY;
+			SRC_ATTACHED_GET_CONNECTOR_CAPABILITY;
 		send_snk_path_en_cmd(port, false);
+		return;
+	case SRC_ATTACHED_GET_CONNECTOR_CAPABILITY:
+		port->src_attached_local_state =
+			SRC_ATTACHED_SET_DR_SWAP_POLICY;
+		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_CAPABILITY);
 		return;
 	case SRC_ATTACHED_SET_DR_SWAP_POLICY:
 		port->src_attached_local_state =
