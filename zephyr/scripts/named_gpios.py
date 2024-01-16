@@ -96,7 +96,7 @@ def verify_gpios_flags_match(edtlib, edt, project_name):
         return True
 
     # Dictionary using the gpio,pin tuple as the key. Value set to the flags
-    board_gpios = dict()
+    board_gpios = {}
     for node in named_gpios.children.values():
         if "gpios" not in node.props:
             continue
@@ -152,7 +152,7 @@ def verify_no_duplicates(edtlib, edt, project_name):
         True if no duplicates found.  Returns False otherwise.
     """
     # Dictionary of GPIO controllers, indexed by the GPIO controller nodelabel
-    gpio_ctrls = dict()
+    gpio_ctrls = {}
     duplicates = 0
     count = 0
 
@@ -186,7 +186,7 @@ def verify_no_duplicates(edtlib, edt, project_name):
 
         if not nodelabel in gpio_ctrls:
             # Create a dictionary at each GPIO controller
-            gpio_ctrls[nodelabel] = dict()
+            gpio_ctrls[nodelabel] = {}
 
         if gpio_pin in gpio_ctrls[nodelabel]:
             logging.error(
