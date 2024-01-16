@@ -356,15 +356,15 @@ class AllTests:
                 test_name="rollback_entropy", imagetype_to_use=ImageType.RO
             ),
             TestConfig(test_name="rtc"),
+            TestConfig(
+                test_name="rtc_stm32f4", exclude_boards=[DARTMONKEY, HELIPILOT]
+            ),
             TestConfig(test_name="sbrk", imagetype_to_use=ImageType.RO),
             TestConfig(test_name="sha256"),
             TestConfig(test_name="sha256_unrolled"),
             TestConfig(test_name="static_if"),
             TestConfig(test_name="stdlib"),
             TestConfig(test_name="std_vector"),
-            TestConfig(
-                test_name="stm32f_rtc", exclude_boards=[DARTMONKEY, HELIPILOT]
-            ),
             TestConfig(
                 config_name="system_is_locked_wp_on",
                 test_name="system_is_locked",

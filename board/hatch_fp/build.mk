@@ -59,6 +59,7 @@ test-list-y=\
        rollback_entropy \
        rsa3 \
        rtc \
+       rtc_stm32f4 \
        sbrk \
        scratchpad \
        sha256 \
@@ -66,7 +67,6 @@ test-list-y=\
        static_if \
        stdlib \
        std_vector \
-       stm32f_rtc \
        system_is_locked \
        timer \
        timer_dos \
