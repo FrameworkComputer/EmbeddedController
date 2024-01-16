@@ -52,8 +52,9 @@ enum fan_status board_override_fan_control_duty(int ch)
 	 * signal to EC after EC outputs the PWM signal to the fan.
 	 * During this period, the driver will read two consecutive RPM = 0.
 	 * In this case, don't step the PWM duty too aggressively.
+	 * We subtract 200 from the start RPM as margin.
 	 */
-	if (data->rpm_pre < 1000 && rpm_actual < 1000) {
+	if (rpm_actual < (fans[ch].rpm->rpm_min  - 200)) {
 		fan_set_duty(ch, CONFIG_FAN_START_DUTY);
 		return FAN_STATUS_CHANGING;
 	}
