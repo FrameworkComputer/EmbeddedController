@@ -2011,3 +2011,12 @@ int pdc_power_mgmt_get_info(int port, struct pdc_info_t *pdc_info)
 	memcpy(pdc_info, &pdc_data[port]->port.info, sizeof(struct pdc_info_t));
 	return 0;
 }
+
+int pdc_power_mgmt_get_bus_info(int port, struct pdc_bus_info_t *pdc_bus_info)
+{
+	/* This operation is handled synchronously within the driver based on
+	 * compile-time data. No need to block or go through the state machine.
+	 */
+
+	return pdc_get_bus_info(pdc_data[port]->port.pdc, pdc_bus_info);
+}

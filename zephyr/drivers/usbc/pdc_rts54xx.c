@@ -1524,6 +1524,22 @@ static int rts54_get_info(const struct device *dev, struct pdc_info_t *info)
 				  ARRAY_SIZE(payload), (uint8_t *)info);
 }
 
+static int rts54_get_bus_info(const struct device *dev,
+			      struct pdc_bus_info_t *info)
+{
+	const struct pdc_config_t *cfg =
+		(const struct pdc_config_t *)dev->config;
+
+	if (info == NULL) {
+		return -EINVAL;
+	}
+
+	info->bus_type = PDC_BUS_TYPE_I2C;
+	info->i2c = cfg->i2c;
+
+	return 0;
+}
+
 static int rts54_get_vbus_voltage(const struct device *dev, uint16_t *voltage)
 {
 	struct pdc_data_t *data = dev->data;
@@ -1665,6 +1681,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.set_handler_cb = rts54_set_handler_cb,
 	.read_power_level = rts54_read_power_level,
 	.get_info = rts54_get_info,
+	.get_bus_info = rts54_get_bus_info,
 	.set_power_level = rts54_set_power_level,
 	.reconnect = rts54_reconnect,
 };
