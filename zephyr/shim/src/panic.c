@@ -20,25 +20,26 @@
  * For each architecture, define:
  * - PANIC_ARCH, which should be the corresponding arch field of the
  *   panic_data struct.
- * - PANIC_REG_LIST, which is a macro that takes a parameter M, and
- *   applies M to 3-tuples of:
+ * - PANIC_REG_LIST, which is a macro that takes parameters M and M_GPR, and
+ *   applies M/M_GPR to 3-tuples of:
  *   - zephyr esf field name
  *   - panic_data struct field name
  *   - human readable name
+ *   M_GPR is used for General Purpose Registers
  */
 
 #if defined(CONFIG_ARM)
 #define PANIC_ARCH PANIC_ARCH_CORTEX_M
 #if defined(CONFIG_EXTRA_EXCEPTION_INFO)
-#define EXTRA_PANIC_REG_LIST(M)                                              \
-	M(extra_info.callee->v1, cm.regs[CORTEX_PANIC_REGISTER_R4], v1)      \
-	M(extra_info.callee->v2, cm.regs[CORTEX_PANIC_REGISTER_R5], v2)      \
-	M(extra_info.callee->v3, cm.regs[CORTEX_PANIC_REGISTER_R6], v3)      \
-	M(extra_info.callee->v4, cm.regs[CORTEX_PANIC_REGISTER_R7], v4)      \
-	M(extra_info.callee->v5, cm.regs[CORTEX_PANIC_REGISTER_R8], v5)      \
-	M(extra_info.callee->v6, cm.regs[CORTEX_PANIC_REGISTER_R9], v6)      \
-	M(extra_info.callee->v7, cm.regs[CORTEX_PANIC_REGISTER_R10], v7)     \
-	M(extra_info.callee->v8, cm.regs[CORTEX_PANIC_REGISTER_R11], v8)     \
+#define EXTRA_PANIC_REG_LIST(M, M_GPR)                                       \
+	M_GPR(extra_info.callee->v1, cm.regs[CORTEX_PANIC_REGISTER_R4], v1)  \
+	M_GPR(extra_info.callee->v2, cm.regs[CORTEX_PANIC_REGISTER_R5], v2)  \
+	M_GPR(extra_info.callee->v3, cm.regs[CORTEX_PANIC_REGISTER_R6], v3)  \
+	M_GPR(extra_info.callee->v4, cm.regs[CORTEX_PANIC_REGISTER_R7], v4)  \
+	M_GPR(extra_info.callee->v5, cm.regs[CORTEX_PANIC_REGISTER_R8], v5)  \
+	M_GPR(extra_info.callee->v6, cm.regs[CORTEX_PANIC_REGISTER_R9], v6)  \
+	M_GPR(extra_info.callee->v7, cm.regs[CORTEX_PANIC_REGISTER_R10], v7) \
+	M_GPR(extra_info.callee->v8, cm.regs[CORTEX_PANIC_REGISTER_R11], v8) \
 	M(extra_info.callee->psp, cm.regs[CORTEX_PANIC_REGISTER_PSP], psp)   \
 	M(extra_info.exc_return, cm.regs[CORTEX_PANIC_REGISTER_LR], exc_rtn) \
 	M(extra_info.msp, cm.regs[CORTEX_PANIC_REGISTER_MSP], msp)
@@ -47,19 +48,19 @@
  * captured in PANIC_REG_LIST.
  */
 #else
-#define EXTRA_PANIC_REG_LIST(M)
+#define EXTRA_PANIC_REG_LIST(M, M_GPR)
 #endif
 /* TODO(b/245423691): Copy other status registers (e.g. CFSR) when available. */
-#define PANIC_REG_LIST(M)                \
-	M(basic.r0, cm.frame[0], a1)     \
-	M(basic.r1, cm.frame[1], a2)     \
-	M(basic.r2, cm.frame[2], a3)     \
-	M(basic.r3, cm.frame[3], a4)     \
-	M(basic.r12, cm.frame[4], ip)    \
-	M(basic.lr, cm.frame[5], lr)     \
-	M(basic.pc, cm.frame[6], pc)     \
-	M(basic.xpsr, cm.frame[7], xpsr) \
-	EXTRA_PANIC_REG_LIST(M)
+#define PANIC_REG_LIST(M, M_GPR)          \
+	M_GPR(basic.r0, cm.frame[0], a1)  \
+	M_GPR(basic.r1, cm.frame[1], a2)  \
+	M_GPR(basic.r2, cm.frame[2], a3)  \
+	M_GPR(basic.r3, cm.frame[3], a4)  \
+	M_GPR(basic.r12, cm.frame[4], ip) \
+	M(basic.lr, cm.frame[5], lr)      \
+	M(basic.pc, cm.frame[6], pc)      \
+	M(basic.xpsr, cm.frame[7], xpsr)  \
+	EXTRA_PANIC_REG_LIST(M, M_GPR)
 #define PANIC_REG_EXCEPTION(pdata) pdata->cm.regs[1]
 #define PANIC_REG_REASON(pdata) pdata->cm.regs[3]
 #define PANIC_REG_INFO(pdata) pdata->cm.regs[4]
@@ -71,7 +72,7 @@
  * The assignments must match include/panic_defs.h
  */
 #define PANIC_ARCH PANIC_ARCH_RISCV_RV32I
-#define PANIC_REG_LIST(M)         \
+#define PANIC_REG_LIST(M, M_GPR)  \
 	M(ra, riscv.regs[29], ra) \
 	M(a0, riscv.regs[26], a0) \
 	M(a1, riscv.regs[25], a1) \
@@ -96,7 +97,7 @@
 #else
 /* Not implemented for this arch */
 #define PANIC_ARCH 0
-#define PANIC_REG_LIST(M)
+#define PANIC_REG_LIST(M, M_GPR)
 static uint8_t placeholder_exception_reg;
 static uint32_t placeholder_reason_reg;
 static uint32_t placeholder_info_reg;
@@ -108,12 +109,17 @@ static uint32_t placeholder_info_reg;
 /* Macros to be applied to PANIC_REG_LIST as M */
 #define PANIC_COPY_REGS(esf_field, pdata_field, human_name) \
 	pdata->pdata_field = esf->esf_field;
+#define PANIC_COPY_REGS_GPR(esf_field, pdata_field, human_name)              \
+	pdata->pdata_field = COND_CODE_1(CONFIG_PLATFORM_EC_PANIC_STRIP_GPR, \
+					 (0), (esf->esf_field));
+
 #define PANIC_PRINT_REGS(esf_field, pdata_field, human_name) \
 	panic_printf("  %-8s = 0x%08X\n", #human_name, pdata->pdata_field);
+#define PANIC_PRINT_REGS_GPR(esf_field, pdata_field, human_name)
 
 void panic_data_print(const struct panic_data *pdata)
 {
-	PANIC_REG_LIST(PANIC_PRINT_REGS);
+	PANIC_REG_LIST(PANIC_PRINT_REGS, PANIC_PRINT_REGS_GPR);
 }
 
 static void copy_esf_to_panic_data(const z_arch_esf_t *esf,
@@ -128,7 +134,7 @@ static void copy_esf_to_panic_data(const z_arch_esf_t *esf,
 	pdata->struct_size = sizeof(*pdata);
 	pdata->magic = PANIC_DATA_MAGIC;
 
-	PANIC_REG_LIST(PANIC_COPY_REGS);
+	PANIC_REG_LIST(PANIC_COPY_REGS, PANIC_COPY_REGS_GPR);
 }
 
 void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *esf)
