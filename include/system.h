@@ -699,6 +699,12 @@ void system_set_rtc(uint32_t seconds);
 void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds);
 
 /**
+ * Return the seconds remaining before the RTC alarm goes off.
+ * Returns 0 if alarm is not set.
+ */
+uint32_t system_get_rtc_alarm(void);
+
+/**
  * Disable and clear the RTC interrupt.
  */
 void system_reset_rtc_alarm(void);
