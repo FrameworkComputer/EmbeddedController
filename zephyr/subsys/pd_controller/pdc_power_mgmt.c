@@ -36,7 +36,7 @@ LOG_MODULE_DECLARE(pdc, LOG_LEVEL_INF);
 /**
  * @brief Time delay before running the state machine loop
  */
-#define LOOP_DELAY_MS 100
+#define LOOP_DELAY_MS 50
 
 /**
  * @brief maximum number of PDOs
