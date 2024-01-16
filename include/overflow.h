@@ -12,7 +12,7 @@
  * __builtin_add_overflow, __builtin_sub_overflow and __builtin_mul_overflow
  * were added in gcc 5.1: https://gcc.gnu.org/gcc-5/changes.html
  */
-#if GCC_VERSION > 50100
+#if TOOLCHAIN_GCC_VERSION > 50100
 #define COMPILER_HAS_GENERIC_BUILTIN_OVERFLOW 1
 #endif
 
