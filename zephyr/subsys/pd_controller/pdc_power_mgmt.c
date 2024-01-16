@@ -472,6 +472,15 @@ static void run_public_api_command(struct pdc_port_t *port)
 	} else if (atomic_test_and_clear_bit(port->pdc_cmd_flags,
 					     CMD_PDC_SET_UOR)) {
 		queue_public_cmd(port, CMD_PDC_SET_UOR);
+	} else if (atomic_test_and_clear_bit(port->pdc_cmd_flags,
+					     CMD_PDC_GET_INFO)) {
+		queue_public_cmd(port, CMD_PDC_GET_INFO);
+		return;
+	}
+
+	if (atomic_get(port->pdc_cmd_flags) != 0) {
+		LOG_ERR("Public API does not support this command (%ld)",
+			atomic_get(port->pdc_cmd_flags));
 	}
 }
 
@@ -1975,3 +1984,30 @@ static void pd_chipset_shutdown(void)
 	LOG_INF("PD:S3->S5");
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pd_chipset_shutdown, HOOK_PRIO_DEFAULT);
+
+int pdc_power_mgmt_get_info(int port, struct pdc_info_t *pdc_info)
+{
+	int ret;
+
+	/* Make sure port is in range and that an output buffer is provided */
+	if (!is_pdc_port_valid(port)) {
+		return -ERANGE;
+	}
+
+	if (pdc_info == NULL) {
+		return -EINVAL;
+	}
+
+	/* Block until command completes */
+	ret = public_api_block(port, CMD_PDC_GET_INFO);
+	if (ret) {
+		return ret;
+	}
+
+	/* Provide a copy of the current info struct to avoid exposing internal
+	 * data structs.
+	 */
+
+	memcpy(pdc_info, &pdc_data[port]->port.info, sizeof(struct pdc_info_t));
+	return 0;
+}
