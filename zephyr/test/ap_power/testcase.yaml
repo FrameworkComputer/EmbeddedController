@@ -6,6 +6,7 @@ tests:
     - boards/native_posix.overlay
     - boards/alderlake.dts
     extra_configs:
+    - CONFIG_TEST_AP_POWER_ADL=y
     - CONFIG_EMUL_POWER_SIGNALS=y
     - CONFIG_X86_NON_DSX_PWRSEQ_ADL=y
     - CONFIG_AP_PWRSEQ_S0IX=y
@@ -13,11 +14,24 @@ tests:
     - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S4=y
     - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S5=y
     - CONFIG_AP_PWRSEQ_DRIVER=n
+  ap_power.brox:
+    extra_dtc_overlay_files:
+    - boards/native_posix.overlay
+    - boards/brox_native_posix.overlay
+    extra_configs:
+    - CONFIG_TEST_AP_POWER_BROX=y
+    - CONFIG_EMUL_POWER_SIGNALS=y
+    - CONFIG_X86_NON_DSX_PWRSEQ_ADL=y
+    - CONFIG_AP_PWRSEQ_S0IX=y
+    - CONFIG_AP_X86_INTEL_ADL=y
+    - CONFIG_PLATFORM_EC_HOST_INTERFACE_ESPI_VW_SLP_S5=y
+    - CONFIG_AP_PWRSEQ_DRIVER=n
   ap_power.meteorlake:
     extra_dtc_overlay_files:
     - boards/native_posix.overlay
     - boards/meteorlake.dts
     extra_configs:
+    - CONFIG_TEST_AP_POWER_MTL=y
     - CONFIG_EMUL_POWER_SIGNALS=y
     - CONFIG_X86_NON_DSX_PWRSEQ_MTL=y
     - CONFIG_AP_PWRSEQ_S0IX=y
@@ -31,6 +45,7 @@ tests:
     - boards/native_posix.overlay
     - boards/alderlake.dts
     extra_configs:
+    - CONFIG_TEST_AP_POWER_ADL=y
     - CONFIG_EMUL_POWER_SIGNALS=y
     - CONFIG_X86_NON_DSX_PWRSEQ_ADL=y
     - CONFIG_AP_PWRSEQ_S0IX=y
@@ -43,6 +58,7 @@ tests:
     - boards/native_posix.overlay
     - boards/meteorlake.dts
     extra_configs:
+    - CONFIG_TEST_AP_POWER_MTL=y
     - CONFIG_EMUL_POWER_SIGNALS=y
     - CONFIG_X86_NON_DSX_PWRSEQ_MTL=y
     - CONFIG_AP_PWRSEQ_S0IX=y

@@ -1,0 +1,112 @@
+/*
+ * Copyright 2023 The ChromiumOS Authors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <dt-bindings/motionsense/utils.h>
+
+/ {
+	aliases {
+		/*
+		 * motion sense's <>_INT_EVENT is handled by alias. Using the
+		 * alias, each driver creates its own <>_INT_EVENT.
+		 */
+		 bma4xx-int = &lid_accel;
+	};
+
+	/*
+	 * No mutex is needed for Brox because none of the sensors have multiple
+	 * measurement types.
+	 */
+
+	/* Rotation matrix used by drivers. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		/* TODO (b/315858961) check rotation matrices */
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <1 0 0
+				 0 1 0
+				 0 0 1>;
+		};
+		base_rot_ref: base-rotation-ref {
+			mat33 = <1 0 0
+				 0 1 0
+				 0 0 1>;
+		};
+	};
+
+	/* Driver specific data */
+	motionsense-sensor-data {
+		lid_data: bma422-drv-lid-data {
+			compatible = "cros-ec,drvdata-bma4xx";
+			status = "okay";
+		};
+		base_data: bma422-drv-base-data {
+			compatible = "cros-ec,drvdata-bma4xx";
+			status = "okay";
+		};
+	};
+
+	/* List of motion sensors that create motion_sensors array. */
+	motionsense-sensor {
+		lid_accel: lid-accel {
+			compatible = "cros-ec,bma4xx";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref>;
+			default-range = <2>;
+			drv-data = <&lid_data>;
+			i2c-spi-addr-flags = "BMA4_I2C_ADDR_PRIMARY";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+		base_accel: base-accel {
+			compatible = "cros-ec,bma4xx";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&base_rot_ref>;
+			default-range = <2>;
+			drv-data = <&base_data>;
+			i2c-spi-addr-flags = "BMA4_I2C_ADDR_SECONDARY";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+	};
+
+	/* High level description info */
+	motionsense-sensor-info {
+		compatible = "cros-ec,motionsense-sensor-info";
+
+		/*
+		 * List of GPIO interrupts that have to be enabled at initial
+		 * stage.
+		 */
+		sensor-irqs = <&int_lid_imu>;
+
+		/* List of sensors in force mode */
+		accel-force-mode-sensors = <&base_accel>;
+	};
+};

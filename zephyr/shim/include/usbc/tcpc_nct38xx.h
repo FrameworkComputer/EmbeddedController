@@ -11,6 +11,7 @@
 #include <zephyr/devicetree.h>
 
 #define NCT38XX_TCPC_COMPAT nuvoton_nct38xx_tcpc
+#define NCT38XX_GPIO_COMPAT nuvoton_nct38xx_gpio
 
 #ifdef CONFIG_MFD_NCT38XX
 #define TCPC_MFD_PARENT(id) .mfd_parent = DEVICE_DT_GET(DT_PARENT(id)),

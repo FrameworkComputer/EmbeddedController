@@ -169,6 +169,12 @@ static void set_color(int node_idx)
 	}
 }
 
+/*
+ * The script zephyr/scripts/led_policy.py is used to verify that all
+ * power/battery states are covered by the cros-ec,led-policy devicetree.
+ * Update the python script whenever major changes are made to the matching
+ * function here.
+ */
 static int match_node(int node_idx)
 {
 	/* Check if this node depends on power state */

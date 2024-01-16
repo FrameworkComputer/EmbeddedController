@@ -6,6 +6,7 @@
 #include <dt-bindings/gpio_defines.h>
 #include <dt-bindings/gpio/nuvoton-npcx-gpio.h>
 #include <nuvoton/npcx/npcx9/npcx9-pinctrl.dtsi>
+#include <cros/vivaldi_kbd_default.dtsi>
 
 #define GPIO_VOLTAGE_1P8 NPCX_GPIO_VOLTAGE_1P8
 
@@ -165,4 +166,10 @@
 /* PSL_OUT is fixed to GPIO85 in npcx9 series. */
 &power_ctrl_psl {
 	enable-gpios = <&gpio8 5 0>;
+};
+
+&kbd {
+	actual-key-mask = <0x1c 0xff 0xff 0xff 0xff
+			   0xf5 0xff 0xa4 0xff 0xfe
+			   0x55 0xfa 0xca>;
 };

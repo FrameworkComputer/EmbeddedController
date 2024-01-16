@@ -137,7 +137,7 @@ void system_reset(int flags)
 
 static void check_reset_cause(void)
 {
-	uint32_t flags = 0;
+	__maybe_unused uint32_t flags = 0;
 	uint32_t raw_reset_cause = SCP_GPR[1];
 
 	/* Set state to power-on */

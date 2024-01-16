@@ -195,6 +195,9 @@
 #define USB_PD_PORT_ANX74XX 0
 #define USB_PD_PORT_PS8751 1
 
+/* System safe mode for improved panic debugging */
+#define CONFIG_SYSTEM_SAFE_MODE
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"

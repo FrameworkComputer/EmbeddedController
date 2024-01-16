@@ -5,6 +5,12 @@
 
 /* Lid switch module for Chrome EC */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
@@ -130,7 +136,6 @@ void enable_lid_detect(bool enable)
 #define LID_GPIO(gpio) gpio_disable_interrupt(gpio);
 		CONFIG_LID_SWITCH_GPIO_LIST
 #undef LID_GPIO
-		lid_switch_open();
 	}
 }
 

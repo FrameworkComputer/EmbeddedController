@@ -6,9 +6,9 @@
  *
  */
 
-#include <stdint.h>
+#include "common.h"
 
-#include <stdnoreturn.h>
+#include <stdint.h>
 
 /* Why naked?  This is dangerous except for
  * function/ISR wrappers using inline assembly.
@@ -20,9 +20,9 @@
  * We also do not know how much stack space is available when
  * EC_RO calls lfw_main().
  *
-noreturn void lfw_main(void) __attribute__ ((naked));
+__noreturn void lfw_main(void) __attribute__ ((naked));
 */
-noreturn void lfw_main(void);
+__noreturn void lfw_main(void);
 void fault_handler(void) __attribute__((naked));
 
 /*

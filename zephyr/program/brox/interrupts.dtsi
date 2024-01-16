@@ -1,0 +1,32 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_lid_imu: int-lid-imu {
+			/*
+			 * TODO: b/319267575 - [Brox Proto1] PP3300_S5 has
+			 * leakage in Z1
+			 * Disable I2C sensor bus and configure pins as input.
+			 */
+			status = "disabled";
+			irq-pin = <&gpio_ec_accel_db_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bma4xx_interrupt";
+		};
+		int_power_button: power_button {
+			irq-pin = <&gpio_gsc_ec_pwr_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+		int_lid_open: lid_open {
+			irq-pin = <&gpio_lid_open>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+	};
+};

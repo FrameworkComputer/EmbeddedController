@@ -56,3 +56,11 @@ properties:
     type: phandle
     description: |
       PD chip for configuring the alternate modes of the USB-C port.
+  pdc:
+    type: phandle
+    description: |
+      PD chip for managing Power Delivery
+  pd-retimer:
+    type: boolean
+    description: |
+      If present, this PD port has a retimer and connected to PD chip.

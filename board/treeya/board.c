@@ -6,6 +6,7 @@
 /* Treeya board-specific configuration */
 
 #include "button.h"
+#include "common.h"
 #include "driver/accel_lis2dw12.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accelgyro_lsm6dsm.h"
@@ -271,7 +272,7 @@ void system_enter_psl_mode(void)
 }
 
 /* Hibernate function implemented by PSL (Power Switch Logic) mode. */
-noreturn void __keep __enter_hibernate_in_psl(void)
+__noreturn void __keep __enter_hibernate_in_psl(void)
 {
 	system_enter_psl_mode();
 	/* Spin and wait for PSL cuts power; should never return */

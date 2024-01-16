@@ -153,7 +153,7 @@ encode_last_byte:
 	it	eq
 	moveq	r3, r2
 	cmp	r3, r4
-	beq	overrun
+	beq	report_overrun
 
 	ldr	r1, head_level
 	cmp	r1, lr
@@ -165,12 +165,6 @@ leave:
 
 	/* Restore registers from stack, and return from interrupt handler */
 	ldmia.w sp!, {r4, r5, r6, pc}
-
-/*
- * Store 32-bit immediate values here (used in "ldr .., =.."), will be copied
- * along with code.
- */
-.ltorg
 
 /*
  * Uncommon case, more than 7 bits in value of "diff", see above for description
@@ -202,9 +196,16 @@ encode_extra_edge:
 
 /* Uncommon case, out of buffer space */
 report_overrun:
+	ldmia.w sp!, {r4, r5, r6, lr}
 	ldr	r1, =overrun
 	adr	r0, my_slot
 	bx	r1
+
+/*
+ * Store 32-bit immediate values used in above code here (used in "ldr .., =..").
+ * Will be copied along with above code.
+ */
+.ltorg
 
 .global edge_int_end
 edge_int_end:

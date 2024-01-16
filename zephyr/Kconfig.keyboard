@@ -51,15 +51,6 @@ config CROS_EC_KEYBOARD_INPUT
 	  `cros-ec,keyboard` chosen property pointing at the desired input
 	  device node.
 
-config CROS_EC_COL_GPIO_DRIVE
-	bool "GPIO driven column keyboard matrix hook"
-	depends on CROS_EC_KEYBOARD_INPUT
-	depends on DT_HAS_CROS_EC_COL_GPIO_ENABLED
-	default y
-	select INPUT_KBD_DRIVE_COLUMN_HOOK
-	help
-	  Implemnt the hook to handle a keyboard matrix column using a GPIO.
-
 endchoice # PLATFORM_EC_KEYBOARD_DRIVER
 
 config CROS_EC_KEYSCAN
@@ -125,8 +116,9 @@ config PLATFORM_EC_KEYBOARD_KEYPAD
 	  commonly used symbols, to help speed up numeric data entry.
 
 config PLATFORM_EC_KEYBOARD_VIVALDI
-	bool "Vivaldi keyboard support"
+	bool "Vivaldi keyboard support (legacy)"
 	depends on PLATFORM_EC_KEYBOARD_PROTOCOL_8042
+	depends on !CROS_EC_VIVALDI_KBD
 	default y
 	help
 	  Enable code for Vivaldi keyboard (standard for new Chromium OS
@@ -262,6 +254,7 @@ config PLATFORM_EC_PWM_KBLIGHT
 	bool "PWM keyboard backlight"
 	default y
 	depends on DT_HAS_CROS_EC_KBLIGHT_PWM_ENABLED
+	depends on PLATFORM_EC_LID_SWITCH
 	select PWM
 	select PLATFORM_EC_PWM_HC
 	select PLATFORM_EC_KEYBOARD_BACKLIGHT

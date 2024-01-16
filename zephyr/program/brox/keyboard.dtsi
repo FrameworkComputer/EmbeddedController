@@ -1,0 +1,38 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	kblight: kblight {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
+	};
+};
+
+
+&cros_kb_raw {
+	status = "okay";
+	pinctrl-0 = <&ksi0_default
+		     &ksi1_default
+		     &ksi2_default
+		     &ksi3_default
+		     &ksi4_default
+		     &ksi5_default
+		     &ksi6_default
+		     &ksi7_default
+		     &kso0_default
+		     &kso1_default
+		     &kso2_default
+		     &kso3_default
+		     &kso4_default
+		     &kso5_default
+		     &kso6_default
+		     &kso7_default
+		     &kso8_default
+		     &kso9_default
+		     &kso10_default
+		     &kso11_default
+		     &kso12_default>;
+	pinctrl-names = "default";
+};

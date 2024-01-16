@@ -1,0 +1,11 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_RAURU
+	bool "Google Rauru Board"
+	help
+	  Build Google Rauru reference board. Rauru has MediaTek SoC
+	  with ITE it82202-ax EC.
+
+source "Kconfig.zephyr"

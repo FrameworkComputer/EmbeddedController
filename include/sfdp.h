@@ -19,7 +19,7 @@
 #define SFDP_DEFINE_BITFIELD(name, hi, lo)          \
 	SFDP_DEFINE_BITMASK_32(name##_MASK, hi, lo) \
 	SFDP_DEFINE_SHIFT_32(name##_SHIFT, hi, lo)
-#define SFDP_GET_BITFIELD(name, dw) (((dw)&name##_MASK) >> name##_SHIFT)
+#define SFDP_GET_BITFIELD(name, dw) (((dw) & name##_MASK) >> name##_SHIFT)
 
 /**
  * Helper macros to construct SFDP defined double words (32b). Note reserved or

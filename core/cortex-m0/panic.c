@@ -139,13 +139,15 @@ void __keep report_panic(void)
 
 void software_panic(uint32_t reason, uint32_t info)
 {
+	/* clang-format off */
 	__asm__("mov " STRINGIFY(
 			SOFTWARE_PANIC_INFO_REG) ", %0\n"
-						 "mov " STRINGIFY(
-							 SOFTWARE_PANIC_REASON_REG) ", %1\n"
-										    "bl exception_panic\n"
+		"ldr " STRINGIFY(
+			SOFTWARE_PANIC_REASON_REG) ", [%1]\n"
+		"bl exception_panic\n"
 		:
 		: "r"(info), "r"(reason));
+	/* clang-format on */
 	__builtin_unreachable();
 }
 

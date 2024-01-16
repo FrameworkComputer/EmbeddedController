@@ -30,6 +30,8 @@ config PLATFORM_EC_ACCEL_BMA255
 
 config PLATFORM_EC_ACCEL_BMA4XX
 	bool "BMA4XX Accelerometer Family Driver"
+	default y
+	depends on DT_HAS_CROS_EC_BMA4XX_ENABLED
 	help
 	  The driver supports Bosch's a triaxial, low-g acceleration sensor.
 	  It allows measurements of acceleration in three perpendicular axes.

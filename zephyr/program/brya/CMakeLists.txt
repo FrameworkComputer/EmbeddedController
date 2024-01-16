@@ -42,7 +42,7 @@ if(NOT DEFINED CONFIG_BOARD_BRYA_PDC)
   zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
     "${PLATFORM_EC_BOARD}/usbc_config.c"
     "${PLATFORM_EC_BOARD}/fw_config.c")
+  zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
+    "${PLATFORM_EC_BOARD}/charger.c"
+    "${PLATFORM_EC}/common/math_util.c")
 endif()
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGE_MANAGER
-  "${PLATFORM_EC_BOARD}/charger.c"
-  "${PLATFORM_EC}/common/math_util.c")

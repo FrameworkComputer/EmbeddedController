@@ -1,0 +1,40 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_TABLET_MODE
+    bool "Tablet Mode"
+    help
+      Enable this for a device which can be a tablet as well as a clamshell.
+      Tablet mode detection is done either by using the lid angle
+      measurement, or by the dedicated GMR sensor; or from external sensor hub
+      via GPIO, or I2C. One example of the external sensor hub is ISH.
+
+if PLATFORM_EC_TABLET_MODE
+
+config PLATFORM_EC_TABLET_MODE_SWITCH
+    bool "Tablet Mode Switch"
+    depends on PLATFORM_EC_MKBP_INPUT_DEVICES
+    help
+      Enable a virtual switch to indicate when we are in tablet mode. The tablet
+      mode state is sent to AP via MKBP protocol(switch event).
+
+config PLATFORM_EC_GMR_TABLET_MODE
+    bool "Giant Magnetoresistance(GMR) Tablet Mode"
+    help
+      Enable this to use GMR sensor to detect tablet mode.
+      It requires to set GPIO_TABLET_MODE_L to map the interrupt from
+      the sensor and direct its mapping to gmr_tablet_switch_isr
+      in common/tablet_mode.c.
+
+config PLATFORM_EC_DPTF_MOTION_LID_NO_GMR_SENSOR
+    bool
+    default y
+    depends on !PLATFORM_EC_GMR_TABLET_MODE
+    depends on PLATFORM_EC_MOTIONSENSE
+    help
+      Enable lid angle calculation as the only source of the tablet mode switch.
+      For this to work, we must have enabled tablet mode, not have a GMR sensor,
+      and have motionsense enabled.
+
+endif # PLATFORM_EC_TABLET_MODE

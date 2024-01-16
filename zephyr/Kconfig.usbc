@@ -42,7 +42,6 @@ rsource "Kconfig.pd_console_cmd"
 rsource "Kconfig.pd_host_cmd"
 rsource "Kconfig.pd_usbc_device_type"
 rsource "Kconfig.pd"
-rsource "Kconfig.ppc"
 rsource "Kconfig.usb_mux"
 rsource "Kconfig.usbc_ss_mux"
 rsource "Kconfig.usbc_common_altmode"
@@ -65,12 +64,12 @@ config PLATFORM_EC_USB_PD_TCPMV2
 config PLATFORM_EC_USB_PD_CONTROLLER
 	bool "USB-C Power Delivery Controller"
 	help
-	  Enable USB-C Power Delivery using a discrete controller chip. The PD
-	  controller chip implements the local policy manager (LPM), managing
-	  all PD communication on a single Type-C connector.
+	  Enable USB-C Power Delivery Controller. It provides
+	  Type-C/PD functionality via a Power Delivery Controller Chip.
 endchoice
 
 if PLATFORM_EC_USB_PD_TCPMV2
+rsource "Kconfig.ppc"
 rsource "Kconfig.tcpm"
 endif # PLATFORM_EC_USB_PD_TCPMV2
 
@@ -235,7 +234,7 @@ config PLATFORM_EC_USB_PD_TCPC_VCONN
 
 config PLATFORM_EC_USB_PD_CLEAR_HARD_RESET_STATUS
 	bool "Clear PD hard reset status when PD setup completes"
-	default y if SOC_SERIES_RISCV32_IT8XXX2
+	default y if SOC_SERIES_ITE_IT8XXX2
 	help
 	  Enabling this config will clear the Hard Reset event status
 	  after the PD connection is finished initialization,

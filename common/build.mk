@@ -228,7 +228,8 @@ common-$(CONFIG_AUDIO_CODEC_WOV)+=hotword_dsp_api.o
 endif
 
 ifeq ($(USE_BUILTIN_STDLIB), 0)
-common-y+=shared_mem_libc.o
+common-$(CONFIG_MALLOC)+=shmalloc.o
+common-$(call not_cfg,$(CONFIG_MALLOC))+=shared_mem_libc.o
 else ifneq ($(CONFIG_COMMON_RUNTIME),)
 ifeq ($(CONFIG_DFU_BOOTMANAGER_MAIN),ro)
 # Ordinary RO is replaced with DFU bootloader stub, CONFIG_MALLOC should only affect RW.

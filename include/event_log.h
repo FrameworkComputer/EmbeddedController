@@ -17,7 +17,7 @@ struct event_log_entry {
 } __packed;
 
 #define EVENT_LOG_SIZE_MASK 0x1f
-#define EVENT_LOG_SIZE(size) ((size)&EVENT_LOG_SIZE_MASK)
+#define EVENT_LOG_SIZE(size) ((size) & EVENT_LOG_SIZE_MASK)
 
 /* The timestamp is the microsecond counter shifted to get about a ms. */
 #define EVENT_LOG_TIMESTAMP_SHIFT 10 /* 1 LSB = 1024us */

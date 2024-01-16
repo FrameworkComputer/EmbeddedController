@@ -470,6 +470,7 @@ cmd_merge_cov=lcov --rc lcov_branch_coverage=1 -o build/coverage/lcov.info \
 	$(foreach info,$^,-a ${info})
 cmd_report_cov=genhtml --branch-coverage -q -o build/coverage/coverage_rpt -t \
 	       "EC Unittest "$(bldversion) -s $^
+cmd_test_cov=genhtml --branch-coverage -q -o $@ -s $^
 
 # Unless V is set to 0 we always want the 'size:' target to report its output,
 # there is no point in generating a short form command trace when calculating
@@ -511,6 +512,8 @@ build/coverage/initial-%.info:
 	$(call quiet,lcov-initial,COV    )
 build/coverage/%.info: run-coverage-%
 	$(call quiet,lcov,COV    )
+build/coverage/%_rpt: build/coverage/%.info
+	$(call quiet,test_cov,REPORT )
 
 .PHONY: coverage test-coverage
 coverage: TEST_FLAG=TEST_COVERAGE=y
@@ -847,6 +850,8 @@ help:
 	@echo "  buildfuzztests       - Build all host fuzzers"
 	@echo "  runfuzztests         - Build and run all host fuzzers for one round"
 	@echo "  analyzestack [BOARD=]- Run max stack size analysis"
+	@echo ""
+	@echo "  build/coverage/TEST_rpt BOARD=host TEST_COVERAGE=y - Gen coverage report for TEST"
 	@echo ""
 	@echo "  flash     [BOARD=]   - Use OpenOCD to flash the latest image"
 	@echo "  flash_ec  [BOARD=]   - Use flash_ec to flash the latest image"

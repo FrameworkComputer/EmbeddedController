@@ -5,4 +5,5 @@
 rsource "ap_pwrseq/Kconfig"
 rsource "host_service/Kconfig"
 rsource "usb_dc/Kconfig"
-rsource "usb_pd/Kconfig.usbc_altmode"
+rsource "pd_controller/Kconfig"
+rsource "fingerprint/Kconfig"

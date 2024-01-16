@@ -1,0 +1,57 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: "COSMX LI7"
+compatible: "cosmx,li7"
+
+include: battery-smart.yaml
+
+properties:
+  enum-name:
+    type: string
+    default: "cosmx,li7"
+
+  # Fuel gauge
+  manuf_name:
+    default: "333-AC-0D-A"
+  device_name:
+    default: "LI7"
+  ship_mode_reg_addr:
+    default: 0x00
+  ship_mode_reg_data:
+    default: [0x0010, 0x0010]
+  flags:
+    default: 0x04
+  fet_reg_addr:
+    default: 0x0
+  fet_reg_mask:
+    default: 0x0006
+  fet_disconnect_val:
+    default: 0x0
+  fet_cfet_mask:
+    default: 0x0004
+  fet_cfet_off_val:
+    default: 0x0
+
+  # Battery info
+  voltage_max:
+    default: 8800
+  voltage_normal:
+    default: 7700
+  voltage_min:
+    default: 6000
+  precharge_current:
+    default: 256
+  start_charging_min_c:
+    default: 0
+  start_charging_max_c:
+    default: 45
+  charging_min_c:
+    default: 0
+  charging_max_c:
+    default: 45
+  discharging_min_c:
+    default: -10
+  discharging_max_c:
+    default: 60

@@ -14,6 +14,7 @@
 #include <ap_power/ap_power.h>
 #include <ap_power/ap_power_events.h>
 #include <ap_power/ap_power_interface.h>
+#include <ap_power/ap_pwrseq.h>
 #include <ap_power_override_functions.h>
 #include <power_signals.h>
 #include <x86_power_signals.h>
@@ -169,3 +170,36 @@ int board_power_signal_set(enum power_signal signal, int value)
 {
 	return -EINVAL;
 }
+
+/*
+ * As a soft power signal, PWR_ALL_SYS_PWRGD will never wake the power state
+ * machine on its own. Since its value depends on the state of
+ * gpio_all_sys_pwrgd, wake the state machine to re-evaluate ALL_SYS_PWRGD
+ * anytime the input changes.
+ */
+void board_all_sys_pwrgd_interrupt(const struct device *unused_device,
+				   struct gpio_callback *unused_callback,
+				   gpio_port_pins_t unused_pin)
+{
+	ap_pwrseq_wake();
+}
+
+static int board_config_pwrgd_interrupt(void)
+{
+	const struct gpio_dt_spec *const pwrgd_gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_all_sys_pwrgd);
+	static struct gpio_callback cb;
+	int rv;
+
+	gpio_init_callback(&cb, board_all_sys_pwrgd_interrupt,
+			   BIT(pwrgd_gpio->pin));
+	gpio_add_callback(pwrgd_gpio->port, &cb);
+
+	rv = gpio_pin_interrupt_configure_dt(pwrgd_gpio, GPIO_INT_EDGE_BOTH);
+	__ASSERT(rv == 0,
+		 "all_sys_pwrgd interrupt configuration returned error %d", rv);
+
+	return 0;
+}
+SYS_INIT(board_config_pwrgd_interrupt, APPLICATION,
+	 CONFIG_APPLICATION_INIT_PRIORITY);

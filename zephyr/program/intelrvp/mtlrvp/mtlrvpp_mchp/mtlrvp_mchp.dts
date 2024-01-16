@@ -139,13 +139,13 @@
 
 		tcpc_port0: nct38xx-tcpc {
 			compatible = "nuvoton,nct38xx-tcpc";
-			gpio-dev = <&nct38xx_c0>;
+			gpio-dev = <&nct38xx_gpio_C0>;
 			tcpc-flags = <(
 				TCPC_FLAGS_TCPCI_REV2_0 |
 				TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
 		};
 
-		nct38xx-gpio {
+		nct38xx_gpio_C0: nct38xx-gpio {
 			#address-cells = <1>;
 			#size-cells = <0>;
 			compatible = "nuvoton,nct38xx-gpio";
@@ -170,11 +170,11 @@
 
 		tcpc_port1: nct38xx-tcpc {
 			compatible = "nuvoton,nct38xx-tcpc";
-			gpio-dev = <&nct38xx_c1>;
+			gpio-dev = <&nct38xx_gpio_C1>;
 			tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
 		};
 
-		nct38xx-gpio {
+		nct38xx_gpio_C1: nct38xx-gpio {
 			#address-cells = <1>;
 			#size-cells = <0>;
 			compatible = "nuvoton,nct38xx-gpio";

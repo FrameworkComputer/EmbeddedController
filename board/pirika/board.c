@@ -791,3 +791,33 @@ __override bool board_usb_charger_support(void)
 {
 	return (get_cbi_fw_config_bc_support() == BC12_SUPPORT);
 }
+
+enum battery_cell_type battery_cell;
+
+static void get_battery_cell(void)
+{
+	int val;
+
+	if (i2c_read16(I2C_PORT_USB_C0, ISL923X_ADDR_FLAGS, ISL9238_REG_INFO2,
+		       &val) == EC_SUCCESS) {
+		/* PROG resistor read out. Number of battery cells [4:0] */
+		val = val & 0x001f;
+	}
+
+	if (val == 0 || val >= 0x18)
+		battery_cell = BATTERY_CELL_TYPE_1S;
+	else if (val >= 0x01 && val <= 0x08)
+		battery_cell = BATTERY_CELL_TYPE_2S;
+	else if (val >= 0x09 && val <= 0x10)
+		battery_cell = BATTERY_CELL_TYPE_3S;
+	else
+		battery_cell = BATTERY_CELL_TYPE_4S;
+
+	CPRINTS("Get battery cells: %d", battery_cell);
+}
+DECLARE_HOOK(HOOK_INIT, get_battery_cell, HOOK_PRIO_INIT_I2C + 1);
+
+enum battery_cell_type board_get_battery_cell_type(void)
+{
+	return battery_cell;
+}

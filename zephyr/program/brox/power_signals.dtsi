@@ -1,0 +1,157 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	chosen {
+		intel-ap-pwrseq,espi = &espi0;
+	};
+
+	common-pwrseq {
+		compatible = "intel,ap-pwrseq";
+
+		/* PCH requires 10ms delay after 3.3 rail stable.  Slew rate
+		 * is 2.5 ms so set a minimum of 12.5 ms delay after enabling
+		 * EN_S5_RAILS
+		 */
+		dsw-pwrok-delay = <13>;
+		sys-pwrok-delay = <10>;
+		all-sys-pwrgd-timeout = <20>;
+	};
+
+	pwr-en-s5-rails {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "EN_S5_RAILS enable output for PP5000/PP3300";
+		enum-name = "PWR_EN_PP5000_A";
+		gpios = <&gpiof 2 0>;
+		output;
+	};
+	pwr-pg-vccin-aux-od {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PG_VCCIN_AUX_OD power good from regulator";
+		enum-name = "PWR_RSMRST";
+		gpios = <&gpiof 3 0>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	pwr-ec-pch-rsmrst-odl {
+		/* EC should delay RSMRST by 10ms on rising edge of
+		 * PG_VCCIN_AUX_OD.
+		 * TODO: b/317810253 - Zephyr: Fix active low handling for
+		 * RSMRST
+		 */
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "EC_RSMRST_L output to PCH";
+		enum-name = "PWR_EC_PCH_RSMRST";
+		gpios = <&gpioi 6 0>;
+		output;
+	};
+	pwr-slp-s0-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SYS_SLP_S0IX_L input from PCH";
+		enum-name = "PWR_SLP_S0";
+		gpios = <&gpioj 5 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	pwr-slp-s3-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "EC_SLP_S3_L input from PCH";
+		enum-name = "PWR_SLP_S3";
+		gpios = <&gpioc 6 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	pwr-slp-s4-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "EC_SLP_S4_L input from PCH";
+		enum-name = "PWR_SLP_S4";
+		gpios = <&gpioc 4 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	pwr-slp-s5-l {
+		compatible = "intel,ap-pwrseq-vw";
+		dbg-label = "SLP_S5 virtual wire input from PCH";
+		enum-name = "PWR_SLP_S5";
+		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S5";
+		vw-invert;
+	};
+	pwr-slp-sus-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "EC_SLP_SUS_L input from PCH";
+		enum-name = "PWR_SLP_SUS";
+		gpios = <&gpioe 5 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	pwr-dsw-pwrok {
+		/* Brox doesn't provide a power good signal for the PP5000 and
+		 * PP3300 rails.  Create a fake board level signal that just
+		 * indicates the status of the PWR_EN_PP5000_A output.
+		 */
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "Main rails power good";
+		enum-name = "PWR_DSW_PWROK";
+	};
+	pwr-pg_pp1p50 {
+		/* Brox doesn't provide a power good signal for the PP1050 rail.
+		 * Create a fake board level signal that just indicates the
+		 * status of the PWR_EN_PP5000_A output.
+		 */
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "Main rails power good";
+		enum-name = "PWR_PG_PP1P05";
+	};
+	pwr-ec-soc-dsw-pwrok {
+		/* EC should delay DSW_PWROK by 12.5ms on after enabling
+		 * the S5 rails.
+		 */
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "EC_DSW_PWROK output to PCH";
+		enum-name = "PWR_EC_SOC_DSW_PWROK";
+		gpios = <&gpiod 3 0>;
+		output;
+	};
+	pwr-vccst-pwrgd-od {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "VCCST_PWRGD_OD output to PCH";
+		enum-name = "PWR_VCCST_PWRGD";
+		gpios = <&gpioh 4 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
+		output;
+	};
+	pwr-imvp9-vrrdy-od {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "IMVP9_VRRDY_OD input from IMVP9";
+		enum-name = "PWR_IMVP9_VRRDY";
+		gpios = <&gpioh 3 0>;
+	};
+	pwr-pch-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "EC_PCH_PWROK output to PCH";
+		enum-name = "PWR_PCH_PWROK";
+		gpios = <&gpiob 5 0>;
+		output;
+	};
+	pwr-ec-pch-sys-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "EC_PCH_SYS_PWROK output to PCH";
+		enum-name = "PWR_EC_PCH_SYS_PWROK";
+		gpios = <&gpiod 5 0>;
+		output;
+	};
+	pwr-sys-rst-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SYS_RST_R_ODL output to PCH";
+		enum-name = "PWR_SYS_RST";
+		gpios = <&gpiog 0 (GPIO_ACTIVE_LOW|GPIO_OPEN_DRAIN)>;
+		output;
+	};
+	pwr-all-sys-pwrgd {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "Combined all power good";
+		enum-name = "PWR_ALL_SYS_PWRGD";
+		gpios = <&gpiob 3 0>;
+	};
+
+	ap-power {
+		compatible = "ap-pwrseq-sub-states";
+		chipset = "AP_POWER_STATE_S0IX";
+	};
+};

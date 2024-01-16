@@ -6,6 +6,8 @@
  */
 
 /* remove when ftdi_usb_purge_buffers has been replaced to follow libftdi */
+#include <cstdint>
+#include <memory>
 #define _FTDI_DISABLE_DEPRECATED
 
 #include "compile_time_macros.h"
@@ -378,8 +380,11 @@ static int i2c_add_recv_bytes(struct ftdi_context *ftdi, uint8_t *buf,
 static int ccd_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 				 uint8_t *data, int write, int numbytes)
 {
-	uint8_t usb_buffer[USB_I2C_HEADER_SIZE + numbytes +
-			   (((!write * numbytes) > 0x7f) ? 2 : 0)];
+	size_t usb_buffer_size = USB_I2C_HEADER_SIZE + numbytes +
+				 (((!write * numbytes) > 0x7f) ? 2 : 0);
+	std::unique_ptr<uint8_t[]> usb_buffer_ptr =
+		std::make_unique<uint8_t[]>(usb_buffer_size);
+	uint8_t *usb_buffer = usb_buffer_ptr.get();
 	size_t response_size;
 	size_t extra = 0;
 

@@ -13,6 +13,8 @@
 			reg = <0>;
 			chg = <&charger>;
 			alt-mode = <&pd_port0>;
+			pdc = <&pd_pow_port0>;
+			pd-retimer;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_0>;
@@ -27,6 +29,8 @@
 			compatible = "named-usbc-port";
 			reg = <1>;
 			alt-mode = <&pd_port1>;
+			pdc = <&pd_pow_port1>;
+			pd-retimer;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_1>;

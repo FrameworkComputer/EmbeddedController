@@ -298,7 +298,7 @@ static void print_reset_flags(uint32_t flags)
 			if (count++)
 				CPUTS(" ");
 
-			CPUTS(reset_flag_descs[i]);
+			CPRINTF("%s", reset_flag_descs[i]);
 		}
 	}
 

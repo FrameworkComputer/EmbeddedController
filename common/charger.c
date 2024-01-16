@@ -141,7 +141,12 @@ static int check_print_error(int rv)
 {
 	if (rv == EC_SUCCESS)
 		return 1;
-	ccputs(rv == EC_ERROR_UNIMPLEMENTED ? "(unsupported)\n" : "(error)\n");
+	if (rv == EC_ERROR_UNIMPLEMENTED) {
+		ccputs("(unsupported)\n");
+
+	} else {
+		ccputs("(error)\n");
+	}
 	return 0;
 }
 
@@ -297,7 +302,7 @@ static void charger_chips_init(void)
 			chg_chips[chip].drv->init(chip);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_POST_I2C);
+DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_POST_BATTERY_INIT);
 #endif
 
 enum ec_error_list charger_post_init(void)

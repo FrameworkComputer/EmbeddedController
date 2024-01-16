@@ -391,7 +391,7 @@ board_vivaldi_keybd_config(void)
 
 static void ps8811_init(void)
 {
-	int rv;
+	__maybe_unused int rv;
 
 	/* Set Channel A output swing to Level1 */
 	rv = i2c_write8(I2C_PORT_USB_1_MIX,

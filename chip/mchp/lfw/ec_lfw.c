@@ -307,7 +307,7 @@ void uart_init(void)
 }
 #endif /* #ifdef CONFIG_UART_CONSOLE */
 
-noreturn void watchdog_reset(void)
+__noreturn void watchdog_reset(void)
 {
 	uart_puts("EXCEPTION!\nTriggering watchdog reset\n");
 	/* trigger reset in 1 ms */

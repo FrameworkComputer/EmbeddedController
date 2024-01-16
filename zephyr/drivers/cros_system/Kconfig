@@ -27,7 +27,7 @@ endif # CROS_SYSTEM_NPCX
 
 config CROS_SYSTEM_IT8XXX2
 	bool "ITE IT8XXX2 cros system driver"
-	depends on SOC_FAMILY_RISCV_ITE
+	depends on SOC_FAMILY_ITE_EC
 	default y
 	help
 	  This option enables the cros system driver for the it8xxx2 family of

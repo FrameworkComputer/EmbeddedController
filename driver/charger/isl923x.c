@@ -42,10 +42,10 @@
 #define DEFAULT_R_SNS 10
 #define R_AC CONFIG_CHARGER_SENSE_RESISTOR_AC
 #define R_SNS CONFIG_CHARGER_SENSE_RESISTOR
-#define REG_TO_CURRENT(REG) ((REG)*DEFAULT_R_SNS / R_SNS)
-#define CURRENT_TO_REG(CUR) ((CUR)*R_SNS / DEFAULT_R_SNS)
-#define AC_REG_TO_CURRENT(REG) ((REG)*DEFAULT_R_AC / R_AC)
-#define AC_CURRENT_TO_REG(CUR) ((CUR)*R_AC / DEFAULT_R_AC)
+#define REG_TO_CURRENT(REG) ((REG) * DEFAULT_R_SNS / R_SNS)
+#define CURRENT_TO_REG(CUR) ((CUR) * R_SNS / DEFAULT_R_SNS)
+#define AC_REG_TO_CURRENT(REG) ((REG) * DEFAULT_R_AC / R_AC)
+#define AC_CURRENT_TO_REG(CUR) ((CUR) * R_AC / DEFAULT_R_AC)
 
 #if defined(CONFIG_CHARGER_ISL9237)
 #define CHARGER_NAME "isl9237"
@@ -633,6 +633,7 @@ static void isl923x_init(int chgnum)
 {
 	int reg;
 	const struct battery_info *bi = battery_get_info();
+	int precharge_current;
 	int precharge_voltage = bi->precharge_voltage ? bi->precharge_voltage :
 							bi->voltage_min;
 
@@ -794,10 +795,13 @@ static void isl923x_init(int chgnum)
 	if (IS_ENABLED(CONFIG_CHARGER_RAA489000)) {
 		if (raw_read16(chgnum, ISL923X_REG_CONTROL2, &reg))
 			goto init_fail;
-		/* Set trickle charge current bits. */
-		reg &= ~GENMASK(13, 15);
-		reg |= ((CONFIG_RAA489000_TRICKLE_CHARGE_CURRENT - 32) / 32)
-		       << 13;
+		/* Set trickle charge current bits by battery info. */
+		precharge_current =
+			bi->precharge_current ?
+				bi->precharge_current :
+				CONFIG_RAA489000_TRICKLE_CHARGE_CURRENT;
+		reg &= ~GENMASK(15, 13);
+		reg |= ((precharge_current - 32) / 32) << 13;
 		if (raw_write16(chgnum, ISL923X_REG_CONTROL2, reg))
 			goto init_fail;
 	}

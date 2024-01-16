@@ -154,16 +154,8 @@ int motion_sense_set_data_rate(struct motion_sensor_t *sensor)
 	/* We assume the sensor is initialized */
 
 	/* Check the AP setting first. */
-	if (sensor_active == SENSOR_ACTIVE_S3 && !SENSOR_ACTIVE(sensor)) {
-		/*
-		 * System is suspended, and sensor is not set to be active
-		 * during suspend.
-		 */
-		ap_odr_mhz = 0;
-	} else if (sensor_active != SENSOR_ACTIVE_S5) {
-		/* System is resuming */
+	if (sensor_active != SENSOR_ACTIVE_S5)
 		ap_odr_mhz = BASE_ODR(sensor->config[SENSOR_CONFIG_AP].odr);
-	}
 
 	/* check if the EC set the sensor ODR at a higher frequency */
 	config_id = motion_sense_get_ec_config();
@@ -314,10 +306,7 @@ static void motion_sense_switch_sensor_rate(void)
 					tablet_set_mode(0, TABLET_TRIGGER_LID);
 			}
 		} else {
-			/*
-			 * The sensors are being powered off or data sampling is
-			 * not supported during suspend.
-			 */
+			/* The sensors are being powered off */
 			if ((sensor->state == SENSOR_INITIALIZED) ||
 			    (sensor->state == SENSOR_READY)) {
 				/*
@@ -327,11 +316,6 @@ static void motion_sense_switch_sensor_rate(void)
 				mutex_lock(&g_sensor_mutex);
 				sensor->collection_rate = 0;
 				mutex_unlock(&g_sensor_mutex);
-				/*
-				 * Set ODR accordingly in case data sampling
-				 * is not supported
-				 */
-				motion_sense_set_data_rate(sensor);
 				sensor->state = SENSOR_NOT_INITIALIZED;
 			}
 		}

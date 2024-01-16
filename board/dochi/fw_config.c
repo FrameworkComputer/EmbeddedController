@@ -44,3 +44,13 @@ enum ec_cfg_usb_db_type ec_cfg_usb_db_type(void)
 {
 	return fw_config.usb_db;
 }
+
+enum ec_cfg_keyboard_backlight_type ec_cfg_keyboard_backlight_type(void)
+{
+	return fw_config.kb_bl;
+}
+
+enum ec_cfg_panel_power_ec_control ec_cfg_panel_power_ec_control(void)
+{
+	return fw_config.touch_en;
+}

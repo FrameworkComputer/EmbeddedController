@@ -32,16 +32,16 @@ int getentropy(void *buffer, size_t length)
 		return -1;
 	}
 
-	/*
-	 * BoringSSL uses size_t to represent buffer size, but Zephyr uses
-	 * uint16_t. Crash the system if user requested more than UINT16_MAX
-	 * bytes.
-	 */
 	if (!device_is_ready(rng)) {
 		errno = EIO;
 		return -1;
 	}
 
+	/*
+	 * BoringSSL uses size_t to represent buffer size, but Zephyr uses
+	 * uint16_t. The length check above allows us to safely cast without
+	 * overflow.
+	 */
 	if (entropy_get_entropy(rng, buffer, (uint16_t)length)) {
 		errno = EIO;
 		return -1;

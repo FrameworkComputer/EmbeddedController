@@ -14,7 +14,7 @@
 #include "util.h"
 #include "write_protect.h"
 
-void batt_conf_main(void);
+const struct board_batt_params *get_batt_params(void);
 
 const struct batt_conf_embed board_battery_info[] = {
 	[BATTERY_C214] = {
@@ -159,7 +159,7 @@ DECLARE_EC_TEST(test_batt_conf_main)
 	 */
 	ccprintf("\nmanuf_name != manuf_name\n");
 	cbi_set_batt_conf(&conf_in_cbi, "foo", "");
-	batt_conf_main();
+	init_battery_type();
 	zassert_equal_ptr(get_batt_params(), &board_battery_info[0].config);
 
 	/*
@@ -167,7 +167,7 @@ DECLARE_EC_TEST(test_batt_conf_main)
 	 */
 	ccprintf("\nmanuf_name == manuf_name && device_name == \"\"\n");
 	cbi_set_batt_conf(&conf_in_cbi, "AS1GUXd3KB", "");
-	batt_conf_main();
+	init_battery_type();
 	conf = get_batt_params();
 	zassert_equal(memcmp(conf, &conf_in_cbi, sizeof(*conf)), 0);
 	zassert_equal(strcmp(get_batt_conf()->manuf_name, "AS1GUXd3KB"), 0);
@@ -177,7 +177,7 @@ DECLARE_EC_TEST(test_batt_conf_main)
 	 */
 	ccprintf("\nmanuf_name == manuf_name && device_name != device_name\n");
 	cbi_set_batt_conf(&conf_in_cbi, "AS1GUXd3KB", "foo");
-	batt_conf_main();
+	init_battery_type();
 	zassert_equal_ptr(get_batt_params(), &board_battery_info[0].config);
 
 	/*
@@ -185,7 +185,18 @@ DECLARE_EC_TEST(test_batt_conf_main)
 	 */
 	ccprintf("\nmanuf_name == manuf_name && device_name == device_name\n");
 	cbi_set_batt_conf(&conf_in_cbi, "AS1GUXd3KB", "C214-43");
-	batt_conf_main();
+	init_battery_type();
+	conf = get_batt_params();
+	zassert_equal(memcmp(conf, &conf_in_cbi, sizeof(*conf)), 0);
+	zassert_equal(strcmp(get_batt_conf()->manuf_name, "AS1GUXd3KB"), 0);
+	zassert_equal(strcmp(get_batt_conf()->device_name, "C214-43"), 0);
+
+	/*
+	 * Battery's device name contains extra chars.
+	 */
+	ccprintf("\nmanuf_name == manuf_name && device_name has extra chars\n");
+	device_in_batt = "C214-43 xyz";
+	init_battery_type();
 	conf = get_batt_params();
 	zassert_equal(memcmp(conf, &conf_in_cbi, sizeof(*conf)), 0);
 	zassert_equal(strcmp(get_batt_conf()->manuf_name, "AS1GUXd3KB"), 0);
@@ -196,7 +207,7 @@ DECLARE_EC_TEST(test_batt_conf_main)
 	 */
 	ccprintf("\nManuf name not found.\n");
 	manuf_in_batt = NULL;
-	batt_conf_main();
+	init_battery_type();
 	zassert_equal_ptr(get_batt_params(), &board_battery_info[0].config);
 	manuf_in_batt = "AS1GUXd3KB";
 
@@ -205,7 +216,7 @@ DECLARE_EC_TEST(test_batt_conf_main)
 	 */
 	ccprintf("\nDevice name not found.\n");
 	device_in_batt = NULL;
-	batt_conf_main();
+	init_battery_type();
 	zassert_equal_ptr(get_batt_params(), &board_battery_info[0].config);
 	device_in_batt = "C214-43";
 
@@ -222,7 +233,7 @@ DECLARE_EC_TEST(test_batt_conf_main_invalid)
 	ccprintf("\nVersion mismatch\n");
 	head.struct_version = EC_BATTERY_CONFIG_STRUCT_VERSION + 1;
 	cbi_set_board_info(CBI_TAG_BATTERY_CONFIG, (void *)&head, sizeof(head));
-	batt_conf_main();
+	init_battery_type();
 	zassert_equal_ptr(get_batt_params(), &board_battery_info[0].config);
 	head.struct_version = EC_BATTERY_CONFIG_STRUCT_VERSION;
 
@@ -232,7 +243,7 @@ DECLARE_EC_TEST(test_batt_conf_main_invalid)
 	ccprintf("\nSize mismatch\n");
 	head.manuf_name_size = 0xff;
 	cbi_set_board_info(CBI_TAG_BATTERY_CONFIG, (void *)&head, sizeof(head));
-	batt_conf_main();
+	init_battery_type();
 	zassert_equal_ptr(get_batt_params(), &board_battery_info[0].config);
 
 	return EC_SUCCESS;

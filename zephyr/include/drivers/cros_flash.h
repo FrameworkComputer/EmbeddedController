@@ -19,6 +19,9 @@
 #include <zephyr/device.h>
 #include <zephyr/kernel.h>
 
+/* Size to reload the watchdog timer to prevent any reset. */
+#define FLASH_WATCHDOG_RELOAD_SIZE 0x10000
+
 /**
  * @brief CROS Flash Driver APIs
  * @defgroup cros_flash_interface CROS Flash Driver APIs

@@ -11,7 +11,7 @@
 #include <zephyr/device.h>
 #include <zephyr/kernel.h>
 
-#define ONE_WIRE_UART_MAX_PAYLOAD_SIZE 62
+#define ONE_WIRE_UART_MAX_PAYLOAD_SIZE 80
 
 /**
  * @brief Send a message.

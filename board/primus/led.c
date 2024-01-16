@@ -42,6 +42,7 @@
 #define LED_OFF EC_LED_COLOR_COUNT
 #define LED_EVENT_SUSPEND TASK_EVENT_CUSTOM_BIT(0)
 #define LED_EVENT_200MS_TICK TASK_EVENT_CUSTOM_BIT(1)
+#define BATT_NEAR_FULL 900
 
 static int tick;
 
@@ -71,8 +72,15 @@ static void led_set_battery(void)
 {
 	switch (led_pwr_get_state()) {
 	case LED_PWRS_CHARGE:
-		/* Always indicate when charging, even in suspend. */
-		led_set_color_battery(EC_LED_COLOR_AMBER);
+		/*
+		 * Always indicate when charging, even in suspend.
+		 * When the battery RSOC > 90, set LED to white.
+		 */
+		if (charge_get_display_charge() > BATT_NEAR_FULL)
+			led_set_color_battery(EC_LED_COLOR_WHITE);
+		else
+			led_set_color_battery(EC_LED_COLOR_AMBER);
+
 		break;
 	case LED_PWRS_DISCHARGE:
 		led_set_color_battery(LED_OFF);

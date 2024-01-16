@@ -7,4 +7,4 @@
 void board_touchpad_reset(void)
 {
 }
-/* LCOV_EXCL_END */
+/* LCOV_EXCL_STOP */

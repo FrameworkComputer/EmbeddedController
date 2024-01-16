@@ -256,7 +256,7 @@
 
 /* --- UCPD --- */
 #define STM32_UCPD_REG(port, offset) \
-	REG32(((STM32_UCPD1_BASE + ((port)*0x400)) + (offset)))
+	REG32(((STM32_UCPD1_BASE + ((port) * 0x400)) + (offset)))
 
 #define STM32_UCPD_CFGR1(port) STM32_UCPD_REG(port, 0x00)
 #define STM32_UCPD_CFGR2(port) STM32_UCPD_REG(port, 0x04)
@@ -603,24 +603,24 @@
 
 /* --- RCC PLLCFGR Bit Definitions --- */
 #define PLLCFGR_PLLSRC_OFF 0
-#define PLLCFGR_PLLSRC(val) (((val)&0x3) << PLLCFGR_PLLSRC_OFF)
+#define PLLCFGR_PLLSRC(val) (((val) & 0x3) << PLLCFGR_PLLSRC_OFF)
 #define PLLCFGR_PLLSRC_HSI 2
 #define PLLCFGR_PLLSRC_HSE 3
 /* PLL Division factor */
 #define PLLCFGR_PLLM_OFF 4
-#define PLLCFGR_PLLM(val) (((val)&0x1f) << PLLCFGR_PLLM_OFF)
+#define PLLCFGR_PLLM(val) (((val) & 0x1f) << PLLCFGR_PLLM_OFF)
 /* PLL Multiplication factor */
 #define PLLCFGR_PLLN_OFF 8
-#define PLLCFGR_PLLN(val) (((val)&0x7f) << PLLCFGR_PLLN_OFF)
+#define PLLCFGR_PLLN(val) (((val) & 0x7f) << PLLCFGR_PLLN_OFF)
 #define PLLCFGR_PLLQ_EN BIT(20)
 #define PLLCFGR_PLLQ_OFF 21
-#define PLLCFGR_PLLQ(val) (((val)&0x3) << PLLCFGR_PLLQ_OFF)
+#define PLLCFGR_PLLQ(val) (((val) & 0x3) << PLLCFGR_PLLQ_OFF)
 /* System and main CPU clock */
 #define PLLCFGR_PLLR_EN BIT(24)
 #define PLLCFGR_PLLR_OFF 25
-#define PLLCFGR_PLLR(val) (((val)&0x3) << PLLCFGR_PLLR_OFF)
+#define PLLCFGR_PLLR(val) (((val) & 0x3) << PLLCFGR_PLLR_OFF)
 #define PLLCFGR_PLLP_OFF 27
-#define PLLCFGR_PLLP(val) (((val)&0x1f) << PLLCFGR_PLLP_OFF)
+#define PLLCFGR_PLLP(val) (((val) & 0x1f) << PLLCFGR_PLLP_OFF)
 
 /* --- RCC CFGR Bit Definitions --- */
 #define STM32_RCC_CFGR_SW_HSI (1 << 0)
@@ -633,16 +633,16 @@
 #define STM32_RCC_CFGR_SWS_MASK (3 << 2)
 /* AHB Prescalar: */
 #define CFGR_HPRE_OFF 4
-#define CFGR_HPRE(val) (((val)&0xf) << CFGR_HPRE_OFF)
+#define CFGR_HPRE(val) (((val) & 0xf) << CFGR_HPRE_OFF)
 /* APB1 Low Speed Prescalar < 45MHz */
 #define CFGR_PPRE1_OFF 8
-#define CFGR_PPRE1(val) (((val)&0x7) << CFGR_PPRE1_OFF)
+#define CFGR_PPRE1(val) (((val) & 0x7) << CFGR_PPRE1_OFF)
 /* APB2 High Speed Prescalar < 90MHz */
 #define CFGR_PPRE2_OFF 11
-#define CFGR_PPRE2(val) (((val)&0x7) << CFGR_PPRE2_OFF)
+#define CFGR_PPRE2(val) (((val) & 0x7) << CFGR_PPRE2_OFF)
 /* RTC CLock: Must equal 1MHz */
 #define CFGR_RTCPRE_OFF 16
-#define CFGR_RTCPRE(val) (((val)&0x1f) << CFGR_RTCPRE_OFF)
+#define CFGR_RTCPRE(val) (((val) & 0x1f) << CFGR_RTCPRE_OFF)
 
 /* --- RCC AHB1ENR Bit Definitions --- */
 #define STM32_RCC_AHB1ENR_DMA1EN BIT(0)
@@ -991,7 +991,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define FLASH_CR_OBL_LAUNCH BIT(27)
 #define FLASH_CR_OPTLOCK BIT(30)
 #define FLASH_CR_LOCK BIT(31)
-#define FLASH_CR_PNB(sec) (((sec)&0x7f) << 3)
+#define FLASH_CR_PNB(sec) (((sec) & 0x7f) << 3)
 #define FLASH_CR_PNB_MASK FLASH_CR_PNB(0x7f)
 
 #define STM32_FLASH_MIN_WRITE_SIZE (CONFIG_FLASH_WRITE_SIZE * 2)
@@ -1012,12 +1012,12 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_OPTB_SECURE2_MEM REG32(STM32_OPTB_BANK2_BASE + 0x28)
 
 /* Read option bytes from flash memory for Bank 1 */
-#define STM32_OPTB_BANK1_READ(n) REG32(STM32_OPTB_BANK1_BASE + ((n)*8))
+#define STM32_OPTB_BANK1_READ(n) REG32(STM32_OPTB_BANK1_BASE + ((n) * 8))
 #define STM32_OPTB_BANK1_COMP_READ(n) \
-	REG32(STM32_OPTB_BANK1_BASE + ((n)*8) + 0x4)
-#define STM32_OPTB_BANK2_READ(n) REG32(STM32_OPTB_BANK2_BASE + ((n)*8))
+	REG32(STM32_OPTB_BANK1_BASE + ((n) * 8) + 0x4)
+#define STM32_OPTB_BANK2_READ(n) REG32(STM32_OPTB_BANK2_BASE + ((n) * 8))
 #define STM32_OPTB_BANK2_COMP_READ(n) \
-	REG32(STM32_OPTB_BANK2_BASE + ((n)*8) + 0x4)
+	REG32(STM32_OPTB_BANK2_BASE + ((n) * 8) + 0x4)
 
 #define STM32_OPTB_USER_DBANK BIT(22)
 #define STM32_OPTB_USER_nBOOT1 BIT(23)
@@ -1046,17 +1046,17 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_ADC_TR1 REG32(STM32_ADC1_BASE + 0x20)
 #define STM32_ADC_TR2 REG32(STM32_ADC1_BASE + 0x24)
 #define STM32_ADC_TR3 REG32(STM32_ADC1_BASE + 0x28)
-#define STM32_ADC_JOFR(n) REG32(STM32_ADC1_BASE + 0x14 + ((n)&3) * 4)
+#define STM32_ADC_JOFR(n) REG32(STM32_ADC1_BASE + 0x14 + ((n) & 3) * 4)
 #define STM32_ADC_HTR REG32(STM32_ADC1_BASE + 0x24)
 #define STM32_ADC_LTR REG32(STM32_ADC1_BASE + 0x28)
-#define STM32_ADC_SQR(n) REG32(STM32_ADC1_BASE + 0x30 + ((n)&3) * 4)
+#define STM32_ADC_SQR(n) REG32(STM32_ADC1_BASE + 0x30 + ((n) & 3) * 4)
 #define STM32_ADC_SQR1 REG32(STM32_ADC1_BASE + 0x30)
 #define STM32_ADC_SQR2 REG32(STM32_ADC1_BASE + 0x34)
 #define STM32_ADC_SQR3 REG32(STM32_ADC1_BASE + 0x38)
 #define STM32_ADC_SQR4 REG32(STM32_ADC1_BASE + 0x3C)
 #define STM32_ADC_DR REG32(STM32_ADC1_BASE + 0x40)
 #define STM32_ADC_JSQR REG32(STM32_ADC1_BASE + 0x4C)
-#define STM32_ADC_JDR(n) REG32(STM32_ADC1_BASE + 0x80 + ((n)&3) * 4)
+#define STM32_ADC_JDR(n) REG32(STM32_ADC1_BASE + 0x80 + ((n) & 3) * 4)
 
 /* --- ADC CR Bit Definitions --- */
 #define STM32_ADC_CR_ADEN BIT(0)
@@ -1207,7 +1207,7 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 	(STM32_DMA_REGS(channel)->isr =                                \
 		 ((STM32_DMA_REGS(channel)->isr &                      \
 		   ~(STM32_DMA_ALL << STM32_DMA_CH_OFFSET(channel))) | \
-		  (((val)&STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
+		  (((val) & STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
 #define STM32_DMA_GET_IFCR(channel)                                        \
 	((STM32_DMA_REGS(channel)->ifcr >> STM32_DMA_CH_OFFSET(channel)) & \
 	 STM32_DMA_ALL)
@@ -1215,7 +1215,7 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 	(STM32_DMA_REGS(channel)->ifcr =                               \
 		 ((STM32_DMA_REGS(channel)->ifcr &                     \
 		   ~(STM32_DMA_ALL << STM32_DMA_CH_OFFSET(channel))) | \
-		  (((val)&STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
+		  (((val) & STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
 
 /* Bits for DMA channel regs */
 #define STM32_DMA_CCR_EN BIT(0)

@@ -26,7 +26,7 @@ struct flash_info flash_info = {
 	.write_protect_bank_offset = 0,
 	.write_protect_bank_count = 6,
 };
-#elif defined(CHIP_VARIANT_NPCX9M8S)
+#elif defined(CHIP_VARIANT_NPCX9MFP)
 struct flash_info flash_info = {
 	.num_flash_banks = 16,
 	.write_protect_bank_offset = 0,

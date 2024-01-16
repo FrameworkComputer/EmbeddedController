@@ -67,7 +67,7 @@ config AP_PWRSEQ_SIGNAL_VW
 	  Helper symbol to enable virtual wire (VW) based power sequencing.
 
 config AP_PWRSEQ_SIGNAL_DEBUG_NAMES
-	bool
+	bool "Debug power sequence names"
 	default y if PLATFORM_EC_BRINGUP
 	help
 	  Enable this option to allow display of the more descriptive

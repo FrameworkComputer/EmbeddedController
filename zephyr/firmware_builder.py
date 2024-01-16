@@ -38,6 +38,7 @@ SPECIAL_BOARDS = [
     "roach",
     "ovis",
     "brox",
+    "rauru",
     # Nissa variants
     "nereid",
     "nivviks",
@@ -86,14 +87,16 @@ def build(opts):
     platform_ec = zephyr_dir.parent
     modules = zmake.modules.locate_from_checkout(find_checkout())
     projects_path = zmake.modules.default_projects_dirs(modules)
+    subprocess.run(
+        [platform_ec / "util" / "check_clang_format.py"],
+        check=True,
+        cwd=platform_ec,
+        stdin=subprocess.DEVNULL,
+    )
 
-    # TODO(b:313535589): Re-enable.
-    # subprocess.run(
-    #     [platform_ec / "util" / "check_clang_format.py"],
-    #     check=True,
-    #     cwd=platform_ec,
-    #     stdin=subprocess.DEVNULL,
-    # )
+    # Validate board targets are reflected as Bazel targets
+    cmd = ["pytest", "-v", "bazel/test_gen_bazel_targets.py"]
+    subprocess.run(cmd, cwd=platform_ec, check=True, stdin=subprocess.DEVNULL)
 
     # Start with a clean build environment
     cmd = ["make", "clobber"]
@@ -328,9 +331,10 @@ def test(opts):
 
     if opts.code_coverage:
         build_dir = platform_ec / "build" / "zephyr"
-        _extract_lcov_summary(
-            "EC_ZEPHYR_TESTS", metrics, twister_out_dir / "coverage.info"
-        )
+        if twister_out_dir.exists():
+            _extract_lcov_summary(
+                "EC_ZEPHYR_TESTS", metrics, twister_out_dir / "coverage.info"
+            )
         _extract_lcov_summary(
             "EC_ZEPHYR_TESTS_GCC",
             metrics,

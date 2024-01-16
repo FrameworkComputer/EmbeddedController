@@ -8,7 +8,7 @@
 
 # See Makefile for description.
 host-util-bin-cxx-y += ectool ec_parse_panicinfo lbplay stm32mon lbcc iteflash \
-	cbi-util
+	cbi-util ec_coredump
 build-util-art-y += util/export_taskinfo.so
 
 build-util-bin-$(CHIP_NPCX) += ecst
@@ -39,6 +39,7 @@ lbplay-objs=lbplay.o $(comm-objs)
 util/ectool.cc: $(out)/ec_version.h
 
 ec_parse_panicinfo-objs=ec_parse_panicinfo.o
+ec_coredump-objs=ec_coredump.o $(comm-objs)
 
 # USB type-C Vendor Information File generation
 ifeq ($(CONFIG_USB_POWER_DELIVERY),y)

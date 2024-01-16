@@ -35,7 +35,7 @@
  */
 enum gpio_interrupts {
 #if DT_HAS_COMPAT_STATUS_OKAY(cros_ec_gpio_interrupts)
-	DT_FOREACH_CHILD_SEP(
+	DT_FOREACH_CHILD_STATUS_OKAY_SEP(
 		DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_gpio_interrupts),
 		GPIO_INT_ENUM, (, )),
 #endif

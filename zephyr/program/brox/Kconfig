@@ -12,4 +12,8 @@ module = Brox
 module-str = Brox board-specific code
 source "subsys/logging/Kconfig.template.log_config"
 
+choice PLATFORM_EC_USBC_STACK
+	default PLATFORM_EC_USB_PD_CONTROLLER
+endchoice
+
 source "Kconfig.zephyr"

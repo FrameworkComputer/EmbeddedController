@@ -662,7 +662,7 @@ static int anx74xx_check_cc_type(int cc_reg)
 static int anx74xx_tcpm_get_cc(int port, enum tcpc_cc_voltage_status *cc1,
 			       enum tcpc_cc_voltage_status *cc2)
 {
-	int rv = EC_SUCCESS;
+	__maybe_unused int rv = EC_SUCCESS;
 	int reg = 0;
 
 	/* Read tcpc cc status register */

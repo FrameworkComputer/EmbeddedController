@@ -60,7 +60,7 @@ enum bmi_emul_axis {
 };
 
 /* turns 16-bit register address into 8-bit address */
-#define REG16TO8(x) ((x)*2)
+#define REG16TO8(x) ((x) * 2)
 /* turns 8-bit register address into 16-bit address */
 #define REG8TO16(x) ((x) / 2)
 

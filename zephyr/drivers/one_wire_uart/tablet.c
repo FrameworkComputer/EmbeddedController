@@ -51,7 +51,7 @@ static void base_shutdown_hook(struct ap_power_ev_callback *cb,
 	/* LCOV_EXCL_START not reachable */
 	default:
 		return;
-		/* LCOV_EXCL_END */
+		/* LCOV_EXCL_STOP */
 	}
 }
 

@@ -15,3 +15,7 @@ ITERABLE_SECTION_ROM(mkbp_event_source, 4)
 FOR_EACH(HOOK_TYPE_SECTION, (
 ), HOOK_TYPES_LIST)
 #endif
+
+#ifdef CONFIG_FINGERPRINT_SUBSYSTEM
+ITERABLE_SECTION_ROM(fingerprint_algorithm, 4)
+#endif

@@ -1199,7 +1199,11 @@ static int command_flash_info(int argc, const char **argv)
 			ccputs("\n    ");
 		else if (!(i & 7))
 			ccputs(" ");
-		ccputs(crec_flash_physical_get_protect(i) ? "Y" : ".");
+		if (crec_flash_physical_get_protect(i)) {
+			ccputs("Y");
+		} else {
+			ccputs(".");
+		}
 	}
 	ccputs("\n");
 	return EC_SUCCESS;

@@ -111,7 +111,9 @@ class Manifest:
             "component_list": [],
         }
 
-    def insert_component(self, ctype, name, i2c_port, i2c_addr, usbc_port=None):
+    def insert_component(
+        self, ctype, name, i2c_port, i2c_addr, usbc_port=None, ssfc=None
+    ):
         """Insert the component inform to the component manifest.
 
         Args:
@@ -120,6 +122,7 @@ class Manifest:
             i2c_port: I2C remote port number.
             i2c_address: I2C device address (7-bit).
             usbc_port: USB-C port number.
+            ssfc: SSFC element to be inserted as is.
         """
         component = {
             "component_type": ctype,
@@ -128,6 +131,8 @@ class Manifest:
         }
         if usbc_port:
             component.update({"usbc": {"port": usbc_port}})
+        if ssfc:
+            component.update({"ssfc": ssfc})
 
         for comp in self.manifest["component_list"]:
             if comp == component:
@@ -149,10 +154,10 @@ def node_is_valid(node, i2c_node, i2c_portmap):
         i2c_portmap: Dict of the mapping from I2C name to remote port number.
     """
     if "compatible" not in node.props:
-        logging.error("Compatible not found: %s", node.name)
+        logging.info("Compatible not found: %s", node.name)
         return False
 
-    if i2c_node and i2c_node.name not in i2c_portmap:
+    if i2c_node is None or i2c_node.name not in i2c_portmap:
         logging.info(
             "Component %s(%s) not on I2C bus, skip it",
             node.name,
@@ -187,6 +192,7 @@ def find_i2c_portmap(edtlib, edt):
         "ite,enhance-i2c",
         "microchip,xec-i2c-v2",
         "zephyr,i2c-emul-controller",
+        "intel,sedi-i2c",
     ]
 
     # Append all I2C chip names to a list; its index is the port number.
@@ -196,7 +202,7 @@ def find_i2c_portmap(edtlib, edt):
             i2c_chip_names.append(node.name)
 
     if not i2c_chip_names:
-        logging.error("No I2C port found")
+        logging.info("No I2C port found")
         return {}
 
     # Find the mapping of the remote_port.
@@ -221,6 +227,86 @@ def find_i2c_portmap(edtlib, edt):
             )
 
     return i2c_portmap
+
+
+def build_ssfc_map(edt, project_name):
+    """Creates a ssfc dictionary for future insertion
+
+    Because all ssfc masks have to be evaluated in sequence to calculate
+    the offset of any individual mask, ssfc dictionary is populated all at
+    once then inserted into the manifest one at a time.
+
+    Args:
+        edt: EDT object representation of a devicetree.
+        project_name: string name of the project or test.
+
+    Returns:
+        A dictionary of the mapping between ssfc-value node name and a ssfc
+        mask/value manifest element
+    """
+
+    cbi_ssfc_nodes = edt.compat2okay["cros-ec,cbi-ssfc"]
+
+    if len(cbi_ssfc_nodes) > 1:
+        raise util.DevicetreeError("More than 1 cbi-ssfc node found")
+
+    if len(cbi_ssfc_nodes) == 0:
+        logging.info("Project %s does not support SSFC", project_name)
+        return None
+
+    ssfc_map = {}
+    ssfc_mask_offset = 0
+    for ssfc_field in cbi_ssfc_nodes[0].children.values():
+        mask_size = ssfc_field.props["size"].val
+        mask = (1 << mask_size) - 1
+        mask <<= ssfc_mask_offset
+        ssfc_mask_offset += mask_size
+
+        for ssfc_value_node in ssfc_field.children.values():
+            ssfc_map.update(
+                {
+                    ssfc_value_node.name: {
+                        "mask": hex(mask),
+                        "value": ssfc_value_node.props["value"].val,
+                    }
+                }
+            )
+
+    return ssfc_map
+
+
+def find_ssfc_default(edt, ssfc_map, node, prop):
+    """find the ssfc node if sensor is default
+
+    Args:
+        edt: EDT object representation of a devicetree
+        ssfc_map: Dict of the mapping from ssfc name to ssfc manifest element.
+        node: Devicetree node object.
+        prop: Devicetree property used to link the ssfc.
+
+    Returns:
+        SSFC element to be inserted into the manifest as is
+    """
+
+    ssfc_node_list = edt.compat2okay["cros-ec,cbi-ssfc-value"]
+
+    # TODO: add ways to find other ssfc defaults as other sensors are supported
+    if prop == "location":
+        if node.props[prop].val == "MOTIONSENSE_LOC_BASE":
+            enum_name = "BASE_SENSOR"
+        elif node.props[prop].val == "MOTIONSENSE_LOC_LID":
+            enum_name = "LID_SENSOR"
+        else:
+            return None
+
+    for snode in ssfc_node_list:
+        if (
+            snode.props["default"].val
+            and enum_name == snode.parent.props["enum-name"].val
+        ):
+            return ssfc_map[snode.name]
+
+    return None
 
 
 def compatible_name_parser(ctype, name):
@@ -255,7 +341,17 @@ def insert_i2c_component(ctype, node, usbc_port, i2c_portmap, manifest):
         i2c_portmap: Dict of the mapping from I2C name to remote port number.
         manifest: Manifest object.
     """
-    if not node_is_valid(node, node.parent, i2c_portmap):
+
+    # go up the devicetree to find the i2c ancestor node
+    i2c_node = node.parent
+    while i2c_node and i2c_node.name not in i2c_portmap:
+        i2c_node = i2c_node.parent
+
+    reg_node = node
+    while reg_node and "reg" not in reg_node.props:
+        reg_node = reg_node.parent
+
+    if not node_is_valid(node, i2c_node, i2c_portmap):
         return
 
     # TODO(b/308031064): Add the probe methods if multiple components share the
@@ -266,8 +362,8 @@ def insert_i2c_component(ctype, node, usbc_port, i2c_portmap, manifest):
     manifest.insert_component(
         ctype,
         compatible_name_parser(ctype, node.props["compatible"].val[0]),
-        i2c_portmap[node.parent.name],
-        node.props["reg"].val[0],
+        i2c_portmap[i2c_node.name],
+        hex(reg_node.props["reg"].val[0]),
         usbc_port,
     )
 
@@ -285,7 +381,7 @@ def iterate_usbc_components(edtlib, edt, i2c_portmap, manifest):
         usbc = edt.get_node("/usbc")
     except edtlib.EDTError:
         # If the usbc node doesn't exist, return success.
-        logging.error("No usbc node found")
+        logging.info("No usbc node found")
         return
 
     for node in usbc.children.values():
@@ -315,13 +411,18 @@ def iterate_usbc_components(edtlib, edt, i2c_portmap, manifest):
             insert_i2c_component("tcpc", tcpc, port, i2c_portmap, manifest)
 
 
-def insert_motionsense_component(node, i2c_portmap, manifest):
+def insert_motionsense_component(
+    node, edt, i2c_portmap, ssfc_map, manifest, is_alt
+):
     """Insert the motion sense component to the manifest.
 
     Args:
         node: Devicetree node object.
+        edt: EDT object representation of a devicetree.
         i2c_portmap: Dict of the mapping from I2C name to remote port number.
+        ssfc_map: Dict of the mapping from ssfc name to ssfc manifest element.
         manifest: Manifest object.
+        is_alt: boolean for if this component is alt sensor.
     """
     if "port" in node.props:
         i2c = node.props["port"].val.props["i2c-port"].val
@@ -354,32 +455,45 @@ def insert_motionsense_component(node, i2c_portmap, manifest):
         if "," + part_number in compatible_name:
             ctype = "als"
 
+    if not is_alt:
+        ssfc_element = find_ssfc_default(edt, ssfc_map, node, "location")
+    elif "alternate-ssfc-indicator" in node.props:
+        ssfc_element = ssfc_map[node.props["alternate-ssfc-indicator"].val.name]
+    else:
+        ssfc_element = None
+
     manifest.insert_component(
         ctype,
         compatible_name_parser(ctype, compatible_name),
         i2c_portmap[i2c.name],
         i2c_addr_val,
+        ssfc=ssfc_element,
     )
 
 
-def iterate_motionsensor_components(edtlib, edt, i2c_portmap, manifest):
+def iterate_motionsensor_components(
+    edtlib, edt, i2c_portmap, ssfc_map, manifest
+):
     """Iterate all motion sensor components and insert them to the manifest.
 
     Args:
         edtlib: Module object for the edtlib library.
         edt: EDT object representation of a devicetree
         i2c_portmap: Dict of the mapping from I2C name to remote port number.
+        ssfc_map: Dict of the mapping from ssfc name to ssfc manifest element.
         manifest: Manifest object.
     """
     try:
         mss = edt.get_node("/motionsense-sensor")
     except edtlib.EDTError:
         # If the motionsense-sensor node doesn't exist, return success.
-        logging.error("No motionsense-sensor node found")
+        logging.info("No motionsense-sensor node found")
         return
 
     for node in mss.children.values():
-        insert_motionsense_component(node, i2c_portmap, manifest)
+        insert_motionsense_component(
+            node, edt, i2c_portmap, ssfc_map, manifest, is_alt=False
+        )
 
     try:
         mss_alt = edt.get_node("/motionsense-sensor-alt")
@@ -389,7 +503,9 @@ def iterate_motionsensor_components(edtlib, edt, i2c_portmap, manifest):
         return
 
     for node in mss_alt.children.values():
-        insert_motionsense_component(node, i2c_portmap, manifest)
+        insert_motionsense_component(
+            node, edt, i2c_portmap, ssfc_map, manifest, is_alt=True
+        )
 
 
 def main(argv: Optional[List[str]] = None) -> Optional[int]:
@@ -412,6 +528,11 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
 
     logging.info("Running CME, outputting to %s", args.manifest_file)
     i2c_portmap = find_i2c_portmap(edtlib, edt)
+    try:
+        ssfc_map = build_ssfc_map(edt, build_dir.name)
+    except util.DevicetreeError as err_msg:
+        logging.error(err_msg)
+        return 1
 
     # Compute the version string.
     if util.is_test(args.edt_pickle):
@@ -426,7 +547,9 @@ def main(argv: Optional[List[str]] = None) -> Optional[int]:
 
     iterate_usbc_components(edtlib, edt, i2c_portmap, manifest)
 
-    iterate_motionsensor_components(edtlib, edt, i2c_portmap, manifest)
+    iterate_motionsensor_components(
+        edtlib, edt, i2c_portmap, ssfc_map, manifest
+    )
 
     # TODO(b/308028560): Iterate all sensor components.
 

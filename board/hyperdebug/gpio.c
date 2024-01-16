@@ -18,6 +18,11 @@
 #include "timer.h"
 #include "util.h"
 
+/* Size of buffer used for gpio monitoring. */
+#define CYCLIC_BUFFER_SIZE 65536
+/* Number of concurrent gpio monitoring operations supported. */
+#define NUM_CYCLIC_BUFFERS 3
+
 struct dac_t {
 	uint32_t enable_mask;
 	volatile uint32_t *data_register;
@@ -160,32 +165,34 @@ struct monitoring_slot_t {
 struct monitoring_slot_t monitoring_slots[16];
 
 /*
- * Memory area used for allocation of cyclic buffers.  (Currently the
- * implementation supports only a single allocation.)
+ * Memory area used for allocation of cyclic buffers.
  */
-uint8_t buffer_area[sizeof(struct cyclic_buffer_header_t) + 8192];
-bool buffer_area_in_use = false;
+uint8_t buffer_area[NUM_CYCLIC_BUFFERS]
+		   [sizeof(struct cyclic_buffer_header_t) + CYCLIC_BUFFER_SIZE];
 
 static struct cyclic_buffer_header_t *allocate_cyclic_buffer(size_t size)
 {
-	struct cyclic_buffer_header_t *res =
-		(struct cyclic_buffer_header_t *)buffer_area;
-	if (buffer_area_in_use) {
-		/* No support for multiple smaller allocations, yet. */
-		return NULL;
+	for (int i = 0; i < NUM_CYCLIC_BUFFERS; i++) {
+		struct cyclic_buffer_header_t *res =
+			(struct cyclic_buffer_header_t *)buffer_area[i];
+		if (res->num_signals)
+			continue;
+		if (sizeof(struct cyclic_buffer_header_t) + size >
+		    sizeof(buffer_area[i])) {
+			/* Requested size exceeds the capacity of the area. */
+			return NULL;
+		}
+		/* Will be overwritten with another non-zero value by caller */
+		res->num_signals = 0xFF;
+		return res;
 	}
-	if (sizeof(struct cyclic_buffer_header_t) + size >
-	    sizeof(buffer_area)) {
-		/* Requested size exceeds the capacity of the area. */
-		return NULL;
-	}
-	buffer_area_in_use = true;
-	return res;
+	/* No free buffers */
+	return NULL;
 }
 
 static void free_cyclic_buffer(struct cyclic_buffer_header_t *buf)
 {
-	buffer_area_in_use = false;
+	buf->num_signals = 0;
 }
 
 /*
@@ -204,8 +211,10 @@ __attribute__((noinline)) void overrun(struct monitoring_slot_t *slot)
 {
 	struct cyclic_buffer_header_t *buffer_header = slot->buffer;
 	gpio_disable_interrupt(slot->gpio_signal);
-	buffer_header->overrun = 1;
-	atomic_add(&num_cur_error_conditions, 1);
+	if (!buffer_header->overrun) {
+		buffer_header->overrun = 1;
+		atomic_add(&num_cur_error_conditions, 1);
+	}
 }
 
 /*
@@ -299,7 +308,8 @@ __attribute((section(".bss.vector_table"))) void (*sram_vectors[125])(void);
 
 static void board_gpio_init(void)
 {
-	size_t interrupt_handler_size = &edge_int_end - &edge_int;
+	size_t interrupt_handler_size = THUMB_CODE_TO_DATA_PTR(&edge_int_end) -
+					THUMB_CODE_TO_DATA_PTR(&edge_int);
 	ASSERT(interrupt_handler_size <= sizeof(monitoring_slots[0].code));
 
 	/* Mark every slot as unused. */
@@ -350,15 +360,19 @@ static void stop_all_gpio_monitoring(void)
 		if (!slot->buffer)
 			continue;
 
-		/* Disable interrupts for all signals feeding into the same
-		 * cyclic buffer. */
+		/*
+		 * Disable interrupts for all signals feeding into the same
+		 * cyclic buffer, and clear `slot->buffer` to make sure they are
+		 * not discovered by next iteration of the outer loop.
+		 */
 		buffer_header = slot->buffer;
 		for (int j = i; j < ARRAY_SIZE(monitoring_slots); j++) {
-			slot = monitoring_slots + i;
+			slot = monitoring_slots + j;
 			if (slot->buffer != buffer_header)
 				continue;
 			gpio_disable_interrupt(slot->gpio_signal);
 			slot->gpio_signal = GPIO_COUNT;
+			slot->buffer = NULL;
 		}
 		/* Deallocate this one cyclic buffer. */
 		num_cur_monitoring--;
@@ -659,7 +673,8 @@ static int command_gpio_monitoring_start(int argc, const char **argv)
 	timestamp_t now;
 	int rv;
 	uint32_t nvic_mask;
-	size_t cyclic_buffer_size = 8192; /* Maybe configurable by parameter */
+	/* Maybe configurable by parameter */
+	size_t cyclic_buffer_size = CYCLIC_BUFFER_SIZE;
 	struct cyclic_buffer_header_t *buf;
 	struct monitoring_slot_t *slot;
 

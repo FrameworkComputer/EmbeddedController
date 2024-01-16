@@ -233,7 +233,7 @@ uint32_t task_wait_event_mask(uint32_t event_mask, int timeout_us)
 	return evt & event_mask;
 }
 
-noreturn void __keep cpu_reset(void)
+__noreturn void __keep cpu_reset(void)
 {
 	/* Disable interrupts */
 	interrupt_disable();

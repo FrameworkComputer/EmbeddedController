@@ -126,3 +126,11 @@ const struct batt_conf_embed board_battery_info[] = {
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_CA14J43;
+
+__override int board_get_default_battery_type(void)
+{
+	if (board_get_battery_cell_type() == BATTERY_CELL_TYPE_2S)
+		return BATTERY_CA11J34;
+	else
+		return DEFAULT_BATTERY_TYPE;
+}

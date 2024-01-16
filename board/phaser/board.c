@@ -7,7 +7,6 @@
 
 #include "adc.h"
 #include "battery_smart.h"
-#include "builtin/stdnoreturn.h"
 #include "button.h"
 #include "charge_state.h"
 #include "common.h"
@@ -303,7 +302,7 @@ void system_enter_psl_mode(void)
 }
 
 /* Hibernate function implemented by PSL (Power Switch Logic) mode. */
-noreturn void __keep __enter_hibernate_in_psl(void)
+__noreturn void __keep __enter_hibernate_in_psl(void)
 {
 	system_enter_psl_mode();
 	/* Spin and wait for PSL cuts power; should never return */

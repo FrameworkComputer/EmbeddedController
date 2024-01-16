@@ -206,7 +206,7 @@
 #define __staticlib extern
 
 /*
- * Mark a function that is defined purely as a hook to be used by a static
+ * Mark a symbol that is defined purely as a hook to be used by a static
  * library.
  */
 #define __staticlib_hook __unused
@@ -227,6 +227,15 @@
 #ifndef __fallthrough
 #define __fallthrough __attribute__((fallthrough))
 #endif
+
+/**
+ * @brief Attribute used to annotate functions that will never return, like
+ * panic.
+ *
+ * See https://clang.llvm.org/docs/AttributeReference.html#noreturn-noreturn and
+ * https://gcc.gnu.org/onlinedocs/gcc/Common-Function-Attributes.html#index-noreturn-function-attribute.
+ */
+#define __noreturn __attribute__((noreturn))
 
 /*
  * Macros for combining bytes into larger integers. _LE and _BE signify little
@@ -256,13 +265,14 @@
  */
 #define CELSIUS_TO_DECI_KELVIN(temp_c) \
 	(round_divide(CELSIUS_TO_MILLI_KELVIN(temp_c), 100))
-#define DECI_KELVIN_TO_CELSIUS(temp_dk) (MILLI_KELVIN_TO_CELSIUS((temp_dk)*100))
+#define DECI_KELVIN_TO_CELSIUS(temp_dk) \
+	(MILLI_KELVIN_TO_CELSIUS((temp_dk) * 100))
 #define MILLI_KELVIN_TO_MILLI_CELSIUS(temp_mk) ((temp_mk)-273150)
 #define MILLI_CELSIUS_TO_MILLI_KELVIN(temp_mc) ((temp_mc) + 273150)
 #define MILLI_KELVIN_TO_KELVIN(temp_mk) (round_divide((temp_mk), 1000))
-#define KELVIN_TO_MILLI_KELVIN(temp_k) ((temp_k)*1000)
+#define KELVIN_TO_MILLI_KELVIN(temp_k) ((temp_k) * 1000)
 #define CELSIUS_TO_MILLI_KELVIN(temp_c) \
-	(MILLI_CELSIUS_TO_MILLI_KELVIN((temp_c)*1000))
+	(MILLI_CELSIUS_TO_MILLI_KELVIN((temp_c) * 1000))
 #define MILLI_KELVIN_TO_CELSIUS(temp_mk) \
 	(round_divide(MILLI_KELVIN_TO_MILLI_CELSIUS(temp_mk), 1000))
 
@@ -270,7 +280,7 @@
  * TARGET_WITH_MARGIN(X, 5) returns X' where X' * 100.5% is almost equal to
  * but does not exceed X. */
 #define TARGET_WITH_MARGIN(target, tenths_percent) \
-	(((target)*1000) / (1000 + (tenths_percent)))
+	(((target) * 1000) / (1000 + (tenths_percent)))
 
 /* Call a function, and return the error value unless it returns EC_SUCCESS. */
 #define RETURN_ERROR(fn)                 \
@@ -297,8 +307,8 @@
 #define test_mockable_noreturn __attribute__((weak))
 #define test_mockable_static_noreturn __attribute__((weak))
 #else
-#define test_mockable_noreturn noreturn __attribute__((weak))
-#define test_mockable_static_noreturn noreturn __attribute__((weak))
+#define test_mockable_noreturn __noreturn __attribute__((weak))
+#define test_mockable_static_noreturn __noreturn __attribute__((weak))
 #endif
 #define test_export_static
 #define test_overridable_const
@@ -306,8 +316,8 @@
 #define test_mockable
 #define test_mockable_static static
 #define test_mockable_static_inline static inline
-#define test_mockable_noreturn noreturn
-#define test_mockable_static_noreturn static noreturn
+#define test_mockable_noreturn __noreturn
+#define test_mockable_static_noreturn static __noreturn
 #define test_export_static static
 #define test_overridable_const const
 #endif

@@ -10,7 +10,7 @@
 
 #include "charge_state.h"
 
-#define TEMPC_TENTHS_OF_DEG(c) ((c)*10)
+#define TEMPC_TENTHS_OF_DEG(c) ((c) * 10)
 
 #define CHARGER_PROF_TEMP_C_LAST_RANGE 0xFFFF
 

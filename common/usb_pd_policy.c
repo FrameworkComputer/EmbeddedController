@@ -1277,4 +1277,4 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DEV_INFO, hc_remote_pd_dev_info,
 
 #endif /* CONFIG_USB_PD_ALT_MODE_DFP */
 
-/* LCOV_EXCL_END */
+/* LCOV_EXCL_STOP */

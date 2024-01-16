@@ -129,14 +129,16 @@ GOOGLETEST_DIR ?= $(realpath ../../third_party/googletest)
 GOOGLETEST_INSTALL_DIR := $(realpath $(out))/googletest/install
 CMAKE_TOOLCHAIN_FILE := $(CURDIR)/cmake/toolchain-armv7m.cmake
 
-GOOGLETEST_CFLAGS := -I$(GOOGLETEST_INSTALL_DIR)/include
+GOOGLETEST_CONFIG_CFLAGS := -DGTEST_HAS_FILE_SYSTEM=0
+GOOGLETEST_CFLAGS := -I$(GOOGLETEST_INSTALL_DIR)/include \
+	$(GOOGLETEST_CONFIG_CFLAGS)
 GOOGLETEST_LDFLAGS := -L$(GOOGLETEST_INSTALL_DIR)/lib -lgtest -lgmock
 GOOGLETEST_LIB := $(GOOGLETEST_INSTALL_DIR)/lib/libgtest.a
 
 $(GOOGLETEST_LIB):
 	mkdir -p $(out)/googletest && \
 	cd $(out)/googletest && \
-	cmake -Dgtest_disable_pthreads=ON \
+	CXXFLAGS="$(GOOGLETEST_CONFIG_CFLAGS)" cmake -Dgtest_disable_pthreads=ON \
 		-GNinja \
 		-DCMAKE_TOOLCHAIN_FILE=$(CMAKE_TOOLCHAIN_FILE) \
 		-DCMAKE_INSTALL_PREFIX=$(GOOGLETEST_INSTALL_DIR) \

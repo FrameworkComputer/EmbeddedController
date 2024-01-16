@@ -31,7 +31,7 @@
 
 #define MTLP_DDR5_RVP_SKU_BOARD_ID 0x01
 #define MTLP_LP5_RVP_SKU_BOARD_ID 0x02
-#define MTL_RVP_BOARD_ID(id) ((id)&0x3F)
+#define MTL_RVP_BOARD_ID(id) ((id) & 0x3F)
 
 /* IOEX ports */
 enum ioex_port {

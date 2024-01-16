@@ -43,12 +43,12 @@ static void power_init(void)
 }
 
 /* GPIO setting helpers */
-#define OUT(n) (1 << ((n)*2))
-#define AF(n) (2 << ((n)*2))
-#define ANALOG(n) (3 << ((n)*2))
+#define OUT(n) (1 << ((n) * 2))
+#define AF(n) (2 << ((n) * 2))
+#define ANALOG(n) (3 << ((n) * 2))
 #define HIGH(n) (1 << (n))
 #define ODR(n) (1 << (n))
-#define HISPEED(n) (3 << ((n)*2))
+#define HISPEED(n) (3 << ((n) * 2))
 #define AFx(n, x) (x << (((n) % 8) * 4))
 
 static void pins_init(void)

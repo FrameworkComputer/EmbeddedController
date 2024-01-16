@@ -262,11 +262,11 @@
 #define MCHP_CHIP_REV_POS 0
 #define MCHP_CHIP_REV_MASK (0xfful << MCHP_CHIP_REV_POS)
 #define MCHP_CHIP_EXTRACT_DEVID(d) \
-	(((uint32_t)(d)&MCHP_CHIP_DEVID_MASK) >> MCHP_CHIP_DEVID_POS)
+	(((uint32_t)(d) & MCHP_CHIP_DEVID_MASK) >> MCHP_CHIP_DEVID_POS)
 #define MCHP_CHIP_EXTRACT_SUBID(d) \
-	(((uint32_t)(d)&MCHP_CHIP_SUBID_MASK) >> MCHP_CHIP_SUBID_POS)
+	(((uint32_t)(d) & MCHP_CHIP_SUBID_MASK) >> MCHP_CHIP_SUBID_POS)
 #define MCHP_CHIP_EXTRACT_REV(d) \
-	(((uint32_t)(d)&MCHP_CHIP_REV_MASK) >> MCHP_CHIP_REV_POS)
+	(((uint32_t)(d) & MCHP_CHIP_REV_MASK) >> MCHP_CHIP_REV_POS)
 
 /* PCR clock control dividers */
 #define MCHP_PCR_CLK_CTL_FASTEST 1U
@@ -294,7 +294,7 @@
  * b[4:0] = bit number
  * b[10:8] = zero based register number
  */
-#define MCHP_PCR_ERB(rnum, bnum) ((((rnum)&0x0f) << 8) | ((bnum)&0x1f))
+#define MCHP_PCR_ERB(rnum, bnum) ((((rnum) & 0x0f) << 8) | ((bnum) & 0x1f))
 
 /* PCR Sleep 1: Sleep Enable, Clock Required, and Reset bits */
 #define MCHP_PCR_BTMR16_1 MCHP_PCR_ERB(1, 31)
@@ -813,8 +813,8 @@
 #define MCHP_UART_SPACING 0x400
 #define MCHP_UART_CFG_OFS 0x300
 #define MCHP_UART_CONFIG_BASE(x) \
-	(MCHP_UART0_BASE + MCHP_UART_CFG_OFS + ((x)*MCHP_UART_SPACING))
-#define MCHP_UART_RUNTIME_BASE(x) (MCHP_UART0_BASE + ((x)*MCHP_UART_SPACING))
+	(MCHP_UART0_BASE + MCHP_UART_CFG_OFS + ((x) * MCHP_UART_SPACING))
+#define MCHP_UART_RUNTIME_BASE(x) (MCHP_UART0_BASE + ((x) * MCHP_UART_SPACING))
 #define MCHP_UART_GIRQ 15
 #define MCHP_UART0_GIRQ_BIT (MCHP_INT15_UART_0)
 #define MCHP_UART1_GIRQ_BIT (MCHP_INT15_UART_1)
@@ -921,8 +921,8 @@
 #define MCHP_TMR32_INSTANCES 2
 #define MCHP_TMR16_MAX (MCHP_TMR16_INSTANCES)
 #define MCHP_TMR32_MAX (MCHP_TMR32_INSTANCES)
-#define MCHP_TMR16_BASE(n) (MCHP_TMR16_0_BASE + (n)*MCHP_TMR_SPACING)
-#define MCHP_TMR32_BASE(n) (MCHP_TMR32_0_BASE + (n)*MCHP_TMR_SPACING)
+#define MCHP_TMR16_BASE(n) (MCHP_TMR16_0_BASE + (n) * MCHP_TMR_SPACING)
+#define MCHP_TMR32_BASE(n) (MCHP_TMR32_0_BASE + (n) * MCHP_TMR_SPACING)
 #define MCHP_TMR16_GIRQ 23
 #define MCHP_TMR16_GIRQ_BIT(n) BIT(0 + (n))
 #define MCHP_TMR32_GIRQ 23
@@ -931,7 +931,7 @@
 /* 16-bit Counter/timer */
 #define MCHP_CNT16_SPACING 0x20
 #define MCHP_CNT16_INSTANCES 4
-#define MCHP_CNT16_BASE(n) (MCHP_CNT16_0_BASE + (n)*MCHP_CNT16_SPACING)
+#define MCHP_CNT16_BASE(n) (MCHP_CNT16_0_BASE + (n) * MCHP_CNT16_SPACING)
 #define MCHP_CNT16_GIRQ 23
 #define MCHP_CNT16_GIRQ_BIT(x) BIT(6 + (x))
 
@@ -961,7 +961,7 @@
 #define MCHP_VBAT_EMB_DEBOUNCE_EN REG32(MCHP_VBAT_BASE + 0x34)
 /* read 32-bit word at 32-bit offset x where 0 <= x <= 32 */
 #define MCHP_VBAT_RAM_SIZE 128
-#define MCHP_VBAT_RAM(wnum) REG32(MCHP_VBAT_RAM_BASE + ((wnum)*4))
+#define MCHP_VBAT_RAM(wnum) REG32(MCHP_VBAT_RAM_BASE + ((wnum) * 4))
 #define MCHP_VBAT_RAM8(bnum) REG8(MCHP_VBAT_RAM_BASE + (bnum))
 #define MCHP_VBAT_VWIRE_BACKUP 30
 /*
@@ -999,7 +999,7 @@
 
 /* Blinking-Breathing LED 0 <= n <= 2 */
 #define MCHP_BBLEB_INSTANCES 4
-#define MCHP_BBLED_BASE(n) (MCHP_BBLED_0_BASE + (((n)&0x03) * 256))
+#define MCHP_BBLED_BASE(n) (MCHP_BBLED_0_BASE + (((n) & 0x03) * 256))
 
 /* EMI */
 #define MCHP_EMI_INSTANCES 3
@@ -1007,9 +1007,9 @@
 #define MCHP_EMI_ECREG_OFS 0x100
 /* base of EMI registers only accessible by EC */
 #define MCHP_EMI_BASE(n) \
-	(MCHP_EMI_0_BASE + MCHP_EMI_ECREG_OFS + ((n)*MCHP_EMI_SPACING))
+	(MCHP_EMI_0_BASE + MCHP_EMI_ECREG_OFS + ((n) * MCHP_EMI_SPACING))
 /* base of EMI registers accessible by EC and Host */
-#define MCHP_EMI_RT_BASE(n) (MCHP_EMI_0_BASE + ((n)*MCHP_EMI_SPACING))
+#define MCHP_EMI_RT_BASE(n) (MCHP_EMI_0_BASE + ((n) * MCHP_EMI_SPACING))
 #define MCHP_EMI_GIRQ 15
 #define MCHP_EMI_GIRQ_BIT(n) BIT(2 + (n))
 
@@ -1090,19 +1090,19 @@
 #define MCHP_PWM_INSTANCES 9
 #define MCHP_PWM_ID_MAX (MCHP_PWM_INSTANCES)
 #define MCHP_PWM_SPACING 16
-#define MCHP_PWM_BASE(x) (MCHP_PWM_0_BASE + ((x)*MCHP_PWM_SPACING))
+#define MCHP_PWM_BASE(x) (MCHP_PWM_0_BASE + ((x) * MCHP_PWM_SPACING))
 
 /* TACH */
 #define MCHP_TACH_INSTANCES 4
 #define MCHP_TACH_SPACING 16
-#define MCHP_TACH_BASE(x) (MCHP_TACH_0_BASE + ((x)*MCHP_TACH_SPACING))
+#define MCHP_TACH_BASE(x) (MCHP_TACH_0_BASE + ((x) * MCHP_TACH_SPACING))
 #define MCHP_TACH_GIRQ 17
 #define MCHP_TACH_GIRQ_BIT(x) BIT(1 + (x))
 
 /* FAN */
 #define MCHP_FAN_INSTANCES 2
 #define MCHP_FAN_SPACING 0x80U
-#define MCHP_FAN_BASE(x) (MCHP_RPM2PWM0_BASE + ((x)*MCHP_FAN_SPACING))
+#define MCHP_FAN_BASE(x) (MCHP_RPM2PWM0_BASE + ((x) * MCHP_FAN_SPACING))
 #define MCHP_FAN_SETTING(x) REG16(MCHP_FAN_BASE(x) + 0x0)
 #define MCHP_FAN_CFG1(x) REG8(MCHP_FAN_BASE(x) + 0x2)
 #define MCHP_FAN_CFG2(x) REG8(MCHP_FAN_BASE(x) + 0x3)
@@ -1122,10 +1122,11 @@
 #define MCHP_ACPI_EC_INSTANCES 5
 #define MCHP_ACPI_EC_MAX (MCHP_ACPI_EC_INSTANCES)
 #define MCHP_ACPI_EC_SPACING 0x400
-#define MCHP_ACPI_EC_BASE(x) (MCHP_ACPI_EC_0_BASE + ((x)*MCHP_ACPI_EC_SPACING))
+#define MCHP_ACPI_EC_BASE(x) \
+	(MCHP_ACPI_EC_0_BASE + ((x) * MCHP_ACPI_EC_SPACING))
 #define MCHP_ACPI_EC_GIRQ 15
-#define MCHP_ACPI_EC_IBF_GIRQ_BIT(x) BIT(5 + ((x)*2))
-#define MCHP_ACPI_EC_OBE_GIRQ_BIT(x) BIT(6 + ((x)*2))
+#define MCHP_ACPI_EC_IBF_GIRQ_BIT(x) BIT(5 + ((x) * 2))
+#define MCHP_ACPI_EC_OBE_GIRQ_BIT(x) BIT(6 + ((x) * 2))
 
 /* ACPI PM1 */
 #define MCHP_ACPI_PM1_ECREGS_OFS 0x100
@@ -1218,8 +1219,8 @@ enum MCHP_i2c_port {
 #define MCHP_ADC_CFG_CLK_LO_TM_MSK GENMASK(7, 0)
 #define MCHP_ADC_CFG_CLK_HI_TM_MSK GENMASK(15, 8)
 #define MCHP_ADC_VREF_CSEL REG32(MCHP_ADC_BASE + 0x80)
-#define MCHP_ADC_VREF_CSEL_MSK(ch) (0x03U << ((ch)*2U))
-#define MCHP_ADC_VREF_CSEL_GPIO(ch) BIT((ch)*2U)
+#define MCHP_ADC_VREF_CSEL_MSK(ch) (0x03U << ((ch) * 2U))
+#define MCHP_ADC_VREF_CSEL_GPIO(ch) BIT((ch) * 2U)
 #define MCHP_ADC_VREF_CTRL REG32(MCHP_ADC_BASE + 0x84)
 #define MCHP_ADC_VREF_CTRL_DFLT 0U
 #define MCHP_ADC_VCTRL_CHRG_DLY_MSK GENMASK(15, 0)
@@ -1241,14 +1242,14 @@ enum MCHP_i2c_port {
 
 /* Hibernation timer */
 #define MCHP_HTIMER_SPACING 0x20
-#define MCHP_HTIMER_ADDR(n) (MCHP_HTIMER_BASE + ((n)*MCHP_HTIMER_SPACING))
+#define MCHP_HTIMER_ADDR(n) (MCHP_HTIMER_BASE + ((n) * MCHP_HTIMER_SPACING))
 #define MCHP_HTIMER_GIRQ 21
 /* HTIMER[0:1] -> GIRQ21 bits[1:2] */
 #define MCHP_HTIMER_GIRQ_BIT(n) BIT(1 + (n))
 #define MCHP_HTIMER_DIRECT_NVIC(n) (112 + (n))
 
 /* General Purpose SPI (GP-SPI) */
-#define MCHP_SPI_BASE(port) (MCHP_GPSPI0_BASE + ((port)*0x80))
+#define MCHP_SPI_BASE(port) (MCHP_GPSPI0_BASE + ((port) * 0x80))
 #define MCHP_SPI_AR(port) REG8(MCHP_SPI_BASE(port) + 0x00)
 #define MCHP_SPI_CR(port) REG8(MCHP_SPI_BASE(port) + 0x04)
 #define MCHP_SPI_SR(port) REG8(MCHP_SPI_BASE(port) + 0x08)
@@ -1261,8 +1262,8 @@ enum MCHP_i2c_port {
 #define MCHP_SPI_RD_ADDR(ctrl) (MCHP_SPI_BASE(ctrl) + 0x10)
 /* All GP-SPI controllers connected to GIRQ18 */
 #define MCHP_SPI_GIRQ 18
-#define MCHP_SPI_GIRQ_TXBE_BIT(x) BIT(2 + ((x)*2))
-#define MCHP_SPI_GIRQ_RXBF_BIT(x) BIT(3 + ((x)*2))
+#define MCHP_SPI_GIRQ_TXBE_BIT(x) BIT(2 + ((x) * 2))
+#define MCHP_SPI_GIRQ_RXBF_BIT(x) BIT(3 + ((x) * 2))
 #define MCHP_GPSPI0_ID 0
 #define MCHP_GPSPI1_ID 1
 
@@ -1316,12 +1317,12 @@ enum MCHP_i2c_port {
  */
 #define MCHP_QMSPI0_LDRX_CHANS 3U
 #define MCHP_QMSPI0_LDTX_CHANS 3U
-#define MCHP_QMSPI0_LDRX_CTRL(n) REG32(MCHP_QMSPI0_BASE + 0x110 + ((n)*16U))
-#define MCHP_QMSPI0_LDRX_MBASE(n) REG32(MCHP_QMSPI0_BASE + 0x114 + ((n)*16U))
-#define MCHP_QMSPI0_LDRX_LEN(n) REG32(MCHP_QMSPI0_BASE + 0x118 + ((n)*16U))
-#define MCHP_QMSPI0_LDTX_CTRL(n) REG32(MCHP_QMSPI0_BASE + 0x140 + ((n)*16U))
-#define MCHP_QMSPI0_LDTX_MBASE(n) REG32(MCHP_QMSPI0_BASE + 0x144 + ((n)*16U))
-#define MCHP_QMSPI0_LDTX_LEN(n) REG32(MCHP_QMSPI0_BASE + 0x148 + ((n)*16U))
+#define MCHP_QMSPI0_LDRX_CTRL(n) REG32(MCHP_QMSPI0_BASE + 0x110 + ((n) * 16U))
+#define MCHP_QMSPI0_LDRX_MBASE(n) REG32(MCHP_QMSPI0_BASE + 0x114 + ((n) * 16U))
+#define MCHP_QMSPI0_LDRX_LEN(n) REG32(MCHP_QMSPI0_BASE + 0x118 + ((n) * 16U))
+#define MCHP_QMSPI0_LDTX_CTRL(n) REG32(MCHP_QMSPI0_BASE + 0x140 + ((n) * 16U))
+#define MCHP_QMSPI0_LDTX_MBASE(n) REG32(MCHP_QMSPI0_BASE + 0x144 + ((n) * 16U))
+#define MCHP_QMSPI0_LDTX_LEN(n) REG32(MCHP_QMSPI0_BASE + 0x148 + ((n) * 16U))
 /* LDMA RX or TX channel control register */
 #define MCHP_QMSPI_LDC_MSK GENMASK(6, 0)
 #define MCHP_QMSPI_LDC_EN BIT(0)

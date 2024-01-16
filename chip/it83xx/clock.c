@@ -45,7 +45,7 @@ static int console_in_use_timeout_sec = 5;
 static timestamp_t console_expire_time;
 
 /* clock source is 32.768KHz */
-#define TIMER_32P768K_CNT_TO_US(cnt) ((uint64_t)(cnt)*1000000 / 32768)
+#define TIMER_32P768K_CNT_TO_US(cnt) ((uint64_t)(cnt) * 1000000 / 32768)
 #define TIMER_CNT_8M_32P768K(cnt) (((cnt) / (8000000 / 32768)) + 1)
 #endif /*CONFIG_LOW_POWER_IDLE */
 

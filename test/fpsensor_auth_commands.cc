@@ -23,8 +23,11 @@ extern "C" {
 }
 
 #include <stdbool.h>
+#include <stddef.h>
 
+#include <algorithm>
 #include <array>
+#include <iterator>
 #include <variant>
 
 namespace
@@ -701,13 +704,10 @@ test_fp_command_read_match_secret_with_pubkey_succeed(void)
 
 	positive_match_secret_state = test_state_1;
 	/* Set fp_positive_match_salt to the default fake positive match salt */
-	memcpy(fp_positive_match_salt, default_fake_fp_positive_match_salt,
-	       sizeof(default_fake_fp_positive_match_salt));
-
-	TEST_ASSERT_ARRAY_EQ(
-		(uint8_t const *)fp_positive_match_salt,
-		(uint8_t const *)default_fake_fp_positive_match_salt,
-		sizeof(default_fake_fp_positive_match_salt));
+	for (size_t fgr = 0; fgr < ARRAY_SIZE(fp_positive_match_salt); ++fgr)
+		std::copy(std::begin(default_fake_fp_positive_match_salt),
+			  std::end(default_fake_fp_positive_match_salt),
+			  std::begin(fp_positive_match_salt[fgr]));
 
 	/* Initialize an empty user_id to compare positive_match_secret */
 	std::fill(std::begin(user_id), std::end(user_id), 0);

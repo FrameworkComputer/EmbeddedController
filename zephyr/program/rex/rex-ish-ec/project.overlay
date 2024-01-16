@@ -6,6 +6,12 @@
 /* Include base Rex */
 #include "../rex/project.overlay"
 
+/ {
+	gpio-interrupts {
+		/delete-node/ tablet_mode;
+	};
+};
+
 &i2c0_0 {
 	status = "disabled";
 };

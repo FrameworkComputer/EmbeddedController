@@ -35,9 +35,15 @@ extern "C" {
 /* Last acquired frame (aligned as it is used by arbitrary binary libraries) */
 uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE] FP_FRAME_SECTION __aligned(4);
 /* Fingers templates for the current user */
-test_mockable uint8_t
-	fp_template[FP_MAX_FINGER_COUNT]
-		   [FP_ALGORITHM_TEMPLATE_SIZE] FP_TEMPLATE_SECTION;
+test_mockable
+	uint8_t fp_template[FP_MAX_FINGER_COUNT]
+			   [FP_ALGORITHM_TEMPLATE_SIZE] FP_TEMPLATE_SECTION
+				   __aligned(4);
+static_assert(
+	sizeof(fp_template[0]) % 4 == 0,
+	"The size of each template must be a multiple of 4 to ensure that the next "
+	"template will still be aligned by 4.");
+
 /* Encryption/decryption buffer */
 /* TODO: On-the-fly encryption/decryption without a dedicated buffer */
 /*

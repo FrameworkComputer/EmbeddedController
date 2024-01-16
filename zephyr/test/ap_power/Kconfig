@@ -2,4 +2,24 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config TEST_AP_POWER_ADL
+	bool "AP power sequence tests for Alderlake"
+	help
+	  Run the AP power sequence tests for the Alderlake chipset.
+	  This is a generic Alderlake implementation that doesn't
+	  match a particular board.
+
+config TEST_AP_POWER_MTL
+	bool "AP power sequence tests for Meteorlake"
+	help
+	  Run the AP power sequence tests for the Meteorlake chipset.
+	  This is a generic Meteorlake implementation that doesn't
+	  match a particular board.
+
+config TEST_AP_POWER_BROX
+	bool "AP Power sequence tests for Brox project"
+	help
+	  Run the AP power sequence tests using the Brox devicetree
+	  configuration and the Brox project specific source files.
+
 source "Kconfig.zephyr"

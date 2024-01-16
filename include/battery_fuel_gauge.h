@@ -45,13 +45,17 @@ __override_proto int board_get_default_battery_type(void);
 
 /**
  * Detect a battery model.
+ *
+ * When no matching is found, it'll use the default config.
+ *
+ * Concurrency isn't considered because this routine shall be called only from:
+ *
+ * - HOOK_INIT (before charge_task starts) AND
+ * - charge_task (when a battery becomes newly present),
+ *
+ * which are serialized.
  */
 void init_battery_type(void);
-
-/**
- * Return struct board_batt_params of the battery.
- */
-const struct board_batt_params *get_batt_params(void);
 
 /**
  * Return pointer to active battery config.

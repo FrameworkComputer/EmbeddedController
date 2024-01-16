@@ -217,6 +217,99 @@ const struct batt_conf_embed board_battery_info[] = {
 			},
 		},
 	},
+
+	[BATTERY_CELXPERT_5B11M90007] = {
+		.manuf_name = "Celxpert",
+		.device_name = "LNV-5B11M90007",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0000,
+					.reg_mask = 0x6000,
+					.disconnect_val = 0x6000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
+			},
+			.batt_info = {
+				.voltage_max		= 13200, /* mV */
+				.voltage_normal		= 11520, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 487,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 70,
+			},
+		},
+	},
+
+	[BATTERY_SMP_5B11M90006] = {
+		.manuf_name = "SMP",
+		.device_name = "LNV-5B11M90006",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0000,
+					.reg_mask = 0x6000,
+					.disconnect_val = 0x6000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
+			},
+			.batt_info = {
+				.voltage_max		= 13200, /* mV */
+				.voltage_normal		= 11520, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 250,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 60,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
+			},
+		},
+	},
+
+	[BATTERY_SUNWODA_5B11M90008] = {
+		.manuf_name = "Sunwoda",
+		.device_name = "LNV-5B11M90008",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0000,
+					.reg_mask = 0x6000,
+					.disconnect_val = 0x6000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
+			},
+			.batt_info = {
+				.voltage_max		= 13200, /* mV */
+				.voltage_normal		= 11520, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 251,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
+			},
+		},
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 

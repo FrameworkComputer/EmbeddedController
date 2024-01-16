@@ -35,7 +35,7 @@ void board_config_pre_init(void)
  */
 
 #define USB_STREAM_RX_SIZE 16
-#define USB_STREAM_TX_SIZE 16
+#define USB_STREAM_TX_SIZE 64
 
 /******************************************************************************
  * Forward USART2 as a simple USB serial interface.
@@ -45,7 +45,7 @@ static struct usart_config const usart2;
 struct usb_stream_config const usart2_usb;
 
 static struct queue const usart2_to_usb =
-	QUEUE_DIRECT(64, uint8_t, usart2.producer, usart2_usb.consumer);
+	QUEUE_DIRECT(1024, uint8_t, usart2.producer, usart2_usb.consumer);
 static struct queue const usb_to_usart2 =
 	QUEUE_DIRECT(64, uint8_t, usart2_usb.producer, usart2.consumer);
 
@@ -66,7 +66,7 @@ static struct usart_config const usart3;
 struct usb_stream_config const usart3_usb;
 
 static struct queue const usart3_to_usb =
-	QUEUE_DIRECT(64, uint8_t, usart3.producer, usart3_usb.consumer);
+	QUEUE_DIRECT(1024, uint8_t, usart3.producer, usart3_usb.consumer);
 static struct queue const usb_to_usart3 =
 	QUEUE_DIRECT(64, uint8_t, usart3_usb.producer, usart3.consumer);
 
@@ -87,7 +87,7 @@ static struct usart_config const usart4;
 struct usb_stream_config const usart4_usb;
 
 static struct queue const usart4_to_usb =
-	QUEUE_DIRECT(64, uint8_t, usart4.producer, usart4_usb.consumer);
+	QUEUE_DIRECT(1024, uint8_t, usart4.producer, usart4_usb.consumer);
 static struct queue const usb_to_usart4 =
 	QUEUE_DIRECT(64, uint8_t, usart4_usb.producer, usart4.consumer);
 
@@ -108,7 +108,7 @@ static struct usart_config const usart5;
 struct usb_stream_config const usart5_usb;
 
 static struct queue const usart5_to_usb =
-	QUEUE_DIRECT(64, uint8_t, usart5.producer, usart5_usb.consumer);
+	QUEUE_DIRECT(1024, uint8_t, usart5.producer, usart5_usb.consumer);
 static struct queue const usb_to_usart5 =
 	QUEUE_DIRECT(64, uint8_t, usart5_usb.producer, usart5.consumer);
 

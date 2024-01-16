@@ -44,7 +44,7 @@
 };
 
 &i2c0 {
-	/* I2C_PWR_CBI */
+	label = "I2C_PWR_CBI";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c0_clk_gpb3_default
@@ -68,7 +68,7 @@
 };
 
 &i2c1 {
-	/* I2C_BATTERY */
+	label = "I2C_BATTERY";
 	status = "okay";
 	clock-frequency = <50000>;
 	pinctrl-0 = <&i2c1_clk_gpc1_default
@@ -78,7 +78,7 @@
 };
 
 &i2c2 {
-	/* I2C_USB_C */
+	label = "I2C_USB_C";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c2_clk_gpf6_default
@@ -121,7 +121,7 @@
 };
 
 &i2c3 {
-	/* I2C_SENSOR */
+	label = "I2C_SENSOR";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	scl-gpios = <&gpiof 2 0>;
@@ -135,7 +135,7 @@
 };
 
 &i2c4 {
-	/* I2C_DETACHABLE_BASE */
+	label = "I2C_DETACHABLE_BASE";
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c4_clk_gpe0_default

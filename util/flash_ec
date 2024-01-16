@@ -130,6 +130,11 @@ BOARDS_SPI_1800MV=(
 	reef
 )
 
+# hold cold_reset:on when using debug header (e.g. servo header)
+BOARDS_HOLD_COLD_RESET_DBG_HDR=(
+	reef
+)
+
 BOARDS_RAIDEN=(
 	coral
 	eve
@@ -192,6 +197,10 @@ DEFINE_boolean try_apshutdown "${FLAGS_FALSE}" \
 	" to understand the limitations when you build a solution on it. "
 DEFINE_integer try_apshutdown_count 16 \
 	"Number of attempts to shutdown the AP immediately after flashing."
+DEFINE_string dut_ip "" \
+	"DUT IP address"
+DEFINE_string token_db "${EC_DIR}/build/tokens.bin" \
+	"Full pathname of the EC tokenized database to copy to DUT."
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
@@ -464,6 +473,10 @@ servo_has_dut_i2c_mux() {
 	dut_control -i dut_i2c_mux >/dev/null 2>&1
 }
 
+servo_has_dut_i2c_en() {
+	dut_control -i dut_i2c_en >/dev/null 2>&1
+}
+
 servo_ec_hard_reset_or_die() {
 	dut_control_or_die cold_reset:on
 	dut_control_or_die cold_reset:off
@@ -734,6 +747,13 @@ if [[ -n "${EC_DIR}" ]]; then
 	fi
 fi
 
+LOCAL_TOKEN_DB=
+if [[ -n "${EC_DIR}" ]]; then
+	if [ -f "${EC_DIR}/build/tokens.bin" ] ; then
+		LOCAL_TOKEN_DB="${EC_DIR}/build/tokens.bin"
+	fi
+fi
+
 # Get baseboard from build system if present
 BASEBOARD=
 
@@ -782,6 +802,40 @@ function ec_image() {
 		fi
 	fi
 	die "no EC image found : build one or specify one."
+}
+
+function ec_token_database() {
+	# No token database specified on command line, try default location
+	if [[ -n "${FLAGS_token_db}" ]] ; then
+		if [ -e "${FLAGS_token_db}" ] || \
+		   [ "${FLAGS_token_db}" == "-" ]; then
+			echo "${FLAGS_token_db}"
+			return
+		fi
+		die "Invalid image path : ${FLAGS_token_db}"
+	else
+		if [ -f "${LOCAL_TOKEN_DB}" ]; then
+			echo "${LOCAL_TOKEN_DB}"
+			return
+		fi
+	fi
+	die "no token database found : specify one."
+}
+
+function load_token_db() {
+	local TOKEN_DB
+	local DUT_IP
+
+	TOKEN_DB="$(ec_token_database)"
+	DUT_IP="${FLAGS_dut_ip}"
+
+	info "TOKEN_DB=${TOKEN_DB}"
+	info "DUT_IP=${DUT_IP}"
+
+	ssh root@"${DUT_IP}" 'mkdir -p /usr/local/cros_ec/'
+	scp "${TOKEN_DB}" root@"${DUT_IP}":/usr/local/cros_ec/tokens.bin
+
+	return
 }
 
 # Find the Loader image to use
@@ -1047,7 +1101,9 @@ function flash_flashrom() {
 			# Set GP_SEL# as low then start ec
 			dut_control fw_up:on
 			sleep 0.2
-			dut_control cold_reset:off
+			if ! in_array "${BOARDS_HOLD_COLD_RESET_DBG_HDR[@]}" "${BOARD}"; then
+				dut_control cold_reset:off
+			fi
 		# Gang programmer mode for npcx_spi requires using dev_mode
 		# rather than fw_up
 		elif [[ "${CHIP}" == "npcx_spi" ]]; then
@@ -1055,7 +1111,9 @@ function flash_flashrom() {
 
 			dut_control dev_mode:on
 			sleep 0.2
-			dut_control cold_reset:off
+			if ! in_array "${BOARDS_HOLD_COLD_RESET_DBG_HDR[@]}" "${BOARD}"; then
+				dut_control cold_reset:off
+			fi
 		fi
 
 		# Enable SPI programming mode.
@@ -1381,6 +1439,14 @@ function flash_it83xx() {
 		info "Switching DUT I2C Mux to ${CHIP}"
 		servo_save_add "dut_i2c_mux"
 		dut_control dut_i2c_mux:ec_prog
+	fi
+
+	# The board overlay defines "dut_i2c_en" if there is a signal that
+	# must be asserted to access the I2C programming pins on the dut.
+	if servo_has_dut_i2c_en; then
+		info "Enabling I2C programming to ${CHIP}"
+		servo_save_add "dut_i2c_en"
+		dut_control dut_i2c_en:on
 	fi
 
 	# We need to send the special waveform very soon after the EC powers on
@@ -1879,7 +1945,7 @@ function read_chip_partially() {
 
 	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
 	CHIP_CMD_PREFIX=${2:?"missing arg 2: Prefix of command"}
-	CHIP_CMD_PREFIX=(${CHIP_CMD_PREFIX})
+	readarray -t -d " " CHIP_CMD_PREFIX <<< "${CHIP_CMD_PREFIX}"
 	OFFSET=${3:?"missing arg 3: Offset"}
 	SIZE=${4:?"missing arg 4: Size"}
 	FILE_PATH=${5:?"missing arg 5: Image storage path"}
@@ -1907,7 +1973,7 @@ function read_chip() {
 
 	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
 	CHIP_CMD_PREFIX=${2:?"missing arg 2: Prefix of command"}
-	CHIP_CMD_PREFIX=(${CHIP_CMD_PREFIX})
+	readarray -t -d " " CHIP_CMD_PREFIX <<< "${CHIP_CMD_PREFIX}"
 	FILE_PATH=${3:?"missing arg 3: Image storage path"}
 
 	if [ "${CHIP_TYPE}" = "npcx_uut" ]; then
@@ -1942,6 +2008,11 @@ function check_preserve_sections_presence() {
 		done
 	)
 }
+
+if [[ -n "${FLAGS_dut_ip}" ]] ; then
+	info "Updating token database"
+	load_token_db
+fi
 
 info "Flashing chip ${CHIP}."
 flash_"${CHIP}"

@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_FPSENSOR_FPSENSOR_UTILS_H
 #define __CROS_EC_FPSENSOR_FPSENSOR_UTILS_H
 
+#include "console.h"
+
 #include <stdbool.h>
 #include <stdint.h>
 

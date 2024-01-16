@@ -16,7 +16,7 @@ void test_main(void)
 	k_sleep(K_MSEC(1000));
 
 	/* Run all the suites that depend on main being called */
-	ztest_run_test_suites(NULL);
+	ztest_run_test_suites(NULL, false, 1, 1);
 
 	/* Check that every suite ran */
 	ztest_verify_all_test_suites_ran();

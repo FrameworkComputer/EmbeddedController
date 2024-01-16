@@ -30,6 +30,10 @@
 #include "usb_common.h"
 #include "util.h"
 
+#ifdef CONFIG_ZEPHYR
+#include <usbc/retimer_fw_update.h>
+#endif /* CONFIG_ZEPHYR */
+
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)
 #define CPRINTF(format, args...) cprintf(CC_LPC, format, ##args)

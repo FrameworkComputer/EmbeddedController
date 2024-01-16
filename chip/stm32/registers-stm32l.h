@@ -522,7 +522,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_ADC_JOFR4 REG32(STM32_ADC1_BASE + 0x24)
 #define STM32_ADC_HTR REG32(STM32_ADC1_BASE + 0x28)
 #define STM32_ADC_LTR REG32(STM32_ADC1_BASE + 0x2C)
-#define STM32_ADC_SQR(n) REG32(STM32_ADC1_BASE + 0x2C + (n)*4)
+#define STM32_ADC_SQR(n) REG32(STM32_ADC1_BASE + 0x2C + (n) * 4)
 #define STM32_ADC_SQR1 REG32(STM32_ADC1_BASE + 0x30)
 #define STM32_ADC_SQR2 REG32(STM32_ADC1_BASE + 0x34)
 #define STM32_ADC_SQR3 REG32(STM32_ADC1_BASE + 0x38)
@@ -684,7 +684,7 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 	(STM32_DMA_REGS(channel)->isr =                                \
 		 ((STM32_DMA_REGS(channel)->isr &                      \
 		   ~(STM32_DMA_ALL << STM32_DMA_CH_OFFSET(channel))) | \
-		  (((val)&STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
+		  (((val) & STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
 #define STM32_DMA_GET_IFCR(channel)                                        \
 	((STM32_DMA_REGS(channel)->ifcr >> STM32_DMA_CH_OFFSET(channel)) & \
 	 STM32_DMA_ALL)
@@ -692,7 +692,7 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 	(STM32_DMA_REGS(channel)->ifcr =                               \
 		 ((STM32_DMA_REGS(channel)->ifcr &                     \
 		   ~(STM32_DMA_ALL << STM32_DMA_CH_OFFSET(channel))) | \
-		  (((val)&STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
+		  (((val) & STM32_DMA_ALL) << STM32_DMA_CH_OFFSET(channel))))
 
 /* Bits for DMA channel regs */
 #define STM32_DMA_CCR_EN BIT(0)
@@ -744,7 +744,7 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 #define STM32_PMSE_IER REG32(STM32_PMSE_BASE + 0x18)
 #define STM32_PMSE_SR REG32(STM32_PMSE_BASE + 0x1c)
 #define STM32_PMSE_IFCR REG32(STM32_PMSE_BASE + 0x20)
-#define STM32_PMSE_PxPMR(x) REG32(STM32_PMSE_BASE + 0x2c + (x)*4)
+#define STM32_PMSE_PxPMR(x) REG32(STM32_PMSE_BASE + 0x2c + (x) * 4)
 #define STM32_PMSE_PAPMR REG32(STM32_PMSE_BASE + 0x2c)
 #define STM32_PMSE_PBPMR REG32(STM32_PMSE_BASE + 0x30)
 #define STM32_PMSE_PCPMR REG32(STM32_PMSE_BASE + 0x34)

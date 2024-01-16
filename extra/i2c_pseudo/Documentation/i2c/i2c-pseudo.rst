@@ -1,6 +1,8 @@
-=================
-i2c-pseudo driver
-=================
+.. SPDX-License-Identifier: GPL-2.0
+
+======================================
+Implementing I2C adapters in userspace
+======================================
 
 The ``i2c-pseudo`` module provides ``/dev/i2c-pseudo`` for implementing
 I2C adapters in userspace.

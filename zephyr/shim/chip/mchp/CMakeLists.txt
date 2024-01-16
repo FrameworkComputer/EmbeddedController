@@ -2,6 +2,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# When building code coverage, the final Zephyr image isn't actually linked
+# and there's no valid image to program. Skip compiling and linking the mchp
+# second loader when coverage is enabled.
+if (NOT DEFINED CONFIG_COVERAGE)
+  add_subdirectory(second_loader)
+endif()
+
 cros_ec_library_include_directories(include)
 
 zephyr_library_sources(clock.c)

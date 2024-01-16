@@ -231,11 +231,11 @@
 #define MCHP_CHIP_REV_POS 0
 #define MCHP_CHIP_REV_MASK (0xfful << MCHP_CHIP_REV_POS)
 #define MCHP_CHIP_EXTRACT_DEVID(d) \
-	(((uint32_t)(d)&MCHP_CHIP_DEVID_MASK) >> MCHP_CHIP_DEVID_POS)
+	(((uint32_t)(d) & MCHP_CHIP_DEVID_MASK) >> MCHP_CHIP_DEVID_POS)
 #define MCHP_CHIP_EXTRACT_SUBID(d) \
-	(((uint32_t)(d)&MCHP_CHIP_SUBID_MASK) >> MCHP_CHIP_SUBID_POS)
+	(((uint32_t)(d) & MCHP_CHIP_SUBID_MASK) >> MCHP_CHIP_SUBID_POS)
 #define MCHP_CHIP_EXTRACT_REV(d) \
-	(((uint32_t)(d)&MCHP_CHIP_REV_MASK) >> MCHP_CHIP_REV_POS)
+	(((uint32_t)(d) & MCHP_CHIP_REV_MASK) >> MCHP_CHIP_REV_POS)
 
 /* PCR clock control dividers */
 #define MCHP_PCR_CLK_CTL_FASTEST 1U
@@ -274,7 +274,7 @@
  * b[4:0] = bit number
  * b[10:8] = zero based register number
  */
-#define MCHP_PCR_ERB(rnum, bnum) ((((rnum)&0x0f) << 8) | ((bnum)&0x1f))
+#define MCHP_PCR_ERB(rnum, bnum) ((((rnum) & 0x0f) << 8) | ((bnum) & 0x1f))
 
 /* PCR Sleep 1: Sleep Enable, Clock Required, and Reset bits */
 #define MCHP_PCR_BTMR16_1 MCHP_PCR_ERB(1, 31)
@@ -583,7 +583,7 @@
 #define MCHP_INT15_MAILBOX BIT(20)
 #define MCHP_INT15_P80_0 BIT(22)
 #define MCHP_INT15_P80_1 BIT(23)
-#define MCHP_INT15_P80(x) BIT(22 + ((x)&0x01U))
+#define MCHP_INT15_P80(x) BIT(22 + ((x) & 0x01U))
 
 /* GIRQ16 interrupt sources. Direct capable */
 #define MCHP_INT16_PKE_ERR BIT(0)
@@ -688,8 +688,8 @@
 #define MCHP_UART_SPACING 0x400
 #define MCHP_UART_CFG_OFS 0x300
 #define MCHP_UART_CONFIG_BASE(x) \
-	(MCHP_UART0_BASE + MCHP_UART_CFG_OFS + ((x)*MCHP_UART_SPACING))
-#define MCHP_UART_RUNTIME_BASE(x) (MCHP_UART0_BASE + ((x)*MCHP_UART_SPACING))
+	(MCHP_UART0_BASE + MCHP_UART_CFG_OFS + ((x) * MCHP_UART_SPACING))
+#define MCHP_UART_RUNTIME_BASE(x) (MCHP_UART0_BASE + ((x) * MCHP_UART_SPACING))
 #define MCHP_UART_GIRQ 15
 #define MCHP_UART0_GIRQ_BIT (MCHP_INT15_UART_0)
 #define MCHP_UART1_GIRQ_BIT (MCHP_INT15_UART_1)
@@ -795,8 +795,8 @@
 #define MCHP_TMR32_INSTANCES 2
 #define MCHP_TMR16_MAX (MCHP_TMR16_INSTANCES)
 #define MCHP_TMR32_MAX (MCHP_TMR32_INSTANCES)
-#define MCHP_TMR16_BASE(n) (MCHP_TMR16_0_BASE + (n)*MCHP_TMR_SPACING)
-#define MCHP_TMR32_BASE(n) (MCHP_TMR32_0_BASE + (n)*MCHP_TMR_SPACING)
+#define MCHP_TMR16_BASE(n) (MCHP_TMR16_0_BASE + (n) * MCHP_TMR_SPACING)
+#define MCHP_TMR32_BASE(n) (MCHP_TMR32_0_BASE + (n) * MCHP_TMR_SPACING)
 #define MCHP_TMR16_GIRQ 23
 #define MCHP_TMR16_GIRQ_BIT(n) BIT(0 + (n))
 #define MCHP_TMR32_GIRQ 23
@@ -827,7 +827,7 @@
 #define MCHP_VBAT_MONOTONIC_CTR_HI REG32(MCHP_VBAT_BASE + 0x24)
 /* read 32-bit word at 32-bit offset x where 0 <= x <= 16 */
 #define MCHP_VBAT_RAM_SIZE 64
-#define MCHP_VBAT_RAM(wnum) REG32(MCHP_VBAT_RAM_BASE + ((wnum)*4))
+#define MCHP_VBAT_RAM(wnum) REG32(MCHP_VBAT_RAM_BASE + ((wnum) * 4))
 #define MCHP_VBAT_RAM8(bnum) REG8(MCHP_VBAT_RAM_BASE + (bnum))
 #define MCHP_VBAT_VWIRE_BACKUP 14
 /*
@@ -863,7 +863,7 @@
 
 /* Blinking-Breathing LED 0 <= n <= 2 */
 #define MCHP_BBLEB_INSTANCES 3
-#define MCHP_BBLED_BASE(n) (MCHP_BBLED_0_BASE + (((n)&0x03) * 256))
+#define MCHP_BBLED_BASE(n) (MCHP_BBLED_0_BASE + (((n) & 0x03) * 256))
 
 /* EMI */
 #define MCHP_EMI_INSTANCES 2
@@ -871,9 +871,9 @@
 #define MCHP_EMI_ECREG_OFS 0x100
 /* base of EMI registers only accessible by EC */
 #define MCHP_EMI_BASE(n) \
-	(MCHP_EMI_0_BASE + MCHP_EMI_ECREG_OFS + ((n)*MCHP_EMI_SPACING))
+	(MCHP_EMI_0_BASE + MCHP_EMI_ECREG_OFS + ((n) * MCHP_EMI_SPACING))
 /* base of EMI registers accessible by EC and Host */
-#define MCHP_EMI_RT_BASE(n) (MCHP_EMI_0_BASE + ((n)*MCHP_EMI_SPACING))
+#define MCHP_EMI_RT_BASE(n) (MCHP_EMI_0_BASE + ((n) * MCHP_EMI_SPACING))
 #define MCHP_EMI_GIRQ 15
 #define MCHP_EMI_GIRQ_BIT(n) BIT(2 + (n))
 
@@ -939,12 +939,12 @@
 #define MCHP_PWM_INSTANCES 9
 #define MCHP_PWM_ID_MAX (MCHP_PWM_INSTANCES)
 #define MCHP_PWM_SPACING 16
-#define MCHP_PWM_BASE(x) (MCHP_PWM_0_BASE + ((x)*MCHP_PWM_SPACING))
+#define MCHP_PWM_BASE(x) (MCHP_PWM_0_BASE + ((x) * MCHP_PWM_SPACING))
 
 /* TACH */
 #define MCHP_TACH_INSTANCES 4
 #define MCHP_TACH_SPACING 16
-#define MCHP_TACH_BASE(x) (MCHP_TACH_0_BASE + ((x)*MCHP_TACH_SPACING))
+#define MCHP_TACH_BASE(x) (MCHP_TACH_0_BASE + ((x) * MCHP_TACH_SPACING))
 #define MCHP_TACH_GIRQ 17
 #define MCHP_TACH_GIRQ_BIT(x) BIT(1 + (x))
 
@@ -952,10 +952,11 @@
 #define MCHP_ACPI_EC_INSTANCES 4
 #define MCHP_ACPI_EC_MAX (ACPI_EC_INSTANCES)
 #define MCHP_ACPI_EC_SPACING 0x400
-#define MCHP_ACPI_EC_BASE(x) (MCHP_ACPI_EC_0_BASE + ((x)*MCHP_ACPI_EC_SPACING))
+#define MCHP_ACPI_EC_BASE(x) \
+	(MCHP_ACPI_EC_0_BASE + ((x) * MCHP_ACPI_EC_SPACING))
 #define MCHP_ACPI_EC_GIRQ 15
-#define MCHP_ACPI_EC_IBF_GIRQ_BIT(x) BIT(5 + ((x)*2))
-#define MCHP_ACPI_EC_OBE_GIRQ_BIT(x) BIT(6 + ((x)*2))
+#define MCHP_ACPI_EC_IBF_GIRQ_BIT(x) BIT(5 + ((x) * 2))
+#define MCHP_ACPI_EC_OBE_GIRQ_BIT(x) BIT(6 + ((x) * 2))
 
 /* ACPI PM1 */
 #define MCHP_ACPI_PM1_ECREGS_OFS 0x100
@@ -1079,7 +1080,7 @@ enum MCHP_i2c_port {
 
 /* Hibernation timer */
 #define MCHP_HTIMER_SPACING 0x20
-#define MCHP_HTIMER_ADDR(n) (MCHP_HTIMER_BASE + ((n)*MCHP_HTIMER_SPACING))
+#define MCHP_HTIMER_ADDR(n) (MCHP_HTIMER_BASE + ((n) * MCHP_HTIMER_SPACING))
 #define MCHP_HTIMER_GIRQ 23
 /* HTIMER[0:1] -> GIRQ23 bits[16:17] */
 #define MCHP_HTIMER_GIRQ_BIT(n) BIT(16 + (n))

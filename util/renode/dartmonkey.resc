@@ -6,7 +6,7 @@ using sysbus
 $name?="dartmonkey"
 mach create $name
 
-machine LoadPlatformDescription $ORIGIN/stm32h743.repl
+machine LoadPlatformDescription $ORIGIN/dartmonkey.repl
 
 
 $bin?=$ORIGIN/dartmonkey/ec.bin

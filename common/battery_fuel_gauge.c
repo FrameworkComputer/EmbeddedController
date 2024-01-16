@@ -18,16 +18,16 @@
 #define BCFGPRT(format, args...) cprints(CC_CHARGER, "BCFG " format, ##args)
 
 /*
- * Pointer to an active config. It's default_battery_conf if a config is found
+ * Pointer to an active config. It's battery_conf_cache if a config is found
  * in CBI or board_battery_info[x] if a config is found in FW.
  */
-const struct batt_conf_embed *battery_conf;
+test_export_static const struct batt_conf_embed *battery_conf;
 
 static char batt_manuf_name[SBS_MAX_STR_OBJ_SIZE];
 static char batt_device_name[SBS_MAX_STR_OBJ_SIZE];
 
 /* Copies of config and strings of a matching battery found in CBI. */
-test_export_static struct batt_conf_embed default_battery_conf = {
+static struct batt_conf_embed battery_conf_cache = {
 	.manuf_name = batt_manuf_name,
 	.device_name = batt_device_name,
 };
@@ -43,8 +43,6 @@ test_export_static struct batt_conf_embed default_battery_conf = {
 test_export_static bool authenticate_battery_type(int index,
 						  const char *manuf_name)
 {
-	char device_name[SBS_MAX_STR_OBJ_SIZE];
-
 	const struct batt_conf_embed *const conf = &board_battery_info[index];
 	int len = 0;
 
@@ -58,14 +56,14 @@ test_export_static bool authenticate_battery_type(int index,
 
 	/* device name is specified in table */
 	if (conf->device_name != NULL) {
-		/* Get the device name */
-		if (battery_device_name(device_name, sizeof(device_name)))
+		/* If config specifies device name, battery must have one. */
+		if (batt_device_name[0] == '\0')
 			return false;
 
 		len = strlen(conf->device_name);
 
 		/* device name mismatch */
-		if (strncasecmp(device_name, conf->device_name, len))
+		if (strncasecmp(batt_device_name, conf->device_name, len))
 			return false;
 	}
 
@@ -106,40 +104,22 @@ void battery_set_fixed_battery_type(int type)
 #endif /* CONFIG_BATTERY_TYPE_NO_AUTO_DETECT */
 
 /**
- * Allows us to override the battery in order to select the battery which has
- * the right configuration for the test.
+ * Find a config for the battery from board_battery_info[].
+ *
+ * This is supposed to be called only if batt_manuf_name is populated.
  */
-test_export_static int battery_fuel_gauge_type_override = -1;
-
-/* Get type of the battery connected on the board */
 static int get_battery_type(void)
 {
-	char manuf_name[SBS_MAX_STR_OBJ_SIZE];
 	int i;
-	static enum battery_type battery_type = BATTERY_TYPE_COUNT;
-
-	if (IS_ENABLED(TEST_BUILD) && battery_fuel_gauge_type_override >= 0) {
-		return battery_fuel_gauge_type_override;
-	}
-
-	/*
-	 * If battery_type is not the default value, then can return here
-	 * as there is no need to query the fuel gauge.
-	 */
-	if (battery_type != BATTERY_TYPE_COUNT)
-		return battery_type;
-
-	/* Get the manufacturer name. If can't read then just exit */
-	if (battery_manufacturer_name(manuf_name, sizeof(manuf_name)))
-		return battery_type;
+	enum battery_type battery_type = BATTERY_TYPE_COUNT;
 
 #if defined(CONFIG_BATTERY_TYPE_NO_AUTO_DETECT)
 	i = battery_get_fixed_battery_type();
-	if (authenticate_battery_type(i, manuf_name))
+	if (authenticate_battery_type(i, batt_manuf_name))
 		battery_type = i;
 #else
 	for (i = 0; i < BATTERY_TYPE_COUNT; i++) {
-		if (authenticate_battery_type(i, manuf_name)) {
+		if (authenticate_battery_type(i, batt_manuf_name)) {
 			battery_type = i;
 			break;
 		}
@@ -154,55 +134,9 @@ __overridable int board_get_default_battery_type(void)
 	return DEFAULT_BATTERY_TYPE;
 }
 
-void init_battery_type(void)
-{
-	int type = get_battery_type();
-
-	if (type == BATTERY_TYPE_COUNT) {
-		BCFGPRT("Config not found");
-		type = board_get_default_battery_type();
-	}
-	BCFGPRT("Found config #%d", type);
-
-	battery_conf = &board_battery_info[type];
-}
-
-const struct batt_conf_embed *get_batt_conf(void)
-{
-	if (IS_ENABLED(TEST_BUILD) && battery_fuel_gauge_type_override >= 0)
-		return &board_battery_info[battery_fuel_gauge_type_override];
-
-	return battery_conf;
-}
-
-const struct board_batt_params *get_batt_params(void)
-{
-	return get_batt_conf() ? &get_batt_conf()->config : NULL;
-}
-
-const struct battery_info *battery_get_info(void)
-{
-	return &get_batt_params()->batt_info;
-}
-
 static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 {
-	char manuf[SBS_MAX_STR_OBJ_SIZE];
-	char device[SBS_MAX_STR_OBJ_SIZE];
 	int tag = CBI_TAG_BATTERY_CONFIG;
-
-	if (battery_manufacturer_name(manuf, sizeof(manuf))) {
-		BCFGPRT("Manuf not found");
-		return EC_ERROR_UNKNOWN;
-	}
-
-	if (battery_device_name(device, sizeof(device))) {
-		BCFGPRT("Name not found");
-		memset(device, 0, sizeof(device));
-		/* Battery name is optional. Proceed. */
-	}
-
-	BCFGPRT("Battery says %s,%s", manuf, device);
 
 	while (1) {
 		uint8_t buf[BATT_CONF_MAX_SIZE];
@@ -240,9 +174,9 @@ static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 		p += sizeof(*head);
 		m = (char *)p;
 		/* Check length explicitly because 'm' isn't null terminated. */
-		if (head->manuf_name_size != strlen(manuf) ||
-		    strncasecmp(m, manuf, strlen(manuf))) {
-			BCFGPRT("Manuf mismatch: %*s", head->manuf_name_size,
+		if (head->manuf_name_size != strlen(batt_manuf_name) ||
+		    strncasecmp(m, batt_manuf_name, strlen(batt_manuf_name))) {
+			BCFGPRT("Manuf mismatch: %.*s", head->manuf_name_size,
 				m);
 			continue;
 		}
@@ -250,16 +184,26 @@ static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 		/* (Optional) Check device name. */
 		p += head->manuf_name_size;
 		d = (char *)p;
-		/* If config has no device name, it's a wild card. */
+		/*
+		 * If config has no device name, it's a wild card.
+		 *
+		 * We do partial match. As long as the battery's device name
+		 * starts with the config's device name, it's considered as a
+		 * match. The characters in the battery's device name after that
+		 * are ignored.
+		 */
 		if (head->device_name_size != 0 &&
-		    (head->device_name_size != strlen(device) ||
-		     strncasecmp(d, device, strlen(device)))) {
-			BCFGPRT("Name mismatch: %*s", head->device_name_size,
-				d);
+		    strncasecmp(d, batt_device_name, head->device_name_size)) {
+			BCFGPRT("Device name mismatch: %.*s",
+				head->device_name_size, d);
 			continue;
 		}
 
 		BCFGPRT("Matched");
+
+		/* Save config in cache. */
+		memset(batt->manuf_name, 0, SBS_MAX_STR_OBJ_SIZE);
+		memset(batt->device_name, 0, SBS_MAX_STR_OBJ_SIZE);
 		strncpy(batt->manuf_name, m, head->manuf_name_size);
 		strncpy(batt->device_name, d, head->device_name_size);
 		p += head->device_name_size;
@@ -267,6 +211,67 @@ static int bcfg_search_in_cbi(struct batt_conf_embed *batt)
 
 		return EC_SUCCESS;
 	}
+}
+
+void init_battery_type(void)
+{
+	int type;
+	int dflt = board_get_default_battery_type();
+
+	if (battery_manufacturer_name(batt_manuf_name,
+				      sizeof(batt_manuf_name))) {
+		BCFGPRT("Manuf name not found");
+		battery_conf = &board_battery_info[dflt];
+		return;
+	}
+
+	/* Don't carry over any previous name (in case i2c fail). */
+	memset(batt_device_name, 0, sizeof(batt_device_name));
+	if (battery_device_name(batt_device_name, sizeof(batt_device_name))) {
+		BCFGPRT("Device name not found");
+		memset(batt_device_name, 0, sizeof(batt_device_name));
+		/* Battery name is optional. Proceed. */
+	}
+
+	BCFGPRT("Battery says %s,%s", batt_manuf_name, batt_device_name);
+
+	if (IS_ENABLED(CONFIG_BATTERY_CONFIG_IN_CBI) &&
+	    board_batt_conf_enabled()) {
+		BCFGPRT("Searching in CBI");
+		if (bcfg_search_in_cbi(&battery_conf_cache) == EC_SUCCESS) {
+			battery_conf = &battery_conf_cache;
+			return;
+		}
+	}
+
+	/* Battery config isn't in CBI. */
+	BCFGPRT("Searching in FW");
+
+	type = get_battery_type();
+	if (type == BATTERY_TYPE_COUNT) {
+		BCFGPRT("Config not found. Fall back to config #%d", dflt);
+		type = dflt;
+	} else {
+		BCFGPRT("Found config #%d", type);
+	}
+
+	battery_conf = &board_battery_info[type];
+}
+DECLARE_HOOK(HOOK_INIT, init_battery_type, HOOK_PRIO_BATTERY_INIT);
+
+const struct batt_conf_embed *get_batt_conf(void)
+{
+	return battery_conf;
+}
+
+test_export_static const struct board_batt_params *get_batt_params(void)
+{
+	return get_batt_conf() ? &get_batt_conf()->config : NULL;
+}
+
+const struct battery_info *battery_get_info(void)
+{
+	return &get_batt_params()->batt_info;
 }
 
 __overridable bool board_batt_conf_enabled(void)
@@ -278,22 +283,6 @@ __overridable bool board_batt_conf_enabled(void)
 
 	return !!(ctrl.bcic_enabled);
 }
-
-test_export_static void batt_conf_main(void)
-{
-	if (IS_ENABLED(CONFIG_BATTERY_CONFIG_IN_CBI) &&
-	    board_batt_conf_enabled()) {
-		BCFGPRT("Searching in CBI");
-		if (bcfg_search_in_cbi(&default_battery_conf) == EC_SUCCESS) {
-			battery_conf = &default_battery_conf;
-			return;
-		}
-	}
-	/* Battery config isn't in CBI. */
-	BCFGPRT("Searching in FW");
-	init_battery_type();
-}
-DECLARE_HOOK(HOOK_INIT, batt_conf_main, HOOK_PRIO_POST_I2C);
 
 #ifndef CONFIG_FUEL_GAUGE
 /**

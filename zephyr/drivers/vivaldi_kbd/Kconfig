@@ -1,0 +1,19 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config CROS_EC_VIVALDI_KBD
+	bool "Vivaldi keyboard support"
+	depends on PLATFORM_EC_KEYBOARD_PROTOCOL_8042
+	depends on DT_HAS_CROS_EC_VIVALDI_KBD_ENABLED
+	default y
+	select INPUT_KBD_ACTUAL_KEY_MASK_DYNAMIC if INPUT
+	help
+	  Enable code for Vivaldi keyboard. A Chromium OS device is Vivaldi
+	  compatible if the keyboard matrix complies with: go/vivaldi-matrix.
+
+	  Vivaldi code enables:
+	  - A response to EC_CMD_GET_KEYBD_CONFIG command.
+	  - The specified row, columns in the keyboard mask
+	  - Custom key codes for the top keys
+	  - Set the boot keys volume up code if supported

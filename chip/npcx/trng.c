@@ -139,7 +139,7 @@ uint32_t npcx_trng_power(bool on_off)
 
 void npcx_trng_hw_init(void)
 {
-#ifndef CHIP_VARIANT_NPCX9M8S
+#ifndef CHIP_VARIANT_NPCX9MFP
 #error "Please add support for CONFIG_RNG on this chip family."
 #endif
 

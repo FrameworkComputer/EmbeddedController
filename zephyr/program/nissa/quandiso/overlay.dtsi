@@ -20,16 +20,7 @@
 
 	batteries {
 		default_battery: cosmx {
-			compatible = "cosmx,gg02047xl", "battery-smart";
-		};
-		dynapack_byd_gg02047xl {
-			compatible = "dynapack,byd_gg02047xl", "battery-smart";
-		};
-		dynapack_hpp_gg02047xl {
-			compatible = "dynapack,hpp_gg02047xl", "battery-smart";
-		};
-		atl_gb-s20-4473a9 {
-			compatible = "atl,gb-s20-4473a9", "battery-smart";
+			compatible = "cosmx,li7", "battery-smart";
 		};
 	};
 
@@ -283,7 +274,7 @@
 	};
 };
 
-&i2c0 {
+&i2c2 {
 	label = "I2C_EEPROM";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
@@ -299,6 +290,9 @@
 	pinctrl-0 = <&i2c0_clk_gpb3_default
 		     &i2c0_data_gpb4_default>;
 	pinctrl-names = "default";
+	scl-gpios = <&gpiob 3 0>;
+	sda-gpios = <&gpiob 4 0>;
+	channel-switch-sel = <I2C_CHA_LOCATE>;
 	status = "okay";
 };
 
@@ -311,14 +305,16 @@
 	status = "okay";
 };
 
-&i2c2 {
+&i2c0 {
 	label = "I2C_SENSOR";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c2_clk_gpf6_default
 		     &i2c2_data_gpf7_default>;
 	pinctrl-names = "default";
+	scl-gpios = <&gpiof 6 0>;
+	sda-gpios = <&gpiof 7 0>;
+	channel-switch-sel = <I2C_CHC_LOCATE>;
 	status = "okay";
-	/delete-property/ fifo-enable;
 };
 
 &i2c4 {

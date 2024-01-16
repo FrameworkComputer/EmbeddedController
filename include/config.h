@@ -4619,6 +4619,7 @@
  * When this config option is enabled, one of the following must be enabled:
  *	CONFIG_USB_PD_TCPMV1 - legacy power delivery state machine
  *	CONFIG_USB_PD_TCPMV2 - current power delivery state machine
+ *	CONFIG_USB_PD_CONTROLLER - power delivery controller state machine
  */
 #undef CONFIG_USB_POWER_DELIVERY
 
@@ -4641,6 +4642,11 @@
  * enabled otherwise an error will be emitted.
  */
 #undef CONFIG_USB_PD_TCPMV2
+
+/*
+ * Enables the Power Delivery Controller state machine.
+ */
+#undef CONFIG_USB_PD_CONTROLLER
 
 /*
  * Enable dynamic PDO selection.
@@ -6084,8 +6090,9 @@
 #if defined(CONFIG_USB_PD_TCPMV1) && defined(CONFIG_USB_PD_TCPMV2)
 #error Only one version of the USB PD State Machine can be enabled.
 #endif
-#if !defined(CONFIG_USB_PD_TCPMV1) && !defined(CONFIG_USB_PD_TCPMV2)
-#error Please enable CONFIG_USB_PD_TCPMV1 or CONFIG_USB_PD_TCPMV2.
+#if !defined(CONFIG_USB_PD_TCPMV1) && !defined(CONFIG_USB_PD_TCPMV2) && \
+	!defined(CONFIG_USB_PD_CONTROLLER)
+#error Please enable CONFIG_USB_PD_TCPMV1 or CONFIG_USB_PD_TCPMV2 or CONFIG_USB_PD_CONTROLLER.
 #endif
 #if defined(CONFIG_USB_PD_TCPMV2) && !defined(CONFIG_USB_PD_DECODE_SOP)
 #error CONFIG_USB_PD_DECODE_SOP must be enabled with the TCPMV2 PD state machine
@@ -6192,12 +6199,16 @@
 
 /******************************************************************************/
 /*
- * Ensure CONFIG_USB_PD_TCPMV2 and CONFIG_USBC_SS_MUX both are defined. USBC
- * retimer firmware update feature requires both.
+ * Ensure CONFIG_USB_PD_TCPMV2 or CONFIG_PLATFORM_EC_USB_PD_CONTROLLER, and
+ * CONFIG_USBC_SS_MUX both are defined. USBC retimer firmware update feature
+ * requires both.
  */
-#if (defined(CONFIG_USBC_RETIMER_FW_UPDATE) && \
-     (!(defined(CONFIG_USB_PD_TCPMV2) && defined(CONFIG_USBC_SS_MUX))))
-#error Retimer firmware update requires TCPMv2 and USBC_SS_MUX
+#if (defined(CONFIG_USBC_RETIMER_FW_UPDATE) &&             \
+     (!((defined(CONFIG_USB_PD_TCPMV2) ||                  \
+	 defined(CONFIG_PLATFORM_EC_USB_PD_CONTROLLER)) && \
+	defined(CONFIG_USBC_SS_MUX))))
+#error "Retimer firmware update requires TCPMv2 or USB PD controller, and" \
+	"USBC_SS_MUX."
 #endif
 
 /******************************************************************************/
@@ -6921,7 +6932,7 @@
  * period.
  */
 #ifdef CONFIG_WATCHDOG
-#if (CONFIG_AUX_TIMER_PERIOD_MS) < ((HOOK_TICK_INTERVAL_MS)*2)
+#if (CONFIG_AUX_TIMER_PERIOD_MS) < ((HOOK_TICK_INTERVAL_MS) * 2)
 #error "CONFIG_AUX_TIMER_PERIOD_MS must be at least 2x HOOK_TICK_INTERVAL_MS"
 #endif
 #endif

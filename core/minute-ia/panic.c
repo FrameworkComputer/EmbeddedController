@@ -171,7 +171,7 @@ void exception_panic(uint32_t vector, uint32_t error_code, uint32_t eip,
 	__builtin_unreachable();
 }
 
-noreturn void software_panic(uint32_t reason, uint32_t info)
+__noreturn void software_panic(uint32_t reason, uint32_t info)
 {
 	uint16_t code_segment;
 

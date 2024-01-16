@@ -110,7 +110,7 @@ or use the -s option with the correct usb serialname.
 DEBUG_ERASED_BOARD_ID = """
 DEBUG ERASED BOARD ID:
 If you are using a prePVT device run
-/usr/share/cros/cr50-set-board-id.sh proto
+/usr/sbin/gsc_set_board_id proto
 
 If you are running a MP device, please talk to someone.
 """

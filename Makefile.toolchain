@@ -53,6 +53,9 @@ USE_CXX_COMPILER:=1
 # b/144957935: Generate exception on signed integer overflow.
 COMMON_WARN+=-ftrapv
 endif
+ifeq ($(BOARD), host)
+USE_BUILTIN_STDLIB:=0
+endif
 
 ifeq ($(USE_CXX_COMPILER), 1)
 COMPILER=$(CXX)

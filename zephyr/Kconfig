@@ -5,7 +5,9 @@
 # Picolibc isn't working in gitlab at the moment, and in any case we
 # don't use it with coreboot-sdk, so just explicitly disable it.
 choice LIBC_IMPLEMENTATION
-    default MINIMAL_LIBC
+	prompt "C Library Implementation"
+	default EXTERNAL_LIBC if NATIVE_BUILD && !(NATIVE_LIBRARY && POSIX_API)
+	default MINIMAL_LIBC
 endchoice
 
 # Default to compiler-rt runtime library when compiling using LLVM (the check
@@ -90,6 +92,7 @@ rsource "Kconfig.rollback"
 rsource "Kconfig.rtc"
 rsource "Kconfig.stacks"
 rsource "Kconfig.system"
+rsource "Kconfig.tabletmode"
 rsource "Kconfig.tasks"
 rsource "Kconfig.temperature"
 rsource "Kconfig.test"
@@ -152,6 +155,7 @@ config PLATFORM_EC_AP_RESET_LOG
 config PLATFORM_EC_BACKLIGHT_LID
 	bool "Control the display backlight based on the lid switch"
 	depends on PLATFORM_EC_HOSTCMD
+	depends on PLATFORM_EC_LID_SWITCH
 	default y
 	help
 	  Support controlling the display backlight based on the state of the
@@ -228,8 +232,7 @@ config PLATFORM_EC_BUTTON
 
 config PLATFORM_EC_BUTTON_TRIGGERED_RECOVERY
 	bool "Support entering recovery mode using buttons"
-	default y
-	depends on PLATFORM_EC_DEDICATED_RECOVERY_BUTTON
+	select PLATFORM_EC_BUTTON
 	help
 	  Support for entering recovery mode using the volume buttons or a
 	  dedicated recovery button. Note that these are *buttons* and not keys
@@ -378,7 +381,7 @@ config PLATFORM_EC_DEBUG_ASSERT
 
 config PLATFORM_EC_DEDICATED_RECOVERY_BUTTON
 	bool "Enable dedicated recovery button"
-	select PLATFORM_EC_BUTTON
+	select PLATFORM_EC_BUTTON_TRIGGERED_RECOVERY
 	help
 	  Indicates there is a dedicated recovery button.  Note, that if there
 	  are volume buttons, a dedicated recovery button is not needed.
@@ -393,7 +396,7 @@ config PLATFORM_EC_DEDICATED_RECOVERY_BUTTON_ACTIVE_HIGH
 
 config PLATFORM_EC_DEDICATED_RECOVERY_BUTTON_2
 	bool "Enable second dedicated recovery button"
-	select PLATFORM_EC_BUTTON
+	select PLATFORM_EC_BUTTON_TRIGGERED_RECOVERY
 	help
 	  Enable use of second dedicated recovery button.
 	  For various reasons, on some platforms there may be multiple

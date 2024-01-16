@@ -1,0 +1,123 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_posix.dts>
+#include <dt-bindings/gpio_defines.h>
+#include "native_posix_ite.dtsi"
+#include "../../../program/brox/power_signals.dtsi"
+#include "alderlake_emul.dtsi"
+
+/ {
+	/*
+	 * Create nodelabels matching the common alderlake emulator.
+	 * Also clear the GPIO_OPEN_DRAIN flags on any power signals
+	 * because open drain operation is not supported by the GPIO
+	 * emulator.
+	 */
+
+	en_pp3300: pwr-en-s5-rails {
+	};
+	pwr_pg_vccin_aux_od: pwr-pg-vccin-aux-od {
+	};
+	rsmrst: pwr-pg-vccin-aux-od {
+	};
+	ec_pch_rsmrst: pwr-ec-pch-rsmrst-odl {
+	};
+	slp_s0: pwr-slp-s0-l {
+	};
+	slp_s3: pwr-slp-s3-l {
+	};
+	slp_s4: pwr-slp-s4-l {
+	};
+	slp_s5: pwr-slp-s5-l {
+	};
+	slp_sus: pwr-slp-sus-l {
+	};
+	dsw_pwrok: pwr-dsw-pwrok {
+	};
+	ec_soc_dsw_pwrok: pwr-ec-soc-dsw-pwrok {
+	};
+	pwr-vccst-pwrgd-od {
+		gpios = <&gpioh 4 0>;
+	};
+	pch_pwrok: pwr-pch-pwrok {
+		gpios = <&gpiob 5 0>;
+	};
+	pwr-sys-rst-l {
+		gpios = <&gpiog 0 GPIO_ACTIVE_LOW>;
+	};
+	all_sys_pwrgd: pwr-all-sys-pwrgd {
+	};
+	pwr_imvp9_vrrdy_od: pwr-imvp9-vrrdy-od {
+	};
+
+	/* TODO: add emulator to drive PWR_IMVP9_VRRDY */
+
+	/delete-node/ en-pp3300-emul;
+
+	en_pp3300_emul: en-pp3300-emul {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&en_pp3300>;
+		init-value = <0>;
+		pg-vccin-aux-od-emul {
+			output-signal = <&pwr_pg_vccin_aux_od>;
+			assert-delay-ms = <10>;
+			init-value= <0>;
+		};
+	};
+
+	/* Stub node - not referenced once all the devictrees merged. */
+	en_pp5000_emul: en-pp5000-emul {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&en_pp3300>;
+		init-value = <0>;
+		pp5000-rsmrst-emul {
+			output-signal = <&dsw_pwrok>;
+			assert-delay-ms = <40>;
+			init-value= <0>;
+		};
+	};
+
+};
+
+/* Assert IMVP9_VRRDY after all-sys-pwrgd */
+&ec_pch_rsmrst_emul {
+	all-sys-pwrgd-imvp9-vrrdy-emul {
+		output-signal = <&pwr_imvp9_vrrdy_od>;
+		assert-delay-ms = <51>;
+		init-value= <0>;
+	};
+};
+
+/*
+ * Brox doesn't have a PG signal for the PP3300/PP5000 rails.
+ * To simulate a power loss, just turn off the enable signal.
+ */
+&pch_pwrok_power_fail_emul {
+	/delete-node/ pch-pwrok-dsw-pwrok-emul;
+	pch-pwrok-fail-s5-rails {
+		output-signal = <&en_pp3300>;
+		assert-delay-ms = <50>;
+		invert-value;
+	};
+};
+
+&ec_pch_rsmrst_s4_dsw_pwrok_fail_emul {
+	/delete-node/ pch-pwrok-dsw-pwrok-emul;
+	pch-pwrok-fail-s5-rails {
+		output-signal = <&en_pp3300>;
+		assert-delay-ms = <50>;
+		invert-value;
+	};
+};
+
+&ec_pch_rsmrst_s3_dsw_pwrok_fail_emul {
+	/delete-node/ pch-pwrok-dsw-pwrok-emul;
+	pch-pwrok-fail-s5-rails {
+		output-signal = <&en_pp3300>;
+		assert-delay-ms = <50>;
+		invert-value;
+	};
+};

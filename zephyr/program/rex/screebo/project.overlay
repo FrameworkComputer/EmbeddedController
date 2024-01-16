@@ -16,6 +16,7 @@
 
 /* Screebo project DTS includes */
 #include "cbi.dtsi"
+#include "keyboard.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
 #include "temp_sensors.dtsi"
@@ -55,6 +56,7 @@
 		/delete-node/ ec_accel;
 		/delete-node/ volume_up;
 		/delete-node/ volume_down;
+		/delete-node/ tablet_mode;
 	};
 
 	batteries {
@@ -115,7 +117,7 @@
 
 		tcpc_nct38xx_port1: nct38xx-tcpc {
 			compatible = "nuvoton,nct38xx-tcpc";
-			gpio-dev = <&nct3807_c1>;
+			gpio-dev = <&nct38xx_gpio_C1>;
 			tcpc-flags = <(
 				TCPC_FLAGS_TCPCI_REV2_0 |
 				TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
@@ -131,7 +133,7 @@
 			rst-gpios = <&gpio3 7 0>;
 		};
 
-		nct38xx-gpio {
+		nct38xx_gpio_C1: nct38xx-gpio {
 			#address-cells = <1>;
 			#size-cells = <0>;
 			compatible = "nuvoton,nct38xx-gpio";

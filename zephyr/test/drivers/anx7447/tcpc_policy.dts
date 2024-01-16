@@ -10,6 +10,15 @@
 		port0@0 {
 			compatible = "named-usbc-port";
 			tcpc = <&anx7447_emul>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&anx7447_mux_c0 &virtual_mux_c0>;
+			};
+		};
+		port0-muxes {
+			anx7447_mux_c0: anx7447-mux-0 {
+				compatible = "analogix,usbc-mux-anx7447";
+			};
 		};
 	};
 };

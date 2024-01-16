@@ -1,0 +1,25 @@
+// Copyright 2023 The ChromiumOS Authors
+// Use of this source code is governed by a BSD-style license that can be
+// found in the LICENSE file.
+
+using "platforms/cpus/nuvoton_npcx9.repl"
+
+itim32_1:
+    apb2Frequency: 1000000
+
+itim32_2:
+    apb2Frequency: 1000000
+
+itim32_3:
+    apb2Frequency: 1000000
+
+itim32_4:
+    apb2Frequency: 1000000
+
+itim32_5:
+    apb2Frequency: 1000000
+
+itim32_6:
+    apb2Frequency: 1000000
+
+fpsensor: Sensors.GenericSPISensor @ spip

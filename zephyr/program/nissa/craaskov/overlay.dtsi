@@ -112,7 +112,9 @@
 		};
 		gpio_fan_enable: fan-enable {
 			gpios = <&gpio6 3 GPIO_OUTPUT>;
-			no-auto-init;
+		};
+		gpio_fan_tach: fan-tach {
+			gpios = <&gpio7 3 GPIO_INPUT_PULL_UP>;
 		};
 		ec-i2c-sensor-scl {
 			gpios = <&gpio9 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
@@ -247,9 +249,7 @@
 			<&gpio3 6 0>,
 			<&gpio5 7 0>,
 			<&gpio6 0 0>,
-			<&gpio6 3 0>,
 			<&gpio6 6 0>,
-			<&gpio7 3 0>,
 			<&gpio8 3 0>,
 			<&gpio8 5 0>,
 			<&gpio8 6 0>,
@@ -330,7 +330,6 @@
 
 &pwm5 {
 	status = "okay";
-	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 	pinctrl-0 = <&pwm5_gpb7>;
 	pinctrl-names = "default";
 };

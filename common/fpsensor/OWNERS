@@ -3,4 +3,4 @@
 # Don't inherit owners from elsewhere in the manifest
 set noparent
 
-include chromiumos/platform2:/biod/OWNERS
+include chromiumos/owners:v1:/firmware/OWNERS.cros_fp

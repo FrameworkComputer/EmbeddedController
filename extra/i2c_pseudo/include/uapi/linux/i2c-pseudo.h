@@ -1,4 +1,4 @@
-/* SPDX-License-Identifier: GPL-2.0+ WITH Linux-syscall-note */
+/* SPDX-License-Identifier: GPL-2.0 WITH Linux-syscall-note */
 /*
  * i2c-pseudo.h - I2C userspace adapter char device interface
  *
@@ -63,7 +63,7 @@
  *   of either arg->msgs or arg->data_buf will be modified.
  * - Thus arg->output.num_msgs will indicate the arg->msgs_len needed for this
  *   transaction.
- * - A retry with with a sufficiently large arg->msgs_len may be successful.
+ * - A retry with a sufficiently large arg->msgs_len may be successful.
  *   If no such retry will be attempted, it is best to use I2CP_IOCTL_XFER_REPLY
  *   with a non-zero error value to unblock the requesting I2C device driver
  *   from the I2C adapter timeout.
@@ -76,7 +76,7 @@
  *   will be modified.
  * - Thus the sum of each i2c_msg.len will indicate the arg->data_buf_len needed
  *   for this transaction.
- * - A retry with with a sufficiently large arg->data_buf may be successful.
+ * - A retry with a sufficiently large arg->data_buf may be successful.
  *   If no such retry will be attempted, it is best to use I2CP_IOCTL_XFER_REPLY
  *   with a non-zero error value to unblock the requesting I2C device driver
  *   from the I2C adapter timeout.

@@ -23,6 +23,9 @@
 	/delete-property/ pinctrl-names;
 };
 
-/delete-node/ &ite_uart2_wrapper;
+&usb0 {
+	/delete-property/ pinctrl-0;
+	/delete-property/ pinctrl-names;
+};
 
-/delete-node/ &usb0;
+/delete-node/ &ite_uart2_wrapper;

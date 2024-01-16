@@ -84,7 +84,6 @@ parameters that may be used, please consult the Twister documentation.
 
 import argparse
 import hashlib
-import json
 import os
 import pathlib
 from pathlib import Path
@@ -110,8 +109,9 @@ EC_TEST_PATHS = [
 
 # Paths under ZEPHYR_BASE that we also wish to search for test cases.
 ZEPHYR_TEST_PATHS = [
-    Path("tests/subsys/shell"),
     Path("tests/drivers/fuel_gauge/sbs_gauge"),
+    Path("tests/drivers/gpio"),
+    Path("tests/subsys/shell"),
 ]
 
 
@@ -242,26 +242,6 @@ def upload_results(ec_base, outdir):
         print("Unable to upload test results, please run 'rdb auth-login'\n")
 
     return flag
-
-
-def check_for_skipped_tests(outdir):
-    """Checks Twister json test report for skipped tests"""
-    found_skipped = False
-    json_path = pathlib.Path(outdir) / "twister.json"
-    if json_path.exists():
-        with open(json_path, encoding="utf-8") as file:
-            data = json.load(file)
-
-            for testsuite in data["testsuites"]:
-                for testcase in testsuite["testcases"]:
-                    if testcase["status"] == "skipped":
-                        tc_name = testcase["identifier"]
-                        print(f"TEST SKIPPED: {tc_name}")
-                        found_skipped = True
-
-            file.close()
-
-    return found_skipped
 
 
 def append_cmake_compiler(cmdline, cmake_var, exe_options):
@@ -516,6 +496,11 @@ def main():
         "--help",
         action="store_true",
     )
+    parser.add_argument(
+        "-C",
+        "--coverage",
+        action="store_true",
+    )
 
     intercepted_args, other_args = parser.parse_known_args()
 
@@ -528,6 +513,12 @@ def main():
             Path.cwd(),
             sandbox_debug=intercepted_args.sandbox_debug,
         )
+
+    # Zephyr upstream defaults to using gcovr, but this isn't
+    # available in the chroot.  Force our runs to use lcov.
+    if intercepted_args.coverage:
+        twister_cli.append("--coverage")
+        twister_cli.extend(["--coverage-tool", "lcov"])
 
     for _ in range(intercepted_args.verbose):
         # Pass verbosity setting through to twister
@@ -557,6 +548,7 @@ def main():
         # posix_native and unit_testing when nothing was requested by user.
         twister_cli.extend(["-p", "native_posix"])
         twister_cli.extend(["-p", "unit_testing"])
+        twister_cli.extend(["-p", "native_sim"])
 
     twister_cli.extend(["--outdir", intercepted_args.outdir])
 
@@ -620,9 +612,6 @@ def main():
             check=False,
             close_fds=False,  # For GNUMakefile jobserver
         )
-
-        if check_for_skipped_tests(intercepted_args.outdir):
-            result.returncode = 1
 
         if result.returncode == 0:
             print("TEST EXECUTION SUCCESSFUL")

@@ -51,8 +51,8 @@ struct icm_drv_data_t {
  * - 8 bits MSB coding bank number
  * - 8 bits LSB coding physical address
  */
-#define ICM426XX_REG_GET_BANK(_r) (((_r)&0xFF00) >> 8)
-#define ICM426XX_REG_GET_ADDR(_r) ((_r)&0x00FF)
+#define ICM426XX_REG_GET_BANK(_r) (((_r) & 0xFF00) >> 8)
+#define ICM426XX_REG_GET_ADDR(_r) ((_r) & 0x00FF)
 
 /* Sensor resolution in number of bits */
 #define ICM_RESOLUTION 16

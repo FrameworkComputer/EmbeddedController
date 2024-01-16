@@ -107,33 +107,37 @@
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 		cpu_vr {
-			temp_host_high = <85>;
-			temp_host_halt = <90>;
-			temp_host_release_high = <80>;
+			temp_host_high = <95>;
+			temp_host_release_high = <90>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_cpu_vr>;
 		};
 		cpu {
-			temp_host_high = <85>;
-			temp_host_halt = <90>;
-			temp_host_release_high = <80>;
+			temp_host_high = <95>;
+			temp_host_halt = <100>;
+			temp_host_release_high = <90>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_cpu>;
 		};
 		ambient {
-			temp_host_high = <85>;
-			temp_host_halt = <90>;
-			temp_host_release_high = <80>;
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <70>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_ambient>;
 		};
 		charger {
-			temp_host_high = <85>;
-			temp_host_halt = <90>;
-			temp_host_release_high = <80>;
+			temp_host_high = <95>;
+			temp_host_release_high = <90>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_charger>;
 		};
+	};
+
+	usba {
+		compatible = "cros-ec,usba-port-enable-pins";
+		status = "okay";
+		enable-pins = <&gpio_en_usb_a0_vbus &gpio_en_usb_a1_vbus>;
 	};
 
 	usbc {
@@ -250,7 +254,7 @@
 
 &i2c1 {
 	label = "I2C_BATTERY";
-	clock-frequency = <50000>;
+	clock-frequency = <I2C_BITRATE_STANDARD>;
 	pinctrl-0 = <&i2c1_clk_gpc1_default
 		     &i2c1_data_gpc2_default>;
 	pinctrl-names = "default";
@@ -277,15 +281,12 @@
 		tcpc-flags = <(
 			TCPC_FLAGS_TCPCI_REV2_0 |
 			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
-			TCPC_FLAGS_VBUS_MONITOR |
 			TCPC_FLAGS_CONTROL_FRS)>;
 		/* a duplicate of the <&gpio_usb_c1_tcpc_int_odl> node in
 		 * "named-gpios". This is the Zephyr preferred style,
 		 * the "named-gpios" node will be dealt with at a later date.
 		 */
-
 		irq-gpios = <&gpiok 6 GPIO_ACTIVE_LOW>;
-		is-alt;
 	};
 
 	ppc_port1: ppc_syv@40 {

@@ -84,13 +84,6 @@
 		gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
-	ec_soc_dsw_pwrok: pwr-ec-soc-dsw-pwrok {
-		compatible = "intel,ap-pwrseq-gpio";
-		dbg-label = "DSW_PWROK output to PCH";
-		enum-name = "PWR_EC_SOC_DSW_PWROK";
-		gpios = <&gpio0 17 0>;
-		output;
-	};
 	pwr-vccst-pwrgd-od {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "VCCST_PWRGD output to PCH";

@@ -448,11 +448,13 @@ static int cros_flash_npcx_write(const struct device *dev, int offset, int size,
 	return ret;
 }
 
+BUILD_ASSERT(FLASH_WATCHDOG_RELOAD_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
+
 static int cros_flash_npcx_erase(const struct device *dev, int offset, int size)
 {
 	int ret = 0;
 	struct cros_flash_npcx_data *data = DRV_DATA(dev);
-	size_t reload_size = CONFIG_FLASH_ERASE_SIZE;
+	size_t reload_size = FLASH_WATCHDOG_RELOAD_SIZE;
 
 	/* check protection */
 	if (all_protected)

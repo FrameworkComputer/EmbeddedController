@@ -66,7 +66,10 @@ static int test_shared_mem(void)
 {
 	int i;
 	int sz = shared_mem_size();
-	char *mem1, *mem2;
+	char *mem1;
+#ifdef USE_BUILTIN_STDLIB
+	char *mem2;
+#endif
 
 #ifndef USE_BUILTIN_STDLIB
 	/* Trim to make sure that other tests haven't fragmented the heap. */
@@ -79,8 +82,10 @@ static int test_shared_mem(void)
 	sz *= 0.8;
 #endif
 
-	TEST_ASSERT(shared_mem_acquire(sz, &mem1) == EC_SUCCESS);
-	TEST_ASSERT(shared_mem_acquire(sz, &mem2) == EC_ERROR_BUSY);
+	TEST_EQ(shared_mem_acquire(sz, &mem1), EC_SUCCESS, "%d");
+#ifdef USE_BUILTIN_STDLIB
+	TEST_EQ(shared_mem_acquire(sz, &mem2), EC_ERROR_BUSY, "%d");
+#endif
 
 	for (i = 0; i < 256; ++i) {
 		memset(mem1, i, sz);

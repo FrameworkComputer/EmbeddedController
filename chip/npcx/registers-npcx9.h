@@ -98,10 +98,10 @@
 #define NPCX_FWCTRL_RO_REGION 6
 #define NPCX_FWCTRL_FW_SLOT 7
 
-#define NPCX_CR_UART_BASE_ADDR(mdl) (0x400E0000 + ((mdl)*0x2000L))
+#define NPCX_CR_UART_BASE_ADDR(mdl) (0x400E0000 + ((mdl) * 0x2000L))
 #define NPCX_LCT_BASE_ADDR 0x400D7000
 #define NPCX_SMB_BASE_ADDR(mdl)                                \
-	(((mdl) < 2)  ? (0x40009000 + ((mdl)*0x2000L)) :       \
+	(((mdl) < 2)  ? (0x40009000 + ((mdl) * 0x2000L)) :     \
 	 ((mdl) < 4)  ? (0x400C0000 + (((mdl)-2) * 0x2000L)) : \
 	 ((mdl) == 4) ? (0x40008000) :                         \
 			(0x40017000 + (((mdl)-5) * 0x1000L)))
@@ -117,7 +117,7 @@ enum {
 	NPCX_MDMA5 = 4,
 	NPCX_MDMA_COUNT
 };
-#define NPCX_MDMA_BASE_ADDR(mdl) (0x40011100 + ((mdl)*0x100L))
+#define NPCX_MDMA_BASE_ADDR(mdl) (0x40011100 + ((mdl) * 0x100L))
 
 /* Channel 0 */
 #define NPCX_MDMA_CTL0(n) REG32(NPCX_MDMA_BASE_ADDR(n) + 0x000)
@@ -305,7 +305,7 @@ enum {
 /* Sofrware Reset Trigger */
 #define NPCX_SWRST_TRG REG16(NPCX_SCFG_BASE_ADDR + 0x100)
 /* Sofrware Reset Control */
-#define NPCX_SWRST_CTL(n) REG32(NPCX_SCFG_BASE_ADDR + 0x104 + (n)*4)
+#define NPCX_SWRST_CTL(n) REG32(NPCX_SCFG_BASE_ADDR + 0x104 + (n) * 4)
 
 #define NPCX_SWRST_CTL4_MDMA_RST(n) ((n) + 24)
 #define NPCX_SWRST_TRG_WORD 0xC183
@@ -522,16 +522,22 @@ enum {
 #define NPCX_UART4_WK_BIT 5
 
 /* MIWU registers */
-#define NPCX_WKEDG_ADDR(port, n) (NPCX_MIWU_BASE_ADDR(port) + 0x00 + ((n)*0x10))
+#define NPCX_WKEDG_ADDR(port, n) \
+	(NPCX_MIWU_BASE_ADDR(port) + 0x00 + ((n) * 0x10))
 #define NPCX_WKAEDG_ADDR(port, n) \
-	(NPCX_MIWU_BASE_ADDR(port) + 0x01 + ((n)*0x10))
-#define NPCX_WKMOD_ADDR(port, n) (NPCX_MIWU_BASE_ADDR(port) + 0x02 + ((n)*0x10))
-#define NPCX_WKPND_ADDR(port, n) (NPCX_MIWU_BASE_ADDR(port) + 0x03 + ((n)*0x10))
-#define NPCX_WKPCL_ADDR(port, n) (NPCX_MIWU_BASE_ADDR(port) + 0x04 + ((n)*0x10))
-#define NPCX_WKEN_ADDR(port, n) (NPCX_MIWU_BASE_ADDR(port) + 0x05 + ((n)*0x10))
-#define NPCX_WKST_ADDR(port, n) (NPCX_MIWU_BASE_ADDR(port) + 0x06 + ((n)*0x10))
+	(NPCX_MIWU_BASE_ADDR(port) + 0x01 + ((n) * 0x10))
+#define NPCX_WKMOD_ADDR(port, n) \
+	(NPCX_MIWU_BASE_ADDR(port) + 0x02 + ((n) * 0x10))
+#define NPCX_WKPND_ADDR(port, n) \
+	(NPCX_MIWU_BASE_ADDR(port) + 0x03 + ((n) * 0x10))
+#define NPCX_WKPCL_ADDR(port, n) \
+	(NPCX_MIWU_BASE_ADDR(port) + 0x04 + ((n) * 0x10))
+#define NPCX_WKEN_ADDR(port, n) \
+	(NPCX_MIWU_BASE_ADDR(port) + 0x05 + ((n) * 0x10))
+#define NPCX_WKST_ADDR(port, n) \
+	(NPCX_MIWU_BASE_ADDR(port) + 0x06 + ((n) * 0x10))
 #define NPCX_WKINEN_ADDR(port, n) \
-	(NPCX_MIWU_BASE_ADDR(port) + 0x07 + ((n)*0x10))
+	(NPCX_MIWU_BASE_ADDR(port) + 0x07 + ((n) * 0x10))
 
 #define NPCX_WKEDG(port, n) REG8(NPCX_WKEDG_ADDR(port, n))
 #define NPCX_WKAEDG(port, n) REG8(NPCX_WKAEDG_ADDR(port, n))

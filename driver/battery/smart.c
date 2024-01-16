@@ -16,7 +16,7 @@
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_CHARGER, outstr);
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_CHARGER, "SBS " format, ##args)
 
 #define BATTERY_NO_RESPONSE_TIMEOUT (1000 * MSEC)
 
@@ -57,24 +57,31 @@ static void addr_flags_for_pec(uint16_t *addr_flags)
 
 #endif
 
+static bool sb_cutoff_or_in_progress(void)
+{
+	if (IS_ENABLED(CONFIG_BATTERY_CUT_OFF)) {
+		/*
+		 * Ship mode command need to set continuously, can't be
+		 * interfered by another command.
+		 */
+		if (battery_cutoff_in_progress())
+			return true;
+
+		/*
+		 * Some batteries would wake up after cut-off if we talk to it.
+		 */
+		if (battery_is_cut_off())
+			return true;
+	}
+	return false;
+}
+
 test_mockable int sb_read(int cmd, int *param)
 {
 	uint16_t addr_flags = BATTERY_ADDR_FLAGS;
 
-#ifdef CONFIG_BATTERY_CUT_OFF
-	/*
-	 * Ship mode command need to set continuously, can't be interfered
-	 * by another command.
-	 */
-	if (battery_cutoff_in_progress())
+	if (sb_cutoff_or_in_progress())
 		return EC_ERROR_ACCESS_DENIED;
-
-	/*
-	 * Some batteries would wake up after cut-off if we talk to it.
-	 */
-	if (battery_is_cut_off())
-		return EC_ERROR_ACCESS_DENIED;
-#endif
 
 	ADDR_FLAGS_FOR_PEC(&addr_flags);
 	return i2c_read16(I2C_PORT_BATTERY, addr_flags, cmd, param);
@@ -84,13 +91,13 @@ test_mockable int sb_write(int cmd, int param)
 {
 	uint16_t addr_flags = BATTERY_ADDR_FLAGS;
 
-#ifdef CONFIG_BATTERY_CUT_OFF
-	/*
-	 * Some batteries would wake up after cut-off if we talk to it.
-	 */
-	if (battery_is_cut_off())
-		return EC_ERROR_ACCESS_DENIED;
-#endif
+	if (IS_ENABLED(CONFIG_BATTERY_CUT_OFF)) {
+		/*
+		 * Some batteries would wake up after cut-off if we talk to it.
+		 */
+		if (battery_is_cut_off())
+			return EC_ERROR_ACCESS_DENIED;
+	}
 
 	ADDR_FLAGS_FOR_PEC(&addr_flags);
 
@@ -101,20 +108,8 @@ int sb_read_string(int offset, uint8_t *data, int len)
 {
 	uint16_t addr_flags = BATTERY_ADDR_FLAGS;
 
-#ifdef CONFIG_BATTERY_CUT_OFF
-	/*
-	 * Ship mode command need to set continuously, can't be interfered
-	 * by another command.
-	 */
-	if (battery_cutoff_in_progress())
+	if (sb_cutoff_or_in_progress())
 		return EC_ERROR_ACCESS_DENIED;
-
-	/*
-	 * Some batteries would wake up after cut-off if we talk to it.
-	 */
-	if (battery_is_cut_off())
-		return EC_ERROR_ACCESS_DENIED;
-#endif
 
 	ADDR_FLAGS_FOR_PEC(&addr_flags);
 
@@ -126,20 +121,8 @@ int sb_read_sized_block(int offset, uint8_t *data, int len)
 	uint16_t addr_flags = BATTERY_ADDR_FLAGS;
 	int read_len = 0;
 
-	if (IS_ENABLED(CONFIG_BATTERY_CUT_OFF)) {
-		/*
-		 * Ship mode command need to set continuously, can't be
-		 * interfered by another command.
-		 */
-		if (battery_cutoff_in_progress())
-			return EC_ERROR_ACCESS_DENIED;
-
-		/*
-		 * Some batteries would wake up after cut-off if we talk to it.
-		 */
-		if (battery_is_cut_off())
-			return EC_ERROR_ACCESS_DENIED;
-	}
+	if (sb_cutoff_or_in_progress())
+		return EC_ERROR_ACCESS_DENIED;
 
 	ADDR_FLAGS_FOR_PEC(&addr_flags);
 

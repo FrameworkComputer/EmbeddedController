@@ -1,0 +1,83 @@
+# Copyright 2024 Google LLC
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+  Vivaldi Keyboard mapping
+
+  This can be used for redefining the mapping of the top row keys (T1 to T15)
+  and the associated functionality. It redefines scancodes for the specified
+  keys and implement the EC_CMD_GET_KEYBD_CONFIG host command to notify the
+  system of the actual key layout.
+
+  Example configuration:
+
+  #include <zephyr/dt-bindings/vivaldi_kbd.h>
+
+  vivaldi_kbd: vivaldi-kbd {
+          compatible = "cros-ec,vivaldi-kbd";
+          vivaldi-keys = <
+                  VIVALDI_RC(0, 2)   /* T1 */
+                  VIVALDI_RC(3, 2)   /* T2 */
+                  VIVALDI_RC(2, 2)   /* T3 */
+                  VIVALDI_RC(1, 2)   /* T4 */
+                  VIVALDI_RC(3, 4)   /* T5 */
+                  VIVALDI_RC(2, 4)   /* T6 */
+                  VIVALDI_RC(1, 4)   /* T7 */
+                  VIVALDI_RC(2, 9)   /* T8 */
+                  VIVALDI_RC(1, 9)   /* T9 */
+                  VIVALDI_RC(0, 4)   /* T10 */
+                  VIVALDI_RC(0, 1)   /* T11 */
+                  VIVALDI_RC(1, 5)   /* T12 */
+                  VIVALDI_RC(3, 5)   /* T13 */
+                  VIVALDI_RC(0, 9)   /* T14 */
+                  VIVALDI_RC(0, 11)  /* T15 */
+          >;
+
+          kbd_config_0: kbd-config-0 {
+                  vivaldi-codes = <
+                          VIVALDI_TK_BACK              /* T1 */
+                          VIVALDI_TK_FORWARD           /* T2 */
+                          VIVALDI_TK_REFRESH           /* T3 */
+                          VIVALDI_TK_FULLSCREEN        /* T4 */
+                          VIVALDI_TK_OVERVIEW          /* T5 */
+                          VIVALDI_TK_BRIGHTNESS_DOWN   /* T6 */
+                          VIVALDI_TK_BRIGHTNESS_UP     /* T7 */
+                          VIVALDI_TK_VOL_MUTE          /* T8 */
+                          VIVALDI_TK_VOL_DOWN          /* T9 */
+                          VIVALDI_TK_VOL_UP            /* T10 */
+                  >;
+                  capabilities = <VIVALDI_KEYBD_CAP_SCRNLOCK_KEY>;
+          };
+  };
+
+  If more than one child nodes is present, the application must implement a
+  board_vivaldi_keybd_idx() function to select the correct configuration,
+  typically using the DT_NODE_CHILD_IDX() macro to indenty the index of the
+  desired child node.
+
+compatible: "cros-ec,vivaldi-kbd"
+
+include: base.yaml
+
+properties:
+  vivaldi-keys:
+    type: array
+    required: true
+    description: |
+      Array of VIVALDI_RC() entries corresponding to the (row, column)
+      location of the top keys, starting from T1.
+
+child-binding:
+  properties:
+    vivaldi-codes:
+      type: array
+      required: true
+      description: |
+        Array of TK_ key codes for the top keys, starting from T1.
+
+    capabilities:
+      type: int
+      required: true
+      description: |
+        Capabiliies bits for the device, or-btmask of KEYBD_CAP_ entries.

@@ -24,3 +24,9 @@ tests:
     - CONFIG_PM=y
     extra_dtc_overlay_files:
     - ./boards/bloonchipper/bloonchipper.dtsi
+  fpmcu.bloonchipper.ec_quirks:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BLOONCHIPPER=y
+    - CONFIG_TEST_BOARD_EC_QUIRKS=y
+    extra_dtc_overlay_files:
+    - ./boards/bloonchipper/bloonchipper.dtsi

@@ -27,7 +27,7 @@
 #define HPET_MAIN_COUNTER_64_HI REG32(ISH_HPET_BASE + 0xF4)
 
 /* HPET Timer 0/1/2 configuration*/
-#define HPET_TIMER_CONF_CAP(x) REG32(ISH_HPET_BASE + 0x100 + ((x)*0x20))
+#define HPET_TIMER_CONF_CAP(x) REG32(ISH_HPET_BASE + 0x100 + ((x) * 0x20))
 #define HPET_Tn_INT_TYPE_CNF BIT(1)
 #define HPET_Tn_INT_ENB_CNF BIT(2)
 #define HPET_Tn_TYPE_CNF BIT(3)
@@ -40,7 +40,7 @@
  * HPET Timer 0/1/2 comparator values. 1/2 are always 32-bit. 0 can be
  * configured as 64-bit.
  */
-#define HPET_TIMER_COMP(x) REG32(ISH_HPET_BASE + 0x108 + ((x)*0x20))
+#define HPET_TIMER_COMP(x) REG32(ISH_HPET_BASE + 0x108 + ((x) * 0x20))
 #define HPET_TIMER0_COMP_64 REG64(ISH_HPET_BASE + 0x108)
 
 /* ISH 4/5: Special status register

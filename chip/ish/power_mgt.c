@@ -4,6 +4,7 @@
  */
 
 #include "aontaskfw/ish_aon_share.h"
+#include "common.h"
 #include "console.h"
 #include "hwtimer.h"
 #include "interrupts.h"
@@ -14,8 +15,6 @@
 #include "task.h"
 #include "util.h"
 #include "watchdog.h"
-
-#include <stdnoreturn.h>
 
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
@@ -258,7 +257,7 @@ static void switch_to_aontask(void)
 	interrupt_enable();
 }
 
-noreturn static void handle_reset_in_aontask(enum ish_pm_state pm_state)
+__noreturn static void handle_reset_in_aontask(enum ish_pm_state pm_state)
 {
 	pm_ctx.aon_share->pm_state = pm_state;
 
@@ -678,7 +677,7 @@ void ish_pm_init(void)
 	}
 }
 
-noreturn void ish_pm_reset(enum ish_pm_state pm_state)
+__noreturn void ish_pm_reset(enum ish_pm_state pm_state)
 {
 	if (IS_ENABLED(CONFIG_ISH_PM_AONTASK) && pm_ctx.aon_valid) {
 		handle_reset_in_aontask(pm_state);
@@ -781,7 +780,7 @@ DECLARE_IRQ(ISH_PMU_WAKEUP_IRQ, pmu_wakeup_isr);
  *
  */
 
-__maybe_unused noreturn static void reset_prep_isr(void)
+__maybe_unused __noreturn static void reset_prep_isr(void)
 {
 	/* mask reset prep avail interrupt */
 	PMU_RST_PREP = PMU_RST_PREP_INT_MASK;

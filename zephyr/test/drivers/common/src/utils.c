@@ -5,6 +5,7 @@
 
 #include "acpi.h"
 #include "battery.h"
+#include "battery_fuel_gauge.h"
 #include "battery_smart.h"
 #include "charge_state.h"
 #include "chipset.h"
@@ -41,6 +42,7 @@ void test_set_battery_level(int percentage)
 	bat = sbat_emul_get_bat_data(emul);
 
 	bat->cap = bat->full_cap * percentage / 100;
+	init_battery_type();
 	bat->volt = battery_get_info()->voltage_normal;
 	bat->design_mv = bat->volt;
 
@@ -584,11 +586,6 @@ static int get_next_event_of_type(struct ec_response_get_next_event_v1 *event,
 int get_next_cec_mkbp_event(struct ec_response_get_next_event_v1 *event)
 {
 	return get_next_event_of_type(event, EC_MKBP_EVENT_CEC_EVENT);
-}
-
-int get_next_cec_message(struct ec_response_get_next_event_v1 *event)
-{
-	return get_next_event_of_type(event, EC_MKBP_EVENT_CEC_MESSAGE);
 }
 
 bool cec_event_matches(struct ec_response_get_next_event_v1 *event, int port,

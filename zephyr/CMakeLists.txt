@@ -6,9 +6,9 @@ separate_arguments(EXTRA_EC_VERSION_FLAGS_LIST UNIX_COMMAND
 		   ${EXTRA_EC_VERSION_FLAGS})
 
 if(DEFINED CONFIG_PLATFORM_EC AND EXISTS "${EDT_PICKLE}")
-  message(STATUS "Performing EC specific devicetree checks")
-
   set(ENV{PYTHONPATH} "${PLATFORM_EC}/zephyr/:${PLATFORM_EC}/zephyr/zmake")
+
+  message(STATUS "Performing EC specific devicetree checks")
 
   # Zephyr's gen_defines.py creates an EDT object of the final devicetree,
   # saving it as pickle file in the build directory.
@@ -20,6 +20,16 @@ if(DEFINED CONFIG_PLATFORM_EC AND EXISTS "${EDT_PICKLE}")
   execute_process(COMMAND ${CMD_NAMED_GPIOS} RESULT_VARIABLE ret)
   if(NOT "${ret}" STREQUAL "0")
     message(FATAL_ERROR "named_gpios.py failed with return code: ${ret}")
+  endif()
+
+  set(LED_POLICY_SCRIPT ${PLATFORM_EC}/zephyr/scripts/led_policy.py)
+  set(CMD_LED_POLICY ${PYTHON_EXECUTABLE} ${LED_POLICY_SCRIPT}
+    --zephyr-base ${ZEPHYR_BASE}
+    --edt-pickle ${EDT_PICKLE}
+  )
+  execute_process(COMMAND ${CMD_LED_POLICY} RESULT_VARIABLE ret)
+  if(NOT "${ret}" STREQUAL "0")
+    message(FATAL_ERROR "led_policy.py failed with return code: ${ret}")
   endif()
 
   message(STATUS "Generating component manifest file")
@@ -515,8 +525,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CONSOLE_CMD_CHARGEN
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CONSOLE_CMD_PD
                                                 "${PLATFORM_EC}/common/usbc/usb_pd_console.c")
 
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_FW_UPDATE
-                                                "${PLATFORM_EC}/common/usbc/usb_retimer_fw_update.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_ANX7483
                                                 "${PLATFORM_EC}/driver/retimer/anx7483.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_ANX7452
@@ -562,12 +570,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_LOGGING
                                                 "${PLATFORM_EC}/common/event_log.c"
                                                 "${PLATFORM_EC}/common/pd_log.c")
 if (CONFIG_PLATFORM_EC_USB_PD_TCPMV2)
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
-                                                "${PLATFORM_EC}/common/usbc/tbt_alt_mode.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_USB4
-                                                "${PLATFORM_EC}/common/usbc/usb_mode.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DP_MODE
-                                                "${PLATFORM_EC}/common/usbc/dp_alt_mode.c")
+	include(tcpmv2.cmake)
 endif ()
 
 zephyr_library_sources_ifdef(CONFIG_SVDM_RSP_DFP_ONLY
@@ -587,16 +590,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_CONSOLE_CMD
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_HOST_CMD
                                                 "${PLATFORM_EC}/common/usb_pd_host_cmd.c"
                                                 "${PLATFORM_EC}/common/usbc/usb_pd_host.c")
-
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_VPD
-                                                "${PLATFORM_EC}/common/usbc/usb_tc_vpd_sm.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_CTVPD
-                                                "${PLATFORM_EC}/common/usbc/usb_tc_ctvpd_sm.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_DRP_ACC_TRYSRC
-                                                "${PLATFORM_EC}/common/usbc/usb_tc_drp_acc_trysrc_sm.c"
-                                                "${PLATFORM_EC}/common/usbc/usb_pe_drp_sm.c"
-                                                "${PLATFORM_EC}/common/usbc/usb_pd_dpm.c"
-						"${PLATFORM_EC}/common/usbc/usbc_pd_policy.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DP_HPD_GPIO
                                                 "${PLATFORM_EC}/common/usbc/dp_hpd_gpio.c")

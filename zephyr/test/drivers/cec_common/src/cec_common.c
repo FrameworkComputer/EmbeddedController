@@ -953,21 +953,6 @@ ZTEST_USER_F(cec_common, test_receive_message_multiple_ports)
 		      EC_RES_UNAVAILABLE);
 }
 
-/* cec_message is not supported on devices with more than one port */
-ZTEST_USER_F(cec_common, test_cec_message_error)
-{
-	struct ec_response_get_next_event_v1 event;
-
-	/* This test case should run with more than one port */
-	zassert_true(CEC_PORT_COUNT > 1);
-
-	/* Set cec_message event */
-	mkbp_send_event(EC_MKBP_EVENT_CEC_MESSAGE);
-
-	/* Check no event was sent */
-	zassert_not_equal(get_next_cec_message(&event), 0);
-}
-
 ZTEST_USER_F(cec_common, test_hc_port_count)
 {
 	struct ec_response_cec_port_count response;

@@ -57,10 +57,10 @@
 #define FLASH_WRP_MASK ((FLASH_PAGE_MAX_COUNT) / 2 - 1)
 #endif
 #endif /* CONFIG_FLASH_DBANK_MODE */
-#define FLASH_WRP_START(val) ((val)&FLASH_WRP_MASK)
+#define FLASH_WRP_START(val) ((val) & FLASH_WRP_MASK)
 #define FLASH_WRP_END(val) (((val) >> 16) & FLASH_WRP_MASK)
 #define FLASH_WRP_RANGE(start, end) \
-	(((start)&FLASH_WRP_MASK) | (((end)&FLASH_WRP_MASK) << 16))
+	(((start) & FLASH_WRP_MASK) | (((end) & FLASH_WRP_MASK) << 16))
 #define FLASH_WRP_RANGE_DISABLED FLASH_WRP_RANGE(FLASH_WRP_MASK, 0x00)
 #define FLASH_WRP1X_MASK FLASH_WRP_RANGE(FLASH_WRP_MASK, FLASH_WRP_MASK)
 

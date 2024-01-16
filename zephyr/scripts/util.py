@@ -13,6 +13,10 @@ import re
 import site
 
 
+class DevicetreeError(Exception):
+    """Error for when the devicetree is invalid"""
+
+
 def is_test(edt_pickle):
     """Determines if the script is running on a project or test from
        the pickle file source.

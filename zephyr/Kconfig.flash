@@ -55,7 +55,7 @@ choice PLATFORM_EC_STORAGE_TYPE
        prompt "Code storage type"
        default PLATFORM_EC_EXTERNAL_STORAGE if SOC_FAMILY_NPCX
        default PLATFORM_EC_EXTERNAL_STORAGE if SOC_FAMILY_MEC
-       default PLATFORM_EC_INTERNAL_STORAGE if SOC_FAMILY_RISCV_ITE
+       default PLATFORM_EC_INTERNAL_STORAGE if SOC_FAMILY_ITE_EC
        default PLATFORM_EC_INTERNAL_STORAGE if SOC_FAMILY_STM32
        help
          Sets the EC code storage type.
@@ -103,7 +103,7 @@ config PLATFORM_EC_FLASH_SIZE_BYTES
 
 config PLATFORM_EC_MAPPED_STORAGE
 	bool "Flash is mapped into the EC's address space"
-	default y if SOC_FAMILY_NPCX || SOC_FAMILY_RISCV_ITE || SOC_FAMILY_STM32
+	default y if SOC_FAMILY_NPCX || SOC_FAMILY_ITE_EC || SOC_FAMILY_STM32
 	help
 	  This indicates that the EC's flash is directly mapped into
 	  its address space. This makes it easier to read and write the flash.
@@ -120,7 +120,7 @@ config PLATFORM_EC_MAPPED_STORAGE_BASE
 
 config PLATFORM_EC_FLASH_PSTATE
 	bool "Store persistent write protect for the flash inside"
-	default y if SOC_FAMILY_RISCV_ITE
+	default y if SOC_FAMILY_ITE_EC
 	help
 	  Store persistent write protect for the flash inside the flash data
 	  itself.  This allows ECs with internal flash to emulate something

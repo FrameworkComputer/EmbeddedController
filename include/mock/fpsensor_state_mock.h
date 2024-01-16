@@ -7,18 +7,14 @@
 #define __MOCK_FPSENSOR_STATE_MOCK_H
 
 #include "ec_commands.h"
-#include "fpsensor_driver.h"
 
-#include <stdbool.h>
 #include <stdint.h>
 
 extern const uint8_t default_fake_tpm_seed[FP_CONTEXT_TPM_BYTES];
 extern const uint8_t
-	default_fake_fp_positive_match_salt[FP_MAX_FINGER_COUNT]
-					   [FP_POSITIVE_MATCH_SALT_BYTES];
+	default_fake_fp_positive_match_salt[FP_POSITIVE_MATCH_SALT_BYTES];
 extern const uint8_t
-	trivial_fp_positive_match_salt[FP_MAX_FINGER_COUNT]
-				      [FP_POSITIVE_MATCH_SALT_BYTES];
+	trivial_fp_positive_match_salt[FP_POSITIVE_MATCH_SALT_BYTES];
 
 int fpsensor_state_mock_set_tpm_seed(
 	const uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES]);

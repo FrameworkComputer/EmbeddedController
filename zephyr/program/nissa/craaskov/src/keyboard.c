@@ -3,25 +3,15 @@
  * found in the LICENSE file.
  */
 
+#include "cros_cbi.h"
 #include "ec_commands.h"
+#include "hooks.h"
+#include "keyboard_8042_sharedlib.h"
+#include "keyboard_customization.h"
 #include "keyboard_scan.h"
 #include "timer.h"
 
-/* Keyboard scan setting */
-__override struct keyboard_scan_config keyscan_config = {
-	/* Increase from 50 us, because KSO_02 passes through the H1. */
-	.output_settle_us = 80,
-	/* Other values should be the same as the default configuration. */
-	.debounce_down_us = 9 * MSEC,
-	.debounce_up_us = 30 * MSEC,
-	.scan_period_us = 3 * MSEC,
-	.min_post_scan_delay_us = 1000,
-	.poll_timeout_us = 100 * MSEC,
-	.actual_key_mask = {
-		0x1c, 0xff, 0xff, 0xff, 0xff, 0xff, 0xff,
-		0xa4, 0xff, 0xf7, 0x55, 0xfb, 0xca,
-	},
-};
+LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 static const struct ec_response_keybd_config craaskov_kb = {
 	.num_top_row_keys = 10,
@@ -72,3 +62,27 @@ __override const struct key {
 	{ .row = 0, .col = 11 }, /* T15 */
 };
 BUILD_ASSERT(ARRAY_SIZE(vivaldi_keys) == MAX_TOP_ROW_KEYS);
+
+/*
+ * Keyboard layout decided by FW config.
+ */
+static void kb_layout_init(void)
+{
+	int ret;
+	uint32_t val;
+
+	ret = cros_cbi_get_fw_config(FW_KB_TYPE, &val);
+	if (ret != 0) {
+		LOG_ERR("Error retrieving CBI FW_CONFIG field %d", FW_KB_TYPE);
+		return;
+	}
+	/*
+	 * If keyboard is ANSI(KEYBOARD_ANSI), we need translate make code 64
+	 * to 45.And translate 29 to 42
+	 */
+	if (val == FW_KB_TYPE_ANSI_CANADIAN) {
+		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
+		set_scancode_set2(3, 11, get_scancode_set2(4, 10));
+	}
+}
+DECLARE_HOOK(HOOK_INIT, kb_layout_init, HOOK_PRIO_POST_FIRST);

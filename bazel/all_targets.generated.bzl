@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 # This file is auto-generated.  To update, run:
-# ./util/gen_bazel_targets.py
+# ./bazel/gen_bazel_targets.py
 
 load(":ec_target.bzl", "ec_target")
 
@@ -279,6 +279,15 @@ def all_targets():
     ec_target(
         name = "brox",
         board = "brox",
+    )
+    ec_target(
+        name = "brox-ish-ec",
+        board = "brox-ish-ec",
+    )
+    ec_target(
+        name = "brox-tokenized",
+        board = "brox-tokenized",
+        extra_modules = ["picolibc", "pigweed"],
     )
     ec_target(
         name = "brya",
@@ -589,6 +598,14 @@ def all_targets():
         board = "discovery-stm32f072",
         chip = "stm32",
         core = "cortex-m0",
+        zephyr = False,
+    )
+    ec_target(
+        name = "dita",
+        baseboard = "dedede",
+        board = "dita",
+        chip = "it83xx",
+        core = "nds32",
         zephyr = False,
     )
     ec_target(
@@ -1834,6 +1851,10 @@ def all_targets():
         chip = "npcx",
         core = "cortex-m",
         zephyr = False,
+    )
+    ec_target(
+        name = "rauru",
+        board = "rauru",
     )
     ec_target(
         name = "redrix",

@@ -467,4 +467,85 @@
 			sample-index = <12>;
 		};
 	};
+
+	/omit-if-no-ref/ thermistor_3V3_100K_100K_4250B:
+			thermistor-3V3-100K-100K-4250B {
+		status = "disabled";
+		compatible = "cros-ec,thermistor";
+		scaling-factor = <11>;
+		num-pairs = <13>;
+		steinhart-reference-mv = <3300>;
+		steinhart-reference-res = <100000>;
+
+		/*
+		 * Data derived from Steinhart-Hart equation in a resistor
+		 * divider circuit with Vdd=3300mV, R = 100Kohm, and thermistor
+		 * (B = 4250, T0 = 298.15 K, nominal resistance (R0) = 100Kohm).
+		 */
+		sample-datum-0 {
+			milivolt = <(2575 / 11)>;
+			temp = <0>;
+			sample-index = <0>;
+		};
+		sample-datum-1 {
+			milivolt = <(2233 / 11)>;
+			temp = <10>;
+			sample-index = <1>;
+		};
+		sample-datum-2 {
+			milivolt = <(1846 / 11)>;
+			temp = <20>;
+			sample-index = <2>;
+		};
+		sample-datum-3 {
+			milivolt = <(1458 / 11)>;
+			temp = <30>;
+			sample-index = <3>;
+		};
+		sample-datum-4 {
+			milivolt = <(1109 / 11)>;
+			temp = <40>;
+			sample-index = <4>;
+		};
+		sample-datum-5 {
+			milivolt = <( 822 / 11)>;
+			temp = <50>;
+			sample-index = <5>;
+		};
+		sample-datum-6 {
+			milivolt = <( 599 / 11)>;
+			temp = <60>;
+			sample-index = <6>;
+		};
+		sample-datum-7 {
+			milivolt = <( 434 / 11)>;
+			temp = <70>;
+			sample-index = <7>;
+		};
+		sample-datum-8 {
+			milivolt = <( 315 / 11)>;
+			temp = <80>;
+			sample-index = <8>;
+		};
+		sample-datum-9 {
+			milivolt = <( 269 / 11)>;
+			temp = <85>;
+			sample-index = <9>;
+		};
+		sample-datum-10 {
+			milivolt = <( 230 / 11)>;
+			temp = <90>;
+			sample-index = <10>;
+		};
+		sample-datum-11 {
+			milivolt = <( 197 / 11)>;
+			temp = <95>;
+			sample-index = <11>;
+		};
+		sample-datum-12 {
+			milivolt = <( 169 / 11)>;
+			temp = <100>;
+			sample-index = <12>;
+		};
+	};
 };
