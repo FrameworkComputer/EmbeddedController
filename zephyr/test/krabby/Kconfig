@@ -34,6 +34,12 @@ config TEST_CHINCHOU
 	  Include board_chinchou test into the binary to test distinguish
 	  between clamshell and convertible.
 
+config TEST_WOOBAT
+	bool "Run the tests intended for woobat"
+	help
+	  Include temp_woobat test into the binary to test temperature
+	  threshold trigger current control.
+
 endchoice
 
 source "Kconfig.zephyr"

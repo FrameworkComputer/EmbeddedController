@@ -52,3 +52,14 @@ target_sources_ifdef(CONFIG_TEST_CHINCHOU
 	src/board_chinchou.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/chinchou/src/board.c
 )
+
+target_sources_ifdef(CONFIG_TEST_WOOBAT
+	app PRIVATE
+	src/fake.c
+	src/ppc_woobat.c
+	src/temp_woobat.c
+	src/fwconfig_woobat.c
+	src/usb_mux_woobat.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/woobat/src/ppc.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/woobat/src/temp.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/woobat/src/sensor.c)

@@ -2312,6 +2312,10 @@ def all_targets():
         extra_modules = ["cmsis", "picolibc", "pigweed"],
     )
     ec_target(
+        name = "woobat",
+        board = "woobat",
+    )
+    ec_target(
         name = "woomax",
         baseboard = "zork",
         board = "woomax",

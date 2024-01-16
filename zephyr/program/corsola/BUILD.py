@@ -80,3 +80,4 @@ register_corsola_project(
 )
 
 register_corsola_project("chinchou")
+register_corsola_project("woobat")
