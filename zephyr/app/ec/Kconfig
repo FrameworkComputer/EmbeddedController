@@ -24,7 +24,7 @@ orsource "chip/$(ARCH)/*/Kconfig.*"
 # Override the maximum number of preemptive priority levels.
 #
 config NUM_PREEMPT_PRIORITIES
-	default 26
+	default 27
 
 #
 # Override the LOG_PRINTK to be no as it currently makes multiple
@@ -40,7 +40,7 @@ config LOG_PRINTK
 # priority. (i.e. NUM_PREEMPT_PRIORITIES - 1)
 #
 config SYSTEM_WORKQUEUE_PRIORITY
-	default 24
+	default 26
 
 # eSPI is chatty, so default to Error only
 choice ESPI_LOG_LEVEL_CHOICE

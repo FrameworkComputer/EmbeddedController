@@ -22,10 +22,9 @@
 #include <zephyr/sys/atomic.h>
 
 /* Ensure that the idle task is at lower priority than lowest priority task. */
-// TODO: Not solved yet
-//BUILD_ASSERT(EC_TASK_PRIORITY(EC_TASK_PRIO_LOWEST) < K_IDLE_PRIO,
-//	     "CONFIG_NUM_PREEMPT_PRIORITIES too small, some tasks would run at "
-//	     "idle priority");
+BUILD_ASSERT(EC_TASK_PRIORITY(EC_TASK_PRIO_LOWEST) < K_IDLE_PRIO,
+	     "CONFIG_NUM_PREEMPT_PRIORITIES too small, some tasks would run at "
+	     "idle priority");
 
 /* Forward declare all task entry point functions */
 #define CROS_EC_TASK(name, entry, ...) void entry(void *p);

@@ -343,9 +343,7 @@ const struct amdr23m_sensor_t amdr23m_sensors[AMDR23M_COUNT] = {
 const struct temp_sensor_t temp_sensors[] = { DT_FOREACH_CHILD_SEP(
 	TEMP_SENSORS_NODEID, TEMP_SENSOR_ENTRY, (, )) };
 
-// TODO: Why doesn't it match up?
-//BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
-//BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == 4);
+BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 static bool temp_sensor_check_power(const struct temp_sensor_t *sensor)
 {
