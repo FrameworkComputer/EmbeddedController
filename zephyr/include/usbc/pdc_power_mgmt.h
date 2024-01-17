@@ -210,6 +210,22 @@ uint32_t pdc_power_mgmt_get_vbus_voltage(int port);
 void pdc_power_mgmt_reset(int port);
 
 /**
+ * @brief Get the source caps list sent by the port partner
+ *
+ * @param port USB-C port number
+ * @retval pointer to source caps list
+ */
+const uint32_t *const pdc_power_mgmt_get_src_caps(int port);
+
+/**
+ * @brief Get the number of source caps sent by the port partner
+ *
+ * @param port USB-C port number
+ * @retval number of source caps
+ */
+uint8_t pdc_power_mgmt_get_src_cap_cnt(int port);
+
+/**
  * @brief Request a power role swap
  *
  * @param port USB-C port number

@@ -308,6 +308,8 @@ struct pdc_snk_attached_policy_t {
 	uint32_t pdo;
 	/** PDOs supported by the Source */
 	uint32_t pdos[PDO_NUM];
+	/** PDO count */
+	uint8_t pdo_count;
 	/** Sent RDO */
 	uint32_t rdo;
 	/** New RDO to send */
@@ -1121,14 +1123,19 @@ static void pdc_send_cmd_wait_exit(void *obj)
 	/* Completed with error. Clear complete bit */
 	atomic_clear_bit(port->cci_flags, CCI_CMD_COMPLETED);
 	port->cmd->pending = false;
+	port->snk_policy.pdo_count = 0;
 
 	switch (port->cmd->cmd) {
 	case CMD_PDC_GET_PDOS:
-		/* Filter out Augmented Power Data Objects (APDO) */
+		/* Filter out Augmented Power Data Objects (APDO). APDOs come
+		 * after the regular PDOS, so it's safe to exclude them from the
+		 * pdo_count. */
 		/* TODO This is temporary until APDOs can be handled  */
 		for (int i = 0; i < PDO_NUM; i++) {
 			if (port->snk_policy.pdos[i] & PDO_TYPE_AUGMENTED) {
 				port->snk_policy.pdos[i] = 0;
+			} else {
+				port->snk_policy.pdo_count++;
 			}
 		}
 		break;
@@ -1705,4 +1712,24 @@ void pdc_power_mgmt_reset(int port)
 {
 	/* Block until command completes */
 	public_api_block(port, CMD_PDC_RESET);
+}
+
+uint8_t pdc_power_mgmt_get_src_cap_cnt(int port)
+{
+	/* Make sure port is Sink connected */
+	if (!pdc_power_mgmt_is_sink_connected(port)) {
+		return 0;
+	}
+
+	return pdc_data[port]->port.snk_policy.pdo_count;
+}
+
+const uint32_t *const pdc_power_mgmt_get_src_caps(int port)
+{
+	/* Make sure port is Sink connected */
+	if (!pdc_power_mgmt_is_sink_connected(port)) {
+		return NULL;
+	}
+
+	return (const uint32_t *const)pdc_data[port]->port.snk_policy.pdos;
 }
