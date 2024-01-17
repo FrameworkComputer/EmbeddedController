@@ -10,6 +10,8 @@
 #ifndef __CROS_EC_PDC_POWER_MGMT_H
 #define __CROS_EC_PDC_POWER_MGMT_H
 
+#include "usb_pd.h"
+
 /**
  * @brief Get the state of the port partner connection
  *
@@ -224,6 +226,15 @@ const uint32_t *const pdc_power_mgmt_get_src_caps(int port);
  * @retval number of source caps
  */
 uint8_t pdc_power_mgmt_get_src_cap_cnt(int port);
+
+/**
+ * @brief Set dual role state, from among enum pd_dual_role_states
+ *
+ * @param port USB-C port number
+ * @param state New state of dual-role port, selected from enum
+ * pd_dual_role_states
+ */
+void pdc_power_mgmt_set_dual_role(int port, enum pd_dual_role_states state);
 
 /**
  * @brief Get the current PD state name of USB-C port
