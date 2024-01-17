@@ -170,11 +170,6 @@
 		reg = <0x4d>;
 	};
 
-	temp_cpu: cpu@4c {
-		compatible = "amd,sb-tsi";
-		reg = <0x4c>;
-	};
-
 	als_cm32183: als-cm32183@29 {
 		compatible = "nxp,cm32183";
 		reg = <0x29>;

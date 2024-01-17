@@ -1386,8 +1386,6 @@ extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 
 /* VBUS-voltage measurement */
 #undef CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
-// TODO: We need this. Why isn't it defined by the config?
-#define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
 #ifdef CONFIG_PLATFORM_EC_USB_PD_VBUS_MEASURE_NOT_PRESENT
 #define CONFIG_USB_PD_VBUS_MEASURE_NOT_PRESENT
 #endif
