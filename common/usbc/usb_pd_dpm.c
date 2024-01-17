@@ -460,8 +460,8 @@ void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		__fallthrough;
 #endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
 	default:
-		CPRINTS("C%d: Received unexpected VDM ACK for SVID %d", port,
-			svid);
+		CPRINTS("C%d: Received unexpected VDM ACK for SVID 0x%04x",
+			port, svid);
 	}
 }
 
@@ -488,8 +488,8 @@ void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
 		__fallthrough;
 #endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
 	default:
-		CPRINTS("C%d: Received unexpected VDM NAK for SVID %d", port,
-			svid);
+		CPRINTS("C%d: Received unexpected VDM NAK for SVID 0x%04x",
+			port, svid);
 	}
 }
 
