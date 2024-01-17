@@ -21,7 +21,7 @@
 #include <drivers/pdc.h>
 #include <usbc/utils.h>
 
-LOG_MODULE_REGISTER(pdc_power_mgmt, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(pdc);
 
 /**
  * @brief maximum number of times to try and send a command
@@ -1271,7 +1271,7 @@ static bool is_connectionless_cmd(enum pdc_cmd_t pdc_cmd)
 {
 	switch (pdc_cmd) {
 	case CMD_PDC_RESET:
-		/* fall-through */
+		__fallthrough;
 	case CMD_PDC_GET_INFO:
 		return true;
 	default:

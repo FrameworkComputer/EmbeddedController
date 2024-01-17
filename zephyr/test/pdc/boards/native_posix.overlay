@@ -18,13 +18,16 @@
 			reg = <0>;
 			chg = <&charger>;
 			pdc = <&rts5453p_emul>;
+			chg = <&isl923x_emul>;
 		};
 	};
+
 	batteries {
-                default_battery: lgc_ap18c8k {
-                        compatible = "lgc,ap18c8k", "battery-smart";
-                };
+		default_battery: lgc_ac17a8m {
+			compatible = "lgc,ac17a8m", "battery-smart";
+		};
 	};
+
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
@@ -51,6 +54,13 @@
 		desired-charg-cur = <2400>;
 		mf-name = "LGC";
 		dev-name = "AP18C8K";
+	};
+
+	isl923x_emul: isl923x@9 {
+		compatible = "cros,isl923x-emul";
+		status = "okay";
+		reg = <0x09>;
+		battery = <&battery>;
 	};
 
 	rts5453p_emul: rts5453p@66 {

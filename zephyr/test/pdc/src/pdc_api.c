@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "battery.h"
 #include "common.h"
 #include "console.h"
 #include "drivers/pdc.h"
