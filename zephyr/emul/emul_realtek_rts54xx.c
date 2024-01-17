@@ -322,6 +322,17 @@ static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 	data->response.rtk_status.battery_charging_status =
 		data->connector_status.battery_charging_cap & BIT_MASK(2);
 
+	/* BYTE 15-18 */
+	data->response.rtk_status.average_current_low = 0;
+	data->response.rtk_status.average_current_high = 0;
+
+	uint32_t voltage = data->connector_status.voltage_reading *
+			   data->connector_status.voltage_scale * 5 / 50;
+	data->response.rtk_status.voltage_reading_low = voltage & 0xFF;
+	data->response.rtk_status.voltage_reading_high = voltage >> 8;
+
+	data->read_offset = req->get_rtk_status.offset;
+
 	send_response(data);
 
 	return 0;
@@ -649,14 +660,13 @@ static int rts5453p_emul_read_byte(const struct emul *emul, int reg,
 {
 	struct rts5453p_emul_pdc_data *data = rts5453p_emul_get_pdc_data(emul);
 
-	LOG_DBG("read_byte reg=0x%X, bytes=%d", reg, bytes);
-
 	if (data->read_ping) {
 		LOG_DBG("READING ping_raw_value=0x%X", data->ping_raw_value);
 		*val = data->ping_raw_value;
-		data->read_ping = false;
 	} else {
-		*val = data->response.raw_data[bytes];
+		LOG_DBG("read_byte reg=0x%X, bytes=%d, offset=%d", reg, bytes,
+			data->read_offset);
+		*val = data->response.raw_data[bytes + data->read_offset];
 	}
 
 	return 0;
@@ -674,10 +684,18 @@ static int rts5453p_emul_read_byte(const struct emul *emul, int reg,
  * @return 0 on success
  * @return -EIO on error
  */
-static int rts5453p_emul_finish_read(const struct emul *target, int reg,
+static int rts5453p_emul_finish_read(const struct emul *emul, int reg,
 				     int bytes)
 {
+	struct rts5453p_emul_pdc_data *data = rts5453p_emul_get_pdc_data(emul);
+
 	LOG_DBG("finish_read reg=0x%X, bytes=%d", reg, bytes);
+	if (data->read_ping) {
+		data->read_ping = false;
+	} else {
+		data->read_offset = 0;
+	}
+
 	return 0;
 }
 /**
@@ -720,6 +738,8 @@ static int rts5453p_emul_init(const struct emul *emul,
 	data->common.cfg = cfg;
 
 	i2c_common_emul_init(&data->common);
+
+	data->pdc_data.read_offset = 0;
 
 	data->pdc_data.connector_reset_type = 0xFF;
 	data->pdc_data.ic_status.fw_main_version = 0xAB;

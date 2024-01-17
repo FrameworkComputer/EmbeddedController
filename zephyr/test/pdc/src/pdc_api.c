@@ -239,3 +239,22 @@ ZTEST_USER(pdc_api, test_set_power_level)
 		zassert_equal(in[i], out);
 	}
 }
+
+ZTEST_USER(pdc_api, test_get_bus_voltage)
+{
+	uint32_t mv_units = 50;
+	uint32_t expected_voltage_mv = 5000;
+	uint16_t out = 0;
+	struct connector_status_t in;
+
+	in.voltage_scale = 10; /* 50 mv units*/
+	in.voltage_reading = expected_voltage_mv / mv_units;
+	emul_pdc_set_connector_status(emul, &in);
+
+	zassert_ok(pdc_get_vbus_voltage(dev, &out));
+	k_sleep(K_MSEC(100));
+
+	zassert_equal(out, expected_voltage_mv);
+
+	zassert_equal(pdc_get_vbus_voltage(dev, NULL), -EINVAL);
+}

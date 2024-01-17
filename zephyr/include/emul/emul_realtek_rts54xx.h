@@ -129,7 +129,9 @@ union rts54_request {
 	} get_connector_status;
 
 	struct get_rtk_status_req {
-		struct rts54_subcommand_header header;
+		uint8_t command_code;
+		uint8_t data_len;
+		uint8_t offset;
 		uint8_t port_num;
 		uint8_t sts_len;
 	} get_rtk_status;
@@ -291,6 +293,11 @@ union rts54_response {
 		uint8_t unchunked_message_support : 1;
 		uint8_t fr_swap_support : 1;
 		uint8_t reserved : 1;
+		/* BYTE 15 - 18 */
+		uint8_t average_current_low;
+		uint8_t average_current_high;
+		uint8_t voltage_reading_low;
+		uint8_t voltage_reading_high;
 	} __packed rtk_status;
 
 	struct get_rdo_response {
@@ -340,6 +347,7 @@ struct rts5453p_emul_pdc_data {
 		struct ping_status ping_status;
 		uint8_t ping_raw_value;
 	};
+	uint8_t read_offset;
 	union rts54_response response;
 
 	uint16_t delay_ms;
