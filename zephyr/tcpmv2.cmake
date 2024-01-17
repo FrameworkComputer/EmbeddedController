@@ -12,11 +12,11 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_VPD
                                                 "${PLATFORM_EC}/common/usbc/usb_tc_vpd_sm.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_CTVPD
                                                 "${PLATFORM_EC}/common/usbc/usb_tc_ctvpd_sm.c")
-#zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_DRP_ACC_TRYSRC
-#                                                "${PLATFORM_EC}/common/usbc/usb_tc_drp_acc_trysrc_sm.c"
-#                                                "${PLATFORM_EC}/common/usbc/usb_pe_drp_sm.c"
-#                                                "${PLATFORM_EC}/common/usbc/usb_pd_dpm.c"
-#                                                "${PLATFORM_EC}/common/usbc/usbc_pd_policy.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_DRP_ACC_TRYSRC
+                                                "${PLATFORM_EC}/common/usbc/usb_tc_drp_acc_trysrc_sm.c"
+                                                "${PLATFORM_EC}/common/usbc/usb_pe_drp_sm.c"
+                                                "${PLATFORM_EC}/common/usbc/usb_pd_dpm.c"
+                                                "${PLATFORM_EC}/common/usbc/usbc_pd_policy.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_FW_UPDATE
                                                 "${PLATFORM_EC}/common/usbc/usb_retimer_fw_update.c")
 

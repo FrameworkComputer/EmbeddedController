@@ -17,8 +17,7 @@
  *
  * So use the smallest one for alignment check.
  */
-//#define CONFIG_FLASH_ERASE_SIZE 0x1000
-#define CONFIG_FLASH_ERASE_SIZE CONFIG_PLATFORM_EC_NPCX_FLASH_ERASE_SIZE
+#define CONFIG_FLASH_ERASE_SIZE 0x1000
 /*
  * The smallest protection bank size is 1/8 of 512 KB or 1/16 of 1M flash,
  * i.e. 64KB.
