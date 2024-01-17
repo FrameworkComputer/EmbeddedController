@@ -446,6 +446,8 @@ static void st_init_entry(void *o)
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
 
 	print_current_state(data);
+
+	data->cmd = CMD_NONE;
 }
 
 static void st_init_run(void *o)
