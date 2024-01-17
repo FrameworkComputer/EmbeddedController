@@ -191,18 +191,14 @@ static void board_charger_lpm_control(void)
 	switch (ps) {
 	case POWER_G3:
 	case POWER_G3S5:
+	case POWER_S5G3:
 	case POWER_S5:
 	case POWER_S3S5:
-	case POWER_S4S5:
+	case POWER_S5S3:
 		ps = POWER_S5;
 		break;
-	case POWER_S0:
-	case POWER_S3S0:
-	case POWER_S5S3:
-	case POWER_S3:
-		ps = POWER_S0;
-		break;
 	default:
+		ps = POWER_S0;
 		break;
 	}
 
