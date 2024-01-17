@@ -194,21 +194,21 @@ static void board_charger_lpm_control(void)
 	case POWER_S5:
 	case POWER_S3S5:
 	case POWER_S4S5:
-		if (pre_power_state != ps)
-			charger_psys_enable(false);
-		charger_input_current_limit_control(POWER_S5);
+		ps = POWER_S5;
 		break;
 	case POWER_S0:
 	case POWER_S3S0:
 	case POWER_S5S3:
 	case POWER_S3:
-		if (pre_power_state != ps)
-			charger_psys_enable(true);
-		charger_input_current_limit_control(POWER_S0);
+		ps = POWER_S0;
 		break;
 	default:
 		break;
 	}
+
+	if (pre_power_state != ps)
+		charger_psys_enable(ps == POWER_S5 ? false : true);
+	charger_input_current_limit_control(ps);
 
 	pre_power_state = ps;
 }
@@ -431,7 +431,6 @@ int board_discharge_on_ac(int enable)
 {
 	int chgnum;
 	int rv = EC_SUCCESS;
-	CPRINTS("DischargeOnAC %d", enable);
 
 	bypass_force_disable = enable;
 	/*
