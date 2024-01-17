@@ -226,6 +226,14 @@ const uint32_t *const pdc_power_mgmt_get_src_caps(int port);
 uint8_t pdc_power_mgmt_get_src_cap_cnt(int port);
 
 /**
+ * @brief Get the current PD state name of USB-C port
+ *
+ * @param port USB-C port number
+ * @retval name of task state
+ */
+const char *pdc_power_mgmt_get_task_state_name(int port);
+
+/**
  * @brief Request a power role swap
  *
  * @param port USB-C port number
