@@ -10,14 +10,6 @@
 	named-adc-channels {
 		compatible = "named-adc-channels";
 
-		adc_charger_amon_q: charger_amon_q {
-			enum-name = "ADC_AMON_BMON";
-			io-channels = <&adc0 2>;
-		};
-		adc_charger_pmon_q: charger_pmon_q {
-			enum-name = "ADC_PSYS";
-			io-channels = <&adc0 3>;
-		};
 		adc_ec_usb_c0_vbus_sense: ec_usb_c0_vbus_sense {
 			enum-name = "ADC_VBUS_C0";
 			io-channels = <&adc0 0>;
@@ -25,6 +17,14 @@
 		adc_ec_usb_c1_vbus_sense: ec_usb_c1_vbus_sense {
 			enum-name = "ADC_VBUS_C1";
 			io-channels = <&adc0 1>;
+		};
+		adc_charger_amon_q: charger_amon_q {
+			enum-name = "ADC_AMON_BMON";
+			io-channels = <&adc0 2>;
+		};
+		adc_charger_pmon_q: charger_pmon_q {
+			enum-name = "ADC_PSYS";
+			io-channels = <&adc0 3>;
 		};
 		adc_temp_sensor1: temp_sensor1 {
 			enum-name = "ADC_TEMP_SENSOR_1";
@@ -87,7 +87,7 @@
 			gpios = <&gpioc 4 GPIO_INPUT>;
 		};
 		gpio_ec_gpa7_test: ec_gpa7_test {
-			gpios = <&gpioa 7 GPIO_INPUT>;
+			gpios = <&gpioa 7 GPIO_INPUT_PULL_DOWN>;
 		};
 		gpio_ec_gsc_packet_mode_en: ec_gsc_packet_mode_en {
 			gpios = <&gpioe 6 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
@@ -133,9 +133,11 @@
 		};
 		gpio_gsc_acok_od: gsc_acok_od {
 			gpios = <&gpioe 1 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
 			gpios = <&gpioe 2 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_hdmi_ec_hpd: hdmi_ec_hpd {
 			gpios = <&gpioi 7 GPIO_INPUT>;
@@ -151,6 +153,7 @@
 		};
 		gpio_lid_open_3v3: lid_open_3v3 {
 			gpios = <&gpioc 6 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
 		};
 		gpio_pg_pp3700_s5_od: pg_pp3700_s5_od {
 			gpios = <&gpioh 6 GPIO_INPUT>;
@@ -162,7 +165,7 @@
 			gpios = <&gpioj 1 GPIO_INPUT>;
 		};
 		gpio_sys_rst_odl: sys_rst_odl {
-			gpios = <&gpioj 5 GPIO_OUTPUT>;
+			gpios = <&gpioj 5 GPIO_ODR_HIGH>;
 		};
 		gpio_usb_c0_dp_in_hpd: usb_c0_dp_in_hpd {
 			gpios = <&gpiof 2 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
@@ -215,28 +218,64 @@
 
 &adc0 {
 	status = "okay";
+	pinctrl-0 = <&adc0_ch0_gpi0_default
+		&adc0_ch1_gpi1_default
+		&adc0_ch2_gpi2_default
+		&adc0_ch3_gpi3_default
+		&adc0_ch4_gpi4_default>;
+	pinctrl-names = "default";
 };
 
 &i2c0 {
 	status = "okay";
+	pinctrl-0 = <&i2c0_clk_gpb3_default
+		&i2c0_data_gpb4_default>;
+	pinctrl-names = "default";
 };
 
 &i2c1 {
 	status = "okay";
+	pinctrl-0 = <&i2c1_clk_gpc1_default
+		&i2c1_data_gpc2_default>;
+	pinctrl-names = "default";
 };
 
 &i2c2ALT {
 	status = "okay";
+	pinctrl-0 = <&i2c2_clk_gpf6_default
+		&i2c2_data_gpf7_default>;
+	pinctrl-names = "default";
 };
 
 &i2c3 {
 	status = "okay";
+	pinctrl-0 = <&i2c3_clk_gpb2_default
+		&i2c3_data_gpb5_default>;
+	pinctrl-names = "default";
 };
 
 &i2c4 {
 	status = "okay";
+	pinctrl-0 = <&i2c4_clk_gpe0_default
+		&i2c4_data_gpe7_default>;
+	pinctrl-names = "default";
 };
 
 &i2c5ALT {
 	status = "okay";
+	pinctrl-0 = <&i2c5_clk_gpa4_default
+		&i2c5_data_gpa5_default>;
+	pinctrl-names = "default";
+};
+
+&pwm2 {
+	status = "okay";
+	pinctrl-0 = <&pwm2_gpa2_default>;
+	pinctrl-names = "default";
+};
+
+&pwm3 {
+	status = "okay";
+	pinctrl-0 = <&pwm3_gpa3_default>;
+	pinctrl-names = "default";
 };

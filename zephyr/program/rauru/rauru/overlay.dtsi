@@ -22,17 +22,6 @@
 	};
 };
 
-
-&adc0 {
-	pinctrl-0 = <&adc0_ch0_gpi0_default
-		     &adc0_ch1_gpi1_default
-		     &adc0_ch2_gpi2_default
-		     &adc0_ch3_gpi3_default
-		     &adc0_ch4_gpi4_default>;
-	pinctrl-names = "default";
-};
-
-
 &pinctrl {
 	i2c3_clk_gpf2_sleep: i2c3_clk_gpf2_sleep {
 		pinmuxs = <&pinctrlf 2 IT8XXX2_ALT_DEFAULT>;
@@ -45,50 +34,39 @@
 &i2c0 {
 	label = "I2C_PWR_CBI";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	pinctrl-0 = <&i2c0_clk_gpb3_default
-		     &i2c0_data_gpb4_default>;
-	pinctrl-names = "default";
 };
 
 &i2c1 {
 	label = "I2C_BATTERY";
 	clock-frequency = <50000>;
-	pinctrl-0 = <&i2c1_clk_gpc1_default
-		     &i2c1_data_gpc2_default>;
-	pinctrl-names = "default";
 };
 
 &i2c2 {
 	label = "I2C_USB_C0";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	pinctrl-0 = <&i2c2_clk_gpf6_default
-		     &i2c2_data_gpf7_default>;
-	pinctrl-names = "default";
 
 };
 
 &i2c3 {
 	label = "I2C_SENSOR";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	scl-gpios = <&gpiob 2 0>;
-	sda-gpios = <&gpiob 3 0>;
-	pinctrl-0 = <&i2c3_clk_gpf2_default
-		     &i2c3_data_gpf3_default>;
-	pinctrl-1 = <&i2c3_clk_gpf2_sleep
-		     &i2c3_data_gpf3_sleep>;
-	pinctrl-names = "default", "sleep";
 	prescale-scl-low = <1>;
 };
 
 &i2c4 {
 	label = "I2C_USB_C1";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	pinctrl-0 = <&i2c4_clk_gpe0_default
-		     &i2c4_data_gpe7_default>;
-	pinctrl-names = "default";
 	prescale-scl-low = <1>;
 };
 
 &i2c5ALT {
 	status = "disabled";
+};
+
+&pwm2 {
+	prescaler-cx = <PWM_PRESCALER_C4>;
+};
+
+&pwm3 {
+	prescaler-cx = <PWM_PRESCALER_C4>;
 };
