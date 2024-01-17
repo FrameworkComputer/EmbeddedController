@@ -11,6 +11,7 @@
 #include "emul/emul_pdc.h"
 #include "emul/emul_realtek_rts54xx.h"
 #include "i2c.h"
+#include "zephyr/sys/util_macro.h"
 
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
@@ -201,4 +202,18 @@ ZTEST_USER(pdc_api, test_set_pdr)
 	zassert_ok(emul_pdc_get_pdr(emul, &out));
 
 	zassert_equal(out.raw_value, in.raw_value);
+}
+
+ZTEST_USER(pdc_api, test_rdo)
+{
+	uint32_t in, out = 0;
+
+	in = BIT(25) | (BIT_MASK(9) & 0x55);
+	zassert_ok(pdc_set_rdo(dev, in));
+
+	k_sleep(K_MSEC(100));
+	zassert_ok(pdc_get_rdo(dev, &out));
+
+	k_sleep(K_MSEC(100));
+	zassert_equal(in, out);
 }

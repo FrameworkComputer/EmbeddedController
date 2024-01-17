@@ -145,6 +145,17 @@ union rts54_request {
 		uint8_t port_num;
 		union pdr_t pdr;
 	} set_pdr;
+
+	struct set_rdo_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+		uint32_t rdo;
+	} set_rdo;
+
+	struct get_rdo_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+	} get_rdo;
 };
 
 union rts54_response {
@@ -267,6 +278,11 @@ union rts54_response {
 		uint8_t fr_swap_support : 1;
 		uint8_t reserved : 1;
 	} __packed rtk_status;
+
+	struct get_rdo_response {
+		uint8_t byte_count;
+		uint32_t rdo;
+	} __packed get_rdo;
 };
 
 enum cmd_sts_t {
@@ -300,6 +316,7 @@ struct rts5453p_emul_pdc_data {
 	union uor_t uor;
 	union pdr_t pdr;
 	union error_status_t error;
+	uint32_t rdo;
 
 	union rts54_request request;
 

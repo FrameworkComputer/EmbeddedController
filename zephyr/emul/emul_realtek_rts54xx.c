@@ -353,6 +353,32 @@ static int set_pdr(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int set_rdo(struct rts5453p_emul_pdc_data *data,
+		   const union rts54_request *req)
+{
+	LOG_INF("SET_RDO port=%d, rdo=0x%X", req->set_rdo.port_num,
+		req->set_rdo.rdo);
+
+	data->rdo = req->set_rdo.rdo;
+
+	memset(&data->response, 0, sizeof(union rts54_response));
+	send_response(data);
+
+	return 0;
+}
+
+static int get_rdo(struct rts5453p_emul_pdc_data *data,
+		   const union rts54_request *req)
+{
+	LOG_INF("GET_RDO port=%d", req->set_rdo.port_num);
+
+	data->response.get_rdo.byte_count = sizeof(struct get_rdo_response) - 1;
+	data->response.get_rdo.rdo = data->rdo;
+	send_response(data);
+
+	return 0;
+}
+
 static bool send_response(struct rts5453p_emul_pdc_data *data)
 {
 	if (data->delay_ms > 0) {
@@ -410,7 +436,7 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0x00, HANDLER_DEF(tcpm_reset) },
 	{ .code = 0x01, HANDLER_DEF(set_notification_enable) },
 	{ .code = 0x03, HANDLER_DEF(unsupported) },
-	{ .code = 0x04, HANDLER_DEF(unsupported) },
+	{ .code = 0x04, HANDLER_DEF(set_rdo) },
 	{ .code = 0x44, HANDLER_DEF(unsupported) },
 	{ .code = 0x05, HANDLER_DEF(unsupported) },
 	{ .code = 0x19, HANDLER_DEF(unsupported) },
@@ -426,7 +452,7 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0x28, HANDLER_DEF(unsupported) },
 	{ .code = 0x2B, HANDLER_DEF(unsupported) },
 	{ .code = 0x83, HANDLER_DEF(unsupported) },
-	{ .code = 0x84, HANDLER_DEF(unsupported) },
+	{ .code = 0x84, HANDLER_DEF(get_rdo) },
 	{ .code = 0x85, HANDLER_DEF(unsupported) },
 	{ .code = 0x99, HANDLER_DEF(unsupported) },
 	{ .code = 0x9A, HANDLER_DEF(unsupported) },
