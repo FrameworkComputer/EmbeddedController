@@ -644,6 +644,45 @@ static void set_attached_flag(struct pdc_port_t *port,
 	k_mutex_unlock(&port->mtx);
 }
 
+static void run_unattached_policies(struct pdc_port_t *port)
+{
+	if (atomic_test_and_clear_bit(port->una_policy.flags,
+				      UNA_POLICY_CC_MODE)) {
+		/* Set CC PULL Resistor and TrySrc or TrySnk */
+		queue_internal_cmd(port, CMD_PDC_SET_CCOM);
+		return;
+	} else if (atomic_test_and_clear_bit(port->una_policy.flags,
+					     UNA_POLICY_TCC)) {
+		/* Set RP current policy */
+		queue_internal_cmd(port, CMD_PDC_SET_POWER_LEVEL);
+		return;
+	} else {
+		run_public_api_command(port);
+	}
+}
+
+static void run_snk_policies(struct pdc_port_t *port)
+{
+	if (atomic_test_and_clear_bit(port->snk_policy.flags,
+				      SNK_POLICY_SWAP_TO_SRC)) {
+		queue_internal_cmd(port, CMD_PDC_SET_PDR);
+		return;
+	} else {
+		run_public_api_command(port);
+	}
+}
+
+static void run_src_policies(struct pdc_port_t *port)
+{
+	if (atomic_test_and_clear_bit(port->src_policy.flags,
+				      SRC_POLICY_SWAP_TO_SNK)) {
+		queue_internal_cmd(port, CMD_PDC_SET_PDR);
+		return;
+	} else {
+		run_public_api_command(port);
+	}
+}
+
 /**
  * @brief Entering unattached state
  */
@@ -691,21 +730,8 @@ static void pdc_unattached_run(void *obj)
 		send_snk_path_en_cmd(port, false);
 		return;
 	case UNATTACHED_RUN:
-		/* Enforce Unattached Policies */
-		if (atomic_test_and_clear_bit(port->una_policy.flags,
-					      UNA_POLICY_CC_MODE)) {
-			/* Set CC PULL Resistor and TrySrc or TrySnk */
-			queue_internal_cmd(port, CMD_PDC_SET_CCOM);
-			return;
-		} else if (atomic_test_and_clear_bit(port->una_policy.flags,
-						     UNA_POLICY_TCC)) {
-			/* Set RP current policy */
-			queue_internal_cmd(port, CMD_PDC_SET_POWER_LEVEL);
-			return;
-		} else {
-			/* Run public API call */
-			run_public_api_command(port);
-		}
+		run_unattached_policies(port);
+		break;
 	}
 }
 
@@ -780,9 +806,7 @@ static void pdc_src_attached_run(void *obj)
 		return;
 	case SRC_ATTACHED_RUN:
 		set_attached_flag(port, SRC_ATTACHED_FLAG);
-
-		/* Run public API call */
-		run_public_api_command(port);
+		run_src_policies(port);
 		break;
 	}
 }
@@ -911,14 +935,7 @@ static void pdc_snk_attached_run(void *obj)
 		/* fall-through */
 	case SNK_ATTACHED_RUN:
 		set_attached_flag(port, SNK_ATTACHED_FLAG);
-
-		/* Enforce Sink Policies */
-		if (atomic_test_and_clear_bit(port->snk_policy.flags,
-					      SNK_POLICY_NEW_POWER_REQUEST)) {
-			port->snk_attached_local_state = SNK_ATTACHED_GET_PDOS;
-		} else {
-			run_public_api_command(port);
-		}
+		run_snk_policies(port);
 		break;
 	}
 }
