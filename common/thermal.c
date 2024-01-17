@@ -267,10 +267,12 @@ DECLARE_HOOK(HOOK_SECOND, thermal_control, HOOK_PRIO_TEMP_SENSOR_DONE);
 
 /*****************************************************************************/
 /* Project */
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
 bool thermal_warn_trigger(void)
 {
 	return thermal_warn_active;
 }
+#endif
 
 /*****************************************************************************/
 /* Console commands */

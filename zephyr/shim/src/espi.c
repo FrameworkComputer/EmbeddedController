@@ -670,9 +670,9 @@ void lpc_kbc_ibf_clear(void)
 	int rv;
 	int data;
 
-	rv = espi_read_lpc_request(espi_dev, E8042_CLEAR_IBF, &data);
+	rv = espi_read_lpc_request(espi_dev, E8042_CLEAR_OBF, &data);
 	if (rv) {
-		LOG_ERR("ESPI read failed: E8042_CLEAR_IBF = %d", rv);
+		LOG_ERR("ESPI read failed: E8042_CLEAR_OBF = %d", rv);
 		return;
 	}
 }

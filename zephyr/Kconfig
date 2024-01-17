@@ -1046,3 +1046,9 @@ config PLATFORM_EC_CURVE25519
 	  Support curve25519 public key cryptography.
 
 endif # PLATFORM_EC
+
+config THIRD_PARTY_CUSTOMIZED_DESIGN
+        bool "Customized design, not upstream Chromium EC"
+	default n
+	help
+	  Used by Framework Computer systems

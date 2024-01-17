@@ -31,10 +31,11 @@ config PLATFORM_EC_STANDALONE_PD_CHIP
 	  Enable if project use the standalone PD chip instead of the structure of
 	  TCPC + TCPM.
 
-if PLATFORM_EC_USBC
+#if PLATFORM_EC_USBC
 
 rsource "Kconfig.pd_int_shared"
 rsource "Kconfig.pd_meas_vbus"
+if PLATFORM_EC_USBC
 rsource "Kconfig.pd_frs"
 rsource "Kconfig.pd_discharge"
 rsource "Kconfig.pd_vbus_detection"
@@ -46,6 +47,7 @@ rsource "Kconfig.usb_mux"
 rsource "Kconfig.usbc_ss_mux"
 rsource "Kconfig.usbc_common_altmode"
 rsource "Kconfig.usb_charger"
+endif
 
 choice PLATFORM_EC_USBC_STACK
 	prompt "USB-C Power Delivery stack type"
@@ -151,7 +153,7 @@ config PLATFORM_EC_USB_PD_PULLUP
 
 # TODO: <Framework Computer> Do we need to modify the dependency for marigold
 # like for Lotus/Azalea in 868425e8d84ce776c9846eeffe29fe564db1fecd ?
-# if PLATFORM_EC_USBC
+if PLATFORM_EC_USBC
 
 config PLATFORM_EC_USBC_OCP
 	bool

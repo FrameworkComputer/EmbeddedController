@@ -588,8 +588,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DUAL_ROLE
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_CONSOLE_CMD
                                                 "${PLATFORM_EC}/common/usb_pd_console_cmd.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_HOST_CMD
-                                                "${PLATFORM_EC}/common/usb_pd_host_cmd.c"
-                                                "${PLATFORM_EC}/common/usbc/usb_pd_host.c")
+                                                "${PLATFORM_EC}/common/usb_pd_host_cmd.c")
+                                                #"${PLATFORM_EC}/common/usbc/usb_pd_host.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DP_HPD_GPIO
                                                 "${PLATFORM_EC}/common/usbc/dp_hpd_gpio.c")

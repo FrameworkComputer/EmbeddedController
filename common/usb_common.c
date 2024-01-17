@@ -607,23 +607,23 @@ static void pd_usb_billboard_deferred(void)
 DECLARE_DEFERRED(pd_usb_billboard_deferred);
 
 #ifdef CONFIG_USB_PD_DISCHARGE
-static void gpio_discharge_vbus(int port, int enable)
-{
-#ifdef CONFIG_USB_PD_DISCHARGE_GPIO
-	enum gpio_signal dischg_gpio[] = {
-		GPIO_USB_C0_DISCHARGE,
-#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
-		GPIO_USB_C1_DISCHARGE,
-#endif
-#if CONFIG_USB_PD_PORT_MAX_COUNT > 2
-		GPIO_USB_C2_DISCHARGE,
-#endif
-	};
-	BUILD_ASSERT(ARRAY_SIZE(dischg_gpio) == CONFIG_USB_PD_PORT_MAX_COUNT);
-
-	gpio_set_level(dischg_gpio[port], enable);
-#endif /* CONFIG_USB_PD_DISCHARGE_GPIO */
-}
+//static void gpio_discharge_vbus(int port, int enable)
+//{
+//#ifdef CONFIG_USB_PD_DISCHARGE_GPIO
+//	enum gpio_signal dischg_gpio[] = {
+//		GPIO_USB_C0_DISCHARGE,
+//#if CONFIG_USB_PD_PORT_MAX_COUNT > 1
+//		GPIO_USB_C1_DISCHARGE,
+//#endif
+//#if CONFIG_USB_PD_PORT_MAX_COUNT > 2
+//		GPIO_USB_C2_DISCHARGE,
+//#endif
+//	};
+//	BUILD_ASSERT(ARRAY_SIZE(dischg_gpio) == CONFIG_USB_PD_PORT_MAX_COUNT);
+//
+//	gpio_set_level(dischg_gpio[port], enable);
+//#endif /* CONFIG_USB_PD_DISCHARGE_GPIO */
+//}
 
 void pd_set_vbus_discharge(int port, int enable)
 {
@@ -645,7 +645,7 @@ void pd_set_vbus_discharge(int port, int enable)
 	enable &= !board_vbus_source_enabled(port);
 
 	if (get_usb_pd_discharge() == USB_PD_DISCHARGE_GPIO) {
-		gpio_discharge_vbus(port, enable);
+		//gpio_discharge_vbus(port, enable);
 	} else if (get_usb_pd_discharge() == USB_PD_DISCHARGE_TCPC) {
 #ifdef CONFIG_USB_PD_DISCHARGE_TCPC
 		tcpc_discharge_vbus(port, enable);
