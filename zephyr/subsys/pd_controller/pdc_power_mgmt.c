@@ -155,8 +155,6 @@ enum snk_attached_local_state_t {
 enum src_attached_local_state_t {
 	/** SRC_ATTACHED_GET_CONNECTOR_CAPABILITY */
 	SRC_ATTACHED_GET_CONNECTOR_CAPABILITY,
-	/** SRC_ATTACHED_SET_SINK_PATH_OFF */
-	SRC_ATTACHED_SET_SINK_PATH_OFF,
 	/** SRC_ATTACHED_SET_DR_SWAP_POLICY */
 	SRC_ATTACHED_SET_DR_SWAP_POLICY,
 	/** SRC_ATTACHED_SET_PR_SWAP_POLICY */
@@ -169,8 +167,6 @@ enum src_attached_local_state_t {
  * @brief Unattached Local States
  */
 enum unattached_local_state_t {
-	/** UNATTACHED_SET_SINK_PATH_OFF */
-	UNATTACHED_SET_SINK_PATH_OFF,
 	/** UNATTACHED_RUN */
 	UNATTACHED_RUN,
 };
@@ -697,7 +693,7 @@ static void pdc_unattached_entry(void *obj)
 	port->send_cmd.intern.pending = false;
 
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
-		port->unattached_local_state = UNATTACHED_SET_SINK_PATH_OFF;
+		port->unattached_local_state = UNATTACHED_RUN;
 	}
 }
 
@@ -725,10 +721,6 @@ static void pdc_unattached_run(void *obj)
 	}
 
 	switch (port->unattached_local_state) {
-	case UNATTACHED_SET_SINK_PATH_OFF:
-		port->unattached_local_state = UNATTACHED_RUN;
-		send_snk_path_en_cmd(port, false);
-		return;
 	case UNATTACHED_RUN:
 		run_unattached_policies(port);
 		break;
@@ -747,13 +739,8 @@ static void pdc_src_attached_entry(void *obj)
 	port->send_cmd.intern.pending = false;
 
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
-		if (port->last_state == PDC_SNK_ATTACHED) {
-			port->src_attached_local_state =
-				SRC_ATTACHED_SET_SINK_PATH_OFF;
-		} else {
-			port->src_attached_local_state =
-				SRC_ATTACHED_GET_CONNECTOR_CAPABILITY;
-		}
+		port->src_attached_local_state =
+			SRC_ATTACHED_GET_CONNECTOR_CAPABILITY;
 	}
 }
 
@@ -783,11 +770,6 @@ static void pdc_src_attached_run(void *obj)
 	/* TODO: b/319643480 - Brox: implement SRC policies */
 
 	switch (port->src_attached_local_state) {
-	case SRC_ATTACHED_SET_SINK_PATH_OFF:
-		port->src_attached_local_state =
-			SRC_ATTACHED_GET_CONNECTOR_CAPABILITY;
-		send_snk_path_en_cmd(port, false);
-		return;
 	case SRC_ATTACHED_GET_CONNECTOR_CAPABILITY:
 		port->src_attached_local_state =
 			SRC_ATTACHED_SET_DR_SWAP_POLICY;
