@@ -7,6 +7,7 @@ find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ "src/board_power.c")
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ "src/charger.c")
+zephyr_library_sources("src/hibernate.c")
 zephyr_library_sources("src/usbc_stubs.c")
 
 if(DEFINED CONFIG_BOARD_BROX)
