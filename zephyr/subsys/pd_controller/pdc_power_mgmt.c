@@ -11,6 +11,7 @@
 
 #include "charge_manager.h"
 #include "charge_state.h"
+#include "usbc/pdc_power_mgmt.h"
 
 #include <zephyr/devicetree.h>
 #include <zephyr/kernel.h>
@@ -1249,6 +1250,22 @@ static int pdc_subsys_init(const struct device *dev)
 }
 
 /**
+ * @brief Returns true if command can be executed without a port partner
+ * connection
+ */
+static bool is_connectionless_cmd(enum pdc_cmd_t pdc_cmd)
+{
+	switch (pdc_cmd) {
+	case CMD_PDC_RESET:
+		/* fall-through */
+	case CMD_PDC_GET_INFO:
+		return true;
+	default:
+		return false;
+	}
+}
+
+/**
  * @brief Called from a public API function to block until the command completes
  * or time outs
  */
@@ -1275,6 +1292,17 @@ static int public_api_block(int port, enum pdc_cmd_t pdc_cmd)
 			/* something went wrong */
 			LOG_ERR("Public API blocking timeout");
 			return -EBUSY;
+		}
+
+		/* Check for commands that don't require a connection */
+		if (is_connectionless_cmd(pdc_cmd)) {
+			continue;
+		}
+
+		/* The system is blocking on a command that requires a
+		 * connection, so return if disconnected */
+		if (!pdc_power_mgmt_is_connected(port)) {
+			return -EIO;
 		}
 	}
 
@@ -1642,11 +1670,6 @@ uint32_t pdc_power_mgmt_get_vbus_voltage(int port)
 
 void pdc_power_mgmt_reset(int port)
 {
-	/* Make sure port is connected */
-	if (!pdc_power_mgmt_is_connected(port)) {
-		return;
-	}
-
 	/* Block until command completes */
 	public_api_block(port, CMD_PDC_RESET);
 }
