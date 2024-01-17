@@ -209,4 +209,18 @@ uint32_t pdc_power_mgmt_get_vbus_voltage(int port);
  */
 void pdc_power_mgmt_reset(int port);
 
+/**
+ * @brief Request a power role swap
+ *
+ * @param port USB-C port number
+ */
+void pdc_power_mgmt_request_power_swap(int port);
+
+/**
+ * @brief Request a data role swap
+ *
+ * @param port USB-C port number
+ */
+void pdc_power_mgmt_request_data_swap(int port);
+
 #endif /* __CROS_EC_PDC_POWER_MGMT_H */

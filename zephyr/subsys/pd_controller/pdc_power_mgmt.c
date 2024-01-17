@@ -396,9 +396,9 @@ struct pdc_port_t {
 	bool sink_path_en;
 	/** VBUS temp variable used with CMD_PDC_GET_VBUS_VOLTAGE command */
 	uint16_t vbus;
-	/** UOR temp variable used with CMD_PDC_SET_UOR command */
+	/** UOR variable used with CMD_PDC_SET_UOR command */
 	union uor_t uor;
-	/** PDR temp variable used with CMD_PDC_SET_PDR command */
+	/** PDR variable used with CMD_PDC_SET_PDR command */
 	union pdr_t pdr;
 	/** True if battery can charge from this port */
 	bool active_charge;
@@ -463,6 +463,12 @@ static void run_public_api_command(struct pdc_port_t *port)
 					     CMD_PDC_GET_VBUS_VOLTAGE)) {
 		queue_public_cmd(port, CMD_PDC_GET_VBUS_VOLTAGE);
 		return;
+	} else if (atomic_test_and_clear_bit(port->pdc_cmd_flags,
+					     CMD_PDC_SET_PDR)) {
+		queue_public_cmd(port, CMD_PDC_SET_PDR);
+	} else if (atomic_test_and_clear_bit(port->pdc_cmd_flags,
+					     CMD_PDC_SET_UOR)) {
+		queue_public_cmd(port, CMD_PDC_SET_UOR);
 	}
 }
 
@@ -1445,7 +1451,6 @@ int pdc_power_mgmt_accept_data_swap(int port, bool val)
 	}
 
 	/* Set DR accept swap policy */
-	pdc_data[port]->port.uor.raw_value = 0;
 	pdc_data[port]->port.uor.accept_dr_swap = val;
 
 	/* Block until command completes */
@@ -1465,7 +1470,6 @@ int pdc_power_mgmt_accept_power_swap(int port, bool val)
 	}
 
 	/* Set PR accept swap policy */
-	pdc_data[port]->port.pdr.raw_value = 0;
 	pdc_data[port]->port.pdr.accept_pr_swap = val;
 
 	/* Block until command completes */
@@ -1477,7 +1481,8 @@ int pdc_power_mgmt_accept_power_swap(int port, bool val)
 	return EC_SUCCESS;
 }
 
-static int pdc_power_mgmt_request_data_swap(int port, enum pd_data_role role)
+static int pdc_power_mgmt_request_data_swap_intern(int port,
+						   enum pd_data_role role)
 {
 	/* Make sure port is connected */
 	if (!pdc_power_mgmt_is_connected(port)) {
@@ -1489,10 +1494,12 @@ static int pdc_power_mgmt_request_data_swap(int port, enum pd_data_role role)
 		/* Attempt to swapt to UFP */
 		pdc_data[port]->port.uor.swap_to_dfp = 0;
 		pdc_data[port]->port.uor.swap_to_ufp = 1;
-	} else {
+	} else if (role == PD_ROLE_DFP) {
 		/* Attempt to swapt to DFP */
 		pdc_data[port]->port.uor.swap_to_dfp = 1;
 		pdc_data[port]->port.uor.swap_to_ufp = 0;
+	} else {
+		return EC_SUCCESS;
 	}
 
 	/* Block until command completes */
@@ -1506,22 +1513,32 @@ static int pdc_power_mgmt_request_data_swap(int port, enum pd_data_role role)
 
 void pdc_power_mgmt_request_data_swap_to_ufp(int port)
 {
-	pdc_power_mgmt_request_data_swap(port, PD_ROLE_UFP);
+	pdc_power_mgmt_request_data_swap_intern(port, PD_ROLE_UFP);
 }
 
 void pdc_power_mgmt_request_data_swap_to_dfp(int port)
 {
-	pdc_power_mgmt_request_data_swap(port, PD_ROLE_DFP);
+	pdc_power_mgmt_request_data_swap_intern(port, PD_ROLE_DFP);
 }
 
-static int pdc_power_mgmt_request_power_swap(int port, enum pd_power_role role)
+void pdc_power_mgmt_request_data_swap(int port)
+{
+	if (pdc_power_mgmt_pd_get_data_role(port) == PD_ROLE_DFP) {
+		pdc_power_mgmt_request_data_swap_intern(port, PD_ROLE_UFP);
+	} else if (pdc_power_mgmt_pd_get_data_role(port) == PD_ROLE_UFP) {
+		pdc_power_mgmt_request_data_swap_intern(port, PD_ROLE_DFP);
+	}
+}
+
+static int pdc_power_mgmt_request_power_swap_intern(int port,
+						    enum pd_power_role role)
 {
 	/* Make sure port is connected */
 	if (!pdc_power_mgmt_is_connected(port)) {
 		return 1;
 	}
 
-	/* Set DR accept swap policy */
+	/* Set PR accept swap policy */
 	if (role == PD_ROLE_SOURCE) {
 		/* Attempt to swap to SOURCE */
 		pdc_data[port]->port.pdr.swap_to_snk = 0;
@@ -1543,12 +1560,21 @@ static int pdc_power_mgmt_request_power_swap(int port, enum pd_power_role role)
 
 void pdc_power_mgmt_request_swap_to_src(int port)
 {
-	pdc_power_mgmt_request_power_swap(port, PD_ROLE_SOURCE);
+	pdc_power_mgmt_request_power_swap_intern(port, PD_ROLE_SOURCE);
 }
 
 void pdc_power_mgmt_request_swap_to_snk(int port)
 {
-	pdc_power_mgmt_request_power_swap(port, PD_ROLE_SINK);
+	pdc_power_mgmt_request_power_swap_intern(port, PD_ROLE_SINK);
+}
+
+void pdc_power_mgmt_request_power_swap(int port)
+{
+	if (pdc_power_mgmt_is_sink_connected(port)) {
+		pdc_power_mgmt_request_power_swap_intern(port, PD_ROLE_SOURCE);
+	} else if (pdc_power_mgmt_is_source_connected(port)) {
+		pdc_power_mgmt_request_power_swap_intern(port, PD_ROLE_SINK);
+	}
 }
 
 enum tcpc_cc_polarity pdc_power_mgmt_pd_get_polarity(int port)
