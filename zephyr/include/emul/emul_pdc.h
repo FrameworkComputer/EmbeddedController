@@ -50,6 +50,8 @@ typedef int (*emul_pdc_get_retimer_fw_t)(const struct emul *target,
 
 typedef int (*emul_pdc_set_response_delay_t)(const struct emul *target,
 					     uint32_t delay_ms);
+typedef int (*emul_pdc_get_requested_power_level_t)(
+	const struct emul *target, enum usb_typec_current_t *level);
 
 __subsystem struct emul_pdc_api_t {
 	emul_pdc_set_response_delay_t set_response_delay;
@@ -70,6 +72,7 @@ __subsystem struct emul_pdc_api_t {
 	emul_pdc_set_info_t set_info;
 	emul_pdc_get_current_flash_bank_t get_current_flash_bank;
 	emul_pdc_get_retimer_fw_t get_retimer;
+	emul_pdc_get_requested_power_level_t get_requested_power_level;
 };
 
 static inline int emul_pdc_set_ucsi_version(const struct emul *target,
@@ -79,13 +82,12 @@ static inline int emul_pdc_set_ucsi_version(const struct emul *target,
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->set_ucsi_version) {
 		return api->set_ucsi_version(target, version);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_reset(const struct emul *target)
@@ -94,13 +96,12 @@ static inline int emul_pdc_reset(const struct emul *target)
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->reset) {
 		return api->reset(target);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_get_connector_reset(const struct emul *target,
@@ -110,13 +111,12 @@ static inline int emul_pdc_get_connector_reset(const struct emul *target,
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->get_connector_reset) {
 		return api->get_connector_reset(target, type);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_set_capability(const struct emul *target,
@@ -126,13 +126,12 @@ static inline int emul_pdc_set_capability(const struct emul *target,
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->set_capability) {
 		return api->set_capability(target, caps);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int
@@ -143,13 +142,12 @@ emul_pdc_set_connector_capability(const struct emul *target,
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->set_connector_capability) {
 		return api->set_connector_capability(target, caps);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_get_ccom(const struct emul *target,
@@ -159,13 +157,12 @@ static inline int emul_pdc_get_ccom(const struct emul *target,
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->get_ccom) {
 		return api->get_ccom(target, ccom, dm);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_get_uor(const struct emul *target, union uor_t *uor)
@@ -174,13 +171,12 @@ static inline int emul_pdc_get_uor(const struct emul *target, union uor_t *uor)
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->get_uor) {
 		return api->get_uor(target, uor);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_get_pdr(const struct emul *target, union pdr_t *pdr)
@@ -189,13 +185,12 @@ static inline int emul_pdc_get_pdr(const struct emul *target, union pdr_t *pdr)
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->get_pdr) {
 		return api->get_pdr(target, pdr);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_get_sink_path(const struct emul *target, bool *en)
@@ -204,13 +199,12 @@ static inline int emul_pdc_get_sink_path(const struct emul *target, bool *en)
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->get_sink_path) {
 		return api->get_sink_path(target, en);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int
@@ -221,13 +215,12 @@ emul_pdc_set_connector_status(const struct emul *target,
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->set_connector_status) {
 		return api->set_connector_status(target, connector_status);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_set_error_status(const struct emul *target,
@@ -237,13 +230,12 @@ static inline int emul_pdc_set_error_status(const struct emul *target,
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->set_error_status) {
 		return api->set_error_status(target, es);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_set_vbus(const struct emul *target,
@@ -253,13 +245,12 @@ static inline int emul_pdc_set_vbus(const struct emul *target,
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->set_vbus_voltage) {
 		return api->set_vbus_voltage(target, vbus);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_set_pdos(const struct emul *target,
@@ -272,14 +263,13 @@ static inline int emul_pdc_set_pdos(const struct emul *target,
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->set_pdos) {
 		return api->set_pdos(target, pdo_type, pdo_offset, num_pdos,
 				     port_partner_pdo, pdos);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_set_info(const struct emul *target,
@@ -289,13 +279,12 @@ static inline int emul_pdc_set_info(const struct emul *target,
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->set_info) {
 		return api->set_info(target, info);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_set_current_pdo(const struct emul *target,
@@ -305,13 +294,12 @@ static inline int emul_pdc_set_current_pdo(const struct emul *target,
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->set_current_pdo) {
 		return api->set_current_pdo(target, pdo);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_get_current_flash_bank(const struct emul *target,
@@ -321,13 +309,12 @@ static inline int emul_pdc_get_current_flash_bank(const struct emul *target,
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->get_current_flash_bank) {
 		return api->get_current_flash_bank(target, bank);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_get_retimer_fw(const struct emul *target,
@@ -337,13 +324,12 @@ static inline int emul_pdc_get_retimer_fw(const struct emul *target,
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->get_retimer) {
 		return api->get_retimer(target, enable);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
 }
 
 static inline int emul_pdc_set_response_delay(const struct emul *target,
@@ -353,13 +339,28 @@ static inline int emul_pdc_set_response_delay(const struct emul *target,
 		return -ENOTSUP;
 	}
 
-	struct emul_pdc_api_t *api =
-		(struct emul_pdc_api_t *)target->backend_api;
+	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->set_response_delay) {
 		return api->set_response_delay(target, delay_ms);
 	}
-	return -ENOTSUP;
+	return -ENOSYS;
+}
+
+static inline int
+emul_pdc_get_requested_power_level(const struct emul *target,
+				   enum usb_typec_current_t *level)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_api_t *api = target->backend_api;
+
+	if (api->get_requested_power_level) {
+		return api->get_requested_power_level(target, level);
+	}
+	return -ENOSYS;
 }
 
 #endif /* ZEPHYR_INCLUDE_EMUL_PDC_H_ */

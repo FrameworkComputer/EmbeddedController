@@ -217,3 +217,25 @@ ZTEST_USER(pdc_api, test_rdo)
 	k_sleep(K_MSEC(100));
 	zassert_equal(in, out);
 }
+
+ZTEST_USER(pdc_api, test_set_power_level)
+{
+	int i;
+	enum usb_typec_current_t out;
+	enum usb_typec_current_t in[] = {
+		TC_CURRENT_USB_DEFAULT,
+		TC_CURRENT_1_5A,
+		TC_CURRENT_3_0A,
+	};
+
+	zassert_equal(pdc_set_power_level(dev, TC_CURRENT_PPM_DEFINED),
+		      -EINVAL);
+
+	for (i = 0; i < ARRAY_SIZE(in); i++) {
+		zassert_ok(pdc_set_power_level(dev, in[i]));
+
+		k_sleep(K_MSEC(100));
+		emul_pdc_get_requested_power_level(emul, &out);
+		zassert_equal(in[i], out);
+	}
+}

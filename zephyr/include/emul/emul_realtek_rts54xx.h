@@ -156,6 +156,20 @@ union rts54_request {
 		struct rts54_subcommand_header header;
 		uint8_t port_num;
 	} get_rdo;
+
+	struct set_tpc_rp_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+		union tpc_rp_t {
+			uint8_t raw_value;
+			struct {
+				uint8_t reserved0 : 2;
+				uint8_t tpc_rp : 2;
+				uint8_t pd_rp : 2;
+				uint8_t reserved1 : 2;
+			};
+		} tpc_rp;
+	} set_tpc_rp;
 };
 
 union rts54_response {
@@ -317,6 +331,7 @@ struct rts5453p_emul_pdc_data {
 	union pdr_t pdr;
 	union error_status_t error;
 	uint32_t rdo;
+	union tpc_rp_t tpc_rp;
 
 	union rts54_request request;
 

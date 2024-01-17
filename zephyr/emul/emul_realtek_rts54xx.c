@@ -379,6 +379,20 @@ static int get_rdo(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int set_tpc_rp(struct rts5453p_emul_pdc_data *data,
+		      const union rts54_request *req)
+{
+	LOG_INF("SET_TPC_RP port=%d, value=0x%X", req->set_tpc_rp.port_num,
+		req->set_tpc_rp.tpc_rp.raw_value);
+
+	data->tpc_rp = req->set_tpc_rp.tpc_rp;
+
+	memset(&data->response, 0, sizeof(data->response));
+	send_response(data);
+
+	return 0;
+}
+
 static bool send_response(struct rts5453p_emul_pdc_data *data)
 {
 	if (data->delay_ms > 0) {
@@ -438,7 +452,7 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0x03, HANDLER_DEF(unsupported) },
 	{ .code = 0x04, HANDLER_DEF(set_rdo) },
 	{ .code = 0x44, HANDLER_DEF(unsupported) },
-	{ .code = 0x05, HANDLER_DEF(unsupported) },
+	{ .code = 0x05, HANDLER_DEF(set_tpc_rp) },
 	{ .code = 0x19, HANDLER_DEF(unsupported) },
 	{ .code = 0x1A, HANDLER_DEF(unsupported) },
 	{ .code = 0x1D, HANDLER_DEF(unsupported) },
@@ -816,6 +830,31 @@ static int emul_realtek_rts54xx_get_pdr(const struct emul *target,
 	return 0;
 }
 
+static int
+emul_realtek_rts54xx_get_requested_power_level(const struct emul *target,
+					       enum usb_typec_current_t *level)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	switch (data->tpc_rp.tpc_rp) {
+	case 1:
+		*level = TC_CURRENT_USB_DEFAULT;
+		break;
+	case 2:
+		*level = TC_CURRENT_1_5A;
+		break;
+	case 3:
+		*level = TC_CURRENT_3_0A;
+		break;
+	default:
+		LOG_ERR("Invalid tpc_rp value 0x%X", data->tpc_rp.tpc_rp);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.set_response_delay = emul_realtek_rts54xx_set_response_delay,
 	.get_connector_reset = emul_realtek_rts54xx_get_connector_reset,
@@ -826,6 +865,8 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.set_connector_status = emul_realtek_rts54xx_set_connector_status,
 	.get_uor = emul_realtek_rts54xx_get_uor,
 	.get_pdr = emul_realtek_rts54xx_get_pdr,
+	.get_requested_power_level =
+		emul_realtek_rts54xx_get_requested_power_level,
 };
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \
