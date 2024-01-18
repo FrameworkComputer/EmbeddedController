@@ -5,7 +5,7 @@
 # found in the LICENSE file.
 
 mapfile -d '' cmakes < <(find zephyr \( -path zephyr/test -prune \) -o \
-  -name CMakeLists.txt -print0)
+  \( -name CMakeLists.txt -o -name tcpmv2.cmake \) -print0)
 
 exit_code=0
 
