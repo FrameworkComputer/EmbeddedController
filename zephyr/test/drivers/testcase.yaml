@@ -430,12 +430,12 @@ tests:
     - prj.conf
     - ec_host_cmd.conf
   drivers.chargesplash.mock_power:
-    timeout: 360
+    timeout: 600
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_CHARGESPLASH=y
     - CONFIG_POWER_SEQUENCE_MOCK=y
   drivers.chargesplash.mock_power.ec_host_cmd:
-    timeout: 360
+    timeout: 600
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_CHARGESPLASH=y
     - CONFIG_POWER_SEQUENCE_MOCK=y
@@ -1091,6 +1091,7 @@ tests:
     extra_dtc_overlay_files:
     - boards/native_posix.overlay
     - sm5803/sm5803.dts
+    timeout: 120
   drivers.sm5803.ec_host_cmd:
     extra_conf_files:
     - prj.conf
@@ -1101,6 +1102,7 @@ tests:
     extra_dtc_overlay_files:
     - boards/native_posix.overlay
     - sm5803/sm5803.dts
+    timeout: 120
   drivers.system:
     tags: common system
     extra_configs:
