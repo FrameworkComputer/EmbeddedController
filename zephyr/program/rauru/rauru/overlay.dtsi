@@ -79,11 +79,44 @@
 };
 
 &pinctrl {
-	i2c3_clk_gpf2_sleep: i2c3_clk_gpf2_sleep {
-		pinmuxs = <&pinctrlf 2 IT8XXX2_ALT_DEFAULT>;
+	/* I2C property setting */
+	i2c0_clk_gpb3_default: i2c0_clk_gpb3_default {
+		gpio-voltage = "3v3";
 	};
-	i2c3_data_gpf3_sleep: i2c3_data_gpf3_sleep {
-		pinmuxs = <&pinctrlf 3 IT8XXX2_ALT_DEFAULT>;
+	i2c0_data_gpb4_default: i2c0_data_gpb4_default {
+		gpio-voltage = "3v3";
+	};
+	i2c1_clk_gpc1_default: i2c1_clk_gpc1_default {
+		gpio-voltage = "3v3";
+	};
+	i2c1_data_gpc2_default: i2c1_data_gpc2_default {
+		gpio-voltage = "3v3";
+	};
+	i2c2_clk_gpf6_default: i2c2_clk_gpf6_default {
+		gpio-voltage = "3v3";
+	};
+	i2c2_data_gpf7_default: i2c2_data_gpf7_default {
+		gpio-voltage = "3v3";
+	};
+	i2c3_clk_gpb2_default: i2c3_clk_gpb2_default {
+		gpio-voltage = "1v8";
+	};
+	i2c3_data_gpb5_default: i2c3_data_gpb5_default {
+		gpio-voltage = "1v8";
+	};
+	i2c3_clk_gpb2_sleep: i2c3_clk_gpb2_sleep {
+		pinmuxs = <&pinctrlb 2 IT8XXX2_ALT_DEFAULT>;
+		gpio-voltage = "1v8";
+	};
+	i2c3_data_gpb5_sleep: i2c3_data_gpb5_sleep {
+		pinmuxs = <&pinctrlb 5 IT8XXX2_ALT_DEFAULT>;
+		gpio-voltage = "1v8";
+	};
+	i2c4_clk_gpe0_default: i2c4_clk_gpe0_default {
+		gpio-voltage = "3v3";
+	};
+	i2c4_data_gpe7_default: i2c4_data_gpe7_default {
+		gpio-voltage = "3v3";
 	};
 };
 
@@ -106,6 +139,11 @@
 &i2c3 {
 	label = "I2C_SENSOR";
 	clock-frequency = <I2C_BITRATE_FAST>;
+	scl-gpios = <&gpiob 2 0>;
+	sda-gpios = <&gpiob 5 0>;
+	pinctrl-1 = <&i2c3_clk_gpb2_sleep
+			&i2c3_data_gpb5_sleep>;
+	pinctrl-names = "default", "sleep";
 	prescale-scl-low = <1>;
 };
 
