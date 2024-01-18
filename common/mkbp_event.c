@@ -499,20 +499,20 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_NEXT_EVENT, mkbp_get_next_event,
 		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2));
 
 #ifdef CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK
-#ifdef CONFIG_MKBP_USE_HOST_EVENT
+#ifndef CONFIG_HOSTCMD_X86
 static enum ec_status
 mkbp_get_host_event_wake_mask(struct host_cmd_handler_args *args)
 {
 	struct ec_response_host_event_mask *r = args->response;
 
-	r->mask = CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK;
+	r->mask = mkbp_host_event_wake_mask;
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_HOST_EVENT_GET_WAKE_MASK,
 		     mkbp_get_host_event_wake_mask, EC_VER_MASK(0));
-#endif /* CONFIG_MKBP_USE_HOST_EVENT */
+#endif /* !CONFIG_HOSTCMD_X86 */
 #endif /* CONFIG_MKBP_HOST_EVENT_WAKEUP_MASK */
 
 #if defined(CONFIG_MKBP_EVENT_WAKEUP_MASK) || \
