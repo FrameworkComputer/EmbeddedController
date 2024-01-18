@@ -10,7 +10,7 @@
 #include "hooks.h"
 #include "temp_sensor.h"
 #include "temp_sensor/f75303.h"
-#include "driver/temp_sensor/f75397.h"
+#include "temp_sensor/f75397.h"
 #include "temp_sensor/pct2075.h"
 #include "temp_sensor/sb_tsi.h"
 #include "temp_sensor/temp_sensor.h"
@@ -253,7 +253,7 @@ const struct f75303_sensor_t f75303_sensors[F75303_IDX_COUNT] = {
 __maybe_unused static int f75397_get_temp(const struct temp_sensor_t *sensor,
 					  int *temp_ptr)
 {
-	return f75397_get_val(sensor->idx, temp_ptr);
+	return f75397_get_val_k(sensor->idx, temp_ptr);
 }
 #endif /* F75397_COMPAT */
 

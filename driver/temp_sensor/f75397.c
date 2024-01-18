@@ -6,11 +6,12 @@
 /* F75397 temperature sensor module for Chrome EC */
 
 #include "common.h"
-#include "f75397.h"
-#include "i2c.h"
-#include "hooks.h"
-#include "util.h"
 #include "console.h"
+#include "hooks.h"
+#include "i2c.h"
+#include "math_util.h"
+#include "temp_sensor/f75397.h"
+#include "util.h"
 
 #ifdef CONFIG_ZEPHYR
 #include "temp_sensor/temp_sensor.h"
@@ -93,6 +94,15 @@ int f75397_get_val(int idx, int *temp)
 		return EC_ERROR_NOT_POWERED;
 
 	*temp = temps[idx];
+	return EC_SUCCESS;
+}
+
+int f75397_get_val_k(int idx, int *temp_k_ptr)
+{
+	if (idx >= F75397_IDX_COUNT)
+		return EC_ERROR_INVAL;
+
+	*temp_k_ptr = MILLI_KELVIN_TO_KELVIN(temps[idx]);
 	return EC_SUCCESS;
 }
 
