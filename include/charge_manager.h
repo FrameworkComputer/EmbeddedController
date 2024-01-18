@@ -373,4 +373,9 @@ int is_pd_port(int port);
  */
 __override_proto int board_get_leave_safe_mode_delay_ms(void);
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+#ifndef CONFIG_PD_COMMON_VBUS_CONTROL
+extern int check_power_on_port(void);
+#endif /* CONFIG_PD_COMMON_VBUS_CONTROL */
+#endif /* CONFIG_CUSTOMIZED_DESIGN */
 #endif /* __CROS_EC_CHARGE_MANAGER_H */

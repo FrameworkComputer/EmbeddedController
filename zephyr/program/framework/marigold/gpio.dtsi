@@ -7,6 +7,7 @@
 
 	aliases {
 		gpio-check-fp-control = &gpio_fp_control;
+		gpio-mux-uart-flip = &gpio_mux_sub_uart_flip;
 	};
 	named-gpios {
 		compatible = "named-gpios";
@@ -22,6 +23,7 @@
 		};
 		gpio_prim_pwr_ok: prim_pwr_ok {
 			gpios = <&gpio7 6 GPIO_INPUT>;	/* Monitor PCH Prim power ok */
+			enum-name = "GPIO_POWER_GOOD_PRIM_PWR";
 		};
 		otg_en {
 			gpios = <&gpioc 5 GPIO_OUTPUT_LOW>;
@@ -80,16 +82,16 @@
 		gpio_cap_led: cap_led {
 			gpios = <&gpiob 1 GPIO_OUTPUT_LOW>;
 		};
-		gpio_on_off_btn_l: on_off_btn_l {
+		gpio_hw_acav_in: adp_in {
 			gpios = <&gpiod 2 GPIO_INPUT>;		/* PSL in1 signal, power button */
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_on_off_btn_l: on_off_btn_l {
+			gpios = <&gpio0 0 GPIO_INPUT>;		/* PSL in2 signal, chassis open */
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_chassis_open_l: chassis_open_l {
-			gpios = <&gpio0 0 GPIO_INPUT>;		/* PSL in2 signal, chassis open */
-		};
-		gpio_hw_acav_in: adp_in {
 			gpios = <&gpio0 1 GPIO_INPUT>;		/* PSL in3 signal, ac present pin */
-			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_lid_sw_l: lid_sw_l {
 			gpios = <&gpio0 2 GPIO_INPUT>;
@@ -148,7 +150,7 @@
 		gpio_fp_control: fp_ctrl {
 			gpios = <&gpio3 4 GPIO_INPUT>;		/* Finger Printer feature */
 		};
-		soc_enbkl_ls {
+		gpio_soc_enbkl_ls: soc_enbkl_ls {
 			gpios = <&gpioe 0 GPIO_INPUT>;		/* monitor CPU EDP BKLEN */
 		};
 		gpio_sm_panel_bken_ec: ec_bkoff_l {
@@ -159,6 +161,7 @@
 		};
 		gpio_slp_s4_l: pm_slp_s4_l {
 			gpios = <&gpioa 0 GPIO_INPUT>;	/*Monitor CPU entry/leave S4 */
+			enum-name = "GPIO_PCH_SLP_S4_L";
 		};
 		soc_tp_int_l {
 			gpios = <&gpioa 4 GPIO_INPUT>;	/* Interrupt of TP module  */
@@ -196,7 +199,7 @@
 			/* ME flash, strap default low before PLT_PWROK*/
 			gpios = <&gpio7 4 (GPIO_OUTPUT_LOW | GPIO_VOLTAGE_1P8)>;
 		};
-		mux_sub_uart_flip {
+		gpio_mux_sub_uart_flip: mux_sub_uart_flip {
 			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;	/*TBT SBU MUX*/
 		};
 		gpio_pd_chip1_interrupt: ec_pd_intb_l {
@@ -228,13 +231,13 @@
 };
 
 /* PSL input pads*/
-&psl_in1_gpd2 {
+&psl_in2_gp00 {
 	/* Power button */
 	psl-in-mode = "edge";
 	psl-in-pol = "low-falling";
 };
 
-&psl_in3_gp01 {
+&psl_in1_gpd2 {
 	/* ac present */
 	psl-in-mode = "edge";
 	psl-in-pol = "high-rising";
@@ -245,7 +248,7 @@
 &power_ctrl_psl {
 	status = "okay";
 	pinctrl-names = "sleep";
-	pinctrl-0 = <&psl_in1_gpd2 &psl_in3_gp01>;
+	pinctrl-0 = <&psl_in1_gpd2 &psl_in2_gp00>;
 };
 
 /* host interface */

@@ -59,6 +59,16 @@ const struct power_signal_info power_signal_list[] = {
 		.flags = POWER_SIGNAL_ACTIVE_HIGH,
 		.name = "VR_PG_DEASSERTED",
 	},
+	[X86_PRIM_PWR] = {
+		.gpio = GPIO_POWER_GOOD_PRIM_PWR,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "PRIM_PWR_DEASSERTED",
+	},
+	[X86_SLP_S4_N] = {
+		.gpio = GPIO_PCH_SLP_S4_L,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "SLP_S4_DEASSERTED",
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
@@ -153,6 +163,7 @@ void clear_power_flags(void)
 		EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
 }
 
+/* TODO: control the me status */
 void update_me_change(int change)
 {
 	me_change = change;
@@ -231,27 +242,8 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 	/* unused function, EC doesn't control GPIO_SYS_RESET_L */
 }
 
-/**
- * AMD recommended EC needs to check whether the system hangs or not,
- * If EC detect the system hangs, force reset the system then reboot again.
- */
-#define VW_NO_READY 0
-void system_hang_detect(void)
-{
-	static int hang_retry_count;
-	int virtual_wire_ready = get_espi_virtual_wire_channel_status();
-
-	if (virtual_wire_ready == VW_NO_READY && hang_retry_count < 4) {
-		hang_retry_count++;
-		board_reboot_ap_on_g3();
-		chipset_force_shutdown(CHIPSET_RESET_HANG_REBOOT);
-	}
-}
-DECLARE_DEFERRED(system_hang_detect);
-
 static void chipset_force_g3(void)
 {
-	hook_call_deferred(&system_hang_detect_data, -1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
@@ -277,71 +269,6 @@ enum power_state power_chipset_init(void)
 	return POWER_G3;
 }
 
-
-
-static int chipset_prepare_S3(uint8_t enable)
-{
-	if (!enable) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
-		k_msleep(85);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
-	} else {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 1);
-		k_msleep(20);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 1);
-
-		/* wait VR power good */
-		if (power_wait_signals(IN_VR_PGOOD)) {
-			/* something wrong, turn off power and force to g3 */
-			power_chipset_init();
-		}
-
-	}
-
-	return true;
-}
-
-/*
- * Issue : 866a60d67
- * for this issue, if into S3 and resume back by keyboard, system would not wake
- * because scan code was send before espi_rst, at the moment system would not
- * take any scan code, co-work with BIOS when Keyboard event send,
- * do this workaround to send a scan code again
- */
-static void key_stuck_wa(void);
-DECLARE_DEFERRED(key_stuck_wa);
-static void key_stuck_wa(void)
-{
-	int wa_bit = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_DISPLAY_ON);
-
-	if (wa_bit) {
-		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_DISPLAY_ON) = 0;
-		hook_call_deferred(&key_stuck_wa_data, -1);
-		simulate_keyboard(SCANCODE_UNASSIGNED, 1);
-		simulate_keyboard(SCANCODE_UNASSIGNED, 0);
-	} else
-		hook_call_deferred(&key_stuck_wa_data, 10 * MSEC);
-
-}
-
-/*
- * Issue : 866ajywad
- * for this issue, if into S3 and resume back by power button,
- * system would not take Keybuffer(DBBOUT) after EC send IRQ1,
- * add this workaround EC manually send Keybuffer  and clearn OBF flag,
- * it will regenerate a IRQ signal to notice system.
- */
-static void key_stuck_ptn(void)
-{
-	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_DISPLAY_ON) = 0;
-	simulate_keyboard(SCANCODE_UNASSIGNED, 1);
-	simulate_keyboard(SCANCODE_UNASSIGNED, 0);
-	keyboard_clear_buffer();
-	/* stop key_stuck_wa if system already wake */
-	hook_call_deferred(&key_stuck_wa_data, -1);
-}
-DECLARE_DEFERRED(key_stuck_ptn);
-
 enum power_state power_handle_state(enum power_state state)
 {
 	switch (state) {
@@ -349,27 +276,25 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_G3S5:
-		if (power_wait_signals(X86_3VALW_PG)) {
-			/* something wrong, turn off power and force to g3 */
-			chipset_force_g3();
+
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 1);
+
+		/* TODO: need confirm sequence
+		if (power_wait_signals(POWER_SIGNAL_MASK(X86_PRIM_PWR))) {
 			return POWER_G3;
 		}
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 1);
-		k_msleep(10);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 1);
-		k_msleep(10);
+		*/
+
+		k_msleep(50);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 1);
 
 		/* Customizes power button out signal without PB task for powering on. */
-		k_msleep(90);
-		CPRINTS("PCH PBTN LOW");
+		k_msleep(30);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
-		k_msleep(20);
-		CPRINTS("PCH PBTN HIGH");
+		k_msleep(16);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 1);
 
-		/* Exit SOC G3 */
-		CPRINTS("Exit SOC G3");
 		power_s5_up_control(1);
 		return POWER_S5;
 
@@ -381,7 +306,7 @@ enum power_state power_handle_state(enum power_state state)
 		}
 
 		if (power_s5_up || stress_test_enable) {
-			while (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 0) {
+			while (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s4_l)) == 0) {
 				if (task_wait_event(SECOND) == TASK_EVENT_TIMER) {
 					if (++s5_exit_tries > ap_boot_delay) {
 						CPRINTS("timeout waiting for S5 exit");
@@ -401,7 +326,7 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S5S3;
 		}
 
-		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 1) {
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s4_l)) == 1) {
 			s5_exit_tries = 0;
 			/* Power up to next state */
 			return POWER_S5S3;
@@ -411,52 +336,26 @@ enum power_state power_handle_state(enum power_state state)
 
 	case POWER_S5S3:
 
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 1);
 		/* Call hooks now that rails are up */
-		hook_call_deferred(&system_hang_detect_data, 5 * SECOND);
 		hook_notify(HOOK_CHIPSET_STARTUP);
 		return POWER_S3;
 
 	case POWER_S3:
-		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 1) {
-
-			/* still in s0ix state */
-			if (system_in_s0ix)
-				return POWER_S3S0ix;
-
-			k_msleep(10);
+		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 1)
 			return POWER_S3S0;
-		} else if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s5_l)) == 0) {
-
-			if (system_in_s0ix) {
-				resume_ms_flag = 0;
-				enter_ms_flag = 0;
-				system_in_s0ix = 0;
-				lpc_s0ix_resume_restore_masks();
-				/* Call hooks now that rails are up */
-				hook_notify(HOOK_CHIPSET_RESUME);
-
-				/* if system drop power return to S0 run sequence shutdown */
-				return POWER_S0;
-			}
-			k_msleep(55);
-			/* Power down to next state */
+		else if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s4_l)) == 0) {
+			/* de-asserted the syson < 0.2 ms */
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
 			return POWER_S3S5;
 		}
+
 		break;
 
 	case POWER_S3S0:
 
-		/*
-		 * TODO: distinguish S5 -> S0 and S3 -> S0, the sequences are different
-		 * S5 -> S0: wait 10 - 15 ms then assert the SYSON
-		 * S3 -> S0: wait 10 - 15 ms then assert the SUSP_L
-		 * currently, I will follow the power on sequence to make sure DUT can
-		 * power up from S5.
-		 */
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 1);
-		k_msleep(20);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 1);
-		k_msleep(20);
+		k_msleep(35);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 1);
 
 		/* wait VR power good */
@@ -467,7 +366,10 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_G3;
 		}
 
-		lpc_s0ix_resume_restore_masks();
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwrok_ls), 1);
+		k_msleep(10);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrok_ls), 1);
+
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
 
@@ -482,7 +384,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_slp_s3_l)) == 0) {
 			/* Power down to next state */
-			k_msleep(5);
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
 			return POWER_S0S3;
 		}
 
@@ -506,7 +408,6 @@ enum power_state power_handle_state(enum power_state state)
 				system_in_s0ix = 0;
 				return POWER_S0ixS0;
 			}
-			return POWER_S0ixS3;
 		}
 
 		if (check_s0ix_statsus() == CS_EXIT_S0ix)
@@ -514,36 +415,14 @@ enum power_state power_handle_state(enum power_state state)
 
 		break;
 
-	case POWER_S0ixS3:
-		CPRINTS("PH S0ixS3");
-		/* make sure next time wake flag not error trigger */
-		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_DISPLAY_ON) = 0;
-		hook_call_deferred(&key_stuck_wa_data, -1);
-		/* follow power sequence Disable S3 power */
-		chipset_prepare_S3(0);
-		CPRINTS("PH S0ixS0->S3");
-		return POWER_S3;
-
-	case POWER_S3S0ix:
-		CPRINTS("PH S3->S0ix");
-		hook_call_deferred(&key_stuck_wa_data, 1);
-		/* Enable power for CPU check system */
-		chipset_prepare_S3(1);
-		CPRINTS("PH S3S0ix->S0ix");
-		return POWER_S0ix;
-
 	case POWER_S0ixS0:
 		CPRINTS("PH S0ixS0");
 		resume_ms_flag = 0;
 		system_in_s0ix = 0;
-		hook_call_deferred(&key_stuck_ptn_data, 100 * MSEC);
 		lpc_s0ix_resume_restore_masks();
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
-		CPRINTS("PH S0ixS0->S0");
 		return POWER_S0;
-
-		break;
 
 	case POWER_S0S0ix:
 		enter_ms_flag = 0;
@@ -552,16 +431,14 @@ enum power_state power_handle_state(enum power_state state)
 		lpc_s0ix_suspend_clear_masks();
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
-		CPRINTS("PH S0S0ix->S0ix");
 		return POWER_S0ix;
-
-		break;
 #endif
 
 	case POWER_S0S3:
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
-		k_msleep(85);
+		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwrok_ls), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrok_ls), 0);
 
 		lpc_s0ix_suspend_clear_masks();
 		/* Call hooks before we remove power rails */
@@ -572,9 +449,9 @@ enum power_state power_handle_state(enum power_state state)
 		return POWER_S3;
 
 	case POWER_S3S5:
-		/* Call hooks before we remove power rails */
 		power_s5_up_control(0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_syson), 0);
+
+		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
 		/* set the PD chip system power state "S5" */
@@ -596,18 +473,21 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 0);
 		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
-		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
 
 		cypd_set_power_active();
-
-
 		return POWER_G3;
 	default:
 		break;
 	}
 	return state;
 }
+
+static void peripheral_interrupt_init(void)
+{
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_enkbl));
+}
+DECLARE_HOOK(HOOK_INIT, peripheral_interrupt_init, HOOK_PRIO_DEFAULT);
 
 static void peripheral_power_startup(void)
 {
@@ -622,7 +502,6 @@ DECLARE_HOOK(HOOK_CHIPSET_STARTUP, peripheral_power_startup, HOOK_PRIO_DEFAULT);
 static void peripheral_power_resume(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sm_panel_bken_ec), 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, peripheral_power_resume, HOOK_PRIO_DEFAULT);
 
@@ -639,9 +518,23 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, peripheral_power_shutdown, HOOK_PRIO_DEFAULT
 static void peripheral_power_suspend(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_mute_l), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sm_panel_bken_ec), 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, peripheral_power_suspend, HOOK_PRIO_DEFAULT);
+
+/* according to Panel team suggest, delay 60ms to meet spec */
+static void bkoff_on_deferred(void)
+{
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sm_panel_bken_ec), 1);
+}
+DECLARE_DEFERRED(bkoff_on_deferred);
+
+void soc_signal_interrupt(enum gpio_signal signal)
+{
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_soc_enbkl_ls)))
+		hook_call_deferred(&bkoff_on_deferred_data, 60 * MSEC);
+	else
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sm_panel_bken_ec), 0);
+}
 
 void chipset_throttle_cpu(int throttle)
 {

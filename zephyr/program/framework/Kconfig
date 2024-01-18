@@ -42,12 +42,34 @@ config PD_CHIP_CCG8
 	  Framework project which uses the CCG8 PD chips.
 	  Enable CCG8 PD feature.
 
+config PD_CCG8_EPR
+	bool "Enable Cypress CCG8 EPR"
+	default n
+	depends on PD_CHIP_CCG8
+	help
+		Support Cypress CCG8 EPR function, this featurn can
+		support more higer powerful adp.
+
 config PD_CHIP_CCG6
 	bool "Select CCG6 PD chip"
 	default n
 	help
 	  Framework project which uses the CCG6 PD chips.
 	  Enable CCG6 PD feature.
+
+config PD_CCG6_ERROR_RECOVERY
+	bool "Enable CCG6 customize error recovery"
+	default n
+	depends on PD_CHIP_CCG6
+	help
+		Enable Cypress CCG6 special error recovery, when bootup to S0
+		will execute reconnect port.
+
+config PD_COMMON_VBUS_CONTROL
+	bool "Enable CCG common vbus control"
+	help
+		Enable Cypress CCG common vbus control, if not enable please modify
+		board_set_active_charge_port at board for customize vbus control.
 
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code

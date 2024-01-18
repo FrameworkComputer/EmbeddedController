@@ -486,12 +486,7 @@ static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
 	r->status = 0;
 	args->response_size = sizeof(*r);
 
-	/**
-	 * TODO: wait CCG6 interface
-	 * Note: retimer control register is multi declared in CCG8 and CCG6
-	 */
-
-	/*switch (p->modes) {
+	switch (p->modes) {
 	case BB_ENTRY_FW_UPDATE_MODE:
 		entry_tbt_mode(p->controller);
 		break;
@@ -510,7 +505,7 @@ static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
 		break;
 	default:
 		return EC_RES_INVALID_PARAM;
-	}*/
+	}
 
 	return EC_RES_UNAVAILABLE;
 }

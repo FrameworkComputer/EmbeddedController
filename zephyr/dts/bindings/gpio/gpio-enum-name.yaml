@@ -66,6 +66,7 @@ properties:
       - GPIO_PCH_RTCRST
       - GPIO_PCH_SLP_S0_L
       - GPIO_PCH_SLP_S3_L
+      - GPIO_PCH_SLP_S4_L
       - GPIO_PCH_SLP_S5_L
       - GPIO_PCH_SLP_SUS_L
       - GPIO_PCH_SYS_PWROK
@@ -80,6 +81,7 @@ properties:
       - GPIO_POWER_BUTTON_L
       - GPIO_POWER_GOOD
       - GPIO_POWER_GOOD_3VALW
+      - GPIO_POWER_GOOD_PRIM_PWR
       - GPIO_POWER_GOOD_VR
       - GPIO_PS_HOLD
       - GPIO_RECOVERY_L

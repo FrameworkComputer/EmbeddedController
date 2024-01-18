@@ -656,6 +656,21 @@ static void charge_manager_get_best_port(int *new_port, int *new_supplier)
 	int best_port_power = -1, candidate_port_power;
 	int i, j;
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+#ifndef CONFIG_PD_COMMON_VBUS_CONTROL
+	/* If system initially power on w/o dc, CYPD will control C_CTRL */
+	if ((charge_port == CHARGE_SUPPLIER_NONE) && ((battery_is_present() == BP_YES) &
+		    battery_get_disconnect_state())) {
+		*new_port = check_power_on_port();
+		CPRINTS("AC only power on port %d", *new_port);
+		*new_supplier = CHARGE_SUPPLIER_PD;
+		if (*new_port == -1)
+			*new_supplier = CHARGE_SUPPLIER_NONE;
+		return;
+	}
+#endif /* CONFIG_PD_COMMON_VBUS_CONTROL */
+#endif /* CONFIG_CUSTOMIZED_DESIGN */
+
 	if (override_port == OVERRIDE_DONT_CHARGE) {
 		*new_port = CHARGE_PORT_NONE;
 		*new_supplier = CHARGE_SUPPLIER_NONE;

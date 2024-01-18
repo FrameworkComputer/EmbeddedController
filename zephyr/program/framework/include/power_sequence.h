@@ -12,6 +12,10 @@ enum power_signal {
 	X86_SLP_S3_N,
 	X86_SLP_S5_N,
 	X86_VR_PG,
+#ifdef CONFIG_BOARD_MARIGOLD
+	X86_PRIM_PWR,
+	X86_SLP_S4_N,
+#endif
 	POWER_SIGNAL_COUNT
 };
 

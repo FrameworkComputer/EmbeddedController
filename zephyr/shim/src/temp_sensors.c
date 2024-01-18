@@ -10,11 +10,13 @@
 #line 11
 
 #include "adc.h"
+#include "charge_state.h"
 #include "charger/chg_rt9490.h"
 #include "driver/charger/rt9490.h"
 #include "hooks.h"
 #include "temp_sensor.h"
 #include "temp_sensor/f75303.h"
+#include "driver/temp_sensor/f75397.h"
 #include "temp_sensor/pct2075.h"
 #include "temp_sensor/sb_tsi.h"
 #include "temp_sensor/temp_sensor.h"
@@ -256,6 +258,64 @@ const struct f75303_sensor_t f75303_sensors[F75303_IDX_COUNT] = {
 	DT_FOREACH_STATUS_OKAY(F75303_COMPAT, DEFINE_F75303_DATA)
 };
 
+#if DT_HAS_COMPAT_STATUS_OKAY(F75397_COMPAT)
+/* The function maybe unused because a temperature sensor can be added to dts
+ * without a reference in the cros_ec_temp_sensors node.
+ */
+__maybe_unused static int f75397_get_temp(const struct temp_sensor_t *sensor,
+					  int *temp_ptr)
+{
+	return f75397_get_val(sensor->idx, temp_ptr);
+}
+#endif /* F75397_COMPAT */
+
+#define DEFINE_F75397_DATA(node_id)                     \
+	[F75397_SENSOR_ID(node_id)] = {                 \
+		.i2c_port = I2C_PORT_BY_DEV(node_id),   \
+		.i2c_addr_flags = DT_REG_ADDR(node_id), \
+	},
+
+#define GET_ZEPHYR_TEMP_SENSOR_F75397(named_id)                  \
+	(&(const struct zephyr_temp_sensor){                     \
+		.read = &f75397_get_temp,                        \
+		.thermistor = NULL,                              \
+		.update_temperature = f75397_update_temperature, \
+		FILL_POWER_GOOD(named_id) })
+
+#define TEMP_F75397(named_id, sensor_id)                                \
+	[TEMP_SENSOR_ID(named_id)] = {                                  \
+		.name = DT_NODE_FULL_NAME(sensor_id),                   \
+		.idx = F75397_SENSOR_ID(sensor_id),                     \
+		.type = TEMP_SENSOR_TYPE_BOARD,                         \
+		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_F75397(named_id), \
+	}
+
+const struct f75397_sensor_t f75397_sensors[F75397_IDX_COUNT] = {
+	DT_FOREACH_STATUS_OKAY(F75397_COMPAT, DEFINE_F75397_DATA)
+};
+
+#if DT_HAS_COMPAT_STATUS_OKAY(BATTERY_COMPAT)
+__maybe_unused static int battery_get_temp(const struct temp_sensor_t *sensor,
+					  int *temp_ptr)
+{
+	return charge_get_battery_temp(sensor->idx, temp_ptr);
+}
+#endif /* BATTERY_COMPAT */
+
+#define GET_ZEPHYR_TEMP_SENSOR_BATTERY(named_id)                  \
+	(&(const struct zephyr_temp_sensor){                     \
+		.read = &battery_get_temp,                        \
+		.thermistor = NULL,                              \
+		.update_temperature = NULL, \
+		FILL_POWER_GOOD(named_id) })
+
+#define TEMP_BATTERY(named_id, sensor_id)                                \
+	[TEMP_SENSOR_ID(named_id)] = {                                  \
+		.name = DT_NODE_FULL_NAME(sensor_id),                   \
+		.idx = 0,                     \
+		.type = TEMP_SENSOR_TYPE_BATTERY,                         \
+		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_BATTERY(named_id), \
+	}
 
 #ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
 #if DT_HAS_COMPAT_STATUS_OKAY(AMDR23M_COMPAT)
@@ -334,6 +394,8 @@ const struct amdr23m_sensor_t amdr23m_sensors[AMDR23M_COUNT] = {
 	CHECK_COMPAT(TMP112_COMPAT, named_id, sensor_id, TEMP_TMP112)         \
 	CHECK_COMPAT(RT9490_CHG_COMPAT, named_id, sensor_id, TEMP_RT9490)     \
 	CHECK_COMPAT(F75303_COMPAT, named_id, sensor_id, TEMP_F75303)         \
+	CHECK_COMPAT(F75397_COMPAT, named_id, sensor_id, TEMP_F75397)         \
+	CHECK_COMPAT(BATTERY_COMPAT, named_id, sensor_id, TEMP_BATTERY)         \
 	CHECK_COMPAT(AMDR23M_COMPAT, named_id, sensor_id, TEMP_AMDR23M)
 
 

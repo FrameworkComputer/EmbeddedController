@@ -16,6 +16,7 @@
 #include "extpower.h"
 #include "hooks.h"
 #include "i2c.h"
+#include "power_sequence.h"
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
@@ -53,30 +54,17 @@ static void charger_chips_init(void)
 		return;
 	}
 
-	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL4, ISL9241_CONTROL4_WOCP_FUNCTION |
-		ISL9241_CONTROL4_VSYS_SHORT_CHECK |
-		ISL9241_CONTROL4_ACOK_BATGONE_DEBOUNCE_25US))
-		goto init_fail;
-
 	value = battery_is_charge_fet_disabled();
 
 	/*
 	 * Set control3 register to
-	 * [14]: ACLIM Reload (Do not reload)
+	 * [14]: ACLIM Reload (1 Do not reload)
+	 * [8:9]: PSYS Gain (11 Default)
 	 */
-	if (value == -1) {
-		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_CONTROL3,
-			(ISL9241_CONTROL3_ACLIM_RELOAD | ISL9241_CONTROL3_ENABLE_ADC |
-			ISL9241_CONTROL3_INPUT_CURRENT_LIMIT)))
-			goto init_fail;
-	} else {
-		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_CONTROL3,
-			(ISL9241_CONTROL3_ACLIM_RELOAD | ISL9241_CONTROL3_ENABLE_ADC)))
-			goto init_fail;
-	}
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL3, ISL9241_CONTROL3_ACLIM_RELOAD |
+		ISL9241_CONTROL3_PSYS_GAIN))
+		goto init_fail;
 
 	/* reverse the flag if no error */
 	if (value != -1)
@@ -94,7 +82,7 @@ static void charger_chips_init(void)
 
 	/* According to Power team suggest, Set ACOK reference to 4.544V */
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4207)))
+		ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4544)))
 		goto init_fail;
 
 
@@ -120,10 +108,17 @@ static void charger_chips_init(void)
 		ISL9241_REG_MIN_SYSTEM_VOLTAGE, bi->voltage_min))
 		goto init_fail;
 
+	/*
+	 * Set control2 register to
+	 * [15:13]: Trickle Charging Current (011 128mA default)
+	 * [10:9]: Prochot# Debounce time (01 100μs)
+	 * [3]: General Purpose Comparator (1 Disable)
+	 */
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL2,
-		ISL9241_CONTROL2_TRICKLE_CHG_CURR(bi->precharge_current) |
-		ISL9241_CONTROL2_PROCHOT_DEBOUNCE_1000))
+		ISL9241_CONTROL2_TRICKLE_CHG_CURR(128) |
+		ISL9241_CONTROL2_PROCHOT_DEBOUNCE_100 |
+		ISL9241_CONTROL2_GENERAL_PURPOSE_COMPARATOR))
 		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
@@ -155,29 +150,24 @@ void charger_update(void)
 {
 	static int pre_ac_state;
 	static int pre_dc_state;
-	int val = 0x0000;
 
 	if (pre_ac_state != extpower_is_present() ||
 		pre_dc_state != battery_is_present()) {
 		CPRINTS("update charger!!");
 
-		if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_CONTROL1, &val)) {
-			CPRINTS("read charger control1 fail");
+		/*set dc prochot 7.680A/0x1E00(61w) 7.168A/0x1c00(55w)*/
+		const struct fuel_gauge_info *const fuel_gauge =
+		&get_batt_params()->fuel_gauge;
+		int rv = 0;
+
+		if (!strcasecmp(fuel_gauge->device_name, "Framework Laptop")) {
+			rv |= i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_DC_PROCHOT, 0x1C00);
+		} else {
+			rv |= i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_DC_PROCHOT, 0x1E00);
 		}
-
-		val |= ISL9241_CONTROL1_PROCHOT_REF_6800;
-		val |= ((ISL9241_CONTROL1_SWITCHING_FREQ_724KHZ << 7) &
-			ISL9241_CONTROL1_SWITCHING_FREQ_MASK);
-
-		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_CONTROL1, val)) {
-			CPRINTS("Update charger control1 fail");
-		}
-
-		/* TODO: check the battery power to update the DC prochot value */
-		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-			ISL9241_REG_DC_PROCHOT, 0x1E00))
+		if (rv)
 			CPRINTS("Update DC prochot fail");
 
 		pre_ac_state = extpower_is_present();
@@ -200,7 +190,7 @@ void board_set_charge_limit(int port, int supplier, int charge_ma,
 	 * And needs to be at least 128mA bigger than the adapter current
 	 */
 	prochot_ma = (DIV_ROUND_UP(charge_ma, 128) * 128);
-	charge_ma = charge_ma * 90 / 100;
+	charge_ma = charge_ma * 95 / 100;
 
 	if ((prochot_ma - charge_ma) < 128) {
 		charge_ma = prochot_ma - 128;
@@ -267,7 +257,7 @@ void charger_psys_enable(uint8_t enable)
 		control1 &= ~ISL9241_CONTROL1_IMON;
 		control1 |= ISL9241_CONTROL1_PSYS;
 		control4 &= ~ISL9241_CONTROL4_GP_COMPARATOR;
-		data = 0x0B00;		/* Set ACOK reference to 4.544V */
+		data = 0x0BC0;		/* Set ACOK reference to 4.544V */
 		CPRINTS("Power saving disable");
 	} else {
 		control1 |= ISL9241_CONTROL1_IMON;
