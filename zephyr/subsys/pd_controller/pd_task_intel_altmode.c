@@ -227,17 +227,21 @@ static void intel_altmode_thread(void *unused1, void *unused2, void *unused3)
 
 		LOG_DBG("Altmode events=0x%x", events);
 
-		if (events & BIT(INTEL_ALTMODE_EVENT_INTERRUPT)) {
+		/*
+		 * Process the forced event first so that they are not
+		 * overlooked in the if-else conditions.
+		 */
+		if (events & BIT(INTEL_ALTMODE_EVENT_FORCE)) {
+			/* Process data for any wake events on all ports */
+			for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
+				process_altmode_pd_data(i);
+		} else if (events & BIT(INTEL_ALTMODE_EVENT_INTERRUPT)) {
 			/* Process data of interrupted port */
 			for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 				if (pd_altmode_is_interrupted(
 					    pd_config_array[i]))
 					process_altmode_pd_data(i);
 			}
-		} else if (events & BIT(INTEL_ALTMODE_EVENT_FORCE)) {
-			/* Process data for any wake events on all ports */
-			for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++)
-				process_altmode_pd_data(i);
 		}
 	}
 }
