@@ -198,6 +198,12 @@ union rts54_request {
 			uint8_t lp_en_control : 1;
 		} data;
 	} force_set_power_switch;
+
+	struct set_tpc_reconnect_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+		uint8_t param0;
+	} set_tpc_reconnect;
 };
 
 union rts54_response {
@@ -367,6 +373,7 @@ struct rts5453p_emul_pdc_data {
 	union tpc_rp_t tpc_rp;
 	union csd_op_mode_t csd_op_mode;
 	struct force_set_power_switch_t set_power_switch_data;
+	uint8_t set_tpc_reconnect_param;
 
 	union rts54_request request;
 

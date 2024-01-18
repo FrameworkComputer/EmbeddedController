@@ -1179,6 +1179,7 @@ static int rts54_reconnect(const struct device *dev)
 		SET_TPC_RECONNECT.len,
 		SET_TPC_RECONNECT.sub,
 		0x00,
+		0x01,
 	};
 
 	return rts54_post_command(dev, CMD_SET_TPC_RECONNECT, payload,

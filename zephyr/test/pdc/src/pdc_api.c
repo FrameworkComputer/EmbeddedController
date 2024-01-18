@@ -296,3 +296,14 @@ ZTEST_USER(pdc_api, test_set_sink_path)
 		zassert_equal(in[i], out);
 	}
 }
+
+ZTEST_USER(pdc_api, test_reconnect)
+{
+	uint8_t expected, val;
+
+	zassert_ok(pdc_reconnect(dev));
+
+	k_sleep(K_MSEC(100));
+	zassert_ok(emul_pdc_get_reconnect_req(emul, &expected, &val));
+	zassert_equal(expected, val);
+}

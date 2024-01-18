@@ -53,6 +53,9 @@ typedef int (*emul_pdc_set_response_delay_t)(const struct emul *target,
 typedef int (*emul_pdc_get_requested_power_level_t)(
 	const struct emul *target, enum usb_typec_current_t *level);
 
+typedef int (*emul_pdc_get_reconnect_req_t)(const struct emul *target,
+					    uint8_t *expecting, uint8_t *val);
+
 __subsystem struct emul_pdc_api_t {
 	emul_pdc_set_response_delay_t set_response_delay;
 	emul_pdc_set_ucsi_version_t set_ucsi_version;
@@ -73,6 +76,7 @@ __subsystem struct emul_pdc_api_t {
 	emul_pdc_get_current_flash_bank_t get_current_flash_bank;
 	emul_pdc_get_retimer_fw_t get_retimer;
 	emul_pdc_get_requested_power_level_t get_requested_power_level;
+	emul_pdc_get_reconnect_req_t get_reconnect_req;
 };
 
 static inline int emul_pdc_set_ucsi_version(const struct emul *target,
@@ -359,6 +363,21 @@ emul_pdc_get_requested_power_level(const struct emul *target,
 
 	if (api->get_requested_power_level) {
 		return api->get_requested_power_level(target, level);
+	}
+	return -ENOSYS;
+}
+
+static inline int emul_pdc_get_reconnect_req(const struct emul *target,
+					     uint8_t *expecting, uint8_t *val)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_api_t *api = target->backend_api;
+
+	if (api->get_reconnect_req) {
+		return api->get_reconnect_req(target, expecting, val);
 	}
 	return -ENOSYS;
 }

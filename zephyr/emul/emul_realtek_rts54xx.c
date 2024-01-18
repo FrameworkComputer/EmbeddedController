@@ -432,6 +432,19 @@ static int force_set_power_switch(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int set_tpc_reconnect(struct rts5453p_emul_pdc_data *data,
+			     const union rts54_request *req)
+{
+	LOG_INF("SET_TPC_RECONNECT port=%d", req->set_tpc_reconnect.port_num);
+
+	data->set_tpc_reconnect_param = req->set_tpc_reconnect.param0;
+
+	memset(&data->response, 0, sizeof(data->response));
+	send_response(data);
+
+	return 0;
+}
+
 static bool send_response(struct rts5453p_emul_pdc_data *data)
 {
 	if (data->delay_ms > 0) {
@@ -495,7 +508,7 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0x19, HANDLER_DEF(unsupported) },
 	{ .code = 0x1A, HANDLER_DEF(unsupported) },
 	{ .code = 0x1D, HANDLER_DEF(set_tpc_csd_operation_mode) },
-	{ .code = 0x1F, HANDLER_DEF(unsupported) },
+	{ .code = 0x1F, HANDLER_DEF(set_tpc_reconnect) },
 	{ .code = 0x20, HANDLER_DEF(unsupported) },
 	{ .code = 0x21, HANDLER_DEF(force_set_power_switch) },
 	{ .code = 0x23, HANDLER_DEF(unsupported) },
@@ -782,6 +795,8 @@ static int rts5453p_emul_init(const struct emul *emul,
 
 	data->pdc_data.connector_capability.op_mode_usb3 = 1;
 
+	data->pdc_data.set_tpc_reconnect_param = 0xAA;
+
 	k_work_init_delayable(&data->pdc_data.delay_work,
 			      delayable_work_handler);
 
@@ -953,6 +968,19 @@ static int emul_realtek_rts54xx_get_sink_path(const struct emul *target,
 	return 0;
 }
 
+static int emul_realtek_rts54xx_get_reconnect_req(const struct emul *target,
+						  uint8_t *expected,
+						  uint8_t *val)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	*expected = 0x01;
+	*val = data->set_tpc_reconnect_param;
+
+	return 0;
+}
+
 struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.set_response_delay = emul_realtek_rts54xx_set_response_delay,
 	.get_connector_reset = emul_realtek_rts54xx_get_connector_reset,
@@ -967,6 +995,7 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 		emul_realtek_rts54xx_get_requested_power_level,
 	.get_ccom = emul_realtek_rts54xx_get_ccom,
 	.get_sink_path = emul_realtek_rts54xx_get_sink_path,
+	.get_reconnect_req = emul_realtek_rts54xx_get_reconnect_req,
 };
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \
