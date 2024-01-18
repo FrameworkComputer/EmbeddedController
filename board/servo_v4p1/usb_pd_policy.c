@@ -1239,6 +1239,17 @@ static void do_cc(int cc_config_new)
 	}
 }
 
+void set_cc_flag(int flag, bool set)
+{
+	int cc_config_new = cc_config;
+
+	if (set)
+		cc_config_new |= flag;
+	else
+		cc_config_new &= ~flag;
+	do_cc(cc_config_new);
+}
+
 static int command_cc(int argc, const char **argv)
 {
 	int cc_config_new = cc_config;

@@ -483,6 +483,18 @@ __override_proto const char *board_read_mac_addr(void);
  */
 __override_proto int board_write_mac_addr(const char *mac_addr);
 
+/**
+ * Optional board-level callback functions to read a variable
+ * poweron configuration for device. Default implementation reads from flash.
+ */
+__override_proto int board_read_poweron_conf(uint8_t *poweron_conf);
+
+/**
+ * Optional board-level callback functions to write a variable
+ * poweron configuration for device. Default implementation writes in flash.
+ */
+__override_proto int board_write_poweron_conf(const uint8_t *poweron_conf);
+
 /*
  * Common bbram entries. Chips don't necessarily need to implement
  * all of these, error will be returned from system_get/set_bbram if
