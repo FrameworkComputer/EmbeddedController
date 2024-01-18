@@ -11,4 +11,5 @@ add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 
 target_sources(app PRIVATE ${PLATFORM_EC}/zephyr/program/brya/brya_pdc/usbc_stubs.c)
 target_sources(app PRIVATE src/main.c)
+target_sources(app PRIVATE src/fakes.c)
 target_sources(app PRIVATE src/pdc_api.c)

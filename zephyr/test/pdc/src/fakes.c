@@ -3,7 +3,12 @@
  * found in the LICENSE file.
  */
 
-int board_get_usb_pd_port_count(void)
+int battery_is_present(void)
 {
 	return 1;
+}
+
+int extpower_is_present(void)
+{
+	return 0;
 }
