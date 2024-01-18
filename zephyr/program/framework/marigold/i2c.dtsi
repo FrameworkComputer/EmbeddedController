@@ -124,6 +124,11 @@
 		status = "okay";
 		reg = <0x9>;
 	};
+
+	battery_temp: battery_temp@b {
+		compatible = "cros-ec,temp-sensor-battery";
+		reg = <0xb>;
+	};
 };
 
 &i2c_ctrl3 {

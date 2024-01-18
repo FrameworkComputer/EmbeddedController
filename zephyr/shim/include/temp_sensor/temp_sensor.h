@@ -17,6 +17,7 @@
 #define TMP112_COMPAT cros_ec_temp_sensor_tmp112
 #define F75303_COMPAT cros_ec_temp_sensor_f75303
 #define F75397_COMPAT cros_ec_temp_sensor_f75397
+#define BATTERY_COMPAT cros_ec_temp_sensor_battery
 #define SB_TSI_COMPAT amd_sb_tsi
 #define THERMISTOR_COMPAT cros_ec_temp_sensor_thermistor
 #define TEMP_SENSORS_COMPAT cros_ec_temp_sensors
@@ -32,6 +33,7 @@
 	DT_FOREACH_STATUS_OKAY(TMP112_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(F75303_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(F75397_COMPAT, fn)                           \
+	DT_FOREACH_STATUS_OKAY(BATTERY_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(AMDR23M_COMPAT, fn)                          \
 	DT_FOREACH_STATUS_OKAY_VARGS(RT9490_CHG_COMPAT, TEMP_RT9490_FN, fn) \
 	DT_FOREACH_STATUS_OKAY(SB_TSI_COMPAT, fn)                           \
