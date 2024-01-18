@@ -1910,3 +1910,24 @@ static void pd_chipset_startup(void)
 	LOG_INF("PD:S5->S3");
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, pd_chipset_startup, HOOK_PRIO_DEFAULT);
+
+/**
+ * Chipset Shutdown (S3->S5) Policy 1:
+ *	a) DRP Force SINK
+ */
+static void enforce_pd_chipset_shutdown_policy_1(int port)
+{
+	LOG_DBG("C%d: Chipset Shutdown Policy 1", port);
+
+	pdc_power_mgmt_set_dual_role(port, PD_DRP_FORCE_SINK);
+}
+
+static void pd_chipset_shutdown(void)
+{
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		enforce_pd_chipset_shutdown_policy_1(i);
+	}
+
+	LOG_INF("PD:S3->S5");
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pd_chipset_shutdown, HOOK_PRIO_DEFAULT);
