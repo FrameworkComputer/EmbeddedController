@@ -1868,3 +1868,24 @@ static void pd_chipset_resume(void)
 	LOG_INF("PD:S3->S0");
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, pd_chipset_resume, HOOK_PRIO_DEFAULT);
+
+/**
+ * @brief Chipset Suspend (S0->S3) Policy 1:
+ *	a) DRP TOGGLE OFF
+ */
+static void enforce_pd_chipset_suspend_policy_1(int port)
+{
+	LOG_DBG("C%d: Chipset Suspend Policy 1", port);
+
+	pdc_power_mgmt_set_dual_role(port, PD_DRP_TOGGLE_OFF);
+}
+
+static void pd_chipset_suspend(void)
+{
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		enforce_pd_chipset_suspend_policy_1(i);
+	}
+
+	LOG_INF("PD:S0->S3");
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, pd_chipset_suspend, HOOK_PRIO_DEFAULT);
