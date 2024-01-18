@@ -66,6 +66,16 @@
 			gpios = <&gpioi 6 GPIO_OUTPUT_LOW>;
 		};
 	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+
+		unused-gpios =
+			/* i2c5_scl */
+			<&gpioa 4 GPIO_INPUT>,
+			/* i2c5_sda */
+			<&gpioa 5 GPIO_INPUT>;
+	};
 };
 
 &pinctrl {
