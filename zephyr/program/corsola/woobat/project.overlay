@@ -109,15 +109,11 @@
 
 		port0@0 {
 			bc12 = <&bc12_port0>;
-			ppc_alt = <&ppc_port0>;
+			ppc = <&ppc_port0>;
 		};
 
-
-		port1@1 {
-			usb-mux-chain-1 {
-				usb-muxes = <&ps8743_mux_1 &virtual_mux_1>;
-			};
-		};
+		/delete-node/ port1@1;
+		/delete-node/ port1-muxes;
 	};
 
 	named-adc-channels {
@@ -450,14 +446,11 @@
 		reg = <0x40>;
 		frs_en_gpio = <&usb_c0_frs_en>;
 	};
+
+	/delete-node/ rt1739@70;
 };
 
 &i2c4 {
+	/delete-node/ syv682x@40;
 	/delete-node/ tusb1064-mux-1@44;
-
-	ps8743_mux_1: ps8743-mux-1@10 {
-		compatible = "parade,ps8743";
-		reg = <0x10>;
-		board-init = "ps8743_eq_c1_setting";
-	};
 };

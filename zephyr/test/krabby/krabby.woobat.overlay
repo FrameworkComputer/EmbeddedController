@@ -169,16 +169,8 @@
 	};
 
 	usbc {
-		port0@0 {
-			ppc = <&bc12_ppc_port0>;
-			ppc_alt = <&ppc_port0>;
-		};
-		port1@1 {
-			ppc = <&ppc_port1>;
-			usb-mux-chain-1 {
-				usb-muxes = <&ps8743_mux_1>;
-			};
-		};
+		/delete-node/ port1@1;
+		/delete-node/ port1-muxes;
 	};
 };
 
@@ -194,24 +186,22 @@
 		timeout = <5>;
 	};
 
-	ppc_port0: syv682x@44 {
-		compatible = "silergy,syv682x", "cros,i2c-mock";
+	ppc0_emul: syv682x@40 {
+		compatible = "zephyr,syv682x-emul";
 		status = "okay";
-		reg = <0x44>;
+		reg = <0x40>;
+		frs_en_gpio = <&usb_c0_frs_en>;
+		alert_gpio = <&usb_c0_ppc_int_odl>;
 	};
 
-	ppc_port1: syv682x@443 {
-		compatible = "silergy,syv682x", "cros,i2c-mock";
-		status = "okay";
-		reg = <0x43>;
-	};
+	/delete-node/ syv682x@42;
+	/delete-node/ syv682x@43;
+	/delete-node/ rt1718s@2c;
 
-	bc12_ppc_port0: rt1739@70 {
-		compatible = "richtek,rt1739-ppc", "richtek,rt1739-bc12",
-			     "cros,i2c-mock";
-		status = "okay";
-		reg = <0x70>;
-	};
+};
+
+&i2c_ctrl4 {
+	/delete-node/ tusb1064-mux-1@44;
 };
 
 &lid_accel {
@@ -232,14 +222,4 @@
 
 &lis2dw12_data {
 	compatible = "cros-ec,drvdata-bmi260";
-};
-
-&i2c_ctrl4 {
-	/delete-node/ tusb1064-mux-1@44;
-
-	ps8743_mux_1: ps8743-mux-1@10 {
-		compatible = "zephyr,ps8743-emul";
-		reg = <0x10>;
-		board-init = "ps8743_eq_c1_setting";
-	};
 };

@@ -59,7 +59,6 @@ target_sources_ifdef(CONFIG_TEST_WOOBAT
 	src/ppc_woobat.c
 	src/temp_woobat.c
 	src/fwconfig_woobat.c
-	src/usb_mux_woobat.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/woobat/src/ppc.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/woobat/src/temp.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/woobat/src/sensor.c)
