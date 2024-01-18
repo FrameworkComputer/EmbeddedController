@@ -4,6 +4,7 @@
  */
 
 #include "../arbitrage.dtsi"
+#include "../common.dtsi"
 #include "../usbc.dtsi"
 #include "generated.dtsi"
 #include "motionsense.dtsi"
