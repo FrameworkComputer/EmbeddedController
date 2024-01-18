@@ -948,8 +948,10 @@ static void pdc_snk_attached_exit(void *obj)
 		charge_manager_update_dualrole(config->connector_num,
 					       CAP_UNKNOWN);
 
-		/* Invalidate PDO */
+		/* Invalidate PDOS */
 		port->snk_policy.pdo = 0;
+		memset(port->snk_policy.pdos, 0, sizeof(uint32_t) * PDO_NUM);
+		port->snk_policy.pdo_count = 0;
 	}
 }
 
