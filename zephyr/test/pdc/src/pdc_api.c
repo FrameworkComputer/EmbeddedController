@@ -11,6 +11,7 @@
 #include "emul/emul_pdc.h"
 #include "emul/emul_realtek_rts54xx.h"
 #include "i2c.h"
+#include "zephyr/sys/util.h"
 #include "zephyr/sys/util_macro.h"
 
 #include <zephyr/device.h>
@@ -257,4 +258,26 @@ ZTEST_USER(pdc_api, test_get_bus_voltage)
 	zassert_equal(out, expected_voltage_mv);
 
 	zassert_equal(pdc_get_vbus_voltage(dev, NULL), -EINVAL);
+}
+
+ZTEST_USER(pdc_api, test_set_ccom)
+{
+	int i, j;
+	enum ccom_t ccom_in[] = { CCOM_RP, CCOM_RD, CCOM_DRP };
+	enum ccom_t ccom_out;
+	enum drp_mode_t dm_in[] = { DRP_NORMAL, DRP_TRY_SRC, DRP_TRY_SNK };
+	enum drp_mode_t dm_out;
+
+	for (i = 0; i < ARRAY_SIZE(ccom_in); i++) {
+		for (j = 0; j < ARRAY_SIZE(dm_in); j++) {
+			zassert_ok(pdc_set_ccom(dev, ccom_in[i], dm_in[j]));
+
+			k_sleep(K_MSEC(100));
+			zassert_ok(emul_pdc_get_ccom(emul, &ccom_out, &dm_out));
+			zassert_equal(ccom_in[i], ccom_out);
+			if (ccom_in[i] == CCOM_DRP) {
+				zassert_equal(dm_in[j], dm_out);
+			}
+		}
+	}
 }

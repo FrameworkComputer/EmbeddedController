@@ -172,6 +172,20 @@ union rts54_request {
 			};
 		} tpc_rp;
 	} set_tpc_rp;
+
+	struct set_tpc_csd_operation_mode_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+		union csd_op_mode_t {
+			uint8_t raw_value;
+			struct {
+				uint8_t csd_mode : 2;
+				uint8_t accessory_support : 1;
+				uint8_t drp_mode : 2;
+				uint8_t reserved : 3;
+			};
+		} op_mode;
+	} set_tpc_csd_operation_mode;
 };
 
 union rts54_response {
@@ -339,6 +353,7 @@ struct rts5453p_emul_pdc_data {
 	union error_status_t error;
 	uint32_t rdo;
 	union tpc_rp_t tpc_rp;
+	union csd_op_mode_t csd_op_mode;
 
 	union rts54_request request;
 

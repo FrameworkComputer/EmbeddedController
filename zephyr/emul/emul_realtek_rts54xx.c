@@ -404,6 +404,20 @@ static int set_tpc_rp(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int set_tpc_csd_operation_mode(struct rts5453p_emul_pdc_data *data,
+				      const union rts54_request *req)
+{
+	LOG_INF("SET_TPC_CSD_OPERATION_MODE port=%d",
+		req->set_tpc_csd_operation_mode.port_num);
+
+	data->csd_op_mode = req->set_tpc_csd_operation_mode.op_mode;
+
+	memset(&data->response, 0, sizeof(data->response));
+	send_response(data);
+
+	return 0;
+}
+
 static bool send_response(struct rts5453p_emul_pdc_data *data)
 {
 	if (data->delay_ms > 0) {
@@ -466,7 +480,7 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0x05, HANDLER_DEF(set_tpc_rp) },
 	{ .code = 0x19, HANDLER_DEF(unsupported) },
 	{ .code = 0x1A, HANDLER_DEF(unsupported) },
-	{ .code = 0x1D, HANDLER_DEF(unsupported) },
+	{ .code = 0x1D, HANDLER_DEF(set_tpc_csd_operation_mode) },
 	{ .code = 0x1F, HANDLER_DEF(unsupported) },
 	{ .code = 0x20, HANDLER_DEF(unsupported) },
 	{ .code = 0x21, HANDLER_DEF(unsupported) },
@@ -875,6 +889,44 @@ emul_realtek_rts54xx_get_requested_power_level(const struct emul *target,
 	return 0;
 }
 
+static int emul_realtek_rts54xx_get_ccom(const struct emul *target,
+					 enum ccom_t *ccom, enum drp_mode_t *dm)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	switch (data->csd_op_mode.csd_mode) {
+	case 0:
+		*ccom = CCOM_RD;
+		break;
+	case 1:
+		*ccom = CCOM_DRP;
+		switch (data->csd_op_mode.drp_mode) {
+		case 0:
+			*dm = DRP_NORMAL;
+			break;
+		case 1:
+			*dm = DRP_TRY_SRC;
+			break;
+		case 2:
+			*dm = DRP_TRY_SNK;
+			break;
+		default:
+			LOG_ERR("Invalid drp 0x%X", data->csd_op_mode.drp_mode);
+			return -EINVAL;
+		}
+		break;
+	case 2:
+		*ccom = CCOM_RP;
+		break;
+	default:
+		LOG_ERR("Invalid csd_mode 0x%X", data->csd_op_mode.csd_mode);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
 struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.set_response_delay = emul_realtek_rts54xx_set_response_delay,
 	.get_connector_reset = emul_realtek_rts54xx_get_connector_reset,
@@ -887,6 +939,7 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.get_pdr = emul_realtek_rts54xx_get_pdr,
 	.get_requested_power_level =
 		emul_realtek_rts54xx_get_requested_power_level,
+	.get_ccom = emul_realtek_rts54xx_get_ccom,
 };
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \
