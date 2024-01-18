@@ -5,7 +5,7 @@
 
 #include <board-overlays/native_posix.dts>
 #include <dt-bindings/gpio_defines.h>
-#include "native_posix_ite.dtsi"
+#include <it8xxx2_emul.dts>
 #include "../../../program/brox/power_signals.dtsi"
 #include "alderlake_emul.dtsi"
 
