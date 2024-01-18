@@ -6,9 +6,6 @@
 #include "common.dtsi"
 
 / {
-	i2c2: i2c2 {
-	};
-
 	usb0: usb0 {
 	};
 };

@@ -15,26 +15,26 @@
 		compatible = "named-i2c-ports";
 
 		battery {
-			i2c-port = <&i2c_ctrl0>;
+			i2c-port = <&i2c0>;
 			remote-port = <1>;
 			enum-names = "I2C_PORT_BATTERY",
 				"I2C_PORT_VIRTUAL_BATTERY";
 		};
 		i2c_charger: charger {
-			i2c-port = <&i2c_ctrl0>;
+			i2c-port = <&i2c0>;
 			enum-names = "I2C_PORT_CHARGER",
 				"I2C_PORT_EEPROM";
 		};
 		i2c_sensor: sensor {
-			i2c-port = <&i2c_ctrl2>;
+			i2c-port = <&i2c2>;
 			enum-names = "I2C_PORT_SENSOR";
 		};
 		i2c_usb_c: usb-c {
-			i2c-port = <&i2c_ctrl2>;
+			i2c-port = <&i2c2>;
 			enum-names = "I2C_PORT_USB_C";
 		};
 		i2c_detachable_base: detachable-base {
-			i2c-port = <&i2c_ctrl4>;
+			i2c-port = <&i2c4>;
 			enum-names = "I2C_PORT_DETACHABLE_BASE";
 		};
 	};
@@ -118,7 +118,7 @@
 	};
 };
 
-&i2c_ctrl0 {
+&i2c0 {
 	/* I2C_BATTERY */
 	battery: sb@b {
 		compatible = "zephyr,smart-battery-emul";
@@ -149,7 +149,7 @@
 	};
 };
 
-&i2c_ctrl2 {
+&i2c2 {
 	/* I2C_USB_C */
 	status = "okay";
 	clock-frequency = <I2C_BITRATE_FAST>;
@@ -188,7 +188,7 @@
 };
 
 /* TODO(b/260377762): peripheral mode */
-&i2c_ctrl4 {
+&i2c4 {
 	/* I2C_DETACHABLE_BASE */
 	status = "okay";
 };

@@ -4,7 +4,6 @@
  */
 #include <it8xxx2_emul.dts>
 
-#include <it8xxx2_emul.dts>
 #include "../program/nissa/gothrax/cbi.dtsi"
 #include "../program/nissa/gothrax/motionsense.dtsi"
 / {
@@ -67,11 +66,11 @@
 		compatible = "named-i2c-ports";
 
 		i2c_ec_i2c_batt: ec_i2c_batt {
-			i2c-port = <&i2c_ctrl0>;
+			i2c-port = <&i2c0>;
 			enum-names = "I2C_PORT_BATTERY";
 		};
 		i2c_ec_i2c_sensor: ec_i2c_sensor {
-			i2c-port = <&i2c_ctrl2>;
+			i2c-port = <&i2c2>;
 			enum-names = "I2C_PORT_SENSOR";
 		};
 	};
@@ -110,7 +109,7 @@
 	};
 };
 
-&i2c_ctrl4 {
+&i2c4 {
 	tcpci_emul_0: tcpci_emul@82 {
 		compatible = "cros,tcpci-generic-emul";
 		status = "okay";
@@ -118,7 +117,7 @@
 	};
 };
 
-&i2c_ctrl4 {
+&i2c4 {
 	tcpci_emul_1: tcpci_emul@84 {
 		compatible = "cros,tcpci-generic-emul";
 		status = "okay";

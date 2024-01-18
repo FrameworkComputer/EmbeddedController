@@ -35,7 +35,7 @@
 		compatible = "named-i2c-ports";
 
 		i2c_ec_i2c_batt: ec_i2c_batt {
-			i2c-port = <&i2c_ctrl0>;
+			i2c-port = <&i2c0>;
 			enum-names = "I2C_PORT_BATTERY";
 		};
 	};
@@ -74,7 +74,7 @@
 	};
 };
 
-&i2c_ctrl4 {
+&i2c4 {
 	tcpci_emul_0: tcpci_emul@82 {
 		compatible = "cros,tcpci-generic-emul";
 		status = "okay";
@@ -82,7 +82,7 @@
 	};
 };
 
-&i2c_ctrl4 {
+&i2c4 {
 	tcpci_emul_1: tcpci_emul@84 {
 		compatible = "cros,tcpci-generic-emul";
 		status = "okay";

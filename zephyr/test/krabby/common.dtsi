@@ -15,7 +15,7 @@
 		compatible = "named-i2c-ports";
 
 		i2c_charger: charger {
-			i2c-port = <&i2c_ctrl0>;
+			i2c-port = <&i2c0>;
 			enum-names = "I2C_PORT_CHARGER",
 				"I2C_PORT_BATTERY";
 		};
@@ -102,7 +102,7 @@
 	};
 };
 
-&i2c_ctrl0 {
+&i2c0 {
 	status="okay";
 
 	pi3usb9201_emul0: pi3usb9201@5f {
@@ -166,7 +166,7 @@
 	status = "okay";
 };
 
-&i2c_ctrl4 {
+&i2c4 {
 	status="okay";
 
 	tusb1064_mux_1: tusb1064-mux-1@44 {

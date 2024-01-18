@@ -76,11 +76,11 @@
 	    compatible = "named-i2c-ports";
 
 	    i2c_sensor: i2c-sensor {
-		    i2c-port = <&i2c_ctrl0>;
+		    i2c-port = <&i2c0>;
 		    enum-names = "I2C_PORT_SENSOR";
 	    };
 	    i2c_eeprom: i2c-eeprom {
-		    i2c-port = <&i2c_ctrl0>;
+		    i2c-port = <&i2c0>;
 		    enum-names = "I2C_PORT_EEPROM";
 	    };
 	};
@@ -182,7 +182,7 @@
 	};
 };
 
-&i2c_ctrl0 {
+&i2c0 {
 	status="okay";
 
 	cbi_eeprom: eeprom@50 {
@@ -234,7 +234,7 @@
 	compatible = "cros-ec,drvdata-bmi260";
 };
 
-&i2c_ctrl4 {
+&i2c4 {
 	/delete-node/ tusb1064-mux-1@44;
 
 	ps8743_mux_1: ps8743-mux-1@10 {
