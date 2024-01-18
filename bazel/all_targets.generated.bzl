@@ -671,14 +671,6 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
-        name = "drawcia_riscv",
-        baseboard = "dedede",
-        board = "drawcia_riscv",
-        chip = "it83xx",
-        core = "riscv-rv32i",
-        zephyr = False,
-    )
-    ec_target(
         name = "driblee",
         baseboard = "keeby",
         board = "driblee",
