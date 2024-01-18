@@ -11,6 +11,7 @@
 
 #include "charge_manager.h"
 #include "charge_state.h"
+#include "hooks.h"
 #include "usbc/pdc_power_mgmt.h"
 
 #include <zephyr/devicetree.h>
@@ -1805,3 +1806,65 @@ void pdc_power_mgmt_set_dual_role(int port, enum pd_dual_role_states state)
 		break;
 	}
 }
+
+/**
+ * PDC Chipset state Policies
+ */
+
+/**
+ * @brief Chipset Resume (S3->S0) Policy 1: Power Role Swap to Source if:
+ *	a) Port is attached as a Sink
+ *	b) No source caps were received from the port partner
+ *	c) Port Partner PDO is Unconstrained Power or NOT DRP
+ *	d) Port isn't a charging port
+ */
+static void enforce_pd_chipset_resume_policy_1(int port)
+{
+	LOG_DBG("Chipset Resume Policy 1");
+
+	/* a) Port is attached as a Sink */
+	if (!pdc_power_mgmt_is_sink_connected(port)) {
+		return;
+	}
+
+	/* b) No source caps were received from the port partner */
+	if (pdc_data[port]->port.snk_policy.pdo_count == 0) {
+		return;
+	}
+
+	/* c) Unconstrained Power or NOT Dual Role Power we can charge from */
+	if (!(pdc_data[port]->port.snk_policy.pdo &
+	      PDO_FIXED_GET_UNCONSTRAINED_PWR) &&
+	    (pdc_data[port]->port.snk_policy.pdo & PDO_FIXED_DUAL_ROLE)) {
+		return;
+	}
+
+	/* d) Port isn't a charging port */
+	if (charge_manager_get_active_charge_port() == port) {
+		return;
+	}
+
+	pdc_power_mgmt_request_power_swap_intern(port, PD_ROLE_SOURCE);
+}
+
+/**
+ * @brief Chipset Resume (S3->S0) Policy 2:
+ *	a) DRP Toggle ON
+ */
+static void enforce_pd_chipset_resume_policy_2(int port)
+{
+	LOG_DBG("C%d: Chipset Resume Policy 2", port);
+
+	pdc_power_mgmt_set_dual_role(port, PD_DRP_TOGGLE_ON);
+}
+
+static void pd_chipset_resume(void)
+{
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		enforce_pd_chipset_resume_policy_1(i);
+		enforce_pd_chipset_resume_policy_2(i);
+	}
+
+	LOG_INF("PD:S3->S0");
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, pd_chipset_resume, HOOK_PRIO_DEFAULT);
