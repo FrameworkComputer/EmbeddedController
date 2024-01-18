@@ -186,6 +186,18 @@ union rts54_request {
 			};
 		} op_mode;
 	} set_tpc_csd_operation_mode;
+
+	struct force_set_power_switch_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+		struct force_set_power_switch_t {
+			uint8_t vbsin_en : 2;
+			uint8_t lp_en : 2;
+			uint8_t reserved : 2;
+			uint8_t vbsin_en_control : 1;
+			uint8_t lp_en_control : 1;
+		} data;
+	} force_set_power_switch;
 };
 
 union rts54_response {
@@ -354,6 +366,7 @@ struct rts5453p_emul_pdc_data {
 	uint32_t rdo;
 	union tpc_rp_t tpc_rp;
 	union csd_op_mode_t csd_op_mode;
+	struct force_set_power_switch_t set_power_switch_data;
 
 	union rts54_request request;
 

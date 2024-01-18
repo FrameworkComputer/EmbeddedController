@@ -418,6 +418,20 @@ static int set_tpc_csd_operation_mode(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int force_set_power_switch(struct rts5453p_emul_pdc_data *data,
+				  const union rts54_request *req)
+{
+	LOG_INF("FORCE_SET_POWER_SWITCH port=%d",
+		req->force_set_power_switch.port_num);
+
+	data->set_power_switch_data = req->force_set_power_switch.data;
+
+	memset(&data->response, 0, sizeof(data->response));
+	send_response(data);
+
+	return 0;
+}
+
 static bool send_response(struct rts5453p_emul_pdc_data *data)
 {
 	if (data->delay_ms > 0) {
@@ -483,7 +497,7 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0x1D, HANDLER_DEF(set_tpc_csd_operation_mode) },
 	{ .code = 0x1F, HANDLER_DEF(unsupported) },
 	{ .code = 0x20, HANDLER_DEF(unsupported) },
-	{ .code = 0x21, HANDLER_DEF(unsupported) },
+	{ .code = 0x21, HANDLER_DEF(force_set_power_switch) },
 	{ .code = 0x23, HANDLER_DEF(unsupported) },
 	{ .code = 0x24, HANDLER_DEF(unsupported) },
 	{ .code = 0x26, HANDLER_DEF(unsupported) },
@@ -927,6 +941,18 @@ static int emul_realtek_rts54xx_get_ccom(const struct emul *target,
 	return 0;
 }
 
+static int emul_realtek_rts54xx_get_sink_path(const struct emul *target,
+					      bool *en)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	*en = data->set_power_switch_data.vbsin_en_control &&
+	      data->set_power_switch_data.vbsin_en == 3;
+
+	return 0;
+}
+
 struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.set_response_delay = emul_realtek_rts54xx_set_response_delay,
 	.get_connector_reset = emul_realtek_rts54xx_get_connector_reset,
@@ -940,6 +966,7 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.get_requested_power_level =
 		emul_realtek_rts54xx_get_requested_power_level,
 	.get_ccom = emul_realtek_rts54xx_get_ccom,
+	.get_sink_path = emul_realtek_rts54xx_get_sink_path,
 };
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \

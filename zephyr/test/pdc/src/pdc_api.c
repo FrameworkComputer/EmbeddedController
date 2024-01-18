@@ -281,3 +281,18 @@ ZTEST_USER(pdc_api, test_set_ccom)
 		}
 	}
 }
+
+ZTEST_USER(pdc_api, test_set_sink_path)
+{
+	int i;
+	bool in[] = { true, false }, out;
+
+	for (i = 0; i < ARRAY_SIZE(in); i++) {
+		zassert_ok(pdc_set_sink_path(dev, in[i]));
+
+		k_sleep(K_MSEC(100));
+		zassert_ok(emul_pdc_get_sink_path(emul, &out));
+
+		zassert_equal(in[i], out);
+	}
+}
