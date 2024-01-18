@@ -76,10 +76,12 @@ LOG_MODULE_REGISTER(hid_target);
  */
 #define ALS_HID_UNIT	0x00
 
-#define HID_ALS_MAX 33000
+#define HID_ALS_MAX 10000
 #define HID_ALS_MIN 0
 /* Note sensitivity is scaled by exponent 0.01*/
 #define HID_ALS_SENSITIVITY 100
+
+#define HID_ALS_REPORT_INTERVAL 1000
 
 /* HID_USAGE_SENSOR_PROPERTY_SENSOR_CONNECTION_TYPE */
 #define HID_INTEGRATED			1
@@ -296,7 +298,7 @@ static const uint8_t als_report_desc[] = {
 	0x26, 0x10, 0x27,	/* LOGICAL_MAXIMUM (0x2710) */
 	0x75, 0x10,		/* Report Size (16) */
 	0x95, 0x01,		/* Report Count (1) */
-	0x55, 0x0E,		/* UNIT EXPONENT (0x0E) */
+	0x55, 0x0E,		/* UNIT EXPONENT (0x0E 0.01) */
 	0xB1, 0x02,		/* Feature (Data,Var,Abs) */
 
 	0x0A, 0xD1, 0x24,	/* USAGE ID (Modified Maximum) */
@@ -350,7 +352,7 @@ static const uint8_t als_report_desc[] = {
 	0x0A, 0xD1, 0x04,	/* USAGE (Data Field: Illuminance) */
 	0x15, 0x00,		/* LOGICAL_MINIMUN (0x00) */
 	0x26, 0xFF, 0xFF,	/* LOGICAL_MAXIMUM (0XFFFF) */
-	0x55, 0x00,		/* UNIT EXPONENT (0x00) */
+	0x55, ALS_HID_UNIT,		/* UNIT EXPONENT (0x00) */
 	0x75, 0x10,		/* Report Size (16) */
 	0x95, 0x01,		/* Report Count (1) */
 	0x81, 0x02,		/* Input (Data,Arr,Abs) */
@@ -456,16 +458,16 @@ static void hid_target_als_irq(void)
 void i2c_hid_als_init(void)
 {
 	als_feature.connection_type = HID_INTEGRATED;
-	als_feature.reporting_state = HID_ALL_EVENTS;
+	als_feature.reporting_state = HID_NO_EVENTS;
 	als_feature.power_state = HID_D0_FULL_POWER;
 	als_feature.sensor_state = HID_READY;
-	als_feature.report_interval = 1000;
+	als_feature.report_interval = HID_ALS_REPORT_INTERVAL;
 	als_feature.sensitivity = HID_ALS_SENSITIVITY;
 	als_feature.maximum = HID_ALS_MAX;
 	als_feature.minimum = HID_ALS_MIN;
 
-	als_sensor.event_type = 0x04; /* HID_DATA_UPDATED */
-	als_sensor.sensor_state = 0x02; /* HID READY */
+	als_sensor.event_type = HID_DATA_UPDATED;
+	als_sensor.sensor_state = HID_READY;
 	als_sensor.illuminanceValue = 0x0000;
 }
 DECLARE_HOOK(HOOK_INIT, i2c_hid_als_init, HOOK_PRIO_DEFAULT);
@@ -475,19 +477,17 @@ DECLARE_DEFERRED(report_illuminance_value);
 void report_illuminance_value(void)
 {
 	uint16_t newIlluminaceValue = *(uint16_t *)host_get_memmap(EC_MEMMAP_ALS);
-	int granularity = als_feature.sensitivity * (HID_ALS_MAX / 10000);
+	int granularity = als_feature.sensitivity * als_sensor.illuminanceValue / 10000;
 	uint32_t report_interval = als_feature.report_interval;
-	/* We need to polling the ALS value at least 6 seconds */
 	switch (als_feature.reporting_state) {
-	case HID_ALL_EVENTS:
-	case HID_ALL_EVENTS_WAKE:
-		als_sensor.illuminanceValue = newIlluminaceValue;
-		hid_target_als_irq();
-		break;
+	/* we did not implement threshold reporting in our HID descriptor */
 	case HID_THRESHOLD_EVENTS:
 	case HID_THRESHOLD_EVENTS_WAKE:
+	case HID_ALL_EVENTS:
+	case HID_ALL_EVENTS_WAKE:
 		if (ABS(als_sensor.illuminanceValue - newIlluminaceValue) > granularity) {
 			als_sensor.illuminanceValue = newIlluminaceValue;
+			als_sensor.event_type = HID_DATA_UPDATED;
 			hid_target_als_irq();
 		}
 		break;
@@ -497,7 +497,7 @@ void report_illuminance_value(void)
 
 	if (report_interval == 0) {
 		/* per hid spec report interval should be sensor default when 0 */
-		report_interval = 250;
+		report_interval = HID_ALS_REPORT_INTERVAL;
 	}
 	hook_call_deferred(&report_illuminance_value_data,
 		report_interval * MSEC);
@@ -640,6 +640,7 @@ static int hid_target_process_write(struct i2c_target_config *config)
 	#endif
 			case REPORT_ID_SENSOR:
 				if (report_type == 0x01) {
+					als_sensor.event_type = HID_POLL_RESPONSE;
 					response_size = fill_report(data->buffer, report_id,
 						&als_sensor,
 						sizeof(struct als_input_report));
@@ -809,18 +810,32 @@ static int hid_target_read_requested(struct i2c_target_config *config,
 }
 
 
-static int cmd_hid_status(int argc, const char **argv)
+static int cmd_hidals_status(int argc, const char **argv)
 {
+	int i;
+	char *e;
+
+	if (argc == 2) {
+		i = strtoi(argv[1], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM1;
+		als_sensor.illuminanceValue = i;
+		als_sensor.event_type = HID_DATA_UPDATED;
+		hid_target_als_irq();
+	}
+
 	ccprintf("ALS Feature\n");
+	ccprintf(" report_state:%d\n", als_feature.reporting_state);
 	ccprintf(" Power:%d\n", als_feature.power_state);
+	ccprintf(" Sensor:%d\n", als_feature.sensor_state);
 	ccprintf(" Interval:%dms\n", als_feature.report_interval);
 	ccprintf(" sensitivity:%d\n", als_feature.sensitivity);
-	ccprintf(" report_state:%d\n", als_feature.reporting_state);
+	ccprintf(" illuminance:%d\n", als_sensor.illuminanceValue);
 
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(hidstatus, cmd_hid_status, "",
-			"Get hid device status");
+DECLARE_CONSOLE_COMMAND(hidals, cmd_hidals_status, "[lux]",
+			"Get als device status");
 
 static int hid_target_stop(struct i2c_target_config *config)
 {
