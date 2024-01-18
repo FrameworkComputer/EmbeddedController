@@ -15,10 +15,15 @@
 		int_powerbtn: powerbtn {
 			irq-pin = <&gpio_on_off_btn_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "power_button_interrupt";
+			handler = "board_power_button_interrupt";
 		};
 		int_slp_s3: slp_s3 {
 			irq-pin = <&gpio_slp_s3_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_slp_s4: slp_s4 {
+			irq-pin = <&gpio_slp_s4_l>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
@@ -34,6 +39,16 @@
 		};
 		int_vr_pg: vr_pg {
 			irq-pin = <&gpio_vr_pwrgd>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_run_pwr_ok: run_pwr_ok {
+			irq-pin = <&gpio_runpwrok>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_prim_pwr_ok: prim_pwr_ok {
+			irq-pin = <&gpio_prim_pwr_ok>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};

@@ -124,7 +124,14 @@ static int bbram_lookup(enum system_bbram_idx idx, int *offset_out,
 		break;
 
 #endif
+#if BBRAM_HAS_REGION(vpro_status)
+	case SYSTEM_BBRAM_IDX_VPRO_STATUS:
+		*offset_out = BBRAM_REGION_OFFSET(vpro_status);
+		*size_out = BBRAM_REGION_SIZE(vpro_status);
+		break;
+
 #endif
+#endif /* CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN */
 	default:
 		return EC_ERROR_INVAL;
 	}

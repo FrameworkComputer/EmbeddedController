@@ -116,6 +116,10 @@
 			offset = <0x4b>;
 			size = <0x01>;
 		};
+		vpro_status {
+			offset = <0x4c>;
+			size = <0x01>;
+		};
 	};
 };
 

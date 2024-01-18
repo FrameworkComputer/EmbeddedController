@@ -312,7 +312,6 @@ DECLARE_HOOK(HOOK_INIT, board_charger_lpm_enable, HOOK_PRIO_DEFAULT);
 
 __override void board_hibernate(void)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75_1p8valw_pwren), 0);
 	/* Turn off BGATE and NGATE for power saving */
 	charger_psys_enable(0);
 	charge_gate_onoff(0);
