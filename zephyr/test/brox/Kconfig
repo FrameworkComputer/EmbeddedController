@@ -1,0 +1,27 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+choice TEST_BOARD_VARIANT
+	prompt "Select board variant for tests"
+	help
+	  Board variant to use for tests
+
+	config TEST_BOARD_BASEBOARD
+		bool "Enable baseboard-specific tests"
+		help
+		  Enable baseboard tests.
+
+	config TEST_BOARD_BROX
+		bool "Enable brox-specific tests"
+		help
+		  Enable Brox tests.
+
+endchoice # TEST_BOARD_VARIANT
+
+config TEST_BOARD_NAME
+	string "Board name"
+	default "baseboard" if TEST_BOARD_BASEBOARD
+	default "brox" if TEST_BOARD_BROX
+
+source "Kconfig.zephyr"

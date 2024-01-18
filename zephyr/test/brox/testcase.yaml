@@ -1,0 +1,13 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+common:
+  platform_allow: native_posix
+tests:
+  # Baseboard tests
+  brox.baseboard:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BASEBOARD=y
+    extra_dtc_overlay_files:
+    - boards/baseboard/baseboard.overlay
