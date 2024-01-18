@@ -280,12 +280,13 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 1);
 
-		/* Wait prim power ok */
+		/* TODO: need confirm sequence
 		if (power_wait_signals(POWER_SIGNAL_MASK(X86_PRIM_PWR))) {
 			return POWER_G3;
 		}
+		*/
 
-		k_msleep(10);
+		k_msleep(50);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 1);
 
 		/* Customizes power button out signal without PB task for powering on. */
@@ -481,6 +482,12 @@ enum power_state power_handle_state(enum power_state state)
 	}
 	return state;
 }
+
+static void peripheral_interrupt_init(void)
+{
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_enkbl));
+}
+DECLARE_HOOK(HOOK_INIT, peripheral_interrupt_init, HOOK_PRIO_DEFAULT);
 
 static void peripheral_power_startup(void)
 {
