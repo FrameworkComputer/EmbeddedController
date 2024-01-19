@@ -10,6 +10,15 @@
 		gpio-wp = &gpio_ec_flash_wp_odl;
 	};
 
+	named-adc-channels {
+		adc_ec_usb_c0_vbus_sense: ec_usb_c0_vbus_sense {
+			mul = <10>;
+		};
+		adc_ec_usb_c1_vbus_sense: ec_usb_c1_vbus_sense {
+			mul = <10>;
+		};
+	};
+
 	named-i2c-ports {
 		/delete-node/ ec_i2c5;
 	};
