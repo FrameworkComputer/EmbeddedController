@@ -6,11 +6,12 @@ on:
       - marigold*
       - lotus*
       - azalea*
-    paths:
-      - 'zephyr/program/framework/**'
+  #  paths:
+  #    - 'zephyr/program/framework/**'
   #pull_request:
   #  branches:
   #    - marigold
+  # Dispatch only works on the main branch, so we can't actually use it here
   workflow_dispatch:
 
 jobs:
