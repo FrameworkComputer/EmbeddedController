@@ -7,6 +7,7 @@
 #include "../program/nissa/cbi.dtsi"
 #include "../program/nissa/joxer/cbi.dtsi"
 #include "../program/nissa/joxer/motionsense.dtsi"
+#include <cros/vivaldi_kbd_default.dtsi>
 
 / {
 	named-gpios {
@@ -184,5 +185,14 @@
 		compatible = "cros,tcpci-generic-emul";
 		status = "okay";
 		reg = <0x84>;
+	};
+};
+
+&vivaldi_kbd {
+	status = "okay";
+
+	kbd_config_1: kbd-config-1 {
+		vivaldi-codes = <0 0 0 0 0 0 0 0 0 0>;
+		capabilities = <0>;
 	};
 };

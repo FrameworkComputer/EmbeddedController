@@ -12,59 +12,21 @@
 
 #include <zephyr/logging/log.h>
 
+#include <drivers/vivaldi_kbd.h>
+
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
-static const struct ec_response_keybd_config yaviks_kb_w_kb_light = {
-	.num_top_row_keys = 13,
-	.action_keys = {
-		TK_BACK,		/* T1 */
-		TK_REFRESH,		/* T2 */
-		TK_FULLSCREEN,		/* T3 */
-		TK_OVERVIEW,		/* T4 */
-		TK_SNAPSHOT,		/* T5 */
-		TK_BRIGHTNESS_DOWN,	/* T6 */
-		TK_BRIGHTNESS_UP,	/* T7 */
-		TK_KBD_BKLIGHT_TOGGLE,	/* T8 */
-		TK_PLAY_PAUSE,		/* T9 */
-		TK_MICMUTE,		/* T10 */
-		TK_VOL_MUTE,		/* T11 */
-		TK_VOL_DOWN,		/* T12 */
-		TK_VOL_UP,		/* T13 */
-	},
-	.capabilities = KEYBD_CAP_NUMERIC_KEYPAD,
-};
-
-static const struct ec_response_keybd_config yaviks_kb_wo_kb_light = {
-	.num_top_row_keys = 13,
-	.action_keys = {
-		TK_BACK,		/* T1 */
-		TK_REFRESH,		/* T2 */
-		TK_FULLSCREEN,		/* T3 */
-		TK_OVERVIEW,		/* T4 */
-		TK_SNAPSHOT,		/* T5 */
-		TK_BRIGHTNESS_DOWN,	/* T6 */
-		TK_BRIGHTNESS_UP,	/* T7 */
-		TK_PLAY_PAUSE,		/* T8 */
-		TK_MICMUTE,		/* T9 */
-		TK_VOL_MUTE,		/* T10 */
-		TK_VOL_DOWN,		/* T11 */
-		TK_VOL_UP,		/* T12 */
-		TK_MENU,		/* T13 */
-	},
-	.capabilities = KEYBD_CAP_NUMERIC_KEYPAD,
-};
-
-__override const struct ec_response_keybd_config *
-board_vivaldi_keybd_config(void)
+int8_t board_vivaldi_keybd_idx(void)
 {
 	uint32_t val;
 
 	cros_cbi_get_fw_config(FW_KB_BACKLIGHT, &val);
 
-	if (val == FW_KB_BACKLIGHT_OFF)
-		return &yaviks_kb_wo_kb_light;
-	else
-		return &yaviks_kb_w_kb_light;
+	if (val == FW_KB_BACKLIGHT_OFF) {
+		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_1));
+	} else {
+		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_0));
+	}
 }
 
 /*

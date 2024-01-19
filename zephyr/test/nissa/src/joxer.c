@@ -26,6 +26,8 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
 
+#include <drivers/vivaldi_kbd.h>
+
 LOG_MODULE_REGISTER(nissa, LOG_LEVEL_INF);
 
 #define TCPC1 EMUL_DT_GET(DT_NODELABEL(tcpci_emul_1))
@@ -469,25 +471,25 @@ ZTEST(joxer, test_kb_layout_init)
 	kb_layout_init();
 	zassert_equal(set_scancode_set2_fake.call_count, 0);
 	zassert_equal(get_scancode_set2_fake.call_count, 0);
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &joxer_kb_wo_kb_light);
+	zassert_equal(board_vivaldi_keybd_idx(), 1);
 
 	keyboard_layout = 2;
 	kb_layout_init();
 	zassert_equal(set_scancode_set2_fake.call_count, 0);
 	zassert_equal(get_scancode_set2_fake.call_count, 0);
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &joxer_kb_w_kb_light);
+	zassert_equal(board_vivaldi_keybd_idx(), 0);
 
 	keyboard_layout = 1;
 	kb_layout_init();
 	zassert_equal(set_scancode_set2_fake.call_count, 1);
 	zassert_equal(get_scancode_set2_fake.call_count, 1);
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &joxer_kb_wo_kb_light);
+	zassert_equal(board_vivaldi_keybd_idx(), 1);
 
 	keyboard_layout = 3;
 	kb_layout_init();
 	zassert_equal(set_scancode_set2_fake.call_count, 2);
 	zassert_equal(get_scancode_set2_fake.call_count, 2);
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &joxer_kb_w_kb_light);
+	zassert_equal(board_vivaldi_keybd_idx(), 0);
 }
 
 ZTEST(joxer, test_kb_layout_init_cbi_error)

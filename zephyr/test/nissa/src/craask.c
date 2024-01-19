@@ -33,6 +33,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
 
+#include <drivers/vivaldi_kbd.h>
 #include <dt-bindings/gpio_defines.h>
 #include <typec_control.h>
 
@@ -156,7 +157,7 @@ ZTEST(craask, test_keyboard_configuration)
 	zassert_equal(keyscan_config.actual_key_mask[12], 0xca);
 	zassert_equal(keyscan_config.actual_key_mask[13], 0x00);
 	zassert_equal(keyscan_config.actual_key_mask[14], 0x00);
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &craask_kb);
+	zassert_equal(board_vivaldi_keybd_idx(), 0);
 
 	/* Initialize keyboard_cols for next test */
 	keyboard_raw_set_cols(KEYBOARD_COLS_MAX);
@@ -168,7 +169,7 @@ ZTEST(craask, test_keyboard_configuration)
 	zassert_equal(keyscan_config.actual_key_mask[12], 0xff);
 	zassert_equal(keyscan_config.actual_key_mask[13], 0xff);
 	zassert_equal(keyscan_config.actual_key_mask[14], 0xff);
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &craask_kb_w_kb_numpad);
+	zassert_equal(board_vivaldi_keybd_idx(), 1);
 }
 
 static bool keyboard_ca_fr;
