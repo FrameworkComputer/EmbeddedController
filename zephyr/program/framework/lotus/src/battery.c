@@ -361,14 +361,7 @@ __override void board_battery_compensate_params(struct batt_params *batt)
 
 void board_cut_off(void)
 {
-	const struct board_batt_params *params = get_batt_params();
 	int rv;
-
-	/* If battery is unknown can't send ship mode command */
-	if (!params) {
-		CPRINTS("Battery unknown cutoff failed");
-		return;
-	}
 
 	/* update charger setting to avoid B+ voltage wake up the battery */
 	if (update_charger_in_cutoff_mode()) {
@@ -376,11 +369,7 @@ void board_cut_off(void)
 		return;
 	}
 
-	/* Ship mode command requires writing 2 data values */
-	rv = sb_write(params->fuel_gauge.ship_mode.reg_addr,
-		params->fuel_gauge.ship_mode.reg_data[0]);
-	rv |= sb_write(params->fuel_gauge.ship_mode.reg_addr,
-		params->fuel_gauge.ship_mode.reg_data[1]);
+	rv = board_cut_off_battery();
 
 	if (rv == EC_RES_SUCCESS) {
 		CPRINTS("Battery cutoff is successful");
