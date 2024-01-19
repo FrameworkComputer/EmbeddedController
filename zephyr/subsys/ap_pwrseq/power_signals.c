@@ -113,6 +113,7 @@ static inline void check_debug(enum power_signal signal)
 	/*
 	 * Only check for debug display if the logging level requires it.
 	 */
+#ifdef CONFIG_LOG
 	if ((CONFIG_AP_PWRSEQ_LOG_LEVEL >= LOG_LEVEL_INF) &&
 	    (debug_signals & POWER_SIGNAL_MASK(signal))) {
 		bool value = atomic_test_bit(&power_signals, signal);
@@ -122,6 +123,7 @@ static inline void check_debug(enum power_signal signal)
 			atomic_set_bit_to(&prev_power_signals, signal, value);
 		}
 	}
+#endif
 }
 
 power_signal_mask_t power_get_signals(void)
