@@ -1833,6 +1833,8 @@ void cypd_port_int(int controller, int port)
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
 	int port_idx = (controller << 1) + port;
 	enum tcpci_msg_type sop_type;
+	static int snk_transition_flags;
+
 	/* enum pd_msg_type sop_type; */
 	rv = i2c_read_offset16_block(i2c_port, addr_flags,
 		CCG_PORT_PD_RESPONSE_REG(port), data2, 4);
@@ -1902,11 +1904,19 @@ void cypd_port_int(int controller, int port)
 			pd_port_states[port_idx].epr_support = 1;
 			CPRINTS("P%d EPR mode capable", port_idx);
 		}
+		snk_transition_flags = 1;
 		break;
 	case CCG_RESPONSE_EPR_EVENT:
 		CPRINTS("CCG_RESPONSE_EPR_EVENT %d", port_idx);
 		cypd_update_epr_state(controller, port, response_len);
 		cypd_update_port_state(controller, port);
+		break;
+	case CCG_RESPONSE_ACCEPT_MSG_RX:
+		CPRINTS("CCG_RESPONSE_ACCEPT_MSG_RX %d", port_idx);
+		if (snk_transition_flags) {
+			charge_manager_force_ceil(port_idx, 500);
+			snk_transition_flags = 0;
+		}
 		break;
 	case CCG_RESPONSE_EXT_MSG_SOP_RX:
 	case CCG_RESPONSE_EXT_SOP1_RX:
