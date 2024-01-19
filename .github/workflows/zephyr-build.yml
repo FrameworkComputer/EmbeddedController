@@ -16,7 +16,7 @@ on:
 jobs:
   build:
     name: Build Framework platforms
-    runs-on: [marigold-builders]
+    runs-on: [zephyr-experiment]
 
     strategy:
       # Only build one at a time because we have only one working directory
@@ -33,7 +33,7 @@ jobs:
     # Build not in $GITHUB_HOME but in the chroot env
     defaults:
       run:
-        working-directory: /${{ matrix.platform.folder }}/ec_home/chromiumos
+        working-directory: /home/zoid/chromiumos
 
     steps:
       # Need to use git
@@ -82,4 +82,4 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.platform.name }}.${{ env.VERSIONINFO }}
-          path: /${{ matrix.platform.folder }}/ec_home/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output
+          path: /home/zoid/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output
