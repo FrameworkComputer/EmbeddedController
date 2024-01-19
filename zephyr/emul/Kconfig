@@ -175,6 +175,17 @@ config EMUL_RTC
 	help
 	  This options enables the RTC emulator for testing.
 
+config EMUL_KTU1125
+	bool "KTU1125 PPC emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_KTU1125_EMUL_ENABLED
+	help
+	  Enable the KTU1125 PPC emulator. This driver uses an emulated
+	  I2C bus. This is a minimal emulator that does not provide
+	  functional emulation but does support coverage testing of the
+	  KTU1125 PPC driver.
+	  Emulator API is available in zephyr/include/emul/emul_ktu1125.h.
+
 config EMUL_RT1739
 	bool "RT1739 PPC emulator"
 	default y
