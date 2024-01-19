@@ -111,6 +111,10 @@
 #define GPIO_TOUCHPAD_INT GPIO_SIGNAL(DT_PROP(DT_PROP(TP_NODE, irq), irq_pin))
 #define CONFIG_TOUCHPAD_I2C_ADDR_FLAGS DT_REG_ADDR(TP_NODE)
 #define CONFIG_TOUCHPAD_I2C_PORT I2C_PORT_BY_DEV(TP_NODE)
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X DT_PROP(TP_NODE, logical_max_x)
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y DT_PROP(TP_NODE, logical_max_y)
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X DT_PROP(TP_NODE, physical_max_x)
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y DT_PROP(TP_NODE, physical_max_y)
 
 #endif /* DT_HAS_COMPAT_STATUS_OKAY(elan_ekth3000) */
 #endif /* CONFIG_ZEPHYR */
@@ -488,7 +492,8 @@ static void elan_tp_init(void)
 		elan_tp_params.width_y, elan_tp_params.pressure_adj, dpi_x,
 		dpi_y);
 
-#ifdef CONFIG_USB_HID_TOUCHPAD
+#if defined(CONFIG_USB_HID_TOUCHPAD) || \
+	defined(CONFIG_PLATFORM_EC_ONE_WIRE_UART_KEYBOARD)
 	/* Validity check dimensions provided at build time. */
 	if (elan_tp_params.max_x != CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X ||
 	    elan_tp_params.max_y != CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y ||

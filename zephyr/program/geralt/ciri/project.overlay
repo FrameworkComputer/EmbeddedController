@@ -249,6 +249,10 @@
 		/* Zephyr preferred style for specifying ec_ap_hid_int_odl */
 		irq-gpios = <&gpioa 6 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8 |
 			     GPIO_ACTIVE_LOW)>;
+		logical_max_x = <2644>;
+		logical_max_y = <1440>;
+		physical_max_x = <839>;
+		physical_max_y = <457>;
 	};
 };
 
