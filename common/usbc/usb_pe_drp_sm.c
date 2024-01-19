@@ -4016,7 +4016,8 @@ static void pe_snk_ready_run(int port)
 		/* Inform DPM state machine that PE is set for messages */
 		dpm_set_pe_ready(port, true);
 
-		if (pd_timer_is_expired(port, PE_TIMER_SINK_EPR_KEEP_ALIVE)) {
+		if (IS_ENABLED(CONFIG_USB_PD_EPR) &&
+		    pd_timer_is_expired(port, PE_TIMER_SINK_EPR_KEEP_ALIVE)) {
 			set_state_pe(port, PE_SNK_EPR_KEEP_ALIVE);
 			return;
 		}
@@ -7086,7 +7087,8 @@ static void pe_vcs_turn_off_vconn_swap_run(int port)
 		pe[port].discover_identity_counter = 0;
 		pe[port].dr_swap_attempt_counter = 0;
 
-		if (PE_CHK_FLAG(port, PE_FLAGS_ENTERING_EPR))
+		if (IS_ENABLED(CONFIG_USB_PD_EPR) &&
+		    PE_CHK_FLAG(port, PE_FLAGS_ENTERING_EPR))
 			set_state_pe(port,
 				     PE_SNK_EPR_MODE_ENTRY_WAIT_FOR_RESPONSE);
 		else
