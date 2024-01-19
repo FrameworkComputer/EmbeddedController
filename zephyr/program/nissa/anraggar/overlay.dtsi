@@ -5,6 +5,7 @@
 
 #include <cros/thermistor/thermistor.dtsi>
 #include <dt-bindings/usb_pd_tcpm.h>
+#include <dt-bindings/usbc_mux.h>
 
 / {
 	aliases {
@@ -163,11 +164,11 @@
 		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
-			tcpc = <&tcpc_port1>;
+			tcpc = <&usbpd1>;
 			ppc = <&ppc_port1>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&virtual_mux_1 &tcpci_mux_1>;
+				usb-muxes = <&virtual_mux_1 &anx7483_mux_1>;
 			};
 			usb_mux_chain_1_no_mux: usb-mux-chain-1-no-mux {
 				compatible = "cros-ec,usb-mux-chain";
@@ -178,9 +179,6 @@
 		port1-muxes {
 			virtual_mux_1: virtual-mux-1 {
 				compatible = "cros-ec,usbc-mux-virtual";
-			};
-			tcpci_mux_1: tcpci-mux-1 {
-				compatible = "parade,usbc-mux-ps8xxx";
 			};
 		};
 	};
@@ -268,35 +266,25 @@
 	pinctrl-names = "default";
 };
 
-&i2c3 {
-	label = "I2C_USB_C1_TCPC";
+&i2c4 {
+	label = "I2C_USB_C1";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	pinctrl-0 = <&i2c3_clk_gph1_default
-		     &i2c3_data_gph2_default>;
+	pinctrl-0 = <&i2c4_clk_gpe0_default
+		     &i2c4_data_gpe7_default>;
 	pinctrl-names = "default";
 
-	tcpc_port1: ps8xxx@b {
-		compatible = "parade,ps8xxx";
-		reg = <0xb>;
-		tcpc-flags = <(
-			TCPC_FLAGS_TCPCI_REV2_0 |
-			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
-			TCPC_FLAGS_CONTROL_FRS)>;
-		/* a duplicate of the <&gpio_usb_c1_tcpc_int_odl> node in
-		 * "named-gpios". This is the Zephyr preferred style,
-		 * the "named-gpios" node will be dealt with at a later date.
-		 */
-		irq-gpios = <&gpiok 6 GPIO_ACTIVE_LOW>;
+	anx7483_mux_1: anx7483-mux-1@3e {
+		compatible = "analogix,anx7483";
+		reg = <0x3e>;
+		board-set = "anx7483_set_default_tuning";
+		flags = <USB_MUX_FLAG_RESETS_IN_G3>;
 	};
 
 	ppc_port1: ppc_syv@40 {
 		compatible = "silergy,syv682x";
 		status = "okay";
 		reg = <0x40>;
-		/* a duplicate of the <&gpio_usb_c1_ppc_int_odl> node in
-		 * "named-gpios". This is the Zephyr preferred style,
-		 * the "named-gpios" node will be dealt with at a later date.
-		 */
+		frs_en_gpio = <&gpio_usb_c1_frs_en>;
 		irq-gpios = <&gpiok 7 GPIO_ACTIVE_LOW>;
 	};
 };
@@ -334,5 +322,9 @@
 };
 
 &usbpd0 {
+	status = "okay";
+};
+
+&usbpd1 {
 	status = "okay";
 };
