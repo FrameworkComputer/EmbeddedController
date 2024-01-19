@@ -106,11 +106,6 @@ ZTEST(pujjo, test_fan_cbi_error)
 	zassert_equal(flags, 0, "actual GPIO flags were %#x", flags);
 }
 
-ZTEST(pujjo, test_keyboard_configuration)
-{
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &pujjo_kb);
-}
-
 ZTEST(pujjo, test_led)
 {
 	/* led pin is low active, status 0 is turn on */

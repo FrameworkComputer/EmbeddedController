@@ -80,11 +80,6 @@ static void test_before(void *fixture)
 
 ZTEST_SUITE(pirrha, NULL, NULL, test_before, NULL, NULL);
 
-ZTEST(pirrha, test_keyboard_config)
-{
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &pirrha_kb_legacy);
-}
-
 ZTEST(pirrha, test_charger_hibernate)
 {
 	/* board_hibernate() asks the chargers to hibernate. */

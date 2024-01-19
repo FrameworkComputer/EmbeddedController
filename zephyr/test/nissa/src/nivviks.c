@@ -150,13 +150,6 @@ ZTEST(nivviks, test_base_inversion)
 		"inverted orientation should use the inverted rotation matrix");
 }
 
-ZTEST(nivviks, test_keyboard_configuration)
-{
-	extern const struct ec_response_keybd_config nivviks_kb;
-
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &nivviks_kb);
-}
-
 ZTEST(nivviks, test_led_pwm)
 {
 	led_set_color_battery(EC_LED_COLOR_BLUE);

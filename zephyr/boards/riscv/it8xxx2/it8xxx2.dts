@@ -7,6 +7,7 @@
 #include <dt-bindings/gpio_defines.h>
 #include <dt-bindings/gpio/ite-it8xxx2-gpio.h>
 #include <ite/it8xxx2-pinctrl-map.dtsi>
+#include <cros/vivaldi_kbd_default.dtsi>
 
 #define GPIO_VOLTAGE_1P8 IT8XXX2_GPIO_VOLTAGE_1P8
 

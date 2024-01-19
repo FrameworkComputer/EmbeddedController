@@ -97,11 +97,6 @@ ZTEST(nokris, test_board_check_extpower)
 	zassert_equal(extpower_handle_update_fake.call_count, 2);
 }
 
-ZTEST(nokris, test_keyboard_configuration)
-{
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &nivviks_kb);
-}
-
 ZTEST(nokris, test_is_sourcing_vbus)
 {
 	board_is_sourcing_vbus(0);

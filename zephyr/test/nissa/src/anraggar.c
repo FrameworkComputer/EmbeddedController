@@ -24,8 +24,3 @@
 LOG_MODULE_REGISTER(nissa, LOG_LEVEL_INF);
 
 ZTEST_SUITE(anraggar, NULL, NULL, NULL, NULL, NULL);
-
-ZTEST(anraggar, test_keyboard_config)
-{
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &anraggar_kb);
-}

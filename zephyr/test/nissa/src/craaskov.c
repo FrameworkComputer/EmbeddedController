@@ -367,5 +367,4 @@ ZTEST(craaskov, test_kb_layout_init)
 	keyboard_layout = 1;
 	kb_layout_init();
 	zassert_equal(set_scancode_set2_fake.call_count, 2);
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &craaskov_kb);
 }

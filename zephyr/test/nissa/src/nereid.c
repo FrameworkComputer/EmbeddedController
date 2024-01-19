@@ -83,11 +83,6 @@ static void test_before(void *fixture)
 
 ZTEST_SUITE(nereid, NULL, NULL, test_before, NULL, NULL);
 
-ZTEST(nereid, test_keyboard_config)
-{
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &nereid_kb_legacy);
-}
-
 static int cbi_get_board_version_1(uint32_t *version)
 {
 	*version = 1;
