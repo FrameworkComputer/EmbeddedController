@@ -34,9 +34,9 @@ CROS_EC_TASK_LIST
 #undef TASK_TEST
 
 /* Statically declare all threads here */
-#define CROS_EC_TASK(name, entry, parameter, stack_size, priority)      \
-	K_THREAD_DEFINE(name, stack_size, entry, parameter, NULL, NULL, \
-			EC_TASK_PRIORITY(priority), 0, SYS_FOREVER_MS);
+#define CROS_EC_TASK(name, entry, parameter, stack_size, priority, options) \
+	K_THREAD_DEFINE(name, stack_size, entry, parameter, NULL, NULL,     \
+			EC_TASK_PRIORITY(priority), options, SYS_FOREVER_MS);
 #define TASK_TEST(name, e, p, size) CROS_EC_TASK(name, e, p, size)
 CROS_EC_TASK_LIST
 #undef CROS_EC_TASK
@@ -53,7 +53,7 @@ struct task_ctx_base_data {
  * Create a mapping from the cros-ec task ID to the Zephyr thread.
  */
 #undef CROS_EC_TASK
-#define CROS_EC_TASK(_name, _entry, _parameter, _size, _prio) _name,
+#define CROS_EC_TASK(_name, _entry, _parameter, _size, _prio, _options) _name,
 #ifdef TEST_BUILD
 static k_tid_t task_to_k_tid[TASK_ID_COUNT] = {
 #else
