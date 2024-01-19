@@ -157,7 +157,7 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	int rv;
+	int rv = EC_SUCCESS;
 
 	switch (led_id) {
 	case EC_LED_ID_LEFT_LED:
@@ -187,10 +187,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 		rv = EC_ERROR_PARAM1;
 	}
 
-	if (rv)
-		return rv;
-
-	return EC_SUCCESS;
+	return rv;
 }
 
 /*
