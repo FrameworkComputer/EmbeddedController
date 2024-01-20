@@ -6,6 +6,7 @@
 #include "battery.h"
 #include "board_adc.h"
 #include "board_host_command.h"
+#include "board_charger.h"
 #include "chipset.h"
 #include "config.h"
 #include "console.h"
@@ -455,6 +456,9 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* Call hooks now that rails are up */
 		hook_call_deferred(&system_hang_detect_data, 3 * SECOND);
+
+		/* enable the psys to resume from low power mode */
+		board_charger_lpm_control(1);
 		hook_notify(HOOK_CHIPSET_STARTUP);
 		return POWER_S3;
 
@@ -680,6 +684,9 @@ enum power_state power_handle_state(enum power_state state)
 			EC_PS_RESUME_S0ix | EC_PS_RESUME_S3 | EC_PS_ENTER_S3);
 
 		cypd_set_power_active();
+
+		/* disable psys to let charger enter low power mode*/
+		board_charger_lpm_control(0);
 		return POWER_G3;
 	default:
 		break;
