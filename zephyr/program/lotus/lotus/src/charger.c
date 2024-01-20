@@ -161,16 +161,15 @@ static  void charger_psys_enable(bool status)
 	}
 }
 
-void charger_input_current_limit_control(enum power_state state)
+void charger_input_current_limit_control(void)
 {
 	int acin = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in));
 
+	if (battery_cutoff_in_progress() || battery_is_cut_off())
+		return;
+
 	if (acin && (battery_is_present() != BP_YES)) {
-		/**
-		 * Set Control3 register bit 5;
-		 * Condition 1: DC mode S5
-		 * Condition 2: AC only
-		 */
+		/* Set Control3 register bit 5; */
 		i2c_update16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL3,
 			ISL9241_CONTROL3_INPUT_CURRENT_LIMIT, MASK_SET);
 	} else {
@@ -180,41 +179,18 @@ void charger_input_current_limit_control(enum power_state state)
 	}
 }
 
-static void board_charger_lpm_control(void)
+void board_charger_lpm_control(int enable)
 {
-	enum power_state ps = power_get_state();
-	static enum power_state pre_power_state = POWER_G3;
-
 	if (battery_cutoff_in_progress() || battery_is_cut_off())
 		return;
 
-	switch (ps) {
-	case POWER_G3:
-	case POWER_G3S5:
-	case POWER_S5G3:
-	case POWER_S5:
-	case POWER_S3S5:
-	case POWER_S5S3:
-		ps = POWER_S5;
-		break;
-	default:
-		ps = POWER_S0;
-		break;
-	}
-
-	if (pre_power_state != ps)
-		charger_psys_enable(ps == POWER_S5 ? false : true);
-	charger_input_current_limit_control(ps);
-
-	pre_power_state = ps;
+	charger_psys_enable(enable);
 }
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_charger_lpm_control, HOOK_PRIO_DEFAULT+1);
-DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_charger_lpm_control, HOOK_PRIO_DEFAULT+1);
 
 __override void board_hibernate(void)
 {
 	/* for i2c analyze, re-write again */
-	board_charger_lpm_control();
+	board_charger_lpm_control(0);
 	charge_gate_onoff(false);
 
 }
@@ -319,7 +295,7 @@ static void charger_chips_init(void)
 		ISL9241_REG_CONTROL1, val))
 		goto init_fail;
 
-	board_charger_lpm_control();
+	board_charger_lpm_control(0);
 
 	/* TODO: should we need to talk to PD chip after initial complete ? */
 	hook_call_deferred(&board_check_current_data, 10*MSEC);
@@ -360,7 +336,7 @@ void charger_update(void)
 		pre_ac_state = extpower_is_present();
 		pre_dc_state = battery_is_present();
 
-		board_charger_lpm_control();
+		charger_input_current_limit_control();
 	}
 }
 DECLARE_HOOK(HOOK_AC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);

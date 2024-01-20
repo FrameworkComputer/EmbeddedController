@@ -34,6 +34,7 @@ int update_charger_in_cutoff_mode(void);
 
 #ifdef CONFIG_BOARD_LOTUS
 int charger_in_bypass_mode(void);
+void board_charger_lpm_control(int enable);
 #endif
 
 #endif	/* __CROS_EC_BOARD_CHARGER_H */
