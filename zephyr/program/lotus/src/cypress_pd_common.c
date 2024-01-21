@@ -33,6 +33,7 @@
 #ifdef CONFIG_BOARD_LOTUS
 #include "gpu.h"
 #include "cpu_power.h"
+#include "board_charger.h"
 #endif
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
@@ -467,7 +468,7 @@ void exit_epr_mode(void)
 					CCG_PD_CONTROL_REG(port_idx & 0x1),
 					CCG_PD_CMD_INITIATE_EPR_EXIT);
 
-			hook_call_deferred(&epr_flow_pending_deferred_data, 500 * MSEC);
+			hook_call_deferred(&epr_flow_pending_deferred_data, 1000 * MSEC);
 		}
 	}
 }
@@ -1328,6 +1329,8 @@ static void cypd_update_port_state(int controller, int port)
 		pd_epr_in_progress &= ~EPR_PROCESS_MASK;
 	}
 #endif
+
+	charge_wakeup();
 }
 
 int cypd_set_power_state(int power_state, int controller)
@@ -1678,6 +1681,11 @@ int cypd_get_ac_power(void)
 
 	ac_power_mW = (pd_port_states[prev_charge_port].current
 		* pd_port_states[prev_charge_port].voltage);
+
+	if (!isl9241_is_in_bypass_mode(0)) {
+		/* limit to 100W if not in bypass mode */
+		ac_power_mW = MIN(100000000, ac_power_mW);
+	}
 
 	return (ac_power_mW / 1000);
 }
@@ -2173,12 +2181,16 @@ int board_set_active_charge_port(int charge_port)
 	int i;
 	CPRINTS("%s port %d, prev:%d", __func__, charge_port, prev_charge_port);
 
+
 	if (prev_charge_port == charge_port) {
 		/* in the case of hard reset, we do not turn off the old
 		 * port, but the PD will implicitly clear the port
 		 * so we need to turn on the vbus control again.
 		 */
 		cypd_cfet_vbus_control(charge_port, true, true);
+#ifdef CONFIG_BOARD_LOTUS
+		board_disable_bypass_oneshot();
+#endif
 		return EC_SUCCESS;
 	}
 
@@ -2187,6 +2199,20 @@ int board_set_active_charge_port(int charge_port)
 		prev_charge_port != charge_port) {
 		/* Turn off the previous charge port before turning on the next port */
 		cypd_cfet_vbus_control(prev_charge_port, false, true);
+#ifdef CONFIG_BOARD_LOTUS
+		board_disable_bypass_oneshot();
+#endif
+		if (isl9241_is_in_bypass_mode(0)) {
+			CPRINTS("Force exit bypass mode for port switch");
+			if (chg_chips[0].drv->enable_bypass_mode)
+			chg_chips[0].drv->enable_bypass_mode(0, false);
+			/* ACOK threshold has been lowered, give the charger some time to
+			 * discharge the input caps before switching to the new port
+			 */
+			usleep(8*MSEC);
+		}
+
+
 	}
 
 	for (i = 0; i < PD_PORT_COUNT; i++) {

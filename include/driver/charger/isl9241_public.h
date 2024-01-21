@@ -33,6 +33,13 @@ int isl9241_set_ac_prochot(int chgnum, int ma);
  */
 int isl9241_set_dc_prochot(int chgnum, int ma);
 
+/**
+ * Check if charger is currently in bypass mode
+ *
+ * @return true/false
+ */
+bool isl9241_is_in_bypass_mode(int chgnum);
+
 #ifdef CONFIG_CHARGER_RAA489110
 #define ISL9241_AC_PROCHOT_CURRENT_MIN 32 /* mA */
 #else /* CONFIG_CHARGER_ISL9241 */

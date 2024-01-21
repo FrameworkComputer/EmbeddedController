@@ -22,7 +22,7 @@
 #include "throttle_ap.h"
 #include "util.h"
 #include "gpu.h"
-
+#include "driver/charger/isl9241_public.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
@@ -992,7 +992,7 @@ void clear_prochot(enum clear_reasons reason)
 {
 	if (events & BIT(PD_PROGRESS_ENTER_EPR_MODE) && (cypd_get_ac_power() > 100000)) {
 		/* wait charger to entry the bypass mode */
-		if (charger_in_bypass_mode())
+		if (isl9241_is_in_bypass_mode(0))
 			update_pmf_events(BIT(PD_PROGRESS_ENTER_EPR_MODE), 0);
 	}
 
@@ -1030,7 +1030,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	}
 
 #ifdef CONFIG_BOARD_LOTUS
-	if (force_update && charger_in_bypass_mode() && !get_gpu_gpio(GPIO_FUNC_ACDC))
+	if (force_update && isl9241_is_in_bypass_mode(0) && !get_gpu_gpio(GPIO_FUNC_ACDC))
 		set_gpu_gpio(GPIO_FUNC_ACDC, 1);
 
 #endif

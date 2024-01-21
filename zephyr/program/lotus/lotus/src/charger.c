@@ -344,29 +344,61 @@ DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, charger_update, HOOK_PRIO_DEFAULT);
 
 static bool bypass_force_en;
 static bool bypass_force_disable;
+
+static int bypass_force_disable_oneshot;
+void board_disable_bypass_oneshot(void)
+{
+	bypass_force_disable_oneshot = 2;
+}
 __override int board_should_charger_bypass(void)
 {
 	int power_uw = charge_manager_get_power_limit_uw();
 	int voltage_mv = charge_manager_get_charger_voltage();
 	int curr_batt = battery_is_present();
+	int ret;
+	const char * reason = "";
+	if (bypass_force_en) {
+		ret = true;
+		reason = "forcen";
+		goto board_exit;
+	}
 
-	if (bypass_force_en)
-		return true;
+	if (bypass_force_disable){
+		ret = false;
+		reason = "forcedis";
+		goto board_exit;
+	}
 
-	if (bypass_force_disable)
-		return false;
+	if (bypass_force_disable_oneshot) {
+		bypass_force_disable_oneshot--;
+		ret = false;
+		reason = "oneshot";
+		goto board_exit;
+	}
 
 	if (curr_batt == BP_YES) {
-		if (power_uw > 100000000)
-			return true;
-		else
-			return false;
+		if (power_uw > 100000000) {
+			ret = true;
+			reason = "power";
+			goto board_exit;
+		} else {
+			ret = false;
+			goto board_exit;
+		}
 	} else {
-		if (voltage_mv > 20000)
-			return true;
-		else
-			return false;
+		if (voltage_mv > 20000){
+			ret = true;
+			reason = "volt";
+			goto board_exit;
+		} else {
+			ret = false;
+			goto board_exit;
+		}
 	}
+board_exit:
+	/* CPRINTS("board_should_charger_bypass %s %d", reason, ret); */
+
+	return ret;
 }
 
 int board_want_change_mode(void)
@@ -379,24 +411,6 @@ int board_want_change_mode(void)
 		return true;
 	} else
 		return false;
-}
-
-int charger_in_bypass_mode(void)
-{
-	int reg;
-	int rv;
-
-	rv = i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS, ISL9241_REG_CONTROL0, &reg);
-
-	/* read register fail */
-	if (rv)
-		return 0;
-
-	/* charer not enter bypass mode */
-	if ((reg & ISL9241_CONTROL0_EN_BYPASS_GATE) != ISL9241_CONTROL0_EN_BYPASS_GATE)
-		return 0;
-
-	return 1;
 }
 
 int board_discharge_on_ac(int enable)
