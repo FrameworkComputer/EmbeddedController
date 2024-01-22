@@ -73,6 +73,7 @@
 		};
 		gpio_ec_ap_int_odl: ec_ap_int_odl {
 			gpios = <&gpiom 6 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_EC_INT_L";
 		};
 		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
 			gpios = <&gpioc 3 GPIO_INPUT>;
