@@ -101,6 +101,7 @@ if(DEFINED CONFIG_BOARD_YAVIKS)
 	zephyr_library_sources(
 			"yaviks/src/led.c"
 			"yaviks/src/keyboard.c"
+			"yaviks/src/board.c"
 			"yaviks/src/sub_board.c"
 			"yaviks/src/thermal.c"
 	)
