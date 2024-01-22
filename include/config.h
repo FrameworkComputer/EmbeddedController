@@ -3483,7 +3483,7 @@
 #endif /* CONFIG_ZEPHYR */
 
 /* Provide rudimentary malloc/free like services for shared memory. */
-#undef CONFIG_MALLOC
+#undef CONFIG_SHARED_MALLOC
 
 /* Need for a math library */
 #undef CONFIG_MATH_UTIL

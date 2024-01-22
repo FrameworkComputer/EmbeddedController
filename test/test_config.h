@@ -68,7 +68,7 @@ enum battery_type {
 #define CONFIG_FLASH_LOG
 #define CONFIG_FLASH_LOG_BASE (CONFIG_PROGRAM_MEMORY_BASE + 0x800)
 #define CONFIG_FLASH_LOG_SPACE 0x800
-#define CONFIG_MALLOC
+#define CONFIG_SHARED_MALLOC
 #endif
 
 #ifdef TEST_KB_8042
@@ -321,7 +321,7 @@ enum sensor_id {
 #endif
 
 #ifdef TEST_SHMALLOC
-#define CONFIG_MALLOC
+#define CONFIG_SHARED_MALLOC
 #endif
 
 #ifdef TEST_SBS_CHARGING

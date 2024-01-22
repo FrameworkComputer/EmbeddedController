@@ -49,9 +49,9 @@
 /*
  * This command needs malloc to work. Could we use this instead?
  *
- * #define CMD_KEYBOARD_LOG IS_ENABLED(CONFIG_MALLOC)
+ * #define CMD_KEYBOARD_LOG IS_ENABLED(CONFIG_SHARED_MALLOC)
  */
-#ifdef CONFIG_MALLOC
+#ifdef CONFIG_SHARED_MALLOC
 #define CMD_KEYBOARD_LOG 1
 #else
 #define CMD_KEYBOARD_LOG 0
