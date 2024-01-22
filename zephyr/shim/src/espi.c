@@ -529,7 +529,16 @@ static void handle_host_write(uint32_t data)
 	lpc_packet.request_size = EC_LPC_HOST_PACKET_SIZE;
 
 	lpc_packet.response = (void *)shm_mem_host_cmd;
+#ifndef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
 	lpc_packet.response_max = EC_LPC_HOST_PACKET_SIZE;
+#else
+	/**
+	 * We are implementing some tool for debugging.
+	 * If the hot command returns the data is more than 127 bytes, the system will stuck.
+	 * So reduce the host command maximum response size to solve this problem.
+	 */
+	lpc_packet.response_max = 0x80;
+#endif
 	lpc_packet.response_size = 0;
 
 	lpc_packet.driver_result = EC_RES_SUCCESS;
