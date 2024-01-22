@@ -363,6 +363,7 @@ struct ping_status {
 
 /** @brief Emulated properties */
 struct rts5453p_emul_pdc_data {
+	struct gpio_dt_spec irq_gpios;
 	uint16_t ucsi_version;
 	union vendor_cmd vnd_command;
 	uint8_t connector_reset_type;

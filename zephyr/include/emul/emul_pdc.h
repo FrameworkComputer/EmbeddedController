@@ -6,6 +6,8 @@
 #ifndef ZEPHYR_INCLUDE_EMUL_PDC_H_
 #define ZEPHYR_INCLUDE_EMUL_PDC_H_
 
+#include "drivers/ucsi_v3.h"
+
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
 
@@ -56,6 +58,8 @@ typedef int (*emul_pdc_get_requested_power_level_t)(
 typedef int (*emul_pdc_get_reconnect_req_t)(const struct emul *target,
 					    uint8_t *expecting, uint8_t *val);
 
+typedef int (*emul_pdc_pulse_irq_t)(const struct emul *target);
+
 __subsystem struct emul_pdc_api_t {
 	emul_pdc_set_response_delay_t set_response_delay;
 	emul_pdc_set_ucsi_version_t set_ucsi_version;
@@ -77,6 +81,7 @@ __subsystem struct emul_pdc_api_t {
 	emul_pdc_get_retimer_fw_t get_retimer;
 	emul_pdc_get_requested_power_level_t get_requested_power_level;
 	emul_pdc_get_reconnect_req_t get_reconnect_req;
+	emul_pdc_pulse_irq_t pulse_irq;
 };
 
 static inline int emul_pdc_set_ucsi_version(const struct emul *target,
@@ -380,6 +385,60 @@ static inline int emul_pdc_get_reconnect_req(const struct emul *target,
 		return api->get_reconnect_req(target, expecting, val);
 	}
 	return -ENOSYS;
+}
+
+static inline int emul_pdc_pulse_irq(const struct emul *target)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_api_t *api = target->backend_api;
+
+	if (api->pulse_irq) {
+		return api->pulse_irq(target);
+	}
+	return -ENOSYS;
+}
+
+static inline void
+emul_pdc_configure_src(const struct emul *target,
+		       struct connector_status_t *connector_status)
+{
+	ARG_UNUSED(target);
+	connector_status->power_operation_mode = PD_OPERATION;
+	connector_status->power_direction = 1;
+}
+
+static inline void
+emul_pdc_configure_snk(const struct emul *target,
+		       struct connector_status_t *connector_status)
+{
+	ARG_UNUSED(target);
+	connector_status->power_operation_mode = PD_OPERATION;
+	connector_status->power_direction = 0;
+}
+
+static inline int
+emul_pdc_connect_partner(const struct emul *target,
+			 struct connector_status_t *connector_status)
+{
+	connector_status->connect_status = 1;
+	emul_pdc_set_connector_status(target, connector_status);
+	emul_pdc_pulse_irq(target);
+
+	return 0;
+}
+
+static inline int emul_pdc_disconnect(const struct emul *target)
+{
+	struct connector_status_t connector_status;
+
+	connector_status.connect_status = 0;
+	emul_pdc_set_connector_status(target, &connector_status);
+	emul_pdc_pulse_irq(target);
+
+	return 0;
 }
 
 #endif /* ZEPHYR_INCLUDE_EMUL_PDC_H_ */

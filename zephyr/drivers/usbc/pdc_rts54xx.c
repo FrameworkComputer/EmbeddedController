@@ -371,6 +371,7 @@ static void print_current_state(struct pdc_data_t *data)
 static void call_cci_event_cb(struct pdc_data_t *data)
 {
 	if (data->cci_cb) {
+		LOG_INF("cci_event_cb event=0x%x", data->cci_event.raw_value);
 		data->cci_cb(data->cci_event, data->cb_data);
 	}
 }
@@ -992,6 +993,7 @@ static void st_irq_run(void *o)
 		if (rv == 0) {
 			if ((ara >> 1) == cfg->i2c.addr) {
 				/* This port generated the interrupt */
+				LOG_INF("port generated interrupt");
 				data->irq_state = IRQ_INFORM_SUBSYSTEM;
 			} else {
 				/* This port didn't generate the interrupt */

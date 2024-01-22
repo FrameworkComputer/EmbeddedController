@@ -23,10 +23,9 @@
 LOG_MODULE_REGISTER(test_pdc_api, LOG_LEVEL_INF);
 
 #define RTS5453P_NODE DT_NODELABEL(rts5453p_emul)
-#define EMUL_DATA rts5453p_emul_get_i2c_common_data(EMUL)
 
-const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
-const struct device *dev = DEVICE_DT_GET(RTS5453P_NODE);
+static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
+static const struct device *dev = DEVICE_DT_GET(RTS5453P_NODE);
 
 void pdc_before_test(void *data)
 {
