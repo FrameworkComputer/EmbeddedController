@@ -350,8 +350,12 @@ static void force_mkbp_if_events(void)
 		if (ap_comm_failure_count < ap_comm_failure_threshold) {
 			CPRINTS("MKBP not cleared within threshold, toggling.");
 		} else if (ap_comm_failure_count == ap_comm_failure_threshold) {
-			CPRINTS("MKBP: The AP is failing to respond despite "
-				"being powered on.");
+			if (chipset_in_state(CHIPSET_STATE_ON))
+				CPRINTS("MKBP: The AP is failing to respond "
+					"despite being powered on.");
+			else
+				CPRINTS("MKBP: The AP is failing to respond "
+					"because it is sleeping or off");
 		}
 	}
 
