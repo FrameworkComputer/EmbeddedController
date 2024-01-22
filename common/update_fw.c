@@ -18,11 +18,28 @@
 #include "vb21_struct.h"
 #include "vboot.h"
 
+#ifdef CONFIG_ZEPHYR
+#include <zephyr/devicetree.h>
+#endif
+
 #if defined(CONFIG_TOUCHPAD_VIRTUAL_OFF) && defined(CONFIG_TOUCHPAD_HASH_FW)
 #define CONFIG_TOUCHPAD_FW_CHUNKS \
 	(CONFIG_TOUCHPAD_VIRTUAL_SIZE / CONFIG_UPDATE_PDU_SIZE)
 
+#ifdef CONFIG_ZEPHYR
+
+const uint8_t touchpad_fw_hashes[CONFIG_TOUCHPAD_FW_CHUNKS][SHA256_DIGEST_SIZE];
+const uint8_t touchpad_fw_full_hash[SHA256_DIGEST_SIZE];
+
+/* Check if the fmap section size is correct */
+BUILD_ASSERT(sizeof(touchpad_fw_hashes) ==
+	     DT_PROP(DT_NODELABEL(touchpad_fw_hashes), size));
+BUILD_ASSERT(sizeof(touchpad_fw_full_hash) ==
+	     DT_PROP(DT_NODELABEL(touchpad_fw_full_hash), size));
+
+#else
 #include "touchpad_fw_hash.h"
+#endif
 
 BUILD_ASSERT(sizeof(touchpad_fw_hashes) ==
 	     (CONFIG_TOUCHPAD_FW_CHUNKS * SHA256_DIGEST_SIZE));

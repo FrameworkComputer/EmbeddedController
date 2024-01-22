@@ -5,6 +5,8 @@
 
 /* Roach program common DTS includes */
 
+#include <cros/touchpad_hashes.dtsi>
+
 #include "../adc.dtsi"
 #include "../gpio.dtsi"
 #include "../uart.dtsi"
@@ -22,4 +24,8 @@
 		physical_max_x = <839>;
 		physical_max_y = <457>;
 	};
+};
+
+&touchpad_fw_hashes {
+	size = <((65536 / 1024) * 32)>;
 };
