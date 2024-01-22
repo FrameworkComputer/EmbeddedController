@@ -7,6 +7,7 @@
 #include <cros/thermistor/thermistor.dtsi>
 #include <dt-bindings/gpio_defines.h>
 #include <zephyr/dt-bindings/pwm/pwm.h>
+#include <cros/vivaldi_kbd_default.dtsi>
 
 #define GPIO_VOLTAGE_1P8 (1U << 11)
 

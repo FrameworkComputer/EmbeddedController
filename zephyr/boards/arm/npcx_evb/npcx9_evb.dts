@@ -7,6 +7,7 @@
 
 #include <cros/nuvoton/npcx9.dtsi>
 #include <nuvoton/npcx/npcx9/npcx9-pinctrl.dtsi>
+#include <cros/vivaldi_kbd_default.dtsi>
 
 /*
  * #include <nuvoton/npcx9m3f.dtsi>

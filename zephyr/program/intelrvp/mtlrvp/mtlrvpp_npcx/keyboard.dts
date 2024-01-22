@@ -29,3 +29,7 @@
 			>;
 	};
 };
+
+&vivaldi_kbd {
+	status = "okay";
+};
