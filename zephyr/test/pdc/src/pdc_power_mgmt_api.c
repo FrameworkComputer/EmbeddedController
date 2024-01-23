@@ -12,7 +12,6 @@
 #include <zephyr/ztest.h>
 
 #define RTS5453P_NODE DT_NODELABEL(rts5453p_emul)
-#define EMUL_DATA rts5453p_emul_get_i2c_common_data(EMUL)
 
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
 #define TEST_PORT 0
@@ -110,5 +109,30 @@ ZTEST_USER(pdc_power_mgmt_api, test_pd_get_data_role)
 	emul_pdc_pulse_irq(emul);
 	k_sleep(K_MSEC(500));
 	zassert_equal(PD_ROLE_DFP, pdc_power_mgmt_pd_get_data_role(TEST_PORT));
+#endif /* TODO_B_321749548 */
+}
+
+ZTEST_USER(pdc_power_mgmt_api, test_pd_get_power_role)
+{
+	zassert_equal(PD_ROLE_SINK, pdc_power_mgmt_get_power_role(
+					    CONFIG_USB_PD_PORT_MAX_COUNT));
+
+/* TODO(b/321749548) - Read connector status after its read from I2C bus
+ * not after reading PING status.
+ */
+#ifdef TODO_B_321749548
+	struct connector_status_t connector_status;
+
+	connector_status.power_direction = 1;
+	emul_pdc_set_connector_status(emul, &connector_status);
+	emul_pdc_pulse_irq(emul);
+	k_sleep(K_MSEC(500));
+	zassert_equal(PD_ROLE_SOURCE, pdc_power_mgmt_get_power_role(TEST_PORT));
+
+	connector_status.power_direction = 0;
+	emul_pdc_set_connector_status(emul, &connector_status);
+	emul_pdc_pulse_irq(emul);
+	k_sleep(K_MSEC(500));
+	zassert_equal(PD_ROLE_SINK, pdc_power_mgmt_get_power_role(TEST_PORT));
 #endif /* TODO_B_321749548 */
 }
