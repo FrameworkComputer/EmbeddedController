@@ -805,7 +805,7 @@ static void update_safety_power_limit(int active_mpower)
 			safety_level++;
 		} else {
 			set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
-			if (safety_level > 1)
+			if (safety_level > 0)
 				safety_level--;
 		}
 		break;
