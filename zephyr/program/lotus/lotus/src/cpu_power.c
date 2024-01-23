@@ -805,7 +805,8 @@ static void update_safety_power_limit(int active_mpower)
 			safety_level++;
 		} else {
 			set_chg_ctrl_mode(CHARGE_CONTROL_NORMAL);
-			safety_level--;
+			if (safety_level > 1)
+				safety_level--;
 		}
 		break;
 	case LEVEL_TUNE_PLS:
@@ -916,6 +917,7 @@ static void update_safety_power_limit(int active_mpower)
 			safety_level--;
 		break;
 	default:
+		safety_level = LEVEL_COUNT;
 		break;
 	}
 
