@@ -94,24 +94,24 @@ $(BUILD)/coverage/lcov.info:
 	$(MAKE) -C .. test-coverage
 
 $(BUILD)/zephyr/all_tests.info: $(PLATFORM_EC)/twister-out-host/coverage.info $(BUILD)/coverage/lcov.info
-	/usr/bin/lcov -o $@ --rc branch_coverage=1 \
+	/usr/bin/lcov -o $@ --rc branch_coverage=1 --rc no_exception_branch=1 \
 	--ignore-errors inconsistent,inconsistent --ignore-errors unused,unused --ignore-errors gcov,gcov \
 	-a $(BUILD)/coverage/lcov.info \
 	-a $(PLATFORM_EC)/twister-out-host/coverage.info
 
 $(BUILD)/zephyr/zephyr_merged.info: $(BUILD)/zephyr/all_tests.info $(BUILD)/zephyr/all_builds.info
-	/usr/bin/lcov -o $@ --rc branch_coverage=1 \
+	/usr/bin/lcov -o $@ --rc branch_coverage=1 --rc no_exception_branch=1 \
 	--ignore-errors inconsistent,inconsistent --ignore-errors unused,unused --ignore-errors gcov,gcov \
 	-a $(BUILD)/zephyr/all_tests.info -a $(BUILD)/zephyr/all_builds.info
 
 $(BUILD)/zephyr/lcov.info: $(BUILD)/zephyr/zephyr_merged.info
-	/usr/bin/lcov -o $@ --rc branch_coverage=1 \
+	/usr/bin/lcov -o $@ --rc branch_coverage=1 --rc no_exception_branch=1 \
 	--ignore-errors inconsistent,inconsistent --ignore-errors unused,unused --ignore-errors gcov,gcov \
 	-r $(BUILD)/zephyr/zephyr_merged.info \
 	$(GENERATED_AND_SYSTEM_PATTERNS)
 
 $(BUILD)/zephyr/lcov_no_tests.info: $(BUILD)/zephyr/lcov.info
-	/usr/bin/lcov -o $@ --rc branch_coverage=1 \
+	/usr/bin/lcov -o $@ --rc branch_coverage=1 --rc no_exception_branch=1 \
 	--ignore-errors inconsistent,inconsistent --ignore-errors unused,unused --ignore-errors gcov,gcov \
 	-r $(BUILD)/zephyr/lcov.info \
 	$(TEST_PATTERNS)
@@ -124,7 +124,7 @@ $(BUILD)/zephyr/lcov_rpt: $(BUILD)/zephyr/lcov.info
 special_boards: $(foreach b, $(SPECIAL_BOARDS), $(BUILD)/zephyr/$(b)_rpt)
 
 $(BUILD)/zephyr/%_merged.info: $(BUILD)/zephyr/%/output/zephyr.info $(BUILD)/zephyr/all_tests.info
-	/usr/bin/lcov -o $@ --rc branch_coverage=1 \
+	/usr/bin/lcov -o $@ --rc branch_coverage=1 --rc no_exception_branch=1 \
 	--ignore-errors inconsistent,inconsistent --ignore-errors unused,unused --ignore-errors gcov,gcov \
 	-a $(BUILD)/zephyr/all_tests.info -a $<
 
@@ -133,7 +133,7 @@ $(BUILD)/zephyr/%_stenciled.info: $(BUILD)/zephyr/%/output/zephyr.info $(BUILD)/
 
 .PRECIOUS: $(BUILD)/zephyr/%_final.info
 $(BUILD)/zephyr/%_final.info: $(BUILD)/zephyr/%_stenciled.info
-	/usr/bin/lcov -o $@ --rc branch_coverage=1 \
+	/usr/bin/lcov -o $@ --rc branch_coverage=1 --rc no_exception_branch=1 \
 	--ignore-errors inconsistent,inconsistent --ignore-errors unused,unused --ignore-errors gcov,gcov \
 	-r $< \
 	'$(THIRD_PARTY)/**' \
