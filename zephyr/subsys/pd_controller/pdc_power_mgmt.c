@@ -21,7 +21,7 @@
 #include <drivers/pdc.h>
 #include <usbc/utils.h>
 
-LOG_MODULE_REGISTER(pdc, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(pdc_power_mgmt, LOG_LEVEL_INF);
 
 /**
  * @brief maximum number of times to try and send a command
