@@ -136,3 +136,39 @@ ZTEST_USER(pdc_power_mgmt_api, test_pd_get_power_role)
 	zassert_equal(PD_ROLE_SINK, pdc_power_mgmt_get_power_role(TEST_PORT));
 #endif /* TODO_B_321749548 */
 }
+
+ZTEST_USER(pdc_power_mgmt_api, test_pd_get_task_cc_state)
+{
+	zassert_equal(PD_CC_NONE, pdc_power_mgmt_get_task_cc_state(
+					  CONFIG_USB_PD_PORT_MAX_COUNT));
+
+/* TODO(b/321749548) - Read connector status after its read from I2C bus
+ * not after reading PING status.
+ */
+#ifdef TODO_B_321749548
+	int i;
+	struct {
+		enum conn_partner_type_t in;
+		enum pd_cc_states out;
+	} test[] = {
+		{ .in = DFP_ATTACHED, .out = PD_CC_DFP_ATTACHED },
+		{ .in = UFP_ATTACHED, .out = PD_CC_UFP_ATTACHED },
+		{ .in = POWERED_CABLE_NO_UFP_ATTACHED, .out = PD_CC_NONE },
+		{ .in = POWERED_CABLE_UFP_ATTACHED, .out = PD_CC_UFP_ATTACHED },
+		{ .in = DEBUG_ACCESSORY_ATTACHED, .out = PD_CC_UFP_DEBUG_ACC },
+		{ .in = AUDIO_ADAPTER_ACCESSORY_ATTACHED,
+		  .out = PD_CC_UFP_AUDIO_ACC },
+	};
+
+	for (i = 0; i < ARRAY_SIZE(test); i++) {
+		struct connector_status_t connector_status;
+
+		connector_status.conn_partner_type = test[i].in;
+		emul_pdc_set_connector_status(emul, &connector_status);
+		emul_pdc_pulse_irq(emul);
+		k_sleep(K_MSEC(500));
+		zassert_equal(test[i].out,
+			      pdc_power_mgmt_get_task_cc_state(TEST_PORT));
+	}
+#endif /* TODO_B_321749548 */
+}
