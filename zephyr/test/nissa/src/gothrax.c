@@ -6,6 +6,7 @@
 #include "ap_power/ap_power_events.h"
 #include "charge_manager.h"
 #include "cros_board_info.h"
+#include "cros_cbi.h"
 #include "driver/charger/isl923x_public.h"
 #include "driver/tcpm/raa489000.h"
 #include "emul/retimer/emul_anx7483.h"
@@ -58,7 +59,13 @@ FAKE_VOID_FUNC(usb_charger_task_set_event_sync, int, uint8_t);
 FAKE_VALUE_FUNC(int, cbi_get_ssfc, uint32_t *);
 FAKE_VOID_FUNC(bmi3xx_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(bma4xx_interrupt, enum gpio_signal);
+
+FAKE_VOID_FUNC(fan_set_count, int);
+FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
+		uint32_t *);
+
 static enum ec_error_list raa489000_is_acok_absent(int charger, bool *acok);
+void fan_init(void);
 
 static void test_before(void *fixture)
 {
@@ -74,6 +81,7 @@ static void test_before(void *fixture)
 	RESET_FAKE(charge_manager_get_active_charge_port);
 	RESET_FAKE(charger_discharge_on_ac);
 	RESET_FAKE(chipset_in_state);
+	RESET_FAKE(fan_set_count);
 
 	raa489000_is_acok_fake.custom_fake = raa489000_is_acok_absent;
 
@@ -606,4 +614,53 @@ ZTEST(gothrax, test_clamshell)
 	interrupt_count = bmi3xx_interrupt_fake.call_count +
 			  bma4xx_interrupt_fake.call_count;
 	zassert_equal(interrupt_count, 0);
+}
+
+static int get_fan_config_present(enum cbi_fw_config_field_id field,
+				  uint32_t *value)
+{
+	zassert_equal(field, FW_FAN);
+	*value = FW_FAN_PRESENT;
+	return 0;
+}
+
+static int get_fan_config_absent(enum cbi_fw_config_field_id field,
+				 uint32_t *value)
+{
+	zassert_equal(field, FW_FAN);
+	*value = FW_FAN_NOT_PRESENT;
+	return 0;
+}
+
+ZTEST(gothrax, test_fan_present)
+{
+	int flags;
+
+	cros_cbi_get_fw_config_fake.custom_fake = get_fan_config_present;
+	fan_init();
+
+	zassert_equal(fan_set_count_fake.call_count, 0);
+	zassert_ok(gpio_pin_get_config_dt(
+		GPIO_DT_FROM_NODELABEL(gpio_fan_enable), &flags));
+	zassert_equal(flags, GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW,
+		      "actual GPIO flags were %#x", flags);
+}
+
+ZTEST(gothrax, test_fan_absent)
+{
+	int flags;
+
+	cros_cbi_get_fw_config_fake.custom_fake = get_fan_config_absent;
+	fan_init();
+
+	zassert_equal(fan_set_count_fake.call_count, 1,
+		      "function actually called %d times",
+		      fan_set_count_fake.call_count);
+	zassert_equal(fan_set_count_fake.arg0_val, 0, "parameter value was %d",
+		      fan_set_count_fake.arg0_val);
+
+	/* Fan enable is left unconfigured */
+	zassert_ok(gpio_pin_get_config_dt(
+		GPIO_DT_FROM_NODELABEL(gpio_fan_enable), &flags));
+	zassert_equal(flags, 0, "actual GPIO flags were %#x", flags);
 }

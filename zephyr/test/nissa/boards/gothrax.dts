@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 #include <it8xxx2_emul.dts>
-
+#include "../program/nissa/cbi.dtsi"
 #include "../program/nissa/gothrax/cbi.dtsi"
 #include "../program/nissa/gothrax/motionsense.dtsi"
 / {
@@ -40,6 +40,10 @@
 		gpio_tablet_mode_l: tablet_mode_l {
 			gpios = <&gpioj 0 GPIO_INPUT>;
 			enum-name = "GPIO_TABLET_MODE_L";
+		};
+		gpio_fan_enable: fan-enable {
+			gpios = <&gpiog 3 GPIO_OUTPUT>;
+			no-auto-init;
 		};
 	};
 
