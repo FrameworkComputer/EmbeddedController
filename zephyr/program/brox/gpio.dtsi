@@ -72,6 +72,11 @@
 		gpio_ec_entering_rw: ec_entering_rw {
 			enum-name = "GPIO_ENTERING_RW";
 		};
+
+		/* EC_PCH_RTCRST_NC */
+		gpio_ec_pch_rtsrst: ec_pch_rtcrst {
+			gpios = <&gpioh 5 GPIO_OUTPUT_LOW>;
+		};
 	};
 
 	unused-pins {
@@ -88,8 +93,6 @@
 			<&gpiog 7 0>,
 			/* SPI_EC_DO_BIOS_DI */
 			<&gpiog 4 0>,
-			/* EC_PCH_RTCRST_NC */
-			<&gpioh 5 0>,
 			/* EC_EN_IMVP91_NC */
 			<&gpioh 6 0>,
 			/* EC_ESPI_ALERT_L_NC */
