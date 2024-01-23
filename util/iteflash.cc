@@ -138,6 +138,7 @@ struct common_hnd {
 	int flash_size;
 	int flash_cmd_v2; /* boolean */
 	int dbgr_addr_3bytes; /* boolean */
+	bool instruction_set_v2;
 	union {
 		int i2c_dev_fd;
 		struct usb_endpoint uep;
@@ -682,6 +683,9 @@ static int check_chipid(struct common_hnd *chnd)
 		if ((id & 0xf000f) == 0x80001 || (id & 0xf000f) == 0x80002) {
 			chnd->flash_cmd_v2 = 1;
 			chnd->dbgr_addr_3bytes = 1;
+			if ((id & 0xf00f) == 0x2002) {
+				chnd->instruction_set_v2 = true;
+			}
 		} else {
 			fprintf(stderr, "Invalid chip id: %05x\n", id);
 			return -EINVAL;
@@ -756,7 +760,8 @@ static int dbgr_disable_watchdog(struct common_hnd *chnd)
 		ret |= i2c_write_byte(chnd, 0x80, 0xf0);
 
 	ret |= i2c_write_byte(chnd, 0x2f, 0x1f);
-	ret |= i2c_write_byte(chnd, 0x2e, 0x05);
+	ret |= i2c_write_byte(chnd, 0x2e,
+			      chnd->instruction_set_v2 ? 0x85 : 0x05);
 	ret |= i2c_write_byte(chnd, 0x30, 0x30);
 
 	if (ret < 0)
