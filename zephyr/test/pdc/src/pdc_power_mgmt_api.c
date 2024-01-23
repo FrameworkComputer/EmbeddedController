@@ -172,3 +172,36 @@ ZTEST_USER(pdc_power_mgmt_api, test_pd_get_task_cc_state)
 	}
 #endif /* TODO_B_321749548 */
 }
+
+ZTEST_USER(pdc_power_mgmt_api, test_pd_capable)
+{
+	zassert_equal(false,
+		      pdc_power_mgmt_pd_capable(CONFIG_USB_PD_PORT_MAX_COUNT));
+
+/* TODO(b/321749548) - Read connector status after its read from I2C bus
+ * not after reading PING status.
+ */
+#ifdef TODO_B_321749548
+	struct connector_status_t connector_status;
+
+	connector_status.connect_status = 0;
+	emul_pdc_set_connector_status(emul, &connector_status);
+	emul_pdc_pulse_irq(emul);
+	k_sleep(K_MSEC(500));
+	zassert_equal(false, pdc_power_mgmt_pd_capable(TEST_PORT));
+
+	connector_status.connect_status = 1;
+	connector_status.power_operation_mode = USB_DEFAULT_OPERATION;
+	emul_pdc_set_connector_status(emul, &connector_status);
+	emul_pdc_pulse_irq(emul);
+	k_sleep(K_MSEC(500));
+	zassert_equal(false, pdc_power_mgmt_pd_capable(TEST_PORT));
+
+	connector_status.connect_status = 1;
+	connector_status.power_operation_mode = PD_OPERATION;
+	emul_pdc_set_connector_status(emul, &connector_status);
+	emul_pdc_pulse_irq(emul);
+	k_sleep(K_MSEC(500));
+	zassert_equal(true, pdc_power_mgmt_pd_capable(TEST_PORT));
+#endif /* TODO_B_321749548 */
+}
