@@ -11,3 +11,11 @@
 #include "../motionsense.dtsi"
 #include "../keyboard.dtsi"
 #include "../overlay.dtsi"
+
+/ {
+	batteries {
+		default_battery: cosmx-3 {
+			compatible = "cosmx,ap20cbl-3", "battery-smart";
+		};
+	};
+};

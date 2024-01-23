@@ -77,6 +77,7 @@
 		};
 		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
 			gpios = <&gpioc 3 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
 		};
 		gpio_ec_bl_en_od: ec_bl_en_od {
 			gpios = <&gpiod 2 GPIO_ODR_LOW>;

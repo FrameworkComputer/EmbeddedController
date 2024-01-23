@@ -11,11 +11,34 @@
 		port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
+			chg = <&charger_bq25710>;
+			tcpc = <&usbpd0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
 		};
 
 		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
+			tcpc = <&usbpd1>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
+
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
 		};
 	};
 };
@@ -26,4 +49,12 @@
 
 &usbpd1 {
 	status = "okay";
+};
+
+&i2c0 {
+	charger_bq25710: bq25710@9 {
+		compatible = "ti,bq25710";
+		status = "okay";
+		reg = <0x9>;
+	};
 };
