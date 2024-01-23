@@ -40,7 +40,3 @@
 	pinctrl-0 = <&pwm2_gpc4>;
 	pinctrl-names = "default";
 };
-
-&vivaldi_kbd {
-	status = "okay";
-};

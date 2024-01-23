@@ -7,7 +7,6 @@
 
 / {
 	vivaldi_kbd: vivaldi-kbd {
-		status = "disabled";
 		compatible = "cros-ec,vivaldi-kbd";
 		vivaldi-keys = <
 			KBD_RC(0, 2)   /* T1 */

@@ -4,8 +4,6 @@
  */
 
 &vivaldi_kbd {
-       status = "okay";
-
        kbd_config_1: kbd-config-1 {
 		vivaldi-codes = <
 			VIVALDI_TK_BACK             /* T1 */

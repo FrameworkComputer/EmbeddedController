@@ -36,8 +36,6 @@
 };
 
 &vivaldi_kbd {
-	status = "okay";
-
 	kbd_config_0: kbd-config-0 {
 		vivaldi-codes = <
 			VIVALDI_TK_BACK                /* T1 */

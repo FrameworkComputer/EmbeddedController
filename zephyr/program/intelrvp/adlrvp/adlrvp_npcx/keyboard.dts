@@ -57,7 +57,3 @@
 	>;
 	pinctrl-names = "default";
 };
-
-&vivaldi_kbd {
-	status = "okay";
-};

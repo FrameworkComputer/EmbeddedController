@@ -36,7 +36,3 @@
 		     &kso12_default>;
 	pinctrl-names = "default";
 };
-
-&vivaldi_kbd {
-	status = "okay";
-};
