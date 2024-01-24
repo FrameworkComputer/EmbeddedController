@@ -6,7 +6,7 @@
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_pdc.h"
-#include "emul/emul_realtek_rts54xx.h"
+#include "emul_realtek_rts54xx.h"
 #include "zephyr/sys/util.h"
 #include "zephyr/sys/util_macro.h"
 
