@@ -181,3 +181,9 @@ config PLATFORM_EC_SPI_CLOCK_DIVIDE
 	  from EC to flashchip.
 
 endif # PLATFORM_EC_FLASH_CROS
+
+config PLATFORM_EC_FLASH_DEFERRED_ERASE
+	bool "Flash erase v1 HC"
+	help
+	  Enable support for Host Command Flash Erase version 1, which uses
+	  deferred call.
