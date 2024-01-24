@@ -9020,7 +9020,7 @@ static int cmd_battery_config_set(int argc, char *argv[])
 	fclose(fp);
 
 	absl::optional<base::Value> root =
-		base::JSONReader::Read(json, base::JSON_ALLOW_TRAILING_COMMAS);
+		base::JSONReader::Read(json, base::JSON_PARSE_RFC);
 	if (root == absl::nullopt) {
 		fprintf(stderr, "File %s isn't properly formed JSON file.\n",
 			json_file);
