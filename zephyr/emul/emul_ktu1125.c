@@ -12,6 +12,7 @@
 #include <stdlib.h>
 
 #include <zephyr/device.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/sys/slist.h>
 #include <zephyr/ztest.h>
 
@@ -29,6 +30,8 @@ struct ktu1125_set_reg_entry_t {
 
 struct ktu1125_data {
 	struct i2c_common_emul_data common;
+	/** GPIO ports connected to the PPC */
+	struct gpio_dt_spec irq_gpio;
 	uint8_t regs[KTU1125_REG_MAX + 1];
 	struct _slist set_private_reg_history;
 };
@@ -64,10 +67,28 @@ static void ktu1125_emul_reset_set_reg_history(const struct emul *emul)
 	}
 }
 
+/* Asserts or deasserts the interrupt signal to the EC. */
+static void ktu1125_emul_set_irq_pin(const struct ktu1125_data *data,
+				     bool assert_irq)
+{
+	int res = gpio_emul_input_set(data->irq_gpio.port,
+				      /* The signal is inverted. */
+				      data->irq_gpio.pin, !assert_irq);
+	__ASSERT_NO_MSG(res == 0);
+}
+
+void ktu1125_emul_assert_irq(const struct emul *emul, bool assert_irq)
+{
+	const struct ktu1125_data *data = emul->data;
+
+	ktu1125_emul_set_irq_pin(data, assert_irq);
+}
+
 void ktu1125_emul_reset(const struct emul *emul)
 {
 	struct ktu1125_data *data = emul->data;
 
+	ktu1125_emul_set_irq_pin(data, false);
 	memset(data->regs, 0, sizeof(data->regs));
 	data->regs[KTU1125_ID] = KTU1125_VENDOR_DIE_IDS;
 	ktu1125_emul_reset_set_reg_history(emul);
@@ -152,17 +173,18 @@ static int ktu1125_emul_init(const struct emul *emul,
 	return 0;
 }
 
-#define INIT_KTU1125_EMUL(n)                                         \
-	static struct i2c_common_emul_cfg common_cfg_##n;            \
-	static struct ktu1125_data ktu1125_data_##n = {              \
-		.common = { .cfg = &common_cfg_##n }                 \
-	};                                                           \
-	static struct i2c_common_emul_cfg common_cfg_##n = {         \
-		.dev_label = DT_NODE_FULL_NAME(DT_DRV_INST(n)),      \
-		.data = &ktu1125_data_##n.common,                    \
-		.addr = DT_INST_REG_ADDR(n)                          \
-	};                                                           \
-	EMUL_DT_INST_DEFINE(n, ktu1125_emul_init, &ktu1125_data_##n, \
+#define INIT_KTU1125_EMUL(n)                                            \
+	static struct i2c_common_emul_cfg common_cfg_##n;               \
+	static struct ktu1125_data ktu1125_data_##n = {                 \
+		.common = { .cfg = &common_cfg_##n },                   \
+		.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {}), \
+	};                                                              \
+	static struct i2c_common_emul_cfg common_cfg_##n = {            \
+		.dev_label = DT_NODE_FULL_NAME(DT_DRV_INST(n)),         \
+		.data = &ktu1125_data_##n.common,                       \
+		.addr = DT_INST_REG_ADDR(n)                             \
+	};                                                              \
+	EMUL_DT_INST_DEFINE(n, ktu1125_emul_init, &ktu1125_data_##n,    \
 			    &common_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_KTU1125_EMUL)

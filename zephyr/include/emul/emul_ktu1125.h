@@ -25,4 +25,12 @@ void ktu1125_emul_reset(const struct emul *emul);
  */
 int ktu1125_emul_set_reg(const struct emul *emul, int reg, int val);
 
+/**
+ * @brief Assert/deassert interrupt GPIO to the ktu1125 PPC.
+ *
+ * @param emul Pointer to ktu1125 emulator
+ * @param assert_irq State of the interrupt signal
+ */
+void ktu1125_emul_assert_irq(const struct emul *emul, bool assert_irq);
+
 #endif /* EMUL_KTU1125_H */
