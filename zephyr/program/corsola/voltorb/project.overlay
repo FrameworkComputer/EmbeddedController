@@ -49,6 +49,9 @@
 		panasonic_ap19b5k {
 			compatible = "panasonic,ap19b5k", "battery-smart";
 		};
+		panasonic_ap23a5l {
+			compatible = "panasonic,ap23a5l", "battery-smart";
+		};
 		smp_ap18c7k {
 			compatible = "smp,ap18c7k", "battery-smart";
 		};
