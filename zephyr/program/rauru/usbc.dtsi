@@ -13,6 +13,7 @@
 			reg = <0>;
 			chg = <&charger_bq25710>;
 			tcpc = <&usbpd0>;
+			ppc = <&ppc_port0>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_0>;
@@ -29,6 +30,7 @@
 			compatible = "named-usbc-port";
 			reg = <1>;
 			tcpc = <&usbpd1>;
+			ppc = <&ppc_port1>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_1>;
@@ -56,5 +58,33 @@
 		compatible = "ti,bq25710";
 		status = "okay";
 		reg = <0x9>;
+	};
+};
+
+&i2c2ALT {
+	ppc_port0: syv682x@42 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x42>;
+		frs_en_gpio = <&gpio_usb_c0_frs_en>;
+		/* a duplicate of the <&usb_c0_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		 irq-gpios = <&gpiof 1 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&i2c4 {
+	ppc_port1: syv682x@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&gpio_usb_c1_frs_en>;
+		/* a duplicate of the <&usb_c1_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiod 4 GPIO_ACTIVE_LOW>;
 	};
 };

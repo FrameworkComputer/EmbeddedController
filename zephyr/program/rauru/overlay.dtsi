@@ -74,6 +74,12 @@
 		gpio_dp_path_hdmi_en: dp_path_hdmi_en {
 			gpios = <&gpioi 6 GPIO_OUTPUT_LOW>;
 		};
+		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
+			gpios = <&gpiof 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
+			gpios = <&gpiod 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
 	};
 
 	hibernate-wake-pins {
