@@ -171,7 +171,7 @@ prj.conf file to disable the console command.
 |  | CONFIG_CMD_ACCELSPOOF | `accelspoof` | |
 | | CONFIG_CMD_ACCEL_FIFO | `fiforead` | |
 | | CONFIG_CMD_ACCEL_INFO | `accelinfo` | |
-| | CONFIG_CMD_ADC | `adc` | Note firmware_ECAdc uses the `temps` command. |
+| | CONFIG_CMD_ADC | `adc` | Note firmware.ECADC uses the `temps` command. |
 | | CONFIG_CMD_ALS | `als` | |
 | | CONFIG_CMD_APTHROTTLE | `apthrottle` | |
 | | CONFIG_CMD_AP_RESET_LOG |??? | |
