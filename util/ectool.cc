@@ -8849,7 +8849,7 @@ static int cmd_battery_config_get(int argc, char *argv[])
 	uint8_t *p;
 	int expected;
 	bool in_json = true;
-	bool in_json_human = true;
+	bool in_json_human = false;
 	int rv;
 	int c;
 	int index = -1;
