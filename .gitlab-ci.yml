@@ -163,10 +163,11 @@ before_script:
       --modules-dir "${MODULES_DIR}" -l DEBUG build --coverage
       -B "${BUILD_DIR}" -t ${TOOLCHAIN:-zephyr}
       "${PROJECT}"
-    - lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/${PROJECT}/output/merged.info"
+    - lcov --rc branch_coverage=1  --ignore-errors unused,unused,inconsistent,inconsistent
+      -o "${BUILD_DIR}/${PROJECT}/output/merged.info"
       -a "${BUILD_DIR}/${PROJECT}/output/zephyr.info"
       -a "${BUILD_DIR}/merged.info"
-    - lcov --rc lcov_branch_coverage=1
+    - lcov --rc branch_coverage=1 --ignore-errors unused,unused,inconsistent,inconsistent
       -o "${BUILD_DIR}/${PROJECT}/output/no_zephyr.info"
       -r "${BUILD_DIR}/${PROJECT}/output/zephyr.info" "${ZEPHYR_BASE}/**"
       "${MODULES_DIR}/**"
@@ -181,7 +182,7 @@ before_script:
     - util/lcov_stencil.py -o "${BUILD_DIR}/${PROJECT}/output/prefiltered.info"
       "${BUILD_DIR}/${PROJECT}/output/no_zephyr.info"
       "${BUILD_DIR}/${PROJECT}/output/merged.info"
-    - lcov --rc lcov_branch_coverage=1
+    - lcov --rc branch_coverage=1 --ignore-errors unused,unused,inconsistent,inconsistent
       -o "${BUILD_DIR}/${PROJECT}/output/filtered_no_zephyr.info"
       -r "${BUILD_DIR}/${PROJECT}/output/prefiltered.info"
       "${ZEPHYR_BASE}/**" "${MODULES_DIR}/**"

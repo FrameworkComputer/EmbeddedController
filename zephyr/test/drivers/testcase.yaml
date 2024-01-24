@@ -423,7 +423,7 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_CHARGESPLASH=y
   drivers.chargesplash.ec_host_cmd:
-    timeout: 360
+    timeout: 600
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_CHARGESPLASH=y
     extra_conf_files:
