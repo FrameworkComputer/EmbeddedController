@@ -53,6 +53,38 @@ static int cmd_pdc_get_status(const struct shell *sh, size_t argc, char **argv)
 	return EC_SUCCESS;
 }
 
+static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
+{
+	int rv;
+	uint8_t port;
+	struct pdc_info_t pdc_info;
+
+	/* Get PD port number */
+	rv = cmd_get_pd_port(sh, argv[1], &port);
+	if (rv)
+		return rv;
+
+	/* Get PDC Status */
+	rv = pdc_power_mgmt_get_info(port, &pdc_info);
+	shell_fprintf(sh, SHELL_INFO,
+		      "FW Ver: %u.%u.%u\n"
+		      "PD Rev: %u\n"
+		      "PD Ver: %u\n"
+		      "VID/PID: %04x:%04x\n"
+		      "Running Flash Code: %c\n"
+		      "Flash Bank: %u\n",
+		      PDC_FWVER_GET_MAJOR(pdc_info.fw_version),
+		      PDC_FWVER_GET_MINOR(pdc_info.fw_version),
+		      PDC_FWVER_GET_PATCH(pdc_info.fw_version),
+		      pdc_info.pd_revision, pdc_info.pd_version,
+		      PDC_VIDPID_GET_VID(pdc_info.vid_pid),
+		      PDC_VIDPID_GET_PID(pdc_info.vid_pid),
+		      pdc_info.is_running_flash_code ? 'Y' : 'N',
+		      pdc_info.running_in_flash_bank);
+
+	return EC_SUCCESS;
+}
+
 static int cmd_pdc_prs(const struct shell *sh, size_t argc, char **argv)
 {
 	int rv;
@@ -125,9 +157,13 @@ static int cmd_pdc_dualrole(const struct shell *sh, size_t argc, char **argv)
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_pdc_cmds,
 	SHELL_CMD_ARG(status, NULL,
-		      "Get PDC status\n"
+		      "Get PD status\n"
 		      "Usage: pdc status <port>",
 		      cmd_pdc_get_status, 2, 0),
+	SHELL_CMD_ARG(info, NULL,
+		      "Get PDC chip info\n"
+		      "Usage: pdc info <port>",
+		      cmd_pdc_get_info, 2, 0),
 	SHELL_CMD_ARG(prs, NULL,
 		      "Trigger power role swap\n"
 		      "Usage: pdc prs <port>",
