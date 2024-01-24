@@ -238,12 +238,7 @@ const struct battery_info *battery_get_info(void)
 
 __overridable bool board_batt_conf_enabled(void)
 {
-	union ec_common_control ctrl;
-
-	if (cbi_get_common_control(&ctrl) != EC_SUCCESS)
-		return false;
-
-	return !!(ctrl.bcic_enabled);
+	return true;
 }
 
 #ifndef CONFIG_FUEL_GAUGE

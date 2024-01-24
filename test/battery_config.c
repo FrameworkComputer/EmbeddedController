@@ -106,16 +106,6 @@ static void test_teardown(void)
 {
 }
 
-static union ec_common_control mock_common_control;
-static int cbi_get_common_control_return;
-
-int cbi_get_common_control(union ec_common_control *ctrl)
-{
-	*ctrl = mock_common_control;
-
-	return cbi_get_common_control_return;
-}
-
 static void cbi_set_batt_conf(const struct board_batt_params *conf,
 			      const char *manuf_name, const char *device_name)
 {
@@ -149,10 +139,6 @@ DECLARE_EC_TEST(test_batt_conf_main)
 	zassert_equal_ptr(get_batt_params(), &board_battery_info[0].config);
 
 	ccprintf("sizeof(struct batt_batt_params) = %lu)\n", sizeof(*conf));
-
-	/* Enable BCIC. */
-	mock_common_control.bcic_enabled = 1;
-	cbi_get_common_control_return = EC_SUCCESS;
 
 	/*
 	 * manuf_name != manuf_name
