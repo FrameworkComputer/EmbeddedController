@@ -135,4 +135,70 @@
 			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 	};
+
+	named-i2c-ports {
+		i2c_ec_i2c_usb_c3: ec_i2c_usb_c3 {
+		i2c-port = <&i2c0_0>;
+		enum-names = "I2C_USB_C3";
+		};
+	};
+
+	usbc {
+		usbc_port3: port3@3 {
+			compatible = "named-usbc-port";
+			reg = <3>;
+			ppc = <&ppc_port3_syv>;
+			tcpc = <&tcpc_port3>;
+			usb-mux-chain-3 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c3_hb_retimer
+					     &virtual_mux_c3>;
+			};
+		};
+		port3-muxes {
+			virtual_mux_c3: virtual-mux-c3 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};
+
+&i2c0_0 {
+	status = "okay";
+	label = "I2C_USB_C3";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
+	tcpc_port3: rt1716@4e {
+		compatible = "richtek,rt1715-tcpc";
+		reg = <0x4e>;
+		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
+		/* a duplicate of the <&gpio_usb_c1_tcpc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpioc 7 GPIO_ACTIVE_LOW>;
+	};
+	ppc_port3_syv: ppc_syv@42 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x42>;
+		/* a duplicate of the <&gpio_usb_c0_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio8 0 GPIO_ACTIVE_LOW>;
+	};
+	usb_c3_hb_retimer: jhl9040r-c0@56 {
+		compatible = "intel,jhl9040r";
+		reg = <0x56>;
+		ls-en-pin = <&gpio_usb_c3_rt_3p3_sx_en>;
+		int-pin = <&gpio_usb_c3_rt_int_odl>;
+		reset-pin = <&gpio_usb_c3_rt_rst_l>;
+	};
+};
+
+&i2c_ctrl0 {
+	status = "okay";
 };
