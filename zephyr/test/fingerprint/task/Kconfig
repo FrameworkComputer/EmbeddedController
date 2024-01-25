@@ -1,0 +1,11 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config LINK_TEST_SUITE_FINGERPRINT_CAPTURE
+	bool "Link fingerprint capture tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on finger capture.
+
+source "Kconfig.zephyr"

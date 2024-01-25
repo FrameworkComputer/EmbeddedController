@@ -1,0 +1,12 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+common:
+  platform_allow: native_posix
+tests:
+  fingerprint.task.capture:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FINGERPRINT_CAPTURE=y
+    extra_conf_files:
+    - prj.conf

@@ -1,0 +1,70 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_posix.dts>
+#include <dt-bindings/gpio_defines.h>
+#include <cros/binman.dtsi>
+
+/ {
+	chosen {
+		cros-ec,flash-controller = &cros_flash;
+		cros-fp,fingerprint-sensor = &fpsensor_sim;
+	};
+
+	aliases {
+		gpio-wp = &ec_wp_l;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		ec_wp_l: write-protect {
+			gpios = <&gpio0 0 GPIO_INPUT>;
+		};
+
+		fp_sensor_sel: fp_sensor_sel {
+			gpios = <&gpio0 1 GPIO_INPUT>;
+		};
+
+		div_highside: div_highside {
+			gpios = <&gpio0 2 GPIO_OUTPUT_HIGH>;
+		};
+	};
+
+	cros_flash: cros-flash {
+		compatible = "cros-ec,flash-emul";
+	};
+
+	fpsensor_sim: fpsensor-sim {
+		compatible = "cros-ec,fingerprint-sensor-sim";
+		width = <160>;
+		height = <160>;
+		bits-per-pixel = <8>;
+		v4l2-pixel-format = "V4L2_PIX_FMT_GREY";
+	};
+};
+
+&gpio0 {
+	ngpios = <3>;
+};
+
+&flash0 {
+	partitions {
+		compatible = "fixed-partitions";
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		/* Rollback region must have erase unit size. */
+		rollback0: partition@100000 {
+			label = "rollback0";
+			reg = <0x100000 DT_SIZE_K(4)>;
+		};
+
+		rollback1: partition@101000 {
+			label = "rollback1";
+			reg = <0x101000 DT_SIZE_K(4)>;
+		};
+	};
+};
