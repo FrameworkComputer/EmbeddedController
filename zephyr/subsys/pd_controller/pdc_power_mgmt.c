@@ -1006,9 +1006,8 @@ static void pdc_send_cmd_start_entry(void *obj)
 	}
 }
 
-static void pdc_send_cmd_start_run(void *obj)
+static int send_pdc_cmd(struct pdc_port_t *port)
 {
-	struct pdc_port_t *port = (struct pdc_port_t *)obj;
 	int rv;
 
 	/* Send PDC command via driver API */
@@ -1060,9 +1059,23 @@ static void pdc_send_cmd_start_run(void *obj)
 		break;
 	default:
 		LOG_ERR("Invalid command: %d", port->cmd->cmd);
-		return;
+		return -EIO;
 	}
 
+	if (rv) {
+		LOG_DBG("Unable to send command: %s",
+			pdc_cmd_names[port->cmd->cmd]);
+	}
+
+	return rv;
+}
+
+static void pdc_send_cmd_start_run(void *obj)
+{
+	struct pdc_port_t *port = (struct pdc_port_t *)obj;
+	int rv;
+
+	rv = send_pdc_cmd(port);
 	if (rv) {
 		LOG_DBG("Unable to send command: %s",
 			pdc_cmd_names[port->cmd->cmd]);
@@ -1115,9 +1128,12 @@ static void pdc_send_cmd_wait_run(void *obj)
 		LOG_DBG("CCI_BUSY");
 	} else if (atomic_test_and_clear_bit(port->cci_flags, CCI_ERROR)) {
 		LOG_DBG("CCI_ERROR");
-		port->cmd->error = true;
-		set_pdc_state(port, port->send_cmd_return_state);
-		return;
+		/* Try to resend command */
+		if (send_pdc_cmd(port) != 0) {
+			/* Set CCI_ERROR flag to trigger a resend of the command
+			 */
+			atomic_set_bit(port->cci_flags, CCI_ERROR);
+		}
 	} else if (atomic_test_and_clear_bit(port->cci_flags,
 					     CCI_CMD_COMPLETED)) {
 		LOG_DBG("CCI_CMD_COMPLETED");
@@ -1133,7 +1149,16 @@ static void pdc_send_cmd_wait_run(void *obj)
 	port->send_cmd.retry_counter++;
 	if (port->send_cmd.retry_counter > RETRY_MAX) {
 		port->cmd->error = true;
-		set_pdc_state(port, port->send_cmd_return_state);
+		if (port->cmd->cmd == CMD_PDC_GET_CONNECTOR_STATUS) {
+			/* Can't get connector status. Enter unattached state
+			 * with error flag set, so it can reset the PDC */
+			port->cmd->cmd = CMD_PDC_RESET;
+			set_pdc_state(port, PDC_UNATTACHED);
+			return;
+		} else {
+			set_pdc_state(port, port->send_cmd_return_state);
+			return;
+		}
 	}
 }
 
