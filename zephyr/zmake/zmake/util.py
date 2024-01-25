@@ -257,7 +257,7 @@ def get_lcov_options(tool_path):
         "--filter",
         "range",
         "--ignore-errors",
-        "inconsistent",
+        "inconsistent,source",
         "--ignore-errors",
         "gcov,gcov",
     ]
