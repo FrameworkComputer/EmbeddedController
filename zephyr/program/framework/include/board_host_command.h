@@ -499,4 +499,15 @@ struct ec_response_get_cutoff_status {
 	uint8_t status;
 } __ec_align1;
 
+/*****************************************************************************/
+/*
+ * This command return the AP throttle status
+ */
+#define EC_CMD_GET_AP_THROTTLE_STATUS	0x3E22
+
+struct ec_response_get_ap_throttle_status {
+	uint8_t soft_ap_throttle;
+	uint8_t hard_ap_throttle;
+} __ec_align1;
+
 #endif /* __BOARD_HOST_COMMAND_H */

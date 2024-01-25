@@ -30,6 +30,7 @@
 #include "uefi_app_mode.h"
 #include "util.h"
 #include "zephyr_console_shim.h"
+#include "throttle_ap.h"
 
 #ifdef CONFIG_BOARD_LOTUS
 #include "gpu.h"
@@ -513,6 +514,18 @@ static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_BB_RETIMER_CONTROL, bb_retimer_control, EC_VER_MASK(0));
 #endif /* PD_CHIP_CCG6 */
 #endif /* CONFIG_CHIPSET_INTEL */
+
+static enum ec_status cmd_get_ap_throttle_status(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_ap_throttle_status *r = args->response;
+
+	throttle_get_state(&r->soft_ap_throttle,&r->hard_ap_throttle);
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_AP_THROTTLE_STATUS, cmd_get_ap_throttle_status, EC_VER_MASK(0));
+
 /*******************************************************************************/
 /*                       EC console command for Project                        */
 /*******************************************************************************/

@@ -116,4 +116,14 @@ static inline void throttle_ap(enum throttle_level level,
 void throttle_gpu(enum throttle_level level, enum throttle_type type,
 		  enum throttle_sources source);
 
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+/**
+ * @brief Get the throttle state
+ *
+ * @param soft_flag return the soft throttle state
+ * @param hard_flag return the hard throttle state
+ */
+void throttle_get_state(uint8_t *soft_flag, uint8_t *hard_flag);
+#endif
+
 #endif /* __CROS_EC_THROTTLE_AP_H */

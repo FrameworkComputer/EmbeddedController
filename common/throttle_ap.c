@@ -206,3 +206,14 @@ static int command_apthrottle(int argc, const char **argv)
 DECLARE_CONSOLE_COMMAND(apthrottle, command_apthrottle, NULL,
 			"Display the AP throttling state");
 #endif
+
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+/*Get throttle status for host command*/
+void throttle_get_state(uint8_t *soft_flag, uint8_t *hard_flag)
+{
+	mutex_lock(&throttle_mutex);
+	*soft_flag = (uint8_t)(throttle_request[THROTTLE_SOFT] & 0xFF);
+	*hard_flag = (uint8_t)(throttle_request[THROTTLE_HARD] & 0xFF);
+	mutex_unlock(&throttle_mutex);
+}
+#endif
