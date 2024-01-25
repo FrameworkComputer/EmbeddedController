@@ -211,7 +211,7 @@
 			enum-name = "GPIO_EC_PD_INTA_L";
 		};
 		gpio_pbtn_out: pbtn_out_l {
-			gpios = <&gpio5 0 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpio5 0 (GPIO_ODR_LOW | GPIO_VOLTAGE_1P8)>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
 
