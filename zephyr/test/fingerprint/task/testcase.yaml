@@ -16,3 +16,9 @@ tests:
     - CONFIG_LINK_TEST_SUITE_FINGERPRINT_ENROLL=y
     extra_conf_files:
     - prj.conf
+
+  fingerprint.task.finger_presence:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FINGERPRINT_FINGER_PRESENCE=y
+    extra_conf_files:
+    - prj.conf

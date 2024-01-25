@@ -11,3 +11,5 @@ target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_CAPTURE app PRIVATE
 	src/fpsensor_capture.c)
 target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_ENROLL app PRIVATE
 	src/fpsensor_enroll.c)
+target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_FINGER_PRESENCE app PRIVATE
+	src/fpsensor_finger_presence.c)
