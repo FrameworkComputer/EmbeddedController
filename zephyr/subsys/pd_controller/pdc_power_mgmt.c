@@ -649,6 +649,40 @@ static void set_attached_flag(struct pdc_port_t *port,
 	k_mutex_unlock(&port->mtx);
 }
 
+/**
+ * @brief This function should only be called after the completion of the
+ * GET_CONNECTOR_STATUS command. It reads the connect_status,
+ * power_operation_mode, and power_direction bit to determine which state should
+ * be entered.
+ * NOTE: This function changes state, so a return should be added
+ * after it's called.
+ */
+static void handle_connector_status(struct pdc_port_t *port)
+{
+	if (!port->connector_status.connect_status) {
+		port->pd_capable = false;
+		/* Port is not connected */
+		set_pdc_state(port, PDC_UNATTACHED);
+	} else {
+		if (port->connector_status.power_operation_mode ==
+		    PD_OPERATION) {
+			port->pd_capable = true;
+			if (port->connector_status.power_direction) {
+				/* Port partner is a sink device
+				 */
+				set_pdc_state(port, PDC_SRC_ATTACHED);
+			} else {
+				/* Port partner is a source
+				 * device */
+				set_pdc_state(port, PDC_SNK_ATTACHED);
+			}
+		} else {
+			port->pd_capable = false;
+			set_pdc_state(port, PDC_SRC_SNK_TYPEC_ONLY);
+		}
+	}
+}
+
 static void run_unattached_policies(struct pdc_port_t *port)
 {
 	if (atomic_test_and_clear_bit(port->una_policy.flags,
@@ -1077,28 +1111,6 @@ static void pdc_send_cmd_wait_run(void *obj)
 			set_pdc_state(port, port->send_cmd_return_state);
 			return;
 		}
-	} else if (port->cmd->cmd == CMD_PDC_GET_CONNECTOR_STATUS) {
-		if (!port->connector_status.connect_status) {
-			port->pd_capable = false;
-			/* Port is not connected */
-			set_pdc_state(port, PDC_UNATTACHED);
-		} else {
-			if (port->connector_status.power_operation_mode ==
-			    PD_OPERATION) {
-				port->pd_capable = true;
-				if (port->connector_status.power_direction) {
-					/* Port partner is a sink device */
-					set_pdc_state(port, PDC_SRC_ATTACHED);
-				} else {
-					/* Port partner is a source device */
-					set_pdc_state(port, PDC_SNK_ATTACHED);
-				}
-			} else {
-				port->pd_capable = false;
-				set_pdc_state(port, PDC_SRC_SNK_TYPEC_ONLY);
-			}
-		}
-		return;
 	} else if (atomic_test_and_clear_bit(port->cci_flags, CCI_BUSY)) {
 		LOG_DBG("CCI_BUSY");
 	} else if (atomic_test_and_clear_bit(port->cci_flags, CCI_ERROR)) {
@@ -1109,8 +1121,13 @@ static void pdc_send_cmd_wait_run(void *obj)
 	} else if (atomic_test_and_clear_bit(port->cci_flags,
 					     CCI_CMD_COMPLETED)) {
 		LOG_DBG("CCI_CMD_COMPLETED");
-		set_pdc_state(port, port->send_cmd_return_state);
-		return;
+		if (port->cmd->cmd == CMD_PDC_GET_CONNECTOR_STATUS) {
+			handle_connector_status(port);
+			return;
+		} else {
+			set_pdc_state(port, port->send_cmd_return_state);
+			return;
+		}
 	}
 
 	port->send_cmd.retry_counter++;
