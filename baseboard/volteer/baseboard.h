@@ -28,6 +28,10 @@
 
 /* System safe mode for improved panic debugging */
 #define CONFIG_SYSTEM_SAFE_MODE
+#define CONFIG_PANIC_ON_WATCHDOG_WARNING
+/* Increase watchdog timeout since system will panic on warning */
+#undef CONFIG_WATCHDOG_PERIOD_MS
+#define CONFIG_WATCHDOG_PERIOD_MS 2100
 
 /* EC Defines */
 #define CONFIG_LTO
