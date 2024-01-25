@@ -204,6 +204,11 @@ union rts54_request {
 		uint8_t port_num;
 		uint8_t param0;
 	} set_tpc_reconnect;
+
+	struct read_power_level_req {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+	} read_power_level;
 };
 
 union rts54_response {

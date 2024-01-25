@@ -445,6 +445,17 @@ static int set_tpc_reconnect(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int read_power_level(struct rts5453p_emul_pdc_data *data,
+			    const union rts54_request *req)
+{
+	LOG_INF("READ_POWER_LEVEL port=%d", req->read_power_level.port_num);
+
+	memset(&data->response, 0, sizeof(data->response));
+	send_response(data);
+
+	return 0;
+}
+
 static bool send_response(struct rts5453p_emul_pdc_data *data)
 {
 	if (data->delay_ms > 0) {
@@ -547,6 +558,7 @@ const struct commands sub_cmd_x0E[] = {
 	{ .code = 0x11, HANDLER_DEF(unsupported) },
 	{ .code = 0x12, HANDLER_DEF(get_connector_status) },
 	{ .code = 0x13, HANDLER_DEF(get_error_status) },
+	{ .code = 0x1E, HANDLER_DEF(read_power_level) },
 };
 
 const struct commands sub_cmd_x12[] = {
