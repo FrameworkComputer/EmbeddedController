@@ -10,3 +10,9 @@ tests:
     - CONFIG_LINK_TEST_SUITE_FINGERPRINT_CAPTURE=y
     extra_conf_files:
     - prj.conf
+
+  fingerprint.task.enroll:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FINGERPRINT_ENROLL=y
+    extra_conf_files:
+    - prj.conf

@@ -9,3 +9,5 @@ project(fpsensor_task_test)
 target_sources(app PRIVATE src/mock_fingerprint_algorithm.c)
 target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_CAPTURE app PRIVATE
 	src/fpsensor_capture.c)
+target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_ENROLL app PRIVATE
+	src/fpsensor_enroll.c)

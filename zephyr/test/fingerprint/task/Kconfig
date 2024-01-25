@@ -8,4 +8,10 @@ config LINK_TEST_SUITE_FINGERPRINT_CAPTURE
 	  Link and execute fingerprint subsystem tests that focus
 	  on finger capture.
 
+config LINK_TEST_SUITE_FINGERPRINT_ENROLL
+	bool "Link fingerprint enroll tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on template enrollment.
+
 source "Kconfig.zephyr"
