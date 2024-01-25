@@ -578,6 +578,26 @@ static void send_cmd_init(struct pdc_port_t *port)
 }
 
 /**
+ * @brief Limits the charge current to zero and invalidates and received Source
+ * PDOS. This function also seeds the charger.
+ */
+static void invalidate_charger_settings(struct pdc_port_t *port)
+{
+	const struct pdc_config_t *const config = port->dev->config;
+
+	typec_set_input_current_limit(config->connector_num, 0, 0);
+	pd_set_input_current_limit(config->connector_num, 0, 0);
+	charge_manager_set_ceil(config->connector_num, CEIL_REQUESTOR_PD,
+				CHARGE_CEIL_NONE);
+	charge_manager_update_dualrole(config->connector_num, CAP_UNKNOWN);
+
+	/* Invalidate PDOS */
+	port->snk_policy.pdo = 0;
+	memset(port->snk_policy.pdos, 0, sizeof(uint32_t) * PDO_NUM);
+	port->snk_policy.pdo_count = 0;
+}
+
+/**
  * @brief Callers of this function should return immediately because the PDC
  * state is changed.
  */
@@ -735,6 +755,8 @@ static void pdc_unattached_entry(void *obj)
 
 	port->send_cmd.intern.pending = false;
 
+	invalidate_charger_settings(port);
+
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
 		port->unattached_local_state = UNATTACHED_RUN;
 	}
@@ -780,6 +802,8 @@ static void pdc_src_attached_entry(void *obj)
 	print_current_pdc_state(port);
 
 	port->send_cmd.intern.pending = false;
+
+	invalidate_charger_settings(port);
 
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
 		port->src_attached_local_state =
@@ -963,30 +987,6 @@ static void pdc_snk_attached_run(void *obj)
 		set_attached_flag(port, SNK_ATTACHED_FLAG);
 		run_snk_policies(port);
 		break;
-	}
-}
-
-/**
- * @brief Exiting from sink attached state.
- */
-static void pdc_snk_attached_exit(void *obj)
-{
-	struct pdc_port_t *port = (struct pdc_port_t *)obj;
-	const struct pdc_config_t *const config = port->dev->config;
-
-	if (port->next_state != PDC_SEND_CMD_START) {
-		/* Set input current limit to zero */
-		pd_set_input_current_limit(config->connector_num, 0, 0);
-		/* Set charge ceil to none */
-		charge_manager_set_ceil(config->connector_num,
-					CEIL_REQUESTOR_PD, CHARGE_CEIL_NONE);
-		charge_manager_update_dualrole(config->connector_num,
-					       CAP_UNKNOWN);
-
-		/* Invalidate PDOS */
-		port->snk_policy.pdo = 0;
-		memset(port->snk_policy.pdos, 0, sizeof(uint32_t) * PDO_NUM);
-		port->snk_policy.pdo_count = 0;
 	}
 }
 
@@ -1219,8 +1219,7 @@ static const struct smf_state pdc_states[] = {
 	[PDC_UNATTACHED] = SMF_CREATE_STATE(pdc_unattached_entry,
 					    pdc_unattached_run, NULL, NULL),
 	[PDC_SNK_ATTACHED] = SMF_CREATE_STATE(pdc_snk_attached_entry,
-					      pdc_snk_attached_run,
-					      pdc_snk_attached_exit, NULL),
+					      pdc_snk_attached_run, NULL, NULL),
 	[PDC_SRC_ATTACHED] = SMF_CREATE_STATE(pdc_src_attached_entry,
 					      pdc_src_attached_run, NULL, NULL),
 	[PDC_SEND_CMD_START] = SMF_CREATE_STATE(
@@ -1280,6 +1279,9 @@ static int pdc_subsys_init(const struct device *dev)
 		LOG_ERR("PDC not ready");
 		return -ENODEV;
 	}
+
+	/* This also seeds the Charge Manager */
+	invalidate_charger_settings(port);
 
 	/* Init port variables */
 
