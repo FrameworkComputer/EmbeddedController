@@ -28,3 +28,9 @@ tests:
     - CONFIG_LINK_TEST_SUITE_FINGERPRINT_INIT=y
     extra_conf_files:
     - prj.conf
+
+  fingerprint.task.match:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FINGERPRINT_MATCH=y
+    extra_conf_files:
+    - prj.conf

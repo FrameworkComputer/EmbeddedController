@@ -26,4 +26,10 @@ config LINK_TEST_SUITE_FINGERPRINT_INIT
 	  Link and execute fingerprint subsystem tests that focus
 	  on initializing TPM seed and context.
 
+config LINK_TEST_SUITE_FINGERPRINT_MATCH
+	bool "Link fingerprint match tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on finger matching.
+
 source "Kconfig.zephyr"
