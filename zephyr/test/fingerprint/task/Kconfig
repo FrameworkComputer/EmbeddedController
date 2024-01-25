@@ -38,4 +38,10 @@ config LINK_TEST_SUITE_FINGERPRINT_SHIM
 	  Link and execute fingerprint subsystem tests that focus
 	  on fpsensor shim.
 
+config LINK_TEST_SUITE_FINGERPRINT_TEMPLATE
+	bool "Link fingerprint template tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on finger templates.
+
 source "Kconfig.zephyr"
