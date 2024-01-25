@@ -34,3 +34,9 @@ tests:
     - CONFIG_LINK_TEST_SUITE_FINGERPRINT_MATCH=y
     extra_conf_files:
     - prj.conf
+
+  fingerprint.task.shim:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FINGERPRINT_SHIM=y
+    extra_conf_files:
+    - prj.conf
