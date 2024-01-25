@@ -22,6 +22,7 @@
 #define THERMISTOR_COMPAT cros_ec_temp_sensor_thermistor
 #define TEMP_SENSORS_COMPAT cros_ec_temp_sensors
 #define AMDR23M_COMPAT cros_ec_temp_sensor_amdr23m
+#define PECI_COMPAT cros_ec_temp_sensor_peci
 
 #define TEMP_SENSORS_NODEID DT_INST(0, TEMP_SENSORS_COMPAT)
 
@@ -35,6 +36,7 @@
 	DT_FOREACH_STATUS_OKAY(F75397_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(BATTERY_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(AMDR23M_COMPAT, fn)                          \
+	DT_FOREACH_STATUS_OKAY(PECI_COMPAT, fn)                          \
 	DT_FOREACH_STATUS_OKAY_VARGS(RT9490_CHG_COMPAT, TEMP_RT9490_FN, fn) \
 	DT_FOREACH_STATUS_OKAY(SB_TSI_COMPAT, fn)                           \
 	DT_FOREACH_STATUS_OKAY(THERMISTOR_COMPAT, fn)

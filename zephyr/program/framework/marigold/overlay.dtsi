@@ -49,6 +49,17 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&battery_temp>;
 		};
+		soc-temp {
+			/* just read, no protection */
+			temp_fan_off = <103>;
+			temp_fan_max = <105>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&peci_temp>;
+		};
+	};
+
+	peci_temp: peci-temp {
+		compatible = "cros-ec,temp-sensor-peci";
 	};
 
 	typec-port {

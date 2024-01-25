@@ -8,6 +8,7 @@
 #include "charger/chg_rt9490.h"
 #include "driver/charger/rt9490.h"
 #include "hooks.h"
+#include "peci.h"
 #include "temp_sensor.h"
 #include "temp_sensor/f75303.h"
 #include "temp_sensor/f75397.h"
@@ -341,6 +342,29 @@ __maybe_unused static int amdr23m_get_temp(const struct temp_sensor_t *sensor,
 const struct amdr23m_sensor_t amdr23m_sensors[AMDR23M_COUNT] = {
 	DT_FOREACH_STATUS_OKAY(AMDR23M_COMPAT, DEFINE_AMDR23M_DATA)
 };
+
+#if DT_HAS_COMPAT_STATUS_OKAY(PECI_COMPAT)
+__maybe_unused static int peci_get_temp(const struct temp_sensor_t *sensor,
+					  int *temp_ptr)
+{
+	return peci_temp_sensor_get_val(sensor->idx, temp_ptr);
+}
+#endif /* PECI_COMPAT */
+
+#define GET_ZEPHYR_TEMP_SENSOR_PECI(named_id)                  \
+	(&(const struct zephyr_temp_sensor){                     \
+		.read = &peci_get_temp,                        \
+		.thermistor = NULL,                              \
+		.update_temperature = soc_update_temperature, \
+		FILL_POWER_GOOD(named_id) })
+
+#define TEMP_PECI(named_id, sensor_id)                                \
+	[TEMP_SENSOR_ID(named_id)] = {                                  \
+		.name = DT_NODE_FULL_NAME(sensor_id),                   \
+		.idx = 0,                     \
+		.type = TEMP_SENSOR_TYPE_CPU,                         \
+		.zephyr_info = GET_ZEPHYR_TEMP_SENSOR_PECI(named_id), \
+	}
 #endif /* CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN */
 
 /* There can be only one thermistor on RT9490 with current driver */
@@ -384,7 +408,8 @@ const struct amdr23m_sensor_t amdr23m_sensors[AMDR23M_COUNT] = {
 	CHECK_COMPAT(F75303_COMPAT, named_id, sensor_id, TEMP_F75303)         \
 	CHECK_COMPAT(F75397_COMPAT, named_id, sensor_id, TEMP_F75397)         \
 	CHECK_COMPAT(BATTERY_COMPAT, named_id, sensor_id, TEMP_BATTERY)         \
-	CHECK_COMPAT(AMDR23M_COMPAT, named_id, sensor_id, TEMP_AMDR23M)
+	CHECK_COMPAT(AMDR23M_COMPAT, named_id, sensor_id, TEMP_AMDR23M)			\
+	CHECK_COMPAT(PECI_COMPAT, named_id, sensor_id, TEMP_PECI)
 
 
 #define TEMP_SENSOR_ENTRY(named_id) \

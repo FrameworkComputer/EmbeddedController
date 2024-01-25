@@ -31,7 +31,9 @@
 
 static const struct device *const espi_dev = DEVICE_DT_GET(DT_NODELABEL(espi0));
 
-static bool espi_verbose = false;
+static bool espi_verbose;
+static int temps;
+
 
 struct peci_over_espi_buffer {
 	uint8_t dest_slave_addr;
@@ -127,29 +129,29 @@ static int peci_get_cpu_temp(int *cpu_temp)
 	if (*cpu_temp >= CONFIG_PECI_TJMAX)
 		return EC_ERROR_UNKNOWN;
 
-	CPRINTS("cpu_temp: %d", CONFIG_PECI_TJMAX - *cpu_temp);
+	*cpu_temp = CONFIG_PECI_TJMAX - *cpu_temp + 273;
 
 	return EC_SUCCESS;
 }
 
-int peci_temp_sensor_get_val(int idx, int *temp_ptr)
+void soc_update_temperature(int idx)
 {
 	int i, rv;
+	int soc_temp = C_TO_K(0);
 
-	if (!chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_STANDBY))
-		return EC_ERROR_NOT_POWERED;
-
-	/*
-	 * Retry reading PECI CPU temperature if the first sample is
-	 * invalid or failed to obtain.
-	 */
 	for (i = 0; i < 2; i++) {
-		rv = peci_get_cpu_temp(temp_ptr);
+		rv = peci_get_cpu_temp(&soc_temp);
 		if (!rv)
 			break;
 	}
 
-	return rv;
+	temps = soc_temp;
+}
+
+int peci_temp_sensor_get_val(int idx, int *temp_ptr)
+{
+	*temp_ptr = temps;
+	return EC_SUCCESS;
 }
 
 /* */
