@@ -32,7 +32,7 @@ int8_t board_vivaldi_keybd_idx(void)
 /*
  * Keyboard layout decided by FW config.
  */
-static void kb_layout_init(void)
+test_export_static void kb_layout_init(void)
 {
 	int ret;
 	uint32_t val;

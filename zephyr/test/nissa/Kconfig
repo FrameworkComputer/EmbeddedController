@@ -83,11 +83,18 @@ choice TEST_TARGET
 	  bool "Tests for Anraggar-specific code"
 	  help
 		The test target that exercises nissa/anraggar/*.c
+
 	config TEST_NISSA_ULDREN
 	  bool "Tests for Uldren-specific code"
 	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	  help
 		The test target that exercises nissa/uldren/*.c
+
+	config TEST_NISSA_YAVIKS
+	  bool "Tests for Yaviks-specific code"
+	  help
+		The test target that exercises nissa/yaviks/*.c
+
 endchoice
 
 config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
