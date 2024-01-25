@@ -92,3 +92,11 @@
 	/* Use PB12 pin as a CS for the device (managed by SPI controller) */
 	cs-gpios = <&gpiob 12 GPIO_ACTIVE_LOW>;
 };
+
+&flash0 {
+	/*
+	 * 4 byte parallelism can be enabled when the voltage is at least 2.7V.
+	 * See STM32F412 reference manual for more details.
+	 */
+	write-block-size = <4>;
+};
