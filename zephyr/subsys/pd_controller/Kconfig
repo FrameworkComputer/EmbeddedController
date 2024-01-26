@@ -24,6 +24,14 @@ config PDC_POWER_MGMT_INIT_PRIORITY
 	help
 	  Initialization priority of the USB-C in POST_KERNEL.
 
+config CHARGE_MANAGER_SYS_INIT_PRIORITY
+	int "USB-C stack init priority"
+	default 89
+	help
+	  Initialization priority of the charge manager weh using the PDC
+	  power management subsystem.  This must be higher priority than the
+	  PDC power management initialization priority.
+
 config PDC_POWER_MGMT_THREAD_PRIORTY
 	int "USB-C thread priority"
 	default 0

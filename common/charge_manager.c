@@ -238,7 +238,25 @@ static void charge_manager_init(void)
 			source_port_rp[i] = CONFIG_USB_PD_PULLUP;
 	}
 }
+#ifndef CONFIG_USB_PDC_POWER_MGMT
 DECLARE_HOOK(HOOK_INIT, charge_manager_init, HOOK_PRIO_INIT_CHARGE_MANAGER);
+#else
+BUILD_ASSERT(CONFIG_CHARGE_MANAGER_SYS_INIT_PRIORITY <
+		     CONFIG_PDC_POWER_MGMT_INIT_PRIORITY,
+	     "The charge manager initialization must be higher priortity than "
+	     "the PDC power management");
+
+/* When CONFIG_USB_PDC_POWER_MGMT is used, we need to init the
+ * charge manager before PDC power management subsystem.
+ */
+static int charge_manager_sys_init(void)
+{
+	charge_manager_init();
+	return 0;
+}
+SYS_INIT(charge_manager_sys_init, POST_KERNEL,
+	 CONFIG_CHARGE_MANAGER_SYS_INIT_PRIORITY);
+#endif
 
 /**
  * Check if the charge manager is seeded.
