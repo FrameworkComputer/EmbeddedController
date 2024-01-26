@@ -329,6 +329,7 @@
 		status = "okay";
 		reg = <0x40>;
 		frs_en_gpio = <&gpio_usb_c0_frs_en>;
+		irq-gpios = <&gpiok 0 GPIO_ACTIVE_LOW>;
 	};
 };
 
