@@ -185,7 +185,7 @@ common-$(CONFIG_USB_POWER_DELIVERY)+=usb_pd_protocol.o usb_pd_policy.o \
 	usb_pd_pdo.o
 endif
 common-$(CONFIG_USB_PD_DUAL_ROLE)+=usb_pd_dual_role.o
-common-$(CONFIG_USB_PD_HOST_CMD)+=usb_pd_host_cmd.o
+common-$(CONFIG_USB_PD_HOST_CMD)+=usb_pd_host_cmd.o pd_host_event.o
 common-$(CONFIG_USB_PD_CONSOLE_CMD)+=usb_pd_console_cmd.o
 endif
 common-$(CONFIG_USB_PD_DISCOVERY)+=usb_pd_discovery.o

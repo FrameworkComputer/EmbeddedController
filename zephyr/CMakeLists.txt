@@ -569,6 +569,9 @@ if (CONFIG_PLATFORM_EC_USB_PD_TCPMV2)
 	include(tcpmv2.cmake)
 endif ()
 
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_HOST_CMD
+                                                "${PLATFORM_EC}/common/pd_host_event.c")
+
 zephyr_library_sources_ifdef(CONFIG_SVDM_RSP_DFP_ONLY
                                                 "${PLATFORM_EC}/common/usbc/svdm_rsp_dfp_only.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_OCP
@@ -581,11 +584,6 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_ALT_MODE_UFP
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DUAL_ROLE
                                                 "${PLATFORM_EC}/common/usb_pd_dual_role.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_CONSOLE_CMD
-                                                "${PLATFORM_EC}/common/usb_pd_console_cmd.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_HOST_CMD
-                                                "${PLATFORM_EC}/common/usb_pd_host_cmd.c"
-                                                "${PLATFORM_EC}/common/usbc/usb_pd_host.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_DP_HPD_GPIO
                                                 "${PLATFORM_EC}/common/usbc/dp_hpd_gpio.c")
