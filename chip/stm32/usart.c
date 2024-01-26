@@ -86,6 +86,28 @@ void usart_shutdown(struct usart_config const *config)
 	config->hw->ops->disable(config);
 }
 
+#ifdef CONFIG_STREAM_USB
+int usart_get_baud_f0_l(struct usart_config const *config, int frequency_hz)
+{
+	int div;
+	intptr_t base = config->hw->base;
+
+	if (STM32_USART_CR1(base) & STM32_USART_CR1_OVER8) {
+		uint32_t bbr = STM32_USART_BRR(base);
+		div = (bbr & 0xFFFFFFF0) | ((bbr & 0x7) << 1);
+	} else {
+		div = STM32_USART_BRR(base);
+	}
+
+#ifdef STM32_USART9_BASE
+	if (config->hw->base == STM32_USART9_BASE) /* LPUART */
+		div /= 256;
+#endif
+
+	return DIV_ROUND_NEAREST(frequency_hz, div);
+}
+#endif
+
 void usart_set_baud_f0_l(struct usart_config const *config, int baud,
 			 int frequency_hz)
 {
@@ -174,6 +196,34 @@ void usart_set_parity(struct usart_config const *config, int parity)
 	/* Restore active state. */
 	STM32_USART_CR1(base) |= ue;
 }
+
+/*
+ * Start/stop generation of "break condition".
+ */
+#ifdef CONFIG_STREAM_USB
+void usart_set_break(struct usart_config const *config, bool enable)
+{
+	uint32_t ue;
+	intptr_t base = config->hw->base;
+
+	/* Record active state and disable the UART. */
+	ue = STM32_USART_CR1(base) & STM32_USART_CR1_UE;
+	STM32_USART_CR1(base) &= ~STM32_USART_CR1_UE;
+
+	/*
+	 * Generate break by temporarily inverting the logic levels on the TX
+	 * signal.
+	 */
+	if (enable) {
+		STM32_USART_CR2(base) |= STM32_USART_CR2_TXINV;
+	} else {
+		STM32_USART_CR2(base) &= ~STM32_USART_CR2_TXINV;
+	}
+
+	/* Restore active state. */
+	STM32_USART_CR1(base) |= ue;
+}
+#endif
 
 void usart_interrupt(struct usart_config const *config)
 {

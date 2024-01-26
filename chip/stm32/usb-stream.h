@@ -250,6 +250,7 @@ enum usb_usart {
 	USB_USART_SET_PARITY = 1,
 	USB_USART_REQ_BAUD = 2,
 	USB_USART_SET_BAUD = 3,
+	USB_USART_BREAK = 4,
 };
 
 /*
