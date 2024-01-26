@@ -170,58 +170,35 @@ ZTEST_USER(pdc_power_mgmt_api, test_pd_capable)
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_partner_usb_comm_capable)
 {
+	int i;
+	struct connector_status_t connector_status;
+	struct {
+		union connector_capability_t ccap;
+		bool expected;
+	} test[] = {
+		{ .ccap = { .raw_value = 0 }, .expected = false },
+		{ .ccap = { .op_mode_usb2 = 1 }, .expected = true },
+		{ .ccap = { .op_mode_usb3 = 1 }, .expected = true },
+		{ .ccap = { .ext_op_mode_usb4_gen2 = 1 }, .expected = true },
+		{ .ccap = { .ext_op_mode_usb4_gen3 = 1 }, .expected = true },
+		{ .ccap = { .op_mode_debug_acc = 1 }, .expected = false },
+		{ .ccap = { .op_mode_analog_audio = 1 }, .expected = false },
+		{ .ccap = { .op_mode_rp_only = 1 }, .expected = false },
+		{ .ccap = { .op_mode_rd_only = 1 }, .expected = false },
+	};
+
 	zassert_false(pdc_power_mgmt_get_partner_usb_comm_capable(
 		CONFIG_USB_PD_PORT_MAX_COUNT));
 
-/* TODO(b/321749548) - Read connector status after its read from I2C bus
- * not after reading PING status.
- */
-#ifdef TODO_B_321749548
-	struct connector_status_t connector_status;
-	union connector_capability_t ccaps;
-
-	connector_status.connect_status = 1;
-	emul_pdc_set_connector_status(emul, &connector_status);
-
-	ccaps.raw_value = 0;
-	emul_pdc_set_connector_capability(emul, &ccaps);
-	emul_pdc_pulse_irq(emul);
-	k_sleep(K_MSEC(500));
-	zassert_false(pdc_power_mgmt_get_partner_usb_comm_capable(TEST_PORT));
-
-	ccaps.raw_value = 0;
-	ccaps.op_mode_usb2 = 1;
-	emul_pdc_set_connector_capability(emul, &ccaps);
-	emul_pdc_pulse_irq(emul);
-	k_sleep(K_MSEC(500));
-	zassert_true(pdc_power_mgmt_get_partner_usb_comm_capable(TEST_PORT));
-
-	ccaps.raw_value = 0;
-	ccaps.op_mode_usb3 = 1;
-	emul_pdc_set_connector_capability(emul, &ccaps);
-	emul_pdc_pulse_irq(emul);
-	k_sleep(K_MSEC(500));
-	zassert_true(pdc_power_mgmt_get_partner_usb_comm_capable(TEST_PORT));
-
-	ccaps.raw_value = 0;
-	ccaps.ext_op_mode_usb4_gen2 = 1;
-	emul_pdc_set_connector_capability(emul, &ccaps);
-	emul_pdc_pulse_irq(emul);
-	k_sleep(K_MSEC(500));
-	zassert_true(pdc_power_mgmt_get_partner_usb_comm_capable(TEST_PORT));
-
-	ccaps.raw_value = 0;
-	ccaps.ext_op_mode_usb4_gen3 = 1;
-	emul_pdc_set_connector_capability(emul, &ccaps);
-	emul_pdc_pulse_irq(emul);
-	k_sleep(K_MSEC(500));
-	zassert_true(pdc_power_mgmt_get_partner_usb_comm_capable(TEST_PORT));
-
-	ccaps.raw_value = 0;
-	ccaps.ext_op_mode_usb4_gen4 = 1;
-	emul_pdc_set_connector_capability(emul, &ccaps);
-	emul_pdc_pulse_irq(emul);
-	k_sleep(K_MSEC(500));
-	zassert_true(pdc_power_mgmt_get_partner_usb_comm_capable(TEST_PORT));
-#endif /* TODO_B_321749548 */
+	for (i = 0; i < ARRAY_SIZE(test); i++) {
+		emul_pdc_set_connector_capability(emul, &test[i].ccap);
+		emul_pdc_configure_src(emul, &connector_status);
+		emul_pdc_connect_partner(emul, &connector_status);
+		k_sleep(K_MSEC(1000));
+		zassert_equal(
+			test[i].expected,
+			pdc_power_mgmt_get_partner_usb_comm_capable(TEST_PORT));
+		emul_pdc_disconnect(emul);
+		k_sleep(K_MSEC(1000));
+	}
 }
