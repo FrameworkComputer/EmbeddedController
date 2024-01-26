@@ -65,3 +65,11 @@ i2c3ALT: &i2c3 {
 /delete-node/ &int_lid_imu;
 
 /delete-node/ &gpio_ish_i2c_ec_scl;
+
+/* These GPIOS are initialized by the PDC driver */
+&gpio_usb_pd_int_odl {
+	no-auto-init;
+};
+&gpio_ec_i2c_pmc_pd_int_odl {
+	no-auto-init;
+};
