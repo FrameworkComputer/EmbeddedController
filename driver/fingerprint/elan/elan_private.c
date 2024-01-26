@@ -5,7 +5,6 @@
 
 #include "common.h"
 #include "console.h"
-#include "cryptoc/util.h"
 #include "elan_sensor.h"
 #include "elan_sensor_pal.h"
 #include "elan_setting.h"
@@ -58,6 +57,9 @@ int fp_sensor_init(void)
 	errors = 0;
 	elan_execute_reset();
 	algorithm_parameter_setting();
+	if (IC_SELECTION == EFSA80SG)
+		elan_set_hv_chip(1);
+
 	if (elan_execute_calibration() < 0)
 		errors |= FP_ERROR_INIT_FAIL;
 	if (elan_woe_mode() != 0)

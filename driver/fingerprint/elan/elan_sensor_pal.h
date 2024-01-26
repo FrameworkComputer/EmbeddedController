@@ -145,4 +145,18 @@ __staticlib int fp_sensor_maintenance(fp_sensor_info_t *fp_sensor_info);
  *                  false => normal operation, i.e. high GPIO state
  */
 __staticlib_hook void elan_sensor_set_rst(bool state);
+
+/**
+ * This is only used on the EFSA80SG.
+ * Enable or disable settings of high voltage chip for ELAN fingerprint sensor
+ *
+ * @param[in] state The state of high voltage chip
+ *                  true  => enable settings of high voltage chip
+ *                  false => disable settings of high voltage chip
+ *
+ * @return 0 on success.
+ *         negative value on error.
+ */
+int elan_set_hv_chip(bool state);
+
 #endif

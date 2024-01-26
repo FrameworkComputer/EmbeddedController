@@ -6,7 +6,6 @@
 
 #include "common.h"
 #include "console.h"
-#include "cryptoc/util.h"
 #include "elan_sensor.h"
 #include "elan_sensor_pal.h"
 #include "elan_setting.h"
@@ -21,17 +20,18 @@
 #include "util.h"
 
 #include <stddef.h>
+#include <stdint.h>
 
-static uint8_t tx_buf[CONFIG_SPI_TX_BUF_SIZE] __uncached;
-static uint8_t rx_buf[CONFIG_SPI_RX_BUF_SIZE] __uncached;
+static uint8_t tx_buf[ELAN_SPI_TX_BUF_SIZE] __uncached;
+static uint8_t rx_buf[ELAN_SPI_RX_BUF_SIZE] __uncached;
 
 /* Unused by staticlib. */
 int elan_write_cmd(uint8_t fp_cmd)
 {
 	int rc = 0;
 
-	memset(tx_buf, 0, CONFIG_SPI_TX_BUF_SIZE);
-	memset(rx_buf, 0, CONFIG_SPI_RX_BUF_SIZE);
+	memset(tx_buf, 0, ELAN_SPI_TX_BUF_SIZE);
+	memset(rx_buf, 0, ELAN_SPI_RX_BUF_SIZE);
 
 	tx_buf[0] = fp_cmd;
 	rc = spi_transaction(&spi_devices[0], tx_buf, 2, rx_buf,
@@ -43,8 +43,8 @@ __staticlib_hook int elan_read_cmd(uint8_t fp_cmd, uint8_t *regdata)
 {
 	int ret = 0;
 
-	memset(tx_buf, 0, CONFIG_SPI_TX_BUF_SIZE);
-	memset(rx_buf, 0, CONFIG_SPI_RX_BUF_SIZE);
+	memset(tx_buf, 0, ELAN_SPI_TX_BUF_SIZE);
+	memset(rx_buf, 0, ELAN_SPI_RX_BUF_SIZE);
 
 	tx_buf[0] = fp_cmd; /* one byte data read */
 	ret = spi_transaction(&spi_devices[0], tx_buf, 2, rx_buf,
@@ -59,8 +59,8 @@ int elan_spi_transaction(uint8_t *tx, int tx_len, uint8_t *rx, int rx_len)
 {
 	int ret = 0;
 
-	memset(tx_buf, 0, CONFIG_SPI_TX_BUF_SIZE);
-	memset(rx_buf, 0, CONFIG_SPI_RX_BUF_SIZE);
+	memset(tx_buf, 0, ELAN_SPI_TX_BUF_SIZE);
+	memset(rx_buf, 0, ELAN_SPI_RX_BUF_SIZE);
 
 	memcpy(tx_buf, tx, tx_len);
 	ret = spi_transaction(&spi_devices[0], tx_buf, tx_len, rx_buf, rx_len);
@@ -73,8 +73,8 @@ __staticlib_hook int elan_write_register(uint8_t regaddr, uint8_t regdata)
 {
 	int ret = 0;
 
-	memset(tx_buf, 0, CONFIG_SPI_TX_BUF_SIZE);
-	memset(rx_buf, 0, CONFIG_SPI_RX_BUF_SIZE);
+	memset(tx_buf, 0, ELAN_SPI_TX_BUF_SIZE);
+	memset(rx_buf, 0, ELAN_SPI_RX_BUF_SIZE);
 
 	tx_buf[0] = WRITE_REG_HEAD + regaddr; /* one byte data write */
 	tx_buf[1] = regdata;
@@ -87,8 +87,8 @@ __staticlib_hook int elan_write_page(uint8_t page)
 {
 	int ret = 0;
 
-	memset(tx_buf, 0, CONFIG_SPI_TX_BUF_SIZE);
-	memset(rx_buf, 0, CONFIG_SPI_RX_BUF_SIZE);
+	memset(tx_buf, 0, ELAN_SPI_TX_BUF_SIZE);
+	memset(rx_buf, 0, ELAN_SPI_RX_BUF_SIZE);
 
 	tx_buf[0] = PAGE_SEL;
 	tx_buf[1] = page;
@@ -117,20 +117,10 @@ __staticlib_hook int elan_write_reg_vector(const uint8_t *reg_table, int length)
 
 __staticlib_hook int raw_capture(uint16_t *short_raw)
 {
-	int ret = 0, i = 0, image_index = 0, index = 0;
-	int cnt_timer = 0;
-	int dma_loop = 0, dma_len = 0;
+	int ret = 0, i = 0, cnt_timer = 0, rx_index = 0;
 	uint8_t regdata[4] = { 0 };
-	char *img_buf;
 
 	memset(short_raw, 0, sizeof(uint16_t) * IMAGE_TOTAL_PIXEL);
-
-	ret = shared_mem_acquire(sizeof(uint8_t) * IMG_BUF_SIZE, &img_buf);
-	if (ret) {
-		LOGE_SA("%s Can't get shared mem\n", __func__);
-		return ret;
-	}
-	memset(img_buf, 0, sizeof(uint8_t) * IMG_BUF_SIZE);
 
 	/* Write start scans command to fp sensor */
 	if (elan_write_cmd(START_SCAN) < 0) {
@@ -139,7 +129,6 @@ __staticlib_hook int raw_capture(uint16_t *short_raw)
 			__func__, ret);
 		goto exit;
 	}
-
 	/* Polling scan status */
 	cnt_timer = 0;
 	while (1) {
@@ -159,36 +148,28 @@ __staticlib_hook int raw_capture(uint16_t *short_raw)
 	}
 
 	/* Read the image from fp sensor */
-	dma_loop = 4;
-	dma_len = IMG_BUF_SIZE / dma_loop;
-
-	for (i = 0; i < dma_loop; i++) {
-		memset(tx_buf, 0, CONFIG_SPI_TX_BUF_SIZE);
-		memset(rx_buf, 0, CONFIG_SPI_RX_BUF_SIZE);
+	for (i = 0; i < ELAN_DMA_LOOP; i++) {
+		memset(tx_buf, 0, ELAN_SPI_TX_BUF_SIZE);
+		memset(rx_buf, 0, ELAN_SPI_RX_BUF_SIZE);
 		tx_buf[0] = START_READ_IMAGE;
 		ret = spi_transaction(&spi_devices[0], tx_buf, 2, rx_buf,
-				      dma_len);
-		memcpy(&img_buf[dma_len * i], rx_buf, dma_len);
+				      ELAN_SPI_RX_BUF_SIZE);
+
+		for (int y = 0; y < IMAGE_HEIGHT / ELAN_DMA_LOOP; y++) {
+			for (int x = 0; x < IMAGE_WIDTH; x++) {
+				rx_index = (x * 2) + (RAW_DATA_SIZE * y);
+				short_raw[(x + y * IMAGE_WIDTH) +
+					  i * ELAN_DMA_SIZE] =
+					(rx_buf[rx_index] << 8) +
+					(rx_buf[rx_index + 1]);
+			}
+		}
 	}
-
-	/* Remove dummy byte */
-	for (image_index = 1; image_index < IMAGE_WIDTH; image_index++)
-		memcpy(&img_buf[RAW_PIXEL_SIZE * image_index],
-		       &img_buf[RAW_DATA_SIZE * image_index], RAW_PIXEL_SIZE);
-
-	for (index = 0; index < IMAGE_TOTAL_PIXEL; index++)
-		short_raw[index] =
-			(img_buf[index * 2] << 8) + img_buf[index * 2 + 1];
 
 exit:
-	if (img_buf != NULL) {
-		always_memset(img_buf, 0, sizeof(uint8_t) * IMG_BUF_SIZE);
-		shared_mem_release(img_buf);
-	}
 
 	if (ret != 0)
 		LOGE_SA("%s error = %d", __func__, ret);
-
 	return ret;
 }
 
@@ -201,6 +182,10 @@ __staticlib_hook int elan_execute_calibration(void)
 		elan_write_cmd(SRST);
 		elan_write_cmd(FUSE_LOAD);
 		register_initialization();
+
+		if (IC_SELECTION == EFSA80SG)
+			elan_set_hv_chip(0);
+
 		elan_sensing_mode();
 
 		ret = calibration();
@@ -251,4 +236,45 @@ int elan_fp_maintenance(uint16_t *error_state)
 __staticlib_hook void elan_sensor_set_rst(bool state)
 {
 	gpio_set_level(GPIO_FP_RST_ODL, state ? 0 : 1);
+}
+
+int elan_set_hv_chip(bool state)
+{
+	int ret = 0;
+
+	memset(tx_buf, 0, ELAN_SPI_TX_BUF_SIZE);
+	memset(rx_buf, 0, ELAN_SPI_RX_BUF_SIZE);
+
+	if (state) {
+		elan_write_cmd(FUSE_LOAD);
+		usleep(1000);
+
+		tx_buf[0] = 0x0B;
+		tx_buf[1] = 0x02;
+
+		ret = spi_transaction(&spi_devices[0], tx_buf, 2, rx_buf, 2);
+		usleep(1000);
+	} else {
+		tx_buf[0] = 0x0B;
+		tx_buf[1] = 0x00;
+
+		ret = spi_transaction(&spi_devices[0], tx_buf, 2, rx_buf, 2);
+		usleep(1000);
+
+		const uint8_t charge_pump[] = { 0x00,
+						(uint8_t)CHARGE_PUMP_HVIC };
+
+		elan_write_reg_vector(charge_pump, ((int)sizeof(charge_pump)));
+
+		const uint8_t disable_hv[] = { 0x01, VOLTAGE_HVIC };
+
+		elan_write_reg_vector(disable_hv, ((int)sizeof(disable_hv)));
+
+		tx_buf[0] = 0x0B;
+		tx_buf[1] = 0x02;
+
+		ret = spi_transaction(&spi_devices[0], tx_buf, 2, rx_buf, 2);
+		usleep(1000);
+	}
+	return ret;
 }
