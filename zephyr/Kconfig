@@ -467,6 +467,13 @@ config PLATFORM_EC_HOOKS
 	  This option is needed by many features in the EC. Disabling it will
 	  likely cause build errors.
 
+config PLATFORM_EC_HOOK_SECOND
+	bool "Enable the one second period hook"
+	default y
+	help
+	  Enable support for the one second hook. Disabling the hook save
+	  some memory and CPU time.
+
 menuconfig PLATFORM_EC_HOSTCMD
 	bool "Host commands"
 	default n if ARCH_POSIX
