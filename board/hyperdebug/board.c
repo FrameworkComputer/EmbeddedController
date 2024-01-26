@@ -53,10 +53,10 @@ static struct usart_config const usart2 =
 	USART_CONFIG(usart2_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
 		     0, usart2_to_usb, usb_to_usart2);
 
-USB_STREAM_CONFIG(usart2_usb, USB_IFACE_USART2_STREAM,
-		  USB_STR_USART2_STREAM_NAME, USB_EP_USART2_STREAM,
-		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart2,
-		  usart2_to_usb)
+USB_STREAM_CONFIG_USART_IFACE(usart2_usb, USB_IFACE_USART2_STREAM,
+			      USB_STR_USART2_STREAM_NAME, USB_EP_USART2_STREAM,
+			      USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE,
+			      usb_to_usart2, usart2_to_usb, usart2)
 
 /******************************************************************************
  * Forward USART3 as a simple USB serial interface.
@@ -74,10 +74,10 @@ static struct usart_config const usart3 =
 	USART_CONFIG(usart3_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
 		     0, usart3_to_usb, usb_to_usart3);
 
-USB_STREAM_CONFIG(usart3_usb, USB_IFACE_USART3_STREAM,
-		  USB_STR_USART3_STREAM_NAME, USB_EP_USART3_STREAM,
-		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart3,
-		  usart3_to_usb)
+USB_STREAM_CONFIG_USART_IFACE(usart3_usb, USB_IFACE_USART3_STREAM,
+			      USB_STR_USART3_STREAM_NAME, USB_EP_USART3_STREAM,
+			      USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE,
+			      usb_to_usart3, usart3_to_usb, usart3)
 
 /******************************************************************************
  * Forward USART4 as a simple USB serial interface.
@@ -95,10 +95,10 @@ static struct usart_config const usart4 =
 	USART_CONFIG(usart4_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
 		     0, usart4_to_usb, usb_to_usart4);
 
-USB_STREAM_CONFIG(usart4_usb, USB_IFACE_USART4_STREAM,
-		  USB_STR_USART4_STREAM_NAME, USB_EP_USART4_STREAM,
-		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart4,
-		  usart4_to_usb)
+USB_STREAM_CONFIG_USART_IFACE(usart4_usb, USB_IFACE_USART4_STREAM,
+			      USB_STR_USART4_STREAM_NAME, USB_EP_USART4_STREAM,
+			      USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE,
+			      usb_to_usart4, usart4_to_usb, usart4)
 
 /******************************************************************************
  * Forward USART5 as a simple USB serial interface.
@@ -116,10 +116,10 @@ static struct usart_config const usart5 =
 	USART_CONFIG(usart5_hw, usart_rx_interrupt, usart_tx_interrupt, 115200,
 		     0, usart5_to_usb, usb_to_usart5);
 
-USB_STREAM_CONFIG(usart5_usb, USB_IFACE_USART5_STREAM,
-		  USB_STR_USART5_STREAM_NAME, USB_EP_USART5_STREAM,
-		  USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE, usb_to_usart5,
-		  usart5_to_usb)
+USB_STREAM_CONFIG_USART_IFACE(usart5_usb, USB_IFACE_USART5_STREAM,
+			      USB_STR_USART5_STREAM_NAME, USB_EP_USART5_STREAM,
+			      USB_STREAM_RX_SIZE, USB_STREAM_TX_SIZE,
+			      usb_to_usart5, usart5_to_usb, usart5)
 
 /******************************************************************************
  * Define the strings used in our USB descriptors.
