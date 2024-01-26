@@ -11,6 +11,7 @@
 #include "../motionsense.dtsi"
 #include "../keyboard.dtsi"
 #include "../overlay.dtsi"
+#include "../power_signal.dtsi"
 
 / {
 	batteries {

@@ -43,12 +43,15 @@
 		};
 		gpio_ap_ec_warm_rst_req: ap_ec_warm_rst_req {
 			gpios = <&gpiom 3 GPIO_INPUT>;
+			enum-name = "GPIO_AP_EC_WARM_RST_REQ";
 		};
 		gpio_ap_ec_wdtrst_l: ap_ec_wdtrst_l {
 			gpios = <&gpioj 3 GPIO_INPUT>;
+			enum-name = "GPIO_AP_EC_WDTRST_L";
 		};
 		gpio_ap_in_sleep_l: ap_in_sleep_l {
 			gpios = <&gpiom 2 GPIO_INPUT>;
+			enum-name = "GPIO_AP_IN_SLEEP_L";
 		};
 		gpio_ap_xhci_init_done: ap_xhci_init_done {
 			gpios = <&gpioj 4 GPIO_INPUT>;
@@ -102,6 +105,7 @@
 		};
 		gpio_ec_pmic_en_odl: ec_pmic_en_odl {
 			gpios = <&gpioj 0 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_EC_PMIC_EN_ODL";
 		};
 		gpio_ec_voldn_btn_odl: ec_voldn_btn_odl {
 			gpios = <&gpioe 3 GPIO_INPUT>;
@@ -159,15 +163,18 @@
 		};
 		gpio_pg_pp3700_s5_od: pg_pp3700_s5_od {
 			gpios = <&gpioh 6 GPIO_INPUT>;
+			enum-name = "GPIO_PG_PP4200_S5_OD";
 		};
 		gpio_pg_pp5000_z1_od: pg_pp5000_z1_od {
 			gpios = <&gpioh 4 GPIO_INPUT>;
 		};
 		gpio_pmic_ec_resetb: pmic_ec_resetb {
 			gpios = <&gpioj 1 GPIO_INPUT>;
+			enum-name = "GPIO_PMIC_EC_RESETB";
 		};
 		gpio_sys_rst_odl: sys_rst_odl {
 			gpios = <&gpioj 5 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_SYS_RST_ODL";
 		};
 		gpio_usb_c0_dp_in_hpd: usb_c0_dp_in_hpd {
 			gpios = <&gpiof 2 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;

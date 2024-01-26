@@ -22,5 +22,35 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "lid_interrupt";
 		};
+		int_ap_in_sleep: ap-in-sleep {
+			irq-pin = <&gpio_ap_in_sleep_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_ap_wdtrst: ap-wdtrst {
+			irq-pin = <&gpio_ap_ec_wdtrst_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "chipset_watchdog_interrupt";
+		};
+		int_pg_pp3700_s5: pg-pp3700-s5 {
+			irq-pin = <&gpio_pg_pp3700_s5_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_warm_rst: warm-rst {
+			irq-pin = <&gpio_ap_ec_warm_rst_req>;
+			flags = <GPIO_INT_EDGE_RISING>;
+			handler = "chipset_reset_request_interrupt";
+		};
+		int_pmic_ec_resetb: pmic-ec-resetb {
+			irq-pin = <&gpio_pmic_ec_resetb>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_ap_in_rst: ap-in-rst {
+			irq-pin = <&gpio_ap_ec_sysrst_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
 	};
 };

@@ -80,6 +80,9 @@
 		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
 			gpios = <&gpiod 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
+		/* a label to prevent build break in power sequencing */
+		en_pp4200_s5: en_pp3700_s5 {
+		};
 	};
 
 	hibernate-wake-pins {
