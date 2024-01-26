@@ -323,6 +323,10 @@ static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 	data->response.rtk_status.battery_charging_status =
 		data->connector_status.battery_charging_cap & BIT_MASK(2);
 
+	/* BYTE 12 */
+	data->response.rtk_status.plug_direction =
+		data->connector_status.orientation & BIT_MASK(1);
+
 	/* BYTE 15-18 */
 	data->response.rtk_status.average_current_low = 0;
 	data->response.rtk_status.average_current_high = 0;
