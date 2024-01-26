@@ -510,4 +510,29 @@ struct ec_response_get_ap_throttle_status {
 	uint8_t hard_ap_throttle;
 } __ec_align1;
 
+/*****************************************************************************/
+/*
+ * Get the current state of the pd port
+ */
+#define EC_CMD_GET_PD_PORT_STATE	0x3E23
+
+struct ec_params_get_pd_port_state {
+	uint8_t port;
+} __ec_align1;
+
+struct ec_response_get_pd_port_state {
+	uint8_t c_state;
+	uint8_t pd_state;
+	uint8_t power_role;
+	uint8_t data_role;
+	uint8_t vconn;
+	uint8_t epr_active;
+	uint8_t epr_support;
+	uint8_t cc_polarity;
+	uint16_t voltage;
+	uint16_t current;
+	uint8_t active_port;
+	uint8_t pd_alt_mode_status;
+} __ec_align1;
+
 #endif /* __BOARD_HOST_COMMAND_H */
