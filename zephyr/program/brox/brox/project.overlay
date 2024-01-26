@@ -63,3 +63,11 @@ i2c3ALT: &i2c3 {
 	offset = <(0x60000 - (0x1000 * 1))>;
 	size = <0x1000>;
 };
+
+/* These GPIOS are initialized by the PDC driver */
+&gpio_usb_pd_int_odl {
+	no-auto-init;
+};
+&gpio_ec_i2c_pmc_pd_int_odl {
+	no-auto-init;
+};
