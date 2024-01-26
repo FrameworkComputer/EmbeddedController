@@ -19,10 +19,19 @@
 
 static uint8_t queue_data[3];
 static int data_count;
+/*
+ * To make sure Synaptics trackpoint receive full resume commands,
+ * use this variable to track resume status. It will block host
+ * send command to Synaptics trackpoint during resume process.
+ * Suspend: 1
+ * Resume: 0
+ */
+static bool trackpoint_in_suspend;
 
 void send_aux_data_to_device(uint8_t data)
 {
-	ps2_transmit_byte(PRIMUS_PS2_CH, data);
+	if (!trackpoint_in_suspend)
+		ps2_transmit_byte(PRIMUS_PS2_CH, data);
 }
 
 static void board_init(void)
@@ -130,9 +139,11 @@ static void ps2_suspend(void)
 	if (trackpoint_id == TP_VARIANT_ELAN)
 		send_command_to_trackpoint(TP_TOGGLE_BURST,
 					   TP_TOGGLE_ELAN_SLEEP);
-	else if (trackpoint_id == TP_VARIANT_SYNAPTICS)
+	else if (trackpoint_id == TP_VARIANT_SYNAPTICS) {
 		send_command_to_trackpoint(TP_TOGGLE_SOURCE_TAG,
 					   TP_TOGGLE_SNAPTICS_SLEEP);
+		trackpoint_in_suspend = 1;
+	}
 
 	/* Clear the data in queue and the counter */
 	memset(queue_data, 0, ARRAY_SIZE(queue_data));
@@ -152,9 +163,11 @@ static void ps2_resume(void)
 	 * For Synaptics trackpoint, EC need to send command to it again.
 	 * For Elan trackpoint, we just need to touch trackpoint and it wake.
 	 */
-	if (trackpoint_id == TP_VARIANT_SYNAPTICS)
+	if (trackpoint_id == TP_VARIANT_SYNAPTICS) {
 		send_command_to_trackpoint(TP_TOGGLE_SOURCE_TAG,
 					   TP_TOGGLE_SNAPTICS_SLEEP);
+		trackpoint_in_suspend = 0;
+	}
 
 	/* Clear the data in queue and the counter */
 	memset(queue_data, 0, ARRAY_SIZE(queue_data));
