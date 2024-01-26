@@ -52,13 +52,10 @@ ZTEST_USER(pdc_power_mgmt_api, test_is_connected)
 	k_sleep(K_MSEC(1000));
 	zassert_false(pdc_power_mgmt_is_connected(TEST_PORT));
 
-/* TODO: Add subcommands to support SNK Mode */
-#ifdef EMUL_SNK_CMDS_SUPPORTED
 	emul_pdc_configure_snk(emul, &connector_status);
-	emul_pdc_connect_charger(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
 	k_sleep(K_MSEC(2000));
 	zassert_true(pdc_power_mgmt_is_connected(TEST_PORT));
-#endif /* EMUL_SNK_CMDS_SUPPORTED */
 }
 
 ZTEST_USER(pdc_power_mgmt_api, test_pd_get_polarity)
@@ -104,27 +101,19 @@ ZTEST_USER(pdc_power_mgmt_api, test_pd_get_data_role)
 
 ZTEST_USER(pdc_power_mgmt_api, test_pd_get_power_role)
 {
+	struct connector_status_t connector_status;
 	zassert_equal(PD_ROLE_SINK, pdc_power_mgmt_get_power_role(
 					    CONFIG_USB_PD_PORT_MAX_COUNT));
 
-/* TODO(b/321749548) - Read connector status after its read from I2C bus
- * not after reading PING status.
- */
-#ifdef TODO_B_321749548
-	struct connector_status_t connector_status;
-
-	connector_status.power_direction = 1;
-	emul_pdc_set_connector_status(emul, &connector_status);
-	emul_pdc_pulse_irq(emul);
-	k_sleep(K_MSEC(500));
+	emul_pdc_configure_src(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	k_sleep(K_MSEC(1000));
 	zassert_equal(PD_ROLE_SOURCE, pdc_power_mgmt_get_power_role(TEST_PORT));
 
-	connector_status.power_direction = 0;
-	emul_pdc_set_connector_status(emul, &connector_status);
-	emul_pdc_pulse_irq(emul);
-	k_sleep(K_MSEC(500));
+	emul_pdc_configure_snk(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	k_sleep(K_MSEC(1000));
 	zassert_equal(PD_ROLE_SINK, pdc_power_mgmt_get_power_role(TEST_PORT));
-#endif /* TODO_B_321749548 */
 }
 
 ZTEST_USER(pdc_power_mgmt_api, test_pd_get_task_cc_state)

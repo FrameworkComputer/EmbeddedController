@@ -383,6 +383,18 @@ static int set_rdo(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int get_pdo(struct rts5453p_emul_pdc_data *data,
+		   const union rts54_request *req)
+{
+	LOG_INF("GET_PDO -- TODO");
+
+	/* TODO: Populate actual PDO response */
+	memset(&data->response, 0, sizeof(union rts54_response));
+	send_response(data);
+
+	return 0;
+}
+
 static int get_rdo(struct rts5453p_emul_pdc_data *data,
 		   const union rts54_request *req)
 {
@@ -533,7 +545,7 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0x27, HANDLER_DEF(unsupported) },
 	{ .code = 0x28, HANDLER_DEF(unsupported) },
 	{ .code = 0x2B, HANDLER_DEF(unsupported) },
-	{ .code = 0x83, HANDLER_DEF(unsupported) },
+	{ .code = 0x83, HANDLER_DEF(get_pdo) },
 	{ .code = 0x84, HANDLER_DEF(get_rdo) },
 	{ .code = 0x85, HANDLER_DEF(unsupported) },
 	{ .code = 0x99, HANDLER_DEF(unsupported) },
