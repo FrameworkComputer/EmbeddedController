@@ -75,7 +75,7 @@
 	ps_rsmrst_in: pwr-pg-ec-rsmrst-od {
 		compatible = "intel,ap-pwrseq-external";
 		dbg-label = "RSMRST power good from regulator";
-		enum-name = "PWR_RSMRST";
+		enum-name = "PWR_RSMRST_PWRGD";
 	};
 	pwr-slp-s3-l {
 		compatible = "intel,ap-pwrseq-external";

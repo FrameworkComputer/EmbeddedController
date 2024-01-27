@@ -157,18 +157,19 @@ ZTEST(nissa_board_power, test_s0_entry_exit)
 ZTEST(nissa_board_power, test_force_shutdown)
 {
 	int signal_get_results[] = {
-		0, /* RSMRST still deasserted */
+		1, /* RSMRST_PWRGD still asserted */
 		0, /* SLP_SUS also still deasserted */
-		1, /* RSMRST asserted after a short delay */
+		0, /* RSMRST_PWRGD deasserted after a short delay */
 		1, /* SLP_SUS for logging */
-		0, /* RSMRST again for logging */
+		0, /* RSMRST_PWRGD again for logging */
 		1, /* DSW_PWROK still asserted */
 		0, /* deasserts after a short delay */
 		0, /* again for logging */
 	};
 	const enum power_signal signal_get_signals[] = {
-		PWR_RSMRST, PWR_SLP_SUS,   PWR_RSMRST,	  PWR_SLP_SUS,
-		PWR_RSMRST, PWR_DSW_PWROK, PWR_DSW_PWROK, PWR_DSW_PWROK,
+		PWR_RSMRST_PWRGD, PWR_SLP_SUS,	    PWR_RSMRST_PWRGD,
+		PWR_SLP_SUS,	  PWR_RSMRST_PWRGD, PWR_DSW_PWROK,
+		PWR_DSW_PWROK,	  PWR_DSW_PWROK,
 	};
 	BUILD_ASSERT(ARRAY_SIZE(signal_get_results) ==
 		     ARRAY_SIZE(signal_get_signals));
