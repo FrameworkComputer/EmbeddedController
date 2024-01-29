@@ -23,6 +23,7 @@
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "keyboard_backlight.h"
+#include "lid_switch.h"
 #include "motionsense_sensors.h"
 #include "system.h"
 #include "tablet_mode.h"
@@ -37,6 +38,7 @@
 
 #include <ap_power/ap_power.h>
 #include <ap_power/ap_power_events.h>
+#include <dt-bindings/buttons.h>
 #include <dt-bindings/gpio_defines.h>
 #include <typec_control.h>
 
@@ -44,6 +46,8 @@
 #define TCPC1 EMUL_DT_GET(DT_NODELABEL(tcpc_port1))
 
 #define ANX7483_EMUL1 EMUL_DT_GET(DT_NODELABEL(anx7483_port1))
+
+#define TEST_LID_DEBOUNCE_MS (LID_DEBOUNCE_US / MSEC + 1)
 
 #define ASSERT_GPIO_FLAGS(spec, expected)                                  \
 	do {                                                               \
@@ -77,6 +81,11 @@ FAKE_VOID_FUNC(bmi3xx_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(lsm6dso_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(bma4xx_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(lis2dw12_interrupt, enum gpio_signal);
+
+int button_disable_gpio(enum button button_type)
+{
+	return EC_SUCCESS;
+}
 
 static int get_gpio_output(const struct gpio_dt_spec *const spec)
 {
@@ -462,6 +471,12 @@ static int cbi_get_board_version_2(uint32_t *version)
 	return 0;
 }
 
+static int cbi_get_board_version_3(uint32_t *version)
+{
+	*version = 3;
+	return 0;
+}
+
 /* Shim GPIO initialization from devicetree. */
 int init_gpios(const struct device *unused);
 
@@ -625,6 +640,14 @@ ZTEST(uldren, test_board_anx7483_c1_mux_set)
 
 ZTEST(uldren, test_mp2964_on_startup)
 {
+	const struct gpio_dt_spec *lid_open =
+		GPIO_DT_FROM_NODELABEL(gpio_lid_open);
+
+	zassert_ok(gpio_emul_input_set(lid_open->port, lid_open->pin, 0), NULL);
+	k_sleep(K_MSEC(TEST_LID_DEBOUNCE_MS));
+
+	cbi_get_board_version_fake.custom_fake = cbi_get_board_version_3;
+
 	hook_notify(HOOK_CHIPSET_STARTUP);
 	zassert_equal(mp2964_tune_fake.call_count, 1);
 	hook_notify(HOOK_CHIPSET_STARTUP);
@@ -878,4 +901,41 @@ ZTEST(uldren, test_lis2dw12_lsm6dso)
 	zassert_equal(lsm6dso_interrupt_fake.call_count, 1);
 	zassert_equal(bma4xx_interrupt_fake.call_count, 0);
 	zassert_equal(lis2dw12_interrupt_fake.call_count, 1);
+}
+
+static int chipset_state;
+
+static int chipset_in_state_mock(int state_mask)
+{
+	if (state_mask & chipset_state)
+		return 1;
+
+	return 0;
+}
+
+ZTEST(uldren, test_touchpad_enable_switch)
+{
+	const struct gpio_dt_spec *lid_open =
+		GPIO_DT_FROM_NODELABEL(gpio_lid_open);
+	const struct gpio_dt_spec *touch_lid_en =
+		GPIO_DT_FROM_NODELABEL(gpio_tchpad_lid_close);
+
+	chipset_in_state_fake.custom_fake = chipset_in_state_mock;
+	chipset_state = CHIPSET_STATE_ANY_SUSPEND;
+
+	zassert_ok(gpio_emul_input_set(lid_open->port, lid_open->pin, 1), NULL);
+	k_sleep(K_MSEC(TEST_LID_DEBOUNCE_MS));
+
+	hook_notify(HOOK_CHIPSET_STARTUP);
+
+	zassert_equal(
+		gpio_emul_output_get(touch_lid_en->port, touch_lid_en->pin), 1);
+
+	zassert_ok(gpio_emul_input_set(lid_open->port, lid_open->pin, 0), NULL);
+	k_sleep(K_MSEC(TEST_LID_DEBOUNCE_MS));
+
+	hook_notify(HOOK_CHIPSET_STARTUP);
+
+	zassert_equal(
+		gpio_emul_output_get(touch_lid_en->port, touch_lid_en->pin), 0);
 }
