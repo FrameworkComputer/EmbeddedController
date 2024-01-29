@@ -242,9 +242,17 @@ def load_config_file(path) -> typing.List[Project]:
             register_func=register_project,
         )
 
+    def assert_rw_fwid(project_name=None, addr=-1):
+        for prj in projects:
+            if prj.config.project_name == project_name:
+                prj.packer.rw_fwid_addr = addr
+                return
+        raise KeyError(f"Project not found: {project_name} (in {path})")
+
     # The Python environment passed to the config file.
     config_globals = {
         "register_project": register_project,
+        "assert_rw_fwid_DO_NOT_EDIT": assert_rw_fwid,
         "here": path.parent.resolve(),
     }
 

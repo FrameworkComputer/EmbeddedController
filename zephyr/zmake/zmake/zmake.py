@@ -845,6 +845,9 @@ class Zmake:
                     self.logger.debug(
                         "Output file '%s' created.", output_dir / output_name
                     )
+                project.packer.verify_rw_fwid(
+                    packer_work_dir,
+                )
 
             if delete_intermediates:
                 outdir = build_dir / "output"

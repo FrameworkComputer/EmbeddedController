@@ -22,3 +22,7 @@ def register_rauru_project(project_name):
 
 
 register_rauru_project(project_name="rauru")
+
+# Note for reviews, do not let anyone edit these assertions, the addresses
+# must not change after the first RO release.
+assert_rw_fwid_DO_NOT_EDIT(project_name="rauru", addr=0x40098)

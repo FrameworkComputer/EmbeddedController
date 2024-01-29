@@ -9,3 +9,7 @@ register_npcx_project(
     zephyr_board="npcx7_evb",
     dts_overlays=["gpio.dts", "interrupts.dts", "fan.dts", "keyboard.dts"],
 )
+
+# Note for reviews, do not let anyone edit these assertions, the addresses
+# must not change after the first RO release.
+assert_rw_fwid_DO_NOT_EDIT(project_name="npcx7", addr=0x7FFE0)

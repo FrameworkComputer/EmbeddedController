@@ -60,3 +60,10 @@ register_ish_project(
     ],
     kconfig_files=[here / "rex-ish" / "prj.conf"],
 )
+
+# Note for reviews, do not let anyone edit these assertions, the addresses
+# must not change after the first RO release.
+assert_rw_fwid_DO_NOT_EDIT(project_name="screebo", addr=0x80144)
+assert_rw_fwid_DO_NOT_EDIT(project_name="karis", addr=0x80144)
+assert_rw_fwid_DO_NOT_EDIT(project_name="rex", addr=0x80144)
+assert_rw_fwid_DO_NOT_EDIT(project_name="rex-ish-ec", addr=0x80144)

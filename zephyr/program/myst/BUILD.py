@@ -28,3 +28,7 @@ def register_myst_project(
 register_myst_project(
     project_name="myst",
 )
+
+# Note for reviews, do not let anyone edit these assertions, the addresses
+# must not change after the first RO release.
+assert_rw_fwid_DO_NOT_EDIT(project_name="myst", addr=0xCFFE0)

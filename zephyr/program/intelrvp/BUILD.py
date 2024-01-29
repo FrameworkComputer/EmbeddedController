@@ -178,3 +178,12 @@ register_intelrvp_project(
         here / "mtlrvp/pd.conf",
     ],
 )
+
+# Note for reviews, do not let anyone edit these assertions, the addresses
+# must not change after the first RO release.
+assert_rw_fwid_DO_NOT_EDIT(project_name="adlrvp_mchp", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="adlrvp_npcx", addr=0xCFFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="mtlrvpp_m1723", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="mtlrvpp_mchp", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="mtlrvpp_npcx", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="mtlrvpp_pd", addr=0x7FFE0)
