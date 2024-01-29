@@ -67,7 +67,13 @@ PORT ?= 9999
 
 # If CONFIG_TOUCHPAD_HASH_FW is set, include hashes of a touchpad firmware in
 # the EC image (if no touchpad firmware is provided, just output blank hashes).
+# The TOUCHPAD_FW_DIR parameter is used for building multiple boards as it is
+# board-independent.
+ifdef TOUCHPAD_FW_DIR
+TOUCHPAD_FW ?= $(TOUCHPAD_FW_DIR)/$(BOARD)/touchpad.bin
+else
 TOUCHPAD_FW ?=
+endif
 
 # If TEST_FUZZ is set make sure at least one sanitizer is enabled.
 ifeq ($(TEST_FUZZ)_$(TEST_ASAN)$(TEST_MSAN)$(TEST_UBSAN),y_)
