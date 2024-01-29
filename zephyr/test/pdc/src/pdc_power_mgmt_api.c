@@ -202,3 +202,32 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_usb_comm_capable)
 		k_sleep(K_MSEC(1000));
 	}
 }
+
+#ifdef TODO_B_322851061
+/* TODO(b/322851061) Enable test after b/322851061 is fixed */
+ZTEST_USER(pdc_power_mgmt_api, test_get_info)
+{
+	struct pdc_info_t in, out;
+	struct connector_status_t connector_status;
+
+	in.fw_version = 0x010203;
+	in.pd_version = 0x0506;
+	in.pd_revision = 0x0708;
+	in.vid_pid = 0xFEEDBEEF;
+
+	emul_pdc_set_info(emul, &in);
+	emul_pdc_configure_src(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	k_sleep(K_MSEC(1000));
+
+	zassert_ok(pdc_power_mgmt_get_info(TEST_PORT, &out));
+	k_sleep(K_MSEC(1000));
+
+	zassert_equal(in.fw_version, out.fw_version, "in=0x%X, out=0x%X",
+		      in.fw_version, out.fw_version);
+	zassert_equal(in.pd_version, out.pd_version);
+	zassert_equal(in.pd_revision, out.pd_revision);
+	zassert_equal(in.vid_pid, out.vid_pid, "in=0x%X, out=0x%X", in.vid_pid,
+		      out.vid_pid);
+}
+#endif

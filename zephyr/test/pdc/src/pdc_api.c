@@ -305,3 +305,26 @@ ZTEST_USER(pdc_api, test_reconnect)
 	zassert_ok(emul_pdc_get_reconnect_req(emul, &expected, &val));
 	zassert_equal(expected, val);
 }
+
+ZTEST_USER(pdc_api, test_get_info)
+{
+	struct pdc_info_t in, out;
+
+	zassert_equal(-EINVAL, pdc_get_info(dev, NULL));
+
+	in.fw_version = 0x010203;
+	in.pd_version = 0x0506;
+	in.pd_revision = 0x0708;
+	in.vid_pid = 0xFEEDBEEF;
+
+	emul_pdc_set_info(emul, &in);
+	zassert_ok(pdc_get_info(dev, &out));
+	k_sleep(K_MSEC(100));
+
+	zassert_equal(in.fw_version, out.fw_version, "in=0x%X, out=0x%X",
+		      in.fw_version, out.fw_version);
+	zassert_equal(in.pd_version, out.pd_version);
+	zassert_equal(in.pd_revision, out.pd_revision);
+	zassert_equal(in.vid_pid, out.vid_pid, "in=0x%X, out=0x%X", in.vid_pid,
+		      out.vid_pid);
+}
