@@ -11,6 +11,7 @@ This is the entry point for the custom firmware builder workflow recipe.
 
 import argparse
 import multiprocessing
+import os
 import pathlib
 import re
 import shlex
@@ -19,10 +20,16 @@ import subprocess
 import sys
 
 from google.protobuf import json_format  # pylint: disable=import-error
-import zmake.modules
-import zmake.project
 
 from chromite.api.gen_sdk.chromite.api import firmware_pb2
+
+
+# Add the zmake dir early in the python search path
+ZEPHYR_DIR = pathlib.Path(__file__).parent.resolve()
+sys.path.insert(1, str(ZEPHYR_DIR / "zmake"))
+
+import zmake.modules  # pylint: disable=wrong-import-position
+import zmake.project  # pylint: disable=wrong-import-position
 
 
 DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
@@ -82,9 +89,14 @@ def find_checkout():
 def build(opts):
     """Builds all Zephyr firmware targets"""
     metric_list = firmware_pb2.FwBuildMetricList()  # pylint: disable=no-member
+    env = os.environ.copy()
+    env.update(
+        {
+            "PYTHONPATH": str(ZEPHYR_DIR / "zmake"),
+        }
+    )
 
-    zephyr_dir = pathlib.Path(__file__).parent.resolve()
-    platform_ec = zephyr_dir.parent
+    platform_ec = ZEPHYR_DIR.parent
     modules = zmake.modules.locate_from_checkout(find_checkout())
     projects_path = zmake.modules.default_projects_dirs(modules)
     subprocess.run(
@@ -92,22 +104,41 @@ def build(opts):
         check=True,
         cwd=platform_ec,
         stdin=subprocess.DEVNULL,
+        env=env,
     )
 
     # Validate board targets are reflected as Bazel targets
     cmd = ["pytest", "-v", "bazel/test_gen_bazel_targets.py"]
-    subprocess.run(cmd, cwd=platform_ec, check=True, stdin=subprocess.DEVNULL)
+    subprocess.run(
+        cmd,
+        cwd=platform_ec,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        env=env,
+    )
 
     # Start with a clean build environment
     cmd = ["make", "clobber"]
     log_cmd(cmd)
-    subprocess.run(cmd, cwd=platform_ec, check=True, stdin=subprocess.DEVNULL)
+    subprocess.run(
+        cmd,
+        cwd=platform_ec,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        env=env,
+    )
 
     cmd = ["zmake", "-D", "build", "-a"]
     if opts.code_coverage:
         cmd.append("--coverage")
     log_cmd(cmd)
-    subprocess.run(cmd, cwd=zephyr_dir, check=True, stdin=subprocess.DEVNULL)
+    subprocess.run(
+        cmd,
+        cwd=ZEPHYR_DIR,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        env=env,
+    )
     if not opts.code_coverage:
         for project in zmake.project.find_projects(projects_path).values():
             build_dir = (
@@ -229,8 +260,7 @@ def bundle_coverage(opts):
     info = firmware_pb2.FirmwareArtifactInfo()  # pylint: disable=no-member
     info.bcs_version_info.version_string = opts.bcs_version
     bundle_dir = get_bundle_dir(opts)
-    zephyr_dir = pathlib.Path(__file__).parent.resolve()
-    platform_ec = zephyr_dir.parent
+    platform_ec = ZEPHYR_DIR.parent
     build_dir = platform_ec / "build" / "zephyr"
     tarball_name = "coverage.tbz2"
     tarball_path = bundle_dir / tarball_name
@@ -261,8 +291,7 @@ def bundle_firmware(opts):
     info = firmware_pb2.FirmwareArtifactInfo()  # pylint: disable=no-member
     info.bcs_version_info.version_string = opts.bcs_version
     bundle_dir = get_bundle_dir(opts)
-    zephyr_dir = pathlib.Path(__file__).parent.resolve()
-    platform_ec = zephyr_dir.parent
+    platform_ec = ZEPHYR_DIR.parent
     modules = zmake.modules.locate_from_checkout(find_checkout())
     projects_path = zmake.modules.default_projects_dirs(modules)
     for project in zmake.project.find_projects(projects_path).values():
@@ -305,8 +334,6 @@ def test(opts):
     """Runs all of the unit tests for Zephyr firmware"""
     metrics = firmware_pb2.FwTestMetricList()  # pylint: disable=no-member
 
-    zephyr_dir = pathlib.Path(__file__).parent.resolve()
-
     # Run tests from Makefile.cq because make knows how to run things
     # in parallel.
     cmd = ["make", "-f", "Makefile.cq", f"-j{opts.cpus}", "test"]
@@ -318,12 +345,12 @@ def test(opts):
     subprocess.run(
         cmd,
         check=True,
-        cwd=zephyr_dir,
+        cwd=ZEPHYR_DIR,
         stdin=subprocess.DEVNULL,
     )
 
     # Twister-based tests
-    platform_ec = zephyr_dir.parent
+    platform_ec = ZEPHYR_DIR.parent
     twister_out_dir = platform_ec / "twister-out-llvm"
     twister_out_dir_gcc = platform_ec / "twister-out-host"
     modules = zmake.modules.locate_from_checkout(find_checkout())
@@ -372,7 +399,6 @@ COVERAGE_RE = re.compile(
 
 
 def _extract_lcov_summary(name, metrics, filename):
-    zephyr_dir = pathlib.Path(__file__).parent.resolve()
     cmd = [
         "/usr/bin/lcov",
         "--ignore-errors",
@@ -383,7 +409,7 @@ def _extract_lcov_summary(name, metrics, filename):
     log_cmd(cmd)
     output = subprocess.run(
         cmd,
-        cwd=zephyr_dir,
+        cwd=ZEPHYR_DIR,
         check=True,
         stdout=subprocess.PIPE,
         universal_newlines=True,
