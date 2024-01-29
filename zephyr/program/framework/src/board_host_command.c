@@ -276,32 +276,6 @@ DECLARE_HOST_COMMAND(EC_CMD_UPDATE_KEYBOARD_MATRIX, update_keyboard_matrix, EC_V
 
 static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_fp_led_control *p = args->params;
-	struct ec_response_fp_led_level *r = args->response;
-	uint8_t led_level = FP_LED_HIGH;
-
-	if (p->get_led_level) {
-		system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &r->level);
-		args->response_size = sizeof(*r);
-		return EC_RES_SUCCESS;
-	}
-
-	switch (p->set_led_level) {
-	case FP_LED_BRIGHTNESS_HIGH:
-		led_level = FP_LED_HIGH;
-		break;
-	case FP_LED_BRIGHTNESS_MEDIUM:
-		led_level = FP_LED_MEDIUM;
-		break;
-	case FP_LED_BRIGHTNESS_LOW:
-		led_level = FP_LED_LOW;
-		break;
-	default:
-		return EC_RES_INVALID_PARAM;
-	}
-
-	system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, led_level);
-
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_LED_LEVEL_CONTROL, fp_led_level_control, EC_VER_MASK(0));
