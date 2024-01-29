@@ -250,6 +250,15 @@ function print_or_run() {
 	fi
 }
 
+# Helper routine to test if specific control is available.
+# This always executes, even with --dry_run so that the control flow
+# of the script continues normally.
+function dut_has_control() {
+	local CONTROL=$1
+
+	"${DUT_CONTROL_CMD[@]}" -i "${CONTROL}" >/dev/null 2>&1
+}
+
 function dut_control() {
 	local DUT_CTRL_CML=( "${DUT_CONTROL_CMD[@]}" )
 
@@ -462,19 +471,19 @@ servo_is_ccd() {
 }
 
 servo_has_warm_reset() {
-	dut_control -i warm_reset >/dev/null 2>&1
+	dut_has_control warm_reset
 }
 
 servo_has_cold_reset() {
-	dut_control -i cold_reset >/dev/null 2>&1
+	dut_has_control cold_reset
 }
 
 servo_has_dut_i2c_mux() {
-	dut_control -i dut_i2c_mux >/dev/null 2>&1
+	dut_has_control dut_i2c_mux
 }
 
 servo_has_dut_i2c_en() {
-	dut_control -i dut_i2c_en >/dev/null 2>&1
+	dut_has_control dut_i2c_en
 }
 
 servo_ec_hard_reset_or_die() {
