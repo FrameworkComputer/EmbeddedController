@@ -9,32 +9,39 @@
 #include <ite/it82202ax-512.dtsi>
 #include "it8xxx2.dts"
 
-/ {
-	/* it82xx2/512 has 512KB of flash. */
-	binman {
-		wp-ro {
-			offset = <0x0>;
-			size = <0x40000>;
+/* it82xx2/512 has 512KB of flash. */
+&binman {
+	wp-ro {
+		offset = <0x0>;
+		size = <0x40000>;
 
-			pstate {
-				offset = <(0x40000 - 4096)>;
+		ec-ro {
+			fmap {
+				offset = <(0x40000 - 4096 - 0x400)>;
+				/*
+				 * don't specify 'size = <0x400>' here so
+				 * it is auto-assigned to the fmap size.
+				 */
 			};
 		};
-		ec-rw {
-			offset = <0x40000>;
-			size = <0x40000>;
-			rw-fw {
-				rw-fwid {
-					/* Fix the location of the FWID to the
-					 * last 32 bytes of the flash. This
-					 * ensures the RW entries in the FMAP
-					 * stored in the RO section of flash
-					 * are always correct.
-					 */
-					offset = <(0x40000 - 32)>;
-				};
-			};
+		pstate {
+			offset = <(0x40000 - 4096)>;
 		};
-		pad-after = <0>;
 	};
+	ec-rw {
+		offset = <0x40000>;
+		size = <0x40000>;
+		rw-fw {
+			rw-fwid {
+				/* Fix the location of the FWID to the
+				 * last 32 bytes of the flash. This
+				 * ensures the RW entries in the FMAP
+				 * stored in the RO section of flash
+				 * are always correct.
+				 */
+				offset = <(0x40000 - 32)>;
+			};
+		};
+	};
+	pad-after = <0>;
 };

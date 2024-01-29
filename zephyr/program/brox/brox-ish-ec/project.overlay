@@ -15,6 +15,7 @@ i2c3ALT: &i2c3 {
 #include <cros/cbi_flash.dtsi>
 
 #include "../adc.dtsi"
+#include "../binman.dtsi"
 #include "../brox.dtsi"
 #include "../fan.dtsi"
 #include "../generated.dtsi"
@@ -44,22 +45,6 @@ i2c3ALT: &i2c3 {
 		compatible = "cros,tabletmode-interrupt";
 		irq-gpios = <&gpioc 7 GPIO_ACTIVE_LOW>;
 	};
-};
-
-/*
- * When CBI in flash is enabled, setup RO flash layout as follows:
- *   RO binary:    0x00000:0x5DFFF
- *   PSTATE block: 0x5E000:0x5EFFF
- *   CBI flash:    0x5F000:0x5FFFF
- */
-&pstate {
-	offset = <(0x60000 - (0x1000 * 2))>;
-	size = <0x1000>;
-};
-
-&cbi_flash {
-	offset = <(0x60000 - (0x1000 * 1))>;
-	size = <0x1000>;
 };
 
 /delete-node/ &int_lid_imu;

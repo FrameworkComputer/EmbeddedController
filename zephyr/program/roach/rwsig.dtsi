@@ -12,6 +12,13 @@
 		ec-ro {
 			size = <0x3d000>;
 
+			fmap {
+				offset = <(0x3e000 - 4096 - 1024 - 0x400)>;
+				/*
+				 * don't specify 'size = <0x400>' here so
+				 * it is auto-assigned to the fmap size.
+				 */
+			};
 			key-ro {
 				type = "section";
 				offset = <(0x3e000 - 4096 - 1024)>;

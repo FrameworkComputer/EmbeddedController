@@ -26,15 +26,28 @@
 /*
  * When CBI in flash is enabled, setup RO flash layout as follows:
  *   RO binary:    0x00000:0x5DFFF
+ *   FMAP:         0x5DC00:0x5DFFF
  *   PSTATE block: 0x5E000:0x5EFFF
  *   CBI flash:    0x5F000:0x5FFFF
  */
-&pstate {
-	offset = <(0x60000 - (0x1000 * 2))>;
-	size = <0x1000>;
-};
-
-&cbi_flash {
-	offset = <(0x60000 - (0x1000 * 1))>;
-	size = <0x1000>;
+&binman {
+	wp-ro {
+		ec-ro {
+			fmap {
+				offset =  <(0x60000 - (0x1000 * 2) - 0x400)>;
+				/*
+				* don't specify 'size = <0x400>' here so
+				* it is auto-assigned to the fmap size.
+				*/
+			};
+		};
+		pstate {
+			offset = <(0x60000 - (0x1000 * 2))>;
+			size = <0x1000>;
+		};
+		cbi {
+			offset = <(0x60000 - (0x1000 * 1))>;
+			size = <0x1000>;
+		};
+	};
 };
