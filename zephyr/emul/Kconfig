@@ -159,6 +159,14 @@ config EMUL_FPC1025
 	  mode) that can be issued by the public driver (without FPC private
 	  library)
 
+config EMUL_SMBUS_ARA
+	bool "SMBUS Alert Response Address emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_SMBUS_ARA_EMUL_ENABLED && EMUL
+	select EMUL_COMMON_I2C
+	help
+	  Enable the SMBUS ARA emulator. This driver use emulated I2C bus.
+
 config EMUL_REALTEK_RTS54_PDC
 	bool "Realtek RTS5453P Type-C Power Delivery Controller emulator"
 	default y
