@@ -49,6 +49,12 @@ config LINK_TEST_SUITE_CBI_FLASH
 	  Include the CBI Flash storage driver test suite
 	  in the binary.
 
+config LINK_TEST_SUITE_CBI_FLASH_FROM_EEPROM
+	bool "Link and run CBI EEPROM to flash region tests"
+	help
+	  Include tests for migrating CBI EEPROM data to the flash based
+	  CBI region.
+
 config LINK_TEST_SUITE_CEC_COMMON
 	bool "Link and run the common/cec.c tests"
 

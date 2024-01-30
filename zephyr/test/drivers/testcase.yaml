@@ -329,6 +329,15 @@ tests:
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
+  drivers.cbi_flash.from_eeprom:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_CBI_FLASH_FROM_EEPROM=y
+    - CONFIG_PLATFORM_EC_CBI_FLASH=y
+    - CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES=0x80000
+    - CONFIG_PLATFORM_EC_CBI_TRANSFER_EEPROM_FLASH=y
+    extra_dtc_overlay_files:
+    - boards/native_posix.overlay
+    - cbi_flash/binman.dts
   drivers.common_cbi:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_COMMON_CBI=y
