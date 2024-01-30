@@ -19,10 +19,15 @@ else()
   zephyr_library_sources(system.c)
 endif()
 
-zephyr_library_sources_ifdef(no_libgcc
-  libgcc_${ARCH}.S
-  popcountsi2.c
-)
+zephyr_library_sources_ifdef(no_libgcc libgcc_${ARCH}.S)
+
+if (no_libgcc AND CONFIG_INPUT)
+  # Implements __popcountsi2, currently used by few input functions. This is
+  # called from __builtin_popcount and LTO gets confused and tries to collect
+  # it so it's declared as __used, only build it when necessary to avoid
+  # wasting flash space.
+  zephyr_library_sources(popcountsi2.c)
+endif()
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_CONTROLLER pdc_shim.c)
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_ANX7452 anx7452_usb_mux.c)
