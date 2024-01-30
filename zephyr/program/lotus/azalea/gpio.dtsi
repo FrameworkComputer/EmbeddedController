@@ -4,6 +4,9 @@
  */
 
 / {
+	aliases {
+		gpio-check-fp-control = &gpio_fp_control;
+	};
 
 	named-gpios {
 		compatible = "named-gpios";
@@ -133,7 +136,7 @@
 		ec_beep {
 			gpios = <&gpio4 2 GPIO_OUTPUT_LOW>;	/* reserved */
 		};
-		fp_control {
+		gpio_fp_control: fp_control {
 			gpios = <&gpio3 4 GPIO_INPUT>;		/* Finger Printer feature */
 		};
 		enbkl_apu {
