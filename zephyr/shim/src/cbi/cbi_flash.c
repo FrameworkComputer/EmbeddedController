@@ -37,7 +37,7 @@ static bool is_cbi_section(uint8_t offset, int len)
 	return true;
 }
 
-static int flash_load(uint8_t offset, uint8_t *data, int len)
+test_mockable_static int flash_load(uint8_t offset, uint8_t *data, int len)
 {
 	if (!is_cbi_section(offset, len)) {
 		return EC_ERROR_INVAL;
