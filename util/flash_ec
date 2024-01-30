@@ -421,7 +421,7 @@ case "${BOARD}" in
 esac
 
 case "${CHIP}" in
-	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"npcx_uut"|"ite_spi"| \
+	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"ite_i2c"|"npcx_uut"|"ite_spi"| \
 			"ite_spi_ccd_i2c"|"it8xxx2"|"mchp_int_spi")
 		;;
 	*)
@@ -1413,6 +1413,32 @@ function dut_i2c_dev() {
 	echo /dev/i2c-"${adap_num}"
 }
 
+function ite_dfu_mode() {
+	# Send the special waveform to the ITE EC.
+	if [[ "${SERVO_TYPE}" =~ "servo_micro" || \
+	      "${SERVO_TYPE}" =~ "c2d2" ]] ; then
+		info "Asking servo to send the dbgr special waveform to ${CHIP}"
+		dut_control_or_die enable_ite_dfu
+	elif servo_is_ccd; then
+		local CCD_I2C_CAP
+		CCD_I2C_CAP="$(dut_control_get ccd_i2c_en)"
+		if [[ "${CCD_I2C_CAP,,}" != "always" ]]; then
+			die "CCD I2C capability is not set as 'Always'" \
+				": ${CCD_I2C_CAP}"
+		fi
+
+		info "Asking CR50 to send the dbgr special waveform to ${CHIP}"
+		sleep 2
+		dut_control_or_die cr50_i2c_ctrl:ite_debugger_mode
+		sleep 3
+	elif [[ "${SERVO_TYPE}" == "servo_v2" ]]; then
+		info "Closing servod connection to ftdi_i2c interface"
+		dut_control_or_die ftdii2c_cmd:close
+	else
+		die "This servo type is not yet supported: ${SERVO_TYPE}"
+	fi
+}
+
 function flash_it83xx() {
 	local TOOL_PATH="${EC_DIR}/build/${BOARD}/util:${PATH}"
 	local ITEFLASH_BIN
@@ -1466,29 +1492,7 @@ function flash_it83xx() {
 		servo_ec_hard_reset_or_die
 	fi
 
-	# Send the special waveform to the ITE EC.
-	if [[ "${SERVO_TYPE}" =~ "servo_micro" || \
-	      "${SERVO_TYPE}" =~ "c2d2" ]] ; then
-		info "Asking servo to send the dbgr special waveform to ${CHIP}"
-		dut_control_or_die enable_ite_dfu
-	elif servo_is_ccd; then
-		local CCD_I2C_CAP
-		CCD_I2C_CAP="$(dut_control_get ccd_i2c_en)"
-		if [[ "${CCD_I2C_CAP,,}" != "always" ]]; then
-			die "CCD I2C capability is not set as 'Always'" \
-				": ${CCD_I2C_CAP}"
-		fi
-
-		info "Asking CR50 to send the dbgr special waveform to ${CHIP}"
-		sleep 2
-		dut_control_or_die cr50_i2c_ctrl:ite_debugger_mode
-		sleep 3
-	elif [[ "${SERVO_TYPE}" == "servo_v2" ]]; then
-		info "Closing servod connection to ftdi_i2c interface"
-		dut_control_or_die ftdii2c_cmd:close
-	else
-		die "This servo type is not yet supported: ${SERVO_TYPE}"
-	fi
+	ite_dfu_mode
 
 	# Build the iteflash command line.
 	local ITEFLASH_ARGS=( "${ITEFLASH_BIN}" )
