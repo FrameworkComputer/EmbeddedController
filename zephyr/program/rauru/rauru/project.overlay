@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <cros/cbi_flash.dtsi>
+
 #include "../arbitrage.dtsi"
 #include "../common.dtsi"
 #include "../usbc.dtsi"
@@ -19,4 +21,20 @@
 			compatible = "cosmx,ap20cbl-3", "battery-smart";
 		};
 	};
+};
+
+/*
+ * When CBI in flash is enabled, setup RO flash layout as follows:
+ *   RO binary:    0x00000:0x5DFFF
+ *   PSTATE block: 0x5E000:0x5EFFF
+ *   CBI flash:    0x5F000:0x5FFFF
+ */
+&pstate {
+	offset = <(0x60000 - (0x1000 * 2))>;
+	size = <0x1000>;
+};
+
+&cbi_flash {
+	offset = <(0x60000 - (0x1000 * 1))>;
+	size = <0x1000>;
 };
