@@ -231,3 +231,64 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_info)
 		      out.vid_pid);
 }
 #endif
+
+ZTEST_USER(pdc_power_mgmt_api, test_request_power_swap)
+{
+	int i;
+	struct setup_t {
+		enum conn_partner_type_t conn_partner_type;
+		emul_pdc_set_connector_status_t configure;
+	};
+	struct expect_t {
+		union pdr_t pdr;
+	};
+	struct {
+		struct setup_t s;
+		struct expect_t e;
+	} test[] = {
+		{ .s = { .conn_partner_type = DFP_ATTACHED,
+			 .configure = emul_pdc_configure_snk },
+		  .e = { .pdr = { .swap_to_src = 1,
+				  .swap_to_snk = 0,
+				  .accept_pr_swap = 1 } } },
+		{ .s = { .conn_partner_type = DFP_ATTACHED,
+			 .configure = emul_pdc_configure_src },
+		  .e = { .pdr = { .swap_to_src = 0,
+				  .swap_to_snk = 1,
+				  .accept_pr_swap = 1 } } },
+		{ .s = { .conn_partner_type = UFP_ATTACHED,
+			 .configure = emul_pdc_configure_snk },
+		  .e = { .pdr = { .swap_to_src = 1,
+				  .swap_to_snk = 0,
+				  .accept_pr_swap = 1 } } },
+		{ .s = { .conn_partner_type = UFP_ATTACHED,
+			 .configure = emul_pdc_configure_src },
+		  .e = { .pdr = { .swap_to_src = 0,
+				  .swap_to_snk = 1,
+				  .accept_pr_swap = 1 } } },
+	};
+
+	struct connector_status_t connector_status;
+	union pdr_t pdr;
+
+	for (i = 0; i < ARRAY_SIZE(test); i++) {
+		memset(&connector_status, 0, sizeof(connector_status));
+		connector_status.conn_partner_type =
+			test[i].s.conn_partner_type;
+
+		test[i].s.configure(emul, &connector_status);
+		emul_pdc_connect_partner(emul, &connector_status);
+		k_sleep(K_MSEC(2000));
+
+		pdc_power_mgmt_request_power_swap(TEST_PORT);
+		k_sleep(K_MSEC(1000));
+
+		emul_pdc_get_pdr(emul, &pdr);
+		zassert_equal(pdr.swap_to_src, test[i].e.pdr.swap_to_src);
+		zassert_equal(pdr.swap_to_snk, test[i].e.pdr.swap_to_snk);
+		zassert_equal(pdr.accept_pr_swap, test[i].e.pdr.accept_pr_swap);
+
+		emul_pdc_disconnect(emul);
+		k_sleep(K_MSEC(1000));
+	}
+}
