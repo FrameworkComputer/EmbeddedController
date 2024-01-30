@@ -268,7 +268,7 @@ static void state_machine(uint64_t tnow)
 			 */
 			reset_diagnostics();
 			chipset_exit_hard_off();
-			pwrbtn_state = PWRBTN_STATE_IDLE;
+			pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
 		} else {
 			/*
 			 * when in preOS still need send power button signal
