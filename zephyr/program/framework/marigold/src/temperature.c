@@ -19,10 +19,12 @@ __override void board_update_temperature_mk(enum temp_sensor_id id)
 	int temp_mk_ptr = KELVIN_TO_MILLI_KELVIN(C_TO_K(0)) / 100;
 	struct charge_state_data *curr;
 
-	
-	switch (id){
+	switch (id) {
 	case 0:
 		/* QN3, local-f75397 */
+		f75397_get_val_mk(F75397_SENSOR_ID(DT_NODELABEL(local_f75397)),
+				 &temp_mk_ptr);
+		temp_mk_ptr = temp_mk_ptr / 100;
 		break;
 	case 1:
 		f75303_get_val_mk(F75303_SENSOR_ID(DT_NODELABEL(cpu_f75303)),
@@ -50,6 +52,9 @@ __override void board_update_temperature_mk(enum temp_sensor_id id)
 		break;
 	}
 
-	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_DTT_TEMP + id * 2) = (uint8_t)(temp_mk_ptr & 0xFF);
-	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_DTT_TEMP + id * 2 + 1) = (uint8_t)((temp_mk_ptr >> 8) & 0xFF);
+	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_DTT_TEMP + id * 2) =
+		(uint8_t)(temp_mk_ptr & 0xFF);
+
+	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_DTT_TEMP + id * 2 + 1) =
+		(uint8_t)((temp_mk_ptr >> 8) & 0xFF);
 }

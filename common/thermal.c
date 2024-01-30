@@ -39,7 +39,6 @@ __overridable int board_temp_smi_evet(void)
 
 __overridable void board_update_temperature_mk(enum temp_sensor_id id)
 {
-	return;
 }
 #endif
 
