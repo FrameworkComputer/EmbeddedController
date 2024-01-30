@@ -8,8 +8,6 @@
 
 #include "heci_internal.h"
 
-extern void sedi_pm_host_suspend(uint32_t suspend);
-
 /**
  * Process system state messages. Called by HECI layer when there is
  * system state message arrives
