@@ -281,6 +281,11 @@ def all_targets():
         board = "brox",
     )
     ec_target(
+        name = "brox-ish",
+        board = "brox-ish",
+        extra_modules = ["cmsis", "hal_intel_public"],
+    )
+    ec_target(
         name = "brox-ish-ec",
         board = "brox-ish-ec",
     )

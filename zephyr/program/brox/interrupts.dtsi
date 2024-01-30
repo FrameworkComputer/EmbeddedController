@@ -4,23 +4,15 @@
  */
 
 / {
-	gpio-interrupts {
+	gpio_interrupts: gpio-interrupts {
 		compatible = "cros-ec,gpio-interrupts";
 
-		int_lid_imu: int-lid-imu {
-			irq-pin = <&gpio_ec_accel_db_int_l>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "bma4xx_interrupt";
-		};
 		int_power_button: power_button {
 			irq-pin = <&gpio_gsc_ec_pwr_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_button_interrupt";
 		};
-		int_lid_open: lid_open {
-			irq-pin = <&gpio_lid_open>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "lid_interrupt";
-		};
 	};
 };
+
+#include "interrupts_motionsense.dtsi"
