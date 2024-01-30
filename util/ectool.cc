@@ -82,312 +82,7 @@ static struct option long_opts[] = { { "dev", 1, 0, OPT_DEV },
 
 #define GEC_LOCK_TIMEOUT_SECS 30 /* 30 secs */
 
-const char help_str[] =
-	"Commands:\n"
-	"  adcread <channel>\n"
-	"      Read an ADC channel.\n"
-	"  addentropy [reset]\n"
-	"      Add entropy to device secret\n"
-	"  apreset\n"
-	"      Issue AP reset\n"
-	"  autofanctrl <on>\n"
-	"      Turn on automatic fan speed control.\n"
-	"  backlight <enabled>\n"
-	"      Enable/disable LCD backlight\n"
-	"  basestate [attach | detach | reset]\n"
-	"      Manually force base state to attached, detached or reset.\n"
-	"  battery\n"
-	"      Prints battery info\n"
-	"  batterycutoff [at-shutdown]\n"
-	"      Cut off battery output power\n"
-	"  batteryparam\n"
-	"      Read or write board-specific battery parameter\n"
-	"  bcfg\n"
-	"      Print an active battery config.\n"
-	"  boardversion\n"
-	"      Prints the board version\n"
-	"  button [vup|vdown|rec] <Delay-ms>\n"
-	"      Simulates button press.\n"
-	"  cbi\n"
-	"      Get/Set/Remove Cros Board Info\n"
-	"  chargecurrentlimit\n"
-	"    Set the maximum battery charging current and the minimum battery\n"
-	"    SoC at which it will apply.\n"
-	"  chargecontrol\n"
-	"      Force the battery to stop charging or discharge\n"
-	"  chargeoverride\n"
-	"      Overrides charge port selection logic\n"
-	"  chargesplash\n"
-	"      Show and manipulate chargesplash variables\n"
-	"  chargestate\n"
-	"      Handle commands related to charge state v2 (and later)\n"
-	"  chipinfo\n"
-	"      Prints chip info\n"
-	"  cmdversions <cmd>\n"
-	"      Prints supported version mask for a command number\n"
-	"  console\n"
-	"      Prints the last output to the EC debug console\n"
-	"  cec\n"
-	"      Read or write CEC messages and settings\n"
-	"  echash [CMDS]\n"
-	"      Various EC hash commands\n"
-	"  eventclear <mask>\n"
-	"      Clears EC host events flags where mask has bits set\n"
-	"  eventclearb <mask>\n"
-	"      Clears EC host events flags copy B where mask has bits set\n"
-	"  eventget\n"
-	"      Prints raw EC host event flags\n"
-	"  eventgetb\n"
-	"      Prints raw EC host event flags copy B\n"
-	"  eventgetscimask\n"
-	"      Prints SCI mask for EC host events\n"
-	"  eventgetsmimask\n"
-	"      Prints SMI mask for EC host events\n"
-	"  eventgetwakemask\n"
-	"      Prints wake mask for EC host events\n"
-	"  eventsetscimask <mask>\n"
-	"      Sets the SCI mask for EC host events\n"
-	"  eventsetsmimask <mask>\n"
-	"      Sets the SMI mask for EC host events\n"
-	"  eventsetwakemask <mask>\n"
-	"      Sets the wake mask for EC host events\n"
-	"  extpwrlimit\n"
-	"      Set the maximum external power limit\n"
-	"  fanduty <percent>\n"
-	"      Forces the fan PWM to a constant duty cycle\n"
-	"  flasherase <offset> <size>\n"
-	"      Erases EC flash\n"
-	"  flasheraseasync <offset> <size>\n"
-	"      Erases EC flash asynchronously\n"
-	"  flashinfo\n"
-	"      Prints information on the EC flash\n"
-	"  flashspiinfo\n"
-	"      Prints information on EC SPI flash, if present\n"
-	"  flashpd <dev_id> <port> <filename>\n"
-	"      Flash commands over PD\n"
-	"  flashprotect [now] [enable | disable]\n"
-	"      Prints or sets EC flash protection state\n"
-	"  flashread <offset> <size> <outfile>\n"
-	"      Reads from EC flash to a file\n"
-	"  flashwrite <offset> <infile>\n"
-	"      Writes to EC flash from a file\n"
-	"  forcelidopen <enable>\n"
-	"      Forces the lid switch to open position\n"
-	"  fpcontext\n"
-	"      Sets the fingerprint sensor context\n"
-	"  fpencstatus\n"
-	"      Prints status of Fingerprint sensor encryption engine\n"
-	"  fpframe\n"
-	"      Retrieve the finger image as a PGM image\n"
-	"  fpinfo\n"
-	"      Prints information about the Fingerprint sensor\n"
-	"  fpmode [mode... [capture_type]]\n"
-	"      Configure/Read the fingerprint sensor current mode\n"
-	"      mode: capture|deepsleep|fingerdown|fingerup|enroll|match|\n"
-	"            reset|reset_sensor|maintenance\n"
-	"      capture_type: vendor|pattern0|pattern1|qual|test_reset\n"
-	"  fpseed\n"
-	"      Sets the value of the TPM seed.\n"
-	"  fpstats\n"
-	"      Prints timing statisitcs relating to capture and matching\n"
-	"  fptemplate [<infile>|<index 0..2>]\n"
-	"      Add a template if <infile> is provided, else dump it\n"
-	"  gpioget <GPIO name>\n"
-	"      Get the value of GPIO signal\n"
-	"  gpioset <GPIO name>\n"
-	"      Set the value of GPIO signal\n"
-	"  hangdetect reload|cancel|set_timeout <reboot_sec>|get_status|clear_status\n"
-	"      Configure the ap hang detect mechanism\n"
-	"  hello\n"
-	"      Checks for basic communication with EC\n"
-	"  hibdelay [sec]\n"
-	"      Set the delay before going into hibernation\n"
-	"  hostsleepstate\n"
-	"      Report host sleep state to the EC\n"
-	"  hostevent\n"
-	"      Get & set host event masks.\n"
-	"  i2cprotect <port> [status]\n"
-	"      Protect EC's I2C bus\n"
-	"  i2cread\n"
-	"      Read I2C bus\n"
-	"  i2cspeed <port> [speed]\n"
-	"      Get or set EC's I2C bus speed\n"
-	"  i2cwrite\n"
-	"      Write I2C bus\n"
-	"  i2cxfer <port> <peripheral_addr> <read_count> [write bytes...]\n"
-	"      Perform I2C transfer on EC's I2C bus\n"
-	"  infopddev <port>\n"
-	"      Get info about USB type-C accessory attached to port\n"
-	"  inventory\n"
-	"      Return the list of supported features\n"
-	"  kbfactorytest\n"
-	"      Scan out keyboard if any pins are shorted\n"
-	"  kbinfo\n"
-	"      Dump keyboard matrix dimensions\n"
-	"  kbpress\n"
-	"      Simulate key press\n"
-	"  keyscan <beat_us> <filename>\n"
-	"      Test low-level key scanning\n"
-	"  led <name> <query | auto | off | <color> | <color>=<value>...>\n"
-	"      Set the color of an LED or query brightness range\n"
-	"  lightbar [CMDS]\n"
-	"      Various lightbar control commands\n"
-	"  locatechip <type> <index>\n"
-	"      Get the addresses and ports of i2c connected and embedded chips\n"
-	"  memory_dump [<address> [<size>]]\n"
-	"      Outputs the memory dump in hexdump canonical format.\n"
-	"  mkbpget <buttons|switches>\n"
-	"      Get MKBP buttons/switches supported mask and current state\n"
-	"  mkbpwakemask <get|set> <event|hostevent> [mask]\n"
-	"      Get or Set the MKBP event wake mask, or host event wake mask\n"
-	"  motionsense [CMDS]\n"
-	"      Various motion sense control commands\n"
-	"  panicinfo\n"
-	"      Prints saved panic info\n"
-	"  pause_in_s5 [on|off]\n"
-	"      Whether or not the AP should pause in S5 on shutdown\n"
-	"  pchg [<port>]\n"
-	"      Get peripheral charge port count and status\n"
-	"  pdcontrol [suspend|resume|reset|disable|on]\n"
-	"      Controls the PD chip\n"
-	"  pdchipinfo <port>\n"
-	"      Get PD chip information\n"
-	"  pdlog\n"
-	"      Prints the PD event log entries\n"
-	"  pdwritelog <type> <port>\n"
-	"      Writes a PD event log of the given <type>\n"
-	"  pdgetmode <port>\n"
-	"      Get All USB-PD alternate SVIDs and modes on <port>\n"
-	"  pdsetmode <port> <svid> <opos>\n"
-	"      Set USB-PD alternate SVID and mode on <port>\n"
-	"  port80flood\n"
-	"      Rapidly write bytes to port 80\n"
-	"  port80read\n"
-	"      Print history of port 80 write\n"
-	"  powerinfo\n"
-	"      Prints power-related information\n"
-	"  protoinfo\n"
-	"       Prints EC host protocol information\n"
-	"  pse\n"
-	"      Get and set PoE PSE port power status\n"
-	"  pstoreinfo\n"
-	"      Prints information on the EC host persistent storage\n"
-	"  pstoreread <offset> <size> <outfile>\n"
-	"      Reads from EC host persistent storage to a file\n"
-	"  pstorewrite <offset> <infile>\n"
-	"      Writes to EC host persistent storage from a file\n"
-	"  pwmgetfanrpm [<index> | all]\n"
-	"      Prints current fan RPM\n"
-	"  pwmgetkblight\n"
-	"      Prints current keyboard backlight percent\n"
-	"  pwmgetnumfans\n"
-	"      Prints the number of fans present\n"
-	"  pwmgetduty\n"
-	"      Prints the current 16 bit duty cycle for given PWM\n"
-	"  pwmsetfanrpm <targetrpm>\n"
-	"      Set target fan RPM\n"
-	"  pwmsetkblight <percent>\n"
-	"      Set keyboard backlight in percent\n"
-	"  pwmsetduty\n"
-	"      Set 16 bit duty cycle of given PWM\n"
-	"  rand <num_bytes>\n"
-	"      generate <num_bytes> of random numbers\n"
-	"  reboot_ec <RO|RW|cold|hibernate|hibernate-clear-ap-off|disable-jump|cold-ap-off>"
-	" [at-shutdown|switch-slot|clear-ap-idle]\n"
-	"      Reboot EC to RO or RW\n"
-	"  reboot_ap_on_g3 [<delay>]\n"
-	"      Requests that the EC will automatically reboot the AP after a\n"
-	"      configurable number of seconds the next time we enter the G3\n"
-	"      power state.\n"
-	"  rgbkbd ...\n"
-	"      Set/get RGB keyboard status, config, etc..\n"
-	"  rollbackinfo\n"
-	"      Print rollback block information\n"
-	"  rtcget\n"
-	"      Print real-time clock\n"
-	"  rtcgetalarm\n"
-	"      Print # of seconds before real-time clock alarm goes off.\n"
-	"  rtcset <time>\n"
-	"      Set real-time clock\n"
-	"  rtcsetalarm <sec>\n"
-	"      Set real-time clock alarm to go off in <sec> seconds\n"
-	"  rwhashpd <dev_id> <HASH[0] ... <HASH[4]>\n"
-	"      Set entry in PD MCU's device rw_hash table.\n"
-	"  rwsig <info|dump|action|status> ...\n"
-	"      info: get all info about rwsig\n"
-	"      dump: show individual rwsig field\n"
-	"      action: Control the behavior of RWSIG task.\n"
-	"      status: Run RW signature verification and get status.\n{"
-	"  rwsigaction (DEPRECATED; use \"rwsig action\")\n"
-	"      Control the behavior of RWSIG task.\n"
-	"  rwsigstatus (DEPRECATED; use \"rwsig status\"\n"
-	"      Run RW signature verification and get status.\n"
-	"  sertest\n"
-	"      Serial output test for COM2\n"
-	"  smartdischarge\n"
-	"      Set/Get smart discharge parameters\n"
-	"  stress [reboot] [help]\n"
-	"      Stress test the ec host command interface.\n"
-	"  sysinfo [flags|reset_flags|firmware_copy]\n"
-	"      Display system info.\n"
-	"  switches\n"
-	"      Prints current EC switch positions\n"
-	"  tabletmode [on | off | reset]\n"
-	"      Manually force tablet mode to on, off or reset.\n"
-	"  temps <sensorid>\n"
-	"      Print temperature and temperature ratio between fan_off and\n"
-	"      fan_max values, which could be a fan speed if it's controlled\n"
-	"      linearly\n"
-	"  tempsinfo <sensorid>\n"
-	"      Print temperature sensor info.\n"
-	"  thermalget <platform-specific args>\n"
-	"      Get the threshold temperature values from the thermal engine.\n"
-	"  thermalset <platform-specific args>\n"
-	"      Set the threshold temperature values for the thermal engine.\n"
-	"  tpselftest\n"
-	"      Run touchpad self test.\n"
-	"  tpframeget\n"
-	"      Get touchpad frame data.\n"
-	"  tmp006cal <tmp006_index> [params...]\n"
-	"      Get/set TMP006 calibration\n"
-	"  tmp006raw <tmp006_index>\n"
-	"      Get raw TMP006 data\n"
-	"  typeccontrol <port> <command>\n"
-	"      Control USB PD policy\n"
-	"  typecdiscovery <port> <type>\n"
-	"      Get discovery information for port and type\n"
-	"  typecstatus <port>\n"
-	"      Get status information for port\n"
-	"  typecvdmresponse <port>\n"
-	"      Get last VDM response for AP-requested VDM\n"
-	"  uptimeinfo\n"
-	"      Get info about how long the EC has been running and the most\n"
-	"      recent AP resets\n"
-	"  usbchargemode <port> <mode> [<inhibit_charge>]\n"
-	"      Set USB charging mode\n"
-	"  usbmux <mux>\n"
-	"      Set USB mux switch state\n"
-	"  usbpd <port> <auto | "
-	"[toggle|toggle-off|sink|source] [none|usb|dp|dock] "
-	"[dr_swap|pr_swap|vconn_swap]>\n"
-	"      Control USB PD/type-C [deprecated]\n"
-	"  usbpddps [enable | disable]\n"
-	"      Enable or disable dynamic pdo selection\n"
-	"  usbpdmuxinfo [tsv]\n"
-	"      Get USB-C SS mux info.\n"
-	"          tsv: Output as tab separated values. Columns are defined "
-	"as:\n"
-	"               Port, USB enabled, DP enabled, Polarity, HPD IRQ, "
-	"HPD LVL\n"
-	"  usbpdpower [port]\n"
-	"      Get USB PD power information\n"
-	"  version\n"
-	"      Prints EC version\n"
-	"  waitevent <type> [<timeout>]\n"
-	"      Wait for the MKBP event of type and display it\n"
-	"  wireless <flags> [<mask> [<suspend_flags> <suspend_mask>]]\n"
-	"      Enable/disable WLAN/Bluetooth radio\n"
-	"";
+const char help_str[] = "Commands:";
 
 /* Note: depends on enum ec_image */
 static const char *const image_names[] = { "unknown", "RO", "RW" };
@@ -471,27 +166,6 @@ static int find_enum_from_text(const char *str,
 	}
 
 	return -1;
-}
-
-void print_help(const char *prog, int print_cmds)
-{
-	printf("Usage: %s [--dev=n]"
-	       " [--interface=dev|i2c|lpc] [--i2c_bus=n] [--device=vid:pid]"
-	       " --verbose",
-	       prog);
-	printf("[--name=cros_ec|cros_fp|cros_pd|cros_scp|cros_ish] [--ascii] ");
-	printf("<command> [params]\n\n");
-	printf("  --i2c_bus=n  Specifies the number of an I2C bus to use. For\n"
-	       "               example, to use /dev/i2c-7, pass --i2c_bus=7.\n"
-	       "               Implies --interface=i2c.\n\n");
-	printf("  --interface Specifies the interface.\n\n");
-	printf("  --device    Specifies USB endpoint by vendor ID and product\n"
-	       "              ID (e.g. 18d1:5022).\n\n");
-	printf("  --verbose   Print more messages.\n\n");
-	if (print_cmds)
-		puts(help_str);
-	else
-		printf("Use '%s help' to print a list of commands.\n", prog);
 }
 
 static uint8_t read_mapped_mem8(uint8_t offset)
@@ -12285,157 +11959,399 @@ static int cmd_s0ix_counter(int argc, char *argv[])
 	return 0;
 }
 
-/* NULL-terminated list of commands */
+/* NULL-terminated list of commands. Please keep sorted. */
 const struct command commands[] = {
-	{ "adcread", cmd_adc_read },
-	{ "addentropy", cmd_add_entropy },
-	{ "apreset", cmd_apreset },
-	{ "autofanctrl", cmd_thermal_auto_fan_ctrl },
-	{ "backlight", cmd_lcd_backlight },
-	{ "basestate", cmd_basestate },
-	{ "battery", cmd_battery },
-	{ "batterycutoff", cmd_battery_cut_off },
-	{ "batteryparam", cmd_battery_vendor_param },
-	{ "bcfg", cmd_battery_config },
-	{ "boardversion", cmd_board_version },
-	{ "boottime", cmd_boottime },
-	{ "button", cmd_button },
-	{ "cbi", cmd_cbi },
-	{ "chargecurrentlimit", cmd_charge_current_limit },
-	{ "chargecontrol", cmd_charge_control },
-	{ "chargeoverride", cmd_charge_port_override },
-	{ "chargesplash", cmd_chargesplash },
-	{ "chargestate", cmd_charge_state },
-	{ "chipinfo", cmd_chipinfo },
-	{ "cmdversions", cmd_cmdversions },
-	{ "console", cmd_console },
-	{ "cec", cmd_cec },
-	{ "echash", cmd_ec_hash },
-	{ "eventclear", cmd_host_event_clear },
-	{ "eventclearb", cmd_host_event_clear_b },
-	{ "eventget", cmd_host_event_get_raw },
-	{ "eventgetb", cmd_host_event_get_b },
-	{ "eventgetscimask", cmd_host_event_get_sci_mask },
-	{ "eventgetsmimask", cmd_host_event_get_smi_mask },
-	{ "eventgetwakemask", cmd_host_event_get_wake_mask },
-	{ "eventsetscimask", cmd_host_event_set_sci_mask },
-	{ "eventsetsmimask", cmd_host_event_set_smi_mask },
-	{ "eventsetwakemask", cmd_host_event_set_wake_mask },
-	{ "extpwrlimit", cmd_ext_power_limit },
-	{ "fanduty", cmd_fanduty },
-	{ "flasherase", cmd_flash_erase },
-	{ "flasheraseasync", cmd_flash_erase },
-	{ "flashprotect", cmd_flash_protect },
-	{ "flashread", cmd_flash_read },
-	{ "flashwrite", cmd_flash_write },
-	{ "flashinfo", cmd_flash_info },
-	{ "flashspiinfo", cmd_flash_spi_info },
-	{ "flashpd", cmd_flash_pd },
-	{ "forcelidopen", cmd_force_lid_open },
-	{ "fpcontext", cmd_fp_context },
-	{ "fpencstatus", cmd_fp_enc_status },
-	{ "fpframe", cmd_fp_frame },
-	{ "fpinfo", cmd_fp_info },
-	{ "fpmode", cmd_fp_mode },
-	{ "fpseed", cmd_fp_seed },
-	{ "fpstats", cmd_fp_stats },
-	{ "fptemplate", cmd_fp_template },
-	{ "gpioget", cmd_gpio_get },
-	{ "gpioset", cmd_gpio_set },
-	{ "hangdetect", cmd_hang_detect },
-	{ "hello", cmd_hello },
-	{ "hibdelay", cmd_hibdelay },
-	{ "hostevent", cmd_hostevent },
-	{ "hostsleepstate", cmd_hostsleepstate },
-	{ "locatechip", cmd_locate_chip },
-	{ "i2cprotect", cmd_i2c_protect },
-	{ "i2cread", cmd_i2c_read },
-	{ "i2cspeed", cmd_i2c_speed },
-	{ "i2cwrite", cmd_i2c_write },
-	{ "i2cxfer", cmd_i2c_xfer },
-	{ "infopddev", cmd_pd_device_info },
-	{ "inventory", cmd_inventory },
-	{ "led", cmd_led },
-	{ "lightbar", cmd_lightbar },
-	{ "kbfactorytest", cmd_keyboard_factory_test },
-	{ "kbinfo", cmd_kbinfo },
-	{ "kbpress", cmd_kbpress },
-	{ "keyconfig", cmd_keyconfig },
-	{ "keyscan", cmd_keyscan },
-	{ "memory_dump", cmd_memory_dump },
-	{ "mkbpget", cmd_mkbp_get },
-	{ "mkbpwakemask", cmd_mkbp_wake_mask },
-	{ "motionsense", cmd_motionsense },
-	{ "nextevent", cmd_next_event },
-	{ "panicinfo", cmd_panic_info },
-	{ "pause_in_s5", cmd_s5 },
-	{ "pchg", cmd_pchg },
-	{ "pdgetmode", cmd_pd_get_amode },
-	{ "pdsetmode", cmd_pd_set_amode },
-	{ "port80read", cmd_port80_read },
-	{ "pdlog", cmd_pd_log },
-	{ "pdcontrol", cmd_pd_control },
-	{ "pdchipinfo", cmd_pd_chip_info },
-	{ "pdwritelog", cmd_pd_write_log },
-	{ "powerinfo", cmd_power_info },
-	{ "protoinfo", cmd_proto_info },
-	{ "pse", cmd_pse },
-	{ "pstoreinfo", cmd_pstore_info },
-	{ "pstoreread", cmd_pstore_read },
-	{ "pstorewrite", cmd_pstore_write },
-	{ "pwmgetfanrpm", cmd_pwm_get_fan_rpm },
-	{ "pwmgetkblight", cmd_pwm_get_keyboard_backlight },
-	{ "pwmgetnumfans", cmd_pwm_get_num_fans },
-	{ "pwmgetduty", cmd_pwm_get_duty },
-	{ "pwmsetfanrpm", cmd_pwm_set_fan_rpm },
-	{ "pwmsetkblight", cmd_pwm_set_keyboard_backlight },
-	{ "pwmsetduty", cmd_pwm_set_duty },
-	{ "rand", cmd_rand },
-	{ "reboot_ec", cmd_reboot_ec },
-	{ "rgbkbd", cmd_rgbkbd },
-	{ "rollbackinfo", cmd_rollback_info },
-	{ "rtcget", cmd_rtc_get },
-	{ "rtcgetalarm", cmd_rtc_get_alarm },
-	{ "rtcset", cmd_rtc_set },
-	{ "rtcsetalarm", cmd_rtc_set_alarm },
-	{ "rwhashpd", cmd_rw_hash_pd },
-	{ "rwsig", cmd_rwsig },
-	{ "rwsigaction", cmd_rwsig_action_legacy },
-	{ "rwsigstatus", cmd_rwsig_status },
-	{ "sertest", cmd_serial_test },
-	{ "s0ix_counter", cmd_s0ix_counter },
-	{ "smartdischarge", cmd_smart_discharge },
-	{ "stress", cmd_stress_test },
-	{ "sysinfo", cmd_sysinfo },
-	{ "port80flood", cmd_port_80_flood },
-	{ "switches", cmd_switches },
-	{ "tabletmode", cmd_tabletmode },
-	{ "temps", cmd_temperature },
-	{ "tempsinfo", cmd_temp_sensor_info },
-	{ "test", cmd_test },
-	{ "thermalget", cmd_thermal_get_threshold },
-	{ "thermalset", cmd_thermal_set_threshold },
-	{ "tpselftest", cmd_tp_self_test },
-	{ "tpframeget", cmd_tp_frame_get },
-	{ "tmp006cal", cmd_tmp006cal },
-	{ "tmp006raw", cmd_tmp006raw },
-	{ "typeccontrol", cmd_typec_control },
-	{ "typecdiscovery", cmd_typec_discovery },
-	{ "typecstatus", cmd_typec_status },
-	{ "typecvdmresponse", cmd_typec_vdm_response },
-	{ "uptimeinfo", cmd_uptimeinfo },
-	{ "usbchargemode", cmd_usb_charge_set_mode },
-	{ "usbmux", cmd_usb_mux },
-	{ "usbpd", cmd_usb_pd },
-	{ "usbpddps", cmd_usb_pd_dps },
-	{ "usbpdmuxinfo", cmd_usb_pd_mux_info },
-	{ "usbpdpower", cmd_usb_pd_power },
-	{ "version", cmd_version },
-	{ "waitevent", cmd_wait_event },
-	{ "wireless", cmd_wireless },
-	{ "reboot_ap_on_g3", cmd_reboot_ap_on_g3 },
+	{ "adcread", cmd_adc_read, "<channel>\n\tRead an ADC channel." },
+	{ "addentropy", cmd_add_entropy,
+	  "[reset]\n\tAdd entropy to device secret." },
+	{ "apreset", cmd_apreset, "\n\tIssue AP reset." },
+	{ "autofanctrl", cmd_thermal_auto_fan_ctrl,
+	  "<on>\n\tTurn on automatic fan speed control." },
+	{ "backlight", cmd_lcd_backlight,
+	  "<enabled>\n\tEnable/disable LCD backlight." },
+	{ "basestate", cmd_basestate,
+	  "[attach | detach | reset]\n"
+	  "\tManually force base state to attached, detached or reset." },
+	{ "battery", cmd_battery, "\n\tPrints battery info." },
+	{ "batterycutoff", cmd_battery_cut_off,
+	  "[at-shutdown]\n\tCut off battery output power." },
+	{ "batteryparam", cmd_battery_vendor_param,
+	  "\n\tRead or write board-specific battery parameter." },
+	{ "bcfg", cmd_battery_config, "\n\tPrint an active battery config." },
+	{ "boardversion", cmd_board_version, "\n\tPrints the board version." },
+	{ "boottime", cmd_boottime, "\n\tGet boot time." },
+	{ "button", cmd_button,
+	  "[vup|vdown|rec] <Delay-ms>\n\tSimulates button press." },
+	{ "cbi", cmd_cbi, "\n\tGet/Set/Remove Cros Board Info." },
+	{ "cec", cmd_cec, "\n\tRead or write CEC messages and settings." },
+	{ "chargecontrol", cmd_charge_control,
+	  "\n\tForce the battery to stop charging or discharge." },
+	{ "chargecurrentlimit", cmd_charge_current_limit,
+	  "\n\tSet the maximum battery charging current and the minimum battery\n"
+	  "\tSoC at which it will apply." },
+	{ "chargeoverride", cmd_charge_port_override,
+	  "\n\tOverrides charge port selection logic." },
+	{ "chargesplash", cmd_chargesplash,
+	  "\n\tShow and manipulate chargesplash variables." },
+	{ "chargestate", cmd_charge_state,
+	  "\n\tHandle commands related to charge state v2 (and later)." },
+	{ "chipinfo", cmd_chipinfo, "\n\tPrints chip info." },
+	{ "cmdversions", cmd_cmdversions,
+	  "<cmd>\n\tPrints supported version mask for a command number." },
+	{ "console", cmd_console,
+	  "\n\tPrints the last output to the EC debug console." },
+	{ "echash", cmd_ec_hash, "[CMDS]\n\tVarious EC hash commands." },
+	{ "eventclear", cmd_host_event_clear,
+	  "<mask>\n"
+	  "\tClears EC host events flags where mask has bits set." },
+	{ "eventclearb", cmd_host_event_clear_b,
+	  "<mask>\n"
+	  "\tClears EC host events flags copy B where mask has bits set." },
+	{ "eventget", cmd_host_event_get_raw,
+	  "\n\tPrints raw EC host event flags." },
+	{ "eventgetb", cmd_host_event_get_b,
+	  "\n\tPrints raw EC host event flags copy B." },
+	{ "eventgetscimask", cmd_host_event_get_sci_mask,
+	  "\n\tPrints SCI mask for EC host events." },
+	{ "eventgetsmimask", cmd_host_event_get_smi_mask,
+	  "\n\tPrints SMI mask for EC host events." },
+	{ "eventgetwakemask", cmd_host_event_get_wake_mask,
+	  "\n\tPrints wake mask for EC host events." },
+	{ "eventsetscimask", cmd_host_event_set_sci_mask,
+	  "<mask>\n\tSets the SCI mask for EC host events." },
+	{ "eventsetsmimask", cmd_host_event_set_smi_mask,
+	  "<mask>\n\tSets the SMI mask for EC host events." },
+	{ "eventsetwakemask", cmd_host_event_set_wake_mask,
+	  "<mask>\n\tSets the wake mask for EC host events" },
+	{ "extpwrlimit", cmd_ext_power_limit,
+	  "\n\tSet the maximum external power limit." },
+	{ "fanduty", cmd_fanduty,
+	  "<percent>\n\tForces the fan PWM to a constant duty cycle." },
+	{ "flasherase", cmd_flash_erase,
+	  "<offset> <size>\n\tErases EC flash." },
+	{ "flasheraseasync", cmd_flash_erase,
+	  "<offset> <size>\n"
+	  "\tErases EC flash asynchronously." },
+	{ "flashinfo", cmd_flash_info,
+	  "\n\tPrints information on the EC flash." },
+	{ "flashpd", cmd_flash_pd,
+	  "<dev_id> <port> <filename>\n"
+	  "\tFlash commands over PD." },
+	{ "flashprotect", cmd_flash_protect,
+	  "[now] [enable | disable]\n"
+	  "\tPrints or sets EC flash protection state." },
+	{ "flashread", cmd_flash_read,
+	  "<offset> <size> <outfile>\n"
+	  "\tReads from EC flash to a file." },
+	{ "flashspiinfo", cmd_flash_spi_info,
+	  "\n\tPrints information on EC SPI flash, if present." },
+	{ "flashwrite", cmd_flash_write,
+	  "<offset> <infile>\n"
+	  "\tWrites to EC flash from a file." },
+	{ "forcelidopen", cmd_force_lid_open,
+	  "<enable>\n"
+	  "\tForces the lid switch to open position." },
+	{ "fpcontext", cmd_fp_context,
+	  "\n\tSets the fingerprint sensor context." },
+	{ "fpencstatus", cmd_fp_enc_status,
+	  "\n\tPrints status of Fingerprint sensor encryption engine." },
+	{ "fpframe", cmd_fp_frame,
+	  "\n\tRetrieve the finger image as a PGM image." },
+	{ "fpinfo", cmd_fp_info,
+	  "\n\tPrints information about the Fingerprint sensor." },
+	{ "fpmode", cmd_fp_mode,
+	  "[mode... [capture_type]]\n"
+	  "\tConfigure/Read the fingerprint sensor current mode.\n"
+	  "\tmode: capture|deepsleep|fingerdown|fingerup|enroll|match|\n"
+	  "\t\treset|reset_sensor|maintenance\n"
+	  "\tcapture_type: vendor|pattern0|pattern1|qual|test_reset" },
+	{ "fpseed", cmd_fp_seed, "\n\tSets the value of the TPM seed." },
+	{ "fpstats", cmd_fp_stats,
+	  "\n\tPrints timing statisitcs relating to capture and matching." },
+	{ "fptemplate", cmd_fp_template,
+	  "[<infile>|<index 0..2>]\n"
+	  "\tAdd a template if <infile> is provided, else dump it." },
+	{ "gpioget", cmd_gpio_get,
+	  "<GPIO name>\n"
+	  "\tGet the value of GPIO signal." },
+	{ "gpioset", cmd_gpio_set,
+	  "<GPIO name>\n"
+	  "\tSet the value of GPIO signal." },
+	{ "hangdetect", cmd_hang_detect,
+	  "reload|cancel|set_timeout <reboot_sec>|get_status|clear_status\n"
+	  "\tConfigure the ap hang detect mechanism." },
+	{ "hello", cmd_hello, "\n\tChecks for basic communication with EC." },
+	{ "hibdelay", cmd_hibdelay,
+	  "[sec]\n"
+	  "\tSet the delay before going into hibernation." },
+	{ "hostevent", cmd_hostevent, "\n\tGet & set host event masks." },
+	{ "hostsleepstate", cmd_hostsleepstate,
+	  "\n\tReport host sleep state to the EC." },
+	{ "i2cprotect", cmd_i2c_protect,
+	  "<port> [status]\n"
+	  "\tProtect EC's I2C bus." },
+	{ "i2cread", cmd_i2c_read, "\n\tRead I2C bus." },
+	{ "i2cspeed", cmd_i2c_speed,
+	  "<port> [speed]\n"
+	  "\tGet or set EC's I2C bus speed." },
+	{ "i2cwrite", cmd_i2c_write, "\n\tWrite I2C bus." },
+	{ "i2cxfer", cmd_i2c_xfer,
+	  "<port> <peripheral_addr> <read_count> [write bytes...]\n"
+	  "\tPerform I2C transfer on EC's I2C bus." },
+	{ "infopddev", cmd_pd_device_info,
+	  "<port>\n"
+	  "\tGet info about USB type-C accessory attached to port." },
+	{ "inventory", cmd_inventory,
+	  "\n\tReturn the list of supported features." },
+	{ "kbfactorytest", cmd_keyboard_factory_test,
+	  "\n\tScan out keyboard if any pins are shorted." },
+	{ "kbinfo", cmd_kbinfo, "\n\tDump keyboard matrix dimensions." },
+	{ "kbpress", cmd_kbpress, "\n\tSimulate key press." },
+	{ "keyconfig", cmd_keyconfig,
+	  "get [<param>] | set [<param>> <value>]\n"
+	  "\tConfigure keyboard scanning." },
+	{ "keyscan", cmd_keyscan,
+	  "<beat_us> <filename>\n"
+	  "\tTest low-level key scanning." },
+	{ "led", cmd_led,
+	  "<name> <query | auto | off | <color> | <color>=<value>...>\n"
+	  "\tSet the color of an LED or query brightness range." },
+	{ "lightbar", cmd_lightbar,
+	  "[CMDS]\n"
+	  "\tVarious lightbar control commands." },
+	{ "locatechip", cmd_locate_chip,
+	  "<type> <index>\n"
+	  "\tGet the addresses and ports of i2c connected and embedded chips." },
+	{ "memory_dump", cmd_memory_dump,
+	  "[<address> [<size>]]\n"
+	  "\tOutputs the memory dump in hexdump canonical format." },
+	{ "mkbpget", cmd_mkbp_get,
+	  "<buttons|switches>\n"
+	  "\tGet MKBP buttons/switches supported mask and current state." },
+	{ "mkbpwakemask", cmd_mkbp_wake_mask,
+	  "<get|set> <event|hostevent> [mask]\n"
+	  "\tGet or Set the MKBP event wake mask, or host event wake mask." },
+	{ "motionsense", cmd_motionsense,
+	  "[CMDS]\n"
+	  "\tVarious motion sense control commands." },
+	{ "nextevent", cmd_next_event, "\n\tGet the next pending MKBP event." },
+	{ "panicinfo", cmd_panic_info, "\n\tPrints saved panic info." },
+	{ "pause_in_s5", cmd_s5,
+	  "[on|off]\n"
+	  "\tWhether or not the AP should pause in S5 on shutdown." },
+	{ "pchg", cmd_pchg,
+	  "[<port>]\n"
+	  "\tGet peripheral charge port count and status." },
+	{ "pdchipinfo", cmd_pd_chip_info,
+	  "<port>\n"
+	  "\tGet PD chip information." },
+	{ "pdcontrol", cmd_pd_control,
+	  "[suspend|resume|reset|disable|on]\n"
+	  "\tControls the PD chip." },
+	{ "pdgetmode", cmd_pd_get_amode,
+	  "<port>\n"
+	  "\tGet All USB-PD alternate SVIDs and modes on <port>." },
+	{ "pdlog", cmd_pd_log, "\n\tPrints the PD event log entries." },
+	{ "pdsetmode", cmd_pd_set_amode,
+	  "<port> <svid> <opos>\n"
+	  "\tSet USB-PD alternate SVID and mode on <port>." },
+	{ "pdwritelog", cmd_pd_write_log,
+	  "<type> <port>\n"
+	  "\tWrites a PD event log of the given <type>." },
+	{ "port80flood", cmd_port_80_flood,
+	  "\n\tRapidly write bytes to port 80." },
+	{ "port80read", cmd_port80_read,
+	  "\n\tPrint history of port 80 write." },
+	{ "powerinfo", cmd_power_info,
+	  "\n\tPrints power-related information." },
+	{ "protoinfo", cmd_proto_info,
+	  "\n\tPrints EC host protocol information." },
+	{ "pse", cmd_pse, "\n\tGet and set PoE PSE port power status." },
+	{ "pstoreinfo", cmd_pstore_info,
+	  "\n\tPrints information on the EC host persistent storage." },
+	{ "pstoreread", cmd_pstore_read,
+	  "<offset> <size> <outfile>\n"
+	  "\tReads from EC host persistent storage to a file." },
+	{ "pstorewrite", cmd_pstore_write,
+	  "<offset> <infile>\n"
+	  "\tWrites to EC host persistent storage from a file." },
+	{ "pwmgetduty", cmd_pwm_get_duty,
+	  "\n\tPrints the current 16 bit duty cycle for given PWM." },
+	{ "pwmgetfanrpm", cmd_pwm_get_fan_rpm,
+	  "[<index> | all]\n"
+	  "\tPrints current fan RPM." },
+	{ "pwmgetkblight", cmd_pwm_get_keyboard_backlight,
+	  "\n\tPrints current keyboard backlight percent." },
+	{ "pwmgetnumfans", cmd_pwm_get_num_fans,
+	  "\n\tPrints the number of fans present." },
+	{ "pwmsetduty", cmd_pwm_set_duty,
+	  "\n\tSet 16 bit duty cycle of given PWM." },
+	{ "pwmsetfanrpm", cmd_pwm_set_fan_rpm,
+	  "<targetrpm>\n"
+	  "\tSet target fan RPM." },
+	{ "pwmsetkblight", cmd_pwm_set_keyboard_backlight,
+	  "<percent>\n"
+	  "\tSet keyboard backlight in percent." },
+	{ "rand", cmd_rand,
+	  "<num_bytes>\n"
+	  "\tgenerate <num_bytes> of random numbers." },
+	{ "reboot_ap_on_g3", cmd_reboot_ap_on_g3,
+	  " [<delay>]\n"
+	  "\tRequests that the EC will automatically reboot the AP after a\n"
+	  "\tconfigurable number of seconds the next time we enter the G3\n"
+	  "\tpower state." },
+	{ "reboot_ec", cmd_reboot_ec,
+	  "<RO|RW|cold|hibernate|hibernate-clear-ap-off|disable-jump|cold-ap-off>\n"
+	  "\t[at-shutdown|switch-slot|clear-ap-idle]\n"
+	  "\tReboot EC to RO or RW" },
+	{ "rgbkbd", cmd_rgbkbd,
+	  "...\n"
+	  "\tSet/get RGB keyboard status, config, etc.." },
+	{ "rollbackinfo", cmd_rollback_info,
+	  "\n\tPrint rollback block information." },
+	{ "rtcget", cmd_rtc_get, "\n\tPrint real-time clock." },
+	{ "rtcgetalarm", cmd_rtc_get_alarm,
+	  "\n\tPrint # of seconds before real-time clock alarm goes off." },
+	{ "rtcset", cmd_rtc_set,
+	  "<time>\n"
+	  "\tSet real-time clock." },
+	{ "rtcsetalarm", cmd_rtc_set_alarm,
+	  "<sec>\n"
+	  "\tSet real-time clock alarm to go off in <sec> seconds." },
+	{ "rwhashpd", cmd_rw_hash_pd,
+	  "<dev_id> <HASH[0] ... <HASH[4]>\n"
+	  "\tSet entry in PD MCU's device rw_hash table." },
+	{ "rwsig", cmd_rwsig,
+	  "<info|dump|action|status> ...\n"
+	  "\tinfo: Get all info about rwsig.\n"
+	  "\tdump: Show individual rwsig field.\n"
+	  "\taction: Control the behavior of RWSIG task.\n"
+	  "\tstatus: Run RW signature verification and get status." },
+	{ "rwsigaction", cmd_rwsig_action_legacy,
+	  "(DEPRECATED; use \"rwsig action\")\n"
+	  "\tControl the behavior of RWSIG task." },
+	{ "rwsigstatus", cmd_rwsig_status,
+	  "(DEPRECATED; use \"rwsig status\"\n"
+	  "\tRun RW signature verification and get status." },
+	{ "s0ix_counter", cmd_s0ix_counter,
+	  "get|set\n"
+	  "\tGet or reset s0ix counter." },
+	{ "sertest", cmd_serial_test, "\n\tSerial output test for COM2." },
+	{ "smartdischarge", cmd_smart_discharge,
+	  "\n\tSet/Get smart discharge parameters." },
+	{ "stress", cmd_stress_test,
+	  "[reboot] [help]\n"
+	  "\tStress test the ec host command interface." },
+	{ "switches", cmd_switches, "\n\tPrints current EC switch positions" },
+	{ "sysinfo", cmd_sysinfo,
+	  "[flags|reset_flags|firmware_copy]\n"
+	  "\tDisplay system info." },
+	{ "tabletmode", cmd_tabletmode,
+	  "[on | off | reset]\n"
+	  "\tManually force tablet mode to on, off or reset." },
+	{ "temps", cmd_temperature,
+	  "<sensorid>\n"
+	  "\tPrint temperature and temperature ratio between fan_off and\n"
+	  "\tfan_max values, which could be a fan speed if it's controlled\n"
+	  "\tlinearly." },
+	{ "tempsinfo", cmd_temp_sensor_info,
+	  "<sensorid>\n"
+	  "\tPrint temperature sensor info." },
+	{ "test", cmd_test,
+	  "result length [version]\n"
+	  "\tFake a variety of responses, purely for testing purposes." },
+	{ "thermalget", cmd_thermal_get_threshold,
+	  "<platform-specific args>\n"
+	  "\tGet the threshold temperature values from the thermal engine." },
+	{ "thermalset", cmd_thermal_set_threshold,
+	  "<platform-specific args>\n"
+	  "\tSet the threshold temperature values for the thermal engine." },
+	{ "tmp006cal", cmd_tmp006cal,
+	  "<tmp006_index> [params...]\n"
+	  "\tGet/set TMP006 calibration." },
+	{ "tmp006raw", cmd_tmp006raw,
+	  "<tmp006_index>\n"
+	  "\tGet raw TMP006 data." },
+	{ "tpframeget", cmd_tp_frame_get, "\n\tGet touchpad frame data." },
+	{ "tpselftest", cmd_tp_self_test, "\n\tRun touchpad self test." },
+	{ "typeccontrol", cmd_typec_control,
+	  "<port> <command>\n"
+	  "\tControl USB PD policy." },
+	{ "typecdiscovery", cmd_typec_discovery,
+	  "<port> <type>\n"
+	  "\tGet discovery information for port and type." },
+	{ "typecstatus", cmd_typec_status,
+	  "<port>\n"
+	  "\tGet status information for port." },
+	{ "typecvdmresponse", cmd_typec_vdm_response,
+	  "<port>\n"
+	  "\tGet last VDM response for AP-requested VDM." },
+	{ "uptimeinfo", cmd_uptimeinfo,
+	  "\n\tGet info about how long the EC has been running and the most\n"
+	  "\trecent AP resets." },
+	{ "usbchargemode", cmd_usb_charge_set_mode,
+	  "<port> <mode> [<inhibit_charge>]\n"
+	  "\tSet USB charging mode." },
+	{ "usbmux", cmd_usb_mux,
+	  "<mux>\n"
+	  "\tSet USB mux switch state." },
+	{ "usbpd", cmd_usb_pd,
+	  "<port> <auto | "
+	  "[toggle|toggle-off|sink|source] [none|usb|dp|dock]\n"
+	  "\t[dr_swap|pr_swap|vconn_swap]>\n"
+	  "\tControl USB PD/type-C [deprecated]." },
+	{ "usbpddps", cmd_usb_pd_dps,
+	  "[enable | disable]\n"
+	  "\tEnable or disable dynamic pdo selection." },
+	{ "usbpdmuxinfo", cmd_usb_pd_mux_info,
+	  "[tsv]\n"
+	  "\tGet USB-C SS mux info.\n"
+	  "\t    tsv: Output as tab separated values. Columns are defined "
+	  "as:\n"
+	  "\t\t   Port, USB enabled, DP enabled, Polarity, HPD IRQ, "
+	  "HPD LVL." },
+	{ "usbpdpower", cmd_usb_pd_power,
+	  "[port]\n"
+	  "\tGet USB PD power information." },
+	{ "version", cmd_version, "\n\tPrints EC version." },
+	{ "waitevent", cmd_wait_event,
+	  "<type> [<timeout>]\n"
+	  "\tWait for the MKBP event of type and display it." },
+	{ "wireless", cmd_wireless,
+	  "<flags> [<mask> [<suspend_flags> <suspend_mask>]]\n"
+	  "\tEnable/disable WLAN/Bluetooth radio." },
 	{ NULL, NULL }
 };
+
+void print_help(const char *prog, int print_cmds)
+{
+	printf("Usage: %s [--dev=n]"
+	       " [--interface=dev|i2c|lpc] [--i2c_bus=n] [--device=vid:pid]"
+	       " --verbose",
+	       prog);
+	printf("[--name=cros_ec|cros_fp|cros_pd|cros_scp|cros_ish] [--ascii] ");
+	printf("<command> [params]\n\n");
+	printf("  --i2c_bus=n  Specifies the number of an I2C bus to use. For\n"
+	       "               example, to use /dev/i2c-7, pass --i2c_bus=7.\n"
+	       "               Implies --interface=i2c.\n\n");
+	printf("  --interface Specifies the interface.\n\n");
+	printf("  --device    Specifies USB endpoint by vendor ID and product\n"
+	       "              ID (e.g. 18d1:5022).\n\n");
+	printf("  --verbose   Print more messages.\n\n");
+	if (print_cmds) {
+		const struct command *cmd;
+		puts(help_str);
+		for (cmd = commands; cmd->name != NULL; cmd++) {
+			printf("  %s ", cmd->name);
+			if (cmd->help != NULL)
+				puts(cmd->help);
+			else
+				puts("");
+		}
+
+	} else
+		printf("Use '%s help' to print a list of commands.\n", prog);
+}
 
 int main(int argc, char *argv[])
 {
