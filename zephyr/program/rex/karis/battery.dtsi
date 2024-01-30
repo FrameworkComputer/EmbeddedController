@@ -5,11 +5,8 @@
 
 / {
 	batteries {
-		default_battery: cosmx-2 {
-			compatible = "cosmx,ap20cbl-2", "battery-smart";
-		};
-		cosmx_3: cosmx-3 {
-			compatible = "cosmx,ap20cbl-3", "battery-smart";
+		default_battery: cosmx {
+			compatible = "cosmx,ap20cbl-4", "battery-smart";
 		};
 		lges_ap23a8l: lges-ap23a8l {
 			compatible = "lges,ap23a8l", "battery-smart";
