@@ -21,6 +21,10 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
+#ifdef CONFIG_ZEPHYR
+#include <soc.h>
+#endif
+
 #ifdef CONFIG_USB_PD_TCPMV1
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) || \
 	defined(CONFIG_USB_PD_VBUS_DETECT_TCPC) ||  \

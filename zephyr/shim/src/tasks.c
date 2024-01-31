@@ -21,6 +21,8 @@
 #include <zephyr/shell/shell.h>
 #include <zephyr/sys/atomic.h>
 
+#include <soc.h>
+
 /* Ensure that the idle task is at lower priority than lowest priority task. */
 BUILD_ASSERT(EC_TASK_PRIORITY(EC_TASK_PRIO_LOWEST) < K_IDLE_PRIO,
 	     "CONFIG_NUM_PREEMPT_PRIORITIES too small, some tasks would run at "

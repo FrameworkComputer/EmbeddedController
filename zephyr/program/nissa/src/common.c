@@ -16,6 +16,8 @@
 #include <zephyr/logging/log.h>
 
 #include <ap_power/ap_power.h>
+#include <soc.h>
+
 LOG_MODULE_REGISTER(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 __overridable void board_power_change(struct ap_power_ev_callback *cb,
