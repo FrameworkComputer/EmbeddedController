@@ -203,6 +203,65 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_usb_comm_capable)
 	}
 }
 
+ZTEST_USER(pdc_power_mgmt_api, test_get_partner_data_swap_capable)
+{
+	int i;
+	struct connector_status_t connector_status;
+	struct {
+		union connector_capability_t ccap;
+		bool expected;
+	} test[] = {
+		{ .ccap = { .raw_value = 0 }, .expected = false },
+		{ .ccap = { .op_mode_drp = 1,
+			    .op_mode_rp_only = 0,
+			    .op_mode_rd_only = 0,
+			    .swap_to_ufp = 1 },
+		  .expected = true },
+		{ .ccap = { .op_mode_drp = 0,
+			    .op_mode_rp_only = 1,
+			    .op_mode_rd_only = 0,
+			    .swap_to_dfp = 1 },
+		  .expected = true },
+		{ .ccap = { .op_mode_drp = 0,
+			    .op_mode_rp_only = 0,
+			    .op_mode_rd_only = 1,
+			    .swap_to_dfp = 1 },
+		  .expected = true },
+		{ .ccap = { .op_mode_drp = 0,
+			    .op_mode_rp_only = 0,
+			    .op_mode_rd_only = 1,
+			    .swap_to_dfp = 0 },
+		  .expected = false },
+		{ .ccap = { .op_mode_drp = 0,
+			    .op_mode_rp_only = 0,
+			    .op_mode_rd_only = 0,
+			    .swap_to_ufp = 1 },
+		  .expected = false },
+		{ .ccap = { .op_mode_drp = 0,
+			    .op_mode_rp_only = 0,
+			    .op_mode_rd_only = 0,
+			    .swap_to_dfp = 1 },
+		  .expected = false },
+	};
+
+	zassert_false(pdc_power_mgmt_get_partner_data_swap_capable(
+		CONFIG_USB_PD_PORT_MAX_COUNT));
+
+	for (i = 0; i < ARRAY_SIZE(test); i++) {
+		emul_pdc_set_connector_capability(emul, &test[i].ccap);
+		emul_pdc_configure_src(emul, &connector_status);
+		emul_pdc_connect_partner(emul, &connector_status);
+		k_sleep(K_MSEC(1000));
+		zassert_equal(
+			test[i].expected,
+			pdc_power_mgmt_get_partner_data_swap_capable(TEST_PORT),
+			"[%d] expected=%d, ccap=0x%X", i, test[i].expected,
+			test[i].ccap);
+		emul_pdc_disconnect(emul);
+		k_sleep(K_MSEC(1000));
+	}
+}
+
 #ifdef TODO_B_322851061
 /* TODO(b/322851061) Enable test after b/322851061 is fixed */
 ZTEST_USER(pdc_power_mgmt_api, test_get_info)
