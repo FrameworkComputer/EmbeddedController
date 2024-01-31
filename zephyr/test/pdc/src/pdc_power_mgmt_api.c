@@ -141,7 +141,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_pd_get_task_cc_state)
 		connector_status.conn_partner_type = test[i].in;
 		emul_pdc_configure_src(emul, &connector_status);
 		emul_pdc_connect_partner(emul, &connector_status);
-		k_sleep(K_MSEC(500));
+		k_sleep(K_MSEC(1000));
 		zassert_equal(test[i].out,
 			      pdc_power_mgmt_get_task_cc_state(TEST_PORT));
 	}
@@ -352,4 +352,27 @@ ZTEST_USER(pdc_power_mgmt_api, test_request_data_swap)
 		emul_pdc_disconnect(emul);
 		k_sleep(K_MSEC(1000));
 	}
+}
+
+ZTEST_USER(pdc_power_mgmt_api, test_get_partner_unconstr_power)
+{
+	struct connector_status_t connector_status;
+
+	zassert_false(pdc_power_mgmt_get_partner_unconstr_power(
+		CONFIG_USB_PD_PORT_MAX_COUNT));
+
+	emul_pdc_configure_src(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	k_sleep(K_MSEC(2000));
+
+	zassert_false(pdc_power_mgmt_get_partner_unconstr_power(TEST_PORT));
+
+	emul_pdc_disconnect(emul);
+	k_sleep(K_MSEC(1000));
+
+	emul_pdc_configure_snk(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	k_sleep(K_MSEC(2000));
+
+	zassert_false(pdc_power_mgmt_get_partner_unconstr_power(TEST_PORT));
 }
