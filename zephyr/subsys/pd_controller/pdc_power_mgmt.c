@@ -25,20 +25,20 @@
 LOG_MODULE_REGISTER(pdc_power_mgmt);
 
 /**
- * @brief maximum number of times to try and send a command
+ * @brief Time delay before running the state machine loop
  */
-#define RETRY_MAX 10
+#define LOOP_DELAY_MS 25
+
+/**
+ * @brief maximum number of times to try and send a command (Time is 2s)
+ */
+#define RETRY_MAX (2000 / LOOP_DELAY_MS)
 
 /**
  * @brief maximum number of counts to wait the subsystem to respond to an API
- * call
+ * call (Time is 500ms)
  */
-#define BLOCK_COUNTER_MAX 10
-
-/**
- * @brief Time delay before running the state machine loop
- */
-#define LOOP_DELAY_MS 50
+#define BLOCK_COUNTER_MAX (500 / LOOP_DELAY_MS)
 
 /**
  * @brief maximum number of PDOs
