@@ -68,6 +68,13 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 #define RTS54XX_GET_IC_STATUS_FWVER_PATCH_OFFSET (6)
 
 /**
+ * @brief Macro to transition to init or idle state and return
+ */
+#define TRANSITION_TO_INIT_OR_IDLE_STATE(data)  \
+	transition_to_init_or_idle_state(data); \
+	return
+
+/**
  * @brief SMbus Command struct for Realtek commands
  */
 struct smbus_cmd_t {
@@ -390,7 +397,11 @@ static void perform_pdc_init(struct pdc_data_t *data)
 	set_state(data, ST_INIT);
 }
 
-static void return_to_init_or_idle_state(struct pdc_data_t *data)
+/**
+ * @brief This function performs a state change, so a return should
+ * be placed after its immediate call.
+ */
+static void transition_to_init_or_idle_state(struct pdc_data_t *data)
 {
 	if (data->init_local_state != INIT_PDC_COMPLETE) {
 		set_state(data, ST_INIT);
@@ -568,7 +579,7 @@ static void st_write_run(void *o)
 			 * This state can only be entered from the Init or
 			 * Idle state, so return to one of them.
 			 */
-			return_to_init_or_idle_state(data);
+			TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 		}
 		return;
 	}
@@ -626,11 +637,8 @@ static void st_ping_status_run(void *o)
 			/* Notify system of status change */
 			call_cci_event_cb(data);
 
-			/*
-			 * An error occurred, return to idle state, so
-			 * the subsystem can take action.
-			 */
-			set_state(data, ST_IDLE);
+			/* An error occurred, return to idle state */
+			TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 		}
 		return;
 	}
@@ -662,11 +670,8 @@ static void st_ping_status_run(void *o)
 			/* Notify system of status change */
 			call_cci_event_cb(data);
 
-			/*
-			 * An error occurred, return to idle state, so
-			 * the subsystem can take action.
-			 */
-			set_state(data, ST_IDLE);
+			/* An error occurred, return to idle state */
+			TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 		} else {
 			/*
 			 * If Busy, then set this cci.busy to a 1b
@@ -688,7 +693,7 @@ static void st_ping_status_run(void *o)
 			call_cci_event_cb(data);
 			LOG_DBG("Realtek PDC reset complete");
 			/* All done, return to Init or Idle state */
-			return_to_init_or_idle_state(data);
+			TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 		} else {
 			LOG_DBG("ping_status: %02x",
 				data->ping_status.raw_value);
@@ -707,7 +712,7 @@ static void st_ping_status_run(void *o)
 				call_cci_event_cb(data);
 
 				/* Return to Idle or Init state */
-				return_to_init_or_idle_state(data);
+				TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 			}
 		}
 		break;
@@ -723,11 +728,8 @@ static void st_ping_status_run(void *o)
 		/* Notify system of status change */
 		call_cci_event_cb(data);
 
-		/*
-		 * An error occurred, return to idle state, so
-		 * the subsystem can take action.
-		 */
-		set_state(data, ST_IDLE);
+		/* An error occurred, return to idle state */
+		TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 		break;
 	}
 }
@@ -771,12 +773,8 @@ static void st_read_run(void *o)
 		/* Notify system of status change */
 		call_cci_event_cb(data);
 
-		/*
-		 * An error occurred, return to idle state, so
-		 * the subsystem can take action.
-		 */
-		set_state(data, ST_IDLE);
-		return;
+		/* An error occurred, return to idle state */
+		TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 	}
 
 	/* Get length of data returned */
@@ -958,7 +956,7 @@ static void st_read_run(void *o)
 	/* Inform the system of the event */
 	call_cci_event_cb(data);
 	/* All done, return to Init or Idle state */
-	return_to_init_or_idle_state(data);
+	TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 }
 
 static void st_irq_entry(void *o)
@@ -982,7 +980,7 @@ static void st_irq_run(void *o)
 	case IRQ_READ_ARA:
 		/* Return to Init or Idle state if IRQ was handled */
 		if (irq_pending == false) {
-			return_to_init_or_idle_state(data);
+			TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 		}
 
 		/*
@@ -1019,13 +1017,11 @@ static void st_irq_run(void *o)
 				data->cci_event.error = 1;
 				/* Notify system of status change */
 				call_cci_event_cb(data);
-				/*
-				 * An error occurred, return to idle state, so
-				 * the subsystem can take action.
-				 */
-				set_state(data, ST_IDLE);
 				/* Clear pending IRQ */
 				irq_pending = false;
+				/* An error occurred, return to init or idle
+				 * state */
+				TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 			}
 		}
 		break;
@@ -1039,15 +1035,15 @@ static void st_irq_run(void *o)
 		data->cci_event.vendor_defined_indicator = 1;
 		/* Notify system of status change */
 		call_cci_event_cb(data);
-		/* All done, return to Init or Idle state */
-		return_to_init_or_idle_state(data);
 		/* Clear pending IRQ */
 		irq_pending = false;
+		/* All done, transition to Init or Idle state */
+		TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 		break;
 	case IRQ_OTHER_PORT_WAIT:
 		/* Wait until the interrupt is handled */
 		if (irq_pending == false) {
-			return_to_init_or_idle_state(data);
+			TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 		}
 	}
 }
