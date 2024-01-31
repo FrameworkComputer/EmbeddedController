@@ -103,6 +103,20 @@ if (DEFINED CONFIG_RISCV)
   zephyr_cc_option(-fsanitize-undefined-trap-on-error)
 endif()
 
+# TODO: b/323234432 - Investigate explicitly using doubles over floats
+# For now disable the "double-promotion" warning to avoid errors from
+# the sensor code and math_util.h.
+get_target_property(warning_base_override compiler warning_base)
+
+set(double_promotion -Wdouble-promotion)
+
+if(${double_promotion} IN_LIST warning_base_override)
+  list(REMOVE_ITEM warning_base_override ${double_promotion})
+  set_compiler_property(PROPERTY warning_base ${warning_base_override})
+  print(warning_base_override)
+endif()
+
+
 # The EC application is split into two libraries:
 #   app: contains all the legacy code
 #   ec_shim: contains all the code under platform/ec/shim
