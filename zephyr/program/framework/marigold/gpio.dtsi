@@ -58,7 +58,7 @@
 		i2c_5a_scl_ls {
 			gpios = <&gpiof 3 GPIO_INPUT>;
 		};
-		i2c_5a_sda_ls {
+		gpio_i2c_5a_sda_ls: i2c_5a_sda_ls {
 			gpios = <&gpiof 2 GPIO_INPUT>;
 		};
 		gpio_soc_ec_int2_l: soc_ec_int2_l {
@@ -166,7 +166,7 @@
 			gpios = <&gpioa 0 GPIO_INPUT>;	/*Monitor CPU entry/leave S4 */
 			enum-name = "GPIO_PCH_SLP_S4_L";
 		};
-		soc_tp_int_l {
+		gpio_soc_tp_int_l: soc_tp_int_l {
 			gpios = <&gpioa 4 GPIO_INPUT>;	/* Interrupt of TP module  */
 		};
 		gpio_soc_ec_int_l: soc_ec_int_l {

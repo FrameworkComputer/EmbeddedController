@@ -30,6 +30,13 @@ config CROS_EC_KEYSCAN
 	  configuration found in devicetree. Requires a cros-ec,keyscan node to
 	  be defined.
 
+config PLATFORM_EC_8042_AUX
+	bool "support 8042 aux"
+	default n
+	help
+	  Enable the 8042 AUX port. This is typically used for PS/2 mouse devices.
+	  You will need to implement send_aux_data_to_device and lpc_aux_put_char.
+
 choice PLATFORM_EC_KEYBOARD_PROTOCOL_MODE
 	prompt "Select the keyboard protocol to use"
 	depends on AP

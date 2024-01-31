@@ -36,6 +36,10 @@
 #include "input_module.h"
 #endif
 
+#ifdef CONFIG_PLATFORM_EC_TOUCHPAD_CUSTOMIZED
+#include "ps2mouse.h"
+#endif
+
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ##args)
@@ -464,19 +468,17 @@ static enum ec_status privacy_switches_check(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_PRIVACY_SWITCHES_CHECK_MODE, privacy_switches_check, EC_VER_MASK(0));
 
 #ifdef CONFIG_CHIPSET_INTEL
+#ifdef CONFIG_PLATFORM_EC_TOUCHPAD_CUSTOMIZED
 static enum ec_status disable_ps2_mouse_emulation(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_ps2_emulation_control *p = args->params;
 
-	/**
-	 * TODO: ps2 mouse emulation
-	 * set_ps2_mouse_emulation(p->disable);
-	 */
-	CPRINTS("TODO: ps2 mouse emulation %d", p->disable);
-	return EC_RES_UNAVAILABLE;
+	set_ps2_mouse_emulation(p->disable);
+
+	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_DISABLE_PS2_EMULATION, disable_ps2_mouse_emulation, EC_VER_MASK(0));
-
+#endif /* CONFIG_PLATFORM_EC_TOUCHPAD_CUSTOMIZED */
 #ifdef PD_CHIP_CCG6
 static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
 {

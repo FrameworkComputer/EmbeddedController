@@ -17,3 +17,10 @@ config PLATFORM_EC_TOUCHPAD_ELAN
 	select PLATFORM_EC_TOUCHPAD
 	help
 	  Adds support for Elan I2C touchpad.
+
+config PLATFORM_EC_TOUCHPAD_CUSTOMIZED
+	bool "customized touchpad support"
+	select PLATFORM_EC_TOUCHPAD
+	help
+	  Adds support for customized touchpad task.
+	  Enable PS2 mouse emulation.
