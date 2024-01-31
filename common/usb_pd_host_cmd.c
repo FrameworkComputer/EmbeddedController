@@ -304,47 +304,6 @@ DECLARE_HOST_COMMAND(EC_CMD_USB_PD_CONTROL, hc_usb_pd_control,
 		     EC_VER_MASK(0) | EC_VER_MASK(1) | EC_VER_MASK(2));
 #endif /* CONFIG_COMMON_RUNTIME */
 
-__overridable enum ec_pd_port_location board_get_pd_port_location(int port)
-{
-	(void)port;
-	return EC_PD_PORT_LOCATION_UNKNOWN;
-}
-
-static enum ec_status hc_get_pd_port_caps(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_get_pd_port_caps *p = args->params;
-	struct ec_response_get_pd_port_caps *r = args->response;
-
-	if (p->port >= board_get_usb_pd_port_count())
-		return EC_RES_INVALID_PARAM;
-
-	/* Power Role */
-	if (IS_ENABLED(CONFIG_USB_PD_DUAL_ROLE))
-		r->pd_power_role_cap = EC_PD_POWER_ROLE_DUAL;
-	else
-		r->pd_power_role_cap = EC_PD_POWER_ROLE_SINK;
-
-	/* Try-Power Role */
-	if (IS_ENABLED(CONFIG_USB_PD_TRY_SRC))
-		r->pd_try_power_role_cap = EC_PD_TRY_POWER_ROLE_SOURCE;
-	else
-		r->pd_try_power_role_cap = EC_PD_TRY_POWER_ROLE_NONE;
-
-	if (IS_ENABLED(CONFIG_USB_VPD) || IS_ENABLED(CONFIG_USB_CTVPD))
-		r->pd_data_role_cap = EC_PD_DATA_ROLE_UFP;
-	else
-		r->pd_data_role_cap = EC_PD_DATA_ROLE_DUAL;
-
-	/* Allow boards to override the locations from UNKNOWN if desired */
-	r->pd_port_location = board_get_pd_port_location(p->port);
-
-	args->response_size = sizeof(*r);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_GET_PD_PORT_CAPS, hc_get_pd_port_caps,
-		     EC_VER_MASK(0));
-
 #ifdef CONFIG_HOSTCMD_PD_CONTROL
 static int pd_control_disabled[CONFIG_USB_PD_PORT_MAX_COUNT];
 
