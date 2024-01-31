@@ -283,7 +283,7 @@ union rts54_response {
 		uint8_t reserved5[7];
 		uint8_t pd_revision[2];
 		uint8_t pd_version[2];
-		uint8_t reserved6[6];
+		uint8_t project_name[12];
 	} ic_status;
 
 	struct get_capability_response {

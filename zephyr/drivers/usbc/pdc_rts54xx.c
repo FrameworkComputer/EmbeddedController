@@ -99,6 +99,7 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 #define RTS54XX_GET_IC_STATUS_PD_REV_MINOR_OFFSET 24
 #define RTS54XX_GET_IC_STATUS_PD_VER_MAJOR_OFFSET 25
 #define RTS54XX_GET_IC_STATUS_PD_VER_MINOR_OFFSET 26
+#define RTS54XX_GET_IC_STATUS_PROG_NAME_STR 27
 
 /**
  * @brief Macro to transition to init or idle state and return
@@ -1208,13 +1209,20 @@ static void st_read_run(void *o)
 				<< 8 |
 			data->rd_buf[RTS54XX_GET_IC_STATUS_PD_VER_MINOR_OFFSET];
 
+		/* Project name string is supported on version >= 0.3.x */
+		memcpy(info->project_name,
+		       &data->rd_buf[RTS54XX_GET_IC_STATUS_PROG_NAME_STR],
+		       PDC_FW_PROJECT_NAME_LEN);
+		info->project_name[PDC_FW_PROJECT_NAME_LEN] = '\0';
+
 		/* Only print this log on init */
 		if (data->init_local_state != INIT_PDC_COMPLETE) {
-			LOG_INF("C%d: Realtek: FW Version: %u.%u.%u",
+			LOG_INF("C%d: Realtek: FW Version: %u.%u.%u (%s)",
 				cfg->connector_number,
 				PDC_FWVER_GET_MAJOR(info->fw_version),
 				PDC_FWVER_GET_MINOR(info->fw_version),
-				PDC_FWVER_GET_PATCH(info->fw_version));
+				PDC_FWVER_GET_PATCH(info->fw_version),
+				info->project_name);
 			LOG_INF("C%d: Realtek: PD Version: %u, Rev %u",
 				cfg->connector_number, info->pd_version,
 				info->pd_revision);
@@ -1996,7 +2004,7 @@ static int rts54_get_info(const struct device *dev, struct pdc_info_t *info,
 
 	/* Post a command and perform a chip operation */
 	uint8_t payload[] = {
-		GET_IC_STATUS.cmd, GET_IC_STATUS.len, 0, 0x00, 26,
+		GET_IC_STATUS.cmd, GET_IC_STATUS.len, 0, 0x00, 38,
 	};
 
 	LOG_DBG("C%d: Get live chip info", cfg->connector_number);

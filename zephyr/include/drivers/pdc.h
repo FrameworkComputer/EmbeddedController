@@ -34,6 +34,14 @@ extern "C" {
 #define PDC_VIDPID_INVALID (0x00000000)
 
 /**
+ * Compare PDC versions
+ */
+#define PDC_FWVER_AT_LEAST(ver_in, major, minor)    \
+	(PDC_FWVER_GET_MAJOR(ver_in) > (major) ||   \
+	 (PDC_FWVER_GET_MAJOR(ver_in) == (major) && \
+	  PDC_FWVER_GET_MINOR(ver_in) >= (minor)))
+
+/**
  * Extract the major, minor, and patch elements from a 32-bit version in
  * `struct pdc_info_t`
  */
@@ -42,6 +50,11 @@ extern "C" {
 #define PDC_FWVER_GET_PATCH(fwver) ((fwver) & 0xFF)
 
 #define PDC_FWVER_INVALID (0x00000000)
+
+/** Maximum length of a project name embedded in a PDC FW image. This length
+ *  does NOT include a NUL-terminator.
+ */
+#define PDC_FW_PROJECT_NAME_LEN 12
 
 /**
  * @brief Power Delivery Controller Information
@@ -59,6 +72,8 @@ struct pdc_info_t {
 	uint8_t is_running_flash_code;
 	/** Set to the currently used flash bank (optional) */
 	uint8_t running_in_flash_bank;
+	/** 12-byte program name string plus NUL terminator */
+	char project_name[PDC_FW_PROJECT_NAME_LEN + 1];
 	/** Extra information (optional) */
 	uint16_t extra;
 };

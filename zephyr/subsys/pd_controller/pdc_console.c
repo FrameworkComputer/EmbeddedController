@@ -215,6 +215,10 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 		return rv;
 	}
 
+	/* Check if the FW project name is set. */
+	bool has_proj_name = pdc_info.project_name[0] != '\0' &&
+			     pdc_info.project_name[0] != 0xFF;
+
 	shell_fprintf(sh, SHELL_INFO,
 		      "Live: %d\n"
 		      "FW Ver: %u.%u.%u\n"
@@ -222,7 +226,8 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 		      "PD Ver: %u\n"
 		      "VID/PID: %04x:%04x\n"
 		      "Running Flash Code: %c\n"
-		      "Flash Bank: %u\n",
+		      "Flash Bank: %u\n"
+		      "Project Name: '%s'\n",
 		      live, PDC_FWVER_GET_MAJOR(pdc_info.fw_version),
 		      PDC_FWVER_GET_MINOR(pdc_info.fw_version),
 		      PDC_FWVER_GET_PATCH(pdc_info.fw_version),
@@ -230,7 +235,8 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 		      PDC_VIDPID_GET_VID(pdc_info.vid_pid),
 		      PDC_VIDPID_GET_PID(pdc_info.vid_pid),
 		      pdc_info.is_running_flash_code ? 'Y' : 'N',
-		      pdc_info.running_in_flash_bank);
+		      pdc_info.running_in_flash_bank,
+		      has_proj_name ? pdc_info.project_name : "<None>");
 
 	return EC_SUCCESS;
 }

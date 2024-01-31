@@ -446,12 +446,14 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_info)
 		.pd_version = 0xabcd,
 		.pd_revision = 0x1234,
 		.vid_pid = 0x12345678,
+		.project_name = "ProjectName",
 	};
 	struct pdc_info_t in2 = {
 		.fw_version = 0x002a3b4c,
 		.pd_version = 0xef01,
 		.pd_revision = 0x5678,
 		.vid_pid = 0x9abcdef0,
+		.project_name = "MyProj",
 	};
 	struct pdc_info_t out = { 0 };
 	union connector_status_t connector_status;
@@ -474,6 +476,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_info)
 	zassert_equal(in1.pd_revision, out.pd_revision);
 	zassert_equal(in1.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
 		      in1.vid_pid, out.vid_pid);
+	zassert_mem_equal(in1.project_name, out.project_name,
+			  sizeof(in1.project_name));
 
 	/* Repeat but non-live. The cached info should match the original
 	 * read instead of `in2`.
@@ -486,6 +490,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_info)
 	zassert_equal(in1.pd_revision, out.pd_revision);
 	zassert_equal(in1.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
 		      in1.vid_pid, out.vid_pid);
+	zassert_mem_equal(in1.project_name, out.project_name,
+			  sizeof(in1.project_name));
 
 	/* Live read again. This time we should get `in2`. */
 	zassert_ok(pdc_power_mgmt_get_info(TEST_PORT, &out, true));
@@ -495,6 +501,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_info)
 	zassert_equal(in2.pd_revision, out.pd_revision);
 	zassert_equal(in2.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
 		      in2.vid_pid, out.vid_pid);
+	zassert_mem_equal(in2.project_name, out.project_name,
+			  sizeof(in2.project_name));
 
 	emul_pdc_disconnect(emul);
 	zassert_true(

@@ -356,6 +356,7 @@ static const struct pdc_info_t info_in1 = {
 	.pd_version = 0xabcd,
 	.pd_revision = 0x1234,
 	.vid_pid = 0x12345678,
+	.project_name = "ProjectName",
 };
 
 static const struct pdc_info_t info_in2 = {
@@ -363,6 +364,7 @@ static const struct pdc_info_t info_in2 = {
 	.pd_version = 0xef01,
 	.pd_revision = 0x5678,
 	.vid_pid = 0x9abcdef0,
+	.project_name = "MyProj",
 };
 
 ZTEST_USER(pdc_api, test_get_info)
@@ -390,6 +392,8 @@ ZTEST_USER(pdc_api, test_get_info)
 	zassert_equal(info_in1.pd_revision, out.pd_revision);
 	zassert_equal(info_in1.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
 		      info_in1.vid_pid, out.vid_pid);
+	zassert_mem_equal(info_in1.project_name, out.project_name,
+			  sizeof(info_in1.project_name));
 
 	/* Part 2: Cached read -- Set `info_in2`, `out` should match the cached
 	 * `info_in1` again
@@ -405,6 +409,8 @@ ZTEST_USER(pdc_api, test_get_info)
 	zassert_equal(info_in1.pd_revision, out.pd_revision);
 	zassert_equal(info_in1.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
 		      info_in1.vid_pid, out.vid_pid);
+	zassert_mem_equal(info_in1.project_name, out.project_name,
+			  sizeof(info_in1.project_name));
 
 	/* Part 3: Live read -- Don't set emul, `out` should match `info_in2`
 	 * this time
@@ -419,6 +425,8 @@ ZTEST_USER(pdc_api, test_get_info)
 	zassert_equal(info_in2.pd_revision, out.pd_revision);
 	zassert_equal(info_in2.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
 		      info_in2.vid_pid, out.vid_pid);
+	zassert_mem_equal(info_in2.project_name, out.project_name,
+			  sizeof(info_in2.project_name));
 }
 
 /* PDO0 is reserved for a fixed PDO at 5V. */
@@ -518,4 +526,6 @@ ZTEST_USER(pdc_api_suspended, test_get_info)
 	zassert_equal(info_in1.pd_revision, out.pd_revision);
 	zassert_equal(info_in1.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
 		      info_in1.vid_pid, out.vid_pid);
+	zassert_mem_equal(info_in1.project_name, out.project_name,
+			  sizeof(info_in1.project_name));
 }

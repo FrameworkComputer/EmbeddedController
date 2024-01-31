@@ -130,6 +130,9 @@ static int get_ic_status(struct rts5453p_emul_pdc_data *data,
 	data->response.ic_status.running_flash_bank_offset =
 		data->info.running_in_flash_bank;
 
+	memcpy(data->response.ic_status.project_name, data->info.project_name,
+	       sizeof(data->response.ic_status.project_name));
+
 	send_response(data);
 
 	return 0;

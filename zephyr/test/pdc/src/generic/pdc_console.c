@@ -540,6 +540,8 @@ ZTEST_USER(console_cmd_pdc, test_prs)
 		      pdc_power_mgmt_request_power_swap_fake.arg0_history[0]);
 }
 
+static char get_info_project_name[12];
+
 /**
  * @brief Custom fake for pdc_power_mgmt_get_info that outputs some test PDC
  *        chip info.
@@ -560,6 +562,9 @@ static int custom_fake_pdc_power_mgmt_get_info(int port, struct pdc_info_t *out,
 		.running_in_flash_bank = 16,
 		.extra = 0xffff,
 	};
+
+	memcpy(out->project_name, get_info_project_name,
+	       sizeof(out->project_name));
 
 	return 0;
 }
@@ -589,6 +594,8 @@ ZTEST_USER(console_cmd_pdc, test_info)
 	RESET_FAKE(pdc_power_mgmt_get_info);
 
 	/* Successful path */
+	strncpy(get_info_project_name, "ProjectName",
+		sizeof(get_info_project_name));
 	pdc_power_mgmt_get_info_fake.custom_fake =
 		custom_fake_pdc_power_mgmt_get_info;
 
@@ -614,6 +621,7 @@ ZTEST_USER(console_cmd_pdc, test_info)
 	zassert_not_null(strstr(outbuffer, "VID/PID: 7890:3456"));
 	zassert_not_null(strstr(outbuffer, "Running Flash Code: Y"));
 	zassert_not_null(strstr(outbuffer, "Flash Bank: 16"));
+	zassert_not_null(strstr(outbuffer, "Project Name: 'ProjectName'"));
 
 	RESET_FAKE(pdc_power_mgmt_get_info);
 
@@ -625,6 +633,24 @@ ZTEST_USER(console_cmd_pdc, test_info)
 	zassert_equal(1, pdc_power_mgmt_get_info_fake.call_count);
 	zassert_equal(0, pdc_power_mgmt_get_info_fake.arg0_history[0]);
 	zassert_false(pdc_power_mgmt_get_info_fake.arg2_history[0]);
+
+	RESET_FAKE(pdc_power_mgmt_get_info);
+	shell_backend_dummy_clear_output(get_ec_shell());
+
+	/* Successful path, but no project name in FW image */
+	strncpy(get_info_project_name, "", sizeof(get_info_project_name));
+	pdc_power_mgmt_get_info_fake.custom_fake =
+		custom_fake_pdc_power_mgmt_get_info;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc info 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+
+	zassert_not_null(strstr(outbuffer, "Project Name: '<None>'"));
 }
 
 /**
