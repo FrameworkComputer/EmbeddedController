@@ -75,6 +75,15 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 	return
 
 /**
+ * @brief Number of RTS54XX ports detected
+ */
+#define NUM_PDC_RTS54XX_PORTS DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT)
+
+/* TODO: b/323371550 */
+BUILD_ASSERT(NUM_PDC_RTS54XX_PORTS <= 2,
+	     "rts54xx driver supports a maximum of 2 ports");
+
+/**
  * @brief SMbus Command struct for Realtek commands
  */
 struct smbus_cmd_t {
@@ -344,6 +353,9 @@ static const char *const state_names[] = {
 	[ST_READ] = "READ",   [ST_IRQ] = "IRQ",
 };
 
+static const struct device *irq_shared_port;
+static int irq_share_pin;
+static bool irq_init_done;
 static volatile bool irq_pending;
 static const struct smf_state states[];
 static int rts54_enable(const struct device *dev);
@@ -1715,30 +1727,43 @@ static int pdc_init(const struct device *dev)
 		return -ENODEV;
 	}
 
-	rv = gpio_pin_configure_dt(&cfg->irq_gpios, GPIO_INPUT);
-	if (rv < 0) {
-		LOG_ERR("Unable to configure GPIO");
-		return rv;
-	}
+	if (!irq_init_done) {
+		irq_shared_port = cfg->irq_gpios.port;
+		irq_share_pin = cfg->irq_gpios.pin;
 
-	gpio_init_callback(&data->gpio_cb, pdc_interrupt_callback,
-			   BIT(cfg->irq_gpios.pin));
+		rv = gpio_pin_configure_dt(&cfg->irq_gpios, GPIO_INPUT);
+		if (rv < 0) {
+			LOG_ERR("Unable to configure GPIO");
+			return rv;
+		}
 
-	rv = gpio_add_callback(cfg->irq_gpios.port, &data->gpio_cb);
-	if (rv < 0) {
-		LOG_ERR("Unable to add callback");
-		return rv;
-	}
+		gpio_init_callback(&data->gpio_cb, pdc_interrupt_callback,
+				   BIT(cfg->irq_gpios.pin));
 
-	rv = gpio_pin_interrupt_configure_dt(&cfg->irq_gpios,
-					     GPIO_INT_EDGE_FALLING);
-	if (rv < 0) {
-		LOG_ERR("Unable to configure interrupt");
-		return rv;
+		rv = gpio_add_callback(cfg->irq_gpios.port, &data->gpio_cb);
+		if (rv < 0) {
+			LOG_ERR("Unable to add callback");
+			return rv;
+		}
+
+		rv = gpio_pin_interrupt_configure_dt(&cfg->irq_gpios,
+						     GPIO_INT_EDGE_FALLING);
+		if (rv < 0) {
+			LOG_ERR("Unable to configure interrupt");
+			return rv;
+		}
+
+		k_work_init(&data->work, interrupt_handler);
+		irq_init_done = true;
+	} else {
+		if (irq_shared_port != cfg->irq_gpios.port ||
+		    irq_share_pin != cfg->irq_gpios.pin) {
+			LOG_ERR("All rts54xx ports must use the same interrupt");
+			return -EINVAL;
+		}
 	}
 
 	k_mutex_init(&data->mtx);
-	k_work_init(&data->work, interrupt_handler);
 
 	data->dev = dev;
 	data->cmd = CMD_NONE;
