@@ -182,18 +182,6 @@ enum init_state_t {
 };
 
 /**
- * @brief Sub-states of the ST_IRQ state
- */
-enum irq_state_t {
-	/** Read the ARA */
-	IRQ_READ_ARA,
-	/** Inform Subsystem of interrupt */
-	IRQ_INFORM_SUBSYSTEM,
-	/** Wait state for non-interrupted port */
-	IRQ_OTHER_PORT_WAIT
-};
-
-/**
  * @brief PDC commands
  */
 enum cmd_t {
@@ -299,10 +287,6 @@ struct pdc_data_t {
 	struct k_work work;
 	/** GPIO interrupt callback */
 	struct gpio_callback gpio_cb;
-	/** IRQ state variable */
-	enum irq_state_t irq_state;
-	/** IRQ counter */
-	uint8_t irq_counter;
 	/** Error status */
 	union error_status_t error_status;
 	/** CCI Event */
@@ -365,6 +349,11 @@ static int rts54_set_notification_enable(const struct device *dev,
 					 uint16_t ext_bits);
 static int rts54_get_info(const struct device *dev, struct pdc_info_t *info);
 
+/**
+ * @brief PDC port data used in interrupt handler
+ */
+static struct pdc_data_t *pdc_data[NUM_PDC_RTS54XX_PORTS];
+
 static enum state_t get_state(struct pdc_data_t *data)
 {
 	return data->ctx.current - &states[0];
@@ -389,6 +378,10 @@ static void print_current_state(struct pdc_data_t *data)
 
 static void call_cci_event_cb(struct pdc_data_t *data)
 {
+	if (data->init_local_state != INIT_PDC_COMPLETE) {
+		return;
+	}
+
 	if (data->cci_cb) {
 		LOG_INF("cci_event_cb event=0x%x", data->cci_event.raw_value);
 		data->cci_cb(data->cci_event, data->cb_data);
@@ -515,6 +508,58 @@ static void st_init_run(void *o)
 	set_state(data, ST_WRITE);
 }
 
+/**
+ * @brief Each port has its own IRQ. When an interrupt is pending, one
+ * of the ST_IDLE states will execute and handle all pending interrupts for all
+ * ports.
+ */
+static void handle_irqs(struct pdc_data_t *data)
+{
+	uint8_t ara;
+	int rv;
+
+	/* Clear pending bit, so other thread won't attempt to handle an irq */
+	irq_pending = false;
+
+	for (int i = 0; i < NUM_PDC_RTS54XX_PORTS; i++) {
+		/*
+		 * Read the Alert Response Address to determine
+		 * which port generated the interrupt.
+		 */
+		rv = get_ara(data->dev, &ara);
+		if (rv) {
+			return;
+		}
+
+		/* Search for port with matching I2C address */
+		for (int j = 0; j < CONFIG_USB_PD_PORT_MAX_COUNT; j++) {
+			struct pdc_data_t *pdc_int_data = pdc_data[j];
+			const struct pdc_config_t *cfg =
+				pdc_int_data->dev->config;
+
+			if ((ara >> 1) == cfg->i2c.addr) {
+				LOG_INF("C%d: IRQ", cfg->connector_number);
+
+				/* Found pending interrupt, handle it */
+				/* Inform subsystem of the interrupt */
+				/* Clear the CCI Event */
+				pdc_int_data->cci_event.raw_value = 0;
+				/* Set the port the CCI Event occurred
+				 * on */
+				pdc_int_data->cci_event.connector_change =
+					cfg->connector_number;
+				/* Set the interrupt event */
+				pdc_int_data->cci_event
+					.vendor_defined_indicator = 1;
+				/* Notify system of status change */
+				call_cci_event_cb(pdc_int_data);
+				/* done with this port */
+				break;
+			}
+		}
+	}
+}
+
 static void st_idle_entry(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
@@ -537,7 +582,7 @@ static void st_idle_run(void *o)
 	if (data->cmd == CMD_TRIGGER_PDC_RESET) {
 		perform_pdc_init(data);
 	} else if (irq_pending) {
-		set_state(data, ST_IRQ);
+		handle_irqs(data);
 	} else if (data->cmd != CMD_NONE) {
 		set_state(data, ST_WRITE);
 	}
@@ -689,10 +734,13 @@ static void st_ping_status_run(void *o)
 			 * If Busy, then set this cci.busy to a 1b
 			 * and all other fields to zero.
 			 */
-			data->cci_event.busy = 1;
+			if (data->cci_event.busy == 0) {
+				/* Only notify subsystem of busy event once */
+				data->cci_event.busy = 1;
 
-			/* Notify system of status change */
-			call_cci_event_cb(data);
+				/* Notify system of status change */
+				call_cci_event_cb(data);
+			}
 		}
 		break;
 	case CMD_DONE:
@@ -971,95 +1019,6 @@ static void st_read_run(void *o)
 	TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 }
 
-static void st_irq_entry(void *o)
-{
-	struct pdc_data_t *data = (struct pdc_data_t *)o;
-
-	print_current_state(data);
-
-	data->irq_state = IRQ_READ_ARA;
-	data->irq_counter = 0;
-}
-
-static void st_irq_run(void *o)
-{
-	struct pdc_data_t *data = (struct pdc_data_t *)o;
-	const struct pdc_config_t *cfg = data->dev->config;
-	uint8_t ara;
-	int rv;
-
-	switch (data->irq_state) {
-	case IRQ_READ_ARA:
-		/* Return to Init or Idle state if IRQ was handled */
-		if (irq_pending == false) {
-			TRANSITION_TO_INIT_OR_IDLE_STATE(data);
-		}
-
-		/*
-		 * Read the Alert Response Address to determine
-		 * which port generated the interrupt.
-		 */
-		rv = get_ara(data->dev, &ara);
-		if (rv == 0) {
-			if ((ara >> 1) == cfg->i2c.addr) {
-				/* This port generated the interrupt */
-				LOG_INF("port generated interrupt");
-				data->irq_state = IRQ_INFORM_SUBSYSTEM;
-			} else {
-				/* This port didn't generate the interrupt */
-				data->irq_state = IRQ_OTHER_PORT_WAIT;
-			}
-		} else {
-			data->irq_counter++;
-			if (data->irq_counter == 4) {
-				/*
-				 * Can't read from the ARA, so inform the
-				 * subsystem of the problem by setting the
-				 * cci_event.vendor_defined_indicator and
-				 * cci_event.error.
-				 */
-				/* Clear the CCI Event */
-				data->cci_event.raw_value = 0;
-				/* Set the port the CCI Event occurred on */
-				data->cci_event.connector_change =
-					cfg->connector_number;
-				/* Set the interrupt event */
-				data->cci_event.vendor_defined_indicator = 1;
-				/* Set error */
-				data->cci_event.error = 1;
-				/* Notify system of status change */
-				call_cci_event_cb(data);
-				/* Clear pending IRQ */
-				irq_pending = false;
-				/* An error occurred, return to init or idle
-				 * state */
-				TRANSITION_TO_INIT_OR_IDLE_STATE(data);
-			}
-		}
-		break;
-	case IRQ_INFORM_SUBSYSTEM:
-		/* Inform subsystem of the interrupt */
-		/* Clear the CCI Event */
-		data->cci_event.raw_value = 0;
-		/* Set the port the CCI Event occurred on */
-		data->cci_event.connector_change = cfg->connector_number;
-		/* Set the interrupt event */
-		data->cci_event.vendor_defined_indicator = 1;
-		/* Notify system of status change */
-		call_cci_event_cb(data);
-		/* Clear pending IRQ */
-		irq_pending = false;
-		/* All done, transition to Init or Idle state */
-		TRANSITION_TO_INIT_OR_IDLE_STATE(data);
-		break;
-	case IRQ_OTHER_PORT_WAIT:
-		/* Wait until the interrupt is handled */
-		if (irq_pending == false) {
-			TRANSITION_TO_INIT_OR_IDLE_STATE(data);
-		}
-	}
-}
-
 /* Populate cmd state table */
 static const struct smf_state states[] = {
 	[ST_INIT] = SMF_CREATE_STATE(st_init_entry, st_init_run, NULL, NULL),
@@ -1068,7 +1027,6 @@ static const struct smf_state states[] = {
 	[ST_PING_STATUS] = SMF_CREATE_STATE(st_ping_status_entry,
 					    st_ping_status_run, NULL, NULL),
 	[ST_READ] = SMF_CREATE_STATE(st_read_entry, st_read_run, NULL, NULL),
-	[ST_IRQ] = SMF_CREATE_STATE(st_irq_entry, st_irq_run, NULL, NULL),
 };
 
 /**
@@ -1767,6 +1725,7 @@ static int pdc_init(const struct device *dev)
 
 	data->dev = dev;
 	data->cmd = CMD_NONE;
+	pdc_data[cfg->connector_number] = data;
 
 	/* Set initial state */
 	data->init_local_state = INIT_PDC_ENABLE;
