@@ -176,8 +176,6 @@ enum unattached_local_state_t {
  * @brief CCI Event Flags
  */
 enum cci_flag_t {
-	/** CCI_RESET_COMPLETED */
-	CCI_RESET_COMPLETED,
 	/** CCI_BUSY */
 	CCI_BUSY,
 	/** CCI_ERROR */
@@ -195,6 +193,8 @@ enum cci_flag_t {
  * @brief State Machine States
  */
 enum pdc_state_t {
+	/** PDC_INIT */
+	PDC_INIT,
 	/** PDC_UNATTACHED */
 	PDC_UNATTACHED,
 	/** PDC_SNK_ATTACHED */
@@ -234,6 +234,7 @@ static const char *const pdc_cmd_names[] = {
  * @brief State Machine State Names
  */
 static const char *const pdc_state_names[] = {
+	[PDC_INIT] = "PDC Init",
 	[PDC_UNATTACHED] = "Unattached",
 	[PDC_SNK_ATTACHED] = "Attached.SNK",
 	[PDC_SRC_ATTACHED] = "Attached.SRC",
@@ -1123,12 +1124,12 @@ static void pdc_send_cmd_wait_run(void *obj)
 	/* Wait for command status notification from driver */
 
 	/*
-	 * On a PDC_RESET, the PDC sets CCI_RESET_COMPLETED to notify
-	 * that the reset is complete
+	 * On a PDC_RESET, the PDC initiates an initializtion and the
+	 * pdc_is_init_done() function is called to check if the initialization
+	 * is complete
 	 */
 	if (port->cmd->cmd == CMD_PDC_RESET) {
-		if (atomic_test_and_clear_bit(port->cci_flags,
-					      CCI_RESET_COMPLETED)) {
+		if (pdc_is_init_done(port->pdc)) {
 			port->cmd->error = false;
 			set_pdc_state(port, port->send_cmd_return_state);
 			return;
@@ -1220,11 +1221,40 @@ static void pdc_src_snk_typec_only_run(void *obj)
 	}
 }
 
+static void pdc_init_entry(void *obj)
+{
+	struct pdc_port_t *port = (struct pdc_port_t *)obj;
+
+	print_current_pdc_state(port);
+
+	/* Initialize Send Command data */
+	send_cmd_init(port);
+}
+
+static void pdc_init_run(void *obj)
+{
+	struct pdc_port_t *port = (struct pdc_port_t *)obj;
+	const struct pdc_config_t *const config = port->dev->config;
+
+	/* Wait until PDC driver is initialized */
+	if (pdc_is_init_done(port->pdc)) {
+		LOG_INF("C%d: PDC Subsystem Started", config->connector_num);
+		/* Send the connector status command to determine which state to
+		 * enter
+		 */
+		port->send_cmd.intern.cmd = CMD_PDC_GET_CONNECTOR_STATUS;
+		port->send_cmd.intern.pending = true;
+		set_pdc_state(port, PDC_SEND_CMD_START);
+		return;
+	}
+}
+
 /**
  * @brief Populate state table
  */
 static const struct smf_state pdc_states[] = {
 	/* Normal States */
+	[PDC_INIT] = SMF_CREATE_STATE(pdc_init_entry, pdc_init_run, NULL, NULL),
 	[PDC_UNATTACHED] = SMF_CREATE_STATE(pdc_unattached_entry,
 					    pdc_unattached_run, NULL, NULL),
 	[PDC_SNK_ATTACHED] = SMF_CREATE_STATE(pdc_snk_attached_entry,
@@ -1247,11 +1277,6 @@ static const struct smf_state pdc_states[] = {
 static void pdc_cci_handler_cb(union cci_event_t cci_event, void *cb_data)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)cb_data;
-
-	/* Handle reset completed event from driver */
-	if (cci_event.reset_completed) {
-		atomic_set_bit(port->cci_flags, CCI_RESET_COMPLETED);
-	}
 
 	/* Handle busy event from driver */
 	if (cci_event.busy) {
@@ -1304,14 +1329,7 @@ static int pdc_subsys_init(const struct device *dev)
 
 	/* Initialize command mutex */
 	k_mutex_init(&port->mtx);
-	/* Initialize Send Command data */
-	send_cmd_init(port);
-
-	/* Send the connector status command to determine which state to enter
-	 */
-	port->send_cmd.intern.cmd = CMD_PDC_GET_CONNECTOR_STATUS;
-	port->send_cmd.intern.pending = true;
-	smf_set_initial(&port->ctx, &pdc_states[PDC_SEND_CMD_START]);
+	smf_set_initial(&port->ctx, &pdc_states[PDC_INIT]);
 
 	/* Create the thread for this port */
 	config->create_thread(dev);
