@@ -188,7 +188,9 @@ enum init_state_t {
 	/** Reset the PDC */
 	INIT_PDC_RESET,
 	/** Initialization complete */
-	INIT_PDC_COMPLETE
+	INIT_PDC_COMPLETE,
+	/** Wait for command to send */
+	INIT_PDC_CMD_WAIT
 };
 
 /**
@@ -253,6 +255,8 @@ struct pdc_config_t {
 	struct gpio_dt_spec irq_gpios;
 	/** connector number of this port */
 	uint8_t connector_number;
+	/** Notification enable bits */
+	union notification_enable_t bits;
 	/** Create thread function */
 	void (*create_thread)(const struct device *dev);
 };
@@ -265,6 +269,10 @@ struct pdc_data_t {
 	struct smf_ctx ctx;
 	/** Init's local state variable */
 	enum init_state_t init_local_state;
+	/** Init's current state */
+	enum init_state_t init_local_current_state;
+	/** Init's next state */
+	enum init_state_t init_local_next_state;
 	/** PDC's last state */
 	enum state_t last_state;
 	/** PDC device structure */
@@ -483,43 +491,65 @@ static void st_init_entry(void *o)
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
 
 	print_current_state(data);
+
 	data->init_done = false;
 	data->cmd = CMD_NONE;
+}
+
+static void init_write_cmd_and_change_state(struct pdc_data_t *data,
+					    enum init_state_t next)
+{
+	data->init_local_current_state = data->init_local_state;
+	data->init_local_next_state = next;
+	data->init_local_state = INIT_PDC_CMD_WAIT;
+	set_state(data, ST_WRITE);
 }
 
 static void st_init_run(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
-	union notification_enable_t bits;
+	const struct pdc_config_t *cfg = data->dev->config;
 
 	switch (data->init_local_state) {
 	case INIT_PDC_ENABLE:
 		rts54_enable(data->dev);
-		data->init_local_state = INIT_PDC_GET_IC_STATUS;
-		break;
+		init_write_cmd_and_change_state(data, INIT_PDC_GET_IC_STATUS);
+		return;
 	case INIT_PDC_GET_IC_STATUS:
 		rts54_get_info(data->dev, &data->info);
-		data->init_local_state = INIT_PDC_SET_NOTIFICATION_ENABLE;
-		break;
+		init_write_cmd_and_change_state(
+			data, INIT_PDC_SET_NOTIFICATION_ENABLE);
+		return;
 	case INIT_PDC_SET_NOTIFICATION_ENABLE:
-		bits.raw_value = 0xDBE7; /* TODO: Read from device tree */
-		rts54_set_notification_enable(data->dev, bits, 0);
-		data->init_local_state = INIT_PDC_RESET;
-		break;
+		rts54_set_notification_enable(data->dev, cfg->bits, 0);
+		init_write_cmd_and_change_state(data, INIT_PDC_RESET);
+		return;
 	case INIT_PDC_RESET:
 		rts54_reset(data->dev);
-		if (data->cci_event.reset_completed) {
-			data->init_local_state = INIT_PDC_COMPLETE;
-		}
-		break;
+		init_write_cmd_and_change_state(data, INIT_PDC_COMPLETE);
+		return;
 	case INIT_PDC_COMPLETE:
 		/* Init is complete, so transition to Idle state */
 		set_state(data, ST_IDLE);
 		data->init_done = true;
 		return;
-	}
+	case INIT_PDC_CMD_WAIT:
+		/* If PDC_RESET was sent, check the reset_completed flag */
+		if (data->init_local_current_state == INIT_PDC_RESET) {
+			if (!data->cci_event.reset_completed) {
+				return;
+			}
+		} else if (!data->cci_event.command_completed) {
+			return;
+		}
 
-	set_state(data, ST_WRITE);
+		if (data->cci_event.error) {
+			data->init_local_state = data->init_local_current_state;
+		} else {
+			data->init_local_state = data->init_local_next_state;
+		}
+		break;
+	}
 }
 
 /**
@@ -1791,6 +1821,22 @@ static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 		.irq_gpios = GPIO_DT_SPEC_INST_GET(inst, irq_gpios),          \
 		.connector_number =                                           \
 			USBC_PORT_FROM_DRIVER_NODE(DT_DRV_INST(inst), pdc),   \
+		.bits.command_completed = 1,                                  \
+		.bits.external_supply_change = 1,                             \
+		.bits.power_operation_mode_change = 1,                        \
+		.bits.attention = 0,                                          \
+		.bits.fw_update_request = 0,                                  \
+		.bits.provider_capability_change_supported = 1,               \
+		.bits.negotiated_power_level_change = 1,                      \
+		.bits.pd_reset_complete = 1,                                  \
+		.bits.support_cam_change = 1,                                 \
+		.bits.battery_charging_status_change = 1,                     \
+		.bits.security_request_from_port_partner = 0,                 \
+		.bits.connector_partner_change = 1,                           \
+		.bits.power_direction_change = 1,                             \
+		.bits.set_retimer_mode = 0,                                   \
+		.bits.connect_change = 1,                                     \
+		.bits.error = 1,                                              \
 		.create_thread = create_thread_##inst,                        \
 	};                                                                    \
                                                                               \
