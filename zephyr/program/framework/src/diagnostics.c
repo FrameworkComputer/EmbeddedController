@@ -86,6 +86,7 @@ void cancel_diagnostics(void)
 static void set_diagnostic_leds(int color)
 {
 	led_set_color(color, EC_LED_ID_BATTERY_LED);
+	board_led_apply_color();
 }
 
 void set_diagnostic(enum diagnostics_device_idx idx, bool error)

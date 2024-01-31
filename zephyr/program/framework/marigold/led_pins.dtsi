@@ -19,7 +19,7 @@
 			pwms = <&pwm4 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
 		};
 
-		pwm_power_w: pwm_power_w {
+		pwm_power_w: pwm-power-w {
 			pwms = <&pwm5 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
 		};
 	};
