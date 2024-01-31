@@ -268,6 +268,15 @@ static void state_machine(uint64_t tnow)
 			 */
 			reset_diagnostics();
 			chipset_exit_hard_off();
+
+			/*
+			 * Workaround: the pch now have leakage,
+			 * need keep pchbtn to low for while,
+			 * if use idle will set to high by release event.
+			 *
+			 * when HW solved leakage will go back check
+			 * should still nedd eat release
+			 */
 			pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
 		} else {
 			/*
