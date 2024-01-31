@@ -297,6 +297,8 @@ struct pdc_data_t {
 	void *cb_data;
 	/** Information about the PDC */
 	struct pdc_info_t info;
+	/** Init done flag */
+	bool init_done;
 };
 
 /**
@@ -378,7 +380,7 @@ static void print_current_state(struct pdc_data_t *data)
 
 static void call_cci_event_cb(struct pdc_data_t *data)
 {
-	if (data->init_local_state != INIT_PDC_COMPLETE) {
+	if (!data->init_done) {
 		return;
 	}
 
@@ -408,10 +410,10 @@ static void perform_pdc_init(struct pdc_data_t *data)
  */
 static void transition_to_init_or_idle_state(struct pdc_data_t *data)
 {
-	if (data->init_local_state != INIT_PDC_COMPLETE) {
-		set_state(data, ST_INIT);
-	} else {
+	if (data->init_done) {
 		set_state(data, ST_IDLE);
+	} else {
+		set_state(data, ST_INIT);
 	}
 }
 
@@ -472,7 +474,7 @@ static void st_init_entry(void *o)
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
 
 	print_current_state(data);
-
+	data->init_done = false;
 	data->cmd = CMD_NONE;
 }
 
@@ -497,11 +499,14 @@ static void st_init_run(void *o)
 		break;
 	case INIT_PDC_RESET:
 		rts54_reset(data->dev);
-		data->init_local_state = INIT_PDC_COMPLETE;
+		if (data->cci_event.reset_completed) {
+			data->init_local_state = INIT_PDC_COMPLETE;
+		}
 		break;
 	case INIT_PDC_COMPLETE:
 		/* Init is complete, so transition to Idle state */
 		set_state(data, ST_IDLE);
+		data->init_done = true;
 		return;
 	}
 
@@ -1629,7 +1634,15 @@ static int rts54_get_current_pdo(const struct device *dev, uint32_t *pdo)
 	return 0;
 }
 
+static bool rts54_is_init_done(const struct device *dev)
+{
+	struct pdc_data_t *data = dev->data;
+
+	return data->init_done;
+}
+
 static const struct pdc_driver_api_t pdc_driver_api = {
+	.is_init_done = rts54_is_init_done,
 	.get_ucsi_version = rts54_get_ucsi_version,
 	.reset = rts54_pdc_reset,
 	.connector_reset = rts54_connector_reset,

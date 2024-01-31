@@ -124,6 +124,7 @@ typedef int (*pdc_reconnect_t)(const struct device *dev);
 typedef int (*pdc_get_current_flash_bank_t)(const struct device *dev,
 					    uint8_t *bank);
 typedef int (*pdc_update_retimer_fw_t)(const struct device *dev, bool enable);
+typedef bool (*pdc_is_init_done_t)(const struct device *dev);
 
 /**
  * @cond INTERNAL_HIDDEN
@@ -131,6 +132,7 @@ typedef int (*pdc_update_retimer_fw_t)(const struct device *dev, bool enable);
  * These are for internal use only, so skip these in public documentation.
  */
 __subsystem struct pdc_driver_api_t {
+	pdc_is_init_done_t is_init_done;
 	pdc_get_ucsi_version_t get_ucsi_version;
 	pdc_reset_t reset;
 	pdc_connector_reset_t connector_reset;
@@ -159,6 +161,23 @@ __subsystem struct pdc_driver_api_t {
 /**
  * @endcond
  */
+
+/**
+ * @brief Tests if the PDC driver init process is complete
+ *
+ * @param dev PDC device structure pointer
+ *
+ * @retval true if PDC driver init process is complete, else false
+ */
+static inline bool pdc_is_init_done(const struct device *dev)
+{
+	const struct pdc_driver_api_t *api =
+		(const struct pdc_driver_api_t *)dev->api;
+
+	__ASSERT(api->is_init_done != NULL, "IS_INIT_DONE is not optional");
+
+	return api->is_init_done(dev);
+}
 
 /**
  * @brief Trigger the PDC to read the power level when in Source mode.
