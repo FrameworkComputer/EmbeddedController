@@ -31,9 +31,9 @@
 			reg = <1>;
 			tcpc = <&usbpd1>;
 			ppc = <&ppc_port1>;
-			usb-mux-chain-0 {
+			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&virtual_mux_1>;
+				usb-muxes = <&tusb1046_mux_1 &virtual_mux_1>;
 			};
 		};
 
@@ -86,5 +86,11 @@
 		 * the "named-gpios" node will be dealt with at a later date.
 		 */
 		irq-gpios = <&gpiod 4 GPIO_ACTIVE_LOW>;
+	};
+
+	tusb1046_mux_1: tusb1046-mux-1@12 {
+		compatible = "ti,tusb1044";
+		status = "okay";
+		reg = <0x12>;
 	};
 };
