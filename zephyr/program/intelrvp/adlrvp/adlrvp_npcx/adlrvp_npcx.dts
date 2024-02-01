@@ -169,6 +169,12 @@
 		reset-pin = <&usb_c0_bb_retimer_rst>;
 		ls-en-pin = <&usb_c0_bb_retimer_ls_en>;
 	};
+
+	usb_c0_opt_redriver: tusb1044_mux_c0@0e {
+		compatible = "ti,tusb1044";
+		status = "okay";
+		reg = <0x0e>;
+	};
 };
 
 &i2c_ctrl0 {

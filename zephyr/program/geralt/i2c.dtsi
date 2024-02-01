@@ -98,7 +98,7 @@
 	};
 
 	tusb546_mux_0: tusb546-mux-0@44 {
-		compatible = "ti,tusb1064";
+		compatible = "ti,tusb546";
 		reg = <0x44>;
 	};
 
