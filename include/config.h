@@ -4408,6 +4408,9 @@
  */
 #undef CONFIG_DPTF
 
+/* If defined, dptf debug prints will print to EC console */
+#undef CONFIG_DPTF_DEBUG_PRINTS
+
 /*
  * If defined, this indicates to the motion lid driver that the board does not
  * have any GMR sensor and hence DPTF profile selection is required to be done
