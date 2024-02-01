@@ -35,6 +35,10 @@
  */
 #line 37
 
+#ifndef __THROW
+#define __THROW
+#endif
+
 /*
  * Define a new macro (FIXED_SECTION) to abstract away the linker details
  * between platform/ec builds and Zephyr. Each build has a slightly different

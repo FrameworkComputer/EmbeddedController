@@ -156,7 +156,7 @@ void timer_print_info(void);
  * Returns a free running millisecond clock counter, which matches tpm2
  * library expectations.
  */
-clock_t clock(void);
+clock_t clock(void) __THROW;
 
 /**
  * Compute how far to_time is from from_time with rollover taken into account
