@@ -5,6 +5,7 @@
 
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_pdc.h"
+#include "emul/emul_smbus_ara.h"
 #include "usbc/pdc_power_mgmt.h"
 
 #include <zephyr/devicetree.h>
@@ -16,11 +17,17 @@
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
 #define TEST_PORT 0
 
+#define SMBUS_ARA_NODE DT_NODELABEL(smbus_ara_emul)
+static const struct emul *ara = EMUL_DT_GET(SMBUS_ARA_NODE);
+
 void pdc_power_mgmt_setup(void)
 {
+	uint8_t addr = DT_REG_ADDR(RTS5453P_NODE);
+
 	zassume(TEST_PORT < CONFIG_USB_PD_PORT_MAX_COUNT,
 		"TEST_PORT is invalid");
 
+	emul_smbus_ara_set_address(ara, addr);
 	emul_pdc_set_response_delay(emul, 0);
 	emul_pdc_disconnect(emul);
 	k_sleep(K_MSEC(1000));

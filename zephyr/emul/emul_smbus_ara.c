@@ -23,6 +23,15 @@ struct smbus_ara_emul_data {
 	uint8_t device_address;
 };
 
+int emul_smbus_ara_set_address(const struct emul *emul, uint8_t address)
+{
+	struct smbus_ara_emul_data *data = emul->data;
+
+	data->device_address = address;
+
+	return 0;
+}
+
 static int smbus_ara_emul_start_read(const struct emul *emul, int reg)
 {
 	return 0;
