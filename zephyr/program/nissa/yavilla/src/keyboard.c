@@ -49,6 +49,12 @@ static void kb_layout_init(void)
 	 */
 	if (val == FW_KB_LAYOUT_US2)
 		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
+
+	/*
+	 * Increase delay before the next key scan to prevent from WDT reset
+	 * under some specific condition (b:323454321).
+	 */
+	keyscan_config.min_post_scan_delay_us = 2 * MSEC;
 }
 DECLARE_HOOK(HOOK_INIT, kb_layout_init, HOOK_PRIO_POST_FIRST);
 
