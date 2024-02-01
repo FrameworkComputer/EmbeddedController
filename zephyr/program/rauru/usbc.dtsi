@@ -16,7 +16,7 @@
 			ppc = <&ppc_port0>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&virtual_mux_0>;
+				usb-muxes = <&ps8802_mux_0 &virtual_mux_0>;
 			};
 		};
 
@@ -72,6 +72,12 @@
 		 * the "named-gpios" node will be dealt with at a later date.
 		 */
 		 irq-gpios = <&gpiof 1 GPIO_ACTIVE_LOW>;
+	};
+
+	ps8802_mux_0: ps8802-mx-0@17 {
+		compatible = "parade,ps8802";
+		status = "okay";
+		reg = <0x17>;
 	};
 };
 
