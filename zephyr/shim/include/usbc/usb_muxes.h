@@ -16,6 +16,7 @@
 #include "usbc/it5205_usb_mux.h"
 #include "usbc/kb8010_usb_mux.h"
 #include "usbc/ps8743_usb_mux.h"
+#include "usbc/ps8802_usb_mux.h"
 #include "usbc/ps8818_usb_mux.h"
 #include "usbc/ps8828_usb_mux.h"
 #include "usbc/ps8833_usb_mux.h"
@@ -43,6 +44,7 @@
 	(KB8010_USB_MUX_COMPAT, USB_MUX_CONFIG_KB8010),         \
 	(PS8743_USB_MUX_COMPAT, USB_MUX_CONFIG_PS8743),         \
 	(PS8743_EMUL_COMPAT, USB_MUX_CONFIG_PS8743),         \
+	(PS8802_USB_MUX_COMPAT, USB_MUX_CONFIG_PS8802),         \
 	(PS8818_USB_MUX_COMPAT, USB_MUX_CONFIG_PS8818),         \
 	(PS8828_USB_MUX_COMPAT, USB_MUX_CONFIG_PS8828),         \
 	(PS8833_USB_MUX_COMPAT, USB_MUX_CONFIG_PS8833),         \
