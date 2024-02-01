@@ -25,6 +25,11 @@
 LOG_MODULE_REGISTER(pdc_power_mgmt);
 
 /**
+ * @brief Event triggered by sending an internal command
+ */
+#define PDC_SM_EVENT BIT(0)
+
+/**
  * @brief Time delay before running the state machine loop
  */
 #define LOOP_DELAY_MS 25
@@ -365,6 +370,8 @@ struct pdc_port_t {
 	enum src_attached_local_state_t src_attached_local_state;
 	/** Last Source attached local state variable */
 	enum src_attached_local_state_t src_attached_last_state;
+	/** State machine run event */
+	struct k_event sm_event;
 
 	/** Transitioning from last_state */
 	enum pdc_state_t last_state;
@@ -446,44 +453,7 @@ static enum pdc_state_t get_pdc_state(struct pdc_port_t *port);
 static int pdc_subsys_init(const struct device *dev);
 static void send_cmd_init(struct pdc_port_t *port);
 static void queue_internal_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd);
-static void queue_public_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd);
-
-/**
- * @brief Run a command started by a public api function call
- */
-static void run_public_api_command(struct pdc_port_t *port)
-{
-	/* Don't send another public initiated command if one is already pending
-	 */
-	if (port->send_cmd.public.pending) {
-		return;
-	}
-
-	/* Send the public initiated command */
-	if (atomic_test_and_clear_bit(port->pdc_cmd_flags, CMD_PDC_RESET)) {
-		queue_public_cmd(port, CMD_PDC_RESET);
-		return;
-	} else if (atomic_test_and_clear_bit(port->pdc_cmd_flags,
-					     CMD_PDC_GET_VBUS_VOLTAGE)) {
-		queue_public_cmd(port, CMD_PDC_GET_VBUS_VOLTAGE);
-		return;
-	} else if (atomic_test_and_clear_bit(port->pdc_cmd_flags,
-					     CMD_PDC_SET_PDR)) {
-		queue_public_cmd(port, CMD_PDC_SET_PDR);
-	} else if (atomic_test_and_clear_bit(port->pdc_cmd_flags,
-					     CMD_PDC_SET_UOR)) {
-		queue_public_cmd(port, CMD_PDC_SET_UOR);
-	} else if (atomic_test_and_clear_bit(port->pdc_cmd_flags,
-					     CMD_PDC_GET_INFO)) {
-		queue_public_cmd(port, CMD_PDC_GET_INFO);
-		return;
-	}
-
-	if (atomic_get(port->pdc_cmd_flags) != 0) {
-		LOG_ERR("Public API does not support this command (%ld)",
-			atomic_get(port->pdc_cmd_flags));
-	}
-}
+static int queue_public_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd);
 
 /**
  * @brief PDC thread
@@ -496,10 +466,11 @@ static ALWAYS_INLINE void pdc_thread(void *pdc_dev, void *unused1,
 	struct pdc_port_t *port = &data->port;
 
 	while (1) {
+		/* Wait for timeout or event */
+		k_event_wait(&port->sm_event, PDC_SM_EVENT, false,
+			     K_MSEC(LOOP_DELAY_MS));
 		/* Run port connection state machine */
 		smf_run_state(&port->ctx);
-		/* Delay */
-		k_sleep(K_MSEC(LOOP_DELAY_MS));
 	}
 }
 
@@ -588,6 +559,17 @@ static void send_cmd_init(struct pdc_port_t *port)
 }
 
 /**
+ * @brief Run a command started by a public api function call
+ */
+static void send_pending_public_commands(struct pdc_port_t *port)
+{
+	/* Send a pending public command */
+	if (port->send_cmd.public.pending) {
+		set_pdc_state(port, PDC_SEND_CMD_START);
+	}
+}
+
+/**
  * @brief Limits the charge current to zero and invalidates and received Source
  * PDOS. This function also seeds the charger.
  */
@@ -611,15 +593,21 @@ static void invalidate_charger_settings(struct pdc_port_t *port)
  * @brief Callers of this function should return immediately because the PDC
  * state is changed.
  */
-static void queue_public_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd)
+static int queue_public_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd)
 {
+	/* Don't send another public initiated command if one is already pending
+	 */
+	if (port->send_cmd.public.pending) {
+		return -EBUSY;
+	}
+
 	k_mutex_lock(&port->mtx, K_FOREVER);
 	port->send_cmd.public.cmd = pdc_cmd;
 	port->send_cmd.public.error = false;
 	port->send_cmd.public.pending = true;
 	k_mutex_unlock(&port->mtx);
-
-	set_pdc_state(port, PDC_SEND_CMD_START);
+	k_event_post(&port->sm_event, PDC_SM_EVENT);
+	return 0;
 }
 
 /**
@@ -633,6 +621,7 @@ static void queue_internal_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd)
 	port->send_cmd.intern.error = false;
 	port->send_cmd.intern.pending = true;
 	k_mutex_unlock(&port->mtx);
+	k_event_post(&port->sm_event, PDC_SM_EVENT);
 
 	set_pdc_state(port, PDC_SEND_CMD_START);
 }
@@ -725,9 +714,9 @@ static void run_unattached_policies(struct pdc_port_t *port)
 		/* Set RP current policy */
 		queue_internal_cmd(port, CMD_PDC_SET_POWER_LEVEL);
 		return;
-	} else {
-		run_public_api_command(port);
 	}
+
+	send_pending_public_commands(port);
 }
 
 static void run_snk_policies(struct pdc_port_t *port)
@@ -736,9 +725,9 @@ static void run_snk_policies(struct pdc_port_t *port)
 				      SNK_POLICY_SWAP_TO_SRC)) {
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
 		return;
-	} else {
-		run_public_api_command(port);
 	}
+
+	send_pending_public_commands(port);
 }
 
 static void run_src_policies(struct pdc_port_t *port)
@@ -747,9 +736,9 @@ static void run_src_policies(struct pdc_port_t *port)
 				      SRC_POLICY_SWAP_TO_SNK)) {
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
 		return;
-	} else {
-		run_public_api_command(port);
 	}
+
+	send_pending_public_commands(port);
 }
 
 /**
@@ -1014,6 +1003,8 @@ static void pdc_send_cmd_start_entry(void *obj)
 	} else {
 		port->cmd = &port->send_cmd.public;
 	}
+
+	k_event_clear(&port->sm_event, PDC_SM_EVENT);
 }
 
 static int send_pdc_cmd(struct pdc_port_t *port)
@@ -1327,6 +1318,9 @@ static int pdc_subsys_init(const struct device *dev)
 	/* Set cci call back */
 	pdc_set_handler_cb(port->pdc, pdc_cci_handler_cb, (void *)port);
 
+	/* Initialize state machine run event */
+	k_event_init(&port->sm_event);
+
 	/* Initialize command mutex */
 	k_mutex_init(&port->mtx);
 	smf_set_initial(&port->ctx, &pdc_states[PDC_INIT]);
@@ -1359,11 +1353,12 @@ static bool is_connectionless_cmd(enum pdc_cmd_t pdc_cmd)
  */
 static int public_api_block(int port, enum pdc_cmd_t pdc_cmd)
 {
+	if (queue_public_cmd(&pdc_data[port]->port, pdc_cmd)) {
+		return -EBUSY;
+	}
+
 	/* Reset block counter */
 	pdc_data[port]->port.block_counter = 0;
-
-	/* Set flag to send the command */
-	atomic_set_bit(pdc_data[port]->port.pdc_cmd_flags, pdc_cmd);
 
 	/* TODO: Investigate using a semaphore here instead of while loop */
 	/* Block calling thread until command is processed, errors or timeout
