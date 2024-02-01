@@ -207,3 +207,13 @@ if(DEFINED CONFIG_BOARD_ANRAGGAR)
 			"anraggar/src/keyboard_customization.c"
 	)
 endif()
+if(DEFINED CONFIG_BOARD_GLASSWAY)
+	project(glassway)
+	zephyr_library_sources(
+			"glassway/src/led.c"
+			"glassway/src/form_factor.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "glassway/src/fan.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "glassway/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "glassway/src/charger.c")
+endif()

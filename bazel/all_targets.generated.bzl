@@ -908,6 +908,11 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "glassway",
+        board = "glassway",
+        extra_modules = ["cmsis"],
+    )
+    ec_target(
         name = "gooey",
         baseboard = "keeby",
         board = "gooey",
