@@ -103,3 +103,13 @@ __override int board_set_active_charge_port(int charge_port)
 {
 	return EC_SUCCESS;
 }
+
+const uint32_t *const pd_get_src_caps(int port)
+{
+	return pdc_power_mgmt_get_src_caps(port);
+}
+
+uint8_t pd_get_src_cap_cnt(int port)
+{
+	return pdc_power_mgmt_get_src_cap_cnt(port);
+}
