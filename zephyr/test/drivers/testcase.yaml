@@ -1513,6 +1513,16 @@ tests:
     - anx7452/usbc.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_ANX7452=y
+  drivers.kb8010:
+    extra_conf_files:
+    - prj.conf
+    - kb8010/prj.conf
+    extra_dtc_overlay_files:
+    - boards/native_posix.overlay
+    - ktu1125/ktu1125.dts
+    - kb8010/kb8010.dts
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_KB8010=y
   drivers.flash_cbi:
     extra_dtc_overlay_files:
     - boards/native_posix.overlay
