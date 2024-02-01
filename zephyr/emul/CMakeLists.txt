@@ -8,6 +8,7 @@ add_subdirectory("tcpc")
 cros_ec_library_include_directories(include)
 
 zephyr_library_sources_ifdef(CONFIG_EMUL_ANX7452	emul_anx7452.c)
+zephyr_library_sources_ifdef(CONFIG_EMUL_KB8010		emul_kb8010.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_BB_RETIMER	emul_bb_retimer.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_BC12_DETECT_PI3USB9201	emul_pi3usb9201.c)
 zephyr_library_sources_ifdef(CONFIG_EMUL_BMA255		emul_bma255.c)

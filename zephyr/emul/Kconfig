@@ -255,6 +255,18 @@ config EMUL_ANX7452
 	  reads and writes to all emulator registers. Emulators API is
 	  available in zephyr/include/emul/emul_anx7452.h
 
+config EMUL_KB8010
+	bool "KB8010 retimer emulator"
+	default y
+	depends on ZTEST && DT_HAS_KANDOU_KB8010_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable the Kandou kb8010 retimer emulator. This driver use
+	  emulated I2C bus. It is used to test kb8010 driver. It
+	  supports reads and writes to all emulator registers.
+	  XXX The emulator's
+	  XXX API is available in zephyr/include/emul/emul_kb8010.h
+
 config EMUL_PS8743
 	bool "PS8743 emulator"
 	default y
