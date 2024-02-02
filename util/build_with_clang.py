@@ -222,6 +222,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "whiskers",
     "woomax",
     "wormdingler",
+    "xol",
     "yorp",
     # CHIP=mt_scp *and* CHIP_VARIANT=mt818x
     # git grep --name-only 'CHIP:=mt_scp' | xargs grep -L 'CHIP_VARIANT:=mt818' | sed 's#board/\(.*\)/build.mk#"\1",#'

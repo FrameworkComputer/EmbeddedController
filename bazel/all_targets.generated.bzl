@@ -2353,6 +2353,14 @@ def all_targets():
         extra_modules = ["cmsis", "picolibc", "pigweed"],
     )
     ec_target(
+        name = "xol",
+        baseboard = "brya",
+        board = "xol",
+        chip = "npcx",
+        core = "cortex-m",
+        zephyr = False,
+    )
+    ec_target(
         name = "yaviks",
         board = "yaviks",
     )
