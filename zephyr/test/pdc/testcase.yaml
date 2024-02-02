@@ -1,4 +1,6 @@
 common:
   platform_allow: native_posix
 tests:
-  pdc.default: {}
+  pdc.generic:
+    extra_configs:
+    - CONFIG_TEST_SUITE_PDC_GENERIC=y
