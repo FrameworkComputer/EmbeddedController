@@ -29,6 +29,7 @@
 #include "usb_pd_ap_vdm_control.h"
 #include "usb_pd_dpm_sm.h"
 #include "usb_pd_pdo.h"
+#include "usb_pd_policy.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pd_timer.h"
 #include "usb_pe_sm.h"
@@ -355,10 +356,14 @@ void dpm_init(int port)
 	dpm[port].pd_button_state = DPM_PD_BUTTON_IDLE;
 	ap_vdm_init(port);
 
-	/* If the TCPM is not Source/DFP/VCONN Source at the time of Attach,
-	 * trigger a VCONN Swap to VCONN Source as soon as possible.
+	/* If the TCPM is not Source/DFP/VCONN Source at the time of Attach, and
+	 * board power policy permits, trigger a VCONN Swap to VCONN Source as
+	 * soon as possible.
+	 * TODO(b/188578923): Passing true indicates that the PE wants to swap
+	 * to VCONN Source at this time. Remove this redundant argument when
+	 * practical.
 	 */
-	if (pd_get_vconn_state(port) == PD_ROLE_VCONN_OFF) {
+	if (port_discovery_vconn_swap_policy(port, true)) {
 		dpm[port].desired_vconn_role = PD_ROLE_VCONN_SRC;
 		DPM_SET_FLAG(port, DPM_FLAG_VCONN_SWAP);
 	}
