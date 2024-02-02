@@ -467,3 +467,81 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_vbus_voltage)
 	k_sleep(K_MSEC(1000));
 #endif
 }
+
+ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
+{
+	int i;
+	struct setup_t {
+		enum pd_dual_role_states state;
+		emul_pdc_set_connector_status_t configure;
+	};
+	struct expect_t {
+		bool check_cc_mode;
+		enum ccom_t cc_mode;
+		bool check_pdr;
+		union pdr_t pdr;
+	};
+	struct {
+		struct setup_t s;
+		struct expect_t e;
+	} test[] = {
+		{ .s = { .state = PD_DRP_TOGGLE_ON, .configure = NULL },
+		  .e = { .check_cc_mode = true, .cc_mode = CCOM_DRP } },
+		{ .s = { .state = PD_DRP_TOGGLE_OFF, .configure = NULL },
+		  .e = { .check_cc_mode = true, .cc_mode = CCOM_RD } },
+		{ .s = { .state = PD_DRP_FREEZE, .configure = NULL },
+		  .e = { .check_cc_mode = true, .cc_mode = CCOM_RD } },
+		{ .s = { .state = PD_DRP_FREEZE,
+			 .configure = emul_pdc_configure_snk },
+		  .e = { .check_cc_mode = true, .cc_mode = CCOM_RD } },
+#ifdef TODO_B_323589615
+		/* TODO(b/323589615) - una_policy is not applied in attached
+		 * states
+		 */
+		{ .s = { .state = PD_DRP_FREEZE,
+			 .configure = emul_pdc_configure_src },
+		  .e = { .check_cc_mode = true, .cc_mode = CCOM_RP } },
+#endif
+		{ .s = { .state = PD_DRP_FORCE_SINK,
+			 .configure = emul_pdc_configure_src },
+		  .e = { .check_pdr = true,
+			 .pdr = { .swap_to_src = 0, .swap_to_snk = 1 } } },
+		{ .s = { .state = PD_DRP_FORCE_SOURCE,
+			 .configure = emul_pdc_configure_snk },
+		  .e = { .check_pdr = true,
+			 .pdr = { .swap_to_src = 1, .swap_to_snk = 0 } } },
+	};
+
+	struct connector_status_t connector_status;
+	enum ccom_t ccom;
+	enum drp_mode_t dm;
+	union pdr_t pdr;
+
+	for (i = 0; i < ARRAY_SIZE(test); i++) {
+		memset(&connector_status, 0, sizeof(connector_status));
+		if (test[i].s.configure) {
+			test[i].s.configure(emul, &connector_status);
+			emul_pdc_connect_partner(emul, &connector_status);
+			k_sleep(K_MSEC(2000));
+		}
+
+		pdc_power_mgmt_set_dual_role(TEST_PORT, test[i].s.state);
+		k_sleep(K_MSEC(4000));
+
+		if (test[i].e.check_cc_mode) {
+			emul_pdc_get_ccom(emul, &ccom, &dm);
+			zassert_equal(test[i].e.cc_mode, ccom,
+				      "[%d] expected=%d, received=%d", i,
+				      test[i].e.cc_mode, ccom);
+		}
+		if (test[i].e.check_pdr) {
+			emul_pdc_get_pdr(emul, &pdr);
+			zassert_equal(test[i].e.pdr.swap_to_snk,
+				      pdr.swap_to_snk);
+			zassert_equal(test[i].e.pdr.swap_to_src,
+				      pdr.swap_to_src);
+		}
+		emul_pdc_disconnect(emul);
+		k_sleep(K_MSEC(2000));
+	}
+}
