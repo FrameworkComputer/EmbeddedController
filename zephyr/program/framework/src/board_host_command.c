@@ -379,7 +379,8 @@ static enum ec_status  host_command_get_simple_version(struct host_cmd_handler_a
 		sizeof(temp_version));
 
 	for (idx = 0; idx < sizeof(r->simple_version); idx++) {
-		r->simple_version[idx] = temp_version[idx + 18];
+		r->simple_version[idx] = temp_version[idx +
+			CONFIG_PLATFORM_SIMPLE_VERSION_SHIFT_IDX];
 	}
 
 	args->response_size = sizeof(*r);

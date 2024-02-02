@@ -71,6 +71,13 @@ config PD_COMMON_VBUS_CONTROL
 		Enable Cypress CCG common vbus control, if not enable please modify
 		board_set_active_charge_port at board for customize vbus control.
 
+config PLATFORM_SIMPLE_VERSION_SHIFT_IDX
+	int "Shift idx for return commit id to BIOS"
+	default 18
+	help
+		The simple version will take commit from EC_IMAGE_RO, than we should shift
+		idx for retrieve commit id example ec:xxxxxx.
+
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code
 source "subsys/logging/Kconfig.template.log_config"
