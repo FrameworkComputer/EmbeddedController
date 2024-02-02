@@ -57,5 +57,20 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "hdmi_hpd_interrupt";
 		};
+		int_lid_accel: lid-accel {
+			irq-pin = <&gpio_lid_accel_int_ec_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lis2dw12_interrupt";
+		};
+		int_imu: ec-imu {
+			irq-pin = <&gpio_imu_int_ec_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bmi3xx_interrupt";
+		};
+		int_als_rgb: ec_als_rgb {
+			irq-pin = <&gpio_als_int_ec_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcs3400_interrupt";
+		};
 	};
 };
