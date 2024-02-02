@@ -75,7 +75,7 @@ def main():
 
     parser = argparse.ArgumentParser()
     parser.add_argument(
-        "--ec_fw", type=Path, required=True, help="Path to the EC firmware"
+        "--ec-fw", type=Path, required=True, help="Path to the EC firmware"
     )
     parser.add_argument(
         "--prikey",
@@ -84,7 +84,7 @@ def main():
         help="Path to the private signing key (*.vbprik2)",
     )
     parser.add_argument(
-        "--tp_fw",
+        "--tp-fw",
         type=Path,
         required=True,
         help="Path to the touchpad firmware",
