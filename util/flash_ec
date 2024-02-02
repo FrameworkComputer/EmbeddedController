@@ -1841,6 +1841,7 @@ function preserve_sections() {
 		local NEW_FMAP_SIZE
 		local CUR_FMAP_IMG
 		local CUR_IMG
+		local CUR_FMAP_HEADER
 
 		NEW_FMAP=$(dump_fmap "${NEW_IMG}" -e FMAP)
 		NEW_FMAP_NFIELD=$(echo "${NEW_FMAP}" | awk '{print NF}')
@@ -1855,7 +1856,13 @@ function preserve_sections() {
 		info "Reading FMAP section from EC chip"
 		read_chip_partially "${CHIP_TYPE}" "${CHIP_CMD_PREFIX}"  \
 			"${NEW_FMAP_OFFSET}" "${NEW_FMAP_SIZE}" "${CUR_FMAP_IMG}"
-		if [[ -z "$(dump_fmap "${CUR_FMAP_IMG}" -e FMAP)" ]]; then
+		# Verify the partial file starts with the correct FMAP header.
+		# If the FMAP has moved between the current image and new
+		# image, this should catch this.
+		# bash can't store NUL characters into variables so strip
+		# any read from the file.
+		CUR_FMAP_HEADER=$(head -c 8 "${CUR_FMAP_IMG}" | tr -d '\0')
+		if [[ "${CUR_FMAP_HEADER}" != "__FMAP__" ]]; then
 			info "FMAP section read failed, reading complete image"
 			read_chip "${CHIP_TYPE}" "${CHIP_CMD_PREFIX}" "${CUR_IMG}"
 			check_preserve_sections_not_present "${CUR_IMG}"  \
