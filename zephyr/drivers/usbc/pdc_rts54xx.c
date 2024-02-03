@@ -75,6 +75,16 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 	return
 
 /**
+ * @brief IRQ Event used to signal that an interrupt is pending
+ */
+K_EVENT_DEFINE(irq_event);
+
+/**
+ * @brief IRQ Event set by the interrupt handler
+ */
+#define RTS54XX_IRQ_EVENT BIT(0)
+
+/**
  * @brief Number of RTS54XX ports detected
  */
 #define NUM_PDC_RTS54XX_PORTS DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT)
@@ -342,7 +352,6 @@ static const char *const state_names[] = {
 static const struct device *irq_shared_port;
 static int irq_share_pin;
 static bool irq_init_done;
-static volatile bool irq_pending;
 static const struct smf_state states[];
 static int rts54_enable(const struct device *dev);
 static int rts54_reset(const struct device *dev);
@@ -514,17 +523,12 @@ static void st_init_run(void *o)
 }
 
 /**
- * @brief Each port has its own IRQ. When an interrupt is pending, one
- * of the ST_IDLE states will execute and handle all pending interrupts for all
- * ports.
+ * @brief Called from the main thread to handle interrupts
  */
 static void handle_irqs(struct pdc_data_t *data)
 {
 	uint8_t ara;
 	int rv;
-
-	/* Clear pending bit, so other thread won't attempt to handle an irq */
-	irq_pending = false;
 
 	for (int i = 0; i < NUM_PDC_RTS54XX_PORTS; i++) {
 		/*
@@ -581,13 +585,10 @@ static void st_idle_run(void *o)
 	/*
 	 * Priority of events:
 	 *  1: CMD_TRIGGER_PDC_RESET
-	 *  2: Interrupt
-	 *  3: Non-Reset command
+	 *  2: Non-Reset command
 	 */
 	if (data->cmd == CMD_TRIGGER_PDC_RESET) {
 		perform_pdc_init(data);
-	} else if (irq_pending) {
-		handle_irqs(data);
 	} else if (data->cmd != CMD_NONE) {
 		set_state(data, ST_WRITE);
 	}
@@ -1667,17 +1668,10 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.reconnect = rts54_reconnect,
 };
 
-static void interrupt_handler(struct k_work *item)
-{
-	irq_pending = true;
-}
-
 static void pdc_interrupt_callback(const struct device *dev,
 				   struct gpio_callback *cb, uint32_t pins)
 {
-	struct pdc_data_t *data = CONTAINER_OF(cb, struct pdc_data_t, gpio_cb);
-
-	k_work_submit(&data->work);
+	k_event_post(&irq_event, RTS54XX_IRQ_EVENT);
 }
 
 static int pdc_init(const struct device *dev)
@@ -1724,7 +1718,8 @@ static int pdc_init(const struct device *dev)
 			return rv;
 		}
 
-		k_work_init(&data->work, interrupt_handler);
+		/* Trigger IRQ on startup to read any pending interrupts */
+		k_event_post(&irq_event, RTS54XX_IRQ_EVENT);
 		irq_init_done = true;
 	} else {
 		if (irq_shared_port != cfg->irq_gpios.port ||
@@ -1747,9 +1742,6 @@ static int pdc_init(const struct device *dev)
 	/* Create the thread for this port */
 	cfg->create_thread(dev);
 
-	/* Trigger an interrupt on startup */
-	irq_pending = true;
-
 	LOG_INF("Realtek RTS545x PDC DRIVER");
 
 	return 0;
@@ -1758,10 +1750,20 @@ static int pdc_init(const struct device *dev)
 static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 {
 	struct pdc_data_t *data = ((const struct device *)dev)->data;
+	uint32_t events;
 
 	while (1) {
 		smf_run_state(SMF_CTX(data));
-		k_sleep(K_MSEC(T_PING_STATUS));
+		if (get_state(data) == ST_IDLE) {
+			events = k_event_wait(&irq_event, RTS54XX_IRQ_EVENT,
+					      false, K_MSEC(T_PING_STATUS));
+			if (events) {
+				k_event_clear(&irq_event, RTS54XX_IRQ_EVENT);
+				handle_irqs(data);
+			}
+		} else {
+			k_sleep(K_MSEC(T_PING_STATUS));
+		}
 	}
 }
 
