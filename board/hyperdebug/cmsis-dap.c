@@ -69,8 +69,7 @@ enum cmsis_dap_command_t {
 	DAP_GOOG_Info = 0x80,
 	DAP_GOOG_I2c = 0x81,
 	DAP_GOOG_I2cDevice = 0x82,
-	DAP_GOOG_GpioMonitoring = 0x83,
-
+	DAP_GOOG_Gpio = 0x83,
 };
 
 /* DAP Status Code */
@@ -566,7 +565,7 @@ static void (*dispatch_table[256])(size_t peek_c) = {
 	[DAP_GOOG_Info] = dap_goog_info,
 	[DAP_GOOG_I2c] = dap_goog_i2c,
 	[DAP_GOOG_I2cDevice] = dap_goog_i2c_device,
-	[DAP_GOOG_GpioMonitoring] = dap_goog_gpio_monitoring,
+	[DAP_GOOG_Gpio] = dap_goog_gpio,
 	[DAP_HostStatus] = dap_host_status,
 	[DAP_Connect] = dap_connect,
 	[DAP_Disconnect] = dap_disconnect,
