@@ -119,10 +119,7 @@ ZTEST_USER(pdc_api, test_get_error_status)
 
 	zassert_ok(pdc_get_error_status(dev, &out),
 		   "Failed to get connector capability");
-	/* TODO(b/319730714) - back 2 back calls should provide EBUSY error but
-	 * driver thread doesn't become active to move out of IDLE state.
-	 * zassert_equal(pdc_get_error_status(dev, &out), -EBUSY);
-	 */
+	zassert_equal(pdc_get_error_status(dev, &out), -EBUSY);
 	k_sleep(K_MSEC(100));
 
 	/* Verify data from emulator */
