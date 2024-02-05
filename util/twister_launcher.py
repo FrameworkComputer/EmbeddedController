@@ -149,6 +149,7 @@ def find_paths():
                 cros_checkout / "src" / "third_party" / "zephyr" / "main"
             )
         zephyr_modules_dir = cros_checkout / "src" / "third_party" / "zephyr"
+        pigweed_dir = cros_checkout / "src" / "third_party" / "pigweed"
     else:
         try:
             ec_base = Path(os.environ["EC_DIR"]).resolve()
@@ -171,7 +172,14 @@ def find_paths():
                 "MODULES_DIR unspecified. Please pass as env var or use chroot."
             ) from err
 
-    return (ec_base, zephyr_base, zephyr_modules_dir)
+        try:
+            pigweed_dir = Path(os.environ["PIGWEED_DIR"]).resolve()
+        except KeyError as err:
+            raise RuntimeError(
+                "PIGWEED_DIR unspecified. Please pass as env var to use chroot."
+            ) from err
+
+    return ec_base, zephyr_base, zephyr_modules_dir, pigweed_dir
 
 
 def find_modules(mod_dir: Path) -> list:
@@ -426,14 +434,18 @@ def main():
         os.chdir(os.environ["BAZEL_TWISTER_CWD"])
 
     # Get paths for the build.
-    ec_base, zephyr_base, zephyr_modules_dir = find_paths()
+    ec_base, zephyr_base, zephyr_modules_dir, pigweed_dir = find_paths()
 
+    zephyr_base = zephyr_base.resolve()
     zephyr_modules = find_modules(zephyr_modules_dir)
 
     # Add the EC dir as a module if not already included (resolve all paths to
     # account for symlinked or relative paths)
     if ec_base.resolve() not in zephyr_modules:
         zephyr_modules.append(ec_base)
+
+    if pigweed_dir.resolve() not in zephyr_modules:
+        zephyr_modules.append(pigweed_dir)
 
     # Twister CLI args
     twister_cli = [
