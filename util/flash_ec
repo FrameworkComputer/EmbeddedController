@@ -1915,7 +1915,7 @@ function preserve_sections_with_fmap_image() {
 			read_chip_partially "${CHIP_TYPE}" "${CHIP_CMD_PREFIX}"  \
 				"${SEC_OFFSET}" "${SEC_SIZE}" "${SEC_IMG}"
 			info "Preserving ${line} section in new image"
-			cbfstool "${NEW_IMG}" write -r "${line}" -f "${SEC_IMG}"
+			futility load_fmap "${NEW_IMG}" "${line}:${SEC_IMG}"
 		done
 	)
 }
@@ -1938,8 +1938,9 @@ function preserve_sections_with_cur_image() {
 
 			info "Preserving ${line} section on EC chip"
 			SEC_IMG="${TEMP_DIR}/ec.cur.${line}.bin"
-			cbfstool "${CUR_IMG}" read -r "${line}" -f "${SEC_IMG}"
-			cbfstool "${NEW_IMG}" write -r "${line}" -f "${SEC_IMG}"
+			futility dump_fmap -x "${CUR_IMG}" "${line}"
+			mv "${line}" "${SEC_IMG}"
+			futility load_fmap "${NEW_IMG}" "${line}:${SEC_IMG}"
 		done
 	)
 }
