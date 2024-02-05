@@ -15,10 +15,13 @@
 		 bma4xx-int = &lid_accel;
 	};
 
-	/*
-	 * No mutex is needed for Brox because none of the sensors have multiple
-	 * measurement types.
-	 */
+	motionsense-mutex {
+		compatible = "cros-ec,motionsense-mutex";
+		mutex_bma4xx_lid: mutex-bma4xx-lid {
+		};
+		mutex_bma4xx_base: mutex-bma4xx-base {
+		};
+	};
 
 	/* Rotation matrix used by drivers. */
 	motionsense-rotation-ref {
@@ -56,6 +59,7 @@
 
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&mutex_bma4xx_lid>;
 			port = <&i2c_ec_i2c_sensor>;
 			rot-standard-ref = <&lid_rot_ref>;
 			default-range = <2>;
@@ -78,6 +82,7 @@
 
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&mutex_bma4xx_base>;
 			port = <&i2c_ec_i2c_sensor>;
 			rot-standard-ref = <&base_rot_ref>;
 			default-range = <2>;
