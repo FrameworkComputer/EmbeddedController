@@ -24,7 +24,7 @@
 
 #include <zephyr/sys/util.h>
 #include <zephyr/toolchain.h>
-#ifdef CONFIG_ZTEST
+#ifdef CONFIG_TEST
 #define TEST_BUILD
 #endif /* CONFIG_ZTEST */
 #endif /* CONFIG_ZEPHYR */

@@ -380,7 +380,7 @@ ec_motion_sensor_fill_values(struct ec_response_motion_sensor_data *dst,
 	dst->data[2] = v[2];
 }
 
-#ifdef CONFIG_ZTEST
+#ifdef CONFIG_TEST
 enum sensor_config motion_sense_get_ec_config(void);
 #endif
 

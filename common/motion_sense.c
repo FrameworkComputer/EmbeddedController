@@ -122,7 +122,7 @@ motion_sensor_time_to_read(const timestamp_t *ts,
 			  sensor->next_collection - motion_min_interval);
 }
 
-STATIC_IF_NOT(CONFIG_ZTEST)
+STATIC_IF_NOT(CONFIG_TEST)
 enum sensor_config motion_sense_get_ec_config(void)
 {
 	switch (sensor_active) {
