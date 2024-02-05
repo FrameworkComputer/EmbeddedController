@@ -64,7 +64,7 @@ const struct batt_conf_embed board_battery_info[] = {
 	},
 	/* Pow-Tech SG20JL1C2S5900-P1P1 Battery Information */
 	[BATTERY_POWTECH_SG20JL1C] = {
-		.manuf_name = "POW-TECH",
+		.manuf_name = "POW-TEC",
 		.device_name = "SG20",
 		.config = {
 			.fuel_gauge = {
