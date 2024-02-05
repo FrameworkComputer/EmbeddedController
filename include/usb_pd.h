@@ -149,6 +149,15 @@ enum pdo_peak_overcurrent {
 	(PDO_BATT_MIN_VOLT(min_mv) | PDO_BATT_MAX_VOLT(max_mv) | \
 	 PDO_BATT_OP_POWER(op_mw) | PDO_TYPE_BATTERY)
 
+/* Programmable power supply values for augmented PDOs. */
+enum pdo_augmented_pps {
+	PDO_AUG_PPS_SPR,
+	PDO_AUG_PPS_EPR,
+};
+
+#define PDO_AUG_PPS(pps) ((pps & 3) << 28)
+#define PDO_AUG_GET_PPS(pdo) ((pdo >> 28) & 0x3)
+
 #define PDO_AUG_MAX_VOLT(mv) ((((mv) / 100) & 0xFF) << 17)
 #define PDO_AUG_MIN_VOLT(mv) ((((mv) / 100) & 0xFF) << 8)
 #define PDO_AUG_MAX_CURR(ma) ((((ma) / 50) & 0x7F) << 0)
@@ -156,6 +165,15 @@ enum pdo_peak_overcurrent {
 #define PDO_AUG(min_mv, max_mv, max_ma)                        \
 	(PDO_AUG_MIN_VOLT(min_mv) | PDO_AUG_MAX_VOLT(max_mv) | \
 	 PDO_AUG_MAX_CURR(max_ma) | PDO_TYPE_AUGMENTED)
+
+#define PDO_AUG_EPR_MAX_VOLT(mv) ((((mv) / 100) & 0x1FF) << 17)
+#define PDO_AUG_EPR_MIN_VOLT(mv) ((((mv) / 100) & 0xFF) << 8)
+#define PDO_AUG_EPR_PDP(pdp) (pdp & 0xFF)
+
+#define PDO_AUG_EPR(min_mv, max_mv, pdp, flags)                        \
+	(PDO_AUG_EPR_MIN_VOLT(min_mv) | PDO_AUG_EPR_MAX_VOLT(max_mv) | \
+	 PDO_AUG_EPR_PDP(pdp) | PDO_TYPE_AUGMENTED |                   \
+	 PDO_AUG_PPS(PDO_AUG_PPS_EPR) | flags)
 
 /* RDO : Request Data Object */
 #define RDO_OBJ_POS(n) (((n) & 0xF) << 28)
