@@ -14,6 +14,7 @@
 #include "joxer.h"
 #include "joxer_sub_board.h"
 #include "keyboard_protocol.h"
+#include "keyboard_scan.h"
 #include "motionsense_sensors.h"
 #include "system.h"
 #include "tcpm/tcpci.h"
@@ -68,6 +69,8 @@ FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 FAKE_VALUE_FUNC(int, cbi_get_board_version, uint32_t *);
 FAKE_VOID_FUNC(set_scancode_set2, uint8_t, uint8_t, uint16_t);
 FAKE_VOID_FUNC(get_scancode_set2, uint8_t, uint8_t);
+
+struct keyboard_scan_config keyscan_config;
 
 uint8_t board_get_charger_chip_count(void)
 {

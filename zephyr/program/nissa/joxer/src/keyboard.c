@@ -8,6 +8,7 @@
 #include "gpio/gpio.h"
 #include "hooks.h"
 #include "keyboard_8042_sharedlib.h"
+#include "keyboard_scan.h"
 
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
@@ -54,5 +55,11 @@ test_export_static void kb_layout_init(void)
 	if (val == FW_KB_FEATURE_BL_ABSENT_US2 ||
 	    val == FW_KB_FEATURE_BL_PRESENT_US2)
 		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
+
+	/*
+	 * Increase delay before the next key scan to prevent from WDT reset
+	 * under some specific condition (b:323732020).
+	 */
+	keyscan_config.min_post_scan_delay_us = 2 * MSEC;
 }
 DECLARE_HOOK(HOOK_INIT, kb_layout_init, HOOK_PRIO_POST_FIRST);
