@@ -36,6 +36,7 @@
 # Although this script is a good proving ground for new testing techniques,
 # care should be taken to offload functionality to other core components.
 
+# shellcheck source=../../../scripts/lib/shflags/shflags
 . /usr/share/misc/shflags
 
 FLAGS_PRIVATE_DEFAULT="${FLAGS_FALSE}"
