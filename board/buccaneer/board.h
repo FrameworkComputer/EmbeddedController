@@ -17,7 +17,7 @@
  */
 
 #ifdef SECTION_IS_RW
-#define CONFIG_FP_SENSOR_FPC1025
+#define CONFIG_FP_SENSOR_ELAN80SG
 #endif /* SECTION_IS_RW */
 
 #endif /* __CROS_EC_BOARD_BUCCANEER_BOARD_H */
