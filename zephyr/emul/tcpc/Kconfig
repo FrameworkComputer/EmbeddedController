@@ -30,7 +30,7 @@ config EMUL_ANX7447
 	help
 	  Enable emulator for ANX7447 of TCPM. This emulator is extension for
 	  TCPCI emulator. ANX7447 specific API is available in
-	  zephyr/include/emul/tpcp/emul_anx7447.h
+	  zephyr/include/emul/tcpc/emul_anx7447.h
 
 config EMUL_TCPCI_PARTNER_COMMON
 	bool
