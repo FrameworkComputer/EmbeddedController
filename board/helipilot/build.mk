@@ -5,9 +5,6 @@
 # Helipilot board specific files build
 #
 
-CHIP:=npcx
-CHIP_FAMILY:=npcx9
-CHIP_VARIANT:=npcx9mfp
 BASEBOARD:=helipilot
 
 board-y=

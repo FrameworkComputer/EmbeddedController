@@ -6,6 +6,10 @@
 # Helipilot baseboard specific files build
 #
 
+CHIP := npcx
+CHIP_FAMILY := npcx9
+CHIP_VARIANT := npcx9mfp
+
 baseboard-y += base_board.o
 baseboard-rw += base_board_rw.o
 baseboard-y += fpsensor_detect.o
