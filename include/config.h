@@ -2269,6 +2269,7 @@
 #undef CONFIG_FP_SENSOR_FPC1035
 #undef CONFIG_FP_SENSOR_FPC1145
 #undef CONFIG_FP_SENSOR_ELAN80
+#undef CONFIG_FP_SENSOR_ELAN80SG
 #undef CONFIG_FP_SENSOR_ELAN515
 
 /*****************************************************************************/
