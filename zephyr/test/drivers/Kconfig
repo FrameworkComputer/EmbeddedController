@@ -166,6 +166,12 @@ config LINK_TEST_SUITE_PS8743
 config LINK_TEST_SUITE_PS8XXX
 	bool "Link and test the ps8xxx tests"
 
+config LINK_TEST_SUITE_RT1715
+	bool "Link and test the rt17115 tests"
+	help
+	  Link rt1715 test suite for the TCPM driver related function
+	  tests.
+
 config LINK_TEST_SUITE_RT1718S
 	bool "Link and test the rt1718s tests"
 	help
