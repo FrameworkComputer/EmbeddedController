@@ -1040,16 +1040,26 @@ config_guybrush() {
 
 config_skyrim() {
   readonly TRANSPORT="UART"
-
   readonly DEVICE="/dev/ttyS1"
 
-  readonly GPIO_CHIP="gpiochip768"
-  # FPMCU RST_ODL is on AGPIO 12 = 768 + 12 = 780
-  readonly GPIO_NRST=780
-  # FPMCU BOOT0 is on AGPIO 130 = 768 + 130 = 898
-  readonly GPIO_BOOT0=898
-  # FPMCU PWR_EN is on AGPIO 4 = 768 + 4 = 772
-  readonly GPIO_PWREN=772
+  local gpiochip_dev_path="platform/AMD0030:00/gpio"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
+
+  readonly GPIO_CHIP="gpiochip${gpiobase}"
+
+  # FPMCU RST_ODL is on AGPIO 12
+  local gpionrst=12
+  readonly GPIO_NRST=$(( gpionrst + gpiobase ))
+  # FPMCU BOOT0 is on AGPIO 130
+  local gpioboot=130
+  readonly GPIO_BOOT0=$(( gpioboot + gpiobase ))
+  # FPMCU PWR_EN is on AGPIO 4
+  local gpiopwren=4
+  readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
 }
 
 config_myst() {
