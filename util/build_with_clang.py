@@ -416,7 +416,7 @@ def main() -> int:
             board = future_to_board[future]
             try:
                 future.result()
-            except Exception:
+            except subprocess.CalledProcessError:
                 failed_boards.append(board)
 
     if len(failed_boards) > 0:
