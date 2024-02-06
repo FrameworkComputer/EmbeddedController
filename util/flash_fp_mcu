@@ -788,20 +788,30 @@ config_herobrine() {
 }
 
 config_nami() {
-  local device="/dev/spidev1.0"
-  # Support kernel version 4.4 during transition to 5.4
-  match_kernel_regex "^4\.4\." && device="/dev/spidev32765.0"
-
   readonly TRANSPORT="SPI"
-  readonly DEVICE="${device}"
+  readonly DEVICE="/dev/spidev1.0"
 
-  readonly GPIO_CHIP="gpiochip360"
-  # FPMCU RST_ODL is on GPP_C9 = 360 + 57 = 417
-  readonly GPIO_NRST=417
-  # FPMCU BOOT0 is on GPP_D5 = 360 + 77 = 437
-  readonly GPIO_BOOT0=437
-  # FP_PWR_EN is on GPP_B11 = 360 + 35 = 395
-  readonly GPIO_PWREN=395
+  # See kernel/v5.4/drivers/pinctrl/intel/pinctrl-sunrisepoint.c
+  # for pin name and pin number.
+
+  local gpiochip_dev_path="pci0000:00/INT344B:00/gpio"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
+
+  local GPIO_CHIP="gpiochip${gpiobase}"
+
+  # FPMCU RST_ODL is on GPP_C9 = 57
+  local gpionrst=57
+  readonly GPIO_NRST=$(( gpionrst + gpiobase ))
+  # FPMCU BOOT0 is on GPP_D5 = 77
+  local gpioboot=77
+  readonly GPIO_BOOT0=$(( gpioboot + gpiobase ))
+  # FP_PWR_EN is on GPP_B11 = 35
+  local gpiopwren=35
+  readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
 }
 
 config_nocturne() {
