@@ -3,11 +3,12 @@
  * found in the LICENSE file.
  */
 
+#include "common.h"
 #include "fpsensor/fpsensor_detect.h"
 #include "gpio.h"
 #include "timer.h"
 
-enum fp_sensor_type fpsensor_detect_get_type(void)
+test_mockable enum fp_sensor_type fpsensor_detect_get_type(void)
 {
 	enum fp_sensor_type ret;
 
@@ -32,7 +33,7 @@ enum fp_sensor_type fpsensor_detect_get_type(void)
 	return ret;
 }
 
-enum fp_sensor_spi_select fpsensor_detect_get_spi_select(void)
+test_mockable enum fp_sensor_spi_select fpsensor_detect_get_spi_select(void)
 {
 	return FP_SENSOR_SPI_SELECT_PRODUCTION;
 }

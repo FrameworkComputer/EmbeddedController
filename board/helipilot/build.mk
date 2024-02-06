@@ -12,14 +12,8 @@ CHIP_VARIANT:=npcx9mfp
 board-y=
 board-y+=board.o
 board-rw=board_rw.o
-
-# If we're mocking the sensor detection for testing (so we can test
-# sensor/transport permutations in the unit tests), don't build the real sensor
-# detection.
-ifeq ($(HAS_MOCK_FPSENSOR_DETECT),)
-	board-y+=fpsensor_detect.o
-	board-rw+=fpsensor_detect_rw.o
-endif
+board-y+=fpsensor_detect.o
+board-rw+=fpsensor_detect_rw.o
 
 # Do not build rsa test because this board uses RSA exponent 3 and the rsa test
 # will fail on device.
