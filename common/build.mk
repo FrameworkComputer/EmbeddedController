@@ -152,7 +152,7 @@ common-$(CONFIG_ONLINE_CALIB)+=stillness_detector.o kasa.o math_util.o \
 	mat44.o vec3.o newton_fit.o accel_cal.o online_calibration.o \
 	mkbp_event.o mag_cal.o math_util.o mat33.o gyro_cal.o gyro_still_det.o
 common-$(CONFIG_SHA1)+= sha1.o
-ifeq ($(CONFIG_SHA256),y)
+ifeq ($(CONFIG_SHA256_SW),y)
 # use the standard software SHA256 lib if the chip cannot support SHA256
 # hardware accelerator.
 ifeq ($(CONFIG_SHA256_HW_ACCELERATE),)

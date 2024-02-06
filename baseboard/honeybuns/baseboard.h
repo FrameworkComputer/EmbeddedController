@@ -193,7 +193,7 @@ enum usb_strings {
 #define CONFIG_RWSIG_TYPE_RWSIG
 #define CONFIG_RSA_KEY_SIZE 3072
 #define CONFIG_RSA_EXPONENT_3
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 
 /* Define typical operating power and max power. */
 #define PD_MAX_VOLTAGE_MV 5000

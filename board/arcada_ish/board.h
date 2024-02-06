@@ -88,7 +88,7 @@
 #undef CONFIG_CMD_HASH
 #undef CONFIG_CMD_TEMP_SENSOR
 #undef CONFIG_ADC
-#undef CONFIG_SHA256
+#undef CONFIG_SHA256_SW
 
 /* power management definitions */
 #define CONFIG_LOW_POWER_IDLE

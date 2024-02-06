@@ -27,7 +27,7 @@
 /* The following are for fpsensor host commands. */
 #define CONFIG_BORINGSSL_CRYPTO
 #define CONFIG_ROLLBACK_SECRET_SIZE 32
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 
 #endif /* TEST_HOST_COMMAND_FUZZ */
 
@@ -36,7 +36,7 @@
 #define CONFIG_USB_PD_TCPMV1
 #define CONFIG_USB_PD_DUAL_ROLE
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_SW_CRC
 #endif /* TEST_USB_PD_FUZZ */
 
@@ -59,7 +59,7 @@
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 #define CONFIG_USBC_VCONN_SWAP_DELAY_US 5000
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_SW_CRC
 #define CONFIG_USB_PD_3A_PORTS 0 /* Host does not define a 3.0 A PDO */
 #endif /* TEST_USB_TCPM_V2_REV30_FUZZ */
@@ -82,7 +82,7 @@
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 #define CONFIG_USBC_VCONN_SWAP_DELAY_US 5000
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_SW_CRC
 #define CONFIG_USB_PD_3A_PORTS 0 /* Host does not define a 3.0 A PDO */
 #endif /* TEST_USB_TCPM_V2_REV20_FUZZ */

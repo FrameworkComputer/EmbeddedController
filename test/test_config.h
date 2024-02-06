@@ -125,7 +125,7 @@ enum battery_type {
 	defined(TEST_FPSENSOR_AUTH_COMMANDS)
 #define CONFIG_BORINGSSL_CRYPTO
 #define CONFIG_ROLLBACK_SECRET_SIZE 32
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #endif
 
 #if defined(TEST_BORINGSSL_CRYPTO)
@@ -287,7 +287,7 @@ enum sensor_id {
 #define CONFIG_CURVE25519
 #define CONFIG_RMA_AUTH
 #define CONFIG_RNG
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CC_EXTENSION CC_COMMAND
 
 #endif
@@ -312,11 +312,11 @@ enum sensor_id {
 #endif
 
 #ifdef TEST_SHA256
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #endif
 
 #ifdef TEST_SHA256_UNROLLED
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_SHA256_UNROLLED
 #endif
 
@@ -394,7 +394,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_SW_CRC
 #endif
 
@@ -404,7 +404,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_SW_CRC
 #define CONFIG_USB_PD_ONLY_FIXED_PDOS
 #endif
@@ -431,7 +431,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
 #define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_SW_CRC
 #endif
 
@@ -602,7 +602,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_SW_CRC
 #endif
 
@@ -614,7 +614,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_SW_CRC
 #ifdef TEST_USB_PD_REV30
 #define CONFIG_USB_PD_REV30
@@ -685,7 +685,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 
 #ifdef TEST_VBOOT
 #define CONFIG_RWSIG
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_RSA
 #define CONFIG_RWSIG_TYPE_RWSIG
 #define CONFIG_RW_B

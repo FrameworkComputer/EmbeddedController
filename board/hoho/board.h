@@ -22,7 +22,7 @@
 #define CONFIG_RSA
 #define CONFIG_RWSIG
 #define CONFIG_RWSIG_TYPE_USBPD1
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 /* TODO(tbroch) Re-enable once STM spi controller can be inhibited at boot so it
    doesn't interfere with HDMI loading its f/w */
 #undef CONFIG_SPI_FLASH
