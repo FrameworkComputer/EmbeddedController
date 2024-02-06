@@ -64,20 +64,3 @@ static enum ec_status hc_pd_ports(struct host_cmd_handler_args *args)
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_PORTS, hc_pd_ports, EC_VER_MASK(0));
-
-/**
- * @brief This is a placeholder implementation of EC_CMD_USB_PD_MUX_INFO that
- *        always indicates the muxes are disconnected.
- */
-static enum ec_status hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
-{
-	struct ec_response_usb_pd_mux_info *r = args->response;
-
-	/* TODO: Add range check on port # and query actual mux state */
-	r->flags = USB_PD_MUX_NONE;
-
-	args->response_size = sizeof(*r);
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_USB_PD_MUX_INFO, hc_usb_pd_mux_info,
-		     EC_VER_MASK(0));
