@@ -407,12 +407,8 @@ enum power_state power_handle_state(enum power_state state)
 			 * If power signal lose, we need to resume to S0 and
 			 * clear the resume ms flag
 			 */
-			if (resume_ms_flag > 0) {
-				resume_ms_flag = 0;
-				enter_ms_flag = 0;
-				system_in_s0ix = 0;
-				return POWER_S0ixS0;
-			}
+			enter_ms_flag = 0;
+			return POWER_S0ixS0;
 		}
 
 		if (check_s0ix_statsus() == CS_EXIT_S0ix)
