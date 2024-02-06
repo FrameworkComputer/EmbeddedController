@@ -100,6 +100,7 @@ before_script:
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/cryptoc" "main" "${MODULES_DIR}/cryptoc" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr" "main" "${ZEPHYR_BASE}" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis" "chromeos-main" "${MODULES_DIR}/cmsis" "${ec_commit_date}"
+  - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_intel" "main" "${MODULES_DIR}/hal_intel_public" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32" "chromeos-main" "${MODULES_DIR}/hal_stm32" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/nanopb" "main" "${MODULES_DIR}/nanopb" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/picolibc" "main" "${MODULES_DIR}/picolibc" "${ec_commit_date}"
@@ -420,7 +421,6 @@ zephyr_boards_coverage:
     - cd ${EC_DIR}
     - projects=( $(zmake --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" list-projects |
-      grep -ve "^rex-ish$" |
       split -n r/"${CI_NODE_INDEX}"/"${CI_NODE_TOTAL}") )
     - zmake --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" -l DEBUG build
