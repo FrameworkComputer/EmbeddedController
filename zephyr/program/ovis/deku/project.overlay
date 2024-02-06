@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include <cros/cbi_flash.dtsi>
+
 /* Ovis program common DTSI includes */
 #include "../fan.dtsi"
 #include "../generated.dtsi"
@@ -201,4 +203,13 @@
 
 &i2c_ctrl0 {
 	status = "okay";
+};
+
+&cbi_flash {
+	/*
+	 * CBI section size is 0x1000 bytes, the CBI portion lies at the end of
+	 * EC_RO section. EC_RO section ends at 0x50000 byte which is the offset
+	 */
+	offset = <0x31000>;
+	size = <0x1000>;
 };
