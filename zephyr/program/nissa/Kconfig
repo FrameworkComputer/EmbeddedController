@@ -90,6 +90,12 @@ config BOARD_YAVILLA
 	  Build Google Yavilla board. Yavilla has Intel ADL-N SoC
 	  with IT81302 EC.
 
+config BOARD_YAVISTA
+	bool "Google Yavista Board"
+	help
+	  Build Google Yavista board. Yavista has Intel ADL-N SoC
+	  with IT81302 EC.
+
 config BOARD_ULDREN
 	bool "Google Uldren Board"
 	help

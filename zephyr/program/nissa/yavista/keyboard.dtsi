@@ -1,0 +1,136 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	kblight {
+		compatible = "cros-ec,kblight-pwm";
+		/*
+		 * Use 324 Hz so that 32Khz clock source is used,
+		 * which is not gated in power saving mode.
+		 */
+		pwms = <&pwm0 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
+	};
+
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+		actual-key-mask = <
+			0x1c /* C0 */
+			0xff /* C1 */
+			0xff /* C2 */
+			0xff /* C3 */
+			0xff /* C4 */
+			0xff /* C5 */
+			0xff /* C6 */
+			0xa4 /* C7 */
+			0xff /* C8 */
+			0xf6 /* C9 */
+			0x55 /* C10 */
+			0xfe /* C11 */
+			0xff /* C12 */
+			0xff /* C13 */
+			0xff /* C14 */
+		>;
+	};
+};
+
+&vivaldi_kbd {
+	status = "okay";
+
+	kbd_config_0: kbd-config-0 {
+		vivaldi-codes = <
+			VIVALDI_TK_BACK                /* T1 */
+			VIVALDI_TK_REFRESH             /* T2 */
+			VIVALDI_TK_FULLSCREEN          /* T3 */
+			VIVALDI_TK_OVERVIEW            /* T4 */
+			VIVALDI_TK_SNAPSHOT            /* T5 */
+			VIVALDI_TK_BRIGHTNESS_DOWN     /* T6 */
+			VIVALDI_TK_BRIGHTNESS_UP       /* T7 */
+			VIVALDI_TK_KBD_BKLIGHT_TOGGLE  /* T8 */
+			VIVALDI_TK_PLAY_PAUSE          /* T9 */
+			VIVALDI_TK_MICMUTE             /* T10 */
+			VIVALDI_TK_VOL_MUTE            /* T11 */
+			VIVALDI_TK_VOL_DOWN            /* T12 */
+			VIVALDI_TK_VOL_UP              /* T13 */
+		>;
+		capabilities = <VIVALDI_KEYBD_CAP_NUMERIC_KEYPAD>;
+	};
+
+	kbd_config_1: kbd-config-1 {
+		vivaldi-codes = <
+			VIVALDI_TK_BACK             /* T1 */
+			VIVALDI_TK_REFRESH          /* T2 */
+			VIVALDI_TK_FULLSCREEN       /* T3 */
+			VIVALDI_TK_OVERVIEW         /* T4 */
+			VIVALDI_TK_SNAPSHOT         /* T5 */
+			VIVALDI_TK_BRIGHTNESS_DOWN  /* T6 */
+			VIVALDI_TK_BRIGHTNESS_UP    /* T7 */
+			VIVALDI_TK_PLAY_PAUSE       /* T8 */
+			VIVALDI_TK_MICMUTE          /* T9 */
+			VIVALDI_TK_VOL_MUTE         /* T10 */
+			VIVALDI_TK_VOL_DOWN         /* T11 */
+			VIVALDI_TK_VOL_UP           /* T12 */
+			VIVALDI_TK_MENU             /* T13 */
+		>;
+		capabilities = <VIVALDI_KEYBD_CAP_NUMERIC_KEYPAD>;
+	};
+};
+
+&pwm0 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm0_gpa0_default>;
+	pinctrl-names = "default";
+};
+
+&cros_kb_raw {
+	status = "okay";
+	pinctrl-0 = <&ksi0_default
+		     &ksi1_default
+		     &ksi2_default
+		     &ksi3_default
+		     &ksi4_default
+		     &ksi5_default
+		     &ksi6_default
+		     &ksi7_default
+		     &kso0_default
+		     &kso1_default
+		     &kso2_default
+		     &kso3_default
+		     &kso4_default
+		     &kso5_default
+		     &kso6_default
+		     &kso7_default
+		     &kso8_default
+		     &kso9_default
+		     &kso10_default
+		     &kso11_default
+		     &kso12_default
+		     &kso13_default
+		     &kso14_default>;
+	pinctrl-1 = <&ksi0_sleep
+		     &ksi1_sleep
+		     &ksi2_sleep
+		     &ksi3_sleep
+		     &ksi4_sleep
+		     &ksi5_sleep
+		     &ksi6_sleep
+		     &ksi7_sleep
+		     &kso0_sleep
+		     &kso1_sleep
+		     &kso2_sleep
+		     &kso3_sleep
+		     &kso4_sleep
+		     &kso5_sleep
+		     &kso6_sleep
+		     &kso7_sleep
+		     &kso8_sleep
+		     &kso9_sleep
+		     &kso10_sleep
+		     &kso11_sleep
+		     &kso12_sleep
+		     &kso13_sleep
+		     &kso14_sleep>;
+	pinctrl-names = "default", "sleep";
+};
