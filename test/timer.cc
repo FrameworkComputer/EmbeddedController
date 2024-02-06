@@ -34,7 +34,7 @@ test_static int test_usleep(void)
 	 * us on 12345 us. This is considerably lower resolution and higher
 	 * error than the stm32 boards and may result in higher deltas.
 	 */
-	if (IS_ENABLED(BOARD_HELIPILOT)) {
+	if (IS_ENABLED(BASEBOARD_HELIPILOT)) {
 		double max_error = expected_duration * 0.02;
 		double clock_tick_us = (1.0 / 32768.0) * 1000000.0;
 

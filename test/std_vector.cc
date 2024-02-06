@@ -98,7 +98,7 @@ test_static int fill_multiple_vectors()
 	// This test allocates a large block of memory split in 8 std::vectors.
 	// Since Helipilot has less available RAM, it will allocate 8KB RAM
 	// (8*1KB), while other targets will allocate 16KB (8*2kB).
-#ifdef BOARD_HELIPILOT
+#ifdef BASEBOARD_HELIPILOT
 	constexpr int num_elements = 1024;
 #else
 	constexpr int num_elements = 2 * 1024;

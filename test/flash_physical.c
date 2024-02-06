@@ -138,7 +138,7 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_flash_config);
 
 /* The Helipilot NPCX board does not support option bytes from STM32 chips */
-#ifndef BOARD_HELIPILOT
+#ifndef BASEBOARD_HELIPILOT
 	RUN_TEST(test_lock_option_bytes);
 	RUN_TEST(test_disable_option_bytes);
 #endif
