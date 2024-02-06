@@ -1,0 +1,23 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+#
+# This file lists the commit hashes that will be ignored when running git blame.
+# This is useful for excluding commits related to reformatting or renaming,
+# which don't change the code's functionality.
+#
+# To enable this feature, run the following command in this repo:
+# $ git config blame.ignoreRevsFile .git-blame-ignore-revs
+#
+# References and Examples:
+# - https://git-scm.com/docs/git-blame#Documentation/git-blame.txt-blameignoreRevsFile
+# - https://github.com/llvm/llvm-project/blob/main/.git-blame-ignore-revs
+# - https://crsrc.org/o/src/platform2/.git-blame-ignore-revs
+# - https://crsrc.org/o/chromite/.git-blame-ignore-revs
+
+# $ git show --no-patch --format="%cs - %s" <commit-hash>
+
+# 2021-01-28 - docs: Run mdformat on all .md files
+2f40b71b625bcd826fd0cb4a005985abef0b8903
+# 2022-07-12 - ec: Format all python files with black and isort
+7540e7b47b55447475bb8191fb3520dd67cf7998
