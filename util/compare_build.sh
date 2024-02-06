@@ -37,7 +37,7 @@
 # care should be taken to offload functionality to other core components.
 
 # shellcheck source=../../../scripts/lib/shflags/shflags
-. /usr/share/misc/shflags
+. "${SHFLAGS:-/usr/share/misc/shflags}" || exit 1
 
 FLAGS_PRIVATE_DEFAULT="${FLAGS_FALSE}"
 if [[ -d private ]]; then

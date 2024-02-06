@@ -4,7 +4,7 @@
 # found in the LICENSE file.
 
 # shellcheck source=../../../scripts/lib/shflags/shflags
-. /usr/share/misc/shflags
+. "${SHFLAGS:-/usr/share/misc/shflags}" || exit 1
 
 readonly DEFAULT_RETRIES=${DEFAULT_RETRIES:-4}
 readonly STM32MON_CONNECT_RETRIES=${STM32MON_CONNECT_RETRIES:-6}

@@ -13,7 +13,7 @@ if [[ "$(basename "${EC_DIR}")" != "ec" ]]; then
 fi
 
 # Loads script libraries.
-# shellcheck source=/dev/null
+# shellcheck source=../../../scripts/lib/shflags/shflags
 . "${SHFLAGS:-/usr/share/misc/shflags}" || exit 1
 
 # Redirects tput to stderr, and drop any error messages.
