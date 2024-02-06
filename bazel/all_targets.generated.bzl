@@ -992,6 +992,7 @@ def all_targets():
     )
     ec_target(
         name = "helipilot",
+        baseboard = "helipilot",
         board = "helipilot",
         chip = "npcx",
         core = "cortex-m",

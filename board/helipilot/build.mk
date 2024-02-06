@@ -8,12 +8,9 @@
 CHIP:=npcx
 CHIP_FAMILY:=npcx9
 CHIP_VARIANT:=npcx9mfp
+BASEBOARD:=helipilot
 
 board-y=
-board-y+=board.o
-board-rw=board_rw.o
-board-y+=fpsensor_detect.o
-board-rw+=fpsensor_detect_rw.o
 
 # Do not build rsa test because this board uses RSA exponent 3 and the rsa test
 # will fail on device.
