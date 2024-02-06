@@ -14,6 +14,8 @@
 #include <zephyr/ztest.h>
 #include <zephyr/ztest_assert.h>
 
+#include <sys/types.h>
+
 /**
  * @brief Returns a pointer to an object (such as a struct jump_data) of type
  *        TYPE at the end of the mock_jump_data memory region, plus an optional,
