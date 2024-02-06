@@ -125,7 +125,7 @@ config PLATFORM_EC_LOG_BACKEND_CONSOLE_BUFFER_REDUCED
 
 config PLATFORM_EC_LOG_CUSTOM_TIMESTAMP
 	bool "Use EC format of timestamp"
-	depends on LOG_OUTPUT_FORMAT_CUSTOM_TIMESTAMP
+	select LOG_OUTPUT_FORMAT_CUSTOM_TIMESTAMP
 	help
 	  Change the default format of the timestamp, to the one EC uses -
 	  "[s.us]" at the beginning of a log.
