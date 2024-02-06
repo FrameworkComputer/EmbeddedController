@@ -334,6 +334,7 @@ def build(board_name: str) -> None:
 
 
 def get_all_boards() -> typing.List[str]:
+    """Return the list of all EC boards."""
     cmd = [
         "make",
         "print-boards",
@@ -346,6 +347,7 @@ def get_all_boards() -> typing.List[str]:
 
 
 def check_boards() -> None:
+    """Checks that all boards are explicitly mentioned in this source."""
     all_boards = get_all_boards()
     diff = set(all_boards) ^ set(
         BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG
@@ -363,6 +365,11 @@ def check_boards() -> None:
 
 
 def main() -> int:
+    """The mainest function of them all.
+
+    Returns:
+        The posix exit status.
+    """
     parser = argparse.ArgumentParser()
 
     log_level_choices = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
