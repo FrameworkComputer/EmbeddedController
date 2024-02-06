@@ -512,8 +512,9 @@ static int custom_timestamp(const struct log_output *output,
 {
 	uint64_t us = log_output_timestamp_to_us(timestamp);
 
-	return printer(output, "[%d.%06d] ", us / USEC_PER_SEC,
-		       us % USEC_PER_SEC);
+	return printer(output, "[%" PRIu32 ".%06" PRIu32 "] ",
+		       (uint32_t)(us / USEC_PER_SEC),
+		       (uint32_t)(us % USEC_PER_SEC));
 }
 
 static int timestamp_init(void)
