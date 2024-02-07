@@ -403,7 +403,9 @@ def main(argv):
     # Check for the existence of a file that has other paths of interest.
     # Also check for 'relevant-paths.txt' in the board directory
     if opts.relevant_paths_file and os.path.exists(opts.relevant_paths_file):
-        with open(opts.relevant_paths_file, "r") as relevant_paths_file:
+        with open(
+            opts.relevant_paths_file, "r", encoding="utf-8"
+        ) as relevant_paths_file:
             for line in relevant_paths_file:
                 if not line.startswith("#"):
                     relevant_paths.append(line.rstrip())
