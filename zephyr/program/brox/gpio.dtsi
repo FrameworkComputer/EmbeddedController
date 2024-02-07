@@ -62,6 +62,7 @@
 		};
 		gpio_ec_pch_int_odl: ec_pch_int_odl {
 			gpios = <&gpiog 1 GPIO_ODR_LOW>;
+			enum-name = "GPIO_EC_INT_L";
 		};
 		gpio_ec_kb_bl_en: ec_kb_bl_en {
 			gpios = <&gpioi 2 GPIO_OUTPUT_LOW>;
@@ -106,4 +107,12 @@
 
 /* The eSPI shim requires this GPIO nodelabel */
 gpio_ec_pch_wake_odl: &gpio_sen_mode1_ec_pch_wake_odl {
+};
+
+&gpio_ec_voldn_btn_odl {
+	enum-name = "GPIO_VOLUME_DOWN_L";
+};
+
+&gpio_ec_volup_btn_odl {
+	enum-name = "GPIO_VOLUME_UP_L";
 };
