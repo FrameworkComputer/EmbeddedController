@@ -16,6 +16,7 @@ from __future__ import print_function
 
 import argparse
 import os
+from pathlib import Path
 import re
 import subprocess
 import sys
@@ -286,6 +287,16 @@ def merge_repo(
     subprocess.run(["git", "commit", "--amend"], check=True)
 
 
+def find_src_base():
+    """Find the path to the base of the checkout (e.g., ~/chromiumos)."""
+    for path in Path(__file__).resolve().parents:
+        if (path / ".repo").is_dir():
+            return path
+    raise FileNotFoundError(
+        "Unable to locate the checkout of the ChromiumOS source"
+    )
+
+
 def main(argv):
     """Generates a merge commit from ToT to a desired release branch.
 
@@ -330,7 +341,7 @@ def main(argv):
     parser.add_argument(
         "--srcbase",
         help=("The base directory where the src tree exists."),
-        default="/mnt/host/source/",
+        default=find_src_base(),
     )
     parser.add_argument(
         "--relevant_paths_file",
