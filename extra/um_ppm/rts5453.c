@@ -68,8 +68,9 @@ struct rts5453_command_entry {
 	int command;
 	uint8_t command_value;
 
-	/* Either 0 (for no read), -1 (variable read) or 1-32 for fixed size */
-	/* reads. */
+	/* Either 0 (for no read), -1 (variable read) or 1-32 for fixed size
+	 * reads.
+	 */
 	size_t return_length;
 };
 
@@ -161,12 +162,25 @@ struct rts5453_ucsi_commands ucsi_commands[UCSI_CMD_VENDOR_CMD + 1] = {
 #define RTS5453_BANK1_START 0x20000
 #define RTS5453_BANK1_END 0x40000
 
+#define UCSI_7BIT_PORTMASK(p) ((p) & 0x7F)
+
+/* Convert a given port to a chip address.
+ *
+ * @param dev: Internal data.
+ * @param port: 1-indexed port number. 0 will give default port.
+ *
+ * @return Chip address for smbus.
+ */
 static uint8_t port_to_chip_address(struct rts5453_device *dev, uint8_t port)
 {
-	if (port >= dev->driver_config->max_num_ports) {
-		ELOG("Attempted to access invalid port %d. Max port index = %d",
-		     port, dev->driver_config->max_num_ports - 1);
+	if (port > dev->active_port_count) {
+		ELOG("Attempted to access invalid port %d. Active ports= %d",
+		     port, dev->active_port_count);
 		return 0;
+	}
+
+	if (port > 0) {
+		port = port - 1;
 	}
 
 	return dev->driver_config->port_address_map[port];
@@ -288,7 +302,7 @@ static int rts5453_set_notification_per_port(struct rts5453_device *dev,
 
 	for (uint8_t port = dev->active_port_count; port > 0; --port) {
 		dev->cmd_buffer[1] = 0; /* fixed port-num = 0 */
-		ret = rts5453_smbus_command(dev, port - 1, cmd, dev->cmd_buffer,
+		ret = rts5453_smbus_command(dev, port, cmd, dev->cmd_buffer,
 					    data_size + 2, lpm_data_out,
 					    SMBUS_MAX_BLOCK_SIZE);
 
@@ -321,22 +335,49 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 	}
 
 	switch (ucsi_command) {
+	/* The following UCSI commands change the port being addressed.
+	 * These commands have the connector number at offset 16.
+	 */
+	case UCSI_CMD_CONNECTOR_RESET:
+	case UCSI_CMD_GET_CONNECTOR_CAPABILITY:
+	case UCSI_CMD_GET_CAM_SUPPORTED:
+	case UCSI_CMD_GET_CURRENT_CAM:
+	case UCSI_CMD_SET_NEW_CAM:
+	case UCSI_CMD_GET_PDOS:
+	case UCSI_CMD_GET_CABLE_PROPERTY:
+	case UCSI_CMD_GET_CONNECTOR_STATUS:
+	case UCSI_CMD_GET_ERROR_STATUS:
+	case UCSI_CMD_GET_PD_MESSAGE:
+	case UCSI_CMD_GET_ATTENTION_VDO:
+	case UCSI_CMD_GET_CAM_CS:
+		port_num = UCSI_7BIT_PORTMASK(control->command_specific[0]);
+		break;
+
+	/* The following UCSI commands change the port being addressed.
+	 * These commands have the connector number at offset 24.
+	 */
+	case UCSI_CMD_GET_ALTERNATE_MODES:
+		port_num = UCSI_7BIT_PORTMASK(control->command_specific[1]);
+		break;
+	}
+
+	switch (ucsi_command) {
 	case UCSI_CMD_ACK_CC_CI:
 		struct ucsiv3_ack_cc_ci_cmd *ack_cmd =
 			(struct ucsiv3_ack_cc_ci_cmd *)control->command_specific;
 		struct ucsiv3_get_connector_status_data *next_connector_status =
 			NULL;
 
-		uint8_t local_port_num = RTS_DEFAULT_PORT;
 		bool has_pending_ci = dev->ppm->get_next_connector_status(
-			dev->ppm->dev, &local_port_num, &next_connector_status);
+			dev->ppm->dev, &port_num, &next_connector_status);
 		cmd = SC_ACK_CC_CI;
 		data_size = 5;
 		platform_memset(dev->cmd_buffer, 0, data_size + 2);
 
-		/* Already memset but for reference: */
-		/* dev->cmd_buffer[0] = 0;    # Reserved and 0. */
-		/* dev->cmd_buffer[1] = 0x0;  # port fixed to 0. */
+		/* Already memset but for reference:
+		 * dev->cmd_buffer[0] = 0;    # Reserved and 0.
+		 * dev->cmd_buffer[1] = 0x0;  # port fixed to 0.
+		 */
 
 		/* Acking on a command or async event? */
 		if (ack_cmd->command_complete_ack) {
@@ -361,7 +402,6 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 			dev->cmd_buffer[3] = (mask >> 8) & 0xff;
 			dev->cmd_buffer[4] = 0xff;
 			dev->cmd_buffer[5] = 0xff;
-			port_num = local_port_num - 1;
 
 			DLOG("ACK_CC_CI with mask (UCSI 0x%x), RTK [%02x, %02x, %02x, %02x] "
 			     "on port %d",
@@ -385,15 +425,7 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 		platform_memcpy(&dev->cmd_buffer[2], control->command_specific,
 				data_size);
 		break;
-	case UCSI_CMD_GET_CONNECTOR_STATUS:
-		cmd = SC_UCSI_COMMANDS;
-		data_size = 0;
-		platform_memset(dev->cmd_buffer, 0, 2);
-		dev->cmd_buffer[0] = ucsi_command;
-		dev->cmd_buffer[1] = 0;
-		port_num = control->command_specific[0] - 1;
 
-		break;
 	case UCSI_CMD_GET_PD_MESSAGE:
 		/* TODO: Update once the Realtek interface supports full
 		 * identity. This definition is a placeholder and will only
@@ -755,7 +787,7 @@ static int rts5453_ucsi_init_ppm(struct ucsi_pd_device *device)
 	 *   ports if firmware doesn't enable all ports that driver config has.
 	 */
 
-	for (uint8_t port = 0; port < max_num_ports; ++port) {
+	for (uint8_t port = 1; port <= max_num_ports; ++port) {
 		if (rts5453_vendor_cmd_enable_smbus(dev, port) == -1) {
 			ELOG("Failed in PPM_INIT: enable vendor commands");
 			return -1;
@@ -819,6 +851,9 @@ struct ucsi_pd_driver *rts5453_open(struct smbus_driver *smbus,
 
 	dev->smbus = smbus;
 	dev->driver_config = config;
+
+	/* Until we init PPM, accept maximum num ports as active. */
+	dev->active_port_count = config->max_num_ports;
 
 	drv = platform_calloc(1, sizeof(struct ucsi_pd_driver));
 	if (!drv) {
