@@ -25,7 +25,7 @@ enum battery_wattage get_battery_wattage()
 
 	if (!strcasecmp(fuel_gauge->device_name, "Framework Laptop")) {
 		return battery_55w;
-	} else if(!strcasecmp(fuel_gauge->device_name, "FRANGWAT01")) {
+	} else if (!strcasecmp(fuel_gauge->device_name, "FRANGWAT01")) {
 		return battery_61w;
 	} else {
 		return none;
@@ -35,6 +35,7 @@ enum battery_wattage get_battery_wattage()
 void update_soc_power_limit(bool force_update, bool force_no_adapter)
 {
 	int active_power;
+	int power;
 	int battery_percent;
 	enum battery_wattage battery_watt;
 
@@ -54,24 +55,24 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		if (battery_watt == battery_55w) {
 			pl2_watt = 35;
 			pl4_watt = 70;
-		} else if(battery_watt == battery_61w) {
+		} else if (battery_watt == battery_61w) {
 			pl2_watt = 41;
 			pl4_watt = 70;
 		}
 
 	} else if (battery_percent <= 30) {
 		/* ADP >= 55W and Battery percentage <= 30% */
-		int power = ((active_power * 95) / 100) - 20;
+		power = ((active_power * 95) / 100) - 20;
 		pl2_watt = MIN(power, 41);
 		pl4_watt = power;
 
 	} else {
 		/* ADP >= 55W and Battery percentage > 30% */
-		int power = ((active_power * 95) / 100) - 20;
+		power = ((active_power * 95) / 100) - 20;
 		if (battery_watt == battery_55w) {
 			pl2_watt = MIN((power + 35), 41);
 			pl4_watt = MIN((power + 58), 167);
-		} else if(battery_watt == battery_61w) {
+		} else if (battery_watt == battery_61w) {
 			pl2_watt = MIN((power + 41), 41);
 			pl4_watt = MIN((power + 67), 167);
 		}
