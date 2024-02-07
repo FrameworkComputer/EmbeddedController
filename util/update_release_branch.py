@@ -184,8 +184,8 @@ def merge_repo(
                         particular baseboard or board.
     """
     # Change directory to the repo being merged
-    print('Starting merge in "%s"' % base)
-    print('Checkout command: "%s"' % " ".join(cmd_checkout))
+    print(f'Starting merge in "{base}"')
+    print(f'Checkout command: "{" ".join(cmd_checkout)}"')
     os.chdir(base)
     # Check if we are already in merge process
     result = subprocess.run(
@@ -209,7 +209,7 @@ def merge_repo(
             "-s",
         ]
         cmd_merge.extend(strategy)
-        print('Merge command: "%s"' % " ".join(cmd_merge))
+        print(f'Merge command: "{" ".join(cmd_merge)}"')
         try:
             subprocess.run(cmd_merge, check=True)
         except subprocess.CalledProcessError:
@@ -458,11 +458,9 @@ def main(argv):
     if opts.merge_strategy == "recursive" and not opts.strategy_option:
         opts.strategy_option = "theirs"
     print(
-        'Using "%s" merge strategy' % opts.merge_strategy,
+        f'Using "{opts.merge_strategy}" merge strategy',
         (
-            "with strategy option '%s'" % opts.strategy_option
-            if opts.strategy_option
-            else ""
+            f"with strategy option '{opts.strategy_option if opts.strategy_option else ''}'"
         ),
     )
     cros_main = opts.remote_prefix + "/" + "main"
