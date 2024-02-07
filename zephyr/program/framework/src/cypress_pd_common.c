@@ -1037,8 +1037,8 @@ void cypd_update_port_state(int controller, int port)
 		pd_set_input_current_limit(port_idx, 0, 0);
 	}
 #if DT_NODE_EXISTS(DT_ALIAS(gpio_mux_uart_flip))
-	if (pd_port_states[0].c_state == CCG_STATUS_DEBUG ||
-		pd_port_states[3].c_state == CCG_STATUS_DEBUG) {
+	if (pd_port_states[CONFIG_PD_CCG6_EC_UART_DEBUG_PORT].c_state == CCG_STATUS_DEBUG ||
+		pd_port_states[CONFIG_PD_CCG6_SOC_UART_DEBUG_PORT].c_state == CCG_STATUS_DEBUG) {
 		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_mux_uart_flip), 1);
 	} else {
 		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_mux_uart_flip), 0);

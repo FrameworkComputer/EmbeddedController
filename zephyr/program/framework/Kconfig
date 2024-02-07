@@ -65,6 +65,22 @@ config PD_CCG6_ERROR_RECOVERY
 		Enable Cypress CCG6 special error recovery, when bootup to S0
 		will execute reconnect port.
 
+config PD_CCG6_EC_UART_DEBUG_PORT
+	int "EC uart debug port"
+	default 0
+	depends on PD_CHIP_CCG6
+	help
+		EC needs to switch the external mux to turn on the path for EC
+		uart.
+
+config PD_CCG6_SOC_UART_DEBUG_PORT
+	int "SoC uart debug port"
+	default 1
+	depends on PD_CHIP_CCG6
+	help
+		EC needs to switch the external mux to turn on the path for SoC
+		uart.
+
 config PD_COMMON_VBUS_CONTROL
 	bool "Enable CCG common vbus control"
 	help
