@@ -67,6 +67,6 @@ extern int pl2_watt;
 extern int pl4_watt;
 extern int pl3_watt;
 
-void set_pl_limits(int pl1, int pl2, int pl4, int psys);
+void set_pl_limits(int pl1, int pl2, int pl4);
 
 #endif

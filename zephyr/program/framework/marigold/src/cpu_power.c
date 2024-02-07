@@ -1,6 +1,7 @@
 
 
 
+#include "battery_fuel_gauge.h"
 #include "charge_state.h"
 #include "charger.h"
 #include "charge_manager.h"
@@ -16,18 +17,31 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+enum battery_wattage { none, battery_55w, battery_61w };
+enum battery_wattage get_battery_wattage()
+{
+	const struct fuel_gauge_info *const fuel_gauge =
+		&get_batt_params()->fuel_gauge;
+
+	if (!strcasecmp(fuel_gauge->device_name, "Framework Laptop")) {
+		return battery_55w;
+	} else if(!strcasecmp(fuel_gauge->device_name, "FRANGWAT01")) {
+		return battery_61w;
+	} else {
+		return none;
+	}
+}
+
 void update_soc_power_limit(bool force_update, bool force_no_adapter)
 {
 	int active_power;
-	int pps_power_budget = 0;
 	int battery_percent;
+	enum battery_wattage battery_watt;
 
 	static int old_pl2_watt = -1;
 	static int old_pl4_watt = -1;
-	static int old_pl3_watt = -1;
 
-	/* TODO: get the power and pps_power_budget */
-	/* pps_power_budget = cypd_get_pps_power_budget(); */
+	battery_watt = get_battery_wattage();
 	battery_percent = charge_get_percent();
 	active_power = charge_manager_get_power_limit_uw() / 1000000;
 
@@ -37,29 +51,38 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 
 	if (!extpower_is_present() || (active_power < 55)) {
 		/* Battery only or ADP < 55W */
-		pl2_watt = 35;
-		pl3_watt = 35;
-		pl4_watt = 80;
-	} else if (battery_percent < 30) {
-		/* ADP > 55W and Battery percentage < 30% */
-		pl4_watt = active_power - 15 - pps_power_budget;
-		pl2_watt = MIN((pl4_watt * 90) / 100, 64);
-		pl3_watt = ((active_power * 95) / 100) - pps_power_budget;
+		if (battery_watt == battery_55w) {
+			pl2_watt = 35;
+			pl4_watt = 70;
+		} else if(battery_watt == battery_61w) {
+			pl2_watt = 41;
+			pl4_watt = 70;
+		}
+
+	} else if (battery_percent <= 30) {
+		/* ADP >= 55W and Battery percentage <= 30% */
+		int power = ((active_power * 95) / 100) - 20;
+		pl2_watt = MIN(power, 41);
+		pl4_watt = power;
+
 	} else {
-		/* ADP > 55W and Battery percentage >= 30% */
-		pl2_watt = 64;
-		pl4_watt = 140;
-		/* psys watt = adp watt * 0.95 + battery watt(55 W) * 0.7 - pps power budget */
-		pl3_watt = ((active_power * 95) / 100) + 39 - pps_power_budget;
+		/* ADP >= 55W and Battery percentage > 30% */
+		int power = ((active_power * 95) / 100) - 20;
+		if (battery_watt == battery_55w) {
+			pl2_watt = MIN((power + 35), 41);
+			pl4_watt = MIN((power + 58), 167);
+		} else if(battery_watt == battery_61w) {
+			pl2_watt = MIN((power + 41), 41);
+			pl4_watt = MIN((power + 67), 167);
+		}
 	}
 
 	if (pl2_watt != old_pl2_watt || pl4_watt != old_pl4_watt ||
-			pl3_watt != old_pl3_watt || force_update) {
-		old_pl3_watt = pl3_watt;
+			force_update) {
 		old_pl4_watt = pl4_watt;
 		old_pl2_watt = pl2_watt;
 
 		pl1_watt = POWER_LIMIT_1_W;
-		set_pl_limits(pl1_watt, pl2_watt, pl3_watt, pl4_watt);
+		set_pl_limits(pl1_watt, pl2_watt, pl4_watt);
 	}
 }

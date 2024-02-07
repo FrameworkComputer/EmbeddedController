@@ -239,7 +239,6 @@ int peci_temp_sensor_get_val(int idx, int *temp_ptr)
 int pl1_watt;
 int pl2_watt;
 int pl4_watt;
-int pl3_watt;
 bool manual_ctl;
 
 static int peci_update_power_limit_1(int watt)
@@ -304,7 +303,7 @@ static int peci_update_power_limit_2(int watt)
 	return EC_SUCCESS;
 }
 
-static int peci_update_power_limit_3(int watt)
+__maybe_unused static int peci_update_power_limit_3(int watt)
 {
 	int ret;
 	uint8_t read_buf[6];
@@ -367,11 +366,10 @@ static int peci_update_power_limit_4(int watt)
 	return EC_SUCCESS;
 }
 
-void set_pl_limits(int pl1, int pl2, int pl3, int pl4)
+void set_pl_limits(int pl1, int pl2, int pl4)
 {
 	peci_update_power_limit_1(pl1);
 	peci_update_power_limit_2(pl2);
-	peci_update_power_limit_3(pl3);
 	peci_update_power_limit_4(pl4);
 }
 
@@ -399,7 +397,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, update_soc_power_limit_boot, HOOK_PRIO_DEFAULT
 
 static int cmd_cpupower(int argc, const char **argv)
 {
-	uint32_t pl1, pl2, pl3, pl4;
+	uint32_t pl1, pl2, pl4;
 	char *e;
 
 	if (argc >= 2) {
@@ -410,14 +408,11 @@ static int cmd_cpupower(int argc, const char **argv)
 		}
 	}
 
-	if (argc >= 5) {
+	if (argc >= 4) {
 		pl1 = strtoi(argv[1], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM1;
 		pl2 = strtoi(argv[2], &e, 0);
-		if (*e)
-			return EC_ERROR_PARAM2;
-		pl3 = strtoi(argv[3], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM3;
 		pl4 = strtoi(argv[4], &e, 0);
@@ -429,17 +424,16 @@ static int cmd_cpupower(int argc, const char **argv)
 
 		pl1_watt = pl1;
 		pl2_watt = pl2;
-		pl3_watt = pl3;
 		pl4_watt = pl4;
-		set_pl_limits(pl1_watt, pl2_watt, pl3_watt, pl4_watt);
+		set_pl_limits(pl1_watt, pl2_watt, pl4_watt);
 
 	}
 
-	CPRINTS("Power Limit: PL1 %dW, PL2 %dW, PL3 %dW, PL4 %dW",
-		pl1_watt, pl2_watt, pl3_watt, pl4_watt);
+	CPRINTS("Power Limit: PL1 %dW, PL2 %dW, PL4 %dW",
+		pl1_watt, pl2_watt, pl4_watt);
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(cpupower, cmd_cpupower,
-			"cpupower pl1 pl2 pl3 pl4 ",
+			"cpupower pl1 pl2 pl4 ",
 			"Set/Get the cpupower limit");
