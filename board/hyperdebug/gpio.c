@@ -84,28 +84,28 @@ int shield_reset_pin = GPIO_COUNT; /* "no pin" value */
  * significant bit indicating whether more bytes belong to the same entry.
  *
  * The chain of relative timestamps are resolved by keeping two absolute
- * timestamps: head_time is the time of the most recently inserted event, and is
- * accessed and updated only by the interrupt handler.  tail_time is the past
+ * timestamps: tail_time is the time of the most recently inserted event, and is
+ * accessed and updated only by the interrupt handler.  head_time is the past
  * timestamp on which the diff of the oldest record in the buffer is based (the
  * timestamp of the last record to be removed from the buffer), it is accessed
  * and updated only from the non-interrupt code that removes records from the
  * buffer.
  *
  * In a similar fashion, the signal level is recorded "at both ends" in for each
- * monitored signal by head_level and tail_level, the former only accessed from
+ * monitored signal by tail_level and head_level, the former only accessed from
  * the interrupt handler, and the latter only accessed from non-interrupt code.
  */
 struct cyclic_buffer_header_t {
 	/* Time base that the oldest event is relative to. */
-	timestamp_t tail_time;
+	timestamp_t head_time;
 	/* Time of the most recent event, updated from interrupt context. */
-	volatile uint32_t head_time;
+	volatile uint32_t tail_time;
 	/* Index at which new records are placed, updated from interrupt. */
-	uint8_t *volatile head;
+	uint8_t *volatile tail;
 	/* Index of oldest record. */
-	const uint8_t *tail;
+	const uint8_t *head;
 	/*
-	 * End of cyclic byte buffer. Here head and tail will wrap back to the
+	 * End of cyclic byte buffer. Here tail and head will wrap back to the
 	 * first byte of data[].
 	 */
 	uint8_t *end;
@@ -143,12 +143,12 @@ struct monitoring_slot_t {
 	 * Most recently recorded level of the signal. (0: low, gpio_pin_mask:
 	 * high).
 	 */
-	volatile uint32_t head_level;
+	volatile uint32_t tail_level;
 	/*
-	 * Level as of the current oldest end (tail) of the recording. (0: low,
+	 * Level as of the current oldest end (head) of the recording. (0: low,
 	 * gpio_pin_mask: high).
 	 */
-	uint32_t tail_level;
+	uint32_t head_level;
 	/* The index of the signal as used in the recording buffer. */
 	uint8_t signal_no;
 	/*
@@ -717,8 +717,8 @@ static int command_gpio_monitoring_start(int argc, const char **argv)
 		CORTEX_VTABLE = (uint32_t)(sram_vectors);
 	}
 
-	buf->tail = buf->head = buf->data;
-	buf->end = buf->head + cyclic_buffer_size;
+	buf->head = buf->tail = buf->data;
+	buf->end = buf->data + cyclic_buffer_size;
 	buf->overrun = 0;
 	buf->num_signals = gpio_num;
 	buf->signal_bits = 0;
@@ -770,14 +770,14 @@ static int command_gpio_monitoring_start(int argc, const char **argv)
 		 * if the GPIO block requests interrupt.
 		 */
 		gpio_enable_interrupt(gpios[i]);
-		slot->head_level = slot->tail_level =
+		slot->tail_level = slot->head_level =
 			gpio_get_level(gpios[i]) ? gpio_list[gpios[i]].mask : 0;
 		/*
 		 * Race condition here!  If three or more edges happen in
 		 * rapid succession, we may fail to record some of them, but
 		 * we should never over-report edges.
 		 *
-		 * Since edge detection was enabled before the "head_level"
+		 * Since edge detection was enabled before the "tail_level"
 		 * was polled, if an edge happened between the two, then an
 		 * interrupt is currently pending, and when handled after this
 		 * loop, the logic in the gpio_edge interrupt handler would
@@ -787,7 +787,7 @@ static int command_gpio_monitoring_start(int argc, const char **argv)
 		 * interrupt bit below, but only for the direction that goes
 		 * "towards" the level measured above.
 		 */
-		if (slot->head_level)
+		if (slot->tail_level)
 			STM32_EXTI_RPR = BIT(gpio_num);
 		else
 			STM32_EXTI_FPR = BIT(gpio_num);
@@ -796,12 +796,12 @@ static int command_gpio_monitoring_start(int argc, const char **argv)
 	 * Now enable the handling of the set of interrupts.
 	 */
 	now = get_time();
-	buf->head_time = now.le.lo;
+	buf->tail_time = now.le.lo;
 	CPU_NVIC_EN(0) = nvic_mask;
 
-	buf->tail_time = now;
+	buf->head_time = now;
 	num_cur_monitoring++;
-	ccprintf("  @%lld\n", buf->tail_time.val);
+	ccprintf("  @%lld\n", buf->head_time.val);
 
 	/*
 	 * Dump the initial level of each input, for the convenience of the
@@ -812,7 +812,7 @@ static int command_gpio_monitoring_start(int argc, const char **argv)
 		slot = monitoring_slots +
 		       GPIO_MASK_TO_NUM(gpio_list[gpios[i]].mask);
 		ccprintf("  %d %s %d\n", i, gpio_list[gpios[i]].name,
-			 !!slot->tail_level);
+			 !!slot->head_level);
 	}
 
 	return EC_SUCCESS;
@@ -894,9 +894,9 @@ static int command_gpio_monitoring_read(int argc, const char **argv)
 	 */
 	traverse_until = get_time();
 	ccprintf("  @%lld\n", traverse_until.val);
-	buf->tail = traverse_buffer(buf, gpio_signals_by_no, traverse_until, 32,
+	buf->head = traverse_buffer(buf, gpio_signals_by_no, traverse_until, 32,
 				    &print_event);
-	if (buf->tail != buf->head)
+	if (buf->head != buf->tail)
 		ccprintf("Warning: more data\n");
 	if (buf->overrun)
 		ccprintf("Error: Buffer overrun\n");
@@ -904,11 +904,11 @@ static int command_gpio_monitoring_read(int argc, const char **argv)
 }
 
 /*
- * This routine iterates through buffered entries starting from buf->tail,
+ * This routine iterates through buffered entries starting from buf->head,
  * stopping when there are no more entries before the `now` timestamp, or when
  * having processed a certain number of entries given by `limit`, whichever
  * comes first.  The return value indicate a new value which the caller must put
- * into buf->tail.  As soon as the caller does this, the traversed range is free
+ * into buf->head.  As soon as the caller does this, the traversed range is free
  * to be overwritten by the interrupt handler.
  */
 static const uint8_t *
@@ -917,40 +917,40 @@ traverse_buffer(struct cyclic_buffer_header_t *buf, int gpio_signals_by_no[],
 		void (*process_event)(uint8_t, timestamp_t, bool))
 {
 	/*
-	 * We have read the current time, before taking a snapshot of the head
+	 * We have read the current time, before taking a snapshot of the tail
 	 * pointer as set by the interrupt handler.  This way, we can guarantee
 	 * that the transcript will include any edge happening at or before the
 	 * `now` timestamp.  If an interrupt happens after `now` was captured,
-	 * but before the line below, causing our head pointer to include an
+	 * but before the line below, causing our tail pointer to include an
 	 * event that happened after "now", then it and any further entries will
 	 * be excluded from the traversal, and remain in the cyclic buffer for
 	 * the next invocation of `gpio monitoring read`.
 	 */
-	const uint8_t *head = buf->head;
+	const uint8_t *tail = buf->tail;
 
 	int8_t signal_bits = buf->signal_bits;
-	const uint8_t *tail = buf->tail;
-	timestamp_t tail_time = buf->tail_time;
-	while (tail != head && limit-- > 0) {
+	const uint8_t *head = buf->head;
+	timestamp_t head_time = buf->head_time;
+	while (head != tail && limit-- > 0) {
 		const uint8_t *const buf_start = buf->data;
 		timestamp_t diff;
 		uint8_t byte;
 		uint8_t signal_no;
 		uint32_t mask;
 		int shift = 0;
-		const uint8_t *tentative_tail = tail;
+		const uint8_t *tentative_head = head;
 		struct monitoring_slot_t *slot;
 		diff.val = 0;
 		do {
-			byte = *tentative_tail++;
-			if (tentative_tail == buf->end)
-				tentative_tail = buf_start;
+			byte = *tentative_head++;
+			if (tentative_head == buf->end)
+				tentative_head = buf_start;
 			diff.val |= (byte & 0x7F) << shift;
 			shift += 7;
 		} while (byte & 0x80);
 		signal_no = diff.val & (0xFF >> (8 - signal_bits));
 		diff.val >>= signal_bits;
-		if (tail_time.val + diff.val > now.val) {
+		if (head_time.val + diff.val > now.val) {
 			/*
 			 * Do not consume this or subsequent records, which
 			 * apparently happened after our "now" timestamp from
@@ -958,16 +958,16 @@ traverse_buffer(struct cyclic_buffer_header_t *buf, int gpio_signals_by_no[],
 			 */
 			break;
 		}
-		tail = tentative_tail;
-		tail_time.val += diff.val;
+		head = tentative_head;
+		head_time.val += diff.val;
 		mask = gpio_list[gpio_signals_by_no[signal_no]].mask;
 		slot = monitoring_slots + GPIO_MASK_TO_NUM(mask);
-		slot->tail_level ^= mask;
+		slot->head_level ^= mask;
 		if (process_event)
-			process_event(signal_no, tail_time, slot->tail_level);
+			process_event(signal_no, head_time, slot->head_level);
 	}
-	buf->tail_time = tail_time;
-	return tail;
+	buf->head_time = head_time;
+	return head;
 }
 
 static int command_gpio_monitoring_stop(int argc, const char **argv)
@@ -1278,15 +1278,15 @@ static void dap_goog_gpio_monitoring_read(size_t peek_c)
 		uint32_t mask = gpio_list[gpio_signals_by_no[signal_no]].mask;
 		struct monitoring_slot_t *slot =
 			monitoring_slots + GPIO_MASK_TO_NUM(mask);
-		if (slot->tail_level)
+		if (slot->head_level)
 			start_levels |= 1 << signal_no;
 	}
 	header->start_levels = start_levels;
-	header->start_timestamp = buf->tail_time.val;
+	header->start_timestamp = buf->head_time.val;
 	timestamp_t now = get_time();
 	header->end_timestamp = now.val;
 
-	const uint8_t *tail =
+	const uint8_t *head =
 		traverse_buffer(buf, gpio_signals_by_no, now, (size_t)-1, NULL);
 
 	if (buf->overrun) {
@@ -1299,32 +1299,32 @@ static void dap_goog_gpio_monitoring_read(size_t peek_c)
 
 	/*
 	 * Having found the byte range that corresponds to the time interval in
-	 * the header, and having updated `tail_level` and `tail_time` to match
+	 * the header, and having updated `head_level` and `head_time` to match
 	 * the end of the interval, we can now transmit all the raw bytes of the
 	 * range.  If it wraps around the cyclic buffer, we need two calls to
 	 * `queue_add_units` (in addition to first call to transmit the header).
 	 */
 
-	if (buf->tail <= tail) {
+	if (buf->head <= head) {
 		/* One contiguous range */
-		header->transcript_size = tail - buf->tail;
+		header->transcript_size = head - buf->head;
 		queue_add_units(&cmsis_dap_tx_queue, encapsulated_header,
 				encapsulated_header_size);
-		queue_blocking_add(&cmsis_dap_tx_queue, buf->tail,
+		queue_blocking_add(&cmsis_dap_tx_queue, buf->head,
 				   header->transcript_size);
 	} else {
 		/* Data wraps around */
 		header->transcript_size =
-			tail - buf->data + buf->end - buf->tail;
+			head - buf->data + buf->end - buf->head;
 		queue_add_units(&cmsis_dap_tx_queue, encapsulated_header,
 				encapsulated_header_size);
-		queue_blocking_add(&cmsis_dap_tx_queue, buf->tail,
-				   buf->end - buf->tail);
+		queue_blocking_add(&cmsis_dap_tx_queue, buf->head,
+				   buf->end - buf->head);
 		queue_blocking_add(&cmsis_dap_tx_queue, buf->data,
-				   tail - buf->data);
+				   head - buf->data);
 	}
 
-	buf->tail = tail;
+	buf->head = head;
 }
 
 /*
