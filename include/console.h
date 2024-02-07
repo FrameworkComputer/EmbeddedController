@@ -161,11 +161,7 @@ static inline bool console_channel_is_disabled(enum console_channel channel)
 #endif
 
 #ifdef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
-/**
- * Buffer size in bytes large enough to hold the largest possible timestamp.
- */
-#define PRINTF_TIMESTAMP_BUF_SIZE 22
-int snprintf_timestamp_now(char *str, size_t size);
+const char *get_timestamp_now(void);
 
 #define cputs(channel, outstr)                        \
 	PW_LOG(PW_LOG_LEVEL_INFO, PW_LOG_MODULE_NAME, \
@@ -177,8 +173,7 @@ int snprintf_timestamp_now(char *str, size_t size);
 
 #define cprints(channel, format, ...)                                       \
 	do {                                                                \
-		char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];                     \
-		snprintf_timestamp_now(ts_str, sizeof(ts_str));             \
+		const char *ts_str = get_timestamp_now();                   \
 		PW_LOG(PW_LOG_LEVEL_INFO, PW_LOG_MODULE_NAME,               \
 		       PW_EC_CHANNEL_TO_FLAG(channel), "[%s " format "]\n", \
 		       ts_str, ##__VA_ARGS__);                              \
@@ -188,7 +183,7 @@ int snprintf_timestamp_now(char *str, size_t size);
 /**
  * Put a string to the console channel.
  *
- * @param channel	Output chanel
+ * @param channel	Output channel
  * @param outstr	String to write
  *
  * @return non-zero if output was truncated.

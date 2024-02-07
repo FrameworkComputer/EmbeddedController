@@ -111,6 +111,17 @@ int snprintf_timestamp_now(char *str, size_t size)
 	return snprintf_timestamp(str, size, get_time().val);
 }
 
+#ifdef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
+const char *get_timestamp_now(void)
+{
+	static char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
+
+	snprintf_timestamp_now(ts_str, sizeof(ts_str));
+
+	return ts_str;
+}
+#endif
+
 int snprintf_timestamp(char *str, size_t size, uint64_t timestamp)
 {
 	int len;
