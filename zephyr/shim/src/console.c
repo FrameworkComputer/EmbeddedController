@@ -523,5 +523,5 @@ static int timestamp_init(void)
 
 	return 0;
 }
-SYS_INIT(timestamp_init, POST_KERNEL, CONFIG_APPLICATION_INIT_PRIORITY);
+SYS_INIT(timestamp_init, POST_KERNEL, CONFIG_LOG_CORE_INIT_PRIORITY);
 #endif /* CONFIG_PLATFORM_EC_LOG_CUSTOM_TIMESTAMP */
