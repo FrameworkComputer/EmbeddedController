@@ -18,7 +18,7 @@
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
 enum battery_wattage { none, battery_55w, battery_61w };
-enum battery_wattage get_battery_wattage()
+enum battery_wattage get_battery_wattage(void)
 {
 	const struct fuel_gauge_info *const fuel_gauge =
 		&get_batt_params()->fuel_gauge;
