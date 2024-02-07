@@ -32,6 +32,7 @@ target_sources(app PRIVATE
     src/lis2dw12.c
     src/ln9310.c
     src/locate_chip.c
+    src/logging.c
     src/motion_sense/motion_sense.c
     src/panic.c
     src/panic_output.c
