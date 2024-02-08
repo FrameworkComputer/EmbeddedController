@@ -57,7 +57,7 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 {
 	int rv;
 	uint8_t port;
-	struct pdc_info_t pdc_info;
+	struct pdc_info_t pdc_info = { 0 };
 
 	/* Get PD port number */
 	rv = cmd_get_pd_port(sh, argv[1], &port);
@@ -66,6 +66,11 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 
 	/* Get PDC Status */
 	rv = pdc_power_mgmt_get_info(port, &pdc_info);
+	if (rv) {
+		shell_error(sh, "Could not get port %u info (%d)", port, rv);
+		return rv;
+	}
+
 	shell_fprintf(sh, SHELL_INFO,
 		      "FW Ver: %u.%u.%u\n"
 		      "PD Rev: %u\n"
