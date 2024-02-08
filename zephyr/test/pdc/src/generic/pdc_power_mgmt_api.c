@@ -449,13 +449,12 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_unconstr_power)
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_vbus_voltage)
 {
-	zassert_equal(0, pdc_power_mgmt_get_vbus_voltage(TEST_PORT));
-#ifdef TODO_B_322851061
-	/* TODO(b/322851061) Possibly related regarding blocking APIs */
 	struct connector_status_t connector_status;
 	uint32_t mv_units = 50;
 	uint32_t expected_voltage_mv = 5000;
 	uint16_t out;
+
+	zassert_equal(0, pdc_power_mgmt_get_vbus_voltage(TEST_PORT));
 
 	connector_status.voltage_scale = 10; /* 50 mv units*/
 	connector_status.voltage_reading = expected_voltage_mv / mv_units;
@@ -469,7 +468,6 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_vbus_voltage)
 
 	emul_pdc_disconnect(emul);
 	k_sleep(K_MSEC(1000));
-#endif
 }
 
 ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
