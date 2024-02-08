@@ -124,8 +124,11 @@ static void process_altmode_pd_data(int port)
 	bool prv_hpd_lvl;
 #endif
 
+/* TODO(b/325624686): The polling mechanism is temporary and will be removed
+ * after the bug is resolved */
+#if !CONFIG_USBPD_POLL_PDC
 	LOG_INF("Process p%d data", port);
-
+#endif
 	/* Clear the interrupt */
 	rv = pd_altmode_write_control(pd_config_array[port], &control);
 	if (rv) {
@@ -222,11 +225,17 @@ static void intel_altmode_thread(void *unused1, void *unused2, void *unused3)
 
 	LOG_INF("Intel Altmode thread start");
 
+#if CONFIG_USBPD_POLL_PDC
+	events = intel_altmode_wait_event();
+#endif
 	while (1) {
+#if CONFIG_USBPD_POLL_PDC
+		events = BIT(INTEL_ALTMODE_EVENT_FORCE);
+#else
 		events = intel_altmode_wait_event();
 
 		LOG_DBG("Altmode events=0x%x", events);
-
+#endif
 		/*
 		 * Process the forced event first so that they are not
 		 * overlooked in the if-else conditions.
@@ -243,6 +252,9 @@ static void intel_altmode_thread(void *unused1, void *unused2, void *unused3)
 					process_altmode_pd_data(i);
 			}
 		}
+#if CONFIG_USBPD_POLL_PDC
+		k_msleep(50);
+#endif
 	}
 }
 
