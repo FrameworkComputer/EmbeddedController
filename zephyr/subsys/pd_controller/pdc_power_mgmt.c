@@ -35,15 +35,11 @@ LOG_MODULE_REGISTER(pdc_power_mgmt);
 #define LOOP_DELAY_MS 25
 
 /**
- * @brief maximum number of times to try and send a command (Time is 2s)
+ * @brief maximum number of times to try and send a command, or wait for a
+ * public API command to execute (Time is 2s)
+ *
  */
 #define RETRY_MAX (2000 / LOOP_DELAY_MS)
-
-/**
- * @brief maximum number of counts to wait the subsystem to respond to an API
- * call (Time is 500ms)
- */
-#define BLOCK_COUNTER_MAX (500 / LOOP_DELAY_MS)
 
 /**
  * @brief maximum number of PDOs
@@ -1371,7 +1367,7 @@ static int public_api_block(int port, enum pdc_cmd_t pdc_cmd)
 		/* give time for command to be processed */
 		k_sleep(K_MSEC(LOOP_DELAY_MS));
 		pdc_data[port]->port.block_counter++;
-		if (pdc_data[port]->port.block_counter > BLOCK_COUNTER_MAX) {
+		if (pdc_data[port]->port.block_counter > RETRY_MAX) {
 			/* something went wrong */
 			LOG_ERR("Public API blocking timeout");
 			return -EBUSY;
