@@ -29,6 +29,7 @@ static const struct device *dev = DEVICE_DT_GET(RTS5453P_NODE);
 
 void pdc_before_test(void *data)
 {
+	emul_pdc_reset(emul);
 	emul_pdc_set_response_delay(emul, 0);
 }
 
@@ -324,4 +325,23 @@ ZTEST_USER(pdc_api, test_get_info)
 	zassert_equal(in.pd_revision, out.pd_revision);
 	zassert_equal(in.vid_pid, out.vid_pid, "in=0x%X, out=0x%X", in.vid_pid,
 		      out.vid_pid);
+}
+
+/* PDO0 is reserved for a fixed PDO at 5V. */
+ZTEST_USER(pdc_api, test_get_pdo)
+{
+	uint32_t fixed_pdo = 0;
+
+	/* Test source fixed pdo. */
+	zassert_ok(pdc_get_pdos(dev, SOURCE_PDO, PDO_OFFSET_0, 1, false,
+				&fixed_pdo));
+	k_sleep(K_MSEC(100));
+	zassert_equal(PDO_FIXED_GET_VOLT(fixed_pdo), 5000);
+
+	/* Test sink fixed pdo. */
+	fixed_pdo = 0;
+	zassert_ok(pdc_get_pdos(dev, SINK_PDO, PDO_OFFSET_0, 1, false,
+				&fixed_pdo));
+	k_sleep(K_MSEC(100));
+	zassert_equal(PDO_FIXED_GET_VOLT(fixed_pdo), 5000);
 }

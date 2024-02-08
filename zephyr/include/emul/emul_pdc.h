@@ -36,11 +36,15 @@ typedef int (*emul_pdc_set_error_status_t)(const struct emul *target,
 
 typedef int (*emul_pdc_set_vbus_t)(const struct emul *target,
 				   const uint16_t *vbus);
-typedef int (*emul_pdc_set_pdos_t)(const struct emul *target,
+typedef int (*emul_pdc_get_pdos_t)(const struct emul *target,
 				   enum pdo_type_t pdo_type,
 				   enum pdo_offset_t pdo_offset,
 				   uint8_t num_pdos, bool port_partner_pdo,
 				   uint32_t *pdos);
+typedef int (*emul_pdc_set_pdos_t)(const struct emul *target,
+				   enum pdo_type_t pdo_type,
+				   enum pdo_offset_t pdo_offset,
+				   uint8_t num_pdos, const uint32_t *pdos);
 typedef int (*emul_pdc_set_info_t)(const struct emul *target,
 				   const struct pdc_info_t *info);
 typedef int (*emul_pdc_set_current_pdo_t)(const struct emul *target,
@@ -74,6 +78,7 @@ __subsystem struct emul_pdc_api_t {
 	emul_pdc_set_connector_status_t set_connector_status;
 	emul_pdc_set_error_status_t set_error_status;
 	emul_pdc_set_vbus_t set_vbus_voltage;
+	emul_pdc_get_pdos_t get_pdos;
 	emul_pdc_set_current_pdo_t set_current_pdo;
 	emul_pdc_set_pdos_t set_pdos;
 	emul_pdc_set_info_t set_info;
@@ -262,7 +267,7 @@ static inline int emul_pdc_set_vbus(const struct emul *target,
 	return -ENOSYS;
 }
 
-static inline int emul_pdc_set_pdos(const struct emul *target,
+static inline int emul_pdc_get_pdos(const struct emul *target,
 				    enum pdo_type_t pdo_type,
 				    enum pdo_offset_t pdo_offset,
 				    uint8_t num_pdos, bool port_partner_pdo,
@@ -274,9 +279,27 @@ static inline int emul_pdc_set_pdos(const struct emul *target,
 
 	const struct emul_pdc_api_t *api = target->backend_api;
 
+	if (api->get_pdos) {
+		return api->get_pdos(target, pdo_type, pdo_offset, num_pdos,
+				     port_partner_pdo, pdos);
+	}
+	return -ENOSYS;
+}
+
+static inline int emul_pdc_set_pdos(const struct emul *target,
+				    enum pdo_type_t pdo_type,
+				    enum pdo_offset_t pdo_offset,
+				    uint8_t num_pdos, const uint32_t *pdos)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_api_t *api = target->backend_api;
+
 	if (api->set_pdos) {
 		return api->set_pdos(target, pdo_type, pdo_offset, num_pdos,
-				     port_partner_pdo, pdos);
+				     pdos);
 	}
 	return -ENOSYS;
 }

@@ -5,4 +5,7 @@
 config TEST_SUITE_PDC_GENERIC
 	bool "Enable generic PDC tests"
 
+config TEST_SUITE_PDC_RTS54XX
+	bool "Enable generic PDC tests"
+
 source "Kconfig.zephyr"

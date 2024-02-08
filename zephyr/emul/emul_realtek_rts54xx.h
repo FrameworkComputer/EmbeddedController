@@ -16,6 +16,7 @@
 #include "drivers/pdc.h"
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_common_i2c.h"
+#include "emul/emul_realtek_rts54xx_public.h"
 #include "zephyr/kernel.h"
 
 #include <zephyr/drivers/emul.h>
@@ -210,6 +211,18 @@ union rts54_request {
 		struct rts54_subcommand_header header;
 		uint8_t port_num;
 	} read_power_level;
+
+	struct get_pdo {
+		struct rts54_subcommand_header header;
+		uint8_t port_num;
+		struct {
+			uint8_t src : 1;
+			uint8_t partner : 1;
+			uint8_t offset : 3;
+			uint8_t num : 3;
+		};
+		uint32_t pdos[PDO_OFFSET_MAX];
+	} __packed get_pdos;
 };
 
 union rts54_response {
@@ -342,6 +355,11 @@ union rts54_response {
 		uint8_t byte_count;
 		uint32_t rdo;
 	} __packed get_rdo;
+
+	struct get_pdo_response {
+		uint8_t byte_count;
+		uint32_t pdos[PDO_OFFSET_MAX];
+	} __packed get_pdos;
 };
 
 enum cmd_sts_t {
@@ -395,6 +413,9 @@ struct rts5453p_emul_pdc_data {
 
 	uint16_t delay_ms;
 	struct k_work_delayable delay_work;
+
+	uint32_t snk_pdos[PDO_OFFSET_MAX];
+	uint32_t src_pdos[PDO_OFFSET_MAX];
 };
 
 /**

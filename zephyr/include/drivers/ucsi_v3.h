@@ -59,6 +59,8 @@ enum pdo_offset_t {
 	PDO_OFFSET_6,
 	/** PDO Offset 7 */
 	PDO_OFFSET_7,
+	/** Enum end marker */
+	PDO_OFFSET_MAX,
 };
 
 /**

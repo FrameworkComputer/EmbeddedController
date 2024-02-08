@@ -16,3 +16,7 @@ if (DEFINED CONFIG_TEST_SUITE_PDC_GENERIC)
 	target_sources(app PRIVATE src/generic/pdc_api.c)
 	target_sources(app PRIVATE src/generic/pdc_power_mgmt_api.c)
 endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PDC_RTS54XX)
+	target_sources(app PRIVATE src/rts54xx/rts54xx.c)
+endif()
