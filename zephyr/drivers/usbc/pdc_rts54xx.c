@@ -725,6 +725,8 @@ static void st_ping_status_run(void *o)
 			data->cci_event.error = 1;
 			/* Command has completed */
 			data->cci_event.command_completed = 1;
+			/* Clear busy event */
+			data->cci_event.busy = 0;
 			/* Set error, I2C read error */
 			data->error_status.i2c_read_error = 1;
 			/* Notify system of status change */
@@ -739,7 +741,7 @@ static void st_ping_status_run(void *o)
 	switch (data->ping_status.cmd_sts) {
 	case CMD_BUSY:
 		/*
-		 * Busy and Deferred and handled the same,
+		 * Busy and Deferred are handled the same,
 		 * so fall through
 		 */
 	case CMD_DEFERRED:
@@ -757,6 +759,8 @@ static void st_ping_status_run(void *o)
 			data->cci_event.error = 1;
 			/* Command completed */
 			data->cci_event.command_completed = 1;
+			/* Clear busy event */
+			data->cci_event.busy = 0;
 			/* Ping Retry Count error */
 			data->error_status.ping_retry_count = 1;
 
@@ -780,6 +784,9 @@ static void st_ping_status_run(void *o)
 		}
 		break;
 	case CMD_DONE:
+		/* Clear busy event */
+		data->cci_event.busy = 0;
+
 		if (data->cmd == CMD_PPM_RESET) {
 			/* The PDC has been reset,
 			 * so set cci.reset_completed to 1b.
@@ -820,7 +827,8 @@ static void st_ping_status_run(void *o)
 		data->cci_event.error = 1;
 		/* Command completed */
 		data->cci_event.command_completed = 1;
-
+		/* Clear busy event */
+		data->cci_event.busy = 0;
 		/* Notify system of status change */
 		call_cci_event_cb(data);
 
