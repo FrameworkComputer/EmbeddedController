@@ -192,7 +192,7 @@ enum ec_status test_send_host_command(int command, int version,
 #endif /* TASK_HAS_HOSTCMD */
 
 /* Defined as test_export_static in common/console.c. */
-int handle_command(char *input);
+enum ec_error_list handle_command(char *input);
 
 enum ec_error_list test_send_console_command(char *input)
 {

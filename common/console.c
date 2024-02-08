@@ -164,7 +164,7 @@ static const char *const errmsgs[] = {
  *
  * @return EC_SUCCESS, or non-zero if error.
  */
-test_export_static int handle_command(char *input)
+test_export_static enum ec_error_list handle_command(char *input)
 {
 	const struct console_command *cmd;
 	const char *argv[MAX_ARGS_PER_COMMAND];
