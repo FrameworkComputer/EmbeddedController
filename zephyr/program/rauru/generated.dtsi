@@ -63,10 +63,10 @@
 			gpios = <&gpioc 0 GPIO_INPUT>;
 		};
 		gpio_dp_path_hdmi_en: dp_path_hdmi_en {
-			gpios = <&gpioi 6 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpioi 6 GPIO_OUTPUT>;
 		};
 		gpio_dp_path_usb_c1_en: dp_path_usb_c1_en {
-			gpios = <&gpiog 0 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpiog 0 GPIO_OUTPUT>;
 		};
 		gpio_ec_ap_dp_hpd_l: ec_ap_dp_hpd_l {
 			gpios = <&gpiof 3 GPIO_OUTPUT>;
@@ -95,7 +95,7 @@
 			gpios = <&gpioa 7 GPIO_INPUT_PULL_DOWN>;
 		};
 		gpio_ec_gsc_packet_mode_en: ec_gsc_packet_mode_en {
-			gpios = <&gpioe 6 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpioe 6 GPIO_OUTPUT>;
 		};
 		gpio_ec_led1_odl: ec_led1_odl {
 			gpios = <&gpioa 0 GPIO_ODR_HIGH>;
@@ -114,28 +114,28 @@
 			gpios = <&gpioe 4 GPIO_INPUT>;
 		};
 		gpio_en_hdmi_pwr: en_hdmi_pwr {
-			gpios = <&gpioi 5 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpioi 5 GPIO_OUTPUT>;
 		};
 		gpio_en_kb_bl: en_kb_bl {
-			gpios = <&gpiog 2 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpiog 2 GPIO_OUTPUT>;
 		};
 		gpio_en_pp3700_s5: en_pp3700_s5 {
-			gpios = <&gpioh 5 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpioh 5 GPIO_OUTPUT>;
 		};
 		gpio_en_pp5000_fan: en_pp5000_fan {
-			gpios = <&gpioa 6 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpioa 6 GPIO_OUTPUT>;
 		};
 		gpio_en_pp5000_pen_l: en_pp5000_pen_l {
 			gpios = <&gpiog 3 GPIO_OUTPUT>;
 		};
 		gpio_en_pp5000_usba_vbus: en_pp5000_usba_vbus {
-			gpios = <&gpiog 1 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpiog 1 GPIO_OUTPUT>;
 		};
 		gpio_en_pp5000_z1: en_pp5000_z1 {
 			gpios = <&gpioh 3 GPIO_OUTPUT>;
 		};
 		gpio_en_ulp: en_ulp {
-			gpios = <&gpioh 0 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpioh 0 GPIO_OUTPUT>;
 		};
 		gpio_gsc_acok_od: gsc_acok_od {
 			gpios = <&gpioe 1 GPIO_INPUT>;
@@ -177,19 +177,19 @@
 			enum-name = "GPIO_SYS_RST_ODL";
 		};
 		gpio_usb_c0_dp_in_hpd: usb_c0_dp_in_hpd {
-			gpios = <&gpiof 2 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpiof 2 GPIO_OUTPUT>;
 		};
 		gpio_usb_c0_frs_en: usb_c0_frs_en {
-			gpios = <&gpiof 0 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpiof 0 GPIO_OUTPUT>;
 		};
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
 			gpios = <&gpiof 1 GPIO_INPUT>;
 		};
 		gpio_usb_c1_dp_in_hpd: usb_c1_dp_in_hpd {
-			gpios = <&gpiod 5 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpiod 5 GPIO_OUTPUT>;
 		};
 		gpio_usb_c1_frs_en: usb_c1_frs_en {
-			gpios = <&gpiod 3 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpiod 3 GPIO_OUTPUT>;
 		};
 		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
 			gpios = <&gpiod 4 GPIO_INPUT>;
