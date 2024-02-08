@@ -32,7 +32,10 @@ static atomic_t fifo_entries; /* number of existing entries */
 static uint8_t fifo_max_depth = FIFO_DEPTH;
 static struct ec_response_get_next_event_v1 fifo[FIFO_DEPTH];
 
+#ifdef CONFIG_KEYBOARD_PROTOCOL_MKBP
+/* Check the FIFO size from the keyboard perspective. */
 BUILD_ASSERT(sizeof(fifo[0].data) >= KEYBOARD_COLS_MAX);
+#endif
 
 /*
  * Mutex for critical sections of mkbp_fifo_add(), which is called
