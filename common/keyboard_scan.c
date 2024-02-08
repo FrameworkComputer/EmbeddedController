@@ -923,6 +923,11 @@ const uint8_t *keyboard_scan_get_state(void)
 
 void keyboard_scan_init(void)
 {
+	CPRINTS("Custom=%d Keypad=%d Vivaldi=%d",
+		IS_ENABLED(CONFIG_KEYBOARD_CUSTOMIZATION),
+		IS_ENABLED(CONFIG_KEYBOARD_KEYPAD),
+		IS_ENABLED(CONFIG_KEYBOARD_VIVALDI));
+
 	if (IS_ENABLED(CONFIG_KEYBOARD_STRICT_DEBOUNCE) &&
 	    keyscan_config.debounce_down_us != keyscan_config.debounce_up_us) {
 		/*
