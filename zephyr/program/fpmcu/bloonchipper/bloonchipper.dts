@@ -7,6 +7,8 @@
 #include "gpio.dtsi"
 #include "rwsig.dtsi"
 
+#include <cros/integrated_fwid.dtsi>
+
 / {
 	chosen {
 		cros-fp,fingerprint-sensor = &fp_sensor;

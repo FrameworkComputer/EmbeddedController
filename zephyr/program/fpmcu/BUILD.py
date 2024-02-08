@@ -41,3 +41,7 @@ bloonchipper = register_fpmcu_variant(
         here / "bloonchipper" / "dev_key.pem",
     ),
 )
+
+# The address of RW_FWID is hardcoded in RO. You need to have REALLY
+# good reason to change it.
+assert_rw_fwid_DO_NOT_EDIT(project_name="bloonchipper", addr=0x601C8)
