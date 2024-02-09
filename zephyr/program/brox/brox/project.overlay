@@ -43,7 +43,10 @@ i2c3ALT: &i2c3 {
                         compatible = "lgc,ap18c8k", "battery-smart";
                 };
         };
+};
 
+&gpio_tablet_mode_l {
+	enum-name = "GPIO_TABLET_MODE_L";
 };
 
 /* These GPIOS are initialized by the PDC driver */

@@ -24,18 +24,21 @@ def register_brox_project(
         dts_overlays=[
             here / project_name / "project.overlay",
         ],
-        kconfig_files=[
-            # Common to all projects.
-            here / "program.conf",
-            # Project-specific KConfig customization.
-            here / project_name / "project.conf",
-        ],
+        kconfig_files=kconfig_files,
         inherited_from=["brox"],
     )
 
 
 brox = register_brox_project(
     project_name="brox",
+    kconfig_files=[
+        # Common to all projects.
+        here / "program.conf",
+        # Parent project's config
+        here / "brox" / "project.conf",
+        # Common sensor configs
+        here / "motionsense.conf",
+    ],
 )
 
 register_brox_project(
@@ -64,7 +67,10 @@ register_ish_project(
     dts_overlays=[
         here / "brox-ish" / "project.overlay",
     ],
-    kconfig_files=[here / "brox-ish" / "prj.conf"],
+    kconfig_files=[
+        here / "brox-ish" / "prj.conf",
+        here / "motionsense.conf",
+    ],
 )
 
 # Note for reviews, do not let anyone edit these assertions, the addresses
