@@ -6569,6 +6569,67 @@ int cmd_keyboard_factory_test(int argc, char *argv[])
 	return 0;
 }
 
+const char *action_key_names[] = {
+	[TK_ABSENT] = "Absent",
+	[TK_BACK] = "Back",
+	[TK_FORWARD] = "Forward",
+	[TK_REFRESH] = "Refresh",
+	[TK_FULLSCREEN] = "Fullscreen",
+	[TK_OVERVIEW] = "Overview",
+	[TK_BRIGHTNESS_DOWN] = "Brightness Down",
+	[TK_BRIGHTNESS_UP] = "Brightness Up",
+	[TK_VOL_MUTE] = "Volume Mute",
+	[TK_VOL_DOWN] = "Volume Down",
+	[TK_VOL_UP] = "Volume Up",
+	[TK_SNAPSHOT] = "Snapshot",
+	[TK_PRIVACY_SCRN_TOGGLE] = "Privacy Screen Toggle",
+	[TK_KBD_BKLIGHT_DOWN] = "Keyboard Backlight Down",
+	[TK_KBD_BKLIGHT_UP] = "Keyboard Backlight Up",
+	[TK_PLAY_PAUSE] = "Play/Pause",
+	[TK_NEXT_TRACK] = "Next Track",
+	[TK_PREV_TRACK] = "Previous Track",
+	[TK_KBD_BKLIGHT_TOGGLE] = "Keyboard Backlight Toggle",
+	[TK_MICMUTE] = "Microphone Mute",
+	[TK_MENU] = "Menu",
+};
+
+BUILD_ASSERT(ARRAY_SIZE(action_key_names) == TK_COUNT);
+
+int cmd_keyboard_get_config(int argc, char *argv[])
+{
+	struct ec_response_keybd_config r;
+	int rv;
+
+	rv = ec_command(EC_CMD_GET_KEYBD_CONFIG, 0, NULL, 0, &r, sizeof(r));
+	if (rv < 0)
+		return rv;
+
+	printf("Vivaldi key:\n");
+	for (int i = 0; i < r.num_top_row_keys; ++i) {
+		const char *name = NULL;
+		if (r.action_keys[i] < TK_COUNT) {
+			name = action_key_names[r.action_keys[i]];
+		}
+		if (name == NULL) {
+			name = "Unknown Key";
+		}
+		printf("%2i: %s (%d)\n", i, name, r.action_keys[i]);
+	}
+	printf("Capabilities: %0#x", r.capabilities);
+	if (r.capabilities & KEYBD_CAP_FUNCTION_KEYS) {
+		printf(" FUNCTION_KEYS");
+	}
+	if (r.capabilities & KEYBD_CAP_NUMERIC_KEYPAD) {
+		printf(" NUMERIC_KEYPAD");
+	}
+	if (r.capabilities & KEYBD_CAP_SCRNLOCK_KEY) {
+		printf(" SCRNLOCK_KEY");
+	}
+	printf("\n");
+
+	return 0;
+}
+
 int cmd_panic_info(int argc, char *argv[])
 {
 	int rv;
@@ -12105,6 +12166,8 @@ const struct command commands[] = {
 	  "\n\tReturn the list of supported features." },
 	{ "kbfactorytest", cmd_keyboard_factory_test,
 	  "\n\tScan out keyboard if any pins are shorted." },
+	{ "kbgetconfig", cmd_keyboard_get_config,
+	  "\n\tGet keyboard Vivaldi configuration." },
 	{ "kbinfo", cmd_kbinfo, "\n\tDump keyboard matrix dimensions." },
 	{ "kbpress", cmd_kbpress, "\n\tSimulate key press." },
 	{ "keyconfig", cmd_keyconfig,

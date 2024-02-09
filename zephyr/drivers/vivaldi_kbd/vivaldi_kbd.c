@@ -48,6 +48,7 @@ static const uint16_t action_scancodes[] = {
 	[TK_KBD_BKLIGHT_TOGGLE] = SCANCODE_KBD_BKLIGHT_TOGGLE,
 	[TK_MENU] = SCANCODE_MENU,
 };
+BUILD_ASSERT(ARRAY_SIZE(action_scancodes) == TK_COUNT);
 
 #define VIVALDI_KEY_INIT(node_id, prop, idx)                             \
 	{                                                                \
