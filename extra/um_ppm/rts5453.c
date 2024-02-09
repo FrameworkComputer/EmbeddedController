@@ -200,8 +200,8 @@ static int rts5453_ping_status(struct rts5453_device *dev, uint8_t port)
 			return -1;
 		}
 
-		/* Busy so wait 10ms. */
-		if (byte == 0) {
+		/* Busy or deferred so wait 10ms. */
+		if (byte == 0 || byte == 2) {
 			platform_usleep(PING_DELAY_US);
 			continue;
 		}
