@@ -3418,6 +3418,13 @@ void svdm_set_hpd_gpio(int port, int en);
  */
 int svdm_get_hpd_gpio(int port);
 
+/*
+ * Generate IRQ_HPD on the HPD GPIO pin
+ *
+ * @param port The PD port number
+ */
+void svdm_set_hpd_gpio_irq(int port);
+
 /**
  * Configure the pins used for DisplayPort Alternate Mode into safe state.
  *

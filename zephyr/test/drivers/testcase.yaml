@@ -1274,6 +1274,14 @@ tests:
     extra_conf_files:
     - prj.conf
     - usbc_alt_mode/prj.conf
+  drivers.usbc_alt_mode.accurate_irq:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=y
+    - CONFIG_PLATFORM_EC_USB_PD_DP_HPD_GPIO_IRQ_ACCURATE=y
+    timeout: 120
+    extra_conf_files:
+    - prj.conf
+    - usbc_alt_mode/prj.conf
   drivers.usbc_alt_mode.ec_host_cmd:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USBC_ALT_MODE=y
