@@ -8,8 +8,6 @@
 #include "include/ppm.h"
 #include "ppm_common.h"
 
-#include <pthread.h>
-
 const char *ppm_state_strings[PPM_STATE_MAX] = {
 	"PPM_STATE_NOT_READY",	    "PPM_STATE_IDLE",
 	"PPM_STATE_IDLE_NOTIFY",    "PPM_STATE_PROCESSING_COMMAND",
