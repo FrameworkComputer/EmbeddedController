@@ -496,6 +496,13 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 				     SMBUS_MAX_BLOCK_SIZE);
 }
 
+static int rts5453_ucsi_get_active_port_count(struct ucsi_pd_device *device)
+{
+	struct rts5453_device *dev = CAST_FROM(device);
+
+	return dev->active_port_count;
+}
+
 int rts5453_vendor_cmd_internal(struct rts5453_device *dev, uint8_t port,
 				uint8_t enable_bits)
 {
@@ -866,6 +873,7 @@ struct ucsi_pd_driver *rts5453_open(struct smbus_driver *smbus,
 	drv->init_ppm = rts5453_ucsi_init_ppm;
 	drv->get_ppm = rts5453_ucsi_get_ppm;
 	drv->execute_cmd = rts5453_ucsi_execute_cmd;
+	drv->get_active_port_count = rts5453_ucsi_get_active_port_count;
 	drv->cleanup = rts5453_ucsi_cleanup;
 
 	/* Initialize the PPM. */

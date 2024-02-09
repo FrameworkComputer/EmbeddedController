@@ -67,6 +67,15 @@ typedef int(ucsi_pd_execute_command)(struct ucsi_pd_device *dev,
 				     uint8_t *lpm_data_out);
 
 /**
+ * Get the number of ports supported by this PD device.
+ *
+ * @param dev: Device object for this PD controller.
+ *
+ * @returns -1 on error or the number of active ports.
+ */
+typedef int(ucsi_pd_get_active_port_count)(struct ucsi_pd_device *dev);
+
+/**
  * Clean up the given PD driver. Call before freeing.
  *
  * @param driver: Driver object to clean up.
@@ -85,6 +94,7 @@ struct ucsi_pd_driver {
 	ucsi_pd_init_ppm *init_ppm;
 	ucsi_pd_get_ppm *get_ppm;
 	ucsi_pd_execute_command *execute_cmd;
+	ucsi_pd_get_active_port_count *get_active_port_count;
 
 	ucsi_pd_cleanup *cleanup;
 };

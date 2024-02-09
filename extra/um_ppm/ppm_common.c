@@ -96,18 +96,27 @@ static bool is_pending_async_event(struct ppm_common_device *dev)
 
 static int ppm_common_opm_notify(struct ppm_common_device *dev)
 {
-	if (dev->opm_notify) {
-		uint32_t cci;
+	uint32_t cci;
 
-		platform_memcpy(&cci, &dev->ucsi_data.cci, sizeof(uint32_t));
-		DLOG("Notifying with CCI = 0x%08x", cci);
-		dev->opm_notify(dev->opm_context);
-		return 0;
-	} else {
+	if (!dev->opm_notify) {
 		ELOG("User error: No notifier!");
+		return -1;
 	}
 
-	return -1;
+	platform_memcpy(&cci, &dev->ucsi_data.cci, sizeof(cci));
+	DLOG("Notifying with CCI = 0x%08x", cci);
+	dev->opm_notify(dev->opm_context);
+	return 0;
+}
+
+static int ppm_common_apply_platform_policy(struct ppm_common_device *dev)
+{
+	if (!dev->apply_platform_policy) {
+		ELOG("User error: No platform policy specified!");
+		return -1;
+	}
+
+	return dev->apply_platform_policy(dev->apply_platform_policy_context);
 }
 
 static void clear_pending_command(struct ppm_common_device *dev)
@@ -318,6 +327,9 @@ success:
 	/* If we reset, we only surface up the reset completed event after busy.
 	 */
 	if (ucsi_command == UCSI_CMD_PPM_RESET) {
+		/* Handle platform policy if we just completed a PPM Reset. */
+		ppm_common_apply_platform_policy(dev);
+
 		cci->reset_completed = 1;
 	} else {
 		cci->data_length = ret & 0xFF;
@@ -503,6 +515,9 @@ static void ppm_common_task(void *context)
 	dev->ucsi_data.control.command = UCSI_CMD_PPM_RESET;
 	if (dev->pd->execute_cmd(dev->pd->dev, &dev->ucsi_data.control,
 				 dev->ucsi_data.message_in) != -1) {
+		/* Set platform policy before starting the state machine. */
+		ppm_common_apply_platform_policy(dev);
+
 		dev->ppm_state = PPM_STATE_IDLE;
 		platform_memset(&dev->ucsi_data.cci, 0,
 				sizeof(struct ucsi_cci));
@@ -851,13 +866,37 @@ static int ppm_common_register_notify(struct ucsi_ppm_device *device,
 				      ucsi_ppm_notify *callback, void *context)
 {
 	struct ppm_common_device *dev = DEV_CAST_FROM(device);
-	if (!dev) {
-		return -1;
+	int ret = 0;
+
+	/* Are we replacing the notify? */
+	if (dev->opm_notify) {
+		DLOG("Replacing existing notify function!");
+		ret = 1;
 	}
 
 	dev->opm_notify = callback;
 	dev->opm_context = context;
-	return 0;
+
+	return ret;
+}
+
+static int
+ppm_common_register_platform_policy(struct ucsi_ppm_device *device,
+				    ucsi_ppm_apply_platform_policy *callback,
+				    void *context)
+{
+	struct ppm_common_device *dev = DEV_CAST_FROM(device);
+	int ret = 0;
+
+	if (dev->apply_platform_policy) {
+		DLOG("Replacing platform policy callback!");
+		ret = 1;
+	}
+
+	dev->apply_platform_policy = callback;
+	dev->apply_platform_policy_context = context;
+
+	return ret;
 }
 
 static void ppm_common_lpm_alert(struct ucsi_ppm_device *device, uint8_t lpm_id)
@@ -928,6 +967,7 @@ struct ucsi_ppm_driver *ppm_open(struct ucsi_pd_driver *pd_driver)
 	drv->read = ppm_common_read;
 	drv->write = ppm_common_write;
 	drv->register_notify = ppm_common_register_notify;
+	drv->register_platform_policy = ppm_common_register_platform_policy;
 	drv->lpm_alert = ppm_common_lpm_alert;
 	drv->cleanup = ppm_common_cleanup;
 

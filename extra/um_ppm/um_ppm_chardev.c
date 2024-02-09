@@ -75,6 +75,8 @@ struct um_ppm_cdev {
 	struct ucsi_ppm_driver *ppm;
 	struct smbus_driver *smbus;
 	struct pd_driver_config *driver_config;
+
+	uint8_t lpm_out_buffer[256];
 };
 
 #define READ_NOINTR(fd, buf, size)                                  \
@@ -136,6 +138,47 @@ static void um_ppm_notify(void *context)
 	write_to_cdev(cdev->fd, msg, sizeof(struct um_message_skeleton));
 }
 
+static int um_ppm_apply_platform_policy(void *context)
+{
+	struct um_ppm_cdev *cdev = (struct um_ppm_cdev *)context;
+	struct ucsi_pd_driver *pd = cdev->pd;
+
+	/* Platform policy steps for PPM:
+	 *   - Set new CAM = 0xff to force AP driven alt-mode
+	 *   (Missing is power policy stuff)
+	 *
+	 * Directly write to pd driver for these commands and bypass PPM because
+	 * this happens between PPM_RESET and result from PPM_RESET.
+	 */
+
+	int port_count = pd->get_active_port_count(pd->dev);
+
+	struct ucsi_control control = {
+		.command = UCSI_CMD_SET_NEW_CAM,
+		.data_length = 0,
+		.command_specific = { 0 },
+	};
+
+	struct ucsiv3_set_new_cam_cmd cam_cmd = {
+		.enter_or_exit = 1,
+		.new_cam = 0xff,
+		.am_specific = 0,
+	};
+
+	for (int i = 1; i <= port_count; ++i) {
+		cam_cmd.connector_number = i;
+		platform_memcpy(control.command_specific, &cam_cmd,
+				sizeof(cam_cmd));
+
+		if (pd->execute_cmd(pd->dev, &control, cdev->lpm_out_buffer) <
+		    0) {
+			ELOG("Failed to SET_NEW_CAM enter 0xff on port %d", i);
+		}
+	}
+
+	return 0;
+}
+
 struct um_ppm_cdev *um_ppm_cdev_open(char *devpath, struct ucsi_pd_driver *pd,
 				     struct smbus_driver *smbus,
 				     struct pd_driver_config *driver_config)
@@ -161,6 +204,8 @@ struct um_ppm_cdev *um_ppm_cdev_open(char *devpath, struct ucsi_pd_driver *pd,
 	cdev->driver_config = driver_config;
 
 	cdev->ppm->register_notify(cdev->ppm->dev, um_ppm_notify, (void *)cdev);
+	cdev->ppm->register_platform_policy(
+		cdev->ppm->dev, um_ppm_apply_platform_policy, (void *)cdev);
 
 	return cdev;
 
