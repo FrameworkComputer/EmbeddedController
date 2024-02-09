@@ -963,7 +963,7 @@ static void ppm_common_cleanup(struct ucsi_ppm_driver *driver)
 	}
 }
 
-struct ucsi_ppm_driver *ppm_open(struct ucsi_pd_driver *pd_driver)
+struct ucsi_ppm_driver *ppm_open(const struct ucsi_pd_driver *pd_driver)
 {
 	struct ppm_common_device *dev = NULL;
 	struct ucsi_ppm_driver *drv = NULL;
