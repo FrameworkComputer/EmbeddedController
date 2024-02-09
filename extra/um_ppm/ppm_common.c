@@ -8,6 +8,7 @@
 #include "include/ppm.h"
 #include "ppm_common.h"
 
+#include <zephyr/device.h>
 #include <zephyr/logging/log.h>
 
 LOG_MODULE_REGISTER(ppm_common, LOG_LEVEL_INF);
@@ -156,6 +157,9 @@ static void ppm_common_handle_async_event(struct ppm_common_device *dev)
 		 * LPM alert.
 		 */
 		if (dev->last_connector_alerted != -1) {
+			const struct device *ppm =
+				DEVICE_DT_GET(DT_INST(0, ucsi_ppm));
+
 			DLOG("Calling GET_CONNECTOR_STATUS on port %d",
 			     dev->last_connector_alerted);
 
@@ -175,7 +179,7 @@ static void ppm_common_handle_async_event(struct ppm_common_device *dev)
 				port_status, 0,
 				sizeof(struct ucsiv3_get_connector_status_data));
 
-			if (dev->pd->execute_cmd(dev->pd->dev, &get_cs_cmd,
+			if (dev->pd->execute_cmd(ppm, &get_cs_cmd,
 						 (uint8_t *)port_status) < 0) {
 				ELOG("Failed to read port %d status. No recovery.",
 				     port + 1);
@@ -259,6 +263,7 @@ static int ppm_common_execute_pending_cmd(struct ppm_common_device *dev)
 	struct ucsiv3_ack_cc_ci_cmd *ack_cmd;
 	int ret = -1;
 	bool ack_ci = false;
+	const struct device *ppm = DEVICE_DT_GET(DT_INST(0, ucsi_ppm));
 
 	if (control->command == 0 || control->command > UCSI_CMD_VENDOR_CMD) {
 		ELOG("Invalid command 0x%x", control->command);
@@ -296,7 +301,7 @@ static int ppm_common_execute_pending_cmd(struct ppm_common_device *dev)
 	}
 
 	/* Do driver specific execute command. */
-	ret = dev->pd->execute_cmd(dev->pd->dev, control, message_in);
+	ret = dev->pd->execute_cmd(ppm, control, message_in);
 
 	/* Clear command since we just executed it. */
 	platform_memset(control, 0, sizeof(struct ucsi_control));
@@ -506,6 +511,7 @@ static void ppm_common_handle_pending_command(struct ppm_common_device *dev)
 static void ppm_common_task(void *context)
 {
 	struct ppm_common_device *dev = DEV_CAST_FROM(context);
+	const struct device *ppm = DEVICE_DT_GET(DT_INST(0, ucsi_ppm));
 
 	if (!dev) {
 		ELOG("Cannot start PPM task without valid device pointer: %p",
@@ -524,7 +530,7 @@ static void ppm_common_task(void *context)
 	platform_memset(&dev->ucsi_data.control, 0,
 			sizeof(struct ucsi_control));
 	dev->ucsi_data.control.command = UCSI_CMD_PPM_RESET;
-	if (dev->pd->execute_cmd(dev->pd->dev, &dev->ucsi_data.control,
+	if (dev->pd->execute_cmd(ppm, &dev->ucsi_data.control,
 				 dev->ucsi_data.message_in) != -1) {
 		/* Set platform policy before starting the state machine. */
 		ppm_common_apply_platform_policy(dev);
@@ -966,7 +972,8 @@ static void ppm_common_cleanup(struct ucsi_ppm_driver *driver)
 	}
 }
 
-struct ucsi_ppm_driver *ppm_open(const struct ucsi_pd_driver *pd_driver)
+struct ucsi_ppm_driver *ppm_open(const struct ucsi_pd_driver *pd_driver,
+				 struct ucsiv3_get_connector_status_data *data)
 {
 	struct ppm_common_device *dev = NULL;
 	struct ucsi_ppm_driver *drv = NULL;
@@ -977,6 +984,8 @@ struct ucsi_ppm_driver *ppm_open(const struct ucsi_pd_driver *pd_driver)
 
 	dev = (struct ppm_common_device *)drv->dev;
 	dev->pd = pd_driver;
+	dev->num_ports = pd_driver->get_active_port_count(NULL);
+	dev->per_port_status = data;
 
 	drv->init_and_wait = ppm_common_init_and_wait;
 	drv->get_data_region = ppm_common_get_data_region;

@@ -73,7 +73,8 @@ struct ppm_common_device {
  * up. The PPM will retain a pointer to the pd driver in order to execute
  * commands (and any other PD driver specific actions).
  */
-struct ucsi_ppm_driver *ppm_open(const struct ucsi_pd_driver *pd_driver);
+struct ucsi_ppm_driver *ppm_open(const struct ucsi_pd_driver *pd_driver,
+				 struct ucsiv3_get_connector_status_data *data);
 
 /**
  * Allocate memory for the platform dependent part of the PPM.
