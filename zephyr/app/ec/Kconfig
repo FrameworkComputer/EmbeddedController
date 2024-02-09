@@ -47,7 +47,7 @@ choice ESPI_LOG_LEVEL_CHOICE
 	default ESPI_LOG_LEVEL_ERR
 endchoice
 
-config LTO
+config PLATFORM_EC_LTO
 	bool "Link Time Optimization (LTO)"
 	default y if !SOC_POSIX
 	help
