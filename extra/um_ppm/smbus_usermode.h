@@ -21,4 +21,4 @@
 struct smbus_driver *smbus_um_open(int bus_num, uint8_t chip_address,
 				   int gpio_chip, int gpio_line);
 
-#endif // UM_PPM_SMBUS_USERMODE_H_
+#endif /* UM_PPM_SMBUS_USERMODE_H_ */

@@ -36,7 +36,7 @@ enum rts5453_flash_protect {
 	RTS5453_FLASH_PROTECT_ENABLE = 1,
 };
 
-// 32 - 3 [Count; ADDR_L; ADDR_H; WR_DATA_COUNT]
+/* 32 - 3 [Count; ADDR_L; ADDR_H; WR_DATA_COUNT] */
 #define FW_BLOCK_CHUNK_SIZE 29
 
 int rts5453_vendor_cmd_disable(struct rts5453_device *dev, uint8_t port);
@@ -63,10 +63,10 @@ int rts5453_write_to_flash(struct rts5453_device *dev, int flash_bank,
 int rts5453_get_ic_status(struct rts5453_device *dev,
 			  struct rts5453_ic_status *status);
 
-// Establish connection and get basic info about the PD controller.
+/* Establish connection and get basic info about the PD controller. */
 int rts5453_get_info(struct ucsi_pd_driver *pd);
 
-// Firmware update for the PD controller.
+/* Firmware update for the PD controller. */
 int rts5453_do_firmware_update(struct ucsi_pd_driver *pd, const char *filepath,
 			       int dry_run);
 
@@ -84,4 +84,4 @@ struct ucsi_pd_driver *rts5453_open(struct smbus_driver *smbus,
  */
 struct pd_driver_config rts5453_get_driver_config();
 
-#endif // UM_PPM_RTS5453_H_
+#endif /* UM_PPM_RTS5453_H_ */

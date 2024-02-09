@@ -55,19 +55,19 @@ void platform_usleep(uint32_t usec);
 /* Opaque task id type.*/
 struct task_handle;
 
-// Initialize a task (code that can be independently scheduled).
+/* Initialize a task (code that can be independently scheduled). */
 struct task_handle *platform_task_init(void *start_fn, void *arg);
 
-// Called from within the task to complete / exit.
+/* Called from within the task to complete / exit. */
 void platform_task_exit();
 
-// Block on task completion (to clean up).
+/* Block on task completion (to clean up). */
 int platform_task_complete(struct task_handle *handle);
 
 /* Opaque mutex struct. */
 struct platform_mutex;
 
-// Allocate and initialize a platform mutex.
+/* Allocate and initialize a platform mutex. */
 struct platform_mutex *platform_mutex_init();
 
 void platform_mutex_lock(struct platform_mutex *mutex);
@@ -76,11 +76,11 @@ void platform_mutex_unlock(struct platform_mutex *mutex);
 /* Opaque notifier struct. */
 struct platform_condvar;
 
-// Allocate and initialize a platform condvar.
+/* Allocate and initialize a platform condvar. */
 struct platform_condvar *platform_condvar_init();
 
 void platform_condvar_wait(struct platform_condvar *condvar,
 			   struct platform_mutex *mutex);
 void platform_condvar_signal(struct platform_condvar *condvar);
 
-#endif // UM_PPM_INCLUDE_PLATFORM_H_
+#endif /* UM_PPM_INCLUDE_PLATFORM_H_ */

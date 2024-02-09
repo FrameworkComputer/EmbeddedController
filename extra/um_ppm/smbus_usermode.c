@@ -21,7 +21,7 @@
 
 #define MAX_PATH_SIZE 32
 
-// 10ms timeout for gpiod wakeup
+/* 10ms timeout for gpiod wakeup */
 #define GPIOD_WAIT_TIMEOUT_NS (10 * 1000 * 1000)
 
 #define GPIOD_CONSUMER "um_ppm"
@@ -32,7 +32,7 @@
 struct smbus_usermode_device {
 	int fd;
 
-	// Currently active chip address.
+	/* Currently active chip address. */
 	uint8_t chip_address;
 
 	pthread_mutex_t cmd_lock;
@@ -50,12 +50,12 @@ int __smbus_switch_address_nolock(struct smbus_usermode_device *dev,
 {
 	int ret;
 
-	// No-op since we're already on the active chip.
+	/* No-op since we're already on the active chip. */
 	if (dev->chip_address == chip_address) {
 		return 0;
 	}
 
-	// Make sure this returns -1 or 0.
+	/* Make sure this returns -1 or 0. */
 	ret = ioctl(dev->fd, I2C_SLAVE, chip_address);
 	if (ret < 0) {
 		ELOG("IOCTL switch to chip_address 0x%02x failed: %d",
@@ -105,7 +105,7 @@ int smbus_um_read_block(struct smbus_device *device, uint8_t chip_address,
 		return -1;
 	}
 
-	// Block read will read at most 32 bytes.
+	/* Block read will read at most 32 bytes. */
 	if (length > 32) {
 		ELOG("Got length > 32 for block read");
 		return -1;
@@ -179,12 +179,13 @@ int smbus_um_read_ara(struct smbus_device *device, uint8_t ara_address)
 
 	pthread_mutex_lock(&dev->cmd_lock);
 
-	// Restore to this address.
+	/* Restore to this address. */
 	chip_address = dev->chip_address;
 
 	do {
-		// First set the I2C address to the alert receiving address
-		// (0xC)
+		/* First set the I2C address to the alert receiving address
+		 * (0xC).
+		 */
 		if (ioctl(dev->fd, I2C_SLAVE, ara_address) < 0) {
 			ELOG("Couldn't switch to alert receiving address: 0x%x!",
 			     ara_address);
@@ -192,9 +193,10 @@ int smbus_um_read_ara(struct smbus_device *device, uint8_t ara_address)
 			break;
 		}
 
-		// ARA address will have 8 bits with top 7 bits of address.
-		// Right shift to get actual chip address. Even if ARA is wrong,
-		// we still need to restore slave address so don't exit yet.
+		/* ARA address will have 8 bits with top 7 bits of address.
+		 * Right shift to get actual chip address. Even if ARA is wrong,
+		 * we still need to restore slave address so don't exit yet.
+		 */
 		ara_byte_result = __smbus_um_read_byte_nolock(dev);
 		ret = ara_byte_result >> 1;
 
@@ -241,24 +243,25 @@ int smbus_um_block_for_interrupt(struct smbus_device *device)
 
 		pthread_mutex_unlock(&dev->gpio_lock);
 
-		// If we're cleaning up, exit out with an error.
+		/* If we're cleaning up, exit out with an error. */
 		if (cleaning_up) {
 			ret = -1;
 			break;
 		}
 
-		// Either error or result will break here. Otherwise, continue.
+		/* Either error or result will break here. Otherwise, continue.
+		 */
 		if (ret == 1 || ret == -1) {
 			break;
 		}
 	} while (true);
 
-	// Got an event. Clear the event before forwarding interrupt.
+	/* Got an event. Clear the event before forwarding interrupt. */
 	if (ret == 1) {
 		struct gpiod_line_event event;
 		DLOG("Got SMBUS interrupt!");
 
-		// First clear the line event.
+		/* First clear the line event. */
 		if (gpiod_line_event_read(dev->line, &event) == -1) {
 			ELOG("Failed to read line event.");
 			ret = -1;
@@ -304,7 +307,7 @@ static int init_interrupt(struct smbus_usermode_device *dev, int gpio_chip,
 		return -1;
 	}
 
-	// Request gpiochip and lines
+	/* Request gpiochip and lines */
 	snprintf(filename, MAX_PATH_SIZE - 1, "/dev/gpiochip%d", gpio_chip);
 	chip = gpiod_chip_open(filename);
 	if (!chip) {
@@ -348,7 +351,7 @@ struct smbus_driver *smbus_um_open(int bus_num, uint8_t chip_address,
 	int fd = -1;
 	char filename[MAX_PATH_SIZE];
 
-	// Make sure we can open the i2c device.
+	/* Make sure we can open the i2c device. */
 	snprintf(filename, MAX_PATH_SIZE - 1, "/dev/i2c-%d", bus_num);
 	fd = open(filename, O_RDWR);
 	if (fd < 0) {
@@ -356,7 +359,7 @@ struct smbus_driver *smbus_um_open(int bus_num, uint8_t chip_address,
 		return NULL;
 	}
 
-	// Switch to a specific chip address.
+	/* Switch to a specific chip address. */
 	if (ioctl(fd, I2C_SLAVE, chip_address) < 0) {
 		ELOG("Could not switch to given chip address.");
 		goto handle_error;
@@ -370,7 +373,7 @@ struct smbus_driver *smbus_um_open(int bus_num, uint8_t chip_address,
 	dev->fd = fd;
 	dev->chip_address = chip_address;
 
-	// Initialize the gpio lines
+	/* Initialize the gpio lines */
 	if (init_interrupt(dev, gpio_chip, gpio_line) == -1) {
 		ELOG("Failed to initialize gpio for interrupt.");
 		goto handle_error;
@@ -389,7 +392,7 @@ struct smbus_driver *smbus_um_open(int bus_num, uint8_t chip_address,
 	drv->block_for_interrupt = smbus_um_block_for_interrupt;
 	drv->cleanup = smbus_um_cleanup;
 
-	// Make sure chip address is valid before returning.
+	/* Make sure chip address is valid before returning. */
 	if (smbus_um_read_byte((struct smbus_device *)dev, chip_address) < 0) {
 		ELOG("Could not read byte at given chip address.");
 		goto handle_error;

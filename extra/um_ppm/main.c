@@ -23,7 +23,7 @@ struct extra_driver_ops {
 	int (*do_firmware_update)(struct ucsi_pd_driver *driver,
 				  const char *filepath, int dry_run);
 
-	// Establish communication with SMBUS transport LPMs.
+	/* Establish communication with SMBUS transport LPMs. */
 	struct ucsi_pd_driver *(*smbus_lpm_open)(
 		struct smbus_driver *smbus, struct pd_driver_config *config);
 };
@@ -34,12 +34,12 @@ struct extra_driver_ops rts5453_ops = {
 	.smbus_lpm_open = rts5453_open,
 };
 
-// Set up the um_ppm device to start communicating with kernel.
+/* Set up the um_ppm device to start communicating with kernel. */
 int cdev_prepare_um_ppm(char *um_test_devpath, struct ucsi_pd_driver *pd,
 			struct smbus_driver *smbus,
 			struct pd_driver_config *config)
 {
-	// Open the kernel um_ppm chardev to establish the PPM communication.
+	/* Open the kernel um_ppm chardev to establish the PPM communication. */
 	struct um_ppm_cdev *cdev =
 		um_ppm_cdev_open(um_test_devpath, pd, smbus, config);
 
@@ -48,9 +48,9 @@ int cdev_prepare_um_ppm(char *um_test_devpath, struct ucsi_pd_driver *pd,
 		return -1;
 	}
 
-	// TODO - Register sigterm handler so we know when to exit.
+	/* TODO - Register sigterm handler so we know when to exit. */
 
-	// Mainloop with chardev handling.
+	/* Mainloop with chardev handling. */
 	um_ppm_cdev_mainloop(cdev);
 
 	return 0;
@@ -148,26 +148,26 @@ int main(int argc, char *argv[])
 		driver_config_in = "rts5453";
 	}
 
-	// Get driver config
+	/* Get driver config */
 	if (strcmp(driver_config_in, "rts5453") == 0) {
 		driver_config = rts5453_get_driver_config();
 		ops = &rts5453_ops;
 
-		// Use port-0 for smbus addressing
+		/* Use port-0 for smbus addressing */
 		i2c_chip_address = driver_config.port_address_map[0];
 	} else {
 		ELOG("Unsupported PD driver config: %s", driver_config_in);
 		return -1;
 	}
 
-	// Open usermode smbus.
+	/* Open usermode smbus. */
 	smbus = smbus_um_open(i2c_bus, i2c_chip_address, gpio_chip, gpio_line);
 	if (!smbus) {
 		ELOG("Failed to open smbus");
 		goto handle_error;
 	}
 
-	// Open PD driver
+	/* Open PD driver */
 	pd_driver = ops->smbus_lpm_open(smbus, &driver_config);
 	if (!pd_driver) {
 		ELOG("Failed to open PD driver.");

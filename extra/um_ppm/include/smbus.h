@@ -103,4 +103,4 @@ struct smbus_driver {
 	smbus_cleanup *cleanup;
 };
 
-#endif // UM_PPM_INCLUDE_SMBUS_H_
+#endif /* UM_PPM_INCLUDE_SMBUS_H_ */

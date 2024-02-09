@@ -14,22 +14,22 @@
 #define SMBUS_MAX_BLOCK_SIZE 32
 
 struct rts5453_device {
-	// LPM smbus driver.
+	/* LPM smbus driver. */
 	struct smbus_driver *smbus;
 
-	// PPM driver (common implementation).
+	/* PPM driver (common implementation). */
 	struct ucsi_ppm_driver *ppm;
 
-	// Re-usable command buffer for active command.
+	/* Re-usable command buffer for active command. */
 	uint8_t cmd_buffer[SMBUS_MAX_BLOCK_SIZE];
 
-	// Configuration for this driver.
+	/* Configuration for this driver. */
 	struct pd_driver_config *driver_config;
 
-	// Number of active ports from |GET_CAPABILITIES|.
+	/* Number of active ports from |GET_CAPABILITIES|. */
 	uint8_t active_port_count;
 
-	// IRQ task for LPM interrupts.
+	/* IRQ task for LPM interrupts. */
 	struct task_handle *lpm_interrupt_task;
 };
 
@@ -56,7 +56,7 @@ enum rts5453_smbus_commands {
 	SC_ISP_VALIDATION,
 	SC_RESET_TO_FLASH,
 
-	// Various ucsi commands
+	/* Various ucsi commands */
 	SC_UCSI_COMMANDS,
 	SC_SET_NOTIFICATION_ENABLE,
 	SC_ACK_CC_CI,
@@ -68,8 +68,8 @@ struct rts5453_command_entry {
 	int command;
 	uint8_t command_value;
 
-	// Either 0 (for no read), -1 (variable read) or 1-32 for fixed size
-	// reads.
+	/* Either 0 (for no read), -1 (variable read) or 1-32 for fixed size */
+	/* reads. */
 	size_t return_length;
 };
 
@@ -180,19 +180,19 @@ static int rts5453_ping_status(struct rts5453_device *dev, uint8_t port)
 		int byte = dev->smbus->read_byte(
 			dev->smbus->dev, port_to_chip_address(dev, port));
 
-		// Ping status failed
+		/* Ping status failed */
 		if (byte == -1) {
 			ELOG("Ping status got read_error");
 			return -1;
 		}
 
-		// Busy so wait 10ms.
+		/* Busy so wait 10ms. */
 		if (byte == 0) {
 			platform_usleep(PING_DELAY_US);
 			continue;
 		}
 
-		// Valid ping status
+		/* Valid ping status */
 		DLOG("Ping status: 0x%02x", (byte & 0xff));
 		return (byte & 0xFF);
 	}
@@ -230,14 +230,14 @@ static int rts5453_smbus_command(struct rts5453_device *dev, uint8_t port,
 		DLOG("Sending smbus command 0x%x", cmd_val);
 	}
 
-	// Write failed. No point in waiting on ping_status
+	/* Write failed. No point in waiting on ping_status */
 	if (dev->smbus->write_block(dev->smbus->dev, chip_address, cmd_val,
 				    cmd_data, length) == -1) {
 		ELOG("Write block for command failed");
 		return -1;
 	}
 
-	// Error out if ping status is invalid.
+	/* Error out if ping status is invalid. */
 	int ping_status = rts5453_ping_status(dev, port);
 	if (ping_status == -1 || (ping_status & 0x3) == 0x3) {
 		ELOG("Ping status failed with %d", ping_status);
@@ -274,7 +274,7 @@ static int rts5453_smbus_command(struct rts5453_device *dev, uint8_t port,
 	return 0;
 }
 
-// Call with dev->cmd_buffer already set.
+/* Call with dev->cmd_buffer already set. */
 static int rts5453_set_notification_per_port(struct rts5453_device *dev,
 					     uint8_t *lpm_data_out)
 {
@@ -282,12 +282,12 @@ static int rts5453_set_notification_per_port(struct rts5453_device *dev,
 	int cmd = SC_SET_NOTIFICATION_ENABLE;
 	uint8_t data_size = 4;
 
-	// Print out what bits are being set in notifications
+	/* Print out what bits are being set in notifications */
 	uint32_t *enable_bits = ((uint32_t *)&dev->cmd_buffer[2]);
 	DLOG("SET_NOTIFICATION_ENABLE with bits = 0x%04x", *enable_bits);
 
 	for (uint8_t port = dev->active_port_count; port > 0; --port) {
-		dev->cmd_buffer[1] = 0; // fixed port-num = 0
+		dev->cmd_buffer[1] = 0; /* fixed port-num = 0 */
 		ret = rts5453_smbus_command(dev, port - 1, cmd, dev->cmd_buffer,
 					    data_size + 2, lpm_data_out,
 					    SMBUS_MAX_BLOCK_SIZE);
@@ -308,9 +308,10 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 	struct rts5453_device *dev = CAST_FROM(device);
 	uint8_t ucsi_command = control->command;
 	int cmd;
-	// Data size skips command, write size, sub-cmd and port-num.
-	// When writing via rts5453_smbus_command, we always add 2 to data_size
-	// (for sub-cmd and port-num).
+	/* Data size skips command, write size, sub-cmd and port-num.
+	 * When writing via rts5453_smbus_command, we always add 2 to data_size
+	 * (for sub-cmd and port-num).
+	 */
 	uint8_t data_size = 0;
 	uint8_t port_num = RTS_DEFAULT_PORT;
 
@@ -333,28 +334,31 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 		data_size = 5;
 		platform_memset(dev->cmd_buffer, 0, data_size + 2);
 
-		// Already memset but for reference:
-		// dev->cmd_buffer[0] = 0;    // Reserved and 0.
-		// dev->cmd_buffer[1] = 0x0;  // port fixed to 0.
+		/* Already memset but for reference: */
+		/* dev->cmd_buffer[0] = 0;    # Reserved and 0. */
+		/* dev->cmd_buffer[1] = 0x0;  # port fixed to 0. */
 
-		// Acking on a command or async event?
+		/* Acking on a command or async event? */
 		if (ack_cmd->command_complete_ack) {
-			dev->cmd_buffer[6] = 0x1; // Command completed
-						  // acknowledge
+			/* Command completed acknowledge */
+			dev->cmd_buffer[6] = 0x1;
 		}
-		// TODO - Do we clear all events on this ack or do we expect OPM
-		// to need a separate notification PER event. I think the answer
-		// is single ack -- double check and clear this comment.
+
+		/* TODO - Do we clear all events on this ack or do we expect OPM
+		 * to need a separate notification PER event. I think the answer
+		 * is single ack -- double check and clear this comment.
+		 */
 		else if (ack_cmd->connector_change_ack && has_pending_ci) {
-			// Copy UCSI status change bits and leave RTK bits alone
-			// (4, 5)
+			/* Copy UCSI status change bits and leave RTK bits alone
+			 * (4, 5)
+			 */
 			uint16_t mask =
 				next_connector_status->connector_status_change;
-			dev->cmd_buffer[1] = 0; // port_num affects chip
-						// addressing
+			/* port_num affects chip addressing */
+			dev->cmd_buffer[1] = 0;
 			dev->cmd_buffer[2] = mask & 0xff;
+			/* Always clear RTK bits (we don't use it in UCSI) */
 			dev->cmd_buffer[3] = (mask >> 8) & 0xff;
-			// Always clear the RTK bits (we don't use it in UCSI)
 			dev->cmd_buffer[4] = 0xff;
 			dev->cmd_buffer[5] = 0xff;
 			port_num = local_port_num - 1;
@@ -375,8 +379,8 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 		cmd = SC_SET_NOTIFICATION_ENABLE;
 		data_size = 4;
 		platform_memset(dev->cmd_buffer, 0, data_size + 2);
-		dev->cmd_buffer[0] = 0x1; // sub-cmd
-		dev->cmd_buffer[1] = 0x0; // fixed port-num = 0
+		dev->cmd_buffer[0] = 0x1; /* sub-cmd */
+		dev->cmd_buffer[1] = 0x0; /* fixed port-num = 0 */
 
 		platform_memcpy(&dev->cmd_buffer[2], control->command_specific,
 				data_size);
@@ -386,17 +390,17 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 		data_size = 0;
 		platform_memset(dev->cmd_buffer, 0, 2);
 		dev->cmd_buffer[0] = ucsi_command;
-		dev->cmd_buffer[1] = 0; // control->command_specific[0];  //
-					// Port number
+		dev->cmd_buffer[1] = 0;
 		port_num = control->command_specific[0] - 1;
 
 		break;
 	case UCSI_CMD_GET_PD_MESSAGE:
-		// TODO: Update once the Realtek interface supports full
-		// identity. This definition is a placeholder and will only
-		// respond to a discover identity request with 6 VDOs to mimic
-		// the maximum identity response length. The returned data is
-		// not partner/cable identity.
+		/* TODO: Update once the Realtek interface supports full
+		 * identity. This definition is a placeholder and will only
+		 * respond to a discover identity request with 6 VDOs to mimic
+		 * the maximum identity response length. The returned data is
+		 * not partner/cable identity.
+		 */
 		struct ucsiv3_get_pd_message_cmd *get_pd_message_cmd =
 			(struct ucsiv3_get_pd_message_cmd *)
 				control->command_specific;
@@ -408,37 +412,40 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 		}
 
 		cmd = SC_GET_VDO;
-		data_size = 7; // Number of VDOs + 1 (+2 added later)
+		data_size = 7; /* Number of VDOs + 1 (+2 added later) */
 		platform_memset(dev->cmd_buffer, 0, data_size + 2);
-		dev->cmd_buffer[0] = 0x9A; // GET_VDO sub command
-		dev->cmd_buffer[1] = 0x00; // Port Num
-		dev->cmd_buffer[2] = 0x0E; // Origin: Port Partner (0x8) | Num
-					   // Vdos (0x6)
-		dev->cmd_buffer[3] = 0x01; // Id Header VDO
-		dev->cmd_buffer[4] = 0x02; // Cert Stat VDO
-		dev->cmd_buffer[5] = 0x03; // Product VDO
-		dev->cmd_buffer[6] = 0x04; // Cable VDO
-		dev->cmd_buffer[7] = 0x05; // AMA VDO
-		dev->cmd_buffer[8] = 0x06; // SVID Response VDO1
+		dev->cmd_buffer[0] = 0x9A; /* GET_VDO sub command */
+		dev->cmd_buffer[1] = 0x00; /* Port Num */
+		dev->cmd_buffer[2] = 0x0E; /* Origin: Port Partner (0x8) | Num
+					    * Vdos (0x6)
+					    */
+		dev->cmd_buffer[3] = 0x01; /* Id Header VDO */
+		dev->cmd_buffer[4] = 0x02; /* Cert Stat VDO */
+		dev->cmd_buffer[5] = 0x03; /* Product VDO */
+		dev->cmd_buffer[6] = 0x04; /* Cable VDO */
+		dev->cmd_buffer[7] = 0x05; /* AMA VDO */
+		dev->cmd_buffer[8] = 0x06; /* SVID Response VDO1 */
 		break;
 	default:
-		// For most UCSI commands, just set the cmd = 0x0E and copy the
-		// additional data from the command to smbus output.
+		/* For most UCSI commands, just set the cmd = 0x0E and copy the
+		 * additional data from the command to smbus output.
+		 */
 		cmd = SC_UCSI_COMMANDS;
 		data_size = ucsi_commands[ucsi_command].command_copy_length;
 		platform_memset(dev->cmd_buffer, 0, data_size + 2);
 		dev->cmd_buffer[0] = ucsi_command;
 		dev->cmd_buffer[1] = data_size;
 
-		// Seems like developer error here. We only support up to 6
-		// bytes.
+		/* Seems like developer error here. We only support up to 6
+		 * bytes.
+		 */
 		if (data_size > 6) {
 			ELOG("UCSI commands using MESSAGE_OUT are unsupported."
 			     "Given data_size was %d",
 			     data_size);
 			return -1;
 		}
-		// Copy any command data
+		/* Copy any command data */
 		else if (data_size > 0) {
 			platform_memcpy(&dev->cmd_buffer[2],
 					control->command_specific, data_size);
@@ -447,7 +454,7 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 		break;
 	}
 
-	// Note special behavior for SET_NOTIFICATION_ENABLE.
+	/* Note special behavior for SET_NOTIFICATION_ENABLE. */
 	if (ucsi_command == UCSI_CMD_SET_NOTIFICATION_ENABLE) {
 		return rts5453_set_notification_per_port(dev, lpm_data_out);
 	}
@@ -510,7 +517,7 @@ int rts5453_write_to_flash(struct rts5453_device *dev, int flash_bank,
 	uint16_t addr_h = 0;
 	uint16_t addr_l = 0;
 
-	// Bounds check
+	/* Bounds check */
 	int start = RTS5453_BANK0_START + offset;
 	int end = RTS5453_BANK0_END;
 	if (flash_bank != 0) {
@@ -518,18 +525,18 @@ int rts5453_write_to_flash(struct rts5453_device *dev, int flash_bank,
 		end = RTS5453_BANK1_END;
 	}
 
-	// Get addr_h and addr_l
+	/* Get addr_h and addr_l */
 	addr_h = (uint16_t)((start >> 16) & 0xFFFF);
 	addr_l = (uint16_t)(start & 0xFFFF);
 
-	// Limited by smbus block size
+	/* Limited by smbus block size */
 	if (size > FW_BLOCK_CHUNK_SIZE) {
 		ELOG("Can't write with size=%d > max smbus size=%d", size,
 		     FW_BLOCK_CHUNK_SIZE);
 		return -1;
 	}
 
-	// We can't write more than flash exists
+	/* We can't write more than flash exists */
 	if (start + size > end) {
 		ELOG("Write to flash exceeds bounds of flash: bank %d, start(0x%x), "
 		     "size(0x%x), end(0x%x)",
@@ -537,7 +544,7 @@ int rts5453_write_to_flash(struct rts5453_device *dev, int flash_bank,
 		return -1;
 	}
 
-	// Determine which smbus write command to use.
+	/* Determine which smbus write command to use. */
 	switch (addr_h) {
 	case 3:
 		flash_cmd = SC_WRITE_FLASH_192K_256K;
@@ -557,10 +564,11 @@ int rts5453_write_to_flash(struct rts5453_device *dev, int flash_bank,
 		return -1;
 	}
 
-	// Build the command.
-	// cmd[0] = ADDR_L
-	// cmd[1] = ADDR_H
-	// cmd[2] = write size
+	/* Build the command.
+	 * cmd[0] = ADDR_L
+	 * cmd[1] = ADDR_H
+	 * cmd[2] = write size
+	 */
 
 	cmd[0] = (uint8_t)(addr_l & 0xFF);
 	cmd[1] = (uint8_t)((addr_l >> 8) & 0xFF);
@@ -642,7 +650,7 @@ static void rts5453_ucsi_cleanup(struct ucsi_pd_driver *driver)
 	if (driver->dev) {
 		struct rts5453_device *dev = CAST_FROM(driver->dev);
 
-		// Clean up PPM first AND then smbus.
+		/* Clean up PPM first AND then smbus. */
 		if (dev->ppm) {
 			dev->ppm->cleanup(dev->ppm);
 			platform_free(dev->ppm);
@@ -651,8 +659,9 @@ static void rts5453_ucsi_cleanup(struct ucsi_pd_driver *driver)
 		if (dev->smbus) {
 			dev->smbus->cleanup(dev->smbus);
 
-			// If there was an interrupt task, it will end when
-			// SMBUS is cleaned up.
+			/* If there was an interrupt task, it will end when
+			 * SMBUS is cleaned up.
+			 */
 			if (dev->lpm_interrupt_task) {
 				platform_task_complete(dev->lpm_interrupt_task);
 			}
@@ -667,8 +676,9 @@ static void rts5453_ucsi_cleanup(struct ucsi_pd_driver *driver)
 
 #define ALERT_RECEIVING_ADDRESS 0xC
 
-// Query ARA (alert receiving address) and forward as lpm_id to PPM. If we
-// received an alert on an unexpected address, raise an error.
+/* Query ARA (alert receiving address) and forward as lpm_id to PPM. If we
+ * received an alert on an unexpected address, raise an error.
+ */
 static int rts5453_ucsi_handle_interrupt(struct rts5453_device *dev)
 {
 	const struct pd_driver_config *config = dev->driver_config;
@@ -689,7 +699,7 @@ static int rts5453_ucsi_handle_interrupt(struct rts5453_device *dev)
 		}
 	}
 
-	// If we got a valid port (one we expected), send LPM alert to PPM.
+	/* If we got a valid port (one we expected), send LPM alert to PPM. */
 	if (port_id > 0) {
 		dev->ppm->lpm_alert(dev->ppm->dev, port_id);
 	} else {
@@ -736,13 +746,14 @@ static int rts5453_ucsi_init_ppm(struct ucsi_pd_device *device)
 	uint8_t num_ports = 0;
 	uint8_t max_num_ports = dev->driver_config->max_num_ports;
 
-	// Init flow for RTS5453:
-	// - First run VENDOR_CMD_ENABLE
-	// - SET NOTIFICATION to very basic set to set to IDLE mode.
-	// - PPM reset.
-	// - Get capability to get number of ports (necessary for handling
-	//   notifications and correct setting CCI). This may not match max num
-	//   ports if firmware doesn't enable all ports that driver config has.
+	/* Init flow for RTS5453:
+	 * - First run VENDOR_CMD_ENABLE
+	 * - SET NOTIFICATION to very basic set to set to IDLE mode.
+	 * - PPM reset.
+	 * - Get capability to get number of ports (necessary for handling
+	 *   notifications and correct setting CCI). This may not match max num
+	 *   ports if firmware doesn't enable all ports that driver config has.
+	 */
 
 	for (uint8_t port = 0; port < max_num_ports; ++port) {
 		if (rts5453_vendor_cmd_enable_smbus(dev, port) == -1) {
@@ -775,7 +786,7 @@ static int rts5453_ucsi_init_ppm(struct ucsi_pd_device *device)
 
 	num_ports = caps[4];
 
-	// Limit the number of ports to maximum configured number of ports.
+	/* Limit the number of ports to maximum configured number of ports. */
 	if (num_ports > max_num_ports) {
 		ELOG("Truncated number of ports from %d to %d", num_ports,
 		     max_num_ports);
@@ -822,7 +833,7 @@ struct ucsi_pd_driver *rts5453_open(struct smbus_driver *smbus,
 	drv->execute_cmd = rts5453_ucsi_execute_cmd;
 	drv->cleanup = rts5453_ucsi_cleanup;
 
-	// Initialize the PPM.
+	/* Initialize the PPM. */
 	dev->ppm = ppm_open(drv);
 	if (!dev->ppm) {
 		ELOG("Failed to open PPM");
@@ -846,13 +857,12 @@ handle_error:
 struct pd_driver_config rts5453_get_driver_config()
 {
 	struct pd_driver_config config = {
-      .max_num_ports = 2,
-      .port_address_map =
-          {
-              0x67,
-              0x68,
-          },
-  };
+		.max_num_ports = 2,
+		.port_address_map = {
+			0x67,
+			0x68,
+		},
+	};
 
 	return config;
 }

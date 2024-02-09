@@ -115,4 +115,4 @@ struct pd_driver_config {
 	enum lpm_transport transport;
 };
 
-#endif // UM_PPM_INCLUDE_PD_DRIVER_H_
+#endif /* UM_PPM_INCLUDE_PD_DRIVER_H_ */
