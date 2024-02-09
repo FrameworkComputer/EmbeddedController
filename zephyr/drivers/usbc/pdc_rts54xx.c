@@ -139,6 +139,7 @@ const struct smbus_cmd_t SET_PDR = { 0x0E, 0x03, 0x0B };
 const struct smbus_cmd_t UCSI_GET_ERROR_STATUS = { 0x0E, 0x02, 0x13 };
 const struct smbus_cmd_t UCSI_READ_POWER_LEVEL = { 0x0E, 0x03, 0x1E };
 const struct smbus_cmd_t GET_IC_STATUS = { 0x3A, 0x03, 0x00 };
+const struct smbus_cmd_t SET_RETIMER_FW_UPDATE_MODE = { 0x20, 0x03, 0x00 };
 
 /**
  * @brief PDC Command states
@@ -255,6 +256,8 @@ enum cmd_t {
 	CMD_SET_TPC_RP,
 	/** TypeC reconnect */
 	CMD_SET_TPC_RECONNECT,
+	/** set Retimer into FW Update Mode */
+	CMD_SET_RETIMER_FW_UPDATE_MODE,
 };
 
 /**
@@ -364,6 +367,7 @@ static const char *const cmd_names[] = {
 	[CMD_SET_TPC_RECONNECT] = "SET_TPC_RECONNECT",
 	[CMD_SET_RDO] = "SET_RDO",
 	[CMD_GET_CURRENT_PARTNER_SRC_PDO] = "GET_CURRENT_PARTNER_SRC_PDO",
+	[CMD_SET_RETIMER_FW_UPDATE_MODE] = "SET_RETIMER_FW_UPDATE_MODE",
 };
 
 /**
@@ -1295,6 +1299,29 @@ static int rts54_enable(const struct device *dev)
 				  ARRAY_SIZE(payload), NULL);
 }
 
+static int rts54_set_retimer_update_mode(const struct device *dev, bool enable)
+{
+	struct pdc_data_t *data = dev->data;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	/* 0: FW update starts, 1: FW update ends */
+	enable = !enable;
+
+	uint8_t payload[] = {
+		SET_RETIMER_FW_UPDATE_MODE.cmd,
+		SET_RETIMER_FW_UPDATE_MODE.len,
+		SET_RETIMER_FW_UPDATE_MODE.sub,
+		0x00,
+		enable,
+	};
+
+	return rts54_post_command(dev, CMD_SET_RETIMER_FW_UPDATE_MODE, payload,
+				  ARRAY_SIZE(payload), NULL);
+}
+
 static int rts54_read_power_level(const struct device *dev)
 {
 	struct pdc_data_t *data = dev->data;
@@ -1839,6 +1866,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.get_bus_info = rts54_get_bus_info,
 	.set_power_level = rts54_set_power_level,
 	.reconnect = rts54_reconnect,
+	.update_retimer = rts54_set_retimer_update_mode,
 };
 
 static void pdc_interrupt_callback(const struct device *dev,
