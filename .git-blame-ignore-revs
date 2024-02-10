@@ -15,7 +15,7 @@
 # - https://crsrc.org/o/src/platform2/.git-blame-ignore-revs
 # - https://crsrc.org/o/chromite/.git-blame-ignore-revs
 
-# $ git show --no-patch --format="%cs - %s" <commit-hash>
+# $ git show --no-patch --format="# %cs - %s%n%H" <commit-hash>
 
 # 2021-01-28 - docs: Run mdformat on all .md files
 2f40b71b625bcd826fd0cb4a005985abef0b8903
