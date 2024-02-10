@@ -83,6 +83,7 @@
 #undef CONFIG_FLASH_CROS
 #undef CONFIG_FMAP
 #undef CONFIG_SWITCH
+#undef CONFIG_CONSOLE_VERBOSE
 
 /* Modules we want to exclude */
 #undef CONFIG_CMD_HASH
