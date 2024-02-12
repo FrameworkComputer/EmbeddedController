@@ -162,6 +162,8 @@ cov-dont-test += fpsensor
 cov-dont-test += fpsensor_crypto
 # fpsensor_state: genhtml looks for build/host/fpsensor_state/cryptoc/util.c
 cov-dont-test += fpsensor_state
+# otp_key: genhtml looks for build/host/chip/npcx/otp_key.c
+cov-dont-test  += otp_key
 # version: Only works in a chroot.
 cov-dont-test += version
 # interrupt: The test often times out if enabled for coverage.
@@ -254,6 +256,7 @@ mutex-y=mutex.o
 mutex_trylock-y=mutex_trylock.o
 mutex_recursive-y=mutex_recursive.o
 newton_fit-y=newton_fit.o
+otp_key-y=otp_key.o
 panic-y=panic.o
 panic_data-y=panic_data.o
 pingpong-y=pingpong.o

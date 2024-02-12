@@ -129,6 +129,8 @@
 #define CONFIG_WP_STORAGE_SIZE CONFIG_EC_PROTECTED_STORAGE_SIZE
 #define CONFIG_WP_ACTIVE_HIGH
 
+#define CONFIG_OTP_KEY
+
 /*
  * We want to prevent flash readout, and use it as indicator of protection
  * status.

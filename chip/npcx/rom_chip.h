@@ -6,6 +6,8 @@
 #ifndef __CROS_EC_ROM_CHIP_H_
 #define __CROS_EC_ROM_CHIP_H_
 
+#include "util.h"
+
 /******************************************************************************/
 /*
  * Enumerations of ROM api functions
@@ -53,6 +55,7 @@ enum API_RETURN_STATUS_T {
 	(((download_from_flash_ptr)ADDR_DOWNLOAD_FROM_FLASH)(            \
 		src_offset, dest_addr, size, sign, exe_addr, status))
 
+#ifndef HAS_MOCK_OTPI
 #define ADDR_OTPI_POWER (*(volatile uint32_t *)0x4C)
 #define otpi_power(on) (((otpi_power_ptr)ADDR_OTPI_POWER)(on))
 
@@ -67,6 +70,13 @@ enum API_RETURN_STATUS_T {
 #define ADDR_OTPI_WRITE_PROTECT (*(volatile uint32_t *)0x5C)
 #define otpi_write_protect(address, size) \
 	(((otpi_write_prot_ptr)ADDR_OTPI_WRITE_PROTECT)(address, size))
+#else
+extern enum API_RETURN_STATUS_T otpi_power(bool on);
+extern enum API_RETURN_STATUS_T otpi_read(uint32_t address, uint8_t *data);
+extern enum API_RETURN_STATUS_T otpi_write(uint32_t address, uint8_t data);
+extern enum API_RETURN_STATUS_T otpi_write_protect(uint32_t address,
+						   uint32_t size);
+#endif
 
 /******************************************************************************/
 /*
@@ -88,27 +98,27 @@ typedef void (*download_from_flash_ptr)(uint32_t src_offset, uint32_t dest_addr,
 					enum API_RETURN_STATUS_T *ec_status);
 
 /* true: OTP hardware on, false: OTP hardware off */
-typedef enum API_RETURN_STATUS_T (*otpi_power_ptr)(bool on);
+test_mockable typedef enum API_RETURN_STATUS_T (*otpi_power_ptr)(bool on);
 
 /*
  * address - OTP address to read from
  * data - pointer to 8-bit variable to store read data
  */
-typedef enum API_RETURN_STATUS_T (*otpi_read_ptr)(uint32_t address,
-						  uint8_t *data);
+test_mockable typedef enum API_RETURN_STATUS_T (*otpi_read_ptr)(
+	uint32_t address, uint8_t *data);
 
 /*
  * address - OTP address to write to
  * data -  8-bit data value
  */
-typedef enum API_RETURN_STATUS_T (*otpi_write_ptr)(uint32_t address,
-						   uint8_t data);
+test_mockable typedef enum API_RETURN_STATUS_T (*otpi_write_ptr)(
+	uint32_t address, uint8_t data);
 
 /*
  * address - OTP address to protect, 16B aligned
  * size - Number of bytes to be protected, 16B aligned
  */
-typedef enum API_RETURN_STATUS_T (*otpi_write_prot_ptr)(uint32_t address,
-							uint32_t size);
+test_mockable typedef enum API_RETURN_STATUS_T (*otpi_write_prot_ptr)(
+	uint32_t address, uint32_t size);
 
 #endif /* __CROS_EC_ROM_CHIP_H_ */
