@@ -60,6 +60,18 @@ This FPMCU board is Icetower Rev 3. |
 ***
 <!-- mdformat on -->
 
+This FPMCU board is Quincy Rev 2. |
+--------------------------------- |
+![Quincy board]                   |
+
+<!-- mdformat off(b/139308852) -->
+*** note
+**Googlers**: You can pick up an Quincy development board at Chromestop.
+
+**Partners**: You can request an Quincy development board from Google.
+***
+<!-- mdformat on -->
+
 ### Servo
 
 Servo is a general purpose debug board that connects to a header on the FPMCU
@@ -599,6 +611,7 @@ Make sure that this interface is disabled:
 [Dragonclaw board]: ../images/dragonclaw_v0.3.jpg
 [Dragonclaw servo fix diagram]: ../images/dragonclaw_servo_fix.jpg
 [Icetower board]: ../images/icetower_v3.jpg
+[Quincy board]: ../images/quincy_v2.jpg
 
 <!-- If you make changes to the docs below make sure to regenerate the JPEGs by
      appending "export/pdf" to the Google Drive link. -->
