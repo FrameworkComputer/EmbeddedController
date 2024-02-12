@@ -174,7 +174,6 @@ int smbus_um_read_ara(struct smbus_device *device, uint8_t ara_address)
 {
 	struct smbus_usermode_device *dev = CAST_FROM(device);
 	uint8_t chip_address;
-	uint8_t ara_byte_result;
 	int ret;
 
 	pthread_mutex_lock(&dev->cmd_lock);
@@ -197,14 +196,17 @@ int smbus_um_read_ara(struct smbus_device *device, uint8_t ara_address)
 		 * Right shift to get actual chip address. Even if ARA is wrong,
 		 * we still need to restore slave address so don't exit yet.
 		 */
-		ara_byte_result = __smbus_um_read_byte_nolock(dev);
-		ret = ara_byte_result >> 1;
+		ret = __smbus_um_read_byte_nolock(dev);
+		if (ret < 0) {
+			ELOG("Failed to read ARA byte: %d", ret);
+		} else {
+			ret = (ret & 0xff) >> 1;
+		}
 
 		if (ioctl(dev->fd, I2C_SLAVE, chip_address) < 0) {
 			ELOG("Couldn't restore chip address: 0x%x. ARA was 0x%x",
 			     chip_address, ret);
 			ret = -1;
-			break;
 		}
 
 	} while (false);

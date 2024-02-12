@@ -164,6 +164,13 @@ struct rts5453_ucsi_commands ucsi_commands[UCSI_CMD_VENDOR_CMD + 1] = {
 
 #define UCSI_7BIT_PORTMASK(p) ((p) & 0x7F)
 
+#define RTS_PING_STATUS_MASK(s) ((s) & 0x3)
+#define RTS_PING_BUSY 0
+#define RTS_PING_COMPLETE 1
+#define RTS_PING_DEFERRED 2
+#define RTS_PING_ERROR 3
+#define RTS_PING_DATA_LEN(s) ((s) >> 2)
+
 /* Convert a given port to a chip address.
  *
  * @param dev: Internal data.
@@ -201,7 +208,7 @@ static int rts5453_ping_status(struct rts5453_device *dev, uint8_t port)
 		}
 
 		/* Busy or deferred so wait 10ms. */
-		if (byte == 0 || byte == 2) {
+		if (byte == RTS_PING_BUSY || byte == RTS_PING_DEFERRED) {
 			platform_usleep(PING_DELAY_US);
 			continue;
 		}
@@ -253,7 +260,8 @@ static int rts5453_smbus_command(struct rts5453_device *dev, uint8_t port,
 
 	/* Error out if ping status is invalid. */
 	int ping_status = rts5453_ping_status(dev, port);
-	if (ping_status == -1 || (ping_status & 0x3) == 0x3) {
+	if (ping_status == -1 ||
+	    RTS_PING_STATUS_MASK(ping_status) == RTS_PING_ERROR) {
 		ELOG("Ping status failed with %d", ping_status);
 		return -1;
 	}
@@ -264,7 +272,8 @@ static int rts5453_smbus_command(struct rts5453_device *dev, uint8_t port,
 			return -1;
 		}
 
-		read_size = read_size != -1 ? read_size : (ping_status >> 2);
+		read_size = read_size != -1 ? read_size :
+					      RTS_PING_DATA_LEN(ping_status);
 
 		if (read_size == 0) {
 			DLOG("Nothing to read.");
