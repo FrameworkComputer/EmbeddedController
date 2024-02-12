@@ -52,5 +52,10 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
 		};
+		int_hdmi_ec_hpd: hdmi-ec-hpd {
+			irq-pin = <&gpio_hdmi_ec_hpd>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "hdmi_hpd_interrupt";
+		};
 	};
 };

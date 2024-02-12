@@ -16,6 +16,10 @@
 #include "../power_signal.dtsi"
 
 / {
+	aliases {
+		gpio-en-hdmi-pwr = &gpio_en_hdmi_pwr;
+	};
+
 	batteries {
 		default_battery: cosmx-3 {
 			compatible = "cosmx,ap20cbl-3", "battery-smart";
