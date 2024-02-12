@@ -171,8 +171,6 @@ enum state_t {
 	ST_PING_STATUS,
 	/** Read State */
 	ST_READ,
-	/** Interrupt State */
-	ST_IRQ
 };
 
 /**
@@ -354,7 +352,7 @@ static const char *const cmd_names[] = {
 static const char *const state_names[] = {
 	[ST_INIT] = "INIT",   [ST_IDLE] = "IDLE",
 	[ST_WRITE] = "WRITE", [ST_PING_STATUS] = "PING_STATUS",
-	[ST_READ] = "READ",   [ST_IRQ] = "IRQ",
+	[ST_READ] = "READ",
 };
 
 static const struct device *irq_shared_port;
