@@ -384,23 +384,29 @@ static void set_state(struct pdc_data_t *data, const enum state_t next_state)
 
 static void print_current_state(struct pdc_data_t *data)
 {
+	const struct pdc_config_t *cfg = data->dev->config;
 	int st = get_state(data);
 
 	if (st == ST_WRITE) {
-		LOG_INF("ST: %s %s", state_names[st], cmd_names[data->cmd]);
+		LOG_INF("ST%d: %s %s", cfg->connector_number, state_names[st],
+			cmd_names[data->cmd]);
 	} else {
-		LOG_INF("ST: %s", state_names[get_state(data)]);
+		LOG_INF("ST%d: %s", cfg->connector_number,
+			state_names[get_state(data)]);
 	}
 }
 
 static void call_cci_event_cb(struct pdc_data_t *data)
 {
+	const struct pdc_config_t *cfg = data->dev->config;
+
 	if (!data->init_done) {
 		return;
 	}
 
 	if (data->cci_cb) {
-		LOG_INF("cci_event_cb event=0x%x", data->cci_event.raw_value);
+		LOG_INF("C%d: cci_event_cb event=0x%x", cfg->connector_number,
+			data->cci_event.raw_value);
 		data->cci_cb(data->cci_event, data->cb_data);
 	}
 }
@@ -706,6 +712,7 @@ static void st_ping_status_entry(void *o)
 static void st_ping_status_run(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
+	const struct pdc_config_t *cfg = data->dev->config;
 	int rv;
 
 	/* Read the Ping Status */
@@ -716,6 +723,8 @@ static void st_ping_status_run(void *o)
 		if (data->i2c_transaction_retry_counter >
 		    N_I2C_TRANSACTION_COUNT) {
 			/* MAX I2C transactions exceeded */
+			LOG_ERR("C%d: Ping Status i2c error",
+				cfg->connector_number);
 			/*
 			 * The command was not successfully completed,
 			 * so set cci.error to 1b.
@@ -751,6 +760,8 @@ static void st_ping_status_run(void *o)
 		data->ping_retry_counter++;
 		if (data->ping_retry_counter > N_RETRY_COUNT) {
 			/* MAX Ping Retries exceeded */
+			LOG_ERR("C%d: Failed to read Ping Status",
+				cfg->connector_number);
 			/*
 			 * The command was not successfully completed,
 			 * so set cci.error to 1b.
@@ -793,11 +804,12 @@ static void st_ping_status_run(void *o)
 			data->cci_event.reset_completed = 1;
 			/* Notify system of status change */
 			call_cci_event_cb(data);
-			LOG_DBG("Realtek PDC reset complete");
+			LOG_DBG("C%d: Realtek PDC reset complete",
+				cfg->connector_number);
 			/* All done, return to Init or Idle state */
 			TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 		} else {
-			LOG_DBG("ping_status: %02x",
+			LOG_DBG("C%d: ping_status: %02x", cfg->connector_number,
 				data->ping_status.raw_value);
 
 			/*
@@ -819,6 +831,7 @@ static void st_ping_status_run(void *o)
 		}
 		break;
 	case CMD_ERROR:
+		LOG_DBG("C%d: Ping Status Error", cfg->connector_number);
 		/*
 		 * The command was not successfully completed,
 		 * so set cci.error to 1b.
@@ -858,6 +871,7 @@ static void st_read_entry(void *o)
 static void st_read_run(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
+	const struct pdc_config_t *cfg = data->dev->config;
 	uint8_t offset;
 	uint8_t len;
 	int rv;
@@ -919,9 +933,11 @@ static void st_read_run(void *o)
 
 		/* Only print this log on init */
 		if (data->init_local_state != INIT_PDC_COMPLETE) {
-			LOG_INF("Realtek: FW Version: %04x", info->fw_version);
-			LOG_INF("Realtek: PD Version: %04x, Rev %04x",
-				info->pd_version, info->pd_revision);
+			LOG_INF("C%d: Realtek: FW Version: %04x",
+				cfg->connector_number, info->fw_version);
+			LOG_INF("C%d: Realtek: PD Version: %04x, Rev %04x",
+				cfg->connector_number, info->pd_version,
+				info->pd_revision);
 		}
 		break;
 	}
@@ -1070,6 +1086,7 @@ static const struct smf_state states[] = {
 	[ST_PING_STATUS] = SMF_CREATE_STATE(st_ping_status_entry,
 					    st_ping_status_run, NULL, NULL),
 	[ST_READ] = SMF_CREATE_STATE(st_read_entry, st_read_run, NULL, NULL),
+
 };
 
 /**
@@ -1779,7 +1796,7 @@ static int pdc_init(const struct device *dev)
 	/* Create the thread for this port */
 	cfg->create_thread(dev);
 
-	LOG_INF("Realtek RTS545x PDC DRIVER");
+	LOG_INF("C%d: Realtek RTS545x PDC DRIVER", cfg->connector_number);
 
 	return 0;
 }
