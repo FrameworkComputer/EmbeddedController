@@ -151,7 +151,7 @@ config EMUL_CROS_FLASH
 
 config EMUL_FPC1025
 	bool "FPC1025 fingerprint sensor emulator"
-	depends on ZTEST && DT_HAS_FPC_FPC1025_ENABLED
+	depends on ZTEST && DT_HAS_FPC_FPC1025_ENABLED && ARCH_POSIX
 	default y
 	help
 	  This option enables the FPC1025 fingerprint sensor emulator.
