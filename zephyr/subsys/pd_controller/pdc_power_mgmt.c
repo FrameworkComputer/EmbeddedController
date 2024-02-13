@@ -39,7 +39,14 @@ LOG_MODULE_REGISTER(pdc_power_mgmt);
  * public API command to execute (Time is 2s)
  *
  */
-#define RETRY_MAX (2000 / LOOP_DELAY_MS)
+#define WAIT_MAX (2000 / LOOP_DELAY_MS)
+
+/**
+ * @brief maximum number of times to try and send a command, or wait for a
+ * public API command to execute (Time is 2s)
+ *
+ */
+#define CMD_RESEND_MAX 2
 
 /**
  * @brief maximum number of PDOs
@@ -119,8 +126,10 @@ struct cmd_t {
 struct send_cmd_t {
 	/** Send command local state */
 	enum send_cmd_state_t local_state;
-	/* Retry counter used in local wait state */
-	uint8_t retry_counter;
+	/* Wait counter used in local wait state */
+	uint16_t wait_counter;
+	/* Command resend counter */
+	uint8_t resend_counter;
 	/* Command sent from public API */
 	struct cmd_t public;
 	/* Command sent from internal API */
@@ -992,7 +1001,7 @@ static void pdc_send_cmd_start_entry(void *obj)
 	print_current_pdc_state(port);
 
 	port->send_cmd_return_state = port->last_state;
-	port->send_cmd.retry_counter = 0;
+	port->send_cmd.wait_counter = 0;
 
 	if (port->send_cmd.intern.pending) {
 		port->cmd = &port->send_cmd.intern;
@@ -1078,11 +1087,20 @@ static void pdc_send_cmd_start_run(void *obj)
 			pdc_cmd_names[port->cmd->cmd]);
 	}
 
+	/*
+	 * If the PDC is still processing a command (not in the IDLE state),
+	 * then will remain in this state and CCI_CMD_COMPLETED can be set via
+	 * the cci_event_cb function when the PDC driver finishes with the
+	 * previous command. This flag is only meaningful for the command that
+	 * was just sent to the PDC.
+	 */
+	atomic_clear_bit(port->cci_flags, CCI_CMD_COMPLETED);
+
 	/* Test if command was successful. If not, try again until max
 	 * retries is reached */
 	if (rv) {
-		port->send_cmd.retry_counter++;
-		if (port->send_cmd.retry_counter > RETRY_MAX) {
+		port->send_cmd.wait_counter++;
+		if (port->send_cmd.wait_counter > WAIT_MAX) {
 			/* Could not send command: TODO handle error */
 			LOG_INF("Command (%s) retry timeout",
 				pdc_cmd_names[port->cmd->cmd]);
@@ -1101,7 +1119,8 @@ static void pdc_send_cmd_wait_entry(void *obj)
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
 
 	print_current_pdc_state(port);
-	port->send_cmd.retry_counter = 0;
+	port->send_cmd.wait_counter = 0;
+	port->send_cmd.resend_counter = 0;
 }
 
 static void pdc_send_cmd_wait_run(void *obj)
@@ -1125,11 +1144,33 @@ static void pdc_send_cmd_wait_run(void *obj)
 		LOG_DBG("CCI_BUSY");
 	} else if (atomic_test_and_clear_bit(port->cci_flags, CCI_ERROR)) {
 		LOG_DBG("CCI_ERROR");
-		/* Try to resend command */
-		if (send_pdc_cmd(port) != 0) {
-			/* Set CCI_ERROR flag to trigger a resend of the command
-			 */
-			atomic_set_bit(port->cci_flags, CCI_ERROR);
+		/* The PDC may set both error and complete bit */
+		atomic_clear_bit(port->cci_flags, CCI_CMD_COMPLETED);
+
+		/*
+		 * TODO(b/325114016): Use ERROR_STATUS result to adjust the
+		 * number of resend attempts. If the command being sent is
+		 * either a SET_UOR or SET_PDR, then should have a lower (if
+		 * any) number of resend attempts.
+		 */
+		if (port->send_cmd.resend_counter < CMD_RESEND_MAX) {
+			/* Try to resend command */
+			if (send_pdc_cmd(port) != 0) {
+				/*
+				 * Set CCI_ERROR flag to trigger a resend of
+				 * the pending command
+				 */
+				atomic_set_bit(port->cci_flags, CCI_ERROR);
+			} else {
+				/* PDC command resent, restart wait counter */
+				port->send_cmd.wait_counter = 0;
+				port->send_cmd.resend_counter++;
+			}
+		} else {
+			LOG_ERR("%s resend attempts exceeded!",
+				pdc_cmd_names[port->cmd->cmd]);
+			set_pdc_state(port, port->send_cmd_return_state);
+			return;
 		}
 	} else if (atomic_test_and_clear_bit(port->cci_flags,
 					     CCI_CMD_COMPLETED)) {
@@ -1143,8 +1184,8 @@ static void pdc_send_cmd_wait_run(void *obj)
 		}
 	}
 
-	port->send_cmd.retry_counter++;
-	if (port->send_cmd.retry_counter > RETRY_MAX) {
+	port->send_cmd.wait_counter++;
+	if (port->send_cmd.wait_counter > WAIT_MAX) {
 		port->cmd->error = true;
 		if (port->cmd->cmd == CMD_PDC_GET_CONNECTOR_STATUS) {
 			/* Can't get connector status. Enter unattached state
@@ -1367,7 +1408,12 @@ static int public_api_block(int port, enum pdc_cmd_t pdc_cmd)
 		/* give time for command to be processed */
 		k_sleep(K_MSEC(LOOP_DELAY_MS));
 		pdc_data[port]->port.block_counter++;
-		if (pdc_data[port]->port.block_counter > RETRY_MAX) {
+		/*
+		 * TODO(b/325070749): This timeout value likely needs to be
+		 * adjusted given that internal commands may be resent up to 2
+		 * times with a 2 second timeout for each send attempt.
+		 */
+		if (pdc_data[port]->port.block_counter > WAIT_MAX) {
 			/* something went wrong */
 			LOG_ERR("Public API blocking timeout");
 			return -EBUSY;
