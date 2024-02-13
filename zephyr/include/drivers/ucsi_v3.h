@@ -319,8 +319,11 @@ union error_status_t {
 
 		/** Vendor Specific Bits follow */
 
-		/** Ping Retry Count exceeded */
-		uint32_t ping_retry_count : 1;
+		/** I2C communication with PDC succeeds, but the data read is
+		 * invalid */
+		uint32_t pdc_internal_error : 1;
+		/** PDC init failed */
+		uint32_t pdc_init_failed : 1;
 		/** I2C Read Error */
 		uint32_t i2c_read_error : 1;
 		/** I2c Write Error */
