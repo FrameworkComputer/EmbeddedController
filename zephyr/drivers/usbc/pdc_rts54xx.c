@@ -742,6 +742,7 @@ static void st_ping_status_run(void *o)
 		 * Busy and Deferred are handled the same,
 		 * so fall through
 		 */
+		__attribute__((fallthrough));
 	case CMD_DEFERRED:
 		/*
 		 * The command has not been processed.
