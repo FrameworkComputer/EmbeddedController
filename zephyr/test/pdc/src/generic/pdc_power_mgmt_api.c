@@ -22,10 +22,13 @@ static const struct emul *ara = EMUL_DT_GET(SMBUS_ARA_NODE);
 
 void pdc_power_mgmt_setup(void)
 {
-	uint8_t addr = DT_REG_ADDR(RTS5453P_NODE);
-
 	zassume(TEST_PORT < CONFIG_USB_PD_PORT_MAX_COUNT,
 		"TEST_PORT is invalid");
+}
+
+void pdc_power_mgmt_before(void *fixture)
+{
+	uint8_t addr = DT_REG_ADDR(RTS5453P_NODE);
 
 	emul_smbus_ara_set_address(ara, addr);
 	emul_pdc_set_response_delay(emul, 0);
@@ -33,7 +36,8 @@ void pdc_power_mgmt_setup(void)
 	k_sleep(K_MSEC(1000));
 }
 
-ZTEST_SUITE(pdc_power_mgmt_api, NULL, pdc_power_mgmt_setup, NULL, NULL, NULL);
+ZTEST_SUITE(pdc_power_mgmt_api, NULL, pdc_power_mgmt_setup,
+	    pdc_power_mgmt_before, NULL, NULL);
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_usb_pd_port_count)
 {
