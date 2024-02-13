@@ -6,6 +6,7 @@
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_pdc.h"
 #include "emul/emul_smbus_ara.h"
+#include "hooks.h"
 #include "usbc/pdc_power_mgmt.h"
 
 #include <zephyr/devicetree.h>
@@ -550,4 +551,24 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 		emul_pdc_disconnect(emul);
 		k_sleep(K_MSEC(2000));
 	}
+}
+
+ZTEST_USER(pdc_power_mgmt_api, test_chipset_suspend)
+{
+	struct connector_status_t connector_status;
+	enum ccom_t ccom;
+	enum drp_mode_t dm;
+
+	emul_pdc_configure_src(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	k_sleep(K_MSEC(2000));
+
+	hook_notify(HOOK_CHIPSET_SUSPEND);
+	k_sleep(K_MSEC(2000));
+
+	emul_pdc_disconnect(emul);
+	k_sleep(K_MSEC(2000));
+
+	emul_pdc_get_ccom(emul, &ccom, &dm);
+	zassert_equal(CCOM_RD, ccom);
 }
