@@ -8,7 +8,9 @@ include("${ZEPHYR_BASE}/cmake/compiler/clang/compiler_flags.cmake")
 set_compiler_property(PROPERTY hosted)
 
 # When testing, look for stack smashing
-add_compile_option_ifdef(CONFIG_ZTEST -fstack-protector-all)
+if(DEFINED CONFIG_ZTEST AND DEFINED CONFIG_ARCH_POSIX)
+add_compile_options(-fstack-protector-all)
+endif()
 
 if(DEFINED CONFIG_COMPILER_WARNINGS_AS_ERRORS)
   check_set_compiler_property(APPEND PROPERTY warning_extended -Wunused-variable
