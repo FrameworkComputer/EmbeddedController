@@ -589,3 +589,23 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume)
 	emul_pdc_get_ccom(emul, &ccom, &dm);
 	zassert_equal(CCOM_DRP, ccom);
 }
+
+ZTEST_USER(pdc_power_mgmt_api, test_chipset_startup)
+{
+	struct connector_status_t connector_status;
+	enum ccom_t ccom;
+	enum drp_mode_t dm;
+
+	emul_pdc_configure_src(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	k_sleep(K_MSEC(2000));
+
+	hook_notify(HOOK_CHIPSET_STARTUP);
+	k_sleep(K_MSEC(2000));
+
+	emul_pdc_disconnect(emul);
+	k_sleep(K_MSEC(2000));
+
+	emul_pdc_get_ccom(emul, &ccom, &dm);
+	zassert_equal(CCOM_RD, ccom);
+}
