@@ -35,6 +35,16 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 #define T_PING_STATUS 10
 
 /**
+ * @brief Error Recovery Delay Counter (time delay is 50mS)
+ */
+#define N_ERROR_RECOVERY_DELAY_COUNT (50 / T_PING_STATUS)
+
+/**
+ * @brief Max number of error recovery attempts
+ */
+#define N_MAX_ERROR_RECOVERY_COUNT 4
+
+/**
  * @brief Number of times to try an I2C transaction
  */
 #define N_I2C_TRANSACTION_COUNT 10
@@ -171,6 +181,10 @@ enum state_t {
 	ST_PING_STATUS,
 	/** Read State */
 	ST_READ,
+	/** Error Recovery State */
+	ST_ERROR_RECOVERY,
+	/** Disable State */
+	ST_DISABLE
 };
 
 /**
@@ -315,6 +329,12 @@ struct pdc_data_t {
 	struct pdc_info_t info;
 	/** Init done flag */
 	bool init_done;
+	/** Error recovery delay counter */
+	uint16_t error_recovery_delay_counter;
+	/** Error recovery counter */
+	uint16_t error_recovery_counter;
+	/** Error Status used during initialization */
+	union error_status_t es;
 };
 
 /**
@@ -349,10 +369,15 @@ static const char *const cmd_names[] = {
 /**
  * @brief List of human readable state names for console debugging
  */
+/* TODO(b/325128262): Bug to explore simplifying the the state machine */
 static const char *const state_names[] = {
-	[ST_INIT] = "INIT",   [ST_IDLE] = "IDLE",
-	[ST_WRITE] = "WRITE", [ST_PING_STATUS] = "PING_STATUS",
+	[ST_INIT] = "INIT",
+	[ST_IDLE] = "IDLE",
+	[ST_WRITE] = "WRITE",
+	[ST_PING_STATUS] = "PING_STATUS",
 	[ST_READ] = "READ",
+	[ST_ERROR_RECOVERY] = "ERROR_RECOVERY",
+	[ST_DISABLE] = "PDC_DISABLED",
 };
 
 static const struct device *irq_shared_port;
@@ -390,6 +415,10 @@ static void print_current_state(struct pdc_data_t *data)
 	if (st == ST_WRITE) {
 		LOG_INF("ST%d: %s %s", cfg->connector_number, state_names[st],
 			cmd_names[data->cmd]);
+	} else if (st == ST_ERROR_RECOVERY) {
+		LOG_INF("ST%d: %s %s %d", cfg->connector_number,
+			state_names[st], cmd_names[data->cmd],
+			data->error_recovery_counter);
 	} else {
 		LOG_INF("ST%d: %s", cfg->connector_number,
 			state_names[get_state(data)]);
@@ -420,6 +449,7 @@ static int get_ara(const struct device *dev, uint8_t *ara)
 
 static void perform_pdc_init(struct pdc_data_t *data)
 {
+	data->error_status.raw_value = 0;
 	/* Set initial local state of Init */
 	data->init_local_state = INIT_PDC_ENABLE;
 	set_state(data, ST_INIT);
@@ -778,8 +808,8 @@ static void st_ping_status_run(void *o)
 			/* Notify system of status change */
 			call_cci_event_cb(data);
 
-			/* An error occurred, return to idle state */
-			TRANSITION_TO_INIT_OR_IDLE_STATE(data);
+			/* An error occurred, try to recover */
+			set_state(data, ST_ERROR_RECOVERY);
 		} else {
 			/*
 			 * If Busy, then set this cci.busy to a 1b
@@ -848,6 +878,13 @@ static void st_ping_status_run(void *o)
 		/* An error occurred, return to idle state */
 		TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 		break;
+	default:
+		/* Ping Status returned an unknown command */
+		LOG_ERR("C%d: unknown ping_status: %02x", cfg->connector_number,
+			data->ping_status.raw_value);
+		/* An error occurred, try to recover */
+		set_state(data, ST_ERROR_RECOVERY);
+		return;
 	}
 }
 
@@ -1101,6 +1138,51 @@ static void st_read_run(void *o)
 	TRANSITION_TO_INIT_OR_IDLE_STATE(data);
 }
 
+static void st_error_recovery_entry(void *o)
+{
+	struct pdc_data_t *data = (struct pdc_data_t *)o;
+
+	print_current_state(data);
+	data->error_recovery_counter++;
+	data->error_recovery_delay_counter = 0;
+
+	/*TODO: ADD ERROR RECOVERY CODE */
+}
+
+static void st_error_recovery_run(void *o)
+{
+	struct pdc_data_t *data = (struct pdc_data_t *)o;
+
+	if (data->error_recovery_counter >= N_MAX_ERROR_RECOVERY_COUNT) {
+		set_state(data, ST_DISABLE);
+		return;
+	}
+
+	/* Current recovery is just delaying and performing a PDC init */
+	/* TODO(b/325633531): Investigate using timestamps instead of counters
+	 */
+	if (data->error_recovery_delay_counter < N_ERROR_RECOVERY_DELAY_COUNT) {
+		data->error_recovery_delay_counter++;
+		return;
+	}
+
+	/* Perform PDC Init */
+	perform_pdc_init(data);
+}
+
+static void st_disable_entry(void *o)
+{
+	struct pdc_data_t *data = (struct pdc_data_t *)o;
+
+	print_current_state(data);
+	data->error_status.port_disabled = 1;
+}
+
+static void st_disable_run(void *o)
+{
+	/* Stay here until reset */
+}
+
 /* Populate cmd state table */
 static const struct smf_state states[] = {
 	[ST_INIT] = SMF_CREATE_STATE(st_init_entry, st_init_run, NULL, NULL),
@@ -1109,6 +1191,10 @@ static const struct smf_state states[] = {
 	[ST_PING_STATUS] = SMF_CREATE_STATE(st_ping_status_entry,
 					    st_ping_status_run, NULL, NULL),
 	[ST_READ] = SMF_CREATE_STATE(st_read_entry, st_read_run, NULL, NULL),
+	[ST_ERROR_RECOVERY] = SMF_CREATE_STATE(
+		st_error_recovery_entry, st_error_recovery_run, NULL, NULL),
+	[ST_DISABLE] =
+		SMF_CREATE_STATE(st_disable_entry, st_disable_run, NULL, NULL),
 
 };
 
@@ -1252,6 +1338,11 @@ static int rts54_reconnect(const struct device *dev)
 static int rts54_pdc_reset(const struct device *dev)
 {
 	struct pdc_data_t *data = dev->data;
+
+	if (get_state(data) == ST_DISABLE) {
+		perform_pdc_init(data);
+		return 0;
+	}
 
 	if (get_state(data) != ST_IDLE) {
 		return -EBUSY;
@@ -1464,12 +1555,19 @@ static int rts54_get_error_status(const struct device *dev,
 {
 	struct pdc_data_t *data = dev->data;
 
-	if (get_state(data) != ST_IDLE) {
-		return -EBUSY;
-	}
-
 	if (es == NULL) {
 		return -EINVAL;
+	}
+
+	/* Port is disabled. Return the last read error_status.
+	 */
+	if (get_state(data) == ST_DISABLE) {
+		es->raw_value = data->error_status.raw_value;
+		return 0;
+	}
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
 	}
 
 	uint8_t payload[] = {
@@ -1808,6 +1906,7 @@ static int pdc_init(const struct device *dev)
 
 	data->dev = dev;
 	data->cmd = CMD_NONE;
+	data->error_recovery_counter = 0;
 	pdc_data[cfg->connector_number] = data;
 
 	/* Set initial state */

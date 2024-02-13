@@ -327,6 +327,8 @@ union error_status_t {
 		uint32_t i2c_write_error : 1;
 		/** Null Buffer Error */
 		uint32_t null_buffer_error : 1;
+		/** Port Disabled */
+		uint32_t port_disabled : 1;
 	};
 	uint32_t raw_value;
 };
