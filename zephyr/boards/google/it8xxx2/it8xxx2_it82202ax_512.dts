@@ -1,0 +1,47 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/dts-v1/;
+
+#include <ite/it82xx2.dtsi>
+#include <ite/it82202ax-512.dtsi>
+#include "it8xxx2.dtsi"
+
+/* it82xx2/512 has 512KB of flash. */
+&binman {
+	wp-ro {
+		offset = <0x0>;
+		size = <0x40000>;
+
+		ec-ro {
+			fmap {
+				offset = <(0x40000 - 4096 - 0x400)>;
+				/*
+				 * don't specify 'size = <0x400>' here so
+				 * it is auto-assigned to the fmap size.
+				 */
+			};
+		};
+		pstate {
+			offset = <(0x40000 - 4096)>;
+		};
+	};
+	ec-rw {
+		offset = <0x40000>;
+		size = <0x40000>;
+		rw-fw {
+			rw-fwid {
+				/* Fix the location of the FWID to the
+				 * last 32 bytes of the flash. This
+				 * ensures the RW entries in the FMAP
+				 * stored in the RO section of flash
+				 * are always correct.
+				 */
+				offset = <(0x40000 - 32)>;
+			};
+		};
+	};
+	pad-after = <0>;
+};

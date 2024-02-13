@@ -48,7 +48,7 @@ endif # CROS_SYSTEM_IT8XXX2
 
 menuconfig CROS_SYSTEM_XEC
 	bool "Microchip XEC cros system driver"
-	depends on SOC_FAMILY_MEC
+	depends on SOC_FAMILY_MICROCHIP_MEC
 	default y
 	help
 	  This option enables the cros system driver for the MCHP XEC family of

@@ -11,7 +11,7 @@ def register_skyrim_project(
     """Register a variant of skyrim."""
     register_npcx_project(
         project_name=project_name,
-        zephyr_board="npcx9m3f",
+        zephyr_board="npcx9/npcx9m3f",
         dts_overlays=[
             here / project_name / "project.overlay",
         ],

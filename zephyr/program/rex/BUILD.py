@@ -20,7 +20,7 @@ def register_rex_project(
 
     register_npcx_project(
         project_name=project_name,
-        zephyr_board="npcx9m7f",
+        zephyr_board="npcx9/npcx9m7f",
         dts_overlays=[
             here / project_name / "project.overlay",
         ],

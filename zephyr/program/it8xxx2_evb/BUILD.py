@@ -22,7 +22,7 @@ def register_it8xxx2_evb_project(project_name, zephyr_board):
 
 
 register_it8xxx2_evb_project(
-    project_name="it8xxx2_evb", zephyr_board="it81302bx"
+    project_name="it8xxx2_evb", zephyr_board="it8xxx2/it81302bx"
 )
 
 # The it82002_evb board consists of the it82002 BGA board connected
@@ -40,5 +40,5 @@ register_it8xxx2_evb_project(
 #   itedlb4-linux-v106/ite -f build/zephyr/it82002_evb/output/ec.bin
 #
 register_it8xxx2_evb_project(
-    project_name="it82002_evb", zephyr_board="it82002aw"
+    project_name="it82002_evb", zephyr_board="it8xxx2/it82002aw"
 )

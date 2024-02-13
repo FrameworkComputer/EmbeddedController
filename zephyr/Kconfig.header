@@ -6,7 +6,7 @@ config PLATFORM_EC_RO_HEADER
 	bool "RO section includes a header"
 	default y
 	depends on CROS_EC_RO
-	depends on SOC_FAMILY_NPCX || SOC_FAMILY_MEC
+	depends on SOC_FAMILY_NPCX || SOC_FAMILY_MICROHIP_MEC
 	help
 	  The RO image residing on flash memory has a header section. The header
 	  is used on some chips (such as the npcx) to load the image correctly

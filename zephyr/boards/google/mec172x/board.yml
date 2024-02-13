@@ -1,0 +1,8 @@
+board:
+  name: mec172x
+  vendor: google
+  socs:
+  - name: mec172x_nsz
+    variants:
+    - name: mec1723
+    - name: mec1727

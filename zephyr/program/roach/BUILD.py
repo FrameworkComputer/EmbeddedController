@@ -15,7 +15,7 @@ def register_variant(project_name, rwsig_sign=True):
 
     register_binman_project(
         project_name=project_name,
-        zephyr_board="it82202ax-512",
+        zephyr_board="it8xxx2/it82202ax/512",
         dts_overlays=[here / project_name / "project.overlay"],
         kconfig_files=[
             here / "program.conf",

@@ -1,0 +1,14 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_IT8XXX2
+	# Allow generating initial 0 line coverage.
+	select HAS_COVERAGE_SUPPORT
+	select SOC_IT81202_BX if BOARD_IT8XXX2_IT81202BX
+	select SOC_IT81202_CX if BOARD_IT8XXX2_IT81202CX
+	select SOC_IT81302_BX if BOARD_IT8XXX2_IT81302BX
+	select SOC_IT81302_CX if BOARD_IT8XXX2_IT81302CX
+	select SOC_IT82002_AW if BOARD_IT8XXX2_IT82002AW
+	select SOC_IT82202_AX if BOARD_IT8XXX2_IT82202AX
+	select SOC_IT82202_AX if BOARD_IT8XXX2_IT82202AX_512

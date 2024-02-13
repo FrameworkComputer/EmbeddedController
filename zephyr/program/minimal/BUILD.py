@@ -11,13 +11,13 @@ register_host_project(
 
 register_npcx_project(
     project_name="minimal-npcx9",
-    zephyr_board="npcx9m3f",
+    zephyr_board="npcx9/npcx9m3f",
     dts_overlays=[here / "npcx9.dts"],
 )
 
 register_binman_project(
     project_name="minimal-it8xxx2",
-    zephyr_board="it81302bx",
+    zephyr_board="it8xxx2/it81302bx",
     dts_overlays=[here / "it8xxx2.dts"],
 )
 

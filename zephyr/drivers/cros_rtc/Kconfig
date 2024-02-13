@@ -24,7 +24,7 @@ config CROS_RTC_NPCX
 
 config CROS_RTC_XEC
 	bool "Microchip XEC Real-Time Clock (RTC) driver for the Zephyr shim"
-	depends on SOC_FAMILY_MEC
+	depends on SOC_FAMILY_MICROCHIP_MEC
 	help
 	  This option enables a driver for providing the support of Real-Time
 	  Clock (RTC) on the MCHP XEC chip.

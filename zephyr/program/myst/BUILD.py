@@ -11,7 +11,7 @@ def register_myst_project(
     """Register a variant of myst."""
     register_npcx_project(
         project_name=project_name,
-        zephyr_board="npcx9m7f",
+        zephyr_board="npcx9/npcx9m7f",
         dts_overlays=[
             here / project_name / "project.overlay",
         ],
