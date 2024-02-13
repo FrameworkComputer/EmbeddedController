@@ -633,6 +633,19 @@ static int command_jtag_set_pins(int argc, const char **argv)
 	}
 
 	/* No errors parsing command line, now apply the new settings. */
+	if (jtag_enabled) {
+		/*
+		 * JTAG left enabled, disable current pins before proceeding.
+		 * This will ensure that the next call to dap_connect() will
+		 * result in the new set of pins being configured for
+		 * input/output as appropriate for JTAG.
+		 */
+		jtag_enabled = false;
+		for (size_t i = 0; i < JTAG_INVALID; i++) {
+			gpio_set_flags(jtag_pins[i], saved_pin_flags[i]);
+		}
+	}
+
 	for (int i = 0; i < JTAG_INVALID; i++)
 		jtag_pins[i] = new_pins[i];
 
