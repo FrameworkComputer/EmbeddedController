@@ -688,6 +688,7 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_ISL9241=y
     - CONFIG_PLATFORM_EC_CHARGER_DUMP_PROCHOT=y
+    - CONFIG_PLATFORM_EC_CONSOLE_CMD_CHARGER_DUMP=y
     - CONFIG_PLATFORM_EC_CHARGER_ISL9241=y
     extra_dtc_overlay_files:
     - ./boards/native_posix.overlay
@@ -696,6 +697,7 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_ISL9241=y
     - CONFIG_PLATFORM_EC_CHARGER_DUMP_PROCHOT=y
+    - CONFIG_PLATFORM_EC_CONSOLE_CMD_CHARGER_DUMP=y
     - CONFIG_PLATFORM_EC_CHARGER_ISL9241=y
     extra_dtc_overlay_files:
     - ./boards/native_posix.overlay
