@@ -1685,8 +1685,6 @@ static int rts54_get_current_pdo(const struct device *dev, uint32_t *pdo)
 
 	return rts54_post_command(dev, CMD_GET_CURRENT_PARTNER_SRC_PDO, payload,
 				  ARRAY_SIZE(payload), (uint8_t *)pdo);
-
-	return 0;
 }
 
 static bool rts54_is_init_done(const struct device *dev)
