@@ -92,6 +92,7 @@ void pd_set_dual_role(int port, enum pd_dual_role_states state)
 
 void pd_set_new_power_request(int port)
 {
+	/* TODO:b/326475515 */
 }
 
 __override uint8_t board_get_usb_pd_port_count(void)
@@ -101,6 +102,8 @@ __override uint8_t board_get_usb_pd_port_count(void)
 
 __override int board_set_active_charge_port(int charge_port)
 {
+	/* TODO:b/326475080 */
+
 	return EC_SUCCESS;
 }
 
@@ -112,4 +115,49 @@ const uint32_t *const pd_get_src_caps(int port)
 uint8_t pd_get_src_cap_cnt(int port)
 {
 	return pdc_power_mgmt_get_src_cap_cnt(port);
+}
+
+const uint32_t *const pd_get_snk_caps(int port)
+{
+	/* TODO:b/326460749 */
+
+	return NULL;
+}
+
+uint8_t pd_get_snk_cap_cnt(int port)
+{
+	/* TODO:b/326460749 */
+
+	return 0;
+}
+
+uint32_t pd_get_events(int port)
+{
+	/* TODO:b/326468316 */
+
+	return 0;
+}
+
+struct rmdo pd_get_partner_rmdo(int port)
+{
+	struct rmdo value = { 0 };
+
+	/* TODO:b/326466602 */
+
+	return value;
+}
+
+enum pd_discovery_state pd_get_identity_discovery(int port,
+						  enum tcpci_msg_type type)
+{
+	/* TODO:b/326468310 */
+
+	return 0;
+}
+
+int pd_get_rev(int port, enum tcpci_msg_type type)
+{
+	/* TODO:b/326466765 */
+
+	return PD_REV30;
 }
