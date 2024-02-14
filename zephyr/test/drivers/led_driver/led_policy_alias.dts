@@ -9,10 +9,10 @@
 	led-colors {
 		compatible = "cros-ec,led-policy";
 
-		sysrq-alias = "EC_LED_ID_RIGHT_LED";
+		sysrq-alias = "EC_LED_ID_BATTERY_LED";
 		sysrq-led-control-color = "LED_WHITE";
 
-		recovery-hw-reinit-alias = "EC_LED_ID_RIGHT_LED";
+		recovery-hw-reinit-alias = "EC_LED_ID_BATTERY_LED";
 		recovery-hw-reinit-led-control-color = "LED_BLUE";
 	};
 };

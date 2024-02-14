@@ -16,7 +16,7 @@ ZTEST(led_common, test_host_command__query)
 	int ret;
 	struct ec_response_led_control response;
 	struct ec_params_led_control params = {
-		.led_id = EC_LED_ID_RIGHT_LED,
+		.led_id = EC_LED_ID_BATTERY_LED,
 		.flags = EC_LED_FLAGS_QUERY,
 	};
 
@@ -58,7 +58,7 @@ ZTEST(led_common, test_host_command__supported_channel)
 	int ret;
 	struct ec_response_led_control response;
 	struct ec_params_led_control params = {
-		.led_id = EC_LED_ID_RIGHT_LED,
+		.led_id = EC_LED_ID_BATTERY_LED,
 		.flags = 0x00,
 		.brightness = {
 			/* This LED does not have a red channel */
@@ -79,7 +79,7 @@ ZTEST(led_common, test_host_command__manual_control)
 	int ret;
 	struct ec_response_led_control response;
 	struct ec_params_led_control params = {
-		.led_id = EC_LED_ID_RIGHT_LED,
+		.led_id = EC_LED_ID_BATTERY_LED,
 		.flags = 0x00,
 		.brightness = {
 			[EC_LED_COLOR_BLUE] = 1,
@@ -107,7 +107,7 @@ ZTEST(led_common, test_host_command__auto_control)
 	int ret;
 	struct ec_response_led_control response;
 	struct ec_params_led_control params = {
-		.led_id = EC_LED_ID_RIGHT_LED,
+		.led_id = EC_LED_ID_BATTERY_LED,
 		.flags = EC_LED_FLAGS_AUTO,
 	};
 

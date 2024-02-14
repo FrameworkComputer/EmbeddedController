@@ -35,7 +35,7 @@
 		};
 
 		right_led: right-led {
-			led-id = "EC_LED_ID_RIGHT_LED";
+			led-id = "EC_LED_ID_BATTERY_LED";
 			led-pins = <&gpio_ec_chg_led_y_c0
 				    &gpio_ec_chg_led_w_c0>;
 
