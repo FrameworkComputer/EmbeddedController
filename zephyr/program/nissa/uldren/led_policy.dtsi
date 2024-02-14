@@ -33,7 +33,7 @@
 		power-state-discharge-s0 {
 			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S0";
-			batt-lvl = <BATTERY_LEVEL_LOW BATTERY_LEVEL_FULL>;
+			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
 
 			batter-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
@@ -47,6 +47,7 @@
 		power-state-discharge-s3 {
 			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S3";
+			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
 
 			batter-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
