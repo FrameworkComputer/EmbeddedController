@@ -27,6 +27,9 @@ config TEST_BOARD_NAME
 config TEST_BOARD_HIBERNATE
 	bool "Run hibernate tests"
 
+config TEST_BOARD_SUSPEND_RESUME
+	bool "Run suspend/resume tests"
+
 config TEST_BOARD_USBC
 	bool "Run USB-C tests"
 

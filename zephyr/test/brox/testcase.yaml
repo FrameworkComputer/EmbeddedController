@@ -25,3 +25,10 @@ tests:
     - CONFIG_TEST_BOARD_HIBERNATE=y
     extra_dtc_overlay_files:
     - boards/baseboard/baseboard.overlay
+
+  brox.baseboard.suspend_resume:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BASEBOARD=y
+    - CONFIG_TEST_BOARD_SUSPEND_RESUME=y
+    extra_dtc_overlay_files:
+    - boards/baseboard/baseboard.overlay
