@@ -24,4 +24,7 @@ config TEST_BOARD_NAME
 	default "baseboard" if TEST_BOARD_BASEBOARD
 	default "brox" if TEST_BOARD_BROX
 
+config TEST_BOARD_USBC
+	bool "Run USB-C tests"
+
 source "Kconfig.zephyr"
