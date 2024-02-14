@@ -66,7 +66,7 @@ enum API_RETURN_STATUS_T {
 
 #define ADDR_OTPI_WRITE_PROTECT (*(volatile uint32_t *)0x5C)
 #define otpi_write_protect(address, size) \
-	(((otpi_write_prot_ptr)ADDR_OTPI_WRITE)(address, size))
+	(((otpi_write_prot_ptr)ADDR_OTPI_WRITE_PROTECT)(address, size))
 
 /******************************************************************************/
 /*
