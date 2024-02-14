@@ -362,6 +362,30 @@
 			};
 		};
 
+		bat-power-state-charge-idle {
+			charge-state = "LED_PWRS_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		bat-power-state-charge-forced-idle {
+			charge-state = "LED_PWRS_FORCED_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
 		/* STARMIE LED bat discharge */
 		bat-power-state-discharge {
 			charge-state = "LED_PWRS_DISCHARGE";
@@ -483,7 +507,20 @@
 			};
 		};
 
-		pwr-power-state-off {
+		pwr-power-state-off-s3 {
+			chipset-state = "POWER_S3";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		pwr-power-state-off-s5 {
+			chipset-state = "POWER_S5";
+
 			power-led {
 				led-id = "EC_LED_ID_POWER_LED";
 				color-0 {
