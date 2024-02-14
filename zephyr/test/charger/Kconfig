@@ -1,0 +1,32 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+choice TEST_BOARD_VARIANT
+	prompt "Select board variant for tests"
+
+	# Brox variants
+	config TEST_BOARD_BROX
+		bool "Run brox tests"
+
+	# Nissa variants
+	config TEST_BOARD_CRAASK
+		bool "Run craask tests"
+endchoice
+
+choice TEST_CHARGER
+	prompt "Select charger for tests"
+
+	config TEST_ISL923X
+		bool "Use ISL923x test variants"
+		select ISL923X_MOCK
+
+endchoice # TEST_CHARGER
+
+config TEST_EXTPOWER
+	bool "Run external power tests"
+
+config TEST_SRC
+	string "Path for the file to test"
+
+source "Kconfig.zephyr"
