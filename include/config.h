@@ -2613,7 +2613,9 @@
 /* EC supports EC_CMD_TYPEC_DISCOVERY */
 #define CONFIG_HOSTCMD_TYPEC_DISCOVERY
 
-/* EC supports EC_CMD_TYPEC_CONTROL */
+/* EC supports EC_CMD_TYPEC_CONTROL
+ * Note: this gets undefined later if TCPMv1 is selected.
+ */
 #define CONFIG_HOSTCMD_TYPEC_CONTROL
 
 /* EC supports EC_CMD_TYPEC_STATUS */
@@ -7172,6 +7174,14 @@
 	"CONFIG_USB_PD_TCPM_PS8* are intended to support in a board."
 #endif
 #endif /* defined(CONFIG_USB_PD_TCPM_PS8705) + ... */
+
+/*
+ * CONFIG_HOSTCMD_TYPEC_CONTROL is not supported for TCPMv1, so disable it in
+ * that case.
+ */
+#ifdef CONFIG_USB_PD_TCPMV1
+#undef CONFIG_HOSTCMD_TYPEC_CONTROL
+#endif /* CONFIG_USB_PD_TCPMV1 */
 
 /******************************************************************************/
 /* Check body detection setup */

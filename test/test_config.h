@@ -665,6 +665,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
 #define I2C_PORT_BATTERY 0
+#undef CONFIG_USB_PD_HOST_CMD
 #endif /* TEST_CHARGE_MANAGER_* */
 
 #ifdef TEST_CHARGE_MANAGER_DRP_CHARGING
