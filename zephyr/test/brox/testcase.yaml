@@ -18,3 +18,10 @@ tests:
     - CONFIG_TEST_BOARD_USBC=y
     extra_dtc_overlay_files:
     - boards/baseboard/baseboard.overlay
+
+  brox.baseboard.hibernate:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BASEBOARD=y
+    - CONFIG_TEST_BOARD_HIBERNATE=y
+    extra_dtc_overlay_files:
+    - boards/baseboard/baseboard.overlay
