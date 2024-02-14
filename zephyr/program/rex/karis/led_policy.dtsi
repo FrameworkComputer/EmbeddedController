@@ -32,8 +32,8 @@
 
 		power-state-charge {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery percent range 0..97 */
-			batt-lvl = <0 97>;
+			/* Battery percent range 0..96 */
+			batt-lvl = <0 96>;
 
 			/* Turn on Amber LED */
 			batt-led {
