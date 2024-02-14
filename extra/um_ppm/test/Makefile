@@ -21,7 +21,11 @@ run_local_tests: unit_tests
 unit_tests: ppm_tests.o ppm_common.co platform_usermode.co
 	$(CXX) -o $@ $^ $(CXXFLAGS) -lgtest -lgtest_main
 
+remote_unit_tests: opm_tests.cc ppm_common.co platform_usermode.co \
+	um_ppm_chardev.co
+	$(CXX) -o $@ $^ $(CXXFLAGS) -lgmock -lgtest -lgtest_main
+
 .PHONY: clean
 
 clean:
-	rm -f *.o *.co unit_tests
+	rm -f *.o *.co unit_tests remote_unit_tests
