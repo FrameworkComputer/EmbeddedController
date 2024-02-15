@@ -22,6 +22,7 @@
 #include "keyboard_scan.h"
 #include "led_onoff_states.h"
 #include "led_pwm.h"
+#include "mock/isl923x.h"
 #include "motionsense_sensors.h"
 #include "nissa_sub_board.h"
 #include "tablet_mode.h"
@@ -64,8 +65,6 @@ FAKE_VOID_FUNC(set_pwm_led_color, enum pwm_led_id, int);
 
 FAKE_VALUE_FUNC(enum battery_present, battery_is_present);
 FAKE_VOID_FUNC(lpc_keyboard_resume_irq);
-
-static enum ec_error_list raa489000_is_acok_absent(int charger, bool *acok);
 
 static void test_before(void *fixture)
 {
@@ -626,41 +625,6 @@ ZTEST(craask, test_fan_absent)
 	zassert_ok(gpio_pin_get_config_dt(
 		GPIO_DT_FROM_NODELABEL(gpio_fan_enable), &flags));
 	zassert_equal(flags, 0, "actual GPIO flags were %#x", flags);
-}
-
-static enum ec_error_list raa489000_is_acok_absent(int charger, bool *acok)
-{
-	*acok = false;
-	return EC_SUCCESS;
-}
-
-static enum ec_error_list raa489000_is_acok_present(int charger, bool *acok)
-{
-	*acok = true;
-	return EC_SUCCESS;
-}
-
-static enum ec_error_list raa489000_is_acok_error(int charger, bool *acok)
-{
-	return EC_ERROR_UNIMPLEMENTED;
-}
-
-ZTEST(craask, test_extpower_is_present)
-{
-	/* Errors are not-OK */
-	raa489000_is_acok_fake.custom_fake = raa489000_is_acok_error;
-	zassert_false(extpower_is_present());
-	zassert_equal(raa489000_is_acok_fake.call_count, 2);
-
-	/* When neither charger is connected, we check both and return no. */
-	raa489000_is_acok_fake.custom_fake = raa489000_is_acok_absent;
-	zassert_false(extpower_is_present());
-	zassert_equal(raa489000_is_acok_fake.call_count, 4);
-
-	/* If one is connected, AC is present */
-	raa489000_is_acok_fake.custom_fake = raa489000_is_acok_present;
-	zassert_true(extpower_is_present());
-	zassert_equal(raa489000_is_acok_fake.call_count, 5);
 }
 
 static int extpower_handle_update_call_count;

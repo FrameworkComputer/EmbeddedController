@@ -24,6 +24,7 @@
 #include "hooks.h"
 #include "keyboard_backlight.h"
 #include "lid_switch.h"
+#include "mock/isl923x.h"
 #include "motionsense_sensors.h"
 #include "system.h"
 #include "tablet_mode.h"
@@ -101,24 +102,6 @@ static void set_fw_config_value(uint32_t value)
 	fw_config_value = value;
 	board_usb_pd_count_init();
 }
-
-static enum ec_error_list raa489000_is_acok_absent(int charger, bool *acok)
-{
-	*acok = false;
-	return EC_SUCCESS;
-}
-
-static enum ec_error_list raa489000_is_acok_present(int charger, bool *acok)
-{
-	*acok = true;
-	return EC_SUCCESS;
-}
-
-static enum ec_error_list raa489000_is_acok_error(int charger, bool *acok)
-{
-	return EC_ERROR_UNIMPLEMENTED;
-}
-static enum ec_error_list raa489000_is_acok_absent(int charger, bool *acok);
 
 static void test_before(void *fixture)
 {

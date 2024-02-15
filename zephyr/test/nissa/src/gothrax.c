@@ -15,6 +15,7 @@
 #include "gothrax.h"
 #include "gpio/gpio_int.h"
 #include "keyboard_protocol.h"
+#include "mock/isl923x.h"
 #include "motionsense_sensors.h"
 #include "nissa_hdmi.h"
 #include "system.h"
@@ -64,7 +65,6 @@ FAKE_VOID_FUNC(fan_set_count, int);
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
 
-static enum ec_error_list raa489000_is_acok_absent(int charger, bool *acok);
 void fan_init(void);
 
 static void test_before(void *fixture)
@@ -134,23 +134,6 @@ ZTEST(gothrax, test_charger_hibernate)
 	zassert_equal(raa489000_hibernate_fake.arg0_history[1],
 		      CHARGER_PRIMARY);
 	zassert_true(raa489000_hibernate_fake.arg1_history[1]);
-}
-
-static enum ec_error_list raa489000_is_acok_absent(int charger, bool *acok)
-{
-	*acok = false;
-	return EC_SUCCESS;
-}
-
-static enum ec_error_list raa489000_is_acok_present(int charger, bool *acok)
-{
-	*acok = true;
-	return EC_SUCCESS;
-}
-
-static enum ec_error_list raa489000_is_acok_error(int charger, bool *acok)
-{
-	return EC_ERROR_UNIMPLEMENTED;
 }
 
 ZTEST(gothrax, test_check_extpower)

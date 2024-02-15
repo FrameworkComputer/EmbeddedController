@@ -4,5 +4,4 @@
 
 if (DEFINED CONFIG_TEST_EXTPOWER)
 	target_sources(app PRIVATE src/extpower.c)
-	target_sources(app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/${CONFIG_TEST_SRC})
 endif()

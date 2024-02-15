@@ -14,6 +14,7 @@
 #include "keyboard_protocol.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
+#include "mock/isl923x.h"
 #include "pirrha.h"
 #include "system.h"
 #include "tcpm/tcpci.h"
@@ -53,8 +54,6 @@ FAKE_VALUE_FUNC(int, chipset_in_state, int);
 FAKE_VOID_FUNC(usb_charger_task_set_event_sync, int, uint8_t);
 FAKE_VALUE_FUNC(int, charge_get_percent);
 FAKE_VALUE_FUNC(int, isl923x_set_comparator_inversion, int, int);
-
-static enum ec_error_list raa489000_is_acok_absent(int charger, bool *acok);
 
 static void test_before(void *fixture)
 {
@@ -96,23 +95,6 @@ ZTEST(pirrha, test_charger_hibernate)
 	zassert_equal(raa489000_hibernate_fake.arg0_history[1],
 		      CHARGER_PRIMARY);
 	zassert_true(raa489000_hibernate_fake.arg1_history[1]);
-}
-
-static enum ec_error_list raa489000_is_acok_absent(int charger, bool *acok)
-{
-	*acok = false;
-	return EC_SUCCESS;
-}
-
-static enum ec_error_list raa489000_is_acok_present(int charger, bool *acok)
-{
-	*acok = true;
-	return EC_SUCCESS;
-}
-
-static enum ec_error_list raa489000_is_acok_error(int charger, bool *acok)
-{
-	return EC_ERROR_UNIMPLEMENTED;
 }
 
 ZTEST(pirrha, test_check_extpower)

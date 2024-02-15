@@ -9,13 +9,3 @@ __weak uint8_t board_get_usb_pd_port_count(void)
 {
 	return 2;
 }
-
-__weak int isl923x_set_ac_prochot(int chgnum, uint16_t ma)
-{
-	return EC_ERROR_UNIMPLEMENTED;
-}
-
-__weak int isl923x_set_dc_prochot(int chgnum, uint16_t ma)
-{
-	return EC_ERROR_UNIMPLEMENTED;
-}

@@ -16,6 +16,7 @@
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "keyboard_protocol.h"
+#include "mock/isl923x.h"
 #include "nissa_hdmi.h"
 #include "system.h"
 #include "tcpm/tcpci.h"
@@ -48,24 +49,6 @@ FAKE_VOID_FUNC(get_scancode_set2, uint8_t, uint8_t);
 
 FAKE_VOID_FUNC(raa489000_hibernate, int, bool);
 FAKE_VALUE_FUNC(int, raa489000_enable_asgate, int, bool);
-
-static enum ec_error_list raa489000_is_acok_absent(int charger, bool *acok)
-{
-	*acok = false;
-	return EC_SUCCESS;
-}
-
-static enum ec_error_list raa489000_is_acok_present(int charger, bool *acok)
-{
-	*acok = true;
-	return EC_SUCCESS;
-}
-
-static enum ec_error_list raa489000_is_acok_error(int charger, bool *acok)
-{
-	return EC_ERROR_UNIMPLEMENTED;
-}
-static enum ec_error_list raa489000_is_acok_absent(int charger, bool *acok);
 
 static void test_before(void *fixture)
 {
@@ -268,24 +251,6 @@ ZTEST(craaskov, test_reset_pd_mcu)
 {
 	/* Doesn't do anything */
 	board_reset_pd_mcu();
-}
-
-ZTEST(craaskov, test_extpower_is_present)
-{
-	/* Errors are not-OK */
-	raa489000_is_acok_fake.custom_fake = raa489000_is_acok_error;
-	zassert_false(extpower_is_present());
-	zassert_equal(raa489000_is_acok_fake.call_count, 2);
-
-	/* When neither charger is connected, we check both and return no. */
-	raa489000_is_acok_fake.custom_fake = raa489000_is_acok_absent;
-	zassert_false(extpower_is_present());
-	zassert_equal(raa489000_is_acok_fake.call_count, 4);
-
-	/* If one is connected, AC is present */
-	raa489000_is_acok_fake.custom_fake = raa489000_is_acok_present;
-	zassert_true(extpower_is_present());
-	zassert_equal(raa489000_is_acok_fake.call_count, 5);
 }
 
 static int extpower_handle_update_call_count;

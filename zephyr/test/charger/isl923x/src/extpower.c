@@ -21,7 +21,6 @@ ZTEST_SUITE(isl923x_extpower, NULL, NULL, test_before, NULL, NULL);
 
 ZTEST(isl923x_extpower, test_extpower_error)
 {
-	/* Errors are not-OK */
 	raa489000_is_acok_fake.custom_fake = raa489000_is_acok_error;
 	zassert_false(extpower_is_present());
 	zassert_not_equal(raa489000_is_acok_fake.call_count, 0);
@@ -29,7 +28,6 @@ ZTEST(isl923x_extpower, test_extpower_error)
 
 ZTEST(isl923x_extpower, test_extpower_absent)
 {
-	/* When neither charger is connected, we check both and return no. */
 	raa489000_is_acok_fake.custom_fake = raa489000_is_acok_absent;
 	zassert_false(extpower_is_present());
 	zassert_not_equal(raa489000_is_acok_fake.call_count, 0);
@@ -37,7 +35,6 @@ ZTEST(isl923x_extpower, test_extpower_absent)
 
 ZTEST(isl923x_extpower, test_extpower_present)
 {
-	/* If one is connected, AC is present */
 	raa489000_is_acok_fake.custom_fake = raa489000_is_acok_present;
 	zassert_true(extpower_is_present());
 	zassert_not_equal(raa489000_is_acok_fake.call_count, 0);
