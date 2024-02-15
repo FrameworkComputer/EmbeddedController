@@ -8,6 +8,7 @@
 	aliases {
 		gpio-cbi-wp = &gpio_ec_cbi_wp;
 		gpio-wp = &gpio_ec_flash_wp_odl;
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
 	};
 
 	named-adc-channels {
@@ -79,6 +80,9 @@
 		};
 		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
 			gpios = <&gpiod 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_kso_02_inv: ec_kso_02_inv {
+			gpios = <&gpioksol 2 GPIO_OUTPUT_HIGH>;
 		};
 		/* a label to prevent build break in power sequencing */
 		en_pp4200_s5: en_pp3700_s5 {
