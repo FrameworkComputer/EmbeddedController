@@ -700,6 +700,7 @@ add_subdirectory("emul")
 add_subdirectory("fake")
 add_subdirectory("mock")
 add_subdirectory_ifdef(CONFIG_PLATFORM_EC "shim")
+add_subdirectory_ifdef(CONFIG_HW_TEST_ON "test/hwtest")
 
 # Use external script to generate the ec_version.h header and add as
 # a dependency to the EC application library.
