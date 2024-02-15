@@ -68,6 +68,9 @@
 			gpios = <&gpioi 2 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_EN_KEYBOARD_BACKLIGHT";
 		};
+		gpio_ec_kso_02_inv: ec_kso_02_inv {
+			gpios = <&gpioksol 2 GPIO_OUTPUT_HIGH>;
+		};
 
 		/* The legacy system code requires GPIO_ENTERING_RW symbol */
 		gpio_ec_entering_rw: ec_entering_rw {
