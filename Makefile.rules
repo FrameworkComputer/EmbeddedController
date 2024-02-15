@@ -80,7 +80,11 @@ cmd_ec_elf_to_flat_dram ?= $(OBJCOPY) -j .dram* -O binary $< $@
 cmd_elf_to_signed ?= $(SIGNER) --key=util/signer/$(3) \
 	--b --input=$< --format=bin --output=$@.signed $(SIGNER_EXTRAS) \
 	&& sudo chown $(shell whoami) $@.signed && mv $@.signed $@
-cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
+# objdump args:
+# -D => Disassemble all sections
+# -C => Demangle C++ names
+# -S => Display source interleaved with disassembly
+cmd_elf_to_dis = $(OBJDUMP) -D -C -S $< > $@
 cmd_elf_to_bin = $(OBJCOPY) -O binary $< $@
 cmd_elf_to_hex = $(OBJCOPY) -O ihex $< $@
 cmd_bin_to_hex = $(OBJCOPY) -I binary -O ihex \
