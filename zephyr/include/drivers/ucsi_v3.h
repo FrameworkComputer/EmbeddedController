@@ -325,6 +325,8 @@ union error_status_t {
 		uint32_t i2c_read_error : 1;
 		/** I2c Write Error */
 		uint32_t i2c_write_error : 1;
+		/** Null Buffer Error */
+		uint32_t null_buffer_error : 1;
 	};
 	uint32_t raw_value;
 };

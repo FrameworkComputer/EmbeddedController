@@ -875,8 +875,32 @@ static void st_read_run(void *o)
 	uint8_t len;
 	int rv;
 
+	/*
+	 * The data->user_buf is checked for NULL before a command is queued.
+	 * The check here gauards against an eronious ping_status indicating
+	 * data is available for a command that doesn't send data.
+	 */
+	if (!data->user_buf) {
+		LOG_ERR("NULL read buffer pointer");
+		/*
+		 * The command was not successfully completed,
+		 * so set cci.error to 1b.
+		 */
+		data->cci_event.error = 1;
+		/* Command completed */
+		data->cci_event.command_completed = 1;
+		/* Null buffer error */
+		data->error_status.null_buffer_error = 1;
+		/* Notify system of status change */
+		call_cci_event_cb(data);
+
+		/* An error occurred, return to idle state */
+		TRANSITION_TO_INIT_OR_IDLE_STATE(data);
+	}
+
 	rv = rts54_i2c_read(data->dev);
 	if (rv < 0) {
+		LOG_ERR("I2C Read Error");
 		/*
 		 * The command was not successfully completed,
 		 * so set cci.error to 1b.
