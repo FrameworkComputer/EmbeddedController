@@ -657,6 +657,37 @@ static int command_gpio_analog_set(int argc, const char **argv)
 }
 
 /*
+ * Configure drive speed of a given pin, mostly useful for SPI pins if clock
+ * frequency is to exceed 10MHz.  The STM32L5 datasheet defines four levels 0-3,
+ * higher numbers mean faster slew rate, default for all pins is level 0.
+ */
+static int command_gpio_set_speed(int argc, const char **argv)
+{
+	if (argc < 4)
+		return EC_ERROR_PARAM_COUNT;
+
+	int gpio = gpio_find_by_name(argv[2]);
+	if (gpio == GPIO_COUNT)
+		return EC_ERROR_PARAM2;
+
+	char *e;
+	int speed = strtoi(argv[3], &e, 0);
+	if (*e)
+		return EC_ERROR_PARAM3;
+	if (speed < 0 || speed > 3)
+		return EC_ERROR_PARAM3;
+
+	int index = GPIO_MASK_TO_NUM(gpio_list[gpio].mask);
+
+	uint32_t register_value = STM32_GPIO_OSPEEDR(gpio_list[gpio].port);
+	register_value &= ~(3U << (index * 2));
+	register_value |= speed << (index * 2);
+	STM32_GPIO_OSPEEDR(gpio_list[gpio].port) = register_value;
+
+	return EC_SUCCESS;
+}
+
+/*
  * Set multiple aspects of a GPIO pin simultaneously, that is, can switch output
  * level, opendrain/pushpull, and pullup simultaneously, eliminating the risk of
  * glitches.
@@ -1382,6 +1413,8 @@ static int command_gpio(int argc, const char **argv)
 		return EC_ERROR_PARAM_COUNT;
 	if (!strcasecmp(argv[1], "analog-set"))
 		return command_gpio_analog_set(argc, argv);
+	if (!strcasecmp(argv[1], "set-speed"))
+		return command_gpio_set_speed(argc, argv);
 	if (!strcasecmp(argv[1], "monitoring"))
 		return command_gpio_monitoring(argc, argv);
 	if (!strcasecmp(argv[1], "multiset"))
@@ -1396,6 +1429,7 @@ DECLARE_CONSOLE_COMMAND_FLAGS(
 	gpio, command_gpio,
 	"multiset name [level] [mode] [pullmode] [milli_volts]"
 	"\nanalog-set name milli_volts"
+	"\nset-speed name 0-3"
 	"\nset-reset name"
 	"\nmonitoring start name..."
 	"\nmonitoring read name..."
