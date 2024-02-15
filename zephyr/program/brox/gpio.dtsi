@@ -113,6 +113,12 @@ gpio_ec_pch_wake_odl: &gpio_sen_mode1_ec_pch_wake_odl {
 	gpios = <&gpioe 6 GPIO_INPUT>;
 };
 
+/* Default PROCHOT high so it's not asserted
+ * TODO: b/214509787 - zephyr: subsys/ap_pwrseq: support chipset interface APIs
+ */
+&gpio_ec_prochot_odl {
+	gpios = <&gpioi 0 GPIO_ODR_HIGH>;
+};
 
 &gpio_ec_voldn_btn_odl {
 	enum-name = "GPIO_VOLUME_DOWN_L";
