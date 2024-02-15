@@ -3,3 +3,4 @@
 # found in the LICENSE file.
 
 zephyr_library_sources("src/main.c")
+zephyr_library_sources_ifdef(CONFIG_HW_TEST_ABORT src/abort.c)
