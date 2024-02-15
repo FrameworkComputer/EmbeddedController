@@ -16,6 +16,10 @@ config BOARD_BLOONCHIPPER
 	select FINGERPRINT_SENSOR if CROS_EC_RW
 	select FINGERPRINT_SHELL if CROS_EC_RW
 	select PLATFORM_EC_FINGERPRINT if CROS_EC_RW
+
+	# Make sure RSA parameters for bloonchipper are correct.
+	depends on PLATFORM_EC_RSA_KEY_SIZE = 3072
+	depends on PLATFORM_EC_RSA_EXPONENT_3
 	help
 	  Build the bloonchipper FPMCU board. The board uses STM32F412CG MCU
 	  and FPC1025 sensor.
@@ -30,5 +34,13 @@ config BLOONCHIPPER_EC_RO_QUIRKS
 	  Zephyr RW.
 
 endif
+
+# Override default RSA parameters.
+# Make sure that these configs are placed ABOVE 'source "Kconfig.zephyr"' line.
+config PLATFORM_EC_RSA_KEY_SIZE
+	default 3072
+
+config PLATFORM_EC_RSA_EXPONENT_3
+	default y
 
 source "Kconfig.zephyr"
