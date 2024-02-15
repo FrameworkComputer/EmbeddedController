@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "driver/charger/isl923x_public.h"
 #include "mock/isl923x.h"
 
 enum ec_error_list raa489000_is_acok_absent(int charger, bool *acok)
@@ -18,6 +19,16 @@ enum ec_error_list raa489000_is_acok_present(int charger, bool *acok)
 }
 
 enum ec_error_list raa489000_is_acok_error(int charger, bool *acok)
+{
+	return EC_ERROR_UNIMPLEMENTED;
+}
+
+__weak int isl923x_set_ac_prochot(int chgnum, uint16_t ma)
+{
+	return EC_ERROR_UNIMPLEMENTED;
+}
+
+__weak int isl923x_set_dc_prochot(int chgnum, uint16_t ma)
 {
 	return EC_ERROR_UNIMPLEMENTED;
 }
