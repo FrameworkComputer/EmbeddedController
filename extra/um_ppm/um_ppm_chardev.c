@@ -10,6 +10,7 @@
 #include "um_ppm_chardev.h"
 
 #include <errno.h>
+#include <signal.h>
 #include <stdio.h>
 #include <stdlib.h>
 
@@ -178,62 +179,6 @@ static int um_ppm_apply_platform_policy(void *context)
 	return 0;
 }
 
-struct um_ppm_cdev *um_ppm_cdev_open(char *devpath, struct ucsi_pd_driver *pd,
-				     struct smbus_driver *smbus,
-				     struct pd_driver_config *driver_config)
-{
-	struct um_ppm_cdev *cdev = NULL;
-	int fd = -1;
-
-	fd = open(devpath, O_RDWR);
-	if (fd < 0) {
-		ELOG("Could not open PPM char device.");
-		return NULL;
-	}
-
-	cdev = calloc(1, sizeof(struct um_ppm_cdev));
-	if (!cdev) {
-		goto handle_error;
-	}
-
-	cdev->fd = fd;
-	cdev->pd = pd;
-	cdev->ppm = pd->get_ppm(pd->dev);
-	cdev->smbus = smbus;
-	cdev->driver_config = driver_config;
-
-	cdev->ppm->register_notify(cdev->ppm->dev, um_ppm_notify, (void *)cdev);
-	cdev->ppm->register_platform_policy(
-		cdev->ppm->dev, um_ppm_apply_platform_policy, (void *)cdev);
-
-	return cdev;
-
-handle_error:
-	close(fd);
-	free(cdev);
-
-	return NULL;
-}
-
-void um_ppm_cdev_cleanup(struct um_ppm_cdev *cdev)
-{
-	if (cdev) {
-		/* Clean up the notify task first. */
-		cdev->smbus->cleanup(cdev->smbus);
-
-		/* Now clean up the cdev file (stopping communication). */
-		if (cdev->fd >= 0) {
-			close(cdev->fd);
-			cdev->fd = -1;
-		}
-
-		/* Finally, clean up the pd driver. */
-		cdev->pd->cleanup(cdev->pd);
-
-		free(cdev);
-	}
-}
-
 static void um_ppm_notify_ready(struct um_ppm_cdev *cdev)
 {
 	uint8_t data[sizeof(struct um_message_skeleton)];
@@ -289,6 +234,35 @@ static int um_ppm_handle_message(struct um_ppm_cdev *cdev,
 	return 0;
 }
 
+static void um_ppm_cdev_cleanup(struct um_ppm_cdev *cdev)
+{
+	if (cdev) {
+		/* Clean up the notify task first. */
+		cdev->smbus->cleanup(cdev->smbus);
+
+		/* Now clean up the cdev file (stopping communication). */
+		if (cdev->fd >= 0) {
+			close(cdev->fd);
+			cdev->fd = -1;
+		}
+
+		/* Finally, clean up the pd driver. */
+		cdev->pd->cleanup(cdev->pd);
+
+		free(cdev);
+	}
+}
+
+static void um_ppm_handle_signal(int signal)
+{
+	DLOG("Handling signal %d", signal);
+	/*
+	 * Nothing to do here because um_ppm_cdev_mainloop()
+	 * will likely be blocked on the file descriptor
+	 * read and will be interrupted by this signal
+	 */
+}
+
 void um_ppm_cdev_mainloop(struct um_ppm_cdev *cdev)
 {
 	int bytes = 0;
@@ -329,23 +303,82 @@ void um_ppm_cdev_mainloop(struct um_ppm_cdev *cdev)
 		}
 		/* Nothing to read at this time (not sure why we woke up). */
 		else if (bytes == 0) {
-			DLOG("Got back zero bytes from read. Shouldn't we block here?");
+			if (errno != -EINTR)
+				DLOG("Read zero bytes");
 			break;
 		} else if (bytes == -1) {
-			if (errno == -EINTR) {
-				continue;
-			}
 			DLOG("Failed to read from cdev due to errno=%d", errno);
 			break;
 		}
 	} while (true);
+
+	DLOG("Exiting cdev main loop");
+	um_ppm_cdev_cleanup(cdev);
+	platform_task_exit();
 }
 
-void um_ppm_handle_signal(struct um_ppm_cdev *cdev, int signal)
+struct um_ppm_cdev *um_ppm_cdev_open(const char *devpath,
+				     struct ucsi_pd_driver *pd,
+				     struct smbus_driver *smbus,
+				     struct pd_driver_config *driver_config)
 {
-	ELOG("Handling signal %d", signal);
+	struct um_ppm_cdev *cdev = NULL;
+	int fd = -1;
 
-	if (cdev) {
-		um_ppm_cdev_cleanup(cdev);
+	fd = open(devpath, O_RDWR);
+	if (fd < 0) {
+		perror("Error = ");
+		ELOG("Could not open PPM char device.");
+		return NULL;
 	}
+
+	cdev = calloc(1, sizeof(struct um_ppm_cdev));
+	if (!cdev) {
+		goto handle_error;
+	}
+
+	cdev->fd = fd;
+	cdev->pd = pd;
+	cdev->ppm = pd->get_ppm(pd->dev);
+	cdev->smbus = smbus;
+	cdev->driver_config = driver_config;
+
+	cdev->ppm->register_notify(cdev->ppm->dev, um_ppm_notify, (void *)cdev);
+	cdev->ppm->register_platform_policy(
+		cdev->ppm->dev, um_ppm_apply_platform_policy, (void *)cdev);
+
+	return cdev;
+
+handle_error:
+	close(fd);
+	free(cdev);
+
+	return NULL;
+}
+
+/* Set up the um_ppm device to start communicating with kernel. */
+int cdev_prepare_um_ppm(const char *um_test_devpath, struct ucsi_pd_driver *pd,
+			struct smbus_driver *smbus,
+			struct pd_driver_config *config)
+{
+	/* Open the kernel um_ppm chardev to establish the PPM communication. */
+	struct um_ppm_cdev *cdev =
+		um_ppm_cdev_open(um_test_devpath, pd, smbus, config);
+	struct sigaction act = { .sa_handler = um_ppm_handle_signal };
+
+	if (!cdev) {
+		ELOG("Failed to initialize PPM chardev. Exit early!");
+		return -1;
+	}
+
+	/* Register sigterm handler so we know when to exit. */
+	if (sigaction(SIGTERM, &act, NULL)) {
+		ELOG("Failed to install handler for SIGTERM.");
+		return -1;
+	}
+
+	/* Mainloop with chardev handling. */
+	um_ppm_cdev_mainloop(cdev);
+
+	return 0;
 }

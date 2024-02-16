@@ -34,28 +34,6 @@ struct extra_driver_ops rts5453_ops = {
 	.smbus_lpm_open = rts5453_open,
 };
 
-/* Set up the um_ppm device to start communicating with kernel. */
-int cdev_prepare_um_ppm(char *um_test_devpath, struct ucsi_pd_driver *pd,
-			struct smbus_driver *smbus,
-			struct pd_driver_config *config)
-{
-	/* Open the kernel um_ppm chardev to establish the PPM communication. */
-	struct um_ppm_cdev *cdev =
-		um_ppm_cdev_open(um_test_devpath, pd, smbus, config);
-
-	if (!cdev) {
-		ELOG("Failed to initialize PPM chardev. Exit early!");
-		return -1;
-	}
-
-	/* TODO - Register sigterm handler so we know when to exit. */
-
-	/* Mainloop with chardev handling. */
-	um_ppm_cdev_mainloop(cdev);
-
-	return 0;
-}
-
 static const char *usage_str =
 	("um_ppm [options]\n"
 	 "\n"

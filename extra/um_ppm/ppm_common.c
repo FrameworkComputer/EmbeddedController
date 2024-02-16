@@ -644,7 +644,7 @@ static void ppm_common_task(void *context)
 	} while (!dev->cleaning_up);
 
 	platform_mutex_unlock(dev->ppm_lock);
-
+	DLOG("Exiting ppm common task");
 	platform_task_exit();
 }
 
