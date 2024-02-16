@@ -7,3 +7,5 @@ find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 project(hooks)
 
 target_sources(app PRIVATE hooks.c)
+
+add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)

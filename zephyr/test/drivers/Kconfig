@@ -154,6 +154,9 @@ config LINK_TEST_SUITE_NX20P348X
 config LINK_TEST_SUITE_PANIC_OUTPUT
 	bool "Link and test the panic_output tests"
 
+config LINK_TEST_SUITE_PANIC_REASON
+	bool "Link and test the panic_reason tests"
+
 config LINK_TEST_SUITE_POWER_HOST_SLEEP
 	bool "Link and run the power/host_sleep.c specific tests"
 

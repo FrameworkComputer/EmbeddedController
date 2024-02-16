@@ -8,3 +8,5 @@ project(crc)
 
 # Include the test source and the file under test
 target_sources(app PRIVATE main.c)
+
+add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)

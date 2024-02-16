@@ -903,6 +903,10 @@ tests:
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
+  drivers.panic_reason:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_PANIC_REASON=y
+    - CONFIG_ASSERT_TEST=y
   drivers.power_host_sleep:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_POWER_HOST_SLEEP=y

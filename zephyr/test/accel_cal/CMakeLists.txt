@@ -22,3 +22,6 @@ target_sources(app PRIVATE
 	"${PLATFORM_EC}/common/newton_fit.c"
 	"${PLATFORM_EC}/common/stillness_detector.c"
 	"${PLATFORM_EC}/common/vec3.c")
+
+zephyr_library_sources(${PLATFORM_EC}/zephyr/test/test_utils/tasks_fakes.c)
+zephyr_library_sources(${PLATFORM_EC}/zephyr/test/test_utils/fff.c)
