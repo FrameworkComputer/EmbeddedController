@@ -104,4 +104,13 @@
 #define ENABLE_GCC_WARNING(warning)
 #endif
 
+/* Zephyr defines __no_optimization */
+#ifndef __no_optimization
+#ifdef __clang__
+#define __no_optimization __attribute__((optnone))
+#else
+#define __no_optimization __attribute__((optimize("-O0")))
+#endif /* __clang__ */
+#endif /* __no_optimization */
+
 #endif /* __CROS_EC_COMPILER_H */
