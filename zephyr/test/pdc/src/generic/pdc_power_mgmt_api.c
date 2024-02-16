@@ -629,3 +629,48 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_shutdown)
 	zassert_equal(1, pdr.swap_to_snk);
 	zassert_equal(0, pdr.swap_to_src);
 }
+
+ZTEST_USER(pdc_power_mgmt_api, test_get_task_state_name)
+{
+	struct setup_t {
+		enum power_operation_mode_t mode;
+		emul_pdc_set_connector_status_t configure;
+	};
+	struct expect_t {
+		const char *name;
+	};
+	struct {
+		struct setup_t s;
+		struct expect_t e;
+	} test[] = {
+		{ .s = { .mode = USB_DEFAULT_OPERATION,
+			 .configure = emul_pdc_configure_snk },
+		  .e = { .name = "TypeCAttached" } },
+		{ .s = { .mode = USB_DEFAULT_OPERATION,
+			 .configure = emul_pdc_configure_src },
+		  .e = { .name = "TypeCAttached" } },
+		{ .s = { .mode = PD_OPERATION,
+			 .configure = emul_pdc_configure_snk },
+		  .e = { .name = "Attached.SNK" } },
+		{ .s = { .mode = PD_OPERATION,
+			 .configure = emul_pdc_configure_src },
+		  .e = { .name = "Attached.SRC" } },
+	};
+	const char *state_name;
+	int i;
+	struct connector_status_t connector_status;
+
+	state_name = pdc_power_mgmt_get_task_state_name(TEST_PORT);
+	zassert_equal(strcmp(state_name, "Unattached"), 0);
+
+	for (i = 0; i < ARRAY_SIZE(test); i++) {
+		memset(&connector_status, 0, sizeof(connector_status));
+		test[i].s.configure(emul, &connector_status);
+		connector_status.power_operation_mode = test[i].s.mode;
+		emul_pdc_connect_partner(emul, &connector_status);
+		k_sleep(K_MSEC(2000));
+
+		state_name = pdc_power_mgmt_get_task_state_name(TEST_PORT);
+		zassert_equal(strcmp(state_name, test[i].e.name), 0);
+	}
+}
