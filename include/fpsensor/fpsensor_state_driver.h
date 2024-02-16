@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+#ifndef __CROS_EC_FPSENSOR_FPSENSOR_STATE_DRIVER_INFO_H
+#define __CROS_EC_FPSENSOR_FPSENSOR_STATE_DRIVER_INFO_H
+
 #include "fpsensor_driver.h"
 
 #include <stdint.h>
@@ -11,3 +14,5 @@
 
 /* Last acquired frame (aligned as it is used by arbitrary binary libraries) */
 extern uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE];
+
+#endif /* __CROS_EC_FPSENSOR_FPSENSOR_STATE_DRIVER_INFO_H */
