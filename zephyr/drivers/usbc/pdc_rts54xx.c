@@ -640,8 +640,11 @@ static void st_write_entry(void *o)
 
 	/* Clear I2C transaction retry counter */
 	data->i2c_transaction_retry_counter = 0;
-	/* Clear the Error Status */
-	data->error_status.raw_value = 0;
+	/* Only clear Error Status if the subsystem isn't going to read it */
+	if (data->cmd != CMD_GET_ERROR_STATUS) {
+		/* Clear the Error Status */
+		data->error_status.raw_value = 0;
+	}
 	/* Clear the CCI Event */
 	data->cci_event.raw_value = 0;
 	/* Set the port the CCI Event occurred on */
@@ -701,8 +704,6 @@ static void st_ping_status_entry(void *o)
 	data->ping_retry_counter = 0;
 	/* Clear Ping Status */
 	data->ping_status.raw_value = 0;
-	/* Clear the Error Status */
-	data->error_status.raw_value = 0;
 	/* Clear the CCI Event */
 	data->cci_event.raw_value = 0;
 	/* Set the port the CCI Event occurred on */
@@ -860,8 +861,6 @@ static void st_read_entry(void *o)
 	/* This state can only be entered from the Ping Status state */
 	assert(data->last_state == ST_PING_STATUS);
 
-	/* Clear the Error Status */
-	data->error_status.raw_value = 0;
 	/* Clear the CCI Event */
 	data->cci_event.raw_value = 0;
 	/* Set the port the CCI Event occurred on */
