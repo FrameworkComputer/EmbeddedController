@@ -7,6 +7,7 @@
 
 #include "adc_chip.h"
 #include "button.h"
+#include "cbi_fw_config.h"
 #include "charge_manager.h"
 #include "charge_state.h"
 #include "charger.h"
@@ -343,15 +344,17 @@ void board_init(void)
 	/* Enable C0 interrupt and check if it needs processing */
 	gpio_enable_interrupt(GPIO_USB_C0_INT_ODL);
 
-	/* Enable C1 interrupt and check if it needs processing */
-	gpio_enable_interrupt(GPIO_USB_C1_INT_V1_ODL);
+	if (get_cbi_fw_config_db() != DB_NONE) {
+		/* Enable C1 interrupt and check if it needs processing */
+		gpio_enable_interrupt(GPIO_USB_C1_INT_V1_ODL);
+		check_c1_line();
+	}
 
 	/*
 	 * If interrupt lines are already low, schedule them to be processed
 	 * after inits are completed.
 	 */
 	check_c0_line();
-	check_c1_line();
 
 	gpio_enable_interrupt(GPIO_USB_C0_CCSBU_OVP_ODL);
 
@@ -580,4 +583,20 @@ board_vivaldi_keybd_config(void)
 	 */
 
 	return &keybd1;
+};
+
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	if (get_cbi_fw_config_db() == DB_NONE)
+		return 1;
+	else
+		return 2;
+};
+
+__override uint8_t board_get_charger_chip_count(void)
+{
+	if (get_cbi_fw_config_db() == DB_NONE)
+		return 1;
+	else
+		return 2;
 }
