@@ -97,6 +97,7 @@ if (DEFINED CONFIG_ARM)
   zephyr_cc_option(-mno-unaligned-access)
 endif()
 zephyr_cc_option(-Wimplicit-fallthrough)
+zephyr_cc_option(-Wint-conversion)
 
 if (DEFINED CONFIG_RISCV)
   zephyr_cc_option(-fsanitize=integer-divide-by-zero)
