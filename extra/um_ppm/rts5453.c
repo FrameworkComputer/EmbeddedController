@@ -436,11 +436,10 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 		break;
 
 	case UCSI_CMD_GET_PD_MESSAGE:
-		/* TODO: Update once the Realtek interface supports full
-		 * identity. This definition is a placeholder and will only
-		 * respond to a discover identity request with 6 VDOs to mimic
-		 * the maximum identity response length. The returned data is
-		 * not partner/cable identity.
+		/* The Realtek PDC does not support GET_PD_MESSAGE, but it can
+		 * return SOP/SOP' identity with GET_VDO. If the GET_PD_MESSAGE
+		 * request is for the discover identity response, map it to the
+		 * corresponding GET_VDO command.
 		 */
 		struct ucsiv3_get_pd_message_cmd *get_pd_message_cmd =
 			(struct ucsiv3_get_pd_message_cmd *)
@@ -453,19 +452,27 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 		}
 
 		cmd = SC_GET_VDO;
-		data_size = 7; /* Number of VDOs + 1 (+2 added later) */
+		data_size = 8;
 		platform_memset(dev->cmd_buffer, 0, data_size + 2);
-		dev->cmd_buffer[0] = 0x9A; /* GET_VDO sub command */
-		dev->cmd_buffer[1] = 0x00; /* Port Num */
-		dev->cmd_buffer[2] = 0x0E; /* Origin: Port Partner (0x8) | Num
-					    * Vdos (0x6)
-					    */
-		dev->cmd_buffer[3] = 0x01; /* Id Header VDO */
-		dev->cmd_buffer[4] = 0x02; /* Cert Stat VDO */
-		dev->cmd_buffer[5] = 0x03; /* Product VDO */
-		dev->cmd_buffer[6] = 0x04; /* Cable VDO */
-		dev->cmd_buffer[7] = 0x05; /* AMA VDO */
-		dev->cmd_buffer[8] = 0x06; /* SVID Response VDO1 */
+		/* GET_VDO sub command */
+		dev->cmd_buffer[0] = 0x9A;
+		/* Fixed port-num = 0 */
+		dev->cmd_buffer[1] = 0x00;
+		/* Recipient | Num VDOs (7) */
+		dev->cmd_buffer[2] = (get_pd_message_cmd->recipient << 3) | 7;
+		/* VDOs in the Discover identity response. GET_PD_MESSAGE
+		 * also returns the VDM header, so cmd_buffer[3] requests a
+		 * reserved value as a placeholder. cmd_buffer[4] through
+		 * cmd_buffer[9] request the ID header VDO, Cert Stat VDO,
+		 * and Product VDO followed by Product Type VDOs 1-3.
+		 */
+		dev->cmd_buffer[3] = 0x00;
+		dev->cmd_buffer[4] = 0x01;
+		dev->cmd_buffer[5] = 0x02;
+		dev->cmd_buffer[6] = 0x03;
+		dev->cmd_buffer[7] = 0x04;
+		dev->cmd_buffer[8] = 0x05;
+		dev->cmd_buffer[9] = 0x06;
 		break;
 	default:
 		/* For most UCSI commands, just set the cmd = 0x0E and copy the
