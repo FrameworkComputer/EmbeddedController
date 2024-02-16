@@ -307,9 +307,14 @@ static int ppm_common_execute_pending_cmd(struct ppm_common_device *dev)
 	}
 
 success:
-	DLOG("Completed UCSI command 0x%x (%s)", ucsi_command,
-	     ucsi_command_to_string(ucsi_command));
+	DLOG("Completed UCSI command 0x%x (%s). Read %d bytes.", ucsi_command,
+	     ucsi_command_to_string(ucsi_command), ret);
 	clear_cci(dev);
+
+	if (ret > 0)
+		DLOG_HEXDUMP(message_in, ret, "Command 0x%x (%s) response",
+			     ucsi_command,
+			     ucsi_command_to_string(ucsi_command));
 
 	/* Post-success command handling */
 	if (ack_ci) {
