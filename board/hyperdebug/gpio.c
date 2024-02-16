@@ -1277,6 +1277,22 @@ void IRQ_HANDLER(IRQ_TIM(BITBANG_TIMER))(void)
 	}
 }
 
+/*
+ * Bitbanging timer interrupt one level below the GPIO edge detection
+ * interrupts.  If more than one of the pins being bitbanged are also being
+ * monitored, this allows accurately recording which pin is modified first at a
+ * particular clock tick, as the edge interrupt would run for each iteration of
+ * the loop in the bitbanging interrupt handler above.  Leaving them at same
+ * priority would mean that all edge detection interrupts would run after the
+ * bitbanging handler, probably in order of the pin number, which could lead to
+ * falsely reversing the order of e.g. edges on SDA and SCL, which would impact
+ * the meaning of I2C signals.
+ */
+const struct irq_priority __keep IRQ_PRIORITY(IRQ_TIM(BITBANG_TIMER))
+	__attribute__((weak, section(".rodata.irqprio"))) = {
+		IRQ_TIM(BITBANG_TIMER), 1
+	};
+
 static void stop_all_gpio_bitbanging(void)
 {
 	/* Stop timer */
