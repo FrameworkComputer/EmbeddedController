@@ -13,8 +13,6 @@ ifneq (,$(filter rw,$(CONFIG_FP_SENSOR_ELAN80) $(CONFIG_FP_SENSOR_ELAN80SG) \
 # Make sure output directory is created (in build directory)
 dirs-y+="$(_elan_cur_dir)"
 
-include $(_elan_cur_dir)../../../private/fingerprint/elan/build.mk
-
 all-obj-rw+=$(_elan_cur_dir)elan_private.o
 all-obj-rw+=$(_elan_cur_dir)elan_sensor_pal.o
 
