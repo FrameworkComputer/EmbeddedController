@@ -203,9 +203,10 @@ void udelay(unsigned int us)
 		;
 }
 
-void usleep(unsigned int us)
+int usleep(unsigned int us)
 {
 	udelay(us);
+	return 0;
 }
 
 int timestamp_expired(timestamp_t deadline, const timestamp_t *now)
