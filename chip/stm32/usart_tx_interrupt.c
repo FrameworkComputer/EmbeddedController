@@ -45,7 +45,7 @@ static void usart_tx_interrupt_handler_common(struct usart_config const *config,
 	if (!(STM32_USART_SR(base) & STM32_USART_SR_TXE))
 		return;
 
-	if (remove_data(config, &byte)) {
+	while (remove_data(config, &byte)) {
 		STM32_USART_TDR(base) = byte;
 
 		/*
@@ -57,16 +57,27 @@ static void usart_tx_interrupt_handler_common(struct usart_config const *config,
 		disable_sleep(SLEEP_MASK_UART);
 
 		STM32_USART_CR1(base) |= STM32_USART_CR1_TXEIE;
-	} else {
-		/*
-		 * The TX queue is empty, disable the TXE interrupt and enable
-		 * deep sleep mode. The TXE interrupt will remain disabled
-		 * until a write call happens.
-		 */
-		enable_sleep(SLEEP_MASK_UART);
 
-		STM32_USART_CR1(base) &= ~STM32_USART_CR1_TXEIE;
+#ifdef STM32_USART_CR1_FIFOEN
+		/*
+		 * UART has FIFO, see if there is more room.  (TXE has the
+		 * meaning of "TX fifo not full", when fifo is enabled.)
+		 */
+		if (!(STM32_USART_SR(base) & STM32_USART_SR_TXE))
+			return;
+#else
+		/* Do not loop. */
+		return;
+#endif
 	}
+	/*
+	 * The TX queue is empty, disable the TXE interrupt and enable deep
+	 * sleep mode. The TXE interrupt will remain disabled until a write call
+	 * happens.
+	 */
+	enable_sleep(SLEEP_MASK_UART);
+
+	STM32_USART_CR1(base) &= ~STM32_USART_CR1_TXEIE;
 }
 
 static size_t queue_remove(struct usart_config const *config, uint8_t *dest)

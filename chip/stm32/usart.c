@@ -17,7 +17,7 @@
 void usart_init(struct usart_config const *config)
 {
 	intptr_t base = config->hw->base;
-	uint32_t cr2, cr3;
+	uint32_t cr1, cr2, cr3;
 
 	/*
 	 * Enable clock to USART, this must be done first, before attempting
@@ -42,10 +42,11 @@ void usart_init(struct usart_config const *config)
 	 * disabled.
 	 */
 
+	cr1 = 0x0000;
 	cr2 = 0x0000;
 	cr3 = 0x0000;
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
-	defined(CHIP_FAMILY_STM32L4)
+	defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
 	if (config->flags & USART_CONFIG_FLAG_RX_INV)
 		cr2 |= BIT(16);
 	if (config->flags & USART_CONFIG_FLAG_TX_INV)
@@ -53,8 +54,15 @@ void usart_init(struct usart_config const *config)
 #endif
 	if (config->flags & USART_CONFIG_FLAG_HDSEL)
 		cr3 |= BIT(3);
+#ifdef STM32_USART_CR1_FIFOEN
+	/*
+	 * UART hardware has FIFO support.  Enable it in order to reduce the
+	 * risk of receiver overrun.
+	 */
+	cr1 |= STM32_USART_CR1_FIFOEN;
+#endif
 
-	STM32_USART_CR1(base) = 0x0000;
+	STM32_USART_CR1(base) = cr1;
 	STM32_USART_CR2(base) = cr2;
 	STM32_USART_CR3(base) = cr3;
 
