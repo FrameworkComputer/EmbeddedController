@@ -58,7 +58,7 @@
 		i2c_5a_scl_ls {
 			gpios = <&gpiof 3 GPIO_INPUT>;
 		};
-		gpio_i2c_5a_sda_ls: i2c_5a_sda_ls {
+		i2c_5a_sda_ls {
 			gpios = <&gpiof 2 GPIO_INPUT>;
 		};
 		gpio_soc_ec_int2_l: soc_ec_int2_l {

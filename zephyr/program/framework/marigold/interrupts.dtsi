@@ -77,11 +77,6 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "soc_signal_interrupt";
 		};
-		int_i2c_5a_sda_ls: i2c_5a_sda_ls {
-			irq-pin = <&gpio_i2c_5a_sda_ls>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "touchpad_i2c_interrupt";
-		};
 		int_soc_tp: soc_tp {
 			irq-pin = <&gpio_soc_tp_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;

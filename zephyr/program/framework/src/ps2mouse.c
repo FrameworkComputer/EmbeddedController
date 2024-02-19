@@ -372,8 +372,6 @@ void read_touchpad_in_report(void)
 	if (power_get_state() == POWER_S5)
 		return;
 
-	/*dont trigger disable state during our own transactions*/
-	gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_i2c_5a_sda_ls));
 	/* need to disable SOC_TP_INT_L if we need to setup touchpad */
 	gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_tp));
 	/**
@@ -425,7 +423,6 @@ read_failed:
 		inreport_retries = 0;
 	}
 	i2c_lock(I2C_PORT_TOUCHPAD, 0);
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_i2c_5a_sda_ls));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_tp));
 
 	if (mouse_state == PS2MSTATE_RESET) {
@@ -499,14 +496,12 @@ void touchpad_task(void *p)
 			CPRINTS("PS2M HC Disable");
 			tp_int_count_clear();
 			gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_tp));
-			gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_i2c_5a_sda_ls));
 		}
 		if (evt & PS2MOUSE_EVT_HC_ENABLE && ec_mode_disabled == true) {
 			CPRINTS("PS2M HC Enable");
 			ec_mode_disabled = false;
 			setup_touchpad();
 			gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_tp));
-			gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_i2c_5a_sda_ls));
 		}
 		if (ec_mode_disabled == false) {
 			if (evt & PS2MOUSE_EVT_AUX_DATA) {
@@ -531,8 +526,6 @@ void touchpad_task(void *p)
 			if  (evt & PS2MOUSE_EVT_I2C_INTERRUPT) {
 				if (detected_host_packet) {
 					CPRINTS("PS2M detected host packet from i2c");
-					gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL
-									(int_i2c_5a_sda_ls));
 				}
 			}
 			if (evt & PS2MOUSE_EVT_POWERSTATE) {
@@ -549,7 +542,6 @@ void touchpad_task(void *p)
 
 					gpio_enable_dt_interrupt(
 						GPIO_INT_FROM_NODELABEL(int_soc_tp));
-					gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_i2c_5a_sda_ls));
 				}
 				if ((power_state == POWER_S3S0) && gpio_pin_get_dt(
 					GPIO_DT_FROM_NODELABEL(gpio_soc_tp_int_l)) == 0) {
@@ -561,7 +553,6 @@ void touchpad_task(void *p)
 					tp_int_count_clear();
 					gpio_disable_dt_interrupt(
 						GPIO_INT_FROM_NODELABEL(int_soc_tp));
-					gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_i2c_5a_sda_ls));
 				}
 			}
 			if (evt & PS2MOUSE_EVT_REENABLE) {
@@ -570,7 +561,6 @@ void touchpad_task(void *p)
 				set_reset();
 				setup_touchpad();
 				gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_tp));
-				gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_i2c_5a_sda_ls));
 			}
 		}
 	}
