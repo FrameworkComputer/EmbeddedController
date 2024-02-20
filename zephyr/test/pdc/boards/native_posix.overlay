@@ -5,6 +5,7 @@
 
 #include <board-overlays/native_posix.dts>
 #include <it8xxx2_emul.dts>
+#include <usbc-policy.dtsi>
 
 / {
 	usbc {
@@ -19,11 +20,13 @@
 			chg = <&charger>;
 			pdc = <&rts5453p_emul>;
 			chg = <&isl923x_emul>;
+			policy = <&cros_policy>;
 		};
 		port1@0 {
 			compatible = "named-usbc-port";
 			reg = <1>;
 			pdc = <&rts5453p_emul2>;
+			policy = <&cros_policy>;
 		};
 	};
 
