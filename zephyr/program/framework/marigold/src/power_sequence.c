@@ -475,12 +475,13 @@ enum power_state power_handle_state(enum power_state state)
 			return POWER_S5;
 
 		/* Don't need to keep pch power, turn off the pch power and power down to G3*/
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 0);
 		k_msleep(5);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ac_present), 0);
+		k_msleep(1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 0);
 
 		cypd_set_power_active();
 		return POWER_G3;
