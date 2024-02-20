@@ -80,7 +80,7 @@
 		gpio_0p75_1p8valw_pwren: 0p75_1p8valw_pwren {
 			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
 		};
-		gpio_module_pwr_on: moduel_pwr_on {
+		gpio_module_pwr_on: module_pwr_on {
 			gpios = <&gpio8 6 GPIO_OUTPUT_LOW>;
 		};
 		als_int_l {

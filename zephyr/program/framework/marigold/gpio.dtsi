@@ -100,7 +100,7 @@
 			gpios = <&gpio0 2 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
 		};
-		gpio_module_pwr_on: moduel_pwr_on {
+		gpio_module_pwr_on: module_pwr_on {
 			gpios = <&gpio8 6 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_als_int_l: ec_als_int_l {
