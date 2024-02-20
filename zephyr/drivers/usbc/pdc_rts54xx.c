@@ -32,12 +32,12 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 /**
  * @brief Time before sending a ping status
  */
-#define T_PING_STATUS 10
+#define T_PING_STATUS 20
 
 /**
- * @brief Error Recovery Delay Counter (time delay is 50mS)
+ * @brief Error Recovery Delay Counter (time delay is 60mS)
  */
-#define N_ERROR_RECOVERY_DELAY_COUNT (50 / T_PING_STATUS)
+#define N_ERROR_RECOVERY_DELAY_COUNT (60 / T_PING_STATUS)
 
 /**
  * @brief Max number of error recovery attempts
