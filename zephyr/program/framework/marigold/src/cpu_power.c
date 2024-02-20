@@ -20,16 +20,26 @@
 enum battery_wattage { none, battery_55w, battery_61w };
 enum battery_wattage get_battery_wattage(void)
 {
-	const struct fuel_gauge_info *const fuel_gauge =
-		&get_batt_params()->fuel_gauge;
+	char device_name[32];
+	int curr_batt_present = battery_is_present();
+	static int pre_batt_present;
+	static enum battery_wattage curr_batt_watt;
 
-	if (!strcasecmp(fuel_gauge->device_name, "Framework Laptop")) {
-		return battery_55w;
-	} else if (!strcasecmp(fuel_gauge->device_name, "FRANGWAT01")) {
-		return battery_61w;
-	} else {
-		return none;
+
+	if (pre_batt_present != curr_batt_present) {
+		/* read the battery device name */
+		if (battery_device_name(device_name, sizeof(device_name)))
+			curr_batt_watt = none;
+		else {
+			if (!strncmp(device_name, "Framework Laptop", 16))
+				curr_batt_watt = battery_55w;
+			else if (!strncmp(device_name, "FRANGWAT01", 10))
+				curr_batt_watt = battery_61w;
+		}
+		pre_batt_present = curr_batt_present;
 	}
+
+	return curr_batt_watt;
 }
 
 void update_soc_power_limit(bool force_update, bool force_no_adapter)
