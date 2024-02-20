@@ -4,6 +4,7 @@
  */
 
 #include "board_host_command.h"
+#include "board_adc.h"
 #include "chipset.h"
 #include "config.h"
 #include "console.h"
@@ -500,7 +501,6 @@ static void peripheral_power_startup(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_rt_gpio6_ctrl), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 1);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, peripheral_power_startup, HOOK_PRIO_DEFAULT);
@@ -515,7 +515,6 @@ static void peripheral_power_shutdown(void)
 {
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_rt_gpio6_ctrl), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_cam_en), 0);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, peripheral_power_shutdown, HOOK_PRIO_DEFAULT);
@@ -546,6 +545,24 @@ void chipset_throttle_cpu(int throttle)
 	if (chipset_in_state(CHIPSET_STATE_ON))
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_h_prochot_l), !throttle);
 }
+
+void control_module_power(void)
+{
+	static int pre_state, pre_touchpad;
+	int state = chipset_in_state(CHIPSET_STATE_ANY_OFF);
+	int touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
+
+	if (pre_state != state || pre_touchpad != touchpad) {
+		if (touchpad >= BOARD_VERSION_2 && touchpad <= BOARD_VERSION_13) {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), !state);
+		} else {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), 0);
+		}
+		pre_state = state;
+		pre_touchpad = touchpad;
+	}
+}
+DECLARE_HOOK(HOOK_TICK, control_module_power, HOOK_PRIO_DEFAULT);
 
 static enum ec_status set_ap_reboot_delay(struct host_cmd_handler_args *args)
 {
