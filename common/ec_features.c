@@ -103,7 +103,8 @@ uint32_t get_feature_flags0(void)
 #ifdef HAS_TASK_CENTROIDING
 			  | EC_FEATURE_MASK_0(EC_FEATURE_TOUCHPAD)
 #endif
-#if defined(HAS_TASK_RWSIG) || defined(HAS_TASK_RWSIG_RO)
+#if defined(HAS_TASK_RWSIG) || defined(HAS_TASK_RWSIG_RO) || \
+	defined(CONFIG_PLATFORM_EC_RWSIG)
 			  | EC_FEATURE_MASK_0(EC_FEATURE_RWSIG)
 #endif
 #ifdef CONFIG_DEVICE_EVENT
