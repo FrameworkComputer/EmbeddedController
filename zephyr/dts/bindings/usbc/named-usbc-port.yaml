@@ -64,3 +64,7 @@ properties:
     type: boolean
     description: |
       If present, this PD port has a retimer and connected to PD chip.
+  policy:
+    type: phandle
+    description: |
+      The static policies of the USB-C port.
