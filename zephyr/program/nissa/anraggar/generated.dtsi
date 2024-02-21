@@ -120,7 +120,7 @@
 			gpios = <&gpiok 3 GPIO_OUTPUT>;
 		};
 		gpio_en_usb_a0_vbus: en_usb_a0_vbus {
-			gpios = <&gpiod 4 GPIO_OUTPUT>;
+			gpios = <&gpiol 6 GPIO_OUTPUT>;
 		};
 		gpio_en_usb_a1_vbus: en_usb_a1_vbus {
 			gpios = <&gpiod 7 GPIO_OUTPUT>;
