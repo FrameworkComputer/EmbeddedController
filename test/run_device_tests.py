@@ -56,6 +56,7 @@ import re
 import socket
 import subprocess
 import sys
+import tempfile
 import time
 from typing import BinaryIO, Callable, Dict, List, Optional, Tuple
 
@@ -63,6 +64,7 @@ from typing import BinaryIO, Callable, Dict, List, Optional, Tuple
 import colorama  # type: ignore[import]
 from contextlib2 import ExitStack
 import fmap
+import yaml
 
 
 # pylint: enable=import-error
@@ -70,16 +72,23 @@ import fmap
 EC_DIR = Path(os.path.dirname(os.path.realpath(__file__))).parent
 JTRACE_FLASH_SCRIPT = os.path.join(EC_DIR, "util/flash_jlink.py")
 SERVO_MICRO_FLASH_SCRIPT = os.path.join(EC_DIR, "util/flash_ec")
+ZEPHYR_FPMCU_DIR = os.path.join(EC_DIR, "zephyr/program/fpmcu")
 
-ALL_TESTS_PASSED_REGEX = re.compile(r"Pass!\r\n")
-ALL_TESTS_FAILED_REGEX = re.compile(r"Fail! \(\d+ tests\)\r\n")
+# .* is added to regexes because Zephyr uses VT100 commands at the beginning of
+# a new line.
+ALL_TESTS_PASSED_REGEX = re.compile(r"(Pass!\r\n)|(.*TESTSUITE.*succeeded)")
+ALL_TESTS_FAILED_REGEX = re.compile(
+    r"(Fail! \(\d+ tests\)\r\n)|(.*TESTSUITE.*failed)"
+)
 
-SINGLE_CHECK_PASSED_REGEX = re.compile(r"Pass: .*")
-SINGLE_CHECK_FAILED_REGEX = re.compile(r".*failed:.*")
+SINGLE_CHECK_PASSED_REGEX = re.compile(r"(Pass: .*)|(.* PASS - )")
+SINGLE_CHECK_FAILED_REGEX = re.compile(r"(.*failed:.*)|(.* FAIL - )")
 
-RW_IMAGE_BOOTED_REGEX = re.compile(r"^\[Image: RW.*")
+RW_IMAGE_BOOTED_REGEX = re.compile(r".*\[Image: RW.*")
 
-ASSERTION_FAILURE_REGEX = re.compile(r"ASSERTION FAILURE.*")
+ASSERTION_FAILURE_REGEX = re.compile(
+    r"(ASSERTION FAILURE.*)|(.*Assertion failed at)"
+)
 
 DATA_ACCESS_VIOLATION_8020000_REGEX = re.compile(
     r"Data access violation, mfar = 8020000\r\n"
@@ -717,25 +726,92 @@ def hw_write_protect(enable: bool) -> None:
     subprocess.run(cmd, check=False).check_returncode()
 
 
-def build(
-    test_name: str, board_name: str, compiler: str, app_type: ApplicationType
-) -> None:
-    """Build specified test for specified board."""
+def build_ec(
+    test_name: str,
+    board_name: str,
+    compiler: str,
+    app_type: ApplicationType,
+) -> List[str]:
+    """Prepare a command to build test using CrosEC"""
     cmd = ["make"]
-
     if compiler == CLANG:
         cmd = cmd + ["CC=arm-none-eabi-clang"]
-
     cmd = cmd + [
         "BOARD=" + board_name,
         "-j",
     ]
-
     # If the image type is a test image, then apply test- prefix to the target name
     if app_type == ApplicationType.TEST:
         cmd = cmd + [
             "test-" + test_name,
         ]
+
+    return cmd
+
+
+def build_zephyr(
+    test_name: str,
+    board_name: str,
+    app_type: ApplicationType,
+    img_type: ImageType,
+) -> List[str]:
+    """Prepare a command to build test using Zephyr"""
+    cmd = ["zmake"] + ["build"]
+    cmd = cmd + [board_name] + ["--clobber"]
+    if app_type != ApplicationType.TEST:
+        return cmd
+
+    # Create tmp file to pass needed configs
+    test_conf = os.path.join(tempfile.gettempdir(), "test.conf")
+    with open(test_conf, "w", encoding="utf-8") as f_test_config:
+        cmd = cmd + ["-DOVERLAY_CONFIG=" + test_conf]
+        # Get list of supported tests
+        testcase = os.path.join(ZEPHYR_FPMCU_DIR, "testcase.yaml")
+        with open(testcase, encoding="utf-8") as testcase:
+            lines = testcase.read()
+        testcase_data = yaml.load(lines, Loader=yaml.SafeLoader)
+        if "tests" not in testcase_data:
+            raise ValueError(
+                'testcase.yaml file doesn\'t contain "tests" section'
+            )
+        # Make sure the current test is supported
+        if test_name not in testcase_data["tests"]:
+            raise ValueError(test_name + " not present in testcase.yaml")
+        # Add configs needed for a specific test from "extra_conf_files"
+        # and "extra_configs" sections
+        if "extra_conf_files" in testcase_data["tests"][test_name]:
+            for config_file in testcase_data["tests"][test_name][
+                "extra_conf_files"
+            ]:
+                config_file_path = os.path.join(ZEPHYR_FPMCU_DIR, config_file)
+                with open(
+                    config_file_path, "r", encoding="utf-8"
+                ) as f_config_file:
+                    f_test_config.write(f_config_file.read())
+        if "extra_configs" in testcase_data["tests"][test_name]:
+            for config in testcase_data["tests"][test_name]["extra_configs"]:
+                f_test_config.write(config + "\n")
+        # Include tests also in RO part. It is not done by default
+        # because of lack of space
+        if img_type == ImageType.RO:
+            f_test_config.write("CONFIG_HW_TEST_RW_ONLY=n\n")
+
+    return cmd
+
+
+def build(
+    test_name: str,
+    board_name: str,
+    compiler: str,
+    app_type: ApplicationType,
+    img_type: ImageType,
+    zephyr: bool,
+) -> None:
+    """Build specified test for specified board."""
+    if zephyr:
+        cmd = build_zephyr(test_name, board_name, app_type, img_type)
+    else:
+        cmd = build_ec(test_name, board_name, compiler, app_type)
 
     logging.debug('Running command: "%s"', " ".join(cmd))
     subprocess.run(cmd, check=False).check_returncode()
@@ -825,11 +901,31 @@ def process_console_output_line(line: bytes, test: TestConfig):
         return None
 
 
+def run_test_ec(test: TestConfig) -> str:
+    """Prepare a command to run test on CrosEC"""
+    test_cmd = "runtest " + " ".join(test.test_args) + "\n"
+
+    return test_cmd
+
+
+def run_test_zephyr(test: TestConfig) -> str:
+    """Prepare a command to run test on Zephyr"""
+    test_cmd = "ztest run-testcase " + test.test_name
+    # ZTEST console doesn't support passing test arguments
+    # Assume a testsuite for every test + arg combination
+    for test_arg in test.test_args:
+        test_cmd = test_cmd + "_" + test_arg
+    test_cmd = test_cmd + "\n"
+
+    return test_cmd
+
+
 def run_test(
     test: TestConfig,
     board_config: BoardConfig,
     console: io.FileIO,
     executor: ThreadPoolExecutor,
+    zephyr: bool,
 ) -> bool:
     """Run specified test."""
     start = time.time()
@@ -852,7 +948,11 @@ def run_test(
 
     # Skip runtest if using standard app type
     if test.apptype_to_use != ApplicationType.PRODUCTION:
-        test_cmd = "runtest " + " ".join(test.test_args) + "\n"
+        if zephyr:
+            test_cmd = run_test_zephyr(test)
+        else:
+            test_cmd = run_test_ec(test)
+
         console.write(test_cmd.encode())
 
     while True:
@@ -920,6 +1020,27 @@ def get_test_list(
     return test_list
 
 
+def get_image_path(test: TestConfig, build_board: str, zephyr: bool):
+    """Get a path to a built image"""
+    if zephyr:
+        image_path = os.path.join(
+            EC_DIR, "build", "zephyr", build_board, "output", "ec.bin"
+        )
+    else:
+        if test.apptype_to_use == ApplicationType.PRODUCTION:
+            image_path = os.path.join(EC_DIR, "build", build_board, "ec.bin")
+        else:
+            image_path = os.path.join(
+                EC_DIR,
+                "build",
+                build_board,
+                test.test_name,
+                test.test_name + ".bin",
+            )
+
+    return image_path
+
+
 def flash_and_run_test(
     test: TestConfig,
     board_config: BoardConfig,
@@ -935,21 +1056,20 @@ def flash_and_run_test(
 
     # attempt to build test binary, reporting a test failure on error
     try:
-        build(test.test_name, build_board, args.compiler, test.apptype_to_use)
+        build(
+            test.test_name,
+            build_board,
+            args.compiler,
+            test.apptype_to_use,
+            test.imagetype_to_use,
+            args.zephyr,
+        )
     except Exception as exception:  # pylint: disable=broad-except
         logging.error("failed to build %s: %s", test.test_name, exception)
         return False
 
-    if test.apptype_to_use == ApplicationType.PRODUCTION:
-        image_path = os.path.join(EC_DIR, "build", build_board, "ec.bin")
-    else:
-        image_path = os.path.join(
-            EC_DIR,
-            "build",
-            build_board,
-            test.test_name,
-            test.test_name + ".bin",
-        )
+    image_path = get_image_path(test, build_board, args.zephyr)
+
     logging.debug("image_path: %s", image_path)
 
     if test.ro_image is not None:
@@ -1008,6 +1128,7 @@ def flash_and_run_test(
             board_config,
             console,
             executor=executor,
+            zephyr=args.zephyr,
         )
 
 
@@ -1121,6 +1242,10 @@ def main():
     with_private_choices = [PRIVATE_YES, PRIVATE_NO, PRIVATE_ONLY]
     parser.add_argument(
         "--with_private", choices=with_private_choices, default=PRIVATE_YES
+    )
+
+    parser.add_argument(
+        "--zephyr", help="Use Zephyr build", action="store_true"
     )
 
     args = parser.parse_args()
