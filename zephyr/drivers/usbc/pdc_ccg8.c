@@ -113,7 +113,7 @@ static int ccg_reset(const struct device *dev)
 }
 
 static int ccg_connector_reset(const struct device *dev,
-			       enum connector_reset_t type)
+			       union connector_reset_t reset_type)
 {
 	return 0;
 }

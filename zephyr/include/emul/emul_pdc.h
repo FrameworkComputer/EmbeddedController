@@ -18,7 +18,7 @@ typedef int (*emul_pdc_set_ucsi_version_t)(const struct emul *target,
 					   uint16_t version);
 typedef int (*emul_pdc_reset_t)(const struct emul *target);
 typedef int (*emul_pdc_get_connector_reset_t)(const struct emul *dev,
-					      enum connector_reset_t *type);
+					      union connector_reset_t *reset);
 typedef int (*emul_pdc_set_capability_t)(const struct emul *target,
 					 const struct capability_t *caps);
 typedef int (*emul_pdc_set_connector_capability_t)(
@@ -119,7 +119,7 @@ static inline int emul_pdc_reset(const struct emul *target)
 }
 
 static inline int emul_pdc_get_connector_reset(const struct emul *target,
-					       enum connector_reset_t *type)
+					       union connector_reset_t *reset)
 {
 	if (!target || !target->backend_api) {
 		return -ENOTSUP;
@@ -128,7 +128,7 @@ static inline int emul_pdc_get_connector_reset(const struct emul *target,
 	const struct emul_pdc_api_t *api = target->backend_api;
 
 	if (api->get_connector_reset) {
-		return api->get_connector_reset(target, type);
+		return api->get_connector_reset(target, reset);
 	}
 	return -ENOSYS;
 }

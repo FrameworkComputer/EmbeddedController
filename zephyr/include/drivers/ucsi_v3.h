@@ -107,11 +107,11 @@ enum source_caps_t {
 /**
  * @brief Type of PD reset to send
  */
-enum connector_reset_t {
+enum connector_reset {
 	/** PD Soft Reset */
-	PD_SOFT_RESET = 0,
+	PD_HARD_RESET = 0,
 	/** PD Hard Reset */
-	PD_HARD_RESET = 1,
+	PD_DATA_RESET = 1,
 };
 
 /**
@@ -914,17 +914,22 @@ union cc_operation_mode_t {
 union uor_t {
 	struct {
 		/**
+		 * This field indicates the connector whose USB
+		 * operational role is to be modified.
+		 */
+		uint16_t connector_number : 7;
+		/**
 		 * If this bit is set, then the connector
 		 * shall initiate swap to DFP if not
 		 * already operating in DFP mode.
 		 */
-		uint8_t swap_to_dfp : 1;
+		uint16_t swap_to_dfp : 1;
 		/**
 		 * If this bit is set, then the connector
 		 * shall initiate swap to UFP if not
 		 * already operating in UFP mode.
 		 */
-		uint8_t swap_to_ufp : 1;
+		uint16_t swap_to_ufp : 1;
 		/**
 		 * If this bit is set, then the connector
 		 * shall accept role swap change
@@ -933,11 +938,11 @@ union uor_t {
 		 * shall reject Role Swap change
 		 * requests from the port partner.
 		 */
-		uint8_t accept_dr_swap : 1;
+		uint16_t accept_dr_swap : 1;
 		/* Reserved */
-		uint8_t reserved : 5;
+		uint16_t reserved : 5;
 	};
-	int8_t raw_value;
+	uint16_t raw_value;
 };
 
 /**
@@ -946,17 +951,22 @@ union uor_t {
 union pdr_t {
 	struct {
 		/**
+		 * This field indicates the connector whose Power
+		 * Direction Role is to be modified.
+		 */
+		uint16_t connector_number : 7;
+		/**
 		 * If this bit is set then the connector
 		 * shall initiate swap to Source, if not
 		 * already operating as Source
 		 */
-		uint8_t swap_to_src : 1;
+		uint16_t swap_to_src : 1;
 		/**
 		 * If this bit is set then the connector
 		 * shall initiate swap to Sink, if not
 		 * already operating as Sink
 		 */
-		uint8_t swap_to_snk : 1;
+		uint16_t swap_to_snk : 1;
 		/**
 		 * If this bit is set, then the connector
 		 * shall accept power swap change
@@ -966,11 +976,11 @@ union pdr_t {
 		 * change requests from the port
 		 * partner
 		 */
-		uint8_t accept_pr_swap : 1;
+		uint16_t accept_pr_swap : 1;
 		/** Reserved */
-		uint8_t reserved : 5;
+		uint16_t reserved : 5;
 	};
-	uint8_t raw_value;
+	uint16_t raw_value;
 };
 
 /**
@@ -985,6 +995,24 @@ struct pdo_t {
 	uint32_t pdo2;
 	/* PDO3 */
 	uint32_t pdo3;
+};
+
+/**
+ * @brief USB Operation Role
+ */
+union connector_reset_t {
+	struct {
+		/**
+		 * This field indicates the connector to reset
+		 */
+		uint8_t connector_number : 7;
+		/**
+		 * If this bit is set, then a DATA_RESET is requeseted,
+		 * else the reset type is HARD_RESET
+		 */
+		uint8_t reset_type : 1;
+	};
+	uint8_t raw_value;
 };
 
 #ifdef __cplusplus

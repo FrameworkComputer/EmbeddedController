@@ -55,19 +55,21 @@ ZTEST_USER(pdc_api, test_reset)
 
 ZTEST_USER(pdc_api, test_connector_reset)
 {
-	enum connector_reset_t type = 0;
+	union connector_reset_t in;
+	union connector_reset_t out;
+
+	in.raw_value = 0;
+	out.raw_value = 0;
+
+	in.reset_type = PD_DATA_RESET;
 
 	emul_pdc_set_response_delay(emul, 50);
-	zassert_ok(pdc_connector_reset(dev, PD_HARD_RESET),
-		   "Failed to reset connector");
-
-	k_sleep(K_MSEC(5));
-	emul_pdc_get_connector_reset(emul, &type);
-	zassert_not_equal(type, PD_HARD_RESET);
+	zassert_ok(pdc_connector_reset(dev, in), "Failed to reset connector");
 
 	k_sleep(K_MSEC(SLEEP_MS));
-	emul_pdc_get_connector_reset(emul, &type);
-	zassert_equal(type, PD_HARD_RESET);
+	emul_pdc_get_connector_reset(emul, &out);
+
+	zassert_equal(in.reset_type, out.reset_type);
 }
 
 ZTEST_USER(pdc_api, test_get_capability)
@@ -176,6 +178,9 @@ ZTEST_USER(pdc_api, test_set_uor)
 {
 	union uor_t in, out;
 
+	in.raw_value = 0;
+	out.raw_value = 0;
+
 	in.accept_dr_swap = 1;
 	in.swap_to_ufp = 1;
 
@@ -190,6 +195,9 @@ ZTEST_USER(pdc_api, test_set_uor)
 ZTEST_USER(pdc_api, test_set_pdr)
 {
 	union pdr_t in, out;
+
+	in.raw_value = 0;
+	out.raw_value = 0;
 
 	in.accept_pr_swap = 1;
 	in.swap_to_src = 1;

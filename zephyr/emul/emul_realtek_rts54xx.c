@@ -156,9 +156,10 @@ static int connector_reset(struct rts5453p_emul_pdc_data *data,
 			   const union rts54_request *req)
 {
 	LOG_INF("CONNECTOR_RESET port=%d, hard_reset=%d",
-		req->connector_reset.port_num, req->connector_reset.hard_reset);
+		req->connector_reset.reset.connector_number,
+		req->connector_reset.reset.reset_type);
 
-	data->connector_reset_type = req->connector_reset.hard_reset;
+	data->reset = req->connector_reset.reset;
 	memset(&data->response, 0, sizeof(union rts54_response));
 	send_response(data);
 
@@ -373,7 +374,8 @@ static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 static int set_uor(struct rts5453p_emul_pdc_data *data,
 		   const union rts54_request *req)
 {
-	LOG_INF("SET_UOR port=%d", req->set_uor.port_num);
+	LOG_INF("SET_UOR port=%d: uor=%x", req->set_uor.uor.connector_number,
+		req->set_uor.uor.raw_value);
 
 	data->uor = req->set_uor.uor;
 
@@ -386,7 +388,7 @@ static int set_uor(struct rts5453p_emul_pdc_data *data,
 static int set_pdr(struct rts5453p_emul_pdc_data *data,
 		   const union rts54_request *req)
 {
-	LOG_INF("SET_PDR port=%d", req->set_pdr.port_num);
+	LOG_INF("SET_PDR port=%d", req->set_pdr.pdr.connector_number);
 
 	data->pdr = req->set_pdr.pdr;
 
@@ -945,7 +947,7 @@ static int rts5453p_emul_init(const struct emul *emul,
 
 	data->pdc_data.read_offset = 0;
 
-	data->pdc_data.connector_reset_type = 0xFF;
+	data->pdc_data.reset.raw_value = 0xFF;
 	data->pdc_data.ic_status.fw_main_version = 0xAB;
 	data->pdc_data.ic_status.pd_version[0] = 0xCD;
 	data->pdc_data.ic_status.pd_revision[0] = 0xEF;
@@ -981,12 +983,12 @@ static int emul_realtek_rts54xx_set_response_delay(const struct emul *target,
 }
 static int
 emul_realtek_rts54xx_get_connector_reset(const struct emul *target,
-					 enum connector_reset_t *type)
+					 union connector_reset_t *reset)
 {
 	struct rts5453p_emul_pdc_data *data =
 		rts5453p_emul_get_pdc_data(target);
 
-	*type = data->connector_reset_type;
+	*reset = data->reset;
 
 	return 0;
 }

@@ -106,8 +106,8 @@ union rts54_request {
 
 	struct connector_reset_req {
 		struct rts54_subcommand_header header;
-		uint8_t port_num;
-		uint8_t hard_reset;
+		uint8_t data_len;
+		union connector_reset_t reset;
 	} connector_reset;
 
 	struct get_capability_req {
@@ -140,13 +140,13 @@ union rts54_request {
 
 	struct set_uor_req {
 		struct rts54_subcommand_header header;
-		uint8_t port_num;
+		uint8_t data_len;
 		union uor_t uor;
 	} set_uor;
 
 	struct set_pdr_req {
 		struct rts54_subcommand_header header;
-		uint8_t port_num;
+		uint8_t data_len;
 		union pdr_t pdr;
 	} set_pdr;
 
@@ -385,7 +385,7 @@ struct rts5453p_emul_pdc_data {
 	struct gpio_dt_spec irq_gpios;
 	uint16_t ucsi_version;
 	union vendor_cmd vnd_command;
-	uint8_t connector_reset_type;
+	union connector_reset_t reset;
 	union pd_status_t notification_data[2];
 	struct rts54_ic_status ic_status;
 	struct capability_t capability;
