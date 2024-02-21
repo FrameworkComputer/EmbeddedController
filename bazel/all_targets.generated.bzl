@@ -1781,13 +1781,6 @@ def all_targets():
         board = "pirrha",
     )
     ec_target(
-        name = "plankton",
-        board = "plankton",
-        chip = "stm32",
-        core = "cortex-m0",
-        zephyr = False,
-    )
-    ec_target(
         name = "polyberry",
         board = "polyberry",
         chip = "stm32",

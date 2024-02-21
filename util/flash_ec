@@ -76,12 +76,10 @@ BOARDS_STM32=(
 	nocturne_fp
 	oak_pd
 	pit
-	plankton
 	strago_pd
 	zinger
 )
 BOARDS_STM32_PROG_EN=(
-	plankton
 )
 
 BOARDS_STM32_DFU=(

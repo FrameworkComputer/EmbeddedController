@@ -73,7 +73,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "moonball",
     "nucleo-f072rb",
     "pdeval-stm32f072",
-    "plankton",
     "prism",
     "servo_micro",
     "servo_v4",
