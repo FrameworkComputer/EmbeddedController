@@ -285,7 +285,9 @@ class AllTests:
             ),
             TestConfig(test_name="abort"),
             TestConfig(test_name="aes"),
-            TestConfig(test_name="always_memset"),
+            # Cryptoc is not supported with Zephyr.
+            # TODO(b/333039464) A new test for OPENSSL_cleanse has to be implemented.
+            TestConfig(test_name="always_memset", skip_for_zephyr=True),
             TestConfig(test_name="benchmark"),
             TestConfig(test_name="boringssl_crypto"),
             TestConfig(test_name="cortexm_fpu"),
