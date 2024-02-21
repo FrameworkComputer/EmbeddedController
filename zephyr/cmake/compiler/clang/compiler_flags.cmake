@@ -16,7 +16,7 @@ if(DEFINED CONFIG_COMPILER_WARNINGS_AS_ERRORS)
   check_set_compiler_property(APPEND PROPERTY warning_extended -Wunused-variable
     -Werror=unused-variable -Werror=missing-braces
     -Werror=sometimes-uninitialized -Werror=unused-function
-    -Werror=array-bounds)
+    -Werror=array-bounds -Werror=implicit-function-declaration)
 endif()
 
 # clang flags for coverage generation
