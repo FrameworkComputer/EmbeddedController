@@ -32,7 +32,7 @@ static struct ec_response_fp_info ec_fp_sensor_info = {
 	.model_id = MID,
 	.version = VERSION,
 	/* Image frame characteristics */
-	.frame_size = FP_SENSOR_RES_X_ELAN * FP_SENSOR_RES_Y_ELAN,
+	.frame_size = FP_SENSOR_RES_X_ELAN * FP_SENSOR_RES_Y_ELAN * 2,
 	.pixel_format = V4L2_PIX_FMT_GREY,
 	.width = FP_SENSOR_RES_X_ELAN,
 	.height = FP_SENSOR_RES_Y_ELAN,

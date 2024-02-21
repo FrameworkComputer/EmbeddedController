@@ -258,7 +258,7 @@ int elan_set_hv_chip(bool state)
 		tx_buf[0] = 0x0B;
 		tx_buf[1] = 0x00;
 
-		ret = spi_transaction(&spi_devices[0], tx_buf, 2, rx_buf, 2);
+		ret |= spi_transaction(&spi_devices[0], tx_buf, 2, rx_buf, 2);
 		usleep(1000);
 
 		const uint8_t charge_pump[] = { 0x00,
@@ -273,7 +273,7 @@ int elan_set_hv_chip(bool state)
 		tx_buf[0] = 0x0B;
 		tx_buf[1] = 0x02;
 
-		ret = spi_transaction(&spi_devices[0], tx_buf, 2, rx_buf, 2);
+		ret |= spi_transaction(&spi_devices[0], tx_buf, 2, rx_buf, 2);
 		usleep(1000);
 	}
 	return ret;
