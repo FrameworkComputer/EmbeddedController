@@ -13,7 +13,7 @@
  *
  * Refer to the Zephyr's Github issue #52739 for more details.
  */
-#ifdef CONFIG_NEWLIB_LIBC
+#if defined(CONFIG_NEWLIB_LIBC) || defined(CONFIG_EXTERNAL_LIBC)
 #define _POSIX_C_SOURCE 200809
 #endif /* CONFIG_NEWLIB_LIBC */
 
@@ -22,6 +22,8 @@
 #include "printf.h"
 #include "timer.h"
 #include "util.h"
+
+#include <string.h>
 
 static const char error_str[] = "ERROR";
 
