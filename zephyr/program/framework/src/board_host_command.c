@@ -30,6 +30,7 @@
 #include "uefi_app_mode.h"
 #include "util.h"
 #include "zephyr_console_shim.h"
+#include "throttle_ap.h"
 
 #ifdef CONFIG_BOARD_LOTUS
 #include "gpu.h"
@@ -513,6 +514,50 @@ static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_BB_RETIMER_CONTROL, bb_retimer_control, EC_VER_MASK(0));
 #endif /* PD_CHIP_CCG6 */
 #endif /* CONFIG_CHIPSET_INTEL */
+
+static enum ec_status cmd_get_ap_throttle_status(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_ap_throttle_status *r = args->response;
+
+	throttle_get_state(&r->soft_ap_throttle, &r->hard_ap_throttle);
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_AP_THROTTLE_STATUS, cmd_get_ap_throttle_status, EC_VER_MASK(0));
+
+static enum ec_status cmd_get_pd_port_state(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_get_pd_port_state *p = args->params;
+	struct ec_response_get_pd_port_state *r = args->response;
+
+	if (p->port > PD_PORT_COUNT || p->port < 0)
+		return EC_RES_INVALID_PARAM;
+
+	struct pd_port_current_state_t *pd = get_pd_port_states_array();
+
+	r->c_state = pd[p->port].c_state;
+	r->pd_state = pd[p->port].pd_state;
+	r->power_role = pd[p->port].power_role;
+	r->data_role = pd[p->port].data_role;
+	r->vconn = pd[p->port].vconn;
+	r->epr_active = pd[p->port].epr_active;
+	r->epr_support = pd[p->port].epr_support;
+	r->cc_polarity = pd[p->port].cc;
+	r->voltage = pd[p->port].voltage;
+	r->current = pd[p->port].current;
+	r->pd_alt_mode_status = get_pd_alt_mode_status(p->port);
+	if (get_active_charge_pd_port() == p->port)
+		r->active_port = 1;
+	else
+		r->active_port = 0;
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_PD_PORT_STATE, cmd_get_pd_port_state, EC_VER_MASK(0));
+
 /*******************************************************************************/
 /*                       EC console command for Project                        */
 /*******************************************************************************/

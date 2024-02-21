@@ -1864,6 +1864,22 @@ void cypd_reinitialize(void)
 	}
 }
 
+struct pd_port_current_state_t *get_pd_port_states_array(void)
+{
+	return pd_port_states;
+}
+
+int get_pd_alt_mode_status(int port)
+{
+	int alt_mode_status;
+
+	cypd_read_reg8(PORT_TO_CONTROLLER(port),
+		CCG_DP_ALT_MODE_CONFIG_REG(PORT_TO_CONTROLLER_PORT(port)),
+		&alt_mode_status);
+
+	return alt_mode_status;
+}
+
 /*****************************************************************************/
 /* Host command */
 
