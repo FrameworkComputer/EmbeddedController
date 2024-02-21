@@ -182,6 +182,8 @@ class BoardConfig:
     rollback_region1_regex: object
     mpu_regex: object
     reboot_timeout: float
+    mcu_power_supply: str
+    power_measurement_delay: int
     expected_fp_power: PowerUtilization
     expected_mcu_power: PowerUtilization
     variants: Dict
@@ -476,6 +478,8 @@ BLOONCHIPPER_CONFIG = BoardConfig(
     rollback_region0_regex=DATA_ACCESS_VIOLATION_8020000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_8040000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_20000000_REGEX,
+    mcu_power_supply="ppvar_mcu_mw",
+    power_measurement_delay=0,
     expected_fp_power=PowerUtilization(
         idle=RangedValue(0.71, 0.53), sleep=RangedValue(0.69, 0.51)
     ),
@@ -500,6 +504,8 @@ DARTMONKEY_CONFIG = BoardConfig(
     rollback_region0_regex=DATA_ACCESS_VIOLATION_80C0000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_80E0000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_24000000_REGEX,
+    mcu_power_supply="ppvar_mcu_mw",
+    power_measurement_delay=0,
     expected_fp_power=PowerUtilization(
         idle=RangedValue(0.03, 0.05), sleep=RangedValue(0.03, 0.05)
     ),
@@ -529,13 +535,15 @@ HELIPILOT_CONFIG = BoardConfig(
     rollback_region0_regex=DATA_ACCESS_VIOLATION_64020000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_64040000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_200B0000_REGEX,
+    mcu_power_supply="pp3300_mcu_mw",
+    # TODO(b/326343480): Why is this delay required for helipilot to sleep?
+    power_measurement_delay=15,
     # Power utilization numbers were experimentally derived via onboard ADCs and verified with a DMM
-    # TODO(b/319314358): Helipilot tests are failing on Quincy V2 boards
     expected_fp_power=PowerUtilization(
         idle=RangedValue(0.0, 0.1), sleep=RangedValue(0.0, 0.1)
     ),
     expected_mcu_power=PowerUtilization(
-        idle=RangedValue(9.2, 0.8), sleep=RangedValue(1.6, 1.3)
+        idle=RangedValue(34.8, 3.0), sleep=RangedValue(2.7, 2.5)
     ),
     variants={},
 )
@@ -1143,10 +1151,12 @@ def main():
     sys.exit(exit_code)
 
 
-def get_power_utilization() -> Tuple[Optional[float], Optional[float]]:
+def get_power_utilization(
+    board_config: BoardConfig,
+) -> Tuple[Optional[float], Optional[float]]:
     """Retrieve board power utilization data"""
     fp_power_signal = "ppvar_fp_mw"
-    mcu_power_signal = "ppvar_mcu_mw"
+    mcu_power_signal = board_config.mcu_power_supply
     cmd = [
         "dut-control",
         "--value_only",  # only the summary will print the field names
@@ -1155,6 +1165,9 @@ def get_power_utilization() -> Tuple[Optional[float], Optional[float]]:
         fp_power_signal,
         mcu_power_signal,
     ]
+
+    time.sleep(board_config.power_measurement_delay)
+
     logging.debug('Running command: "%s"', " ".join(cmd))
 
     fp_power_mw = None
@@ -1222,7 +1235,7 @@ def verify_power_utilization(
 def verify_idle_power_utilization(board_config: BoardConfig) -> bool:
     """Verifies that idle power utilization is within range for the specified board"""
 
-    fp_power_mw, mcu_power_mw = get_power_utilization()
+    fp_power_mw, mcu_power_mw = get_power_utilization(board_config)
     return verify_power_utilization(
         fp_power_mw,
         mcu_power_mw,
@@ -1234,7 +1247,7 @@ def verify_idle_power_utilization(board_config: BoardConfig) -> bool:
 def verify_sleep_power_utilization(board_config: BoardConfig) -> bool:
     """Verifies that sleep power utilization is within range for the specified board"""
 
-    fp_power_mw, mcu_power_mw = get_power_utilization()
+    fp_power_mw, mcu_power_mw = get_power_utilization(board_config)
     ret = verify_power_utilization(
         fp_power_mw,
         mcu_power_mw,
