@@ -56,6 +56,9 @@ static void update_mapped_memory(void)
 			break;
 		case EC_SUCCESS:
 			*mptr = t - EC_TEMP_SENSOR_OFFSET;
+#ifdef CONFIG_CUSTOMIZED_DESIGN
+			board_update_temperature_mk(i);
+#endif
 			break;
 		default:
 			*mptr = EC_TEMP_SENSOR_ERROR;

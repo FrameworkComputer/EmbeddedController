@@ -34,7 +34,9 @@ enum f75397_index {
 
 /* F75397 register */
 #define F75397_TEMP_LOCAL		0x00
+#define F75397_TEMP_LOCAL_LOW_REGISTER 0x29
 #define F75397_TEMP_REMOTE1		0x01
+#define F75397_TEMP_REMOTE1_LOW_REGISTER 0x10
 
 /**
  * Get the last polled value of a sensor.
@@ -57,6 +59,18 @@ int f75397_get_val(int idx, int *temp);
  * @return EC_SUCCESS if successful, non-zero if error.
  */
 int f75397_get_val_k(int idx, int *temp_k_ptr);
+
+/**
+ * Get the last polled value of a sensor.
+ *
+ * @param idx		Index to read, from board's enum f75397_sensor
+ *			definition
+ *
+ * @param temp_mk_ptr	Destination for temperature in mK.
+ *
+ * @return EC_SUCCESS if successful, non-zero if error.
+ */
+int f75397_get_val_mk(int idx, int *temp_mk_ptr);
 
 /**
  * Set if the underlying polling task will read the sensor

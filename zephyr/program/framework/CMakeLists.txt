@@ -88,6 +88,7 @@ if(DEFINED CONFIG_BOARD_MARIGOLD)
 			"marigold/src/keyboard_customization.c"
 			"marigold/src/project_diagnostics.c"
 			"marigold/src/power_button_x86.c"
+			"marigold/src/temperature.c"
 	)
 
 endif()
