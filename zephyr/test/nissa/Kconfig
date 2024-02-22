@@ -95,6 +95,11 @@ choice TEST_TARGET
 	  help
 		The test target that exercises nissa/yaviks/*.c
 
+	config TEST_NISSA_QUANDISO
+	  bool "Tests for Quandiso-specific code"
+	  help
+		The test target that exercises nissa/quandiso/*.c
+
 endchoice
 
 config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
