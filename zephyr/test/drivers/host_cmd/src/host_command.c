@@ -3,11 +3,13 @@
  * found in the LICENSE file.
  */
 
+#include "console.h"
 #include "ec_commands.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 #include "uart.h"
 
+#include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest.h>
 
 ZTEST(host_cmd_host_commands, test_get_command_versions__v1)
