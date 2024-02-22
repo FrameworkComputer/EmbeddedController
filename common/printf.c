@@ -18,6 +18,7 @@
 #endif /* CONFIG_NEWLIB_LIBC */
 
 #include "builtin/assert.h"
+#include "builtin/string.h"
 #include "console.h"
 #include "printf.h"
 #include "timer.h"
