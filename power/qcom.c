@@ -944,6 +944,11 @@ power_chipset_handle_host_sleep_event(enum host_sleep_event state,
 
 	} else if (state == HOST_SLEEP_EVENT_S3_RESUME) {
 		/*
+		 * In case the suspend fails, cancel the power button timer,
+		 * similar to what we do in S3S0, the suspend success case.
+		 */
+		cancel_power_button_timer();
+		/*
 		 * Wake up chipset task and indicate to power state machine that
 		 * listeners need to be notified of chipset resume.
 		 */
