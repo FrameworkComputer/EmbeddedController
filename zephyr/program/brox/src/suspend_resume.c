@@ -12,6 +12,7 @@
 LOG_MODULE_REGISTER(board_init, LOG_LEVEL_INF);
 
 #define EN_PP3300_WLAN_DT_SPEC GPIO_DT_FROM_NODELABEL(gpio_ec_en_pp3300_wlan)
+#define AMP_MUTE_L_DT_SPEC GPIO_DT_FROM_NODELABEL(gpio_amp_mute_l)
 
 static void brox_power_event_handler(struct ap_power_ev_callback *callback,
 				     struct ap_power_ev_data data)
@@ -27,9 +28,15 @@ static void brox_power_event_handler(struct ap_power_ev_callback *callback,
 		/* fall-through */
 	case AP_POWER_STARTUP:
 		gpio_pin_set_dt(EN_PP3300_WLAN_DT_SPEC, 1);
+
+		/* Deassert AMP_MUTE_L when AP is on. */
+		gpio_pin_set_dt(AMP_MUTE_L_DT_SPEC, 0);
 		break;
 	case AP_POWER_SHUTDOWN:
 		gpio_pin_set_dt(EN_PP3300_WLAN_DT_SPEC, 0);
+
+		/* Assert AMP_MUTE_L when powered off. */
+		gpio_pin_set_dt(AMP_MUTE_L_DT_SPEC, 1);
 		break;
 	default:
 		/* Other events ignored */
@@ -42,9 +49,16 @@ static int init_suspend_resume(void)
 	static struct ap_power_ev_callback cb;
 	const struct gpio_dt_spec *en_pp3300_wlan =
 		GPIO_DT_FROM_NODELABEL(gpio_ec_en_pp3300_wlan);
+	const struct gpio_dt_spec *amp_mute_l =
+		GPIO_DT_FROM_NODELABEL(gpio_amp_mute_l);
 
 	if (!gpio_is_ready_dt(en_pp3300_wlan)) {
 		LOG_ERR("device %s not ready", en_pp3300_wlan->port->name);
+		return -EINVAL;
+	}
+
+	if (!gpio_is_ready_dt(amp_mute_l)) {
+		LOG_ERR("device %s not ready", amp_mute_l->port->name);
 		return -EINVAL;
 	}
 

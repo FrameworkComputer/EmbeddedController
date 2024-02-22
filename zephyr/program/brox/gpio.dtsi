@@ -116,6 +116,10 @@ gpio_ec_pch_wake_odl: &gpio_sen_mode1_ec_pch_wake_odl {
 	gpios = <&gpioe 6 GPIO_INPUT>;
 };
 
+&gpio_amp_mute_l {
+	gpios = <&gpioj 6 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+};
+
 /* Default PROCHOT high so it's not asserted
  * TODO: b/214509787 - zephyr: subsys/ap_pwrseq: support chipset interface APIs
  */
