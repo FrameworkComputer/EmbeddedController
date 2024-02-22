@@ -5,6 +5,7 @@
 
 #include "battery_smart.h"
 #include "charger.h"
+#include "console.h"
 #include "driver/charger/isl9241.h"
 #include "driver/charger/isl9241_public.h"
 #include "emul/emul_isl9241.h"
@@ -13,6 +14,7 @@
 #include "test/drivers/utils.h"
 
 #include <zephyr/shell/shell.h>
+#include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest.h>
 
 #define ISL9241_NODE DT_NODELABEL(isl9241_emul)
