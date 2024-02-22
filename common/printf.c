@@ -471,9 +471,6 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 					     precision, base, c == 'X');
 			ASSERT(vstr);
 
-			if (sign)
-				*(--vstr) = sign;
-
 			/*
 			 * Precision field was interpreted by fixed-point
 			 * logic, so clear it.
@@ -493,18 +490,54 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			vlen = strnlen(vstr, precision);
 		}
 
-		while (vlen < pad_width && !(flags & PF_LEFT)) {
-			if (addchar(context, flags & PF_PADZERO ? '0' : ' '))
-				return EC_ERROR_OVERFLOW;
-			vlen++;
+		if (sign) {
+			/*
+			 * a sign was requested for an int, count it
+			 * toward the length of the value
+			 */
+			++vlen;
 		}
+
+		if (!(flags & PF_LEFT)) {
+			/* padding for right justified value */
+			if (sign && (flags & PF_PADZERO)) {
+				/* the sign precedes leading zeros */
+				if (addchar(context, sign))
+					return EC_ERROR_OVERFLOW;
+				sign = 0;
+			}
+
+			/* output padding now */
+			while (vlen < pad_width) {
+				if (addchar(context,
+					    flags & PF_PADZERO ? '0' : ' '))
+					return EC_ERROR_OVERFLOW;
+				++vlen;
+			}
+		}
+
+		if (sign) {
+			/*
+			 * if we didn't output the sign before the padding,
+			 * output it now
+			 */
+			if (addchar(context, sign))
+				return EC_ERROR_OVERFLOW;
+			sign = 0;
+		}
+
+		/* output all permissible string chars */
 		while (--precision >= 0 && *vstr)
 			if (addchar(context, *vstr++))
 				return EC_ERROR_OVERFLOW;
-		while (vlen < pad_width && flags & PF_LEFT) {
-			if (addchar(context, ' '))
-				return EC_ERROR_OVERFLOW;
-			vlen++;
+
+		if (flags & PF_LEFT) {
+			/* left justified string, output padding now */
+			while (vlen < pad_width) {
+				if (addchar(context, ' '))
+					return EC_ERROR_OVERFLOW;
+				++vlen;
+			}
 		}
 	}
 

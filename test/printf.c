@@ -190,26 +190,14 @@ test_static int test_vsnprintf_int(void)
 	T(expect(EC_ERROR_OVERFLOW, "123", false, 4, "%-10d", 123));
 	T(expect(EC_ERROR_OVERFLOW, "0.0", false, 4, "%.10d", 123));
 
-	/*
-	 * TODO(b/239233116): These are incorrect and should be fixed.
-	 */
-	T(expect_success_crec("0+123", "%+05d", 123));
-	T(expect_success_crec("0+123", "%+005d", 123));
-
+	T(expect_success("+0123", "%+05d", 123));
+	T(expect_success("+0123", "%+005d", 123));
 	T(expect_success("  123", "%*d", 5, 123));
 	T(expect_success(" +123", "%+*d", 5, 123));
 	T(expect_success("00123", "%0*d", 5, 123));
 	T(expect_success("00123", "%00*d", 5, 123));
-
-	/*
-	 * TODO(b/239233116): This is incorrect and should be fixed.
-	 */
-	T(expect_success_crec("0+123", "%+0*d", 5, 123));
-
-	/*
-	 * TODO(b/239233116): This is incorrect and should be fixed.
-	 */
-	T(expect_success_crec("0+123", "%+00*d", 5, 123));
+	T(expect_success("+0123", "%+0*d", 5, 123));
+	T(expect_success("+0123", "%+00*d", 5, 123));
 
 	T(expect_success("123  ", "%-5d", 123));
 	T(expect_success("+123 ", "%-+5d", 123));
@@ -244,6 +232,8 @@ test_static int test_vsnprintf_fixed_point(void)
 	T(expect_success_crec("0.00123", "%7.5d", 123));
 	T(expect_success_crec("  0.00123", "%9.5d", 123));
 	T(expect_success_crec(" +0.00123", "%+9.5d", 123));
+	T(expect_success_crec("+0000.123", "%+09.3d", 123));
+	T(expect_success_crec("-0000.123", "%+09.3d", -123));
 
 	return EC_SUCCESS;
 }
