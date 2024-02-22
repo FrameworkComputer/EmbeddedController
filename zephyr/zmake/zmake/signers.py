@@ -88,7 +88,7 @@ class RwsigSigner(BaseSigner):
         """
         for path, name in files:
             if name == "ec.bin":
-                yield self.sign_ec(path, work_dir, jobclient), name
+                yield from self.sign_ec(path, work_dir, jobclient)
             else:
                 yield path, name
 
@@ -97,7 +97,7 @@ class RwsigSigner(BaseSigner):
         bin_file: Path,
         work_dir: Path,
         jobclient: jobserver.JobClient,
-    ) -> Path:
+    ) -> Iterable[Tuple[Path, str]]:
         """Sign a EC binary.
 
         Args:
@@ -105,8 +105,9 @@ class RwsigSigner(BaseSigner):
             work_dir: A directory to write outputs and temporary files into.
             jobclient: A JobClient object to use.
 
-        Returns:
-            Path to the signed firmware.
+        Yields:
+            2-tuples (output_name, output_path) which should be copied into
+            the output directory, and the output filename.
         """
         ec_rw = work_dir / "ec_rw"
         pub_key = work_dir / "key.vbpubk2"
@@ -160,7 +161,8 @@ class RwsigSigner(BaseSigner):
             jobclient,
         )
 
-        return signed_bin
+        yield signed_bin, "ec.bin"
+        yield pri_key, "key.vbprik2"
 
     def _run_futility(
         self,
