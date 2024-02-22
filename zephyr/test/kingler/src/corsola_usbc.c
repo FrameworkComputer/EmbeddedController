@@ -4,8 +4,10 @@
  */
 
 #include "ap_power/ap_power.h"
+#include "ap_power/ap_power_events.h"
 #include "driver/tcpm/tcpm.h"
 #include "ec_app_main.h"
+#include "gpio.h"
 #include "gpio/gpio.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
@@ -23,6 +25,8 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
+
+void x_ec_interrupt(enum gpio_signal signal);
 
 #define LOG_LEVEL 0
 LOG_MODULE_REGISTER(corsola_usbc);
@@ -206,7 +210,7 @@ ZTEST(corsola_usbc, test_baseboard_x_ec_gpio2_init)
 		GPIO_DT_FROM_NODELABEL(gpio_x_ec_gpio2), &flags));
 	zassert_equal(flags & GPIO_INT_ENABLE, 0, "actual GPIO flags were %#x",
 		      flags);
-	gpio_reset(GPIO_DT_FROM_NODELABEL(gpio_x_ec_gpio2));
+	gpio_reset(GPIO_SIGNAL(DT_NODELABEL(gpio_x_ec_gpio2)));
 
 	/* type-c board */
 	corsola_get_db_type_fake.return_val = CORSOLA_DB_TYPEC;
@@ -218,7 +222,7 @@ ZTEST(corsola_usbc, test_baseboard_x_ec_gpio2_init)
 	zassert_equal(flags & (GPIO_INT_ENABLE | GPIO_INT_EDGE_FALLING),
 		      GPIO_INT_ENABLE | GPIO_INT_EDGE_FALLING,
 		      "actual GPIO flags were %#x", flags);
-	gpio_reset(GPIO_DT_FROM_NODELABEL(gpio_x_ec_gpio2));
+	gpio_reset(GPIO_SIGNAL(DT_NODELABEL(gpio_x_ec_gpio2)));
 
 	/* hdmi board */
 	corsola_get_db_type_fake.return_val = CORSOLA_DB_HDMI;

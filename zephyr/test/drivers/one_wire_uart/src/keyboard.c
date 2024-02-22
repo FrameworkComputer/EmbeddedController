@@ -6,6 +6,7 @@
 #include "drivers/one_wire_uart_internal.h"
 #include "drivers/one_wire_uart_stream.h"
 #include "keyboard_config.h"
+#include "keyboard_scan.h"
 #include "queue.h"
 #include "test/drivers/test_state.h"
 #include "test/drivers/utils.h"
@@ -18,6 +19,8 @@
 #include <zephyr/fff.h>
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test.h>
+
+void keyboard_state_changed(int row, int col, int is_pressed);
 
 const static struct device *dev = DEVICE_DT_GET(DT_NODELABEL(one_wire_uart));
 

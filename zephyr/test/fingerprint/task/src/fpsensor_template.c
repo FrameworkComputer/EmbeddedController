@@ -3,6 +3,11 @@
  * found in the LICENSE file.
  */
 
+#if defined(CONFIG_NEWLIB_LIBC) || defined(CONFIG_EXTERNAL_LIBC)
+/* For srandom() */
+#define _XOPEN_SOURCE 500
+#endif
+
 #include "mock_fingerprint_algorithm.h"
 
 #include <stdlib.h>

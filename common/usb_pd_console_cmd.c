@@ -6,6 +6,7 @@
  */
 
 #include "console.h"
+#include "led_onoff_states.h"
 #include "usb_dp_alt_mode.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"

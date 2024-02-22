@@ -12,6 +12,7 @@
 #ifndef __CROS_EC_USB_DP_ALT_MODE_H
 #define __CROS_EC_USB_DP_ALT_MODE_H
 
+#include "config.h"
 #include "tcpm/tcpm.h"
 #include "usb_pd_dpm_sm.h"
 #include "usb_pd_vdo.h"
@@ -311,5 +312,11 @@ static inline bool dp_mode_entry_allowed(int port)
 {
 	return false;
 }
+
+static inline uint32_t dp_get_mode_vdo(int port, enum tcpci_msg_type type)
+{
+	return 0;
+}
+
 #endif /* CONFIG_USB_PD_DP_MODE */
 #endif /* __CROS_EC_USB_DP_ALT_MODE_H */

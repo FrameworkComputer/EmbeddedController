@@ -6,6 +6,7 @@
 #include "gpio_signal.h"
 #include "power.h"
 #include "usb_charge.h"
+#include "usb_mux.h"
 #include "usb_pd.h"
 
 #include <zephyr/drivers/gpio/gpio_emul.h>

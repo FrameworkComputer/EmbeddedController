@@ -9,6 +9,7 @@
 #include "system.h"
 #include "typec_control.h"
 #include "usb_charge.h"
+#include "usb_pd.h"
 
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/fff.h>
@@ -17,6 +18,9 @@
 
 #include <dt-bindings/gpio_defines.h>
 #include <typec_control.h>
+
+void reset_nct38xx_port(int port);
+void bc12_interrupt(enum gpio_signal);
 
 LOG_MODULE_REGISTER(nissa, LOG_LEVEL_INF);
 

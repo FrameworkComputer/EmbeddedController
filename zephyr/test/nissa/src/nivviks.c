@@ -7,6 +7,7 @@
 #include "cros_cbi.h"
 #include "hooks.h"
 #include "keyboard_protocol.h"
+#include "led_onoff_states.h"
 #include "led_pwm.h"
 #include "motionsense_sensors.h"
 #include "pwm_mock.h"

@@ -4,6 +4,7 @@
  */
 
 #include "battery.h"
+#include "battery_fuel_gauge.h"
 #include "battery_smart.h"
 #include "driver/charger/isl923x.h"
 #include "driver/charger/isl923x_public.h"

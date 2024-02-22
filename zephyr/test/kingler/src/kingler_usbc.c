@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "baseboard_usbc_config.h"
 #include "driver/tcpm/rt1718s.h"
 #include "driver/tcpm/tcpm.h"
 #include "ec_app_main.h"
@@ -28,6 +29,9 @@
 LOG_MODULE_REGISTER(npcx_usbc);
 
 extern void board_tcpc_init(void);
+void ppc_interrupt(enum gpio_signal);
+void ccd_interrupt(enum gpio_signal);
+void bc12_interrupt(enum gpio_signal);
 
 FAKE_VALUE_FUNC(bool, in_interrupt_context);
 FAKE_VALUE_FUNC(bool, ps8743_field_update, const struct usb_mux *, uint8_t,
@@ -38,7 +42,7 @@ FAKE_VALUE_FUNC(int, rt1718s_get_adc, int, enum rt1718s_adc_channel, int *);
 FAKE_VALUE_FUNC(int, tcpci_get_vbus_voltage_no_check, int, int *);
 FAKE_VALUE_FUNC(uint8_t, board_get_adjusted_usb_pd_port_count);
 FAKE_VOID_FUNC(bmi3xx_interrupt);
-FAKE_VOID_FUNC(hdmi_hpd_interrupt);
+FAKE_VOID_FUNC(hdmi_hpd_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(nx20p348x_interrupt, int);
 FAKE_VOID_FUNC(ps185_hdmi_hpd_mux_set);
 FAKE_VOID_FUNC(usb_charger_task_set_event, int, uint8_t);

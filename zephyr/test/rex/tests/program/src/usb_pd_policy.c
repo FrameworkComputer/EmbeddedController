@@ -15,6 +15,8 @@
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
+bool board_is_dp_uhbr13_5_allowed(int port);
+
 FAKE_VALUE_FUNC(int, chipset_in_state, int);
 FAKE_VALUE_FUNC(int, ppc_vbus_source_enable, int, int);
 FAKE_VOID_FUNC(pd_set_vbus_discharge, int, int);

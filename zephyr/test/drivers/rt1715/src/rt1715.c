@@ -7,6 +7,7 @@
 #include "driver/tcpm/rt1715_public.h"
 #include "driver/tcpm/tcpci.h"
 #include "emul/tcpc/emul_rt1715.h"
+#include "emul/tcpc/emul_tcpci.h"
 #include "test/drivers/test_state.h"
 
 #include <zephyr/drivers/emul.h>

@@ -13,6 +13,7 @@
 #include "i2c/i2c.h"
 #include "test_state.h"
 #include "usb_pd.h"
+#include "usb_pd_policy.h"
 #include "usbc_ppc.h"
 
 #include <zephyr/devicetree.h>

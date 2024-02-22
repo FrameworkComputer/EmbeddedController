@@ -12,6 +12,8 @@
 #include "extpower.h"
 #include "hooks.h"
 #include "keyboard_protocol.h"
+#include "led_common.h"
+#include "led_onoff_states.h"
 #include "pirrha.h"
 #include "system.h"
 #include "tcpm/tcpci.h"
@@ -27,6 +29,8 @@
 
 #include <dt-bindings/gpio_defines.h>
 #include <typec_control.h>
+
+void reduce_input_voltage_when_full(void);
 
 /* charging current is limited to 0.45C */
 #define CHARGING_CURRENT_45C 2601

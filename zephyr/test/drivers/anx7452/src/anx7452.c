@@ -10,10 +10,12 @@
 #include "driver/retimer/anx7452_public.h"
 #include "emul/emul_anx7452.h"
 #include "emul/emul_common_i2c.h"
+#include "gpio.h"
 #include "i2c.h"
 #include "test/drivers/stubs.h"
 #include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 #include "timer.h"
 #include "usb_mux.h"
 
