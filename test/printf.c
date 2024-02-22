@@ -17,7 +17,11 @@
 /* This is ugly, but we want to test the functions in builtin/stdlib.c while
  * still depending on the system stdlib.c
  */
+#define snprintf hidden_crec_snprintf
+#define vsnprintf hidden_crec_vsnprintf
 #include "../builtin/stdlib.c"
+#undef snprintf
+#undef vsnprintf
 #endif
 
 #define VSNPRINTF crec_vsnprintf
@@ -59,7 +63,7 @@ int run(int expect_ret, const char *expect, bool output_null, size_t size_limit,
 	return EC_SUCCESS;
 }
 
-int expect_success(const char *expect, const char *format, ...)
+int expect_success_crec(const char *expect, const char *format, ...)
 {
 	va_list args;
 	int rv;
@@ -67,6 +71,30 @@ int expect_success(const char *expect, const char *format, ...)
 	va_start(args, format);
 	rv = run(EC_SUCCESS, expect, false, sizeof(output), format, args);
 	va_end(args);
+
+	return rv;
+}
+
+int expect_success(const char *expect, const char *format, ...)
+{
+	char expect_std[1024];
+	va_list args;
+	int rv;
+
+	va_start(args, format);
+	rv = run(EC_SUCCESS, expect, false, sizeof(output), format, args);
+	va_end(args);
+
+	/*
+	 * Verify expected result is consistent with the standard libc
+	 * result.
+	 */
+	va_start(args, format);
+	vsnprintf(expect_std, sizeof(expect_std), format, args);
+	va_end(args);
+
+	ccprintf("standard='%.*s'\n", 30, expect_std);
+	TEST_ASSERT(strcmp(expect_std, expect) == 0);
 
 	return rv;
 }
@@ -143,8 +171,8 @@ test_static int test_vsnprintf_int(void)
 	 * TODO(b/239233116): These are incorrect and should be fixed.
 	 */
 	/* Fixed point. */
-	T(expect_success("0.00123", "%.5d", 123));
-	T(expect_success("12.3", "%2.1d", 123));
+	T(expect_success_crec("0.00123", "%.5d", 123));
+	T(expect_success_crec("12.3", "%2.1d", 123));
 	/* Precision or width larger than buffer should fail. */
 	T(expect(EC_ERROR_OVERFLOW, "  1", false, 4, "%5d", 123));
 	T(expect(EC_ERROR_OVERFLOW, "   ", false, 4, "%10d", 123));
@@ -154,8 +182,8 @@ test_static int test_vsnprintf_int(void)
 	/*
 	 * TODO(b/239233116): These are incorrect and should be fixed.
 	 */
-	T(expect_success("0+123", "%+05d", 123));
-	T(expect_success("0+123", "%+005d", 123));
+	T(expect_success_crec("0+123", "%+05d", 123));
+	T(expect_success_crec("0+123", "%+005d", 123));
 
 	T(expect_success("  123", "%*d", 5, 123));
 	T(expect_success(" +123", "%+*d", 5, 123));
@@ -164,24 +192,24 @@ test_static int test_vsnprintf_int(void)
 	/*
 	 * TODO(b/239233116): This incorrect and should be fixed.
 	 */
-	T(expect_success(err_str, "%00*d", 5, 123));
+	T(expect_success_crec(err_str, "%00*d", 5, 123));
 
 	/*
 	 * TODO(b/239233116): This is incorrect and should be fixed.
 	 */
-	T(expect_success("0+123", "%+0*d", 5, 123));
+	T(expect_success_crec("0+123", "%+0*d", 5, 123));
 
 	/*
 	 * TODO(b/239233116): This is incorrect and should be fixed.
 	 */
-	T(expect_success(err_str, "%+00*d", 5, 123));
+	T(expect_success_crec(err_str, "%+00*d", 5, 123));
 
 	T(expect_success("123  ", "%-5d", 123));
 	T(expect_success("+123 ", "%-+5d", 123));
 	/*
 	 * TODO(b/239233116): This incorrect and should be fixed.
 	 */
-	T(expect_success(err_str, "%+-5d", 123));
+	T(expect_success_crec(err_str, "%+-5d", 123));
 
 	T(expect_success("123  ", "%-05d", 123));
 	T(expect_success("123  ", "%-005d", 123));
@@ -191,11 +219,11 @@ test_static int test_vsnprintf_int(void)
 	/*
 	 * TODO(b/239233116): These are incorrect and should be fixed.
 	 */
-	T(expect_success("0.00123", "%.5d", 123));
-	T(expect_success("+0.00123", "%+.5d", 123));
-	T(expect_success("0.00123", "%7.5d", 123));
-	T(expect_success("  0.00123", "%9.5d", 123));
-	T(expect_success(" +0.00123", "%+9.5d", 123));
+	T(expect_success_crec("0.00123", "%.5d", 123));
+	T(expect_success_crec("+0.00123", "%+.5d", 123));
+	T(expect_success_crec("0.00123", "%7.5d", 123));
+	T(expect_success_crec("  0.00123", "%9.5d", 123));
+	T(expect_success_crec(" +0.00123", "%+9.5d", 123));
 
 	T(expect_success("123", "%u", 123));
 	T(expect_success("4294967295", "%u", -1));
@@ -249,8 +277,8 @@ test_static int test_vsnprintf_32bit_long_supported(void)
 	 * %i and %li are only supported via the CONFIG_PRINTF_LONG_IS_32BITS
 	 * configuration (see https://issuetracker.google.com/issues/172210614).
 	 */
-	T(expect_success("123", "%i", 123));
-	T(expect_success("123", "%li", 123));
+	T(expect_success_crec("123", "%i", 123));
+	T(expect_success_crec("123", "%li", 123));
 
 	return EC_SUCCESS;
 }
@@ -286,8 +314,8 @@ test_static int test_vsnprintf_64bit_long_supported(void)
 	/*
 	 * TODO(b/239233116): These are incorrect and should be fixed.
 	 */
-	T(expect_success(err_str, "%i", 123));
-	T(expect_success(err_str, "%li", 123));
+	T(expect_success_crec(err_str, "%i", 123));
+	T(expect_success_crec(err_str, "%li", 123));
 
 	return EC_SUCCESS;
 }
@@ -301,8 +329,8 @@ test_static int test_vsnprintf_long_not_supported(void)
 	T(expect_success(err_str, "%08lu", 123));
 	T(expect_success("13ERROR", "%d%lu%d", 13, 14L, 15));
 
-	T(expect_success(err_str, "%i", 123));
-	T(expect_success(err_str, "%li", 123));
+	T(expect_success_crec(err_str, "%i", 123));
+	T(expect_success_crec(err_str, "%li", 123));
 
 	return EC_SUCCESS;
 }
@@ -329,7 +357,7 @@ test_static int test_vsnprintf_pointers(void)
 	/*
 	 * TODO(b/239233116): This incorrect and should be fixed.
 	 */
-	T(expect_success("55005e00", "%p", ptr));
+	T(expect_success_crec("55005e00", "%p", ptr));
 
 	return EC_SUCCESS;
 }
@@ -355,7 +383,7 @@ test_static int test_vsnprintf_strings(void)
 	/*
 	 * TODO(b/239233116): This incorrect and should be fixed.
 	 */
-	T(expect_success("ab", "%5.2s", "abc"));
+	T(expect_success_crec("ab", "%5.2s", "abc"));
 
 	T(expect_success("abc", "%.4s", "abc"));
 
@@ -363,8 +391,11 @@ test_static int test_vsnprintf_strings(void)
 	 * Given a malformed string (address 0x1 is a good example),
 	 * if we ask for zero precision, expect no bytes to be read
 	 * from the malformed address and a blank output string.
+	 *
+	 * Note: This is not a valid test using the standard libc
+	 * printf as that will trigger the address sanitizer.
 	 */
-	T(expect_success("", "%.0s", (char *)1));
+	T(expect_success_crec("", "%.0s", (char *)1));
 
 	return EC_SUCCESS;
 }
