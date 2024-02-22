@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "console.h"
 #include "driver/tcpm/anx7447.h"
 #include "emul/tcpc/emul_anx7447.h"
 #include "emul/tcpc/emul_tcpci.h"
