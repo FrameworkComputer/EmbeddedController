@@ -202,10 +202,6 @@ void board_process_pd_alert(int port)
 		gpio = GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl);
 	}
 
-	if (!gpio_pin_get_dt(gpio)) {
-		usb_charger_task_set_event_sync(port, USB_CHG_EVENT_BC12);
-	}
-
 	/*
 	 * Immediately schedule another TCPC interrupt if it seems we haven't
 	 * cleared all pending interrupts.
