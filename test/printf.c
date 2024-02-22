@@ -184,12 +184,6 @@ test_static int test_vsnprintf_int(void)
 	T(expect_success("00123", "%05d", 123));
 	T(expect_success("00123", "%005d", 123));
 
-	/*
-	 * TODO(b/239233116): These are incorrect and should be fixed.
-	 */
-	/* Fixed point. */
-	T(expect_success_crec("0.00123", "%.5d", 123));
-	T(expect_success_crec("12.3", "%2.1d", 123));
 	/* Precision or width larger than buffer should fail. */
 	T(expect(EC_ERROR_OVERFLOW, "  1", false, 4, "%5d", 123));
 	T(expect(EC_ERROR_OVERFLOW, "   ", false, 4, "%10d", 123));
@@ -225,15 +219,6 @@ test_static int test_vsnprintf_int(void)
 	T(expect_success("+123 ", "%-+05d", 123));
 	T(expect_success("+123 ", "%-+005d", 123));
 
-	/*
-	 * TODO(b/239233116): These are incorrect and should be fixed.
-	 */
-	T(expect_success_crec("0.00123", "%.5d", 123));
-	T(expect_success_crec("+0.00123", "%+.5d", 123));
-	T(expect_success_crec("0.00123", "%7.5d", 123));
-	T(expect_success_crec("  0.00123", "%9.5d", 123));
-	T(expect_success_crec(" +0.00123", "%+9.5d", 123));
-
 	T(expect_success("123", "%u", 123));
 	T(expect_success("4294967295", "%u", -1));
 	T(expect_success("18446744073709551615", "%llu", (uint64_t)-1));
@@ -242,6 +227,23 @@ test_static int test_vsnprintf_int(void)
 	T(expect_success("0", "%X", 0));
 	T(expect_success("5e", "%x", 0X5E));
 	T(expect_success("5E", "%X", 0X5E));
+
+	return EC_SUCCESS;
+}
+
+test_static int test_vsnprintf_fixed_point(void)
+{
+	/*
+	 * Fixed point formatting is a cros-ec
+	 * deviation from the standard.
+	 */
+	T(expect_success_crec("0.00123", "%.5d", 123));
+	T(expect_success_crec("12.3", "%2.1d", 123));
+	T(expect_success_crec("0.00123", "%.5d", 123));
+	T(expect_success_crec("+0.00123", "%+.5d", 123));
+	T(expect_success_crec("0.00123", "%7.5d", 123));
+	T(expect_success_crec("  0.00123", "%9.5d", 123));
+	T(expect_success_crec(" +0.00123", "%+9.5d", 123));
 
 	return EC_SUCCESS;
 }
@@ -642,6 +644,7 @@ void run_test(int argc, const char **argv)
 
 	RUN_TEST(test_vsnprintf_args);
 	RUN_TEST(test_vsnprintf_int);
+	RUN_TEST(test_vsnprintf_fixed_point);
 	RUN_TEST(test_printf_long32_enabled);
 	RUN_TEST(test_vsnprintf_long);
 	RUN_TEST(test_vsnprintf_pointers);
