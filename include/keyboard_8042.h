@@ -54,11 +54,17 @@ enum ec_error_list keyboard_scancode_callback(uint16_t *make_code,
 void send_aux_data_to_host_interrupt(uint8_t data);
 
 /**
+ * Returns how many bytes of aux data are available in the queue
+ */
+int aux_buffer_available(void);
+
+/**
  * Send aux data to device.
  *
  * @param data	Aux data to send to device.
  */
 void send_aux_data_to_device(uint8_t data);
+
 #ifdef CONFIG_BOARD_AZALEA
 /**
  * Pauses or resumes the i8042 device -> host queue.
