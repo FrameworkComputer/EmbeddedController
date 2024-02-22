@@ -13,6 +13,13 @@
 #include <zephyr/drivers/emul.h>
 #include <zephyr/ztest.h>
 
+#define TEST_WAIT_FOR(expr, timeout_ms) \
+	WAIT_FOR(expr, 1000 * timeout_ms, k_msleep(100))
+#define ASSERT_FOR_TRUE(expr, timeout_ms) \
+	zassert_true(TEST_WAIT_FOR(expr, timeout_ms))
+#define ASSERT_FOR_FALSE(expr, timeout_ms) \
+	zassert_false(!TEST_WAIT_FOR(!expr, timeout_ms))
+
 #define RTS5453P_NODE DT_NODELABEL(rts5453p_emul)
 
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
@@ -57,17 +64,14 @@ ZTEST_USER(pdc_power_mgmt_api, test_is_connected)
 
 	emul_pdc_configure_src(emul, &connector_status);
 	emul_pdc_connect_partner(emul, &connector_status);
-	k_sleep(K_MSEC(1000));
-	zassert_true(pdc_power_mgmt_is_connected(TEST_PORT));
+	ASSERT_FOR_TRUE(pdc_power_mgmt_is_connected(TEST_PORT), 1000);
 
 	emul_pdc_disconnect(emul);
-	k_sleep(K_MSEC(1000));
-	zassert_false(pdc_power_mgmt_is_connected(TEST_PORT));
+	ASSERT_FOR_FALSE(pdc_power_mgmt_is_connected(TEST_PORT), 1000);
 
 	emul_pdc_configure_snk(emul, &connector_status);
 	emul_pdc_connect_partner(emul, &connector_status);
-	k_sleep(K_MSEC(2000));
-	zassert_true(pdc_power_mgmt_is_connected(TEST_PORT));
+	ASSERT_FOR_TRUE(pdc_power_mgmt_is_connected(TEST_PORT), 2000);
 }
 
 ZTEST_USER(pdc_power_mgmt_api, test_pd_get_polarity)
