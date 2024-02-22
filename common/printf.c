@@ -314,7 +314,7 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 		}
 
 		/* Handle padding with 0's */
-		if (c == '0') {
+		while (c == '0') {
 			flags |= PF_PADZERO;
 			c = *format++;
 		}

@@ -188,11 +188,7 @@ test_static int test_vsnprintf_int(void)
 	T(expect_success("  123", "%*d", 5, 123));
 	T(expect_success(" +123", "%+*d", 5, 123));
 	T(expect_success("00123", "%0*d", 5, 123));
-
-	/*
-	 * TODO(b/239233116): This incorrect and should be fixed.
-	 */
-	T(expect_success_crec(err_str, "%00*d", 5, 123));
+	T(expect_success("00123", "%00*d", 5, 123));
 
 	/*
 	 * TODO(b/239233116): This is incorrect and should be fixed.
@@ -202,7 +198,7 @@ test_static int test_vsnprintf_int(void)
 	/*
 	 * TODO(b/239233116): This is incorrect and should be fixed.
 	 */
-	T(expect_success_crec(err_str, "%+00*d", 5, 123));
+	T(expect_success_crec("0+123", "%+00*d", 5, 123));
 
 	T(expect_success("123  ", "%-5d", 123));
 	T(expect_success("+123 ", "%-+5d", 123));
