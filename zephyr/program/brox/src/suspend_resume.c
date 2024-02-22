@@ -33,7 +33,6 @@ static void brox_power_event_handler(struct ap_power_ev_callback *callback,
 		break;
 	default:
 		/* Other events ignored */
-		break;
 	}
 }
 
