@@ -231,7 +231,7 @@ ZTEST(nct38xx, test_dead_init_no_accessory)
 				       NCT38XX_ROLE_CTRL_DEAD_BATTERY);
 	zassert_ok(rv);
 
-	rv = nct38xx_emul_test_set_reg(TCPC_REG_TCPC_CTRL, &val);
+	rv = nct38xx_emul_test_get_reg(TCPC_REG_TCPC_CTRL, &val);
 	zassert_ok(rv);
 	rv = nct38xx_emul_test_set_reg(
 		TCPC_REG_TCPC_CTRL,
