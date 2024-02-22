@@ -481,10 +481,6 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			precision = -1;
 		}
 
-		/* No padding strings to wider than the precision */
-		if (precision >= 0 && pad_width > precision)
-			pad_width = precision;
-
 		if (precision < 0) {
 			/* If precision is unset, print everything */
 			vlen = strlen(vstr);

@@ -75,6 +75,23 @@ int expect_success_crec(const char *expect, const char *format, ...)
 	return rv;
 }
 
+int expect_success_std(const char *format, ...)
+{
+	char expect_std[1024];
+	va_list args;
+	int rv;
+
+	va_start(args, format);
+	vsnprintf(expect_std, sizeof(expect_std), format, args);
+	va_end(args);
+
+	va_start(args, format);
+	rv = run(EC_SUCCESS, expect_std, false, sizeof(output), format, args);
+	va_end(args);
+
+	return rv;
+}
+
 int expect_success(const char *expect, const char *format, ...)
 {
 	char expect_std[1024];
@@ -367,6 +384,8 @@ test_static int test_vsnprintf_chars(void)
 
 test_static int test_vsnprintf_strings(void)
 {
+	char fmt[100];
+
 	T(expect_success("abc", "%s", "abc"));
 	T(expect_success("  abc", "%5s", "abc"));
 	T(expect_success("abc", "%0s", "abc"));
@@ -376,12 +395,18 @@ test_static int test_vsnprintf_strings(void)
 	T(expect_success("a", "%.*s", 1, "abc"));
 	T(expect_success("", "%.0s", "abc"));
 	T(expect_success("", "%.*s", 0, "abc"));
-	/*
-	 * TODO(b/239233116): This incorrect and should be fixed.
-	 */
-	T(expect_success_crec("ab", "%5.2s", "abc"));
-
 	T(expect_success("abc", "%.4s", "abc"));
+
+	/*
+	 * Exhaustively test (width, precision) cases that
+	 * are shorter and longer than given string.
+	 */
+	for (int width = 0; width < 6; ++width) {
+		for (int prec = 0; prec < 6; ++prec) {
+			snprintf(fmt, sizeof(fmt), "%%%d.%ds", width, prec);
+			T(expect_success_std(fmt, "abc"));
+		}
+	}
 
 	/*
 	 * Given a malformed string (address 0x1 is a good example),
