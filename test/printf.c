@@ -219,11 +219,7 @@ test_static int test_vsnprintf_int(void)
 
 	T(expect_success("123  ", "%-5d", 123));
 	T(expect_success("+123 ", "%-+5d", 123));
-	/*
-	 * TODO(b/239233116): This incorrect and should be fixed.
-	 */
-	T(expect_success_crec(err_str, "%+-5d", 123));
-
+	T(expect_success("+123 ", "%+-5d", 123));
 	T(expect_success("123  ", "%-05d", 123));
 	T(expect_success("123  ", "%-005d", 123));
 	T(expect_success("+123 ", "%-+05d", 123));

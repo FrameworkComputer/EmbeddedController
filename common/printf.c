@@ -301,15 +301,15 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			continue;
 		}
 
-		/* Handle left-justification ("%-5s") */
-		if (c == '-') {
-			flags |= PF_LEFT;
-			c = *format++;
-		}
+		while (c == '-' || c == '+') {
+			/* Handle left-justification ("%-5s") */
+			if (c == '-')
+				flags |= PF_LEFT;
 
-		/* Handle positive sign (%+d) */
-		if (c == '+') {
-			flags |= PF_SIGN;
+			/* Handle positive sign (%+d) */
+			if (c == '+')
+				flags |= PF_SIGN;
+
 			c = *format++;
 		}
 
