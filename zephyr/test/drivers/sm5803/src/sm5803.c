@@ -5,12 +5,14 @@
 
 #include "battery.h"
 #include "battery_smart.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "driver/charger/sm5803.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_sm5803.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
+#include "extpower.h"
 #include "hooks.h"
 #include "tcpm/tcpci.h"
 #include "test/drivers/charger_utils.h"
@@ -1003,6 +1005,35 @@ ZTEST(sm5803, test_set_option)
 	zassert_not_equal(sm5803_drv.set_option(CHARGER_NUM, 0), 0);
 }
 
+FAKE_VALUE_FUNC(int, extpower_is_present);
+
+ZTEST_F(sm5803, test_set_mode)
+{
+	int temp;
+
+	/* Make cur.ac = 1 */
+	pd_connect_source(fixture);
+	extpower_is_present_fake.return_val = 1;
+	zassert_true(extpower_is_present());
+	/* add delay to let curr.ac to be 1 */
+	k_sleep(K_SECONDS(1));
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate idle off"));
+	zassert_ok(charger_set_mode(0));
+	zassert_ok(charger_get_option(&temp));
+	/* Flow1(0x1C) Bit[1:0]=01, Flow2(0x1D) Bit[2:0]=111 */
+	zassert_equal(temp, 0x701);
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate idle on"));
+	zassert_ok(charger_set_mode(0));
+	zassert_ok(charger_get_option(&temp));
+	/* Flow1(0x1C) Bit[1:0]=01, Flow2(0x1D) Bit[2:0]=000 */
+	zassert_equal(temp, 0x1);
+
+	/* Reset AC status */
+	extpower_is_present_fake.return_val = 0;
+	zassert_false(extpower_is_present());
+}
+
 ZTEST(sm5803, test_acok)
 {
 	bool acok;
@@ -1596,6 +1627,7 @@ static void sm5803_before_test(void *data)
 
 	system_get_jump_tag_fake.custom_fake = NULL;
 	RESET_FAKE(board_overcurrent_event);
+	RESET_FAKE(extpower_is_present);
 }
 
 static void sm5803_after_test(void *data)

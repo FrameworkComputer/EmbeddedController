@@ -88,6 +88,14 @@ static int attempt_bfet_enable;
  */
 static bool fast_charge_disabled;
 
+#ifdef CONFIG_BATTERY
+/*
+ * During charge idle mode, we want to disable fast-charge/ pre-charge/
+ * trickle-charge. Add this variable to avoid re-send command to charger.
+ */
+static int charge_idle_enabled;
+#endif
+
 #ifdef TEST_BUILD
 void test_sm5803_set_fast_charge_disabled(bool value)
 {
@@ -1529,6 +1537,35 @@ static enum ec_error_list sm5803_set_mode(int chgnum, int mode)
 					  MASK_CLR);
 	}
 
+#ifdef CONFIG_BATTERY
+	if ((get_chg_ctrl_mode() == CHARGE_CONTROL_IDLE) &&
+	    !charge_idle_enabled) {
+		/*
+		 * Writes to the FLOW2_AUTO_ENABLED bits below have no effect if
+		 * flow1 is set to an active state, so disable sink mode first
+		 * before making other config changes.
+		 */
+		rv = sm5803_flow1_update(chgnum, SM5803_FLOW1_MODE, MASK_CLR);
+		/*
+		 * Disable fast-charge/ pre-charge/ trickle-charge.
+		 */
+		rv |= sm5803_flow2_update(chgnum, SM5803_FLOW2_AUTO_ENABLED,
+					  MASK_CLR);
+		/*
+		 * Enable Sink mode to make sure battery will not discharge.
+		 */
+		rv |= sm5803_flow1_update(chgnum, CHARGER_MODE_SINK, MASK_SET);
+		charge_idle_enabled = 1;
+	} else if ((get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL) &&
+		   charge_idle_enabled) {
+		rv = sm5803_flow1_update(chgnum, SM5803_FLOW1_MODE, MASK_CLR);
+		rv |= sm5803_flow2_update(chgnum, SM5803_FLOW2_AUTO_ENABLED,
+					  MASK_SET);
+		rv |= sm5803_flow1_update(chgnum, CHARGER_MODE_SINK, MASK_SET);
+		charge_idle_enabled = 0;
+	}
+#endif
+
 	return rv;
 }
 
@@ -1842,7 +1879,7 @@ static enum ec_error_list sm5803_get_option(int chgnum, int *option)
 
 	rv |= chg_read8(chgnum, SM5803_REG_FLOW3, &reg);
 	control |= reg << 16;
-
+	*option = control;
 	return rv;
 }
 
