@@ -164,7 +164,6 @@ void clear_power_flags(void)
 		EC_PS_ENTER_S5 | EC_PS_RESUME_S5);
 }
 
-/* TODO: control the me status */
 void update_me_change(int change)
 {
 	me_change = change;
@@ -289,6 +288,8 @@ enum power_state power_handle_state(enum power_state state)
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_prim_pwr_ok)) == 0) {
 			return POWER_G3;
 		}
+
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_me_en), !!(me_change & ME_UNLOCK));
 
 		k_msleep(10);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 1);
@@ -441,6 +442,8 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwrok_ls), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_sys_pwrok_ls), 0);
+
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_me_en), 0);
 
 		lpc_s0ix_suspend_clear_masks();
 		/* Call hooks before we remove power rails */
