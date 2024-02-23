@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* rex-ish project DTSI includes */
+/* brox-ish project DTSI includes */
 #include "gpio.dtsi"
 #include "i2c.dtsi"
 #include "interrupts.dtsi"

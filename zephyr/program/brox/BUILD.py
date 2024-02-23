@@ -60,7 +60,7 @@ brox.variant(
 
 register_ish_project(
     project_name="brox-ish",
-    zephyr_board="intel_ish_5_6_0",
+    zephyr_board="intel_ish_5_4_1",
     dts_overlays=[
         here / "brox-ish" / "project.overlay",
     ],
