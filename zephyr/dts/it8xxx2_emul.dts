@@ -173,6 +173,45 @@
 		#gpio-cells = <2>;
 		ngpios = <8>;
 	};
+	gpioksi: gpio@f01d08 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0xf01d08 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		keyboard-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpioksoh: gpio@f01d01 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0xf01d01 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		keyboard-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpioksol: gpio@f01d00 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0xf01d00 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		keyboard-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
 
 	i2c0: i2c@f01c40 {
 		compatible = "zephyr,i2c-emul-controller";
