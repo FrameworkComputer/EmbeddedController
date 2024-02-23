@@ -13,7 +13,9 @@
 #include "charger_profile_override.h"
 #include "common.h"
 #include "compile_time_macros.h"
+#include "driver/charger/isl9241.h"
 #include "gpio.h"
+#include "hooks.h"
 /*
  * Battery info for all Osiris battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
@@ -149,3 +151,15 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
 {
 	return EC_RES_INVALID_PARAM;
 }
+
+/* Set the DCPROCHOT base on battery over discharging current about 7A */
+static void set_dc_prochot(void)
+{
+	/*
+	 * Only bits 13:8 are usable for this register, any other bits will be
+	 * truncated.  Valid values are 256 mA to 16128 mA at 256 mA intervals.
+	 */
+
+	isl9241_set_dc_prochot(CHARGER_SOLO, 0x1B00);
+}
+DECLARE_HOOK(HOOK_INIT, set_dc_prochot, HOOK_PRIO_DEFAULT);
