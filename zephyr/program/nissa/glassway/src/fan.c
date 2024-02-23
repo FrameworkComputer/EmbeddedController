@@ -15,7 +15,7 @@
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 /*
- * Nirwen fan support
+ * Glassway fan support
  */
 test_export_static void fan_init(void)
 {
@@ -24,12 +24,12 @@ test_export_static void fan_init(void)
 	/*
 	 * Retrieve the fan config.
 	 */
-	ret = cros_cbi_get_fw_config(FW_FAN, &val);
+	ret = cros_cbi_get_fw_config(FW_THERMAL_SOLUTION, &val);
 	if (ret != 0) {
 		LOG_ERR("Error retrieving CBI FW_CONFIG field %d", FW_FAN);
 		return;
 	}
-	if (val != FW_FAN_PRESENT) {
+	if (val == FW_THERMAL_SOLUTION_PASSIVE) {
 		/* Disable the fan */
 		fan_set_count(0);
 	} else {

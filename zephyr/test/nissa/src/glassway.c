@@ -8,6 +8,10 @@
 #include "driver/tcpm/raa489000.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "extpower.h"
+#include "fan.h"
+#include "glassway.h"
+#include "glassway_sub_board.h"
+#include "hooks.h"
 #include "led_onoff_states.h"
 #include "led_pwm.h"
 #include "mock/isl923x.h"
@@ -27,11 +31,19 @@
 
 #define TCPC0 EMUL_DT_GET(DT_NODELABEL(tcpc_port0))
 #define TCPC1 EMUL_DT_GET(DT_NODELABEL(tcpc_port1))
+#define ASSERT_GPIO_FLAGS(spec, expected)                                  \
+	do {                                                               \
+		gpio_flags_t flags;                                        \
+		zassert_ok(gpio_emul_flags_get((spec)->port, (spec)->pin,  \
+					       &flags));                   \
+		zassert_equal(flags, expected,                             \
+			      "actual value was %#x; expected %#x", flags, \
+			      expected);                                   \
+	} while (0)
 
 LOG_MODULE_REGISTER(nissa, LOG_LEVEL_INF);
 
 void fan_init(void);
-void form_factor_init(void);
 
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
@@ -46,6 +58,17 @@ FAKE_VALUE_FUNC(int, charge_manager_get_active_charge_port);
 FAKE_VALUE_FUNC(enum ec_error_list, charger_discharge_on_ac, int);
 FAKE_VALUE_FUNC(int, chipset_in_state, int);
 FAKE_VOID_FUNC(usb_charger_task_set_event_sync, int, uint8_t);
+FAKE_VOID_FUNC(usb_interrupt_c1, enum gpio_signal);
+
+void board_usb_pd_count_init(void);
+static uint32_t fw_config_value;
+
+static void set_fw_config_value(uint32_t value)
+{
+	fw_config_value = value;
+	board_usb_pd_count_init();
+	fan_init();
+}
 
 static void test_before(void *fixture)
 {
@@ -68,6 +91,9 @@ static void test_before(void *fixture)
 	i2c_common_emul_set_write_fail_reg(
 		emul_tcpci_generic_get_i2c_common_data(TCPC1),
 		I2C_COMMON_EMUL_NO_FAIL_REG);
+
+	glassway_cached_sub_board = GLASSWAY_SB_1C_1A;
+	set_fw_config_value(FW_SUB_BOARD_3);
 }
 
 ZTEST_SUITE(glassway, NULL, NULL, test_before, NULL, NULL);
@@ -324,16 +350,16 @@ ZTEST(glassway, test_process_pd_alert)
 static int get_fan_config_present(enum cbi_fw_config_field_id field,
 				  uint32_t *value)
 {
-	zassert_equal(field, FW_FAN);
-	*value = FW_FAN_PRESENT;
+	zassert_equal(field, FW_THERMAL_SOLUTION);
+	*value = FW_THERMAL_SOLUTION_ACTIVE;
 	return 0;
 }
 
 static int get_fan_config_absent(enum cbi_fw_config_field_id field,
 				 uint32_t *value)
 {
-	zassert_equal(field, FW_FAN);
-	*value = FW_FAN_NOT_PRESENT;
+	zassert_equal(field, FW_THERMAL_SOLUTION);
+	*value = FW_THERMAL_SOLUTION_PASSIVE;
 	return 0;
 }
 
@@ -354,6 +380,8 @@ ZTEST(glassway, test_fan_present)
 ZTEST(glassway, test_fan_absent)
 {
 	int flags;
+	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_fan_enable),
+			      GPIO_DISCONNECTED);
 
 	cros_cbi_get_fw_config_fake.custom_fake = get_fan_config_absent;
 	fan_init();
@@ -364,7 +392,6 @@ ZTEST(glassway, test_fan_absent)
 	zassert_equal(fan_set_count_fake.arg0_val, 0, "parameter value was %d",
 		      fan_set_count_fake.arg0_val);
 
-	/* Fan enable is left unconfigured */
 	zassert_ok(gpio_pin_get_config_dt(
 		GPIO_DT_FROM_NODELABEL(gpio_fan_enable), &flags));
 	zassert_equal(flags, 0, "actual GPIO flags were %#x", flags);
@@ -373,6 +400,8 @@ ZTEST(glassway, test_fan_absent)
 ZTEST(glassway, test_fan_cbi_error)
 {
 	int flags;
+	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_fan_enable),
+			      GPIO_DISCONNECTED);
 
 	cros_cbi_get_fw_config_fake.return_val = EINVAL;
 	fan_init();
@@ -381,56 +410,6 @@ ZTEST(glassway, test_fan_cbi_error)
 	zassert_ok(gpio_pin_get_config_dt(
 		GPIO_DT_FROM_NODELABEL(gpio_fan_enable), &flags));
 	zassert_equal(flags, 0, "actual GPIO flags were %#x", flags);
-}
-
-static int get_base_orientation_normal(enum cbi_fw_config_field_id field,
-				       uint32_t *value)
-{
-	zassert_equal(field, FW_BASE_INVERSION);
-	*value = FW_BASE_REGULAR;
-	return 0;
-}
-
-static int get_base_orientation_inverted(enum cbi_fw_config_field_id field,
-					 uint32_t *value)
-{
-	zassert_equal(field, FW_BASE_INVERSION);
-	*value = FW_BASE_INVERTED;
-	return 0;
-}
-
-ZTEST(glassway, test_base_inversion)
-{
-	const int BASE_ACCEL = SENSOR_ID(DT_NODELABEL(base_accel));
-	const void *const normal_rotation =
-		&SENSOR_ROT_STD_REF_NAME(DT_NODELABEL(base_rot_ref));
-	const void *const inverted_rotation =
-		&SENSOR_ROT_STD_REF_NAME(DT_NODELABEL(base_rot_inverted));
-
-	/*
-	 * Normally this gets set to rot-standard-ref during other init,
-	 * which we aren't running in this test.
-	 */
-	motion_sensors[BASE_ACCEL].rot_standard_ref = normal_rotation;
-
-	cros_cbi_get_fw_config_fake.custom_fake = get_base_orientation_normal;
-	form_factor_init();
-	zassert_equal_ptr(
-		motion_sensors[BASE_ACCEL].rot_standard_ref, normal_rotation,
-		"normal orientation should use the standard rotation matrix");
-
-	RESET_FAKE(cros_cbi_get_fw_config);
-	cros_cbi_get_fw_config_fake.return_val = EINVAL;
-	form_factor_init();
-	zassert_equal_ptr(motion_sensors[BASE_ACCEL].rot_standard_ref,
-			  normal_rotation,
-			  "errors should leave the rotation unchanged");
-
-	cros_cbi_get_fw_config_fake.custom_fake = get_base_orientation_inverted;
-	form_factor_init();
-	zassert_equal_ptr(
-		motion_sensors[BASE_ACCEL].rot_standard_ref, inverted_rotation,
-		"inverted orientation should use the inverted rotation matrix");
 }
 
 ZTEST(glassway, test_led_pwm)
@@ -446,4 +425,80 @@ ZTEST(glassway, test_led_pwm)
 	led_set_color_battery(EC_LED_COLOR_GREEN);
 	zassert_equal(set_pwm_led_color_fake.arg0_val, PWM_LED0);
 	zassert_equal(set_pwm_led_color_fake.arg1_val, -1);
+}
+
+enum glassway_sub_board_type glassway_get_sb_type(void);
+
+static int
+get_fake_sub_board_fw_config_field(enum cbi_fw_config_field_id field_id,
+				   uint32_t *value)
+{
+	*value = fw_config_value;
+	return 0;
+}
+
+int init_gpios(const struct device *unused);
+
+ZTEST(glassway, test_db_without_c)
+{
+	cros_cbi_get_fw_config_fake.custom_fake =
+		get_fake_sub_board_fw_config_field;
+	/* Reset cached global state. */
+	glassway_cached_sub_board = GLASSWAY_SB_UNKNOWN;
+	fw_config_value = -1;
+
+	/* Set the sub-board, reported configuration is correct. */
+	set_fw_config_value(FW_SUB_BOARD_2);
+	zassert_equal(glassway_get_sb_type(), GLASSWAY_SB_1A);
+	zassert_equal(board_get_usb_pd_port_count(), 1);
+
+	init_gpios(NULL);
+	hook_notify(HOOK_INIT);
+
+	ASSERT_GPIO_FLAGS(GPIO_DT_FROM_NODELABEL(gpio_sb_1),
+			  GPIO_PULL_UP | GPIO_INPUT | GPIO_INT_EDGE_FALLING);
+
+	glassway_cached_sub_board = GLASSWAY_SB_1C_1A;
+	fw_config_value = -1;
+}
+
+ZTEST(glassway, test_db_with_c)
+{
+	cros_cbi_get_fw_config_fake.custom_fake =
+		get_fake_sub_board_fw_config_field;
+	/* Reset cached global state. */
+	glassway_cached_sub_board = GLASSWAY_SB_UNKNOWN;
+	fw_config_value = -1;
+
+	/* Set the sub-board, reported configuration is correct. */
+	set_fw_config_value(FW_SUB_BOARD_1);
+	zassert_equal(glassway_get_sb_type(), GLASSWAY_SB_1C);
+	zassert_equal(board_get_usb_pd_port_count(), 2);
+
+	init_gpios(NULL);
+	hook_notify(HOOK_INIT);
+
+	ASSERT_GPIO_FLAGS(GPIO_DT_FROM_NODELABEL(gpio_sb_1),
+			  GPIO_PULL_UP | GPIO_INPUT | GPIO_INT_EDGE_FALLING);
+
+	glassway_cached_sub_board = GLASSWAY_SB_1C;
+	fw_config_value = -1;
+
+	/* Reset cached global state. */
+	glassway_cached_sub_board = GLASSWAY_SB_UNKNOWN;
+	fw_config_value = -1;
+
+	/* Set the sub-board, reported configuration is correct. */
+	set_fw_config_value(FW_SUB_BOARD_3);
+	zassert_equal(glassway_get_sb_type(), GLASSWAY_SB_1C_1A);
+	zassert_equal(board_get_usb_pd_port_count(), 2);
+
+	init_gpios(NULL);
+	hook_notify(HOOK_INIT);
+
+	ASSERT_GPIO_FLAGS(GPIO_DT_FROM_NODELABEL(gpio_sb_1),
+			  GPIO_PULL_UP | GPIO_INPUT | GPIO_INT_EDGE_FALLING);
+
+	glassway_cached_sub_board = GLASSWAY_SB_1C_1A;
+	fw_config_value = -1;
 }

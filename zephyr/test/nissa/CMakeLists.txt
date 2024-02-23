@@ -239,7 +239,7 @@ if(CONFIG_TEST_NISSA_GLASSWAY)
             app PRIVATE
             src/glassway.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/glassway/src/fan.c
-            ${PLATFORM_EC_PROGRAM_DIR}/nissa/glassway/src/form_factor.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/glassway/src/sub_board.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/glassway/src/usbc.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/glassway/src/charger.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/glassway/src/led.c

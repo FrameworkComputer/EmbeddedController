@@ -98,20 +98,6 @@
 			no-auto-init;
 		};
 
-		/*
-		 * Set I2C pins for type C sub-board to be low voltage (I2C5_1).
-		 * We do this for all boards, since the pins are 3.3V tolerant,
-		 * and the only 2 types of sub-boards used on nivviks both have
-		 * type-C ports on them.
-		 */
-		gpio_sb_3: sb-3 {
-			gpios = <&gpiof 4 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
-			no-auto-init;
-		};
-		gpio_sb_4: sb-4 {
-			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-			no-auto-init;
-		};
 		gpio_fan_enable: fan-enable {
 			gpios = <&gpio6 3 GPIO_OUTPUT>;
 			no-auto-init;
@@ -130,7 +116,6 @@
 	aliases {
 		/*
 		 * Input GPIO when used with type-C port 1
-		 * Output when used with HDMI sub-board
 		 */
 		gpio-usb-c1-int-odl = &gpio_sb_1;
 		gpio-en-rails-odl = &gpio_sb_1;
@@ -138,15 +123,6 @@
 		 * Sub-board with type A USB, enable.
 		 */
 		gpio-en-usb-a1-vbus = &gpio_sb_2;
-		/*
-		 * HPD pins for HDMI sub-board.
-		 */
-		gpio-hdmi-en-odl = &gpio_sb_3;
-		gpio-hpd-odl = &gpio_sb_4;
-		/*
-		 * Enable S5 rails for LTE sub-board
-		 */
-		gpio-en-sub-s5-rails = &gpio_sb_2;
 	};
 
 	temp_memory: memory {
