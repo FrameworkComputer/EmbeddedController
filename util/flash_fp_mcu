@@ -252,6 +252,30 @@ power_cycle_fpmcu() {
   fi
 }
 
+# TODO(b/b:320623537): Remove after hardware is fixed.
+power_cycle_fpmcu_workaround() {
+  local gpio_pwren="${1}"
+
+  local model
+  if ! model="$(get_model_name)"; then
+    echo "Failed to get model name."
+    exit "${EXIT_CONFIG}"
+  fi
+
+  if [[ "${model}" == "karis" ]]; then
+    local board_version
+    if ! board_version="$(get_board_version)"; then
+      echo "Failed to get board version."
+      exit "${EXIT_CONFIG}"
+    fi
+
+    if [[ "${board_version}" == "1" ]]; then
+      echo "b/320623537: Running power cycle workaround."
+      power_cycle_fpmcu "${gpio_pwren}"
+    fi
+  fi
+}
+
 # Test the current running kernel version against a regular expression.
 # Returns 0 if the regex matches.
 match_kernel_regex() {
@@ -589,6 +613,9 @@ flash_fp_mcu_board() {
   gpio 1 "${gpio_boot0}"
   gpio 0 "${gpio_nrst}"
   sleep 0.001
+
+  # TODO(b/b:320623537): Remove after hardware is fixed.
+  power_cycle_fpmcu_workaround "${gpio_pwren}"
 
   klog "Binding raw driver"
   if [[ "${transport}" == "UART" ]]; then
