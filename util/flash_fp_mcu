@@ -206,6 +206,36 @@ get_platform_name() {
   echo "${platform_name}"
 }
 
+# Get the model name as a string.
+get_model_name() {
+  local model_name
+
+  echo "Getting model name." 1>&2
+  model_name="$(cros_config / name)"
+  if [[ -z "${model_name}" ]]; then
+    return 1
+  fi
+
+  echo "${model_name}"
+}
+
+# Return the board version as a string. The board version corresponds to EVT,
+# DVT, PVT, etc.
+# https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md#board_version
+# NOTE: This doesn't work on all platforms and should only be used for
+# short-term workarounds that are fixed in later hardware.
+get_board_version() {
+  local board_version
+
+  echo "Getting board version." 1>&2
+  board_version="$(ectool cbi get 0 | grep -o '[0-9]\+' | head -n 1)"
+  if [[ -z "${board_version}" ]]; then
+    return 1
+  fi
+
+  echo "${board_version}"
+}
+
 # Test the current running kernel version against a regular expression.
 # Returns 0 if the regex matches.
 match_kernel_regex() {
