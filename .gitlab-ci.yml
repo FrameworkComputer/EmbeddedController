@@ -402,7 +402,7 @@ zephyr_coverage:
     - python3 ${EC_DIR}/twister --coverage --outdir "${TWISTER_OUT_DIR}"
       -v -i -x=ALLOW_WARNINGS=ON -y
     - tests=( $( jq -r '.testsuites[] | @text "\(.name)"' "${TWISTER_OUT_DIR}/testplan.json" |
-      sort |
+      sort -u |
       split -n r/"${CI_NODE_INDEX}"/"${CI_NODE_TOTAL}") )
     - printf ' -s %s' "${tests[@]}" | xargs python3 ${EC_DIR}/twister --coverage --outdir "${TWISTER_OUT_DIR}"
       -v -i -x=ALLOW_WARNINGS=ON
@@ -495,7 +495,7 @@ testall:
     - python3 ${EC_DIR}/twister --outdir "${TWISTER_OUT_DIR}" -v -i
       -x=ALLOW_WARNINGS=ON -y
     - tests=( $( jq -r '.testsuites[] | @text "\(.name)"' "${TWISTER_OUT_DIR}/testplan.json" |
-      sort |
+      sort -u |
       split -n r/"${CI_NODE_INDEX}"/"${CI_NODE_TOTAL}") )
     - printf ' -s %s' "${tests[@]}" | xargs python3 ${EC_DIR}/twister --outdir "${TWISTER_OUT_DIR}" -v -i
       -x=ALLOW_WARNINGS=ON
