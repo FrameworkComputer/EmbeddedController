@@ -236,6 +236,22 @@ get_board_version() {
   echo "${board_version}"
 }
 
+power_cycle_fpmcu() {
+  local gpio_pwren="${1}"
+
+  if [[ "${gpio_pwren}" -gt 0 ]]; then
+    echo "Power cycling the FPMCU."
+    gpio export "${gpio_pwren}"
+    gpio out    "${gpio_pwren}"
+    gpio 0      "${gpio_pwren}"
+    # Must outlast hardware soft start, which is typically ~3ms.
+    sleep 0.5
+    gpio 1      "${gpio_pwren}"
+    # Power enable line is externally pulled down, so leave as output-high.
+    gpio unexport "${gpio_pwren}"
+  fi
+}
+
 # Test the current running kernel version against a regular expression.
 # Returns 0 if the regex matches.
 match_kernel_regex() {
@@ -635,15 +651,7 @@ flash_fp_mcu_board() {
   # detected on boot. We force a POR here to ensure we avoid this reboot loop.
   # See to b/146428434.
   if [[ "${gpio_pwren}" -gt 0 ]]; then
-    echo "Power cycling the FPMCU."
-    gpio export "${gpio_pwren}"
-    gpio out    "${gpio_pwren}"
-    gpio 0      "${gpio_pwren}"
-    # Must outlast hardware soft start, which is typically ~3ms.
-    sleep 0.5
-    gpio 1      "${gpio_pwren}"
-    # Power enable line is externally pulled down, so leave as output-high.
-    gpio unexport "${gpio_pwren}"
+    power_cycle_fpmcu "${gpio_pwren}"
   else
     echo "Reset the FPMCU."
     gpio out	"${gpio_nrst}"
