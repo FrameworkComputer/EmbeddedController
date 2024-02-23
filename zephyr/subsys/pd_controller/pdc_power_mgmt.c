@@ -87,6 +87,8 @@ enum pdc_cmd_t {
 	CMD_PDC_SET_PDR,
 	/** CMD_PDC_GET_CONNECTOR_STATUS */
 	CMD_PDC_GET_CONNECTOR_STATUS,
+	/** CMD_PDC_GET_CABLE_PROPERTY */
+	CMD_PDC_GET_CABLE_PROPERTY,
 
 	/** CMD_PDC_COUNT */
 	CMD_PDC_COUNT
@@ -142,6 +144,8 @@ struct send_cmd_t {
 enum snk_attached_local_state_t {
 	/** SNK_ATTACHED_GET_CONNECTOR_CAPABILITY */
 	SNK_ATTACHED_GET_CONNECTOR_CAPABILITY,
+	/** SNK_ATTACHED_GET_CABLE_PROPERTY */
+	SNK_ATTACHED_GET_CABLE_PROPERTY,
 	/** SNK_ATTACHED_SET_DR_SWAP_POLICY */
 	SNK_ATTACHED_SET_DR_SWAP_POLICY,
 	/** SNK_ATTACHED_SET_PR_SWAP_POLICY */
@@ -166,6 +170,8 @@ enum snk_attached_local_state_t {
 enum src_attached_local_state_t {
 	/** SRC_ATTACHED_GET_CONNECTOR_CAPABILITY */
 	SRC_ATTACHED_GET_CONNECTOR_CAPABILITY,
+	/** SRC_ATTACHED_GET_CABLE_PROPERTY */
+	SRC_ATTACHED_GET_CABLE_PROPERTY,
 	/** SRC_ATTACHED_SET_DR_SWAP_POLICY */
 	SRC_ATTACHED_SET_DR_SWAP_POLICY,
 	/** SRC_ATTACHED_SET_PR_SWAP_POLICY */
@@ -238,6 +244,7 @@ static const char *const pdc_cmd_names[] = {
 	[CMD_PDC_SET_UOR] = "PDC_SET_UOR",
 	[CMD_PDC_SET_PDR] = "PDC_SET_PDR",
 	[CMD_PDC_GET_CONNECTOR_STATUS] = "PDC_GET_CONNECTOR_STATUS",
+	[CMD_PDC_GET_CABLE_PROPERTY] = "PDC_GET_CABLE_PROPERTY",
 };
 
 /**
@@ -391,6 +398,8 @@ struct pdc_port_t {
 	/** PDC Source Attached policy */
 	struct pdc_src_attached_policy_t src_policy;
 
+	/** Cable Property */
+	union cable_property_t cable_prop;
 	/** PDC version and other information */
 	struct pdc_info_t info;
 	/** Public API block counter */
@@ -776,6 +785,10 @@ static void pdc_unattached_entry(void *obj)
 
 	port->send_cmd.intern.pending = false;
 
+	/* Clear any previously set cable property information */
+	port->cable_prop.raw_value[0] = 0;
+	port->cable_prop.raw_value[1] = 0;
+
 	invalidate_charger_settings(port);
 
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
@@ -842,8 +855,13 @@ static void pdc_src_attached_run(void *obj)
 	switch (port->src_attached_local_state) {
 	case SRC_ATTACHED_GET_CONNECTOR_CAPABILITY:
 		port->src_attached_local_state =
-			SRC_ATTACHED_SET_DR_SWAP_POLICY;
+			SRC_ATTACHED_GET_CABLE_PROPERTY;
 		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_CAPABILITY);
+		return;
+	case SRC_ATTACHED_GET_CABLE_PROPERTY:
+		port->src_attached_local_state =
+			SRC_ATTACHED_SET_DR_SWAP_POLICY;
+		queue_internal_cmd(port, CMD_PDC_GET_CABLE_PROPERTY);
 		return;
 	case SRC_ATTACHED_SET_DR_SWAP_POLICY:
 		port->src_attached_local_state =
@@ -898,8 +916,13 @@ static void pdc_snk_attached_run(void *obj)
 	switch (port->snk_attached_local_state) {
 	case SNK_ATTACHED_GET_CONNECTOR_CAPABILITY:
 		port->snk_attached_local_state =
-			SNK_ATTACHED_SET_DR_SWAP_POLICY;
+			SNK_ATTACHED_GET_CABLE_PROPERTY;
 		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_CAPABILITY);
+		return;
+	case SNK_ATTACHED_GET_CABLE_PROPERTY:
+		port->snk_attached_local_state =
+			SNK_ATTACHED_SET_DR_SWAP_POLICY;
+		queue_internal_cmd(port, CMD_PDC_GET_CABLE_PROPERTY);
 		return;
 	case SNK_ATTACHED_SET_DR_SWAP_POLICY:
 		port->snk_attached_local_state =
@@ -1050,6 +1073,9 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 	case CMD_PDC_GET_CONNECTOR_STATUS:
 		rv = pdc_get_connector_status(port->pdc,
 					      &port->connector_status);
+		break;
+	case CMD_PDC_GET_CABLE_PROPERTY:
+		rv = pdc_get_cable_property(port->pdc, &port->cable_prop);
 		break;
 	default:
 		LOG_ERR("Invalid command: %d", port->cmd->cmd);
@@ -2068,4 +2094,27 @@ int pdc_power_mgmt_get_bus_info(int port, struct pdc_bus_info_t *pdc_bus_info)
 	 */
 
 	return pdc_get_bus_info(pdc_data[port]->port.pdc, pdc_bus_info);
+}
+
+int pdc_power_mgmt_get_rev(int port, enum tcpci_msg_type type)
+{
+	uint32_t rev;
+
+	/* Make sure port is connected */
+	if (!pdc_power_mgmt_is_connected(port)) {
+		return 0;
+	}
+
+	switch (type) {
+	case TCPCI_MSG_SOP:
+		rev = pdc_data[port]->port.ccaps.partner_pd_revision - 1;
+		break;
+	case TCPCI_MSG_SOP_PRIME:
+		rev = pdc_data[port]->port.cable_prop.cable_pd_revision - 1;
+		break;
+	default:
+		rev = 0;
+	}
+
+	return rev;
 }

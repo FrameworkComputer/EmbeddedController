@@ -283,4 +283,16 @@ int pdc_power_mgmt_get_info(int port, struct pdc_info_t *pdc_info);
  */
 int pdc_power_mgmt_get_bus_info(int port, struct pdc_bus_info_t *pdc_bus_info);
 
+/**
+ * @brief Get current PD Revision
+ *
+ * @param port USB-C port number
+ * @param type SOP* type
+ *
+ * @retval PD_REV10 for PD Revision 1.0
+ *         PD_REV20 for PD Revision 2.0
+ *         PD_REV30 for PD Revision 3.0
+ */
+int pdc_power_mgmt_get_rev(int port, enum tcpci_msg_type type);
+
 #endif /* __CROS_EC_PDC_POWER_MGMT_H */

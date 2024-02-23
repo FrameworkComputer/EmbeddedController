@@ -157,7 +157,5 @@ enum pd_discovery_state pd_get_identity_discovery(int port,
 
 int pd_get_rev(int port, enum tcpci_msg_type type)
 {
-	/* TODO:b/326466765 */
-
-	return PD_REV30;
+	return pdc_power_mgmt_get_rev(port, type);
 }
