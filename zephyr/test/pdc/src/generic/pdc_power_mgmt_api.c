@@ -84,14 +84,16 @@ ZTEST_USER(pdc_power_mgmt_api, test_pd_get_polarity)
 	connector_status.orientation = 1;
 	emul_pdc_configure_src(emul, &connector_status);
 	emul_pdc_connect_partner(emul, &connector_status);
-	k_sleep(K_MSEC(1000));
-	zassert_equal(POLARITY_CC2, pdc_power_mgmt_pd_get_polarity(TEST_PORT));
+	ASSERT_FOR_TRUE(POLARITY_CC2 ==
+				pdc_power_mgmt_pd_get_polarity(TEST_PORT),
+			1000);
 
 	connector_status.orientation = 0;
 	emul_pdc_configure_src(emul, &connector_status);
 	emul_pdc_connect_partner(emul, &connector_status);
-	k_sleep(K_MSEC(1000));
-	zassert_equal(POLARITY_CC1, pdc_power_mgmt_pd_get_polarity(TEST_PORT));
+	ASSERT_FOR_TRUE(POLARITY_CC1 ==
+				pdc_power_mgmt_pd_get_polarity(TEST_PORT),
+			1000);
 }
 
 ZTEST_USER(pdc_power_mgmt_api, test_pd_get_data_role)
