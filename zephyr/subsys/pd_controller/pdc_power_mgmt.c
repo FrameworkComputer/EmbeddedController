@@ -779,15 +779,6 @@ static void pdc_unattached_run(void *obj)
 		return;
 	}
 
-	/* TODO: Limit the number of retries and try to reset PDC, then
-	 * ultimately disable port */
-	if (port->send_cmd.intern.error) {
-		/* The last command could not be sent, so send it again */
-		port->unattached_local_state = port->unattached_last_state;
-	} else {
-		port->unattached_last_state = port->unattached_local_state;
-	}
-
 	switch (port->unattached_local_state) {
 	case UNATTACHED_RUN:
 		run_unattached_policies(port);
@@ -826,15 +817,6 @@ static void pdc_src_attached_run(void *obj)
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_EVENT)) {
 		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_STATUS);
 		return;
-	}
-
-	/* TODO: Limit the number of retries and try to reset PDC, then
-	 * ultimately disable port */
-	if (port->send_cmd.intern.error) {
-		/* The last command could not be sent, so send it again */
-		port->src_attached_local_state = port->src_attached_last_state;
-	} else {
-		port->src_attached_last_state = port->src_attached_local_state;
 	}
 
 	/* TODO: b/319643480 - Brox: implement SRC policies */
@@ -893,15 +875,6 @@ static void pdc_snk_attached_run(void *obj)
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_EVENT)) {
 		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_STATUS);
 		return;
-	}
-
-	/* TODO: Limit the number of retries and try to reset PDC, then
-	 * ultimately disable port */
-	if (port->send_cmd.intern.error) {
-		/* The last command could not be sent, so send it again */
-		port->snk_attached_local_state = port->snk_attached_last_state;
-	} else {
-		port->snk_attached_last_state = port->snk_attached_local_state;
 	}
 
 	switch (port->snk_attached_local_state) {
@@ -1168,6 +1141,7 @@ static void pdc_send_cmd_wait_run(void *obj)
 		} else {
 			LOG_ERR("%s resend attempts exceeded!",
 				pdc_cmd_names[port->cmd->cmd]);
+			port->cmd->error = true;
 			set_pdc_state(port, port->send_cmd_return_state);
 			return;
 		}
