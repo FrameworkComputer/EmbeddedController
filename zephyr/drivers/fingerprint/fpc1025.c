@@ -36,12 +36,17 @@ enum fpc1025_cmd {
 static int fpc1025_send_cmd(const struct device *dev, uint8_t cmd)
 {
 	const struct fpc1025_cfg *cfg = dev->config;
+	struct fpc1025_data *data = dev->data;
 	const struct spi_buf tx_buf[1] = { { .buf = &cmd, .len = 1 } };
 	const struct spi_buf_set tx = { .buffers = tx_buf, .count = 1 };
-	int rc = spi_write_dt(&cfg->spi, &tx);
+	int rc;
+
+	k_sem_take(&data->sensor_lock, K_FOREVER);
+	rc = spi_write_dt(&cfg->spi, &tx);
 
 	/* Release CS line */
 	spi_release_dt(&cfg->spi);
+	k_sem_give(&data->sensor_lock);
 
 	return rc;
 }
@@ -49,6 +54,7 @@ static int fpc1025_send_cmd(const struct device *dev, uint8_t cmd)
 static int fpc1025_get_hwid(const struct device *dev, uint16_t *id)
 {
 	const struct fpc1025_cfg *cfg = dev->config;
+	struct fpc1025_data *data = dev->data;
 	uint8_t cmd = FPC1025_CMD_HW_ID;
 	uint8_t tmp;
 	int rc;
@@ -64,10 +70,12 @@ static int fpc1025_get_hwid(const struct device *dev, uint16_t *id)
 	if (id == NULL)
 		return -EINVAL;
 
+	k_sem_take(&data->sensor_lock, K_FOREVER);
 	rc = spi_transceive_dt(&cfg->spi, &tx, &rx);
 
 	/* Release CS line */
 	spi_release_dt(&cfg->spi);
+	k_sem_give(&data->sensor_lock);
 
 	/* HWID is in big endian, so convert it CPU endianness. */
 	*id = sys_be16_to_cpu(*id);
@@ -380,6 +388,8 @@ static int fpc1025_init_driver(const struct device *dev)
 		return ret;
 	}
 
+	k_sem_init(&data->sensor_lock, 1, 1);
+
 	data->dev = dev;
 	gpio_init_callback(&data->irq_cb, fpc1025_irq, BIT(cfg->interrupt.pin));
 	gpio_add_callback_dt(&cfg->interrupt, &data->irq_cb);
@@ -404,8 +414,7 @@ static int fpc1025_init_driver(const struct device *dev)
 	static const struct fpc1025_cfg fpc1025_cfg_##inst = {                 \
 		.spi = SPI_DT_SPEC_INST_GET(                                   \
 			inst,                                                  \
-			SPI_OP_MODE_MASTER | SPI_WORD_SET(8) |                 \
-				SPI_HOLD_ON_CS | SPI_LOCK_ON,                  \
+			SPI_OP_MODE_MASTER | SPI_WORD_SET(8) | SPI_HOLD_ON_CS, \
 			0),                                                    \
 		.interrupt = GPIO_DT_SPEC_INST_GET(inst, irq_gpios),           \
 		.reset_pin = GPIO_DT_SPEC_INST_GET(inst, reset_gpios),         \

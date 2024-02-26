@@ -22,6 +22,8 @@ struct fpc1025_data {
 	const struct device *dev;
 	fingerprint_callback_t callback;
 	struct gpio_callback irq_cb;
+	struct k_sem sensor_lock;
+	k_tid_t sensor_owner;
 	uint16_t errors;
 };
 
