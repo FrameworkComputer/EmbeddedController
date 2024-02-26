@@ -62,15 +62,6 @@ enum battery_type {
 #define CONFIG_EEPROM_CBI_WP
 #endif
 
-#ifdef TEST_FLASH_LOG
-#define CONFIG_CRC8
-#define CONFIG_FLASH_ERASED_VALUE32 (-1U)
-#define CONFIG_FLASH_LOG
-#define CONFIG_FLASH_LOG_BASE (CONFIG_PROGRAM_MEMORY_BASE + 0x800)
-#define CONFIG_FLASH_LOG_SPACE 0x800
-#define CONFIG_SHARED_MALLOC
-#endif
-
 #ifdef TEST_KB_8042
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_8042_AUX
@@ -261,35 +252,6 @@ enum sensor_id {
 #if defined(TEST_BODY_DETECTION)
 #define CONFIG_BODY_DETECTION
 #define CONFIG_BODY_DETECTION_SENSOR BASE
-#endif
-
-#ifdef TEST_RMA_AUTH
-
-/* Test server public and private keys */
-#define RMA_KEY_BLOB                                                          \
-	{                                                                     \
-		0x03, 0xae, 0x2d, 0x2c, 0x06, 0x23, 0xe0, 0x73, 0x0d, 0xd3,   \
-			0xb7, 0x92, 0xac, 0x54, 0xc5, 0xfd, 0x7e, 0x9c, 0xf0, \
-			0xa8, 0xeb, 0x7e, 0x2a, 0xb5, 0xdb, 0xf4, 0x79, 0x5f, \
-			0x8a, 0x0f, 0x28, 0x3f, 0x10                          \
-	}
-
-#define RMA_TEST_SERVER_PRIVATE_KEY                                           \
-	{                                                                     \
-		0x47, 0x3b, 0xa5, 0xdb, 0xc4, 0xbb, 0xd6, 0x77, 0x20, 0xbd,   \
-			0xd8, 0xbd, 0xc8, 0x7a, 0xbb, 0x07, 0x03, 0x79, 0xba, \
-			0x7b, 0x52, 0x8c, 0xec, 0xb3, 0x4d, 0xaa, 0x69, 0xf5, \
-			0x65, 0xb4, 0x31, 0xad                                \
-	}
-#define RMA_TEST_SERVER_KEY_ID 0x10
-
-#define CONFIG_BASE32
-#define CONFIG_CURVE25519
-#define CONFIG_RMA_AUTH
-#define CONFIG_RNG
-#define CONFIG_SHA256_SW
-#define CC_EXTENSION CC_COMMAND
-
 #endif
 
 #ifdef TEST_CRC
