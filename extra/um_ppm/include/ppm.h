@@ -106,8 +106,8 @@ enum ucsi_commands {
 #define UCSI_MESSAGE_OUT_OFFSET 272
 
 /* Message sizes in UCSI data structure */
-#define MESSAGE_IN_SIZE 256
-#define MESSAGE_OUT_SIZE 256
+#define MESSAGE_IN_SIZE 255
+#define MESSAGE_OUT_SIZE 255
 
 /* UCSI version struct */
 struct ucsi_version {
