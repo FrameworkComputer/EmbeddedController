@@ -44,6 +44,7 @@
 #include <libec/rand_num_command.h>
 #include <libec/versions_command.h>
 #include <memory>
+#include <optional>
 #include <string>
 #include <unistd.h>
 #include <vector>
@@ -8514,27 +8515,27 @@ static int read_battery_config_from_json(base::Value::Dict *root_dict,
 	}
 
 	struct battery_info *bi = &config->batt_info;
-	absl::optional<int> voltage_max = batt_info->FindInt("voltage_max");
-	absl::optional<int> voltage_normal =
+	std::optional<int> voltage_max = batt_info->FindInt("voltage_max");
+	std::optional<int> voltage_normal =
 		batt_info->FindInt("voltage_normal");
-	absl::optional<int> voltage_min = batt_info->FindInt("voltage_min");
-	absl::optional<int> precharge_voltage =
+	std::optional<int> voltage_min = batt_info->FindInt("voltage_min");
+	std::optional<int> precharge_voltage =
 		batt_info->FindInt("precharge_voltage");
-	absl::optional<int> precharge_current =
+	std::optional<int> precharge_current =
 		batt_info->FindInt("precharge_current");
-	absl::optional<int> start_charging_min_c =
+	std::optional<int> start_charging_min_c =
 		batt_info->FindInt("start_charging_min_c");
-	absl::optional<int> start_charging_max_c =
+	std::optional<int> start_charging_max_c =
 		batt_info->FindInt("start_charging_max_c");
-	absl::optional<int> charging_min_c =
+	std::optional<int> charging_min_c =
 		batt_info->FindInt("charging_min_c");
-	absl::optional<int> charging_max_c =
+	std::optional<int> charging_max_c =
 		batt_info->FindInt("charging_max_c");
-	absl::optional<int> discharging_min_c =
+	std::optional<int> discharging_min_c =
 		batt_info->FindInt("discharging_min_c");
-	absl::optional<int> discharging_max_c =
+	std::optional<int> discharging_max_c =
 		batt_info->FindInt("discharging_max_c");
-	absl::optional<int> vendor_param_start =
+	std::optional<int> vendor_param_start =
 		batt_info->FindInt("vendor_param_start");
 	bi->voltage_max = voltage_max.value();
 	bi->voltage_normal = voltage_normal.value();
@@ -8754,9 +8755,9 @@ static int cmd_battery_config_set(int argc, char *argv[])
 
 	fclose(fp);
 
-	absl::optional<base::Value> root =
+	std::optional<base::Value> root =
 		base::JSONReader::Read(json, base::JSON_PARSE_RFC);
-	if (root == absl::nullopt) {
+	if (root == std::nullopt) {
 		fprintf(stderr, "File %s isn't properly formed JSON file.\n",
 			json_file);
 		free(json);
