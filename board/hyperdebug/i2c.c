@@ -287,9 +287,13 @@ static void usb_i2c_execute(unsigned int expected_size)
 	} else if (portindex >= i2c_ports_used) {
 		i2c_status = USB_I2C_PORT_INVALID;
 	} else {
-		int ret = i2c_xfer(i2c_ports[portindex].port, addr_flags,
-				   rx_buffer + 5 + offset, write_count,
-				   rx_buffer + 5, read_count);
+		i2c_lock(i2c_ports[portindex].port, 1);
+		int ret = i2c_xfer_unlocked(i2c_ports[portindex].port,
+					    addr_flags, rx_buffer + 5 + offset,
+					    write_count, rx_buffer + 5,
+					    read_count,
+					    I2C_XFER_START | I2C_XFER_STOP);
+		i2c_lock(i2c_ports[portindex].port, 0);
 		i2c_status = usb_i2c_map_error(ret);
 	}
 	rx_buffer[1] = i2c_status & 0xFF;
