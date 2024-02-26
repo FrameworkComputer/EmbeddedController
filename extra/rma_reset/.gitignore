@@ -1,5 +1,0 @@
-base32.o
-curve25519-generic.o
-curve25519.o
-rma_reset
-sha256.o
