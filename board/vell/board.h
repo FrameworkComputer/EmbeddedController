@@ -13,6 +13,10 @@
 /* Baseboard features */
 #include "baseboard.h"
 
+/* Increase tx buffer size. */
+#undef CONFIG_UART_TX_BUF_SIZE
+#define CONFIG_UART_TX_BUF_SIZE 8192
+
 /*
  * This will happen automatically on NPCX9 ES2 and later. Do not remove
  * until we can confirm all earlier chips are out of service.
