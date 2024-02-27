@@ -40,7 +40,6 @@ static uint32_t ec_sleep;
  * Fixed amount of time to keep the console in use flag true after boot in
  * order to give a permanent window in which the heavy sleep mode is not used.
  */
-#define CONSOLE_IN_USE_ON_BOOT_TIME (15 * SECOND)
 static int console_in_use_timeout_sec = 5;
 static timestamp_t console_expire_time;
 
@@ -606,7 +605,8 @@ void clock_sleep_mode_wakeup_isr(void)
 
 void __keep __idle_init(void)
 {
-	console_expire_time.val = get_time().val + CONSOLE_IN_USE_ON_BOOT_TIME;
+	console_expire_time.val =
+		get_time().val + CONFIG_CONSOLE_IN_USE_ON_BOOT_TIME;
 	/* init hw timer and clock source is 32.768 KHz */
 	ext_timer_ms(LOW_POWER_EXT_TIMER, EXT_PSR_32P768K_HZ, 1, 0, 0xffffffff,
 		     1, 1);

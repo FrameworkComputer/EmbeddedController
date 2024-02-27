@@ -1911,6 +1911,9 @@
 /* Max length of a single line of input */
 #define CONFIG_CONSOLE_INPUT_LINE_SIZE 80
 
+/* Amount of time to keep the console in use flag */
+#define CONFIG_CONSOLE_IN_USE_ON_BOOT_TIME (15 * SECOND)
+
 /* Enable verbose output to UART console and extra timestamp print precision. */
 #define CONFIG_CONSOLE_VERBOSE
 
