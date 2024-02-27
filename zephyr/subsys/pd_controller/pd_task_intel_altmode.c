@@ -83,12 +83,9 @@ static void intel_altmode_suspend_handler(struct ap_power_ev_callback *cb,
 	LOG_DBG("suspend event: 0x%x", data.event);
 
 	if (data.event == AP_POWER_RESUME) {
-		/*
-		 * Set event to forcefully get new PD data.
-		 * This ensures EC doesn't miss the interrupt if the interrupt
-		 * pull-ups are on A-rail.
-		 */
-		intel_altmode_post_event(INTEL_ALTMODE_EVENT_FORCE);
+		resume_pd_intel_altmode_task();
+	} else if (data.event == AP_POWER_SUSPEND) {
+		suspend_pd_intel_altmode_task();
 	} else {
 		LOG_ERR("Invalid suspend event");
 	}
@@ -215,7 +212,7 @@ static void intel_altmode_thread(void *unused1, void *unused2, void *unused3)
 	/* Add callbacks for suspend hooks */
 	ap_power_ev_init_callback(&intel_altmode_task_data.cb,
 				  intel_altmode_suspend_handler,
-				  AP_POWER_RESUME);
+				  AP_POWER_RESUME | AP_POWER_SUSPEND);
 	ap_power_ev_add_callback(&intel_altmode_task_data.cb);
 
 	/* Register PD interrupt callback */
