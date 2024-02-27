@@ -318,6 +318,21 @@ ifneq ($(touchpad_fw_ls),$(old_touchpad_fw_ls))
 endif
 endif
 
+ifeq ($(TEST_BUILD),)
+
+ifeq ($(CONFIG_RMA_AUTH_USE_P256),)
+BLOB_FILE = rma_key_blob.x25519.test
+else
+BLOB_FILE = rma_key_blob.p256.test
+endif
+
+$(out)/RW/common/rma_auth.o: $(out)/rma_key_from_blob.h
+
+$(out)/rma_key_from_blob.h: board/$(BOARD)/$(BLOB_FILE) util/bin2h.sh
+	$(Q)util/bin2h.sh RMA_KEY_BLOB $< $@
+
+endif
+
 include $(_common_dir)fpsensor/build.mk
 include $(_common_dir)usbc/build.mk
 include $(_common_dir)spi/build.mk
