@@ -58,11 +58,11 @@ struct icm_drv_data_t {
 #define ICM_RESOLUTION 16
 
 /**
- * sign_extend - sign extend a standard int value using the given sign-bit
+ * icm_sign_extend - sign extend a standard int value using the given sign-bit
  * @value: value to sign extend
  * @index: 0 based bit index to sign bit
  */
-static inline int sign_extend(int value, int index)
+static inline int icm_sign_extend(int value, int index)
 {
 	int shift = (sizeof(int) * 8) - index - 1;
 
