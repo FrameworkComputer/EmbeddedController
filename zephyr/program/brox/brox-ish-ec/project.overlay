@@ -51,6 +51,10 @@ i2c3ALT: &i2c3 {
 
 /delete-node/ &gpio_ish_i2c_ec_scl;
 
+/* Disable sensor I2C nodes */
+/delete-node/ &i2c5;
+/delete-node/ &i2c_ec_i2c_sensor;
+
 /* These GPIOS are initialized by the PDC driver */
 &gpio_usb_pd_int_odl {
 	no-auto-init;
