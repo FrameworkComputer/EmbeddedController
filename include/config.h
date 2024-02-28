@@ -3575,6 +3575,15 @@
 #undef CONFIG_ISL9238C_DISABLE_CMOUT_LATCH
 
 /*
+ * ISL9238C input voltage setting.
+ * Set the input voltage for the ISL9238C charger. Setting -1 means use
+ * the default setting defined by the chip.  The ISL9238C input voltage
+ * is configured using 341.3 mV steps.  The value specified is rounded
+ * down.
+ */
+#define CONFIG_ISL9238C_INPUT_VOLTAGE_MV -1
+
+/*
  * ISL9238C enable Force Buck mode.
  */
 #undef CONFIG_ISL9238C_ENABLE_BUCK_MODE

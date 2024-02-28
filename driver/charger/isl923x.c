@@ -752,6 +752,16 @@ static void isl923x_init(int chgnum)
 	}
 
 	if (IS_ENABLED(CONFIG_CHARGER_ISL9238C)) {
+		if (CONFIG_ISL9238C_INPUT_VOLTAGE_MV != -1) {
+			reg = (CONFIG_ISL9238C_INPUT_VOLTAGE_MV /
+			       ISL9238_INPUT_VOLTAGE_REF_STEP)
+			      << ISL9238_INPUT_VOLTAGE_REF_SHIFT;
+			if (raw_write16(chgnum, ISL9238_REG_INPUT_VOLTAGE,
+					reg)) {
+				goto init_fail;
+			}
+		}
+
 		/* b/155366741: enable slew rate control */
 		if (raw_read16(chgnum, ISL9238C_REG_CONTROL6, &reg))
 			goto init_fail;

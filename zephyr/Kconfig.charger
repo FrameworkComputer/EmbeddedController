@@ -171,6 +171,15 @@ config PLATFORM_EC_ISL9241_SWITCHING_FREQ
 
 endif
 
+config PLATFORM_EC_ISL9238C_INPUT_VOLTAGE_MV
+	int "ISL9238C input voltage"
+	default -1
+	help
+	  Set the input voltage for the ISL9238C charger. Setting -1 means use
+	  the default setting defined by the chip.  The ISL9238C input voltage
+	  is configured using 341.3 mV steps.  The value specified is rounded
+	  down.
+
 config PLATFORM_EC_CHARGER_BQ25710
 	bool "Use the BQ25710 charger"
 	depends on PLATFORM_EC_I2C
