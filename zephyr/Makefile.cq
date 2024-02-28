@@ -138,9 +138,32 @@ $(BUILD)/zephyr/%_final.info: $(BUILD)/zephyr/%_stenciled.info
 	/usr/bin/lcov -o $@ --rc branch_coverage=1 --rc no_exception_branch=1 \
 	--ignore-errors inconsistent,inconsistent --ignore-errors unused,unused --ignore-errors gcov,gcov \
 	-r $< \
+	'$(PLATFORM_EC)/zephyr/drivers/cros_displight/*' \
+	'$(PLATFORM_EC)/zephyr/drivers/cros_flash/*' \
+	'$(PLATFORM_EC)/zephyr/drivers/cros_kb_raw*' \
+	'$(PLATFORM_EC)/zephyr/drivers/cros_kblight/*' \
+	'$(PLATFORM_EC)/zephyr/drivers/cros_rtc/*' \
+	'$(PLATFORM_EC)/zephyr/drivers/cros_shi/*' \
+	'$(PLATFORM_EC)/zephyr/drivers/cros_system/*' \
+	'$(PLATFORM_EC)/zephyr/drivers/cros_tabletmode_interrupt/*' \
+	'$(PLATFORM_EC)/zephyr/drivers/fingerprint/*' \
+	'$(PLATFORM_EC)/zephyr/drivers/keyboard_input/*' \
+	'$(PLATFORM_EC)/zephyr/drivers/one_wire_uart/*' \
+	'$(PLATFORM_EC)/zephyr/drivers/sm5803/*' \
+	'$(PLATFORM_EC)/zephyr/drivers/vivaldi_kbd/*' \
 	'$(THIRD_PARTY)/**' \
-	'$(PLATFORM_EC)/zephyr/drivers/**' \
-	'$(PLATFORM_EC)/zephyr/include/drivers/**' \
+	'$(PLATFORM_EC)/zephyr/include/drivers/cros_displight.h' \
+	'$(PLATFORM_EC)/zephyr/include/drivers/cros_flash.h' \
+	'$(PLATFORM_EC)/zephyr/include/drivers/cros_kb_raw.h' \
+	'$(PLATFORM_EC)/zephyr/include/drivers/cros_rtc.h' \
+	'$(PLATFORM_EC)/zephyr/include/drivers/cros_shi.h' \
+	'$(PLATFORM_EC)/zephyr/include/drivers/cros_system.h' \
+	'$(PLATFORM_EC)/zephyr/include/drivers/fingerprint_sim.h' \
+	'$(PLATFORM_EC)/zephyr/include/drivers/fingerprint.h' \
+	'$(PLATFORM_EC)/zephyr/include/drivers/one_wire_uart_internal.h' \
+	'$(PLATFORM_EC)/zephyr/include/drivers/one_wire_uart_stream.h' \
+	'$(PLATFORM_EC)/zephyr/include/drivers/one_wire_uart.h' \
+	'$(PLATFORM_EC)/zephyr/include/drivers/vivaldi_kbd.h' \
 	'$(PLATFORM_EC)/zephyr/shim/chip/**' \
 	'$(PLATFORM_EC)/zephyr/shim/chip/npcx/npcx_monitor/**' \
 	'$(PLATFORM_EC)/zephyr/shim/core/**' \
