@@ -360,7 +360,9 @@ class AllTests:
             ),
             TestConfig(test_name="rtc"),
             TestConfig(
-                test_name="rtc_npcx9", exclude_boards=[BLOONCHIPPER, DARTMONKEY]
+                test_name="rtc_npcx9",
+                timeout_secs=20,
+                exclude_boards=[BLOONCHIPPER, DARTMONKEY],
             ),
             TestConfig(
                 test_name="rtc_stm32f4", exclude_boards=[DARTMONKEY, HELIPILOT]
