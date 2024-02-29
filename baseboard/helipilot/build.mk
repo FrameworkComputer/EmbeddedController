@@ -19,7 +19,7 @@ baseboard-rw += fpsensor_detect_rw.o
 # will fail on device.
 # TODO(b/314131076): Fix cortexm_fpu test for helipilot
 # TODO(b/314131510): Fix stm32f_rtc test (or create a new one) for helipilot
-test-list-y=\
+test-list-y = \
        abort \
        aes \
        always_memset \
@@ -71,3 +71,6 @@ test-list-y=\
        unaligned_access_benchmark \
        utils \
        utils_str
+
+# This is relative to the EC root directory.
+-include private/board/helipilot/build.mk

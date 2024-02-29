@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
- #include "base_ec.tasklist"
+#include "base_ec.tasklist"
 
 /**
  * See CONFIG_TASK_LIST in config.h for details.

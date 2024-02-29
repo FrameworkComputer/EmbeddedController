@@ -5,10 +5,6 @@
 # Helipilot board specific files build
 #
 
-BASEBOARD:=helipilot
+BASEBOARD := helipilot
 
-board-y=
-
-# Note that this variable includes the trailing "/"
-_hatch_fp_cur_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
--include $(_hatch_fp_cur_dir)../../private/board/helipilot/build.mk
+board-y =
