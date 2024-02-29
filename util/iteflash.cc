@@ -423,8 +423,8 @@ static int ccd_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 
 	response_size = 0;
 	usb_trx(&chnd->uep, usb_buffer,
-		write ? sizeof(usb_buffer) : USB_I2C_HEADER_SIZE + extra,
-		usb_buffer, sizeof(usb_buffer), 1, &response_size);
+		write ? usb_buffer_size : USB_I2C_HEADER_SIZE + extra,
+		usb_buffer, usb_buffer_size, 1, &response_size);
 
 	if (response_size < (USB_I2C_HEADER_SIZE + (write ? 0 : numbytes))) {
 		fprintf(stderr, "%s: got too few bytes (%zd) in response\n",
@@ -1981,8 +1981,12 @@ static int linux_i2c_interface_shutdown(struct common_hnd *chnd)
 
 static int ccd_i2c_interface_init(struct common_hnd *chnd)
 {
-	chnd->conf.usb_vid = CR50_USB_VID;
-	chnd->conf.usb_pid = CR50_USB_PID;
+	if (chnd->conf.usb_vid == 0) {
+		chnd->conf.usb_vid = CR50_USB_VID;
+	}
+	if (chnd->conf.usb_pid == 0) {
+		chnd->conf.usb_pid = CR50_USB_PID;
+	}
 	return connect_to_ccd_i2c_bridge(chnd);
 }
 
@@ -1994,6 +1998,12 @@ static int ccd_i2c_interface_shutdown(struct common_hnd *chnd)
 
 static int ftdi_i2c_interface_init(struct common_hnd *chnd)
 {
+	if (chnd->conf.usb_vid == 0) {
+		chnd->conf.usb_vid = SERVO_USB_VID;
+	}
+	if (chnd->conf.usb_pid == 0) {
+		chnd->conf.usb_pid = SERVO_USB_PID;
+	}
 	chnd->ftdi_hnd = open_ftdi_device(chnd->conf.usb_vid,
 					  chnd->conf.usb_pid,
 					  chnd->conf.usb_interface,
@@ -2328,8 +2338,6 @@ int main(int argc, char **argv)
 			.disable_watchdog = 1,
 			.disable_protect_path = 1,
 			.usb_interface = SERVO_INTERFACE,
-			.usb_vid = SERVO_USB_VID,
-			.usb_pid = SERVO_USB_PID,
 			.verify = 1,
 			.i2c_if = &ftdi_i2c_interface,
 		},
