@@ -436,6 +436,17 @@ typedef struct mutex mutex_t;
 void mutex_lock(mutex_t *mtx);
 
 /**
+ * Attempt to lock a mutex
+ *
+ * This tries to lock the mutex mtx. If the mutex is already locked by another
+ * thread this function returns 0. If the mutex is unlocked, lock the mutex and
+ * return 1.
+ *
+ * Must not be used in interrupt context!
+ */
+int mutex_try_lock(mutex_t *mtx);
+
+/**
  * Release a mutex previously locked by the same task.
  */
 void mutex_unlock(mutex_t *mtx);

@@ -337,6 +337,7 @@ class AllTests:
                 finish_regexes=[board_config.mpu_regex],
             ),
             TestConfig(test_name="mutex"),
+            TestConfig(test_name="mutex_trylock"),
             TestConfig(test_name="panic"),
             TestConfig(test_name="pingpong"),
             TestConfig(test_name="printf"),

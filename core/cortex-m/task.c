@@ -881,7 +881,6 @@ static void __nvic_init_irqs(void)
 
 void mutex_lock(struct mutex *mtx)
 {
-	uint32_t value;
 	uint32_t id;
 
 	/*
@@ -902,25 +901,47 @@ void mutex_lock(struct mutex *mtx)
 
 	atomic_or(&mtx->waiters, id);
 
-	do {
-		/* Try to get the lock (set 1 into the lock field) */
-		__asm__ __volatile__("   ldrex   %0, [%1]\n"
-				     "   teq     %0, #0\n"
-				     "   it eq\n"
-				     "   strexeq %0, %2, [%1]\n"
-				     : "=&r"(value)
-				     : "r"(&mtx->lock), "r"(2)
-				     : "cc");
-		/*
-		 * "value" is equals to 1 if the store conditional failed,
-		 * 2 if somebody else owns the mutex, 0 else.
-		 */
-		if (value == 2)
-			/* Contention on the mutex */
-			task_wait_event_mask(TASK_EVENT_MUTEX, 0);
-	} while (value);
+	while (!mutex_try_lock(mtx)) {
+		/* Contention on the mutex */
+		task_wait_event_mask(TASK_EVENT_MUTEX, 0);
+	}
 
 	atomic_clear_bits(&mtx->waiters, id);
+}
+
+int mutex_try_lock(struct mutex *mtx)
+{
+	uint32_t value;
+
+	/* mutex_try_lock() must not be used in interrupt context. */
+	ASSERT(!in_interrupt_context());
+
+	/*
+	 * Task ID is not valid before task_start() (since current_task is
+	 * scratchpad), and no need for mutex locking before task switching has
+	 * begun.
+	 */
+	if (!task_start_called())
+		return 1;
+
+	/* Try to get the lock (set 1 into the lock field) */
+	__asm__ __volatile__("   ldrex   %0, [%1]\n"
+			     "   teq     %0, #0\n"
+			     "   it eq\n"
+			     "   strexeq %0, %2, [%1]\n"
+			     : "=&r"(value)
+			     : "r"(&mtx->lock), "r"(2)
+			     : "cc");
+	/*
+	 * "value" is equals to 1 if the store conditional failed,
+	 * 2 if somebody else owns the mutex, 0 else.
+	 */
+	if (value == 2) {
+		/* Contention on the mutex */
+		return 0;
+	}
+
+	return 1;
 }
 
 void mutex_unlock(struct mutex *mtx)

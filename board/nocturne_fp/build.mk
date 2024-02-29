@@ -44,6 +44,7 @@ test-list-y=\
        malloc \
        mpu \
        mutex \
+       mutex_trylock \
        panic \
        panic_data \
        pingpong \
