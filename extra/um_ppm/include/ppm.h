@@ -186,6 +186,21 @@ struct ucsiv3_set_new_cam_cmd {
 	unsigned am_specific : 32;
 } __attribute__((__packed__));
 
+/* GET_CAPABILITY data */
+struct ucsiv3_get_capability_data {
+	uint32_t attributes;
+	uint8_t num_connectors : 7;
+	uint8_t reserved_0 : 1;
+
+	uint32_t optional_features : 24;
+	uint32_t num_alt_modes : 8;
+
+	uint8_t reserved_1;
+	uint16_t bcd_bc_version;
+	uint16_t bcd_pd_version;
+	uint16_t bcd_typec_version;
+} __attribute__((__packed__));
+
 /* GET_CONNECTOR_STATUS data */
 struct ucsiv3_get_connector_status_data {
 	unsigned connector_status_change : 16;

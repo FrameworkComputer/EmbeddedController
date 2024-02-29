@@ -175,7 +175,6 @@ static int um_ppm_apply_platform_policy(void *context)
 			ELOG("Failed to SET_NEW_CAM enter 0xff on port %d", i);
 		}
 	}
-
 	return 0;
 }
 

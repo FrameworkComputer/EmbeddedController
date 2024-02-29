@@ -13,6 +13,53 @@
 
 #define SMBUS_MAX_BLOCK_SIZE 32
 
+#define MAX_NUM_ALT_MODES 8
+#define CONSTAT_SUPPORTED_CAM_CHANGE (1 << 8)
+struct virtual_mode_info {
+	/* Which connector is this information for? */
+	uint8_t connector;
+
+	/* Number of valid alt modes for this connector. */
+	uint8_t num_alt_modes;
+
+	/* SVIDs for alt modes. */
+	uint16_t alt_mode_svids[MAX_NUM_ALT_MODES];
+
+	/* Current alternate mode. Use 0xFF for none. */
+	uint8_t current_alt_mode;
+
+	/* What's the target alt mode. 0xFF means no automatic entry. */
+	uint8_t desired_alt_mode;
+
+	/* Cached set_usb4 state. USB3 state is ignored for virtualization.
+	 * This will be used to modify the return value for
+	 * GET_CONNECTOR_CAPABILITY and GET_CONNECTOR_STATUS.
+	 */
+	bool allow_usb4;
+
+	/* Mask to OR over connector status. */
+	uint16_t constat_mask;
+};
+
+struct driver_action_t {
+	struct platform_mutex *lock;
+	struct platform_condvar *condvar;
+
+	enum action_t {
+		ACTION_NONE = 0,
+		ACTION_LPM_ALERT,
+		ACTION_CLEANUP_EXIT,
+	} action;
+
+	union {
+		struct lpm_alert_t {
+			uint8_t connector;
+		} alert_action;
+
+		uint8_t no_op;
+	};
+};
+
 struct rts5453_device {
 	/* LPM smbus driver. */
 	struct smbus_driver *smbus;
@@ -31,6 +78,17 @@ struct rts5453_device {
 
 	/* IRQ task for LPM interrupts. */
 	struct task_handle *lpm_interrupt_task;
+
+	/* Task for handling out-of-band actions. */
+	struct task_handle *action_task;
+
+	/* Next action to take in the action task. */
+	struct driver_action_t action_data;
+
+	/* Per port virtual alt-mode information. Used for emulating AP driven
+	 * alt-mode.
+	 */
+	struct virtual_mode_info *per_port_mode_info;
 };
 
 #define CAST_FROM(v) (struct rts5453_device *)(v)
@@ -297,6 +355,213 @@ static int rts5453_smbus_command(struct rts5453_device *dev, uint8_t port,
 	return 0;
 }
 
+/* Virtualized port-partner alt-modes.
+ *
+ * Realtek FW versions < 0.9.x do not correct handle AP driven alt-mode. Add a
+ * virtualized alt-mode handler that resets per port on connection but can be
+ * used to develop the kernel driver.
+ *
+ * Note:
+ *   Port configuration of SET_NEW_CAM(0xff, _) will be honored and alt-mode
+ *   will default to 0xff (which is no-alt-mode).
+ *
+ *   List of valid alt-modes will be collated from any GET_ALTERNATE_MODES
+ *   results from SOP and SOP'.
+ *
+ *   If SET_NEW_CAM(0xff, _) is not set, we will simply report entering the
+ *   highest alternate mode available on connection. The ordering will be:
+ *     * Thunderbolt (0x8087)
+ *     * Displayport (0xff01)
+ *
+ *  Finally, we also virtualize the SET_USB state to enable/disable USB4. This
+ *  means we will intercept the results to GET_CONNECTOR_STATUS and inject bits
+ *  based on current state.
+ */
+
+static void rts5453_reset_desired_altmodes(struct rts5453_device *dev)
+{
+	for (uint8_t i = 0; i < dev->active_port_count; ++i) {
+		uint8_t tbt_mode = 0;
+		uint8_t dp_mode = 0;
+
+		struct virtual_mode_info *vmode = &dev->per_port_mode_info[i];
+
+		for (int j = 0; j < vmode->num_alt_modes; ++j) {
+			if (vmode->alt_mode_svids[j] == 0x8087) {
+				tbt_mode = j;
+			} else if (vmode->alt_mode_svids[j] == 0xff01) {
+				dp_mode = j;
+			}
+		}
+
+		if (tbt_mode > 0) {
+			vmode->desired_alt_mode = tbt_mode;
+		} else if (dp_mode > 0) {
+			vmode->desired_alt_mode = dp_mode;
+		} else {
+			vmode->desired_alt_mode = vmode->desired_alt_mode - 1;
+		}
+	}
+}
+
+static int rts5453_init_virtual_mode_info(struct rts5453_device *dev)
+{
+	struct ucsi_control get_alt_modes = {};
+	struct ucsi_control get_capability = {};
+	int ret = 0;
+
+	get_alt_modes.command = UCSI_CMD_GET_ALTERNATE_MODES;
+	get_capability.command = UCSI_CMD_GET_CAPABILITY;
+
+	for (int i = 0; i < dev->active_port_count; ++i) {
+		uint8_t connector = i + 1;
+		struct virtual_mode_info *vmode = &dev->per_port_mode_info[i];
+		struct ucsiv3_get_capability_data *get_cap_data =
+			(struct ucsiv3_get_capability_data *)dev->cmd_buffer;
+
+		vmode->connector = connector;
+
+		/* Get capabilities. */
+		get_capability.command_specific[0] = connector;
+
+		ret = rts5453_smbus_command(
+			dev, connector, SC_UCSI_COMMANDS,
+			(uint8_t *)&get_capability, sizeof(get_capability),
+			dev->cmd_buffer,
+			sizeof(struct ucsiv3_get_capability_data));
+		if (ret < 0) {
+			ELOG("Failed to get capability on port %u", connector);
+			return ret;
+		}
+
+		vmode->num_alt_modes = (uint8_t)get_cap_data->num_alt_modes;
+		if (vmode->num_alt_modes > MAX_NUM_ALT_MODES) {
+			ELOG("Connector has too many alt modes: %d",
+			     vmode->num_alt_modes);
+			return -1;
+		}
+		vmode->current_alt_mode = 0xff;
+		vmode->allow_usb4 = true;
+
+		/* Fill SVIDs. */
+		for (int j = 0; j < vmode->num_alt_modes; ++j) {
+			platform_memset(get_alt_modes.command_specific, 0,
+					sizeof(get_alt_modes.command_specific));
+
+			/* Recipient = Connector */
+			get_alt_modes.command_specific[0] = 0;
+			get_alt_modes.command_specific[1] = connector;
+			/* alt-mode offset */
+			get_alt_modes.command_specific[2] = j;
+
+			ret = rts5453_smbus_command(dev, connector,
+						    SC_UCSI_COMMANDS,
+						    (uint8_t *)&get_alt_modes,
+						    sizeof(get_alt_modes),
+						    dev->cmd_buffer, 6);
+
+			if (ret < 0) {
+				ELOG("Failed to get altmode; port %u offset %u",
+				     connector, j);
+				return ret;
+			}
+
+			vmode->alt_mode_svids[j] = dev->cmd_buffer[0] |
+						   (dev->cmd_buffer[1] << 8);
+		}
+	}
+
+	rts5453_reset_desired_altmodes(dev);
+
+	return ret;
+}
+
+static int rts5453_handle_get_current_cam(struct rts5453_device *dev,
+					  uint8_t connector,
+					  uint8_t *lpm_data_out)
+{
+	if (connector > dev->active_port_count) {
+		ELOG("Bad connector %u", connector);
+		return -1;
+	}
+
+	struct virtual_mode_info *vmode =
+		&dev->per_port_mode_info[connector - 1];
+	lpm_data_out[0] = vmode->current_alt_mode;
+
+	DLOG("[%u]: CAM = 0x%x (desired=0x%x)", connector,
+	     vmode->current_alt_mode, vmode->desired_alt_mode);
+	return 1;
+}
+
+static int rts5453_handle_set_new_cam(struct rts5453_device *dev,
+				      uint8_t connector, bool enter,
+				      uint8_t new_cam, uint8_t *lpm_data_out)
+{
+	if (connector > dev->active_port_count) {
+		ELOG("Bad connector %u", connector);
+		return -1;
+	}
+
+	struct virtual_mode_info *vmode =
+		&dev->per_port_mode_info[connector - 1];
+
+	if (!(new_cam < vmode->num_alt_modes || new_cam == 0xFF)) {
+		ELOG("Invalid new_cam 0x%02x on port %u", new_cam, connector);
+		return -1;
+	}
+
+	if (new_cam == 0xFF) {
+		vmode->current_alt_mode = 0xFF;
+		vmode->desired_alt_mode = 0xFF;
+		vmode->constat_mask = CONSTAT_SUPPORTED_CAM_CHANGE;
+	} else if (enter) {
+		vmode->current_alt_mode = new_cam;
+		vmode->constat_mask = CONSTAT_SUPPORTED_CAM_CHANGE;
+	} else if (!enter && new_cam == vmode->current_alt_mode) {
+		vmode->current_alt_mode = 0xff;
+		vmode->constat_mask = CONSTAT_SUPPORTED_CAM_CHANGE;
+	} else {
+		return -1;
+	}
+
+	DLOG("[%u]: SET_NEW_CAM with new_cam = 0x%x, enter = %u", connector,
+	     new_cam, enter);
+
+	if (vmode->constat_mask) {
+		platform_mutex_lock(dev->action_data.lock);
+		dev->action_data.action = ACTION_LPM_ALERT;
+		dev->action_data.alert_action.connector = connector;
+		platform_condvar_signal(dev->action_data.condvar);
+		platform_mutex_unlock(dev->action_data.lock);
+	}
+
+	return 0;
+}
+
+static void rts5453_update_alt_mode_on_connection(struct rts5453_device *dev,
+						  uint8_t connector,
+						  bool connected)
+{
+	if (connector > dev->active_port_count) {
+		ELOG("Bad connector %u", connector);
+		return;
+	}
+
+	struct virtual_mode_info *vmode =
+		&dev->per_port_mode_info[connector - 1];
+
+	if (!connected) {
+		vmode->current_alt_mode = 0xFF;
+	} else {
+		vmode->current_alt_mode = vmode->desired_alt_mode;
+	}
+
+	DLOG("[%u] is %s. Alt-mode = 0x%x", connector,
+	     (connected ? "connected" : "disconnected"),
+	     vmode->current_alt_mode);
+}
+
 /* Call with dev->cmd_buffer already set. */
 static int rts5453_set_notification_per_port(struct rts5453_device *dev,
 					     uint8_t *lpm_data_out)
@@ -337,6 +602,7 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 	 */
 	uint8_t data_size = 0;
 	uint8_t port_num = RTS_DEFAULT_PORT;
+	int ret = 0;
 
 	if (control->command == 0 || control->command > UCSI_CMD_VENDOR_CMD) {
 		ELOG("Invalid command 0x%x", control->command);
@@ -412,6 +678,12 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 			dev->cmd_buffer[4] = 0xff;
 			dev->cmd_buffer[5] = 0xff;
 
+			/* Clear any constat mask on virtual mode. */
+			if (port_num && port_num < dev->active_port_count) {
+				dev->per_port_mode_info[port_num - 1]
+					.constat_mask = 0;
+			}
+
 			DLOG("ACK_CC_CI with mask (UCSI 0x%x), RTK [%02x, %02x, %02x, %02x] "
 			     "on port %d",
 			     mask, dev->cmd_buffer[2], dev->cmd_buffer[3],
@@ -474,6 +746,16 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 		dev->cmd_buffer[8] = 0x05;
 		dev->cmd_buffer[9] = 0x06;
 		break;
+
+	case UCSI_CMD_GET_CURRENT_CAM:
+		return rts5453_handle_get_current_cam(dev, port_num,
+						      lpm_data_out);
+	case UCSI_CMD_SET_NEW_CAM:
+		bool enter = !!(control->command_specific[0] & 0x80);
+		uint8_t new_cam = control->command_specific[1];
+
+		return rts5453_handle_set_new_cam(dev, port_num, enter, new_cam,
+						  lpm_data_out);
 	default:
 		/* For most UCSI commands, just set the cmd = 0x0E and copy the
 		 * additional data from the command to smbus output.
@@ -507,9 +789,44 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 		return rts5453_set_notification_per_port(dev, lpm_data_out);
 	}
 
-	return rts5453_smbus_command(dev, port_num, cmd, dev->cmd_buffer,
-				     data_size + 2, lpm_data_out,
-				     SMBUS_MAX_BLOCK_SIZE);
+	ret = rts5453_smbus_command(dev, port_num, cmd, dev->cmd_buffer,
+				    data_size + 2, lpm_data_out,
+				    SMBUS_MAX_BLOCK_SIZE);
+
+	if (ret >= 0) {
+		/* Successful PPM reset will reset desired alt-mode. */
+		if (ucsi_command == UCSI_CMD_PPM_RESET) {
+			rts5453_reset_desired_altmodes(dev);
+		} else if (ucsi_command == UCSI_CMD_GET_CONNECTOR_STATUS) {
+			struct ucsiv3_get_connector_status_data *constat =
+				(struct ucsiv3_get_connector_status_data *)
+					lpm_data_out;
+
+			uint16_t constat_change =
+				constat->connector_status_change;
+			if (constat_change & ((1 << 14) | (1 << 11))) {
+				rts5453_update_alt_mode_on_connection(
+					dev, port_num, constat->connect_status);
+			}
+
+			if (port_num && port_num < dev->active_port_count) {
+				constat->connector_status_change |=
+					dev->per_port_mode_info[port_num - 1]
+						.constat_mask;
+			}
+		} else if (ucsi_command == UCSI_CMD_GET_CAPABILITY) {
+			struct ucsiv3_get_capability_data *cap =
+				(struct ucsiv3_get_capability_data *)
+					lpm_data_out;
+
+			/* Force enable Alt-mode details supported and
+			 * Alt-mode override supported.
+			 */
+			cap->optional_features |= ((1 << 2) | (1 << 3));
+		}
+	}
+
+	return ret;
 }
 
 static int rts5453_ucsi_get_active_port_count(struct ucsi_pd_device *device)
@@ -793,6 +1110,33 @@ static int rts5453_ucsi_configure_lpm_irq(struct ucsi_pd_device *device)
 	return 0;
 }
 
+static void rts5453_action_task(void *context)
+{
+	struct rts5453_device *dev = CAST_FROM(context);
+	struct driver_action_t *actions = &dev->action_data;
+
+	platform_mutex_lock(actions->lock);
+	while (actions->action != ACTION_CLEANUP_EXIT) {
+		platform_condvar_wait(actions->condvar, actions->lock);
+
+		switch (actions->action) {
+		case ACTION_LPM_ALERT:
+			dev->ppm->lpm_alert(dev->ppm->dev,
+					    actions->alert_action.connector);
+			break;
+		default:
+			DLOG("Task signaled for unhandled action %u",
+			     actions->action);
+			break;
+		}
+
+		/* Clear action for next iteration. */
+		actions->action = ACTION_NONE;
+	}
+	platform_mutex_unlock(actions->lock);
+	platform_task_exit();
+}
+
 static int rts5453_ucsi_init_ppm(struct ucsi_pd_device *device)
 {
 	struct rts5453_device *dev = CAST_FROM(device);
@@ -849,6 +1193,31 @@ static int rts5453_ucsi_init_ppm(struct ucsi_pd_device *device)
 	}
 
 	dev->active_port_count = num_ports;
+
+	/* Initialize per port virtual modes. */
+	dev->per_port_mode_info =
+		platform_calloc(num_ports, sizeof(*dev->per_port_mode_info));
+
+	if (rts5453_init_virtual_mode_info(dev) < 0) {
+		ELOG("Failed to set up virtual altmodes!");
+		return -1;
+	}
+
+	/* Initialize actions task. */
+	dev->action_data.lock = platform_mutex_init();
+	if (!dev->action_data.lock) {
+		return -1;
+	}
+
+	dev->action_data.condvar = platform_condvar_init();
+	if (!dev->action_data.condvar) {
+		return -1;
+	}
+
+	dev->action_task = platform_task_init(rts5453_action_task, dev);
+	if (dev->action_task == NULL) {
+		return -1;
+	}
 
 	DLOG("RTS5453 PPM is ready to init.");
 	return dev->ppm->init_and_wait(dev->ppm->dev, num_ports);
