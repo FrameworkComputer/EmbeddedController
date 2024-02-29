@@ -71,4 +71,10 @@ __override uint8_t get_dp_pin_mode(int port)
 	/* To support EC_CMD_USB_PD_CONTROL  */
 	return 0;
 }
+
+uint8_t get_pd_control_flags(int port)
+{
+	/* To support EC_CMD_USB_PD_CONTROL  */
+	return 0;
+}
 #endif

@@ -3600,6 +3600,14 @@ __override_proto int svdm_tbt_compat_attention(int port, uint32_t *payload);
 
 __override_proto enum ec_pd_port_location board_get_pd_port_location(int port);
 
+/**
+ * Called when EC_CMD_USB_PD_CONTROL host command is received
+ *
+ * @param port  The PD port number
+ * @return      Information related connected port partner and cable
+ */
+uint8_t get_pd_control_flags(int port);
+
 /****************************************************************************
  * TCPC CC/Rp Management
  */

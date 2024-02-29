@@ -152,4 +152,50 @@ static enum ec_status pd_control(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_PD_CONTROL, pd_control, EC_VER_MASK(0));
 #endif /* CONFIG_HOSTCMD_PD_CONTROL */
 
+#ifdef CONFIG_COMMON_RUNTIME
+/*
+ * Combines the following information into a single byte
+ * Bit 0: Active/Passive cable
+ * Bit 1: Optical/Non-optical cable
+ * Bit 2: Legacy Thunderbolt adapter
+ * Bit 3: Active Link Uni-Direction/Bi-Direction
+ * Bit 4: Retimer/Rediriver cable
+ */
+uint8_t get_pd_control_flags(int port)
+{
+	union tbt_mode_resp_cable cable_resp;
+	union tbt_mode_resp_device device_resp;
+	uint8_t control_flags = 0;
+
+	if (!IS_ENABLED(CONFIG_USB_PD_ALT_MODE_DFP) ||
+	    !IS_ENABLED(CONFIG_USB_PD_TBT_COMPAT_MODE))
+		return 0;
+
+	cable_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME);
+	device_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP);
+
+	/*
+	 * Ref: USB Type-C Cable and Connector Specification
+	 * Table F-11 TBT3 Cable Discover Mode VDO Responses
+	 * For Passive cables, Active Cable Plug link training is set to 0
+	 */
+	control_flags |= (get_usb_pd_cable_type(port) == IDH_PTYPE_ACABLE ||
+			  cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE) ?
+				 USB_PD_CTRL_ACTIVE_CABLE :
+				 0;
+	control_flags |= cable_resp.tbt_cable == TBT_CABLE_OPTICAL ?
+				 USB_PD_CTRL_OPTICAL_CABLE :
+				 0;
+	control_flags |= device_resp.tbt_adapter == TBT_ADAPTER_TBT2_LEGACY ?
+				 USB_PD_CTRL_TBT_LEGACY_ADAPTER :
+				 0;
+	control_flags |= cable_resp.lsrx_comm == UNIDIR_LSRX_COMM ?
+				 USB_PD_CTRL_ACTIVE_LINK_UNIDIR :
+				 0;
+	control_flags |= cable_resp.retimer_type == USB_RETIMER ?
+				 USB_PD_CTRL_RETIMER_CABLE :
+				 0;
+	return control_flags;
+}
+#endif
 #endif /* HAS_TASK_HOSTCMD */

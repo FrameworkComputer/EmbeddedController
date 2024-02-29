@@ -474,3 +474,41 @@ enum tbt_compat_rounded_support get_tbt_rounded_support(int port)
 	return intel_altmode_task_data.data_status[port].cable_gen;
 }
 #endif
+
+#ifdef CONFIG_COMMON_RUNTIME
+/*
+ * Combines the following information into a single byte
+ * Bit 0: Active/Passive cable
+ * Bit 1: Optical/Non-optical cable
+ * Bit 2: Legacy Thunderbolt adapter
+ * Bit 3: Active Link Uni-Direction/Bi-Direction
+ * Bit 4: Retimer/Rediriver cable
+ */
+uint8_t get_pd_control_flags(int port)
+{
+	uint8_t control_flags = 0;
+
+	control_flags |=
+		intel_altmode_task_data.data_status[port].active_passive ==
+				TBT_CABLE_ACTIVE ?
+			USB_PD_CTRL_ACTIVE_CABLE :
+			0;
+	control_flags |= intel_altmode_task_data.data_status[port].cable_type ==
+					 TBT_CABLE_OPTICAL ?
+				 USB_PD_CTRL_OPTICAL_CABLE :
+				 0;
+	control_flags |= intel_altmode_task_data.data_status[port].tbt_type ==
+					 TBT_ADAPTER_TBT2_LEGACY ?
+				 USB_PD_CTRL_TBT_LEGACY_ADAPTER :
+				 0;
+	control_flags |= intel_altmode_task_data.data_status[port].usb4_tbt_lt ?
+				 USB_PD_CTRL_ACTIVE_LINK_UNIDIR :
+				 0;
+	control_flags |= intel_altmode_task_data.data_status[port].ret_redrv ==
+					 USB_RETIMER ?
+				 USB_PD_CTRL_RETIMER_CABLE :
+				 0;
+
+	return control_flags;
+}
+#endif
