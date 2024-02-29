@@ -37,6 +37,7 @@ USE_CXX_COMPILER:=0
 # We can't use a config for this since the config generation uses the compiler.
 CLANG_BOARDS:= \
 	bloonchipper \
+	bloonchipper-druid \
 	buccaneer \
 	dartmonkey \
 	hatch_fp \

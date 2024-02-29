@@ -233,6 +233,14 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "bloonchipper-druid",
+        baseboard = "bloonchipper",
+        board = "bloonchipper-druid",
+        chip = "stm32",
+        core = "cortex-m",
+        zephyr = False,
+    )
+    ec_target(
         name = "bloonchipper_zephyr",
         board = "bloonchipper",
         extra_modules = ["hal_stm32", "cmsis"],
