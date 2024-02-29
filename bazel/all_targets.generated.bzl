@@ -225,6 +225,7 @@ def all_targets():
     )
     ec_target(
         name = "bloonchipper",
+        baseboard = "bloonchipper",
         board = "bloonchipper",
         chip = "stm32",
         core = "cortex-m",
@@ -981,6 +982,7 @@ def all_targets():
     )
     ec_target(
         name = "hatch_fp",
+        baseboard = "bloonchipper",
         board = "hatch_fp",
         chip = "stm32",
         core = "cortex-m",
