@@ -23,7 +23,7 @@ ZTEST(suspend_resume, test_suspend_resume_handler)
 
 	gpio_pin_set_dt(gpio_ec_en_pp3300_wlan, 1);
 	gpio_pin_set_dt(gpio_amp_mute_l, 0);
-	ap_power_ev_send_callbacks(AP_POWER_SHUTDOWN);
+	ap_power_ev_send_callbacks(AP_POWER_HARD_OFF);
 	zassert_false(gpio_emul_output_get(gpio_ec_en_pp3300_wlan->port,
 					   gpio_ec_en_pp3300_wlan->pin));
 	/* GPIO emulator always returns physical state of the pin */

@@ -32,7 +32,7 @@ static void brox_power_event_handler(struct ap_power_ev_callback *callback,
 		/* Deassert AMP_MUTE_L when AP is on. */
 		gpio_pin_set_dt(AMP_MUTE_L_DT_SPEC, 0);
 		break;
-	case AP_POWER_SHUTDOWN:
+	case AP_POWER_HARD_OFF:
 		gpio_pin_set_dt(EN_PP3300_WLAN_DT_SPEC, 0);
 
 		/* Assert AMP_MUTE_L when powered off. */
@@ -64,7 +64,7 @@ static int init_suspend_resume(void)
 
 	ap_power_ev_init_callback(&cb, brox_power_event_handler,
 				  AP_POWER_PRE_INIT | AP_POWER_STARTUP |
-					  AP_POWER_SHUTDOWN);
+					  AP_POWER_HARD_OFF);
 	ap_power_ev_add_callback(&cb);
 
 	return 0;
