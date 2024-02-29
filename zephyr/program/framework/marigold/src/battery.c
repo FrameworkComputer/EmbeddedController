@@ -185,6 +185,12 @@ void battery_customize(struct charge_state_data *curr_batt)
 		if (old_btp == 0)
 			old_btp = curr_batt->batt.remaining_capacity;
 
+		/* Workaround: send the BTP event again if the btp value does not change */
+		if (new_btp == old_btp) {
+			CPRINTS("BTP workaround");
+			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
+		}
+
 		if (new_btp == 0 && batt_os_percentage < 995)
 			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
 
