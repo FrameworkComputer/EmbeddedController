@@ -8548,7 +8548,7 @@ static int read_battery_config_from_json(base::Value::Dict *root_dict,
 	bi->charging_max_c = charging_max_c.value();
 	bi->discharging_min_c = discharging_min_c.value();
 	bi->discharging_max_c = discharging_max_c.value();
-	if (vendor_param_start != absl::nullopt)
+	if (vendor_param_start != std::nullopt)
 		bi->vendor_param_start = vendor_param_start.value();
 
 	return 0;
