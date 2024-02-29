@@ -11,9 +11,11 @@
  * https://sourceware.org/git/?p=newlib-cygwin.git;a=tree;f=libgloss/libnosys.
  */
 
+#include "builtin/assert.h"
 #include "gettimeofday.h"
 #include "link_defs.h"
 #include "panic.h"
+#include "recursive_mutex.h"
 #include "shared_mem.h"
 #include "software_panic.h"
 #include "system.h"
@@ -21,6 +23,7 @@
 #include "uart.h"
 
 #include <errno.h>
+#include <stdlib.h>
 
 #include <sys/stat.h>
 
@@ -122,4 +125,114 @@ void *_sbrk(intptr_t incr)
 	heap_end += incr;
 
 	return (void *)prev_heap_end;
+}
+
+/*
+ * Newlib Retargetable Locking Interface Implementation for EC.
+ *
+ * The interface can be found at
+ * https://sourceware.org/git/?p=newlib-cygwin.git;a=blob;f=newlib/libc/misc/lock.c
+ */
+
+/* Make sure that Newlib was compiled with retargetable locking support. */
+#ifndef _RETARGETABLE_LOCKING
+#error "Newlib must be compiled with retargetable locking support"
+#endif
+
+/* Static locks */
+K_MUTEX_DEFINE(__lock___at_quick_exit_mutex);
+K_MUTEX_DEFINE(__lock___tz_mutex);
+K_MUTEX_DEFINE(__lock___dd_hash_mutex);
+K_MUTEX_DEFINE(__lock___arc4random_mutex);
+
+K_MUTEX_R_DEFINE(__lock___sinit_recursive_mutex);
+K_MUTEX_R_DEFINE(__lock___sfp_recursive_mutex);
+K_MUTEX_R_DEFINE(__lock___atexit_recursive_mutex);
+K_MUTEX_R_DEFINE(__lock___malloc_recursive_mutex);
+K_MUTEX_R_DEFINE(__lock___env_recursive_mutex);
+
+void __retarget_lock_init(_LOCK_T *lock)
+{
+	ASSERT(lock != NULL);
+	ASSERT(!in_interrupt_context());
+
+	*lock = malloc(sizeof(mutex_t));
+	ASSERT(*lock != NULL);
+
+	memset(*lock, 0, sizeof(mutex_t));
+}
+
+void __retarget_lock_close(_LOCK_T lock)
+{
+	ASSERT(lock != NULL);
+	ASSERT(!in_interrupt_context());
+
+	free(lock);
+}
+
+void __retarget_lock_acquire(_LOCK_T lock)
+{
+	ASSERT(lock != NULL);
+	ASSERT(!in_interrupt_context());
+
+	mutex_lock((mutex_t *)lock);
+}
+
+int __retarget_lock_try_acquire(_LOCK_T lock)
+{
+	ASSERT(lock != NULL);
+	ASSERT(!in_interrupt_context());
+
+	return mutex_try_lock((mutex_t *)lock);
+}
+
+void __retarget_lock_release(_LOCK_T lock)
+{
+	ASSERT(lock != NULL);
+	ASSERT(!in_interrupt_context());
+
+	mutex_unlock((mutex_t *)lock);
+}
+
+void __retarget_lock_init_recursive(_LOCK_T *lock)
+{
+	ASSERT(lock != NULL);
+	ASSERT(!in_interrupt_context());
+
+	*lock = malloc(sizeof(struct mutex_r));
+	ASSERT(*lock != NULL);
+
+	mutex_init_recursive((struct mutex_r *)*lock);
+}
+
+void __retarget_lock_close_recursive(_LOCK_T lock)
+{
+	ASSERT(lock != NULL);
+	ASSERT(!in_interrupt_context());
+
+	free(lock);
+}
+
+void __retarget_lock_acquire_recursive(_LOCK_T lock)
+{
+	ASSERT(lock != NULL);
+	ASSERT(!in_interrupt_context());
+
+	mutex_lock_recursive((struct mutex_r *)lock);
+}
+
+int __retarget_lock_try_acquire_recursive(_LOCK_T lock)
+{
+	ASSERT(lock != NULL);
+	ASSERT(!in_interrupt_context());
+
+	return mutex_try_lock_recursive((struct mutex_r *)lock);
+}
+
+void __retarget_lock_release_recursive(_LOCK_T lock)
+{
+	ASSERT(lock != NULL);
+	ASSERT(!in_interrupt_context());
+
+	mutex_unlock_recursive((struct mutex_r *)lock);
 }
