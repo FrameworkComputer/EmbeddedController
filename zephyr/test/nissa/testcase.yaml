@@ -254,3 +254,15 @@ tests:
       - CONFIG_PLATFORM_EC_HOSTCMD=y
       - CONFIG_PLATFORM_EC_VBOOT_HASH=n
       - CONFIG_PLATFORM_EC_LID_SWITCH=y
+  nissa.glassway:
+    extra_dtc_overlay_files:
+      - "boards/generic_npcx.dts"
+      - "boards/battery.dts"
+      - "boards/glassway.dts"
+    extra_conf_files:
+      - "prj.conf"
+    extra_configs:
+      - CONFIG_TEST_NISSA_GLASSWAY=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSO=y
+      - CONFIG_PLATFORM_EC_ACCEL_LIS2DW12=y
+      - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n

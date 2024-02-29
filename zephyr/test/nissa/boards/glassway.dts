@@ -1,0 +1,61 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/pwm/pwm.h>
+
+#include "../program/nissa/glassway/cbi.dtsi"
+#include "../program/nissa/glassway/motionsense.dtsi"
+
+/ {
+	named-gpios {
+		gpio_fan_enable: fan-enable {
+			gpios = <&gpio6 3 GPIO_OUTPUT>;
+			no-auto-init;
+		};
+	};
+
+	named-i2c-ports {
+		i2c_ec_i2c_sensor: ec_i2c_sensor {
+			i2c-port = <&i2c_ctrl1>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+	};
+
+	/* LEDs need to exist for testing, but aren't actually used. */
+	led-pwms {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		pwm_red: pwm@0 {
+			compatible = "cros,pwm-mock";
+			reg = <0 1>;
+			#pwm-cells = <3>;
+		};
+	};
+
+	pwm-leds {
+		compatible = "pwm-leds";
+
+		pwm_led0: led0 {
+			pwms = <&pwm_red 0 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	cros-pwmleds {
+		compatible = "cros-ec,pwm-leds";
+		leds = <&pwm_led0>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pwm_led_0@0 {
+			reg = <0>;
+			ec-led-name = "EC_LED_ID_BATTERY_LED";
+		};
+	};
+
+	/* Sensors need to exist for this test but aren't actually used. */
+	/delete-node/ motionsense-sensor-info;
+};

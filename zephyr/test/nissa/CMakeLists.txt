@@ -232,3 +232,16 @@ if(CONFIG_TEST_NISSA_YAVILLA)
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/yavilla/src/usbc.c
     )
 endif()
+
+if(CONFIG_TEST_NISSA_GLASSWAY)
+    target_compile_definitions(app PRIVATE CHARGER_PRIMARY=0 CHARGER_SECONDARY=1)
+    target_sources(
+            app PRIVATE
+            src/glassway.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/glassway/src/fan.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/glassway/src/form_factor.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/glassway/src/usbc.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/glassway/src/charger.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/glassway/src/led.c
+    )
+endif()

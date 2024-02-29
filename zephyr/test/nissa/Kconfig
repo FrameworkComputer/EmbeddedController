@@ -105,6 +105,11 @@ choice TEST_TARGET
 	  help
 		The test target that exercises nissa/yavilla/*.c
 
+	config TEST_NISSA_GLASSWAY
+	  bool "Tests for Glassway-specific"
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	  help
+	    The test target that exercises nissa/glassway/*.c
 endchoice
 
 config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
