@@ -46,6 +46,9 @@
 		lgc_ap19b8k {
 			compatible = "lgc,ap19b8k", "battery-smart";
 		};
+		lges-ap23a8l {
+			compatible = "lges,ap23a8l", "battery-smart";
+		};
 		panasonic_ap19b5k {
 			compatible = "panasonic,ap19b5k", "battery-smart";
 		};
