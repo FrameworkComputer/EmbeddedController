@@ -199,12 +199,10 @@ DT_FOREACH_STATUS_OKAY(cros_ec_motionsense_bodydetect,
  * See motionsense-sensor-base.yaml and cros-ec,motionsense-sensor-config.yaml
  * for DT example and details.
  */
-#define SET_CONFIG_EC(cfg_id, cfg_suffix)                                   \
-	[SENSOR_CONFIG_##cfg_suffix] = {                                    \
-		IF_ENABLED(DT_NODE_HAS_PROP(cfg_id, odr),                   \
-			   (.odr = DT_PROP(cfg_id, odr), ))                 \
-			IF_ENABLED(DT_NODE_HAS_PROP(cfg_id, ec_rate),       \
-				   (.ec_rate = DT_PROP(cfg_id, ec_rate), )) \
+#define SET_CONFIG_EC(cfg_id, cfg_suffix)                  \
+	[SENSOR_CONFIG_##cfg_suffix] = {                   \
+		.odr = DT_PROP_OR(cfg_id, odr, 0),         \
+		.ec_rate = DT_PROP_OR(cfg_id, ec_rate, 0), \
 	}
 
 /* Get configs */

@@ -53,6 +53,9 @@
  * BOARD_*, CHIP_*, and CHIP_FAMILY_*.
  */
 
+/* When the ec_rate config is set, put the sensor in force mode */
+#undef CONFIG_SENSOR_EC_RATE_FORCE_MODE
+
 /* Add support for sensor FIFO */
 #undef CONFIG_ACCEL_FIFO
 

@@ -37,6 +37,7 @@ child-binding:
         MSB is used to know if we are rounding up.
     ec-rate:
       type: int
+      default: 0
       description: Delay between collection by EC, in us.
 
 #
