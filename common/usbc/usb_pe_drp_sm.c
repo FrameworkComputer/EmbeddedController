@@ -3733,6 +3733,24 @@ static void pe_snk_transition_sink_run(int port)
 				dpm_evaluate_sink_fixed_pdo(
 					port, *pd_get_snk_caps(port));
 
+			/*
+			 * Per PD r3.1 v1.8 ss 8.3.3.3.6, the PE should start
+			 * actually sinking according to the new power contract
+			 * upon exit from PE_SNK_Transition_Sink. Setting the
+			 * current limit here in the run function instead of the
+			 * exit function ensures that this happens before the
+			 * next run of the type-C state machine. This avoids a
+			 * race condition in the case where the TC transitions
+			 * to Unattached immediately after contract negotiation.
+			 * In this case, the TC sets the current limit to 0, and
+			 * this should happen last.
+			 */
+			pd_set_input_current_limit(port, pe[port].curr_limit,
+						   pe[port].supply_voltage);
+			if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
+				/* Set ceiling based on what's negotiated */
+				charge_manager_set_ceil(port, CEIL_REQUESTOR_PD,
+							pe[port].curr_limit);
 			set_state_pe(port, PE_SNK_READY);
 		} else {
 			/*
@@ -3756,15 +3774,6 @@ static void pe_snk_transition_sink_run(int port)
 
 static void pe_snk_transition_sink_exit(int port)
 {
-	/* Transition Sink's power supply to the new power level */
-	pd_set_input_current_limit(port, pe[port].curr_limit,
-				   pe[port].supply_voltage);
-
-	if (IS_ENABLED(CONFIG_CHARGE_MANAGER))
-		/* Set ceiling based on what's negotiated */
-		charge_manager_set_ceil(port, CEIL_REQUESTOR_PD,
-					pe[port].curr_limit);
-
 	pd_timer_disable(port, PE_TIMER_PS_TRANSITION);
 
 	if (IS_ENABLED(CONFIG_USB_PD_DPS))
