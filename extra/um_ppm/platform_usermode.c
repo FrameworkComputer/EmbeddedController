@@ -68,6 +68,15 @@ void platform_usleep(uint32_t usec)
 	usleep(usec);
 }
 
+void platform_hexdump(const uint8_t *data, size_t len)
+{
+	for (int _i = 0; _i < len; ++_i) {
+		DLOG_LOOP("0x%02x", data[_i]);
+		if (_i != len - 1)
+			DLOG_LOOP(", ");
+	}
+}
+
 struct task_handle {
 	pthread_t thread;
 };
