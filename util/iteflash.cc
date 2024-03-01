@@ -1981,10 +1981,10 @@ static int linux_i2c_interface_shutdown(struct common_hnd *chnd)
 
 static int ccd_i2c_interface_init(struct common_hnd *chnd)
 {
-	if (chnd->conf.usb_vid == 0) {
+	if (chnd->conf.usb_vid == 0 && chnd->conf.usb_serial == nullptr) {
 		chnd->conf.usb_vid = CR50_USB_VID;
 	}
-	if (chnd->conf.usb_pid == 0) {
+	if (chnd->conf.usb_pid == 0 && chnd->conf.usb_serial == nullptr) {
 		chnd->conf.usb_pid = CR50_USB_PID;
 	}
 	return connect_to_ccd_i2c_bridge(chnd);
