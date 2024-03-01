@@ -253,6 +253,7 @@ static int ppm_common_execute_pending_cmd(struct ppm_common_device *dev)
 	struct ucsi_cci *cci = &dev->ucsi_data.cci;
 	uint8_t *message_in = (uint8_t *)&dev->ucsi_data.message_in;
 	uint8_t ucsi_command = control->command;
+	struct ucsiv3_ack_cc_ci_cmd *ack_cmd;
 	int ret = -1;
 	bool ack_ci = false;
 
@@ -270,8 +271,8 @@ static int ppm_common_execute_pending_cmd(struct ppm_common_device *dev)
 
 	switch (ucsi_command) {
 	case UCSI_CMD_ACK_CC_CI:
-		struct ucsiv3_ack_cc_ci_cmd *ack_cmd =
-			(struct ucsiv3_ack_cc_ci_cmd *)control->command_specific;
+		ack_cmd = (struct ucsiv3_ack_cc_ci_cmd *)
+				  control->command_specific;
 		/* The ack should already validated before we reach here. */
 		ack_ci = ack_cmd->connector_change_ack;
 		break;
