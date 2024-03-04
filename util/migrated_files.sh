@@ -11,7 +11,7 @@ exit_code=0
 
 # Some tests were mainly copy paste to Zephyr. Add a warning to make sure
 # fixes are applied for both versions.
-migrated_tests="test/abort.c"
+migrated_tests="test/abort.c test/cortexm_fpu.c"
 
 for file in "$@"; do
   ec_file="${file##**/platform/ec/}"

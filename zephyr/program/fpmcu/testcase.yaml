@@ -8,3 +8,8 @@ tests:
     - CONFIG_HW_TEST_ABORT=y
     extra_conf_files:
     - prj_hw_tests.conf
+  cortexm_fpu:
+    extra_configs:
+    - CONFIG_HW_TEST_CORTEXM_FPU=y
+    extra_conf_files:
+    - prj_hw_tests.conf
