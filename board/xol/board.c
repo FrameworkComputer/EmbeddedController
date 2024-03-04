@@ -57,3 +57,31 @@ static void mp2964_on_startup(void)
 		CPRINTF("[mp2964] try to tune MP2964 (%d)\n", status);
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, mp2964_on_startup, HOOK_PRIO_FIRST);
+
+static const struct ec_response_keybd_config xol_kb = {
+	.num_top_row_keys = 14,
+	.action_keys = {
+		TK_BACK,                /* T1 */
+		TK_REFRESH,             /* T2 */
+		TK_FULLSCREEN,          /* T3 */
+		TK_OVERVIEW,            /* T4 */
+		TK_SNAPSHOT,            /* T5 */
+		TK_BRIGHTNESS_DOWN,     /* T6 */
+		TK_BRIGHTNESS_UP,       /* T7 */
+		TK_KBD_BKLIGHT_DOWN,    /* T8 */
+		TK_KBD_BKLIGHT_UP,      /* T9 */
+		TK_PLAY_PAUSE,          /* T10 */
+		TK_MICMUTE,             /* T11 */
+		TK_VOL_MUTE,            /* T12 */
+		TK_VOL_UP,              /* T13 */
+		TK_VOL_DOWN,            /* T14 */
+	},
+	.capabilities = KEYBD_CAP_FUNCTION_KEYS | KEYBD_CAP_SCRNLOCK_KEY |
+			KEYBD_CAP_NUMERIC_KEYPAD,
+};
+
+__override const struct ec_response_keybd_config *
+board_vivaldi_keybd_config(void)
+{
+	return &xol_kb;
+}
