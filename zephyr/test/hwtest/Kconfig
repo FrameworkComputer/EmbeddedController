@@ -14,3 +14,7 @@ config HW_TEST_CORTEXM_FPU
 	bool "Cortex-M FPU test"
 	select ZTEST
 	depends on BOARD_FINGERPRINT
+
+config HW_TEST_CRC
+	bool "CRC test"
+	select ZTEST
