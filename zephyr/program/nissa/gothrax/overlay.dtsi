@@ -465,6 +465,10 @@
 };
 
 /* fan tachometer sensor */
+&tach1a_gpd7_default {
+	bias-pull-up;
+};
+
 &tach1 {
 	status = "okay";
 	channel = <IT8XXX2_TACH_CHANNEL_A>;
