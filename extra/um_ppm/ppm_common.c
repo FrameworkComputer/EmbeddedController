@@ -527,10 +527,18 @@ static void ppm_common_task(void *context)
 	 * PPM lock; may need to  fix that.
 	 */
 	do {
-		/* Wait for a task from OPM unless we are already processing a
-		 * command.
+		/* We will handle async events only in idle state if there is
+		 * one pending.
 		 */
-		if (dev->ppm_state != PPM_STATE_PROCESSING_COMMAND) {
+		bool handle_async_event =
+			(dev->ppm_state <= PPM_STATE_IDLE_NOTIFY) &&
+			is_pending_async_event(dev);
+		/* Wait for a task from OPM unless we are already processing a
+		 * command or we need to fall through for a pending command or
+		 * handleable async event.
+		 */
+		if (dev->ppm_state != PPM_STATE_PROCESSING_COMMAND &&
+		    !is_pending_command(dev) && !handle_async_event) {
 			DLOG("Waiting for next command at state %d (%s)...",
 			     dev->ppm_state,
 			     ppm_state_to_string(dev->ppm_state));
@@ -593,12 +601,15 @@ static void ppm_common_task(void *context)
 
 		/* Waiting for a command completion acknowledge. */
 		case PPM_STATE_WAITING_CC_ACK:
-			if (!match_pending_command(dev, UCSI_CMD_ACK_CC_CI) ||
-			    is_invalid_ack(dev)) {
-				invalid_ack_notify(dev);
-				break;
+			if (is_pending_command(dev)) {
+				if (!match_pending_command(
+					    dev, UCSI_CMD_ACK_CC_CI) ||
+				    is_invalid_ack(dev)) {
+					invalid_ack_notify(dev);
+					break;
+				}
+				ppm_common_handle_pending_command(dev);
 			}
-			ppm_common_handle_pending_command(dev);
 			break;
 
 		/* Waiting for async event ack. */

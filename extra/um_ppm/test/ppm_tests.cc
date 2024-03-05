@@ -280,9 +280,7 @@ class PpmTest : public testing::Test {
 		EXPECT_TRUE(expected_commands_queue_.empty());
 	}
 
-	// Set up a PPM alert on port 1. This results in a GET_CONNECTOR_STATUS
-	// read, and a subsequent notification to the OPM.
-	void TriggerConnectorChangedNotification(uint8_t lpm_id)
+	void TriggerNotificationAsync(uint8_t lpm_id)
 	{
 		ucsiv3_get_connector_status_data data = {
 			.connector_status_change = 1
@@ -294,7 +292,13 @@ class PpmTest : public testing::Test {
 			  std::vector<uint8_t>(lpm_data,
 					       lpm_data + lpm_data_size) });
 		SendLpmAlert(lpm_id);
+	}
 
+	// Set up a PPM alert on lpm_id. This results in a GET_CONNECTOR_STATUS
+	// read, and a subsequent notification to the OPM.
+	void TriggerConnectorChangedNotification(uint8_t lpm_id)
+	{
+		TriggerNotificationAsync(lpm_id);
 		EXPECT_TRUE(WaitForAsyncEventPendingState(false));
 	}
 
@@ -639,6 +643,44 @@ TEST_F(PpmTest, WaitForCmdAck_SupportSimultaneousAckCCAndCI)
 	EXPECT_EQ(GetPpmData()->ppm_state, PPM_STATE_IDLE_NOTIFY);
 	EXPECT_EQ(GetPpmData()->per_port_status[0].connector_status_change, 0);
 	EXPECT_EQ(GetPpmData()->last_connector_changed, -1);
+}
+
+// If an async event is seen while a command is processing and waiting for an
+// ack, ignore it until the current command loop finishes.
+TEST_F(PpmTest, WaitForCmdAck_IgnoreAsyncEventProcessing)
+{
+	InitializeToIdleNotify();
+	int notified = GetNotifiedCount();
+
+	QueueExpectedCommandWithResult({ UCSI_CMD_SET_NOTIFICATION_ENABLE, 0 });
+	struct ucsi_control control = {
+		.command = UCSI_CMD_SET_NOTIFICATION_ENABLE, .data_length = 0
+	};
+	ASSERT_NE(-1, WriteCommand(control));
+	EXPECT_TRUE(WaitForCommandPendingState(false));
+	EXPECT_EQ(GetPpmData()->ppm_state, PPM_STATE_WAITING_CC_ACK);
+	EXPECT_EQ(notified + 2, GetNotifiedCount()); // one notification each
+						     // for busy and command
+						     // complete
+
+	// The next expected command is ACK_CC_CI. Do this before triggering the
+	// lpm alert.
+	QueueExpectedCommandWithResult({ UCSI_CMD_ACK_CC_CI, 0 });
+
+	// Send LPM alert which should queue an async event for processing.
+	// No notification goes out for this!
+	TriggerNotificationAsync(kDefaultAlertPort);
+	EXPECT_EQ(notified + 2, GetNotifiedCount());
+
+	// OPM acknowledges the PPM's cmd_complete.
+	WriteAckCommand(/*connector_change_ack*/ false,
+			/*command_complete_ack*/ true);
+	EXPECT_TRUE(WaitForCommandPendingState(false));
+
+	// After handling the command loop, we will see the pending command and
+	// go into the WAITING_ASYNC_EV_ACK state.
+	EXPECT_TRUE(WaitForNotification(notified + 4));
+	EXPECT_EQ(GetPpmData()->ppm_state, PPM_STATE_WAITING_ASYNC_EV_ACK);
 }
 
 // When waiting for a Connection Indicator Ack, we accept an immediate ACK_CC_CI
