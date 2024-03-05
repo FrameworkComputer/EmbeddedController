@@ -1520,7 +1520,7 @@ function flash_it83xx() {
 		cat "${IMG}" > "${IMG_CPY}"
 		IMG="${IMG_CPY}"
 		preserve_sections "ite_i2c" "${IMG}" "${TEMP_DIR}"    \
-			"${ITEFLASH_ARGS[*]}" || die "${MSG_PROGRAM_FAIL}"
+			"${ITEFLASH_ARGS[@]}" || die "${MSG_PROGRAM_FAIL}"
 	fi
 
 	local ERROR_MSG
@@ -1720,7 +1720,7 @@ function flash_npcx_uut() {
 			cat "${IMG}" > "${IMG_CPY}"
 			IMG="${IMG_CPY}"
 			preserve_sections "${CHIP}" "${IMG}" "${TEMP_DIR}"    \
-				"${NPCX_UUT} ${UUT_ARGS[*]}" || die "${MSG_PROGRAM_FAIL}"
+				"${NPCX_UUT}" "${UUT_ARGS[@]}" || die "${MSG_PROGRAM_FAIL}"
 		fi
 
 		info "Programming EC firmware image."
@@ -1845,10 +1845,13 @@ function preserve_sections() {
 	local CHIP_CMD_PREFIX
 
 	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
-	NEW_IMG=${2:?"missing arg 2: New EC image path"}
+	shift
+	NEW_IMG=${1:?"missing arg 2: New EC image path"}
 	NEW_IMG=$(readlink -f "${NEW_IMG}")
-	TEMP_DIR=${3:?"missing arg 3: Temp directory path"}
-	CHIP_CMD_PREFIX=${4:?"missing arg 4: Chip command prefix"}
+	shift
+	TEMP_DIR=${1:?"missing arg 3: Temp directory path"}
+	shift
+	CHIP_CMD_PREFIX=("$@")
 	(
 		cd "${TEMP_DIR}"
 		local NEW_FMAP
@@ -1869,8 +1872,9 @@ function preserve_sections() {
 		CUR_FMAP_IMG="${TEMP_DIR}/ec.cur.fmap.bin"
 		CUR_IMG="${TEMP_DIR}/ec.cur.bin"
 		info "Reading FMAP section from EC chip"
-		read_chip_partially "${CHIP_TYPE}" "${CHIP_CMD_PREFIX}"  \
-			"${NEW_FMAP_OFFSET}" "${NEW_FMAP_SIZE}" "${CUR_FMAP_IMG}"
+		read_chip_partially "${CHIP_TYPE}" "${NEW_FMAP_OFFSET}" \
+			"${NEW_FMAP_SIZE}" "${CUR_FMAP_IMG}" \
+			"${CHIP_CMD_PREFIX[@]}"
 		# Verify the partial file starts with the correct FMAP header.
 		# If the FMAP has moved between the current image and new
 		# image, this should catch this.
@@ -1879,7 +1883,7 @@ function preserve_sections() {
 		CUR_FMAP_HEADER=$(head -c 8 "${CUR_FMAP_IMG}" | tr -d '\0')
 		if [[ "${CUR_FMAP_HEADER}" != "__FMAP__" ]]; then
 			info "FMAP section read failed, reading complete image"
-			read_chip "${CHIP_TYPE}" "${CHIP_CMD_PREFIX}" "${CUR_IMG}"
+			read_chip "${CHIP_TYPE}" "${CUR_IMG}" "${CHIP_CMD_PREFIX[@]}"
 			check_preserve_sections_not_present "${CUR_IMG}"  \
 				"${NEW_IMG}" "${TEMP_DIR}" || die
 			preserve_sections_with_cur_image "${CUR_IMG}" "${NEW_IMG}" "${TEMP_DIR}"
@@ -1889,7 +1893,7 @@ function preserve_sections() {
 				"${NEW_IMG}" "${TEMP_DIR}" || die
 			preserve_sections_with_fmap_image "${CUR_FMAP_IMG}"  \
 				"${NEW_IMG}" "${TEMP_DIR}" "${CHIP_TYPE}"  \
-				"${CHIP_CMD_PREFIX}"
+				"${CHIP_CMD_PREFIX[@]}"
 		fi
 	)
 }
@@ -1918,10 +1922,14 @@ function preserve_sections_with_fmap_image() {
 	local CHIP_CMD_PREFIX
 
 	CUR_FMAP_IMG=${1:?"missing arg 1: Cur EC FMAP image path"}
-	NEW_IMG=${2:?"missing arg 2: New EC image path"}
-	TEMP_DIR=${3:?"missing arg 3: Temp directory path"}
-	CHIP_TYPE=${4:?"missing arg 4: Chip type"}
-	CHIP_CMD_PREFIX=${5:?"missing arg 5: Chip command prefix"}
+	shift
+	NEW_IMG=${1:?"missing arg 2: New EC image path"}
+	shift
+	TEMP_DIR=${1:?"missing arg 3: Temp directory path"}
+	shift
+	CHIP_TYPE=${1:?"missing arg 4: Chip type"}
+	shift
+	CHIP_CMD_PREFIX=("$@")
 	(
 		cd "${TEMP_DIR}"
 		dump_fmap "${CUR_FMAP_IMG}" -e | grep ' preserve' | cut \
@@ -1938,8 +1946,8 @@ function preserve_sections_with_fmap_image() {
 			SEC_OFFSET=$(echo "${SEC_FMAP_DUMP}" | awk '{print $2}')
 			SEC_SIZE=$(echo "${SEC_FMAP_DUMP}" | awk '{print $3}')
 			info "Reading ${line} section from EC chip"
-			read_chip_partially "${CHIP_TYPE}" "${CHIP_CMD_PREFIX}"  \
-				"${SEC_OFFSET}" "${SEC_SIZE}" "${SEC_IMG}"
+			read_chip_partially "${CHIP_TYPE}" \
+				"${SEC_OFFSET}" "${SEC_SIZE}" "${SEC_IMG}" "${CHIP_CMD_PREFIX[@]}"
 			info "Preserving ${line} section in new image"
 			futility load_fmap "${NEW_IMG}" "${line}:${SEC_IMG}"
 		done
@@ -1973,17 +1981,20 @@ function preserve_sections_with_cur_image() {
 
 function read_chip_partially() {
 	local CHIP_TYPE
-	local CHIP_CMD_PREFIX
 	local OFFSET
 	local SIZE
 	local FILE_PATH
+	local CHIP_CMD_PREFIX
 
 	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
-	CHIP_CMD_PREFIX=${2:?"missing arg 2: Prefix of command"}
-	readarray -t -d " " CHIP_CMD_PREFIX <<< "${CHIP_CMD_PREFIX}"
-	OFFSET=${3:?"missing arg 3: Offset"}
-	SIZE=${4:?"missing arg 4: Size"}
-	FILE_PATH=${5:?"missing arg 5: Image storage path"}
+	shift
+	OFFSET=${1:?"missing arg 2: Offset"}
+	shift
+	SIZE=${1:?"missing arg 3: Size"}
+	shift
+	FILE_PATH=${1:?"missing arg 4: Image storage path"}
+	shift
+	CHIP_CMD_PREFIX=("$@")
 
 	if [ "${CHIP_TYPE}" = "npcx_uut" ]; then
 		local NPCX_BASE_ADDR
@@ -2039,14 +2050,15 @@ function read_chip_partially() {
 
 function read_chip() {
 	local CHIP_TYPE
-	local CHIP_CMD_PREFIX
 	local FILE_PATH
 	local UUT_CUR_RD
+	local CHIP_CMD_PREFIX
 
 	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
-	CHIP_CMD_PREFIX=${2:?"missing arg 2: Prefix of command"}
-	readarray -t -d " " CHIP_CMD_PREFIX <<< "${CHIP_CMD_PREFIX}"
-	FILE_PATH=${3:?"missing arg 3: Image storage path"}
+	shift
+	FILE_PATH=${1:?"missing arg 2: Image storage path"}
+	shift
+	CHIP_CMD_PREFIX=("$@")
 
 	if [ "${CHIP_TYPE}" = "npcx_uut" ]; then
 		UUT_CUR_RD=( "${CHIP_CMD_PREFIX[@]}" "--read-flash" "--file=${FILE_PATH}" )
