@@ -245,6 +245,18 @@ function print_or_run() {
 		echo "DRY RUN:" "${quoted_args[@]}" >&2
 		tput2 sgr0
 	else
+		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
+			local arg
+			local -a quoted_args
+
+			# Quote each of the arguments so it can easily be
+			# copy-pasted into a shell.
+			for arg in "$@"; do
+				quoted_args+=("$(printf "%q" "${arg}")")
+			done
+
+			echo "${quoted_args[@]}" >&2
+		fi
 		"$@"
 	fi
 }
@@ -268,10 +280,6 @@ function dut_control() {
 		fi
 		DUT_CTRL_CML+=( "${p}" )
 	done
-
-	if [ "${FLAGS_verbose}" = "${FLAGS_TRUE}" ]; then
-		echo "${DUT_CTRL_CML[*]}" 1>&2
-	fi
 
 	print_or_run "${DUT_CTRL_CML[@]}" >/dev/null
 }
@@ -1220,7 +1228,6 @@ function flash_flashrom() {
 		local FLASHROM_WRITE=("${FLASHROM_CMDLINE[@]}" "${FLASHROM_OPTIONS[@]}")
 		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 			info "Running flashrom:" 1>&2
-			echo " ${FLASHROM_WRITE[*]} -w ${T}" 1>&2
 		fi
 		print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
 			"${FLASHROM_WRITE[@]}" -w "${T}" \
@@ -1230,7 +1237,6 @@ function flash_flashrom() {
 		info "Reading EC firmware image."
 		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 			info "Running flashrom:" 1>&2
-			echo " ${FLASHROM_CMDLINE[*]} -r ${FLAGS_read}" 1>&2
 		fi
 		print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
 			"${FLASHROM_CMDLINE[@]}" -r "${FLAGS_read}" \
@@ -1314,9 +1320,6 @@ function flash_stm32() {
 		info "Programming EC firmware image."
 		# Unprotect flash, erase, and write
 		local STM32MON_COMMAND=("${STM32MON}" "${STM32MON_OPT[@]}" -U -u -e -w)
-		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
-			echo "${STM32MON_COMMAND[*]} ${IMG}"
-		fi
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
 			"${STM32MON_COMMAND[@]}" "${IMG}" \
 			|| die "${MSG_PROGRAM_FAIL}"
@@ -1338,9 +1341,6 @@ function flash_stm32() {
 	if [[ -n "${IMG_READ}" ]]; then
 		info "Reading EC firmware image."
 		local STM32MON_READ_CMD=("${STM32MON}" "${STM32MON_OPT[@]}" -U -r)
-		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
-			echo "${STM32MON_READ_CMD[*]} ${IMG_READ}"
-		fi
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
 			"${STM32MON_READ_CMD[@]}" "${IMG_READ}" \
 			|| die "${MSG_READ_FAIL}"
@@ -1540,7 +1540,6 @@ function flash_it83xx() {
 
 	if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 		ITEFLASH_ARGS+=( "--debug" )
-		echo "${ITEFLASH_ARGS[@]}"
 	fi
 
 	# Ensure the CR50 doesn't go into low power while flashing
@@ -1690,10 +1689,6 @@ function flash_npcx_uut() {
 				"--file=${MON}" )
 
 		# Load monitor binary to address 0x200C3020
-		if [[ "${FLAGS_verbose}" = "${FLAGS_TRUE}" ]]; then
-			echo "${UUT_MON[*]}"
-		fi
-
 		local monitor_res=0
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
 			"${UUT_MON[@]}" || monitor_res=$?
@@ -1727,9 +1722,6 @@ function flash_npcx_uut() {
 		local UUT_WR=( "${NPCX_UUT}" "${UUT_ARGS[@]}"      \
 			       "--auto" "--offset=${FLAGS_offset}" \
 			       "--file=${IMG}" )
-		if [[ "${FLAGS_verbose}" = "${FLAGS_TRUE}" ]]; then
-			echo "${UUT_WR[*]}"
-		fi
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
 			"${UUT_WR[@]}" || die "${MSG_PROGRAM_FAIL}"
 
@@ -1747,9 +1739,6 @@ function flash_npcx_uut() {
 		local UUT_RD=( "${NPCX_UUT}" "${UUT_ARGS[@]}"   \
 			      "--read-flash" "--file=${IMG_READ}" )
 
-		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
-			echo "${UUT_RD[*]}"
-		fi
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
 			"${UUT_RD[@]}" || die "${MSG_READ_FAIL}"
 	fi
@@ -1758,10 +1747,6 @@ function flash_npcx_uut() {
 	# only if it was a flash write request.
 	if [[ -z "${FLAGS_read}" && "${FLAGS_verify}" == "${FLAGS_TRUE}" ]]; then
 		info "Verifying EC firmware image."
-
-		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
-			echo "cmp -n ${IMG_SIZE} ${IMG} ${IMG_READ}"
-		fi
 
 		print_or_run cmp -s -n "${IMG_SIZE}" "${IMG}" "${IMG_READ}" \
 			|| die "${MSG_VERIFY_FAIL}"
@@ -2004,7 +1989,6 @@ function read_chip_partially() {
 		UUT_CUR_FMAP_RD=( "${CHIP_CMD_PREFIX[@]}" "--opr=rd"  \
 			"--addr=${OFFSET}" "--size=${SIZE}"  \
 			"--file=${FILE_PATH}" )
-		echo "${UUT_CUR_FMAP_RD[*]}"
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
 					"${UUT_CUR_FMAP_RD[@]}" || die "${MSG_READ_FAIL}"
 	elif [ "${CHIP_TYPE}" == "ite_i2c" ]; then
@@ -2062,12 +2046,10 @@ function read_chip() {
 
 	if [ "${CHIP_TYPE}" = "npcx_uut" ]; then
 		UUT_CUR_RD=( "${CHIP_CMD_PREFIX[@]}" "--read-flash" "--file=${FILE_PATH}" )
-		echo "${UUT_CUR_RD[*]}"
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
 					"${UUT_CUR_RD[@]}" || die "${MSG_READ_FAIL}"
 	elif [ "${CHIP_TYPE}" == "ite_i2c" ]; then
 		UUT_CUR_RD=( "${CHIP_CMD_PREFIX[@]}" "--read=${FILE_PATH}" )
-		echo "${UUT_CUR_RD[*]}"
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
 					"${UUT_CUR_RD[@]}" || die "${MSG_READ_FAIL}"
 
