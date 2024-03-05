@@ -228,6 +228,13 @@ union rts54_request {
 		struct rts54_subcommand_header header;
 		uint8_t port_num;
 	} get_cable_property;
+
+	struct get_vdo_req {
+		struct rts54_subcommand_header header;
+		uint8_t data_len;
+		union get_vdo_t vdo_req;
+		uint8_t vdo_type[7];
+	} get_vdo;
 };
 
 union rts54_response {
@@ -384,6 +391,11 @@ union rts54_response {
 			uint32_t raw_value[2];
 		};
 	} __packed get_cable_property;
+
+	struct get_vdo_response {
+		uint8_t byte_count;
+		uint32_t vdo[7];
+	} __packed get_vdo;
 };
 
 enum cmd_sts_t {

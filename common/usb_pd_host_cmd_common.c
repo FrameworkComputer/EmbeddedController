@@ -448,3 +448,28 @@ static enum ec_status hc_typec_control(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_TYPEC_CONTROL, hc_typec_control, EC_VER_MASK(0));
 #endif /* CONFIG_HOSTCMD_TYPEC_CONTROL */
+
+#if defined(CONFIG_USB_PD_ALT_MODE_DFP) || \
+	defined(CONFIG_PLATFORM_EC_USB_PD_CONTROLLER)
+static enum ec_status hc_remote_pd_discovery(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_usb_pd_info_request *p = args->params;
+	struct ec_params_usb_pd_discovery_entry *r = args->response;
+
+	if (p->port >= board_get_usb_pd_port_count())
+		return EC_RES_INVALID_PARAM;
+
+	r->vid = pd_get_identity_vid(p->port);
+	r->ptype = pd_get_product_type(p->port);
+
+	/* pid only included if vid is assigned */
+	if (r->vid)
+		r->pid = pd_get_identity_pid(p->port);
+
+	args->response_size = sizeof(*r);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_USB_PD_DISCOVERY, hc_remote_pd_discovery,
+		     EC_VER_MASK(0));
+#endif /* CONFIG_USB_PD_ALT_MODE_DFP || CONFIG_PLATFORM_EC_USB_PD_CONTROLLER \
+	*/

@@ -608,6 +608,19 @@ static int get_cable_property(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int get_vdo(struct rts5453p_emul_pdc_data *data,
+		   const union rts54_request *req)
+{
+	LOG_INF("GET_VDO = %x", req->get_vdo.vdo_req.raw_value);
+	memset(&data->response, 0, sizeof(data->response));
+
+	data->response.get_vdo.byte_count =
+		sizeof(uint32_t) * req->get_vdo.vdo_req.num_vdos;
+
+	send_response(data);
+	return 0;
+}
+
 static bool send_response(struct rts5453p_emul_pdc_data *data)
 {
 	if (data->delay_ms > 0) {
@@ -684,7 +697,7 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0x84, HANDLER_DEF(get_rdo) },
 	{ .code = 0x85, HANDLER_DEF(unsupported) },
 	{ .code = 0x99, HANDLER_DEF(unsupported) },
-	{ .code = 0x9A, HANDLER_DEF(unsupported) },
+	{ .code = 0x9A, HANDLER_DEF(get_vdo) },
 	{ .code = 0x9D, HANDLER_DEF(unsupported) },
 	{ .code = 0xA2, HANDLER_DEF(unsupported) },
 	{ .code = 0xF0, HANDLER_DEF(unsupported) },

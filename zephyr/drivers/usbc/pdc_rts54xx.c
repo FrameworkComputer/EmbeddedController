@@ -132,6 +132,7 @@ const struct smbus_cmd_t SET_TPC_RECONNECT = { 0x08, 0x03, 0x1F };
 const struct smbus_cmd_t FORCE_SET_POWER_SWITCH = { 0x08, 0x03, 0x21 };
 const struct smbus_cmd_t GET_PDOS = { 0x08, 0x03, 0x83 };
 const struct smbus_cmd_t GET_RDO = { 0x08, 0x02, 0x84 };
+const struct smbus_cmd_t GET_VDO = { 0x08, 0x03, 0x9A };
 const struct smbus_cmd_t GET_CURRENT_PARTNER_SRC_PDO = { 0x08, 0x02, 0xA7 };
 const struct smbus_cmd_t GET_POWER_SWITCH_STATE = { 0x08, 0x02, 0xA9 };
 const struct smbus_cmd_t GET_RTK_STATUS = { 0x09, 0x03, 0x00 };
@@ -268,6 +269,8 @@ enum cmd_t {
 	CMD_SET_RETIMER_FW_UPDATE_MODE,
 	/** Get the cable properties */
 	CMD_GET_CABLE_PROPERTY,
+	/** Get VDO(s) of PDC, Cable, or Port partner */
+	CMD_GET_VDO,
 };
 
 /**
@@ -381,6 +384,7 @@ static const char *const cmd_names[] = {
 	[CMD_GET_CURRENT_PARTNER_SRC_PDO] = "GET_CURRENT_PARTNER_SRC_PDO",
 	[CMD_SET_RETIMER_FW_UPDATE_MODE] = "SET_RETIMER_FW_UPDATE_MODE",
 	[CMD_GET_CABLE_PROPERTY] = "GET_CABLE_PROPERTY",
+	[CMD_GET_VDO] = "GET VDO",
 };
 
 /**
@@ -968,7 +972,6 @@ static void st_ping_status_run(void *o)
 		} else {
 			LOG_DBG("C%d: ping_status: %02x", cfg->connector_number,
 				data->ping_status.raw_value);
-
 			/*
 			 * The command completed successfully,
 			 * so set cci.command_completed to 1b.
@@ -1989,6 +1992,43 @@ static bool rts54_is_init_done(const struct device *dev)
 	return data->init_done;
 }
 
+static int rts54_get_vdo(const struct device *dev, union get_vdo_t vdo_req,
+			 uint8_t *vdo_req_list, uint32_t *vdo)
+{
+	struct pdc_data_t *data = dev->data;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	if (vdo == NULL) {
+		return -EINVAL;
+	}
+
+	uint8_t payload[] = {
+		GET_VDO.cmd,
+		GET_VDO.len + vdo_req.num_vdos,
+		GET_VDO.sub,
+		0x00, /*  3: Port num */
+		vdo_req.raw_value, /*  4: Origin + number of VDOs */
+		0x00, /*  5: VDO type 0 */
+		0x00, /*  6: VDO type 1 */
+		0x00, /*  7: VDO type 2 */
+		0x00, /*  8: VDO type 3 */
+		0x00, /*  9: VDO type 4 */
+		0x00, /* 10: VDO type 5 */
+		0x00, /* 11: VDO type 6 */
+		0x00, /* 12: VDO type 7 */
+	};
+
+	/* Copy the list of VDO types being requested in the cmd message */
+	memcpy(&payload[5], vdo_req_list, vdo_req.num_vdos);
+
+	return rts54_post_command(dev, CMD_GET_VDO, payload,
+				  GET_VDO.len + vdo_req.num_vdos + 2,
+				  (uint8_t *)vdo);
+}
+
 static const struct pdc_driver_api_t pdc_driver_api = {
 	.is_init_done = rts54_is_init_done,
 	.get_ucsi_version = rts54_get_ucsi_version,
@@ -2015,6 +2055,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.reconnect = rts54_reconnect,
 	.update_retimer = rts54_set_retimer_update_mode,
 	.get_cable_property = rts54_get_cable_property,
+	.get_vdo = rts54_get_vdo,
 };
 
 static void pdc_interrupt_callback(const struct device *dev,
