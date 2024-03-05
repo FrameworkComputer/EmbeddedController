@@ -252,6 +252,7 @@ libcxx-y=libcxx.o
 mpu-y=mpu.o
 mutex-y=mutex.o
 mutex_trylock-y=mutex_trylock.o
+mutex_recursive-y=mutex_recursive.o
 newton_fit-y=newton_fit.o
 panic-y=panic.o
 panic_data-y=panic_data.o
