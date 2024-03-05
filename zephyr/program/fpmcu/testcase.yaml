@@ -23,3 +23,10 @@ tests:
     - CONFIG_HW_TEST_FLASH_PHYSICAL=y
     extra_conf_files:
     - prj_hw_tests.conf
+  flash_write_protect:
+    extra_configs:
+    - CONFIG_HW_TEST_FLASH_WRITE_PROTECT=y
+    # Added to reduce RO flash usage
+    - CONFIG_PM=n
+    extra_conf_files:
+    - prj_hw_tests.conf
