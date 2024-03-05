@@ -177,6 +177,7 @@ const uint8_t PREPARE_READ_PORT_MASK = 0x0F;
 
 /* Bitfield, i2c_transfer_t, flags */
 const uint8_t TRANSFER_FLAG_TIMEOUT = BIT(0);
+const uint8_t TRANSFER_FLAG_INTERFERENCE = BIT(1);
 
 /*
  * This header is used both on each transaction in the in-memory cyclic buffer,
@@ -587,9 +588,36 @@ static void i2c_interrupt(int index)
 		 */
 		return;
 	}
+	if ((isr & STM32_I2C_ISR_ARLO)) {
+		/*
+		 * Some other device on the I2C bus is responding to the same
+		 * address as HyperDebug, (or otherwise interfering with the bus
+		 * signals.)  Record that fact.
+		 */
+		if (state->cur_transfer)
+			state->cur_transfer->flags |=
+				TRANSFER_FLAG_INTERFERENCE;
+		STM32_I2C_ICR(index) = STM32_I2C_ICR_ARLOCF;
+	}
+	if ((isr & STM32_I2C_ISR_BERR)) {
+		/*
+		 * Unexpected start or stop condition.  Record that fact.
+		 */
+		if (state->cur_transfer)
+			state->cur_transfer->flags |=
+				TRANSFER_FLAG_INTERFERENCE;
+		STM32_I2C_ICR(index) = STM32_I2C_ICR_BERRCF;
+	}
 	if (isr & STM32_I2C_ISR_TXIS) {
-		if (state->cur_transfer->num_bytes >=
-		    state->prepared_read_len) {
+		if (state->cur_transfer->flags & TRANSFER_FLAG_INTERFERENCE) {
+			/*
+			 * We detected something else driving the I2C bus,
+			 * refrain from further action on the bus, by sending
+			 * all high bits.
+			 */
+			STM32_I2C_TXDR(index) = 0xFF;
+		} else if (state->cur_transfer->num_bytes >=
+			   state->prepared_read_len) {
 			STM32_I2C_TXDR(index) = 0xFF;
 		} else {
 			uint8_t data_byte =
