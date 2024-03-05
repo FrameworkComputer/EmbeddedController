@@ -18,3 +18,8 @@ tests:
     - CONFIG_HW_TEST_CRC=y
     extra_conf_files:
     - prj_hw_tests.conf
+  flash_physical:
+    extra_configs:
+    - CONFIG_HW_TEST_FLASH_PHYSICAL=y
+    extra_conf_files:
+    - prj_hw_tests.conf

@@ -522,6 +522,11 @@ class AllTests:
                 test_name="zephyr_flash_stm32f4",
                 exclude_boards=[DARTMONKEY, HELIPILOT],
             ),
+            TestConfig(
+                zephyr_name="drivers.flash.stm32.f4.block_registers",
+                test_name="zephyr_flash_stm32f4_block_registers",
+                exclude_boards=[DARTMONKEY, HELIPILOT],
+            ),
         ]
 
         for test in tests:
