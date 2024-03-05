@@ -142,6 +142,7 @@ if(CONFIG_TEST_NISSA_CRAASKOV)
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craaskov/src/charger.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/craaskov/src/hdmi.c
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craaskov/src/keyboard.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/craaskov/src/touch_panel.c
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craaskov/src/usbc.c
     )
 endif()
