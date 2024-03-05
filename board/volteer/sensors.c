@@ -20,8 +20,8 @@
 
 /******************************************************************************/
 /* Sensors */
-K_MUTEX_DEFINE(g_lid_accel_mutex);
-K_MUTEX_DEFINE(g_base_mutex);
+static K_MUTEX_DEFINE(g_lid_accel_mutex);
+static K_MUTEX_DEFINE(g_base_mutex);
 
 /* BMA253 private data */
 static struct accelgyro_saved_data_t g_bma253_data;

@@ -95,7 +95,7 @@ enum isl923x_mon_dir { MON_CHARGE = 0, MON_DISCHARGE = 1 };
 static int learn_mode;
 
 /* Mutex for CONTROL1 register, that can be updated from multiple tasks. */
-K_MUTEX_DEFINE(control1_mutex_isl923x);
+static K_MUTEX_DEFINE(control1_mutex_isl923x);
 
 static enum ec_error_list isl923x_discharge_on_ac(int chgnum, int enable);
 static enum ec_error_list isl923x_discharge_on_ac_weak_disable(int chgnum);

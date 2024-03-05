@@ -658,7 +658,7 @@ static void dpm_run_pd_button_sm(int port)
  * them
  */
 static uint32_t max_current_claimed;
-K_MUTEX_DEFINE(max_current_claimed_lock);
+static K_MUTEX_DEFINE(max_current_claimed_lock);
 
 /* Ports with PD sink needing > 1.5 A */
 static atomic_t sink_max_pdo_requested;

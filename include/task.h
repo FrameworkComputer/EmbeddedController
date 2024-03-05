@@ -423,7 +423,7 @@ typedef struct mutex mutex_t;
  * initialize it.  We provide the same macro for CrOS EC OS so that we
  * can use it in shared code.
  */
-#define K_MUTEX_DEFINE(name) static mutex_t name = {}
+#define K_MUTEX_DEFINE(name) mutex_t name = {}
 
 /**
  * Lock a mutex.

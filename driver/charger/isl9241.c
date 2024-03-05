@@ -34,10 +34,10 @@
 static int learn_mode;
 
 /* Mutex for CONTROL1 register, that can be updated from multiple tasks. */
-K_MUTEX_DEFINE(control1_mutex_isl9241);
+static K_MUTEX_DEFINE(control1_mutex_isl9241);
 
 /* Mutex for CONTROL3 register, that can be updated from multiple tasks. */
-K_MUTEX_DEFINE(control3_mutex_isl9241);
+static K_MUTEX_DEFINE(control3_mutex_isl9241);
 
 /* Charger parameters */
 static const struct charger_info isl9241_charger_info = {

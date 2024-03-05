@@ -257,7 +257,7 @@ static const int it8801_valid_gpio_group[] = {
 };
 
 /* Mutexes */
-K_MUTEX_DEFINE(ioex_mutex);
+static K_MUTEX_DEFINE(ioex_mutex);
 
 static uint8_t it8801_gpio_sov[ARRAY_SIZE(it8801_valid_gpio_group)];
 

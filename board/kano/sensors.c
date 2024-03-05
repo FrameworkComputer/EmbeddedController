@@ -46,8 +46,8 @@ const struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-K_MUTEX_DEFINE(g_lid_accel_mutex);
-K_MUTEX_DEFINE(g_base_accel_mutex);
+static K_MUTEX_DEFINE(g_lid_accel_mutex);
+static K_MUTEX_DEFINE(g_base_accel_mutex);
 static struct kionix_accel_data g_kx022_data;
 static struct icm_drv_data_t g_icm426xx_data;
 static struct bmi_drv_data_t g_bmi260_data;
