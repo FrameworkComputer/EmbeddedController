@@ -1441,7 +1441,7 @@ function ite_dfu_mode() {
 }
 
 function flash_it83xx() {
-	local TOOL_PATH="${EC_DIR}/build/${BOARD}/util:${PATH}"
+	local TOOL_PATH="${EC_DIR}/build/host/util:${PATH}"
 	local ITEFLASH_BIN
 	local TEMP_DIR
 	ITEFLASH_BIN=$(PATH="${TOOL_PATH}" which iteflash)
