@@ -443,7 +443,7 @@ static int ccd_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 		rv = (rv << 8) + usb_buffer[0];
 
 		fprintf(stderr, "%s: usb i2c error %d\n", __func__,
-			(((uint16_t)usb_buffer[1]) << 8) + usb_buffer[0]);
+			(uint16_t)rv);
 
 		return -rv;
 	}
