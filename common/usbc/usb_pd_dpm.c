@@ -1020,7 +1020,7 @@ __overridable int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
 	return pd_src_pdo_cnt;
 }
 
-int dpm_get_source_current(const int port)
+__overridable int dpm_get_source_current(const int port)
 {
 	if (pd_get_power_role(port) == PD_ROLE_SINK)
 		return 0;
