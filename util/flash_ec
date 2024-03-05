@@ -200,6 +200,9 @@ DEFINE_string dut_ip "" \
 	"DUT IP address"
 DEFINE_string token_db "${EC_DIR}/build/tokens.bin" \
 	"Full pathname of the EC tokenized database to copy to DUT."
+DEFINE_boolean use_i2c_pseudo "${FLAGS_TRUE}" \
+	"Use the linux i2c_pseudo driver instead of accessing the servo " \
+	"i2c endpoint directly."
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
@@ -496,13 +499,15 @@ servo_has_dut_i2c_en() {
 }
 
 servo_ec_hard_reset_or_die() {
-	dut_control_or_die cold_reset:on
-	dut_control_or_die cold_reset:off
-
 	# Cold reset on C2D2 is H1 reset, which will double reset the EC
-	# We need to wait a little bit to ensure we catch final EC reset
 	if [[ "${SERVO_TYPE}" =~ "c2d2" ]]; then
-		print_or_run sleep 0.2
+		dut_control_or_die gsc_ec_reset:on
+		dut_control_or_die gsc_ec_reset:off
+	elif servo_has_cold_reset; then
+		dut_control_or_die cold_reset:on
+		dut_control_or_die cold_reset:off
+	else
+		info "Skipping cold reset"
 	fi
 }
 
@@ -991,6 +996,19 @@ function claim_pty() {
 	done
 }
 
+# Returns if get_serial used CCD.
+function get_serial_is_ccd() {
+	if [[ "${SERVO_TYPE}" =~ ^servo_v4(p1)?_with_servo_micro ]]; then
+		false
+	elif [[ "${SERVO_TYPE}" =~ ^servo_v4(p1)?_with_c2d2 ]]; then
+		false
+	elif [[ "${SERVO_TYPE}" =~ "_with_ccd" ]] ; then
+		true
+	else
+		false
+	fi
+}
+
 # Returns the serialnumber of the specified servo.
 function get_serial() {
 	if [[ "${SERVO_TYPE}" =~ ^servo_v4(p1)?_with_servo_micro ]]; then
@@ -1002,6 +1020,16 @@ function get_serial() {
 			sn_ctl="servo_micro_"
 		else
 			sn_ctl="servo_micro_for_${BOARD}_"
+		fi
+	elif [[ "${SERVO_TYPE}" =~ ^servo_v4(p1)?_with_c2d2 ]]; then
+		if [[ -z "${BOARD}" ]]; then
+			sn_ctl="c2d2_"
+		elif [[ "$(dut_control_get "c2d2_for_${BOARD}_serialname")" =~ \
+				"unknown" ]] ; then
+			# Fall back to c2d2_ if S/N is uknown.
+			sn_ctl="c2d2_"
+		else
+			sn_ctl="c2d2_for_${BOARD}_"
 		fi
 	elif [[ "${SERVO_TYPE}" =~ "_with_ccd" ]] ; then
 		sn_ctl="ccd_"
@@ -1492,7 +1520,7 @@ function flash_it83xx() {
 	if [[ "${SERVO_TYPE}" =~ "c2d2" ]]; then
 		# The EC was held in reset above
 		dut_control gsc_ec_reset:off
-	elif servo_has_cold_reset; then
+	else
 		servo_ec_hard_reset_or_die
 	fi
 
@@ -1503,11 +1531,18 @@ function flash_it83xx() {
 
 	if [[ "${SERVO_TYPE}" == "servo_v2" ]]; then
 		ITEFLASH_ARGS+=( "--send-waveform=1" "--i2c-interface=ftdi" )
-	else
+	elif [[ "${FLAGS_use_i2c_pseudo}" == "${FLAGS_TRUE}" ]]; then
+		sudo modprobe i2c-dev
 		ITEFLASH_ARGS=( "sudo" "--" "${ITEFLASH_ARGS[@]}" \
 			"--send-waveform=0" "--i2c-interface=linux" \
 			"--i2c-dev-path=$(dut_i2c_dev)" )
 		if servo_is_ccd; then
+			ITEFLASH_ARGS+=( "--block-write-size=256" )
+		fi
+	else
+		ITEFLASH_ARGS+=( "--send-waveform=0" "--i2c-interface=usb" \
+			"-s" "$(get_serial)" )
+		if get_serial_is_ccd; then
 			ITEFLASH_ARGS+=( "--block-write-size=256" )
 		fi
 	fi
@@ -2025,6 +2060,8 @@ function read_chip_partially() {
 			print_or_run mv "${ALIGNED_FILE}" "${FILE_PATH}"
 		fi
 
+		# Reset EC before setting DFU mode
+		servo_ec_hard_reset_or_die
 		# ITE DFU mode must be re-enabled after each operation
 		ite_dfu_mode
 	else
@@ -2053,6 +2090,8 @@ function read_chip() {
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
 					"${UUT_CUR_RD[@]}" || die "${MSG_READ_FAIL}"
 
+		# Reset EC before setting DFU mode
+		servo_ec_hard_reset_or_die
 		# ITE DFU mode must be re-enabled after each operation
 		ite_dfu_mode
 	else
