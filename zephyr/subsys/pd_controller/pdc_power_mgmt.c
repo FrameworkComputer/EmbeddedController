@@ -2118,3 +2118,46 @@ int pdc_power_mgmt_get_rev(int port, enum tcpci_msg_type type)
 
 	return rev;
 }
+
+const uint32_t *const pdc_power_mgmt_get_snk_caps(int port)
+{
+	/* TODO:b/326460749 */
+
+	return NULL;
+}
+
+uint8_t pdc_power_mgmt_get_snk_cap_cnt(int port)
+{
+	/* TODO:b/326460749 */
+
+	return 0;
+}
+
+uint32_t pdc_power_mgmt_get_events(int port)
+{
+	/* TODO:b/326468316 */
+
+	return 0;
+}
+
+struct rmdo pdc_power_mgmt_get_partner_rmdo(int port)
+{
+	struct rmdo value = { 0 };
+
+	/* TODO:b/326466602 */
+
+	return value;
+}
+
+enum pd_discovery_state
+pdc_power_mgmt_get_identity_discovery(int port, enum tcpci_msg_type type)
+{
+	/* TODO:b/326468310 */
+
+	return 0;
+}
+
+void pd_pdc_power_mgmt_set_new_power_request(int port)
+{
+	/* TODO:b/326475515 */
+}
