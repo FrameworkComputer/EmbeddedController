@@ -129,6 +129,8 @@ typedef int (*pdc_get_cable_property_t)(const struct device *dev,
 					union cable_property_t *cable_prop);
 typedef int (*pdc_get_vdo_t)(const struct device *dev, union get_vdo_t req,
 			     uint8_t *req_list, uint32_t *vdo);
+typedef int (*pdc_get_identity_discovery_t)(const struct device *dev,
+					    bool *disc_state);
 
 /**
  * @cond INTERNAL_HIDDEN
@@ -163,6 +165,7 @@ __subsystem struct pdc_driver_api_t {
 	pdc_update_retimer_fw_t update_retimer;
 	pdc_get_cable_property_t get_cable_property;
 	pdc_get_vdo_t get_vdo;
+	pdc_get_identity_discovery_t get_identity_discovery;
 };
 /**
  * @endcond
@@ -840,6 +843,30 @@ static inline int pdc_get_vdo(const struct device *dev, union get_vdo_t vdo_req,
 	__ASSERT(api->get_vdo != NULL, "GET_VDO is not optional");
 
 	return api->get_vdo(dev, vdo_req, vdo_list, vdo);
+}
+
+/*
+ * @brief get the state of the discovery process
+ *
+ * @param dev PDC device structure pointer
+ * @param disc_state pointer where the discovery state is stored. True if
+ * discovery is complete, else False
+ *
+ * @retval 0 on success
+ * @retval -ENOSYS if not implemented
+ * @retval -EINVAL if disc_state is NULL
+ */
+static inline int pdc_get_identity_discovery(const struct device *dev,
+					     bool *disc_state)
+{
+	const struct pdc_driver_api_t *api =
+		(const struct pdc_driver_api_t *)dev->api;
+
+	if (api->get_identity_discovery == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->get_identity_discovery(dev, disc_state);
 }
 
 #ifdef __cplusplus

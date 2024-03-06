@@ -296,6 +296,16 @@ int pdc_power_mgmt_get_bus_info(int port, struct pdc_bus_info_t *pdc_bus_info);
 int pdc_power_mgmt_get_rev(int port, enum tcpci_msg_type type);
 
 /**
+ * @brief Get identity discovery state for this type and port
+ *
+ * @param port USB-C port number
+ *
+ * @retval Current discovery state
+ */
+enum pd_discovery_state
+pdc_power_mgmt_get_identity_discovery(int port, enum tcpci_msg_type type);
+
+/**
  * @brief Get port partner VID
  *
  * @param port USB-C port number

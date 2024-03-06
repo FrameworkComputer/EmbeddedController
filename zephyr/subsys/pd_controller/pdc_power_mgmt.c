@@ -98,6 +98,8 @@ enum pdc_cmd_t {
 	CMD_PDC_GET_VDO,
 	/** CMD_PDC_CONNECTOR_RESET */
 	CMD_PDC_CONNECTOR_RESET,
+	/** CMD_PDC_GET_IDENTITY_DISCOVERY */
+	CMD_PDC_GET_IDENTITY_DISCOVERY,
 
 	/** CMD_PDC_COUNT */
 	CMD_PDC_COUNT
@@ -260,6 +262,7 @@ static const char *const pdc_cmd_names[] = {
 	[CMD_PDC_GET_CABLE_PROPERTY] = "PDC_GET_CABLE_PROPERTY",
 	[CMD_PDC_GET_VDO] = "PDC_GET_VDO",
 	[CMD_PDC_CONNECTOR_RESET] = "PDC_CONNECTOR_RESET",
+	[CMD_PDC_GET_IDENTITY_DISCOVERY] = "PDC_GET_IDENTITY_DISCOVERY",
 };
 
 /**
@@ -473,6 +476,9 @@ struct pdc_port_t {
 	uint32_t vdo[VDO_NUM];
 	/** CONNECTOR_RESET temp variable used with CMD_PDC_CONNECTOR_RESET */
 	union connector_reset_t connector_reset;
+	/** PD Port Partner discovery state: True if discovery is complete, else
+	 * false */
+	bool discovery_state;
 };
 
 /**
@@ -1153,6 +1159,10 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 		break;
 	case CMD_PDC_CONNECTOR_RESET:
 		rv = pdc_connector_reset(port->pdc, port->connector_reset);
+		break;
+	case CMD_PDC_GET_IDENTITY_DISCOVERY:
+		rv = pdc_get_identity_discovery(port->pdc,
+						&port->discovery_state);
 		break;
 	default:
 		LOG_ERR("Invalid command: %d", port->cmd->cmd);
@@ -2196,6 +2206,45 @@ int pdc_power_mgmt_get_rev(int port, enum tcpci_msg_type type)
 	}
 
 	return rev;
+}
+
+enum pd_discovery_state
+pdc_power_mgmt_get_identity_discovery(int port, enum tcpci_msg_type type)
+{
+	enum pdc_cmd_t cmd;
+	int ret;
+
+	/* Make sure port is Sink connected */
+	if (!pdc_power_mgmt_is_connected(port)) {
+		return PD_DISC_NEEDED;
+	}
+
+	switch (type) {
+	case TCPCI_MSG_SOP:
+		cmd = CMD_PDC_GET_IDENTITY_DISCOVERY;
+		break;
+	case TCPCI_MSG_SOP_PRIME:
+		cmd = CMD_PDC_GET_CABLE_PROPERTY;
+		break;
+	default:
+		return PD_DISC_FAIL;
+	}
+
+	/* Block until command completes */
+	ret = public_api_block(port, cmd);
+	if (ret) {
+		return PD_DISC_NEEDED;
+	}
+
+	if (cmd == CMD_PDC_GET_IDENTITY_DISCOVERY) {
+		return pdc_data[port]->port.discovery_state ? PD_DISC_COMPLETE :
+							      PD_DISC_FAIL;
+	} else {
+		return (pdc_data[port]->port.cable_prop.cable_type &&
+			pdc_data[port]->port.cable_prop.mode_support) ?
+			       PD_DISC_COMPLETE :
+			       PD_DISC_FAIL;
+	}
 }
 
 int pdc_power_mgmt_connector_reset(int port, enum connector_reset reset_type)
