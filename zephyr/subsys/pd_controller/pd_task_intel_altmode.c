@@ -21,6 +21,7 @@
 #include <ap_power/ap_power.h>
 #include <drivers/intel_altmode.h>
 #include <usbc/pd_task_intel_altmode.h>
+#include <usbc/pdc_power_mgmt.h>
 
 LOG_MODULE_DECLARE(usbpd_altmode, CONFIG_USB_PD_ALTMODE_LOG_LEVEL);
 
@@ -49,6 +50,12 @@ enum intel_altmode_event {
 	INTEL_ALTMODE_EVENT_COUNT
 };
 
+struct usb_mux_info_t {
+	mux_state_t mux_mode;
+	enum usb_switch usb_mode;
+	int polarity;
+};
+
 struct intel_altmode_data {
 	/* Driver event object to receive events posted. */
 	struct k_event evt;
@@ -56,6 +63,13 @@ struct intel_altmode_data {
 	struct ap_power_ev_callback cb;
 	/* Cache the dta status register */
 	union data_status_reg data_status[CONFIG_USB_PD_PORT_MAX_COUNT];
+#ifdef CONFIG_USBPD_POLL_PDC
+	/*
+	 * Used in polling mode to synchronize mux_state with PDC attached
+	 * state
+	 */
+	struct usb_mux_info_t mux_pending[CONFIG_USB_PD_PORT_MAX_COUNT];
+#endif
 };
 
 /* Generate device tree for available PDs */
@@ -109,6 +123,13 @@ static uint32_t intel_altmode_wait_event(void)
 	return events & INTEL_ALTMODE_EVENT_MASK;
 }
 
+static void intel_altmode_set_mux(int port, mux_state_t mux,
+				  enum usb_switch usb_mode, int polarity)
+{
+	LOG_INF("Set p%d mux=0x%x", port, mux);
+	usb_mux_set(port, mux, usb_mode, polarity);
+}
+
 static void process_altmode_pd_data(int port)
 {
 	int rv;
@@ -117,6 +138,11 @@ static void process_altmode_pd_data(int port)
 	union data_status_reg *prev_status =
 		&intel_altmode_task_data.data_status[port];
 	union data_control_reg control = { .i2c_int_ack = 1 };
+#ifdef CONFIG_USBPD_POLL_PDC
+	struct usb_mux_info_t *mux_pend =
+		&intel_altmode_task_data.mux_pending[port];
+#endif
+	enum usb_switch usb_mode;
 #ifdef CONFIG_PLATFORM_EC_USB_PD_DP_MODE
 	bool prv_hpd_lvl;
 #endif
@@ -147,8 +173,24 @@ static void process_altmode_pd_data(int port)
 
 	/* Nothing to do if the data in the status register has not changed */
 	if (!memcmp(&status.raw_value[0], prev_status,
-		    sizeof(union data_status_reg)))
+		    sizeof(union data_status_reg))) {
+#ifdef CONFIG_USBPD_POLL_PDC
+		/*
+		 * If the mux needs to be set to something other than NONE, the
+		 * set needs to wait until the PDC API has updated its status to
+		 * indicate the port as connected.
+		 */
+		if ((mux_pend->mux_mode != USB_PD_MUX_NONE) &&
+		    pdc_power_mgmt_is_connected(port)) {
+			intel_altmode_set_mux(port, mux_pend->mux_mode,
+					      mux_pend->usb_mode,
+					      mux_pend->polarity);
+			/* Clear mux state so it's no longer pending */
+			mux_pend->mux_mode = USB_PD_MUX_NONE;
+		}
+#endif
 		return;
+	}
 
 	/* Update the new data */
 	memcpy(prev_status, &status, sizeof(union data_status_reg));
@@ -186,12 +228,37 @@ static void process_altmode_pd_data(int port)
 		mux |= USB_PD_MUX_USB4_ENABLED;
 #endif
 
-	LOG_INF("Set p%d mux=0x%x", port, mux);
+	usb_mode = mux == USB_PD_MUX_NONE ? USB_SWITCH_DISCONNECT :
+					    USB_SWITCH_CONNECT;
 
-	usb_mux_set(port, mux,
-		    mux == USB_PD_MUX_NONE ? USB_SWITCH_DISCONNECT :
-					     USB_SWITCH_CONNECT,
-		    status.conn_ori);
+#ifdef CONFIG_USBPD_POLL_PDC
+	/*
+	 * If the new desired mux state is USB_PD_MUX_NONE, then there is no
+	 * current connection and this setting can be applied
+	 * immediately. However, other mux states imply the port is
+	 * connected. usb_set_mux() will notify the AP and the AP will then
+	 * query the port status via HC 0x0101. Setting the mux needs to be
+	 * delayed until the PDC API has had time to query connector_status and
+	 * updated its connected/disconnected status.
+	 *
+	 * TODO(b/325090383): Reevaluate if this synchronization is required
+	 * once type-c events are being reported to the AP.
+	 */
+	if (usb_mode == USB_SWITCH_DISCONNECT) {
+		intel_altmode_set_mux(port, mux, usb_mode, status.conn_ori);
+	}
+	/*
+	 * Save the desired mux state always. If the desired mux state is NONE,
+	 * then updating these values is a don't care. Otherwise, the mux set
+	 * needs to happen in conjunction with the PDC connected state which is
+	 * checked above.
+	 */
+	mux_pend->mux_mode = mux;
+	mux_pend->usb_mode = usb_mode;
+	mux_pend->polarity = status.conn_ori;
+#else
+	intel_altmode_set_mux(port, mux, usb_mode, status.conn_ori);
+#endif
 
 #ifdef CONFIG_PLATFORM_EC_USB_PD_DP_MODE
 	/* Update the change in HPD level */
