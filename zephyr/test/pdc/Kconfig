@@ -8,4 +8,7 @@ config TEST_SUITE_PDC_GENERIC
 config TEST_SUITE_PDC_RTS54XX
 	bool "Enable generic PDC tests"
 
+config TEST_SUITE_PDC_RETIMER_FW_UPDATE
+	bool "Enable retimer FW update tests"
+
 source "Kconfig.zephyr"

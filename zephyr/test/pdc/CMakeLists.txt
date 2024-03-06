@@ -20,3 +20,7 @@ endif()
 if (DEFINED CONFIG_TEST_SUITE_PDC_RTS54XX)
 	target_sources(app PRIVATE src/rts54xx/rts54xx.c)
 endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PDC_RETIMER_FW_UPDATE)
+	target_sources(app PRIVATE src/generic/retimer_fw_update.c)
+endif()

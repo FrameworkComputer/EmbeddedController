@@ -21,12 +21,35 @@
 			pdc = <&rts5453p_emul>;
 			chg = <&isl923x_emul>;
 			policy = <&cros_policy>;
+			pd-retimer;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
 		};
+
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
 		port1@0 {
 			compatible = "named-usbc-port";
 			reg = <1>;
 			pdc = <&rts5453p_emul2>;
 			policy = <&cros_policy>;
+			pd-retimer;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
+
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
 		};
 	};
 
