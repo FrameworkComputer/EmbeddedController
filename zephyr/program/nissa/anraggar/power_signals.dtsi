@@ -111,6 +111,7 @@
 		dbg-label = "SLP_S4 virtual wire input from PCH";
 		enum-name = "PWR_SLP_S4";
 		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S4";
+		reset-val = <1>;
 		vw-invert;
 	};
 	pwr-slp-s5 {
