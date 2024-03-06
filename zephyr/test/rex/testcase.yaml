@@ -38,7 +38,7 @@ tests:
 
   rex.battery_present:
     extra_dtc_overlay_files:
-      - boards/rex/rex.dtsi
+      - boards/native_posix.overlay
       - boards/power.dtsi
     extra_configs:
       - CONFIG_TEST_PROGRAM_BATTERY_PRESENT=y
