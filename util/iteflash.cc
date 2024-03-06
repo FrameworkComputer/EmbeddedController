@@ -378,7 +378,7 @@ static int i2c_add_recv_bytes(struct ftdi_context *ftdi, uint8_t *buf,
 }
 
 #define USB_I2C_HEADER_SIZE 4
-static int ccd_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
+static int usb_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 				 uint8_t *data, int write, int numbytes)
 {
 	size_t usb_buffer_size = USB_I2C_HEADER_SIZE + numbytes +
@@ -983,7 +983,7 @@ static int ftdi_config_i2c(struct ftdi_context *ftdi)
 #define SPECIAL_BUFFER_SIZE \
 	(((SPECIAL_LEN_USEC * SPECIAL_FREQ * 2 / USEC) + 7) & ~7)
 
-static int connect_to_ccd_i2c_bridge(struct common_hnd *chnd)
+static int connect_to_usb_i2c_bridge(struct common_hnd *chnd)
 {
 	int rv;
 
@@ -999,7 +999,7 @@ static int connect_to_ccd_i2c_bridge(struct common_hnd *chnd)
 	return rv;
 }
 
-static int ccd_trigger_special_waveform(struct common_hnd *chnd)
+static int usb_trigger_special_waveform(struct common_hnd *chnd)
 {
 	uint8_t response[20];
 	size_t rsize;
@@ -1025,7 +1025,7 @@ static int ccd_trigger_special_waveform(struct common_hnd *chnd)
 
 	sleep(3);
 
-	return connect_to_ccd_i2c_bridge(chnd);
+	return connect_to_usb_i2c_bridge(chnd);
 }
 
 static int ftdi_send_special_waveform(struct common_hnd *chnd)
@@ -1979,7 +1979,7 @@ static int linux_i2c_interface_shutdown(struct common_hnd *chnd)
 	return 0;
 }
 
-static int ccd_i2c_interface_init(struct common_hnd *chnd)
+static int usb_i2c_interface_init(struct common_hnd *chnd)
 {
 	if (chnd->conf.usb_vid == 0 && chnd->conf.usb_serial == nullptr) {
 		chnd->conf.usb_vid = CR50_USB_VID;
@@ -1987,10 +1987,10 @@ static int ccd_i2c_interface_init(struct common_hnd *chnd)
 	if (chnd->conf.usb_pid == 0 && chnd->conf.usb_serial == nullptr) {
 		chnd->conf.usb_pid = CR50_USB_PID;
 	}
-	return connect_to_ccd_i2c_bridge(chnd);
+	return connect_to_usb_i2c_bridge(chnd);
 }
 
-static int ccd_i2c_interface_shutdown(struct common_hnd *chnd)
+static int usb_i2c_interface_shutdown(struct common_hnd *chnd)
 {
 	usb_shut_down(&chnd->uep);
 	return 0;
@@ -2046,12 +2046,13 @@ static const struct i2c_interface linux_i2c_interface = {
 	.default_block_write_size = 128,
 };
 
-static const struct i2c_interface ccd_i2c_interface = {
-	.interface_init = ccd_i2c_interface_init,
-	.interface_shutdown = ccd_i2c_interface_shutdown,
-	.send_special_waveform = ccd_trigger_special_waveform,
-	.byte_transfer = ccd_i2c_byte_transfer,
-	.default_block_write_size = PAGE_SIZE,
+static const struct i2c_interface usb_i2c_interface = {
+	.interface_init = usb_i2c_interface_init,
+	.interface_shutdown = usb_i2c_interface_shutdown,
+	.send_special_waveform = usb_trigger_special_waveform,
+	.byte_transfer = usb_i2c_byte_transfer,
+	// 256 works for CCD, but not for C2D2 & servo_micro, see above.
+	.default_block_write_size = 128,
 };
 
 static const struct i2c_interface ftdi_i2c_interface = {
@@ -2131,8 +2132,9 @@ static void display_usage(const char *program)
 		program);
 	fprintf(stderr, "-d, --debug : Output debug traces.\n");
 	fprintf(stderr, "-e, --erase : Erase all the flash content.\n");
-	fprintf(stderr, "-c, --i2c-interface <linux|ccd|ftdi> : I2C interface "
-			"to use\n");
+	fprintf(stderr,
+		"-c, --i2c-interface <linux|usb|ftdi|ccd (deprecated, use usb)> : "
+		"I2C interface to use\n");
 	fprintf(stderr, "-D, --i2c-dev-path /dev/i2c-<N> : Path to "
 			"Linux i2c-dev file e.g. /dev/i2c-5;\n"
 			"\tonly applicable with --i2c-interface=linux\n");
@@ -2218,8 +2220,9 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 		case 'c':
 			if (!strcasecmp(optarg, "linux")) {
 				conf->i2c_if = &linux_i2c_interface;
-			} else if (!strcasecmp(optarg, "ccd")) {
-				conf->i2c_if = &ccd_i2c_interface;
+			} else if (!strcasecmp(optarg, "usb") ||
+				   !strcasecmp(optarg, "ccd")) {
+				conf->i2c_if = &usb_i2c_interface;
 			} else if (!strcasecmp(optarg, "ftdi")) {
 				conf->i2c_if = &ftdi_i2c_interface;
 			} else {
