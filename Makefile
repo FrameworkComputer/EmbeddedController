@@ -312,10 +312,12 @@ include $(BASEDIR)/build.mk
 ifneq ($(BASEDIR),$(BDIR))
 include $(BDIR)/build.mk
 endif
+ifneq ($(BOARD),host)
 ifeq ($(USE_BUILTIN_STDLIB), 1)
 include builtin/build.mk
 else
 include libc/build.mk
+endif
 endif
 include chip/$(CHIP)/build.mk
 include core/build.mk
