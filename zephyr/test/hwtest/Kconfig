@@ -28,3 +28,8 @@ config HW_TEST_FLASH_WRITE_PROTECT
 	bool "Flash write protect test"
 	select ZTEST
 	depends on PLATFORM_EC_FLASH_CROS
+
+config HW_TEST_FP_TRANSPORT
+	bool "FP transport layer test"
+	select ZTEST
+	depends on EC_HOST_CMD
