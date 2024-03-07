@@ -399,6 +399,7 @@ zephyr_coverage:
   needs: []
   parallel: 6
   script:
+    - export PIGWEED_DIR=${MODULES_DIR}/pigweed
     - python3 ${EC_DIR}/twister --coverage --outdir "${TWISTER_OUT_DIR}"
       -v -i -x=ALLOW_WARNINGS=ON -y
     - tests=( $( jq -r '.testsuites[] | @text "\(.name)"' "${TWISTER_OUT_DIR}/testplan.json" |
@@ -492,6 +493,7 @@ testall:
   needs: []
   parallel: 6
   script:
+    - export PIGWEED_DIR=${MODULES_DIR}/pigweed
     - python3 ${EC_DIR}/twister --outdir "${TWISTER_OUT_DIR}" -v -i
       -x=ALLOW_WARNINGS=ON -y
     - tests=( $( jq -r '.testsuites[] | @text "\(.name)"' "${TWISTER_OUT_DIR}/testplan.json" |
