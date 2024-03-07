@@ -193,6 +193,12 @@
 			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
+		gpio_led_w_odl: led_w_odl {
+			gpios = <&gpioc 2 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_led_a_odl: led_a_odl {
+			gpios = <&gpioc 3 GPIO_OUTPUT_HIGH>;
+		};
 	};
 
 	named-i2c-ports {
