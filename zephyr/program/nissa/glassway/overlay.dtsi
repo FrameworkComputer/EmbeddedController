@@ -21,11 +21,11 @@
 	};
 
 	batteries {
-		default_battery: lgc {
-			compatible = "lgc,ap18c8k", "battery-smart";
+		default_battery: getac_pg01lj3353 {
+			compatible = "getac,pg01lj3353", "battery-smart";
 		};
-		lgc_ap19b8m {
-			compatible = "lgc,ap19b8m", "battery-smart";
+		cosmx_pg01lj3353 {
+			compatible = "cosmx,pg01lj3353", "battery-smart";
 		};
 	};
 
