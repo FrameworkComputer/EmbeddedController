@@ -16,6 +16,7 @@
  */
 void intel_altmode_task_start(void);
 
+#if defined(CONFIG_USBC_INTEL_ALTMODE) || defined(CONFIG_ZTEST)
 /*
  * @brief Suspend pd_intel_altmode_task.
  */
@@ -33,5 +34,17 @@ void resume_pd_intel_altmode_task(void);
  *         Else false.
  */
 bool is_pd_intel_altmode_task_suspended(void);
+#else
+static inline void suspend_pd_intel_altmode_task(void)
+{
+}
+static inline void resume_pd_intel_altmode_task(void)
+{
+}
+static inline bool is_pd_intel_altmode_task_suspended(void)
+{
+	return true;
+}
+#endif /* defined(CONFIG_USBC_INTEL_ALTMODE) */
 
 #endif /* __CROS_EC_PD_TASK_INTEL_ALTMODE_H */
