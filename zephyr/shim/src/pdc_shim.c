@@ -119,16 +119,12 @@ uint8_t pd_get_src_cap_cnt(int port)
 
 const uint32_t *const pd_get_snk_caps(int port)
 {
-	/* TODO:b/326460749 */
-
-	return NULL;
+	return pdc_power_mgmt_get_snk_caps(port);
 }
 
 uint8_t pd_get_snk_cap_cnt(int port)
 {
-	/* TODO:b/326460749 */
-
-	return 0;
+	return pdc_power_mgmt_get_snk_cap_cnt(port);
 }
 
 uint32_t pd_get_events(int port)

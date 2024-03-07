@@ -296,6 +296,24 @@ int pdc_power_mgmt_get_bus_info(int port, struct pdc_bus_info_t *pdc_bus_info);
 int pdc_power_mgmt_get_rev(int port, enum tcpci_msg_type type);
 
 /**
+ * @brief Returns the sink caps list
+ *
+ * @param port USB-C port number
+ *
+ * @retval List of sink capabilities
+ */
+const uint32_t *const pdc_power_mgmt_get_snk_caps(int port);
+
+/**
+ * @brief Returns the number of sink caps
+ *
+ * @param port USB-C port number
+ *
+ * @retval Number of sink capabilities
+ */
+uint8_t pdc_power_mgmt_get_snk_cap_cnt(int port);
+
+/**
  * @brief Get identity discovery state for this type and port
  *
  * @param port USB-C port number
