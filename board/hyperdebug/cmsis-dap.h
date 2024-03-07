@@ -10,6 +10,15 @@ extern uint8_t rx_buffer[256];
 extern uint8_t tx_buffer[256];
 
 /*
+ * Routines to be used in the CMSIS-DAP task to add/remove a possibly large
+ * number of bytes from the USB queues.  These functions can block waiting for
+ * the host computer, and will not return until the given number of bytes has
+ * been transferred.
+ */
+void queue_blocking_add(struct queue const *q, const void *src, size_t count);
+void queue_blocking_remove(struct queue const *q, void *dest, size_t count);
+
+/*
  * Declaration of handlers of CMSIS-DAP vendor extension commands, implemented
  * in other files besides cmsis-dap.c .
  */

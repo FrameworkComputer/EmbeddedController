@@ -1497,42 +1497,6 @@ static void led_tick(void)
 }
 DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
 
-size_t queue_add_units(struct queue const *q, const void *src, size_t count);
-
-static void queue_blocking_add(struct queue const *q, const void *src,
-			       size_t count)
-{
-	while (true) {
-		size_t progress = queue_add_units(q, src, count);
-		src += progress;
-		if (progress >= count)
-			return;
-		count -= progress;
-		/*
-		 * Wait for queue consumer to wake up this task, when there is
-		 * more room in the queue.
-		 */
-		task_wait_event(0);
-	}
-}
-
-static void queue_blocking_remove(struct queue const *q, void *dest,
-				  size_t count)
-{
-	while (true) {
-		size_t progress = queue_remove_units(q, dest, count);
-		dest += progress;
-		if (progress >= count)
-			return;
-		count -= progress;
-		/*
-		 * Wait for queue consumer to wake up this task, when there is
-		 * more data in the queue.
-		 */
-		task_wait_event(0);
-	}
-}
-
 /*
  * Declaration of header used in the binary USB protocol (Google HyperDebug
  * extensions to CMSIS-DAP protocol.)

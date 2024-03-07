@@ -137,7 +137,7 @@ struct i2c_state_t {
 	 */
 	volatile size_t prepared_read_len;
 	volatile bool prepared_read_sticky;
-	uint8_t prepared_read_data[256];
+	uint8_t prepared_read_data[1024];
 
 	/*
 	 * If non-zero, I2C host is currently waiting in READ transfer, with
@@ -391,20 +391,21 @@ void dap_goog_i2c_device(size_t peek_c)
 			status->transcript_size = head - state->tail;
 			queue_add_units(&cmsis_dap_tx_queue, rx_buffer,
 					1 + sizeof(*status));
-			queue_add_units(&cmsis_dap_tx_queue, state->tail,
-					status->transcript_size);
+			queue_blocking_add(&cmsis_dap_tx_queue, state->tail,
+					   status->transcript_size);
 		} else {
 			/* Data wraps around */
 			status->transcript_size =
 				head - state->tail + sizeof(state->data_buffer);
 			queue_add_units(&cmsis_dap_tx_queue, rx_buffer,
 					1 + sizeof(*status));
-			queue_add_units(&cmsis_dap_tx_queue, state->tail,
-					state->data_buffer +
-						sizeof(state->data_buffer) -
-						state->tail);
-			queue_add_units(&cmsis_dap_tx_queue, state->data_buffer,
-					state->head - state->data_buffer);
+			queue_blocking_add(&cmsis_dap_tx_queue, state->tail,
+					   state->data_buffer +
+						   sizeof(state->data_buffer) -
+						   state->tail);
+			queue_blocking_add(&cmsis_dap_tx_queue,
+					   state->data_buffer,
+					   state->head - state->data_buffer);
 		}
 		state->tail = head;
 		return;
@@ -416,9 +417,10 @@ void dap_goog_i2c_device(size_t peek_c)
 		uint16_t len = rx_buffer[3] + (rx_buffer[4] << 8);
 		/* TODO Check that len does not exceed size of
 		 * prepared_data_data */
-		queue_remove_units(&cmsis_dap_rx_queue, rx_buffer, 5);
-		queue_remove_units(&cmsis_dap_rx_queue,
-				   state->prepared_read_data, len);
+		queue_blocking_remove(&cmsis_dap_rx_queue, rx_buffer, 5);
+		queue_blocking_remove(&cmsis_dap_rx_queue,
+				      state->prepared_read_data, len);
+
 		queue_add_unit(&cmsis_dap_tx_queue, rx_buffer);
 		state->prepared_read_len = len;
 		state->prepared_read_sticky = sticky;

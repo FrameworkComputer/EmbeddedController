@@ -173,6 +173,38 @@ static bool jtag_enabled = false;
 static uint16_t jtag_half_period_count =
 	CPU_CLOCK / DEFAULT_JTAG_CLOCK_HZ / 2 - OVERHEAD_CLOCK_CYCLES;
 
+void queue_blocking_add(struct queue const *q, const void *src, size_t count)
+{
+	while (true) {
+		size_t progress = queue_add_units(q, src, count);
+		src += progress;
+		if (progress >= count)
+			return;
+		count -= progress;
+		/*
+		 * Wait for queue consumer to wake up this task, when there is
+		 * more room in the queue.
+		 */
+		task_wait_event(0);
+	}
+}
+
+void queue_blocking_remove(struct queue const *q, void *dest, size_t count)
+{
+	while (true) {
+		size_t progress = queue_remove_units(q, dest, count);
+		dest += progress;
+		if (progress >= count)
+			return;
+		count -= progress;
+		/*
+		 * Wait for queue consumer to wake up this task, when there is
+		 * more data in the queue.
+		 */
+		task_wait_event(0);
+	}
+}
+
 /*
  * Implementation of handler routines for each CMSIS-DAP command.
  */
