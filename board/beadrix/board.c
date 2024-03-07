@@ -392,8 +392,8 @@ __override void board_power_5v_enable(int enable)
 	 */
 	gpio_set_level(GPIO_EN_PP5000, !!enable);
 	gpio_set_level(GPIO_EN_USB_A0_VBUS, !!enable);
-
-	if (isl923x_set_comparator_inversion(1, !!enable))
+	if ((get_cbi_fw_config_db() != DB_NONE) &&
+	    (isl923x_set_comparator_inversion(1, !!enable)))
 		CPRINTS("Failed to %sable sub rails!", enable ? "en" : "dis");
 }
 
