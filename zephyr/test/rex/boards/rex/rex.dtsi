@@ -5,8 +5,13 @@
 
 #include "../native_posix.overlay"
 #include "../../../../program/rex/rex/cbi.dtsi"
+#include "usb_db.dtsi"
 
 / {
+	chosen {
+		cros-ec,espi = &espi0;
+	};
+
 	/* Unused Stub */
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
@@ -29,6 +34,68 @@
 		};
 	};
 
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_usb_c0_bc12_int_l: usb_c0_bc12_int_l {
+			gpios = <&gpio1 10 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
+		};
+		gpio_usb_c1_bc12_int_l: usb_c1_bc12_int_l {
+			gpios = <&gpio1 11 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C1_BC12_INT_ODL";
+		};
+		ioex_usb_c0_sbu_fault_odl: usb_c0_sbu_fault_odl {
+			gpios = <&ioex_c0_port1 2 GPIO_INPUT>;
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_usb_c0_bc12: usb_c0_bc12 {
+			irq-pin = <&gpio_usb_c0_bc12_int_l>;
+			flags = <GPIO_INT_LEVEL_LOW>;
+			handler = "usb0_evt";
+		};
+		int_usb_c1_bc12: usb_c1_bc12 {
+			irq-pin = <&gpio_usb_c1_bc12_int_l>;
+			flags = <GPIO_INT_LEVEL_LOW>;
+			handler = "usb0_evt";
+		};
+		int_usb_c0_sbu_fault: c0_sbu_fault {
+			irq-pin = <&ioex_usb_c0_sbu_fault_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "sbu_fault_interrupt";
+		};
+	};
+
+	ioex_c0_port0: gpio@1100 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x1100 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+
+	ioex_c0_port1: gpio@1200 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x1200 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+
 	usbc {
 		#address-cells = <1>;
 		#size-cells = <0>;
@@ -36,44 +103,51 @@
 		usbc_port0: port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
+
+			bc12 = <&pi3usb9201_emul0>;
+			ppc = <&ppc_syv_port0>;
+			tcpc = <&tcpc_port0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_c0>;
+			};
 		};
-		usbc_port1: port1@1 {
-			compatible = "named-usbc-port";
-			reg = <1>;
+		port0-muxes {
+			virtual_mux_c0: virtual-mux-c0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
 		};
 	};
-
-	aliases {
-		kb-usb-c1-rst-odl = &gpio_usb_c1_rst_odl;
-		anx-usb-c1-rt-hpd-in = &gpio_usb_c1_rst_odl;
-		hb-usb-c1-rst-odl = &gpio_usb_c1_rst_odl;
-
-		kb-usb-c1-dp-mode = &gpio_usb_c1_rt_int_odl;
-		anx-usb-c1-rt-dp-en = &gpio_usb_c1_rt_int_odl;
-		hb-usb-c1-int-odl = &gpio_usb_c1_rt_int_odl;
-
-		ps-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
-		kb-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
-		anx-usb-c1-rt-usb-en = &gpio_usb_c1_rt_rst_r_odl;
-		hb-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
-
-		kb-usb-c1-frs-alert = &gpio_usb_c1_frs_en;
-		anx-usb-c1-frs-en = &gpio_usb_c1_frs_en;
-		hb-usb-c1-frs-en = &gpio_usb_c1_frs_en;
-	};
-
 };
 
 &i2c1_0 {
 	status = "okay";
 
-	/*
-	 * Use the PS8811 retimer as a place-holder for the
-	 * NCT3807 TCPC for now.
-	 */
-	tcpc_port0: ps8811_emul@70 {
-		compatible = "cros,ps8811-emul";
+	nct38xx@70 {
+		compatible = "nuvoton,nct38xx";
 		reg = <0x70>;
+
+		tcpc_port0: nct38xx-tcpc {
+			compatible = "cros,nct38xx-emul",
+				"nuvoton,nct38xx-tcpc";
+		};
+	};
+
+	pi3usb9201_emul0: pi3usb9201@5f {
+		compatible = "pericom,pi3usb9201";
+		status = "okay";
+		reg = <0x5f>;
+		irq = <&int_usb_c0_bc12>;
+	};
+};
+
+&i2c2_0 {
+	status = "okay";
+
+	ppc_syv_port0: ppc_syv@40 {
+		compatible = "silergy,syv682x", "cros,i2c-mock";
+		status = "okay";
+		reg = <0x40>;
 	};
 };
 
@@ -85,41 +159,6 @@
 	 * Intel HBR retimer for now.
 	 */
 	usb_c0_hb_retimer: ps8811_emul@56 {
-		compatible = "cros,ps8811-emul";
-		reg = <0x56>;
-	};
-};
-
-&i2c4_1 {
-	status = "okay";
-
-	/*
-	 * Use the PS8811 retimer as a place-holder for the
-	 * PS8815 TCPC for now.
-	 */
-	tcpc_ps8815_port1: ps8811_emul@b {
-		compatible = "cros,ps8811-emul";
-		reg = <0x0b>;
-	};
-};
-
-&i2c6_1 {
-	status = "okay";
-
-	/*
-	 * Use the PS8811 retimer as a place-holder for the
-	 * ANX7452 retimer for now.
-	 */
-	usb_c1_anx7452_retimer: ps8811_emul@10 {
-		compatible = "cros,ps8811-emul";
-		reg = <0x10>;
-	};
-
-	/*
-	 * Use the PS8811 retimer as a place-holder for the
-	 * Intel HBR retimer for now.
-	 */
-	usb_c1_hb_retimer: ps8811_emul@56 {
 		compatible = "cros,ps8811-emul";
 		reg = <0x56>;
 	};
