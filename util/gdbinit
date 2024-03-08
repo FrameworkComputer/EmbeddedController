@@ -7,6 +7,7 @@
 #
 # Setup Automatic Import:
 # ln -s util/gdbinit .gdbinit
+# echo 'add-auto-load-safe-path ~/chromiumos' >~/.gdbinit
 #
 # Environment Variables:
 # BOARD=[nocturne_fp|bloonchipper|...]
