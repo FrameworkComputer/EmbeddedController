@@ -18,3 +18,8 @@ properties:
     type: phandle-array
     description: |
       Interrupt from TCPC
+  is-alt:
+    type: boolean
+    description: |
+      If present, this node refers to an alternate TCPC device. The TCPC device
+      is not used by default, and must be manually enabled at runtime.
