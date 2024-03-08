@@ -499,10 +499,13 @@ DECLARE_HOOK(HOOK_INIT, pwr_led_init, HOOK_PRIO_DEFAULT);
  */
 void board_led_auto_control(void)
 {
-	if (chipset_in_state(CHIPSET_STATE_ON))
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		led_set_color_power(LED_WHITE, 100);
 		pwr_led_resume();
-	else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
+	} else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
 		pwr_led_suspend_hook();
-	else
+	else {
+		led_set_color_power(LED_OFF, 0);
 		pwr_led_shutdown_hook();
+	}
 }
