@@ -63,9 +63,41 @@ const struct batt_conf_embed board_battery_info[] = {
 				.start_charging_min_c   = 0,
 				.start_charging_max_c   = 45,
 				.charging_min_c         = 0,
-				.charging_max_c         = 45,
+				.charging_max_c         = 55,
 				.discharging_min_c      = -20,
-				.discharging_max_c      = 60,
+				.discharging_max_c      = 70,
+			},
+		},
+	},
+	/* SWD(Sunwoda) Battery Information */
+	[BATTERY_SWD] = {
+		.manuf_name = "SWD",
+		.device_name = "4434A43",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0xc000,
+					.disconnect_val = 0x8000,
+					.cfet_mask = 0xc000,
+					.cfet_off_val = 0x4000,
+				},
+			},
+			.batt_info = {
+				.voltage_max            = 17520,
+				.voltage_normal         = 15440, /* mV */
+				.voltage_min            = 12000, /* mV */
+				.precharge_current      = 200,  /* mA */
+				.start_charging_min_c   = 0,
+				.start_charging_max_c   = 45,
+				.charging_min_c         = 0,
+				.charging_max_c         = 55,
+				.discharging_min_c      = -20,
+				.discharging_max_c      = 70,
 			},
 		},
 	},
