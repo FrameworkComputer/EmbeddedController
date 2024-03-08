@@ -69,6 +69,17 @@ config EMUL_PPC_NX20P348X
 	  NX20P3483.  It is also register compatible with the SM5360A.  This
 	  emulator makes use of the emulated I2C bus.
 
+if EMUL_PPC_NX20P348X
+
+config EMUL_PPC_NX20P348X_NO_TCPC
+	bool "Disable TCPC interactions"
+	help
+	  Enable if TCPC relationship is not known at compile
+	  time. This is the case when the the PPC or TCPC nodes
+	  use the "is-alt" property.
+
+endif # EMUL_PPC_NX20P348X
+
 config EMUL_PPC_SYV682X
 	bool "Silergy SYV682x PPC emulator"
 	default y
