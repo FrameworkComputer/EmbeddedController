@@ -1220,6 +1220,8 @@ static void pdc_src_snk_typec_only_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_STATUS);
 		return;
 	}
+
+	send_pending_public_commands(port);
 }
 
 static void pdc_init_entry(void *obj)
