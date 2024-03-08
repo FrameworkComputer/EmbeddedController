@@ -13,6 +13,7 @@
 #include "gpio.h"
 #include "spi.h"
 #include "system.h"
+#include "task.h"
 #include "util.h"
 
 #include <stddef.h>
@@ -23,6 +24,10 @@ static uint8_t
 
 /* Recorded error flags */
 static uint16_t errors;
+
+/* Lock to access the sensor */
+static K_MUTEX_DEFINE(sensor_lock);
+static task_id_t sensor_owner;
 
 /* FPC specific initialization and de-initialization functions */
 __staticlib int fp_sensor_open(void);
@@ -101,12 +106,32 @@ enum fpc_cmd {
 /* Memory for the SPI transfer buffer */
 static uint8_t spi_buf[MAX_CMD_SPI_TRANSFER_SIZE];
 
+void fp_sensor_lock(void)
+{
+	if (sensor_owner != task_get_current()) {
+		mutex_lock(&sensor_lock);
+		sensor_owner = task_get_current();
+	}
+}
+
+void fp_sensor_unlock(void)
+{
+	sensor_owner = 0xFF;
+	mutex_unlock(&sensor_lock);
+}
+
 static int fpc_send_cmd(const uint8_t cmd)
 {
+	int ret;
+
 	spi_buf[0] = cmd;
 
-	return spi_transaction(SPI_FP_DEVICE, spi_buf, 1, spi_buf,
-			       SPI_READBACK_ALL);
+	fp_sensor_lock();
+	ret = spi_transaction(SPI_FP_DEVICE, spi_buf, 1, spi_buf,
+			      SPI_READBACK_ALL);
+	fp_sensor_unlock();
+
+	return ret;
 }
 
 void fp_sensor_low_power(void)
@@ -124,8 +149,11 @@ int fpc_get_hwid(uint16_t *id)
 
 	spi_buf[0] = FPC_CMD_HW_ID;
 
+	fp_sensor_lock();
 	rc = spi_transaction(SPI_FP_DEVICE, spi_buf, 3, spi_buf,
 			     SPI_READBACK_ALL);
+	fp_sensor_unlock();
+
 	if (rc) {
 		CPRINTS("FPC HW ID read failed %d", rc);
 		return FP_ERROR_SPI_COMM;
@@ -210,8 +238,10 @@ int fp_sensor_get_info(struct ec_response_fp_info *resp)
 
 	memcpy(resp, &ec_fp_sensor_info, sizeof(struct ec_response_fp_info));
 
+	fp_sensor_lock();
 	rc = spi_transaction(SPI_FP_DEVICE, spi_buf, 3, spi_buf,
 			     SPI_READBACK_ALL);
+	fp_sensor_unlock();
 	if (rc)
 		return EC_RES_ERROR;
 
