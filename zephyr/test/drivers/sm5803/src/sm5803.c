@@ -1017,7 +1017,9 @@ ZTEST_F(sm5803, test_set_mode)
 	zassert_true(extpower_is_present());
 	/* add delay to let curr.ac to be 1 */
 	k_sleep(K_SECONDS(1));
+
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate idle off"));
+	charge_idle_enabled = 1;
 	zassert_ok(charger_set_mode(0));
 	zassert_ok(charger_get_option(&temp));
 	/* Flow1(0x1C) Bit[1:0]=01, Flow2(0x1D) Bit[2:0]=111 */
@@ -1028,6 +1030,10 @@ ZTEST_F(sm5803, test_set_mode)
 	zassert_ok(charger_get_option(&temp));
 	/* Flow1(0x1C) Bit[1:0]=01, Flow2(0x1D) Bit[2:0]=000 */
 	zassert_equal(temp, 0x1);
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate discharge on"));
+	zassert_ok(charger_set_mode(0));
+	zassert_equal(charge_idle_enabled, 0);
 
 	/* Reset AC status */
 	extpower_is_present_fake.return_val = 0;

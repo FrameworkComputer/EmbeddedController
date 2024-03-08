@@ -93,7 +93,7 @@ static bool fast_charge_disabled;
  * During charge idle mode, we want to disable fast-charge/ pre-charge/
  * trickle-charge. Add this variable to avoid re-send command to charger.
  */
-static int charge_idle_enabled;
+test_export_static int charge_idle_enabled;
 #endif
 
 #ifdef TEST_BUILD
@@ -1563,7 +1563,15 @@ static enum ec_error_list sm5803_set_mode(int chgnum, int mode)
 					  MASK_SET);
 		rv |= sm5803_flow1_update(chgnum, CHARGER_MODE_SINK, MASK_SET);
 		charge_idle_enabled = 0;
+	} else if ((get_chg_ctrl_mode() == CHARGE_CONTROL_DISCHARGE) &&
+		   charge_idle_enabled) {
+		/*
+		 * Discharge is controlled by discharge_on_ac, so only need to
+		 * reset charge_idle_enabled.
+		 */
+		charge_idle_enabled = 0;
 	}
+
 #endif
 
 	return rv;
