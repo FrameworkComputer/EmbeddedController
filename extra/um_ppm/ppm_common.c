@@ -216,7 +216,11 @@ static void ppm_common_handle_async_event(struct ppm_common_device *dev)
 			 * OPM.
 			 */
 			if (port < dev->num_ports) {
-				alert_port = true;
+				/* Let through only enabled notifications. */
+				port_status = &dev->per_port_status[port];
+				if (dev->notif_mask.raw_value &
+				    port_status->connector_status_change)
+					alert_port = true;
 			} else {
 				DLOG("No more ports needing OPM alerting");
 			}
@@ -259,6 +263,7 @@ static void ppm_common_reset_data(struct ppm_common_device *dev)
 	clear_last_error(dev);
 	dev->last_connector_changed = -1;
 	dev->last_connector_alerted = -1;
+	dev->notif_mask.raw_value = 0;
 	memset(&dev->pending, 0, sizeof(dev->pending));
 	memset(dev->per_port_status, 0,
 	       sizeof(struct ucsiv3_get_connector_status_data) *
@@ -310,6 +315,12 @@ static int ppm_common_execute_pending_cmd(struct ppm_common_device *dev)
 		break;
 	case UCSI_CMD_PPM_RESET:
 		ppm_common_reset_data(dev);
+		ret = 0;
+		goto success;
+	case UCSI_CMD_SET_NOTIFICATION_ENABLE:
+		/* Save the notification mask. */
+		platform_memcpy(&dev->notif_mask, control->command_specific,
+				sizeof(dev->notif_mask));
 		ret = 0;
 		goto success;
 	default:

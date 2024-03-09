@@ -6,6 +6,7 @@
 #ifndef UM_PPM_PPM_COMMON_H_
 #define UM_PPM_PPM_COMMON_H_
 
+#include "drivers/ucsi_v3.h"
 #include "include/platform.h"
 #include "include/ppm.h"
 
@@ -64,6 +65,9 @@ struct ppm_common_device {
 	/* Last error status info. */
 	enum last_error_type last_error;
 	struct ucsiv3_get_error_status_data ppm_error_result;
+
+	/** Notification mask */
+	union notification_enable_t notif_mask;
 };
 
 /**
