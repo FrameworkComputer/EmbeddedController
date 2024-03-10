@@ -8255,6 +8255,21 @@ struct ec_params_fp_unlock_template {
 	uint16_t fgr_num;
 } __ec_align4;
 
+/*
+ * Migrate a legacy FP template (here, legacy refers to being generated in a
+ * raw user_id context instead of a nonce context) by wiping its match secret
+ * salt and treating it as a newly-enrolled template.
+ * The legacy FP template needs to be uploaded by FP_TEMPLATE command first
+ * without committing, then this command will commit it.
+ */
+#define EC_CMD_FP_MIGRATE_TEMPLATE_TO_NONCE_CONTEXT 0x0418
+
+struct ec_params_fp_migrate_template_to_nonce_context {
+	/* The context userid used to encrypt this template when it was created.
+	 */
+	uint32_t userid[FP_CONTEXT_USERID_WORDS];
+};
+
 /*****************************************************************************/
 /* Touchpad MCU commands: range 0x0500-0x05FF */
 

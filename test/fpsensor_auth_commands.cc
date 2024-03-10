@@ -1249,6 +1249,403 @@ test_fp_command_unlock_template_pre_encrypted(void)
 	return EC_SUCCESS;
 }
 
+// Test that legacy format (v2) isn't accepted by commit function.
+test_static enum ec_error_list test_fp_command_commit_v2(void)
+{
+	fp_reset_and_clear_context();
+
+	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+
+	constexpr size_t head_size = offsetof(ec_params_fp_template, data);
+	constexpr size_t metadata_size =
+		sizeof(ec_fp_template_encryption_metadata);
+	constexpr size_t template_size = sizeof(fp_template[0]);
+	constexpr size_t params_size =
+		head_size + metadata_size + template_size;
+
+	std::array<uint8_t, params_size> params = {};
+	std::span head(params.begin(), params.begin() + head_size);
+	std::span enc_metadata(head.end(), head.end() + metadata_size);
+	std::span template_data(enc_metadata.end(),
+				enc_metadata.end() + template_size);
+
+	struct ec_params_fp_template head_data = {
+		.offset = 0,
+		.size = FP_TEMPLATE_COMMIT | (params_size - head_size),
+	};
+	static_assert(head_size == sizeof(head_data));
+	memcpy(head.data(), &head_data, head.size());
+
+	std::fill(template_data.begin(), template_data.end(), 0xc4);
+
+	struct fp_auth_command_encryption_metadata info;
+	encrypt_data_in_place(1, info, template_data.data(),
+			      template_data.size());
+
+	struct ec_fp_template_encryption_metadata enc_metadata_data {
+		.struct_version = 2
+	};
+
+	static_assert(sizeof(info.nonce) == sizeof(enc_metadata_data.nonce));
+	std::copy(std::begin(info.nonce), std::end(info.nonce),
+		  std::begin(enc_metadata_data.nonce));
+
+	static_assert(sizeof(info.encryption_salt) ==
+		      sizeof(enc_metadata_data.encryption_salt));
+	std::copy(std::begin(info.encryption_salt),
+		  std::end(info.encryption_salt),
+		  std::begin(enc_metadata_data.encryption_salt));
+
+	static_assert(sizeof(info.tag) == sizeof(enc_metadata_data.tag));
+	std::copy(std::begin(info.tag), std::end(info.tag),
+		  std::begin(enc_metadata_data.tag));
+
+	static_assert(metadata_size == sizeof(enc_metadata_data));
+	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
+
+	TEST_EQ(test_send_host_command(EC_CMD_FP_TEMPLATE, 0, params.data(),
+				       params.size(), NULL, 0),
+		EC_RES_INVALID_PARAM, "%d");
+
+	return EC_SUCCESS;
+}
+
+// Test that legacy format (v3) is still accepted for commit.
+test_static enum ec_error_list test_fp_command_commit_v3(void)
+{
+	fp_reset_and_clear_context();
+
+	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+
+	constexpr size_t head_size = offsetof(ec_params_fp_template, data);
+	constexpr size_t metadata_size =
+		sizeof(ec_fp_template_encryption_metadata);
+	constexpr size_t template_size = sizeof(fp_template[0]);
+	constexpr size_t params_size =
+		head_size + metadata_size + template_size;
+
+	std::array<uint8_t, params_size> params = {};
+	std::span head(params.begin(), params.begin() + head_size);
+	std::span enc_metadata(head.end(), head.end() + metadata_size);
+	std::span template_data(enc_metadata.end(),
+				enc_metadata.end() + template_size);
+
+	struct ec_params_fp_template head_data = {
+		.offset = 0,
+		.size = FP_TEMPLATE_COMMIT | (params_size - head_size),
+	};
+	static_assert(head_size == sizeof(head_data));
+	memcpy(head.data(), &head_data, head.size());
+
+	std::fill(template_data.begin(), template_data.end(), 0xc4);
+
+	struct fp_auth_command_encryption_metadata info;
+	encrypt_data_in_place(1, info, template_data.data(),
+			      template_data.size());
+
+	struct ec_fp_template_encryption_metadata enc_metadata_data {
+		.struct_version = 3
+	};
+
+	static_assert(sizeof(info.nonce) == sizeof(enc_metadata_data.nonce));
+	std::copy(std::begin(info.nonce), std::end(info.nonce),
+		  std::begin(enc_metadata_data.nonce));
+
+	static_assert(sizeof(info.encryption_salt) ==
+		      sizeof(enc_metadata_data.encryption_salt));
+	std::copy(std::begin(info.encryption_salt),
+		  std::end(info.encryption_salt),
+		  std::begin(enc_metadata_data.encryption_salt));
+
+	static_assert(sizeof(info.tag) == sizeof(enc_metadata_data.tag));
+	std::copy(std::begin(info.tag), std::end(info.tag),
+		  std::begin(enc_metadata_data.tag));
+
+	static_assert(metadata_size == sizeof(enc_metadata_data));
+	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
+
+	TEST_EQ(test_send_host_command(EC_CMD_FP_TEMPLATE, 0, params.data(),
+				       params.size(), NULL, 0),
+		EC_RES_SUCCESS, "%d");
+
+	return EC_SUCCESS;
+}
+
+// Test that trivial positive match salt will be detected into an error.
+test_static enum ec_error_list test_fp_command_commit_trivial_salt(void)
+{
+	fp_reset_and_clear_context();
+
+	// Templates will only be decrypted in active context.
+	struct ec_params_fp_context_v1 ctx_params = {
+		.action = FP_CONTEXT_GET_RESULT,
+		.userid = { 0, 1, 2, 3, 4, 5, 6, 7 },
+	};
+	TEST_EQ(test_send_host_command(EC_CMD_FP_CONTEXT, 1, &ctx_params,
+				       sizeof(ctx_params), NULL, 0),
+		EC_RES_SUCCESS, "%d");
+
+	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+
+	constexpr size_t head_size = offsetof(ec_params_fp_template, data);
+	constexpr size_t metadata_size =
+		sizeof(ec_fp_template_encryption_metadata);
+	constexpr size_t template_size = sizeof(fp_template[0]);
+	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t params_size =
+		head_size + metadata_size + template_size + salt_size;
+
+	std::array<uint8_t, params_size> params = {};
+	std::span head(params.begin(), params.begin() + head_size);
+	std::span enc_metadata(head.end(), head.end() + metadata_size);
+	std::span template_data(enc_metadata.end(),
+				enc_metadata.end() + template_size);
+	std::span salt_data(template_data.end(),
+			    template_data.end() + salt_size);
+
+	struct ec_params_fp_template head_data = {
+		.offset = 0,
+		.size = FP_TEMPLATE_COMMIT | (params_size - head_size),
+	};
+	static_assert(head_size == sizeof(head_data));
+	memcpy(head.data(), &head_data, head.size());
+
+	std::fill(template_data.begin(), template_data.end(), 0xc4);
+
+	struct fp_auth_command_encryption_metadata info;
+	encrypt_data_in_place(1, info, template_data.data(),
+			      template_data.size() + salt_data.size());
+
+	struct ec_fp_template_encryption_metadata enc_metadata_data {
+		.struct_version = 4
+	};
+
+	static_assert(sizeof(info.nonce) == sizeof(enc_metadata_data.nonce));
+	std::copy(std::begin(info.nonce), std::end(info.nonce),
+		  std::begin(enc_metadata_data.nonce));
+
+	static_assert(sizeof(info.encryption_salt) ==
+		      sizeof(enc_metadata_data.encryption_salt));
+	std::copy(std::begin(info.encryption_salt),
+		  std::end(info.encryption_salt),
+		  std::begin(enc_metadata_data.encryption_salt));
+
+	static_assert(sizeof(info.tag) == sizeof(enc_metadata_data.tag));
+	std::copy(std::begin(info.tag), std::end(info.tag),
+		  std::begin(enc_metadata_data.tag));
+
+	static_assert(metadata_size == sizeof(enc_metadata_data));
+	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
+
+	TEST_EQ(test_send_host_command(EC_CMD_FP_TEMPLATE, 0, params.data(),
+				       params.size(), NULL, 0),
+		EC_RES_INVALID_PARAM, "%d");
+
+	return EC_SUCCESS;
+}
+
+test_static enum ec_error_list test_fp_command_commit_without_seed(void)
+{
+	fp_reset_and_clear_context();
+
+	// Templates will only be decrypted in active context.
+	struct ec_params_fp_context_v1 ctx_params = {
+		.action = FP_CONTEXT_GET_RESULT,
+		.userid = { 0, 1, 2, 3, 4, 5, 6, 7 },
+	};
+	TEST_EQ(test_send_host_command(EC_CMD_FP_CONTEXT, 1, &ctx_params,
+				       sizeof(ctx_params), NULL, 0),
+		EC_RES_SUCCESS, "%d");
+
+	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+
+	constexpr size_t head_size = offsetof(ec_params_fp_template, data);
+	constexpr size_t metadata_size =
+		sizeof(ec_fp_template_encryption_metadata);
+	constexpr size_t template_size = sizeof(fp_template[0]);
+	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t params_size =
+		head_size + metadata_size + template_size + salt_size;
+
+	std::array<uint8_t, params_size> params = {};
+	std::span head(params.begin(), params.begin() + head_size);
+	std::span enc_metadata(head.end(), head.end() + metadata_size);
+	std::span template_data(enc_metadata.end(),
+				enc_metadata.end() + template_size);
+	std::span salt_data(template_data.end(),
+			    template_data.end() + salt_size);
+
+	struct ec_params_fp_template head_data = {
+		.offset = 0,
+		.size = FP_TEMPLATE_COMMIT | (params_size - head_size),
+	};
+	static_assert(head_size == sizeof(head_data));
+	memcpy(head.data(), &head_data, head.size());
+
+	std::fill(template_data.begin(), template_data.end(), 0xc4);
+	std::fill(salt_data.begin(), salt_data.end(), 0x12);
+
+	struct fp_auth_command_encryption_metadata info;
+
+	struct ec_fp_template_encryption_metadata enc_metadata_data {
+		.struct_version = 4
+	};
+
+	static_assert(sizeof(info.nonce) == sizeof(enc_metadata_data.nonce));
+	std::copy(std::begin(info.nonce), std::end(info.nonce),
+		  std::begin(enc_metadata_data.nonce));
+
+	static_assert(sizeof(info.encryption_salt) ==
+		      sizeof(enc_metadata_data.encryption_salt));
+	std::copy(std::begin(info.encryption_salt),
+		  std::end(info.encryption_salt),
+		  std::begin(enc_metadata_data.encryption_salt));
+
+	static_assert(sizeof(info.tag) == sizeof(enc_metadata_data.tag));
+	std::copy(std::begin(info.tag), std::end(info.tag),
+		  std::begin(enc_metadata_data.tag));
+
+	static_assert(metadata_size == sizeof(enc_metadata_data));
+	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
+
+	TEST_EQ(test_send_host_command(EC_CMD_FP_TEMPLATE, 0, params.data(),
+				       params.size(), NULL, 0),
+		EC_RES_UNAVAILABLE, "%d");
+
+	return EC_SUCCESS;
+}
+
+test_static enum ec_error_list
+test_fp_command_migrate_template_to_nonce_context(void)
+{
+	fp_reset_and_clear_context();
+
+	/* Prepare an uncommitted template. */
+	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+
+	constexpr size_t head_size = offsetof(ec_params_fp_template, data);
+	constexpr size_t metadata_size =
+		sizeof(ec_fp_template_encryption_metadata);
+	constexpr size_t template_size = sizeof(fp_template[0]);
+	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t params_size =
+		head_size + metadata_size + template_size + salt_size;
+
+	std::array<uint8_t, params_size> params = {};
+	std::span head(params.begin(), params.begin() + head_size);
+	std::span enc_metadata(head.end(), head.end() + metadata_size);
+	std::span template_data(enc_metadata.end(),
+				enc_metadata.end() + template_size);
+	std::span salt_data(template_data.end(),
+			    template_data.end() + salt_size);
+
+	struct ec_params_fp_template head_data = {
+		.offset = 0,
+		.size = (params_size - head_size),
+	};
+	static_assert(head_size == sizeof(head_data));
+	memcpy(head.data(), &head_data, head.size());
+
+	std::fill(template_data.begin(), template_data.end(), 0xc4);
+	std::fill(salt_data.begin(), salt_data.end(), 0xab);
+
+	struct fp_auth_command_encryption_metadata info;
+	encrypt_data_in_place(1, info, template_data.data(),
+			      template_data.size() + salt_data.size());
+
+	struct ec_fp_template_encryption_metadata enc_metadata_data {
+		.struct_version = 4
+	};
+
+	static_assert(sizeof(info.nonce) == sizeof(enc_metadata_data.nonce));
+	std::copy(std::begin(info.nonce), std::end(info.nonce),
+		  std::begin(enc_metadata_data.nonce));
+
+	static_assert(sizeof(info.encryption_salt) ==
+		      sizeof(enc_metadata_data.encryption_salt));
+	std::copy(std::begin(info.encryption_salt),
+		  std::end(info.encryption_salt),
+		  std::begin(enc_metadata_data.encryption_salt));
+
+	static_assert(sizeof(info.tag) == sizeof(enc_metadata_data.tag));
+	std::copy(std::begin(info.tag), std::end(info.tag),
+		  std::begin(enc_metadata_data.tag));
+
+	static_assert(metadata_size == sizeof(enc_metadata_data));
+	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
+
+	TEST_EQ(test_send_host_command(EC_CMD_FP_TEMPLATE, 0, params.data(),
+				       params.size(), NULL, 0),
+		EC_RES_SUCCESS, "%d");
+
+	struct ec_params_fp_migrate_template_to_nonce_context
+		migrate_params = {};
+
+	/* Migrate command should fail outside a nonce session. */
+	TEST_EQ(test_send_host_command(
+			EC_CMD_FP_MIGRATE_TEMPLATE_TO_NONCE_CONTEXT, 0,
+			&migrate_params, sizeof(migrate_params), NULL, 0),
+		EC_RES_ACCESS_DENIED, "%d");
+
+	struct ec_response_fp_generate_nonce nonce_response;
+	struct ec_params_fp_nonce_context nonce_params = {};
+
+	TEST_EQ(test_send_host_command(EC_CMD_FP_GENERATE_NONCE, 0, NULL, 0,
+				       &nonce_response, sizeof(nonce_response)),
+		EC_RES_SUCCESS, "%d");
+	TEST_EQ(test_send_host_command(EC_CMD_FP_NONCE_CONTEXT, 0,
+				       &nonce_params, sizeof(nonce_params),
+				       NULL, 0),
+		EC_RES_SUCCESS, "%d");
+
+	/* Now migrate command should succeed. */
+	TEST_EQ(test_send_host_command(
+			EC_CMD_FP_MIGRATE_TEMPLATE_TO_NONCE_CONTEXT, 0,
+			&migrate_params, sizeof(migrate_params), NULL, 0),
+		EC_RES_SUCCESS, "%d");
+	TEST_EQ(templ_valid, 1, "%d");
+
+	return EC_SUCCESS;
+}
+
+test_static enum ec_error_list
+test_fp_command_migrate_template_to_nonce_context_failure(void)
+{
+	fp_reset_and_clear_context();
+
+	/* Prepare an uncommitted template. */
+	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+
+	struct ec_params_fp_migrate_template_to_nonce_context
+		migrate_params = {};
+
+	struct ec_response_fp_generate_nonce nonce_response;
+	struct ec_params_fp_nonce_context nonce_params = {};
+
+	TEST_EQ(test_send_host_command(EC_CMD_FP_GENERATE_NONCE, 0, NULL, 0,
+				       &nonce_response, sizeof(nonce_response)),
+		EC_RES_SUCCESS, "%d");
+	TEST_EQ(test_send_host_command(EC_CMD_FP_NONCE_CONTEXT, 0,
+				       &nonce_params, sizeof(nonce_params),
+				       NULL, 0),
+		EC_RES_SUCCESS, "%d");
+
+	/* Migrate command should fail without loaded template. */
+	TEST_EQ(test_send_host_command(
+			EC_CMD_FP_MIGRATE_TEMPLATE_TO_NONCE_CONTEXT, 0,
+			&migrate_params, sizeof(migrate_params), NULL, 0),
+		EC_RES_INVALID_PARAM, "%d");
+
+	templ_valid = 5;
+	/* Migrate command should fail without overflow. */
+	TEST_EQ(test_send_host_command(
+			EC_CMD_FP_MIGRATE_TEMPLATE_TO_NONCE_CONTEXT, 0,
+			&migrate_params, sizeof(migrate_params), NULL, 0),
+		EC_RES_OVERFLOW, "%d");
+	templ_valid = 0;
+	return EC_SUCCESS;
+}
+
 } // namespace
 
 extern "C" void run_test(int argc, const char **argv)
@@ -1256,6 +1653,7 @@ extern "C" void run_test(int argc, const char **argv)
 	RUN_TEST(test_fp_command_establish_pairing_key_without_seed);
 	RUN_TEST(test_fp_command_check_context_cleared);
 	RUN_TEST(test_fp_command_generate_nonce);
+	RUN_TEST(test_fp_command_commit_without_seed);
 
 	// All tests after this require the TPM seed to be set.
 	RUN_TEST(test_set_fp_tpm_seed);
@@ -1277,5 +1675,10 @@ extern "C" void run_test(int argc, const char **argv)
 	RUN_TEST(test_fp_command_unlock_template);
 	RUN_TEST(test_fp_command_unlock_template_pre_encrypted_fail);
 	RUN_TEST(test_fp_command_unlock_template_pre_encrypted);
+	RUN_TEST(test_fp_command_commit_v2);
+	RUN_TEST(test_fp_command_commit_v3);
+	RUN_TEST(test_fp_command_commit_trivial_salt);
+	RUN_TEST(test_fp_command_migrate_template_to_nonce_context);
+	RUN_TEST(test_fp_command_migrate_template_to_nonce_context_failure);
 	test_print_result();
 }

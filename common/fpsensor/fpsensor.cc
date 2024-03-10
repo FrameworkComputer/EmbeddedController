@@ -15,6 +15,7 @@
 #include <variant>
 
 extern "C" {
+#include "assert.h"
 #include "atomic.h"
 #include "clock.h"
 #include "common.h"
@@ -632,6 +633,97 @@ validate_template_format(struct ec_fp_template_encryption_metadata *enc_info)
 	return EC_RES_SUCCESS;
 }
 
+enum ec_status fp_commit_template(const uint8_t *context, size_t context_size)
+{
+	ScopedFastCpu fast_cpu;
+
+	uint16_t idx = templ_valid;
+	struct ec_fp_template_encryption_metadata *enc_info;
+	/* Encrypted template is after the metadata. */
+	uint8_t *encrypted_template = fp_enc_buffer + sizeof(*enc_info);
+	/* Positive match salt is after the template. */
+	uint8_t *positive_match_salt =
+		encrypted_template + sizeof(fp_template[0]);
+	size_t encrypted_blob_size;
+	uint8_t key[SBP_ENC_KEY_LEN];
+
+	/*
+	 * The complete encrypted template has been received, start
+	 * decryption.
+	 */
+	fp_clear_finger_context(idx);
+	/*
+	 * The beginning of the buffer contains nonce, encryption_salt
+	 * and tag.
+	 */
+	enc_info = (struct ec_fp_template_encryption_metadata *)fp_enc_buffer;
+	enum ec_status res = validate_template_format(enc_info);
+	if (res != EC_RES_SUCCESS) {
+		CPRINTS("fgr%d: Template format not supported", idx);
+		return EC_RES_INVALID_PARAM;
+	}
+
+	// TODO(b/335132437): Remove support for older templates (with
+	// struct_version < 4) after migration is completed.
+	if (enc_info->struct_version <= 3) {
+		encrypted_blob_size = sizeof(fp_template[0]);
+	} else {
+		encrypted_blob_size = sizeof(fp_template[0]) +
+				      sizeof(fp_positive_match_salt[0]);
+	}
+
+	enum ec_error_list ret;
+	if (fp_encryption_status & FP_CONTEXT_USER_ID_SET) {
+		ret = derive_encryption_key_with_info(
+			key, enc_info->encryption_salt, context, context_size);
+		if (ret != EC_SUCCESS) {
+			CPRINTS("fgr%d: Failed to derive key", idx);
+			return EC_RES_UNAVAILABLE;
+		}
+
+		/* Decrypt the secret blob in-place. */
+		ret = aes_128_gcm_decrypt(key, SBP_ENC_KEY_LEN,
+					  encrypted_template,
+					  encrypted_template,
+					  encrypted_blob_size, enc_info->nonce,
+					  FP_CONTEXT_NONCE_BYTES, enc_info->tag,
+					  FP_CONTEXT_TAG_BYTES);
+		OPENSSL_cleanse(key, sizeof(key));
+		if (ret != EC_SUCCESS) {
+			CPRINTS("fgr%d: Failed to decipher template", idx);
+			/* Don't leave bad data in the template buffer
+			 */
+			fp_clear_finger_context(idx);
+			return EC_RES_UNAVAILABLE;
+		}
+		fp_init_decrypted_template_state_with_user_id(idx);
+	} else {
+		template_states[idx] = fp_encrypted_template_state{
+			.enc_metadata = *enc_info,
+		};
+	}
+
+	memcpy(fp_template[idx], encrypted_template, sizeof(fp_template[0]));
+	if (template_needs_validation_value(enc_info)) {
+		CPRINTS("fgr%d: Generating positive match salt.", idx);
+		trng_init();
+		trng_rand_bytes(positive_match_salt,
+				FP_POSITIVE_MATCH_SALT_BYTES);
+		trng_exit();
+	}
+	if (bytes_are_trivial(positive_match_salt,
+			      sizeof(fp_positive_match_salt[0]))) {
+		CPRINTS("fgr%d: Trivial positive match salt.", idx);
+		OPENSSL_cleanse(fp_template[idx], sizeof(fp_template[0]));
+		return EC_RES_INVALID_PARAM;
+	}
+	memcpy(fp_positive_match_salt[idx], positive_match_salt,
+	       sizeof(fp_positive_match_salt[0]));
+
+	templ_valid++;
+	return EC_RES_SUCCESS;
+}
+
 static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 {
 	const auto *params =
@@ -640,8 +732,6 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 	bool xfer_complete = params->size & FP_TEMPLATE_COMMIT;
 	uint32_t offset = params->offset;
 	uint16_t idx = templ_valid;
-	uint8_t key[SBP_ENC_KEY_LEN];
-	struct ec_fp_template_encryption_metadata *enc_info;
 
 	/* Can we store one more template ? */
 	if (idx >= FP_MAX_FINGER_COUNT)
@@ -658,91 +748,71 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 	memcpy(&fp_enc_buffer[offset], params->data, size);
 
 	if (xfer_complete) {
-		ScopedFastCpu fast_cpu;
-
-		/* Encrypted template is after the metadata. */
-		uint8_t *encrypted_template = fp_enc_buffer + sizeof(*enc_info);
-		/* Positive match salt is after the template. */
-		uint8_t *positive_match_salt =
-			encrypted_template + sizeof(fp_template[0]);
-		size_t encrypted_blob_size;
-
-		/*
-		 * The complete encrypted template has been received, start
-		 * decryption.
-		 */
-		fp_clear_finger_context(idx);
-		/*
-		 * The beginning of the buffer contains nonce, encryption_salt
-		 * and tag.
-		 */
-		enc_info = (struct ec_fp_template_encryption_metadata *)
-			fp_enc_buffer;
-		enum ec_status res = validate_template_format(enc_info);
-		if (res != EC_RES_SUCCESS) {
-			CPRINTS("fgr%d: Template format not supported", idx);
-			return EC_RES_INVALID_PARAM;
-		}
-
-		if (enc_info->struct_version <= 3) {
-			encrypted_blob_size = sizeof(fp_template[0]);
-		} else {
-			encrypted_blob_size = sizeof(fp_template[0]) +
-					      sizeof(fp_positive_match_salt[0]);
-		}
-
-		if (fp_encryption_status & FP_CONTEXT_USER_ID_SET) {
-			ret = derive_encryption_key(key,
-						    enc_info->encryption_salt);
-			if (ret != EC_SUCCESS) {
-				CPRINTS("fgr%d: Failed to derive key", idx);
-				return EC_RES_UNAVAILABLE;
-			}
-
-			/* Decrypt the secret blob in-place. */
-			ret = aes_128_gcm_decrypt(
-				key, SBP_ENC_KEY_LEN, encrypted_template,
-				encrypted_template, encrypted_blob_size,
-				enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
-				enc_info->tag, FP_CONTEXT_TAG_BYTES);
-			OPENSSL_cleanse(key, sizeof(key));
-			if (ret != EC_SUCCESS) {
-				CPRINTS("fgr%d: Failed to decipher template",
-					idx);
-				/* Don't leave bad data in the template buffer
-				 */
-				fp_clear_finger_context(idx);
-				return EC_RES_UNAVAILABLE;
-			}
-			fp_init_decrypted_template_state_with_user_id(idx);
-		} else {
-			template_states[idx] = fp_encrypted_template_state{
-				.enc_metadata = *enc_info,
-			};
-		}
-
-		memcpy(fp_template[idx], encrypted_template,
-		       sizeof(fp_template[0]));
-		if (template_needs_validation_value(enc_info)) {
-			CPRINTS("fgr%d: Generating positive match salt.", idx);
-			trng_init();
-			trng_rand_bytes(positive_match_salt,
-					FP_POSITIVE_MATCH_SALT_BYTES);
-			trng_exit();
-		}
-		if (bytes_are_trivial(positive_match_salt,
-				      sizeof(fp_positive_match_salt[0]))) {
-			CPRINTS("fgr%d: Trivial positive match salt.", idx);
-			OPENSSL_cleanse(fp_template[idx],
-					sizeof(fp_template[0]));
-			return EC_RES_INVALID_PARAM;
-		}
-		memcpy(fp_positive_match_salt[idx], positive_match_salt,
-		       sizeof(fp_positive_match_salt[0]));
-
-		templ_valid++;
+		return fp_commit_template(reinterpret_cast<uint8_t *>(user_id),
+					  sizeof(user_id));
 	}
 
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_TEMPLATE, fp_command_template, EC_VER_MASK(0));
+
+static enum ec_status
+fp_command_migrate_template_to_nonce_context(struct host_cmd_handler_args *args)
+{
+	const auto *params = static_cast<
+		const ec_params_fp_migrate_template_to_nonce_context *>(
+		args->params);
+	uint16_t idx = templ_valid;
+
+	/*
+	 * The command is used for migrating legacy templates to be encrypted by
+	 * nonce sessions. No point to call this outside a nonce context.
+	 */
+	if (!(fp_encryption_status & FP_CONTEXT_STATUS_NONCE_CONTEXT_SET)) {
+		return EC_RES_ACCESS_DENIED;
+	}
+
+	/*
+	 * Migration commits a template into the nonce session, so the whole
+	 * temlpate needs to be uploaded through FP_TEMPLATE command first
+	 * without committing. Check whether we have space for a new template.
+	 */
+	if (idx >= FP_MAX_FINGER_COUNT)
+		return EC_RES_OVERFLOW;
+
+	BUILD_ASSERT(sizeof(params->userid) == SHA256_DIGEST_SIZE);
+	ec_status res = fp_commit_template(
+		reinterpret_cast<const uint8_t *>(params->userid),
+		sizeof(params->userid));
+	if (res != EC_RES_SUCCESS) {
+		return res;
+	}
+
+	ScopedFastCpu fast_cpu;
+
+	/*
+	 * Make sure salt data is cleared because the new protocol doesn't trust
+	 * match secrets of legacy templates. New match secret needs to be
+	 * generated for them.
+	 */
+	memset(fp_positive_match_salt[idx], 0, FP_POSITIVE_MATCH_SALT_BYTES);
+	int ret = fp_enable_positive_match_secret(idx,
+						  &positive_match_secret_state);
+	if (ret != EC_SUCCESS) {
+		return EC_RES_ACCESS_DENIED;
+	}
+
+	/*
+	 * Note that this operation can be think of as making template idx
+	 * (the one we just committed) a freshly enrolled template. It needs to
+	 * be fetched again (and encrypted differently) and its match secret
+	 * needs to be freshly generated.
+	 */
+	templ_dirty |= BIT(idx);
+	template_newly_enrolled = idx;
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_FP_MIGRATE_TEMPLATE_TO_NONCE_CONTEXT,
+		     fp_command_migrate_template_to_nonce_context,
+		     EC_VER_MASK(0));

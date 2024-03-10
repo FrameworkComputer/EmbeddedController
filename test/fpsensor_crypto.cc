@@ -315,6 +315,23 @@ static int test_derive_encryption_key_raw(const uint32_t *user_id_,
 	return EC_SUCCESS;
 }
 
+static int test_derive_encryption_key_with_info_raw(const uint32_t *user_id_,
+						    const uint8_t *salt,
+						    const uint8_t *info,
+						    size_t info_size,
+						    const uint8_t *expected_key)
+{
+	uint8_t key[SBP_ENC_KEY_LEN];
+	enum ec_error_list rv;
+
+	rv = derive_encryption_key_with_info(key, salt, info, info_size);
+
+	TEST_ASSERT(rv == EC_SUCCESS);
+	TEST_ASSERT_ARRAY_EQ(key, expected_key, sizeof(key));
+
+	return EC_SUCCESS;
+}
+
 test_static int test_derive_encryption_key(void)
 {
 	/*
@@ -354,6 +371,12 @@ test_static int test_derive_encryption_key(void)
 		0x9c, 0xe2, 0xe2, 0x6f, 0xe6, 0x66, 0x3d, 0x3a,
 	};
 
+	static uint8_t unused_key[SBP_ENC_KEY_LEN];
+	static const uint8_t unused_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = {
+		0
+	};
+	static const uint8_t info_wrong_size[] = { 0x01, 0x02, 0x03 };
+
 	/*
 	 * GIVEN that the TPM seed is set, and reading the rollback secret will
 	 * succeed.
@@ -367,6 +390,16 @@ test_static int test_derive_encryption_key(void)
 
 	TEST_ASSERT(test_derive_encryption_key_raw(user_id2, salt2, key2) ==
 		    EC_SUCCESS);
+
+	/* Providing user_id1 as custom info should still result in key1. */
+	TEST_ASSERT(test_derive_encryption_key_with_info_raw(
+			    user_id1, salt1,
+			    reinterpret_cast<const uint8_t *>(user_id1),
+			    sizeof(user_id1), key1) == EC_SUCCESS);
+	/* Providing custom info with invalid size should fail. */
+	TEST_ASSERT(derive_encryption_key_with_info(
+			    unused_key, unused_salt, info_wrong_size,
+			    sizeof(info_wrong_size)) == EC_ERROR_INVAL);
 
 	return EC_SUCCESS;
 }

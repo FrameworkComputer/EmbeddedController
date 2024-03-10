@@ -247,7 +247,10 @@ derive_positive_match_secret(uint8_t *output,
 	return ret;
 }
 
-enum ec_error_list derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
+enum ec_error_list derive_encryption_key_with_info(uint8_t *out_key,
+						   const uint8_t *salt,
+						   const uint8_t *info,
+						   size_t info_size)
 {
 	enum ec_error_list ret;
 	uint8_t ikm[IKM_SIZE_BYTES];
@@ -255,7 +258,11 @@ enum ec_error_list derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
 
 	BUILD_ASSERT(SBP_ENC_KEY_LEN <= SHA256_DIGEST_SIZE);
 	BUILD_ASSERT(SBP_ENC_KEY_LEN <= CONFIG_ROLLBACK_SECRET_SIZE);
-	BUILD_ASSERT(sizeof(user_id) == SHA256_DIGEST_SIZE);
+
+	if (info_size != SHA256_DIGEST_SIZE) {
+		CPRINTS("Invalid info size: %zu", info_size);
+		return EC_ERROR_INVAL;
+	}
 
 	ret = get_ikm(ikm);
 	if (ret != EC_SUCCESS) {
@@ -275,10 +282,18 @@ enum ec_error_list derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
 	 * https://tools.ietf.org/html/rfc5869#section-2.3
 	 */
 	ret = hkdf_expand_one_step(out_key, SBP_ENC_KEY_LEN, prk, sizeof(prk),
-				   (uint8_t *)user_id, sizeof(user_id));
+				   info, SHA256_DIGEST_SIZE);
 	OPENSSL_cleanse(prk, sizeof(prk));
 
 	return ret;
+}
+
+enum ec_error_list derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
+{
+	BUILD_ASSERT(sizeof(user_id) == SHA256_DIGEST_SIZE);
+	return derive_encryption_key_with_info(
+		out_key, salt, reinterpret_cast<uint8_t *>(user_id),
+		sizeof(user_id));
 }
 
 enum ec_error_list aes_128_gcm_encrypt(const uint8_t *key, size_t key_size,
