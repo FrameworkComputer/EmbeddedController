@@ -7153,6 +7153,7 @@ enum tcpc_cc_polarity {
 #define PD_STATUS_EVENT_VDM_REQ_REPLY BIT(6)
 #define PD_STATUS_EVENT_VDM_REQ_FAILED BIT(7)
 #define PD_STATUS_EVENT_VDM_ATTENTION BIT(8)
+#define PD_STATUS_EVENT_COUNT 9
 
 /*
  * Encode and decode for BCD revision response

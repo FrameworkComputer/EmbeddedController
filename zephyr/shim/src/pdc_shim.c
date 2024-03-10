@@ -3,6 +3,9 @@
  * found in the LICENSE file.
  */
 
+#include <zephyr/sys/atomic.h>
+#include <zephyr/toolchain/common.h>
+
 #include <usbc/pdc_power_mgmt.h>
 
 enum tcpc_cc_polarity pd_get_polarity(int port)
@@ -127,9 +130,19 @@ uint8_t pd_get_snk_cap_cnt(int port)
 
 uint32_t pd_get_events(int port)
 {
-	/* TODO:b/326468316 */
+	/*
+	 * atomic_t (or perhaps eventually atomic_t[] with enough flags) is the
+	 * natural Zephyr data type for a bitfield of events. uint32_t is the
+	 * legacy ECOS type. Ensure that they are compatible.
+	 */
+	BUILD_ASSERT(sizeof(uint32_t) >= sizeof(atomic_t));
 
-	return 0;
+	return pdc_power_mgmt_get_events(port);
+}
+
+void pd_clear_events(int port, uint32_t clear_mask)
+{
+	pdc_power_mgmt_clear_event(port, clear_mask);
 }
 
 struct rmdo pd_get_partner_rmdo(int port)

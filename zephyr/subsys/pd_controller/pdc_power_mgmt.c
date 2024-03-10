@@ -18,6 +18,7 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/smf.h>
+#include <zephyr/sys/atomic.h>
 
 #include <drivers/pdc.h>
 #include <usbc/utils.h>
@@ -454,6 +455,8 @@ struct pdc_port_t {
 	struct send_cmd_t send_cmd;
 	/** Pointer to current pending command */
 	struct cmd_t *cmd;
+	/** Bit mask of port events; see PD_STATUS_EVENT_* */
+	atomic_t port_event;
 	/** CCAPS temp variable used with CMD_PDC_GET_CONNECTOR_CAPABILITY
 	 * command */
 	union connector_capability_t ccaps;
@@ -651,6 +654,22 @@ static void send_pending_public_commands(struct pdc_port_t *port)
 	if (port->send_cmd.public.pending) {
 		set_pdc_state(port, PDC_SEND_CMD_START);
 	}
+}
+
+atomic_val_t pdc_power_mgmt_get_events(int port)
+{
+	return pdc_data[port]->port.port_event;
+}
+
+void pdc_power_mgmt_notify_event(int port, atomic_t event_mask)
+{
+	atomic_or(&pdc_data[port]->port.port_event, event_mask);
+	pd_send_host_event(PD_EVENT_TYPEC);
+}
+
+void pdc_power_mgmt_clear_event(int port, atomic_t event_mask)
+{
+	atomic_and(&pdc_data[port]->port.port_event, ~event_mask);
 }
 
 /**
@@ -1482,6 +1501,7 @@ static int pdc_subsys_init(const struct device *dev)
 
 	atomic_clear(port->pdc_cmd_flags);
 	atomic_clear(port->cci_flags);
+	port->port_event = ATOMIC_INIT(0);
 
 	/* Can charge from port by default */
 	port->active_charge = true;
