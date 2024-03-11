@@ -1613,6 +1613,14 @@ def all_targets():
         extra_modules = ["cmsis"],
     )
     ec_target(
+        name = "nova",
+        baseboard = "brask",
+        board = "nova",
+        chip = "npcx",
+        core = "cortex-m",
+        zephyr = False,
+    )
+    ec_target(
         name = "npcx7",
         board = "npcx7",
         extra_modules = ["cmsis"],

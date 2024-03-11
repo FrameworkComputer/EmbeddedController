@@ -179,6 +179,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "nightfury",
     "nipperkin",
     "nocturne",
+    "nova",
     "npcx7_evb",
     "npcx9_evb",
     "npcx_evb",
