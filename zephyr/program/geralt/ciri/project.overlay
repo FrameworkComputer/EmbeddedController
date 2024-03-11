@@ -167,7 +167,7 @@
 			compatible = "cros-ec,lsm6dsm-accel";
 			status = "okay";
 
-			active-mask = "SENSOR_ACTIVE_S0_S3";
+			active-mask = "SENSOR_ACTIVE_S0";
 			location = "MOTIONSENSE_LOC_LID";
 			mutex = <&lid_mutex>;
 			port = <&i2c_sensor>;
@@ -182,10 +182,6 @@
 					odr = <(12500 | ROUND_UP_FLAG)>;
 					ec-rate = <(100 * USEC_PER_MSEC)>;
 				};
-				ec-s3 {
-					odr = <(12500 | ROUND_UP_FLAG)>;
-					ec-rate = <0>;
-				};
 			};
 		};
 
@@ -193,7 +189,7 @@
 			compatible = "cros-ec,lsm6dsm-gyro";
 			status = "okay";
 
-			active-mask = "SENSOR_ACTIVE_S0_S3";
+			active-mask = "SENSOR_ACTIVE_S0";
 			location = "MOTIONSENSE_LOC_LID";
 			mutex = <&lid_mutex>;
 			port = <&i2c_sensor>;
