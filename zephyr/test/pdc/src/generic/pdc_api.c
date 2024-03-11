@@ -356,3 +356,26 @@ ZTEST_USER(pdc_api, test_get_pdo)
 	k_sleep(K_MSEC(SLEEP_MS));
 	zassert_equal(PDO_FIXED_GET_VOLT(fixed_pdo), 5000);
 }
+
+ZTEST_USER(pdc_api, test_get_cable_property)
+{
+	/* Properties chosen to be spread throughout the bytes of the union. */
+	const union cable_property_t property = {
+		.b_current_capablilty = 50,
+		.plug_end_type = USB_TYPE_C,
+		.latency = 4,
+	};
+	union cable_property_t read_property;
+
+	memset(&read_property, 0, sizeof(union cable_property_t));
+	zassert_ok(emul_pdc_set_cable_property(emul, property));
+	zassert_ok(emul_pdc_get_cable_property(emul, &read_property));
+	zassert_ok(memcmp(&read_property, &property,
+			  sizeof(union cable_property_t)));
+
+	memset(&read_property, 0, sizeof(union cable_property_t));
+	zassert_ok(pdc_get_cable_property(dev, &read_property));
+	k_sleep(K_MSEC(SLEEP_MS));
+	zassert_ok(memcmp(&read_property, &property,
+			  sizeof(union cable_property_t)));
+}
