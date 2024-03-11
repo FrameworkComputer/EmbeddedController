@@ -19,6 +19,7 @@
 #include <zephyr/logging/log.h>
 
 #include <dt-bindings/vivaldi_kbd.h>
+#include <hooks.h>
 #include <host_command.h>
 
 LOG_MODULE_REGISTER(vivaldi_kbd, LOG_LEVEL_ERR);
@@ -109,7 +110,7 @@ DECLARE_HOST_COMMAND(EC_CMD_GET_KEYBD_CONFIG, get_vivaldi_keybd_config,
 
 #define CROS_EC_KEYBOARD_NODE DT_CHOSEN(cros_ec_keyboard)
 
-static int vivaldi_kbd_init(void)
+static void vivaldi_kbd_init(void)
 {
 	const struct ec_response_keybd_config *keybd_config;
 
@@ -119,10 +120,10 @@ static int vivaldi_kbd_init(void)
 	config_idx = board_vivaldi_keybd_idx();
 	if (config_idx < 0) {
 		LOG_ERR("top row not enabled");
-		return 0;
+		return;
 	} else if (config_idx >= ARRAY_SIZE(keybd_configs)) {
 		LOG_ERR("invalid keybd config index: %d", config_idx);
-		return -EINVAL;
+		return;
 	}
 
 	vivaldi_kbd_active_config_idx = config_idx;
@@ -167,7 +168,5 @@ static int vivaldi_kbd_init(void)
 		}
 #endif
 	}
-
-	return 0;
 }
-SYS_INIT(vivaldi_kbd_init, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEVICE);
+DECLARE_HOOK(HOOK_INIT, vivaldi_kbd_init, HOOK_PRIO_DEFAULT);
