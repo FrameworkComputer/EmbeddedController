@@ -94,11 +94,15 @@ static void intel_altmode_post_event(enum intel_altmode_event event)
 static void intel_altmode_suspend_handler(struct ap_power_ev_callback *cb,
 					  struct ap_power_ev_data data)
 {
-	LOG_DBG("suspend event: 0x%x", data.event);
+	LOG_DBG("ALTMODE: suspend event: %d, 0x%x", __builtin_ctz(data.event),
+		data.event);
 
-	if (data.event == AP_POWER_RESUME) {
+	/* The retimer is only powered in in S3 and above.
+	 * Disable the altmode thread while in S5 or below.
+	 */
+	if (data.event == AP_POWER_STARTUP) {
 		resume_pd_intel_altmode_task();
-	} else if (data.event == AP_POWER_SUSPEND) {
+	} else if (data.event == AP_POWER_SHUTDOWN) {
 		suspend_pd_intel_altmode_task();
 	} else {
 		LOG_ERR("Invalid suspend event");
@@ -279,7 +283,7 @@ static void intel_altmode_thread(void *unused1, void *unused2, void *unused3)
 	/* Add callbacks for suspend hooks */
 	ap_power_ev_init_callback(&intel_altmode_task_data.cb,
 				  intel_altmode_suspend_handler,
-				  AP_POWER_RESUME | AP_POWER_SUSPEND);
+				  AP_POWER_STARTUP | AP_POWER_SHUTDOWN);
 	ap_power_ev_add_callback(&intel_altmode_task_data.cb);
 
 	/* Register PD interrupt callback */
