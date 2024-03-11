@@ -41,11 +41,12 @@
 	M_GPR(extra_info.callee->v7, cm.regs[CORTEX_PANIC_REGISTER_R10], v7) \
 	M_GPR(extra_info.callee->v8, cm.regs[CORTEX_PANIC_REGISTER_R11], v8) \
 	M(extra_info.callee->psp, cm.regs[CORTEX_PANIC_REGISTER_PSP], psp)   \
+	M(basic.xpsr, cm.regs[CORTEX_PANIC_REGISTER_IPSR], ipsr)             \
 	M(extra_info.exc_return, cm.regs[CORTEX_PANIC_REGISTER_LR], exc_rtn) \
 	M(extra_info.msp, cm.regs[CORTEX_PANIC_REGISTER_MSP], msp)
 /*
- * IPSR is not copied. IPSR is a subset of xPSR, which is already
- * captured in PANIC_REG_LIST.
+ * IPSR is a subset of xPSR, which is already captured in PANIC_REG_LIST, but
+ * print it anyway because it may contain panic exception.
  */
 #else
 #define EXTRA_PANIC_REG_LIST(M, M_GPR)
@@ -119,6 +120,10 @@ static uint32_t placeholder_info_reg;
 void panic_data_print(const struct panic_data *pdata)
 {
 	PANIC_REG_LIST(PANIC_PRINT_REGS, PANIC_PRINT_REGS);
+#if defined(CONFIG_RISCV) && !defined(CONFIG_64BIT)
+	PANIC_PRINT_REGS(NULL, riscv.regs[10], S1);
+	PANIC_PRINT_REGS(NULL, riscv.regs[11], S0);
+#endif
 }
 
 static void copy_esf_to_panic_data(const z_arch_esf_t *esf,
