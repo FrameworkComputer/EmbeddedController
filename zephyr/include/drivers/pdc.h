@@ -125,6 +125,8 @@ typedef int (*pdc_get_current_flash_bank_t)(const struct device *dev,
 					    uint8_t *bank);
 typedef int (*pdc_update_retimer_fw_t)(const struct device *dev, bool enable);
 typedef bool (*pdc_is_init_done_t)(const struct device *dev);
+typedef int (*pdc_get_cable_property_t)(const struct device *dev,
+					union cable_property_t *cable_prop);
 
 /**
  * @cond INTERNAL_HIDDEN
@@ -157,6 +159,7 @@ __subsystem struct pdc_driver_api_t {
 	pdc_reconnect_t reconnect;
 	pdc_get_current_flash_bank_t get_current_flash_bank;
 	pdc_update_retimer_fw_t update_retimer;
+	pdc_get_cable_property_t get_cable_property;
 };
 /**
  * @endcond
@@ -783,6 +786,32 @@ static inline int pdc_update_retimer_fw(const struct device *dev, bool enable)
 	}
 
 	return api->update_retimer(dev, enable);
+}
+
+/**
+ * @brief Gets the attached cable properties
+ * @note CCI Events set
+ *           busy: if PDC is busy
+ *           error: treated as non-emarker cable
+ *           command_commpleted: capability was retrieved
+ *
+ * @param dev PDC device structure pointer
+ * @param cable_prop pointer where the cable properties are stored
+ *
+ * @retval 0 on success
+ * @retval -EBUSY if not ready to execute the command
+ * @retval -EINVAL if caps is NULL
+ */
+static inline int pdc_get_cable_property(const struct device *dev,
+					 union cable_property_t *cable_prop)
+{
+	const struct pdc_driver_api_t *api =
+		(const struct pdc_driver_api_t *)dev->api;
+
+	__ASSERT(api->get_cable_property != NULL,
+		 "GET_CABLE_PROPERTY is not optional");
+
+	return api->get_cable_property(dev, cable_prop);
 }
 
 #ifdef __cplusplus

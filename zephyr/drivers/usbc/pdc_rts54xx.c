@@ -145,6 +145,7 @@ const struct smbus_cmd_t UCSI_GET_ERROR_STATUS = { 0x0E, 0x03, 0x13 };
 const struct smbus_cmd_t UCSI_READ_POWER_LEVEL = { 0x0E, 0x05, 0x1E };
 const struct smbus_cmd_t GET_IC_STATUS = { 0x3A, 0x03, 0x00 };
 const struct smbus_cmd_t SET_RETIMER_FW_UPDATE_MODE = { 0x20, 0x03, 0x00 };
+const struct smbus_cmd_t GET_CABLE_PROPERTY = { 0x0E, 0x02, 0x11 };
 
 /**
  * @brief PDC Command states
@@ -265,6 +266,8 @@ enum cmd_t {
 	CMD_SET_TPC_RECONNECT,
 	/** set Retimer into FW Update Mode */
 	CMD_SET_RETIMER_FW_UPDATE_MODE,
+	/** Get the cable properties */
+	CMD_GET_CABLE_PROPERTY,
 };
 
 /**
@@ -377,6 +380,7 @@ static const char *const cmd_names[] = {
 	[CMD_SET_RDO] = "SET_RDO",
 	[CMD_GET_CURRENT_PARTNER_SRC_PDO] = "GET_CURRENT_PARTNER_SRC_PDO",
 	[CMD_SET_RETIMER_FW_UPDATE_MODE] = "SET_RETIMER_FW_UPDATE_MODE",
+	[CMD_GET_CABLE_PROPERTY] = "GET_CABLE_PROPERTY",
 };
 
 /**
@@ -1693,6 +1697,30 @@ static int rts54_get_connector_status(const struct device *dev,
 				    (uint8_t *)cs);
 }
 
+static int rts54_get_cable_property(const struct device *dev,
+				    union cable_property_t *cp)
+{
+	struct pdc_data_t *data = dev->data;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	if (cp == NULL) {
+		return -EINVAL;
+	}
+
+	uint8_t payload[] = {
+		GET_CABLE_PROPERTY.cmd,
+		GET_CABLE_PROPERTY.len,
+		GET_CABLE_PROPERTY.sub,
+		0x00,
+	};
+
+	return rts54_post_command(dev, CMD_GET_CABLE_PROPERTY, payload,
+				  ARRAY_SIZE(payload), (uint8_t *)cp);
+}
+
 static int rts54_get_error_status(const struct device *dev,
 				  union error_status_t *es)
 {
@@ -1986,6 +2014,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.set_power_level = rts54_set_power_level,
 	.reconnect = rts54_reconnect,
 	.update_retimer = rts54_set_retimer_update_mode,
+	.get_cable_property = rts54_get_cable_property,
 };
 
 static void pdc_interrupt_callback(const struct device *dev,
