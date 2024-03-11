@@ -115,13 +115,10 @@ static uint32_t placeholder_info_reg;
 
 #define PANIC_PRINT_REGS(esf_field, pdata_field, human_name) \
 	panic_printf("  %-8s = 0x%08X\n", #human_name, pdata->pdata_field);
-#define PANIC_PRINT_REGS_GPR(esf_field, pdata_field, human_name) \
-	IF_DISABLED(CONFIG_PLATFORM_EC_PANIC_STRIP_GPR,          \
-		    (PANIC_PRINT_REGS(esf_field, pdata_field, human_name)))
 
 void panic_data_print(const struct panic_data *pdata)
 {
-	PANIC_REG_LIST(PANIC_PRINT_REGS, PANIC_PRINT_REGS_GPR);
+	PANIC_REG_LIST(PANIC_PRINT_REGS, PANIC_PRINT_REGS);
 }
 
 static void copy_esf_to_panic_data(const z_arch_esf_t *esf,
