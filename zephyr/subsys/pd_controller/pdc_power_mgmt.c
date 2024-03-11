@@ -469,11 +469,24 @@ static ALWAYS_INLINE void pdc_thread(void *pdc_dev, void *unused1,
 	const struct device *dev = (const struct device *)pdc_dev;
 	struct pdc_data_t *data = dev->data;
 	struct pdc_port_t *port = &data->port;
+	int rv;
 
 	while (1) {
 		/* Wait for timeout or event */
-		k_event_wait(&port->sm_event, PDC_SM_EVENT, false,
-			     K_MSEC(LOOP_DELAY_MS));
+		rv = k_event_wait(&port->sm_event, PDC_SM_EVENT, false,
+				  K_MSEC(LOOP_DELAY_MS));
+
+		/*
+		 * If k_event_wait returns a non-zero value, then
+		 * always clear PDC_SM_EVENT to ensure that the thread goes to
+		 * sleep in cases where PDC_SM_EVENT can't be handled
+		 * immediately such as when a public cmd is posted, but is
+		 * waiting on an internal cmd to be sent.
+		 */
+		if (rv != 0) {
+			k_event_clear(&port->sm_event, PDC_SM_EVENT);
+		}
+
 		/* Run port connection state machine */
 		smf_run_state(&port->ctx);
 	}
@@ -985,8 +998,6 @@ static void pdc_send_cmd_start_entry(void *obj)
 	} else {
 		port->cmd = &port->send_cmd.public;
 	}
-
-	k_event_clear(&port->sm_event, PDC_SM_EVENT);
 }
 
 static int send_pdc_cmd(struct pdc_port_t *port)
