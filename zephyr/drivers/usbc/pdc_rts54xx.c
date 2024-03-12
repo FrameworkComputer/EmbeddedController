@@ -17,6 +17,8 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/smf.h>
+#include <zephyr/sys/atomic.h>
+#include <zephyr/sys/util.h>
 LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 #include "usbc/utils.h"
 
@@ -197,7 +199,9 @@ enum state_t {
 	/** Error Recovery State */
 	ST_ERROR_RECOVERY,
 	/** Disable State */
-	ST_DISABLE
+	ST_DISABLE,
+	/** PDC communication suspended */
+	ST_SUSPENDED,
 };
 
 /**
@@ -405,6 +409,7 @@ static const char *const state_names[] = {
 	[ST_READ] = "READ",
 	[ST_ERROR_RECOVERY] = "ERROR_RECOVERY",
 	[ST_DISABLE] = "PDC_DISABLED",
+	[ST_SUSPENDED] = "PDC_SUSPENDED",
 };
 
 static const struct device *irq_shared_port;
@@ -434,6 +439,31 @@ static void set_state(struct pdc_data_t *data, const enum state_t next_state)
 {
 	data->last_state = get_state(data);
 	smf_set_state(SMF_CTX(data), &states[next_state]);
+}
+
+/**
+ * Atomic flag to suspend sending new commands to chip
+ *
+ * This flag is shared across driver instances.
+ *
+ * TODO(b/323371550) When more than one PDC is supported, this flag will need
+ * to be tracked per-chip.
+ */
+static atomic_t suspend_comms_flag = ATOMIC_INIT(0);
+
+static void suspend_comms(void)
+{
+	atomic_set(&suspend_comms_flag, 1);
+}
+
+static void enable_comms(void)
+{
+	atomic_set(&suspend_comms_flag, 0);
+}
+
+static bool check_comms_suspended(void)
+{
+	return atomic_get(&suspend_comms_flag) != 0;
 }
 
 static void print_current_state(struct pdc_data_t *data)
@@ -649,6 +679,12 @@ static void st_init_run(void *o)
 	int cnum = cfg->connector_number;
 	int rv;
 
+	/* Do not start executing commands if suspended */
+	if (check_comms_suspended()) {
+		set_state(data, ST_SUSPENDED);
+		return;
+	}
+
 	switch (data->init_local_state) {
 	case INIT_PDC_ENABLE:
 		rv = rts54_enable(data->dev);
@@ -821,6 +857,12 @@ static void st_idle_entry(void *o)
 static void st_idle_run(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
+
+	/* Do not start executing commands if suspended */
+	if (check_comms_suspended()) {
+		set_state(data, ST_SUSPENDED);
+		return;
+	}
 
 	/*
 	 * Priority of events:
@@ -1290,6 +1332,12 @@ static void st_error_recovery_run(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
 
+	/* Don't continue trying if we are suspending communication */
+	if (check_comms_suspended()) {
+		set_state(data, ST_SUSPENDED);
+		return;
+	}
+
 	if (data->error_recovery_counter >= N_MAX_ERROR_RECOVERY_COUNT) {
 		set_state(data, ST_DISABLE);
 		return;
@@ -1322,6 +1370,30 @@ static void st_disable_run(void *o)
 	/* Stay here until reset */
 }
 
+static void st_suspended_entry(void *o)
+{
+	struct pdc_data_t *data = (struct pdc_data_t *)o;
+
+	print_current_state(data);
+}
+
+static void st_suspended_run(void *o)
+{
+	struct pdc_data_t *data = (struct pdc_data_t *)o;
+
+	/* Stay here while suspended */
+	if (check_comms_suspended()) {
+		return;
+	}
+
+	/* Otherwise, return back to init state...
+	 *
+	 * Start the driver initialization routine to put everything
+	 * back into a known state (This includes a driver + PDC reset)
+	 */
+	perform_pdc_init(data);
+}
+
 /* Populate cmd state table */
 static const struct smf_state states[] = {
 	[ST_INIT] = SMF_CREATE_STATE(st_init_entry, st_init_run, NULL, NULL),
@@ -1334,6 +1406,8 @@ static const struct smf_state states[] = {
 		st_error_recovery_entry, st_error_recovery_run, NULL, NULL),
 	[ST_DISABLE] =
 		SMF_CREATE_STATE(st_disable_entry, st_disable_run, NULL, NULL),
+	[ST_SUSPENDED] = SMF_CREATE_STATE(st_suspended_entry, st_suspended_run,
+					  NULL, NULL),
 
 };
 
@@ -1344,13 +1418,20 @@ static const struct smf_state states[] = {
  * @param buf Command payload to copy into write buffer
  * @param len Length of paylaod buffer
  * @param user_buf Pointer to buffer where response data will be written.
- * @return 0 on success, -EBUSY if command is already pending.
+ * @return 0 on success
+ * @return -EBUSY if command is already pending.
+ * @return -ECONNREFUSED if chip communication is disabled
  */
 static int rts54_post_command(const struct device *dev, enum cmd_t cmd,
 			      const uint8_t *buf, uint8_t len,
 			      uint8_t *user_buf)
 {
 	struct pdc_data_t *data = dev->data;
+
+	/* Return an error if chip communication is suspended */
+	if (check_comms_suspended()) {
+		return -ECONNREFUSED;
+	}
 
 	k_mutex_lock(&data->mtx, K_FOREVER);
 
@@ -2070,6 +2151,44 @@ static int rts54_get_vdo(const struct device *dev, union get_vdo_t vdo_req,
 				  (uint8_t *)vdo);
 }
 
+/** Allow 3 seconds for the driver to suspend itself. */
+#define SUSPEND_TIMEOUT_USEC (3 * USEC_PER_SEC)
+
+static int rts54_set_comms_state(const struct device *dev, bool comms_active)
+{
+	struct pdc_data_t *data = dev->data;
+
+	if (comms_active) {
+		/* Re-enable communications. Clearing the suspend flag will
+		 * trigger a reset. Note: if the driver is in the disabled
+		 * state due to a previous comms failure, it will remain
+		 * disabled. (Thus, suspending/resuming comms on a disabled
+		 * PDC driver is a no-op)
+		 */
+		enable_comms();
+
+	} else {
+		/* Request communication to be stopped. This allows in-progress
+		 * operations to complete first.
+		 */
+		suspend_comms();
+
+		if (get_state(data) == ST_DISABLE) {
+			/* The driver is already permanently shut down. */
+			return 0;
+		}
+
+		/* Wait for driver to enter the suspended state */
+		if (!WAIT_FOR((get_state(data) == ST_SUSPENDED),
+			      SUSPEND_TIMEOUT_USEC,
+			      k_sleep(K_MSEC(T_PING_STATUS)))) {
+			return -ETIMEDOUT;
+		}
+	}
+
+	return 0;
+}
+
 static const struct pdc_driver_api_t pdc_driver_api = {
 	.is_init_done = rts54_is_init_done,
 	.get_ucsi_version = rts54_get_ucsi_version,
@@ -2098,6 +2217,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.get_cable_property = rts54_get_cable_property,
 	.get_vdo = rts54_get_vdo,
 	.get_identity_discovery = rts54_get_identity_discovery,
+	.set_comms_state = rts54_set_comms_state,
 };
 
 static void pdc_interrupt_callback(const struct device *dev,
@@ -2183,6 +2303,7 @@ static int pdc_init(const struct device *dev)
 
 static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 {
+	const struct pdc_config_t *cfg = ((const struct device *)dev)->config;
 	struct pdc_data_t *data = ((const struct device *)dev)->data;
 	uint32_t events;
 
@@ -2193,6 +2314,17 @@ static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 					      false, K_MSEC(T_PING_STATUS));
 			if (events) {
 				k_event_clear(&irq_event, RTS54XX_IRQ_EVENT);
+
+				/* If PDC communications are suspended, do not
+				 * process interrupts, as it will cause the
+				 * handler to read from the chip via the ARA
+				 * address.
+				 */
+				if (check_comms_suspended()) {
+					LOG_INF("C%d: Ignoring interrupt",
+						cfg->connector_number);
+					continue;
+				}
 				handle_irqs(data);
 			}
 		} else {

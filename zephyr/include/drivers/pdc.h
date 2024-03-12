@@ -131,6 +131,7 @@ typedef int (*pdc_get_vdo_t)(const struct device *dev, union get_vdo_t req,
 			     uint8_t *req_list, uint32_t *vdo);
 typedef int (*pdc_get_identity_discovery_t)(const struct device *dev,
 					    bool *disc_state);
+typedef int (*pdc_set_comms_state_t)(const struct device *dev, bool active);
 
 /**
  * @cond INTERNAL_HIDDEN
@@ -166,6 +167,7 @@ __subsystem struct pdc_driver_api_t {
 	pdc_get_cable_property_t get_cable_property;
 	pdc_get_vdo_t get_vdo;
 	pdc_get_identity_discovery_t get_identity_discovery;
+	pdc_set_comms_state_t set_comms_state;
 };
 /**
  * @endcond
@@ -530,7 +532,8 @@ static inline int pdc_get_vbus_voltage(const struct device *dev,
 	const struct pdc_driver_api_t *api =
 		(const struct pdc_driver_api_t *)dev->api;
 
-	__ASSERT(api->get_vbus_voltage != NULL, "GET_RDO is not optional");
+	__ASSERT(api->get_vbus_voltage != NULL,
+		 "GET_VBUS_VOLTAGE is not optional");
 
 	return api->get_vbus_voltage(dev, voltage);
 }
@@ -845,7 +848,7 @@ static inline int pdc_get_vdo(const struct device *dev, union get_vdo_t vdo_req,
 	return api->get_vdo(dev, vdo_req, vdo_list, vdo);
 }
 
-/*
+/**
  * @brief get the state of the discovery process
  *
  * @param dev PDC device structure pointer
@@ -867,6 +870,27 @@ static inline int pdc_get_identity_discovery(const struct device *dev,
 	}
 
 	return api->get_identity_discovery(dev, disc_state);
+}
+
+/**
+ * @brief Control if the driver can communicate with the PDC.
+ *
+ * @param dev PDC device structure pointer
+ * @param comms_active True to allow PDC communication, false to end
+ *        communication
+ *
+ * @retval 0 if success
+ */
+static inline int pdc_set_comms_state(const struct device *dev,
+				      bool comms_active)
+{
+	const struct pdc_driver_api_t *api =
+		(const struct pdc_driver_api_t *)dev->api;
+
+	__ASSERT(api->set_comms_state != NULL,
+		 "set_comms_state is not optional");
+
+	return api->set_comms_state(dev, comms_active);
 }
 
 #ifdef __cplusplus

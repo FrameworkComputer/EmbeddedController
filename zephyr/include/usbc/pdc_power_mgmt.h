@@ -396,4 +396,14 @@ void pdc_power_mgmt_clear_event(int port, atomic_t event_mask);
  */
 void pdc_power_mgmt_notify_event(int port, atomic_t event_mask);
 
+/**
+ * @brief Control if the PDC power mgmt and underlying driver threads are
+ *        active.
+ *
+ * @param run True to allow comms, false to suspend
+ *
+ * @retval 0 if successful or error code
+ */
+int pdc_power_mgmt_set_comms_state(bool run);
+
 #endif /* __CROS_EC_PDC_POWER_MGMT_H */
