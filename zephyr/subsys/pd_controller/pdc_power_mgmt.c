@@ -599,6 +599,11 @@ static void invalidate_charger_settings(struct pdc_port_t *port)
  */
 static int queue_public_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd)
 {
+	/* Don't send if still in init state */
+	if (get_pdc_state(port) == PDC_INIT) {
+		return -ENOTCONN;
+	}
+
 	/* Don't send another public initiated command if one is already pending
 	 */
 	if (port->send_cmd.public.pending) {
@@ -1365,8 +1370,11 @@ static bool is_connectionless_cmd(enum pdc_cmd_t pdc_cmd)
  */
 static int public_api_block(int port, enum pdc_cmd_t pdc_cmd)
 {
-	if (queue_public_cmd(&pdc_data[port]->port, pdc_cmd)) {
-		return -EBUSY;
+	int ret;
+
+	ret = queue_public_cmd(&pdc_data[port]->port, pdc_cmd);
+	if (ret) {
+		return ret;
 	}
 
 	/* Reset block counter */
@@ -1805,10 +1813,10 @@ uint32_t pdc_power_mgmt_get_vbus_voltage(int port)
 	return pdc_data[port]->port.vbus;
 }
 
-void pdc_power_mgmt_reset(int port)
+int pdc_power_mgmt_reset(int port)
 {
 	/* Block until command completes */
-	public_api_block(port, CMD_PDC_RESET);
+	return public_api_block(port, CMD_PDC_RESET);
 }
 
 uint8_t pdc_power_mgmt_get_src_cap_cnt(int port)

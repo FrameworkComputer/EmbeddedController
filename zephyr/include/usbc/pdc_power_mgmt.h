@@ -212,9 +212,9 @@ uint32_t pdc_power_mgmt_get_vbus_voltage(int port);
  *
  * @param port USB-C port number
  *
- * @retval void
+ * @retval 0 if successful, error code otherwise
  */
-void pdc_power_mgmt_reset(int port);
+int pdc_power_mgmt_reset(int port);
 
 /**
  * @brief Get the source caps list sent by the port partner

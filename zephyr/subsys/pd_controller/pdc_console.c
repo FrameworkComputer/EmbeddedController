@@ -170,7 +170,11 @@ static int cmd_pdc_reset(const struct shell *sh, size_t argc, char **argv)
 		return rv;
 
 	/* Trigger a PDC reset for this port. */
-	pdc_power_mgmt_reset(port);
+	rv = pdc_power_mgmt_reset(port);
+	if (rv) {
+		shell_error(sh, "Could not reset port %u (%d)", port, rv);
+		return rv;
+	}
 
 	return EC_SUCCESS;
 }
