@@ -215,6 +215,22 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+static void usart_reinit(struct usart_config const *usart)
+{
+	usart_set_parity(usart, 0);
+	usart_set_baud(usart, 115200);
+	usart_set_break(usart, false);
+}
+
+static void usart_reinit_all(void)
+{
+	usart_reinit(&usart2);
+	usart_reinit(&usart3);
+	usart_reinit(&usart4);
+	usart_reinit(&usart5);
+}
+DECLARE_HOOK(HOOK_REINIT, usart_reinit_all, HOOK_PRIO_DEFAULT);
+
 static int command_reinit(int argc, const char **argv)
 {
 	/* Let every module know to re-initialize to power-on state. */
