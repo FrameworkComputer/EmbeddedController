@@ -136,11 +136,7 @@ uint32_t pd_get_events(int port)
 
 struct rmdo pd_get_partner_rmdo(int port)
 {
-	struct rmdo value = { 0 };
-
-	/* TODO:b/326466602 */
-
-	return value;
+	return pdc_power_mgmt_get_partner_rmdo(port);
 }
 
 enum pd_discovery_state pd_get_identity_discovery(int port,

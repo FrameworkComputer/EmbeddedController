@@ -2262,6 +2262,16 @@ uint8_t pdc_power_mgmt_get_snk_cap_cnt(int port)
 	return pdc_data[port]->port.src_policy.pdo_count;
 }
 
+struct rmdo pdc_power_mgmt_get_partner_rmdo(int port)
+{
+	struct rmdo value = { 0 };
+
+	/* The PD 3.1 Get_Revision Message is optional and currently not
+	 * supported in the PDC, although this may change in future updates. */
+
+	return value;
+}
+
 enum pd_discovery_state
 pdc_power_mgmt_get_identity_discovery(int port, enum tcpci_msg_type type)
 {

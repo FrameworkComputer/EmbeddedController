@@ -314,6 +314,15 @@ const uint32_t *const pdc_power_mgmt_get_snk_caps(int port);
 uint8_t pdc_power_mgmt_get_snk_cap_cnt(int port);
 
 /**
+ * @brief Gets the port partner's Revision Message Data Object (RMDO)
+ *
+ * @param port USB-C port number
+ *
+ * @retval port partner's RMDO
+ */
+struct rmdo pdc_power_mgmt_get_partner_rmdo(int port);
+
+/**
  * @brief Get identity discovery state for this type and port
  *
  * @param port USB-C port number
