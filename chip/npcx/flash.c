@@ -182,6 +182,23 @@ static void flash_get_status(uint8_t *sr1, uint8_t *sr2)
 	crec_flash_lock_mapped_storage(0);
 }
 
+#ifdef NPCX_INT_FLASH_SUPPORT
+static int is_int_flash_protected(void)
+{
+	return IS_BIT_SET(NPCX_DEV_CTL4, NPCX_DEV_CTL4_WP_IF);
+}
+
+static void flash_protect_int_flash(int enable)
+{
+	/*
+	 * Please notice the type of WP_IF bit is R/W1S. Once it's set,
+	 * only rebooting EC can clear it.
+	 */
+	if (enable && !is_int_flash_protected())
+		SET_BIT(NPCX_DEV_CTL4, NPCX_DEV_CTL4_WP_IF);
+}
+#endif
+
 /* Check if Status Register Protect bit 0 is set */
 static int flash_check_status_reg_srp(void)
 {
@@ -194,9 +211,16 @@ static int flash_check_status_reg_srp(void)
 
 static int flash_set_status(uint8_t sr1, uint8_t sr2)
 {
-	if (flash_check_status_reg_srp() &&
-	    (crec_flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED)) {
-		return EC_ERROR_ACCESS_DENIED;
+	if (flash_check_status_reg_srp()) {
+#ifdef NPCX_INT_FLASH_SUPPORT
+		if (is_int_flash_protected()) {
+			return EC_ERROR_ACCESS_DENIED;
+		}
+#else
+		if (crec_flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED) {
+			return EC_ERROR_ACCESS_DENIED;
+		}
+#endif
 	}
 
 	/* Lock physical flash operations */
@@ -238,23 +262,6 @@ static void flash_set_quad_enable(int enable)
 
 	flash_set_status(sr1, sr2);
 }
-
-#ifdef NPCX_INT_FLASH_SUPPORT
-static int is_int_flash_protected(void)
-{
-	return IS_BIT_SET(NPCX_DEV_CTL4, NPCX_DEV_CTL4_WP_IF);
-}
-
-static void flash_protect_int_flash(int enable)
-{
-	/*
-	 * Please notice the type of WP_IF bit is R/W1S. Once it's set,
-	 * only rebooting EC can clear it.
-	 */
-	if (enable && !is_int_flash_protected())
-		SET_BIT(NPCX_DEV_CTL4, NPCX_DEV_CTL4_WP_IF);
-}
-#endif
 
 #ifdef CONFIG_HOSTCMD_FLASH_SPI_INFO
 
