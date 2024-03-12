@@ -5,7 +5,6 @@
  */
 
 /* Interrupts */
-GPIO_INT(FP_MCU_INT_L,         PIN(B, 0), GPIO_INT_RISING, fps_event)
 GPIO_INT(HOST_MCU_WP_OD,       PIN(A, 4), GPIO_INT_BOTH, switch_interrupt)
 
 /* SHI CS Ready, Low Active. */
@@ -14,7 +13,6 @@ GPIO_INT(SLP_L,                PIN(A, 0), GPIO_INT_BOTH, slp_event)
 
 /* Inputs */
 GPIO(TRANSPORT_SEL,            PIN(4, 3), GPIO_INPUT)
-GPIO(FP_SENSOR_SEL,            PIN(4, 4), GPIO_INPUT)
 /*
  * SPI host interface - enable PDs by default. These will be made functional
  * by the SHI driver when the AP powers up, and restored back to GPIO when
@@ -26,8 +24,6 @@ GPIO(SPI_HOST_CLK_MCU,         PIN(5, 5), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(MCU_PLATFORM_INT_L,       PIN(A, 7),  GPIO_ODR_HIGH)
 
 /* Outputs */
-GPIO(FP_RST_ODL,               PIN(9, 6),  GPIO_OUT_HIGH)
-GPIO(SPI_MCU_CS_FP_L,          PIN(A, 6),  GPIO_OUT_HIGH)
 GPIO(DIVIDER_HIGHSIDE,         PIN(9, 3),  GPIO_OUT_LOW)
 
 /* UART1 Tx/Rx */
@@ -41,10 +37,8 @@ ALTERNATE(PIN_MASK(1, 0x03), 1, MODULE_UART, 0) /* CR_SIN/SOUT  GPIO10/11 */
 ALTERNATE(PIN_MASK(7, 0x20), 1, MODULE_UART, 0) /* CR_SIN2  GPIO75 */
 ALTERNATE(PIN_MASK(8, 0x40), 1, MODULE_UART, 0) /* CR_SOUT2 GPIO86 */
 
-/* SPIP - to fingerprint sensor */
-/* SPIP_MOSI/SPIP_SCLK GPIOA3/A1 */
-ALTERNATE(PIN_MASK(A, 0x0A), 1, MODULE_SPI, 0)
-/* SPIP_MISO GPIO95    */
-ALTERNATE(PIN_MASK(9, 0x20), 1, MODULE_SPI, 0)
-
 UNIMPLEMENTED(ENTERING_RW)
+
+#ifdef SECTION_IS_RW
+#include "base_gpio_rw.inc"
+#endif

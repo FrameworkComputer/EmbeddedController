@@ -42,3 +42,9 @@ void board_init_rw(void)
 	/* Configure and enable SPI as master for FP sensor */
 	configure_fp_sensor_spi();
 }
+
+#ifndef HAS_TASK_FPSENSOR
+void fps_event(enum gpio_signal signal)
+{
+}
+#endif

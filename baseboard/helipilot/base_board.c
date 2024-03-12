@@ -134,8 +134,3 @@ void slp_event(enum gpio_signal signal)
 {
 	hook_call_deferred(&ap_deferred_data, 0);
 }
-#ifndef HAS_TASK_FPSENSOR
-void fps_event(enum gpio_signal signal)
-{
-}
-#endif
