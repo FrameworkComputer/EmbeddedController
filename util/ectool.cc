@@ -9692,10 +9692,10 @@ static int cmd_memory_dump(int argc, char *argv[])
 		rv = -1;
 		goto cmd_memory_dump_cleanup;
 	}
-	segments = (struct mem_segment *)malloc(sizeof(struct mem_segment) *
-						entry_count);
+	segments = (struct mem_segment *)calloc(entry_count,
+						sizeof(struct mem_segment));
 	if (segments == NULL) {
-		fprintf(stderr, "malloc failed\n");
+		fprintf(stderr, "calloc failed\n");
 		rv = -1;
 		goto cmd_memory_dump_cleanup;
 	}
