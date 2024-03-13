@@ -600,15 +600,9 @@ ZTEST(amd_power, test_power_handle_suspend_hang)
 	zassert_ok(host_command_process(&host_sleep_ev_args));
 	k_sleep(K_MSEC(CONFIG_SLEEP_TIMEOUT_MS + 1));
 
-	/* The AP has not been recovered yet */
-	zassert_equal(hook_counts.reset_count, 0);
-
-	/* Wait for a hard sleep hang */
-	k_sleep(K_MSEC(CONFIG_HARD_SLEEP_HANG_TIMEOUT + 1));
-
-	/* Verify the SOC was reset to recover the hard sleep hang */
+	/* Verify the AP is awake and was not reset */
 	zassert_equal(power_get_state(), POWER_S0);
-	zassert_equal(hook_counts.reset_count, 1);
+	zassert_equal(hook_counts.reset_count, 0);
 }
 
 ZTEST(amd_power, test_power_handle_resume_hang)
@@ -640,14 +634,8 @@ ZTEST(amd_power, test_power_handle_resume_hang)
 	zassert_ok(gpio_emul_input_set(gpio_dev, SLP_S3_PIN, 1));
 	k_sleep(K_MSEC(CONFIG_SLEEP_TIMEOUT_MS + 1));
 
-	/* The AP has not been recovered yet */
+	/* Verify the AP is awake and was not reset */
 	zassert_equal(hook_counts.reset_count, 0);
-
-	/* Wait for a hard sleep hang */
-	k_sleep(K_MSEC(CONFIG_HARD_SLEEP_HANG_TIMEOUT + 1));
-
-	/* Verify the SOC was reset to recover the hard sleep hang */
-	zassert_equal(hook_counts.reset_count, 1);
 	zassert_equal(power_get_state(), POWER_S0);
 }
 #endif /* SECTION_IS_RW */

@@ -14,6 +14,7 @@
 #include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"
+#include "lpc.h"
 #include "power.h"
 #include "system.h"
 #include "timer.h"
@@ -205,16 +206,51 @@ static void board_handle_hard_sleep_hang(void)
 		ccprints("Very hard S0ix sleep hang detected!!! "
 			 "Shutting down AP now!");
 		chipset_force_shutdown(CHIPSET_SHUTDOWN_BOARD_CUSTOM);
-	} else {
-		ccprints("Hard S0ix sleep hang detected!! Resetting AP now!");
-		/* If AP reset does not break hang, force a shutdown */
-		shutdown_on_hard_hang = true;
-		ccprints("AP will be shutdown in %dms if hang persists",
+
+		return;
+	}
+
+	if (IS_ENABLED(CONFIG_EMULATED_SYSRQ) && (hard_sleep_hang_count == 1)) {
+		/*
+		 * Send SysRq event to generate a kernel panic. If
+		 * the AP is already in the kernel, the intent is that
+		 * the current CPU stack traces will be output so the
+		 * hang can be debugged. If the CPU is not in the
+		 * kernel, it should be woken, as keyboard input events
+		 * are wake events. Once the AP has booted/woken far
+		 * enough to process the keyboard event, the SysRq
+		 * will generate a panic, which will generate a crash
+		 * report (and the corresponding metrics). A single
+		 * SysRq restarts chrome, while two trigger a kernel
+		 * panic.
+		 */
+		CPRINTS("Sending SysRq to trigger AP kernel panic and"
+			" reboot!");
+		host_send_sysrq('x');
+		/*
+		 * Wait a bit so the AP can treat them as separate SysRq
+		 * signals.
+		 */
+		msleep(SYSRQ_WAIT_MSEC);
+		host_send_sysrq('x');
+		ccprints("AP will be force reset in %dms if hang persists",
 			 CONFIG_HARD_SLEEP_HANG_TIMEOUT);
 		hook_call_deferred(&board_handle_hard_sleep_hang_data,
 				   CONFIG_HARD_SLEEP_HANG_TIMEOUT * MSEC);
-		chipset_reset(CHIPSET_RESET_HANG_REBOOT);
+
+		return;
 	}
+
+	ccprints("Consecutive(%d) hard sleep hangs detected!",
+		 hard_sleep_hang_count);
+	ccprints("Hard S0ix sleep hang detected!! Resetting AP now!");
+	/* If the AP continues to hang, force a shutdown */
+	shutdown_on_hard_hang = true;
+	ccprints("AP will be shutdown in %dms if hang persists",
+		 CONFIG_HARD_SLEEP_HANG_TIMEOUT);
+	hook_call_deferred(&board_handle_hard_sleep_hang_data,
+			   CONFIG_HARD_SLEEP_HANG_TIMEOUT * MSEC);
+	chipset_reset(CHIPSET_RESET_HANG_REBOOT);
 }
 
 void power_sleep_hang_recovery(enum sleep_hang_type hang_type)
@@ -232,22 +268,9 @@ void power_sleep_hang_recovery(enum sleep_hang_type hang_type)
 	ccprints("Consecutive sleep hang count: soft=%d hard=%d",
 		 soft_sleep_hang_count, hard_sleep_hang_count);
 
-	if (hard_sleep_hang_count == 0) {
-		/* Try an AP reset first */
-		shutdown_on_hard_hang = false;
-		ccprints("AP will be force reset in %dms if hang persists",
-			 CONFIG_HARD_SLEEP_HANG_TIMEOUT);
-	} else {
-		/* Avoid reboot loop that drains battery and just shutdown */
-		shutdown_on_hard_hang = true;
-		ccprints("Consecutive(%d) hard sleep hangs detected!",
-			 hard_sleep_hang_count);
-		ccprints("AP will be force shutdown in %dms if hang persists",
-			 CONFIG_HARD_SLEEP_HANG_TIMEOUT);
-	}
-
 	/*
-	 * Start a timer to manually reset the AP, in case it's just slow.
+	 * Start a timer to handle a hard sleep hang, in case the host event
+	 * wake it.
 	 */
 	hook_call_deferred(&board_handle_hard_sleep_hang_data,
 			   CONFIG_HARD_SLEEP_HANG_TIMEOUT * MSEC);
@@ -257,28 +280,21 @@ void power_sleep_hang_recovery(enum sleep_hang_type hang_type)
 	 * This will be ignored if the AP is in the OS.
 	 */
 	CPRINTS("Warning: Detected sleep hang! Waking host up!");
-	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
+#ifdef CONFIG_POWER_S0IX
+	{
+		host_event_t sleep_wake_mask;
 
-	if (IS_ENABLED(CONFIG_EMULATED_SYSRQ)) {
 		/*
-		 * Send |SysRq| signal to generate a kernel panic. If the AP is
-		 * in the OS, this will generate stack traces for all of the
-		 * running CPUs and trigger a reboot. A single |SysRq| restarts
-		 * chrome, while two trigger a kernel panic.
-		 * Otherwise, if the AP is not in the kernel, this will do
-		 * nothing, so the device will continue to be hung until the
-		 * timer expires and sysrq_reboot_timeout() is called to
-		 * reboot the AP.
+		 * The S0ix wake mask is not set until the CPU fully suspends
+		 * and enters S0ix, so it must be manually set here to enable
+		 * LPC_HOST_EVENT_WAKE as a wake event before sending the host
+		 * event.
 		 */
-		CPRINTS("Sending SysRq to trigger AP kernel panic and reboot!");
-		host_send_sysrq('x');
-		/*
-		 * Wait a bit so the AP can treat them as separate SysRq
-		 * signals.
-		 */
-		usleep(SYSRQ_WAIT_MSEC * MSEC);
-		host_send_sysrq('x');
+		get_lazy_wake_mask(POWER_S0ix, &sleep_wake_mask);
+		lpc_set_host_event_mask(LPC_HOST_EVENT_WAKE, sleep_wake_mask);
 	}
+#endif
+	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
 }
 
 /**
@@ -292,6 +308,7 @@ static void reset_hang_counters(void)
 			 soft_sleep_hang_count, hard_sleep_hang_count);
 	hard_sleep_hang_count = 0;
 	soft_sleep_hang_count = 0;
+	shutdown_on_hard_hang = false;
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, reset_hang_counters, HOOK_PRIO_DEFAULT);
 
