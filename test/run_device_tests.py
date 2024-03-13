@@ -102,8 +102,8 @@ DATA_ACCESS_VIOLATION_24000000_REGEX = re.compile(
 DATA_ACCESS_VIOLATION_64020000_REGEX = re.compile(
     r"Data access violation, mfar = 64020000\r\n"
 )
-DATA_ACCESS_VIOLATION_64040000_REGEX = re.compile(
-    r"Data access violation, mfar = 64040000\r\n"
+DATA_ACCESS_VIOLATION_64030000_REGEX = re.compile(
+    r"Data access violation, mfar = 64030000\r\n"
 )
 DATA_ACCESS_VIOLATION_200B0000_REGEX = re.compile(
     r"Data access violation, mfar = 200b0000\r\n"
@@ -534,7 +534,7 @@ HELIPILOT_CONFIG = BoardConfig(
     servo_power_enable="fpmcu_pp3300",
     reboot_timeout=1.5,
     rollback_region0_regex=DATA_ACCESS_VIOLATION_64020000_REGEX,
-    rollback_region1_regex=DATA_ACCESS_VIOLATION_64040000_REGEX,
+    rollback_region1_regex=DATA_ACCESS_VIOLATION_64030000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_200B0000_REGEX,
     mcu_power_supply="pp3300_mcu_mw",
     # Power utilization numbers were experimentally derived via onboard ADCs and verified with a DMM

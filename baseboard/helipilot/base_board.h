@@ -263,7 +263,7 @@
 /* EC rollback protection block */
 #define CONFIG_ROLLBACK_OFF \
 	(CONFIG_EC_PROTECTED_STORAGE_OFF + CONFIG_EC_PROTECTED_STORAGE_SIZE)
-#define CONFIG_ROLLBACK_SIZE (128 * 1024 * 2) /* 2 blocks of 128KB each */
+#define CONFIG_ROLLBACK_SIZE (64 * 1024 * 2) /* 2 blocks of 64KB each */
 
 /*-------------------------------------------------------------------------*
  * RW Signature Verification
