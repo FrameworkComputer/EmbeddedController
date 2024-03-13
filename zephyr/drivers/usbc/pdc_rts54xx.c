@@ -333,8 +333,6 @@ struct pdc_data_t {
 	uint8_t *user_buf;
 	/** Command mutex */
 	struct k_mutex mtx;
-	/** Interrupt workqueue */
-	struct k_work work;
 	/** GPIO interrupt callback */
 	struct gpio_callback gpio_cb;
 	/** Error status */
