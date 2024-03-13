@@ -870,12 +870,19 @@ static void run_src_policies(struct pdc_port_t *port)
 static void pdc_unattached_entry(void *obj)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
+	const struct pdc_config_t *config = port->dev->config;
+	int port_number = config->connector_num;
 
 	print_current_pdc_state(port);
 
 	set_attached_flag(port, UNATTACHED_FLAG);
 
 	port->send_cmd.intern.pending = false;
+
+	/* Clear all events except for disconnect. */
+	pdc_power_mgmt_clear_event(port_number,
+				   BIT_MASK(PD_STATUS_EVENT_COUNT));
+	pdc_power_mgmt_notify_event(port_number, PD_STATUS_EVENT_DISCONNECTED);
 
 	/* Clear any previously set cable property information */
 	port->cable_prop.raw_value[0] = 0;
