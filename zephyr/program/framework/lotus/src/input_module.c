@@ -129,6 +129,9 @@ bool input_deck_is_fully_populated(void)
 	}
 	for (i = 0; i <= TOP_ROW_4;) {
 		switch (hub_board_id[i]) {
+		case INPUT_MODULE_FULL_WIDTH:
+			i += 5;
+			break;
 		case INPUT_MODULE_GENERIC_A:
 		case INPUT_MODULE_KEYBOARD_A:
 			i += 3;
@@ -375,6 +378,9 @@ static int inputdeck_cmd(int argc, const char **argv)
 			switch (id) {
 			case INPUT_MODULE_SHORT:
 				ccprintf(" [Short]\n");
+				break;
+			case INPUT_MODULE_FULL_WIDTH:
+				ccprintf(" [Generic Full Width]\n");
 				break;
 			case INPUT_MODULE_GENERIC_A:
 				ccprintf(" [Generic A]\n");
