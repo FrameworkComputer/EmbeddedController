@@ -55,26 +55,6 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "lid_interrupt";
 		};
-		int_tablet_mode: tablet_mode {
-			irq-pin = <&gpio_tablet_mode_l>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "gmr_tablet_switch_isr";
-		};
-		int_imu: ec_imu {
-			irq-pin = <&gpio_imu_int_l>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "lsm6dso_interrupt";
-		};
-		int_vol_down: vol_down {
-			irq-pin = <&gpio_voldn_btn_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "button_interrupt";
-		};
-		int_vol_up: vol_up {
-			irq-pin = <&gpio_volup_btn_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "button_interrupt";
-		};
 		int_usb_c0: usb_c0 {
 			irq-pin = <&gpio_usb_c0_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
@@ -256,6 +236,8 @@
 			<&gpio3 3 0>,
 			<&gpio3 5 0>,
 			<&gpio3 6 0>,
+			<&gpio5 0 0>,
+			<&gpio5 6 0>,
 			<&gpio5 7 0>,
 			<&gpio6 0 0>,
 			<&gpio6 3 0>,
@@ -264,11 +246,19 @@
 			<&gpio8 3 0>,
 			<&gpio8 5 0>,
 			<&gpio8 6 0>,
+			<&gpio9 2 0>,
+			<&gpio9 3 0>,
+			<&gpio9 5 0>,
+			<&gpioa 2 0>,
 			<&gpiob 1 0>,
 			<&gpiob 7 0>,
+			<&gpioc 0 0>,
 			<&gpioc 4 0>,
+			<&gpioc 6 0>,
 			<&gpioc 7 0>,
 			<&gpiod 5 0>,
+			<&gpioe 3 0>,
+			<&gpioe 4 0>,
 			<&gpiof 2 0>,
 			<&gpiof 3 0>;
 	 };

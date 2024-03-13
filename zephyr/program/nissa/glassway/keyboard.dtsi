@@ -3,13 +3,6 @@
  * found in the LICENSE file.
  */
 
-/ {
-	kblight {
-		compatible = "cros-ec,kblight-pwm";
-		pwms = <&pwm6 6 PWM_KHZ(10) PWM_POLARITY_NORMAL>;
-	};
-};
-
 &kbd_config_0 {
 	vivaldi-codes = <
 		VIVALDI_TK_BACK             /* T1 */
@@ -23,12 +16,6 @@
 		VIVALDI_TK_VOL_DOWN         /* T9 */
 		VIVALDI_TK_VOL_UP           /* T10 */
 	>;
-};
-
-&pwm6 {
-	status = "okay";
-	pinctrl-0 = <&pwm6_gpc0>;
-	pinctrl-names = "default";
 };
 
 &cros_kb_raw {

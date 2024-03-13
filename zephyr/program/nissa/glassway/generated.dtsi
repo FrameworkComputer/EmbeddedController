@@ -35,9 +35,6 @@
 	named-gpios {
 		compatible = "named-gpios";
 
-		gpio_acc_int_l: acc_int_l {
-			gpios = <&gpio5 0 GPIO_INPUT>;
-		};
 		gpio_all_sys_pwrgd: all_sys_pwrgd {
 			gpios = <&gpioa 7 GPIO_INPUT>;
 		};
@@ -78,9 +75,6 @@
 		};
 		gpio_ec_soc_dsw_pwrok: ec_soc_dsw_pwrok {
 			gpios = <&gpio6 1 GPIO_OUTPUT>;
-		};
-		gpio_ec_soc_hdmi_hpd: ec_soc_hdmi_hpd {
-			gpios = <&gpioe 4 GPIO_OUTPUT>;
 		};
 		gpio_ec_soc_int_odl: ec_soc_int_odl {
 			gpios = <&gpio8 0 GPIO_ODR_HIGH>;
@@ -132,12 +126,6 @@
 			gpios = <&gpio0 0 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
-		gpio_hdmi_sel: hdmi_sel {
-			gpios = <&gpioc 6 GPIO_OUTPUT>;
-		};
-		gpio_imu_int_l: imu_int_l {
-			gpios = <&gpio5 6 GPIO_INPUT>;
-		};
 		gpio_imvp91_vrrdy_od: imvp91_vrrdy_od {
 			gpios = <&gpio4 3 GPIO_INPUT>;
 		};
@@ -172,26 +160,8 @@
 		gpio_sys_rst_odl: sys_rst_odl {
 			gpios = <&gpioc 5 GPIO_ODR_HIGH>;
 		};
-		gpio_tablet_mode_l: tablet_mode_l {
-			gpios = <&gpio9 5 GPIO_INPUT>;
-			enum-name = "GPIO_TABLET_MODE_L";
-		};
 		gpio_usb_c0_int_odl: usb_c0_int_odl {
 			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
-		};
-		gpio_vccin_aux_vid0: vccin_aux_vid0 {
-			gpios = <&gpio9 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-		};
-		gpio_vccin_aux_vid1: vccin_aux_vid1 {
-			gpios = <&gpioe 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-		};
-		gpio_voldn_btn_odl: voldn_btn_odl {
-			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_VOLUME_DOWN_L";
-		};
-		gpio_volup_btn_odl: volup_btn_odl {
-			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_VOLUME_UP_L";
 		};
 		gpio_led_w_odl: led_w_odl {
 			gpios = <&gpioc 2 GPIO_OUTPUT_HIGH>;

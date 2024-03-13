@@ -8,7 +8,6 @@
 #include "cbi.dtsi"
 #include "generated.dtsi"
 #include "keyboard.dtsi"
-#include "motionsense.dtsi"
 #include "overlay.dtsi"
 #include "power_signals.dtsi"
 #include "gpio_leds.dtsi"

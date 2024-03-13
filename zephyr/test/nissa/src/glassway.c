@@ -15,7 +15,6 @@
 #include "led_onoff_states.h"
 #include "led_pwm.h"
 #include "mock/isl923x.h"
-#include "motionsense_sensors.h"
 #include "pwm_mock.h"
 #include "system.h"
 #include "tcpm/tcpci.h"

@@ -6,7 +6,6 @@
 #include <dt-bindings/pwm/pwm.h>
 
 #include "../program/nissa/glassway/cbi.dtsi"
-#include "../program/nissa/glassway/motionsense.dtsi"
 
 / {
 	named-gpios {
@@ -55,7 +54,4 @@
 			ec-led-name = "EC_LED_ID_BATTERY_LED";
 		};
 	};
-
-	/* Sensors need to exist for this test but aren't actually used. */
-	/delete-node/ motionsense-sensor-info;
 };
