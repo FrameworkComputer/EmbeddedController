@@ -2367,6 +2367,10 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "wugtrio",
+        board = "wugtrio",
+    )
+    ec_target(
         name = "xivu",
         board = "xivu",
         extra_modules = ["cmsis"],
