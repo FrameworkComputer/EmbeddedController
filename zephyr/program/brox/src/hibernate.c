@@ -3,7 +3,14 @@
  * found in the LICENSE file.
  */
 
+#include "charger.h"
+#include "charger/isl923x_public.h"
 #include "system.h"
+
+__override void board_hibernate(void)
+{
+	isl9238c_hibernate(CHARGER_SOLO);
+}
 
 __override void board_hibernate_late(void)
 {

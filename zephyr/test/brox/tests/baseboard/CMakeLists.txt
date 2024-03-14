@@ -10,7 +10,8 @@ if (DEFINED CONFIG_TEST_BOARD_USBC)
 endif()
 
 if (DEFINED CONFIG_TEST_BOARD_HIBERNATE)
-	target_sources(app PRIVATE src/hibernate.c)
+  target_compile_definitions(app PRIVATE CHARGER_SOLO=0)
+  target_sources(app PRIVATE src/hibernate.c)
 	target_sources(app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/brox/src/hibernate.c)
 endif()
 
