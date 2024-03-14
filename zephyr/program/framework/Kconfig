@@ -94,6 +94,13 @@ config PLATFORM_SIMPLE_VERSION_SHIFT_IDX
 		The simple version will take commit from EC_IMAGE_RO, than we should shift
 		idx for retrieve commit id example ec:xxxxxx.
 
+config PLATFORM_MULTI_LED_FREQ
+	int "set the framework multifunction led flash frequency"
+	default 1000
+	help
+		The multifunction LED flash frequency is different on each project, use this
+		to configure the frequency. (unit milli period)
+
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code
 source "subsys/logging/Kconfig.template.log_config"

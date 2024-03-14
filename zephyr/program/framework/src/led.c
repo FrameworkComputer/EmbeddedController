@@ -541,11 +541,7 @@ static void led_tick(void)
 		colors[0] = LED_RED;
 		colors[1] = LED_BLUE;
 		colors[2] = LED_OFF;
-#ifdef CONFIG_BOARD_LOTUS
-		multifunction_leds_control(colors, 2, 1000);
-#else
-		multifunction_leds_control(colors, 2, 500);
-#endif
+		multifunction_leds_control(colors, 2, CONFIG_PLATFORM_MULTI_LED_FREQ);
 		return;
 	}
 
@@ -554,11 +550,7 @@ static void led_tick(void)
 		colors[0] = LED_RED;
 		colors[1] = LED_BLUE;
 		colors[2] = LED_OFF;
-#ifdef CONFIG_BOARD_LOTUS
-		multifunction_leds_control(colors, 2, 1000);
-#else
-		multifunction_leds_control(colors, 2, 500);
-#endif
+		multifunction_leds_control(colors, 2, CONFIG_PLATFORM_MULTI_LED_FREQ);
 		return;
 	}
 
