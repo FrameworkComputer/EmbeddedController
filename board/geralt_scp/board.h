@@ -10,23 +10,22 @@
 
 #include "baseboard.h"
 
-#define SCP_CORE1_RAM_START 0xe0000
-#define SCP_CORE1_RAM_SIZE 0x1F000 /* 124K */
-#define SCP_CORE1_RAM_PADDING 0xc00 /* for 4K-alignment */
+#define SCP_CORE1_RAM_START 0xd0000
+#define SCP_CORE1_RAM_SIZE 0x2F000 /* 124K */
 
 #ifdef BOARD_GERALT_SCP_CORE1
 
 /*
  * RW only, no flash
- * +-------------------- 0xe0000 + 0
+ * +-------------------- 0xd0000 + 0
  * | ROM vectortable, .text, .rodata, .data LMA
- * +-------------------- 0xe0000 + 0x14000 = 0xf4000
+ * +-------------------- 0xd0000 + 0x10000 = 0xe0000
  * | RAM .bss, .data
- * +-------------------- 0xe0000 + 0x1ec00 = 0xfec00
+ * +-------------------- 0xd0000 + 0x1ec00 = 0xeec00
  * | Reserved (padding for 1k-alignment)
- * +-------------------- 0xe0000 + 0x1edb0 = 0xfedb0
+ * +-------------------- 0xd0000 + 0x1edb0 = 0xeedb0
  * | IPI shared buffer with AP (288 + 8) * 2
- * +-------------------- 0xe0000 + 0x1f000 = 0xff000
+ * +-------------------- 0xd0000 + 0x2f000 = 0xff000
  *
  * [Memory remap]
  * SCP core 1 has registers to remap core view addresses by SCP bus. This is
@@ -54,24 +53,19 @@
  * | ROM vectortable, .text, .rodata, .data LMA
  * +-------------------- 0x68000
  * | RAM .bss, .data
- * +-------------------- 0xe0000 (4k-alignment)
- * | SCP core1 boot code
- * +-------------------- 0xff000 (4k-alignment)
- * | Reserved (padding for 4k-alignment)
- * +-------------------- 0xffc00
+ * +-------------------- 0xbf000 (4k-alignment)
  * | Reserved (padding for 1k-alignment)
- * +-------------------- 0xffdb0
+ * +-------------------- 0xbfdb0
  * | IPI shared buffer with AP (288 + 8) * 2
- * +-------------------- 0x100000
+ * +-------------------- 0xc0000
  */
 #define CONFIG_ROM_BASE 0x0
 #define CONFIG_RAM_BASE 0x68000
 #define CONFIG_ROM_SIZE (CONFIG_RAM_BASE - CONFIG_ROM_BASE)
-#define CONFIG_RAM_SIZE                                                    \
-	((CONFIG_IPC_SHARED_OBJ_ADDR & (~(0x400 - 1))) - CONFIG_RAM_BASE - \
-	 SCP_CORE1_RAM_SIZE - SCP_CORE1_RAM_PADDING)
+#define CONFIG_RAM_SIZE \
+	((CONFIG_IPC_SHARED_OBJ_ADDR & (~(0x400 - 1))) - CONFIG_RAM_BASE)
 
-#define SCP_FW_END 0x100000
+#define SCP_FW_END 0xd0000
 
 #endif /* BOARD_GERALT_SCP_CORE1 */
 #endif /* __CROS_EC_BOARD_H */
