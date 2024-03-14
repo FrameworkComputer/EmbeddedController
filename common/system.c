@@ -1046,6 +1046,9 @@ static int handle_pending_reboot(struct ec_params_reboot_ec *p)
 		return system_run_image_copy(system_get_active_copy());
 	case EC_REBOOT_COLD:
 	case EC_REBOOT_COLD_AP_OFF:
+		if (IS_ENABLED(CONFIG_AP_X86_INTEL))
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_G3);
+
 		/*
 		 * Reboot the PD chip(s) as well, but first suspend the ports
 		 * if this board has PD tasks running so they don't query the
