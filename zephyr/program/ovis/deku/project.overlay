@@ -40,6 +40,7 @@
 		/delete-node/ ec_spare_gpio80;
 		/delete-node/ ec_spare_gpio83;
 		/delete-node/ ec_spare_gpio94;
+		/delete-node/ ec_spare_gpio95;
 		/delete-node/ ec_spare_gpioa1;
 		/delete-node/ ec_spare_gpiob4;
 		/delete-node/ ec_spare_gpiob5;
@@ -67,29 +68,27 @@
 		/delete-node/ usb_c1_frs_en;
 		/delete-node/ usb_c2_frs_en;
 
-		gpio_ec_soc_rec_switch_odl: ec_soc_rec_switch_odl {
-			gpios = <&gpioe 3 GPIO_ODR_LOW>;
+		/*
+		 * TODO(b/329518509): Default LED to Green until led_policy.dtsi
+		 * is added */
+		led_2_l {
+			gpios = <&gpioc 3 GPIO_OUTPUT>;
 		};
-		gpio_ec_spare_gpiod7: ec_spare_gpiod7 {
-			gpios = <&gpiod 7 GPIO_OUTPUT>;
+
+		gpio_ec_prochot_odl: ec_prochot_odl {
+			gpios = <&gpio9 5 GPIO_ODR_HIGH>;
+		};
+		gpio_ec_soc_rec_switch_odl: ec_soc_rec_switch_odl {
+			gpios = <&gpioe 3 GPIO_ODR_HIGH>;
 		};
 		gpio_ec_spare_gpio02: ec_spare_gpio02 {
 			gpios = <&gpio0 2 GPIO_OUTPUT>;
 		};
-		gpio_ec_spare_gpio85: ec_spare_gpio85 {
-			gpios = <&gpio8 5 GPIO_OUTPUT>;
+		gpio_ec_spare_gpio06: ec_spare_gpio06 {
+			gpios = <&gpio0 6 GPIO_OUTPUT>;
 		};
-		gpio_gsc_flash_wp_odl: gsc_flash_wp_odl {
-			gpios = <&gpioa 1 GPIO_ODR_HIGH>;
-		};
-		gpio_ec_spare_gpiod3: ec_spare_gpiod3 {
-			gpios = <&gpiod 3 GPIO_OUTPUT>;
-		};
-		gpio_ec_spare_gpio74: ec_spare_gpio74 {
-			gpios = <&gpio7 4 GPIO_OUTPUT>;
-		};
-		gpio_sys_slp_s0ix_l: sys_slp_s0ix_l {
-			gpios = <&gpio5 0 GPIO_INPUT>;
+		gpio_ec_spare_gpio07: ec_spare_gpio07 {
+			gpios = <&gpio0 7 GPIO_OUTPUT>;
 		};
 		gpio_ec_spare_gpio17: ec_spare_gpio17 {
 			gpios = <&gpio1 7 GPIO_OUTPUT>;
@@ -103,23 +102,47 @@
 		gpio_ec_spare_gpio25: ec_spare_gpio25 {
 			gpios = <&gpio2 5 GPIO_OUTPUT>;
 		};
-		gpio_ec_spare_gpio67: ec_spare_gpio67 {
-			gpios = <&gpio6 7 GPIO_ODR_HIGH>;
-		};
-		gpio_usb_a4_oc_odl: usb_a4_oc_odl {
-			gpios = <&gpio2 6 GPIO_INPUT>;
-		};
 		gpio_ec_spare_gpio36: ec_spare_gpio36 {
 			gpios = <&gpio3 6 GPIO_OUTPUT>;
 		};
-		gpio_ec_spare_gpio06: ec_spare_gpio06 {
-			gpios = <&gpio0 6 GPIO_OUTPUT>;
+		gpio_ec_spare_gpio60: ec_spare_gpio60 {
+			gpios = <&gpio6 0 GPIO_OUTPUT>;
 		};
-		gpio_ec_spare_gpio07: ec_spare_gpio07 {
-			gpios = <&gpio0 7 GPIO_OUTPUT>;
+		gpio_ec_spare_gpio67: ec_spare_gpio67 {
+			gpios = <&gpio6 7 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpio74: ec_spare_gpio74 {
+			gpios = <&gpio7 4 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpio85: ec_spare_gpio85 {
+			gpios = <&gpio8 5 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpiod3: ec_spare_gpiod3 {
+			gpios = <&gpiod 3 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpiod5: ec_spare_gpiod5 {
+			gpios = <&gpiod 5 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpiod7: ec_spare_gpiod7 {
+			gpios = <&gpiod 7 GPIO_OUTPUT>;
+		};
+		gpio_ec_swio: ec_swio {
+			gpios = <&gpio2 0 GPIO_OUTPUT>;
+		};
+		gpio_ec_swclk: ec_swclk {
+			gpios = <&gpio2 1 GPIO_OUTPUT>;
 		};
 		gpio_ec_usb_c0_sbu_mux_flt_odl: ec_usb_c0_sbu_mux_flt_odl {
 			gpios = <&gpio8 3 GPIO_INPUT>;
+		};
+		gpio_gsc_flash_wp_odl: gsc_flash_wp_odl {
+			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_sys_slp_s0ix_l: sys_slp_s0ix_l {
+			gpios = <&gpio5 0 GPIO_INPUT>;
+		};
+		gpio_usb_a4_oc_odl: usb_a4_oc_odl {
+			gpios = <&gpio2 6 GPIO_INPUT>;
 		};
 		gpio_usb_c3_ppc_int_odl: usb_c3_ppc_int_odl {
 			gpios = <&gpio8 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
@@ -128,10 +151,10 @@
 			gpios = <&gpio1 4 GPIO_ODR_LOW>;
 		};
 		gpio_usb_c3_rt_int_odl: usb_c3_rt_int_odl {
-			gpios = <&gpio9 4 GPIO_OUTPUT>;
+			gpios = <&gpio9 4 GPIO_INPUT>;
 		};
 		gpio_usb_c3_rt_rst_l: usb_c3_rt_rst_l {
-			gpios = <&gpio1 6 GPIO_OUTPUT>;
+			gpios = <&gpio1 6 GPIO_ODR_HIGH>;
 		};
 		gpio_usb_c3_tcpc_int_odl: usb_c3_tcpc_int_odl {
 			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
