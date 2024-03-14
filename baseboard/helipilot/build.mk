@@ -34,6 +34,7 @@ test-list-y = \
        flash_write_protect \
        fp_transport \
        fpsensor_auth_crypto_stateful \
+       fpsensor_auth_crypto_stateful_otp \
        fpsensor_auth_crypto_stateless \
        fpsensor_crypto \
        fpsensor_hw \

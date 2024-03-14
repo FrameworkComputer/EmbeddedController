@@ -344,6 +344,10 @@ class AllTests:
                 test_args=["uart"],
             ),
             TestConfig(test_name="fpsensor_auth_crypto_stateful"),
+            TestConfig(
+                test_name="fpsensor_auth_crypto_stateful_otp",
+                exclude_boards=[BLOONCHIPPER, DARTMONKEY],
+            ),
             TestConfig(test_name="fpsensor_auth_crypto_stateless"),
             TestConfig(test_name="fpsensor_crypto"),
             TestConfig(

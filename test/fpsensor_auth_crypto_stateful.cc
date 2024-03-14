@@ -6,9 +6,11 @@
 #include "common.h"
 #include "ec_commands.h"
 #include "fpsensor/fpsensor_auth_crypto.h"
+#include "mock/otpi_mock.h"
 #include "openssl/bn.h"
 #include "openssl/ec.h"
 #include "openssl/obj_mac.h"
+#include "otp_key.h"
 #include "test_util.h"
 #include "util.h"
 
@@ -98,6 +100,13 @@ test_static enum ec_error_list test_fp_encrypt_decrypt_key(void)
 
 void run_test(int argc, const char **argv)
 {
+	/*
+	 * Set the OTP key to since the following tests require it.
+	 */
+	if (IS_ENABLED(CONFIG_OTP_KEY)) {
+		std::ranges::copy(default_fake_otp_key,
+				  mock_otp.otp_key_buffer);
+	}
 	RUN_TEST(test_fp_encrypt_decrypt_data);
 	RUN_TEST(test_fp_encrypt_decrypt_key);
 	test_print_result();

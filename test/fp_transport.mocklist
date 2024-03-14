@@ -10,6 +10,7 @@
 	MOCK(FPSENSOR_DETECT) \
 	MOCK(FPSENSOR_STATE)  \
 	MOCK(MKBP_EVENTS)     \
+	MOCK(OTPI)            \
 	MOCK(ROLLBACK)        \
 	MOCK(TIMER)
 #elif defined(TEST_BUILD)

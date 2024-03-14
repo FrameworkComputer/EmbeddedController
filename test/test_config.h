@@ -112,14 +112,21 @@ enum battery_type {
 #if defined(TEST_FP_TRANSPORT) || defined(TEST_FPSENSOR_STATE) || \
 	defined(TEST_FPSENSOR_CRYPTO) ||                          \
 	defined(TEST_FPSENSOR_CRYPTO_WITH_MOCK) ||                \
+	defined(TEST_FPSENSOR_CRYPTO_WITH_MOCK_OTP) ||            \
 	defined(TEST_FPSENSOR_UTILS) ||                           \
 	defined(TEST_FPSENSOR_AUTH_CRYPTO_STATELESS) ||           \
 	defined(TEST_FPSENSOR_AUTH_CRYPTO_STATEFUL) ||            \
+	defined(TEST_FPSENSOR_AUTH_CRYPTO_STATEFUL_OTP) ||        \
 	defined(TEST_FPSENSOR_AUTH_COMMANDS) ||                   \
 	defined(TEST_HOST_COMMAND_FUZZ)
 #define CONFIG_FINGERPRINT_MCU
 #define CONFIG_BORINGSSL_CRYPTO
 #define CONFIG_ROLLBACK_SECRET_SIZE 32
+#endif
+
+#if defined(TEST_FPSENSOR_CRYPTO_WITH_MOCK_OTP) || \
+	defined(TEST_FPSENSOR_AUTH_CRYPTO_STATEFUL_OTP)
+#define CONFIG_OTP_KEY
 #endif
 
 #if defined(TEST_BORINGSSL_CRYPTO)
