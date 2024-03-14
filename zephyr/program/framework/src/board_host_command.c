@@ -480,7 +480,7 @@ static enum ec_status disable_ps2_mouse_emulation(struct host_cmd_handler_args *
 }
 DECLARE_HOST_COMMAND(EC_CMD_DISABLE_PS2_EMULATION, disable_ps2_mouse_emulation, EC_VER_MASK(0));
 #endif /* CONFIG_PLATFORM_EC_TOUCHPAD_CUSTOMIZED */
-#ifdef PD_CHIP_CCG6
+#ifdef CONFIG_PD_CHIP_CCG6
 static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_bb_retimer_control_mode *p = args->params;
@@ -511,10 +511,10 @@ static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 	}
 
-	return EC_RES_UNAVAILABLE;
+	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_BB_RETIMER_CONTROL, bb_retimer_control, EC_VER_MASK(0));
-#endif /* PD_CHIP_CCG6 */
+#endif /* CONFIG_PD_CHIP_CCG6 */
 #endif /* CONFIG_CHIPSET_INTEL */
 
 static enum ec_status cmd_get_ap_throttle_status(struct host_cmd_handler_args *args)

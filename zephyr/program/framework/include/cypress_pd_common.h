@@ -642,6 +642,14 @@ void entry_tbt_mode(int controller);
  */
 void exit_tbt_mode(int controller);
 
+/**
+ * check retimer TBT mode
+ *
+ * @param controller	PD chip controller
+ * @return int
+ */
+int check_tbt_mode(int controller);
+
 #ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
 /**
  * Function can cmd PD to do disconnect both ports.
