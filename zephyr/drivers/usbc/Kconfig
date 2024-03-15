@@ -50,4 +50,12 @@ config USBC_PDC_RTS54XX_THREAD_PRIORITY
         help
           Set thread priority of the USB-C PDC
 
+config USBC_PDC_TRACE_MSG
+	bool "USB-C PDC message tracing"
+	depends on USBC_PDC_RTS54XX
+	help
+	  Enable communication tracing between the EC and the PDC.
+	  Messages between the EC and PDC are saved in a pre-allocated
+	  FIFO so they can be retrieved by EC host and console commands.
+
 endif # PLATFORM_EC_USBC

@@ -917,6 +917,37 @@ static inline int pdc_is_vconn_sourcing(const struct device *dev,
 	return api->is_vconn_sourcing(dev, vconn_sourcing);
 }
 
+/**
+ * @brief PDC message type or chip type identifiers. These are 8-bit
+ *        values.
+ */
+enum pdc_trace_chip_type {
+	PDC_TRACE_CHIP_TYPE_UNSPEC = 0,
+	PDC_TRACE_CHIP_TYPE_RTS54XX = 0x54,
+};
+
+/**
+ * @brief Log outgoing PDC message for tracing
+ *
+ * @param port Type-C port number
+ * @param msg_type Message type (hint how to interpret message)
+ * @param buf Message to log
+ * @param count Message length
+ */
+void pdc_trace_msg_req(int port, enum pdc_trace_chip_type msg_type,
+		       const uint8_t *buf, const int count);
+
+/**
+ * @brief Log incoming PDC message for tracing
+ *
+ * @param port Type-C port number
+ * @param msg_type Message type (hint how to interpret message)
+ * @param buf Message to log
+ * @param count Message length
+ */
+void pdc_trace_msg_resp(int port, enum pdc_trace_chip_type msg_type,
+			const uint8_t *buf, const int count);
+
 #ifdef __cplusplus
 }
 #endif
