@@ -45,10 +45,6 @@ i2c3ALT: &i2c3 {
         };
 };
 
-&gpio_tablet_mode_l {
-	enum-name = "GPIO_TABLET_MODE_L";
-};
-
 /* These GPIOS are initialized by the PDC driver */
 &gpio_usb_pd_int_odl {
 	no-auto-init;
