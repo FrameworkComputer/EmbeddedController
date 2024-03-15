@@ -338,6 +338,14 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "bujia",
+        baseboard = "brask",
+        board = "bujia",
+        chip = "npcx",
+        core = "cortex-m",
+        zephyr = False,
+    )
+    ec_target(
         name = "burnet",
         baseboard = "kukui",
         board = "burnet",

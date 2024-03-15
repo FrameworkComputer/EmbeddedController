@@ -109,6 +109,7 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "brask",
     "brya",
     "bugzzy",
+    "bujia",
     "cappy2",
     "careena",
     "casta",
