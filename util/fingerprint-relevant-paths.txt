@@ -2,5 +2,6 @@
 # merge commits to the firmware-fpmcu-<BOARD>-release branch when
 # using update_release_branch.py.
 common/fpsensor
+common/rollback.c
 docs/fingerprint
 driver/fingerprint
