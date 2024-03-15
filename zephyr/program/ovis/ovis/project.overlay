@@ -9,11 +9,11 @@
 #include "../interrupts.dtsi"
 #include "../power_signals.dtsi"
 #include "../ovis.dtsi"
-#include "../temp_sensors.dtsi"
 #include "../usbc.dtsi"
 
 /* Ovis project DTS includes */
 #include "led_pins.dtsi"
+#include "temp_sensors.dtsi"
 /*
  * TODO(b/285166688): need led_policy.dtsi once that has been
  * implemented to match Ovis requirements
