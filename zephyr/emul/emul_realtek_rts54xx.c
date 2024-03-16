@@ -632,9 +632,7 @@ static bool send_response(struct rts5453p_emul_pdc_data *data)
 		return true;
 	}
 
-	set_ping_status(
-		data, CMD_COMPLETE,
-		data->response.byte_count ? data->response.byte_count + 1 : 0);
+	set_ping_status(data, CMD_COMPLETE, data->response.byte_count);
 
 	return false;
 }
@@ -645,9 +643,7 @@ static void delayable_work_handler(struct k_work *w)
 	struct rts5453p_emul_pdc_data *data =
 		CONTAINER_OF(dwork, struct rts5453p_emul_pdc_data, delay_work);
 
-	set_ping_status(
-		data, CMD_COMPLETE,
-		data->response.byte_count ? data->response.byte_count + 1 : 0);
+	set_ping_status(data, CMD_COMPLETE, data->response.byte_count);
 }
 
 struct commands {
