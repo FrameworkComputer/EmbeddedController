@@ -883,8 +883,21 @@ static int rts5453p_emul_read_byte(const struct emul *emul, int reg,
 		*val = data->ping_raw_value;
 	} else {
 		uint8_t v;
+		int o;
 
-		v = data->response.raw_data[bytes + data->read_offset];
+		/*
+		 * Response byte 0 is always .byte_count.
+		 * Remaining bytes are read starting at read_offset.
+		 * Note that the byte following .byte_count is
+		 * considered to be at offset 0.
+		 */
+		if (bytes > 0) {
+			o = bytes + data->read_offset;
+		} else {
+			o = bytes;
+		}
+
+		v = data->response.raw_data[o];
 		LOG_DBG("read_byte reg=0x%X, bytes=%d, offset=%d, val=0x%X",
 			reg, bytes, data->read_offset, v);
 		*val = v;
