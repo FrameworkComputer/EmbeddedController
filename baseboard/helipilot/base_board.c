@@ -103,10 +103,6 @@ static void board_init(void)
 	/* Enable interrupt on PCH power signals */
 	gpio_enable_interrupt(GPIO_SLP_L);
 
-	if (IS_ENABLED(SECTION_IS_RW)) {
-		board_init_rw();
-	}
-
 	/* Initialize trng peripheral before kicking off the application to
 	 * avoid incurring that cost when generating random numbers
 	 */
@@ -114,6 +110,10 @@ static void board_init(void)
 
 	/* Power on OTP Memory */
 	otp_key_init();
+
+	if (IS_ENABLED(SECTION_IS_RW)) {
+		board_init_rw();
+	}
 
 	/*
 	 * Enable the SPI slave interface if the PCH is up.
