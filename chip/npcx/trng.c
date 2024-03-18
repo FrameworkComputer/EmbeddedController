@@ -189,8 +189,28 @@ void npcx_trng_hw_init(void)
 		return;
 	}
 
+	/* NIST SP 800-90A Rev. 1 Section 8.4 states:
+	 *
+	 * The pseudorandom bits returned from a DRBG shall not be used for any
+	 * application that requires a higher security strength than the DRBG is
+	 * instantiated to support. The security strength provided in these
+	 * returned bits is the minimum of the security strength supported by
+	 * the DRBG and the length of the bit string returned, i.e.:
+	 *
+	 * Security_strength_of_output =
+	 *   min(output_length, DRBG_security_strength)
+	 *
+	 * A concatenation of bit strings resulting from multiple calls to a
+	 * DRBG will not provide a security strength for the concatenated string
+	 * that is greater than the instantiated security strength of the DRBG.
+	 * For example, two 128-bit output strings requested from a DRBG that
+	 * supports a 128-bit security strength cannot be concatenated to form a
+	 * 256-bit string with a security strength of 256 bits.
+	 *
+	 * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-90Ar1.pdf#page=23
+	 */
 	state_p->trng_init = NCL_DRBG->instantiate(
-		ctx_p, NCL_DRBG_SECURITY_STRENGTH_128b, NULL, 0);
+		ctx_p, NCL_DRBG_SECURITY_STRENGTH_256b, NULL, 0);
 	if (state_p->trng_init != NCL_STATUS_OK) {
 		ccprintf("ERROR! DRBG instantiate returned %x\r",
 			 state_p->trng_init);
