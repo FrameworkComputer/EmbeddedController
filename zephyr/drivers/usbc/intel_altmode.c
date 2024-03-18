@@ -178,7 +178,7 @@ static int intel_altmode_init(const struct device *dev)
 		}
 
 		rv = gpio_pin_interrupt_configure_dt(&cfg->int_gpio,
-						     GPIO_INT_EDGE_FALLING);
+						     GPIO_INT_LEVEL_LOW);
 		if (rv < 0) {
 			LOG_ERR("Unable to configure interrupt");
 			return rv;
