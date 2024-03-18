@@ -1042,7 +1042,7 @@ static void pdc_snk_attached_run(void *obj)
 		}
 
 		LOG_INF("RDO: %d", RDO_POS(port->snk_policy.rdo));
-		/* TODO:b/xxxxxxxxx - Currently only the RDO is retrieved and
+		/* TODO:b/330758295 - Currently only the RDO is retrieved and
 		converted to a PDO, which is sent to the charge manager.
 		Instead, the PDOs should be evaluated, and a proper PDO selected
 		and sent to the charge manager. */
@@ -1083,11 +1083,7 @@ static void pdc_snk_attached_run(void *obj)
 		port->snk_attached_local_state = SNK_ATTACHED_RUN;
 
 		/* Test if battery can be charged from this port */
-		if (port->active_charge) {
-			port->sink_path_en = true;
-		} else {
-			port->sink_path_en = false;
-		}
+		port->sink_path_en = port->active_charge;
 		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
 		return;
 	case SNK_ATTACHED_RUN:
