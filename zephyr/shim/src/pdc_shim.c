@@ -102,9 +102,7 @@ __override uint8_t board_get_usb_pd_port_count(void)
 
 __override int board_set_active_charge_port(int charge_port)
 {
-	/* TODO:b/326475080 */
-
-	return EC_SUCCESS;
+	return pdc_power_mgmt_set_active_charge_port(charge_port);
 }
 
 const uint32_t *const pd_get_src_caps(int port)

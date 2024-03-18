@@ -169,10 +169,10 @@ enum snk_attached_local_state_t {
 	SNK_ATTACHED_GET_VDO,
 	/** SNK_ATTACHED_GET_RDO */
 	SNK_ATTACHED_GET_RDO,
-	/** SNK_ATTACHED_SET_SINK_PATH_ON */
-	SNK_ATTACHED_SET_SINK_PATH_ON,
-	/** SNK_ATTACHED_START_CHARGING */
-	SNK_ATTACHED_START_CHARGING,
+	/** SNK_ATTACHED_SET_SINK_PATH */
+	SNK_ATTACHED_SET_SINK_PATH,
+	/** SNK_ATTACHED_EVALUATE_PDOS */
+	SNK_ATTACHED_EVALUATE_PDOS,
 	/** SNK_ATTACHED_RUN */
 	SNK_ATTACHED_RUN,
 };
@@ -318,7 +318,8 @@ enum policy_snk_attached_t {
 	SNK_POLICY_REQUEST_LOW_POWER_PDO,
 	/** Selects the highest powered PDO on connect */
 	SNK_POLICY_REQUEST_HIGH_POWER_PDO,
-
+	/** Selects the active charge port */
+	SNK_POLICY_SET_ACTIVE_CHARGE_PORT,
 	/** SNK_POLICY_COUNT */
 	SNK_POLICY_COUNT,
 };
@@ -711,16 +712,6 @@ static void queue_internal_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd)
 }
 
 /**
- * @brief Callers of this function should return immediately because the PDC
- * state is changed.
- */
-static void send_snk_path_en_cmd(struct pdc_port_t *port, bool en)
-{
-	port->sink_path_en = en;
-	queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
-}
-
-/**
  * @brief Tracks the attached state of the state machine
  */
 static void set_attached_flag(struct pdc_port_t *port,
@@ -827,7 +818,11 @@ static void run_unattached_policies(struct pdc_port_t *port)
 static void run_snk_policies(struct pdc_port_t *port)
 {
 	if (atomic_test_and_clear_bit(port->snk_policy.flags,
-				      SNK_POLICY_SWAP_TO_SRC)) {
+				      SNK_POLICY_SET_ACTIVE_CHARGE_PORT)) {
+		port->snk_attached_local_state = SNK_ATTACHED_GET_PDOS;
+		return;
+	} else if (atomic_test_and_clear_bit(port->snk_policy.flags,
+					     SNK_POLICY_SWAP_TO_SRC)) {
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
 		return;
 	}
@@ -1022,33 +1017,23 @@ static void pdc_snk_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
 		return;
 	case SNK_ATTACHED_READ_POWER_LEVEL:
-		port->snk_attached_local_state = SNK_ATTACHED_GET_PDOS;
+		port->snk_attached_local_state = SNK_ATTACHED_GET_VDO;
 		queue_internal_cmd(port, CMD_PDC_READ_POWER_LEVEL);
 		return;
+	case SNK_ATTACHED_GET_VDO:
+		port->snk_attached_local_state = SNK_ATTACHED_GET_PDOS;
+		queue_internal_cmd(port, CMD_PDC_GET_VDO);
+		return;
 	case SNK_ATTACHED_GET_PDOS:
-		port->snk_attached_local_state = SNK_ATTACHED_GET_VDO;
+		port->snk_attached_local_state = SNK_ATTACHED_GET_RDO;
 		port->pdo_type = SOURCE_PDO;
 		queue_internal_cmd(port, CMD_PDC_GET_PDOS);
 		return;
-	case SNK_ATTACHED_GET_VDO:
-		port->snk_attached_local_state = SNK_ATTACHED_GET_RDO;
-		queue_internal_cmd(port, CMD_PDC_GET_VDO);
-		return;
 	case SNK_ATTACHED_GET_RDO:
-		/* Test if battery can be charged from this port */
-		if (port->active_charge) {
-			port->snk_attached_local_state =
-				SNK_ATTACHED_SET_SINK_PATH_ON;
-		} else {
-			port->snk_attached_local_state = SNK_ATTACHED_RUN;
-		}
+		port->snk_attached_local_state = SNK_ATTACHED_EVALUATE_PDOS;
 		queue_internal_cmd(port, CMD_PDC_GET_RDO);
 		return;
-	case SNK_ATTACHED_SET_SINK_PATH_ON:
-		port->snk_attached_local_state = SNK_ATTACHED_START_CHARGING;
-		send_snk_path_en_cmd(port, true);
-		return;
-	case SNK_ATTACHED_START_CHARGING:
+	case SNK_ATTACHED_EVALUATE_PDOS:
 		for (int i = 0; i < PDO_NUM; i++) {
 			LOG_INF("PDO%d: %08x, %d %d", i,
 				port->snk_policy.pdos[i],
@@ -1057,6 +1042,10 @@ static void pdc_snk_attached_run(void *obj)
 		}
 
 		LOG_INF("RDO: %d", RDO_POS(port->snk_policy.rdo));
+		/* TODO:b/xxxxxxxxx - Currently only the RDO is retrieved and
+		converted to a PDO, which is sent to the charge manager.
+		Instead, the PDOs should be evaluated, and a proper PDO selected
+		and sent to the charge manager. */
 		port->snk_policy.pdo =
 			port->snk_policy.pdos[RDO_POS(port->snk_policy.rdo) - 1];
 
@@ -1088,9 +1077,21 @@ static void pdc_snk_attached_run(void *obj)
 						       CAP_DUALROLE);
 		}
 
-		port->snk_attached_local_state = SNK_ATTACHED_RUN;
+		port->snk_attached_local_state = SNK_ATTACHED_SET_SINK_PATH;
+
 		/* fall-through */
 		__attribute__((fallthrough));
+	case SNK_ATTACHED_SET_SINK_PATH:
+		port->snk_attached_local_state = SNK_ATTACHED_RUN;
+
+		/* Test if battery can be charged from this port */
+		if (port->active_charge) {
+			port->sink_path_en = true;
+		} else {
+			port->sink_path_en = false;
+		}
+		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
+		return;
 	case SNK_ATTACHED_RUN:
 		set_attached_flag(port, SNK_ATTACHED_FLAG);
 		run_snk_policies(port);
@@ -1619,15 +1620,22 @@ uint8_t pdc_power_mgmt_get_usb_pd_port_count(void)
 
 int pdc_power_mgmt_set_active_charge_port(int charge_port)
 {
-	if (!is_pdc_port_valid(charge_port)) {
-		return 1;
-	}
-
-	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		if (i == charge_port) {
-			pdc_data[i]->port.active_charge = true;
-		} else {
+	if (charge_port == CHARGE_PORT_NONE) {
+		/* Disable all ports */
+		for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 			pdc_data[i]->port.active_charge = false;
+			atomic_set_bit(pdc_data[i]->port.snk_policy.flags,
+				       SNK_POLICY_SET_ACTIVE_CHARGE_PORT);
+		}
+	} else if (is_pdc_port_valid(charge_port)) {
+		for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+			if (i == charge_port) {
+				pdc_data[i]->port.active_charge = true;
+			} else {
+				pdc_data[i]->port.active_charge = false;
+			}
+			atomic_set_bit(pdc_data[i]->port.snk_policy.flags,
+				       SNK_POLICY_SET_ACTIVE_CHARGE_PORT);
 		}
 	}
 
