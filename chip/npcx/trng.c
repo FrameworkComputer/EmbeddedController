@@ -172,10 +172,17 @@ void npcx_trng_hw_init(void)
 		return;
 	}
 
-	/* Configure trng to generate new 128 byte random seed every N (second
-	 * parameter) calls to NCL_DRBG->generate()
+	/* Disable automatic reseeding since it takes a long time and can cause
+	 * host commands to timeout. See See b/322827873 for more details.
+	 *
+	 * The DRBG algorithm used is Hash_DRBG, which has a maxmium of 2^48
+	 * requests between reseeds (reseed_interval). See NIST SP 800-90A Rev.
+	 * 1, Section 10.1: DRBG Mechanisms Based on Hash Functions.
+	 *
+	 * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-90Ar1.pdf#page=47
 	 */
-	state_p->trng_init = NCL_DRBG->config(ctx_p, 100, false);
+	const uint32_t reseed_interval = UINT32_MAX;
+	state_p->trng_init = NCL_DRBG->config(ctx_p, reseed_interval, false);
 	if (state_p->trng_init != NCL_STATUS_OK) {
 		ccprintf("ERROR! DRBG config returned %x\r",
 			 state_p->trng_init);
