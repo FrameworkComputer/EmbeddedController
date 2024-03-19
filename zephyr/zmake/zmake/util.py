@@ -10,7 +10,6 @@ import re
 import shlex
 import shutil
 import subprocess
-import sys
 
 import zmake.jobserver
 import zmake.multiproc
@@ -276,7 +275,9 @@ def merge_token_databases(databases, merged_db):
 
     proc = jobclient.popen(
         [
-            sys.executable,
+            get_tool_path("vpython3"),
+            "-vpython-spec",
+            checkout / modules["ec"] / "zephyr" / "pigweed-vpython3",
             checkout
             / modules["pigweed"]
             / "pw_tokenizer"
@@ -293,6 +294,7 @@ def merge_token_databases(databases, merged_db):
         ],
         cwd=os.path.dirname(merged_db),
         encoding="utf-8",
+        env={"PATH": "/bin:/usr/bin", "HOME": os.environ["HOME"]},
     )
 
     if proc.wait(timeout=60):
