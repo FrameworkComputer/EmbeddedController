@@ -294,7 +294,9 @@ static int get_connector_status(struct rts5453p_emul_pdc_data *data,
 static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 			  const union rts54_request *req)
 {
-	LOG_INF("GET_RTK_STATUS port=%d", req->get_rtk_status.port_num);
+	LOG_INF("GET_RTK_STATUS port=%d offset=%d sts_len=%d",
+		req->get_rtk_status.port_num, req->get_rtk_status.offset,
+		req->get_rtk_status.sts_len);
 
 	data->response.rtk_status.byte_count =
 		MIN(sizeof(struct get_rtk_status_response) - 1,
@@ -882,9 +884,12 @@ static int rts5453p_emul_read_byte(const struct emul *emul, int reg,
 		LOG_DBG("READING ping_raw_value=0x%X", data->ping_raw_value);
 		*val = data->ping_raw_value;
 	} else {
-		LOG_DBG("read_byte reg=0x%X, bytes=%d, offset=%d", reg, bytes,
-			data->read_offset);
-		*val = data->response.raw_data[bytes + data->read_offset];
+		uint8_t v;
+
+		v = data->response.raw_data[bytes + data->read_offset];
+		LOG_DBG("read_byte reg=0x%X, bytes=%d, offset=%d, val=0x%X",
+			reg, bytes, data->read_offset, v);
+		*val = v;
 	}
 
 	return 0;
