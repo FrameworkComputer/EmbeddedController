@@ -154,7 +154,7 @@ const struct smbus_cmd_t UCSI_READ_POWER_LEVEL = { 0x0E, 0x05, 0x1E };
 const struct smbus_cmd_t UCSI_SET_CCOM = { 0x0E, 0x04, 0x08 };
 const struct smbus_cmd_t GET_IC_STATUS = { 0x3A, 0x03 };
 const struct smbus_cmd_t SET_RETIMER_FW_UPDATE_MODE = { 0x20, 0x03, 0x00 };
-const struct smbus_cmd_t GET_CABLE_PROPERTY = { 0x0E, 0x02, 0x11 };
+const struct smbus_cmd_t GET_CABLE_PROPERTY = { 0x0E, 0x03, 0x11 };
 
 /**
  * @brief PDC Command states
@@ -1771,6 +1771,7 @@ static int rts54_get_cable_property(const struct device *dev,
 		GET_CABLE_PROPERTY.cmd,
 		GET_CABLE_PROPERTY.len,
 		GET_CABLE_PROPERTY.sub,
+		0x00,
 		0x00,
 	};
 
