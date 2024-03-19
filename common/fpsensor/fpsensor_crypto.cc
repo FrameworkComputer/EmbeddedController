@@ -76,10 +76,9 @@ static void hkdf_extract(uint8_t *prk, const uint8_t *salt, size_t salt_size,
 	compute_hmac_sha256(prk, salt, salt_size, ikm, ikm_size);
 }
 
-static enum ec_error_list hkdf_expand_one_step(uint8_t *out_key,
-					       size_t out_key_size,
-					       uint8_t *prk, size_t prk_size,
-					       uint8_t *info, size_t info_size)
+static enum ec_error_list
+hkdf_expand_one_step(uint8_t *out_key, size_t out_key_size, const uint8_t *prk,
+		     size_t prk_size, const uint8_t *info, size_t info_size)
 {
 	uint8_t key_buf[SHA256_DIGEST_SIZE];
 	uint8_t message_buf[SHA256_DIGEST_SIZE + 1];
