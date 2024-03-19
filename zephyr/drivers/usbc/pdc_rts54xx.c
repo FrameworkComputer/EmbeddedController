@@ -141,7 +141,7 @@ const struct smbus_cmd_t GET_RDO = { 0x08, 0x02, 0x84 };
 const struct smbus_cmd_t GET_VDO = { 0x08, 0x03, 0x9A };
 const struct smbus_cmd_t GET_CURRENT_PARTNER_SRC_PDO = { 0x08, 0x02, 0xA7 };
 const struct smbus_cmd_t GET_POWER_SWITCH_STATE = { 0x08, 0x02, 0xA9 };
-const struct smbus_cmd_t GET_RTK_STATUS = { 0x09, 0x03, 0x00 };
+const struct smbus_cmd_t GET_RTK_STATUS = { 0x09, 0x03 };
 const struct smbus_cmd_t PPM_RESET = { 0x0E, 0x02, 0x01 };
 const struct smbus_cmd_t CONNECTOR_RESET = { 0x0E, 0x03, 0x03 };
 const struct smbus_cmd_t GET_CAPABILITY = { 0x0E, 0x02, 0x06 };
@@ -1421,11 +1421,7 @@ static int rts54_get_rtk_status(const struct device *dev, uint8_t offset,
 	}
 
 	uint8_t payload[] = {
-		GET_RTK_STATUS.cmd,
-		GET_RTK_STATUS.len,
-		GET_RTK_STATUS.sub + offset,
-		0x00,
-		len,
+		GET_RTK_STATUS.cmd, GET_RTK_STATUS.len, offset, 0x00, len,
 	};
 
 	return rts54_post_command(dev, cmd, payload, ARRAY_SIZE(payload), buf);
