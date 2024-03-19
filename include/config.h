@@ -3688,6 +3688,9 @@
 #undef CONFIG_MPU
 #endif /* CONFIG_ZEPHYR */
 
+/* Support RAM write/fetch protection */
+#undef CONFIG_RAM_LOCK
+
 /* Do not try hold I/O pins at frozen level during deep sleep */
 #undef CONFIG_NO_PINHOLD
 

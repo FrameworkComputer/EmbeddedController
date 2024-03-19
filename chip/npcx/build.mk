@@ -44,6 +44,9 @@ chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_SPI)+=spi.o
 chip-$(CONFIG_RNG)+=trng.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
+ifdef CONFIG_MPU
+chip-$(CONFIG_RAM_LOCK)+=ram_lock.o
+endif
 ifndef CONFIG_KEYBOARD_DISCRETE
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 endif
