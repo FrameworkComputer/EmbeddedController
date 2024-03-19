@@ -10,7 +10,6 @@
 #define DT_DRV_COMPAT named_usbc_port
 
 #include "charge_manager.h"
-#include "charge_state.h"
 #include "hooks.h"
 #include "usbc/pdc_power_mgmt.h"
 
