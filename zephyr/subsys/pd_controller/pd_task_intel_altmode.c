@@ -199,6 +199,11 @@ static void process_altmode_pd_data(int port)
 	/* Update the new data */
 	memcpy(prev_status, &status, sizeof(union data_status_reg));
 
+	/* Log changes to aid in debugging.  MSB printed first. */
+	LOG_INF("P%d DATA_STATUS: %02x %02x %02x %02x %02x", port,
+		status.raw_value[4], status.raw_value[3], status.raw_value[2],
+		status.raw_value[1], status.raw_value[0]);
+
 	/* Process MUX events */
 
 	/* Orientation */
@@ -398,10 +403,9 @@ static int cmd_altmode_read(const struct shell *sh, size_t argc, char **argv)
 		return rv;
 	}
 
-	shell_fprintf(sh, SHELL_INFO, "RD_VAL: ");
-	for (i = 0; i < INTEL_ALTMODE_DATA_STATUS_REG_LEN; i++)
-		shell_fprintf(sh, SHELL_INFO, "[%d]0x%x, ", i,
-			      status.raw_value[i]);
+	shell_fprintf(sh, SHELL_INFO, "DATA_STATUS (msb-lsb): ");
+	for (i = INTEL_ALTMODE_DATA_STATUS_REG_LEN - 1; i >= 0; i--)
+		shell_fprintf(sh, SHELL_INFO, "%02x ", status.raw_value[i]);
 
 	shell_info(sh, "");
 
