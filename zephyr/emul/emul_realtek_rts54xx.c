@@ -357,12 +357,14 @@ static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 	data->response.rtk_status.plug_direction =
 		data->connector_status.orientation & BIT_MASK(1);
 
-	/* BYTE 15-18 */
+	/* BYTE 16-17 */
 	data->response.rtk_status.average_current_low = 0;
 	data->response.rtk_status.average_current_high = 0;
 
 	uint32_t voltage = data->connector_status.voltage_reading *
 			   data->connector_status.voltage_scale * 5 / 50;
+
+	/* BYTE 18-19 */
 	data->response.rtk_status.voltage_reading_low = voltage & 0xFF;
 	data->response.rtk_status.voltage_reading_high = voltage >> 8;
 

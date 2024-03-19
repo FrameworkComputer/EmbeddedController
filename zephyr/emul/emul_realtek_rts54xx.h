@@ -356,9 +356,14 @@ union rts54_response {
 		uint8_t unchunked_message_support : 1;
 		uint8_t fr_swap_support : 1;
 		uint8_t reserved : 1;
-		/* BYTE 15 - 18 */
+		/* BYTE 15 */
+		uint8_t ucsi_b_power_reading_ready : 1;
+		uint8_t ucsi_b_scale_cur : 3;
+		uint8_t ucsi_b_scale_vol : 4;
+		/* BYTE 16-17 */
 		uint8_t average_current_low;
 		uint8_t average_current_high;
+		/* BYTE 18-19 */
 		uint8_t voltage_reading_low;
 		uint8_t voltage_reading_high;
 	} __packed rtk_status;

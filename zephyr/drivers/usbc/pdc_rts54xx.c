@@ -1125,9 +1125,9 @@ static void st_read_run(void *o)
 	}
 	case CMD_GET_VBUS_VOLTAGE:
 		/*
-		 * Realtek Voltage reading is on Byte16 and Byte17, but
+		 * Realtek Voltage reading is on Byte18 and Byte19, but
 		 * the READ_RTK_STATUS command was issued with reading
-		 * 2-bytes from offset 16, so the data is read from
+		 * 2-bytes from offset 18, so the data is read from
 		 * rd_buf at Byte1 and Byte2.
 		 */
 		*(uint16_t *)data->user_buf =
@@ -1195,9 +1195,9 @@ static void st_read_run(void *o)
 		/* Realtek voltage scale is 1010b - 50mV */
 		cs->voltage_scale = 0xa;
 
-		/* Realtek Voltage Reading Byte 17 (low byte) and Byte 18 (high
+		/* Realtek Voltage Reading Byte 18 (low byte) and Byte 19 (high
 		 * byte) */
-		cs->voltage_reading = data->rd_buf[18] << 8 | data->rd_buf[17];
+		cs->voltage_reading = data->rd_buf[19] << 8 | data->rd_buf[18];
 		break;
 	}
 	case CMD_GET_ERROR_STATUS: {
@@ -1365,6 +1365,13 @@ static int rts54_post_command(const struct device *dev, enum cmd_t cmd,
 	return 0;
 }
 
+/**
+ * @param offset Starting location in PD Status information payload.
+ *               Note that offset values refer to the payload data
+ *               following the byte-count byte present in all response
+ *               messages. For example, the 4 PD status bytes are at
+ *               offset 0, not 1.
+ */
 static int rts54_get_rtk_status(const struct device *dev, uint8_t offset,
 				uint8_t len, enum cmd_t cmd, uint8_t *buf)
 {
@@ -1702,9 +1709,10 @@ static int rts54_get_connector_status(const struct device *dev,
 	 * NOTE: Realtek's get connector status command doesn't provide all the
 	 * information in the UCSI get connector status command, but the
 	 * get rtk status command comes close.
+	 *
+	 * Note: byte count needs to include Byte19 for voltage reading.
 	 */
-
-	return rts54_get_rtk_status(dev, 0, 18, CMD_GET_CONNECTOR_STATUS,
+	return rts54_get_rtk_status(dev, 0, 19, CMD_GET_CONNECTOR_STATUS,
 				    (uint8_t *)cs);
 }
 
@@ -1884,7 +1892,7 @@ static int rts54_get_vbus_voltage(const struct device *dev, uint16_t *voltage)
 		return -EINVAL;
 	}
 
-	return rts54_get_rtk_status(dev, 16, 2, CMD_GET_VBUS_VOLTAGE,
+	return rts54_get_rtk_status(dev, 17, 2, CMD_GET_VBUS_VOLTAGE,
 				    (uint8_t *)voltage);
 }
 
