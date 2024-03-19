@@ -4,7 +4,7 @@
 
 config BOARD_NPCX7
 	bool
-	select SOC_NPCX9M7F
+	select SOC_NPCX7M7FC
 	# NPCX doesn't actually have enough ram for coverage, but this will
 	# allow generating initial 0 line coverage.
 	select HAS_COVERAGE_SUPPORT
