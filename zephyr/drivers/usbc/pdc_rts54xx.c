@@ -104,6 +104,11 @@ K_EVENT_DEFINE(irq_event);
  */
 #define NUM_PDC_RTS54XX_PORTS DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT)
 
+/**
+ * @brief RTS54XX I2C block read command
+ */
+#define RTS54XX_BLOCK_READ_CMD 0x80
+
 /* TODO: b/323371550 */
 BUILD_ASSERT(NUM_PDC_RTS54XX_PORTS <= 2,
 	     "rts54xx driver supports a maximum of 2 ports");
@@ -548,7 +553,7 @@ static int rts54_i2c_read(const struct device *dev)
 	struct pdc_data_t *data = dev->data;
 	const struct pdc_config_t *cfg = dev->config;
 	struct i2c_msg msg[2];
-	uint8_t cmd = 0x80;
+	uint8_t cmd = RTS54XX_BLOCK_READ_CMD;
 	int rv;
 
 	msg[0].buf = &cmd;
