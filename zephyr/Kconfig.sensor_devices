@@ -95,6 +95,12 @@ config PLATFORM_EC_ALS_CM32183
 	  The driver supports CM32183 which provides ambient
 	  light sensing.
 
+config PLATFORM_EC_ALS_VEML3328
+	bool "VEML3328 Ambient Light Sensor Driver"
+	help
+	  The driver supports VEML3328 which provides ambient
+	  and RGB light sensing.
+
 config PLATFORM_EC_ALS_TCS3400_EMULATED_IRQ_EVENT
 	bool "Enable TCS3400 Ambient Light Sensor Driver Polling mode"
 	help

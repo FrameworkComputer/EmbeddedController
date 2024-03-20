@@ -49,6 +49,7 @@ driver-$(CONFIG_ALS_SI114X)+=als_si114x.o
 driver-$(CONFIG_ALS_BH1730)+=als_bh1730.o
 driver-$(CONFIG_ALS_TCS3400)+=als_tcs3400.o
 driver-$(CONFIG_ALS_CM32183)+=als_cm32183.o
+driver-$(CONFIG_ALS_VEML3328)+=als_veml3328.o
 
 # Barometers
 driver-$(CONFIG_BARO_BMP280)+=baro_bmp280.o
