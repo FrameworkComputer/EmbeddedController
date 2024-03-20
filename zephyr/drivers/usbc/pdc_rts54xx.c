@@ -992,7 +992,7 @@ static void st_ping_status_run(void *o)
 		}
 		break;
 	case CMD_ERROR:
-		LOG_DBG("C%d: Ping Status Error", cfg->connector_number);
+		LOG_ERR("C%d: Ping Status Error", cfg->connector_number);
 		/*
 		 * The command was not successfully completed,
 		 * so set cci.error to 1b.
