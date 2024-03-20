@@ -1065,7 +1065,7 @@ static void pdc_snk_attached_run(void *obj)
 		max_mv = PDO_FIXED_GET_VOLT(port->snk_policy.pdo);
 		max_mw = max_ma * max_mv / 1000;
 
-		LOG_INF("Charging ON PORT%d\n", config->connector_num);
+		LOG_INF("Available charging on C%d\n", config->connector_num);
 		LOG_INF("PDO: %08x", port->snk_policy.pdo);
 		LOG_INF("V: %d", max_mv);
 		LOG_INF("C: %d", max_ma);
@@ -1623,7 +1623,6 @@ int pdc_power_mgmt_set_active_charge_port(int charge_port)
 		return 1;
 	}
 
-	/* TODO: b/319712834 - Brox: validate charging from multiple ports */
 	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		if (i == charge_port) {
 			pdc_data[i]->port.active_charge = true;
