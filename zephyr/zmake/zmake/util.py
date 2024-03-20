@@ -294,7 +294,7 @@ def merge_token_databases(databases, merged_db):
         ],
         cwd=os.path.dirname(merged_db),
         encoding="utf-8",
-        env={"PATH": "/bin:/usr/bin", "HOME": os.environ["HOME"]},
+        env={"PATH": os.environ["PATH"], "HOME": os.environ["HOME"]},
     )
 
     if proc.wait(timeout=60):
