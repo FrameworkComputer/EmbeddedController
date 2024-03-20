@@ -6819,6 +6819,11 @@ enum action_key {
  */
 #define KEYBD_CAP_SCRNLOCK_KEY BIT(2)
 
+/*
+ * Whether the keyboard has an assistant key.
+ */
+#define KEYBD_CAP_ASSISTANT_KEY BIT(3)
+
 struct ec_response_keybd_config {
 	/*
 	 *  Number of top row keys, excluding Esc and Screenlock.
