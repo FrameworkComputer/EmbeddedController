@@ -54,13 +54,10 @@
  * above private matching libraries.
  */
 #if defined(CONFIG_LIB_DRUID_WRAPPER) && defined(HAVE_PRIVATE)
-#include "mcu/primitives/templates.h"
 
 #undef FP_ALGORITHM_TEMPLATE_SIZE
-#define FP_ALGORITHM_TEMPLATE_SIZE sizeof(fingerprintauth::FingerTemplate)
-
 #undef FP_MAX_FINGER_COUNT
-#define FP_MAX_FINGER_COUNT 2
+#include "mcu/cros/template_storage.h"
 
 #endif /* CONFIG_LIB_DRUID_WRAPPER && HAVE_PRIVATE */
 
