@@ -148,15 +148,20 @@ int ucsi_write_tunnel(void)
 		} else
 			i = 0;
 
-		pd_chip_ucsi_info[i].write_tunnel_complete = 1;
+		pd_chip_ucsi_info[i].wait_ack = 1;
 		rv = cypd_write_reg_block(i, CCG_MESSAGE_OUT_REG, message_out, 16);
 		rv = cypd_write_reg_block(i, CCG_CONTROL_REG, command, 8);
 		break;
 	default:
 		for (i = 0; i < PD_CHIP_COUNT; i++) {
 
+			/**
+			 * If the controller does not needs to respond ACK,
+			 * set the read tunnel complete flag.
+			 * Because ec will not write the command to PD chips.
+			 */
 			if (*command == UCSI_CMD_ACK_CC_CI &&
-			    pd_chip_ucsi_info[i].write_tunnel_complete == 0) {
+			    pd_chip_ucsi_info[i].wait_ack == 0) {
 				pd_chip_ucsi_info[i].read_tunnel_complete = 1;
 				continue;
 			}
@@ -169,10 +174,14 @@ int ucsi_write_tunnel(void)
 			if (rv != EC_SUCCESS)
 				break;
 
+			/**
+			 * ACK_CC_CI command is the end of the UCSI command,
+			 * does not need to wait ack.
+			 */
 			if (*command == UCSI_CMD_ACK_CC_CI)
-				pd_chip_ucsi_info[i].write_tunnel_complete = 0;
+				pd_chip_ucsi_info[i].wait_ack = 0;
 			else
-				pd_chip_ucsi_info[i].write_tunnel_complete = 1;
+				pd_chip_ucsi_info[i].wait_ack = 1;
 		}
 		break;
 	}
@@ -319,12 +328,15 @@ int ucsi_read_tunnel(int controller)
 	if (!chipset_in_state(CHIPSET_STATE_ON) && !chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		return EC_SUCCESS;
 
+	if (!(memcmp(host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CONN_CHANGE),
+		&pd_chip_ucsi_info[controller].cci, 4)))
+		return EC_ERROR_UNKNOWN;
+
 	pd_chip_ucsi_info[controller].read_tunnel_complete = 1;
 
 	switch (*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND)) {
 	case UCSI_CMD_PPM_RESET:
 	case UCSI_CMD_CANCEL:
-	case UCSI_CMD_ACK_CC_CI:
 	case UCSI_CMD_SET_NOTIFICATION_ENABLE:
 	case UCSI_CMD_GET_CAPABILITY:
 	case UCSI_CMD_GET_ERROR_STATUS:
@@ -333,6 +345,18 @@ int ucsi_read_tunnel(int controller)
 		    pd_chip_ucsi_info[1].read_tunnel_complete)
 			read_complete = 1;
 		else
+			read_complete = 0;
+		break;
+	case UCSI_CMD_ACK_CC_CI:
+		if (pd_chip_ucsi_info[0].read_tunnel_complete &&
+		    pd_chip_ucsi_info[1].read_tunnel_complete) {
+			read_complete = 1;
+
+			/* workaround for linux driver */
+			if ((pd_chip_ucsi_info[controller].cci & CCI_ACKNOWLEDGE_FLAG) !=
+				pd_chip_ucsi_info[controller].cci)
+				pd_chip_ucsi_info[controller].wait_ack = 1;
+		} else
 			read_complete = 0;
 		break;
 	default:
