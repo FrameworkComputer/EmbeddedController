@@ -757,6 +757,7 @@ static int syv682x_init(int port)
 	if (rv)
 		return rv;
 	atomic_clear(&sink_ocp_count[port]);
+	atomic_clear(&flags[port]);
 
 	/*
 	 * Disable FRS prior to configuring the power paths
