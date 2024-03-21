@@ -207,7 +207,8 @@ static int match_node(int node_idx)
 		enum led_pwr_state pwr_state = led_pwr_get_state();
 		int port = charge_manager_get_active_charge_port();
 
-		if (pwr_state == LED_PWRS_DISCHARGE || pwr_state == LED_PWRS_DISCHARGE_FULL) {
+		if (pwr_state == LED_PWRS_DISCHARGE || pwr_state == LED_PWRS_DISCHARGE_FULL ||
+			(pwr_state == LED_PWRS_IDLE && port < 0)) {
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 0);
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 0);
 		} else {
@@ -521,11 +522,7 @@ static void led_tick(void)
 		colors[0] = LED_RED;
 		colors[1] = LED_BLUE;
 		colors[2] = LED_OFF;
-#ifdef CONFIG_BOARD_LOTUS
-		multifunction_leds_control(colors, 2, 1000);
-#else
-		multifunction_leds_control(colors, 2, 500);
-#endif
+		multifunction_leds_control(colors, 2, CONFIG_PLATFORM_MULTI_LED_FREQ);
 		return;
 	}
 
@@ -534,11 +531,7 @@ static void led_tick(void)
 		colors[0] = LED_RED;
 		colors[1] = LED_BLUE;
 		colors[2] = LED_OFF;
-#ifdef CONFIG_BOARD_LOTUS
-		multifunction_leds_control(colors, 2, 1000);
-#else
-		multifunction_leds_control(colors, 2, 500);
-#endif
+		multifunction_leds_control(colors, 2, CONFIG_PLATFORM_MULTI_LED_FREQ);
 		return;
 	}
 

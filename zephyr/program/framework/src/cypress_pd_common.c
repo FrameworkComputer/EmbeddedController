@@ -1037,8 +1037,8 @@ void cypd_update_port_state(int controller, int port)
 		pd_set_input_current_limit(port_idx, 0, 0);
 	}
 #if DT_NODE_EXISTS(DT_ALIAS(gpio_mux_uart_flip))
-	if (pd_port_states[0].c_state == CCG_STATUS_DEBUG ||
-		pd_port_states[3].c_state == CCG_STATUS_DEBUG) {
+	if (pd_port_states[CONFIG_PD_CCG6_EC_UART_DEBUG_PORT].c_state == CCG_STATUS_DEBUG ||
+		pd_port_states[CONFIG_PD_CCG6_SOC_UART_DEBUG_PORT].c_state == CCG_STATUS_DEBUG) {
 		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_mux_uart_flip), 1);
 	} else {
 		gpio_pin_set_dt(GPIO_DT_FROM_ALIAS(gpio_mux_uart_flip), 0);
@@ -1862,6 +1862,22 @@ void cypd_reinitialize(void)
 		/* Run state handler to set up controller */
 		task_set_event(TASK_ID_CYPD, 4<<i);
 	}
+}
+
+struct pd_port_current_state_t *get_pd_port_states_array(void)
+{
+	return pd_port_states;
+}
+
+int get_pd_alt_mode_status(int port)
+{
+	int alt_mode_status;
+
+	cypd_read_reg8(PORT_TO_CONTROLLER(port),
+		CCG_DP_ALT_MODE_CONFIG_REG(PORT_TO_CONTROLLER_PORT(port)),
+		&alt_mode_status);
+
+	return alt_mode_status;
 }
 
 /*****************************************************************************/

@@ -76,5 +76,11 @@ int print_temps(void);
  * Board specific callback when temp sensor condition different with common
  */
 __override_proto int board_temp_smi_evet(void);
+
+/**
+ * Update the mk unit namespace for intel DTT feature
+ */
+__override_proto void board_update_temperature_mk(enum temp_sensor_id id);
+
 #endif
 #endif /* __CROS_EC_TEMP_SENSOR_H */

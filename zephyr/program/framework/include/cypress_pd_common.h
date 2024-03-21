@@ -642,6 +642,14 @@ void entry_tbt_mode(int controller);
  */
 void exit_tbt_mode(int controller);
 
+/**
+ * check retimer TBT mode
+ *
+ * @param controller	PD chip controller
+ * @return int
+ */
+int check_tbt_mode(int controller);
+
 #ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
 /**
  * Function can cmd PD to do disconnect both ports.
@@ -847,5 +855,21 @@ void cypd_update_epr_state(int controller, int port, int response_len);
 #ifdef CONFIG_PD_COMMON_VBUS_CONTROL
 int cypd_cfet_vbus_control(int port, bool enable, bool ec_control);
 #endif /* CONFIG_PD_CCG8_EPR */
+
+/**
+ * Get the current state of the PD port.
+ *
+ * @return A pointer to the pd_port_current_state_t structure representing the current state
+ * of the port.
+ */
+struct pd_port_current_state_t *get_pd_port_states_array(void);
+
+/**
+ * Retrieves the register of the PD alternate mode .
+ *
+ * @param port The port number for which to retrieve the state.
+ * @return pd alt mode register value.
+ */
+int get_pd_alt_mode_status(int port);
 
 #endif /* __CROS_EC_CYPRESS_PD_COMMON_H */

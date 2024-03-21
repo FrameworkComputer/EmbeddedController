@@ -656,9 +656,9 @@ void lpc_aux_put_char(uint8_t chr, int send_irq)
 	if (rv) {
 		LOG_ERR("ESPI write failed: E8042_SET_FLAG = %d", rv);
 	}
-	rv = espi_write_lpc_request(espi_dev, E8042_WRITE_KB_CHAR, &kb_char);
+	rv = espi_write_lpc_request(espi_dev, E8042_WRITE_MB_CHAR, &kb_char);
 	if (rv) {
-		LOG_ERR("ESPI write failed: E8042_WRITE_KB_CHAR = %d", rv);
+		LOG_ERR("ESPI write failed: E8042_WRITE_MB_CHAR = %d", rv);
 	}
 	LOG_INF("AUX put %02x", kb_char);
 }

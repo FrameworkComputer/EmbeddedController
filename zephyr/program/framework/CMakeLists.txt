@@ -23,13 +23,16 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led.c")
 zephyr_library_sources_ifdef(CONFIG_CHIPSET_AMD
 	"src/cpu_power/amd_cpu_power_interface.c")
-zephyr_library_sources_ifdef(CONFIG_CHIPSET_INTEL
+zephyr_library_sources_ifdef(CONFIG_PECI_NPCX
 	"src/cpu_power/intel_cpu_power_interface.c")
 
 zephyr_library_sources_ifdef(CONFIG_PD_CHIP_CCG8
 	"src/cypd_ccg8.c")
 zephyr_library_sources_ifdef(CONFIG_PD_CHIP_CCG6
 	"src/cypd_ccg6.c")
+
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TOUCHPAD_CUSTOMIZED
+	"src/ps2mouse.c")
 
 if(DEFINED CONFIG_BOARD_LOTUS)
 	project(lotus)
@@ -88,6 +91,7 @@ if(DEFINED CONFIG_BOARD_MARIGOLD)
 			"marigold/src/keyboard_customization.c"
 			"marigold/src/project_diagnostics.c"
 			"marigold/src/power_button_x86.c"
+			"marigold/src/temperature.c"
 	)
 
 endif()

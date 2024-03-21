@@ -65,11 +65,41 @@ config PD_CCG6_ERROR_RECOVERY
 		Enable Cypress CCG6 special error recovery, when bootup to S0
 		will execute reconnect port.
 
+config PD_CCG6_EC_UART_DEBUG_PORT
+	int "EC uart debug port"
+	default 0
+	depends on PD_CHIP_CCG6
+	help
+		EC needs to switch the external mux to turn on the path for EC
+		uart.
+
+config PD_CCG6_SOC_UART_DEBUG_PORT
+	int "SoC uart debug port"
+	default 1
+	depends on PD_CHIP_CCG6
+	help
+		EC needs to switch the external mux to turn on the path for SoC
+		uart.
+
 config PD_COMMON_VBUS_CONTROL
 	bool "Enable CCG common vbus control"
 	help
 		Enable Cypress CCG common vbus control, if not enable please modify
 		board_set_active_charge_port at board for customize vbus control.
+
+config PLATFORM_SIMPLE_VERSION_SHIFT_IDX
+	int "Shift idx for return commit id to BIOS"
+	default 18
+	help
+		The simple version will take commit from EC_IMAGE_RO, than we should shift
+		idx for retrieve commit id example ec:xxxxxx.
+
+config PLATFORM_MULTI_LED_FREQ
+	int "set the framework multifunction led flash frequency"
+	default 1000
+	help
+		The multifunction LED flash frequency is different on each project, use this
+		to configure the frequency. (unit milli period)
 
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code

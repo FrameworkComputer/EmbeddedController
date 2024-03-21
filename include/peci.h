@@ -54,6 +54,11 @@ struct peci_data {
 int peci_temp_sensor_get_val(int idx, int *temp_ptr);
 
 /**
+ * Updated PECI SOC temperature every one second
+ */
+void soc_update_temperature(int idx);
+
+/**
  * Start a PECI transaction
  *
  * @param  peci transaction data

@@ -52,10 +52,17 @@ enum battery_present battery_is_present(void)
 
 uint32_t get_system_percentage(void)
 {
+	static uint32_t pre_os_percentage;
 	uint32_t memmap_cap = *(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_CAP);
 	uint32_t memmap_lfcc = *(uint32_t *)host_get_memmap(EC_MEMMAP_BATT_LFCC);
+	uint32_t os_percentage = 1000 * memmap_cap / (memmap_lfcc + 1);
 
-	return 1000 * memmap_cap / (memmap_lfcc + 1);
+	/* ensure this value is valid */
+	if (os_percentage <= 1000 && os_percentage >= 0) {
+		pre_os_percentage = os_percentage;
+		return os_percentage;
+	} else
+		return pre_os_percentage;
 }
 
 static void battery_percentage_control(void)
@@ -177,6 +184,12 @@ void battery_customize(struct charge_state_data *curr_batt)
 
 		if (old_btp == 0)
 			old_btp = curr_batt->batt.remaining_capacity;
+
+		/* Workaround: send the BTP event again if the btp value does not change */
+		if (new_btp == old_btp) {
+			CPRINTS("BTP workaround");
+			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
+		}
 
 		if (new_btp == 0 && batt_os_percentage < 995)
 			host_set_single_event(EC_HOST_EVENT_BATT_BTP);

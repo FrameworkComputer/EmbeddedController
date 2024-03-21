@@ -42,6 +42,10 @@ __overridable int board_temp_smi_evet(void)
 	/* Do nothing by default. Boards can modify the temps condition */
 	return true;
 }
+
+__overridable void board_update_temperature_mk(enum temp_sensor_id id)
+{
+}
 #endif
 
 test_mockable_static void smi_sensor_failure_warning(void)

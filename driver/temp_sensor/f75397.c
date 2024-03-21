@@ -6,11 +6,12 @@
 /* F75397 temperature sensor module for Chrome EC */
 
 #include "common.h"
-#include "f75397.h"
-#include "i2c.h"
-#include "hooks.h"
-#include "util.h"
 #include "console.h"
+#include "hooks.h"
+#include "i2c.h"
+#include "math_util.h"
+#include "temp_sensor/f75397.h"
+#include "util.h"
 
 #ifdef CONFIG_ZEPHYR
 #include "temp_sensor/temp_sensor.h"
@@ -65,6 +66,7 @@ static int get_temp(const int offset, int *temp)
 	return EC_SUCCESS;
 }
 #else
+#ifndef CONFIG_CUSTOMZIED_DESIGN
 static int get_temp(int sensor, const int offset, int *temp)
 {
 	int rv;
@@ -78,6 +80,38 @@ static int get_temp(int sensor, const int offset, int *temp)
 	*temp = CELSIUS_TO_MILLI_KELVIN(temp_raw);
 	return EC_SUCCESS;
 }
+
+#else
+
+static int get_temp(int sensor, const int offset, int *temp)
+{
+	int rv;
+	int data = 0;
+	int temp_raw = 0;
+
+	/* read high byte (1 degree) and low byte (0.125 degree)*/
+	switch (offset) {
+	case F75397_TEMP_LOCAL:
+		rv = raw_read8(sensor, offset, &temp_raw);
+		rv = raw_read8(sensor, F75397_TEMP_LOCAL_LOW_REGISTER, &data);
+		break;
+	case F75397_TEMP_REMOTE1:
+		rv = raw_read8(sensor, offset, &temp_raw);
+		rv = raw_read8(sensor, F75397_TEMP_REMOTE1_LOW_REGISTER, &data);
+		break;
+	default:
+		rv = EC_ERROR_INVAL;
+	}
+
+	if (rv != 0)
+		return rv;
+
+	temp_raw = (temp_raw * 1000) + ((data >> 4) * 125);
+	*temp = MILLI_CELSIUS_TO_MILLI_KELVIN(temp_raw);
+
+	return EC_SUCCESS;
+}
+#endif /* !CONFIG_CUSTOMIZED_DESIGN */
 #endif /* !CONFIG_ZEPHYR */
 
 int f75397_get_val(int idx, int *temp)
@@ -93,6 +127,24 @@ int f75397_get_val(int idx, int *temp)
 		return EC_ERROR_NOT_POWERED;
 
 	*temp = temps[idx];
+	return EC_SUCCESS;
+}
+
+int f75397_get_val_k(int idx, int *temp_k_ptr)
+{
+	if (idx >= F75397_IDX_COUNT)
+		return EC_ERROR_INVAL;
+
+	*temp_k_ptr = MILLI_KELVIN_TO_KELVIN(temps[idx]);
+	return EC_SUCCESS;
+}
+
+int f75397_get_val_mk(int idx, int *temp_mk_ptr)
+{
+	if (idx >= F75397_IDX_COUNT)
+		return EC_ERROR_INVAL;
+
+	*temp_mk_ptr = temps[idx];
 	return EC_SUCCESS;
 }
 

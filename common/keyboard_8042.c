@@ -749,12 +749,18 @@ static int handle_keyboard_data(uint8_t data, uint8_t *output)
 		case ATKBD_CMD_ENABLE:
 			output[out_len++] = ATKBD_RET_ACK;
 			keystroke_enable(1);
+#ifdef CONFIG_8042_AUX
+			aux_enable(1);
+#endif
 			keyboard_clear_buffer();
 			break;
 
 		case ATKBD_CMD_RESET_DIS:
 			output[out_len++] = ATKBD_RET_ACK;
 			keystroke_enable(0);
+#ifdef CONFIG_8042_AUX
+			aux_enable(0);
+#endif
 			reset_rate_and_delay();
 			keyboard_clear_buffer();
 			break;
@@ -871,10 +877,16 @@ static int handle_keyboard_command(uint8_t command, uint8_t *output)
 
 	case I8042_DIS_MOUSE:
 		update_ctl_ram(0, read_ctl_ram(0) | I8042_AUX_DIS);
+#ifdef CONFIG_8042_AUX
+		aux_enable(0);
+#endif
 		break;
 
 	case I8042_ENA_MOUSE:
 		update_ctl_ram(0, read_ctl_ram(0) & ~I8042_AUX_DIS);
+#ifdef CONFIG_8042_AUX
+		aux_enable(1);
+#endif
 		break;
 
 	case I8042_TEST_MOUSE:
@@ -1152,6 +1164,11 @@ void send_aux_data_to_host_interrupt(uint8_t data)
 {
 	queue_add_unit(&aux_to_host_queue, &data);
 	hook_call_deferred(&send_aux_data_to_host_deferred_data, 0);
+}
+
+int aux_buffer_available(void)
+{
+	return queue_space(&aux_to_host_queue);
 }
 
 /**

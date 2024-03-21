@@ -13,32 +13,23 @@
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		ddr-f75303 {
-			temp_host_high = <87>;
-			temp_host_halt = <97>;
-			temp_host_release_high = <77>;
+		local-f75397 {
+			temp_host_high = <88>;
+			temp_host_halt = <98>;
+			temp_host_release_high = <78>;
 			temp_fan_off = <40>;
-			temp_fan_max = <69>;
+			temp_fan_max = <55>;
 			power-good-pin = <&gpio_slp_s3_l>;
-			sensor = <&ddr_f75303>;
+			sensor = <&local_f75397>;
 		};
 		cpu-f75303 {
 			temp_host_high = <88>;
 			temp_host_halt = <98>;
 			temp_host_release_high = <78>;
-			temp_fan_off = <51>;
-			temp_fan_max = <69>;
+			temp_fan_off = <55>;
+			temp_fan_max = <65>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&cpu_f75303>;
-		};
-		local-f75397 {
-			temp_host_high = <88>;
-			temp_host_halt = <98>;
-			temp_host_release_high = <78>;
-			temp_fan_off = <51>;
-			temp_fan_max = <69>;
-			power-good-pin = <&gpio_slp_s3_l>;
-			sensor = <&local_f75397>;
 		};
 		battery-temp {
 			temp_host_high = <50>;
@@ -49,6 +40,26 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&battery_temp>;
 		};
+		ddr-f75303 {
+			temp_host_high = <87>;
+			temp_host_halt = <97>;
+			temp_host_release_high = <77>;
+			temp_fan_off = <40>;
+			temp_fan_max = <69>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&ddr_f75303>;
+		};
+		soc-temp {
+			/* just read, no protection */
+			temp_fan_off = <103>;
+			temp_fan_max = <105>;
+			power-good-pin = <&gpio_slp_s3_l>;
+			sensor = <&peci_temp>;
+		};
+	};
+
+	peci_temp: peci-temp {
+		compatible = "cros-ec,temp-sensor-peci";
 	};
 
 	typec-port {

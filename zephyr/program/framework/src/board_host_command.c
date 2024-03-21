@@ -30,10 +30,15 @@
 #include "uefi_app_mode.h"
 #include "util.h"
 #include "zephyr_console_shim.h"
+#include "throttle_ap.h"
 
 #ifdef CONFIG_BOARD_LOTUS
 #include "gpu.h"
 #include "input_module.h"
+#endif
+
+#ifdef CONFIG_PLATFORM_EC_TOUCHPAD_CUSTOMIZED
+#include "ps2mouse.h"
 #endif
 
 /* Console output macros */
@@ -353,7 +358,8 @@ static enum ec_status  host_command_get_simple_version(struct host_cmd_handler_a
 		sizeof(temp_version));
 
 	for (idx = 0; idx < sizeof(r->simple_version); idx++) {
-		r->simple_version[idx] = temp_version[idx + 18];
+		r->simple_version[idx] = temp_version[idx +
+			CONFIG_PLATFORM_SIMPLE_VERSION_SHIFT_IDX];
 	}
 
 	args->response_size = sizeof(*r);
@@ -437,20 +443,18 @@ static enum ec_status privacy_switches_check(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_PRIVACY_SWITCHES_CHECK_MODE, privacy_switches_check, EC_VER_MASK(0));
 
 #ifdef CONFIG_CHIPSET_INTEL
+#ifdef CONFIG_PLATFORM_EC_TOUCHPAD_CUSTOMIZED
 static enum ec_status disable_ps2_mouse_emulation(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_ps2_emulation_control *p = args->params;
 
-	/**
-	 * TODO: ps2 mouse emulation
-	 * set_ps2_mouse_emulation(p->disable);
-	 */
-	CPRINTS("TODO: ps2 mouse emulation %d", p->disable);
-	return EC_RES_UNAVAILABLE;
+	set_ps2_mouse_emulation(p->disable);
+
+	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_DISABLE_PS2_EMULATION, disable_ps2_mouse_emulation, EC_VER_MASK(0));
-
-#ifdef PD_CHIP_CCG6
+#endif /* CONFIG_PLATFORM_EC_TOUCHPAD_CUSTOMIZED */
+#ifdef CONFIG_PD_CHIP_CCG6
 static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_bb_retimer_control_mode *p = args->params;
@@ -481,11 +485,55 @@ static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 	}
 
-	return EC_RES_UNAVAILABLE;
+	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_BB_RETIMER_CONTROL, bb_retimer_control, EC_VER_MASK(0));
-#endif /* PD_CHIP_CCG6 */
+#endif /* CONFIG_PD_CHIP_CCG6 */
 #endif /* CONFIG_CHIPSET_INTEL */
+
+static enum ec_status cmd_get_ap_throttle_status(struct host_cmd_handler_args *args)
+{
+	struct ec_response_get_ap_throttle_status *r = args->response;
+
+	throttle_get_state(&r->soft_ap_throttle, &r->hard_ap_throttle);
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_AP_THROTTLE_STATUS, cmd_get_ap_throttle_status, EC_VER_MASK(0));
+
+static enum ec_status cmd_get_pd_port_state(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_get_pd_port_state *p = args->params;
+	struct ec_response_get_pd_port_state *r = args->response;
+
+	if (p->port > PD_PORT_COUNT || p->port < 0)
+		return EC_RES_INVALID_PARAM;
+
+	struct pd_port_current_state_t *pd = get_pd_port_states_array();
+
+	r->c_state = pd[p->port].c_state;
+	r->pd_state = pd[p->port].pd_state;
+	r->power_role = pd[p->port].power_role;
+	r->data_role = pd[p->port].data_role;
+	r->vconn = pd[p->port].vconn;
+	r->epr_active = pd[p->port].epr_active;
+	r->epr_support = pd[p->port].epr_support;
+	r->cc_polarity = pd[p->port].cc;
+	r->voltage = pd[p->port].voltage;
+	r->current = pd[p->port].current;
+	r->pd_alt_mode_status = get_pd_alt_mode_status(p->port);
+	if (get_active_charge_pd_port() == p->port)
+		r->active_port = 1;
+	else
+		r->active_port = 0;
+
+	args->response_size = sizeof(*r);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_GET_PD_PORT_STATE, cmd_get_pd_port_state, EC_VER_MASK(0));
+
 /*******************************************************************************/
 /*                       EC console command for Project                        */
 /*******************************************************************************/
