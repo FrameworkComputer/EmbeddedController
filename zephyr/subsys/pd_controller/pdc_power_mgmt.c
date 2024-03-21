@@ -181,6 +181,8 @@ enum snk_attached_local_state_t {
  * @brief SRC Attached Local States
  */
 enum src_attached_local_state_t {
+	/** SRC_ATTACHED_SET_SINK_PATH_OFF */
+	SRC_ATTACHED_SET_SINK_PATH_OFF,
 	/** SRC_ATTACHED_GET_CONNECTOR_CAPABILITY */
 	SRC_ATTACHED_GET_CONNECTOR_CAPABILITY,
 	/** SRC_ATTACHED_GET_CABLE_PROPERTY */
@@ -201,6 +203,8 @@ enum src_attached_local_state_t {
  * @brief Unattached Local States
  */
 enum unattached_local_state_t {
+	/** UNATTACHED_SET_SINK_PATH_OFF */
+	UNATTACHED_SET_SINK_PATH_OFF,
 	/** UNATTACHED_RUN */
 	UNATTACHED_RUN,
 };
@@ -858,13 +862,11 @@ static void pdc_unattached_entry(void *obj)
 	port->cable_prop.raw_value[0] = 0;
 	port->cable_prop.raw_value[1] = 0;
 
-	invalidate_charger_settings(port);
-
 	/* Ensure VDOs aren't valid from previous connection */
 	discovery_info_init(port);
 
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
-		port->unattached_local_state = UNATTACHED_RUN;
+		port->unattached_local_state = UNATTACHED_SET_SINK_PATH_OFF;
 	}
 }
 
@@ -883,6 +885,11 @@ static void pdc_unattached_run(void *obj)
 	}
 
 	switch (port->unattached_local_state) {
+	case UNATTACHED_SET_SINK_PATH_OFF:
+		port->sink_path_en = false;
+		port->unattached_local_state = UNATTACHED_RUN;
+		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
+		return;
 	case UNATTACHED_RUN:
 		run_unattached_policies(port);
 		break;
@@ -900,11 +907,8 @@ static void pdc_src_attached_entry(void *obj)
 
 	port->send_cmd.intern.pending = false;
 
-	invalidate_charger_settings(port);
-
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
-		port->src_attached_local_state =
-			SRC_ATTACHED_GET_CONNECTOR_CAPABILITY;
+		port->src_attached_local_state = SRC_ATTACHED_SET_SINK_PATH_OFF;
 	}
 }
 
@@ -925,6 +929,12 @@ static void pdc_src_attached_run(void *obj)
 	/* TODO: b/319643480 - Brox: implement SRC policies */
 
 	switch (port->src_attached_local_state) {
+	case SRC_ATTACHED_SET_SINK_PATH_OFF:
+		port->sink_path_en = false;
+		port->src_attached_local_state =
+			SRC_ATTACHED_GET_CONNECTOR_CAPABILITY;
+		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
+		return;
 	case SRC_ATTACHED_GET_CONNECTOR_CAPABILITY:
 		port->src_attached_local_state =
 			SRC_ATTACHED_GET_CABLE_PROPERTY;
@@ -1145,6 +1155,10 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 		rv = pdc_get_vbus_voltage(port->pdc, &port->vbus);
 		break;
 	case CMD_PDC_SET_SINK_PATH:
+		/* Charger settings are invalid when sink path is off */
+		if (!port->sink_path_en) {
+			invalidate_charger_settings(port);
+		}
 		rv = pdc_set_sink_path(port->pdc, port->sink_path_en);
 		break;
 	case CMD_PDC_READ_POWER_LEVEL:
