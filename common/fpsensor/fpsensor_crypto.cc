@@ -71,7 +71,10 @@ test_export_static enum ec_error_list get_ikm(uint8_t *ikm)
 #ifdef CONFIG_OTP_KEY
 	uint8_t otp_key[OTP_KEY_SIZE_BYTES] = { 0 };
 
+	otp_key_init();
 	ret = (enum ec_error_list)otp_key_read(otp_key);
+	otp_key_exit();
+
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to read OTP key with ret=%d", ret);
 		return EC_ERROR_HW_INTERNAL;
