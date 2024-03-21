@@ -43,7 +43,7 @@ config USBPD_ALTMODE_INTEL_THREAD_PRIORITY
 
 config USBPD_POLL_PDC
 	bool "Poll the PDC register for Alt-Mode port partner connections"
-	default n
+	default y
 	help
 	  This option poll's the PDC register for Alt-Mode port partner
 	  connection instead of relying on interrupts fro the PDC.
