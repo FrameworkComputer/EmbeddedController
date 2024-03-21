@@ -64,7 +64,7 @@ static struct amd_fp8_mux_state amd_fp8_muxes[] = { DT_FOREACH_STATUS_OKAY(
  */
 BUILD_ASSERT(ARRAY_SIZE(amd_fp8_muxes) == AMD_FP8_MUX_COUNT);
 
-K_MUTEX_DEFINE(amd_fp8_lock);
+static K_MUTEX_DEFINE(amd_fp8_lock);
 
 static int amd_fp8_init(void)
 {

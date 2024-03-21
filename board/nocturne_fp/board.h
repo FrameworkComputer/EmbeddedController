@@ -110,7 +110,7 @@
 #define CONFIG_MKBP_EVENT
 #define CONFIG_MKBP_USE_GPIO
 #define CONFIG_PRINTF_LONG_IS_32BITS
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_SHA256_UNROLLED
 #define CONFIG_SPI
 #undef CONFIG_TASK_PROFILING
@@ -164,12 +164,6 @@
 #ifdef SECTION_IS_RW
 #define CONFIG_FP_SENSOR_FPC1145
 #define CONFIG_CMD_FPSENSOR_DEBUG
-/*
- * Use the malloc code only in the RW section (for the private library),
- * we cannot enable it in RO since it is not compatible with the RW verification
- * (shared_mem_init done too late).
- */
-#define CONFIG_MALLOC
 /* Special memory regions to store large arrays */
 #define FP_FRAME_SECTION __SECTION(ahb4)
 #define FP_TEMPLATE_SECTION __SECTION(ahb)

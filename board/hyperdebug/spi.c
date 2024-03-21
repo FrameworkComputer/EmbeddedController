@@ -373,6 +373,29 @@ int usb_spi_board_transaction_async(const struct spi_device_t *spi_device,
 	uint32_t data_len;
 	uint32_t control_value = 0;
 
+	/*
+	 * Bring OCTOSPI block out of reset.
+	 */
+	deadline.val = get_time().val + OCTOSPI_INIT_TIMEOUT_US;
+	STM32_RCC_AHB3RSTR |= STM32_RCC_AHB3RSTR_QSPIRST;
+	STM32_RCC_AHB3RSTR &= ~STM32_RCC_AHB3RSTR_QSPIRST;
+	while (STM32_OCTOSPI_SR & STM32_OCTOSPI_SR_BUSY) {
+		timestamp_t now = get_time();
+		if (timestamp_expired(deadline, &now))
+			return EC_ERROR_TIMEOUT;
+	}
+
+	/*
+	 * Declare that a "Standard" SPI flash device, maximum size is connected
+	 * to OCTOSPI.  This allows the controller to send arbitrary 32-bit
+	 * addresses, which is needed as we use the instruction and address
+	 * bytes as arbitrary data to send via SPI.
+	 */
+	STM32_OCTOSPI_DCR1 = STM32_OCTOSPI_DCR1_MTYP_STANDARD |
+			     STM32_OCTOSPI_DCR1_DEVSIZE_MSK;
+	/* Clock prescaler (max value 255) */
+	STM32_OCTOSPI_DCR2 = spi_devices[1].div;
+
 	if (!flash_flags) {
 		/*
 		 * This is a request does not use the extended format with SPI
@@ -601,6 +624,11 @@ int usb_spi_board_transaction_flush(const struct spi_device_t *spi_device)
 	/* Return chip select to previous level. */
 	gpio_set_level(spi_device->gpio_cs, previous_cs);
 
+	/*
+	 * Put OCTOSPI block into reset, to ensure that no state carries over to
+	 * next transaction.
+	 */
+	STM32_RCC_AHB3RSTR |= STM32_RCC_AHB3RSTR_QSPIRST;
 	return rv;
 }
 
@@ -623,8 +651,7 @@ static void spi_reinit(void)
 		if (spi_devices[i].usb_flags & USB_SPI_CUSTOM_SPI_DEVICE) {
 			/* Quad SPI controller */
 			spi_devices[i].gpio_cs = spi_device_default_gpio_cs[i];
-			STM32_OCTOSPI_DCR2 = spi_devices[i].div =
-				spi_device_default_div[i];
+			spi_devices[i].div = spi_device_default_div[i];
 			/* Select SYSCLK clock source */
 			STM32_RCC_CCIPR2 = (STM32_RCC_CCIPR2 &
 					    ~STM32_RCC_CCIPR2_OSPISEL_MSK) |
@@ -644,8 +671,6 @@ DECLARE_HOOK(HOOK_REINIT, spi_reinit, HOOK_PRIO_DEFAULT);
 /* Initialize board for SPI. */
 static void spi_init(void)
 {
-	timestamp_t deadline;
-
 	/* Record initial values for use by `spi_reinit()` above. */
 	for (unsigned int i = 0; i < spi_devices_used; i++) {
 		spi_device_default_gpio_cs[i] = spi_devices[i].gpio_cs;
@@ -704,35 +729,11 @@ static void spi_init(void)
 	spi_enable(&spi_devices[0], 1);
 
 	/*
-	 * Enable OCTOSPI, no driver for this in chip/stm32.
+	 * Enable OCTOSPI clock, but keep the block under reset.  Will be
+	 * brought out of reset only when needed.
 	 */
-	deadline.val = get_time().val + OCTOSPI_INIT_TIMEOUT_US;
-
+	STM32_RCC_AHB3RSTR |= STM32_RCC_AHB3RSTR_QSPIRST;
 	STM32_RCC_AHB3ENR |= STM32_RCC_AHB3ENR_QSPIEN;
-	while (STM32_OCTOSPI_SR & STM32_OCTOSPI_SR_BUSY) {
-		timestamp_t now = get_time();
-		if (timestamp_expired(deadline, &now)) {
-			/*
-			 * Ideally, the USB host would have a way of
-			 * discovering our failure to initialize OctoSPI.  But
-			 * for now, log and move on, this would happen only on
-			 * code bug or hardware failure.
-			 */
-			cprints(CC_SPI, "Initialization of OctoSPI failed");
-			break;
-		}
-	}
-
-	/*
-	 * Declare that a "Standard" SPI flash device, maximum size is connected
-	 * to OCTOSPI.  This allows the controller to send arbitrary 32-bit
-	 * addresses, which is needed as we use the instruction and address
-	 * bytes as arbitrary data to send via SPI.
-	 */
-	STM32_OCTOSPI_DCR1 = STM32_OCTOSPI_DCR1_MTYP_STANDARD |
-			     STM32_OCTOSPI_DCR1_DEVSIZE_MSK;
-	/* Clock prescaler (max value 255) */
-	STM32_OCTOSPI_DCR2 = spi_devices[1].div;
 
 	/* Turn off MSI, not used initially. */
 	STM32_RCC_CR &= ~STM32_RCC_CR_MSION;

@@ -17,21 +17,21 @@ description: |
   vivaldi_kbd: vivaldi-kbd {
           compatible = "cros-ec,vivaldi-kbd";
           vivaldi-keys = <
-                  VIVALDI_RC(0, 2)   /* T1 */
-                  VIVALDI_RC(3, 2)   /* T2 */
-                  VIVALDI_RC(2, 2)   /* T3 */
-                  VIVALDI_RC(1, 2)   /* T4 */
-                  VIVALDI_RC(3, 4)   /* T5 */
-                  VIVALDI_RC(2, 4)   /* T6 */
-                  VIVALDI_RC(1, 4)   /* T7 */
-                  VIVALDI_RC(2, 9)   /* T8 */
-                  VIVALDI_RC(1, 9)   /* T9 */
-                  VIVALDI_RC(0, 4)   /* T10 */
-                  VIVALDI_RC(0, 1)   /* T11 */
-                  VIVALDI_RC(1, 5)   /* T12 */
-                  VIVALDI_RC(3, 5)   /* T13 */
-                  VIVALDI_RC(0, 9)   /* T14 */
-                  VIVALDI_RC(0, 11)  /* T15 */
+                  KBD_RC(0, 2)   /* T1 */
+                  KBD_RC(3, 2)   /* T2 */
+                  KBD_RC(2, 2)   /* T3 */
+                  KBD_RC(1, 2)   /* T4 */
+                  KBD_RC(3, 4)   /* T5 */
+                  KBD_RC(2, 4)   /* T6 */
+                  KBD_RC(1, 4)   /* T7 */
+                  KBD_RC(2, 9)   /* T8 */
+                  KBD_RC(1, 9)   /* T9 */
+                  KBD_RC(0, 4)   /* T10 */
+                  KBD_RC(0, 1)   /* T11 */
+                  KBD_RC(1, 5)   /* T12 */
+                  KBD_RC(3, 5)   /* T13 */
+                  KBD_RC(0, 9)   /* T14 */
+                  KBD_RC(0, 11)  /* T15 */
           >;
 
           kbd_config_0: kbd-config-0 {
@@ -65,8 +65,8 @@ properties:
     type: array
     required: true
     description: |
-      Array of VIVALDI_RC() entries corresponding to the (row, column)
-      location of the top keys, starting from T1.
+      Array of KBD_RC() entries corresponding to the (row, column) location of
+      the top keys, starting from T1.
 
 child-binding:
   properties:

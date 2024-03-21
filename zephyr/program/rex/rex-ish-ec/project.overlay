@@ -7,8 +7,17 @@
 #include "../rex/project.overlay"
 
 / {
+	named-gpios {
+		/delete-node/ ec_spare_gpioa2;
+	};
+
 	gpio-interrupts {
 		/delete-node/ tablet_mode;
+	};
+
+	tabletmode_interrupt: tabletmode-interrupt {
+		compatible = "cros,tabletmode-interrupt";
+		irq-gpios = <&gpioa 2 GPIO_ACTIVE_LOW>;
 	};
 };
 

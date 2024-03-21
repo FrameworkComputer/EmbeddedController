@@ -13,51 +13,19 @@
 #include "keyboard_scan.h"
 #include "nissa_sub_board.h"
 
+#include <drivers/vivaldi_kbd.h>
+
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 static bool key_pad = FW_KB_NUMERIC_PAD_ABSENT;
-test_export_static const struct ec_response_keybd_config craask_kb = {
-	.num_top_row_keys = 10,
-	.action_keys = {
-		TK_BACK,		/* T1 */
-		TK_REFRESH,		/* T2 */
-		TK_FULLSCREEN,		/* T3 */
-		TK_OVERVIEW,		/* T4 */
-		TK_SNAPSHOT,		/* T5 */
-		TK_BRIGHTNESS_DOWN,	/* T6 */
-		TK_BRIGHTNESS_UP,	/* T7 */
-		TK_VOL_MUTE,		/* T8 */
-		TK_VOL_DOWN,		/* T9 */
-		TK_VOL_UP,		/* T10 */
-	},
-	.capabilities = KEYBD_CAP_SCRNLOCK_KEY,
-};
 
-test_export_static const struct ec_response_keybd_config
-				craask_kb_w_kb_numpad = {
-	.num_top_row_keys = 10,
-	.action_keys = {
-		TK_BACK,		/* T1 */
-		TK_REFRESH,		/* T2 */
-		TK_FULLSCREEN,		/* T3 */
-		TK_OVERVIEW,		/* T4 */
-		TK_SNAPSHOT,		/* T5 */
-		TK_BRIGHTNESS_DOWN,	/* T6 */
-		TK_BRIGHTNESS_UP,	/* T7 */
-		TK_VOL_MUTE,		/* T8 */
-		TK_VOL_DOWN,		/* T9 */
-		TK_VOL_UP,		/* T10 */
-	},
-	.capabilities = KEYBD_CAP_SCRNLOCK_KEY | KEYBD_CAP_NUMERIC_KEYPAD,
-};
-
-__override const struct ec_response_keybd_config *
-board_vivaldi_keybd_config(void)
+int8_t board_vivaldi_keybd_idx(void)
 {
-	if (key_pad == FW_KB_NUMERIC_PAD_ABSENT)
-		return &craask_kb;
-	else
-		return &craask_kb_w_kb_numpad;
+	if (key_pad == FW_KB_NUMERIC_PAD_ABSENT) {
+		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_0));
+	} else {
+		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_1));
+	}
 }
 
 /*

@@ -6,6 +6,7 @@
 / {
 	aliases {
 		gpio-wp = &gpio_ec_wp_odl;
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
 	};
 	chosen {
 		zephyr,console = &uart2;

@@ -23,7 +23,7 @@
 #include "../builtin/stdlib.c"
 #endif
 
-static int test_isalpha(void)
+__no_optimization static int test_isalpha(void)
 {
 	TEST_ASSERT(isalpha('a'));
 	TEST_ASSERT(isalpha('z'));
@@ -37,7 +37,7 @@ static int test_isalpha(void)
 	return EC_SUCCESS;
 }
 
-static int test_isupper(void)
+__no_optimization static int test_isupper(void)
 {
 	TEST_ASSERT(!isupper('a'));
 	TEST_ASSERT(!isupper('z'));
@@ -51,7 +51,7 @@ static int test_isupper(void)
 	return EC_SUCCESS;
 }
 
-static int test_isprint(void)
+__no_optimization static int test_isprint(void)
 {
 	TEST_ASSERT(isprint('a'));
 	TEST_ASSERT(isprint('z'));
@@ -65,7 +65,7 @@ static int test_isprint(void)
 	return EC_SUCCESS;
 }
 
-static int test_strstr(void)
+__no_optimization static int test_strstr(void)
 {
 	const char s1[] = "abcde";
 
@@ -87,7 +87,7 @@ static int test_strstr(void)
 	return EC_SUCCESS;
 }
 
-static int test_strtoull(void)
+__no_optimization static int test_strtoull(void)
 {
 	char *e;
 
@@ -211,7 +211,7 @@ static int test_strtoull(void)
 	return EC_SUCCESS;
 }
 
-static int test_strncpy(void)
+__no_optimization static int test_strncpy(void)
 {
 	char dest[10];
 
@@ -232,7 +232,7 @@ static int test_strncpy(void)
 	return EC_SUCCESS;
 }
 
-static int test_strncmp(void)
+__no_optimization static int test_strncmp(void)
 {
 	TEST_ASSERT(strncmp("123", "123", 8) == 0);
 	TEST_ASSERT(strncmp("789", "456", 8) > 0);
@@ -241,7 +241,7 @@ static int test_strncmp(void)
 	return EC_SUCCESS;
 }
 
-static int test_memcmp(void)
+__no_optimization static int test_memcmp(void)
 {
 	TEST_ASSERT(memcmp("12345678", "12345678", 8) == 0);
 	TEST_ASSERT(memcmp("78945612", "45612378", 8) > 0);
@@ -250,13 +250,13 @@ static int test_memcmp(void)
 	return EC_SUCCESS;
 }
 
-static int test_strlen(void)
+__no_optimization static int test_strlen(void)
 {
 	TEST_ASSERT(strlen("this is a string") == 16);
 	return EC_SUCCESS;
 }
 
-static int test_strnlen(void)
+__no_optimization static int test_strnlen(void)
 {
 	TEST_ASSERT(strnlen("this is a string", 17) == 16);
 	TEST_ASSERT(strnlen("this is a string", 16) == 16);
@@ -265,7 +265,7 @@ static int test_strnlen(void)
 	return EC_SUCCESS;
 }
 
-static int test_strcasecmp(void)
+__no_optimization static int test_strcasecmp(void)
 {
 	TEST_ASSERT(strcasecmp("test string", "TEST strIng") == 0);
 	TEST_ASSERT(strcasecmp("test123!@#", "TesT123!@#") == 0);
@@ -273,7 +273,7 @@ static int test_strcasecmp(void)
 	return EC_SUCCESS;
 }
 
-static int test_strncasecmp(void)
+__no_optimization static int test_strncasecmp(void)
 {
 	TEST_ASSERT(strncasecmp("test string", "TEST str", 4) == 0);
 	TEST_ASSERT(strncasecmp("test string", "TEST str", 8) == 0);
@@ -284,7 +284,7 @@ static int test_strncasecmp(void)
 	return EC_SUCCESS;
 }
 
-static int test_atoi(void)
+__no_optimization static int test_atoi(void)
 {
 	TEST_ASSERT(atoi("  901") == 901);
 	TEST_ASSERT(atoi("-12c") == -12);
@@ -293,7 +293,7 @@ static int test_atoi(void)
 	return EC_SUCCESS;
 }
 
-static int test_snprintf(void)
+__no_optimization static int test_snprintf(void)
 {
 	char buffer[32];
 
@@ -302,7 +302,7 @@ static int test_snprintf(void)
 	return EC_SUCCESS;
 }
 
-static int test_strcspn(void)
+__no_optimization static int test_strcspn(void)
 {
 	const char str1[] = "abc";
 	const char str2[] = "This is a string\nwith newlines!";
@@ -476,7 +476,7 @@ static int test_memset(void)
 	return EC_SUCCESS;
 }
 
-static int test_memchr(void)
+__no_optimization static int test_memchr(void)
 {
 	char *buf = "1234";
 

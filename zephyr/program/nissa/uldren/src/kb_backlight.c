@@ -11,7 +11,7 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/logging/log.h>
 
-LOG_MODULE_DECLARE(uldren, CONFIG_NISSA_LOG_LEVEL);
+LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 __override uint32_t board_override_feature_flags0(uint32_t flags0)
 {

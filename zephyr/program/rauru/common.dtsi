@@ -1,0 +1,22 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/integrated_fwid.dtsi>
+#include <ite/it8xxx2-pinctrl-map.dtsi>
+
+/ {
+	chosen {
+		zephyr,host-cmd-shi-backend = &shi0;
+	};
+};
+
+&shi0 {
+	status = "okay";
+	pinctrl-0 = <&shi_mosi_gpm0_default &shi_miso_gpm1_default
+		     &shi_clk_gpm4_default &shi_cs_gpm5_default>;
+	pinctrl-names = "default";
+	/* unused but needed by dt binding */
+	cs-gpios = <&gpiom 5 GPIO_VOLTAGE_1P8>;
+};

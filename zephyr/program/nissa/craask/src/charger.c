@@ -15,7 +15,7 @@
 
 #include <zephyr/logging/log.h>
 
-LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
+LOG_MODULE_REGISTER(charger, LOG_LEVEL_INF);
 
 int extpower_is_present(void)
 {

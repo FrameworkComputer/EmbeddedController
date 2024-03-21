@@ -7,9 +7,14 @@
 #define __CROS_EC_PATHSEL_H
 
 /**
- * Both USB3_TypeA0 and USB3_TypeA1 are routed to the DUT by default.
+ * Enables/disables power on A0 USB port
  */
-void init_pathsel(void);
+void hh_usb3_a0_pwr_en(int en);
+
+/**
+ * Enables/disables power on A1 USB port
+ */
+void hh_usb3_a1_pwr_en(int en);
 
 /**
  * Routes USB3_TypeA0 port to DUT

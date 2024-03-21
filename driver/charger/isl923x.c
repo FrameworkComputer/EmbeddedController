@@ -95,7 +95,7 @@ enum isl923x_mon_dir { MON_CHARGE = 0, MON_DISCHARGE = 1 };
 static int learn_mode;
 
 /* Mutex for CONTROL1 register, that can be updated from multiple tasks. */
-K_MUTEX_DEFINE(control1_mutex_isl923x);
+static K_MUTEX_DEFINE(control1_mutex_isl923x);
 
 static enum ec_error_list isl923x_discharge_on_ac(int chgnum, int enable);
 static enum ec_error_list isl923x_discharge_on_ac_weak_disable(int chgnum);
@@ -752,6 +752,16 @@ static void isl923x_init(int chgnum)
 	}
 
 	if (IS_ENABLED(CONFIG_CHARGER_ISL9238C)) {
+		if (CONFIG_ISL9238C_INPUT_VOLTAGE_MV != -1) {
+			reg = (CONFIG_ISL9238C_INPUT_VOLTAGE_MV /
+			       ISL9238_INPUT_VOLTAGE_REF_STEP)
+			      << ISL9238_INPUT_VOLTAGE_REF_SHIFT;
+			if (raw_write16(chgnum, ISL9238_REG_INPUT_VOLTAGE,
+					reg)) {
+				goto init_fail;
+			}
+		}
+
 		/* b/155366741: enable slew rate control */
 		if (raw_read16(chgnum, ISL9238C_REG_CONTROL6, &reg))
 			goto init_fail;

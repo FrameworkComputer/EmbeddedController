@@ -1,0 +1,238 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/cbi_flash.dtsi>
+
+/* Ovis program common DTSI includes */
+#include "../fan.dtsi"
+#include "../generated.dtsi"
+#include "../interrupts.dtsi"
+#include "../power_signals.dtsi"
+#include "../ovis.dtsi"
+#include "../usbc.dtsi"
+
+/* Deku project DTS includes */
+#include "led_pins.dtsi"
+#include "temp_sensors.dtsi"
+/*
+ * TODO(b/285166688): need led_policy.dtsi once that has been
+ * implemented to match Ovis requirements
+ */
+
+/ {
+	named-adc-channels {
+		adc_temp_sensor_3: temp_sensor_3 {
+			enum-name = "ADC_TEMP_SENSOR_3";
+			io-channels = <&adc0 7>;
+		};
+			adc_temp_sensor_4: temp_sensor_4 {
+			enum-name = "ADC_TEMP_SENSOR_4";
+			io-channels = <&adc0 9>;
+		};
+	};
+
+	named-gpios {
+		/delete-node/ ec_spare_gpio14;
+		/delete-node/ ec_spare_gpio16;
+		/delete-node/ ec_spare_gpio50;
+		/delete-node/ ec_spare_gpio80;
+		/delete-node/ ec_spare_gpio83;
+		/delete-node/ ec_spare_gpio94;
+		/delete-node/ ec_spare_gpio95;
+		/delete-node/ ec_spare_gpioa1;
+		/delete-node/ ec_spare_gpiob4;
+		/delete-node/ ec_spare_gpiob5;
+		/delete-node/ ec_spare_gpioc7;
+		/delete-node/ ec_spare_gpioe1;
+		/delete-node/ ec_spare_gpioe3;
+		/delete-node/ ec_spare_gpiof0;
+		/delete-node/ ec_spare_psl_gpo;
+		/delete-node/ ec_spare_psl_in_3;
+		/delete-node/ en_z1_rails;
+		/delete-node/ gsc_flash_wp_odl;
+		/delete-node/ pg_mem_vdd;
+		/delete-node/ pg_pp1250_soc;
+		/delete-node/ sys_slp_s0ix_l;
+		/delete-node/ usb_a0_low_pwr_l;
+		/delete-node/ usb_a0_status_odl;
+		/delete-node/ usb_a1_low_pwr_l;
+		/delete-node/ usb_a1_status_odl;
+		/delete-node/ usb_a2_low_pwr_l;
+		/delete-node/ usb_a2_oc_odl;
+		/delete-node/ usb_a2_status_odl;
+		/delete-node/ usb_a3_low_pwr_l;
+		/delete-node/ usb_a3_status_odl;
+		/delete-node/ usb_c0_frs_en;
+		/delete-node/ usb_c1_frs_en;
+		/delete-node/ usb_c2_frs_en;
+
+		/*
+		 * TODO(b/329518509): Default LED to Green until led_policy.dtsi
+		 * is added */
+		led_2_l {
+			gpios = <&gpioc 3 GPIO_OUTPUT>;
+		};
+
+		gpio_ec_prochot_odl: ec_prochot_odl {
+			gpios = <&gpio9 5 GPIO_ODR_HIGH>;
+		};
+		gpio_ec_soc_rec_switch_odl: ec_soc_rec_switch_odl {
+			gpios = <&gpioe 3 GPIO_ODR_HIGH>;
+		};
+		gpio_ec_spare_gpio02: ec_spare_gpio02 {
+			gpios = <&gpio0 2 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpio06: ec_spare_gpio06 {
+			gpios = <&gpio0 6 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpio07: ec_spare_gpio07 {
+			gpios = <&gpio0 7 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpio17: ec_spare_gpio17 {
+			gpios = <&gpio1 7 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpio23: ec_spare_gpio23 {
+			gpios = <&gpio2 3 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpio24: ec_spare_gpio24 {
+			gpios = <&gpio2 4 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpio25: ec_spare_gpio25 {
+			gpios = <&gpio2 5 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpio36: ec_spare_gpio36 {
+			gpios = <&gpio3 6 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpio60: ec_spare_gpio60 {
+			gpios = <&gpio6 0 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpio67: ec_spare_gpio67 {
+			gpios = <&gpio6 7 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpio74: ec_spare_gpio74 {
+			gpios = <&gpio7 4 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpio85: ec_spare_gpio85 {
+			gpios = <&gpio8 5 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpiod3: ec_spare_gpiod3 {
+			gpios = <&gpiod 3 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpiod5: ec_spare_gpiod5 {
+			gpios = <&gpiod 5 GPIO_OUTPUT>;
+		};
+		gpio_ec_spare_gpiod7: ec_spare_gpiod7 {
+			gpios = <&gpiod 7 GPIO_OUTPUT>;
+		};
+		gpio_ec_swio: ec_swio {
+			gpios = <&gpio2 0 GPIO_OUTPUT>;
+		};
+		gpio_ec_swclk: ec_swclk {
+			gpios = <&gpio2 1 GPIO_OUTPUT>;
+		};
+		gpio_ec_usb_c0_sbu_mux_flt_odl: ec_usb_c0_sbu_mux_flt_odl {
+			gpios = <&gpio8 3 GPIO_INPUT>;
+		};
+		gpio_gsc_flash_wp_odl: gsc_flash_wp_odl {
+			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_sys_slp_s0ix_l: sys_slp_s0ix_l {
+			gpios = <&gpio5 0 GPIO_INPUT>;
+		};
+		gpio_usb_a4_oc_odl: usb_a4_oc_odl {
+			gpios = <&gpio2 6 GPIO_INPUT>;
+		};
+		gpio_usb_c3_ppc_int_odl: usb_c3_ppc_int_odl {
+			gpios = <&gpio8 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_usb_c3_rt_3p3_sx_en: usb_c3_rt_3p3_sx_en {
+			gpios = <&gpio1 4 GPIO_ODR_LOW>;
+		};
+		gpio_usb_c3_rt_int_odl: usb_c3_rt_int_odl {
+			gpios = <&gpio9 4 GPIO_INPUT>;
+		};
+		gpio_usb_c3_rt_rst_l: usb_c3_rt_rst_l {
+			gpios = <&gpio1 6 GPIO_ODR_HIGH>;
+		};
+		gpio_usb_c3_tcpc_int_odl: usb_c3_tcpc_int_odl {
+			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+	};
+
+	named-i2c-ports {
+		i2c_ec_i2c_usb_c3: ec_i2c_usb_c3 {
+		i2c-port = <&i2c0_0>;
+		enum-names = "I2C_USB_C3";
+		};
+	};
+
+	usbc {
+		usbc_port3: port3@3 {
+			compatible = "named-usbc-port";
+			reg = <3>;
+			ppc = <&ppc_port3_syv>;
+			tcpc = <&tcpc_port3>;
+			usb-mux-chain-3 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c3_hb_retimer
+					     &virtual_mux_c3>;
+			};
+		};
+		port3-muxes {
+			virtual_mux_c3: virtual-mux-c3 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};
+
+&i2c0_0 {
+	status = "okay";
+	label = "I2C_USB_C3";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
+	tcpc_port3: rt1716@4e {
+		compatible = "richtek,rt1715-tcpc";
+		reg = <0x4e>;
+		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V)>;
+		/* a duplicate of the <&gpio_usb_c1_tcpc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpioc 7 GPIO_ACTIVE_LOW>;
+	};
+	ppc_port3_syv: ppc_syv@42 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x42>;
+		/* a duplicate of the <&gpio_usb_c0_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio8 0 GPIO_ACTIVE_LOW>;
+	};
+	usb_c3_hb_retimer: jhl9040r-c0@56 {
+		compatible = "intel,jhl9040r";
+		reg = <0x56>;
+		ls-en-pin = <&gpio_usb_c3_rt_3p3_sx_en>;
+		int-pin = <&gpio_usb_c3_rt_int_odl>;
+		reset-pin = <&gpio_usb_c3_rt_rst_l>;
+	};
+};
+
+&i2c_ctrl0 {
+	status = "okay";
+};
+
+&cbi_flash {
+	/*
+	 * CBI section size is 0x1000 bytes, the CBI portion lies at the end of
+	 * EC_RO section. EC_RO section ends at 0x50000 byte which is the offset
+	 */
+	offset = <0x31000>;
+	size = <0x1000>;
+};

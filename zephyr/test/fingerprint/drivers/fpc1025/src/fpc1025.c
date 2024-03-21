@@ -186,6 +186,17 @@ ZTEST_F(fpc1025, test_pal_spi_write_read)
 	zassert_equal(hwid >> 4, 0x021);
 }
 
+ZTEST_F(fpc1025, test_pal_spi_write_read_series)
+{
+	uint8_t hwid_cmd_buf[] = { 0xFC, 0x00, 0x00 };
+
+	zassert_ok(fpc1025_pal_spi_write_read(hwid_cmd_buf, hwid_cmd_buf,
+					      sizeof(hwid_cmd_buf), true));
+	/* The second transfer is done, with the CS already asserted */
+	zassert_ok(fpc1025_pal_spi_write_read(hwid_cmd_buf, hwid_cmd_buf,
+					      sizeof(hwid_cmd_buf), false));
+}
+
 ZTEST_F(fpc1025, test_pal_check_irq)
 {
 	const struct gpio_dt_spec irq_pin =

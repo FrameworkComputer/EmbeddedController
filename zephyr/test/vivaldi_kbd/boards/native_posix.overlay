@@ -10,21 +10,21 @@
 	vivaldi_kbd: vivaldi-kbd {
 		compatible = "cros-ec,vivaldi-kbd";
 		vivaldi-keys = <
-			VIVALDI_RC(0, 2)
-			VIVALDI_RC(3, 2)
-			VIVALDI_RC(2, 2)
-			VIVALDI_RC(1, 2)
-			VIVALDI_RC(3, 4)
-			VIVALDI_RC(2, 4)
-			VIVALDI_RC(1, 4)
-			VIVALDI_RC(2, 9)
-			VIVALDI_RC(1, 9)
-			VIVALDI_RC(0, 4)
-			VIVALDI_RC(0, 1)
-			VIVALDI_RC(1, 5)
-			VIVALDI_RC(3, 5)
-			VIVALDI_RC(0, 9)
-			VIVALDI_RC(0, 11)
+			KBD_RC(0, 2)
+			KBD_RC(3, 2)
+			KBD_RC(2, 2)
+			KBD_RC(1, 2)
+			KBD_RC(3, 4)
+			KBD_RC(2, 4)
+			KBD_RC(1, 4)
+			KBD_RC(2, 9)
+			KBD_RC(1, 9)
+			KBD_RC(0, 4)
+			KBD_RC(0, 1)
+			KBD_RC(1, 5)
+			KBD_RC(3, 5)
+			KBD_RC(0, 9)
+			KBD_RC(0, 11)
 		>;
 
 		kbd_config_0: kbd-config-0 {

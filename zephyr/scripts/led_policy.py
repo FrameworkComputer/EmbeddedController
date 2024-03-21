@@ -11,7 +11,9 @@ from typing import List, Optional
 from scripts import util
 
 
-def check_policy(charge_state, charge_port, chipset_state, batt_lvl, policies):
+def check_policy(
+    charge_state, charge_port, chipset_state, batt_lvl, policies, led_id
+):
     """Checks if a given state has valid policy coverage
 
     Args:
@@ -19,10 +21,14 @@ def check_policy(charge_state, charge_port, chipset_state, batt_lvl, policies):
         charge_port: charge port to be tested
         chipset_state: chipset state to be tested
         batt_lvl: battery level to be tested
+        led_id: ID of the LED to be tested
 
     Return:
-        A boolean: True if state is in the LED policies, false if not.
+        ret: number of policies covering this state. Any value other than 1 is an error.
     """
+
+    ret = 0
+
     for node in policies.children.values():
         # check_policy is a replica of the match_node() function in led.c
         if "charge-state" in node.props:
@@ -44,14 +50,22 @@ def check_policy(charge_state, charge_port, chipset_state, batt_lvl, policies):
             ):
                 continue
 
-        return True
+        for led_node in node.children.values():
+            if led_node.props["led-id"].val == led_id:
+                ret += 1
 
-    # None of the devicetree nodes match this combination of states
-    return False
+    return ret
 
 
 def log_state(
-    project_name, charge_state, charge_port, chipset_state, batt_min, batt_range
+    project_name,
+    charge_state,
+    charge_port,
+    chipset_state,
+    batt_min,
+    batt_range,
+    led_id,
+    coverage,
 ):
     """Checks if current state is missing coverage and logs error if it is
 
@@ -63,6 +77,8 @@ def log_state(
         batt_min: lower bound of battery level range being tested
         batt_range: range of battery level that is missing coverage, 0 for state
                     is covered
+        led_id: ID of the LED being tested
+        coverage: how many policies cover this state. if batt_range is 0 coverage must be 1
 
     Returns:
         A boolean: true if error is logged, false if not
@@ -72,21 +88,25 @@ def log_state(
         return False
     if batt_range == 101:
         logging.error(
-            "%s: No LED policy found for %s%s%s",
+            "%s: %s LED policies found for %s%s%s%s",
             project_name,
+            f"{coverage} overlapping" if coverage > 1 else "No",
             (charge_state + ", ") if charge_state else "",
             f"port {charge_port}, " if charge_port is not None else "",
             (chipset_state + ", ") if chipset_state else "",
+            led_id + ", ",
         )
     else:
         logging.error(
-            "%s: No LED policy for battery range %i%% to %i%% for %s%s%s",
+            "%s: %s LED policies for battery range %i%% to %i%% for %s%s%s%s",
             project_name,
+            f"{coverage} overlapping" if coverage > 1 else "No",
             batt_min,
             batt_min + batt_range - 1,
             (charge_state + ", ") if charge_state else "",
             f"port {charge_port}, " if charge_port is not None else "",
             (chipset_state + ", ") if chipset_state else "",
+            led_id + ", ",
         )
     return True
 
@@ -98,7 +118,7 @@ def iterate_power_states(edt, project_name):
         edt: EDT object representation of a devicetree
 
     Returns:
-        num_errors: Number of missing policies detected.
+        num_errors: Number of missing or overcoverage policies detected.
     """
     led_policy_nodes = edt.compat2okay["cros-ec,led-policy"]
 
@@ -111,6 +131,8 @@ def iterate_power_states(edt, project_name):
     charge_port_list = [None]
 
     chipset_state_list = [None]
+
+    led_id_list = []
 
     # no Zephyr project currently uses batt_state to determine LED policy
 
@@ -131,6 +153,12 @@ def iterate_power_states(edt, project_name):
             care_about["chipset-state"] = True
         if "batt-lvl" in node.props:
             care_about["batt-lvl"] = True
+
+        # not all LEDs may appear in led policy.
+        # Filter for only the LEDs that appear in the policy.
+        for led_node in node.children.values():
+            if led_node.props["led-id"].val not in led_id_list:
+                led_id_list.append(led_node.props["led-id"].val)
 
     if care_about["charge-state"]:
         charge_state_list = [
@@ -160,40 +188,49 @@ def iterate_power_states(edt, project_name):
         ]
 
     num_errors = 0
-    for charge_state in charge_state_list:
-        for charge_port in charge_port_list:
-            for chipset_state in chipset_state_list:
-                no_policy_batt_lvl_min = 0
-                no_policy_batt_range = 0
-                for batt_lvl in range(101):
-                    if check_policy(
-                        charge_state,
-                        charge_port,
-                        chipset_state,
-                        batt_lvl,
-                        policies,
-                    ):
-                        num_errors += log_state(
-                            project_name,
+    for led_id in led_id_list:
+        for charge_state in charge_state_list:
+            for charge_port in charge_port_list:
+                for chipset_state in chipset_state_list:
+                    policy_batt_lvl_min = 0
+                    policy_batt_range = 0
+                    prev_coverage = 1
+                    for batt_lvl in range(101):
+                        coverage = check_policy(
                             charge_state,
                             charge_port,
                             chipset_state,
-                            no_policy_batt_lvl_min,
-                            no_policy_batt_range,
+                            batt_lvl,
+                            policies,
+                            led_id,
                         )
-                        no_policy_batt_range = 0
-                        no_policy_batt_lvl_min = batt_lvl + 1
-                    else:
-                        no_policy_batt_range += 1
+                        if coverage == 1:
+                            num_errors += log_state(
+                                project_name,
+                                charge_state,
+                                charge_port,
+                                chipset_state,
+                                policy_batt_lvl_min,
+                                policy_batt_range,
+                                led_id,
+                                prev_coverage,
+                            )
+                            policy_batt_range = 0
+                            policy_batt_lvl_min = batt_lvl + 1
+                        else:
+                            policy_batt_range += 1
+                        prev_coverage = coverage
 
-                num_errors += log_state(
-                    project_name,
-                    charge_state,
-                    charge_port,
-                    chipset_state,
-                    no_policy_batt_lvl_min,
-                    no_policy_batt_range,
-                )
+                    num_errors += log_state(
+                        project_name,
+                        charge_state,
+                        charge_port,
+                        chipset_state,
+                        policy_batt_lvl_min,
+                        policy_batt_range,
+                        led_id,
+                        prev_coverage,
+                    )
     return num_errors
 
 

@@ -171,7 +171,7 @@ prj.conf file to disable the console command.
 |  | CONFIG_CMD_ACCELSPOOF | `accelspoof` | |
 | | CONFIG_CMD_ACCEL_FIFO | `fiforead` | |
 | | CONFIG_CMD_ACCEL_INFO | `accelinfo` | |
-| | CONFIG_CMD_ADC | `adc` | Note firmware_ECAdc uses the `temps` command. |
+| | CONFIG_CMD_ADC | `adc` | Note firmware.ECADC uses the `temps` command. |
 | | CONFIG_CMD_ALS | `als` | |
 | | CONFIG_CMD_APTHROTTLE | `apthrottle` | |
 | | CONFIG_CMD_AP_RESET_LOG |??? | |
@@ -189,7 +189,7 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_CHGRAMP | `chgramp` | |
 | | CONFIG_CMD_CLOCKGATES | `clockgates` | |
 | | CONFIG_CMD_COMXTEST | `comxtest` | |
-| x | CONFIG_CMD_CRASH | `crash` | Used by TAST `crash.ECCrash`, FAFT `firmware_ECSharedMem` |
+| x | CONFIG_CMD_CRASH | `crash` | Used by TAST `crash.ECCrash`, FAFT `firmware.ECSharedMem` |
 | | CONFIG_CMD_DEVICE_EVENT | `deviceevent` | |
 | | CONFIG_CMD_DLOG | `dlog` | |
 | | CONFIG_CMD_ECTEMP | `ectemp` | |
@@ -205,8 +205,8 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_GPIO_EXTENDED | Adds options to `gpioget` and `gpioset`. | Should be renamed to CONFIG_GPOI_EXTENDED |
 | | CONFIG_CMD_GPIO_POWER_DOWN | Not a valid config. | Should be CONFIG_GPIO_POWER_DOWN |
 | | CONFIG_CMD_GT7288 | `gt7288_desc`<br>`gt7288_repdesc`<br>`gt7288_ver`<br>`gt7288_report` | |
-| | CONFIG_CMD_HASH | `hash` | firmware_ECHash uses `ectool echash` |
-| x | CONFIG_CMD_HCDEBUG | `hcdebug` | firmware_ECBootTime.py |
+| | CONFIG_CMD_HASH | `hash` | firmware.SoftwareSync uses `ectool echash` |
+| x | CONFIG_CMD_HCDEBUG | `hcdebug` | firmware.BootTime looks at the console logs for HC |
 | x | CONFIG_CMD_HOSTCMD | `hostcmd` | |
 | | CONFIG_CMD_I2CWEDGE | `i2cwedge`<br>`i2cunwedge` | |
 | | CONFIG_CMD_I2C_PROTECT | `i2cprotect` | |
@@ -217,12 +217,12 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_I2C_STRESS_TEST_BATTERY | Not a console command | |
 | | CONFIG_CMD_I2C_STRESS_TEST_CHARGER | Not a console command | |
 | | CONFIG_CMD_I2C_STRESS_TEST_TCPC | `Not a console command | |
-| | CONFIG_CMD_I2C_XFER | `i2cxfer` | firmware_ECCbiEeprom uses `ectool i2cxfer` which is not guarded by CONFIG_CMD_I2C_XFER |
+| | CONFIG_CMD_I2C_XFER | `i2cxfer` | firmware.ECCbiEeprom uses `ectool i2cxfer` which is not guarded by CONFIG_CMD_I2C_XFER |
 | | CONFIG_CMD_I2C_XFER_RAW |  | Adds options to `i2cxfer` |
 | | CONFIG_CMD_IDLE_STATS | `idlestats` | |
 | | CONFIG_CMD_INA | `ina` | |
 | | CONFIG_CMD_JUMPTAGS | `jumptags` | |
-| x | CONFIG_CMD_KEYBOARD | `8042`<br>`ksstate`<br>`kbpress` | Used by `firmware_ECKeyboard` |
+| x | CONFIG_CMD_KEYBOARD | `8042`<br>`ksstate`<br>`kbpress` | Used by most all tests, and specifically `firmware.ECKeyboard` |
 | | CONFIG_CMD_LEDTEST | `ledtest` | |
 | | CONFIG_CMD_MCDP | `mcdp` | |
 | | CONFIG_CMD_MD | `md` | |
@@ -251,14 +251,14 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_SCRATCHPAD | `scratchpad` | |
 | | CONFIG_CMD_SEVEN_SEG_DISPLAY | `seg` | |
 | | CONFIG_CMD_SHA256_TEST | `???` | |
-| x | CONFIG_CMD_SHMEM | `shmem` | Used by firmware_ECSharedMem |
+| x | CONFIG_CMD_SHMEM | `shmem` | Used by firmware.ECSharedMem |
 | | CONFIG_CMD_SLEEPMASK | `sleepmask` | Only used for Cr50 tests |
 | | CONFIG_CMD_SLEEPMASK_SET | | Adds options to `sleepmask` |
 | | CONFIG_CMD_SPI_FLASH | `spi_flasherase`<br>`spi_flashwrite`<br>`spi_flashread`<br>`spi_flash_rsr`<br>`spi_flash_wsr`<br>`spi_flash_wsr` | |
 | | CONFIG_CMD_SPI_NOR | `spinorinfo`<br>`spinorerase`<br>`spinorwrite`<br>`spinorread` | |
 | | CONFIG_CMD_SPI_XFER | `spixfer` | |
-| x | CONFIG_CMD_SYSINFO | `sysinfo` | Used by firmware_ECSystemLocked |
-| x | CONFIG_CMD_SYSJUMP | `sysjump` | Used by firmware_ECSharedMem |
+| x | CONFIG_CMD_SYSINFO | `sysinfo` | Used by firmware.ECSystemLocked |
+| x | CONFIG_CMD_SYSJUMP | `sysjump` | Used by firmware.ECSharedMem |
 | | CONFIG_CMD_SYSLOCK | `syslock` | |
 | | CONFIG_CMD_TASKREADY | `taskready` | |
 | | CONFIG_CMD_TASK_RESET | `taskreset` | |
@@ -269,7 +269,7 @@ prj.conf file to disable the console command.
 | | CONFIG_CMD_USART_INFO | `usart_info` | |
 | | CONFIG_CMD_USB_PD_CABLE | `pdcable` | |
 | x | CONFIG_CMD_USB_PD_PE | `pe` | Doesn't appear to be used but might be by FAFT PD |
-| x | CONFIG_CMD_WAITMS | `waitms` | firmware_ECWatchdog | |
+| x | CONFIG_CMD_WAITMS | `waitms` | firmware.ECWatchdog | |
 
 <!-- mdformat on -->
 
@@ -462,5 +462,5 @@ enable this option, you may also need to change firmware testing configuration
 [2]:https://github.com/zephyrproject-rtos/zephyr/blob/main/subsys/shell/Kconfig
 [3]:https://docs.zephyrproject.org/latest/guides/optimizations/tools.html
 [4]:https://github.com/zephyrproject-rtos/zephyr/issues/2112
-[5]:https://chromium.googlesource.com/chromiumos/third_party/autotest/+/069cb4b0/server/site_tests/firmware_ECUsbPorts/firmware_ECUsbPorts.py#81
+[5]:https://chromium.googlesource.com/chromiumos/platform/tast-tests/+/main/src/go.chromium.org/tast-tests/cros/remote/bundles/cros/firmware/ec_usb_ports.go
 [6]:https://chromium.googlesource.com/chromiumos/platform/fw-testing-configs/+/e2e9547e/volteer.json#26

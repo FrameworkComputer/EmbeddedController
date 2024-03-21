@@ -22,6 +22,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "intc.h"
+#include "keyboard_8042_sharedlib.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
@@ -427,6 +428,19 @@ void board_init(void)
 		keyscan_config.actual_key_mask[12] = 0xff;
 		keyscan_config.actual_key_mask[13] = 0xff;
 		keyscan_config.actual_key_mask[14] = 0xff;
+	}
+
+	/* Keyboard config = 1 : CA-FR US keyboard*/
+	if (get_cbi_fw_config_keyboard() == 1) {
+		/*
+		 * Candian French keyboard (US Type).
+		 * \|:		0x0061 -> 0x61 -> 0x56
+		 * r-ctrl:	0xe014 -> 0x14 -> 0x1d
+		 */
+		uint16_t tmp = get_scancode_set2(4, 0);
+
+		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
+		set_scancode_set2(2, 7, tmp);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);

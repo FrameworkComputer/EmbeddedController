@@ -83,6 +83,8 @@ config PLATFORM_EC_ACCELGYRO_BMI3XX
 
 config PLATFORM_EC_ALS_TCS3400
 	bool "TCS3400 Ambient Light Senseor Driver"
+	default y
+	depends on DT_HAS_CROS_EC_TCS3400_CLEAR_ENABLED || DT_HAS_CROS_EC_TCS3400_RGB_ENABLED
 	help
 	  The driver supports TCS3400 which provides color and
 	  IR (red, green, blue, clear and IR) ambient light sensing.
@@ -117,6 +119,8 @@ config PLATFORM_EC_ACCELGYRO_ICM42607
 
 config PLATFORM_EC_ACCELGYRO_LSM6DSO
 	bool "LSM6DSO Accelgyro Driver"
+	default y
+	depends on DT_HAS_CROS_EC_LSM6DSO_ACCEL_ENABLED || DT_HAS_CROS_EC_LSM6DSO_GYRO_ENABLED
 	select PLATFORM_EC_STM_MEMS_COMMON
 	help
 	  The driver supports ST's LSM6DSO 3D digital accelerometer sensor.

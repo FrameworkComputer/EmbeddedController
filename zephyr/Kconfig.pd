@@ -277,6 +277,15 @@ config PLATFORM_EC_USB_PD_DP_HPD_GPIO_CUSTOM
 
 	    int svdm_get_hpd_gpio(int port);
 
+config PLATFORM_EC_USB_PD_DP_HPD_GPIO_IRQ_ACCURATE
+	bool "Generate a more acuurate IRQ_HPD pulse"
+	depends on PLATFORM_EC_USB_PD_DP_HPD_GPIO
+	default y if SOC_IT8XXX2
+	help
+	  Enable this if the IRQ_HPD pulse interval HPD_DSTREAM_DEBOUNCE_IRQ
+	  is longer than the requirement. This is common on ITE EC due to
+	  performance issue.
+
 config PLATFORM_EC_USB_PD_DATA_RESET_MSG
 	bool "Enable the PD Data Reset Message."
 	depends on PLATFORM_EC_USB_PD_REV30

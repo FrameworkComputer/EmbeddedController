@@ -1,0 +1,11 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_NPCX9
+	# NPCX doesn't actually have enough ram for coverage, but this will
+	# allow generating initial 0 line coverage.
+	select HAS_COVERAGE_SUPPORT
+	select SOC_NPCX9M7F if BOARD_NPCX9_NPCX9M7F
+	select SOC_NPCX9M7FB if BOARD_NPCX9_NPCX9M7FB
+	select SOC_NPCX9M3F if BOARD_NPCX9_NPCX9M3F

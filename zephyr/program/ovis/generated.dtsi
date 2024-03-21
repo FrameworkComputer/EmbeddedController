@@ -191,10 +191,10 @@
 			gpios = <&gpio4 3 GPIO_INPUT>;
 		};
 		gpio_led_1_l: led_1_l {
-			gpios = <&gpioc 4 GPIO_OUTPUT>;
+			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
 		};
 		gpio_led_2_l: led_2_l {
-			gpios = <&gpioc 3 GPIO_OUTPUT>;
+			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
 		};
 		gpio_mech_pwr_btn_odl: mech_pwr_btn_odl {
 			gpios = <&gpio0 0 GPIO_INPUT>;
@@ -277,7 +277,7 @@
 			gpios = <&gpio3 6 GPIO_OUTPUT>;
 		};
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
-			gpios = <&gpio6 2 GPIO_INPUT>;
+			gpios = <&gpio6 2 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 		};
 		gpio_usb_c0_rt_3p3_sx_en: usb_c0_rt_3p3_sx_en {
@@ -287,18 +287,17 @@
 			gpios = <&gpioa 0 GPIO_INPUT>;
 		};
 		gpio_usb_c0_rt_rst_l: usb_c0_rt_rst_l {
-			gpios = <&gpio1 0 GPIO_OUTPUT>;
+			gpios = <&gpio1 0 GPIO_ODR_HIGH>;
 		};
 		gpio_usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
 			gpios = <&gpioe 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
 		};
-
 		gpio_usb_c1_frs_en: usb_c1_frs_en {
 			gpios = <&gpio0 6 GPIO_OUTPUT>;
 		};
 		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
-			gpios = <&gpiof 5 GPIO_INPUT>;
+			gpios = <&gpiof 5 (GPIO_INPUT| GPIO_ACTIVE_LOW) >;
 			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
 		};
 		gpio_usb_c1_rt_3p3_sx_en: usb_c1_rt_3p3_sx_en {
@@ -308,7 +307,7 @@
 			gpios = <&gpio7 2 GPIO_INPUT>;
 		};
 		gpio_usb_c1_rt_rst_l: usb_c1_rt_rst_l {
-			gpios = <&gpio3 7 GPIO_OUTPUT>;
+			gpios = <&gpio3 7 GPIO_ODR_HIGH>;
 		};
 		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
 			gpios = <&gpio3 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
@@ -318,7 +317,7 @@
 			gpios = <&gpio0 7 GPIO_OUTPUT>;
 		};
 		gpio_usb_c2_ppc_int_odl: usb_c2_ppc_int_odl {
-			gpios = <&gpioc 6 GPIO_INPUT>;
+			gpios = <&gpioc 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C2_PPC_INT_ODL";
 		};
 		gpio_usb_c2_rt_3p3_sx_en: usb_c2_rt_3p3_sx_en {
@@ -328,7 +327,7 @@
 			gpios = <&gpio9 7 GPIO_INPUT>;
 		};
 		gpio_usb_c2_rt_rst_l: usb_c2_rt_rst_l {
-			gpios = <&gpio1 1 GPIO_OUTPUT>;
+			gpios = <&gpio1 1 GPIO_ODR_HIGH>;
 		};
 		gpio_usb_c2_tcpc_int_odl: usb_c2_tcpc_int_odl {
 			gpios = <&gpiod 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;

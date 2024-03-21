@@ -54,7 +54,7 @@ config PLATFORM_EC_CONSOLE_CMD_SYSJUMP
 choice PLATFORM_EC_STORAGE_TYPE
        prompt "Code storage type"
        default PLATFORM_EC_EXTERNAL_STORAGE if SOC_FAMILY_NPCX
-       default PLATFORM_EC_EXTERNAL_STORAGE if SOC_FAMILY_MEC
+       default PLATFORM_EC_EXTERNAL_STORAGE if SOC_FAMILY_MICROHIP_MEC
        default PLATFORM_EC_INTERNAL_STORAGE if SOC_FAMILY_ITE_EC
        default PLATFORM_EC_INTERNAL_STORAGE if SOC_FAMILY_STM32
        help
@@ -190,3 +190,9 @@ config PLATFORM_EC_SPI_CLOCK_DIVIDE
 	  from EC to flashchip.
 
 endif # PLATFORM_EC_FLASH_CROS
+
+config PLATFORM_EC_FLASH_DEFERRED_ERASE
+	bool "Flash erase v1 HC"
+	help
+	  Enable support for Host Command Flash Erase version 1, which uses
+	  deferred call.

@@ -11,7 +11,7 @@ def register_npcx9_variant(
     """Register a variant of a brya, even though this is not named as such."""
     return register_npcx_project(
         project_name=project_name,
-        zephyr_board="npcx9m3f",
+        zephyr_board="npcx9/npcx9m3f",
         dts_overlays=[
             "adc.dts",
             "battery.dts",
@@ -46,7 +46,12 @@ brya = register_npcx9_variant(
 
 brya_pdc = register_npcx_project(
     project_name="brya_pdc",
-    zephyr_board="npcx9m3f",
+    zephyr_board="npcx9/npcx9m3f",
     dts_overlays=[here / "brya_pdc" / "project.overlay"],
     kconfig_files=[here / "prj.conf", here / "brya_pdc" / "project.conf"],
 )
+
+# Note for reviews, do not let anyone edit these assertions, the addresses
+# must not change after the first RO release.
+assert_rw_fwid_DO_NOT_EDIT(project_name="brya", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="brya_pdc", addr=0x7FFE0)

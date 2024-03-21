@@ -237,10 +237,8 @@ static void configure_retimer_usbmux(void)
 	}
 }
 
-static void configure_battery_type(void)
+__override int board_get_default_battery_type(void)
 {
-	int bat_cell_type;
-
 	switch (ADL_RVP_BOARD_ID(board_get_version())) {
 	case ADLM_LP4_RVP1_SKU_BOARD_ID:
 	case ADLM_LP5_RVP2_SKU_BOARD_ID:
@@ -248,17 +246,13 @@ static void configure_battery_type(void)
 	case ADLN_LP5_ERB_SKU_BOARD_ID:
 	case ADLN_LP5_RVP_SKU_BOARD_ID:
 		/* configure Battery to 2S based */
-		bat_cell_type = BATTERY_TYPE(DT_ALIAS(getac_2s));
-		break;
+		return BATTERY_TYPE(DT_ALIAS(getac_2s));
 	default:
 		/* configure Battery to 3S based */
-		bat_cell_type = BATTERY_TYPE(DT_ALIAS(getac_3s));
-		break;
+		return BATTERY_TYPE(DT_ALIAS(getac_3s));
 	}
-
-	/* Set the fixed battery type */
-	battery_set_fixed_battery_type(bat_cell_type);
 }
+
 /******************************************************************************/
 /* PWROK signal configuration */
 /*
@@ -381,9 +375,6 @@ static int board_pre_task_peripheral_init(void)
 
 	/* Make sure SBU are routed to CCD or AUX based on CCD status at init */
 	board_connect_c0_sbu_deferred();
-
-	/* Configure battery type */
-	configure_battery_type();
 
 	/* Reconfigure board specific charger drivers */
 	configure_charger();

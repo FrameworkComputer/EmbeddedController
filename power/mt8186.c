@@ -413,7 +413,7 @@ enum power_state power_handle_state(enum power_state state)
 						    PG_PP4200_S5_DELAY))
 			return POWER_S5G3;
 #endif
-
+		mt8186_exit_off();
 		return POWER_S5;
 
 	case POWER_S5S3:

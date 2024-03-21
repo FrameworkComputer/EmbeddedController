@@ -5,6 +5,8 @@
 
 /* Kelpie program common DTS includes */
 
+#include <cros/touchpad_hashes.dtsi>
+
 #include "../adc.dtsi"
 #include "../gpio.dtsi"
 #include "../uart.dtsi"
@@ -163,4 +165,20 @@
 			/* gpiom6 */
 			<&gpiom 6 GPIO_INPUT_PULL_DOWN>;
 	};
+};
+
+&i2c0 {
+	data-hold-time = <9>;
+	prescale-scl-low = <4>;
+
+	touchpad@15 {
+		logical_max_x = <2644>;
+		logical_max_y = <1440>;
+		physical_max_x = <839>;
+		physical_max_y = <457>;
+	};
+};
+
+&touchpad_fw_hashes {
+	size = <((65536 / 1024) * 32)>;
 };

@@ -5,12 +5,14 @@
 
 #include "charge_state.h"
 #include "chipset.h"
+#include "driver/bc12/pi3usb9201.h"
 #include "driver/charger/sm5803.h"
 #include "driver/tcpm/it83xx_pd.h"
 #include "driver/tcpm/ps8xxx_public.h"
 #include "driver/tcpm/tcpci.h"
 #include "hooks.h"
 #include "system.h"
+#include "usb_charge.h"
 #include "usb_mux.h"
 #include "watchdog.h"
 
@@ -308,6 +310,35 @@ void usb_c1_interrupt(enum gpio_signal s)
 	schedule_deferred_pd_interrupt(1);
 }
 
+#define RETRY_COUNT 3
+
+static bool pi3usb9201_is_exist;
+
+static void board_has_bc12_detected(void)
+{
+	int rv, value, retry_count;
+
+	for (retry_count = 0; retry_count < RETRY_COUNT; ++retry_count) {
+		rv = i2c_read8(I2C_PORT_USB_C0_TCPC,
+			       PI3USB9201_I2C_ADDR_3_FLAGS,
+			       PI3USB9201_REG_CLIENT_STS, &value);
+		if (rv == EC_SUCCESS)
+			break;
+	}
+
+	if (rv == EC_SUCCESS)
+		pi3usb9201_is_exist = true;
+	else
+		pi3usb9201_is_exist = false;
+
+	LOG_INF("PI3USB9201 is exist: %d", pi3usb9201_is_exist);
+}
+
+__override bool board_usb_charger_support(void)
+{
+	return pi3usb9201_is_exist;
+}
+
 /*
  * Check state of IRQ lines at startup, ensuring an IRQ that happened before
  * the EC started up won't get lost (leaving the IRQ line asserted and blocking
@@ -318,6 +349,8 @@ void usb_c1_interrupt(enum gpio_signal s)
  */
 void board_handle_initial_typec_irq(void)
 {
+	board_has_bc12_detected();
+
 	check_c0_line();
 	/*
 	 * C1 port IRQ already handled by board_process_pd_alert(), we don't

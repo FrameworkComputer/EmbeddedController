@@ -1,5 +1,6 @@
 [BASIC]
 additional-builtins=
+    assert_rw_fwid_DO_NOT_EDIT,
     here,
     register_binman_project,
     register_host_project,

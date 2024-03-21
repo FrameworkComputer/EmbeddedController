@@ -55,6 +55,14 @@ config HAVE_FPC1025_PRIVATE_DRIVER
 
 endif # FINGERPRINT_SENSOR_FPC1025
 
+config FINGERPRINT_SENSOR_SIMULATOR
+	bool "Fingerprint sensor simulator"
+	depends on DT_HAS_CROS_EC_FINGERPRINT_SENSOR_SIM_ENABLED
+	default y
+	help
+	  Fingerprint sensor simulator. This driver is useful for testing code
+	  that uses fingerprint sensors.
+
 config FINGERPRINT_SENSOR_IMAGE_SIZE
 	int
 	default 26260 if FINGERPRINT_SENSOR_FPC1025

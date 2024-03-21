@@ -161,57 +161,29 @@ static inline bool console_channel_is_disabled(enum console_channel channel)
 #endif
 
 #ifdef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
-/**
- * Buffer size in bytes large enough to hold the largest possible timestamp.
- */
-#define PRINTF_TIMESTAMP_BUF_SIZE 22
-int snprintf_timestamp_now(char *str, size_t size);
-#if 0
-/* TODO(b/289215486)
- * console_channel_is_disabled checks don't give space savings,
- * See if we can add this but still get tokenized space savings
- */
-#define cputs(channel, outstr)                               \
-	do {                                                 \
-		if (!console_channel_is_disabled(channel)) { \
-			PW_LOG_INFO("%s", outstr);           \
-		}                                            \
-	} while (false)
+const char *get_timestamp_now(void);
 
-#define cprintf(channel, format, ...)                        \
-	do {                                                 \
-		if (!console_channel_is_disabled(channel)) { \
-			PW_LOG_INFO(format, ##__VA_ARGS__);  \
-		}                                            \
-	} while (false)
+#define cputs(channel, outstr)                        \
+	PW_LOG(PW_LOG_LEVEL_INFO, PW_LOG_MODULE_NAME, \
+	       PW_EC_CHANNEL_TO_FLAG(channel), outstr)
 
-#define cprints(channel, format, ...)                                   \
-	do {                                                            \
-		if (!console_channel_is_disabled(channel)) {            \
-			char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];         \
-			snprintf_timestamp_now(ts_str, sizeof(ts_str)); \
-			PW_LOG_INFO("[%s " format "]\n", ts_str,        \
-				    ##__VA_ARGS__);                     \
-		}                                                       \
-	} while (false)
-#endif
+#define cprintf(channel, format, ...)                 \
+	PW_LOG(PW_LOG_LEVEL_INFO, PW_LOG_MODULE_NAME, \
+	       PW_EC_CHANNEL_TO_FLAG(channel), format, ##__VA_ARGS__)
 
-#define cputs(channel, outstr) PW_LOG_INFO(outstr)
-
-#define cprintf(channel, format, ...) PW_LOG_INFO(format, ##__VA_ARGS__)
-
-#define cprints(channel, format, ...)                                    \
-	do {                                                             \
-		char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];                  \
-		snprintf_timestamp_now(ts_str, sizeof(ts_str));          \
-		PW_LOG_INFO("[%s " format "]\n", ts_str, ##__VA_ARGS__); \
+#define cprints(channel, format, ...)                                       \
+	do {                                                                \
+		const char *ts_str = get_timestamp_now();                   \
+		PW_LOG(PW_LOG_LEVEL_INFO, PW_LOG_MODULE_NAME,               \
+		       PW_EC_CHANNEL_TO_FLAG(channel), "[%s " format "]\n", \
+		       ts_str, ##__VA_ARGS__);                              \
 	} while (false)
 #else
 
 /**
  * Put a string to the console channel.
  *
- * @param channel	Output chanel
+ * @param channel	Output channel
  * @param outstr	String to write
  *
  * @return non-zero if output was truncated.

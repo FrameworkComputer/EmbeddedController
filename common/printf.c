@@ -13,15 +13,18 @@
  *
  * Refer to the Zephyr's Github issue #52739 for more details.
  */
-#ifdef CONFIG_NEWLIB_LIBC
+#if defined(CONFIG_NEWLIB_LIBC) || defined(CONFIG_EXTERNAL_LIBC)
 #define _POSIX_C_SOURCE 200809
 #endif /* CONFIG_NEWLIB_LIBC */
 
 #include "builtin/assert.h"
+#include "builtin/string.h"
 #include "console.h"
 #include "printf.h"
 #include "timer.h"
 #include "util.h"
+
+#include <string.h>
 
 static const char error_str[] = "ERROR";
 
@@ -110,6 +113,17 @@ int snprintf_timestamp_now(char *str, size_t size)
 {
 	return snprintf_timestamp(str, size, get_time().val);
 }
+
+#ifdef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
+const char *get_timestamp_now(void)
+{
+	static char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
+
+	snprintf_timestamp_now(ts_str, sizeof(ts_str));
+
+	return ts_str;
+}
+#endif
 
 int snprintf_timestamp(char *str, size_t size, uint64_t timestamp)
 {
@@ -287,20 +301,20 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			continue;
 		}
 
-		/* Handle left-justification ("%-5s") */
-		if (c == '-') {
-			flags |= PF_LEFT;
-			c = *format++;
-		}
+		while (c == '-' || c == '+') {
+			/* Handle left-justification ("%-5s") */
+			if (c == '-')
+				flags |= PF_LEFT;
 
-		/* Handle positive sign (%+d) */
-		if (c == '+') {
-			flags |= PF_SIGN;
+			/* Handle positive sign (%+d) */
+			if (c == '+')
+				flags |= PF_SIGN;
+
 			c = *format++;
 		}
 
 		/* Handle padding with 0's */
-		if (c == '0') {
+		while (c == '0') {
 			flags |= PF_PADZERO;
 			c = *format++;
 		}
@@ -457,19 +471,12 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 					     precision, base, c == 'X');
 			ASSERT(vstr);
 
-			if (sign)
-				*(--vstr) = sign;
-
 			/*
 			 * Precision field was interpreted by fixed-point
 			 * logic, so clear it.
 			 */
 			precision = -1;
 		}
-
-		/* No padding strings to wider than the precision */
-		if (precision >= 0 && pad_width > precision)
-			pad_width = precision;
 
 		if (precision < 0) {
 			/* If precision is unset, print everything */
@@ -483,18 +490,54 @@ int vfnprintf(int (*addchar)(void *context, int c), void *context,
 			vlen = strnlen(vstr, precision);
 		}
 
-		while (vlen < pad_width && !(flags & PF_LEFT)) {
-			if (addchar(context, flags & PF_PADZERO ? '0' : ' '))
-				return EC_ERROR_OVERFLOW;
-			vlen++;
+		if (sign) {
+			/*
+			 * a sign was requested for an int, count it
+			 * toward the length of the value
+			 */
+			++vlen;
 		}
+
+		if (!(flags & PF_LEFT)) {
+			/* padding for right justified value */
+			if (sign && (flags & PF_PADZERO)) {
+				/* the sign precedes leading zeros */
+				if (addchar(context, sign))
+					return EC_ERROR_OVERFLOW;
+				sign = 0;
+			}
+
+			/* output padding now */
+			while (vlen < pad_width) {
+				if (addchar(context,
+					    flags & PF_PADZERO ? '0' : ' '))
+					return EC_ERROR_OVERFLOW;
+				++vlen;
+			}
+		}
+
+		if (sign) {
+			/*
+			 * if we didn't output the sign before the padding,
+			 * output it now
+			 */
+			if (addchar(context, sign))
+				return EC_ERROR_OVERFLOW;
+			sign = 0;
+		}
+
+		/* output all permissible string chars */
 		while (--precision >= 0 && *vstr)
 			if (addchar(context, *vstr++))
 				return EC_ERROR_OVERFLOW;
-		while (vlen < pad_width && flags & PF_LEFT) {
-			if (addchar(context, ' '))
-				return EC_ERROR_OVERFLOW;
-			vlen++;
+
+		if (flags & PF_LEFT) {
+			/* left justified string, output padding now */
+			while (vlen < pad_width) {
+				if (addchar(context, ' '))
+					return EC_ERROR_OVERFLOW;
+				++vlen;
+			}
 		}
 	}
 

@@ -33,6 +33,13 @@ config PLATFORM_EC_DPTF
 	  and will take corrective actions for high temperatures such as turning
 	  on the fans or powering down the AP.
 
+config PLATFORM_EC_DPTF_PRINTS
+	bool "Dynamic Platform and Thermal Framework debug prints"
+	default n
+	help
+	  Enables debug prints for DPTF. These are not needed in normal operation
+	  and result in a large amount of console prints when enabled.
+
 config PLATFORM_EC_THERMISTOR
 	bool "Thermistor support"
 	default y

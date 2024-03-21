@@ -19,7 +19,9 @@
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/math_extras.h>
+#ifdef CONFIG_ZTEST
 #include <zephyr/ztest.h>
+#endif
 
 #define DT_DRV_COMPAT cros_bma4xx_emul
 
@@ -431,6 +433,7 @@ static int bma4xx_emul_init(const struct emul *emul,
 DT_INST_FOREACH_STATUS_OKAY(INIT_BMA4XX)
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
 
+#ifdef CONFIG_ZTEST
 static void bma4xx_emul_reset_rule_before(const struct ztest_unit_test *test,
 					  void *data)
 {
@@ -443,3 +446,4 @@ static void bma4xx_emul_reset_rule_before(const struct ztest_unit_test *test,
 	DT_INST_FOREACH_STATUS_OKAY(BMA4XX_EMUL_RESET_RULE_BEFORE);
 }
 ZTEST_RULE(bma4xx_emul_reset, bma4xx_emul_reset_rule_before, NULL);
+#endif /* CONFIG_ZTEST */

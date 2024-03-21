@@ -210,8 +210,8 @@
 
 		bat-state3-charge {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery display percent range (>= 97, <= 99) */
-			batt-lvl = <97 99>;
+			/* Battery display percent range (>= 97, <= 100) */
+			batt-lvl = <97 100>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";

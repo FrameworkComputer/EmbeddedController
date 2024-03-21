@@ -115,3 +115,17 @@ config PLATFORM_EC_LOG_TOKENIZED
 	  Enable tokenized logging in EC.  Log format strings are converted to
 	  32 bit tokens reducing image size.  A token database for detokenizing
 	  is generated in the build directory.
+
+config PLATFORM_EC_LOG_BACKEND_CONSOLE_BUFFER_REDUCED
+	bool "Reduce size of the log format"
+	depends on PLATFORM_EC_LOG_BACKEND_CONSOLE_BUFFER
+	help
+	  Skip logging the logging level and the source to the console buffer.
+	  It reduces the amount data stored in the console buffer.
+
+config PLATFORM_EC_LOG_CUSTOM_TIMESTAMP
+	bool "Use EC format of timestamp"
+	select LOG_OUTPUT_FORMAT_CUSTOM_TIMESTAMP
+	help
+	  Change the default format of the timestamp, to the one EC uses -
+	  "[s.us]" at the beginning of a log.

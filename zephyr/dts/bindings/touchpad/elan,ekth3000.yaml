@@ -16,18 +16,22 @@ properties:
 
   logical_max_x:
     type: int
+    required: true
     description: The logical maximum x-axis setting
 
   logical_max_y:
     type: int
+    required: true
     description: The logical maximum y-axis setting
 
   physical_max_x:
     type: int
+    required: true
     description: The physical maximum x-axis setting
 
   physical_max_y:
     type: int
+    required: true
     description: The physical maximum y-axis setting
 
   max_pressure:

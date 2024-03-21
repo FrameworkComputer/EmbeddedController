@@ -70,6 +70,7 @@ rsource "Kconfig.debug_assert"
 rsource "Kconfig.defaults"
 rsource "Kconfig.detachable_base"
 rsource "Kconfig.espi"
+rsource "Kconfig.fingerprint"
 rsource "Kconfig.flash"
 rsource "Kconfig.header"
 rsource "Kconfig.host_interface"
@@ -104,6 +105,7 @@ rsource "Kconfig.usba"
 rsource "Kconfig.usbc"
 rsource "Kconfig.watchdog"
 rsource "Kconfig.wireless_charger"
+rsource "Kconfig.ap_hang_detect"
 
 # Define PLATFORM_EC_... options to enable EC features. Each Kconfig should be
 # matched by a line in zephyr/shim/include/config_chip.h which #defines the
@@ -480,6 +482,13 @@ config PLATFORM_EC_HOOKS
 
 	  This option is needed by many features in the EC. Disabling it will
 	  likely cause build errors.
+
+config PLATFORM_EC_HOOK_SECOND
+	bool "Enable the one second period hook"
+	default y
+	help
+	  Enable support for the one second hook. Disabling the hook save
+	  some memory and CPU time.
 
 menuconfig PLATFORM_EC_HOSTCMD
 	bool "Host commands"

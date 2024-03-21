@@ -2,9 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-set(CROSS_COMPILE_TARGET_posix        x86_64-pc-linux-gnu)
-set(CROSS_COMPILE_TARGET_unit_testing x86_64-pc-linux-gnu)
-set(CROSS_COMPILE_TARGET          ${CROSS_COMPILE_TARGET_${ARCH}})
+if((${BOARD_DIR} MATCHES "boards\/native") OR ("${BOARD}" STREQUAL "unit_testing"))
+  set(CROSS_COMPILE_TARGET x86_64-pc-linux-gnu)
+endif()
 
 set(CC gcc)
 set(CROSS_COMPILE "/usr/bin/${CROSS_COMPILE_TARGET}-")

@@ -22,6 +22,8 @@
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 
+#include <dt-bindings/buttons.h>
+
 static void form_factor_init(void)
 {
 	int ret;

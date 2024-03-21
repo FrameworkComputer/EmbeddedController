@@ -80,8 +80,7 @@ ZTEST(keyboard_scan, test_boot_key)
 	zassert_ok(emulate_keystate(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH,
 				    true));
 	zassert_ok(emulate_keystate(KEYBOARD_ROW_ESC, KEYBOARD_COL_ESC, true));
-	zassert_ok(
-		emulate_keystate(KEYBOARD_ROW_KEY_0, KEYBOARD_COL_KEY_0, true));
+	zassert_ok(emulate_keystate(6, 8, true)); /* random key */
 	keyboard_scan_init();
 	zassert_equal(keyboard_scan_get_boot_keys(), BOOT_KEY_NONE);
 

@@ -9,6 +9,7 @@
 
 #include <dt-bindings/vivaldi_kbd.h>
 #include <ec_commands.h>
+#include <hooks.h>
 #include <host_command.h>
 #include <keyboard_8042_sharedlib.h>
 #include <keyboard_scan.h>
@@ -241,4 +242,11 @@ ZTEST(vivaldi_kbd, test_vol_up_key)
 #endif
 }
 
-ZTEST_SUITE(vivaldi_kbd, NULL, NULL, NULL, NULL, NULL);
+static void *vivaldi_setup(const void *state)
+{
+	hook_notify(HOOK_INIT);
+
+	return NULL;
+}
+
+ZTEST_SUITE(vivaldi_kbd, NULL, vivaldi_setup, NULL, NULL, NULL);

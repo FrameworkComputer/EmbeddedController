@@ -4,29 +4,25 @@
  */
 
 / {
-	gpio-interrupts {
+	gpio_interrupts: gpio-interrupts {
 		compatible = "cros-ec,gpio-interrupts";
 
-		int_lid_imu: int-lid-imu {
-			/*
-			 * TODO: b/319267575 - [Brox Proto1] PP3300_S5 has
-			 * leakage in Z1
-			 * Disable I2C sensor bus and configure pins as input.
-			 */
-			status = "disabled";
-			irq-pin = <&gpio_ec_accel_db_int_l>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "bma4xx_interrupt";
-		};
 		int_power_button: power_button {
 			irq-pin = <&gpio_gsc_ec_pwr_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_button_interrupt";
 		};
-		int_lid_open: lid_open {
-			irq-pin = <&gpio_lid_open>;
+		int_volume_up: volume_up {
+			irq-pin = <&gpio_ec_volup_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "lid_interrupt";
+			handler = "button_interrupt";
+		};
+		int_volume_down: volume_down {
+			irq-pin = <&gpio_ec_voldn_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
 		};
 	};
 };
+
+#include "interrupts_motionsense.dtsi"

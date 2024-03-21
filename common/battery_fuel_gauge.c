@@ -71,38 +71,6 @@ test_export_static bool authenticate_battery_type(int index,
 	return true;
 }
 
-#ifdef CONFIG_BATTERY_TYPE_NO_AUTO_DETECT
-
-/* When battery type is not initialized */
-#define BATTERY_TYPE_UNINITIALIZED -1
-
-/* Variable to decide the battery type */
-static int fixed_battery_type = BATTERY_TYPE_UNINITIALIZED;
-
-/*
- * Function to get the fixed battery type.
- */
-static int battery_get_fixed_battery_type(void)
-{
-	if (fixed_battery_type == BATTERY_TYPE_UNINITIALIZED) {
-		CPRINTS("Warning: Battery type is not Initialized! "
-			"Setting to default battery type.\n");
-		fixed_battery_type = DEFAULT_BATTERY_TYPE;
-	}
-
-	return fixed_battery_type;
-}
-
-/*
- * Function to set the battery type, when auto-detection cannot be used.
- */
-void battery_set_fixed_battery_type(int type)
-{
-	if (type < BATTERY_TYPE_COUNT)
-		fixed_battery_type = type;
-}
-#endif /* CONFIG_BATTERY_TYPE_NO_AUTO_DETECT */
-
 /**
  * Find a config for the battery from board_battery_info[].
  *
@@ -113,18 +81,12 @@ static int get_battery_type(void)
 	int i;
 	enum battery_type battery_type = BATTERY_TYPE_COUNT;
 
-#if defined(CONFIG_BATTERY_TYPE_NO_AUTO_DETECT)
-	i = battery_get_fixed_battery_type();
-	if (authenticate_battery_type(i, batt_manuf_name))
-		battery_type = i;
-#else
 	for (i = 0; i < BATTERY_TYPE_COUNT; i++) {
 		if (authenticate_battery_type(i, batt_manuf_name)) {
 			battery_type = i;
 			break;
 		}
 	}
-#endif
 
 	return battery_type;
 }
@@ -276,12 +238,7 @@ const struct battery_info *battery_get_info(void)
 
 __overridable bool board_batt_conf_enabled(void)
 {
-	union ec_common_control ctrl;
-
-	if (cbi_get_common_control(&ctrl) != EC_SUCCESS)
-		return false;
-
-	return !!(ctrl.bcic_enabled);
+	return true;
 }
 
 #ifndef CONFIG_FUEL_GAUGE

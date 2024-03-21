@@ -32,7 +32,7 @@
 	pwr-pg-ec-rsmrst-odl {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "RSMRST power good from regulator";
-		enum-name = "PWR_RSMRST";
+		enum-name = "PWR_RSMRST_PWRGD";
 		gpios = <&gpioe 1 0>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
@@ -40,7 +40,8 @@
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "RSMRST output to PCH";
 		enum-name = "PWR_EC_PCH_RSMRST";
-		gpios = <&gpioh 0 0>;
+		gpios = <&gpioh 0 GPIO_ACTIVE_LOW>;
+		reset-val = <1>;
 		output;
 	};
 	pwr-slp-s0-l {
@@ -106,17 +107,19 @@
 		output;
 	};
 	pwr-slp-s4 {
-		compatible = "intel,ap-pwrseq-gpio";
-		dbg-label = "SLP_S4_L input from PCH";
+		compatible = "intel,ap-pwrseq-vw";
+		dbg-label = "SLP_S4 virtual wire input from PCH";
 		enum-name = "PWR_SLP_S4";
-		gpios = <&gpioi 5 GPIO_ACTIVE_LOW>;
-		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S4";
+		reset-val = <1>;
+		vw-invert;
 	};
 	pwr-slp-s5 {
 		compatible = "intel,ap-pwrseq-vw";
 		dbg-label = "SLP_S5 virtual wire input from PCH";
 		enum-name = "PWR_SLP_S5";
 		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S5";
+		reset-val = <1>;
 		vw-invert;
 	};
 	pwr-all-sys-pwrgd {
@@ -180,9 +183,6 @@
 	no-auto-init;
 };
 &gpio_slp_s3_l {
-	no-auto-init;
-};
-&gpio_slp_s4_l {
 	no-auto-init;
 };
 &gpio_slp_sus_l {

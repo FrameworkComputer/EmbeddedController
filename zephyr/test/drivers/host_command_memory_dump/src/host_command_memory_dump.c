@@ -218,10 +218,10 @@ static enum ec_status fetch_memory_dump(struct mem_dump *dump)
 		};
 	}
 
-	/* try reading out of boud */
+	/* try reading out of bounds */
 	struct ec_params_memory_dump_read_memory read_mem_params_addr_low = {
 		.memory_dump_entry_index = 0,
-		.address = NULL,
+		.address = 0,
 		.size = 4,
 	};
 	int response_size = 0;

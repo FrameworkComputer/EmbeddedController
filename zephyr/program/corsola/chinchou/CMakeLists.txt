@@ -10,3 +10,4 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
                              "../src/ite_usb_pd_policy.c" "../src/ite_usbc.c")
 zephyr_library_sources("src/ppc.c")
 zephyr_library_sources("src/board.c")
+zephyr_library_sources("src/thermal.c")

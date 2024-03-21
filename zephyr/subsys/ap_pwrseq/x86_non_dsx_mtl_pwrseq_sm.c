@@ -10,6 +10,25 @@
 
 LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 
+bool chipset_is_prim_power_good(void)
+{
+	return power_signal_get(PWR_RSMRST_PWRGD);
+}
+
+bool chipset_is_vw_power_good(void)
+{
+	return chipset_is_prim_power_good() &&
+	       !power_signal_get(PWR_EC_PCH_RSMRST);
+}
+
+bool chipset_is_all_power_good(void)
+{
+	return chipset_is_vw_power_good() &&
+	       power_signal_get(PWR_ALL_SYS_PWRGD) &&
+	       power_signal_get(PWR_PCH_PWROK) &&
+	       power_signal_get(PWR_EC_PCH_SYS_PWROK);
+}
+
 #ifndef CONFIG_AP_PWRSEQ_DRIVER
 static void ap_off(void)
 {
@@ -68,8 +87,8 @@ static int x86_non_dsx_mtl_g3_run(void *data)
 	 * Power rail must be enabled by application, now check if chipset is
 	 * ready.
 	 */
-	if (power_wait_signals_timeout(
-		    POWER_SIGNAL_MASK(PWR_RSMRST),
+	if (power_wait_signals_on_timeout(
+		    POWER_SIGNAL_MASK(PWR_RSMRST_PWRGD),
 		    AP_PWRSEQ_DT_VALUE(wait_signal_timeout))) {
 		return 1;
 	}
@@ -92,7 +111,7 @@ static int x86_non_dsx_mtl_s3_run(void *data)
 {
 	int all_sys_pwrgd_in = power_signal_get(PWR_ALL_SYS_PWRGD);
 
-	if (power_signal_get(PWR_RSMRST) == 0) {
+	if (power_signal_get(PWR_RSMRST_PWRGD) == 0) {
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_G3);
 	}
 
@@ -125,7 +144,7 @@ AP_POWER_CHIPSET_STATE_DEFINE(AP_POWER_STATE_S3, x86_non_dsx_mtl_s3_entry,
 
 static int x86_non_dsx_mtl_s0_run(void *data)
 {
-	if (power_signal_get(PWR_RSMRST) == 0) {
+	if (power_signal_get(PWR_RSMRST_PWRGD) == 0) {
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_G3);
 	}
 
@@ -157,7 +176,7 @@ static int x86_non_dsx_mtl_s0ix_run(void *data)
 		 * before leaving S0ix.
 		 */
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S0);
-	} else if (!power_signals_on(POWER_SIGNAL_MASK(PWR_RSMRST))) {
+	} else if (!power_signals_on(POWER_SIGNAL_MASK(PWR_RSMRST_PWRGD))) {
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_G3);
 	}
 

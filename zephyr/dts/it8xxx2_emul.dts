@@ -13,6 +13,10 @@
 #define GPIO_VOLTAGE_1P8 NATIVE_POSIX_GPIO_VOLTAGE_1P8
 
 / {
+	/* Delete conflicting native sim peripherals. */
+	/delete-node/ adc;
+	/delete-node/ i2c@100;
+
 	gpioa: gpio@f01601 {
 		status = "okay";
 		compatible = "zephyr,gpio-emul";
@@ -169,8 +173,47 @@
 		#gpio-cells = <2>;
 		ngpios = <8>;
 	};
+	gpioksi: gpio@f01d08 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0xf01d08 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		keyboard-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpioksoh: gpio@f01d01 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0xf01d01 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		keyboard-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	gpioksol: gpio@f01d00 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0xf01d00 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		keyboard-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
 
-	i2c_ctrl0: i2c@f01c40 {
+	i2c0: i2c@f01c40 {
 		compatible = "zephyr,i2c-emul-controller";
 		clock-frequency = <I2C_BITRATE_STANDARD>;
 		#address-cells = <1>;
@@ -178,7 +221,15 @@
 		reg = <0xf01c40 0x1000>;
 	};
 
-	i2c_ctrl2: i2c@f01cc0 {
+	i2c1: i2c@f01c80 {
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0xf01c80 0x1000>;
+	};
+
+	i2c2: i2c@f01cc0 {
 		compatible = "zephyr,i2c-emul-controller";
 		clock-frequency = <I2C_BITRATE_STANDARD>;
 		#address-cells = <1>;
@@ -186,7 +237,7 @@
 		reg = <0x00f01cc0 0x0040>;
 	};
 
-	i2c_ctrl3: i2c@f03680 {
+	i2c3: i2c@f03680 {
 		compatible = "zephyr,i2c-emul-controller";
 		clock-frequency = <I2C_BITRATE_STANDARD>;
 		#address-cells = <1>;
@@ -194,7 +245,7 @@
 		reg = <0x00f03680 0x0080>;
 	};
 
-	i2c_ctrl4: i2c@f03500 {
+	i2c4: i2c@f03500 {
 		compatible = "zephyr,i2c-emul-controller";
 		clock-frequency = <I2C_BITRATE_STANDARD>;
 		#address-cells = <1>;
@@ -202,7 +253,7 @@
 		reg = <0x00f03500 0x0080>;
 	};
 
-	i2c_ctrl5: i2c@f03580 {
+	i2c5: i2c@f03580 {
 		compatible = "zephyr,i2c-emul-controller";
 		clock-frequency = <I2C_BITRATE_STANDARD>;
 		#address-cells = <1>;
@@ -210,8 +261,9 @@
 		reg = <0x00f03580 0x0080>;
 	};
 
-	adc0: adc {
+	adc0: adc@f01900 {
 		compatible = "zephyr,adc-emul";
+		reg = <0xf01900 0x45>;
 		nchannels = <6>;
 		ref-internal-mv = <3300>;
 		#io-channel-cells = <1>;

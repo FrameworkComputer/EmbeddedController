@@ -69,7 +69,7 @@ enum cmsis_dap_command_t {
 	DAP_GOOG_Info = 0x80,
 	DAP_GOOG_I2c = 0x81,
 	DAP_GOOG_I2cDevice = 0x82,
-
+	DAP_GOOG_Gpio = 0x83,
 };
 
 /* DAP Status Code */
@@ -123,6 +123,8 @@ enum goog_info_subcommand_t {
 /* Bitfield response to vendor (Google) capabities request */
 const uint32_t GOOG_CAP_I2c = BIT(0);
 const uint32_t GOOG_CAP_I2cDevice = BIT(1);
+const uint32_t GOOG_CAP_GpioMonitoring = BIT(2);
+const uint32_t GOOG_CAP_GpioBitbanging = BIT(3);
 
 /* Bitfield used in DAP_SWJ_Pins request */
 const uint8_t PIN_SwClk_Tck = 0x01;
@@ -170,6 +172,38 @@ static int saved_pin_flags[JTAG_INVALID];
 static bool jtag_enabled = false;
 static uint16_t jtag_half_period_count =
 	CPU_CLOCK / DEFAULT_JTAG_CLOCK_HZ / 2 - OVERHEAD_CLOCK_CYCLES;
+
+void queue_blocking_add(struct queue const *q, const void *src, size_t count)
+{
+	while (true) {
+		size_t progress = queue_add_units(q, src, count);
+		src += progress;
+		if (progress >= count)
+			return;
+		count -= progress;
+		/*
+		 * Wait for queue consumer to wake up this task, when there is
+		 * more room in the queue.
+		 */
+		task_wait_event(0);
+	}
+}
+
+void queue_blocking_remove(struct queue const *q, void *dest, size_t count)
+{
+	while (true) {
+		size_t progress = queue_remove_units(q, dest, count);
+		dest += progress;
+		if (progress >= count)
+			return;
+		count -= progress;
+		/*
+		 * Wait for queue consumer to wake up this task, when there is
+		 * more data in the queue.
+		 */
+		task_wait_event(0);
+	}
+}
 
 /*
  * Implementation of handler routines for each CMSIS-DAP command.
@@ -542,7 +576,9 @@ static void dap_jtag_sequence(size_t peek_c)
 /* Vendor command (HyperDebug): Discover Google-specific capabilities. */
 static void dap_goog_info(size_t peek_c)
 {
-	const uint16_t CAPABILITIES = GOOG_CAP_I2c | GOOG_CAP_I2cDevice;
+	const uint16_t CAPABILITIES = GOOG_CAP_I2c | GOOG_CAP_I2cDevice |
+				      GOOG_CAP_GpioMonitoring |
+				      GOOG_CAP_GpioBitbanging;
 
 	if (peek_c < 2)
 		return;
@@ -563,6 +599,7 @@ static void (*dispatch_table[256])(size_t peek_c) = {
 	[DAP_GOOG_Info] = dap_goog_info,
 	[DAP_GOOG_I2c] = dap_goog_i2c,
 	[DAP_GOOG_I2cDevice] = dap_goog_i2c_device,
+	[DAP_GOOG_Gpio] = dap_goog_gpio,
 	[DAP_HostStatus] = dap_host_status,
 	[DAP_Connect] = dap_connect,
 	[DAP_Disconnect] = dap_disconnect,
@@ -628,6 +665,19 @@ static int command_jtag_set_pins(int argc, const char **argv)
 	}
 
 	/* No errors parsing command line, now apply the new settings. */
+	if (jtag_enabled) {
+		/*
+		 * JTAG left enabled, disable current pins before proceeding.
+		 * This will ensure that the next call to dap_connect() will
+		 * result in the new set of pins being configured for
+		 * input/output as appropriate for JTAG.
+		 */
+		jtag_enabled = false;
+		for (size_t i = 0; i < JTAG_INVALID; i++) {
+			gpio_set_flags(jtag_pins[i], saved_pin_flags[i]);
+		}
+	}
+
 	for (int i = 0; i < JTAG_INVALID; i++)
 		jtag_pins[i] = new_pins[i];
 
@@ -686,8 +736,22 @@ struct consumer const cmsis_dap_consumer = {
 	.ops = &cmsis_dap_consumer_ops,
 };
 
+static void cmsis_dap_read(struct producer const *producer, size_t count)
+{
+	task_wake(TASK_ID_CMSIS_DAP);
+}
+
+struct producer_ops const cmsis_dap_producer_ops = {
+	.read = cmsis_dap_read,
+};
+
+struct producer const cmsis_dap_producer = {
+	.queue = &cmsis_dap_tx_queue,
+	.ops = &cmsis_dap_producer_ops,
+};
+
 struct queue const cmsis_dap_tx_queue = QUEUE_DIRECT(
-	sizeof(tx_buffer), uint8_t, null_producer, cmsis_dap_usb.consumer);
+	sizeof(tx_buffer), uint8_t, cmsis_dap_producer, cmsis_dap_usb.consumer);
 
 struct queue const cmsis_dap_rx_queue = QUEUE_DIRECT(
 	sizeof(rx_buffer), uint8_t, cmsis_dap_usb.producer, cmsis_dap_consumer);

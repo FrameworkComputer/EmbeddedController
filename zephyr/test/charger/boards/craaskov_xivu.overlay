@@ -1,0 +1,20 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/gpio_defines.h>
+#include <npcx_emul.dts>
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+		gpio_ec_acok_otg_c0: ec_acok_otg_c0 {
+			gpios = <&gpioc 6 GPIO_OUTPUT>;
+		};
+
+		gpio_ec_acok_otg_c1: ec_acok_otg_c1 {
+			gpios = <&gpioe 4 GPIO_OUTPUT>;
+		};
+	};
+};

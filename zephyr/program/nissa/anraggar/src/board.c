@@ -9,6 +9,7 @@
  * So some functions should be disabled for clamshell.
  */
 #include "accelgyro.h"
+#include "battery.h"
 #include "common.h"
 #include "cros_cbi.h"
 #include "driver/accelgyro_bmi323.h"
@@ -66,3 +67,13 @@ static void alt_sensor_init(void)
 	motion_sensors_check_ssfc();
 }
 DECLARE_HOOK(HOOK_INIT, alt_sensor_init, HOOK_PRIO_POST_I2C);
+
+enum battery_present battery_hw_present(void)
+{
+	const struct gpio_dt_spec *batt_pres;
+
+	batt_pres = GPIO_DT_FROM_NODELABEL(gpio_ec_battery_pres_odl);
+
+	/* The GPIO is low when the battery is physically present */
+	return gpio_pin_get_dt(batt_pres) ? BP_NO : BP_YES;
+}

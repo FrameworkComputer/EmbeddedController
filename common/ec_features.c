@@ -103,7 +103,8 @@ uint32_t get_feature_flags0(void)
 #ifdef HAS_TASK_CENTROIDING
 			  | EC_FEATURE_MASK_0(EC_FEATURE_TOUCHPAD)
 #endif
-#if defined(HAS_TASK_RWSIG) || defined(HAS_TASK_RWSIG_RO)
+#if defined(HAS_TASK_RWSIG) || defined(HAS_TASK_RWSIG_RO) || \
+	defined(CONFIG_PLATFORM_EC_RWSIG)
 			  | EC_FEATURE_MASK_0(EC_FEATURE_RWSIG)
 #endif
 #ifdef CONFIG_DEVICE_EVENT
@@ -151,7 +152,8 @@ uint32_t get_feature_flags1(void)
 #ifdef CHIP_ISH
 		| EC_FEATURE_MASK_1(EC_FEATURE_ISH)
 #endif
-#ifdef CONFIG_USB_PD_TCPMV2
+#if defined(CONFIG_USB_PD_TCPMV2) || \
+	defined(CONFIG_PLATFORM_EC_USB_PD_CONTROLLER)
 		| EC_FEATURE_MASK_1(EC_FEATURE_TYPEC_CMD)
 #endif
 #ifdef CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY

@@ -1,0 +1,172 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+
+		port1-muxes {
+			virtual_mux_c1: virtual-mux-c1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		usbc_port1: port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			bc12 = <&pi3usb9201_emul1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_c1>;
+			};
+			usb_mux_chain_ps8815_port1: usb-mux-chain-ps8815-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_c1>;
+				alternative-chain;
+			};
+			usb_mux_chain_anx7452_port1: usb-mux-chain-1-anx7452 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c1_anx7452_retimer
+					     &virtual_mux_c1>;
+				alternative-chain;
+			};
+			usb_mux_chain_kb8010_port1: usb-mux-chain-1-kb8010 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c1_kb8010_retimer
+					     &virtual_mux_c1>;
+				alternative-chain;
+			};
+			usb_mux_chain_hbr_port1: usb-mux-chain-1-hbr {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&usb_c1_hb_retimer
+					     &virtual_mux_c1>;
+				alternative-chain;
+			};
+		};
+	};
+
+	aliases {
+		kb-usb-c1-rst-odl = &gpio_usb_c1_rst_odl;
+		anx-usb-c1-rt-hpd-in = &gpio_usb_c1_rst_odl;
+		hb-usb-c1-rst-odl = &gpio_usb_c1_rst_odl;
+
+		kb-usb-c1-dp-mode = &gpio_usb_c1_rt_int_odl;
+		anx-usb-c1-rt-dp-en = &gpio_usb_c1_rt_int_odl;
+		hb-usb-c1-int-odl = &gpio_usb_c1_rt_int_odl;
+
+		ps-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
+		kb-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
+		anx-usb-c1-rt-usb-en = &gpio_usb_c1_rt_rst_r_odl;
+		hb-usb-c1-rt-rst-odl = &gpio_usb_c1_rt_rst_r_odl;
+
+		kb-usb-c1-frs-alert = &gpio_usb_c1_frs_en;
+		anx-usb-c1-frs-en = &gpio_usb_c1_frs_en;
+		hb-usb-c1-frs-en = &gpio_usb_c1_frs_en;
+	};
+
+	named-gpios {
+		gpio_usb_c1_rt_rst_r_odl: usb_c1_rt_rst_r_odl {
+			gpios = <&gpio0 3 GPIO_ODR_HIGH>;
+		};
+		gpio_usb_c1_rt_rst_r_odl: usb_c1_rt_rst_r_odl {
+			gpios = <&gpio0 3 (GPIO_INPUT|GPIO_OUTPUT)>;
+		};
+		gpio_usb_c1_rt_int_odl: usb_c1_rt_int_odl {
+			gpios = <&gpio0 2 GPIO_INPUT_PULL_UP>;
+		};
+
+		usb_c1_ppc_int_odl {
+			gpios = <&gpio0 8 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+
+	};
+};
+
+&i2c4_1 {
+	status = "okay";
+
+	tcpc_ps8815_port1: ps8xxx@b {
+		compatible = "parade,ps8xxx", "cros,i2c-mock";
+		reg = <0x0b>;
+		is-alt;
+	};
+
+	tcpc_rt1716_port1: rt1716@4e {
+		compatible = "cros,rt1715-tcpc-emul",
+			"richtek,rt1715-tcpc",
+			"cros,i2c-mock";
+		reg = <0x4e>;
+		is-alt;
+	};
+
+};
+
+&i2c6_1 {
+	status = "okay";
+
+	usb_c1_kb8010_retimer: usb-c1-kb8010-retimer@8 {
+		compatible = "zephyr,kb8010-emul", "kandou,kb8010";
+		status = "okay";
+		reg = <0x08>;
+
+		reset-pin = <&gpio_usb_c1_rt_rst_r_odl>;
+		dp-en-pin = <&gpio_usb_c1_rt_int_odl>;
+
+		/*
+		 * TODO: Figure out how to use reset-pin
+		 *   directly in emul_kb8010.c.
+		 */
+		emul-reset-gpios = <&gpio1 14 GPIO_ACTIVE_HIGH>;
+	};
+
+	usb_c1_anx7452_retimer: usb-c1-anx7452-retimer@10 {
+		compatible = "analogix,anx7452";
+		reg = <0x10>;
+		usb-en-pin = <&gpio_usb_c1_rt_rst_r_odl>;
+		dp-en-pin = <&gpio_usb_c1_rt_int_odl>;
+	};
+
+	ppc_ktu1125_port1: ktu1125@38 {
+		compatible = "zephyr,ktu1125-emul", "kinetic,ktu1125";
+		status = "okay";
+		reg = <0x38>;
+		irq-gpios = <&gpio0 8 GPIO_ACTIVE_LOW>;
+		is-alt;
+	};
+
+	ppc_syv_port1: ppc_syv@40 {
+		compatible = "silergy,syv682x", "cros,i2c-mock";
+
+		status = "okay";
+		reg = <0x40>;
+		is-alt;
+	};
+
+	usb_c1_hb_retimer: usb-c1-hb-retimer@56 {
+		compatible = "intel,jhl8040r";
+		reg = <0x56>;
+		ls-en-pin = <&gpio_usb_c1_rst_odl>;
+		int-pin = <&gpio_usb_c1_rt_int_odl>;
+		reset-pin = <&gpio_usb_c1_rt_rst_r_odl>;
+	};
+
+	pi3usb9201_emul1: pi3usb9201@5f {
+		compatible = "pericom,pi3usb9201";
+		status = "okay";
+		reg = <0x5f>;
+		irq = <&int_usb_c1_bc12>;
+	};
+
+	ppc_nx20p_port1: nx20p348x@72 {
+		compatible = "nxp,nx20p348x";
+		status = "okay";
+		reg = <0x72>;
+		irq-gpios = <&gpio0 8 GPIO_ACTIVE_LOW>;
+		is-alt;
+	};
+};

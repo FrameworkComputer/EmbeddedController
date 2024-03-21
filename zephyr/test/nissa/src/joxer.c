@@ -14,6 +14,7 @@
 #include "joxer.h"
 #include "joxer_sub_board.h"
 #include "keyboard_protocol.h"
+#include "keyboard_scan.h"
 #include "motionsense_sensors.h"
 #include "system.h"
 #include "tcpm/tcpci.h"
@@ -25,6 +26,8 @@
 #include <zephyr/fff.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
+
+#include <drivers/vivaldi_kbd.h>
 
 LOG_MODULE_REGISTER(nissa, LOG_LEVEL_INF);
 
@@ -66,6 +69,8 @@ FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 FAKE_VALUE_FUNC(int, cbi_get_board_version, uint32_t *);
 FAKE_VOID_FUNC(set_scancode_set2, uint8_t, uint8_t, uint16_t);
 FAKE_VOID_FUNC(get_scancode_set2, uint8_t, uint8_t);
+
+struct keyboard_scan_config keyscan_config;
 
 uint8_t board_get_charger_chip_count(void)
 {
@@ -469,25 +474,25 @@ ZTEST(joxer, test_kb_layout_init)
 	kb_layout_init();
 	zassert_equal(set_scancode_set2_fake.call_count, 0);
 	zassert_equal(get_scancode_set2_fake.call_count, 0);
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &joxer_kb_wo_kb_light);
+	zassert_equal(board_vivaldi_keybd_idx(), 1);
 
 	keyboard_layout = 2;
 	kb_layout_init();
 	zassert_equal(set_scancode_set2_fake.call_count, 0);
 	zassert_equal(get_scancode_set2_fake.call_count, 0);
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &joxer_kb_w_kb_light);
+	zassert_equal(board_vivaldi_keybd_idx(), 0);
 
 	keyboard_layout = 1;
 	kb_layout_init();
 	zassert_equal(set_scancode_set2_fake.call_count, 1);
 	zassert_equal(get_scancode_set2_fake.call_count, 1);
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &joxer_kb_wo_kb_light);
+	zassert_equal(board_vivaldi_keybd_idx(), 1);
 
 	keyboard_layout = 3;
 	kb_layout_init();
 	zassert_equal(set_scancode_set2_fake.call_count, 2);
 	zassert_equal(get_scancode_set2_fake.call_count, 2);
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &joxer_kb_w_kb_light);
+	zassert_equal(board_vivaldi_keybd_idx(), 0);
 }
 
 ZTEST(joxer, test_kb_layout_init_cbi_error)

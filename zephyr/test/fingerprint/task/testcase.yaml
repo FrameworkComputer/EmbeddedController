@@ -1,0 +1,48 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+common:
+  platform_allow: native_posix
+tests:
+  fingerprint.task.capture:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FINGERPRINT_CAPTURE=y
+    extra_conf_files:
+    - prj.conf
+
+  fingerprint.task.enroll:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FINGERPRINT_ENROLL=y
+    extra_conf_files:
+    - prj.conf
+
+  fingerprint.task.finger_presence:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FINGERPRINT_FINGER_PRESENCE=y
+    extra_conf_files:
+    - prj.conf
+
+  fingerprint.task.init:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FINGERPRINT_INIT=y
+    extra_conf_files:
+    - prj.conf
+
+  fingerprint.task.match:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FINGERPRINT_MATCH=y
+    extra_conf_files:
+    - prj.conf
+
+  fingerprint.task.shim:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FINGERPRINT_SHIM=y
+    extra_conf_files:
+    - prj.conf
+
+  fingerprint.task.template:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_FINGERPRINT_TEMPLATE=y
+    extra_conf_files:
+    - prj.conf

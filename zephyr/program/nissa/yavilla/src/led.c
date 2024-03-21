@@ -157,7 +157,7 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
-	int rv;
+	int rv = EC_SUCCESS;
 
 	switch (led_id) {
 	case EC_LED_ID_LEFT_LED:
@@ -187,10 +187,7 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 		rv = EC_ERROR_PARAM1;
 	}
 
-	if (rv)
-		return rv;
-
-	return EC_SUCCESS;
+	return rv;
 }
 
 /*
@@ -502,10 +499,13 @@ DECLARE_HOOK(HOOK_INIT, pwr_led_init, HOOK_PRIO_DEFAULT);
  */
 void board_led_auto_control(void)
 {
-	if (chipset_in_state(CHIPSET_STATE_ON))
+	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		led_set_color_power(LED_WHITE, 100);
 		pwr_led_resume();
-	else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
+	} else if (chipset_in_state(CHIPSET_STATE_SUSPEND))
 		pwr_led_suspend_hook();
-	else
+	else {
+		led_set_color_power(LED_OFF, 0);
 		pwr_led_shutdown_hook();
+	}
 }

@@ -19,6 +19,12 @@
 
 #include <zephyr/ztest.h>
 
+enum usb_tc_state {
+	NOT_A_REAL_STATE,
+};
+
+enum usb_tc_state get_state_tc(const int port);
+
 #define TEST_USB_PORT 0
 
 #define TEST_ADDED_PDO PDO_FIXED(10000, 3000, PDO_FIXED_UNCONSTRAINED)

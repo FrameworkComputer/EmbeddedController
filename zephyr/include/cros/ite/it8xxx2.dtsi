@@ -80,6 +80,15 @@
 		offset = <0x0>;
 		size = <0x60000>;
 
+		ec-ro {
+			fmap {
+				offset = <(0x60000 - 4096 - 0x400)>;
+				/*
+				 * don't specify 'size = <0x400>' here so
+				 * it is auto-assigned to the fmap size.
+				 */
+			};
+		};
 		pstate: pstate {
 			type = "section";
 			offset = <(0x60000 - 4096)>;

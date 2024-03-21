@@ -172,18 +172,45 @@ void npcx_trng_hw_init(void)
 		return;
 	}
 
-	/* Configure trng to generate new 128 byte random seed every N (second
-	 * parameter) calls to NCL_DRBG->generate()
+	/* Disable automatic reseeding since it takes a long time and can cause
+	 * host commands to timeout. See See b/322827873 for more details.
+	 *
+	 * The DRBG algorithm used is Hash_DRBG, which has a maxmium of 2^48
+	 * requests between reseeds (reseed_interval). See NIST SP 800-90A Rev.
+	 * 1, Section 10.1: DRBG Mechanisms Based on Hash Functions.
+	 *
+	 * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-90Ar1.pdf#page=47
 	 */
-	state_p->trng_init = NCL_DRBG->config(ctx_p, 100, false);
+	const uint32_t reseed_interval = UINT32_MAX;
+	state_p->trng_init = NCL_DRBG->config(ctx_p, reseed_interval, false);
 	if (state_p->trng_init != NCL_STATUS_OK) {
 		ccprintf("ERROR! DRBG config returned %x\r",
 			 state_p->trng_init);
 		return;
 	}
 
+	/* NIST SP 800-90A Rev. 1 Section 8.4 states:
+	 *
+	 * The pseudorandom bits returned from a DRBG shall not be used for any
+	 * application that requires a higher security strength than the DRBG is
+	 * instantiated to support. The security strength provided in these
+	 * returned bits is the minimum of the security strength supported by
+	 * the DRBG and the length of the bit string returned, i.e.:
+	 *
+	 * Security_strength_of_output =
+	 *   min(output_length, DRBG_security_strength)
+	 *
+	 * A concatenation of bit strings resulting from multiple calls to a
+	 * DRBG will not provide a security strength for the concatenated string
+	 * that is greater than the instantiated security strength of the DRBG.
+	 * For example, two 128-bit output strings requested from a DRBG that
+	 * supports a 128-bit security strength cannot be concatenated to form a
+	 * 256-bit string with a security strength of 256 bits.
+	 *
+	 * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-90Ar1.pdf#page=23
+	 */
 	state_p->trng_init = NCL_DRBG->instantiate(
-		ctx_p, NCL_DRBG_SECURITY_STRENGTH_128b, NULL, 0);
+		ctx_p, NCL_DRBG_SECURITY_STRENGTH_256b, NULL, 0);
 	if (state_p->trng_init != NCL_STATUS_OK) {
 		ccprintf("ERROR! DRBG instantiate returned %x\r",
 			 state_p->trng_init);

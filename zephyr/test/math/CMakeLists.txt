@@ -18,3 +18,5 @@ target_sources(
 
 # Fixed point specific tests
 target_sources_ifndef(CONFIG_FPU app PRIVATE src/fixed_point_int_sqrtf.c)
+
+add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)

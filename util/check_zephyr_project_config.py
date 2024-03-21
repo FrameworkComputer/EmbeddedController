@@ -154,17 +154,20 @@ class KconfigCheck:
             ) as file:
                 file.write(kconfig)
 
-            # generate empty Kconfig.dts file
-            with open(
-                pathlib.Path(temp_dir) / "Kconfig.dts", "w", encoding="utf-8"
-            ) as file:
-                file.write("")
+            # generate few more stub files
+            (pathlib.Path(temp_dir) / "Kconfig.dts").touch()
+            (pathlib.Path(temp_dir) / "soc").mkdir()
+            (pathlib.Path(temp_dir) / "soc" / "Kconfig.soc").touch()
+            (pathlib.Path(temp_dir) / "soc" / "Kconfig.defconfig").touch()
+            (pathlib.Path(temp_dir) / "arch").mkdir()
+            (pathlib.Path(temp_dir) / "arch" / "Kconfig").touch()
 
             os.environ["ZEPHYR_BASE"] = str(ZEPHYR_BASE)
             os.environ["srctree"] = str(ZEPHYR_BASE)
             os.environ["KCONFIG_BINARY_DIR"] = temp_dir
             os.environ["ARCH_DIR"] = "arch"
             os.environ["ARCH"] = "*"
+            os.environ["HWM_SCHEME"] = "v2"
             os.environ["BOARD_DIR"] = "boards/posix/native_posix"
 
             if not filename:

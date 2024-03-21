@@ -49,9 +49,9 @@
 /*
  * This command needs malloc to work. Could we use this instead?
  *
- * #define CMD_KEYBOARD_LOG IS_ENABLED(CONFIG_MALLOC)
+ * #define CMD_KEYBOARD_LOG IS_ENABLED(CONFIG_SHARED_MALLOC)
  */
-#ifdef CONFIG_MALLOC
+#ifdef CONFIG_SHARED_MALLOC
 #define CMD_KEYBOARD_LOG 1
 #else
 #define CMD_KEYBOARD_LOG 0
@@ -96,7 +96,7 @@ enum scancode_set_list {
  * Mutex to control write access to the to-host buffer head.  Don't need to
  * mutex the tail because reads are only done in one place.
  */
-K_MUTEX_DEFINE(to_host_mutex);
+static K_MUTEX_DEFINE(to_host_mutex);
 
 #if defined(CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN)
 K_MUTEX_DEFINE(from_host_mutex);

@@ -22,7 +22,7 @@
 
 	wdg_helper: counter-watchdog {
 		compatible = "zephyr,counter-watchdog";
-		status = "disable";
+		status = "disabled";
 	};
 
 	binman {

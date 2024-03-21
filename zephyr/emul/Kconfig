@@ -69,6 +69,17 @@ config EMUL_PPC_NX20P348X
 	  NX20P3483.  It is also register compatible with the SM5360A.  This
 	  emulator makes use of the emulated I2C bus.
 
+if EMUL_PPC_NX20P348X
+
+config EMUL_PPC_NX20P348X_NO_TCPC
+	bool "Disable TCPC interactions"
+	help
+	  Enable if TCPC relationship is not known at compile
+	  time. This is the case when the the PPC or TCPC nodes
+	  use the "is-alt" property.
+
+endif # EMUL_PPC_NX20P348X
+
 config EMUL_PPC_SYV682X
 	bool "Silergy SYV682x PPC emulator"
 	default y
@@ -151,13 +162,21 @@ config EMUL_CROS_FLASH
 
 config EMUL_FPC1025
 	bool "FPC1025 fingerprint sensor emulator"
-	depends on ZTEST && DT_HAS_FPC_FPC1025_ENABLED
+	depends on ZTEST && DT_HAS_FPC_FPC1025_ENABLED && ARCH_POSIX
 	default y
 	help
 	  This option enables the FPC1025 fingerprint sensor emulator.
 	  It supports only basic commands (get hardware id, enter low power
 	  mode) that can be issued by the public driver (without FPC private
 	  library)
+
+config EMUL_SMBUS_ARA
+	bool "SMBUS Alert Response Address emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_SMBUS_ARA_EMUL_ENABLED && EMUL
+	select EMUL_COMMON_I2C
+	help
+	  Enable the SMBUS ARA emulator. This driver use emulated I2C bus.
 
 config EMUL_REALTEK_RTS54_PDC
 	bool "Realtek RTS5453P Type-C Power Delivery Controller emulator"
@@ -174,6 +193,17 @@ config EMUL_RTC
 	depends on DT_HAS_CROS_EC_RTC_EMUL_ENABLED
 	help
 	  This options enables the RTC emulator for testing.
+
+config EMUL_KTU1125
+	bool "KTU1125 PPC emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_KTU1125_EMUL_ENABLED
+	help
+	  Enable the KTU1125 PPC emulator. This driver uses an emulated
+	  I2C bus. This is a minimal emulator that does not provide
+	  functional emulation but does support coverage testing of the
+	  KTU1125 PPC driver.
+	  Emulator API is available in zephyr/include/emul/emul_ktu1125.h.
 
 config EMUL_RT1739
 	bool "RT1739 PPC emulator"
@@ -236,6 +266,18 @@ config EMUL_ANX7452
 	  reads and writes to all emulator registers. Emulators API is
 	  available in zephyr/include/emul/emul_anx7452.h
 
+config EMUL_KB8010
+	bool "KB8010 retimer emulator"
+	default y
+	depends on ZTEST && DT_HAS_KANDOU_KB8010_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable the Kandou kb8010 retimer emulator. This driver use
+	  emulated I2C bus. It is used to test kb8010 driver. It
+	  supports reads and writes to all emulator registers.
+	  XXX The emulator's
+	  XXX API is available in zephyr/include/emul/emul_kb8010.h
+
 config EMUL_PS8743
 	bool "PS8743 emulator"
 	default y
@@ -252,6 +294,13 @@ config EMUL_ICM42607
 	select EMUL_COMMON_I2C
 	help
 	  Enable the ICM42607 accelerometer and gyroscope emulator.
+
+config EMUL_LSM6DSO
+  bool "lsm6dso emulator"
+  default y
+  depends on DT_HAS_CROS_LSM6DSO_EMUL_ENABLED
+  help
+    Enable the LSM6DSO accelerometer and gyroscope emulator.
 
 rsource "Kconfig.ln9310"
 rsource "Kconfig.lis2dw12"

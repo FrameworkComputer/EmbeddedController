@@ -8,6 +8,8 @@
 #include <openssl/crypto.h>
 #include <openssl/rand.h>
 
+void CRYPTO_sysrand(uint8_t *out, size_t requested);
+
 ZTEST_SUITE(boringssl_crypto, NULL, NULL, NULL, NULL, NULL);
 
 static ZTEST_DMEM volatile int expected_reason = -1;

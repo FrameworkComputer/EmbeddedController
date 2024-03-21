@@ -736,7 +736,7 @@ static int icm42607_get_hw_offset(const struct motion_sensor_t *s,
 
 	/* Extend sign-bit of 12 bits signed values */
 	for (i = X; i <= Z; ++i)
-		offset[i] = sign_extend(offset[i], 11);
+		offset[i] = icm_sign_extend(offset[i], 11);
 
 	return EC_SUCCESS;
 
@@ -965,7 +965,7 @@ static int icm42607_read_temp(const struct motion_sensor_t *s, int *temp_ptr)
 	val = be16toh(val);
 
 	/* ensure correct propagation of 16 bits sign bit */
-	val = sign_extend(val, 15);
+	val = icm_sign_extend(val, 15);
 
 	if (val == ICM42607_INVALID_DATA)
 		return EC_ERROR_NOT_POWERED;

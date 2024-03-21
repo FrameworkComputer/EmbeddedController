@@ -138,6 +138,7 @@ struct common_hnd {
 	int flash_size;
 	int flash_cmd_v2; /* boolean */
 	int dbgr_addr_3bytes; /* boolean */
+	bool instruction_set_v2;
 	union {
 		int i2c_dev_fd;
 		struct usb_endpoint uep;
@@ -377,7 +378,7 @@ static int i2c_add_recv_bytes(struct ftdi_context *ftdi, uint8_t *buf,
 }
 
 #define USB_I2C_HEADER_SIZE 4
-static int ccd_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
+static int usb_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 				 uint8_t *data, int write, int numbytes)
 {
 	size_t usb_buffer_size = USB_I2C_HEADER_SIZE + numbytes +
@@ -422,8 +423,8 @@ static int ccd_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 
 	response_size = 0;
 	usb_trx(&chnd->uep, usb_buffer,
-		write ? sizeof(usb_buffer) : USB_I2C_HEADER_SIZE + extra,
-		usb_buffer, sizeof(usb_buffer), 1, &response_size);
+		write ? usb_buffer_size : USB_I2C_HEADER_SIZE + extra,
+		usb_buffer, usb_buffer_size, 1, &response_size);
 
 	if (response_size < (USB_I2C_HEADER_SIZE + (write ? 0 : numbytes))) {
 		fprintf(stderr, "%s: got too few bytes (%zd) in response\n",
@@ -442,7 +443,7 @@ static int ccd_i2c_byte_transfer(struct common_hnd *chnd, uint8_t addr,
 		rv = (rv << 8) + usb_buffer[0];
 
 		fprintf(stderr, "%s: usb i2c error %d\n", __func__,
-			(((uint16_t)usb_buffer[1]) << 8) + usb_buffer[0]);
+			(uint16_t)rv);
 
 		return -rv;
 	}
@@ -682,6 +683,9 @@ static int check_chipid(struct common_hnd *chnd)
 		if ((id & 0xf000f) == 0x80001 || (id & 0xf000f) == 0x80002) {
 			chnd->flash_cmd_v2 = 1;
 			chnd->dbgr_addr_3bytes = 1;
+			if ((id & 0xf00f) == 0x2002) {
+				chnd->instruction_set_v2 = true;
+			}
 		} else {
 			fprintf(stderr, "Invalid chip id: %05x\n", id);
 			return -EINVAL;
@@ -756,7 +760,8 @@ static int dbgr_disable_watchdog(struct common_hnd *chnd)
 		ret |= i2c_write_byte(chnd, 0x80, 0xf0);
 
 	ret |= i2c_write_byte(chnd, 0x2f, 0x1f);
-	ret |= i2c_write_byte(chnd, 0x2e, 0x05);
+	ret |= i2c_write_byte(chnd, 0x2e,
+			      chnd->instruction_set_v2 ? 0x85 : 0x05);
 	ret |= i2c_write_byte(chnd, 0x30, 0x30);
 
 	if (ret < 0)
@@ -978,7 +983,7 @@ static int ftdi_config_i2c(struct ftdi_context *ftdi)
 #define SPECIAL_BUFFER_SIZE \
 	(((SPECIAL_LEN_USEC * SPECIAL_FREQ * 2 / USEC) + 7) & ~7)
 
-static int connect_to_ccd_i2c_bridge(struct common_hnd *chnd)
+static int connect_to_usb_i2c_bridge(struct common_hnd *chnd)
 {
 	int rv;
 
@@ -994,7 +999,7 @@ static int connect_to_ccd_i2c_bridge(struct common_hnd *chnd)
 	return rv;
 }
 
-static int ccd_trigger_special_waveform(struct common_hnd *chnd)
+static int usb_trigger_special_waveform(struct common_hnd *chnd)
 {
 	uint8_t response[20];
 	size_t rsize;
@@ -1020,7 +1025,7 @@ static int ccd_trigger_special_waveform(struct common_hnd *chnd)
 
 	sleep(3);
 
-	return connect_to_ccd_i2c_bridge(chnd);
+	return connect_to_usb_i2c_bridge(chnd);
 }
 
 static int ftdi_send_special_waveform(struct common_hnd *chnd)
@@ -1974,14 +1979,18 @@ static int linux_i2c_interface_shutdown(struct common_hnd *chnd)
 	return 0;
 }
 
-static int ccd_i2c_interface_init(struct common_hnd *chnd)
+static int usb_i2c_interface_init(struct common_hnd *chnd)
 {
-	chnd->conf.usb_vid = CR50_USB_VID;
-	chnd->conf.usb_pid = CR50_USB_PID;
-	return connect_to_ccd_i2c_bridge(chnd);
+	if (chnd->conf.usb_vid == 0 && chnd->conf.usb_serial == nullptr) {
+		chnd->conf.usb_vid = CR50_USB_VID;
+	}
+	if (chnd->conf.usb_pid == 0 && chnd->conf.usb_serial == nullptr) {
+		chnd->conf.usb_pid = CR50_USB_PID;
+	}
+	return connect_to_usb_i2c_bridge(chnd);
 }
 
-static int ccd_i2c_interface_shutdown(struct common_hnd *chnd)
+static int usb_i2c_interface_shutdown(struct common_hnd *chnd)
 {
 	usb_shut_down(&chnd->uep);
 	return 0;
@@ -1989,6 +1998,12 @@ static int ccd_i2c_interface_shutdown(struct common_hnd *chnd)
 
 static int ftdi_i2c_interface_init(struct common_hnd *chnd)
 {
+	if (chnd->conf.usb_vid == 0) {
+		chnd->conf.usb_vid = SERVO_USB_VID;
+	}
+	if (chnd->conf.usb_pid == 0) {
+		chnd->conf.usb_pid = SERVO_USB_PID;
+	}
 	chnd->ftdi_hnd = open_ftdi_device(chnd->conf.usb_vid,
 					  chnd->conf.usb_pid,
 					  chnd->conf.usb_interface,
@@ -2031,12 +2046,13 @@ static const struct i2c_interface linux_i2c_interface = {
 	.default_block_write_size = 128,
 };
 
-static const struct i2c_interface ccd_i2c_interface = {
-	.interface_init = ccd_i2c_interface_init,
-	.interface_shutdown = ccd_i2c_interface_shutdown,
-	.send_special_waveform = ccd_trigger_special_waveform,
-	.byte_transfer = ccd_i2c_byte_transfer,
-	.default_block_write_size = PAGE_SIZE,
+static const struct i2c_interface usb_i2c_interface = {
+	.interface_init = usb_i2c_interface_init,
+	.interface_shutdown = usb_i2c_interface_shutdown,
+	.send_special_waveform = usb_trigger_special_waveform,
+	.byte_transfer = usb_i2c_byte_transfer,
+	// 256 works for CCD, but not for C2D2 & servo_micro, see above.
+	.default_block_write_size = 128,
 };
 
 static const struct i2c_interface ftdi_i2c_interface = {
@@ -2116,8 +2132,9 @@ static void display_usage(const char *program)
 		program);
 	fprintf(stderr, "-d, --debug : Output debug traces.\n");
 	fprintf(stderr, "-e, --erase : Erase all the flash content.\n");
-	fprintf(stderr, "-c, --i2c-interface <linux|ccd|ftdi> : I2C interface "
-			"to use\n");
+	fprintf(stderr,
+		"-c, --i2c-interface <linux|usb|ftdi|ccd (deprecated, use usb)> : "
+		"I2C interface to use\n");
 	fprintf(stderr, "-D, --i2c-dev-path /dev/i2c-<N> : Path to "
 			"Linux i2c-dev file e.g. /dev/i2c-5;\n"
 			"\tonly applicable with --i2c-interface=linux\n");
@@ -2203,8 +2220,9 @@ static int parse_parameters(int argc, char **argv, struct iteflash_config *conf)
 		case 'c':
 			if (!strcasecmp(optarg, "linux")) {
 				conf->i2c_if = &linux_i2c_interface;
-			} else if (!strcasecmp(optarg, "ccd")) {
-				conf->i2c_if = &ccd_i2c_interface;
+			} else if (!strcasecmp(optarg, "usb") ||
+				   !strcasecmp(optarg, "ccd")) {
+				conf->i2c_if = &usb_i2c_interface;
 			} else if (!strcasecmp(optarg, "ftdi")) {
 				conf->i2c_if = &ftdi_i2c_interface;
 			} else {
@@ -2323,8 +2341,6 @@ int main(int argc, char **argv)
 			.disable_watchdog = 1,
 			.disable_protect_path = 1,
 			.usb_interface = SERVO_INTERFACE,
-			.usb_vid = SERVO_USB_VID,
-			.usb_pid = SERVO_USB_PID,
 			.verify = 1,
 			.i2c_if = &ftdi_i2c_interface,
 		},

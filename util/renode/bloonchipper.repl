@@ -16,5 +16,7 @@ timer2:
 GPIO_WP: Miscellaneous.Button @ gpioPortB 7
     invert: true
     -> gpioPortB@7
+    init:
+        ReleaseOnReset false
 
 fpsensor: Sensors.GenericSPISensor @ spi2

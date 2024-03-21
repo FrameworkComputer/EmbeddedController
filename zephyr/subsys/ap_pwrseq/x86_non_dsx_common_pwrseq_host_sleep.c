@@ -6,6 +6,15 @@
 #include <ap_power_host_sleep.h>
 #include <x86_non_dsx_common_pwrseq_sm_handler.h>
 
+/**
+ * Type of sleep hang detected
+ */
+enum sleep_hang_type {
+	SLEEP_HANG_NONE,
+	SLEEP_HANG_S0IX_SUSPEND,
+	SLEEP_HANG_S0IX_RESUME
+};
+
 static uint16_t sleep_signal_timeout;
 static uint16_t host_sleep_timeout_default = CONFIG_SLEEP_TIMEOUT_MS;
 static uint32_t sleep_signal_transitions;
@@ -15,15 +24,6 @@ static void sleep_transition_timeout(struct k_work *work);
 
 static K_WORK_DELAYABLE_DEFINE(sleep_transition_timeout_data,
 			       sleep_transition_timeout);
-
-/**
- * Type of sleep hang detected
- */
-enum sleep_hang_type {
-	SLEEP_HANG_NONE,
-	SLEEP_HANG_S0IX_SUSPEND,
-	SLEEP_HANG_S0IX_RESUME
-};
 
 void power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 {

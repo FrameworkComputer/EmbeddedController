@@ -39,48 +39,6 @@
 
 #define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 
-/* ADC channels */
-const struct adc_t adc_channels[] = {
-	[ADC_VSNS_PP3300_A] = { .name = "PP3300_A_PGOOD",
-				.factor_mul = ADC_MAX_MVOLT,
-				.factor_div = ADC_READ_MAX + 1,
-				.shift = 0,
-				.channel = CHIP_ADC_CH0 },
-	[ADC_TEMP_SENSOR_1] = { .name = "TEMP_SENSOR1",
-				.factor_mul = ADC_MAX_MVOLT,
-				.factor_div = ADC_READ_MAX + 1,
-				.shift = 0,
-				.channel = CHIP_ADC_CH2 },
-	[ADC_TEMP_SENSOR_2] = { .name = "TEMP_SENSOR2",
-				.factor_mul = ADC_MAX_MVOLT,
-				.factor_div = ADC_READ_MAX + 1,
-				.shift = 0,
-				.channel = CHIP_ADC_CH3 },
-	[ADC_VBUS] = { .name = "VBUS", /* 113/1113 voltage divider */
-		       .factor_mul = ADC_MAX_MVOLT * 1113,
-		       .factor_div = (ADC_READ_MAX + 1) * 113,
-		       .shift = 0,
-		       .channel = CHIP_ADC_CH4 },
-	[ADC_TEMP_SENSOR_3] = { .name = "TEMP_SENSOR3",
-				.factor_mul = ADC_MAX_MVOLT,
-				.factor_div = ADC_READ_MAX + 1,
-				.shift = 0,
-				.channel = CHIP_ADC_CH13 },
-	/* 0.01 ohm shunt resistor and 50 V/V INA -> 500 mV/A */
-	[ADC_PPVAR_PWR_IN_IMON] = { .name = "ADC_PPVAR_PWR_IN_IMON",
-				    .factor_mul = ADC_MAX_MVOLT * 2,
-				    .factor_div = ADC_READ_MAX + 1,
-				    .shift = 0,
-				    .channel = CHIP_ADC_CH15 },
-	/* 5/39 voltage divider */
-	[ADC_SNS_PPVAR_PWR_IN] = { .name = "ADC_SNS_PPVAR_PWR_IN",
-				   .factor_mul = ADC_MAX_MVOLT * 39,
-				   .factor_div = (ADC_READ_MAX + 1) * 5,
-				   .shift = 0,
-				   .channel = CHIP_ADC_CH16 },
-};
-BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
-
 /* TCPCs */
 const struct tcpc_config_t tcpc_config[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	{
@@ -121,22 +79,27 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 	GPIO_EN_USB_A3_VBUS, GPIO_EN_USB_A4_VBUS,
 };
 
-/* Thermistors */
-const struct temp_sensor_t temp_sensors[] = {
-	[TEMP_SENSOR_1] = { .name = "Memory",
-			    .type = TEMP_SENSOR_TYPE_BOARD,
-			    .read = get_temp_3v3_51k1_47k_4050b,
-			    .idx = ADC_TEMP_SENSOR_1 },
-	[TEMP_SENSOR_2] = { .name = "SoC power",
-			    .type = TEMP_SENSOR_TYPE_BOARD,
-			    .read = get_temp_3v3_51k1_47k_4050b,
-			    .idx = ADC_TEMP_SENSOR_2 },
-	[TEMP_SENSOR_3] = { .name = "Ambient",
-			    .type = TEMP_SENSOR_TYPE_BOARD,
-			    .read = get_temp_3v3_51k1_47k_4050b,
-			    .idx = ADC_TEMP_SENSOR_3 },
+/* Power on Dita through CEC */
+struct cec_offline_policy dita_cec_policy[] = {
+	{
+		.command = CEC_MSG_ACTIVE_SOURCE,
+		.action = CEC_ACTION_POWER_BUTTON,
+	},
+	{
+		.command = CEC_MSG_TEXT_VIEW_ON,
+		.action = CEC_ACTION_POWER_BUTTON,
+	},
+	{
+		.command = CEC_MSG_IMAGE_VIEW_ON,
+		.action = CEC_ACTION_POWER_BUTTON,
+	},
+	{
+		.command = CEC_MSG_SET_STREAM_PATH,
+		.action = CEC_ACTION_POWER_BUTTON,
+	},
+	/* Terminator */
+	{ 0 },
 };
-BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
 /* CEC ports */
 static const struct bitbang_cec_config bitbang_cec_config = {
@@ -151,13 +114,13 @@ const struct cec_config_t cec_config[] = {
 	[CEC_PORT_0] = {
 		.drv = &it83xx_cec_drv,
 		.drv_config = NULL,
-		.offline_policy = cec_default_policy,
+		.offline_policy = dita_cec_policy,
 	},
 	/* HDMI2 */
 	[CEC_PORT_1] = {
 		.drv = &bitbang_cec_drv,
 		.drv_config = &bitbang_cec_config,
-		.offline_policy = cec_default_policy,
+		.offline_policy = dita_cec_policy,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(cec_config) == CEC_PORT_COUNT);

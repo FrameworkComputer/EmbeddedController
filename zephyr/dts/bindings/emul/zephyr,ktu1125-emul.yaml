@@ -1,0 +1,13 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Zephyr ktu1125 Emulator
+
+compatible: "zephyr,ktu1125-emul"
+
+include: ["i2c-device.yaml", "ppc-chip.yaml"]
+
+properties:
+  irq-gpios:
+    required: true

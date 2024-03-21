@@ -20,3 +20,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_DRP_ACC_TRYSRC
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_FW_UPDATE
                                                 "${PLATFORM_EC}/common/usbc/usb_retimer_fw_update.c")
 
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_CONSOLE_CMD
+                                                "${PLATFORM_EC}/common/usb_pd_console_cmd.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_HOST_CMD
+                                                "${PLATFORM_EC}/common/usb_pd_host_cmd.c"
+                                                "${PLATFORM_EC}/common/usbc/usb_pd_host.c")

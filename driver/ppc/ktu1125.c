@@ -504,7 +504,6 @@ static void ktu1125_handle_interrupt(int port)
 	while (ppc_get_alert_status(port))
 #endif
 	{
-		int ovp_int_count = 0;
 		int snk = 0;
 		int src = 0;
 		int data = 0;
@@ -553,13 +552,7 @@ static void ktu1125_handle_interrupt(int port)
 
 		if (data & (KTU1125_CC1_OVP | KTU1125_CC2_OVP)) {
 			ppc_prints("CC Over Voltage!", port);
-			/*
-			 * Bug on ktu1125 Rev A:
-			 * OVP interrupts are falsely triggered
-			 * after IC reset (RST_L 0-> 1)
-			 */
-			if (ovp_int_count++)
-				pd_handle_cc_overvoltage(port);
+			pd_handle_cc_overvoltage(port);
 		}
 	}
 }

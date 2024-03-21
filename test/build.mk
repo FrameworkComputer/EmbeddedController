@@ -162,6 +162,8 @@ cov-dont-test += fpsensor
 cov-dont-test += fpsensor_crypto
 # fpsensor_state: genhtml looks for build/host/fpsensor_state/cryptoc/util.c
 cov-dont-test += fpsensor_state
+# otp_key: genhtml looks for build/host/chip/npcx/otp_key.c
+cov-dont-test  += otp_key
 # version: Only works in a chroot.
 cov-dont-test += version
 # interrupt: The test often times out if enabled for coverage.
@@ -251,7 +253,10 @@ endif
 libcxx-y=libcxx.o
 mpu-y=mpu.o
 mutex-y=mutex.o
+mutex_trylock-y=mutex_trylock.o
+mutex_recursive-y=mutex_recursive.o
 newton_fit-y=newton_fit.o
+otp_key-y=otp_key.o
 panic-y=panic.o
 panic_data-y=panic_data.o
 pingpong-y=pingpong.o
@@ -259,6 +264,7 @@ power_button-y=power_button.o
 powerdemo-y=powerdemo.o
 printf-y=printf.o
 queue-y=queue.o
+restricted_console-y=restricted_console.o
 rng_benchmark-y=rng_benchmark.o
 rollback-y=rollback.o
 rollback_entropy-y=rollback_entropy.o
@@ -266,6 +272,8 @@ rollback_secret-y=rollback_secret.o
 rsa-y=rsa.o
 rsa3-y=rsa.o
 rtc-y=rtc.o
+rtc_npcx9-y=rtc_npcx9.o
+rtc_stm32f4-y=rtc_stm32f4.o
 scratchpad-y=scratchpad.o
 sbrk-y=sbrk.o
 sbs_charging-y=sbs_charging.o
@@ -276,7 +284,6 @@ shmalloc-y=shmalloc.o
 static_if-y=static_if.o
 stdlib-y=stdlib.o
 std_vector-y=std_vector.o
-stm32f_rtc-y=stm32f_rtc.o
 stress-y=stress.o
 system-y=system.o
 system_is_locked-y=system_is_locked.o

@@ -129,6 +129,14 @@
 		pg_pp4200_s5_od: pg-pp4200-s5-od {
 			gpios = <&gpioc 5 GPIO_INPUT>;
 		};
+		volume_down_l: volume_down_l {
+			gpios = <&gpiod 6 GPIO_INPUT>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		volume_up_l: volume_up_l {
+			gpios = <&gpiod 5 GPIO_INPUT>;
+			enum-name = "GPIO_VOLUME_UP_L";
+		};
 	};
 
 	unused-pins {
@@ -170,9 +178,11 @@
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 		temp_sensor_1 {
+			temp_host_halt = <75>;
 			sensor = <&temp_sensor_1_thermistor>;
 		};
 		temp_charger: charger {
+			temp_host_halt = <88>;
 			sensor = <&charger_bc12_port1>;
 		};
 	};

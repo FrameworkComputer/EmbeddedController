@@ -476,11 +476,6 @@
 #undef CONFIG_BATTERY_CONFIG_IN_CBI
 
 /*
- * Config to indicate the battery type that cannot be auto detected.
- */
-#undef CONFIG_BATTERY_TYPE_NO_AUTO_DETECT
-
-/*
  * Compile battery-specific code.
  *
  * Note that some boards have their own unique battery constants / functions.
@@ -1799,7 +1794,7 @@
  * capture the EC state after a panic.
  */
 #undef CONFIG_SYSTEM_SAFE_MODE
-#define CONFIG_SYSTEM_SAFE_MODE_TIMEOUT_MSEC 2000
+#define CONFIG_SYSTEM_SAFE_MODE_TIMEOUT_MSEC 4000
 /*
  * Prints the stack of the faulting task to the console buffer in system safe
  * mode.
@@ -1931,6 +1926,9 @@
 
 /* Max length of a single line of input */
 #define CONFIG_CONSOLE_INPUT_LINE_SIZE 80
+
+/* Amount of time to keep the console in use flag */
+#define CONFIG_CONSOLE_IN_USE_ON_BOOT_TIME (15 * SECOND)
 
 /* Enable verbose output to UART console and extra timestamp print precision. */
 #define CONFIG_CONSOLE_VERBOSE
@@ -2290,6 +2288,7 @@
 #undef CONFIG_FP_SENSOR_FPC1035
 #undef CONFIG_FP_SENSOR_FPC1145
 #undef CONFIG_FP_SENSOR_ELAN80
+#undef CONFIG_FP_SENSOR_ELAN80SG
 #undef CONFIG_FP_SENSOR_ELAN515
 
 /*****************************************************************************/
@@ -2638,7 +2637,9 @@
 /* EC supports EC_CMD_TYPEC_DISCOVERY */
 #define CONFIG_HOSTCMD_TYPEC_DISCOVERY
 
-/* EC supports EC_CMD_TYPEC_CONTROL */
+/* EC supports EC_CMD_TYPEC_CONTROL
+ * Note: this gets undefined later if TCPMv1 is selected.
+ */
 #define CONFIG_HOSTCMD_TYPEC_CONTROL
 
 /* EC supports EC_CMD_TYPEC_STATUS */
@@ -3510,7 +3511,7 @@
 #endif /* CONFIG_ZEPHYR */
 
 /* Provide rudimentary malloc/free like services for shared memory. */
-#undef CONFIG_MALLOC
+#undef CONFIG_SHARED_MALLOC
 
 /* Need for a math library */
 #undef CONFIG_MATH_UTIL
@@ -3594,6 +3595,15 @@
  * ISL9238C disable the CMOUT latch function.
  */
 #undef CONFIG_ISL9238C_DISABLE_CMOUT_LATCH
+
+/*
+ * ISL9238C input voltage setting.
+ * Set the input voltage for the ISL9238C charger. Setting -1 means use
+ * the default setting defined by the chip.  The ISL9238C input voltage
+ * is configured using 341.3 mV steps.  The value specified is rounded
+ * down.
+ */
+#define CONFIG_ISL9238C_INPUT_VOLTAGE_MV -1
 
 /*
  * ISL9238C enable Force Buck mode.
@@ -4053,6 +4063,12 @@
 /* Size of the MAC address field if needed. */
 #undef CONFIG_MAC_ADDR_LEN
 
+/* Support programmable device poweron config. */
+#undef CONFIG_POWERON_CONF
+
+/* Size of the poweron config field if needed. */
+#undef CONFIG_POWERON_CONF_LEN
+
 /****************************************************************************/
 /* Shared objects library. */
 
@@ -4072,7 +4088,7 @@
 #undef CONFIG_SCI_GPIO
 
 /* Support computing of other hash sizes (without the VBOOT code) */
-#undef CONFIG_SHA256
+#undef CONFIG_SHA256_SW
 
 /* Compute SHA256 by using chip's hardware accelerator */
 #undef CONFIG_SHA256_HW_ACCELERATE
@@ -4435,6 +4451,9 @@
  * DPTF. We have some hybrid solutions where the EC still manages the fans.
  */
 #undef CONFIG_DPTF
+
+/* If defined, dptf debug prints will print to EC console */
+#undef CONFIG_DPTF_DEBUG_PRINTS
 
 /*
  * If defined, this indicates to the motion lid driver that the board does not
@@ -5324,7 +5343,9 @@
 #undef CONFIG_USBC_PPC_AOZ1380
 #undef CONFIG_USBC_PPC_KTU1125
 #undef CONFIG_USBC_PPC_NX20P3481
+#ifndef CONFIG_ZEPHYR
 #undef CONFIG_USBC_PPC_NX20P3483
+#endif /* CONFIG_ZEPHYR */
 #undef CONFIG_USBC_PPC_RT1718S
 #undef CONFIG_USBC_PPC_SN5S330
 #undef CONFIG_USBC_PPC_SYV682C
@@ -7128,7 +7149,7 @@
 
 /* EC Codec Wake-on-Voice related definitions */
 #ifdef CONFIG_AUDIO_CODEC_WOV
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #endif
 
 #ifdef CONFIG_SMBUS_PEC
@@ -7188,6 +7209,14 @@
 	"CONFIG_USB_PD_TCPM_PS8* are intended to support in a board."
 #endif
 #endif /* defined(CONFIG_USB_PD_TCPM_PS8705) + ... */
+
+/*
+ * CONFIG_HOSTCMD_TYPEC_CONTROL is not supported for TCPMv1, so disable it in
+ * that case.
+ */
+#ifdef CONFIG_USB_PD_TCPMV1
+#undef CONFIG_HOSTCMD_TYPEC_CONTROL
+#endif /* CONFIG_USB_PD_TCPMV1 */
 
 /******************************************************************************/
 /* Check body detection setup */

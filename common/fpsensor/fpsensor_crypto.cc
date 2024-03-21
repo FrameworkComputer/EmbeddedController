@@ -15,6 +15,7 @@
 #include "crypto/fipsmodule/modes/internal.h"
 
 extern "C" {
+#include "otp_key.h"
 #include "rollback.h"
 #include "sha256.h"
 #include "util.h"
@@ -26,6 +27,18 @@ test_mockable void compute_hmac_sha256(uint8_t *output, const uint8_t *key,
 }
 
 #include <stdbool.h>
+
+#ifdef CONFIG_OTP_KEY
+constexpr uint8_t IKM_OTP_OFFSET_BYTES =
+	CONFIG_ROLLBACK_SECRET_SIZE + sizeof(tpm_seed);
+constexpr uint8_t IKM_SIZE_BYTES = IKM_OTP_OFFSET_BYTES + OTP_KEY_SIZE_BYTES;
+BUILD_ASSERT(IKM_SIZE_BYTES == 96);
+
+#else
+constexpr uint8_t IKM_SIZE_BYTES =
+	CONFIG_ROLLBACK_SECRET_SIZE + sizeof(tpm_seed);
+BUILD_ASSERT(IKM_SIZE_BYTES == 64);
+#endif
 
 #if !defined(CONFIG_BORINGSSL_CRYPTO) || !defined(CONFIG_ROLLBACK_SECRET_SIZE)
 #error "fpsensor requires CONFIG_BORINGSSL_CRYPTO and ROLLBACK_SECRET_SIZE"
@@ -55,6 +68,30 @@ test_export_static enum ec_error_list get_ikm(uint8_t *ikm)
 	 */
 	memcpy(ikm + CONFIG_ROLLBACK_SECRET_SIZE, tpm_seed, sizeof(tpm_seed));
 
+#ifdef CONFIG_OTP_KEY
+	uint8_t otp_key[OTP_KEY_SIZE_BYTES] = { 0 };
+
+	ret = (enum ec_error_list)otp_key_read(otp_key);
+	if (ret != EC_SUCCESS) {
+		CPRINTS("Failed to read OTP key with ret=%d", ret);
+		return EC_ERROR_HW_INTERNAL;
+	}
+
+	if (bytes_are_trivial(otp_key, sizeof(otp_key))) {
+		CPRINTS("ERROR: bytes read from OTP are trivial!");
+		return EC_ERROR_HW_INTERNAL;
+	}
+
+	/*
+	 * IKM is now the concatenation of the rollback secret, the seed
+	 * from the TPM and the key stored in OTP
+	 */
+	memcpy(ikm + IKM_OTP_OFFSET_BYTES, otp_key, sizeof(otp_key));
+	BUILD_ASSERT((IKM_SIZE_BYTES - IKM_OTP_OFFSET_BYTES) ==
+		     sizeof(otp_key));
+	OPENSSL_cleanse(otp_key, OTP_KEY_SIZE_BYTES);
+#endif
+
 	return EC_SUCCESS;
 }
 
@@ -76,10 +113,9 @@ static void hkdf_extract(uint8_t *prk, const uint8_t *salt, size_t salt_size,
 	compute_hmac_sha256(prk, salt, salt_size, ikm, ikm_size);
 }
 
-static enum ec_error_list hkdf_expand_one_step(uint8_t *out_key,
-					       size_t out_key_size,
-					       uint8_t *prk, size_t prk_size,
-					       uint8_t *info, size_t info_size)
+static enum ec_error_list
+hkdf_expand_one_step(uint8_t *out_key, size_t out_key_size, const uint8_t *prk,
+		     size_t prk_size, const uint8_t *info, size_t info_size)
 {
 	uint8_t key_buf[SHA256_DIGEST_SIZE];
 	uint8_t message_buf[SHA256_DIGEST_SIZE + 1];
@@ -168,7 +204,7 @@ derive_positive_match_secret(uint8_t *output,
 			     const uint8_t *input_positive_match_salt)
 {
 	enum ec_error_list ret;
-	uint8_t ikm[CONFIG_ROLLBACK_SECRET_SIZE + sizeof(tpm_seed)];
+	uint8_t ikm[IKM_SIZE_BYTES];
 	uint8_t prk[SHA256_DIGEST_SIZE];
 	static const char info_prefix[] = "positive_match_secret for user ";
 	uint8_t info[sizeof(info_prefix) - 1 + sizeof(user_id)];
@@ -211,7 +247,7 @@ derive_positive_match_secret(uint8_t *output,
 enum ec_error_list derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
 {
 	enum ec_error_list ret;
-	uint8_t ikm[CONFIG_ROLLBACK_SECRET_SIZE + sizeof(tpm_seed)];
+	uint8_t ikm[IKM_SIZE_BYTES];
 	uint8_t prk[SHA256_DIGEST_SIZE];
 
 	BUILD_ASSERT(SBP_ENC_KEY_LEN <= SHA256_DIGEST_SIZE);

@@ -90,9 +90,12 @@ uint8_t nx20p348x_emul_peek(const struct emul *emul, int reg)
 
 void nx20p348x_emul_set_tcpc_interact(const struct emul *emul, bool en)
 {
-	struct nx20p348x_emul_data *data =
-		(struct nx20p348x_emul_data *)emul->data;
-	data->tcpc_interact = en;
+	if (!IS_ENABLED(EMUL_PPC_NX20P348X_NO_TCPC)) {
+		struct nx20p348x_emul_data *data =
+			(struct nx20p348x_emul_data *)emul->data;
+
+		data->tcpc_interact = en;
+	}
 }
 
 void nx20p348x_emul_set_interrupt1(const struct emul *emul, uint8_t val)
@@ -118,6 +121,7 @@ static int nx20p348x_emul_read(const struct emul *emul, int reg, uint8_t *val,
 		return -EINVAL;
 
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_USBC_PPC_NX20P3483) &&
+	    !IS_ENABLED(CONFIG_EMUL_PPC_NX20P348X_NO_TCPC) &&
 	    data->tcpc_interact) {
 		uint16_t pwr_status;
 		bool src_en, snk_en;
@@ -236,20 +240,27 @@ static int nx20p348x_emul_init(const struct emul *emul,
 	return 0;
 }
 
-#define INIT_NX20P348X_EMUL(n)                                                 \
-	static struct nx20p348x_emul_data nx20p348x_emul_data_##n;             \
-	static struct i2c_common_emul_cfg common_cfg_##n = {                   \
-		.dev_label = DT_NODE_FULL_NAME(DT_DRV_INST(n)),                \
-		.data = &nx20p348x_emul_data_##n.common,                       \
-		.addr = DT_INST_REG_ADDR(n)                                    \
-	};                                                                     \
-	static struct nx20p348x_emul_data nx20p348x_emul_data_##n = {          \
-		.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {}),        \
-		.tcpc_emul =                                                   \
-			EMUL_GET_USBC_PROP_BINDING(ppc, DT_DRV_INST(n), tcpc), \
-		.tcpc_interact = true,                                         \
-	};                                                                     \
-	EMUL_DT_INST_DEFINE(n, nx20p348x_emul_init, &nx20p348x_emul_data_##n,  \
+#ifdef CONFIG_EMUL_PPC_NX20P348X_NO_TCPC
+#define TCPC_INSTANCE(_inst) 0
+#else
+#define TCPC_INSTANCE(_inst) \
+	EMUL_GET_USBC_PROP_BINDING(ppc, DT_DRV_INST(_inst), tcpc)
+#endif
+
+#define INIT_NX20P348X_EMUL(n)                                                \
+	static struct nx20p348x_emul_data nx20p348x_emul_data_##n;            \
+	static struct i2c_common_emul_cfg common_cfg_##n = {                  \
+		.dev_label = DT_NODE_FULL_NAME(DT_DRV_INST(n)),               \
+		.data = &nx20p348x_emul_data_##n.common,                      \
+		.addr = DT_INST_REG_ADDR(n)                                   \
+	};                                                                    \
+	static struct nx20p348x_emul_data nx20p348x_emul_data_##n = {         \
+		.irq_gpio = GPIO_DT_SPEC_INST_GET_OR(n, irq_gpios, {}),       \
+		.tcpc_emul = TCPC_INSTANCE(n),                                \
+		.tcpc_interact =                                              \
+			!IS_ENABLED(CONFIG_EMUL_PPC_NX20P348X_NO_TCPC),       \
+	};                                                                    \
+	EMUL_DT_INST_DEFINE(n, nx20p348x_emul_init, &nx20p348x_emul_data_##n, \
 			    &common_cfg_##n, &i2c_common_emul_api, NULL)
 
 DT_INST_FOREACH_STATUS_OKAY(INIT_NX20P348X_EMUL)

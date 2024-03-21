@@ -11,10 +11,12 @@
 #define KB8010_USB_MUX_COMPAT kandou_kb8010
 
 #define KB8010_RST_GPIO(mux_id) GPIO_SIGNAL(DT_PHANDLE(mux_id, reset_pin))
+#define KB8010_DP_EN_GPIO(mux_id) GPIO_SIGNAL(DT_PHANDLE(mux_id, dp_en_pin))
 
 #define KB8010_CONTROLS_CONFIG(mux_id)                       \
 	{                                                    \
 		.retimer_rst_gpio = KB8010_RST_GPIO(mux_id), \
+		.dp_enable_gpio = KB8010_DP_EN_GPIO(mux_id), \
 	}
 
 #define USB_MUX_KB8010_CONTROL_ARRAY(mux_id) \

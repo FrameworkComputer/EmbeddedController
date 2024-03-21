@@ -11,7 +11,7 @@ def register_rauru_project(project_name):
 
     return register_func(
         project_name=project_name,
-        zephyr_board="it82202ax-512",
+        zephyr_board="it8xxx2/it82202ax",
         dts_overlays=[here / project_name / "project.overlay"],
         kconfig_files=[
             here / "program.conf",
@@ -22,3 +22,7 @@ def register_rauru_project(project_name):
 
 
 register_rauru_project(project_name="rauru")
+
+# Note for reviews, do not let anyone edit these assertions, the addresses
+# must not change after the first RO release.
+assert_rw_fwid_DO_NOT_EDIT(project_name="rauru", addr=0x60098)

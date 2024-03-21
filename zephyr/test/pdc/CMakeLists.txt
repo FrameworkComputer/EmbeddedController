@@ -9,6 +9,18 @@ project(pdc)
 # Include FFF fakes
 add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 
-target_sources(app PRIVATE ${PLATFORM_EC}/zephyr/program/brya/brya_pdc/usbc_stubs.c)
 target_sources(app PRIVATE src/main.c)
-target_sources(app PRIVATE src/pdc_api.c)
+target_sources(app PRIVATE src/fakes.c)
+
+if (DEFINED CONFIG_TEST_SUITE_PDC_GENERIC)
+	target_sources(app PRIVATE src/generic/pdc_api.c)
+	target_sources(app PRIVATE src/generic/pdc_power_mgmt_api.c)
+endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PDC_RTS54XX)
+	target_sources(app PRIVATE src/rts54xx/rts54xx.c)
+endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PDC_RETIMER_FW_UPDATE)
+	target_sources(app PRIVATE src/generic/retimer_fw_update.c)
+endif()

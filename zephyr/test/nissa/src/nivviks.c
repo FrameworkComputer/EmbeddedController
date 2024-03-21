@@ -7,6 +7,7 @@
 #include "cros_cbi.h"
 #include "hooks.h"
 #include "keyboard_protocol.h"
+#include "led_onoff_states.h"
 #include "led_pwm.h"
 #include "motionsense_sensors.h"
 #include "pwm_mock.h"
@@ -148,13 +149,6 @@ ZTEST(nivviks, test_base_inversion)
 	zassert_equal_ptr(
 		motion_sensors[BASE_ACCEL].rot_standard_ref, inverted_rotation,
 		"inverted orientation should use the inverted rotation matrix");
-}
-
-ZTEST(nivviks, test_keyboard_configuration)
-{
-	extern const struct ec_response_keybd_config nivviks_kb;
-
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &nivviks_kb);
 }
 
 ZTEST(nivviks, test_led_pwm)

@@ -483,6 +483,18 @@ __override_proto const char *board_read_mac_addr(void);
  */
 __override_proto int board_write_mac_addr(const char *mac_addr);
 
+/**
+ * Optional board-level callback functions to read a variable
+ * poweron configuration for device. Default implementation reads from flash.
+ */
+__override_proto int board_read_poweron_conf(uint8_t *poweron_conf);
+
+/**
+ * Optional board-level callback functions to write a variable
+ * poweron configuration for device. Default implementation writes in flash.
+ */
+__override_proto int board_write_poweron_conf(const uint8_t *poweron_conf);
+
 /*
  * Common bbram entries. Chips don't necessarily need to implement
  * all of these, error will be returned from system_get/set_bbram if
@@ -708,6 +720,12 @@ void system_set_rtc(uint32_t seconds);
  * @param microseconds Number of microseconds before RTC interrupt
  */
 void system_set_rtc_alarm(uint32_t seconds, uint32_t microseconds);
+
+/**
+ * Return the seconds remaining before the RTC alarm goes off.
+ * Returns 0 if alarm is not set.
+ */
+uint32_t system_get_rtc_alarm(void);
 
 /**
  * Disable and clear the RTC interrupt.

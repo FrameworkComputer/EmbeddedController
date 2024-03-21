@@ -1,0 +1,45 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	usbc {
+		port1@1 {
+			compatible = "named-usbc-port";
+
+			tcpc = <&tcpci_emul>;
+			usb-mux-chain-1 {
+				usb-muxes = <&kb8010_emul>;
+			};
+		};
+	};
+
+	named-gpios {
+		usb_c1_usb_en: usb_c1_usb_en {
+			gpios = <&gpio1 14 (GPIO_INPUT|GPIO_OUTPUT)>;
+		};
+	};
+};
+
+&i2c3 {
+	status = "okay";
+
+	/delete-node/ bbretimer@42;
+	/delete-node/ ps8xxx_emul@b;
+
+	kb8010_emul: kb8010@8 {
+		compatible = "zephyr,kb8010-emul", "kandou,kb8010";
+		status = "okay";
+		reg = <0x08>;
+
+		reset-pin = <&usb_c1_usb_en>;
+		dp-en-pin = <&usb_c1_dp_en>;
+
+		/*
+		 * TODO: Figure out how to use reset-pin
+		 *   directly in emul_kb8010.c.
+		 */
+		emul-reset-gpios = <&gpio1 14 GPIO_ACTIVE_HIGH>;
+	};
+};

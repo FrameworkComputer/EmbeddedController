@@ -16,7 +16,6 @@ if(DEFINED CONFIG_BOARD_NIVVIKS)
 	zephyr_library_sources(
 			"nivviks/src/led.c"
 			"nivviks/src/form_factor.c"
-			"nivviks/src/keyboard.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "nivviks/src/fan.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "nivviks/src/usbc.c")
@@ -26,7 +25,6 @@ if(DEFINED CONFIG_BOARD_NEREID OR DEFINED CONFIG_BOARD_NEREID_CX)
 	project(nereid)
 	zephyr_library_sources(
 			"src/led.c"
-			"nereid/src/keyboard.c"
 			"nereid/src/hdmi.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "nereid/src/usbc.c")
@@ -37,7 +35,6 @@ if(DEFINED CONFIG_BOARD_NOKRIS)
 	zephyr_library_sources(
 			"nokris/src/led.c"
 			"nokris/src/form_factor.c"
-			"nokris/src/keyboard.c"
 			"nokris/src/hdmi.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "nokris/src/fan.c")
@@ -48,7 +45,6 @@ if(DEFINED CONFIG_BOARD_NAKTAL)
         project(naktal)
         zephyr_library_sources(
                         "naktal/src/led.c"
-                        "naktal/src/keyboard.c"
                         "naktal/src/hdmi.c"
         )
         zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "naktal/src/usbc.c")
@@ -72,7 +68,6 @@ if(DEFINED CONFIG_BOARD_PUJJO)
 	project(pujjo)
 	zephyr_library_sources(
 			"pujjo/src/led.c"
-			"pujjo/src/keyboard.c"
 			"pujjo/src/hdmi.c"
 			"pujjo/src/form_factor.c"
 	)
@@ -84,7 +79,6 @@ if(DEFINED CONFIG_BOARD_XIVU)
 	project(xivu)
 	zephyr_library_sources(
 			"xivu/src/form_factor.c"
-			"xivu/src/keyboard.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "xivu/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "xivu/src/charger.c")
@@ -92,6 +86,7 @@ endif()
 if(DEFINED CONFIG_BOARD_JOXER)
 	project(joxer)
 	zephyr_library_sources(
+			"joxer/src/board.c"
 			"joxer/src/led.c"
 			"joxer/src/keyboard.c"
 			"joxer/src/form_factor.c"
@@ -107,6 +102,7 @@ if(DEFINED CONFIG_BOARD_YAVIKS)
 	zephyr_library_sources(
 			"yaviks/src/led.c"
 			"yaviks/src/keyboard.c"
+			"yaviks/src/board.c"
 			"yaviks/src/sub_board.c"
 			"yaviks/src/thermal.c"
 	)
@@ -126,12 +122,24 @@ if(DEFINED CONFIG_BOARD_YAVILLA)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "yavilla/src/charger.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "yavilla/src/fan.c")
 endif()
+if(DEFINED CONFIG_BOARD_YAVISTA)
+	project(yavista)
+	zephyr_library_sources(
+			"yavista/src/led.c"
+			"yavista/src/keyboard.c"
+			"yavista/src/board.c"
+			"yavista/src/sub_board.c"
+			"yavista/src/thermal.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "yavista/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "yavista/src/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "yavista/src/fan.c")
+endif()
 if(DEFINED CONFIG_BOARD_XIVUR)
 	project(xivur)
 	zephyr_library_sources(
 			"xivur/src/led.c"
 			"xivur/src/board.c"
-			"xivur/src/keyboard.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "xivur/src/fan.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "xivur/src/usbc.c")
@@ -153,7 +161,6 @@ endif()
 if(DEFINED CONFIG_BOARD_GOTHRAX)
 	project(gothrax)
 	zephyr_library_sources(
-			"gothrax/src/keyboard.c"
 			"gothrax/src/hdmi.c"
 			"gothrax/src/usb_mux_config.c"
 			"gothrax/src/form_factor.c"
@@ -161,6 +168,7 @@ if(DEFINED CONFIG_BOARD_GOTHRAX)
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "gothrax/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "gothrax/src/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "gothrax/src/fan.c")
 endif()
 if(DEFINED CONFIG_BOARD_CRAASKOV)
 	project(craaskov)
@@ -168,6 +176,7 @@ if(DEFINED CONFIG_BOARD_CRAASKOV)
 	zephyr_library_sources(
 			"craaskov/src/keyboard.c"
 			"craaskov/src/hdmi.c"
+			"craaskov/src/touch_panel.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "craaskov/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "craaskov/src/charger.c")
@@ -194,7 +203,6 @@ if(DEFINED CONFIG_BOARD_PIRRHA)
 	zephyr_include_directories("pirrha/include")
 	zephyr_library_sources(
 			"pirrha/src/led.c"
-			"pirrha/src/keyboard.c"
 			"pirrha/src/board.c"
 			"pirrha/src/battery.c"
 	)
@@ -206,7 +214,6 @@ if(DEFINED CONFIG_BOARD_ANRAGGAR)
 	zephyr_include_directories("anraggar/include")
 	zephyr_library_sources(
 			"anraggar/src/board.c"
-			"anraggar/src/keyboard.c"
 			"anraggar/src/sub_board.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "anraggar/src/usbc.c")
@@ -214,4 +221,13 @@ if(DEFINED CONFIG_BOARD_ANRAGGAR)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 			"anraggar/src/keyboard_customization.c"
 	)
+endif()
+if(DEFINED CONFIG_BOARD_GLASSWAY)
+	project(glassway)
+	zephyr_library_sources(
+			"glassway/src/sub_board.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "glassway/src/fan.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "glassway/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "glassway/src/charger.c")
 endif()

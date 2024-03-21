@@ -14,6 +14,9 @@
 #include <fan.h>
 #include <hooks.h>
 
+bool board_supports_pcore_ocp(void);
+void fan_init(void);
+
 FAKE_VOID_FUNC(fan_set_count, int);
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);

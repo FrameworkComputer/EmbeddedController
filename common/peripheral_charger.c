@@ -626,6 +626,9 @@ static void pchg_state_downloading(struct pchg *ctx)
 static int pchg_should_notify(struct pchg *ctx, enum pchg_chipset_state state,
 			      uint32_t prev_error, uint8_t prev_battery)
 {
+	if (!ctx->policy[state])
+		return 0;
+
 	if (ctx->event == PCHG_EVENT_ERROR) {
 		uint32_t err = ctx->error & ctx->policy[state]->err_mask;
 		/* Report only 0->1. */

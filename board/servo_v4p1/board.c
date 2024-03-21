@@ -5,7 +5,6 @@
 /* Servo V4p1 configuration */
 
 #include "adc.h"
-#include "ccd_measure_sbu.h"
 #include "chg_control.h"
 #include "common.h"
 #include "console.h"
@@ -20,6 +19,7 @@
 #include "ioexpanders.h"
 #include "pathsel.h"
 #include "pi3usb9201.h"
+#include "poweron_conf.h"
 #include "queue_policies.h"
 #include "registers.h"
 #include "spi.h"
@@ -40,6 +40,17 @@
 #include "util.h"
 
 #include <driver/gl3590.h>
+
+/*
+ * Important part of servo functionality is dependent on poweron config feature.
+ * We enable all USB ports and CCD in apply_poweron_config function. Therefore
+ * make sure nobody would try to compile servo without CONFIG_POWERON_CONF.
+ * Also note because of this ifdef there is no additional need for ifdef around
+ * apply_poweron_config()/board_read|write_poweron_conf calls.
+ */
+#if !defined(CONFIG_POWERON_CONF) || !defined(CONFIG_POWERON_CONF_LEN)
+#error "Servo needs POWERON_CONF feature to ensure basic functionalities."
+#endif
 
 #ifdef SECTION_IS_RO
 #define CROS_EC_SECTION "RO"
@@ -314,18 +325,6 @@ static void dut_pwr_evt(enum gpio_signal signal)
 	ccprintf("dut_pwr_evt\n");
 }
 
-/* Enable uservo USB. */
-static void init_uservo_port(void)
-{
-	/* Enable USERVO_POWER_EN */
-	ec_uservo_power_en(1);
-
-	gl3590_enable_ports(0, GL3590_DFP4, 1);
-
-	/* Connect uservo to host hub */
-	uservo_fastboot_mux_sel(0);
-}
-
 void ext_hpd_detection_enable(int enable)
 {
 	if (enable) {
@@ -535,8 +534,7 @@ static void evaluate_input_power_def(void)
 
 	gl3590_init(HOST_HUB);
 
-	init_uservo_port();
-	init_pathsel();
+	apply_poweron_conf();
 }
 #endif
 
@@ -566,8 +564,7 @@ static void board_init(void)
 	CPRINTS("Board ID is %d", board_id_det());
 
 	init_dacs();
-	init_uservo_port();
-	init_pathsel();
+	apply_poweron_conf();
 	init_ina231s();
 	init_fusb302b(1);
 	vbus_dischrg_en(0);
@@ -582,9 +579,6 @@ static void board_init(void)
 	 * least 100ms.
 	 */
 	hook_call_deferred(&evaluate_input_power_def_data, 100 * MSEC);
-
-	/* Enable DUT USB2.0 pair. */
-	gpio_set_level(GPIO_FASTBOOT_DUTHUB_MUX_EN_L, 0);
 
 	/* Enable VBUS detection to wake PD tasks fast enough */
 	gpio_enable_interrupt(GPIO_USB_DET_PP_CHG);
@@ -603,8 +597,6 @@ static void board_init(void)
 	 */
 	pd_set_max_voltage(PD_MIN_MV);
 
-	/* Start SuzyQ detection */
-	start_ccd_meas_sbu_cycle();
 #else /* SECTION_IS_RO */
 	CPRINTS("Board ID is %d", board_id_det());
 #endif /* SECTION_IS_RO */

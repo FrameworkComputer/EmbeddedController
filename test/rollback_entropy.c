@@ -1,13 +1,14 @@
-/* Copyright 2020 The ChromiumOS Authors
+/* Copyright 2024 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-
+#include "otp_key.h"
 #include "rollback.h"
 #include "rollback_private.h"
 #include "string.h"
 #include "system.h"
 #include "test_util.h"
+#include "util.h"
 
 static const uint32_t VALID_ROLLBACK_COOKIE = 0x0b112233;
 static const uint32_t UNINITIALIZED_ROLLBACK_COOKIE = 0xffffffff;
@@ -92,6 +93,7 @@ test_static int test_add_entropy(void)
 {
 	int rv;
 	struct rollback_data rb_data;
+	uint8_t otp_key_buffer[OTP_KEY_SIZE_BYTES] = { 0 };
 
 	const struct rollback_data expected_empty = {
 		.id = 0,
@@ -124,6 +126,14 @@ test_static int test_add_entropy(void)
 	if (system_get_image_copy() != EC_IMAGE_RO) {
 		ccprintf("This test is only works when running RO\n");
 		return EC_ERROR_UNKNOWN;
+	}
+
+	if (IS_ENABLED(CONFIG_OTP_KEY)) {
+		/* Check OTP key is unset initially. */
+		rv = otp_key_read(otp_key_buffer);
+		TEST_EQ(rv, EC_SUCCESS, "%d");
+		TEST_EQ(bytes_are_trivial(otp_key_buffer, OTP_KEY_SIZE_BYTES),
+			true, "%d");
 	}
 
 	/*
@@ -178,6 +188,14 @@ test_static int test_add_entropy(void)
 	rv = read_rollback(1, &rb_data);
 	TEST_EQ(rv, EC_SUCCESS, "%d");
 	TEST_EQ(check_equal(&rb_data, &expected_secret), EC_SUCCESS, "%d");
+
+	if (IS_ENABLED(CONFIG_OTP_KEY)) {
+		/* Check OTP key has been written. */
+		rv = otp_key_read(otp_key_buffer);
+		TEST_EQ(rv, EC_SUCCESS, "%d");
+		TEST_EQ(bytes_are_trivial(otp_key_buffer, OTP_KEY_SIZE_BYTES),
+			false, "%d");
+	}
 
 	return rv;
 }

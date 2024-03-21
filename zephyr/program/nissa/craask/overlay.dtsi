@@ -30,8 +30,8 @@
 		cosmx {
 			compatible = "cosmx,ap20cbl", "battery-smart";
 		};
-		cosmx-2 {
-			compatible = "cosmx,ap20cbl-2", "battery-smart";
+		cosmx-4 {
+			compatible = "cosmx,ap20cbl-4", "battery-smart";
 		};
 		smp_ap23a7l {
 			compatible = "smp,ap23a7l", "battery-smart";

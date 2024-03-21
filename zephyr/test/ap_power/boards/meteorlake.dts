@@ -23,13 +23,14 @@
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "RSMRST output to PCH";
 		enum-name = "PWR_EC_PCH_RSMRST";
-		gpios = <&gpio0 13 0>;
+		gpios = <&gpio0 13 GPIO_ACTIVE_LOW>;
+		reset-val = <1>;
 		output;
 	};
 	rsmrst: pwr-pg-ec-rsmrst-odl {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "RSMRST power good from regulator";
-		enum-name = "PWR_RSMRST";
+		enum-name = "PWR_RSMRST_PWRGD";
 		gpios = <&gpio0 12 0>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
@@ -103,35 +104,32 @@
 	ec_pch_rsmrst_emul: ec-pch-rsmrst-emul {
 		compatible = "intel,ap-pwr-signal-emul";
 		input-signal = <&ec_pch_rsmrst>;
-		init-value = <0>;
+		init-value = <1>;
 		ec-pch-rsmrst-slp-s5-emul {
 			output-signal = <&slp_s5>;
-			assert-delay-ms = <20>;
-			invert-value;
+			deassert-delay-ms = <20>;
 			init-value= <1>;
 		};
 		ec-pch-rsmrst-slp-s4-emul {
 			output-signal = <&slp_s4>;
-			assert-delay-ms = <30>;
-			invert-value;
+			deassert-delay-ms = <30>;
 			init-value= <1>;
 		};
 		ec-pch-rsmrst-slp-s3-emul {
 			output-signal = <&slp_s3>;
-			assert-delay-ms = <40>;
+			deassert-delay-ms = <40>;
 			init-value= <1>;
-			invert-value;
 		};
 		ec-pch-rsmrst-slp-s0-emul {
 			output-signal = <&slp_s0>;
-			assert-delay-ms = <45>;
+			deassert-delay-ms = <45>;
 			init-value= <1>;
-			invert-value;
 		};
 		ec-pch-rsmrst-all-sys-pwrgd {
 			output-signal = <&all_sys_pwrgd>;
-			assert-delay-ms = <50>;
+			deassert-delay-ms = <50>;
 			init-value= <0>;
+			invert-value;
 		};
 	};
 
@@ -144,6 +142,7 @@
 		compatible = "intel,ap-pwr-signal-emul";
 		input-signal = <&pch_pwrok>;
 		init-value = <0>;
+		edge = "EDGE_ACTIVE_ON_ASSERT";
 		pch-pwrok-rsmrst-emul {
 			output-signal = <&rsmrst>;
 			assert-delay-ms = <60>;
@@ -161,11 +160,9 @@
 		input-signal = <&pch_pwrok>;
 		init-value = <0>;
 		edge = "EDGE_ACTIVE_ON_ASSERT";
-
 		pch_pwrok-rsmrst-emul {
 			output-signal = <&rsmrst>;
 			assert-delay-ms = <90>;
-			invert-value;
 		};
 
 		pch-pwrok-slp-s5-emul {
@@ -199,34 +196,31 @@
 		ec-pch-rsmrst-s3-rsmrst-deassert-emul {
 		compatible = "intel,ap-pwr-signal-emul";
 		input-signal = <&ec_pch_rsmrst>;
-		init-value = <0>;
-		edge = "EDGE_ACTIVE_ON_ASSERT";
+		init-value = <1>;
+		edge = "EDGE_ACTIVE_ON_DEASSERT";
 		ec-pch-rsmrst-slp-s5-emul {
 			output-signal = <&slp_s5>;
-			assert-delay-ms = <20>;
-			invert-value;
+			deassert-delay-ms = <20>;
 			init-value= <1>;
 		};
 		ec-pch-rsmrst-slp-s4-emul {
 			output-signal = <&slp_s4>;
-			assert-delay-ms = <30>;
-			invert-value;
+			deassert-delay-ms = <30>;
 			init-value= <1>;
 		};
 		ec-pch-rsmrst-slp-s3-emul {
 			output-signal = <&slp_s3>;
-			assert-delay-ms = <40>;
+			deassert-delay-ms = <40>;
 			init-value= <1>;
-			invert-value;
 		};
 		ec-pch-rsmrst-slp-s3-deassert-emul {
 			output-signal = <&slp_s3>;
-			assert-delay-ms = <60>;
+			deassert-delay-ms = <60>;
+			invert-value;
 		};
 		pch_pch-rsmrst-rsmrst-deassert-emul {
 			output-signal = <&rsmrst>;
-			assert-delay-ms = <100>;
-			invert-value;
+			deassert-delay-ms = <100>;
 		};
 	};
 

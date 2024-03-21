@@ -120,7 +120,7 @@
 			gpios = <&gpiok 3 GPIO_OUTPUT>;
 		};
 		gpio_en_usb_a0_vbus: en_usb_a0_vbus {
-			gpios = <&gpioe 0 GPIO_OUTPUT>;
+			gpios = <&gpiol 6 GPIO_OUTPUT>;
 		};
 		gpio_en_usb_a1_vbus: en_usb_a1_vbus {
 			gpios = <&gpiod 7 GPIO_OUTPUT>;
@@ -174,17 +174,13 @@
 			gpios = <&gpioc 4 GPIO_OUTPUT>;
 			enum-name = "GPIO_USB_C0_FRS_EN";
 		};
+		gpio_usb_c1_frs_en: usb_c1_frs_en {
+			gpios = <&gpioj 2 GPIO_OUTPUT>;
+			enum-name = "GPIO_USB_C1_FRS_EN";
+		};
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
 			gpios = <&gpiok 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
-		};
-		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
-			gpios = <&gpiok 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
-		};
-		gpio_usb_c1_tcpc_rst_odl: usb_c1_tcpc_rst_l {
-			gpios = <&gpiol 6 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
-			enum-name = "GPIO_USB_C1_TCPC_RST_L";
 		};
 		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
 			gpios = <&gpiok 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
@@ -246,8 +242,8 @@
 			enum-names = "I2C_PORT_SENSOR";
 		};
 		i2c_ec_i2c_usb_c1: ec_i2c_usb_c1 {
-			i2c-port = <&i2c3>;
-			enum-names = "I2C_PORT_USB_C1_TCPC";
+			i2c-port = <&i2c4>;
+			enum-names = "I2C_PORT_USB_C1";
 		};
 		i2c_ec_i2c_usb_c0: ec_i2c_usb_c0 {
 			i2c-port = <&i2c5>;
@@ -272,7 +268,7 @@
 	status = "okay";
 };
 
-&i2c3 {
+&i2c4 {
 	status = "okay";
 };
 

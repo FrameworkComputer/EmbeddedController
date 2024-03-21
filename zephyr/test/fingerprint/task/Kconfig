@@ -1,0 +1,47 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config LINK_TEST_SUITE_FINGERPRINT_CAPTURE
+	bool "Link fingerprint capture tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on finger capture.
+
+config LINK_TEST_SUITE_FINGERPRINT_ENROLL
+	bool "Link fingerprint enroll tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on template enrollment.
+
+config LINK_TEST_SUITE_FINGERPRINT_FINGER_PRESENCE
+	bool "Link fingerprint finger presence tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on finger presence.
+
+config LINK_TEST_SUITE_FINGERPRINT_INIT
+	bool "Link fingerprint init tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on initializing TPM seed and context.
+
+config LINK_TEST_SUITE_FINGERPRINT_MATCH
+	bool "Link fingerprint match tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on finger matching.
+
+config LINK_TEST_SUITE_FINGERPRINT_SHIM
+	bool "Link fingerprint shim tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on fpsensor shim.
+
+config LINK_TEST_SUITE_FINGERPRINT_TEMPLATE
+	bool "Link fingerprint template tests"
+	help
+	  Link and execute fingerprint subsystem tests that focus
+	  on finger templates.
+
+source "Kconfig.zephyr"

@@ -26,7 +26,11 @@
  * The EC uses the one bank of flash to emulate a SPI-like write protect
  * register with persistent state.
  */
+#ifdef CONFIG_PLATFORM_EC_FLASH_PSTATE_BANK
 #define CONFIG_FW_PSTATE_SIZE CONFIG_FLASH_BANK_SIZE
 #define CONFIG_FW_PSTATE_OFF (CONFIG_RO_STORAGE_OFF + CONFIG_RO_SIZE)
+#else
+#define CONFIG_FW_PSTATE_SIZE 0
+#endif /* CONFIG_PLATFORM_EC_FLASH_PSTATE_BANK */
 
 #endif /* __CROS_EC_FLASH_CHIP_H */

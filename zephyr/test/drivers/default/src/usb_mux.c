@@ -501,6 +501,27 @@ ZTEST(usb_uninit_mux, test_usb_mux_init)
 	proxy_mux_1.board_init = NULL;
 }
 
+ZTEST(usb_uninit_mux, test_usb_invalid_mux_init)
+{
+	/* Set AP to normal state to init BB retimer */
+	test_set_chipset_to_s0();
+
+	/*
+	 * Test initialisation for invalid port number. proxy_init should not
+	 * be called.
+	 */
+	reset_proxy_fakes();
+	usb_mux_init(USBC_PORT_COUNT + 1);
+	CHECK_PROXY_FAKE_CALL_CNT(proxy_init, 0);
+
+	/*
+	 * Test initialisation for valid port number. proxy_init should not
+	 * be called NUM_OF_PROXY times.
+	 */
+	usb_mux_init(USBC_PORT_C1);
+	CHECK_PROXY_FAKE_CALL_CNT(proxy_init, NUM_OF_PROXY);
+}
+
 /** Test usb_mux setting mux mode */
 ZTEST(usb_uninit_mux, test_usb_mux_set)
 {

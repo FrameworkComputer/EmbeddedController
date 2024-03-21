@@ -143,3 +143,13 @@ enum i2c_freq chip_i2c_get_freq(int port)
 		return I2C_FREQ_COUNT;
 	}
 }
+
+enum i2c_ports i2c_get_port_from_device(const struct device *i2c_dev)
+{
+	for (int i = 0; i < I2C_PORT_COUNT; i++) {
+		if (i2c_devices[i] == i2c_dev) {
+			return i;
+		}
+	}
+	return -1;
+}

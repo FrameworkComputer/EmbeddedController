@@ -48,10 +48,14 @@ BUILD_ASSERT(ARRAY_SIZE(hook_registry) == HOOK_TYPE_COUNT,
 BUILD_ASSERT(NUM_VA_ARGS_LESS_1(HOOK_TYPES_LIST) + 1 == HOOK_TYPE_COUNT,
 	     "At least one hook type is missing from HOOK_TYPES_LIST");
 
+#ifdef CONFIG_PLATFORM_EC_HOOK_SECOND
 static void hook_second_work(struct k_work *work);
+#endif /* CONFIG_PLATFORM_EC_HOOK_SECOND */
 static void hook_tick_work(struct k_work *work);
 
+#ifdef CONFIG_PLATFORM_EC_HOOK_SECOND
 static K_WORK_DELAYABLE_DEFINE(hook_seconds_work_data, hook_second_work);
+#endif /* CONFIG_PLATFORM_EC_HOOK_SECOND */
 static K_WORK_DELAYABLE_DEFINE(hook_ticks_work_data, hook_tick_work);
 
 /* LCOV_EXCL_START informational only; should never happen */
@@ -64,6 +68,7 @@ static void work_queue_error(const void *data, int rv)
 }
 /* LCOV_EXCL_STOP */
 
+#ifdef CONFIG_PLATFORM_EC_HOOK_SECOND
 static void hook_second_work(struct k_work *work)
 {
 	int rv;
@@ -76,6 +81,7 @@ static void hook_second_work(struct k_work *work)
 		work_queue_error(&hook_seconds_work_data, rv);
 	/* LCOV_EXCL_STOP */
 }
+#endif /* CONFIG_PLATFORM_EC_HOOK_SECOND */
 
 static void hook_tick_work(struct k_work *work)
 {
@@ -102,13 +108,16 @@ static int zephyr_shim_setup_hooks(void)
 {
 	int rv;
 
-	/* Startup the HOOK_TICK and HOOK_SECOND recurring work */
+#ifdef CONFIG_PLATFORM_EC_HOOK_SECOND
+	/* Startup the HOOK_SECOND recurring work */
 	rv = k_work_reschedule(&hook_seconds_work_data, K_SECONDS(1));
 	/* LCOV_EXCL_START cannot fail unless delay = K_NO_WAIT */
 	if (rv < 0)
 		work_queue_error(&hook_seconds_work_data, rv);
-	/* LCOV_EXCL_STOP */
+		/* LCOV_EXCL_STOP */
+#endif /* CONFIG_PLATFORM_EC_HOOK_SECOND */
 
+	/* Startup the HOOK_TICK recurring work */
 	rv = k_work_reschedule(&hook_ticks_work_data,
 			       K_USEC(HOOK_TICK_INTERVAL));
 	/* LCOV_EXCL_START cannot fail unless delay = K_NO_WAIT */

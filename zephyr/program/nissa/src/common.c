@@ -16,6 +16,8 @@
 #include <zephyr/logging/log.h>
 
 #include <ap_power/ap_power.h>
+#include <soc.h>
+
 LOG_MODULE_REGISTER(nissa, CONFIG_NISSA_LOG_LEVEL);
 
 __overridable void board_power_change(struct ap_power_ev_callback *cb,
@@ -161,7 +163,8 @@ __override void board_ocpc_init(struct ocpc_data *ocpc)
 }
 #endif
 
-int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
+__overridable int
+board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
 {
 	/*
 	 * AP tunneling to I2C is default-forbidden, but allowed for

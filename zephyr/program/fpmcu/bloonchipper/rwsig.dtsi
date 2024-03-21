@@ -16,10 +16,16 @@
 
 	ec-rw {
 		rw-fw {
-			/* RWSIG requires all space between zephyr-rw
-			 * and sig-rw to be 0xFF, so remove rw-fwid.
-			 */
-			/delete-node/ rw-fwid;
+			rw-rbver {
+				size = <4>;
+				type = "section";
+				/* points to
+				 * current_image_data.rollback_version
+				 */
+				offset-from-elf = <&zephyr_rw>,
+					"current_image_data", <40>;
+				overlap;
+			};
 
 			sig-rw {
 				type = "section";

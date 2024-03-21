@@ -1,0 +1,31 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/dts-v1/;
+
+#include <cros/nuvoton/npcx9.dtsi>
+#include <nuvoton/npcx/npcx9/npcx9-pinctrl.dtsi>
+#include <cros/vivaldi_kbd_default.dtsi>
+
+/*
+ * #include <nuvoton/npcx9m3f.dtsi>
+ * #include <nuvoton/npcx9m6f.dtsi>
+ * #include <nuvoton/npcx9m7f.dtsi>
+ */
+#include <nuvoton/npcx9m6f.dtsi>
+#include "npcx_evb.dtsi"
+
+&uart1 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&uart1_2_sin_gp64
+		     &uart1_2_sout_gp65>;
+	pinctrl-names = "default";
+};
+
+/* PSL_OUT is fixed to GPIO85 in npcx9 series. */
+&power_ctrl_psl {
+	enable-gpios = <&gpio8 5 0>;
+};

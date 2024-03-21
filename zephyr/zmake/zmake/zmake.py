@@ -81,6 +81,9 @@ def ninja_stdout_log_level_override(line, current_log_level):
     # this message is a bit like make failing. We already got the error output.
     if line.startswith("FAILED: CMakeFiles"):
         return logging.INFO
+    # Provide visibility to a common chroot file system permission error
+    if line.startswith("ccache: error: Failed to create directory"):
+        return logging.ERROR
     # if a particular file fails it shows the build line used, but that is not
     # useful except for debugging.
     if line.startswith("ccache"):
@@ -845,6 +848,9 @@ class Zmake:
                     self.logger.debug(
                         "Output file '%s' created.", output_dir / output_name
                     )
+                project.packer.verify_rw_fwid(
+                    packer_work_dir,
+                )
 
             if delete_intermediates:
                 outdir = build_dir / "output"

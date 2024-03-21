@@ -378,6 +378,7 @@
 		compatible = "kandou,kb8010";
 		reg = <0x08>;
 		reset-pin = <&gpio_usb_c1_rt_rst_r_odl>;
+		dp-en-pin = <&gpio_usb_c1_rt_int_odl>;
 	};
 
 	usb_c1_hb_retimer: usb-c1-hb-retimer@56 {

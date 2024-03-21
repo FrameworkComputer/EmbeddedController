@@ -423,7 +423,7 @@ typedef struct mutex mutex_t;
  * initialize it.  We provide the same macro for CrOS EC OS so that we
  * can use it in shared code.
  */
-#define K_MUTEX_DEFINE(name) static mutex_t name = {}
+#define K_MUTEX_DEFINE(name) mutex_t name = {}
 
 /**
  * Lock a mutex.
@@ -434,6 +434,17 @@ typedef struct mutex mutex_t;
  * Must not be used in interrupt context!
  */
 void mutex_lock(mutex_t *mtx);
+
+/**
+ * Attempt to lock a mutex
+ *
+ * This tries to lock the mutex mtx. If the mutex is already locked by another
+ * thread this function returns 0. If the mutex is unlocked, lock the mutex and
+ * return 1.
+ *
+ * Must not be used in interrupt context!
+ */
+int mutex_try_lock(mutex_t *mtx);
 
 /**
  * Release a mutex previously locked by the same task.

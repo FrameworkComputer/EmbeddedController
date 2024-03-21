@@ -14,6 +14,11 @@ choice TEST_TARGET
 		help
 		  The test target that exercises nissa/src/sub_board.c.
 
+	config TEST_NISSA_BOARD_POWER
+		bool "Tests for board_power.c"
+		help
+		  The test target that exercises nissa/src/board_power.c
+
 	config TEST_NISSA_COMMON
 		bool "Tests for common.c"
 		help
@@ -62,6 +67,12 @@ choice TEST_TARGET
 	  help
 		The test target that exercises nissa/craask/*.c
 
+	config TEST_NISSA_CRAASKOV
+	  bool "Tests for Craaskov-specific code"
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	  help
+		The test target that exercises nissa/craaskov/*.c
+
 	config TEST_NISSA_PIRRHA
 	  bool "Tests for Pirrha-specific code"
 	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
@@ -72,6 +83,33 @@ choice TEST_TARGET
 	  bool "Tests for Anraggar-specific code"
 	  help
 		The test target that exercises nissa/anraggar/*.c
+
+	config TEST_NISSA_ULDREN
+	  bool "Tests for Uldren-specific code"
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	  help
+		The test target that exercises nissa/uldren/*.c
+
+	config TEST_NISSA_YAVIKS
+	  bool "Tests for Yaviks-specific code"
+	  help
+		The test target that exercises nissa/yaviks/*.c
+
+	config TEST_NISSA_QUANDISO
+	  bool "Tests for Quandiso-specific code"
+	  help
+		The test target that exercises nissa/quandiso/*.c
+
+	config TEST_NISSA_YAVILLA
+	  bool "Tests for Yavilla-specific code"
+	  help
+		The test target that exercises nissa/yavilla/*.c
+
+	config TEST_NISSA_GLASSWAY
+	  bool "Tests for Glassway-specific"
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	  help
+	    The test target that exercises nissa/glassway/*.c
 endchoice
 
 config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
@@ -101,6 +139,13 @@ config PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 	  than the top row, and you are looking only for top row customization,
 	  then you should be looking at overriding board_vivaldi_keybd_config()
 	  instead.
+
+config TEST_DISABLE_AP_PWRSEQ
+	bool "Disable CONFIG_AP_PWRSEQ"
+	default n
+	help
+	  This is used to disable CONFIG_AP_PWRSEQ for testing purposes
+	  directly.
 
 module = NISSA
 module-str = Nissa board-specific code (unit tests)

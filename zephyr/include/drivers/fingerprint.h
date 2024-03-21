@@ -21,6 +21,10 @@
 #include <zephyr/device.h>
 #include <zephyr/kernel.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Get fingerprint sensor width. */
 #define FINGERPRINT_SENSOR_RES_X(node_id) DT_PROP(node_id, width)
 
@@ -442,6 +446,10 @@ static inline int z_impl_fingerprint_finger_status(const struct device *dev)
 
 	return api->finger_status(dev);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 /**
  * @}

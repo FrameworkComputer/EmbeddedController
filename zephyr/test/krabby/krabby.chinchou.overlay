@@ -7,6 +7,8 @@
 #include "../program/corsola/ite_gpio.dtsi"
 #include "../program/corsola/ite_interrupts.dtsi"
 #include "../program/corsola/power_signal.dtsi"
+#include "../program/corsola/chinchou/thermistor.dtsi"
+#include <cros/thermistor/thermistor.dtsi>
 
 /* remove pinctrl to avoid pull in too many unwanted dependency */
 /delete-node/ &pinctrl;
@@ -31,6 +33,53 @@
 	aliases {
 		bma4xx-int = &lid_accel;
 	};
+
+	charger_bc12_port1: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+
+		thermistor = <&thermistor_rt9490>;
+		adc = <&adc_charger>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_charger: charger {
+			status = "okay";
+			sensor = <&charger_bc12_port1>;
+		};
+	};
+
+	named-gpios {
+		en_pp4200_s5: en-pp4200-s5 {
+			gpios = <&gpiod 2 GPIO_OUTPUT_LOW>;
+		};
+
+		pg_pp4200_s5_od: pg-pp4200-s5-od {
+			gpios = <&gpioe 1 GPIO_INPUT>;
+			enum-name = "GPIO_PG_PP4200_S5_OD";
+		};
+
+		pmic_ec_resetb: pmic-ec-resetb {
+			gpios = <&gpioh 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_PMIC_EC_RESETB";
+		};
+	};
+
+	power_signal_list: power-signal-list {
+		 compatible = "mediatek,mt8188-power-signal-list";
+
+		 pg_pp4200_s5 {
+			power-enum-name = "PG_PP4200_S5";
+			power-gpio-pin = <&pg_pp4200_s5_od>;
+		};
+		 pmic_ap_reset {
+			power-enum-name = "PMIC_AP_RST";
+			power-gpio-pin = <&pmic_ec_resetb>;
+		};
+	};
+
+	/delete-node/ unused-pins;
 
 	gpio-interrupts {
 		int_base_imu: base_imu {
@@ -79,6 +128,7 @@
 			drv-data = <&bmi3xx_data>;
 		};
 	};
+
 	Chinchou-fw-config {
 		compatible = "cros-ec,cbi-fw-config";
 
@@ -103,6 +153,7 @@
 			};
 		};
 	};
+
 	/* Chinchou-specific ssfc fields. */
 	chinchou-ssfc {
 		compatible = "cros-ec,cbi-ssfc";

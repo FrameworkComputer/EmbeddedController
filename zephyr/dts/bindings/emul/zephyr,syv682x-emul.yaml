@@ -21,3 +21,8 @@ properties:
     type: phandle-array
     description: |
       Interrupt from PPC using shim driver
+  is-alt:
+    type: boolean
+    description: |
+      If present, this node refers to an altnerate PPC device. The PPC device
+      is not used by default, and must be manually enabled at runtime.

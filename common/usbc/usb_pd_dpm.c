@@ -29,6 +29,7 @@
 #include "usb_pd_ap_vdm_control.h"
 #include "usb_pd_dpm_sm.h"
 #include "usb_pd_pdo.h"
+#include "usb_pd_policy.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pd_timer.h"
 #include "usb_pe_sm.h"
@@ -39,7 +40,7 @@
  * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
  * #line marks the *next* line, so it is off by one.
  */
-#line 43
+#line 44
 
 #ifdef CONFIG_ZEPHYR
 #include "temp_sensor/temp_sensor.h"
@@ -355,10 +356,14 @@ void dpm_init(int port)
 	dpm[port].pd_button_state = DPM_PD_BUTTON_IDLE;
 	ap_vdm_init(port);
 
-	/* If the TCPM is not Source/DFP/VCONN Source at the time of Attach,
-	 * trigger a VCONN Swap to VCONN Source as soon as possible.
+	/* If the TCPM is not Source/DFP/VCONN Source at the time of Attach, and
+	 * board power policy permits, trigger a VCONN Swap to VCONN Source as
+	 * soon as possible.
+	 * TODO(b/188578923): Passing true indicates that the PE wants to swap
+	 * to VCONN Source at this time. Remove this redundant argument when
+	 * practical.
 	 */
-	if (pd_get_vconn_state(port) == PD_ROLE_VCONN_OFF) {
+	if (port_discovery_vconn_swap_policy(port, true)) {
 		dpm[port].desired_vconn_role = PD_ROLE_VCONN_SRC;
 		DPM_SET_FLAG(port, DPM_FLAG_VCONN_SWAP);
 	}
@@ -460,8 +465,8 @@ void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		__fallthrough;
 #endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
 	default:
-		CPRINTS("C%d: Received unexpected VDM ACK for SVID %d", port,
-			svid);
+		CPRINTS("C%d: Received unexpected VDM ACK for SVID 0x%04x",
+			port, svid);
 	}
 }
 
@@ -488,8 +493,8 @@ void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
 		__fallthrough;
 #endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
 	default:
-		CPRINTS("C%d: Received unexpected VDM NAK for SVID %d", port,
-			svid);
+		CPRINTS("C%d: Received unexpected VDM NAK for SVID 0x%04x",
+			port, svid);
 	}
 }
 
@@ -653,7 +658,7 @@ static void dpm_run_pd_button_sm(int port)
  * them
  */
 static uint32_t max_current_claimed;
-K_MUTEX_DEFINE(max_current_claimed_lock);
+static K_MUTEX_DEFINE(max_current_claimed_lock);
 
 /* Ports with PD sink needing > 1.5 A */
 static atomic_t sink_max_pdo_requested;
@@ -1015,7 +1020,7 @@ __overridable int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
 	return pd_src_pdo_cnt;
 }
 
-int dpm_get_source_current(const int port)
+__overridable int dpm_get_source_current(const int port)
 {
 	if (pd_get_power_role(port) == PD_ROLE_SINK)
 		return 0;

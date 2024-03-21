@@ -25,16 +25,13 @@ ZTEST(karis_charger, test_get_leave_safe_mode_delay_ms)
 	battery_conf = &board_battery_info[0];
 	zassert_equal(board_get_leave_safe_mode_delay_ms(), 2000);
 
-	battery_conf = &board_battery_info[1];
-	zassert_equal(board_get_leave_safe_mode_delay_ms(), 2000);
-
 	/* Not cosmx battery would use defaut delay time 500ms. */
+	battery_conf = &board_battery_info[1];
+	zassert_equal(board_get_leave_safe_mode_delay_ms(), 500);
+
 	battery_conf = &board_battery_info[2];
 	zassert_equal(board_get_leave_safe_mode_delay_ms(), 500);
 
 	battery_conf = &board_battery_info[3];
-	zassert_equal(board_get_leave_safe_mode_delay_ms(), 500);
-
-	battery_conf = &board_battery_info[4];
 	zassert_equal(board_get_leave_safe_mode_delay_ms(), 500);
 }

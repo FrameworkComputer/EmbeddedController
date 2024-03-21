@@ -1,0 +1,7 @@
+board:
+  name: npcx9
+  vendor: google
+  socs:
+  - name: npcx9m3f
+  - name: npcx9m7f
+  - name: npcx9m7fb

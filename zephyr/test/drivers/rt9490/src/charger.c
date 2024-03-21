@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "battery_fuel_gauge.h"
 #include "battery_smart.h"
 #include "charger.h"
 #include "driver/charger/rt9490.h"

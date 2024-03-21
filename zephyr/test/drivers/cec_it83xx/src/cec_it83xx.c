@@ -10,6 +10,9 @@
 
 #include <zephyr/ztest.h>
 
+/* From chip/it83xx/intc.h, but that file has inline assembly. */
+void cec_interrupt(void);
+
 #define TEST_PORT 0
 
 #define CEC_EVENT_BTE BIT(0)

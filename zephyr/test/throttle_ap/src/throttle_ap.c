@@ -25,3 +25,11 @@ ZTEST_USER(throttle_ap, test_throttle_ap)
 	throttle_ap(THROTTLE_OFF, THROTTLE_HARD, THROTTLE_SRC_AC);
 	zassert_false(is_throttled);
 }
+
+ZTEST_USER(throttle_ap, test_command_apthrottle)
+{
+	/* Must define CONFIG_CMD_APTHROTTLE for this sub-command */
+	int rv = shell_execute_cmd(get_ec_shell(), "apthrottle");
+
+	zassert_equal(rv, 0, "Expected %d, but got %d", 0, rv);
+}

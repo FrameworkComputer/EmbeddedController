@@ -9,7 +9,7 @@
 #include "system.h"
 #include "task.h"
 
-K_MUTEX_DEFINE(reset_log_mutex);
+static K_MUTEX_DEFINE(reset_log_mutex);
 static int next_reset_log __preserved_logs(next_reset_log);
 static uint32_t ap_resets_since_ec_boot;
 /* keep reset_logs size a power of 2 */

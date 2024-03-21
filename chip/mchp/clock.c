@@ -52,7 +52,6 @@ static uint32_t ecia_result[MCHP_INT_GIRQ_NUM];
  * boot in order to give a permanent window in which the heavy sleep
  * mode is not used.
  */
-#define CONSOLE_IN_USE_ON_BOOT_TIME (15 * SECOND)
 static int console_in_use_timeout_sec = 60;
 static timestamp_t console_expire_time;
 #endif /*CONFIG_LOW_POWER_IDLE */
@@ -539,7 +538,8 @@ void __idle(void)
 	htimer_init(); /* hibernation timer initialize */
 
 	disable_sleep(SLEEP_MASK_CONSOLE);
-	console_expire_time.val = get_time().val + CONSOLE_IN_USE_ON_BOOT_TIME;
+	console_expire_time.val =
+		get_time().val + CONFIG_CONSOLE_IN_USE_ON_BOOT_TIME;
 
 	/*
 	 * Print when the idle task starts. This is the lowest priority

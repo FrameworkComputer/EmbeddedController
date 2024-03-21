@@ -20,6 +20,13 @@
 #include "timer.h"
 #include "util.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
+/* Pre declarations */
+struct accelgyro_drv;
+
 enum sensor_state {
 	/* Sensor state is unknown, out of reset. Maybe powered down */
 	SENSOR_NOT_INITIALIZED = 0,
@@ -380,8 +387,12 @@ ec_motion_sensor_fill_values(struct ec_response_motion_sensor_data *dst,
 	dst->data[2] = v[2];
 }
 
-#ifdef CONFIG_ZTEST
+#ifdef CONFIG_TEST
 enum sensor_config motion_sense_get_ec_config(void);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_MOTION_SENSE_H */

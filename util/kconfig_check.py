@@ -27,6 +27,7 @@ import os
 import pathlib
 import re
 import sys
+import tempfile
 import traceback
 
 
@@ -338,36 +339,46 @@ class KconfigCheck:
             List of config and menuconfig options found
         """
         if USE_KCONFIGLIB and try_kconfiglib:
-            os.environ.update(
-                {
-                    "srctree": srcdir,
-                    "SOC_DIR": "soc",
-                    "ARCH_DIR": "arch",
-                    "BOARD_DIR": "boards/*/*",
-                    "ARCH": "*",
-                }
-            )
-            kconfigs = []
-            for filename in [
-                "Kconfig",
-                os.path.join(os.environ["ZEPHYR_BASE"], "Kconfig.zephyr"),
-            ]:
-                kconf = kconfiglib.Kconfig(
-                    filename,
-                    warn=False,
-                    search_paths=search_paths,
-                    allow_empty_macros=True,
+            with tempfile.TemporaryDirectory() as temp_dir:
+                (pathlib.Path(temp_dir) / "Kconfig.modules").touch()
+                (pathlib.Path(temp_dir) / "soc").mkdir()
+                (pathlib.Path(temp_dir) / "soc" / "Kconfig.defconfig").touch()
+                (pathlib.Path(temp_dir) / "soc" / "Kconfig.soc").touch()
+                (pathlib.Path(temp_dir) / "arch").mkdir()
+                (pathlib.Path(temp_dir) / "arch" / "Kconfig").touch()
+
+                os.environ.update(
+                    {
+                        "srctree": srcdir,
+                        "SOC_DIR": "soc",
+                        "ARCH_DIR": "arch",
+                        "BOARD_DIR": "boards/*/*",
+                        "ARCH": "*",
+                        "KCONFIG_BINARY_DIR": temp_dir,
+                        "HWM_SCHEME": "v2",
+                    }
                 )
+                kconfigs = []
+                for filename in [
+                    "Kconfig",
+                    os.path.join(os.environ["ZEPHYR_BASE"], "Kconfig.zephyr"),
+                ]:
+                    kconf = kconfiglib.Kconfig(
+                        filename,
+                        warn=False,
+                        search_paths=search_paths,
+                        allow_empty_macros=True,
+                    )
 
-                symbols = [
-                    node.item.name
-                    for node in kconf.node_iter()
-                    if isinstance(node.item, kconfiglib.Symbol)
-                ]
+                    symbols = [
+                        node.item.name
+                        for node in kconf.node_iter()
+                        if isinstance(node.item, kconfiglib.Symbol)
+                    ]
 
-                symbols = cls.fixup_symbols(symbols, replace_list)
+                    symbols = cls.fixup_symbols(symbols, replace_list)
 
-                kconfigs += symbols
+                    kconfigs += symbols
         else:
             symbols = []
             kconfigs = []

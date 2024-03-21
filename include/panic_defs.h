@@ -162,6 +162,8 @@ enum panic_arch {
 #endif
 };
 
+#define PANIC_ZEPHYR_FATAL_ERROR 0xDEAD6800
+
 /* Flags for panic_data.flags */
 /* panic_data.frame is valid */
 #define PANIC_DATA_FLAG_FRAME_VALID BIT(0)

@@ -4,7 +4,7 @@
 # found in the LICENSE file.
 
 # shellcheck source=../../../scripts/lib/shflags/shflags
-. /usr/share/misc/shflags
+. "${SHFLAGS:-/usr/share/misc/shflags}" || exit 1
 
 readonly DEFAULT_RETRIES=${DEFAULT_RETRIES:-4}
 readonly STM32MON_CONNECT_RETRIES=${STM32MON_CONNECT_RETRIES:-6}
@@ -206,6 +206,76 @@ get_platform_name() {
   echo "${platform_name}"
 }
 
+# Get the model name as a string.
+get_model_name() {
+  local model_name
+
+  echo "Getting model name." 1>&2
+  model_name="$(cros_config / name)"
+  if [[ -z "${model_name}" ]]; then
+    return 1
+  fi
+
+  echo "${model_name}"
+}
+
+# Return the board version as a string. The board version corresponds to EVT,
+# DVT, PVT, etc.
+# https://chromium.googlesource.com/chromiumos/docs/+/HEAD/design_docs/cros_board_info.md#board_version
+# NOTE: This doesn't work on all platforms and should only be used for
+# short-term workarounds that are fixed in later hardware.
+get_board_version() {
+  local board_version
+
+  echo "Getting board version." 1>&2
+  board_version="$(ectool cbi get 0 | grep -o '[0-9]\+' | head -n 1)"
+  if [[ -z "${board_version}" ]]; then
+    return 1
+  fi
+
+  echo "${board_version}"
+}
+
+power_cycle_fpmcu() {
+  local gpio_pwren="${1}"
+
+  if [[ "${gpio_pwren}" -gt 0 ]]; then
+    echo "Power cycling the FPMCU."
+    gpio export "${gpio_pwren}"
+    gpio out    "${gpio_pwren}"
+    gpio 0      "${gpio_pwren}"
+    # Must outlast hardware soft start, which is typically ~3ms.
+    sleep 0.5
+    gpio 1      "${gpio_pwren}"
+    # Power enable line is externally pulled down, so leave as output-high.
+    gpio unexport "${gpio_pwren}"
+  fi
+}
+
+# TODO(b/b:320623537): Remove after hardware is fixed.
+power_cycle_fpmcu_workaround() {
+  local gpio_pwren="${1}"
+
+  local model
+  if ! model="$(get_model_name)"; then
+    echo "Failed to get model name."
+    exit "${EXIT_CONFIG}"
+  fi
+
+  if [[ "${model}" == "karis" ]]; then
+    local board_version
+    if ! board_version="$(get_board_version)"; then
+      echo "Failed to get board version."
+      exit "${EXIT_CONFIG}"
+    fi
+
+    if [[ "${board_version}" == "1" ]]; then
+      echo "b/320623537: Running power cycle workaround."
+      power_cycle_fpmcu "${gpio_pwren}"
+    fi
+  fi
+}
+
 # Test the current running kernel version against a regular expression.
 # Returns 0 if the regex matches.
 match_kernel_regex() {
@@ -252,7 +322,7 @@ get_chip() {
     bloonchipper|dartmonkey|nocturne_fp|nami_fp)
       echo "STM32"
       ;;
-    helipilot)
+    buccaneer|helipilot)
       echo "NPCX"
       ;;
     *)
@@ -544,6 +614,9 @@ flash_fp_mcu_board() {
   gpio 0 "${gpio_nrst}"
   sleep 0.001
 
+  # TODO(b/b:320623537): Remove after hardware is fixed.
+  power_cycle_fpmcu_workaround "${gpio_pwren}"
+
   klog "Binding raw driver"
   if [[ "${transport}" == "UART" ]]; then
     # load AMDI0020:01 ttyS1
@@ -605,15 +678,7 @@ flash_fp_mcu_board() {
   # detected on boot. We force a POR here to ensure we avoid this reboot loop.
   # See to b/146428434.
   if [[ "${gpio_pwren}" -gt 0 ]]; then
-    echo "Power cycling the FPMCU."
-    gpio export "${gpio_pwren}"
-    gpio out    "${gpio_pwren}"
-    gpio 0      "${gpio_pwren}"
-    # Must outlast hardware soft start, which is typically ~3ms.
-    sleep 0.5
-    gpio 1      "${gpio_pwren}"
-    # Power enable line is externally pulled down, so leave as output-high.
-    gpio unexport "${gpio_pwren}"
+    power_cycle_fpmcu "${gpio_pwren}"
   else
     echo "Reset the FPMCU."
     gpio out	"${gpio_nrst}"
@@ -723,20 +788,30 @@ config_herobrine() {
 }
 
 config_nami() {
-  local device="/dev/spidev1.0"
-  # Support kernel version 4.4 during transition to 5.4
-  match_kernel_regex "^4\.4\." && device="/dev/spidev32765.0"
-
   readonly TRANSPORT="SPI"
-  readonly DEVICE="${device}"
+  readonly DEVICE="/dev/spidev1.0"
 
-  readonly GPIO_CHIP="gpiochip360"
-  # FPMCU RST_ODL is on GPP_C9 = 360 + 57 = 417
-  readonly GPIO_NRST=417
-  # FPMCU BOOT0 is on GPP_D5 = 360 + 77 = 437
-  readonly GPIO_BOOT0=437
-  # FP_PWR_EN is on GPP_B11 = 360 + 35 = 395
-  readonly GPIO_PWREN=395
+  # See kernel/v5.4/drivers/pinctrl/intel/pinctrl-sunrisepoint.c
+  # for pin name and pin number.
+
+  local gpiochip_dev_path="pci0000:00/INT344B:00/gpio"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
+
+  local GPIO_CHIP="gpiochip${gpiobase}"
+
+  # FPMCU RST_ODL is on GPP_C9 = 57
+  local gpionrst=57
+  readonly GPIO_NRST=$(( gpionrst + gpiobase ))
+  # FPMCU BOOT0 is on GPP_D5 = 77
+  local gpioboot=77
+  readonly GPIO_BOOT0=$(( gpioboot + gpiobase ))
+  # FP_PWR_EN is on GPP_B11 = 35
+  local gpiopwren=35
+  readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
 }
 
 config_nocturne() {
@@ -909,25 +984,24 @@ config_zork() {
   readonly TRANSPORT="UART"
   readonly DEVICE="/dev/ttyS1"
 
-  local gpiochip="gpiochip768"
-  # Support kernel version 5.4 during transition to 5.15+
-  match_kernel_regex "^5\.4\." && gpiochip="gpiochip256"
-  readonly GPIO_CHIP="${gpiochip}"
+  local gpiochip_dev_path="platform/AMD0030:00/gpio"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
 
-  local offset=0
-  # Support kernel version 5.4 during transition to 5.15+
-  # v5.4 has GPIOs that are offset by -512
-  match_kernel_regex "^5\.4\." && offset=512
+  local GPIO_CHIP="gpiochip${gpiobase}"
 
-  # FPMCU RST_ODL is on AGPIO 11 = 768 + 11 = 779
-  local gpionrst=779
-  readonly GPIO_NRST=$(( gpionrst - offset ))
-  # FPMCU BOOT0 is on AGPIO 69 = 768 + 69 = 837
-  local gpioboot=837
-  readonly GPIO_BOOT0=$(( gpioboot - offset ))
-  # FPMCU PWR_EN is on AGPIO 32 = 768 + 32 = 800
-  local gpiopwren=800
-  readonly GPIO_PWREN=$(( gpiopwren - offset ))
+  # FPMCU RST_ODL is on AGPIO 11
+  local gpionrst=11
+  readonly GPIO_NRST=$(( gpionrst + gpiobase ))
+  # FPMCU BOOT0 is on AGPIO 69
+  local gpioboot=69
+  readonly GPIO_BOOT0=$(( gpioboot + gpiobase ))
+  # FPMCU PWR_EN is on AGPIO 32
+  local gpiopwren=32
+  readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
 }
 
 config_guybrush() {

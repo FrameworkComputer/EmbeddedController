@@ -90,6 +90,14 @@ config PLATFORM_EC_USBC_RETIMER_ANX7451
 	  ANX7451 has built-in re-timers to recover both the USB and DP signals
 	  with loss compensation of 23dB for USB and up to 27dB for DP.
 
+config PLATFORM_EC_USBC_RETIMER_PS8802
+	bool "Parade PS8802 USB Type-C Retimer for USB and DP Alternate Mode"
+	default y
+	depends on DT_HAS_PARADE_PS8802_ENABLED
+	help
+	  PS8802 is a 10Gbps retimer for Type-C applications with the
+	  integrated USB3.1 and DisplayPort alternate mode port.
+
 config PLATFORM_EC_USBC_RETIMER_PS8818
 	bool "Parade PS8818 USB Type-C Retimer for USB and DP Alternate Mode"
 	default y

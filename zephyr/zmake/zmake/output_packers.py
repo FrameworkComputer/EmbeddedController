@@ -23,6 +23,7 @@ class BasePacker:
 
     def __init__(self, project):
         self.project = project
+        self.rw_fwid_addr = -1
 
     def configs(self):  # pylint: disable=no-self-use
         """Get all of the build configurations necessary.
@@ -59,6 +60,24 @@ class BasePacker:
             directory, and the output filename.
         """
         raise NotImplementedError("Abstract method not implemented")
+
+    def verify_rw_fwid(
+        self,
+        _work_dir,
+    ):
+        """Verify the RW_FWID address matches what is expected.
+
+        Args:
+            _work_dir: A directory to write outputs and temporary files
+            into.
+        """
+        # If the rw_fwid_addr is unset, then we don't need this implemented.
+        # But if someone set rw_fwid_addr, the subclass must implement this
+        # method.
+        if self.rw_fwid_addr >= 0:
+            raise NotImplementedError(
+                f"{self}: Abstract method not implemented"
+            )
 
     def _get_max_image_bytes(  # pylint: disable=no-self-use
         self, dir_map
@@ -236,6 +255,41 @@ class BinmanPacker(BasePacker):
         if os.path.exists(token_paths[0]):
             util.merge_token_databases(token_paths, work_dir / token_db_name)
             yield work_dir / token_db_name, token_db_name
+
+    def verify_rw_fwid(
+        self,
+        work_dir,
+    ):
+        """Verify the RW_FWID address matches what is expected.
+
+        Args:
+            work_dir: A directory to write outputs and temporary files
+            into.
+        """
+        actual_rw_fwid_addr = -1
+        with open(work_dir / "image.map", encoding="utf-8") as image_map:
+            for line in image_map:
+                addr, _, _, name = line.split(None, 4)
+                if name == "rw-fwid":
+                    actual_rw_fwid_addr = int(addr, 16)
+        if self.rw_fwid_addr != actual_rw_fwid_addr:
+            if self.rw_fwid_addr < 0:
+                raise RuntimeError(
+                    "Missing RW_FWID assertion. Add one to BUILD.py:\n"
+                    "assert_rw_fwid_DO_NOT_EDIT(project_name="
+                    f'"{self.project.config.project_name}", '
+                    f"addr={actual_rw_fwid_addr:#x})"
+                )
+            if actual_rw_fwid_addr < 0:
+                raise RuntimeError(
+                    "Unexpected RW_FWID assertion. Please remove "
+                    "assert_rw_fwid_DO_NOT_EDIT from BUILD.py for project_name "
+                    f"{self.project.config.project_name}"
+                )
+            raise RuntimeError(
+                f"{self.project.config.project_name}: Incorrect RW_FWID, "
+                f"expected {self.rw_fwid_addr:#x} got {actual_rw_fwid_addr:#x}"
+            )
 
 
 class NpcxPacker(BinmanPacker):

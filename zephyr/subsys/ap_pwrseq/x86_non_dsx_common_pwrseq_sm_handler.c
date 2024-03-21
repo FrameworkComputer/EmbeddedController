@@ -318,7 +318,7 @@ void ap_power_reset(enum ap_power_shutdown_reason reason)
 int rsmrst_power_is_good(void)
 {
 	/* TODO: Check if this is still intact */
-	return power_signal_get(PWR_RSMRST);
+	return power_signal_get(PWR_RSMRST_PWRGD);
 }
 
 /* Handling RSMRST signal is mostly common across x86 chipsets */
@@ -326,15 +326,20 @@ void rsmrst_pass_thru_handler(void)
 {
 	/* Handle RSMRST passthrough */
 	/* TODO: Add additional conditions for RSMRST handling */
-	int in_sig_val = power_signal_get(PWR_RSMRST);
-	int out_sig_val = power_signal_get(PWR_EC_PCH_RSMRST);
-
-	if (in_sig_val != out_sig_val) {
-		if (in_sig_val)
+	if (power_signal_get(PWR_RSMRST_PWRGD)) {
+		if (power_signal_get(PWR_EC_PCH_RSMRST)) {
+			/*
+			 * Delay `PWR_EC_PCH_RSMRST` de-assertion for at least
+			 * `rsmrst_delay` after detecting that power wells are
+			 * stable.
+			 */
 			k_msleep(AP_PWRSEQ_DT_VALUE(rsmrst_delay));
-		LOG_DBG("Setting PWR_EC_PCH_RSMRST to %d", in_sig_val);
-		power_signal_set(PWR_EC_PCH_RSMRST, in_sig_val);
-		update_ap_boot_time(RSMRST);
+			LOG_DBG("Deasserting PWR_EC_PCH_RSMRST");
+			power_signal_set(PWR_EC_PCH_RSMRST, 0);
+			update_ap_boot_time(RSMRST);
+		}
+	} else {
+		power_signal_set(PWR_EC_PCH_RSMRST, 1);
 	}
 }
 
@@ -455,7 +460,7 @@ static int common_pwr_sm_run(int state)
 		break;
 
 	case SYS_POWER_STATE_S4S3:
-		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
+		if (!chipset_is_prim_power_good()) {
 			/* Required rail went away */
 			shutdown_and_notify(AP_POWER_SHUTDOWN_POWERFAIL);
 			return SYS_POWER_STATE_G3;
@@ -479,7 +484,7 @@ static int common_pwr_sm_run(int state)
 			LOG_WRN("RSMRST is not GOOD");
 			return SYS_POWER_STATE_S3S4;
 		}
-		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
+		if (!chipset_is_prim_power_good()) {
 			/* Required rail went away, go straight to S5 */
 			shutdown_and_notify(AP_POWER_SHUTDOWN_POWERFAIL);
 			return SYS_POWER_STATE_G3;
@@ -491,7 +496,7 @@ static int common_pwr_sm_run(int state)
 		break;
 
 	case SYS_POWER_STATE_S3S0:
-		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
+		if (!chipset_is_prim_power_good()) {
 			shutdown_and_notify(AP_POWER_SHUTDOWN_POWERFAIL);
 			return SYS_POWER_STATE_G3;
 		}
@@ -524,7 +529,7 @@ static int common_pwr_sm_run(int state)
 			 * before leaving S0ix.
 			 */
 			return SYS_POWER_STATE_S0ixS0;
-		} else if (!power_signals_on(IN_PGOOD_ALL_CORE))
+		} else if (!chipset_is_all_power_good())
 			return SYS_POWER_STATE_S0;
 
 		break;
@@ -567,7 +572,7 @@ static int common_pwr_sm_run(int state)
 #endif /* CONFIG_AP_PWRSEQ_S0IX */
 
 	case SYS_POWER_STATE_S0:
-		if (!power_signals_on(IN_PGOOD_ALL_CORE)) {
+		if (!chipset_is_prim_power_good()) {
 			shutdown_and_notify(AP_POWER_SHUTDOWN_POWERFAIL);
 			return SYS_POWER_STATE_G3;
 		} else if (signals_valid_and_on(IN_PCH_SLP_S3)) {
@@ -842,7 +847,7 @@ static int x86_non_dsx_s5_run(void *data)
 	 * have already checked that required power rails are OK.
 	 */
 	rsmrst_pass_thru_handler();
-	if (power_signal_get(PWR_EC_PCH_RSMRST)) {
+	if (!power_signal_get(PWR_EC_PCH_RSMRST)) {
 		if (signals_valid_and_off(IN_PCH_SLP_S5)) {
 			return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S4);
 		}
@@ -873,7 +878,7 @@ AP_POWER_ARCH_STATE_DEFINE(AP_POWER_STATE_S5, x86_non_dsx_s5_entry,
 
 static int x86_non_dsx_s4_run(void *data)
 {
-	if (power_signal_get(PWR_RSMRST) == 0 ||
+	if (power_signal_get(PWR_RSMRST_PWRGD) == 0 ||
 	    signals_valid_and_on(IN_PCH_SLP_S5)) {
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S5);
 	}
@@ -896,7 +901,7 @@ AP_POWER_ARCH_STATE_DEFINE(AP_POWER_STATE_S4, NULL, x86_non_dsx_s4_run, NULL);
 
 static int x86_non_dsx_s3_run(void *data)
 {
-	if (power_signal_get(PWR_RSMRST) == 0 ||
+	if (power_signal_get(PWR_RSMRST_PWRGD) == 0 ||
 	    signals_valid_and_on(IN_PCH_SLP_S4)) {
 		return ap_pwrseq_sm_set_state(data, AP_POWER_STATE_S4);
 	}

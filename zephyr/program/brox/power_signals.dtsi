@@ -30,20 +30,16 @@
 	pwr-pg-vccin-aux-od {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "PG_VCCIN_AUX_OD power good from regulator";
-		enum-name = "PWR_RSMRST";
+		enum-name = "PWR_RSMRST_PWRGD";
 		gpios = <&gpiof 3 0>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
 	pwr-ec-pch-rsmrst-odl {
-		/* EC should delay RSMRST by 10ms on rising edge of
-		 * PG_VCCIN_AUX_OD.
-		 * TODO: b/317810253 - Zephyr: Fix active low handling for
-		 * RSMRST
-		 */
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "EC_RSMRST_L output to PCH";
 		enum-name = "PWR_EC_PCH_RSMRST";
-		gpios = <&gpioi 6 0>;
+		gpios = <&gpioi 6 GPIO_ACTIVE_LOW>;
+		reset-val = <1>;
 		output;
 	};
 	pwr-slp-s0-l {
@@ -72,6 +68,7 @@
 		dbg-label = "SLP_S5 virtual wire input from PCH";
 		enum-name = "PWR_SLP_S5";
 		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S5";
+		reset-val = <1>;
 		vw-invert;
 	};
 	pwr-slp-sus-l {

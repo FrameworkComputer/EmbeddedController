@@ -7,6 +7,8 @@
 #include "gpio.dtsi"
 #include "rwsig.dtsi"
 
+#include <cros/integrated_fwid.dtsi>
+
 / {
 	chosen {
 		cros-fp,fingerprint-sensor = &fp_sensor;
@@ -72,6 +74,19 @@
 		ec-rw {
 			offset = <0x60000>;
 			size = <0xa0000>;
+			rw-fw {
+				/*
+				 * Clang doesn't emit STT_SECTION symbols (also
+				 * called 'section symbols'), so 'rom_start'
+				 * symbol is not available. Fortunately, Zephyr
+				 * linker scripts provide '__rom_start_address'
+				 * symbol which points to the beginning of
+				 * 'rom_start' section.
+				 */
+				zephyr-rw {
+					elf-base-sym = "__rom_start_address";
+				};
+			};
 		};
 		pad-byte = <0xff>;
 	};

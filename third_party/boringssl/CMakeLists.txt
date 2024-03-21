@@ -16,6 +16,14 @@ if (DEFINED ENV{MODULES_DIR})
 # which should be correct in Gitlab CI.
 elseif(EXISTS ${ZEPHYR_BASE}/../../modules/boringssl)
 	set(BORINGSSL_SOURCES ${ZEPHYR_BASE}/../../modules/boringssl)
+# When releasing FPMCU firmware, the directory structure is
+#    |_ zephyr-base/
+#    |_ modules/
+#    |   |_ boringssl/
+#
+# Check ${ZEPHYR_BASE}/../modules/boringssl for BoringSSL sources.
+elseif(EXISTS ${ZEPHYR_BASE}/../modules/boringssl)
+	set(BORINGSSL_SOURCES ${ZEPHYR_BASE}/../modules/boringssl)
 # Finally, look for BoringSSL in third_part/boringssl which should be correct
 # when running in cros_sdk.
 else()

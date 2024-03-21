@@ -100,6 +100,38 @@ ZTEST(led_driver, test_get_chipset_state)
 		      pwr_state);
 }
 
+ZTEST(led_driver, test_separated_led_policies)
+{
+	led_auto_control(EC_LED_ID_SYSRQ_DEBUG_LED, 1);
+	led_auto_control(EC_LED_ID_BATTERY_LED, 1);
+
+	set_ac_enabled(false);
+	test_set_chipset_to_power_level(POWER_S0);
+	VERIFY_LED_COLOR(LED_BLUE, EC_LED_ID_SYSRQ_DEBUG_LED);
+	VERIFY_LED_COLOR(LED_OFF, EC_LED_ID_BATTERY_LED);
+
+	test_set_chipset_to_power_level(POWER_S3);
+	VERIFY_LED_COLOR(LED_WHITE, EC_LED_ID_SYSRQ_DEBUG_LED);
+	VERIFY_LED_COLOR(LED_OFF, EC_LED_ID_BATTERY_LED);
+
+	test_set_chipset_to_power_level(POWER_S5);
+	VERIFY_LED_COLOR(LED_OFF, EC_LED_ID_SYSRQ_DEBUG_LED);
+	VERIFY_LED_COLOR(LED_OFF, EC_LED_ID_BATTERY_LED);
+
+	set_ac_enabled(true);
+	test_set_chipset_to_power_level(POWER_S0);
+	VERIFY_LED_COLOR(LED_BLUE, EC_LED_ID_SYSRQ_DEBUG_LED);
+	VERIFY_LED_COLOR(LED_WHITE, EC_LED_ID_BATTERY_LED);
+
+	test_set_chipset_to_power_level(POWER_S3);
+	VERIFY_LED_COLOR(LED_WHITE, EC_LED_ID_SYSRQ_DEBUG_LED);
+	VERIFY_LED_COLOR(LED_WHITE, EC_LED_ID_BATTERY_LED);
+
+	test_set_chipset_to_power_level(POWER_S5);
+	VERIFY_LED_COLOR(LED_OFF, EC_LED_ID_SYSRQ_DEBUG_LED);
+	VERIFY_LED_COLOR(LED_WHITE, EC_LED_ID_BATTERY_LED);
+}
+
 struct led_driver_fixture {
 	struct tcpci_partner_data source_20v_3a;
 	struct tcpci_src_emul_data src_ext;

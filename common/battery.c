@@ -35,7 +35,7 @@ const static int batt_host_shutdown_pct = CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE;
 #ifdef CONFIG_BATTERY_CUT_OFF
 
 #ifndef CONFIG_BATTERY_CUTOFF_DELAY_US
-#define CONFIG_BATTERY_CUTOFF_DELAY_US (1 * SECOND)
+#define CONFIG_BATTERY_CUTOFF_DELAY_US (1500 * MSEC)
 #endif
 
 static enum battery_cutoff_states battery_cutoff_state =
@@ -365,10 +365,14 @@ static int battery_cutoff_start(void)
 	/* Reset previous attempt */
 	battery_cutoff_clear();
 
+	/*
+	 * Set BATTERY_CUTOFF_STATE_IN_PROGRESS here to ensure other
+	 * communication with the battery will be refrained from.
+	 */
+	battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
 	/* Send a request to the battery. */
 	rv = board_cut_off_battery();
 	if (rv == EC_RES_SUCCESS) {
-		battery_cutoff_state = BATTERY_CUTOFF_STATE_IN_PROGRESS;
 		cutoff_timeout.val = get_time().val +
 				     CONFIG_BATTERY_CUTOFF_TIMEOUT_MSEC * MSEC;
 		CUTOFFPRINTS("started (timeout in %u msec)",

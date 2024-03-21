@@ -9,6 +9,7 @@
 #include "system.h"
 #include "typec_control.h"
 #include "usb_charge.h"
+#include "usb_pd.h"
 
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/fff.h>
@@ -17,6 +18,9 @@
 
 #include <dt-bindings/gpio_defines.h>
 #include <typec_control.h>
+
+void reset_nct38xx_port(int port);
+void bc12_interrupt(enum gpio_signal);
 
 LOG_MODULE_REGISTER(nissa, LOG_LEVEL_INF);
 
@@ -95,11 +99,6 @@ ZTEST(nokris, test_board_check_extpower)
 	board_check_extpower();
 	zassert_equal(extpower_is_present_fake.call_count, 3);
 	zassert_equal(extpower_handle_update_fake.call_count, 2);
-}
-
-ZTEST(nokris, test_keyboard_configuration)
-{
-	zassert_equal_ptr(board_vivaldi_keybd_config(), &nivviks_kb);
 }
 
 ZTEST(nokris, test_is_sourcing_vbus)

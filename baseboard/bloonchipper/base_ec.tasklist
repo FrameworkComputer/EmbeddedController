@@ -1,0 +1,21 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* If we are actually using DRUID in the FP task, we need a bigger stack. */
+#ifdef CONFIG_LIB_DRUID_WRAPPER
+#define FPSENSOR_TASK_STACK_SIZE 20240
+#else
+#define FPSENSOR_TASK_STACK_SIZE 4096
+#endif
+
+/**
+ * See CONFIG_TASK_LIST in config.h for details.
+ */
+#define BASEBOARD_CONFIG_TASK_LIST \
+	TASK_ALWAYS_RO(RWSIG, rwsig_task, NULL, 1280) \
+	TASK_ALWAYS(HOOKS, hook_task, NULL, 1024) \
+	TASK_ALWAYS_RW(FPSENSOR, fp_task, NULL, FPSENSOR_TASK_STACK_SIZE) \
+	TASK_ALWAYS(HOSTCMD, host_command_task, NULL, 6144) \
+	TASK_ALWAYS(CONSOLE, console_task, NULL, CONSOLE_TASK_STACK_SIZE)

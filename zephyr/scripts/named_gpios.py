@@ -96,9 +96,22 @@ def verify_gpios_flags_match(edtlib, edt, project_name):
         return True
 
     # Dictionary using the gpio,pin tuple as the key. Value set to the flags
-    board_gpios = dict()
+    board_gpios = {}
+    skipped_count = 0
     for node in named_gpios.children.values():
         if "gpios" not in node.props:
+            skipped_count += 1
+            continue
+
+        if "no-auto-init" not in node.props:
+            logging.warning(
+                "GPIO %s is missing no-auto-init property", node.name
+            )
+        elif node.props["no-auto-init"].val:
+            # GPIOs with the no-auto-init boolean property set to True can
+            # be skipped as the GPIO shim driver doesn't touch them.
+            logging.debug("GPIO %s is no-auto-init, skipping", node.name)
+            skipped_count += 1
             continue
 
         gpios = node.props["gpios"].val
@@ -136,7 +149,8 @@ def verify_gpios_flags_match(edtlib, edt, project_name):
         logging.error("%d GPIO mismatches found in %s.", errors, project_name)
         return False
 
-    logging.info("Verified %d '*-gpios' properties, all flags match", count)
+    logging.info("Verified %d '*-gpios' properties, all flags match.", count)
+    logging.info("Skipped %d named-gpios children.", skipped_count)
     return True
 
 
@@ -152,7 +166,7 @@ def verify_no_duplicates(edtlib, edt, project_name):
         True if no duplicates found.  Returns False otherwise.
     """
     # Dictionary of GPIO controllers, indexed by the GPIO controller nodelabel
-    gpio_ctrls = dict()
+    gpio_ctrls = {}
     duplicates = 0
     count = 0
 
@@ -186,7 +200,7 @@ def verify_no_duplicates(edtlib, edt, project_name):
 
         if not nodelabel in gpio_ctrls:
             # Create a dictionary at each GPIO controller
-            gpio_ctrls[nodelabel] = dict()
+            gpio_ctrls[nodelabel] = {}
 
         if gpio_pin in gpio_ctrls[nodelabel]:
             logging.error(

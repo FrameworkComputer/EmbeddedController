@@ -28,7 +28,7 @@
 #ifdef SECTION_IS_RO
 
 /* Configure the Boot Manager. */
-#define CONFIG_MALLOC
+#define CONFIG_SHARED_MALLOC
 #define CONFIG_DFU_BOOTMANAGER_MAIN
 #define CONFIG_DFU_BOOTMANAGER_SHARED
 #undef CONFIG_COMMON_RUNTIME
@@ -100,6 +100,13 @@
 #define CONFIG_USB
 #define CONFIG_USB_PID 0x520e
 #define CONFIG_USB_CONSOLE
+
+/*
+ * Some commands take a list of GPIO names, which can exceed the default 80
+ * character limit.
+ */
+#undef CONFIG_CONSOLE_INPUT_LINE_SIZE
+#define CONFIG_CONSOLE_INPUT_LINE_SIZE 256
 
 /*
  * Enabling USB updating would exceed the number of USB endpoints

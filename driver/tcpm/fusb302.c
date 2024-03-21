@@ -38,7 +38,7 @@ static struct fusb302_chip_state {
 	uint8_t mdac_rd;
 } state[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-K_MUTEX_DEFINE(measure_lock);
+static K_MUTEX_DEFINE(measure_lock);
 
 /*
  * Bring the FUSB302 out of reset after Hard Reset signaling. This will

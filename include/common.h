@@ -24,7 +24,7 @@
 
 #include <zephyr/sys/util.h>
 #include <zephyr/toolchain.h>
-#ifdef CONFIG_ZTEST
+#ifdef CONFIG_TEST
 #define TEST_BUILD
 #endif /* CONFIG_ZTEST */
 #endif /* CONFIG_ZEPHYR */
@@ -34,6 +34,10 @@
  * #line marks the *next* line, so it is off by one.
  */
 #line 37
+
+#ifndef __THROW
+#define __THROW
+#endif
 
 /*
  * Define a new macro (FIXED_SECTION) to abstract away the linker details

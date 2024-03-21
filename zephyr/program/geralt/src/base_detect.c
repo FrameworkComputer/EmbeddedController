@@ -123,8 +123,6 @@ static int base_init(void)
 {
 	static struct ap_power_ev_callback cb;
 
-	base_update(false);
-
 	ap_power_ev_init_callback(&cb, base_startup_hook,
 				  AP_POWER_STARTUP | AP_POWER_SHUTDOWN);
 	ap_power_ev_add_callback(&cb);
@@ -140,7 +138,8 @@ SYS_INIT(base_init, APPLICATION, 1);
 
 void base_init_setting(void)
 {
-	if (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED)) {
+	if (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED) &&
+	    adc_read_channel(ADC_BASE_DET) > DETACH_MIN_THRESHOLD_MV) {
 		base_update(false);
 		base_detect_enable(true);
 	}

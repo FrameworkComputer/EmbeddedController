@@ -64,6 +64,7 @@ config PLATFORM_EC_HOSTCMD_TYPEC_DISCOVERY
 config PLATFORM_EC_HOSTCMD_TYPEC_CONTROL
 	bool "Host command: EC_CMD_TYPEC_CONTROL"
 	default y
+	depends on PLATFORM_EC_USB_PD_TCPMV2 || PLATFORM_EC_USB_PD_CONTROLLER
 	help
 	  Enables EC_CMD_TYPEC_CONTROL host command. This allows AP to
 	  control USB PD policy.

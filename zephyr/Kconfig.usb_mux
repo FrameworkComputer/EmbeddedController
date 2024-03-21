@@ -69,21 +69,10 @@ config PLATFORM_EC_USB_MUX_PS8743
 	  High-Bit-Rate 2 (HBR2) redriver. It provides control of switching
 	  modes through either GPIO or I2C.
 
-choice PLATFORM_EC_USB_MUX_TUSB_TYPE
-	prompt "Select the TUSB USB-C Redriver type"
-	default PLATFORM_EC_USB_MUX_TUSB1064 if DT_HAS_TI_TUSB1064_ENABLED
-	default PLATFORM_EC_USB_MUX_TUSB1064 if DT_HAS_ZEPHYR_TUSB1064_EMUL_ENABLED
-	help
-	  There are three supported types of TUSB USB-C Redriver: TUSB546,
-	  TUSB1044, and TUSB1064.
-
-config PLATFORM_EC_USB_MUX_TUSB_NONE
-	bool "None"
-	help
-	  Default option if the board doesn't contain any model of TUSB family.
-
 config PLATFORM_EC_USB_MUX_TUSB546
 	bool "TI TUSB546 USB-C DP ALT Mode Linear Redriver Crosspoint Switch"
+	default y
+	depends on DT_HAS_TI_TUSB546_ENABLED
 	help
 	  This is a USB Type-C Alt Mode redriving switch supporting USB 3.1 data
 	  rates up to 5 Gbps and DisplayPort 1.4 up to 8.1 Gbps for downstream
@@ -91,6 +80,8 @@ config PLATFORM_EC_USB_MUX_TUSB546
 
 config PLATFORM_EC_USB_MUX_TUSB1044
 	bool "TI TUSB1044 USB-C 10 Gbps Linear Redriver"
+	default y
+	depends on DT_HAS_TI_TUSB1044_ENABLED
 	help
 	  This is a USB Type-C Alt Mode redriver. This supports USB 3.1
 	  Gen 2 and DisplayPort 1.4 as Alternate Mode. It Provides GPIO and
@@ -98,10 +89,10 @@ config PLATFORM_EC_USB_MUX_TUSB1044
 
 config PLATFORM_EC_USB_MUX_TUSB1064
 	bool "TI TUSB1064 USB-C 10 Gbps Linear Redriver"
+	default y
+	depends on DT_HAS_TI_TUSB1064_ENABLED || DT_HAS_ZEPHYR_TUSB1064_EMUL_ENABLED
 	help
 	  This is a USB Type-C Alt Mode redriver. This supports USB 3.1
 	  Gen 2 and DisplayPort 1.4.
-
-endchoice # PLATFORM_EC_USB_MUX_TUSB_TYPE
 
 endif # PLATFORM_EC_USB_MUX

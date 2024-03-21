@@ -48,7 +48,18 @@ target_sources_ifdef(CONFIG_TEST_STARMIE
 
 target_sources_ifdef(CONFIG_TEST_CHINCHOU
 	app PRIVATE
-	src/fake.c
 	src/board_chinchou.c
+	src/temp_chinchou.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/chinchou/src/board.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/chinchou/src/thermal.c
 )
+
+target_sources_ifdef(CONFIG_TEST_WOOBAT
+	app PRIVATE
+	src/fake.c
+	src/ppc_woobat.c
+	src/temp_woobat.c
+	src/fwconfig_woobat.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/woobat/src/ppc.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/woobat/src/temp.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/woobat/src/sensor.c)

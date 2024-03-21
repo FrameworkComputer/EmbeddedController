@@ -9,6 +9,7 @@
 		compatible = "cros-ec,led-policy";
 
 		pwr-power-state-off {
+			chipset-state = "POWER_S5";
 
 			power-led {
 				led-id = "EC_LED_ID_POWER_LED";

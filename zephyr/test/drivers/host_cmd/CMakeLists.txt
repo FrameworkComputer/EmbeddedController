@@ -25,6 +25,7 @@ target_sources(app PRIVATE
     src/tablet_mode.c
     src/usb_pd_control.c
     src/usb_pd_host_cmd.c
+    src/ap_hang_detect.c
 )
 
 add_subdirectory(

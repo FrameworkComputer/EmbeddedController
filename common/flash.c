@@ -60,6 +60,7 @@
 #define PSTATE_VALID_FLAGS BIT(0)
 #define PSTATE_VALID_SERIALNO BIT(1)
 #define PSTATE_VALID_MAC_ADDR BIT(2)
+#define PSTATE_VALID_POWERON_CONF BIT(3)
 
 /*
  * Error correction code operates on blocks equal to CONFIG_FLASH_WRITE_SIZE
@@ -79,6 +80,9 @@ struct persist_state {
 #ifdef CONFIG_MAC_ADDR_LEN
 	uint8_t mac_addr[CONFIG_MAC_ADDR_LEN];
 #endif /* CONFIG_MAC_ADDR_LEN */
+#ifdef CONFIG_POWERON_CONF_LEN
+	uint8_t poweron_conf[CONFIG_POWERON_CONF_LEN];
+#endif /* CONFIG_POWERON_CONF_LEN */
 } __aligned(CONFIG_FLASH_WRITE_SIZE);
 
 /* written with flash_physical_write, need to respect alignment constraints */
@@ -570,6 +574,59 @@ int crec_flash_write_pstate_mac_addr(const char *mac_addr)
 }
 
 #endif /* CONFIG_MAC_ADDR_LEN */
+
+#ifdef CONFIG_POWERON_CONF_LEN
+
+/**
+ * Read and return persistent servo default settings.
+ */
+int crec_flash_read_pstate_poweron_conf(uint8_t *poweron_conf)
+{
+	const struct persist_state *pstate =
+		(const struct persist_state *)flash_physical_dataptr(
+			CONFIG_FW_PSTATE_OFF);
+
+	if ((pstate->version != PERSIST_STATE_VERSION) ||
+	    !(pstate->valid_fields & PSTATE_VALID_POWERON_CONF))
+		return EC_ERROR_UNKNOWN;
+
+	memcpy(poweron_conf, pstate->poweron_conf, CONFIG_POWERON_CONF_LEN);
+	return EC_SUCCESS;
+}
+
+/**
+ * Write persistent poweron_conf to pstate, erasing if necessary.
+ *
+ * @param poweron_conf
+ * @return EC_SUCCESS, or nonzero if error.
+ */
+int crec_flash_write_pstate_poweron_conf(const uint8_t *poweron_conf)
+{
+	struct persist_state newpstate;
+	const struct persist_state *pstate =
+		(const struct persist_state *)flash_physical_dataptr(
+			CONFIG_FW_PSTATE_OFF);
+
+	/* Check that this is OK, data fits in the region. */
+	if (!poweron_conf) {
+		return EC_ERROR_INVAL;
+	}
+
+	/* Cache the old copy for read/modify/write. */
+	memcpy(&newpstate, pstate, sizeof(newpstate));
+	validate_pstate_struct(&newpstate);
+
+	/*
+	 * Copy new data.
+	 */
+	memcpy(newpstate.poweron_conf, poweron_conf, CONFIG_POWERON_CONF_LEN);
+
+	newpstate.valid_fields |= PSTATE_VALID_POWERON_CONF;
+
+	return flash_write_pstate_data(&newpstate);
+}
+
+#endif /* CONFIG_POWERON_CONF_LEN */
 
 #else /* !CONFIG_FLASH_PSTATE_BANK */
 
@@ -1531,6 +1588,23 @@ BUILD_ASSERT(CONFIG_EC_WRITABLE_STORAGE_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
 
 #endif
 
+#if defined(HAS_TASK_HOSTCMD) && defined(CONFIG_HOST_COMMAND_STATUS)
+#ifdef CONFIG_EC_HOST_CMD
+static struct {
+	int offset;
+	int size;
+} erase_continue_data;
+static enum ec_host_cmd_status erase_continue(void *user_data)
+{
+	if (crec_flash_erase(erase_continue_data.offset,
+			     erase_continue_data.size))
+		return EC_HOST_CMD_ERROR;
+
+	return EC_HOST_CMD_SUCCESS;
+}
+#endif /* CONFIG_EC_HOST_CMD */
+#endif /* HAS_TASK_HOSTCMD && CONFIG_HOST_COMMAND_STATUS */
+
 static enum ec_status flash_command_erase(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_erase *p = args->params;
@@ -1561,9 +1635,11 @@ static enum ec_status flash_command_erase(struct host_cmd_handler_args *args)
 		args->result = EC_RES_IN_PROGRESS;
 		host_send_response(args);
 #else
-		ec_host_cmd_send_response(
-			EC_HOST_CMD_IN_PROGRESS,
-			(struct ec_host_cmd_handler_args *)args);
+		erase_continue_data.offset = offset;
+		erase_continue_data.size = p->size;
+		ec_host_cmd_send_in_progress_continue(erase_continue, NULL);
+
+		return EC_RES_IN_PROGRESS;
 #endif
 #endif
 		if (crec_flash_erase(offset, p->size))

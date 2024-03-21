@@ -20,22 +20,25 @@ def register_brox_project(
 
     return register_binman_project(
         project_name=project_name,
-        zephyr_board="it82002aw",
+        zephyr_board="it8xxx2/it82002aw",
         dts_overlays=[
             here / project_name / "project.overlay",
         ],
-        kconfig_files=[
-            # Common to all projects.
-            here / "program.conf",
-            # Project-specific KConfig customization.
-            here / project_name / "project.conf",
-        ],
+        kconfig_files=kconfig_files,
         inherited_from=["brox"],
     )
 
 
 brox = register_brox_project(
     project_name="brox",
+    kconfig_files=[
+        # Common to all projects.
+        here / "program.conf",
+        # Parent project's config
+        here / "brox" / "project.conf",
+        # Common sensor configs
+        here / "motionsense.conf",
+    ],
 )
 
 register_brox_project(
@@ -57,3 +60,22 @@ brox.variant(
     ],
     modules=["picolibc", "ec", "pigweed"],
 )
+
+register_ish_project(
+    project_name="brox-ish",
+    zephyr_board="intel_ish_5_4_1",
+    dts_overlays=[
+        here / "brox-ish" / "project.overlay",
+    ],
+    kconfig_files=[
+        here / "brox-ish" / "prj.conf",
+        here / "motionsense.conf",
+    ],
+)
+
+# Note for reviews, do not let anyone edit these assertions, the addresses
+# must not change after the first RO release. Not needed for brox-ish since it
+# doesn't use RO+RW
+assert_rw_fwid_DO_NOT_EDIT(project_name="brox", addr=0xBFFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="brox-ish-ec", addr=0xBFFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="brox-tokenized", addr=0xBFFE0)

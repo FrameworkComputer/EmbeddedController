@@ -3,15 +3,9 @@
  * found in the LICENSE file.
  */
 
-/*
+#include "base_ec.tasklist"
+
+/**
  * See CONFIG_TASK_LIST in config.h for details.
  */
-#undef HOOKS_TASK_STACK_SIZE
-#define HOOKS_TASK_STACK_SIZE 2048
-
-#define CONFIG_TASK_LIST                                           \
-	TASK_ALWAYS_RO(RWSIG, rwsig_task, NULL, 2048)              \
-	TASK_ALWAYS(HOOKS, hook_task, NULL, HOOKS_TASK_STACK_SIZE) \
-	TASK_ALWAYS_RW(FPSENSOR, fp_task, NULL, 4096)              \
-	TASK_ALWAYS(HOSTCMD, host_command_task, NULL, 6144)        \
-	TASK_ALWAYS(CONSOLE, console_task, NULL, CONSOLE_TASK_STACK_SIZE)
+#define CONFIG_TASK_LIST BASEBOARD_CONFIG_TASK_LIST

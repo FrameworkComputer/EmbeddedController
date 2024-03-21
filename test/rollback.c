@@ -20,7 +20,7 @@ struct rollback_info {
  * config headers, so that if the headers are accidentally changed we can catch
  * it.
  */
-#if defined(CHIP_VARIANT_STM32F412) || defined(CHIP_VARIANT_NPCX9MFP)
+#if defined(CHIP_VARIANT_STM32F412)
 struct rollback_info rollback_info = {
 	.region_0_offset = 0x20000,
 	.region_1_offset = 0x40000,
@@ -31,6 +31,12 @@ struct rollback_info rollback_info = {
 	.region_0_offset = 0xC0000,
 	.region_1_offset = 0xE0000,
 	.region_size_bytes = 128 * 1024,
+};
+#elif defined(CHIP_VARIANT_NPCX9MFP)
+struct rollback_info rollback_info = {
+	.region_0_offset = 0x20000,
+	.region_1_offset = 0x30000,
+	.region_size_bytes = 64 * 1024,
 };
 #else
 #error "Rollback info not defined for this chip. Please add it."

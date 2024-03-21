@@ -15,7 +15,7 @@ def register_variant(project_name, rwsig_sign=True):
 
     register_binman_project(
         project_name=project_name,
-        zephyr_board="it82202ax-512",
+        zephyr_board="it8xxx2/it82202ax/512",
         dts_overlays=[here / project_name / "project.overlay"],
         kconfig_files=[
             here / "program.conf",
@@ -28,3 +28,9 @@ def register_variant(project_name, rwsig_sign=True):
 register_variant("roach")
 register_variant("axii", rwsig_sign=False)
 register_variant("kelpie")
+
+# Note for reviews, do not let anyone edit these assertions, the addresses
+# must not change after the first RO release.
+assert_rw_fwid_DO_NOT_EDIT(project_name="axii", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="kelpie", addr=0x40098)
+assert_rw_fwid_DO_NOT_EDIT(project_name="roach", addr=0x40098)

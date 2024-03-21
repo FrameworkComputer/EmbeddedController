@@ -15,6 +15,7 @@ i2c3ALT: &i2c3 {
 #include <cros/cbi_flash.dtsi>
 
 #include "../adc.dtsi"
+#include "../binman.dtsi"
 #include "../brox.dtsi"
 #include "../fan.dtsi"
 #include "../generated.dtsi"
@@ -29,6 +30,7 @@ i2c3ALT: &i2c3 {
 #include "../pwm.dtsi"
 #include "../temp_sensors.dtsi"
 #include "../usb_typec.dtsi"
+#include "../usba.dtsi"
 
 /* Brox-ish-ec project DTS includes*/
 
@@ -40,22 +42,24 @@ i2c3ALT: &i2c3 {
 			compatible = "lgc,ap18c8k", "battery-smart";
 		};
 	};
-};
-
-/*
- * When CBI in flash is enabled, setup RO flash layout as follows:
- *   RO binary:    0x00000:0x5DFFF
- *   PSTATE block: 0x5E000:0x5EFFF
- *   CBI flash:    0x5F000:0x5FFFF
- */
-&pstate {
-	offset = <(0x60000 - (0x1000 * 2))>;
-	size = <0x1000>;
-};
-
-&cbi_flash {
-	offset = <(0x60000 - (0x1000 * 1))>;
-	size = <0x1000>;
+	tabletmode_interrupt: tabletmode-interrupt {
+		compatible = "cros,tabletmode-interrupt";
+		irq-gpios = <&gpioc 7 GPIO_ACTIVE_LOW>;
+	};
 };
 
 /delete-node/ &int_lid_imu;
+
+/delete-node/ &gpio_ish_i2c_ec_scl;
+
+/* Disable sensor I2C nodes */
+/delete-node/ &i2c5;
+/delete-node/ &i2c_ec_i2c_sensor;
+
+/* These GPIOS are initialized by the PDC driver */
+&gpio_usb_pd_int_odl {
+	no-auto-init;
+};
+&gpio_ec_i2c_pmc_pd_int_odl {
+	no-auto-init;
+};

@@ -11,8 +11,8 @@
 		power-state-charge-lvl-1 {
 			charge-state = "LED_PWRS_CHARGE";
 
-			/* Battery display percent range (>= Empty, < 5%) */
-			batt-lvl = <BATTERY_LEVEL_EMPTY 5>;
+			/* Battery display percent range (>= Empty, <= 4%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 4>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
@@ -26,8 +26,8 @@
 		power-state-charge-lvl-2 {
 			charge-state = "LED_PWRS_CHARGE";
 
-			/* Battery display percent range (>= 5%, < 97%) */
-			batt-lvl = <5 97>;
+			/* Battery display percent range (>= 5%, <= 96%) */
+			batt-lvl = <5 96>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";

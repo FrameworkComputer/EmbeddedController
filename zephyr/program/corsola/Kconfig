@@ -56,6 +56,12 @@ config BOARD_CHINCHOU
 	  Build Google Chinchou variant board. Chinchou is a variant of Krabby
 	  and has MediaTek MT8186 SoC with ITE it81202-bx EC
 
+config BOARD_WOOBAT
+	bool "Google Woobat Board"
+	help
+	  Build Google Woobat variant board. Woobat is a variant of Krabby
+	  and has MediaTek MT8186 SoC with ITE it81202-bx EC
+
 config VARIANT_CORSOLA_DB_DETECTION
 	bool "Corsola Platform Runtime Daughter Board Detection"
 	depends on PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG

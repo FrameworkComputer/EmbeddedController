@@ -1,0 +1,19 @@
+# Copyright 2021 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+# Note: this Zephyr board more closely represents the Chrome OS
+# concept of a baseboard.  Zephyr boards and Chrome OS boards do not
+# have a 1:1 mapping.
+
+config BOARD_NPCX_EVB_NPCX7M6FC
+	bool
+	select SOC_NPCX7M6FC
+	# Allow generating initial 0 line coverage.
+	select HAS_COVERAGE_SUPPORT
+
+config BOARD_NPCX_EVB_NPCX9M6F
+	bool
+	select SOC_NPCX9M6F
+	# Allow generating initial 0 line coverage.
+	select HAS_COVERAGE_SUPPORT

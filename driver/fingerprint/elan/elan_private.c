@@ -5,7 +5,6 @@
 
 #include "common.h"
 #include "console.h"
-#include "cryptoc/util.h"
 #include "elan_sensor.h"
 #include "elan_sensor_pal.h"
 #include "elan_setting.h"
@@ -33,7 +32,7 @@ static struct ec_response_fp_info ec_fp_sensor_info = {
 	.model_id = MID,
 	.version = VERSION,
 	/* Image frame characteristics */
-	.frame_size = FP_SENSOR_RES_X_ELAN * FP_SENSOR_RES_Y_ELAN,
+	.frame_size = FP_SENSOR_RES_X_ELAN * FP_SENSOR_RES_Y_ELAN * 2,
 	.pixel_format = V4L2_PIX_FMT_GREY,
 	.width = FP_SENSOR_RES_X_ELAN,
 	.height = FP_SENSOR_RES_Y_ELAN,
@@ -58,6 +57,9 @@ int fp_sensor_init(void)
 	errors = 0;
 	elan_execute_reset();
 	algorithm_parameter_setting();
+	if (IC_SELECTION == EFSA80SG)
+		elan_set_hv_chip(1);
+
 	if (elan_execute_calibration() < 0)
 		errors |= FP_ERROR_INIT_FAIL;
 	if (elan_woe_mode() != 0)

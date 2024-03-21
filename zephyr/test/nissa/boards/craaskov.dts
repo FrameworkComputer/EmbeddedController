@@ -1,0 +1,33 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "generic_npcx.dts"
+#include <dt-bindings/pwm/pwm.h>
+#include "../program/nissa/craaskov/cbi.dtsi"
+
+/ {
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_soc_edp_bl_en: soc_edp_bl_en {
+			irq-pin = <&gpio_soc_edp_bl_en>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "soc_edp_bl_interrupt";
+		};
+	};
+	named-gpios {
+		compatible = "named-gpios";
+		/delete-node/ hdmi_sel;
+		gpio_ec_acok_otg_c0: ec_acok_otg_c0 {
+			gpios = <&gpioc 6 GPIO_OUTPUT>;
+		};
+		gpio_ec_touch_en: ec_touch_en {
+			gpios = <&gpio8 3 GPIO_OUTPUT>;
+		};
+		gpio_soc_edp_bl_en: soc_edp_bl_en {
+			gpios = <&gpioc 7 GPIO_INPUT>;
+		};
+	};
+};

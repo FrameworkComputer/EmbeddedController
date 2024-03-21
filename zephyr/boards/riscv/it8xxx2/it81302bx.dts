@@ -1,9 +1,0 @@
-/* Copyright 2022 The ChromiumOS Authors
- * Use of this source code is governed by a BSD-style license that can be
- * found in the LICENSE file.
- */
-
-/dts-v1/;
-
-#include <ite/it81xx2.dtsi>
-#include "it8xxx2.dts"

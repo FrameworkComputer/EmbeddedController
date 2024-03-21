@@ -3,11 +3,13 @@
  * found in the LICENSE file.
  */
 
+#include "console.h"
 #include "ec_commands.h"
 #include "host_command.h"
 #include "test/drivers/test_state.h"
 #include "uart.h"
 
+#include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest.h>
 
 ZTEST(host_cmd_host_commands, test_get_command_versions__v1)
@@ -93,6 +95,10 @@ ZTEST(host_cmd_host_commands, test_resend_response)
 
 	zassert_equal(EC_RES_IN_PROGRESS, rv);
 
+	/* Give time for handler that returns IN_PROGRESS to execute. It runs
+	 * in sysworkq
+	 */
+	k_sleep(K_MSEC(100));
 	/* Expect error because of incorrect parameters - size = 0 */
 	rv = host_command_process(&args);
 	zassert_equal(EC_RES_ERROR, rv);

@@ -38,12 +38,12 @@ BUILD_ASSERT(sizeof(fifo[0].data) >= KEYBOARD_COLS_MAX);
  * Mutex for critical sections of mkbp_fifo_add(), which is called
  * from various tasks.
  */
-K_MUTEX_DEFINE(fifo_add_mutex);
+static K_MUTEX_DEFINE(fifo_add_mutex);
 /*
  * Mutex for critical sections of fifo_remove(), which is called from the
  * hostcmd task and from keyboard_clear_buffer().
  */
-K_MUTEX_DEFINE(fifo_remove_mutex);
+static K_MUTEX_DEFINE(fifo_remove_mutex);
 
 static int get_data_size(enum ec_mkbp_event e)
 {

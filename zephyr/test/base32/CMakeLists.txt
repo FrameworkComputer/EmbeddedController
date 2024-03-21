@@ -7,3 +7,5 @@ find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 project(base32)
 
 target_sources(app PRIVATE "${PLATFORM_EC}/test/base32.c")
+
+add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)

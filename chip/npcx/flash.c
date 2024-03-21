@@ -20,6 +20,9 @@
 #include "util.h"
 #include "watchdog.h"
 
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+
 #define FLASH_SYSJUMP_TAG 0x5750 /* "WP" - Write Protect */
 #define FLASH_HOOK_VERSION 1
 
@@ -182,6 +185,23 @@ static void flash_get_status(uint8_t *sr1, uint8_t *sr2)
 	crec_flash_lock_mapped_storage(0);
 }
 
+#ifdef NPCX_INT_FLASH_SUPPORT
+static int is_int_flash_protected(void)
+{
+	return IS_BIT_SET(NPCX_DEV_CTL4, NPCX_DEV_CTL4_WP_IF);
+}
+
+static void flash_protect_int_flash(int enable)
+{
+	/*
+	 * Please notice the type of WP_IF bit is R/W1S. Once it's set,
+	 * only rebooting EC can clear it.
+	 */
+	if (enable && !is_int_flash_protected())
+		SET_BIT(NPCX_DEV_CTL4, NPCX_DEV_CTL4_WP_IF);
+}
+#endif
+
 /* Check if Status Register Protect bit 0 is set */
 static int flash_check_status_reg_srp(void)
 {
@@ -194,9 +214,16 @@ static int flash_check_status_reg_srp(void)
 
 static int flash_set_status(uint8_t sr1, uint8_t sr2)
 {
-	if (flash_check_status_reg_srp() &&
-	    (crec_flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED)) {
-		return EC_ERROR_ACCESS_DENIED;
+	if (flash_check_status_reg_srp()) {
+#ifdef NPCX_INT_FLASH_SUPPORT
+		if (is_int_flash_protected()) {
+			return EC_ERROR_ACCESS_DENIED;
+		}
+#else
+		if (crec_flash_get_protect() & EC_FLASH_PROTECT_GPIO_ASSERTED) {
+			return EC_ERROR_ACCESS_DENIED;
+		}
+#endif
 	}
 
 	/* Lock physical flash operations */
@@ -238,23 +265,6 @@ static void flash_set_quad_enable(int enable)
 
 	flash_set_status(sr1, sr2);
 }
-
-#ifdef NPCX_INT_FLASH_SUPPORT
-static int is_int_flash_protected(void)
-{
-	return IS_BIT_SET(NPCX_DEV_CTL4, NPCX_DEV_CTL4_WP_IF);
-}
-
-static void flash_protect_int_flash(int enable)
-{
-	/*
-	 * Please notice the type of WP_IF bit is R/W1S. Once it's set,
-	 * only rebooting EC can clear it.
-	 */
-	if (enable && !is_int_flash_protected())
-		SET_BIT(NPCX_DEV_CTL4, NPCX_DEV_CTL4_WP_IF);
-}
-#endif
 
 #ifdef CONFIG_HOSTCMD_FLASH_SPI_INFO
 
@@ -778,6 +788,50 @@ int crec_flash_pre_init(void)
 	 * Disable flash quad enable to avoid /WP pin function is not
 	 * available. */
 	flash_set_quad_enable(0);
+
+#ifdef NPCX_INT_FLASH_SUPPORT
+	/*
+	 * Fix situation when flash protect bit (SRP0) is enabled, but the size
+	 * of protected area is 0 or it's not possible to decode protected range
+	 * from SR1 and SR2 registers (spi_flash_reg_to_protect() returned
+	 * error). This situation can occur if flashing was interrupted
+	 * e.g. flashrom was killed while reading from flash:
+	 * http://b/328066864#comment12
+	 *
+	 * Status registers can be modified only when the SRP0 bit and the WP_IF
+	 * bit (in DEV_CTL4 register) are not enabled at the same time. The
+	 * WP_IF bit is cleared when MCU reboots, it means that once enabled,
+	 * the bit can't be cleared by the software.
+	 *
+	 * The WP_IF bit is set by flash_protect_int_flash() function based on
+	 * GPIO_WP status. In our case, the WP_IF bit is clear in RO (because we
+	 * are after reboot), but not in RW (because it will be set later in
+	 * this function).
+	 *
+	 * Clearing the status registers before the WP_IF bit is enabled avoids
+	 * situation in which we protect status registers with size of protected
+	 * area set to 0. We rely on other parts of the system to enable
+	 * protection like we rely on them to enable protection when HW WP is
+	 * enabled for the first time.
+	 */
+	if (!is_int_flash_protected()) {
+		uint8_t sr1, sr2;
+		unsigned int prot_start, prot_length;
+		int rv;
+
+		flash_get_status(&sr1, &sr2);
+		rv = spi_flash_reg_to_protect(sr1, sr2, &prot_start,
+					      &prot_length);
+
+		if (rv || ((sr1 & SPI_FLASH_SR1_SRP0) && prot_length == 0)) {
+			rv = flash_set_status(0, 0);
+			if (rv) {
+				CPRINTS("Failed to clear invalid status: %d",
+					rv);
+			}
+		}
+	}
+#endif
 
 	/*
 	 * Protect status registers of internal spi-flash if WP# is active

@@ -28,8 +28,10 @@
  * extension" commands.
  *
  * Vendor extension 0x81 is used when HyperDebug is I2C host, and the header
- * byte is immediately followed by a request of the same format as described
- * in include/usb_i2c.h.
+ * byte is immediately followed by a request of the same format as described in
+ * include/usb_i2c.h, with the extension that the otherwise unused high bit of
+ * the addr byte is used to request that a STOP condition should not be
+ * generated.
  *
  * Vendor extension 0x82 is used when HyperDebug is I2C device, and encodes a
  * number of request sub-types.
@@ -137,7 +139,7 @@ struct i2c_state_t {
 	 */
 	volatile size_t prepared_read_len;
 	volatile bool prepared_read_sticky;
-	uint8_t prepared_read_data[256];
+	uint8_t prepared_read_data[1024];
 
 	/*
 	 * If non-zero, I2C host is currently waiting in READ transfer, with
@@ -171,12 +173,19 @@ struct i2c_state_t {
 const uint8_t I2C_REQ_GET_TRANSCRIPT = 0x00;
 const uint8_t I2C_REQ_PREPARE_READ = 0x01;
 
+/*
+ * Bitfield of the address byte, indicating request to not generate STOP
+ * condition.
+ */
+const uint8_t ADDR_NOSTOP = 0x80;
+
 /* Bitfield, Prepare read data request, I2C port field */
 const uint8_t PREPARE_READ_FLAG_STICKY = BIT(7);
 const uint8_t PREPARE_READ_PORT_MASK = 0x0F;
 
 /* Bitfield, i2c_transfer_t, flags */
 const uint8_t TRANSFER_FLAG_TIMEOUT = BIT(0);
+const uint8_t TRANSFER_FLAG_INTERFERENCE = BIT(1);
 
 /*
  * This header is used both on each transaction in the in-memory cyclic buffer,
@@ -259,6 +268,7 @@ static void usb_i2c_execute(unsigned int expected_size)
 	/* Payload is ready to execute. */
 	int portindex = rx_buffer[1] & 0xf;
 	uint16_t addr_flags = rx_buffer[2] & 0x7f;
+	bool no_stop = rx_buffer[2] & ADDR_NOSTOP;
 	int write_count = ((rx_buffer[1] << 4) & 0xf00) | rx_buffer[3];
 	int read_count = rx_buffer[4];
 	int offset = 0; /* Offset for extended reading header. */
@@ -286,9 +296,13 @@ static void usb_i2c_execute(unsigned int expected_size)
 	} else if (portindex >= i2c_ports_used) {
 		i2c_status = USB_I2C_PORT_INVALID;
 	} else {
-		int ret = i2c_xfer(i2c_ports[portindex].port, addr_flags,
-				   rx_buffer + 5 + offset, write_count,
-				   rx_buffer + 5, read_count);
+		i2c_lock(i2c_ports[portindex].port, 1);
+		int ret = i2c_xfer_unlocked(
+			i2c_ports[portindex].port, addr_flags,
+			rx_buffer + 5 + offset, write_count, rx_buffer + 5,
+			read_count,
+			I2C_XFER_START | (no_stop ? 0 : I2C_XFER_STOP));
+		i2c_lock(i2c_ports[portindex].port, 0);
 		i2c_status = usb_i2c_map_error(ret);
 	}
 	rx_buffer[1] = i2c_status & 0xFF;
@@ -386,20 +400,21 @@ void dap_goog_i2c_device(size_t peek_c)
 			status->transcript_size = head - state->tail;
 			queue_add_units(&cmsis_dap_tx_queue, rx_buffer,
 					1 + sizeof(*status));
-			queue_add_units(&cmsis_dap_tx_queue, state->tail,
-					status->transcript_size);
+			queue_blocking_add(&cmsis_dap_tx_queue, state->tail,
+					   status->transcript_size);
 		} else {
 			/* Data wraps around */
 			status->transcript_size =
 				head - state->tail + sizeof(state->data_buffer);
 			queue_add_units(&cmsis_dap_tx_queue, rx_buffer,
 					1 + sizeof(*status));
-			queue_add_units(&cmsis_dap_tx_queue, state->tail,
-					state->data_buffer +
-						sizeof(state->data_buffer) -
-						state->tail);
-			queue_add_units(&cmsis_dap_tx_queue, state->data_buffer,
-					state->head - state->data_buffer);
+			queue_blocking_add(&cmsis_dap_tx_queue, state->tail,
+					   state->data_buffer +
+						   sizeof(state->data_buffer) -
+						   state->tail);
+			queue_blocking_add(&cmsis_dap_tx_queue,
+					   state->data_buffer,
+					   state->head - state->data_buffer);
 		}
 		state->tail = head;
 		return;
@@ -411,9 +426,10 @@ void dap_goog_i2c_device(size_t peek_c)
 		uint16_t len = rx_buffer[3] + (rx_buffer[4] << 8);
 		/* TODO Check that len does not exceed size of
 		 * prepared_data_data */
-		queue_remove_units(&cmsis_dap_rx_queue, rx_buffer, 5);
-		queue_remove_units(&cmsis_dap_rx_queue,
-				   state->prepared_read_data, len);
+		queue_blocking_remove(&cmsis_dap_rx_queue, rx_buffer, 5);
+		queue_blocking_remove(&cmsis_dap_rx_queue,
+				      state->prepared_read_data, len);
+
 		queue_add_unit(&cmsis_dap_tx_queue, rx_buffer);
 		state->prepared_read_len = len;
 		state->prepared_read_sticky = sticky;
@@ -587,9 +603,36 @@ static void i2c_interrupt(int index)
 		 */
 		return;
 	}
+	if ((isr & STM32_I2C_ISR_ARLO)) {
+		/*
+		 * Some other device on the I2C bus is responding to the same
+		 * address as HyperDebug, (or otherwise interfering with the bus
+		 * signals.)  Record that fact.
+		 */
+		if (state->cur_transfer)
+			state->cur_transfer->flags |=
+				TRANSFER_FLAG_INTERFERENCE;
+		STM32_I2C_ICR(index) = STM32_I2C_ICR_ARLOCF;
+	}
+	if ((isr & STM32_I2C_ISR_BERR)) {
+		/*
+		 * Unexpected start or stop condition.  Record that fact.
+		 */
+		if (state->cur_transfer)
+			state->cur_transfer->flags |=
+				TRANSFER_FLAG_INTERFERENCE;
+		STM32_I2C_ICR(index) = STM32_I2C_ICR_BERRCF;
+	}
 	if (isr & STM32_I2C_ISR_TXIS) {
-		if (state->cur_transfer->num_bytes >=
-		    state->prepared_read_len) {
+		if (state->cur_transfer->flags & TRANSFER_FLAG_INTERFERENCE) {
+			/*
+			 * We detected something else driving the I2C bus,
+			 * refrain from further action on the bus, by sending
+			 * all high bits.
+			 */
+			STM32_I2C_TXDR(index) = 0xFF;
+		} else if (state->cur_transfer->num_bytes >=
+			   state->prepared_read_len) {
 			STM32_I2C_TXDR(index) = 0xFF;
 		} else {
 			uint8_t data_byte =

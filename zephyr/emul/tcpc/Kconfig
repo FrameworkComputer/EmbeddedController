@@ -30,7 +30,7 @@ config EMUL_ANX7447
 	help
 	  Enable emulator for ANX7447 of TCPM. This emulator is extension for
 	  TCPCI emulator. ANX7447 specific API is available in
-	  zephyr/include/emul/tpcp/emul_anx7447.h
+	  zephyr/include/emul/tcpc/emul_anx7447.h
 
 config EMUL_TCPCI_PARTNER_COMMON
 	bool
@@ -56,6 +56,15 @@ config EMUL_PS8XXX
 	  Enable emulator for PS8XXX family of TCPC. This emulator is extenstion
 	  for TCPCI emulator. PS8XXX specific API is available in
 	  zephyr/include/emul/tcpc/emul_ps8xxx.h
+
+config EMUL_RT1715
+	bool "Richtek rt1715 emulator"
+	default y
+	depends on DT_HAS_CROS_RT1715_TCPC_EMUL_ENABLED
+	help
+	  Enable emulator for the rt1715 TCPC. This emulator is an
+	  extension of the TCPCI emulator. The rt1715 specific API is
+	  available in zephyr/include/emul/tcpc/emul_rt1715.h.
 
 config EMUL_RT1718S
 	bool "Richtek rt1718s emulator"

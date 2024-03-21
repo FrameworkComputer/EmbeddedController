@@ -163,9 +163,6 @@
 #define CONFIG_BATTERY_COUNT 1
 #define CONFIG_HOSTCMD_BATTERY_V2
 
-/* Config to indicate battery type doesn't auto detect */
-#define CONFIG_BATTERY_TYPE_NO_AUTO_DETECT
-
 /* Enable system boot time logging */
 #define CONFIG_SYSTEM_BOOT_TIME_LOGGING
 

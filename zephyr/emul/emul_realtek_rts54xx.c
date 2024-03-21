@@ -6,12 +6,13 @@
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_pdc.h"
-#include "emul/emul_realtek_rts54xx.h"
+#include "emul_realtek_rts54xx.h"
 #include "zephyr/sys/util.h"
 #include "zephyr/sys/util_macro.h"
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/logging/log.h>
@@ -97,9 +98,36 @@ static int set_notification_enable(struct rts5453p_emul_pdc_data *data,
 static int get_ic_status(struct rts5453p_emul_pdc_data *data,
 			 const union rts54_request *req)
 {
-	LOG_INF("%s", __func__);
+	LOG_INF("GET_IC_STATUS");
 
-	data->response.ic_status = data->ic_status;
+	data->response.ic_status.byte_count = sizeof(struct rts54_ic_status);
+	data->response.ic_status.fw_main_version = data->info.fw_version >> 16 &
+						   BIT_MASK(8);
+	data->response.ic_status.fw_sub_version[0] =
+		data->info.fw_version >> 8 & BIT_MASK(8);
+	data->response.ic_status.fw_sub_version[1] = data->info.fw_version &
+						     BIT_MASK(8);
+
+	data->response.ic_status.pd_revision[0] = data->info.pd_revision >> 8 &
+						  BIT_MASK(8);
+	data->response.ic_status.pd_revision[1] = data->info.pd_revision &
+						  BIT_MASK(8);
+	data->response.ic_status.pd_version[0] = data->info.pd_version >> 8 &
+						 BIT_MASK(8);
+	data->response.ic_status.pd_version[1] = data->info.pd_version &
+						 BIT_MASK(8);
+
+	data->response.ic_status.vid[1] = data->info.vid_pid >> 24 &
+					  BIT_MASK(8);
+	data->response.ic_status.vid[0] = data->info.vid_pid >> 16 &
+					  BIT_MASK(8);
+	data->response.ic_status.pid[1] = data->info.vid_pid >> 8 & BIT_MASK(8);
+	data->response.ic_status.pid[0] = data->info.vid_pid & BIT_MASK(8);
+
+	data->response.ic_status.is_flash_code =
+		data->info.is_running_flash_code;
+	data->response.ic_status.running_flash_bank_offset =
+		data->info.running_in_flash_bank;
 
 	send_response(data);
 
@@ -128,9 +156,10 @@ static int connector_reset(struct rts5453p_emul_pdc_data *data,
 			   const union rts54_request *req)
 {
 	LOG_INF("CONNECTOR_RESET port=%d, hard_reset=%d",
-		req->connector_reset.port_num, req->connector_reset.hard_reset);
+		req->connector_reset.reset.connector_number,
+		req->connector_reset.reset.reset_type);
 
-	data->connector_reset_type = req->connector_reset.hard_reset;
+	data->reset = req->connector_reset.reset;
 	memset(&data->response, 0, sizeof(union rts54_response));
 	send_response(data);
 
@@ -265,7 +294,9 @@ static int get_connector_status(struct rts5453p_emul_pdc_data *data,
 static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 			  const union rts54_request *req)
 {
-	LOG_INF("GET_RTK_STATUS port=%d", req->get_rtk_status.port_num);
+	LOG_INF("GET_RTK_STATUS port=%d offset=%d sts_len=%d",
+		req->get_rtk_status.port_num, req->get_rtk_status.offset,
+		req->get_rtk_status.sts_len);
 
 	data->response.rtk_status.byte_count =
 		MIN(sizeof(struct get_rtk_status_response) - 1,
@@ -322,6 +353,21 @@ static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 	data->response.rtk_status.battery_charging_status =
 		data->connector_status.battery_charging_cap & BIT_MASK(2);
 
+	/* BYTE 12 */
+	data->response.rtk_status.plug_direction =
+		data->connector_status.orientation & BIT_MASK(1);
+
+	/* BYTE 15-18 */
+	data->response.rtk_status.average_current_low = 0;
+	data->response.rtk_status.average_current_high = 0;
+
+	uint32_t voltage = data->connector_status.voltage_reading *
+			   data->connector_status.voltage_scale * 5 / 50;
+	data->response.rtk_status.voltage_reading_low = voltage & 0xFF;
+	data->response.rtk_status.voltage_reading_high = voltage >> 8;
+
+	data->read_offset = req->get_rtk_status.offset;
+
 	send_response(data);
 
 	return 0;
@@ -330,7 +376,8 @@ static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 static int set_uor(struct rts5453p_emul_pdc_data *data,
 		   const union rts54_request *req)
 {
-	LOG_INF("SET_UOR port=%d", req->set_uor.port_num);
+	LOG_INF("SET_UOR port=%d: uor=%x", req->set_uor.uor.connector_number,
+		req->set_uor.uor.raw_value);
 
 	data->uor = req->set_uor.uor;
 
@@ -343,13 +390,236 @@ static int set_uor(struct rts5453p_emul_pdc_data *data,
 static int set_pdr(struct rts5453p_emul_pdc_data *data,
 		   const union rts54_request *req)
 {
-	LOG_INF("SET_PDR port=%d", req->set_pdr.port_num);
+	LOG_INF("SET_PDR port=%d", req->set_pdr.pdr.connector_number);
 
 	data->pdr = req->set_pdr.pdr;
 
 	memset(&data->response, 0, sizeof(union rts54_response));
 	send_response(data);
 
+	return 0;
+}
+
+static int set_rdo(struct rts5453p_emul_pdc_data *data,
+		   const union rts54_request *req)
+{
+	LOG_INF("SET_RDO port=%d, rdo=0x%X", req->set_rdo.port_num,
+		req->set_rdo.rdo);
+
+	data->rdo = req->set_rdo.rdo;
+
+	memset(&data->response, 0, sizeof(union rts54_response));
+	send_response(data);
+
+	return 0;
+}
+
+static int get_rdo(struct rts5453p_emul_pdc_data *data,
+		   const union rts54_request *req)
+{
+	LOG_INF("GET_RDO port=%d", req->set_rdo.port_num);
+
+	data->response.get_rdo.byte_count = sizeof(struct get_rdo_response) - 1;
+	data->response.get_rdo.rdo = data->rdo;
+	send_response(data);
+
+	return 0;
+}
+
+static int set_tpc_rp(struct rts5453p_emul_pdc_data *data,
+		      const union rts54_request *req)
+{
+	LOG_INF("SET_TPC_RP port=%d, value=0x%X", req->set_tpc_rp.port_num,
+		req->set_tpc_rp.tpc_rp.raw_value);
+
+	data->tpc_rp = req->set_tpc_rp.tpc_rp;
+
+	memset(&data->response, 0, sizeof(data->response));
+	send_response(data);
+
+	return 0;
+}
+
+static int set_tpc_csd_operation_mode(struct rts5453p_emul_pdc_data *data,
+				      const union rts54_request *req)
+{
+	LOG_INF("SET_TPC_CSD_OPERATION_MODE port=%d",
+		req->set_tpc_csd_operation_mode.port_num);
+
+	data->csd_op_mode = req->set_tpc_csd_operation_mode.op_mode;
+
+	memset(&data->response, 0, sizeof(data->response));
+	send_response(data);
+
+	return 0;
+}
+
+static int force_set_power_switch(struct rts5453p_emul_pdc_data *data,
+				  const union rts54_request *req)
+{
+	LOG_INF("FORCE_SET_POWER_SWITCH port=%d",
+		req->force_set_power_switch.port_num);
+
+	data->set_power_switch_data = req->force_set_power_switch.data;
+
+	memset(&data->response, 0, sizeof(data->response));
+	send_response(data);
+
+	return 0;
+}
+
+static int set_tpc_reconnect(struct rts5453p_emul_pdc_data *data,
+			     const union rts54_request *req)
+{
+	LOG_INF("SET_TPC_RECONNECT port=%d", req->set_tpc_reconnect.port_num);
+
+	data->set_tpc_reconnect_param = req->set_tpc_reconnect.param0;
+
+	memset(&data->response, 0, sizeof(data->response));
+	send_response(data);
+
+	return 0;
+}
+
+static int read_power_level(struct rts5453p_emul_pdc_data *data,
+			    const union rts54_request *req)
+{
+	LOG_INF("READ_POWER_LEVEL port=%d", req->read_power_level.port_num);
+
+	memset(&data->response, 0, sizeof(data->response));
+	send_response(data);
+
+	return 0;
+}
+
+static inline uint32_t *get_pdo_data(struct rts5453p_emul_pdc_data *data,
+				     enum pdo_type_t pdo_type)
+{
+	return (pdo_type == SOURCE_PDO) ? data->src_pdos : data->snk_pdos;
+}
+
+static inline bool is_epr_pdo(uint32_t pdo)
+{
+	uint32_t type = PDO_GET_TYPE(pdo);
+
+	return (type == PDO_GET_TYPE(PDO_TYPE_AUGMENTED) &&
+		PDO_AUG_GET_PPS(pdo) == PDO_AUG_PPS_EPR) ||
+	       (type == PDO_GET_TYPE(PDO_TYPE_FIXED) &&
+		(pdo & PDO_FIXED_EPR_MODE_CAPABLE) != 0);
+}
+
+static int set_pdos_direct(struct rts5453p_emul_pdc_data *data,
+			   enum pdo_type_t pdo_type,
+			   enum pdo_offset_t pdo_offset, uint8_t num_pdos,
+			   const uint32_t *pdos)
+{
+	uint32_t *target_pdos = get_pdo_data(data, pdo_type);
+
+	if (!target_pdos) {
+		return -EINVAL;
+	}
+
+	if (pdo_offset + num_pdos > PDO_OFFSET_MAX) {
+		LOG_ERR("PDO offset overflow at %d, num pdos: %d", pdo_offset,
+			num_pdos);
+		return -EINVAL;
+	}
+
+	if (pdo_offset == PDO_OFFSET_0) {
+		LOG_ERR("Attempt to set read-only PDO 0");
+		return -EINVAL;
+	}
+
+	for (uint8_t i = 0; i < num_pdos; i++) {
+		/* EPR PDOs are only supported in offsets 1-4. */
+		if (is_epr_pdo(pdos[i]) &&
+		    pdo_offset + i > RTS5453P_MAX_EPR_PDO_OFFSET) {
+			LOG_ERR("Only PDOs 1-4 support EPR");
+			return -EINVAL;
+		}
+	}
+
+	memcpy(&target_pdos[pdo_offset], pdos, sizeof(uint32_t) * num_pdos);
+
+	/* TODO b/317065172: handle renegotiation if we have a port partner. */
+	return 0;
+}
+
+static int get_pdos_direct(struct rts5453p_emul_pdc_data *data,
+			   enum pdo_type_t pdo_type,
+			   enum pdo_offset_t pdo_offset, uint8_t num_pdos,
+			   bool port_partner_pdo, uint32_t *pdos)
+{
+	const uint32_t *target_pdos = get_pdo_data(data, pdo_type);
+
+	if (port_partner_pdo) {
+		/*
+		 * TODO b/317065172: Implement when we have port partner
+		 * support.
+		 */
+		LOG_ERR("GET_PDOS currently doesn't support port parnters");
+		return -EINVAL;
+	}
+
+	if (pdo_offset + num_pdos > PDO_OFFSET_MAX) {
+		LOG_ERR("GET PDO offset overflow at %d, num pdos: %d",
+			pdo_offset, num_pdos);
+		return -EINVAL;
+	}
+
+	pdo_offset = MIN(pdo_offset, PDO_OFFSET_MAX);
+	memcpy(pdos, &target_pdos[pdo_offset], num_pdos * sizeof(uint32_t));
+	return 0;
+}
+
+static int get_pdos(struct rts5453p_emul_pdc_data *data,
+		    const union rts54_request *req)
+{
+	enum pdo_type_t pdo_type = req->get_pdos.src ? SOURCE_PDO : SINK_PDO;
+	enum pdo_offset_t pdo_offset = req->get_pdos.offset;
+	/* GET_PDOS stops at the end if there's a requested overflow. */
+	uint8_t pdo_count = MIN(PDO_OFFSET_MAX - pdo_offset, req->get_pdos.num);
+	bool partner = req->get_pdos.partner;
+
+	LOG_INF("GET_PDO type=%d, offset=%d, count=%d", pdo_type, pdo_offset,
+		pdo_count);
+
+	memset(&data->response, 0, sizeof(data->response));
+	get_pdos_direct(data, pdo_type, pdo_offset, pdo_count, partner,
+			data->response.get_pdos.pdos);
+	data->response.get_pdos.byte_count = sizeof(uint32_t) * pdo_count;
+
+	send_response(data);
+	return 0;
+}
+
+static int get_cable_property(struct rts5453p_emul_pdc_data *data,
+			      const union rts54_request *req)
+{
+	union cable_property_t property = data->cable_property;
+
+	LOG_INF("GET_CABLE_PROPERTY property=%x", property);
+	memset(&data->response, 0, sizeof(data->response));
+
+	data->response.get_cable_property.byte_count =
+		sizeof(struct get_cable_property_response);
+	data->response.get_cable_property.raw_value[0] = property.raw_value[0];
+	data->response.get_cable_property.raw_value[1] = property.raw_value[1];
+
+	send_response(data);
+	return 0;
+}
+
+static int get_vdo(struct rts5453p_emul_pdc_data *data,
+		   const union rts54_request *req)
+{
+	LOG_INF("GET_VDO = %x", req->get_vdo.vdo_req.raw_value);
+	memset(&data->response, 0, sizeof(data->response));
+
+	data->response.get_vdo.byte_count =
+		sizeof(uint32_t) * req->get_vdo.vdo_req.num_vdos;
+
+	send_response(data);
 	return 0;
 }
 
@@ -362,9 +632,7 @@ static bool send_response(struct rts5453p_emul_pdc_data *data)
 		return true;
 	}
 
-	set_ping_status(
-		data, CMD_COMPLETE,
-		data->response.byte_count ? data->response.byte_count + 1 : 0);
+	set_ping_status(data, CMD_COMPLETE, data->response.byte_count);
 
 	return false;
 }
@@ -375,9 +643,7 @@ static void delayable_work_handler(struct k_work *w)
 	struct rts5453p_emul_pdc_data *data =
 		CONTAINER_OF(dwork, struct rts5453p_emul_pdc_data, delay_work);
 
-	set_ping_status(
-		data, CMD_COMPLETE,
-		data->response.byte_count ? data->response.byte_count + 1 : 0);
+	set_ping_status(data, CMD_COMPLETE, data->response.byte_count);
 }
 
 struct commands {
@@ -410,26 +676,26 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0x00, HANDLER_DEF(tcpm_reset) },
 	{ .code = 0x01, HANDLER_DEF(set_notification_enable) },
 	{ .code = 0x03, HANDLER_DEF(unsupported) },
-	{ .code = 0x04, HANDLER_DEF(unsupported) },
+	{ .code = 0x04, HANDLER_DEF(set_rdo) },
 	{ .code = 0x44, HANDLER_DEF(unsupported) },
-	{ .code = 0x05, HANDLER_DEF(unsupported) },
+	{ .code = 0x05, HANDLER_DEF(set_tpc_rp) },
 	{ .code = 0x19, HANDLER_DEF(unsupported) },
 	{ .code = 0x1A, HANDLER_DEF(unsupported) },
-	{ .code = 0x1D, HANDLER_DEF(unsupported) },
-	{ .code = 0x1F, HANDLER_DEF(unsupported) },
+	{ .code = 0x1D, HANDLER_DEF(set_tpc_csd_operation_mode) },
+	{ .code = 0x1F, HANDLER_DEF(set_tpc_reconnect) },
 	{ .code = 0x20, HANDLER_DEF(unsupported) },
-	{ .code = 0x21, HANDLER_DEF(unsupported) },
+	{ .code = 0x21, HANDLER_DEF(force_set_power_switch) },
 	{ .code = 0x23, HANDLER_DEF(unsupported) },
 	{ .code = 0x24, HANDLER_DEF(unsupported) },
 	{ .code = 0x26, HANDLER_DEF(unsupported) },
 	{ .code = 0x27, HANDLER_DEF(unsupported) },
 	{ .code = 0x28, HANDLER_DEF(unsupported) },
 	{ .code = 0x2B, HANDLER_DEF(unsupported) },
-	{ .code = 0x83, HANDLER_DEF(unsupported) },
-	{ .code = 0x84, HANDLER_DEF(unsupported) },
+	{ .code = 0x83, HANDLER_DEF(get_pdos) },
+	{ .code = 0x84, HANDLER_DEF(get_rdo) },
 	{ .code = 0x85, HANDLER_DEF(unsupported) },
 	{ .code = 0x99, HANDLER_DEF(unsupported) },
-	{ .code = 0x9A, HANDLER_DEF(unsupported) },
+	{ .code = 0x9A, HANDLER_DEF(get_vdo) },
 	{ .code = 0x9D, HANDLER_DEF(unsupported) },
 	{ .code = 0xA2, HANDLER_DEF(unsupported) },
 	{ .code = 0xF0, HANDLER_DEF(unsupported) },
@@ -452,9 +718,10 @@ const struct commands sub_cmd_x0E[] = {
 	{ .code = 0x0E, HANDLER_DEF(unsupported) },
 	{ .code = 0x0F, HANDLER_DEF(unsupported) },
 	{ .code = 0x10, HANDLER_DEF(unsupported) },
-	{ .code = 0x11, HANDLER_DEF(unsupported) },
+	{ .code = 0x11, HANDLER_DEF(get_cable_property) },
 	{ .code = 0x12, HANDLER_DEF(get_connector_status) },
 	{ .code = 0x13, HANDLER_DEF(get_error_status) },
+	{ .code = 0x1E, HANDLER_DEF(read_power_level) },
 };
 
 const struct commands sub_cmd_x12[] = {
@@ -609,14 +876,16 @@ static int rts5453p_emul_read_byte(const struct emul *emul, int reg,
 {
 	struct rts5453p_emul_pdc_data *data = rts5453p_emul_get_pdc_data(emul);
 
-	LOG_DBG("read_byte reg=0x%X, bytes=%d", reg, bytes);
-
 	if (data->read_ping) {
 		LOG_DBG("READING ping_raw_value=0x%X", data->ping_raw_value);
 		*val = data->ping_raw_value;
-		data->read_ping = false;
 	} else {
-		*val = data->response.raw_data[bytes];
+		uint8_t v;
+
+		v = data->response.raw_data[bytes + data->read_offset];
+		LOG_DBG("read_byte reg=0x%X, bytes=%d, offset=%d, val=0x%X",
+			reg, bytes, data->read_offset, v);
+		*val = v;
 	}
 
 	return 0;
@@ -634,10 +903,18 @@ static int rts5453p_emul_read_byte(const struct emul *emul, int reg,
  * @return 0 on success
  * @return -EIO on error
  */
-static int rts5453p_emul_finish_read(const struct emul *target, int reg,
+static int rts5453p_emul_finish_read(const struct emul *emul, int reg,
 				     int bytes)
 {
+	struct rts5453p_emul_pdc_data *data = rts5453p_emul_get_pdc_data(emul);
+
 	LOG_DBG("finish_read reg=0x%X, bytes=%d", reg, bytes);
+	if (data->read_ping) {
+		data->read_ping = false;
+	} else {
+		data->read_offset = 0;
+	}
+
 	return 0;
 }
 /**
@@ -655,6 +932,24 @@ static int rts5453p_emul_access_reg(const struct emul *emul, int reg, int bytes,
 				    bool read)
 {
 	return reg;
+}
+
+static int emul_realtek_rts54xx_reset(const struct emul *target)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	/* Reset PDOs. */
+	memset(data->src_pdos, 0xFF, sizeof(data->src_pdos));
+	memset(data->snk_pdos, 0xFF, sizeof(data->snk_pdos));
+
+	data->src_pdos[0] = RTS5453P_FIXED_SRC;
+
+	data->snk_pdos[0] = RTS5453P_FIXED_SNK;
+	data->snk_pdos[1] = RTS5453P_BATT_SNK;
+	data->snk_pdos[2] = RTS5453P_VAR_SNK;
+
+	return 0;
 }
 
 /* Device instantiation */
@@ -681,7 +976,9 @@ static int rts5453p_emul_init(const struct emul *emul,
 
 	i2c_common_emul_init(&data->common);
 
-	data->pdc_data.connector_reset_type = 0xFF;
+	data->pdc_data.read_offset = 0;
+
+	data->pdc_data.reset.raw_value = 0xFF;
 	data->pdc_data.ic_status.fw_main_version = 0xAB;
 	data->pdc_data.ic_status.pd_version[0] = 0xCD;
 	data->pdc_data.ic_status.pd_revision[0] = 0xEF;
@@ -693,6 +990,10 @@ static int rts5453p_emul_init(const struct emul *emul,
 	data->pdc_data.capability.bcdUSBTypeCVersion = 0xCAFE;
 
 	data->pdc_data.connector_capability.op_mode_usb3 = 1;
+
+	data->pdc_data.set_tpc_reconnect_param = 0xAA;
+
+	emul_realtek_rts54xx_reset(emul);
 
 	k_work_init_delayable(&data->pdc_data.delay_work,
 			      delayable_work_handler);
@@ -713,12 +1014,12 @@ static int emul_realtek_rts54xx_set_response_delay(const struct emul *target,
 }
 static int
 emul_realtek_rts54xx_get_connector_reset(const struct emul *target,
-					 enum connector_reset_t *type)
+					 union connector_reset_t *reset)
 {
 	struct rts5453p_emul_pdc_data *data =
 		rts5453p_emul_get_pdc_data(target);
 
-	*type = data->connector_reset_type;
+	*reset = data->reset;
 
 	return 0;
 }
@@ -790,7 +1091,160 @@ static int emul_realtek_rts54xx_get_pdr(const struct emul *target,
 	return 0;
 }
 
+static int
+emul_realtek_rts54xx_get_requested_power_level(const struct emul *target,
+					       enum usb_typec_current_t *level)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	switch (data->tpc_rp.tpc_rp) {
+	case 1:
+		*level = TC_CURRENT_USB_DEFAULT;
+		break;
+	case 2:
+		*level = TC_CURRENT_1_5A;
+		break;
+	case 3:
+		*level = TC_CURRENT_3_0A;
+		break;
+	default:
+		LOG_ERR("Invalid tpc_rp value 0x%X", data->tpc_rp.tpc_rp);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int emul_realtek_rts54xx_get_ccom(const struct emul *target,
+					 enum ccom_t *ccom, enum drp_mode_t *dm)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	switch (data->csd_op_mode.csd_mode) {
+	case 0:
+		*ccom = CCOM_RD;
+		break;
+	case 1:
+		*ccom = CCOM_DRP;
+		switch (data->csd_op_mode.drp_mode) {
+		case 0:
+			*dm = DRP_NORMAL;
+			break;
+		case 1:
+			*dm = DRP_TRY_SRC;
+			break;
+		case 2:
+			*dm = DRP_TRY_SNK;
+			break;
+		default:
+			LOG_ERR("Invalid drp 0x%X", data->csd_op_mode.drp_mode);
+			return -EINVAL;
+		}
+		break;
+	case 2:
+		*ccom = CCOM_RP;
+		break;
+	default:
+		LOG_ERR("Invalid csd_mode 0x%X", data->csd_op_mode.csd_mode);
+		return -EINVAL;
+	}
+
+	return 0;
+}
+
+static int emul_realtek_rts54xx_get_sink_path(const struct emul *target,
+					      bool *en)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	*en = data->set_power_switch_data.vbsin_en_control &&
+	      data->set_power_switch_data.vbsin_en == 3;
+
+	return 0;
+}
+
+static int emul_realtek_rts54xx_get_reconnect_req(const struct emul *target,
+						  uint8_t *expected,
+						  uint8_t *val)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	*expected = 0x01;
+	*val = data->set_tpc_reconnect_param;
+
+	return 0;
+}
+
+static int emul_realtek_rts54xx_pulse_irq(const struct emul *target)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	gpio_emul_input_set(data->irq_gpios.port, data->irq_gpios.pin, 1);
+	gpio_emul_input_set(data->irq_gpios.port, data->irq_gpios.pin, 0);
+
+	return 0;
+}
+
+static int emul_realtek_rts54xx_set_info(const struct emul *target,
+					 const struct pdc_info_t *info)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	data->info = *info;
+
+	return 0;
+}
+
+static int emul_realtek_rts54xx_get_pdos(const struct emul *target,
+					 enum pdo_type_t pdo_type,
+					 enum pdo_offset_t pdo_offset,
+					 uint8_t num_pdos,
+					 bool port_partner_pdo, uint32_t *pdos)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+	return get_pdos_direct(data, pdo_type, pdo_offset, num_pdos,
+			       port_partner_pdo, pdos);
+}
+
+static int emul_realtek_rts54xx_set_pdos(const struct emul *target,
+					 enum pdo_type_t pdo_type,
+					 enum pdo_offset_t pdo_offset,
+					 uint8_t num_pdos, const uint32_t *pdos)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+	return set_pdos_direct(data, pdo_type, pdo_offset, num_pdos, pdos);
+}
+
+static int
+emul_realtek_rts54xx_get_cable_property(const struct emul *target,
+					union cable_property_t *property)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+	*property = data->cable_property;
+	return 0;
+}
+
+static int
+emul_realtek_rts54xx_set_cable_property(const struct emul *target,
+					const union cable_property_t property)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+	data->cable_property = property;
+	return 0;
+}
+
 struct emul_pdc_api_t emul_realtek_rts54xx_api = {
+	.reset = emul_realtek_rts54xx_reset,
 	.set_response_delay = emul_realtek_rts54xx_set_response_delay,
 	.get_connector_reset = emul_realtek_rts54xx_get_connector_reset,
 	.set_capability = emul_realtek_rts54xx_set_capability,
@@ -800,6 +1254,17 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.set_connector_status = emul_realtek_rts54xx_set_connector_status,
 	.get_uor = emul_realtek_rts54xx_get_uor,
 	.get_pdr = emul_realtek_rts54xx_get_pdr,
+	.get_requested_power_level =
+		emul_realtek_rts54xx_get_requested_power_level,
+	.get_ccom = emul_realtek_rts54xx_get_ccom,
+	.get_sink_path = emul_realtek_rts54xx_get_sink_path,
+	.get_reconnect_req = emul_realtek_rts54xx_get_reconnect_req,
+	.pulse_irq = emul_realtek_rts54xx_pulse_irq,
+	.set_info = emul_realtek_rts54xx_set_info,
+	.set_pdos = emul_realtek_rts54xx_set_pdos,
+	.get_pdos = emul_realtek_rts54xx_get_pdos,
+	.get_cable_property = emul_realtek_rts54xx_get_cable_property,
+	.set_cable_property = emul_realtek_rts54xx_set_cable_property,
 };
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \
@@ -812,6 +1277,9 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 			.read_byte = rts5453p_emul_read_byte,		\
 			.finish_read = rts5453p_emul_finish_read,	\
 			.access_reg = rts5453p_emul_access_reg,		\
+		},							\
+		.pdc_data = {						\
+			.irq_gpios = GPIO_DT_SPEC_INST_GET(n, irq_gpios), \
 		},							\
 	};       \
 	static const struct i2c_common_emul_cfg rts5453p_emul_cfg_##n = {   \

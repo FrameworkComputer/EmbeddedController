@@ -1,0 +1,4 @@
+*.o
+*.co
+um_ppm
+test/unit_tests

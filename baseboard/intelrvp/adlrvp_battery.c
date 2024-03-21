@@ -10,7 +10,6 @@
 #include "common.h"
 #include "util.h"
 
-#ifdef CONFIG_BATTERY_TYPE_NO_AUTO_DETECT
 /* Battery configuration */
 const struct batt_conf_embed board_battery_info[] = {
 	/*
@@ -83,4 +82,3 @@ const struct batt_conf_embed board_battery_info[] = {
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
 const enum battery_type DEFAULT_BATTERY_TYPE = BATTERY_GETAC_SMP_HHP_408_3S;
-#endif /* CONFIG_BATTERY_TYPE_NO_AUTO_DETECT */

@@ -92,7 +92,7 @@ BUILD_ASSERT(FP_ENROLLMENT_RESULT_INTERNAL_ERROR ==
 	     BIO_ENROLLMENT_INTERNAL_ERROR);
 
 static int fpc_bep_enroll_step(const struct fingerprint_algorithm *const alg,
-			       uint8_t *image, int *completion)
+			       const uint8_t *const image, int *completion)
 {
 	struct fpc_bep_data *data = (struct fpc_bep_data *)alg->data;
 	bio_enrollment_t bio_enroll = &data->enroll_ctx;
@@ -102,7 +102,11 @@ static int fpc_bep_enroll_step(const struct fingerprint_algorithm *const alg,
 		return -ENOTSUP;
 	}
 
-	rc = bio_enrollment_add_image(bio_enroll, image);
+	/*
+	 * FPC BEP library takes image as 'void *', so we are casting away
+	 * the 'const' here.
+	 */
+	rc = bio_enrollment_add_image(bio_enroll, (bio_image_t)image);
 	if (rc < 0) {
 		LOG_ERR("bio_enrollment_add_image() failed, result %d", rc);
 		return -EINVAL;
@@ -148,8 +152,9 @@ BUILD_ASSERT(FP_MATCH_RESULT_LOW_QUALITY == BIO_TEMPLATE_LOW_QUALITY);
 BUILD_ASSERT(FP_MATCH_RESULT_LOW_COVERAGE == BIO_TEMPLATE_LOW_COVERAGE);
 
 static int fpc_bep_match(const struct fingerprint_algorithm *const alg,
-			 void *templ, uint32_t templ_count, uint8_t *image,
-			 int32_t *match_index, uint32_t *update_bitmap)
+			 void *templ, uint32_t templ_count,
+			 const uint8_t *const image, int32_t *match_index,
+			 uint32_t *update_bitmap)
 {
 	int rc;
 
@@ -157,8 +162,13 @@ static int fpc_bep_match(const struct fingerprint_algorithm *const alg,
 		return -ENOTSUP;
 	}
 
-	rc = bio_template_image_match_list(templ, templ_count, image,
-					   match_index, update_bitmap);
+	/*
+	 * FPC BEP library takes image as 'void *', so we are casting away
+	 * the 'const' here.
+	 */
+	rc = bio_template_image_match_list(templ, templ_count,
+					   (bio_image_t)image, match_index,
+					   update_bitmap);
 	if (rc < 0) {
 		LOG_ERR("bio_template_image_match_list() failed, result %d",
 			rc);

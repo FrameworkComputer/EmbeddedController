@@ -49,6 +49,12 @@ config LINK_TEST_SUITE_CBI_FLASH
 	  Include the CBI Flash storage driver test suite
 	  in the binary.
 
+config LINK_TEST_SUITE_CBI_FLASH_FROM_EEPROM
+	bool "Link and run CBI EEPROM to flash region tests"
+	help
+	  Include tests for migrating CBI EEPROM data to the flash based
+	  CBI region.
+
 config LINK_TEST_SUITE_CEC_COMMON
 	bool "Link and run the common/cec.c tests"
 
@@ -148,6 +154,9 @@ config LINK_TEST_SUITE_NX20P348X
 config LINK_TEST_SUITE_PANIC_OUTPUT
 	bool "Link and test the panic_output tests"
 
+config LINK_TEST_SUITE_PANIC_REASON
+	bool "Link and test the panic_reason tests"
+
 config LINK_TEST_SUITE_POWER_HOST_SLEEP
 	bool "Link and run the power/host_sleep.c specific tests"
 
@@ -160,6 +169,12 @@ config LINK_TEST_SUITE_PS8743
 config LINK_TEST_SUITE_PS8XXX
 	bool "Link and test the ps8xxx tests"
 
+config LINK_TEST_SUITE_RT1715
+	bool "Link and test the rt17115 tests"
+	help
+	  Link rt1715 test suite for the TCPM driver related function
+	  tests.
+
 config LINK_TEST_SUITE_RT1718S
 	bool "Link and test the rt1718s tests"
 	help
@@ -170,6 +185,12 @@ config LINK_TEST_SUITE_RT1739
 	bool "Link and test the rt1739 tests"
 	help
 	  Link tests rt1739s test suite for the PPC driver related function
+	  tests.
+
+config LINK_TEST_SUITE_KTU1125
+	bool "Link and test the ktu1125 tests"
+	help
+	  Link tests ktu1125 test suite for the PPC driver related function
 	  tests.
 
 config LINK_TEST_SUITE_RT9490
@@ -321,6 +342,12 @@ config LINK_TEST_SUITE_ANX7452
 	  Include the test suite of ANX7452 retimer in the binary. The tests
 	  use I2C emulation.
 
+config LINK_TEST_SUITE_KB8010
+	bool "Link and test the kb8010 tests"
+	help
+	  Link tests kb8010 test suite for the retimer driver related
+	  function tests.
+
 config LINK_TEST_SUITE_SM5803
 	bool "Link and test the SM5803 charger tests"
 
@@ -337,5 +364,11 @@ config LINK_TEST_SUITE_ONE_WIRE_UART
 
 config LINK_TEST_SUITE_SMART_BATTERY
 	bool "Link and test the smart battery driver tests"
+
+config LINK_TEST_SUITE_TABLETMODE_INTERRUPT
+	bool "Link and test the tabletmode interrupt driver tests"
+	help
+	  Verifies a singleton driver which handles an external interrupt
+	  signaling to the EC when to switch in or out of tablet mode.
 
 source "Kconfig.zephyr"

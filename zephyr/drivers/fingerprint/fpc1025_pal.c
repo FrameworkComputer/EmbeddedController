@@ -30,10 +30,20 @@ int __unused fpc_sensor_spi_write_read(uint8_t *write, uint8_t *read,
 				       size_t size, bool leave_cs_asserted)
 {
 	const struct fpc1025_cfg *cfg = fp_sensor_dev->config;
+	struct fpc1025_data *data = fp_sensor_dev->data;
 	const struct spi_buf tx_buf[1] = { { .buf = write, .len = size } };
 	const struct spi_buf rx_buf[1] = { { .buf = read, .len = size } };
 	const struct spi_buf_set tx = { .buffers = tx_buf, .count = 1 };
 	const struct spi_buf_set rx = { .buffers = rx_buf, .count = 1 };
+
+	/* Block communicating with sensor by other threads while a series of
+	 * SPI transaction is ongoing, until CS is asserted,
+	 */
+	if (!((k_sem_count_get(&data->sensor_lock) == 0) &&
+	      (data->sensor_owner == k_current_get()))) {
+		k_sem_take(&data->sensor_lock, K_FOREVER);
+		data->sensor_owner = k_current_get();
+	}
 
 	int err = spi_transceive_dt(&cfg->spi, &tx, &rx);
 
@@ -60,6 +70,9 @@ int __unused fpc_sensor_spi_write_read(uint8_t *write, uint8_t *read,
 	if (!leave_cs_asserted) {
 		/* Release CS line */
 		spi_release_dt(&cfg->spi);
+		/* Release lock of the sensor */
+		data->sensor_owner = NULL;
+		k_sem_give(&data->sensor_lock);
 	}
 
 	if (err != 0) {

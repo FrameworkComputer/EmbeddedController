@@ -7,8 +7,33 @@
 if ZTEST
 
 config PLATFORM_EC_TEST_CC_USBPD
-    bool "Enable USBPD console channel"
-    help
-      Enable USBPD console channel
+	bool "Enable USBPD console channel"
+	help
+	  Enable USBPD console channel
 
 endif # ZTEST
+
+config HW_TEST
+	bool "Include tests that will be run on hardware"
+	help
+	  Enables building full image with zmake that includes tests.
+	  The tests can be run via console or are run automatically depending
+	  on a test framework and other configs.
+
+if HW_TEST
+
+config HW_TEST_RW_ONLY
+	bool "Include harwdware tests only in the RW copy"
+	default y
+
+config HW_TEST_ON
+	bool
+	default y if HW_TEST_RW_ONLY && CROS_EC_RW
+	default y if !HW_TEST_RW_ONLY
+
+if HW_TEST_ON
+
+rsource "test/hwtest/Kconfig"
+
+endif # HW_TEST_ON
+endif # HW_TEST

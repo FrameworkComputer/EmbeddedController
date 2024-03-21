@@ -8,6 +8,8 @@
 #ifndef __CROS_EC_DRIVER_TCPM_RT1715_PUBLIC_H
 #define __CROS_EC_DRIVER_TCPM_RT1715_PUBLIC_H
 
+#include "usb_pd_tcpm.h"
+
 /* I2C interface */
 #define RT1715_I2C_ADDR_FLAGS 0x4E
 

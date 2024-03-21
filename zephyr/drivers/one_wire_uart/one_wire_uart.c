@@ -167,8 +167,8 @@ static void wake_tx(void)
 DECLARE_DEFERRED(wake_tx);
 
 /* retry every 2.5ms */
-#define RETRY_INTERVAL (5 * MSEC / 2)
-#define MAX_RETRY 10
+#define RETRY_INTERVAL (2 * MSEC)
+#define MAX_RETRY 20
 
 static void start_error_recovery(void)
 {

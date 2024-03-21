@@ -49,8 +49,8 @@ struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-K_MUTEX_DEFINE(g_lid_accel_mutex);
-K_MUTEX_DEFINE(g_base_accel_mutex);
+static K_MUTEX_DEFINE(g_lid_accel_mutex);
+static K_MUTEX_DEFINE(g_base_accel_mutex);
 static struct stprivate_data g_lis2dw12_data;
 static struct lsm6dso_data lsm6dso_data;
 

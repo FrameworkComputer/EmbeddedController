@@ -3798,7 +3798,7 @@ static int gen_vif(const char *board, struct vif_t *vif)
 			else if (is_src() && is_snk())
 				/*
 				 * No DRP with SRC and SNK PDOs detected. So
-				 * ignore.  ie. Twinkie or Plankton
+				 * ignore.  ie. Twinkie
 				 */
 				return 0;
 			else if (is_src())

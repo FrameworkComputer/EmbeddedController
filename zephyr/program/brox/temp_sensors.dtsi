@@ -24,6 +24,7 @@
 			temp_host_high = <85>;
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
+			power-good-pin = <&gpio_ec_dsw_pwrok>;
 			sensor = <&temp_ddr_soc>;
 		};
 
@@ -33,6 +34,7 @@
 			temp_host_high = <85>;
 			temp_host_halt = <90>;
 			temp_host_release_high = <80>;
+			power-good-pin = <&gpio_ec_dsw_pwrok>;
 			sensor = <&temp_fan_inlet>;
 		};
 	};

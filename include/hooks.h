@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum hook_priority {
 	/* Generic values across all hooks */
 	HOOK_PRIO_FIRST = 1, /* Highest priority */
@@ -247,12 +251,14 @@ enum hook_type {
 	 */
 	HOOK_TICK,
 
+#if !defined(CONFIG_ZEPHYR) || defined(CONFIG_PLATFORM_EC_HOOK_SECOND)
 	/*
 	 * Periodic tick, every second.
 	 *
 	 * Hook routines will be called from the TICK task.
 	 */
 	HOOK_SECOND,
+#endif
 
 	/*
 	 * USB PD cc disconnect event.
@@ -306,6 +312,10 @@ struct hook_data {
  * @param type		Type of hook routines to call.
  */
 void hook_notify(enum hook_type type);
+
+#ifdef __cplusplus
+}
+#endif
 
 /*
  * CONFIG_PLATFORM_EC_HOOKS is enabled by default during a Zephyr

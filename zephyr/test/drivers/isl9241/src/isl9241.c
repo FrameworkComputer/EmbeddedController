@@ -5,6 +5,7 @@
 
 #include "battery_smart.h"
 #include "charger.h"
+#include "console.h"
 #include "driver/charger/isl9241.h"
 #include "driver/charger/isl9241_public.h"
 #include "emul/emul_isl9241.h"
@@ -13,6 +14,7 @@
 #include "test/drivers/utils.h"
 
 #include <zephyr/shell/shell.h>
+#include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest.h>
 
 #define ISL9241_NODE DT_NODELABEL(isl9241_emul)
@@ -220,6 +222,34 @@ ZTEST_F(isl9241_driver, test_dc_prochot)
 	zassert_equal(isl9241_emul_peek(fixture->isl9241_emul,
 					ISL9241_REG_DC_PROCHOT),
 		      ISL9241_DC_PROCHOT_CURRENT_MIN);
+}
+
+ZTEST_F(isl9241_driver, test_dump_registers)
+{
+	const struct shell *cli;
+	const char *output;
+	size_t output_size;
+	const char dump_marker[] = "Dump ISL9241 registers";
+	int rv;
+
+	cli = get_ec_shell();
+	shell_backend_dummy_clear_output(cli);
+
+	/* Must define CONFIG_CMD_CHARGER_DUMP for this sub-command */
+	rv = shell_execute_cmd(cli, "charger dump");
+
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+	output = shell_backend_dummy_get_output(cli, &output_size);
+	/*
+	 * Checking the exact register dump is not very interesting.
+	 * Let's check if the output starts out reasonable.
+	 */
+	zassert_true(output_size >= sizeof(dump_marker));
+	if (output_size >= sizeof(dump_marker)) {
+		zassert_true(strstr(output, dump_marker) != NULL,
+			     "Expected: \"%s\" in \"%s\"", dump_marker, output);
+	}
 }
 
 ZTEST(isl9241_driver, test_prochot_dump)

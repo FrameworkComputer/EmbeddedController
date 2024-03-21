@@ -105,6 +105,14 @@ enum pd_rx_errors {
 
 #define PDO_GET_TYPE(pdo) (((pdo) >> 30) & 3)
 
+/* Peak overcurrent, naming follows 10ms @ 50% duty cycle percentages*/
+enum pdo_peak_overcurrent {
+	PDO_PEAK_OVERCURR_100,
+	PDO_PEAK_OVERCURR_110,
+	PDO_PEAK_OVERCURR_125,
+	PDO_PEAK_OVERCURR_150,
+};
+
 #define PDO_FIXED_SUSPEND BIT(28) /* USB Suspend supported */
 /* Higher capability in vSafe5V sink PDO */
 #define PDO_FIXED_SNK_HIGHER_CAP BIT(28)
@@ -113,7 +121,7 @@ enum pd_rx_errors {
 #define PDO_FIXED_FRS_CURR_1A5_AT_5V (2 << 23)
 #define PDO_FIXED_FRS_CURR_3A0_AT_5V (3 << 23)
 #define PDO_FIXED_EPR_MODE_CAPABLE BIT(23)
-#define PDO_FIXED_PEAK_CURR () /* [21..20] Peak current */
+#define PDO_FIXED_PEAK_CURR(peak) ((peak & 3) << 20) /* Peak current */
 #define PDO_FIXED_VOLT(mv) (((mv) / 50) << 10) /* Voltage in 50mV units */
 #define PDO_FIXED_CURR(ma) (((ma) / 10) << 0) /* Max current in 10mA units */
 #define PDO_FIXED_GET_VOLT(pdo) (((pdo >> 10) & 0x3FF) * 50)
@@ -141,6 +149,15 @@ enum pd_rx_errors {
 	(PDO_BATT_MIN_VOLT(min_mv) | PDO_BATT_MAX_VOLT(max_mv) | \
 	 PDO_BATT_OP_POWER(op_mw) | PDO_TYPE_BATTERY)
 
+/* Programmable power supply values for augmented PDOs. */
+enum pdo_augmented_pps {
+	PDO_AUG_PPS_SPR,
+	PDO_AUG_PPS_EPR,
+};
+
+#define PDO_AUG_PPS(pps) ((pps & 3) << 28)
+#define PDO_AUG_GET_PPS(pdo) ((pdo >> 28) & 0x3)
+
 #define PDO_AUG_MAX_VOLT(mv) ((((mv) / 100) & 0xFF) << 17)
 #define PDO_AUG_MIN_VOLT(mv) ((((mv) / 100) & 0xFF) << 8)
 #define PDO_AUG_MAX_CURR(ma) ((((ma) / 50) & 0x7F) << 0)
@@ -148,6 +165,15 @@ enum pd_rx_errors {
 #define PDO_AUG(min_mv, max_mv, max_ma)                        \
 	(PDO_AUG_MIN_VOLT(min_mv) | PDO_AUG_MAX_VOLT(max_mv) | \
 	 PDO_AUG_MAX_CURR(max_ma) | PDO_TYPE_AUGMENTED)
+
+#define PDO_AUG_EPR_MAX_VOLT(mv) ((((mv) / 100) & 0x1FF) << 17)
+#define PDO_AUG_EPR_MIN_VOLT(mv) ((((mv) / 100) & 0xFF) << 8)
+#define PDO_AUG_EPR_PDP(pdp) (pdp & 0xFF)
+
+#define PDO_AUG_EPR(min_mv, max_mv, pdp, flags)                        \
+	(PDO_AUG_EPR_MIN_VOLT(min_mv) | PDO_AUG_EPR_MAX_VOLT(max_mv) | \
+	 PDO_AUG_EPR_PDP(pdp) | PDO_TYPE_AUGMENTED |                   \
+	 PDO_AUG_PPS(PDO_AUG_PPS_EPR) | flags)
 
 /* RDO : Request Data Object */
 #define RDO_OBJ_POS(n) (((n) & 0xF) << 28)
@@ -3392,6 +3418,13 @@ void svdm_set_hpd_gpio(int port, int en);
  */
 int svdm_get_hpd_gpio(int port);
 
+/*
+ * Generate IRQ_HPD on the HPD GPIO pin
+ *
+ * @param port The PD port number
+ */
+void svdm_set_hpd_gpio_irq(int port);
+
 /**
  * Configure the pins used for DisplayPort Alternate Mode into safe state.
  *
@@ -3566,6 +3599,14 @@ __override_proto int svdm_tbt_compat_attention(int port, uint32_t *payload);
  */
 
 __override_proto enum ec_pd_port_location board_get_pd_port_location(int port);
+
+/**
+ * Called when EC_CMD_USB_PD_CONTROL host command is received
+ *
+ * @param port  The PD port number
+ * @return      Information related connected port partner and cable
+ */
+uint8_t get_pd_control_flags(int port);
 
 /****************************************************************************
  * TCPC CC/Rp Management

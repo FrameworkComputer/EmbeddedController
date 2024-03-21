@@ -97,7 +97,6 @@
 		compatible = "silergy,syv682x";
 		status = "okay";
 		reg = <0x42>;
-		frs_en_gpio = <&gpio_usb_c0_frs_en>;
 		/* a duplicate of the <&gpio_usb_c0_ppc_int_odl> node in
 		 * "named-gpios". This is the Zephyr preferred style,
 		 * the "named-gpios" node will be dealt with at a later date.
@@ -137,7 +136,6 @@
 		compatible = "silergy,syv682x";
 		status = "okay";
 		reg = <0x42>;
-		frs_en_gpio = <&gpio_usb_c1_frs_en>;
 		/* a duplicate of the <&gpio_usb_c1_ppc_int_odl> node in
 		 * "named-gpios". This is the Zephyr preferred style,
 		 * the "named-gpios" node will be dealt with at a later date.
@@ -177,7 +175,6 @@
 		compatible = "silergy,syv682x";
 		status = "okay";
 		reg = <0x42>;
-		frs_en_gpio = <&gpio_usb_c2_frs_en>;
 		/* a duplicate of the <&gpio_usb_c2_ppc_int_odl> node in
 		 * "named-gpios". This is the Zephyr preferred style,
 		 * the "named-gpios" node will be dealt with at a later date.

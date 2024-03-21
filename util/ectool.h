@@ -17,6 +17,11 @@ struct command {
 	 * @return 0 if successful, or a negative `enum ec_status` value.
 	 */
 	int (*handler)(int argc, char *argv[]);
+
+	/** The help text for this command, as
+	 * "arguments\n\tShort description."
+	 */
+	const char *help;
 };
 
 /**

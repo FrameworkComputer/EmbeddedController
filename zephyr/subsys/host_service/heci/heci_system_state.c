@@ -4,6 +4,7 @@
  */
 
 #include "heci_system_state.h"
+#include "sedi_driver_pm.h"
 
 #define SYSTEM_STATE_SUBSCRIBE 0x1
 #define SYSTEM_STATE_STATUS 0x2
@@ -67,10 +68,12 @@ void heci_handle_system_state_msg(uint8_t *msg, const size_t length)
 	case SYSTEM_STATE_STATUS:
 		status = (struct ss_status *)msg;
 		if (status->supported_states & SUSPEND_STATE_BIT) {
+#ifdef CONFIG_PM
 			if (status->states_status & SUSPEND_STATE_BIT)
 				sedi_pm_host_suspend(1);
 			else
 				sedi_pm_host_suspend(0);
+#endif
 		}
 
 		break;

@@ -8,3 +8,8 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC_RETIMER_FW_UPDATE
 	retimer_fw_update.c)
 zephyr_library_sources_ifdef(CONFIG_USB_PDC_POWER_MGMT
 	pdc_power_mgmt.c)
+zephyr_library_sources_ifdef(CONFIG_USB_PDC_POWER_MGMT
+	pdc_console.c)
+zephyr_library_sources(pdc_host_cmd.c)
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_TYPEC_CONTROL
+	pdc_stub.c)

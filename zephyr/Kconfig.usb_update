@@ -28,4 +28,23 @@ config PLATFORM_EC_USB_PAIRING
 	help
 	  Add support for pairing over the USB update interface
 
-endif #PLATFORM_EC_USB_UPDATE
+config PLATFORM_EC_UPDATE_PDU_SIZE
+	int "Maximum size allowed in the update protocol"
+	default 1024
+	help
+	  Maximum size of an update protocol data unit (PDU). (see
+	  docs/usb_updater.md)
+
+config PLATFORM_EC_TOUCHPAD_HASH_FW
+	bool "Include hashes of the touchpad FW in the EC image"
+	help
+	  Include hashes of the touchpad FW in the EC image.
+	  If enabled, the SHA256 hash of the touchpad FW is stored in EC's
+	  `touchpad_fw_hashes` and `touchpad_fw_full_hash` section.
+	  EC will verify if the received FW chunk using the hashes.
+
+	  To enable this feature, board should include cros/touchpad_hashes.dtsi
+	  in their dts file, and set the size of `touchpad_fw_hashes` section to
+	  `(TOUCHPAD_VIRTUAL_SIZE / UPDATE_PDU_SIZE) * 32`.
+
+endif # PLATFORM_EC_USB_UPDATE

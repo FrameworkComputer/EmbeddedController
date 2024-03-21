@@ -11,7 +11,7 @@ def register_myst_project(
     """Register a variant of myst."""
     register_npcx_project(
         project_name=project_name,
-        zephyr_board="npcx9m7f",
+        zephyr_board="npcx9/npcx9m7f",
         dts_overlays=[
             here / project_name / "project.overlay",
         ],
@@ -28,3 +28,7 @@ def register_myst_project(
 register_myst_project(
     project_name="myst",
 )
+
+# Note for reviews, do not let anyone edit these assertions, the addresses
+# must not change after the first RO release.
+assert_rw_fwid_DO_NOT_EDIT(project_name="myst", addr=0xCFFE0)

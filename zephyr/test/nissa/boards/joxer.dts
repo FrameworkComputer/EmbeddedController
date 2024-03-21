@@ -7,6 +7,7 @@
 #include "../program/nissa/cbi.dtsi"
 #include "../program/nissa/joxer/cbi.dtsi"
 #include "../program/nissa/joxer/motionsense.dtsi"
+#include <cros/vivaldi_kbd_default.dtsi>
 
 / {
 	named-gpios {
@@ -82,11 +83,11 @@
 		compatible = "named-i2c-ports";
 
 		i2c_ec_i2c_batt: ec_i2c_batt {
-			i2c-port = <&i2c_ctrl0>;
+			i2c-port = <&i2c0>;
 			enum-names = "I2C_PORT_BATTERY";
 		};
 		i2c_ec_i2c_sensor: ec_i2c_sensor {
-			i2c-port = <&i2c_ctrl2>;
+			i2c-port = <&i2c2>;
 			enum-names = "I2C_PORT_SENSOR";
 		};
 	};
@@ -171,7 +172,7 @@
 	};
 };
 
-&i2c_ctrl4 {
+&i2c4 {
 	tcpci_emul_0: tcpci_emul@82 {
 		compatible = "cros,tcpci-generic-emul";
 		status = "okay";
@@ -179,10 +180,19 @@
 	};
 };
 
-&i2c_ctrl4 {
+&i2c4 {
 	tcpci_emul_1: tcpci_emul@84 {
 		compatible = "cros,tcpci-generic-emul";
 		status = "okay";
 		reg = <0x84>;
+	};
+};
+
+&vivaldi_kbd {
+	status = "okay";
+
+	kbd_config_1: kbd-config-1 {
+		vivaldi-codes = <0 0 0 0 0 0 0 0 0 0>;
+		capabilities = <0>;
 	};
 };

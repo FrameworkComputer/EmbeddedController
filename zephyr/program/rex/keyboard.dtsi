@@ -14,10 +14,6 @@
 	};
 };
 
-&vivaldi_kbd {
-	status = "okay";
-};
-
 &pwm3 {
 	status = "okay";
 	pinctrl-0 = <&pwm3_gp80>;

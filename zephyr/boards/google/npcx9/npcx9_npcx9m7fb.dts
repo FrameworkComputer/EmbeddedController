@@ -1,0 +1,54 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/dts-v1/;
+
+#include <cros/nuvoton/npcx9.dtsi>
+#include <nuvoton/npcx9m7fb.dtsi>
+#include "npcx9.dtsi"
+
+/*
+ * The NPCX9m7FB includes 384 kB of code RAM, and 1 MB flash. Padding
+ * is added to make the image the same size as the internal flash. This
+ * is required to support the flashrom tool which requires an image that
+ * matches the full internal flash size.
+ */
+&binman {
+	wp-ro {
+		/*
+		 * wp-ro must match a block protect region supported by
+		 * by the internal flash device. In practice, that's
+		 * 512 KiB starting at address 0.
+		 */
+		offset = <0x0>;
+		size = <0x80000>;
+		ec-ro {
+			fmap {
+				offset = <(0x50000 - 0x400)>;
+				/*
+				 * don't specify 'size = <0x400>' here so
+				 * it is auto-assigned to the fmap size.
+				 */
+			};
+		};
+	};
+	ec-rw {
+		offset = <0x80000>;
+		size = <0x50000>;
+		rw-fw {
+			rw-fwid {
+				/* Fix the lcoation of the FWID to the
+				 * last 32 bytes of the flash. This
+				 * ensures the RW entries in the FMAP
+				 * stored in the RO section of flash
+				 * are always correct.
+				 */
+				offset = <(0x50000 - 32)>;
+			};
+		};
+	};
+	pad-byte = <0xff>;
+	pad-after = <0x30000>;
+};

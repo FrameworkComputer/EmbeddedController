@@ -295,7 +295,7 @@
 		};
 
 		/* Tentacruel LED bat discharge */
-		bat-power-state-discharge {
+		bat-power-state-discharge-s0 {
 			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S0";
 			/* Battery percent range (>= 11%, <= Full) */

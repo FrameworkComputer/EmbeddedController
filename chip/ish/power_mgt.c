@@ -43,16 +43,6 @@ static void pg_exit_restore_hw(void)
 	CCU_BCG_GPIO = 0;
 }
 
-/**
- * on ISH, uart interrupt can only wakeup ISH from low power state via
- * CTS pin, but most ISH platforms only have Rx and Tx pins, no CTS pin
- * exposed, so, we need block ISH enter low power state for a while when
- * console is in use.
- * fixed amount of time to keep the console in use flag true after boot in
- * order to give a permanent window in which the low speed clock is not used.
- */
-#define CONSOLE_IN_USE_ON_BOOT_TIME (15 * SECOND)
-
 /* power management internal context data structure */
 struct pm_context {
 	/* aontask image valid flag */
@@ -699,7 +689,7 @@ void __idle(void)
 	 */
 	disable_sleep(SLEEP_MASK_CONSOLE);
 	pm_ctx.console_expire_time.val =
-		get_time().val + CONSOLE_IN_USE_ON_BOOT_TIME;
+		get_time().val + CONFIG_CONSOLE_IN_USE_ON_BOOT_TIME;
 
 	while (1) {
 		t0 = get_time();

@@ -16,4 +16,12 @@ choice PLATFORM_EC_USBC_STACK
 	default PLATFORM_EC_USB_PD_CONTROLLER
 endchoice
 
+# TODO: b/326152804 - Brox: EC SW sync not working
+# HW based hash always generates the same result.  Switch to the SW based
+# hash until a root cause is identified.
+choice PLATFORM_EC_SHA256_MODE
+	default PLATFORM_EC_SHA256_SW
+endchoice
+
+
 source "Kconfig.zephyr"

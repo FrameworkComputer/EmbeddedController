@@ -50,6 +50,7 @@ static task_id_t ack_task[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[0 ... CONFIG_USB_PD_PORT_MAX_COUNT - 1] = TASK_ID_INVALID
 };
 
+static void perform_mux_init(int port);
 static void perform_mux_set(int port, int index, mux_state_t mux_mode,
 			    enum usb_switch usb_mode, int polarity);
 static void perform_mux_hpd_update(int port, int index, mux_state_t hpd_state);
@@ -226,6 +227,8 @@ __maybe_unused void usb_mux_task(void *u)
 				else if (next.type == USB_MUX_HPD_UPDATE)
 					perform_mux_hpd_update(port, next.index,
 							       next.mux_mode);
+				else if (next.type == USB_MUX_INIT)
+					perform_mux_init(port);
 				else
 					CPRINTS("Error: Unknown mux task type:"
 						"%d",
@@ -448,7 +451,7 @@ static int exit_low_power_mode(int port)
 {
 	/* If we are in low power, initialize device (which clears LPM flag) */
 	if (flags[port] & USB_MUX_FLAG_IN_LPM)
-		usb_mux_init(port);
+		perform_mux_init(port);
 
 	if (!(flags[port] & USB_MUX_FLAG_INIT)) {
 		CPRINTS("C%d: USB_MUX_FLAG_INIT not set", port);
@@ -463,7 +466,7 @@ static int exit_low_power_mode(int port)
 	return EC_SUCCESS;
 }
 
-void usb_mux_init(int port)
+static void perform_mux_init(int port)
 {
 	int rv;
 
@@ -489,6 +492,32 @@ void usb_mux_init(int port)
 		atomic_clear_bits(&flags[port], USB_MUX_FLAG_IN_LPM);
 }
 
+void usb_mux_init(int port)
+{
+	if (port >= board_get_usb_pd_port_count())
+		return;
+
+	/* Block if we have no mux task, but otherwise queue it up and return */
+	if (IS_ENABLED(HAS_TASK_USB_MUX)) {
+		struct mux_queue_entry new_entry;
+
+		new_entry.type = USB_MUX_INIT;
+#ifdef DEBUG_MUX_QUEUE_TIME
+		new_entry.enqueued_time = get_time();
+#endif
+
+		mutex_lock(&queue_lock[port]);
+		if (queue_add_unit(&mux_queue[port], &new_entry) == 0)
+			CPRINTS("Error: Dropping port %d mux init", port);
+		else
+			task_wake(TASK_ID_USB_MUX);
+
+		mutex_unlock(&queue_lock[port]);
+	} else {
+		perform_mux_init(port);
+	}
+}
+
 static void perform_mux_set(int port, int index, mux_state_t mux_mode,
 			    enum usb_switch usb_mode, int polarity)
 {
@@ -499,7 +528,7 @@ static void perform_mux_set(int port, int index, mux_state_t mux_mode,
 
 	/* Perform initialization if not initialized yet */
 	if (!(flags[port] & USB_MUX_FLAG_INIT))
-		usb_mux_init(port);
+		perform_mux_init(port);
 
 	/* Configure USB2.0 */
 	if (IS_ENABLED(CONFIG_USB_CHARGER))
@@ -601,7 +630,7 @@ static enum ec_error_list try_usb_mux_get(int port, mux_state_t *mux_state)
 
 	/* Perform initialization if not initialized yet */
 	if (!(flags[port] & USB_MUX_FLAG_INIT))
-		usb_mux_init(port);
+		perform_mux_init(port);
 
 	if (flags[port] & USB_MUX_FLAG_IN_LPM) {
 		*mux_state = USB_PD_MUX_NONE;
@@ -632,7 +661,7 @@ void usb_mux_flip(int port)
 
 	/* Perform initialization if not initialized yet */
 	if (!(flags[port] & USB_MUX_FLAG_INIT))
-		usb_mux_init(port);
+		perform_mux_init(port);
 
 	if (exit_low_power_mode(port) != EC_SUCCESS)
 		return;
@@ -654,7 +683,7 @@ static void perform_mux_hpd_update(int port, int index, mux_state_t hpd_state)
 {
 	/* Perform initialization if not initialized yet */
 	if (!(flags[port] & USB_MUX_FLAG_INIT))
-		usb_mux_init(port);
+		perform_mux_init(port);
 
 	if (exit_low_power_mode(port) != EC_SUCCESS)
 		return;

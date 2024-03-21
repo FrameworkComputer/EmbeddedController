@@ -31,7 +31,7 @@ properties:
     - PWR_IMVP9_VRRDY
     - PWR_PCH_PWROK
     - PWR_PG_PP1P05
-    - PWR_RSMRST
+    - PWR_RSMRST_PWRGD
     - PWR_SLP_S0
     - PWR_SLP_S3
     - PWR_SLP_S4
@@ -39,3 +39,12 @@ properties:
     - PWR_SLP_SUS
     - PWR_SYS_RST
     - PWR_VCCST_PWRGD
+
+  reset-val:
+    type: int
+    default: 0
+    description: |
+      Logical level (active/inactive) to set this signal to on power sequencing
+      reset. Behavior depends on the signal type: for GPIOs this only affects
+      outputs, and for virtual wires it specifies the assumed value of the
+      signal on eSPI reset.

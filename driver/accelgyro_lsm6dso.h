@@ -15,10 +15,6 @@
 #define LSM6DSO_FUNC_CFG_ACC_ADDR 0x01
 #define LSM6DSO_FUNC_CFG_EN 0x80
 
-/* Who Am I */
-#define LSM6DSO_WHO_AM_I_REG 0x0f
-#define LSM6DSO_WHO_AM_I 0x6c
-
 /* Common defines for Acc and Gyro sensors */
 #define LSM6DSO_EN_BIT 0x01
 #define LSM6DSO_DIS_BIT 0x00
@@ -28,12 +24,6 @@
 
 #define LSM6DSO_CTRL1_ADDR 0x10
 #define LSM6DSO_CTRL2_ADDR 0x11
-#define LSM6DSO_CTRL3_ADDR 0x12
-#define LSM6DSO_SW_RESET 0x01
-#define LSM6DSO_IF_INC 0x04
-#define LSM6DSO_PP_OD 0x10
-#define LSM6DSO_H_L_ACTIVE 0x20
-#define LSM6DSO_BDU 0x40
 
 #define LSM6DSO_CTRL4_ADDR 0x13
 #define LSM6DSO_INT2_ON_INT1_MASK 0x20
@@ -64,7 +54,6 @@
 #define LSM6DSO_FIFO_CTRL4_ADDR 0x0a
 #define LSM6DSO_FIFO_MODE_MASK 0x07
 
-#define LSM6DSO_INT1_CTRL 0x0d
 #define LSM6DSO_INT2_CTRL 0x0e
 #define LSM6DSO_INT_FIFO_TH 0x08
 #define LSM6DSO_INT_FIFO_OVR 0x10

@@ -51,8 +51,8 @@ const struct adc_t adc_channels[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(adc_channels) == ADC_CH_COUNT);
 
-K_MUTEX_DEFINE(g_lid_accel_mutex);
-K_MUTEX_DEFINE(g_base_accel_mutex);
+static K_MUTEX_DEFINE(g_lid_accel_mutex);
+static K_MUTEX_DEFINE(g_base_accel_mutex);
 static struct accelgyro_saved_data_t g_bma253_data;
 static struct accelgyro_saved_data_t g_bma422_data;
 static struct lsm6dsm_data lsm6dsm_data = LSM6DSM_DATA;

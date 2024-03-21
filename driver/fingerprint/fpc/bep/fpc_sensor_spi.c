@@ -8,6 +8,7 @@
 #include "common.h"
 #include "console.h"
 #include "driver/fingerprint/fpc/fpc_sensor.h"
+#include "fpc_private.h"
 #include "fpc_sensor_spi.h"
 #include "fpsensor/fpsensor.h"
 #include "fpsensor/fpsensor_utils.h"
@@ -33,11 +34,14 @@ __staticlib_hook int fpc_sensor_spi_write_read(uint8_t *write, uint8_t *read,
 	int rc = 0;
 
 	if (size == FP_SENSOR_REAL_IMAGE_SIZE_FPC) {
+		fp_sensor_lock();
 		rc |= spi_transaction(SPI_FP_DEVICE, write, size, read,
 				      SPI_READBACK_ALL);
 		spi_transaction_flush(SPI_FP_DEVICE);
+		fp_sensor_unlock();
 	} else if (size <= SPI_BUF_SIZE) {
 		memcpy(spi_buf, write, size);
+		fp_sensor_lock();
 		rc |= spi_transaction_async(SPI_FP_DEVICE, spi_buf, size,
 					    spi_buf, SPI_READBACK_ALL);
 
@@ -47,10 +51,12 @@ __staticlib_hook int fpc_sensor_spi_write_read(uint8_t *write, uint8_t *read,
 		 * chip-select asserted. Make sure chip-select is de-asserted
 		 * when all transactions are finished.
 		 */
-		if (!leave_cs_asserted)
+		if (!leave_cs_asserted) {
 			spi_transaction_flush(SPI_FP_DEVICE);
-		else
+			fp_sensor_unlock();
+		} else {
 			spi_transaction_wait(SPI_FP_DEVICE);
+		}
 
 		memcpy(read, spi_buf, size);
 	} else {

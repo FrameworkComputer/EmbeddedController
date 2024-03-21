@@ -20,7 +20,7 @@ struct memory_dump_entry {
 
 static struct memory_dump_entry entries[MAX_DUMP_ENTRIES];
 static uint16_t memory_dump_entry_count;
-K_MUTEX_DEFINE(memory_dump_mutex);
+static K_MUTEX_DEFINE(memory_dump_mutex);
 
 int register_memory_dump(uint32_t address, uint32_t size)
 {

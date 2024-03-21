@@ -143,7 +143,7 @@ static struct retimer_update_workq_info enter_workq_info;
 static struct retimer_update_workq_info exit_workq_info;
 
 /* Initialize retimer states of ports */
-static int pd_retimer_state_init(void)
+test_export_static int pd_retimer_state_init(void)
 {
 	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		if (pd_retimer_ports[i] != NULL) {

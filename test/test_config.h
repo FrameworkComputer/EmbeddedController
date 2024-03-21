@@ -62,15 +62,6 @@ enum battery_type {
 #define CONFIG_EEPROM_CBI_WP
 #endif
 
-#ifdef TEST_FLASH_LOG
-#define CONFIG_CRC8
-#define CONFIG_FLASH_ERASED_VALUE32 (-1U)
-#define CONFIG_FLASH_LOG
-#define CONFIG_FLASH_LOG_BASE (CONFIG_PROGRAM_MEMORY_BASE + 0x800)
-#define CONFIG_FLASH_LOG_SPACE 0x800
-#define CONFIG_MALLOC
-#endif
-
 #ifdef TEST_KB_8042
 #define CONFIG_KEYBOARD_PROTOCOL_8042
 #define CONFIG_8042_AUX
@@ -125,7 +116,6 @@ enum battery_type {
 	defined(TEST_FPSENSOR_AUTH_COMMANDS)
 #define CONFIG_BORINGSSL_CRYPTO
 #define CONFIG_ROLLBACK_SECRET_SIZE 32
-#define CONFIG_SHA256
 #endif
 
 #if defined(TEST_BORINGSSL_CRYPTO)
@@ -263,35 +253,6 @@ enum sensor_id {
 #define CONFIG_BODY_DETECTION_SENSOR BASE
 #endif
 
-#ifdef TEST_RMA_AUTH
-
-/* Test server public and private keys */
-#define RMA_KEY_BLOB                                                          \
-	{                                                                     \
-		0x03, 0xae, 0x2d, 0x2c, 0x06, 0x23, 0xe0, 0x73, 0x0d, 0xd3,   \
-			0xb7, 0x92, 0xac, 0x54, 0xc5, 0xfd, 0x7e, 0x9c, 0xf0, \
-			0xa8, 0xeb, 0x7e, 0x2a, 0xb5, 0xdb, 0xf4, 0x79, 0x5f, \
-			0x8a, 0x0f, 0x28, 0x3f, 0x10                          \
-	}
-
-#define RMA_TEST_SERVER_PRIVATE_KEY                                           \
-	{                                                                     \
-		0x47, 0x3b, 0xa5, 0xdb, 0xc4, 0xbb, 0xd6, 0x77, 0x20, 0xbd,   \
-			0xd8, 0xbd, 0xc8, 0x7a, 0xbb, 0x07, 0x03, 0x79, 0xba, \
-			0x7b, 0x52, 0x8c, 0xec, 0xb3, 0x4d, 0xaa, 0x69, 0xf5, \
-			0x65, 0xb4, 0x31, 0xad                                \
-	}
-#define RMA_TEST_SERVER_KEY_ID 0x10
-
-#define CONFIG_BASE32
-#define CONFIG_CURVE25519
-#define CONFIG_RMA_AUTH
-#define CONFIG_RNG
-#define CONFIG_SHA256
-#define CC_EXTENSION CC_COMMAND
-
-#endif
-
 #ifdef TEST_CRC
 #define CONFIG_CRC8
 #define CONFIG_SW_CRC
@@ -312,16 +273,17 @@ enum sensor_id {
 #endif
 
 #ifdef TEST_SHA256
-#define CONFIG_SHA256
+/* Test whichever sha256 implementation the platform provides. */
 #endif
 
 #ifdef TEST_SHA256_UNROLLED
-#define CONFIG_SHA256
+#undef CONFIG_SHA256_HW_ACCELERATE
+#define CONFIG_SHA256_SW
 #define CONFIG_SHA256_UNROLLED
 #endif
 
 #ifdef TEST_SHMALLOC
-#define CONFIG_MALLOC
+#define CONFIG_SHARED_MALLOC
 #endif
 
 #ifdef TEST_SBS_CHARGING
@@ -394,7 +356,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_SW_CRC
 #endif
 
@@ -404,7 +366,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_SW_CRC
 #define CONFIG_USB_PD_ONLY_FIXED_PDOS
 #endif
@@ -431,7 +393,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
 #define CONFIG_USB_POWER_DELIVERY
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_SW_CRC
 #endif
 
@@ -602,7 +564,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_SW_CRC
 #endif
 
@@ -614,7 +576,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_USB_PD_PORT_MAX_COUNT 2
 #define CONFIG_USB_PD_TCPC
 #define CONFIG_USB_PD_TCPM_STUB
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_SW_CRC
 #ifdef TEST_USB_PD_REV30
 #define CONFIG_USB_PD_REV30
@@ -665,6 +627,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER
 #define I2C_PORT_BATTERY 0
+#undef CONFIG_USB_PD_HOST_CMD
 #endif /* TEST_CHARGE_MANAGER_* */
 
 #ifdef TEST_CHARGE_MANAGER_DRP_CHARGING
@@ -685,7 +648,7 @@ int ncp15wb_calculate_temp(uint16_t adc);
 
 #ifdef TEST_VBOOT
 #define CONFIG_RWSIG
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 #define CONFIG_RSA
 #define CONFIG_RWSIG_TYPE_RWSIG
 #define CONFIG_RW_B

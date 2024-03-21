@@ -43,5 +43,6 @@ def test_rwsig_sign(mock_futility, tmpdir):
 
     # expect only path to ec.bin changed.
     assert signed[0][1] == "ec.bin"
-    assert signed[1] == (Path("b"), "zephyr.ro.elf")
-    assert signed[2] == (Path("c"), "zephyr.rw.elf")
+    assert signed[1][1] == "key.vbprik2"
+    assert signed[2] == (Path("b"), "zephyr.ro.elf")
+    assert signed[3] == (Path("c"), "zephyr.rw.elf")

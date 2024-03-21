@@ -57,7 +57,7 @@ add_custom_target(generate_second_loader
 
 add_dependencies(zephyr generate_second_loader)
 set_property(GLOBAL APPEND PROPERTY extra_post_build_commands
-  COMMAND ${PYTHON_EXECUTABLE} ${SOC_DIR}/${ARCH}/${SOC_FAMILY}/common/spigen/mec_spi_gen.py
+  COMMAND ${PYTHON_EXECUTABLE} ${ZEPHYR_BASE}/soc/microchip/mec/common/spigen/mec_spi_gen.py
   -i ${CMAKE_BINARY_DIR}/second_loader.bin
   -o ${CMAKE_BINARY_DIR}/second_loader_fw.bin
   -c ${CONFIG_MCHP_MEC_HEADER_CHIP}

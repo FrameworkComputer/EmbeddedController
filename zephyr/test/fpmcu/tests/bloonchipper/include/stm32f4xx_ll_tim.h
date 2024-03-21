@@ -10,5 +10,6 @@
  * Tests don't use HAL, all needed functions are mocked.
  */
 typedef uint32_t TIM_TypeDef;
+void LL_TIM_DisableCounter(TIM_TypeDef *TIMx);
 
 #endif

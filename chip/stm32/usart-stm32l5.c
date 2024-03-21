@@ -48,6 +48,18 @@ static void usart_variant_enable(struct usart_config const *config)
 	task_enable_irq(config->hw->irq);
 }
 
+#ifdef CONFIG_STREAM_USB
+int usart_get_baud(struct usart_config const *config)
+{
+	return usart_get_baud_f0_l(config, 16000000);
+}
+#endif
+
+void usart_set_baud(struct usart_config const *config, int baud)
+{
+	usart_set_baud_f0_l(config, baud, 16000000);
+}
+
 static void usart_variant_disable(struct usart_config const *config)
 {
 	task_disable_irq(config->hw->irq);

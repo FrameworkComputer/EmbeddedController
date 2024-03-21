@@ -6,6 +6,8 @@
 #include "common.h"
 #include "console.h"
 #include "fpc_bio_algorithm.h"
+#include "fpc_libfp_matcher.h"
+#include "fpc_libfp_sensor.h"
 #include "fpc_private.h"
 #include "fpc_sensor.h"
 #include "fpsensor/fpsensor.h"

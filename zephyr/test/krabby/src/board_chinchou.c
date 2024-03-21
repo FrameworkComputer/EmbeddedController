@@ -24,6 +24,7 @@
 #define SSFC_MAIM_SENSORS (SSFC_LID_MAIN_SENSOR | SSFC_BASE_MAIN_SENSOR)
 #define SSFC_ALT_SENSORS (SSFC_LID_ALT_SENSOR | SSFC_BASE_ALT_SENSOR)
 
+FAKE_VALUE_FUNC(int, cbi_get_ssfc, uint32_t *);
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
 
@@ -123,6 +124,13 @@ void lsm6dsm_interrupt(enum gpio_signal signal)
 	interrupt_id = 2;
 }
 
+static int ssfc_data;
+static int cbi_get_ssfc_mock(uint32_t *ssfc)
+{
+	*ssfc = ssfc_data;
+	return 0;
+}
+
 static void *alt_sensor_use_setup(void)
 {
 	const struct device *wp_gpio =
@@ -132,9 +140,8 @@ static void *alt_sensor_use_setup(void)
 	/* Make sure that write protect is disabled */
 	zassert_ok(gpio_emul_input_set(wp_gpio, wp_pin, 1), NULL);
 	/* Set SSFC to enable alt sensors. */
-	zassert_ok(cbi_set_ssfc(SSFC_ALT_SENSORS), NULL);
-	/* Set form factor to CONVERTIBLE to enable motion sense interrupts. */
-	zassert_ok(cbi_set_fw_config(CONVERTIBLE << 13), NULL);
+	cbi_get_ssfc_fake.custom_fake = cbi_get_ssfc_mock;
+	ssfc_data = SSFC_ALT_SENSORS;
 	/* Run init hooks to initialize cbi. */
 	hook_notify(HOOK_INIT);
 
@@ -167,9 +174,8 @@ static void *alt_sensor_no_use_setup(void)
 	/* Make sure that write protect is disabled */
 	zassert_ok(gpio_emul_input_set(wp_gpio, wp_pin, 1), NULL);
 	/* Set SSFC to disable alt sensors. */
-	zassert_ok(cbi_set_ssfc(SSFC_MAIM_SENSORS), NULL);
-	/* Set form factor to CONVERTIBLE to enable motion sense interrupts. */
-	zassert_ok(cbi_set_fw_config(CONVERTIBLE << 13), NULL);
+	cbi_get_ssfc_fake.custom_fake = cbi_get_ssfc_mock;
+	ssfc_data = SSFC_MAIM_SENSORS;
 	/* Run init hooks to initialize cbi. */
 	hook_notify(HOOK_INIT);
 

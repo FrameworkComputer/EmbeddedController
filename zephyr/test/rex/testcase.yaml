@@ -38,7 +38,7 @@ tests:
 
   rex.battery_present:
     extra_dtc_overlay_files:
-      - boards/rex/rex.dtsi
+      - boards/native_posix.overlay
       - boards/power.dtsi
     extra_configs:
       - CONFIG_TEST_PROGRAM_BATTERY_PRESENT=y
@@ -61,6 +61,8 @@ tests:
       - CONFIG_TEST_PROJECT_REX=y
 
   rex.rex.usb_mux_config:
+    extra_conf_files:
+      - boards/rex/prj.conf
     extra_dtc_overlay_files:
       - boards/rex/rex.dtsi
     extra_configs:
@@ -68,8 +70,9 @@ tests:
       - CONFIG_TEST_PROJECT_USB_MUX_CONFIG=y
 
   rex.rex.i2c_policy:
+    extra_conf_files:
+      - boards/rex/prj.conf
     extra_dtc_overlay_files:
-      - boards/native_posix.overlay
       - boards/rex/rex.dtsi
     extra_configs:
       - CONFIG_TEST_PROJECT_REX=y

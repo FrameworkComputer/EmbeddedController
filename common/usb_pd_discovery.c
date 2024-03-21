@@ -307,6 +307,14 @@ enum pd_discovery_state pd_get_modes_discovery(int port,
 					       enum tcpci_msg_type type)
 {
 	const struct svid_mode_data *mode_data = pd_get_next_mode(port, type);
+	enum pd_discovery_state svids_disc = pd_get_svids_discovery(port, type);
+
+	/*
+	 * If SVIDs discovery is incomplete, modes discovery is trivially
+	 * incomplete.
+	 */
+	if (svids_disc != PD_DISC_COMPLETE)
+		return svids_disc;
 
 	/*
 	 * If there are no SVIDs for which to discover modes, mode discovery is

@@ -7,6 +7,7 @@
 #include "driver/tcpm/raa489000.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "extpower.h"
+#include "mock/isl923x.h"
 #include "system.h"
 #include "tcpm/tcpci.h"
 #include "usb_charge.h"
@@ -33,8 +34,6 @@ FAKE_VALUE_FUNC(int, charge_manager_get_active_charge_port);
 FAKE_VALUE_FUNC(enum ec_error_list, charger_discharge_on_ac, int);
 FAKE_VALUE_FUNC(int, chipset_in_state, int);
 FAKE_VOID_FUNC(usb_charger_task_set_event_sync, int, uint8_t);
-
-static enum ec_error_list raa489000_is_acok_absent(int charger, bool *acok);
 
 static void test_before(void *fixture)
 {
@@ -71,23 +70,6 @@ ZTEST(nivviks_charger, test_charger_hibernate)
 	zassert_equal(raa489000_hibernate_fake.arg0_history[1],
 		      CHARGER_PRIMARY);
 	zassert_true(raa489000_hibernate_fake.arg1_history[1]);
-}
-
-static enum ec_error_list raa489000_is_acok_absent(int charger, bool *acok)
-{
-	*acok = false;
-	return EC_SUCCESS;
-}
-
-static enum ec_error_list raa489000_is_acok_present(int charger, bool *acok)
-{
-	*acok = true;
-	return EC_SUCCESS;
-}
-
-static enum ec_error_list raa489000_is_acok_error(int charger, bool *acok)
-{
-	return EC_ERROR_UNIMPLEMENTED;
 }
 
 ZTEST(nivviks_charger, test_check_extpower)

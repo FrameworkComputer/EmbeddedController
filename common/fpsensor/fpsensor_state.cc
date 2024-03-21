@@ -31,6 +31,8 @@ extern "C" {
 #include "fpsensor/fpsensor_state.h"
 #include "fpsensor/fpsensor_template_state.h"
 #include "fpsensor/fpsensor_utils.h"
+#include "fpsensor_driver.h"
+#include "fpsensor_matcher.h"
 
 /* Last acquired frame (aligned as it is used by arbitrary binary libraries) */
 uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE] FP_FRAME_SECTION __aligned(4);

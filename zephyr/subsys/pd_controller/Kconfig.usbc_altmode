@@ -41,6 +41,13 @@ config USBPD_ALTMODE_INTEL_THREAD_PRIORITY
 	  this number must be selected in such way thread priority is lower
 	  than the USB PD task that handles the power delivery aspects.
 
+config USBPD_POLL_PDC
+	bool "Poll the PDC register for Alt-Mode port partner connections"
+	default n
+	help
+	  This option poll's the PDC register for Alt-Mode port partner
+	  connection instead of relying on interrupts fro the PDC.
+
 config CONSOLE_CMD_USBPD_INTEL_ALTMODE
 	bool "Console command: altmode"
 	default y

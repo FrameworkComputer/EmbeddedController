@@ -62,8 +62,8 @@
 
 		bat-state3-charge {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery display percent range (>= 97, <= 99) */
-			batt-lvl = <97 99>;
+			/* Battery display percent range (>= 97, <= 100) */
+			batt-lvl = <97 100>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
@@ -139,47 +139,6 @@
 				color-1 {
 					led-color = "LED_GREEN";
 					period-ms = <2000>;
-				};
-			};
-		};
-
-		/* kingler LED power s0 */
-		power-state-s0 {
-			chipset-state = "POWER_S0";
-
-			battery-led {
-				led-id = "EC_LED_ID_BATTERY_LED";
-				color-0 {
-					led-color = "LED_AMBER";
-				};
-			};
-		};
-
-		/* kingler LED power s3 */
-		power-state-s3 {
-			chipset-state = "POWER_S3";
-
-			battery-led {
-				led-id = "EC_LED_ID_BATTERY_LED";
-				color-0 {
-					led-color = "LED_AMBER";
-					period-ms = <3000>;
-				};
-				color-1 {
-					led-color = "LED_OFF";
-					period-ms = <500>;
-				};
-			};
-		};
-
-		/* kingler LED power s5 */
-		power-state-s5 {
-			chipset-state = "POWER_S5";
-
-			battery-led {
-				led-id = "EC_LED_ID_BATTERY_LED";
-				color-0 {
-					led-color = "LED_OFF";
 				};
 			};
 		};
