@@ -168,12 +168,12 @@ enum {
 	COND_CODE_1(HAS_TASK_CYPD,                                         \
 		    (CROS_EC_TASK(CYPD, cypd_interrupt_handler_task, 0,    \
 				  CONFIG_TASK_CYPD_STACK_SIZE,             \
-				  EC_TASK_CYPD_PRIO)),                     \
+				  EC_TASK_CYPD_PRIO, 0)),                     \
 		())                                                    \
 	COND_CODE_1(HAS_TASK_ALS,                                         \
 		    (CROS_EC_TASK(ALS, als_task, 0,    \
 				  CONFIG_TASK_ALS_STACK_SIZE,             \
-				  EC_TASK_ALS_PRIO)),                     \
+				  EC_TASK_ALS_PRIO, 0)),                     \
 		())                                                    \
 	COND_CODE_1(HAS_TASK_TOUCHPAD,                                     \
 		    (CROS_EC_TASK(TOUCHPAD, touchpad_task, 0,              \
@@ -234,8 +234,8 @@ enum {
 	CROS_EC_TASK(PD_INT_C1, NULL, 1, 0, EC_TASK_PD_INT_C1_PRIO, 0)         \
 	CROS_EC_TASK(PD_INT_C2, NULL, 2, 0, EC_TASK_PD_INT_C2_PRIO, 0)         \
 	CROS_EC_TASK(PD_INT_C3, NULL, 3, 0, EC_TASK_PD_INT_C3_PRIO, 0)         \
-	CROS_EC_TASK(CYPD, NULL, 0, 0, EC_TASK_CYPD_PRIO)                   \
-	CROS_EC_TASK(ALS, NULL, 0, 0, EC_TASK_ALS_PRIO)                     \
+	CROS_EC_TASK(CYPD, NULL, 0, 0, EC_TASK_CYPD_PRIO, 0)                   \
+	CROS_EC_TASK(ALS, NULL, 0, 0, EC_TASK_ALS_PRIO, 0)                     \
 	CROS_EC_TASK(TOUCHPAD, NULL, 0, 0, EC_TASK_TOUCHPAD_PRIO, 0)           \
 	CROS_EC_TASK(FPSENSOR, NULL, 0, 0, EC_TASK_FPSENSOR_PRIO, K_FP_REGS)   \
 	CROS_EC_TASK(CEC, NULL, 0, 0, EC_TASK_CEC_PRIO, 0)
