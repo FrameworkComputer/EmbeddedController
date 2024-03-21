@@ -1,6 +1,7 @@
 # Paths of interest to be included in the commit message for
 # merge commits to the firmware-fpmcu-<BOARD>-release branch when
 # using update_release_branch.py.
+chip/npcx/trng.c
 common/fpsensor
 common/rollback.c
 docs/fingerprint
