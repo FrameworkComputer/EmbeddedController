@@ -18,6 +18,8 @@
 #include "common.h"
 #include "test_util.h"
 
+#include <memory>
+
 extern "C" {
 #include "builtin/assert.h"
 #include "console.h"
@@ -95,8 +97,10 @@ static int test_aes_gcm_raw_inplace(const uint8_t *key, int key_size,
 	 * Make copies that will be clobbered during in-place encryption or
 	 * decryption.
 	 */
-	uint8_t plaintext_copy[plaintext_size];
-	uint8_t ciphertext_copy[plaintext_size];
+	auto plaintext_ptr = std::make_unique<uint8_t[]>(plaintext_size);
+	auto ciphertext_ptr = std::make_unique<uint8_t[]>(plaintext_size);
+	uint8_t *plaintext_copy = plaintext_ptr.get();
+	uint8_t *ciphertext_copy = ciphertext_ptr.get();
 
 	memcpy(plaintext_copy, plaintext, plaintext_size);
 	memcpy(ciphertext_copy, ciphertext, plaintext_size);
