@@ -690,6 +690,8 @@ static void invalidate_charger_settings(struct pdc_port_t *port)
 	port->snk_policy.pdo = 0;
 	memset(port->snk_policy.pdos, 0, sizeof(uint32_t) * PDO_NUM);
 	port->snk_policy.pdo_count = 0;
+	memset(port->src_policy.pdos, 0, sizeof(uint32_t) * PDO_NUM);
+	port->src_policy.pdo_count = 0;
 }
 
 /**
@@ -1350,23 +1352,34 @@ static void pdc_send_cmd_wait_run(void *obj)
 static void pdc_send_cmd_wait_exit(void *obj)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
+	uint32_t *pdos;
+	uint8_t *pdo_count;
 
 	/* Completed with error. Clear complete bit */
 	atomic_clear_bit(port->cci_flags, CCI_CMD_COMPLETED);
 	port->cmd->pending = false;
-	port->snk_policy.pdo_count = 0;
 
 	switch (port->cmd->cmd) {
 	case CMD_PDC_GET_PDOS:
+		if (port->pdo_type == SOURCE_PDO) {
+			pdo_count = &port->src_policy.pdo_count;
+			pdos = port->src_policy.pdos;
+		} else {
+			pdo_count = &port->snk_policy.pdo_count;
+			pdos = port->snk_policy.pdos;
+		}
+
+		*pdo_count = 0;
+
 		/* Filter out Augmented Power Data Objects (APDO). APDOs come
 		 * after the regular PDOS, so it's safe to exclude them from the
 		 * pdo_count. */
 		/* TODO This is temporary until APDOs can be handled  */
 		for (int i = 0; i < PDO_NUM; i++) {
-			if (port->snk_policy.pdos[i] & PDO_TYPE_AUGMENTED) {
-				port->snk_policy.pdos[i] = 0;
+			if (pdos[i] & PDO_TYPE_AUGMENTED) {
+				pdos[i] = 0;
 			} else {
-				port->snk_policy.pdo_count++;
+				++*pdo_count;
 			}
 		}
 		break;
