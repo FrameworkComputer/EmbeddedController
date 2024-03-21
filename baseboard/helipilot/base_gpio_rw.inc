@@ -17,6 +17,7 @@ GPIO(FP_SENSOR_SEL,            PIN(4, 4), GPIO_INPUT)
 /* Outputs */
 GPIO(FP_RST_ODL,               PIN(9, 6),  GPIO_OUT_HIGH)
 GPIO(SPI_MCU_CS_FP_L,          PIN(A, 6),  GPIO_OUT_HIGH)
+GPIO(USER_PRES_L,              PIN(A, 5),  GPIO_ODR_HIGH)
 
 /* SPIP - to fingerprint sensor */
 /* SPIP_MOSI/SPIP_SCLK GPIOA3/A1 */
