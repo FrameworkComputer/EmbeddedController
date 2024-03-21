@@ -42,6 +42,8 @@ TEST_PATTERNS='$(PLATFORM_EC)/test/**' \
 	'$(THIRD_PARTY)/zephyr/main/subsys/emul/**' \
 	'$(THIRD_PARTY)/zephyr/main/arch/posix/**' \
 	'$(THIRD_PARTY)/zephyr/main/scripts/native_simulator/**' \
+	'$(THIRD_PARTY)/zephyr/main/boards/native/native_posix/**' \
+	'$(THIRD_PARTY)/zephyr/main/boards/native/native_sim/**' \
 	'**/*_benchmark.cc' \
 	'**/*_test.c' \
 	'**/*_test.cc' \
