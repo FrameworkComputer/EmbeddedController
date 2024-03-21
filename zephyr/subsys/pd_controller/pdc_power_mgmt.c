@@ -242,8 +242,10 @@ enum pdc_state_t {
 	PDC_SEND_CMD_START,
 	/** PDC_SEND_CMD_WAIT */
 	PDC_SEND_CMD_WAIT,
-	/** PDC_SRC_SNK_TYPEC_ONLY */
-	PDC_SRC_SNK_TYPEC_ONLY,
+	/** PDC_SRC_TYPEC_ONLY */
+	PDC_SRC_TYPEC_ONLY,
+	/** PDC_SNK_TYPEC_ONLY */
+	PDC_SNK_TYPEC_ONLY,
 };
 
 /**
@@ -281,7 +283,8 @@ static const char *const pdc_state_names[] = {
 	[PDC_SRC_ATTACHED] = "Attached.SRC",
 	[PDC_SEND_CMD_START] = "SendCmdStart",
 	[PDC_SEND_CMD_WAIT] = "SendCmdWait",
-	[PDC_SRC_SNK_TYPEC_ONLY] = "TypeCAttached",
+	[PDC_SRC_TYPEC_ONLY] = "TypeCSrcAttached",
+	[PDC_SNK_TYPEC_ONLY] = "TypeCSnkAttached",
 };
 
 /**
@@ -329,17 +332,19 @@ enum policy_snk_attached_t {
 };
 
 /**
- * @brief Attached state flags
+ * @brief Attached state
  */
-enum attached_flag_t {
-	/** UNATTACHED_FLAG */
-	UNATTACHED_FLAG,
-	/** SRC_ATTACHED_FLAG */
-	SRC_ATTACHED_FLAG,
-	/** SNK_ATTACHED_FLAG */
-	SNK_ATTACHED_FLAG,
-	/** SNK_SRC_ATTACHED_TYPEC_ONLY_FLAG */
-	SNK_SRC_ATTACHED_TYPEC_ONLY_FLAG,
+enum attached_state_t {
+	/** UNATTACHED_STATE */
+	UNATTACHED_STATE,
+	/** SRC_ATTACHED_STATE */
+	SRC_ATTACHED_STATE,
+	/** SNK_ATTACHED_STATE */
+	SNK_ATTACHED_STATE,
+	/** SRC_ATTACHED_TYPEC_ONLY_STATE */
+	SRC_ATTACHED_TYPEC_ONLY_STATE,
+	/** SNK_ATTACHED_TYPEC_ONLY_STATE */
+	SNK_ATTACHED_TYPEC_ONLY_STATE,
 };
 
 /**
@@ -473,14 +478,8 @@ struct pdc_port_t {
 	union pdr_t pdr;
 	/** True if battery can charge from this port */
 	bool active_charge;
-	/** True if in source attached state */
-	bool attached_src;
-	/** True if in sink attached state */
-	bool attached_snk;
-	/** True if in typec only attached state */
-	bool attached_snk_src_typec_only;
-	/** True if attached device is PD Capable */
-	bool pd_capable;
+	/** Tracks current connection state */
+	enum attached_state_t attached_state;
 	/** GET_VDO temp variable used with CMD_GET_VDO */
 	union get_vdo_t vdo_req;
 	/** Array used to hold the list of VDO types to request */
@@ -495,6 +494,8 @@ struct pdc_port_t {
 	/** Type of PDOs to get: SINK or SOURCE.  Used with CMD_PDC_GET_PDOS
 	 * command */
 	enum pdo_type_t pdo_type;
+	/** Charge current while in TypeC Sink state */
+	uint32_t typec_current_ma;
 };
 
 /**
@@ -734,38 +735,6 @@ static void queue_internal_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd)
 }
 
 /**
- * @brief Tracks the attached state of the state machine
- */
-static void set_attached_flag(struct pdc_port_t *port,
-			      enum attached_flag_t flag)
-{
-	k_mutex_lock(&port->mtx, K_FOREVER);
-	switch (flag) {
-	case SRC_ATTACHED_FLAG:
-		port->attached_snk_src_typec_only = false;
-		port->attached_snk = false;
-		port->attached_src = true;
-		break;
-	case SNK_ATTACHED_FLAG:
-		port->attached_snk_src_typec_only = false;
-		port->attached_snk = true;
-		port->attached_src = false;
-		break;
-	case SNK_SRC_ATTACHED_TYPEC_ONLY_FLAG:
-		port->attached_snk_src_typec_only = true;
-		port->attached_snk = false;
-		port->attached_src = false;
-		break;
-	default:
-		port->attached_snk_src_typec_only = false;
-		port->attached_snk = false;
-		port->attached_src = false;
-		break;
-	}
-	k_mutex_unlock(&port->mtx);
-}
-
-/**
  * @brief This function should only be called after the completion of the
  * GET_CONNECTOR_STATUS command. It reads the connect_status,
  * power_operation_mode, and power_direction bit to determine which state should
@@ -776,25 +745,50 @@ static void set_attached_flag(struct pdc_port_t *port,
 static void handle_connector_status(struct pdc_port_t *port)
 {
 	if (!port->connector_status.connect_status) {
-		port->pd_capable = false;
 		/* Port is not connected */
 		set_pdc_state(port, PDC_UNATTACHED);
 	} else {
-		if (port->connector_status.power_operation_mode ==
-		    PD_OPERATION) {
-			port->pd_capable = true;
+		switch (port->connector_status.power_operation_mode) {
+		case USB_DEFAULT_OPERATION:
+			port->typec_current_ma = 500;
+			break;
+		case BC_OPERATION:
+			port->typec_current_ma = 500;
+			break;
+		case PD_OPERATION:
+			port->typec_current_ma = 0;
 			if (port->connector_status.power_direction) {
 				/* Port partner is a sink device
 				 */
 				set_pdc_state(port, PDC_SRC_ATTACHED);
+				return;
 			} else {
 				/* Port partner is a source
 				 * device */
 				set_pdc_state(port, PDC_SNK_ATTACHED);
+				return;
 			}
+			break;
+		case USB_TC_CURRENT_1_5A:
+			port->typec_current_ma = 1500;
+			break;
+		case USB_TC_CURRENT_3A:
+			port->typec_current_ma = 3000;
+			break;
+		case USB_TC_CURRENT_5A:
+			port->typec_current_ma = 5000;
+			break;
+		}
+
+		/* TypeC only connection */
+		if (port->connector_status.power_direction) {
+			/* Port partner is a Typec Sink device */
+			set_pdc_state(port, PDC_SRC_TYPEC_ONLY);
+			return;
 		} else {
-			port->pd_capable = false;
-			set_pdc_state(port, PDC_SRC_SNK_TYPEC_ONLY);
+			/* Port partner is a Typec Source device */
+			set_pdc_state(port, PDC_SNK_TYPEC_ONLY);
+			return;
 		}
 	}
 }
@@ -874,8 +868,7 @@ static void pdc_unattached_entry(void *obj)
 
 	print_current_pdc_state(port);
 
-	set_attached_flag(port, UNATTACHED_FLAG);
-
+	port->attached_state = UNATTACHED_STATE;
 	port->send_cmd.intern.pending = false;
 
 	/* Clear all events except for disconnect. */
@@ -991,7 +984,7 @@ static void pdc_src_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_GET_PDOS);
 		return;
 	case SRC_ATTACHED_RUN:
-		set_attached_flag(port, SRC_ATTACHED_FLAG);
+		port->attached_state = SRC_ATTACHED_STATE;
 		run_src_policies(port);
 		break;
 	}
@@ -1122,7 +1115,7 @@ static void pdc_snk_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
 		return;
 	case SNK_ATTACHED_RUN:
-		set_attached_flag(port, SNK_ATTACHED_FLAG);
+		port->attached_state = SNK_ATTACHED_STATE;
 		run_snk_policies(port);
 		break;
 	}
@@ -1382,18 +1375,46 @@ static void pdc_send_cmd_wait_exit(void *obj)
 	}
 }
 
-static void pdc_src_snk_typec_only_entry(void *obj)
+static void pdc_src_typec_only_entry(void *obj)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
 
 	print_current_pdc_state(port);
 }
 
-static void pdc_src_snk_typec_only_run(void *obj)
+static void pdc_src_typec_only_run(void *obj)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
 
-	set_attached_flag(port, SNK_SRC_ATTACHED_TYPEC_ONLY_FLAG);
+	port->attached_state = SRC_ATTACHED_TYPEC_ONLY_STATE;
+
+	/* The CCI_EVENT is set on a connector disconnect, so check the
+	 * connector status and take the appropriate action. */
+	if (atomic_test_and_clear_bit(port->cci_flags, CCI_EVENT)) {
+		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_STATUS);
+		return;
+	}
+
+	send_pending_public_commands(port);
+}
+
+static void pdc_snk_typec_only_entry(void *obj)
+{
+	struct pdc_port_t *port = (struct pdc_port_t *)obj;
+	const struct pdc_config_t *const config = port->dev->config;
+
+	typec_set_input_current_limit(config->connector_num,
+				      port->typec_current_ma, 5000);
+
+	charge_manager_update_dualrole(config->connector_num, CAP_DEDICATED);
+	print_current_pdc_state(port);
+}
+
+static void pdc_snk_typec_only_run(void *obj)
+{
+	struct pdc_port_t *port = (struct pdc_port_t *)obj;
+
+	port->attached_state = SNK_ATTACHED_TYPEC_ONLY_STATE;
 
 	/* The CCI_EVENT is set on a connector disconnect, so check the
 	 * connector status and take the appropriate action. */
@@ -1452,9 +1473,10 @@ static const struct smf_state pdc_states[] = {
 	[PDC_SEND_CMD_WAIT] = SMF_CREATE_STATE(pdc_send_cmd_wait_entry,
 					       pdc_send_cmd_wait_run,
 					       pdc_send_cmd_wait_exit, NULL),
-	[PDC_SRC_SNK_TYPEC_ONLY] =
-		SMF_CREATE_STATE(pdc_src_snk_typec_only_entry,
-				 pdc_src_snk_typec_only_run, NULL, NULL),
+	[PDC_SRC_TYPEC_ONLY] = SMF_CREATE_STATE(
+		pdc_src_typec_only_entry, pdc_src_typec_only_run, NULL, NULL),
+	[PDC_SNK_TYPEC_ONLY] = SMF_CREATE_STATE(
+		pdc_snk_typec_only_entry, pdc_snk_typec_only_run, NULL, NULL),
 };
 
 /**
@@ -1615,7 +1637,7 @@ static bool pdc_power_mgmt_is_sink_connected(int port)
 		return false;
 	}
 
-	return pdc_data[port]->port.attached_snk;
+	return pdc_data[port]->port.attached_state == SNK_ATTACHED_STATE;
 }
 
 static bool pdc_power_mgmt_is_source_connected(int port)
@@ -1624,16 +1646,7 @@ static bool pdc_power_mgmt_is_source_connected(int port)
 		return false;
 	}
 
-	return pdc_data[port]->port.attached_src;
-}
-
-static bool pdc_power_mgmt_is_typec_connected(int port)
-{
-	if (!is_pdc_port_valid(port)) {
-		return false;
-	}
-
-	return pdc_data[port]->port.attached_snk_src_typec_only;
+	return pdc_data[port]->port.attached_state == SRC_ATTACHED_STATE;
 }
 
 bool pdc_power_mgmt_is_connected(int port)
@@ -1642,9 +1655,7 @@ bool pdc_power_mgmt_is_connected(int port)
 		return false;
 	}
 
-	return pdc_data[port]->port.attached_src ||
-	       pdc_data[port]->port.attached_snk ||
-	       pdc_data[port]->port.attached_snk_src_typec_only;
+	return pdc_data[port]->port.attached_state != UNATTACHED_STATE;
 }
 
 uint8_t pdc_power_mgmt_get_usb_pd_port_count(void)
@@ -1949,7 +1960,8 @@ bool pdc_power_mgmt_pd_capable(int port)
 		return false;
 	}
 
-	return pdc_data[port]->port.pd_capable;
+	return (pdc_data[port]->port.attached_state == SNK_ATTACHED_STATE) ||
+	       (pdc_data[port]->port.attached_state == SRC_ATTACHED_STATE);
 }
 
 bool pdc_power_mgmt_get_partner_dual_role_power(int port)
@@ -2042,15 +2054,7 @@ const uint32_t *const pdc_power_mgmt_get_src_caps(int port)
 
 const char *pdc_power_mgmt_get_task_state_name(int port)
 {
-	if (pdc_power_mgmt_is_typec_connected(port)) {
-		return pdc_state_names[PDC_SRC_SNK_TYPEC_ONLY];
-	} else if (pdc_power_mgmt_is_sink_connected(port)) {
-		return pdc_state_names[PDC_SNK_ATTACHED];
-	} else if (pdc_power_mgmt_is_source_connected(port)) {
-		return pdc_state_names[PDC_SRC_ATTACHED];
-	}
-
-	return pdc_state_names[PDC_UNATTACHED];
+	return pdc_state_names[get_pdc_state(&pdc_data[port]->port)];
 }
 
 void pdc_power_mgmt_set_dual_role(int port, enum pd_dual_role_states state)

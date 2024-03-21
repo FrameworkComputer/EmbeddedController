@@ -797,10 +797,10 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_task_state_name)
 	} test[] = {
 		{ .s = { .mode = USB_DEFAULT_OPERATION,
 			 .configure = emul_pdc_configure_snk },
-		  .e = { .name = "TypeCAttached" } },
+		  .e = { .name = "TypeCSnkAttached" } },
 		{ .s = { .mode = USB_DEFAULT_OPERATION,
 			 .configure = emul_pdc_configure_src },
-		  .e = { .name = "TypeCAttached" } },
+		  .e = { .name = "TypeCSrcAttached" } },
 		{ .s = { .mode = PD_OPERATION,
 			 .configure = emul_pdc_configure_snk },
 		  .e = { .name = "Attached.SNK" } },
