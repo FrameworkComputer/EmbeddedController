@@ -37,7 +37,7 @@ brox = register_brox_project(
         # Parent project's config
         here / "brox" / "project.conf",
         # Common sensor configs
-        here / "motionsense.conf",
+        # here / "motionsense.conf",
     ],
 )
 
