@@ -238,53 +238,8 @@ static int get_connector_status(struct rts5453p_emul_pdc_data *data,
 		req->get_connector_status.port_num);
 
 	data->response.connector_status.byte_count =
-		sizeof(struct get_connector_status_response) - 1;
-
-	/* Massage PD status into RTS54 response */
-	data->response.connector_status.pd_status.external_supply_change =
-		data->connector_status.conn_status_change_bits
-			.external_supply_change;
-	data->response.connector_status.pd_status.pwr_operation_mode =
-		data->connector_status.conn_status_change_bits
-			.pwr_operation_mode;
-	data->response.connector_status.pd_status.supported_provider_caps =
-		data->connector_status.conn_status_change_bits
-			.supported_provider_caps;
-	data->response.connector_status.pd_status.negotiated_power_level =
-		data->connector_status.conn_status_change_bits
-			.negotiated_power_level;
-	data->response.connector_status.pd_status.pd_reset_complete =
-		data->connector_status.conn_status_change_bits.pd_reset_complete;
-	data->response.connector_status.pd_status.supported_cam =
-		data->connector_status.conn_status_change_bits.supported_cam;
-	data->response.connector_status.pd_status.battery_charging_status =
-		data->connector_status.conn_status_change_bits
-			.battery_charging_status;
-	data->response.connector_status.pd_status.port_partner =
-		data->connector_status.conn_status_change_bits.connector_partner;
-	data->response.connector_status.pd_status.pwr_direction =
-		data->connector_status.conn_status_change_bits.pwr_direction;
-	data->response.connector_status.pd_status.connect_change =
-		data->connector_status.conn_status_change_bits.connect_change;
-	data->response.connector_status.pd_status.error =
-		data->connector_status.conn_status_change_bits.error;
-
-	data->response.connector_status.port_operation_mode =
-		data->connector_status.power_operation_mode;
-	data->response.connector_status.connect_status =
-		data->connector_status.connect_status & BIT_MASK(1);
-	data->response.connector_status.power_direction =
-		data->connector_status.power_direction & BIT_MASK(1);
-	data->response.connector_status.port_partner_flags =
-		data->connector_status.conn_partner_flags;
-	data->response.connector_status.port_partner_type =
-		data->connector_status.conn_partner_type & BIT_MASK(3);
-	data->response.connector_status.request_data_object =
-		data->connector_status.rdo;
-	data->response.connector_status.battery_charging_status =
-		data->connector_status.battery_charging_cap & BIT_MASK(2);
-	data->response.connector_status.provider_capabilities_limited_reason =
-		data->connector_status.provider_caps_limited & BIT_MASK(4);
+		sizeof(union connector_status_t);
+	data->response.connector_status.status = data->connector_status;
 
 	send_response(data);
 
@@ -294,6 +249,11 @@ static int get_connector_status(struct rts5453p_emul_pdc_data *data,
 static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 			  const union rts54_request *req)
 {
+	union conn_status_change_bits_t conn_status_change_bits;
+
+	conn_status_change_bits.raw_value =
+		data->connector_status.raw_conn_status_change_bits;
+
 	LOG_INF("GET_RTK_STATUS port=%d offset=%d sts_len=%d",
 		req->get_rtk_status.port_num, req->get_rtk_status.offset,
 		req->get_rtk_status.sts_len);
@@ -305,32 +265,27 @@ static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 	/* Massage PD status into RTS54 response */
 	/* BYTE 1-4 */
 	data->response.rtk_status.pd_status.external_supply_charge =
-		data->connector_status.conn_status_change_bits
-			.external_supply_change;
+		conn_status_change_bits.external_supply_change;
 	data->response.rtk_status.pd_status.power_operation_mode_change =
-		data->connector_status.conn_status_change_bits
-			.pwr_operation_mode;
+		conn_status_change_bits.pwr_operation_mode;
 	data->response.rtk_status.pd_status.provider_capabilities_change =
-		data->connector_status.conn_status_change_bits
-			.supported_provider_caps;
+		conn_status_change_bits.supported_provider_caps;
 	data->response.rtk_status.pd_status.negotiated_power_level_change =
-		data->connector_status.conn_status_change_bits
-			.negotiated_power_level;
+		conn_status_change_bits.negotiated_power_level;
 	data->response.rtk_status.pd_status.pd_reset_complete =
-		data->connector_status.conn_status_change_bits.pd_reset_complete;
+		conn_status_change_bits.pd_reset_complete;
 	data->response.rtk_status.pd_status.supported_cam_change =
-		data->connector_status.conn_status_change_bits.supported_cam;
+		conn_status_change_bits.supported_cam;
 	data->response.rtk_status.pd_status.battery_charging_status_change =
-		data->connector_status.conn_status_change_bits
-			.battery_charging_status;
+		conn_status_change_bits.battery_charging_status;
 	data->response.rtk_status.pd_status.port_partner_changed =
-		data->connector_status.conn_status_change_bits.connector_partner;
+		conn_status_change_bits.connector_partner;
 	data->response.rtk_status.pd_status.power_direction_changed =
-		data->connector_status.conn_status_change_bits.pwr_direction;
+		conn_status_change_bits.pwr_direction;
 	data->response.rtk_status.pd_status.connect_change =
-		data->connector_status.conn_status_change_bits.connect_change;
+		conn_status_change_bits.connect_change;
 	data->response.rtk_status.pd_status.error =
-		data->connector_status.conn_status_change_bits.error;
+		conn_status_change_bits.error;
 
 	/* BYTE 5 */
 	data->response.rtk_status.supply = 0;
@@ -351,7 +306,8 @@ static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 	data->response.rtk_status.port_partner_type =
 		data->connector_status.conn_partner_type & BIT_MASK(3);
 	data->response.rtk_status.battery_charging_status =
-		data->connector_status.battery_charging_cap & BIT_MASK(2);
+		data->connector_status.battery_charging_cap_status &
+		BIT_MASK(2);
 
 	/* BYTE 12 */
 	data->response.rtk_status.plug_direction =
@@ -1074,7 +1030,7 @@ static int emul_realtek_rts54xx_set_error_status(const struct emul *target,
 
 static int emul_realtek_rts54xx_set_connector_status(
 	const struct emul *target,
-	const struct connector_status_t *connector_status)
+	const union connector_status_t *connector_status)
 {
 	struct rts5453p_emul_pdc_data *data =
 		rts5453p_emul_get_pdc_data(target);

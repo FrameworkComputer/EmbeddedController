@@ -138,11 +138,15 @@ ZTEST_USER(pdc_api, test_get_error_status)
 
 ZTEST_USER(pdc_api, test_get_connector_status)
 {
-	struct connector_status_t in, out;
+	union connector_status_t in, out;
+	union conn_status_change_bits_t in_conn_status_change_bits;
+	union conn_status_change_bits_t out_conn_status_change_bits;
 
-	in.conn_status_change_bits.external_supply_change = 1;
-	in.conn_status_change_bits.connector_partner = 1;
-	in.conn_status_change_bits.connect_change = 1;
+	in_conn_status_change_bits.external_supply_change = 1;
+	in_conn_status_change_bits.connector_partner = 1;
+	in_conn_status_change_bits.connect_change = 1;
+	in.raw_conn_status_change_bits = in_conn_status_change_bits.raw_value;
+
 	in.power_operation_mode = PD_OPERATION;
 	in.connect_status = 1;
 	in.power_direction = 0;
@@ -156,14 +160,15 @@ ZTEST_USER(pdc_api, test_get_connector_status)
 		   "Failed to get connector capability");
 
 	k_sleep(K_MSEC(SLEEP_MS));
+	out_conn_status_change_bits.raw_value = out.raw_conn_status_change_bits;
 
 	/* Verify data from emulator */
-	zassert_equal(out.conn_status_change_bits.external_supply_change,
-		      in.conn_status_change_bits.external_supply_change);
-	zassert_equal(out.conn_status_change_bits.connector_partner,
-		      in.conn_status_change_bits.connector_partner);
-	zassert_equal(out.conn_status_change_bits.connect_change,
-		      in.conn_status_change_bits.connect_change);
+	zassert_equal(out_conn_status_change_bits.external_supply_change,
+		      in_conn_status_change_bits.external_supply_change);
+	zassert_equal(out_conn_status_change_bits.connector_partner,
+		      in_conn_status_change_bits.connector_partner);
+	zassert_equal(out_conn_status_change_bits.connect_change,
+		      in_conn_status_change_bits.connect_change);
 	zassert_equal(out.power_operation_mode, in.power_operation_mode);
 	zassert_equal(out.connect_status, in.connect_status);
 	zassert_equal(out.power_direction, in.power_direction);
@@ -251,7 +256,7 @@ ZTEST_USER(pdc_api, test_get_bus_voltage)
 	uint32_t mv_units = 50;
 	uint32_t expected_voltage_mv = 5000;
 	uint16_t out = 0;
-	struct connector_status_t in;
+	union connector_status_t in;
 
 	in.voltage_scale = 10; /* 50 mv units*/
 	in.voltage_reading = expected_voltage_mv / mv_units;

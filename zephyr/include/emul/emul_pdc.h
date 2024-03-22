@@ -30,7 +30,7 @@ typedef int (*emul_pdc_get_pdr_t)(const struct emul *target, union pdr_t *pdr);
 typedef int (*emul_pdc_get_sink_path_t)(const struct emul *target, bool *en);
 typedef int (*emul_pdc_set_connector_status_t)(
 	const struct emul *target,
-	const struct connector_status_t *connector_status);
+	const union connector_status_t *connector_status);
 typedef int (*emul_pdc_set_error_status_t)(const struct emul *target,
 					   const union error_status_t *es);
 
@@ -230,7 +230,7 @@ static inline int emul_pdc_get_sink_path(const struct emul *target, bool *en)
 
 static inline int
 emul_pdc_set_connector_status(const struct emul *target,
-			      const struct connector_status_t *connector_status)
+			      const union connector_status_t *connector_status)
 {
 	if (!target || !target->backend_api) {
 		return -ENOTSUP;
@@ -464,7 +464,7 @@ emul_pdc_set_cable_property(const struct emul *target,
 
 static inline void
 emul_pdc_configure_src(const struct emul *target,
-		       struct connector_status_t *connector_status)
+		       union connector_status_t *connector_status)
 {
 	ARG_UNUSED(target);
 	connector_status->power_operation_mode = PD_OPERATION;
@@ -473,7 +473,7 @@ emul_pdc_configure_src(const struct emul *target,
 
 static inline void
 emul_pdc_configure_snk(const struct emul *target,
-		       struct connector_status_t *connector_status)
+		       union connector_status_t *connector_status)
 {
 	ARG_UNUSED(target);
 	connector_status->power_operation_mode = PD_OPERATION;
@@ -482,7 +482,7 @@ emul_pdc_configure_snk(const struct emul *target,
 
 static inline int
 emul_pdc_connect_partner(const struct emul *target,
-			 struct connector_status_t *connector_status)
+			 union connector_status_t *connector_status)
 {
 	connector_status->connect_status = 1;
 	emul_pdc_set_connector_status(target, connector_status);
@@ -493,7 +493,7 @@ emul_pdc_connect_partner(const struct emul *target,
 
 static inline int emul_pdc_disconnect(const struct emul *target)
 {
-	struct connector_status_t connector_status;
+	union connector_status_t connector_status;
 
 	connector_status.connect_status = 0;
 	emul_pdc_set_connector_status(target, &connector_status);

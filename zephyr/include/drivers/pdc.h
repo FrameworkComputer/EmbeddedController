@@ -98,7 +98,7 @@ typedef int (*pdc_set_uor_t)(const struct device *dev, union uor_t uor);
 typedef int (*pdc_set_pdr_t)(const struct device *dev, union pdr_t pdr);
 typedef int (*pdc_set_sink_path_t)(const struct device *dev, bool en);
 typedef int (*pdc_get_connector_status_t)(
-	const struct device *dev, struct connector_status_t *connector_status);
+	const struct device *dev, union connector_status_t *connector_status);
 typedef int (*pdc_get_error_status_t)(const struct device *dev,
 				      union error_status_t *es);
 typedef void (*pdc_cci_handler_cb_t)(union cci_event_t cci_event,
@@ -352,7 +352,7 @@ static inline int pdc_get_capability(const struct device *dev,
  */
 static inline int
 pdc_get_connector_status(const struct device *dev,
-			 struct connector_status_t *connector_status)
+			 union connector_status_t *connector_status)
 {
 	const struct pdc_driver_api_t *api =
 		(const struct pdc_driver_api_t *)dev->api;

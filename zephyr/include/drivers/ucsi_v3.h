@@ -163,7 +163,7 @@ enum conn_partner_type_t {
 	/** DEBUG_ACCESSORY_ATTACHED */
 	DEBUG_ACCESSORY_ATTACHED = 5,
 	/** AUDIO_ADAPTER_ACCESSORY_ATTACHED */
-	AUDIO_ADAPTER_ACCESSORY_ATTACHED = 6
+	AUDIO_ADAPTER_ACCESSORY_ATTACHED = 6,
 };
 
 /**
@@ -612,165 +612,168 @@ union conn_status_change_bits_t {
 /**
  * @brief Current status of the connector
  */
-struct connector_status_t {
-	/**
-	 * A bitmap indicating the types of status changes that have
-	 * occurred on the connector.
-	 */
-	union conn_status_change_bits_t conn_status_change_bits;
-	/**
-	 * This field is only valid when the Connect Status field is set to
-	 * one. This field shall indicate the current power operation
-	 * mode of the connector.
-	 */
-	enum power_operation_mode_t power_operation_mode;
-	/**
-	 * This field indicates the current connect status of the
-	 * connector. This field shall be set to one when a device is
-	 * connected to this connector.
-	 */
-	uint8_t connect_status;
-	/**
-	 * This field is only valid when the Connect Status field is set to
-	 * one. The field shall indicate whether the connector is
-	 * operating as a consumer or provider.
-	 *  0 - Connector is operating as a consumer
-	 *  1 - Connector is operating as a provider
-	 */
-	uint8_t power_direction;
-	/**
-	 * This field is only valid when the Connect Status field is set to
-	 * one. This field indicates the current mode the connector is
-	 * operating in.
-	 *  0 - USB (USB 2.0 or USB 3.x)
-	 *  1 - Alternate Mode
-	 *  2 - USB4 gen 3
-	 *  3 - USB4 gen 4
-	 *  4 - Reserved
-	 *  5 - Reserved
-	 *  6 - Reserved
-	 *  7 - Reserved
-	 */
-	uint8_t conn_partner_flags;
-	/**
-	 * This field is only valid when the Connect Status field is set to
-	 * one. This field indicates the type of connector partner
-	 * detected on this connector.
-	 */
-	enum conn_partner_type_t conn_partner_type;
-	/**
-	 * This field is only valid when the Connect Status field is set to
-	 * one and the Power Operation Mode field is set to PD.
-	 * Optional: Is the Requeste Data Object
-	 */
-	uint32_t rdo;
-	/**
-	 * This field is only valid if the connector is operating as a Sink.
-	 * Slow or very slow charging rate shall be indicated only if it's
-	 * determined that the currently negotiated contract (or
-	 * current level) is not sufficient for nominal charging rate.
-	 *
-	 * As an example, if the nominal charging rate capability is 45W:
-	 *  Slow charging rate capability is indicated when the
-	 *  negotiated power level is between 27W and 45W.
-	 *
-	 *  Very slow charging rate capability is indicated when the
-	 *  negotiated power level is between 15W and 27W.
-	 *
-	 *  No charging capability is indicated when the negotiated
-	 *  power level is less than 15W.
-	 *
-	 *  0 - Not charging
-	 *  1 - Nominal charging rate
-	 *  2 - Slow charging rate
-	 *  3 - Very slow charging rate
-	 */
-	uint8_t battery_charging_cap;
-	/**
-	 * A bitmap indicating the reasons why the Provider capabilities
-	 * of the connector have been limited. This field is only valid if
-	 * the connector is operating as a provider.
-	 *
-	 * 0 - Power Budget Lowered
-	 * 1 - Reaching Power Budget Limit
-	 * 2 - Reserved
-	 * 3 - Reserved
-	 */
-	uint8_t provider_caps_limited;
-	/**
-	 * This field indicates the USB Power Delivery Specification
-	 * Revision Number the connector uses during an Explicit
-	 * Contract (as described in the [USBPD]), and the format is in
-	 * Binary-Coded Decimal (e.g., Revision 3.0 is 300H).
-	 */
-	uint16_t bcd_pd_version;
-	/**
-	 * This field shall be set to 0 when the connection is in the direct
-	 * orientation. This field shall be set to 1 when the connection is
-	 * in the flipped orientation.
-	 */
-	uint8_t orientation;
-	/**
-	 * This field shall indicate the status of the Sink Path. The bit
-	 * shall be set to one if the sink path is enabled and set to zero if
-	 * the sink is disabled.
-	 */
-	uint8_t sink_path_status;
-	/**
-	 * This field is valid if the Reverse Current Protection Support
-	 * field is set to one in the GET_CONNECTOR_CAPABILITY. This
-	 * field shall be set to one when the Reverse Current Protection
-	 * happens. Otherwise, this bit shall be set to zero.
-	 */
-	uint8_t reverse_current_protection_status;
-	/**
-	 * This field is set to 1 if the power reading is valid.
-	 */
-	uint8_t power_reading_ready;
-	/**
-	 * This field indicates the current resolution.
-	 * Each bit is 5mA.
-	 *
-	 * Example of values:
-	 *  1b – 5mA
-	 *  101b – 25mA
-	 */
-	uint8_t current_scale;
-	/**
-	 * This field is a peak current measurement reading.
-	 * If the ADC supports only less than 16 bits, the most
-	 * significant bits shall be set to 0
-	 */
-	uint16_t peak_current;
-	/**
-	 * This field represents the moving average for the minimum
-	 * time interval specified either in the READ_POWER_LEVEL
-	 * command or default 100mS of total time with interval of 5mS
-	 * if the READ_POWER_LEVEL command has not been issued.
-	 * If the ADC supports less than 16 bits, the most significant bits
-	 * shall be set to 0.
-	 */
-	uint16_t average_current;
-	/**
-	 * This field indicates the voltage resolution.
-	 * Each bit is 5mV.
-	 *
-	 * Example of values:
-	 *  010b – 10mV
-	 *  0101b – 25mV
-	 *  1010b – 50mV
-	 */
-	uint8_t voltage_scale;
-	/**
-	 * This field is the most recent VBUS voltage measurement
-	 * within the time window specified by the
-	 * READ_POWER_LEVEL command “Time to Read Power” or
-	 * 100mS which is the default value.
-	 * If the ADC supports less than 16 bits, the most significant bits
-	 * shall be set to 0.
-	 */
-	uint16_t voltage_reading;
+union connector_status_t {
+	struct {
+		/**
+		 * A bitmap indicating the types of status changes that have
+		 * occurred on the connector.
+		 */
+		unsigned raw_conn_status_change_bits : 16;
+		/**
+		 * This field is only valid when the Connect Status field is set
+		 * to one. This field shall indicate the current power operation
+		 * mode of the connector.
+		 */
+		enum power_operation_mode_t power_operation_mode : 3;
+		/**
+		 * This field indicates the current connect status of the
+		 * connector. This field shall be set to one when a device is
+		 * connected to this connector.
+		 */
+		unsigned connect_status : 1;
+		/**
+		 * This field is only valid when the Connect Status field is set
+		 * to one. The field shall indicate whether the connector is
+		 * operating as a consumer or provider.
+		 *  0 - Connector is operating as a consumer
+		 *  1 - Connector is operating as a provider
+		 */
+		unsigned power_direction : 1;
+		/**
+		 * This field is only valid when the Connect Status field is set
+		 * to one. This field indicates the current mode the connector
+		 * is operating in. 0 - USB (USB 2.0 or USB 3.x) 1 - Alternate
+		 * Mode 2 - USB4 gen 3 3 - USB4 gen 4 4 - Reserved 5 - Reserved
+		 *  6 - Reserved
+		 *  7 - Reserved
+		 */
+		unsigned conn_partner_flags : 8;
+
+		/**
+		 * This field is only valid when the Connect Status field is set
+		 * to one. This field indicates the type of connector partner
+		 * detected on this connector.
+		 */
+		enum conn_partner_type_t conn_partner_type : 3;
+		/**
+		 * This field is only valid when the Connect Status field is set
+		 * to one and the Power Operation Mode field is set to PD.
+		 * Optional: Is the Requested Data Object
+		 */
+		unsigned rdo : 32;
+		/**
+		 * This field is only valid if the connector is operating as a
+		 * Sink. Slow or very slow charging rate shall be indicated only
+		 * if it's determined that the currently negotiated contract (or
+		 * current level) is not sufficient for nominal charging rate.
+		 *
+		 * As an example, if the nominal charging rate capability is
+		 * 45W: Slow charging rate capability is indicated when the
+		 *  negotiated power level is between 27W and 45W.
+		 *
+		 *  Very slow charging rate capability is indicated when the
+		 *  negotiated power level is between 15W and 27W.
+		 *
+		 *  No charging capability is indicated when the negotiated
+		 *  power level is less than 15W.
+		 *
+		 *  0 - Not charging
+		 *  1 - Nominal charging rate
+		 *  2 - Slow charging rate
+		 *  3 - Very slow charging rate
+		 */
+		unsigned battery_charging_cap_status : 2;
+		/**
+		 * A bitmap indicating the reasons why the Provider capabilities
+		 * of the connector have been limited. This field is only valid
+		 * if the connector is operating as a provider.
+		 *
+		 * 0 - Power Budget Lowered
+		 * 1 - Reaching Power Budget Limit
+		 * 2 - Reserved
+		 * 3 - Reserved
+		 */
+		unsigned provider_caps_limited_reason : 4;
+		/**
+		 * This field indicates the USB Power Delivery Specification
+		 * Revision Number the connector uses during an Explicit
+		 * Contract (as described in the [USBPD]), and the format is in
+		 * Binary-Coded Decimal (e.g., Revision 3.0 is 300H).
+		 */
+		unsigned bcd_pd_version : 16;
+		/**
+		 * This field shall be set to 0 when the connection is in the
+		 * direct orientation. This field shall be set to 1 when the
+		 * connection is in the flipped orientation.
+		 */
+		unsigned orientation : 1;
+		/**
+		 * This field shall indicate the status of the Sink Path. The
+		 * bit shall be set to one if the sink path is enabled and set
+		 * to zero if the sink is disabled.
+		 */
+		unsigned sink_path_status : 1;
+		/**
+		 * This field is valid if the Reverse Current Protection Support
+		 * field is set to one in the GET_CONNECTOR_CAPABILITY. This
+		 * field shall be set to one when the Reverse Current Protection
+		 * happens. Otherwise, this bit shall be set to zero.
+		 */
+		unsigned reverse_current_protection_status : 1;
+		/**
+		 * This field is set to 1 if the power reading is valid.
+		 */
+		unsigned power_reading_ready : 1;
+		/**
+		 * This field indicates the current resolution.
+		 * Each bit is 5mA.
+		 *
+		 * Example of values:
+		 *  1b – 5mA
+		 *  101b – 25mA
+		 */
+		unsigned current_scale : 3;
+		/**
+		 * This field is a peak current measurement reading.
+		 * If the ADC supports only less than 16 bits, the most
+		 * significant bits shall be set to 0
+		 */
+		unsigned peak_current : 16;
+		/**
+		 * This field represents the moving average for the minimum
+		 * time interval specified either in the READ_POWER_LEVEL
+		 * command or default 100mS of total time with interval of 5mS
+		 * if the READ_POWER_LEVEL command has not been issued.
+		 * If the ADC supports less than 16 bits, the most significant
+		 * bits shall be set to 0.
+		 */
+		unsigned average_current : 16;
+		/**
+		 * This field indicates the voltage resolution.
+		 * Each bit is 5mV.
+		 *
+		 * Example of values:
+		 *  010b – 10mV
+		 *  0101b – 25mV
+		 *  1010b – 50mV
+		 */
+		unsigned voltage_scale : 4;
+		/**
+		 * This field is the most recent VBUS voltage measurement
+		 * within the time window specified by the
+		 * READ_POWER_LEVEL command “Time to Read Power” or
+		 * 100mS which is the default value.
+		 * If the ADC supports less than 16 bits, the most significant
+		 * bits shall be set to 0.
+		 */
+		unsigned voltage_reading : 16;
+		unsigned reserved : 7;
+	} __packed;
+	uint8_t raw_value[19];
 };
+
+BUILD_ASSERT(sizeof(union connector_status_t) == DIV_ROUND_UP(145, 8),
+	     "sizeof(connector_status_t) incorrect size");
 
 /**
  * @brief Plug End Type
