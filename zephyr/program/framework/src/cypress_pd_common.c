@@ -1629,7 +1629,9 @@ void cypd_port_int(int controller, int port)
 			CPRINTS("P%d EPR mode capable", port_idx);
 		}
 
-		snk_transition_flags = 1;
+		if (!battery_is_cut_off() && !battery_cutoff_in_progress())
+			snk_transition_flags = 1;
+
 		break;
 #ifdef CONFIG_PD_CCG8_EPR
 	case CCG_RESPONSE_EPR_EVENT:
