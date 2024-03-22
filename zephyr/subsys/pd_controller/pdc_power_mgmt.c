@@ -1078,9 +1078,7 @@ static void pdc_snk_attached_run(void *obj)
 		}
 
 		port->snk_attached_local_state = SNK_ATTACHED_SET_SINK_PATH;
-
-		/* fall-through */
-		__attribute__((fallthrough));
+		break;
 	case SNK_ATTACHED_SET_SINK_PATH:
 		port->snk_attached_local_state = SNK_ATTACHED_RUN;
 
