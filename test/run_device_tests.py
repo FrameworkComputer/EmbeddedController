@@ -124,7 +124,8 @@ DATA_ACCESS_VIOLATION_200B0000_REGEX = re.compile(
     r"Data access violation, mfar = 200b0000\r\n"
 )
 
-PRINTF_CALLED_REGEX = re.compile(r"printf called\r\n")
+# \r is added twice by Zephyr code.
+PRINTF_CALLED_REGEX = re.compile(r"printf called(\r){1,2}\n")
 
 BLOONCHIPPER = "bloonchipper"
 BUCCANEER = "buccaneer"

@@ -40,3 +40,9 @@ config HW_TEST_FTRAPV
 	depends on BOARD_FINGERPRINT
 	help
 	  The test verify if int overflow causes a crash.
+
+config HW_TEST_LIBC_PRINTF
+	bool "libc printf test"
+	select ZTEST
+	help
+	  Prints a hardcoded string to check by a test runner.
