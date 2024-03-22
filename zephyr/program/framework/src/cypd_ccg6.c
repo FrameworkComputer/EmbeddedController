@@ -263,7 +263,6 @@ int board_set_active_charge_port(int charge_port)
 
 	/* port need change, stop all power and ready to switch. */
 	if (next_charge_port != -1 && next_charge_port != charge_port) {
-		update_soc_power_limit(false, true);
 		CPRINTS("Disable all type-c port to change the charger port");
 		cypd_write_reg8(0, CCG_CUST_C_CTRL_CONTROL_REG, CCG_P0P1_TURN_OFF_C_CTRL);
 		cypd_write_reg8(1, CCG_CUST_C_CTRL_CONTROL_REG, CCG_P0P1_TURN_OFF_C_CTRL);

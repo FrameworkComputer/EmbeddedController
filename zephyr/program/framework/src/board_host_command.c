@@ -180,7 +180,6 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 
 #ifdef CONFIG_CHIPSET_AMD
 	update_apu_ready(1);
-#endif
 
 	/**
 	 * Even though the protocol returns EC_SUCCESS,
@@ -188,7 +187,7 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 	 * So move the update process at here.
 	 */
 	update_soc_power_limit(true, false);
-
+#endif
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_NON_ACPI_NOTIFY, enter_non_acpi_mode, EC_VER_MASK(0));

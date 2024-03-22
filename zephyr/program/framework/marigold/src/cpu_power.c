@@ -51,6 +51,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 
 	static int old_pl2_watt = -1;
 	static int old_pl4_watt = -1;
+	static bool communication_fail;
 
 	battery_watt = get_battery_wattage();
 	battery_percent = charge_get_percent();
@@ -89,11 +90,15 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	}
 
 	if (pl2_watt != old_pl2_watt || pl4_watt != old_pl4_watt ||
-			force_update) {
+			force_update || communication_fail) {
 		old_pl4_watt = pl4_watt;
 		old_pl2_watt = pl2_watt;
 
 		pl1_watt = POWER_LIMIT_1_W;
-		set_pl_limits(pl1_watt, pl2_watt, pl4_watt);
+		communication_fail = set_pl_limits(pl1_watt, pl2_watt, pl4_watt);
+
+		if (!communication_fail)
+			CPRINTS("PL1:%d, PL2:%d and PL4:%d updated success",
+				pl1_watt, pl2_watt, pl4_watt);
 	}
 }

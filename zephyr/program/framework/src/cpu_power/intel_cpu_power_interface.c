@@ -87,6 +87,32 @@ uint8_t calc_AWFCS(uint8_t *data_blk_ptr, unsigned int length)
 	return crc;
 }
 
+static int system_is_ready(void)
+{
+	uint8_t system_flags = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS);
+
+	return !!((system_flags & ACPI_DRIVER_READY) && !chipset_in_state(CHIPSET_STATE_ANY_OFF));
+}
+
+
+__override int stop_read_peci_temp(void)
+{
+	static uint64_t t;
+	uint64_t tnow;
+
+	tnow = get_time().val;
+
+	if (!system_is_ready())
+		return EC_ERROR_NOT_POWERED;
+	else if (chipset_in_state(CHIPSET_STATE_STANDBY)) {
+		if (tnow - t < (7 * SECOND))
+			return EC_ERROR_NOT_POWERED;
+	}
+
+	t = tnow;
+	return EC_SUCCESS;
+}
+
 static int request_temp(void)
 {
 	struct peci_over_espi_buffer oob_buff = {0};
@@ -186,6 +212,9 @@ static int peci_get_cpu_temp(int *cpu_temp)
 	int ret;
 	uint8_t get_temp_buf[7];
 
+	if (!system_is_ready())
+		return EC_ERROR_NOT_POWERED;
+
 	ret = request_temp();
 	if (ret) {
 		CPRINTS("OOB req failed %d", ret);
@@ -216,13 +245,18 @@ static int peci_get_cpu_temp(int *cpu_temp)
 
 void soc_update_temperature(int idx)
 {
-	int i, rv;
+	int rv;
 	int soc_temp = C_TO_K(0);
 
-	for (i = 0; i < 2; i++) {
+	rv = stop_read_peci_temp();
+
+	if (rv == EC_ERROR_NOT_POWERED) {
+		soc_temp = 0xfffe;
+	} else {
 		rv = peci_get_cpu_temp(&soc_temp);
-		if (!rv)
-			break;
+
+		if (rv != EC_SUCCESS)
+			soc_temp = 0xffff;
 	}
 
 	temps = soc_temp;
@@ -230,7 +264,14 @@ void soc_update_temperature(int idx)
 
 int peci_temp_sensor_get_val(int idx, int *temp_ptr)
 {
+	if (temps == 0xfffe)
+		return EC_ERROR_NOT_POWERED;
+
+	if (temps == 0xffff)
+		return EC_ERROR_INVAL;
+
 	*temp_ptr = temps;
+
 	return EC_SUCCESS;
 }
 
@@ -246,6 +287,9 @@ static int peci_update_power_limit_1(int watt)
 	int ret;
 	uint8_t read_buf[6];
 	uint32_t data;
+
+	if (!system_is_ready())
+		return EC_ERROR_NOT_POWERED;
 
 	data = PECI_PL1_CONTROL_TIME_WINDOWS(TIME_WINDOW_PL1) | PECI_PL1_POWER_LIMIT_ENABLE(1) |
 		PECI_PL1_POWER_LIMIT(watt);
@@ -278,6 +322,9 @@ static int peci_update_power_limit_2(int watt)
 	uint8_t read_buf[6];
 	uint32_t data;
 
+	if (!system_is_ready())
+		return EC_ERROR_NOT_POWERED;
+
 	data = PECI_PL2_CONTROL_TIME_WINDOWS(TIME_WINDOW_PL2) | PECI_PL2_POWER_LIMIT_ENABLE(1) |
 		PECI_PL2_POWER_LIMIT(watt);
 
@@ -308,6 +355,9 @@ __maybe_unused static int peci_update_power_limit_3(int watt)
 	int ret;
 	uint8_t read_buf[6];
 	uint32_t data;
+
+	if (!system_is_ready())
+		return EC_ERROR_NOT_POWERED;
 
 	data = PECI_PL3_CONTROL_DUTY(DUTY_CYCLE_PL3) |
 		PECI_PL3_CONTROL_TIME_WINDOWS(TIME_WINDOW_PL3) |
@@ -342,6 +392,9 @@ static int peci_update_power_limit_4(int watt)
 	uint8_t read_buf[6];
 	uint32_t data;
 
+	if (!system_is_ready())
+		return EC_ERROR_NOT_POWERED;
+
 	data = PECI_PL4_POWER_LIMIT(watt);
 
 	ret = request_wrpkgconfig(PECI_INDEX_POWER_LIMITS_PL4, PECI_PARAMS_POWER_LIMITS_PL4,
@@ -366,11 +419,13 @@ static int peci_update_power_limit_4(int watt)
 	return EC_SUCCESS;
 }
 
-void set_pl_limits(int pl1, int pl2, int pl4)
+int set_pl_limits(int pl1, int pl2, int pl4)
 {
-	peci_update_power_limit_1(pl1);
-	peci_update_power_limit_2(pl2);
-	peci_update_power_limit_4(pl4);
+	RETURN_ERROR(peci_update_power_limit_1(pl1));
+	RETURN_ERROR(peci_update_power_limit_2(pl2));
+	RETURN_ERROR(peci_update_power_limit_4(pl4));
+
+	return EC_SUCCESS;
 }
 
 void update_soc_power_limit_hook(void)
@@ -379,8 +434,7 @@ void update_soc_power_limit_hook(void)
 		update_soc_power_limit(false, false);
 }
 
-DECLARE_HOOK(HOOK_AC_CHANGE, update_soc_power_limit_hook, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, update_soc_power_limit_hook, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_SECOND, update_soc_power_limit_hook, HOOK_PRIO_DEFAULT);
 
 void update_soc_power_on_boot_deferred(void)
 {
