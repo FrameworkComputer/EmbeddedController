@@ -53,6 +53,85 @@ static int cmd_pdc_get_status(const struct shell *sh, size_t argc, char **argv)
 	return EC_SUCCESS;
 }
 
+static int cmd_pdc_get_connector_status(const struct shell *sh, size_t argc,
+					char **argv)
+{
+	int rv;
+	uint8_t port;
+	union connector_status_t connector_status;
+
+	/* Get PD port number */
+	rv = cmd_get_pd_port(sh, argv[1], &port);
+	if (rv)
+		return rv;
+
+	rv = pdc_power_mgmt_get_connector_status(port, &connector_status);
+	if (rv)
+		return rv;
+
+	shell_fprintf(sh, SHELL_INFO, "Port %d GET_CONNECTOR_STATUS:\n", port);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   change bits                      : 0x%04x\n",
+		      connector_status.raw_conn_status_change_bits);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   power_operation_mode             : %d\n",
+		      connector_status.power_operation_mode);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   connect_status                   : %d\n",
+		      connector_status.connect_status);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   power_direction                  : %d\n",
+		      connector_status.power_direction);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   conn_partner_flags               : 0x%02x\n",
+		      connector_status.conn_partner_flags);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   conn_partner_type                : %d\n",
+		      connector_status.conn_partner_type);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   rdo                              : 0x%08x\n",
+		      connector_status.rdo);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   battery_charging_cap_status      : %d\n",
+		      connector_status.battery_charging_cap_status);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   provider_caps_limited_reason     : %d\n",
+		      connector_status.provider_caps_limited_reason);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   bcd_pd_version                   : 0x%04x\n",
+		      connector_status.bcd_pd_version);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   orientation                      : %d\n",
+		      connector_status.orientation);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   sink_path_status                 : %d\n",
+		      connector_status.sink_path_status);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   reverse_current_protection_status: %d\n",
+		      connector_status.reverse_current_protection_status);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   power_reading_ready              : %d\n",
+		      connector_status.power_reading_ready);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   peak_current                     : %d\n",
+		      connector_status.peak_current);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   average_current                  : %d\n",
+		      connector_status.average_current);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   voltage_scale                    : %d\n",
+		      connector_status.voltage_scale);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   voltage_reading                  : %d\n",
+		      connector_status.voltage_reading);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   voltage                          : %d mV\n",
+		      (connector_status.voltage_reading *
+		       connector_status.voltage_scale * 5));
+
+	return EC_SUCCESS;
+}
+
 static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 {
 	int rv;
@@ -300,6 +379,10 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Suspend/resume PDC command communication\n"
 		      "Usage: pdc comms [suspend|resume]",
 		      cmd_pdc_comms_state, 2, 0),
+	SHELL_CMD_ARG(connector_status, NULL,
+		      "Print the UCSI GET_CONNECTOR_STATUS\n"
+		      "Usage pdc connector_status <port>",
+		      cmd_pdc_get_connector_status, 2, 0),
 	SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(pdc, &sub_pdc_cmds, "PDC console commands", NULL);

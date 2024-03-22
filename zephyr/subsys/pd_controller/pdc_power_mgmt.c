@@ -2727,3 +2727,23 @@ int pdc_power_mgmt_set_comms_state(bool enable_comms)
 
 	return status;
 }
+
+int pdc_power_mgmt_get_connector_status(
+	int port, union connector_status_t *connector_status)
+{
+	struct pdc_port_t *pdc;
+
+	if (!is_pdc_port_valid(port)) {
+		return -ERANGE;
+	}
+
+	if (connector_status == NULL) {
+		return -EINVAL;
+	}
+
+	pdc = &pdc_data[port]->port;
+
+	*connector_status = pdc->connector_status;
+
+	return 0;
+}

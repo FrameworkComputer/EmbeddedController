@@ -406,4 +406,15 @@ void pdc_power_mgmt_notify_event(int port, atomic_t event_mask);
  */
 int pdc_power_mgmt_set_comms_state(bool run);
 
+/**
+ * @brief Return the current UCSI connector status on a port
+ *
+ * @param port USB-C port number
+ * @param connector_status Output variable to store the connector status
+ *
+ * @retval 0 if successful or error code
+ */
+int pdc_power_mgmt_get_connector_status(
+	int port, union connector_status_t *connector_status);
+
 #endif /* __CROS_EC_PDC_POWER_MGMT_H */
