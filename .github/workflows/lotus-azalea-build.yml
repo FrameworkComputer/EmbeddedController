@@ -22,8 +22,8 @@ jobs:
       max-parallel: 1
       matrix:
         platform: [
-          {name: lotus, folder: data },
-          {name: azalea, folder: data },
+          {name: lotus, folder: lotus },
+          {name: azalea, folder: lotus },
         ]
 
 
@@ -37,17 +37,17 @@ jobs:
       #- name: Checkout EC code
       #  uses: actions/checkout@v3
       #  with:
-      #    path: /data/ec_home/chromiumos/src/platform/ec
+      #    path: /lotus/ec_home/chromiumos/src/platform/ec
 
       #- name: Checkout Zephyr code
       #  uses: actions/checkout@v2
-      #    path: /data/ec_home/chromiumos/src/third_party/zephyr/main
+      #    path: /lotus/ec_home/chromiumos/src/third_party/zephyr/main
       #    ref: lotus-zephyr
       #    repository: ssh://git@github.com/FrameworkComputer/zephyr-ec
 
       # Need to manually checkout
       # actions/checkout@v3 complains:
-      # Error: Repository path '/data/ec_home/chromiumos/src/platform/ec' is not under '/data/ec_home/actions-runner/_work/ec/ec'
+      # Error: Repository path '/lotus/ec_home/chromiumos/src/platform/ec' is not under '/data/ec_home/actions-runner/_work/ec/ec'
       # See: https://github.com/actions/checkout/issues/197
       - name: Manual checkout
         run: |
