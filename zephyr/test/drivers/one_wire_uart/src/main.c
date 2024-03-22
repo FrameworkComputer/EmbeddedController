@@ -284,7 +284,7 @@ ZTEST(one_wire_uart_driver, test_max_retry_count)
 {
 	struct one_wire_uart_data *data = dev->data;
 	struct one_wire_uart_message msg;
-	const int MAX_RETRY = 20;
+	const int MAX_RETRY = 50;
 	const k_timeout_t RESEND_DELAY = K_MSEC(3);
 
 	memset(&msg, 0, sizeof(msg));
