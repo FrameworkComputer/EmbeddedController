@@ -33,3 +33,10 @@ config HW_TEST_FP_TRANSPORT
 	bool "FP transport layer test"
 	select ZTEST
 	depends on EC_HOST_CMD
+
+config HW_TEST_FTRAPV
+	bool "ftrapv test"
+	select ZTEST
+	depends on BOARD_FINGERPRINT
+	help
+	  The test verify if int overflow causes a crash.
