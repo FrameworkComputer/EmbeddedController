@@ -305,10 +305,33 @@ int power_wait_mask_signals_timeout(power_signal_mask_t want,
  * @param timeout The amount of time to wait in ms.
  * @return 0 if the signals matched.
  */
-static inline int power_wait_signals_timeout(power_signal_mask_t want,
-					     int timeout)
+static inline int power_wait_signals_on_timeout(power_signal_mask_t want,
+						int timeout)
 {
+	if (want == 0) {
+		return 0;
+	}
+
 	return power_wait_mask_signals_timeout(want, want, timeout);
+}
+
+/**
+ * @brief Wait until the selected power signals are deasserted, with timeout.
+ *
+ * Given a set of signals, wait until all of the signals are deasserted.
+ *
+ * @param want The value of the signals to wait for.
+ * @param timeout The amount of time to wait in ms.
+ * @return 0 if the signals matched.
+ */
+static inline int power_wait_signals_off_timeout(power_signal_mask_t want,
+						 int timeout)
+{
+	if (want == 0) {
+		return 0;
+	}
+
+	return power_wait_mask_signals_timeout(want, 0, timeout);
 }
 
 /**

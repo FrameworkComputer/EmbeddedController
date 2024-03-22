@@ -28,6 +28,7 @@ LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 		.espi_signal = DT_INST_STRING_UPPER_TOKEN(inst, virtual_wire), \
 		.signal = PWR_DT_INST_SIGNAL_ENUM(inst),                       \
 		.invert = DT_INST_PROP(inst, vw_invert),                       \
+		.reset_val = !!DT_INST_PROP(inst, reset_val),                  \
 	},
 
 /*
@@ -36,7 +37,8 @@ LOG_MODULE_DECLARE(ap_pwrseq, CONFIG_AP_PWRSEQ_LOG_LEVEL);
 struct vw_config {
 	uint8_t espi_signal; /* associated VW signal */
 	uint8_t signal; /* power signal */
-	bool invert; /* Invert the signal value */
+	uint8_t invert : 1; /* Invert the signal value */
+	uint8_t reset_val : 1; /* Signal value in reset */
 };
 
 const static struct vw_config vw_config[] = { DT_INST_FOREACH_STATUS_OKAY(
@@ -86,6 +88,25 @@ static void vw_update_all(bool notify)
 	}
 }
 
+/*
+ * Reset all defined VW signals.
+ */
+static void vw_reset_all(void)
+{
+	for (int i = 0; i < ARRAY_SIZE(vw_config); i++) {
+		/*
+		 * Apply invert flag to make reset-val same as DT description.
+		 */
+		bool vw_value =
+			!!(vw_config[i].reset_val ^ vw_config[i].invert);
+
+		/*
+		 * Upon reset we need to set VW signals to corresponding value.
+		 */
+		vw_set(i, vw_value, true);
+	}
+}
+
 void power_signal_espi_cb(const struct device *dev, struct espi_callback *cb,
 			  struct espi_event event)
 {
@@ -96,14 +117,27 @@ void power_signal_espi_cb(const struct device *dev, struct espi_callback *cb,
 		__ASSERT(0, "ESPI unknown event type: %d", event.evt_type);
 		break;
 
+	case ESPI_BUS_RESET:
+		/*
+		 * `event.evt_data` in event `ESPI_BUS_RESET` holds Reset# pin
+		 * state. Low: Reset Asserted & High: Reset De-asserted.
+		 */
+		if (event.evt_data) {
+			/* All VW signals are reset on bus reset deassertion */
+			vw_reset_all();
+		} else {
+			/* Reset asserted, invalidate VW signals */
+			atomic_clear(&signal_valid);
+		}
+		break;
 	case ESPI_BUS_EVENT_CHANNEL_READY:
 		/* Virtual wire channel status change */
 		if (event.evt_details == ESPI_CHANNEL_VWIRE) {
-			if (event.evt_data) {
-				/* If now ready, update all the signals */
-				vw_update_all(true);
-			} else {
-				/* If not ready, invalidate the signals */
+			if (!event.evt_data) {
+				/*
+				 * Host channel is not enabled, we need to
+				 * invalidate the signals.
+				 */
 				atomic_clear(&signal_valid);
 			}
 		}

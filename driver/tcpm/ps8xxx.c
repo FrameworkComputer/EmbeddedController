@@ -526,30 +526,23 @@ static int ps8xxx_tcpc_drp_toggle(int port)
 #endif
 
 #ifdef CONFIG_USB_PD_TCPM_PS8805_FORCE_DID
-static int ps8805_make_device_id(int port, int *id, int live)
+static int ps8805_make_device_id(int port, int *id)
 {
-	static int cached_chip_revision[CONFIG_USB_PD_PORT_MAX_COUNT];
-	static bool cache_valid[CONFIG_USB_PD_PORT_MAX_COUNT];
-	int p0_addr;
-	int val;
-	int status;
+	int chip_revision;
+	int p0_addr =
+		PS8751_P3_TO_P0_FLAGS(tcpc_config[port].i2c_info.addr_flags);
+	int status = tcpc_addr_read(port, p0_addr, PS8805_P0_REG_CHIP_REVISION,
+				    &chip_revision);
 
-	if (live || !cache_valid[port]) {
-		p0_addr = PS8751_P3_TO_P0_FLAGS(
-			tcpc_config[port].i2c_info.addr_flags);
-		status = tcpc_addr_read(port, p0_addr,
-					PS8805_P0_REG_CHIP_REVISION, &val);
-		if (status != EC_SUCCESS)
-			return status;
-		cached_chip_revision[port] = val;
-		cache_valid[port] = true;
-	}
+	if (status != EC_SUCCESS)
+		return status;
 
-	switch (cached_chip_revision[port] & 0xF0) {
+	switch (chip_revision & 0xF0) {
 	case 0x00: /* A2 chip */
 		*id = 1;
 		break;
 	case 0xa0: /* A3 chip */
+	case 0x40: /* Corrupted A2/A3 chip */
 		*id = 2;
 		break;
 	default:
@@ -571,27 +564,19 @@ static int ps8805_make_device_id(int port, int *id, int live)
  * The ps8815 A2 reports device ID 0x0001 instead of 0x0003 when the
  * firmware is bad (mis-programmed).
  */
-static int ps8815_make_device_id(int port, int *id, int live)
+static int ps8815_make_device_id(int port, int *id)
 {
-	static int cached_hw_revision[CONFIG_USB_PD_PORT_MAX_COUNT];
-	static bool cache_valid[CONFIG_USB_PD_PORT_MAX_COUNT];
-	int p1_addr;
-	int val;
-	int status;
+	int hw_rev_val;
+	/* P1 registers are always accessible on PS8815 */
+	int p1_addr =
+		PS8751_P3_TO_P1_FLAGS(tcpc_config[port].i2c_info.addr_flags);
+	int status = tcpc_addr_read16(port, p1_addr, PS8815_P1_REG_HW_REVISION,
+				      &hw_rev_val);
 
-	if (live || !cache_valid[port]) {
-		/* P1 registers are always accessible on PS8815 */
-		p1_addr = PS8751_P3_TO_P1_FLAGS(
-			tcpc_config[port].i2c_info.addr_flags);
-		status = tcpc_addr_read16(port, p1_addr,
-					  PS8815_P1_REG_HW_REVISION, &val);
-		if (status != EC_SUCCESS)
-			return status;
-		cached_hw_revision[port] = val;
-		cache_valid[port] = true;
-	}
+	if (status != EC_SUCCESS)
+		return status;
 
-	switch (cached_hw_revision[port]) {
+	switch (hw_rev_val) {
 	case 0x0a00:
 		*id = 1;
 		break;
@@ -617,27 +602,18 @@ static int ps8815_make_device_id(int port, int *id, int live)
  *
  * See b/236761058 and the PS8xxx TCPC Family Chip Revision Guide (v0.2)
  */
-static int ps8745_make_device_id(int port, uint16_t *pid, uint16_t *did,
-				 int live)
+static int ps8745_make_device_id(int port, uint16_t *pid, uint16_t *did)
 {
-	static int cached_reg_id[CONFIG_USB_PD_PORT_MAX_COUNT];
-	static bool cache_valid[CONFIG_USB_PD_PORT_MAX_COUNT];
-	int status;
-	int val;
+	int reg_id_value;
+	int status = tcpc_addr_read(
+		port,
+		PS8751_P3_TO_P0_FLAGS(tcpc_config[port].i2c_info.addr_flags),
+		PS8815_P0_REG_ID, &reg_id_value);
 
-	if (live || !cache_valid[port]) {
-		status = tcpc_addr_read(
-			port,
-			PS8751_P3_TO_P0_FLAGS(
-				tcpc_config[port].i2c_info.addr_flags),
-			PS8815_P0_REG_ID, &val);
-		if (status != EC_SUCCESS)
-			return status;
-		cached_reg_id[port] = val;
-		cache_valid[port] = true;
-	}
+	if (status != EC_SUCCESS)
+		return status;
 
-	if (*pid == PS8815_PRODUCT_ID && (cached_reg_id[port] & BIT(1)) != 0) {
+	if (*pid == PS8815_PRODUCT_ID && (reg_id_value & BIT(1)) != 0) {
 		/* PS8815 with this bit set is actually PS8745 */
 		*pid = PS8745_PRODUCT_ID;
 	}
@@ -697,81 +673,18 @@ static int ps8xxx_lpm_recovery_delay(int port)
 	return EC_SUCCESS;
 }
 
-static int ps8xxx_get_chip_info(int port, int live,
-				struct ec_response_pd_chip_info_v1 *chip_info)
+static int
+ps8xxx_fill_chip_info(int port, bool live,
+		      struct ec_response_pd_chip_info_v1 *const cache)
 {
-	static int cached_fw_version[CONFIG_USB_PD_PORT_MAX_COUNT];
-	static bool cache_valid[CONFIG_USB_PD_PORT_MAX_COUNT];
-	int val;
-	int reg;
-	int rv = tcpci_get_chip_info(port, live, chip_info);
+	/* Populate chip firmware version. */
+	int fw_ver_reg = get_reg_by_product(port, REG_FW_VER);
+	int fw_version;
+	int rv = tcpc_read(port, fw_ver_reg, &fw_version);
 
 	if (rv != EC_SUCCESS)
 		return rv;
-
-	if (chip_info == NULL)
-		return EC_SUCCESS;
-
-	if (!live) {
-		uint16_t pid;
-
-		pid = board_get_ps8xxx_product_id(port);
-		if (pid == 0)
-			return EC_ERROR_UNKNOWN;
-		product_id[port] = pid;
-		chip_info->vendor_id = PS8XXX_VENDOR_ID;
-		chip_info->product_id = product_id[port];
-	}
-
-#ifdef CONFIG_USB_PD_TCPM_PS8745_FORCE_ID
-	/* device ID 3 is PS8815 and might be misreported */
-	if (chip_info->product_id == PS8815_PRODUCT_ID ||
-	    chip_info->device_id == 0x0003) {
-		uint16_t pid = chip_info->product_id;
-		uint16_t did = chip_info->device_id;
-
-		rv = ps8745_make_device_id(port, &pid, &did, live);
-		chip_info->product_id = pid;
-		chip_info->device_id = did;
-		if (rv != EC_SUCCESS)
-			return rv;
-	}
-#endif
-#ifdef CONFIG_USB_PD_TCPM_PS8805_FORCE_DID
-	if (chip_info->product_id == PS8805_PRODUCT_ID &&
-	    chip_info->device_id == 0x0001) {
-		rv = ps8805_make_device_id(port, &val, live);
-		if (rv != EC_SUCCESS)
-			return rv;
-		chip_info->device_id = val;
-	}
-#endif
-#ifdef CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
-	if (chip_info->product_id == PS8815_PRODUCT_ID &&
-	    chip_info->device_id == 0x0001) {
-		rv = ps8815_make_device_id(port, &val, live);
-		if (rv != EC_SUCCESS)
-			return rv;
-		chip_info->device_id = val;
-	}
-#endif
-
-	if (live || !cache_valid[port]) {
-		reg = get_reg_by_product(port, REG_FW_VER);
-		rv = tcpc_read(port, reg, &val);
-		if (rv != EC_SUCCESS)
-			return rv;
-		cached_fw_version[port] = val;
-		cache_valid[port] = true;
-	}
-	chip_info->fw_version_number = cached_fw_version[port];
-
-	/* Treat unexpected values as error (FW not initiated from reset) */
-	if (live &&
-	    (chip_info->vendor_id != PS8XXX_VENDOR_ID ||
-	     chip_info->product_id != board_get_ps8xxx_product_id(port) ||
-	     chip_info->fw_version_number == 0))
-		return EC_ERROR_UNKNOWN;
+	cache->fw_version_number = fw_version;
 
 #if defined(CONFIG_USB_PD_TCPM_PS8751) && \
 	defined(CONFIG_USB_PD_VBUS_DETECT_TCPC)
@@ -779,10 +692,81 @@ static int ps8xxx_get_chip_info(int port, int live,
 	 * Min firmware version of PS8751 to ensure that it can detect Vbus
 	 * properly. See b/109769787#comment7
 	 */
-	chip_info->min_req_fw_version_number = 0x39;
+	cache->min_req_fw_version_number = 0x39;
 #endif
 
-	return rv;
+	/*
+	 * Unless live data is requested, override whatever vendor and product
+	 * IDs are reported with the ones that board configuration assumes.
+	 */
+	if (!live) {
+		uint16_t pid;
+
+		pid = board_get_ps8xxx_product_id(port);
+		if (pid == 0)
+			return EC_ERROR_UNKNOWN;
+		product_id[port] = pid;
+		cache->vendor_id = PS8XXX_VENDOR_ID;
+		cache->product_id = product_id[port];
+	}
+
+	/*
+	 * Some firmware versions for some chips report incorrect IDs, generally
+	 * the product or device ID for a different chip. The following tests
+	 * check for IDs that are known to correspond to firmwares that report
+	 * wrong IDs then check vendor-specific registers in order to set then
+	 * to accurately reflect what hardware is in use.
+	 */
+#ifdef CONFIG_USB_PD_TCPM_PS8745_FORCE_ID
+	/* device ID 3 is PS8815 and might be misreported */
+	if (cache->product_id == PS8815_PRODUCT_ID ||
+	    cache->device_id == 0x0003) {
+		uint16_t pid = cache->product_id;
+		uint16_t did = cache->device_id;
+
+		rv = ps8745_make_device_id(port, &pid, &did);
+		cache->product_id = pid;
+		cache->device_id = did;
+		if (rv != EC_SUCCESS)
+			return rv;
+	}
+#endif
+#ifdef CONFIG_USB_PD_TCPM_PS8805_FORCE_DID
+	if (cache->product_id == PS8805_PRODUCT_ID) {
+		int val;
+
+		rv = ps8805_make_device_id(port, &val);
+		if (rv != EC_SUCCESS)
+			return rv;
+		cache->device_id = val;
+	}
+#endif
+#ifdef CONFIG_USB_PD_TCPM_PS8815_FORCE_DID
+	if (cache->product_id == PS8815_PRODUCT_ID &&
+	    cache->device_id == 0x0001) {
+		int val;
+
+		rv = ps8815_make_device_id(port, &val);
+		if (rv != EC_SUCCESS)
+			return rv;
+		cache->device_id = val;
+	}
+#endif
+
+	/* Treat unexpected values as error (FW not initiated from reset) */
+	if (live && (cache->vendor_id != PS8XXX_VENDOR_ID ||
+		     cache->product_id != board_get_ps8xxx_product_id(port) ||
+		     cache->fw_version_number == 0))
+		return EC_ERROR_UNKNOWN;
+
+	return EC_SUCCESS;
+}
+
+static int ps8xxx_get_chip_info(int port, int live,
+				struct ec_response_pd_chip_info_v1 *chip_info)
+{
+	return tcpci_get_chip_info_mutable(port, live, chip_info,
+					   ps8xxx_fill_chip_info);
 }
 
 #ifdef CONFIG_USB_PD_TCPC_LOW_POWER

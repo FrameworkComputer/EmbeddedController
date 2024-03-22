@@ -1,0 +1,103 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+comment "local-host HECI protocol support"
+
+module = HECI
+module-str = heci
+source "subsys/logging/Kconfig.template.log_config"
+
+config WEAK_SMHI
+	bool "enable the weak SMHI client"
+	default n
+	select REBOOT
+	help
+	  SMHI is a basic system HECI client used by host to get basic
+	  fw status and info
+
+if WEAK_SMHI
+module = SMHI
+module-str = smhi
+source "subsys/logging/Kconfig.template.log_config"
+endif
+
+config HECI_INTF_IPC
+	bool "support ipc as communication hal of heci"
+	default n
+	select IPC
+	select IPC_SEDI
+	help
+	  Support IPC as communication hal of HECI, an IPC device is treated
+	  as hal bridge with host.
+
+config HECI_INTF_IPM
+	bool "support ipm as communication hal of heci"
+	default n
+	select IPM
+	select IPM_SEDI
+	help
+	  Support ipm as communication hal of HECI, an IPM device is treated
+	  as hal bridge with host.
+
+config HECI_MSG_DUMP
+	bool "if HECI message dumping is neeed for debugging"
+	default n
+	depends on LOG
+	help
+	  This configuration is used for HECI debugging, to print all
+	  HECI in/out message
+
+config HECI_MAX_MSG_SIZE
+	int "max message size of HECI protocol"
+	default 16384
+	range 1024 65536
+	help
+	  Set this to config max message size of HECI protocol
+
+config HECI_MAX_FRAG_SIZE
+	int "max size of single heci fragment"
+	default 128 if HECI_INTF_IPC && (!HECI_ROUTER)
+	default 4096
+	range 64 4096
+	help
+	  HECI message will be divided into fragments, this kconfig
+	  sets the max fragment message size
+
+config HECI_PAGE_SIZE
+	int "max page size of HECI protocol"
+	default 4096
+	help
+	  Set this to config page size of HECI protocol,
+	  equals the page size of local sram
+
+config HECI_FC_WAIT_TIMEOUT
+	int "timeout in ms to wait flow control when send heci message"
+	default 5000
+	help
+	  The max time in ms that the heci client message sending will
+	  wait for the flow control from peer client.
+
+config HECI_USE_DMA
+	bool "if HECI use dma to transfer dma, as an extension of ipc"
+	default n
+	help
+	 Set the HECI_USE_DMA to config HECI to use dma, while data
+	 length is too long.
+
+if HECI_USE_DMA
+config HECI_DMA_THRESHOLD
+	int "the threshold when using dma in HECI"
+	default 372
+	help
+	  When data legnth exceeds the max length of ipc msg size, HECI
+	  should use dma, and the threshold should no larger than max
+	  size of ipc msg field.
+
+config DMA_ALIGN_SIZE
+	int "dma align size"
+	default 32
+	help
+	  DMA align size
+
+endif

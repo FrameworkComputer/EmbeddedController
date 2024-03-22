@@ -1,0 +1,14 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config CROS_TABLETMODE_INTERRUPT
+	bool "Interrupt driver used to toggle tablet mode"
+	default y
+	depends on DT_HAS_CROS_TABLETMODE_INTERRUPT_ENABLED
+	depends on PLATFORM_EC_TABLET_MODE
+	help
+	  Allows the EC to toggle tablet mode based on an external GPIO. This is
+	  most commonly used when the ISH is running the motionsense task and
+	  is responsible for notifying the EC of tablet mode changes caused by
+	  lid angle changes.

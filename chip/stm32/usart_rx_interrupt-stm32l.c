@@ -59,11 +59,22 @@ static void usart_rx_interrupt_handler(struct usart_config const *config)
 		atomic_add((atomic_t *)&(config->state->rx_overrun), 1);
 	}
 
-	if (status & STM32_USART_SR_RXNE) {
+	while (status & STM32_USART_SR_RXNE) {
 		uint8_t byte = STM32_USART_RDR(base);
 
 		if (!queue_add_unit(config->producer.queue, &byte))
 			atomic_add((atomic_t *)&(config->state->rx_dropped), 1);
+
+#ifdef STM32_USART_CR1_FIFOEN
+		/* UART has FIFO, see if there are more bytes ready. */
+		status = STM32_USART_SR(base);
+#else
+		/*
+		 * Do not loop.  If a second character has arrived in the short
+		 * span since above, we will enter this IRQ again.
+		 */
+		break;
+#endif
 	}
 }
 

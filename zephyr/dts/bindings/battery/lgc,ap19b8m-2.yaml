@@ -21,7 +21,7 @@ properties:
   # Manufacturer Access 0x00
   # b1: D-FET
   # b2: C-FET
-  fet_mfgacc_support:
+  flags:
     default: 0
   fet_reg_addr:
     default: 0x43

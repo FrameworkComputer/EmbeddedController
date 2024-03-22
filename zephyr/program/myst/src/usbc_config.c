@@ -53,14 +53,7 @@ static uint32_t get_io_db_type_from_cached_cbi(void)
 static void usbc_interrupt_init(void)
 {
 	/* Enable PPC interrupts. */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_ppc));
-
-	/* Process any interrupts that are already present */
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c0_ppc_int_odl)))
-		ppc_interrupt(GPIO_USB_C0_PPC_INT_ODL);
-	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_usb_c1_ppc_int_odl)))
-		ppc_interrupt(GPIO_USB_C1_PPC_INT_ODL);
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_pd_soc));
 
 	/* Reset TCPC if we only have a battery connected, or the SINK
 	 * gpio to the PPC might be reset and cause brown-out.
@@ -131,15 +124,6 @@ int board_set_active_charge_port(int port)
 	}
 
 	return EC_SUCCESS;
-}
-
-void usb_pd_soc_interrupt(enum gpio_signal signal)
-{
-	/*
-	 * This interrupt is unexpected with our use of the SoC mux, so just log
-	 * it as a point of interest.
-	 */
-	CPRINTSUSB("SOC PD Interrupt");
 }
 
 /* Round up 3250 max current to multiple of 128mA for ISL9241 AC prochot. */

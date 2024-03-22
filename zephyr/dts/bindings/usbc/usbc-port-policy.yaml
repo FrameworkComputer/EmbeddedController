@@ -1,0 +1,40 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+  The default policies of a USB-C port
+
+  Example:
+    TODO
+
+compatible: "usbc-port-policy"
+
+include: base.yaml
+
+properties:
+  unattached_rp_value:
+    type: string
+    # Must match enum typec_current_t
+    enum:
+      - "TC_CURRENT_PPM_DEFINED"
+      - "TC_CURRENT_3_0A"
+      - "TC_CURRENT_1_5A"
+      - "TC_CURRENT_USB_DEFAULT"
+    required: true
+  unattached_cc_mode:
+    type: string
+    # Must match enum ccom_t
+    enum:
+      - "CCOM_RP"
+      - "CCOM_RD"
+      - "CCOM_DRP"
+    required: true
+  unattached_try:
+    type: string
+    # Must match enum drp_mode_t
+    enum:
+      - "DRP_NORMAL"
+      - "DRP_TRY_SRC"
+      - "DRP_TRY_SNK"
+    required: true

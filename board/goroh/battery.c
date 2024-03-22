@@ -13,33 +13,35 @@
 #include "system.h"
 #include "usb_pd.h"
 
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	[BATTERY_LGC_AP18C8K] = {
-		.fuel_gauge = {
-			.manuf_name = "LGC KT0030G020",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "LGC KT0030G020",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x43,
+					.reg_mask = 0x0001,
+					.disconnect_val = 0x0,
+					.cfet_mask = 0x0002,
+					.cfet_off_val = 0x0000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x43,
-				.reg_mask = 0x0001,
-				.disconnect_val = 0x0,
-				.cfet_mask = 0x0002,
-				.cfet_off_val = 0x0000,
+			.batt_info = {
+				.voltage_max            = 13050,
+				.voltage_normal         = 11250,
+				.voltage_min            = 9000,
+				.precharge_current      = 256,
+				.start_charging_min_c   = 0,
+				.start_charging_max_c   = 50,
+				.charging_min_c         = 0,
+				.charging_max_c         = 60,
+				.discharging_min_c      = -20,
+				.discharging_max_c      = 75,
 			},
-		},
-		.batt_info = {
-			.voltage_max            = 13050,
-			.voltage_normal         = 11250,
-			.voltage_min            = 9000,
-			.precharge_current      = 256,
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 75,
 		},
 	},
 };

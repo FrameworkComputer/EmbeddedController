@@ -163,8 +163,11 @@ static enum ec_error_list rt9490_set_current(int chgnum, int current)
 	uint16_t reg_ichg;
 	const struct charger_info *const info = rt9490_get_info(chgnum);
 
-	if (current == 0)
+	if (current == 0) {
 		current = info->current_min;
+		rt9490_clr_bit(chgnum, RT9490_REG_CHG_CTRL0, RT9490_EN_CHG);
+	} else
+		rt9490_set_bit(chgnum, RT9490_REG_CHG_CTRL0, RT9490_EN_CHG);
 
 	if (!IN_RANGE(current, info->current_min, info->current_max))
 		return EC_ERROR_PARAM2;

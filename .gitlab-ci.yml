@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-image: jbettis/ubuntu-26apr23
+image: jbettis/ubuntu-23jan24
 
 # You can update that image using this repo:
 #   https://gitlab.com/zephyr-ec/gitlab-ci-runner/-/tree/main
@@ -97,18 +97,20 @@ before_script:
   - ec_commit_date="$(cd ${EC_DIR} ; git log -1 HEAD --format=%cd --date=iso)"
   - checkout_at_date "https://chromium.googlesource.com/chromium/tools/depot_tools.git" "main" "${CI_PROJECT_DIR}/depot_tools" "${ec_commit_date}"
   - export PATH="${CI_PROJECT_DIR}/depot_tools:$PATH"
+  - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/cryptoc" "main" "${MODULES_DIR}/cryptoc" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr" "main" "${ZEPHYR_BASE}" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis" "chromeos-main" "${MODULES_DIR}/cmsis" "${ec_commit_date}"
+  - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_intel" "main" "${MODULES_DIR}/hal_intel_public" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/hal_stm32" "chromeos-main" "${MODULES_DIR}/hal_stm32" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/nanopb" "main" "${MODULES_DIR}/nanopb" "${ec_commit_date}"
-  - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/cryptoc" "main" "${MODULES_DIR}/cryptoc" "${ec_commit_date}"
+  - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/picolibc" "main" "${MODULES_DIR}/picolibc" "${ec_commit_date}"
+  - checkout_at_date "https://chromium.googlesource.com/external/pigweed/pigweed/pigweed" "upstream/main" "${MODULES_DIR}/pigweed" "${ec_commit_date}"
   - repo_clone_at_data "src/third_party/boringssl" "m/main" "${MODULES_DIR}/boringssl" "${ec_commit_date}"
   # Add a symlink so the ec appears in modules directory (hack to make zmake work)
   - ln -s "${EC_DIR}" "${MODULES_DIR}/ec"
   # Install Python and packages
   - python3 -V  # Print out python version for debugging
   - python3 -m pip install "${EC_DIR}/zephyr/zmake[tests]" --user
-  - python3 -m pip install natsort
   - export PATH="$PATH:$HOME/.local/bin"
   - export PYTHONIOENCODING=utf-8
   # Build directory
@@ -162,10 +164,11 @@ before_script:
       --modules-dir "${MODULES_DIR}" -l DEBUG build --coverage
       -B "${BUILD_DIR}" -t ${TOOLCHAIN:-zephyr}
       "${PROJECT}"
-    - lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/${PROJECT}/output/merged.info"
+    - lcov --rc branch_coverage=1  --ignore-errors unused,unused,inconsistent,inconsistent
+      -o "${BUILD_DIR}/${PROJECT}/output/merged.info"
       -a "${BUILD_DIR}/${PROJECT}/output/zephyr.info"
       -a "${BUILD_DIR}/merged.info"
-    - lcov --rc lcov_branch_coverage=1
+    - lcov --rc branch_coverage=1 --ignore-errors unused,unused,inconsistent,inconsistent
       -o "${BUILD_DIR}/${PROJECT}/output/no_zephyr.info"
       -r "${BUILD_DIR}/${PROJECT}/output/zephyr.info" "${ZEPHYR_BASE}/**"
       "${MODULES_DIR}/**"
@@ -180,7 +183,7 @@ before_script:
     - util/lcov_stencil.py -o "${BUILD_DIR}/${PROJECT}/output/prefiltered.info"
       "${BUILD_DIR}/${PROJECT}/output/no_zephyr.info"
       "${BUILD_DIR}/${PROJECT}/output/merged.info"
-    - lcov --rc lcov_branch_coverage=1
+    - lcov --rc branch_coverage=1 --ignore-errors unused,unused,inconsistent,inconsistent
       -o "${BUILD_DIR}/${PROJECT}/output/filtered_no_zephyr.info"
       -r "${BUILD_DIR}/${PROJECT}/output/prefiltered.info"
       "${ZEPHYR_BASE}/**" "${MODULES_DIR}/**"
@@ -223,16 +226,6 @@ before_script:
     expire_in: 1 week
     when: always
   coverage: '/lines\.*: \d+\.\d+%/'
-
-herobrine:
-  variables:
-    PROJECT: "herobrine"
-  <<: *build_template
-
-herobrine_coverage:
-  variables:
-    PROJECT: "herobrine"
-  <<: *coverage_template
 
 nivviks_coverage:
   variables:
@@ -354,14 +347,34 @@ geralt_coverage:
     PROJECT: "geralt"
   <<: *coverage_template
 
-myst:
+ovis:
   variables:
-    PROJECT: "myst"
+    PROJECT: "ovis"
   <<: *build_template
 
-myst_coverage:
+ovis_coverage:
   variables:
-    PROJECT: "myst"
+    PROJECT: "ovis"
+  <<: *coverage_template
+
+brox:
+  variables:
+    PROJECT: "brox"
+  <<: *build_template
+
+brox_coverage:
+  variables:
+    PROJECT: "brox"
+  <<: *coverage_template
+
+rauru:
+  variables:
+    PROJECT: "rauru"
+  <<: *build_template
+
+rauru_coverage:
+  variables:
+    PROJECT: "rauru"
   <<: *coverage_template
 
 ec_coverage:
@@ -384,12 +397,20 @@ ec_coverage:
 zephyr_coverage:
   stage: test
   needs: []
+  parallel: 6
   script:
+    - export PIGWEED_DIR=${MODULES_DIR}/pigweed
     - python3 ${EC_DIR}/twister --coverage --outdir "${TWISTER_OUT_DIR}"
+      -v -i -x=ALLOW_WARNINGS=ON -y
+    - tests=( $( jq -r '.testsuites[] | @text "\(.name)"' "${TWISTER_OUT_DIR}/testplan.json" |
+      sort -u |
+      split -n r/"${CI_NODE_INDEX}"/"${CI_NODE_TOTAL}") )
+    - printf ' -s %s' "${tests[@]}" | xargs python3 ${EC_DIR}/twister --coverage --outdir "${TWISTER_OUT_DIR}"
       -v -i -x=ALLOW_WARNINGS=ON
+    - mv "${TWISTER_OUT_DIR}/coverage.info" "${TWISTER_OUT_DIR}/coverage${CI_NODE_INDEX}.info"
   artifacts:
     paths:
-      - ec_dir/twister-out/coverage.info
+      - ec_dir/twister-out/coverage*.info
     expire_in: 1 week
   coverage: '/lines\.*: \d+\.\d+%/'
 
@@ -419,12 +440,15 @@ merged_coverage:
   needs: ["ec_coverage", "zephyr_coverage", "zephyr_boards_coverage"]
   script:
     # build_dir / "all_tests.info" -> "${BUILD_DIR}/merged.info"
-    - lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/merged.info"
-      -a "${BUILD_DIR}/coverage/lcov.info" -a "${TWISTER_OUT_DIR}/coverage.info"
+    - printf ' -a %s' "${TWISTER_OUT_DIR}/"coverage[0-9]*.info | xargs -x
+      lcov --rc branch_coverage=1 --ignore-errors unused,unused,inconsistent,inconsistent
+      -o "${BUILD_DIR}/merged.info"
+      -a "${BUILD_DIR}/coverage/lcov.info"
     - printf ' -a %s' ${BUILD_DIR}/zephyr/all_builds[0-9]*.info | xargs -x
-      lcov --rc lcov_branch_coverage=1 -o "${BUILD_DIR}/zephyr/zephyr_merged.info"
+      lcov --rc branch_coverage=1 --ignore-errors unused,unused,inconsistent,inconsistent
+      -o "${BUILD_DIR}/zephyr/zephyr_merged.info"
       -a "${BUILD_DIR}/merged.info"
-    - lcov --rc lcov_branch_coverage=1
+    - lcov --rc branch_coverage=1 --ignore-errors unused,unused,inconsistent,inconsistent
       -o "${BUILD_DIR}/all_builds_filtered.info"
       -r "${BUILD_DIR}/zephyr/zephyr_merged.info"
       "${EC_DIR}/build/**" "${EC_DIR}/twister-out*/**" "/usr/include/**"
@@ -467,8 +491,15 @@ merged_coverage:
 testall:
   stage: test
   needs: []
+  parallel: 6
   script:
+    - export PIGWEED_DIR=${MODULES_DIR}/pigweed
     - python3 ${EC_DIR}/twister --outdir "${TWISTER_OUT_DIR}" -v -i
+      -x=ALLOW_WARNINGS=ON -y
+    - tests=( $( jq -r '.testsuites[] | @text "\(.name)"' "${TWISTER_OUT_DIR}/testplan.json" |
+      sort -u |
+      split -n r/"${CI_NODE_INDEX}"/"${CI_NODE_TOTAL}") )
+    - printf ' -s %s' "${tests[@]}" | xargs python3 ${EC_DIR}/twister --outdir "${TWISTER_OUT_DIR}" -v -i
       -x=ALLOW_WARNINGS=ON
 
 # The download url changed. Disable until we can figure it out.
@@ -492,7 +523,7 @@ testall:
 #           break ;
 #         fi ;
 #       done
-#     - lcov --rc lcov_branch_coverage=1 --summary ${BUILD_DIR}/zephyr_codecov/fixed.info
+#     - lcov --rc branch_coverage=1 --summary ${BUILD_DIR}/zephyr_codecov/fixed.info
 #   artifacts:
 #     paths:
 #       - ec_dir/build/zephyr_codecov/fixed.info

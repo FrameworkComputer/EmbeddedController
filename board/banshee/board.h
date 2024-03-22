@@ -32,6 +32,9 @@
  */
 #define CONFIG_HIBERNATE_PSL_VCC1_RST_WAKEUP
 
+/* Chipset */
+#define CONFIG_CHIPSET_RESUME_INIT_HOOK
+
 #define CONFIG_MP2964
 
 /* KEYBOARD */

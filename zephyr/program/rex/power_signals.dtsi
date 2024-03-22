@@ -25,7 +25,7 @@
 	pwr-pg-ec-rsmrst-od {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "RSMRST power good from regulator";
-		enum-name = "PWR_RSMRST";
+		enum-name = "PWR_RSMRST_PWRGD";
 		gpios = <&gpioe 2 GPIO_ACTIVE_HIGH>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
@@ -33,7 +33,8 @@
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "RSMRST output to PCH";
 		enum-name = "PWR_EC_PCH_RSMRST";
-		gpios = <&gpioa 6 GPIO_ACTIVE_HIGH>;
+		gpios = <&gpioa 6 GPIO_ACTIVE_LOW>;
+		reset-val = <1>;
 		output;
 	};
 	pwr-pch-pwrok {
@@ -65,24 +66,18 @@
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
 	pwr-slp-s3-l {
-		compatible = "intel,ap-pwrseq-vw";
+		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "SLP_S3_L input from PCH";
 		enum-name = "PWR_SLP_S3";
-		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S3";
-		vw-invert;
-/*
- * TODO: Initially, use virtual wire for sleep S3 signal instead of
- * of the GPIO signal which also exists.
- *		compatible = "intel,ap-pwrseq-gpio";
- *		gpios = <&gpio4 1 GPIO_ACTIVE_LOW>;
- *		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
- */
+		gpios = <&gpio4 1 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
 	pwr-slp-s4 {
 		compatible = "intel,ap-pwrseq-vw";
 		dbg-label = "SLP_S4 virtual wire input from PCH";
 		enum-name = "PWR_SLP_S4";
 		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S4";
+		reset-val = <1>;
 		vw-invert;
 	};
 	pwr-slp-s5 {
@@ -90,6 +85,7 @@
 		dbg-label = "SLP_S5 virtual wire input from PCH";
 		enum-name = "PWR_SLP_S5";
 		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S5";
+		reset-val = <1>;
 		vw-invert;
 	};
 	pwr-all-sys-pwrgd {
@@ -98,6 +94,11 @@
 		enum-name = "PWR_ALL_SYS_PWRGD";
 		gpios = <&gpiof 4 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+
+	ap-power {
+		compatible = "ap-pwrseq-sub-states";
+		chipset = "AP_POWER_STATE_S0IX";
 	};
 };
 

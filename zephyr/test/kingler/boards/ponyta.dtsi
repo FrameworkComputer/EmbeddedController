@@ -1,0 +1,14 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	chosen {
+		cros-ec,raw-kb = &cros_kb_raw;
+	};
+
+	cros_kb_raw: kb-raw-emul {
+		compatible = "cros-ec,kb-raw-emul";
+	};
+};

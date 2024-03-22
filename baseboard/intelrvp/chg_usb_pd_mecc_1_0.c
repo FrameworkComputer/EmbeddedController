@@ -38,12 +38,14 @@ static void baseboard_tcpc_init(void)
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		/* Enable PPC interrupts. */
-		if (tcpc_aic_gpios[i].ppc_intr_handler)
-			gpio_enable_interrupt(tcpc_aic_gpios[i].ppc_alert);
+		if (mecc_1_0_tcpc_aic_gpios[i].ppc_intr_handler)
+			gpio_enable_interrupt(
+				mecc_1_0_tcpc_aic_gpios[i].ppc_alert);
 
 		/* Enable TCPC interrupts. */
 		if (tcpc_config[i].bus_type != EC_BUS_TYPE_EMBEDDED)
-			gpio_enable_interrupt(tcpc_aic_gpios[i].tcpc_alert);
+			gpio_enable_interrupt(
+				mecc_1_0_tcpc_aic_gpios[i].tcpc_alert);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, baseboard_tcpc_init, HOOK_PRIO_INIT_CHIPSET);
@@ -58,7 +60,7 @@ void tcpc_alert_event(enum gpio_signal signal)
 		if (tcpc_config[i].bus_type == EC_BUS_TYPE_EMBEDDED)
 			continue;
 
-		if (signal == tcpc_aic_gpios[i].tcpc_alert) {
+		if (signal == mecc_1_0_tcpc_aic_gpios[i].tcpc_alert) {
 			schedule_deferred_pd_interrupt(i);
 			break;
 		}
@@ -77,7 +79,7 @@ uint16_t tcpc_get_alert_status(void)
 		if (tcpc_config[i].bus_type == EC_BUS_TYPE_EMBEDDED)
 			continue;
 
-		if (!gpio_get_level(tcpc_aic_gpios[i].tcpc_alert))
+		if (!gpio_get_level(mecc_1_0_tcpc_aic_gpios[i].tcpc_alert))
 			status |= PD_STATUS_TCPC_ALERT_0 << i;
 	}
 
@@ -86,10 +88,10 @@ uint16_t tcpc_get_alert_status(void)
 
 int ppc_get_alert_status(int port)
 {
-	if (!tcpc_aic_gpios[port].ppc_intr_handler)
+	if (!mecc_1_0_tcpc_aic_gpios[port].ppc_intr_handler)
 		return 0;
 
-	return !gpio_get_level(tcpc_aic_gpios[port].ppc_alert);
+	return !gpio_get_level(mecc_1_0_tcpc_aic_gpios[port].ppc_alert);
 }
 
 /* PPC support routines */
@@ -98,9 +100,9 @@ void ppc_interrupt(enum gpio_signal signal)
 	int i;
 
 	for (i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		if (tcpc_aic_gpios[i].ppc_intr_handler &&
-		    signal == tcpc_aic_gpios[i].ppc_alert) {
-			tcpc_aic_gpios[i].ppc_intr_handler(i);
+		if (mecc_1_0_tcpc_aic_gpios[i].ppc_intr_handler &&
+		    signal == mecc_1_0_tcpc_aic_gpios[i].ppc_alert) {
+			mecc_1_0_tcpc_aic_gpios[i].ppc_intr_handler(i);
 			break;
 		}
 	}

@@ -147,6 +147,12 @@ const static struct npcx_chip_info chip_info[] = {
 		.chip_id = 0x09,
 		.flash_size = 1024 * 1024,
 	},
+	{
+		/* NPCX99FP */
+		.device_id = 0x2B,
+		.chip_id = 0x09,
+		.flash_size = 1024 * 1024,
+	},
 };
 /*---------------------------------------------------------------------------
  * Functions prototypes

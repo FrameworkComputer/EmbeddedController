@@ -89,6 +89,9 @@ const uint8_t rgbkbd_map[] = {
 	DELM, LED(0, 0), DELM, LED(1, 0), DELM, LED(2, 0),  DELM, LED(3, 0),
 	DELM, LED(4, 0), DELM, LED(5, 0), DELM, LED(6, 0),  DELM, LED(7, 0),
 	DELM, LED(8, 0), DELM, LED(9, 0), DELM, LED(10, 0), DELM, LED(11, 0),
+	DELM, LED(0, 1), DELM, LED(1, 1), DELM, LED(2, 1),  DELM, LED(3, 1),
+	DELM, LED(4, 1), DELM, LED(5, 1), DELM, LED(6, 1),  DELM, LED(7, 1),
+	DELM, LED(8, 1), DELM, LED(9, 1), DELM, LED(10, 1), DELM, LED(11, 1),
 	DELM, DELM,
 };
 #undef LED

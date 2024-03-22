@@ -1,0 +1,95 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	ponyta-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		/*
+		 * FW_CONFIG field to indicate the device is clamshell
+		 * or convertible.
+		 */
+		form_factor {
+			enum-name = "FORM_FACTOR";
+			start = <13>;
+			size = <3>;
+
+			convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CONVERTIBLE";
+				value = <1>;
+			};
+			clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CLAMSHELL";
+				value = <0>;
+			};
+		};
+
+		/* FW_CONFIG field to indicate which DB is attached. */
+		db_config: db {
+			enum-name = "DB";
+			start = <0>;
+			size = <4>;
+
+			sub-board-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "DB_NONE";
+				value = <0>;
+			};
+			sub-board-2 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "DB_USBA_HDMI";
+				value = <1>;
+			};
+			sub-board-3 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "DB_USBA_HDMI_LTE";
+				value = <2>;
+			};
+		};
+	};
+
+	/* ponyta-specific ssfc fields. */
+	ponyta-ssfc {
+		compatible = "cros-ec,cbi-ssfc";
+
+		/* SSFC field to identify BASE motion sensor. */
+		base-sensor {
+			enum-name = "BASE_SENSOR";
+			size = <3>;
+
+			base_sensor_0: bmi323 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+				default;
+			};
+			base_sensor_1: lsm6dsm {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <2>;
+			};
+		};
+
+		/* SSFC field to identify LID motion sensor. */
+		lid-sensor {
+			enum-name = "LID_SENSOR";
+			size = <3>;
+
+			lid_sensor_0: bma422 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+				default;
+			};
+			lid_sensor_1: lis2dw12 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <2>;
+			};
+		};
+	};
+};

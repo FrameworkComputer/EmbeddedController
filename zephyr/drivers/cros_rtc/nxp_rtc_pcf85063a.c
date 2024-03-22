@@ -332,7 +332,7 @@ static int nxp_rtc_pcf85063a_init(const struct device *dev)
 	int ret;
 
 	if (!device_is_ready(config->bus)) {
-		LOG_ERR("Device %s is not ready", config->bus->name);
+		LOG_ERR("device %s not ready", config->bus->name);
 		return -ENODEV;
 	}
 

@@ -52,3 +52,27 @@ test_mockable int power_interrupt_handler(const struct gpio_dt_spec *dt)
 test_mockable void throttle_ap_prochot_input_interrupt(enum gpio_signal signal)
 {
 }
+
+test_mockable void ppc_interrupt(enum gpio_signal signal)
+{
+}
+
+test_mockable void bc12_interrupt(enum gpio_signal signal)
+{
+}
+
+test_mockable void sbu_fault_interrupt(enum gpio_signal signal)
+{
+}
+
+test_mockable void usb_fault_interrupt(enum gpio_signal signal)
+{
+}
+
+test_mockable void test_nct38xx0_interrupt(enum gpio_signal signal)
+{
+}
+
+test_mockable void test_nct38xx1_interrupt(enum gpio_signal signal)
+{
+}

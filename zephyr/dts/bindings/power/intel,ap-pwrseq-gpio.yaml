@@ -22,7 +22,6 @@ properties:
 
   interrupt-flags:
     type: int
-    required: false
     description: GPIO interrupt configuration flags.
 
   no-enable:

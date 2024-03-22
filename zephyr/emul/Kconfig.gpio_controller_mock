@@ -1,0 +1,11 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config GPIO_CONTROLLER_MOCK
+	bool "Mock implementation of a GPIO controller"
+	default y
+	depends on DT_HAS_CROS_GPIO_CONTROLLER_MOCK_ENABLED
+	help
+	  Enable the GPIO controller mock. This driver is a pure mock and
+	  only forces device_is_ready() calls to fail.

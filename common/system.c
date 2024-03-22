@@ -4,6 +4,13 @@
  */
 
 /* System module for Chrome EC : common functions */
+
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #include "battery.h"
 #include "charge_manager.h"
 #include "chipset.h"
@@ -291,7 +298,7 @@ static void print_reset_flags(uint32_t flags)
 			if (count++)
 				CPUTS(" ");
 
-			CPUTS(reset_flag_descs[i]);
+			CPRINTF("%s", reset_flag_descs[i]);
 		}
 	}
 
@@ -826,8 +833,6 @@ const char *system_get_cros_fwid(enum ec_image copy)
 		if (data && (data->cookie3 & CROS_EC_IMAGE_DATA_COOKIE3_MASK) ==
 				    CROS_EC_IMAGE_DATA_COOKIE3)
 			return data->cros_fwid;
-		else
-			return CROS_FWID_MISSING_STR;
 	}
 	return "";
 }
@@ -907,13 +912,20 @@ void system_common_pre_init(void)
 
 		panic_get_reason(&reason, &info, &exception);
 		pdata = panic_get_data();
+
+		/* If the panic reason is a watchdog warning, then change
+		 * the reason to a regular watchdog reason while preserving
+		 * the info and exception from the watchdog warning.
+		 */
+		if (reason == PANIC_SW_WATCHDOG_WARN)
+			panic_set_reason(PANIC_SW_WATCHDOG, info, exception);
 		/* The watchdog panic info may have already been initialized by
 		 * the watchdog handler, so only set it here if the panic reason
 		 * is not a watchdog or the panic info has already been read,
 		 * i.e. an old watchdog panic.
 		 */
-		if (reason != PANIC_SW_WATCHDOG || !pdata ||
-		    pdata->flags & PANIC_DATA_FLAG_OLD_HOSTCMD)
+		else if (reason != PANIC_SW_WATCHDOG || !pdata ||
+			 pdata->flags & PANIC_DATA_FLAG_OLD_HOSTCMD)
 			panic_set_reason(PANIC_SW_WATCHDOG, 0, 0);
 	}
 
@@ -1000,19 +1012,30 @@ int system_is_manual_recovery(void)
 	return system_info_flags & SYSTEM_IN_MANUAL_RECOVERY;
 }
 
+void system_set_reboot_at_shutdown(const struct ec_params_reboot_ec *p)
+{
+	reboot_at_shutdown = *p;
+}
+
+const struct ec_params_reboot_ec *system_get_reboot_at_shutdown(void)
+{
+	return &reboot_at_shutdown;
+}
+
 /**
  * Handle a pending reboot command.
  */
-static int handle_pending_reboot(struct ec_params_reboot_ec p)
+static int handle_pending_reboot(struct ec_params_reboot_ec *p)
 {
 	if (IS_ENABLED(CONFIG_POWER_BUTTON_INIT_IDLE) &&
-	    (p.flags & EC_REBOOT_FLAG_CLEAR_AP_IDLE)) {
+	    (p->flags & EC_REBOOT_FLAG_CLEAR_AP_IDLE)) {
 		CPRINTS("Clearing AP_IDLE");
 		chip_save_reset_flags(chip_read_reset_flags() &
 				      ~EC_RESET_FLAG_AP_IDLE);
+		p->flags &= ~(EC_REBOOT_FLAG_CLEAR_AP_IDLE);
 	}
 
-	switch (p.cmd) {
+	switch (p->cmd) {
 	case EC_REBOOT_CANCEL:
 	case EC_REBOOT_NO_OP:
 		return EC_SUCCESS;
@@ -1048,7 +1071,7 @@ static int handle_pending_reboot(struct ec_params_reboot_ec p)
 			board_reset_pd_mcu();
 
 		cflush();
-		if (p.cmd == EC_REBOOT_COLD_AP_OFF)
+		if (p->cmd == EC_REBOOT_COLD_AP_OFF)
 			system_reset(SYSTEM_RESET_HARD |
 				     SYSTEM_RESET_LEAVE_AP_OFF);
 		else
@@ -1119,10 +1142,9 @@ test_mockable void system_enter_hibernate(uint32_t seconds,
 
 static void system_common_shutdown(void)
 {
-	system_exit_manual_recovery();
 	if (reboot_at_shutdown.cmd)
 		CPRINTF("Reboot at shutdown: %d\n", reboot_at_shutdown.cmd);
-	handle_pending_reboot(reboot_at_shutdown);
+	handle_pending_reboot(&reboot_at_shutdown);
 
 	/* Reset cnt on cold boot */
 	update_ap_boot_time(RESET_CNT);
@@ -1516,7 +1538,7 @@ static int command_sleepmask(int argc, const char **argv)
 		}
 	}
 #endif
-	ccprintf("sleep mask: %08x\n", (int)sleep_mask);
+	ccprintf("sleep mask: %08x\n", (unsigned int)sleep_mask);
 
 	return EC_SUCCESS;
 }
@@ -1713,7 +1735,8 @@ host_command_get_board_version(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_GET_BOARD_VERSION, host_command_get_board_version,
 		     EC_VER_MASK(0));
 
-static enum ec_status host_command_reboot(struct host_cmd_handler_args *args)
+STATIC_IF_NOT(CONFIG_ZTEST)
+enum ec_status host_command_reboot(struct host_cmd_handler_args *args)
 {
 	struct ec_params_reboot_ec p;
 
@@ -1750,13 +1773,19 @@ static enum ec_status host_command_reboot(struct host_cmd_handler_args *args)
 	    p.cmd == EC_REBOOT_COLD || p.cmd == EC_REBOOT_HIBERNATE ||
 	    p.cmd == EC_REBOOT_COLD_AP_OFF) {
 		/* Clean busy bits on host for commands that won't return */
+#ifndef CONFIG_EC_HOST_CMD
 		args->result = EC_RES_SUCCESS;
 		host_send_response(args);
+#else
+		ec_host_cmd_send_response(
+			EC_HOST_CMD_SUCCESS,
+			(struct ec_host_cmd_handler_args *)args);
+#endif
 	}
 #endif
 
 	CPRINTS("Executing host reboot command %d", p.cmd);
-	switch (handle_pending_reboot(p)) {
+	switch (handle_pending_reboot(&p)) {
 	case EC_SUCCESS:
 		return EC_RES_SUCCESS;
 	case EC_ERROR_INVAL:
@@ -1842,6 +1871,28 @@ __overridable int board_write_mac_addr(const char *mac_addr)
 		return EC_ERROR_UNIMPLEMENTED;
 }
 #endif /* CONFIG_MAC_ADDR_LEN */
+
+#ifdef CONFIG_POWERON_CONF_LEN
+/* By default, read servo poweron config from flash, can be overridden. */
+__overridable int board_read_poweron_conf(uint8_t *poweron_conf)
+{
+	if (IS_ENABLED(CONFIG_FLASH_PSTATE) &&
+	    IS_ENABLED(CONFIG_FLASH_PSTATE_BANK))
+		return crec_flash_read_pstate_poweron_conf(poweron_conf);
+	else
+		return EC_ERROR_UNIMPLEMENTED;
+}
+
+/* By default, write servo poweron config from flash, can be overridden. */
+__overridable int board_write_poweron_conf(const uint8_t *poweron_conf)
+{
+	if (IS_ENABLED(CONFIG_FLASH_PSTATE) &&
+	    IS_ENABLED(CONFIG_FLASH_PSTATE_BANK))
+		return crec_flash_write_pstate_poweron_conf(poweron_conf);
+	else
+		return EC_ERROR_UNIMPLEMENTED;
+}
+#endif /* CONFIG_POWERON_CONF_LEN */
 
 __test_only void system_common_reset_state(void)
 {

@@ -10,4 +10,3 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_BUTTONS_RUNTIME_CONFIG
                              "src/button.c")
-zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON "src/led.c")

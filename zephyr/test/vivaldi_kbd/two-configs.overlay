@@ -1,0 +1,25 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&vivaldi_kbd {
+	kbd_config_1: kbd-config-1 {
+		vivaldi-codes = <
+			VIVALDI_TK_PLAY_PAUSE
+			VIVALDI_TK_NEXT_TRACK
+			VIVALDI_TK_PREV_TRACK
+			VIVALDI_TK_ABSENT
+			VIVALDI_TK_ABSENT
+			VIVALDI_TK_ABSENT
+			VIVALDI_TK_ABSENT
+			VIVALDI_TK_ABSENT
+			VIVALDI_TK_KBD_BKLIGHT_TOGGLE
+			VIVALDI_TK_MICMUTE
+			VIVALDI_TK_MENU
+		>;
+		capabilities = <(VIVALDI_KEYBD_CAP_SCRNLOCK_KEY |
+				 VIVALDI_KEYBD_CAP_NUMERIC_KEYPAD |
+				 VIVALDI_KEYBD_CAP_SCRNLOCK_KEY)>;
+	};
+};

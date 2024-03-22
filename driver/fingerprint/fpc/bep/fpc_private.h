@@ -12,6 +12,8 @@
 extern "C" {
 #endif
 
+#include "common.h"
+
 #include <stdint.h>
 
 /** @brief Common results returned by BEP functions.
@@ -137,8 +139,8 @@ typedef struct {
  * - 0 on success
  * - negative value on error
  */
-int fp_sensor_maintenance(uint8_t *image_data,
-			  fp_sensor_info_t *fp_sensor_info);
+__staticlib int fp_sensor_maintenance(uint8_t *image_data,
+				      fp_sensor_info_t *fp_sensor_info);
 
 /**
  * Get the HWID of the sensor.
@@ -151,6 +153,21 @@ int fp_sensor_maintenance(uint8_t *image_data,
  * - EC_ERROR_INVAL or FP_ERROR_SPI_COMM on error
  */
 int fpc_get_hwid(uint16_t *id);
+
+/**
+ * Take access to communicate with FP sensor via SPI. This function blocks the
+ * current thread, if the sensor is used by another thread, until the access is
+ * gained.
+ *
+ * The function can be called by a thread multiple times. fp_sensor_unlock has
+ * to be called once to return the access.
+ */
+void fp_sensor_lock(void);
+
+/**
+ * Return access to communicate with FP sensor via SPI.
+ */
+void fp_sensor_unlock(void);
 
 #ifdef __cplusplus
 }

@@ -1,0 +1,59 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+choice TEST_BOARD_VARIANT
+	prompt "Select board variant for tests"
+	help
+	  Board variant to use for tests
+
+	config TEST_BOARD_BLOONCHIPPER
+		bool "Enable baseboard-specific tests"
+		help
+		Enable bloonchippers tests.
+
+endchoice # TEST_BOARD_VARIANT
+
+config TEST_BOARD_NAME
+	string "Board name"
+	default "bloonchipper" if TEST_BOARD_BLOONCHIPPER
+
+config TEST_BOARD_TRANSPORT_SPI
+	bool "Enable SPI transport layer tests"
+
+config TEST_BOARD_TRANSPORT_UART
+	bool "Enable UART transport layer tests"
+
+config EC_HOST_CMD_INIT_PRIORITY
+	int "Initialization priority"
+	default 80
+	range 0 99
+
+config EC_HOST_CMD_HANDLER_RX_BUFFER_SIZE
+	int "HC RX buffer size"
+	default 549
+
+config EC_HOST_CMD_HANDLER_TX_BUFFER_SIZE
+	int "HC TX buffer size"
+	default 544
+
+config EC_HOST_CMD_BACKEND_SPI
+	bool "HC SPI backend"
+	default y
+
+config EC_HOST_CMD_BACKEND_UART
+	bool "HC UART backend"
+	default y
+
+config TEST_BOARD_POWER
+	bool "Board power tests"
+
+config TEST_PROVIDE_PM_HOOKS
+	bool "Provide PM hooks for test purposes"
+	default y
+	select HAS_PM
+
+config TEST_BOARD_EC_QUIRKS
+	bool "Board EC quirks tests"
+
+source "Kconfig.zephyr"

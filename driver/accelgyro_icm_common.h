@@ -15,6 +15,12 @@
 
 #include <sys/types.h>
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 23
+
 #if !defined(CONFIG_ACCELGYRO_ICM_COMM_SPI) && \
 	!defined(CONFIG_ACCELGYRO_ICM_COMM_I2C)
 #error "ICM must use either SPI or I2C communication"
@@ -45,18 +51,18 @@ struct icm_drv_data_t {
  * - 8 bits MSB coding bank number
  * - 8 bits LSB coding physical address
  */
-#define ICM426XX_REG_GET_BANK(_r) (((_r)&0xFF00) >> 8)
-#define ICM426XX_REG_GET_ADDR(_r) ((_r)&0x00FF)
+#define ICM426XX_REG_GET_BANK(_r) (((_r) & 0xFF00) >> 8)
+#define ICM426XX_REG_GET_ADDR(_r) ((_r) & 0x00FF)
 
 /* Sensor resolution in number of bits */
 #define ICM_RESOLUTION 16
 
 /**
- * sign_extend - sign extend a standard int value using the given sign-bit
+ * icm_sign_extend - sign extend a standard int value using the given sign-bit
  * @value: value to sign extend
  * @index: 0 based bit index to sign bit
  */
-static inline int sign_extend(int value, int index)
+static inline int icm_sign_extend(int value, int index)
 {
 	int shift = (sizeof(int) * 8) - index - 1;
 

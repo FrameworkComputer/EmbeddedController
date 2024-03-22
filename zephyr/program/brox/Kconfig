@@ -1,0 +1,27 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_BROX
+	bool "Google Brox Board"
+	help
+	  Build Google Brox reference board.  This board uses an Intel RPL SoC
+	  and ITE EC
+
+module = Brox
+module-str = Brox board-specific code
+source "subsys/logging/Kconfig.template.log_config"
+
+choice PLATFORM_EC_USBC_STACK
+	default PLATFORM_EC_USB_PD_CONTROLLER
+endchoice
+
+# TODO: b/326152804 - Brox: EC SW sync not working
+# HW based hash always generates the same result.  Switch to the SW based
+# hash until a root cause is identified.
+choice PLATFORM_EC_SHA256_MODE
+	default PLATFORM_EC_SHA256_SW
+endchoice
+
+
+source "Kconfig.zephyr"

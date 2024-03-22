@@ -1,0 +1,225 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "common.dtsi"
+#include "../program/corsola/ite_gpio.dtsi"
+#include "../program/corsola/ite_interrupts.dtsi"
+#include "../program/corsola/ite_motionsense.dtsi"
+#include "../program/corsola/woobat/cbi.dtsi"
+#include "../program/corsola/woobat/thermistor.dtsi"
+
+/* remove pinctrl to avoid pull in too many unwanted dependency */
+/delete-node/ &pinctrl;
+
+/delete-node/ &{/hibernate-wake-pins};
+
+/*
+ * The unused-pins functionality is not currently tested. Remove
+ * to avoid mismatches in the GPIO flags configuration.
+ */
+/delete-node/ &{/unused-pins};
+
+/ {
+	name_temp_charger: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+
+		thermistor = <&thermistor_rt9490>;
+		adc = <&adc_charger>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_charger: charger {
+			status = "okay";
+			sensor = <&name_temp_charger>;
+		};
+	};
+
+	named-gpios {
+		/delete-node/ usb_c0_ppc_bc12_int_odl;
+
+		usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
+			gpios = <&gpiod 1 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
+		};
+
+		usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {
+			gpios = <&gpiof 1 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
+		};
+
+		/delete-node/ usb_c0_ppc_frsinfo;
+
+		usb_c0_frs_en: usb_c0_frs_en {
+			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_USB_C0_FRS_EN";
+		};
+	};
+
+	gpio-interrupts {
+		/delete-node/ usb_c0_ppc_bc12;
+	};
+
+	aliases {
+		/*
+		 * motion sense's <>_INT_EVENT is handled
+		 * by alias. Using the alias, each driver creates
+		 * its own <>_INT_EVENT.
+		 */
+		bmi3xx-int = &base_accel;
+		bma4xx-int = &lid_accel;
+	};
+
+	named-i2c-ports {
+	    compatible = "named-i2c-ports";
+
+	    i2c_sensor: i2c-sensor {
+		    i2c-port = <&i2c0>;
+		    enum-names = "I2C_PORT_SENSOR";
+	    };
+	    i2c_eeprom: i2c-eeprom {
+		    i2c-port = <&i2c0>;
+		    enum-names = "I2C_PORT_EEPROM";
+	    };
+	};
+
+	gpio-interrupts {
+		int_base_imu: base_imu {
+			handler = "base_sensor_interrupt";
+		};
+
+		int_lid_imu: lid_imu {
+			handler = "lid_sensor_interrupt";
+		};
+
+		int_usb_c0_ppc: usb_c0_ppc {
+			irq-pin = <&usb_c0_ppc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+
+		int_usb_c0_bc12: usb_c0_bc12 {
+			 irq-pin = <&usb_c0_bc12_int_odl>;
+			 flags = <GPIO_INT_EDGE_FALLING>;
+			 handler = "bc12_interrupt";
+		};
+
+		int_x_ec_gpio2: x_ec_gpio2 {
+			/* We have bypassed the db detection, so link
+			 * int_x_ec_gpio2 to ppc_interrupt directly.
+			 */
+			handler = "ppc_interrupt";
+		};
+	};
+
+	/*
+	 * change all underlying sensor drivers to bmi260 to have a easier way
+	 * to mock interrupt handlers.
+	 */
+	motionsense-sensor-data {
+		bmi323_data: bmi323-drv-data {
+			compatible = "cros-ec,drvdata-bmi260";
+			status = "okay";
+		};
+
+		bma422_data: bma422-drv-data {
+			compatible = "cros-ec,drvdata-bmi260";
+			status = "okay";
+		};
+	};
+
+	motionsense-sensor-alt {
+		alt_lid_accel: alt-lid-accel {
+			compatible = "cros-ec,bmi260-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			port = <&i2c_sensor>;
+			drv-data = <&bma422_data>;
+			alternate-for = <&lid_accel>;
+			mutex = <&lid_mutex>;
+		};
+
+		alt_base_accel: alt-base-accel {
+			compatible = "cros-ec,bmi260-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			port = <&i2c_sensor>;
+			drv-data = <&bmi323_data>;
+			alternate-for = <&base_accel>;
+			mutex = <&base_mutex>;
+		};
+
+		alt_base_gyro: alt-base-gyro {
+			compatible = "cros-ec,bmi260-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			port = <&i2c_sensor>;
+			drv-data = <&bmi323_data>;
+			alternate-for = <&base_gyro>;
+			mutex = <&base_mutex>;
+		};
+	};
+
+	usbc {
+		/delete-node/ port1@1;
+		/delete-node/ port1-muxes;
+	};
+};
+
+&i2c0 {
+	status="okay";
+
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+
+	ppc0_emul: syv682x@40 {
+		compatible = "zephyr,syv682x-emul";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&usb_c0_frs_en>;
+		alert_gpio = <&usb_c0_ppc_int_odl>;
+	};
+
+	/delete-node/ syv682x@42;
+	/delete-node/ syv682x@43;
+	/delete-node/ rt1718s@2c;
+
+};
+
+&i2c4 {
+	/delete-node/ tusb1064-mux-1@44;
+};
+
+&lid_accel {
+	compatible = "cros-ec,bmi260-accel";
+};
+
+&base_accel {
+	compatible = "cros-ec,bmi260-accel";
+};
+
+&base_gyro {
+	compatible = "cros-ec,bmi260-gyro";
+};
+
+&icm42607_data {
+	compatible = "cros-ec,drvdata-bmi260";
+};
+
+&lis2dw12_data {
+	compatible = "cros-ec,drvdata-bmi260";
+};

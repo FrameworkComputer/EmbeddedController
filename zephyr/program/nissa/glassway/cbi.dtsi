@@ -1,0 +1,75 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+  /* Glassway-specific fw_config fields. */
+	nissa-fw-config {
+		/*
+		 * FW_CONFIG field to enable fan or not.
+		 */
+		thermal_solution {
+			enum-name = "FW_THERMAL_SOLUTION";
+			start = <0>;
+			size = <1>;
+
+			passive {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_SOLUTION_PASSIVE";
+				value = <0>;
+			};
+			active {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_SOLUTION_ACTIVE";
+				value = <1>;
+				default;
+			};
+		};
+		/*
+		 * FW_CONFIG field to describe sub board.
+		 */
+		sub-board {
+			enum-name = "FW_SUB_BOARD";
+			start = <5>;
+			size = <3>;
+
+			sub-board-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_1";
+				value = <1>;
+			};
+			sub-board-2 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_2";
+				value = <2>;
+			};
+			sub-board-3 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_3";
+				value = <3>;
+				default;
+			};
+		};
+		/*
+		 * FW_CONFIG field to enable TypeC BC1.2.
+		 */
+		typec-bc12 {
+			enum-name = "FW_TYPEC_BC12";
+			start = <9>;
+			size = <1>;
+
+			absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TYPEC_BC12_ABSENT";
+				value = <0>;
+				default;
+			};
+			present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TYPEC_BC12_PRESENT";
+				value = <1>;
+			};
+		};
+	};
+};

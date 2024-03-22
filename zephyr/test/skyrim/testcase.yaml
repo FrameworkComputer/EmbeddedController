@@ -10,9 +10,25 @@ tests:
     extra_configs:
     - CONFIG_TEST_BOARD_BASEBOARD=y
 
+  skyrim.baseboard.i2c_policy:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BASEBOARD=y
+    - CONFIG_TEST_BOARD_I2C_POLICY=y
+
+  skyrim.baseboard.usbc_config:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BASEBOARD=y
+    - CONFIG_PLATFORM_EC_USBC=n
+    - CONFIG_TEST_BOARD_USBC_CONFIG=y
+    - CONFIG_PLATFORM_EC_USB_PD_TCPM_TCPCI=y
+    - CONFIG_PLATFORM_EC_USB_PD_TCPM_NCT38XX=y
+    - CONFIG_PLATFORM_EC_USB_CHARGER=y
+    - CONFIG_PLATFORM_EC_USB_PD_5V_EN_CUSTOM=y
+
   skyrim.baseboard.power_signals:
     extra_configs:
     - CONFIG_TEST_BOARD_BASEBOARD=y
+    - CONFIG_PLATFORM_EC_USBC=n
     - CONFIG_TEST_BOARD_POWER_SIGNALS=y
     - CONFIG_PLATFORM_EC_AMD_STB_DUMP=y
     - CONFIG_PLATFORM_EC_THROTTLE_AP=y
@@ -22,11 +38,13 @@ tests:
   skyrim.baseboard.usb_pd_policy:
     extra_configs:
     - CONFIG_TEST_BOARD_BASEBOARD=y
+    - CONFIG_PLATFORM_EC_USBC=n
     - CONFIG_TEST_BOARD_USB_PD_POLICY=y
 
   skyrim.baseboard.usb_pd_policy.discharge:
     extra_configs:
     - CONFIG_TEST_BOARD_BASEBOARD=y
+    - CONFIG_PLATFORM_EC_USBC=n
     - CONFIG_TEST_BOARD_USB_PD_POLICY=y
     - CONFIG_USB_PD_DISCHARGE=y
 
@@ -39,16 +57,23 @@ tests:
     extra_configs:
     - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
     - CONFIG_TEST_BOARD_FAN=y
+    - CONFIG_TEST_BOARD_FAN_CUSTOM=y
+    - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
 
-  skyrim.crystaldrift.ppc_config:
-    extra_configs:
-    - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
-    - CONFIG_TEST_BOARD_PPC_CONFIG_CUSTOM=y
-
+    extra_dtc_overlay_files:
+    - ./boards/crystaldrift/crystaldrift.dtsi
   skyrim.crystaldrift.usb_mux_config:
     extra_configs:
     - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
+    - CONFIG_PLATFORM_EC_USBC=n
     - CONFIG_TEST_BOARD_USB_MUX_CONFIG_CUSTOM=y
+
+  skyrim.crystaldrift.form_factor:
+    extra_configs:
+    - CONFIG_TEST_BOARD_CRYSTALDRIFT=y
+    - CONFIG_TEST_BOARD_FORM_FACTOR=y
+    extra_dtc_overlay_files:
+    - ./boards/skyrim/skyrim.dtsi
 
   # Frostflow tests
   skyrim.frostflow:
@@ -58,11 +83,13 @@ tests:
   skyrim.frostflow.ppc_config:
     extra_configs:
     - CONFIG_TEST_BOARD_FROSTFLOW=y
+    - CONFIG_PLATFORM_EC_USBC=n
     - CONFIG_TEST_BOARD_PPC_CONFIG=y
 
   skyrim.frostflow.usb_mux_config:
     extra_configs:
     - CONFIG_TEST_BOARD_FROSTFLOW=y
+    - CONFIG_PLATFORM_EC_USBC=n
     - CONFIG_TEST_BOARD_USB_MUX_CONFIG_CUSTOM=y
 
   # Markarth tests
@@ -73,11 +100,13 @@ tests:
   skyrim.markarth.ppc_config:
     extra_configs:
     - CONFIG_TEST_BOARD_MARKARTH=y
+    - CONFIG_PLATFORM_EC_USBC=n
     - CONFIG_TEST_BOARD_PPC_CONFIG=y
 
   skyrim.markarth.usb_mux_config:
     extra_configs:
     - CONFIG_TEST_BOARD_MARKARTH=y
+    - CONFIG_PLATFORM_EC_USBC=n
     - CONFIG_TEST_BOARD_USB_MUX_CONFIG_CUSTOM=y
 
   # Skyrim tests
@@ -105,11 +134,13 @@ tests:
   skyrim.skyrim.ppc_config:
     extra_configs:
     - CONFIG_TEST_BOARD_SKYRIM=y
+    - CONFIG_PLATFORM_EC_USBC=n
     - CONFIG_TEST_BOARD_PPC_CONFIG=y
 
   skyrim.skyrim.usb_mux_config:
     extra_configs:
     - CONFIG_TEST_BOARD_SKYRIM=y
+    - CONFIG_PLATFORM_EC_USBC=n
     - CONFIG_TEST_BOARD_USB_MUX_CONFIG_CUSTOM=y
 
   # Winterhold tests
@@ -117,14 +148,15 @@ tests:
     extra_configs:
     - CONFIG_TEST_BOARD_WINTERHOLD=y
 
-  skyrim.winterhold.ppc_config:
+  skyrim.winterhold.alt_charger:
     extra_configs:
     - CONFIG_TEST_BOARD_WINTERHOLD=y
-    - CONFIG_TEST_BOARD_PPC_CONFIG_CUSTOM=y
+    - CONFIG_TEST_BOARD_ALT_CHARGER_CUSTOM=y
 
   skyrim.winterhold.usb_mux_config:
     extra_configs:
     - CONFIG_TEST_BOARD_WINTERHOLD=y
+    - CONFIG_PLATFORM_EC_USBC=n
     - CONFIG_TEST_BOARD_USB_MUX_CONFIG_CUSTOM=y
 
   skyrim.winterhold.fan:

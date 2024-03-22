@@ -10,6 +10,7 @@
 #include "temp_sensor.h"
 #include "temp_sensor/temp_sensor.h"
 #include "test/drivers/test_state.h"
+#include "test/drivers/utils.h"
 #include "timer.h"
 
 #include <math.h>
@@ -265,6 +266,70 @@ ZTEST_USER(temp_sensor, test_temp_sensor_pct2075_fail)
 	zassert_equal(MILLI_KELVIN_TO_KELVIN(mk2), temp);
 }
 
+/*
+ * Test we see reasonable prints from temperature sensors on the console
+ */
+ZTEST_USER(temp_sensor, test_temps_print_good)
+{
+	check_console_cmd("temps", "K (= ", EC_SUCCESS, __FILE__, __LINE__);
+}
+
+/*
+ * Test we see error returns for an unpowered sensor
+ */
+ZTEST_USER(temp_sensor, test_temps_print_unpowered)
+{
+	const struct device *gpio_dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_EC_PG_PIN_TEMP_PATH, gpios));
+
+	zassert_not_null(gpio_dev, "Cannot get GPIO device");
+
+	/* ec_pg_pin_temp = 0 means temperature sensors are not powered. */
+	zassert_ok(gpio_emul_input_set(gpio_dev, GPIO_EC_PG_PIN_TEMP_PORT, 0),
+		   NULL);
+
+	check_console_cmd("temps", "Not powered", EC_ERROR_NOT_POWERED,
+			  __FILE__, __LINE__);
+}
+
+/* Test that we report temp sensor info up to the AP if asked */
+ZTEST_USER(temp_sensor, test_temp_get_info_good)
+{
+	struct ec_params_temp_sensor_get_info params = {
+		.id = 0,
+	};
+	struct ec_response_temp_sensor_get_info response;
+
+	zassert_ok(ec_cmd_temp_sensor_get_info(NULL, &params, &response));
+	zassert_equal(response.sensor_type, TEMP_SENSOR_TYPE_BOARD);
+}
+
+ZTEST_USER(temp_sensor, test_temp_get_info_failure)
+{
+	struct ec_params_temp_sensor_get_info params = {
+		.id = TEMP_SENSOR_COUNT,
+	};
+	struct ec_response_temp_sensor_get_info response;
+
+	zassert_equal(ec_cmd_temp_sensor_get_info(NULL, &params, &response),
+		      EC_RES_ERROR);
+}
+
+static void temp_sensor_after(void *fixture)
+{
+	/* Clean up any PGOOD pin changes */
+	const struct device *dev =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_PG_EC_DSW_PWROK_PATH, gpios));
+	const struct device *dev_pin =
+		DEVICE_DT_GET(DT_GPIO_CTLR(GPIO_EC_PG_PIN_TEMP_PATH, gpios));
+
+	zassert_not_null(dev, NULL);
+	zassert_ok(gpio_emul_input_set(dev, GPIO_PG_EC_DSW_PWROK_PORT, 1),
+		   NULL);
+	zassert_ok(gpio_emul_input_set(dev_pin, GPIO_EC_PG_PIN_TEMP_PORT, 1),
+		   NULL);
+}
+
 static void *temp_sensor_setup(void)
 {
 	const struct device *dev =
@@ -290,4 +355,4 @@ static void *temp_sensor_setup(void)
 }
 
 ZTEST_SUITE(temp_sensor, drivers_predicate_post_main, temp_sensor_setup, NULL,
-	    NULL, NULL);
+	    temp_sensor_after, NULL);

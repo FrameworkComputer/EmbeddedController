@@ -2,7 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if SOC_FAMILY_RISCV_ITE
+if SOC_FAMILY_ITE_EC
 
 # Code RAM base for IT8XXX2
 config CROS_EC_PROGRAM_MEMORY_BASE
@@ -31,4 +31,4 @@ config CROS_EC_RW_MEM_OFF
 config FLASH_LOAD_OFFSET
 	default CROS_EC_RW_MEM_OFF if CROS_EC_RW
 
-endif # SOC_FAMILY_RISCV_ITE
+endif # SOC_FAMILY_ITE_EC

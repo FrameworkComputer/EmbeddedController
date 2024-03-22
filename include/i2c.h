@@ -41,10 +41,10 @@
 /* BIT(15) SPI_FLAG - used in motion_sense to overload address */
 #define I2C_FLAG_ADDR_IS_SPI BIT(15)
 
-#define I2C_STRIP_FLAGS(addr_flags) ((addr_flags)&I2C_ADDR_MASK)
+#define I2C_STRIP_FLAGS(addr_flags) ((addr_flags) & I2C_ADDR_MASK)
 #define I2C_IS_ADDR16_LITTLE_ENDIAN(addr_flags)	((addr_flags) & I2C_FLAG_ADDR16_LITTLE_ENDIAN)
-#define I2C_USE_PEC(addr_flags) ((addr_flags)&I2C_FLAG_PEC)
-#define I2C_IS_BIG_ENDIAN(addr_flags) ((addr_flags)&I2C_FLAG_BIG_ENDIAN)
+#define I2C_USE_PEC(addr_flags) ((addr_flags) & I2C_FLAG_PEC)
+#define I2C_IS_BIG_ENDIAN(addr_flags) ((addr_flags) & I2C_FLAG_BIG_ENDIAN)
 
 /*
  * All 7-bit addresses in the following formats
@@ -70,6 +70,10 @@
 
 /* This port allows changing speed at runtime */
 #define I2C_PORT_FLAG_DYNAMIC_SPEED BIT(0)
+
+#ifndef CONFIG_I2C_BITBANG
+#define I2C_BITBANG_PORT_COUNT 0
+#endif
 
 /*
  * Supported I2C CLK frequencies.
@@ -494,7 +498,8 @@ void i2c_init(void);
  *
  * @return true, if passthru should be allowed on the I2C command.
  */
-int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc);
+__override_proto int
+board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc);
 
 /**
  * Board level function that can indicate if a particular i2c bus is known to be

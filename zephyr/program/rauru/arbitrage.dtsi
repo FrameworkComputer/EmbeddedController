@@ -1,0 +1,17 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Fix of arbitrage auto-generated files.
+ */
+
+/ {
+	soc {
+		/* Arbitrage uses i2c2ALT, the source uses i2c2. */
+		i2c2ALT: i2c@f04400 {
+		};
+		/* Arbitrage uses i2c5ALT, the source uses i2c5. */
+		i2c5ALT: i2c@f04580 {
+		};
+	};
+};

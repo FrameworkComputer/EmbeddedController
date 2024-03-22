@@ -31,7 +31,7 @@
 
 /*****************************************************************************/
 /* This enforces the virtual OR of all throttling sources. */
-K_MUTEX_DEFINE(throttle_mutex);
+static K_MUTEX_DEFINE(throttle_mutex);
 static uint32_t throttle_request[NUM_THROTTLE_TYPES];
 static int debounced_prochot_in;
 static const struct prochot_cfg *prochot_cfg;

@@ -6,6 +6,10 @@
 #ifndef __CROS_EC_TABLET_MODE_H
 #define __CROS_EC_TABLET_MODE_H
 
+#include "common.h"
+
+#include <inttypes.h>
+
 /**
  * Get tablet mode state
  *

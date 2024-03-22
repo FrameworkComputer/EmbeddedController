@@ -30,4 +30,10 @@ struct rollback_data {
 
 int read_rollback(int region, struct rollback_data *data);
 
+#ifdef CONFIG_ZTEST
+#if !defined(CONFIG_BORINGSSL_CRYPTO) && !defined(CONFIG_LIBCRYPTOC)
+void secure_clear(void *buffer, size_t size);
+#endif
+#endif
+
 #endif /* __CROS_EC_ROLLBACK_PRIVATE_H */

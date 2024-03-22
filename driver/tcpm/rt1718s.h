@@ -179,8 +179,8 @@
 
 #define RT1718S_ADC_CTRL_01 0xF2A0
 #define RT1718S_ADC_CTRL_02 0xF2A1
-#define RT1718S_ADC_CHX_VOL_L(ch) (0xF2A6 + (ch)*2)
-#define RT1718S_ADC_CHX_VOL_H(ch) (0xF2A7 + (ch)*2)
+#define RT1718S_ADC_CHX_VOL_L(ch) (0xF2A6 + (ch) * 2)
+#define RT1718S_ADC_CHX_VOL_H(ch) (0xF2A7 + (ch) * 2)
 
 int rt1718s_write8(int port, int reg, int val);
 int rt1718s_read8(int port, int reg, int *val);

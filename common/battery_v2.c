@@ -5,6 +5,12 @@
  * Battery V2 APIs.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #include "battery.h"
 #include "charge_state.h"
 #include "common.h"
@@ -304,8 +310,8 @@ void update_dynamic_battery_info(void)
 {
 	static int batt_present;
 	uint8_t tmp;
-	int send_batt_status_event = 0;
-	int send_batt_info_event = 0;
+	__maybe_unused int send_batt_status_event = 0;
+	__maybe_unused int send_batt_info_event = 0;
 	struct charge_state_data *curr;
 	struct ec_response_battery_dynamic_info *const bd =
 		&battery_dynamic[BATT_IDX_MAIN];

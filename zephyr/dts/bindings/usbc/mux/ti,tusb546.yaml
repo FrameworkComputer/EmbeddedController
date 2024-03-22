@@ -1,0 +1,10 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: |
+  TI TUSB546 USB-C MUX
+
+include: ["i2c-device.yaml", "cros-ec,usbc-mux.yaml"]
+
+compatible: "ti,tusb546"

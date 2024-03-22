@@ -11,7 +11,12 @@ import os
 import subprocess
 import unittest
 
-import mock  # pylint:disable=import-error
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock  # pylint:disable=import-error
+
 import stack_analyzer as sa
 
 

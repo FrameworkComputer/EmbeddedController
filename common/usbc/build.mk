@@ -4,51 +4,45 @@
 
 # Build for USB Type-C and Power Delivery
 
-# Note that this variable includes the trailing "/"
-_usbc_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
-
 ifneq ($(CONFIG_USB_PD_TCPMV2),)
-all-obj-$(CONFIG_USB_PD_TCPMV2)+=$(_usbc_dir)usb_pd_timer.o
-all-obj-$(CONFIG_USB_PD_TCPMV2)+=$(_usbc_dir)usb_sm.o
-all-obj-$(CONFIG_USB_PD_TCPMV2)+=$(_usbc_dir)usbc_task.o
+common-usbc-$(CONFIG_USB_PD_TCPMV2) += usb_pd_timer.o usb_sm.o usbc_task.o
 
 # Type-C state machines
 ifneq ($(CONFIG_USB_TYPEC_SM),)
-all-obj-$(CONFIG_USB_VPD)+=$(_usbc_dir)usb_tc_vpd_sm.o
-all-obj-$(CONFIG_USB_CTVPD)+=$(_usbc_dir)usb_tc_ctvpd_sm.o
-all-obj-$(CONFIG_USB_DRP_ACC_TRYSRC)+=$(_usbc_dir)usb_tc_drp_acc_trysrc_sm.o
+common-usbc-$(CONFIG_USB_VPD) += usb_tc_vpd_sm.o
+common-usbc-$(CONFIG_USB_CTVPD) += usb_tc_ctvpd_sm.o
+common-usbc-$(CONFIG_USB_DRP_ACC_TRYSRC) += usb_tc_drp_acc_trysrc_sm.o
 endif # CONFIG_USB_TYPEC_SM
 
 # Protocol state machine
 ifneq ($(CONFIG_USB_PRL_SM),)
-all-obj-$(CONFIG_USB_PD_TCPMV2)+=$(_usbc_dir)usb_prl_sm.o
+common-usbc-$(CONFIG_USB_PD_TCPMV2) += usb_prl_sm.o
 endif # CONFIG_USB_PRL_SM
 
 # Policy Engine state machines
 ifneq ($(CONFIG_USB_PE_SM),)
-all-obj-$(CONFIG_USB_VPD)+=$(_usbc_dir)usb_pe_ctvpd_sm.o
-all-obj-$(CONFIG_USB_CTVPD)+=$(_usbc_dir)usb_pe_ctvpd_sm.o
-all-obj-$(CONFIG_USB_DRP_ACC_TRYSRC)+=$(_usbc_dir)usbc_pd_policy.o
-all-obj-$(CONFIG_USB_DRP_ACC_TRYSRC)+=$(_usbc_dir)usb_pe_drp_sm.o
-all-obj-$(CONFIG_USB_DRP_ACC_TRYSRC)+=$(_usbc_dir)usb_pd_dpm.o
-all-obj-$(CONFIG_USB_PD_VDM_AP_CONTROL)+=$(_usbc_dir)ap_vdm_control.o
-all-obj-$(CONFIG_USB_PD_DP_MODE)+=$(_usbc_dir)dp_alt_mode.o
-all-obj-$(CONFIG_USB_PD_DP_HPD_GPIO)+=$(_usbc_dir)dp_hpd_gpio.o
-all-obj-$(CONFIG_USB_PD_TBT_COMPAT_MODE)+=$(_usbc_dir)tbt_alt_mode.o
-all-obj-$(CONFIG_USB_PD_USB4)+=$(_usbc_dir)usb_mode.o
-all-obj-$(CONFIG_CMD_PD)+=$(_usbc_dir)usb_pd_console.o
-all-obj-$(CONFIG_USB_PD_HOST_CMD)+=$(_usbc_dir)usb_pd_host.o
+common-usbc-$(CONFIG_USB_VPD) += usb_pe_ctvpd_sm.o
+common-usbc-$(CONFIG_USB_CTVPD) += usb_pe_ctvpd_sm.o
+common-usbc-$(CONFIG_USB_DRP_ACC_TRYSRC) += usbc_pd_policy.o
+common-usbc-$(CONFIG_USB_DRP_ACC_TRYSRC) += usb_pe_drp_sm.o
+common-usbc-$(CONFIG_USB_DRP_ACC_TRYSRC) += usb_pd_dpm.o
+common-usbc-$(CONFIG_USB_PD_VDM_AP_CONTROL) += ap_vdm_control.o
+common-usbc-$(CONFIG_USB_PD_DP_MODE) += dp_alt_mode.o
+common-usbc-$(CONFIG_USB_PD_DP_HPD_GPIO) += dp_hpd_gpio.o
+common-usbc-$(CONFIG_USB_PD_TBT_COMPAT_MODE) += tbt_alt_mode.o
+common-usbc-$(CONFIG_USB_PD_USB4) += usb_mode.o
+common-usbc-$(CONFIG_CMD_PD) += usb_pd_console.o
+common-usbc-$(CONFIG_USB_PD_HOST_CMD) += usb_pd_host.o
 endif # CONFIG_USB_PE_SM
 
 # Retimer firmware update
-all-obj-$(CONFIG_USBC_RETIMER_FW_UPDATE)+=$(_usbc_dir)usb_retimer_fw_update.o
+common-usbc-$(CONFIG_USBC_RETIMER_FW_UPDATE) += usb_retimer_fw_update.o
 
 # ALT-DP mode for UFP ports
-all-obj-$(CONFIG_USB_PD_ALT_MODE_UFP_DP)+=$(_usbc_dir)usb_pd_dp_ufp.o
+common-usbc-$(CONFIG_USB_PD_ALT_MODE_UFP_DP) += usb_pd_dp_ufp.o
 endif # CONFIG_USB_PD_TCPMV2
 
 # For testing
-all-obj-$(CONFIG_TEST_USB_PD_TIMER)+=$(_usbc_dir)usb_pd_timer.o
-all-obj-$(CONFIG_TEST_USB_PE_SM)+=$(_usbc_dir)usbc_pd_policy.o
-all-obj-$(CONFIG_TEST_USB_PE_SM)+=$(_usbc_dir)usb_pe_drp_sm.o
-all-obj-$(CONFIG_TEST_SM)+=$(_usbc_dir)usb_sm.o
+common-usbc-$(CONFIG_TEST_USB_PD_TIMER) += usb_pd_timer.o
+common-usbc-$(CONFIG_TEST_USB_PE_SM) += usbc_pd_policy.o usb_pe_drp_sm.o
+common-usbc-$(CONFIG_TEST_SM) += usb_sm.o

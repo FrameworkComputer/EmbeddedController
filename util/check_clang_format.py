@@ -10,6 +10,7 @@ CQ.  Most users will likely find out they forgot to clang-format by
 the pre-upload checks.
 """
 
+import argparse
 import logging
 import pathlib
 import shlex
@@ -17,12 +18,10 @@ import subprocess
 import sys
 from typing import List
 
-from chromite.lib import commandline
-
 
 def main(argv=None):
     """Find all C/C++ files and runs clang-format on them."""
-    parser = commandline.ArgumentParser()
+    parser = argparse.ArgumentParser(description=__doc__)
     parser.add_argument(
         "--fix",
         action="store_true",

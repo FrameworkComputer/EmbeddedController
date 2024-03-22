@@ -320,7 +320,7 @@
 #define B38400 0x0000f
 
 /* KHZ, MHZ */
-#define KHZ(x) ((x)*1000)
+#define KHZ(x) ((x) * 1000)
 #define MHZ(x) (KHZ(x) * 1000)
 #if defined(CHIP_VARIANT_ISH5P4)
 /* Change to 100MHZ in real silicon platform */

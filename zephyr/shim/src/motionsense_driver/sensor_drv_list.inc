@@ -8,7 +8,7 @@
  * driver-specific data and an motion sensor entry in
  * motion_sensors array that are used by motion sense task.
  *
- * This file includes the .inc file and is used by motionsense_sensrs.c to
+ * This file includes the .inc file and is used by motionsense_sensors.c to
  * create the sensor driver data and the entries in mostion_sensors array.
  *
  * e.g) bma255-drvinfo.inc is provided for BMA255 chip
@@ -27,6 +27,9 @@
 #endif
 #ifdef CONFIG_PLATFORM_EC_ACCEL_KX022
 #include "kx022-drvinfo.inc"
+#endif
+#ifdef CONFIG_PLATFORM_EC_ACCEL_LIS2DS
+#include "lis2ds-drvinfo.inc"
 #endif
 #ifdef CONFIG_PLATFORM_EC_ACCEL_LIS2DW12
 #include "lis2dw12-drvinfo.inc"

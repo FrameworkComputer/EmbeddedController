@@ -11,7 +11,7 @@
 #include "compile_time_macros.h"
 #include "console.h"
 #include "ec_commands.h"
-#include "fpsensor_utils.h"
+#include "fpsensor/fpsensor_utils.h"
 #include "mock/fpsensor_crypto_mock.h"
 #include "sha256.h"
 

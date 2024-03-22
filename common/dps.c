@@ -40,7 +40,7 @@
 BUILD_ASSERT(K_MORE_PWR > K_LESS_PWR && 100 >= K_MORE_PWR && 100 >= K_LESS_PWR);
 
 /* lock for updating timeout value */
-K_MUTEX_DEFINE(dps_lock);
+static K_MUTEX_DEFINE(dps_lock);
 static timestamp_t timeout;
 static bool is_enabled = true;
 static int debug_level;

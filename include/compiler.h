@@ -9,11 +9,22 @@
 /*
  * See https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
  */
-#ifndef CONFIG_ZEPHYR
-/* If building with Zephyr, use its GCC version. */
-#define GCC_VERSION \
+#define __GCC_VERSION \
 	(__GNUC__ * 10000 + __GNUC_MINOR__ * 100 + __GNUC_PATCHLEVEL__)
-#endif /* !CONFIG_ZEPHYR */
+
+/*
+ * If TOOLCHAIN_GCC_VERSION is defined, check if it equals to __GCC_VERSION
+ * value expected by EC code. Otherwise, define it as __GCC_VERSION.
+ *
+ * Zephyr defines TOOLCHAIN_GCC_VERSION.
+ */
+#ifdef TOOLCHAIN_GCC_VERSION
+#if TOOLCHAIN_GCC_VERSION != __GCC_VERSION
+#error "Zephyr TOOLCHAIN_GCC_VERSION is not equal to __GCC_VERSION"
+#endif
+#else
+#define TOOLCHAIN_GCC_VERSION __GCC_VERSION
+#endif /* TOOLCHAIN_GCC_VERSION */
 
 /*
  * The EC codebase assumes that typeof() is available but it is not in Zephyr.
@@ -92,5 +103,14 @@
 #define DISABLE_GCC_WARNING(warning)
 #define ENABLE_GCC_WARNING(warning)
 #endif
+
+/* Zephyr defines __no_optimization */
+#ifndef __no_optimization
+#ifdef __clang__
+#define __no_optimization __attribute__((optnone))
+#else
+#define __no_optimization __attribute__((optimize("-O0")))
+#endif /* __clang__ */
+#endif /* __no_optimization */
 
 #endif /* __CROS_EC_COMPILER_H */

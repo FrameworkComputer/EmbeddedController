@@ -30,7 +30,23 @@ ZTEST_USER(console_cmd_cutoff, test_sb_cutoff)
 
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected %d, but got %d",
 		      EC_RES_SUCCESS, rv);
-	zassert_true(battery_is_cut_off(), NULL);
+	zassert_true(battery_cutoff_in_progress(), NULL);
+	zassert_true(WAIT_FOR(battery_is_cut_off(), 1500000, k_msleep(250)),
+		     NULL);
+}
+
+ZTEST_USER(console_cmd_cutoff, test_sb_cutoff_timeout)
+{
+	int rv;
+
+	set_ac_enabled(false);
+
+	rv = shell_execute_cmd(get_ec_shell(), "cutoff");
+	zassert_equal(EC_RES_SUCCESS, rv, "Expected %d, but got %d",
+		      EC_RES_SUCCESS, rv);
+	zassert_true(battery_cutoff_in_progress());
+
+	zassert_false(WAIT_FOR(battery_is_cut_off(), 510000, k_msleep(250)));
 }
 
 ZTEST_USER(console_cmd_cutoff, test_invalid_arg1)

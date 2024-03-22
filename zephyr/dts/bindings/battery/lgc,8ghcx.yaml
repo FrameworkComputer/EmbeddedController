@@ -16,16 +16,12 @@ properties:
     default: "LGC-LGC3.65"
   device_name:
     default: "DELL 8GHCX"
-  ship_mode_wb_support:
-    default: 1
   ship_mode_reg_addr:
     default: 0x44
   ship_mode_reg_data:
     default: [0x0010, 0x0010]
-  fet_mfgacc_support:
-    default: 1
-  fet_mfgacc_smb_block:
-    default: 1
+  flags:
+    default: 0x0d
   fet_reg_addr:
     default: 0x0054
   fet_reg_mask:

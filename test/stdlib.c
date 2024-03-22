@@ -15,13 +15,15 @@
 #include "timer.h"
 #include "util.h"
 
-#ifdef USE_BUILTIN_STDLIB
-static const bool use_builtin_stdlib = true;
-#else
-static const bool use_builtin_stdlib = false;
+#ifndef USE_BUILTIN_STDLIB
+/* This is ugly, but we want to test the functions in builtin/stdlib.c while
+ * still depending on the system stdlib.c
+ */
+#define snprintf TESTED_snprintf
+#include "../builtin/stdlib.c"
 #endif
 
-static int test_isalpha(void)
+__no_optimization static int test_isalpha(void)
 {
 	TEST_ASSERT(isalpha('a'));
 	TEST_ASSERT(isalpha('z'));
@@ -35,7 +37,21 @@ static int test_isalpha(void)
 	return EC_SUCCESS;
 }
 
-static int test_isprint(void)
+__no_optimization static int test_isupper(void)
+{
+	TEST_ASSERT(!isupper('a'));
+	TEST_ASSERT(!isupper('z'));
+	TEST_ASSERT(isupper('A'));
+	TEST_ASSERT(isupper('Z'));
+	TEST_ASSERT(!isupper('0'));
+	TEST_ASSERT(!isupper('~'));
+	TEST_ASSERT(!isupper(' '));
+	TEST_ASSERT(!isupper('\0'));
+	TEST_ASSERT(!isupper('\n'));
+	return EC_SUCCESS;
+}
+
+__no_optimization static int test_isprint(void)
 {
 	TEST_ASSERT(isprint('a'));
 	TEST_ASSERT(isprint('z'));
@@ -49,24 +65,20 @@ static int test_isprint(void)
 	return EC_SUCCESS;
 }
 
-static int test_strstr(void)
+__no_optimization static int test_strstr(void)
 {
 	const char s1[] = "abcde";
 
 	TEST_ASSERT(strstr(s1, "ab") == s1);
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(http://b/243192369): This is incorrect and should be
-		 * fixed.
-		 */
-		TEST_ASSERT(strstr(s1, "") == NULL);
-	} else {
-		/*
-		 * From the man page: If needle is the empty string, the return
-		 * value is always haystack itself.
-		 */
-		TEST_ASSERT(strstr(s1, "") == s1);
-	}
+	/*
+	 * TODO(http://b/243192369): This is incorrect and should be
+	 * fixed.
+	 *
+	 * From the man page: If needle is the empty string, the return
+	 * value is always haystack itself.
+	 * TEST_ASSERT(strstr(s1, "") == s1);
+	 */
+	TEST_ASSERT(strstr(s1, "") == NULL);
 	TEST_ASSERT(strstr("", "ab") == NULL);
 	TEST_ASSERT(strstr("", "x") == NULL);
 	TEST_ASSERT(strstr(s1, "de") == &s1[3]);
@@ -75,7 +87,7 @@ static int test_strstr(void)
 	return EC_SUCCESS;
 }
 
-static int test_strtoull(void)
+__no_optimization static int test_strtoull(void)
 {
 	char *e;
 
@@ -86,23 +98,19 @@ static int test_strtoull(void)
 	TEST_ASSERT(strtoull("+010", &e, 0) == 8);
 	TEST_ASSERT(e && (*e == '\0'));
 
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(http://b/243192369): This is incorrect and should be
-		 * fixed.
-		 */
-		TEST_ASSERT(strtoull("-010", &e, 0) == 0);
-		TEST_ASSERT(e && (*e == '-'));
-	} else {
-		/*
-		 * From the man page: The strtoull() function returns either
-		 * the result of the conversion or, if there was a leading
-		 * minus sign, the negation of the result of the conversion
-		 * represented as an unsigned value, unless the original
-		 * (nonnegated) value would overflow
-		 */
-		TEST_ASSERT(strtoull("-010", &e, 0) == 0xFFFFFFFFFFFFFFF8);
-	}
+	/*
+	 * TODO(http://b/243192369): This is incorrect and should be
+	 * fixed.
+	 *
+	 * From the man page: The strtoull() function returns either
+	 * the result of the conversion or, if there was a leading
+	 * minus sign, the negation of the result of the conversion
+	 * represented as an unsigned value, unless the original
+	 * (nonnegated) value would overflow
+	 * TEST_ASSERT(strtoull("-010", &e, 0) == 0xFFFFFFFFFFFFFFF8);
+	 */
+	TEST_ASSERT(strtoull("-010", &e, 0) == 0);
+	TEST_ASSERT(e && (*e == '-'));
 
 	TEST_ASSERT(strtoull("0x1f z", &e, 0) == 31);
 	TEST_ASSERT(e && (*e == ' '));
@@ -115,117 +123,95 @@ static int test_strtoull(void)
 	TEST_ASSERT(strtoull("+0x02C", &e, 16) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
 
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(http://b/243192369): This is incorrect and should be
-		 * fixed.
-		 */
-		TEST_ASSERT(strtoull("-0x02C", &e, 16) == 0);
-		TEST_ASSERT(e && (*e == '-'));
-	} else {
-		TEST_ASSERT(strtoull("-0x02C", &e, 16) == 0xFFFFFFFFFFFFFFD4);
-	}
+	/*
+	 * TODO(http://b/243192369): This is incorrect and should be
+	 * fixed.
+	 * TEST_ASSERT(strtoull("-0x02C", &e, 16) == 0xFFFFFFFFFFFFFFD4);
+	 */
+	TEST_ASSERT(strtoull("-0x02C", &e, 16) == 0);
+	TEST_ASSERT(e && (*e == '-'));
 
 	TEST_ASSERT(strtoull("0x02C", &e, 0) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
 	TEST_ASSERT(strtoull("+0x02C", &e, 0) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
 
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(http://b/243192369): This is incorrect and should be
-		 * fixed.
-		 */
-		TEST_ASSERT(strtoull("-0x02C", &e, 0) == 0);
-		TEST_ASSERT(e && (*e == '-'));
-	} else {
-		TEST_ASSERT(strtoull("-0x02C", &e, 0) == 0xFFFFFFFFFFFFFFD4);
-	}
+	/*
+	 * TODO(http://b/243192369): This is incorrect and should be
+	 * fixed.
+	 * TEST_ASSERT(strtoull("-0x02C", &e, 0) == 0xFFFFFFFFFFFFFFD4);
+	 */
+	TEST_ASSERT(strtoull("-0x02C", &e, 0) == 0);
+	TEST_ASSERT(e && (*e == '-'));
 
 	TEST_ASSERT(strtoull("0X02C", &e, 16) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
 	TEST_ASSERT(strtoull("+0X02C", &e, 16) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
 
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(http://b/243192369): This is incorrect and should be
-		 * fixed.
-		 */
-		TEST_ASSERT(strtoull("-0X02C", &e, 16) == 0);
-		TEST_ASSERT(e && (*e == '-'));
-	} else {
-		TEST_ASSERT(strtoull("-0X02C", &e, 16) == 0xFFFFFFFFFFFFFFD4);
-	}
+	/*
+	 * TODO(http://b/243192369): This is incorrect and should be
+	 * fixed.
+	 * TEST_ASSERT(strtoull("-0X02C", &e, 16) == 0xFFFFFFFFFFFFFFD4);
+	 */
+	TEST_ASSERT(strtoull("-0X02C", &e, 16) == 0);
+	TEST_ASSERT(e && (*e == '-'));
 
 	TEST_ASSERT(strtoull("0X02C", &e, 0) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
 	TEST_ASSERT(strtoull("+0X02C", &e, 0) == 44);
 	TEST_ASSERT(e && (*e == '\0'));
 
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(http://b/243192369): This is incorrect and should be
-		 * fixed.
-		 */
-		TEST_ASSERT(strtoull("-0X02C", &e, 0) == 0);
-		TEST_ASSERT(e && (*e == '-'));
-	} else {
-		TEST_ASSERT(strtoull("-0X02C", &e, 0) == 0xFFFFFFFFFFFFFFD4);
-	}
+	/*
+	 * TODO(http://b/243192369): This is incorrect and should be
+	 * fixed.
+	 * TEST_ASSERT(strtoull("-0X02C", &e, 0) == 0xFFFFFFFFFFFFFFD4);
+	 */
+	TEST_ASSERT(strtoull("-0X02C", &e, 0) == 0);
+	TEST_ASSERT(e && (*e == '-'));
 
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(http://b/243192369): This is incorrect and should be
-		 * fixed.
-		 */
-		TEST_ASSERT(strtoull("   -12", &e, 0) == 0);
-		TEST_ASSERT(e && (*e == '-'));
-	} else {
-		TEST_ASSERT(strtoull("   -12", &e, 0) == 0xFFFFFFFFFFFFFFF4);
-	}
+	/*
+	 * TODO(http://b/243192369): This is incorrect and should be
+	 * fixed.
+	 * TEST_ASSERT(strtoull("   -12", &e, 0) == 0xFFFFFFFFFFFFFFF4);
+	 */
+	TEST_ASSERT(strtoull("   -12", &e, 0) == 0);
+	TEST_ASSERT(e && (*e == '-'));
 
 	TEST_ASSERT(strtoull("!", &e, 0) == 0);
 	TEST_ASSERT(e && (*e == '!'));
 
 	TEST_ASSERT(strtoull("+!", &e, 0) == 0);
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(http://b/243192369): This is incorrect and should be
-		 * fixed.
-		 */
-		TEST_ASSERT(e && (*e == '!'));
-	} else {
-		TEST_ASSERT(e && (*e == '+'));
-	}
+	/*
+	 * TODO(http://b/243192369): This is incorrect and should be
+	 * fixed.
+	 * TEST_ASSERT(e && (*e == '+'));
+	 */
+	TEST_ASSERT(e && (*e == '!'));
 
 	TEST_ASSERT(strtoull("+0!", &e, 0) == 0);
 	TEST_ASSERT(e && (*e == '!'));
 
 	TEST_ASSERT(strtoull("+0x!", &e, 0) == 0);
-	if (use_builtin_stdlib) {
-		TEST_ASSERT(e && (*e == '!'));
-	} else {
-		if (IS_ENABLED(EMU_BUILD))
-			TEST_ASSERT(e && (*e == 'x'));
-		else
-			TEST_ASSERT(e && (*e == '+'));
-	}
+	/*
+	 * TODO(http://b/243192369): This is incorrect and should be
+	 * fixed.
+	 * TEST_ASSERT(e && (*e == '+'));
+	 */
+	TEST_ASSERT(e && (*e == '!'));
 
 	TEST_ASSERT(strtoull("+0X!", &e, 0) == 0);
-	if (use_builtin_stdlib) {
-		TEST_ASSERT(e && (*e == '!'));
-	} else {
-		if (IS_ENABLED(EMU_BUILD))
-			TEST_ASSERT(e && (*e == 'X'));
-		else
-			TEST_ASSERT(e && (*e == '+'));
-	}
+	/*
+	 * TODO(http://b/243192369): This is incorrect and should be
+	 * fixed.
+	 * TEST_ASSERT(e && (*e == '+'));
+	 */
+	TEST_ASSERT(e && (*e == '!'));
 
 	return EC_SUCCESS;
 }
 
-static int test_strncpy(void)
+__no_optimization static int test_strncpy(void)
 {
 	char dest[10];
 
@@ -246,7 +232,7 @@ static int test_strncpy(void)
 	return EC_SUCCESS;
 }
 
-static int test_strncmp(void)
+__no_optimization static int test_strncmp(void)
 {
 	TEST_ASSERT(strncmp("123", "123", 8) == 0);
 	TEST_ASSERT(strncmp("789", "456", 8) > 0);
@@ -255,13 +241,22 @@ static int test_strncmp(void)
 	return EC_SUCCESS;
 }
 
-static int test_strlen(void)
+__no_optimization static int test_memcmp(void)
+{
+	TEST_ASSERT(memcmp("12345678", "12345678", 8) == 0);
+	TEST_ASSERT(memcmp("78945612", "45612378", 8) > 0);
+	TEST_ASSERT(memcmp("abc", "abd", 4) < 0);
+	TEST_ASSERT(memcmp("abc", "abd", 2) == 0);
+	return EC_SUCCESS;
+}
+
+__no_optimization static int test_strlen(void)
 {
 	TEST_ASSERT(strlen("this is a string") == 16);
 	return EC_SUCCESS;
 }
 
-static int test_strnlen(void)
+__no_optimization static int test_strnlen(void)
 {
 	TEST_ASSERT(strnlen("this is a string", 17) == 16);
 	TEST_ASSERT(strnlen("this is a string", 16) == 16);
@@ -270,7 +265,7 @@ static int test_strnlen(void)
 	return EC_SUCCESS;
 }
 
-static int test_strcasecmp(void)
+__no_optimization static int test_strcasecmp(void)
 {
 	TEST_ASSERT(strcasecmp("test string", "TEST strIng") == 0);
 	TEST_ASSERT(strcasecmp("test123!@#", "TesT123!@#") == 0);
@@ -278,7 +273,7 @@ static int test_strcasecmp(void)
 	return EC_SUCCESS;
 }
 
-static int test_strncasecmp(void)
+__no_optimization static int test_strncasecmp(void)
 {
 	TEST_ASSERT(strncasecmp("test string", "TEST str", 4) == 0);
 	TEST_ASSERT(strncasecmp("test string", "TEST str", 8) == 0);
@@ -289,7 +284,7 @@ static int test_strncasecmp(void)
 	return EC_SUCCESS;
 }
 
-static int test_atoi(void)
+__no_optimization static int test_atoi(void)
 {
 	TEST_ASSERT(atoi("  901") == 901);
 	TEST_ASSERT(atoi("-12c") == -12);
@@ -298,7 +293,7 @@ static int test_atoi(void)
 	return EC_SUCCESS;
 }
 
-static int test_snprintf(void)
+__no_optimization static int test_snprintf(void)
 {
 	char buffer[32];
 
@@ -307,7 +302,7 @@ static int test_snprintf(void)
 	return EC_SUCCESS;
 }
 
-static int test_strcspn(void)
+__no_optimization static int test_strcspn(void)
 {
 	const char str1[] = "abc";
 	const char str2[] = "This is a string\nwith newlines!";
@@ -364,7 +359,7 @@ static int test_memmove(void)
 	ccprintf(" %" PRId64 " us) ", t3.val - t2.val);
 	TEST_ASSERT_ARRAY_EQ(buf + 100, buf, len);
 
-	if (!IS_ENABLED(EMU_BUILD) && use_builtin_stdlib)
+	if (!IS_ENABLED(EMU_BUILD))
 		TEST_ASSERT((t1.val - t0.val) > (t3.val - t2.val));
 
 	/* Test small moves */
@@ -481,7 +476,7 @@ static int test_memset(void)
 	return EC_SUCCESS;
 }
 
-static int test_memchr(void)
+__no_optimization static int test_memchr(void)
 {
 	char *buf = "1234";
 
@@ -497,6 +492,7 @@ void run_test(int argc, const char **argv)
 	test_reset();
 
 	RUN_TEST(test_isalpha);
+	RUN_TEST(test_isupper);
 	RUN_TEST(test_isprint);
 	RUN_TEST(test_strstr);
 	RUN_TEST(test_strtoull);
@@ -513,6 +509,7 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_memcpy);
 	RUN_TEST(test_memset);
 	RUN_TEST(test_memchr);
+	RUN_TEST(test_memcmp);
 
 	test_print_result();
 }

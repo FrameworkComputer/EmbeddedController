@@ -1,0 +1,15 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+
+		/* Legacy system code requires GPIO_ENTERING_RW symbol */
+		gpio_ec_entering_rw: ec_entering_rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+};

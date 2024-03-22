@@ -3,7 +3,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
+"""Wrapper for invoking Twister
+
 This script is a wrapper for invoking Twister, the Zephyr test runner, using
 default parameters for the ChromiumOS EC project. For an overview of CLI
 parameters that may be used, please consult the Twister documentation.
@@ -83,7 +84,6 @@ parameters that may be used, please consult the Twister documentation.
 
 import argparse
 import hashlib
-import json
 import os
 import pathlib
 from pathlib import Path
@@ -97,6 +97,7 @@ import sys
 import tempfile
 import time
 from typing import List
+import uuid
 
 
 # Paths under the EC base dir that contain tests. This is used to define
@@ -108,6 +109,8 @@ EC_TEST_PATHS = [
 
 # Paths under ZEPHYR_BASE that we also wish to search for test cases.
 ZEPHYR_TEST_PATHS = [
+    Path("tests/drivers/fuel_gauge/sbs_gauge"),
+    Path("tests/drivers/gpio"),
     Path("tests/subsys/shell"),
 ]
 
@@ -146,6 +149,7 @@ def find_paths():
                 cros_checkout / "src" / "third_party" / "zephyr" / "main"
             )
         zephyr_modules_dir = cros_checkout / "src" / "third_party" / "zephyr"
+        pigweed_dir = cros_checkout / "src" / "third_party" / "pigweed"
     else:
         try:
             ec_base = Path(os.environ["EC_DIR"]).resolve()
@@ -168,7 +172,14 @@ def find_paths():
                 "MODULES_DIR unspecified. Please pass as env var or use chroot."
             ) from err
 
-    return (ec_base, zephyr_base, zephyr_modules_dir)
+        try:
+            pigweed_dir = Path(os.environ["PIGWEED_DIR"]).resolve()
+        except KeyError as err:
+            raise RuntimeError(
+                "PIGWEED_DIR unspecified. Please pass as env var to use chroot."
+            ) from err
+
+    return ec_base, zephyr_base, zephyr_modules_dir, pigweed_dir
 
 
 def find_modules(mod_dir: Path) -> list:
@@ -241,26 +252,6 @@ def upload_results(ec_base, outdir):
     return flag
 
 
-def check_for_skipped_tests(outdir):
-    """Checks Twister json test report for skipped tests"""
-    found_skipped = False
-    json_path = pathlib.Path(outdir) / "twister.json"
-    if json_path.exists():
-        with open(json_path, encoding="utf-8") as file:
-            data = json.load(file)
-
-            for testsuite in data["testsuites"]:
-                for testcase in testsuite["testcases"]:
-                    if testcase["status"] == "skipped":
-                        tc_name = testcase["identifier"]
-                        print(f"TEST SKIPPED: {tc_name}")
-                        found_skipped = True
-
-            file.close()
-
-    return found_skipped
-
-
 def append_cmake_compiler(cmdline, cmake_var, exe_options):
     """Picks the first available exe from exe_options and adds a cmake variable
     to cmdline."""
@@ -316,7 +307,7 @@ def in_fwsdk() -> bool:
             stderr=subprocess.DEVNULL,
             check=True,
         )
-    except subprocess.CalledProcessError:
+    except (subprocess.CalledProcessError, FileNotFoundError):
         return False
     return True
 
@@ -337,25 +328,91 @@ def maybe_relaunch_in_bazel(
     if running_in_bazel():
         return False
 
+    # We want to parse args specially handled in fwsdk
+    parser = argparse.ArgumentParser(add_help=False)
+
+    # We intercept build-only/test-only because bazel should handle whether we build or not
+    parser.add_argument("--test-only", action="store_true")
+    parser.add_argument("-b", "--build-only", action="store_true")
+    parser.add_argument("--prep-artifacts-for-testing", action="store_true")
+    # We intercept testsuite-root to resolve paths.
+    parser.add_argument("-T", "--testsuite-root", action="append")
+
+    known_args, unknown_args = parser.parse_known_args(args=argv)
+    args_from_fwsdk = []
+
+    if known_args.test_only:
+        print(
+            "--test-only is not compatible with Bazel twister_launcher, remove it.",
+            file=sys.stderr,
+        )
+        sys.exit(22)  # UNIX Invalid Argument error code
+
+    if known_args.testsuite_root:
+        for arg in known_args.testsuite_root:
+            args_from_fwsdk.extend(["-T", str(Path(arg).resolve())])
+
+    argv = args_from_fwsdk + unknown_args
+
     gen_starlark = f"""
 load(
-    "//platform/rules_cros_firmware/cros_firmware/twister:twister.bzl",
-    "twister_test_binary",
+    "//platform/ec/bazel:twister.bzl",
+    "twister_test",
 )
-twister_test_binary(
+twister_test(
     name = "run_twister",
     args = {argv!r},
     cwd = {str(cwd)!r},
 )"""
     run_hash = hashlib.md5(gen_starlark.encode("utf-8")).hexdigest()
-    twister_bzl_dir = Path(__file__).parent.parent / "build" / "twister-bzl"
+    build_dir = Path(__file__).resolve().parent.parent / "build"
+    twister_bzl_dir = build_dir / "twister-bzl"
     run_dir = twister_bzl_dir / run_hash
 
     if not run_dir.is_dir():
         run_dir.mkdir(parents=True)
         (run_dir / "BUILD.bazel").write_text(gen_starlark, encoding="utf-8")
 
-    bazel_cmd = ["bazel", "build", ":run_twister"]
+    # Twister users are used to seeing `twister-out`; symlink it to bazel twister-out
+    bazel_bin = Path(
+        subprocess.run(
+            ["bazel", "info", "bazel-bin"],
+            cwd=Path(__file__).resolve().parent,
+            check=True,
+            stdout=subprocess.PIPE,
+            encoding="utf-8",
+        ).stdout.strip()
+    )
+
+    ec_twister_out = Path("twister-out_build")
+    bazel_twister_out = (
+        # TODO b/293119619: Create symlink for test execution output too.
+        bazel_bin
+        / "platform/ec/build/twister-bzl"
+        / run_hash
+        / "twister-out_build"
+    )
+
+    # Atomically symlink to twister out/build directory
+    # Largely taken from chromite.osutils.SafeSymlink()
+    tmp_twister_out = ec_twister_out.with_name(
+        f".tmp-{ec_twister_out.name}-{uuid.uuid4().hex}"
+    )
+    try:
+        tmp_twister_out.symlink_to(bazel_twister_out)
+        tmp_twister_out.rename(ec_twister_out)
+    except OSError:
+        # Clean up temporary symlink if rename failed
+        tmp_twister_out.unlink(missing_ok=True)
+
+    # Bazel likes to cache test executions, we're not interested in this behavior.
+    bazel_cmd = ["bazel", "test", ":run_twister"]
+
+    bazel_cmd.append("--test_output=all")
+    # Bazel likes to cache test results in addition to builds.
+    bazel_cmd.append("--nocache_test_results")
+    # By default be as verbose as twister is.
+    bazel_cmd.append("--test_output=streamed")
     if sandbox_debug:
         bazel_cmd.append("--sandbox_debug")
 
@@ -377,14 +434,18 @@ def main():
         os.chdir(os.environ["BAZEL_TWISTER_CWD"])
 
     # Get paths for the build.
-    ec_base, zephyr_base, zephyr_modules_dir = find_paths()
+    ec_base, zephyr_base, zephyr_modules_dir, pigweed_dir = find_paths()
 
+    zephyr_base = zephyr_base.resolve()
     zephyr_modules = find_modules(zephyr_modules_dir)
 
     # Add the EC dir as a module if not already included (resolve all paths to
     # account for symlinked or relative paths)
     if ec_base.resolve() not in zephyr_modules:
         zephyr_modules.append(ec_base)
+
+    if pigweed_dir.resolve() not in zephyr_modules:
+        zephyr_modules.append(pigweed_dir)
 
     # Twister CLI args
     twister_cli = [
@@ -395,7 +456,7 @@ def main():
         f"-x=SYSCALL_INCLUDE_DIRS={str(ec_base / 'zephyr' / 'include' / 'drivers')}",
         f"-x=ZEPHYR_BASE={zephyr_base}",
         f"-x=ZEPHYR_MODULES={';'.join([str(p) for p in zephyr_modules])}",
-        f"-x=PYTHON_EXECUTABLE={sys.executable}",
+        f"-x=Python3_EXECUTABLE={sys.executable}",
     ]
 
     # `-T` flags (used for specifying test directories to build and run)
@@ -447,6 +508,11 @@ def main():
         "--help",
         action="store_true",
     )
+    parser.add_argument(
+        "-C",
+        "--coverage",
+        action="store_true",
+    )
 
     intercepted_args, other_args = parser.parse_known_args()
 
@@ -459,6 +525,12 @@ def main():
             Path.cwd(),
             sandbox_debug=intercepted_args.sandbox_debug,
         )
+
+    # Zephyr upstream defaults to using gcovr, but this isn't
+    # available in the chroot.  Force our runs to use lcov.
+    if intercepted_args.coverage:
+        twister_cli.append("--coverage")
+        twister_cli.extend(["--coverage-tool", "lcov"])
 
     for _ in range(intercepted_args.verbose):
         # Pass verbosity setting through to twister
@@ -488,23 +560,22 @@ def main():
         # posix_native and unit_testing when nothing was requested by user.
         twister_cli.extend(["-p", "native_posix"])
         twister_cli.extend(["-p", "unit_testing"])
+        twister_cli.extend(["-p", "native_sim"])
 
     twister_cli.extend(["--outdir", intercepted_args.outdir])
-
-    toolchain_root = (
-        str(ec_base / "zephyr") if in_cros_sdk() else str(zephyr_base)
-    )
-    twister_cli.extend([f"-x=TOOLCHAIN_ROOT={toolchain_root}"])
 
     # Prepare environment variables for export to Twister. Inherit the parent
     # process's environment, but set some default values if not already set.
     twister_env = dict(os.environ)
     with tempfile.TemporaryDirectory() as parsetab_dir:
+        toolchain_root = os.environ.get(
+            "TOOLCHAIN_ROOT",
+            str(ec_base / "zephyr") if in_cros_sdk() else str(zephyr_base),
+        )
+
+        twister_cli.extend([f"-x=TOOLCHAIN_ROOT={toolchain_root}"])
         extra_env_vars = {
-            "TOOLCHAIN_ROOT": os.environ.get(
-                "TOOLCHAIN_ROOT",
-                str(ec_base / "zephyr") if in_cros_sdk() else str(zephyr_base),
-            ),
+            "TOOLCHAIN_ROOT": toolchain_root,
             # TODO(https://github.com/zephyrproject-rtos/zephyr/issues/59453):
             # This ought to be passed as a CMake variable but can't due to how
             # Zephyr calls verify-toolchain.cmake
@@ -554,14 +625,12 @@ def main():
             close_fds=False,  # For GNUMakefile jobserver
         )
 
-        if check_for_skipped_tests(intercepted_args.outdir):
-            result.returncode = 1
-
         if result.returncode == 0:
             print("TEST EXECUTION SUCCESSFUL")
         else:
             print("TEST EXECUTION FAILED")
 
+        # TODO(b/295197371): Add rdb support for test builds in fwsdk
         if is_tool("rdb") and intercepted_args.upload_cros_rdb:
             upload_results(ec_base, intercepted_args.outdir)
 

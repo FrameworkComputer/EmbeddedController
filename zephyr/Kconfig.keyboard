@@ -3,12 +3,27 @@
 # found in the LICENSE file.
 
 CHOSEN_CROS_EC_RAW_KB := cros-ec,raw-kb
+CHOSEN_CROS_EC_KEYBOARD := cros-ec,keyboard
 
 menuconfig PLATFORM_EC_KEYBOARD
 	bool "Keyboard support"
 	default y
-	depends on DT_HAS_CROS_KEYSCAN_ENABLED || $(dt_chosen_enabled,$(CHOSEN_CROS_EC_RAW_KB))
+	depends on ($(dt_chosen_enabled,$(CHOSEN_CROS_EC_RAW_KB)) || $(dt_chosen_enabled,$(CHOSEN_CROS_EC_KEYBOARD)) || $(dt_nodelabel_enabled,kb_discrete))
+	help
+	  Enable keyboard support.
+
+if PLATFORM_EC_KEYBOARD
+
+choice PLATFORM_EC_KEYBOARD_DRIVER
+	prompt "Select the keyboard driver to use"
+	help
+	  Select the keyboard driver to use for the specific device keyboard
+	  implementation.
+
+config PLATFORM_EC_KEYBOARD_CROS_EC_RAW_KB
+	prompt "Shimmed raw keyboard driver"
 	select HAS_TASK_KEYSCAN
+	depends on $(dt_chosen_enabled,$(CHOSEN_CROS_EC_RAW_KB))
 	help
 	  Enable compilation of support for scanning a keyboard and providing
 	  the resulting input to the AP over the host interface. This consists
@@ -19,7 +34,24 @@ menuconfig PLATFORM_EC_KEYBOARD
 	  Enabling this automatically enables HAS_TASK_KEYSCAN since keyboard
 	  scanning must run in its own task.
 
-if PLATFORM_EC_KEYBOARD
+config PLATFORM_EC_KEYBOARD_DISCRETE
+	bool "Support discrete Keyboard"
+	select HAS_TASK_KEYSCAN
+	depends on $(dt_nodelabel_enabled,kb_discrete)
+	help
+	  Enable support for a discrete Keyboard if the platform needs one
+	  or the raw Keyboard support is not built-in in the EC.
+
+config CROS_EC_KEYBOARD_INPUT
+	bool "Input subsystem based Keyboard"
+	depends on $(dt_chosen_enabled,$(CHOSEN_CROS_EC_KEYBOARD))
+	depends on INPUT
+	help
+	  Input subsystem based Keyboard implementation, requires a
+	  `cros-ec,keyboard` chosen property pointing at the desired input
+	  device node.
+
+endchoice # PLATFORM_EC_KEYBOARD_DRIVER
 
 config CROS_EC_KEYSCAN
 	bool "Devicetree based keyscan map"
@@ -68,14 +100,6 @@ config PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP
 
 endchoice # PLATFORM_EC_KEYBOARD_PROTOCOL_MODE
 
-config PLATFORM_EC_KEYBOARD_DISCRETE
-	bool "Support discrete Keyboard"
-	default y
-	depends on $(dt_nodelabel_enabled,kb_discrete)
-	help
-	  Enable support for a discrete Keyboard if the platform needs one
-	  or the raw Keyboard support is not built-in in the EC.
-
 config PLATFORM_EC_KEYBOARD_DEBUG
 	bool "Enable keyboard debug prints"
 	depends on PLATFORM_EC_SYSTEM_UNLOCKED
@@ -97,19 +121,6 @@ config PLATFORM_EC_KEYBOARD_KEYPAD
 	  Enable support for a keypad, a palm-sized keyboard section usually
 	  placed on the far right. This contains nuumber keys and also some
 	  commonly used symbols, to help speed up numeric data entry.
-
-config PLATFORM_EC_KEYBOARD_VIVALDI
-	bool "Vivaldi keyboard support"
-	depends on PLATFORM_EC_KEYBOARD_PROTOCOL_8042
-	default y
-	help
-	  Enable code for Vivaldi keyboard (standard for new Chromium OS
-	  devices). A Chromium OS device is Vivaldi compatible if the keyboard
-	  matrix complies with: go/vivaldi-matrix.
-
-	  Vivaldi code enables:
-	  - A response to EC_CMD_GET_KEYBD_CONFIG command.
-	  - Boards can specify their custom layout for top keys.
 
 config PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 	bool "Support keyboard customization"
@@ -184,6 +195,7 @@ config PLATFORM_EC_KEYBOARD_SCAN_ADC
 
 config PLATFORM_EC_VOLUME_BUTTONS
 	bool "Board has volume-up and volume-down buttons"
+	select PLATFORM_EC_BUTTON
 	help
 	  Enable this if the board has physical buttons for the volume controls.
 	  These are buttons controlled by GPIOs and are not part of the keyboard
@@ -203,13 +215,6 @@ config PLATFORM_EC_CMD_BUTTON
 	help
 	  This command simulates button press. The buttons are like volume-up,
 	  volume-down, and recovery buttons.
-
-config PLATFORM_EC_BUTTON_TRIGGERED_RECOVERY
-	bool "Support entering recovery mode using buttons"
-	help
-	  Support for entering recovery mode using the volume buttons or a
-	  dedicated recovery button. Note that these are *buttons* and not keys
-	  in the keyboard matrix.
 
 config PLATFORM_EC_CONSOLE_CMD_KEYBOARD
 	bool "Console command: ksstate, kbpress, 8042"
@@ -242,6 +247,7 @@ config PLATFORM_EC_PWM_KBLIGHT
 	bool "PWM keyboard backlight"
 	default y
 	depends on DT_HAS_CROS_EC_KBLIGHT_PWM_ENABLED
+	depends on PLATFORM_EC_LID_SWITCH
 	select PWM
 	select PLATFORM_EC_PWM_HC
 	select PLATFORM_EC_KEYBOARD_BACKLIGHT
@@ -255,6 +261,12 @@ config PLATFORM_EC_KBLIGHT_ENABLE_PIN
 	help
 	  Enables control of the keyboard backlight through a GPIO enable and
 	  disable pin.  This pin must be defined as GPIO_EN_KEYBOARD_BACKLIGHT.
+
+config PLATFORM_EC_KBLIGHT_HOOK_INIT
+	bool "Keyboard backlight during init hook"
+	help
+	  Keyboard backlight init function gets called during init hook instead of
+	  start up hook.
 
 config PLATFORM_EC_KEYBOARD_STRICT_DEBOUNCE
 	bool "Keyboard strict debouncer"

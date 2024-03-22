@@ -46,3 +46,13 @@ bool ec_cfg_has_tabletmode(void)
 {
 	return (fw_config.tab_mode == TABLETMODE_ENABLED);
 }
+
+bool ec_cfg_has_keyboard_numpad(void)
+{
+	return (fw_config.kb_numpd == KEYBOARD_NUMPAD_PRESENT);
+}
+
+enum ec_cfg_keyboard_layout ec_cfg_keyboard_layout(void)
+{
+	return fw_config.kb_layout;
+}

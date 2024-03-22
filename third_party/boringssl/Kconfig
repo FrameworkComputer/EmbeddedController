@@ -1,0 +1,23 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BORINGSSL_CRYPTO
+	bool "BoringSSL support"
+	depends on COMMON_LIBC_MALLOC_ARENA_SIZE >= 2048 || \
+		   NEWLIB_LIBC_MIN_REQUIRED_HEAP_SIZE >= 2048
+	help
+	  This option enables BoringSSL cryptography library.
+	  The library is provided as external module.
+
+if BORINGSSL_CRYPTO
+
+config BORINGSSL_HARDWARE_ENTROPY
+	bool "Provide entropy from hardware RNG"
+	default y
+	select ENTROPY_GENERATOR
+	help
+	  This option enables support for providing entropy to BoringSSL.
+	  Entropy comes from hardware RNG selected in DTS.
+
+endif

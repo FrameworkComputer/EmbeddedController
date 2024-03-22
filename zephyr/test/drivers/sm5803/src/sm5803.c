@@ -5,12 +5,14 @@
 
 #include "battery.h"
 #include "battery_smart.h"
+#include "charge_state.h"
 #include "charger.h"
 #include "driver/charger/sm5803.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_sm5803.h"
 #include "emul/tcpc/emul_tcpci_partner_snk.h"
 #include "emul/tcpc/emul_tcpci_partner_src.h"
+#include "extpower.h"
 #include "hooks.h"
 #include "tcpm/tcpci.h"
 #include "test/drivers/charger_utils.h"
@@ -216,7 +218,7 @@ static void verify_init_common(struct i2c_log *const log_ptr)
 	LOG_ASSERT_W(SM5803_ADDR_MAIN_FLAGS, SM5803_REG_INT4_EN, 0x13);
 	LOG_ASSERT_W(SM5803_ADDR_MEAS_FLAGS, SM5803_REG_TINT_HIGH_TH, 0xd1);
 	LOG_ASSERT_W(SM5803_ADDR_MEAS_FLAGS, SM5803_REG_TINT_LOW_TH, 0);
-	LOG_ASSERT_RW(SM5803_ADDR_MAIN_FLAGS, SM5803_REG_INT2_EN, 0x81);
+	LOG_ASSERT_W(SM5803_ADDR_MAIN_FLAGS, SM5803_REG_INT2_EN, 0x80);
 	/* Charging is exclusively EC-controlled */
 	LOG_ASSERT_W(SM5803_ADDR_CHARGER_FLAGS, SM5803_REG_FLOW2, 0x40);
 	/* Battery parameters */
@@ -294,7 +296,7 @@ ZTEST(sm5803, test_init_2s)
 	LOG_ASSERT_W(SM5803_ADDR_CHARGER_FLAGS, 0x7E, 0x07);
 	LOG_ASSERT_W(SM5803_ADDR_CHARGER_FLAGS, 0x33, 0x3C);
 	LOG_ASSERT_W(SM5803_ADDR_CHARGER_FLAGS, 0x5C, 0x7A);
-	LOG_ASSERT_W(SM5803_ADDR_CHARGER_FLAGS, 0x73, 0x22);
+	LOG_ASSERT_RW(SM5803_ADDR_CHARGER_FLAGS, SM5803_REG_PHOT2, 0x24);
 	LOG_ASSERT_W(SM5803_ADDR_CHARGER_FLAGS, 0x50, 0x88);
 	LOG_ASSERT_RW(SM5803_ADDR_CHARGER_FLAGS, 0x34, 0x80);
 	LOG_ASSERT_W(SM5803_ADDR_MAIN_FLAGS, 0x1f, 0x01);
@@ -302,6 +304,9 @@ ZTEST(sm5803, test_init_2s)
 	LOG_ASSERT_W(SM5803_ADDR_TEST_FLAGS, 0x47, 0x10);
 	LOG_ASSERT_W(SM5803_ADDR_TEST_FLAGS, 0x48, 0x04);
 	LOG_ASSERT_W(SM5803_ADDR_MAIN_FLAGS, 0x1f, 0);
+	LOG_ASSERT_RW(SM5803_ADDR_CHARGER_FLAGS, SM5803_REG_PHOT1, 0x70);
+	LOG_ASSERT_RW(SM5803_ADDR_CHARGER_FLAGS, SM5803_REG_PHOT3, 0x08);
+	LOG_ASSERT_RW(SM5803_ADDR_CHARGER_FLAGS, SM5803_REG_PHOT4, 0x08);
 	verify_init_common(log_ptr);
 
 	zassert_equal(log.entries_asserted, log.entries_used,
@@ -372,7 +377,7 @@ ZTEST(sm5803, test_init_3s)
 	LOG_ASSERT_W(SM5803_ADDR_CHARGER_FLAGS, 0x7E, 0x04);
 	LOG_ASSERT_W(SM5803_ADDR_CHARGER_FLAGS, 0x33, 0x3C);
 	LOG_ASSERT_W(SM5803_ADDR_CHARGER_FLAGS, 0x5C, 0x7A);
-	LOG_ASSERT_W(SM5803_ADDR_CHARGER_FLAGS, 0x73, 0x22);
+	LOG_ASSERT_RW(SM5803_ADDR_CHARGER_FLAGS, SM5803_REG_PHOT2, 0x24);
 	LOG_ASSERT_W(SM5803_ADDR_CHARGER_FLAGS, 0x50, 0x88);
 	LOG_ASSERT_RW(SM5803_ADDR_CHARGER_FLAGS, 0x34, 0x80);
 	LOG_ASSERT_W(SM5803_ADDR_MAIN_FLAGS, 0x1f, 0x01);
@@ -380,6 +385,9 @@ ZTEST(sm5803, test_init_3s)
 	LOG_ASSERT_W(SM5803_ADDR_TEST_FLAGS, 0x47, 0x10);
 	LOG_ASSERT_W(SM5803_ADDR_TEST_FLAGS, 0x48, 0x04);
 	LOG_ASSERT_W(SM5803_ADDR_MAIN_FLAGS, 0x1f, 0);
+	LOG_ASSERT_RW(SM5803_ADDR_CHARGER_FLAGS, SM5803_REG_PHOT1, 0x70);
+	LOG_ASSERT_RW(SM5803_ADDR_CHARGER_FLAGS, SM5803_REG_PHOT3, 0x08);
+	LOG_ASSERT_RW(SM5803_ADDR_CHARGER_FLAGS, SM5803_REG_PHOT4, 0x08);
 	verify_init_common(log_ptr);
 
 	zassert_equal(log.entries_asserted, log.entries_used,
@@ -997,6 +1005,41 @@ ZTEST(sm5803, test_set_option)
 	zassert_not_equal(sm5803_drv.set_option(CHARGER_NUM, 0), 0);
 }
 
+FAKE_VALUE_FUNC(int, extpower_is_present);
+
+ZTEST_F(sm5803, test_set_mode)
+{
+	int temp;
+
+	/* Make cur.ac = 1 */
+	pd_connect_source(fixture);
+	extpower_is_present_fake.return_val = 1;
+	zassert_true(extpower_is_present());
+	/* add delay to let curr.ac to be 1 */
+	k_sleep(K_SECONDS(1));
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate idle off"));
+	charge_idle_enabled = 1;
+	zassert_ok(charger_set_mode(0));
+	zassert_ok(charger_get_option(&temp));
+	/* Flow1(0x1C) Bit[1:0]=01, Flow2(0x1D) Bit[2:0]=111 */
+	zassert_equal(temp, 0x701);
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate idle on"));
+	zassert_ok(charger_set_mode(0));
+	zassert_ok(charger_get_option(&temp));
+	/* Flow1(0x1C) Bit[1:0]=01, Flow2(0x1D) Bit[2:0]=000 */
+	zassert_equal(temp, 0x1);
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chgstate discharge on"));
+	zassert_ok(charger_set_mode(0));
+	zassert_equal(charge_idle_enabled, 0);
+
+	/* Reset AC status */
+	extpower_is_present_fake.return_val = 0;
+	zassert_false(extpower_is_present());
+}
+
 ZTEST(sm5803, test_acok)
 {
 	bool acok;
@@ -1455,6 +1498,85 @@ ZTEST_F(sm5803, test_otg_fail_interrupt)
 		      board_overcurrent_event_fake.call_count);
 }
 
+ZTEST(sm5803, test_set_prochot_duration)
+{
+	struct i2c_log log = {};
+	struct i2c_log *const log_ptr = &log;
+
+	i2c_common_emul_set_read_func(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+				      i2c_log_read_chg, log_ptr);
+	i2c_common_emul_set_write_func(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+				       i2c_log_write_chg, log_ptr);
+
+	zassert_ok(sm5803_set_phot_duration(CHARGER_NUM, 4));
+	LOG_ASSERT_RW(SM5803_ADDR_CHARGER_FLAGS, SM5803_REG_PHOT1, 0x40);
+
+	/* Error is handled */
+	i2c_common_emul_set_write_fail_reg(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+					   SM5803_REG_PHOT1);
+	zassert_true(sm5803_set_phot_duration(CHARGER_NUM, 4));
+}
+
+ZTEST(sm5803, test_set_vbus_monitor_sel)
+{
+	struct i2c_log log = {};
+	struct i2c_log *const log_ptr = &log;
+
+	i2c_common_emul_set_read_func(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+				      i2c_log_read_chg, log_ptr);
+	i2c_common_emul_set_write_func(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+				       i2c_log_write_chg, log_ptr);
+
+	zassert_ok(sm5803_set_vbus_monitor_sel(CHARGER_NUM, 4));
+	LOG_ASSERT_RW(SM5803_ADDR_CHARGER_FLAGS, SM5803_REG_PHOT2, 0x24);
+
+	/* Error is handled */
+	i2c_common_emul_set_write_fail_reg(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+					   SM5803_REG_PHOT2);
+	zassert_true(sm5803_set_vbus_monitor_sel(CHARGER_NUM, 4));
+}
+
+ZTEST(sm5803, test_set_vsys_monitor_sel)
+{
+	struct i2c_log log = {};
+	struct i2c_log *const log_ptr = &log;
+
+	i2c_common_emul_set_read_func(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+				      i2c_log_read_chg, log_ptr);
+	i2c_common_emul_set_write_func(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+				       i2c_log_write_chg, log_ptr);
+
+	zassert_ok(sm5803_set_vsys_monitor_sel(CHARGER_NUM, 10));
+	LOG_ASSERT_RW(SM5803_ADDR_CHARGER_FLAGS, SM5803_REG_PHOT3, 0xa);
+
+	/* Error is handled */
+	i2c_common_emul_set_write_fail_reg(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+					   SM5803_REG_PHOT3);
+	zassert_true(sm5803_set_vsys_monitor_sel(CHARGER_NUM, 10));
+}
+
+ZTEST(sm5803, test_set_ibat_phot_sel)
+{
+	struct i2c_log log = {};
+	struct i2c_log *const log_ptr = &log;
+
+	i2c_common_emul_set_read_func(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+				      i2c_log_read_chg, log_ptr);
+	i2c_common_emul_set_write_func(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+				       i2c_log_write_chg, log_ptr);
+
+	zassert_ok(sm5803_set_ibat_phot_sel(CHARGER_NUM, 37800));
+	LOG_ASSERT_RW(SM5803_ADDR_CHARGER_FLAGS, SM5803_REG_PHOT4, 0x3f);
+
+	zassert_ok(sm5803_set_ibat_phot_sel(CHARGER_NUM, 38000));
+	LOG_ASSERT_RW(SM5803_ADDR_CHARGER_FLAGS, SM5803_REG_PHOT4, 0x3f);
+
+	/* Error is handled */
+	i2c_common_emul_set_write_fail_reg(sm5803_emul_get_i2c_chg(SM5803_EMUL),
+					   SM5803_REG_PHOT4);
+	zassert_true(sm5803_set_ibat_phot_sel(CHARGER_NUM, 37800));
+}
+
 static void pd_disconnect(struct sm5803_fixture *fixture)
 {
 	if (pd_is_connected(CHARGER_NUM)) {
@@ -1511,6 +1633,7 @@ static void sm5803_before_test(void *data)
 
 	system_get_jump_tag_fake.custom_fake = NULL;
 	RESET_FAKE(board_overcurrent_event);
+	RESET_FAKE(extpower_is_present);
 }
 
 static void sm5803_after_test(void *data)

@@ -1,0 +1,25 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Zephyr RT1715 Emulator
+
+compatible: "cros,rt1715-tcpc-emul"
+
+include: i2c-device.yaml
+
+properties:
+  tcpc-flags:
+    type: int
+    default: 0
+    description: |
+      TCPC configuration flags
+  irq-gpios:
+    type: phandle-array
+    description: |
+      Interrupt from TCPC
+  is-alt:
+    type: boolean
+    description: |
+      If present, this node refers to an alternate TCPC device. The TCPC device
+      is not used by default, and must be manually enabled at runtime.

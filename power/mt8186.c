@@ -78,12 +78,18 @@
 #error Must have dt node en_pp4200_s5 for MT8188 power sequence
 #endif
 
+/* The timeout of the check if the system can boot AP */
+#define CAN_BOOT_AP_CHECK_TIMEOUT (1600 * MSEC)
+
+/* Wait for polling if the system can boot AP */
+#define CAN_BOOT_AP_CHECK_WAIT (200 * MSEC)
+
 /* indicate MT8186 is processing a chipset reset. */
 static bool is_resetting;
 /* indicate MT8186 is AP reset is held by servo or GSC. */
 test_export_static bool is_held;
 /* indicate MT8186 is processing a AP forcing shutdown. */
-test_export_static bool is_shutdown;
+static bool is_shutdown;
 /* indicate MT8186 has been dropped to S5G3 from the last IN_AP_RST state . */
 static bool is_s5g3_passed;
 /*
@@ -94,6 +100,20 @@ static bool is_exiting_off;
 
 /* forward declaration */
 static enum power_state power_get_signal_state(void);
+
+static bool power_is_enough(void)
+{
+	timestamp_t poll_deadline;
+
+	poll_deadline.val = get_time().val + CAN_BOOT_AP_CHECK_TIMEOUT;
+
+	while (!system_can_boot_ap() &&
+	       !timestamp_expired(poll_deadline, NULL)) {
+		usleep(CAN_BOOT_AP_CHECK_WAIT);
+	}
+
+	return system_can_boot_ap();
+}
 
 /* Turn on the PMIC power source to AP, this also boots AP. */
 static void set_pmic_pwron(void)
@@ -380,6 +400,11 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_G3S5:
+#if CONFIG_CHARGER_MIN_BAT_PCT_FOR_POWER_ON
+		if (!power_is_enough())
+			return POWER_G3;
+#endif
+
 #if DT_NODE_EXISTS(DT_NODELABEL(en_pp4200_s5))
 		power_signal_enable_interrupt(GPIO_PMIC_EC_RESETB);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_pp4200_s5), 1);
@@ -388,6 +413,7 @@ enum power_state power_handle_state(enum power_state state)
 						    PG_PP4200_S5_DELAY))
 			return POWER_S5G3;
 #endif
+		mt8186_exit_off();
 		return POWER_S5;
 
 	case POWER_S5S3:
@@ -405,9 +431,11 @@ enum power_state power_handle_state(enum power_state state)
 		GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 1);
 
 		if (power_wait_mask_signals_timeout(0, IN_AP_RST,
-						    PMIC_EN_TIMEOUT))
+						    PMIC_EN_TIMEOUT)) {
 			/* Give up, go back to G3. */
-			return POWER_S5G3;
+			is_shutdown = true;
+			return POWER_S3S5;
+		}
 
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_STARTUP);

@@ -133,78 +133,86 @@
 	pinctrl-0 = <&i2c06_scl_gpio140 &i2c06_sda_gpio132>;
 	pinctrl-names = "default";
 
-	tcpc_port0: nct38xx@73 {
+	nct38xx_c0: nct38xx@73 {
 		compatible = "nuvoton,nct38xx";
 		reg = <0x73>;
-		gpio-dev = <&nct38xx_c0>;
-		tcpc-flags = <(
-			TCPC_FLAGS_TCPCI_REV2_0 |
-			TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
-	};
 
-	nct38xx_c0: nct38xx_c0@73 {
-		#address-cells = <1>;
-		#size-cells = <0>;
-		compatible = "nuvoton,nct38xx-gpio";
-		reg = <0x73>;
-		label = "NCT38XX_C0";
+		tcpc_port0: nct38xx-tcpc {
+			compatible = "nuvoton,nct38xx-tcpc";
+			gpio-dev = <&nct38xx_gpio_C0>;
+			tcpc-flags = <(
+				TCPC_FLAGS_TCPCI_REV2_0 |
+				TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
+		};
 
-		ioex_c0:gpio@0 {
-			compatible = "nuvoton,nct38xx-gpio-port";
-			reg = <0x0>;
-			label = "NCT38XX_C0_GPIO0";
-			gpio-controller;
-			#gpio-cells = <2>;
-			ngpios = <8>;
-			pin_mask = <0xdc>;
-			pinmux_mask = <0xff>;
+		nct38xx_gpio_C0: nct38xx-gpio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "nuvoton,nct38xx-gpio";
+			label = "NCT38XX_C0";
+
+			ioex_c0:gpio@0 {
+				compatible = "nuvoton,nct38xx-gpio-port";
+				reg = <0x0>;
+				label = "NCT38XX_C0_GPIO0";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <8>;
+				pin_mask = <0xdc>;
+				pinmux_mask = <0xff>;
+			};
 		};
 	};
 
-	tcpc_port1: nct38xx@77 {
+	nct38xx_c1: nct38xx@77 {
 		compatible = "nuvoton,nct38xx";
 		reg = <0x77>;
-		gpio-dev = <&nct38xx_c1>;
-		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
-	};
 
-	nct38xx_c1: nct38xx_c1@77 {
-		#address-cells = <1>;
-		#size-cells = <0>;
-		compatible = "nuvoton,nct38xx-gpio";
-		reg = <0x77>;
-		label = "NCT38XX_C1";
+		tcpc_port1: nct38xx-tcpc {
+			compatible = "nuvoton,nct38xx-tcpc";
+			gpio-dev = <&nct38xx_gpio_C1>;
+			tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+		};
 
-		ioex_c1:gpio@0 {
-			compatible = "nuvoton,nct38xx-gpio-port";
-			reg = <0x0>;
-			label = "NCT38XX_C1_GPIO0";
-			gpio-controller;
-			#gpio-cells = <2>;
-			ngpios = <8>;
-			pin_mask = <0xdc>;
-			pinmux_mask = <0xff>;
+		nct38xx_gpio_C1: nct38xx-gpio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "nuvoton,nct38xx-gpio";
+			label = "NCT38XX_C1";
+
+			ioex_c1:gpio@0 {
+				compatible = "nuvoton,nct38xx-gpio-port";
+				reg = <0x0>;
+				label = "NCT38XX_C1_GPIO0";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <8>;
+				pin_mask = <0xdc>;
+				pinmux_mask = <0xff>;
+			};
 		};
 	};
-
-	nct38xx_alert_0 {
-		compatible = "nuvoton,nct38xx-gpio-alert";
-		/* irq-gpios = <&gpio4 0 GPIO_ACTIVE_LOW>; */
-		irq-gpios = <&gpio_140_176 3 GPIO_ACTIVE_LOW>;
-		nct38xx-dev = <&nct38xx_c0 &nct38xx_c1>;
-		label = "NCT38XX_ALERT_1";
-	}; /* GPIO143 */
 
 	ppc_port0: sn5s330@40 {
 		compatible = "ti,sn5s330";
 		status = "okay";
 		reg = <0x40>;
+		/* a duplicate of the <&usbc_tcpc_ppc_alrt_p0> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio_240_276 1 GPIO_ACTIVE_LOW>;
 	};
 
 	ppc_port1: sn5s330@41 {
 		compatible = "ti,sn5s330";
 		status = "okay";
 		reg = <0x41>;
+		/* a duplicate of the <&usbc_tcpc_ppc_alrt_p1> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio_140_176 13 GPIO_ACTIVE_LOW>;
 	};
 
 	usb_c0_hb_retimer: jhl9040r-c0@56 {

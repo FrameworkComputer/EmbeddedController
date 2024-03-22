@@ -114,7 +114,7 @@ static void base_startup_hook(struct ap_power_ev_callback *cb,
 	}
 }
 
-static int base_init(void)
+static void base_init(void)
 {
 	static struct ap_power_ev_callback cb;
 
@@ -126,10 +126,8 @@ static int base_init(void)
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		base_detect_enable(true);
 	}
-
-	return 0;
 }
-SYS_INIT(base_init, APPLICATION, 1);
+DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT);
 
 void base_force_state(enum ec_set_base_state_cmd state)
 {

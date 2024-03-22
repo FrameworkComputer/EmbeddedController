@@ -3,6 +3,12 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #include "acpi.h"
 #include "console.h"
 #include "gpio.h"
@@ -10,10 +16,10 @@
 #include "host_command.h"
 #include "lid_angle.h"
 #include "lid_switch.h"
-#include "stdbool.h"
 #include "tablet_mode.h"
 #include "timer.h"
 
+#include <stdbool.h>
 #include <string.h>
 
 #define CPRINTS(format, args...) cprints(CC_MOTION_LID, format, ##args)

@@ -1,0 +1,50 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_posix.dts>
+#include <cros/binman.dtsi>
+#include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/gpio_defines.h>
+#include <dt-bindings/pwm/pwm.h>
+#include <dt-bindings/wake_mask_event_defines.h>
+#include <freq.h>
+
+#include "../native_posix.overlay"
+
+/ {
+	fan_steps: fan-step {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp_on = <37>;
+			temp_off = <99>;
+			rpm_target = <0>;
+		};
+		level_1 {
+			temp_on = <45>;
+			temp_off = <38>;
+			rpm_target = <3000>;
+		};
+		level_2 {
+			temp_on = <52>;
+			temp_off = <47>;
+			rpm_target = <3500>;
+		};
+		level_3 {
+			temp_on = <61>;
+			temp_off = <56>;
+			rpm_target = <4000>;
+		};
+		level_4 {
+			temp_on = <70>;
+			temp_off = <68>;
+			rpm_target = <4500>;
+		};
+		level_5 {
+			temp_on = <76>;
+			temp_off = <73>;
+			rpm_target = <4800>;
+		};
+	};
+};

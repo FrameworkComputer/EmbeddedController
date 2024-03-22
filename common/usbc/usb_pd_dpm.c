@@ -29,6 +29,7 @@
 #include "usb_pd_ap_vdm_control.h"
 #include "usb_pd_dpm_sm.h"
 #include "usb_pd_pdo.h"
+#include "usb_pd_policy.h"
 #include "usb_pd_tcpm.h"
 #include "usb_pd_timer.h"
 #include "usb_pe_sm.h"
@@ -39,7 +40,7 @@
  * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
  * #line marks the *next* line, so it is off by one.
  */
-#line 43
+#line 44
 
 #ifdef CONFIG_ZEPHYR
 #include "temp_sensor/temp_sensor.h"
@@ -70,6 +71,10 @@ static struct {
 	enum tcpci_msg_type req_type;
 	mutex_t vdm_req_mutex;
 	enum dpm_pd_button_state pd_button_state;
+	/* The desired VCONN role for an upcoming VCONN Swap. Only meaningful if
+	 * DPM_FLAG_VCONN_SWAP is set.
+	 */
+	enum pd_vconn_role desired_vconn_role;
 } dpm[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 __overridable const struct svdm_response svdm_rsp = {
@@ -98,6 +103,7 @@ static volatile task_id_t sysjump_task_waiting = TASK_ID_INVALID;
 #define DPM_FLAG_PD_BUTTON_PRESSED BIT(7)
 #define DPM_FLAG_PD_BUTTON_RELEASED BIT(8)
 #define DPM_FLAG_PE_READY BIT(9)
+#define DPM_FLAG_VCONN_SWAP BIT(10)
 
 /* List of all Device Policy Manager level states */
 enum usb_dpm_state {
@@ -251,6 +257,14 @@ __overridable bool board_is_tbt_usb4_port(int port)
 	return true;
 }
 
+void pd_request_vconn_swap(int port)
+{
+	dpm[port].desired_vconn_role = pd_get_vconn_state(port) ?
+					       PD_ROLE_VCONN_OFF :
+					       PD_ROLE_VCONN_SRC;
+	DPM_SET_FLAG(port, DPM_FLAG_VCONN_SWAP);
+}
+
 enum ec_status pd_request_vdm(int port, const uint32_t *data, int vdo_count,
 			      enum tcpci_msg_type tx_type)
 {
@@ -341,6 +355,18 @@ void dpm_init(int port)
 	dpm[port].flags = 0;
 	dpm[port].pd_button_state = DPM_PD_BUTTON_IDLE;
 	ap_vdm_init(port);
+
+	/* If the TCPM is not Source/DFP/VCONN Source at the time of Attach, and
+	 * board power policy permits, trigger a VCONN Swap to VCONN Source as
+	 * soon as possible.
+	 * TODO(b/188578923): Passing true indicates that the PE wants to swap
+	 * to VCONN Source at this time. Remove this redundant argument when
+	 * practical.
+	 */
+	if (port_discovery_vconn_swap_policy(port, true)) {
+		dpm[port].desired_vconn_role = PD_ROLE_VCONN_SRC;
+		DPM_SET_FLAG(port, DPM_FLAG_VCONN_SWAP);
+	}
 
 	/* Ensure that DPM state machine gets reset */
 	set_state_dpm(port, DPM_WAITING);
@@ -439,8 +465,8 @@ void dpm_vdm_acked(int port, enum tcpci_msg_type type, int vdo_count,
 		__fallthrough;
 #endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
 	default:
-		CPRINTS("C%d: Received unexpected VDM ACK for SVID %d", port,
-			svid);
+		CPRINTS("C%d: Received unexpected VDM ACK for SVID 0x%04x",
+			port, svid);
 	}
 }
 
@@ -467,8 +493,8 @@ void dpm_vdm_naked(int port, enum tcpci_msg_type type, uint16_t svid,
 		__fallthrough;
 #endif /* CONFIG_USB_PD_TBT_COMPAT_MODE */
 	default:
-		CPRINTS("C%d: Received unexpected VDM NAK for SVID %d", port,
-			svid);
+		CPRINTS("C%d: Received unexpected VDM NAK for SVID 0x%04x",
+			port, svid);
 	}
 }
 
@@ -632,7 +658,7 @@ static void dpm_run_pd_button_sm(int port)
  * them
  */
 static uint32_t max_current_claimed;
-K_MUTEX_DEFINE(max_current_claimed_lock);
+static K_MUTEX_DEFINE(max_current_claimed_lock);
 
 /* Ports with PD sink needing > 1.5 A */
 static atomic_t sink_max_pdo_requested;
@@ -994,7 +1020,7 @@ __overridable int dpm_get_source_pdo(const uint32_t **src_pdo, const int port)
 	return pd_src_pdo_cnt;
 }
 
-int dpm_get_source_current(const int port)
+__overridable int dpm_get_source_current(const int port)
 {
 	if (pd_get_power_role(port) == PD_ROLE_SINK)
 		return 0;
@@ -1251,7 +1277,8 @@ static bool dpm_dfp_enter_mode_msg(int port)
 	    !DPM_CHK_FLAG(port, DPM_FLAG_MODE_ENTRY_DONE) &&
 	    pd_is_mode_discovered_for_svid(port, TCPCI_MSG_SOP,
 					   USB_SID_DISPLAYPORT) &&
-	    dpm_mode_entry_requested(port, TYPEC_MODE_DP)) {
+	    dpm_mode_entry_requested(port, TYPEC_MODE_DP) &&
+	    dp_mode_entry_allowed(port)) {
 		enter_mode_requested = true;
 		vdo_count = ARRAY_SIZE(vdm);
 		status = dp_setup_next_vdm(port, &vdo_count, vdm);
@@ -1419,6 +1446,25 @@ static void dpm_waiting_run(const int port)
 	}
 }
 
+/**
+ * Decide whether to initiate a VCONN Swap.
+ *
+ * @param port USB-C port number
+ * @return true if state changed; false otherwise
+ */
+static bool dpm_vconn_swap_policy(int port)
+{
+	if (DPM_CHK_FLAG(port, DPM_FLAG_VCONN_SWAP)) {
+		pe_set_requested_vconn_role(port, dpm[port].desired_vconn_role);
+		pd_dpm_request(port, DPM_REQUEST_VCONN_SWAP);
+		DPM_CLR_FLAG(port, DPM_FLAG_VCONN_SWAP);
+		set_state_dpm(port, DPM_WAITING);
+		return true;
+	}
+
+	return false;
+}
+
 /*
  * DPM_DFP_READY
  */
@@ -1456,6 +1502,10 @@ static void dpm_dfp_ready_run(const int port)
 			return;
 	}
 
+	/* Return early if the VCS policy changed the DPM state. */
+	if (dpm_vconn_swap_policy(port))
+		return;
+
 	/* Run any VDM REQ messages */
 	if (DPM_CHK_FLAG(port, DPM_FLAG_SEND_VDM_REQ)) {
 		dpm_send_req_vdm(port);
@@ -1490,6 +1540,10 @@ static void dpm_ufp_ready_run(const int port)
 		 */
 		return;
 	}
+
+	/* Return early if the VCS policy changed the DPM state. */
+	if (dpm_vconn_swap_policy(port))
+		return;
 
 	/* Run any VDM REQ messages */
 	if (DPM_CHK_FLAG(port, DPM_FLAG_SEND_VDM_REQ)) {

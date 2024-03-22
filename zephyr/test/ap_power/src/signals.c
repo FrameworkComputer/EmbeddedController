@@ -9,7 +9,6 @@
  */
 
 #include "ec_tasks.h"
-#include "emul/emul_stub_device.h"
 #include "gpio.h"
 #include "gpio/gpio.h"
 #include "gpio/gpio_int.h"
@@ -38,12 +37,12 @@ static struct {
 	enum power_signal signal;
 	int pin;
 } signal_to_pin_table[] = {
-	{ PWR_EN_PP5000_A, 10 }, { PWR_EN_PP3300_A, 11 },
-	{ PWR_RSMRST, 12 },	 { PWR_EC_PCH_RSMRST, 13 },
-	{ PWR_SLP_S0, 14 },	 { PWR_SLP_S3, 15 },
-	{ PWR_SLP_SUS, 16 },	 { PWR_EC_SOC_DSW_PWROK, 17 },
-	{ PWR_VCCST_PWRGD, 18 }, { PWR_IMVP9_VRRDY, 19 },
-	{ PWR_PCH_PWROK, 20 },	 { PWR_EC_PCH_SYS_PWROK, 21 },
+	{ PWR_EN_PP5000_A, 10 },  { PWR_EN_PP3300_A, 11 },
+	{ PWR_RSMRST_PWRGD, 12 }, { PWR_EC_PCH_RSMRST, 13 },
+	{ PWR_SLP_S0, 14 },	  { PWR_SLP_S3, 15 },
+	{ PWR_SLP_SUS, 16 },	  { PWR_EC_SOC_DSW_PWROK, 17 },
+	{ PWR_VCCST_PWRGD, 18 },  { PWR_IMVP9_VRRDY, 19 },
+	{ PWR_PCH_PWROK, 20 },	  { PWR_EC_PCH_SYS_PWROK, 21 },
 	{ PWR_SYS_RST, 22 },
 };
 
@@ -204,12 +203,12 @@ ZTEST(signals, test_init_outputs)
  */
 ZTEST(signals, test_gpio_input)
 {
-	emul_set(PWR_RSMRST, 1);
-	zassert_equal(1, power_signal_get(PWR_RSMRST),
-		      "power_signal_get of PWR_RSMRST should be 1");
-	emul_set(PWR_RSMRST, 0);
-	zassert_equal(0, power_signal_get(PWR_RSMRST),
-		      "power_signal_get of PWR_RSMRST should be 0");
+	emul_set(PWR_RSMRST_PWRGD, 1);
+	zassert_equal(1, power_signal_get(PWR_RSMRST_PWRGD),
+		      "power_signal_get of PWR_RSMRST_PWRGD should be 1");
+	emul_set(PWR_RSMRST_PWRGD, 0);
+	zassert_equal(0, power_signal_get(PWR_RSMRST_PWRGD),
+		      "power_signal_get of PWR_RSMRST_PWRGD should be 0");
 	/* ACTIVE_LOW input */
 	emul_set(PWR_SLP_S0, 0);
 	zassert_equal(
@@ -324,17 +323,17 @@ ZTEST(signals, test_debug_mask)
  */
 ZTEST(signals, test_gpio_interrupts)
 {
-	power_signal_mask_t rsm = POWER_SIGNAL_MASK(PWR_RSMRST);
+	power_signal_mask_t rsm = POWER_SIGNAL_MASK(PWR_RSMRST_PWRGD);
 	power_signal_mask_t s3 = POWER_SIGNAL_MASK(PWR_SLP_S3);
 	power_signal_mask_t s0 = POWER_SIGNAL_MASK(PWR_SLP_S0);
 
 	/* Check that GPIO pin changes update the signal mask. */
-	emul_set(PWR_RSMRST, 1);
+	emul_set(PWR_RSMRST_PWRGD, 1);
 	zassert_equal(true, power_signals_on(rsm),
-		      "PWR_RSMRST not updated in mask");
-	emul_set(PWR_RSMRST, 0);
+		      "PWR_RSMRST_PWRGD not updated in mask");
+	emul_set(PWR_RSMRST_PWRGD, 0);
 	zassert_equal(true, power_signals_off(rsm),
-		      "PWR_RSMRST not updated in mask");
+		      "PWR_RSMRST_PWRGD not updated in mask");
 
 	/*
 	 * Check that an ACTIVE_LOW signal gets asserted in
@@ -517,7 +516,3 @@ static void init_signals(void *data)
  */
 ZTEST_SUITE(signals, ap_power_predicate_post_main, init_dev, init_signals, NULL,
 	    NULL);
-
-/* These 2 lines are needed because we don't define an espi host driver */
-#define DT_DRV_COMPAT zephyr_espi_emul_espi_host
-DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);

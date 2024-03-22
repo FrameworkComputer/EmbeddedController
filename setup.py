@@ -6,18 +6,6 @@ from setuptools import setup
 
 
 setup(
-    name="ec3po",
-    version="1.0.0rc1",
-    author="Aseda Aboagye",
-    author_email="aaboagye@chromium.org",
-    url="https://www.chromium.org/chromium-os/ec-development",
-    package_dir={"": "util"},
-    packages=["ec3po"],
-    py_modules=["ec3po.console", "ec3po.interpreter"],
-    description="EC console interpreter.",
-)
-
-setup(
     name="ecusb",
     version="1.0",
     author="Nick Sanders",
@@ -26,32 +14,6 @@ setup(
     package_dir={"": "extra/tigertool"},
     packages=["ecusb"],
     description="Tiny implementation of servod.",
-)
-
-setup(
-    name="servo_updater",
-    version="1.0",
-    author="Nick Sanders",
-    author_email="nsanders@chromium.org",
-    url="https://www.chromium.org/chromium-os/ec-development",
-    package_dir={"": "extra/usb_updater"},
-    py_modules=["servo_updater", "fw_update"],
-    entry_points={
-        "console_scripts": ["servo_updater=servo_updater:main"],
-    },
-    data_files=[
-        (
-            "share/servo_updater/configs",
-            [
-                "extra/usb_updater/c2d2.json",
-                "extra/usb_updater/servo_v4.json",
-                "extra/usb_updater/servo_v4p1.json",
-                "extra/usb_updater/servo_micro.json",
-                "extra/usb_updater/sweetberry.json",
-            ],
-        )
-    ],
-    description="Servo usb updater.",
 )
 
 setup(

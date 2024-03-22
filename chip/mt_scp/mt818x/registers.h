@@ -219,24 +219,24 @@
 #define RXIF_CFG0_RESET_VAL 0x2A130001
 #define RXIF_AFE_ON (1 << 0)
 #define RXIF_SCKINV (1 << 1)
-#define RXIF_RG_DL_2_IN_MODE(mode) (((mode)&0xf) << 8)
+#define RXIF_RG_DL_2_IN_MODE(mode) (((mode) & 0xf) << 8)
 #define RXIF_RGDL2_AMIC_16K (0x1 << 8)
 #define RXIF_RGDL2_DMIC_16K (0x2 << 8)
 #define RXIF_RGDL2_DMIC_LP_16K (0x3 << 8)
 #define RXIF_RGDL2_AMIC_32K (0x5 << 8)
 #define RXIF_RGDL2_MASK (0xf << 8)
-#define RXIF_UP8X_RSP(p) (((p)&0x7) << 16)
+#define RXIF_UP8X_RSP(p) (((p) & 0x7) << 16)
 #define RXIF_RG_RX_READEN (1 << 19)
 #define RXIF_MONO (1 << 20)
-#define RXIF_RG_CLK_A16P7K_EN(cnt) (((cnt)&0xff) << 24)
+#define RXIF_RG_CLK_A16P7K_EN(cnt) (((cnt) & 0xff) << 24)
 #define SCP_RXIF_CFG1 REG32(SCP_AUDIO_BASE + 0x18)
 #define RXIF_CFG1_RESET_VAL 0x33180014
-#define RXIF_RG_SYNC_CNT_TBL(t) ((t)&0x1ff)
-#define RXIF_RG_SYNC_SEARCH_TBL(t) (((t)&0x1f) << 16)
-#define RXIF_RG_SYNC_CHECK_ROUND(r) (((r)&0xf) << 24)
-#define RXIF_RG_INSYNC_CHECK_ROUND(r) (((r)&0xf) << 28)
+#define RXIF_RG_SYNC_CNT_TBL(t) ((t) & 0x1ff)
+#define RXIF_RG_SYNC_SEARCH_TBL(t) (((t) & 0x1f) << 16)
+#define RXIF_RG_SYNC_CHECK_ROUND(r) (((r) & 0xf) << 24)
+#define RXIF_RG_INSYNC_CHECK_ROUND(r) (((r) & 0xf) << 28)
 #define SCP_RXIF_CFG2 REG32(SCP_AUDIO_BASE + 0x1C)
-#define RXIF_SYNC_WORD(w) ((w)&0xffff)
+#define RXIF_SYNC_WORD(w) ((w) & 0xffff)
 #define SCP_RXIF_OUT REG32(SCP_AUDIO_BASE + 0x20)
 #define SCP_RXIF_STATUS REG32(SCP_AUDIO_BASE + 0x24)
 #define SCP_RXIF_IRQ_EN REG32(SCP_AUDIO_BASE + 0x28)
@@ -316,14 +316,14 @@
  */
 #define SCP_CLK_SYS_VAL REG32(SCP_CLK_BASE + 0x14)
 #define CLK_SYS_VAL_MASK 0x3ff /* 10 bits */
-#define CLK_SYS_VAL(n) ((n)&CLK_SYS_VAL_MASK)
+#define CLK_SYS_VAL(n) ((n) & CLK_SYS_VAL_MASK)
 /*
  * ULPOSC clock counter value.
  * CLK_HIGH_VAL[9:0] ULPOSC clock counter initial/reset value.
  */
 #define SCP_CLK_HIGH_VAL REG32(SCP_CLK_BASE + 0x18)
 #define CLK_HIGH_VAL_MASK 0x3ff /* 10 bits */
-#define CLK_HIGH_VAL(n) ((n)&CLK_HIGH_VAL_MASK)
+#define CLK_HIGH_VAL(n) ((n) & CLK_HIGH_VAL_MASK)
 #define SCP_CLK_SLOW_SEL REG32(SCP_CLK_BASE + 0x1C)
 #define CKSW_SEL_SLOW_MASK 0x3
 #define CKSW_SEL_SLOW_DIV_MASK 0x30
@@ -498,7 +498,7 @@
 #define CACHE_DCACHE 1
 #define CACHE_COUNT 2
 #define SCP_CACHE_BASE (SCP_CFG_BASE + 0x14000)
-#define SCP_CACHE_SEL(x) (SCP_CACHE_BASE + (x)*0x3000)
+#define SCP_CACHE_SEL(x) (SCP_CACHE_BASE + (x) * 0x3000)
 #define SCP_CACHE_CON(x) REG32(SCP_CACHE_SEL(x))
 #define SCP_CACHE_CON_MCEN BIT(0)
 #define SCP_CACHE_CON_CNTEN0 BIT(2)
@@ -540,9 +540,10 @@
 #define SCP_CACHE_REGION_EN(x) REG32(SCP_CACHE_SEL(x) + 0x2c)
 
 #define SCP_CACHE_ENTRY_BASE(x) (SCP_CACHE_SEL(x) + 0x2000)
-#define SCP_CACHE_ENTRY(x, reg) REG32(SCP_CACHE_ENTRY_BASE(x) + (reg)*4)
+#define SCP_CACHE_ENTRY(x, reg) REG32(SCP_CACHE_ENTRY_BASE(x) + (reg) * 4)
 #define SCP_CACHE_END_ENTRY_BASE(x) (SCP_CACHE_SEL(x) + 0x2040)
-#define SCP_CACHE_END_ENTRY(x, reg) REG32(SCP_CACHE_END_ENTRY_BASE(x) + (reg)*4)
+#define SCP_CACHE_END_ENTRY(x, reg) \
+	REG32(SCP_CACHE_END_ENTRY_BASE(x) + (reg) * 4)
 #define SCP_CACHE_ENTRY_C BIT(8)
 #define SCP_CACHE_ENTRY_BASEADDR_MASK (0xfffff << 12)
 
@@ -603,7 +604,7 @@
 #define CFG_FREQ_METER_RUN (1 << 4)
 #define CFG_FREQ_METER_ENABLE (1 << 12)
 #define AP_SCP_CFG_1 REG32(TOPCK_BASE + 0x0224)
-#define CFG_FREQ_COUNTER(CFG1) ((CFG1)&0xFFFF)
+#define CFG_FREQ_COUNTER(CFG1) ((CFG1) & 0xFFFF)
 
 /* GPIO */
 #define AP_GPIO_BASE (AP_BASE + 0x00005000)
@@ -662,13 +663,13 @@
 #ifdef CHIP_VARIANT_MT8186
 #define AP_ULPOSC_BASE0 (AP_BASE + 0xC500)
 #define AP_ULPOSC_BASE1 (AP_BASE + 0xC504)
-#define AP_ULPOSC_CON02(osc) REG32(AP_ULPOSC_BASE0 + (osc)*0x80)
-#define AP_ULPOSC_CON13(osc) REG32(AP_ULPOSC_BASE1 + (osc)*0x80)
+#define AP_ULPOSC_CON02(osc) REG32(AP_ULPOSC_BASE0 + (osc) * 0x80)
+#define AP_ULPOSC_CON13(osc) REG32(AP_ULPOSC_BASE1 + (osc) * 0x80)
 #else
 #define AP_ULPOSC_BASE0 (AP_BASE + 0xC700)
 #define AP_ULPOSC_BASE1 (AP_BASE + 0xC704)
-#define AP_ULPOSC_CON02(osc) REG32(AP_ULPOSC_BASE0 + (osc)*0x8)
-#define AP_ULPOSC_CON13(osc) REG32(AP_ULPOSC_BASE1 + (osc)*0x8)
+#define AP_ULPOSC_CON02(osc) REG32(AP_ULPOSC_BASE0 + (osc) * 0x8)
+#define AP_ULPOSC_CON13(osc) REG32(AP_ULPOSC_BASE1 + (osc) * 0x8)
 #endif
 /*
  * AP_ULPOSC_CON[0,2]

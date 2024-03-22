@@ -13,4 +13,5 @@ properties:
     description: i2c address or SPI slave logic GPIO
     enum:
       - "BMI3_ADDR_I2C_PRIM"
+      - "BMI3_ADDR_I2C_SEC"
     default: "BMI3_ADDR_I2C_PRIM"

@@ -96,9 +96,16 @@ struct cec_offline_policy kuldax_cec_policy[] = {
 };
 
 /* CEC ports */
+static const struct bitbang_cec_config bitbang_cec_config = {
+	.gpio_out = GPIO_HDMI_CEC_OUT,
+	.gpio_in = GPIO_HDMI_CEC_IN,
+	.gpio_pull_up = GPIO_HDMI_CEC_PULL_UP,
+};
+
 const struct cec_config_t cec_config[] = {
 	[CEC_PORT_0] = {
 		.drv = &bitbang_cec_drv,
+		.drv_config = &bitbang_cec_config,
 		.offline_policy = kuldax_cec_policy,
 	},
 };
@@ -315,6 +322,9 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_A1_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A2_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A3_OC_ODL);
+
+	if (get_mb_usbc_type() == MB_TC_USB3)
+		mb_update_usb4_tbt_config();
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

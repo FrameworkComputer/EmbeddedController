@@ -23,22 +23,22 @@
 #define EXPIRE_NOW (0)
 
 #define PD_SET_ACTIVE(p, bit) \
-	atomic_set_bit(timer_active, (p)*PD_TIMER_COUNT + (bit))
+	atomic_set_bit(timer_active, (p) * PD_TIMER_COUNT + (bit))
 
 #define PD_CLR_ACTIVE(p, bit) \
-	atomic_clear_bit(timer_active, (p)*PD_TIMER_COUNT + (bit))
+	atomic_clear_bit(timer_active, (p) * PD_TIMER_COUNT + (bit))
 
 #define PD_CHK_ACTIVE(p, bit) \
-	atomic_test_bit(timer_active, (p)*PD_TIMER_COUNT + (bit))
+	atomic_test_bit(timer_active, (p) * PD_TIMER_COUNT + (bit))
 
 #define PD_SET_DISABLED(p, bit) \
-	atomic_set_bit(timer_disabled, (p)*PD_TIMER_COUNT + (bit))
+	atomic_set_bit(timer_disabled, (p) * PD_TIMER_COUNT + (bit))
 
 #define PD_CLR_DISABLED(p, bit) \
-	atomic_clear_bit(timer_disabled, (p)*PD_TIMER_COUNT + (bit))
+	atomic_clear_bit(timer_disabled, (p) * PD_TIMER_COUNT + (bit))
 
 #define PD_CHK_DISABLED(p, bit) \
-	atomic_test_bit(timer_disabled, (p)*PD_TIMER_COUNT + (bit))
+	atomic_test_bit(timer_disabled, (p) * PD_TIMER_COUNT + (bit))
 
 test_mockable_static ATOMIC_DEFINE(timer_active, PD_TIMER_COUNT *MAX_PD_PORTS);
 test_mockable_static ATOMIC_DEFINE(timer_disabled,

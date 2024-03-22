@@ -27,6 +27,10 @@
 #define GPIO_SET_LEVEL(signal, value) gpio_set_level(signal, value)
 #endif
 
+#define RSMRST_L_PGOOD_MASK POWER_SIGNAL_MASK(X86_RSMRST_L_PGOOD)
+#define DSW_DPWROK_MASK POWER_SIGNAL_MASK(X86_DSW_DPWROK)
+#define ALL_SYS_PGOOD_MASK POWER_SIGNAL_MASK(X86_ALL_SYS_PGOOD)
+
 /* The wait time is ~150 msec, allow for safety margin. */
 #define IN_PCH_SLP_SUS_WAIT_TIME_USEC (250 * MSEC)
 
@@ -75,23 +79,28 @@ const struct power_signal_info power_signal_list[] = {
 		.flags = POWER_SIGNAL_ACTIVE_HIGH,
 		.name = "ALL_SYS_PWRGD",
 	},
+#ifdef CONFIG_CHIPSET_JASPERLAKE
+	[PP1050_ST_PGOOD] = {
+		.gpio = GPIO_PG_PP1050_ST_OD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "PP1050_ST_PGOOD",
+	},
+	[DRAM_PGOOD] = {
+		.gpio = GPIO_PG_DRAM_OD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "DRAM_PGOOD",
+	},
+	[VCCIO_EXT_PGOOD] = {
+		.gpio = GPIO_PG_VCCIO_EXT_OD,
+		.flags = POWER_SIGNAL_ACTIVE_HIGH,
+		.name = "VCCIO_EXT_PGOOD",
+	},
+#endif
 };
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
-__overridable int intel_x86_get_pg_ec_dsw_pwrok(void)
-{
-	return gpio_get_level(GPIO_PG_EC_DSW_PWROK);
-}
-
-__overridable int intel_x86_get_pg_ec_all_sys_pwrgd(void)
-{
-	return gpio_get_level(GPIO_PG_EC_ALL_SYS_PWRGD);
-}
-
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
-	int timeout_ms = 50;
-
 	CPRINTS("%s() %d", __func__, reason);
 	report_ap_reset(reason);
 
@@ -128,19 +137,11 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	if (IS_ENABLED(CONFIG_CHIPSET_JASPERLAKE))
 		power_signal_interrupt(GPIO_PG_EC_DSW_PWROK);
 
-	/*
-	 * TODO(b/111810925): Replace this wait with
-	 * power_wait_signals_timeout()
-	 */
-	/* Now wait for DSW_PWROK and  RSMRST_ODL to go away. */
-	while (intel_x86_get_pg_ec_dsw_pwrok() &&
-	       gpio_get_level(GPIO_PG_EC_RSMRST_ODL) && (timeout_ms > 0)) {
-		msleep(1);
-		timeout_ms--;
-	};
-
-	if (!timeout_ms)
-		CPRINTS("DSW_PWROK or RSMRST_ODL didn't go low!  Assuming G3.");
+	/* Now wait for DSW_PWROK and RSMRST_ODL to go away. */
+	if (power_wait_mask_signals_timeout(
+		    0, DSW_DPWROK_MASK | RSMRST_L_PGOOD_MASK, 50 * MSEC) !=
+	    EC_SUCCESS)
+		CPRINTS("DSW_PWROK or RSMRST_ODL didn't go low! Assuming G3.");
 }
 
 void chipset_handle_espi_reset_assert(void)
@@ -175,7 +176,7 @@ static void enable_pp5000_rail(void)
 
 static void dsw_pwrok_pass_thru(void)
 {
-	int dswpwrok_in = intel_x86_get_pg_ec_dsw_pwrok();
+	int dswpwrok_in = !!(power_get_signals() & DSW_DPWROK_MASK);
 
 	/* Pass-through DSW_PWROK to ICL. */
 	if (dswpwrok_in != gpio_get_level(GPIO_PCH_DSW_PWROK)) {
@@ -219,7 +220,7 @@ static void pwrok_signal_set(const struct intel_x86_pwrok_signal *signal,
  */
 static void all_sys_pwrgd_pass_thru(void)
 {
-	int all_sys_pwrgd_in = intel_x86_get_pg_ec_all_sys_pwrgd();
+	int all_sys_pwrgd_in = !!(power_get_signals() & ALL_SYS_PGOOD_MASK);
 	const struct intel_x86_pwrok_signal *pwrok_signal;
 	int signal_count;
 	int i;
@@ -246,10 +247,6 @@ static void all_sys_pwrgd_pass_thru(void)
 
 enum power_state power_handle_state(enum power_state state)
 {
-#ifdef CONFIG_CHIPSET_JASPERLAKE
-	int timeout_ms = 10;
-#endif /* CONFIG_CHIPSET_JASPERLAKE */
-
 	dsw_pwrok_pass_thru();
 
 	all_sys_pwrgd_pass_thru();
@@ -325,12 +322,8 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S3S0:
 		GPIO_SET_LEVEL(GPIO_EN_VCCIO_EXT, 1);
 		/* Now wait for ALL_SYS_PWRGD. */
-		while (!intel_x86_get_pg_ec_all_sys_pwrgd() &&
-		       (timeout_ms > 0)) {
-			msleep(1);
-			timeout_ms--;
-		};
-		if (!timeout_ms)
+		if (power_wait_signals_timeout(ALL_SYS_PGOOD_MASK, 10 * MSEC) !=
+		    EC_SUCCESS)
 			CPRINTS("ALL_SYS_PWRGD not received.");
 		break;
 

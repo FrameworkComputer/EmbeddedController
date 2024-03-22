@@ -6,7 +6,6 @@
 
 properties:
   wakeup-mask:
-    required: false
     type: int
     default: 0
     description:

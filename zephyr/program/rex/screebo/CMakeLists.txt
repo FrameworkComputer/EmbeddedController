@@ -4,4 +4,6 @@
 
 cros_ec_library_include_directories_ifdef(CONFIG_BOARD_SCREEBO include)
 zephyr_include_directories("include")
-zephyr_library_sources("src/keyboard.c" "src/usb_config.c")
+zephyr_library_sources("src/board.c"
+                       "src/i2c_policy.c"
+                       "src/usb_config.c")

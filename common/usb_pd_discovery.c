@@ -70,6 +70,14 @@ void dfp_consume_identity(int port, enum tcpci_msg_type type, int cnt,
 	memcpy(disc->identity.raw_value, payload + 1, identity_size);
 	disc->identity_cnt = identity_size / sizeof(uint32_t);
 
+	if (PD_VDO_SVDM_VERS_MAJOR(payload[0]) &&
+	    PD_VDO_SVDM_VERS_MINOR(payload[0]))
+		disc->svdm_vers = SVDM_VER_2_1;
+	else if (PD_VDO_SVDM_VERS_MAJOR(payload[0]))
+		disc->svdm_vers = SVDM_VER_2_0;
+	else
+		disc->svdm_vers = SVDM_VER_1_0;
+
 	switch (ptype) {
 	case IDH_PTYPE_AMA:
 		/* Leave vbus ON if the following macro is false */
@@ -299,6 +307,14 @@ enum pd_discovery_state pd_get_modes_discovery(int port,
 					       enum tcpci_msg_type type)
 {
 	const struct svid_mode_data *mode_data = pd_get_next_mode(port, type);
+	enum pd_discovery_state svids_disc = pd_get_svids_discovery(port, type);
+
+	/*
+	 * If SVIDs discovery is incomplete, modes discovery is trivially
+	 * incomplete.
+	 */
+	if (svids_disc != PD_DISC_COMPLETE)
+		return svids_disc;
 
 	/*
 	 * If there are no SVIDs for which to discover modes, mode discovery is

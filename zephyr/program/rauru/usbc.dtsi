@@ -1,0 +1,102 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			chg = <&charger_bq25710>;
+			tcpc = <&usbpd0>;
+			ppc = <&ppc_port0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&ps8802_mux_0 &virtual_mux_0>;
+			};
+		};
+
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			tcpc = <&usbpd1>;
+			ppc = <&ppc_port1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&tusb1046_mux_1 &virtual_mux_1>;
+			};
+		};
+
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};
+
+&usbpd0 {
+	status = "okay";
+};
+
+&usbpd1 {
+	status = "okay";
+};
+
+&i2c0 {
+	charger_bq25710: bq25710@9 {
+		compatible = "ti,bq25710";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
+
+&i2c2ALT {
+	ppc_port0: syv682x@42 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x42>;
+		frs_en_gpio = <&gpio_usb_c0_frs_en>;
+		/* a duplicate of the <&usb_c0_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		 irq-gpios = <&gpiof 1 GPIO_ACTIVE_LOW>;
+	};
+
+	ps8802_mux_0: ps8802-mx-0@17 {
+		compatible = "parade,ps8802";
+		status = "okay";
+		reg = <0x17>;
+	};
+};
+
+&i2c4 {
+	ppc_port1: syv682x@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&gpio_usb_c1_frs_en>;
+		/* a duplicate of the <&usb_c1_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiod 4 GPIO_ACTIVE_LOW>;
+	};
+
+	tusb1046_mux_1: tusb1046-mux-1@12 {
+		compatible = "ti,tusb1044";
+		status = "okay";
+		reg = <0x12>;
+	};
+};

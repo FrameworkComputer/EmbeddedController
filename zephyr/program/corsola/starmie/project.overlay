@@ -15,6 +15,7 @@
 #include "../ite_led.dtsi"
 #include "../ite_usbc.dtsi"
 #include "../ite_shi.dtsi"
+#include "./thermistor.dtsi"
 #include <cros/thermistor/thermistor.dtsi>
 #include <dt-bindings/motionsense/utils.h>
 
@@ -48,6 +49,12 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "base_detect_interrupt";
 		};
+
+		usb_c0_ppc_bc12 {
+			handler = "ppc_interrupt";
+		};
+
+		/delete-node/ usb_c1_bc12_charger;
 		/delete-node/ lid_imu;
 	};
 
@@ -108,8 +115,14 @@
 			enum-name = "GPIO_ENTERING_RW";
 		};
 
+		usb_c0_frs_en: usb_c0_frs_en {
+			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_USB_C0_FRS_EN";
+		};
+
 		/delete-node/ en_pp5000_usb_a0_vbus;
 		/delete-node/ usb_a0_fault_odl;
+		/delete-node/ usb_c1_bc12_charger_int_odl;
 	};
 
 	unused-pins {
@@ -117,17 +130,13 @@
 		<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
 		<&gpioe 0 GPIO_INPUT_PULL_DOWN>,
 		<&gpioe 7 GPIO_INPUT_PULL_DOWN>,
-		<&gpiof 0 GPIO_INPUT_PULL_DOWN>,	//EC_EN_PP3300_WCAM
 		<&gpiof 1 GPIO_INPUT_PULL_DOWN>,
 		<&gpioh 0 GPIO_INPUT_PULL_DOWN>,	//EC_AP_RSVD1_ODL
 		<&gpioh 1 GPIO_INPUT_PULL_DOWN>,
 		<&gpioh 2 GPIO_INPUT_PULL_DOWN>,
 		<&gpioi 3 GPIO_INPUT_PULL_DOWN>,	//EC_AP_RSVD0_ODL
+		<&gpioj 4 GPIO_INPUT_PULL_DOWN>,
 		<&gpiom 2 GPIO_INPUT_PULL_DOWN>;
-	};
-
-	named-i2c-ports {
-		/delete-node/ usb-c1;			//unused i2c_usb_c1
 	};
 
 	/delete-node/ cros-keyscan;
@@ -139,9 +148,6 @@
 		 * its own <>_INT_EVENT.
 		 */
 		bmi3xx-int = &lid_accel;
-
-		/* Use lid accelerometer for body detection */
-		on-body-sensor = &lid_accel;
 	};
 
 	motionsense-mutex {
@@ -222,6 +228,8 @@
 		/delete-node/ port1-muxes;
 
 		port0@0{
+			/delete-property/ bc12;
+			ppc_alt = <&ppc_port0>;
 			usb-mux-chain-0{
 				usb-muxes = <&ps8743_mux_1 &virtual_mux_0>;
 			};
@@ -242,7 +250,7 @@
 	};
 
 	named-adc-channels {
-        adc_temp_sensor_1: adc-temp-sensor-1 {
+        	adc_temp_sensor_1: adc-temp-sensor-1 {
 			enum-name = "ADC_TEMP_SENSOR_1";
 			io-channels = <&adc0 6>;
 		};
@@ -250,7 +258,7 @@
 			enum-name = "ADC_TEMP_SENSOR_2";
 			io-channels = <&adc0 7>;
 		};
-    };
+	};
 
 	temp_sensor_1_thermistor: sensor-1-thermistor {
 		compatible = "cros-ec,temp-sensor-thermistor";
@@ -264,13 +272,16 @@
 		adc = <&adc_temp_sensor_2>;
 	};
 
-    named-temp-sensors {
+	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 		temp_sensor_1 {
 			sensor = <&temp_sensor_1_thermistor>;
 		};
 		temp_sensor_2 {
 			sensor = <&temp_sensor_2_thermistor>;
+		};
+		temp_charger: charger {
+			sensor = <&charger_bc12_port1>;
 		};
 	};
 	/*
@@ -295,40 +306,83 @@
 			led-pwms = <&led_power_white>;
 
 			/* Overwrite Power LED white to off */
-			color_power_white: color-power-white {
+			color-power-white {
 				led-color = "LED_WHITE";
 				led-values = <0>;
 			};
 		};
 	};
 
+	/delete-node/ led-colors;
 	led-colors {
 		compatible = "cros-ec,led-policy";
 
+		sysrq-alias = "EC_LED_ID_BATTERY_LED";
+		sysrq-led-control-color = "LED_WHITE";
+
+		recovery-hw-reinit-alias = "EC_LED_ID_BATTERY_LED";
+		recovery-hw-reinit-led-control-color = "LED_AMBER";
+
 		/* STARMIE LED bat charge */
-		bat-power-state-charge-1v1-1 {
+		bat-power-state-charge-lvl-1 {
 			charge-state = "LED_PWRS_CHARGE";
 			/* Battery percent range (>= Empty, <= 94%) */
 			batt-lvl = <BATTERY_LEVEL_EMPTY 94>;
-			color-0 {
-				led-color = <&color_battery_amber>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_AMBER";
+				};
 			};
 		};
 
-		bat-power-state-charge-1v1-2 {
+		bat-power-state-charge-lvl-2 {
 			charge-state = "LED_PWRS_CHARGE";
 			/* Battery percent range (>= 95) */
 			batt-lvl = <95 100>;
-			color-0 {
-				led-color = <&color_battery_white>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
 		bat-power-state-charge-near-full {
 			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
 
-			color-0 {
-				led-color = <&color_battery_white>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		bat-power-state-charge-idle {
+			charge-state = "LED_PWRS_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		bat-power-state-charge-forced-idle {
+			charge-state = "LED_PWRS_FORCED_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
@@ -339,8 +393,12 @@
 			/* Battery percent range (>= 11%, <= Full) */
 			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
 
-			color-0 {
-				led-color = <&color_battery_white>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
@@ -348,23 +406,31 @@
 			charge-state = "LED_PWRS_DISCHARGE";
 			chipset-state = "POWER_S3";
 
-			color-0 {
-				led-color = <&color_battery_white>;
-				period-ms = <1000>;
-			};
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
 
-			color-1 {
-				led-color = <&color_battery_off>;
-				period-ms = <3000>;
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
 			};
 		};
 
 		bat-power-state-discharge-s5 {
 			charge-state = "LED_PWRS_DISCHARGE";
-
 			chipset-state = "POWER_S5";
-			color-0 {
-				led-color = <&color_battery_off>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
@@ -374,14 +440,18 @@
 			chipset-state = "POWER_S0";
 			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
 
-			color-0 {
-				led-color = <&color_battery_amber>;
-				period-ms = <1000>;
-			};
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
 
-			color-1 {
-				led-color = <&color_battery_off>;
-				period-ms = <3000>;
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
 			};
 		};
 
@@ -390,14 +460,18 @@
 			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S0";
 
-			color-0 {
-				led-color = <&color_battery_amber>;
-				period-ms = <1000>;
-			};
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
 
-			color-1 {
-				led-color = <&color_battery_off>;
-				period-ms = <1000>;
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
 			};
 		};
 
@@ -405,14 +479,18 @@
 			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S3";
 
-			color-0 {
-				led-color = <&color_battery_white>;
-				period-ms = <1000>;
-			};
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
 
-			color-1 {
-				led-color = <&color_battery_off>;
-				period-ms = <3000>;
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
 			};
 		};
 
@@ -420,8 +498,45 @@
 			charge-state = "LED_PWRS_ERROR";
 			chipset-state = "POWER_S5";
 
-			color-0 {
-				led-color = <&color_battery_off>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		pwr-power-state-off-s3 {
+			chipset-state = "POWER_S3";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		pwr-power-state-off-s5 {
+			chipset-state = "POWER_S5";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		pwr-power-state-on {
+			chipset-state = "POWER_S0";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 	};
@@ -430,6 +545,8 @@
 &i2c0{
 	charger_bc12_port1: rt9490@53{
 		compatible = "richtek,rt9490";
+		thermistor = <&thermistor_rt9490>;
+		/delete-property/ irq;
 	};
 };
 
@@ -437,6 +554,15 @@
 	ps8743_mux_1: ps8743-mux-1@10 {
 		compatible = "parade,ps8743";
 		reg = <0x10>;
+	};
+	rt1739@70{
+		compatible = "richtek,rt1739-ppc";
+	};
+	ppc_port0: syv682x@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&usb_c0_frs_en>;
 	};
 };
 
@@ -447,5 +573,5 @@
 };
 
 &thermistor_1V8_100K_100K_4250B{
-    status = "okay";
+	status = "okay";
 };

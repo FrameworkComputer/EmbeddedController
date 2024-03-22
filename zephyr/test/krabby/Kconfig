@@ -22,6 +22,24 @@ config TEST_TENTACRUEL
 	  Include temp_tentacruel test into the binary to test temperature
 	  threshold trigger current control.
 
+config TEST_STARMIE
+	bool "Run the tests intended for starmie"
+	help
+	  Include temp_starmie test into the binary to test temperature
+	  threshold trigger current control.
+
+config TEST_CHINCHOU
+	bool "Run the tests intended for chincou"
+	help
+	  Include board_chinchou test into the binary to test distinguish
+	  between clamshell and convertible.
+
+config TEST_WOOBAT
+	bool "Run the tests intended for woobat"
+	help
+	  Include temp_woobat test into the binary to test temperature
+	  threshold trigger current control.
+
 endchoice
 
 source "Kconfig.zephyr"

@@ -4,6 +4,10 @@
  */
 #include "compile_time_macros.h"
 
+#ifdef CONFIG_ZEPHYR
+#include <zephyr/shell/shell.h>
+#endif
+
 extern "C" {
 #include "atomic.h"
 #include "clock.h"
@@ -23,11 +27,11 @@ extern "C" {
 #include "watchdog.h"
 }
 
-#include "fpsensor.h"
-#include "fpsensor_crypto.h"
-#include "fpsensor_detect.h"
-#include "fpsensor_state.h"
-#include "fpsensor_utils.h"
+#include "fpsensor/fpsensor.h"
+#include "fpsensor/fpsensor_crypto.h"
+#include "fpsensor/fpsensor_detect.h"
+#include "fpsensor/fpsensor_state.h"
+#include "fpsensor/fpsensor_utils.h"
 
 #ifdef CONFIG_CMD_FPSENSOR_DEBUG
 /* --- Debug console commands --- */
@@ -292,10 +296,26 @@ DECLARE_CONSOLE_COMMAND(fpclear, command_fpclear, NULL,
 static int command_fpmaintenance(int argc, const char **argv)
 {
 #ifdef HAVE_FP_PRIVATE_DRIVER
-	return fp_maintenance();
-#else
-	return EC_SUCCESS;
+	uint32_t mode_output = 0;
+	int rc = 0;
+
+	rc = fp_set_sensor_mode(FP_MODE_SENSOR_MAINTENANCE, &mode_output);
+
+	if (rc != EC_RES_SUCCESS) {
+		/*
+		 * EC host command errors do not directly map to console command
+		 * errors.
+		 */
+		return EC_ERROR_UNKNOWN;
+	}
+
+	/* Block console until maintenance is finished. */
+	while (sensor_mode & FP_MODE_SENSOR_MAINTENANCE) {
+		usleep(100 * MSEC);
+	}
 #endif /* #ifdef HAVE_FP_PRIVATE_DRIVER */
+
+	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(fpmaintenance, command_fpmaintenance, NULL,
 			"Run fingerprint sensor maintenance");

@@ -5,12 +5,11 @@
 
 #include "common.h"
 #include "console.h"
-#include "cryptoc/util.h"
 #include "elan_sensor.h"
 #include "elan_sensor_pal.h"
 #include "elan_setting.h"
-#include "fpsensor.h"
-#include "fpsensor_utils.h"
+#include "fpsensor/fpsensor.h"
+#include "fpsensor/fpsensor_utils.h"
 #include "gpio.h"
 #include "link_defs.h"
 #include "math_util.h"
@@ -33,7 +32,7 @@ static struct ec_response_fp_info ec_fp_sensor_info = {
 	.model_id = MID,
 	.version = VERSION,
 	/* Image frame characteristics */
-	.frame_size = FP_SENSOR_RES_X_ELAN * FP_SENSOR_RES_Y_ELAN,
+	.frame_size = FP_SENSOR_RES_X_ELAN * FP_SENSOR_RES_Y_ELAN * 2,
 	.pixel_format = V4L2_PIX_FMT_GREY,
 	.width = FP_SENSOR_RES_X_ELAN,
 	.height = FP_SENSOR_RES_Y_ELAN,
@@ -58,6 +57,9 @@ int fp_sensor_init(void)
 	errors = 0;
 	elan_execute_reset();
 	algorithm_parameter_setting();
+	if (IC_SELECTION == EFSA80SG)
+		elan_set_hv_chip(1);
+
 	if (elan_execute_calibration() < 0)
 		errors |= FP_ERROR_INIT_FAIL;
 	if (elan_woe_mode() != 0)
@@ -181,7 +183,7 @@ int fp_finger_enroll(uint8_t *image, int *completion)
  * fp_sensor_configure_detect needs to be called to restore finger detection
  * functionality.
  */
-void fp_sensor_configure_detect(void)
+void fp_configure_detect(void)
 {
 	CPRINTF("========%s=======\n", __func__);
 	elan_woe_mode();
@@ -210,7 +212,7 @@ void fp_sensor_configure_detect(void)
  * - FP_SENSOR_TOO_FAST on finger removed before image was captured
  * - FP_SENSOR_LOW_SENSOR_COVERAGE on sensor not fully covered by finger
  */
-int fp_sensor_acquire_image_with_mode(uint8_t *image_data, int mode)
+int fp_acquire_image_with_mode(uint8_t *image_data, int mode)
 {
 	CPRINTF("========%s=======\n", __func__);
 	return elan_sensor_acquire_image_with_mode(image_data, mode);
@@ -224,7 +226,7 @@ int fp_sensor_acquire_image_with_mode(uint8_t *image_data, int mode)
  * - FINGER_PARTIAL
  * - FINGER_PRESENT
  */
-enum finger_state fp_sensor_finger_status(void)
+enum finger_state fp_finger_status(void)
 {
 	CPRINTF("========%s=======\n", __func__);
 	return elan_sensor_finger_status();

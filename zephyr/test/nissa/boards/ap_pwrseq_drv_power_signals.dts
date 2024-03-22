@@ -1,0 +1,221 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	common-pwrseq {
+		compatible = "intel,ap-pwrseq";
+
+		sys-pwrok-delay = <10>;
+		all-sys-pwrgd-timeout = <20>;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+		gpio_all_sys_pwrgd: all_sys_pwrgd {
+			gpios = <&gpioa 3 GPIO_INPUT>;
+		};
+	};
+	en_pp5000: pwr-en-pp5000-s5 {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PP5000_S5 enable output to regulator";
+		enum-name = "PWR_EN_PP5000_A";
+		gpios = <&gpio0 10 0>;
+		output;
+	};
+	en_pp3300: pwr-en-pp3300-s5 {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PP3300_S5 enable output to LS";
+		enum-name = "PWR_EN_PP3300_A";
+		gpios = <&gpio0 11 0>;
+		output;
+	};
+	rsmrst: pwr-pg-ec-rsmrst-odl {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "RSMRST power good from regulator";
+		enum-name = "PWR_RSMRST_PWRGD";
+		gpios = <&gpio0 12 0>;
+	};
+	ec_pch_rsmrst: pwr-ec-pch-rsmrst-odl {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "RSMRST output to PCH";
+		enum-name = "PWR_EC_PCH_RSMRST";
+		gpios = <&gpio0 13 0>;
+		output;
+	};
+	slp_s0: pwr-slp-s0-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SLP_S0_L input from PCH";
+		enum-name = "PWR_SLP_S0";
+		gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
+		no-enable;
+	};
+	slp_s3: pwr-slp-s3-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SLP_S3_L input from PCH";
+		enum-name = "PWR_SLP_S3";
+		gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
+	};
+	slp_sus: pwr-slp-sus-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SLP_SUS_L input from PCH";
+		enum-name = "PWR_SLP_SUS";
+		gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
+	};
+	ec_soc_dsw_pwrok: pwr-ec-soc-dsw-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "DSW_PWROK output to PCH";
+		enum-name = "PWR_EC_SOC_DSW_PWROK";
+		gpios = <&gpio0 17 0>;
+		output;
+	};
+	dsw_pwrok: pwr-pp3300-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PP3300 PWROK";
+		enum-name = "PWR_DSW_PWROK";
+		gpios = <&gpio0 19 0>;
+	};
+	pwr-vccst-pwrgd-od {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "VCCST_PWRGD output to PCH";
+		enum-name = "PWR_VCCST_PWRGD";
+		gpios = <&gpio0 18 0>;
+		output;
+	};
+	pch_pwrok: pwr-pch-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PCH_PWROK output to PCH";
+		enum-name = "PWR_PCH_PWROK";
+		gpios = <&gpio0 20 0>;
+		output;
+	};
+	pwr-ec-pch-sys-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SYS_PWROK output to PCH";
+		enum-name = "PWR_EC_PCH_SYS_PWROK";
+		gpios = <&gpio0 21 0>;
+		output;
+	};
+	pwr-sys-rst-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SYS_RESET# output to PCH";
+		enum-name = "PWR_SYS_RST";
+		gpios = <&gpio0 22 GPIO_ACTIVE_LOW>;
+		output;
+	};
+	pwr-all-sys-pwrgd {
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "Combined all power good";
+		enum-name = "PWR_ALL_SYS_PWRGD";
+	};
+	pwr_pg_pp1p05: pwr-pg-pp1p05 {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PP1P05 PWROK (from ADC)";
+		enum-name = "PWR_PG_PP1P05";
+		gpios = <&gpio0 24 GPIO_ACTIVE_HIGH>;
+	};
+	ec_soc_dsw_pwrok_emul_pd: ec-soc-dsw-pwrok-emul-pd {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&ec_soc_dsw_pwrok>;
+		init-value = <1>;
+		ec-dsw-pwrok-slp-sus-emul {
+			output-signal = <&slp_sus>;
+			deassert-delay-ms = <5>;
+			init-value= <0>;
+			invert-value;
+		};
+	};
+	ec_pch_rsmrst_emul_pd: ec-pch-rsmrst-emul-pd {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&ec_pch_rsmrst>;
+		init-value = <0>;
+		ec-pch-rsmrst-emul {
+			output-signal = <&rsmrst>;
+			deassert-delay-ms = <5>;
+			init-value= <1>;
+			invert-value;
+		};
+	};
+	en_pp3300_emul_pd: en-pp3300-emul-pd {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&en_pp3300>;
+		init-value = <1>;
+		pp3300-dsw-pwrok-emul {
+			output-signal = <&dsw_pwrok>;
+			deassert-delay-ms = <2>;
+			init-value= <1>;
+		};
+	};
+	tp-power-down-ok {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&ec_soc_dsw_pwrok_emul_pd &ec_pch_rsmrst_emul_pd
+				&en_pp3300_emul_pd>;
+	};
+	en_pp3300_emul_ok: en-pp3300-emul-ok {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&en_pp3300>;
+		init-value = <0>;
+		pp3300-dsw-pwrok-emul {
+			output-signal = <&dsw_pwrok>;
+			assert-delay-ms = <10>;
+			init-value= <0>;
+		};
+	};
+	tp-power-up-ok {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&en_pp3300_emul_ok>;
+	};
+	en_pp3300_emul_fail: en-pp3300-emul-fail {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&en_pp3300>;
+		init-value = <0>;
+		pp3300-dsw-pwrok-emul {
+			output-signal = <&dsw_pwrok>;
+			assert-delay-ms = <30000>;
+			init-value= <0>;
+		};
+	};
+	tp-power-up-fail {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&en_pp3300_emul_fail>;
+	};
+	ec_soc_dsw_pwrok_g3_emul: ec-soc-dsw-prok-g3-emul {
+		compatible = "intel,ap-pwr-signal-emul";
+		input-signal = <&ec_soc_dsw_pwrok>;
+		init-value= <1>;
+		edge = "EDGE_ACTIVE_ON_DEASSERT";
+		ec-soc-dsw-prok-dsw-pwrok-emul {
+			output-signal = <&dsw_pwrok>;
+			init-value= <1>;
+			deassert-delay-ms = <2>;
+		};
+		ec-soc-dsw-prok-rsmrst-emul {
+			output-signal = <&rsmrst>;
+			init-value= <1>;
+			deassert-delay-ms = <1>;
+		};
+		ec-soc-dsw-prok-slp-sus-emul {
+			output-signal = <&slp_sus>;
+			init-value= <0>;
+			invert-value;
+			deassert-delay-ms = <1>;
+		};
+	};
+	tp-s0-to-g3 {
+		compatible = "intel,ap-pwr-test-platform";
+		nodes = <&ec_soc_dsw_pwrok_g3_emul>;
+	};
+	ap-power {
+		compatible = "ap-pwrseq-sub-states";
+		chipset = "AP_POWER_STATE_S0IX";
+	};
+	gpio-interrupts {
+		/delete-node/ int_usb_c0;
+		/delete-node/ int_usb_c1;
+	};
+};
+
+&gpio0 {
+	ngpios = <28>;
+};

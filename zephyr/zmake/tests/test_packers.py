@@ -7,9 +7,10 @@
 import pathlib
 import tempfile
 
-import hypothesis  # pylint:disable=import-error
-import hypothesis.strategies as st  # pylint:disable=import-error
-import pytest  # pylint:disable=import-error
+# pylint:disable=import-error
+import hypothesis
+import hypothesis.strategies as st
+import pytest
 import zmake.output_packers as packers
 
 
@@ -28,10 +29,13 @@ class FakePacker(packers.BasePacker):
         """Expose the _check_packed_file_size method."""
         return self._check_packed_file_size(file, dir_map)
 
-    def _get_max_image_bytes(self, dir_map):
+    def _get_max_image_bytes(self, _dir_map):
         return self.max_size
 
-    def pack_firmware(self, work_dir, jobclient, dir_map, version_string=""):
+    def pack_firmware(  # pylint: disable=no-self-use
+        self, _work_dir, _jobclient, _dir_map, version_string=""
+    ):
+        """See base class."""
         del version_string
         assert False
 

@@ -9,8 +9,10 @@
 #include "ec_commands.h"
 #include "emul/emul_power_signals.h"
 #include "host_command.h"
+#include "power_signals.h"
 #include "test_mocks.h"
 #include "test_state.h"
+#include "zephyr/sys/util.h"
 
 #include <zephyr/drivers/espi.h>
 #include <zephyr/drivers/espi_emul.h>
@@ -20,6 +22,9 @@
 #include <zephyr/ztest.h>
 
 #include <ap_power/ap_pwrseq.h>
+#include <ap_power_override_functions.h>
+
+LOG_MODULE_REGISTER(test_ap_pwrseq);
 
 static struct ap_power_ev_callback test_cb;
 static int power_resume_count;
@@ -28,6 +33,69 @@ static int power_hard_off_count;
 static int power_shutdown_count;
 static int power_shutdown_complete_count;
 static int power_suspend_count;
+
+#define S5_INACTIVITY_TIMEOUT_MS                                               \
+	COND_CODE_0(                                                           \
+		AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout), (2 * MSEC_PER_SEC), \
+		(AP_PWRSEQ_DT_VALUE(s5_inactivity_timeout) * MSEC_PER_SEC))
+
+#ifdef CONFIG_AP_PWRSEQ_DRIVER
+static void ap_pwrseq_wake(void)
+{
+	const struct device *dev = ap_pwrseq_get_instance();
+
+	ap_pwrseq_post_event(dev, AP_PWRSEQ_EVENT_POWER_SIGNAL);
+}
+#endif
+
+#define PWRSEQ_OUTPUT(nodeid)                                 \
+	{                                                     \
+		.signal_enum = PWR_SIGNAL_ENUM(nodeid),       \
+		.signal_name = DT_PROP(nodeid, enum_name),    \
+		.gpio_spec = GPIO_DT_SPEC_GET(nodeid, gpios), \
+	},
+
+#define PWRSEQ_GPIOS(nodeid) \
+	COND_CODE_1(DT_PROP(nodeid, output), (PWRSEQ_OUTPUT(nodeid)), ())
+
+struct ec_output {
+	uint8_t signal_enum;
+	char *signal_name;
+	struct gpio_dt_spec gpio_spec;
+};
+
+/*
+ * Get a list of power signals that are GPIO outputs.
+ */
+static const struct ec_output ec_outputs[] = { DT_FOREACH_STATUS_OKAY(
+	intel_ap_pwrseq_gpio, PWRSEQ_GPIOS) };
+
+/*
+ * List of input signals to the AP that are driven by the EC. All signals
+ * should start out at physical level 0 while in G3 and should end up at
+ * physical level 1 when reaching S0.
+ */
+#ifdef CONFIG_AP_X86_INTEL_MTL
+static const uint8_t ap_inputs[] = {
+	PWR_EC_PCH_RSMRST,
+	PWR_EC_PCH_SYS_PWROK,
+};
+#endif
+
+#ifdef CONFIG_AP_X86_INTEL_ADL
+static const uint8_t ap_inputs[] = {
+	PWR_EC_SOC_DSW_PWROK,
+	PWR_PCH_PWROK,
+	PWR_EC_PCH_RSMRST,
+#ifndef CONFIG_AP_PWRSEQ_DRIVER
+	/* TODO: b/317918383 - AP_PWRSEQ_DRIVER: ADL chipset needs to support
+	 * PWR_VCCST_PWRGD and PWR_EC_PCH_SYS_PWROK
+	 */
+	PWR_VCCST_PWRGD,
+	PWR_EC_PCH_SYS_PWROK,
+#endif
+};
+#endif
 
 static void emul_ev_handler(struct ap_power_ev_callback *callback,
 			    struct ap_power_ev_data data)
@@ -71,8 +139,42 @@ static void ap_pwrseq_reset_ev_counters(void)
 	power_suspend_count = 0;
 }
 
+static void verify_ap_inputs(bool in_s0)
+{
+	int expected_level;
+
+	if (in_s0) {
+		expected_level = 1;
+	} else {
+		expected_level = 0;
+	}
+
+	LOG_INF("Verifying AP inputs are at physical level %d", expected_level);
+
+	for (int ap = 0; ap < ARRAY_SIZE(ap_inputs); ap++) {
+		for (int ec = 0; ec < ARRAY_SIZE(ec_outputs); ec++) {
+			int phys_level;
+
+			if (ec_outputs[ec].signal_enum == ap_inputs[ap]) {
+				phys_level = gpio_emul_output_get(
+					ec_outputs[ec].gpio_spec.port,
+					ec_outputs[ec].gpio_spec.pin);
+				zassert_equal(
+					phys_level, expected_level,
+					"%s (%d) signal isn't at physical %d",
+					ec_outputs[ec].signal_name,
+					ec_outputs[ec].signal_enum,
+					expected_level);
+			}
+		}
+	}
+}
+
 ZTEST(ap_pwrseq, test_ap_pwrseq_0)
 {
+	/* Verify all inputs to the AP start a physical level 0. */
+	verify_ap_inputs(false);
+
 	zassert_equal(0,
 		      power_signal_emul_load(
 			      EMUL_POWER_SIGNAL_TEST_PLATFORM(tp_sys_g3_to_s0)),
@@ -84,6 +186,11 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_0)
 		      "AP_POWER_STARTUP event not generated");
 	zassert_equal(1, power_resume_count,
 		      "AP_POWER_RESUME event not generated");
+
+	/* Once reaching S0, validate that all inputs to the
+	 * AP are set to high level.
+	 */
+	verify_ap_inputs(true);
 }
 
 ZTEST(ap_pwrseq, test_ap_pwrseq_0_sleep)
@@ -200,10 +307,10 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_2)
 		"Unable to load test platform `tp_sys_g3_to_s0_power_down`");
 
 	ap_power_exit_hardoff();
-	k_msleep(2000);
-	zassert_equal(2, power_shutdown_count,
+	k_sleep(K_MSEC(S5_INACTIVITY_TIMEOUT_MS * 1.5));
+	zassert_equal(1, power_shutdown_count,
 		      "AP_POWER_SHUTDOWN event not generated");
-	zassert_equal(2, power_shutdown_complete_count,
+	zassert_equal(1, power_shutdown_complete_count,
 		      "AP_POWER_SHUTDOWN_COMPLETE event not generated");
 	zassert_equal(1, power_suspend_count,
 		      "AP_POWER_SUSPEND event not generated");
@@ -211,6 +318,7 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_2)
 		      "AP_POWER_HARD_OFF event not generated");
 }
 
+#if defined(CONFIG_AP_X86_INTEL_ADL)
 ZTEST(ap_pwrseq, test_ap_pwrseq_3)
 {
 	zassert_equal(0,
@@ -221,8 +329,19 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_3)
 	ap_power_exit_hardoff();
 	k_msleep(500);
 
-	zassert_equal(1, power_hard_off_count,
-		      "AP_POWER_HARD_OFF event not generated");
+	/*
+	 * AP_PWRSEQ_DRIVER inhibits transition up from G3 due to slp_sus signal
+	 * error, whereas the other implementation goes to G3S5 then notices the
+	 * problem and goes back to G3, emitting a AP_POWER_HARD_OFF event in
+	 * the process.
+	 */
+	if (IS_ENABLED(CONFIG_AP_PWRSEQ_DRIVER)) {
+		zassert_equal(0, power_hard_off_count,
+			      "AP_POWER_HARD_OFF event generated");
+	} else {
+		zassert_equal(1, power_hard_off_count,
+			      "AP_POWER_HARD_OFF event not generated");
+	}
 }
 
 ZTEST(ap_pwrseq, test_ap_pwrseq_4)
@@ -257,6 +376,30 @@ ZTEST(ap_pwrseq, test_ap_pwrseq_5)
 
 	zassert_equal(0, power_hard_off_count,
 		      "AP_POWER_HARD_OFF event generated");
+	zassert_equal(1, power_shutdown_count,
+		      "AP_POWER_SHUTDOWN event not generated");
+	zassert_equal(1, power_shutdown_complete_count,
+		      "AP_POWER_SHUTDOWN_COMPLETE event not generated");
+}
+#endif /* CONFIG_AP_X86_INTEL_ADL */
+
+ZTEST(ap_pwrseq, test_ap_pwrseq_6)
+{
+	zassert_equal(
+		0,
+		power_signal_emul_load(
+			EMUL_POWER_SIGNAL_TEST_PLATFORM(tp_sys_s3_rsmrst_fail)),
+		"Unable to load test platform `tp_sys_s3_dsw_pwrok_fail`");
+
+	ap_power_exit_hardoff();
+	k_sleep(K_MSEC(S5_INACTIVITY_TIMEOUT_MS * 1.5));
+
+#if defined(CONFIG_AP_X86_INTEL_ADL)
+	zassert_equal(1, power_hard_off_count,
+		      "AP_POWER_HARD_OFF event generated");
+#endif /* CONFIG_AP_X86_INTEL_ADL */
+	zassert_equal(1, power_start_up_count,
+		      "AP_POWER_STARTUP event not generated");
 	zassert_equal(1, power_shutdown_count,
 		      "AP_POWER_SHUTDOWN event not generated");
 	zassert_equal(1, power_shutdown_complete_count,

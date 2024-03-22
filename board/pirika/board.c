@@ -22,6 +22,7 @@
 #include "gpio.h"
 #include "hooks.h"
 #include "intc.h"
+#include "keyboard_8042_sharedlib.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
@@ -428,6 +429,19 @@ void board_init(void)
 		keyscan_config.actual_key_mask[13] = 0xff;
 		keyscan_config.actual_key_mask[14] = 0xff;
 	}
+
+	/* Keyboard config = 1 : CA-FR US keyboard*/
+	if (get_cbi_fw_config_keyboard() == 1) {
+		/*
+		 * Candian French keyboard (US Type).
+		 * \|:		0x0061 -> 0x61 -> 0x56
+		 * r-ctrl:	0xe014 -> 0x14 -> 0x1d
+		 */
+		uint16_t tmp = get_scancode_set2(4, 0);
+
+		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
+		set_scancode_set2(2, 7, tmp);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
@@ -444,8 +458,9 @@ void board_hibernate(void)
 
 __override void board_ocpc_init(struct ocpc_data *ocpc)
 {
-	/* There's no provision to measure Isys */
-	ocpc->chg_flags[CHARGER_SECONDARY] |= OCPC_NO_ISYS_MEAS_CAP;
+	if (get_cbi_fw_config_db() != DB_NONE)
+		/* There's no provision to measure Isys */
+		ocpc->chg_flags[CHARGER_SECONDARY] |= OCPC_NO_ISYS_MEAS_CAP;
 }
 
 void board_reset_pd_mcu(void)
@@ -464,7 +479,8 @@ __override void board_power_5v_enable(int enable)
 	 */
 	gpio_set_level(GPIO_EN_PP5000, !!enable);
 	gpio_set_level(GPIO_EN_USB_A0_VBUS, !!enable);
-	if (isl923x_set_comparator_inversion(1, !!enable))
+	if ((get_cbi_fw_config_db() != DB_NONE) &&
+	    (isl923x_set_comparator_inversion(1, !!enable)))
 		CPRINTS("Failed to %sable sub rails!", enable ? "en" : "dis");
 }
 
@@ -694,56 +710,37 @@ const struct temp_sensor_t temp_sensors[] = {
 };
 BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CHARGER          \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(68), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(50), \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_charger =
-	THERMAL_CHARGER;
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_VCORE            \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(53), \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_vcore =
-	THERMAL_VCORE;
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_AMBIENT          \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(50), \
-		}, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_ambient =
-	THERMAL_AMBIENT;
-
+const static struct ec_thermal_config thermal_charger = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(68),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(50),
+	},
+};
+const static struct ec_thermal_config thermal_vcore = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(53),
+	},
+};
+const static struct ec_thermal_config thermal_ambient = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(50),
+	},
+};
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1] = THERMAL_CHARGER,
-	[TEMP_SENSOR_2] = THERMAL_VCORE,
-	[TEMP_SENSOR_3] = THERMAL_AMBIENT,
+	[TEMP_SENSOR_1] = thermal_charger,
+	[TEMP_SENSOR_2] = thermal_vcore,
+	[TEMP_SENSOR_3] = thermal_ambient,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
@@ -786,4 +783,55 @@ __override void board_pulse_entering_rw(void)
 	usleep(MSEC);
 	gpio_set_level(GPIO_EC_ENTERING_RW, 0);
 	gpio_set_level(GPIO_EC_ENTERING_RW2, 0);
+}
+
+__override uint8_t board_get_usb_pd_port_count(void)
+{
+	if (get_cbi_fw_config_db() == DB_NONE)
+		return 1;
+	else
+		return 2;
+}
+
+__override uint8_t board_get_charger_chip_count(void)
+{
+	if (get_cbi_fw_config_db() == DB_NONE)
+		return 1;
+	else
+		return 2;
+}
+
+__override bool board_usb_charger_support(void)
+{
+	return (get_cbi_fw_config_bc_support() == BC12_SUPPORT);
+}
+
+enum battery_cell_type battery_cell;
+
+static void get_battery_cell(void)
+{
+	int val;
+
+	if (i2c_read16(I2C_PORT_USB_C0, ISL923X_ADDR_FLAGS, ISL9238_REG_INFO2,
+		       &val) == EC_SUCCESS) {
+		/* PROG resistor read out. Number of battery cells [4:0] */
+		val = val & 0x001f;
+	}
+
+	if (val == 0 || val >= 0x18)
+		battery_cell = BATTERY_CELL_TYPE_1S;
+	else if (val >= 0x01 && val <= 0x08)
+		battery_cell = BATTERY_CELL_TYPE_2S;
+	else if (val >= 0x09 && val <= 0x10)
+		battery_cell = BATTERY_CELL_TYPE_3S;
+	else
+		battery_cell = BATTERY_CELL_TYPE_4S;
+
+	CPRINTS("Get battery cells: %d", battery_cell);
+}
+DECLARE_HOOK(HOOK_INIT, get_battery_cell, HOOK_PRIO_INIT_I2C + 1);
+
+enum battery_cell_type board_get_battery_cell_type(void)
+{
+	return battery_cell;
 }

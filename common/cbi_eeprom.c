@@ -5,6 +5,7 @@
 
 /* Support Cros Board Info EEPROM */
 
+#include "cbi_config.h"
 #include "console.h"
 #include "cros_board_info.h"
 #include "gpio.h"
@@ -76,7 +77,7 @@ const struct cbi_storage_driver eeprom_drv = {
 	.is_protected = eeprom_is_write_protected,
 };
 
-const struct cbi_storage_config_t cbi_config = {
+const struct cbi_storage_config_t eeprom_cbi_config = {
 	.storage_type = CBI_STORAGE_TYPE_EEPROM,
 	.drv = &eeprom_drv,
 };

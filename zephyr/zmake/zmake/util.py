@@ -9,6 +9,10 @@ import pathlib
 import re
 import shlex
 import shutil
+import subprocess
+
+import zmake.jobserver
+import zmake.multiproc
 
 
 def c_str(input_str):
@@ -31,7 +35,7 @@ def c_str(input_str):
             "\\": "\\\\",
         }.get(char, char)
 
-    return '"{}"'.format("".join(map(c_chr, input_str)))
+    return f'"{"".join(map(c_chr, input_str))}"'
 
 
 def locate_cros_checkout():
@@ -76,7 +80,7 @@ def read_kconfig_file(path):
         A dictionary of kconfig items to their values.
     """
     result = {}
-    with open(path) as file:
+    with open(path, encoding="utf-8") as file:
         for line in file:
             line, _, _ = line.partition("#")
             line = line.strip()
@@ -96,8 +100,8 @@ def read_kconfig_autoconf_value(path, key):
     Returns:
         The value associated with the key or nothing if the key wasn't found.
     """
-    prog = re.compile(r"^#define\s{}\s(\S+)$".format(key))
-    with open(path / "autoconf.h") as file:
+    prog = re.compile(rf"^#define\s{key}\s(\S+)$")
+    with open(path / "autoconf.h", encoding="utf-8") as file:
         for line in file:
             match = prog.match(line)
             if match:
@@ -117,9 +121,9 @@ def write_kconfig_file(path, config, only_if_changed=True):
     if only_if_changed:
         if path.exists() and read_kconfig_file(path) == config:
             return
-    with open(path, "w") as file:
+    with open(path, "w", encoding="utf-8") as file:
         for name, value in config.items():
-            file.write("{}={}\n".format(name, value))
+            file.write(f"{name}={value}\n")
 
 
 def read_zephyr_version(zephyr_base):
@@ -134,7 +138,7 @@ def read_zephyr_version(zephyr_base):
     version_file = pathlib.Path(zephyr_base) / "VERSION"
 
     file_vars = {}
-    with open(version_file) as file:
+    with open(version_file, encoding="utf-8") as file:
         for line in file:
             key, _, value = line.partition("=")
             file_vars[key.strip()] = value.strip()
@@ -204,5 +208,94 @@ def get_tool_path(program):
     """
     path = os.environ.get(f"TOOL_PATH_{program}")
     if path:
-        return pathlib.Path(path).resolve()
-    return pathlib.Path(shutil.which(program))
+        path = pathlib.Path(path).resolve()
+    else:
+        path = pathlib.Path(shutil.which(program))
+    if not path:
+        raise FileNotFoundError(f"{program} not found in PATH")
+    return path
+
+
+def get_lcov_options(tool_path):
+    """Return required options for running lcov.
+
+    Varying versions of lcov require different options to successfully work.
+    This function executes lcov to discover its version and returns arguments
+    appropriate for the detected version.
+
+    Args:
+        tool_path: The path to a lcov binary (as from get_tool_path("lcov"))
+
+    Returns:
+        List of strings to be passed to lcov in argv
+    """
+    version_result = subprocess.run(
+        [tool_path, "--version"],
+        stdout=subprocess.PIPE,
+        stderr=subprocess.DEVNULL,
+        check=True,
+        text=True,
+    )
+    version_match = re.search(
+        r"LCOV version (?P<major>\d+)\.(?P<minor>\d+)(?P<extra>.*)$",
+        version_result.stdout,
+    )
+    if not version_match:
+        raise ValueError(
+            f"Unable to determine version of lcov: output was: {version_result.stdout:?}"
+        )
+
+    if int(version_match["major"]) < 2:
+        return ["--rc", "lcov_branch_coverage=1"]
+    # 2.0 deprecated the lcov_ prefix from rc options and began treating
+    # many previously-ignored errors as fatal, some of which need to be
+    # ignored.
+    return [
+        "--rc",
+        "branch_coverage=1",
+        "--filter",
+        "range",
+        "--ignore-errors",
+        "inconsistent,source",
+        "--ignore-errors",
+        "gcov,gcov",
+    ]
+
+
+def merge_token_databases(databases, merged_db):
+    """Merge token databases
+
+    Args:
+    databases: Array of token databases to be merged
+    merged_db: Merged token database output path.
+    """
+    checkout = locate_cros_checkout()
+    modules = zmake.modules.locate_from_checkout(pathlib.Path("."))
+    jobclient = zmake.jobserver.GNUMakeJobServer()
+
+    proc = jobclient.popen(
+        [
+            get_tool_path("vpython3"),
+            "-vpython-spec",
+            checkout / modules["ec"] / "zephyr" / "pigweed-vpython3",
+            checkout
+            / modules["pigweed"]
+            / "pw_tokenizer"
+            / "py"
+            / "pw_tokenizer"
+            / "database.py",
+            "create",
+            "--type",
+            "binary",
+            "--force",
+            "--database",
+            merged_db,
+            *databases,
+        ],
+        cwd=os.path.dirname(merged_db),
+        encoding="utf-8",
+        env={"PATH": os.environ["PATH"], "HOME": os.environ["HOME"]},
+    )
+
+    if proc.wait(timeout=60):
+        raise OSError("Failed to run PW database.py")

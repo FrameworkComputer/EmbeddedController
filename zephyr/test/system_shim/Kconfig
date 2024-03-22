@@ -2,26 +2,31 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-config TEST_USB_PD_POLICY
-  bool
-  help
-    Stub config that's used in chipset.h to control the definition of
-    `chipset_in_state()` in tests. Each test must define this currently.
+config TEST_PROVIDE_PM_HOOKS
+	bool "Provide PM hooks for test purposes"
+	default y
+	select HAS_PM
+
+config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	bool
+	help
+	  Stub config that's used in chipset.h to control the definition of
+	  `chipset_in_state()` in tests. Each test must define this currently.
 
 choice SYSTEM_SHIM_TEST
-  prompt "Which shim to test"
-  default SYSTEM_SHIM_TEST_DEFAULT
+	prompt "Which shim to test"
+	default SYSTEM_SHIM_TEST_DEFAULT
 
 config SYSTEM_SHIM_TEST_DEFAULT
-  bool "Use the normal shim"
-  help
-    Build and run the default shim/src/system.c tests.
+	bool "Use the normal shim"
+	help
+	  Build and run the default shim/src/system.c tests.
 
 config SYSTEM_SHIM_TEST_ISH
-  bool "Use the ISH shim"
-  select TEST_USB_PD_POLICY
-  help
-    Build and run the shim/src/ish_system.c tests.
+	bool "Use the ISH shim"
+	select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	help
+	  Build and run the shim/src/ish_system.c tests.
 
 endchoice
 

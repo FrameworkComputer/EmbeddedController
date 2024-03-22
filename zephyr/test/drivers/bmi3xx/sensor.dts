@@ -1,0 +1,80 @@
+/ {
+	aliases {
+		bmi3xx-int = &ms_bmi3xx_accel;
+	};
+
+	motionsense-mutex {
+		mutex_bmi3xx: bmi3xx-mutex {
+		};
+	};
+
+	motionsense-sensor-data {
+		bmi3xx_data: bmi3xx-drv-data {
+			compatible = "cros-ec,drvdata-bmi3xx";
+			status = "okay";
+		};
+	};
+
+	motionsense-sensor {
+		ms_bmi3xx_accel: ms-bmi3xx-accel {
+			compatible = "cros-ec,bmi3xx-accel";
+			status = "okay";
+
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&mutex_bmi3xx>;
+			port = <&named_i2c1>;
+			drv-data = <&bmi3xx_data>;
+			i2c-spi-addr-flags = "BMI3_ADDR_I2C_SEC";
+			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <10000>;
+				};
+				ec-s3 {
+					odr = <10000>;
+				};
+				ec-s5 {
+					odr = <10000>;
+				};
+			};
+		};
+
+		ms_bmi3xx_gyro: ms-bmi3xx-gryo {
+			compatible = "cros-ec,bmi3xx-gyro";
+			status = "okay";
+
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&mutex_bmi3xx>;
+			port = <&named_i2c1>;
+			drv-data = <&bmi3xx_data>;
+			i2c-spi-addr-flags = "BMI3_ADDR_I2C_SEC";
+			active-mask = "SENSOR_ACTIVE_S0_S3_S5";
+		};
+	};
+};
+
+
+&i2c1 {
+	bmi3xx_emul: bmi3xx@69 {
+		compatible = "zephyr,bmi-emul";
+		status = "okay";
+		reg = <0x69>;
+		device-model = "BMI_EMUL_3XX";
+		error-on-ro-write;
+		error-on-wo-read;
+		error-on-reserved-bit-write;
+		simulate-command-exec-time;
+	};
+};
+
+/* motionsense framework supports at most 8 sensors, remove two so we can add
+ * our test target.
+ */
+&ms_bmi160_accel {
+	status = "disabled";
+};
+&ms_bmi160_gyro {
+	status = "disabled";
+};

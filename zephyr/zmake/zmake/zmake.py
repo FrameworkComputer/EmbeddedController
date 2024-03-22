@@ -2,7 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# pylint: disable=too-many-lines
+
 """Module encapsulating Zmake wrapper object."""
+
 import atexit
 import difflib
 import functools
@@ -16,6 +19,7 @@ import sys
 import tempfile
 from typing import Dict, Optional, Set, Union
 
+from zmake import util
 import zmake.build_config
 import zmake.compare_builds
 import zmake.generate_readme
@@ -23,7 +27,6 @@ import zmake.jobserver
 import zmake.modules
 import zmake.multiproc
 import zmake.project
-import zmake.util as util
 import zmake.version
 
 
@@ -78,6 +81,9 @@ def ninja_stdout_log_level_override(line, current_log_level):
     # this message is a bit like make failing. We already got the error output.
     if line.startswith("FAILED: CMakeFiles"):
         return logging.INFO
+    # Provide visibility to a common chroot file system permission error
+    if line.startswith("ccache: error: Failed to create directory"):
+        return logging.ERROR
     # if a particular file fails it shows the build line used, but that is not
     # useful except for debugging.
     if line.startswith("ccache"):
@@ -129,9 +135,7 @@ def get_process_failure_msg(proc):
     Returns:
         Failure message as a string:
     """
-    return "Execution failed (return code={}): {}\n".format(
-        proc.returncode, util.repr_command(proc.args)
-    )
+    return f"Execution failed (return code={proc.returncode}): {util.repr_command(proc.args)}\n"
 
 
 class Zmake:
@@ -165,7 +169,7 @@ class Zmake:
         goma=False,
         gomacc="/mnt/host/depot_tools/.cipd_bin/gomacc",
         modules_dir=None,
-        projects_dir=None,
+        projects_dirs=None,
         zephyr_base=None,
     ):
         zmake.multiproc.LogWriter.reset()
@@ -188,10 +192,14 @@ class Zmake:
                 self.checkout
             )
 
-        if projects_dir:
-            self.projects_dir = projects_dir.resolve()
+        if projects_dirs:
+            self.projects_dirs = []
+            for projects_dir in projects_dirs:
+                self.projects_dirs.append(projects_dir.resolve())
         else:
-            self.projects_dir = self.module_paths["ec"] / "zephyr"
+            self.projects_dirs = zmake.modules.default_projects_dirs(
+                self.module_paths
+            )
 
         if jobserver:
             self.jobserver = jobserver
@@ -210,6 +218,53 @@ class Zmake:
             self._checkout = util.locate_cros_checkout()
         return self._checkout.resolve()
 
+    def _filter_projects(
+        self,
+        project_names,
+        all_projects=False,
+    ):
+        """Filter out projects that are not valid for compare builds
+
+        project_names: List of projects passed in to compare-builds
+        all_projects: Boolean indicating when "-a" flag used
+
+        Returns a tuple containing:
+            set of all projects
+            project_names list (filtered)
+            all_projects bool
+        """
+        projects = self._resolve_projects(
+            project_names,
+            all_projects=all_projects,
+        )
+
+        # TODO: b/299112542 - "zmake compare-builds -a" fails to build
+        # bloonchipper
+        skipped_projects = set(
+            filter(
+                lambda project: project.config.project_name == "bloonchipper",
+                projects,
+            )
+        )
+
+        for project in skipped_projects:
+            self.logger.warning(
+                "Project %s not supported by compare-builds, skipping.",
+                project.config.project_name,
+            )
+
+        projects = projects - skipped_projects
+
+        # Override all_projects setting if any projects are skipped
+        if len(skipped_projects) != 0:
+            all_projects = False
+
+        project_names = []
+        for project in projects:
+            project_names.append(project.config.project_name)
+
+        return projects, project_names, all_projects
+
     def _resolve_projects(
         self,
         project_names,
@@ -219,7 +274,7 @@ class Zmake:
 
         Returns a list of projects.
         """
-        found_projects = zmake.project.find_projects(self.projects_dir)
+        found_projects = zmake.project.find_projects(self.projects_dirs)
         if all_projects:
             projects = set(found_projects.values())
         else:
@@ -228,9 +283,7 @@ class Zmake:
                 try:
                     projects.add(found_projects[project_name])
                 except KeyError as e:
-                    raise KeyError(
-                        "No project named {}".format(project_name)
-                    ) from e
+                    raise KeyError(f"No project named {project_name}") from e
         return projects
 
     def configure(
@@ -243,10 +296,12 @@ class Zmake:
         bringup=False,
         coverage=False,
         cmake_defs=None,
+        cmake_trace=None,
         allow_warnings=False,
         all_projects=False,
         extra_cflags=None,
         delete_intermediates=False,
+        version=None,
         static_version=False,
         save_temps=False,
         wait_for_executor=True,
@@ -275,9 +330,11 @@ class Zmake:
                     bringup=bringup,
                     coverage=coverage,
                     cmake_defs=cmake_defs,
+                    cmake_trace=cmake_trace,
                     allow_warnings=allow_warnings,
                     extra_cflags=extra_cflags,
                     delete_intermediates=delete_intermediates,
+                    version=version,
                     static_version=static_version,
                     save_temps=save_temps,
                 )
@@ -286,6 +343,16 @@ class Zmake:
                 result = self.executor.wait()
                 if result:
                     return result
+
+        if build_after_configure:
+            result = self.executor.wait()
+            if result:
+                return result
+            _db = list(build_dir.glob("*/build-r?/database.bin"))
+            if len(_db) > 0:
+                univeral_db = build_dir.parent.joinpath("tokens.bin")
+                util.merge_token_databases(_db, univeral_db)
+
         if coverage and build_after_configure:
             result = self.executor.wait()
             if result:
@@ -314,10 +381,12 @@ class Zmake:
         bringup=False,
         coverage=False,
         cmake_defs=None,
+        cmake_trace=None,
         allow_warnings=False,
         all_projects=False,
         extra_cflags=None,
         delete_intermediates=False,
+        version=None,
         static_version=False,
         save_temps=False,
     ):
@@ -330,11 +399,13 @@ class Zmake:
             bringup=bringup,
             coverage=coverage,
             cmake_defs=cmake_defs,
+            cmake_trace=cmake_trace,
             allow_warnings=allow_warnings,
             all_projects=all_projects,
             extra_cflags=extra_cflags,
             build_after_configure=True,
             delete_intermediates=delete_intermediates,
+            version=version,
             static_version=static_version,
             save_temps=save_temps,
         )
@@ -360,10 +431,15 @@ class Zmake:
         else:
             self.logger.info("Temporary dir %s will be retained", temp_dir)
 
-        projects = self._resolve_projects(
-            project_names,
-            all_projects=all_projects,
+        # TODO: b/299112542 - "zmake compare-builds -a" fails to build
+        # bloonchipper
+        projects, project_names, all_projects = self._filter_projects(
+            project_names, all_projects
         )
+
+        if (len(project_names)) == 0 and not all_projects:
+            self.logger.info("No projects to compare, exiting.")
+            return 0
 
         self.logger.info("Compare zephyr builds")
 
@@ -380,12 +456,12 @@ class Zmake:
             # Now that the sources have been checked out, transform the
             # zephyr-base and module-paths to use the temporary directory
             # created by BuildInfo.
-            for module_name in self.module_paths.keys():
+            for module_name in self.module_paths:
                 new_path = checkout.modules_dir / module_name
                 transformed_module = {module_name: new_path}
                 self.module_paths.update(transformed_module)
 
-            self.projects_dir = checkout.projects_dir
+            self.projects_dirs = checkout.projects_dirs
             self.zephyr_base = checkout.zephyr_dir
 
             self.logger.info("Building projects at %s", checkout.ref)
@@ -445,9 +521,11 @@ class Zmake:
         bringup=False,
         coverage=False,
         cmake_defs=None,
+        cmake_trace=None,
         allow_warnings=False,
         extra_cflags=None,
         delete_intermediates=False,
+        version=None,
         static_version=False,
         save_temps=False,
     ):
@@ -463,6 +541,13 @@ class Zmake:
                     shutil.rmtree(build_dir)
 
                 generated_include_dir = (build_dir / "include").resolve()
+
+                ec_version_flags = []
+                if version:
+                    ec_version_flags.extend(["--version", version])
+                if static_version:
+                    ec_version_flags.append("--static")
+
                 base_config = zmake.build_config.BuildConfig(
                     cmake_defs={
                         "CMAKE_EXPORT_COMPILE_COMMANDS": "ON",
@@ -481,10 +566,14 @@ class Zmake:
                         ),
                         "ZEPHYR_BASE": str(self.zephyr_base),
                         "ZMAKE_INCLUDE_DIR": str(generated_include_dir),
-                        "PYTHON_PREFER": sys.executable,
+                        "Python3_EXECUTABLE": sys.executable,
                         **(
-                            {"EXTRA_EC_VERSION_FLAGS": "--static"}
-                            if static_version
+                            {
+                                "EXTRA_EC_VERSION_FLAGS": util.repr_command(
+                                    ec_version_flags
+                                )
+                            }
+                            if ec_version_flags
                             else {}
                         ),
                     },
@@ -573,6 +662,7 @@ class Zmake:
                             build_dir=build_dir,
                             build_name=build_name,
                             project=project,
+                            cmake_trace=cmake_trace,
                         )
                     )
                     wait_funcs.append(wait_func)
@@ -590,6 +680,7 @@ class Zmake:
                     build_dir=build_dir,
                     project=project,
                     coverage=coverage,
+                    version=version,
                     static_version=static_version,
                     delete_intermediates=delete_intermediates,
                 )
@@ -604,6 +695,7 @@ class Zmake:
         build_dir,
         build_name,
         project,
+        cmake_trace,
     ):
         """Run cmake and maybe ninja on one build dir."""
         with self.jobserver.get_job():
@@ -621,7 +713,7 @@ class Zmake:
                     return 0
                 config_json_file.unlink()
 
-            output_dir = build_dir / "build-{}".format(build_name)
+            output_dir = build_dir / f"build-{build_name}"
             if output_dir.exists():
                 self.logger.info(
                     "Clobber %s due to configuration changes.",
@@ -635,19 +727,20 @@ class Zmake:
                 build_name,
             )
 
-            kconfig_file = build_dir / "kconfig-{}.conf".format(build_name)
+            kconfig_file = build_dir / f"kconfig-{build_name}.conf"
             proc = config.popen_cmake(
                 self.jobserver,
                 project.config.project_dir,
                 output_dir,
                 kconfig_file,
+                cmake_trace,
                 stdin=subprocess.DEVNULL,
                 stdout=subprocess.PIPE,
                 stderr=subprocess.PIPE,
                 encoding="utf-8",
                 errors="replace",
             )
-            job_id = "{}:{}".format(project.config.project_name, build_name)
+            job_id = f"{project.config.project_name}:{build_name}"
             zmake.multiproc.LogWriter.log_output(
                 self.logger,
                 logging.DEBUG,
@@ -672,6 +765,7 @@ class Zmake:
         build_dir,
         project: zmake.project.Project,
         coverage=False,
+        version=None,
         static_version=False,
         delete_intermediates=False,
     ):
@@ -685,8 +779,7 @@ class Zmake:
             # Compute the version string.
             version_string = zmake.version.get_version_string(
                 project.config.project_name,
-                build_dir / "zephyr_base",
-                zmake.modules.locate_from_directory(build_dir / "modules"),
+                version,
                 static=static_version,
             )
 
@@ -703,7 +796,7 @@ class Zmake:
             gcov = "gcov.sh-not-found"
             wait_funcs = []
             for build_name, _ in project.iter_builds():
-                dirs[build_name] = build_dir / "build-{}".format(build_name)
+                dirs[build_name] = build_dir / f"build-{build_name}"
                 gcov = dirs[build_name] / "gcov.sh"
                 wait_func = self.executor.append(
                     func=functools.partial(
@@ -742,14 +835,22 @@ class Zmake:
                     gcov=gcov,
                 )
             else:
-                for output_file, output_name in project.packer.pack_firmware(
+                unsigned_files = project.packer.pack_firmware(
                     packer_work_dir,
                     self.jobserver,
                     dirs,
                     version_string=version_string,
+                )
+                for output_file, output_name in project.signer.sign(
+                    unsigned_files, packer_work_dir, self.jobserver
                 ):
                     shutil.copy2(output_file, output_dir / output_name)
-                    self.logger.debug("Output file '%s' created.", output_file)
+                    self.logger.debug(
+                        "Output file '%s' created.", output_dir / output_name
+                    )
+                project.packer.verify_rw_fwid(
+                    packer_work_dir,
+                )
 
             if delete_intermediates:
                 outdir = build_dir / "output"
@@ -793,11 +894,12 @@ class Zmake:
                 # TODO(b/239619222): Filter os.environ for ninja.
                 env=os.environ,
             )
-            job_id = "{}:{}".format(project.config.project_name, build_name)
+            job_id = f"{project.config.project_name}:{build_name}"
             dirs[build_name].mkdir(parents=True, exist_ok=True)
             build_log = open(  # pylint:disable=consider-using-with
                 dirs[build_name] / "build.log",
                 "w",
+                encoding="utf-8",
             )
             out = zmake.multiproc.LogWriter.log_output(
                 logger=self.logger,
@@ -834,8 +936,9 @@ class Zmake:
             self.logger.info("Running (initial) lcov on %s.", build_dir)
         else:
             self.logger.info("Running lcov on %s.", build_dir)
+        lcov = util.get_tool_path("lcov")
         cmd = [
-            util.get_tool_path("lcov"),
+            lcov,
             "--gcov-tool",
             gcov,
             "-q",
@@ -846,9 +949,7 @@ class Zmake:
             build_dir,
             "-t",
             build_dir.stem,
-            "--rc",
-            "lcov_branch_coverage=1",
-        ]
+        ] + util.get_lcov_options(lcov)
         if initial:
             cmd += ["-i"]
         proc = self.jobserver.popen(
@@ -862,14 +963,14 @@ class Zmake:
             self.logger,
             logging.WARNING,
             proc.stderr,
-            job_id="{}-lcov".format(build_dir),
+            job_id=f"{build_dir}-lcov",
         )
 
-        with open(lcov_file, "w") as outfile:
+        with open(lcov_file, "w", encoding="utf-8") as outfile:
             for line in proc.stdout:
                 if line.startswith("SF:"):
                     path = line[3:].rstrip()
-                    outfile.write("SF:%s\n" % os.path.realpath(path))
+                    outfile.write(f"SF:{os.path.realpath(path)}\n")
                 else:
                     outfile.write(line)
         if proc.wait():
@@ -886,13 +987,12 @@ class Zmake:
             all_lcov_files.append(project_build_dir / "output" / "zephyr.info")
         # Merge info files into a single lcov.info
         self.logger.info("Merging coverage data into %s.", output_file)
+        lcov = util.get_tool_path("lcov")
         cmd = [
-            util.get_tool_path("lcov"),
+            lcov,
             "-o",
             output_file,
-            "--rc",
-            "lcov_branch_coverage=1",
-        ]
+        ] + util.get_lcov_options(lcov)
         for info in all_lcov_files:
             cmd += ["-a", info]
         proc = self.jobserver.popen(
@@ -918,7 +1018,7 @@ class Zmake:
         Args:
             fmt: The formatting string to print projects with.
         """
-        for project in zmake.project.find_projects(self.projects_dir).values():
+        for project in zmake.project.find_projects(self.projects_dirs).values():
             print(fmt.format(config=project.config), end="")
 
         return 0

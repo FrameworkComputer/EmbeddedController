@@ -19,6 +19,11 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
+static bool is_not_powered(void)
+{
+	return chipset_in_state(CHIPSET_STATE_HARD_OFF) != 0;
+}
+
 static int anx7452_top_read(const struct usb_mux *me, uint8_t reg, int *val)
 {
 	return i2c_read8(me->i2c_port, me->i2c_addr_flags, reg, val);
@@ -59,7 +64,7 @@ static int anx7452_power_enable(const struct usb_mux *me)
 
 	usb_enable = anx7452_controls[me->usb_port].usb_enable_gpio;
 
-	if (chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
+	if (is_not_powered()) {
 		return EC_ERROR_NOT_POWERED;
 	}
 
@@ -113,7 +118,7 @@ static int anx7452_set(const struct usb_mux *me, mux_state_t mux_state,
 	int cfg1_val = 0;
 	int cfg2_val = 0;
 
-	if (chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
+	if (is_not_powered()) {
 		return EC_ERROR_NOT_POWERED;
 	}
 
@@ -154,7 +159,7 @@ static int anx7452_get(const struct usb_mux *me, mux_state_t *mux_state)
 {
 	int reg_val = 0;
 
-	if (chipset_in_state(CHIPSET_STATE_HARD_OFF)) {
+	if (is_not_powered()) {
 		*mux_state = USB_PD_MUX_NONE;
 		return EC_ERROR_NOT_POWERED;
 	}

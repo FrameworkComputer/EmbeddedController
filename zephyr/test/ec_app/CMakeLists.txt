@@ -8,3 +8,5 @@ project(ec_app)
 
 FILE(GLOB app_sources src/*.c)
 target_sources(app PRIVATE ${app_sources})
+
+add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)

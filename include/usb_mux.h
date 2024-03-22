@@ -215,6 +215,7 @@ struct usb_mux_chain {
 /* Supported USB mux drivers */
 extern const struct usb_mux_driver amd_fp5_usb_mux_driver;
 extern const struct usb_mux_driver amd_fp6_usb_mux_driver;
+extern const struct usb_mux_driver amd_fp8_usb_mux_driver;
 extern const struct usb_mux_driver anx7440_usb_mux_driver;
 extern const struct usb_mux_driver it5205_usb_mux_driver;
 extern const struct usb_mux_driver pi3usb3x532_usb_mux_driver;
@@ -287,6 +288,13 @@ void usb_mux_init(int port);
  */
 void usb_mux_set(int port, mux_state_t mux_mode, enum usb_switch usb_config,
 		 int polarity);
+
+/**
+ * Mark that mux ACK has been received for this port's pending set
+ *
+ * @param port port number.
+ */
+void usb_mux_set_ack_complete(int port);
 
 /**
  * Configure superspeed muxes on type-C port for only one index in the mux

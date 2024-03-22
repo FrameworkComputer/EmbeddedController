@@ -112,6 +112,8 @@ static void configure_keyboard(void)
 					    GPIO_ALT_FUNC_DEFAULT);
 		key_typ.col_refresh = KEYBOARD_COL_ID2_REFRESH;
 		key_typ.row_refresh = KEYBOARD_ROW_ID2_REFRESH;
+		boot_key_list[BOOT_KEY_REFRESH].col = KEYBOARD_COL_ID2_REFRESH;
+		boot_key_list[BOOT_KEY_REFRESH].row = KEYBOARD_ROW_ID2_REFRESH;
 	}
 
 	board_id_keyboard_col_inverted((int)board_id);
@@ -143,7 +145,7 @@ __override void board_pre_task_i2c_peripheral_init(void)
 __override uint8_t board_keyboard_row_refresh(void)
 {
 	if (board_id < 2)
-		return KEYBOARD_ROW_ID1_REFRESH;
+		return KEYBOARD_ROW_REFRESH;
 	else
 		return KEYBOARD_ROW_ID2_REFRESH;
 }

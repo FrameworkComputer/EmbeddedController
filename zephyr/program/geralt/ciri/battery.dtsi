@@ -1,0 +1,21 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	batteries {
+		default_battery: byd_l21b2pg2 {
+			compatible = "byd,l21b2pg2", "battery-smart";
+		};
+		byd_l23b2pg5 {
+			compatible = "byd,l23b2pg5", "battery-smart";
+		};
+		sunwoda_l21d2pg2 {
+			compatible = "sunwoda,l21d2pg2", "battery-smart";
+		};
+		sunwoda_l23d2pg5 {
+			compatible = "sunwoda,l23d2pg5", "battery-smart";
+		};
+	};
+};

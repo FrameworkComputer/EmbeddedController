@@ -14,6 +14,7 @@
 #include "ioexpander.h"
 #include "power_signals.h"
 #include "system.h"
+#include "usb_dp_alt_mode.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usbc_ppc.h"
@@ -78,4 +79,12 @@ int board_vbus_source_enabled(int port)
 int board_is_sourcing_vbus(int port)
 {
 	return board_vbus_source_enabled(port);
+}
+
+__override bool board_is_dp_uhbr13_5_allowed(int port)
+{
+	/* From Meteorlake PDG Table 92. DisplayPort* Bit Rates
+	 * UHBR 13.5 Not Supported,
+	 */
+	return false;
 }

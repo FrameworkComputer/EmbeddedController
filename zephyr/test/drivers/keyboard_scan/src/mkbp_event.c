@@ -197,7 +197,7 @@ ZTEST(mkbp_event, test_host_command_get_events__get_event_v2)
 	 * host command. Event types must be different.
 	 */
 
-	const struct ec_response_get_next_event expected_event = {
+	const struct ec_response_get_next_event_v1 expected_event = {
 		.event_type = EC_MKBP_EVENT_KEY_MATRIX,
 		.data.key_matrix = {
 			/* Arbitrary key matrix data (uint8_t[13]) */
@@ -205,7 +205,7 @@ ZTEST(mkbp_event, test_host_command_get_events__get_event_v2)
 			0xc, 0xd
 		},
 	};
-	const struct ec_response_get_next_event expected_event2 = {
+	const struct ec_response_get_next_event_v1 expected_event2 = {
 		.event_type = EC_MKBP_EVENT_BUTTON,
 		.data.buttons = BIT(EC_MKBP_VOL_UP) | BIT(EC_MKBP_VOL_DOWN),
 	};
@@ -229,7 +229,7 @@ ZTEST(mkbp_event, test_host_command_get_events__get_event_v2)
 
 	/* Retrieve these events via host commands */
 
-	struct ec_response_get_next_event response;
+	struct ec_response_get_next_event_v1 response;
 
 	ret = ec_cmd_get_next_event_v2(NULL, &response);
 	zassert_equal(EC_RES_SUCCESS, ret, "Expected EC_RES_SUCCESS but got %d",

@@ -19,9 +19,9 @@
  * must multiply them by 4. Flags value contains information which version
  * of chip is used.
  */
-#define TCA64XXA_PORT_ID(port, reg, flags)                                \
-	((((flags)&TCA64XXA_FLAG_VER_MASK) >> TCA64XXA_FLAG_VER_OFFSET) * \
-		 (reg) +                                                  \
+#define TCA64XXA_PORT_ID(port, reg, flags)                                  \
+	((((flags) & TCA64XXA_FLAG_VER_MASK) >> TCA64XXA_FLAG_VER_OFFSET) * \
+		 (reg) +                                                    \
 	 (port))
 
 static int tca64xxa_write_byte(int ioex, int port, int reg, uint8_t val)

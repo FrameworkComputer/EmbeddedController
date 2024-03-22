@@ -17,6 +17,12 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
 
+/*
+ * Note, compatible is for the parent multi-function device. The TCPC device
+ * is a child to the MFD.
+ *
+ * TODO(b/295024023): nct38xx - Add MFD emulator upstream
+ */
 #define DT_DRV_COMPAT nuvoton_nct38xx
 
 #define NCT38XX_VENDOR_REG_START 0xC0
@@ -236,4 +242,6 @@ static void nct38xx_emul_test_reset(const struct ztest_unit_test *test,
 
 ZTEST_RULE(emul_nct38xx_reset, NULL, nct38xx_emul_test_reset);
 
-DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE)
+#ifndef CONFIG_MFD_NCT38XX
+DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);
+#endif

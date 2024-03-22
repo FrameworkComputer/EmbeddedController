@@ -66,79 +66,76 @@
 	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
 	pinctrl-names = "default";
 
-	tcpc_port0: nct38xx@70 {
+	nct3808_0_P1: nct38xx@70 {
 		compatible = "nuvoton,nct38xx";
 		reg = <0x70>;
-		gpio-dev = <&nct3808_0_P1>;
-		tcpc-flags = <(
-			TCPC_FLAGS_TCPCI_REV2_0 |
-			TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
-		/* a duplicate of the <&gpio_usb_c0_c2_tcpc_int_odl> node in
-		 * "named-gpios". This is the Zephyr preferred style,
-		 * the "named-gpios" node will be dealt with at a later date.
-		 */
-		irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
-	};
 
-	nct3808_0_P1: nct3808_0_P1@70 {
-		#address-cells = <1>;
-		#size-cells = <0>;
-		compatible = "nuvoton,nct38xx-gpio";
-		reg = <0x70>;
-		label = "NCT3808_0_P1";
+		tcpc_port0: nct38xx-tcpc {
+			compatible = "nuvoton,nct38xx-tcpc";
+			gpio-dev = <&nct38xx_gpio_0_P1>;
+			tcpc-flags = <(
+				TCPC_FLAGS_TCPCI_REV2_0 |
+				TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
+			/* a duplicate of the <&gpio_usb_c0_c2_tcpc_int_odl>
+			 * node in * "named-gpios". This is the Zephyr preferred
+			 * style, the "named-gpios" node will be dealt with at a
+			 * later date.
+			 */
+			irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
+		};
 
-		ioex_port1: gpio@0 {
-			compatible = "nuvoton,nct38xx-gpio-port";
-			reg = <0x0>;
-			label = "NCT3808_0_P1_GPIO0";
-			gpio-controller;
-			#gpio-cells = <2>;
-			ngpios = <8>;
-			pin_mask = <0xdc>;
-			pinmux_mask = <0xff>;
+		nct38xx_gpio_0_P1: nct38xx-gpio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "nuvoton,nct38xx-gpio";
+			label = "NCT3808_0_P1";
+
+			ioex_port1: gpio@0 {
+				compatible = "nuvoton,nct38xx-gpio-port";
+				reg = <0x0>;
+				label = "NCT3808_0_P1_GPIO0";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <8>;
+				pin_mask = <0xdc>;
+				pinmux_mask = <0xff>;
+			};
 		};
 	};
 
-	tcpc_port2: nct38xx@74 {
+	nct3808_0_P2: nct38xx@74 {
 		compatible = "nuvoton,nct38xx";
 		reg = <0x74>;
-		gpio-dev = <&nct3808_0_P2>;
-		tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
-		/* a duplicate of the <&gpio_usb_c0_c2_tcpc_int_odl> node in
-		 * "named-gpios". This is the Zephyr preferred style,
-		 * the "named-gpios" node will be dealt with at a later date.
-		 */
-		irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
-	};
 
-	nct3808_0_P2: nct3808_0_P2@74 {
-		#address-cells = <1>;
-		#size-cells = <0>;
-		compatible = "nuvoton,nct38xx-gpio";
-		reg = <0x74>;
-		label = "NCT3808_0_P2";
-
-		ioex_port2: gpio@0 {
-			compatible = "nuvoton,nct38xx-gpio-port";
-			reg = <0x0>;
-			label = "NCT3808_0_P2_GPIO0";
-			gpio-controller;
-			#gpio-cells = <2>;
-			ngpios = <8>;
-			pin_mask = <0xdc>;
-			pinmux_mask = <0xff>;
+		tcpc_port2: nct38xx-tcpc {
+			compatible = "nuvoton,nct38xx-tcpc";
+			gpio-dev = <&nct38xx_gpio_0_P2>;
+			tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+			/* a duplicate of the <&gpio_usb_c0_c2_tcpc_int_odl>
+			 * node in "named-gpios". This is the Zephyr preferred
+			 * style, the "named-gpios" node will be dealt with at
+			 * a later date.
+			 */
+			irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
 		};
-	};
 
-	nct3808_alert_1 {
-		compatible = "nuvoton,nct38xx-gpio-alert";
-		/* a duplicate of the <&gpio_usb_c0_c2_tcpc_int_odl> node in
-		 * "named-gpios". This is the Zephyr preferred style,
-		 * the "named-gpios" node will be dealt with at a later date.
-		 */
-		irq-gpios = <&gpioe 0 GPIO_ACTIVE_LOW>;
-		nct38xx-dev = <&nct3808_0_P1 &nct3808_0_P2>;
-		label = "NCT3808_ALERT_1";
+		nct38xx_gpio_0_P2: nct38xx-gpio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "nuvoton,nct38xx-gpio";
+			label = "NCT3808_0_P2";
+
+			ioex_port2: gpio@0 {
+				compatible = "nuvoton,nct38xx-gpio-port";
+				reg = <0x0>;
+				label = "NCT3808_0_P2_GPIO0";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <8>;
+				pin_mask = <0xdc>;
+				pinmux_mask = <0xff>;
+			};
+		};
 	};
 };
 
@@ -157,6 +154,11 @@
 		status = "okay";
 		reg = <0x40>;
 		frs_en_gpio = <&usb_c0_frs_en>;
+		/* a duplicate of the <&gpio_usb_c0_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio6 2 GPIO_ACTIVE_LOW>;
 	};
 
 	bc12_port0: pi3usb9201@5f {
@@ -171,6 +173,11 @@
 		status = "okay";
 		reg = <0x42>;
 		frs_en_gpio = <&usb_c2_frs_en>;
+		/* a duplicate of the <&gpio_usb_c2_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio7 0 GPIO_ACTIVE_LOW>;
 	};
 
 	bc12_port2: pi3usb9201@5d {
@@ -257,6 +264,11 @@
 		compatible = "nxp,nx20p348x";
 		status = "okay";
 		reg = <0x72>;
+		/* a duplicate of the <&gpio_usb_c1_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
 	};
 
 	bc12_port1: pi3usb9201@5f {

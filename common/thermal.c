@@ -7,6 +7,12 @@
  * implementation from the original version that shipped on Link.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 15
+
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -265,10 +271,12 @@ DECLARE_HOOK(HOOK_SECOND, thermal_control, HOOK_PRIO_TEMP_SENSOR_DONE);
 
 /*****************************************************************************/
 /* Project */
+#ifdef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
 bool thermal_warn_trigger(void)
 {
 	return thermal_warn_active;
 }
+#endif
 
 /*****************************************************************************/
 /* Console commands */

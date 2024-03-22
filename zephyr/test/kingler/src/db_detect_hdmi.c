@@ -121,6 +121,7 @@ ZTEST(db_detection, test_db_detect_hdmi)
 	k_sleep(K_MSEC(500));
 
 	zassert_equal(svdm_set_hpd_gpio_fake.call_count, 1);
+	k_sleep(K_MSEC(1500));
 	zassert_true(usb_mux_get(USBC_PORT_C1) & USB_PD_MUX_DP_ENABLED, NULL);
 
 	/* unplug */

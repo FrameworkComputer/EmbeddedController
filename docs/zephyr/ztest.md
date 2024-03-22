@@ -92,7 +92,6 @@ apply to all tests here. It will look like:
 
 ```
 CONFIG_ZTEST=y
-CONFIG_ZTEST_NEW_API=y
 
 # Enable the shim of the legacy CrosEC (You’ll need both)
 CONFIG_CROS_EC=y

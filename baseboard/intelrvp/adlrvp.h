@@ -22,7 +22,7 @@
 #define ADLN_LP5_RVP_SKU_BOARD_ID 0x07
 #define ADLP_DDR5_RVP_SKU_BOARD_ID 0x12
 #define ADLP_LP5_T4_RVP_SKU_BOARD_ID 0x13
-#define ADL_RVP_BOARD_ID(id) ((id)&0x3F)
+#define ADL_RVP_BOARD_ID(id) ((id) & 0x3F)
 
 /* MECC config */
 #define CONFIG_INTEL_RVP_MECC_VERSION_1_0
@@ -162,9 +162,6 @@
 #define CONFIG_BATTERY_V2
 #define CONFIG_BATTERY_COUNT 1
 #define CONFIG_HOSTCMD_BATTERY_V2
-
-/* Config to indicate battery type doesn't auto detect */
-#define CONFIG_BATTERY_TYPE_NO_AUTO_DETECT
 
 /* Enable system boot time logging */
 #define CONFIG_SYSTEM_BOOT_TIME_LOGGING

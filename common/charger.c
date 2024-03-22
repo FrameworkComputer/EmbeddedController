@@ -5,6 +5,12 @@
  * Common functions for battery charging.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #include "battery_smart.h"
 #include "builtin/assert.h"
 #include "charge_state.h"
@@ -135,7 +141,12 @@ static int check_print_error(int rv)
 {
 	if (rv == EC_SUCCESS)
 		return 1;
-	ccputs(rv == EC_ERROR_UNIMPLEMENTED ? "(unsupported)\n" : "(error)\n");
+	if (rv == EC_ERROR_UNIMPLEMENTED) {
+		ccputs("(unsupported)\n");
+
+	} else {
+		ccputs("(error)\n");
+	}
 	return 0;
 }
 
@@ -171,24 +182,24 @@ void print_charger_debug(int chgnum)
 		ccputs("disabled\n");
 
 	/* Limits */
-	ccprintf("Limits\t\t\t ( min    max  step)\n");
+	ccprintf("Limits\t\t\t ( min     max step)\n");
 
 	/* charge voltage limit */
 	print_item_name("chg_voltage:");
 	if (check_print_error(charger_get_voltage(chgnum, &d)))
-		ccprintf("\t%5d mV (%4d - %5d, %3d)\n", d, info->voltage_min,
+		ccprintf("%7d mV (%4d - %5d, %3d)\n", d, info->voltage_min,
 			 info->voltage_max, info->voltage_step);
 
 	/* charge current limit */
 	print_item_name("chg_current:");
 	if (check_print_error(charger_get_current(chgnum, &d)))
-		ccprintf("\t%5d mA (%4d - %5d, %3d)\n", d, info->current_min,
+		ccprintf("%7d mA (%4d - %5d, %3d)\n", d, info->current_min,
 			 info->current_max, info->current_step);
 
 	/* input current limit */
 	print_item_name("input_current:");
 	if (check_print_error(charger_get_input_current_limit(chgnum, &d)))
-		ccprintf("\t%5d mA (%4d - %5d, %3d)\n", d,
+		ccprintf("%5d mA (%4d - %5d, %3d)\n", d,
 			 info->input_current_min, info->input_current_max,
 			 info->input_current_step);
 }
@@ -291,7 +302,7 @@ static void charger_chips_init(void)
 			chg_chips[chip].drv->init(chip);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_POST_I2C);
+DECLARE_HOOK(HOOK_INIT, charger_chips_init, HOOK_PRIO_POST_BATTERY_INIT);
 #endif
 
 enum ec_error_list charger_post_init(void)
@@ -493,7 +504,7 @@ enum ec_error_list charger_set_voltage(int chgnum, int voltage)
 	return chg_chips[chgnum].drv->set_voltage(chgnum, voltage);
 }
 
-enum ec_error_list charger_discharge_on_ac(int enable)
+test_mockable enum ec_error_list charger_discharge_on_ac(int enable)
 {
 	int chgnum;
 	int rv = EC_ERROR_UNIMPLEMENTED;

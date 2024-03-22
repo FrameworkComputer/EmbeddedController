@@ -7,7 +7,10 @@ target_include_directories(app PRIVATE
     "${PLATFORM_EC}/zephyr/shim/src/led_driver")
 
 # Add source files
-target_sources(app PRIVATE
-  src/led_common.c
-  src/led.c
+zephyr_library_sources_ifdef(CONFIG_LINK_TEST_SUITE_LED_DRIVER
+    src/led_common.c
+    src/led.c
+)
+zephyr_library_sources_ifdef(CONFIG_LINK_TEST_SUITE_LED_DRIVER_ALIAS_LED
+    src/led_alias.c
 )

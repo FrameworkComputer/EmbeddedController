@@ -16,6 +16,8 @@
 #include <zephyr/ztest.h>
 #include <zephyr/ztest_assert.h>
 
+#define TEST_RETURN_BUFFER_SIZE (256)
+
 void register_thread_memory_dump(k_tid_t thread);
 
 /* Simple local structs for storing a memory dump */
@@ -151,6 +153,9 @@ static enum ec_status fetch_memory_dump(struct mem_dump *dump)
 	struct ec_response_memory_dump_get_metadata metadata_response;
 	struct ec_response_get_protocol_info protocol_info_response;
 
+	struct ec_response_memory_dump_get_entry_info entry_info_response;
+	int seg = 0;
+
 	zassert_ok(send_host_command(EC_CMD_GET_PROTOCOL_INFO, 0, NULL, 0,
 				     &protocol_info_response,
 				     sizeof(protocol_info_response), NULL));
@@ -164,13 +169,10 @@ static enum ec_status fetch_memory_dump(struct mem_dump *dump)
 		sizeof(struct mem_segment) *
 		metadata_response.memory_dump_entry_count);
 
-	for (int seg = 0; seg < metadata_response.memory_dump_entry_count;
-	     seg++) {
+	for (seg = 0; seg < metadata_response.memory_dump_entry_count; seg++) {
 		struct ec_params_memory_dump_get_entry_info entry_info_params = {
 			.memory_dump_entry_index = seg
 		};
-		struct ec_response_memory_dump_get_entry_info
-			entry_info_response;
 
 		zassert_ok(send_host_command(
 			EC_CMD_MEMORY_DUMP_GET_ENTRY_INFO, 0,
@@ -215,6 +217,61 @@ static enum ec_status fetch_memory_dump(struct mem_dump *dump)
 			offset += response_size;
 		};
 	}
+
+	/* try reading out of bounds */
+	struct ec_params_memory_dump_read_memory read_mem_params_addr_low = {
+		.memory_dump_entry_index = 0,
+		.address = 0,
+		.size = 4,
+	};
+	int response_size = 0;
+	uint8_t test_response[TEST_RETURN_BUFFER_SIZE];
+
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      send_host_command(EC_CMD_MEMORY_DUMP_READ_MEMORY, 0,
+					&read_mem_params_addr_low,
+					sizeof(read_mem_params_addr_low),
+					test_response, TEST_RETURN_BUFFER_SIZE,
+					&response_size),
+		      NULL);
+
+	zassert_equal(0, response_size, NULL);
+
+	/* try reading illegal size from the last segment */
+	struct ec_params_memory_dump_read_memory read_mem_params_bad_size = {
+		.memory_dump_entry_index = seg - 1,
+		.address = entry_info_response.address,
+		.size = entry_info_response.size + 1,
+	};
+
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      send_host_command(EC_CMD_MEMORY_DUMP_READ_MEMORY, 0,
+					&read_mem_params_bad_size,
+					sizeof(read_mem_params_bad_size),
+					test_response, TEST_RETURN_BUFFER_SIZE,
+					&response_size),
+		      NULL);
+
+	zassert_equal(0, response_size, NULL);
+
+	/* try creating wraparound in address+size */
+	struct ec_params_memory_dump_read_memory read_mem_params_wraparound = {
+		.memory_dump_entry_index = seg - 1,
+		.address = entry_info_response.address +
+			   entry_info_response.size - 1,
+		.size = UINT32_MAX,
+	};
+
+	zassert_equal(EC_RES_INVALID_PARAM,
+		      send_host_command(EC_CMD_MEMORY_DUMP_READ_MEMORY, 0,
+					&read_mem_params_wraparound,
+					sizeof(read_mem_params_wraparound),
+					test_response, TEST_RETURN_BUFFER_SIZE,
+					&response_size),
+		      NULL);
+
+	zassert_equal(0, response_size, NULL);
+
 	return EC_RES_SUCCESS;
 }
 

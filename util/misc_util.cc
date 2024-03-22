@@ -202,8 +202,8 @@ void hexdump_canonical(const uint8_t *data, size_t len, uint32_t offset_start)
 		}
 		printf(" |");
 		for (j = i; j < i + 16 && j < len; j++)
-			if (isprint(data[i + j]))
-				printf("%c", data[i + j]);
+			if (isprint(data[j]))
+				printf("%c", data[j]);
 			else
 				printf(".");
 		printf("|\n");

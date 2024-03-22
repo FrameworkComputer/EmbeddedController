@@ -14,12 +14,12 @@ extern "C" {
 /* Sample function for the benchmark */
 static void float_mult()
 {
-	float a = 1.1;
-	float b = 1.1;
+	volatile float a = 1.1f;
+	float b = 1.1f;
 	int i;
 
 	for (i = 0; i < 1000; ++i)
-		a *= b;
+		a = a * b;
 }
 
 test_static int test_valid_benchmark()

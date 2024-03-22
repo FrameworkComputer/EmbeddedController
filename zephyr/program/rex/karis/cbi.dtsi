@@ -12,39 +12,59 @@
 		 */
 		usb-db {
 			enum-name = "FW_USB_DB";
-			start = <12>;
-			size = <3>;
+			start = <0>;
+			size = <2>;
 
 			io-db-unknown {
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_USB_DB_NOT_CONNECTED";
 				value = <0>;
 			};
-			io-db-usb3 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_USB_DB_USB3";
-				value = <1>;
-				default;
-			};
-			io-db-usb4-kb8010 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_USB_DB_USB4_KB8010";
-				value = <2>;
-			};
-			io-db-usb4-anx7452 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_USB_DB_USB4_ANX7452";
-				value = <3>;
-			};
 			io-db-usb4-hayden {
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_USB_DB_USB4_HB";
-				value = <4>;
+				value = <1>;
 			};
-			io-db-usb4-anx7452v2 {
+		};
+
+		/*
+		 * FW_CONFIG field to change scancode for different type
+		 * keyboard.
+		 */
+		keyboard-type {
+			enum-name = "FW_KB_TYPE";
+			start = <12>;
+			size = <1>;
+
+			kb-default {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_USB_DB_USB4_ANX7452_V2";
-				value = <5>;
+				enum-name = "FW_KB_DEFAULT";
+				value = <0>;
+			};
+			kb-ca-fr {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_CA_FR";
+				value = <1>;
+			};
+		};
+		/*
+		 * FW_CONFIG field to enable touch panel power sequence
+		 * control or not.
+		 */
+		touch-en {
+			enum-name = "FW_TOUCH_EN";
+			start = <14>;
+			size = <1>;
+
+			touch-en-disable {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TOUCH_EN_DISABLE";
+				value = <0>;
+			};
+			touch-en-enable {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TOUCH_EN_ENABLE";
+				value = <1>;
 			};
 		};
 	};

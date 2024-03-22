@@ -4,6 +4,7 @@
  */
 
 #include "battery.h"
+#include "battery_fuel_gauge.h"
 #include "button.h"
 #include "charge_ramp.h"
 #include "charger.h"
@@ -21,6 +22,7 @@
 #include "switch.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
+#include "util.h"
 
 /* Must come after other header files and interrupt handler declarations */
 #include "gpio_list.h"
@@ -71,3 +73,15 @@ const int keyboard_factory_scan_pins[][2] = {
 const int keyboard_factory_scan_pins_used =
 	ARRAY_SIZE(keyboard_factory_scan_pins);
 #endif
+
+__override int board_get_leave_safe_mode_delay_ms(void)
+{
+	const struct batt_conf_embed *batt = get_batt_conf();
+
+	/* If it's COSMX battery, there's need more delay time. */
+	if (!strcasecmp(batt->manuf_name, "COSMX KT0030B002") ||
+	    !strcasecmp(batt->manuf_name, "COSMX KT0030B004"))
+		return 2000;
+	else
+		return 500;
+}

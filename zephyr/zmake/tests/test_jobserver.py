@@ -9,7 +9,8 @@ import logging
 import os
 import threading
 
-import pytest  # pylint:disable=import-error
+# pylint: disable=import-error
+import pytest
 import zmake.jobserver
 
 

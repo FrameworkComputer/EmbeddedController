@@ -15,6 +15,18 @@ config BOARD_GERALT
 	  Build the Geralt reference board. The board is the reference design
 	  of Geralt family.
 
+config BOARD_CIRI
+	bool "Google Geralt Variant Board"
+	help
+	  Build the Ciri variant board. The board follows reference design
+	  of Geralt family.
+
 endchoice
+
+config GERALT_LID_DETECTION_SELECTED
+	bool "Geralt Platform lid detect Selection"
+	help
+	  Disable lid detection when base detach. This is a workaround for
+	  machine stack issue.
 
 source "Kconfig.zephyr"

@@ -3,13 +3,17 @@
  * found in the LICENSE file.
  */
 
-#include "driver/fingerprint/fpc/fpc_sensor.h"
+#include "common.h"
+#include "fpc_bep_matcher.h"
+#include "fpc_bep_sensor.h"
 #include "fpc_bio_algorithm.h"
-#include "fpsensor.h"
-#include "fpsensor_utils.h"
+#include "fpc_sensor.h"
+#include "fpsensor/fpsensor.h"
+#include "fpsensor/fpsensor_utils.h"
 #include "gpio.h"
 #include "spi.h"
 #include "system.h"
+#include "task.h"
 #include "util.h"
 
 #include <stddef.h>
@@ -21,15 +25,19 @@ static uint8_t
 /* Recorded error flags */
 static uint16_t errors;
 
+/* Lock to access the sensor */
+static K_MUTEX_DEFINE(sensor_lock);
+static task_id_t sensor_owner;
+
 /* FPC specific initialization and de-initialization functions */
-int fp_sensor_open(void);
-int fp_sensor_close(void);
+__staticlib int fp_sensor_open(void);
+__staticlib int fp_sensor_close(void);
 
 /* Get FPC library version code.*/
-const char *fp_sensor_get_version(void);
+__staticlib const char *fp_sensor_get_version(void);
 
 /* Get FPC library build info.*/
-const char *fp_sensor_get_build_info(void);
+__staticlib const char *fp_sensor_get_build_info(void);
 
 /* Sensor description */
 static struct ec_response_fp_info ec_fp_sensor_info = {
@@ -55,32 +63,32 @@ typedef struct {
 
 #if defined(CONFIG_FP_SENSOR_FPC1025)
 
-extern const fpc_bep_sensor_t fpc_bep_sensor_1025;
-extern const fpc_bep_algorithm_t fpc_bep_algorithm_pfe_1025;
+__staticlib const fpc_bep_sensor_t fpc_bep_sensor_1025;
+__staticlib const fpc_bep_algorithm_t fpc_bep_algorithm_pfe_1025;
 
-const fpc_sensor_info_t fpc_sensor_info = {
+__staticlib_hook const fpc_sensor_info_t fpc_sensor_info = {
 	.sensor = &fpc_bep_sensor_1025,
 	.image_buffer_size = FP_SENSOR_IMAGE_SIZE_FPC,
 };
 
-const fpc_bio_info_t fpc_bio_info = {
+__staticlib_hook const fpc_bio_info_t fpc_bio_info = {
 	.algorithm = &fpc_bep_algorithm_pfe_1025,
 	.template_size = FP_ALGORITHM_TEMPLATE_SIZE_FPC,
 };
 
 #elif defined(CONFIG_FP_SENSOR_FPC1035)
 
-extern const fpc_bep_sensor_t fpc_bep_sensor_1035;
-extern const fpc_bep_algorithm_t fpc_bep_algorithm_pfe_1035;
+__staticlib const fpc_bep_sensor_t fpc_bep_sensor_1035;
+__staticlib const fpc_bep_algorithm_t fpc_bep_algorithm_pfe_1035;
 
-const fpc_sensor_info_t fpc_sensor_info = {
+__staticlib_hook const fpc_sensor_info_t fpc_sensor_info = {
 	.sensor = &fpc_bep_sensor_1035,
-	.image_buffer_size = FP_SENSOR_IMAGE_SIZE,
+	.image_buffer_size = FP_SENSOR_IMAGE_SIZE_FPC,
 };
 
-const fpc_bio_info_t fpc_bio_info = {
+__staticlib_hook const fpc_bio_info_t fpc_bio_info = {
 	.algorithm = &fpc_bep_algorithm_pfe_1035,
-	.template_size = FP_ALGORITHM_TEMPLATE_SIZE,
+	.template_size = FP_ALGORITHM_TEMPLATE_SIZE_FPC,
 };
 #else
 #error "Sensor type not defined!"
@@ -98,12 +106,32 @@ enum fpc_cmd {
 /* Memory for the SPI transfer buffer */
 static uint8_t spi_buf[MAX_CMD_SPI_TRANSFER_SIZE];
 
+void fp_sensor_lock(void)
+{
+	if (sensor_owner != task_get_current()) {
+		mutex_lock(&sensor_lock);
+		sensor_owner = task_get_current();
+	}
+}
+
+void fp_sensor_unlock(void)
+{
+	sensor_owner = 0xFF;
+	mutex_unlock(&sensor_lock);
+}
+
 static int fpc_send_cmd(const uint8_t cmd)
 {
+	int ret;
+
 	spi_buf[0] = cmd;
 
-	return spi_transaction(SPI_FP_DEVICE, spi_buf, 1, spi_buf,
-			       SPI_READBACK_ALL);
+	fp_sensor_lock();
+	ret = spi_transaction(SPI_FP_DEVICE, spi_buf, 1, spi_buf,
+			      SPI_READBACK_ALL);
+	fp_sensor_unlock();
+
+	return ret;
 }
 
 void fp_sensor_low_power(void)
@@ -121,8 +149,11 @@ int fpc_get_hwid(uint16_t *id)
 
 	spi_buf[0] = FPC_CMD_HW_ID;
 
+	fp_sensor_lock();
 	rc = spi_transaction(SPI_FP_DEVICE, spi_buf, 3, spi_buf,
 			     SPI_READBACK_ALL);
+	fp_sensor_unlock();
+
 	if (rc) {
 		CPRINTS("FPC HW ID read failed %d", rc);
 		return FP_ERROR_SPI_COMM;
@@ -207,8 +238,10 @@ int fp_sensor_get_info(struct ec_response_fp_info *resp)
 
 	memcpy(resp, &ec_fp_sensor_info, sizeof(struct ec_response_fp_info));
 
+	fp_sensor_lock();
 	rc = spi_transaction(SPI_FP_DEVICE, spi_buf, 3, spi_buf,
 			     SPI_READBACK_ALL);
+	fp_sensor_unlock();
 	if (rc)
 		return EC_RES_ERROR;
 
@@ -218,8 +251,9 @@ int fp_sensor_get_info(struct ec_response_fp_info *resp)
 	return EC_SUCCESS;
 }
 
-int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
-		    int32_t *match_index, uint32_t *update_bitmap)
+__overridable int fp_finger_match(void *templ, uint32_t templ_count,
+				  uint8_t *image, int32_t *match_index,
+				  uint32_t *update_bitmap)
 {
 	int rc;
 
@@ -232,7 +266,7 @@ int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
 	return rc;
 }
 
-int fp_enrollment_begin(void)
+__overridable int fp_enrollment_begin(void)
 {
 	int rc;
 	bio_enrollment_t bio_enroll = enroll_ctx;
@@ -244,7 +278,7 @@ int fp_enrollment_begin(void)
 	return rc;
 }
 
-int fp_enrollment_finish(void *templ)
+__overridable int fp_enrollment_finish(void *templ)
 {
 	int rc;
 	bio_enrollment_t bio_enroll = enroll_ctx;
@@ -257,7 +291,7 @@ int fp_enrollment_finish(void *templ)
 	return rc;
 }
 
-int fp_finger_enroll(uint8_t *image, int *completion)
+__overridable int fp_finger_enroll(uint8_t *image, int *completion)
 {
 	int rc;
 	bio_enrollment_t bio_enroll = enroll_ctx;
@@ -277,4 +311,24 @@ int fp_finger_enroll(uint8_t *image, int *completion)
 int fp_maintenance(void)
 {
 	return fpc_fp_maintenance(&errors);
+}
+
+int fp_acquire_image_with_mode(uint8_t *image_data, int mode)
+{
+	return fp_sensor_acquire_image_with_mode(image_data, mode);
+}
+
+int fp_acquire_image(uint8_t *image_data)
+{
+	return fp_sensor_acquire_image(image_data);
+}
+
+enum finger_state fp_finger_status(void)
+{
+	return fp_sensor_finger_status();
+}
+
+void fp_configure_detect(void)
+{
+	return fp_sensor_configure_detect();
 }

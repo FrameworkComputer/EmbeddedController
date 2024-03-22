@@ -6,8 +6,8 @@
 /* PWM control module for STM32 */
 
 #include "builtin/assert.h"
-#include "clock-f.h"
 #include "clock.h"
+#include "clock_chip.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "hwtimer.h"

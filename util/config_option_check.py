@@ -8,6 +8,7 @@
 Script to ensure that all configuration options for the Chrome EC are defined
 in config.h.
 """
+
 from __future__ import print_function
 
 import enum
@@ -97,7 +98,7 @@ def obtain_config_options_in_use():
     config_option_re = re.compile(r"\b(CONFIG_[a-zA-Z0-9_]+)")
     config_debug_option_re = re.compile(r"\b(CONFIG_DEBUG_[a-zA-Z0-9_]+)")
     options_in_use = set()
-    for (dirpath, dirnames, filenames) in os.walk(cwd, topdown=True):
+    for dirpath, dirnames, filenames in os.walk(cwd, topdown=True):
         # Ignore the build and private directories (taken from .gitignore)
         for i in range(len(dirnames) - 1, -1, -1):
             if (

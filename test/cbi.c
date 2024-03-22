@@ -148,47 +148,38 @@ DECLARE_EC_TEST(test_all_tags)
 	const char string[] = "abc";
 	uint8_t buf[32];
 	uint8_t size;
-	int count = 0;
 
 	/* Populate all data and read out */
 	d8 = 0x12;
 	zassert_equal(cbi_set_board_info(CBI_TAG_BOARD_VERSION, &d8,
 					 sizeof(d8)),
 		      EC_SUCCESS, NULL);
-	count++;
 	zassert_equal(cbi_set_board_info(CBI_TAG_OEM_ID, &d8, sizeof(d8)),
 		      EC_SUCCESS, NULL);
-	count++;
 	zassert_equal(cbi_set_board_info(CBI_TAG_SKU_ID, &d8, sizeof(d8)),
 		      EC_SUCCESS, NULL);
-	count++;
 	zassert_equal(cbi_set_board_info(CBI_TAG_DRAM_PART_NUM, string,
 					 sizeof(string)),
 		      EC_SUCCESS, NULL);
-	count++;
 	zassert_equal(cbi_set_board_info(CBI_TAG_OEM_NAME, string,
 					 sizeof(string)),
 		      EC_SUCCESS, NULL);
-	count++;
 	zassert_equal(cbi_set_board_info(CBI_TAG_MODEL_ID, &d8, sizeof(d8)),
 		      EC_SUCCESS, NULL);
-	count++;
 	zassert_equal(cbi_set_board_info(CBI_TAG_FW_CONFIG, &d8, sizeof(d8)),
 		      EC_SUCCESS, NULL);
-	count++;
 	zassert_equal(cbi_set_board_info(CBI_TAG_PCB_SUPPLIER, &d8, sizeof(d8)),
 		      EC_SUCCESS, NULL);
-	count++;
 	zassert_equal(cbi_set_board_info(CBI_TAG_SSFC, &d8, sizeof(d8)),
 		      EC_SUCCESS, NULL);
-	count++;
 	zassert_equal(cbi_set_board_info(CBI_TAG_REWORK_ID, &d8, sizeof(d8)),
 		      EC_SUCCESS, NULL);
-	count++;
 	zassert_equal(cbi_set_board_info(CBI_TAG_FACTORY_CALIBRATION_DATA, &d8,
 					 sizeof(d8)),
 		      EC_SUCCESS, NULL);
-	count++;
+	zassert_equal(cbi_set_board_info(CBI_TAG_COMMON_CONTROL, &d8,
+					 sizeof(d8)),
+		      EC_SUCCESS, NULL);
 
 	/* Read out all */
 	zassert_equal(cbi_get_board_version(&d32), EC_SUCCESS);
@@ -232,15 +223,9 @@ DECLARE_EC_TEST(test_all_tags)
 	zassert_true((unsigned long long)d64 == (unsigned long long)d8,
 		     "0x%llx, 0x%llx", (unsigned long long)d64,
 		     (unsigned long long)d8);
-
-	/*
-	 * Fail if a (new) tag is missing from the unit test.
-	 *
-	 * Tags after FUEL_GAUGE_MANUF_NAME are tested in test/battery_config.c.
-	 * Since they don't have dedicated accessors, adding them here do not
-	 * exercise any new lines.
-	 */
-	zassert_equal(count, CBI_TAG_FUEL_GAUGE_MANUF_NAME);
+	zassert_equal(cbi_get_common_control((union ec_common_control *)&d32),
+		      EC_SUCCESS);
+	zassert_equal(d32, d8, "0x%x, 0x%x", d32, d8);
 
 	/* Write protect */
 	write_protect_set(1);

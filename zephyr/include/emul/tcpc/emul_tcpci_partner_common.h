@@ -163,8 +163,10 @@ struct tcpci_partner_data {
 	 */
 	uint32_t identity_vdm[VDO_MAX_SIZE];
 	int identity_vdos;
+	/* Discover SVIDs ACK VDM */
 	uint32_t svids_vdm[VDO_MAX_SIZE];
 	int svids_vdos;
+	/* Discover Modes ACK VDM (implicitly for the first SVID) */
 	uint32_t modes_vdm[VDO_MAX_SIZE];
 	int modes_vdos;
 	/* VDMs sent when responding to a mode entry command */
@@ -214,6 +216,12 @@ struct tcpci_cable_data {
 	 */
 	uint32_t identity_vdm[VDO_MAX_SIZE];
 	int identity_vdos;
+	/* Discover SVIDs ACK VDM */
+	uint32_t svids_vdm[VDO_MAX_SIZE];
+	int svids_vdos;
+	/* Discover Modes ACK VDM (implicitly for the first SVID) */
+	uint32_t modes_vdm[VDO_MAX_SIZE];
+	int modes_vdos;
 };
 
 /** Structure of message used by TCPCI partner emulator */

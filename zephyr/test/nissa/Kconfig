@@ -14,6 +14,11 @@ choice TEST_TARGET
 		help
 		  The test target that exercises nissa/src/sub_board.c.
 
+	config TEST_NISSA_BOARD_POWER
+		bool "Tests for board_power.c"
+		help
+		  The test target that exercises nissa/src/board_power.c
+
 	config TEST_NISSA_COMMON
 		bool "Tests for common.c"
 		help
@@ -26,7 +31,7 @@ choice TEST_TARGET
 
 	config TEST_NISSA_NIVVIKS_CHARGER
 	  bool "Tests for Nivviks-specific charger/USB-C code"
-	  select TEST_USB_PD_POLICY
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	  help
 	    The test target that exercises nissa/nivviks/{charger,usbc}.c
 
@@ -34,12 +39,113 @@ choice TEST_TARGET
 	  bool "Tests for Nereid-specific code"
 	  help
 		The test target that exercises nissa/nereid/*.c
+
+	config TEST_NISSA_NOKRIS
+	  bool "Tests for Nokris-specific code"
+	  help
+		The test target that exercises nissa/nokris/*.c
+
+	config TEST_NISSA_GOTHRAX
+	  bool "Tests for Gothrax-specific code"
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	  help
+		The test target that exercises nissa/gothrax/*.c
+
+	config TEST_NISSA_PUJJO
+	  bool "Tests for Pujjo-specific code"
+	  help
+	    The test target that exercises nissa/pujjo/*.c
+
+	config TEST_NISSA_JOXER
+	  bool "Tests for Joxer-specific code"
+	  help
+		The test target that exercises nissa/joxer/*.c
+
+	config TEST_NISSA_CRAASK
+	  bool "Tests for Craask-specific code"
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	  help
+		The test target that exercises nissa/craask/*.c
+
+	config TEST_NISSA_CRAASKOV
+	  bool "Tests for Craaskov-specific code"
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	  help
+		The test target that exercises nissa/craaskov/*.c
+
+	config TEST_NISSA_PIRRHA
+	  bool "Tests for Pirrha-specific code"
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	  help
+		The test target that exercises nissa/pirrha/*.c
+
+	config TEST_NISSA_ANRAGGAR
+	  bool "Tests for Anraggar-specific code"
+	  help
+		The test target that exercises nissa/anraggar/*.c
+
+	config TEST_NISSA_ULDREN
+	  bool "Tests for Uldren-specific code"
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	  help
+		The test target that exercises nissa/uldren/*.c
+
+	config TEST_NISSA_YAVIKS
+	  bool "Tests for Yaviks-specific code"
+	  help
+		The test target that exercises nissa/yaviks/*.c
+
+	config TEST_NISSA_QUANDISO
+	  bool "Tests for Quandiso-specific code"
+	  help
+		The test target that exercises nissa/quandiso/*.c
+
+	config TEST_NISSA_YAVILLA
+	  bool "Tests for Yavilla-specific code"
+	  help
+		The test target that exercises nissa/yavilla/*.c
+
+	config TEST_NISSA_GLASSWAY
+	  bool "Tests for Glassway-specific"
+	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	  help
+	    The test target that exercises nissa/glassway/*.c
 endchoice
 
-config TEST_USB_PD_POLICY
-	bool
+config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	bool "Disable chipset_in_state inline method"
 	help
-	  Enable mocking of chipset_in_state() for PD policy testing.
+	  This is used to not define chipset_in_state method as inline
+	  function.
+
+config NISSA_BOARD_HAS_HDMI_SUPPORT
+	bool "Board supports HDMI sub-boards"
+	help
+	  Enable board code for managing the state of hdmi connections
+	  for nissa/src/sub_board.c.
+
+config PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+	bool "Support keyboard customization"
+	help
+	  Enable support for customization keyboard, some boards need to custom matrix
+	  because those board keyboard layout doesn't follow a common matrix.
+
+	  If define, the board layer
+	  needs to implement:
+	  1. the scancode_set2 and keycap_label array
+	  2. keyboard_customization.h which is similar to keyboard_config.h
+
+	  Note that if your board has the standard chromeos keyboard layout other
+	  than the top row, and you are looking only for top row customization,
+	  then you should be looking at overriding board_vivaldi_keybd_config()
+	  instead.
+
+config TEST_DISABLE_AP_PWRSEQ
+	bool "Disable CONFIG_AP_PWRSEQ"
+	default n
+	help
+	  This is used to disable CONFIG_AP_PWRSEQ for testing purposes
+	  directly.
 
 module = NISSA
 module-str = Nissa board-specific code (unit tests)

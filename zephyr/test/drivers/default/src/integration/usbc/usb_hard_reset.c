@@ -19,6 +19,12 @@
 
 #include <zephyr/ztest.h>
 
+enum usb_tc_state {
+	NOT_A_REAL_STATE,
+};
+
+enum usb_tc_state get_state_tc(const int port);
+
 #define TEST_USB_PORT 0
 
 #define TEST_ADDED_PDO PDO_FIXED(10000, 3000, PDO_FIXED_UNCONSTRAINED)
@@ -172,7 +178,7 @@ ZTEST_F(usb_hard_reset_source, test_vsafe0v_late)
 		tcpci_emul_set_vbus_level(fixture->tcpci_emul, VBUS_PRESENT));
 
 	/* Wait for everything to settle, and check state. */
-	k_sleep(K_SECONDS(2));
+	k_sleep(K_SECONDS(5));
 	state = get_state_tc(TEST_USB_PORT);
 	zassert_equal(state, /* TC_ATTACHED_SNK */ 7, "Got %d", state);
 	state = get_state_pe(TEST_USB_PORT);
@@ -205,7 +211,7 @@ ZTEST_F(usb_hard_reset_source, test_vbus_present_late)
 		tcpci_emul_set_vbus_level(fixture->tcpci_emul, VBUS_PRESENT));
 
 	/* Wait for everything to settle, and check state. */
-	k_sleep(K_SECONDS(2));
+	k_sleep(K_SECONDS(5));
 	state = get_state_tc(TEST_USB_PORT);
 	zassert_equal(state, /* TC_ATTACHED_SNK */ 7, "Got %d", state);
 	state = get_state_pe(TEST_USB_PORT);

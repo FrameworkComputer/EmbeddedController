@@ -88,6 +88,14 @@ static int attempt_bfet_enable;
  */
 static bool fast_charge_disabled;
 
+#ifdef CONFIG_BATTERY
+/*
+ * During charge idle mode, we want to disable fast-charge/ pre-charge/
+ * trickle-charge. Add this variable to avoid re-send command to charger.
+ */
+test_export_static int charge_idle_enabled;
+#endif
+
 #ifdef TEST_BUILD
 void test_sm5803_set_fast_charge_disabled(bool value)
 {
@@ -484,6 +492,79 @@ static void init_mutexes(void)
 DECLARE_HOOK(HOOK_INIT, init_mutexes, HOOK_PRIO_FIRST);
 #endif
 
+enum ec_error_list sm5803_set_phot_duration(int chgnum,
+					    enum sm5803_phot1_duration duration)
+{
+	enum ec_error_list rv = EC_SUCCESS;
+	int reg = 0;
+
+	/* Set PHOT_DURATION */
+	rv |= chg_read8(chgnum, SM5803_REG_PHOT1, &reg);
+	reg &= ~SM5803_PHOT1_DURATION;
+	reg |= duration << SM5803_PHOT1_DURATION_SHIFT;
+	rv |= chg_write8(chgnum, SM5803_REG_PHOT1, reg);
+
+	if (rv)
+		return rv;
+
+	return EC_SUCCESS;
+}
+
+enum ec_error_list
+sm5803_set_vbus_monitor_sel(int chgnum, enum sm5803_phot2_vbus_sel vbus_sel)
+{
+	enum ec_error_list rv = EC_SUCCESS;
+	int reg = 0;
+
+	/* Set VBUS_MONITOR_SEL */
+	rv |= chg_read8(chgnum, SM5803_REG_PHOT2, &reg);
+	reg &= ~SM5803_PHOT2_VBUS_SEL;
+	reg |= vbus_sel;
+	rv |= chg_write8(chgnum, SM5803_REG_PHOT2, reg);
+
+	if (rv)
+		return rv;
+
+	return EC_SUCCESS;
+}
+
+enum ec_error_list
+sm5803_set_vsys_monitor_sel(int chgnum, enum sm5803_phot3_vbus_sel vsys_sel)
+{
+	enum ec_error_list rv = EC_SUCCESS;
+	int reg = 0;
+
+	/* Set VSYS_MONITOR_SEL */
+	rv |= chg_read8(chgnum, SM5803_REG_PHOT3, &reg);
+	reg &= ~SM5803_PHOT3_VSYS_SEL;
+	reg |= vsys_sel;
+	rv |= chg_write8(chgnum, SM5803_REG_PHOT3, reg);
+
+	if (rv)
+		return rv;
+
+	return EC_SUCCESS;
+}
+
+enum ec_error_list sm5803_set_ibat_phot_sel(int chgnum, int ibat_sel)
+{
+	enum ec_error_list rv = EC_SUCCESS;
+	int reg = 0;
+
+	if (ibat_sel > IBAT_SEL_MAX)
+		ibat_sel = IBAT_SEL_MAX;
+
+	/* Set IBAT_PHOT_SEL */
+	rv |= chg_read8(chgnum, SM5803_REG_PHOT4, &reg);
+	reg &= ~SM5803_PHOT4_IBAT_SEL;
+	reg |= SM5803_IBAT_PROCHOT_MA_TO_REG(ibat_sel);
+	rv |= chg_write8(chgnum, SM5803_REG_PHOT4, reg);
+
+	if (rv)
+		return rv;
+	return EC_SUCCESS;
+}
+
 static void sm5803_init(int chgnum)
 {
 	enum ec_error_list rv;
@@ -685,7 +766,13 @@ static void sm5803_init(int chgnum)
 			rv |= chg_write8(chgnum, 0x5C, 0x7A);
 		}
 
-		rv |= chg_write8(chgnum, 0x73, 0x22);
+		/*
+		 * For VBUS_MONITOR_SEL, Silicon Mitus recommended to set
+		 * to 3.5V and the rest setting will follow the hardware
+		 * default.
+		 */
+		rv |= sm5803_set_vbus_monitor_sel(
+			chgnum, CONFIG_CHARGER_SM5803_VBUS_MON_SEL);
 		rv |= chg_write8(chgnum, 0x50, 0x88);
 		rv |= chg_read8(chgnum, 0x34, &reg);
 		reg |= BIT(7);
@@ -695,6 +782,21 @@ static void sm5803_init(int chgnum)
 		rv |= test_write8(chgnum, 0x47, 0x10);
 		rv |= test_write8(chgnum, 0x48, 0x04);
 		rv |= main_write8(chgnum, 0x1F, 0x0);
+/*
+ * Check the config is hardware default and do nothing if it is.
+ */
+#if CONFIG_CHARGER_SM5803_PROCHOT_DURATION != 2
+		rv |= sm5803_set_phot_duration(
+			chgnum, CONFIG_CHARGER_SM5803_PROCHOT_DURATION);
+#endif
+#if CONFIG_CHARGER_SM5803_VSYS_MON_SEL != 10
+		rv |= sm5803_set_vsys_monitor_sel(
+			chgnum, CONFIG_CHARGER_SM5803_VSYS_MON_SEL);
+#endif
+#if CONFIG_CHARGER_SM5803_IBAT_PHOT_SEL != IBAT_SEL_MAX
+		rv |= sm5803_set_ibat_phot_sel(
+			chgnum, CONFIG_CHARGER_SM5803_IBAT_PHOT_SEL);
+#endif
 	}
 
 	/* Enable LDO bits */
@@ -746,12 +848,11 @@ static void sm5803_init(int chgnum)
 			  SM5803_TINT_MIN_LEVEL);
 
 	/*
-	 * Configure VBAT_SNSP high and TINT interrupts to fire after
-	 * thresholds are set.
+	 * Configure TINT interrupt to fire after thresholds are set.
+	 * b:292038738: Temporarily disable VBAT_SNSP high interrupt since
+	 * the setpoint is not confirmed.
 	 */
-	rv |= main_read8(chgnum, SM5803_REG_INT2_EN, &reg);
-	reg |= SM5803_INT2_VBATSNSP | SM5803_INT2_TINT;
-	rv |= main_write8(chgnum, SM5803_REG_INT2_EN, reg);
+	rv |= main_write8(chgnum, SM5803_REG_INT2_EN, SM5803_INT2_TINT);
 
 	/*
 	 * Configure CHG_ENABLE to only be set through I2C by setting
@@ -1436,6 +1537,43 @@ static enum ec_error_list sm5803_set_mode(int chgnum, int mode)
 					  MASK_CLR);
 	}
 
+#ifdef CONFIG_BATTERY
+	if ((get_chg_ctrl_mode() == CHARGE_CONTROL_IDLE) &&
+	    !charge_idle_enabled) {
+		/*
+		 * Writes to the FLOW2_AUTO_ENABLED bits below have no effect if
+		 * flow1 is set to an active state, so disable sink mode first
+		 * before making other config changes.
+		 */
+		rv = sm5803_flow1_update(chgnum, SM5803_FLOW1_MODE, MASK_CLR);
+		/*
+		 * Disable fast-charge/ pre-charge/ trickle-charge.
+		 */
+		rv |= sm5803_flow2_update(chgnum, SM5803_FLOW2_AUTO_ENABLED,
+					  MASK_CLR);
+		/*
+		 * Enable Sink mode to make sure battery will not discharge.
+		 */
+		rv |= sm5803_flow1_update(chgnum, CHARGER_MODE_SINK, MASK_SET);
+		charge_idle_enabled = 1;
+	} else if ((get_chg_ctrl_mode() == CHARGE_CONTROL_NORMAL) &&
+		   charge_idle_enabled) {
+		rv = sm5803_flow1_update(chgnum, SM5803_FLOW1_MODE, MASK_CLR);
+		rv |= sm5803_flow2_update(chgnum, SM5803_FLOW2_AUTO_ENABLED,
+					  MASK_SET);
+		rv |= sm5803_flow1_update(chgnum, CHARGER_MODE_SINK, MASK_SET);
+		charge_idle_enabled = 0;
+	} else if ((get_chg_ctrl_mode() == CHARGE_CONTROL_DISCHARGE) &&
+		   charge_idle_enabled) {
+		/*
+		 * Discharge is controlled by discharge_on_ac, so only need to
+		 * reset charge_idle_enabled.
+		 */
+		charge_idle_enabled = 0;
+	}
+
+#endif
+
 	return rv;
 }
 
@@ -1749,7 +1887,7 @@ static enum ec_error_list sm5803_get_option(int chgnum, int *option)
 
 	rv |= chg_read8(chgnum, SM5803_REG_FLOW3, &reg);
 	control |= reg << 16;
-
+	*option = control;
 	return rv;
 }
 

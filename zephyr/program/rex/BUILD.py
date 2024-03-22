@@ -20,7 +20,7 @@ def register_rex_project(
 
     register_npcx_project(
         project_name=project_name,
-        zephyr_board="npcx9m7f",
+        zephyr_board="npcx9/npcx9m7f",
         dts_overlays=[
             here / project_name / "project.overlay",
         ],
@@ -51,3 +51,19 @@ register_rex_project(
 register_rex_project(
     project_name="karis",
 )
+
+register_ish_project(
+    project_name="rex-ish",
+    zephyr_board="intel_ish_5_6_0",
+    dts_overlays=[
+        here / "rex-ish" / "project.overlay",
+    ],
+    kconfig_files=[here / "rex-ish" / "prj.conf"],
+)
+
+# Note for reviews, do not let anyone edit these assertions, the addresses
+# must not change after the first RO release.
+assert_rw_fwid_DO_NOT_EDIT(project_name="screebo", addr=0x80144)
+assert_rw_fwid_DO_NOT_EDIT(project_name="karis", addr=0x80144)
+assert_rw_fwid_DO_NOT_EDIT(project_name="rex", addr=0x80144)
+assert_rw_fwid_DO_NOT_EDIT(project_name="rex-ish-ec", addr=0x80144)

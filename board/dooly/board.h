@@ -80,7 +80,7 @@
 #define CONFIG_VBOOT_HASH
 #define CONFIG_VSTORE
 #define CONFIG_VSTORE_SLOT_COUNT 1
-#define CONFIG_SHA256
+#define CONFIG_SHA256_SW
 
 /* EC Commands */
 #define CONFIG_CMD_BUTTON

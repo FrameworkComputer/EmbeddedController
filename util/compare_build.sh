@@ -36,7 +36,8 @@
 # Although this script is a good proving ground for new testing techniques,
 # care should be taken to offload functionality to other core components.
 
-. /usr/share/misc/shflags
+# shellcheck source=../../../scripts/lib/shflags/shflags
+. "${SHFLAGS:-/usr/share/misc/shflags}" || exit 1
 
 FLAGS_PRIVATE_DEFAULT="${FLAGS_FALSE}"
 if [[ -d private ]]; then
@@ -114,6 +115,15 @@ parse-boards() {
   local -n boards="$1"
   shift
 
+  local -a FP_BOARDS=(
+    dartmonkey
+    bloonchipper
+    buccaneer
+    helipilot
+    nucleo-dartmonkey
+    nucleo-h743zi
+  )
+
   # Board groups
   #
   # Get all CHIP variants in use:
@@ -122,7 +132,7 @@ parse-boards() {
   local -A BOARD_GROUPS=(
     # make-print-boards already filters out the skipped boards
     [all]="$(make-print-boards)"
-    [fp]="dartmonkey bloonchipper helipilot nucleo-dartmonkey nucleo-h743zi"
+    [fp]="${FP_BOARDS[*]}"
     [stm32]="$(boards-with 'CHIP[[:space:]:=]*stm32')"
     [stm32f0]="$(boards-with 'CHIP_VARIANT[[:space:]:=]*stm32f0')"
     [stm32f4]="$(boards-with 'CHIP_VARIANT[[:space:]:=]*stm32f4')"

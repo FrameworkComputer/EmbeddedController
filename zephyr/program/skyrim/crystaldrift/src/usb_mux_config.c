@@ -99,21 +99,21 @@ int board_anx7483_c1_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 					    ANX7483_EQ_SETTING_12_5DB));
 	} else if (mux_state == USB_PD_MUX_DP_ENABLED) {
 		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX1,
-					    ANX7483_EQ_SETTING_8_4DB));
+					    ANX7483_EQ_SETTING_10_3DB));
 		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX2,
-					    ANX7483_EQ_SETTING_8_4DB));
+					    ANX7483_EQ_SETTING_10_3DB));
 		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_UTX1,
-					    ANX7483_EQ_SETTING_8_4DB));
+					    ANX7483_EQ_SETTING_10_3DB));
 		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_UTX2,
-					    ANX7483_EQ_SETTING_8_4DB));
+					    ANX7483_EQ_SETTING_10_3DB));
 		RETURN_ERROR(anx7483_set_fg(me, ANX7483_PIN_URX1,
-					    ANX7483_FG_SETTING_0_5DB));
+					    ANX7483_FG_SETTING_1_2DB));
 		RETURN_ERROR(anx7483_set_fg(me, ANX7483_PIN_URX2,
-					    ANX7483_FG_SETTING_0_5DB));
+					    ANX7483_FG_SETTING_1_2DB));
 		RETURN_ERROR(anx7483_set_fg(me, ANX7483_PIN_UTX1,
-					    ANX7483_FG_SETTING_0_5DB));
+					    ANX7483_FG_SETTING_1_2DB));
 		RETURN_ERROR(anx7483_set_fg(me, ANX7483_PIN_UTX2,
-					    ANX7483_FG_SETTING_0_5DB));
+					    ANX7483_FG_SETTING_1_2DB));
 	} else if (mux_state == USB_PD_MUX_DOCK && !flipped) {
 		RETURN_ERROR(anx7483_set_eq(me, ANX7483_PIN_URX1,
 					    ANX7483_EQ_SETTING_12_5DB));
@@ -158,7 +158,7 @@ int board_c1_ps8818_mux_set(const struct usb_mux *me, mux_state_t mux_state)
 	return 0;
 }
 
-static void setup_mux(void)
+test_export_static void setup_mux(void)
 {
 	uint32_t val;
 

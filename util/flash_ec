@@ -13,7 +13,8 @@ if [[ "$(basename "${EC_DIR}")" != "ec" ]]; then
 fi
 
 # Loads script libraries.
-. "/usr/share/misc/shflags" || exit 1
+# shellcheck source=../../../scripts/lib/shflags/shflags
+. "${SHFLAGS:-/usr/share/misc/shflags}" || exit 1
 
 # Redirects tput to stderr, and drop any error messages.
 tput2() {
@@ -75,13 +76,10 @@ BOARDS_STM32=(
 	nocturne_fp
 	oak_pd
 	pit
-	plankton
-	rainier
 	strago_pd
 	zinger
 )
 BOARDS_STM32_PROG_EN=(
-	plankton
 )
 
 BOARDS_STM32_DFU=(
@@ -116,16 +114,23 @@ BOARDS_NPCX_7M7X_JTAG=(
 )
 
 BOARDS_NPCX_SPI=(
+	buccaneer
 	helipilot
 )
 
 BOARDS_NPCX_INT_SPI=(
 	adlrvpp_npcx
 	mtlrvpp_npcx
+	mtlrvpp_pd
 )
 
 BOARDS_SPI_1800MV=(
 	coral
+	reef
+)
+
+# hold cold_reset:on when using debug header (e.g. servo header)
+BOARDS_HOLD_COLD_RESET_DBG_HDR=(
 	reef
 )
 
@@ -139,7 +144,6 @@ BOARDS_RAIDEN=(
 	poppy
 	rammus
 	reef
-	scarlet
 	soraka
 )
 
@@ -186,6 +190,19 @@ DEFINE_boolean zephyr "${FLAGS_FALSE}" \
 	"Program a Zephyr EC image instead of a CrOS EC image"
 DEFINE_boolean no_preserve "${FLAGS_FALSE}" \
 	"Avoid preserving the sections of firmware image with preserve property"
+DEFINE_boolean try_apshutdown "${FLAGS_FALSE}" \
+	"Shutdown the AP immediately after flashing. It does not guarantee a " \
+	"successful AP shutdown for all devices or in all situations. You need" \
+	" to understand the limitations when you build a solution on it. "
+DEFINE_integer try_apshutdown_count 16 \
+	"Number of attempts to shutdown the AP immediately after flashing."
+DEFINE_string dut_ip "" \
+	"DUT IP address"
+DEFINE_string token_db "${EC_DIR}/build/tokens.bin" \
+	"Full pathname of the EC tokenized database to copy to DUT."
+DEFINE_boolean use_i2c_pseudo "${FLAGS_TRUE}" \
+	"Use the linux i2c_pseudo driver instead of accessing the servo " \
+	"i2c endpoint directly."
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
@@ -199,10 +216,17 @@ fi
 MSG_PROGRAM_FAIL="Failed to flash EC firmware image"
 MSG_READ_FAIL="Failed to read EC firmware image"
 MSG_VERIFY_FAIL="Failed to verify EC firmware image."
+MSG_CHIP_READ_INVALID="Invalid chip type passed to be read"
 
 set -e
 
-DUT_CONTROL_CMD=( "dut-control" "--port=${FLAGS_port}" )
+if [[ -n "${BAZEL_DUT_CONTROL}" ]]; then
+	DUT_CONTROL_CMD=( "${BAZEL_DUT_CONTROL}" )
+else
+	DUT_CONTROL_CMD=( "dut-control" )
+fi
+DUT_CONTROL_CMD+=( "--port=${FLAGS_port}" )
+
 DUT_CTRL_PREFIX=""
 
 # Run a command which mutates the state of an attached device.
@@ -224,8 +248,29 @@ function print_or_run() {
 		echo "DRY RUN:" "${quoted_args[@]}" >&2
 		tput2 sgr0
 	else
+		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
+			local arg
+			local -a quoted_args
+
+			# Quote each of the arguments so it can easily be
+			# copy-pasted into a shell.
+			for arg in "$@"; do
+				quoted_args+=("$(printf "%q" "${arg}")")
+			done
+
+			echo "${quoted_args[@]}" >&2
+		fi
 		"$@"
 	fi
+}
+
+# Helper routine to test if specific control is available.
+# This always executes, even with --dry_run so that the control flow
+# of the script continues normally.
+function dut_has_control() {
+	local CONTROL=$1
+
+	"${DUT_CONTROL_CMD[@]}" -i "${CONTROL}" >/dev/null 2>&1
 }
 
 function dut_control() {
@@ -238,10 +283,6 @@ function dut_control() {
 		fi
 		DUT_CTRL_CML+=( "${p}" )
 	done
-
-	if [ "${FLAGS_verbose}" = "${FLAGS_TRUE}" ]; then
-		echo "${DUT_CTRL_CML[*]}" 1>&2
-	fi
 
 	print_or_run "${DUT_CTRL_CML[@]}" >/dev/null
 }
@@ -384,13 +425,15 @@ case "${BOARD}" in
 	chocodile_bec ) MCU="usbpd" ;;
 	oak_pd|strago_pd ) MCU="usbpd" ;;
 	chell_pd|glados_pd ) MCU="usbpd" ;;
-	bloonchipper|dartmonkey|hatch_fp|helipilot|nami_fp|nocturne_fp ) MCU="fpmcu" ;;
+	bloonchipper|buccaneer|dartmonkey|hatch_fp|helipilot|nami_fp|nocturne_fp )
+		MCU="fpmcu"
+		;;
 	dingdong|hoho|twinkie ) DUT_CONTROL_CMD=( "true" ); MCU="ec" ;;
 	*) MCU="ec" ;;
 esac
 
 case "${CHIP}" in
-	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"npcx_uut"|"ite_spi"| \
+	"stm32"|"npcx_spi"|"npcx_int_spi"|"it83xx"|"ite_i2c"|"npcx_uut"|"ite_spi"| \
 			"ite_spi_ccd_i2c"|"it8xxx2"|"mchp_int_spi")
 		;;
 	*)
@@ -440,25 +483,31 @@ servo_is_ccd() {
 }
 
 servo_has_warm_reset() {
-	dut_control -i warm_reset >/dev/null 2>&1
+	dut_has_control warm_reset
 }
 
 servo_has_cold_reset() {
-	dut_control -i cold_reset >/dev/null 2>&1
+	dut_has_control cold_reset
 }
 
 servo_has_dut_i2c_mux() {
-	dut_control -i dut_i2c_mux >/dev/null 2>&1
+	dut_has_control dut_i2c_mux
+}
+
+servo_has_dut_i2c_en() {
+	dut_has_control dut_i2c_en
 }
 
 servo_ec_hard_reset_or_die() {
-	dut_control_or_die cold_reset:on
-	dut_control_or_die cold_reset:off
-
 	# Cold reset on C2D2 is H1 reset, which will double reset the EC
-	# We need to wait a little bit to ensure we catch final EC reset
 	if [[ "${SERVO_TYPE}" =~ "c2d2" ]]; then
-		print_or_run sleep 0.2
+		dut_control_or_die gsc_ec_reset:on
+		dut_control_or_die gsc_ec_reset:off
+	elif servo_has_cold_reset; then
+		dut_control_or_die cold_reset:on
+		dut_control_or_die cold_reset:off
+	else
+		info "Skipping cold reset"
 	fi
 }
 
@@ -682,6 +731,15 @@ cleanup() {
 	if ! on_raiden || servo_has_cold_reset; then
 		ec_reset
 	fi
+
+	if [[ "${FLAGS_try_apshutdown}" == "${FLAGS_TRUE}" ]]; then
+		info "Attempting to shut down the AP..."
+		dut_control ec_uart_regexp:None
+		for (( i = 0; i < "${FLAGS_try_apshutdown_count}"; i++ )); do
+			dut_control ec_uart_cmd:apshutdown
+			sleep 1
+		done
+	fi
 }
 trap cleanup EXIT
 
@@ -712,6 +770,13 @@ if [[ -n "${EC_DIR}" ]]; then
 	fi
 fi
 
+LOCAL_TOKEN_DB=
+if [[ -n "${EC_DIR}" ]]; then
+	if [ -f "${EC_DIR}/build/tokens.bin" ] ; then
+		LOCAL_TOKEN_DB="${EC_DIR}/build/tokens.bin"
+	fi
+fi
+
 # Get baseboard from build system if present
 BASEBOARD=
 
@@ -728,7 +793,7 @@ else
 	info "Could not find ec build folder to calculate baseboard."
 fi
 # shellcheck disable=SC2181
-if [ $? -ne 0 ]; then
+if [ $? -ne 0 ] && [ -z "${FLAGS_image}" ]; then
 	info "EC build system didn't recognize ${BOARD}. Assuming no baseboard."
 fi
 set -e
@@ -760,6 +825,40 @@ function ec_image() {
 		fi
 	fi
 	die "no EC image found : build one or specify one."
+}
+
+function ec_token_database() {
+	# No token database specified on command line, try default location
+	if [[ -n "${FLAGS_token_db}" ]] ; then
+		if [ -e "${FLAGS_token_db}" ] || \
+		   [ "${FLAGS_token_db}" == "-" ]; then
+			echo "${FLAGS_token_db}"
+			return
+		fi
+		die "Invalid image path : ${FLAGS_token_db}"
+	else
+		if [ -f "${LOCAL_TOKEN_DB}" ]; then
+			echo "${LOCAL_TOKEN_DB}"
+			return
+		fi
+	fi
+	die "no token database found : specify one."
+}
+
+function load_token_db() {
+	local TOKEN_DB
+	local DUT_IP
+
+	TOKEN_DB="$(ec_token_database)"
+	DUT_IP="${FLAGS_dut_ip}"
+
+	info "TOKEN_DB=${TOKEN_DB}"
+	info "DUT_IP=${DUT_IP}"
+
+	ssh root@"${DUT_IP}" 'mkdir -p /usr/local/cros_ec/'
+	scp "${TOKEN_DB}" root@"${DUT_IP}":/usr/local/cros_ec/tokens.bin
+
+	return
 }
 
 # Find the Loader image to use
@@ -897,6 +996,19 @@ function claim_pty() {
 	done
 }
 
+# Returns if get_serial used CCD.
+function get_serial_is_ccd() {
+	if [[ "${SERVO_TYPE}" =~ ^servo_v4(p1)?_with_servo_micro ]]; then
+		false
+	elif [[ "${SERVO_TYPE}" =~ ^servo_v4(p1)?_with_c2d2 ]]; then
+		false
+	elif [[ "${SERVO_TYPE}" =~ "_with_ccd" ]] ; then
+		true
+	else
+		false
+	fi
+}
+
 # Returns the serialnumber of the specified servo.
 function get_serial() {
 	if [[ "${SERVO_TYPE}" =~ ^servo_v4(p1)?_with_servo_micro ]]; then
@@ -908,6 +1020,16 @@ function get_serial() {
 			sn_ctl="servo_micro_"
 		else
 			sn_ctl="servo_micro_for_${BOARD}_"
+		fi
+	elif [[ "${SERVO_TYPE}" =~ ^servo_v4(p1)?_with_c2d2 ]]; then
+		if [[ -z "${BOARD}" ]]; then
+			sn_ctl="c2d2_"
+		elif [[ "$(dut_control_get "c2d2_for_${BOARD}_serialname")" =~ \
+				"unknown" ]] ; then
+			# Fall back to c2d2_ if S/N is uknown.
+			sn_ctl="c2d2_"
+		else
+			sn_ctl="c2d2_for_${BOARD}_"
 		fi
 	elif [[ "${SERVO_TYPE}" =~ "_with_ccd" ]] ; then
 		sn_ctl="ccd_"
@@ -1025,7 +1147,9 @@ function flash_flashrom() {
 			# Set GP_SEL# as low then start ec
 			dut_control fw_up:on
 			sleep 0.2
-			dut_control cold_reset:off
+			if ! in_array "${BOARDS_HOLD_COLD_RESET_DBG_HDR[@]}" "${BOARD}"; then
+				dut_control cold_reset:off
+			fi
 		# Gang programmer mode for npcx_spi requires using dev_mode
 		# rather than fw_up
 		elif [[ "${CHIP}" == "npcx_spi" ]]; then
@@ -1033,7 +1157,9 @@ function flash_flashrom() {
 
 			dut_control dev_mode:on
 			sleep 0.2
-			dut_control cold_reset:off
+			if ! in_array "${BOARDS_HOLD_COLD_RESET_DBG_HDR[@]}" "${BOARD}"; then
+				dut_control cold_reset:off
+			fi
 		fi
 
 		# Enable SPI programming mode.
@@ -1130,7 +1256,6 @@ function flash_flashrom() {
 		local FLASHROM_WRITE=("${FLASHROM_CMDLINE[@]}" "${FLASHROM_OPTIONS[@]}")
 		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 			info "Running flashrom:" 1>&2
-			echo " ${FLASHROM_WRITE[*]} -w ${T}" 1>&2
 		fi
 		print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
 			"${FLASHROM_WRITE[@]}" -w "${T}" \
@@ -1140,7 +1265,6 @@ function flash_flashrom() {
 		info "Reading EC firmware image."
 		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 			info "Running flashrom:" 1>&2
-			echo " ${FLASHROM_CMDLINE[*]} -r ${FLAGS_read}" 1>&2
 		fi
 		print_or_run sudo timeout -k 10 -s 9 "${FLAGS_timeout}" \
 			"${FLASHROM_CMDLINE[@]}" -r "${FLAGS_read}" \
@@ -1224,9 +1348,6 @@ function flash_stm32() {
 		info "Programming EC firmware image."
 		# Unprotect flash, erase, and write
 		local STM32MON_COMMAND=("${STM32MON}" "${STM32MON_OPT[@]}" -U -u -e -w)
-		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
-			echo "${STM32MON_COMMAND[*]} ${IMG}"
-		fi
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
 			"${STM32MON_COMMAND[@]}" "${IMG}" \
 			|| die "${MSG_PROGRAM_FAIL}"
@@ -1248,9 +1369,6 @@ function flash_stm32() {
 	if [[ -n "${IMG_READ}" ]]; then
 		info "Reading EC firmware image."
 		local STM32MON_READ_CMD=("${STM32MON}" "${STM32MON_OPT[@]}" -U -r)
-		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
-			echo "${STM32MON_READ_CMD[*]} ${IMG_READ}"
-		fi
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
 			"${STM32MON_READ_CMD[@]}" "${IMG_READ}" \
 			|| die "${MSG_READ_FAIL}"
@@ -1324,10 +1442,39 @@ function dut_i2c_dev() {
 	echo /dev/i2c-"${adap_num}"
 }
 
+function ite_dfu_mode() {
+	# Send the special waveform to the ITE EC.
+	if [[ "${SERVO_TYPE}" =~ "servo_micro" || \
+	      "${SERVO_TYPE}" =~ "c2d2" ]] ; then
+		info "Asking servo to send the dbgr special waveform to ${CHIP}"
+		dut_control_or_die enable_ite_dfu
+	elif servo_is_ccd; then
+		local CCD_I2C_CAP
+		CCD_I2C_CAP="$(dut_control_get ccd_i2c_en)"
+		if [[ "${CCD_I2C_CAP,,}" != "always" ]]; then
+			die "CCD I2C capability is not set as 'Always'" \
+				": ${CCD_I2C_CAP}"
+		fi
+
+		info "Asking CR50 to send the dbgr special waveform to ${CHIP}"
+		sleep 2
+		dut_control_or_die cr50_i2c_ctrl:ite_debugger_mode
+		sleep 3
+	elif [[ "${SERVO_TYPE}" == "servo_v2" ]]; then
+		info "Closing servod connection to ftdi_i2c interface"
+		dut_control_or_die ftdii2c_cmd:close
+	else
+		die "This servo type is not yet supported: ${SERVO_TYPE}"
+	fi
+}
+
 function flash_it83xx() {
-	local TOOL_PATH="${EC_DIR}/build/${BOARD}/util:${PATH}"
+	local TOOL_PATH="${EC_DIR}/build/host/util:${PATH}"
 	local ITEFLASH_BIN
+	local TEMP_DIR
 	ITEFLASH_BIN=$(PATH="${TOOL_PATH}" which iteflash)
+	TEMP_DIR="$(mktemp -d --suffix="${TEMP_SUFFIX}")"
+	DELETE_LIST+=("${TEMP_DIR}")
 
 	if [[ ! -x "${ITEFLASH_BIN}" ]]; then
 		die "no iteflash util found."
@@ -1361,50 +1508,54 @@ function flash_it83xx() {
 		dut_control dut_i2c_mux:ec_prog
 	fi
 
+	# The board overlay defines "dut_i2c_en" if there is a signal that
+	# must be asserted to access the I2C programming pins on the dut.
+	if servo_has_dut_i2c_en; then
+		info "Enabling I2C programming to ${CHIP}"
+		servo_save_add "dut_i2c_en"
+		dut_control dut_i2c_en:on
+	fi
+
 	# We need to send the special waveform very soon after the EC powers on
 	if [[ "${SERVO_TYPE}" =~ "c2d2" ]]; then
 		# The EC was held in reset above
 		dut_control gsc_ec_reset:off
-	elif servo_has_cold_reset; then
+	else
 		servo_ec_hard_reset_or_die
 	fi
 
-	# Send the special waveform to the ITE EC.
-	if [[ "${SERVO_TYPE}" =~ "servo_micro" || \
-	      "${SERVO_TYPE}" =~ "c2d2" ]] ; then
-		info "Asking servo to send the dbgr special waveform to ${CHIP}"
-		dut_control_or_die enable_ite_dfu
-	elif servo_is_ccd; then
-		local CCD_I2C_CAP
-		CCD_I2C_CAP="$(dut_control_get ccd_i2c_en)"
-		if [[ "${CCD_I2C_CAP,,}" != "always" ]]; then
-			die "CCD I2C capability is not set as 'Always'" \
-				": ${CCD_I2C_CAP}"
-		fi
-
-		info "Asking CR50 to send the dbgr special waveform to ${CHIP}"
-		sleep 2
-		dut_control_or_die cr50_i2c_ctrl:ite_debugger_mode
-		sleep 3
-	elif [[ "${SERVO_TYPE}" == "servo_v2" ]]; then
-		info "Closing servod connection to ftdi_i2c interface"
-		dut_control_or_die ftdii2c_cmd:close
-	else
-		die "This servo type is not yet supported: ${SERVO_TYPE}"
-	fi
+	ite_dfu_mode
 
 	# Build the iteflash command line.
 	local ITEFLASH_ARGS=( "${ITEFLASH_BIN}" )
 
 	if [[ "${SERVO_TYPE}" == "servo_v2" ]]; then
 		ITEFLASH_ARGS+=( "--send-waveform=1" "--i2c-interface=ftdi" )
-	else
+	elif [[ "${FLAGS_use_i2c_pseudo}" == "${FLAGS_TRUE}" ]]; then
+		sudo modprobe i2c-dev
 		ITEFLASH_ARGS=( "sudo" "--" "${ITEFLASH_ARGS[@]}" \
 			"--send-waveform=0" "--i2c-interface=linux" \
 			"--i2c-dev-path=$(dut_i2c_dev)" )
 		if servo_is_ccd; then
 			ITEFLASH_ARGS+=( "--block-write-size=256" )
 		fi
+	else
+		ITEFLASH_ARGS+=( "--send-waveform=0" "--i2c-interface=usb" \
+			"-s" "$(get_serial)" )
+		if get_serial_is_ccd; then
+			ITEFLASH_ARGS+=( "--block-write-size=256" )
+		fi
+	fi
+
+	if [[ "${FLAGS_no_preserve}" == "${FLAGS_FALSE}" && \
+	      -z "${FLAGS_read}" ]]; then
+		local IMG_CPY
+
+		IMG_CPY="${TEMP_DIR}/ec.new.cpy.bin"
+		cat "${IMG}" > "${IMG_CPY}"
+		IMG="${IMG_CPY}"
+		preserve_sections "ite_i2c" "${IMG}" "${TEMP_DIR}"    \
+			"${ITEFLASH_ARGS[@]}" || die "${MSG_PROGRAM_FAIL}"
 	fi
 
 	local ERROR_MSG
@@ -1424,7 +1575,6 @@ function flash_it83xx() {
 
 	if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
 		ITEFLASH_ARGS+=( "--debug" )
-		echo "${ITEFLASH_ARGS[@]}"
 	fi
 
 	# Ensure the CR50 doesn't go into low power while flashing
@@ -1438,10 +1588,18 @@ function flash_it83xx() {
 	print_or_run "${ITEFLASH_ARGS[@]}" || die "${ERROR_MSG}"
 }
 
+# Alias for flashing ITE chips over I2C from all servo types.
+function flash_ite_i2c() {
+        flash_it83xx
+}
+
+# Alias for flashing ITE chips over SPI from all servo types.
 function flash_ite_spi() {
 	flash_flashrom
 }
 
+# Flash ITE chips over SPI when using the servod debug connector
+# and over I2C whn using CCD.
 function flash_ite_spi_ccd_i2c() {
 	if [[ "${SERVO_TYPE}" =~ "servo_micro" || \
 	      "${SERVO_TYPE}" =~ "servo_v2" ]] ; then
@@ -1451,6 +1609,8 @@ function flash_ite_spi_ccd_i2c() {
 	fi
 }
 
+# Flash ITE chips over SPI when using the servod debug connector
+# and over I2C whn using CCD.
 function flash_it8xxx2() {
 	flash_ite_spi_ccd_i2c
 }
@@ -1564,10 +1724,6 @@ function flash_npcx_uut() {
 				"--file=${MON}" )
 
 		# Load monitor binary to address 0x200C3020
-		if [[ "${FLAGS_verbose}" = "${FLAGS_TRUE}" ]]; then
-			echo "${UUT_MON[*]}"
-		fi
-
 		local monitor_res=0
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
 			"${UUT_MON[@]}" || monitor_res=$?
@@ -1588,31 +1744,19 @@ function flash_npcx_uut() {
 		fi
 
 		if [[ "${FLAGS_no_preserve}" == "${FLAGS_FALSE}" ]]; then
-			local CUR_IMG
-			local PRESERVE_STATUS
+			local IMG_CPY
 
-			PRESERVE_STATUS=0
-			is_preservation_needed "${IMG}" "${TEMP_DIR}" || PRESERVE_STATUS=$?
-			if [[ "${PRESERVE_STATUS}" -eq 0 ]]; then
-				info "Reading current EC firmware image."
-				CUR_IMG="${TEMP_DIR}/ec.cur.bin"
-				local UUT_CUR_RD=( "${NPCX_UUT}" "${UUT_ARGS[@]}"   \
-							"--read-flash" "--file=${CUR_IMG}" )
-				echo "${UUT_CUR_RD[*]}"
-				print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
-					"${UUT_CUR_RD[@]}" || die "${MSG_READ_FAIL}"
-
-				preserve_sections "${CUR_IMG}" "${IMG}" "${TEMP_DIR}"
-			fi
+			IMG_CPY="${TEMP_DIR}/ec.new.cpy.bin"
+			cat "${IMG}" > "${IMG_CPY}"
+			IMG="${IMG_CPY}"
+			preserve_sections "${CHIP}" "${IMG}" "${TEMP_DIR}"    \
+				"${NPCX_UUT}" "${UUT_ARGS[@]}" || die "${MSG_PROGRAM_FAIL}"
 		fi
 
 		info "Programming EC firmware image."
 		local UUT_WR=( "${NPCX_UUT}" "${UUT_ARGS[@]}"      \
 			       "--auto" "--offset=${FLAGS_offset}" \
 			       "--file=${IMG}" )
-		if [[ "${FLAGS_verbose}" = "${FLAGS_TRUE}" ]]; then
-			echo "${UUT_WR[*]}"
-		fi
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
 			"${UUT_WR[@]}" || die "${MSG_PROGRAM_FAIL}"
 
@@ -1630,9 +1774,6 @@ function flash_npcx_uut() {
 		local UUT_RD=( "${NPCX_UUT}" "${UUT_ARGS[@]}"   \
 			      "--read-flash" "--file=${IMG_READ}" )
 
-		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
-			echo "${UUT_RD[*]}"
-		fi
 		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
 			"${UUT_RD[@]}" || die "${MSG_READ_FAIL}"
 	fi
@@ -1641,10 +1782,6 @@ function flash_npcx_uut() {
 	# only if it was a flash write request.
 	if [[ -z "${FLAGS_read}" && "${FLAGS_verify}" == "${FLAGS_TRUE}" ]]; then
 		info "Verifying EC firmware image."
-
-		if [[ "${FLAGS_verbose}" == "${FLAGS_TRUE}" ]]; then
-			echo "cmp -n ${IMG_SIZE} ${IMG} ${IMG_READ}"
-		fi
 
 		print_or_run cmp -s -n "${IMG_SIZE}" "${IMG}" "${IMG_READ}" \
 			|| die "${MSG_VERIFY_FAIL}"
@@ -1721,43 +1858,272 @@ if [ "${NEED_SERVO}" != "no" ] ; then
 	servo_save
 fi
 
-function is_preservation_needed() {
+function preserve_sections() {
+	local CHIP_TYPE
 	local NEW_IMG
 	local TEMP_DIR
+	local CHIP_CMD_PREFIX
 
-	NEW_IMG=${1:?"missing arg 1: EC image path"}
+	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
+	shift
+	NEW_IMG=${1:?"missing arg 2: New EC image path"}
 	NEW_IMG=$(readlink -f "${NEW_IMG}")
-	TEMP_DIR=${2:?"missing arg 2: Temp directory path"}
-
+	shift
+	TEMP_DIR=${1:?"missing arg 3: Temp directory path"}
+	shift
+	CHIP_CMD_PREFIX=("$@")
 	(
 		cd "${TEMP_DIR}"
-		dump_fmap "${NEW_IMG}" -e | grep -q ' preserve'
+		local NEW_FMAP
+		local NEW_FMAP_OFFSET
+		local NEW_FMAP_SIZE
+		local CUR_FMAP_IMG
+		local CUR_IMG
+		local CUR_FMAP_HEADER
+
+		NEW_FMAP=$(dump_fmap "${NEW_IMG}" -e FMAP)
+		NEW_FMAP_NFIELD=$(echo "${NEW_FMAP}" | awk '{print NF}')
+		if [ "${NEW_FMAP_NFIELD}" -ne 4 ]; then
+			die "The output of dump_fmap is not expected; try update_chroot"
+		fi
+
+		NEW_FMAP_OFFSET=$(echo "${NEW_FMAP}" | awk '{print $2}')
+		NEW_FMAP_SIZE=$(echo "${NEW_FMAP}" | awk '{print $3}')
+		CUR_FMAP_IMG="${TEMP_DIR}/ec.cur.fmap.bin"
+		CUR_IMG="${TEMP_DIR}/ec.cur.bin"
+		info "Reading FMAP section from EC chip"
+		read_chip_partially "${CHIP_TYPE}" "${NEW_FMAP_OFFSET}" \
+			"${NEW_FMAP_SIZE}" "${CUR_FMAP_IMG}" \
+			"${CHIP_CMD_PREFIX[@]}"
+		# Verify the partial file starts with the correct FMAP header.
+		# If the FMAP has moved between the current image and new
+		# image, this should catch this.
+		# bash can't store NUL characters into variables so strip
+		# any read from the file.
+		CUR_FMAP_HEADER=$(head -c 8 "${CUR_FMAP_IMG}" | tr -d '\0')
+		if [[ "${CUR_FMAP_HEADER}" != "__FMAP__" ]]; then
+			info "FMAP section read failed, reading complete image"
+			read_chip "${CHIP_TYPE}" "${CUR_IMG}" "${CHIP_CMD_PREFIX[@]}"
+			check_preserve_sections_not_present "${CUR_IMG}"  \
+				"${NEW_IMG}" "${TEMP_DIR}" || die
+			preserve_sections_with_cur_image "${CUR_IMG}" "${NEW_IMG}" "${TEMP_DIR}"
+		else
+			info "FMAP read is successful from EC flash"
+			check_preserve_sections_not_present "${CUR_FMAP_IMG}"  \
+				"${NEW_IMG}" "${TEMP_DIR}" || die
+			preserve_sections_with_fmap_image "${CUR_FMAP_IMG}"  \
+				"${NEW_IMG}" "${TEMP_DIR}" "${CHIP_TYPE}"  \
+				"${CHIP_CMD_PREFIX[@]}"
+		fi
 	)
 }
 
-function preserve_sections() {
+function check_preserve_sections_not_present() {
 	local CUR_IMG
 	local NEW_IMG
 	local TEMP_DIR
 
 	CUR_IMG=${1:?"missing arg 1: Cur EC image path"}
 	NEW_IMG=${2:?"missing arg 2: New EC image path"}
-	NEW_IMG=$(readlink -f "${NEW_IMG}")
 	TEMP_DIR=${3:?"missing arg 3: Temp directory path"}
+
+	if ! dump_fmap "${CUR_IMG}" -e | grep -q ' preserve'; then
+		info "No sections are being preserved"
+	else
+		check_preserve_sections_presence "${CUR_IMG}" "${NEW_IMG}" "${TEMP_DIR}"
+	fi
+}
+
+function preserve_sections_with_fmap_image() {
+	local CUR_FMAP_IMG
+	local NEW_IMG
+	local TEMP_DIR
+	local CHIP_TYPE
+	local CHIP_CMD_PREFIX
+
+	CUR_FMAP_IMG=${1:?"missing arg 1: Cur EC FMAP image path"}
+	shift
+	NEW_IMG=${1:?"missing arg 2: New EC image path"}
+	shift
+	TEMP_DIR=${1:?"missing arg 3: Temp directory path"}
+	shift
+	CHIP_TYPE=${1:?"missing arg 4: Chip type"}
+	shift
+	CHIP_CMD_PREFIX=("$@")
 	(
 		cd "${TEMP_DIR}"
-		dump_fmap "${NEW_IMG}" -e | grep ' preserve' | cut \
+		dump_fmap "${CUR_FMAP_IMG}" -e | grep ' preserve' | cut \
 			-f1 -d' ' |
 		while read -r line
 		do
-			info "Preserving ${line} section on EC chip"
-			local SEC_IMG="${TEMP_DIR}/ec.cur.${line}.bin"
+			local SEC_IMG
+			local SEC_FMAP_DUMP
+			local SEC_OFFSET
+			local SEC_SIZE
 
-			cbfstool "${CUR_IMG}" read -r "${line}" -f "${SEC_IMG}"
-			cbfstool "${NEW_IMG}" write -r "${line}" -f "${SEC_IMG}"
+			SEC_IMG="${TEMP_DIR}/ec.cur.${line}.bin"
+			SEC_FMAP_DUMP=$(dump_fmap "${CUR_FMAP_IMG}" -e "${line}")
+			SEC_OFFSET=$(echo "${SEC_FMAP_DUMP}" | awk '{print $2}')
+			SEC_SIZE=$(echo "${SEC_FMAP_DUMP}" | awk '{print $3}')
+			info "Reading ${line} section from EC chip"
+			read_chip_partially "${CHIP_TYPE}" \
+				"${SEC_OFFSET}" "${SEC_SIZE}" "${SEC_IMG}" "${CHIP_CMD_PREFIX[@]}"
+			info "Preserving ${line} section in new image"
+			futility load_fmap "${NEW_IMG}" "${line}:${SEC_IMG}"
 		done
 	)
 }
+
+function preserve_sections_with_cur_image() {
+	local CUR_IMG
+	local NEW_IMG
+	local TEMP_DIR
+
+	CUR_IMG=${1:?"missing arg 1: Cur EC image path"}
+	NEW_IMG=${2:?"missing arg 2: New EC image path"}
+	TEMP_DIR=${3:?"missing arg 3: Temp directory path"}
+	(
+		cd "${TEMP_DIR}"
+		dump_fmap "${CUR_IMG}" -e | grep ' preserve' | cut \
+			-f1 -d' ' |
+		while read -r line
+		do
+			local SEC_IMG
+
+			info "Preserving ${line} section on EC chip"
+			SEC_IMG="${TEMP_DIR}/ec.cur.${line}.bin"
+			futility dump_fmap -x "${CUR_IMG}" "${line}"
+			mv "${line}" "${SEC_IMG}"
+			futility load_fmap "${NEW_IMG}" "${line}:${SEC_IMG}"
+		done
+	)
+}
+
+function read_chip_partially() {
+	local CHIP_TYPE
+	local OFFSET
+	local SIZE
+	local FILE_PATH
+	local CHIP_CMD_PREFIX
+
+	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
+	shift
+	OFFSET=${1:?"missing arg 2: Offset"}
+	shift
+	SIZE=${1:?"missing arg 3: Size"}
+	shift
+	FILE_PATH=${1:?"missing arg 4: Image storage path"}
+	shift
+	CHIP_CMD_PREFIX=("$@")
+
+	if [ "${CHIP_TYPE}" = "npcx_uut" ]; then
+		local NPCX_BASE_ADDR
+
+		NPCX_BASE_ADDR=0x64000000
+		OFFSET=$(("${NPCX_BASE_ADDR}" + "${OFFSET}"))
+		UUT_CUR_FMAP_RD=( "${CHIP_CMD_PREFIX[@]}" "--opr=rd"  \
+			"--addr=${OFFSET}" "--size=${SIZE}"  \
+			"--file=${FILE_PATH}" )
+		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
+					"${UUT_CUR_FMAP_RD[@]}" || die "${MSG_READ_FAIL}"
+	elif [ "${CHIP_TYPE}" == "ite_i2c" ]; then
+		local UUT_CUR_FMAP_RD
+		local ALIGNED_START SKIP_BYTES ALIGNED_SIZE RANGE ALIGNED_FILE
+
+		# ITE flash tool can start reads on a 256 byte page boundary
+		info "ITE partial read: offset ${OFFSET} size ${SIZE}"
+
+		ALIGNED_START=$((OFFSET & 0xFFFFFF00))
+		SKIP_BYTES=$((OFFSET - ALIGNED_START))
+		ALIGNED_SIZE=$((SIZE + SKIP_BYTES))
+		ALIGNED_FILE="${FILE_PATH}.aligned"
+
+		# --range requires hex representation
+		RANGE=$(printf '0x%x:0x%x' "${ALIGNED_START}" "${ALIGNED_SIZE}" )
+		info "ITE partial read range ${RANGE}"
+
+		UUT_CUR_FMAP_RD=( "${CHIP_CMD_PREFIX[@]}" \
+			"--read=${ALIGNED_FILE}" "--range=${RANGE}")
+		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
+					"${UUT_CUR_FMAP_RD[@]}" || die "${MSG_READ_FAIL}"
+
+		if [[ "${ALIGNED_START}" != "${OFFSET}" ]]; then
+		   	local DD_CMD
+			# We had to read extra data from the DUT. Use dd
+			# to extract just the portion needed.
+			info "Extract ${SIZE} bytes from temp file"
+			DD_CMD=( "dd" "if=${ALIGNED_FILE}" "of=${FILE_PATH}" \
+				"skip=${SKIP_BYTES}" "count=${SIZE}" "bs=1" )
+			print_or_run "${DD_CMD[@]}"
+		else
+			# Extracted file has what we need
+			print_or_run mv "${ALIGNED_FILE}" "${FILE_PATH}"
+		fi
+
+		# Reset EC before setting DFU mode
+		servo_ec_hard_reset_or_die
+		# ITE DFU mode must be re-enabled after each operation
+		ite_dfu_mode
+	else
+		die "${MSG_CHIP_READ_INVALID}"
+	fi
+}
+
+function read_chip() {
+	local CHIP_TYPE
+	local FILE_PATH
+	local UUT_CUR_RD
+	local CHIP_CMD_PREFIX
+
+	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
+	shift
+	FILE_PATH=${1:?"missing arg 2: Image storage path"}
+	shift
+	CHIP_CMD_PREFIX=("$@")
+
+	if [ "${CHIP_TYPE}" = "npcx_uut" ]; then
+		UUT_CUR_RD=( "${CHIP_CMD_PREFIX[@]}" "--read-flash" "--file=${FILE_PATH}" )
+		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
+					"${UUT_CUR_RD[@]}" || die "${MSG_READ_FAIL}"
+	elif [ "${CHIP_TYPE}" == "ite_i2c" ]; then
+		UUT_CUR_RD=( "${CHIP_CMD_PREFIX[@]}" "--read=${FILE_PATH}" )
+		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
+					"${UUT_CUR_RD[@]}" || die "${MSG_READ_FAIL}"
+
+		# Reset EC before setting DFU mode
+		servo_ec_hard_reset_or_die
+		# ITE DFU mode must be re-enabled after each operation
+		ite_dfu_mode
+	else
+		die "${MSG_CHIP_READ_INVALID}"
+	fi
+}
+
+function check_preserve_sections_presence() {
+	local CUR_IMG
+	local NEW_IMG
+	local TEMP_DIR
+
+	CUR_IMG=${1:?"missing arg 1: Cur EC image path"}
+	NEW_IMG=${2:?"missing arg 2: New EC image path"}
+	TEMP_DIR=${3:?"missing arg 3: Temp directory path"}
+	(
+		cd "${TEMP_DIR}"
+		dump_fmap "${CUR_IMG}" -e | grep ' preserve' | cut \
+			-f1 -d' ' |
+		while read -r line
+		do
+			if [[ -z "$(dump_fmap "${NEW_IMG}" -e "${line}")" ]]; then
+				die "New image don't contain the ${line} section"
+			fi
+		done
+	)
+}
+
+if [[ -n "${FLAGS_dut_ip}" ]] ; then
+	info "Updating token database"
+	load_token_db
+fi
 
 info "Flashing chip ${CHIP}."
 flash_"${CHIP}"

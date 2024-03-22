@@ -34,10 +34,10 @@
 static int learn_mode;
 
 /* Mutex for CONTROL1 register, that can be updated from multiple tasks. */
-K_MUTEX_DEFINE(control1_mutex_isl9241);
+static K_MUTEX_DEFINE(control1_mutex_isl9241);
 
 /* Mutex for CONTROL3 register, that can be updated from multiple tasks. */
-K_MUTEX_DEFINE(control3_mutex_isl9241);
+static K_MUTEX_DEFINE(control3_mutex_isl9241);
 
 /* Charger parameters */
 static const struct charger_info isl9241_charger_info = {
@@ -45,10 +45,10 @@ static const struct charger_info isl9241_charger_info = {
 	.voltage_max = CHARGE_V_MAX,
 	.voltage_min = CHARGE_V_MIN,
 	.voltage_step = CHARGE_V_STEP,
-	.current_max = BC_REG_TO_CURRENT(CHARGE_I_MAX),
+	.current_max = CHARGE_I_MAX,
 	.current_min = BC_REG_TO_CURRENT(CHARGE_I_MIN),
 	.current_step = BC_REG_TO_CURRENT(CHARGE_I_STEP),
-	.input_current_max = AC_REG_TO_CURRENT(INPUT_I_MAX),
+	.input_current_max = INPUT_I_MAX,
 	.input_current_min = AC_REG_TO_CURRENT(INPUT_I_MIN),
 	.input_current_step = AC_REG_TO_CURRENT(INPUT_I_STEP),
 };
@@ -144,7 +144,7 @@ static enum ec_error_list isl9241_set_frequency(int chgnum, int freq_khz)
 	rv = isl9241_read(chgnum, ISL9241_REG_CONTROL1, &reg);
 	if (rv) {
 		CPRINTS("Could not read CONTROL1. (rv=%d)", rv);
-		return rv;
+		goto error;
 	}
 	/* 000 = 1420kHz */
 	/* 001 = 1180kHz */
@@ -174,11 +174,15 @@ static enum ec_error_list isl9241_set_frequency(int chgnum, int freq_khz)
 	reg &= ~ISL9241_CONTROL1_SWITCHING_FREQ_MASK;
 	reg |= (freq << 7);
 	rv = isl9241_write(chgnum, ISL9241_REG_CONTROL1, reg);
-	if (rv)
-		return rv;
+	if (rv) {
+		CPRINTS("Could not write CONTROL1. (rv=%d)", rv);
+		goto error;
+	}
 
+error:
 	mutex_unlock(&control1_mutex_isl9241);
-	return EC_SUCCESS;
+
+	return rv;
 }
 
 static enum ec_error_list isl9241_get_option(int chgnum, int *option)

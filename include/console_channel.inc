@@ -89,7 +89,8 @@ CONSOLE_CHANNEL(CC_PCHG,         "pchg")
 CONSOLE_CHANNEL(CC_PWM,          "pwm")
 #endif
 CONSOLE_CHANNEL(CC_SPI,          "spi")
-#if defined(CONFIG_SWITCH) || defined(CONFIG_LID_SWITCH)
+#if defined(CONFIG_SWITCH) || defined(CONFIG_LID_SWITCH) || \
+	defined(CONFIG_HAS_TASK_POWERBTN)
 CONSOLE_CHANNEL(CC_SWITCH,       "switch")
 #endif
 CONSOLE_CHANNEL(CC_SYSTEM,       "system")
@@ -106,7 +107,8 @@ CONSOLE_CHANNEL(CC_ALS,		 "als")
 CONSOLE_CHANNEL(CC_THERMAL,      "thermal")
 CONSOLE_CHANNEL(CC_USB,          "usb")
 CONSOLE_CHANNEL(CC_USBCHARGE,    "usbcharge")
-#if defined(CONFIG_USB_POWER_DELIVERY) || defined(CONFIG_USB_PD_TCPC)
+#if defined(CONFIG_USB_POWER_DELIVERY) || defined(CONFIG_USB_PD_TCPC) || \
+	defined(CONFIG_PLATFORM_EC_TEST_CC_USBPD)
 CONSOLE_CHANNEL(CC_USBPD,        "usbpd")
 #endif
 CONSOLE_CHANNEL(CC_VBOOT,        "vboot")

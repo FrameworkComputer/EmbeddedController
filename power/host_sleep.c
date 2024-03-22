@@ -3,12 +3,20 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #include "config.h"
 #include "console.h"
 #include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "power.h"
+#include "system.h"
+#include "timer.h"
 #include "util.h"
 
 /* Console output macros */
@@ -17,6 +25,8 @@
 
 /* Track last reported sleep event */
 static enum host_sleep_event host_sleep_state;
+
+#define SYSRQ_WAIT_MSEC 50
 
 /* LCOV_EXCL_START */
 /* Function stub that has no behavior, so ignoring for coverage */
@@ -125,7 +135,12 @@ static void handle_chipset_suspend(void)
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, handle_chipset_suspend, HOOK_PRIO_LAST);
 #endif /* CONFIG_POWERSEQ_S0IX_COUNTER */
 
-#ifdef CONFIG_POWER_SLEEP_FAILURE_DETECTION
+/**
+ * Sleep Hang Recovery Routines.
+ *
+ * Only runs in RW to de-risk an unrecoverable boot loop in RO.
+ */
+#if defined(SECTION_IS_RW) && defined(CONFIG_POWER_SLEEP_FAILURE_DETECTION)
 
 static uint16_t sleep_signal_timeout;
 /* Non-const because it may be set by sleeptimeout console cmd */
@@ -152,6 +167,133 @@ power_chipset_handle_sleep_hang(enum sleep_hang_type hang_type)
 	/* Default empty implementation */
 }
 /* LCOV_EXCL_STOP */
+
+/* These counters are reset whenever there's a successful resume */
+static int soft_sleep_hang_count;
+static int hard_sleep_hang_count;
+
+/* Shutdown or reset on hard hang */
+static int shutdown_on_hard_hang;
+
+static void board_handle_hard_sleep_hang(void);
+DECLARE_DEFERRED(board_handle_hard_sleep_hang);
+
+/**
+ * Hard hang detection timers are stopped on any suspend, resume, reset or
+ * shutdown event.
+ */
+static void stop_hard_hang_timer(void)
+{
+	hook_call_deferred(&board_handle_hard_sleep_hang_data, -1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, stop_hard_hang_timer, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, stop_hard_hang_timer, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESET, stop_hard_hang_timer, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, stop_hard_hang_timer, HOOK_PRIO_DEFAULT);
+
+/**
+ * Reboot or shutdown when hard sleep hang detected.
+ * This timer is stopped on suspend, resume, reset or shutdown events.
+ */
+static void board_handle_hard_sleep_hang(void)
+{
+	hard_sleep_hang_count += 1;
+	/* Avoid race condition */
+	stop_hard_hang_timer();
+
+	if (shutdown_on_hard_hang) {
+		ccprints("Very hard S0ix sleep hang detected!!! "
+			 "Shutting down AP now!");
+		chipset_force_shutdown(CHIPSET_SHUTDOWN_BOARD_CUSTOM);
+	} else {
+		ccprints("Hard S0ix sleep hang detected!! Resetting AP now!");
+		/* If AP reset does not break hang, force a shutdown */
+		shutdown_on_hard_hang = true;
+		ccprints("AP will be shutdown in %dms if hang persists",
+			 CONFIG_HARD_SLEEP_HANG_TIMEOUT);
+		hook_call_deferred(&board_handle_hard_sleep_hang_data,
+				   CONFIG_HARD_SLEEP_HANG_TIMEOUT * MSEC);
+		chipset_reset(CHIPSET_RESET_HANG_REBOOT);
+	}
+}
+
+void power_sleep_hang_recovery(enum sleep_hang_type hang_type)
+{
+	soft_sleep_hang_count += 1;
+
+	/* Avoid race condition */
+	stop_hard_hang_timer();
+
+	if (hang_type == SLEEP_HANG_S0IX_SUSPEND)
+		ccprints("S0ix suspend sleep hang detected!");
+	else if (hang_type == SLEEP_HANG_S0IX_RESUME)
+		ccprints("S0ix resume sleep hang detected!");
+
+	ccprints("Consecutive sleep hang count: soft=%d hard=%d",
+		 soft_sleep_hang_count, hard_sleep_hang_count);
+
+	if (hard_sleep_hang_count == 0) {
+		/* Try an AP reset first */
+		shutdown_on_hard_hang = false;
+		ccprints("AP will be force reset in %dms if hang persists",
+			 CONFIG_HARD_SLEEP_HANG_TIMEOUT);
+	} else {
+		/* Avoid reboot loop that drains battery and just shutdown */
+		shutdown_on_hard_hang = true;
+		ccprints("Consecutive(%d) hard sleep hangs detected!",
+			 hard_sleep_hang_count);
+		ccprints("AP will be force shutdown in %dms if hang persists",
+			 CONFIG_HARD_SLEEP_HANG_TIMEOUT);
+	}
+
+	/*
+	 * Start a timer to manually reset the AP, in case it's just slow.
+	 */
+	hook_call_deferred(&board_handle_hard_sleep_hang_data,
+			   CONFIG_HARD_SLEEP_HANG_TIMEOUT * MSEC);
+
+	/*
+	 * Always send a host event, in case the AP is stuck in FW.
+	 * This will be ignored if the AP is in the OS.
+	 */
+	CPRINTS("Warning: Detected sleep hang! Waking host up!");
+	host_set_single_event(EC_HOST_EVENT_HANG_DETECT);
+
+	if (IS_ENABLED(CONFIG_EMULATED_SYSRQ)) {
+		/*
+		 * Send |SysRq| signal to generate a kernel panic. If the AP is
+		 * in the OS, this will generate stack traces for all of the
+		 * running CPUs and trigger a reboot. A single |SysRq| restarts
+		 * chrome, while two trigger a kernel panic.
+		 * Otherwise, if the AP is not in the kernel, this will do
+		 * nothing, so the device will continue to be hung until the
+		 * timer expires and sysrq_reboot_timeout() is called to
+		 * reboot the AP.
+		 */
+		CPRINTS("Sending SysRq to trigger AP kernel panic and reboot!");
+		host_send_sysrq('x');
+		/*
+		 * Wait a bit so the AP can treat them as separate SysRq
+		 * signals.
+		 */
+		usleep(SYSRQ_WAIT_MSEC * MSEC);
+		host_send_sysrq('x');
+	}
+}
+
+/**
+ * Reset hang counters whenever a resume is successful
+ */
+static void reset_hang_counters(void)
+{
+	if (hard_sleep_hang_count || soft_sleep_hang_count)
+		ccprints("Successful S0ix resume after consecutive hangs: "
+			 "soft=%d hard=%d",
+			 soft_sleep_hang_count, hard_sleep_hang_count);
+	hard_sleep_hang_count = 0;
+	soft_sleep_hang_count = 0;
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, reset_hang_counters, HOOK_PRIO_DEFAULT);
 
 static void sleep_increment_transition(void)
 {
@@ -194,6 +336,13 @@ static void sleep_transition_timeout(void)
 		power_chipset_handle_sleep_hang(timeout_hang_type);
 		power_board_handle_sleep_hang(timeout_hang_type);
 	}
+
+	/*
+	 * Perform the recovery after the chipset/board has had a chance to do
+	 * their work, so we don't modify system state (resetting the AP) until
+	 * after they've initiated any debug data collection.
+	 */
+	power_sleep_hang_recovery(timeout_hang_type);
 }
 
 void sleep_start_suspend(struct host_sleep_event_context *ctx)
@@ -280,7 +429,7 @@ DECLARE_CONSOLE_COMMAND(sleeptimeout, command_sleep_fail_timeout,
 			" <msec> - custom length in milliseconds\n"
 			" <none> - prints the current setting");
 
-#else /* !CONFIG_POWER_SLEEP_FAILURE_DETECTION */
+#else /* !SECTION_IS_RW && !CONFIG_POWER_SLEEP_FAILURE_DETECTION */
 
 /* No action */
 void sleep_suspend_transition(void)
@@ -303,4 +452,4 @@ void sleep_reset_tracking(void)
 {
 }
 
-#endif /* CONFIG_POWER_SLEEP_FAILURE_DETECTION */
+#endif /* SECTION_IS_RW && CONFIG_POWER_SLEEP_FAILURE_DETECTION */

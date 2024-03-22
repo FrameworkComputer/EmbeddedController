@@ -1,14 +1,15 @@
 # Copyright 2020 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
 """Encapsulation of a build configuration."""
 
 import hashlib
 import json
 import pathlib
 
+from zmake import util
 import zmake.jobserver
-import zmake.util as util
 
 
 class BuildConfig:
@@ -61,7 +62,8 @@ class BuildConfig:
         project_dir,
         build_dir,
         kconfig_path=None,
-        **kwargs
+        cmake_trace=False,
+        **kwargs,
     ):
         """Run Cmake with this config using a jobclient.
 
@@ -92,29 +94,35 @@ class BuildConfig:
                 }
             )
             return (base_config | conf_file_config).popen_cmake(
-                jobclient, project_dir, build_dir, **kwargs
+                jobclient,
+                project_dir,
+                build_dir,
+                cmake_trace=cmake_trace,
+                **kwargs,
             )
 
+        cmd = [
+            util.get_tool_path("cmake"),
+            "-S",
+            project_dir,
+            "-B",
+            build_dir,
+            "-GNinja",
+            *(f"-D{pair[0]}={pair[1]}" for pair in self.cmake_defs.items()),
+        ]
+        if cmake_trace:
+            cmd.append("--trace")
+
         return jobclient.popen(
-            [
-                util.get_tool_path("cmake"),
-                "-S",
-                project_dir,
-                "-B",
-                build_dir,
-                "-GNinja",
-                *("-D{}={}".format(*pair) for pair in self.cmake_defs.items()),
-            ],
-            **kwargs
+            cmd,
+            **kwargs,
         )
 
     def __or__(self, other):
         """Combine two BuildConfig instances."""
         if not isinstance(other, BuildConfig):
             raise TypeError(
-                "Unsupported operation | for {} and {}".format(
-                    type(self), type(other)
-                )
+                f"Unsupported operation | for {type(self)} and {type(other)}"
             )
 
         return BuildConfig(
@@ -124,17 +132,16 @@ class BuildConfig:
         )
 
     def __repr__(self):
-        return "BuildConfig({})".format(
-            ", ".join(
-                "{}={!r}".format(name, getattr(self, name))
-                for name in [
-                    "cmake_defs",
-                    "kconfig_defs",
-                    "kconfig_files",
-                ]
-                if getattr(self, name)
-            )
+        args = ", ".join(
+            f"{name}={getattr(self, name)!r}"
+            for name in [
+                "cmake_defs",
+                "kconfig_defs",
+                "kconfig_files",
+            ]
+            if getattr(self, name)
         )
+        return f"BuildConfig({args})"
 
     def _get_paths_for_hashing(self):
         # Zephyr's CMake system won't detect that CMake needs to be

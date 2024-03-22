@@ -115,12 +115,31 @@ struct ncl_drbg {
 struct npcx_trng_state {
 	enum ncl_status trng_init;
 };
-struct npcx_trng_state trng_state;
+struct npcx_trng_state trng_state = { .trng_init = 0 };
 struct npcx_trng_state *state_p = &trng_state;
 
-test_mockable void trng_init(void)
+uint32_t npcx_trng_power(bool on_off)
 {
-#ifndef CHIP_VARIANT_NPCX9M8S
+	enum ncl_status status = NCL_STATUS_FAIL;
+
+	status = NCL_DRBG->power(ctx_p, on_off);
+	if (status != NCL_STATUS_OK) {
+		ccprintf("ERROR! DRBG power returned %x\n", status);
+		return status;
+	}
+
+	status = NCL_SHA->power(ctx_p, on_off);
+	if (status != NCL_STATUS_OK) {
+		ccprintf("ERROR! SHA power returned %x\n", status);
+		return status;
+	}
+
+	return status;
+}
+
+void npcx_trng_hw_init(void)
+{
+#ifndef CHIP_VARIANT_NPCX9MFP
 #error "Please add support for CONFIG_RNG on this chip family."
 #endif
 
@@ -133,15 +152,10 @@ test_mockable void trng_init(void)
 		ccprintf("ERROR! Unexpected NCL DRBG context_size = %d\n",
 			 context_size);
 
-	state_p->trng_init = NCL_DRBG->power(ctx_p, true);
+	state_p->trng_init = npcx_trng_power(true);
 	if (state_p->trng_init != NCL_STATUS_OK) {
-		ccprintf("ERROR! DRBG power returned %x\n", state_p->trng_init);
-		return;
-	}
-
-	state_p->trng_init = NCL_SHA->power(ctx_p, true);
-	if (state_p->trng_init != NCL_STATUS_OK) {
-		ccprintf("ERROR! SHA power returned %x\n", state_p->trng_init);
+		ccprintf("ERROR! npcx_trng_power returned %x\n",
+			 state_p->trng_init);
 		return;
 	}
 
@@ -158,31 +172,68 @@ test_mockable void trng_init(void)
 		return;
 	}
 
-	state_p->trng_init = NCL_DRBG->config(ctx_p, 100, false);
+	/* Disable automatic reseeding since it takes a long time and can cause
+	 * host commands to timeout. See See b/322827873 for more details.
+	 *
+	 * The DRBG algorithm used is Hash_DRBG, which has a maxmium of 2^48
+	 * requests between reseeds (reseed_interval). See NIST SP 800-90A Rev.
+	 * 1, Section 10.1: DRBG Mechanisms Based on Hash Functions.
+	 *
+	 * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-90Ar1.pdf#page=47
+	 */
+	const uint32_t reseed_interval = UINT32_MAX;
+	state_p->trng_init = NCL_DRBG->config(ctx_p, reseed_interval, false);
 	if (state_p->trng_init != NCL_STATUS_OK) {
 		ccprintf("ERROR! DRBG config returned %x\r",
 			 state_p->trng_init);
 		return;
 	}
 
+	/* NIST SP 800-90A Rev. 1 Section 8.4 states:
+	 *
+	 * The pseudorandom bits returned from a DRBG shall not be used for any
+	 * application that requires a higher security strength than the DRBG is
+	 * instantiated to support. The security strength provided in these
+	 * returned bits is the minimum of the security strength supported by
+	 * the DRBG and the length of the bit string returned, i.e.:
+	 *
+	 * Security_strength_of_output =
+	 *   min(output_length, DRBG_security_strength)
+	 *
+	 * A concatenation of bit strings resulting from multiple calls to a
+	 * DRBG will not provide a security strength for the concatenated string
+	 * that is greater than the instantiated security strength of the DRBG.
+	 * For example, two 128-bit output strings requested from a DRBG that
+	 * supports a 128-bit security strength cannot be concatenated to form a
+	 * 256-bit string with a security strength of 256 bits.
+	 *
+	 * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-90Ar1.pdf#page=23
+	 */
 	state_p->trng_init = NCL_DRBG->instantiate(
-		ctx_p, NCL_DRBG_SECURITY_STRENGTH_128b, NULL, 0);
+		ctx_p, NCL_DRBG_SECURITY_STRENGTH_256b, NULL, 0);
 	if (state_p->trng_init != NCL_STATUS_OK) {
 		ccprintf("ERROR! DRBG instantiate returned %x\r",
 			 state_p->trng_init);
 		return;
 	}
 
-	state_p->trng_init = NCL_DRBG->power(ctx_p, false);
+	/* Turn off hardware blocks after hw_init, trng_init will power on */
+	state_p->trng_init = npcx_trng_power(false);
 	if (state_p->trng_init != NCL_STATUS_OK) {
-		ccprintf("ERROR! DRBG power returned %x\n", state_p->trng_init);
+		ccprintf("ERROR! npcx_trng_power returned %x\n",
+			 state_p->trng_init);
 		return;
 	}
+}
 
-	state_p->trng_init = NCL_SHA->power(ctx_p, false);
-	if (state_p->trng_init != NCL_STATUS_OK) {
-		ccprintf("ERROR! SHA power returned %x\n", state_p->trng_init);
-		return;
+test_mockable void trng_init(void)
+{
+	enum ncl_status status = NCL_STATUS_FAIL;
+
+	status = npcx_trng_power(true);
+	if (status != NCL_STATUS_OK) {
+		ccprintf("ERROR! trng_init failed %x\n", status);
+		software_panic(PANIC_SW_BAD_RNG, task_get_current());
 	}
 }
 
@@ -195,41 +246,29 @@ uint32_t trng_rand(void)
 	if (state_p->trng_init != NCL_STATUS_OK)
 		software_panic(PANIC_SW_BAD_RNG, task_get_current());
 
-	status = NCL_DRBG->power(ctx_p, true);
-	if (status != NCL_STATUS_OK) {
-		ccprintf("ERROR! DRBG power returned %x\n", status);
-		software_panic(PANIC_SW_BAD_RNG, task_get_current());
-	}
-
-	status = NCL_SHA->power(ctx_p, true);
-	if (status != NCL_STATUS_OK) {
-		ccprintf("ERROR! SHA power returned %x\n", status);
-		software_panic(PANIC_SW_BAD_RNG, task_get_current());
-	}
-
-	status = NCL_DRBG->generate(NULL, NULL, 0, (uint8_t *)&return_value, 4);
+	status =
+		NCL_DRBG->generate(ctx_p, NULL, 0, (uint8_t *)&return_value, 4);
 	if (status != NCL_STATUS_OK) {
 		ccprintf("ERROR! DRBG generate returned %x\r", status);
 		software_panic(PANIC_SW_BAD_RNG, task_get_current());
 	}
 
-	/*
-	 * Failing to turn off the blocks has power implications but wouldn't
-	 * result in feeding the caller a bad result, hence no panics enabled
-	 * for failing to turn off the hardware
-	 */
-	status = NCL_DRBG->power(ctx_p, false);
-	if (status != NCL_STATUS_OK)
-		ccprintf("ERROR! DRBG power returned %x\n", status);
-
-	status = NCL_SHA->power(ctx_p, false);
-	if (status != NCL_STATUS_OK)
-		ccprintf("ERROR! SHA power returned %x\n", status);
-
 	return return_value;
 }
 
 test_mockable void trng_exit(void)
+{
+	enum ncl_status status = NCL_STATUS_FAIL;
+
+	status = npcx_trng_power(false);
+	if (status != NCL_STATUS_OK)
+		ccprintf("ERROR! trng_exit failed %x\n", status);
+}
+
+/* Shutting down and reinitializing TRNG is time consuming so don't call
+ * this unless it is necessary
+ */
+test_mockable void npcx_trng_hw_off(void)
 {
 	enum ncl_status status = NCL_STATUS_FAIL;
 
@@ -241,11 +280,7 @@ test_mockable void trng_exit(void)
 	if (status != NCL_STATUS_OK)
 		ccprintf("ERROR! DRBG uninstantiate returned %x\r", status);
 
-	status = NCL_DRBG->power(ctx_p, false);
+	status = npcx_trng_power(false);
 	if (status != NCL_STATUS_OK)
-		ccprintf("ERROR! DRBG power returned %x\n", status);
-
-	status = NCL_SHA->power(ctx_p, false);
-	if (status != NCL_STATUS_OK)
-		ccprintf("ERROR! SHA power returned %x\n", status);
+		ccprintf("ERROR! npcx_trng_power returned %x\n", status);
 }

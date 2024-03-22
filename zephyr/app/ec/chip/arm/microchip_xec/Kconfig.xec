@@ -6,7 +6,7 @@
 # This file defines the default config values shared by all MEC chipsets
 #
 
-if SOC_FAMILY_MEC
+if SOC_FAMILY_MICROCHIP_MEC
 
 # Enable MPU for ARM targets
 config ARM_MPU
@@ -23,4 +23,4 @@ config PLATFORM_EC_ADC_OVERSAMPLING
 config SYS_CLOCK_HW_CYCLES_PER_SEC
 	default 32768
 
-endif # SOC_FAMILY_MEC
+endif # SOC_FAMILY_MICROCHIP_MEC

@@ -8,7 +8,7 @@ config CROS_SYSTEM_XEC_PRE_INIT_PRIORITY
 	int "System pre-initialization priority"
 	default 15
 	range 10 19
-	depends on SOC_FAMILY_MEC
+	depends on SOC_FAMILY_MICROCHIP_MEC
 	help
 	  This sets the priority of the MCHP XEC chip system initialization.
 	  The chip system initialization verifies the integrity of the BBRAM

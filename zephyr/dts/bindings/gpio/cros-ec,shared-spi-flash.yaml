@@ -1,0 +1,9 @@
+description: External Shared SPI falsh GPIO node
+
+compatible: "cros-ec,shared-spi-flash"
+
+properties:
+  spi-oe-gpios:
+    type: phandle-array
+    required: true
+    description: GPIO to configure access to the external shared flash

@@ -16,7 +16,7 @@ LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 #define ALT_MAT SENSOR_ROT_STD_REF_NAME(DT_NODELABEL(lid_rot_inverted))
 #define LID_ACCEL SENSOR_ID(DT_NODELABEL(lid_accel))
 
-static void form_factor_init(void)
+test_export_static void form_factor_init(void)
 {
 	int ret;
 	uint32_t val;

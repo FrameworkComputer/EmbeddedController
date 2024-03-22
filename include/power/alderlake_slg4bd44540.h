@@ -44,4 +44,6 @@ enum power_signal {
 	POWER_SIGNAL_COUNT
 };
 
+__override_proto int board_get_all_sys_pgood(void);
+
 #endif /* __CROS_EC_ALDERLAKE_SLG4BD44540_H */

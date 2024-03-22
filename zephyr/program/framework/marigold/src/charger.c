@@ -156,11 +156,10 @@ void charger_update(void)
 		CPRINTS("update charger!!");
 
 		/*set dc prochot 7.680A/0x1E00(61w) 7.168A/0x1c00(55w)*/
-		const struct fuel_gauge_info *const fuel_gauge =
-		&get_batt_params()->fuel_gauge;
+		const struct battery_info *bi = battery_get_info();
 		int rv = 0;
 
-		if (!strcasecmp(fuel_gauge->device_name, "Framework Laptop")) {
+		if (bi->voltage_max == 17600) {
 			rv |= i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 			ISL9241_REG_DC_PROCHOT, 0x1C00);
 		} else {

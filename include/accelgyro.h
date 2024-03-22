@@ -127,6 +127,17 @@ struct accelgyro_drv {
 	int (*probe)(const struct motion_sensor_t *s);
 
 	/**
+	 * @brief Enable/disable data interrupts
+	 *
+	 * If supported, enable or disable the data ready interrupts.
+	 *
+	 * @param s Pointer to sensor data
+	 * @param enable Whether to enable or disable the interrupts
+	 * @return EC_SUCCESS if the interrupt was configured
+	 */
+	int (*enable_interrupt)(const struct motion_sensor_t *s, bool enable);
+
+	/**
 	 * Interrupt handler for GPIO pin.
 	 *
 	 * @signal Signal which caused interrupt.
@@ -249,6 +260,6 @@ struct als_drv_data_t {
 	(((_input) * (uint64_t)(_scale)) / MOTION_SENSE_DEFAULT_SCALE)
 
 /* Individual channel scale value between 0 and 2 represented in 16 bits */
-#define ALS_CHANNEL_SCALE(_x) ((_x)*MOTION_SENSE_DEFAULT_SCALE)
+#define ALS_CHANNEL_SCALE(_x) ((_x) * MOTION_SENSE_DEFAULT_SCALE)
 
 #endif /* __CROS_EC_ACCELGYRO_H */

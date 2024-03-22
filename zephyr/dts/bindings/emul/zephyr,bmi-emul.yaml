@@ -15,6 +15,7 @@ properties:
     enum:
       - BMI_EMUL_160
       - BMI_EMUL_260
+      - BMI_EMUL_3XX
     description: Model of device that is emulated.
 
   error-on-ro-write:

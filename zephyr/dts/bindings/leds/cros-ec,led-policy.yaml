@@ -6,6 +6,52 @@ description: LED policy parent node
 
 compatible: "cros-ec,led-policy"
 
+properties:
+  sysrq-alias:
+    description: |
+      This property is for making another existing led behaves as the
+      EC_LED_ID_SYSRQ_DEBUG_LED when any call to `led_control` on the
+      SYSRQ_DEBUG_LED.
+    type: string
+    default: EC_LED_ID_SYSRQ_DEBUG_LED
+    enum: &led-id-enum
+      - EC_LED_ID_BATTERY_LED
+      - EC_LED_ID_POWER_LED
+      - EC_LED_ID_ADAPTER_LED
+      - EC_LED_ID_LEFT_LED
+      - EC_LED_ID_RIGHT_LED
+      - EC_LED_ID_RECOVERY_HW_REINIT_LED
+      - EC_LED_ID_SYSRQ_DEBUG_LED
+  sysrq-led-control-color:
+    description: |
+      Specify what color to display when `led_control` makes the LED
+      EC_LED_ID_SYSRQ_DEBUG_LED active.
+    type: string
+    default: LED_BLUE
+    enum: &led-color-enum
+      - LED_OFF
+      - LED_RED
+      - LED_GREEN
+      - LED_BLUE
+      - LED_YELLOW
+      - LED_WHITE
+      - LED_AMBER
+  recovery-hw-reinit-alias:
+    description: |
+      This property is for making another existing led behaves as the
+      EC_LED_ID_RECOVERY_HW_REINIT_LED when any call to `led_control` on the
+      RECOVERY_HW_REINIT_LED.
+    type: string
+    default: EC_LED_ID_RECOVERY_HW_REINIT_LED
+    enum: *led-id-enum
+  recovery-hw-reinit-led-control-color:
+    description: |
+      Specify what color to display when `led_control` makes the LED
+      EC_LED_ID_RECOVERY_HW_REINIT_LED active.
+    type: string
+    default: LED_BLUE
+    enum: *led-color-enum
+
 child-binding:
   description: |
     LED policy nodes to describe the policy combination a node depends on, and
@@ -16,8 +62,11 @@ child-binding:
        charge-state = "LED_PWRS_DISCHARGE";
        chipset-state = "POWER_S0";
        charge-port = <0>;
-       color-0 {
-         led-color = <&color_blue>;
+       led-0 {
+         led-id = "EC_LED_ID_BATTERY_LED";
+         color-0 {
+           led-color = "LED_BLUE";
+         };
        };
     };
 
@@ -35,7 +84,6 @@ child-binding:
         LED_PWRS_CHARGE_NEAR_FULL - AC is connected, battery is charging
                                      and close to fully charged.
       type: string
-      required: false
       enum:
         - LED_PWRS_CHARGE
         - LED_PWRS_DISCHARGE
@@ -48,14 +96,12 @@ child-binding:
       description: |
         If the LED color depends on the charging port (left or right).
       type: int
-      required: false
 
     chipset-state:
       description: |
         If the LED color depends on chipset state, this property is used
         to describe it.
       type: string
-      required: false
       enum:
         - POWER_S0
         - POWER_S3
@@ -68,14 +114,12 @@ child-binding:
         Use the macros defined in dt-bindings/battery.h.
         e.g. SB_STATUS_DISCHARGING - Battery is discharging.
       type: int
-      required: false
 
     batt-state:
       description: |
         If the LED color depends on battery state, this property is used
         to select the battery state value base on batt-state-mask.
       type: int
-      required: false
 
     batt-lvl:
       description: |
@@ -85,34 +129,54 @@ child-binding:
         e.g. <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW> describes battery level
              range of BATTERY_LEVEL_EMPTY to BATTERY_LEVEL_LOW inclusive.
       type: array
-      required: false
 
   child-binding:
-    description: Color enum
     properties:
-      led-color:
+      led-id:
         description: |
-          Handle to LED pins node that describes pins to set to enable a
-          particular color.
-        type: phandle
+          This property is the same as the one required by the
+          EC_CMD_LED_CONTROL host command.
+          It must match the enum names defined in ec_commands.h.
+        type: string
         required: true
-      period-ms:
+        enum: *led-id-enum
+      transition:
         description: |
-          In case of blinking LEDs, amount of time in msecs the LED
-          color is active. This value must be a multiple of
-          HOOK_TICK_INTERVAL_MS.
-          e.g.
-          power-state-error {
-             charge-state = "LED_PWRS_ERROR";
-             /* One sec Amber, one sec Off */
-             color-0 {
-               led-color = <&color_amber>;
-               period-ms = <1000>;
-             };
-             color-1 {
-               led-color = <&color_off>;
-               period-ms = <1000>;
-             };
-          };
-        type: int
-        required: false
+          This property describes the type of transition this LED will use
+          to transition from one color to the next.
+        type: string
+        enum:
+          - LED_TRANSITION_STEP
+          - LED_TRANSITION_LINEAR
+          - LED_TRANSITION_EXPONENTIAL
+    child-binding:
+      properties:
+        led-color:
+          description: |
+            The color to be set for this LED. Must be one of the colors defined
+            for this LED in led_pins.dts or pwm_pins.dts.
+          type: string
+          required: true
+          enum: *led-color-enum
+        period-ms:
+          description: |
+            In case of blinking LEDs, amount of time in msecs the LED
+            color is active. This value must be a multiple of
+            HOOK_TICK_INTERVAL_MS.
+            e.g.
+            power-state-error {
+               charge-state = "LED_PWRS_ERROR";
+               led-0 {
+                 led-node = "EC_LED_ID_BATTERY_LED";
+                 /* One sec Amber, one sec Off */
+                 color-0 {
+                   led-color = "LED_AMBER";
+                   period-ms = <1000>;
+                 };
+                 color-1 {
+                   led-color = "LED_OFF";
+                   period-ms = <1000>;
+                 };
+               };
+            };
+          type: int

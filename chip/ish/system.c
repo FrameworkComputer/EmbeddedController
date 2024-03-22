@@ -57,7 +57,7 @@ uint32_t chip_read_reset_flags(void)
  * Used when the watchdog timer exceeds max retries and we want to
  * disable ISH completely.
  */
-noreturn static void system_halt(void)
+__noreturn static void system_halt(void)
 {
 	cflush();
 

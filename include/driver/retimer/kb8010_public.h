@@ -18,6 +18,8 @@ extern const struct usb_mux_driver kb8010_usb_retimer_driver;
 struct kb8010_control {
 	/* Retimer reset */
 	enum gpio_signal retimer_rst_gpio;
+	/* DP enable */
+	const enum gpio_signal dp_enable_gpio;
 };
 extern const struct kb8010_control kb8010_controls[];
 

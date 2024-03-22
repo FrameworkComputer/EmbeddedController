@@ -5,8 +5,15 @@
 
 #include "compile_time_macros.h"
 
+#include <array>
+#include <variant>
+
 /* Boringssl headers need to be included before extern "C" section. */
 #include "openssl/mem.h"
+
+#ifdef CONFIG_ZEPHYR
+#include <zephyr/shell/shell.h>
+#endif
 
 extern "C" {
 #include "atomic.h"
@@ -18,16 +25,27 @@ extern "C" {
 #include "util.h"
 }
 
-#include "fpsensor.h"
-#include "fpsensor_crypto.h"
-#include "fpsensor_state.h"
-#include "fpsensor_utils.h"
+#include "fpsensor/fpsensor.h"
+#include "fpsensor/fpsensor_auth_commands.h"
+#include "fpsensor/fpsensor_crypto.h"
+#include "fpsensor/fpsensor_state.h"
+#include "fpsensor/fpsensor_template_state.h"
+#include "fpsensor/fpsensor_utils.h"
+#include "fpsensor_driver.h"
+#include "fpsensor_matcher.h"
 
 /* Last acquired frame (aligned as it is used by arbitrary binary libraries) */
 uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE] FP_FRAME_SECTION __aligned(4);
 /* Fingers templates for the current user */
-uint8_t fp_template[FP_MAX_FINGER_COUNT]
-		   [FP_ALGORITHM_TEMPLATE_SIZE] FP_TEMPLATE_SECTION;
+test_mockable
+	uint8_t fp_template[FP_MAX_FINGER_COUNT]
+			   [FP_ALGORITHM_TEMPLATE_SIZE] FP_TEMPLATE_SECTION
+				   __aligned(4);
+static_assert(
+	sizeof(fp_template[0]) % 4 == 0,
+	"The size of each template must be a multiple of 4 to ensure that the next "
+	"template will still be aligned by 4.");
+
 /* Encryption/decryption buffer */
 /* TODO: On-the-fly encryption/decryption without a dedicated buffer */
 /*
@@ -38,20 +56,47 @@ uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE] FP_TEMPLATE_SECTION;
 /* Salt used in derivation of positive match secret. */
 uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
 			      [FP_POSITIVE_MATCH_SALT_BYTES];
+/* The states for different fingers. */
+std::array<fp_template_state, FP_MAX_FINGER_COUNT> template_states;
 
-void fp_task_simulate(void)
+/* LCOV_EXCL_START */
+__test_only void fp_task_simulate(void)
 {
 	int timeout_us = -1;
 
 	while (1)
 		task_wait_event(timeout_us);
 }
+/* LCOV_EXCL_STOP */
 
 void fp_clear_finger_context(uint16_t idx)
 {
 	OPENSSL_cleanse(fp_template[idx], sizeof(fp_template[0]));
 	OPENSSL_cleanse(fp_positive_match_salt[idx],
 			sizeof(fp_positive_match_salt[0]));
+	template_states[idx] = std::monostate();
+}
+
+void fp_reset_context()
+{
+	templ_valid = 0;
+	templ_dirty = 0;
+	template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
+	fp_encryption_status &= FP_ENC_STATUS_SEED_SET;
+	OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
+	OPENSSL_cleanse(user_id, sizeof(user_id));
+	OPENSSL_cleanse(auth_nonce.data(), auth_nonce.size());
+	fp_disable_positive_match_secret(&positive_match_secret_state);
+}
+
+void fp_init_decrypted_template_state_with_user_id(uint16_t idx)
+{
+	std::array<uint32_t, FP_CONTEXT_USERID_WORDS> raw_user_id;
+	std::copy(std::begin(user_id), std::end(user_id),
+		  std::begin(raw_user_id));
+	template_states[idx] = fp_decrypted_template_state{
+		.user_id = raw_user_id,
+	};
 }
 
 /**
@@ -61,12 +106,8 @@ void fp_clear_finger_context(uint16_t idx)
  */
 static void _fp_clear_context(void)
 {
-	templ_valid = 0;
-	templ_dirty = 0;
+	fp_reset_context();
 	OPENSSL_cleanse(fp_buffer, sizeof(fp_buffer));
-	OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
-	OPENSSL_cleanse(user_id, sizeof(user_id));
-	fp_disable_positive_match_secret(&positive_match_secret_state);
 	for (uint16_t idx = 0; idx < FP_MAX_FINGER_COUNT; idx++)
 		fp_clear_finger_context(idx);
 }
@@ -215,7 +256,23 @@ static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 		if (sensor_mode & FP_MODE_RESET_SENSOR)
 			return EC_RES_BUSY;
 
+		if (fp_encryption_status &
+		    FP_CONTEXT_STATUS_NONCE_CONTEXT_SET) {
+			/* Reject the request to prevent downgrade attack. */
+			return EC_RES_ACCESS_DENIED;
+		}
+
 		memcpy(user_id, p->userid, sizeof(user_id));
+
+		/* Set the FP_CONTEXT_USER_ID_SET bit if the user_id is
+		 * non-zero. */
+		for (size_t i = 0; i < std::size(user_id); i++) {
+			if (user_id[i] != 0) {
+				fp_encryption_status |= FP_CONTEXT_USER_ID_SET;
+				break;
+			}
+		}
+
 		return EC_RES_SUCCESS;
 	}
 

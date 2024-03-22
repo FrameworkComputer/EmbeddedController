@@ -31,169 +31,181 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* Panasonic AP1505L Battery Information */
 	[BATTERY_PANASONIC] = {
-		.fuel_gauge = {
-			.manuf_name = "PANASONIC",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "PANASONIC",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x4000,
+					.disconnect_val = 0x0,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x4000,
-				.disconnect_val = 0x0,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= 13200, /* mV */
-			.voltage_normal		= 11550, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 256,	 /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= 0,
-			.discharging_max_c	= 60,
+			.batt_info = {
+				.voltage_max		= 13200, /* mV */
+				.voltage_normal		= 11550, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 256,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= 0,
+				.discharging_max_c	= 60,
+			},
 		},
 	},
 	/* SMP 5B10Q13163 */
 	[BATTERY_SMP] = {
-		.fuel_gauge = {
-			.manuf_name = "SMP",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "SMP",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x34,
+					.reg_mask = 0x0100,
+					.disconnect_val = 0x0100,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x34,
-				.reg_mask = 0x0100,
-				.disconnect_val = 0x0100,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= 13050, /* mV */
-			.voltage_normal		= 11250, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 186,	 /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
+			.batt_info = {
+				.voltage_max		= 13050, /* mV */
+				.voltage_normal		= 11250, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 186,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
+			},
 		},
 	},
 	/* LGC 5B10Q13162  */
 	[BATTERY_LGC] = {
-		.fuel_gauge = {
-			.manuf_name = "LGC",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "LGC",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x34,
+					.reg_mask = 0x0100,
+					.disconnect_val = 0x0100,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x34,
-				.reg_mask = 0x0100,
-				.disconnect_val = 0x0100,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= 13050, /* mV */
-			.voltage_normal		= 11400, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 181,	 /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 73,
+			.batt_info = {
+				.voltage_max		= 13050, /* mV */
+				.voltage_normal		= 11400, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 181,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 73,
+			},
 		},
 	},
 	/* Sunwoda L18D3PG1  */
 	[BATTERY_SUNWODA] = {
-		.fuel_gauge = {
-			.manuf_name = "SUNWODA",
-			.ship_mode = {
-				.reg_addr = 0x34,
-				.reg_data = { 0x0000, 0x1000 },
+		.manuf_name = "SUNWODA",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x34,
+					.reg_data = { 0x0000, 0x1000 },
+				},
+				.fet = {
+					.reg_addr = 0x34,
+					.reg_mask = 0x0100,
+					.disconnect_val = 0x0100,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x34,
-				.reg_mask = 0x0100,
-				.disconnect_val = 0x0100,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= 13050, /* mV */
-			.voltage_normal		= 11250, /* mV */
-			.voltage_min		= 9000,  /* mV */
-			.precharge_current	= 200,	 /* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 60,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
+			.batt_info = {
+				.voltage_max		= 13050, /* mV */
+				.voltage_normal		= 11250, /* mV */
+				.voltage_min		= 9000,  /* mV */
+				.precharge_current	= 200,	 /* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 60,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
+			},
 		},
 	},
 	/* GF Battery Information */
 	[BATTERY_GF] = {
-		.fuel_gauge = {
-			.manuf_name = "GF",
-			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x10, 0x10 },
+		.manuf_name = "GF",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x0,
+					.reg_data = { 0x10, 0x10 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x2000,
+					.disconnect_val = 0x2000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= 13050,
-			.voltage_normal		= 11400, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 200,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
-			.charging_min_c		= 0,
-			.charging_max_c		= 45,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
+			.batt_info = {
+				.voltage_max		= 13050,
+				.voltage_normal		= 11400, /* mV */
+				.voltage_min		= 9000, /* mV */
+				.precharge_current	= 200,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 45,
+				.charging_min_c		= 0,
+				.charging_max_c		= 45,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
+			},
 		},
 	},
 	/* GuoGuang 50Wh/38Wh Battery Information */
 	[BATTERY_AEC] = {
-		.fuel_gauge = {
-			.manuf_name = "AEC",
-			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x10, 0x10 },
+		.manuf_name = "AEC",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x0,
+					.reg_data = { 0x10, 0x10 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x2000,
+					.disconnect_val = 0x2000,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= 13050,
-			.voltage_normal		= 11400, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 200,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 60,
+			.batt_info = {
+				.voltage_max		= 13050,
+				.voltage_normal		= 11400, /* mV */
+				.voltage_min		= 9000, /* mV */
+				.precharge_current	= 200,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 60,
+			},
 		},
 	},
 };

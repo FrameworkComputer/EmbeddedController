@@ -83,9 +83,9 @@ struct led_pattern {
 #define PULSE(interval) (BIT(7) | (interval))
 #define BLINK(interval) (interval)
 #define ALTERNATE(interval) (BIT(6) | (interval))
-#define IS_PULSING(pulse) ((pulse)&0x80)
-#define IS_ALTERNATE(pulse) ((pulse)&0x40)
-#define PULSE_INTERVAL(pulse) (((pulse)&0x3f) * 100 * MSEC)
+#define IS_PULSING(pulse) ((pulse) & 0x80)
+#define IS_ALTERNATE(pulse) ((pulse) & 0x40)
+#define PULSE_INTERVAL(pulse) (((pulse) & 0x3f) * 100 * MSEC)
 
 /* 40 msec for nice and smooth transition. */
 #define LED_PULSE_TICK_US (40 * MSEC)

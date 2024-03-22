@@ -12,6 +12,11 @@
 #include "compile_time_macros.h"
 #include "keyboard_config.h"
 
+#ifdef CONFIG_ZTEST
+extern uint8_t key_vol_up_row;
+extern uint8_t key_vol_up_col;
+#endif
+
 struct keyboard_scan_config {
 	/* Delay between setting up output and waiting for it to settle */
 	uint16_t output_settle_us;
@@ -58,14 +63,21 @@ struct keyboard_scan_config *keyboard_scan_get_config(void);
  */
 __override_proto extern struct keyboard_scan_config keyscan_config;
 
+#define BOOT_KEY_NONE 0
+
 /* Key held down at keyboard-controlled reset boot time. */
 enum boot_key {
 	/* No keys other than keyboard-controlled reset keys */
-	BOOT_KEY_NONE = 0,
-	BOOT_KEY_ESC = BIT(0),
-	BOOT_KEY_DOWN_ARROW = BIT(1),
-	BOOT_KEY_LEFT_SHIFT = BIT(2),
+	BOOT_KEY_ESC = 0,
+	BOOT_KEY_DOWN_ARROW = 1,
+	BOOT_KEY_LEFT_SHIFT = 2,
+	BOOT_KEY_REFRESH = 3,
+
+	BOOT_KEY_COUNT,
+	/* 31 is reserved for power button. */
+	BOOT_KEY_POWER = 31,
 };
+BUILD_ASSERT(BOOT_KEY_COUNT < 31);
 
 #if defined(HAS_TASK_KEYSCAN) && defined(CONFIG_KEYBOARD_BOOT_KEYS)
 /**
@@ -101,7 +113,7 @@ enum kb_scan_disable_masks {
 	KB_SCAN_DISABLE_USB_SUSPENDED = (1 << 3),
 };
 
-#ifdef HAS_TASK_KEYSCAN
+#if defined(HAS_TASK_KEYSCAN) || defined(CONFIG_CROS_EC_KEYBOARD_INPUT)
 /**
  * Enable/disable keyboard scanning. Scanning will be disabled if any disable
  * reason bit is set. Scanning is enabled only if no disable reasons are set.
@@ -140,7 +152,7 @@ extern const int keyboard_factory_scan_pins_used;
 #endif
 
 #ifdef CONFIG_KEYBOARD_MULTIPLE
-extern struct boot_key_entry boot_key_list[3];
+extern struct boot_key_entry boot_key_list[];
 
 struct keyboard_type {
 	int col_esc;

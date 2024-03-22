@@ -12,7 +12,9 @@
 
 #include <stdio.h>
 
-DECLARE_EC_TEST(test_crc5)
+#include <zephyr/ztest.h>
+
+ZTEST(test_base32_lib, test_crc5)
 {
 	uint32_t seen;
 	int i, j, c;
@@ -51,8 +53,6 @@ DECLARE_EC_TEST(test_crc5)
 		}
 	}
 	zassert_equal(errors, 0);
-
-	return EC_SUCCESS;
 }
 
 static int enctest(const void *src, int srcbits, int crc_every, const char *enc)
@@ -71,7 +71,7 @@ static int enctest(const void *src, int srcbits, int crc_every, const char *enc)
 
 #define ENCTEST(a, b, c, d) zassert_equal(enctest(a, b, c, d), 0, NULL)
 
-DECLARE_EC_TEST(test_encode)
+ZTEST(test_base32_lib, test_encode)
 {
 	const uint8_t src1[5] = { 0xff, 0x00, 0xff, 0x00, 0xff };
 	char enc[32];
@@ -109,8 +109,6 @@ DECLARE_EC_TEST(test_encode)
 		      EC_ERROR_INVAL, NULL);
 	/* But what matters is symbol count, not bit count */
 	ENCTEST("\xff\x00\xff\x00\xfe", 39, 4, "96ARU8AH8P");
-
-	return EC_SUCCESS;
 }
 
 static int cmpbytes(const uint8_t *expect, const uint8_t *got, int len,
@@ -147,7 +145,7 @@ static int dectest(const void *dec, int decbits, int crc_every, const char *enc)
 
 #define DECTEST(a, b, c, d) zassert_equal(dectest(a, b, c, d), 0, NULL)
 
-DECLARE_EC_TEST(test_decode)
+ZTEST(test_base32_lib, test_decode)
 {
 	uint8_t dec[32];
 
@@ -197,14 +195,6 @@ DECLARE_EC_TEST(test_decode)
 
 	/* Detect error when not enough data is given */
 	zassert_equal(base32_decode(dec, 40, "AA", 4), -1, NULL);
-
-	return EC_SUCCESS;
 }
 
-TEST_MAIN()
-{
-	ztest_test_suite(test_base32_lib, ztest_unit_test(test_crc5),
-			 ztest_unit_test(test_encode),
-			 ztest_unit_test(test_decode));
-	ztest_run_test_suite(test_base32_lib);
-}
+ZTEST_SUITE(test_base32_lib, NULL, NULL, NULL, NULL, NULL);

@@ -36,6 +36,8 @@ endif
 DMA_TYPE=$(if $(CHIP_FAMILY_STM32F4)$(CHIP_FAMILY_STM32H7),-stm32f4,)
 SPI_TYPE=$(if $(CHIP_FAMILY_STM32H7),-stm32h7,)
 
+chip-$(or $(CHIP_FAMILY_STM32F4),$(CHIP_FAMILY_STM32G4),)+=debug.o
+chip-$(or $(CHIP_FAMILY_STM32H7),)+=debug.o
 chip-$(CONFIG_DMA_CROS)+=dma$(DMA_TYPE).o
 chip-$(CONFIG_COMMON_RUNTIME)+=bkpdata.o system.o
 chip-y+=clock-$(CHIP_FAMILY).o

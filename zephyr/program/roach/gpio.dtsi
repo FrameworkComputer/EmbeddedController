@@ -187,17 +187,3 @@
 			<&gpiom 6 GPIO_INPUT_PULL_DOWN>;
 	};
 };
-
-&uart2 {
-	status = "okay";
-	current-speed = <460800>;
-	clock-frequency = <1804800>;
-};
-
-&ite_uart2_wrapper {
-	status = "okay";
-	pinctrl-0 = <&uart2_rx_gpf0_default
-		     &uart2_tx_gpf1_default>;
-	pinctrl-names = "default";
-};
-

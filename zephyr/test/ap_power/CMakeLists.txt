@@ -12,5 +12,26 @@ add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 zephyr_include_directories("${CMAKE_CURRENT_SOURCE_DIR}")
 zephyr_include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
-FILE(GLOB_RECURSE test_sources src/*.c)
-target_sources(app PRIVATE ${test_sources})
+target_sources(app PRIVATE
+  src/ap_pwrseq.c
+  src/console_command.c
+  src/events.c
+  src/hibdelay.c
+  src/hibernate.c
+  src/host_command.c
+	src/test_mocks.c
+  src/main.c)
+
+# Generic architecture tests
+target_sources_ifdef(CONFIG_TEST_AP_POWER_ADL app PRIVATE
+  src/boards/alderlake.c src/signals.c)
+
+target_sources_ifdef(CONFIG_TEST_AP_POWER_MTL app PRIVATE
+  src/boards/meteorlake.c)
+
+target_sources_ifdef(CONFIG_X86_NON_DSX_PWRSEQ_CONSOLE app PRIVATE
+  src/pwrseq_console.c)
+
+# Project specific tests
+target_sources_ifdef(CONFIG_TEST_AP_POWER_BROX app PRIVATE
+  ${PLATFORM_EC_PROGRAM_DIR}/brox/src/board_power.c)

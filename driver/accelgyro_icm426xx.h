@@ -89,8 +89,8 @@ enum icm426xx_slew_rate {
 };
 #define ICM426XX_REG_DRIVE_CONFIG 0x0013
 #define ICM426XX_DRIVE_CONFIG_MASK GENMASK(5, 0)
-#define ICM426XX_I2C_SLEW_RATE(_s) (((_s)&0x07) << 3)
-#define ICM426XX_SPI_SLEW_RATE(_s) ((_s)&0x07)
+#define ICM426XX_I2C_SLEW_RATE(_s) (((_s) & 0x07) << 3)
+#define ICM426XX_SPI_SLEW_RATE(_s) ((_s) & 0x07)
 
 /* default int configuration is pulsed mode, open drain, and active low */
 #define ICM426XX_REG_INT_CONFIG 0x0014
@@ -155,16 +155,16 @@ enum icm426xx_sensor_mode {
 #define ICM426XX_TEMP_DIS BIT(5)
 #define ICM426XX_IDLE BIT(4)
 #define ICM426XX_GYRO_MODE_MASK GENMASK(3, 2)
-#define ICM426XX_GYRO_MODE(_m) (((_m)&0x03) << 2)
+#define ICM426XX_GYRO_MODE(_m) (((_m) & 0x03) << 2)
 #define ICM426XX_ACCEL_MODE_MASK GENMASK(1, 0)
-#define ICM426XX_ACCEL_MODE(_m) ((_m)&0x03)
+#define ICM426XX_ACCEL_MODE(_m) ((_m) & 0x03)
 
 #define ICM426XX_REG_GYRO_CONFIG0 0x004F
 #define ICM426XX_REG_ACCEL_CONFIG0 0x0050
 #define ICM426XX_FS_MASK GENMASK(7, 5)
-#define ICM426XX_FS_SEL(_fs) (((_fs)&0x07) << 5)
+#define ICM426XX_FS_SEL(_fs) (((_fs) & 0x07) << 5)
 #define ICM426XX_ODR_MASK GENMASK(3, 0)
-#define ICM426XX_ODR(_odr) ((_odr)&0x0F)
+#define ICM426XX_ODR(_odr) ((_odr) & 0x0F)
 
 enum icm426xx_filter_bw {
 	/* low noise mode */
@@ -177,9 +177,9 @@ enum icm426xx_filter_bw {
 
 #define ICM426XX_REG_GYRO_ACCEL_CONFIG0 0x0052
 #define ICM426XX_ACCEL_UI_FILT_MASK GENMASK(7, 4)
-#define ICM426XX_ACCEL_UI_FILT_BW(_f) (((_f)&0x0F) << 4)
+#define ICM426XX_ACCEL_UI_FILT_BW(_f) (((_f) & 0x0F) << 4)
 #define ICM426XX_GYRO_UI_FILT_MASK GENMASK(3, 0)
-#define ICM426XX_GYRO_UI_FILT_BW(_f) ((_f)&0x0F)
+#define ICM426XX_GYRO_UI_FILT_BW(_f) ((_f) & 0x0F)
 
 #define ICM426XX_REG_FIFO_CONFIG1 0x005F
 #define ICM426XX_FIFO_PARTIAL_READ BIT(6)
@@ -221,7 +221,7 @@ enum icm426xx_filter_bw {
 #define ICM426XX_CHIP_ICM42605 0x42
 
 #define ICM426XX_REG_BANK_SEL 0x0076
-#define ICM426XX_BANK_SEL(_b) ((_b)&0x07)
+#define ICM426XX_BANK_SEL(_b) ((_b) & 0x07)
 
 #define ICM426XX_REG_INTF_CONFIG4 0x017A
 #define ICM426XX_I3C_BUS_MODE BIT(6)

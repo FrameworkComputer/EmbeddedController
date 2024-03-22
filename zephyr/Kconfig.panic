@@ -45,4 +45,9 @@ config PLATFORM_EC_DEBUG_ASSERT_BRIEF
 	  On assertion failure, prints only the file name and the line number.
 	  Boards typically define this option in order to reduce image size.
 
+config PLATFORM_EC_PANIC_STRIP_GPR
+	bool "Strip general purpose registers"
+	help
+	  Don't save General Purpose Registers during panic.
+
 endif # PLATFORM_EC_PANIC

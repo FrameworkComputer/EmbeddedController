@@ -46,12 +46,6 @@
 /* Special memory regions to store large arrays */
 #define FP_FRAME_SECTION __SECTION(ahb4)
 #define FP_TEMPLATE_SECTION __SECTION(ahb)
-/*
- * Use the malloc code only in the RW section (for the private library),
- * we cannot enable it in RO since it is not compatible with the RW
- * verification (shared_mem_init done too late).
- */
-#define CONFIG_MALLOC
 #endif /* SECTION_IS_RW */
 
 #ifndef __ASSEMBLER__

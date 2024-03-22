@@ -15,29 +15,33 @@
 #include "task.h"
 #include "util.h"
 
-#ifdef CONFIG_CEC_DEBUG
 #define CPRINTF(format, args...) cprintf(CC_CEC, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_CEC, format, ##args)
+
+#ifdef CONFIG_CEC_DEBUG
+#define DEBUG_CPRINTF(format, args...) cprintf(CC_CEC, format, ##args)
+#define DEBUG_CPRINTS(format, args...) cprints(CC_CEC, format, ##args)
 #else
-#define CPRINTF(...)
-#define CPRINTS(...)
+#define DEBUG_CPRINTF(...)
+#define DEBUG_CPRINTS(...)
 #endif
 
-/* Only one port is supported for now */
-#define CEC_PORT 0
-BUILD_ASSERT(CEC_PORT_COUNT == 1);
+#define CEC_SEND_RESULTS (EC_MKBP_CEC_SEND_OK | EC_MKBP_CEC_SEND_FAILED)
 
 /*
  * Mutex for the read-offset of the rx queue. Needed since the
  * queue is read and flushed from different contexts
  */
-static struct mutex rx_queue_readoffset_mutex;
+static mutex_t rx_queue_readoffset_mutex;
 
 /* Queue of completed incoming CEC messages */
-static struct cec_rx_queue cec_rx_queue;
+static struct cec_rx_queue cec_rx_queue[CEC_PORT_COUNT];
 
-/* Events to send to AP */
-static atomic_t cec_events;
+/* MKBP events to send to the AP (enum mkbp_cec_event) */
+static atomic_t cec_mkbp_events[CEC_PORT_COUNT];
+
+/* Task events for each port (CEC_TASK_EVENT_*) */
+static atomic_t cec_task_events[CEC_PORT_COUNT];
 
 int cec_transfer_get_bit(const struct cec_msg_transfer *transfer)
 {
@@ -86,11 +90,11 @@ void cec_rx_queue_flush(struct cec_rx_queue *queue)
 
 struct cec_offline_policy cec_default_policy[] = {
 	{
-		.command = CEC_MSG_IMAGE_VIEW_ON,
+		.command = CEC_MSG_REQUEST_ACTIVE_SOURCE,
 		.action = CEC_ACTION_POWER_BUTTON,
 	},
 	{
-		.command = CEC_MSG_TEXT_VIEW_ON,
+		.command = CEC_MSG_SET_STREAM_PATH,
 		.action = CEC_ACTION_POWER_BUTTON,
 	},
 	/* Terminator */
@@ -112,12 +116,10 @@ static enum cec_action cec_find_action(const struct cec_offline_policy *policy,
 	return CEC_ACTION_NONE;
 }
 
-int cec_process_offline_message(struct cec_rx_queue *queue, const uint8_t *msg,
-				uint8_t msg_len)
+int cec_process_offline_message(int port, const uint8_t *msg, uint8_t msg_len)
 {
 	uint8_t command;
 	char str_buf[hex_str_buf_size(msg_len)];
-	int port = CEC_PORT;
 
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		/* Forward to the AP */
@@ -127,7 +129,11 @@ int cec_process_offline_message(struct cec_rx_queue *queue, const uint8_t *msg,
 		return EC_ERROR_INVAL;
 
 	snprintf_hex_buffer(str_buf, sizeof(str_buf), HEX_BUF(msg, msg_len));
-	CPRINTS("MSG: %s", str_buf);
+	DEBUG_CPRINTS("CEC%d offline msg: %s", port, str_buf);
+
+	/* Header-only, e.g. a polling message. No command, so nothing to do */
+	if (msg_len == 1)
+		return EC_SUCCESS;
 
 	command = msg[1];
 
@@ -197,7 +203,7 @@ int cec_rx_queue_pop(struct cec_rx_queue *queue, uint8_t *msg, uint8_t *msg_len)
 	if (*msg_len == 0 || *msg_len > MAX_CEC_MSG_LEN) {
 		mutex_unlock(&rx_queue_readoffset_mutex);
 		*msg_len = 0;
-		cprintf(CC_CEC, "Invalid CEC msg size: %u\n", *msg_len);
+		CPRINTS("CEC: Invalid msg size in queue: %u", *msg_len);
 		return -1;
 	}
 
@@ -213,27 +219,83 @@ int cec_rx_queue_pop(struct cec_rx_queue *queue, uint8_t *msg, uint8_t *msg_len)
 	return 0;
 }
 
-static void send_mkbp_event(uint32_t event)
+void cec_task_set_event(int port, uint32_t event)
 {
-	atomic_or(&cec_events, event);
+	atomic_or(&cec_task_events[port], event);
+	task_wake(TASK_ID_CEC);
+}
+
+test_export_static void send_mkbp_event(int port, uint32_t event)
+{
+	/*
+	 * We only support one transmission at a time on each port, so there
+	 * should only be one send result set at a time. The host should read
+	 * the send result before starting the next transmission, so this only
+	 * happens if the host is misbehaving.
+	 */
+	if ((event & CEC_SEND_RESULTS) &&
+	    (cec_mkbp_events[port] & CEC_SEND_RESULTS)) {
+		CPRINTS("CEC%d warning: host did not clear send result", port);
+		atomic_clear_bits(&cec_mkbp_events[port], CEC_SEND_RESULTS);
+	}
+
+	atomic_or(&cec_mkbp_events[port], event);
 	mkbp_send_event(EC_MKBP_EVENT_CEC_EVENT);
 }
 
 static enum ec_status hc_cec_write(struct host_cmd_handler_args *args)
 {
-	const struct ec_params_cec_write *params = args->params;
-	int port = CEC_PORT;
+	int port;
+	uint8_t msg_len;
+	const uint8_t *msg;
 
-	if (args->params_size == 0 || args->params_size > MAX_CEC_MSG_LEN)
+	if (args->version == 0) {
+		const struct ec_params_cec_write *params = args->params;
+
+		/* v0 only supports one port, so we assume it's port 0. */
+		port = 0;
+		msg_len = args->params_size;
+		msg = params->msg;
+	} else {
+		const struct ec_params_cec_write_v1 *params_v1 = args->params;
+
+		port = params_v1->port;
+		msg_len = params_v1->msg_len;
+		msg = params_v1->msg;
+	}
+
+	if (port < 0 || port >= CEC_PORT_COUNT)
 		return EC_RES_INVALID_PARAM;
 
-	if (cec_config[port].drv->send(port, params->msg, args->params_size) !=
-	    EC_SUCCESS)
+	if (msg_len == 0 || msg_len > MAX_CEC_MSG_LEN)
+		return EC_RES_INVALID_PARAM;
+
+	if (cec_config[port].drv->send(port, msg, msg_len) != EC_SUCCESS)
 		return EC_RES_BUSY;
 
 	return EC_RES_SUCCESS;
 }
-DECLARE_HOST_COMMAND(EC_CMD_CEC_WRITE_MSG, hc_cec_write, EC_VER_MASK(0));
+DECLARE_HOST_COMMAND(EC_CMD_CEC_WRITE_MSG, hc_cec_write,
+		     EC_VER_MASK(0) | EC_VER_MASK(1));
+
+static enum ec_status hc_cec_read(struct host_cmd_handler_args *args)
+{
+	const struct ec_params_cec_read *params = args->params;
+	struct ec_response_cec_read *response = args->response;
+	int port = params->port;
+
+	if (port < 0 || port >= CEC_PORT_COUNT)
+		return EC_RES_INVALID_PARAM;
+
+	if (cec_rx_queue_pop(&cec_rx_queue[port], response->msg,
+			     &response->msg_len) != 0)
+		return EC_RES_UNAVAILABLE;
+
+	args->response_size = sizeof(*response);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CEC_READ_MSG, hc_cec_read, EC_VER_MASK(0));
 
 static enum ec_status cec_set_enable(int port, uint8_t enable)
 {
@@ -245,8 +307,8 @@ static enum ec_status cec_set_enable(int port, uint8_t enable)
 
 	if (enable == 0) {
 		/* If disabled, clear the rx queue and events. */
-		memset(&cec_rx_queue, 0, sizeof(struct cec_rx_queue));
-		cec_events = 0;
+		memset(&cec_rx_queue[port], 0, sizeof(struct cec_rx_queue));
+		cec_mkbp_events[port] = 0;
 	}
 
 	return EC_RES_SUCCESS;
@@ -255,7 +317,7 @@ static enum ec_status cec_set_enable(int port, uint8_t enable)
 static enum ec_status cec_set_logical_addr(int port, uint8_t logical_addr)
 {
 	if (logical_addr >= CEC_BROADCAST_ADDR &&
-	    logical_addr != CEC_UNREGISTERED_ADDR)
+	    logical_addr != CEC_INVALID_ADDR)
 		return EC_RES_INVALID_PARAM;
 
 	if (cec_config[port].drv->set_logical_addr(port, logical_addr) !=
@@ -268,7 +330,10 @@ static enum ec_status cec_set_logical_addr(int port, uint8_t logical_addr)
 static enum ec_status hc_cec_set(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_cec_set *params = args->params;
-	int port = CEC_PORT;
+	int port = params->port;
+
+	if (port < 0 || port >= CEC_PORT_COUNT)
+		return EC_RES_INVALID_PARAM;
 
 	switch (params->cmd) {
 	case CEC_CMD_ENABLE:
@@ -285,7 +350,10 @@ static enum ec_status hc_cec_get(struct host_cmd_handler_args *args)
 {
 	struct ec_response_cec_get *response = args->response;
 	const struct ec_params_cec_get *params = args->params;
-	int port = CEC_PORT;
+	int port = params->port;
+
+	if (port < 0 || port >= CEC_PORT_COUNT)
+		return EC_RES_INVALID_PARAM;
 
 	switch (params->cmd) {
 	case CEC_CMD_ENABLE:
@@ -308,86 +376,112 @@ static enum ec_status hc_cec_get(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_CEC_GET, hc_cec_get, EC_VER_MASK(0));
 
+static enum ec_status hc_port_count(struct host_cmd_handler_args *args)
+{
+	struct ec_response_cec_port_count *response = args->response;
+
+	response->port_count = CEC_PORT_COUNT;
+	args->response_size = sizeof(*response);
+
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CEC_PORT_COUNT, hc_port_count, EC_VER_MASK(0));
+
 static int cec_get_next_event(uint8_t *out)
 {
-	uint32_t event_out = atomic_clear(&cec_events);
+	uint32_t event_out = 0;
+	uint32_t events;
+	int port;
+
+	/* Find a port with pending events */
+	for (port = 0; port < CEC_PORT_COUNT; port++) {
+		if (!cec_mkbp_events[port])
+			continue;
+
+		events = atomic_clear(&cec_mkbp_events[port]);
+		event_out = EC_MKBP_EVENT_CEC_PACK(events, port);
+		break;
+	}
+
+	if (!event_out) {
+		/* Didn't find any events */
+		return 0;
+	}
 
 	memcpy(out, &event_out, sizeof(event_out));
+
+	/* Notify the AP if there are more events to send */
+	for (port = 0; port < CEC_PORT_COUNT; port++) {
+		if (cec_mkbp_events[port]) {
+			mkbp_send_event(EC_MKBP_EVENT_CEC_EVENT);
+			break;
+		}
+	}
 
 	return sizeof(event_out);
 }
 DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_CEC_EVENT, cec_get_next_event);
 
-static int cec_get_next_msg(uint8_t *out)
-{
-	int rv;
-	uint8_t msg_len, msg[MAX_CEC_MSG_LEN];
-
-	rv = cec_rx_queue_pop(&cec_rx_queue, msg, &msg_len);
-	if (rv != 0)
-		return EC_RES_UNAVAILABLE;
-
-	memcpy(out, msg, msg_len);
-
-	return msg_len;
-}
-DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_CEC_MESSAGE, cec_get_next_msg);
-
 static void cec_init(void)
 {
-	int port = CEC_PORT;
+	int port;
 
-	cec_config[port].drv->init(port);
+	for (port = 0; port < CEC_PORT_COUNT; port++)
+		cec_config[port].drv->init(port);
 
 	CPRINTS("CEC initialized");
 }
 DECLARE_HOOK(HOOK_INIT, cec_init, HOOK_PRIO_LAST);
 
-static void handle_received_message(void)
+static void handle_received_message(int port)
 {
 	int rv;
 	uint8_t *msg;
 	uint8_t msg_len;
-	int port = CEC_PORT;
 
 	if (cec_config[port].drv->get_received_message(port, &msg, &msg_len) !=
 	    EC_SUCCESS) {
-		cprints(CC_CEC, "CEC: failed to get received message");
+		CPRINTS("CEC%d failed to get received message", port);
 		return;
 	}
 
-	if (cec_process_offline_message(&cec_rx_queue, msg, msg_len) ==
-	    EC_SUCCESS) {
-		CPRINTS("Message consumed offline");
+	if (cec_process_offline_message(port, msg, msg_len) == EC_SUCCESS) {
+		DEBUG_CPRINTS("CEC%d message consumed offline", port);
 		/* Continue to queue message and notify AP. */
 	}
-	rv = cec_rx_queue_push(&cec_rx_queue, msg, msg_len);
+	rv = cec_rx_queue_push(&cec_rx_queue[port], msg, msg_len);
 	if (rv == EC_ERROR_OVERFLOW) {
 		/* Queue full, prefer the most recent msg */
-		cec_rx_queue_flush(&cec_rx_queue);
-		rv = cec_rx_queue_push(&cec_rx_queue, msg, msg_len);
+		cec_rx_queue_flush(&cec_rx_queue[port]);
+		rv = cec_rx_queue_push(&cec_rx_queue[port], msg, msg_len);
 	}
-	if (rv == EC_SUCCESS)
-		mkbp_send_event(EC_MKBP_EVENT_CEC_MESSAGE);
+	if (rv != EC_SUCCESS)
+		return;
+
+	send_mkbp_event(port, EC_MKBP_CEC_HAVE_DATA);
 }
 
 void cec_task(void *unused)
 {
 	uint32_t events;
+	int port;
 
-	CPRINTF("CEC task starting\n");
+	CPRINTS("CEC task starting");
 
 	while (1) {
-		events = task_wait_event(-1);
-		if (events & CEC_TASK_EVENT_RECEIVED_DATA) {
-			handle_received_message();
-		}
-		if (events & CEC_TASK_EVENT_OKAY) {
-			send_mkbp_event(EC_MKBP_CEC_SEND_OK);
-			CPRINTS("SEND OKAY");
-		} else if (events & CEC_TASK_EVENT_FAILED) {
-			send_mkbp_event(EC_MKBP_CEC_SEND_FAILED);
-			CPRINTS("SEND FAILED");
+		task_wait_event(-1);
+		for (port = 0; port < CEC_PORT_COUNT; port++) {
+			events = atomic_clear(&cec_task_events[port]);
+			if (events & CEC_TASK_EVENT_RECEIVED_DATA) {
+				handle_received_message(port);
+			}
+			if (events & CEC_TASK_EVENT_OKAY) {
+				send_mkbp_event(port, EC_MKBP_CEC_SEND_OK);
+				DEBUG_CPRINTS("CEC%d SEND OKAY", port);
+			} else if (events & CEC_TASK_EVENT_FAILED) {
+				send_mkbp_event(port, EC_MKBP_CEC_SEND_FAILED);
+				DEBUG_CPRINTS("CEC%d SEND FAILED", port);
+			}
 		}
 	}
 }

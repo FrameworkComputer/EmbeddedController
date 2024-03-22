@@ -5,6 +5,12 @@
 
 /* Port 80 module for Chrome EC */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #include "common.h"
 #include "console.h"
 #include "chipset.h"
@@ -16,6 +22,7 @@
 #include "task.h"
 #include "timer.h"
 #include "util.h"
+#include "watchdog.h"
 
 #define CPRINTF(format, args...) cprintf(CC_PORT80, format, ##args)
 
@@ -89,6 +96,9 @@ void port_80_write(int data)
 		snprintf_timestamp_now(ts_str, sizeof(ts_str));
 		CPRINTF("%c[%s Port 80: 0x%02x]", scroll ? '\n' : '\r', ts_str,
 			data);
+
+		/* Prevent port80 writes from causing the WDT to trigger. */
+		watchdog_reload();
 	}
 
 	if (!IS_ENABLED(CONFIG_PORT80_QUIET)) {
@@ -232,7 +242,7 @@ static enum ec_status port80_command_read(struct host_cmd_handler_args *args)
 	} else if (p->subcmd == EC_PORT80_READ_BUFFER) {
 		/* do not allow bad offset or size */
 		if (offset >= ARRAY_SIZE(history) || entries == 0 ||
-		    entries > args->response_max)
+		    entries * sizeof(uint16_t) > args->response_max)
 			return EC_RES_INVALID_PARAM;
 
 		for (i = 0; i < entries; i++) {

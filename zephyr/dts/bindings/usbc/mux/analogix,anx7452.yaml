@@ -16,4 +16,3 @@ properties:
 
   dp-en-pin:
     type: phandle
-    required: false

@@ -1,0 +1,32 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+common:
+  platform_allow: native_posix
+tests:
+  fpmcu.bloonchipper.transport_spi:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BLOONCHIPPER=y
+    - CONFIG_TEST_BOARD_TRANSPORT_SPI=y
+    extra_dtc_overlay_files:
+    - ./boards/bloonchipper/bloonchipper.dtsi
+  fpmcu.bloonchipper.transport_uart:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BLOONCHIPPER=y
+    - CONFIG_TEST_BOARD_TRANSPORT_UART=y
+    extra_dtc_overlay_files:
+    - ./boards/bloonchipper/bloonchipper.dtsi
+  fpmcu.bloonchipper.power:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BLOONCHIPPER=y
+    - CONFIG_TEST_BOARD_POWER=y
+    - CONFIG_PM=y
+    extra_dtc_overlay_files:
+    - ./boards/bloonchipper/bloonchipper.dtsi
+  fpmcu.bloonchipper.ec_quirks:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BLOONCHIPPER=y
+    - CONFIG_TEST_BOARD_EC_QUIRKS=y
+    extra_dtc_overlay_files:
+    - ./boards/bloonchipper/bloonchipper.dtsi

@@ -2,13 +2,69 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-config TEST_BOARD_USB_MUX_CONFIG
+choice TEST_PROJECT_TYPE
+	prompt "Select board variant for tests"
+	help
+	  Board variant to use for tests
+
+	config TEST_PROJECT_REX
+		bool "Enable rex-specific tests"
+		help
+		Enable tests for rex variant.
+
+	config TEST_PROJECT_SCREEBO
+		bool "Enable screebo-specific tests"
+		help
+		Enable tests for screebo variant.
+
+	config TEST_PROJECT_KARIS
+		bool "Enable karis-specific tests"
+		help
+		Enable tests for karis variant.
+
+	config TEST_PROJECT_REX_ISH
+		bool "Enable rex ISH tests"
+		help
+		Enable tests for rex ISH project. Rex ISH handles motion
+		sensors.
+endchoice # TEST_PROJECT_TYPE
+
+config TEST_PROJECT_NAME
+	string "Board name"
+	default "rex" if TEST_PROJECT_REX
+	default "screebo" if TEST_PROJECT_SCREEBO
+
+config TEST_PROJECT_USB_MUX_CONFIG
 	bool "Run the tests intended for usb_mux_config"
 	help
-	  Include usb_mux_config.c into the binary and test their
-	  functions.
+	  Include project specific usb_mux_config.c into the binary and
+	  test their functions.
 
-config TEST_USB_PD_POLICY
+config TEST_PROJECT_USB_CONFIG
+	bool "Run the tests intended for usb_config"
+	help
+	  Include project specific usb_config.c into the binary and test
+	  their functions.
+
+config TEST_PROJECT_KEYBOARD
+	bool "Run the tests intended for keyboard.c"
+	help
+	  Include project specific keyboard.c into the binary and test
+	  their functions.
+
+config TEST_PROJECT_BOARD
+	bool "Run the tests intended for board.c"
+	help
+	  Include project specific board.c into the binary and test
+	  their functions.
+
+config TEST_PROJECT_CHARGER
+	bool "Run the tests intended for charger.c"
+	help
+	  Include project specific charger.c into the binary and test
+	  their functions.
+
+config TEST_PROGRAM_USB_PD_POLICY
 	bool "Run the tests intended for usb_pd_policy"
 	help
 	  Include usb_pd_policy.c into the binary and test their functions.
@@ -25,7 +81,19 @@ config TEST_ENABLE_USB_PD_HOST_CMD
 	  This is used to define CONFIG_USB_PD_HOST_CMD for testing purposes
 	  directly.
 
-config TEST_BOARD_POWER
+config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	bool "Disable chipset_in_state inline method"
+	help
+	  This is used to not define chipset_in_state method as inline
+	  function.
+
+config TEST_PROGRAM_BATTERY_PRESENT
+	bool "Tests battery presence detect"
+	help
+	  Include tests for board specific battery presence detection.
+	  Really, that's all it does.
+
+config TEST_PROGRAM_BOARD_POWER
 	bool "Run the tests intended for board_power"
 	help
 	  Include board_power.c into the binary and test
@@ -43,6 +111,16 @@ config TEST_DISABLE_AP_PWRSEQ
 	help
 	  This is used to disable CONFIG_AP_PWRSEQ for testing purposes
 	  directly.
+
+config TEST_PROGRAM_I2C_POLICY
+	bool "Run the tests intended for i2c_policy"
+	help
+	  Include i2c_policy.c into the binary and test their functions.
+
+config TEST_PROJECT_TOUCH_PANEL
+	bool "Run the tests intended for touch_panel.c"
+	help
+	  Include touch_panel.c into the binary and test their functions.
 
 module = REX
 module-str = Rex board-specific code

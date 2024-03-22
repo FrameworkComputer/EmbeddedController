@@ -1,0 +1,113 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	gpio-interrupts {
+	  /*
+	   * GPIO interrupt shim fails to build if this node exists but has no
+	   * interrupts, and this test doesn't use any GPIO interrupts.
+	   */
+	  status = "disabled";
+	};
+
+	/* A fake GPIO bank for all of the power signals. */
+	gpio_pwr: gpio@1000 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x1000 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <32>;
+	};
+
+	named-gpios {
+		gpio_all_sys_pwrgd: all_sys_pwrgd {
+			gpios = <&gpioa 7 GPIO_INPUT>;
+		};
+		gpio_ec_soc_pwr_btn_odl: ec_soc_pwr_btn_odl {
+			gpios = <&gpioc 1 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
+			gpios = <&gpio0 0 GPIO_INPUT_PULL_UP>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+	};
+
+	common-pwrseq {
+		compatible = "intel,ap-pwrseq";
+
+		sys-pwrok-delay = <10>;
+		all-sys-pwrgd-timeout = <20>;
+	};
+
+	ps_en_pp5000_s5: pwr-en-pp5000-s5 {
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "PP5000_S5 enable output to regulator";
+		enum-name = "PWR_EN_PP5000_A";
+	};
+	pwr-adc-pp3300 {
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "PP3300 PWROK";
+		enum-name = "PWR_DSW_PWROK";
+	};
+	ps_ec_soc_dsw_pwrok: pwr-ec-soc-dsw-pwrok {
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "DSW_PWROK output to PCH";
+		enum-name = "PWR_EC_SOC_DSW_PWROK";
+	};
+	pwr-adc-pp1p05 {
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "PP1P05 PWROK";
+		enum-name = "PWR_PG_PP1P05";
+	};
+	pwr-ec-pch-rsmrst-odl {
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "RSMRST output to PCH";
+		enum-name = "PWR_EC_PCH_RSMRST";
+	};
+	ps_rsmrst_in: pwr-pg-ec-rsmrst-od {
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "RSMRST power good from regulator";
+		enum-name = "PWR_RSMRST_PWRGD";
+	};
+	pwr-slp-s3-l {
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "SLP_S3_L input from PCH";
+		enum-name = "PWR_SLP_S3";
+	};
+	pwr-slp-sus-l {
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "SLP_SUS_L input from PCH";
+		enum-name = "PWR_SLP_SUS";
+	};
+	ps_en_pp3300_a: pwr-en-pp3300-s5 {
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "PP3300_S5 enable output to LS";
+		enum-name = "PWR_EN_PP3300_A";
+	};
+	pwr-pch-pwrok {
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "PCH_PWROK output to PCH";
+		enum-name = "PWR_PCH_PWROK";
+	};
+	pwr-all-sys-pwrgd {
+		compatible = "intel,ap-pwrseq-external";
+		dbg-label = "Combined all power good";
+		enum-name = "PWR_ALL_SYS_PWRGD";
+	};
+};
+
+&int_usb_c0 {
+	status = "disabled";
+};
+
+&int_usb_c1 {
+	status = "disabled";
+};

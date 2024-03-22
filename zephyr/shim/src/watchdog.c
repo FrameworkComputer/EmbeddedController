@@ -5,6 +5,8 @@
 
 #include "config.h"
 #include "hooks.h"
+#include "panic.h"
+#include "task.h"
 #include "watchdog.h"
 
 #include <zephyr/device.h>
@@ -21,8 +23,11 @@ struct watchdog_info {
 
 __maybe_unused static void wdt_warning_handler(const struct device *wdt_dev,
 					       int channel_id);
+__maybe_unused static void
+wdt_warning_handler_with_enable(const struct device *wdt_dev, int channel_id);
 
 const struct watchdog_info wdt_info[] = {
+#if DT_NODE_HAS_STATUS(DT_CHOSEN(cros_ec_watchdog), okay)
 	{
 		.wdt_dev = DEVICE_DT_GET(DT_CHOSEN(cros_ec_watchdog)),
 		.config = {
@@ -39,6 +44,7 @@ const struct watchdog_info wdt_info[] = {
 #endif
 		},
 	},
+#endif
 #ifdef CONFIG_PLATFORM_EC_WATCHDOG_HELPER
 	{
 		.wdt_dev = DEVICE_DT_GET(DT_CHOSEN(cros_ec_watchdog_helper)),
@@ -46,7 +52,7 @@ const struct watchdog_info wdt_info[] = {
 			.flags = 0U,
 			.window.min = 0U,
 			.window.max = CONFIG_AUX_TIMER_PERIOD_MS,
-			.callback = wdt_warning_handler,
+			.callback = wdt_warning_handler_with_enable,
 		},
 	},
 #endif
@@ -98,7 +104,7 @@ static int watchdog_init_device(const struct watchdog_info *info)
 	int chan, err;
 
 	if (!device_is_ready(wdt_dev)) {
-		LOG_ERR("Error: device %s is not ready", wdt_dev->name);
+		LOG_ERR("device %s not ready", wdt_dev->name);
 		return -ENODEV;
 	}
 
@@ -167,6 +173,18 @@ __maybe_unused static void wdt_warning_handler(const struct device *wdt_dev,
 	cros_chip_wdt_handler(wdt_dev, channel_id);
 #endif
 
+	/* Save the current task id in panic info.
+	 * The PANIC_SW_WATCHDOG_WARN reason will be changed to a regular
+	 * PANIC_SW_WATCHDOG in system_common_pre_init if a watchdog reset
+	 * occurs.
+	 */
+	panic_set_reason(PANIC_SW_WATCHDOG_WARN, 0, task_get_current());
+}
+
+__maybe_unused static void
+wdt_warning_handler_with_enable(const struct device *wdt_dev, int channel_id)
+{
+	wdt_warning_handler(wdt_dev, channel_id);
 	/* Watchdog is disabled after calling handler. Re-enable it now. */
 	watchdog_enable(wdt_dev);
 }

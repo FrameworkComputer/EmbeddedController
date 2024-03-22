@@ -96,10 +96,11 @@ void lpc_aux_put_char(uint8_t chr, int send_irq)
 /* Test utilities */
 
 /*
- * This is a bit tricky, the second parameter to _Static_assert must be a string
- * literal, so we use that property to assert x is a string literal.
+ * This is a bit tricky, only string literal can concats with string literals
+ * so we use that property to assert x is a string literal.
  */
-#define ASSERT_IS_STRING_LITERAL(x) _Static_assert(true, x)
+#define ASSERT_IS_STRING_LITERAL(x) \
+	_Static_assert(sizeof("" x "") == sizeof(x), "Not string literal")
 
 int _wait_for_data(int delay_ms)
 {

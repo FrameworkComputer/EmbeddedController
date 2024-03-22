@@ -1,0 +1,22 @@
+# Copyright 2023 The Chromium OS Authors. All rights reserved.
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: FPC1025 fingerprint sensor
+
+compatible: "fpc,fpc1025"
+
+include: [spi-device.yaml, fingerprint-sensor.yaml]
+
+properties:
+  irq-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      This property specifies the connection for sensor interrupt.
+
+  reset-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      This property specifies the connection for sensor reset.

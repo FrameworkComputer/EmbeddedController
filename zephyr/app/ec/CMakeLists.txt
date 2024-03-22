@@ -4,7 +4,7 @@
 
 cros_ec_library_include_directories(include)
 zephyr_library_sources(ec_app_main.c)
-if(NOT DEFINED CONFIG_ZTEST)
+if(NOT DEFINED CONFIG_TEST)
     zephyr_library_sources(main_shim.c)
 endif()
 

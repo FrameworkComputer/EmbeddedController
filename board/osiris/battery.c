@@ -13,7 +13,9 @@
 #include "charger_profile_override.h"
 #include "common.h"
 #include "compile_time_macros.h"
+#include "driver/charger/isl9241.h"
 #include "gpio.h"
+#include "hooks.h"
 /*
  * Battery info for all Osiris battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
@@ -36,36 +38,37 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* COSMX AP22ABN Battery Information */
 	[BATTERY_COSMX_AP22ABN] = {
-		.fuel_gauge = {
-			.manuf_name = "COSMX KT0030B003",
-			.device_name = "AP22ABN",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "COSMX KT0030B003",
+		.device_name = "AP22ABN",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x8000,
+					.disconnect_val = 0x0000,
+					.cfet_mask = 0x4000,
+					.cfet_off_val = 0x4000,
+				},
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x8000,
-				.disconnect_val = 0x8000,
-				.cfet_mask = 0x4000,
-				.cfet_off_val = 0x4000,
+			.batt_info = {
+				.voltage_max            = 13440,
+				.voltage_normal         = 11670,
+				.voltage_min            = 9000,
+				.precharge_current      = 567,
+				.start_charging_min_c   = 0,
+				.start_charging_max_c   = 50,
+				.charging_min_c         = 0,
+				.charging_max_c         = 60,
+				.discharging_min_c      = -20,
+				.discharging_max_c      = 75,
 			},
-		},
-		.batt_info = {
-			.voltage_max            = 13440,
-			.voltage_normal         = 11670,
-			.voltage_min            = 9000,
-			.precharge_current      = 567,
-			.start_charging_min_c   = 0,
-			.start_charging_max_c   = 50,
-			.charging_min_c         = 0,
-			.charging_max_c         = 60,
-			.discharging_min_c      = -20,
-			.discharging_max_c      = 75,
 		},
 	},
 };
@@ -148,3 +151,15 @@ enum ec_status charger_profile_override_set_param(uint32_t param,
 {
 	return EC_RES_INVALID_PARAM;
 }
+
+/* Set the DCPROCHOT base on battery over discharging current about 7A */
+static void set_dc_prochot(void)
+{
+	/*
+	 * Only bits 13:8 are usable for this register, any other bits will be
+	 * truncated.  Valid values are 256 mA to 16128 mA at 256 mA intervals.
+	 */
+
+	isl9241_set_dc_prochot(CHARGER_SOLO, 0x1B00);
+}
+DECLARE_HOOK(HOOK_INIT, set_dc_prochot, HOOK_PRIO_DEFAULT);

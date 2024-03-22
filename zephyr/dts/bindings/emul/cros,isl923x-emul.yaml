@@ -13,6 +13,5 @@ properties:
     required: true
   battery:
     type: phandle
-    required: false
     description:
       Reference to battery emulator.

@@ -47,4 +47,3 @@ seq 20 ab
 seq 30 b
 seq 40
 endtest
-

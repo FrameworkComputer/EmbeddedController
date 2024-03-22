@@ -18,7 +18,7 @@
 
 #define DEFAULT_R_AC 20
 #define R_AC CONFIG_CHARGER_SENSE_RESISTOR_AC
-#define AC_CURRENT_TO_REG(CUR) ((CUR)*R_AC / DEFAULT_R_AC)
+#define AC_CURRENT_TO_REG(CUR) ((CUR) * R_AC / DEFAULT_R_AC)
 
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
@@ -343,6 +343,9 @@ const struct tcpm_drv raa489000_tcpm_drv = {
 	.get_cc = &tcpci_tcpm_get_cc,
 #ifdef CONFIG_USB_PD_VBUS_DETECT_TCPC
 	.check_vbus_level = &tcpci_tcpm_check_vbus_level,
+#endif
+#ifdef CONFIG_USB_PD_VBUS_MEASURE_TCPC
+	.get_vbus_voltage = &tcpci_get_vbus_voltage,
 #endif
 	.select_rp_value = &tcpci_tcpm_select_rp_value,
 	.set_cc = &raa489000_tcpm_set_cc,

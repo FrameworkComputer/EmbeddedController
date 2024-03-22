@@ -79,6 +79,11 @@
 	ppc_port0: aoz1380 {
 		compatible = "aoz,aoz1380";
 		status = "okay";
+		/* a duplicate of the <&gpio_usb_c0_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio7 5 GPIO_ACTIVE_LOW>;
 	};
 
 	fan_steps_clamshell: fan-steps-clamshell {
@@ -215,6 +220,27 @@
 			};
 		};
 	};
+
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+		actual-key-mask = <
+			0x1c /* C0 */
+			0xff /* C1 */
+			0xff /* C2 */
+			0xff /* C3 */
+			0xff /* C4 */
+			0xff /* C5 */
+			0xff /* C6 */
+			0x86 /* C7 */
+			0xff /* C8 */
+			0xff /* C9 */
+			0x55 /* C10 */
+			0xff /* C11 */
+			0xff /* C12 */
+			0xff /* C13 */
+			0xff /* C13 */
+		>;
+	};
 };
 
 /* i2c overrides */
@@ -309,4 +335,24 @@
 	rpm_start = <2600>;
 	rpm_max = <4600>;
 	rpm_deviation = <2>;
+};
+
+&vivaldi_kbd {
+	vivaldi-keys = <
+		KBD_RC(4, 2)   /* T1 */
+		KBD_RC(3, 2)   /* T2 */
+		KBD_RC(2, 2)   /* T3 */
+		KBD_RC(1, 2)   /* T4 */
+		KBD_RC(4, 4)   /* T5 */
+		KBD_RC(3, 4)   /* T6 */
+		KBD_RC(2, 4)   /* T7 */
+		KBD_RC(2, 9)   /* T8 */
+		KBD_RC(1, 9)   /* T9 */
+		KBD_RC(1, 4)   /* T10 */
+		KBD_RC(0, 4)   /* T11 */
+		KBD_RC(1, 5)   /* T12 */
+		KBD_RC(3, 5)   /* T13 */
+		KBD_RC(2, 1)   /* T14 */
+		KBD_RC(0, 1)   /* T15 */
+	>;
 };

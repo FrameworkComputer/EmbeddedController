@@ -51,15 +51,18 @@
 		is-alt;
 	};
 
-	tcpc_nct38xx_alt: tcpc-nct38xx-alt@73 {
+	nct38xx@73 {
 		compatible = "nuvoton,nct38xx";
 		reg = <0x73>;
-		tcpc-flags = <(
-			TCPC_FLAGS_TCPCI_REV2_0 |
-			TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
-		is-alt;
-	};
 
+		tcpc_nct38xx_alt: nct38xx-tcpc {
+			compatible = "nuvoton,nct38xx-tcpc";
+			tcpc-flags = <(
+				TCPC_FLAGS_TCPCI_REV2_0 |
+				TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
+			is-alt;
+		};
+	};
 
 	tcpc_rt1715_alt: tcpc-rt1715-alt@a{
 		compatible = "richtek,rt1715-tcpc", "cros,i2c-mock";

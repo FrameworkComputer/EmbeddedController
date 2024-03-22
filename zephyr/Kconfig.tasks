@@ -8,7 +8,7 @@ menu "Tasks"
 
 config TASKS_SET_TEST_RUNNER_TID_RULE
 	bool "Automatically call set_test_runner_tid() for each test"
-	depends on ZTEST && ZTEST_NEW_API
+	depends on ZTEST
 	help
 	  This enables the test rule which will run before each unit test and
 	  call set_test_runner_tid(). This function is needed to allow-list the
@@ -135,7 +135,6 @@ endif # HAS_TASK_KEYPROTO
 
 config HAS_TASK_KEYSCAN
 	bool
-	depends on PLATFORM_EC_KEYBOARD
 	help
 	  This turns on the keyscan task which handles scanning the keyboard
 	  and producing a list of changes in the key state. This list can either
@@ -323,5 +322,37 @@ config TASK_RWSIG_STACK_SIZE
 	  See b/176180736 for checking these stack sizes.
 
 endif # HAS_TASK_RWSIG
+
+config HAS_TASK_CEC
+	bool # Selected by PLATFORM_EC_CEC
+	help
+	  Enable the CEC task, which sends CEC messages from the AP on the
+	  appropriate CEC bus, and passes received messages back to the AP.
+
+if HAS_TASK_CEC
+
+config TASK_CEC_STACK_SIZE
+	int "CEC task stack size"
+	default 800	# Most boards use LARGER_TASK_STACK_SIZE = 800 on npcx
+	help
+	  The stack size of the CEC task.
+
+endif # HAS_TASK_CEC
+
+config HAS_TASK_FPSENSOR
+	bool # Selected by PLATFORM_EC_FINGERPRINT
+	help
+	  This turns on the FPSENSOR task which provides fingerprint
+	  authentication service.
+
+if HAS_TASK_FPSENSOR
+
+config TASK_FPSENSOR_STACK_SIZE
+	int "FPSENSOR task stack size"
+	default 4096
+	help
+	  The stack size of the FPSENSOR task.
+
+endif # HAS_TASK_FPSENSOR
 
 endmenu # Tasks

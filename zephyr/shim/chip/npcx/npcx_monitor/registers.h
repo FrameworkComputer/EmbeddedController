@@ -121,12 +121,12 @@
 #define NPCX_TWD_BASE_ADDR 0x400D8000
 
 /* Multi-Modules Map */
-#define NPCX_PWM_BASE_ADDR(mdl) (0x40080000 + ((mdl)*0x2000L))
-#define NPCX_GPIO_BASE_ADDR(mdl) (0x40081000 + ((mdl)*0x2000L))
-#define NPCX_ITIM_BASE_ADDR(mdl) (0x400B0000 + ((mdl)*0x2000L))
-#define NPCX_MIWU_BASE_ADDR(mdl) (0x400BB000 + ((mdl)*0x2000L))
-#define NPCX_MFT_BASE_ADDR(mdl) (0x400E1000 + ((mdl)*0x2000L))
-#define NPCX_PM_CH_BASE_ADDR(mdl) (0x400C9000 + ((mdl)*0x2000L))
+#define NPCX_PWM_BASE_ADDR(mdl) (0x40080000 + ((mdl) * 0x2000L))
+#define NPCX_GPIO_BASE_ADDR(mdl) (0x40081000 + ((mdl) * 0x2000L))
+#define NPCX_ITIM_BASE_ADDR(mdl) (0x400B0000 + ((mdl) * 0x2000L))
+#define NPCX_MIWU_BASE_ADDR(mdl) (0x400BB000 + ((mdl) * 0x2000L))
+#define NPCX_MFT_BASE_ADDR(mdl) (0x400E1000 + ((mdl) * 0x2000L))
+#define NPCX_PM_CH_BASE_ADDR(mdl) (0x400C9000 + ((mdl) * 0x2000L))
 
 /******************************************************************************/
 /* System Configuration (SCFG) Registers */
@@ -195,6 +195,7 @@
 #define NPCX_UMA_CTS REG8(NPCX_FIU_BASE_ADDR + 0x01E)
 #define NPCX_UMA_ECTS REG8(NPCX_FIU_BASE_ADDR + 0x01F)
 #define NPCX_UMA_DB0_3 REG32(NPCX_FIU_BASE_ADDR + 0x020)
+#define NPCX_FIU_VER REG8(NPCX_FIU_BASE_ADDR + 0x02F)
 #define NPCX_FIU_RD_CMD REG8(NPCX_FIU_BASE_ADDR + 0x030)
 #define NPCX_FIU_DMM_CYC REG8(NPCX_FIU_BASE_ADDR + 0x032)
 #define NPCX_FIU_EXT_CFG REG8(NPCX_FIU_BASE_ADDR + 0x033)
@@ -212,6 +213,7 @@
 #define NPCX_UMA_ECTS_SW_CS1 1
 #define NPCX_UMA_ECTS_SEC_CS 2
 #define NPCX_UMA_ECTS_UMA_LOCK 3
+#define NPCX_UMA_ECTS_UMA_ADDR_SIZE FIELD(4, 3)
 
 /******************************************************************************/
 /* KBC Registers */
@@ -290,6 +292,7 @@
 #define CMD_READ_ID 0x9F
 #define CMD_READ_MAN_DEV_ID 0x90
 #define CMD_WRITE_EN 0x06
+#define CMD_WRITE_DIS 0x04
 #define CMD_WRITE_STATUS 0x50
 #define CMD_READ_STATUS_REG 0x05
 #define CMD_READ_STATUS_REG2 0x35
@@ -354,6 +357,10 @@
 	(MASK(EXEC_DONE) | FLASH_SEL | MASK(RD_WR) | MASK(C_SIZE) | D_SIZE_1)
 #define MASK_CMD_WR_2BYTE \
 	(MASK(EXEC_DONE) | FLASH_SEL | MASK(RD_WR) | MASK(C_SIZE) | D_SIZE_2)
+#define MASK_CMD_WR_3BYTE \
+	(MASK(EXEC_DONE) | FLASH_SEL | MASK(RD_WR) | MASK(C_SIZE) | D_SIZE_3)
+#define MASK_CMD_WR_4BYTE \
+	(MASK(EXEC_DONE) | FLASH_SEL | MASK(RD_WR) | MASK(C_SIZE) | D_SIZE_4)
 #define MASK_CMD_WR_ADR \
 	(MASK(EXEC_DONE) | FLASH_SEL | MASK(RD_WR) | MASK(A_SIZE))
 

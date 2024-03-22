@@ -219,9 +219,6 @@
 		gpio_c0_charger_led_amber_l: c0_charger_led_amber_l {
 			gpios = <&gpioj 7 GPIO_OUTPUT_HIGH>;
 		};
-		gpio_power_led_white_l: power_led_white_l {
-			gpios = <&gpioa 3 GPIO_OUTPUT_HIGH>;
-		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
 			gpios = <&gpioksol 2 GPIO_OUTPUT_HIGH>;
 			enum-name = "GPIO_KBD_KSO2";
@@ -240,7 +237,7 @@
 		compatible = "named-i2c-ports";
 
 		i2c_ec_i2c_eeprom: ec_i2c_eeprom {
-			i2c-port = <&i2c0>;
+			i2c-port = <&i2c2>;
 			enum-names = "I2C_PORT_EEPROM";
 		};
 		i2c_ec_i2c_batt: ec_i2c_batt {
@@ -248,7 +245,7 @@
 			enum-names = "I2C_PORT_BATTERY";
 		};
 		i2c_ec_i2c_sensor: ec_i2c_sensor {
-			i2c-port = <&i2c2>;
+			i2c-port = <&i2c0>;
 			enum-names = "I2C_PORT_SENSOR";
 		};
 		i2c_ec_i2c_sub_usb_c1: ec_i2c_sub_usb_c1 {

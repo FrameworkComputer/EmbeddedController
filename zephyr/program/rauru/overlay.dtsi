@@ -1,0 +1,197 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ */
+
+/ {
+	aliases {
+		gpio-cbi-wp = &gpio_ec_cbi_wp;
+		gpio-wp = &gpio_ec_flash_wp_odl;
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
+	};
+
+	named-adc-channels {
+		adc_ec_usb_c0_vbus_sense: ec_usb_c0_vbus_sense {
+			mul = <10>;
+		};
+		adc_ec_usb_c1_vbus_sense: ec_usb_c1_vbus_sense {
+			mul = <10>;
+		};
+	};
+
+	named-i2c-ports {
+		/delete-node/ ec_i2c5;
+	};
+
+	named-gpios {
+		/* unimplemented GPIOs */
+		entering_rw: entering_rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		/* default output level */
+		gpio_en_pp5000_fan: en_pp5000_fan {
+			gpios = <&gpioa 6 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_cbi_wp: ec_cbi_wp {
+			gpios = <&gpioc 5 GPIO_OUTPUT_LOW>;
+		};
+		gpio_usb_c1_frs_en: usb_c1_frs_en {
+			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
+		};
+		gpio_usb_c1_dp_in_hpd: usb_c1_dp_in_hpd {
+			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_gsc_packet_mode_en: ec_gsc_packet_mode_en {
+			gpios = <&gpioe 6 GPIO_OUTPUT_LOW>;
+		};
+		gpio_usb_c0_frs_en: usb_c0_frs_en {
+			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
+		};
+		gpio_usb_c0_dp_in_hpd: usb_c0_dp_in_hpd {
+			gpios = <&gpiof 2 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_ap_dp_hpd_l: ec_ap_dp_hpd_l {
+			gpios = <&gpiof 3 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_dp_path_usb_c1_en: dp_path_usb_c1_en {
+			gpios = <&gpiog 0 GPIO_OUTPUT_LOW>;
+		};
+		gpio_en_pp5000_usba_vbus: en_pp5000_usba_vbus {
+			gpios = <&gpiog 1 GPIO_OUTPUT_LOW>;
+		};
+		gpio_en_pp5000_pen_l: en_pp5000_pen_l {
+			gpios = <&gpiog 3 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_en_ulp: en_ulp {
+			gpios = <&gpioh 0 GPIO_OUTPUT_LOW>;
+		};
+		gpio_en_pp5000_z1: en_pp5000_z1 {
+			gpios = <&gpioh 3 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_en_hdmi_pwr: en_hdmi_pwr {
+			gpios = <&gpioi 5 GPIO_OUTPUT_LOW>;
+		};
+		gpio_dp_path_hdmi_en: dp_path_hdmi_en {
+			gpios = <&gpioi 6 GPIO_OUTPUT_LOW>;
+		};
+		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
+			gpios = <&gpiof 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
+			gpios = <&gpiod 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_kso_02_inv: ec_kso_02_inv {
+			gpios = <&gpioksol 2 GPIO_OUTPUT_HIGH>;
+		};
+		/* a label to prevent build break in power sequencing */
+		en_pp4200_s5: en_pp3700_s5 {
+		};
+	};
+
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-irqs = <
+			&int_ac_present
+			&int_power_button
+			&int_lid_open
+		>;
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+
+		unused-gpios =
+			/* i2c5_scl */
+			<&gpioa 4 GPIO_INPUT>,
+			/* i2c5_sda */
+			<&gpioa 5 GPIO_INPUT>;
+	};
+};
+
+&pinctrl {
+	/* I2C property setting */
+	i2c0_clk_gpb3_default: i2c0_clk_gpb3_default {
+		gpio-voltage = "3v3";
+	};
+	i2c0_data_gpb4_default: i2c0_data_gpb4_default {
+		gpio-voltage = "3v3";
+	};
+	i2c1_clk_gpc1_default: i2c1_clk_gpc1_default {
+		gpio-voltage = "3v3";
+	};
+	i2c1_data_gpc2_default: i2c1_data_gpc2_default {
+		gpio-voltage = "3v3";
+	};
+	i2c2_clk_gpf6_default: i2c2_clk_gpf6_default {
+		gpio-voltage = "3v3";
+	};
+	i2c2_data_gpf7_default: i2c2_data_gpf7_default {
+		gpio-voltage = "3v3";
+	};
+	i2c3_clk_gpb2_default: i2c3_clk_gpb2_default {
+		gpio-voltage = "1v8";
+	};
+	i2c3_data_gpb5_default: i2c3_data_gpb5_default {
+		gpio-voltage = "1v8";
+	};
+	i2c3_clk_gpb2_sleep: i2c3_clk_gpb2_sleep {
+		pinmuxs = <&pinctrlb 2 IT8XXX2_ALT_DEFAULT>;
+		gpio-voltage = "1v8";
+	};
+	i2c3_data_gpb5_sleep: i2c3_data_gpb5_sleep {
+		pinmuxs = <&pinctrlb 5 IT8XXX2_ALT_DEFAULT>;
+		gpio-voltage = "1v8";
+	};
+	i2c4_clk_gpe0_default: i2c4_clk_gpe0_default {
+		gpio-voltage = "3v3";
+	};
+	i2c4_data_gpe7_default: i2c4_data_gpe7_default {
+		gpio-voltage = "3v3";
+	};
+};
+
+&i2c0 {
+	label = "I2C_PWR_CBI";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c1 {
+	label = "I2C_BATTERY";
+	clock-frequency = <50000>;
+};
+
+&i2c2 {
+	label = "I2C_USB_C0";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+};
+
+&i2c3 {
+	label = "I2C_SENSOR";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	scl-gpios = <&gpiob 2 0>;
+	sda-gpios = <&gpiob 5 0>;
+	pinctrl-1 = <&i2c3_clk_gpb2_sleep
+			&i2c3_data_gpb5_sleep>;
+	pinctrl-names = "default", "sleep";
+	prescale-scl-low = <1>;
+};
+
+&i2c4 {
+	label = "I2C_USB_C1";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	prescale-scl-low = <1>;
+};
+
+&i2c5ALT {
+	status = "disabled";
+};
+
+&pwm2 {
+	prescaler-cx = <PWM_PRESCALER_C4>;
+};
+
+&pwm3 {
+	prescaler-cx = <PWM_PRESCALER_C4>;
+};

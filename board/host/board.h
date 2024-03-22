@@ -93,6 +93,7 @@ enum {
 void fps_event(enum gpio_signal signal);
 
 #define CONFIG_CRC8
+#define CONFIG_SHA256_SW
 
 #define CONFIG_I2C
 #define CONFIG_I2C_CONTROLLER

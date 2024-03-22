@@ -214,6 +214,10 @@ void board_process_pd_alert(int port)
 		schedule_deferred_pd_interrupt(port);
 }
 
+/*
+ * LCOV_EXCL_START schedule_deferred_pd_interrupt() can't be verified in tests,
+ * but type-C will be obviously broken if this function doesn't work.
+ */
 void usb_interrupt(enum gpio_signal signal)
 {
 	int port;
@@ -226,3 +230,4 @@ void usb_interrupt(enum gpio_signal signal)
 	/* Trigger polling of TCPC and BC1.2 in USB-PD task */
 	schedule_deferred_pd_interrupt(port);
 }
+/* LCOV_EXCL_STOP */

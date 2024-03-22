@@ -28,6 +28,7 @@
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
 #include "usbc/usb_muxes.h"
+#include "usbc_config.h"
 #include "usbc_ppc.h"
 
 #include <zephyr/drivers/gpio.h>
@@ -42,15 +43,11 @@ enum usba_port { USBA_PORT_A0 = 0, USBA_PORT_A1, USBA_PORT_COUNT };
 enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_C1, USBC_PORT_COUNT };
 BUILD_ASSERT(USBC_PORT_COUNT == CONFIG_USB_PD_PORT_MAX_COUNT);
 
-static void reset_nct38xx_port(int port);
+test_export_static void reset_nct38xx_port(int port);
 
-static void usbc_interrupt_init(void)
+void usbc_interrupt_init(void)
 {
-	/* Enable PPC interrupts. */
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_ppc));
-	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_ppc));
-
-#ifdef CONFIG_PLATFORM_EC_USB_CHARGER
+#if defined(CONFIG_PLATFORM_EC_USB_CHARGER)
 	/* Enable BC 1.2 interrupts */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c0_bc12));
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_c1_bc12));
@@ -62,7 +59,7 @@ static void usbc_interrupt_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, usbc_interrupt_init, HOOK_PRIO_POST_I2C);
 
-static void usb_fault_interrupt_init(void)
+test_export_static void usb_fault_interrupt_init(void)
 {
 	/* Enable USB fault interrupts when we hit S5 */
 	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_hub_fault));
@@ -71,7 +68,7 @@ static void usb_fault_interrupt_init(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_STARTUP, usb_fault_interrupt_init, HOOK_PRIO_DEFAULT);
 
-static void usb_fault_interrupt_disable(void)
+test_export_static void usb_fault_interrupt_disable(void)
 {
 	/* Disable USB fault interrupts leaving S5 */
 	gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_usb_hub_fault));
@@ -244,7 +241,7 @@ static void charger_prochot_init_isl9238(void)
 DECLARE_HOOK(HOOK_INIT, charger_prochot_init_isl9238, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_CHARGER_ISL9238 */
 
-static void reset_nct38xx_port(int port)
+test_export_static void reset_nct38xx_port(int port)
 {
 	const struct gpio_dt_spec *reset_gpio_l;
 	const struct device *ioex_port0, *ioex_port1;
@@ -306,7 +303,7 @@ void board_reset_pd_mcu(void)
 	reset_nct38xx_port(USBC_PORT_C1);
 }
 
-#ifdef CONFIG_PLATFORM_EC_USB_CHARGER
+#if defined(CONFIG_PLATFORM_EC_USB_CHARGER)
 void bc12_interrupt(enum gpio_signal signal)
 {
 	switch (signal) {
@@ -330,7 +327,6 @@ void bc12_interrupt(enum gpio_signal signal)
  * until voltage drops to 4.5V. Don't go lower than this to be kind to the
  * charger (see b/67964166).
  */
-#define BC12_MIN_VOLTAGE 4500
 int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 {
 	int voltage = 0;
@@ -354,15 +350,14 @@ int board_is_vbus_too_low(int port, enum chg_ramp_vbus_state ramp_state)
 		return 0;
 	}
 
-	if (voltage < BC12_MIN_VOLTAGE)
+	if (voltage < SKYRIM_BC12_MIN_VOLTAGE)
 		CPRINTSUSB("%s vbus=%d", __func__, voltage);
 
-	return voltage < BC12_MIN_VOLTAGE;
+	return voltage < SKYRIM_BC12_MIN_VOLTAGE;
 }
 #endif
 
 #define SAFE_RESET_VBUS_DELAY_MS 900
-#define SAFE_RESET_VBUS_MV 5000
 void board_hibernate(void)
 {
 	int port;
@@ -376,7 +371,7 @@ void board_hibernate(void)
 	 */
 	port = charge_manager_get_active_charge_port();
 	if (port != CHARGE_PORT_NONE) {
-		pd_request_source_voltage(port, SAFE_RESET_VBUS_MV);
+		pd_request_source_voltage(port, SKYRIM_SAFE_RESET_VBUS_MV);
 
 		/* Give PD task and PPC chip time to get to 5V */
 		msleep(SAFE_RESET_VBUS_DELAY_MS);

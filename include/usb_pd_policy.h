@@ -38,4 +38,16 @@ __override_proto bool port_discovery_dr_swap_policy(int port,
 __override_proto bool port_discovery_vconn_swap_policy(int port,
 						       bool vconn_swap_flag);
 
+/**
+ * Port Disable FRS until VBUS source on policy.
+ *
+ * Port disable FRS until VBUS source on policy. Different boards can implement
+ * its own FRS disable timing rules. Default timing is after receiving FRS Rx
+ * signal.
+ *
+ * @param port USB-C port number
+ * @param return True if FRS disable is delayed, else False.
+ */
+__override_proto bool port_frs_disable_until_source_on(int port);
+
 #endif /* __CROS_EC_USB_PD_POLICY_H */

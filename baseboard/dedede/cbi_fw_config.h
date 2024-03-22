@@ -80,6 +80,16 @@ enum fw_config_hdmi_type {
 #define FW_CONFIG_HDMI_OFFSET 17
 #define FW_CONFIG_HDMI_MASK GENMASK(17, 17)
 
+/*
+ * BC12 (1 bit)
+ */
+enum fw_config_bc12 {
+	BC12_SUPPORT = 0,
+	BC12_NONE = 1,
+};
+#define FW_CONFIG_BC12_SUPPORT 20
+#define FW_CONFIG_BC12_MASK GENMASK(20, 20)
+
 enum fw_config_db get_cbi_fw_config_db(void);
 enum fw_config_stylus get_cbi_fw_config_stylus(void);
 enum fw_config_kblight_type get_cbi_fw_config_kblight(void);
@@ -88,5 +98,6 @@ enum fw_config_numeric_pad_type get_cbi_fw_config_numeric_pad(void);
 enum fw_config_hdmi_type get_cbi_fw_config_hdmi(void);
 
 int get_cbi_fw_config_keyboard(void);
+int get_cbi_fw_config_bc_support(void);
 
 #endif /* _DEDEDE_CBI_FW_CONFIG__H_ */

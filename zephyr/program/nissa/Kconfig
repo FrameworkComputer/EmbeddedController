@@ -11,6 +11,13 @@ config NISSA_SUB_BOARD
 	  one of a number of option sub-boards with different
 	  hardware configurations.
 
+config NISSA_BOARD_HAS_HDMI_SUPPORT
+	bool "Board supports HDMI sub-boards"
+	default $(dt_nodelabel_enabled,gpio_hdmi_sel)
+	help
+	  Enable board code for managing the state of HDMI connections
+	  on a sub-board.
+
 config BOARD_NIVVIKS
 	bool "Google Nivviks Board"
 	help
@@ -28,6 +35,18 @@ config BOARD_NEREID_CX
 	help
 	  Build Google Nereid reference board, but with IT81302 CX EC rather
 	  than IT81302 BX.
+
+config BOARD_NOKRIS
+        bool "Google Nokris Board"
+        help
+          Build Google Nokris reference board. Nokris has Intel ADL-N SoC
+          with NPCX993FA0BX EC.
+
+config BOARD_NAKTAL
+        bool "Google Naktal Board"
+        help
+          Build Google Naktal reference board. Naktal has Intel ADL-N Soc
+	      with IT81302 EC.
 
 config BOARD_CRAASK
 	bool "Google Craask Board"
@@ -71,6 +90,12 @@ config BOARD_YAVILLA
 	  Build Google Yavilla board. Yavilla has Intel ADL-N SoC
 	  with IT81302 EC.
 
+config BOARD_YAVISTA
+	bool "Google Yavista Board"
+	help
+	  Build Google Yavista board. Yavista has Intel ADL-N SoC
+	  with IT81302 EC.
+
 config BOARD_ULDREN
 	bool "Google Uldren Board"
 	help
@@ -82,6 +107,36 @@ config BOARD_GOTHRAX
 	help
 	  Build Google Gothrax reference board. Gothrax has Intel ADL-N SoC
 	  with IT81302 EC.
+
+config BOARD_CRAASKOV
+	bool "Google Craaskov Board"
+	help
+	  Build Google Craaskov reference board. Craaskov has Intel ADL-N SoC
+	  with NPCX993FA0BX EC.
+
+config BOARD_QUANDISO
+	bool "Google Quandiso Board"
+	help
+	  Build Google Quandiso board. Quandiso has Intel ADL-N SoC
+	  with IT81302 EC.
+
+config BOARD_PIRRHA
+	bool "Google Pirrha Board"
+	help
+	  Build Google Pirrha reference board. Pirrha has Intel ADL-N SoC
+	  with IT81302 EC.
+
+config BOARD_ANRAGGAR
+	bool "Google Anraggar Board"
+	help
+	  Build Google Anraggar reference board. Anraggar has Intel ADL-N SoC
+	  with IT81302 EC.
+
+config BOARD_GLASSWAY
+	bool "Google Glassway Board"
+	help
+	  Build Google Glassway reference board. Nivviks has Intel ADL-N SoC
+	  with NPCX993FA0BX EC.
 
 module = NISSA
 module-str = Nissa board-specific code

@@ -9,7 +9,7 @@
 
 #include <zephyr/fff.h>
 #include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test_new.h>
+#include <zephyr/ztest_test.h>
 
 #define TEST_PORT 0
 

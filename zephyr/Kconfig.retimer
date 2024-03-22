@@ -61,7 +61,7 @@ config PLATFORM_EC_USBC_RETIMER_INTEL_HB
 
 config PLATFORM_EC_USBC_RETIMER_INTEL_BB_RUNTIME_CONFIG
 	bool "Use runtime configuration of Intel Burnside Bridge"
-	depends on PLATFORM_EC_USBC_RETIMER_INTEL_BB
+	depends on PLATFORM_EC_USBC_RETIMER_INTEL_BB || PLATFORM_EC_USBC_RETIMER_INTEL_HB
 	default y
 	help
 	  Enable this to allow run-time configuration of the Burnside Bridge
@@ -90,6 +90,14 @@ config PLATFORM_EC_USBC_RETIMER_ANX7451
 	  ANX7451 has built-in re-timers to recover both the USB and DP signals
 	  with loss compensation of 23dB for USB and up to 27dB for DP.
 
+config PLATFORM_EC_USBC_RETIMER_PS8802
+	bool "Parade PS8802 USB Type-C Retimer for USB and DP Alternate Mode"
+	default y
+	depends on DT_HAS_PARADE_PS8802_ENABLED
+	help
+	  PS8802 is a 10Gbps retimer for Type-C applications with the
+	  integrated USB3.1 and DisplayPort alternate mode port.
+
 config PLATFORM_EC_USBC_RETIMER_PS8818
 	bool "Parade PS8818 USB Type-C Retimer for USB and DP Alternate Mode"
 	default y
@@ -97,6 +105,22 @@ config PLATFORM_EC_USBC_RETIMER_PS8818
 	help
 	  PS8818 is a 10Gbps retimer for Type-C applications with the
 	  integrated USB3.1 and DisplayPort alternate mode port.
+
+config PLATFORM_EC_USBC_RETIMER_PS8828
+	bool "Parade PS8828 USB Type-C Retimer for USB and DP Alternate Mode"
+	default y
+	depends on DT_HAS_PARADE_PS8828_ENABLED
+	help
+	  This is a Parade USB type-C 10Gbps retimer for USB 3.2 Gen2x2 and DP 1.4
+	  alternate.
+
+config PLATFORM_EC_USBC_RETIMER_PS8833
+	bool "Parade PS8833 USB Type-C Retimer for USB and DP Alternate Mode"
+	default y
+	depends on DT_HAS_PARADE_PS8833_ENABLED
+	help
+	  This is a Parade USB type-C 10Gbps retimer for USB 3.2 Gen2x2 and DP 1.4
+	  alternate.
 
 config PLATFORM_EC_USBC_RETIMER_KB800X
 	bool "Enable KB800X retimer"

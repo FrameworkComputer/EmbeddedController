@@ -1,0 +1,29 @@
+# Copyright 2023 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config FP_FPC_BEP_ALGORITHM
+	bool "FPC BEP matching algorithm"
+	default y if FINGERPRINT_SENSOR_FPC1025
+	help
+	  Enable FPC BEP matching algorithm. To work properly, FPC private
+	  library is required.
+
+config FP_ALGORITHM_TEMPLATE_SIZE
+	int "Size of template size"
+	default 5092 if FINGERPRINT_SENSOR_FPC1025 && FP_FPC_BEP_ALGORITHM
+	default 0
+	help
+	  Constant value corresponding to the maximum template size.
+	  Client template memory allocation must have this size.
+	  This includes extra memory for template update.
+
+	  For example, for FPC1025 sensor template size is 5092 bytes which
+	  consists of template size + alignment padding + size of template
+	  size variable.
+
+config HAVE_BEP_PRIVATE_DRIVER
+	bool
+	default n
+	help
+	  If enabled, it indicates that BEP private driver is present.

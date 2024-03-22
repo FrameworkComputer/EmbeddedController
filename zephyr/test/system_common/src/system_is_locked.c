@@ -7,7 +7,7 @@
 
 #include <zephyr/shell/shell_dummy.h>
 #include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test_new.h>
+#include <zephyr/ztest_test.h>
 
 ZTEST_USER(system_is_locked, test_syslock_console_cmd)
 {

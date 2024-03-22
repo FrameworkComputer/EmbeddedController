@@ -53,7 +53,7 @@ patch "${tmp}" << EOF
 + * NOTE: This file is auto-generated from ChromeOS EC Open Source code from
 + * https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/include/ec_commands.h
   */
- 
+
  /* Host communication command constants for Chrome EC */
 EOF
 

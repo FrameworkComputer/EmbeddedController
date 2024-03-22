@@ -3,6 +3,12 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #ifndef ZEPHYR_CHROME_I2C_I2C_H
 #define ZEPHYR_CHROME_I2C_I2C_H
 
@@ -206,5 +212,13 @@ const struct device *i2c_get_device_for_port(const int port);
  * @return Port number used in EC. -1 if the remote port is not defined
  */
 int i2c_get_port_from_remote_port(int remote_port);
+
+/**
+ * @brief Get legacy I2C port enum from Zephyr device pointer
+ *
+ * @param i2c_dev Zephyr device struct pointer for the target I2C port
+ * @return i2c_ports enum if match is found, or -1 if not.
+ */
+enum i2c_ports i2c_get_port_from_device(const struct device *i2c_dev);
 
 #endif /* ZEPHYR_CHROME_I2C_I2C_H */

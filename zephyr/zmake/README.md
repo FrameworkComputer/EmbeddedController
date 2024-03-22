@@ -29,14 +29,14 @@ Chromium OS's meta-build tool for Zephyr
 | `-L`, `--no-log-label` | Turn off logging labels |
 | `--log-label` | Turn on logging labels |
 | `--modules-dir MODULES_DIR` | The path to a directory containing all modules needed.  If unspecified, zmake will assume you have a Chrome OS checkout and try locating them in the checkout. |
-| `--projects-dir PROJECTS_DIR` | Base directory to search for BUILD.py files. |
+| `--projects-dir PROJECTS_DIR` | Base directory to search for BUILD.py files. Can be repeated. |
 | `--zephyr-base ZEPHYR_BASE` | Path to Zephyr OS repository |
 
 ## Subcommands
 
 ### zmake configure
 
-**Usage:** `zmake configure [-h] [--bringup] [--clobber] [--static] [--save-temps] [--allow-warnings] [-B BUILD_DIR] [-c] [--delete-intermediates] [-D CMAKE_DEFS] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
+**Usage:** `zmake configure [-h] [--bringup] [--clobber] [-v VERSION] [--static] [--save-temps] [--allow-warnings] [--cmake-trace] [-B BUILD_DIR] [-c] [--delete-intermediates] [-D CMAKE_DEFS] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
 
 #### Positional Arguments
 
@@ -51,9 +51,11 @@ Chromium OS's meta-build tool for Zephyr
 | `-h`, `--help` | show this help message and exit |
 | `--bringup` | Enable bringup debugging features |
 | `--clobber` | Delete existing build directories, even if configuration is unchanged |
-| `--static` | Generate static version information for reproducible builds |
+| `-v VERSION`, `--version VERSION` | Base version string to use in build |
+| `--static` | Generate static version information for reproducible builds and official builds |
 | `--save-temps` | Save the temporary files containing preprocessor output |
 | `--allow-warnings` | Do not treat warnings as errors |
+| `--cmake-trace` | None |
 | `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Root build directory, project files will be in ${build_dir}/${project_name} |
 | `-c`, `--coverage` | Enable CONFIG_COVERAGE Kconfig. |
 | `--delete-intermediates` | Delete intermediate files to save disk space |
@@ -64,7 +66,7 @@ Chromium OS's meta-build tool for Zephyr
 
 ### zmake build
 
-**Usage:** `zmake build [-h] [--bringup] [--clobber] [--static] [--save-temps] [--allow-warnings] [-B BUILD_DIR] [-c] [--delete-intermediates] [-D CMAKE_DEFS] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
+**Usage:** `zmake build [-h] [--bringup] [--clobber] [-v VERSION] [--static] [--save-temps] [--allow-warnings] [--cmake-trace] [-B BUILD_DIR] [-c] [--delete-intermediates] [-D CMAKE_DEFS] [-t TOOLCHAIN] [--extra-cflags EXTRA_CFLAGS] (-a | project_name [project_name ...])`
 
 #### Positional Arguments
 
@@ -79,9 +81,11 @@ Chromium OS's meta-build tool for Zephyr
 | `-h`, `--help` | show this help message and exit |
 | `--bringup` | Enable bringup debugging features |
 | `--clobber` | Delete existing build directories, even if configuration is unchanged |
-| `--static` | Generate static version information for reproducible builds |
+| `-v VERSION`, `--version VERSION` | Base version string to use in build |
+| `--static` | Generate static version information for reproducible builds and official builds |
 | `--save-temps` | Save the temporary files containing preprocessor output |
 | `--allow-warnings` | Do not treat warnings as errors |
+| `--cmake-trace` | None |
 | `-B BUILD_DIR`, `--build-dir BUILD_DIR` | Root build directory, project files will be in ${build_dir}/${project_name} |
 | `-c`, `--coverage` | Enable CONFIG_COVERAGE Kconfig. |
 | `--delete-intermediates` | Delete intermediate files to save disk space |

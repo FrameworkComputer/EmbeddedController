@@ -1,0 +1,121 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_posix.dts>
+#include <it8xxx2_emul.dts>
+#include <usbc-policy.dtsi>
+
+/ {
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		/* Configure just the DB port
+		 */
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			chg = <&charger>;
+			pdc = <&rts5453p_emul>;
+			chg = <&isl923x_emul>;
+			policy = <&cros_policy>;
+			pd-retimer;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+
+		port1@0 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			pdc = <&rts5453p_emul2>;
+			policy = <&cros_policy>;
+			pd-retimer;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
+
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+
+	batteries {
+		default_battery: lgc_ac17a8m {
+			compatible = "lgc,ac17a8m", "battery-smart";
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_usb_c0: ec_i2c_usb_c0 {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_USB_C0_TCPC";
+		};
+
+		i2c_ec_i2c_charger: ec_i2c_charger {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_BATTERY";
+		};
+	};
+
+};
+
+&i2c0 {
+	battery: sb@b {
+		compatible = "zephyr,smart-battery-emul";
+		reg = <0xb>;
+		cycle-count = <6>;
+		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
+		desired-charg-volt = <11250>;
+		desired-charg-cur = <2400>;
+		mf-name = "LGC";
+		dev-name = "AP18C8K";
+	};
+
+	isl923x_emul: isl923x@9 {
+		compatible = "cros,isl923x-emul";
+		status = "okay";
+		reg = <0x09>;
+		battery = <&battery>;
+	};
+
+	smbus_ara_emul: smbus_ara@c {
+		compatible = "zephyr,smbus-ara-emul";
+		reg = <0xc>;
+		device-address = <0x66>;
+	};
+
+	rts5453p_emul: rts5453p@66 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x66>;
+		irq-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+	};
+
+	rts5453p_emul2: rts5453p@67 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x67>;
+		irq-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+	};
+
+	charger: isl9238@9 {
+		compatible = "cros,isl923x-emul";
+		status = "okay";
+		reg = <0x9>;
+		battery = <&battery>;
+	};
+};

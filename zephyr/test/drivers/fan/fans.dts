@@ -1,0 +1,38 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	fans {
+		compatible = "cros-ec,fans";
+
+		fan0: fan_0 {
+			pwms = <&pwm_fan 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+			rpm_min = <3100>;
+			rpm_start = <3100>;
+			rpm_max = <8000>;
+			tach = <&tach_fan>;
+			pgood_gpio = <&gpio_test>;
+		};
+	};
+	pwms {
+		pwm_fan: pwm@6 {
+			compatible = "cros,pwm-mock";
+			reg = <6 1>;
+			#pwm-cells = <3>;
+			status = "okay";
+		};
+	};
+	tachs {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		tach_fan: tach@0 {
+			compatible = "cros,tach-mock";
+			reg = <0 1>;
+			#tach-cells = <3>;
+			status = "okay";
+		};
+	};
+};

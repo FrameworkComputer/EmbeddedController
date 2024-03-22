@@ -6,7 +6,7 @@
 #ifndef __MOCK_FPSENSOR_DETECT_MOCK_H
 #define __MOCK_FPSENSOR_DETECT_MOCK_H
 
-#include "fpsensor_detect.h"
+#include "fpsensor/fpsensor_detect.h"
 
 struct mock_ctrl_fpsensor_detect {
 	enum fp_sensor_type fpsensor_detect_get_type_return;

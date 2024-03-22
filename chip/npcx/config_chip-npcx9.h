@@ -18,6 +18,7 @@
 /* Chip ID for all variants */
 #define NPCX996F_CHIP_ID 0x21
 #define NPCX993F_CHIP_ID 0x25
+#define NPCX99FP_CHIP_ID 0x2b
 
 /*****************************************************************************/
 /* Hardware features */
@@ -31,7 +32,7 @@
 #define NPCX_UART_FIFO_SUPPORT
 /* Number of UART modules. */
 #define NPCX_SECOND_UART
-#define UART_MODULE_COUNT 2
+#define UART_MODULE_COUNT 4
 
 /*
  * For NPCX9, PS2_2 & PS2_3 pins also support other alternate functions
@@ -103,7 +104,7 @@
 /* Two blocks of data RAM - total size is 64KB */
 #define CONFIG_DATA_RAM_SIZE 0x00010000
 #define CONFIG_RAM_SIZE CONFIG_DATA_RAM_SIZE
-#elif defined(CHIP_VARIANT_NPCX9M8S)
+#elif defined(CHIP_VARIANT_NPCX9MFP)
 /*
  * 416KB program RAM, 1MB of Flash.
  */
@@ -127,7 +128,7 @@
 
 /* Internal spi-flash setting */
 #define CONFIG_SPI_FLASH_REGS
-#if defined(CHIP_VARIANT_NPCX9M8S)
+#if defined(CHIP_VARIANT_NPCX9MFP)
 #define CONFIG_SPI_FLASH_W25Q80 /* Internal spi flash type */
 #define CONFIG_FLASH_SIZE_BYTES 0x00100000 /* 1 MB internal spi flash */
 #else

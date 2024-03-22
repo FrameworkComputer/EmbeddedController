@@ -1,4 +1,4 @@
-#!/usr/bin/env python3.8
+#!/usr/bin/env python3
 # -*- coding: utf-8 -*-
 # Copyright 2021 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
@@ -11,16 +11,25 @@ This is the entry point for the custom firmware builder workflow recipe.
 
 import argparse
 import multiprocessing
+import os
 import pathlib
 import re
 import shlex
+import shutil
 import subprocess
 import sys
 
 from google.protobuf import json_format  # pylint: disable=import-error
-import zmake.project
 
 from chromite.api.gen_sdk.chromite.api import firmware_pb2
+
+
+# Add the zmake dir early in the python search path
+ZEPHYR_DIR = pathlib.Path(__file__).parent.resolve()
+sys.path.insert(1, str(ZEPHYR_DIR / "zmake"))
+
+import zmake.modules  # pylint: disable=wrong-import-position
+import zmake.project  # pylint: disable=wrong-import-position
 
 
 DEFAULT_BUNDLE_DIRECTORY = "/tmp/artifact_bundles"
@@ -28,14 +37,15 @@ DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"
 
 # Boards that we want to track the coverage of our own files specifically.
 SPECIAL_BOARDS = [
-    "herobrine",
     "krabby",
     "skyrim",
     "kingler",
     "rex",
     "geralt",
     "roach",
-    "myst",
+    "ovis",
+    "brox",
+    "rauru",
     # Nissa variants
     "nereid",
     "nivviks",
@@ -68,37 +78,76 @@ def log_cmd(cmd, env=None):
     sys.stdout.flush()
 
 
+def find_checkout():
+    """Find the path to the base of the checkout (e.g., ~/chromiumos)."""
+    for path in pathlib.Path(__file__).resolve().parents:
+        if (path / ".repo").is_dir():
+            return path
+    raise FileNotFoundError("Unable to locate the root of the checkout")
+
+
 def build(opts):
     """Builds all Zephyr firmware targets"""
-    metric_list = firmware_pb2.FwBuildMetricList()
+    metric_list = firmware_pb2.FwBuildMetricList()  # pylint: disable=no-member
+    env = os.environ.copy()
+    env.update(
+        {
+            "PYTHONPATH": str(ZEPHYR_DIR / "zmake"),
+        }
+    )
 
-    zephyr_dir = pathlib.Path(__file__).parent.resolve()
-    platform_ec = zephyr_dir.parent
+    platform_ec = ZEPHYR_DIR.parent
+    modules = zmake.modules.locate_from_checkout(find_checkout())
+    projects_path = zmake.modules.default_projects_dirs(modules)
     subprocess.run(
         [platform_ec / "util" / "check_clang_format.py"],
         check=True,
         cwd=platform_ec,
         stdin=subprocess.DEVNULL,
+        env=env,
+    )
+
+    # Validate board targets are reflected as Bazel targets
+    cmd = ["pytest", "-v", "bazel/test_gen_bazel_targets.py"]
+    subprocess.run(
+        cmd,
+        cwd=platform_ec,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        env=env,
     )
 
     # Start with a clean build environment
     cmd = ["make", "clobber"]
     log_cmd(cmd)
-    subprocess.run(cmd, cwd=platform_ec, check=True, stdin=subprocess.DEVNULL)
+    subprocess.run(
+        cmd,
+        cwd=platform_ec,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        env=env,
+    )
 
     cmd = ["zmake", "-D", "build", "-a"]
     if opts.code_coverage:
         cmd.append("--coverage")
     log_cmd(cmd)
-    subprocess.run(cmd, cwd=zephyr_dir, check=True, stdin=subprocess.DEVNULL)
+    subprocess.run(
+        cmd,
+        cwd=ZEPHYR_DIR,
+        check=True,
+        stdin=subprocess.DEVNULL,
+        env=env,
+    )
     if not opts.code_coverage:
-        for project in zmake.project.find_projects(zephyr_dir).values():
+        for project in zmake.project.find_projects(projects_path).values():
             build_dir = (
                 platform_ec / "build" / "zephyr" / project.config.project_name
             )
             metric = metric_list.value.add()
-            metric.target_name = project.config.project_name
-            metric.platform_name = project.config.zephyr_board
+            full_name = project.config.full_name.split(".")
+            metric.target_name = full_name[-1]
+            metric.platform_name = ".".join(full_name[:-1])
             for variant, _ in project.iter_builds():
                 build_log = build_dir / f"build-{variant}" / "build.log"
                 parse_buildlog(
@@ -107,7 +156,7 @@ def build(opts):
                     variant.upper(),
                     metric.target_name in SPECIAL_BOARDS,
                 )
-    with open(opts.metrics, "w") as file:
+    with open(opts.metrics, "w", encoding="utf-8") as file:
         file.write(json_format.MessageToJson(metric_list))
 
 
@@ -119,9 +168,31 @@ UNITS = {
 }
 
 
+def _memory_region_is_valid(parts):
+    """Verify a region (FLASH, RAM, ETC) from the in build.log memory report."""
+    # Expected format
+    #    <region>: <used-bytes> <unit> <total-bytes> <unit>
+    if len(parts) < 5:
+        return False
+
+    # Region name must have a trailing colon
+    if not parts[0].endswith(":"):
+        return False
+
+    # Verify "used" size and units
+    if not parts[1].isdecimal() or not parts[2] in UNITS:
+        return False
+
+    # Verify "region" size and units
+    if not parts[3].isdecimal() or not parts[4] in UNITS:
+        return False
+
+    return True
+
+
 def parse_buildlog(filename, metric, variant, track_on_gerrit):
     """Parse the build.log generated by zmake to find the size of the image."""
-    with open(filename, "r") as infile:
+    with open(filename, "r", encoding="utf-8") as infile:
         # Skip over all lines until the memory report is found
         while True:
             line = infile.readline()
@@ -135,6 +206,13 @@ def parse_buildlog(filename, metric, variant, track_on_gerrit):
             if not line.startswith(" "):
                 continue
             parts = line.split()
+
+            if not _memory_region_is_valid(parts):
+                print(
+                    f"Warning: {metric.target_name} unsupported memory region: '{line[:-1]}'"
+                )
+                continue
+
             fw_section = metric.fw_section.add()
             fw_section.region = variant + "_" + parts[0][:-1]
             fw_section.used = int(parts[1]) * UNITS[parts[2]]
@@ -173,17 +251,16 @@ def write_metadata(opts, info):
     bundle_metadata_file = (
         opts.metadata if opts.metadata else DEFAULT_BUNDLE_METADATA_FILE
     )
-    with open(bundle_metadata_file, "w") as file:
+    with open(bundle_metadata_file, "w", encoding="utf-8") as file:
         file.write(json_format.MessageToJson(info))
 
 
 def bundle_coverage(opts):
     """Bundles the artifacts from code coverage into its own tarball."""
-    info = firmware_pb2.FirmwareArtifactInfo()
+    info = firmware_pb2.FirmwareArtifactInfo()  # pylint: disable=no-member
     info.bcs_version_info.version_string = opts.bcs_version
     bundle_dir = get_bundle_dir(opts)
-    zephyr_dir = pathlib.Path(__file__).parent.resolve()
-    platform_ec = zephyr_dir.parent
+    platform_ec = ZEPHYR_DIR.parent
     build_dir = platform_ec / "build" / "zephyr"
     tarball_name = "coverage.tbz2"
     tarball_path = bundle_dir / tarball_name
@@ -193,7 +270,7 @@ def bundle_coverage(opts):
     meta = info.objects.add()
     meta.file_name = tarball_name
     meta.lcov_info.type = (
-        firmware_pb2.FirmwareArtifactInfo.LcovTarballInfo.LcovType.LCOV
+        firmware_pb2.FirmwareArtifactInfo.LcovTarballInfo.LcovType.LCOV  # pylint: disable=no-member
     )
     (bundle_dir / "html").mkdir(exist_ok=True)
     cmd = ["mv", "lcov_rpt"]
@@ -211,12 +288,13 @@ def bundle_coverage(opts):
 
 def bundle_firmware(opts):
     """Bundles the artifacts from each target into its own tarball."""
-    info = firmware_pb2.FirmwareArtifactInfo()
+    info = firmware_pb2.FirmwareArtifactInfo()  # pylint: disable=no-member
     info.bcs_version_info.version_string = opts.bcs_version
     bundle_dir = get_bundle_dir(opts)
-    zephyr_dir = pathlib.Path(__file__).parent.resolve()
-    platform_ec = zephyr_dir.parent
-    for project in zmake.project.find_projects(zephyr_dir).values():
+    platform_ec = ZEPHYR_DIR.parent
+    modules = zmake.modules.locate_from_checkout(find_checkout())
+    projects_path = zmake.modules.default_projects_dirs(modules)
+    for project in zmake.project.find_projects(projects_path).values():
         build_dir = (
             platform_ec / "build" / "zephyr" / project.config.project_name
         )
@@ -231,19 +309,30 @@ def bundle_firmware(opts):
         meta = info.objects.add()
         meta.file_name = tarball_name
         meta.tarball_info.type = (
-            firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.EC
+            firmware_pb2.FirmwareArtifactInfo.TarballInfo.FirmwareType.EC  # pylint: disable=no-member
         )
         # TODO(kmshelton): Populate the rest of metadata contents as it
         # gets defined in infra/proto/src/chromite/api/firmware.proto.
+
+    tokens_file = "tokens.bin"
+    tokens_path = platform_ec / "build" / tokens_file
+    print(f"{tokens_path} exists={pathlib.Path(tokens_path).is_file()}")
+    if pathlib.Path(tokens_path).is_file():
+        cmd = ["shutil.copyfile", tokens_path, bundle_dir / tokens_file]
+        log_cmd(cmd)
+        shutil.copyfile(tokens_path, bundle_dir / tokens_file)
+        meta = info.objects.add()
+        meta.file_name = tokens_file
+        meta.token_info.type = (
+            firmware_pb2.FirmwareArtifactInfo.TokenDatabaseInfo.TokenDatabaseType.EC  # pylint: disable=no-member
+        )
 
     write_metadata(opts, info)
 
 
 def test(opts):
     """Runs all of the unit tests for Zephyr firmware"""
-    metrics = firmware_pb2.FwTestMetricList()
-
-    zephyr_dir = pathlib.Path(__file__).parent.resolve()
+    metrics = firmware_pb2.FwTestMetricList()  # pylint: disable=no-member
 
     # Run tests from Makefile.cq because make knows how to run things
     # in parallel.
@@ -256,20 +345,23 @@ def test(opts):
     subprocess.run(
         cmd,
         check=True,
-        cwd=zephyr_dir,
+        cwd=ZEPHYR_DIR,
         stdin=subprocess.DEVNULL,
     )
 
     # Twister-based tests
-    platform_ec = zephyr_dir.parent
+    platform_ec = ZEPHYR_DIR.parent
     twister_out_dir = platform_ec / "twister-out-llvm"
     twister_out_dir_gcc = platform_ec / "twister-out-host"
+    modules = zmake.modules.locate_from_checkout(find_checkout())
+    projects_path = zmake.modules.default_projects_dirs(modules)
 
     if opts.code_coverage:
         build_dir = platform_ec / "build" / "zephyr"
-        _extract_lcov_summary(
-            "EC_ZEPHYR_TESTS", metrics, twister_out_dir / "coverage.info"
-        )
+        if twister_out_dir.exists():
+            _extract_lcov_summary(
+                "EC_ZEPHYR_TESTS", metrics, twister_out_dir / "coverage.info"
+            )
         _extract_lcov_summary(
             "EC_ZEPHYR_TESTS_GCC",
             metrics,
@@ -289,14 +381,15 @@ def test(opts):
             "ALL_FILTERED", metrics, build_dir / "lcov_no_tests.info"
         )
 
-        for board in SPECIAL_BOARDS:
-            _extract_lcov_summary(
-                f"BOARD_{board}".upper(),
-                metrics,
-                build_dir / (board + "_final.info"),
-            )
+        for project in zmake.project.find_projects(projects_path).values():
+            if project.config.project_name in SPECIAL_BOARDS:
+                _extract_lcov_summary(
+                    f"BOARD_{project.config.full_name}".upper(),
+                    metrics,
+                    build_dir / (project.config.project_name + "_final.info"),
+                )
 
-    with open(opts.metrics, "w") as file:
+    with open(opts.metrics, "w", encoding="utf-8") as file:
         file.write(json_format.MessageToJson(metrics))  # type: ignore
 
 
@@ -306,16 +399,17 @@ COVERAGE_RE = re.compile(
 
 
 def _extract_lcov_summary(name, metrics, filename):
-    zephyr_dir = pathlib.Path(__file__).parent.resolve()
     cmd = [
         "/usr/bin/lcov",
+        "--ignore-errors",
+        "inconsistent",
         "--summary",
         filename,
     ]
     log_cmd(cmd)
     output = subprocess.run(
         cmd,
-        cwd=zephyr_dir,
+        cwd=ZEPHYR_DIR,
         check=True,
         stdout=subprocess.PIPE,
         universal_newlines=True,

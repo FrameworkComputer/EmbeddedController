@@ -9,13 +9,13 @@
 
 def register_intelrvp_project(
     project_name,
-    chip="npcx9m3f",
+    chip,
     extra_dts_overlays=(),
     extra_kconfig_files=(),
 ):
     """Register a variant of intelrvp."""
     register_func = register_binman_project
-    if chip.startswith("mec1727"):
+    if chip.startswith("mec172"):
         register_func = register_mchp_project
     elif chip.startswith("npcx"):
         register_func = register_npcx_project
@@ -43,7 +43,7 @@ def register_intelrvp_project(
 
 register_intelrvp_project(
     project_name="adlrvp_mchp",
-    chip="mec1727",
+    chip="mec172x/mec172x_nsz/mec1727",
     extra_dts_overlays=[
         here / "adlrvp/adlrvp_mchp/adlrvp_mchp.dts",
         here / "adlrvp/adlrvp_mchp/gpio.dts",
@@ -60,7 +60,7 @@ register_intelrvp_project(
 
 register_intelrvp_project(
     project_name="adlrvp_npcx",
-    chip="npcx9m7f",
+    chip="npcx9/npcx9m7f",
     extra_dts_overlays=[
         here / "adlrvp/adlrvp_npcx/adlrvp_npcx.dts",
         here / "adlrvp/adlrvp_npcx/fan.dts",
@@ -79,14 +79,42 @@ register_intelrvp_project(
 
 
 register_intelrvp_project(
-    project_name="mtlrvpp_mchp",
-    chip="mec1727",
+    project_name="mtlrvpp_m1723",
+    chip="mec172x/mec172x_nsz/mec1723",
     extra_dts_overlays=[
         here / "mtlrvp/mtlrvpp_mchp/fan.dts",
         here / "mtlrvp/mtlrvpp_mchp/gpio.dts",
         here / "mtlrvp/mtlrvpp_mchp/keyboard.dts",
         here / "mtlrvp/mtlrvpp_npcx/interrupts.dts",
+        here / "mtlrvp/mtlrvpp_npcx/tcpc_interrupts.dts",
         here / "mtlrvp/ioex.dts",
+        here / "mtlrvp/tcpc_ioex.dts",
+        here / "mtlrvp/mtlrvpp_mchp/mtlrvp_mchp.dts",
+        here / "mtlrvp/mtlrvpp_m1723/mtlrvp_flash.dts",
+        here / "mtlrvp/mtlrvpp_mchp/mtlrvp_mchp_power_signals.dts",
+        here / "adlrvp/adlrvp_npcx/temp_sensor.dts",
+        here / "mtlrvp/usbc.dts",
+    ],
+    extra_kconfig_files=[
+        here / "zephyr_ap_pwrseq.conf",
+        here / "mtlrvp/mtlrvpp_m1723/prj.conf",
+        here / "mtlrvp/mtlrvpp_mchp/board_mchp.conf",
+        here / "mtlrvp/tcpc.conf",
+    ],
+)
+
+
+register_intelrvp_project(
+    project_name="mtlrvpp_mchp",
+    chip="mec172x/mec172x_nsz/mec1727",
+    extra_dts_overlays=[
+        here / "mtlrvp/mtlrvpp_mchp/fan.dts",
+        here / "mtlrvp/mtlrvpp_mchp/gpio.dts",
+        here / "mtlrvp/mtlrvpp_mchp/keyboard.dts",
+        here / "mtlrvp/mtlrvpp_npcx/interrupts.dts",
+        here / "mtlrvp/mtlrvpp_npcx/tcpc_interrupts.dts",
+        here / "mtlrvp/ioex.dts",
+        here / "mtlrvp/tcpc_ioex.dts",
         here / "mtlrvp/mtlrvpp_mchp/mtlrvp_mchp.dts",
         here / "mtlrvp/mtlrvpp_mchp/mtlrvp_mchp_power_signals.dts",
         here / "adlrvp/adlrvp_npcx/temp_sensor.dts",
@@ -95,20 +123,26 @@ register_intelrvp_project(
     extra_kconfig_files=[
         here / "zephyr_ap_pwrseq.conf",
         here / "mtlrvp/mtlrvpp_mchp/prj.conf",
+        here / "mtlrvp/mtlrvpp_mchp/board_mchp.conf",
+        here / "mtlrvp/tcpc.conf",
     ],
 )
 
 
 register_intelrvp_project(
     project_name="mtlrvpp_npcx",
-    chip="npcx9m3f",
+    chip="npcx9/npcx9m3f",
     extra_dts_overlays=[
         here / "mtlrvp/mtlrvpp_npcx/fan.dts",
         here / "mtlrvp/mtlrvpp_npcx/gpio.dts",
+        here / "mtlrvp/mtlrvpp_npcx/tcpc_gpio.dts",
         here / "mtlrvp/mtlrvpp_npcx/keyboard.dts",
         here / "mtlrvp/mtlrvpp_npcx/interrupts.dts",
+        here / "mtlrvp/mtlrvpp_npcx/tcpc_interrupts.dts",
         here / "mtlrvp/ioex.dts",
+        here / "mtlrvp/tcpc_ioex.dts",
         here / "mtlrvp/mtlrvpp_npcx/mtlrvp_npcx.dts",
+        here / "mtlrvp/mtlrvpp_npcx/tcpc_i2c.dts",
         here / "mtlrvp/mtlrvpp_npcx/mtlrvp_npcx_power_signals.dts",
         here / "adlrvp/adlrvp_npcx/temp_sensor.dts",
         here / "mtlrvp/usbc.dts",
@@ -116,5 +150,40 @@ register_intelrvp_project(
     extra_kconfig_files=[
         here / "zephyr_ap_pwrseq.conf",
         here / "mtlrvp/mtlrvpp_npcx/prj.conf",
+        here / "mtlrvp/mtlrvpp_npcx/board_npcx.conf",
+        here / "mtlrvp/tcpc.conf",
     ],
 )
+
+register_intelrvp_project(
+    project_name="mtlrvpp_pd",
+    chip="npcx9/npcx9m3f",
+    extra_dts_overlays=[
+        here / "mtlrvp/mtlrvpp_npcx/fan.dts",
+        here / "mtlrvp/mtlrvpp_npcx/gpio.dts",
+        here / "mtlrvp/mtlrvpp_pd/gpio.dts",
+        here / "mtlrvp/mtlrvpp_npcx/keyboard.dts",
+        here / "mtlrvp/mtlrvpp_npcx/interrupts.dts",
+        here / "mtlrvp/ioex.dts",
+        here / "mtlrvp/mtlrvpp_npcx/mtlrvp_npcx.dts",
+        here / "mtlrvp/mtlrvpp_pd/pd_i2c.dts",
+        here / "mtlrvp/mtlrvpp_npcx/mtlrvp_npcx_power_signals.dts",
+        here / "adlrvp/adlrvp_npcx/temp_sensor.dts",
+        here / "mtlrvp/pd.dts",
+    ],
+    extra_kconfig_files=[
+        here / "zephyr_ap_pwrseq.conf",
+        here / "mtlrvp/mtlrvpp_pd/prj.conf",
+        here / "mtlrvp/mtlrvpp_npcx/board_npcx.conf",
+        here / "mtlrvp/pd.conf",
+    ],
+)
+
+# Note for reviews, do not let anyone edit these assertions, the addresses
+# must not change after the first RO release.
+assert_rw_fwid_DO_NOT_EDIT(project_name="adlrvp_mchp", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="adlrvp_npcx", addr=0xCFFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="mtlrvpp_m1723", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="mtlrvpp_mchp", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="mtlrvpp_npcx", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="mtlrvpp_pd", addr=0x7FFE0)

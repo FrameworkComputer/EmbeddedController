@@ -10,14 +10,12 @@ description: Body detection configuration parameters
 properties:
   var_noise_factor:
     type: int
-    required: false
     description: |
       The unit is percentage
       This is used for mitigate the effect of the noise from sensor.
       If set to 100%, the average noise is canceled out.
   var_threshold:
     type: int
-    required: false
     description: |
       The unit is (mm/s^2)^2
       The motion confidence is calculated if the variance is within
@@ -25,7 +23,6 @@ properties:
       is too high/low, confidence will be 100%/0%
   confidence_delta:
     type: int
-    required: false
     description: |
       The unit is (mm/s^2)^2
       The motion confidence is calculated if the variance is within

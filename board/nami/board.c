@@ -396,172 +396,132 @@ const struct temp_sensor_t temp_sensors[TEMP_SENSOR_COUNT] = {
 struct ec_thermal_config thermal_params[TEMP_SENSOR_COUNT];
 
 /* Nami/Vayne Remote 1, 2 */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_A                \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-			[EC_TEMP_THRESH_HALT] = 0, \
-		}, \
-		.temp_fan_off = C_TO_K(39), \
-		.temp_fan_max = C_TO_K(50), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_a = THERMAL_A;
+const static struct ec_thermal_config thermal_a = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(39),
+	.temp_fan_max = C_TO_K(50),
+};
 
 /* Sona Remote 1 */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_B1               \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(82), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(89), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(72), \
-			[EC_TEMP_THRESH_HALT] = 0, \
-		}, \
-		.temp_fan_off = C_TO_K(38), \
-		.temp_fan_max = C_TO_K(58), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_b1 = THERMAL_B1;
+const static struct ec_thermal_config thermal_b1 = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(82),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(89),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(72),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(38),
+	.temp_fan_max = C_TO_K(58),
+};
 
 /* Sona Remote 2 */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_B2               \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(84), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(91), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(74), \
-			[EC_TEMP_THRESH_HALT] = 0, \
-		}, \
-		.temp_fan_off = C_TO_K(40), \
-		.temp_fan_max = C_TO_K(60), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_b2 = THERMAL_B2;
+const static struct ec_thermal_config thermal_b2 = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(84),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(91),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(74),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(60),
+};
 
 /* Pantheon Remote 1 */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_C1               \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(66), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(56), \
-			[EC_TEMP_THRESH_HALT] = 0, \
-		}, \
-		.temp_fan_off = C_TO_K(38), \
-		.temp_fan_max = C_TO_K(61), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_c1 = THERMAL_C1;
+const static struct ec_thermal_config thermal_c1 = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(66),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(56),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(38),
+	.temp_fan_max = C_TO_K(61),
+};
 
 /* Pantheon Remote 2 */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_C2               \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(74), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(82), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = 0, \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(64), \
-			[EC_TEMP_THRESH_HALT] = 0, \
-		}, \
-		.temp_fan_off = C_TO_K(38), \
-		.temp_fan_max = C_TO_K(61), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_c2 = THERMAL_C2;
+const static struct ec_thermal_config thermal_c2 = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(74),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(82),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = 0,
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(64),
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = C_TO_K(38),
+	.temp_fan_max = C_TO_K(61),
+};
 
 /* Akali Local */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_D0               \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(79), \
-			[EC_TEMP_THRESH_HIGH] = 0, \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(81), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(80), \
-			[EC_TEMP_THRESH_HIGH] = 0, \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(82), \
-		}, \
-		.temp_fan_off = C_TO_K(35), \
-		.temp_fan_max = C_TO_K(70), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_d0 = THERMAL_D0;
+const static struct ec_thermal_config thermal_d0 = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(79),
+		[EC_TEMP_THRESH_HIGH] = 0,
+		[EC_TEMP_THRESH_HALT] = C_TO_K(81),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(80),
+		[EC_TEMP_THRESH_HIGH] = 0,
+		[EC_TEMP_THRESH_HALT] = C_TO_K(82),
+	},
+	.temp_fan_off = C_TO_K(35),
+	.temp_fan_max = C_TO_K(70),
+};
 
 /* Akali Remote 1 */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_D1               \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(59), \
-			[EC_TEMP_THRESH_HIGH] = 0, \
-			[EC_TEMP_THRESH_HALT] = 0, \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(60), \
-			[EC_TEMP_THRESH_HIGH] = 0, \
-			[EC_TEMP_THRESH_HALT] = 0, \
-		}, \
-		.temp_fan_off = 0, \
-		.temp_fan_max = 0, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_d1 = THERMAL_D1;
+const static struct ec_thermal_config thermal_d1 = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(59),
+		[EC_TEMP_THRESH_HIGH] = 0,
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(60),
+		[EC_TEMP_THRESH_HIGH] = 0,
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = 0,
+	.temp_fan_max = 0,
+};
 
 /* Akali Remote 2 */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_D2               \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(59), \
-			[EC_TEMP_THRESH_HIGH] = 0, \
-			[EC_TEMP_THRESH_HALT] = 0, \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_WARN] = C_TO_K(60), \
-			[EC_TEMP_THRESH_HIGH] = 0, \
-			[EC_TEMP_THRESH_HALT] = 0, \
-		}, \
-		.temp_fan_off = 0, \
-		.temp_fan_max = 0, \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_d2 = THERMAL_D2;
+const static struct ec_thermal_config thermal_d2 = {
+	.temp_host = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(59),
+		[EC_TEMP_THRESH_HIGH] = 0,
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_WARN] = C_TO_K(60),
+		[EC_TEMP_THRESH_HIGH] = 0,
+		[EC_TEMP_THRESH_HALT] = 0,
+	},
+	.temp_fan_off = 0,
+	.temp_fan_max = 0,
+};
 
 #define I2C_PMIC_READ(reg, data) \
 	i2c_read8(I2C_PORT_PMIC, TPS650X30_I2C_ADDR1_FLAGS, (reg), (data))

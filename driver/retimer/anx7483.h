@@ -16,6 +16,21 @@ struct anx7483_tuning_set {
 	uint8_t value;
 };
 
+extern const size_t anx7483_AA_usb_count;
+extern const size_t anx7483_BA_usb_count;
+extern const size_t anx7483_AA_dp_count;
+extern const size_t anx7483_BA_dp_count;
+extern const size_t anx7483_AA_dock_noflip_count;
+extern const size_t anx7483_BA_dock_noflip_count;
+extern const size_t anx7483_AA_dock_flip_count;
+extern const size_t anx7483_BA_dock_flip_count;
+
+#define ANX7483_AUX_CFG_1 0x01
+#define ANX7483_AUX_CFG_1_REPLY 0
+
+#define ANX7483_AUX_CFG_0 0x7B
+#define ANX7483_AUX_CFG_0_REPLY 0x28
+
 /*
  * LFPS_TIMER register
  *
@@ -147,6 +162,9 @@ struct anx7483_tuning_set {
 #define ANX7483_CFG3_90Ohm_IN 0x7A
 #define ANX7483_CFG3_90Ohm_OUT 0x7E
 
+#define ANX7483_BA_CFG3_90Ohm_IN 0x3A
+#define ANX7483_BA_CFG3_90Ohm_OUT 0x5E
+
 /*
  * AUX_Snooping_CTRL register
  *
@@ -161,6 +179,9 @@ struct anx7483_tuning_set {
  * (register ignored outside DP mode and does not need to be cleared)
  */
 #define ANX7483_AUX_SNOOPING_DEF 0x13
+
+#define ANX7483_CHIP_ID 0x14
+#define ANX7483_BA 0xBA
 
 /*
  * Middle Frequency Compensation

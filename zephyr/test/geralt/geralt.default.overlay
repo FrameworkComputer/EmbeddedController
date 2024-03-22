@@ -1,0 +1,38 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "common.dtsi"
+#include "charger.dtsi"
+#include "../program/geralt/gpio.dtsi"
+#include "../program/geralt/interrupts.dtsi"
+#include "../program/geralt/power_signal.dtsi"
+
+/* remove pinctrl to avoid pull in too many unwanted dependency */
+/delete-node/ &pinctrl;
+
+/delete-node/ &int_volume_up;
+/delete-node/ &int_volume_down;
+/delete-node/ &int_wp;
+/delete-node/ &int_spi0_cs;
+/delete-node/ &int_ccd_mode_odl;
+/delete-node/ &int_lid_360;
+/delete-node/ &int_lid_imu;
+
+&{/aliases} {
+	/delete-property/ int-wp;
+};
+
+/* open-drain is not supported in gpio emul, re-config to push-pull  */
+&ec_pmic_en_odl {
+	gpios = <&gpiod 0 (GPIO_OUTPUT_HIGH | GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+};
+&sys_rst_odl {
+	gpios = <&gpiog 1 GPIO_OUTPUT_LOW>;
+};
+
+/* set default gpio-emul state */
+&power_button_l {
+	gpios = <&gpioe 4 (GPIO_INPUT | GPIO_PULL_UP)>;
+};

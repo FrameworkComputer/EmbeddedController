@@ -29,7 +29,8 @@
 #define CONFIG_POWER_BUTTON_FLAGS 0
 #endif
 
-static int debounced_power_pressed; /* Debounced power button state */
+/* Debounced power button state */
+test_export_static int debounced_power_pressed;
 static int simulate_power_pressed;
 static volatile int power_button_is_stable = 1;
 
@@ -40,7 +41,7 @@ static const struct button_config power_button = {
 	.flags = CONFIG_POWER_BUTTON_FLAGS,
 };
 
-int power_button_signal_asserted(void)
+test_mockable int power_button_signal_asserted(void)
 {
 	return !!(
 		gpio_get_level(power_button.gpio) ==
@@ -110,8 +111,15 @@ int power_button_wait_for_release(int timeout_us)
  */
 static void power_button_init(void)
 {
+	uint32_t boot_keys = keyboard_scan_get_boot_keys();
+
 	if (raw_power_button_pressed())
 		debounced_power_pressed = 1;
+
+	/* Take care of release or press we missed during start-up. */
+	if (((boot_keys & BIT(BOOT_KEY_POWER)) && !debounced_power_pressed) ||
+	    (!(boot_keys & BIT(BOOT_KEY_POWER)) && debounced_power_pressed))
+		hook_notify(HOOK_POWER_BUTTON_CHANGE);
 
 	/* Enable interrupts, now that we've initialized */
 	gpio_enable_interrupt(power_button.gpio);

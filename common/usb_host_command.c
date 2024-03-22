@@ -47,7 +47,7 @@ USB_STREAM_CONFIG_FULL(usbhc_stream, USB_IFACE_HOSTCMD, USB_CLASS_VENDOR_SPEC,
 		       USB_SUBCLASS_GOOGLE_HOSTCMD, USB_PROTOCOL_GOOGLE_HOSTCMD,
 		       USB_STR_HOSTCMD_NAME, USB_EP_HOSTCMD,
 		       USB_MAX_PACKET_SIZE, USB_MAX_PACKET_SIZE, usb_to_hostcmd,
-		       hostcmd_to_usb)
+		       hostcmd_to_usb, 1, 0)
 
 static uint8_t in_msg[USBHC_MAX_REQUEST_SIZE];
 static uint8_t out_msg[USBHC_MAX_RESPONSE_SIZE];

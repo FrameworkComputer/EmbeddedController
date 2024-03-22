@@ -5,6 +5,12 @@
 
 /* uart.h - UART module for Chrome EC */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #ifndef __CROS_EC_UART_H
 #define __CROS_EC_UART_H
 
@@ -239,6 +245,11 @@ int uart_buffer_empty(void);
  * Return boolean expressing whether UART buffer is full or not.
  */
 int uart_buffer_full(void);
+
+/**
+ * Return the number of bytes in the tx buffer
+ */
+int uart_buffer_used(void);
 
 /**
  * Disable the EC console UART and convert the UART RX pin to a generic GPIO

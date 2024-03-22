@@ -70,46 +70,34 @@ const struct fan_t fans[FAN_CH_COUNT] = {
  * 130 C.  However, sensor is located next to DDR, so we need to use the lower
  * DDR temperature limit (80 C)
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CONFIG_WITHOUT_FAN \
-	{                          \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(77), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-		},   \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_config_without_fan =
-	THERMAL_CONFIG_WITHOUT_FAN;
+const static struct ec_thermal_config thermal_config_without_fan = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(77),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+};
 
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CONFIG_WITH_FAN  \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(77), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-		}, \
-		/* For real temperature fan_table (0 ~ 99C) */ \
-		.temp_fan_off = C_TO_K(0), \
-		.temp_fan_max = C_TO_K(99), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_config_with_fan =
-	THERMAL_CONFIG_WITH_FAN;
+const static struct ec_thermal_config thermal_config_with_fan = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(77),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+	/* For real temperature fan_table (0 ~ 99C) */
+	.temp_fan_off = C_TO_K(0),
+	.temp_fan_max = C_TO_K(99),
+};
 
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_CHARGER] = THERMAL_CONFIG_WITH_FAN,
-	[TEMP_SENSOR_2_PP3300_REGULATOR] = THERMAL_CONFIG_WITHOUT_FAN,
-	[TEMP_SENSOR_3_DDR_SOC] = THERMAL_CONFIG_WITHOUT_FAN,
-	[TEMP_SENSOR_4_FAN] = THERMAL_CONFIG_WITHOUT_FAN,
+	[TEMP_SENSOR_1_CHARGER] = thermal_config_with_fan,
+	[TEMP_SENSOR_2_PP3300_REGULATOR] = thermal_config_without_fan,
+	[TEMP_SENSOR_3_DDR_SOC] = thermal_config_without_fan,
+	[TEMP_SENSOR_4_FAN] = thermal_config_without_fan,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 

@@ -159,4 +159,21 @@ extern const struct accelgyro_drv lis2ds_drv;
 
 void lis2ds_interrupt(enum gpio_signal signal);
 
+#if defined(CONFIG_ZEPHYR)
+#if DT_NODE_EXISTS(DT_ALIAS(lis2ds_int))
+/* Get the motion sensor ID of the LIS2DS12 sensor that generates the
+ * interrupt. The interrupt is converted to the event and transferred to
+ * motion sense task that actually handles the interrupt.
+ *
+ * Here we use an alias (lis2ds_int) to get the motion sensor ID. This alias
+ * MUST be defined for this driver to work.
+ * aliases {
+ *   lis2ds-int = &lid_accel;
+ * };
+ */
+#define CONFIG_ACCEL_LIS2DS_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(lis2ds_int)))
+#endif
+#endif
+
 #endif /* __CROS_EC_ACCEL_LIS2DS_H */

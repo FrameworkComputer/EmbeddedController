@@ -105,7 +105,7 @@ static void irq_set_orientation(struct motion_sensor_t *s)
  * This is a "top half" interrupt handler, it just asks motion sense ask
  * to schedule the "bottom half", ->irq_handler().
  */
-void bmi3xx_interrupt(enum gpio_signal signal)
+test_mockable void bmi3xx_interrupt(enum gpio_signal signal)
 {
 	last_interrupt_timestamp = __hw_clock_source_read();
 
@@ -328,15 +328,29 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 	uint16_t int_status[2];
 	uint16_t reg_data[2];
 	struct bmi3_fifo_frame fifo_frame;
+	int rv;
+	int i;
 
 	if ((s->type != MOTIONSENSE_TYPE_ACCEL) ||
 	    (!(*event & CONFIG_ACCELGYRO_BMI3XX_INT_EVENT)))
 		return EC_ERROR_NOT_HANDLED;
 
-	/* Get the interrupt status */
-	do {
-		RETURN_ERROR(bmi3_read_n(s, BMI3_REG_INT_STATUS_INT1,
-					 (uint8_t *)int_status, 4));
+	/*
+	 * We have to loop until we see the interrupt status as 0 to avoid
+	 * getting stuck. We use edge triggered interrupts and, once one
+	 * triggers, our irq apparently won't necessarily trigger again until
+	 * we've cleared all interrupt sources and then a new interrupt happens.
+	 *
+	 * However, despite needing to loop, we also don't want to get stuck
+	 * in an infinite loop if there's a bug in the driver or the hardware.
+	 * We'll loop 200 times and then give up if an interrupt is still
+	 * pending.
+	 */
+	for (i = 0; i < 200; i++) {
+		rv = bmi3_read_n(s, BMI3_REG_INT_STATUS_INT1,
+				 (uint8_t *)int_status, 4);
+		if (rv)
+			break;
 
 		if (IS_ENABLED(CONFIG_BMI_ORIENTATION_SENSOR) &&
 		    (BMI3_INT_STATUS_ORIENTATION & int_status[1]))
@@ -347,8 +361,10 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 			break;
 
 		/* Get the FIFO fill level in words */
-		RETURN_ERROR(bmi3_read_n(s, BMI3_REG_FIFO_FILL_LVL,
-					 (uint8_t *)reg_data, 4));
+		rv = bmi3_read_n(s, BMI3_REG_FIFO_FILL_LVL, (uint8_t *)reg_data,
+				 4);
+		if (rv)
+			break;
 
 		reg_data[1] =
 			BMI3_GET_BIT_POS0(reg_data[1], BMI3_FIFO_FILL_LVL);
@@ -368,13 +384,27 @@ static int irq_handler(struct motion_sensor_t *s, uint32_t *event)
 			MIN(fifo_frame.available_fifo_len,
 			    ARRAY_SIZE(fifo_frame.data));
 		/* Read FIFO data */
-		RETURN_ERROR(bmi3_read_n(
+		rv = bmi3_read_n(
 			s, BMI3_REG_FIFO_DATA, (uint8_t *)fifo_frame.data,
-			fifo_frame.available_fifo_len * sizeof(uint16_t)));
+			fifo_frame.available_fifo_len * sizeof(uint16_t));
+		if (rv)
+			break;
 
 		bmi3_parse_fifo_data(s, &fifo_frame, last_interrupt_timestamp);
 		has_read_fifo = true;
-	} while (true);
+	}
+
+	if (i == 200) {
+		CPRINTF("irq 0x%04x stuck (%d loops)\n", int_status[1], i);
+
+		/* Clear the FIFO using Flush command */
+		reg_data[0] = BMI3_ENABLE;
+		bmi3_write_n(s, BMI3_REG_FIFO_CTRL, (uint8_t *)reg_data, 2);
+	}
+
+	/* Only return an error if no data was read at all. */
+	if (i == 0 && rv)
+		return rv;
 
 	if (IS_ENABLED(CONFIG_ACCEL_FIFO) && has_read_fifo)
 		motion_sense_fifo_commit_data();
@@ -695,25 +725,32 @@ static int get_offset(const struct motion_sensor_t *s, int16_t *offset,
 static int set_offset(const struct motion_sensor_t *s, const int16_t *offset,
 		      int16_t temp)
 {
+	int ret;
 	intv3_t v = { offset[X], offset[Y], offset[Z] };
 	(void)temp;
 
 	rotate_inv(v, *s->rot_standard_ref, v);
 
+	/*
+	 * Lock accel resource to prevent I2C racing condition.
+	 */
+	mutex_lock(s->mutex);
+
 	switch (s->type) {
 	case MOTIONSENSE_TYPE_ACCEL:
 		/* Offset should be in units of mg */
-		RETURN_ERROR(set_accel_offset(s, v));
+		ret = set_accel_offset(s, v);
 		break;
 	case MOTIONSENSE_TYPE_GYRO:
 		/* Offset should be in units of mdps */
-		RETURN_ERROR(set_gyro_offset(s, v));
+		ret = set_gyro_offset(s, v);
 		break;
 	default:
-		return EC_RES_INVALID_PARAM;
+		ret = EC_RES_INVALID_PARAM;
 	}
 
-	return EC_SUCCESS;
+	mutex_unlock(s->mutex);
+	return ret;
 }
 
 #ifdef CONFIG_BODY_DETECTION
@@ -895,8 +932,10 @@ static int set_range(struct motion_sensor_t *s, int range, int rnd)
 		if (range <= sensor_range[index][0])
 			break;
 
-		if (range < sensor_range[index + 1][0] && rnd) {
-			index++;
+		if (range < sensor_range[index + 1][0]) {
+			if (rnd) {
+				index++;
+			}
 			break;
 		}
 	}
@@ -994,7 +1033,7 @@ static int init(struct motion_sensor_t *s)
 
 	/*
 	 * BMI3xx driver only supports MOTIONSENSE_TYPE_ACCEL and
-	 * MOTIONSENSE_TYPE_GYR0
+	 * MOTIONSENSE_TYPE_GYRO
 	 */
 	if (s->type != MOTIONSENSE_TYPE_ACCEL &&
 	    s->type != MOTIONSENSE_TYPE_GYRO)

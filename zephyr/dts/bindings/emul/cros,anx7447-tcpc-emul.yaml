@@ -14,3 +14,12 @@ properties:
     default: 0
     description: |
       TCPC configuration flags
+  rst-gpios:
+    type: phandle-array
+    description: |
+      TCPC reset line
+  spi-addr:
+    type: int
+    default: 0x3f
+    description:
+      The hidden SPI address.

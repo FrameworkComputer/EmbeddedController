@@ -1,0 +1,13 @@
+/* Copyright 2023 The ChromiumOS Authors.
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * RDP1 byte can be any byte (except 0xAA and 0xCC). By default STM32 HAL uses
+ * 0x55, but old FPMCU RO reports RDP1 when the RDP byte is 0x00, so override
+ * the default.
+ */
+&flash {
+	st,rdp1-enable-byte = <0x00>;
+};

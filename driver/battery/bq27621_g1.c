@@ -128,7 +128,7 @@
 #define BQ27621_UNSCALE(x)            \
 	(BQ27621_SCALE_FACTOR == 10 ? \
 		 (x) / 10 :           \
-		 (BQ27621_SCALE_FACTOR == 0.1 ? (x)*10 : (x)))
+		 (BQ27621_SCALE_FACTOR == 0.1 ? (x) * 10 : (x)))
 
 #define BQ27621_TAPER_RATE \
 	((int)(BQ27621_DESIGN_CAPACITY / (0.1 * BQ27621_TAPER_CURRENT)))
@@ -144,7 +144,7 @@
  * The values from the data sheet are already LSB-first.
  */
 
-#define ENDIAN_SWAP_2B(x) ((((x)&0xff) << 8) | (((x)&0xff00) >> 8))
+#define ENDIAN_SWAP_2B(x) ((((x) & 0xff) << 8) | (((x) & 0xff00) >> 8))
 #define DESIGN_CAPACITY ENDIAN_SWAP_2B(BQ27621_SCALED_DESIGN_CAPACITY)
 #define DESIGN_ENERGY ENDIAN_SWAP_2B(BQ27621_SCALED_DESIGN_ENERGY)
 #define TAPER_RATE ENDIAN_SWAP_2B(BQ27621_TAPER_RATE)

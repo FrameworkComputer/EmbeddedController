@@ -1,0 +1,45 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* IOEX_C2_CCGXXF */
+	ioex-c2 {
+		compatible = "cros,ioex-chip";
+		i2c-port = <&typec_aic2>;
+		i2c-addr = <0x0B>;
+		drv = "ccgxxf_ioexpander_drv";
+		flags = <0x00>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		ioex_c2_port0: ioex-c2-port@0 {
+			compatible = "cros,ioex-port";
+			reg = <0>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+		};
+		ioex_c2_port1: ioex-c2-port@1 {
+			compatible = "cros,ioex-port";
+			reg = <1>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+		};
+		ioex_c2_port2: ioex-c2-port@2 {
+			compatible = "cros,ioex-port";
+			reg = <2>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+		};
+		ioex_c2_port3: ioex-c2-port@3 {
+			compatible = "cros,ioex-port";
+			reg = <3>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+		};
+	};
+};

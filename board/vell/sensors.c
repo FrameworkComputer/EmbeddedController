@@ -204,94 +204,72 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  * 130 C.  However, sensor is located next to DDR, so we need to use the lower
  * DDR temperature limit (85 C)
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CPU              \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(95), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
-		}, \
-	}
+static const struct ec_thermal_config thermal_cpu = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(95),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
+	},
+};
 
 /*
  * TODO(b/203839956): update for Alder Lake/vell
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CHARGER          \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(90), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(95), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(85), \
-		}, \
-	}
+static const struct ec_thermal_config thermal_charger = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(90),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(95),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
+	},
+};
 
 /*
  * TODO(b/203839956): update for vell WWAN module
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_WWAN             \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-		}, \
-	}
+static const struct ec_thermal_config thermal_wwan = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+};
 
 /*
  * TODO(b/203839956): update for Alder Lake/vell
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-
-#define THERMAL_DDR              \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-		}, \
-	}
+static const struct ec_thermal_config thermal_ddr = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+	},
+};
 
 /*
  * TODO(b/203839956): update for Alder Lake/vell
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-
-#define THERMAL_REGULATOR        \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-		}, \
-	}
+static const struct ec_thermal_config thermal_regulator = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(80),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
+	},
+};
 
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_SOC] = THERMAL_CPU,
-	[TEMP_SENSOR_2_CHARGER] = THERMAL_CHARGER,
-	[TEMP_SENSOR_3_WWAN] = THERMAL_WWAN,
-	[TEMP_SENSOR_4_DDR] = THERMAL_DDR,
-	[TEMP_SENSOR_5_REGULATOR] = THERMAL_REGULATOR,
+	[TEMP_SENSOR_1_SOC] = thermal_cpu,
+	[TEMP_SENSOR_2_CHARGER] = thermal_charger,
+	[TEMP_SENSOR_3_WWAN] = thermal_wwan,
+	[TEMP_SENSOR_4_DDR] = thermal_ddr,
+	[TEMP_SENSOR_5_REGULATOR] = thermal_regulator,
 };

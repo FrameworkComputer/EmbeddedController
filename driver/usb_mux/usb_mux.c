@@ -50,6 +50,7 @@ static task_id_t ack_task[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 	[0 ... CONFIG_USB_PD_PORT_MAX_COUNT - 1] = TASK_ID_INVALID
 };
 
+static void perform_mux_init(int port);
 static void perform_mux_set(int port, int index, mux_state_t mux_mode,
 			    enum usb_switch usb_mode, int polarity);
 static void perform_mux_hpd_update(int port, int index, mux_state_t hpd_state);
@@ -86,6 +87,9 @@ BUILD_ASSERT(POWER_OF_TWO(MUX_QUEUE_DEPTH));
 
 /* Define in order to enable debug info about how long the queue takes */
 #undef DEBUG_MUX_QUEUE_TIME
+
+/* Delay between suspending and configuring the USB mux for idle mode */
+#define IDLE_MODE_ENTRY_DELAY (2 * SECOND)
 
 struct mux_queue_entry {
 	enum mux_config_type type;
@@ -223,6 +227,8 @@ __maybe_unused void usb_mux_task(void *u)
 				else if (next.type == USB_MUX_HPD_UPDATE)
 					perform_mux_hpd_update(port, next.index,
 							       next.mux_mode);
+				else if (next.type == USB_MUX_INIT)
+					perform_mux_init(port);
 				else
 					CPRINTS("Error: Unknown mux task type:"
 						"%d",
@@ -445,7 +451,7 @@ static int exit_low_power_mode(int port)
 {
 	/* If we are in low power, initialize device (which clears LPM flag) */
 	if (flags[port] & USB_MUX_FLAG_IN_LPM)
-		usb_mux_init(port);
+		perform_mux_init(port);
 
 	if (!(flags[port] & USB_MUX_FLAG_INIT)) {
 		CPRINTS("C%d: USB_MUX_FLAG_INIT not set", port);
@@ -460,7 +466,7 @@ static int exit_low_power_mode(int port)
 	return EC_SUCCESS;
 }
 
-void usb_mux_init(int port)
+static void perform_mux_init(int port)
 {
 	int rv;
 
@@ -486,6 +492,32 @@ void usb_mux_init(int port)
 		atomic_clear_bits(&flags[port], USB_MUX_FLAG_IN_LPM);
 }
 
+void usb_mux_init(int port)
+{
+	if (port >= board_get_usb_pd_port_count())
+		return;
+
+	/* Block if we have no mux task, but otherwise queue it up and return */
+	if (IS_ENABLED(HAS_TASK_USB_MUX)) {
+		struct mux_queue_entry new_entry;
+
+		new_entry.type = USB_MUX_INIT;
+#ifdef DEBUG_MUX_QUEUE_TIME
+		new_entry.enqueued_time = get_time();
+#endif
+
+		mutex_lock(&queue_lock[port]);
+		if (queue_add_unit(&mux_queue[port], &new_entry) == 0)
+			CPRINTS("Error: Dropping port %d mux init", port);
+		else
+			task_wake(TASK_ID_USB_MUX);
+
+		mutex_unlock(&queue_lock[port]);
+	} else {
+		perform_mux_init(port);
+	}
+}
+
 static void perform_mux_set(int port, int index, mux_state_t mux_mode,
 			    enum usb_switch usb_mode, int polarity)
 {
@@ -496,7 +528,7 @@ static void perform_mux_set(int port, int index, mux_state_t mux_mode,
 
 	/* Perform initialization if not initialized yet */
 	if (!(flags[port] & USB_MUX_FLAG_INIT))
-		usb_mux_init(port);
+		perform_mux_init(port);
 
 	/* Configure USB2.0 */
 	if (IS_ENABLED(CONFIG_USB_CHARGER))
@@ -598,7 +630,7 @@ static enum ec_error_list try_usb_mux_get(int port, mux_state_t *mux_state)
 
 	/* Perform initialization if not initialized yet */
 	if (!(flags[port] & USB_MUX_FLAG_INIT))
-		usb_mux_init(port);
+		perform_mux_init(port);
 
 	if (flags[port] & USB_MUX_FLAG_IN_LPM) {
 		*mux_state = USB_PD_MUX_NONE;
@@ -629,7 +661,7 @@ void usb_mux_flip(int port)
 
 	/* Perform initialization if not initialized yet */
 	if (!(flags[port] & USB_MUX_FLAG_INIT))
-		usb_mux_init(port);
+		perform_mux_init(port);
 
 	if (exit_low_power_mode(port) != EC_SUCCESS)
 		return;
@@ -651,7 +683,7 @@ static void perform_mux_hpd_update(int port, int index, mux_state_t hpd_state)
 {
 	/* Perform initialization if not initialized yet */
 	if (!(flags[port] & USB_MUX_FLAG_INIT))
-		usb_mux_init(port);
+		perform_mux_init(port);
 
 	if (exit_low_power_mode(port) != EC_SUCCESS)
 		return;
@@ -659,7 +691,7 @@ static void perform_mux_hpd_update(int port, int index, mux_state_t hpd_state)
 	configure_mux(port, index, USB_MUX_HPD_UPDATE, &hpd_state);
 }
 
-void usb_mux_hpd_update(int port, mux_state_t hpd_state)
+test_mockable void usb_mux_hpd_update(int port, mux_state_t hpd_state)
 {
 	if (port >= board_get_usb_pd_port_count())
 		return;
@@ -704,9 +736,12 @@ static void mux_chipset_reset(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESET, mux_chipset_reset, HOOK_PRIO_DEFAULT);
 
-static void mux_chipset_suspend(void)
+static void mux_chipset_suspend_deferred(void)
 {
 	int port;
+
+	if (!chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		return;
 
 	for (port = 0; port < board_get_usb_pd_port_count(); ++port) {
 		if (flags[port] & USB_MUX_FLAG_IN_LPM)
@@ -716,11 +751,27 @@ static void mux_chipset_suspend(void)
 			      USB_MUX_CHIPSET_IDLE, NULL);
 	}
 }
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, mux_chipset_suspend, HOOK_PRIO_DEFAULT);
+DECLARE_DEFERRED(mux_chipset_suspend_deferred);
+
+static void mux_chipset_suspend(void)
+{
+	/*
+	 * Defer USB mux idle mode entry on suspend by IDLE_MODE_ENTRY_DELAY.
+	 * Entry into idle mode will put USB mux and retimer components in a low
+	 * power state which the AP may misinterpret as device disconnection.
+	 * Deferring idle mode entry allows the AP sufficient time to suspend to
+	 * prevent devices resetting during suspend/resume.
+	 */
+	hook_call_deferred(&mux_chipset_suspend_deferred_data,
+			   IDLE_MODE_ENTRY_DELAY);
+}
 
 static void mux_chipset_resume(void)
 {
 	int port;
+
+	/* Cancel deferred suspend hook call if it is still pending on resume */
+	hook_call_deferred(&mux_chipset_suspend_deferred_data, -1);
 
 	for (port = 0; port < board_get_usb_pd_port_count(); ++port) {
 		if (flags[port] & USB_MUX_FLAG_IN_LPM)
@@ -730,7 +781,15 @@ static void mux_chipset_resume(void)
 			      USB_MUX_CHIPSET_ACTIVE, NULL);
 	}
 }
+
+#ifdef CONFIG_CHIPSET_RESUME_INIT_HOOK
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND_COMPLETE, mux_chipset_suspend,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME_INIT, mux_chipset_resume, HOOK_PRIO_DEFAULT);
+#else
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, mux_chipset_suspend, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, mux_chipset_resume, HOOK_PRIO_DEFAULT);
+#endif
 
 /*
  * For muxes which have powered off in G3, clear any cached INIT and LPM flags
@@ -837,6 +896,16 @@ static enum ec_status hc_usb_pd_mux_info(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_MUX_INFO, hc_usb_pd_mux_info,
 		     EC_VER_MASK(0));
 
+/*
+ * Allow board or driver code to set the "done" event for muxes that have
+ * interrupt-driven completion
+ */
+void usb_mux_set_ack_complete(int port)
+{
+	if (ack_task[port] != TASK_ID_INVALID)
+		task_set_event(ack_task[port], PD_EVENT_AP_MUX_DONE);
+}
+
 static enum ec_status hc_usb_pd_mux_ack(struct host_cmd_handler_args *args)
 {
 	__maybe_unused const struct ec_params_usb_pd_mux_ack *p = args->params;
@@ -844,8 +913,13 @@ static enum ec_status hc_usb_pd_mux_ack(struct host_cmd_handler_args *args)
 	if (!IS_ENABLED(CONFIG_USB_MUX_AP_ACK_REQUEST))
 		return EC_RES_INVALID_COMMAND;
 
+	if (p->port >= board_get_usb_pd_port_count())
+		return EC_RES_INVALID_PARAM;
+
 	if (ack_task[p->port] != TASK_ID_INVALID)
 		task_set_event(ack_task[p->port], PD_EVENT_AP_MUX_DONE);
+
+	usb_mux_set_ack_complete(p->port);
 
 	return EC_RES_SUCCESS;
 }

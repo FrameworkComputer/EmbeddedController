@@ -25,7 +25,6 @@ properties:
 
   gpio-i2c-addr:
     type: int
-    required: false
     default: 0
     description:
       GPIO I2C address. When set to zero GPIO I2C device is not registered

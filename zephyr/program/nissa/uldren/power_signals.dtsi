@@ -32,7 +32,7 @@
 	pwr-pg-ec-rsmrst-od {
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "RSMRST power good from regulator";
-		enum-name = "PWR_RSMRST";
+		enum-name = "PWR_RSMRST_PWRGD";
 		gpios = <&gpio9 4 0>;
 		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
 	};
@@ -40,7 +40,8 @@
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "RSMRST output to PCH";
 		enum-name = "PWR_EC_PCH_RSMRST";
-		gpios = <&gpioa 6 0>;
+		gpios = <&gpioa 6 GPIO_ACTIVE_LOW>;
+		reset-val = <1>;
 		output;
 	};
 	pwr-slp-s0-l {
@@ -110,6 +111,7 @@
 		dbg-label = "SLP_S4 virtual wire input from PCH";
 		enum-name = "PWR_SLP_S4";
 		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S4";
+		reset-val = <1>;
 		vw-invert;
 	};
 	pwr-slp-s5 {
@@ -117,6 +119,7 @@
 		dbg-label = "SLP_S5 virtual wire input from PCH";
 		enum-name = "PWR_SLP_S5";
 		virtual-wire = "ESPI_VWIRE_SIGNAL_SLP_S5";
+		reset-val = <1>;
 		vw-invert;
 	};
 	pwr-all-sys-pwrgd {

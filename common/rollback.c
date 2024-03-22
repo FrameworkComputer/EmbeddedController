@@ -14,6 +14,7 @@
 #ifdef CONFIG_MPU
 #include "mpu.h"
 #endif
+#include "otp_key.h"
 #include "rollback.h"
 #include "rollback_private.h"
 #include "sha256.h"
@@ -30,7 +31,15 @@
 #include "cryptoc/util.h"
 #define secure_clear(buffer, size) always_memset(buffer, 0, size)
 #else
-#error One of CONFIG_BORINGSSL_CRYPTO or CONFIG_LIBCRYPTOC should be defined
+/* Copied from OpenSSL crypto/mem_clr.c
+ * Function call through volatile pointer should survive through optimization.
+ */
+static void *(*volatile memset_fn)(void *, int, size_t) = memset;
+
+test_export_static void secure_clear(void *buffer, size_t size)
+{
+	memset_fn(buffer, 0, size);
+}
 #endif
 #endif
 
@@ -201,7 +210,7 @@ static int get_rollback_erase_size_bytes(int region)
 }
 
 #ifdef CONFIG_ROLLBACK_SECRET_SIZE
-#ifdef CONFIG_SHA256
+#if (defined CONFIG_SHA256_SW || defined CONFIG_SHA256_HW_ACCELERATE)
 static int add_entropy(uint8_t *dst, const uint8_t *src, const uint8_t *add,
 		       unsigned int add_len)
 {
@@ -236,7 +245,7 @@ failed:
 }
 #else
 #error "Adding entropy to secret in rollback region requires SHA256."
-#endif /* CONFIG_SHA256 */
+#endif /* CONFIG_SHA256_SW */
 #endif /* CONFIG_ROLLBACK_SECRET_SIZE */
 
 /**
@@ -358,6 +367,17 @@ int rollback_update_version(int32_t next_min_version)
 
 int rollback_add_entropy(const uint8_t *data, unsigned int len)
 {
+	if (IS_ENABLED(CONFIG_OTP_KEY)) {
+		uint32_t status = EC_ERROR_UNKNOWN;
+
+		status = otp_key_provision();
+		if (status != EC_SUCCESS) {
+			ccprintf("failed to provision OTP key with status=%d",
+				 status);
+			return status;
+		}
+	}
+
 	return rollback_update(-1, data, len);
 }
 

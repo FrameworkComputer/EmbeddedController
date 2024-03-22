@@ -138,7 +138,7 @@
 	};
 
 	tusb1064_mux_1: tusb1064-mux-1@44 {
-		compatible = "ti,tusb1064";
+		compatible = "ti,tusb546";
 		reg = <0x44>;
 		board-init = "tusb1064_mux_1_board_init";
 	};

@@ -1,0 +1,46 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_posix.dts>
+#include <dt-bindings/vivaldi_kbd.h>
+
+/ {
+	vivaldi_kbd: vivaldi-kbd {
+		compatible = "cros-ec,vivaldi-kbd";
+		vivaldi-keys = <
+			KBD_RC(0, 2)
+			KBD_RC(3, 2)
+			KBD_RC(2, 2)
+			KBD_RC(1, 2)
+			KBD_RC(3, 4)
+			KBD_RC(2, 4)
+			KBD_RC(1, 4)
+			KBD_RC(2, 9)
+			KBD_RC(1, 9)
+			KBD_RC(0, 4)
+			KBD_RC(0, 1)
+			KBD_RC(1, 5)
+			KBD_RC(3, 5)
+			KBD_RC(0, 9)
+			KBD_RC(0, 11)
+		>;
+
+		kbd_config_0: kbd-config-0 {
+			vivaldi-codes = <
+				VIVALDI_TK_BACK
+				VIVALDI_TK_FORWARD
+				VIVALDI_TK_REFRESH
+				VIVALDI_TK_FULLSCREEN
+				VIVALDI_TK_OVERVIEW
+				VIVALDI_TK_BRIGHTNESS_DOWN
+				VIVALDI_TK_BRIGHTNESS_UP
+				VIVALDI_TK_VOL_MUTE
+				VIVALDI_TK_VOL_DOWN
+				VIVALDI_TK_VOL_UP
+			>;
+			capabilities = <VIVALDI_KEYBD_CAP_SCRNLOCK_KEY>;
+		};
+	};
+};

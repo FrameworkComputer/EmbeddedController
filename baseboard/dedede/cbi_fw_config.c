@@ -68,3 +68,9 @@ enum fw_config_hdmi_type get_cbi_fw_config_hdmi(void)
 	return ((cached_fw_config & FW_CONFIG_HDMI_MASK) >>
 		FW_CONFIG_HDMI_OFFSET);
 }
+
+int get_cbi_fw_config_bc_support(void)
+{
+	return ((cached_fw_config & FW_CONFIG_BC12_MASK) >>
+		FW_CONFIG_BC12_SUPPORT);
+}

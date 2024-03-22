@@ -121,6 +121,12 @@
 #define DEFAULT_SERIALNO "Uninitialized"
 #define CONFIG_MAC_ADDR
 #define DEFAULT_MAC_ADDR "Uninitialized"
+#define CONFIG_POWERON_CONF
+/*
+ * In case of servo_v4_p1 we would need
+ * 4 separate bitmasks for CC_CONFIG and USB port muxes.
+ */
+#define CONFIG_POWERON_CONF_LEN 4
 
 /* USB interface indexes (use define rather than enum to expand them) */
 #define USB_IFACE_CONSOLE 0

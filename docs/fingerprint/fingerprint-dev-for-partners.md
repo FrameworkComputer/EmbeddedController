@@ -60,6 +60,18 @@ This FPMCU board is Icetower Rev 3. |
 ***
 <!-- mdformat on -->
 
+This FPMCU board is Quincy Rev 2. |
+--------------------------------- |
+![Quincy board]                   |
+
+<!-- mdformat off(b/139308852) -->
+*** note
+**Googlers**: You can pick up an Quincy development board at Chromestop.
+
+**Partners**: You can request an Quincy development board from Google.
+***
+<!-- mdformat on -->
+
 ### Servo
 
 Servo is a general purpose debug board that connects to a header on the FPMCU
@@ -599,6 +611,7 @@ Make sure that this interface is disabled:
 [Dragonclaw board]: ../images/dragonclaw_v0.3.jpg
 [Dragonclaw servo fix diagram]: ../images/dragonclaw_servo_fix.jpg
 [Icetower board]: ../images/icetower_v3.jpg
+[Quincy board]: ../images/quincy_v2.jpg
 
 <!-- If you make changes to the docs below make sure to regenerate the JPEGs by
      appending "export/pdf" to the Google Drive link. -->
@@ -609,8 +622,8 @@ Make sure that this interface is disabled:
 
 <!-- https://docs.google.com/drawings/d/1w2qbb4AsSxY-KTK2vXZ6TKeWHveWvS3Dkgh61ocu0wc -->
 
-[CQ Prototype Environment]: ../images/CQ_Prototype_Environment.jpg
+[CQ Prototype Environment]: ../images/CQ_Prototype_Environment_Sinclair.jpg
 
-<!-- https://docs.google.com/drawings/d/13hsnPBa1aeMVU7CjrK1nz-aeYSQcdLxrylOEJNOiEA0 -->
+<!-- https://docs.google.com/drawings/d/1zPQEF65doEVDCL0sXHb0tACpq0GSP1ZH5c2vEIjpC98 -->
 
 [FPMCU devboard environment v2 with satlab]: ../images/FPMCU_devboard_environment_v2_with_Satlab.jpg

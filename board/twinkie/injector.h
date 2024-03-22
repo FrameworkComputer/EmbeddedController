@@ -21,8 +21,8 @@
 
 /* Macros to extract values from FSM command words */
 #define INJ_CMD(w) ((w) >> 28)
-#define INJ_ARG(w) ((w)&0x0FFFFFFF)
-#define INJ_ARG0(w) ((w)&0x0000FFFF)
+#define INJ_ARG(w) ((w) & 0x0FFFFFFF)
+#define INJ_ARG0(w) ((w) & 0x0000FFFF)
 #define INJ_ARG1(w) (((w) >> 16) & 0xFF)
 #define INJ_ARG2(w) (((w) >> 24) & 0xF)
 #define INJ_ARG12(w) (((w) >> 16) & 0xFFF)

@@ -23,7 +23,7 @@
 #define MIN_FIT_MAG MIN_EIGEN_MAG
 
 #define CPRINTF(format, args...) cprintf(CC_ACCEL, format, ##args)
-#define PRINTF_FLOAT(x) ((int)((x)*100.0f))
+#define PRINTF_FLOAT(x) ((int)((x) * 100.0f))
 
 /**
  * Compute the covariance element: (avg(ab) - avg(a)*avg(b))

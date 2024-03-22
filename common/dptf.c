@@ -21,6 +21,12 @@
 #define CPUTS(outstr) cputs(CC_DPTF, outstr)
 #define CPRINTS(format, args...) cprints(CC_DPTF, format, ##args)
 
+#ifdef CONFIG_DPTF_DEBUG_PRINTS
+#define DPRINTS(format, args...) cprints(CC_DPTF, format, ##args)
+#else
+#define DPRINTS(format, args...)
+#endif
+
 /*****************************************************************************/
 /* DPTF temperature thresholds */
 
@@ -81,12 +87,12 @@ static int dptf_check_temp_threshold(int sensor_id, int temp)
 			cond_set_false(&dptf_threshold[sensor_id][i].over);
 
 		if (cond_went_true(&dptf_threshold[sensor_id][i].over)) {
-			CPRINTS("DPTF over threshold [%d][%d", sensor_id, i);
+			DPRINTS("DPTF over threshold [%d][%d]", sensor_id, i);
 			atomic_or(&dptf_seen, BIT(sensor_id));
 			tripped = 1;
 		}
 		if (cond_went_false(&dptf_threshold[sensor_id][i].over)) {
-			CPRINTS("DPTF under threshold [%d][%d", sensor_id, i);
+			DPRINTS("DPTF under threshold [%d][%d]", sensor_id, i);
 			atomic_or(&dptf_seen, BIT(sensor_id));
 			tripped = 1;
 		}
@@ -97,7 +103,7 @@ static int dptf_check_temp_threshold(int sensor_id, int temp)
 
 void dptf_set_temp_threshold(int sensor_id, int temp, int idx, int enable)
 {
-	CPRINTS("DPTF sensor %d, threshold %d C, index %d, %sabled", sensor_id,
+	DPRINTS("DPTF sensor %d, threshold %d C, index %d, %sabled", sensor_id,
 		K_TO_C(temp), idx, enable ? "en" : "dis");
 
 	if ((sensor_id >= TEMP_SENSOR_COUNT) ||

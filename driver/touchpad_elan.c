@@ -5,6 +5,7 @@
 
 #ifdef CONFIG_ZEPHYR
 #include <zephyr/devicetree.h>
+#include <zephyr/sys/byteorder.h>
 #else
 #include "byteorder.h"
 #endif
@@ -46,14 +47,18 @@
 #define ETP_I2C_SLEEP 0x0801
 
 #define ETP_I2C_STAND_CMD 0x0005
+#define ETP_I2C_PATTERN_CMD 0x0100
 #define ETP_I2C_UNIQUEID_CMD 0x0101
 #define ETP_I2C_FW_VERSION_CMD 0x0102
+#define ETP_I2C_IC_TYPE_CMD 0x0103
 #define ETP_I2C_OSM_VERSION_CMD 0x0103
 #define ETP_I2C_XY_TRACENUM_CMD 0x0105
 #define ETP_I2C_MAX_X_AXIS_CMD 0x0106
 #define ETP_I2C_MAX_Y_AXIS_CMD 0x0107
 #define ETP_I2C_RESOLUTION_CMD 0x0108
 #define ETP_I2C_IAP_VERSION_CMD 0x0110
+#define ETP_I2C_IC_TYPE_P0_CMD 0x0110
+#define ETP_I2C_IAP_VERSION_P0_CMD 0x0111
 #define ETP_I2C_PRESSURE_CMD 0x010A
 #define ETP_I2C_SET_CMD 0x0300
 #define ETP_I2C_IAP_TYPE_CMD 0x0304
@@ -106,6 +111,10 @@
 #define GPIO_TOUCHPAD_INT GPIO_SIGNAL(DT_PROP(DT_PROP(TP_NODE, irq), irq_pin))
 #define CONFIG_TOUCHPAD_I2C_ADDR_FLAGS DT_REG_ADDR(TP_NODE)
 #define CONFIG_TOUCHPAD_I2C_PORT I2C_PORT_BY_DEV(TP_NODE)
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X DT_PROP(TP_NODE, logical_max_x)
+#define CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y DT_PROP(TP_NODE, logical_max_y)
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_X DT_PROP(TP_NODE, physical_max_x)
+#define CONFIG_USB_HID_TOUCHPAD_PHYSICAL_MAX_Y DT_PROP(TP_NODE, physical_max_y)
 
 #endif /* DT_HAS_COMPAT_STATUS_OKAY(elan_ekth3000) */
 #endif /* CONFIG_ZEPHYR */
@@ -119,10 +128,13 @@ struct {
 	uint16_t width_y;
 	/* Pressure adjustment */
 	uint8_t pressure_adj;
+	/* Device info */
 	uint16_t ic_type;
 	uint16_t page_count;
 	uint16_t page_size;
 	uint16_t iap_version;
+	/* Version related info */
+	uint8_t pattern;
 } elan_tp_params;
 
 /*
@@ -335,6 +347,76 @@ __maybe_unused static int calc_physical_dimension(int dpi, int logical_dim)
 	return round_divide(254 * logical_dim, dpi);
 }
 
+static int elan_i2c_get_pattern(void)
+{
+	int rv;
+	uint8_t val[2];
+
+	rv = elan_tp_read_cmd(ETP_I2C_PATTERN_CMD, (uint16_t *)val);
+	if (rv) {
+		CPRINTS("%s: read pattern failed", __func__);
+		return rv;
+	}
+	CPRINTS("%s: read pattern reg:%04X.", __func__, elan_tp_params.pattern);
+
+	/*
+	 * Not all versions of firmware implement "get pattern" command. When
+	 * this command is not implemented the device will respond with 0xFF
+	 * 0xFF, which we will treat as "old" pattern 0.
+	 */
+	elan_tp_params.pattern = (*(uint16_t *)val == 0xFFFF) ? 0 : val[1];
+
+	return EC_SUCCESS;
+}
+
+static int elan_query_product(void)
+{
+	int rv;
+	uint8_t val[2];
+
+	rv = elan_i2c_get_pattern();
+	if (rv) {
+		return rv;
+	}
+
+	if (elan_tp_params.pattern >= 0x01) {
+		rv = elan_tp_read_cmd(ETP_I2C_IC_TYPE_CMD, (uint16_t *)val);
+		if (rv) {
+			return rv;
+		}
+#ifdef CONFIG_ZEPHYR
+		elan_tp_params.ic_type = sys_be16_to_cpu(*(uint16_t *)val);
+#else
+		elan_tp_params.ic_type = be16toh(*(uint16_t *)val);
+#endif
+	} else {
+		rv = elan_tp_read_cmd(ETP_I2C_IC_TYPE_P0_CMD, (uint16_t *)val);
+		if (rv) {
+			return rv;
+		}
+		elan_tp_params.ic_type = val[0];
+	}
+	CPRINTS("%s: ic_type:%04X.", __func__, elan_tp_params.ic_type);
+
+	if (elan_tp_params.pattern >= 0x01) {
+		rv = elan_tp_read_cmd(ETP_I2C_IAP_VERSION_CMD, (uint16_t *)val);
+		if (rv) {
+			return rv;
+		}
+		elan_tp_params.iap_version = val[1];
+	} else {
+		rv = elan_tp_read_cmd(ETP_I2C_IAP_VERSION_P0_CMD,
+				      (uint16_t *)val);
+		if (rv) {
+			return rv;
+		}
+		elan_tp_params.iap_version = val[0];
+	}
+	CPRINTS("%s: iap_version:%04X.", __func__, elan_tp_params.iap_version);
+
+	return EC_SUCCESS;
+}
+
 /* Initialize the controller ICs after reset */
 static void elan_tp_init(void)
 {
@@ -353,17 +435,11 @@ static void elan_tp_init(void)
 	if (rv)
 		goto out;
 
-	/* Read IC type, IAP version */
-	rv = elan_tp_read_cmd(ETP_I2C_OSM_VERSION_CMD, &elan_tp_params.ic_type);
-	CPRINTS("%s: ic_type:%04X.", __func__, elan_tp_params.ic_type);
-	elan_tp_params.ic_type >>= 8;
-	if (rv)
-		goto out;
-
-	rv = elan_tp_read_cmd(ETP_I2C_IAP_VERSION_CMD,
-			      &elan_tp_params.iap_version);
-	CPRINTS("%s: iap_version:%04X.", __func__, elan_tp_params.iap_version);
-	elan_tp_params.iap_version >>= 8;
+	/*
+	 * Read pattern , then based on pattern to determine what command to
+	 * send to get IC type, IAP version, etc
+	 */
+	rv = elan_query_product();
 	if (rv)
 		goto out;
 
@@ -403,15 +479,21 @@ static void elan_tp_init(void)
 	if (rv)
 		goto out;
 
-	dpi_x = 10 * val[0] + 790;
-	dpi_y = 10 * val[1] + 790;
+	if (elan_tp_params.pattern <= 0x01) {
+		dpi_x = 10 * val[0] + 790;
+		dpi_y = 10 * val[1] + 790;
+	} else {
+		dpi_x = (val[0] + 3) * 100;
+		dpi_y = (val[1] + 3) * 100;
+	}
 
 	CPRINTS("max=%d/%d width=%d/%d adj=%d dpi=%d/%d", elan_tp_params.max_x,
 		elan_tp_params.max_y, elan_tp_params.width_x,
 		elan_tp_params.width_y, elan_tp_params.pressure_adj, dpi_x,
 		dpi_y);
 
-#ifdef CONFIG_USB_HID_TOUCHPAD
+#if defined(CONFIG_USB_HID_TOUCHPAD) || \
+	defined(CONFIG_PLATFORM_EC_ONE_WIRE_UART_KEYBOARD)
 	/* Validity check dimensions provided at build time. */
 	if (elan_tp_params.max_x != CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_X ||
 	    elan_tp_params.max_y != CONFIG_USB_HID_TOUCHPAD_LOGICAL_MAX_Y ||
@@ -547,7 +629,12 @@ static int touchpad_update_page(const uint8_t *data)
 
 	for (i = 0; i < elan_tp_params.page_size; i += 2)
 		checksum += ((uint16_t)(data[i + 1]) << 8) | (data[i]);
+
+#ifdef CONFIG_ZEPHYR
+	checksum = sys_cpu_to_le16(checksum);
+#else
 	checksum = htole16(checksum);
+#endif
 
 	i2c_lock(CONFIG_TOUCHPAD_I2C_PORT, 1);
 

@@ -29,96 +29,102 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* AEC 5477109 */
 	[BATTERY_AEC] = {
-		.fuel_gauge = {
-			.manuf_name = "AEC",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "AEC",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.sleep_mode = {
+					.reg_addr = 0x00,
+					.reg_data = 0x0011,
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x2000,
+					.disconnect_val = 0x2000,
+				},
+				.flags = FUEL_GAUGE_FLAG_SLEEP_MODE,
 			},
-			.sleep_mode = {
-				.sleep_supported = true,
-				.reg_addr = 0x00,
-				.reg_data = 0x0011,
+			.batt_info = {
+				.voltage_max          = 8700,	/* mV */
+				.voltage_normal       = 7600,
+				.voltage_min          = 6000,
+				.precharge_current    = 100,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c       = 0,
+				.charging_max_c       = 50,
+				.discharging_min_c    = -20,
+				.discharging_max_c    = 60,
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
-			}
-		},
-		.batt_info = {
-			.voltage_max          = 8700,	/* mV */
-			.voltage_normal       = 7600,
-			.voltage_min          = 6000,
-			.precharge_current    = 100,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c       = 0,
-			.charging_max_c       = 50,
-			.discharging_min_c    = -20,
-			.discharging_max_c    = 60,
 		},
 	},
 	/* AP18F4M / LIS4163ACPC */
 	[BATTERY_AP18F4M] = {
-		.fuel_gauge = {
-			.manuf_name = "Murata KT00404001",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "Murata KT00404001",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x2000,
+					.disconnect_val = 0x2000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x2000,
-				.disconnect_val = 0x2000,
-			}
-		},
-		.batt_info = {
-			.voltage_max          = 8700,	/* mV */
-			.voltage_normal       = 7600,
-			.voltage_min          = 5500,
-			.precharge_current    = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 50,
-			.charging_min_c       = 0,
-			.charging_max_c       = 60,
-			.discharging_min_c    = -20,
-			.discharging_max_c    = 75,
+			.batt_info = {
+				.voltage_max          = 8700,	/* mV */
+				.voltage_normal       = 7600,
+				.voltage_min          = 5500,
+				.precharge_current    = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 50,
+				.charging_min_c       = 0,
+				.charging_max_c       = 60,
+				.discharging_min_c    = -20,
+				.discharging_max_c    = 75,
+			},
 		},
 	},
 	/* POW-TECH Battery Information */
 	[BATTERY_POWER_TECH] = {
-		.fuel_gauge = {
-			.manuf_name = "POW-TECH",
-			.ship_mode = {
-				.reg_addr = 0x0,
-				.reg_data = { 0x10, 0x10 },
+		.manuf_name = "POW-TECH",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x0,
+					.reg_data = { 0x10, 0x10 },
+				},
+				.sleep_mode = {
+					.reg_addr = 0x00,
+					.reg_data = 0x0011,
+				},
+				.fet = {
+					.reg_addr       = 0x00,
+					.reg_mask       = 0x2000,
+					.disconnect_val = 0x2000,
+				},
+				.flags = FUEL_GAUGE_FLAG_SLEEP_MODE,
 			},
-			.sleep_mode = {
-				.sleep_supported = true,
-				.reg_addr = 0x00,
-				.reg_data = 0x0011,
+			.batt_info = {
+				.voltage_max          = 8800,	/* mV */
+				.voltage_normal       = 7700,
+				.voltage_min          = 6000,
+				.precharge_current    = 88,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c       = 0,
+				.charging_max_c       = 45,
+				.discharging_min_c    = -20,
+				.discharging_max_c    = 60,
 			},
-			.fet = {
-				.reg_addr       = 0x00,
-				.reg_mask       = 0x2000,
-				.disconnect_val = 0x2000,
-			}
-		},
-		.batt_info = {
-			.voltage_max          = 8800,	/* mV */
-			.voltage_normal       = 7700,
-			.voltage_min          = 6000,
-			.precharge_current    = 88,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c       = 0,
-			.charging_max_c       = 45,
-			.discharging_min_c    = -20,
-			.discharging_max_c    = 60,
 		},
 	},
 };

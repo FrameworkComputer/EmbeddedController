@@ -8,37 +8,14 @@
 #include "ioexpanders.h"
 #include "pathsel.h"
 
-static void hh_usb3_a0_pwr_en(int en)
+void hh_usb3_a0_pwr_en(int en)
 {
 	gl3590_enable_ports(0, GL3590_DFP2, en);
 }
 
-static void hh_usb3_a1_pwr_en(int en)
+void hh_usb3_a1_pwr_en(int en)
 {
 	gl3590_enable_ports(0, GL3590_DFP1, en);
-}
-
-void init_pathsel(void)
-{
-	/* Connect TypeA port to DUT hub */
-	usb3_a0_to_dut();
-	/* Connect data lines */
-	usb3_a0_mux_en_l(0);
-
-	/* Enable power */
-	ec_usb3_a0_pwr_en(1);
-
-	hh_usb3_a0_pwr_en(1);
-
-	/* Connect TypeA port to DUT hub */
-	usb3_a1_to_dut();
-	/* Connect data lines */
-	gpio_set_level(GPIO_USB3_A1_MUX_EN_L, 0);
-
-	/* Enable power */
-	ec_usb3_a1_pwr_en(1);
-
-	hh_usb3_a1_pwr_en(1);
 }
 
 void usb3_a0_to_dut(void)

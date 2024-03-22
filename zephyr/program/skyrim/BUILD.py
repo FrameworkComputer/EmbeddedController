@@ -11,7 +11,7 @@ def register_skyrim_project(
     """Register a variant of skyrim."""
     register_npcx_project(
         project_name=project_name,
-        zephyr_board="npcx9m3f",
+        zephyr_board="npcx9/npcx9m3f",
         dts_overlays=[
             here / project_name / "project.overlay",
         ],
@@ -46,3 +46,11 @@ register_skyrim_project(
 register_skyrim_project(
     project_name="markarth",
 )
+
+# Note for reviews, do not let anyone edit these assertions, the addresses
+# must not change after the first RO release.
+assert_rw_fwid_DO_NOT_EDIT(project_name="crystaldrift", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="frostflow", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="markarth", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="skyrim", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="winterhold", addr=0x7FFE0)

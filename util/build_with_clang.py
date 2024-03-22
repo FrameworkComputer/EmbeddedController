@@ -4,6 +4,7 @@
 # found in the LICENSE file.
 
 """Build firmware with clang instead of gcc."""
+
 import argparse
 import concurrent
 from concurrent.futures import ThreadPoolExecutor
@@ -21,6 +22,8 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Fingerprint boards
     "dartmonkey",
     "bloonchipper",
+    "bloonchipper-druid",
+    "buccaneer",
     "helipilot",
     "nami_fp",
     "nucleo-dartmonkey",
@@ -29,12 +32,10 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Boards that use CHIP:=stm32 and *not* CHIP_FAMILY:=stm32f0
     # git grep  --name-only 'CHIP:=stm32' | xargs grep -L 'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "baklava",
-    "bellis",
     "discovery",
     "gingerbread",
     "hatch_fp",
     "hyperdebug",
-    "munna",
     "nocturne_fp",
     "nucleo-f411re",
     "nucleo-g431rb",
@@ -47,54 +48,39 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
     # git grep  --name-only 'CHIP:=stm32' | xargs grep -L 'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "bland",
-    "burnet",
     "c2d2",
-    "cerise",
     "coffeecake",
-    "damu",
     "dingdong",
     "discovery-stm32f072",
     "don",
     "duck",
     "eel",
     "elm",
-    "fennel",
     "fluffy",
     "fusb307bgevb",
     "gelatin",
     "hammer",
     "hoho",
-    "jacuzzi",
     "jewel",
-    "juniper",
     "kakadu",
     "kappa",
     "katsu",
-    "kodama",
-    "krane",
     "kukui",
     "magnemite",
-    "makomo",
     "masterball",
     "minimuffin",
     "moonball",
     "nucleo-f072rb",
-    "oak",
     "pdeval-stm32f072",
-    "plankton",
     "prism",
-    "rainier",
-    "scarlet",
     "servo_micro",
     "servo_v4",
     "servo_v4p1",
     "staff",
     "star",
-    "stern",
     "tigertail",
     "twinkie",
     "wand",
-    "willow",
     "zed",
     "zinger",
     # Boards that use CHIP:=mchp
@@ -109,7 +95,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     # Boards that use CHIP:=npcx
     # git grep --name-only 'CHIP:=npcx' | sed 's#^board/\(.*\)/build.mk#"\1",#'
     "adlrvpp_npcx",
-    "agah",
     "akemi",
     "aleena",
     "ambassador",
@@ -124,23 +109,22 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "brask",
     "brya",
     "bugzzy",
+    "bujia",
     "cappy2",
     "careena",
     "casta",
     "chronicler",
-    "coachz",
     "collis",
     "constitution",
     "copano",
     "coral",
     "corori",
-    "corori2",
-    "cret",
     "crota",
     "dalboz",
     "delbin",
     "dewatt",
     "dirinboz",
+    "dochi",
     "dood",
     "dooly",
     "dratini",
@@ -153,22 +137,17 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "eve",
     "ezkinil",
     "felwinter",
-    "fizz",
     "fleex",
     "foob",
     "gaelin",
-    "garg",
-    "gelarshie",
     "genesis",
     "gimble",
     "gladios",
     "grunt",
     "gumboz",
     "guybrush",
-    "hades",
     "hatch",
     "helios",
-    "herobrine",
     "homestar",
     "jinlon",
     "kano",
@@ -196,12 +175,12 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "moonbuggy",
     "morphius",
     "mrbland",
-    "mushu",
     "nami",
     "nautilus",
     "nightfury",
     "nipperkin",
     "nocturne",
+    "nova",
     "npcx7_evb",
     "npcx9_evb",
     "npcx_evb",
@@ -227,7 +206,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "stryke",
     "taeko",
     "taniks",
-    "terrador",
     "treeya",
     "trembyle",
     "trogdor",
@@ -236,16 +214,15 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "voema",
     "volet",
     "volmar",
-    "volteer",
     "volteer_npcx797fc",
     "voxel",
     "voxel_ecmodeentry",
     "voxel_npcx797fc",
-    "waddledoo",
     "waddledoo2",
     "whiskers",
     "woomax",
     "wormdingler",
+    "xol",
     "yorp",
     # CHIP=mt_scp *and* CHIP_VARIANT=mt818x
     # git grep --name-only 'CHIP:=mt_scp' | xargs grep -L 'CHIP_VARIANT:=mt818' | sed 's#board/\(.*\)/build.mk#"\1",#'
@@ -268,7 +245,9 @@ NDS32_BOARDS = [
     "blipper",
     "boten",
     "boxy",
+    "dexi",
     "dibbi",
+    "dita",
     "drawcia",
     "galtic",
     "gooey",
@@ -293,7 +272,6 @@ RISCV_BOARDS = [
     "cherry_scp",
     "cozmo",
     "dojo",
-    "drawcia_riscv",
     "goroh",
     "hayato",
     "icarus",
@@ -307,6 +285,36 @@ RISCV_BOARDS = [
 BOARDS_THAT_FAIL_WITH_CLANG = [
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
     "chocodile_vpdmcu",  # compilation error: b/254710459
+    # Boards that use CHIP:=npcx
+    "garg",
+    # Boards that don't fit in flash with clang
+    "bellis",
+    "cerise",
+    "corori2",
+    "cret",
+    "munna",
+    "mushu",
+    "volteer",
+    "willow",
+    # Not enough flash space with CONFIG_POWER_SLEEP_FAILURE_DETECTION enabled
+    "burnet",
+    "coachz",
+    "corori2",
+    "cret",
+    "damu",
+    "fennel",
+    "fizz",
+    "gelarshie",
+    "jacuzzi",
+    "juniper",
+    "kodama",
+    "krane",
+    "mushu",
+    "makomo",
+    "oak",
+    "stern",
+    "terrador",
+    "waddledoo",
 ]
 
 # TODO(b/201311714): NDS32 is not supported by LLVM.
@@ -330,6 +338,7 @@ def build(board_name: str) -> None:
 
 
 def get_all_boards() -> typing.List[str]:
+    """Return the list of all EC boards."""
     cmd = [
         "make",
         "print-boards",
@@ -342,6 +351,7 @@ def get_all_boards() -> typing.List[str]:
 
 
 def check_boards() -> None:
+    """Checks that all boards are explicitly mentioned in this source."""
     all_boards = get_all_boards()
     diff = set(all_boards) ^ set(
         BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG
@@ -359,6 +369,11 @@ def check_boards() -> None:
 
 
 def main() -> int:
+    """The mainest function of them all.
+
+    Returns:
+        The posix exit status.
+    """
     parser = argparse.ArgumentParser()
 
     log_level_choices = ["DEBUG", "INFO", "WARNING", "ERROR", "CRITICAL"]
@@ -405,7 +420,7 @@ def main() -> int:
             board = future_to_board[future]
             try:
                 future.result()
-            except Exception:
+            except subprocess.CalledProcessError:
                 failed_boards.append(board)
 
     if len(failed_boards) > 0:

@@ -210,6 +210,9 @@ enum ec_status test_send_host_command(int command, int version,
 				      const void *params, int params_size,
 				      void *resp, int resp_size);
 
+/* Simulates the submission of a single line of console input. */
+enum ec_error_list test_send_console_command(char *input);
+
 /* Optionally defined interrupt generator entry point */
 void interrupt_generator(void);
 
@@ -520,7 +523,7 @@ void z_ztest_run_test_suite(const char *name, struct unit_test *suite);
 #define zassert_not_null(ptr, ...) TEST_ASSERT((ptr) != NULL)
 #define zassert_equal(a, b, ...) TEST_EQ((a), (b), "0x%x")
 #define zassert_not_equal(a, b, ...) TEST_NE((a), (b), "0x%x")
-#define zassert_equal_ptr(a, b, ...) TEST_EQ((void *)(a), (void *)(b), "0x%x")
+#define zassert_equal_ptr(a, b, ...) TEST_EQ((void *)(a), (void *)(b), "0x%p")
 #define zassert_within(a, b, d, ...) TEST_NEAR((a), (b), (d), "%f")
 #define zassert_mem_equal(buf, exp, size, ...) \
 	TEST_ASSERT_ARRAY_EQ(buf, exp, size)

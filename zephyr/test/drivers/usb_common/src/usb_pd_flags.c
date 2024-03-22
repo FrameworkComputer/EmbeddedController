@@ -7,7 +7,7 @@
 #include "usb_pd_flags.h"
 
 #include <zephyr/ztest_assert.h>
-#include <zephyr/ztest_test_new.h>
+#include <zephyr/ztest_test.h>
 
 ZTEST_USER(usb_common, test_usb_pd_charger_otg)
 {

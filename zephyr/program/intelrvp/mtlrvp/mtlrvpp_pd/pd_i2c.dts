@@ -1,0 +1,65 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-i2c-ports {
+		ec_pd_power: typec-aic1-power {
+			i2c-port = <&i2c0_0>;
+			enum-names = "I2C_PORT_TYPEC_AIC_1";
+		};
+		ec_pd_data: typec-aic-data {
+			i2c-port = <&i2c5_0>;
+			enum-names = "I2C_PORT_TYPEC_DATA";
+		};
+	};
+};
+
+/* typec-aic1-power */
+&i2c0_0 {
+	label = "I2C_PD_POWER";
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
+	pinctrl-names = "default";
+	pd_pow_port0: ccgP0@08 {
+		compatible = "infineon,ccg8";
+		reg = <0x08>;
+		irq-gpios = <&gpio4 0 GPIO_ACTIVE_LOW>;
+	};
+	pd_pow_port1: ccgP1@08 {
+		compatible = "infineon,ccg8";
+		reg = <0x08>;
+		irq-gpios = <&gpio4 0 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&i2c_ctrl0 {
+	status = "okay";
+};
+
+/* typec-aic-data */
+&i2c5_0 {
+	label = "I2C_PD_DATA";
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
+	pinctrl-names = "default";
+
+	pd_port0: ccg@50 {
+		compatible = "intel,pd-altmode";
+		reg = <0x50>;
+		irq-gpios = <&gpio9 5 GPIO_ACTIVE_LOW>;
+	};
+	pd_port1: ccg@51 {
+		compatible = "intel,pd-altmode";
+		reg = <0x51>;
+		irq-gpios = <&gpio9 5 GPIO_ACTIVE_LOW>;
+		irq-shared;
+	};
+};
+
+&i2c_ctrl5 {
+	status = "okay";
+};

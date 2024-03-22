@@ -17,11 +17,23 @@
 #include <zephyr/shell/shell.h>
 #include <zephyr/ztest.h>
 
+static int16_t mock_offset[3];
+
 FAKE_VALUE_FUNC(int, mock_set_range, struct motion_sensor_t *, int, int);
 FAKE_VALUE_FUNC(int, mock_set_offset, const struct motion_sensor_t *,
 		const int16_t *, int16_t);
 FAKE_VALUE_FUNC(int, mock_get_offset, const struct motion_sensor_t *, int16_t *,
 		int16_t *);
+static int mock_get_offset_custom(const struct motion_sensor_t *s,
+				  int16_t *offset, int16_t *temp)
+{
+	for (int i = 0; i < 3; i++) {
+		offset[i] = mock_offset[i];
+	}
+
+	return mock_get_offset_fake.return_val;
+}
+
 FAKE_VALUE_FUNC(int, mock_set_scale, const struct motion_sensor_t *,
 		const uint16_t *, int16_t);
 FAKE_VALUE_FUNC(int, mock_get_scale, const struct motion_sensor_t *, uint16_t *,
@@ -72,11 +84,16 @@ static void host_cmd_motion_sense_before(void *fixture)
 	RESET_FAKE(mock_perform_calib);
 	FFF_RESET_HISTORY();
 
-	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelinit 0"));
+	/* Setup proxy functions */
+	mock_get_offset_fake.custom_fake = mock_get_offset_custom;
 
-	atomic_clear(&motion_sensors[0].flush_pending);
 	motion_sensors[0].config[SENSOR_CONFIG_AP].odr = 0;
 	motion_sensors[0].config[SENSOR_CONFIG_AP].ec_rate = 1000 * MSEC;
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "accelinit 0"));
+	task_wake(TASK_ID_MOTIONSENSE);
+	k_sleep(K_MSEC(100));
+
+	atomic_clear(&motion_sensors[0].flush_pending);
 
 	/* Reset the lid wake angle to 0 degrees. */
 	lid_angle_set_wake_angle(0);
@@ -502,13 +519,15 @@ ZTEST_USER_F(host_cmd_motion_sense, test_offset_fail_to_get)
 		      NULL);
 	zassert_equal(1, mock_set_offset_fake.call_count);
 	zassert_equal(1, mock_get_offset_fake.call_count);
-	zassert_equal((int16_t *)&response.sensor_offset.offset,
-		      mock_get_offset_fake.arg1_history[0], NULL);
 }
 
 ZTEST_USER_F(host_cmd_motion_sense, test_get_offset)
 {
 	struct ec_response_motion_sense response;
+
+	mock_offset[0] = 0xaa;
+	mock_offset[1] = 0xbb;
+	mock_offset[2] = 0xcc;
 
 	motion_sensors[0].drv = &fixture->mock_drv;
 	mock_get_offset_fake.return_val = EC_RES_SUCCESS;
@@ -522,8 +541,10 @@ ZTEST_USER_F(host_cmd_motion_sense, test_get_offset)
 		   NULL);
 	zassert_equal(1, mock_set_offset_fake.call_count);
 	zassert_equal(1, mock_get_offset_fake.call_count);
-	zassert_equal((int16_t *)&response.sensor_offset.offset,
-		      mock_get_offset_fake.arg1_history[0], NULL);
+	for (int i = 0; i < ARRAY_SIZE(response.sensor_offset.offset); i++) {
+		zassert_equal(response.sensor_offset.offset[i], mock_offset[i],
+			      NULL);
+	}
 	zassert_equal(1, mock_set_offset_fake.arg2_history[0]);
 }
 
@@ -688,6 +709,7 @@ ZTEST_USER_F(host_cmd_motion_sense, test_calib)
 	motion_sensors[0].drv = &fixture->mock_drv;
 	mock_perform_calib_fake.return_val = 0;
 	mock_get_offset_fake.return_val = 0;
+	zassert_equal(motion_sensors[0].state, SENSOR_READY);
 
 	zassert_ok(host_cmd_motion_sense_calib(/*sensor_num=*/0,
 					       /*enable=*/true, &response),
@@ -754,6 +776,20 @@ ZTEST(host_cmd_motion_sense, test_fifo_read)
 	motion_sense_fifo_stage_data(&data, &motion_sensors[1], 1, 5);
 	motion_sense_fifo_commit_data();
 
+	/* Remove the ODR change confirmation after init. */
+	zassert_ok(host_cmd_motion_sense_fifo_read(4, response));
+	zassert_equal(2, response->fifo_read.number_data);
+
+	zassert_equal(MOTIONSENSE_SENSOR_FLAG_ODR |
+			      MOTIONSENSE_SENSOR_FLAG_TIMESTAMP,
+		      response->fifo_read.data[0].flags, NULL);
+	zassert_equal(0, response->fifo_read.data[0].sensor_num);
+
+	/* Remove the timestamp when the motion_sense task complete */
+	zassert_equal(MOTIONSENSE_SENSOR_FLAG_TIMESTAMP,
+		      response->fifo_read.data[1].flags, NULL);
+	zassert_equal(0xff, response->fifo_read.data[1].sensor_num);
+
 	/* Read 2 samples */
 	zassert_ok(host_cmd_motion_sense_fifo_read(4, response));
 	zassert_equal(2, response->fifo_read.number_data);
@@ -761,7 +797,10 @@ ZTEST(host_cmd_motion_sense, test_fifo_read)
 	zassert_equal(MOTIONSENSE_SENSOR_FLAG_TIMESTAMP,
 		      response->fifo_read.data[0].flags, NULL);
 	zassert_equal(0, response->fifo_read.data[0].sensor_num);
-	zassert_equal(0, response->fifo_read.data[0].timestamp);
+	/*
+	 * The timestamp may be modified based on the previous timestamp from
+	 * the task.
+	 */
 
 	zassert_equal(0, response->fifo_read.data[1].flags);
 	zassert_equal(0, response->fifo_read.data[1].sensor_num);
@@ -775,7 +814,10 @@ ZTEST(host_cmd_motion_sense, test_fifo_read)
 	zassert_equal(MOTIONSENSE_SENSOR_FLAG_TIMESTAMP,
 		      response->fifo_read.data[0].flags, NULL);
 	zassert_equal(1, response->fifo_read.data[0].sensor_num);
-	zassert_equal(5, response->fifo_read.data[0].timestamp);
+	/*
+	 * The timestamp may be modified based on the previous timestamp from
+	 * the task.
+	 */
 
 	zassert_equal(0, response->fifo_read.data[1].flags);
 	zassert_equal(1, response->fifo_read.data[1].sensor_num);

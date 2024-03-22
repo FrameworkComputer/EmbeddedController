@@ -530,7 +530,7 @@ struct pwm_fan_state {
 #define FAN_STATE_FLAG_ENABLED BIT(0)
 #define FAN_STATE_FLAG_THERMAL BIT(1)
 
-static void pwm_fan_init(void)
+test_export_static void pwm_fan_init(void)
 {
 	const struct pwm_fan_state *prev;
 	struct pwm_fan_state state;
@@ -538,9 +538,6 @@ static void pwm_fan_init(void)
 	int version, size;
 	int i;
 	int fan;
-
-	if (fan_count == 0)
-		return;
 
 	for (fan = 0; fan < fan_count; fan++)
 		fan_channel_setup(FAN_CH(fan), fans[fan].conf->flags);

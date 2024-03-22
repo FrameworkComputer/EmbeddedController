@@ -4,13 +4,12 @@
 
 if (DEFINED CONFIG_SOC_FAMILY_NPCX)
 	add_subdirectory(npcx)
-elseif (DEFINED CONFIG_SOC_FAMILY_RISCV_ITE)
+elseif (DEFINED CONFIG_SOC_FAMILY_ITE_EC)
 	add_subdirectory(it8xxx2)
-elseif (DEFINED CONFIG_SOC_FAMILY_MEC)
+elseif (DEFINED CONFIG_SOC_FAMILY_MICROCHIP_MEC)
 	add_subdirectory(mchp)
 elseif (DEFINED CONFIG_SOC_FAMILY_STM32)
 	add_subdirectory(stm32)
 else ()
 	add_subdirectory(stub)
 endif()
-

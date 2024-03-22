@@ -33,6 +33,8 @@ struct lis2dw12_emul_data {
 	uint8_t ctrl2_reg;
 	/** Emulated ctrl3 register */
 	uint8_t ctrl3_reg;
+	/** Emulated ctrl4 register */
+	uint8_t ctrl4_reg;
 	/** Emulated ctrl6 register */
 	uint8_t ctrl6_reg;
 	/** Emulated status register */
@@ -41,6 +43,8 @@ struct lis2dw12_emul_data {
 	uint32_t soft_reset_count;
 	/** Current X, Y, and Z output data registers */
 	int16_t accel_data[3];
+	/** FIFO control register */
+	uint8_t fifo_ctrl;
 };
 
 struct lis2dw12_emul_cfg {
@@ -141,6 +145,14 @@ static int lis2dw12_emul_read_byte(const struct emul *emul, int reg,
 			*val = (data->accel_data[channel] >> 8) & 0xFF;
 		}
 		break;
+	case LIS2DW12_FIFO_CTRL_ADDR:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->fifo_ctrl;
+		break;
+	case LIS2DW12_CTRL4_ADDR:
+		__ASSERT_NO_MSG(bytes == 0);
+		*val = data->ctrl4_reg;
+		break;
 	default:
 		__ASSERT(false, "No read handler for register 0x%02x", reg);
 		return -EINVAL;
@@ -230,6 +242,12 @@ static int lis2dw12_emul_write_byte(const struct emul *emul, int reg,
 			 "Attempt to write to data output register 0x%02x",
 			 reg);
 		return -EINVAL;
+	case LIS2DW12_FIFO_CTRL_ADDR:
+		data->fifo_ctrl = val;
+		break;
+	case LIS2DW12_CTRL4_ADDR:
+		data->ctrl4_reg = val;
+		break;
 	default:
 		__ASSERT(false, "No write handler for register 0x%02x", reg);
 		return -EINVAL;
@@ -244,6 +262,7 @@ static int emul_lis2dw12_init(const struct emul *emul,
 
 	data->common.i2c = parent;
 	i2c_common_emul_init(&data->common);
+	lis2dw12_emul_reset(emul);
 
 	return 0;
 }

@@ -1,0 +1,21 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	usbc {
+		port0@0 {
+			usb-mux-chain-0 {
+				usb-muxes = <&ps8743_mux_0>;
+			};
+		};
+	};
+};
+
+&i2c0 {
+	ps8743_mux_0: ps8743-mux-0@10 {
+		compatible = "zephyr,ps8743-emul";
+		reg = <0x10>;
+	};
+};

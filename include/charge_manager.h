@@ -3,6 +3,12 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #ifndef __CROS_EC_CHARGE_MANAGER_H
 #define __CROS_EC_CHARGE_MANAGER_H
 

@@ -19,11 +19,22 @@
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/gpio/gpio_nct38xx.h>
+#include <zephyr/drivers/mfd/nct38xx.h>
 #endif
 
 #if defined(CONFIG_ZEPHYR) && defined(CONFIG_IO_EXPANDER_NCT38XX)
 #error CONFIG_IO_EXPANDER_NCT38XX cannot be used with Zephyr.
 #error Enable the Zephyr driver CONFIG_GPIO_NCT38XX instead.
+#endif
+
+/*
+ * TODO(b/295587630): nct38xx: upstream gpio_nct38xx_alert.c driver
+ * incompatible with downstream TCPC driver
+ */
+#ifdef CONFIG_GPIO_NCT38XX_ALERT
+#error Zephyr driver CONFIG_GPIO_NCT38XX_ALERT cannot be used with the
+#error downstream CONFIG_PLATFORM_EC_USB_PD_TCPM_NCT38XX driver.
+#error Delete the nuvoton,nct38xx-gpio-alert node from the devicetree.
 #endif
 
 #if !defined(CONFIG_USB_PD_TCPM_TCPCI)
@@ -36,12 +47,16 @@
 
 static enum nct38xx_boot_type boot_type[CONFIG_USB_PD_PORT_MAX_COUNT];
 
-enum nct38xx_boot_type nct38xx_get_boot_type(int port)
+#ifdef CONFIG_MFD_NCT38XX
+static struct k_sem *mfd_lock[CONFIG_USB_PD_PORT_MAX_COUNT];
+#endif
+
+test_mockable enum nct38xx_boot_type nct38xx_get_boot_type(int port)
 {
 	return boot_type[port];
 }
 
-void nct38xx_reset_notify(int port)
+test_mockable void nct38xx_reset_notify(int port)
 {
 	/* A full reset also resets the chip's dead battery boot status */
 	boot_type[port] = NCT38XX_BOOT_UNKNOWN;
@@ -51,6 +66,15 @@ int nct38xx_init(int port)
 {
 	int rv;
 	int reg;
+
+#ifdef CONFIG_MFD_NCT38XX
+	if (!device_is_ready(tcpc_config[port].mfd_parent)) {
+		return EC_ERROR_INVALID_CONFIG;
+	}
+
+	mfd_lock[port] =
+		mfd_nct38xx_get_lock_reference(tcpc_config[port].mfd_parent);
+#endif
 
 	/*
 	 * Detect dead battery boot by the default role control value of 0x0A
@@ -146,7 +170,7 @@ int nct38xx_init(int port)
 			nct38xx_get_gpio_device_from_port(port);
 
 		if (!device_is_ready(dev)) {
-			CPRINTS("C%d: device is not ready", port);
+			CPRINTS("device %s not ready", dev->name);
 			return EC_ERROR_BUSY;
 		}
 #endif /* CONFIG_ZEPHYR */
@@ -349,6 +373,22 @@ __maybe_unused test_export_static int nct38xx_set_frs_enable(int port,
 			    enable ? MASK_SET : MASK_CLR);
 }
 
+#ifdef CONFIG_MFD_NCT38XX
+/*
+ * The NCT38xx TCPC and NCT38xx GPIO drivers must not access the NC38xx
+ * at the same time.  Use the lock provided by the upstream NCT38xx
+ * multi-funciton device.
+ */
+static void nct38xx_lock(int port, int lock)
+{
+	if (lock) {
+		k_sem_take(mfd_lock[port], K_FOREVER);
+	} else {
+		k_sem_give(mfd_lock[port]);
+	}
+}
+#endif
+
 const struct tcpm_drv nct38xx_tcpm_drv = {
 	.init = &nct38xx_tcpm_init,
 	.release = &tcpci_tcpm_release,
@@ -394,4 +434,8 @@ const struct tcpm_drv nct38xx_tcpm_drv = {
 #endif
 	.handle_fault = &nct3807_handle_fault,
 	.hard_reset_reinit = &tcpci_hard_reset_reinit,
+
+#ifdef CONFIG_MFD_NCT38XX
+	.lock = &nct38xx_lock,
+#endif
 };

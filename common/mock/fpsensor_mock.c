@@ -9,7 +9,7 @@
  */
 
 #include "common.h"
-#include "fpsensor.h"
+#include "fpsensor/fpsensor.h"
 #include "mock/fpsensor_mock.h"
 
 #include <stdlib.h>
@@ -40,23 +40,23 @@ void fp_sensor_low_power(void)
 {
 }
 
-void fp_sensor_configure_detect(void)
+void fp_configure_detect(void)
 {
 }
 
-enum finger_state fp_sensor_finger_status(void)
+enum finger_state fp_finger_status(void)
 {
-	return mock_ctrl_fp_sensor.fp_sensor_finger_status_return;
+	return mock_ctrl_fp_sensor.fp_finger_status_return;
 }
 
-int fp_sensor_acquire_image(uint8_t *image_data)
+int fp_acquire_image(uint8_t *image_data)
 {
-	return mock_ctrl_fp_sensor.fp_sensor_acquire_image_return;
+	return mock_ctrl_fp_sensor.fp_acquire_image_return;
 }
 
-int fp_sensor_acquire_image_with_mode(uint8_t *image_data, int mode)
+int fp_acquire_image_with_mode(uint8_t *image_data, int mode)
 {
-	return mock_ctrl_fp_sensor.fp_sensor_acquire_image_with_mode_return;
+	return mock_ctrl_fp_sensor.fp_acquire_image_with_mode_return;
 }
 
 int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,

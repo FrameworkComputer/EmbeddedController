@@ -69,6 +69,17 @@ config EMUL_PPC_NX20P348X
 	  NX20P3483.  It is also register compatible with the SM5360A.  This
 	  emulator makes use of the emulated I2C bus.
 
+if EMUL_PPC_NX20P348X
+
+config EMUL_PPC_NX20P348X_NO_TCPC
+	bool "Disable TCPC interactions"
+	help
+	  Enable if TCPC relationship is not known at compile
+	  time. This is the case when the the PPC or TCPC nodes
+	  use the "is-alt" property.
+
+endif # EMUL_PPC_NX20P348X
+
 config EMUL_PPC_SYV682X
 	bool "Silergy SYV682x PPC emulator"
 	default y
@@ -149,12 +160,58 @@ config EMUL_CROS_FLASH
 	help
 	  This option enables the flash emulator for testing.
 
+config EMUL_FPC1025
+	bool "FPC1025 fingerprint sensor emulator"
+	depends on ZTEST && DT_HAS_FPC_FPC1025_ENABLED && ARCH_POSIX
+	default y
+	help
+	  This option enables the FPC1025 fingerprint sensor emulator.
+	  It supports only basic commands (get hardware id, enter low power
+	  mode) that can be issued by the public driver (without FPC private
+	  library)
+
+config EMUL_SMBUS_ARA
+	bool "SMBUS Alert Response Address emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_SMBUS_ARA_EMUL_ENABLED && EMUL
+	select EMUL_COMMON_I2C
+	help
+	  Enable the SMBUS ARA emulator. This driver use emulated I2C bus.
+
+config EMUL_REALTEK_RTS54_PDC
+	bool "Realtek RTS5453P Type-C Power Delivery Controller emulator"
+	default y
+	depends on DT_HAS_REALTEK_RTS54_PDC_ENABLED && EMUL
+	select EMUL_COMMON_I2C
+	help
+	  Enable the Realtek RTS5453P emulator. This driver use emulated I2C bus.
+	  Emulator API is available in zephyr/include/emul/emul_realtek_rts5453p.h
+
 config EMUL_RTC
 	bool "Emulated RTC driver for Zephyr shim"
 	default y
 	depends on DT_HAS_CROS_EC_RTC_EMUL_ENABLED
 	help
 	  This options enables the RTC emulator for testing.
+
+config EMUL_KTU1125
+	bool "KTU1125 PPC emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_KTU1125_EMUL_ENABLED
+	help
+	  Enable the KTU1125 PPC emulator. This driver uses an emulated
+	  I2C bus. This is a minimal emulator that does not provide
+	  functional emulation but does support coverage testing of the
+	  KTU1125 PPC driver.
+	  Emulator API is available in zephyr/include/emul/emul_ktu1125.h.
+
+config EMUL_RT1739
+	bool "RT1739 PPC emulator"
+	default y
+	depends on DT_HAS_ZEPHYR_RT1739_EMUL_ENABLED
+	help
+	  Enable the RT1739 PPC emulator. This driver use emulated I2C bus.
+	  Emulator API is available in zephyr/include/emul/emul_rt1739.h.
 
 config EMUL_RT9490
 	bool "Rt9490 charger emulator"
@@ -172,6 +229,14 @@ config PWM_MOCK
 	help
 	  Enable the PWM mock. This driver is a pure mock and does nothing by
 	  default.
+
+config TACH_MOCK
+	bool "Mock implementation of a tachometer"
+	default y
+	depends on DT_HAS_CROS_TACH_MOCK_ENABLED
+	help
+	  Enable the tachometer mock.  This driver does nothing by default but
+	  provides an interface to set the tachometer reading value as needed.
 
 config VCMP_MOCK
 	bool "Generic voltage comparator device mock implementation"
@@ -201,6 +266,18 @@ config EMUL_ANX7452
 	  reads and writes to all emulator registers. Emulators API is
 	  available in zephyr/include/emul/emul_anx7452.h
 
+config EMUL_KB8010
+	bool "KB8010 retimer emulator"
+	default y
+	depends on ZTEST && DT_HAS_KANDOU_KB8010_ENABLED
+	select EMUL_COMMON_I2C
+	help
+	  Enable the Kandou kb8010 retimer emulator. This driver use
+	  emulated I2C bus. It is used to test kb8010 driver. It
+	  supports reads and writes to all emulator registers.
+	  XXX The emulator's
+	  XXX API is available in zephyr/include/emul/emul_kb8010.h
+
 config EMUL_PS8743
 	bool "PS8743 emulator"
 	default y
@@ -218,9 +295,17 @@ config EMUL_ICM42607
 	help
 	  Enable the ICM42607 accelerometer and gyroscope emulator.
 
+config EMUL_LSM6DSO
+  bool "lsm6dso emulator"
+  default y
+  depends on DT_HAS_CROS_LSM6DSO_EMUL_ENABLED
+  help
+    Enable the LSM6DSO accelerometer and gyroscope emulator.
+
 rsource "Kconfig.ln9310"
 rsource "Kconfig.lis2dw12"
 rsource "Kconfig.i2c_mock"
+rsource "Kconfig.gpio_controller_mock"
 rsource "Kconfig.isl923x"
 rsource "Kconfig.clock_control"
 rsource "Kconfig.sm5803"

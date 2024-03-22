@@ -17,7 +17,7 @@
 void usart_init(struct usart_config const *config)
 {
 	intptr_t base = config->hw->base;
-	uint32_t cr2, cr3;
+	uint32_t cr1, cr2, cr3;
 
 	/*
 	 * Enable clock to USART, this must be done first, before attempting
@@ -42,10 +42,11 @@ void usart_init(struct usart_config const *config)
 	 * disabled.
 	 */
 
+	cr1 = 0x0000;
 	cr2 = 0x0000;
 	cr3 = 0x0000;
 #if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
-	defined(CHIP_FAMILY_STM32L4)
+	defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
 	if (config->flags & USART_CONFIG_FLAG_RX_INV)
 		cr2 |= BIT(16);
 	if (config->flags & USART_CONFIG_FLAG_TX_INV)
@@ -53,8 +54,15 @@ void usart_init(struct usart_config const *config)
 #endif
 	if (config->flags & USART_CONFIG_FLAG_HDSEL)
 		cr3 |= BIT(3);
+#ifdef STM32_USART_CR1_FIFOEN
+	/*
+	 * UART hardware has FIFO support.  Enable it in order to reduce the
+	 * risk of receiver overrun.
+	 */
+	cr1 |= STM32_USART_CR1_FIFOEN;
+#endif
 
-	STM32_USART_CR1(base) = 0x0000;
+	STM32_USART_CR1(base) = cr1;
 	STM32_USART_CR2(base) = cr2;
 	STM32_USART_CR3(base) = cr3;
 
@@ -85,6 +93,28 @@ void usart_shutdown(struct usart_config const *config)
 
 	config->hw->ops->disable(config);
 }
+
+#ifdef CONFIG_STREAM_USB
+int usart_get_baud_f0_l(struct usart_config const *config, int frequency_hz)
+{
+	int div;
+	intptr_t base = config->hw->base;
+
+	if (STM32_USART_CR1(base) & STM32_USART_CR1_OVER8) {
+		uint32_t bbr = STM32_USART_BRR(base);
+		div = (bbr & 0xFFFFFFF0) | ((bbr & 0x7) << 1);
+	} else {
+		div = STM32_USART_BRR(base);
+	}
+
+#ifdef STM32_USART9_BASE
+	if (config->hw->base == STM32_USART9_BASE) /* LPUART */
+		div /= 256;
+#endif
+
+	return DIV_ROUND_NEAREST(frequency_hz, div);
+}
+#endif
 
 void usart_set_baud_f0_l(struct usart_config const *config, int baud,
 			 int frequency_hz)
@@ -174,6 +204,34 @@ void usart_set_parity(struct usart_config const *config, int parity)
 	/* Restore active state. */
 	STM32_USART_CR1(base) |= ue;
 }
+
+/*
+ * Start/stop generation of "break condition".
+ */
+#ifdef CONFIG_STREAM_USB
+void usart_set_break(struct usart_config const *config, bool enable)
+{
+	uint32_t ue;
+	intptr_t base = config->hw->base;
+
+	/* Record active state and disable the UART. */
+	ue = STM32_USART_CR1(base) & STM32_USART_CR1_UE;
+	STM32_USART_CR1(base) &= ~STM32_USART_CR1_UE;
+
+	/*
+	 * Generate break by temporarily inverting the logic levels on the TX
+	 * signal.
+	 */
+	if (enable) {
+		STM32_USART_CR2(base) |= STM32_USART_CR2_TXINV;
+	} else {
+		STM32_USART_CR2(base) &= ~STM32_USART_CR2_TXINV;
+	}
+
+	/* Restore active state. */
+	STM32_USART_CR1(base) |= ue;
+}
+#endif
 
 void usart_interrupt(struct usart_config const *config)
 {

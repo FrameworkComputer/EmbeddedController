@@ -48,14 +48,14 @@
 #define NCT38XX_ROLE_CTRL_DEAD_BATTERY 0x0A
 #define NCT38XX_ROLE_CTRL_GOOD_BATTERY 0x4A
 
-#define NCT38XX_REG_GPIO_DATA_IN(n) (0xC0 + ((n)*8))
-#define NCT38XX_REG_GPIO_DATA_OUT(n) (0xC1 + ((n)*8))
-#define NCT38XX_REG_GPIO_DIR(n) (0xC2 + ((n)*8))
-#define NCT38XX_REG_GPIO_OD_SEL(n) (0xC3 + ((n)*8))
-#define NCT38XX_REG_GPIO_ALERT_RISE(n) (0xC4 + ((n)*8))
-#define NCT38XX_REG_GPIO_ALERT_FALL(n) (0xC5 + ((n)*8))
-#define NCT38XX_REG_GPIO_ALERT_LEVEL(n) (0xC6 + ((n)*8))
-#define NCT38XX_REG_GPIO_ALERT_MASK(n) (0xC7 + ((n)*8))
+#define NCT38XX_REG_GPIO_DATA_IN(n) (0xC0 + ((n) * 8))
+#define NCT38XX_REG_GPIO_DATA_OUT(n) (0xC1 + ((n) * 8))
+#define NCT38XX_REG_GPIO_DIR(n) (0xC2 + ((n) * 8))
+#define NCT38XX_REG_GPIO_OD_SEL(n) (0xC3 + ((n) * 8))
+#define NCT38XX_REG_GPIO_ALERT_RISE(n) (0xC4 + ((n) * 8))
+#define NCT38XX_REG_GPIO_ALERT_FALL(n) (0xC5 + ((n) * 8))
+#define NCT38XX_REG_GPIO_ALERT_LEVEL(n) (0xC6 + ((n) * 8))
+#define NCT38XX_REG_GPIO_ALERT_MASK(n) (0xC7 + ((n) * 8))
 #define NCT38XX_REG_MUX_CONTROL 0xD0
 #define NCT38XX_REG_GPIO_ALERT_STAT(n) (0xD4 + (n))
 

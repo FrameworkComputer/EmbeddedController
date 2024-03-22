@@ -243,6 +243,8 @@
 #define STM32_USART_CR1_OVER8 BIT(15)
 #define STM32_USART_CR2(base) STM32_USART_REG(base, 0x04)
 #define STM32_USART_CR2_SWAP BIT(15)
+#define STM32_USART_CR2_RXINV BIT(16)
+#define STM32_USART_CR2_TXINV BIT(17)
 #define STM32_USART_CR3(base) STM32_USART_REG(base, 0x08)
 #define STM32_USART_CR3_EIE BIT(0)
 #define STM32_USART_CR3_DMAR BIT(6)
@@ -654,6 +656,19 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define STM32_SPI_SR_TXC BIT(12)
 
 /* --- Debug --- */
+#define STM32_DBGMCU_CR_D1_SLEEP BIT(0)
+#define STM32_DBGMCU_CR_D1_STOP BIT(1)
+#define STM32_DBGMCU_CR_D1_STBY BIT(2)
+#define STM32_DBGMCU_CR_D3_STOP BIT(7)
+#define STM32_DBGMCU_CR_D3_STBY BIT(8)
+#define STM32_DBGMCU_CR_TRACE_EN BIT(20)
+#define STM32_DBGMCU_CR_D1_CLK_EN BIT(21)
+#define STM32_DBGMCU_CR_D3_CLK_EN BIT(22)
+#define STM32_DBGMCU_CR_TRIG_OUT_EN BIT(28)
+#define STM32_DBGMCU_CR_LOW_PWR_FRIENDLY                      \
+	(STM32_DBGMCU_CR_D1_SLEEP | STM32_DBGMCU_CR_D1_STOP | \
+	 STM32_DBGMCU_CR_D1_STBY | STM32_DBGMCU_CR_D3_STOP |  \
+	 STM32_DBGMCU_CR_D3_STBY)
 #define STM32_DBGMCU_APB3FZ REG32(STM32_DBGMCU_BASE + 0x34)
 #define STM32_DBGMCU_APB1LFZ REG32(STM32_DBGMCU_BASE + 0x3C)
 #define STM32_DBGMCU_APB1HFZ REG32(STM32_DBGMCU_BASE + 0x44)
@@ -692,7 +707,7 @@ typedef volatile struct stm32_spi_regs stm32_spi_regs_t;
 #define FLASH_CR_PSIZE_MASK (3 << 4)
 #define FLASH_CR_FW BIT(6)
 #define FLASH_CR_STRT BIT(7)
-#define FLASH_CR_SNB(sec) (((sec)&0x7) << 8)
+#define FLASH_CR_SNB(sec) (((sec) & 0x7) << 8)
 #define FLASH_CR_SNB_MASK FLASH_CR_SNB(0x7)
 #define STM32_FLASH_SR(bank) STM32_FLASH_REG(bank, 0x10)
 #define FLASH_SR_BUSY BIT(0)
@@ -953,12 +968,12 @@ typedef volatile struct stm32_dma_regs stm32_dma_regs_t;
 	(STM32_DMA_REGS(channel)->ifcr[STM32_DMA_CH_LH(channel)] =          \
 		 (STM32_DMA_REGS(channel)->ifcr[STM32_DMA_CH_LH(channel)] & \
 		  ~(0x3f << STM32_DMA_CH_OFFSET(channel))) |                \
-		 (((val)&0x3f) << STM32_DMA_CH_OFFSET(channel)))
+		 (((val) & 0x3f) << STM32_DMA_CH_OFFSET(channel)))
 #define STM32_DMA_SET_ISR(channel, val)                                    \
 	(STM32_DMA_REGS(channel)->isr[STM32_DMA_CH_LH(channel)] =          \
 		 (STM32_DMA_REGS(channel)->isr[STM32_DMA_CH_LH(channel)] & \
 		  ~(0x3f << STM32_DMA_CH_OFFSET(channel))) |               \
-		 (((val)&0x3f) << STM32_DMA_CH_OFFSET(channel)))
+		 (((val) & 0x3f) << STM32_DMA_CH_OFFSET(channel)))
 
 #define STM32_DMA_FEIF BIT(0)
 #define STM32_DMA_DMEIF BIT(2)
@@ -1106,7 +1121,7 @@ enum dmamux1_request {
 #define STM32_PMSE_IER REG32(STM32_PMSE_BASE + 0x18)
 #define STM32_PMSE_SR REG32(STM32_PMSE_BASE + 0x1c)
 #define STM32_PMSE_IFCR REG32(STM32_PMSE_BASE + 0x20)
-#define STM32_PMSE_PxPMR(x) REG32(STM32_PMSE_BASE + 0x2c + (x)*4)
+#define STM32_PMSE_PxPMR(x) REG32(STM32_PMSE_BASE + 0x2c + (x) * 4)
 #define STM32_PMSE_PAPMR REG32(STM32_PMSE_BASE + 0x2c)
 #define STM32_PMSE_PBPMR REG32(STM32_PMSE_BASE + 0x30)
 #define STM32_PMSE_PCPMR REG32(STM32_PMSE_BASE + 0x34)

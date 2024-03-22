@@ -71,11 +71,11 @@
 #define IPC_DB_BUSY_MASK BIT(IPC_DB_BUSY_SHIFT)
 
 #define IPC_DB_MSG_LENGTH(drbl) \
-	(((drbl)&IPC_DB_MSG_LENGTH_MASK) >> IPC_DB_MSG_LENGTH_SHIFT)
+	(((drbl) & IPC_DB_MSG_LENGTH_MASK) >> IPC_DB_MSG_LENGTH_SHIFT)
 #define IPC_DB_PROTOCOL(drbl) \
-	(((drbl)&IPC_DB_PROTOCOL_MASK) >> IPC_DB_PROTOCOL_SHIFT)
-#define IPC_DB_CMD(drbl) (((drbl)&IPC_DB_CMD_MASK) >> IPC_DB_CMD_SHIFT)
-#define IPC_DB_BUSY(drbl) (!!((drbl)&IPC_DB_BUSY_MASK))
+	(((drbl) & IPC_DB_PROTOCOL_MASK) >> IPC_DB_PROTOCOL_SHIFT)
+#define IPC_DB_CMD(drbl) (((drbl) & IPC_DB_CMD_MASK) >> IPC_DB_CMD_SHIFT)
+#define IPC_DB_BUSY(drbl) (!!((drbl) & IPC_DB_BUSY_MASK))
 
 #define IPC_BUILD_DB(length, proto, cmd, busy)                         \
 	(((busy) << IPC_DB_BUSY_SHIFT) | ((cmd) << IPC_DB_CMD_SHIFT) | \
@@ -102,7 +102,7 @@
 #define IPC_HANDLE_PEER_ID(handle) \
 	((uint32_t)(handle) >> IPC_HANDLE_PEER_ID_SHIFT)
 #define IPC_HANDLE_PROTOCOL(handle) \
-	((uint32_t)(handle)&IPC_HANDLE_PROTOCOL_MASK)
+	((uint32_t)(handle) & IPC_HANDLE_PROTOCOL_MASK)
 #define IPC_IS_VALID_HANDLE(handle)                      \
 	(IPC_HANDLE_PEER_ID(handle) < IPC_PEERS_COUNT && \
 	 IPC_HANDLE_PROTOCOL(handle) < IPC_PROTOCOL_COUNT)

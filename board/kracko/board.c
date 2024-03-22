@@ -42,6 +42,7 @@
 #include "usb_mux.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+#include "watchdog.h"
 
 #define CPRINTUSB(format, args...) cprints(CC_USBCHARGE, format, ##args)
 
@@ -67,6 +68,15 @@ __override void board_process_pd_alert(int port)
 		return;
 
 	sm5803_handle_interrupt(port);
+
+	/*
+	 * b:273208597: There are some peripheral display docks will
+	 * issue HPDs in the short time. TCPM must wake up pd_task
+	 * continually to service the events. They may cause the
+	 * watchdog to reset. This patch placates watchdog after
+	 * receiving dp_attention.
+	 */
+	watchdog_reload();
 }
 
 /* C0 interrupt line shared by BC 1.2 and charger */

@@ -22,21 +22,58 @@ config TEST_DISABLE_PLATFORM_EC_USBC
 	  USBC.
 
 rsource "Kconfig.retimer"
+
+config PLATFORM_EC_STANDALONE_PD_CHIP
+	bool "The project uses the standalone PD chip"
+	default n
+	select HAS_TASK_CYPD
+	help
+	  Enable if project use the standalone PD chip instead of the structure of
+	  TCPC + TCPM.
+
+# if PLATFORM_EC_USBC
+
 rsource "Kconfig.pd_int_shared"
 rsource "Kconfig.pd_meas_vbus"
+if PLATFORM_EC_USBC
 rsource "Kconfig.pd_frs"
 rsource "Kconfig.pd_discharge"
 rsource "Kconfig.pd_vbus_detection"
 rsource "Kconfig.pd_console_cmd"
+rsource "Kconfig.pd_host_cmd"
 rsource "Kconfig.pd_usbc_device_type"
 rsource "Kconfig.pd"
-rsource "Kconfig.ppc"
 rsource "Kconfig.usb_mux"
 rsource "Kconfig.usbc_ss_mux"
-rsource "Kconfig.tcpm"
+rsource "Kconfig.usbc_common_altmode"
 rsource "Kconfig.usb_charger"
+endif
 
-# if PLATFORM_EC_USBC
+choice PLATFORM_EC_USBC_STACK
+	prompt "USB-C Power Delivery stack type"
+	default PLATFORM_EC_USB_PD_TCPMV2
+	help
+	   This symbol selects the USB-C power delivery stack implemtation used
+	   on the ChromiumOS EC.
+
+config PLATFORM_EC_USB_PD_TCPMV2
+	bool "USB-C Power Delivery TCPM Version 2"
+	help
+	  Enable USB-C Power Delivery Type-C Port Manager Version 2. It
+	  implements a layered, state-based design which tracks more closely
+	  with the USB Type-C and USB PD specifications.
+
+config PLATFORM_EC_USB_PD_CONTROLLER
+	bool "USB-C Power Delivery Controller"
+	help
+	  Enable USB-C Power Delivery Controller. It provides
+	  Type-C/PD functionality via a Power Delivery Controller Chip.
+endchoice
+
+if PLATFORM_EC_USB_PD_TCPMV2
+rsource "Kconfig.ppc"
+rsource "Kconfig.tcpm"
+endif # PLATFORM_EC_USB_PD_TCPMV2
 
 config PLATFORM_EC_TCPC_INTERRUPT
 	bool "Enables tcpc driver"
@@ -197,7 +234,7 @@ config PLATFORM_EC_USB_PD_TCPC_VCONN
 
 config PLATFORM_EC_USB_PD_CLEAR_HARD_RESET_STATUS
 	bool "Clear PD hard reset status when PD setup completes"
-	default y if SOC_SERIES_RISCV32_IT8XXX2
+	default y if SOC_SERIES_ITE_IT8XXX2
 	help
 	  Enabling this config will clear the Hard Reset event status
 	  after the PD connection is finished initialization,

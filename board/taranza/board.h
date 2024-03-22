@@ -12,9 +12,6 @@
 #define VARIANT_DEDEDE_EC_IT8320
 #include "baseboard.h"
 
-/* System unlocked in early development */
-#define CONFIG_SYSTEM_UNLOCKED
-
 #define CONFIG_CMD_CHARGER_DUMP
 
 /* I2C Bus Configuration */
@@ -75,6 +72,9 @@
 #undef CONFIG_BATTERY_REVIVE_DISCONNECT
 #undef CONFIG_BATTERY_SMART
 
+/* PWM */
+#define CONFIG_PWM
+
 /* Thermistors */
 #define CONFIG_TEMP_SENSOR
 #define CONFIG_THERMISTOR
@@ -86,8 +86,14 @@
 #define CONFIG_DEDICATED_RECOVERY_BUTTON_FLAGS BUTTON_FLAG_ACTIVE_HIGH
 #define CONFIG_POWER_BUTTON
 #define CONFIG_POWER_BUTTON_IGNORE_LID
+#define CONFIG_POWER_BUTTON_INIT_IDLE
 #define CONFIG_POWER_BUTTON_X86
 #define CONFIG_EMULATED_SYSRQ
+
+/* CEC */
+#define CONFIG_CEC
+#define CONFIG_CEC_BITBANG
+#define CONFIG_CEC_IT83XX
 
 /* No Keyboard */
 #undef CONFIG_KEYBOARD_COL2_INVERTED
@@ -129,6 +135,11 @@ enum charge_port {
 
 enum usbc_port { USBC_PORT_C0 = 0, USBC_PORT_COUNT };
 
+enum pwm_channel {
+	PWM_CH_LED_GREEN,
+	PWM_CH_COUNT,
+};
+
 /* ADC channels */
 enum adc_channel {
 	ADC_VSNS_PP3300_A, /* ADC0 */
@@ -147,6 +158,8 @@ enum temp_sensor_id {
 	TEMP_SENSOR_3,
 	TEMP_SENSOR_COUNT
 };
+
+enum cec_port { CEC_PORT_0, CEC_PORT_1, CEC_PORT_COUNT };
 
 #endif /* !__ASSEMBLER__ */
 

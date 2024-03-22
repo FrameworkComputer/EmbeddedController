@@ -1,0 +1,22 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Zephyr kb8010 Emulator
+
+compatible: "zephyr,kb8010-emul"
+
+include: ["i2c-device.yaml", "cros-ec,usbc-mux.yaml"]
+
+properties:
+  dp-en-pin:
+    type: phandle
+    required: true
+
+  reset-pin:
+    type: phandle
+    required: true
+
+  emul-reset-gpios:
+    type: phandle-array
+    required: true

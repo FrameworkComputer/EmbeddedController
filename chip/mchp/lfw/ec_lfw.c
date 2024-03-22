@@ -203,9 +203,10 @@ void udelay(unsigned int us)
 		;
 }
 
-void usleep(unsigned int us)
+int usleep(unsigned int us)
 {
 	udelay(us);
+	return 0;
 }
 
 int timestamp_expired(timestamp_t deadline, const timestamp_t *now)
@@ -307,7 +308,7 @@ void uart_init(void)
 }
 #endif /* #ifdef CONFIG_UART_CONSOLE */
 
-noreturn void watchdog_reset(void)
+__noreturn void watchdog_reset(void)
 {
 	uart_puts("EXCEPTION!\nTriggering watchdog reset\n");
 	/* trigger reset in 1 ms */

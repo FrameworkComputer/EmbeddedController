@@ -4,6 +4,7 @@
  */
 
 #include <dt-bindings/gpio_defines.h>
+#include <zephyr/dt-bindings/pinctrl/it8xxx2-pinctrl.h>
 
 / {
 	aliases {
@@ -47,7 +48,7 @@
 			enum-name = "GPIO_EC_PMIC_EN_ODL";
 		};
 		usb_c0_ppc_bc12_int_odl: usb-c0-ppc-bc12-int-odl {
-			gpios = <&gpiod 1 GPIO_INPUT>;
+			gpios = <&gpiod 1 (GPIO_INPUT| GPIO_ACTIVE_LOW)>;
 		};
 		ap_ec_warm_rst_req: ap-ec-warm-rst-req {
 			gpios = <&gpiod 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
@@ -144,7 +145,7 @@
 			enum-name = "GPIO_CCD_MODE_ODL";
 		};
 		usb_c1_ppc_int_odl: usb-c1-ppc-int-odl {
-			gpios = <&gpiob 2 GPIO_INPUT>;
+			gpios = <&gpiob 2 (GPIO_INPUT| GPIO_ACTIVE_LOW)>;
 		};
 		en_pp5000_z1_l: en-pp5000-z1-l {
 			gpios = <&gpioc 6 GPIO_OUTPUT_LOW>;
@@ -202,9 +203,6 @@
 			 * EC_AP_RSVD0_ODL
 			 */
 			<&gpioh 0 GPIO_INPUT>,
-			/* h5,h6: uart base tx/rx */
-			<&gpioh 5 GPIO_INPUT>,
-			<&gpioh 6 GPIO_INPUT>,
 			<&gpiom 2 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>,
 			<&gpiom 6 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>;
 	};
@@ -236,5 +234,11 @@
 	};
 	shi_cs_gpm5_default: shi_cs_gpm5_default {
 		gpio-voltage = "1v8";
+	};
+	uart2_rx_gph5: uart2_rx_gph5 {
+		pinmuxs = <&pinctrlh 5 IT8XXX2_ALT_FUNC_3>;
+	};
+	uart2_tx_gph6: uart2_tx_gph6 {
+		pinmuxs = <&pinctrlh 6 IT8XXX2_ALT_FUNC_3>;
 	};
 };

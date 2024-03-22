@@ -4,6 +4,7 @@
 
 config PLATFORM_EC_CEC
 	bool "EC CEC support"
+	select HAS_TASK_CEC
 	help
 	  Enable support for HDMI CEC (Consumer Electronics Control).
 
@@ -21,5 +22,11 @@ config PLATFORM_EC_CEC_BITBANG
 	  timer to send and receive CEC messages. It can be used on ECs without
 	  a CEC peripheral, or in addition to a CEC peripheral to enable more
 	  CEC ports.
+
+config PLATFORM_EC_CEC_IT83XX
+	bool "IT83XX CEC driver"
+	help
+	  Enable a driver for CEC peripheral on the ITE IT83XX EC. This
+	  peripheral supports a single CEC port.
 
 endif # PLATFORM_EC_CEC

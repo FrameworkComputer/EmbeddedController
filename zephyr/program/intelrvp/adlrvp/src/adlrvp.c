@@ -33,7 +33,7 @@
 #define CPRINTS(format, args...) cprints(CC_COMMAND, format, ##args)
 
 /* TCPC AIC GPIO Configuration */
-const struct tcpc_aic_gpio_config_t tcpc_aic_gpios[] = {
+const struct mecc_1_0_tcpc_aic_gpio_config_t mecc_1_0_tcpc_aic_gpios[] = {
 	[TYPE_C_PORT_0] = {
 		.tcpc_alert = GPIO_SIGNAL(DT_NODELABEL(usbc_tcpc_alrt_p0)),
 		.ppc_alert = GPIO_SIGNAL(DT_NODELABEL(usbc_tcpc_ppc_alrt_p0)),
@@ -61,7 +61,8 @@ const struct tcpc_aic_gpio_config_t tcpc_aic_gpios[] = {
 	},
 #endif
 };
-BUILD_ASSERT(ARRAY_SIZE(tcpc_aic_gpios) == CONFIG_USB_PD_PORT_MAX_COUNT);
+BUILD_ASSERT(ARRAY_SIZE(mecc_1_0_tcpc_aic_gpios) ==
+	     CONFIG_USB_PD_PORT_MAX_COUNT);
 
 /* Cache BB retimer power state */
 static bool cache_bb_enable[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -236,10 +237,8 @@ static void configure_retimer_usbmux(void)
 	}
 }
 
-static void configure_battery_type(void)
+__override int board_get_default_battery_type(void)
 {
-	int bat_cell_type;
-
 	switch (ADL_RVP_BOARD_ID(board_get_version())) {
 	case ADLM_LP4_RVP1_SKU_BOARD_ID:
 	case ADLM_LP5_RVP2_SKU_BOARD_ID:
@@ -247,17 +246,13 @@ static void configure_battery_type(void)
 	case ADLN_LP5_ERB_SKU_BOARD_ID:
 	case ADLN_LP5_RVP_SKU_BOARD_ID:
 		/* configure Battery to 2S based */
-		bat_cell_type = BATTERY_TYPE(DT_ALIAS(getac_2s));
-		break;
+		return BATTERY_TYPE(DT_ALIAS(getac_2s));
 	default:
 		/* configure Battery to 3S based */
-		bat_cell_type = BATTERY_TYPE(DT_ALIAS(getac_3s));
-		break;
+		return BATTERY_TYPE(DT_ALIAS(getac_3s));
 	}
-
-	/* Set the fixed battery type */
-	battery_set_fixed_battery_type(bat_cell_type);
 }
+
 /******************************************************************************/
 /* PWROK signal configuration */
 /*
@@ -380,9 +375,6 @@ static int board_pre_task_peripheral_init(void)
 
 	/* Make sure SBU are routed to CCD or AUX based on CCD status at init */
 	board_connect_c0_sbu_deferred();
-
-	/* Configure battery type */
-	configure_battery_type();
 
 	/* Reconfigure board specific charger drivers */
 	configure_charger();

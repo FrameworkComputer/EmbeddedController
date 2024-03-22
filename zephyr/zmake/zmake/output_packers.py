@@ -3,17 +3,19 @@
 # found in the LICENSE file.
 
 """Types which provide many builds and composite them into a single binary."""
+
 import logging
+import os
 from pathlib import Path
 import shutil
 import subprocess
 import sys
 from typing import Dict, Optional
 
-import zmake.build_config as build_config
+from zmake import build_config
+from zmake import util
 import zmake.jobserver
 import zmake.multiproc
-import zmake.util as util
 
 
 class BasePacker:
@@ -21,9 +23,9 @@ class BasePacker:
 
     def __init__(self, project):
         self.project = project
+        self.rw_fwid_addr = -1
 
-    @staticmethod
-    def configs():
+    def configs(self):  # pylint: disable=no-self-use
         """Get all of the build configurations necessary.
 
         Yields:
@@ -59,8 +61,27 @@ class BasePacker:
         """
         raise NotImplementedError("Abstract method not implemented")
 
-    @staticmethod
-    def _get_max_image_bytes(dir_map) -> Optional[int]:
+    def verify_rw_fwid(
+        self,
+        _work_dir,
+    ):
+        """Verify the RW_FWID address matches what is expected.
+
+        Args:
+            _work_dir: A directory to write outputs and temporary files
+            into.
+        """
+        # If the rw_fwid_addr is unset, then we don't need this implemented.
+        # But if someone set rw_fwid_addr, the subclass must implement this
+        # method.
+        if self.rw_fwid_addr >= 0:
+            raise NotImplementedError(
+                f"{self}: Abstract method not implemented"
+            )
+
+    def _get_max_image_bytes(  # pylint: disable=no-self-use
+        self, dir_map
+    ) -> Optional[int]:
         """Get the maximum allowed image size (in bytes).
 
         This value will generally be found in CONFIG_FLASH_SIZE but may vary
@@ -87,14 +108,12 @@ class BasePacker:
         Returns:
             The file if it passes the test.
         """
-        max_size = (
-            self._get_max_image_bytes(  # pylint: disable=assignment-from-none
-                dir_map
-            )
+        max_size = (  # pylint: disable=assignment-from-no-return
+            self._get_max_image_bytes(dir_map)
         )
         if max_size is None or file.stat().st_size <= max_size:
             return file
-        raise RuntimeError("Output file ({}) too large".format(file))
+        raise RuntimeError(f"Output file ({file}) too large")
 
 
 class ElfPacker(BasePacker):
@@ -133,10 +152,12 @@ class BinmanPacker(BasePacker):
 
     def configs(self):
         yield "ro", build_config.BuildConfig(
-            kconfig_defs={"CONFIG_CROS_EC_RO": "y"}
+            kconfig_defs={"CONFIG_CROS_EC_RO": "y"},
+            cmake_defs={"CMAKE_C_FLAGS": "-DSECTION_IS_RO"},
         )
         yield "rw", build_config.BuildConfig(
-            kconfig_defs={"CONFIG_CROS_EC_RW": "y"}
+            kconfig_defs={"CONFIG_CROS_EC_RW": "y"},
+            cmake_defs={"CMAKE_C_FLAGS": "-DSECTION_IS_RW"},
         )
 
     def pack_firmware(
@@ -172,13 +193,20 @@ class BinmanPacker(BasePacker):
             ro_dir / "zephyr" / self.ro_file, work_dir / "zephyr_ro.bin"
         )
         shutil.copy2(
+            ro_dir / "zephyr" / "zephyr.elf", work_dir / "zephyr_ro.elf"
+        )
+        shutil.copy2(
             rw_dir / "zephyr" / self.rw_file, work_dir / "zephyr_rw.bin"
         )
+        shutil.copy2(
+            rw_dir / "zephyr" / "zephyr.elf", work_dir / "zephyr_rw.elf"
+        )
 
+        version_file_path = work_dir / "version.txt"
         # Version in FRID/FWID can be at most 31 bytes long (32, minus
         # one for null character).
-        if len(version_string) > 31:
-            version_string = version_string[:31]
+        with open(version_file_path, "w", encoding="utf-8") as version_file:
+            version_file.write(version_string[:31].ljust(32, "\0"))
 
         proc = jobclient.popen(
             [
@@ -187,8 +215,6 @@ class BinmanPacker(BasePacker):
                 "-v",
                 "5",
                 "build",
-                "-a",
-                "version={}".format(version_string),
                 "-d",
                 dts_file_path,
                 "-m",
@@ -211,8 +237,59 @@ class BinmanPacker(BasePacker):
             raise OSError("Failed to run binman")
 
         yield work_dir / "ec.bin", "ec.bin"
+        yield rw_dir / "zephyr" / ".config", "ec.config"
         yield ro_dir / "zephyr" / "zephyr.elf", "zephyr.ro.elf"
+        yield ro_dir / "zephyr" / "zephyr.lst", "zephyr.ro.lst"
         yield rw_dir / "zephyr" / "zephyr.elf", "zephyr.rw.elf"
+        yield rw_dir / "zephyr" / "zephyr.lst", "zephyr.rw.lst"
+        yield (
+            rw_dir / "zephyr" / "component_manifest.json",
+            "component_manifest.json",
+        )
+
+        token_db_name = "database.bin"
+        token_paths = [
+            ro_dir / token_db_name,
+            rw_dir / token_db_name,
+        ]
+        if os.path.exists(token_paths[0]):
+            util.merge_token_databases(token_paths, work_dir / token_db_name)
+            yield work_dir / token_db_name, token_db_name
+
+    def verify_rw_fwid(
+        self,
+        work_dir,
+    ):
+        """Verify the RW_FWID address matches what is expected.
+
+        Args:
+            work_dir: A directory to write outputs and temporary files
+            into.
+        """
+        actual_rw_fwid_addr = -1
+        with open(work_dir / "image.map", encoding="utf-8") as image_map:
+            for line in image_map:
+                addr, _, _, name = line.split(None, 4)
+                if name == "rw-fwid":
+                    actual_rw_fwid_addr = int(addr, 16)
+        if self.rw_fwid_addr != actual_rw_fwid_addr:
+            if self.rw_fwid_addr < 0:
+                raise RuntimeError(
+                    "Missing RW_FWID assertion. Add one to BUILD.py:\n"
+                    "assert_rw_fwid_DO_NOT_EDIT(project_name="
+                    f'"{self.project.config.project_name}", '
+                    f"addr={actual_rw_fwid_addr:#x})"
+                )
+            if actual_rw_fwid_addr < 0:
+                raise RuntimeError(
+                    "Unexpected RW_FWID assertion. Please remove "
+                    "assert_rw_fwid_DO_NOT_EDIT from BUILD.py for project_name "
+                    f"{self.project.config.project_name}"
+                )
+            raise RuntimeError(
+                f"{self.project.config.project_name}: Incorrect RW_FWID, "
+                f"expected {self.rw_fwid_addr:#x} got {actual_rw_fwid_addr:#x}"
+            )
 
 
 class NpcxPacker(BinmanPacker):
@@ -271,6 +348,39 @@ class MchpPacker(BinmanPacker):
     """
 
     ro_file = "zephyr.mchp.bin"
+    second_loader = "second_loader_fw.bin"
+
+    def _get_max_image_bytes(self, dir_map):
+        ro_dir = dir_map["ro"]
+        rw_dir = dir_map["rw"]
+        ro_size = util.read_kconfig_autoconf_value(
+            ro_dir / "zephyr" / "include" / "generated",
+            "CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES",
+        )
+        rw_size = util.read_kconfig_autoconf_value(
+            rw_dir / "zephyr" / "include" / "generated",
+            "CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES",
+        )
+        return max(int(ro_size, 0), int(rw_size, 0))
+
+    def pack_firmware(self, work_dir, jobclient, dir_map, version_string=""):
+        ro_dir = dir_map["ro"]
+        for path, output_file in super().pack_firmware(
+            work_dir,
+            jobclient,
+            dir_map,
+            version_string=version_string,
+        ):
+            if output_file == "ec.bin":
+                yield (
+                    self._check_packed_file_size(path, dir_map),
+                    "ec.bin",
+                )
+            else:
+                yield path, output_file
+
+        # Include the MCHP second loader file as an output artifact.
+        yield ro_dir / self.second_loader, self.second_loader
 
 
 # A dictionary mapping packer config names to classes.

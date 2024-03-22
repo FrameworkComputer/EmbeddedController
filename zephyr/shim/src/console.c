@@ -23,6 +23,7 @@
 #include <zephyr/drivers/uart.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/logging/log_output_custom.h>
 #include <zephyr/shell/shell.h>
 #ifdef CONFIG_SHELL_BACKEND_DUMMY /* nocheck */
 #include <zephyr/shell/shell_dummy.h> /* nocheck */
@@ -39,6 +40,10 @@
 #if defined(CONFIG_SHELL_BACKEND_SERIAL) && \
 	defined(CONFIG_SHELL_BACKEND_DUMMY) /* nocheck */
 #error Must select only one shell backend
+#endif
+
+#ifdef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
+char ts_str[PRINTF_TIMESTAMP_BUF_SIZE];
 #endif
 
 LOG_MODULE_REGISTER(shim_console, LOG_LEVEL_ERR);
@@ -387,6 +392,7 @@ void uart_clear_input(void)
 #endif
 }
 
+#ifndef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
 static void handle_sprintf_rv(int rv, size_t *len)
 {
 	if (rv < 0) {
@@ -423,11 +429,13 @@ static void zephyr_print(const char *buff, size_t size)
 			printk("%s", buff);
 	}
 }
+#endif /* CONFIG_PIGWEED_LOG_TOKENIZED_LIB */
 
 #if defined(CONFIG_USB_CONSOLE) || defined(CONFIG_USB_CONSOLE_STREAM)
 BUILD_ASSERT(0, "USB console is not supported with Zephyr");
 #endif /* defined(CONFIG_USB_CONSOLE) || defined(CONFIG_USB_CONSOLE_STREAM) */
 
+#ifndef CONFIG_PIGWEED_LOG_TOKENIZED_LIB
 int cputs(enum console_channel channel, const char *outstr)
 {
 	/* Filter out inactive channels */
@@ -495,3 +503,25 @@ int cprints(enum console_channel channel, const char *format, ...)
 
 	return rv > 0 ? EC_SUCCESS : rv;
 }
+#endif /* CONFIG_PIGWEED_LOG_TOKENIZED_LIB */
+
+#ifdef CONFIG_PLATFORM_EC_LOG_CUSTOM_TIMESTAMP
+static int custom_timestamp(const struct log_output *output,
+			    const log_timestamp_t timestamp,
+			    const log_timestamp_printer_t printer)
+{
+	uint64_t us = log_output_timestamp_to_us(timestamp);
+
+	return printer(output, "[%" PRIu32 ".%06" PRIu32 "] ",
+		       (uint32_t)(us / USEC_PER_SEC),
+		       (uint32_t)(us % USEC_PER_SEC));
+}
+
+static int timestamp_init(void)
+{
+	log_custom_timestamp_set(custom_timestamp);
+
+	return 0;
+}
+SYS_INIT(timestamp_init, POST_KERNEL, CONFIG_LOG_CORE_INIT_PRIORITY);
+#endif /* CONFIG_PLATFORM_EC_LOG_CUSTOM_TIMESTAMP */

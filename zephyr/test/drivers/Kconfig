@@ -2,6 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config TEST_PROVIDE_PM_HOOKS
+	bool "Provide PM hooks for test purposes"
+	default y
+	select HAS_PM
+
 config BUG_249829957
 	bool "Tracking b/249829957"
 
@@ -29,6 +34,12 @@ config LINK_TEST_SUITE_AP_MUX_CONTROL
 config LINK_TEST_SUITE_AP_VDM_CONTROL
 	bool "Link and test the ap_vdm_control tests"
 
+config LINK_TEST_SUITE_BMI3XX
+	bool "Link and test the bmi3xx tests"
+	help
+	  Include the BMI3XX driver test suite in the
+	  binary.
+
 config LINK_TEST_SUITE_BUTTON
 	bool "Link tests for common/button.c"
 
@@ -37,6 +48,21 @@ config LINK_TEST_SUITE_CBI_FLASH
 	help
 	  Include the CBI Flash storage driver test suite
 	  in the binary.
+
+config LINK_TEST_SUITE_CBI_FLASH_FROM_EEPROM
+	bool "Link and run CBI EEPROM to flash region tests"
+	help
+	  Include tests for migrating CBI EEPROM data to the flash based
+	  CBI region.
+
+config LINK_TEST_SUITE_CEC_COMMON
+	bool "Link and run the common/cec.c tests"
+
+config LINK_TEST_SUITE_CEC_BITBANG
+	bool "Link and run tests for driver/cec/bitbang"
+
+config LINK_TEST_SUITE_CEC_IT83XX
+	bool "Link and run tests for driver/cec/it83xx"
 
 config LINK_TEST_SUITE_CHARGESPLASH
 	bool "Link and test the chargesplash tests"
@@ -50,6 +76,9 @@ config LINK_TEST_SUITE_COMMON_CBI_GPIO
 config LINK_TEST_SUITE_COMMON_CHARGER
 	bool "Link and execute the common/charger.c tests"
 
+config LINK_TEST_SUITE_FAN
+	bool "Link and test the fan tests"
+
 config LINK_TEST_SUITE_CROS_FLASH
 	bool "Link and execute the cros-flash driver tests"
 	help
@@ -59,6 +88,9 @@ config LINK_TEST_SUITE_FLASH
 	bool "Link and execute the common/flash.c tests"
 	help
 	  Include the test suite exercising flash-related code in the binary.
+
+config LINK_TEST_SUITE_GPIO_INIT
+  	bool "Link and execute the GPIO init tests"
 
 config LINK_TEST_SUITE_GPIO_UNHOOK
   	bool "Link and execute the unhooked gpio tests"
@@ -99,6 +131,9 @@ config LINK_TEST_SUITE_KEYBOARD_SCAN
 config LINK_TEST_SUITE_LED_DRIVER
 	bool "Link and test the led_driver tests"
 
+config LINK_TEST_SUITE_LED_DRIVER_ALIAS_LED
+	bool "Link and test the led_driver tests with alias LEDs defined"
+
 config LINK_TEST_SUITE_LOCATE_CHIP_ALTS
 	bool "Link tests for alternate operations of the locate chip host cmd"
 	help
@@ -119,11 +154,26 @@ config LINK_TEST_SUITE_NX20P348X
 config LINK_TEST_SUITE_PANIC_OUTPUT
 	bool "Link and test the panic_output tests"
 
+config LINK_TEST_SUITE_PANIC_REASON
+	bool "Link and test the panic_reason tests"
+
 config LINK_TEST_SUITE_POWER_HOST_SLEEP
 	bool "Link and run the power/host_sleep.c specific tests"
 
+config LINK_TEST_SUITE_PS8743
+	bool "Link and test the ps8743 tests"
+	help
+	  Link tests PS8743 test suite for the MUX driver related function
+	  tests.
+
 config LINK_TEST_SUITE_PS8XXX
 	bool "Link and test the ps8xxx tests"
+
+config LINK_TEST_SUITE_RT1715
+	bool "Link and test the rt17115 tests"
+	help
+	  Link rt1715 test suite for the TCPM driver related function
+	  tests.
 
 config LINK_TEST_SUITE_RT1718S
 	bool "Link and test the rt1718s tests"
@@ -131,8 +181,25 @@ config LINK_TEST_SUITE_RT1718S
 	  Link tests rt1718s test suite for the TCPM driver related function
 	  tests.
 
+config LINK_TEST_SUITE_RT1739
+	bool "Link and test the rt1739 tests"
+	help
+	  Link tests rt1739s test suite for the PPC driver related function
+	  tests.
+
+config LINK_TEST_SUITE_KTU1125
+	bool "Link and test the ktu1125 tests"
+	help
+	  Link tests ktu1125 test suite for the PPC driver related function
+	  tests.
+
 config LINK_TEST_SUITE_RT9490
 	bool "Link and test the rt9490 tests"
+
+config LINK_TEST_SUITE_WATCHDOG_HELPER
+	bool "Link and run watchdog helper tests"
+	help
+	  Include the test suite exercising the Watchdog Helper utility.
 
 config LINK_TEST_SUITE_RANDOM
 	bool "Link and run random (trng) tests"
@@ -153,6 +220,9 @@ config LINK_TEST_SUITE_SYSTEM
 
 config LINK_TEST_SUITE_TIMER
 	bool "Link and test the timer tests"
+
+config LINK_TEST_SUITE_UPSTREAM_FUEL_GAUGE
+	bool "Link and test usage of upstream fuel-gauge API"
 
 config LINK_TEST_SUITE_USB_COMMON
 	bool "Link and test USB common code tests"
@@ -220,6 +290,11 @@ config LINK_TEST_SUITE_USBC_RETIMER_PS8811
 	help
 	  Include the PS8811 test suite in the binary.
 
+config LINK_TEST_SUITE_USBC_DP_MODE
+	bool "Link and test the usbc_dp_tests"
+	help
+	  Include the DP 2.1 test suite in the binary.
+
 config LINK_TEST_SUITE_USBC_TBT_MODE
 	bool "Link and test the usbc_tbt_mode tests"
 
@@ -239,6 +314,12 @@ config LINK_TEST_SUITE_CONSOLE
 
 config LINK_TEST_SUITE_HOST_CMD_THREAD
 	bool "Link and test the host command thread override tests"
+
+config LINK_TEST_SUITE_BC12_UPSTREAM
+	bool "Link and test the BC1.2 upsstream tests"
+	help
+	  This test suite validates integration of the EC application with
+	  the upstream Zephyr BC1.2 driver API.
 
 config LINK_TEST_SUITE_PI3USB9201
 	bool "Link and test the pi3usb9201 tests"
@@ -261,6 +342,12 @@ config LINK_TEST_SUITE_ANX7452
 	  Include the test suite of ANX7452 retimer in the binary. The tests
 	  use I2C emulation.
 
+config LINK_TEST_SUITE_KB8010
+	bool "Link and test the kb8010 tests"
+	help
+	  Link tests kb8010 test suite for the retimer driver related
+	  function tests.
+
 config LINK_TEST_SUITE_SM5803
 	bool "Link and test the SM5803 charger tests"
 
@@ -268,5 +355,20 @@ config LINK_TEST_SUITE_BODY_DETECTION
 	bool "Link and test the body detection tests"
 	help
 	  Include the test suite exercising body detection behaviors in the binary.
+
+config LINK_TEST_SUITE_LED_PWM_FADE
+	bool "Link and test the led_pwm_fade.c tests"
+
+config LINK_TEST_SUITE_ONE_WIRE_UART
+	bool "Link and test the one wire uart driver tests"
+
+config LINK_TEST_SUITE_SMART_BATTERY
+	bool "Link and test the smart battery driver tests"
+
+config LINK_TEST_SUITE_TABLETMODE_INTERRUPT
+	bool "Link and test the tabletmode interrupt driver tests"
+	help
+	  Verifies a singleton driver which handles an external interrupt
+	  signaling to the EC when to switch in or out of tablet mode.
 
 source "Kconfig.zephyr"

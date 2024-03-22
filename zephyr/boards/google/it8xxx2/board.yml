@@ -1,0 +1,12 @@
+board:
+  name: it8xxx2
+  vendor: google
+  socs:
+    - name: it81202bx
+    - name: it81202cx
+    - name: it81302bx
+    - name: it81302cx
+    - name: it82002aw
+    - name: it82202ax
+      variants:
+        - name: "512"

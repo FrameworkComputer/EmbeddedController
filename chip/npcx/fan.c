@@ -91,7 +91,7 @@ static int rpm_pre[FAN_CH_COUNT];
 #define TACHO_MAX_CNT (BIT(16) - 1)
 
 /* Margin of target rpm */
-#define RPM_MARGIN(rpm_target) (((rpm_target)*RPM_DEVIATION) / 100)
+#define RPM_MARGIN(rpm_target) (((rpm_target) * RPM_DEVIATION) / 100)
 
 /**
  * MFT get fan rpm value

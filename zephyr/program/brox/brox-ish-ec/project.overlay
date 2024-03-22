@@ -1,0 +1,65 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Brox-ish-ec program common DTS includes */
+
+/* Arbitrage generates an incorrect node label when using alternate pins.
+ * Create a 2nd node label on I2C3 as a workaround.
+ * TODO: b/310227384 - I2C alternate selection not detected automatically.
+ */
+i2c3ALT: &i2c3 {
+};
+
+#include <cros/cbi_flash.dtsi>
+
+#include "../adc.dtsi"
+#include "../binman.dtsi"
+#include "../brox.dtsi"
+#include "../fan.dtsi"
+#include "../generated.dtsi"
+#include "../gpio.dtsi"
+#include "../i2c.dtsi"
+#include "../interrupts.dtsi"
+#include "../led_pins.dtsi"
+#include "../led_policy.dtsi"
+#include "../keyboard.dtsi"
+#include "../power_signals.dtsi"
+#include "../power_signals_gpios.dtsi"
+#include "../pwm.dtsi"
+#include "../temp_sensors.dtsi"
+#include "../usb_typec.dtsi"
+#include "../usba.dtsi"
+
+/* Brox-ish-ec project DTS includes*/
+
+/* Brox-ish-ec overrides follow... */
+
+/{
+	batteries {
+		default_battery: lgc_ap18c8k {
+			compatible = "lgc,ap18c8k", "battery-smart";
+		};
+	};
+	tabletmode_interrupt: tabletmode-interrupt {
+		compatible = "cros,tabletmode-interrupt";
+		irq-gpios = <&gpioc 7 GPIO_ACTIVE_LOW>;
+	};
+};
+
+/delete-node/ &int_lid_imu;
+
+/delete-node/ &gpio_ish_i2c_ec_scl;
+
+/* Disable sensor I2C nodes */
+/delete-node/ &i2c5;
+/delete-node/ &i2c_ec_i2c_sensor;
+
+/* These GPIOS are initialized by the PDC driver */
+&gpio_usb_pd_int_odl {
+	no-auto-init;
+};
+&gpio_ec_i2c_pmc_pd_int_odl {
+	no-auto-init;
+};

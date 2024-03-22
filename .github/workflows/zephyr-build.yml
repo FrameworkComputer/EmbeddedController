@@ -17,7 +17,7 @@ on:
 jobs:
   build:
     name: Build Framework platforms
-    runs-on: [marigold-builders]
+    runs-on: [marigold2-builders]
 
     strategy:
       # Only build one at a time because we have only one working directory
@@ -25,7 +25,7 @@ jobs:
       matrix:
         platform: [
           # Build marigold only on marigold builder and folder
-          {name: marigold, folder: marigold },
+          {name: marigold, folder: zephyr-q1 },
           {name: lotus, folder: marigold },
           {name: azalea, folder: marigold },
         ]
@@ -65,7 +65,9 @@ jobs:
           pushd src/third_party/zephyr/main
           git fetch github-private
           git clean -ffdx
-          git reset --hard github-private/marigold
+          # Previous one is: ee0cd57778e00c49269068d049a4b7e237500134
+          # New one is:      b3843c543ca1d8d4811fd7f7e37484b19207c54b
+          git reset --hard github-private/marigold.upstream-merge
           popd
 
       - name: Build ${{ matrix.platform.name }}

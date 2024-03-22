@@ -3,6 +3,7 @@
 # found in the LICENSE file.
 
 """The entry point into zmake."""
+
 import argparse
 import inspect
 import logging
@@ -10,8 +11,8 @@ import os
 import pathlib
 import sys
 
-import zmake.jobserver as jobserver
-import zmake.multiproc as multiproc
+from zmake import jobserver
+from zmake import multiproc
 import zmake.zmake as zm
 
 
@@ -164,7 +165,10 @@ def get_argparser():
     parser.add_argument(
         "--projects-dir",
         type=pathlib.Path,
-        help="Base directory to search for BUILD.py files.",
+        action="append",
+        dest="projects_dirs",
+        metavar="PROJECTS_DIR",
+        help="Base directory to search for BUILD.py files. Can be repeated.",
     )
     parser.add_argument(
         "--zephyr-base", type=pathlib.Path, help="Path to Zephyr OS repository"
@@ -307,10 +311,15 @@ def add_common_configure_args(sub_parser: argparse.ArgumentParser):
         help="Delete existing build directories, even if configuration is unchanged",
     )
     sub_parser.add_argument(
+        "-v",
+        "--version",
+        help="Base version string to use in build",
+    )
+    sub_parser.add_argument(
         "--static",
         action="store_true",
         dest="static_version",
-        help="Generate static version information for reproducible builds",
+        help="Generate static version information for reproducible builds and official builds",
     )
     sub_parser.add_argument(
         "--save-temps",
@@ -323,6 +332,12 @@ def add_common_configure_args(sub_parser: argparse.ArgumentParser):
         action="store_true",
         default=False,
         help="Do not treat warnings as errors",
+    )
+    sub_parser.add_argument(
+        "--cmake-trace",
+        action="store_true",
+        default=False,
+        dest="cmake_trace",
     )
     sub_parser.add_argument(
         "-B",

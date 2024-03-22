@@ -44,11 +44,32 @@ BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 
 /******************************************************************************/
 
+/* Power on Lisbon through CEC */
+struct cec_offline_policy lisbon_cec_policy[] = {
+	{
+		.command = CEC_MSG_REPORT_PHYSICAL_ADDRESS,
+		.action = CEC_ACTION_POWER_BUTTON,
+	},
+	{
+		.command = CEC_MSG_DEVICE_VENDOR_ID,
+		.action = CEC_ACTION_POWER_BUTTON,
+	},
+	/* Terminator */
+	{ 0 },
+};
+
 /* CEC ports */
+static const struct bitbang_cec_config bitbang_cec_config = {
+	.gpio_out = GPIO_HDMIB_CEC_OUT,
+	.gpio_in = GPIO_HDMIB_CEC_IN,
+	.gpio_pull_up = GPIO_HDMIB_CEC_PULL_UP,
+};
+
 const struct cec_config_t cec_config[] = {
 	[CEC_PORT_0] = {
 		.drv = &bitbang_cec_drv,
-		.offline_policy = NULL,
+		.drv_config = &bitbang_cec_config,
+		.offline_policy = lisbon_cec_policy,
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(cec_config) == CEC_PORT_COUNT);

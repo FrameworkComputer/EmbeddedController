@@ -59,29 +59,21 @@ enum led_pwr_state {
 	LED_PWRS_COUNT
 };
 
-/* Charge state flags */
-/* Forcing idle state */
-#define CHARGE_FLAG_FORCE_IDLE BIT(0)
-/* External (AC) power is present */
-#define CHARGE_FLAG_EXTERNAL_POWER BIT(1)
-/* Battery is responsive */
-#define CHARGE_FLAG_BATT_RESPONSIVE BIT(2)
-
-/* Debugging constants, in the same order as enum pwr_state. This string
- * table was moved here to sync with enum above.
+/*
+ * Charge state flags for LED control.
+ * This is being deprecated. Use enum led_pwr_state instead.
  */
-#define CHARGE_STATE_NAME_TABLE                                             \
-	{                                                                   \
-		"unchange", "init", "reinit", "idle0", "idle", "discharge", \
-			"discharge_full", "charge", "charge_near_full",     \
-			"error"                                             \
-	}
-/* End of CHARGE_STATE_NAME_TABLE macro */
+/* Forcing idle state */
+#define CHARGE_LED_FLAG_FORCE_IDLE BIT(0)
+/* External (AC) power is present */
+#define CHARGE_LED_FLAG_EXTERNAL_POWER BIT(1)
+/* Battery is responsive */
+#define CHARGE_LED_FLAG_BATT_RESPONSIVE BIT(2)
 
 /*
- * The values exported by charge_get_state() and charge_get_flags() are used
- * only to control the LEDs (with one not-quite-correct exception). For V2
- * we use a different set of states internally.
+ * Charge task's states
+ *
+ * Use enum led_pwr_state for controlling LEDs.
  */
 enum charge_state {
 	ST_IDLE = 0,
@@ -89,7 +81,7 @@ enum charge_state {
 	ST_CHARGE,
 	ST_PRECHARGE,
 
-	NUM_STATES_V2
+	CHARGE_STATE_COUNT
 };
 
 struct charge_state_data {
@@ -116,18 +108,19 @@ struct charge_state_data {
 struct sustain_soc {
 	int8_t lower;
 	int8_t upper;
+	uint8_t flags; /* enum ec_charge_control_flag */
 };
 
 #define BAT_MAX_DISCHG_CURRENT 5000 /* mA */
 #define BAT_LOW_VOLTAGE_THRESH 3200 /* mV */
 
 /**
- * Return current charge state.
+ * Return current charge state for LED control.
  */
 enum led_pwr_state led_pwr_get_state(void);
 
 /**
- * Return current charge v2 state.
+ * Return current charge task state.
  */
 __test_only enum charge_state charge_get_state(void);
 
@@ -137,9 +130,14 @@ __test_only enum charge_state charge_get_state(void);
 int charge_keep_power_off(void);
 
 /**
- * Return current charge state flags (CHARGE_FLAG_*)
+ * Return current charge LED state flags (CHARGE_LED_FLAG_*)
+ *
+ * This API is being deprecated. It has been used only for LED control and is
+ * being replaced by led_pwr_get_state.
  */
-uint32_t charge_get_flags(void);
+#if defined(BOARD_ELM) || defined(BOARD_REEF_MCHP) || defined(TEST_BUILD)
+uint32_t charge_get_led_flags(void);
+#endif
 
 /**
  * Return current battery charge percentage.

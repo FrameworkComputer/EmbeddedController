@@ -135,9 +135,18 @@ enum temp_sensor_id {
 enum battery_type {
 	BATTERY_CA14J43,
 	BATTERY_CA11J58,
+	BATTERY_CA11J34,
 	BATTERY_TYPE_COUNT,
 };
 
+enum battery_cell_type {
+	BATTERY_CELL_TYPE_1S = 1,
+	BATTERY_CELL_TYPE_2S = 2,
+	BATTERY_CELL_TYPE_3S = 3,
+	BATTERY_CELL_TYPE_4S = 4,
+};
+
+enum battery_cell_type board_get_battery_cell_type(void);
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

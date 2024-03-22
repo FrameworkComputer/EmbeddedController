@@ -54,7 +54,7 @@
  * Calibration code is set to 16LSB/ut, [0.0625 uT/LSB]
  * Apply a multiplier to change the unit
  */
-#define LIS2MDL_RATIO(_in) (((_in)*24) / 10)
+#define LIS2MDL_RATIO(_in) (((_in) * 24) / 10)
 
 struct lis2mdl_private_data {
 	/* lsm6dsm_data union requires cal be first element */

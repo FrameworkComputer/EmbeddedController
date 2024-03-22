@@ -338,6 +338,55 @@ ZTEST_USER(bmi160, test_bmi_acc_set_offset)
 }
 
 /**
+ * Test set accelerometer offset with extreme values.
+ */
+ZTEST_USER(bmi160, test_bmi_acc_set_offset_min_max)
+{
+	struct motion_sensor_t *ms;
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
+	int16_t input_v[3];
+	int16_t temp = 0;
+	intv3_t ret_v;
+	intv3_t exp_v;
+
+	ms = &motion_sensors[BMI_ACC_SENSOR_ID];
+
+	/* Set expected offsets */
+	exp_v[0] = 8128;
+	exp_v[1] = -8192;
+	exp_v[2] = 0;
+	/* Set some extreme values. */
+	input_v[0] = INT16_MAX;
+	input_v[1] = INT16_MIN;
+	input_v[2] = 0;
+	/* Disable rotation */
+	ms->rot_standard_ref = NULL;
+
+	/* Test set offset without rotation */
+	zassert_equal(EC_SUCCESS, ms->drv->set_offset(ms, input_v, temp));
+	get_emul_acc_offset(emul, ret_v);
+	compare_int3v(exp_v, ret_v);
+	/* Accelerometer offset should be enabled */
+	zassert_true(bmi_emul_get_reg(emul, BMI160_OFFSET_ACC70) &
+			     BMI160_OFFSET_ACC_EN,
+		     NULL);
+
+	/* Setup rotation and rotate input for set_offset function */
+	ms->rot_standard_ref = &test_rotation;
+	convert_int3v_int16(input_v, ret_v);
+	rotate_int3v_by_test_rotation(ret_v);
+	convert_int3v_int16(ret_v, input_v);
+
+	/* Test set offset with rotation */
+	zassert_equal(EC_SUCCESS, ms->drv->set_offset(ms, input_v, temp));
+	get_emul_acc_offset(emul, ret_v);
+	compare_int3v(exp_v, ret_v);
+	zassert_true(bmi_emul_get_reg(emul, BMI160_OFFSET_ACC70) &
+			     BMI160_OFFSET_ACC_EN,
+		     NULL);
+}
+
+/**
  * Test set gyroscope offset with and without rotation. Also test behaviour
  * on I2C error.
  */
@@ -1943,6 +1992,29 @@ ZTEST_USER(bmi160, test_bmi_gyr_fifo)
 		      NULL);
 }
 
+/** Test irq handler of accelerometer sensor when interrupt register is stuck.
+ */
+ZTEST_USER(bmi160, test_bmi_acc_fifo_stuck)
+{
+	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
+	struct motion_sensor_t *ms_acc = &motion_sensors[BMI_ACC_SENSOR_ID];
+	struct motion_sensor_t *ms_gyr = &motion_sensors[BMI_GYR_SENSOR_ID];
+	uint32_t event = BMI_INT_EVENT;
+
+	/* init bmi before test */
+	zassert_equal(EC_RES_SUCCESS, ms_acc->drv->init(ms_acc));
+	zassert_equal(EC_RES_SUCCESS, ms_gyr->drv->init(ms_gyr));
+
+	/* Setup interrupts register */
+	bmi_emul_set_reg(emul, BMI160_INT_STATUS_0, BMI160_FWM_INT & 0xff);
+	bmi_emul_set_reg(emul, BMI160_INT_STATUS_1,
+			 (BMI160_FWM_INT >> 8) & 0xff);
+
+	/* Read FIFO in driver */
+	zassert_equal(EC_SUCCESS, ms_acc->drv->irq_handler(ms_acc, &event),
+		      "Failed to read FIFO in irq handler");
+}
+
 /** Test reading from compass via `bmi160_sec_raw_read8()` */
 ZTEST_USER(bmi160, test_bmi_sec_raw_read8)
 {
@@ -2214,8 +2286,14 @@ ZTEST_SUITE(bmi160, drivers_predicate_pre_main, NULL, bmi160_before,
 /** Cause an interrupt and verify the motion_sense task handled it. */
 ZTEST_USER(bmi160_tasks, test_irq_handling)
 {
-	struct bmi_emul_frame f[3];
 	const struct emul *emul = EMUL_DT_GET(BMI_NODE);
+	struct i2c_common_emul_data *common_data =
+		emul_bmi_get_i2c_common_data(emul);
+	struct fifo_func_data func_data;
+	struct bmi_emul_frame f[3];
+
+	/* Set custom function for FIFO test */
+	i2c_common_emul_set_read_func(common_data, emul_fifo_func, &func_data);
 
 	f[0].type = BMI_EMUL_FRAME_ACC;
 	f[0].acc_x = BMI_EMUL_1G / 10;
@@ -2223,9 +2301,7 @@ ZTEST_USER(bmi160_tasks, test_irq_handling)
 	f[0].acc_z = -(int)BMI_EMUL_1G / 30;
 	f[0].next = NULL;
 	bmi_emul_append_frame(emul, f);
-	bmi_emul_set_reg(emul, BMI160_INT_STATUS_0, BMI160_FWM_INT & 0xff);
-	bmi_emul_set_reg(emul, BMI160_INT_STATUS_1,
-			 (BMI160_FWM_INT >> 8) & 0xff);
+	func_data.interrupts = BMI160_FWM_INT;
 
 	bmi160_interrupt(0);
 	k_sleep(K_SECONDS(10));

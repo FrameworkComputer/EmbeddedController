@@ -35,7 +35,7 @@
 #define FLAG_FRS_RX_SIGNALLED BIT(1)
 #define FLAG_FRS_VBUS_VALID_FALL BIT(2)
 static atomic_t frs_flag[CONFIG_USB_PD_PORT_MAX_COUNT];
-K_MUTEX_DEFINE(adc_lock);
+static K_MUTEX_DEFINE(adc_lock);
 
 /* i2c_write function which won't wake TCPC from low power mode. */
 static int rt1718s_write(int port, int reg, int val, int len)
@@ -98,7 +98,7 @@ int rt1718s_read16(int port, int reg, int *val)
 	return rt1718s_read(port, reg, val, 2);
 }
 
-int rt1718s_sw_reset(int port)
+test_mockable int rt1718s_sw_reset(int port)
 {
 	int rv;
 
@@ -449,7 +449,8 @@ static int rt1718s_enter_low_power_mode(int port)
 }
 #endif
 
-int rt1718s_get_adc(int port, enum rt1718s_adc_channel channel, int *adc_val)
+test_mockable int rt1718s_get_adc(int port, enum rt1718s_adc_channel channel,
+				  int *adc_val)
 {
 	int rv;
 	const int max_wait_times = 30;
@@ -491,14 +492,16 @@ int rt1718s_get_adc(int port, enum rt1718s_adc_channel channel, int *adc_val)
 	if (rv)
 		goto out;
 
-	/*
-	 * The resolution of VBUS1 ADC is 12.5mV,
-	 * other channels are 4mV.
-	 */
-	if (channel == RT1718S_ADC_VBUS1)
+	if (channel == RT1718S_ADC_VBUS1) {
+		/* 12.5mV / LSB */
 		*adc_val = *adc_val * 125 / 10;
-	else
+	} else if (channel == RT1718S_ADC_VBUS_CURRENT) {
+		/* 33mA / LSB */
+		*adc_val *= 33;
+	} else {
+		/* other channels are 4mV / LSB */
 		*adc_val *= 4;
+	}
 
 out:
 	/* Cleanup: disable adc and clear interrupt. Error ignored. */

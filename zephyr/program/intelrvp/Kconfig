@@ -16,6 +16,13 @@ config BOARD_ADLRVP_NPCX
 	  Build Intel ADLRVP_NPCX reference board. This board has Intel ADL RVP
 	  SoC with NPCX9M37F EC.
 
+config BOARD_MTLRVP_M1723
+	bool "Intel MTLRVP_MCHP board"
+	depends on SOC_MEC172X_NSZ
+	help
+	  Build Intel MTLRVP_MCHP reference board. This board has Intel MTL RVP
+	  SoC with MEC1723 EC
+
 config BOARD_MTLRVP_MCHP
 	bool "Intel MTLRVP_MCHP board"
 	depends on SOC_MEC172X_NSZ
@@ -29,5 +36,18 @@ config BOARD_MTLRVP_NPCX
 	help
 	  Build Intel MTLRVP_NPCX reference board. This board is Intel MTL RVP
 	  SOC with NPCX_NPCX9M3F
+
+config BOARD_MTLRVP_PD
+	bool "Intel MTLRVP_PD board"
+	depends on SOC_NPCX9M3F
+	help
+	  Build Intel MTLRVP_PD reference board. This board is Intel MTL RVP
+	  SOC with NPCX_NPCX9M3F and CCG8 PD.
+
+# Override the default USB-C stack choice baseed on the board type.
+# This must be done before including Kconfig.zephyr below.
+choice PLATFORM_EC_USBC_STACK
+	default PLATFORM_EC_USB_PD_CONTROLLER if BOARD_MTLRVP_PD
+endchoice
 
 source "Kconfig.zephyr"

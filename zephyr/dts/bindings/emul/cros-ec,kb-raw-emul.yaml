@@ -10,12 +10,10 @@ include: base.yaml
 
 properties:
   rows:
-    required: false
     type: int
     default: 8
     description: Number of keyboard scan rows
   cols:
-    required: false
     type: int
     default: 18
     description: Number of keyboard scan columns

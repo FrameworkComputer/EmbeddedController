@@ -1,0 +1,6 @@
+board:
+  name: npcx_evb
+  vendor: nuvoton
+  socs:
+  - name: npcx7m6fc
+  - name: npcx9m6f

@@ -11,21 +11,7 @@
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
 
-#define ANX7483_EMUL0 EMUL_DT_GET(DT_NODELABEL(anx7483_port0))
 #define ANX7483_EMUL1 EMUL_DT_GET(DT_NODELABEL(anx7483_port1))
-
-int board_c1_ps8818_mux_set(const struct usb_mux *me, mux_state_t mux_state);
-void setup_mux(void);
-
-extern const struct anx7483_tuning_set anx7483_usb_enabled[];
-extern const struct anx7483_tuning_set anx7483_dp_enabled[];
-extern const struct anx7483_tuning_set anx7483_dock_noflip[];
-extern const struct anx7483_tuning_set anx7483_dock_flip[];
-
-extern const size_t anx7483_usb_enabled_count;
-extern const size_t anx7483_dp_enabled_count;
-extern const size_t anx7483_dock_noflip_count;
-extern const size_t anx7483_dock_flip_count;
 
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
@@ -50,34 +36,6 @@ static void usb_mux_config_before(void *fixture)
 }
 
 ZTEST_SUITE(usb_mux_config, NULL, NULL, usb_mux_config_before, NULL, NULL);
-
-ZTEST(usb_mux_config, test_board_anx7483_c0_mux_set)
-{
-	int rv;
-
-	usb_mux_init(0);
-
-	usb_mux_set(0, USB_PD_MUX_USB_ENABLED, USB_SWITCH_CONNECT, 0);
-	rv = anx7483_emul_validate_tuning(ANX7483_EMUL0, anx7483_usb_enabled,
-					  anx7483_usb_enabled_count);
-	zexpect_ok(rv);
-
-	usb_mux_set(0, USB_PD_MUX_DP_ENABLED, USB_SWITCH_CONNECT, 0);
-	rv = anx7483_emul_validate_tuning(ANX7483_EMUL0, anx7483_dp_enabled,
-					  anx7483_dp_enabled_count);
-	zexpect_ok(rv);
-
-	usb_mux_set(0, USB_PD_MUX_DOCK, USB_SWITCH_CONNECT, 0);
-	rv = anx7483_emul_validate_tuning(ANX7483_EMUL0, anx7483_dock_noflip,
-					  anx7483_dock_noflip_count);
-	zexpect_ok(rv);
-
-	usb_mux_set(0, USB_PD_MUX_DOCK | USB_PD_MUX_POLARITY_INVERTED,
-		    USB_SWITCH_CONNECT, 0);
-	rv = anx7483_emul_validate_tuning(ANX7483_EMUL0, anx7483_dock_flip,
-					  anx7483_dock_flip_count);
-	zexpect_ok(rv);
-}
 
 ZTEST(usb_mux_config, test_board_anx7483_c1_mux_set)
 {
@@ -165,21 +123,6 @@ ZTEST(usb_mux_config, test_board_anx7483_c1_mux_set)
 	rv = anx7483_emul_get_eq(ANX7483_EMUL1, ANX7483_PIN_DRX2, &eq);
 	zassert_ok(rv);
 	zassert_equal(eq, ANX7483_EQ_SETTING_12_5DB);
-}
-
-ZTEST(usb_mux_config, test_board_c1_ps8818_mux_set)
-{
-	const struct gpio_dt_spec *c1 =
-		GPIO_DT_FROM_NODELABEL(gpio_usb_c1_in_hpd);
-	const struct usb_mux mux = {
-		.usb_port = 1,
-	};
-
-	board_c1_ps8818_mux_set(&mux, USB_PD_MUX_USB_ENABLED);
-	zassert_false(gpio_emul_output_get(c1->port, c1->pin));
-
-	board_c1_ps8818_mux_set(&mux, USB_PD_MUX_DP_ENABLED);
-	zassert_true(gpio_emul_output_get(c1->port, c1->pin));
 }
 
 ZTEST(usb_mux_config, test_setup_mux)

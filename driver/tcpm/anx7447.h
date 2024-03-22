@@ -163,7 +163,6 @@ struct anx7447_i2c_addr {
 void anx7447_hpd_mode_en(int port);
 void anx7447_hpd_output_en(int port);
 
-void anx7447_tcpc_clear_hpd_status(int port);
 void anx7447_tcpc_update_hpd_status(const struct usb_mux *me,
 				    mux_state_t mux_state, bool *ack_required);
 

@@ -3,6 +3,12 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #include "acpi.h"
 #include "battery.h"
 #include "body_detection.h"
@@ -23,6 +29,10 @@
 #include "usb_charge.h"
 #include "usb_common.h"
 #include "util.h"
+
+#ifdef CONFIG_ZEPHYR
+#include <usbc/retimer_fw_update.h>
+#endif /* CONFIG_ZEPHYR */
 
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_LPC, outstr)

@@ -5,6 +5,12 @@
 
 /* Timer module for Chrome EC operating system */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #ifndef __CROS_EC_TIMER_H
 #define __CROS_EC_TIMER_H
 
@@ -13,8 +19,11 @@
 
 #include <sys/types.h>
 #else
+#ifndef __clock_t_defined
+#define __clock_t_defined 1
 /* Data type for POSIX style clock() implementation */
-typedef long clock_t;
+typedef long unsigned int clock_t;
+#endif
 #endif
 
 #include "common.h"
@@ -94,8 +103,9 @@ void udelay(unsigned int us);
  * This may only be called from a task function, with interrupts enabled.
  *
  * @param us		Number of microseconds to sleep.
+ * @return 0 on success, negative on error
  */
-void usleep(unsigned int us);
+int usleep(unsigned int us);
 
 /**
  * Sleep for milliseconds.
@@ -115,10 +125,13 @@ static inline void msleep(unsigned int ms)
  * Otherwise the same as usleep().
  *
  * @param sec		Number of seconds to sleep.
+ * @return 0 if the requested time has elapsed, or the number of seconds left
+ *   to sleep, if the call was interrupted by a signal handler.
  */
-static inline void sleep(unsigned int sec)
+static inline unsigned int sleep(unsigned int sec)
 {
 	usleep(sec * SECOND);
+	return 0;
 }
 
 /**
@@ -147,7 +160,7 @@ void timer_print_info(void);
  * Returns a free running millisecond clock counter, which matches tpm2
  * library expectations.
  */
-clock_t clock(void);
+clock_t clock(void) __THROW;
 
 /**
  * Compute how far to_time is from from_time with rollover taken into account

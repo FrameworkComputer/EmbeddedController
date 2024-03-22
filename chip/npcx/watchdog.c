@@ -59,6 +59,10 @@ void watchdog_stop_and_unlock(void)
 	NPCX_WDSDM = 0x87;
 	NPCX_WDSDM = 0x61;
 	NPCX_WDSDM = 0x63;
+
+	/* Wait for WD to stop running */
+	while (IS_BIT_SET(NPCX_T0CSR, NPCX_T0CSR_WD_RUN))
+		;
 }
 
 static void touch_watchdog_count(void)

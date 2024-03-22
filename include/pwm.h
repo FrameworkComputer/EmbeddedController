@@ -10,8 +10,8 @@
 
 #include <inttypes.h>
 
-#define PWM_RAW_TO_PERCENT(v) DIV_ROUND_NEAREST((uint32_t)(v)*100, UINT16_MAX)
-#define PWM_PERCENT_TO_RAW(v) ((uint32_t)(v)*UINT16_MAX / 100)
+#define PWM_RAW_TO_PERCENT(v) DIV_ROUND_NEAREST((uint32_t)(v) * 100, UINT16_MAX)
+#define PWM_PERCENT_TO_RAW(v) ((uint32_t)(v) * UINT16_MAX / 100)
 
 /* The values are defined in board.h */
 enum pwm_channel;

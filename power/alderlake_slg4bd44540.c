@@ -49,6 +49,10 @@
 /* The wait time is ~150 msec, allow for safety margin. */
 #define IN_PCH_SLP_SUS_WAIT_TIME_USEC (250 * MSEC)
 
+#define RSMRST_L_PGOOD_MASK POWER_SIGNAL_MASK(X86_RSMRST_L_PGOOD)
+#define DSW_DPWROK_MASK POWER_SIGNAL_MASK(X86_DSW_DPWROK)
+#define ALL_SYS_PGOOD_MASK POWER_SIGNAL_MASK(X86_ALL_SYS_PGOOD)
+
 #ifndef CONFIG_POWER_SIGNAL_RUNTIME_CONFIG
 const
 #endif /* !CONFIG_POWER_SIGNAL_RUNTIME_CONFIG */
@@ -99,20 +103,13 @@ struct power_signal_info power_signal_list[] = {
 
 BUILD_ASSERT(ARRAY_SIZE(power_signal_list) == POWER_SIGNAL_COUNT);
 
-__overridable int intel_x86_get_pg_ec_dsw_pwrok(void)
+__overridable int board_get_all_sys_pgood(void)
 {
-	return gpio_get_level(GPIO_PG_EC_DSW_PWROK);
-}
-
-__overridable int intel_x86_get_pg_ec_all_sys_pwrgd(void)
-{
-	return gpio_get_level(GPIO_PG_EC_ALL_SYS_PWRGD);
+	return !!(power_get_signals() & ALL_SYS_PGOOD_MASK);
 }
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 {
-	int timeout_ms = 50;
-
 	CPRINTS("%s() %d", __func__, reason);
 	report_ap_reset(reason);
 
@@ -124,19 +121,11 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	/* Turn off S5 rails */
 	GPIO_SET_LEVEL(GPIO_EN_S5_RAILS, 0);
 
-	/*
-	 * TODO(b/179519791): Replace this wait with
-	 * power_wait_signals_timeout()
-	 */
-	/* Now wait for DSW_PWROK and  RSMRST_ODL to go away. */
-	while (intel_x86_get_pg_ec_dsw_pwrok() &&
-	       gpio_get_level(GPIO_PG_EC_RSMRST_ODL) && (timeout_ms > 0)) {
-		msleep(1);
-		timeout_ms--;
-	};
-
-	if (!timeout_ms)
-		CPRINTS("DSW_PWROK or RSMRST_ODL didn't go low!  Assuming G3.");
+	/* Now wait for DSW_PWROK and RSMRST_ODL to go away. */
+	if (power_wait_mask_signals_timeout(
+		    0, DSW_DPWROK_MASK | RSMRST_L_PGOOD_MASK, 50 * MSEC) !=
+	    EC_SUCCESS)
+		CPRINTS("DSW_PWROK or RSMRST_ODL didn't go low! Assuming G3.");
 }
 
 void chipset_handle_espi_reset_assert(void)
@@ -197,7 +186,7 @@ static void all_sys_pwrgd_pass_thru(void)
 	int pch_pok;
 	int sys_pok;
 
-	sys_pg = intel_x86_get_pg_ec_all_sys_pwrgd();
+	sys_pg = board_get_all_sys_pgood();
 
 	if (IS_ENABLED(CONFIG_BRINGUP))
 		CPRINTS("PG_EC_ALL_SYS_PWRGD is %d", sys_pg);
@@ -235,7 +224,7 @@ static void all_sys_pwrgd_pass_thru(void)
 	if (sys_pok == 0) {
 		msleep(SYS_PWROK_DELAY_MS);
 		/* Check if we lost power while waiting. */
-		sys_pg = intel_x86_get_pg_ec_all_sys_pwrgd();
+		sys_pg = board_get_all_sys_pgood();
 		if (sys_pg == 0) {
 			CPRINTS("PG_EC_ALL_SYS_PWRGD deasserted, "
 				"shutting AP off!");

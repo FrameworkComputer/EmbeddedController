@@ -5,6 +5,12 @@
  * Driver for Intel Burnside Bridge - Thunderbolt/USB/DisplayPort Retimer
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
@@ -14,6 +20,7 @@
 #include "i2c.h"
 #include "task.h"
 #include "timer.h"
+#include "usb_dp_alt_mode.h"
 #include "usb_pd.h"
 #include "util.h"
 
@@ -25,13 +32,8 @@
 	 USB_PD_MUX_SAFE_MODE | USB_PD_MUX_TBT_COMPAT_ENABLED | \
 	 USB_PD_MUX_USB4_ENABLED)
 
-#define BB_RETIMER_MUX_USB_ALT_MODE                       \
-	(USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED | \
-	 USB_PD_MUX_TBT_COMPAT_ENABLED | USB_PD_MUX_USB4_ENABLED)
-
-#define BB_RETIMER_MUX_USB_DP_MODE                        \
-	(USB_PD_MUX_USB_ENABLED | USB_PD_MUX_DP_ENABLED | \
-	 USB_PD_MUX_USB4_ENABLED)
+#define BB_RETIMER_MUX_USB_MODE \
+	(USB_PD_MUX_USB_ENABLED | USB_PD_MUX_USB4_ENABLED)
 
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
@@ -172,26 +174,19 @@ __overridable int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 	return EC_SUCCESS;
 }
 
-static void retimer_set_state_dfp(int port, mux_state_t mux_state,
-				  uint32_t *set_retimer_con)
+static void retimer_handle_usb_dfp(int port, uint32_t *set_retimer_con)
 {
-	union tbt_mode_resp_cable cable_resp = {
-		.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME)
-	};
-	union tbt_mode_resp_device dev_resp;
 	enum idh_ptype cable_type = get_usb_pd_cable_type(port);
-
 	/*
 	 * Bit 2: RE_TIMER_DRIVER
 	 * 0 - Re-driver
 	 * 1 - Re-timer
 	 *
-	 * If Alternate mode is USB/DP/USB4, RE_TIMER_DRIVER is
+	 * If Alternate mode is USB/USB4, RE_TIMER_DRIVER is
 	 * set according to SOP' VDO2 response Bit 9.
 	 *
 	 */
-	if (is_active_cable_element_retimer(port) &&
-	    (mux_state & BB_RETIMER_MUX_USB_DP_MODE))
+	if (is_active_cable_element_retimer(port))
 		*set_retimer_con |= BB_RETIMER_RE_TIMER_DRIVER;
 
 	/*
@@ -199,91 +194,237 @@ static void retimer_set_state_dfp(int port, mux_state_t mux_state,
 	 * 0 - Passive cable
 	 * 1 - Active cable
 	 *
-	 * If the mode is USB/DP/Thunderbolt_compat/USB4, ACTIVE/PASIVE is
+	 * If the mode is USB/USB4, ACTIVE/PASIVE is
 	 * set according to Discover mode SOP' response.
 	 */
-	if ((mux_state & BB_RETIMER_MUX_USB_ALT_MODE) &&
-	    ((cable_type == IDH_PTYPE_ACABLE) ||
-	     cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE))
+	if (cable_type == IDH_PTYPE_ACABLE)
+		*set_retimer_con |= BB_RETIMER_ACTIVE_PASSIVE;
+}
+
+static void retimer_handle_tbt_dfp(int port, mux_state_t mux_state,
+				   uint32_t *set_retimer_con)
+{
+	union tbt_mode_resp_cable cable_resp = {
+		.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME)
+	};
+	union tbt_mode_resp_device dev_resp = {
+		.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP)
+	};
+	enum idh_ptype cable_type = get_usb_pd_cable_type(port);
+
+	/*
+	 * Bit 2: RE_TIMER_DRIVER
+	 * 0 - Re-driver
+	 * 1 - Re-timer
+	 *
+	 * If Alternate mode is Thunderbolt-Compat, RE_TIMER_DRIVER is
+	 * set according to Discover Mode SOP' response,
+	 * Bit 22: Retimer Type.
+	 */
+	if (cable_resp.retimer_type == USB_RETIMER)
+		*set_retimer_con |= BB_RETIMER_RE_TIMER_DRIVER;
+
+	/*
+	 * Bit 17: TBT_TYPE
+	 * 0 - Type-C to Type-C Cable
+	 * 1 - Type-C Legacy TBT Adapter
+	 */
+	if (dev_resp.tbt_adapter == TBT_ADAPTER_TBT2_LEGACY)
+		*set_retimer_con |= BB_RETIMER_TBT_TYPE;
+
+	/*
+	 * Bit 18: CABLE_TYPE
+	 * 0 - Electrical cable
+	 * 1 - Optical cable
+	 */
+	if (cable_resp.tbt_cable == TBT_CABLE_OPTICAL)
+		*set_retimer_con |= BB_RETIMER_TBT_CABLE_TYPE;
+
+	/*
+	 * Bit 19: VPO_DOCK_DETECTED_OR_DP_OVERDRIVE
+	 * 0 - No vPro Dock.No DP Overdrive
+	 *     detected
+	 * 1 - vPro Dock or DP Overdrive
+	 *     detected
+	 */
+	if ((IS_ENABLED(CONFIG_USBC_RETIMER_INTEL_BB_VPRO_CAPABLE) &&
+	     dev_resp.intel_spec_b0 == VENDOR_SPECIFIC_SUPPORTED) ||
+	    dev_resp.vendor_spec_b1 == VENDOR_SPECIFIC_SUPPORTED)
+		*set_retimer_con |= BB_RETIMER_VPRO_DOCK_DP_OVERDRIVE;
+
+	/*
+	 * Bit 20: TBT_ACTIVE_LINK_TRAINING
+	 * 0 - Active with bi-directional LSRX communication
+	 * 1 - Active with uni-directional LSRX communication
+	 * Set to "0" when passive cable plug
+	 */
+	if ((cable_type == IDH_PTYPE_ACABLE ||
+	     cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE) &&
+	    cable_resp.lsrx_comm == UNIDIR_LSRX_COMM)
+		*set_retimer_con |= BB_RETIMER_TBT_ACTIVE_LINK_TRAINING;
+
+	/*
+	 * Bit 22: ACTIVE/PASSIVE
+	 * 0 - Passive cable
+	 * 1 - Active cable
+	 *
+	 * If the mode is Thunderbolt-Compat, ACTIVE/PASIVE is
+	 * set according to Discover mode SOP' response.
+	 */
+	if (cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE)
 		*set_retimer_con |= BB_RETIMER_ACTIVE_PASSIVE;
 
+	/*
+	 * Bit 27-25: USB4/TBT Cable speed
+	 * 000b - No functionality
+	 * 001b - USB3.1 Gen1 Cable
+	 * 010b - 10Gb/s
+	 * 011b - 10Gb/s and 20Gb/s
+	 * 10..11b - Reserved
+	 */
+	*set_retimer_con |= BB_RETIMER_USB4_TBT_CABLE_SPEED_SUPPORT(
+		mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED ?
+			get_tbt_cable_speed(port) :
+			get_usb4_cable_speed(port));
+
+	/*
+	 * Bits 29-28: TBT_GEN_SUPPORT
+	 * 00b - 3rd generation TBT (10.3125 and 20.625Gb/s)
+	 * 01b - 4th generation TBT (10.00005Gb/s, 10.3125Gb/s,
+	 *                           20.0625Gb/s, 20.000Gb/s)
+	 * 10..11b - Reserved
+	 */
+	*set_retimer_con |=
+		BB_RETIMER_TBT_CABLE_GENERATION(cable_resp.tbt_rounded);
+}
+
+static void retimer_handle_dp21_dfp(int port, uint32_t *set_retimer_con)
+{
+	union dp_mode_resp_cable cable_dp_mode_resp = {
+		.raw_value =
+			IS_ENABLED(CONFIG_USB_PD_DP21_MODE) ?
+				dp_get_mode_vdo(port, TCPCI_MSG_SOP_PRIME) :
+				0
+	};
+	union tbt_mode_resp_cable tbt_cable_resp = {
+		.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME)
+	};
+
+	enum idh_ptype cable_type = get_usb_pd_cable_type(port);
+	enum dpam_version dpam_ver =
+		dp_resolve_dpam_version(port, TCPCI_MSG_SOP_PRIME);
+
+	/*
+	 * Bit 2: RE_TIMER_DRIVER
+	 * 0 - Re-driver
+	 * 1 - Re-timer
+	 *
+	 * If Alternate mode is DP2.0  or earlier RE_TIMER_DRIVER is
+	 * set according to SOP' VDO2 response Bit 9.
+	 *
+	 * If Alternate mode is DP2.1 RE_TIMER_DRIVER is
+	 * set according to DP Discover mode SOP' response Bit 29:28.
+	 */
+	if ((dpam_ver == DPAM_VERSION_20 &&
+	     is_active_cable_element_retimer(port)) ||
+	    (dpam_ver == DPAM_VERSION_21 &&
+	     cable_dp_mode_resp.active_comp == DP21_ACTIVE_RETIMER_CABLE) ||
+	    tbt_cable_resp.retimer_type == USB_RETIMER)
+		*set_retimer_con |= BB_RETIMER_RE_TIMER_DRIVER;
+
+	/*
+	 * Bit 18: CABLE_TYPE
+	 * 0 - Electrical cable
+	 * 1 - Optical cable
+	 */
+	if ((cable_dp_mode_resp.active_comp == DP21_OPTICAL_CABLE &&
+	     dpam_ver == DPAM_VERSION_21) ||
+	    tbt_cable_resp.tbt_cable == TBT_CABLE_OPTICAL)
+		*set_retimer_con |= BB_RETIMER_TBT_CABLE_TYPE;
+
+	/*
+	 * Bit 22: ACTIVE/PASSIVE
+	 * 0 - Passive cable
+	 * 1 - Active cable
+	 *
+	 * If the mode is DP2.1, ACTIVE/PASIVE is set according to
+	 * DP Discover mode SOP' response B29:28
+	 * If the mode is DP2.0 or earlier, ACTIVE/PASIVE is set according to
+	 * Discover ID SOP' response B29:27.
+	 */
+	if (((dpam_ver == DPAM_VERSION_20) &&
+	     (cable_type == IDH_PTYPE_ACABLE)) ||
+	    ((dpam_ver == DPAM_VERSION_21) &&
+	     (cable_dp_mode_resp.active_comp != DP21_PASSIVE_CABLE)) ||
+	    tbt_cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE)
+		*set_retimer_con |= BB_RETIMER_ACTIVE_PASSIVE;
+
+	/*
+	 * Bit 27-25: DP Cable speed for DP2.1
+	 * 000b - No functionality
+	 * 001b - HBR3
+	 * 010b - UHBR10
+	 * 100b - UHBR20
+	 */
+	*set_retimer_con |= BB_RETIMER_USB4_TBT_CABLE_SPEED_SUPPORT(
+		dpam_ver == DPAM_VERSION_21 ? dp_get_cable_bit_rate(port) :
+					      get_usb4_cable_speed(port));
+}
+
+static void retimer_handle_dp_dfp(int port, uint32_t *set_retimer_con)
+{
+	union tbt_mode_resp_cable cable_resp = {
+		.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP_PRIME)
+	};
+	enum idh_ptype cable_type = get_usb_pd_cable_type(port);
+
+	/*
+	 * Bit 2: RE_TIMER_DRIVER
+	 * 0 - Re-driver
+	 * 1 - Re-timer
+	 *
+	 * If DP2.1 feature is not enabled, RE_TIMER_DRIVER is
+	 * set according to SOP' VDO2 response Bit 9.
+	 */
+	if (is_active_cable_element_retimer(port))
+		*set_retimer_con |= BB_RETIMER_RE_TIMER_DRIVER;
+
+	/*
+	 * Bit 18: CABLE_TYPE
+	 * 0 - Electrical cable
+	 * 1 - Optical cable
+	 */
+	if (cable_resp.tbt_cable == TBT_CABLE_OPTICAL)
+		*set_retimer_con |= BB_RETIMER_TBT_CABLE_TYPE;
+
+	/*
+	 * Bit 22: ACTIVE/PASSIVE
+	 * 0 - Passive cable
+	 * 1 - Active cable
+	 *
+	 * If DP2.1 support is not enabled, ACTIVE/PASIVE is set
+	 * according to Discover ID SOP' response B29:27.
+	 */
+	if (cable_type == IDH_PTYPE_ACABLE)
+		*set_retimer_con |= BB_RETIMER_ACTIVE_PASSIVE;
+}
+
+static void retimer_set_state_dfp(int port, mux_state_t mux_state,
+				  uint32_t *set_retimer_con)
+{
+	if (mux_state & (USB_PD_MUX_USB_ENABLED | USB_PD_MUX_USB4_ENABLED))
+		retimer_handle_usb_dfp(port, set_retimer_con);
+
 	if (mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED ||
-	    mux_state & USB_PD_MUX_USB4_ENABLED) {
-		dev_resp.raw_value = pd_get_tbt_mode_vdo(port, TCPCI_MSG_SOP);
+	    mux_state & USB_PD_MUX_USB4_ENABLED)
+		retimer_handle_tbt_dfp(port, mux_state, set_retimer_con);
 
-		/*
-		 * Bit 2: RE_TIMER_DRIVER
-		 * 0 - Re-driver
-		 * 1 - Re-timer
-		 *
-		 * If Alternate mode is Thunderbolt-Compat, RE_TIMER_DRIVER is
-		 * set according to Discover Mode SOP' response,
-		 * Bit 22: Retimer Type.
-		 */
-		if (cable_resp.retimer_type == USB_RETIMER)
-			*set_retimer_con |= BB_RETIMER_RE_TIMER_DRIVER;
-
-		/*
-		 * Bit 17: TBT_TYPE
-		 * 0 - Type-C to Type-C Cable
-		 * 1 - Type-C Legacy TBT Adapter
-		 */
-		if (dev_resp.tbt_adapter == TBT_ADAPTER_TBT2_LEGACY)
-			*set_retimer_con |= BB_RETIMER_TBT_TYPE;
-
-		/*
-		 * Bit 18: CABLE_TYPE
-		 * 0 - Electrical cable
-		 * 1 - Optical cable
-		 */
-		if (cable_resp.tbt_cable == TBT_CABLE_OPTICAL)
-			*set_retimer_con |= BB_RETIMER_TBT_CABLE_TYPE;
-
-		/*
-		 * Bit 19: VPO_DOCK_DETECTED_OR_DP_OVERDRIVE
-		 * 0 - No vPro Dock.No DP Overdrive
-		 *     detected
-		 * 1 - vPro Dock or DP Overdrive
-		 *     detected
-		 */
-		if ((IS_ENABLED(CONFIG_USBC_RETIMER_INTEL_BB_VPRO_CAPABLE) &&
-		     dev_resp.intel_spec_b0 == VENDOR_SPECIFIC_SUPPORTED) ||
-		    dev_resp.vendor_spec_b1 == VENDOR_SPECIFIC_SUPPORTED)
-			*set_retimer_con |= BB_RETIMER_VPRO_DOCK_DP_OVERDRIVE;
-
-		/*
-		 * Bit 20: TBT_ACTIVE_LINK_TRAINING
-		 * 0 - Active with bi-directional LSRX communication
-		 * 1 - Active with uni-directional LSRX communication
-		 * Set to "0" when passive cable plug
-		 */
-		if ((cable_type == IDH_PTYPE_ACABLE ||
-		     cable_resp.tbt_active_passive == TBT_CABLE_ACTIVE) &&
-		    cable_resp.lsrx_comm == UNIDIR_LSRX_COMM)
-			*set_retimer_con |= BB_RETIMER_TBT_ACTIVE_LINK_TRAINING;
-
-		/*
-		 * Bit 27-25: USB4/TBT Cable speed
-		 * 000b - No functionality
-		 * 001b - USB3.1 Gen1 Cable
-		 * 010b - 10Gb/s
-		 * 011b - 10Gb/s and 20Gb/s
-		 * 10..11b - Reserved
-		 */
-		*set_retimer_con |= BB_RETIMER_USB4_TBT_CABLE_SPEED_SUPPORT(
-			mux_state & USB_PD_MUX_TBT_COMPAT_ENABLED ?
-				get_tbt_cable_speed(port) :
-				get_usb4_cable_speed(port));
-
-		/*
-		 * Bits 29-28: TBT_GEN_SUPPORT
-		 * 00b - 3rd generation TBT (10.3125 and 20.625Gb/s)
-		 * 01b - 4th generation TBT (10.00005Gb/s, 10.3125Gb/s,
-		 *                           20.0625Gb/s, 20.000Gb/s)
-		 * 10..11b - Reserved
-		 */
-		*set_retimer_con |=
-			BB_RETIMER_TBT_CABLE_GENERATION(cable_resp.tbt_rounded);
+	if (IS_ENABLED(CONFIG_USB_PD_DP21_MODE) &&
+	    (mux_state & USB_PD_MUX_DP_ENABLED)) {
+		retimer_handle_dp21_dfp(port, set_retimer_con);
+	} else if (!IS_ENABLED(CONFIG_USB_PD_DP21_MODE) &&
+		   (mux_state & USB_PD_MUX_DP_ENABLED)) {
+		retimer_handle_dp_dfp(port, set_retimer_con);
 	}
 }
 

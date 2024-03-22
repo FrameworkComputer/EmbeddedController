@@ -10,6 +10,10 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
+#if defined(CONFIG_USB_PD_CONTROLLER)
+#include "usbc/pdc_power_mgmt.h"
+#endif
+
 #ifdef CONFIG_HOSTCMD_LOCATE_CHIP
 static enum ec_status hc_locate_chip(struct host_cmd_handler_args *args)
 {
@@ -30,7 +34,8 @@ static enum ec_status hc_locate_chip(struct host_cmd_handler_args *args)
 #endif /* CONFIG_CBI_EEPROM */
 		break;
 	case EC_CHIP_TYPE_TCPC:
-#if defined(CONFIG_USB_POWER_DELIVERY) && \
+#if !defined(CONFIG_USB_PD_CONTROLLER) &&     \
+	defined(CONFIG_USB_POWER_DELIVERY) && \
 	defined(CONFIG_USB_PD_PORT_MAX_COUNT) && !defined(CONFIG_USB_PD_TCPC)
 		if (params->index >= board_get_usb_pd_port_count())
 			return EC_RES_OVERFLOW;
@@ -45,6 +50,40 @@ static enum ec_status hc_locate_chip(struct host_cmd_handler_args *args)
 		/* Not reachable in new boards. */
 		return EC_RES_UNAVAILABLE; /* LCOV_EXCL_LINE */
 #endif /* CONFIG_USB_PD_PORT_MAX_COUNT */
+		break;
+	case EC_CHIP_TYPE_PDC:
+#if defined(CONFIG_USB_PD_CONTROLLER)
+		if (params->index >= pdc_power_mgmt_get_usb_pd_port_count())
+			return EC_RES_OVERFLOW;
+
+		struct pdc_bus_info_t bus_info;
+		int i2c_port;
+
+		if (pdc_power_mgmt_get_bus_info(params->index, &bus_info)) {
+			/* Cannot obtain I2C info for PDC */
+			return EC_RES_ERROR;
+		}
+
+		/* Only I2C PDCs are supported at this time. */
+		if (bus_info.bus_type != PDC_BUS_TYPE_I2C) {
+			return EC_RES_UNAVAILABLE;
+		}
+		resp->bus_type = EC_BUS_TYPE_I2C;
+
+		resp->i2c_info.addr_flags = bus_info.i2c.addr;
+
+		i2c_port = i2c_get_port_from_device(bus_info.i2c.bus);
+		if (i2c_port < 0) {
+			return EC_RES_DUP_UNAVAILABLE;
+		}
+
+		resp->i2c_info.port = (uint16_t)i2c_port;
+
+		break;
+#else
+		/* Only available on boards that use PD_CONTROLLER */
+		return EC_RES_UNAVAILABLE; /* LCOV_EXCL_LINE */
+#endif /* CONFIG_USB_PD_CONTROLLER */
 		break;
 	default:
 		/* The type was unrecognized */

@@ -8,7 +8,6 @@
 #include "chipset.h"
 #include "emul/emul_power_signals.h"
 #include "power_signals.h"
-#include "test_state.h"
 
 #include <zephyr/drivers/adc.h>
 #include <zephyr/drivers/espi.h>
@@ -133,10 +132,18 @@ struct power_signal_emul_node {
 					 ())))                                 \
 	}
 
+#ifdef CONFIG_AP_PWRSEQ_SIGNAL_DEBUG_NAMES
+#define ENUM_DBGNAME(inst, dir)         \
+	"(" DT_PROP(DT_PROP(inst, dir), \
+		    enum_name) ") " DT_PROP(DT_PROP(inst, dir), dbg_label)
+#else
+#define ENUM_DBGNAME(inst, dir) DT_PROP(DT_PROP(inst, dir), enum_name)
+#endif
+
 #define EMUL_POWER_SIGNAL_GET_SIGNAL(inst, dir)                             \
 	{                                                                   \
 		.enum_id = PWR_SIGNAL_ENUM(DT_PROP(inst, dir)),             \
-		.name = DT_PROP(DT_PROP(inst, dir), enum_name),             \
+		.name = ENUM_DBGNAME(inst, dir),                            \
 		.source = EMUL_POWER_SIGNAL_GET_SOURCE(DT_PROP(inst, dir)), \
 		.spec = EMUL_POWER_SIGNAL_GET_SIGNAL_SPEC(inst, dir),       \
 	}
@@ -253,6 +260,10 @@ static bool emul_ready;
 static void power_signal_emul_set_gpio_value(const struct gpio_dt_spec *spec,
 					     int value)
 {
+	__ASSERT(IS_ENABLED(CONFIG_AP_PWRSEQ_SIGNAL_GPIO),
+		 "%s should only be used when GPIO power signals exist",
+		 __func__);
+#if CONFIG_AP_PWRSEQ_SIGNAL_GPIO
 	gpio_flags_t gpio_flags;
 	int ret;
 
@@ -267,6 +278,40 @@ static void power_signal_emul_set_gpio_value(const struct gpio_dt_spec *spec,
 		ret = gpio_pin_set(spec->port, spec->pin, value);
 	}
 	zassert_ok(ret, "Setting GPIO value!!");
+#endif
+}
+
+/**
+ * @brief Get GPIO type power signal value.
+ *
+ * @param spec Pointer to container for GPIO pin information specified in
+ *             devicetree.
+ *
+ * @return GPIO type power signal value.
+ */
+static int power_signal_emul_get_gpio_value(const struct gpio_dt_spec *spec)
+{
+	__ASSERT(IS_ENABLED(CONFIG_AP_PWRSEQ_SIGNAL_GPIO),
+		 "%s should only be used when GPIO power signals exist",
+		 __func__);
+#if CONFIG_AP_PWRSEQ_SIGNAL_GPIO
+	gpio_flags_t gpio_flags;
+	int ret;
+
+	ret = gpio_emul_flags_get(spec->port, spec->pin, &gpio_flags);
+	zassert_ok(ret, "Getting GPIO flags!!");
+
+	if (gpio_flags & GPIO_INPUT) {
+		ret = gpio_pin_get(spec->port, spec->pin);
+	} else if (gpio_flags & GPIO_OUTPUT) {
+		ret = gpio_emul_output_get(spec->port, spec->pin);
+		ret = gpio_flags & GPIO_ACTIVE_LOW ? !ret : !!ret;
+	}
+
+	return ret;
+#else
+	return 0;
+#endif
 }
 
 /**
@@ -279,11 +324,16 @@ static void power_signal_emul_set_gpio_value(const struct gpio_dt_spec *spec,
 static void power_signal_emul_set_vw_value(const struct wv_dt_spec *vw,
 					   int value)
 {
+	__ASSERT(IS_ENABLED(CONFIG_AP_PWRSEQ_SIGNAL_VW),
+		 "%s should only be used when VW power signals exist",
+		 __func__);
+#if CONFIG_AP_PWRSEQ_SIGNAL_VW
 	const struct device *espi =
 		DEVICE_DT_GET_ANY(zephyr_espi_emul_controller);
 
 	emul_espi_host_send_vw(espi, vw->espi_signal,
 			       vw->invert ? !value : !!value);
+#endif
 }
 
 /**
@@ -316,32 +366,6 @@ power_signal_emul_set_value(struct power_signal_emul_signal_desc *desc,
 		zassert_unreachable("Undefined Signal %s!!", desc->name);
 	}
 	power_signal_interrupt(desc->enum_id, value);
-}
-
-/**
- * @brief Get GPIO type power signal value.
- *
- * @param spec Pointer to container for GPIO pin information specified in
- *             devicetree.
- *
- * @return GPIO type power signal value.
- */
-static int power_signal_emul_get_gpio_value(const struct gpio_dt_spec *spec)
-{
-	gpio_flags_t gpio_flags;
-	int ret;
-
-	ret = gpio_emul_flags_get(spec->port, spec->pin, &gpio_flags);
-	zassert_ok(ret, "Getting GPIO flags!!");
-
-	if (gpio_flags & GPIO_INPUT) {
-		ret = gpio_pin_get(spec->port, spec->pin);
-	} else if (gpio_flags & GPIO_OUTPUT) {
-		ret = gpio_emul_output_get(spec->port, spec->pin);
-		ret = gpio_flags & GPIO_ACTIVE_LOW ? !ret : !!ret;
-	}
-
-	return ret;
 }
 
 /**

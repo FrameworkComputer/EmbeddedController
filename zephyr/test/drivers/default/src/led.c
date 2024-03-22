@@ -27,6 +27,9 @@ ZTEST(pwm_led_driver, test_led_set_brightness)
 	const uint8_t brightness_amber[EC_LED_COLOR_COUNT] = {
 		[EC_LED_COLOR_AMBER] = 1
 	};
+	const uint8_t brightness_yellow[EC_LED_COLOR_COUNT] = {
+		[EC_LED_COLOR_YELLOW] = 1
+	};
 	const struct device *pwm_blue_left =
 		DEVICE_DT_GET(DT_NODELABEL(pwm_blue_left));
 	const struct device *pwm_white_left =
@@ -64,6 +67,13 @@ ZTEST(pwm_led_driver, test_led_set_brightness)
 	zassert_equal(pwm_mock_get_duty(pwm_white_left, 0), 0, NULL);
 	zassert_equal(pwm_mock_get_duty(pwm_amber_right, 0), 100, NULL);
 	zassert_equal(pwm_mock_get_duty(pwm_white_right, 0), 0, NULL);
+
+	/* Call led_set_color(YELLOW, RIGHT_LED) */
+	led_set_brightness(EC_LED_ID_RIGHT_LED, brightness_yellow);
+	zassert_equal(pwm_mock_get_duty(pwm_blue_left, 0), 0, NULL);
+	zassert_equal(pwm_mock_get_duty(pwm_white_left, 0), 0, NULL);
+	zassert_equal(pwm_mock_get_duty(pwm_amber_right, 0), 100, NULL);
+	zassert_equal(pwm_mock_get_duty(pwm_white_right, 0), 20, NULL);
 }
 
 ZTEST(pwm_led_driver, test_led_get_brightness)
@@ -76,6 +86,7 @@ ZTEST(pwm_led_driver, test_led_get_brightness)
 	const uint8_t expected_right[EC_LED_COLOR_COUNT] = {
 		[EC_LED_COLOR_WHITE] = 100,
 		[EC_LED_COLOR_AMBER] = 100,
+		[EC_LED_COLOR_YELLOW] = 100,
 	};
 
 	/* Verify LED colors defined in device tree are reflected in the

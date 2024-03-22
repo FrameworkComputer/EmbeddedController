@@ -2,6 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+
 choice PLATFORM_EC_USB_PD_VBUS_MEASURE_MODE
 	prompt "Select how VBUS voltage is measured"
 	optional
@@ -49,4 +50,3 @@ config PLATFORM_EC_CMD_VBUS
 	help
 	  Support console command vbus to print the VBUS on each port
 	  respectively.
-

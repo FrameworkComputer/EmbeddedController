@@ -88,27 +88,11 @@
 			mtc-alarm = <&wui_mtc>;
 		};
 	};
-
-	power-states {
-		suspend_to_idle_instant: suspend_to_idle_instant {
-			compatible = "zephyr,power-state";
-			power-state-name = "suspend-to-idle";
-			substate-id = <0>;
-			min-residency-us = <500>;
-		};
-
-		suspend_to_idle_normal: suspend_to_idle_normal {
-			compatible = "zephyr,power-state";
-			power-state-name = "suspend-to-idle";
-			substate-id = <1>;
-			min-residency-us = <200100>;
-		};
-	};
 };
 
-&cpu0 {
-	cpu-power-states = <&suspend_to_idle_instant &suspend_to_idle_normal>;
-};
+/*&suspend_to_idle0 {
+	min-residency-us = <500>;
+};*/
 
 &bbram {
 	status = "okay";
@@ -116,8 +100,4 @@
 
 &mdc {
 	status = "okay";
-};
-
-&shi0 {
-	shi-cs-wui =<&wui_io53>;
 };

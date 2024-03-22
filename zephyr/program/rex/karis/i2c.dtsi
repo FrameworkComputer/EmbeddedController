@@ -1,22 +1,10 @@
-&i2c4_1 {
-	tcpc_ps8815_port1: ps8xxx@b {
-		compatible = "parade,ps8xxx";
-		reg = <0xb>;
-		tcpc-flags = <(
-			TCPC_FLAGS_TCPCI_REV2_0 |
-			TCPC_FLAGS_TCPCI_REV2_0_NO_VSAFE0V |
-			TCPC_FLAGS_CONTROL_VCONN |
-			TCPC_FLAGS_CONTROL_FRS)>;
-		/* a duplicate of the <&gpio_usb_c1_tcpc_int_odl> node in
-		 * "named-gpios". This is the Zephyr preferred style,
-		 * the "named-gpios" node will be dealt with at a later date.
-		 */
-		irq-gpios = <&gpio3 4 GPIO_ACTIVE_LOW>;
-		/* a duplicate of the <&gpio_usb_c1_rt_rst_r_odl> node in
-		 * "named-gpios". This is the Zephyr preferred style,
-		 * the "named-gpios" node will be dealt with at a later date.
-		 */
-		rst-gpios = <&gpio7 4 0>;
-		is-alt;
+&i2c7_0 {
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
 	};
 };

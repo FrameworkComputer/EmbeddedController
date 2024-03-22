@@ -35,7 +35,10 @@ static const struct anx7483_register default_reg_configs[ANX7483_REG_MAX] = {
 		.def = ANX7483_AUX_SNOOPING_CTRL_REG_DEFAULT,
 		.reserved = ANX7483_AUX_SNOOPING_CTRL_REG_RESERVED_MASK,
 	},
-
+	{
+		.reg = ANX7483_CHIP_ID,
+		.def = ANX7483_CHIP_ID_DEFAULT,
+	},
 	/* CFG0 */
 	{
 		.reg = ANX7483_UTX1_PORT_CFG0_REG,
@@ -92,6 +95,14 @@ static const struct anx7483_register default_reg_configs[ANX7483_REG_MAX] = {
 	{
 		.reg = ANX7483_DRX2_PORT_CFG1_REG,
 		.def = ANX7483_DRX2_PORT_CFG1_REG_DEFAULT,
+	},
+	{
+		.reg = ANX7483_AUX_CFG_0,
+		.def = ANX7483_AUX_CFG_0_DEFAULT,
+	},
+	{
+		.reg = ANX7483_AUX_CFG_1,
+		.def = ANX7483_AUX_CFG_1_DEFAULT,
 	},
 
 	/* CFG2 */
@@ -319,6 +330,37 @@ int anx7483_emul_get_eq(const struct emul *emul, enum anx7483_tune_pin pin,
 
 	*eq &= ANX7483_CFG0_EQ_MASK;
 	*eq >>= ANX7483_CFG0_EQ_SHIFT;
+
+	return EC_SUCCESS;
+}
+
+int anx7483_emul_get_fg(const struct emul *emul, enum anx7483_tune_pin pin,
+			enum anx7483_fg_setting *fg)
+{
+	int reg;
+	int rv;
+
+	if (pin == ANX7483_PIN_UTX1)
+		reg = ANX7483_UTX1_PORT_CFG2_REG;
+	else if (pin == ANX7483_PIN_UTX2)
+		reg = ANX7483_UTX2_PORT_CFG2_REG;
+	else if (pin == ANX7483_PIN_URX1)
+		reg = ANX7483_URX1_PORT_CFG2_REG;
+	else if (pin == ANX7483_PIN_URX2)
+		reg = ANX7483_URX2_PORT_CFG2_REG;
+	else if (pin == ANX7483_PIN_DRX1)
+		reg = ANX7483_DRX1_PORT_CFG2_REG;
+	else if (pin == ANX7483_PIN_DRX2)
+		reg = ANX7483_DRX2_PORT_CFG2_REG;
+	else
+		return EC_ERROR_INVAL;
+
+	rv = anx7483_emul_get_reg(emul, reg, (uint8_t *)fg);
+	if (rv)
+		return rv;
+
+	*fg &= ANX7483_CFG2_FG_MASK;
+	*fg >>= ANX7483_CFG2_FG_SHIFT;
 
 	return EC_SUCCESS;
 }

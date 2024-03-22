@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "base_state.h"
 #include "button.h"
 #include "console.h"
 #include "hooks.h"
@@ -23,6 +24,7 @@
  */
 
 FAKE_VOID_FUNC(chipset_reset, enum chipset_shutdown_reason);
+FAKE_VOID_FUNC(base_force_state, enum ec_set_base_state_cmd);
 
 static char *button_debug_state_strings[] = {
 	"STATE_DEBUG_NONE", "STATE_DEBUG_CHECK",
@@ -146,6 +148,47 @@ ZTEST(button, test_fail_check_button_stuck)
 	pass_time(11000);
 	ASSERT_DEBUG_STATE(STATE_DEBUG_NONE);
 }
+
+#ifdef CONFIG_DETACHABLE_BASE
+static inline bool get_sysrq_led_status(void)
+{
+	return gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_chg_led_y_c1));
+}
+
+ZTEST(button, test_activate_sysrq_led_flickering)
+{
+	bool is_sysrq_active;
+	/*
+	 * Issue press both volume-up and volume-down for 10.5 seconds to in EC
+	 * debug mode.
+	 */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vup 10500"));
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "button vdown 10500"));
+
+	/* Let the deferred calls get run (800ms) */
+	pass_time(800);
+	/* Jump after button debounce time passed, and is in debug checking */
+	pass_time(500);
+	/* Jump for simulated button request for releasing */
+	pass_time(10000);
+	/* Jump for button debounce time passed */
+	pass_time(500);
+	ASSERT_DEBUG_STATE(STATE_DEBUG_MODE_ACTIVE);
+
+	/*
+	 * LED flickering is running in tick hook, so just sleep the thread, and
+	 * query the pin status every HOOK_TICK_INTERVAL_MS.
+	 */
+	is_sysrq_active = get_sysrq_led_status();
+	k_msleep(HOOK_TICK_INTERVAL_MS);
+	zassert_not_equal(is_sysrq_active, get_sysrq_led_status());
+	k_msleep(HOOK_TICK_INTERVAL_MS);
+	zassert_equal(is_sysrq_active, get_sysrq_led_status());
+
+	/* Now sleep and move the clock forward to timeout the debug process */
+	pass_time(11000);
+}
+#endif /* CONFIG_DETACHABLE_BASE */
 
 ZTEST(button, test_activate_sysrq_path_then_timeout)
 {

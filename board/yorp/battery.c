@@ -31,118 +31,126 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* LGC AC15A8J Battery Information */
 	[BATTERY_LGC15] = {
-		.fuel_gauge = {
-			.manuf_name = "LGC",
-			.device_name = "AC15A8J",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "LGC",
+		.device_name = "AC15A8J",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0002,
+					.disconnect_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0002,
-				.disconnect_val = 0x0,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11520, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= 0,
-			.discharging_max_c	= 60,
+			.batt_info = {
+				.voltage_max		= 13200,
+				.voltage_normal		= 11520, /* mV */
+				.voltage_min		= 9000, /* mV */
+				.precharge_current	= 256,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= 0,
+				.discharging_max_c	= 60,
+			},
 		},
 	},
 
 	/* Panasonic AP1505L Battery Information */
 	[BATTERY_PANASONIC] = {
-		.fuel_gauge = {
-			.manuf_name = "PANASONIC",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "PANASONIC",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x4000,
+					.disconnect_val = 0x0,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x4000,
-				.disconnect_val = 0x0,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= 13200,
-			.voltage_normal		= 11550, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= 0,
-			.discharging_max_c	= 60,
+			.batt_info = {
+				.voltage_max		= 13200,
+				.voltage_normal		= 11550, /* mV */
+				.voltage_min		= 9000, /* mV */
+				.precharge_current	= 256,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= 0,
+				.discharging_max_c	= 60,
+			},
 		},
 	},
 
 	/* SANYO AC15A3J Battery Information */
 	[BATTERY_SANYO] = {
-		.fuel_gauge = {
-			.manuf_name = "SANYO",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "SANYO",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x4000,
+					.disconnect_val = 0x0,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x4000,
-				.disconnect_val = 0x0,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
-			.voltage_normal		= 11550, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= 0,
-			.discharging_max_c	= 60,
+			.batt_info = {
+				.voltage_max = TARGET_WITH_MARGIN(13200, 5),
+				.voltage_normal		= 11550, /* mV */
+				.voltage_min		= 9000, /* mV */
+				.precharge_current	= 256,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= 0,
+				.discharging_max_c	= 60,
+			},
 		},
 	},
 
 	/* Sony Ap13J4K Battery Information */
 	[BATTERY_SONY] = {
-		.fuel_gauge = {
-			.manuf_name = "SONYCorp",
-			.ship_mode = {
-				.reg_addr = 0x3A,
-				.reg_data = { 0xC574, 0xC574 },
+		.manuf_name = "SONYCorp",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x3A,
+					.reg_data = { 0xC574, 0xC574 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x8000,
+					.disconnect_val = 0x8000,
+				},
 			},
-			.fet = {
-				.reg_addr = 0x0,
-				.reg_mask = 0x8000,
-				.disconnect_val = 0x8000,
-			}
-		},
-		.batt_info = {
-			.voltage_max		= TARGET_WITH_MARGIN(13200, 5),
-			.voltage_normal		= 11400, /* mV */
-			.voltage_min		= 9000, /* mV */
-			.precharge_current	= 256,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 50,
-			.charging_min_c		= 0,
-			.charging_max_c		= 60,
-			.discharging_min_c	= 0,
-			.discharging_max_c	= 60,
+			.batt_info = {
+				.voltage_max = TARGET_WITH_MARGIN(13200, 5),
+				.voltage_normal		= 11400, /* mV */
+				.voltage_min		= 9000, /* mV */
+				.precharge_current	= 256,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 50,
+				.charging_min_c		= 0,
+				.charging_max_c		= 60,
+				.discharging_min_c	= 0,
+				.discharging_max_c	= 60,
+			},
 		},
 	},
 };

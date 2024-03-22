@@ -22,12 +22,14 @@ extern "C" {
 #include "sha256.h"
 }
 
-#include "fpsensor_auth_crypto.h"
-#include "fpsensor_crypto.h"
-#include "fpsensor_state_without_driver_info.h"
-#include "fpsensor_utils.h"
-
+// clang-format off
 #include <array>
+
+#include "fpsensor/fpsensor_auth_crypto.h"
+#include "fpsensor/fpsensor_crypto.h"
+#include "fpsensor/fpsensor_state_without_driver_info.h"
+#include "fpsensor/fpsensor_utils.h"
+// clang-format on
 
 enum ec_error_list
 encrypt_data_in_place(uint16_t version,

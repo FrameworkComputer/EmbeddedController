@@ -10,9 +10,6 @@
 
 #include "common.h"
 
-/** True if the board supports an HDMI sub-board. */
-#define NISSA_BOARD_HAS_HDMI_SUPPORT DT_NODE_EXISTS(DT_NODELABEL(gpio_hdmi_sel))
-
 /**
  * Configure the GPIO that controls core rails on the HDMI sub-board.
  *

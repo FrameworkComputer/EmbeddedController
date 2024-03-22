@@ -5,6 +5,12 @@
 
 /* Flash memory module for Chrome EC - common functions */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #include "builtin/assert.h"
 #ifdef CONFIG_ZEPHYR
 #include "cbi_flash.h"
@@ -54,6 +60,7 @@
 #define PSTATE_VALID_FLAGS BIT(0)
 #define PSTATE_VALID_SERIALNO BIT(1)
 #define PSTATE_VALID_MAC_ADDR BIT(2)
+#define PSTATE_VALID_POWERON_CONF BIT(3)
 
 /*
  * Error correction code operates on blocks equal to CONFIG_FLASH_WRITE_SIZE
@@ -73,6 +80,9 @@ struct persist_state {
 #ifdef CONFIG_MAC_ADDR_LEN
 	uint8_t mac_addr[CONFIG_MAC_ADDR_LEN];
 #endif /* CONFIG_MAC_ADDR_LEN */
+#ifdef CONFIG_POWERON_CONF_LEN
+	uint8_t poweron_conf[CONFIG_POWERON_CONF_LEN];
+#endif /* CONFIG_POWERON_CONF_LEN */
 } __aligned(CONFIG_FLASH_WRITE_SIZE);
 
 /* written with flash_physical_write, need to respect alignment constraints */
@@ -565,6 +575,59 @@ int crec_flash_write_pstate_mac_addr(const char *mac_addr)
 
 #endif /* CONFIG_MAC_ADDR_LEN */
 
+#ifdef CONFIG_POWERON_CONF_LEN
+
+/**
+ * Read and return persistent servo default settings.
+ */
+int crec_flash_read_pstate_poweron_conf(uint8_t *poweron_conf)
+{
+	const struct persist_state *pstate =
+		(const struct persist_state *)flash_physical_dataptr(
+			CONFIG_FW_PSTATE_OFF);
+
+	if ((pstate->version != PERSIST_STATE_VERSION) ||
+	    !(pstate->valid_fields & PSTATE_VALID_POWERON_CONF))
+		return EC_ERROR_UNKNOWN;
+
+	memcpy(poweron_conf, pstate->poweron_conf, CONFIG_POWERON_CONF_LEN);
+	return EC_SUCCESS;
+}
+
+/**
+ * Write persistent poweron_conf to pstate, erasing if necessary.
+ *
+ * @param poweron_conf
+ * @return EC_SUCCESS, or nonzero if error.
+ */
+int crec_flash_write_pstate_poweron_conf(const uint8_t *poweron_conf)
+{
+	struct persist_state newpstate;
+	const struct persist_state *pstate =
+		(const struct persist_state *)flash_physical_dataptr(
+			CONFIG_FW_PSTATE_OFF);
+
+	/* Check that this is OK, data fits in the region. */
+	if (!poweron_conf) {
+		return EC_ERROR_INVAL;
+	}
+
+	/* Cache the old copy for read/modify/write. */
+	memcpy(&newpstate, pstate, sizeof(newpstate));
+	validate_pstate_struct(&newpstate);
+
+	/*
+	 * Copy new data.
+	 */
+	memcpy(newpstate.poweron_conf, poweron_conf, CONFIG_POWERON_CONF_LEN);
+
+	newpstate.valid_fields |= PSTATE_VALID_POWERON_CONF;
+
+	return flash_write_pstate_data(&newpstate);
+}
+
+#endif /* CONFIG_POWERON_CONF_LEN */
+
 #else /* !CONFIG_FLASH_PSTATE_BANK */
 
 /**
@@ -680,7 +743,7 @@ int crec_flash_is_erased(uint32_t offset, int size)
 static bool check_cbi_section_overlap(int offset, int size)
 {
 	int cbi_start = CBI_FLASH_OFFSET;
-	int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+	int cbi_end = CBI_FLASH_OFFSET + CBI_FLASH_SIZE;
 	int sec_start = offset;
 	int sec_end = offset + size;
 
@@ -697,7 +760,7 @@ static bool check_cbi_section_overlap(int offset, int size)
 static void protect_cbi_overlapped_section(int offset, int size, char *data)
 {
 	if (check_cbi_section_overlap(offset, size)) {
-		int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+		int cbi_end = CBI_FLASH_OFFSET + CBI_FLASH_SIZE;
 		int sec_end = offset + size;
 		int cbi_fill_start = MAX(CBI_FLASH_OFFSET, offset);
 		int cbi_fill_size = MIN(cbi_end, sec_end) - cbi_fill_start;
@@ -761,12 +824,14 @@ static void flash_abort_or_invalidate_hash(int offset, int size)
 	 * If RW flash has been written to, make sure we do not automatically
 	 * jump to RW after the timeout.
 	 */
-	if ((offset >= CONFIG_RW_MEM_OFF &&
-	     offset < (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)) ||
-	    ((offset + size) > CONFIG_RW_MEM_OFF &&
-	     (offset + size) <= (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)) ||
-	    (offset < CONFIG_RW_MEM_OFF &&
-	     (offset + size) > (CONFIG_RW_MEM_OFF + CONFIG_RW_SIZE)))
+	if ((offset >= CONFIG_EC_WRITABLE_STORAGE_OFF &&
+	     offset < (CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_SIZE)) ||
+	    ((offset + size) > CONFIG_EC_WRITABLE_STORAGE_OFF &&
+	     (offset + size) <=
+		     (CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_SIZE)) ||
+	    (offset < CONFIG_EC_WRITABLE_STORAGE_OFF &&
+	     (offset + size) >
+		     (CONFIG_EC_WRITABLE_STORAGE_OFF + CONFIG_RW_SIZE)))
 		rwsig_abort();
 #endif
 }
@@ -780,7 +845,7 @@ int crec_flash_write(int offset, int size, const char *data)
 
 #if defined(CONFIG_ZEPHYR) && defined(CONFIG_PLATFORM_EC_CBI_FLASH)
 	if (check_cbi_section_overlap(offset, size)) {
-		int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+		int cbi_end = CBI_FLASH_OFFSET + CBI_FLASH_SIZE;
 		int sec_end = offset + size;
 
 		if (offset < CBI_FLASH_OFFSET) {
@@ -809,7 +874,7 @@ int crec_flash_erase(int offset, int size)
 
 #if defined(CONFIG_ZEPHYR) && defined(CONFIG_PLATFORM_EC_CBI_FLASH)
 	if (check_cbi_section_overlap(offset, size)) {
-		int cbi_end = CBI_FLASH_OFFSET + CBI_IMAGE_SIZE;
+		int cbi_end = CBI_FLASH_OFFSET + CBI_FLASH_SIZE;
 		int sec_end = offset + size;
 
 		if (offset < CBI_FLASH_OFFSET) {
@@ -1191,7 +1256,11 @@ static int command_flash_info(int argc, const char **argv)
 			ccputs("\n    ");
 		else if (!(i & 7))
 			ccputs(" ");
-		ccputs(crec_flash_physical_get_protect(i) ? "Y" : ".");
+		if (crec_flash_physical_get_protect(i)) {
+			ccputs("Y");
+		} else {
+			ccputs(".");
+		}
 	}
 	ccputs("\n");
 	return EC_SUCCESS;
@@ -1519,6 +1588,23 @@ BUILD_ASSERT(CONFIG_EC_WRITABLE_STORAGE_SIZE % CONFIG_FLASH_ERASE_SIZE == 0);
 
 #endif
 
+#if defined(HAS_TASK_HOSTCMD) && defined(CONFIG_HOST_COMMAND_STATUS)
+#ifdef CONFIG_EC_HOST_CMD
+static struct {
+	int offset;
+	int size;
+} erase_continue_data;
+static enum ec_host_cmd_status erase_continue(void *user_data)
+{
+	if (crec_flash_erase(erase_continue_data.offset,
+			     erase_continue_data.size))
+		return EC_HOST_CMD_ERROR;
+
+	return EC_HOST_CMD_SUCCESS;
+}
+#endif /* CONFIG_EC_HOST_CMD */
+#endif /* HAS_TASK_HOSTCMD && CONFIG_HOST_COMMAND_STATUS */
+
 static enum ec_status flash_command_erase(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_erase *p = args->params;
@@ -1545,8 +1631,16 @@ static enum ec_status flash_command_erase(struct host_cmd_handler_args *args)
 	switch (cmd) {
 	case FLASH_ERASE_SECTOR:
 #if defined(HAS_TASK_HOSTCMD) && defined(CONFIG_HOST_COMMAND_STATUS)
+#ifndef CONFIG_EC_HOST_CMD
 		args->result = EC_RES_IN_PROGRESS;
 		host_send_response(args);
+#else
+		erase_continue_data.offset = offset;
+		erase_continue_data.size = p->size;
+		ec_host_cmd_send_in_progress_continue(erase_continue, NULL);
+
+		return EC_RES_IN_PROGRESS;
+#endif
 #endif
 		if (crec_flash_erase(offset, p->size))
 			return EC_RES_ERROR;
@@ -1615,7 +1709,7 @@ flash_command_protect_v2(struct host_cmd_handler_args *args)
 {
 	const struct ec_params_flash_protect_v2 *p = args->params;
 	struct ec_response_flash_protect *r = args->response;
-	int rc = EC_RES_SUCCESS;
+	int rc;
 
 	flash_protect_async_data.mask = p->mask;
 	flash_protect_async_data.flags = p->flags;
@@ -1629,12 +1723,11 @@ flash_command_protect_v2(struct host_cmd_handler_args *args)
 
 	switch (p->action) {
 	case FLASH_PROTECT_ASYNC:
+		rc = flash_protect_async_data.rc;
+		if (rc == EC_RES_BUSY) {
+			return rc;
+		}
 		if (p->mask) {
-			rc = flash_protect_async_data.rc;
-			if (rc != EC_RES_SUCCESS) {
-				rc = EC_RES_BUSY;
-				break;
-			}
 			hook_call_deferred(
 				&crec_flash_set_protect_deferred_data,
 				100 * MSEC);
@@ -1654,8 +1747,15 @@ flash_command_protect_v2(struct host_cmd_handler_args *args)
 		 * the actual result.
 		 */
 		rc = flash_protect_async_data.rc;
-		if (rc == EC_RES_BUSY || rc == EC_RES_ERROR)
+		if (rc == EC_RES_ERROR) {
+			/* Ready for another command */
+			flash_protect_async_data.rc = EC_RES_SUCCESS;
 			break;
+		}
+
+		if (rc == EC_RES_BUSY) {
+			break;
+		}
 
 		r->flags = crec_flash_get_protect();
 
@@ -1670,8 +1770,6 @@ flash_command_protect_v2(struct host_cmd_handler_args *args)
 
 		args->response_size = sizeof(*r);
 
-		/* Ready for another command */
-		flash_protect_async_data.rc = EC_RES_SUCCESS;
 		break;
 
 	default:

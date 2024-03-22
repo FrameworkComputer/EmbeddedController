@@ -26,6 +26,21 @@ enum cortex_panic_frame_registers {
 	NUM_CORTEX_PANIC_FRAME_REGISTERS
 };
 
+enum cortex_panic_registers_v1 {
+	CORTEX_PANIC_REGISTER_PSP_V1 = 0,
+	CORTEX_PANIC_REGISTER_IPSR_V1,
+	CORTEX_PANIC_REGISTER_LR_V1,
+	CORTEX_PANIC_REGISTER_R4_V1,
+	CORTEX_PANIC_REGISTER_R5_V1,
+	CORTEX_PANIC_REGISTER_R6_V1,
+	CORTEX_PANIC_REGISTER_R7_V1,
+	CORTEX_PANIC_REGISTER_R8_V1,
+	CORTEX_PANIC_REGISTER_R9_V1,
+	CORTEX_PANIC_REGISTER_R10_V1,
+	CORTEX_PANIC_REGISTER_R11_V1,
+	NUM_CORTEX_PANIC_REGISTERS_V1
+};
+
 enum cortex_panic_registers {
 	CORTEX_PANIC_REGISTER_PSP = 0,
 	CORTEX_PANIC_REGISTER_IPSR,
@@ -40,6 +55,22 @@ enum cortex_panic_registers {
 	CORTEX_PANIC_REGISTER_R11,
 	CORTEX_PANIC_REGISTER_LR,
 	NUM_CORTEX_PANIC_REGISTERS
+};
+
+/* Version 1 ARM Cortex-Mx registers saved on panic */
+struct cortex_panic_data_v1 {
+	/* See cortex_panic_registers_v1 enum for information about registers */
+	uint32_t regs[NUM_CORTEX_PANIC_REGISTERS_V1];
+
+	/* See cortex_panic_frame_registers enum for more information */
+	uint32_t frame[NUM_CORTEX_PANIC_FRAME_REGISTERS];
+
+	uint32_t cfsr;
+	uint32_t bfar;
+	uint32_t mfar;
+	uint32_t shcsr;
+	uint32_t hfsr;
+	uint32_t dfsr;
 };
 
 /* ARM Cortex-Mx registers saved on panic */
@@ -104,7 +135,8 @@ struct panic_data {
 
 	/* core specific panic data */
 	union {
-		struct cortex_panic_data cm; /* Cortex-Mx registers */
+		struct cortex_panic_data_v1 cm_v1; /* V1 Cortex-Mx registers */
+		struct cortex_panic_data cm; /* V2+ Cortex-Mx registers */
 		struct nds32_n8_panic_data nds_n8; /* NDS32 N8 registers */
 		struct x86_panic_data x86; /* Intel x86 */
 #ifndef CONFIG_DO_NOT_INCLUDE_RV32I_PANIC_DATA
@@ -129,6 +161,8 @@ enum panic_arch {
 	PANIC_ARCH_RISCV_RV32I = 4, /* RISC-V RV32I */
 #endif
 };
+
+#define PANIC_ZEPHYR_FATAL_ERROR 0xDEAD6800
 
 /* Flags for panic_data.flags */
 /* panic_data.frame is valid */

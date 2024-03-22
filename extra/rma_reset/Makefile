@@ -30,6 +30,7 @@ endif
 INCLUDE=-I. -I../../ -I../../fuzz -I../../test -I../../include -I../../chip/host
 LIBS    += -lcrypto -lssl
 CFLAGS  += ${INCLUDE}
+CFLAGS  += -D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
 STANDALONE_FLAGS=${INCLUDE} -ffreestanding -fno-builtin \
                         -Ibuiltin/ -D"__keep= "
 

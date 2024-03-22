@@ -30,7 +30,6 @@ properties:
 
   assert-value:
     type: int
-    required: false
     default: 1
     description: |
       Value that indicates `input-signal` must be ASSERTED.
@@ -41,7 +40,6 @@ properties:
 
   edge:
     type: string
-    required: false
     description: |
       Controls when to trigger children value change, based on `input-signal`
       new state.
@@ -63,7 +61,6 @@ properties:
 
   init-value:
     type: int
-    required: false
     description: |
       Initial value of `input-signal`.
 
@@ -81,7 +78,6 @@ child-binding:
 
     assert-value:
       type: int
-      required: false
       default: 1
       description: |
         Value that will be assigned to this signal when parent `input-signal`
@@ -89,7 +85,6 @@ child-binding:
 
     assert-delay-ms:
       type: int
-      required: false
       default: 10
       description: |
         Milliseconds to delay setting this signal to its `assert-value`
@@ -97,7 +92,6 @@ child-binding:
 
     deassert-value:
       type: int
-      required: false
       default: 0
       description: |
         Value that will be assigned to this signal when parent `input-signal`
@@ -105,7 +99,6 @@ child-binding:
 
     deassert-delay-ms:
       type: int
-      required: false
       default: 10
       description: |
         Milliseconds to delay setting this signal to its `deassert-value`
@@ -113,7 +106,6 @@ child-binding:
 
     init-value:
       type: int
-      required: false
       description: |
         Value set to this power signal when initializing this node.
 

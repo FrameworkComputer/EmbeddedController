@@ -62,6 +62,23 @@
 #define ISL923X_T2_2000 (0x06 << 8)
 #define ISL923X_T2_10000 (0x07 << 8)
 
+#define RAA489000_T1_10000 (0x00 << 10)
+#define RAA489000_T1_20000 (0x01 << 10)
+#define RAA489000_T1_15000 (0x02 << 10)
+#define RAA489000_T1_5000 (0x03 << 10)
+#define RAA489000_T1_1000 (0x04 << 10)
+#define RAA489000_T1_500 (0x05 << 10)
+#define RAA489000_T1_100 (0x06 << 10)
+#define RAA489000_T1_0 (0x07 << 10)
+#define RAA489000_T2_10 (0x00 << 13)
+#define RAA489000_T2_100 (0x01 << 13)
+#define RAA489000_T2_500 (0x02 << 13)
+#define RAA489000_T2_1000 (0x03 << 13)
+#define RAA489000_T2_300 (0x04 << 13)
+#define RAA489000_T2_750 (0x05 << 13)
+#define RAA489000_T2_2000 (0x06 << 13)
+#define RAA489000_T2_10000 (0x07 << 13)
+
 #define ISL9237_SYS_VOLTAGE_REG_MAX 13824
 #define ISL9238_SYS_VOLTAGE_REG_MAX 18304
 #define ISL923X_SYS_VOLTAGE_REG_MIN 2048
@@ -114,6 +131,9 @@
 /* Control0: BGATE force on */
 #define RAA489000_C0_BGATE_FORCE_ON BIT(10)
 #define RAA489000_C0_EN_CHG_PUMPS_TO_100PCT BIT(6)
+
+/* Control0: SMBUS Timeout */
+#define RAA489000_C0_SMBUT_TIMEOUT BIT(7)
 
 /* Control1: general purpose comparator debounce time in micro second */
 #define ISL923X_C1_GP_DEBOUNCE_2 (0 << 14)
@@ -339,6 +359,8 @@ enum isl9237_fsm_state {
 #define ISL9237_INFO_ACHOT BIT(12)
 
 #define RAA489000_DEV_ID_B0 0x11
+#define ISL9237_DEV_ID 0x0A
+#define ISL9238_DEV_ID 0x0C
 
 /* DVC - Dynamic Voltage Compensation */
 #define RAA489000_RP1_MAX 156

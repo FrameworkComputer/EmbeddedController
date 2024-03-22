@@ -511,10 +511,10 @@ Prior to uploading a new change for review, please run the EC unit tests with:
 ```
 
 ```bash
-(chroot) $ make -j tests
+(chroot) $ make -j runtests
 ```
 
-These commands will build and run unit tests in an emulator on your host.
+These commands will build and run unit tests on your host.
 
 Pre-upload checks are run when you try to upload a change-list. If you wish to
 run these checks manually first, commit your change locally then run the

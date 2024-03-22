@@ -32,5 +32,14 @@
       "*.irqlist": "c",
       "*.mocklist": "c",
       "*.testlist": "c"
-   }
+   },
+   /*
+    * The private dir (and sub-dirs) are added to gitignore(s) to prevent
+    * checking a file into the wrong sub-repo. We still need to be able to
+    * search these files, so we need to disable the vscode search feature
+    * that parses and honors the git ignore files.
+    */
+   "search.useIgnoreFiles": false,
+   /* We expect a single trailing newline in ChromiumOS. */
+   "files.insertFinalNewline": true
 }

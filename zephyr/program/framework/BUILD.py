@@ -4,7 +4,7 @@
 
 def register_framework_project(
     project_name,
-    chip="npcx9m3f",
+    chip="npcx9/npcx9m3f",
 ):
     """Register a variant of lotus."""
     register_func = register_npcx_project
@@ -21,15 +21,18 @@ def register_framework_project(
 
 lotus = register_framework_project(
     project_name="lotus",
-    chip="npcx9m3f",
 )
 
 azalea = register_framework_project(
     project_name="azalea",
-    chip="npcx9m3f",
 )
 
 marigold = register_framework_project(
     project_name="marigold",
-    chip="npcx9m3f",
 )
+
+# Note for reviews, do not let anyone edit these assertions, the addresses
+# must not change after the first RO release.
+assert_rw_fwid_DO_NOT_EDIT(project_name="lotus", addr=0X7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="azalea", addr=0X7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="marigold", addr=0X7FFE0)

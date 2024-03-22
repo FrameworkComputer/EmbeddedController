@@ -80,7 +80,11 @@ cmd_ec_elf_to_flat_dram ?= $(OBJCOPY) -j .dram* -O binary $< $@
 cmd_elf_to_signed ?= $(SIGNER) --key=util/signer/$(3) \
 	--b --input=$< --format=bin --output=$@.signed $(SIGNER_EXTRAS) \
 	&& sudo chown $(shell whoami) $@.signed && mv $@.signed $@
-cmd_elf_to_dis = $(OBJDUMP) -D $< > $@
+# objdump args:
+# -D => Disassemble all sections
+# -C => Demangle C++ names
+# -S => Display source interleaved with disassembly
+cmd_elf_to_dis = $(OBJDUMP) -D -C -S $< > $@
 cmd_elf_to_bin = $(OBJCOPY) -O binary $< $@
 cmd_elf_to_hex = $(OBJCOPY) -O ihex $< $@
 cmd_bin_to_hex = $(OBJCOPY) -I binary -O ihex \
@@ -103,8 +107,8 @@ cmd_c_to_o = $(CC) -std=gnu11 $(C_WARN) $(CFLAGS) -MMD -MP -MF $@.d -c $< \
 		-MT $(@D)/$(@F) -o $(@D)/$(@F)
 cmd_c_to_s = $(CC) -S $(C_WARN) $(CFLAGS) -fno-lto -MMD -MP -MF $@.d -c $< \
 		-MT $(@D)/$(@F) -o $(@D)/$(@F)
-cmd_cxx_to_o = $(CXX) -std=gnu++17 $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $@.d -c $< \
-		      -MT $(@D)/$(@F) -o $(@D)/$(@F)
+cmd_cxx_to_o = $(CXX) -std=gnu++2a $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $@.d \
+		      -c $< -MT $(@D)/$(@F) -o $(@D)/$(@F)
 cmd_c_to_build = $(BUILDCC) $(BUILD_CFLAGS) \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $(wildcard $*.c)) \
 	         $(BUILD_LDFLAGS) \
@@ -113,7 +117,7 @@ cmd_c_to_vif = $(BUILDCC) $(BUILD_CFLAGS) $(STANDALONE_FLAGS) \
 		-MMD -MF $@.d -c $< -flto -MT $@ -o $@
 cmd_c_to_host = $(HOSTCC) $(HOST_CFLAGS) -MMD -MF $@.d -MT $@ -o $@ \
 	         $(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.c)) $(wildcard $*.c)) $(HOST_LDFLAGS)
-cmd_cxx_to_host = $(HOSTCXX) -std=gnu++17 $(HOST_CXXFLAGS) \
+cmd_cxx_to_host = $(HOSTCXX) -std=gnu++2a $(HOST_CXXFLAGS) \
 		-MMD -MF $@.d -MT $@ -o $@ \
 		$(sort $(foreach c,$($(*F)-objs),util/$(c:%.o=%.cc)) $(wildcard $*.cc)) $(HOST_LDFLAGS)
 cmd_o_to_a = $(AR) rcs $@ $^
@@ -151,6 +155,7 @@ cmd_emmc_bootblock = $(out)/util/gen_emmc_transfer_data \
 		-i $(BOOTBLOCK) -o $@
 
 cmd_ipi_table = $(out)/util/gen_ipi_table $@
+cmd_cp = cp -f "$<" "$@"
 cmd_cp_script = cp "$<" "$@" && chmod +x "$@"
 
 # commands for RSA signature: rwsig does not need to sign the whole image
@@ -270,7 +275,8 @@ conflicting_options := \
 	UART_CONSOLE
 
 cmd_check_allowed = ./util/kconfig_check.py -c ${config} \
-	 -a util/config_allowed.txt -p PLATFORM_EC_ -s "" \
+	 -a util/config_allowed.txt \
+	 -r PLATFORM_EC_, PLATFORM_EC_CONSOLE_CMD_,CMD_ -s "" \
 	 -I "${ZEPHYR_BASE}" \
 	 $(foreach opt,$(conflicting_options),-i $(opt)) check
 cmd_check_undef = ./util/kconfig_check.py -s "" -I "${ZEPHYR_BASE}" \
@@ -459,16 +465,19 @@ cov-test-targets=$(foreach t,$(cov-test-list-host),build/coverage/$(t).info)
 cov-initial-targets=$(foreach t,$(cov-boards),build/coverage/initial-$(t).info)
 bldversion=$(shell (./util/getversion.sh ; echo VERSION) | $(CPP) -P -)
 
-cmd_lcov=lcov --rc lcov_branch_coverage=1 --gcov-tool \
+cmd_lcov=lcov --rc branch_coverage=1 --gcov-tool \
 	$(HOSTGCOV) -q -o $@ -c -d build/coverage/$* -t $* \
-	--exclude '*/ec/test/*' --exclude '*/ec/include/tests/*'
-cmd_lcov-initial=lcov --rc lcov_branch_coverage=1 --gcov-tool \
+	--exclude '*/ec/test/*' --exclude '*/ec/include/tests/*' \
+	--ignore-errors unused,unused,inconsistent,inconsistent
+cmd_lcov-initial=lcov --rc branch_coverage=1 --gcov-tool \
 	$(GCOV) -q -o $@ -c -d build/coverage/initial-$* \
-	-i -t $* --exclude '*/ec/test/*' --exclude '*/ec/include/tests/*'
-cmd_merge_cov=lcov --rc lcov_branch_coverage=1 -o build/coverage/lcov.info \
+	-i -t $* --exclude '*/ec/test/*' --exclude '*/ec/include/tests/*' \
+	--ignore-errors unused,unused,inconsistent,inconsistent
+cmd_merge_cov=lcov --rc branch_coverage=1 -o build/coverage/lcov.info \
 	$(foreach info,$^,-a ${info})
 cmd_report_cov=genhtml --branch-coverage -q -o build/coverage/coverage_rpt -t \
 	       "EC Unittest "$(bldversion) -s $^
+cmd_test_cov=genhtml --branch-coverage -q -o $@ -s $^
 
 # Unless V is set to 0 we always want the 'size:' target to report its output,
 # there is no point in generating a short form command trace when calculating
@@ -510,6 +519,8 @@ build/coverage/initial-%.info:
 	$(call quiet,lcov-initial,COV    )
 build/coverage/%.info: run-coverage-%
 	$(call quiet,lcov,COV    )
+build/coverage/%_rpt: build/coverage/%.info
+	$(call quiet,test_cov,REPORT )
 
 .PHONY: coverage test-coverage
 coverage: TEST_FLAG=TEST_COVERAGE=y
@@ -665,6 +676,14 @@ $(out)/RO/%.a:
 	$(call quiet,o_to_a,AR     )
 $(out)/RW/%.a:
 	$(call quiet,o_to_a,AR     )
+
+# Pull in private static archive, if available. We copy the archive, instead of
+# using it inplace, to make it easier for vendors to build their static archive
+# in tree, when the private repo archive doesn't yet exist.
+$(out)/RO/private/%.a:private/%.a
+	$(call quiet,cp,CP     )
+$(out)/RW/private/%.a:private/%.a
+	$(call quiet,cp,CP     )
 
 # Conditionally force the rebuilding of ec_version.h only if it would be
 # changed.
@@ -846,6 +865,8 @@ help:
 	@echo "  buildfuzztests       - Build all host fuzzers"
 	@echo "  runfuzztests         - Build and run all host fuzzers for one round"
 	@echo "  analyzestack [BOARD=]- Run max stack size analysis"
+	@echo ""
+	@echo "  build/coverage/TEST_rpt BOARD=host TEST_COVERAGE=y - Gen coverage report for TEST"
 	@echo ""
 	@echo "  flash     [BOARD=]   - Use OpenOCD to flash the latest image"
 	@echo "  flash_ec  [BOARD=]   - Use flash_ec to flash the latest image"

@@ -6,6 +6,7 @@
 #include "driver/ppc/rt1739.h"
 
 #define RT1739_PPC_COMPAT richtek_rt1739_ppc
+#define RT1739_PPC_EMUL_COMPAT zephyr_rt1739_emul
 
 #define PPC_CHIP_RT1739(id)                                                \
 	{                                                                  \
@@ -14,4 +15,5 @@
 		.frs_en = COND_CODE_1(                                     \
 			DT_NODE_HAS_PROP(id, frs_en_gpio),                 \
 			(GPIO_SIGNAL(DT_PHANDLE(id, frs_en_gpio))), (0)),  \
+		.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {}),        \
 	}

@@ -36,11 +36,13 @@ Run the script on the remote machine:
 (remote chroot) ./test/run_device_tests.py --remote 127.0.0.1 \
                 --jlink_port 19020 --console_port 10000
 """
+
 # pylint: enable=line-too-long
 # TODO(b/267800058): refactor into multiple modules
 # pylint: disable=too-many-lines
 
 import argparse
+from collections import namedtuple
 import concurrent
 from concurrent.futures.thread import ThreadPoolExecutor
 from dataclasses import dataclass
@@ -55,7 +57,7 @@ import socket
 import subprocess
 import sys
 import time
-from typing import BinaryIO, Dict, List, Optional, Tuple
+from typing import BinaryIO, Callable, Dict, List, Optional, Tuple
 
 # pylint: disable=import-error
 import colorama  # type: ignore[import]
@@ -100,8 +102,11 @@ DATA_ACCESS_VIOLATION_24000000_REGEX = re.compile(
 DATA_ACCESS_VIOLATION_64020000_REGEX = re.compile(
     r"Data access violation, mfar = 64020000\r\n"
 )
-DATA_ACCESS_VIOLATION_64040000_REGEX = re.compile(
-    r"Data access violation, mfar = 64040000\r\n"
+DATA_ACCESS_VIOLATION_64030000_REGEX = re.compile(
+    r"Data access violation, mfar = 64030000\r\n"
+)
+DATA_ACCESS_VIOLATION_200B0000_REGEX = re.compile(
+    r"Data access violation, mfar = 200b0000\r\n"
 )
 
 PRINTF_CALLED_REGEX = re.compile(r"printf called\r\n")
@@ -137,6 +142,9 @@ BLOONCHIPPER_V5938_IMAGE_PATH = os.path.join(
     TEST_ASSETS_BUCKET, "bloonchipper_v2.0.5938-197506c1.bin"
 )
 
+RangedValue = namedtuple("RangedValue", "nominal range")
+PowerUtilization = namedtuple("PowerUtilization", "idle sleep")
+
 
 class ImageType(Enum):
     """EC Image type to use for the test."""
@@ -154,7 +162,16 @@ class ApplicationType(Enum):
     PRODUCTION = 2
 
 
+class FPSensorType(Enum):
+    """Fingerprint sensor types."""
+
+    ELAN = 0
+    FPC = 1
+    UNKNOWN = -1
+
+
 @dataclass
+# pylint: disable-next=too-many-instance-attributes
 class BoardConfig:
     """Board-specific configuration."""
 
@@ -164,6 +181,10 @@ class BoardConfig:
     rollback_region0_regex: object
     rollback_region1_regex: object
     mpu_regex: object
+    reboot_timeout: float
+    mcu_power_supply: str
+    expected_fp_power: PowerUtilization
+    expected_mcu_power: PowerUtilization
     variants: Dict
 
 
@@ -190,6 +211,14 @@ class TestConfig:
     passed: bool = field(init=False, default=False)
     num_passes: int = field(init=False, default=0)
     num_fails: int = field(init=False, default=0)
+
+    # The callbacks below are called before and after a test is executed and
+    # may be used for additional test setup, post test activities, or other tasks
+    # that do not otherwise fit into the test workflow. The default behavior is
+    # to simply return True and if either callback returns False then the test
+    # is reported a failure.
+    pre_test_callback: Callable = field(init=True, default=lambda board: True)
+    post_test_callback: Callable = field(init=True, default=lambda board: True)
 
     def __post_init__(self):
         if self.finish_regexes is None:
@@ -260,13 +289,11 @@ class AllTests:
                 toggle_power=True,
                 enable_hw_write_protect=True,
             ),
-            # TODO(b/274162810): Re-enable test on bloonchipper when LTO is re-enabled.
-            TestConfig(
-                test_name="fpsensor_auth_crypto_stateful",
-                exclude_boards=[BLOONCHIPPER],
-            ),
+            TestConfig(test_name="fpsensor_auth_crypto_stateful"),
             TestConfig(test_name="fpsensor_auth_crypto_stateless"),
-            TestConfig(test_name="fpsensor_hw"),
+            TestConfig(
+                test_name="fpsensor_hw", pre_test_callback=fp_sensor_sel
+            ),
             TestConfig(
                 config_name="fpsensor_spi_ro",
                 test_name="fpsensor",
@@ -309,10 +336,14 @@ class AllTests:
                 finish_regexes=[board_config.mpu_regex],
             ),
             TestConfig(test_name="mutex"),
+            TestConfig(test_name="mutex_trylock"),
+            TestConfig(test_name="mutex_recursive"),
+            TestConfig(test_name="otp_key"),
             TestConfig(test_name="panic"),
             TestConfig(test_name="pingpong"),
             TestConfig(test_name="printf"),
             TestConfig(test_name="queue"),
+            TestConfig(test_name="restricted_console"),
             TestConfig(test_name="rng_benchmark"),
             TestConfig(
                 config_name="rollback_region0",
@@ -330,13 +361,20 @@ class AllTests:
                 test_name="rollback_entropy", imagetype_to_use=ImageType.RO
             ),
             TestConfig(test_name="rtc"),
+            TestConfig(
+                test_name="rtc_npcx9",
+                timeout_secs=20,
+                exclude_boards=[BLOONCHIPPER, DARTMONKEY],
+            ),
+            TestConfig(
+                test_name="rtc_stm32f4", exclude_boards=[DARTMONKEY, HELIPILOT]
+            ),
             TestConfig(test_name="sbrk", imagetype_to_use=ImageType.RO),
             TestConfig(test_name="sha256"),
             TestConfig(test_name="sha256_unrolled"),
             TestConfig(test_name="static_if"),
             TestConfig(test_name="stdlib"),
             TestConfig(test_name="std_vector"),
-            TestConfig(test_name="stm32f_rtc", exclude_boards=[DARTMONKEY]),
             TestConfig(
                 config_name="system_is_locked_wp_on",
                 test_name="system_is_locked",
@@ -354,11 +392,47 @@ class AllTests:
             TestConfig(test_name="timer"),
             TestConfig(test_name="timer_dos"),
             TestConfig(test_name="tpm_seed_clear"),
+            TestConfig(test_name="uart"),
+            TestConfig(test_name="unaligned_access"),
+            TestConfig(test_name="unaligned_access_benchmark"),
             TestConfig(test_name="utils", timeout_secs=20),
             TestConfig(test_name="utils_str"),
+            TestConfig(
+                config_name="power_utilization_idle",
+                test_name="power_utilization",
+                apptype_to_use=ApplicationType.PRODUCTION,
+                toggle_power=True,
+                pre_test_callback=lambda config=None: set_sleep_mode(False),
+                post_test_callback=verify_idle_power_utilization,
+                finish_regexes=[RW_IMAGE_BOOTED_REGEX],
+            ),
+            TestConfig(
+                config_name="power_utilization_sleep",
+                test_name="power_utilization",
+                apptype_to_use=ApplicationType.PRODUCTION,
+                toggle_power=True,
+                pre_test_callback=lambda config=None: set_sleep_mode(True),
+                post_test_callback=verify_sleep_power_utilization,
+                finish_regexes=[RW_IMAGE_BOOTED_REGEX],
+            ),
         ]
 
-        # Run panic data tests for all boards and RO versions.
+        # Run unaligned access tests for all boards and RO versions.
+        for variant_name, variant_info in board_config.variants.items():
+            tests.append(
+                TestConfig(
+                    config_name="unaligned_access_" + variant_name,
+                    test_name="unaligned_access",
+                    fail_regexes=[
+                        SINGLE_CHECK_FAILED_REGEX,
+                        ALL_TESTS_FAILED_REGEX,
+                    ],
+                    ro_image=variant_info.get("ro_image_path"),
+                    build_board=variant_info.get("build_board"),
+                )
+            )
+
+        # Run panic data test for all boards and RO versions.
         for variant_name, variant_info in board_config.variants.items():
             tests.append(
                 TestConfig(
@@ -404,9 +478,17 @@ BLOONCHIPPER_CONFIG = BoardConfig(
     name=BLOONCHIPPER,
     servo_uart_name="raw_fpmcu_console_uart_pty",
     servo_power_enable="fpmcu_pp3300",
+    reboot_timeout=1.0,
     rollback_region0_regex=DATA_ACCESS_VIOLATION_8020000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_8040000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_20000000_REGEX,
+    mcu_power_supply="ppvar_mcu_mw",
+    expected_fp_power=PowerUtilization(
+        idle=RangedValue(0.71, 0.53), sleep=RangedValue(0.69, 0.51)
+    ),
+    expected_mcu_power=PowerUtilization(
+        idle=RangedValue(16.05, 0.14 * 2), sleep=RangedValue(0.53, 0.35 * 2)
+    ),
     variants={
         "bloonchipper_v2.0.4277": {
             "ro_image_path": BLOONCHIPPER_V4277_IMAGE_PATH
@@ -421,9 +503,17 @@ DARTMONKEY_CONFIG = BoardConfig(
     name=DARTMONKEY,
     servo_uart_name="raw_fpmcu_console_uart_pty",
     servo_power_enable="fpmcu_pp3300",
+    reboot_timeout=1.0,
     rollback_region0_regex=DATA_ACCESS_VIOLATION_80C0000_REGEX,
     rollback_region1_regex=DATA_ACCESS_VIOLATION_80E0000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_24000000_REGEX,
+    mcu_power_supply="ppvar_mcu_mw",
+    expected_fp_power=PowerUtilization(
+        idle=RangedValue(0.03, 0.05), sleep=RangedValue(0.03, 0.05)
+    ),
+    expected_mcu_power=PowerUtilization(
+        idle=RangedValue(42.67, 0.35 * 2), sleep=RangedValue(4.46, 0.23 * 2)
+    ),
     # For dartmonkey board, run panic data test also on nocturne_fp and
     # nami_fp boards with appropriate RO image.
     variants={
@@ -443,10 +533,18 @@ HELIPILOT_CONFIG = BoardConfig(
     name=HELIPILOT,
     servo_uart_name="raw_fpmcu_console_uart_pty",
     servo_power_enable="fpmcu_pp3300",
-    # TODO(b/286537264): Double check these values and ensure rollback tests pass
+    reboot_timeout=1.5,
     rollback_region0_regex=DATA_ACCESS_VIOLATION_64020000_REGEX,
-    rollback_region1_regex=DATA_ACCESS_VIOLATION_64040000_REGEX,
-    mpu_regex=DATA_ACCESS_VIOLATION_20000000_REGEX,
+    rollback_region1_regex=DATA_ACCESS_VIOLATION_64030000_REGEX,
+    mpu_regex=DATA_ACCESS_VIOLATION_200B0000_REGEX,
+    mcu_power_supply="pp3300_mcu_mw",
+    # Power utilization numbers were experimentally derived via onboard ADCs and verified with a DMM
+    expected_fp_power=PowerUtilization(
+        idle=RangedValue(0.0, 0.1), sleep=RangedValue(0.0, 0.1)
+    ),
+    expected_mcu_power=PowerUtilization(
+        idle=RangedValue(34.8, 3.0), sleep=RangedValue(2.7, 2.5)
+    ),
     variants={},
 )
 
@@ -544,6 +642,19 @@ def get_console(board_config: BoardConfig) -> Optional[str]:
     return None
 
 
+def set_sleep_mode(enter_sleep: bool) -> bool:
+    """Enters or exists sleep mode based on enter_sleep parameter"""
+    sleep_mode = "on" if enter_sleep else "off"
+    cmd = [
+        "dut-control",
+        f"fpmcu_slp:{sleep_mode}",
+    ]
+
+    logging.debug('Running command: "%s"', cmd)
+    proc = subprocess.run(cmd, check=False)
+    return proc.returncode == 0
+
+
 def power(board_config: BoardConfig, power_on: bool) -> None:
     """Turn power to board on/off."""
     if power_on:
@@ -563,8 +674,33 @@ def power_cycle(board_config: BoardConfig) -> None:
     """power_cycle the boards."""
     logging.debug("power_cycling board")
     power(board_config, power_on=False)
-    time.sleep(1)
+    time.sleep(board_config.reboot_timeout)
     power(board_config, power_on=True)
+    time.sleep(board_config.reboot_timeout)
+
+
+def fp_sensor_sel(
+    board_config: BoardConfig, sensor_type: FPSensorType = FPSensorType.FPC
+) -> None:
+    """
+    Explicitly select the appropriate fingerprint sensor.
+    This function assumes that the fp_sensor_sel servo control is connected to
+    the proper gpio on the development board. This is not the case on some
+    older development boards. This should not result in any failures but also
+    may have not actually change the selected sensor.
+    """
+
+    cmd = [
+        "dut-control",
+        "fp_sensor_sel" + ":" + str(sensor_type.value),
+    ]
+
+    logging.debug('Running command: "%s"', " ".join(cmd))
+    subprocess.run(cmd, check=False).check_returncode()
+
+    # power cycle after setting sensor type to ensure detection
+    power_cycle(board_config)
+    return True
 
 
 def hw_write_protect(enable: bool) -> None:
@@ -691,17 +827,29 @@ def process_console_output_line(line: bytes, test: TestConfig):
 
 
 def run_test(
-    test: TestConfig, console: io.FileIO, executor: ThreadPoolExecutor
+    test: TestConfig,
+    board_config: BoardConfig,
+    console: io.FileIO,
+    executor: ThreadPoolExecutor,
 ) -> bool:
     """Run specified test."""
     start = time.time()
 
+    reboot_timeout = board_config.reboot_timeout
+    logging.debug("Calling pre-test callback")
+    if not test.pre_test_callback(board_config):
+        logging.error("pre-test callback failed, aborting")
+        return False
+
     # Wait for boot to finish
-    time.sleep(1)
-    console.write("\n".encode())
+    time.sleep(reboot_timeout)
+
+    if test.apptype_to_use != ApplicationType.PRODUCTION:
+        console.write("\n".encode())
+
     if test.imagetype_to_use == ImageType.RO:
         console.write("reboot ro\n".encode())
-        time.sleep(1)
+        time.sleep(reboot_timeout)
 
     # Skip runtest if using standard app type
     if test.apptype_to_use != ApplicationType.PRODUCTION:
@@ -740,7 +888,9 @@ def run_test(
                 for line in lines:
                     process_console_output_line(line, test)
 
-                return test.num_fails == 0
+                logging.debug("Calling post-test callback")
+                post_cb_passed = test.post_test_callback(board_config)
+                return test.num_fails == 0 and post_cb_passed
 
 
 def get_test_list(
@@ -823,7 +973,7 @@ def flash_and_run_test(
         ):
             flash_succeeded = True
             break
-        time.sleep(1)
+        time.sleep(board_config.reboot_timeout)
 
     if not flash_succeeded:
         logging.debug(
@@ -833,6 +983,9 @@ def flash_and_run_test(
 
     if test.toggle_power:
         power_cycle(board_config)
+    else:
+        # In some cases flash_ec leaves the board off, so just ensure it is on
+        power(board_config, power_on=True)
 
     hw_write_protect(test.enable_hw_write_protect)
 
@@ -851,7 +1004,12 @@ def flash_and_run_test(
             console_file = open(get_console(board_config), "wb+", buffering=0)
             console = stack.enter_context(console_file)
 
-        return run_test(test, console, executor=executor)
+        return run_test(
+            test,
+            board_config,
+            console,
+            executor=executor,
+        )
 
 
 def parse_remote_arg(remote: str) -> str:
@@ -994,6 +1152,113 @@ def main():
             print(colorama.Style.RESET_ALL)
 
     sys.exit(exit_code)
+
+
+def get_power_utilization(
+    board_config: BoardConfig,
+) -> Tuple[Optional[float], Optional[float]]:
+    """Retrieve board power utilization data"""
+    fp_power_signal = "ppvar_fp_mw"
+    mcu_power_signal = board_config.mcu_power_supply
+    cmd = [
+        "dut-control",
+        "--value_only",  # only the summary will print the field names
+        "-t",
+        "10",  # sample time in seconds
+        fp_power_signal,
+        mcu_power_signal,
+    ]
+
+    logging.debug('Running command: "%s"', " ".join(cmd))
+
+    fp_power_mw = None
+    mcu_power_mw = None
+    with subprocess.Popen(cmd, stdout=subprocess.PIPE) as proc:
+        for line in io.TextIOWrapper(proc.stdout):  # type: ignore[arg-type]
+            # Only the summary is required and those lines start with @@ and have 6 other fields
+            # (NAME, COUNT, AVERAGE, STDDEV, MAX, MIN)
+            response = line.split()
+            if len(response) != 7 or response[0] != "@@":
+                continue
+
+            resp_name, _, resp_avg, _, _, _ = response[1:]
+
+            if resp_name == fp_power_signal:
+                fp_power_mw = float(resp_avg.strip())
+            elif resp_name == mcu_power_signal:
+                mcu_power_mw = float(resp_avg.strip())
+
+            logging.debug(
+                "fp_power_mw:%s \t mcu_power_mw:%s", fp_power_mw, mcu_power_mw
+            )
+
+            if fp_power_mw is not None and mcu_power_mw is not None:
+                return (fp_power_mw, mcu_power_mw)
+
+    logging.error("Failed to receive required power data from FPMCU")
+    return (None, None)
+
+
+def verify_power_utilization(
+    fp_power_mw: float,
+    mcu_power_mw: float,
+    fp_expected: RangedValue,
+    mcu_expected: RangedValue,
+) -> bool:
+    """Get the name of the console for a given board."""
+
+    if fp_power_mw is not None and mcu_power_mw is not None:
+        fp_mw_delta = abs(fp_power_mw - fp_expected.nominal)
+        mcu_mw_delta = abs(mcu_power_mw - mcu_expected.nominal)
+
+        logging.info(
+            "fp power:\tactual: %0.2f expected: %0.2f threshold: +/-%0.2f",
+            fp_power_mw,
+            fp_expected.nominal,
+            fp_expected.range,
+        )
+        logging.info(
+            "mcu power:\tactual: %0.2f expected: %0.2f threshold: +/-%0.2f",
+            mcu_power_mw,
+            mcu_expected.nominal,
+            mcu_expected.range,
+        )
+
+        return (
+            fp_mw_delta <= fp_expected.range
+            and mcu_mw_delta <= mcu_expected.range
+        )
+
+    logging.error("Failed to receive required power data from FPMCU")
+    return False
+
+
+def verify_idle_power_utilization(board_config: BoardConfig) -> bool:
+    """Verifies that idle power utilization is within range for the specified board"""
+
+    fp_power_mw, mcu_power_mw = get_power_utilization(board_config)
+    return verify_power_utilization(
+        fp_power_mw,
+        mcu_power_mw,
+        board_config.expected_fp_power.idle,
+        board_config.expected_mcu_power.idle,
+    )
+
+
+def verify_sleep_power_utilization(board_config: BoardConfig) -> bool:
+    """Verifies that sleep power utilization is within range for the specified board"""
+
+    fp_power_mw, mcu_power_mw = get_power_utilization(board_config)
+    ret = verify_power_utilization(
+        fp_power_mw,
+        mcu_power_mw,
+        board_config.expected_fp_power.sleep,
+        board_config.expected_mcu_power.sleep,
+    )
+
+    # Make sure to exit sleep mode!
+    set_sleep_mode(False)
+    return ret
 
 
 if __name__ == "__main__":

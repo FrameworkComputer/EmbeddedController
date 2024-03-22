@@ -12,6 +12,67 @@
 		 */
 		pwms = <&pwm0 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
 	};
+
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+		actual-key-mask = <
+			0x1c /* C0 */
+			0xff /* C1 */
+			0xff /* C2 */
+			0xff /* C3 */
+			0xff /* C4 */
+			0xff /* C5 */
+			0xff /* C6 */
+			0xa4 /* C7 */
+			0xff /* C8 */
+			0xf6 /* C9 */
+			0x55 /* C10 */
+			0xfe /* C11 */
+			0xff /* C12 */
+			0xff /* C13 */
+			0xff /* C14 */
+		>;
+	};
+};
+
+&vivaldi_kbd {
+	kbd_config_0: kbd-config-0 {
+		vivaldi-codes = <
+			VIVALDI_TK_BACK                /* T1 */
+			VIVALDI_TK_REFRESH             /* T2 */
+			VIVALDI_TK_FULLSCREEN          /* T3 */
+			VIVALDI_TK_OVERVIEW            /* T4 */
+			VIVALDI_TK_SNAPSHOT            /* T5 */
+			VIVALDI_TK_BRIGHTNESS_DOWN     /* T6 */
+			VIVALDI_TK_BRIGHTNESS_UP       /* T7 */
+			VIVALDI_TK_KBD_BKLIGHT_TOGGLE  /* T8 */
+			VIVALDI_TK_PLAY_PAUSE          /* T9 */
+			VIVALDI_TK_MICMUTE             /* T10 */
+			VIVALDI_TK_VOL_MUTE            /* T11 */
+			VIVALDI_TK_VOL_DOWN            /* T12 */
+			VIVALDI_TK_VOL_UP              /* T13 */
+		>;
+		capabilities = <VIVALDI_KEYBD_CAP_NUMERIC_KEYPAD>;
+	};
+
+	kbd_config_1: kbd-config-1 {
+		vivaldi-codes = <
+			VIVALDI_TK_BACK             /* T1 */
+			VIVALDI_TK_REFRESH          /* T2 */
+			VIVALDI_TK_FULLSCREEN       /* T3 */
+			VIVALDI_TK_OVERVIEW         /* T4 */
+			VIVALDI_TK_SNAPSHOT         /* T5 */
+			VIVALDI_TK_BRIGHTNESS_DOWN  /* T6 */
+			VIVALDI_TK_BRIGHTNESS_UP    /* T7 */
+			VIVALDI_TK_PLAY_PAUSE       /* T8 */
+			VIVALDI_TK_MICMUTE          /* T9 */
+			VIVALDI_TK_VOL_MUTE         /* T10 */
+			VIVALDI_TK_VOL_DOWN         /* T11 */
+			VIVALDI_TK_VOL_UP           /* T12 */
+			VIVALDI_TK_MENU             /* T13 */
+		>;
+		capabilities = <VIVALDI_KEYBD_CAP_NUMERIC_KEYPAD>;
+	};
 };
 
 &pwm0 {
@@ -23,7 +84,6 @@
 
 &cros_kb_raw {
 	status = "okay";
-	/* No KSO2 (it's inverted and implemented by GPIO) */
 	pinctrl-0 = <&ksi0_default
 		     &ksi1_default
 		     &ksi2_default
@@ -34,6 +94,7 @@
 		     &ksi7_default
 		     &kso0_default
 		     &kso1_default
+		     &kso2_default
 		     &kso3_default
 		     &kso4_default
 		     &kso5_default
@@ -56,6 +117,7 @@
 		     &ksi7_sleep
 		     &kso0_sleep
 		     &kso1_sleep
+		     &kso2_sleep
 		     &kso3_sleep
 		     &kso4_sleep
 		     &kso5_sleep

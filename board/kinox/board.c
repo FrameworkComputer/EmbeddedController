@@ -42,9 +42,16 @@ BUILD_ASSERT(ARRAY_SIZE(usb_port_enable) == USB_PORT_COUNT);
 /******************************************************************************/
 
 /* CEC ports */
+static const struct bitbang_cec_config bitbang_cec_config = {
+	.gpio_out = GPIO_HDMI_CEC_OUT,
+	.gpio_in = GPIO_HDMI_CEC_IN,
+	.gpio_pull_up = GPIO_HDMI_CEC_PULL_UP,
+};
+
 const struct cec_config_t cec_config[] = {
 	[CEC_PORT_0] = {
 		.drv = &bitbang_cec_drv,
+		.drv_config = &bitbang_cec_config,
 		.offline_policy = NULL,
 	},
 };

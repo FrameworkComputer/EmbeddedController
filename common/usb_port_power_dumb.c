@@ -5,10 +5,17 @@
 
 /* USB charging control module for Chrome EC */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #include "chipset.h"
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#include "gpio_signal.h"
 #include "hooks.h"
 #include "host_command.h"
 #include "system.h"
@@ -26,7 +33,14 @@ static void usb_port_set_enabled(int port_id, int en)
 	 * Only enable valid ports.
 	 */
 	if (usb_port_enable[port_id] >= 0) {
+#ifdef CONFIG_ZEPHYR
+		const struct gpio_dt_spec *gpio =
+			gpio_get_dt_spec(usb_port_enable[port_id]);
+
+		gpio_pin_set_dt(gpio, en);
+#else
 		gpio_or_ioex_set_level(usb_port_enable[port_id], en);
+#endif
 		charge_mode[port_id] = en;
 	}
 }
@@ -48,8 +62,8 @@ static void usb_port_all_ports_off(void)
 /*****************************************************************************/
 /* Host commands */
 
-int usb_charge_set_mode(int port_id, enum usb_charge_mode mode,
-			enum usb_suspend_charge inhibit_charge)
+test_mockable int usb_charge_set_mode(int port_id, enum usb_charge_mode mode,
+				      enum usb_suspend_charge inhibit_charge)
 {
 	CPRINTS("USB port p%d %d", port_id, mode);
 

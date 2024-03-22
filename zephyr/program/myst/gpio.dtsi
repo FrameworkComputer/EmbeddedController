@@ -10,6 +10,13 @@
 		gpio-cbi-wp = &gpio_usb_c0_sbu_flip;
 		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
 	};
+
+	usba-port-enable-list {
+		compatible = "cros-ec,usba-port-enable-pins";
+		enable-pins = <&gpio_en_pp5000_usb_a0_vbus
+			       &gpio_en_pp5000_usb_a1_vbus
+				   &gpio_en_usb_a1_retimer>;
+	};
 };
 
 /* PSL input pads */

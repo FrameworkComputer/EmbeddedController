@@ -13,9 +13,7 @@ child-binding:
   properties:
     again:
       type: int
-      required: false
       description: Gain Scaling; must be value between 0 and 3
     atime:
       type: int
-      required: false
       description: Acquisition Time, controlled by the ATIME register

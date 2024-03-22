@@ -14,6 +14,8 @@
 
 #include <stdbool.h>
 
+#undef CONFIG_HIBERNATE_PSL
+
 #define CONFIG_USB_PD_PORT_MAX_COUNT 1
 
 /* USB-A config */

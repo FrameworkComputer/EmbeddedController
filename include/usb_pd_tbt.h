@@ -106,7 +106,7 @@ enum vendor_specific_support {
 
 /* TBT Alternate Mode */
 #define TBT_ALTERNATE_MODE 0x0001
-#define PD_VDO_RESP_MODE_INTEL_TBT(x) (((x)&0xff) == TBT_ALTERNATE_MODE)
+#define PD_VDO_RESP_MODE_INTEL_TBT(x) (((x) & 0xff) == TBT_ALTERNATE_MODE)
 
 union tbt_mode_resp_device {
 	struct {

@@ -30,31 +30,41 @@ include: base.yaml
 properties:
   bc12:
     type: phandle
-    required: false
     description: |
       BC1.2 chip for the USB-C port.
   tcpc:
     type: phandle
-    required: false
     description: |
       TCPC chip for the USB-C port.
   chg:
     type: phandle
-    required: false
     description: |
       Charger chip for the USB-C port.
   chg_alt:
     type: phandle
-    required: false
     description: |
       Alternative charger for the USB-C port.
   ppc:
     type: phandle
-    required: false
     description: |
       PPC for the USB-C port.
   ppc_alt:
     type: phandle
-    required: false
     description: |
       Alternate PPC for the USB-C port.
+  alt-mode:
+    type: phandle
+    description: |
+      PD chip for configuring the alternate modes of the USB-C port.
+  pdc:
+    type: phandle
+    description: |
+      PD chip for managing Power Delivery
+  pd-retimer:
+    type: boolean
+    description: |
+      If present, this PD port has a retimer and connected to PD chip.
+  policy:
+    type: phandle
+    description: |
+      The static policies of the USB-C port.

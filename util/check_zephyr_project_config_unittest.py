@@ -11,8 +11,12 @@ import site
 import unittest
 
 import check_zephyr_project_config
-import mock  # pylint:disable=import-error
 
+
+try:
+    from unittest import mock
+except ImportError:
+    import mock  # pylint:disable=import-error
 
 site.addsitedir(check_zephyr_project_config.ZEPHYR_BASE / "scripts" / "kconfig")
 # pylint:disable=import-error,wrong-import-position

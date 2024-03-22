@@ -5,15 +5,13 @@
 
 #include "console.h"
 
-#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
+#include <cmsis_core.h>
 
 /* IRQ counters */
 int irq_count[CONFIG_NUM_IRQS];
 
-void sys_trace_isr_enter_user(int nested_interrupts)
+void sys_trace_isr_enter_user(void)
 {
-	ARG_UNUSED(nested_interrupts);
-
 	/* read the exception number */
 	uint32_t irq = __get_IPSR() - 16;
 

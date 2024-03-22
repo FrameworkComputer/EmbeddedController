@@ -6,16 +6,10 @@ menuconfig AP_PWRSEQ
 	bool "AP Power sequencing support"
 	default y
 	depends on DT_HAS_INTEL_AP_PWRSEQ_ENABLED && !TEST_DISABLE_AP_PWRSEQ
-	select HAS_TASK_POWERBTN
-	select GPIO_GET_CONFIG
 	help
 	  Enables AP power sequencing support with
 	  embedded controller. This includes normal shutdown, critical
 	  shutdown and reset handling.
-	  Enabling this automatically enables HAS_TASK_POWERBTN since this task
-	  is required to handle power button pressed/released by user.
-	  Enabling this also enables retrieving the GPIO config feature
-	  so that the value of output GPIOs can be determined.
 
 if AP_PWRSEQ
 
@@ -25,6 +19,7 @@ source "subsys/logging/Kconfig.template.log_config"
 
 config AP_PWRSEQ_DRIVER
 	bool "AP Power sequencing driver support"
+	default y
 	select SMF
 	select SMF_ANCESTOR_SUPPORT
 	select EVENTS
@@ -32,6 +27,15 @@ config AP_PWRSEQ_DRIVER
 	  AP power sequence driver establishes an underlaying framework to
 	  easily add or extend AP Power Sequence action handler routines, it is
 	  designed to follow the zephyr's State Machine Framework (SMF).
+
+	  This version of power sequencing offers improved APIs when compared
+	  to the alternatives and is meant to be the long-term default
+	  solution. If in doubt, leave it enabled.
+
+config AP_PWRSEQ_POWER_SIGNALS
+	bool
+	help
+	  Enables power signals implementation for AP Power Sequence.
 
 config AP_PWRSEQ_SIGNAL_ADC
 	bool
@@ -63,7 +67,7 @@ config AP_PWRSEQ_SIGNAL_VW
 	  Helper symbol to enable virtual wire (VW) based power sequencing.
 
 config AP_PWRSEQ_SIGNAL_DEBUG_NAMES
-	bool
+	bool "Debug power sequence names"
 	default y if PLATFORM_EC_BRINGUP
 	help
 	  Enable this option to allow display of the more descriptive
@@ -106,9 +110,16 @@ config AP_PWRSEQ_THREAD_PRIORITY
 config X86_NON_DSX_PWRSEQ
 	bool
 	default n
+	select AP_PWRSEQ_POWER_SIGNALS
+	select HAS_TASK_POWERBTN
+	select GPIO_GET_CONFIG
 	help
 	  This option enables Non Deep Sleep Well power sequencing for
 	  Intel x86 chips.
+	  Enabling this automatically enables HAS_TASK_POWERBTN since this task
+	  is required to handle power button pressed/released by user.
+	  Enabling this also enables retrieving the GPIO config feature
+	  so that the value of output GPIOs can be determined.
 
 config X86_NON_DSX_PWRSEQ_ADL
 	bool "x86 Non Deep Sx power sequencing on ADL"

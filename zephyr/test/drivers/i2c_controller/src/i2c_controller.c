@@ -48,7 +48,7 @@ ZTEST_F(i2c_controller, test_write_read32_be)
 			       expected));
 
 	/* Get the first four bytes of the register space as a uint32_t */
-	actual = __bswap_32(*((uint32_t *)&fixture->emul_data->regs[0]));
+	actual = BSWAP_32(*((uint32_t *)&fixture->emul_data->regs[0]));
 
 	zassert_equal(expected, actual, "got %08x, expected %08x", actual,
 		      expected);
@@ -71,7 +71,7 @@ ZTEST_F(i2c_controller, test_write_read16_be)
 			       expected));
 
 	/* Get the first two bytes of the register space as a uint16_t */
-	actual = __bswap_16(*((uint16_t *)&fixture->emul_data->regs[0]));
+	actual = BSWAP_16(*((uint16_t *)&fixture->emul_data->regs[0]));
 
 	zassert_equal(expected, actual, "got %04x, expected %08x", actual,
 		      expected);
@@ -184,7 +184,7 @@ ZTEST_F(i2c_controller, test_read_offset16__two_bytes_be)
 				     fixture->addr | I2C_FLAG_BIG_ENDIAN, reg,
 				     &data, 2));
 
-	uint16_t data16 = __bswap_16((uint16_t)data);
+	uint16_t data16 = BSWAP_16((uint16_t)data);
 
 	zassert_equal(expected, data16, "got %04x, expected %04x", data16,
 		      expected);
@@ -252,7 +252,7 @@ ZTEST_F(i2c_controller, test_write_offset16__two_bytes_be)
 				      fixture->addr | I2C_FLAG_BIG_ENDIAN, reg,
 				      expected, 2));
 
-	actual = __bswap_16(
+	actual = BSWAP_16(
 		*((uint16_t *)&fixture->emul_data->extended_regs[reg & 0xFF]));
 
 	zassert_equal(expected, actual, "got %04x, expected %04x", actual,

@@ -65,8 +65,5 @@ int pd_set_power_supply_ready(int port)
 
 __override int pd_snk_is_vbus_provided(int port)
 {
-	if (port != CHARGE_PORT_TYPEC0)
-		return 0;
-
 	return ppc_is_vbus_present(port);
 }

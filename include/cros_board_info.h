@@ -13,6 +13,8 @@
 #define CBI_VERSION_MAJOR 0
 #define CBI_VERSION_MINOR 0
 
+#define CBI_IMAGE_SIZE_EEPROM 256
+
 #ifdef CONFIG_CBI_GPIO
 /*
  * if CBI is sourced from GPIO, the CBI cache only needs to accomondate
@@ -22,9 +24,9 @@
 	(sizeof(struct cbi_header) + \
 	 (2 * (sizeof(struct cbi_data) + sizeof(uint32_t))))
 #elif defined(CONFIG_CBI_FLASH)
-#define CBI_IMAGE_SIZE DT_PROP(DT_NODELABEL(cbi_flash), size)
+#define CBI_IMAGE_SIZE DT_PROP(DT_NODELABEL(cbi_flash), image_size)
 #else
-#define CBI_IMAGE_SIZE 256
+#define CBI_IMAGE_SIZE CBI_IMAGE_SIZE_EEPROM
 #endif
 
 static const uint8_t cbi_magic[] = { 0x43, 0x42, 0x49 }; /* 'C' 'B' 'I' */
@@ -81,10 +83,12 @@ struct cbi_storage_driver {
 	int (*is_protected)(void);
 };
 
-extern const struct cbi_storage_config_t {
+struct cbi_storage_config_t {
 	enum cbi_storage_type storage_type;
 	const struct cbi_storage_driver *drv;
-} cbi_config;
+};
+
+extern const struct cbi_storage_config_t *cbi_config;
 
 /**
  * Board info accessors
@@ -103,6 +107,7 @@ int cbi_get_pcb_supplier(uint32_t *pcb_supplier);
 int cbi_get_ssfc(uint32_t *ssfc);
 int cbi_get_rework_id(uint64_t *id);
 int cbi_get_factory_calibration_data(uint32_t *calibration_data);
+int cbi_get_common_control(union ec_common_control *ctrl);
 
 /**
  * Get data from CBI store

@@ -59,12 +59,18 @@ enum bmi_emul_axis {
 	BMI_EMUL_GYR_Z,
 };
 
+/* turns 16-bit register address into 8-bit address */
+#define REG16TO8(x) ((x) * 2)
+/* turns 8-bit register address into 16-bit address */
+#define REG8TO16(x) ((x) / 2)
+
 /** BMI emulator models */
 #define BMI_EMUL_160 1
 #define BMI_EMUL_260 2
+#define BMI_EMUL_3XX 3
 
 /** Last register supported by emulator */
-#define BMI_EMUL_MAX_REG 0x80
+#define BMI_EMUL_MAX_REG (0x80 * 2)
 /** Maximum number of registers that can be backed in NVM */
 #define BMI_EMUL_MAX_NVM_REGS 10
 
@@ -97,6 +103,9 @@ enum bmi_emul_axis {
 #define BMI_EMUL_FRAME_ACC BIT(1)
 #define BMI_EMUL_FRAME_MAG BIT(2)
 #define BMI_EMUL_FRAME_GYR BIT(3)
+#define BMI_EMUL_FRAME_TEMP BIT(4)
+#define BMI_EMUL_FRAME_TIME BIT(5)
+#define BMI_EMUL_FRAME_NONE BIT(7)
 
 /**
  * Code returned by model specific handle_read and handle_write functions, when
@@ -125,6 +134,10 @@ struct bmi_emul_frame {
 	int32_t mag_y;
 	int32_t mag_z;
 	int32_t rhall;
+	/** Temp sensor values in internal emulator units */
+	int32_t temp;
+	/** Sensor time values in internal emulator units */
+	int32_t time;
 
 	/** Pointer to next frame or NULL */
 	struct bmi_emul_frame *next;
@@ -151,6 +164,19 @@ struct bmi_emul_type_data {
 			  bool read);
 
 	/**
+	 * @brief Model specific start write function. It should modify state of
+	 *        emulator if required.
+	 *
+	 * @param regs Pointer to array of emulator's registers
+	 * @param emul Pointer to BMI emulator
+	 * @param reg Selected register
+	 *
+	 * @return 0 on success
+	 * @return BMI_EMUL_ACCESS_E on RO register access
+	 * @return other on error
+	 */
+	int (*start_write)(uint8_t *regs, const struct emul *emul, int reg);
+	/**
 	 * @brief Model specific write function. It should modify state of
 	 *        emulator if required.
 	 *
@@ -166,6 +192,34 @@ struct bmi_emul_type_data {
 	 */
 	int (*handle_write)(uint8_t *regs, const struct emul *emul, int reg,
 			    int byte, uint8_t val);
+	/**
+	 * @brief Model specific finish write function. It should modify state
+	 *        of emulator if required.
+	 *
+	 * @param regs Pointer to array of emulator's registers
+	 * @param emul Pointer to BMI emulator
+	 * @param reg Selected register
+	 * @param byte Number of handled bytes in the write command
+	 *
+	 * @return 0 on success
+	 * @return BMI_EMUL_ACCESS_E on RO register access
+	 * @return other on error
+	 */
+	int (*finish_write)(uint8_t *regs, const struct emul *emul, int reg,
+			    int bytes);
+	/**
+	 * @brief Model specific start read function. It should modify state of
+	 *        emulator if required.
+	 *
+	 * @param regs Pointer to array of emulator's registers
+	 * @param emul Pointer to BMI emulator
+	 * @param reg Selected register
+	 *
+	 * @return 0 on success
+	 * @return BMI_EMUL_ACCESS_E on RO register access
+	 * @return other on error
+	 */
+	int (*start_read)(uint8_t *regs, const struct emul *emul, int reg);
 	/**
 	 * @brief Model specific read function. It should modify state of
 	 *        emulator if required. @p buf should be set to response value.
@@ -218,6 +272,14 @@ struct bmi_emul_type_data {
 	int acc_off_reg;
 	/** Gyroscope 9 and 8 bits register */
 	int gyr98_off_reg;
+
+	/** The order of the source in the frame
+	 * Check the flags of BMI_MUL_FRAME_*, the last
+	 * source must be BMI_EMUL_FRAME_NONE
+	 */
+	uint8_t frame_order[9];
+	/** The bytes of the content in the register */
+	int reg_bytes;
 };
 
 /**
@@ -234,6 +296,13 @@ const struct bmi_emul_type_data *get_bmi160_emul_type_data(void);
 const struct bmi_emul_type_data *get_bmi260_emul_type_data(void);
 
 /**
+ * @brief Get BMI3XX model specific structure.
+ *
+ * @return Pointer to BMI3XX specific structure
+ */
+const struct bmi_emul_type_data *get_bmi3xx_emul_type_data(void);
+
+/**
  * @brief Set value of given register of BMI
  *
  * @param emul Pointer to BMI emulator
@@ -241,6 +310,15 @@ const struct bmi_emul_type_data *get_bmi260_emul_type_data(void);
  * @param val New value of the register
  */
 void bmi_emul_set_reg(const struct emul *emul, int reg, uint8_t val);
+
+/**
+ * @brief Set value of given 16-bit register of BMI
+ *
+ * @param emul Pointer to BMI emulator
+ * @param reg Register address which value will be changed
+ * @param val New value of the register in 16-bit
+ */
+void bmi_emul_set_reg16(const struct emul *emul, int reg, uint16_t val);
 
 /**
  * @brief Get value of given register of BMI
@@ -251,6 +329,16 @@ void bmi_emul_set_reg(const struct emul *emul, int reg, uint8_t val);
  * @return Value of the register
  */
 uint8_t bmi_emul_get_reg(const struct emul *emul, int reg);
+
+/**
+ * @brief Get value of given 16-bit register of BMI
+ *
+ * @param emul Pointer to BMI emulator
+ * @param reg Register address
+ *
+ * @return Value of the register in 16-bit
+ */
+uint16_t bmi_emul_get_reg16(const struct emul *emul, int reg);
 
 /**
  * @brief Get internal value of offset for given axis and sensor
@@ -356,6 +444,13 @@ void bmi_emul_flush_fifo(const struct emul *emul, bool tag_time, bool header);
  * @param emul Pointer to BMI emulator
  */
 void bmi_emul_reset_common(const struct emul *emul, bool tag_time, bool header);
+
+/**
+ * @brief Reset BMI emulator
+ *
+ * @param emul Emulation information
+ */
+void bmi_emul_reset(const struct emul *emul);
 
 /**
  * @brief Set command end time to @p time ms from now

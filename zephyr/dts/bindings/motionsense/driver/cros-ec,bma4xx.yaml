@@ -10,6 +10,8 @@ compatible: "cros-ec,bma4xx"
 include: motionsense-sensor-base.yaml
 
 properties:
+  default-range:
+    default: 4
   i2c-spi-addr-flags:
     type: string
     description: i2c address or SPI peripheral logic GPIO

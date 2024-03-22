@@ -7,8 +7,8 @@
 
 #include "builtin/assert.h"
 #include "chipset.h"
-#include "clock-f.h"
 #include "clock.h"
+#include "clock_chip.h"
 #include "common.h"
 #include "console.h"
 #include "cpu.h"
@@ -99,7 +99,7 @@ static void post_work_set_rtc_alarm(void)
 #ifdef CONFIG_HOSTCMD_RTC
 static struct wake_time host_wake_time;
 
-int is_host_wake_alarm_expired(timestamp_t ts)
+bool is_host_wake_alarm_expired(timestamp_t ts)
 {
 	return host_wake_time.ts.val &&
 	       timestamp_expired(host_wake_time.ts, &ts);

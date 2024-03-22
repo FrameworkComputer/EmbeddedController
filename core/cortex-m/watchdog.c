@@ -34,8 +34,18 @@ void __keep watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 		stack = (uint32_t *)psp;
 	}
 
-	panic_set_reason(PANIC_SW_WATCHDOG, stack[STACK_IDX_REG_PC],
-			 (excep_lr & 0xf) == 1 ? 0xff : task_get_current());
+	/* Log PC from stack and task id.
+	 *
+	 * Why we set set PANIC_SW_WATCHDOG_WARN reason:
+	 *
+	 * The PANIC_SW_WATCHDOG_WARN reason will be changed to a regular
+	 * PANIC_SW_WATCHDOG in system_common_pre_init if a watchdog reset
+	 * actually occurs. If no watchdog reset occurs, this watchdog warning
+	 * panic may still be collected by the kernel and handled as a
+	 * non-fatal EC panic.
+	 */
+	panic_set_reason(PANIC_SW_WATCHDOG_WARN, stack[STACK_IDX_REG_PC],
+			 task_get_current());
 
 	/*
 	 * This is our last breath, the last opportunity to sort out all
@@ -55,4 +65,7 @@ void __keep watchdog_trace(uint32_t excep_lr, uint32_t excep_sp)
 	 * messages might not appear but they are useless in that situation. */
 	timer_print_info();
 	task_print_list();
+
+	if (IS_ENABLED(CONFIG_PANIC_ON_WATCHDOG_WARNING))
+		software_panic(PANIC_SW_WATCHDOG, task_get_current());
 }

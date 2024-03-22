@@ -38,7 +38,7 @@
 			gpios = <&gpio8 6 GPIO_OUTPUT>;
 		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
-			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_mech_pwr_btn_l: ec_mech_pwr_btn_l {
 			gpios = <&gpio0 2 GPIO_INPUT>;
@@ -81,6 +81,12 @@
 		};
 		gpio_ec_spare_gpio94: ec_spare_gpio94 {
 			gpios = <&gpio9 4 GPIO_OUTPUT>;
+		};
+		gpio_usb_c0_hbr_rst_l: usb_c0_hbr_rst_l {
+			gpios = <&gpio9 3 GPIO_OUTPUT_LOW>;
+		};
+		gpio_usb_c1_hbr_rst_l: usb_c1_hbr_rst_l {
+			gpios = <&gpio9 7 GPIO_OUTPUT_LOW>;
 		};
 		gpio_usb_a_low_pwr_od: usb_a_low_pwr_od {
 			gpios = <&gpioa 2 GPIO_OUTPUT_LOW>;
@@ -162,7 +168,7 @@
 			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
 		};
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
-			gpios = <&gpio6 2 GPIO_INPUT>;
+			gpios = <&gpio6 2 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
 		};
 		gpio_usb_c0_rt_3p3_sx_en: usb_c0_rt_3p3_sx_en {
@@ -186,7 +192,7 @@
 			gpios = <&gpio8 3 GPIO_ODR_HIGH>;
 		};
 		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
-			gpios = <&gpiof 5 GPIO_INPUT>;
+			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
 		};
 		gpio_usb_c1_rst_odl: usb_c1_rst_odl {

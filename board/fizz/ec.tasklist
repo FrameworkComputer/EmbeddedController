@@ -10,7 +10,7 @@
 #define CONFIG_TASK_LIST \
 	TASK_ALWAYS(HOOKS, hook_task, NULL, 2048) \
 	/* Larger stack for RW verification (i.e. sha256, rsa) */ \
-	TASK_NOTEST(CHIPSET, chipset_task, NULL, TASK_STACK_SIZE) \
+	TASK_ALWAYS(CHIPSET, chipset_task, NULL, TASK_STACK_SIZE) \
 	TASK_ALWAYS(HOSTCMD, host_command_task, NULL, 2048) \
 	TASK_ALWAYS(CONSOLE, console_task, NULL, LARGER_TASK_STACK_SIZE) \
 	TASK_ALWAYS(POWERBTN, power_button_task, NULL, LARGER_TASK_STACK_SIZE) \

@@ -29,6 +29,7 @@ static bool is_valid_rt1718s_page1_register(int reg)
 	case RT1718S_SYS_CTRL2:
 	case RT1718S_SYS_CTRL3:
 	case RT1718S_RT_MASK6:
+	case RT1718S_RT_INT6:
 	case RT1718S_VCON_CTRL3:
 	case 0xCF: /* FOD function */
 	case RT1718S_RT_MASK1:
@@ -38,6 +39,8 @@ static bool is_valid_rt1718s_page1_register(int reg)
 	case RT1718S_GPIO_CTRL(RT1718S_GPIO1):
 	case RT1718S_GPIO_CTRL(RT1718S_GPIO2):
 	case RT1718S_GPIO_CTRL(RT1718S_GPIO3):
+	case RT1718S_GPIO1_VBUS_CTRL:
+	case RT1718S_GPIO2_VBUS_CTRL:
 		return true;
 	default:
 		return false;
@@ -48,12 +51,18 @@ static bool is_valid_rt1718s_page2_register(int reg)
 {
 	int combined_reg_address = (RT1718S_RT2 << 8) | reg;
 
+	if (RT1718S_ADC_CHX_VOL_L(RT1718S_ADC_VBUS1) <= combined_reg_address &&
+	    combined_reg_address <= RT1718S_ADC_CHX_VOL_H(RT1718S_ADC_CH11)) {
+		return true;
+	}
+
 	switch (combined_reg_address) {
 	case RT1718S_RT2_SBU_CTRL_01:
 	case RT1718S_RT2_BC12_SNK_FUNC:
 	case RT1718S_RT2_DPDM_CTR1_DPDM_SET:
 	case RT1718S_RT2_VBUS_VOL_CTRL:
 	case RT1718S_VCON_CTRL4:
+	case RT1718S_ADC_CTRL_01:
 		return true;
 	default:
 		return false;
@@ -167,7 +176,7 @@ static int copy_reg_byte(uint8_t *dst, uint8_t src_reg[], int reg,
 	    dst == NULL) {
 		return -EIO;
 	}
-	*(dst + read_bytes) = src_reg[reg + read_bytes];
+	*dst = src_reg[reg + read_bytes];
 	return EC_SUCCESS;
 }
 
@@ -188,8 +197,6 @@ static int rt1718s_emul_read_byte(const struct emul *emul, int reg,
 	struct rt1718s_emul_data *rt1718s_data = emul->data;
 	int current_page = rt1718s_data->current_page;
 
-	rt1718s_data->current_page = 1;
-
 	if (current_page == 2) {
 		if (reg != RT1718S_RT2) {
 			LOG_ERR("The page2 register is selected in previous "
@@ -207,6 +214,26 @@ static int rt1718s_emul_read_byte(const struct emul *emul, int reg,
 	} else {
 		return tcpci_emul_read_byte(emul, reg, val, read_bytes);
 	}
+}
+
+/**
+ * @brief Function called on the end of write message to rt1718s emulator
+ *
+ * @param emul Pointer to I2C rt1718s emulator
+ * @param reg First byte of last write message
+ * @param msg_len Length of handled I2C message
+ *
+ * @return 0 on success
+ * @return -EIO on error
+ */
+static int rt1718s_emul_finish_read(const struct emul *emul, int reg,
+				    int msg_len)
+{
+	struct rt1718s_emul_data *rt1718s_data = emul->data;
+
+	rt1718s_data->current_page = 1;
+
+	return EC_SUCCESS;
 }
 
 /**
@@ -256,18 +283,11 @@ static int rt1718s_emul_write_byte_page2(const struct emul *emul, int reg,
 			return -EIO;
 		}
 		rt1718s_data->current_page2_register = val;
-	} else if (bytes == 2) {
-		rt1718s_data->reg_page2[rt1718s_data->current_page2_register] =
-			val;
-		add_access_history_entry(
-			rt1718s_data,
-			(reg << 8) | rt1718s_data->current_page2_register, val);
 	} else {
-		/*
-		 * All register in page2 only has 1 byte, so the write should
-		 * not more than 3 bytes.
-		 */
-		return -EIO;
+		int pos = rt1718s_data->current_page2_register + bytes - 2;
+
+		rt1718s_data->reg_page2[pos] = val;
+		add_access_history_entry(rt1718s_data, (reg << 8) | pos, val);
 	}
 
 	return EC_SUCCESS;
@@ -403,6 +423,7 @@ static int rt1718s_emul_init(const struct emul *emul,
 	tcpci_ctx->common.write_byte = rt1718s_emul_write_byte_wrapper;
 	tcpci_ctx->common.finish_write = rt1718s_emul_finish_write;
 	tcpci_ctx->common.read_byte = rt1718s_emul_read_byte;
+	tcpci_ctx->common.finish_read = rt1718s_emul_finish_read;
 	tcpci_ctx->common.access_reg = rt1718s_emul_access_reg;
 
 	tcpci_emul_i2c_init(emul, i2c_dev);
@@ -456,7 +477,7 @@ struct i2c_emul_api i2c_rt1718s_emul_api = {
 
 DT_INST_FOREACH_STATUS_OKAY(RT1718S_EMUL)
 
-#ifdef CONFIG_ZTEST_NEW_API
+#ifdef CONFIG_ZTEST
 #define RT1718S_EMUL_RESET_RULE_BEFORE(n) \
 	rt1718s_emul_reset(EMUL_DT_GET(DT_DRV_INST(n)))
 static void rt1718s_emul_reset_rule_before(const struct ztest_unit_test *test,
@@ -467,6 +488,6 @@ static void rt1718s_emul_reset_rule_before(const struct ztest_unit_test *test,
 	DT_INST_FOREACH_STATUS_OKAY(RT1718S_EMUL_RESET_RULE_BEFORE);
 }
 ZTEST_RULE(RT1718S_emul_reset, rt1718s_emul_reset_rule_before, NULL);
-#endif /* CONFIG_ZTEST_NEW_API */
+#endif /* CONFIG_ZTEST */
 
 DT_INST_FOREACH_STATUS_OKAY(EMUL_STUB_DEVICE);

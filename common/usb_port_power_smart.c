@@ -101,8 +101,8 @@ static void usb_charge_all_ports_ctrl(enum usb_charge_mode mode)
 		usb_charge_set_mode(i, mode, USB_ALLOW_SUSPEND_CHARGE);
 }
 
-int usb_charge_set_mode(int port_id, enum usb_charge_mode mode,
-			enum usb_suspend_charge inhibit_charge)
+test_mockable int usb_charge_set_mode(int port_id, enum usb_charge_mode mode,
+				      enum usb_suspend_charge inhibit_charge)
 {
 	CPRINTS("USB charge p%d m%d i%d", port_id, mode, inhibit_charge);
 

@@ -5,12 +5,13 @@
 
 /* FPC Platform Abstraction Layer */
 
+#include "common.h"
 #include "fpc_timebase.h"
 #include "timer.h"
 
 #include <stdint.h>
 
-uint32_t __unused fpc_timebase_get_tick(void)
+__staticlib_hook uint32_t fpc_timebase_get_tick(void)
 {
 	clock_t time;
 
@@ -19,11 +20,7 @@ uint32_t __unused fpc_timebase_get_tick(void)
 	return (uint32_t)time;
 }
 
-void __unused fpc_timebase_busy_wait(uint32_t ms)
+__staticlib_hook void fpc_timebase_busy_wait(uint32_t ms)
 {
 	udelay(ms * 1000);
-}
-
-void __unused fpc_timebase_init(void)
-{
 }

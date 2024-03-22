@@ -6,6 +6,8 @@
 #ifndef FPC_PAL_SENSOR_H_
 #define FPC_PAL_SENSOR_H_
 
+#include "common.h"
+
 #include <stdint.h>
 
 typedef void *fpc_device_t;
@@ -21,19 +23,6 @@ typedef enum {
 } fpc_pal_irq_t;
 
 /**
- * @brief Write sensor access buffer to SPI interface
- *
- * @param[in] device             Client's device handle.
- * @param[in] access_buffer      Buffer holding data to write.
- * @param[in] access_buffer_size Size of the access buffer.
- *
- * @return 0 on success.
- *         negative value on error.
- */
-int fpc_pal_spi_write(fpc_device_t device, uint8_t *access_buffer,
-		      uint32_t access_buffer_size);
-
-/**
  * @brief Write and read sensor access buffer to SPI interface
  *
  * SPI transfers always write the same number of bytes as they read,
@@ -47,8 +36,9 @@ int fpc_pal_spi_write(fpc_device_t device, uint8_t *access_buffer,
  * @return 0 on success.
  *         negative value on error.
  */
-int fpc_pal_spi_writeread(fpc_device_t device, uint8_t *tx_buffer,
-			  uint8_t *rx_buffer, uint32_t size);
+__staticlib_hook int fpc_pal_spi_writeread(fpc_device_t device,
+					   uint8_t *tx_buffer,
+					   uint8_t *rx_buffer, uint32_t size);
 
 /**
  * @brief Wait for IRQ
@@ -59,7 +49,8 @@ int fpc_pal_spi_writeread(fpc_device_t device, uint8_t *tx_buffer,
  * @return 0 on success.
  *         negative value on error.
  */
-int fpc_pal_wait_irq(fpc_device_t device, fpc_pal_irq_t irq_type);
+__staticlib_hook int fpc_pal_wait_irq(fpc_device_t device,
+				      fpc_pal_irq_t irq_type);
 
 /**
  * @brief Get time
@@ -72,7 +63,7 @@ int fpc_pal_wait_irq(fpc_device_t device, fpc_pal_irq_t irq_type);
  * @return 0 on success.
  *         negative value on error.
  */
-int fpc_pal_get_time(uint64_t *time_us);
+__staticlib_hook int fpc_pal_get_time(uint64_t *time_us);
 
 /**
  * @brief Delay function
@@ -85,20 +76,7 @@ int fpc_pal_get_time(uint64_t *time_us);
  * @return 0 on success.
  *         negative value on error.
  */
-int fpc_pal_delay_us(uint64_t us);
-
-/**
- * @brief Get platform SPI clock frequency
- *
- * @param[in]  device   Client's device handle.
- * @param[out] speed_hz SPI frequency in hertz.
- *
- * Required by platform for adaptive SPI calculations.
- *
- * @return 0 on success.
- *         negative value on error.
- */
-int fpc_pal_spi_get_speed_hz(fpc_device_t device, uint32_t *speed_hz);
+__staticlib_hook int fpc_pal_delay_us(uint64_t us);
 
 /**
  * @brief Print SDK log strings
@@ -115,6 +93,7 @@ int fpc_pal_spi_get_speed_hz(fpc_device_t device, uint32_t *speed_hz);
 #define FPC_SENSOR_SDK_LOG_LEVEL_INFO (2)
 #define FPC_SENSOR_SDK_LOG_LEVEL_ERROR (3)
 #define FPC_SENSOR_SDK_LOG_LEVEL_DISABLED (4)
-void fpc_pal_log_entry(const char *tag, int log_level, const char *format, ...);
+__staticlib_hook void fpc_pal_log_entry(const char *tag, int log_level,
+					const char *format, ...);
 
 #endif // FPC_PAL_SENSOR_H_

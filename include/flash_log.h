@@ -90,7 +90,7 @@ struct nvmem_failure_payload {
 #define MAX_FLASH_LOG_PAYLOAD_SIZE ((1 << 6) - 1)
 #define FLASH_LOG_PAYLOAD_SIZE_MASK (MAX_FLASH_LOG_PAYLOAD_SIZE)
 
-#define FLASH_LOG_PAYLOAD_SIZE(size) ((size)&FLASH_LOG_PAYLOAD_SIZE_MASK)
+#define FLASH_LOG_PAYLOAD_SIZE(size) ((size) & FLASH_LOG_PAYLOAD_SIZE_MASK)
 /* Size of log entry for a specific payload size. */
 #define FLASH_LOG_ENTRY_SIZE(payload_sz)                                  \
 	((FLASH_LOG_PAYLOAD_SIZE(payload_sz) +                            \

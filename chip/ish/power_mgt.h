@@ -9,8 +9,6 @@
 #include "common.h"
 #include "registers.h"
 
-#include <stdnoreturn.h>
-
 extern void uart_port_restore(void);
 extern void uart_to_idle(void);
 extern void clear_fabric_error(void);
@@ -58,7 +56,7 @@ static inline void ish_mia_halt(void)
 }
 
 /* reset ISH mintue-ia cpu core  */
-noreturn static inline void ish_mia_reset(void)
+__noreturn static inline void ish_mia_reset(void)
 {
 	/**
 	 * ISH HW looks at the rising edge of this bit to
@@ -82,7 +80,7 @@ __maybe_unused static void ish_pm_init(void)
 /**
  * reset ISH (reset minute-ia cpu core, and power off main SRAM)
  */
-noreturn void ish_pm_reset(enum ish_pm_state pm_state);
+__noreturn void ish_pm_reset(enum ish_pm_state pm_state);
 
 /**
  * notify the power management module that the UART for the console is in use.

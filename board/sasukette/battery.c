@@ -14,6 +14,8 @@
 
 #define CHARGING_VOLTAGE_MV_SAFE 8400
 #define CHARGING_CURRENT_MA_SAFE 1500
+#define CHARGING_VOLTAGE_MV_ADJUST 8700
+#define CHARGING_CURRENT_MA_ADJUST 3200
 
 /*
  * Battery info for all sasukette battery types. Note that the fields
@@ -37,38 +39,39 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* SDI Battery Information */
 	[BATTERY_SDI] = {
-		.fuel_gauge = {
-			.manuf_name = "SDI",
-			.device_name = "4402D51",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "SDI",
+		.device_name = "4402D51",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x00,
+					.reg_mask = 0xc000,
+					.disconnect_val = 0x8000,
+					.cfet_mask = 0xc000,
+					.cfet_off_val = 0x2000,
+				},
 			},
-			.fet = {
-				.mfgacc_support = 0,
-				.reg_addr = 0x00,
-				.reg_mask = 0xc000,
-				.disconnect_val = 0x8000,
-				.cfet_mask = 0xc000,
-				.cfet_off_val = 0x2000,
-			}
+			.batt_info = {
+				.voltage_max		= 8700,
+				.voltage_normal		= 7700, /* mV */
+				.voltage_min		= 6000, /* mV */
+				.precharge_current	= 200,	/* mA */
+				.start_charging_min_c	= 0,
+				.start_charging_max_c	= 45,
+				.charging_min_c		= 0,
+				.charging_max_c		= 50,
+				.discharging_min_c	= -20,
+				.discharging_max_c	= 70,
+			},
 		},
-		.batt_info = {
-			.voltage_max		= 8800,
-			.voltage_normal		= 7700, /* mV */
-			.voltage_min		= 6000, /* mV */
-			.precharge_current	= 200,	/* mA */
-			.start_charging_min_c	= 0,
-			.start_charging_max_c	= 45,
-			.charging_min_c		= 0,
-			.charging_max_c		= 50,
-			.discharging_min_c	= -20,
-			.discharging_max_c	= 70,
-		},
-	}
+	},
 };
 BUILD_ASSERT(ARRAY_SIZE(board_battery_info) == BATTERY_TYPE_COUNT);
 
@@ -106,7 +109,11 @@ int charger_profile_override(struct charge_state_data *curr)
 		return 0;
 
 	current = curr->requested_current;
+	if (current > CHARGING_CURRENT_MA_ADJUST)
+		current = CHARGING_CURRENT_MA_ADJUST;
 	voltage = curr->requested_voltage;
+	if (voltage > CHARGING_VOLTAGE_MV_ADJUST)
+		voltage = CHARGING_VOLTAGE_MV_ADJUST;
 	bat_temp_c = curr->batt.temperature - 2731;
 	batt_info = battery_get_info();
 
@@ -133,12 +140,10 @@ int charger_profile_override(struct charge_state_data *curr)
 		break;
 
 	case TEMP_ZONE_1:
-		voltage += 100;
 		current = CHARGING_CURRENT_MA_SAFE;
 		break;
 
 	case TEMP_ZONE_2:
-		voltage += 100;
 		break;
 
 	case TEMP_ZONE_3:

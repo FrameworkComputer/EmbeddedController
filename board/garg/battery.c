@@ -31,119 +31,126 @@
  * status can be read with a sb_read() command and therefore, only the register
  * address, mask, and disconnect value need to be provided.
  */
-const struct board_batt_params board_battery_info[] = {
+const struct batt_conf_embed board_battery_info[] = {
 	/* Simplo SDI 916Q2286H battery information */
 	[BATTERY_SIMPLO_SDI] = {
-		.fuel_gauge = {
-			.manuf_name = "SMP-SDI3320",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "SMP-SDI3320",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0002,
+					.disconnect_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0002,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max = TARGET_WITH_MARGIN(13050, 5),
+				.voltage_normal = 11460,
+				.voltage_min = 9000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 60,
+				.discharging_min_c = -20,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = TARGET_WITH_MARGIN(13050, 5),	/* mV */
-			.voltage_normal = 11460,
-			.voltage_min = 9000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 60,
-			.discharging_min_c = -20,
-			.discharging_max_c = 60,
 		},
 	},
 
 	/* Simplo BYD 916Q2294H battery information */
 	[BATTERY_SIMPLO_BYD] = {
-		.fuel_gauge = {
-			.manuf_name = "SMP-LP485780",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "SMP-LP485780",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0002,
+					.disconnect_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0002,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max = TARGET_WITH_MARGIN(13200, 5),
+				.voltage_normal = 11550,
+				.voltage_min = 9000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -20,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = TARGET_WITH_MARGIN(13200, 5),	/* mV */
-			.voltage_normal = 11550,
-			.voltage_min = 9000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -20,
-			.discharging_max_c = 60,
 		},
 	},
 
 	/* Simplo CA475778G 916QA141H battery information */
 	[BATTERY_SIMPLO_CA475778G] = {
-		.fuel_gauge = {
-			.manuf_name = "SMP-CA475778G",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "SMP-CA475778G",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x0,
+					.reg_mask = 0x0002,
+					.disconnect_val = 0x0,
+				},
+				.flags = FUEL_GAUGE_FLAG_MFGACC,
 			},
-			.fet = {
-				.mfgacc_support = 1,
-				.reg_addr = 0x0,
-				.reg_mask = 0x0002,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max = 13050,		/* mV */
+				.voltage_normal = 11430,
+				.voltage_min = 9000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -20,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 13050,		/* mV */
-			.voltage_normal = 11430,
-			.voltage_min = 9000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -20,
-			.discharging_max_c = 60,
 		},
 	},
 	/* Simplo CA475778G_R 916QA152H battery information, BMU RAJ240045 */
 	[BATTERY_SIMPLO_CA475778G_R] = {
-		.fuel_gauge = {
-			.manuf_name = "SMP-CA475778G_R",
-			.ship_mode = {
-				.reg_addr = 0x00,
-				.reg_data = { 0x0010, 0x0010 },
+		.manuf_name = "SMP-CA475778G_R",
+		.config = {
+			.fuel_gauge = {
+				.ship_mode = {
+					.reg_addr = 0x00,
+					.reg_data = { 0x0010, 0x0010 },
+				},
+				.fet = {
+					.reg_addr = 0x43,
+					.reg_mask = 0x0001,
+					.disconnect_val = 0x0,
+				},
 			},
-			.fet = {
-				.mfgacc_support = 0,
-				.reg_addr = 0x43,
-				.reg_mask = 0x0001,
-				.disconnect_val = 0x0,
+			.batt_info = {
+				.voltage_max = 13050,		/* mV */
+				.voltage_normal = 11430,
+				.voltage_min = 9000,
+				.precharge_current = 256,	/* mA */
+				.start_charging_min_c = 0,
+				.start_charging_max_c = 45,
+				.charging_min_c = 0,
+				.charging_max_c = 45,
+				.discharging_min_c = -20,
+				.discharging_max_c = 60,
 			},
-		},
-		.batt_info = {
-			.voltage_max = 13050,		/* mV */
-			.voltage_normal = 11430,
-			.voltage_min = 9000,
-			.precharge_current = 256,	/* mA */
-			.start_charging_min_c = 0,
-			.start_charging_max_c = 45,
-			.charging_min_c = 0,
-			.charging_max_c = 45,
-			.discharging_min_c = -20,
-			.discharging_max_c = 60,
 		},
 	},
 };

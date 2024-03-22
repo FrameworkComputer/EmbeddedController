@@ -47,7 +47,7 @@
 #define VBUS_DETECT_THRESHOLD 2500 /* mV */
 #define VCONN_DETECT_THRESHOLD 2500 /* mV */
 
-#define SCALE(vmeas, sfactor) (((vmeas)*1000) / (sfactor))
+#define SCALE(vmeas, sfactor) (((vmeas) * 1000) / (sfactor))
 
 /*
  * Type C power source charge current limits are identified by their cc

@@ -42,7 +42,7 @@
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 #define CONFIG_LID_ANGLE_UPDATE
-/* BH1730 and TCS3400 ALS */
+/* OPT3001 and TCS3400 ALS */
 #define CONFIG_ALS
 #define ALS_COUNT 1
 #define I2C_PORT_ALS I2C_PORT_SENSOR
@@ -51,33 +51,6 @@
 
 /* Sensors without hardware FIFO are in forced mode */
 #define CONFIG_ACCEL_FORCE_MODE_MASK (BIT(BASE_ALS))
-
-/* Parameter to calculate LUX on Nightfury */
-#define CONFIG_ALS_BH1730_LUXTH_PARAMS
-/*
- * Calculation formula depends on characteristic of optical window.
- * In case of Nightfury, we can select two different formula
- * as characteristic of optical window.
- * BH1730_LUXTH1_1K is charateristic of optical window.
- * 1. d1_1K/d0_1K * 1000 <  BH1730_LUXTH1_1K
- * 2. d1_1K/d0_1K * 1000 >= BH1730_LUXTH1_1K
- * d0 and d1 are unsigned 16 bit. So, d1/d0 max is 65535
- * To meet 2nd condition, make BH1730_LUXTH2_1K to (max+1)*1000
- * Nightfury will not use both BH1730_LUXTH3_1K condition
- * and BH1730_LUXTH4_1K condition.
- */
-#define BH1730_LUXTH1_1K 270
-#define BH1730_LUXTH1_D0_1K 19200
-#define BH1730_LUXTH1_D1_1K 30528
-#define BH1730_LUXTH2_1K 655360000
-#define BH1730_LUXTH2_D0_1K 11008
-#define BH1730_LUXTH2_D1_1K 10752
-#define BH1730_LUXTH3_1K 1030
-#define BH1730_LUXTH3_D0_1K 11008
-#define BH1730_LUXTH3_D1_1K 10752
-#define BH1730_LUXTH4_1K 3670
-#define BH1730_LUXTH4_D0_1K 11008
-#define BH1730_LUXTH4_D1_1K 10752
 
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_MUX_RUNTIME_CONFIG

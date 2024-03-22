@@ -23,7 +23,7 @@ properties:
   # Set - Discharge FET is ON, Reset - Discharge FET is OFF
   # Bit15 Charge FET status
   # Set - Charge FET is ON, Reset - Charge FET is OFF
-  fet_mfgacc_support:
+  flags:
     default: 0
   fet_reg_addr:
     default: 0x0

@@ -84,6 +84,7 @@ properties:
       - GPIO_POWER_GOOD_PRIM_PWR
       - GPIO_POWER_GOOD_VR
       - GPIO_PS_HOLD
+      - GPIO_RECOVERY_L
       - GPIO_S0_PGOOD
       - GPIO_S5_PGOOD
       - GPIO_SLP_SUS_L

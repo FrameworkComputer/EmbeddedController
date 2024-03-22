@@ -22,7 +22,7 @@ class SusbError(Exception):
         self.value = value
 
 
-class Susb(object):
+class Susb:
     """Provide stm32 USB functionality.
 
     Instance Variables:
@@ -40,7 +40,7 @@ class Susb(object):
         product=0x5027,
         interface=1,
         serialname=None,
-        logger=None,
+        _unused_logger=None,
     ):
         """Susb constructor.
 

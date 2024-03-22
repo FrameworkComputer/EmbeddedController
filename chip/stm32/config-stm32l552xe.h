@@ -13,12 +13,12 @@
 #define CONFIG_FLASH_WRITE_IDEAL_SIZE 0x100 /* 256 (32 double words) */
 
 /*
- * SRAM1 (48kB) at 0x20000000
- * SRAM2 (16kB) at 0x10000000 (and aliased at 0x2000C000)
+ * SRAM1 (192kB) at 0x20000000
+ * SRAM2 (64kB) at 0x20030000
  * so they are contiguous.
  */
 #define CONFIG_RAM_BASE 0x20000000
-#define CONFIG_RAM_SIZE 0x00010000 /* 64 kB */
+#define CONFIG_RAM_SIZE 0x00040000 /* 256 kB */
 
 /* Number of IRQ vectors on the NVIC */
 #define CONFIG_IRQ_COUNT 109

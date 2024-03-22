@@ -4,16 +4,15 @@
 
 config PLATFORM_EC_FLASH_INIT_PRIORITY
   int "Init priority of the flash module"
-  default 90 if SOC_FAMILY_NPCX
-  default 90 if SOC_FAMILY_MEC
-  default 52
+  default 90
   help
     The initialization priority of the flash module. This should always be
-    greater than PLATFORM_EC_GPIO_INIT_PRIORITY.
+    a lower priority than PLATFORM_EC_GPIO_INIT_PRIORITY.
 
 config PLATFORM_EC_GPIO_INIT_PRIORITY
   int "Init priority of the GPIO module"
-  default 51
+  default 88 if MFD
+  default 53
   help
     The initialization priority of the GPIO module. This should always happen
     after the gpio drivers are initialized.
@@ -21,7 +20,7 @@ config PLATFORM_EC_GPIO_INIT_PRIORITY
 config PLATFORM_EC_PWM_INIT_PRIORITY
 	int "Initialization priority of the PWM module"
 	depends on PLATFORM_EC_PWM
-	default 51
+	default 53
 	help
 	  Sets the initialization priority of the PWM module. This MUST be a
 	  value greater than the PWM driver's initialization priority which

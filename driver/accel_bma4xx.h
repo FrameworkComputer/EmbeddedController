@@ -179,11 +179,13 @@
 	((_range) < 8 ? BMA4_ACCEL_RANGE_2G + ((_range) / 4) : \
 			BMA4_ACCEL_RANGE_8G + ((_range) / 16))
 
-#define BMA4_REG_TO_RANGE(_reg)                        \
-	((_reg) < BMA4_ACCEL_RANGE_8G ? 2 + (_reg)*2 : \
+#define BMA4_REG_TO_RANGE(_reg)                          \
+	((_reg) < BMA4_ACCEL_RANGE_8G ? 2 + (_reg) * 2 : \
 					8 + ((_reg)-BMA4_ACCEL_RANGE_8G) * 8)
 
 extern const struct accelgyro_drv bma4_accel_drv;
+
+void bma4xx_interrupt(enum gpio_signal signal);
 
 #if defined(CONFIG_ZEPHYR)
 #include <zephyr/devicetree.h>
@@ -203,9 +205,6 @@ extern const struct accelgyro_drv bma4_accel_drv;
  */
 #define CONFIG_ACCEL_BMA4XX_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(bma4xx_int)))
-
-#include "gpio_signal.h"
-void bma4xx_interrupt(enum gpio_signal signal);
 #endif /* DT_NODE_EXISTS */
 #endif /* CONFIG_ZEPHYR */
 

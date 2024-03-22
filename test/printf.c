@@ -13,24 +13,18 @@
 #include <stdbool.h>
 #include <stddef.h>
 
-#ifdef USE_BUILTIN_STDLIB
-/*
- * When USE_BUILTIN_STDLIB is defined, we want to test the EC printf
- * implementation. We need to include the builtin header file directly so
- * that we can call the EC version (crec_vsnprintf) when linking with the
- * standard library on the host.
+#ifndef USE_BUILTIN_STDLIB
+/* This is ugly, but we want to test the functions in builtin/stdlib.c while
+ * still depending on the system stdlib.c
  */
-#include "builtin/stdio.h"
-#define VSNPRINTF crec_vsnprintf
-#define SNPRINTF crec_snprintf
-static const bool use_builtin_stdlib = true;
-#else
-#include <stdio.h>
-#define VSNPRINTF vsnprintf
-#define SNPRINTF snprintf
-static const bool use_builtin_stdlib = false;
+#define snprintf hidden_crec_snprintf
+#define vsnprintf hidden_crec_vsnprintf
+#include "../builtin/stdlib.c"
+#undef snprintf
+#undef vsnprintf
 #endif
 
+#define VSNPRINTF crec_vsnprintf
 #define INIT_VALUE 0x5E
 #define NO_BYTES_TOUCHED NULL
 
@@ -69,7 +63,7 @@ int run(int expect_ret, const char *expect, bool output_null, size_t size_limit,
 	return EC_SUCCESS;
 }
 
-int expect_success(const char *expect, const char *format, ...)
+int expect_success_crec(const char *expect, const char *format, ...)
 {
 	va_list args;
 	int rv;
@@ -77,6 +71,47 @@ int expect_success(const char *expect, const char *format, ...)
 	va_start(args, format);
 	rv = run(EC_SUCCESS, expect, false, sizeof(output), format, args);
 	va_end(args);
+
+	return rv;
+}
+
+int expect_success_std(const char *format, ...)
+{
+	char expect_std[1024];
+	va_list args;
+	int rv;
+
+	va_start(args, format);
+	vsnprintf(expect_std, sizeof(expect_std), format, args);
+	va_end(args);
+
+	va_start(args, format);
+	rv = run(EC_SUCCESS, expect_std, false, sizeof(output), format, args);
+	va_end(args);
+
+	return rv;
+}
+
+int expect_success(const char *expect, const char *format, ...)
+{
+	char expect_std[1024];
+	va_list args;
+	int rv;
+
+	va_start(args, format);
+	rv = run(EC_SUCCESS, expect, false, sizeof(output), format, args);
+	va_end(args);
+
+	/*
+	 * Verify expected result is consistent with the standard libc
+	 * result.
+	 */
+	va_start(args, format);
+	vsnprintf(expect_std, sizeof(expect_std), format, args);
+	va_end(args);
+
+	ccprintf("standard='%.*s'\n", 30, expect_std);
+	TEST_ASSERT(strcmp(expect_std, expect) == 0);
 
 	return rv;
 }
@@ -106,29 +141,27 @@ test_static int test_vsnprintf_args(void)
 	T(expect_success("", ""));
 	T(expect_success("a", "a"));
 
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(b/239233116): This differs from the C standard library
-		 * behavior and should probably be changed.
-		 */
-		T(expect(/* expect an invalid args error */
-			 EC_ERROR_INVAL, NO_BYTES_TOUCHED,
-			 /* given 0 as output size limit */
-			 false, 0, ""));
-		T(expect(/* expect an overflow error */
-			 EC_ERROR_OVERFLOW, "",
-			 /* given 1 as output size limit with a non-blank format
-			  */
-			 false, 1, "a"));
-		T(expect(/* expect an invalid args error */
-			 EC_ERROR_INVAL, NO_BYTES_TOUCHED,
-			 /* given NULL as the output buffer */
-			 true, sizeof(output), ""));
-		T(expect(/* expect an invalid args error */
-			 EC_ERROR_INVAL, NO_BYTES_TOUCHED,
-			 /* given a NULL format string */
-			 false, sizeof(output), NULL));
-	}
+	/*
+	 * TODO(b/239233116): This differs from the C standard library
+	 * behavior and should probably be changed.
+	 */
+	T(expect(/* expect an invalid args error */
+		 EC_ERROR_INVAL, NO_BYTES_TOUCHED,
+		 /* given 0 as output size limit */
+		 false, 0, ""));
+	T(expect(/* expect an overflow error */
+		 EC_ERROR_OVERFLOW, "",
+		 /* given 1 as output size limit with a non-blank format
+		  */
+		 false, 1, "a"));
+	T(expect(/* expect an invalid args error */
+		 EC_ERROR_INVAL, NO_BYTES_TOUCHED,
+		 /* given NULL as the output buffer */
+		 true, sizeof(output), ""));
+	T(expect(/* expect an invalid args error */
+		 EC_ERROR_INVAL, NO_BYTES_TOUCHED,
+		 /* given a NULL format string */
+		 false, sizeof(output), NULL));
 	T(expect(/* expect SUCCESS */
 		 EC_SUCCESS, "",
 		 /* given 1 as output size limit and a blank format */
@@ -151,128 +184,28 @@ test_static int test_vsnprintf_int(void)
 	T(expect_success("00123", "%05d", 123));
 	T(expect_success("00123", "%005d", 123));
 
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(b/239233116): These are incorrect and should be fixed.
-		 */
-		/* Fixed point. */
-		T(expect_success("0.00123", "%.5d", 123));
-		T(expect_success("12.3", "%2.1d", 123));
-		/* Precision or width larger than buffer should fail. */
-		T(expect(EC_ERROR_OVERFLOW, "  1", false, 4, "%5d", 123));
-		T(expect(EC_ERROR_OVERFLOW, "   ", false, 4, "%10d", 123));
-		T(expect(EC_ERROR_OVERFLOW, "123", false, 4, "%-10d", 123));
-		T(expect(EC_ERROR_OVERFLOW, "0.0", false, 4, "%.10d", 123));
-	} else {
-		int ret;
+	/* Precision or width larger than buffer should fail. */
+	T(expect(EC_ERROR_OVERFLOW, "  1", false, 4, "%5d", 123));
+	T(expect(EC_ERROR_OVERFLOW, "   ", false, 4, "%10d", 123));
+	T(expect(EC_ERROR_OVERFLOW, "123", false, 4, "%-10d", 123));
+	T(expect(EC_ERROR_OVERFLOW, "0.0", false, 4, "%.10d", 123));
 
-		T(expect_success("00123", "%.5d", 123));
-		T(expect_success("123", "%2.1d", 123));
-
-		/*
-		 * From the man page: The functions  snprintf() and vsnprintf()
-		 * do not write more than size bytes (including the
-		 * terminating null byte ('\0')). If the output was truncated
-		 * due to this limit, then the return value is the number of
-		 * characters (excluding the terminating null byte) which
-		 * would have been written to the final string if enough
-		 * space had been available. Thus, a return value of size or
-		 * more means that the output was truncated.
-		 */
-		DISABLE_COMPILER_WARNING("-Wformat-truncation");
-
-		ret = SNPRINTF(output, 4, "%5d", 123);
-		TEST_ASSERT_ARRAY_EQ(output, "  1", 4);
-		TEST_EQ(ret, 5, "%d");
-
-		ret = SNPRINTF(output, 4, "%10d", 123);
-		TEST_ASSERT_ARRAY_EQ(output, "   ", 4);
-		TEST_EQ(ret, 10, "%d");
-
-		ret = SNPRINTF(output, 4, "%-10d", 123);
-		TEST_ASSERT_ARRAY_EQ(output, "123", 4);
-		TEST_EQ(ret, 10, "%d");
-
-		ret = SNPRINTF(output, 4, "%.10d", 123);
-		TEST_ASSERT_ARRAY_EQ(output, "000", 4);
-		TEST_EQ(ret, 10, "%d");
-
-		ENABLE_COMPILER_WARNING("-Wformat-truncation");
-	}
-
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(b/239233116): These are incorrect and should be fixed.
-		 */
-		T(expect_success("0+123", "%+05d", 123));
-		T(expect_success("0+123", "%+005d", 123));
-	} else {
-		T(expect_success("+0123", "%+05d", 123));
-		T(expect_success("+0123", "%+005d", 123));
-	}
-
+	T(expect_success("+0123", "%+05d", 123));
+	T(expect_success("+0123", "%+005d", 123));
 	T(expect_success("  123", "%*d", 5, 123));
 	T(expect_success(" +123", "%+*d", 5, 123));
 	T(expect_success("00123", "%0*d", 5, 123));
-
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(b/239233116): This incorrect and should be fixed.
-		 */
-		T(expect_success(err_str, "%00*d", 5, 123));
-	} else {
-		T(expect_success("00123", "%00*d", 5, 123));
-	}
-
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(b/239233116): This is incorrect and should be fixed.
-		 */
-		T(expect_success("0+123", "%+0*d", 5, 123));
-	} else {
-		T(expect_success("+0123", "%+0*d", 5, 123));
-	}
-
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(b/239233116): This is incorrect and should be fixed.
-		 */
-		T(expect_success(err_str, "%+00*d", 5, 123));
-	} else {
-		T(expect_success("+0123", "%+00*d", 5, 123));
-	}
+	T(expect_success("00123", "%00*d", 5, 123));
+	T(expect_success("+0123", "%+0*d", 5, 123));
+	T(expect_success("+0123", "%+00*d", 5, 123));
 
 	T(expect_success("123  ", "%-5d", 123));
 	T(expect_success("+123 ", "%-+5d", 123));
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(b/239233116): This incorrect and should be fixed.
-		 */
-		T(expect_success(err_str, "%+-5d", 123));
-	} else {
-		T(expect_success("+123 ", "%+-5d", 123));
-	}
+	T(expect_success("+123 ", "%+-5d", 123));
 	T(expect_success("123  ", "%-05d", 123));
 	T(expect_success("123  ", "%-005d", 123));
 	T(expect_success("+123 ", "%-+05d", 123));
 	T(expect_success("+123 ", "%-+005d", 123));
-
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(b/239233116): These are incorrect and should be fixed.
-		 */
-		T(expect_success("0.00123", "%.5d", 123));
-		T(expect_success("+0.00123", "%+.5d", 123));
-		T(expect_success("0.00123", "%7.5d", 123));
-		T(expect_success("  0.00123", "%9.5d", 123));
-		T(expect_success(" +0.00123", "%+9.5d", 123));
-	} else {
-		T(expect_success("00123", "%.5d", 123));
-		T(expect_success("+00123", "%+.5d", 123));
-		T(expect_success("  00123", "%7.5d", 123));
-		T(expect_success("    00123", "%9.5d", 123));
-		T(expect_success("   +00123", "%+9.5d", 123));
-	}
 
 	T(expect_success("123", "%u", 123));
 	T(expect_success("4294967295", "%u", -1));
@@ -286,12 +219,31 @@ test_static int test_vsnprintf_int(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_vsnprintf_fixed_point(void)
+{
+	/*
+	 * Fixed point formatting is a cros-ec
+	 * deviation from the standard.
+	 */
+	T(expect_success_crec("0.00123", "%.5d", 123));
+	T(expect_success_crec("12.3", "%2.1d", 123));
+	T(expect_success_crec("0.00123", "%.5d", 123));
+	T(expect_success_crec("+0.00123", "%+.5d", 123));
+	T(expect_success_crec("0.00123", "%7.5d", 123));
+	T(expect_success_crec("  0.00123", "%9.5d", 123));
+	T(expect_success_crec(" +0.00123", "%+9.5d", 123));
+	T(expect_success_crec("+0000.123", "%+09.3d", 123));
+	T(expect_success_crec("-0000.123", "%+09.3d", -123));
+
+	return EC_SUCCESS;
+}
+
 test_static int test_printf_long32_enabled(void)
 {
 	bool use_l32 = IS_ENABLED(CONFIG_PRINTF_LONG_IS_32BITS);
 
 	if (IS_ENABLED(BOARD_BLOONCHIPPER) || IS_ENABLED(BOARD_DARTMONKEY) ||
-	    IS_ENABLED(BOARD_HELIPILOT))
+	    IS_ENABLED(BASEBOARD_HELIPILOT))
 		TEST_ASSERT(use_l32);
 	else
 		TEST_ASSERT(!use_l32);
@@ -326,8 +278,8 @@ test_static int test_vsnprintf_32bit_long_supported(void)
 	 * %i and %li are only supported via the CONFIG_PRINTF_LONG_IS_32BITS
 	 * configuration (see https://issuetracker.google.com/issues/172210614).
 	 */
-	T(expect_success("123", "%i", 123));
-	T(expect_success("123", "%li", 123));
+	T(expect_success_crec("123", "%i", 123));
+	T(expect_success_crec("123", "%li", 123));
 
 	return EC_SUCCESS;
 }
@@ -360,16 +312,11 @@ test_static int test_vsnprintf_64bit_long_supported(void)
 	T(expect_success("00000123", "%08lu", 123));
 	T(expect_success("131415", "%d%lu%d", 13, 14L, 15));
 
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(b/239233116): These are incorrect and should be fixed.
-		 */
-		T(expect_success(err_str, "%i", 123));
-		T(expect_success(err_str, "%li", 123));
-	} else {
-		T(expect_success("123", "%i", 123));
-		T(expect_success("123", "%li", 123));
-	}
+	/*
+	 * TODO(b/239233116): These are incorrect and should be fixed.
+	 */
+	T(expect_success_crec(err_str, "%i", 123));
+	T(expect_success_crec(err_str, "%li", 123));
 
 	return EC_SUCCESS;
 }
@@ -383,8 +330,8 @@ test_static int test_vsnprintf_long_not_supported(void)
 	T(expect_success(err_str, "%08lu", 123));
 	T(expect_success("13ERROR", "%d%lu%d", 13, 14L, 15));
 
-	T(expect_success(err_str, "%i", 123));
-	T(expect_success(err_str, "%li", 123));
+	T(expect_success_crec(err_str, "%i", 123));
+	T(expect_success_crec(err_str, "%li", 123));
 
 	return EC_SUCCESS;
 }
@@ -408,14 +355,10 @@ test_static int test_vsnprintf_pointers(void)
 {
 	void *ptr = (void *)0x55005E00;
 
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(b/239233116): This incorrect and should be fixed.
-		 */
-		T(expect_success("55005e00", "%p", ptr));
-	} else {
-		T(expect_success("0x55005e00", "%p", ptr));
-	}
+	/*
+	 * TODO(b/239233116): This incorrect and should be fixed.
+	 */
+	T(expect_success_crec("55005e00", "%p", ptr));
 
 	return EC_SUCCESS;
 }
@@ -429,6 +372,8 @@ test_static int test_vsnprintf_chars(void)
 
 test_static int test_vsnprintf_strings(void)
 {
+	char fmt[100];
+
 	T(expect_success("abc", "%s", "abc"));
 	T(expect_success("  abc", "%5s", "abc"));
 	T(expect_success("abc", "%0s", "abc"));
@@ -438,22 +383,28 @@ test_static int test_vsnprintf_strings(void)
 	T(expect_success("a", "%.*s", 1, "abc"));
 	T(expect_success("", "%.0s", "abc"));
 	T(expect_success("", "%.*s", 0, "abc"));
-	if (use_builtin_stdlib) {
-		/*
-		 * TODO(b/239233116): This incorrect and should be fixed.
-		 */
-		T(expect_success("ab", "%5.2s", "abc"));
-	} else {
-		T(expect_success("   ab", "%5.2s", "abc"));
-	}
 	T(expect_success("abc", "%.4s", "abc"));
+
+	/*
+	 * Exhaustively test (width, precision) cases that
+	 * are shorter and longer than given string.
+	 */
+	for (int width = 0; width < 6; ++width) {
+		for (int prec = 0; prec < 6; ++prec) {
+			snprintf(fmt, sizeof(fmt), "%%%d.%ds", width, prec);
+			T(expect_success_std(fmt, "abc"));
+		}
+	}
 
 	/*
 	 * Given a malformed string (address 0x1 is a good example),
 	 * if we ask for zero precision, expect no bytes to be read
 	 * from the malformed address and a blank output string.
+	 *
+	 * Note: This is not a valid test using the standard libc
+	 * printf as that will trigger the address sanitizer.
 	 */
-	T(expect_success("", "%.0s", (char *)1));
+	T(expect_success_crec("", "%.0s", (char *)1));
 
 	return EC_SUCCESS;
 }
@@ -683,6 +634,7 @@ void run_test(int argc, const char **argv)
 
 	RUN_TEST(test_vsnprintf_args);
 	RUN_TEST(test_vsnprintf_int);
+	RUN_TEST(test_vsnprintf_fixed_point);
 	RUN_TEST(test_printf_long32_enabled);
 	RUN_TEST(test_vsnprintf_long);
 	RUN_TEST(test_vsnprintf_pointers);

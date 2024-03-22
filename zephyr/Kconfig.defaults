@@ -20,7 +20,7 @@ config THREAD_MAX_NAME_LEN
 	default 16
 
 config SHELL_PROMPT_UART
-	default "ec:~$ "
+	default "ec:~> "
 
 config SHELL_VT100_COLORS
 	default n
@@ -34,13 +34,7 @@ config SHELL_THREAD_PRIORITY
 config EXTRA_EXCEPTION_INFO
 	default y if ARCH_HAS_EXTRA_EXCEPTION_INFO
 
-config EEPROM_SHELL
-	default n
-
-config PWM_SHELL
-	default n
-
-config SENSOR_SHELL
+config FLASH_PAGE_LAYOUT
 	default n
 
 config ESPI_NPCX_PERIPHERAL_DEBUG_PORT_80_MULTI_BYTE
@@ -50,10 +44,10 @@ choice INPUT_MODE
 	default INPUT_MODE_SYNCHRONOUS
 endchoice
 
-config CHECK_INIT_PRIORITIES
-	default y if !ZTEST
+config INPUT_NPCX_KBD
+	default n if PLATFORM_EC_KEYBOARD_CROS_EC_RAW_KB
 
-config CHECK_INIT_PRIORITIES_FAIL_ON_WARNING
-	default y if !ZTEST
+config OUTPUT_DISASSEMBLY
+	default y
 
 orsource "Kconfig.defaults-$(ARCH)"

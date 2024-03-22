@@ -1,0 +1,38 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&binman {
+	ec-rw {
+		rw-fw {
+			/* SHA256 hashes of the touchpad FW, points to the
+			 * global `touchpad_fw_hashes` array.
+			 *
+			 * Board should define the size of this section, which
+			 * is
+			 *   (TOUCHPAD_VIRTUAL_SIZE / UPDATE_PDU_SIZE) * 32
+			 * in their project.overlay.
+			 */
+			touchpad_fw_hashes: touchpad-fw-hashes {
+				compatible = "cros-ec,flash-layout";
+				type = "section";
+				offset-from-elf = <&zephyr_rw>,
+					"touchpad_fw_hashes", <0>;
+				overlap;
+			};
+
+			/* SHA256 hash of the whole touchpad FW, points to the
+			 * global `touchpad_fw_full_hash` array.
+			 */
+			touchpad_fw_full_hash: touchpad-fw-full-hash {
+				compatible = "cros-ec,flash-layout";
+				type = "section";
+				offset-from-elf = <&zephyr_rw>,
+					"touchpad_fw_full_hash", <0>;
+				size = <32>; /* SHA256_DIGEST_SIZE */
+				overlap;
+			};
+		};
+	};
+};

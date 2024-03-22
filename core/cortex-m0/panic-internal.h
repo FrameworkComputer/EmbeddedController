@@ -6,8 +6,8 @@
 #ifndef __CROS_EC_PANIC_INTERNAL_H
 #define __CROS_EC_PANIC_INTERNAL_H
 
-#include <stdnoreturn.h>
+#include "common.h"
 
-noreturn void exception_panic(void) __attribute__((naked));
+__noreturn void exception_panic(void) __attribute__((naked));
 
 #endif /* __CROS_EC_PANIC_INTERNAL_H */

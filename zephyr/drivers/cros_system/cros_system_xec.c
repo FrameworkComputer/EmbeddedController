@@ -3,17 +3,30 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #include "bbram.h"
 #include "gpio/gpio_int.h"
 #include "system.h"
 #include "system_chip.h"
 
-#include <zephyr/arch/arm/aarch32/cortex_m/cmsis.h>
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 22
+
 #include <zephyr/drivers/interrupt_controller/intc_mchp_xec_ecia.h>
 #include <zephyr/drivers/watchdog.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/util.h>
+#include <zephyr/toolchain.h>
 
+#include <cmsis_core.h>
 #include <drivers/cros_system.h>
 #include <soc.h>
 #include <soc/microchip_xec/reg_def_cros.h>
@@ -84,7 +97,7 @@ static int system_xec_watchdog_stop(void)
 		const struct device *wdt_dev =
 			DEVICE_DT_GET(DT_NODELABEL(wdog));
 		if (!device_is_ready(wdt_dev)) {
-			LOG_ERR("Error: device %s is not ready", wdt_dev->name);
+			LOG_ERR("device %s not ready", wdt_dev->name);
 			return -ENODEV;
 		}
 
@@ -149,7 +162,7 @@ static int cros_system_xec_init(const struct device *dev)
 	return 0;
 }
 
-noreturn static int cros_system_xec_soc_reset(const struct device *dev)
+FUNC_NORETURN static int cros_system_xec_soc_reset(const struct device *dev)
 {
 	struct pcr_regs *const pcr = HAL_PCR_INST(dev);
 
@@ -282,9 +295,9 @@ static void system_set_htimer_alarm(uint32_t seconds, uint32_t microseconds)
 }
 
 /* Put the EC in hibernate (lowest EC power state). */
-noreturn static int cros_system_xec_hibernate(const struct device *dev,
-					      uint32_t seconds,
-					      uint32_t microseconds)
+FUNC_NORETURN static int cros_system_xec_hibernate(const struct device *dev,
+						   uint32_t seconds,
+						   uint32_t microseconds)
 {
 	struct pcr_regs *const pcr = HAL_PCR_INST(dev);
 #ifdef CONFIG_ADC_XEC_V2

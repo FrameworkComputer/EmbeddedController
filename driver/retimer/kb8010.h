@@ -38,13 +38,6 @@
 
 /* Registers to configure the elastic buffer input connection */
 #define KB8010_REG_XBAR_EB1SEL 0x5044
-#define KB8010_REG_XBAR_EB2SEL 0x5045
-#define KB8010_REG_XBAR_EB4SEL 0x5046
-#define KB8010_REG_XBAR_EB5SEL 0x5047
-#define KB8010_REG_XBAR_TXASEL 0x5048
-#define KB8010_REG_XBAR_TXBSEL 0x5049
-#define KB8010_REG_XBAR_TXCSEL 0x504A
-#define KB8010_REG_XBAR_TXDSEL 0x504B
 
 /* Registers to configure SBU LSX/AUX flip */
 #define KB8010_REG_XBAR_SBU_CFG 0x504C

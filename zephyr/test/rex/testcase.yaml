@@ -9,22 +9,185 @@ tests:
     extra_dtc_overlay_files:
       - boards/native_posix.overlay
     extra_configs:
-      - CONFIG_TEST_USB_PD_POLICY=y
+      - CONFIG_TEST_PROGRAM_USB_PD_POLICY=y
+      - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
       - CONFIG_TEST_ENABLE_USB_PD_DISCHARGE=y
       - CONFIG_TEST_ENABLE_USB_PD_HOST_CMD=y
 
   rex.board_power:
     extra_dtc_overlay_files:
-      - board_power.dtsi
+      - boards/board_power.dtsi
     extra_configs:
-      - CONFIG_TEST_BOARD_POWER=y
+      - CONFIG_TEST_PROGRAM_BOARD_POWER=y
       - CONFIG_TEST_X86_NON_DSX_PWRSEQ_MTL=y
       - CONFIG_AP_POWER_EVENTS_MOCK=y
-      - CONFIG_POWER_SIGNALS_MOCK=y
       - CONFIG_AP_EVENTS=n
 
+  rex.board_power.ap_pwrseq_drv:
+    extra_dtc_overlay_files:
+      - boards/board_power.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROGRAM_BOARD_POWER=y
+      - CONFIG_TEST_X86_NON_DSX_PWRSEQ_MTL=y
+      - CONFIG_TEST_DISABLE_AP_PWRSEQ=n
+      - CONFIG_AP_POWER_EVENTS_MOCK=y
+      - CONFIG_AP_PWRSEQ=y
+      - CONFIG_AP_PWRSEQ_DRIVER=y
+      - CONFIG_EMUL_AP_PWRSEQ_DRIVER=y
+      - CONFIG_AP_EVENTS=n
+
+  rex.battery_present:
+    extra_dtc_overlay_files:
+      - boards/native_posix.overlay
+      - boards/power.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROGRAM_BATTERY_PRESENT=y
+      - CONFIG_PLATFORM_EC_BATTERY_PRESENT_CUSTOM=y
+      - CONFIG_PLATFORM_EC_BATTERY_HW_PRESENT_CUSTOM=y
+      - CONFIG_PLATFORM_EC_CHARGER_ISL9241=y
+      - CONFIG_PLATFORM_EC_CHARGER_SENSE_RESISTOR=10
+      - CONFIG_PLATFORM_EC_CHARGER_SENSE_RESISTOR_AC=20
+      - CONFIG_PLATFORM_EC_BACKLIGHT_LID=n
+      - CONFIG_PLATFORM_EC_BATTERY_FUEL_GAUGE=y
+      - CONFIG_PLATFORM_EC_HOSTCMD=y
+      - CONFIG_PLATFORM_EC_SWITCH=n
+      - CONFIG_PLATFORM_EC_USB_PD_VBUS_MEASURE_NOT_PRESENT=y
+      - CONFIG_PLATFORM_EC_VBOOT_HASH=n
+      - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE=n
+
+  # Rex project tests
+  rex.rex:
+    extra_configs:
+      - CONFIG_TEST_PROJECT_REX=y
+
   rex.rex.usb_mux_config:
+    extra_conf_files:
+      - boards/rex/prj.conf
     extra_dtc_overlay_files:
       - boards/rex/rex.dtsi
     extra_configs:
-      - CONFIG_TEST_BOARD_USB_MUX_CONFIG=y
+      - CONFIG_TEST_PROJECT_REX=y
+      - CONFIG_TEST_PROJECT_USB_MUX_CONFIG=y
+
+  rex.rex.i2c_policy:
+    extra_conf_files:
+      - boards/rex/prj.conf
+    extra_dtc_overlay_files:
+      - boards/rex/rex.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROJECT_REX=y
+      - CONFIG_TEST_PROGRAM_I2C_POLICY=y
+      - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
+
+  # Screebo project tests
+  rex.screebo:
+    extra_configs:
+      - CONFIG_TEST_PROJECT_SCREEBO=y
+
+  rex.screebo.usb_config:
+    extra_dtc_overlay_files:
+      - boards/screebo/screebo.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROJECT_SCREEBO=y
+      - CONFIG_TEST_PROJECT_USB_CONFIG=y
+      - CONFIG_PLATFORM_EC_BACKLIGHT_LID=n
+      - CONFIG_PLATFORM_EC_BATTERY_FUEL_GAUGE=y
+      - CONFIG_PLATFORM_EC_CHARGER_ISL9241=y
+      - CONFIG_PLATFORM_EC_CHARGER_SENSE_RESISTOR=10
+      - CONFIG_PLATFORM_EC_CHARGER_SENSE_RESISTOR_AC=20
+      - CONFIG_PLATFORM_EC_GPIO_INIT_PRIORITY=49
+      - CONFIG_PLATFORM_EC_HOSTCMD=y
+      - CONFIG_PLATFORM_EC_LID_SWITCH=n
+      - CONFIG_PLATFORM_EC_SWITCH=n
+      - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=y
+      - CONFIG_PLATFORM_EC_USBC=y
+      - CONFIG_PLATFORM_EC_USBC_PPC=y
+      - CONFIG_PLATFORM_EC_USBC_PPC_SYV682C=y
+      - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE_PPC=y
+      - CONFIG_PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG=y
+      - CONFIG_PLATFORM_EC_USB_PD_TCPM_PS8815=y
+      - CONFIG_PLATFORM_EC_USB_PD_VBUS_MEASURE_BY_BOARD=y
+      - CONFIG_PLATFORM_EC_VBOOT_HASH=n
+
+  rex.screebo.board:
+    extra_dtc_overlay_files:
+      - boards/native_posix.overlay
+    extra_configs:
+      - CONFIG_TEST_PROJECT_SCREEBO=y
+      - CONFIG_TEST_PROJECT_BOARD=y
+      - CONFIG_PLATFORM_EC_BACKLIGHT_LID=n
+      - CONFIG_PLATFORM_EC_HOOKS=y
+      - CONFIG_PLATFORM_EC_USBA=y
+      - CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB_CUSTOM_HOOK=y
+
+  rex.screebo.i2c_policy:
+    extra_dtc_overlay_files:
+      - boards/native_posix.overlay
+      - boards/screebo/i2c.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROJECT_SCREEBO=y
+      - CONFIG_TEST_PROGRAM_I2C_POLICY=y
+      - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
+
+  # Karis project tests
+  rex.karis:
+    extra_configs:
+      - CONFIG_TEST_PROJECT_KARIS=y
+
+  rex.karis.usb_config:
+    extra_dtc_overlay_files:
+      - boards/karis/karis.dtsi
+      - boards/karis/usbc.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROJECT_KARIS=y
+      - CONFIG_TEST_PROJECT_USB_CONFIG=y
+      - CONFIG_PLATFORM_EC_USBC=y
+      - CONFIG_PLATFORM_EC_USBC_PPC=y
+      - CONFIG_PLATFORM_EC_USBC_PPC_SYV682C=y
+      - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE_PPC=y
+      - CONFIG_PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG=y
+      - CONFIG_ESPI=y
+  rex.karis.keyboard:
+    extra_dtc_overlay_files:
+      - boards/karis/karis.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROJECT_KARIS=y
+      - CONFIG_TEST_PROJECT_KEYBOARD=y
+  rex.karis.charger:
+    extra_dtc_overlay_files:
+      - boards/karis/karis.dtsi
+      - boards/karis/chargers.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROJECT_KARIS=y
+      - CONFIG_TEST_PROJECT_CHARGER=y
+      - CONFIG_PLATFORM_EC_BACKLIGHT_LID=n
+      - CONFIG_PLATFORM_EC_BATTERY_FUEL_GAUGE=y
+      - CONFIG_PLATFORM_EC_CHARGER_ISL9241=y
+      - CONFIG_PLATFORM_EC_CHARGER_SENSE_RESISTOR=10
+      - CONFIG_PLATFORM_EC_CHARGER_SENSE_RESISTOR_AC=20
+      - CONFIG_PLATFORM_EC_HOSTCMD=y
+      - CONFIG_PLATFORM_EC_CHARGER=y
+      - CONFIG_PLATFORM_EC_USB_PD_VBUS_MEASURE_NOT_PRESENT=y
+      - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE=n
+      - CONFIG_PLATFORM_EC_VBOOT_HASH=n
+  rex.karis.i2c_policy:
+    extra_configs:
+      - CONFIG_TEST_PROJECT_KARIS=y
+      - CONFIG_TEST_PROGRAM_I2C_POLICY=y
+      - CONFIG_PLATFORM_EC_I2C_PASSTHRU_RESTRICTED=y
+
+  rex.karis.touch_panel:
+    extra_dtc_overlay_files:
+      - boards/karis/karis.dtsi
+      - boards/karis/touch.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROJECT_KARIS=y
+      - CONFIG_TEST_PROJECT_TOUCH_PANEL=y
+      - CONFIG_PLATFORM_EC_LID_SWITCH=y
+
+  # ISH project tests
+  rex.ish:
+    extra_dtc_overlay_files:
+      - boards/rex_ish/ish.dtsi
+    extra_configs:
+      - CONFIG_TEST_PROJECT_REX_ISH=y

@@ -126,3 +126,19 @@ ZTEST(nissa_common, test_sm5803_buck_boost_forbidden)
 	board_get_battery_cells(); /* Refresh cached cell count */
 	zassert_false(pd_is_valid_input_voltage(12000));
 }
+
+ZTEST(nissa_common, test_i2c_passthru_policy)
+{
+	/* Type-C ports are allowed */
+	zassert_true(board_allow_i2c_passthru(&(struct i2c_cmd_desc_t){
+		.port = I2C_PORT_USB_C0_TCPC,
+	}));
+	zassert_true(board_allow_i2c_passthru(&(struct i2c_cmd_desc_t){
+		.port = I2C_PORT_USB_C1_TCPC,
+	}));
+
+	/* Others are not */
+	zassert_false(board_allow_i2c_passthru(&(struct i2c_cmd_desc_t){
+		.port = I2C_PORT_BATTERY,
+	}));
+}

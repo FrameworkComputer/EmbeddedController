@@ -21,9 +21,6 @@
 /* HDMI CEC */
 #define CONFIG_CEC
 #define CONFIG_CEC_BITBANG
-#define CEC_GPIO_OUT GPIO_HDMIB_CEC_OUT
-#define CEC_GPIO_IN GPIO_HDMIB_CEC_IN
-#define CEC_GPIO_PULL_UP GPIO_HDMIB_CEC_PULL_UP
 
 /* USB Type A Features */
 #define USB_PORT_COUNT 2
@@ -49,14 +46,13 @@
 #define PD_POWER_SUPPLY_TURN_OFF_DELAY 30000 /* us */
 #define PD_VCONN_SWAP_DELAY 5000 /* us */
 
-/* The design should support up to 100W. */
-/* TODO(b/197702356): Set the max PD to 60W now and change it
- * to 100W after we verify it.
+/* Not support typec adapter. */
+/* TODO(b/293975611): Set the max PD to 0W.
  */
 #define PD_OPERATING_POWER_MW CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
-#define PD_MAX_POWER_MW 100000
-#define PD_MAX_CURRENT_MA 5000
-#define PD_MAX_VOLTAGE_MV 20000
+#define PD_MAX_POWER_MW 0
+#define PD_MAX_CURRENT_MA 0
+#define PD_MAX_VOLTAGE_MV 5000
 
 /*
  * Macros for GPIO signals used in common code that don't match the
@@ -190,7 +186,7 @@ enum fan_channel { FAN_CH_0 = 0, FAN_CH_COUNT };
 
 enum mft_channel { MFT_CH_0 = 0, MFT_CH_COUNT };
 
-enum cec_port { CEC_PORT_0, CEC_PORT_COUNT };
+enum cec_port { CEC_PORT_0, CEC_PORT_1, CEC_PORT_COUNT };
 
 extern void adp_connect_interrupt(enum gpio_signal signal);
 

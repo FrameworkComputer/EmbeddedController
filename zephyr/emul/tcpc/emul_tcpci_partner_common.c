@@ -825,6 +825,22 @@ tcpci_partner_common_cable_handler(struct tcpci_partner_data *data,
 		}
 		/* A cable with no identity shouldn't GoodCRC */
 		return TCPCI_PARTNER_COMMON_MSG_NO_GOODCRC;
+	case CMD_DISCOVER_SVID:
+		if (data->cable->svids_vdos > 0) {
+			tcpci_cable_send_data_msg(data, PD_DATA_VENDOR_DEF,
+						  data->cable->svids_vdm,
+						  data->cable->svids_vdos,
+						  TCPCI_MSG_SOP_PRIME, 0);
+		}
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
+	case CMD_DISCOVER_MODES:
+		if (data->cable->modes_vdos > 0) {
+			tcpci_cable_send_data_msg(data, PD_DATA_VENDOR_DEF,
+						  data->cable->modes_vdm,
+						  data->cable->modes_vdos,
+						  TCPCI_MSG_SOP_PRIME, 0);
+		}
+		return TCPCI_PARTNER_COMMON_MSG_HANDLED;
 	default:
 		/*
 		 * Cable must support VDMs, so generate a NAK on unfamiliar
@@ -1394,6 +1410,9 @@ void tcpci_partner_common_clear_logged_msgs(struct tcpci_partner_data *data)
 void tcpci_partner_common_set_ams_ctrl_msg(struct tcpci_partner_data *data,
 					   enum pd_ctrl_msg_type msg_type)
 {
+	/* TODO(b/307386769): This assert seems to leave a mutex locked in
+	 * i2c_controller.
+	 */
 	/* Make sure we handle one CTRL request at a time */
 	zassert_equal(data->cur_ams_ctrl_req, PD_CTRL_INVALID,
 		      "More than one CTRL msg handled in parallel"

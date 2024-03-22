@@ -1,0 +1,175 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/gpio_defines.h>
+#include <dt-bindings/gpio/nuvoton-npcx-gpio.h>
+#include <nuvoton/npcx/npcx9/npcx9-pinctrl.dtsi>
+#include <cros/vivaldi_kbd_default.dtsi>
+
+#define GPIO_VOLTAGE_1P8 NPCX_GPIO_VOLTAGE_1P8
+
+/ {
+	model = "NPCX9";
+
+	aliases {
+		i2c-0 = &i2c0_0;
+		i2c-1 = &i2c1_0;
+		i2c-2 = &i2c2_0;
+		i2c-3 = &i2c3_0;
+		i2c-5 = &i2c5_0;
+		i2c-7 = &i2c7_0;
+	};
+
+	chosen {
+		zephyr,sram = &sram0;
+		zephyr,console = &uart1;
+		zephyr,shell-uart = &uart1;
+		zephyr,flash = &flash0;
+		zephyr,flash-controller = &int_flash;
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+	};
+};
+
+&uart1 {
+	status = "okay";
+	current-speed = <115200>;
+	pinctrl-0 = <&uart1_2_sin_gp64 &uart1_2_sout_gp65>;
+	pinctrl-names = "default";
+};
+
+&pinctrl {
+	/*
+	 * TODO(b/232573074): Move pinctrl to set SHI pins to GPIO mode
+	 * upstream.
+	 */
+	 /omit-if-no-ref/ shi_gpio_gp46_47_53_55: periph-shi-gpio {
+		pinmux = <&altc_shi_sl>;
+		pinmux-gpio;
+	};
+
+	/* Keyboard peripheral interfaces */
+	/omit-if-no-ref/ ksi0_gpio_gp31: periph-kbscan-ksi0-gpio {
+		pinmux = <&alt7_no_ksi0_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ ksi1_gpio_gp30: periph-kbscan-ksi1-gpio {
+		pinmux = <&alt7_no_ksi1_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ ksi2_gpio_gp27: periph-kbscan-ksi2-gpio {
+		pinmux = <&alt7_no_ksi2_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ ksi3_gpio_gp26: periph-kbscan-ksi3-gpio {
+		pinmux = <&alt7_no_ksi3_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ ksi4_gpio_gp25: periph-kbscan-ksi4-gpio {
+		pinmux = <&alt7_no_ksi4_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ ksi5_gpio_gp24: periph-kbscan-ksi5-gpio {
+		pinmux = <&alt7_no_ksi5_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ ksi6_gpio_gp23: periph-kbscan-ksi6-gpio {
+		pinmux = <&alt7_no_ksi6_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ ksi7_gpio_gp22: periph-kbscan-ksi7-gpio {
+		pinmux = <&alt7_no_ksi7_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso00_gpio_gp21: periph-kbscan-kso00-gpio {
+		pinmux = <&alt8_no_kso00_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso01_gpio_gp20: periph-kbscan-kso01-gpio {
+		pinmux = <&alt8_no_kso01_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso02_gpio_gp17: periph-kbscan-kso02-gpio {
+		pinmux = <&alt8_no_kso02_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso03_gpio_gp16: periph-kbscan-kso03-gpio {
+		pinmux = <&alt8_no_kso03_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso04_gpio_gp15: periph-kbscan-kso04-gpio {
+		pinmux = <&alt8_no_kso04_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso05_gpio_gp14: periph-kbscan-kso05-gpio {
+		pinmux = <&alt8_no_kso05_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso06_gpio_gp13: periph-kbscan-kso06-gpio {
+		pinmux = <&alt8_no_kso06_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso07_gpio_gp12: periph-kbscan-kso07-gpio {
+		pinmux = <&alt8_no_kso07_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso08_gpio_gp11: periph-kbscan-kso08-gpio {
+		pinmux = <&alt9_no_kso08_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso09_gpio_gp10: periph-kbscan-kso09-gpio {
+		pinmux = <&alt9_no_kso09_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso10_gpio_gp07: periph-kbscan-kso10-gpio {
+		pinmux = <&alt9_no_kso10_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso11_gpio_gp06: periph-kbscan-kso11-gpio {
+		pinmux = <&alt9_no_kso11_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso12_gpio_gp05: periph-kbscan-kso12-gpio {
+		pinmux = <&alt9_no_kso12_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso13_gpio_gp04: periph-kbscan-kso13-gpio {
+		pinmux = <&alt9_no_kso13_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso14_gpio_gp82: periph-kbscan-kso14-gpio {
+		pinmux = <&alt9_no_kso14_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso15_gpio_gp83: periph-kbscan-kso15-gpio {
+		pinmux = <&alt9_no_kso15_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso16_gpio_gp03: periph-kbscan-kso16-gpio {
+		pinmux = <&alta_no_kso16_sl>;
+		pinmux-gpio;
+	};
+	/omit-if-no-ref/ kso17_gpio_gpb1: periph-kbscan-kso17-gpio {
+		pinmux = <&alta_no_kso17_sl>;
+		pinmux-gpio;
+	};
+};
+
+/* PSL_OUT is fixed to GPIO85 in npcx9 series. */
+&power_ctrl_psl {
+	enable-gpios = <&gpio8 5 0>;
+};
+
+&kbd {
+	actual-key-mask = <0x1c 0xff 0xff 0xff 0xff
+			   0xf5 0xff 0xa4 0xff 0xfe
+			   0x55 0xfa 0xca>;
+};

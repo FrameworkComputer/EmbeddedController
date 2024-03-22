@@ -37,6 +37,8 @@ USE_CXX_COMPILER:=0
 # We can't use a config for this since the config generation uses the compiler.
 CLANG_BOARDS:= \
 	bloonchipper \
+	bloonchipper-druid \
+	buccaneer \
 	dartmonkey \
 	hatch_fp \
 	helipilot \
@@ -52,6 +54,9 @@ USE_BUILTIN_STDLIB:=0
 USE_CXX_COMPILER:=1
 # b/144957935: Generate exception on signed integer overflow.
 COMMON_WARN+=-ftrapv
+endif
+ifeq ($(BOARD), host)
+USE_BUILTIN_STDLIB:=0
 endif
 
 ifeq ($(USE_CXX_COMPILER), 1)
@@ -185,7 +190,9 @@ BUILD_CPPFLAGS=$(CFLAGS_DEFINE) -Icore/host $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
 	 -DSECTION_IS_$(BLD)=$(EMPTY) -DSECTION=$(BLD) $(CPPFLAGS_$(BLD))
 HOST_CPPFLAGS=$(CFLAGS_DEFINE) $(CFLAGS_INCLUDE) $(CFLAGS_TEST) \
 	 $(EXTRA_CFLAGS) $(CFLAGS_COVERAGE) $(CFLAGS_HOSTTEST) $(LATE_CFLAGS_DEFINE) \
-	 -DSECTION_IS_$(BLD)=$(EMPTY) -DSECTION=$(BLD) $(CPPFLAGS_$(BLD))
+	-DSECTION_IS_$(BLD)=$(EMPTY) -DSECTION=$(BLD) $(CPPFLAGS_$(BLD)) \
+	-D_FILE_OFFSET_BITS=64 -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE
+
 ifneq ($(BOARD),host)
 CPPFLAGS+=-fno-PIC
 ifeq ($(USE_BUILTIN_STDLIB), 1)

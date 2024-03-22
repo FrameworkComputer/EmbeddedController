@@ -45,7 +45,7 @@ void test_main(void)
 	};
 
 	/* Run all the suites that depend on main not being called yet */
-	ztest_run_all(&state);
+	ztest_run_all(&state, false, 1, 1);
 
 	ec_app_main();
 	state.ec_app_main_run = true;
@@ -60,5 +60,5 @@ void test_main(void)
 #endif /* !IS_ENABLED(CONFIG_POWER_SEQUENCE_MOCK) */
 
 	/* Run all the suites that depend on main being called */
-	ztest_run_all(&state);
+	ztest_run_all(&state, false, 1, 1);
 }

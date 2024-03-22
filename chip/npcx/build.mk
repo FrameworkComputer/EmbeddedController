@@ -37,6 +37,7 @@ chip-$(CONFIG_HOST_INTERFACE_ESPI)+=espi.o
 chip-$(CONFIG_PECI)+=peci.o
 chip-$(CONFIG_HOST_INTERFACE_SHI)+=shi.o
 chip-$(CONFIG_CEC_BITBANG)+=cec_bitbang.o
+chip-$(CONFIG_OTP_KEY)+=otp_key.o
 # pwm functions are implemented with the fan functions
 chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_SPI)+=spi.o
@@ -50,9 +51,16 @@ chip-$(CONFIG_PS2)+=ps2.o
 # Only npcx9 or later chip family can support LCT module
 ifneq ($(CHIP_FAMILY),$(filter $(CHIP_FAMILY),npcx5 npcx7))
 chip-y+=lct.o
+chip-y+=uartn_dma.o
 endif
 
 chip-$(CONFIG_SHA256_HW_ACCELERATE)+=sha256_chip.o
+
+chip-$(CONFIG_USART_HOST_COMMAND)+=uart_host_command.o
+
+ifneq (,$(filter y,$(CONFIG_FINGERPRINT_MCU) $(CONFIG_HOST_INTERFACE_SHI)))
+chip-y+=host_command_common.o
+endif
 
 # spi monitor program fw for openocd and UUT(UART Update Tool)
 npcx-monitor-fw=chip/npcx/spiflashfw/npcx_monitor

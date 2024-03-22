@@ -84,31 +84,26 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  * 130 C.  However, sensor is located next to DDR, so we need to use the lower
  * DDR temperature limit (85 C)
  */
-/*
- * TODO(b/202062363): Remove when clang is fixed.
- */
-#define THERMAL_CPU              \
-	{                        \
-		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
-		}, \
-		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(65), \
-		}, \
-		.temp_fan_off = C_TO_K(40), \
-		.temp_fan_max = C_TO_K(80), \
-	}
-__maybe_unused static const struct ec_thermal_config thermal_cpu = THERMAL_CPU;
+static const struct ec_thermal_config thermal_cpu = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(80),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(65),
+	},
+	.temp_fan_off = C_TO_K(40),
+	.temp_fan_max = C_TO_K(80),
+};
 
 /*
  * TODO(b/197478860): add the thermal sensor setting
  */
 /* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
-	[TEMP_SENSOR_1_CPU] = THERMAL_CPU,
-	[TEMP_SENSOR_2_CPU_VR] = THERMAL_CPU,
-	[TEMP_SENSOR_3_WIFI] = THERMAL_CPU,
-	[TEMP_SENSOR_4_DIMM] = THERMAL_CPU,
+	[TEMP_SENSOR_1_CPU] = thermal_cpu,
+	[TEMP_SENSOR_2_CPU_VR] = thermal_cpu,
+	[TEMP_SENSOR_3_WIFI] = thermal_cpu,
+	[TEMP_SENSOR_4_DIMM] = thermal_cpu,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);

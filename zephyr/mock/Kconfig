@@ -19,3 +19,8 @@ config POWER_SIGNALS_MOCK
 	bool "Use a mocked power signals driver."
 	help
 	  A simplified power signals driver that provides it's functions fakes.
+
+config ISL923X_MOCK
+	bool "Use mocked ISL923X functions"
+	help
+	  Simple ISL923x function mocks

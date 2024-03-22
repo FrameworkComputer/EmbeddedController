@@ -141,6 +141,12 @@
 #define CONFIG_USBC_VCONN
 #define CONFIG_USBC_VCONN_SWAP
 
+/* I2C speed console command */
+#define CONFIG_CMD_I2C_SPEED
+
+/* I2C control host command */
+#define CONFIG_HOSTCMD_I2C_CONTROL
+
 /* RTC */
 #define CONFIG_CMD_RTC
 #define CONFIG_HOSTCMD_RTC

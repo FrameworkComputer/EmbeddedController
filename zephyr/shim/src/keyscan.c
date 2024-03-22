@@ -16,10 +16,12 @@
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
 	     "Exactly one instance of cros-ec,keyscan should be defined.");
 
+#ifndef CONFIG_KEYBOARD_CUSTOMIZATION
 /* The keyboard matrix should have at least enough columns for the
  * standard keyboard with no keypad.
  */
 BUILD_ASSERT(DT_INST_PROP_LEN(0, actual_key_mask) >= KEYBOARD_COLS_NO_KEYPAD);
+#endif
 
 /*
  * Override the default keyscan_config if the board defines a

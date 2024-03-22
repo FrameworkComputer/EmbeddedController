@@ -14,6 +14,39 @@
 	};
 };
 
+&vivaldi_kbd {
+	kbd_config_1: kbd-config-1 {
+		vivaldi-codes = <
+			VIVALDI_TK_BACK             /* T1 */
+			VIVALDI_TK_REFRESH          /* T2 */
+			VIVALDI_TK_FULLSCREEN       /* T3 */
+			VIVALDI_TK_OVERVIEW         /* T4 */
+			VIVALDI_TK_SNAPSHOT         /* T5 */
+			VIVALDI_TK_BRIGHTNESS_DOWN  /* T6 */
+			VIVALDI_TK_BRIGHTNESS_UP    /* T7 */
+			VIVALDI_TK_VOL_MUTE         /* T8 */
+			VIVALDI_TK_VOL_DOWN         /* T9 */
+			VIVALDI_TK_VOL_UP           /* T10 */
+		>;
+		capabilities = <0>;
+	};
+};
+
+&kbd_config_0 {
+	vivaldi-codes = <
+		VIVALDI_TK_BACK             /* T1 */
+		VIVALDI_TK_REFRESH          /* T2 */
+		VIVALDI_TK_FULLSCREEN       /* T3 */
+		VIVALDI_TK_OVERVIEW         /* T4 */
+		VIVALDI_TK_SNAPSHOT         /* T5 */
+		VIVALDI_TK_BRIGHTNESS_DOWN  /* T6 */
+		VIVALDI_TK_BRIGHTNESS_UP    /* T7 */
+		VIVALDI_TK_VOL_MUTE         /* T8 */
+		VIVALDI_TK_VOL_DOWN         /* T9 */
+		VIVALDI_TK_VOL_UP           /* T10 */
+	>;
+};
+
 &pwm0 {
 	status = "okay";
 	prescaler-cx = <PWM_PRESCALER_C4>;
@@ -23,7 +56,6 @@
 
 &cros_kb_raw {
 	status = "okay";
-	/* No KSO2 (it's inverted and implemented by GPIO) */
 	pinctrl-0 = <&ksi0_default
 		     &ksi1_default
 		     &ksi2_default
@@ -34,6 +66,7 @@
 		     &ksi7_default
 		     &kso0_default
 		     &kso1_default
+		     &kso2_default
 		     &kso3_default
 		     &kso4_default
 		     &kso5_default
@@ -56,6 +89,7 @@
 		     &ksi7_sleep
 		     &kso0_sleep
 		     &kso1_sleep
+		     &kso2_sleep
 		     &kso3_sleep
 		     &kso4_sleep
 		     &kso5_sleep

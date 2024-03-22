@@ -107,7 +107,7 @@
 			enum-name = "GPIO_EC_INT_L";
 		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
-			gpios = <&gpio1 7 (GPIO_OUTPUT_LOW | GPIO_ACTIVE_LOW)>;
+			gpios = <&gpio1 7 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {
 			gpios = <&gpio8 3 GPIO_INPUT>;

@@ -34,6 +34,8 @@ extern __error("k_usleep() should only be called from Zephyr code") int32_t
 
 #define TIMER_SYSJUMP_TAG 0x4d54 /* "TM" */
 
+#define USLEEP_WARNING_INTERVAL_MS (20 * MSEC)
+
 /* High 32-bits of the 64-bit timestamp counter. */
 STATIC_IF_NOT(CONFIG_HWTIMER_64BIT) volatile uint32_t clksrc_high;
 
@@ -174,19 +176,21 @@ void timer_cancel(task_id_t tskid)
  * probability of delay longer than 2*us (and possibly infinite delay)
  * increases.
  */
-void usleep(unsigned int us)
+int usleep(unsigned int us)
 {
 	uint32_t evt = 0;
 	uint32_t t0;
 
 	/* If a wait is 0, return immediately. */
-	if (!us)
-		return;
+	if (!us) {
+		return 0;
+	}
 
 	if (IS_ENABLED(CONFIG_ZEPHYR)) {
-		while (us)
+		while (us) {
 			us = k_usleep(us);
-		return;
+		}
+		return 0;
 	}
 
 	t0 = __hw_clock_source_read();
@@ -194,14 +198,22 @@ void usleep(unsigned int us)
 	/* If task scheduling has not started, just delay */
 	if (!task_start_called()) {
 		udelay(us);
-		return;
+		return 0;
 	}
 
 	/* If in interrupt context or interrupts are disabled, use udelay() */
 	if (!is_interrupt_enabled() || in_interrupt_context()) {
-		CPRINTS("Sleeping not allowed");
+		/* Avoid printing warning too frequently */
+		static timestamp_t next_print_deadline = { .val = 0 };
+
+		if (timestamp_expired(next_print_deadline, NULL)) {
+			next_print_deadline.val =
+				get_time().val + USLEEP_WARNING_INTERVAL_MS;
+			CPRINTS("Sleeping not allowed");
+		}
+
 		udelay(us);
-		return;
+		return 0;
 	}
 
 	do {
@@ -210,9 +222,11 @@ void usleep(unsigned int us)
 		 ((__hw_clock_source_read() - t0) < us));
 
 	/* Re-queue other events which happened in the meanwhile */
-	if (evt)
+	if (evt) {
 		atomic_or(task_get_event_bitmap(task_get_current()),
 			  evt & ~TASK_EVENT_TIMER);
+	}
+	return 0;
 }
 
 #ifdef CONFIG_ZTEST

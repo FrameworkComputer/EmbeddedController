@@ -29,23 +29,18 @@ properties:
       - "MOTIONSENSE_LOC_CAMERA"
   mutex:
     type: phandle
-    required: false
     description: mutex used by chip driver
   port:
     type: phandle
-    required: false
     description: phandle to the named i2c port
   rot-standard-ref:
     type: phandle
-    required: false
     description: phandle to 3x3 rotation matrix
   default-range:
     type: int
-    required: false
     description: default range of sensor read
   drv-data:
     type: phandle
-    required: false
     description: phandle to driver data to be used for the motion sensor.
       Some drivers require this to be a global shared datas structure
       used by all instances of this device, others require separate

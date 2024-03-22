@@ -6,6 +6,7 @@ if ZTEST
 
 config EMUL_POWER_SIGNALS
 	bool "Enable Power Signals Emulator"
+	select AP_PWRSEQ_POWER_SIGNALS
 	help
 	  Power signals emulator imitates the behavior of power signals
 	  that interact with the EC within a given platform. It enables testing
@@ -31,4 +32,11 @@ config EMUL_POWER_SIGNALS_WORK_QUEUE_PRIO
 	  Defines work queue thread thread priority.
 
 endif # EMUL_POWER_SIGNALS
+
+config EMUL_AP_PWRSEQ_DRIVER
+	bool "Enable Ap Power Sequence Emulator"
+	depends on AP_PWRSEQ_DRIVER
+	help
+	  AP Power sequence emulator provides minimum functionality for testing
+	  power sequence action handlers while using existing API's and macros.
 endif # ZTEST

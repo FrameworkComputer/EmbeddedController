@@ -1,0 +1,129 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	common-pwrseq {
+		compatible = "intel,ap-pwrseq";
+	};
+	named-gpios {
+		compatible = "named-gpios";
+		ec_bl_disable_l {
+			gpios = <&gpio0 1 GPIO_INPUT>;
+			enum-name = "GPIO_ENABLE_BACKLIGHT";
+		};
+		gpio_pch_pwrbtn_l: pch_pwrbtn_l {
+			gpios = <&gpio0 2 GPIO_OUTPUT>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
+			/* GPIO_PULL_UP will cause this start asserted,
+			 * i.e. not pressed.
+			 */
+			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_wp_l: wp_l {
+			gpios = <&gpio0 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		entering-rw {
+			gpios = <&gpio0 5 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+	en_pp5000: pwr-en-pp5000-s5 {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PP5000_S5 enable output to regulator";
+		enum-name = "PWR_EN_PP5000_A";
+		gpios = <&gpio0 10 0>;
+		output;
+	};
+	en_pp3300: pwr-en-pp3300-s5 {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PP3300_S5 enable output to LS";
+		enum-name = "PWR_EN_PP3300_A";
+		gpios = <&gpio0 11 0>;
+		output;
+	};
+	rsmrst: pwr-pg-ec-rsmrst-odl {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "RSMRST power good from regulator";
+		enum-name = "PWR_RSMRST_PWRGD";
+		gpios = <&gpio0 12 0>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	ec_pch_rsmrst: pwr-ec-pch-rsmrst-odl {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "RSMRST output to PCH";
+		enum-name = "PWR_EC_PCH_RSMRST";
+		gpios = <&gpio0 13 GPIO_ACTIVE_LOW>;
+		reset-val = <1>;
+		output;
+	};
+	slp_s0: pwr-slp-s0-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SLP_S0_L input from PCH";
+		enum-name = "PWR_SLP_S0";
+		gpios = <&gpio0 14 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+		no-enable;
+	};
+	slp_s3: pwr-slp-s3-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SLP_S3_L input from PCH";
+		enum-name = "PWR_SLP_S3";
+		gpios = <&gpio0 15 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	slp_sus: pwr-slp-sus-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SLP_SUS_L input from PCH";
+		enum-name = "PWR_SLP_SUS";
+		gpios = <&gpio0 16 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+	pwr-vccst-pwrgd-od {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "VCCST_PWRGD output to PCH";
+		enum-name = "PWR_VCCST_PWRGD";
+		gpios = <&gpio0 18 0>;
+		output;
+	};
+	pwr-imvp9-vrrdy-od {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "VRRDY input from IMVP9";
+		enum-name = "PWR_IMVP9_VRRDY";
+		gpios = <&gpio0 19 0>;
+	};
+	pch_pwrok: pwr-pch-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "PCH_PWROK output to PCH";
+		enum-name = "PWR_PCH_PWROK";
+		gpios = <&gpio0 20 0>;
+		output;
+	};
+	pwr-ec-pch-sys-pwrok {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SYS_PWROK output to PCH";
+		enum-name = "PWR_EC_PCH_SYS_PWROK";
+		gpios = <&gpio0 21 0>;
+		output;
+	};
+	pwr-sys-rst-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SYS_RESET# output to PCH";
+		enum-name = "PWR_SYS_RST";
+		gpios = <&gpio0 22 GPIO_ACTIVE_LOW>;
+		output;
+	};
+	pwr-all-sys-pwrgd {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "all power good";
+		enum-name = "PWR_ALL_SYS_PWRGD";
+		gpios = <&gpio0 23 (GPIO_ACTIVE_HIGH | GPIO_PULL_UP)>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+};

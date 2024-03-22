@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Based off of `ec/zephyr/program/herobrine/led_policy_herobrine.dts`
+/* Based off of `ec/zephyr/program/brox/led_policy.dtsi`
  * Modified led-colors to obtain better test coverage.
  */
 
@@ -13,218 +13,216 @@
 	led-colors {
 		compatible = "cros-ec,led-policy";
 
-		power-state-charge-left {
-			charge-state = "LED_PWRS_CHARGE";
-			charge-port = <1>; /* Left port */
-
-			/* Turn off the right LED */
-			color-0 {
-				led-color = <&color_off_right>;
-			};
-			/* Left LED to Blue */
-			color-1 {
-				led-color = <&color_blue_left>;
-			};
-		};
-
 		power-state-charge-right {
 			charge-state = "LED_PWRS_CHARGE";
 			charge-port = <0>; /* Right port */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 99>;
 			/* Battery is charging */
 			batt-state-mask = <SB_STATUS_DISCHARGING>;
 			batt-state = <0>;
 
-			/* Turn off the left LED */
-			color-0 {
-				led-color = <&color_off_left>;
-			};
-			/* Right LED to Blue */
-			color-1 {
-				led-color = <&color_blue_right>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
 			};
 		};
 
-		power-state-charge-idle-right {
+		power-state-charge-right-full {
 			charge-state = "LED_PWRS_CHARGE";
 			charge-port = <0>; /* Right port */
+			batt-lvl = <100 100>;
+			/* Battery is charging */
+			batt-state-mask = <SB_STATUS_DISCHARGING>;
+			batt-state = <0>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_BLUE";
+				};
+			};
+		};
+
+		power-state-charge-left {
+			charge-state = "LED_PWRS_CHARGE";
+			charge-port = <1>; /* Left port */
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				/* Blue 1 sec, White 1 sec */
+				color-0 {
+					led-color = "LED_BLUE";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		power-state-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_BLUE";
+				};
+			};
+		};
+
+		power-state-discharge-valid {
+			charge-state = "LED_PWRS_DISCHARGE";
+			batt-lvl = <BATTERY_LEVEL_EMPTY 99>;
 			/* Battery is discharging */
 			batt-state-mask = <SB_STATUS_DISCHARGING>;
 			batt-state = <SB_STATUS_DISCHARGING>;
 
-			/* Turn off the left LED */
-			color-0 {
-				led-color = <&color_off_left>;
-			};
-			/* Turn off the right LED */
-			color-1 {
-				led-color = <&color_off_right>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
-		power-state-discharge-right-low {
+		/* This policy is invalid and should never trigger*/
+		power-state-discharge-invalid {
 			charge-state = "LED_PWRS_DISCHARGE";
-			/* Battery percent range (>= Empty, <= Low) */
-			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
+			batt-lvl = <100 100>;
+			batt-state-mask = <SB_STATUS_DISCHARGING>;
+			batt-state = <0>;
 
-			/* Turn off the left LED */
-			color-0 {
-				led-color = <&color_off_left>;
-			};
-			/* Right LED - White 1 sec, off 3 sec */
-			color-1 {
-				led-color = <&color_white_right>;
-				period-ms = <1000>;
-			};
-			color-2 {
-				led-color = <&color_off_right>;
-				period-ms = <3000>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_BLUE";
+				};
 			};
 		};
 
-		power-state-discharge-right {
-			charge-state = "LED_PWRS_DISCHARGE";
-			/* Battery percent range (> Low, <= Full) */
-			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
-
-			/* Turn off the left LED */
-			color-0 {
-				led-color = <&color_off_left>;
-			};
-			/* Turn off the right LED */
-			color-1 {
-				led-color = <&color_off_right>;
-			};
-		};
-
-		power-state-error-left {
+		power-state-error-left-low {
 			charge-state = "LED_PWRS_ERROR";
 			charge-port = <1>; /* Left port */
+			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
 
-			/* Turn off the right LED */
-			color-0 {
-				led-color = <&color_off_right>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				/* Blue 1 sec, White 1 sec */
+				color-0 {
+					led-color = "LED_BLUE";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
 			};
-			/* Left LED - White 2 sec, off 2 sec */
-			color-1 {
-				led-color = <&color_white_left>;
-				period-ms = <2000>;
-			};
-			color-2 {
-				led-color = <&color_off_right>;
-				period-ms = <2000>;
+		};
+
+		power-state-error-left-high {
+			charge-state = "LED_PWRS_ERROR";
+			charge-port = <1>; /* Left port */
+			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				/* Blue 1 sec, White 1 sec */
+				color-0 {
+					led-color = "LED_BLUE";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
 			};
 		};
 
 		power-state-error-right {
 			charge-state = "LED_PWRS_ERROR";
 			charge-port = <0>; /* Right port */
+			/* Battery is charging */
+			batt-state-mask = <SB_STATUS_DISCHARGING>;
+			batt-state = <0>;
 
-			/* Turn off the left LED */
-			color-0 {
-				led-color = <&color_off_left>;
-			};
-			/* Right LED - White 2 sec, off 2 sec */
-			color-1 {
-				led-color = <&color_white_right>;
-				period-ms = <2000>;
-			};
-			color-2 {
-				led-color = <&color_off_right>;
-				period-ms = <2000>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				/* Blue 1 sec, White 1 sec */
+				color-0 {
+					led-color = "LED_BLUE";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
 			};
 		};
 
-		power-state-near-full-left {
-			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
-			charge-port = <1>; /* Left port */
-
-			/* Turn off the right LED */
-			color-0 {
-				led-color = <&color_off_right>;
-			};
-			/* Left LED to White */
-			color-1 {
-				led-color = <&color_white_left>;
-			};
-		};
-
-		power-state-near-full-right {
-			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
-			charge-port = <0>; /* Right port */
-
-			/* Turn off the left LED */
-			color-0 {
-				led-color = <&color_off_left>;
-			};
-			/* Right LED to White */
-			color-1 {
-				led-color = <&color_white_right>;
-			};
-		};
-
-		power-state-forced-idle-left {
+		power-state-forced-idle {
 			charge-state = "LED_PWRS_FORCED_IDLE";
-			charge-port = <1>; /* Left port */
 
-			/* Turn off the right LED */
-			color-0 {
-				led-color = <&color_off_right>;
-			};
-			/* Left LED - Blue 3 sec, Off 1 sec */
-			color-1 {
-				led-color = <&color_blue_left>;
-				period-ms = <3000>;
-			};
-			color-2 {
-				led-color = <&color_off_left>;
-				period-ms = <1000>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
-		power-state-forced-idle-right {
-			charge-state = "LED_PWRS_FORCED_IDLE";
-			charge-port = <0>; /* Right port */
-
-			/* Turn off the left LED */
-			color-0 {
-				led-color = <&color_off_left>;
-			};
-			/* Right LED - Blue 3 sec, Off 1 sec */
-			color-1 {
-				led-color = <&color_blue_right>;
-				period-ms = <3000>;
-			};
-			color-2 {
-				led-color = <&color_off_right>;
-				period-ms = <1000>;
-			};
-		};
-
-		power-state-idle-left {
+		power-state-idle {
 			charge-state = "LED_PWRS_IDLE";
-			charge-port = <1>; /* Left port */
 
-			/* Turn off the right LED */
-			color-0 {
-				led-color = <&color_off_right>;
-			};
-			/* Left LED to White */
-			color-1 {
-				led-color = <&color_white_left>;
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 
-		power-state-idle-right {
-			charge-state = "LED_PWRS_IDLE";
-			charge-port = <0>; /* Right port */
+		chipset-state-s0 {
+			chipset-state = "POWER_S0";
 
-			/* Turn off the left LED */
-			color-0 {
-				led-color = <&color_off_left>;
+			power-led {
+				led-id = "EC_LED_ID_SYSRQ_DEBUG_LED";
+
+				color-0 {
+					led-color = "LED_BLUE";
+				};
 			};
-			/* Right LED to White */
-			color-1 {
-				led-color = <&color_white_right>;
+		};
+
+		chipset-state-s3 {
+			chipset-state = "POWER_S3";
+
+			power-led {
+				led-id = "EC_LED_ID_SYSRQ_DEBUG_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		chipset-state-s5 {
+			chipset-state = "POWER_S5";
+
+			power-led {
+				led-id = "EC_LED_ID_SYSRQ_DEBUG_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
 			};
 		};
 	};

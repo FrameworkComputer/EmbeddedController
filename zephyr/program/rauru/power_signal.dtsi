@@ -1,0 +1,39 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	power_signal_list: power-signal-list {
+		compatible = "mediatek,mt8188-power-signal-list";
+
+		ap_in_rst {
+			power-enum-name = "AP_IN_RST";
+			power-gpio-pin = <&gpio_sys_rst_odl>;
+		};
+		ap_in_s3 {
+			power-enum-name = "AP_IN_S3";
+			power-gpio-pin = <&gpio_ap_in_sleep_l>;
+		};
+		ap_wdt_asserted {
+			power-enum-name = "AP_WDT_ASSERTED";
+			power-gpio-pin = <&gpio_ap_ec_wdtrst_l>;
+		};
+		ap_warm_rst_req {
+			power-enum-name = "AP_WARM_RST_REQ";
+			power-gpio-pin = <&gpio_ap_ec_warm_rst_req>;
+		};
+		pg_pp4200_s5 {
+			/*
+			 * It's actually PP3700, but we don't change it and
+			 * follow the legacy naming.
+			 */
+			power-enum-name = "PG_PP4200_S5";
+			power-gpio-pin = <&gpio_pg_pp3700_s5_od>;
+		};
+		pmic_ap_reset {
+			power-enum-name = "PMIC_AP_RST";
+			power-gpio-pin = <&gpio_pmic_ec_resetb>;
+		};
+	};
+};

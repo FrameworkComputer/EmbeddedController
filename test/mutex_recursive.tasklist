@@ -1,0 +1,14 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/**
+ * See CONFIG_TASK_LIST in config.h for details.
+ */
+#define CONFIG_TEST_TASK_LIST \
+  TASK_TEST(MTX3C, mutex_recursive_random_task, NULL, 384) \
+  TASK_TEST(MTX3B, mutex_recursive_random_task, NULL, 384) \
+  TASK_TEST(MTX3A, mutex_recursive_random_task, NULL, 384) \
+  TASK_TEST(MTX2, mutex_recursive_second_task, NULL, 384) \
+  TASK_TEST(MTX1, mutex_recursive_main_task, NULL, 384)

@@ -71,6 +71,9 @@ config TEST_BOARD_FORM_FACTOR
 	  Include tests which checks accelerometer
 	  interrupt and tablet mode.
 
+config TEST_BOARD_I2C_POLICY
+	bool "Enable I2C policy tests"
+
 config TEST_BOARD_USB_PD_POLICY
 	bool "Enable USB PD policy specific tests"
 	select TEST_ENABLE_USB_PD_HOST_CMD
@@ -87,12 +90,17 @@ config TEST_BOARD_PPC_CONFIG_CUSTOM
 	bool "ENable PPC config tests with a variant-specific test file"
 	select TEST_BOARD_PPC_CONFIG
 
+config TEST_BOARD_USBC_CONFIG
+	bool "Enable USB-C config tests"
+	select PLATFORM_EC_TCPC_INTERRUPT
+
 config TEST_BOARD_USB_MUX_CONFIG
 	bool "Enable USB mux config tests"
 	select AP_POWER_CONTROL
 	select PLATFORM_EC_USB_MUX_MOCK
 	select PLATFORM_EC_USBC_RETIMER_PS8811
 	select PLATFORM_EC_USB_MUX_RUNTIME_CONFIG
+	select TEST_DISABLE_PLATFORM_EC_USBC
 
 config TEST_BOARD_USB_MUX_CONFIG_CUSTOM
 	bool "Enable USB mux config tests with a variant-specific test file"
@@ -114,7 +122,28 @@ config USB_PD_DISCHARGE
 config PLATFORM_EC_USB_MUX_RUNTIME_CONFIG
 	bool "Fake config to enable this feature"
 
+config PLATFORM_EC_TCPC_INTERRUPT
+	bool "Fake config to enable this feature"
+
+config PLATFORM_EC_USB_PD_TCPM_TCPCI
+	bool "Fake config to enable this feature"
+
+config PLATFORM_EC_USB_PD_TCPM_NCT38XX
+	bool "Fake config to enable this feature"
+
+config PLATFORM_EC_USB_CHARGER
+	bool "Fake config to enable this feature"
+
+config PLATFORM_EC_USB_PD_5V_EN_CUSTOM
+	bool "Fake config to enable this feature"
+
 config BOARD_USB_HUB_RESET
 	bool "Fake config to enable this feature"
+
+config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	bool "Disable chipset_in_state inline method"
+	help
+	  This is used to not define chipset_in_state method as inline
+	  function.
 
 source "Kconfig.zephyr"

@@ -24,8 +24,11 @@
 		default_battery: lgc_ap19b8m-2 {
 			compatible = "lgc,ap19b8m", "battery-smart";
 		};
-		cosmx_ap20cbl-3 {
-			compatible = "cosmx,ap20cbl-3", "battery-smart";
+		cosmx_ap20cbl-4 {
+			compatible = "cosmx,ap20cbl-4", "battery-smart";
+		};
+		lges_ap23a8l {
+			compatible = "lges,ap23a8l", "battery-smart";
 		};
 	};
 
@@ -74,28 +77,28 @@
 	fan_steps: fan-step {
 		compatible = "cros-ec,fan-steps";
 		level_0 {
-			temp_on = <(-1) (-1) 75 (-1) 30 (-1)>;
+			temp_on = <(-1) (-1) 30 (-1) 30 (-1)>;
 			temp_off = <(-1) (-1) 99 (-1) 99 (-1)>;
 			rpm_target = <0>;
 		};
 		level_1 {
-			temp_on = <(-1) (-1) 75 (-1) 35 (-1)>;
-			temp_off = <(-1) (-1) 99 (-1) 32 (-1)>;
+			temp_on = <(-1) (-1) 62 (-1) 37 (-1)>;
+			temp_off = <(-1) (-1) 52 (-1) 34 (-1)>;
 			rpm_target = <2200>;
 		};
 		level_2 {
-			temp_on = <(-1) (-1) 75 (-1) 40 (-1)>;
-			temp_off = <(-1) (-1) 99 (-1) 37 (-1)>;
+			temp_on = <(-1) (-1) 70 (-1) 40 (-1)>;
+			temp_off = <(-1) (-1) 65 (-1) 38 (-1)>;
 			rpm_target = <2400>;
 		};
 		level_3 {
 			temp_on = <(-1) (-1) 75 (-1) 43 (-1)>;
-			temp_off = <(-1) (-1) 99 (-1) 41 (-1)>;
+			temp_off = <(-1) (-1) 72 (-1) 41 (-1)>;
 			rpm_target = <2700>;
 		};
 		level_4 {
-			temp_on = <(-1) (-1) 75 (-1) 46 (-1)>;
-			temp_off = <(-1) (-1) 99 (-1) 44 (-1)>;
+			temp_on = <(-1) (-1) 85 (-1) 46 (-1)>;
+			temp_off = <(-1) (-1) 82 (-1) 44 (-1)>;
 			rpm_target = <3000>;
 		};
 		level_5 {
@@ -149,6 +152,26 @@
 				value = <1>;
 			};
 		};
+
+		/*
+		 * FW_CONFIG field to set keyboard layout.
+		 */
+		keyboard {
+			enum-name = "FW_KB_LAYOUT";
+			start = <2>;
+			size = <2>;
+
+			keyboard-default {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "KEYBOARD_DEFAULT";
+				value = <0>;
+			};
+			keyboard-ansi {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "KEYBOARD_ANSI";
+				value = <1>;
+			};
+		};
 	};
 
 	/* Rotation matrices for motion sensors. */
@@ -170,6 +193,30 @@
 	ppc_port0: aoz1380 {
 		compatible = "aoz,aoz1380";
 		status = "okay";
+		/* a duplicate of the <&gpio_usb_c0_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio7 5 GPIO_ACTIVE_LOW>;
+	};
+
+       cros-keyscan {
+		compatible = "cros-ec,keyscan";
+		actual-key-mask = <
+			0x1c  /* C0 */
+			0xff  /* C1 */
+			0xff  /* C2 */
+			0xff  /* C3 */
+			0xff  /* C4 */
+			0xff  /* C5 */
+			0xff  /* C6 */
+			0xa4  /* C7 */
+			0xff  /* C8 */
+			0xf7  /* C9 */
+			0x55  /* C10 */
+			0xfb  /* C11 */
+			0xca  /* C12 */
+		>;
 	};
 };
 
@@ -293,4 +340,24 @@
 	rpm_start = <2400>;
 	rpm_max = <4464>;
 	rpm_deviation = <2>;
+};
+
+&vivaldi_kbd {
+	vivaldi-keys = <
+		KBD_RC(0, 2)   /* T1 */
+		KBD_RC(3, 2)   /* T2 */
+		KBD_RC(2, 2)   /* T3 */
+		KBD_RC(1, 2)   /* T4 */
+		KBD_RC(3, 4)   /* T5 */
+		KBD_RC(2, 4)   /* T6 */
+		KBD_RC(1, 4)   /* T7 */
+		KBD_RC(2, 9)   /* T8 */
+		KBD_RC(1, 9)   /* T9 */
+		KBD_RC(0, 4)   /* T10 */
+		KBD_RC(3, 0)   /* T11 */
+		KBD_RC(1, 5)   /* T12 */
+		KBD_RC(3, 5)   /* T13 */
+		KBD_RC(0, 9)   /* T14 */
+		KBD_RC(0, 11)  /* T15 */
+	>;
 };

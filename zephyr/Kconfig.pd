@@ -2,11 +2,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-if PLATFORM_EC_USBC
-
 menuconfig PLATFORM_EC_USB_POWER_DELIVERY
 	bool "USB Type-C Power Delivery (PD)"
 	default y
+	depends on PLATFORM_EC_USB_PD_TCPMV2
 	help
 	  USB has always provided basic power to an attached peripheral. USB-C
 	  PD is part of the USB 3.0 standard and allows a lot more functionality
@@ -19,15 +18,6 @@ menuconfig PLATFORM_EC_USB_POWER_DELIVERY
 	  those devices.
 
 if PLATFORM_EC_USB_POWER_DELIVERY
-
-config PLATFORM_EC_USB_PD_HOST_CMD
-	bool "Host commands related to USB Power Delivery"
-	default y
-	help
-	  This enables host commands which allow finding out the capabilities
-	  of USB PD, checking is status and controlling how it operates. For
-	  devices which support firmware update, this is provided as well,
-	  with the firmware being sent from the AP.
 
 config PLATFORM_EC_CONSOLE_CMD_MFALLOW
 	bool "Console command: mfallow"
@@ -189,18 +179,6 @@ config PLATFORM_EC_USB_PD_DUAL_ROLE_AUTO_TOGGLE
 	  disabled, the USB power delivery task is responsible for manually
 	  toggling the power role.
 
-config PLATFORM_EC_USB_PD_REV30
-	bool "USB PD Rev3.0 functionality"
-	default y
-	help
-	  Enable this to allow Rev3.0 functionality, including features such as
-	  Fast Role Swap, advertising the available power across all ports of a
-	  multi-port charger, and USB4. If disabled, only USB Power Delivery
-	  Rev2.0 functionality is supported.
-
-	  This defaults to y because PD Rev3.0 is required for USB4
-	  functionality.
-
 config PLATFORM_EC_USB_PD_EXTENDED_MESSAGES
 	bool "USB 3.0 Extended Message Support"
 	default y
@@ -299,6 +277,15 @@ config PLATFORM_EC_USB_PD_DP_HPD_GPIO_CUSTOM
 
 	    int svdm_get_hpd_gpio(int port);
 
+config PLATFORM_EC_USB_PD_DP_HPD_GPIO_IRQ_ACCURATE
+	bool "Generate a more acuurate IRQ_HPD pulse"
+	depends on PLATFORM_EC_USB_PD_DP_HPD_GPIO
+	default y if SOC_IT8XXX2
+	help
+	  Enable this if the IRQ_HPD pulse interval HPD_DSTREAM_DEBOUNCE_IRQ
+	  is longer than the requirement. This is common on ITE EC due to
+	  performance issue.
+
 config PLATFORM_EC_USB_PD_DATA_RESET_MSG
 	bool "Enable the PD Data Reset Message."
 	depends on PLATFORM_EC_USB_PD_REV30
@@ -350,26 +337,6 @@ config PLATFORM_EC_USB_PD_DECODE_SOP
 	  (SOP, SOP' and SOP'', collectively called SOP*) in bits 31-28 of the
 	  32-bit msg header type.
 
-config PLATFORM_EC_HOSTCMD_PD_CONTROL
-	bool "Host command: EC_CMD_PD_CONTROL"
-	default y
-	help
-	  Enable the EC_CMD_PD_CONTROL host command. This allows control
-	  of the USB-PD chip from the AP, including reset, suspend/resume
-	  and enabling power.
-
-	  This host command can be manually executed using the
-	  "ectool pdcontrol" command from the Chromium OS shell.
-
-config PLATFORM_EC_USB_PD_LOGGING
-	bool "Host command: EC_CMD_PD_GET_LOG_ENTRY"
-	help
-	  Enable logging of USB Power Delivery events. The AP can request the
-	  log to see what has happened recently.
-
-	  The log events are stored in a circular buffer, each one being a
-	  struct event_log_entry.
-
 config PLATFORM_EC_USB_PD_PRL_EVENT_LOG
 	bool "Log PRL state changes to a ring buffer"
 	help
@@ -402,32 +369,12 @@ config PLATFORM_EC_USB_PD_TRY_SRC
 	  for laptops, for example, since when attaching to a cellphone we want
 	  the laptop to charge the phone, not vice versa.
 
-config PLATFORM_EC_USB_PD_DP_MODE
-	bool "EC-driven DP support"
-	depends on !PLATFORM_EC_USB_PD_VDM_AP_CONTROL
-	default y
+config PLATFORM_EC_USB_PD_DP21_MODE
+	bool "Enable DP2.1 Support"
+	depends on PLATFORM_EC_USB_PD_DP_MODE
 	help
-	  This enables support for entering DisplayPort alternate mode as a
-	  DFP from the Embedded Controller directly.  This flag gates all the
-	  on-EC logic for determining specifics such as VDM contents.
-
-config PLATFORM_EC_USB_PD_USB4
-	bool "USB4 support"
-	depends on PLATFORM_EC_USB_PD_REV30
-	default n
-	help
-	  This enables support for entering into USB4 mode between two port
-	  partners. The provides new features such as higher speeds and more
-	  flexible multiplexing of data on the cable for different purposes,
-	  e.g. attaching multiple displays and storage devices on the same bus.
-
-config PLATFORM_EC_USB_PD_TBT_COMPAT_MODE
-	bool "Thunderbolt-compatible mode support"
-	depends on PLATFORM_EC_USB_PD_REV30
-	default n
-	help
-	  Enable this to allow entering into Thunderbolt-compatible mode between
-	  two port partners. This does not require that USB4 mode be enabled.
+	  This enables support for entering DisplayPort alternate mode 2.1 as
+	  a DFP from the Embedded Controller directly.
 
 config PLATFORM_EC_USB_PD_STARTUP_DELAY_MS
 	int "PD thread startup delay time in milliseconds"
@@ -493,16 +440,22 @@ config PLATFORM_EC_USB_PD_EPR
 	help
 	  This enables support for EPR (Extended Power Range).
 
+config PLATFORM_EC_USB_PD_RESET_PRESERVE_RECOVERY_FLAGS
+	bool "Workaround for cros_ec_softrec_power on chromeboxes"
+	help
+	  cros_ec_softrec works by running `reboot wait-ext ap-off-in-ro`. If a
+	  chromebox is powered by Type-C only, the EC reset will result in a PD
+	  hard reset and the device will brown out. When it boots again the
+	  ap-off and stay-in-ro flags are lost so recovery fails. To work around
+	  this, we preserve the flags across a PD reset.
+
+	  This doesn't affect manual recovery on user devices, since it uses the
+	  recovery signal from the GSC, not the reset flags.
+
+	  This should only be enabled on chromeboxes which don't have servo
+	  micro and therefore can't use cros_ec_hardrec_power. See b/293545949
+	  and b/295363809.
+
 rsource "Kconfig.svdm_rsp"
 
 endif  # PLATFORM_EC_USB_POWER_DELIVERY
-
-endif # PLATFORM_EC_USBC
-
-config PLATFORM_EC_STANDALONE_PD_CHIP
-	bool "The project uses the standalone PD chip"
-	default n
-	select HAS_TASK_CYPD
-	help
-	  Enable if project use the standalone PD chip instead of the structure of
-	  TCPC + TCPM.

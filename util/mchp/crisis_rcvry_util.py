@@ -24,6 +24,7 @@ Refer to the Microchip Crisis_Mode-cmdSequence document for full details.
 import argparse
 import binascii
 from dataclasses import dataclass
+import enum
 import logging
 import os
 import struct
@@ -38,7 +39,7 @@ CRC_LENGTH = 4
 HEADER_WRITE_CMD_ID = 0x65
 FW_IMAGE_WRITE_CMD_ID = 0x67
 SRAM_EXE_CMD_ID = 0x69
-EC_RESPONSE_BYTES_COUNT = 262272
+EC_FW_TRANS_WAIT_BYTE = 262144
 IMAGE_CHUNK_LENGTH = 128
 HEADER_CHUNK_LENGTH = 64
 HEADER_LENGTH = 320
@@ -49,7 +50,9 @@ DELAY_50_MS = 0.05
 IMG_LEN_ENCRYPTION = 512
 IMG_LEN_NO_ENCRYPTION = 384
 RESPONSE_STATUS_IMAGE_INVA_MASK = 0x06
+RESPONSE_STATUS_CRC_MISMATCH_MASK = 0x01
 RESPONSE_PACKET_ERROR_MASK = 0x80
+ACK_TIMEOUT_SECS = 22
 
 HOST_NEGO_CMD_SEQ = b"\x55\xAA"
 HOST_NEGO_CMD_RESP_SEQ = b"\x5A\xA5"
@@ -75,6 +78,15 @@ MCHP_TERM_ID_END = MCHP_TERM_ID_START + len(TERMINATOR_ID)
 logging.basicConfig(level=logging.INFO)
 
 
+class Transfer(enum.Enum):
+    """A class for holding transfer type"""
+
+    SECOND_LOADER_HDR = 1
+    SECOND_LOADER_FW = 2
+    EC_HDR = 3
+    EC_FW = 4
+
+
 @dataclass
 class PacketProperties:
     """A class for holding transfer method argument"""
@@ -84,7 +96,7 @@ class PacketProperties:
     max_write_length: int
     payload_length: int
     payload: bytearray
-    bootloader_active: bool
+    transfer_type: enum.Enum
 
 
 def update_progress(curr_val, max_val):
@@ -136,7 +148,7 @@ def ec_image_transfer(uart_handle, ec_file):
         PRG_HDR_TOTAL_LEN,
         PRG_HDR_TOTAL_LEN,
         header_gen,
-        False,
+        Transfer.EC_HDR,
     )
     transfer(trans_prop)
     logging.info("EC program header transfer completed")
@@ -152,7 +164,7 @@ def ec_image_transfer(uart_handle, ec_file):
         IMAGE_CHUNK_LENGTH,
         max_len,
         image,
-        False,
+        Transfer.EC_FW,
     )
     transfer(trans_prop)
     logging.info("EC FW image transfer completed")
@@ -192,12 +204,29 @@ def transfer(prop_obj):
 
         prop_obj.uart_handle.write(cmd_bytes)
 
-        if prop_obj.bootloader_active:
+        if prop_obj.transfer_type in (
+            Transfer.SECOND_LOADER_HDR,
+            Transfer.SECOND_LOADER_FW,
+        ):
             # Bootloader need some time to generate response
             # It runs slower than the Second loader that execute from SRAM
             time.sleep(DELAY_50_MS)
 
         prop_obj.uart_handle.reset_input_buffer()
+
+        # Second loader buffers the received bytes till reaches 256Kbytes.
+        # Once it reaches, second loader transfer it to FLASH
+        # Required some delay to complete this transfer.
+        if prop_obj.transfer_type == Transfer.EC_FW:
+            byte_transferred = offset + program_length
+            if (byte_transferred >= prop_obj.payload_length) or (
+                byte_transferred == EC_FW_TRANS_WAIT_BYTE
+            ):
+                logging.info(
+                    "Waiting for EC to program. Will take about %ss.",
+                    ACK_TIMEOUT_SECS,
+                )
+                time.sleep(ACK_TIMEOUT_SECS)
 
         rf_cont_disp = prop_obj.uart_handle.read(RESPONSE_LENGTH)
 
@@ -211,9 +240,9 @@ def transfer(prop_obj):
         # Size: 6Bytes
         #    0th byte -> Rxd Command | 0x80
         #    1st byte -> Status byte
-        #        0th bit -> CRC failure
-        #        1st bit -> Incorrect payload length
-        #        2nd bit -> Incorrect header offset
+        #       The script provides a retry function exclusively for CRC
+        #       failures. Any other types of failures will result in the
+        #       termination of the script.
         #    2nd to 5th bytes -> CRC
 
         if rf_cont_disp != resp_bytes:
@@ -223,10 +252,11 @@ def transfer(prop_obj):
                 sys.exit(1)
             elif rf_cont_disp[0] & RESPONSE_PACKET_ERROR_MASK:
                 # Check for Host -> EC packet error
-                # Since its Failure response, read one more byte.
-                rf_cont_disp.append(prop_obj.uart_handle.read(1))
-                # Check status for Incorrect payload length or header offset
-                if rf_cont_disp[1] & RESPONSE_STATUS_IMAGE_INVA_MASK:
+                # Since its Failure response, read one more byte
+                # and ignore it.
+                _ = prop_obj.uart_handle.read(1)
+
+                if not rf_cont_disp[1] & RESPONSE_STATUS_CRC_MISMATCH_MASK:
                     logging.critical("Image not valid")
                     sys.exit(1)
 
@@ -260,9 +290,9 @@ def second_loader_image_transfer(uart_handle, spi_file):
 
     hdr_addr = tag_base_addr
     header_len = HEADER_LENGTH
-    img_offset = hdr_addr + header_len
     hdr_file_data = image[tag_base_addr : tag_base_addr + header_len]
     encryption_enable = struct.unpack("B", hdr_file_data[0x06:0x07])[0]
+    img_offset = hdr_addr + (struct.unpack("<I", hdr_file_data[0x14:0x18]))[0]
     img_len = (
         struct.unpack("<H", hdr_file_data[0x10:0x12])[0]
     ) * IMAGE_CHUNK_LENGTH
@@ -279,7 +309,7 @@ def second_loader_image_transfer(uart_handle, spi_file):
         HEADER_CHUNK_LENGTH,
         header_len,
         image[hdr_addr : hdr_addr + header_len],
-        True,
+        Transfer.SECOND_LOADER_HDR,
     )
     transfer(trans_prop)
     logging.info("Second loader header transfer completed")
@@ -291,7 +321,7 @@ def second_loader_image_transfer(uart_handle, spi_file):
         IMAGE_CHUNK_LENGTH,
         img_len,
         image[img_offset : img_offset + img_len],
-        True,
+        Transfer.SECOND_LOADER_FW,
     )
     transfer(trans_prop)
     logging.info("Second loader FW image transfer completed")

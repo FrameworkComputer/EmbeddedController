@@ -6,27 +6,19 @@ description: USBC TCPC
 
 compatible: "cypress,ccgxxf"
 
-include: ["i2c-device.yaml", "cros-ec,tcpci.yaml"]
+include: ["i2c-device.yaml", "tcpc-device.yaml"]
 
 properties:
-  tcpc-flags:
-    type: int
-    default: 0
-    description: |
-      TCPC configuration flags
   irq-gpios:
     type: phandle-array
-    required: false
     description: |
       Interrupt from TCPC using shim driver
   rst-gpios:
     type: phandle-array
-    required: false
     description: |
       TCPC reset line while using shim driver
   int-pin:
     type: phandles
-    required: false
     deprecated: true
     description: |
       Interrupt from TCPC using gpio-int. This property should only be used when

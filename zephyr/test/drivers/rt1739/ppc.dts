@@ -1,0 +1,24 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	usbc {
+		port0@0 {
+			compatible = "named-usbc-port";
+			bc12 = <&rt1739_emul>;
+			ppc = <&rt1739_emul>;
+		};
+	};
+};
+
+&i2c2 {
+	status="okay";
+
+	rt1739_emul: rt1739@70 {
+		compatible = "zephyr,rt1739-emul", "richtek,rt1739-ppc";
+		status = "okay";
+		reg = <0x70>;
+	};
+};

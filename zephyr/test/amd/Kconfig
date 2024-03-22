@@ -2,8 +2,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-config TEST_AMD_STB_DUMP
-	bool "Enable STB dump test"
-	select PLATFORM_EC_AMD_STB_DUMP
+config TEST_AMD_POWER
+	bool "Enable general power sequencing tests"
 
 source "Kconfig.zephyr"

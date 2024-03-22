@@ -5,7 +5,7 @@
 
 #include "common.h"
 #include "ec_commands.h"
-#include "fpsensor_auth_crypto.h"
+#include "fpsensor/fpsensor_auth_crypto.h"
 #include "openssl/bn.h"
 #include "openssl/ec.h"
 #include "openssl/obj_mac.h"
@@ -98,7 +98,9 @@ test_static enum ec_error_list test_fp_create_pubkey_from_ec_key(void)
 
 test_static enum ec_error_list test_fp_create_ec_key_from_privkey(void)
 {
-	std::array<uint8_t, 32> data = {};
+	std::array<uint8_t, 32> data = { 0, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0,
+					 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1,
+					 2, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
 
 	bssl::UniquePtr<EC_KEY> key =
 		create_ec_key_from_privkey(data.data(), data.size());

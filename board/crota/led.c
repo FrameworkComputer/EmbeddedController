@@ -10,6 +10,7 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "ec_commands.h"
+#include "extpower.h"
 #include "gpio.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
@@ -99,7 +100,7 @@ __override enum led_states board_led_get_state(enum led_states desired_state)
 	 * Otherwise it will wait 30 seconds then blinking.
 	 */
 	if (led_pwr_get_state() == LED_PWRS_IDLE) {
-		if (charge_get_flags() & CHARGE_FLAG_EXTERNAL_POWER)
+		if (extpower_is_present())
 			desired_state = STATE_BATTERY_ERROR;
 	}
 	return desired_state;

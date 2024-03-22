@@ -12,3 +12,4 @@ tests:
   thottle_ap.throttle_ap:
     extra_configs:
       - CONFIG_TEST_THROTTLE_AP=y
+      - CONFIG_PLATFORM_EC_CONSOLE_CMD_APTHROTTLE=y
