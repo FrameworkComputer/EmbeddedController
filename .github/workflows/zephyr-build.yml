@@ -25,7 +25,7 @@ jobs:
       matrix:
         platform: [
           # Build marigold only on marigold builder and folder
-          {name: marigold, folder: marigold },
+          {name: marigold, folder: zephyr-q1 },
           {name: lotus, folder: marigold },
           {name: azalea, folder: marigold },
         ]
@@ -34,7 +34,7 @@ jobs:
     # Build not in $GITHUB_HOME but in the chroot env
     defaults:
       run:
-        working-directory: /home/zoid/chromiumos
+        working-directory: /${{ matrix.platform.folder }}/ec_home/chromiumos
 
     steps:
       # Need to use git
@@ -85,4 +85,4 @@ jobs:
       - uses: actions/upload-artifact@v3
         with:
           name: ${{ matrix.platform.name }}.${{ env.VERSIONINFO }}
-          path: /home/zoid/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output
+          path: /${{ matrix.platform.folder }}/ec_home/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output
