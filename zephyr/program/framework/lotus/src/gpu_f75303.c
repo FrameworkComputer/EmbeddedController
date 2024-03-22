@@ -71,7 +71,7 @@ static void gpu_board_f75303_poweron_config(void)
 }
 DECLARE_DEFERRED(gpu_board_f75303_poweron_config);
 
-void gpu_power_enable_handler(void)
+void gpu_power_enable_handler(enum gpio_signal signal)
 {
 	/* we needs to re-initial the thermal sensor and gpu when gpu power enable */
 	if (gpu_f75303_address && gpu_power_enable())
