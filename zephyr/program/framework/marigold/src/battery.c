@@ -25,7 +25,13 @@
 
 static enum battery_present batt_pres_prev = BP_NOT_SURE;
 static uint8_t charging_maximum_level = EC_CHARGE_LIMIT_RESTORE;
-static int old_btp;
+
+enum battery_trip_point_state_t {
+	BATTERY_TRIP_POINT_DISCHARGE  = BIT(0),
+	BATTERY_TRIP_POINT_CHARGE     = BIT(1),
+	BATTERY_TRIP_POINT_FULL       = BIT(2),
+	BATTERY_TRIP_POINT_WAIT_EVENT = BIT(3),
+};
 
 enum battery_present battery_is_present(void)
 {
@@ -118,19 +124,94 @@ enum battery_present board_batt_is_present(void)
 	return batt_pres_prev;
 }
 
+void battery_trip_point(struct charge_state_data *curr_batt)
+{
+	int curr_btp = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_BATT_TRIP_POINT) +
+		(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BATT_TRIP_POINT+1) << 8);
+	int curr_remaining = curr_batt->batt.remaining_capacity;
+
+	static int old_btp;
+	static uint8_t btp_status;
+	static uint64_t btp_timer;
+
+	/* If EC reads the remaining capacity fail, don't process the BTP flow */
+	if ((curr_batt->batt.flags & BATT_FLAG_BAD_REMAINING_CAPACITY))
+		return;
+
+	/* System doing the cold boot or warm boot, clear the old btp value */
+	if (!(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) & ACPI_DRIVER_READY)) {
+		old_btp = 0;
+		return;
+	}
+
+	/* system updates the btp value, prepare to process the next BTP event */
+	if (old_btp != curr_btp) {
+		btp_status = 0;
+		old_btp = curr_btp;
+	} else if ((old_btp == curr_btp) &&
+		(btp_status & BATTERY_TRIP_POINT_WAIT_EVENT)) {
+		/* wait btp update if the btp event has sent */
+		if (get_time().val < btp_timer)
+			return;
+
+		btp_status &= ~BATTERY_TRIP_POINT_WAIT_EVENT;
+	}
+
+	/* check the next BTP event is over or down */
+	if (!btp_status) {
+		if (curr_remaining > old_btp)
+			btp_status = BATTERY_TRIP_POINT_DISCHARGE;
+		else if (curr_remaining < old_btp)
+			btp_status = BATTERY_TRIP_POINT_CHARGE;
+
+		/* override the btp status if the battery is full */
+		if (curr_batt->batt.state_of_charge == 100)
+			btp_status = BATTERY_TRIP_POINT_FULL;
+	}
+
+	/**
+	 * Battery is discharging (BIT 0)
+	 * send the SCI event when the remaining capacity is lower then btp value.
+	 *
+	 * Battery is charging (BIT 1)
+	 * send the SCI event when the remaining capacity is higher then btp value.
+	 *
+	 * Battery is full (BIT 2)
+	 * System will update the btp value to zero when the battery RSOC is 100%.
+	 * so EC needs to update the btp value when the battery RSOC is discharged to 99%
+	 */
+	if ((btp_status & BATTERY_TRIP_POINT_DISCHARGE) &&
+		(curr_remaining <= old_btp)) {
+		CPRINTS("discharging btp");
+		btp_status |= BATTERY_TRIP_POINT_WAIT_EVENT;
+		btp_timer = get_time().val + 1 * SECOND;
+		host_set_single_event(EC_HOST_EVENT_BATT_BTP);
+	} else if ((btp_status & BATTERY_TRIP_POINT_CHARGE) &&
+		(curr_remaining >= old_btp)) {
+		CPRINTS("charging btp");
+		btp_status |= BATTERY_TRIP_POINT_WAIT_EVENT;
+		btp_timer = get_time().val + 1 * SECOND;
+		host_set_single_event(EC_HOST_EVENT_BATT_BTP);
+	} else if ((btp_status & BATTERY_TRIP_POINT_FULL) &&
+		(curr_batt->batt.state_of_charge <= 99)) {
+		CPRINTS("workaround btp");
+		btp_status |= BATTERY_TRIP_POINT_WAIT_EVENT;
+		btp_timer = get_time().val + 1 * SECOND;
+		host_set_single_event(EC_HOST_EVENT_BATT_BTP);
+	}
+}
+
 void battery_customize(struct charge_state_data *curr_batt)
 {
 	char text[32];
 	char *str = "LION";
 	int value;
-	int new_btp;
 	int rv;
-	static int batt_state;
-	static int read_manuf_date;
 	int day = 0;
 	int month = 0;
 	int year = 0;
-	uint32_t batt_os_percentage = get_system_percentage();
+	static int batt_state;
+	static int read_manuf_date;
 
 	/* manufacture date is static data */
 	if (!read_manuf_date && battery_is_present() == BP_YES) {
@@ -156,7 +237,7 @@ void battery_customize(struct charge_state_data *curr_batt)
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BATT_AVER_TEMP) =
 					(curr_batt->batt.temperature - 2731) / 10;
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BATT_PERCENTAGE) =
-					batt_os_percentage / 10;
+					get_system_percentage() / 10;
 
 	if (curr_batt->batt.status & STATUS_FULLY_CHARGED)
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BATT_STATUS) |= EC_BATT_FLAG_FULL;
@@ -176,36 +257,8 @@ void battery_customize(struct charge_state_data *curr_batt)
 	else
 		*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BATT_STATUS) |= EC_BATT_MODE;
 
-	/* BTP: Notify AP update battery */
-	new_btp = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_BATT_TRIP_POINT) +
-			(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_BATT_TRIP_POINT+1) << 8);
 
-	if (!(curr_batt->batt.flags & BATT_FLAG_BAD_REMAINING_CAPACITY)) {
-
-		if (old_btp == 0)
-			old_btp = curr_batt->batt.remaining_capacity;
-
-		/* Workaround: send the BTP event again if the btp value does not change */
-		if (new_btp == old_btp) {
-			CPRINTS("BTP workaround");
-			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
-		}
-
-		if (new_btp == 0 && batt_os_percentage < 995)
-			host_set_single_event(EC_HOST_EVENT_BATT_BTP);
-
-		if (new_btp > old_btp && !battery_is_cut_off()) {
-			if (curr_batt->batt.remaining_capacity > new_btp) {
-				old_btp = new_btp;
-				host_set_single_event(EC_HOST_EVENT_BATT_BTP);
-			}
-		} else if (new_btp < old_btp && !battery_is_cut_off()) {
-			if (curr_batt->batt.remaining_capacity < new_btp) {
-				old_btp = new_btp;
-				host_set_single_event(EC_HOST_EVENT_BATT_BTP);
-			}
-		}
-	}
+	battery_trip_point(curr_batt);
 
 	/*
 	 * When the battery present have change notify AP
