@@ -7,6 +7,7 @@ on:
       - azalea*
     paths:
       - 'zephyr/program/lotus/**'
+      - '.github/workflows/**'
   #pull_request:
   #  branches:
   #    - lotus-zephyr
@@ -22,8 +23,8 @@ jobs:
       max-parallel: 1
       matrix:
         platform: [
-          {name: lotus, folder: data },
-          {name: azalea, folder: data },
+          {name: lotus, folder: lotus },
+          {name: azalea, folder: lotus },
         ]
 
 
@@ -35,19 +36,19 @@ jobs:
     steps:
       # Need to use git
       #- name: Checkout EC code
-      #  uses: actions/checkout@v3
+      #  uses: actions/checkout@v4
       #  with:
-      #    path: /data/ec_home/chromiumos/src/platform/ec
+      #    path: /lotus/ec_home/chromiumos/src/platform/ec
 
       #- name: Checkout Zephyr code
       #  uses: actions/checkout@v2
-      #    path: /data/ec_home/chromiumos/src/third_party/zephyr/main
+      #    path: /lotus/ec_home/chromiumos/src/third_party/zephyr/main
       #    ref: lotus-zephyr
       #    repository: ssh://git@github.com/FrameworkComputer/zephyr-ec
 
       # Need to manually checkout
-      # actions/checkout@v3 complains:
-      # Error: Repository path '/data/ec_home/chromiumos/src/platform/ec' is not under '/data/ec_home/actions-runner/_work/ec/ec'
+      # actions/checkout@v4 complains:
+      # Error: Repository path '/lotus/ec_home/chromiumos/src/platform/ec' is not under '/data/ec_home/actions-runner/_work/ec/ec'
       # See: https://github.com/actions/checkout/issues/197
       - name: Manual checkout
         run: |
@@ -76,7 +77,7 @@ jobs:
         run: |
           echo "VERSIONINFO=$(date -u +'%Y-%m-%d-%H-%M-%S')_$GITHUB_SHA" >> $GITHUB_ENV
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform.name }}.${{ env.VERSIONINFO }}
           path: /${{ matrix.platform.folder }}/ec_home/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output
