@@ -1912,7 +1912,9 @@ void cypd_port_int(int controller, int port)
 			pd_port_states[port_idx].epr_support = 1;
 			CPRINTS("P%d EPR mode capable", port_idx);
 		}
-		snk_transition_flags = 1;
+		if (!battery_is_cut_off() && !battery_cutoff_in_progress())
+			snk_transition_flags = 1;
+
 		break;
 	case CCG_RESPONSE_EPR_EVENT:
 		CPRINTS("CCG_RESPONSE_EPR_EVENT %d", port_idx);
