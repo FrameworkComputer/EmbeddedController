@@ -80,6 +80,24 @@ struct pdc_bus_info_t {
 };
 
 /**
+ * @brief PDO Source: PDC or Port Partner
+ */
+enum pdo_source_t {
+	/** LPM */
+	LPM_PDO,
+	/** Port Partner PDO */
+	PARTNER_PDO,
+};
+
+/**
+ * @brief Used for building CMD_PDC_GET_PDOS
+ */
+struct get_pdo_t {
+	enum pdo_type_t pdo_type;
+	enum pdo_source_t pdo_source;
+};
+
+/**
  * @typedef
  * @brief These are the API function types
  */
