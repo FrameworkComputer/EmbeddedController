@@ -131,7 +131,7 @@ struct smbus_cmd_t {
 
 const struct smbus_cmd_t VENDOR_CMD_ENABLE = { 0x01, 0x03, 0xDA };
 const struct smbus_cmd_t SET_NOTIFICATION_ENABLE = { 0x08, 0x06, 0x01 };
-const struct smbus_cmd_t SET_PDOS = { 0x08, 0x03, 0x03 };
+const struct smbus_cmd_t SET_PDO = { 0x08, 0x03, 0x03 };
 const struct smbus_cmd_t SET_RDO = { 0x08, 0x06, 0x04 };
 const struct smbus_cmd_t SET_TPC_RP = { 0x08, 0x03, 0x05 };
 const struct smbus_cmd_t SET_TPC_CSD_OPERATION_MODE = { 0x08, 0x03, 0x1D };
@@ -288,6 +288,8 @@ enum cmd_t {
 	CMD_GET_IDENTITY_DISCOVERY,
 	/** CMD_GET_IS_VCONN_SOURCING */
 	CMD_GET_IS_VCONN_SOURCING,
+	/** CMD_SET_PDO */
+	CMD_SET_PDO,
 };
 
 /**
@@ -403,6 +405,7 @@ static const char *const cmd_names[] = {
 	[CMD_GET_VDO] = "GET VDO",
 	[CMD_GET_IDENTITY_DISCOVERY] = "CMD_GET_IDENTITY_DISCOVERY",
 	[CMD_GET_IS_VCONN_SOURCING] = "CMD_GET_IS_VCONN_SOURCING",
+	[CMD_SET_PDO] = "CMD_SET_PDO",
 };
 
 /**
@@ -2202,6 +2205,39 @@ static int rts54_set_comms_state(const struct device *dev, bool comms_active)
 	return 0;
 }
 
+static int rts54_set_pdo(const struct device *dev, enum pdo_type_t type,
+			 uint32_t *pdo, int count)
+{
+	struct pdc_data_t *data = dev->data;
+	uint8_t pdo_info;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	/*
+	 * TODO(b/319643480): Current implementation only supports setting the
+	 * first SNK or SRC CAP.
+	 */
+	if (count != 1) {
+		count = 1;
+		LOG_WRN("rts54xx: set_pdos only sets the first PDO passed in");
+	}
+
+	pdo_info = (count & 0x7) | (type << 3);
+
+	uint8_t payload[] = {
+		SET_PDO.cmd,   SET_PDO.len + sizeof(uint32_t) * count,
+		SET_PDO.sub,   0x00,
+		pdo_info,      BYTE0(pdo[0]),
+		BYTE1(pdo[0]), BYTE2(pdo[0]),
+		BYTE3(pdo[0]),
+	};
+
+	return rts54_post_command(dev, CMD_SET_PDO, payload,
+				  ARRAY_SIZE(payload), NULL);
+}
+
 static const struct pdc_driver_api_t pdc_driver_api = {
 	.is_init_done = rts54_is_init_done,
 	.get_ucsi_version = rts54_get_ucsi_version,
@@ -2233,6 +2269,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.get_identity_discovery = rts54_get_identity_discovery,
 	.set_comms_state = rts54_set_comms_state,
 	.is_vconn_sourcing = rts54_is_vconn_sourcing,
+	.set_pdos = rts54_set_pdo,
 };
 
 static void pdc_interrupt_callback(const struct device *dev,

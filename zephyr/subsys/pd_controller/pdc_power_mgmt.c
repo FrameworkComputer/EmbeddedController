@@ -114,6 +114,8 @@ enum pdc_cmd_t {
 	CMD_PDC_IS_VCONN_SOURCING,
 	/** CMD_PDC_GET_PD_VDO_DP_CFG */
 	CMD_PDC_GET_PD_VDO_DP_CFG_SELF,
+	/** CMD_PDC_SET_PDOS */
+	CMD_PDC_SET_PDOS,
 	/** CMD_PDC_COUNT */
 	CMD_PDC_COUNT
 };
@@ -320,6 +322,7 @@ test_export_static const char *const pdc_cmd_names[] = {
 	[CMD_PDC_GET_IDENTITY_DISCOVERY] = "PDC_GET_IDENTITY_DISCOVERY",
 	[CMD_PDC_IS_VCONN_SOURCING] = "PDC_IS_VCONN_SOURCING",
 	[CMD_PDC_GET_PD_VDO_DP_CFG_SELF] = "PDC_GET_PD_VDO_DP_CFG_SELF",
+	[CMD_PDC_SET_PDOS] = "PDC_SET_PDOS",
 };
 const int pdc_cmd_types = CMD_PDC_COUNT;
 
@@ -417,6 +420,18 @@ struct pdc_pdos_t {
 	uint32_t pdos[PDO_NUM];
 	/** PDO count */
 	uint8_t pdo_count;
+};
+
+/**
+ * @brief Struct for SET_PDOS command
+ */
+struct set_pdos_t {
+	/** PDOs for SRC or SNK CAPs */
+	uint32_t pdos[PDO_NUM];
+	/** PDO count */
+	uint8_t count;
+	/** SRC or SNK pdo */
+	enum pdo_type_t type;
 };
 
 /**
@@ -587,6 +602,8 @@ struct pdc_port_t {
 	struct k_timer typec_only_timer;
 	/** Type of PDOs to get: SNK|SRC from PDC or Port Partner */
 	struct get_pdo_t get_pdo;
+	/** Variable used to store/set PDC LPM SRC CAPs */
+	struct set_pdos_t set_pdos;
 };
 
 /**
@@ -1529,6 +1546,10 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 		}
 		rv = pdc_is_vconn_sourcing(port->pdc,
 					   (bool *)port->public_api_buff);
+		break;
+	case CMD_PDC_SET_PDOS:
+		rv = pdc_set_pdos(port->pdc, port->set_pdos.type,
+				  port->set_pdos.pdos, port->set_pdos.count);
 		break;
 	default:
 		LOG_ERR("Invalid command: %d", port->cmd->cmd);
