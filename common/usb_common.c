@@ -104,11 +104,6 @@ int usb_get_battery_soc(void)
 #endif
 }
 
-#if defined(CONFIG_USB_PD_PREFER_MV) && \
-	defined(PD_PREFER_LOW_VOLTAGE) + defined(PD_PREFER_HIGH_VOLTAGE) > 1
-#error "PD preferred voltage strategy should be mutually exclusive."
-#endif
-
 /*
  * CC values for regular sources and Debug sources (aka DTS)
  *

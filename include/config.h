@@ -5261,17 +5261,6 @@
 #undef CONFIG_PD_USE_DAC_AS_REF
 
 /*
- * Request for a PDO which voltage is closest to PD_PREFER_MV for sink.
- * This config in theory could achieve better charging efficiency.  Note this
- * may not always pick the PD_PREFER_MV if available (if the PDO's
- * power not sufficient for the system), it will pick second closest PDO until
- * the system desired power is low enough to be charged by the designed PDO.
- *
- * If defined, must also define `struct pd_pref_config_t pd_pref_config`.
- */
-#undef CONFIG_USB_PD_PREFER_MV
-
-/*
  * The Fast Role Swap trigger can be implemented in either the TCPC or PPC
  * driver. If either CONFIG_USB_PD_FRS_TCPC or CONFIG_USB_PD_FRS_PPC is set,
  * CONFIG_USB_FRS will be set automatically to enable the protocol-side of FRS.

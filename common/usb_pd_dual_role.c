@@ -25,10 +25,6 @@
  */
 static unsigned int max_request_mv = PD_MAX_VOLTAGE_MV;
 
-/* TODO(b:169532537): deprecate CONFIG_USB_PD_PREFER_MV */
-STATIC_IF_NOT(CONFIG_USB_PD_PREFER_MV)
-struct pd_pref_config_t __maybe_unused pd_pref_config;
-
 void pd_set_max_voltage(unsigned int mv)
 {
 	max_request_mv = mv;
@@ -74,14 +70,7 @@ int pd_find_pdo_index(uint32_t src_cap_cnt, const uint32_t *const src_caps,
 	int cur_uw = 0;
 	int has_preferred_pdo;
 	int prefer_cur;
-	int desired_uw = 0;
-	const int prefer_mv = pd_pref_config.mv;
-	const int type = pd_pref_config.type;
-
 	int __attribute__((unused)) cur_mv = 0;
-
-	if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV))
-		desired_uw = charge_get_plt_plus_bat_desired_mw() * 1000;
 
 	/* max voltage is always limited by this boards max request */
 	max_mv = MIN(max_mv, PD_MAX_VOLTAGE_MV);
@@ -130,52 +119,10 @@ int pd_find_pdo_index(uint32_t src_cap_cnt, const uint32_t *const src_caps,
 		} else if (IS_ENABLED(PD_PREFER_HIGH_VOLTAGE)) {
 			if (uw == cur_uw && mv > cur_mv)
 				prefer_cur = 1;
-		} else if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV)) {
-			/* Pick if the PDO provides more than desired. */
-			if (uw >= desired_uw) {
-				/* pick if cur_uw is less than desired watt */
-				if (cur_uw < desired_uw)
-					prefer_cur = 1;
-				else if (type == PD_PREFER_BUCK) {
-					/*
-					 * pick the smallest mV above prefer_mv
-					 */
-					if (mv >= prefer_mv && mv < cur_mv)
-						prefer_cur = 1;
-					/*
-					 * pick if cur_mv is less than
-					 * prefer_mv, and we have higher mV
-					 */
-					else if (cur_mv < prefer_mv &&
-						 mv > cur_mv)
-						prefer_cur = 1;
-				} else if (type == PD_PREFER_BOOST) {
-					/*
-					 * pick the largest mV below prefer_mv
-					 */
-					if (mv <= prefer_mv && mv > cur_mv)
-						prefer_cur = 1;
-					/*
-					 * pick if cur_mv is larger than
-					 * prefer_mv, and we have lower mV
-					 */
-					else if (cur_mv > prefer_mv &&
-						 mv < cur_mv)
-						prefer_cur = 1;
-				}
-				/*
-				 * pick the largest power if we don't see one
-				 * staisfy desired power
-				 */
-			} else if (cur_uw == 0 || uw > cur_uw) {
-				prefer_cur = 1;
-			}
 		}
 
 		/* Prefer higher power, except for tiebreaker */
-		has_preferred_pdo =
-			prefer_cur ||
-			(!IS_ENABLED(CONFIG_USB_PD_PREFER_MV) && uw > cur_uw);
+		has_preferred_pdo = prefer_cur || (uw > cur_uw);
 
 		if (has_preferred_pdo) {
 			ret = i;
