@@ -1640,6 +1640,16 @@ static int rts54_set_power_level(const struct device *dev,
 		break;
 	}
 
+	/*
+	 * Apply the same value to both TPC Rp and PD Rp as 0 is a reserved
+	 * value and without setting both fields, the command will fail.
+	 *
+	 * bits 1:0 reserved
+	 * bits 3:2 TPC Rp
+	 * bits 5:4 PD Rp
+	 */
+	byte |= (byte << 2);
+
 	uint8_t payload[] = {
 		SET_TPC_RP.cmd, SET_TPC_RP.len, SET_TPC_RP.sub, 0x00, byte,
 	};

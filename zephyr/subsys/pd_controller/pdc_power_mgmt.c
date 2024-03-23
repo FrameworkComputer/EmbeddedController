@@ -2034,6 +2034,8 @@ static bool is_connectionless_cmd(enum pdc_cmd_t pdc_cmd)
 	switch (pdc_cmd) {
 	case CMD_PDC_RESET:
 		__fallthrough;
+	case CMD_PDC_SET_POWER_LEVEL:
+		__fallthrough;
 	case CMD_PDC_GET_INFO:
 		return true;
 	default:
