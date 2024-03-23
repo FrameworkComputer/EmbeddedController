@@ -11,6 +11,7 @@
 
 #include "charge_manager.h"
 #include "hooks.h"
+#include "usbc/pdc_dpm.h"
 #include "usbc/pdc_power_mgmt.h"
 
 #include <zephyr/devicetree.h>
@@ -238,6 +239,8 @@ enum src_typec_attached_local_state_t {
 	SRC_TYPEC_ATTACHED_SET_SINK_PATH_OFF,
 	/** SRC_TYPEC_ATTACHED_DEBOUNCE */
 	SRC_TYPEC_ATTACHED_DEBOUNCE,
+	/** SRC_TYPEC_ATTACHED_ADD_SINK */
+	SRC_TYPEC_ATTACHED_ADD_SINK,
 	/** SRC_TYPEC_ATTACHED_RUN */
 	SRC_TYPEC_ATTACHED_RUN,
 };
@@ -464,6 +467,17 @@ enum policy_src_attached_t {
 	SRC_POLICY_SWAP_TO_SNK,
 	/** Forces sink-only operation, even if it requires a disconnect */
 	SRC_POLICY_FORCE_SNK,
+	/** Triggers sending CMD_SET_POWER_LEVEL to set Rp value */
+	SRC_POLICY_SET_RP,
+	/** Trigger a call into DPM source current balancing policy */
+	SRC_POLICY_EVAL_SNK_FIXED_PDO,
+	/** Set new SRC CAP for PDC port in source power role */
+	SRC_POLICY_UPDATE_SRC_CAPS,
+	/**
+	 * Triggers sending CMD_PDC_GET_RDO to extract RDO for current
+	 * balancing policy.
+	 */
+	SRC_POLICY_GET_RDO,
 
 	/** SRC_POLICY_COUNT */
 	SRC_POLICY_COUNT
@@ -479,6 +493,8 @@ struct pdc_src_attached_policy_t {
 	struct pdc_pdos_t snk;
 	/** PDOs for Source caps */
 	struct pdc_pdos_t src;
+	/** Request RDO from port partner */
+	uint32_t rdo;
 };
 
 /**
@@ -629,6 +645,16 @@ struct pdc_config_t {
 	 * main thread for this port
 	 */
 	void (*create_thread)(const struct device *dev);
+};
+
+static const uint32_t pdo_fixed_flags =
+	(PDO_FIXED_DUAL_ROLE | PDO_FIXED_DATA_SWAP | PDO_FIXED_COMM_CAP);
+
+static const uint32_t pdc_src_pdo_nominal[] = {
+	PDO_FIXED(5000, 1500, pdo_fixed_flags),
+};
+static const uint32_t pdc_src_pdo_max[] = {
+	PDO_FIXED(5000, 3000, pdo_fixed_flags),
 };
 
 static const struct smf_state pdc_states[];
@@ -1086,6 +1112,9 @@ static void run_snk_policies(struct pdc_port_t *port)
 
 static void run_src_policies(struct pdc_port_t *port)
 {
+	const struct pdc_config_t *config = port->dev->config;
+	int port_num = config->connector_num;
+
 	if (atomic_test_and_clear_bit(port->src_policy.flags,
 				      SRC_POLICY_SWAP_TO_SNK)) {
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
@@ -1094,6 +1123,26 @@ static void run_src_policies(struct pdc_port_t *port)
 					     SRC_POLICY_FORCE_SNK)) {
 		queue_internal_cmd(port, CMD_PDC_SET_CCOM);
 		return;
+	} else if (atomic_test_and_clear_bit(port->src_policy.flags,
+					     SRC_POLICY_EVAL_SNK_FIXED_PDO)) {
+		/* Adjust source current limits if necessary */
+		pdc_dpm_eval_sink_fixed_pdo(port_num,
+					    port->src_policy.snk.pdos[0]);
+		return;
+	} else if (atomic_test_and_clear_bit(port->src_policy.flags,
+					     SRC_POLICY_UPDATE_SRC_CAPS)) {
+		/* Update the PDC SRC_CAP message */
+		queue_internal_cmd(port, CMD_PDC_SET_PDOS);
+		/*
+		 * After sending new SRC_CAP message, get the RDO from the port
+		 * partner to see if the current limit can be adjusted.
+		 */
+		atomic_set_bit(port->src_policy.flags, SRC_POLICY_GET_RDO);
+		return;
+	} else if (atomic_test_and_clear_bit(port->src_policy.flags,
+					     SRC_POLICY_GET_RDO)) {
+		/* Get the RDO from the port partner */
+		queue_internal_cmd(port, CMD_PDC_GET_RDO);
 	}
 
 	send_pending_public_commands(port);
@@ -1127,6 +1176,9 @@ static void pdc_unattached_entry(void *obj)
 
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
 		port->unattached_local_state = UNATTACHED_SET_SINK_PATH_OFF;
+		/* Update source current limit policy */
+		pdc_dpm_remove_sink(port_number);
+		pdc_dpm_remove_source(port_number);
 	}
 }
 
@@ -1233,6 +1285,9 @@ static void pdc_src_attached_run(void *obj)
 		port->get_pdo.pdo_type = SINK_PDO;
 		port->get_pdo.pdo_source = PARTNER_PDO;
 		queue_internal_cmd(port, CMD_PDC_GET_PDOS);
+		/* Evaluate SNK CAP after it's been retrieved from the PDC */
+		atomic_set_bit(port->src_policy.flags,
+			       SRC_POLICY_EVAL_SNK_FIXED_PDO);
 		return;
 	case SRC_ATTACHED_RUN:
 		set_attached_pdc_state(port, SRC_ATTACHED_STATE);
@@ -1455,6 +1510,7 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 {
 	int rv;
 	const struct pdc_config_t *const config = port->dev->config;
+	uint32_t *rdo;
 
 	LOG_DBG("C%d: Send %s (%d) %s", config->connector_num,
 		pdc_cmd_names[port->cmd->cmd], port->cmd->cmd,
@@ -1481,7 +1537,13 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 				  get_pdc_pdos_ptr(port, &port->get_pdo)->pdos);
 		break;
 	case CMD_PDC_GET_RDO:
-		rv = pdc_get_rdo(port->pdc, &port->snk_policy.rdo);
+		/* RDO from LPM or port partner depending on power role */
+		if (port->attached_state == SRC_ATTACHED_STATE) {
+			rdo = &port->src_policy.rdo;
+		} else {
+			rdo = &port->snk_policy.rdo;
+		}
+		rv = pdc_get_rdo(port->pdc, rdo);
 		break;
 	case CMD_PDC_SET_RDO:
 		rv = pdc_set_rdo(port->pdc, port->snk_policy.rdo_to_send);
@@ -1705,6 +1767,7 @@ static void pdc_send_cmd_wait_run(void *obj)
 static void pdc_send_cmd_wait_exit(void *obj)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
+	const struct pdc_config_t *const config = port->dev->config;
 	struct pdc_pdos_t *pdc_pdos;
 
 	if (port->cmd == &port->send_cmd.public) {
@@ -1731,6 +1794,13 @@ static void pdc_send_cmd_wait_exit(void *obj)
 			} else {
 				pdc_pdos->pdo_count++;
 			}
+		}
+		break;
+	case CMD_PDC_GET_RDO:
+		if (port->attached_state == SRC_ATTACHED_STATE) {
+			/* Inform DPM port partner's current request */
+			pdc_dpm_evaluate_request_rdo(config->connector_num,
+						     port->src_policy.rdo);
 		}
 		break;
 	default:
@@ -1763,6 +1833,8 @@ static void pdc_src_typec_only_entry(void *obj)
 static void pdc_src_typec_only_run(void *obj)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
+	const struct pdc_config_t *config = port->dev->config;
+	int port_number = config->connector_num;
 
 	set_attached_pdc_state(port, SRC_ATTACHED_TYPEC_ONLY_STATE);
 
@@ -1784,11 +1856,22 @@ static void pdc_src_typec_only_run(void *obj)
 	case SRC_TYPEC_ATTACHED_DEBOUNCE:
 		if (k_timer_status_get(&port->typec_only_timer) > 0) {
 			port->src_typec_attached_local_state =
-				SRC_TYPEC_ATTACHED_RUN;
+				SRC_TYPEC_ATTACHED_ADD_SINK;
 		}
 		return;
+	case SRC_TYPEC_ATTACHED_ADD_SINK:
+		port->src_typec_attached_local_state = SRC_TYPEC_ATTACHED_RUN;
+		/* Notify DPM that a type-c only port partner is attached */
+		pdc_dpm_add_non_pd_sink(port_number);
+		return;
 	case SRC_TYPEC_ATTACHED_RUN:
-		send_pending_public_commands(port);
+		/* Check if Rp value needs to be adjusted */
+		if (atomic_test_and_clear_bit(port->src_policy.flags,
+					      SRC_POLICY_SET_RP)) {
+			queue_internal_cmd(port, CMD_PDC_SET_POWER_LEVEL);
+		} else {
+			send_pending_public_commands(port);
+		}
 		break;
 	}
 }
@@ -3173,4 +3256,94 @@ int pdc_power_mgmt_get_cable_prop(int port, union cable_property_t *cable_prop)
 	*cable_prop = pdc_data[port]->port.cable_prop;
 
 	return 0;
+}
+
+int pdc_power_mgmt_set_src_pdo(int port, const uint32_t *src_pdo,
+			       uint8_t pdo_count)
+{
+	struct pdc_port_t *pdc;
+	int i;
+	int ret;
+
+	pdc = &pdc_data[port]->port;
+
+	if (pdo_count > PDO_NUM) {
+		return -ERANGE;
+	}
+	/* Set up */
+	pdc->set_pdos.count = pdo_count;
+	pdc->set_pdos.type = SOURCE_PDO;
+	for (i = 0; i < pdo_count; i++) {
+		pdc->set_pdos.pdos[i] = src_pdo[i];
+	}
+
+	/* Block until command completes */
+	ret = public_api_block(port, CMD_PDC_SET_PDOS);
+	if (ret) {
+		return ret;
+	}
+
+	return EC_SUCCESS;
+}
+
+enum usb_typec_current_t pdc_power_mgmt_get_default_current_limit(int port)
+{
+	return TC_CURRENT_1_5A;
+}
+
+/**
+ * @brief Adjust typec and USB-PD current limits
+ */
+int pdc_power_mgmt_set_current_limit(int port_num,
+				     enum usb_typec_current_t current)
+{
+	struct pdc_port_t *pdc;
+
+	if (!is_pdc_port_valid(port_num)) {
+		return -ERANGE;
+	}
+
+	pdc = &pdc_data[port_num]->port;
+
+	/* Always set the new Rp value */
+	pdc->una_policy.tcc = current;
+
+	/* Further actions depend on the port attached state and power role */
+	if (pdc->attached_state == SRC_ATTACHED_STATE) {
+		/*
+		 * Active USB-PD SRC connection. Update the LPM source cap which
+		 * will also trigger the PDC to send a new SRC_CAP message to
+		 * the port partner.
+		 */
+		pdc->set_pdos.count = 1;
+		pdc->set_pdos.type = SOURCE_PDO;
+		pdc->set_pdos.pdos[0] = current == TC_CURRENT_3_0A ?
+						pdc_src_pdo_max[0] :
+						pdc_src_pdo_nominal[0];
+
+		/* Set flag to trigger SET_PDOS command to PDC */
+		atomic_set_bit(pdc->src_policy.flags,
+			       SRC_POLICY_UPDATE_SRC_CAPS);
+	} else if (pdc->attached_state == SRC_ATTACHED_TYPEC_ONLY_STATE) {
+		/*
+		 * Active TypeC only SRC connection. Because the connection is
+		 * active and not a PD connection, apply the new Rp value now.
+		 */
+		atomic_set_bit(pdc->src_policy.flags, SRC_POLICY_SET_RP);
+	} else {
+		/* Update the default Rp level */
+		atomic_set_bit(pdc->una_policy.flags, UNA_POLICY_TCC);
+	}
+
+	return EC_SUCCESS;
+}
+
+int pdc_power_mgmt_frs_enable(int port_num, bool enable)
+{
+	/*
+	 * TODO(b/337958604): Currently there is no mechanism to enable/disable
+	 * FRS. Waiting for this control to be available in PDC.
+	 */
+
+	return EC_SUCCESS;
 }
