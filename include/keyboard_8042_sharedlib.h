@@ -19,13 +19,15 @@ struct button_8042_t {
 	int repeat;
 };
 
+typedef uint16_t scancode_set2_t[][KEYBOARD_ROWS];
+
 /**
  * Register scancode set for the standard ChromeOS keyboard matrix set 2.
  *
  * @param scancode_set	Scancode set to register.
- * @param size		Size of the scancode set in bytes.
+ * @param cols Scancode column size
  */
-void register_scancode_set2(uint16_t *scancode_set, size_t size);
+void register_scancode_set2(scancode_set2_t *scancode_set, uint8_t cols);
 
 /**
  * Get the standard Chrome OS keyboard matrix set 2 scanset

@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "i8042_protocol.h"
 #include "keyboard_8042.h"
+#include "keyboard_8042_sharedlib.h"
 #include "keyboard_protocol.h"
 #include "keyboard_scan.h"
 #include "lpc.h"
@@ -997,12 +998,37 @@ test_static int test_vivaldi_top_keys(void)
 	return EC_SUCCESS;
 }
 
+static scancode_set2_t scancode_test = {
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+};
+
+extern scancode_set2_t *scancode_set2;
+
+static int test_register_scancode_set2(void)
+{
+	/* Save */
+	scancode_set2_t *scancode_default = scancode_set2;
+	uint8_t cols = keyboard_get_cols();
+
+	register_scancode_set2(&scancode_test, 1);
+	TEST_ASSERT(keyboard_get_cols() == 1);
+	TEST_ASSERT(scancode_set2 == &scancode_test);
+	/* Out of bounds */
+	TEST_ASSERT(get_scancode_set2(0, cols + 1) == 0);
+
+	/* Restore */
+	register_scancode_set2(scancode_default, cols);
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, const char **argv)
 {
 	test_reset();
 	wait_for_task_started();
 
 	if (system_get_image_copy() == EC_IMAGE_RO) {
+		RUN_TEST(test_register_scancode_set2);
 		RUN_TEST(test_8042_aux_loopback);
 		RUN_TEST(test_8042_aux_two_way_communication);
 		RUN_TEST(test_8042_aux_inhibit);

@@ -115,7 +115,7 @@ __override struct keyboard_scan_config keyscan_config = {
 	},
 };
 
-static uint16_t scancode_set2_rgb[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
+static scancode_set2_t scancode_set2_rgb = {
 	{ 0x0000, 0x0000, 0x0014, 0xe01f, 0xe014, 0xe007, 0x0000, 0x0000 },
 	{ 0x001f, 0x0076, 0x0017, 0x000e, 0x001c, 0x003a, 0x000d, 0x0016 },
 	{ 0x006c, 0x000c, 0x0004, 0x0006, 0x0005, 0xe071, 0x0026, 0x002a },
@@ -132,12 +132,13 @@ static uint16_t scancode_set2_rgb[KEYBOARD_COLS_MAX][KEYBOARD_ROWS] = {
 	{ 0x0073, 0x0066, 0xe071, 0x005d, 0x005a, 0xe04a, 0x0070, 0x0021 },
 	{ 0x0023, 0xe05a, 0x0075, 0x0067, 0xe069, 0xe07a, 0x007d, 0x0069 },
 };
+BUILD_ASSERT(ARRAY_SIZE(scancode_set2_rgb) == KEYBOARD_COLS_MAX);
 
 static void keyboard_matrix_init(void)
 {
 	CPRINTS("%s", __func__);
 
-	register_scancode_set2((uint16_t *)&scancode_set2_rgb,
-			       sizeof(scancode_set2_rgb));
+	register_scancode_set2(&scancode_set2_rgb,
+			       ARRAY_SIZE(scancode_set2_rgb));
 }
 DECLARE_HOOK(HOOK_INIT, keyboard_matrix_init, HOOK_PRIO_PRE_DEFAULT);
