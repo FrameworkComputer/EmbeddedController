@@ -138,9 +138,10 @@ SYS_INIT(base_init, APPLICATION, 1);
 
 void base_init_setting(void)
 {
-	if (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED) &&
-	    adc_read_channel(ADC_BASE_DET) > DETACH_MIN_THRESHOLD_MV) {
-		base_update(false);
+	if (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED)) {
+		if (adc_read_channel(ADC_BASE_DET) > DETACH_MIN_THRESHOLD_MV) {
+			base_update(false);
+		}
 		base_detect_enable(true);
 	}
 }
