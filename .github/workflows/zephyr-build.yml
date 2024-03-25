@@ -16,18 +16,17 @@ on:
 
 jobs:
   build:
-    name: Build Framework platforms
-    runs-on: [marigold2-builders]
+    runs-on: [marigold-builders]
 
     strategy:
       # Only build one at a time because we have only one working directory
       max-parallel: 1
       matrix:
         platform: [
-          # Build marigold only on marigold builder and folder
-          {name: marigold, folder: zephyr-q1 },
-          {name: lotus, folder: marigold },
-          {name: azalea, folder: marigold },
+          # Marigold builder uses same folder for all
+          { name: marigold, folder: marigold1 },
+          { name: lotus, folder: marigold1 },
+          { name: azalea, folder: marigold1 },
         ]
 
 
@@ -39,18 +38,18 @@ jobs:
     steps:
       # Need to use git
       #- name: Checkout EC code
-      #  uses: actions/checkout@v3
+      #  uses: actions/checkout@v4
       #  with:
-      #    path: /data/ec_home/chromiumos/src/platform/ec
+      #    path: /${{ matrix.platform.folder }}/ec_home/chromiumos/src/platform/ec
 
       #- name: Checkout Zephyr code
       #  uses: actions/checkout@v2
-      #    path: /data/ec_home/chromiumos/src/third_party/zephyr/main
+      #    path: /${{ matrix.platform.folder }}/ec_home/chromiumos/src/third_party/zephyr/main
       #    ref: lotus-zephyr
       #    repository: ssh://git@github.com/FrameworkComputer/zephyr-ec
 
       # Need to manually checkout
-      # actions/checkout@v3 complains:
+      # actions/checkout@v4 complains:
       # Error: Repository path '/data/ec_home/chromiumos/src/platform/ec' is not under '/data/ec_home/actions-runner/_work/ec/ec'
       # See: https://github.com/actions/checkout/issues/197
       - name: Manual checkout
@@ -82,7 +81,7 @@ jobs:
         run: |
           echo "VERSIONINFO=$(date -u +'%Y-%m-%d-%H-%M-%S')_$GITHUB_SHA" >> $GITHUB_ENV
 
-      - uses: actions/upload-artifact@v3
+      - uses: actions/upload-artifact@v4
         with:
           name: ${{ matrix.platform.name }}.${{ env.VERSIONINFO }}
           path: /${{ matrix.platform.folder }}/ec_home/chromiumos/src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output

@@ -118,13 +118,16 @@
 			};
 		};
 		
-		pwr-power-state-off {
-			power_led {
-				led-id = "EC_LED_ID_POWER_LED";
-				color-0 {
-					led-color = "LED_OFF";
-				};
-			};
-		};
+// Cause build failure
+// ERROR: lotus: 2 overlapping LED policies found for LED_PWRS_CHARGE, POWER_S0, EC_LED_ID_POWER_LED,
+// I think because there's no chipset-state declared here
+//		pwr-power-state-off {
+//			power_led {
+//				led-id = "EC_LED_ID_POWER_LED";
+//				color-0 {
+//					led-color = "LED_OFF";
+//				};
+//			};
+//		};
 	};
 };
