@@ -13,3 +13,4 @@ zephyr_library_sources_ifdef(CONFIG_HW_TEST_FLASH_WRITE_PROTECT src/flash_write_
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_FP_TRANSPORT src/fp_transport.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_FTRAPV src/ftrapv.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_LIBC_PRINTF src/libc_printf.c)
+zephyr_library_sources_ifdef(CONFIG_HW_TEST_MALLOC src/malloc.c)

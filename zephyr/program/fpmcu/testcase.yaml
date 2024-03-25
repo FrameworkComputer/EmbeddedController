@@ -47,3 +47,10 @@ tests:
     - CONFIG_HW_TEST_LIBC_PRINTF=y
     extra_conf_files:
     - prj_hw_tests.conf
+  malloc:
+    extra_configs:
+    - CONFIG_HW_TEST_MALLOC=y
+    # Added to reduce RO flash usage
+    - CONFIG_PM=n
+    extra_conf_files:
+    - prj_hw_tests.conf

@@ -46,3 +46,9 @@ config HW_TEST_LIBC_PRINTF
 	select ZTEST
 	help
 	  Prints a hardcoded string to check by a test runner.
+
+config HW_TEST_MALLOC
+	bool "malloc test"
+	select ZTEST
+	help
+	  The test verifies basic malloc operations.
