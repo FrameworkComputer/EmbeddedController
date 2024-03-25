@@ -65,27 +65,27 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		/* Battery only or ADP < 55W */
 		if (battery_watt == battery_55w) {
 			pl2_watt = 35;
-			pl4_watt = 70;
+			pl4_watt = 50;
 		} else if (battery_watt == battery_61w) {
 			pl2_watt = 41;
-			pl4_watt = 70;
+			pl4_watt = 60;
 		}
 
 	} else if (battery_percent <= 30) {
 		/* ADP >= 55W and Battery percentage <= 30% */
-		power = ((active_power * 95) / 100) - 20;
-		pl2_watt = MIN(power, 41);
+		power = ((active_power * 95) / 100);
+		pl2_watt = MIN((power-20), 60);
 		pl4_watt = power;
 
 	} else {
 		/* ADP >= 55W and Battery percentage > 30% */
 		power = ((active_power * 95) / 100) - 20;
 		if (battery_watt == battery_55w) {
-			pl2_watt = MIN((power + 35), 41);
-			pl4_watt = MIN((power + 58), 167);
+			pl2_watt = MIN((power + 55), 60);
+			pl4_watt = MIN((power + 38), 120);
 		} else if (battery_watt == battery_61w) {
-			pl2_watt = MIN((power + 41), 41);
-			pl4_watt = MIN((power + 67), 167);
+			pl2_watt = MIN((power + 61), 60);
+			pl4_watt = MIN((power + 42), 120);
 		}
 	}
 
