@@ -431,7 +431,7 @@ test_export_static uint8_t key_vol_up_col = KEYBOARD_DEFAULT_COL_VOL_UP;
 
 void set_vol_up_key(uint8_t row, uint8_t col)
 {
-	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS) {
+	if (col < keyboard_cols && row < KEYBOARD_ROWS) {
 		key_vol_up_row = row;
 		key_vol_up_col = col;
 	}

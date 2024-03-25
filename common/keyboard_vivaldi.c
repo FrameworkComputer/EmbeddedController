@@ -158,7 +158,7 @@ static void vivaldi_init(void)
 		row = vivaldi_keys[i].row;
 		col = vivaldi_keys[i].col;
 
-		if (col >= KEYBOARD_COLS_MAX || row >= KEYBOARD_ROWS) {
+		if (col >= keyboard_cols || row >= KEYBOARD_ROWS) {
 			CPRINTS("VIVALDI: Bad (row,col) for T-%u: (%u,%u)", i,
 				row, col);
 			ASSERT(false);
