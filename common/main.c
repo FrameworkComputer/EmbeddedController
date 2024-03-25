@@ -211,6 +211,12 @@ test_mockable __keep int main(void)
 		}
 	}
 
+	/*
+	 * Copy this line in case you need even earlier hooks instead of moving
+	 * it. Callbacks of this type are expected to handle multiple calls.
+	 */
+	hook_notify(HOOK_INIT_EARLY);
+
 #ifdef HAS_TASK_KEYSCAN
 
 #ifdef CONFIG_KEYBOARD_SCAN_ADC

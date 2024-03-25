@@ -84,6 +84,13 @@ enum hook_type {
 	HOOK_INIT = 0,
 
 	/*
+	 * This hook is called before HOOK_INIT and some early init routines.
+	 * Hook routines of this type are expected to be called multiple times.
+	 * So, make sure your routine takes care of 'initialized' state.
+	 */
+	HOOK_INIT_EARLY,
+
+	/*
 	 * System clock changed frequency.
 	 *
 	 * The "pre" frequency hook is called before we change the frequency.

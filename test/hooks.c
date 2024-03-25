@@ -13,6 +13,8 @@
 #include "util.h"
 
 static int init_hook_count;
+static int init_early_hook_count;
+static bool init_early_before_init;
 static int tick_hook_count;
 static int tick2_hook_count;
 static int tick_count_seen_by_tick2;
@@ -26,6 +28,13 @@ static void init_hook(void)
 	init_hook_count++;
 }
 DECLARE_HOOK(HOOK_INIT, init_hook, HOOK_PRIO_DEFAULT);
+
+static void init_early_hook(void)
+{
+	init_early_hook_count++;
+	init_early_before_init = init_hook_count == 0;
+}
+DECLARE_HOOK(HOOK_INIT_EARLY, init_early_hook, HOOK_PRIO_DEFAULT);
 
 static void tick_hook(void)
 {
@@ -67,6 +76,13 @@ static const struct deferred_data non_deferred_func_data = { non_deferred_func }
 static int test_init_hook(void)
 {
 	TEST_ASSERT(init_hook_count == 1);
+	return EC_SUCCESS;
+}
+
+static int test_init_early_hook(void)
+{
+	TEST_ASSERT(init_early_hook_count == 1);
+	TEST_ASSERT(init_early_before_init == true);
 	return EC_SUCCESS;
 }
 
@@ -161,6 +177,7 @@ void run_test(int argc, const char **argv)
 	test_reset();
 
 	RUN_TEST(test_init_hook);
+	RUN_TEST(test_init_early_hook);
 	RUN_TEST(test_ticks);
 	RUN_TEST(test_priority);
 	RUN_TEST(test_deferred);

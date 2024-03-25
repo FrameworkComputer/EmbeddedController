@@ -47,6 +47,9 @@ static int test_main(void)
 	test_init();
 
 	timer_init();
+
+	hook_notify(HOOK_INIT_EARLY);
+
 #ifdef HAS_TASK_KEYSCAN
 	keyboard_scan_init();
 #endif
