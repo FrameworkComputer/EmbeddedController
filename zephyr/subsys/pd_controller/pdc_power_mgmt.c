@@ -794,14 +794,18 @@ static void queue_internal_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd)
 }
 
 /**
- * @brief This function should only be called after the completion of the
+ * @brief Reads connector status and takes appropriate action.
+ *
+ * This function should only be called after the completion of the
  * GET_CONNECTOR_STATUS command. It reads the connect_status,
  * power_operation_mode, and power_direction bit to determine which state should
  * be entered.
- * NOTE: This function changes state, so a return should be added
- * after it's called.
+ * Note: The caller should return after this call if it changed state (returned
+ * true).
+ *
+ * @return true if state changed, false otherwise
  */
-static void handle_connector_status(struct pdc_port_t *port)
+static bool handle_connector_status(struct pdc_port_t *port)
 {
 	if (!port->connector_status.connect_status) {
 		/* Port is not connected */
@@ -820,12 +824,12 @@ static void handle_connector_status(struct pdc_port_t *port)
 				/* Port partner is a sink device
 				 */
 				set_pdc_state(port, PDC_SRC_ATTACHED);
-				return;
+				return true;
 			} else {
 				/* Port partner is a source
 				 * device */
 				set_pdc_state(port, PDC_SNK_ATTACHED);
-				return;
+				return true;
 			}
 			break;
 		case USB_TC_CURRENT_1_5A:
@@ -843,13 +847,15 @@ static void handle_connector_status(struct pdc_port_t *port)
 		if (port->connector_status.power_direction) {
 			/* Port partner is a Typec Sink device */
 			set_pdc_state(port, PDC_SRC_TYPEC_ONLY);
-			return;
+			return true;
 		} else {
 			/* Port partner is a Typec Source device */
 			set_pdc_state(port, PDC_SNK_TYPEC_ONLY);
-			return;
+			return true;
 		}
 	}
+
+	return true;
 }
 
 /**
@@ -1388,26 +1394,32 @@ static void pdc_send_cmd_wait_run(void *obj)
 					     CCI_CMD_COMPLETED)) {
 		LOG_DBG("CCI_CMD_COMPLETED");
 		if (port->cmd->cmd == CMD_PDC_GET_CONNECTOR_STATUS) {
-			handle_connector_status(port);
-			return;
+			if (handle_connector_status(port)) {
+				return;
+			}
 		} else {
 			set_pdc_state(port, port->send_cmd_return_state);
 			return;
 		}
-	}
-
-	port->send_cmd.wait_counter++;
-	if (port->send_cmd.wait_counter > WAIT_MAX) {
-		port->cmd->error = true;
-		if (port->cmd->cmd == CMD_PDC_GET_CONNECTOR_STATUS) {
-			/* Can't get connector status. Enter unattached state
-			 * with error flag set, so it can reset the PDC */
-			port->cmd->cmd = CMD_PDC_RESET;
-			set_pdc_state(port, PDC_UNATTACHED);
-			return;
-		} else {
-			set_pdc_state(port, port->send_cmd_return_state);
-			return;
+	} else {
+		/* No response: Wait until timeout. */
+		port->send_cmd.wait_counter++;
+		if (port->send_cmd.wait_counter > WAIT_MAX) {
+			port->cmd->error = true;
+			if (port->cmd->cmd == CMD_PDC_GET_CONNECTOR_STATUS) {
+				/*
+				 * Can't get connector status. Enter unattached
+				 * state with error flag set, so it can reset
+				 * the PDC.
+				 */
+				port->cmd->cmd = CMD_PDC_RESET;
+				set_pdc_state(port, PDC_UNATTACHED);
+				return;
+			} else {
+				set_pdc_state(port,
+					      port->send_cmd_return_state);
+				return;
+			}
 		}
 	}
 }
