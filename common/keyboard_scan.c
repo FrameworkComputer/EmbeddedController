@@ -140,6 +140,16 @@ static volatile int force_poll;
 /* Indicates keyboard_scan_task has started. */
 test_export_static uint8_t keyboard_scan_task_started;
 
+uint8_t keyboard_get_cols(void)
+{
+	return keyboard_cols;
+}
+
+void keyboard_set_cols(uint8_t cols)
+{
+	keyboard_cols = cols;
+}
+
 test_export_static int keyboard_scan_is_enabled(void)
 {
 	/* NOTE: this is just an instantaneous glimpse of the variable. */

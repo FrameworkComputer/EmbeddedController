@@ -195,6 +195,17 @@ static int verify_key_presses(int old, int expected)
 	}
 }
 
+static int set_cols_test(void)
+{
+	const uint8_t cols = keyboard_get_cols();
+
+	keyboard_set_cols(cols + 1);
+	TEST_ASSERT(keyboard_get_cols() == cols + 1);
+	keyboard_set_cols(cols);
+
+	return EC_SUCCESS;
+}
+
 static int deghost_test(void)
 {
 	reset_key_state();
@@ -649,6 +660,7 @@ static void run_test_step1(void)
 	test_reset();
 	msleep(1);
 
+	RUN_TEST(set_cols_test);
 	RUN_TEST(deghost_test);
 
 	if (IS_ENABLED(CONFIG_KEYBOARD_STRICT_DEBOUNCE))
