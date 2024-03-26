@@ -102,7 +102,7 @@ BUILD_ASSERT(ARRAY_SIZE(boot_key_list) == BOOT_KEY_COUNT);
 static uint32_t boot_key_value = BOOT_KEY_NONE;
 #endif
 
-uint8_t keyboard_cols = KEYBOARD_COLS_MAX;
+uint8_t keyboard_cols = KEYBOARD_COLS;
 
 /* Debounced key matrix */
 static uint8_t debounced_state[KEYBOARD_COLS_MAX];

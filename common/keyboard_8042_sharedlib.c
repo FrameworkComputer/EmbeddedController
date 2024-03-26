@@ -41,7 +41,7 @@ static scancode_set2_t scancode_set2_default = {
 	{ 0x006c, 0x0075, 0x007d, 0x0079, 0x007a, 0x0072, 0x0069, 0xe05a },
 #endif
 };
-BUILD_ASSERT(ARRAY_SIZE(scancode_set2_default) == KEYBOARD_COLS_MAX);
+BUILD_ASSERT(ARRAY_SIZE(scancode_set2_default) == KEYBOARD_COLS);
 
 test_export_static scancode_set2_t *scancode_set2 = &scancode_set2_default;
 
