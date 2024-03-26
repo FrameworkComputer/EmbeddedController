@@ -347,7 +347,9 @@ class AllTests:
             TestConfig(test_name="mutex"),
             TestConfig(test_name="mutex_trylock"),
             TestConfig(test_name="mutex_recursive"),
-            TestConfig(test_name="otp_key"),
+            TestConfig(
+                test_name="otp_key", exclude_boards=[BLOONCHIPPER, DARTMONKEY]
+            ),
             TestConfig(test_name="panic"),
             TestConfig(test_name="pingpong"),
             TestConfig(test_name="printf"),
