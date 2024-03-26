@@ -1120,9 +1120,12 @@ static void st_read_run(void *o)
 
 		/* Only print this log on init */
 		if (data->init_local_state != INIT_PDC_COMPLETE) {
-			LOG_INF("C%d: Realtek: FW Version: %04x",
-				cfg->connector_number, info->fw_version);
-			LOG_INF("C%d: Realtek: PD Version: %04x, Rev %04x",
+			LOG_INF("C%d: Realtek: FW Version: %u.%u.%u",
+				cfg->connector_number,
+				PDC_FWVER_GET_MAJOR(info->fw_version),
+				PDC_FWVER_GET_MINOR(info->fw_version),
+				PDC_FWVER_GET_PATCH(info->fw_version));
+			LOG_INF("C%d: Realtek: PD Version: %u, Rev %u",
 				cfg->connector_number, info->pd_version,
 				info->pd_revision);
 		}
