@@ -380,7 +380,10 @@ class AllTests:
                 test_name="otp_key", exclude_boards=[BLOONCHIPPER, DARTMONKEY]
             ),
             TestConfig(test_name="panic"),
-            TestConfig(test_name="pingpong"),
+            # Task synchronization covered by Zephyr tests and shim layer by unit tests.
+            # task_wait_event is implemented based on k_poll_event and it is verified by
+            # the kernel.poll test.
+            TestConfig(test_name="pingpong", skip_for_zephyr=True),
             TestConfig(test_name="printf"),
             TestConfig(test_name="queue"),
             TestConfig(test_name="restricted_console"),
