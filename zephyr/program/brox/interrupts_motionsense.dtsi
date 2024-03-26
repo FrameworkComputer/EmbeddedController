@@ -9,10 +9,4 @@
 		flags = <GPIO_INT_EDGE_FALLING>;
 		handler = "bma4xx_interrupt";
 	};
-
-	int_lid_open: lid_open {
-		irq-pin = <&gpio_lid_open>;
-		flags = <GPIO_INT_EDGE_BOTH>;
-		handler = "lid_interrupt";
-	};
 };

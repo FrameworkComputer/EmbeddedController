@@ -6,12 +6,6 @@ common:
   platform_allow: native_posix
 tests:
   # ISL923x common tests
-  isl923x.extpower.brox:
-    extra_configs:
-      - CONFIG_TEST_BOARD_BROX=y
-      - CONFIG_TEST_EXTPOWER=y
-      - CONFIG_TEST_SRC="src/charger.c"
-
   isl923x.extpower.nissa.craask:
     extra_configs:
       - CONFIG_TEST_BOARD_CRAASK=y
