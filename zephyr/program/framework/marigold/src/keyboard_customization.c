@@ -281,13 +281,13 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t fn, int8_t pressed)
 		if (fn_table_media_set(pressed, KB_FN_F6))
 			*key_code = SCANCODE_NEXT_TRACK;
 		break;
-	case SCANCODE_F7:  /* TODO: DIM_SCREEN */
+	case SCANCODE_F7:  /* DIM_SCREEN */
 		if (fn_table_media_set(pressed, KB_FN_F7)) {
 			hid_consumer(BUTTON_ID_BRIGHTNESS_DECREMENT, pressed);
 			return EC_ERROR_UNIMPLEMENTED;
 		}
 		break;
-	case SCANCODE_F8:  /* TODO: BRIGHTEN_SCREEN */
+	case SCANCODE_F8:  /* BRIGHTEN_SCREEN */
 		if (fn_table_media_set(pressed, KB_FN_F8)) {
 			hid_consumer(BUTTON_ID_BRIGHTNESS_INCREMENT, pressed);
 			return EC_ERROR_UNIMPLEMENTED;
@@ -321,7 +321,7 @@ int hotkey_F1_F12(uint16_t *key_code, uint16_t fn, int8_t pressed)
 		if (fn_table_media_set(pressed, KB_FN_F11))
 			*key_code = 0xE07C;
 		break;
-	case SCANCODE_F12:  /* TODO: FRAMEWORK */
+	case SCANCODE_F12:  /* Framework logo key */
 		/* Media Select scan code */
 		if (fn_table_media_set(pressed, KB_FN_F12))
 			*key_code = 0xE050;
@@ -338,11 +338,11 @@ int hotkey_special_key(uint16_t *key_code, int8_t pressed)
 	const uint16_t prss_key = *key_code;
 
 	switch (prss_key) {
-	case SCANCODE_DELETE:  /* TODO: INSERT */
+	case SCANCODE_DELETE:  /* INSERST */
 		if (fn_table_set(pressed, KB_FN_DELETE))
 			*key_code = 0xe070;
 		break;
-	case SCANCODE_K:  /* TODO: SCROLL_LOCK */
+	case SCANCODE_K:
 		if (fn_table_set(pressed, KB_FN_K))
 			*key_code = SCANCODE_SCROLL_LOCK;
 		break;
@@ -378,7 +378,7 @@ int functional_hotkey(uint16_t *key_code, int8_t pressed)
 	const uint16_t prss_key = *key_code;
 
 	switch (prss_key) {
-	case SCANCODE_ESC: /* TODO: FUNCTION_LOCK */
+	case SCANCODE_ESC: /* FUNCTION_LOCK */
 		if (fn_table_set(pressed, KB_FN_ESC)) {
 			if (pressed) {
 				if (Fn_key & FN_LOCKED)
