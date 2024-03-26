@@ -65,16 +65,6 @@ static const struct dma_option dma_rx_option = {
  */
 #define SPI_CMD_RX_TIMEOUT_US 8192
 
-#ifdef CONFIG_SPI_PROTOCOL_V2
-/*
- * Offset of output parameters needs to account for pad and framing bytes and
- * one last past-end byte at the end so any additional bytes clocked out by
- * the AP will have a known and identifiable value.
- */
-#define SPI_PROTO2_OFFSET (EC_PROTO2_RESPONSE_HEADER_BYTES + 2)
-#define SPI_PROTO2_OVERHEAD \
-	(SPI_PROTO2_OFFSET + EC_PROTO2_RESPONSE_TRAILER_BYTES + 1)
-#endif /* defined(CONFIG_SPI_PROTOCOL_V2) */
 /*
  * Max data size for a version 3 request/response packet.  This is big enough
  * to handle a request/response header, flash write offset/size, and 512 bytes
@@ -119,9 +109,6 @@ static uint8_t out_msg[SPI_MAX_RESPONSE_SIZE + sizeof(out_preamble) +
 		       EC_SPI_PAST_END_LENGTH] __aligned(4) __uncached;
 static uint8_t in_msg[SPI_MAX_REQUEST_SIZE] __aligned(4) __uncached;
 static uint8_t enabled;
-#ifdef CONFIG_SPI_PROTOCOL_V2
-static struct host_cmd_handler_args args;
-#endif
 static struct host_packet spi_packet;
 
 /*
@@ -190,81 +177,6 @@ static int wait_for_bytes(dma_chan_t *rxdma, int needed, enum gpio_signal nss)
 			return -1;
 	}
 }
-
-#ifdef CONFIG_SPI_PROTOCOL_V2
-/**
- * Send a reply on a given port.
- *
- * The format of a reply is as per the command interface, with a number of
- * preamble bytes before it.
- *
- * The format of a reply is a sequence of bytes:
- *
- * <hdr> <status> <len> <msg bytes> <sum> [<preamble byte>...]
- *
- * The hdr byte is just a tag to indicate that the real message follows. It
- * signals the end of any preamble required by the interface.
- *
- * The length is the entire packet size, including the header, length bytes,
- * message payload, checksum, and postamble byte.
- *
- * The preamble is at least 2 bytes, but can be longer if the STM takes ages
- * to react to the incoming message. Since we send our first byte as the AP
- * sends us the command, we clearly can't send anything sensible for that
- * byte. The second byte must be written to the output register just when the
- * command byte is ready (I think), so we can't do anything there either.
- * Any processing we do may increase this delay. That's the reason for the
- * preamble.
- *
- * It is interesting to note that it seems to be possible to run the SPI
- * interface faster than the CPU clock with this approach.
- *
- * We keep an eye on the NSS line - if this goes high then the transaction is
- * over so there is no point in trying to send the reply.
- *
- * @param txdma		TX DMA channel to send on
- * @param status	Status result to send
- * @param msg_ptr	Message payload to send, which normally starts
- *			SPI_PROTO2_OFFSET bytes into out_msg
- * @param msg_len	Number of message bytes to send
- */
-static void reply(dma_chan_t *txdma, enum ec_status status, char *msg_ptr,
-		  int msg_len)
-{
-	char *msg = out_msg;
-	int need_copy = msg_ptr != msg + SPI_PROTO2_OFFSET;
-	int sum, i;
-
-	ASSERT(msg_len + SPI_PROTO2_OVERHEAD <= sizeof(out_msg));
-
-	/* Add our header bytes - the first one might not actually be sent */
-	msg[0] = EC_SPI_PROCESSING;
-	msg[1] = EC_SPI_FRAME_START;
-	msg[2] = status;
-	msg[3] = msg_len & 0xff;
-
-	/*
-	 * Calculate the checksum; includes the status and message length bytes
-	 * but not the pad and framing bytes since those are stripped by the AP
-	 * driver.
-	 */
-	sum = status + msg_len;
-	for (i = 0; i < msg_len; i++) {
-		int ch = msg_ptr[i];
-		sum += ch;
-		if (need_copy)
-			msg[i + SPI_PROTO2_OFFSET] = ch;
-	}
-
-	/* Add the checksum and get ready to send */
-	msg[SPI_PROTO2_OFFSET + msg_len] = sum & 0xff;
-	msg[SPI_PROTO2_OFFSET + msg_len + 1] = EC_SPI_PAST_END;
-	dma_prepare_tx(&dma_tx_option, msg_len + SPI_PROTO2_OVERHEAD, msg);
-
-	/* Kick off the DMA to send the data */
-	dma_go(txdma);
-}
-#endif /* defined(CONFIG_SPI_PROTOCOL_V2) */
 
 /**
  * Sends a byte over SPI without DMA
@@ -364,44 +276,6 @@ static void check_setup_transaction_later(void)
 		 */
 	}
 }
-
-#ifdef CONFIG_SPI_PROTOCOL_V2
-/**
- * Called for V2 protocol to indicate that a command has completed
- *
- * Some commands can continue for a while. This function is called by
- * host_command when it completes.
- *
- */
-static void spi_send_response(struct host_cmd_handler_args *args)
-{
-	enum ec_status result = args->result;
-	dma_chan_t *txdma;
-
-	/*
-	 * If we're not processing, then the AP has already terminated the
-	 * transaction, and won't be listening for a response.
-	 */
-	if (state != SPI_STATE_PROCESSING)
-		return;
-
-	/* state == SPI_STATE_PROCESSING */
-
-	if (args->response_size > args->response_max)
-		result = EC_RES_INVALID_RESPONSE;
-
-	/* Transmit the reply */
-	txdma = dma_get_channel(STM32_DMAC_SPI1_TX);
-	reply(txdma, result, args->response, args->response_size);
-
-	/*
-	 * Before the state is set to SENDING, any CS de-assertion would
-	 * set setup_transaction_later to 1.
-	 */
-	state = SPI_STATE_SENDING;
-	check_setup_transaction_later();
-}
-#endif /* defined(CONFIG_SPI_PROTOCOL_V2) */
 
 /**
  * Called to send a response back to the host.
@@ -559,54 +433,8 @@ void spi_event(enum gpio_signal signal)
 		return;
 
 	} else if (in_msg[0] >= EC_CMD_VERSION0) {
-#ifdef CONFIG_SPI_PROTOCOL_V2
-		/*
-		 * Protocol version 2
-		 *
-		 * TODO(crosbug.com/p/20257): Remove once kernel supports
-		 * version 3.
-		 */
-
-#ifdef CHIP_FAMILY_STM32F0
-		CPRINTS("WARNING: Protocol version 2 is not supported on the F0"
-			" line due to crosbug.com/p/31390");
-#endif
-
-		args.version = in_msg[0] - EC_CMD_VERSION0;
-		args.command = in_msg[1];
-		args.params_size = in_msg[2];
-
-		/* Wait for parameters */
-		if (wait_for_bytes(rxdma, 3 + args.params_size, GPIO_SPI1_NSS))
-			goto spi_event_error;
-
-		/*
-		 * Params are not 32-bit aligned in protocol version 2.  As a
-		 * workaround, move them to the beginning of the input buffer
-		 * so they are aligned.
-		 */
-		if (args.params_size)
-			memmove(in_msg, in_msg + 3, args.params_size);
-
-		args.params = in_msg;
-		args.send_response = spi_send_response;
-
-		/* Allow room for the header bytes */
-		args.response = out_msg + SPI_PROTO2_OFFSET;
-		args.response_max = sizeof(out_msg) - SPI_PROTO2_OVERHEAD;
-		args.response_size = 0;
-		args.result = EC_RES_SUCCESS;
-
-		/* Move to processing state */
-		state = SPI_STATE_PROCESSING;
-		tx_status(EC_SPI_PROCESSING);
-
-		host_command_received(&args);
-		return;
-#else /* !defined(CONFIG_SPI_PROTOCOL_V2) */
 		/* Protocol version 2 is deprecated. */
 		CPRINTS("ERROR: Protocol V2 is not supported!");
-#endif /* defined(CONFIG_SPI_PROTOCOL_V2) */
 	}
 
 spi_event_error:
@@ -733,9 +561,6 @@ enum ec_status spi_get_protocol_info(struct host_cmd_handler_args *args)
 	struct ec_response_get_protocol_info *r = args->response;
 
 	memset(r, 0, sizeof(*r));
-#ifdef CONFIG_SPI_PROTOCOL_V2
-	r->protocol_versions |= BIT(2);
-#endif
 	r->protocol_versions |= BIT(3);
 	r->max_request_packet_size = SPI_MAX_REQUEST_SIZE;
 	r->max_response_packet_size = SPI_MAX_RESPONSE_SIZE;

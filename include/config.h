@@ -4103,9 +4103,6 @@
 #undef CONFIG_SPI
 #endif /* CONFIG_ZEPHYR */
 
-/* Support deprecated SPI protocol version 2. */
-#undef CONFIG_SPI_PROTOCOL_V2
-
 /* Define the SPI port to use to access SPI accelerometer */
 #undef CONFIG_SPI_ACCEL_PORT
 
