@@ -5,6 +5,8 @@ on:
     branches:
       - lotus*
       - azalea*
+      - fwk*
+      - framework*
     paths:
       - 'zephyr/program/lotus/**'
       - '.github/workflows/**'
