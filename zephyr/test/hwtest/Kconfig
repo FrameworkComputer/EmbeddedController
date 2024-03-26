@@ -52,3 +52,10 @@ config HW_TEST_MALLOC
 	select ZTEST
 	help
 	  The test verifies basic malloc operations.
+
+config HW_TEST_PANIC
+	bool "Panic test"
+	select ZTEST
+	depends on ARM
+	help
+	  The test verifies panic data.

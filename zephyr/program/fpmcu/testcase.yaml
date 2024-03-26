@@ -54,3 +54,9 @@ tests:
     - CONFIG_PM=n
     extra_conf_files:
     - prj_hw_tests.conf
+  panic:
+    extra_configs:
+    - CONFIG_HW_TEST_PANIC=y
+    - CONFIG_PLATFORM_EC_PANIC_STRIP_GPR=n
+    extra_conf_files:
+    - prj_hw_tests.conf
