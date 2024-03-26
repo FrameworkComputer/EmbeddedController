@@ -113,23 +113,32 @@ main() {
   most_recents=()    # Non empty if any of the component repos is 'dirty'.
   dir_list=( . )   # list of component directories, always includes the EC tree
 
+  # Common/shared repos for fingerprint boards.
+  local fp_common_dir_list=( )
+  if [[ -d ../../third_party/boringssl ]]; then
+    fp_common_dir_list+=( ../../third_party/boringssl )
+  fi
+  if [[ -d ../../third_party/cryptoc ]]; then
+    fp_common_dir_list+=( ../../third_party/cryptoc )
+  fi
+  if [[ -d ./private ]]; then
+    fp_common_dir_list+=( ./private )
+  fi
+
   case "${BOARD}" in
     cr50)
       dir_list+=( ../../third_party/tpm2 ../../third_party/cryptoc )
       ;;
-    # Examples: hatch_fp, nucleo-bloonchipper, helipilot, helipiot-druid
-    *_fp|*dartmonkey|*bloonchipper|helipilot*)
-      if [[ -d ../../third_party/boringssl ]]; then
-        dir_list+=( ../../third_party/boringssl )
-      fi
-      if [[ -d ../../third_party/cryptoc ]]; then
-        dir_list+=( ../../third_party/cryptoc )
-      fi
-      if [[ -d ./private ]]; then
-        dir_list+=( ./private )
-      fi
+    *_fp|*dartmonkey*|*bloonchipper*|helipilot*)
+      dir_list+=( "${fp_common_dir_list[@]}" )
       if [[ -d ./private/fingerprint/fpc ]]; then
         dir_list+=( ./private/fingerprint/fpc )
+      fi
+      ;;
+    buccaneer*)
+      dir_list+=( "${fp_common_dir_list[@]}" )
+      if [[ -d ./private/fingerprint/elan ]]; then
+        dir_list+=( ./private/fingerprint/elan )
       fi
       ;;
     *_scp)
