@@ -126,8 +126,15 @@ int ucsi_write_tunnel(void)
 	case UCSI_CMD_GET_ALTERNATE_MODES:
 	case UCSI_CMD_GET_CURRENT_CAM:
 
-		if (*command == UCSI_CMD_GET_ALTERNATE_MODES)
+		if (*command == UCSI_CMD_GET_ALTERNATE_MODES) {
+			/**
+			 * Workaround: PD chip cannot process the SOP/SOP'/SOP'' alternate mode
+			 * event, ignore the recipient field.
+			 */
+			*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC) =
+				(*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CTR_SPECIFIC) & 0xFC);
 			offset = 1;
+		}
 
 		/**
 		 * those command will control specific pd port,
@@ -328,8 +335,14 @@ int ucsi_read_tunnel(int controller)
 	if (!chipset_in_state(CHIPSET_STATE_ON) && !chipset_in_state(CHIPSET_STATE_ANY_OFF))
 		return EC_SUCCESS;
 
+	/**
+	 * 1. Ignore the same CCI indicator without any command
+	 * 2. Ignore the same CCI indicator with busy flags
+	 */
 	if (!(memcmp(host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CONN_CHANGE),
-		&pd_chip_ucsi_info[controller].cci, 4)))
+		&pd_chip_ucsi_info[controller].cci, 4)) &&
+		((*host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_COMMAND) == 0) ||
+		*(uint32_t *)host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CONN_CHANGE)&CCI_BUSY_FLAG))
 		return EC_ERROR_UNKNOWN;
 
 	pd_chip_ucsi_info[controller].read_tunnel_complete = 1;
