@@ -114,11 +114,11 @@ main() {
   dir_list=( . )   # list of component directories, always includes the EC tree
 
   case "${BOARD}" in
-    (cr50)
+    cr50)
       dir_list+=( ../../third_party/tpm2 ../../third_party/cryptoc )
       ;;
     # Examples: hatch_fp, nucleo-bloonchipper, helipilot, helipiot-druid
-    (*_fp|*dartmonkey|*bloonchipper|helipilot*)
+    *_fp|*dartmonkey|*bloonchipper|helipilot*)
       if [[ -d ../../third_party/boringssl ]]; then
         dir_list+=( ../../third_party/boringssl )
       fi
@@ -132,7 +132,7 @@ main() {
         dir_list+=( ./private/fingerprint/fpc )
       fi
       ;;
-    (*_scp)
+    *_scp)
       if [[ -d ./private-mt-scp ]]; then
         dir_list+=( ./private-mt-scp )
       fi
