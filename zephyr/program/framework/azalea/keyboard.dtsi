@@ -10,6 +10,11 @@
 	};
 };
 
+&vivaldi_kbd {
+	status = "disabled";
+};
+
+
 &pwm1 {
 	status = "okay";
 	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
