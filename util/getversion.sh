@@ -117,7 +117,8 @@ main() {
     (cr50)
       dir_list+=( ../../third_party/tpm2 ../../third_party/cryptoc )
       ;;
-    (*_fp|*dartmonkey|*bloonchipper)
+    # Examples: hatch_fp, nucleo-bloonchipper, helipilot, helipiot-druid
+    (*_fp|*dartmonkey|*bloonchipper|helipilot*)
       if [[ -d ../../third_party/boringssl ]]; then
         dir_list+=( ../../third_party/boringssl )
       fi
