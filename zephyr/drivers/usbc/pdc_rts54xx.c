@@ -1278,6 +1278,13 @@ static void st_read_run(void *o)
 		es->overcurrent = 0;
 		es->undefined = 0;
 		es->port_partner_rejected_swap = 0;
+		/*
+		 * Note: If Realtek did indicate Hard Reset, then it would also
+		 * make sense to notify the host of PD_STATUS_EVENT_HARD_RESET.
+		 * However, this would be redundant with the notification that
+		 * will be generated later, upon completion of
+		 * GET_CONNECTOR_STATUS.
+		 */
 		es->hard_reset = 0;
 		es->ppm_policy_conflict = 0;
 		es->swap_rejected = 0;

@@ -807,11 +807,21 @@ static void queue_internal_cmd(struct pdc_port_t *port, enum pdc_cmd_t pdc_cmd)
  */
 static bool handle_connector_status(struct pdc_port_t *port)
 {
-	if (!port->connector_status.connect_status) {
+	struct connector_status_t *status = &port->connector_status;
+	const struct pdc_config_t *config = port->dev->config;
+	int port_number = config->connector_num;
+
+	if (status->conn_status_change_bits.pd_reset_complete) {
+		LOG_INF("C%d: Reset complete indicator", port_number);
+		pdc_power_mgmt_notify_event(port_number,
+					    PD_STATUS_EVENT_HARD_RESET);
+	}
+
+	if (!status->connect_status) {
 		/* Port is not connected */
 		set_pdc_state(port, PDC_UNATTACHED);
 	} else {
-		switch (port->connector_status.power_operation_mode) {
+		switch (status->power_operation_mode) {
 		case USB_DEFAULT_OPERATION:
 			port->typec_current_ma = 500;
 			break;
@@ -820,7 +830,7 @@ static bool handle_connector_status(struct pdc_port_t *port)
 			break;
 		case PD_OPERATION:
 			port->typec_current_ma = 0;
-			if (port->connector_status.power_direction) {
+			if (status->power_direction) {
 				/* Port partner is a sink device
 				 */
 				set_pdc_state(port, PDC_SRC_ATTACHED);
@@ -844,7 +854,7 @@ static bool handle_connector_status(struct pdc_port_t *port)
 		}
 
 		/* TypeC only connection */
-		if (port->connector_status.power_direction) {
+		if (status->power_direction) {
 			/* Port partner is a Typec Sink device */
 			set_pdc_state(port, PDC_SRC_TYPEC_ONLY);
 			return true;
@@ -1401,6 +1411,13 @@ static void pdc_send_cmd_wait_run(void *obj)
 			set_pdc_state(port, port->send_cmd_return_state);
 			return;
 		}
+		/*
+		 * Note: If the command was CONNECTOR_RESET, and the type of
+		 * reset was a Hard Reset, then it would also make sense to
+		 * notify the host of PD_STATUS_EVENT_HARD_RESET. However, this
+		 * would be redundant with the notification that will be
+		 * generated later, upon completion of GET_CONNECTOR_STATUS.
+		 */
 	} else {
 		/* No response: Wait until timeout. */
 		port->send_cmd.wait_counter++;
