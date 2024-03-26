@@ -127,11 +127,11 @@ bool diagnostics_tick(void)
 		return false;
 	}
 
-	/* Wait 15 seconds for checks to complete */
+	/* Wait 60 seconds for checks to complete */
 	if (++diagnostic_tick < 60 * TICK_PER_SEC)
 		return false;
 
-	/* Everything is ok after minimum 15 seconds of checking */
+	/* Everything is ok after minimum 60 seconds of checking */
 	if (bios_complete && hw_diagnostics == 0)
 		return false;
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
