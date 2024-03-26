@@ -6,6 +6,8 @@ on:
       - marigold*
       - lotus*
       - azalea*
+      - fwk*
+      - framework*
   #  paths:
   #    - 'zephyr/program/framework/**'
   #pull_request:
@@ -69,13 +71,20 @@ jobs:
           git reset --hard github-private/marigold.upstream-merge
           popd
 
+      # Note:
+      # By default cros_sdk changes into src/scripts folder.
+      # But that will make zmake pick up the scripts git commit SHA
+      # To embed the ec repo's commit SHA we need to change pwd there
       - name: Build ${{ matrix.platform.name }}
-        run: |
-          cros_sdk zmake build ${{ matrix.platform.name }}
-          echo Built ${{ matrix.platform.name }} EC
+        run: cros_sdk bash -c 'pushd ../platform/ec; zmake -D build ${{ matrix.platform.name }}'
 
       - name: File sha256
         run: sha256sum src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output/ec.bin
+
+      - name: Check version embedded in binary
+        run: |
+          strings src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output/ec.bin | grep ${{ matrix.platform.name }} | tee bin-strings.txt
+          grep $(echo "$GITHUB_SHA" | cut -c1-7) bin-strings.txt
 
       - name: Generate artifact version
         run: |
