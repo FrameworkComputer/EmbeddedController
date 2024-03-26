@@ -666,7 +666,7 @@ int board_is_c10_gate_enabled(void)
 	 * core rails while in S0 because HDMI should remain powered.
 	 * EN_PP5000_HDMI is a separate EC output on all other boards.
 	 */
-	return board_version != 0;
+	return 0;
 }
 
 void board_enable_s0_rails(int enable)
