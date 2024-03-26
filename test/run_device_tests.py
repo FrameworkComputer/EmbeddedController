@@ -372,9 +372,10 @@ class AllTests:
                 finish_regexes=[board_config.mpu_regex],
                 skip_for_zephyr=True,
             ),
-            TestConfig(test_name="mutex"),
-            TestConfig(test_name="mutex_trylock"),
-            TestConfig(test_name="mutex_recursive"),
+            # Handled by Zephyr - kernel.mutex test
+            TestConfig(test_name="mutex", skip_for_zephyr=True),
+            TestConfig(test_name="mutex_trylock", skip_for_zephyr=True),
+            TestConfig(test_name="mutex_recursive", skip_for_zephyr=True),
             TestConfig(
                 test_name="otp_key", exclude_boards=[BLOONCHIPPER, DARTMONKEY]
             ),
