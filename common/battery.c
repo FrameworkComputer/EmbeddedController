@@ -346,6 +346,8 @@ static const int cutoff_poll_msec = 250;
 
 static void battery_cutoff_clear(void)
 {
+	if (battery_cutoff_state == BATTERY_CUTOFF_STATE_SCHEDULED)
+		CUTOFFPRINTS("unscheduled");
 	battery_cutoff_state = BATTERY_CUTOFF_STATE_NORMAL;
 	hook_call_deferred(&pending_cutoff_deferred_data, -1);
 }
@@ -429,24 +431,12 @@ static void pending_cutoff_deferred(void)
 }
 DECLARE_DEFERRED(pending_cutoff_deferred);
 
-static void battery_on_ac_change(void)
+static void ac_change(void)
 {
-	if (extpower_is_present()) {
-		/* Plugged */
-		if (battery_cutoff_state == BATTERY_CUTOFF_STATE_SCHEDULED)
-			CUTOFFPRINTS("unscheduled");
-		battery_cutoff_clear();
-	}
-}
-DECLARE_HOOK(HOOK_AC_CHANGE, battery_on_ac_change, HOOK_PRIO_DEFAULT);
-
-#ifdef CONFIG_CHARGE_MANAGER
-static void power_supply_change(void)
-{
-	static bool had_active_charge_port;
-	int port = charge_manager_get_active_charge_port();
+	static bool was_ac_on;
 	bool key = false;
 
+	CUTOFFPRINTS("AC %s", extpower_is_present() ? "on" : "off");
 	if (IS_ENABLED(HAS_TASK_KEYSCAN))
 		key = keyboard_scan_get_boot_keys() & BIT(BOOT_KEY_REFRESH);
 
@@ -457,27 +447,36 @@ static void power_supply_change(void)
 #endif
 
 	if (!key) {
-		/*
-		 * Need to set had_active_charge_port also here because refresh
-		 * boot key can be registered when the power button is released.
-		 */
-		if (port != CHARGE_PORT_NONE)
-			had_active_charge_port = true;
-		return;
-	}
-
-	if (port != CHARGE_PORT_NONE) {
-		had_active_charge_port = true;
-		if (key) {
-			/* Cancel cutoff if AC is backoff again */
-			hook_call_deferred(&pending_cutoff_deferred_data, -1);
-			CUTOFFPRINTS("backoff: P%d is active", port);
+		if (extpower_is_present()) {
+			/*
+			 * Need to cancel cutoff here because the AC adapter may
+			 * glitch, which appears as On->Off->On sequence.
+			 */
+			battery_cutoff_clear();
+			/*
+			 * Need to set was_ac_on here because refresh boot key
+			 * can be registered when the power button is released.
+			 */
+			was_ac_on = true;
 		}
 		return;
 	}
 
-	if (!had_active_charge_port) {
-		CUTOFFPRINTS("backoff: Haven't had active charge port");
+	/* Refresh key (or equivalent) is down. */
+
+	if (extpower_is_present()) {
+		/*
+		 * 1. AC is (still) on. Waiting for unplug.
+		 * 2. AC came back after cutoff is triggered (and while waiting
+		 *    for CONFIG_BATTERY_CUTOFF_DELAY_US).
+		 */
+		battery_cutoff_clear();
+		was_ac_on = true;
+		return;
+	}
+
+	if (!was_ac_on) {
+		CUTOFFPRINTS("backoff: Haven't seen AC on");
 		return;
 	}
 
@@ -486,8 +485,8 @@ static void power_supply_change(void)
 	hook_call_deferred(&pending_cutoff_deferred_data,
 			   CONFIG_BATTERY_CUTOFF_DELAY_US);
 }
-DECLARE_HOOK(HOOK_POWER_SUPPLY_CHANGE, power_supply_change, HOOK_PRIO_DEFAULT);
-#endif
+DECLARE_HOOK(HOOK_AC_CHANGE, ac_change, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, ac_change, HOOK_PRIO_DEFAULT);
 
 static enum ec_status battery_command_cutoff(struct host_cmd_handler_args *args)
 {
