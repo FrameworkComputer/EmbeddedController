@@ -92,7 +92,7 @@ config PLATFORM_SIMPLE_VERSION_SHIFT_IDX
 	default 18
 	help
 		The simple version will take commit from EC_IMAGE_RO, than we should shift
-		idx for retrieve commit id example ec:xxxxxx.
+		idx for retrieve commit id from, for example "marigold-1.00-7f2d422" (15 shift)
 
 config PLATFORM_MULTI_LED_FREQ
 	int "set the framework multifunction led flash frequency"

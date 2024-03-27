@@ -350,15 +350,17 @@ DECLARE_HOST_COMMAND(EC_CMD_CHASSIS_COUNTER, chassis_counter, EC_VER_MASK(0));
 static enum ec_status  host_command_get_simple_version(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_custom_version *r = args->response;
-	char temp_version[32];
+	char temp_version[32] = {0};
 	int idx;
+	int shift = CONFIG_PLATFORM_SIMPLE_VERSION_SHIFT_IDX;
+	enum ec_image active_slot = system_get_active_copy();
 
-	strzcpy(temp_version, system_get_version(EC_IMAGE_RO),
+	strzcpy(temp_version, system_get_version(active_slot),
 		sizeof(temp_version));
 
-	for (idx = 0; idx < sizeof(r->simple_version); idx++) {
-		r->simple_version[idx] = temp_version[idx +
-			CONFIG_PLATFORM_SIMPLE_VERSION_SHIFT_IDX];
+	memset(r->simple_version, '\0', sizeof(r->simple_version));
+	for (idx = 0; idx < MIN(sizeof(r->simple_version), sizeof(temp_version) - shift); idx++) {
+		r->simple_version[idx] = temp_version[idx + shift];
 	}
 
 	args->response_size = sizeof(*r);
