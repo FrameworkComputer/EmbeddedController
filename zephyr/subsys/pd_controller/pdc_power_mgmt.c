@@ -2179,44 +2179,43 @@ const char *pdc_power_mgmt_get_task_state_name(int port)
 
 void pdc_power_mgmt_set_dual_role(int port, enum pd_dual_role_states state)
 {
+	struct pdc_port_t *port_data = &pdc_data[port]->port;
+
 	switch (state) {
 	/* While disconnected, toggle between src and sink */
 	case PD_DRP_TOGGLE_ON:
-		pdc_data[port]->port.una_policy.cc_mode = CCOM_DRP;
-		atomic_set_bit(pdc_data[port]->port.una_policy.flags,
-			       UNA_POLICY_CC_MODE);
+		port_data->una_policy.cc_mode = CCOM_DRP;
+		atomic_set_bit(port_data->una_policy.flags, UNA_POLICY_CC_MODE);
 		break;
 	/* Stay in src until disconnect, then stay in sink forever */
 	case PD_DRP_TOGGLE_OFF:
-		pdc_data[port]->port.una_policy.cc_mode = CCOM_RD;
-		atomic_set_bit(pdc_data[port]->port.una_policy.flags,
-			       UNA_POLICY_CC_MODE);
+		port_data->una_policy.cc_mode = CCOM_RD;
+		atomic_set_bit(port_data->una_policy.flags, UNA_POLICY_CC_MODE);
 		break;
 	/* Stay in current power role, don't switch. No auto-toggle support */
 	case PD_DRP_FREEZE:
 		if (pdc_power_mgmt_is_source_connected(port)) {
-			pdc_data[port]->port.una_policy.cc_mode = CCOM_RP;
+			port_data->una_policy.cc_mode = CCOM_RP;
 		} else {
-			pdc_data[port]->port.una_policy.cc_mode = CCOM_RD;
+			port_data->una_policy.cc_mode = CCOM_RD;
 		}
-		atomic_set_bit(pdc_data[port]->port.una_policy.flags,
-			       UNA_POLICY_CC_MODE);
+		atomic_set_bit(port_data->una_policy.flags, UNA_POLICY_CC_MODE);
 		break;
 	/* Switch to sink */
 	case PD_DRP_FORCE_SINK:
 		if (pdc_power_mgmt_is_source_connected(port)) {
-			pdc_data[port]->port.pdr.swap_to_src = 0;
-			pdc_data[port]->port.pdr.swap_to_snk = 1;
-			atomic_set_bit(pdc_data[port]->port.src_policy.flags,
+			port_data->pdr.swap_to_src = 0;
+			port_data->pdr.swap_to_snk = 1;
+			atomic_set_bit(port_data->src_policy.flags,
 				       SRC_POLICY_SWAP_TO_SNK);
 		}
 		break;
 	/* Switch to source */
 	case PD_DRP_FORCE_SOURCE:
 		if (pdc_power_mgmt_is_sink_connected(port)) {
-			pdc_data[port]->port.pdr.swap_to_src = 1;
-			pdc_data[port]->port.pdr.swap_to_snk = 0;
-			atomic_set_bit(pdc_data[port]->port.snk_policy.flags,
+			port_data->pdr.swap_to_src = 1;
+			port_data->pdr.swap_to_snk = 0;
+			atomic_set_bit(port_data->snk_policy.flags,
 				       SNK_POLICY_SWAP_TO_SRC);
 		}
 		break;
