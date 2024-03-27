@@ -41,7 +41,6 @@ static void board_temperature_reset(void)
 {
 	thermal_filter_reset(&apu_filtered);
 }
-
 DECLARE_HOOK(HOOK_CHIPSET_RESUME, board_temperature_reset, HOOK_PRIO_DEFAULT);
 
 void fan_set_rpm_target(int ch, int rpm)
@@ -99,9 +98,24 @@ int fan_percent_to_rpm(int fan_index, int temp_ratio)
 }
 
 bool log_thermal;
+// battery-temp
 #define TEMP_BATTERY TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_battery))
+
 // TODO: Rename to SOC
+// soc-temp
 #define TEMP_APU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_soc))
+
+// ddr-f75303
+#define TEMP_DDR TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_ddr))
+#define TEMP_DDR_F F75303_SENSOR_ID(DT_NODELABEL(ddr_f75303))
+
+// cpu-f75303
+#define TEMP_CPU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_cpu))
+#define TEMP_CPU_F F75303_SENSOR_ID(DT_NODELABEL(cpu_f75303))
+
+// local-f75397
+#define TEMP_LOCAL TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_local))
+#define TEMP_LOCAL_F F75397_SENSOR_ID(DT_NODELABEL(local_f75397))
 
 void board_override_fan_control(int fan, int *temp)
 {
@@ -121,6 +135,7 @@ void board_override_fan_control(int fan, int *temp)
 	static timestamp_t deadline;
 	timestamp_t now = get_time();
 
+	// CPRINTS("fan: %d, is_thermal_control_enabled: %d", fan, is_thermal_control_enabled(fan));
 	if (!is_thermal_control_enabled(fan))
 		return;
 
@@ -129,42 +144,15 @@ void board_override_fan_control(int fan, int *temp)
 	 * when chipset suspend or shutdown.
 	 */
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
+		f75303_get_val_mk(TEMP_CPU_F, &apu_temp_mk);
 
-#ifdef CONFIG_GPU
-
-		board_get_soc_temp_mk(&apu_temp_mk);
-		if (thermal_params[TEMP_APU].temp_fan_off &&
-			thermal_params[TEMP_APU].temp_fan_max) {
-			apu_pct = thermal_fan_percent(thermal_params[TEMP_APU].temp_fan_off * 1000,
-						thermal_params[TEMP_APU].temp_fan_max * 1000,
-						apu_temp_mk);
+		if (thermal_params[TEMP_CPU].temp_fan_off &&
+			thermal_params[TEMP_CPU].temp_fan_max) {
+			pct = thermal_fan_percent(
+				thermal_params[TEMP_CPU].temp_fan_off * 1000,
+				thermal_params[TEMP_CPU].temp_fan_max * 1000,
+				apu_temp_mk);
 		}
-
-		if (fan == 0) {
-			// thermal_filter_update(&apu_filtered, temp[TEMP_APU_DIE]);
-		}
-
-		apu_filtered_temp = thermal_filter_get(&apu_filtered);
-		if (thermal_params[TEMP_APU_DIE].temp_fan_off &&
-			thermal_params[TEMP_APU_DIE].temp_fan_max) {
-			apu_filtered_pct = thermal_fan_percent(thermal_params[TEMP_APU_DIE].temp_fan_off*1000,
-						thermal_params[TEMP_APU_DIE].temp_fan_max*1000,
-						C_TO_K(apu_filtered_temp)*1000);
-		}
-
-		apu_selected_pct = MAX(apu_pct, apu_filtered_pct);
-
-		pct = apu_selected_pct;
-#else
-		board_get_soc_temp_mk(&apu_temp_mk);
-
-		if (thermal_params[TEMP_APU].temp_fan_off &&
-			thermal_params[TEMP_APU].temp_fan_max) {
-			pct = thermal_fan_percent(thermal_params[TEMP_APU].temp_fan_off * 1000,
-						thermal_params[TEMP_APU].temp_fan_max * 1000,
-						apu_temp_mk);
-		}
-#endif
 
 		new_rpm = fan_percent_to_rpm(fan, pct);
 		actual_rpm = fan_get_rpm_actual(FAN_CH(fan));
@@ -182,8 +170,8 @@ void board_override_fan_control(int fan, int *temp)
 			/* add temperature histeresis so the fan does not turn off
 			 * unless the system has cooled 0.5C below the fan turn on temperature
 			 */
-			if (thermal_params[TEMP_APU].temp_fan_off &&
-				apu_temp_mk > (thermal_params[TEMP_APU].temp_fan_off
+			if (thermal_params[TEMP_CPU].temp_fan_off &&
+				apu_temp_mk > (thermal_params[TEMP_CPU].temp_fan_off
 					* 1000 - 500)) {
 				deadline.val = get_time().val + FAN_STOP_DELAY_S;
 			}
@@ -194,15 +182,9 @@ void board_override_fan_control(int fan, int *temp)
 		}
 
 		if (log_thermal && fan == 0) {
-			f75303_get_val_mk(
-				F75303_SENSOR_ID(DT_NODELABEL(ddr_f75303)),
-				&temps_mk[0]);
-			f75303_get_val_mk(
-				F75303_SENSOR_ID(DT_NODELABEL(cpu_f75303)),
-				&temps_mk[1]);
-			f75397_get_val_mk(
-				F75397_SENSOR_ID(DT_NODELABEL(local_f75397)),
-				 &temps_mk[2]);
+			f75303_get_val_mk(TEMP_DDR_F, &temps_mk[0]);
+			f75303_get_val_mk(TEMP_CPU_F, &temps_mk[1]);
+			f75397_get_val_mk(TEMP_LOCAL_F, &temps_mk[2]);
 			CPRINTS(
 				"\tThrm\t%d\t%d\t%d\t"
 				"\t%d\t%d\t"
@@ -244,6 +226,8 @@ static int thermallog_cmd(int argc, const char **argv)
 		} else {
 			return EC_ERROR_PARAM1;
 		}
+	} else {
+		CPRINTS("thermallog [en/dis]");
 	}
 	return EC_SUCCESS;
 }
