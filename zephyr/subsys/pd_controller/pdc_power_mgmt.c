@@ -1030,7 +1030,10 @@ static void pdc_src_attached_run(void *obj)
 		return;
 	case SRC_ATTACHED_SET_PR_SWAP_POLICY:
 		port->src_attached_local_state = SRC_ATTACHED_GET_VDO;
-		port->pdr.accept_pr_swap = 1; /* TODO read from DT */
+		/* TODO: read from DT */
+		port->pdr = (union pdr_t){ .accept_pr_swap = 1,
+					   .swap_to_src = 0,
+					   .swap_to_snk = 0 };
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
 		return;
 	case SRC_ATTACHED_GET_VDO:
@@ -1100,7 +1103,10 @@ static void pdc_snk_attached_run(void *obj)
 		return;
 	case SNK_ATTACHED_SET_PR_SWAP_POLICY:
 		port->snk_attached_local_state = SNK_ATTACHED_READ_POWER_LEVEL;
-		port->pdr.accept_pr_swap = 1; /* TODO read from DT */
+		/* TODO: read from DT */
+		port->pdr = (union pdr_t){ .accept_pr_swap = 1,
+					   .swap_to_src = 0,
+					   .swap_to_snk = 0 };
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
 		return;
 	case SNK_ATTACHED_READ_POWER_LEVEL:
