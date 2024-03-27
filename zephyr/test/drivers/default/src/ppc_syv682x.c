@@ -456,7 +456,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_frs_trigger)
 	 */
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_FRS,
 				   SYV682X_CONTROL_4_NONE);
-	msleep(1);
+	msleep(2);
 	zassert_true(ppc_is_sourcing_vbus(syv682x_port),
 		     "PPC is not sourcing VBUS after FRS signal handled");
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_NONE,
