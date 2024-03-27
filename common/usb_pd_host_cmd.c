@@ -101,57 +101,6 @@ DECLARE_HOST_COMMAND(EC_CMD_PD_CHIP_INFO, hc_remote_pd_chip_info,
 		     EC_VER_MASK(0) | EC_VER_MASK(1));
 #endif /* CONFIG_HOSTCMD_PD_CHIP_INFO && !CONFIG_USB_PD_TCPC */
 
-#ifdef CONFIG_HOSTCMD_PD_CONTROL
-static int pd_control_disabled[CONFIG_USB_PD_PORT_MAX_COUNT];
-
-/* Only allow port re-enable in unit tests */
-#ifdef TEST_BUILD
-void pd_control_port_enable(int port)
-{
-	pd_control_disabled[port] = 0;
-}
-#endif /* TEST_BUILD */
-
-static enum ec_status pd_control(struct host_cmd_handler_args *args)
-{
-	const struct ec_params_pd_control *cmd = args->params;
-	int enable = 0;
-
-	if (cmd->chip >= board_get_usb_pd_port_count())
-		return EC_RES_INVALID_PARAM;
-
-	/* Always allow disable command */
-	if (cmd->subcmd == PD_CONTROL_DISABLE) {
-		pd_control_disabled[cmd->chip] = 1;
-		return EC_RES_SUCCESS;
-	}
-
-	if (pd_control_disabled[cmd->chip])
-		return EC_RES_ACCESS_DENIED;
-
-	if (cmd->subcmd == PD_SUSPEND) {
-		if (!pd_firmware_upgrade_check_power_readiness(cmd->chip))
-			return EC_RES_BUSY;
-		enable = 0;
-	} else if (cmd->subcmd == PD_RESUME) {
-		enable = 1;
-	} else if (cmd->subcmd == PD_RESET) {
-		board_reset_pd_mcu();
-	} else if (cmd->subcmd == PD_CHIP_ON && board_set_tcpc_power_mode) {
-		board_set_tcpc_power_mode(cmd->chip, 1);
-		return EC_RES_SUCCESS;
-	} else {
-		return EC_RES_INVALID_COMMAND;
-	}
-
-	pd_comm_enable(cmd->chip, enable);
-	pd_set_suspend(cmd->chip, !enable);
-
-	return EC_RES_SUCCESS;
-}
-DECLARE_HOST_COMMAND(EC_CMD_PD_CONTROL, pd_control, EC_VER_MASK(0));
-#endif /* CONFIG_HOSTCMD_PD_CONTROL */
-
 #ifdef CONFIG_COMMON_RUNTIME
 /*
  * Combines the following information into a single byte

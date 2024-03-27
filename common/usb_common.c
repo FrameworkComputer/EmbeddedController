@@ -49,49 +49,9 @@
 #define CPRINTF(format, args...)
 #endif
 
-/*
- * If we are trying to upgrade PD firmwares (TCPC chips, retimer, etc), we
- * need to ensure the battery has enough charge for this process. Set the
- * threshold to 10%, and it should be enough charge to get us
- * through the EC jump to RW and PD upgrade.
- */
-#define MIN_BATTERY_FOR_PD_UPGRADE_PERCENT 10 /* % */
-
 #ifdef CONFIG_COMMON_RUNTIME
 struct ec_params_usb_pd_rw_hash_entry rw_hash_table[RW_HASH_ENTRIES];
 #endif /* CONFIG_COMMON_RUNTIME */
-
-bool pd_firmware_upgrade_check_power_readiness(int port)
-{
-	if (IS_ENABLED(HAS_TASK_CHARGER)) {
-		struct batt_params batt = { 0 };
-		/*
-		 * Cannot rely on the EC's active charger data as the
-		 * EC may just rebooted into RW and has not necessarily
-		 * picked the active charger yet. Charger task may not
-		 * initialized, so check battery directly.
-		 * Prevent the upgrade if the battery doesn't have enough
-		 * charge to finish the upgrade.
-		 */
-		battery_get_params(&batt);
-		if (batt.flags & BATT_FLAG_BAD_STATE_OF_CHARGE ||
-		    batt.state_of_charge < MIN_BATTERY_FOR_PD_UPGRADE_PERCENT) {
-			CPRINTS("C%d: Cannot suspend for upgrade, not "
-				"enough battery (%d%%)!",
-				port, batt.state_of_charge);
-			return false;
-		}
-	} else {
-		/* VBUS is present on the port (it is either a
-		 * source or sink) to provide power, so don't allow
-		 * PD firmware upgrade on the port.
-		 */
-		if (pd_is_vbus_present(port))
-			return false;
-	}
-
-	return true;
-}
 
 int usb_get_battery_soc(void)
 {
