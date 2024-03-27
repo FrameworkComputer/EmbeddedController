@@ -175,3 +175,27 @@ uint8_t pd_get_product_type(int port)
 {
 	return pdc_power_mgmt_get_product_type(port);
 }
+
+void pd_comm_enable(int port, int enable)
+{
+	ARG_UNUSED(port);
+
+	(void)pdc_power_mgmt_set_comms_state(enable);
+}
+
+/* No-op on PDC devices. The suspend/enable operation is handled within
+ * pd_comm_enable() entirely.
+ */
+void pd_set_suspend(int port, int suspend)
+{
+	ARG_UNUSED(port);
+	ARG_UNUSED(suspend);
+}
+
+/**
+ * Board function for resetting the PD chips through EC_CMD_PD_CONTROL. This
+ * feature is not used on PDC devices.
+ */
+void board_reset_pd_mcu(void)
+{
+}
