@@ -31,7 +31,7 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&cpu_f75303>;
 		};
-		battery-temp {
+		temp_sensor_battery: battery-temp {
 			temp_host_high = <50>;
 			temp_host_halt = <60>;
 			temp_host_release_high = <40>;
@@ -49,7 +49,7 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&ddr_f75303>;
 		};
-		soc-temp {
+		temp_sensor_soc: soc-temp {
 			/* just read, no protection */
 			temp_fan_off = <103>;
 			temp_fan_max = <105>;

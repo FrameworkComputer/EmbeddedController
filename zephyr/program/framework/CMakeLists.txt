@@ -16,6 +16,7 @@ zephyr_library_sources("src/diagnostics.c")
 zephyr_library_sources("src/ucsi.c")
 zephyr_library_sources("src/als.c")
 zephyr_library_sources("src/hid_device.c")
+zephyr_library_sources("src/temperature_filter.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led_pwm.c")
@@ -94,6 +95,7 @@ if(DEFINED CONFIG_BOARD_MARIGOLD)
 			"marigold/src/project_diagnostics.c"
 			"marigold/src/power_button_x86.c"
 			"marigold/src/temperature.c"
+			"marigold/src/thermal.c"
 	)
 
 endif()
