@@ -75,6 +75,9 @@ def launch(opts: argparse.Namespace) -> int:
     os.chdir(ec_dir)
 
     renode_execute: List[str] = []
+    # We set the machine name to the exact board name, since we might be
+    # using a derivative board, like buccaneer which is based on helipilot.
+    renode_execute.append(f'$name="{board}";')
     renode_execute.append(f'$bin="{bin_file}";')
     renode_execute.append(f'$elf_ro="{elf_ro_file}";')
     renode_execute.append(f'$elf_rw="{elf_rw_file}";')
