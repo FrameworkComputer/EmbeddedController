@@ -35,7 +35,7 @@ __override void board_check_extpower(void)
 __override void board_set_charge_limit(int port, int supplier, int charge_ma,
 				       int max_ma, int charge_mv)
 {
-	charge_ma = charge_ma * 94 / 100;
+	charge_ma = charge_ma * 90 / 100;
 
 	charge_set_input_current_limit(charge_ma, charge_mv);
 	charger_set_input_current_limit(0, charge_ma);
