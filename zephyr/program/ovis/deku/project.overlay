@@ -84,11 +84,11 @@
 		gpio_ec_spare_gpio02: ec_spare_gpio02 {
 			gpios = <&gpio0 2 GPIO_OUTPUT>;
 		};
-		gpio_ec_spare_gpio06: ec_spare_gpio06 {
-			gpios = <&gpio0 6 GPIO_OUTPUT>;
+		gpio_poe_cs_out: poe_cs_out {
+			gpios = <&gpio0 6 GPIO_OUTPUT_LOW>;
 		};
-		gpio_ec_spare_gpio07: ec_spare_gpio07 {
-			gpios = <&gpio0 7 GPIO_OUTPUT>;
+		gpio_poe_check_l: poe_check_l {
+			gpios = <&gpio0 7 GPIO_INPUT>;
 		};
 		gpio_ec_spare_gpio17: ec_spare_gpio17 {
 			gpios = <&gpio1 7 GPIO_OUTPUT>;
