@@ -140,6 +140,10 @@
 #define CONFIG_CHARGER_BQ25710_SENSE_RESISTOR_AC 10
 #define CONFIG_CHARGER_BQ25710_PSYS_SENSING
 
+/* Keyboard */
+#define KEYBOARD_COLS_MAX 18
+#define CONFIG_KEYBOARD_KEYPAD
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h" /* needed by registers.h */
