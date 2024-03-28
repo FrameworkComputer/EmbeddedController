@@ -191,7 +191,7 @@ void board_override_fan_control(int fan, int *temp)
 				"\t%d\t"
 				"\t%d\t%d\t%d\t"
 				"\t%d\t%d",
-				temps_mk[0], temps_mk[1], temps_mk[2],
+				MILLI_KELVIN_TO_CELSIUS(temps_mk[0]), MILLI_KELVIN_TO_CELSIUS(temps_mk[1]), MILLI_KELVIN_TO_CELSIUS(temps_mk[2]),
 				temp[TEMP_BATTERY], temp[TEMP_APU],
 				thermal_filter_get(&apu_filtered),
 				pct, apu_pct, apu_filtered_pct,
