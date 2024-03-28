@@ -65,3 +65,9 @@ config HW_TEST_PRINTF
 	select ZTEST
 	help
 	  The test verifies printf related functions.
+
+config HW_TEST_QUEUE
+	bool "Queue test"
+	select ZTEST
+	help
+	  The test verifies queue functionality in EC.

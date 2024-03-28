@@ -21,7 +21,8 @@ test/ftrapv.c
 test/libc_printf.c
 test/malloc.c
 test/panic.c
-test/printf.c"
+test/printf.c
+test/queue.c"
 
 for file in "$@"; do
   ec_file="${file##**/platform/ec/}"
