@@ -711,7 +711,7 @@ static int shutdown_on_critical_battery(void)
 					sleep(1);
 				CPRINTS("Hibernate due to critical battery");
 				cflush();
-				system_hibernate(0, 0);
+				system_enter_hibernate(0, 0);
 			}
 			break;
 		case CRITICAL_SHUTDOWN_CUTOFF:

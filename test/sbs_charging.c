@@ -320,7 +320,7 @@ test_static int test_low_battery(void)
 	sb_write(SB_CURRENT, -1000);
 	wait_charging_state();
 	sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
-	TEST_ASSERT(is_hibernated);
+	TEST_ASSERT(!is_hibernated);
 
 	ccprintf("[CHARGING TEST] Low battery shutdown S0->S5\n");
 	mock_chipset_state = CHIPSET_STATE_ON;
@@ -408,8 +408,10 @@ test_static int test_high_temp_battery(void)
 	sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
 	TEST_ASSERT(is_shutdown);
 
-	ccprintf("[CHARGING TEST] High battery temp S0->S5 hibernate\n");
+	ccprintf(
+		"[CHARGING TEST] High battery temp && AC off S0->S5 hibernate\n");
 	mock_chipset_state = CHIPSET_STATE_SOFT_OFF;
+	gpio_set_level(GPIO_AC_PRESENT, 0);
 	wait_charging_state();
 	TEST_ASSERT(is_hibernated);
 
