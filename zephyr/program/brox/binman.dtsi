@@ -21,10 +21,17 @@
 	 * Effective wp-ro map:
 	 *	0x00000 - 0x5DDFF: RO binary
 	 *	0x5DC00 - 0x5DFFF: FMAP
-	 *	0x5E000 - 0x5EFFF: Persistent state for flash flags
-	 *	0x5F000 - 0x5FFFF: CBI data
+	 *	0x5E000 - 0x5EFFF: CBI data
+	 *	0x5F000 - 0x5FFFF: Persistent state for flash flags
 	 */
 	wp-ro {
+		/*
+		 * Delete the pstate node so that we can force it to be the
+		 * last sub-section. binman doesn't handle sub-sections with
+		 * out of order offsets.
+		 */
+		/delete-node/ pstate;
+
 		ec-ro {
 			fmap {
 				offset =  <(0x60000 - (0x1000 * 2) - 0x400)>;
@@ -34,10 +41,12 @@
 				 */
 			};
 		};
-		pstate {
-			offset = <(0x60000 - (0x1000 * 2))>;
-		};
 		cbi {
+			offset = <(0x60000 - (0x1000 * 2))>;
+			size = <0x1000>;
+		};
+		pstate {
+			type = "section";
 			offset = <(0x60000 - (0x1000 * 1))>;
 			size = <0x1000>;
 		};

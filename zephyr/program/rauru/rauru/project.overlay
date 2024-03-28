@@ -27,12 +27,19 @@
  * When CBI in flash is enabled, setup RO flash layout as follows:
  *   RO binary:    0x00000:0x5DFFF
  *   FMAP:         0x5DC00:0x5DFFF
- *   PSTATE block: 0x5E000:0x5EFFF
- *   CBI flash:    0x5F000:0x5FFFF
+ *   CBI flash:    0x5E000:0x5EFFF
+ *   PSTATE block: 0x5F000:0x5FFFF
  */
 &binman {
 	wp-ro {
-		ec-ro {
+		/*
+		 * Delete the pstate node so that we can force it to be the
+		 * last sub-section. binman doesn't handle sub-sections with
+		 * out of order offsets.
+		 */
+		 /delete-node/ pstate;
+
+		 ec-ro {
 			fmap {
 				offset =  <(0x60000 - (0x1000 * 2) - 0x400)>;
 				/*
@@ -41,11 +48,12 @@
 				*/
 			};
 		};
-		pstate {
+		cbi {
 			offset = <(0x60000 - (0x1000 * 2))>;
 			size = <0x1000>;
 		};
-		cbi {
+		pstate {
+			type = "section";
 			offset = <(0x60000 - (0x1000 * 1))>;
 			size = <0x1000>;
 		};
