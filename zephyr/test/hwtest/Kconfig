@@ -59,3 +59,9 @@ config HW_TEST_PANIC
 	depends on ARM
 	help
 	  The test verifies panic data.
+
+config HW_TEST_PRINTF
+	bool "printf test"
+	select ZTEST
+	help
+	  The test verifies printf related functions.

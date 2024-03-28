@@ -60,3 +60,9 @@ tests:
     - CONFIG_PLATFORM_EC_PANIC_STRIP_GPR=n
     extra_conf_files:
     - prj_hw_tests.conf
+  printf:
+    extra_configs:
+    - CONFIG_HW_TEST_PRINTF=y
+    - CONFIG_ZTEST_STACK_SIZE=2048
+    extra_conf_files:
+    - prj_hw_tests.conf
