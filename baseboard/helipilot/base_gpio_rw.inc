@@ -9,14 +9,16 @@
 #endif
 
 /* Interrupts */
-GPIO_INT(FP_MCU_INT_L,         PIN(B, 0), GPIO_INT_RISING, fps_event)
+/* FP_MCU_INT_L in the schematic. */
+GPIO_INT(FPS_INT,              PIN(B, 0), GPIO_INT_RISING, fps_event)
 
 /* Inputs */
 GPIO(FP_SENSOR_SEL,            PIN(4, 4), GPIO_INPUT)
 
 /* Outputs */
 GPIO(FP_RST_ODL,               PIN(9, 6),  GPIO_OUT_HIGH)
-GPIO(SPI_MCU_CS_FP_L,          PIN(A, 6),  GPIO_OUT_HIGH)
+/* SPI_MCU_CS_FP_L in the schematic. */
+GPIO(FP_SPI_CS,                PIN(A, 6),  GPIO_OUT_HIGH)
 GPIO(USER_PRES_L,              PIN(A, 5),  GPIO_ODR_HIGH)
 
 /* SPIP - to fingerprint sensor */

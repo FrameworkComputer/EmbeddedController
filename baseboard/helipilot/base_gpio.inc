@@ -5,10 +5,11 @@
  */
 
 /* Interrupts */
-GPIO_INT(HOST_MCU_WP_OD,       PIN(A, 4), GPIO_INT_BOTH, switch_interrupt)
+/* HOST_MCU_WP_OD in the schematic. */
+GPIO_INT(WP,                   PIN(A, 4), GPIO_INT_BOTH, switch_interrupt)
 
-/* SHI CS Ready, Low Active. */
-GPIO_INT(SPI_HOST_CS_MCU_ODL,  PIN(5, 3), GPIO_INT_FALLING,shi_cs_event)
+/* SHI CS Ready, Low Active. SPI_HOST_CS_MCU_ODL in the schematic. */
+GPIO_INT(SHI_CS_L,  PIN(5, 3), GPIO_INT_FALLING,shi_cs_event)
 GPIO_INT(SLP_L,                PIN(A, 0), GPIO_INT_BOTH, slp_event)
 
 /* Inputs */
@@ -21,7 +22,8 @@ GPIO(TRANSPORT_SEL,            PIN(4, 3), GPIO_INPUT)
 GPIO(SPI_HOST_DO_MCU_DI,       PIN(4, 6), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(SPI_HOST_DI_MCU_DO,       PIN(4, 7), GPIO_INPUT | GPIO_PULL_DOWN)
 GPIO(SPI_HOST_CLK_MCU,         PIN(5, 5), GPIO_INPUT | GPIO_PULL_DOWN)
-GPIO(MCU_PLATFORM_INT_L,       PIN(A, 7),  GPIO_ODR_HIGH)
+/* MCU_PLATFORM_INT_L in the schematic. */
+GPIO(EC_INT_L,                 PIN(A, 7),  GPIO_ODR_HIGH)
 
 /* Outputs */
 GPIO(DIVIDER_HIGHSIDE,         PIN(9, 3),  GPIO_OUT_LOW)
