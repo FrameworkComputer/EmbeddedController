@@ -19,7 +19,8 @@ config PLATFORM_EC_CONSOLE_CMD_SYSINFO
 	  about the current image copy running, reset flags, etc.
 
 config PLATFORM_EC_HIBERNATE
-	bool
+	bool "Support system hibernating"
+	default y
 	help
 	  Enable system hibernation.
 	  The type of hibernation supported must be selected.
@@ -38,7 +39,6 @@ config PLATFORM_EC_HIBERNATE_PSL
 	bool "System hibernating with PSL (Power Switch Logic) mechanism"
 	depends on DT_HAS_NUVOTON_NPCX_POWER_PSL_ENABLED
 	depends on SOC_FAMILY_NPCX
-	select PLATFORM_EC_HIBERNATE
 	help
 	  Use PSL (Power Switch Logic) for hibernating. It turns off VCC power
 	  rail for ultra-low power consumption and uses PSL inputs rely on VSBY
@@ -46,7 +46,6 @@ config PLATFORM_EC_HIBERNATE_PSL
 
 config PLATFORM_EC_HIBERNATE_WAKE_PINS
 	bool "System hibernating with wake-source pins"
-	select PLATFORM_EC_HIBERNATE
 	help
 	  Use wake source pins for hibernating. It turns off VCC power
 	  rail for ultra-low power consumption and uses a low power
