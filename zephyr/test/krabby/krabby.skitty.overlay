@@ -1,0 +1,160 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "common.dtsi"
+#include "../program/corsola/ite_gpio.dtsi"
+#include "../program/corsola/ite_interrupts.dtsi"
+#include "../program/corsola/skitty/thermistor.dtsi"
+
+/* remove pinctrl to avoid pull in too many unwanted dependency */
+/delete-node/ &pinctrl;
+
+/delete-node/ &int_usb_c0_ppc_bc12;
+
+/delete-node/ &int_volume_up;
+
+/delete-node/ &int_volume_down;
+
+/delete-node/ &int_tablet_mode;
+
+/delete-node/ &{/hibernate-wake-pins};
+
+/*
+ * The unused-pins functionality is not currently tested. Remove
+ * to avoid mismatches in the GPIO flags configuration.
+ */
+/delete-node/ &{/unused-pins};
+
+/ {
+	name_temp_charger: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+
+		thermistor = <&thermistor_rt9490>;
+		adc = <&adc_charger>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_charger: charger {
+			status = "okay";
+			sensor = <&name_temp_charger>;
+		};
+	};
+
+	named-gpios {
+		/delete-node/ usb_c0_ppc_bc12_int_odl;
+
+		usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
+			gpios = <&gpiod 1 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
+		};
+
+		/delete-node/ usb_c0_ppc_frsinfo;
+
+		usb_c0_frs_en: usb_c0_frs_en {
+			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_USB_C0_FRS_EN";
+		};
+	};
+
+	gpio-interrupts {
+		/delete-node/ usb_c0_ppc_bc12;
+	};
+
+	named-i2c-ports {
+	    compatible = "named-i2c-ports";
+
+	    i2c_sensor: i2c-sensor {
+		    i2c-port = <&i2c0>;
+		    enum-names = "I2C_PORT_SENSOR";
+	    };
+	    i2c_eeprom: i2c-eeprom {
+		    i2c-port = <&i2c0>;
+		    enum-names = "I2C_PORT_EEPROM";
+	    };
+	};
+
+	gpio-interrupts {
+		/delete-node/ base_imu;
+		/delete-node/ lid_imu;
+
+		int_usb_c0_ppc: usb_c0_ppc {
+			irq-pin = <&usb_c0_ppc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+
+		int_x_ec_gpio2: x_ec_gpio2 {
+			/* We have bypassed the db detection, so link
+			 * int_x_ec_gpio2 to ppc_interrupt directly.
+			 */
+			handler = "ppc_interrupt";
+		};
+	};
+
+	usbc {
+		port0@0 {
+			ppc_alt = <&ppc_port0>;
+		};
+		/delete-node/ port1@1;
+	};
+};
+
+/* open-drain is not supported in gpio emul, re-config to push-pull  */
+&ec_pmic_en_odl {
+	gpios = <&gpiod 0 (GPIO_OUTPUT_HIGH | GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+};
+&sys_rst_odl {
+	gpios = <&gpiog 1 GPIO_OUTPUT_LOW>;
+};
+&gpio_ec_bl_en_od {
+	gpios = <&gpiob 5 (GPIO_OUTPUT_LOW | GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+};
+&ec_int_l {
+	gpios = <&gpioe 6 (GPIO_OUTPUT_HIGH | GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+};
+&ec_ap_dp_hpd_odl {
+	gpios = <&gpioj 0 (GPIO_OUTPUT_HIGH | GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+};
+&en_ec_id_odl {
+	gpios = <&gpioh 5 (GPIO_OUTPUT_HIGH | GPIO_INPUT)>;
+};
+
+/* set default gpio-emul state */
+&power_button_l {
+	gpios = <&gpioe 4 (GPIO_INPUT | GPIO_PULL_UP)>;
+};
+
+&i2c0 {
+	status="okay";
+
+	/delete-node/ pi3usb9201_emul0;
+
+	/delete-node/ ppc0_emul;
+
+	/delete-node/ ppc1_emul;
+
+	/delete-node/ rt1718s_emul;
+
+	/delete-node/ ppc_port1;
+
+	/delete-node/ bc12_ppc_port0;
+};
+
+&i2c2 {
+	status="okay";
+
+	ppc_port0: syv682x@44 {
+		compatible = "silergy,syv682x", "cros,i2c-mock";
+		status = "okay";
+		reg = <0x44>;
+	};
+};
+
+&i2c4 {
+	/delete-node/ tusb1064-mux-1@44;
+
+	/delete-node/ ps8743_mux_1;
+};

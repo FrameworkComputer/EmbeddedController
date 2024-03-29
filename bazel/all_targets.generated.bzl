@@ -2035,6 +2035,10 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "skitty",
+        board = "skitty",
+    )
+    ec_target(
         name = "skyrim",
         board = "skyrim",
         extra_modules = ["cmsis"],

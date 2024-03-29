@@ -82,6 +82,7 @@ register_corsola_project(
 register_corsola_project("chinchou")
 register_corsola_project("woobat")
 register_corsola_project("wugtrio")
+register_corsola_project("skitty")
 
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
@@ -96,3 +97,4 @@ assert_rw_fwid_DO_NOT_EDIT(project_name="tentacruel", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="voltorb", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="woobat", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="wugtrio", addr=0xBFFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="skitty", addr=0xBFFE0)

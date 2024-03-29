@@ -1,0 +1,288 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Corsola program common DTS includes */
+
+#include <cros/thermistor/thermistor.dtsi>
+#include "../common.dtsi"
+#include "../power_signal.dtsi"
+#include "../usba.dtsi"
+#include "../ite_adc.dtsi"
+#include "../ite_gpio.dtsi"
+#include "../ite_keyboard.dtsi"
+#include "../ite_i2c.dtsi"
+#include "../ite_interrupts.dtsi"
+#include "../ite_led.dtsi"
+#include "../ite_usbc.dtsi"
+#include "../ite_shi.dtsi"
+#include "./thermistor.dtsi"
+
+/ {
+	named-gpios {
+		/delete-node/ usb_c0_ppc_bc12_int_odl;
+
+		usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
+			gpios = <&gpiod 1 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
+		};
+
+		/delete-node/ usb_c0_ppc_frsinfo;
+
+		usb_c0_frs_en: usb_c0_frs_en {
+			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_USB_C0_FRS_EN";
+		};
+	};
+
+	unused-pins {
+		unused-gpios =
+			/* pg_pp5000_z2_od */
+			<&gpiod 2 GPIO_INPUT>,
+			/* GPIO_VOLUME_DOWN_L */
+			<&gpiod 5 GPIO_INPUT>,
+			/* GPIO_VOLUME_UP_L */
+			<&gpiod 6 GPIO_INPUT>,
+			/* pg_mt6315_proc_b_odl */
+			<&gpioe 1 GPIO_INPUT>,
+			/* ec_pen_chg_dis_odl */
+			<&gpioh 3 GPIO_ODR_HIGH>,
+			/* unnamed nc pins */
+			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
+			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpiod 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
+			<&gpioh 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 3 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 6 GPIO_INPUT_PULL_DOWN>,
+			<&gpioi 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpiom 6 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>,
+			/* spi_clk_gpg6 */
+			<&gpiog 6 GPIO_INPUT_PULL_UP>,
+			/* spi_mosi_gpg4 */
+			<&gpiog 4 GPIO_OUTPUT_LOW>,
+			/* spi_miso_gpg5 */
+			<&gpiog 5 GPIO_OUTPUT_LOW>,
+			/* spi_cs_gpg7 */
+			<&gpiog 7 GPIO_OUTPUT_LOW>;
+	};
+
+	gpio-interrupts {
+		/delete-node/ volume_up;
+		/delete-node/ volume_down;
+		/delete-node/ usb_c0_ppc_bc12;
+		/delete-node/ base_imu;
+		/delete-node/ lid_imu;
+
+		int_usb_c0_ppc: usb_c0_ppc {
+			irq-pin = <&usb_c0_ppc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+	};
+
+	usbc {
+		port0@0 {
+			ppc_alt = <&ppc_port0>;
+		};
+
+		/delete-node/ port1@1;
+	};
+
+	named-adc-channels {
+		adc_ambient: ambient {
+			enum-name = "ADC_TEMP_SENSOR_2_AMBIENT";
+			io-channels = <&adc0 5>;
+		};
+	};
+
+	temp_ambient: ambient {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_30K9_47K_NCP15WB>;
+		adc = <&adc_ambient>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		ambient {
+			temp_host_high = <56>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <42>;
+			sensor = <&temp_ambient>;
+		};
+		temp_charger: charger {
+			temp_host_high = <68>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <59>;
+			sensor = <&charger_bc12_port1>;
+		};
+	};
+
+	led-colors {
+		compatible = "cros-ec,led-policy";
+
+		/* Skitty LED bat charge */
+		bat-power-state-charge {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery percent range (>= Empty, <= 94%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 94>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+				};
+			};
+		};
+
+		bat-power-state-charge-near-full {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery percent range (>= 95%, <= Full) */
+			batt-lvl = <95 BATTERY_LEVEL_FULL>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		/* Skitty LED bat discharge */
+		bat-power-state-discharge-s0 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S0";
+			/* Battery percent range (>= 11%, <= Full) */
+			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		bat-power-state-discharge-s5 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S5";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		/* Skitty LED bat error */
+		bat-power-state-error {
+			charge-state = "LED_PWRS_ERROR";
+			chipset-state = "POWER_S0";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		bat-power-state-error-s3 {
+			charge-state = "LED_PWRS_ERROR";
+			chipset-state = "POWER_S3";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
+			};
+		};
+
+		bat-power-state-error-s5 {
+			charge-state = "LED_PWRS_ERROR";
+			chipset-state = "POWER_S5";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+	};
+
+	pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		power_led: power-led {
+			led-id = "EC_LED_ID_POWER_LED";
+			led-pwms = <&led_power_white>;
+
+			/* Overwrite Power LED white to off */
+			color-power-white {
+				led-color = "LED_WHITE";
+				led-values = <0>;
+			};
+		};
+	};
+
+	batteries {
+		default_battery: c235 {
+			compatible = "celxpert,c235-41", "battery-smart";
+		};
+	};
+
+};
+
+&adc0 {
+	pinctrl-0 = <&adc0_ch0_gpi0_default
+		     &adc0_ch1_gpi1_default
+		     &adc0_ch2_gpi2_default
+			 &adc0_ch5_gpi5_default>;
+};
+
+&thermistor_3V3_30K9_47K_NCP15WB {
+	status = "okay";
+};
+
+&i2c0 {
+	charger_bc12_port1: rt9490@53 {
+		thermistor = <&thermistor_rt9490>;
+	};
+};
+
+&i2c2 {
+	ppc_port0: syv682x@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&usb_c0_frs_en>;
+	};
+};
+
+&i2c4 {
+	/delete-node/ tusb1064-mux-1@44;
+
+	/delete-node/ ps8743_mux_1;
+};

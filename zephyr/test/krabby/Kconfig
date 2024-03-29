@@ -52,6 +52,12 @@ config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	  This is used to not define chipset_in_state method as inline
 	  function.
 
+config TEST_SKITTY
+	bool "Run the tests intended for skitty"
+	help
+	  Include skitty test into the binary to test temperature
+	  threshold trigger current control.
+
 endchoice
 
 source "Kconfig.zephyr"
