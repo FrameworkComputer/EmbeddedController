@@ -24,6 +24,17 @@
 
 #define CONFIG_MP2964
 
+#define CONFIG_CMD_ACCEL_INFO
+#define CONFIG_CMD_ACCELS
+
+/* ALS */
+#define CONFIG_ALS
+#define ALS_COUNT 1
+#define CONFIG_ALS_VEML3328
+
+/* Sensors without hardware FIFO are in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK (BIT(CLEAR_ALS) | BIT(RGB_ALS))
+
 /* LED */
 #define CONFIG_LED_COMMON
 #define CONFIG_LED_ONOFF_STATES
@@ -140,6 +151,13 @@
 #define CONFIG_CHARGER_BQ25710_SENSE_RESISTOR_AC 10
 #define CONFIG_CHARGER_BQ25710_PSYS_SENSING
 
+/* Enable sensor fifo, must also define the _SIZE and _THRES */
+#define CONFIG_ACCEL_FIFO
+/* FIFO size is in power of 2. */
+#define CONFIG_ACCEL_FIFO_SIZE 256
+/* Depends on how fast the AP boots and typical ODRs */
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
+
 /* Keyboard */
 #define KEYBOARD_COLS_MAX 18
 #define CONFIG_KEYBOARD_KEYPAD
@@ -173,6 +191,8 @@ enum pwm_channel {
 	PWM_CH_FAN, /* PWM5 */
 	PWM_CH_COUNT
 };
+
+enum sensor_id { CLEAR_ALS = 0, RGB_ALS, SENSOR_COUNT };
 
 enum fan_channel { FAN_CH_0 = 0, FAN_CH_COUNT };
 
