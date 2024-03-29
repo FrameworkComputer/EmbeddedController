@@ -11,10 +11,13 @@
 #include <stdlib.h>
 #include <string.h>
 
+#include <fcntl.h>
 #include <getopt.h>
+#include <glob.h>
 #include <libusb.h>
-#include <poll.h>
-#include <sys/select.h>
+#include <linux/hidraw.h>
+#include <linux/input.h>
+#include <sys/ioctl.h>
 #include <unistd.h>
 
 /* Command line options */
@@ -160,6 +163,11 @@ static int claimed_iface;
 static int iface_num = -1;
 static int do_exit;
 
+/* I2C related */
+static int bus_type = -1;
+static int i2c_devnum;
+static int i2c_addr;
+
 static void request_exit(const char *format, ...)
 {
 	va_list ap;
@@ -296,6 +304,13 @@ static int check_read_status(int r, int expected, int actual)
 #define MAX_USB_PACKET_SIZE 64
 #define PRIMITIVE_READING_SIZE 60
 
+static int i2c_single_write_and_read(const uint8_t *to_write,
+				     uint16_t write_length, uint8_t *to_read,
+				     uint16_t read_length)
+{
+	return -1;
+}
+
 static int libusb_single_write_and_read(const uint8_t *to_write,
 					uint16_t write_length, uint8_t *to_read,
 					uint16_t read_length)
@@ -352,6 +367,20 @@ static int libusb_single_write_and_read(const uint8_t *to_write,
 	return r;
 }
 
+static int single_write_and_read(const uint8_t *to_write, uint16_t write_length,
+				 uint8_t *to_read, uint16_t read_length)
+{
+	if (bus_type == BUS_USB) {
+		return libusb_single_write_and_read(to_write, write_length,
+						    to_read, read_length);
+	}
+	if (bus_type == BUS_I2C) {
+		return i2c_single_write_and_read(to_write, write_length,
+						 to_read, read_length);
+	}
+	return -1;
+}
+
 /* Control Elan trackpad I2C over USB */
 #define ETP_I2C_INF_LENGTH 2
 
@@ -364,8 +393,8 @@ static int elan_write_and_read(int reg, uint8_t *buf, int read_length,
 		tx_buf[2] = (cmd >> 0) & 0xff;
 		tx_buf[3] = (cmd >> 8) & 0xff;
 	}
-	return libusb_single_write_and_read(tx_buf, with_cmd ? 4 : 2, rx_buf,
-					    read_length);
+	return single_write_and_read(tx_buf, with_cmd ? 4 : 2, rx_buf,
+				     read_length);
 }
 
 static int elan_read_block(int reg, uint8_t *buf, int read_length)
@@ -582,8 +611,7 @@ static int elan_write_fw_block(uint8_t *raw_data, uint16_t checksum)
 	page_store[fw_page_size + 2 + 0] = (checksum >> 0) & 0xff;
 	page_store[fw_page_size + 2 + 1] = (checksum >> 8) & 0xff;
 
-	rv = libusb_single_write_and_read(page_store, fw_page_size + 4, rx_buf,
-					  0);
+	rv = single_write_and_read(page_store, fw_page_size + 4, rx_buf, 0);
 	if (rv)
 		return rv;
 	usleep((fw_page_size >= 512 ? 50 : 35) * 1000);
@@ -627,13 +655,65 @@ static void pretty_print_buffer(uint8_t *buf, int len)
 	printf("\n");
 }
 
+static void closefd(int *fd)
+{
+	if (*fd >= 0)
+		close(*fd);
+}
+
+static void probe_device(void)
+{
+	glob_t globbuf;
+
+	if (glob("/dev/hidraw*", 0, NULL, &globbuf) != 0) {
+		return;
+	}
+
+	for (char **path = globbuf.gl_pathv; *path; path++) {
+		__attribute__((cleanup(closefd))) int fd =
+			open(*path, O_RDWR | O_NONBLOCK);
+		struct hidraw_devinfo info;
+
+		if (fd < 0)
+			continue;
+		if (ioctl(fd, HIDIOCGRAWINFO, &info) < 0)
+			continue;
+		if (info.vendor != vid || info.product != pid)
+			continue;
+
+		if (info.bustype == BUS_I2C) {
+			char phys[256];
+
+			if (ioctl(fd, HIDIOCGRAWPHYS(256), phys) < 0)
+				continue;
+			if (sscanf(phys, "%d-%04x", &i2c_devnum, &i2c_addr) !=
+			    2)
+				continue;
+		}
+		bus_type = info.bustype;
+
+		break;
+	}
+
+	globfree(&globbuf);
+
+	return;
+}
+
 int main(int argc, char *argv[])
 {
 	uint16_t local_checksum;
 	uint16_t remote_checksum;
 
 	parse_cmdline(argc, argv);
-	init_with_libusb();
+
+	probe_device();
+	if (bus_type == BUS_USB) {
+		init_with_libusb();
+	} else if (bus_type != BUS_I2C) {
+		printf("device %04hx:%04hx not found\n", vid, pid);
+		exit(1);
+	}
 	register_sigaction();
 
 	/*
@@ -660,7 +740,7 @@ int main(int argc, char *argv[])
 		tx_buf[3] = 0x02;
 		tx_buf[4] = 0x06;
 		tx_buf[5] = 0x00;
-		libusb_single_write_and_read(tx_buf, 6, rx_buf, 633);
+		single_write_and_read(tx_buf, 6, rx_buf, 633);
 		pretty_print_buffer(rx_buf, 637);
 	}
 
