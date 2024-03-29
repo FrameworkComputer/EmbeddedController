@@ -61,11 +61,7 @@ static int config_interrupt(const struct motion_sensor_t *s)
 	 * number or samples still present in FIFO exceeds the
 	 * configured threshold.
 	 */
-	int ret = s->drv->enable_interrupt(s, true);
-
-	if (ret != EC_SUCCESS) {
-		return ret;
-	}
+	RETURN_ERROR(s->drv->enable_interrupt(s, true));
 
 	return st_raw_write8(s->port, s->i2c_spi_addr_flags,
 			     LSM6DSO_FIFO_CTRL1_ADDR, 1);
@@ -375,11 +371,9 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 {
 	uint8_t raw[OUT_XYZ_SIZE];
 	uint8_t xyz_reg;
-	int ret, tmp = 0;
+	int tmp = 0;
 
-	ret = is_data_ready(s, &tmp);
-	if (ret != EC_SUCCESS)
-		return ret;
+	RETURN_ERROR(is_data_ready(s, &tmp));
 
 	/*
 	 * If sensor data is not ready, return the previous read data.
@@ -396,10 +390,8 @@ static int read(const struct motion_sensor_t *s, intv3_t v)
 	xyz_reg = get_xyz_reg(s->type);
 
 	/* Read data bytes starting at xyz_reg. */
-	ret = st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags, xyz_reg, raw,
-				  OUT_XYZ_SIZE);
-	if (ret != EC_SUCCESS)
-		return ret;
+	RETURN_ERROR(st_raw_read_n_noinc(s->port, s->i2c_spi_addr_flags,
+					 xyz_reg, raw, OUT_XYZ_SIZE));
 
 	/* Apply precision, sensitivity and rotation vector. */
 	st_normalize(s, v, raw);
