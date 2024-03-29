@@ -8,6 +8,12 @@ config BOARD_BROX
 	  Build Google Brox reference board.  This board uses an Intel RPL SoC
 	  and ITE EC
 
+config BOARD_GREENBAYUPOC
+	bool "Google Greenbayupoc Board"
+	help
+	  Build Google Greenbayupoc reference board.  This board uses an Intel RPL SoC
+	  and ITE EC
+
 module = Brox
 module-str = Brox board-specific code
 source "subsys/logging/Kconfig.template.log_config"

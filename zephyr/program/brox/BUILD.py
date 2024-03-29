@@ -73,9 +73,22 @@ register_ish_project(
     ],
 )
 
+greenbayupoc = register_brox_project(
+    project_name="greenbayupoc",
+    kconfig_files=[
+        # Common to all projects.
+        here / "program.conf",
+        # Parent project's config
+        here / "greenbayupoc" / "project.conf",
+        # Common sensor configs
+        here / "motionsense.conf",
+    ],
+)
+
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release. Not needed for brox-ish since it
 # doesn't use RO+RW
 assert_rw_fwid_DO_NOT_EDIT(project_name="brox", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="brox-ish-ec", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="brox-tokenized", addr=0xBFFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="greenbayupoc", addr=0xBFFE0)

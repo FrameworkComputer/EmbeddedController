@@ -950,6 +950,10 @@ def all_targets():
         board = "gothrax",
     )
     ec_target(
+        name = "greenbayupoc",
+        board = "greenbayupoc",
+    )
+    ec_target(
         name = "grunt",
         baseboard = "grunt",
         board = "grunt",
