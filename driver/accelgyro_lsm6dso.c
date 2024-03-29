@@ -71,13 +71,27 @@ static int lsm6dso_enable_interrupt(const struct motion_sensor_t *s,
 				    bool enable)
 {
 	uint8_t value = 0;
+	int ret;
 
 	if (enable) {
 		value = LSM6DSO_INT_FIFO_TH | LSM6DSO_INT_FIFO_OVR |
 			LSM6DSO_INT_FIFO_FULL;
 	}
-	return st_raw_write8(s->port, s->i2c_spi_addr_flags, LSM6DSO_INT1_CTRL,
-			     value);
+	ret = st_raw_write8(s->port, s->i2c_spi_addr_flags, LSM6DSO_INT1_CTRL,
+			    value);
+
+	/* When disabling the interrupt, the i2c controller return an error, but
+	 * the data seems to have been written.
+	 */
+	if (!enable && ret == EC_ERROR_UNKNOWN) {
+		int value_check;
+
+		RETURN_ERROR(st_raw_read8(s->port, s->i2c_spi_addr_flags,
+					  LSM6DSO_INT1_CTRL, &value_check));
+		if (value_check == value)
+			ret = EC_SUCCESS;
+	}
+	return ret;
 }
 
 /**
