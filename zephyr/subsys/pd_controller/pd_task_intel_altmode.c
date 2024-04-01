@@ -234,8 +234,12 @@ static bool process_altmode_pd_data(int port)
 		mux |= USB_PD_MUX_USB4_ENABLED;
 #endif
 
-	usb_mode = mux == USB_PD_MUX_NONE ? USB_SWITCH_DISCONNECT :
-					    USB_SWITCH_CONNECT;
+	if (mux == USB_PD_MUX_NONE || mux == USB_PD_MUX_POLARITY_INVERTED) {
+		usb_mode = USB_SWITCH_DISCONNECT;
+		mux = USB_PD_MUX_NONE;
+	} else {
+		usb_mode = USB_SWITCH_CONNECT;
+	}
 
 	/*
 	 * If the new desired mux state is USB_PD_MUX_NONE, then there is no
