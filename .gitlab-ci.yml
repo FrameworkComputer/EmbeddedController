@@ -184,7 +184,7 @@ before_script:
       "${EC_DIR}/zephyr/drivers/keyboard_input/*"
       "${EC_DIR}/zephyr/drivers/one_wire_uart/*"
       "${EC_DIR}/zephyr/drivers/sm5803/*"
-      "${EC_DIR}/zephyr/drivers/vivaldi_kbd/*'
+      "${EC_DIR}/zephyr/drivers/vivaldi_kbd/*"
       "${EC_DIR}/zephyr/include/drivers/cros_displight.h"
       "${EC_DIR}/zephyr/include/drivers/cros_flash.h"
       "${EC_DIR}/zephyr/include/drivers/cros_kb_raw.h"
@@ -196,7 +196,7 @@ before_script:
       "${EC_DIR}/zephyr/include/drivers/one_wire_uart_internal.h"
       "${EC_DIR}/zephyr/include/drivers/one_wire_uart_stream.h"
       "${EC_DIR}/zephyr/include/drivers/one_wire_uart.h"
-      "${EC_DIR}/zephyr/include/drivers/vivaldi_kbd.h'
+      "${EC_DIR}/zephyr/include/drivers/vivaldi_kbd.h"
       "${EC_DIR}/zephyr/shim/chip/**" "${EC_DIR}/zephyr/shim/core/**"
       "/usr/include/**"
       "${EC_DIR}/build/**" "${EC_DIR}/twister-out*/**"
