@@ -687,7 +687,7 @@ def fp_sensor_sel(
     This function assumes that the fp_sensor_sel servo control is connected to
     the proper gpio on the development board. This is not the case on some
     older development boards. This should not result in any failures but also
-    may have not actually change the selected sensor.
+    may have not actually changed the selected sensor.
     """
 
     cmd = [
