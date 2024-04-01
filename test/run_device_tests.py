@@ -700,7 +700,6 @@ def fp_sensor_sel(
 
     # power cycle after setting sensor type to ensure detection
     power_cycle(board_config)
-    return True
 
 
 def hw_write_protect(enable: bool) -> None:
