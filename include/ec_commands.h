@@ -1697,6 +1697,10 @@ enum ec_feature_code {
 	 * The MCU is System Companion Processor Core 1
 	 */
 	EC_FEATURE_SCP_C1 = 53,
+	/*
+	 * The EC supports UCSI PPM.
+	 */
+	EC_FEATURE_UCSI_PPM = 54,
 };
 
 #define EC_FEATURE_MASK_0(event_code) BIT(event_code % 32)

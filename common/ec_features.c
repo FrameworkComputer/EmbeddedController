@@ -193,6 +193,9 @@ uint32_t get_feature_flags1(void)
 #ifdef CONFIG_USB_PD_DP21_MODE
 		| EC_FEATURE_MASK_1(EC_FEATURE_TYPEC_DP2_1)
 #endif
+#ifdef CONFIG_UCSI_PPM
+		| EC_FEATURE_MASK_1(EC_FEATURE_UCSI_PPM)
+#endif
 		;
 	return board_override_feature_flags1(result);
 }
