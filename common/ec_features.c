@@ -196,6 +196,9 @@ uint32_t get_feature_flags1(void)
 #ifdef CONFIG_UCSI_PPM
 		| EC_FEATURE_MASK_1(EC_FEATURE_UCSI_PPM)
 #endif
+#ifdef CONFIG_KEYBOARD_STRAUSS
+		| EC_FEATURE_MASK_1(EC_FEATURE_STRAUSS)
+#endif
 		;
 	return board_override_feature_flags1(result);
 }

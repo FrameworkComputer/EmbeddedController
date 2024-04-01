@@ -660,6 +660,7 @@ static const char *const ec_feature_names[] = {
 	[EC_FEATURE_AMD_STB_DUMP] = "AMD STB dump",
 	[EC_FEATURE_MEMORY_DUMP] = "Memory Dump",
 	[EC_FEATURE_UCSI_PPM] = "UCSI PPM",
+	[EC_FEATURE_STRAUSS] = "Strauss",
 };
 
 int cmd_inventory(int argc, char *argv[])
