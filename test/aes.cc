@@ -19,6 +19,7 @@
 #include "test_util.h"
 
 #include <memory>
+#include <span>
 
 extern "C" {
 #include "builtin/assert.h"
@@ -29,11 +30,10 @@ extern "C" {
 }
 
 #include "aes_gcm_helpers.h"
+#include "openssl/aead.h"
 #include "openssl/aes.h"
-
-/* These must be included after the "openssl/aes.h" */
-#include "crypto/fipsmodule/aes/internal.h"
-#include "crypto/fipsmodule/modes/internal.h"
+#include "openssl/cipher.h"
+#include "openssl/err.h"
 
 /* Temporary buffer, to avoid using too much stack space. */
 static uint8_t tmp[512];
@@ -121,16 +121,28 @@ static int test_aes_gcm_encrypt(uint8_t *result, const uint8_t *key,
 				const uint8_t *nonce, int nonce_size,
 				const uint8_t *tag, int tag_size)
 {
-	static AES_KEY aes_key;
-	static GCM128_CONTEXT ctx;
+	bssl::ScopedEVP_AEAD_CTX ctx;
 
-	TEST_ASSERT(AES_set_encrypt_key(key, 8 * key_size, &aes_key) == 0);
+	int ret = EVP_AEAD_CTX_init(ctx.get(), EVP_aead_aes_128_gcm(), key,
+				    key_size, tag_size, nullptr);
+	TEST_ASSERT(ret == 1);
 
-	CRYPTO_gcm128_init(&ctx, &aes_key, (block128_f)AES_encrypt, 0);
-	CRYPTO_gcm128_setiv(&ctx, &aes_key, nonce, nonce_size);
-	TEST_ASSERT(CRYPTO_gcm128_encrypt(&ctx, &aes_key, plaintext, result,
-					  plaintext_size));
-	TEST_ASSERT(CRYPTO_gcm128_finish(&ctx, tag, tag_size));
+	std::vector<uint8_t> out_tag(tag_size);
+	size_t out_tag_len = 0;
+
+	const std::span<uint8_t> extra_input; /* no extra input */
+	const std::span<uint8_t> additional_data; /* no additional data */
+
+	ret = EVP_AEAD_CTX_seal_scatter(ctx.get(), result, out_tag.data(),
+					&out_tag_len, tag_size, nonce,
+					nonce_size, plaintext, plaintext_size,
+					extra_input.data(), extra_input.size(),
+					additional_data.data(),
+					additional_data.size());
+	TEST_ASSERT(ret == 1);
+	TEST_ASSERT(out_tag_len == static_cast<size_t>(tag_size));
+
+	TEST_ASSERT_ARRAY_EQ(tag, out_tag, tag_size);
 	TEST_ASSERT_ARRAY_EQ(ciphertext, result, plaintext_size);
 
 	return EC_SUCCESS;
@@ -145,16 +157,19 @@ static int test_aes_gcm_decrypt(uint8_t *result, const uint8_t *key,
 				const uint8_t *nonce, int nonce_size,
 				const uint8_t *tag, int tag_size)
 {
-	static AES_KEY aes_key;
-	static GCM128_CONTEXT ctx;
+	bssl::ScopedEVP_AEAD_CTX ctx;
 
-	TEST_ASSERT(AES_set_encrypt_key(key, 8 * key_size, &aes_key) == 0);
+	int ret = EVP_AEAD_CTX_init(ctx.get(), EVP_aead_aes_128_gcm(), key,
+				    key_size, tag_size, nullptr);
+	TEST_ASSERT(ret == 1);
 
-	CRYPTO_gcm128_init(&ctx, &aes_key, (block128_f)AES_encrypt, 0);
-	CRYPTO_gcm128_setiv(&ctx, &aes_key, nonce, nonce_size);
-	TEST_ASSERT(CRYPTO_gcm128_decrypt(&ctx, &aes_key, ciphertext, result,
-					  plaintext_size));
-	TEST_ASSERT(CRYPTO_gcm128_finish(&ctx, tag, tag_size));
+	std::span<uint8_t> additional_data; /* no additional data */
+	ret = EVP_AEAD_CTX_open_gather(ctx.get(), result, nonce, nonce_size,
+				       ciphertext, plaintext_size, tag,
+				       tag_size, additional_data.data(),
+				       additional_data.size());
+	TEST_ASSERT(ret == 1);
+
 	TEST_ASSERT_ARRAY_EQ(plaintext, result, plaintext_size);
 
 	return EC_SUCCESS;
@@ -236,21 +251,48 @@ test_static int test_aes_gcm(void)
 {
 	/*
 	 * Test vectors from BoringSSL
-	 * https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt
+	 * https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/cipher_extra/test/aes_128_gcm_tests.txt
 	 * (only the ones with actual data, and no additional data).
 	 */
 
-	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt#8
-	TestVectorHex test_vector_hex1 = {
-		.key = "00000000000000000000000000000000",
-		.plaintext = "00000000000000000000000000000000",
-		.nonce = "000000000000000000000000",
-		.ciphertext = "0388dace60b6a392f328c2b971b2fe78",
-		.tag = "ab6e47d42cec13bdf53a67b21257bddf",
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/cipher_extra/test/aes_128_gcm_tests.txt#4
+	const TestVectorHex test_vector1 = {
+		.key = "d480429666d48b400633921c5407d1d1",
+		.plaintext = "",
+		.nonce = "3388c676dc754acfa66e172a",
+		.ciphertext = "",
+		.tag = "7d7daf44850921a34e636b01adeb104f",
 	};
 
-	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt#15
-	TestVectorHex test_vector_hex2 = {
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/cipher_extra/test/aes_128_gcm_tests.txt#424
+	const TestVectorHex test_vector2 = {
+		.key = "31323334353637383930313233343536",
+		.plaintext = "48656c6c6f2c20576f726c64",
+		.nonce = "31323334353637383930313233343536",
+		.ciphertext = "cec189d0e8419b90fb16d555",
+		.tag = "32893832a8d609224d77c2e56a922282",
+	};
+
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/cipher_extra/test/aes_128_gcm_tests.txt#433
+	const TestVectorHex test_vector3 = {
+		.key = "00000000000000000000000000000000",
+		.plaintext = "",
+		.nonce = "000000000000000000000000",
+		.ciphertext = "",
+		.tag = "58e2fccefa7e3061367f1d57a4e7455a",
+	};
+
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/cipher_extra/test/aes_128_gcm_tests.txt#440
+	const TestVectorHex test_vector4 = {
+		.key = "00000000000000000000000000000000",
+		.plaintext = "",
+		.nonce = "000000000000000000000000",
+		.ciphertext = "",
+		.tag = "58e2fccefa7e3061367f1d57a4e7455a",
+	};
+
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/cipher_extra/test/aes_128_gcm_tests.txt#447
+	const TestVectorHex test_vector5 = {
 		.key = "feffe9928665731c6d6a8f9467308308",
 		.plaintext =
 			"d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b391aafd255",
@@ -260,48 +302,53 @@ test_static int test_aes_gcm(void)
 		.tag = "4d5c2af327cd64a62cf35abd2ba6fab4",
 	};
 
-	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt#50
-	TestVectorHex test_vector_hex3 = {
-		.key = "000000000000000000000000000000000000000000000000",
-		.plaintext = "00000000000000000000000000000000",
-		.nonce = "000000000000000000000000",
-		.ciphertext = "98e7247c07f0fe411c267e4384b0f600",
-		.tag = "2ff58d80033927ab8ef4d4587514f0fb",
-	};
-
-	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt#57
-	TestVectorHex test_vector_hex4 = {
-		.key = "feffe9928665731c6d6a8f9467308308feffe9928665731c",
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/cipher_extra/test/aes_128_gcm_tests.txt#485
+	const TestVectorHex test_vector6 = {
+		.key = "00000000000000000000000000000000",
 		.plaintext =
-			"d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b391aafd255",
-		.nonce = "cafebabefacedbaddecaf888",
-		.ciphertext =
-			"3980ca0b3c00e841eb06fac4872a2757859e1ceaa6efd984628593b40ca1e19c7d773d00c144c525ac619d18c84a3f4718e2448b2fe324d9ccda2710acade256",
-		.tag = "9924a7c8587336bfb118024db8674a14",
-	};
-
-	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt#99
-	TestVectorHex test_vector_hex5 = {
-		.key = "0000000000000000000000000000000000000000000000000000000000000000",
-		.plaintext = "00000000000000000000000000000000",
+			"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
 		.nonce = "000000000000000000000000",
-		.ciphertext = "cea7403d4d606b6e074ec5d3baf39d18",
-		.tag = "d0d1c8a799996bf0265b98b5d48ab919",
-	};
-
-	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt#106
-	TestVectorHex test_vector_hex6 = {
-		.key = "feffe9928665731c6d6a8f9467308308feffe9928665731c6d6a8f9467308308",
-		.plaintext =
-			"d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b391aafd255",
-		.nonce = "cafebabefacedbaddecaf888",
 		.ciphertext =
-			"522dc1f099567d07f47f37a32a84427d643a8cdcbfe5c0c97598a2bd2555d1aa8cb08e48590dbb3da7b08b1056828838c5f61e6393ba7a0abcc9f662898015ad",
-		.tag = "b094dac5d93471bdec1a502270e3cc6c",
+			"0388dace60b6a392f328c2b971b2fe78f795aaab494b5923f7fd89ff948bc1e0200211214e7394da2089b6acd093abe0",
+		.tag = "9dd0a376b08e40eb00c35f29f9ea61a4",
 	};
 
-	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt#141
-	TestVectorHex test_vector_hex7 = {
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/cipher_extra/test/aes_128_gcm_tests.txt#493
+	const TestVectorHex test_vector7 = {
+		.key = "00000000000000000000000000000000",
+		.plaintext =
+			"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+		.nonce = "000000000000000000000000",
+		.ciphertext =
+			"0388dace60b6a392f328c2b971b2fe78f795aaab494b5923f7fd89ff948bc1e0200211214e7394da2089b6acd093abe0c94da219118e297d7b7ebcbcc9c388f28ade7d85a8ee35616f7124a9d5270291",
+		.tag = "98885a3a22bd4742fe7b72172193b163",
+	};
+
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/cipher_extra/test/aes_128_gcm_tests.txt#501
+	const TestVectorHex test_vector8 = {
+		.key = "00000000000000000000000000000000",
+		.plaintext =
+			"0000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+		.nonce = "000000000000000000000000",
+		.ciphertext =
+			"0388dace60b6a392f328c2b971b2fe78f795aaab494b5923f7fd89ff948bc1e0200211214e7394da2089b6acd093abe0c94da219118e297d7b7ebcbcc9c388f28ade7d85a8ee35616f7124a9d527029195b84d1b96c690ff2f2de30bf2ec89e00253786e126504f0dab90c48a30321de3345e6b0461e7c9e6c6b7afedde83f40",
+		.tag = "cac45f60e31efd3b5a43b98a22ce1aa1",
+	};
+
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/cipher_extra/test/aes_128_gcm_tests.txt#509
+	const TestVectorHex test_vector9 = {
+		.key = "00000000000000000000000000000000",
+		.plaintext =
+			"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+		.nonce =
+			"ffffffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+		.ciphertext =
+			"56b3373ca9ef6e4a2b64fe1e9a17b61425f10d47a75a5fce13efc6bc784af24f4141bdd48cf7c770887afd573cca5418a9aeffcd7c5ceddfc6a78397b9a85b499da558257267caab2ad0b23ca476a53cb17fb41c4b8b475cb4f3f7165094c229c9e8c4dc0a2a5ff1903e501511221376a1cdb8364c5061a20cae74bc4acd76ceb0abc9fd3217ef9f8c90be402ddf6d8697f4f880dff15bfb7a6b28241ec8fe183c2d59e3f9dfff653c7126f0acb9e64211f42bae12af462b1070bef1ab5e3606",
+		.tag = "566f8ef683078bfdeeffa869d751a017",
+	};
+
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/cipher_extra/test/aes_128_gcm_tests.txt#517
+	const TestVectorHex test_vector10 = {
 		.key = "00000000000000000000000000000000",
 		.plaintext =
 			"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
@@ -312,11 +359,11 @@ test_static int test_aes_gcm(void)
 		.tag = "8b307f6b33286d0ab026a9ed3fe1e85f",
 	};
 
-	const std::array hex_test_vectors = {
-		test_vector_hex1, test_vector_hex2, test_vector_hex3,
-		test_vector_hex4, test_vector_hex5, test_vector_hex6,
-		test_vector_hex7
-	};
+	const std::array hex_test_vectors = { test_vector1, test_vector2,
+					      test_vector3, test_vector4,
+					      test_vector5, test_vector6,
+					      test_vector7, test_vector8,
+					      test_vector9, test_vector10 };
 
 	std::vector<AesTestVector> test_vectors;
 	for (const auto &hex_test_vector : hex_test_vectors) {
@@ -326,7 +373,7 @@ test_static int test_aes_gcm(void)
 		test_vectors.emplace_back(test_vector);
 	}
 
-	constexpr size_t kExpectedNumTestVectors = 7;
+	constexpr size_t kExpectedNumTestVectors = 10;
 	TEST_EQ(test_vectors.size(), kExpectedNumTestVectors, "%zu");
 	for (const auto &test_vector : test_vectors) {
 		TEST_ASSERT(!test_aes_gcm_raw(
@@ -360,31 +407,45 @@ static void test_aes_gcm_speed(void)
 	const int tag_size = sizeof(tag);
 
 	uint8_t *encrypted_data = tmp;
-	static AES_KEY aes_key;
-	static GCM128_CONTEXT ctx;
 
 	assert(plaintext_size <= sizeof(tmp));
 
 	benchmark.run("AES-GCM encrypt", [&]() {
-		AES_set_encrypt_key(key, 8 * key_size, &aes_key);
-		CRYPTO_gcm128_init(&ctx, &aes_key, (block128_f)AES_encrypt, 0);
-		CRYPTO_gcm128_setiv(&ctx, &aes_key, nonce, nonce_size);
-		CRYPTO_gcm128_encrypt(&ctx, &aes_key, plaintext, encrypted_data,
-				      plaintext_size);
-		CRYPTO_gcm128_tag(&ctx, tag, tag_size);
+		bssl::ScopedEVP_AEAD_CTX ctx;
+
+		int ret = EVP_AEAD_CTX_init(ctx.get(), EVP_aead_aes_128_gcm(),
+					    key, key_size, tag_size, nullptr);
+		ASSERT(ret == 1);
+
+		size_t out_tag_len = 0;
+
+		const std::span<uint8_t> extra_input; /* no extra input */
+		const std::span<uint8_t> additional_data; /* no additional data
+							   */
+
+		ret = EVP_AEAD_CTX_seal_scatter(
+			ctx.get(), encrypted_data, tag, &out_tag_len, tag_size,
+			nonce, nonce_size, plaintext, plaintext_size,
+			extra_input.data(), extra_input.size(),
+			additional_data.data(), additional_data.size());
+		ASSERT(ret == 1);
+		ASSERT(out_tag_len == tag_size);
 	});
 
 	benchmark.run("AES-GCM decrypt", [&]() {
-		AES_set_encrypt_key(key, 8 * key_size, &aes_key);
-		CRYPTO_gcm128_init(&ctx, &aes_key, (block128_f)AES_encrypt, 0);
-		CRYPTO_gcm128_setiv(&ctx, &aes_key, nonce, nonce_size);
-		auto decrypt_res =
-			CRYPTO_gcm128_decrypt(&ctx, &aes_key, encrypted_data,
-					      plaintext, plaintext_size);
+		bssl::ScopedEVP_AEAD_CTX ctx;
 
-		auto finish_res = CRYPTO_gcm128_finish(&ctx, tag, tag_size);
-		assert(decrypt_res);
-		assert(finish_res);
+		int ret = EVP_AEAD_CTX_init(ctx.get(), EVP_aead_aes_128_gcm(),
+					    key, key_size, tag_size, nullptr);
+		ASSERT(ret == 1);
+
+		std::span<uint8_t> additional_data; /* no additional data */
+		ret = EVP_AEAD_CTX_open_gather(ctx.get(), plaintext, nonce,
+					       nonce_size, encrypted_data,
+					       plaintext_size, tag, tag_size,
+					       additional_data.data(),
+					       additional_data.size());
+		ASSERT(ret == 1);
 	});
 	benchmark.print_results();
 }
