@@ -47,6 +47,10 @@
 			offset = <0x06>;
 			size = <0x01>;
 		};
+		unlock-flash-at-boot {
+			offset = <0x07>;
+			size = <0x01>;
+		};
 	};
 
 	soc {
