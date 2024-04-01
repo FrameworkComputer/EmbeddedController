@@ -2119,6 +2119,11 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "sundance",
+        board = "sundance",
+        extra_modules = ["cmsis"],
+    )
+    ec_target(
         name = "sweetberry",
         board = "sweetberry",
         chip = "stm32",

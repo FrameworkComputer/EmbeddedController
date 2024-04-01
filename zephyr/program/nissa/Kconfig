@@ -138,6 +138,12 @@ config BOARD_GLASSWAY
 	  Build Google Glassway reference board. Nivviks has Intel ADL-N SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_SUNDANCE
+        bool "Google Sundance Board"
+        help
+          Build Google Sundance reference board. Nokris has Intel ADL-N SoC
+          with NPCX993FA0BX EC.
+
 module = NISSA
 module-str = Nissa board-specific code
 source "subsys/logging/Kconfig.template.log_config"

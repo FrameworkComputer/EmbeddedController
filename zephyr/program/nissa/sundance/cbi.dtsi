@@ -1,0 +1,30 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+  /* Sundance-specific fw_config fields. */
+	nissa-fw-config {
+		/*
+		 * FW_CONFIG field to describe mainboard orientation in chassis.
+		 */
+		base-inversion {
+			enum-name = "FW_BASE_INVERSION";
+			start = <3>;
+			size = <1>;
+
+			inverted {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BASE_INVERTED";
+				value = <0>;
+			};
+			regular {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_BASE_REGULAR";
+				value = <1>;
+				default;
+			};
+		};
+	};
+};

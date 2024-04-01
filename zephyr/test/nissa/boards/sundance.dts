@@ -1,0 +1,310 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ *
+ * Device tree for a generic Nissa device based on a NPCX EC, suitable for board
+ * unit tests.
+ */
+#include <npcx_emul.dts>
+
+/ {
+	aliases {
+		/* type-C */
+		gpio-usb-c1-int-odl = &gpio_sb_1;
+		/* type-A */
+		gpio-en-usb-a1-vbus = &gpio_sb_2;
+		gpio-hpd-odl = &gpio_sb_4;
+		/* LTE */
+		gpio-en-sub-s5-rails = &gpio_sb_2;
+
+		gpio-wp = &gpio_ec_wp_odl;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_ec_soc_dsw_pwrok: ec_soc_dsw_pwrok {
+			gpios = <&gpio6 1 GPIO_OUTPUT>;
+		};
+
+		gpio_ec_wp_odl: ec_wp_odl {
+			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+
+		entering_rw {
+			gpios = <&gpio0 3 GPIO_OUTPUT>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+
+		gpio_en_pp5000_pen_x: en_pp5000_pen_x {
+			gpios = <&gpioe 2 GPIO_OUTPUT>;
+		};
+
+		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
+			gpios = <&gpio0 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C0_PPC_INT_ODL";
+		};
+
+		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
+			gpios = <&gpio0 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
+		};
+
+		gpio_usb_a0_enable: usb_a0_enable {
+			gpios = <&gpio1 0 GPIO_OUTPUT>;
+		};
+
+		gpio_usb_a0_ilimit_sdp: usb_a0_ilimit_sdp {
+			gpios = <&gpio1 2 GPIO_OUTPUT>;
+			enum-name = "GPIO_USB1_ILIM_SEL";
+		};
+
+		gpio_sub_usb_a1_ilimit_sdp: usb_a1_ilimit_sdp {
+			gpios = <&gpio1 3 GPIO_OUTPUT>;
+			enum-name = "GPIO_USB2_ILIM_SEL";
+		};
+
+		gpio_usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {
+			gpios = <&gpio6 6 GPIO_INPUT>;
+			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
+		};
+
+		acok_od: acok_od {
+			gpios = <&gpio0 4 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+
+		gpio_usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
+			gpios = <&gpiob 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
+		};
+
+		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
+			gpios = <&gpio0 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
+		};
+
+		gpio_usb_c0_tcpc_rst_odl: usb_c0_tcpc_rst_l {
+			gpios = <&gpio7 3 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C0_TCPC_RST_L";
+		};
+
+		gpio_usb_c1_tcpc_rst_odl: usb_c1_tcpc_rst_l {
+			gpios = <&gpiod 7 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_USB_C1_TCPC_RST_L";
+		};
+
+		ioex_usb_c1_frs_en: usb_c1_frs_en {
+			gpios = <&gpio8 1 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_USB_C1_FRS_EN";
+		};
+
+		gpio_sb_1: sb-1 {
+			gpios = <&gpio6 0 GPIO_PULL_UP>;
+			no-auto-init;
+			enum-name = "GPIO_USB_C1_BC12_INT_ODL";
+		};
+
+		gpio_sb_2: sb-2 {
+			gpios = <&gpiod 4 GPIO_OUTPUT>;
+			no-auto-init;
+		};
+
+		gpio_sb_3: sb-3 {
+			gpios = <&gpiof 4 0>;
+			no-auto-init;
+		};
+
+		gpio_sb_4: sb-4 {
+			gpios = <&gpiof 5 GPIO_INPUT>;
+			no-auto-init;
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+		i2c_ec_i2c_batt: ec_i2c_batt {
+			i2c-port = <&i2c_ctrl7>;
+			enum-names = "I2C_PORT_BATTERY";
+		};
+		i2c_ec_i2c_usb_c0: ec_i2c_usb_c0 {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_USB_C0_TCPC";
+		};
+		i2c_ec_i2c_sub_usb_c1: ec_i2c_sub_usb_c1 {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_USB_C1_TCPC";
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_usb_c0_bc12: usb_c0_bc12 {
+			irq-pin = <&gpio_usb_c0_bc12_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bc12_interrupt";
+		};
+		int_usb_c1_bc12: usb_c1_bc12 {
+			irq-pin = <&gpio_sb_1>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bc12_interrupt";
+		};
+		int_usb_c0: usb_c0 {
+			irq-pin = <&gpio_usb_c0_tcpc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_interrupt_c0";
+		};
+
+		int_usb_c1: usb_c1 {
+			irq-pin = <&gpio_usb_c1_tcpc_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_interrupt_c1";
+		};
+	};
+
+	ioex_c0_port0: gpio@1100 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x1100 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+
+	ioex_c0_port1: gpio@1200 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x1200 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+
+	ioex_c1_port0: gpio@1300 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x1300 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+
+	ioex_c1_port1: gpio@1400 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x1400 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+
+	usba {
+		compatible = "cros-ec,usba-port-enable-pins";
+		enable-pins = <&gpio_usb_a0_enable &gpio_sb_2>;
+		status = "okay";
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			bc12 = <&pi3usb9201_emul0>;
+			tcpc = <&tcpc_port0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+		/*
+		 * TODO(b:211693800): port1 may not be present on some
+		 * sub-boards.
+		 */
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			bc12 = <&pi3usb9201_emul1>;
+			tcpc = <&tcpc_port1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};
+
+&i2c0 {
+	status = "okay";
+
+	tcpci_emul0: tcpci_emul@83 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x83>;
+	};
+
+	tcpci_emul1: tcpci_emul@82 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x82>;
+	};
+
+	nct38xx@70 {
+		compatible = "nuvoton,nct38xx";
+		reg = <0x70>;
+		tcpc_port0: nct38xx-tcpc {
+			compatible = "cros,nct38xx-emul",
+				"nuvoton,nct38xx-tcpc";
+			rst-gpios = <&gpio7 3 0x7>;
+		};
+	};
+
+	tcpc_port1: ps8xxx_emul@b {
+		compatible = "cros,ps8xxx-emul";
+		reg = <0xb>;
+		rst-gpios = <&gpiod 7 0x7>;
+		p0-i2c-addr = <0x8>;
+		p1-i2c-addr = <0x9>;
+		gpio-i2c-addr = <0x1a>;
+	};
+
+	pi3usb9201_emul0: pi3usb9201@5d {
+		compatible = "pericom,pi3usb9201";
+		status = "okay";
+		reg = <0x5d>;
+	};
+
+	pi3usb9201_emul1: pi3usb9201@5e {
+		compatible = "pericom,pi3usb9201";
+		status = "okay";
+		reg = <0x5e>;
+	};
+};

@@ -45,6 +45,11 @@ choice TEST_TARGET
 	  help
 		The test target that exercises nissa/nokris/*.c
 
+	config TEST_NISSA_SUNDANCE
+	  bool "Tests for Sundance-specific code"
+	  help
+		The test target that exercises nissa/sundance/*.c
+
 	config TEST_NISSA_GOTHRAX
 	  bool "Tests for Gothrax-specific code"
 	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
