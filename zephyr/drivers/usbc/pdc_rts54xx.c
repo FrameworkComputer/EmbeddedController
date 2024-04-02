@@ -283,6 +283,8 @@ enum cmd_t {
 	CMD_GET_VDO,
 	/** CMD_GET_IDENTITY_DISCOVERY */
 	CMD_GET_IDENTITY_DISCOVERY,
+	/** CMD_GET_IS_VCONN_SOURCING */
+	CMD_GET_IS_VCONN_SOURCING,
 };
 
 /**
@@ -396,6 +398,7 @@ static const char *const cmd_names[] = {
 	[CMD_GET_CABLE_PROPERTY] = "GET_CABLE_PROPERTY",
 	[CMD_GET_VDO] = "GET VDO",
 	[CMD_GET_IDENTITY_DISCOVERY] = "CMD_GET_IDENTITY_DISCOVERY",
+	[CMD_GET_IS_VCONN_SOURCING] = "CMD_GET_IS_VCONN_SOURCING",
 };
 
 /**
@@ -1238,6 +1241,13 @@ static void st_read_run(void *o)
 		*disc_state = (data->rd_buf[14] & 0x07);
 		break;
 	}
+	case CMD_GET_IS_VCONN_SOURCING: {
+		bool *vconn_sourcing = (bool *)data->user_buf;
+
+		/* Realtek PD Sourcing VCONN, Byte 11, bit 5 */
+		*vconn_sourcing = (data->rd_buf[11] & 0x20);
+		break;
+	}
 	default:
 		/* No preprocessing needed for the user data */
 		memcpy(data->user_buf, data->rd_buf + offset, len);
@@ -2050,6 +2060,23 @@ static int rts54_get_identity_discovery(const struct device *dev,
 				    (uint8_t *)disc_state);
 }
 
+static int rts54_is_vconn_sourcing(const struct device *dev,
+				   bool *vconn_sourcing)
+{
+	struct pdc_data_t *data = dev->data;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	if (vconn_sourcing == NULL) {
+		return -EINVAL;
+	}
+
+	return rts54_get_rtk_status(dev, 0, 11, CMD_GET_IS_VCONN_SOURCING,
+				    (uint8_t *)vconn_sourcing);
+}
+
 static bool rts54_is_init_done(const struct device *dev)
 {
 	struct pdc_data_t *data = dev->data;
@@ -2161,6 +2188,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.get_vdo = rts54_get_vdo,
 	.get_identity_discovery = rts54_get_identity_discovery,
 	.set_comms_state = rts54_set_comms_state,
+	.is_vconn_sourcing = rts54_is_vconn_sourcing,
 };
 
 static void pdc_interrupt_callback(const struct device *dev,

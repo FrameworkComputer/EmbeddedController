@@ -110,7 +110,8 @@ enum pdc_cmd_t {
 	CMD_PDC_CONNECTOR_RESET,
 	/** CMD_PDC_GET_IDENTITY_DISCOVERY */
 	CMD_PDC_GET_IDENTITY_DISCOVERY,
-
+	/** CMD_PDC_IS_SOURCING_VCONN */
+	CMD_PDC_IS_VCONN_SOURCING,
 	/** CMD_PDC_COUNT */
 	CMD_PDC_COUNT
 };
@@ -511,6 +512,8 @@ struct pdc_port_t {
 	enum pdo_type_t pdo_type;
 	/** Charge current while in TypeC Sink state */
 	uint32_t typec_current_ma;
+	/** Buffer used by public api to receive data from the driver */
+	uint8_t *public_api_buff;
 };
 
 /**
@@ -1293,6 +1296,13 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 		rv = pdc_get_identity_discovery(port->pdc,
 						&port->discovery_state);
 		break;
+	case CMD_PDC_IS_VCONN_SOURCING:
+		if (port->public_api_buff == NULL) {
+			return -EINVAL;
+		}
+		rv = pdc_is_vconn_sourcing(port->pdc,
+					   (bool *)port->public_api_buff);
+		break;
 	default:
 		LOG_ERR("Invalid command: %d", port->cmd->cmd);
 		return -EIO;
@@ -1563,6 +1573,7 @@ static void pdc_init_run(void *obj)
 		 */
 		port->send_cmd.intern.cmd = CMD_PDC_GET_CONNECTOR_STATUS;
 		port->send_cmd.intern.pending = true;
+		port->public_api_buff = NULL;
 		set_pdc_state(port, PDC_SEND_CMD_START);
 		return;
 	}
@@ -1871,13 +1882,25 @@ int pdc_power_mgmt_comm_is_enabled(int port)
 
 bool pdc_power_mgmt_get_vconn_state(int port)
 {
-	/* Make sure port is connected */
-	if (!pdc_power_mgmt_is_connected(port)) {
+	bool vconn_sourcing;
+
+	/* Make sure port is source connected */
+	if (!pdc_power_mgmt_is_source_connected(port)) {
 		return false;
 	}
 
-	/* TODO: Add driver support for this */
-	return true;
+	pdc_data[port]->port.public_api_buff = (uint8_t *)&vconn_sourcing;
+
+	/* Block until command completes */
+	if (public_api_block(port, CMD_PDC_IS_VCONN_SOURCING)) {
+		/* something went wrong */
+		pdc_data[port]->port.public_api_buff = NULL;
+		return false;
+	}
+
+	pdc_data[port]->port.public_api_buff = NULL;
+
+	return vconn_sourcing;
 }
 
 bool pdc_power_mgmt_get_partner_usb_comm_capable(int port)
