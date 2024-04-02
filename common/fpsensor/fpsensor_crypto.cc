@@ -281,18 +281,18 @@ enum ec_error_list derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
 	return ret;
 }
 
-enum ec_error_list aes_gcm_encrypt(const uint8_t *key, int key_size,
+enum ec_error_list aes_gcm_encrypt(const uint8_t *key, size_t key_size,
 				   const uint8_t *plaintext,
-				   uint8_t *ciphertext, int text_size,
-				   const uint8_t *nonce, int nonce_size,
-				   uint8_t *tag, int tag_size)
+				   uint8_t *ciphertext, size_t text_size,
+				   const uint8_t *nonce, size_t nonce_size,
+				   uint8_t *tag, size_t tag_size)
 {
 	int res;
 	AES_KEY aes_key;
 	GCM128_CONTEXT ctx;
 
 	if (nonce_size != FP_CONTEXT_NONCE_BYTES) {
-		CPRINTS("Invalid nonce size %d bytes", nonce_size);
+		CPRINTS("Invalid nonce size %zu bytes", nonce_size);
 		return EC_ERROR_INVAL;
 	}
 
@@ -315,18 +315,18 @@ enum ec_error_list aes_gcm_encrypt(const uint8_t *key, int key_size,
 	return EC_SUCCESS;
 }
 
-enum ec_error_list aes_gcm_decrypt(const uint8_t *key, int key_size,
+enum ec_error_list aes_gcm_decrypt(const uint8_t *key, size_t key_size,
 				   uint8_t *plaintext,
-				   const uint8_t *ciphertext, int text_size,
-				   const uint8_t *nonce, int nonce_size,
-				   const uint8_t *tag, int tag_size)
+				   const uint8_t *ciphertext, size_t text_size,
+				   const uint8_t *nonce, size_t nonce_size,
+				   const uint8_t *tag, size_t tag_size)
 {
 	int res;
 	AES_KEY aes_key;
 	GCM128_CONTEXT ctx;
 
 	if (nonce_size != FP_CONTEXT_NONCE_BYTES) {
-		CPRINTS("Invalid nonce size %d bytes", nonce_size);
+		CPRINTS("Invalid nonce size %zu bytes", nonce_size);
 		return EC_ERROR_INVAL;
 	}
 

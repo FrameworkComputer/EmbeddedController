@@ -74,11 +74,11 @@ derive_positive_match_secret(uint8_t *output,
  * @param tag_size the size of |tag|.
  * @return EC_SUCCESS on success and error code otherwise.
  */
-enum ec_error_list aes_gcm_encrypt(const uint8_t *key, int key_size,
+enum ec_error_list aes_gcm_encrypt(const uint8_t *key, size_t key_size,
 				   const uint8_t *plaintext,
-				   uint8_t *ciphertext, int text_size,
-				   const uint8_t *nonce, int nonce_size,
-				   uint8_t *tag, int tag_size);
+				   uint8_t *ciphertext, size_t text_size,
+				   const uint8_t *nonce, size_t nonce_size,
+				   uint8_t *tag, size_t tag_size);
 
 /**
  * Decrypt |plaintext| using AES-GCM128.
@@ -94,11 +94,11 @@ enum ec_error_list aes_gcm_encrypt(const uint8_t *key, int key_size,
  * @param tag_size the length of tag to compare against.
  * @return EC_SUCCESS on success and error code otherwise.
  */
-enum ec_error_list aes_gcm_decrypt(const uint8_t *key, int key_size,
+enum ec_error_list aes_gcm_decrypt(const uint8_t *key, size_t key_size,
 				   uint8_t *plaintext,
-				   const uint8_t *ciphertext, int text_size,
-				   const uint8_t *nonce, int nonce_size,
-				   const uint8_t *tag, int tag_size);
+				   const uint8_t *ciphertext, size_t text_size,
+				   const uint8_t *nonce, size_t nonce_size,
+				   const uint8_t *tag, size_t tag_size);
 
 #ifdef __cplusplus
 }
