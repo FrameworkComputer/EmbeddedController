@@ -9,6 +9,7 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
+#include "crypto/cleanse_wrapper.h"
 #include "ec_commands.h"
 #include "fpsensor/fpsensor.h"
 #include "fpsensor/fpsensor_console.h"
@@ -482,7 +483,6 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 	uint32_t offset = params->offset & FP_FRAME_OFFSET_MASK;
 	uint32_t size = params->size;
 	uint16_t fgr;
-	uint8_t key[SBP_ENC_KEY_LEN];
 	struct ec_fp_template_encryption_metadata *enc_info;
 	enum ec_error_list ret;
 
@@ -572,6 +572,7 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 			trng_exit();
 		}
 
+		CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > key;
 		ret = derive_encryption_key(key, enc_info->encryption_salt,
 					    global_context.user_id,
 					    global_context.tpm_seed);
@@ -593,7 +594,6 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 			key, encrypted_template_and_positive_match_salt,
 			encrypted_template_and_positive_match_salt,
 			enc_info->nonce, enc_info->tag);
-		OPENSSL_cleanse(key, sizeof(key));
 		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to encrypt template", fgr);
 			return EC_RES_UNAVAILABLE;
@@ -645,7 +645,6 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 
 	uint16_t idx = global_context.templ_valid;
 	struct ec_fp_template_encryption_metadata *enc_info;
-	uint8_t key[SBP_ENC_KEY_LEN];
 
 	/*
 	 * The complete encrypted template has been received, start
@@ -673,6 +672,7 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 
 	enum ec_error_list ret;
 	if (global_context.fp_encryption_status & FP_CONTEXT_USER_ID_SET) {
+		CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > key;
 		ret = derive_encryption_key(key, enc_info->encryption_salt,
 					    context, global_context.tpm_seed);
 		if (ret != EC_SUCCESS) {
@@ -685,7 +685,6 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 			key, encrypted_template_and_positive_match_salt,
 			encrypted_template_and_positive_match_salt,
 			enc_info->nonce, enc_info->tag);
-		OPENSSL_cleanse(key, sizeof(key));
 		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to decipher template", idx);
 			/* Don't leave bad data in the template buffer
