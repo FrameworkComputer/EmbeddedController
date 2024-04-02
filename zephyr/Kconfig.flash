@@ -180,6 +180,19 @@ config PLATFORM_EC_SPI_CLOCK_DIVIDE
 	  clock  divider value. Clock divide value depends on the spi length
 	  from EC to flashchip.
 
+config PLATFORM_EC_FLASH_PROTECT_RW
+	bool "RW write protect"
+	help
+	  Enable this if the system need to write protect RW / Rollback region
+	  independently of all flash.
+
+config PLATFORM_EC_FLASH_PROTECT_NEXT_BOOT
+	bool "Flash protection applies to the next boot"
+	default y if (SOC_FAMILY_ITE_EC && PLATFORM_EC_FLASH_PROTECT_RW)
+	help
+	  Enable this if flash protection applies to the next boot, not the
+	  current one.
+
 endif # PLATFORM_EC_FLASH_CROS
 
 config PLATFORM_EC_FLASH_DEFERRED_ERASE
