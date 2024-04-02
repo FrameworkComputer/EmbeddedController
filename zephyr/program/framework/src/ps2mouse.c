@@ -264,16 +264,28 @@ void touchpad_interrupt(enum gpio_signal signal)
 	last_int_time.val = now.val + 80*MSEC;
 }
 
-static void ps2mouse_powerstate_change(void)
+static void ps2mouse_powerstate_resume(void)
 {
-	task_set_event(TASK_ID_TOUCHPAD, PS2MOUSE_EVT_POWERSTATE);
+	int power_state = power_get_state();
+
+	if (power_state == POWER_S3S0) {
+		task_set_event(TASK_ID_TOUCHPAD, PS2MOUSE_EVT_POWER_RESUME);
+	}
 }
 DECLARE_HOOK(HOOK_CHIPSET_RESUME,
-		ps2mouse_powerstate_change,
+		ps2mouse_powerstate_resume,
 		HOOK_PRIO_DEFAULT);
 
+static void ps2mouse_powerstate_suspend(void)
+{
+	int power_state = power_get_state();
+
+	if (power_state == POWER_S0S3) {
+		task_set_event(TASK_ID_TOUCHPAD, PS2MOUSE_EVT_POWER_SUSPEND);
+	}
+}
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND,
-		ps2mouse_powerstate_change,
+		ps2mouse_powerstate_suspend,
 		HOOK_PRIO_DEFAULT);
 
 /*
@@ -484,7 +496,6 @@ read_failed:
  */
 void touchpad_task(void *p)
 {
-	int power_state = 0;
 	int evt;
 	int i;
 
@@ -528,11 +539,9 @@ void touchpad_task(void *p)
 					CPRINTS("PS2M detected host packet from i2c");
 				}
 			}
-			if (evt & PS2MOUSE_EVT_POWERSTATE) {
-				power_state = power_get_state();
-				CPRINTS("PS2M Got S0 Event %d", power_state);
-				if (!ec_mode_disabled &&
-					(power_state == POWER_S3S0)) {
+			if (evt & PS2MOUSE_EVT_POWER_RESUME) {
+				CPRINTS("PS2M Got Power Resume Event");
+				if (!ec_mode_disabled) {
 					CPRINTS("PS2M Configuring for ps2 emulation mode");
 					/*tp takes about 80 ms to come up, wait a bit*/
 					usleep(200*MSEC);
@@ -543,17 +552,18 @@ void touchpad_task(void *p)
 					gpio_enable_dt_interrupt(
 						GPIO_INT_FROM_NODELABEL(int_soc_tp));
 				}
-				if ((power_state == POWER_S3S0) && gpio_pin_get_dt(
-					GPIO_DT_FROM_NODELABEL(gpio_soc_tp_int_l)) == 0) {
+				if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
+					gpio_soc_tp_int_l)) == 0) {
 					read_touchpad_in_report();
 				}
-				if (power_state == POWER_S0S3 || power_state == POWER_S5) {
-					/* Power Down */
-					set_power(true);
-					tp_int_count_clear();
-					gpio_disable_dt_interrupt(
-						GPIO_INT_FROM_NODELABEL(int_soc_tp));
-				}
+			}
+			if (evt & PS2MOUSE_EVT_POWER_SUSPEND) {
+				CPRINTS("PS2M Got Power Suspend Event");
+				/* Power Down */
+				set_power(true);
+				tp_int_count_clear();
+				gpio_disable_dt_interrupt(
+					GPIO_INT_FROM_NODELABEL(int_soc_tp));
 			}
 			if (evt & PS2MOUSE_EVT_REENABLE) {
 				CPRINTS("PS2M renabling");

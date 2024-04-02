@@ -1149,8 +1149,10 @@ static void send_aux_data_to_host_deferred(void)
 		queue_remove_unit(&aux_to_host_queue, &data);
 		if (aux_chan_enabled && IS_ENABLED(CONFIG_8042_AUX))
 			i8042_send_to_host(1, &data, CHAN_AUX, 0);
+#ifndef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
 		else
 			CPRINTS("AUX Callback ignored");
+#endif
 	}
 }
 DECLARE_DEFERRED(send_aux_data_to_host_deferred);
