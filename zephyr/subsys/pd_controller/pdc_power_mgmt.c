@@ -1861,13 +1861,12 @@ uint8_t pdc_power_mgmt_get_task_state(int port)
 
 int pdc_power_mgmt_comm_is_enabled(int port)
 {
-	/* Make sure port is connected */
-	if (!pdc_power_mgmt_is_connected(port)) {
-		return false;
+	if (pdc_power_mgmt_is_sink_connected(port) ||
+	    pdc_power_mgmt_is_source_connected(port)) {
+		return true;
 	}
 
-	/* TODO */
-	return true;
+	return false;
 }
 
 bool pdc_power_mgmt_get_vconn_state(int port)
