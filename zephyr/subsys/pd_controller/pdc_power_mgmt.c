@@ -1849,8 +1849,11 @@ void pdc_power_mgmt_set_new_power_request(int port)
 
 uint8_t pdc_power_mgmt_get_task_state(int port)
 {
-	/* TODO */
-	return 0;
+	if (!is_pdc_port_valid(port)) {
+		return PDC_UNATTACHED;
+	}
+
+	return get_pdc_state(&pdc_data[port]->port);
 }
 
 int pdc_power_mgmt_comm_is_enabled(int port)
