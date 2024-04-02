@@ -330,10 +330,10 @@ static enum ec_status unlock_template(uint16_t idx)
 		return EC_RES_UNAVAILABLE;
 	}
 
-	if (aes_gcm_decrypt(key.data(), SBP_ENC_KEY_LEN, fp_enc_buffer,
-			    fp_enc_buffer, enc_buffer_size, enc_info.nonce,
-			    FP_CONTEXT_NONCE_BYTES, enc_info.tag,
-			    FP_CONTEXT_TAG_BYTES) != EC_SUCCESS) {
+	if (aes_128_gcm_decrypt(key.data(), SBP_ENC_KEY_LEN, fp_enc_buffer,
+				fp_enc_buffer, enc_buffer_size, enc_info.nonce,
+				FP_CONTEXT_NONCE_BYTES, enc_info.tag,
+				FP_CONTEXT_TAG_BYTES) != EC_SUCCESS) {
 		fp_clear_finger_context(idx);
 		OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
 		return EC_RES_UNAVAILABLE;

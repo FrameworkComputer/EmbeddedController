@@ -571,10 +571,12 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 		       sizeof(fp_positive_match_salt[0]));
 
 		/* Encrypt the secret blob in-place. */
-		ret = aes_gcm_encrypt(key, SBP_ENC_KEY_LEN, encrypted_template,
-				      encrypted_template, encrypted_blob_size,
-				      enc_info->nonce, FP_CONTEXT_NONCE_BYTES,
-				      enc_info->tag, FP_CONTEXT_TAG_BYTES);
+		ret = aes_128_gcm_encrypt(key, SBP_ENC_KEY_LEN,
+					  encrypted_template,
+					  encrypted_template,
+					  encrypted_blob_size, enc_info->nonce,
+					  FP_CONTEXT_NONCE_BYTES, enc_info->tag,
+					  FP_CONTEXT_TAG_BYTES);
 		OPENSSL_cleanse(key, sizeof(key));
 		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to encrypt template", fgr);
@@ -698,7 +700,7 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 			}
 
 			/* Decrypt the secret blob in-place. */
-			ret = aes_gcm_decrypt(
+			ret = aes_128_gcm_decrypt(
 				key, SBP_ENC_KEY_LEN, encrypted_template,
 				encrypted_template, encrypted_blob_size,
 				enc_info->nonce, FP_CONTEXT_NONCE_BYTES,

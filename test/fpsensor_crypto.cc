@@ -757,7 +757,7 @@ test_static int test_command_read_match_secret_unreadable(void)
 	return EC_SUCCESS;
 }
 
-test_static ec_error_list test_aes_gcm_encrypt_in_place()
+test_static ec_error_list test_aes_128_gcm_encrypt_in_place()
 {
 	constexpr std::array<uint8_t, SBP_ENC_KEY_LEN> key = {
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -781,11 +781,10 @@ test_static ec_error_list test_aes_gcm_encrypt_in_place()
 		0xa1, 0xab, 0x8f, 0xb3, 0x70, 0x75, 0xab, 0x48,
 	};
 
-	ec_error_list ret = aes_gcm_encrypt(key.data(), key.size(),
-					    plaintext.data(), plaintext.data(),
-					    plaintext.size(), nonce.data(),
-					    nonce.size(), tag.data(),
-					    tag.size());
+	ec_error_list ret = aes_128_gcm_encrypt(
+		key.data(), key.size(), plaintext.data(), plaintext.data(),
+		plaintext.size(), nonce.data(), nonce.size(), tag.data(),
+		tag.size());
 	TEST_EQ(ret, EC_SUCCESS, "%d");
 	TEST_ASSERT_ARRAY_EQ(plaintext.data(), expected_ciphertext.data(),
 			     plaintext.size());
@@ -794,7 +793,7 @@ test_static ec_error_list test_aes_gcm_encrypt_in_place()
 	return EC_SUCCESS;
 }
 
-test_static ec_error_list test_aes_gcm_decrypt_in_place()
+test_static ec_error_list test_aes_128_gcm_decrypt_in_place()
 {
 	constexpr std::array<uint8_t, SBP_ENC_KEY_LEN> key = {
 		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
@@ -820,7 +819,7 @@ test_static ec_error_list test_aes_gcm_decrypt_in_place()
 		0xa1, 0xab, 0x8f, 0xb3, 0x70, 0x75, 0xab, 0x48,
 	};
 
-	ec_error_list ret = aes_gcm_decrypt(
+	ec_error_list ret = aes_128_gcm_decrypt(
 		key.data(), key.size(), ciphertext.data(), ciphertext.data(),
 		ciphertext.size(), nonce.data(), nonce.size(), tag.data(),
 		tag.size());
@@ -834,8 +833,8 @@ test_static ec_error_list test_aes_gcm_decrypt_in_place()
 
 void run_test(int argc, const char **argv)
 {
-	RUN_TEST(test_aes_gcm_encrypt_in_place);
-	RUN_TEST(test_aes_gcm_decrypt_in_place);
+	RUN_TEST(test_aes_128_gcm_encrypt_in_place);
+	RUN_TEST(test_aes_128_gcm_decrypt_in_place);
 	RUN_TEST(test_hkdf_expand);
 	RUN_TEST(test_derive_encryption_key_failure_seed_not_set);
 	RUN_TEST(test_derive_positive_match_secret_fail_seed_not_set);
