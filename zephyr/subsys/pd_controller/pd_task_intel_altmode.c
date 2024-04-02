@@ -19,6 +19,7 @@
 #include <zephyr/shell/shell.h>
 
 #include <ap_power/ap_power.h>
+#include <ap_power/ap_power_interface.h>
 #include <drivers/intel_altmode.h>
 #include <usbc/pd_task_intel_altmode.h>
 #include <usbc/pdc_power_mgmt.h>
@@ -117,7 +118,7 @@ static uint32_t intel_altmode_wait_event(void)
 	uint32_t events;
 
 	events = k_event_wait(&intel_altmode_task_data.evt,
-			      INTEL_ALTMODE_EVENT_MASK, false, Z_FOREVER);
+			      INTEL_ALTMODE_EVENT_MASK, false, K_FOREVER);
 
 	/* Clear all events posted */
 	k_event_clear(&intel_altmode_task_data.evt, events);
@@ -280,6 +281,8 @@ static void intel_altmode_thread(void *unused1, void *unused2, void *unused3)
 	int i;
 	uint32_t events;
 
+	LOG_INF("Intel Altmode thread init");
+
 	/* Initialize events */
 	k_event_init(&intel_altmode_task_data.evt);
 
@@ -294,19 +297,28 @@ static void intel_altmode_thread(void *unused1, void *unused2, void *unused3)
 		pd_altmode_set_result_cb(pd_config_array[i],
 					 intel_altmode_event_cb);
 
+	/* If the AP is off, wait until it's powered up before entering the
+	 * processing loop.
+	 */
+	if (ap_power_in_state(AP_POWER_STATE_ANY_OFF)) {
+		LOG_INF("Intel Altmode: wait for AP power up");
+		events = k_event_wait(&intel_altmode_task_data.evt,
+				      BIT(INTEL_ALTMODE_EVENT_FORCE), false,
+				      K_FOREVER);
+
+		/* Clear all events posted */
+		k_event_clear(&intel_altmode_task_data.evt, events);
+	} else {
+		/*
+		 * AP already powered up.  We probably just did a sysjump.
+		 * Trigger an update to the muxconfig.
+		 */
+		events = BIT(INTEL_ALTMODE_EVENT_FORCE);
+	}
+
 	LOG_INF("Intel Altmode thread start");
 
-#if CONFIG_USBPD_POLL_PDC
-	events = intel_altmode_wait_event();
-#endif
 	while (1) {
-#if CONFIG_USBPD_POLL_PDC
-		events = BIT(INTEL_ALTMODE_EVENT_FORCE);
-#else
-		events = intel_altmode_wait_event();
-
-		LOG_DBG("Altmode events=0x%x", events);
-#endif
 		/*
 		 * Process the forced event first so that they are not
 		 * overlooked in the if-else conditions.
@@ -331,6 +343,10 @@ static void intel_altmode_thread(void *unused1, void *unused2, void *unused3)
 		}
 #if CONFIG_USBPD_POLL_PDC
 		k_msleep(50);
+		events = BIT(INTEL_ALTMODE_EVENT_FORCE);
+#else
+		events = intel_altmode_wait_event();
+		LOG_DBG("Altmode events=0x%x", events);
 #endif
 	}
 }
