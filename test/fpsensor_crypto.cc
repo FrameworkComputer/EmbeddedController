@@ -7,6 +7,8 @@
 #include "fpsensor/fpsensor_crypto.h"
 #include "fpsensor/fpsensor_state.h"
 
+#include <array>
+
 extern "C" {
 #include "builtin/assert.h"
 #include "common.h"
@@ -755,8 +757,85 @@ test_static int test_command_read_match_secret_unreadable(void)
 	return EC_SUCCESS;
 }
 
+test_static ec_error_list test_aes_gcm_encrypt_in_place()
+{
+	constexpr std::array<uint8_t, SBP_ENC_KEY_LEN> key = {
+		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+		0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+	};
+	std::array<uint8_t, 16> plaintext = { 0x00, 0x00, 0x00, 0x00,
+					      0x00, 0x00, 0x00, 0x00,
+					      0x00, 0x00, 0x00, 0x00,
+					      0x00, 0x00, 0x00, 0x00 };
+	constexpr std::array<uint8_t, 16> expected_ciphertext = {
+		0x9b, 0xde, 0x09, 0x85, 0x27, 0x8c, 0x70, 0x89,
+		0x54, 0x28, 0xcc, 0x4e, 0x7a, 0x36, 0xb1, 0x2d,
+	};
+	constexpr std::array<uint8_t, FP_CONTEXT_NONCE_BYTES> nonce = {
+		0x0B, 0x0A, 0x09, 0x08, 0x07, 0x06,
+		0x05, 0x04, 0x03, 0x02, 0x01, 0x00
+	};
+	std::array<uint8_t, FP_CONTEXT_TAG_BYTES> tag{};
+	constexpr std::array<uint8_t, FP_CONTEXT_TAG_BYTES> expected_tag = {
+		0x85, 0x6e, 0xd2, 0x04, 0x1f, 0xe0, 0x8f, 0x0b,
+		0xa1, 0xab, 0x8f, 0xb3, 0x70, 0x75, 0xab, 0x48,
+	};
+
+	ec_error_list ret = aes_gcm_encrypt(key.data(), key.size(),
+					    plaintext.data(), plaintext.data(),
+					    plaintext.size(), nonce.data(),
+					    nonce.size(), tag.data(),
+					    tag.size());
+	TEST_EQ(ret, EC_SUCCESS, "%d");
+	TEST_ASSERT_ARRAY_EQ(plaintext.data(), expected_ciphertext.data(),
+			     plaintext.size());
+	TEST_ASSERT_ARRAY_EQ(tag.data(), expected_tag.data(), tag.size());
+
+	return EC_SUCCESS;
+}
+
+test_static ec_error_list test_aes_gcm_decrypt_in_place()
+{
+	constexpr std::array<uint8_t, SBP_ENC_KEY_LEN> key = {
+		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
+		0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
+	};
+	/* Using the same values as from test_aes_gcm_encrypt_in_place means we
+	 * should get back the original plaintext from that function.
+	 */
+	constexpr std::array<uint8_t, 16> expected_plaintext = {
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
+		0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00
+	};
+	std::array<uint8_t, 16> ciphertext = {
+		0x9b, 0xde, 0x09, 0x85, 0x27, 0x8c, 0x70, 0x89,
+		0x54, 0x28, 0xcc, 0x4e, 0x7a, 0x36, 0xb1, 0x2d,
+	};
+	constexpr std::array<uint8_t, FP_CONTEXT_NONCE_BYTES> nonce = {
+		0x0B, 0x0A, 0x09, 0x08, 0x07, 0x06,
+		0x05, 0x04, 0x03, 0x02, 0x01, 0x00
+	};
+	constexpr std::array<uint8_t, FP_CONTEXT_TAG_BYTES> tag = {
+		0x85, 0x6e, 0xd2, 0x04, 0x1f, 0xe0, 0x8f, 0x0b,
+		0xa1, 0xab, 0x8f, 0xb3, 0x70, 0x75, 0xab, 0x48,
+	};
+
+	ec_error_list ret = aes_gcm_decrypt(
+		key.data(), key.size(), ciphertext.data(), ciphertext.data(),
+		ciphertext.size(), nonce.data(), nonce.size(), tag.data(),
+		tag.size());
+	;
+	TEST_EQ(ret, EC_SUCCESS, "%d");
+	TEST_ASSERT_ARRAY_EQ(ciphertext.data(), expected_plaintext.data(),
+			     ciphertext.size());
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, const char **argv)
 {
+	RUN_TEST(test_aes_gcm_encrypt_in_place);
+	RUN_TEST(test_aes_gcm_decrypt_in_place);
 	RUN_TEST(test_hkdf_expand);
 	RUN_TEST(test_derive_encryption_key_failure_seed_not_set);
 	RUN_TEST(test_derive_positive_match_secret_fail_seed_not_set);
