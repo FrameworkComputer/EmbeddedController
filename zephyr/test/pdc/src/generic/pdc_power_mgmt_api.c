@@ -839,3 +839,52 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_task_state_name)
 		zassert_equal(strcmp(state_name, test[i].e.name), 0);
 	}
 }
+
+ZTEST_USER(pdc_power_mgmt_api, test_get_connector_status)
+{
+	union connector_status_t in, out;
+	union conn_status_change_bits_t in_conn_status_change_bits;
+	union conn_status_change_bits_t out_conn_status_change_bits;
+
+	zassert_equal(-ERANGE, pdc_power_mgmt_get_connector_status(
+				       CONFIG_USB_PD_PORT_MAX_COUNT, &out));
+	zassert_equal(-EINVAL,
+		      pdc_power_mgmt_get_connector_status(TEST_PORT, NULL));
+
+	in_conn_status_change_bits.external_supply_change = 1;
+	in_conn_status_change_bits.connector_partner = 1;
+	in_conn_status_change_bits.connect_change = 1;
+	in.raw_conn_status_change_bits = in_conn_status_change_bits.raw_value;
+
+	in.conn_partner_flags = 1;
+	in.conn_partner_type = UFP_ATTACHED;
+	in.rdo = 0x01234567;
+
+	emul_pdc_configure_snk(emul, &in);
+	emul_pdc_connect_partner(emul, &in);
+	zassert_true(TEST_WAIT_FOR(pdc_power_mgmt_is_connected(TEST_PORT),
+				   PDC_TEST_TIMEOUT));
+
+	zassert_ok(pdc_power_mgmt_get_connector_status(TEST_PORT, &out));
+
+	out_conn_status_change_bits.raw_value = out.raw_conn_status_change_bits;
+
+	zassert_equal(out_conn_status_change_bits.external_supply_change,
+		      in_conn_status_change_bits.external_supply_change);
+	zassert_equal(out_conn_status_change_bits.connector_partner,
+		      in_conn_status_change_bits.connector_partner);
+	zassert_equal(out_conn_status_change_bits.connect_change,
+		      in_conn_status_change_bits.connect_change);
+	zassert_equal(out.power_operation_mode, in.power_operation_mode);
+	zassert_equal(out.connect_status, in.connect_status);
+	zassert_equal(out.power_direction, in.power_direction);
+	zassert_equal(out.conn_partner_flags, in.conn_partner_flags,
+		      "out=0x%X != in=0x%X", out.conn_partner_flags,
+		      in.conn_partner_flags);
+	zassert_equal(out.conn_partner_type, in.conn_partner_type);
+	zassert_equal(out.rdo, in.rdo);
+
+	emul_pdc_disconnect(emul);
+	zassert_true(TEST_WAIT_FOR(!pdc_power_mgmt_is_connected(TEST_PORT),
+				   PDC_TEST_TIMEOUT));
+}
