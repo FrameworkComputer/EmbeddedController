@@ -21,6 +21,7 @@
 #include <algorithm>
 #include <array>
 #include <cstdint>
+#include <span>
 #include <utility>
 #include <variant>
 
@@ -311,15 +312,15 @@ static enum ec_status unlock_template(uint16_t idx)
 	constexpr size_t enc_buffer_size = template_size + salt_size;
 	static_assert(enc_buffer_size <= sizeof(fp_enc_buffer));
 
-	const auto enc_template_begin = std::begin(fp_enc_buffer);
-	const auto enc_template_end = std::begin(fp_enc_buffer) + template_size;
-	const auto enc_salt_begin = enc_template_end;
-	const auto enc_salt_end = enc_template_end + salt_size;
+	const std::span enc_template(std::begin(fp_enc_buffer),
+				     std::begin(fp_enc_buffer) + template_size);
+	const std::span enc_salt(enc_template.end(),
+				 enc_template.end() + salt_size);
 
 	std::copy(fp_template[idx], fp_template[idx] + template_size,
-		  enc_template_begin);
+		  enc_template.begin());
 	std::copy(fp_positive_match_salt[idx],
-		  fp_positive_match_salt[idx] + salt_size, enc_salt_begin);
+		  fp_positive_match_salt[idx] + salt_size, enc_salt.begin());
 
 	CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > key;
 	if (derive_encryption_key(key.data(), enc_info.encryption_salt) !=
@@ -338,9 +339,10 @@ static enum ec_status unlock_template(uint16_t idx)
 		return EC_RES_UNAVAILABLE;
 	}
 
-	std::copy(enc_template_begin, enc_template_end, fp_template[idx]);
+	std::copy(enc_template.begin(), enc_template.end(), fp_template[idx]);
 
-	std::copy(enc_salt_begin, enc_salt_end, fp_positive_match_salt[idx]);
+	std::copy(enc_salt.begin(), enc_salt.end(),
+		  fp_positive_match_salt[idx]);
 
 	fp_init_decrypted_template_state_with_user_id(idx);
 	OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));

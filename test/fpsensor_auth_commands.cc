@@ -28,6 +28,7 @@ extern "C" {
 #include <algorithm>
 #include <array>
 #include <iterator>
+#include <span>
 #include <variant>
 
 namespace
@@ -766,21 +767,19 @@ test_static enum ec_error_list test_fp_command_template_encrypted(void)
 		head_size + metadata_size + template_size + salt_size;
 
 	std::array<uint8_t, params_size> params = {};
-	const auto head_begin = params.begin();
-	const auto head_end = params.begin() + head_size;
-	const auto enc_metadata_begin = head_end;
-	const auto enc_metadata_end = head_end + metadata_size;
-	const auto template_data_begin = enc_metadata_end;
-	const auto template_data_end = enc_metadata_end + template_size;
-	const auto salt_data_begin = template_data_end;
-	const auto salt_data_end = template_data_end + salt_size;
+	std::span head(params.begin(), params.begin() + head_size);
+	std::span enc_metadata(head.end(), head.end() + metadata_size);
+	std::span template_data(enc_metadata.end(),
+				enc_metadata.end() + template_size);
+	std::span salt_data(template_data.end(),
+			    template_data.end() + salt_size);
 
 	struct ec_params_fp_template head_data = {
 		.offset = 0,
 		.size = FP_TEMPLATE_COMMIT | (params_size - head_size),
 	};
 	static_assert(head_size == sizeof(head_data));
-	memcpy(head_begin, &head_data, head_size);
+	memcpy(head.data(), &head_data, head.size());
 
 	struct ec_fp_template_encryption_metadata enc_metadata_data {
 		.struct_version = 4, .nonce = { 1, 2, 3, 4, 5, 6, 7, 8 },
@@ -788,10 +787,10 @@ test_static enum ec_error_list test_fp_command_template_encrypted(void)
 		.tag = { 3, 2, 3, 4, 5, 6, 7, 8 },
 	};
 	static_assert(metadata_size == sizeof(enc_metadata_data));
-	memcpy(enc_metadata_begin, &enc_metadata_data, metadata_size);
+	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
 
-	std::fill(template_data_begin, template_data_end, 0xc4);
-	std::fill(salt_data_begin, salt_data_end, 0xab);
+	std::fill(template_data.begin(), template_data.end(), 0xc4);
+	std::fill(salt_data.begin(), salt_data.end(), 0xab);
 
 	fp_reset_and_clear_context();
 	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
@@ -840,28 +839,26 @@ test_static enum ec_error_list test_fp_command_template_decrypted(void)
 		head_size + metadata_size + template_size + salt_size;
 
 	std::array<uint8_t, params_size> params = {};
-	const auto head_begin = params.begin();
-	const auto head_end = params.begin() + head_size;
-	const auto enc_metadata_begin = head_end;
-	const auto enc_metadata_end = head_end + metadata_size;
-	const auto template_data_begin = enc_metadata_end;
-	const auto template_data_end = enc_metadata_end + template_size;
-	const auto salt_data_begin = template_data_end;
-	const auto salt_data_end = template_data_end + salt_size;
+	std::span head(params.begin(), params.begin() + head_size);
+	std::span enc_metadata(head.end(), head.end() + metadata_size);
+	std::span template_data(enc_metadata.end(),
+				enc_metadata.end() + template_size);
+	std::span salt_data(template_data.end(),
+			    template_data.end() + salt_size);
 
 	struct ec_params_fp_template head_data = {
 		.offset = 0,
 		.size = FP_TEMPLATE_COMMIT | (params_size - head_size),
 	};
 	static_assert(head_size == sizeof(head_data));
-	memcpy(head_begin, &head_data, head_size);
+	memcpy(head.data(), &head_data, head.size());
 
-	std::fill(template_data_begin, template_data_end, 0xc4);
-	std::fill(salt_data_begin, salt_data_end, 0xab);
+	std::fill(template_data.begin(), template_data.end(), 0xc4);
+	std::fill(salt_data.begin(), salt_data.end(), 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info, template_data_begin,
-			      template_size + salt_size);
+	encrypt_data_in_place(1, info, template_data.data(),
+			      template_data.size() + salt_data.size());
 
 	struct ec_fp_template_encryption_metadata enc_metadata_data {
 		.struct_version = 4
@@ -882,7 +879,7 @@ test_static enum ec_error_list test_fp_command_template_decrypted(void)
 		  std::begin(enc_metadata_data.tag));
 
 	static_assert(metadata_size == sizeof(enc_metadata_data));
-	memcpy(enc_metadata_begin, &enc_metadata_data, metadata_size);
+	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
 
 	TEST_EQ(test_send_host_command(EC_CMD_FP_TEMPLATE, 0, params.data(),
 				       params.size(), NULL, 0),
@@ -941,28 +938,26 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 		head_size + metadata_size + template_size + salt_size;
 
 	std::array<uint8_t, params_size> params = {};
-	const auto head_begin = params.begin();
-	const auto head_end = params.begin() + head_size;
-	const auto enc_metadata_begin = head_end;
-	const auto enc_metadata_end = head_end + metadata_size;
-	const auto template_data_begin = enc_metadata_end;
-	const auto template_data_end = enc_metadata_end + template_size;
-	const auto salt_data_begin = template_data_end;
-	const auto salt_data_end = template_data_end + salt_size;
+	std::span head(params.begin(), params.begin() + head_size);
+	std::span enc_metadata(head.end(), head.end() + metadata_size);
+	std::span template_data(enc_metadata.end(),
+				enc_metadata.end() + template_size);
+	std::span salt_data(template_data.end(),
+			    template_data.end() + salt_size);
 
 	struct ec_params_fp_template head_data = {
 		.offset = 0,
 		.size = FP_TEMPLATE_COMMIT | (params_size - head_size),
 	};
 	static_assert(head_size == sizeof(head_data));
-	memcpy(head_begin, &head_data, head_size);
+	memcpy(head.data(), &head_data, head.size());
 
-	std::fill(template_data_begin, template_data_end, 0xc4);
-	std::fill(salt_data_begin, salt_data_end, 0xab);
+	std::fill(template_data.begin(), template_data.end(), 0xc4);
+	std::fill(salt_data.begin(), salt_data.end(), 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info, template_data_begin,
-			      template_size + salt_size);
+	encrypt_data_in_place(1, info, template_data.data(),
+			      template_data.size() + salt_data.size());
 
 	struct ec_fp_template_encryption_metadata enc_metadata_data {
 		.struct_version = 4
@@ -983,7 +978,7 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 		  std::begin(enc_metadata_data.tag));
 
 	static_assert(metadata_size == sizeof(enc_metadata_data));
-	memcpy(enc_metadata_begin, &enc_metadata_data, metadata_size);
+	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
 
 	TEST_EQ(test_send_host_command(EC_CMD_FP_TEMPLATE, 0, params.data(),
 				       params.size(), NULL, 0),
@@ -1086,21 +1081,19 @@ test_fp_command_unlock_template_pre_encrypted_fail(void)
 		head_size + metadata_size + template_size + salt_size;
 
 	std::array<uint8_t, params_size> params = {};
-	const auto head_begin = params.begin();
-	const auto head_end = params.begin() + head_size;
-	const auto enc_metadata_begin = head_end;
-	const auto enc_metadata_end = head_end + metadata_size;
-	const auto template_data_begin = enc_metadata_end;
-	const auto template_data_end = enc_metadata_end + template_size;
-	const auto salt_data_begin = template_data_end;
-	const auto salt_data_end = template_data_end + salt_size;
+	std::span head(params.begin(), params.begin() + head_size);
+	std::span enc_metadata(head.end(), head.end() + metadata_size);
+	std::span template_data(enc_metadata.end(),
+				enc_metadata.end() + template_size);
+	std::span salt_data(template_data.end(),
+			    template_data.end() + salt_size);
 
 	struct ec_params_fp_template head_data = {
 		.offset = 0,
 		.size = FP_TEMPLATE_COMMIT | (params_size - head_size),
 	};
 	static_assert(head_size == sizeof(head_data));
-	memcpy(head_begin, &head_data, head_size);
+	memcpy(head.data(), &head_data, head.size());
 
 	struct ec_fp_template_encryption_metadata enc_metadata_data {
 		.struct_version = 4, .nonce = { 1, 2, 3, 4, 5, 6, 7, 8 },
@@ -1108,10 +1101,10 @@ test_fp_command_unlock_template_pre_encrypted_fail(void)
 		.tag = { 3, 2, 3, 4, 5, 6, 7, 8 },
 	};
 	static_assert(metadata_size == sizeof(enc_metadata_data));
-	memcpy(enc_metadata_begin, &enc_metadata_data, metadata_size);
+	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
 
-	std::fill(template_data_begin, template_data_end, 0xc4);
-	std::fill(salt_data_begin, salt_data_end, 0xab);
+	std::fill(template_data.begin(), template_data.end(), 0xc4);
+	std::fill(salt_data.begin(), salt_data.end(), 0xab);
 
 	fp_reset_and_clear_context();
 	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
@@ -1172,28 +1165,26 @@ test_fp_command_unlock_template_pre_encrypted(void)
 		head_size + metadata_size + template_size + salt_size;
 
 	std::array<uint8_t, params_size> params = {};
-	const auto head_begin = params.begin();
-	const auto head_end = params.begin() + head_size;
-	const auto enc_metadata_begin = head_end;
-	const auto enc_metadata_end = head_end + metadata_size;
-	const auto template_data_begin = enc_metadata_end;
-	const auto template_data_end = enc_metadata_end + template_size;
-	const auto salt_data_begin = template_data_end;
-	const auto salt_data_end = template_data_end + salt_size;
+	std::span head(params.begin(), params.begin() + head_size);
+	std::span enc_metadata(head.end(), head.end() + metadata_size);
+	std::span template_data(enc_metadata.end(),
+				enc_metadata.end() + template_size);
+	std::span salt_data(template_data.end(),
+			    template_data.end() + salt_size);
 
 	struct ec_params_fp_template head_data = {
 		.offset = 0,
 		.size = FP_TEMPLATE_COMMIT | (params_size - head_size),
 	};
 	static_assert(head_size == sizeof(head_data));
-	memcpy(head_begin, &head_data, head_size);
+	memcpy(head.data(), &head_data, head.size());
 
-	std::fill(template_data_begin, template_data_end, 0xc4);
-	std::fill(salt_data_begin, salt_data_end, 0xab);
+	std::fill(template_data.begin(), template_data.end(), 0xc4);
+	std::fill(salt_data.begin(), salt_data.end(), 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info, template_data_begin,
-			      template_size + salt_size);
+	encrypt_data_in_place(1, info, template_data.data(),
+			      template_data.size() + salt_data.size());
 
 	struct ec_fp_template_encryption_metadata enc_metadata_data {
 		.struct_version = 4
@@ -1214,7 +1205,7 @@ test_fp_command_unlock_template_pre_encrypted(void)
 		  std::begin(enc_metadata_data.tag));
 
 	static_assert(metadata_size == sizeof(enc_metadata_data));
-	memcpy(enc_metadata_begin, &enc_metadata_data, metadata_size);
+	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
 
 	std::array<uint32_t, FP_CONTEXT_USERID_WORDS> backup_user_id;
 	std::copy(std::begin(user_id), std::end(user_id),
