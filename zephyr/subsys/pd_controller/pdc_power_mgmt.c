@@ -259,6 +259,9 @@ enum pdc_state_t {
 	PDC_SNK_TYPEC_ONLY,
 	/** Stop operation */
 	PDC_SUSPENDED,
+
+	/** State count. Always leave as last item. */
+	PDC_STATE_COUNT,
 };
 
 /**
@@ -300,6 +303,9 @@ static const char *const pdc_state_names[] = {
 	[PDC_SNK_TYPEC_ONLY] = "TypeCSnkAttached",
 	[PDC_SUSPENDED] = "Suspended",
 };
+
+BUILD_ASSERT(ARRAY_SIZE(pdc_state_names) == PDC_STATE_COUNT,
+	     "pdc_state_names array has wrong number of elements");
 
 /**
  * @brief Unattached policy flags
@@ -578,6 +584,9 @@ static bool should_suspend(struct pdc_port_t *port)
 	/* No need to transition */
 	case PDC_SUSPENDED:
 		return false;
+
+	case PDC_STATE_COUNT:
+		__ASSERT(0, "Invalid state");
 	}
 
 	__builtin_unreachable();
@@ -2231,7 +2240,20 @@ const uint32_t *const pdc_power_mgmt_get_src_caps(int port)
 
 const char *pdc_power_mgmt_get_task_state_name(int port)
 {
-	return pdc_state_names[get_pdc_state(&pdc_data[port]->port)];
+	enum pdc_state_t indicated_state,
+		actual_state = get_pdc_state(&pdc_data[port]->port);
+
+	/* For a transitional state, report the return-to state instead */
+	switch (actual_state) {
+	case PDC_SEND_CMD_START:
+	case PDC_SEND_CMD_WAIT:
+		indicated_state = pdc_data[port]->port.send_cmd_return_state;
+		break;
+	default:
+		indicated_state = actual_state;
+	}
+
+	return pdc_state_names[indicated_state];
 }
 
 void pdc_power_mgmt_set_dual_role(int port, enum pd_dual_role_states state)
