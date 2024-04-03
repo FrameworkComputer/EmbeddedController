@@ -44,6 +44,17 @@ struct AesTestVector {
 	std::vector<uint8_t> nonce;
 	std::vector<uint8_t> ciphertext;
 	std::vector<uint8_t> tag;
+	/* clang-format off */
+	auto operator<=> (const AesTestVector &) const = default;
+	/* clang-format on */
+};
+
+struct TestVectorHex {
+	std::string key;
+	std::string plaintext;
+	std::string nonce;
+	std::string ciphertext;
+	std::string tag;
 };
 
 test_static std::optional<uint8_t> HexCharToDigit(const char c)
@@ -88,6 +99,17 @@ test_static bool HexStringToBytes(std::string input,
 		output->emplace_back((*msb << 4) | *lsb);
 	}
 	return true;
+}
+
+test_static ec_error_list TestVectorHexToBytes(const TestVectorHex &input,
+					       AesTestVector *output)
+{
+	TEST_ASSERT(HexStringToBytes(input.key, &output->key));
+	TEST_ASSERT(HexStringToBytes(input.plaintext, &output->plaintext));
+	TEST_ASSERT(HexStringToBytes(input.nonce, &output->nonce));
+	TEST_ASSERT(HexStringToBytes(input.ciphertext, &output->ciphertext));
+	TEST_ASSERT(HexStringToBytes(input.tag, &output->tag));
+	return EC_SUCCESS;
 }
 
 /*
@@ -213,10 +235,11 @@ static int test_aes_gcm_raw(const uint8_t *key, int key_size,
 test_static int test_aes_gcm(void)
 {
 	/*
-	 * Test vectors from BoringSSL crypto/fipsmodule/modes/gcm_tests.txt
+	 * Test vectors from BoringSSL
+	 * https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt
 	 * (only the ones with actual data, and no additional data).
 	 */
-	const AesTestVector test_vector1 = {
+	const AesTestVector expected_test_vector1 = {
 		.key = {
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 				0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -239,7 +262,16 @@ test_static int test_aes_gcm(void)
 		}
 	};
 
-	const AesTestVector test_vector2 = {
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt#8
+	TestVectorHex test_vector_hex1 = {
+		.key = "00000000000000000000000000000000",
+		.plaintext = "00000000000000000000000000000000",
+		.nonce = "000000000000000000000000",
+		.ciphertext = "0388dace60b6a392f328c2b971b2fe78",
+		.tag = "ab6e47d42cec13bdf53a67b21257bddf",
+	};
+
+	const AesTestVector expected_test_vector2 = {
 		.key = {
 			0xfe, 0xff, 0xe9, 0x92, 0x86, 0x65, 0x73, 0x1c,
 			0x6d, 0x6a, 0x8f, 0x94, 0x67, 0x30, 0x83, 0x08,
@@ -271,7 +303,18 @@ test_static int test_aes_gcm(void)
 			0x2c, 0xf3, 0x5a, 0xbd, 0x2b, 0xa6, 0xfa, 0xb4,
 		} };
 
-	const AesTestVector test_vector3 = {
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt#15
+	TestVectorHex test_vector_hex2 = {
+		.key = "feffe9928665731c6d6a8f9467308308",
+		.plaintext =
+			"d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b391aafd255",
+		.nonce = "cafebabefacedbaddecaf888",
+		.ciphertext =
+			"42831ec2217774244b7221b784d0d49ce3aa212f2c02a4e035c17e2329aca12e21d514b25466931c7d8f6a5aac84aa051ba30b396a0aac973d58e091473f5985",
+		.tag = "4d5c2af327cd64a62cf35abd2ba6fab4",
+	};
+
+	const AesTestVector expected_test_vector3 = {
 		.key = {
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -294,7 +337,16 @@ test_static int test_aes_gcm(void)
 			0x8e, 0xf4, 0xd4, 0x58, 0x75, 0x14, 0xf0, 0xfb,
 		} };
 
-	const AesTestVector test_vector4 = {
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt#50
+	TestVectorHex test_vector_hex3 = {
+		.key = "000000000000000000000000000000000000000000000000",
+		.plaintext = "00000000000000000000000000000000",
+		.nonce = "000000000000000000000000",
+		.ciphertext = "98e7247c07f0fe411c267e4384b0f600",
+		.tag = "2ff58d80033927ab8ef4d4587514f0fb",
+	};
+
+	const AesTestVector expected_test_vector4 = {
 		.key = {
 			0xfe, 0xff, 0xe9, 0x92, 0x86, 0x65, 0x73, 0x1c,
 			0x6d, 0x6a, 0x8f, 0x94, 0x67, 0x30, 0x83, 0x08,
@@ -327,7 +379,18 @@ test_static int test_aes_gcm(void)
 			0xb1, 0x18, 0x02, 0x4d, 0xb8, 0x67, 0x4a, 0x14,
 		} };
 
-	const AesTestVector test_vector5 = {
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt#57
+	TestVectorHex test_vector_hex4 = {
+		.key = "feffe9928665731c6d6a8f9467308308feffe9928665731c",
+		.plaintext =
+			"d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b391aafd255",
+		.nonce = "cafebabefacedbaddecaf888",
+		.ciphertext =
+			"3980ca0b3c00e841eb06fac4872a2757859e1ceaa6efd984628593b40ca1e19c7d773d00c144c525ac619d18c84a3f4718e2448b2fe324d9ccda2710acade256",
+		.tag = "9924a7c8587336bfb118024db8674a14",
+	};
+
+	const AesTestVector expected_test_vector5 = {
 		.key = {
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -351,7 +414,16 @@ test_static int test_aes_gcm(void)
 			0x26, 0x5b, 0x98, 0xb5, 0xd4, 0x8a, 0xb9, 0x19,
 		} };
 
-	const AesTestVector test_vector6 = {
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt#99
+	TestVectorHex test_vector_hex5 = {
+		.key = "0000000000000000000000000000000000000000000000000000000000000000",
+		.plaintext = "00000000000000000000000000000000",
+		.nonce = "000000000000000000000000",
+		.ciphertext = "cea7403d4d606b6e074ec5d3baf39d18",
+		.tag = "d0d1c8a799996bf0265b98b5d48ab919",
+	};
+
+	const AesTestVector expected_test_vector6 = {
 		.key = {
 			0xfe, 0xff, 0xe9, 0x92, 0x86, 0x65, 0x73, 0x1c,
 			0x6d, 0x6a, 0x8f, 0x94, 0x67, 0x30, 0x83, 0x08,
@@ -385,7 +457,18 @@ test_static int test_aes_gcm(void)
 			0xec, 0x1a, 0x50, 0x22, 0x70, 0xe3, 0xcc, 0x6c,
 		} };
 
-	const AesTestVector test_vector7 = {
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt#106
+	TestVectorHex test_vector_hex6 = {
+		.key = "feffe9928665731c6d6a8f9467308308feffe9928665731c6d6a8f9467308308",
+		.plaintext =
+			"d9313225f88406e5a55909c5aff5269a86a7a9531534f7da2e4c303d8a318a721c3c0c95956809532fcf0e2449a6b525b16aedf5aa0de657ba637b391aafd255",
+		.nonce = "cafebabefacedbaddecaf888",
+		.ciphertext =
+			"522dc1f099567d07f47f37a32a84427d643a8cdcbfe5c0c97598a2bd2555d1aa8cb08e48590dbb3da7b08b1056828838c5f61e6393ba7a0abcc9f662898015ad",
+		.tag = "b094dac5d93471bdec1a502270e3cc6c",
+	};
+
+	const AesTestVector expected_test_vector7 = {
 		.key = {
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 			0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
@@ -466,9 +549,39 @@ test_static int test_aes_gcm(void)
 			0xb0, 0x26, 0xa9, 0xed, 0x3f, 0xe1, 0xe8, 0x5f,
 		} };
 
-	std::array test_vectors = { test_vector1, test_vector2, test_vector3,
-				    test_vector4, test_vector5, test_vector6,
-				    test_vector7 };
+	// https://boringssl.googlesource.com/boringssl/+/f94f3ed3965ea033001fb9ae006084eee408b861/crypto/fipsmodule/modes/gcm_tests.txt#141
+	TestVectorHex test_vector_hex7 = {
+		.key = "00000000000000000000000000000000",
+		.plaintext =
+			"000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+		.nonce =
+			"ffffffff000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000000",
+		.ciphertext =
+			"56b3373ca9ef6e4a2b64fe1e9a17b61425f10d47a75a5fce13efc6bc784af24f4141bdd48cf7c770887afd573cca5418a9aeffcd7c5ceddfc6a78397b9a85b499da558257267caab2ad0b23ca476a53cb17fb41c4b8b475cb4f3f7165094c229c9e8c4dc0a2a5ff1903e501511221376a1cdb8364c5061a20cae74bc4acd76ceb0abc9fd3217ef9f8c90be402ddf6d8697f4f880dff15bfb7a6b28241ec8fe183c2d59e3f9dfff653c7126f0acb9e64211f42bae12af462b1070bef1ab5e3606872ca10dee15b3249b1a1b958f23134c4bccb7d03200bce420a2f8eb66dcf3644d1423c1b5699003c13ecef4bf38a3b60eedc34033bac1902783dc6d89e2e774188a439c7ebcc0672dbda4ddcfb2794613b0be41315ef778708a70ee7d75165c",
+		.tag = "8b307f6b33286d0ab026a9ed3fe1e85f",
+	};
+
+	const std::array expected_test_vectors = {
+		expected_test_vector1, expected_test_vector2,
+		expected_test_vector3, expected_test_vector4,
+		expected_test_vector5, expected_test_vector6,
+		expected_test_vector7
+	};
+	const std::array hex_test_vectors = {
+		test_vector_hex1, test_vector_hex2, test_vector_hex3,
+		test_vector_hex4, test_vector_hex5, test_vector_hex6,
+		test_vector_hex7
+	};
+
+	std::vector<AesTestVector> test_vectors;
+	TEST_EQ(expected_test_vectors.size(), hex_test_vectors.size(), "%zu");
+	for (size_t i = 0; i < expected_test_vectors.size(); i++) {
+		AesTestVector test_vector;
+		TEST_ASSERT(TestVectorHexToBytes(hex_test_vectors[i],
+						 &test_vector) == EC_SUCCESS);
+		TEST_ASSERT(test_vector == expected_test_vectors[i]);
+		test_vectors.emplace_back(test_vector);
+	}
 
 	constexpr size_t kExpectedNumTestVectors = 7;
 	TEST_EQ(test_vectors.size(), kExpectedNumTestVectors, "%zu");
