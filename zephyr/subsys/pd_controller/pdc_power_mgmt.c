@@ -2135,11 +2135,6 @@ void pdc_power_mgmt_request_power_swap(int port)
 
 enum tcpc_cc_polarity pdc_power_mgmt_pd_get_polarity(int port)
 {
-	/* Make sure port is connected */
-	if (!pdc_power_mgmt_is_connected(port)) {
-		return POLARITY_COUNT;
-	}
-
 	if (pdc_data[port]->port.connector_status.orientation) {
 		return POLARITY_CC2;
 	}

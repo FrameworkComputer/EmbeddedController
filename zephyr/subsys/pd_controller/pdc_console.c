@@ -44,9 +44,11 @@ static int cmd_pdc_get_status(const struct shell *sh, size_t argc, char **argv)
 	dr = pdc_power_mgmt_pd_get_data_role(port);
 	polarity = pdc_power_mgmt_pd_get_polarity(port);
 	shell_fprintf(sh, SHELL_INFO,
-		      "Port C%d CC%d, Role: %s-%s PDC State: %s"
+		      "Port C%d CC%d, %s - Role: %s-%s PDC State: %s"
 		      "\n",
-		      port, polarity, pr == PD_ROLE_SINK ? "SNK" : "SRC",
+		      port, polarity + 1,
+		      pdc_power_mgmt_is_connected(port) ? "Enable" : "Disable",
+		      pr == PD_ROLE_SINK ? "SNK" : "SRC",
 		      dr == PD_ROLE_DFP ? "DFP" : "UFP",
 		      pdc_power_mgmt_get_task_state_name(port));
 

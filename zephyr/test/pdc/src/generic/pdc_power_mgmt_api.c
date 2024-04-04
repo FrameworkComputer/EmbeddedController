@@ -75,8 +75,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_pd_get_polarity)
 {
 	union connector_status_t connector_status;
 
-	zassert_equal(POLARITY_COUNT,
-		      pd_get_polarity(CONFIG_USB_PD_PORT_MAX_COUNT));
+	zassert_false(
+		pdc_power_mgmt_is_connected(CONFIG_USB_PD_PORT_MAX_COUNT));
 
 	connector_status.orientation = 1;
 	emul_pdc_configure_src(emul, &connector_status);
