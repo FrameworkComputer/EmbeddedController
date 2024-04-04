@@ -22,7 +22,8 @@ test/libc_printf.c
 test/malloc.c
 test/panic.c
 test/printf.c
-test/queue.c"
+test/queue.c
+test/restricted_console.c"
 
 for file in "$@"; do
   ec_file="${file##**/platform/ec/}"

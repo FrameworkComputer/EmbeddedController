@@ -71,3 +71,10 @@ config HW_TEST_QUEUE
 	select ZTEST
 	help
 	  The test verifies queue functionality in EC.
+
+config HW_TEST_RESTRICTED_CONSOLE
+	bool "Restricted console test"
+	select ZTEST
+	depends on BOARD_FINGERPRINT
+	help
+	  The test verifies restricted console.

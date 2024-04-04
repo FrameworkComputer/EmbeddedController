@@ -71,3 +71,8 @@ tests:
     - CONFIG_HW_TEST_QUEUE=y
     extra_conf_files:
     - prj_hw_tests.conf
+  restricted_console:
+    extra_configs:
+    - CONFIG_HW_TEST_RESTRICTED_CONSOLE=y
+    extra_conf_files:
+    - prj_hw_tests.conf
