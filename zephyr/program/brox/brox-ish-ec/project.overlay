@@ -44,13 +44,14 @@ i2c3ALT: &i2c3 {
 	};
 	tabletmode_interrupt: tabletmode-interrupt {
 		compatible = "cros,tabletmode-interrupt";
-		irq-gpios = <&gpioc 7 GPIO_ACTIVE_LOW>;
+		irq-gpios = <&gpiod 0 GPIO_ACTIVE_LOW>;
 	};
 };
 
-/delete-node/ &int_lid_imu;
+/* TODO: b:332805291; remove the node and enable for proto 2 */
+/delete-node/ &tabletmode_interrupt;
 
-/delete-node/ &gpio_ish_i2c_ec_scl;
+/delete-node/ &int_lid_imu;
 
 /* Disable sensor I2C nodes */
 /delete-node/ &i2c5;
