@@ -30,3 +30,9 @@ tests:
     - CONFIG_TEST_BOARD_EC_QUIRKS=y
     extra_dtc_overlay_files:
     - ./boards/bloonchipper/bloonchipper.dtsi
+  fpmcu.bloonchipper.restricted_console:
+    extra_configs:
+    - CONFIG_TEST_BOARD_BLOONCHIPPER=y
+    - CONFIG_TEST_BOARD_RESTRICTED_CONSOLE=y
+    extra_dtc_overlay_files:
+    - ./boards/bloonchipper/bloonchipper.dtsi

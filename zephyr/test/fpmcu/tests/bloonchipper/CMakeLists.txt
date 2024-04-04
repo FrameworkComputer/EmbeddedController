@@ -19,3 +19,8 @@ target_sources_ifdef(CONFIG_TEST_BOARD_POWER app PRIVATE
 target_sources_ifdef(CONFIG_TEST_BOARD_EC_QUIRKS app PRIVATE
 	src/ec_quirks.c
 	${PLATFORM_EC_PROGRAM_DIR}/fpmcu/${CONFIG_TEST_BOARD_NAME}/src/ec_quirks.c)
+
+target_sources_ifdef(CONFIG_TEST_BOARD_RESTRICTED_CONSOLE app PRIVATE
+	src/restricted_console.c
+	${PLATFORM_EC}/common/memory_commands.c
+	${PLATFORM_EC}/common/gpio_commands.c)

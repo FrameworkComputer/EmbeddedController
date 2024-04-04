@@ -159,6 +159,11 @@ static int command_gpio_set(int argc, const char **argv)
 	int flags = 0;
 	int af = -1;
 
+#ifdef CONFIG_BOARD_FINGERPRINT
+	if (system_is_locked())
+		return EC_ERROR_ACCESS_DENIED;
+#endif /* CONFIG_BOARD_FINGERPRINT */
+
 	if (argc < 3)
 		return EC_ERROR_PARAM_COUNT;
 

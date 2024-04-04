@@ -62,8 +62,8 @@ int zshim_run_ec_console_command(const struct zephyr_console_command *command,
 	_ZEPHYR_SHELL_COMMAND_SHIM(NAME, ROUTINE, ARGDESC, HELP)
 
 /*
- * TODO(jrosenth): implement flags and restricted commands?  We just
- * discard this in the shim layer for now.
+ * There is only one CMD_FLAG_RESTRICTED flag, used in very few cases, so it is
+ * handlend within the command handlers to reduce the shim layer.
  */
 #define DECLARE_CONSOLE_COMMAND_FLAGS(NAME, ROUTINE, ARGDESC, HELP, FLAGS) \
 	_ZEPHYR_SHELL_COMMAND_SHIM(NAME, ROUTINE, ARGDESC, HELP)
