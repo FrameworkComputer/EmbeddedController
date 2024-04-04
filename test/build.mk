@@ -170,7 +170,7 @@ cov-dont-test += version
 cov-dont-test += interrupt
 # Flaky tests. The number of covered lines changes from run to run
 # b/213374060
-cov-dont-test += accel_cal entropy flash float kb_mkbp kb_scan kb_scan_strict
+cov-dont-test += accel_cal entropy flash float kb_mkbp kb_scan_strict
 cov-dont-test += rsa
 
 cov-test-list-host = $(filter-out $(cov-dont-test), $(test-list-host))
