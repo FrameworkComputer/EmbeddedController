@@ -393,6 +393,14 @@ enum attached_state_t {
 	SNK_ATTACHED_TYPEC_ONLY_STATE,
 };
 
+static const char *const attached_state_names[] = {
+	[UNATTACHED_STATE] = "Unattached",
+	[SRC_ATTACHED_STATE] = "Attached.SRC",
+	[SNK_ATTACHED_STATE] = "Attached.SNK",
+	[SRC_ATTACHED_TYPEC_ONLY_STATE] = "TypeCSrcAttached",
+	[SNK_ATTACHED_TYPEC_ONLY_STATE] = "TypeCSnkAttached",
+};
+
 /**
  * @brief Sink attached policy object
  */
@@ -731,6 +739,18 @@ static void print_current_pdc_state(struct pdc_port_t *port)
 		pdc_state_names[get_pdc_state(port)]);
 }
 
+static void set_attached_pdc_state(struct pdc_port_t *port,
+				   enum attached_state_t attached_state)
+{
+	const struct pdc_config_t *const config = port->dev->config;
+
+	if (attached_state != port->attached_state) {
+		port->attached_state = attached_state;
+		LOG_INF("C%d attached: %s", config->connector_num,
+			attached_state_names[port->attached_state]);
+	}
+}
+
 static void send_cmd_init(struct pdc_port_t *port)
 {
 	port->send_cmd.public.cmd = CMD_PDC_NONE;
@@ -988,7 +1008,7 @@ static void pdc_unattached_entry(void *obj)
 
 	print_current_pdc_state(port);
 
-	port->attached_state = UNATTACHED_STATE;
+	set_attached_pdc_state(port, UNATTACHED_STATE);
 	port->send_cmd.intern.pending = false;
 
 	/* Clear all events except for disconnect. */
@@ -1107,7 +1127,7 @@ static void pdc_src_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_GET_PDOS);
 		return;
 	case SRC_ATTACHED_RUN:
-		port->attached_state = SRC_ATTACHED_STATE;
+		set_attached_pdc_state(port, SRC_ATTACHED_STATE);
 		run_src_policies(port);
 		break;
 	}
@@ -1241,7 +1261,7 @@ static void pdc_snk_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
 		return;
 	case SNK_ATTACHED_RUN:
-		port->attached_state = SNK_ATTACHED_STATE;
+		set_attached_pdc_state(port, SNK_ATTACHED_STATE);
 		run_snk_policies(port);
 		break;
 	}
@@ -1552,7 +1572,7 @@ static void pdc_src_typec_only_run(void *obj)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
 
-	port->attached_state = SRC_ATTACHED_TYPEC_ONLY_STATE;
+	set_attached_pdc_state(port, SRC_ATTACHED_TYPEC_ONLY_STATE);
 
 	/* The CCI_EVENT is set on a connector disconnect, so check the
 	 * connector status and take the appropriate action. */
@@ -1592,7 +1612,7 @@ static void pdc_snk_typec_only_run(void *obj)
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
 	const struct pdc_config_t *const config = port->dev->config;
 
-	port->attached_state = SNK_ATTACHED_TYPEC_ONLY_STATE;
+	set_attached_pdc_state(port, SNK_ATTACHED_TYPEC_ONLY_STATE);
 
 	/* The CCI_EVENT is set on a connector disconnect, so check the
 	 * connector status and take the appropriate action. */
