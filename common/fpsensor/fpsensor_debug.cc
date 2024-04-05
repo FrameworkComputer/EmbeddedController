@@ -132,12 +132,10 @@ static int command_fpcapture(int argc, const char **argv)
 	uint32_t mode;
 	enum ec_error_list rc;
 
-	/*
-	 * TODO(b/142944002): Remove this redundant check for system_is_locked
-	 * once we have unit-tests/integration-tests in place.
-	 */
+#ifdef CONFIG_ZEPHYR
 	if (system_is_locked())
 		return EC_ERROR_ACCESS_DENIED;
+#endif
 
 	if (argc >= 2) {
 		char *e;
@@ -225,12 +223,10 @@ static int command_fpenroll(int argc, const char **argv)
 	static const char *const enroll_str[] = { "OK", "Low Quality",
 						  "Immobile", "Low Coverage" };
 
-	/*
-	 * TODO(b/142944002): Remove this redundant check for system_is_locked
-	 * once we have unit-tests/integration-tests in place.
-	 */
+#ifdef CONFIG_ZEPHYR
 	if (system_is_locked())
 		return EC_ERROR_ACCESS_DENIED;
+#endif
 
 	do {
 		int tries = 1000;
