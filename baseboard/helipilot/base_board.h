@@ -13,6 +13,7 @@
 #undef CONFIG_SYSTEM_UNLOCKED
 
 #define CONFIG_ALLOW_UNALIGNED_ACCESS
+#define CONFIG_PROTECT_CODE_RAM
 #define CONFIG_LTO
 
 /*-------------------------------------------------------------------------*

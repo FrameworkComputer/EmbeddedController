@@ -1859,6 +1859,13 @@
 #undef CONFIG_ALLOW_UNALIGNED_ACCESS
 
 /*
+ * Protect the code RAM section on devices that execute code from RAM. On these
+ * devices, this mechanism protects the code from being modified using the MPU.
+ * The MPU protections are setup on boot.
+ */
+#undef CONFIG_PROTECT_CODE_RAM
+
+/*
  * Provide common runtime layer code (tasks, hooks ...)
  * You want this unless you are doing a really tiny firmware.
  */
