@@ -271,15 +271,23 @@ union rts54_response {
 
 	struct get_error_status_response {
 		uint8_t byte_count;
-		uint8_t unrecognized_command : 1;
-		uint8_t non_existent_connector_number : 1;
-		uint8_t invalid_command_specific_param : 1;
-		uint8_t incompatible_connector_partner : 1;
-		uint8_t cc_communication_error : 1;
-		uint8_t cmd_unsuccessful_dead_batt : 1;
-		uint8_t contract_negotiation_failed : 1;
-		uint8_t reserved : 1;
-	} error_status;
+		uint16_t unrecognized_command : 1;
+		uint16_t non_existent_connector_number : 1;
+		uint16_t invalid_command_specific_param : 1;
+		uint16_t incompatible_connector_partner : 1;
+		uint16_t cc_communication_error : 1;
+		uint16_t cmd_unsuccessful_dead_batt : 1;
+		uint16_t contract_negotiation_failed : 1;
+		uint16_t overcurrent : 1;
+		uint16_t undefined : 1;
+		uint16_t port_partner_rejected_swap : 1;
+		uint16_t hard_reset : 1;
+		uint16_t ppm_policy_conflict : 1;
+		uint16_t swap_rejected : 1;
+		uint16_t reverse_current_protection : 1;
+		uint16_t set_sink_path_rejected : 1;
+		uint16_t reserved0 : 1;
+	} __packed error_status;
 
 	struct get_connector_status_response {
 		uint8_t byte_count;
