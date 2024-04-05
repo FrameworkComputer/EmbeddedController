@@ -46,6 +46,50 @@ struct AesTestVector {
 	std::vector<uint8_t> tag;
 };
 
+test_static std::optional<uint8_t> HexCharToDigit(const char c)
+{
+	if (c >= '0' && c <= '9')
+		return static_cast<uint8_t>(c - '0');
+
+	if (c >= 'a' && c <= 'f')
+		return static_cast<uint8_t>(c - 'a' + 10);
+
+	if (c >= 'A' && c <= 'F')
+		return static_cast<uint8_t>(c - 'A' + 10);
+
+	return std::nullopt;
+}
+
+test_static bool HexStringToBytes(std::string input,
+				  std::vector<uint8_t> *output)
+{
+	size_t count = input.size();
+	if ((count % 2) != 0) {
+		return false;
+	}
+
+	if (output == nullptr) {
+		return false;
+	}
+
+	output->clear();
+	output->reserve(count / 2);
+	for (size_t i = 0; i < count; i += 2) {
+		// most significant 4 bits
+		std::optional<uint8_t> msb = HexCharToDigit(input[i]);
+		if (!msb) {
+			return false;
+		}
+		// least significant 4 bits
+		std::optional<uint8_t> lsb = HexCharToDigit(input[i + 1]);
+		if (!lsb) {
+			return false;
+		}
+		output->emplace_back((*msb << 4) | *lsb);
+	}
+	return true;
+}
+
 /*
  * Do encryption, put result in |result|, and compare with |ciphertext|.
  */
