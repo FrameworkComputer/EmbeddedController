@@ -861,3 +861,16 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_connector_status)
 	zassert_true(TEST_WAIT_FOR(!pdc_power_mgmt_is_connected(TEST_PORT),
 				   PDC_TEST_TIMEOUT));
 }
+
+/*
+ * Validate that all possible PDC power management states have a name
+ * assigned.  This could possibly be done with some macrobatics, but
+ * a runtime unit test is easier to maintain.
+ */
+ZTEST_USER(pdc_power_mgmt_api, test_names)
+{
+	for (int i = 0; i < pdc_cmd_types; i++) {
+		zassert_not_null(pdc_cmd_names[i],
+				 "PDC command %d missing name", i);
+	}
+}

@@ -289,7 +289,7 @@ enum pdc_state_t {
 /**
  * @brief PDC Command Names
  */
-static const char *const pdc_cmd_names[] = {
+test_export_static const char *const pdc_cmd_names[] = {
 	[CMD_PDC_NONE] = "",
 	[CMD_PDC_RESET] = "PDC_RESET",
 	[CMD_PDC_SET_POWER_LEVEL] = "PDC_SET_POWER_LEVEL",
@@ -309,7 +309,11 @@ static const char *const pdc_cmd_names[] = {
 	[CMD_PDC_GET_VDO] = "PDC_GET_VDO",
 	[CMD_PDC_CONNECTOR_RESET] = "PDC_CONNECTOR_RESET",
 	[CMD_PDC_GET_IDENTITY_DISCOVERY] = "PDC_GET_IDENTITY_DISCOVERY",
+	[CMD_PDC_IS_VCONN_SOURCING] = "PDC_IS_VCONN_SOURCING",
 };
+const int pdc_cmd_types = CMD_PDC_COUNT;
+
+BUILD_ASSERT(ARRAY_SIZE(pdc_cmd_names) == CMD_PDC_COUNT);
 
 /**
  * @brief State Machine State Names

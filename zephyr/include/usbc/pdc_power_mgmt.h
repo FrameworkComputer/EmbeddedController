@@ -19,6 +19,11 @@
 
 #include <drivers/pdc.h>
 
+#ifdef CONFIG_ZTEST
+extern const char *const pdc_cmd_names[];
+extern const int pdc_cmd_types;
+#endif
+
 /**
  * @brief Get the state of the port partner connection
  *
