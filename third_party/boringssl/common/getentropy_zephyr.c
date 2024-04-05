@@ -6,6 +6,7 @@
 /* Implement getentropy (used by BoringSSL) using Zephyr Entropy Device. */
 
 #include <errno.h>
+#include <stddef.h>
 
 #include <zephyr/drivers/entropy.h>
 #include <zephyr/kernel.h>
