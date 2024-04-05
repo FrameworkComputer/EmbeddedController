@@ -831,10 +831,80 @@ test_static ec_error_list test_aes_128_gcm_decrypt_in_place()
 	return EC_SUCCESS;
 }
 
+test_static ec_error_list test_aes_128_gcm_encrypt_invalid_nonce_size()
+{
+	constexpr std::array<uint8_t, SBP_ENC_KEY_LEN> key{};
+	std::array<uint8_t, 16> text{};
+	std::array<uint8_t, FP_CONTEXT_TAG_BYTES> tag{};
+
+	/* Use an invalid nonce size. */
+	constexpr std::array<uint8_t, FP_CONTEXT_NONCE_BYTES - 1> nonce{};
+
+	ec_error_list ret = aes_128_gcm_encrypt(
+		key.data(), key.size(), text.data(), text.data(), text.size(),
+		nonce.data(), nonce.size(), tag.data(), tag.size());
+	TEST_EQ(ret, EC_ERROR_INVAL, "%d");
+
+	return EC_SUCCESS;
+}
+
+test_static ec_error_list test_aes_128_gcm_decrypt_invalid_nonce_size()
+{
+	constexpr std::array<uint8_t, SBP_ENC_KEY_LEN> key{};
+	std::array<uint8_t, 16> text{};
+	constexpr std::array<uint8_t, FP_CONTEXT_TAG_BYTES> tag{};
+
+	/* Use an invalid nonce size. */
+	constexpr std::array<uint8_t, FP_CONTEXT_NONCE_BYTES - 1> nonce{};
+
+	ec_error_list ret = aes_128_gcm_decrypt(
+		key.data(), key.size(), text.data(), text.data(), text.size(),
+		nonce.data(), nonce.size(), tag.data(), tag.size());
+	TEST_EQ(ret, EC_ERROR_INVAL, "%d");
+	return EC_SUCCESS;
+}
+
+test_static ec_error_list test_aes_128_gcm_encrypt_invalid_key_size()
+{
+	std::array<uint8_t, 16> text{};
+	std::array<uint8_t, FP_CONTEXT_TAG_BYTES> tag{};
+	constexpr std::array<uint8_t, FP_CONTEXT_NONCE_BYTES> nonce{};
+
+	/* Use an invalid key size. Key must be exactly 128 bits. */
+	constexpr std::array<uint8_t, SBP_ENC_KEY_LEN - 1> key{};
+
+	ec_error_list ret = aes_128_gcm_encrypt(
+		key.data(), key.size(), text.data(), text.data(), text.size(),
+		nonce.data(), nonce.size(), tag.data(), tag.size());
+	TEST_EQ(ret, EC_ERROR_UNKNOWN, "%d");
+
+	return EC_SUCCESS;
+}
+
+test_static ec_error_list test_aes_128_gcm_decrypt_invalid_key_size()
+{
+	std::array<uint8_t, 16> text{};
+	constexpr std::array<uint8_t, FP_CONTEXT_TAG_BYTES> tag{};
+	constexpr std::array<uint8_t, FP_CONTEXT_NONCE_BYTES> nonce{};
+
+	/* Use an invalid key size. Key must be exactly 128 bits. */
+	constexpr std::array<uint8_t, SBP_ENC_KEY_LEN - 1> key{};
+
+	ec_error_list ret = aes_128_gcm_decrypt(
+		key.data(), key.size(), text.data(), text.data(), text.size(),
+		nonce.data(), nonce.size(), tag.data(), tag.size());
+	TEST_EQ(ret, EC_ERROR_UNKNOWN, "%d");
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_aes_128_gcm_encrypt_in_place);
 	RUN_TEST(test_aes_128_gcm_decrypt_in_place);
+	RUN_TEST(test_aes_128_gcm_encrypt_invalid_nonce_size);
+	RUN_TEST(test_aes_128_gcm_decrypt_invalid_nonce_size);
+	RUN_TEST(test_aes_128_gcm_encrypt_invalid_key_size);
+	RUN_TEST(test_aes_128_gcm_decrypt_invalid_key_size);
 	RUN_TEST(test_hkdf_expand);
 	RUN_TEST(test_derive_encryption_key_failure_seed_not_set);
 	RUN_TEST(test_derive_positive_match_secret_fail_seed_not_set);
