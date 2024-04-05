@@ -24,16 +24,16 @@ extern "C" {
 
 test_static enum ec_error_list test_rand(void)
 {
-	constexpr uint8_t zero[256] = { 0 };
-	uint8_t buf1[256];
-	uint8_t buf2[256];
+	constexpr std::array<uint8_t, 256> zero{};
+	std::array<uint8_t, 256> buf1{};
+	std::array<uint8_t, 256> buf2{};
 
-	RAND_bytes(buf1, sizeof(buf1));
-	RAND_bytes(buf2, sizeof(buf2));
+	RAND_bytes(buf1.data(), buf1.size());
+	RAND_bytes(buf2.data(), buf2.size());
 
-	TEST_ASSERT_ARRAY_NE(buf1, zero, sizeof(zero));
-	TEST_ASSERT_ARRAY_NE(buf2, zero, sizeof(zero));
-	TEST_ASSERT_ARRAY_NE(buf1, buf2, sizeof(buf1));
+	TEST_ASSERT(buf1 != zero);
+	TEST_ASSERT(buf2 != zero);
+	TEST_ASSERT(buf1 != buf2);
 
 	return EC_SUCCESS;
 }
