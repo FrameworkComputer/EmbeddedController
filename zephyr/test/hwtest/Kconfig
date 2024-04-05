@@ -85,3 +85,10 @@ config HW_TEST_ROLLBACK
 	depends on BOARD_FINGERPRINT
 	help
 	  The test verifies rollback regions functionality.
+
+config HW_TEST_ROLLBACK_ENTROPY
+	bool "Rollback entropy test"
+	select ZTEST
+	depends on PLATFORM_EC_ROLLBACK
+	help
+	  The test verifies rollback entropy functionality.

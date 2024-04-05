@@ -24,7 +24,8 @@ test/panic.c
 test/printf.c
 test/queue.c
 test/restricted_console.c
-test/rollback.c"
+test/rollback.c
+test/rollback_entropy.c"
 
 for file in "$@"; do
   ec_file="${file##**/platform/ec/}"
