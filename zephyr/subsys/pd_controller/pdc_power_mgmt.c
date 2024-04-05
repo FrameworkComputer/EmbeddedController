@@ -1499,7 +1499,7 @@ static void pdc_send_cmd_wait_exit(void *obj)
 	uint32_t *pdos;
 	uint8_t *pdo_count;
 
-	if (port->send_cmd.public.pending) {
+	if (port->cmd == &port->send_cmd.public) {
 		k_event_post(&port->sm_event, PDC_PUBLIC_CMD_COMPLETE_EVENT);
 	}
 
