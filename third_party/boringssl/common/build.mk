@@ -5,4 +5,4 @@
 # EC OS Support Files for BoringSSL
 #
 
-boringssl-y+=sysrand.o
+boringssl-y+=getentropy.o

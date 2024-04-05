@@ -63,7 +63,7 @@ zephyr_library_link_libraries(crypto)
 
 # Provide implementation of getentropy() using Zephyr Entropy Device.
 zephyr_library_sources_ifdef(CONFIG_BORINGSSL_HARDWARE_ENTROPY
-	common/sysrand_zephyr.c)
+	common/getentropy_zephyr.c)
 
 # Add compile options required by BoringSSL.
 # -D_POSIX_C_SOURCE=200809L is needed because BoringSSL uses strdup() function

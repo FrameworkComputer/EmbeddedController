@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Implement the BoringSSL sysrand from Zephyr Entropy Device. */
+/* Implement getentropy (used by BoringSSL) using Zephyr Entropy Device. */
 
 #include <errno.h>
 

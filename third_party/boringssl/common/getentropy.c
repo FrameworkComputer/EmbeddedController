@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Implement the boringssl sysrand from EC TRNG. */
+/* Implement getentropy (used by BoringSSL) using the EC TRNG. */
 
 #include "trng.h"
 
