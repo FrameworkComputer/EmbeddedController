@@ -79,6 +79,9 @@ zephyr_library_sources_ifdef(CONFIG_BORINGSSL_HARDWARE_ENTROPY
 zephyr_library_compile_options(-std=c11)
 
 # Add compile options required by BoringSSL.
+# -D_POSIX_C_SOURCE=200809L is needed because BoringSSL uses strdup() function
+# is guarded by __POSIX_VISIBLE >=200809 in Newlib's string.h file.
+#
 # -Wno-implicit-function-declaration is needed because BoringSSL sources use
 # functions not defined in Zephyr: fflush(), getenv(), sscanf(). We won't get
 # any linker issues because code that uses these functions is unused and will
@@ -90,7 +93,8 @@ zephyr_library_compile_options(-std=c11)
 #
 # -std=c11 is necessary because BoringSSL sources use features available in
 # C11, e.g. static_assert().
-set(BORINGSSL_COMPILE_OPTIONS -Wno-implicit-function-declaration -fno-common -std=c11)
+set(BORINGSSL_COMPILE_OPTIONS -D_POSIX_C_SOURCE=200809L
+	-Wno-implicit-function-declaration -fno-common -std=c11)
 
 # Target 'fipsmodule' is a object library. It compiles source files, but
 # doesn't archive or link object files into library. Other targets should
