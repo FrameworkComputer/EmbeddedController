@@ -78,3 +78,10 @@ config HW_TEST_RESTRICTED_CONSOLE
 	depends on BOARD_FINGERPRINT
 	help
 	  The test verifies restricted console.
+
+config HW_TEST_ROLLBACK
+	bool "Rollback test"
+	select ZTEST
+	depends on BOARD_FINGERPRINT
+	help
+	  The test verifies rollback regions functionality.

@@ -97,10 +97,10 @@ ASSERTION_FAILURE_REGEX = re.compile(
 )
 
 DATA_ACCESS_VIOLATION_8020000_REGEX = re.compile(
-    r"Data access violation, mfar = 8020000\r\n"
+    r"(Data access violation, mfar = 8020000\r\n)|(.*MMFAR Address: 0x8020000\r\n)"
 )
 DATA_ACCESS_VIOLATION_8040000_REGEX = re.compile(
-    r"Data access violation, mfar = 8040000\r\n"
+    r"(Data access violation, mfar = 8040000\r\n)|(.*MMFAR Address: 0x8040000\r\n)"
 )
 DATA_ACCESS_VIOLATION_80C0000_REGEX = re.compile(
     r"Data access violation, mfar = 80c0000\r\n"
