@@ -80,9 +80,6 @@ void check_device_deferred(void)
 	/* Exit the duty mode and let thermal to control the fan */
 	dptf_set_fan_duty_target(-1);
 
-	if (amd_ddr_initialized_check())
-		set_bios_diagnostic(CODE_DDR_FAIL);
-
 	set_device_complete(true);
 }
 DECLARE_DEFERRED(check_device_deferred);
