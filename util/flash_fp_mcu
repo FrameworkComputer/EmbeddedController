@@ -420,7 +420,8 @@ flash_fp_mcu_npcx() {
     cmd_flash_monitor+=" --opr=wr --addr=0x200c3020"
 
     #TODO(b/294944527): Make sure this file is available in image
-    cmd_flash_monitor+=" --file /opt/google/biod/fw/npcx_monitor.bin"
+    cmd_flash_monitor+=" \
+      --file /usr/local/usr/share/ec-devutils/npcx9/npcx_monitor.bin"
 
     # Reset sequence to enter bootloader mode
     gpio 0 "${gpio_nrst}"
