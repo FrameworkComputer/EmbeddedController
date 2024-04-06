@@ -100,7 +100,8 @@ static int get_ic_status(struct rts5453p_emul_pdc_data *data,
 {
 	LOG_INF("GET_IC_STATUS");
 
-	data->response.ic_status.byte_count = sizeof(struct rts54_ic_status);
+	data->response.ic_status.byte_count = MIN(
+		sizeof(struct rts54_ic_status) - 1, req->get_ic_status.sts_len);
 	data->response.ic_status.fw_main_version = data->info.fw_version >> 16 &
 						   BIT_MASK(8);
 	data->response.ic_status.fw_sub_version[0] =

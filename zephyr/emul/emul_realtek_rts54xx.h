@@ -233,6 +233,14 @@ union rts54_request {
 		union get_vdo_t vdo_req;
 		uint8_t vdo_type[7];
 	} get_vdo;
+
+	struct get_ic_status_req {
+		uint8_t command_code;
+		uint8_t data_len;
+		uint8_t offset;
+		uint8_t reserved;
+		uint8_t sts_len;
+	} get_ic_status;
 };
 
 union rts54_response {
