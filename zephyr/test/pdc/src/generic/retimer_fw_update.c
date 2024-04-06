@@ -4,6 +4,7 @@
  */
 
 #include "ec_commands.h"
+#include "pdc_trace_msg.h"
 #include "test/util.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
@@ -30,6 +31,9 @@ static void before(void *unused)
 	RESET_FAKE(resume_pd_intel_altmode_task);
 
 	pd_retimer_state_init();
+	if (IS_ENABLED(CONFIG_TEST_PDC_MESSAGE_TRACING)) {
+		set_pdc_trace_msg_mocks();
+	}
 }
 
 ZTEST_SUITE(retimer_fw_update, NULL, NULL, before, NULL, NULL);

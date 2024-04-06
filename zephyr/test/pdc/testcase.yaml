@@ -5,16 +5,22 @@ tests:
     timeout: 300
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_GENERIC=y
+    - CONFIG_TEST_PDC_MESSAGE_TRACING=y
+    - CONFIG_USBC_PDC_TRACE_MSG=y
 
   pdc.rts54xx:
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_RTS54XX=y
+    - CONFIG_TEST_PDC_MESSAGE_TRACING=y
+    - CONFIG_USBC_PDC_TRACE_MSG=y
 
   pdc.retimer_fw_update:
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_RETIMER_FW_UPDATE=y
     - CONFIG_PLATFORM_EC_USBC_SS_MUX=y
     - CONFIG_PLATFORM_EC_USBC_RETIMER_FW_UPDATE=y
+    - CONFIG_TEST_PDC_MESSAGE_TRACING=y
+    - CONFIG_USBC_PDC_TRACE_MSG=y
 
   pdc.console:
     extra_configs:

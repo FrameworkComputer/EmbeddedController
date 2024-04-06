@@ -10,6 +10,7 @@
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_pdc.h"
 #include "i2c.h"
+#include "pdc_trace_msg.h"
 #include "zephyr/sys/util.h"
 #include "zephyr/sys/util_macro.h"
 
@@ -32,6 +33,9 @@ void pdc_before_test(void *data)
 {
 	emul_pdc_reset(emul);
 	emul_pdc_set_response_delay(emul, 0);
+	if (IS_ENABLED(CONFIG_TEST_PDC_MESSAGE_TRACING)) {
+		set_pdc_trace_msg_mocks();
+	}
 }
 
 ZTEST_SUITE(pdc_api, NULL, NULL, pdc_before_test, NULL, NULL);

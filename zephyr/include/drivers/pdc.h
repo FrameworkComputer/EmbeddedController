@@ -1006,8 +1006,10 @@ enum pdc_trace_chip_type {
  * @param msg_type Message type (hint how to interpret message)
  * @param buf Message to log
  * @param count Message length
+ *
+ * @retval true IFF pushed into FIFO
  */
-void pdc_trace_msg_req(int port, enum pdc_trace_chip_type msg_type,
+bool pdc_trace_msg_req(int port, enum pdc_trace_chip_type msg_type,
 		       const uint8_t *buf, const int count);
 
 /**
@@ -1017,8 +1019,10 @@ void pdc_trace_msg_req(int port, enum pdc_trace_chip_type msg_type,
  * @param msg_type Message type (hint how to interpret message)
  * @param buf Message to log
  * @param count Message length
+ *
+ * @retval true IFF pushed into FIFO
  */
-void pdc_trace_msg_resp(int port, enum pdc_trace_chip_type msg_type,
+bool pdc_trace_msg_resp(int port, enum pdc_trace_chip_type msg_type,
 			const uint8_t *buf, const int count);
 
 #ifdef __cplusplus
