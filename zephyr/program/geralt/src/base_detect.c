@@ -21,13 +21,6 @@
 #define ATTACH_MAX_THRESHOLD_MV 300
 #define DETACH_MIN_THRESHOLD_MV 3000
 
-enum power_status {
-	POWER_STATUS_NOCHANGE = 0,
-	POWER_STATUS_STARTUP = 1,
-	POWER_STATUS_SHUTDOWN = 2,
-};
-static enum power_status power_status_change = POWER_STATUS_NOCHANGE;
-
 static void base_update(bool attached)
 {
 	const struct gpio_dt_spec *en_cc_lid_base_pu =
@@ -35,15 +28,13 @@ static void base_update(bool attached)
 
 	if (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED)) {
 		enable_lid_detect(attached);
-		if (power_status_change == POWER_STATUS_SHUTDOWN ||
-		    chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		if (chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_ppvar_base_x),
 					false);
 		} else {
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_ppvar_base_x),
 					attached);
 		}
-		power_status_change = POWER_STATUS_NOCHANGE;
 	} else {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_ppvar_base_x),
 				attached);
@@ -71,9 +62,7 @@ static void base_detect_tick(void)
 			debouncing = false;
 			base_update(false);
 		}
-	} else if ((mv <= ATTACH_MAX_THRESHOLD_MV && !base_get_state()) ||
-		   (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED) &&
-		    power_status_change)) {
+	} else if (mv <= ATTACH_MAX_THRESHOLD_MV && !base_get_state()) {
 		if (!debouncing) {
 			debouncing = true;
 		} else {
@@ -104,12 +93,16 @@ static void base_startup_hook(struct ap_power_ev_callback *cb,
 	case AP_POWER_STARTUP:
 		base_detect_enable(true);
 		if (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED)) {
-			power_status_change = POWER_STATUS_STARTUP;
+			if (base_get_state())
+				gpio_pin_set_dt(
+					GPIO_DT_FROM_NODELABEL(en_ppvar_base_x),
+					true);
 		}
 		break;
 	case AP_POWER_SHUTDOWN:
 		if (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED)) {
-			power_status_change = POWER_STATUS_SHUTDOWN;
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_ppvar_base_x),
+					false);
 		} else {
 			base_detect_enable(false);
 		}
