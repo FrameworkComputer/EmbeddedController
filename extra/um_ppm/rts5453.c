@@ -1105,8 +1105,8 @@ static int rts5453_ucsi_configure_lpm_irq(struct ucsi_pd_device *device)
 		return 0;
 	}
 
-	dev->lpm_interrupt_task = platform_task_init(rts5453_lpm_irq_task, dev);
-	if (dev->lpm_interrupt_task == NULL) {
+	if (platform_task_init(rts5453_lpm_irq_task, dev,
+			       &dev->lpm_interrupt_task)) {
 		return -1;
 	}
 

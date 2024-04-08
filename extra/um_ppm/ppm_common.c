@@ -8,6 +8,8 @@
 #include "include/ppm.h"
 #include "ppm_common.h"
 
+#include <pthread.h>
+
 const char *ppm_state_strings[PPM_STATE_MAX] = {
 	"PPM_STATE_NOT_READY",	    "PPM_STATE_IDLE",
 	"PPM_STATE_IDLE_NOTIFY",    "PPM_STATE_PROCESSING_COMMAND",
@@ -672,30 +674,31 @@ static int ppm_common_init_and_wait(struct ucsi_ppm_device *device,
 	ucsi_data->version.lpm_address = 0x0;
 
 	/* Init lock to sync PPM task and main task context. */
-	dev->ppm_lock = platform_mutex_init();
-	if (!dev->ppm_lock) {
+	if (platform_mutex_init(&dev->ppm_lock)) {
+		ELOG("Failed to init ppm_lock");
 		return -1;
 	}
 
 	/* Init condvar to notify PPM task. */
-	dev->ppm_condvar = platform_condvar_init();
-	if (!dev->ppm_condvar) {
+	if (platform_condvar_init(&dev->ppm_condvar)) {
+		ELOG("Failed to init ppm_condvar");
 		return -1;
 	}
 
 	/* Allocate per port status (used for PPM async event notifications). */
-	dev->num_ports = num_ports;
-	dev->per_port_status = platform_calloc(
-		dev->num_ports,
-		sizeof(struct ucsiv3_get_connector_status_data));
+	if (num_ports != dev->num_ports) {
+		dev->num_ports = num_ports;
+		dev->per_port_status = platform_calloc(
+			dev->num_ports,
+			sizeof(struct ucsiv3_get_connector_status_data));
+	}
 	dev->last_connector_changed = -1;
 
 	DLOG("Ready to initialize PPM task!");
 
 	/* Initialize the PPM task. */
-	dev->ppm_task_handle =
-		platform_task_init((void *)ppm_common_task, (void *)dev);
-	if (!dev->ppm_task_handle) {
+	if (platform_task_init((void *)ppm_common_task, (void *)dev,
+			       &dev->ppm_task_handle)) {
 		ELOG("No ppm task created.");
 		return -1;
 	}
@@ -965,19 +968,13 @@ struct ucsi_ppm_driver *ppm_open(struct ucsi_pd_driver *pd_driver)
 	struct ppm_common_device *dev = NULL;
 	struct ucsi_ppm_driver *drv = NULL;
 
-	dev = platform_calloc(1, sizeof(struct ppm_common_device));
-	if (!dev) {
-		goto handle_error;
-	}
+	drv = platform_allocate_ppm();
+	if (!drv)
+		return NULL;
 
+	dev = (struct ppm_common_device *)drv->dev;
 	dev->pd = pd_driver;
 
-	drv = platform_calloc(1, sizeof(struct ucsi_ppm_driver));
-	if (!drv) {
-		goto handle_error;
-	}
-
-	drv->dev = (struct ucsi_ppm_device *)dev;
 	drv->init_and_wait = ppm_common_init_and_wait;
 	drv->get_data_region = ppm_common_get_data_region;
 	drv->get_next_connector_status = ppm_common_get_next_connector_status;
@@ -989,10 +986,4 @@ struct ucsi_ppm_driver *ppm_open(struct ucsi_pd_driver *pd_driver)
 	drv->cleanup = ppm_common_cleanup;
 
 	return drv;
-
-handle_error:
-	platform_free(dev);
-	platform_free(drv);
-
-	return NULL;
 }

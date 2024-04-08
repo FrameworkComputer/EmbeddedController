@@ -75,4 +75,11 @@ struct ppm_common_device {
  */
 struct ucsi_ppm_driver *ppm_open(struct ucsi_pd_driver *pd_driver);
 
+/**
+ * Allocate memory for the platform dependent part of the PPM.
+ *
+ * @return NULL on error.
+ */
+struct ucsi_ppm_driver *platform_allocate_ppm(void);
+
 #endif /* UM_PPM_PPM_COMMON_H_ */
