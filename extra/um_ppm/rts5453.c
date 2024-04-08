@@ -823,6 +823,9 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 			 * Alt-mode override supported.
 			 */
 			cap->optional_features |= ((1 << 2) | (1 << 3));
+
+			/* Force enable GET_PD_MESSAGE support. */
+			cap->optional_features |= (1 << 8);
 		}
 	}
 
