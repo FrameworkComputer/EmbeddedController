@@ -518,12 +518,12 @@ class OpmUnitTest : public TestFixture {
 
 	void TearDown()
 	{
-		/* Clean up ppm */
-		ppm_drv_->cleanup(ppm_drv_);
-
 		/* Clean up main loop (cdev) */
 		pthread_kill(thread_, SIGTERM);
 		pthread_join(thread_, NULL);
+
+		/* Clean up ppm */
+		ppm_drv_->cleanup(ppm_drv_);
 	}
 
 	static void *MainLoop(void *ptr)
