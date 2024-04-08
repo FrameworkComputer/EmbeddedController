@@ -5,6 +5,7 @@
 
 /* Physical fans. These are logically separate from pwm_channels. */
 
+#include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
@@ -30,17 +31,10 @@ static const struct fan_conf fan_conf_0 = {
 	.enable_gpio = -1,
 };
 
-/*
- * TOOD(b/181271666): thermistor placement and calibration
- *
- * Prototype fan spins at about 4200 RPM at 100% PWM, this
- * is specific to board ID 2 and might also apears in later
- * boards as well.
- */
 static const struct fan_rpm fan_rpm_0 = {
-	.rpm_min = 2200,
-	.rpm_start = 2200,
-	.rpm_max = 4200,
+	.rpm_min = 0,
+	.rpm_start = 1230,
+	.rpm_max = 4100,
 };
 
 const struct fan_t fans[FAN_CH_COUNT] = {
@@ -50,40 +44,79 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 	},
 };
 
-#ifndef CONFIG_FANS
+struct fan_step {
+	int on;
+	int off;
+	int rpm;
+};
 
-/*
- * TODO(b/181271666): use static fan speeds until fan and sensors are
- * tuned. for now, use:
- *
- *   AP off:  33%
- *   AP  on: 100%
- */
+static const struct fan_step fan_table[] = {
+	{ .on = 39, .off = 0, .rpm = 0 },
+	{ .on = 43, .off = 35, .rpm = 2100 },
+	{ .on = 47, .off = 39, .rpm = 2400 },
+	{ .on = 50, .off = 43, .rpm = 2700 },
+	{ .on = 53, .off = 46, .rpm = 3100 },
+	{ .on = 56, .off = 49, .rpm = 3500 },
+	{ .on = 127, .off = 52, .rpm = 4000 },
+};
 
-static void fan_slow(void)
+int fan_table_to_rpm(int fan, int *temp, enum temp_sensor_id temp_sensor)
 {
-	const int duty_pct = 33;
+	const struct fan_step *fan_step_table;
+	/* current fan level */
+	static int current_level;
+	/* previous sensor temperature */
+	static int prev_tmp[TEMP_SENSOR_COUNT];
 
-	ccprints("%s: speed %d%%", __func__, duty_pct);
+	int i;
+	uint8_t fan_table_size;
 
-	pwm_enable(PWM_CH_FAN, 1);
-	pwm_set_duty(PWM_CH_FAN, duty_pct);
+	fan_step_table = fan_table;
+	fan_table_size = ARRAY_SIZE(fan_table);
+
+	/*
+	 * Compare the current and previous temperature, we have
+	 * the three paths :
+	 *  1. decreasing path. (check the release point)
+	 *  2. increasing path. (check the trigger point)
+	 *  3. invariant path. (return the current RPM)
+	 */
+
+	if (temp[temp_sensor] < prev_tmp[temp_sensor]) {
+		for (i = current_level; i > 0; i--) {
+			if (temp[temp_sensor] <= fan_step_table[i].off)
+				current_level = i - 1;
+			else
+				break;
+		}
+	} else if (temp[temp_sensor] > prev_tmp[temp_sensor]) {
+		for (i = current_level; i < fan_table_size; i++) {
+			if (temp[temp_sensor] >= fan_step_table[i].on)
+				current_level = i + 1;
+			else
+				break;
+		}
+	}
+
+	if (current_level < 0)
+		current_level = 0;
+
+	if (current_level >= fan_table_size)
+		current_level = fan_table_size - 1;
+
+	prev_tmp[temp_sensor] = temp[temp_sensor];
+
+	return fan_step_table[current_level].rpm;
 }
 
-static void fan_max(void)
+void board_override_fan_control(int fan, int *tmp)
 {
-	const int duty_pct = 100;
+	if (chipset_in_state(CHIPSET_STATE_ON | CHIPSET_STATE_ANY_SUSPEND)) {
+		int new_rpm = fan_table_to_rpm(fan, tmp, TEMP_SENSOR_2);
 
-	ccprints("%s: speed %d%%", __func__, duty_pct);
-
-	pwm_enable(PWM_CH_FAN, 1);
-	pwm_set_duty(PWM_CH_FAN, duty_pct);
+		if (new_rpm != fan_get_rpm_target(FAN_CH(fan))) {
+			fan_set_rpm_mode(FAN_CH(fan), 1);
+			fan_set_rpm_target(FAN_CH(fan), new_rpm);
+		}
+	}
 }
-
-DECLARE_HOOK(HOOK_INIT, fan_slow, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, fan_slow, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, fan_slow, HOOK_PRIO_DEFAULT);
-DECLARE_HOOK(HOOK_CHIPSET_RESET, fan_max, HOOK_PRIO_FIRST);
-DECLARE_HOOK(HOOK_CHIPSET_RESUME, fan_max, HOOK_PRIO_DEFAULT);
-
-#endif /* CONFIG_FANS */
