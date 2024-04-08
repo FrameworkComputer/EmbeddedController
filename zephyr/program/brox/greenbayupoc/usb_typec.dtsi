@@ -25,6 +25,10 @@
 			pd-retimer;
 			policy = <&cros_policy>;
 		};
+		ppm-driver {
+			compatible = "ucsi,ppm";
+			lpm = <&pdc_power_p0 &pdc_power_p1>;
+		};
 	};
 };
 
