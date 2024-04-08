@@ -172,8 +172,7 @@ static void ppm_common_handle_async_event(struct ppm_common_device *dev)
 				sizeof(struct ucsiv3_get_connector_status_data));
 
 			if (dev->pd->execute_cmd(dev->pd->dev, &get_cs_cmd,
-						 (uint8_t *)port_status) ==
-			    -1) {
+						 (uint8_t *)port_status) < 0) {
 				ELOG("Failed to read port %d status. No recovery.",
 				     port + 1);
 			} else {
