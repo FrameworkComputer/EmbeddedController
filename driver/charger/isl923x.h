@@ -122,6 +122,11 @@
 #define ISL923X_C0_DCHOT_5A BIT(3)
 #define ISL923X_C0_DCHOT_4A (2 << 3)
 #define ISL923X_C0_DCHOT_3A (3 << 3)
+/* Control0: battery DCHOT reference for RS2 == 5mOhm */
+#define ISL923X_C0_DCHOT_5MOHM_24A (0 << 3)
+#define ISL923X_C0_DCHOT_5MOHM_20A (1 << 3)
+#define ISL923X_C0_DCHOT_5MOHM_16A (2 << 3)
+#define ISL923X_C0_DCHOT_5MOHM_12A (3 << 3)
 #define ISL923X_C0_DCHOT_MASK (3 << 3)
 
 /* Control0: adjusts phase comparator threshold offset for forward buck */
