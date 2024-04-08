@@ -80,8 +80,6 @@ greenbayupoc = register_brox_project(
         here / "program.conf",
         # Parent project's config
         here / "greenbayupoc" / "project.conf",
-        # Common sensor configs
-        here / "motionsense.conf",
     ],
 )
 

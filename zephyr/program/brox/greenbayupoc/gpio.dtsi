@@ -1,0 +1,132 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/*
+ * Arbitrage instructions:
+ *	1. Determine latest Brox schematic version "arb list -project brox"
+ *	2. Copy the arbitrage console command from cell A1 of the Brox EC pinout
+ *	   and make the following modfication
+ *		a. Add "--force --output=zephyr/program/brox/generated.dtsi"
+ *		   before the "project:version" argument
+ *		b. Replace "project:version" with "brox:<latest schematic>"
+ *		c. Execute the arbitrage command
+ *	3. Check the terminal for errors.  "Net not found" and "No matchin GPIO"
+ *	   errors are expected. Update the comment below to match.
+ *	4. Make changes to the manual GPIO overrides as needed.
+ */
+
+/*
+ * Updated for schematic version 0.10.
+ *
+ * The command "arb export-ec-devicetree-csv" generates the following
+ * errors. Reference b/308208621
+ *
+ * # EC GPIO Config Error Report
+ * ## Net not found on chip:
+ * The following nets provided in the spreadsheet cannot be found or is not
+ * connected to the EC in the schematic. This may be due to a naming mismatch so
+ * please check the schematic or list of nets mapped to GPIO's in the reference
+ * below for potential naming mismatches.
+ *
+ * row: 11, net: SPI_EC_DI_BIOS_DO_NC
+ * row: 12, net: SPI_EC_CS_BIOS_L_NC
+ * row: 13, net: EC_PCH_RTCRST_NC
+ * row: 15, net: EC_PCH_PECI_NC
+ * row: 19, net: EN_PP5000_FAN
+ * row: 23, net: SPI_EC_CLK_NC
+ * row: 24, net: SPI_EC_DO_BIOS_DI_NC
+ * row: 25, net: EC_EN_IMVP91_NC
+ * row: 52, net: EC_PCH_INT_ODL
+ * row: 56, net: EC_KB_BL_EN
+ * row: 58, net: EC_ESPI_ALERT_L_NC
+ * row: 81, net: PCBEEP_EC_NC
+ * row: 101, net: ADP_DET_NC
+ *
+ * Signals with the "_NC" suffix are no-connects and handled by the
+ * unused-gpios node.
+ *
+ * For all other signals, the GPIO entry is manually added to named-gpios.
+ */
+
+ / {
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_pg_vccin_aux_od: pg_vccin_aux_od {
+			gpios = <&gpiof 3 GPIO_INPUT>;
+		};
+		gpio_en_pp5000_fan: en_pp5000_fan {
+			gpios = <&gpioj 4 GPIO_INPUT>;
+		};
+		gpio_ec_pch_int_odl: ec_pch_int_odl {
+			gpios = <&gpiog 1 GPIO_ODR_LOW>;
+			enum-name = "GPIO_EC_INT_L";
+		};
+		gpio_ec_kso_02_inv: ec_kso_02_inv {
+			gpios = <&gpioksol 2 GPIO_OUTPUT_HIGH>;
+		};
+
+		/* The legacy system code requires GPIO_ENTERING_RW symbol */
+		gpio_ec_entering_rw: ec_entering_rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+
+		/* EC_PCH_RTCRST_NC */
+		gpio_ec_pch_rtsrst: ec_pch_rtcrst {
+			gpios = <&gpioh 5 GPIO_OUTPUT_LOW>;
+		};
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+
+		unused-gpios =
+			/* SPI_EC_DI_BIOS_DO */
+			<&gpiog 5 0>,
+			/* SPI_EC_CS_BIOS_L */
+			<&gpiog 3 0>,
+			/* EC_PCH_PECI */
+			<&gpiof 6 0>,
+			/* SPI_EC_CLK */
+			<&gpiog 7 0>,
+			/* SPI_EC_DO_BIOS_DI */
+			<&gpiog 4 0>,
+			/* EC_EN_IMVP91_NC */
+			<&gpioh 6 0>,
+			/* EC_ESPI_ALERT_L_NC */
+			<&gpiom 6 0>,
+			/* PCBEEP_EC */
+			<&gpioa 7 0>,
+			/* EC_EN_KB_BL */
+			<&gpioi 2 0>;
+		};
+};
+
+/* The eSPI shim requires this GPIO nodelabel */
+gpio_ec_pch_wake_odl: &gpio_sen_mode1_ec_pch_wake_odl {
+};
+
+&gpio_ccd_mode_odl {
+	gpios = <&gpioe 6 GPIO_INPUT>;
+};
+
+&gpio_amp_mute_l {
+	gpios = <&gpioj 6 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+};
+
+/* Default PROCHOT high so it's not asserted
+ * TODO: b/214509787 - zephyr: subsys/ap_pwrseq: support chipset interface APIs
+ */
+&gpio_ec_prochot_odl {
+	gpios = <&gpioi 0 GPIO_ODR_HIGH>;
+};
+
+&gpio_ec_wp_odl {
+	gpios = <&gpioj 3 (GPIO_INPUT | GPIO_ACTIVE_LOW) >;
+};
+
+&gpio_acok_ec_od {
+	enum-name = "GPIO_AC_PRESENT";
+};
