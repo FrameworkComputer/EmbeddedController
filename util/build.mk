@@ -8,7 +8,7 @@
 
 # See Makefile for description.
 host-util-bin-cxx-y += ectool ec_parse_panicinfo lbplay stm32mon lbcc iteflash \
-	cbi-util ec_coredump
+	itecomdbgr cbi-util ec_coredump
 build-util-art-y += util/export_taskinfo.so
 
 build-util-bin-$(CHIP_NPCX) += ecst
@@ -30,6 +30,7 @@ comm-objs=$(util-lock-objs:%=lock/%) comm-host.o comm-dev.o
 comm-objs+=comm-lpc.o comm-i2c.o misc_util.o comm-usb.o
 
 iteflash-objs = iteflash.o usb_if.o
+itecomdbgr-objs = itecomdbgr.o
 ectool-objs=ectool.o ectool_keyscan.o ec_flash.o $(comm-objs)
 ectool-objs+=ectool_i2c.o
 ectool-objs+=../common/crc.o
