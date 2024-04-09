@@ -202,13 +202,13 @@
 	motionsense-rotation-ref {
 		compatible = "cros-ec,motionsense-rotation-ref";
 		lid_rot_ref_bmi: lid-rotation-ref-bmi {
-			mat33 = <1 0 0
-				 0 (-1) 0
+			mat33 = <(-1) 0 0
+				 0 1 0
 				 0 0 (-1)>;
 		};
 		lid_rot_ref_lsm6dsm: lid-rotation-ref-lsm6dsm {
-			mat33 = <0 1 0
-				 1 0 0
+			mat33 = <0 (-1) 0
+				 (-1) 0 0
 				 0 0 (-1)>;
 		};
 	};
