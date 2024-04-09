@@ -38,6 +38,7 @@ test/restricted_console.c
 test/rng_benchmark.cc
 test/rollback.c
 test/rollback_entropy.c
+test/sbrk.c
 test/sha256.c
 test/static_if.c
 test/std_vector.cc

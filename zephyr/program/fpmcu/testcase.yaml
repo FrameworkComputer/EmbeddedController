@@ -154,6 +154,13 @@ tests:
     - CONFIG_PM=n
     extra_conf_files:
     - prj_hw_tests.conf
+  sbrk:
+    extra_configs:
+    - CONFIG_HW_TEST_SBRK=y
+    # Added to reduce RO flash usage
+    - CONFIG_PM=n
+    extra_conf_files:
+    - prj_hw_tests.conf
   sha256:
     extra_configs:
     - CONFIG_HW_TEST_SHA256=y

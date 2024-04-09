@@ -20,7 +20,11 @@
  * @return the previous program break (address) on success
  * @return (void*)-1 on error and errno is set to ENOMEM.
  */
+#ifndef CONFIG_ARCH_POSIX
 void *_sbrk(intptr_t incr)
+#else
+void *sbrk(intptr_t incr)
+#endif
 {
 	static char *heap_end = __shared_mem_buf;
 	char *prev_heap_end;

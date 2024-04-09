@@ -158,6 +158,13 @@ config HW_TEST_ROLLBACK_ENTROPY
 	help
 	  The test verifies rollback entropy functionality.
 
+config HW_TEST_SBRK
+	bool "SBRK test"
+	select ZTEST
+	depends on NEWLIB_LIBC_SUPPORTED
+	help
+	  The test verifies sbrk return values.
+
 config HW_TEST_SHA256
 	bool "SHA256 test"
 	select ZTEST
