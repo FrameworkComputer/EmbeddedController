@@ -21,6 +21,10 @@
 	};
 
 	named-i2c-ports {
+		ec_i2c_usb_c0_scl_3v3 {
+			i2c-port = <&i2c2ALT>;
+		};
+
 		/delete-node/ ec_i2c5;
 	};
 
@@ -86,6 +90,49 @@
 		};
 		/* a label to prevent build break in power sequencing */
 		en_pp4200_s5: en_pp3700_s5 {
+		};
+		/* Arbitrage doesn't support INPUT | ACTIVE_LOW gpios */
+		als_int_ec_odl {
+			gpios = <&gpiob 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+		};
+		ap_ec_sysrst_odl {
+			gpios = <&gpioj 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+		};
+		ap_ec_wdtrst_l {
+			gpios = <&gpioj 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+		};
+		ap_in_sleep_l {
+			gpios = <&gpiom 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+		};
+		charger_prochot_odl {
+			gpios = <&gpioc 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		pmic_ec_resetb {
+			gpios = <&gpioj 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+		};
+		/* Arbitrage doesn't generate ODR_HIGH correctly */
+		ec_pmic_en_odl {
+			gpios = <&gpioj 0 GPIO_ODR_HIGH>;
+		};
+		ec_ap_hid_int_odl {
+			gpios = <&gpiod 7 GPIO_ODR_HIGH>;
+		};
+		ec_ap_int_odl {
+			gpios = <&gpiom 6 GPIO_ODR_HIGH>;
+		};
+		ec_led1_odl {
+			gpios = <&gpioa 0 GPIO_ODR_HIGH>;
+		};
+		ec_led2_odl {
+			gpios = <&gpioa 1 GPIO_ODR_HIGH>;
+		};
+		sys_rst_odl {
+			gpios = <&gpioj 5 GPIO_ODR_HIGH>;
 		};
 	};
 
