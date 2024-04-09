@@ -1,0 +1,7 @@
+common:
+  platform_allow: native_sim
+tests:
+  crypto.sha256:
+    extra_configs:
+    - CONFIG_TEST_SHA256=y
+    - CONFIG_PLATFORM_EC_SHA256_SW=y

@@ -88,3 +88,13 @@ tests:
     - CONFIG_PM=n
     extra_conf_files:
     - prj_hw_tests.conf
+  sha256:
+    extra_configs:
+    - CONFIG_HW_TEST_SHA256=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  sha256_unrolled:
+    extra_configs:
+    - CONFIG_HW_TEST_SHA256_UNROLLED=y
+    extra_conf_files:
+    - prj_hw_tests.conf

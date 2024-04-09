@@ -92,3 +92,16 @@ config HW_TEST_ROLLBACK_ENTROPY
 	depends on PLATFORM_EC_ROLLBACK
 	help
 	  The test verifies rollback entropy functionality.
+
+config HW_TEST_SHA256
+	bool "SHA256 test"
+	select ZTEST
+	help
+	  The test verifies SHA256 functions.
+
+config HW_TEST_SHA256_UNROLLED
+	bool "SHA256 unrolled test"
+	select ZTEST
+	select PLATFORM_EC_SHA256_UNROLLED
+	help
+	  The test verifies SHA256 functions with forced unrolled config.
