@@ -26,7 +26,7 @@ ZTEST(isl9238c, test_isl9238c_init)
 	const struct emul *isl923x_emul = ISL923X_EMUL;
 	int input_current;
 
-	if (CONFIG_ISL9238C_INPUT_VOLTAGE_MV == -1) {
+	if (CONFIG_PLATFORM_EC_ISL9238C_INPUT_VOLTAGE_MV == -1) {
 		isl923x_emul_reset_registers(isl923x_emul);
 		i2c_common_emul_set_write_fail_reg(COMMON_DATA,
 						   ISL9238_REG_INPUT_VOLTAGE);
@@ -63,7 +63,9 @@ ZTEST(isl9238c, test_isl9238c_init)
 	zassert_equal(0, input_current,
 		      "Expected input current 0mA but got %dmA", input_current);
 
-	if (!IS_ENABLED(CONFIG_ISL9238C_ENABLE_BUCK_MODE)) {
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_ISL9238C_ENABLE_BUCK_MODE)) {
+		uint32_t option;
+
 		isl923x_emul_reset_registers(isl923x_emul);
 		i2c_common_emul_set_read_fail_reg(COMMON_DATA,
 						  ISL923X_REG_CONTROL0);
@@ -89,5 +91,14 @@ ZTEST(isl9238c, test_isl9238c_init)
 		zassert_equal(0, input_current,
 			      "Expected input current 0mA but got %dmA",
 			      input_current);
+
+		isl923x_emul_reset_registers(isl923x_emul);
+		isl923x_drv.init(CHARGER_NUM);
+
+		zassert_ok(isl923x_drv.get_option(CHARGER_NUM, &option));
+		zassert_true(
+			(option & ISL923X_C0_ENABLE_BUCK) != 0,
+			"Expected options (0x%08x) to enable buck mode 0x%08x",
+			option, ISL923X_C0_ENABLE_BUCK);
 	}
 }
