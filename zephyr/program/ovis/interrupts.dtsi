@@ -12,12 +12,6 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_button_interrupt";
 		};
-
-		int_rec_button: rec_button {
-			irq-pin = <&gpio_gsc_ec_rec_btn_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "button_interrupt";
-		};
 	};
 };
 
