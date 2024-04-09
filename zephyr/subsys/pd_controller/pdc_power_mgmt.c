@@ -211,6 +211,28 @@ enum src_attached_local_state_t {
 };
 
 /**
+ * @brief TypeC SNK Attached Local States
+ */
+enum snk_typec_attached_local_state_t {
+	/** SNK_TYPEC_ATTACHED_SET_CHARGE_CURRENT */
+	SNK_TYPEC_ATTACHED_SET_CHARGE_CURRENT,
+	/** SNK_TYPEC_ATTACHED_SET_SINK_PATH_ON */
+	SNK_TYPEC_ATTACHED_SET_SINK_PATH_ON,
+	/** SNK_TYPEC_ATTACHED_RUN */
+	SNK_TYPEC_ATTACHED_RUN,
+};
+
+/**
+ * @brief TypeC SRC Attached Local States
+ */
+enum src_typec_attached_local_state_t {
+	/** SRC_TYPEC_ATTACHED_SET_SINK_PATH_OFF */
+	SRC_TYPEC_ATTACHED_SET_SINK_PATH_OFF,
+	/** SRC_TYPEC_ATTACHED_RUN */
+	SRC_TYPEC_ATTACHED_RUN,
+};
+
+/**
  * @brief Unattached Local States
  */
 enum unattached_local_state_t {
@@ -441,6 +463,10 @@ struct pdc_port_t {
 	/** Flag to suspend the PDC Power Mgmt state machine */
 	atomic_t suspend;
 
+	/** Source TypeC attached local state variable */
+	enum src_typec_attached_local_state_t src_typec_attached_local_state;
+	/** Sink TypeC attached local state variable */
+	enum snk_typec_attached_local_state_t snk_typec_attached_local_state;
 	/** Unattached local state variable */
 	enum unattached_local_state_t unattached_local_state;
 	/** Last unattached local state variable */
@@ -1511,6 +1537,11 @@ static void pdc_src_typec_only_entry(void *obj)
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
 
 	print_current_pdc_state(port);
+
+	if (get_pdc_state(port) != port->send_cmd_return_state) {
+		port->src_typec_attached_local_state =
+			SRC_TYPEC_ATTACHED_SET_SINK_PATH_OFF;
+	}
 }
 
 static void pdc_src_typec_only_run(void *obj)
@@ -1526,24 +1557,36 @@ static void pdc_src_typec_only_run(void *obj)
 		return;
 	}
 
-	send_pending_public_commands(port);
+	switch (port->src_typec_attached_local_state) {
+	case SRC_TYPEC_ATTACHED_SET_SINK_PATH_OFF:
+		port->src_typec_attached_local_state = SRC_TYPEC_ATTACHED_RUN;
+
+		port->sink_path_en = false;
+		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
+		return;
+	case SRC_TYPEC_ATTACHED_RUN:
+		send_pending_public_commands(port);
+		break;
+	}
 }
 
 static void pdc_snk_typec_only_entry(void *obj)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
-	const struct pdc_config_t *const config = port->dev->config;
 
-	typec_set_input_current_limit(config->connector_num,
-				      port->typec_current_ma, 5000);
+	port->send_cmd.intern.pending = false;
+	if (get_pdc_state(port) != port->send_cmd_return_state) {
+		port->snk_typec_attached_local_state =
+			SNK_TYPEC_ATTACHED_SET_CHARGE_CURRENT;
+	}
 
-	charge_manager_update_dualrole(config->connector_num, CAP_DEDICATED);
 	print_current_pdc_state(port);
 }
 
 static void pdc_snk_typec_only_run(void *obj)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
+	const struct pdc_config_t *const config = port->dev->config;
 
 	port->attached_state = SNK_ATTACHED_TYPEC_ONLY_STATE;
 
@@ -1554,7 +1597,26 @@ static void pdc_snk_typec_only_run(void *obj)
 		return;
 	}
 
-	send_pending_public_commands(port);
+	switch (port->snk_typec_attached_local_state) {
+	case SNK_TYPEC_ATTACHED_SET_CHARGE_CURRENT:
+		port->snk_typec_attached_local_state =
+			SNK_TYPEC_ATTACHED_SET_SINK_PATH_ON;
+
+		typec_set_input_current_limit(config->connector_num,
+					      port->typec_current_ma, 5000);
+
+		charge_manager_update_dualrole(config->connector_num,
+					       CAP_DEDICATED);
+		break;
+	case SNK_TYPEC_ATTACHED_SET_SINK_PATH_ON:
+		port->snk_typec_attached_local_state = SNK_TYPEC_ATTACHED_RUN;
+		port->sink_path_en = true;
+		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
+		return;
+	case SNK_TYPEC_ATTACHED_RUN:
+		send_pending_public_commands(port);
+		break;
+	}
 }
 
 static void pdc_init_entry(void *obj)
