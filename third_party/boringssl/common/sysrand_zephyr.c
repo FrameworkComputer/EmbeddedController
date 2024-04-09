@@ -10,9 +10,6 @@
 #include <zephyr/drivers/entropy.h>
 #include <zephyr/kernel.h>
 
-#include <../crypto/fipsmodule/rand/internal.h>
-#include <openssl/base.h>
-
 #define rng DEVICE_DT_GET(DT_CHOSEN(zephyr_entropy))
 
 // We don't want to conflict with the linux getentropy.
@@ -35,7 +32,7 @@ int getentropy(void *buffer, size_t length)
 	}
 
 	/*
-	 * BoringSSL uses size_t to represent buffer size, but Zephyr uses
+	 * getentropy() uses size_t to represent buffer size, but Zephyr uses
 	 * uint16_t. The length check above allows us to safely cast without
 	 * overflow.
 	 */

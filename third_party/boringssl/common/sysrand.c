@@ -5,7 +5,6 @@
 
 /* Implement the boringssl sysrand from EC TRNG. */
 
-#include "openssl/base.h"
 #include "trng.h"
 
 #include <errno.h>

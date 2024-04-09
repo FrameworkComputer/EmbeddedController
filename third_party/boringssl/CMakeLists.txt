@@ -65,10 +65,6 @@ zephyr_library_link_libraries(crypto)
 zephyr_library_sources_ifdef(CONFIG_BORINGSSL_HARDWARE_ENTROPY
 	common/sysrand_zephyr.c)
 
-# Change language to C11 because sysrand_zephyr.c includes header from
-# BoringSSL which requires that.
-zephyr_library_compile_options(-std=c11)
-
 # Add compile options required by BoringSSL.
 # -D_POSIX_C_SOURCE=200809L is needed because BoringSSL uses strdup() function
 # is guarded by __POSIX_VISIBLE >=200809 in Newlib's string.h file.
