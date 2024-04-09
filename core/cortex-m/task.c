@@ -924,22 +924,24 @@ int mutex_try_lock(struct mutex *mtx)
 	if (!task_start_called())
 		return 1;
 
-	/* Try to get the lock (set 1 into the lock field) */
-	__asm__ __volatile__("   ldrex   %0, [%1]\n"
-			     "   teq     %0, #0\n"
-			     "   it eq\n"
-			     "   strexeq %0, %2, [%1]\n"
-			     : "=&r"(value)
-			     : "r"(&mtx->lock), "r"(2)
-			     : "cc");
-	/*
-	 * "value" is equals to 1 if the store conditional failed,
-	 * 2 if somebody else owns the mutex, 0 else.
-	 */
-	if (value == 2) {
-		/* Contention on the mutex */
-		return 0;
-	}
+	do {
+		/* Try to get the lock (set 1 into the lock field) */
+		__asm__ __volatile__("   ldrex   %0, [%1]\n"
+				     "   teq     %0, #0\n"
+				     "   it eq\n"
+				     "   strexeq %0, %2, [%1]\n"
+				     : "=&r"(value)
+				     : "r"(&mtx->lock), "r"(2)
+				     : "cc");
+		/*
+		 * Variable "value" equals to 1 if the store conditional failed,
+		 * 2 if somebody else owns the mutex, 0 else.
+		 */
+		if (value == 2) {
+			/* Contention on the mutex */
+			return 0;
+		}
+	} while (value);
 
 	return 1;
 }
