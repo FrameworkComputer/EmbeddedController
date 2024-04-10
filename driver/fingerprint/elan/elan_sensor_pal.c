@@ -278,3 +278,8 @@ int elan_set_hv_chip(bool state)
 	}
 	return ret;
 }
+
+__staticlib_hook int usleep(unsigned int us)
+{
+	return crec_usleep(us);
+}
