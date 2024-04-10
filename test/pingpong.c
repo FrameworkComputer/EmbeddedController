@@ -54,7 +54,7 @@ int task_tick(void *data)
 	/* Wake up every tick */
 	while (1) {
 		/* Wait for timer interrupt message */
-		usleep(3000);
+		crec_usleep(3000);
 	}
 
 	return EC_SUCCESS;

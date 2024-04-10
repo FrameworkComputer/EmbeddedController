@@ -141,7 +141,7 @@ static int veml3328_init(struct motion_sensor_t *s)
 	}
 
 	/* TODO(b/312586806) - what should be the reset timing ?? */
-	msleep(1);
+	crec_msleep(1);
 
 	/* Power on, write default config */
 	ret = i2c_write16(s->port, s->i2c_spi_addr_flags, VEML3328_REG_CONF,
@@ -152,7 +152,7 @@ static int veml3328_init(struct motion_sensor_t *s)
 	}
 
 	/* TODO(b/312586806) - what should be the reset timing ?? */
-	msleep(1);
+	crec_msleep(1);
 
 	/* Check chip ID */
 	ret = i2c_read16(s->port, s->i2c_spi_addr_flags, VEML3328_REG_ID, &id);

@@ -125,7 +125,7 @@ static int rx_serial(uint8_t *msg, int cnt)
 
 	read = queue_remove_units(&usart_mcdp_rx_queue, msg, cnt);
 	while ((read < cnt) && retry) {
-		usleep(100 * MSEC);
+		crec_usleep(100 * MSEC);
 		read += queue_remove_units(&usart_mcdp_rx_queue, msg + read,
 					   cnt - read);
 		retry--;

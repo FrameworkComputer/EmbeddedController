@@ -453,7 +453,7 @@ enum battery_present battery_is_present(void)
 		if (battery_get_disconnect_state() ==
 		    BATTERY_NOT_DISCONNECTED) {
 			CPRINTS("Delay 2s on the first power on.");
-			sleep(2);
+			crec_sleep(2);
 		}
 		first_check_done = 1;
 	}
@@ -530,7 +530,7 @@ void board_reset_pd_mcu(void)
 	cflush();
 
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-	msleep(PS8XXX_RESET_DELAY_MS);
+	crec_msleep(PS8XXX_RESET_DELAY_MS);
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
 }
 

@@ -106,7 +106,7 @@ void anx7406_update_hpd_status(const struct usb_mux *mux, mux_state_t mux_state)
 		uint64_t now = get_time().val;
 		/* wait for the minimum spacing between IRQ_HPD if needed */
 		if (now < hpd_timestamp[port])
-			usleep(hpd_timestamp[port] - now);
+			crec_usleep(hpd_timestamp[port] - now);
 
 		/*
 		 * For generate hardware HPD IRQ, need set bit
@@ -162,7 +162,7 @@ static int anx7406_init(int port)
 	if (rv) {
 		/* Failed but this is expected if the chip is in LPM. */
 		CPRINTS("C%d: Retrying to set OCP", port);
-		msleep(5);
+		crec_msleep(5);
 		rv = tcpc_write(port, ANX7406_REG_VBUS_OCP, OCP_THRESHOLD);
 		if (rv)
 			return rv;
@@ -300,7 +300,7 @@ int anx7406_m1_read(int port, int slave, int offset)
 		return rv;
 	}
 
-	usleep(1000);
+	crec_usleep(1000);
 
 	/* Read I2C data out */
 	rv = i2c_read8(tcpc_config[port].i2c_info.port,

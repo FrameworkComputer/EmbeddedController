@@ -159,12 +159,12 @@ void board_reset_pd_mcu(void)
 	/* reset C0 ANX3447 */
 	/* Assert reset */
 	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 1);
-	msleep(1);
+	crec_msleep(1);
 	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 0);
 	/* After TEST_R release, anx7447/3447 needs 2ms to finish eFuse
 	 * loading.
 	 */
-	msleep(2);
+	crec_msleep(2);
 
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 	/* reset C1 RT1718s */

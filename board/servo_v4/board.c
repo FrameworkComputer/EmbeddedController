@@ -451,13 +451,13 @@ static void ccd_measure_sbu(void)
 		if (mux_en) {
 			/* Disable mux as it's disconnected now. */
 			gpio_set_level(GPIO_SBU_MUX_EN, 0);
-			msleep(10);
+			crec_msleep(10);
 			CPRINTS("CCD: disconnected.");
 		} else {
 			/* SBU flip = polarity */
 			write_ioexpander(0, 2, polarity);
 			gpio_set_level(GPIO_SBU_MUX_EN, 1);
-			msleep(10);
+			crec_msleep(10);
 			CPRINTS("CCD: connected %s",
 				polarity ? "flip" : "noflip");
 		}
@@ -520,7 +520,7 @@ static void board_init(void)
 	usart_init(&usart4);
 
 	/* Delay DUT hub to avoid brownout. */
-	usleep(1000);
+	crec_usleep(1000);
 	gpio_set_flags(GPIO_DUT_HUB_USB_RESET_L, GPIO_OUT_HIGH);
 
 	/*

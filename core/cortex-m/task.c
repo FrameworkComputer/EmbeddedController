@@ -664,7 +664,7 @@ static inline int try_release_reset_lock(uint32_t *state)
 static inline void sleep_forever(void)
 {
 	while (1)
-		usleep(-1);
+		crec_usleep(-1);
 }
 
 void task_enable_resets(void)

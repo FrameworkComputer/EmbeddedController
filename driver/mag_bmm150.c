@@ -89,7 +89,7 @@ int bmm150_init(struct motion_sensor_t *s)
 	/* Set the compass from Suspend to Sleep */
 	ret = raw_mag_write8(s->port, s->i2c_spi_addr_flags, BMM150_PWR_CTRL,
 			     BMM150_PWR_ON);
-	msleep(4);
+	crec_msleep(4);
 	/* Now we can read the device id */
 	ret = raw_mag_read8(s->port, s->i2c_spi_addr_flags, BMM150_CHIP_ID,
 			    &val);

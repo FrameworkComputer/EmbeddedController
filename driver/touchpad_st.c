@@ -491,7 +491,7 @@ static int st_tp_load_host_data(uint8_t mem_id)
 			ret = EC_SUCCESS;
 			break;
 		}
-		msleep(10);
+		crec_msleep(10);
 	}
 	return ret;
 }
@@ -567,7 +567,7 @@ static void dump_error(void)
 		CPRINTS("%08x %08x %08x %08x", rx_buf.dump_info[i + 0],
 			rx_buf.dump_info[i + 1], rx_buf.dump_info[i + 2],
 			rx_buf.dump_info[i + 3]);
-	msleep(8);
+	crec_msleep(8);
 }
 
 /*
@@ -602,11 +602,11 @@ static void dump_memory(void)
 				CPRINTF("%s ", str_buf);
 			}
 			CPRINTF("\n");
-			msleep(8);
+			crec_msleep(8);
 		}
 	}
 	CPRINTF("===============================\n");
-	msleep(8);
+	crec_msleep(8);
 }
 
 /*
@@ -801,7 +801,7 @@ static int st_tp_reset(void)
 			}
 		}
 
-		msleep(10);
+		crec_msleep(10);
 	}
 	CPRINTS("Timeout waiting for controller ready.");
 	return EC_ERROR_TIMEOUT;
@@ -900,7 +900,7 @@ static int wait_for_flash_ready(uint8_t type)
 				      (uint8_t *)&rx_buf, 1 + ST_TP_EXTRA_BYTE);
 		if (ret == EC_SUCCESS && !(rx_buf.bytes[0] & 0x80))
 			break;
-		msleep(50);
+		crec_msleep(50);
 	}
 	return retry >= 0 ? ret : EC_ERROR_TIMEOUT;
 }
@@ -1113,7 +1113,7 @@ static int st_tp_panel_init(int full)
 	retry = 100;
 	while (retry--) {
 		watchdog_reload();
-		msleep(100);
+		crec_msleep(100);
 
 		ret = st_tp_check_command_echo(tx_buf, sizeof(tx_buf));
 		if (ret == EC_SUCCESS) {
@@ -1163,7 +1163,7 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 			if (retry % 10 == 0)
 				CPRINTS("TP not ready for update, "
 					"will check again");
-			msleep(100);
+			crec_msleep(100);
 		}
 
 		old_cx_version = get_cx_version(system_info.release_info);

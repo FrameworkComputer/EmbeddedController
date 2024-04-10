@@ -132,7 +132,7 @@ test_mockable __keep int main(void)
 
 	/*
 	 * Initialize timer.  Everything after this can be benchmarked.
-	 * get_time() and udelay() may now be used.  usleep() requires task
+	 * get_time() and udelay() may now be used.  crec_usleep() requires task
 	 * scheduling, so cannot be used yet.  Note that interrupts declared
 	 * via DECLARE_IRQ() call timer routines when profiling is enabled, so
 	 * timer init() must be before uart_init().

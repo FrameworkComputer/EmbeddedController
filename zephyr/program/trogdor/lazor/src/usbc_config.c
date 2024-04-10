@@ -176,7 +176,7 @@ void board_reset_pd_mcu(void)
 
 	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 1);
 	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 1);
-	msleep(PS8XXX_RESET_DELAY_MS);
+	crec_msleep(PS8XXX_RESET_DELAY_MS);
 	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 0);
 	gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 0);
 }

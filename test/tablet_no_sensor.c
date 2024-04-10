@@ -29,9 +29,9 @@ void before_test(void)
 {
 	/* Make sure the device lid is in a consistent state (close). */
 	gpio_set_level(GPIO_TABLET_MODE_L, 1);
-	msleep(50);
+	crec_msleep(50);
 	gpio_set_level(GPIO_LID_OPEN, 0);
-	msleep(50);
+	crec_msleep(50);
 	tablet_hook_count = 1;
 }
 
@@ -45,25 +45,25 @@ test_static int test_start_lid_close(void)
 
 	/* Opening, No change. */
 	gpio_set_level(GPIO_LID_OPEN, 1);
-	msleep(50);
+	crec_msleep(50);
 	TEST_ASSERT(tablet_hook_count == 1);
 	TEST_ASSERT(!tablet_get_mode());
 
 	/* full 360, tablet mode. */
 	gpio_set_level(GPIO_TABLET_MODE_L, 0);
-	msleep(50);
+	crec_msleep(50);
 	TEST_ASSERT(tablet_hook_count == 2);
 	TEST_ASSERT(tablet_get_mode());
 
 	/* Get out of full 360 mode, Immediately back to clamshell mode. */
 	gpio_set_level(GPIO_TABLET_MODE_L, 1);
-	msleep(50);
+	crec_msleep(50);
 	TEST_ASSERT(tablet_hook_count == 3);
 	TEST_ASSERT(!tablet_get_mode());
 
 	/* Back to close, no change. */
 	gpio_set_level(GPIO_LID_OPEN, 0);
-	msleep(50);
+	crec_msleep(50);
 	TEST_ASSERT(tablet_hook_count == 3);
 	TEST_ASSERT(!tablet_get_mode());
 
@@ -81,14 +81,14 @@ test_static int test_start_tablet_mode(void)
 	/* Go in tablet mode */
 	gpio_set_level(GPIO_LID_OPEN, 1);
 	gpio_set_level(GPIO_TABLET_MODE_L, 0);
-	msleep(50);
+	crec_msleep(50);
 	TEST_ASSERT(tablet_hook_count == 2);
 
 	/* Shutdown device */
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 
 	/* Check we start in tablet mode */
-	msleep(50);
+	crec_msleep(50);
 	TEST_ASSERT(tablet_get_mode());
 
 	return EC_SUCCESS;

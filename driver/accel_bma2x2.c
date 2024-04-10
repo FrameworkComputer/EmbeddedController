@@ -255,7 +255,7 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 				ret = EC_RES_TIMEOUT;
 				goto end_perform_calib;
 			}
-			msleep(50);
+			crec_msleep(50);
 			ret = raw_read8(s->port, s->i2c_spi_addr_flags,
 					BMA2x2_OFFSET_CTRL_ADDR, &status);
 			if (ret != EC_SUCCESS)
@@ -316,7 +316,7 @@ static int init(struct motion_sensor_t *s)
 			mutex_unlock(s->mutex);
 			return ret;
 		}
-		msleep(1);
+		crec_msleep(1);
 	} while (1);
 	mutex_unlock(s->mutex);
 

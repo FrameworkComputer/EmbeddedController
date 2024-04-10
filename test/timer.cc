@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/** @brief Test functions defined in timer.h, like usleep().
+/** @brief Test functions defined in timer.h, like crec_usleep().
  *
  * This test only validates the functionality of code in timer.h and is not
  * expected to accurately measure/check the timing.
@@ -25,7 +25,7 @@ test_static int test_usleep(void)
 	constexpr int expected_duration = 12345;
 
 	timestamp_t start_time = get_time();
-	usleep(expected_duration);
+	crec_usleep(expected_duration);
 	int sleep_duration = time_since32(start_time);
 	int error_threshold;
 
@@ -111,7 +111,7 @@ test_static int test_usleep_warning(void)
 		 * occurred */
 		interrupt_disable();
 		pre_test_buffer_used = uart_buffer_used();
-		usleep(1);
+		crec_usleep(1);
 		delta_buffer_used = uart_buffer_used() - pre_test_buffer_used;
 		TEST_GE(delta_buffer_used,
 			(int32_t)strlen("Sleeping not allowed"), "%d");
@@ -122,7 +122,7 @@ test_static int test_usleep_warning(void)
 		 */
 		interrupt_disable();
 		pre_test_buffer_used = uart_buffer_used();
-		usleep(1);
+		crec_usleep(1);
 		delta_buffer_used = uart_buffer_used() - pre_test_buffer_used;
 		TEST_EQ(delta_buffer_used, 0, "%d");
 		interrupt_enable();
@@ -131,7 +131,7 @@ test_static int test_usleep_warning(void)
 		udelay(usleep_warning_interval_ms);
 		interrupt_disable();
 		pre_test_buffer_used = uart_buffer_used();
-		usleep(1);
+		crec_usleep(1);
 		delta_buffer_used = uart_buffer_used() - pre_test_buffer_used;
 		TEST_GE(delta_buffer_used,
 			(int32_t)strlen("Sleeping not allowed"), "%d");

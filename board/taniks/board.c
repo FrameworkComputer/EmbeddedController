@@ -70,7 +70,7 @@ __override void board_kblight_init(void)
 {
 	gpio_set_level(GPIO_RGBKBD_SDB_L, 1);
 	gpio_set_level(GPIO_EC_KB_BL_EN_L, 0);
-	msleep(10);
+	crec_msleep(10);
 }
 
 #ifdef CONFIG_CHARGE_RAMP_SW

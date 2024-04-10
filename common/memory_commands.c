@@ -103,7 +103,7 @@ static int command_mem_dump(int argc, const char **argv)
 		 * Let other things happen, too */
 		if (!(i % 0x100)) {
 			watchdog_reload();
-			usleep(10 * MSEC);
+			crec_usleep(10 * MSEC);
 		}
 	}
 	ccprintf("\n");

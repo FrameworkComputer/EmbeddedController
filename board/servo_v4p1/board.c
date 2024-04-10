@@ -111,7 +111,7 @@ static int cmd_dut_usb3(int argc, const char *argv[])
 			    polarity_rm_dts(pd_get_polarity(DUT)));
 
 		/* Delay enabling DUT hub to avoid enumeration problems. */
-		usleep(MSEC);
+		crec_usleep(MSEC);
 		gpio_set_level(GPIO_DUT_HUB_USB_RESET_L, 1);
 	} else if (!strcasecmp(argv[1], "disabled") ||
 		   !strcasecmp(argv[1], "disable")) {
@@ -195,7 +195,7 @@ static int board_tusb1064_set(const struct usb_mux *me, mux_state_t mux_state)
 				      &unused);
 
 		/* MUX is set, add preventive delay and enable DUT USB hub. */
-		usleep(MSEC);
+		crec_usleep(MSEC);
 		gpio_set_level(GPIO_DUT_HUB_USB_RESET_L, 1);
 	}
 	return rv;
@@ -551,7 +551,7 @@ static void board_init(void)
 	usart_init(&usart4);
 
 	/* Delay DUT hub to avoid brownout. */
-	usleep(MSEC);
+	crec_usleep(MSEC);
 
 	init_pi3usb9201();
 

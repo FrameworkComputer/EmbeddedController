@@ -146,7 +146,7 @@ static int aw20198_init(struct rgbkbd *ctx)
 	int rv;
 
 	rv = aw20198_reset(ctx);
-	msleep(3);
+	crec_msleep(3);
 
 	/* Read chip ID, assuming page is still 0. */
 	rv = aw20198_read(ctx, AW20198_REG_RSTN, &u8);

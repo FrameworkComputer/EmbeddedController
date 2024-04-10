@@ -169,7 +169,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		uint64_t now = get_time().val;
 		/* wait for the minimum spacing between IRQ_HPD if needed */
 		if (now < svdm_hpd_deadline[port]) {
-			usleep(svdm_hpd_deadline[port] - now);
+			crec_usleep(svdm_hpd_deadline[port] - now);
 		}
 
 		/* generate IRQ_HPD pulse */

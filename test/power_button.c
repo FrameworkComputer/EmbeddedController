@@ -38,12 +38,12 @@ static int test_hook(void)
 {
 	/* Release power button for testing */
 	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
-	msleep(100);
+	crec_msleep(100);
 	pb_hook_count = 0;
 	host_clear_events(0xffffffff);
 
 	gpio_set_level(GPIO_POWER_BUTTON_L, 0);
-	msleep(50);
+	crec_msleep(50);
 	TEST_ASSERT(pb_hook_count == 1);
 	TEST_ASSERT(power_button_is_pressed());
 	TEST_ASSERT(pb_memmap_state());
@@ -52,7 +52,7 @@ static int test_hook(void)
 	host_clear_events(0xffffffff);
 
 	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
-	msleep(50);
+	crec_msleep(50);
 	TEST_ASSERT(pb_hook_count == 2);
 	TEST_ASSERT(!power_button_is_pressed());
 	TEST_ASSERT(!pb_memmap_state());
@@ -66,12 +66,12 @@ static int test_debounce(void)
 {
 	/* Release power button for testing */
 	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
-	msleep(100);
+	crec_msleep(100);
 	pb_hook_count = 0;
 	host_clear_events(0xffffffff);
 
 	gpio_set_level(GPIO_POWER_BUTTON_L, 0);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(pb_hook_count == 0);
 	TEST_ASSERT(!power_button_is_pressed());
 	TEST_ASSERT(!pb_memmap_state());
@@ -79,7 +79,7 @@ static int test_debounce(void)
 		      EC_HOST_EVENT_MASK(EC_HOST_EVENT_POWER_BUTTON)));
 
 	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
-	msleep(50);
+	crec_msleep(50);
 	TEST_ASSERT(pb_hook_count == 0);
 	TEST_ASSERT(!power_button_is_pressed());
 	TEST_ASSERT(!pb_memmap_state());

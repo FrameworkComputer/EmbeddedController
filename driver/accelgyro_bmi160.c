@@ -107,7 +107,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		/* go to suspend mode */
 		ret = bmi_write8(s->port, s->i2c_spi_addr_flags, BMI160_CMD_REG,
 				 BMI160_CMD_MODE_SUSPEND(s->type));
-		msleep(3);
+		crec_msleep(3);
 		data->odr = 0;
 		if (IS_ENABLED(CONFIG_MAG_BMI_BMM150) &&
 		    (s->type == MOTIONSENSE_TYPE_MAG)) {
@@ -121,7 +121,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		/* back from suspend mode. */
 		ret = bmi_write8(s->port, s->i2c_spi_addr_flags, BMI160_CMD_REG,
 				 BMI160_CMD_MODE_NORMAL(s->type));
-		msleep(wakeup_time[s->type]);
+		crec_msleep(wakeup_time[s->type]);
 	}
 
 	ret = bmi_get_normalized_rate(s, rate, rnd, &normalized_rate, &reg_val);
@@ -282,7 +282,7 @@ static int perform_calib(struct motion_sensor_t *s, int enable)
 			ret = EC_RES_TIMEOUT;
 			goto end_perform_calib;
 		}
-		msleep(50);
+		crec_msleep(50);
 		ret = bmi_read8(s->port, s->i2c_spi_addr_flags, BMI160_STATUS,
 				&status);
 		if (ret != EC_SUCCESS)
@@ -610,7 +610,7 @@ static int init(struct motion_sensor_t *s)
 		/* Reset the chip to be in a good state */
 		bmi_write8(s->port, s->i2c_spi_addr_flags, BMI160_CMD_REG,
 			   BMI160_CMD_SOFT_RESET);
-		msleep(1);
+		crec_msleep(1);
 		data->flags &= ~(BMI_FLAG_SEC_I2C_ENABLED |
 				 (BMI_FIFO_ALL_MASK << BMI_FIFO_FLAG_OFFSET));
 		if (IS_ENABLED(CONFIG_GESTURE_HOST_DETECTION)) {
@@ -638,7 +638,7 @@ static int init(struct motion_sensor_t *s)
 		 */
 		bmi_write8(s->port, s->i2c_spi_addr_flags, BMI160_CMD_REG,
 			   BMI160_CMD_MODE_NORMAL(s->type));
-		msleep(wakeup_time[s->type]);
+		crec_msleep(wakeup_time[s->type]);
 
 		if ((data->flags & BMI_FLAG_SEC_I2C_ENABLED) == 0) {
 			int ext_page_reg;

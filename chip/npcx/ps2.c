@@ -165,7 +165,7 @@ int ps2_transmit_byte(int channel, uint8_t data)
 
 	mutex_lock(&ps2_lock);
 	while (ps2_is_busy()) {
-		usleep(PS2_TRANSACTION_TIMEOUT);
+		crec_usleep(PS2_TRANSACTION_TIMEOUT);
 		if (busy_retry == 0) {
 			mutex_unlock(&ps2_lock);
 			return EC_ERROR_BUSY;

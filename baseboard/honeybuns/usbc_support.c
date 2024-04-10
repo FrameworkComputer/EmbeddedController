@@ -72,7 +72,7 @@ static int baseboard_ppc_enable_sink_path(int port)
 		status = write_reg(port, SN5S330_FUNC_SET1, SN5S330_ILIM_3_06);
 		if (status) {
 			retries++;
-			msleep(1);
+			crec_msleep(1);
 		} else {
 			break;
 		}

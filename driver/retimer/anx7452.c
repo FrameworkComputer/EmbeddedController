@@ -90,7 +90,7 @@ static int anx7452_i2c_awake(const struct usb_mux *me)
 		if (rv == EC_SUCCESS) {
 			break;
 		}
-		usleep(ANX7452_I2C_WAKE_RETRY_DELAY_US);
+		crec_usleep(ANX7452_I2C_WAKE_RETRY_DELAY_US);
 	} while (time_since32(start) < ANX7452_I2C_WAKE_TIMEOUT_MS * MSEC);
 	if (rv != EC_SUCCESS) {
 		CPRINTS("ANX7452: Failed to wake mux rv: %d", rv);
@@ -104,7 +104,7 @@ static int anx7452_init(const struct usb_mux *me)
 {
 	RETURN_ERROR(anx7452_power_enable(me));
 
-	msleep(ANX7452_I2C_PRE_WAKE_WAIT_MS);
+	crec_msleep(ANX7452_I2C_PRE_WAKE_WAIT_MS);
 
 	RETURN_ERROR(anx7452_i2c_awake(me));
 

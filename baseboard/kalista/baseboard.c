@@ -217,7 +217,7 @@ const int usb_port_enable[USB_PORT_COUNT] = {
 void board_reset_pd_mcu(void)
 {
 	gpio_set_level(GPIO_USB_C0_PD_RST_ODL, 0);
-	msleep(1);
+	crec_msleep(1);
 	gpio_set_level(GPIO_USB_C0_PD_RST_ODL, 1);
 }
 

@@ -277,7 +277,7 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 	report_ap_reset(reason);
 
 	GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 0);
-	usleep(SYS_RST_PULSE_LENGTH);
+	crec_usleep(SYS_RST_PULSE_LENGTH);
 	GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 1);
 }
 /**
@@ -295,7 +295,7 @@ static void power_seq_run(const struct power_seq_op *power_seq_ops,
 		GPIO_SET_LEVEL(power_seq_ops[i].signal, power_seq_ops[i].level);
 		if (!power_seq_ops[i].delay)
 			continue;
-		msleep(power_seq_ops[i].delay);
+		crec_msleep(power_seq_ops[i].delay);
 	}
 }
 

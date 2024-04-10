@@ -67,7 +67,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESET, disable_ps2, HOOK_PRIO_DEFAULT);
 static void ps2_transmit(uint8_t cmd)
 {
 	ps2_transmit_byte(PRIMUS_PS2_CH, cmd);
-	msleep(PS2_TRANSMIT_DELAY_MS);
+	crec_msleep(PS2_TRANSMIT_DELAY_MS);
 }
 
 /* Process the PS2 data at here */

@@ -139,7 +139,7 @@ static void board_all_sys_pwrgd(void)
 	 * Wait at least 10 ms between power signals going high
 	 */
 	if (allsys_in)
-		msleep(100);
+		crec_msleep(100);
 
 	if (!allsys_out) {
 		/* CPRINTS("Set SYS_RESET_L = %d", allsys_in); */
@@ -377,7 +377,7 @@ struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 void board_reset_pd_mcu(void)
 {
 	gpio_set_level(GPIO_PD_RST_L, 0);
-	usleep(100);
+	crec_usleep(100);
 	gpio_set_level(GPIO_PD_RST_L, 1);
 }
 

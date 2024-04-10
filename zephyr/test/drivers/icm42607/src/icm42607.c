@@ -363,7 +363,7 @@ ZTEST_USER(icm42607, test_read_not_stabilized)
 	zassert_ok(acc->drv->set_data_rate(acc, 10000, 1));
 	zassert_not_equal(acc->drv->read(acc, v), 0);
 
-	sleep(1);
+	crec_sleep(1);
 	zassert_equal(acc->drv->read(acc, v), 0);
 }
 

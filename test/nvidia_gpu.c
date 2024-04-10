@@ -111,13 +111,13 @@ static int test_ac_unplug(void)
 	host_clear_events(EC_HOST_EVENT_MASK(EC_HOST_EVENT_GPU));
 
 	/* Wait half of NVIDIA_GPU_ACOFF_DURATION. D5 -> D5. */
-	usleep(NVIDIA_GPU_ACOFF_DURATION / 2);
+	crec_usleep(NVIDIA_GPU_ACOFF_DURATION / 2);
 	TEST_EQ(nvidia_gpu_acoff_odl, 0, "%d");
 	TEST_EQ(check_d_notify_level(D_NOTIFY_5), EC_SUCCESS, "%d");
 	TEST_ASSERT(!host_is_event_set(EC_HOST_EVENT_GPU));
 
 	/* Wait another half of NVIDIA_GPU_ACOFF_DURATION. D5 -> D3. */
-	usleep(NVIDIA_GPU_ACOFF_DURATION / 2);
+	crec_usleep(NVIDIA_GPU_ACOFF_DURATION / 2);
 	TEST_EQ(nvidia_gpu_acoff_odl, 1, "%d");
 	TEST_EQ(check_d_notify_level(D_NOTIFY_3), EC_SUCCESS, "%d");
 	TEST_ASSERT(host_is_event_set(EC_HOST_EVENT_GPU));

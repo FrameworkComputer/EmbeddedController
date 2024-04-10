@@ -28,7 +28,7 @@ test_static int test_rtc_alarm_fired(void)
 	atomic_clear(&interrupt_counter);
 	system_set_rtc_alarm(rtc_delay_seconds, 0);
 
-	sleep(2 * rtc_delay_seconds);
+	crec_sleep(2 * rtc_delay_seconds);
 
 	rtc_fired = atomic_get(&interrupt_counter);
 
@@ -43,7 +43,7 @@ test_static int test_rtc_alarm_not_fired(void)
 	atomic_clear(&interrupt_counter);
 	system_set_rtc_alarm(rtc_delay_seconds, 0);
 
-	sleep(0.5 * rtc_delay_seconds);
+	crec_sleep(0.5 * rtc_delay_seconds);
 
 	rtc_fired = atomic_get(&interrupt_counter);
 
@@ -61,7 +61,7 @@ test_static int test_rtc_series_alarm_fired(void)
 
 	for (int i = 0; i < rtc_alarm_iterations; ++i) {
 		system_set_rtc_alarm(rtc_delay_seconds, 0);
-		sleep(2 * rtc_delay_seconds);
+		crec_sleep(2 * rtc_delay_seconds);
 		rtc_fired = atomic_get(&interrupt_counter);
 		TEST_EQ(i + 1, rtc_fired, "%d");
 		TEST_EQ(0, system_get_rtc_alarm(), "%d");

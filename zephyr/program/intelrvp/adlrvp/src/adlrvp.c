@@ -104,18 +104,18 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 		 * retimer_init() function ensures power is up before calling
 		 * this function.
 		 */
-		msleep(1);
+		crec_msleep(1);
 		ioex_set_level(bb_controls[me->usb_port].retimer_rst_gpio, 1);
 
 		/*
 		 * Allow 1ms time for the retimer to power up lc_domain
 		 * which powers I2C controller within retimer
 		 */
-		msleep(1);
+		crec_msleep(1);
 
 	} else {
 		ioex_set_level(bb_controls[me->usb_port].retimer_rst_gpio, 0);
-		msleep(1);
+		crec_msleep(1);
 		ioex_set_level(bb_controls[me->usb_port].usb_ls_en_gpio, 0);
 	}
 	return EC_SUCCESS;

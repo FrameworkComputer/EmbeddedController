@@ -24,7 +24,7 @@ static int test_reboot_on_shutdown(void)
 	system_set_scratchpad(TEST_STATE_FAIL);
 
 	test_chipset_on();
-	msleep(30);
+	crec_msleep(30);
 
 	params.cmd = EC_REBOOT_COLD;
 	params.flags = EC_REBOOT_FLAG_ON_AP_SHUTDOWN;
@@ -35,7 +35,7 @@ static int test_reboot_on_shutdown(void)
 
 	system_set_scratchpad(TEST_STATE_STEP_2);
 	test_chipset_off();
-	msleep(30);
+	crec_msleep(30);
 
 	/* Shouldn't reach here */
 	return EC_ERROR_UNKNOWN;
@@ -49,7 +49,7 @@ static int test_cancel_reboot(void)
 	system_set_scratchpad(TEST_STATE_FAIL);
 
 	test_chipset_on();
-	msleep(30);
+	crec_msleep(30);
 
 	params.cmd = EC_REBOOT_COLD;
 	params.flags = EC_REBOOT_FLAG_ON_AP_SHUTDOWN;
@@ -66,7 +66,7 @@ static int test_cancel_reboot(void)
 		EC_SUCCESS, "%d");
 
 	test_chipset_off();
-	msleep(30);
+	crec_msleep(30);
 
 	return EC_SUCCESS;
 }

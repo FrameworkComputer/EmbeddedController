@@ -181,7 +181,7 @@ static void ps8815_reset(void)
 		CPRINTS("ps8815: reg 0x0f was %02x", val);
 	else {
 		CPRINTS("delay 10ms to make sure PS8815 is waken from idle");
-		msleep(10);
+		crec_msleep(10);
 	}
 
 	if (i2c_write8(I2C_PORT_USB_C1_TCPC, PS8XXX_I2C_ADDR1_FLAGS, 0x0f,
@@ -264,13 +264,14 @@ void board_reset_pd_mcu(void)
 	/*
 	 * delay for power-on to reset-off and min. assertion time
 	 */
-	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS, PS8815_PWR_H_RST_H_DELAY_MS));
+	crec_msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
+				PS8815_PWR_H_RST_H_DELAY_MS));
 
 	gpio_set_level(GPIO_USB_C0_TCPC_RST_ODL, 1);
 	gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 1);
 
 	/* wait for chips to come up */
-	msleep(PS8815_FW_INIT_DELAY_MS);
+	crec_msleep(PS8815_FW_INIT_DELAY_MS);
 	ps8815_reset();
 
 	/*

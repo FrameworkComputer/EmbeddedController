@@ -691,7 +691,7 @@ static int command_idle_stats(int argc, const char **argv)
 	ccprintf("Num idle calls that doze:            %d\n", idle_doze_cnt);
 	ccprintf("Num idle calls that sleep:           %d\n", idle_sleep_cnt);
 
-	ccprintf("Total Time spent in sleep(sec):      %.6lld(s)\n",
+	ccprintf("Total Time spent in crec_sleep(sec): %.6lld(s)\n",
 		 total_idle_sleep_time_us);
 	ccprintf("Total time on:                       %.6llds\n\n", ts.val);
 	return EC_SUCCESS;

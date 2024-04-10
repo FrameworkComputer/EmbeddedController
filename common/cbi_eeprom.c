@@ -55,7 +55,7 @@ static int eeprom_write(uint8_t *cbi)
 			return rv;
 		}
 		/* Wait for internal write cycle completion */
-		msleep(EEPROM_PAGE_WRITE_MS);
+		crec_msleep(EEPROM_PAGE_WRITE_MS);
 		p += size;
 		rest -= size;
 	}

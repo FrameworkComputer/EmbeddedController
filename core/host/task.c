@@ -334,7 +334,7 @@ static void _wait_for_task_started(int can_sleep)
 		for (i = 0; i < TASK_ID_COUNT - 1; ++i) {
 			if (!tasks[i].started) {
 				if (can_sleep)
-					msleep(10);
+					crec_msleep(10);
 				else
 					_msleep(10);
 				ok = 0;

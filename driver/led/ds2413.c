@@ -82,7 +82,7 @@ static int led_set(enum led_color color)
 		 * chip time to recover from the failed attempt, and allows
 		 * lower-priority tasks a chance to run.
 		 */
-		usleep(100);
+		crec_usleep(100);
 	}
 
 	return rv;

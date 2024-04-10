@@ -150,7 +150,7 @@ int ioexpander_read_intelrvp_version(int *port0, int *port1)
 					 PCA9555_CMD_INPUT_PORT_1, port1))
 			return 0;
 
-		msleep(1);
+		crec_msleep(1);
 	}
 
 	/* pca9555 read failed */

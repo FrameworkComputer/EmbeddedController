@@ -96,7 +96,7 @@ static void run_chargen(void)
 			 * Let's let other tasks run for a bit while buffer is
 			 * being drained a little.
 			 */
-			usleep(BUFFER_DRAIN_TIME_US / 10);
+			crec_usleep(BUFFER_DRAIN_TIME_US / 10);
 
 			current_time = get_time();
 

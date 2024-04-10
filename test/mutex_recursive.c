@@ -27,7 +27,7 @@ int mutex_recursive_random_task(void *unused)
 		for (int i = 1; i <= 5; i++) {
 			ccprintf("%c+\n", letter);
 			mutex_lock_recursive(&mtx);
-			usleep(50);
+			crec_usleep(50);
 		}
 
 		ccprintf("%c=\n", letter);

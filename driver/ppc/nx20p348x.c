@@ -155,7 +155,7 @@ __maybe_unused static int nx20p3481_vbus_sink_enable(int port, int enable)
 	 * compared against the status value. The control switch has a debounce
 	 * (15 msec) before the status will reflect the control command.
 	 */
-	msleep(NX20P348X_SWITCH_STATUS_DEBOUNCE_MSEC);
+	crec_msleep(NX20P348X_SWITCH_STATUS_DEBOUNCE_MSEC);
 	rv = read_reg(port, NX20P348X_SWITCH_STATUS_REG, &status);
 	if (rv)
 		return rv;
@@ -188,7 +188,7 @@ __maybe_unused static int nx20p3481_vbus_source_enable(int port, int enable)
 	 * compared against the status value. The control switch has a debounce
 	 * (15 msec) before the status will reflect the control command.
 	 */
-	msleep(NX20P348X_SWITCH_STATUS_DEBOUNCE_MSEC);
+	crec_msleep(NX20P348X_SWITCH_STATUS_DEBOUNCE_MSEC);
 
 	if (IS_ENABLED(CONFIG_USBC_PPC_NX20P3481)) {
 		rv = read_reg(port, NX20P348X_SWITCH_STATUS_REG, &status);
@@ -252,7 +252,7 @@ __maybe_unused static int nx20p3483_vbus_sink_enable(int port, int enable)
 		if (enable == is_sink)
 			return EC_SUCCESS;
 
-		msleep(1);
+		crec_msleep(1);
 	}
 
 	return EC_ERROR_TIMEOUT;
@@ -293,7 +293,7 @@ __maybe_unused static int nx20p3483_vbus_source_enable(int port, int enable)
 				flags[port] &= ~NX20P348X_FLAGS_SOURCE_ENABLED;
 			return EC_SUCCESS;
 		}
-		msleep(1);
+		crec_msleep(1);
 	}
 
 	return EC_ERROR_TIMEOUT;

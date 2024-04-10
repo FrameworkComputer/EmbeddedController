@@ -35,7 +35,7 @@ void set_lid_state(int is_open)
 {
 	mock_lid = is_open;
 	lid_interrupt(GPIO_LID_OPEN);
-	msleep(40);
+	crec_msleep(40);
 }
 
 static int send_bklight_hostcmd(int enabled)

@@ -691,7 +691,7 @@ int connected_communicate(void)
 			 * required sleep time because the code to receive
 			 * packets requires time to set up.
 			 */
-			usleep(sleep_time - (sleep_time >> 5));
+			crec_usleep(sleep_time - (sleep_time >> 5));
 		} else {
 			last_receive_time = time_of_connect_req;
 			sleep_time = TRANSMIT_WINDOW_OFFSET_CONSTANT +
@@ -702,7 +702,7 @@ int connected_communicate(void)
 				 * Radio is on for longer than needed for first
 				 * packet to make sure that it is received.
 				 */
-				usleep(sleep_time - (sleep_time >> 2));
+				crec_usleep(sleep_time - (sleep_time >> 2));
 			} else {
 				return EC_ERROR_TIMEOUT;
 			}
@@ -779,7 +779,7 @@ void bluetooth_ll_task(void)
 				break;
 			}
 			/* sleep for 0-10ms */
-			usleep(ll_adv_interval_us + ll_pseudo_rand(10000));
+			crec_usleep(ll_adv_interval_us + ll_pseudo_rand(10000));
 
 			if (get_time().val > deadline.val) {
 				ll_state = STANDBY;
@@ -799,14 +799,14 @@ void bluetooth_ll_task(void)
 			if (ble_test_rx() == HCI_SUCCESS)
 				ll_test_packets++;
 			/* Packets come every 625us, sleep to save power */
-			usleep(300);
+			crec_usleep(300);
 			break;
 		case TEST_TX:
 			start = get_time().le.lo;
 			ble_test_tx();
 			ll_test_packets++;
 			end = get_time().le.lo;
-			usleep(625 - 82 - (end - start)); /* 625us */
+			crec_usleep(625 - 82 - (end - start)); /* 625us */
 			break;
 		case UNINITIALIZED:
 			ble_radio_init(BLE_ADV_ACCESS_ADDRESS, BLE_ADV_CRCINIT);

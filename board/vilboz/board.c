@@ -316,11 +316,11 @@ static void reset_nct38xx_port(int port)
 		return;
 
 	gpio_set_level(reset_gpio_l, 0);
-	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
+	crec_msleep(NCT38XX_RESET_HOLD_DELAY_MS);
 	gpio_set_level(reset_gpio_l, 1);
 	nct38xx_reset_notify(port);
 	if (NCT3807_RESET_POST_DELAY_MS != 0)
-		msleep(NCT3807_RESET_POST_DELAY_MS);
+		crec_msleep(NCT3807_RESET_POST_DELAY_MS);
 }
 
 void board_reset_pd_mcu(void)
@@ -531,7 +531,7 @@ __override void zork_board_hibernate(void)
 	pd_prevent_low_power_mode(0, 1);
 	pd_wait_exit_low_power(0);
 	/* Delay to allow PD task to settle after low power exit */
-	msleep(100);
+	crec_msleep(100);
 	tcpc_update8(0, NCT38XX_REG_CTRL_OUT_EN, NCT38XX_REG_CTRL_OUT_EN_SNKEN,
 		     MASK_CLR);
 	pd_prevent_low_power_mode(0, 0);

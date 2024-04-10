@@ -209,7 +209,7 @@ int bmi_write8(const int port, const uint16_t i2c_spi_addr_flags, const int reg,
 	 * the sensor. Given we are only doing write during init, add
 	 * the delay unconditionally.
 	 */
-	msleep(1);
+	crec_msleep(1);
 
 	return rv;
 }
@@ -247,7 +247,7 @@ int bmi_write16(const int port, const uint16_t i2c_spi_addr_flags,
 	 * the sensor. Given we are only doing write during init, add
 	 * the delay unconditionally.
 	 */
-	msleep(1);
+	crec_msleep(1);
 	return rv;
 }
 
@@ -298,7 +298,7 @@ int bmi_write_n(const int port, const uint16_t i2c_spi_addr_flags,
 	 * the sensor. Given we are only doing write during init, add
 	 * the delay unconditionally.
 	 */
-	msleep(1);
+	crec_msleep(1);
 
 	return rv;
 }

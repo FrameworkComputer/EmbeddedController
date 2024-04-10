@@ -194,7 +194,7 @@ static bool query_usb_mux_set_completed_timeout(int port)
 
 	for (i = 0; i < POLLING_CYCLE; i++) {
 		if (!usb_mux_set_completed(port))
-			msleep(POLLING_TIME_MS);
+			crec_msleep(POLLING_TIME_MS);
 		else
 			return false;
 	}

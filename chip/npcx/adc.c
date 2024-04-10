@@ -132,7 +132,7 @@ static int start_single_and_wait(enum npcx_adc_input_channel input_ch,
 		if (!task_start_called()) {
 			/* Wait for the ADC interrupt to set the flag */
 			do {
-				usleep(10);
+				crec_usleep(10);
 			} while (adc_done == false);
 
 			adc_done = false;

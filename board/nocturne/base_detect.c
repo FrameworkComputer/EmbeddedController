@@ -102,7 +102,7 @@ static void base_power_enable(int enable)
 				     CHIPSET_STATE_ANY_SUSPEND)) {
 			gpio_set_level(GPIO_BASE_PWR_EN, 1);
 			/* Allow time for the fault line to rise. */
-			msleep(1);
+			crec_msleep(1);
 			/* Monitor for base power faults. */
 			enable_base_interrupts(1);
 		}

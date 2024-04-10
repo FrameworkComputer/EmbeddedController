@@ -91,7 +91,7 @@ static int test_shared_mem(void)
 		memset(mem1, i, sz);
 		TEST_ASSERT_MEMSET(mem1, (char)i, sz);
 		if ((i & 0xf) == 0)
-			msleep(20); /* Yield to other tasks */
+			crec_msleep(20); /* Yield to other tasks */
 	}
 
 	shared_mem_release(mem1);

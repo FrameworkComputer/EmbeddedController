@@ -163,7 +163,7 @@ static int wait_for_vrrdy(void)
 		vrrdy = gpio_get_level(GPIO_IMVP9_VRRDY_OD);
 		if (vrrdy != 0)
 			return 1;
-		msleep(1);
+		crec_msleep(1);
 	}
 	return 0;
 }
@@ -200,7 +200,7 @@ static void all_sys_pwrgd_pass_thru(void)
 
 	vccst_pg = gpio_get_level(GPIO_VCCST_PWRGD_OD);
 	if (vccst_pg == 0) {
-		msleep(VCCST_PWRGD_DELAY_MS);
+		crec_msleep(VCCST_PWRGD_DELAY_MS);
 		GPIO_SET_LEVEL(GPIO_VCCST_PWRGD_OD, 1);
 	}
 
@@ -214,7 +214,7 @@ static void all_sys_pwrgd_pass_thru(void)
 			ap_off();
 			return;
 		}
-		msleep(PCH_PWROK_DELAY_MS);
+		crec_msleep(PCH_PWROK_DELAY_MS);
 		GPIO_SET_LEVEL(GPIO_PCH_PWROK, 1);
 	}
 
@@ -222,7 +222,7 @@ static void all_sys_pwrgd_pass_thru(void)
 
 	sys_pok = gpio_get_level(GPIO_EC_PCH_SYS_PWROK);
 	if (sys_pok == 0) {
-		msleep(SYS_PWROK_DELAY_MS);
+		crec_msleep(SYS_PWROK_DELAY_MS);
 		/* Check if we lost power while waiting. */
 		sys_pg = board_get_all_sys_pgood();
 		if (sys_pg == 0) {

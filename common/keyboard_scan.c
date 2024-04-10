@@ -218,7 +218,7 @@ static void ensure_keyboard_scanned(int old_polls)
 	 */
 	while ((kbd_polls == old_polls) &&
 	       (get_time().val - start_time < SCAN_TASK_TIMEOUT_US))
-		usleep(keyscan_config.scan_period_us);
+		crec_usleep(keyscan_config.scan_period_us);
 }
 
 #ifdef CONFIG_KEYBOARD_SCAN_ADC
@@ -298,8 +298,8 @@ static void simulate_key(int row, int col, int pressed)
 	 * That means it needs to have run and for enough time.
 	 */
 	ensure_keyboard_scanned(old_polls);
-	usleep(pressed ? keyscan_config.debounce_down_us :
-			 keyscan_config.debounce_up_us);
+	crec_usleep(pressed ? keyscan_config.debounce_down_us :
+			      keyscan_config.debounce_up_us);
 	ensure_keyboard_scanned(kbd_polls);
 }
 
@@ -1098,7 +1098,7 @@ void keyboard_scan_task(void *u)
 			if (wait_time < post_scan_clock_us)
 				wait_time = post_scan_clock_us;
 
-			usleep(wait_time);
+			crec_usleep(wait_time);
 		}
 	}
 }

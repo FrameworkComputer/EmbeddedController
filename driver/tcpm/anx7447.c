@@ -216,7 +216,7 @@ static int anx7447_flash_erase_internal(int port, int write_console_if_empty)
 	int r;
 
 	tcpc_read(port, TCPC_REG_COMMAND, &r);
-	usleep(ANX7447_DELAY_IN_US);
+	crec_usleep(ANX7447_DELAY_IN_US);
 
 	if (anx7447_flash_is_empty(port) == 1) {
 		if (write_console_if_empty)
@@ -229,7 +229,7 @@ static int anx7447_flash_erase_internal(int port, int write_console_if_empty)
 	if (rv)
 		return rv;
 
-	usleep(ANX7447_DELAY_IN_US);
+	crec_usleep(ANX7447_DELAY_IN_US);
 
 	rv = anx7447_flash_write_en(port);
 	if (rv)
@@ -534,7 +534,7 @@ void anx7447_tcpc_update_hpd_status(const struct usb_mux *me,
 		uint64_t now = get_time().val;
 		/* wait for the minimum spacing between IRQ_HPD if needed */
 		if (now < hpd_deadline[port])
-			usleep(hpd_deadline[port] - now);
+			crec_usleep(hpd_deadline[port] - now);
 
 		/*
 		 * For generate hardware HPD IRQ, need clear bit

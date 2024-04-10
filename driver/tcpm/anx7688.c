@@ -50,7 +50,7 @@ static int anx7688_init(int port)
 
 		if (rv == EC_SUCCESS && (mask & ANX7688_REG_RAMCTRL_BOOT_DONE))
 			break;
-		msleep(10);
+		crec_msleep(10);
 	}
 
 	rv = tcpci_tcpm_drv.init(port);

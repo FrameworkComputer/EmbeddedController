@@ -88,7 +88,7 @@ static int bb_retimer_read(const struct usb_mux *me, const uint32_t offset,
 				rv);
 			return rv;
 		}
-		msleep(10);
+		crec_msleep(10);
 	}
 
 	if (buf[0] != BB_RETIMER_REG_SIZE)
@@ -140,7 +140,7 @@ static int bb_retimer_write(const struct usb_mux *me, const uint32_t offset,
 				rv);
 			break;
 		}
-		msleep(10);
+		crec_msleep(10);
 	}
 	return rv;
 }
@@ -159,16 +159,16 @@ __overridable int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 		 * retimer_init() function ensures power is up before calling
 		 * this function.
 		 */
-		msleep(1);
+		crec_msleep(1);
 		gpio_set_level(control->retimer_rst_gpio, 1);
 		/*
 		 * Allow 1ms time for the retimer to power up lc_domain
 		 * which powers I2C controller within retimer
 		 */
-		msleep(1);
+		crec_msleep(1);
 	} else {
 		gpio_set_level(control->retimer_rst_gpio, 0);
-		msleep(1);
+		crec_msleep(1);
 		gpio_set_level(control->usb_ls_en_gpio, 0);
 	}
 	return EC_SUCCESS;

@@ -37,7 +37,7 @@ int lm3630a_poweron(void)
 	 * LM3630A will NAK I2C transactions for 1ms (tWAIT in the datasheet)
 	 * after HWEN asserted or after SW reset.
 	 */
-	msleep(1);
+	crec_msleep(1);
 
 	/* Sample PWM every 8 periods. */
 	ret |= lm3630a_write(LM3630A_REG_FILTER_STRENGTH, 0x3);

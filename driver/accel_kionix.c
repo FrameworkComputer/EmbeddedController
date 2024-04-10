@@ -532,7 +532,7 @@ static int init(struct motion_sensor_t *s)
 		reg = KIONIX_WHO_AM_I(V(s));
 		timeout = 0;
 		do {
-			msleep(1);
+			crec_msleep(1);
 			/* Read WHO_AM_I to be sure the device has booted */
 			ret = raw_read8(s->port, s->i2c_spi_addr_flags, reg,
 					&val);
@@ -599,7 +599,7 @@ static int init(struct motion_sensor_t *s)
 		/* The SRST will be cleared when reset is complete. */
 		timeout = 0;
 		do {
-			msleep(1);
+			crec_msleep(1);
 
 			ret = raw_read8(s->port, s->i2c_spi_addr_flags, reg,
 					&val);
@@ -614,7 +614,7 @@ static int init(struct motion_sensor_t *s)
 		} while (1);
 	} else {
 		/* Wait 2 milliseconds for completion of the software reset. */
-		msleep(2);
+		crec_msleep(2);
 
 		reg = KX022_COTR;
 		ret = raw_read8(s->port, s->i2c_spi_addr_flags, reg, &val);

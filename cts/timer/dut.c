@@ -15,7 +15,7 @@ static enum cts_rc timer_calibration_test(void)
 	gpio_set_flags(GPIO_OUTPUT_TEST, GPIO_ODR_HIGH);
 
 	sync();
-	sleep(1);
+	crec_sleep(1);
 	gpio_set_level(GPIO_OUTPUT_TEST, 0);
 
 	return CTS_RC_SUCCESS;

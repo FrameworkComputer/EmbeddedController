@@ -1955,7 +1955,7 @@ static enum ec_error_list sm5803_enable_otg_power(int chgnum, int enabled)
 					 CHARGER_MODE_SOURCE |
 						 SM5803_FLOW1_DIRECTCHG_SRC_EN,
 					 MASK_SET);
-		usleep(4000);
+		crec_usleep(4000);
 
 		sm5803_set_otg_current_voltage(chgnum, selected_current, 5000);
 	} else {

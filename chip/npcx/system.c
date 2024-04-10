@@ -574,7 +574,7 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 
 	/* Disable ADC */
 	NPCX_ADCCNF = 0;
-	usleep(1000);
+	crec_usleep(1000);
 
 #ifdef NPCX_LCT_SUPPORT
 	/*

@@ -183,7 +183,7 @@ void pd_task(void *u)
 		return;
 
 #if CONFIG_USB_PD_STARTUP_DELAY_MS > 0
-	msleep(CONFIG_USB_PD_STARTUP_DELAY_MS);
+	crec_msleep(CONFIG_USB_PD_STARTUP_DELAY_MS);
 #endif
 
 	while (1) {

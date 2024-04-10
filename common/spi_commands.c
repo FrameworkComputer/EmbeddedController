@@ -64,7 +64,7 @@ static int command_spixfer(int argc, const char **argv)
 		 * Some SPI device needs a delay before accepting other
 		 * commands, otherwise the write might be ignored.
 		 */
-		msleep(1);
+		crec_msleep(1);
 	} else {
 		return EC_ERROR_PARAM1;
 	}

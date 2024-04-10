@@ -216,14 +216,14 @@ void board_set_tcpc_power_mode(int port, int mode)
 	switch (mode) {
 	case ANX74XX_NORMAL_MODE:
 		gpio_set_level(GPIO_EN_USB_C0_TCPC_PWR, 1);
-		msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
+		crec_msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
 		gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
 		break;
 	case ANX74XX_STANDBY_MODE:
 		gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-		msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
+		crec_msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
 		gpio_set_level(GPIO_EN_USB_C0_TCPC_PWR, 0);
-		msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
+		crec_msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 		break;
 	default:
 		break;
@@ -241,7 +241,7 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
 
 	/* TCPC1 (ps8751) requires 1ms reset down assertion */
-	msleep(MAX(1, ANX74XX_RST_L_PWR_L_DELAY_MS));
+	crec_msleep(MAX(1, ANX74XX_RST_L_PWR_L_DELAY_MS));
 
 	/* Deassert reset to TCPC1 */
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
@@ -251,18 +251,18 @@ void board_reset_pd_mcu(void)
 	/*
 	 * anx3429 requires 10ms reset/power down assertion
 	 */
-	msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
+	crec_msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 	board_set_tcpc_power_mode(USB_PD_PORT_ANX74XX, 1);
 #elif defined(VARIANT_GRUNT_TCPC_0_ANX3447)
 	/* Assert reset to TCPC0 (anx3447) */
 	gpio_set_level(GPIO_USB_C0_PD_RST, 1);
-	msleep(ANX74XX_RESET_HOLD_MS);
+	crec_msleep(ANX74XX_RESET_HOLD_MS);
 	gpio_set_level(GPIO_USB_C0_PD_RST, 0);
-	msleep(ANX74XX_RESET_FINISH_MS);
+	crec_msleep(ANX74XX_RESET_FINISH_MS);
 
 	/* Assert reset to TCPC1 (ps8751) */
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
-	msleep(PS8XXX_RESET_DELAY_MS);
+	crec_msleep(PS8XXX_RESET_DELAY_MS);
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
 #endif
 }

@@ -185,7 +185,7 @@ static void set_uart_gpios(int state)
 	STM32_USART_CR1(STM32_USART1_BASE) |= STM32_USART_CR1_UE;
 
 	/* Enable level shifter. */
-	usleep(1000);
+	crec_usleep(1000);
 	gpio_set_level(GPIO_ST_UART_LVL_DIS, !enabled);
 }
 
@@ -256,7 +256,7 @@ void set_uart_state(int state)
 {
 	if (state == UART_AUTO) {
 		set_uart_gpios(UART_OFF);
-		msleep(10);
+		crec_msleep(10);
 
 		uart_detect = UART_DETECT_AUTO;
 		state = detect_uart_orientation();
@@ -382,14 +382,14 @@ void set_mux_state(int state)
 	gpio_set_level(GPIO_SEL_RELAY_B, 0);
 
 	/* Let USB disconnect. */
-	msleep(100);
+	crec_msleep(100);
 
 	/* Reconnect VBUS/CC in the requested direction. */
 	gpio_set_level(GPIO_SEL_RELAY_A, !dir && enabled);
 	gpio_set_level(GPIO_SEL_RELAY_B, dir && enabled);
 
 	/* Reconnect data. */
-	msleep(10);
+	crec_msleep(10);
 
 	gpio_set_level(GPIO_USB_C_SEL_B, dir);
 	gpio_set_level(GPIO_USB_C_OE_N, !enabled);

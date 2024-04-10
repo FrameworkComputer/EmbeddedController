@@ -470,7 +470,7 @@ int crec_flash_physical_erase(int offset, int size)
 		watchdog_reload();
 		while ((STM32_FLASH_SR & FLASH_SR_BUSY) &&
 		       (get_time().val < deadline.val)) {
-			usleep(timeout_us / 100);
+			crec_usleep(timeout_us / 100);
 		}
 		if (STM32_FLASH_SR & FLASH_SR_BUSY) {
 			res = EC_ERROR_TIMEOUT;

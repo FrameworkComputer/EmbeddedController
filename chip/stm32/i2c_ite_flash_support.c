@@ -306,19 +306,19 @@ static int command_enable_ite_dfu(int argc, const char **argv)
 	gpio_config_pin(MODULE_I2C_TIMERS, ite_dfu_config.scl, 1);
 	gpio_config_pin(MODULE_I2C_TIMERS, ite_dfu_config.sda, 1);
 
-	msleep(START_DELAY_MS);
+	crec_msleep(START_DELAY_MS);
 
 	/* Set pulse width to half of waveform period. */
 	STM32_TIM_CCR1(16) = (MHz / SMCLK_WAVEFORM_PERIOD_HZ) / 2;
 	STM32_TIM_CCR1(17) = (MHz / SMDAT_WAVEFORM_PERIOD_HZ) / 2;
 
-	msleep(SPECIAL_WAVEFORM_MS);
+	crec_msleep(SPECIAL_WAVEFORM_MS);
 
 	/* Set duty cycle to 0% or 100%, pinning each channel low or high. */
 	STM32_TIM_CCR1(16) = SMCLK_POST_LEVEL ? 0xFFFF : 0x0000;
 	STM32_TIM_CCR1(17) = SMDAT_POST_LEVEL ? 0xFFFF : 0x0000;
 
-	msleep(PLL_STABLE_MS);
+	crec_msleep(PLL_STABLE_MS);
 
 	/* Set GPIO back to alternate mode I2C. */
 	gpio_config_pin(MODULE_I2C, ite_dfu_config.scl, 1);

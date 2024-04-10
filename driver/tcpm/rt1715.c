@@ -43,7 +43,7 @@ static int rt1715_tcpci_tcpm_init(int port)
 		if (rv)
 			return rv;
 		rt1715_initialized[port] = true;
-		msleep(10);
+		crec_msleep(10);
 	}
 
 	rv = tcpc_update8(port, RT1715_REG_VENDOR_5,

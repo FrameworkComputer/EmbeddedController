@@ -247,6 +247,6 @@ void led_task(void *u)
 		 * the duration exceeds the tick time, then don't sleep.
 		 */
 		if (task_duration < LED_TICK_INTERVAL_MS)
-			usleep(LED_TICK_INTERVAL_MS - task_duration);
+			crec_usleep(LED_TICK_INTERVAL_MS - task_duration);
 	}
 }

@@ -468,7 +468,7 @@ static void sink_can_xmit(int port, int rp)
 
 	/* We must wait tSinkTx before sending a message */
 	if (rp == SINK_TX_NG)
-		usleep(PD_T_SINK_TX);
+		crec_usleep(PD_T_SINK_TX);
 }
 #endif
 
@@ -1480,7 +1480,7 @@ void pd_execute_hard_reset(int port)
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
 	if (!hard_rst_tx)
-		usleep(PD_T_PS_HARD_RESET);
+		crec_usleep(PD_T_PS_HARD_RESET);
 
 	/* We are a source, cut power */
 	pd_power_supply_reset(port);
@@ -2093,7 +2093,7 @@ static void handle_request(int port, uint32_t head, uint32_t *payload)
 #ifdef CONFIG_USBC_VCONN
 			set_vconn(port, 0);
 #endif /* defined(CONFIG_USBC_VCONN) */
-			usleep(PD_T_ERROR_RECOVERY);
+			crec_usleep(PD_T_ERROR_RECOVERY);
 
 			/* Restore terminations. */
 			tcpm_set_cc(port, DUAL_ROLE_IF_ELSE(port, TYPEC_CC_RD,
@@ -2516,7 +2516,7 @@ static void pd_partner_port_reset(int port)
 	timeout = get_time().val + 200 * MSEC;
 
 	while (get_time().val < timeout && pd_is_vbus_present(port))
-		msleep(10);
+		crec_msleep(10);
 }
 #endif /* CONFIG_USB_PD_DUAL_ROLE */
 
@@ -4833,7 +4833,7 @@ void pd_set_suspend(int port, int suspend)
 			task_wake(PD_PORT_TO_TASK_ID(port));
 			if (pd[port].task_state == PD_STATE_SUSPENDED)
 				break;
-			msleep(1);
+			crec_msleep(1);
 		} while (--tries != 0);
 		if (!tries)
 			tcpc_prints("set_suspend failed!", port);

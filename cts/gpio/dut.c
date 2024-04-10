@@ -20,7 +20,7 @@ enum cts_rc set_high_test(void)
 {
 	gpio_set_flags(GPIO_OUTPUT_TEST, GPIO_ODR_LOW);
 	gpio_set_level(GPIO_OUTPUT_TEST, 1);
-	msleep(READ_WAIT_TIME_MS * 2);
+	crec_msleep(READ_WAIT_TIME_MS * 2);
 	return CTS_RC_SUCCESS;
 }
 
@@ -28,7 +28,7 @@ enum cts_rc set_low_test(void)
 {
 	gpio_set_flags(GPIO_OUTPUT_TEST, GPIO_ODR_LOW);
 	gpio_set_level(GPIO_OUTPUT_TEST, 0);
-	msleep(READ_WAIT_TIME_MS * 2);
+	crec_msleep(READ_WAIT_TIME_MS * 2);
 	return CTS_RC_SUCCESS;
 }
 
@@ -37,7 +37,7 @@ enum cts_rc read_high_test(void)
 	int level;
 
 	gpio_set_flags(GPIO_INPUT_TEST, GPIO_INPUT | GPIO_PULL_UP);
-	msleep(READ_WAIT_TIME_MS);
+	crec_msleep(READ_WAIT_TIME_MS);
 	level = gpio_get_level(GPIO_INPUT_TEST);
 	if (level)
 		return CTS_RC_SUCCESS;
@@ -50,7 +50,7 @@ enum cts_rc read_low_test(void)
 	int level;
 
 	gpio_set_flags(GPIO_INPUT_TEST, GPIO_INPUT | GPIO_PULL_UP);
-	msleep(READ_WAIT_TIME_MS);
+	crec_msleep(READ_WAIT_TIME_MS);
 	level = gpio_get_level(GPIO_INPUT_TEST);
 	if (!level)
 		return CTS_RC_SUCCESS;
@@ -63,7 +63,7 @@ enum cts_rc od_read_high_test(void)
 	int level;
 
 	gpio_set_flags(GPIO_OUTPUT_TEST, GPIO_ODR_HIGH | GPIO_PULL_UP);
-	msleep(READ_WAIT_TIME_MS);
+	crec_msleep(READ_WAIT_TIME_MS);
 	level = gpio_get_level(GPIO_OUTPUT_TEST);
 	if (!level)
 		return CTS_RC_SUCCESS;

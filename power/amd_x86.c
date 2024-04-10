@@ -90,7 +90,7 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 	 * Send a pulse to SYS_RST to trigger a warm reset.
 	 */
 	gpio_set_level(GPIO_SYS_RESET_L, 0);
-	usleep(32 * MSEC);
+	crec_usleep(32 * MSEC);
 	gpio_set_level(GPIO_SYS_RESET_L, 1);
 }
 
@@ -202,11 +202,11 @@ static void handle_pass_through(enum gpio_signal pin_in,
 	 * asserting PWR_GOOD.
 	 */
 	if ((pin_in == GPIO_S0_PGOOD) && in_level)
-		msleep(1);
+		crec_msleep(1);
 
 	if (IS_ENABLED(CONFIG_CHIPSET_X86_RSMRST_DELAY) &&
 	    (pin_out == GPIO_PCH_RSMRST_L) && in_level)
-		msleep(10);
+		crec_msleep(10);
 
 	gpio_set_level(pin_out, in_level);
 

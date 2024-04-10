@@ -398,7 +398,7 @@ static void led_change_color(void)
 				/* Move one step in the transition table */
 				led_adjust_color_step(i);
 		}
-		msleep(LED_STEP_MSEC);
+		crec_msleep(LED_STEP_MSEC);
 	}
 }
 
@@ -595,7 +595,7 @@ void led_task(void *u)
 
 	led_init();
 
-	usleep(SECOND);
+	crec_usleep(SECOND);
 
 	while (1) {
 		enum led_pattern pattern_desired[LED_BOTH];
@@ -626,7 +626,7 @@ void led_task(void *u)
 		 * the duration exceeds the tick time, then don't sleep.
 		 */
 		if (task_duration < LED_TICK_TIME)
-			usleep(LED_TICK_TIME - task_duration);
+			crec_usleep(LED_TICK_TIME - task_duration);
 	}
 }
 

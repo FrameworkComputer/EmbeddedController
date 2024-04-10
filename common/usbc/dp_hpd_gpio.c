@@ -56,7 +56,7 @@ void svdm_set_hpd_gpio_irq(int port)
 	if (IS_ENABLED(CONFIG_USB_PD_DP_HPD_GPIO_IRQ_ACCURATE)) {
 		udelay(HPD_DSTREAM_DEBOUNCE_IRQ);
 	} else {
-		usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
+		crec_usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
 	}
 
 	svdm_set_hpd_gpio(port, 1);
@@ -79,7 +79,7 @@ enum ec_error_list dp_hpd_gpio_set(int port, bool level, bool irq)
 		uint64_t now = get_time().val;
 		/* wait for the minimum spacing between IRQ_HPD if needed */
 		if (now < svdm_hpd_deadline[port])
-			usleep(svdm_hpd_deadline[port] - now);
+			crec_usleep(svdm_hpd_deadline[port] - now);
 
 		svdm_set_hpd_gpio_irq(port);
 	} else {

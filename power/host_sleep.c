@@ -231,7 +231,7 @@ static void board_handle_hard_sleep_hang(void)
 		 * Wait a bit so the AP can treat them as separate SysRq
 		 * signals.
 		 */
-		msleep(SYSRQ_WAIT_MSEC);
+		crec_msleep(SYSRQ_WAIT_MSEC);
 		host_send_sysrq('x');
 		ccprints("AP will be force reset in %dms if hang persists",
 			 CONFIG_HARD_SLEEP_HANG_TIMEOUT);

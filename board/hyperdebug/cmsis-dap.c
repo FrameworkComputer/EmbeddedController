@@ -332,7 +332,7 @@ static void dap_reset_target(size_t peek_c)
 
 	if (shield_reset_pin != GPIO_COUNT) {
 		gpio_set_level(shield_reset_pin, false);
-		usleep(100000);
+		crec_usleep(100000);
 		gpio_set_level(shield_reset_pin, true);
 		tx_buffer[2] = 1;
 	} else {
@@ -367,7 +367,7 @@ static void dap_swj_pins(size_t peek_c)
 	if ((pin_mask & PIN_Reset) && shield_reset_pin != GPIO_COUNT)
 		gpio_set_level(shield_reset_pin, !!(pin_value & PIN_Reset));
 
-	usleep(wait_us);
+	crec_usleep(wait_us);
 
 	tx_buffer[1] = 0;
 	queue_add_units(&cmsis_dap_tx_queue, tx_buffer, 2);

@@ -63,7 +63,7 @@ enum power_state chipset_force_g3(void)
 
 	/* Now wait for DSW_PWROK to go away. */
 	while (gpio_get_level(GPIO_PMIC_DPWROK) && (timeout > 0)) {
-		msleep(1);
+		crec_msleep(1);
 		timeout--;
 	};
 

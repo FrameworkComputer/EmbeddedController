@@ -49,7 +49,7 @@ void keyboard_update_button(enum keyboard_button_type button, int is_pressed)
 static int test_button_press(void)
 {
 	gpio_set_level(button_vol_down->gpio, 0);
-	msleep(100);
+	crec_msleep(100);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
 
 	return EC_SUCCESS;
@@ -59,9 +59,9 @@ static int test_button_press(void)
 static int test_button_release(void)
 {
 	gpio_set_level(button_vol_up->gpio, 0);
-	msleep(100);
+	crec_msleep(100);
 	gpio_set_level(button_vol_up->gpio, 1);
-	msleep(100);
+	crec_msleep(100);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_UP] == 0);
 
 	return EC_SUCCESS;
@@ -71,9 +71,9 @@ static int test_button_release(void)
 static int test_button_debounce_short_press(void)
 {
 	gpio_set_level(button_vol_down->gpio, 0);
-	msleep(10);
+	crec_msleep(10);
 	gpio_set_level(button_vol_down->gpio, 1);
-	msleep(100);
+	crec_msleep(100);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 
 	return EC_SUCCESS;
@@ -83,15 +83,15 @@ static int test_button_debounce_short_press(void)
 static int test_button_debounce_short_bounce(void)
 {
 	gpio_set_level(button_vol_down->gpio, 0);
-	msleep(10);
+	crec_msleep(10);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 	gpio_set_level(button_vol_down->gpio, 1);
-	msleep(10);
+	crec_msleep(10);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 	gpio_set_level(button_vol_down->gpio, 0);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
 
 	return EC_SUCCESS;
@@ -101,24 +101,24 @@ static int test_button_debounce_short_bounce(void)
 static int test_button_debounce_stability(void)
 {
 	gpio_set_level(button_vol_down->gpio, 0);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 	gpio_set_level(button_vol_down->gpio, 1);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 	gpio_set_level(button_vol_down->gpio, 0);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
-	msleep(60);
+	crec_msleep(60);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
 	gpio_set_level(button_vol_down->gpio, 1);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 0);
-	msleep(60);
+	crec_msleep(60);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 0);
 
 	return EC_SUCCESS;
@@ -128,14 +128,14 @@ static int test_button_debounce_stability(void)
 static int test_button_press_both(void)
 {
 	gpio_set_level(button_vol_down->gpio, 0);
-	msleep(10);
+	crec_msleep(10);
 	gpio_set_level(button_vol_up->gpio, 0);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_UP] == UNCHANGED);
-	msleep(30);
+	crec_msleep(30);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_UP] == UNCHANGED);
-	msleep(40);
+	crec_msleep(40);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_UP] == 1);
 
@@ -156,7 +156,7 @@ static int send_button_hostcmd(uint32_t btn_mask, uint32_t press_ms)
 static void test_sim_button_util(uint32_t btn_mask, uint32_t press_ms)
 {
 	send_button_hostcmd(btn_mask, press_ms);
-	msleep(100);
+	crec_msleep(100);
 }
 
 /* Test simulate pressing a button */
@@ -193,13 +193,13 @@ static int test_sim_button_debounce_short_bounce(void)
 
 	btn_mask |= (1 << KEYBOARD_BUTTON_VOLUME_DOWN);
 	send_button_hostcmd(btn_mask, 10);
-	msleep(50);
+	crec_msleep(50);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 
 	send_button_hostcmd(btn_mask, 100);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
 
 	return EC_SUCCESS;
@@ -212,24 +212,24 @@ static int test_sim_button_debounce_stability(void)
 
 	btn_mask |= (1 << KEYBOARD_BUTTON_VOLUME_DOWN);
 	send_button_hostcmd(btn_mask, 10);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 
 	send_button_hostcmd(btn_mask, 100);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
-	msleep(60);
+	crec_msleep(60);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
 
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 0);
-	msleep(60);
+	crec_msleep(60);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 0);
 
 	return EC_SUCCESS;
@@ -243,13 +243,13 @@ static int test_sim_button_press_both(void)
 	btn_mask |= (1 << KEYBOARD_BUTTON_VOLUME_DOWN);
 	btn_mask |= (1 << KEYBOARD_BUTTON_VOLUME_UP);
 	send_button_hostcmd(btn_mask, 100);
-	msleep(10);
+	crec_msleep(10);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == UNCHANGED);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_UP] == UNCHANGED);
-	msleep(60);
+	crec_msleep(60);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 1);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_UP] == 1);
-	msleep(100);
+	crec_msleep(100);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_DOWN] == 0);
 	TEST_ASSERT(button_state[BUTTON_VOLUME_UP] == 0);
 
@@ -261,7 +261,7 @@ static int test_button_init(void)
 	TEST_ASSERT(button_get_boot_button() == 0);
 
 	gpio_set_level(button_vol_down->gpio, 0);
-	msleep(100);
+	crec_msleep(100);
 	button_init();
 	TEST_ASSERT(button_get_boot_button() == BIT(BUTTON_VOLUME_DOWN));
 
@@ -277,7 +277,7 @@ static void button_test_init(void)
 		gpio_set_level(buttons[i].gpio,
 			       !(buttons[i].flags & BUTTON_FLAG_ACTIVE_HIGH));
 
-	msleep(100);
+	crec_msleep(100);
 	for (i = 0; i < BUTTON_COUNT; i++)
 		button_state[i] = UNCHANGED;
 }

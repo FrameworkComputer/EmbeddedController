@@ -257,7 +257,7 @@ static int usb_wait_console(void)
 			if (wait_time_us < MSEC)
 				udelay(wait_time_us);
 			else
-				usleep(wait_time_us);
+				crec_usleep(wait_time_us);
 			wait_time_us *= 2;
 		}
 

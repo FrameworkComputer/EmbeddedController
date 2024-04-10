@@ -180,10 +180,10 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 		 * Allow 1ms time for the retimer to power up lc_domain
 		 * which powers I2C controller within retimer
 		 */
-		msleep(1);
+		crec_msleep(1);
 	} else {
 		ioex_set_level(rst_signal, 0);
-		msleep(1);
+		crec_msleep(1);
 	}
 	return EC_SUCCESS;
 }

@@ -278,7 +278,7 @@ static int bd9995x_charger_enable(int chgnum, int enable)
 		 * BGATE charge pump current min : 3uA
 		 * T = C * V / I so, Tmax = 112ms
 		 */
-		msleep(115);
+		crec_msleep(115);
 
 		/*
 		 * Set VSYSREG_SET <= VBAT so that the charger is in Fast-Charge
@@ -299,7 +299,7 @@ static int bd9995x_charger_enable(int chgnum, int enable)
 		 * the charger which prevents inrush current while moving from
 		 * fast-charge state to pre-charge state.
 		 */
-		msleep(50);
+		crec_msleep(50);
 	}
 	if (rv)
 		return rv;
@@ -333,7 +333,7 @@ static int bd9995x_por_reset(int chgnum)
 
 	/* Wait until OTPROM loading is finished */
 	for (i = 0; i < OTPROM_LOAD_WAIT_RETRY; i++) {
-		msleep(10);
+		crec_msleep(10);
 		rv = ch_raw_read16(chgnum, BD9995X_CMD_SYSTEM_STATUS, &reg,
 				   BD9995X_EXTENDED_COMMAND);
 
@@ -1552,7 +1552,7 @@ static int bd9995x_psys_charger_adc(int chgnum)
 			return 0;
 
 		/* Conversion Interval is 200us */
-		usleep(200);
+		crec_usleep(200);
 		ipmon += reg;
 	}
 
@@ -1622,7 +1622,7 @@ static int bd9995x_amon_bmon_chg_adc(int chgnum)
 		iout += reg;
 
 		/* Conversion Interval is 200us */
-		usleep(200);
+		crec_usleep(200);
 	}
 
 	/*

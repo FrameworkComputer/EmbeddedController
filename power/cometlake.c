@@ -88,13 +88,13 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	board_chipset_forced_shutdown();
 
 	/* Need to wait a min of 10 msec before check for power good */
-	msleep(10);
+	crec_msleep(10);
 
 	/* Now wait for PP5000_A and RSMRST_L to go low */
 	while ((gpio_get_level(GPIO_PP5000_A_PG_OD) ||
 		power_has_signals(IN_PGOOD_ALL_CORE)) &&
 	       (timeout_ms > 0)) {
-		msleep(1);
+		crec_msleep(1);
 		timeout_ms--;
 	};
 
@@ -197,7 +197,7 @@ enum power_state power_handle_state(enum power_state state)
 
 		if (all_sys_pwrgd_in != all_sys_pwrgd_out) {
 			if (all_sys_pwrgd_in)
-				msleep(2);
+				crec_msleep(2);
 			gpio_set_level(GPIO_PCH_SYS_PWROK, all_sys_pwrgd_in);
 		}
 		break;

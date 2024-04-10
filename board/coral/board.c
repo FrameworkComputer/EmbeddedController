@@ -327,14 +327,14 @@ void board_set_tcpc_power_mode(int port, int mode)
 	switch (mode) {
 	case ANX74XX_NORMAL_MODE:
 		gpio_set_level(GPIO_EN_USB_TCPC_PWR, 1);
-		msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
+		crec_msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
 		gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
 		break;
 	case ANX74XX_STANDBY_MODE:
 		gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-		msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
+		crec_msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
 		gpio_set_level(GPIO_EN_USB_TCPC_PWR, 0);
-		msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
+		crec_msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 		break;
 	default:
 		break;
@@ -356,7 +356,7 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
 
 	/* TCPC1 (ps8751) requires 1ms reset down assertion */
-	msleep(MAX(1, ANX74XX_RST_L_PWR_L_DELAY_MS));
+	crec_msleep(MAX(1, ANX74XX_RST_L_PWR_L_DELAY_MS));
 
 	/* Deassert reset to TCPC1 */
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);
@@ -366,7 +366,7 @@ void board_reset_pd_mcu(void)
 	/*
 	 * anx3429 requires 10ms reset/power down assertion
 	 */
-	msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
+	crec_msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 	board_set_tcpc_power_mode(USB_PD_PORT_ANX74XX, 1);
 }
 
@@ -378,7 +378,7 @@ static void board_tcpc_init(void)
 	/* Wait for disconnected battery to wake up */
 	while (battery_hw_present() == BP_YES &&
 	       battery_is_present() == BP_NO) {
-		usleep(100 * MSEC);
+		crec_usleep(100 * MSEC);
 		/* Give up waiting after 2 seconds */
 		if (++count > 20)
 			break;
@@ -812,7 +812,7 @@ void board_hibernate(void)
 	chipset_do_shutdown();
 
 	/* Added delay to allow AP to settle down */
-	msleep(100);
+	crec_msleep(100);
 
 	/* Enable both the VBUS & VCC ports before entering PG3 */
 	bd9995x_select_input_port(BD9995X_CHARGE_PORT_BOTH, 1);
@@ -870,7 +870,7 @@ static int board_read_version(enum adc_channel chan)
 	/* ID/SKU enable is active high */
 	gpio_set_flags(GPIO_EC_BRD_ID_EN, GPIO_OUT_HIGH);
 	/* Wait to allow cap charge */
-	msleep(1);
+	crec_msleep(1);
 	mv = adc_read_channel(chan);
 	CPRINTS("ID/SKU ADC %d = %d mV", chan, mv);
 	/* Disable ID/SKU circuit */
@@ -937,7 +937,7 @@ static void print_form_factor_list(int low, int high)
 			 SKU_IS_CONVERTIBLE(id) ? "Convertible" : "Clamshell");
 		/* Don't print too many lines at once */
 		if (!(++count % 5))
-			msleep(20);
+			crec_msleep(20);
 	}
 }
 

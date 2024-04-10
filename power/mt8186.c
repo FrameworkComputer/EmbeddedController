@@ -109,7 +109,7 @@ static bool power_is_enough(void)
 
 	while (!system_can_boot_ap() &&
 	       !timestamp_expired(poll_deadline, NULL)) {
-		usleep(CAN_BOOT_AP_CHECK_WAIT);
+		crec_usleep(CAN_BOOT_AP_CHECK_WAIT);
 	}
 
 	return system_can_boot_ap();
@@ -119,9 +119,9 @@ static bool power_is_enough(void)
 static void set_pmic_pwron(void)
 {
 	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
-	msleep(PMIC_EN_PULSE_MS);
+	crec_msleep(PMIC_EN_PULSE_MS);
 	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 0);
-	msleep(PMIC_EN_PULSE_MS);
+	crec_msleep(PMIC_EN_PULSE_MS);
 	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
 }
 
@@ -141,7 +141,7 @@ static void set_pmic_pwroff(void)
 	pmic_off_timeout.val += PMIC_HARD_OFF_DELAY;
 
 	while (!timestamp_expired(pmic_off_timeout, NULL)) {
-		msleep(100);
+		crec_msleep(100);
 	};
 
 	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
@@ -248,7 +248,7 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 	is_resetting = true;
 	hook_call_deferred(&reset_flag_deferred_data, RESET_FLAG_TIMEOUT);
 	GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 0);
-	usleep(SYS_RST_PULSE_LENGTH);
+	crec_usleep(SYS_RST_PULSE_LENGTH);
 	GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 1);
 }
 

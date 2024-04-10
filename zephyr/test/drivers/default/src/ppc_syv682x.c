@@ -258,11 +258,11 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_source_oc)
 	/* An OC event less than 100 ms should not cause VBUS to turn off. */
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_OC_5V,
 				   SYV682X_CONTROL_4_NONE);
-	msleep(50);
+	crec_msleep(50);
 	zassert_true(ppc_is_sourcing_vbus(syv682x_port),
 		     "PPC is not sourcing VBUS after 50 ms OC");
 	/* But one greater than 100 ms should. */
-	msleep(60);
+	crec_msleep(60);
 	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
 		      "PPC is sourcing VBUS after 100 ms OC");
 }
@@ -278,7 +278,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_tsd)
 		   "Source enable failed");
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_TSD,
 				   SYV682X_CONTROL_4_NONE);
-	msleep(1);
+	crec_msleep(1);
 	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
 		      "PPC is sourcing power after TSD");
 }
@@ -290,7 +290,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vbus_ovp)
 		   "Source enable failed");
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_OVP,
 				   SYV682X_CONTROL_4_NONE);
-	msleep(1);
+	crec_msleep(1);
 	zassert_false(ppc_is_sourcing_vbus(syv682x_port),
 		      "PPC is sourcing power after OVP");
 }
@@ -308,7 +308,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vbus_hv_oc)
 		   "Sink enable failed");
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_OC_HV,
 				   SYV682X_CONTROL_4_NONE);
-	msleep(1);
+	crec_msleep(1);
 	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   "Reading CONTROL_1 failed");
@@ -317,7 +317,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vbus_hv_oc)
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_OC_HV,
 				   SYV682X_CONTROL_4_NONE);
 	/* Alert GPIO doesn't change so wait for delayed syv682x interrupt */
-	msleep(15);
+	crec_msleep(15);
 	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   "Reading CONTROL_1 failed");
@@ -326,7 +326,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vbus_hv_oc)
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_OC_HV,
 				   SYV682X_CONTROL_4_NONE);
 	/* Alert GPIO doesn't change so wait for delayed syv682x interrupt */
-	msleep(15);
+	crec_msleep(15);
 	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_1_REG, &reg),
 		   "Reading CONTROL_1 failed");
@@ -346,14 +346,14 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vconn_oc)
 	ppc_set_vconn(syv682x_port, true);
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_NONE,
 				   SYV682X_CONTROL_4_VCONN_OCP);
-	msleep(1);
+	crec_msleep(1);
 	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_4_REG, &reg),
 		   "Reading CONTROL_4 failed");
 	zassert_true(reg & (SYV682X_CONTROL_4_VCONN1 |
 			    SYV682X_CONTROL_4_VCONN2),
 		     "VCONN disabled after initial VCONN OC");
-	msleep(50);
+	crec_msleep(50);
 	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_4_REG, &reg),
 		   "Reading CONTROL_4 failed");
@@ -364,7 +364,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vconn_oc)
 	 * But if the event keeps going for over 100 ms continuously, the driver
 	 * should turn VCONN off.
 	 */
-	msleep(60);
+	crec_msleep(60);
 	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_4_REG, &reg),
 		   "Reading CONTROL_4 failed");
@@ -386,7 +386,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_interrupt_vconn_ov)
 	ppc_set_vconn(syv682x_port, true);
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_NONE,
 				   SYV682X_CONTROL_4_VBAT_OVP);
-	msleep(1);
+	crec_msleep(1);
 	zassert_ok(syv682x_emul_get_reg(fixture->ppc_emul,
 					SYV682X_CONTROL_4_REG, &reg),
 		   "Reading CONTROL_4 failed");
@@ -456,7 +456,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_frs_trigger)
 	 */
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_FRS,
 				   SYV682X_CONTROL_4_NONE);
-	msleep(2);
+	crec_msleep(2);
 	zassert_true(ppc_is_sourcing_vbus(syv682x_port),
 		     "PPC is not sourcing VBUS after FRS signal handled");
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_NONE,
@@ -633,7 +633,7 @@ ZTEST_F(ppc_syv682x, test_syv682x_vbus_sink_oc_limit)
 		syv682x_emul_set_condition(fixture->ppc_emul,
 					   SYV682X_STATUS_OC_HV,
 					   SYV682X_CONTROL_4_NONE);
-		msleep(15);
+		crec_msleep(15);
 	}
 	syv682x_emul_set_condition(fixture->ppc_emul, SYV682X_STATUS_NONE,
 				   SYV682X_CONTROL_4_NONE);

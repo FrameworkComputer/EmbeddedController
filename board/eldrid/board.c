@@ -362,9 +362,10 @@ static void ps8815_reset(void)
 	int val;
 
 	gpio_set_level(ps8xxx_rst_odl, 0);
-	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS, PS8815_PWR_H_RST_H_DELAY_MS));
+	crec_msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
+				PS8815_PWR_H_RST_H_DELAY_MS));
 	gpio_set_level(ps8xxx_rst_odl, 1);
-	msleep(PS8815_FW_INIT_DELAY_MS);
+	crec_msleep(PS8815_FW_INIT_DELAY_MS);
 
 	/*
 	 * b/144397088

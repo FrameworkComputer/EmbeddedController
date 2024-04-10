@@ -18,16 +18,16 @@ void clean_state(void)
 
 static void trigger_interrupt1(void)
 {
-	usleep(CTS_INTERRUPT_TRIGGER_DELAY_US);
+	crec_usleep(CTS_INTERRUPT_TRIGGER_DELAY_US);
 	gpio_set_level(GPIO_OUTPUT_TEST, 0);
-	usleep(CTS_INTERRUPT_TRIGGER_DELAY_US);
+	crec_usleep(CTS_INTERRUPT_TRIGGER_DELAY_US);
 }
 
 static void trigger_interrupt2(void)
 {
-	usleep(CTS_INTERRUPT_TRIGGER_DELAY_US);
+	crec_usleep(CTS_INTERRUPT_TRIGGER_DELAY_US);
 	gpio_set_level(GPIO_CTS_IRQ2, 0);
-	usleep(CTS_INTERRUPT_TRIGGER_DELAY_US);
+	crec_usleep(CTS_INTERRUPT_TRIGGER_DELAY_US);
 }
 
 enum cts_rc test_task_wait_event(void)

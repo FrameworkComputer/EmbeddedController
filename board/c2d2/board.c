@@ -814,7 +814,7 @@ static int command_h1_reset(int argc, const char **argv)
 					    VREF_MON_DIS_H1_RST_HELD,
 					    "H1 reset");
 		if (rv == EC_SUCCESS) {
-			msleep(100);
+			crec_msleep(100);
 			rv = command_vref_alternate(
 				c, cmd_off, GPIO_SPIVREF_RSVD_H1VREF_H1_RST_ODL,
 				GPIO_EN_SPIVREF_RSVD_H1VREF_H1_RST,
@@ -891,7 +891,7 @@ static inline void drain_vref_lines(void)
 
 	/* Ensure we have enough time to drain line. Not in mutex */
 	mutex_unlock(&vref_bus_state_mutex);
-	msleep(5);
+	crec_msleep(5);
 	mutex_lock(&vref_bus_state_mutex);
 	if (vref_monitor_disable) {
 		mutex_unlock(&vref_bus_state_mutex);
@@ -916,7 +916,7 @@ static inline void drain_vref_lines(void)
 
 	mutex_unlock(&vref_bus_state_mutex);
 	/* Ensure we have enough time to charge line up to real voltage */
-	msleep(10);
+	crec_msleep(10);
 }
 
 /* This if forward declared as a deferred function above */

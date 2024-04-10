@@ -52,7 +52,7 @@ void task_tick(void *data)
 	/* Wake up every tick */
 	while (1)
 		/* Wait for timer interrupt message */
-		usleep(3000);
+		crec_usleep(3000);
 }
 
 enum cts_rc test_task_switch(void)
@@ -123,7 +123,7 @@ enum cts_rc test_task_priority(void)
 static void recurse(int x)
 {
 	CPRINTS("+%d", x);
-	msleep(1);
+	crec_msleep(1);
 	recurse(x + 1);
 	CPRINTS("-%d", x);
 }

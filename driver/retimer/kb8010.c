@@ -287,7 +287,7 @@ static int kb8010_init(const struct usb_mux *me)
 	bool unused;
 
 	gpio_set_level(kb8010_controls[me->usb_port].retimer_rst_gpio, 0);
-	msleep(KB8010_POWER_ON_DELAY_MS);
+	crec_msleep(KB8010_POWER_ON_DELAY_MS);
 
 	gpio_set_level(kb8010_controls[me->usb_port].retimer_rst_gpio, 1);
 
@@ -297,7 +297,7 @@ static int kb8010_init(const struct usb_mux *me)
 	 * logic. If after the delay, the reset is still held low - return an
 	 * error.
 	 */
-	msleep(KB8010_POWER_ON_DELAY_MS);
+	crec_msleep(KB8010_POWER_ON_DELAY_MS);
 	if (!gpio_get_level(kb8010_controls[me->usb_port].retimer_rst_gpio)) {
 		return EC_ERROR_NOT_POWERED;
 	}

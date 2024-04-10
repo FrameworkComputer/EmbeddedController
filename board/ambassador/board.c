@@ -609,10 +609,10 @@ void board_reset_pd_mcu(void)
 		       TCPC_FLAGS_RESET_ACTIVE_HIGH);
 
 	gpio_set_level(GPIO_USB_C0_TCPC_RST, level);
-	msleep(BOARD_TCPC_C0_RESET_HOLD_DELAY);
+	crec_msleep(BOARD_TCPC_C0_RESET_HOLD_DELAY);
 	gpio_set_level(GPIO_USB_C0_TCPC_RST, !level);
 	if (BOARD_TCPC_C0_RESET_POST_DELAY)
-		msleep(BOARD_TCPC_C0_RESET_POST_DELAY);
+		crec_msleep(BOARD_TCPC_C0_RESET_POST_DELAY);
 }
 
 int board_set_active_charge_port(int port)

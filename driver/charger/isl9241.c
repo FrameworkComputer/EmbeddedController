@@ -397,7 +397,7 @@ static enum ec_error_list _get_vsys_voltage(int chgnum, int port, int *voltage)
 		return rv;
 	}
 
-	usleep(ISL9241_ADC_POLLING_TIME_US);
+	crec_usleep(ISL9241_ADC_POLLING_TIME_US);
 
 	/* Read voltage ADC value */
 	rv = isl9241_read(chgnum, ISL9241_REG_VSYS_ADC_RESULTS, &val);
@@ -570,7 +570,7 @@ static int isl9241_get_prochot_status(int chgnum, bool *out_low_vsys,
 		restore_adc = true;
 	}
 
-	usleep(ISL9241_ADC_POLLING_TIME_US);
+	crec_usleep(ISL9241_ADC_POLLING_TIME_US);
 
 	/* Get input current */
 	rv = isl9241_read(chgnum, ISL9241_REG_IADP_ADC_RESULTS,
@@ -885,7 +885,7 @@ static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
 	/* 9*: Wait until VSYS == MaxSysVoltage. */
 	deadline.val = get_time().val + ISL9241_BYPASS_VSYS_TIMEOUT_MS * MSEC;
 	do {
-		msleep(ISL9241_BYPASS_VSYS_TIMEOUT_MS / 10);
+		crec_msleep(ISL9241_BYPASS_VSYS_TIMEOUT_MS / 10);
 		if (_get_vsys_voltage(chgnum, 0, &vsys)) {
 			CPRINTS("Aborting bypass mode. Vsys is unknown.");
 			rv = EC_ERROR_UNKNOWN;
@@ -904,7 +904,7 @@ static enum ec_error_list isl9241_nvdc_to_bypass(int chgnum)
 		       ISL9241_CONTROL0_EN_BYPASS_GATE, MASK_SET);
 
 	/* 11: Wait 1 ms. */
-	msleep(1);
+	crec_msleep(1);
 
 	/* 12*: Turn off NGATE. */
 	isl9241_update(chgnum, ISL9241_REG_CONTROL0, ISL9241_CONTROL0_NGATE_OFF,
@@ -1000,7 +1000,7 @@ static enum ec_error_list isl9241_bypass_to_nvdc(int chgnum)
 		return rv;
 
 	/* 7*: Wait until VSYS == MaxSysVoltage. */
-	msleep(1);
+	crec_msleep(1);
 
 	/* 8*: Turn on NGATE. */
 	rv = isl9241_update(chgnum, ISL9241_REG_CONTROL0,
@@ -1222,7 +1222,7 @@ static void isl9241_restart_charge_voltage_when_full(void)
 	    led_pwr_get_state() == LED_PWRS_CHARGE_NEAR_FULL &&
 	    battery_get_disconnect_state() == BATTERY_NOT_DISCONNECTED) {
 		charger_discharge_on_ac(1);
-		msleep(50);
+		crec_msleep(50);
 		charger_discharge_on_ac(0);
 	}
 }

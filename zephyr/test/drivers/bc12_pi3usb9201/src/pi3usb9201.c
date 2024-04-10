@@ -102,7 +102,7 @@ static void test_bc12_pi3usb9201_host_mode(void)
 	 * role to DFP.
 	 */
 	usb_charger_task_set_event(0, USB_CHG_EVENT_DR_DFP);
-	msleep(1);
+	crec_msleep(1);
 	/*
 	 * Expect the pi3usb9201 driver to configure CDP host mode and unmask
 	 * interrupts.
@@ -112,11 +112,11 @@ static void test_bc12_pi3usb9201_host_mode(void)
 	zassert_equal(a, b);
 
 	/* Pretend that a device has been plugged in. */
-	msleep(500);
+	crec_msleep(500);
 	pi3usb9201_emul_set_reg(emul, PI3USB9201_REG_HOST_STS,
 				PI3USB9201_REG_HOST_STS_DEV_PLUG);
 	usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
-	msleep(1);
+	crec_msleep(1);
 	/* Expect the pi3usb9201 driver to configure SDP host mode. */
 	pi3usb9201_emul_get_reg(emul, PI3USB9201_REG_CTRL_1, &a);
 	b = PI3USB9201_SDP_HOST_MODE << PI3USB9201_REG_CTRL_1_MODE_SHIFT;
@@ -124,11 +124,11 @@ static void test_bc12_pi3usb9201_host_mode(void)
 	pi3usb9201_emul_set_reg(emul, PI3USB9201_REG_HOST_STS, 0);
 
 	/* Pretend that a device has been unplugged. */
-	msleep(500);
+	crec_msleep(500);
 	pi3usb9201_emul_set_reg(emul, PI3USB9201_REG_HOST_STS,
 				PI3USB9201_REG_HOST_STS_DEV_UNPLUG);
 	usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
-	msleep(1);
+	crec_msleep(1);
 	/* Expect the pi3usb9201 driver to configure CDP host mode. */
 	pi3usb9201_emul_get_reg(emul, PI3USB9201_REG_CTRL_1, &a);
 	b = PI3USB9201_CDP_HOST_MODE << PI3USB9201_REG_CTRL_1_MODE_SHIFT;
@@ -149,10 +149,10 @@ test_bc12_pi3usb9201_client_mode(enum pi3usb9201_client_sts detect_result,
 	 * Pretend that the USB-C Port Manager (TCPMv2) has set the port data
 	 * role to UFP and decided charging from the port is allowed.
 	 */
-	msleep(500);
+	crec_msleep(500);
 	usb_charger_task_set_event(0, USB_CHG_EVENT_DR_UFP);
 	charge_manager_update_dualrole(USBC_PORT_C0, CAP_DEDICATED);
-	msleep(1);
+	crec_msleep(1);
 	/*
 	 * Expect the pi3usb9201 driver to configure client mode and start
 	 * detection.
@@ -165,11 +165,11 @@ test_bc12_pi3usb9201_client_mode(enum pi3usb9201_client_sts detect_result,
 	zassert_equal(a, b);
 
 	/* Pretend that detection completed. */
-	msleep(500);
+	crec_msleep(500);
 	pi3usb9201_emul_set_reg(emul, PI3USB9201_REG_CLIENT_STS,
 				1 << detect_result);
 	usb_charger_task_set_event(0, USB_CHG_EVENT_BC12);
-	msleep(1);
+	crec_msleep(1);
 	/* Expect the pi3usb9201 driver to clear the start bit. */
 	pi3usb9201_emul_get_reg(emul, PI3USB9201_REG_CTRL_2, &a);
 	zassert_equal(a, 0);
@@ -184,7 +184,7 @@ test_bc12_pi3usb9201_client_mode(enum pi3usb9201_client_sts detect_result,
 		voltage = USB_CHARGER_VOLTAGE_MV;
 	}
 	/* Wait for the charge port to update. */
-	msleep(500);
+	crec_msleep(500);
 	zassert_equal(charge_manager_get_active_charge_port(), port);
 	zassert_equal(charge_manager_get_supplier(), supplier);
 	zassert_equal(charge_manager_get_charger_current(), current_limit,
@@ -195,9 +195,9 @@ test_bc12_pi3usb9201_client_mode(enum pi3usb9201_client_sts detect_result,
 	 * Pretend that the USB-C Port Manager (TCPMv2) has set the port data
 	 * role to disconnected.
 	 */
-	msleep(500);
+	crec_msleep(500);
 	usb_charger_task_set_event(0, USB_CHG_EVENT_CC_OPEN);
-	msleep(1);
+	crec_msleep(1);
 	/*
 	 * Expect the pi3usb9201 driver to configure power down mode and mask
 	 * interrupts.
@@ -240,7 +240,7 @@ ZTEST_USER(bc12, test_bc12_pi3usb9201)
 	set_ac_enabled(true);
 
 	/* Wait long enough for TCPMv2 to be idle. */
-	msleep(2000);
+	crec_msleep(2000);
 
 	/*
 	 * Pretend that the USB-C Port Manager (TCPMv2) has set the port data
@@ -248,7 +248,7 @@ ZTEST_USER(bc12, test_bc12_pi3usb9201)
 	 */
 	usb_charger_task_set_event(0, USB_CHG_EVENT_CC_OPEN);
 	usb_charger_task_set_event(1, USB_CHG_EVENT_CC_OPEN);
-	msleep(1);
+	crec_msleep(1);
 	/*
 	 * Expect the pi3usb9201 driver to configure power down mode and mask
 	 * interrupts.

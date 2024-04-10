@@ -46,7 +46,7 @@ int spi_flash_wait(void)
 	timeout.val = get_time().val + SPI_FLASH_TIMEOUT_USEC;
 	/* Wait until chip is not busy */
 	while (spi_flash_get_status1() & SPI_FLASH_SR1_BUSY) {
-		usleep(SPI_FLASH_SLEEP_USEC);
+		crec_usleep(SPI_FLASH_SLEEP_USEC);
 
 		if (get_time().val > timeout.val)
 			return EC_ERROR_TIMEOUT;
@@ -167,7 +167,7 @@ int spi_flash_read(uint8_t *buf_usr, unsigned int offset, unsigned int bytes)
 				      read_size);
 		if (ret != EC_SUCCESS)
 			break;
-		msleep(CONFIG_SPI_FLASH_READ_WAIT_MS);
+		crec_msleep(CONFIG_SPI_FLASH_READ_WAIT_MS);
 	}
 	return ret;
 }

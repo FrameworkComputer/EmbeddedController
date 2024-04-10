@@ -20,7 +20,7 @@ static int ac_hook_count;
 static void set_ac(int val)
 {
 	gpio_set_level(GPIO_AC_PRESENT, val);
-	msleep(50);
+	crec_msleep(50);
 }
 
 static void ac_change_hook(void)

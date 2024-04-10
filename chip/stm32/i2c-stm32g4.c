@@ -251,7 +251,7 @@ static int wait_isr(int port, int mask)
 		 * sleeping and letting other things run.
 		 */
 		if (delta >= busyloop_us[pdata[port].freq])
-			usleep(100);
+			crec_usleep(100);
 	} while (delta < pdata[port].timeout_us);
 
 	return EC_ERROR_TIMEOUT;

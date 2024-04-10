@@ -151,7 +151,7 @@ static int test_read_temp_twice_after_cache_stale(void)
 					     __hw_clock_source_read());
 	TEST_EQ(rc, EC_SUCCESS, "%d");
 
-	sleep(2);
+	crec_sleep(2);
 	rc = online_calibration_process_data(&data, &motion_sensors[0],
 					     __hw_clock_source_read());
 	TEST_EQ(rc, EC_SUCCESS, "%d");

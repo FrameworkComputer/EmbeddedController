@@ -351,7 +351,7 @@ static void stack_overflow_recurse(int n)
 	 * Force task context switch, since that's where we do stack overflow
 	 * checking.
 	 */
-	msleep(10);
+	crec_msleep(10);
 
 	stack_overflow_recurse(n + 1);
 

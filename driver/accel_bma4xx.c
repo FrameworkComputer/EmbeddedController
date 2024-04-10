@@ -67,7 +67,7 @@ static inline int bma4_write8(const struct motion_sensor_t *s, const int reg,
 	 * the sensor. Given we are only doing write during init, add
 	 * the delay unconditionally.
 	 */
-	usleep(450);
+	crec_usleep(450);
 
 	return ret;
 }
@@ -147,7 +147,7 @@ static int wait_and_read_data(struct motion_sensor_t *s, intv3_t v)
 	/* Check if data is ready */
 	while (try_cnt && (!(reg_data[0] & BMA4_STAT_DATA_RDY_ACCEL_MSK))) {
 		/* 20ms delay for 50Hz ODR */
-		msleep(20);
+		crec_msleep(20);
 
 		/* Read the status register */
 		RETURN_ERROR(i2c_read_block(s->port, s->i2c_spi_addr_flags,

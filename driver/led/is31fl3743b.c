@@ -164,7 +164,7 @@ static int is31fl3743b_init(struct rgbkbd *ctx)
 	rv = is31fl3743b_write(ctx, IS31FL3743B_REG_RSTN, 0xae);
 	if (rv)
 		return rv;
-	msleep(3);
+	crec_msleep(3);
 
 	return EC_SUCCESS;
 }

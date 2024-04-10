@@ -185,7 +185,7 @@ static int is_suspend_asserted(void)
 #ifdef BOARD_OAK
 	if ((power_get_signals() & IN_SUSPEND) &&
 	    (system_get_board_version() < 4))
-		usleep(SUSPEND_DEBOUNCE_TIME);
+		crec_usleep(SUSPEND_DEBOUNCE_TIME);
 #endif
 
 	return power_get_signals() & IN_SUSPEND;
@@ -202,7 +202,7 @@ static int is_suspend_deasserted(void)
 #ifdef BOARD_OAK
 	if (!(power_get_signals() & IN_SUSPEND) &&
 	    (system_get_board_version() < 4))
-		usleep(SUSPEND_DEBOUNCE_TIME);
+		crec_usleep(SUSPEND_DEBOUNCE_TIME);
 #endif
 
 	return !(power_get_signals() & IN_SUSPEND);
@@ -221,7 +221,7 @@ static int is_power_good_asserted(void)
 #ifdef BOARD_OAK
 	else if ((power_get_signals() & IN_POWER_GOOD) &&
 		 (system_get_board_version() < 4))
-		usleep(POWER_DEBOUNCE_TIME);
+		crec_usleep(POWER_DEBOUNCE_TIME);
 #endif
 
 	return power_get_signals() & IN_POWER_GOOD;
@@ -247,7 +247,7 @@ static int is_power_good_deasserted(void)
 			return 0;
 	} else {
 		if (!(power_get_signals() & IN_POWER_GOOD))
-			usleep(POWER_DEBOUNCE_TIME);
+			crec_usleep(POWER_DEBOUNCE_TIME);
 	}
 #endif
 	if (0 == gpio_get_level(GPIO_AP_RESET_L))
@@ -290,7 +290,7 @@ static void set_pmic_pwron(int asserted)
 		poll_deadline.val += SECOND;
 		while (asserted && !gpio_get_level(GPIO_5V_POWER_GOOD) &&
 		       get_time().val < poll_deadline.val)
-			usleep(PMIC_WAIT_FOR_5V_POWER_GOOD);
+			crec_usleep(PMIC_WAIT_FOR_5V_POWER_GOOD);
 		if (!gpio_get_level(GPIO_5V_POWER_GOOD))
 			CPRINTS("5V power not ready");
 	}
@@ -470,7 +470,7 @@ static void chipset_turn_off_power_rails(void)
 	set_pmic_pwron(0);
 
 	/* system power off */
-	usleep(PMIC_POWER_OFF_DELAY);
+	crec_usleep(PMIC_POWER_OFF_DELAY);
 	set_system_power(0);
 }
 
@@ -609,7 +609,7 @@ static void power_on(void)
 		uint32_t wait = PMIC_RTC_STARTUP - t;
 
 		CPRINTS("wait for %dms for PMIC RTC start-up", wait / MSEC);
-		usleep(wait);
+		crec_usleep(wait);
 	}
 
 	/*
@@ -651,7 +651,7 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 	report_ap_reset(reason);
 
 	set_warm_reset(1);
-	usleep(PMIC_WARM_RESET_H_HOLD_TIME);
+	crec_usleep(PMIC_WARM_RESET_H_HOLD_TIME);
 	/* deassert the reset signals */
 	set_warm_reset(0);
 }

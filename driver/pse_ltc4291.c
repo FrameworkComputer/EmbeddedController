@@ -61,7 +61,7 @@ static int pse_init_worker(void)
 	while ((err = I2C_PSE_READ(ID, &id)) != EC_SUCCESS) {
 		if (timestamp_expired(deadline, NULL))
 			return EC_ERROR_TIMEOUT;
-		msleep(1);
+		crec_msleep(1);
 	}
 
 	err = I2C_PSE_READ(DEVID, &devid);

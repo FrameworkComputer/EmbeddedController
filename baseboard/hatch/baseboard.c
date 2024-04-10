@@ -176,7 +176,7 @@ void board_hibernate(void)
 	 * needs time to work through the transitions.  Also, it
 	 * works.
 	 */
-	msleep(300);
+	crec_msleep(300);
 }
 
 /******************************************************************************/
@@ -252,10 +252,10 @@ static void reset_pd_port(int port, enum gpio_signal reset_gpio, int hold_delay,
 	int level = !!(tcpc_config[port].flags & TCPC_FLAGS_RESET_ACTIVE_HIGH);
 
 	gpio_set_level(reset_gpio, level);
-	msleep(hold_delay);
+	crec_msleep(hold_delay);
 	gpio_set_level(reset_gpio, !level);
 	if (finish_delay)
-		msleep(finish_delay);
+		crec_msleep(finish_delay);
 }
 
 void board_reset_pd_mcu(void)

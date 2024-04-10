@@ -93,14 +93,14 @@ static int mp2964_store_user_all(void)
 	if (status != EC_SUCCESS)
 		return status;
 
-	usleep(MP2964_STORE_WAIT_US);
+	crec_usleep(MP2964_STORE_WAIT_US);
 
 	status = i2c_xfer_unlocked(I2C_PORT_MP2964, I2C_ADDR_MP2964_FLAGS, &rd,
 				   sizeof(rd), NULL, 0, I2C_XFER_SINGLE);
 	if (status != EC_SUCCESS)
 		return status;
 
-	usleep(MP2964_RESTORE_WAIT_US);
+	crec_usleep(MP2964_RESTORE_WAIT_US);
 
 	return EC_SUCCESS;
 }

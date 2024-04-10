@@ -500,7 +500,7 @@ static int init(struct motion_sensor_t *s)
 			goto err_unlock;
 		}
 
-		msleep(1);
+		crec_msleep(1);
 		timeout += 1;
 		ret = st_raw_read8(s->port, s->i2c_spi_addr_flags,
 				   LIS2DW12_SOFT_RESET_ADDR, &status);

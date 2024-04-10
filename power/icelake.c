@@ -120,7 +120,7 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 	 * VCCIN_AUX time to discharge.
 	 */
 	if (IS_ENABLED(CONFIG_CHIPSET_JASPERLAKE))
-		msleep(60);
+		crec_msleep(60);
 
 	/* Turn off PP5000 rail */
 	if (IS_ENABLED(CONFIG_POWER_PP5000_CONTROL))
@@ -186,7 +186,7 @@ static void dsw_pwrok_pass_thru(void)
 			 * Once DSW_PWROK is high, reconfigure SLP_S3_L back to
 			 * an input after a short delay.
 			 */
-			msleep(1);
+			crec_msleep(1);
 			CPRINTS("Release SLP_S3_L");
 			gpio_reset(SLP_S3_SIGNAL_L);
 			power_signal_enable_interrupt(SLP_S3_SIGNAL_L);
@@ -198,7 +198,7 @@ static void dsw_pwrok_pass_thru(void)
 		 * A minimum 10 msec delay is required between PP3300_A being
 		 * stable and the DSW_PWROK signal being passed to the PCH.
 		 */
-		msleep(10);
+		crec_msleep(10);
 		GPIO_SET_LEVEL(GPIO_PCH_DSW_PWROK, dswpwrok_in);
 	}
 }
@@ -239,7 +239,7 @@ static void all_sys_pwrgd_pass_thru(void)
 	 */
 	for (i = 0; i < signal_count; i++, pwrok_signal++) {
 		if (pwrok_signal->delay_ms > 0)
-			msleep(pwrok_signal->delay_ms);
+			crec_msleep(pwrok_signal->delay_ms);
 
 		pwrok_signal_set(pwrok_signal, all_sys_pwrgd_in);
 	}

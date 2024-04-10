@@ -69,7 +69,7 @@ static int qmspi_wait(uint32_t mask, uint32_t mval)
 		if (timestamp_expired(deadline, NULL))
 			return EC_ERROR_TIMEOUT;
 
-		usleep(QMSPI_BYTE_TRANSFER_POLL_INTERVAL_US);
+		crec_usleep(QMSPI_BYTE_TRANSFER_POLL_INTERVAL_US);
 	}
 	return EC_SUCCESS;
 }
@@ -621,7 +621,7 @@ int qmspi_transaction_flush(const struct spi_device_t *spi_device)
 			ret = EC_ERROR_TIMEOUT;
 			break;
 		}
-		usleep(QMSPI_BYTE_TRANSFER_POLL_INTERVAL_US);
+		crec_usleep(QMSPI_BYTE_TRANSFER_POLL_INTERVAL_US);
 		qsts = MCHP_QMSPI0_STS;
 	}
 

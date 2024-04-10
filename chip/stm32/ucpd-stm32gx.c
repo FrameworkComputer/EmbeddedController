@@ -865,7 +865,7 @@ static void ucpd_task_log_dump(void)
 			 ucpd_tx_statelog[idx].timeout_us);
 
 		idx = (idx + 1) & TX_STATE_LOG_MASK;
-		msleep(5);
+		crec_msleep(5);
 	}
 
 	ucpd_tx_state_log_freeze = 0;
@@ -1429,7 +1429,7 @@ static void ucpd_dump_msg_log(void)
 				 delta_ts);
 		}
 		ccprintf("\n");
-		msleep(5);
+		crec_msleep(5);
 	}
 }
 

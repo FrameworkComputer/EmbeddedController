@@ -126,7 +126,7 @@ static int syv682x_wait_for_ready(int port, int reg)
 			return EC_ERROR_TIMEOUT;
 		}
 
-		msleep(1);
+		crec_msleep(1);
 	} while (1);
 
 	return EC_SUCCESS;

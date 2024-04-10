@@ -105,13 +105,13 @@ void board_reset_pd_mcu(void)
 {
 	/* Reset NCT38XX TCPC */
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(usb_c0_c1_tcpc_rst_odl), 0);
-	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
+	crec_msleep(NCT38XX_RESET_HOLD_DELAY_MS);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(usb_c0_c1_tcpc_rst_odl), 1);
 	nct38xx_reset_notify(0);
 	nct38xx_reset_notify(1);
 
 	if (NCT3807_RESET_POST_DELAY_MS != 0) {
-		msleep(NCT3807_RESET_POST_DELAY_MS);
+		crec_msleep(NCT3807_RESET_POST_DELAY_MS);
 	}
 
 	/* NCT38XX chip uses gpio ioex */

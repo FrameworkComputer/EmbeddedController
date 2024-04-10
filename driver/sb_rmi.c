@@ -138,7 +138,7 @@ int sb_rmi_mailbox_xfer(int cmd, uint32_t msg_in, uint32_t *msg_out_ptr)
 			alerted = true;
 			break;
 		}
-		msleep(SB_RMI_MAILBOX_RETRY_DELAY_MS);
+		crec_msleep(SB_RMI_MAILBOX_RETRY_DELAY_MS);
 	} while (time_since32(start) < SB_RMI_MAILBOX_TIMEOUT_MS * MSEC);
 
 	if (!alerted) {

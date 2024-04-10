@@ -312,7 +312,7 @@ struct hook_data {
  * This function must be called from the correct type-specific context (task);
  * see enum hook_type for details.  hook_notify() should NEVER be called from
  * interrupt context unless specifically allowed for a hook type, because hook
- * routines may need to perform task-level calls like usleep() and mutex
+ * routines may need to perform task-level calls like crec_usleep() and mutex
  * operations that are not valid in interrupt context.  Instead of calling a
  * hook from interrupt context, use a deferred function.
  *

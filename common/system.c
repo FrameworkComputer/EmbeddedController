@@ -579,7 +579,7 @@ const char *ec_image_to_string(enum ec_image copy)
 __overridable void board_pulse_entering_rw(void)
 {
 	gpio_set_level(GPIO_ENTERING_RW, 1);
-	usleep(MSEC);
+	crec_usleep(MSEC);
 	gpio_set_level(GPIO_ENTERING_RW, 0);
 }
 
@@ -1071,7 +1071,7 @@ static int handle_pending_reboot(struct ec_params_reboot_ec *p)
 			 * Give enough time to apply CC Open and brown out if
 			 * we are running with out a battery.
 			 */
-			msleep(20);
+			crec_msleep(20);
 		}
 
 		/* Reset external PD chips. */
@@ -1100,7 +1100,7 @@ static int handle_pending_reboot(struct ec_params_reboot_ec *p)
 		 * immediate wake up.
 		 */
 		CPRINTS("Waiting 1s before hibernating...");
-		msleep(1000);
+		crec_msleep(1000);
 		CPRINTS("system hibernating");
 		system_hibernate(hibernate_seconds, hibernate_microseconds);
 		/* That shouldn't return... */

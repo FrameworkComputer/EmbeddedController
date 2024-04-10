@@ -64,7 +64,7 @@ static void wait_for_chipset_startup(void)
 	 * TODO(b/230362548): We need to give the EC a bit to "calm down"
 	 * after reaching S0.
 	 */
-	msleep(2000);
+	crec_msleep(2000);
 }
 
 #define GPIO_LID_OPEN_EC_NODE DT_NODELABEL(gpio_lid_open_ec)
@@ -89,7 +89,7 @@ static void set_lid(bool open, bool inhibit_boot)
 		   "Failed to set lid switch GPIO");
 
 	while (lid_is_open() != open) {
-		usleep(LID_DEBOUNCE_US + 1);
+		crec_usleep(LID_DEBOUNCE_US + 1);
 	}
 
 	if (inhibit_boot) {
@@ -197,7 +197,7 @@ ZTEST_USER(chargesplash, test_lockout)
 		      "chargesplash should be locked out");
 	set_ac_enabled(false);
 
-	sleep(CONFIG_CHARGESPLASH_PERIOD);
+	crec_sleep(CONFIG_CHARGESPLASH_PERIOD);
 
 	set_ac_enabled(true);
 	zassert_true(is_chargesplash_requested(),
@@ -245,7 +245,7 @@ ZTEST_USER(chargesplash, test_manual_lockout_via_console)
 	zassert_false(is_chargesplash_requested(),
 		      "chargesplash should be not requested due to lockout");
 
-	sleep(CONFIG_CHARGESPLASH_PERIOD);
+	crec_sleep(CONFIG_CHARGESPLASH_PERIOD);
 
 	zassert_ok(shell_execute_cmd(get_ec_shell(), "chargesplash request"),
 		   NULL);
@@ -273,7 +273,7 @@ ZTEST_USER(chargesplash, test_manual_lockout_via_hostcmd)
 	zassert_false(is_chargesplash_requested(),
 		      "chargesplash should be not requested due to lockout");
 
-	sleep(CONFIG_CHARGESPLASH_PERIOD);
+	crec_sleep(CONFIG_CHARGESPLASH_PERIOD);
 
 	zassert_ok(chargesplash_hostcmd(EC_CHARGESPLASH_REQUEST, &response),
 		   NULL);

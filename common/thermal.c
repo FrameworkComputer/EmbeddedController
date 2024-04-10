@@ -86,7 +86,7 @@ static void thermal_control(void)
 #if defined(CONFIG_TEMP_SENSOR_POWER) && \
 	defined(CONFIG_TEMP_SENSOR_FIRST_READ_DELAY_MS)
 	if (first_read_delay != 0) {
-		msleep(first_read_delay);
+		crec_msleep(first_read_delay);
 		first_read_delay = 0;
 	}
 #endif

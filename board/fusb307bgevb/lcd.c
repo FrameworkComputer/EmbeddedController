@@ -33,10 +33,10 @@ static void expander_write(uint8_t data)
 static void pulse_enable(uint8_t data)
 {
 	expander_write(data | LCD_EN); /* En high */
-	usleep(1); /* enable pulse must be >450ns */
+	crec_usleep(1); /* enable pulse must be >450ns */
 
 	expander_write(data & ~LCD_EN); /* En low */
-	usleep(50); /* commands need > 37us to settle */
+	crec_usleep(50); /* commands need > 37us to settle */
 }
 
 static void write_4bits(uint8_t value)
@@ -64,7 +64,7 @@ static void command(uint8_t value)
 void lcd_clear(void)
 {
 	command(LCD_CLEAR_DISPLAY); /* clear display, set cursor to zero */
-	usleep(2000); /* this command takes a long time! */
+	crec_usleep(2000); /* this command takes a long time! */
 }
 
 void lcd_set_cursor(uint8_t col, uint8_t row)
@@ -124,12 +124,12 @@ void lcd_init(uint8_t cols, uint8_t rows, uint8_t dotsize)
 	 * above 2.7V before sending commands. Arduino can turn on way
 	 * before 4.5V so we'll wait 50
 	 */
-	usleep(50);
+	crec_usleep(50);
 
 	/* Now we pull both RS and R/W low to begin commands */
 	/* reset expanderand turn backlight off (Bit 8 =1) */
 	expander_write(state.backlightval);
-	usleep(1000);
+	crec_usleep(1000);
 
 	/* put the LCD into 4 bit mode
 	 * this is according to the hitachi HD44780 datasheet
@@ -137,13 +137,13 @@ void lcd_init(uint8_t cols, uint8_t rows, uint8_t dotsize)
 	 * we start in 8bit mode, try to set 4 bit mode
 	 */
 	write_4bits(0x03 << 4);
-	usleep(4500); /* wait min 4.1ms */
+	crec_usleep(4500); /* wait min 4.1ms */
 	/*second try */
 	write_4bits(0x03 << 4);
-	usleep(4500); /* wait min 4.1ms */
+	crec_usleep(4500); /* wait min 4.1ms */
 	/* third go! */
 	write_4bits(0x03 << 4);
-	usleep(150);
+	crec_usleep(150);
 	/* finally, set to 4-bit interface */
 	write_4bits(0x02 << 4);
 

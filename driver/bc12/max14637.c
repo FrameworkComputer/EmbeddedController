@@ -114,9 +114,9 @@ static void bc12_detect(const int port)
 	 * avoid collision with a device that might be doing bc1.2 client side
 	 * detection.
 	 */
-	msleep(100);
+	crec_msleep(100);
 	activate_chip_enable(cfg, 0);
-	msleep(CONFIG_BC12_MAX14637_DELAY_FROM_OFF_TO_ON_MS);
+	crec_msleep(CONFIG_BC12_MAX14637_DELAY_FROM_OFF_TO_ON_MS);
 	activate_chip_enable(cfg, 1);
 
 #if defined(CONFIG_CHARGE_RAMP_SW) || defined(CONFIG_CHARGE_RAMP_HW)
@@ -124,7 +124,7 @@ static void bc12_detect(const int port)
 	 * Apple or TomTom charger detection can take as long as 600ms.  Wait a
 	 * little bit longer for margin.
 	 */
-	msleep(630);
+	crec_msleep(630);
 #endif /* !defined(CONFIG_CHARGE_RAMP_SW && CONFIG_CHARGE_RAMP_HW) */
 }
 

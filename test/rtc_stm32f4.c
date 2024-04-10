@@ -31,7 +31,7 @@ test_static int test_rtc_alarm(void)
 
 	set_rtc_alarm(0, delay_us, &rtc, 0);
 
-	msleep(2 * rtc_delay_ms);
+	crec_msleep(2 * rtc_delay_ms);
 
 	/* Make sure the interrupt fired exactly once. */
 	TEST_EQ(1, atomic_clear(&rtc_fired), "%d");
@@ -63,7 +63,7 @@ test_static int test_rtc_match_delay(void)
 	atomic_clear(&rtc_fired);
 	for (i = 0; i < rtc_match_delay_iterations; i++) {
 		set_rtc_alarm(0, SET_RTC_MATCH_DELAY, &rtc, 0);
-		usleep(2 * SET_RTC_MATCH_DELAY);
+		crec_usleep(2 * SET_RTC_MATCH_DELAY);
 	}
 
 	ccprintf("Expected number of RTC alarm interrupts %d\n",
