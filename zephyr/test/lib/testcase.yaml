@@ -1,0 +1,6 @@
+common:
+  platform_allow: native_sim
+tests:
+  lib.stdlib:
+    extra_configs:
+    - CONFIG_TEST_LIB_STDLIB=y

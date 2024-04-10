@@ -33,6 +33,7 @@ test/rollback.c
 test/rollback_entropy.c
 test/sha256.c
 test/static_if.c
+test/stdlib.c
 test/system_is_locked.c
 test/utils_str.c
 test/utils.c"
