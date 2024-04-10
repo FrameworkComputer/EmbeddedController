@@ -20,3 +20,9 @@ properties:
       Interrupt line is shared between ports in a dual port solution.
       Define it only for the secondary port so that the driver doesn't
       trigger multiple events.
+  irq-flags:
+    type: int
+    description: |
+      Zephyr config flags for interrupt. Valid if GPIO is an interrupt.
+      If not specified, the driver uses GPIO_INT_EDGE_FALLING as the default
+      setting. For custom configurations, modify this value in the board files.
