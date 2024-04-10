@@ -226,6 +226,19 @@ config PLATFORM_EC_POWERSEQ_MT8188
 	  Use the MT8188 code for power sequencing. Re-use MT8186 common
 	  code.
 
+if PLATFORM_EC_POWERSEQ_MT8188
+
+config PLATFORM_EC_PP3700_DISCHARGE_TIME_MS
+	int "Time(in millisecond) required for power-cycling PP3700_S5"
+	default 0
+	help
+	  Timeout value (in milliseconds) for EC to wait for PP3700_S5 to
+	  fully discharge.
+	  This implies that whenever AP shutdown, AP has to stay in the
+	  shutdown state for at least PP3700_DISCHARGE_TIME_MS.
+
+endif # PLATFORM_EC_POWERSEQ_MT8188
+
 config PLATFORM_EC_POWERSEQ_SC7180
 	bool "SC7180 power sequencing"
 	depends on AP_ARM_QUALCOMM_SC7180
