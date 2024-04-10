@@ -6013,6 +6013,12 @@
  */
 #undef CONFIG_GOOGLETEST
 
+/*
+ * When this option is enabled, some of the experimental features (aka finch)
+ * will be enabled for CROS_EC.
+ */
+#undef CONFIG_FEATURE_FINCH
+
 /*****************************************************************************/
 /*
  * Include board and core configs, since those hold the CONFIG_ constants for a

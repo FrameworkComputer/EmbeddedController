@@ -1032,4 +1032,10 @@ config PLATFORM_EC_CURVE25519
 	help
 	  Support curve25519 public key cryptography.
 
+config PLATFORM_EC_FEATURE_FINCH
+	bool "Enable experimental features"
+	help
+	  When this option is enabled, some of the experimental features
+	  (aka finch) will be enabled for CROS_EC.
+
 endif # PLATFORM_EC
