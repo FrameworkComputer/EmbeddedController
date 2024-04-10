@@ -111,9 +111,11 @@
 		};
 		gpio_ec_voldn_btn_odl: ec_voldn_btn_odl {
 			gpios = <&gpioe 3 (GPIO_INPUT)>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
 		};
 		gpio_ec_volup_btn_odl: ec_volup_btn_odl {
 			gpios = <&gpioe 4 (GPIO_INPUT)>;
+			enum-name = "GPIO_VOLUME_UP_L";
 		};
 		gpio_en_hdmi_pwr: en_hdmi_pwr {
 			gpios = <&gpioi 5 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;

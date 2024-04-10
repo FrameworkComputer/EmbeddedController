@@ -17,6 +17,16 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_button_interrupt";
 		};
+		int_volume_up: volume-up {
+			irq-pin = <&gpio_ec_volup_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+		int_volume_down: volume-down {
+			irq-pin = <&gpio_ec_voldn_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
 		int_lid_open: lid-open {
 			irq-pin = <&gpio_lid_open_3v3>;
 			flags = <GPIO_INT_EDGE_BOTH>;
