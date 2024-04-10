@@ -68,12 +68,12 @@
 			handler = "button_interrupt";
 		};
 		int_usb_c0: usb_c0 {
-			irq-pin = <&gpio_usb_c0_tcpc_int_odl>;
+			irq-pin = <&gpio_usb_c0_c1_tcpc_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "usb_interrupt";
 		};
 		int_usb_c1: usb_c1 {
-			irq-pin = <&gpio_sb_1>;
+			irq-pin = <&gpio_usb_c0_c1_tcpc_rst_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "usb_interrupt";
 		};

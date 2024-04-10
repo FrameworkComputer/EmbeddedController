@@ -168,7 +168,7 @@ void usb_interrupt(enum gpio_signal signal)
 {
 	int port;
 
-	if (signal == GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_tcpc_int_odl))) {
+	if (signal == GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_c1_tcpc_int_odl))) {
 		port = 0;
 	} else {
 		port = 1;

@@ -74,9 +74,9 @@
 			enum-name = "GPIO_AC_PRESENT";
 		};
 
-		gpio_usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
+		gpio_usb_c0_c1_tcpc_int_odl: usb_c0_c1_tcpc_int_odl {
 			gpios = <&gpiob 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
+			enum-name = "GPIO_USB_C0_C1_TCPC_INT_ODL";
 		};
 
 		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
@@ -84,9 +84,9 @@
 			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
 		};
 
-		gpio_usb_c0_tcpc_rst_odl: usb_c0_tcpc_rst_l {
+		gpio_usb_c0_c1_tcpc_rst_odl: usb_c0_c1_tcpc_rst_l {
 			gpios = <&gpio7 3 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
-			enum-name = "GPIO_USB_C0_TCPC_RST_L";
+			enum-name = "GPIO_USB_C0_C1_TCPC_RST_ODL";
 		};
 
 		gpio_usb_c1_tcpc_rst_odl: usb_c1_tcpc_rst_l {
@@ -151,7 +151,7 @@
 			handler = "bc12_interrupt";
 		};
 		int_usb_c0: usb_c0 {
-			irq-pin = <&gpio_usb_c0_tcpc_int_odl>;
+			irq-pin = <&gpio_usb_c0_c1_tcpc_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "usb_interrupt_c0";
 		};

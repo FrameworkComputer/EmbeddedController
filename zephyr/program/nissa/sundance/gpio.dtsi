@@ -190,13 +190,13 @@
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
 			gpios = <&gpio4 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
-		gpio_usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
+		gpio_usb_c0_c1_tcpc_int_odl: usb_c0_c1_tcpc_int_odl {
 			gpios = <&gpiob 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-			enum-name = "GPIO_USB_C0_TCPC_INT_ODL";
+			enum-name = "GPIO_USB_C0_C1_TCPC_INT_ODL";
 		};
-		gpio_usb_c0_tcpc_rst_odl: usb_c0_tcpc_rst_l {
+		gpio_usb_c0_c1_tcpc_rst_odl: usb_c0_c1_tcpc_rst_l {
 			gpios = <&gpio7 3 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
-			enum-name = "GPIO_USB_C0_TCPC_RST_L";
+			enum-name = "GPIO_USB_C0_C1_TCPC_RST_ODL";
 		};
 		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
 			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
