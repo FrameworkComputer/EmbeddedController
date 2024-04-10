@@ -134,6 +134,54 @@ static int cmd_pdc_get_connector_status(const struct shell *sh, size_t argc,
 	return EC_SUCCESS;
 }
 
+static int cmd_pdc_get_cable_prop(const struct shell *sh, size_t argc,
+				  char **argv)
+{
+	int rv;
+	uint8_t port;
+	union cable_property_t cable_prop;
+
+	/* Get PD port number */
+	rv = cmd_get_pd_port(sh, argv[1], &port);
+	if (rv)
+		return rv;
+
+	rv = pdc_power_mgmt_get_cable_prop(port, &cable_prop);
+	if (rv)
+		return rv;
+
+	shell_fprintf(sh, SHELL_INFO, "Port %d GET_CABLE_PROP:\n", port);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   bm_speed_supported               : 0x%04x\n",
+		      cable_prop.bm_speed_supported);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   b_current_capablilty             : %d mA\n",
+		      cable_prop.b_current_capablilty * 50);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   vbus_in_cables                   : %d\n",
+		      cable_prop.vbus_in_cable);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   cable_type                       : %d\n",
+		      cable_prop.cable_type);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   directionality                   : %d\n",
+		      cable_prop.directionality);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   plug_end_type                    : %d\n",
+		      cable_prop.plug_end_type);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   mode_support                     : %d\n",
+		      cable_prop.mode_support);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   cable_pd_revision                : %d\n",
+		      cable_prop.cable_pd_revision);
+	shell_fprintf(sh, SHELL_INFO,
+		      "   latency                          : %d\n",
+		      cable_prop.latency);
+
+	return EC_SUCCESS;
+}
+
 static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 {
 	int rv;
@@ -385,6 +433,10 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Print the UCSI GET_CONNECTOR_STATUS\n"
 		      "Usage pdc connector_status <port>",
 		      cmd_pdc_get_connector_status, 2, 0),
+	SHELL_CMD_ARG(cable_prop, NULL,
+		      "Print the UCSI GET_CABLE_PROPERTY\n"
+		      "Usage pdc cable_prop <port>",
+		      cmd_pdc_get_cable_prop, 2, 0),
 	SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(pdc, &sub_pdc_cmds, "PDC console commands", NULL);

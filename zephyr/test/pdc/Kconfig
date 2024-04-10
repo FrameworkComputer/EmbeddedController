@@ -11,4 +11,7 @@ config TEST_SUITE_PDC_RTS54XX
 config TEST_SUITE_PDC_RETIMER_FW_UPDATE
 	bool "Enable retimer FW update tests"
 
+config TEST_SUITE_PDC_CONSOLE
+	bool "Enable pdc console command tests"
+
 source "Kconfig.zephyr"

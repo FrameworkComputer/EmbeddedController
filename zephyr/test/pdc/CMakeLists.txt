@@ -24,3 +24,7 @@ endif()
 if (DEFINED CONFIG_TEST_SUITE_PDC_RETIMER_FW_UPDATE)
 	target_sources(app PRIVATE src/generic/retimer_fw_update.c)
 endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PDC_CONSOLE)
+	target_sources(app PRIVATE src/generic/pdc_console.c)
+endif()
