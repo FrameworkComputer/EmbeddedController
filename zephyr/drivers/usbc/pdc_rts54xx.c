@@ -156,6 +156,7 @@ const struct smbus_cmd_t UCSI_SET_CCOM = { 0x0E, 0x04, 0x08 };
 const struct smbus_cmd_t GET_IC_STATUS = { 0x3A, 0x03 };
 const struct smbus_cmd_t SET_RETIMER_FW_UPDATE_MODE = { 0x20, 0x03, 0x00 };
 const struct smbus_cmd_t GET_CABLE_PROPERTY = { 0x0E, 0x03, 0x11 };
+const struct smbus_cmd_t GET_PCH_DATA_STATUS = { 0x08, 0x02, 0xE0 };
 
 /**
  * @brief PDC Command states
@@ -290,6 +291,8 @@ enum cmd_t {
 	CMD_GET_IS_VCONN_SOURCING,
 	/** CMD_SET_PDO */
 	CMD_SET_PDO,
+	/** Get PDC ALT MODE Status Register value */
+	CMD_GET_PCH_DATA_STATUS,
 };
 
 /**
@@ -406,6 +409,7 @@ static const char *const cmd_names[] = {
 	[CMD_GET_IDENTITY_DISCOVERY] = "CMD_GET_IDENTITY_DISCOVERY",
 	[CMD_GET_IS_VCONN_SOURCING] = "CMD_GET_IS_VCONN_SOURCING",
 	[CMD_SET_PDO] = "CMD_SET_PDO",
+	[CMD_GET_PCH_DATA_STATUS] = "CMD_GET_PCH_DATA_STATUS",
 };
 
 /**
@@ -2138,6 +2142,31 @@ static int rts54_is_vconn_sourcing(const struct device *dev,
 				    (uint8_t *)vconn_sourcing);
 }
 
+static int rts54_get_pch_data_status(const struct device *dev, uint8_t port_num,
+				     uint8_t *status_reg)
+{
+	struct pdc_data_t *data = dev->data;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	if (status_reg == NULL) {
+		return -EINVAL;
+	}
+
+	uint8_t payload[] = {
+		GET_PCH_DATA_STATUS.cmd,
+		GET_PCH_DATA_STATUS.len,
+		GET_PCH_DATA_STATUS.sub,
+		port_num,
+	};
+
+	rts54_post_command(dev, CMD_GET_PCH_DATA_STATUS, payload,
+			   ARRAY_SIZE(payload), status_reg);
+	return 0;
+}
+
 static bool rts54_is_init_done(const struct device *dev)
 {
 	struct pdc_data_t *data = dev->data;
@@ -2285,6 +2314,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.set_comms_state = rts54_set_comms_state,
 	.is_vconn_sourcing = rts54_is_vconn_sourcing,
 	.set_pdos = rts54_set_pdo,
+	.get_pch_data_status = rts54_get_pch_data_status,
 };
 
 static void pdc_interrupt_callback(const struct device *dev,
