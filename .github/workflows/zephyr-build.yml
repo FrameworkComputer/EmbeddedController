@@ -26,9 +26,10 @@ jobs:
       matrix:
         platform: [
           # Marigold builder uses same folder for all
-          { name: marigold, folder: marigold1 },
-          { name: lotus, folder: marigold1 },
-          { name: azalea, folder: marigold1 },
+          { name: marigold, folder: marigold1, ver: "1.0.1" },
+          # Lotus and Azalea official releases are NOT coming from this branch
+          { name: lotus, folder: marigold1, ver: "0.0.0" },
+          { name: azalea, folder: marigold1, ver: "0.0.0" },
         ]
 
 
@@ -76,7 +77,7 @@ jobs:
       # But that will make zmake pick up the scripts git commit SHA
       # To embed the ec repo's commit SHA we need to change pwd there
       - name: Build ${{ matrix.platform.name }}
-        run: cros_sdk bash -c 'pushd ../platform/ec; zmake -D build ${{ matrix.platform.name }}'
+        run: cros_sdk bash -c 'pushd ../platform/ec; zmake -D build -v ${{ matrix.platform.ver }} ${{ matrix.platform.name }}'
 
       - name: File sha256
         run: sha256sum src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output/ec.bin
