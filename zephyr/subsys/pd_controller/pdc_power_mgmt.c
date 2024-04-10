@@ -3104,3 +3104,18 @@ void pdc_power_mgmt_request_source_voltage(int port, int mv)
 		pdc_power_mgmt_request_swap_to_snk(port);
 	}
 }
+
+int pdc_power_mgmt_get_cable_prop(int port, union cable_property_t *cable_prop)
+{
+	if (!is_pdc_port_valid(port)) {
+		return -ERANGE;
+	}
+
+	if (cable_prop == NULL) {
+		return -EINVAL;
+	}
+
+	*cable_prop = pdc_data[port]->port.cable_prop;
+
+	return 0;
+}

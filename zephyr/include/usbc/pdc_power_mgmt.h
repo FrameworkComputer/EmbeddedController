@@ -456,4 +456,14 @@ unsigned int pdc_power_mgmt_get_max_voltage(void);
  */
 void pdc_power_mgmt_request_source_voltage(int port, int mv);
 
+/**
+ * @brief Return the current UCSI cable property on a port
+ *
+ * @param port USB-C port number
+ * @param cable_prop Output variable to store the cable property
+ *
+ * @retval 0 if successful or error code
+ */
+int pdc_power_mgmt_get_cable_prop(int port, union cable_property_t *cable_prop);
+
 #endif /* __CROS_EC_PDC_POWER_MGMT_H */

@@ -858,6 +858,62 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_connector_status)
 				   PDC_TEST_TIMEOUT));
 }
 
+ZTEST_USER(pdc_power_mgmt_api, test_get_cable_prop)
+{
+	union cable_property_t in, out, exp;
+	union connector_status_t in_conn_status, out_conn_status;
+	union conn_status_change_bits_t in_conn_status_change_bits;
+
+	zassert_equal(-ERANGE, pdc_power_mgmt_get_cable_prop(
+				       CONFIG_USB_PD_PORT_MAX_COUNT, &out));
+	zassert_equal(-EINVAL, pdc_power_mgmt_get_cable_prop(TEST_PORT, NULL));
+
+	in.raw_value[0] = 0x1a2b3c4d;
+	in.raw_value[1] = 0x5a6b7c8d;
+	emul_pdc_set_cable_property(emul, in);
+
+	in_conn_status_change_bits.external_supply_change = 1;
+	in_conn_status_change_bits.connector_partner = 1;
+	in_conn_status_change_bits.connect_change = 1;
+	in_conn_status.raw_conn_status_change_bits =
+		in_conn_status_change_bits.raw_value;
+
+	in_conn_status.conn_partner_flags = 1;
+	in_conn_status.conn_partner_type = UFP_ATTACHED;
+	in_conn_status.rdo = 0x01234567;
+
+	emul_pdc_configure_snk(emul, &in_conn_status);
+	emul_pdc_connect_partner(emul, &in_conn_status);
+	zassert_true(TEST_WAIT_FOR(pdc_power_mgmt_is_connected(TEST_PORT),
+				   PDC_TEST_TIMEOUT));
+
+	zassert_ok(pdc_power_mgmt_get_connector_status(TEST_PORT,
+						       &out_conn_status));
+
+	zassert_ok(pdc_power_mgmt_get_cable_prop(TEST_PORT, &out));
+
+	/*
+	 * The RTS54xx only returns 5 bytes of cable property.
+	 */
+	zassert_mem_equal(in.raw_value, out.raw_value, 5,
+			  "Returned cable property did not match input "
+			  "in 0x%08X:%08X != out 0x%08X:%08X",
+			  in.raw_value[0], in.raw_value[1], out.raw_value[0],
+			  out.raw_value[1]);
+
+	exp.raw_value[0] = in.raw_value[0];
+	exp.raw_value[1] = in.raw_value[1] & 0xff;
+	zassert_mem_equal(exp.raw_value, out.raw_value, sizeof(exp),
+			  "Returned cable property included extra data "
+			  "exp 0x%08X:%08X != out 0x%08X:%08X",
+			  exp.raw_value[0], exp.raw_value[1], out.raw_value[0],
+			  out.raw_value[1]);
+
+	emul_pdc_disconnect(emul);
+	zassert_true(TEST_WAIT_FOR(!pdc_power_mgmt_is_connected(TEST_PORT),
+				   PDC_TEST_TIMEOUT));
+}
+
 /*
  * Validate that all possible PDC power management states have a name
  * assigned.  This could possibly be done with some macrobatics, but
