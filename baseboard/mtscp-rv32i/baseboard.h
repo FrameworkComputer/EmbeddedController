@@ -24,7 +24,12 @@
 #endif
 
 /* IPI configs */
+#if defined(CHIP_VARIANT_MT8188)
 #define CONFIG_IPC_SHARED_OBJ_BUF_SIZE 600
+#else
+#define CONFIG_IPC_SHARED_OBJ_BUF_SIZE 288
+#endif /* CHIP_VARIANT_MT8188 */
+
 #define CONFIG_IPC_SHARED_OBJ_ADDR \
 	(SCP_FW_END -              \
 	 (CONFIG_IPC_SHARED_OBJ_BUF_SIZE + 2 * 4 /* int32_t */) * 2)

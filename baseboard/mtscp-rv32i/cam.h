@@ -14,7 +14,11 @@
  * IMPORTANT:
  * Please check MAX_MTKCAM_IPI_EVENT_SIZE if IPI message structure changes
  */
+#if defined(CHIP_VARIANT_MT8188)
 #define MAX_MTKCAM_IPI_EVENT_SIZE 588
+#else
+#define MAX_MTKCAM_IPI_EVENT_SIZE 86
+#endif /* CHIP_VARIANT_MT8188 */
 
 struct cam_msg {
 	unsigned char id;
