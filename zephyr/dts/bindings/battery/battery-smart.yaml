@@ -90,6 +90,7 @@ properties:
       - "smp,l22m3pg0"
       - "smp,l22m3pg1"
       - "smp,pc-vp-bp153"
+      - "smp,pc-vp-bp162"
       - "smp,coslight_gh02047xl"
       - "smp,cosxdy9k"
       - "smp,highpower_gh02047xl"
