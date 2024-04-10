@@ -49,7 +49,6 @@
 		/delete-node/ ec_spare_psl_in_3;
 		/delete-node/ en_z1_rails;
 		/delete-node/ gsc_flash_wp_odl;
-		/delete-node/ gsc_ec_rec_btn_odl;
 		/delete-node/ pg_mem_vdd;
 		/delete-node/ pg_pp1250_soc;
 		/delete-node/ sys_slp_s0ix_l;
@@ -73,10 +72,6 @@
 			gpios = <&gpioc 3 GPIO_OUTPUT>;
 		};
 
-		gpio_ec_mech_rec_btn_odl: ec_mech_rec_btn_odl {
-			gpios = <&gpiod 5 GPIO_INPUT>;
-			enum-name = "GPIO_RECOVERY_L";
-		};
 		gpio_ec_prochot_odl: ec_prochot_odl {
 			gpios = <&gpio9 5 GPIO_ODR_HIGH>;
 		};
@@ -122,6 +117,9 @@
 		gpio_ec_spare_gpiod3: ec_spare_gpiod3 {
 			gpios = <&gpiod 3 GPIO_OUTPUT>;
 		};
+		gpio_ec_spare_gpiod5: ec_spare_gpiod5 {
+			gpios = <&gpiod 5 GPIO_OUTPUT>;
+		};
 		gpio_ec_spare_gpiod7: ec_spare_gpiod7 {
 			gpios = <&gpiod 7 GPIO_OUTPUT>;
 		};
@@ -133,9 +131,6 @@
 		};
 		gpio_ec_usb_c0_sbu_mux_flt_odl: ec_usb_c0_sbu_mux_flt_odl {
 			gpios = <&gpio8 3 GPIO_INPUT>;
-		};
-		gpio_gsc_ec_rec_btn_odl:  gsc_ec_rec_btn_odl {
-			gpios = <&gpio2 2 GPIO_INPUT>;
 		};
 		gpio_gsc_flash_wp_odl: gsc_flash_wp_odl {
 			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
@@ -160,16 +155,6 @@
 		};
 		gpio_usb_c3_tcpc_int_odl: usb_c3_tcpc_int_odl {
 			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-		};
-	};
-
-	gpio-interrupts {
-		compatible = "cros-ec,gpio-interrupts";
-
-		int_rec_button: rec_button {
-			irq-pin = <&gpio_ec_mech_rec_btn_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "button_interrupt";
 		};
 	};
 
