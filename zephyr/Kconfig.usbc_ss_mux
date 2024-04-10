@@ -44,15 +44,4 @@ config PLATFORM_EC_USB_MUX_VIRTUAL
 	  and is is informed when status changes, via the
 	  EC_CMD_USB_PD_MUX_INFO host command.
 
-config PLATFORM_EC_CONSOLE_CMD_TYPEC
-	bool "Console command: typec"
-	default y
-	help
-	  Enable the 'typec' console command. Use this command to override
-	  the USB Type-C connector mux configuration on a specified port.
-
-	  Passing in 'debug' instead of a port number turns on additional
-	  debug messages whenever the EC application modifies the mux state.
-
-
 endif  # PLATFORM_EC_USBC_SS_MUX
