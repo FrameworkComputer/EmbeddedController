@@ -216,3 +216,8 @@ unsigned int pd_get_max_voltage(void)
 {
 	return pdc_power_mgmt_get_max_voltage();
 }
+
+void pd_request_source_voltage(int port, int mv)
+{
+	pdc_power_mgmt_request_source_voltage(port, mv);
+}

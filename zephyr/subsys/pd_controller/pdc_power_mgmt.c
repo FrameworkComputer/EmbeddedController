@@ -3010,3 +3010,14 @@ unsigned int pdc_power_mgmt_get_max_voltage(void)
 {
 	return pdc_max_request_mv;
 }
+
+void pdc_power_mgmt_request_source_voltage(int port, int mv)
+{
+	pdc_power_mgmt_set_max_voltage(mv);
+
+	if (pdc_power_mgmt_is_sink_connected(port)) {
+		pdc_power_mgmt_set_new_power_request(port);
+	} else {
+		pdc_power_mgmt_request_swap_to_snk(port);
+	}
+}
