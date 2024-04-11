@@ -112,6 +112,8 @@ enum pdc_cmd_t {
 	CMD_PDC_GET_IDENTITY_DISCOVERY,
 	/** CMD_PDC_IS_SOURCING_VCONN */
 	CMD_PDC_IS_VCONN_SOURCING,
+	/** CMD_PDC_GET_PD_VDO_DP_CFG */
+	CMD_PDC_GET_PD_VDO_DP_CFG_SELF,
 	/** CMD_PDC_COUNT */
 	CMD_PDC_COUNT
 };
@@ -254,7 +256,8 @@ enum cci_flag_t {
 	CCI_CMD_COMPLETED,
 	/** CCI_EVENT */
 	CCI_EVENT,
-
+	/** CCI_CAM_CHANGE */
+	CCI_CAM_CHANGE,
 	/** CCI_FLAGS_COUNT */
 	CCI_FLAGS_COUNT
 };
@@ -310,6 +313,7 @@ test_export_static const char *const pdc_cmd_names[] = {
 	[CMD_PDC_CONNECTOR_RESET] = "PDC_CONNECTOR_RESET",
 	[CMD_PDC_GET_IDENTITY_DISCOVERY] = "PDC_GET_IDENTITY_DISCOVERY",
 	[CMD_PDC_IS_VCONN_SOURCING] = "PDC_IS_VCONN_SOURCING",
+	[CMD_PDC_GET_PD_VDO_DP_CFG_SELF] = "PDC_GET_PD_VDO_DP_CFG_SELF",
 };
 const int pdc_cmd_types = CMD_PDC_COUNT;
 
@@ -546,6 +550,8 @@ struct pdc_port_t {
 	uint8_t vdo_type[VDO_NUM];
 	/** Array used to store VDOs returned from the GET_VDO command */
 	uint32_t vdo[VDO_NUM];
+	/** Store the VDO returned for the PD_VDO_DP_CFG */
+	uint32_t vdo_dp_cfg;
 	/** CONNECTOR_RESET temp variable used with CMD_PDC_CONNECTOR_RESET */
 	union connector_reset_t connector_reset;
 	/** PD Port Partner discovery state: True if discovery is complete, else
@@ -898,6 +904,11 @@ static bool handle_connector_status(struct pdc_port_t *port)
 			break;
 		case PD_OPERATION:
 			port->typec_current_ma = 0;
+			if (conn_status_change_bits.supported_cam) {
+				atomic_set_bit(port->cci_flags, CCI_CAM_CHANGE);
+				LOG_INF("C%d: CAM change", port_number);
+			}
+
 			if (status->power_direction) {
 				/* Port partner is a sink device
 				 */
@@ -955,6 +966,9 @@ static void discovery_info_init(struct pdc_port_t *port)
 		port->vdo_type[i] = vdo_discovery_list[i];
 		port->vdo[i] = 0;
 	}
+
+	/* Clear the DP Config VDO, which stores the DP pin assignment */
+	port->vdo_dp_cfg = 0;
 }
 
 static void run_unattached_policies(struct pdc_port_t *port)
@@ -1087,6 +1101,11 @@ static void pdc_src_attached_run(void *obj)
 		return;
 	}
 
+	if (atomic_test_and_clear_bit(port->cci_flags, CCI_CAM_CHANGE)) {
+		queue_internal_cmd(port, CMD_PDC_GET_PD_VDO_DP_CFG_SELF);
+		return;
+	}
+
 	/* TODO: b/319643480 - Brox: implement SRC policies */
 
 	switch (port->src_attached_local_state) {
@@ -1165,6 +1184,11 @@ static void pdc_snk_attached_run(void *obj)
 	 * connector status and take the appropriate action. */
 	if (atomic_test_and_clear_bit(port->cci_flags, CCI_EVENT)) {
 		queue_internal_cmd(port, CMD_PDC_GET_CONNECTOR_STATUS);
+		return;
+	}
+
+	if (atomic_test_and_clear_bit(port->cci_flags, CCI_CAM_CHANGE)) {
+		queue_internal_cmd(port, CMD_PDC_GET_PD_VDO_DP_CFG_SELF);
 		return;
 	}
 
@@ -1356,6 +1380,20 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 		rv = pdc_get_vdo(port->pdc, port->vdo_req, port->vdo_type,
 				 port->vdo);
 		break;
+	case CMD_PDC_GET_PD_VDO_DP_CFG_SELF: {
+		union get_vdo_t vdo_req;
+		uint8_t vdo_type;
+
+		vdo_req.raw_value = 0;
+		vdo_req.num_vdos = 1;
+		vdo_req.vdo_origin = VDO_ORIGIN_PORT;
+
+		vdo_type = VDO_PD_DP_CFG;
+
+		rv = pdc_get_vdo(port->pdc, vdo_req, &vdo_type,
+				 &port->vdo_dp_cfg);
+		break;
+	}
 	case CMD_PDC_CONNECTOR_RESET:
 		rv = pdc_connector_reset(port->pdc, port->connector_reset);
 		break;
@@ -2882,3 +2920,31 @@ int pdc_power_mgmt_get_connector_status(
 
 	return 0;
 }
+
+#ifdef CONFIG_PLATFORM_EC_USB_PD_DP_MODE
+uint8_t pdc_power_mgmt_get_dp_pin_mode(int port)
+{
+	uint8_t pin_mode;
+
+	/* Make sure port is in range and that an output buffer is provided */
+	if (!is_pdc_port_valid(port)) {
+		LOG_ERR("get_dp_pin_mode: invalid port %d", port);
+		return 0;
+	}
+
+	/* Make sure port is connected and PD capable */
+	if (!pdc_power_mgmt_is_connected(port)) {
+		return 0;
+	}
+
+	/*
+	 * Byte 1 (bits 15:8) contains the DP Source Device Pin assignment.
+	 * The VDO pin assignments match our MODE_DP_PIN_x definitions.
+	 */
+	pin_mode = (pdc_data[port]->port.vdo_dp_cfg >> 8) & 0xFF;
+
+	LOG_INF("C%d: DP pin mode 0x%02x", port, pin_mode);
+
+	return pin_mode;
+}
+#endif

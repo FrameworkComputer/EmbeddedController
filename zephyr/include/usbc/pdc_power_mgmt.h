@@ -422,4 +422,14 @@ int pdc_power_mgmt_set_comms_state(bool run);
 int pdc_power_mgmt_get_connector_status(
 	int port, union connector_status_t *connector_status);
 
+/**
+ * @brief Return the current DP pin assignment configured by the PDC as
+ * as the DP source.
+ *
+ * @param port USB-C port number
+ *
+ * @retval DP pin assignment mask (MODE_DP_PIN_x defines from ec_commands.h)
+ */
+uint8_t pdc_power_mgmt_get_dp_pin_mode(int port);
+
 #endif /* __CROS_EC_PDC_POWER_MGMT_H */

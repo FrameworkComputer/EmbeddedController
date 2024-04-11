@@ -66,12 +66,6 @@ static enum ec_status hc_pd_ports(struct host_cmd_handler_args *args)
 DECLARE_HOST_COMMAND(EC_CMD_USB_PD_PORTS, hc_pd_ports, EC_VER_MASK(0));
 
 #if !defined(CONFIG_USB_PD_ALTMODE_INTEL)
-__override uint8_t get_dp_pin_mode(int port)
-{
-	/* To support EC_CMD_USB_PD_CONTROL  */
-	return 0;
-}
-
 uint8_t get_pd_control_flags(int port)
 {
 	/* To support EC_CMD_USB_PD_CONTROL  */

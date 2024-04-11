@@ -199,3 +199,10 @@ void pd_set_suspend(int port, int suspend)
 void board_reset_pd_mcu(void)
 {
 }
+
+#ifdef CONFIG_PLATFORM_EC_USB_PD_DP_MODE
+__override uint8_t get_dp_pin_mode(int port)
+{
+	return pdc_power_mgmt_get_dp_pin_mode(port);
+}
+#endif
