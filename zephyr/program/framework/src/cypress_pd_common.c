@@ -1070,24 +1070,27 @@ void cypd_update_port_state(int controller, int port)
 #endif
 }
 
-int cypd_set_power_state(int power_state, int controller)
+void cypd_set_power_state(int power_state, int controller)
 {
 	int i;
 	int rv = EC_SUCCESS;
 
-	CPRINTS("C%d, %s pwr state %d", controller, __func__, power_state);
-
-	if (controller < 2)
+	if (controller < 2) {
 		rv = cypd_write_reg8_wait_ack(controller, CCG_SYS_PWR_STATE, power_state);
-	else {
+		if (rv != EC_SUCCESS) {
+			CPRINTS("C%d, cypd set power_state 0x%02x failed, rv=%d",
+				controller, power_state, rv);
+		}
+	} else {
 		for (i = 0; i < PD_CHIP_COUNT; i++) {
 
 			rv = cypd_write_reg8_wait_ack(i, CCG_SYS_PWR_STATE, power_state);
-			if (rv != EC_SUCCESS)
-				break;
+			if (rv != EC_SUCCESS) {
+				CPRINTS("C%d, cypd set power_state 0x%02x failed, rv=%d",
+					controller, power_state, rv);
+			}
 		}
 	}
-	return rv;
 }
 
 static int cypd_update_power_status(int controller)

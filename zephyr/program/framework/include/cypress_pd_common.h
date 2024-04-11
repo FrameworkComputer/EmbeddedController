@@ -607,9 +607,8 @@ void cypd_print_buff(const char *msg, void *buff, int len);
  *
  * @param power_state	Set PD power state
  * @param controller	PD chip controller
- * @return int
  */
-int cypd_set_power_state(int power_state, int controller);
+void cypd_set_power_state(int power_state, int controller);
 
 #ifdef CONFIG_PD_CHIP_CCG6
 /**

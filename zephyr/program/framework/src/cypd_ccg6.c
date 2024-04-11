@@ -77,10 +77,13 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 		CPRINTS("Get INT Fail");
 
 	if (intr_status & CCG_DEV_INTR && cmd_port == -1) {
+		/* read the response register */
+		rv = cypd_read_reg16(controller, CCG_RESPONSE_REG, &event);
+		if (rv != EC_SUCCESS)
+			CPRINTS("fail to read DEV response");
+
+		/* check the ac port */
 		if (data == CCG6_AC_AT_PORT) {
-			rv = cypd_read_reg16(controller, CCG_RESPONSE_REG, &event);
-			if (rv != EC_SUCCESS)
-				CPRINTS("fail to read DEV response");
 			switch (event) {
 			case CCG6_RESPONSE_AC_AT_P0:
 				pd_port_states[(controller * 2) + 0].ac_port = 1;
@@ -98,6 +101,7 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 				CPRINTS("Check AC get unknown event 0x%04x", event);
 			}
 		}
+
 		ack_mask = CCG_DEV_INTR;
 	} else if (intr_status & CCG_PORT0_INTR && cmd_port == 0) {
 		rv = cypd_read_reg16(controller, CCG_PORT_PD_RESPONSE_REG(0), &event);
