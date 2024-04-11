@@ -2083,6 +2083,11 @@ def all_targets():
         board = "spikyrock",
     )
     ec_target(
+        name = "squirtle",
+        board = "squirtle",
+        extra_modules = ["cmsis"],
+    )
+    ec_target(
         name = "staff",
         board = "staff",
         chip = "stm32",

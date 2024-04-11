@@ -35,8 +35,11 @@ FAKE_VOID_FUNC(chipset_warm_reset_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(ccd_interrupt, enum gpio_signal);
 #endif
 
-#if (defined(CONFIG_TEST_STEELIX_RUSTY) || defined(CONFIG_TEST_PONYTA))
+#if (defined(CONFIG_TEST_STEELIX_RUSTY) || defined(CONFIG_TEST_PONYTA) || \
+     defined(CONFIG_TEST_SQUIRTLE))
+#ifndef CONFIG_TEST_SQUIRTLE
 FAKE_VOID_FUNC(x_ec_interrupt, enum gpio_signal);
+#endif
 FAKE_VOID_FUNC(motion_sensors_check_ssfc);
 #else
 FAKE_VOID_FUNC(motion_interrupt, enum gpio_signal);

@@ -113,3 +113,9 @@ tests:
     - CONFIG_TEST_KYOGRE_SENSOR_PROBE=y
     extra_dtc_overlay_files:
     - kingler.kyogre.overlay
+  kingler.squirtle:
+    extra_configs:
+    - CONFIG_TEST_SQUIRTLE=y
+    - CONFIG_TEST_USB_PD_POLICY=y
+    extra_dtc_overlay_files:
+    - kingler.squirtle.overlay
