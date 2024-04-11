@@ -377,8 +377,10 @@ void __keep report_panic(void)
 
 	/* Start safe mode if possible */
 	if (IS_ENABLED(CONFIG_SYSTEM_SAFE_MODE)) {
-		/* TODO: check for nested exceptions */
-		if (start_system_safe_mode() == EC_SUCCESS) {
+		/* Only start safe mode if panic occurred in thread context */
+		if (!is_frame_in_handler_stack(
+			    pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]) &&
+		    start_system_safe_mode() == EC_SUCCESS) {
 			pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_STARTED;
 			/* If not in an interrupt context (e.g. software_panic),
 			 * the next highest priority task will immediately
