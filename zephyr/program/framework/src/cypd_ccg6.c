@@ -84,12 +84,15 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 			switch (event) {
 			case CCG6_RESPONSE_AC_AT_P0:
 				pd_port_states[(controller * 2) + 0].ac_port = 1;
+				event = CCG_RESPONSE_SUCCESS;
 				break;
 			case CCG6_RESPONSE_AC_AT_P1:
 				pd_port_states[(controller * 2) + 1].ac_port = 1;
+				event = CCG_RESPONSE_SUCCESS;
 				break;
 			case CCG6_RESPONSE_NO_AC:
 			case CCG6_RESPONSE_EC_MODE:
+				event = CCG_RESPONSE_SUCCESS;
 				break;
 			default:
 				CPRINTS("Check AC get unknown event 0x%04x", event);
