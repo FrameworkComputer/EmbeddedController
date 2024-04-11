@@ -165,6 +165,7 @@ if(DEFINED CONFIG_BOARD_GOTHRAX)
 			"gothrax/src/usb_mux_config.c"
 			"gothrax/src/form_factor.c"
 			"gothrax/src/sub_board.c"
+			"gothrax/src/thermal.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "gothrax/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "gothrax/src/charger.c")
