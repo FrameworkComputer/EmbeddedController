@@ -23,6 +23,7 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 #include "usbc/utils.h"
 
 #include <drivers/pdc.h>
+#include <include/ppm.h>
 
 #define DT_DRV_COMPAT realtek_rts54_pdc
 
@@ -398,6 +399,10 @@ struct pdc_data_t {
 	uint16_t error_recovery_counter;
 	/** Error Status used during initialization */
 	union error_status_t es;
+	/** Connector Status */
+	union connector_status_t conn_status;
+	/** Connector Status Cache State */
+	bool conn_status_cached;
 };
 
 /**
@@ -883,6 +888,7 @@ static void handle_irqs(struct pdc_data_t *data)
 				/* Set the interrupt event */
 				pdc_int_data->cci_event
 					.vendor_defined_indicator = 1;
+				pdc_int_data->conn_status_cached = false;
 				/* Notify system of status change */
 				call_cci_event_cb(pdc_int_data);
 				/* done with this port */
@@ -1304,6 +1310,14 @@ static void st_read_run(void *o)
 		*vconn_sourcing = (data->rd_buf[11] & 0x20);
 		break;
 	}
+	case CMD_GET_CONNECTOR_STATUS:
+		memcpy(data->user_buf, data->rd_buf + offset, len);
+		/* Save connector status in cache. */
+		k_mutex_lock(&data->mtx, K_FOREVER);
+		memcpy(&data->conn_status, data->user_buf, len);
+		k_mutex_unlock(&data->mtx);
+		data->conn_status_cached = true;
+		break;
 	default:
 		/* No preprocessing needed for the user data */
 		memcpy(data->user_buf, data->rd_buf + offset, len);
@@ -2369,6 +2383,16 @@ static int rts54_execute_command_sync(const struct device *dev,
 	void *cb_data_copy;
 	int call_counter;
 	int rv;
+
+	if (ucsi_command == UCSI_CMD_GET_CONNECTOR_STATUS &&
+	    data->conn_status_cached) {
+		LOG_INF("%s: Read conn status from cache", __func__);
+		k_mutex_lock(&data->mtx, K_FOREVER);
+		memcpy(lpm_data_out, &data->conn_status,
+		       sizeof(data->conn_status));
+		k_mutex_unlock(&data->mtx);
+		return sizeof(data->conn_status);
+	}
 
 	/* We don't know yet if the PDC driver is busy or not. */
 	if (get_state(data) != ST_IDLE || data->cmd != CMD_NONE) {
