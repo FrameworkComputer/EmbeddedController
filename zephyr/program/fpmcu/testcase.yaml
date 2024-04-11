@@ -101,5 +101,8 @@ tests:
   static_if:
     extra_configs:
     - CONFIG_HW_TEST_STATIC_IF=y
+  system_is_locked:
+    extra_configs:
+    - CONFIG_HW_TEST_SYSTEM_IS_LOCKED=y
     extra_conf_files:
     - prj_hw_tests.conf

@@ -23,3 +23,4 @@ zephyr_library_sources_ifdef(CONFIG_HW_TEST_ROLLBACK_ENTROPY src/rollback_entrop
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_SHA256 ${PLATFORM_EC}/zephyr/test/crypto/src/sha256.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_SHA256_UNROLLED ${PLATFORM_EC}/zephyr/test/crypto/src/sha256.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_STATIC_IF ${PLATFORM_EC}/zephyr/test/utils/src/static_if.c)
+zephyr_library_sources_ifdef(CONFIG_HW_TEST_SYSTEM_IS_LOCKED src/system_is_locked.c)
