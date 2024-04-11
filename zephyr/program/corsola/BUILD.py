@@ -83,6 +83,7 @@ register_corsola_project("chinchou")
 register_corsola_project("woobat")
 register_corsola_project("wugtrio")
 register_corsola_project("skitty")
+register_corsola_project("veluza")
 
 register_corsola_project(
     project_name="kyogre",
@@ -104,3 +105,4 @@ assert_rw_fwid_DO_NOT_EDIT(project_name="voltorb", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="woobat", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="wugtrio", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="skitty", addr=0xBFFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="veluza", addr=0xBFFE0)

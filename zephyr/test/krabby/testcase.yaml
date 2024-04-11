@@ -128,3 +128,12 @@ tests:
     - CONFIG_PLATFORM_EC_USB_MUX_TUSB546=n
     extra_dtc_overlay_files:
     - krabby.skitty.overlay
+  krabby.veluza:
+    extra_configs:
+    - CONFIG_TEST_VELUZA=y
+    - CONFIG_PLATFORM_EC_CHARGER_PROFILE_OVERRIDE=y
+    - CONFIG_EEPROM=y
+    - CONFIG_EEPROM_SIMULATOR=n
+    - CONFIG_PLATFORM_EC_USB_MUX_TUSB546=n
+    extra_dtc_overlay_files:
+    - krabby.veluza.overlay

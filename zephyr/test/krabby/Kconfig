@@ -58,6 +58,12 @@ config TEST_SKITTY
 	  Include skitty test into the binary to test temperature
 	  threshold trigger current control.
 
+config TEST_VELUZA
+	bool "Run the tests intended for veluza"
+	help
+	  Include veluza test into the binary to test temperature
+	  threshold trigger current control.
+
 endchoice
 
 source "Kconfig.zephyr"

@@ -80,6 +80,12 @@ config BOARD_SKITTY
 	  Build Google Skitty variant board. Skitty is a variant of Krabby
 	  and has MediaTek MT8186 SoC with ITE it81202-bx EC
 
+config BOARD_VELUZA
+	bool "Google Veluza Board"
+	help
+	  Build Google Veluza variant board. Veluza is a variant of Krabby
+	  and has MediaTek MT8186 SoC with ITE it81202-bx EC
+
 config VARIANT_CORSOLA_DB_DETECTION
 	bool "Corsola Platform Runtime Daughter Board Detection"
 	depends on PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG

@@ -80,3 +80,11 @@ target_sources_ifdef(CONFIG_TEST_SKITTY
 	src/temp_skitty.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/skitty/src/ppc.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/skitty/src/temp.c)
+
+target_sources_ifdef(CONFIG_TEST_VELUZA
+	app PRIVATE
+	src/fake.c
+	src/ppc_veluza.c
+	src/temp_veluza.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/veluza/src/ppc.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/veluza/src/temp.c)
