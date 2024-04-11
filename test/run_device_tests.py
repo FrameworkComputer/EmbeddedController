@@ -447,7 +447,11 @@ class AllTests:
                 enable_hw_write_protect=False,
             ),
             TestConfig(test_name="timer"),
-            TestConfig(test_name="timer_dos"),
+            # task_wait_event works only with the shimmed task list, which is
+            # hardcoded. The task synchronization functions are covered by
+            # Zephyr tests. task_wait_event is implemented based on k_poll_event
+            # and it is verified by the kernel.poll test.
+            TestConfig(test_name="timer_dos", skip_for_zephyr=True),
             TestConfig(test_name="tpm_seed_clear"),
             TestConfig(test_name="uart"),
             TestConfig(test_name="unaligned_access"),
@@ -556,6 +560,10 @@ class AllTests:
                 test_name="zephyr_counter_basic_api_stm32_subsec",
                 exclude_boards=[DARTMONKEY, HELIPILOT],
                 timeout_secs=60,
+            ),
+            TestConfig(
+                zephyr_name="kernel.poll",
+                test_name="zephyr_kernel_poll",
             ),
         ]
 
