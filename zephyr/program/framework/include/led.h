@@ -46,6 +46,12 @@ enum led_color {
 	LED_COLOR_COUNT /* Number of colors, not a color itself */
 };
 
+enum fp_led_brightness_level {
+	FP_LED_BRIGHTNESS_HIGH = 0,
+	FP_LED_BRIGHTNESS_MEDIUM = 1,
+	FP_LED_BRIGHTNESS_LOW = 2,
+};
+
 /* EC_LED_COLOR maps to LED_COLOR - 1 */
 BUILD_ASSERT((LED_RED - 1) == EC_LED_COLOR_RED);
 BUILD_ASSERT((LED_GREEN - 1) == EC_LED_COLOR_GREEN);
