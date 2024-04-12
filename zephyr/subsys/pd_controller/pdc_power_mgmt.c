@@ -876,6 +876,9 @@ static bool handle_connector_status(struct pdc_port_t *port)
 
 	conn_status_change_bits.raw_value = status->raw_conn_status_change_bits;
 
+	LOG_DBG("C%d: Connector Change: 0x%04x", port_number,
+		conn_status_change_bits.raw_value);
+
 	if (conn_status_change_bits.pd_reset_complete) {
 		LOG_INF("C%d: Reset complete indicator", port_number);
 		pdc_power_mgmt_notify_event(port_number,
@@ -1286,6 +1289,11 @@ static void pdc_send_cmd_start_entry(void *obj)
 static int send_pdc_cmd(struct pdc_port_t *port)
 {
 	int rv;
+	const struct pdc_config_t *const config = port->dev->config;
+
+	LOG_DBG("C%d: Send %s (%d) %s", config->connector_num,
+		pdc_cmd_names[port->cmd->cmd], port->cmd->cmd,
+		(port->cmd == &port->send_cmd.intern) ? "internal" : "public");
 
 	/* Send PDC command via driver API */
 	switch (port->cmd->cmd) {
@@ -1822,6 +1830,7 @@ static bool is_connectionless_cmd(enum pdc_cmd_t pdc_cmd)
 static int public_api_block(int port, enum pdc_cmd_t pdc_cmd)
 {
 	int ret;
+	struct cmd_t *public_cmd;
 
 	ret = queue_public_cmd(&pdc_data[port]->port, pdc_cmd);
 	if (ret) {
@@ -1830,12 +1839,12 @@ static int public_api_block(int port, enum pdc_cmd_t pdc_cmd)
 
 	/* Reset block counter */
 	pdc_data[port]->port.block_counter = 0;
+	public_cmd = &pdc_data[port]->port.send_cmd.public;
 
 	/* TODO: Investigate using a semaphore here instead of while loop */
 	/* Block calling thread until command is processed, errors or timeout
 	 * occurs. */
-	while (pdc_data[port]->port.send_cmd.public.pending &&
-	       !pdc_data[port]->port.send_cmd.public.error) {
+	while (public_cmd->pending && !public_cmd->error) {
 		/* block until command completes or max block count is reached
 		 */
 
@@ -1857,12 +1866,13 @@ static int public_api_block(int port, enum pdc_cmd_t pdc_cmd)
 		 */
 		if (pdc_data[port]->port.block_counter > WAIT_MAX) {
 			/* something went wrong */
-			LOG_ERR("Public API blocking timeout");
+			LOG_ERR("C%d: Public API blocking timeout: %s", port,
+				pdc_cmd_names[public_cmd->cmd]);
 			return -EBUSY;
 		}
 
 		/* Check for commands that don't require a connection */
-		if (is_connectionless_cmd(pdc_cmd)) {
+		if (is_connectionless_cmd(public_cmd->cmd)) {
 			continue;
 		}
 
