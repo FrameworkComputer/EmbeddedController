@@ -456,7 +456,7 @@ class AllTests:
             TestConfig(test_name="uart"),
             TestConfig(test_name="unaligned_access"),
             TestConfig(test_name="unaligned_access_benchmark"),
-            TestConfig(test_name="utils", timeout_secs=20),
+            TestConfig(test_name="utils", timeout_secs=25),
             TestConfig(test_name="utils_str"),
             TestConfig(
                 config_name="power_utilization_idle",

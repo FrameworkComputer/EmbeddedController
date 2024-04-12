@@ -117,3 +117,9 @@ config HW_TEST_SYSTEM_IS_LOCKED
 	select ZTEST
 	help
 	  The test verifies system_is_locked function with wp on/off.
+
+config HW_TEST_UTILS
+	bool "Utils test"
+	select ZTEST
+	help
+	  The test verifies util functions.

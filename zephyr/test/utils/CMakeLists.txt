@@ -7,5 +7,6 @@ find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 project(utils)
 
 target_sources_ifdef(CONFIG_TEST_STATIC_IF app PRIVATE src/static_if.c)
+target_sources_ifdef(CONFIG_TEST_UTILS app PRIVATE src/utils.c)
 
 add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
