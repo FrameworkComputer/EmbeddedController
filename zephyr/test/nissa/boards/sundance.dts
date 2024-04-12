@@ -11,9 +11,6 @@
 	aliases {
 		/* type-C */
 		gpio-usb-c1-int-odl = &gpio_sb_1;
-		/* type-A */
-		gpio-en-usb-a1-vbus = &gpio_sb_2;
-		gpio-hpd-odl = &gpio_sb_4;
 		/* LTE */
 		gpio-en-sub-s5-rails = &gpio_sb_2;
 
@@ -44,20 +41,6 @@
 		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
 			gpios = <&gpio0 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
-		};
-
-		gpio_usb_a0_enable: usb_a0_enable {
-			gpios = <&gpio1 0 GPIO_OUTPUT>;
-		};
-
-		gpio_usb_a0_ilimit_sdp: usb_a0_ilimit_sdp {
-			gpios = <&gpio1 2 GPIO_OUTPUT>;
-			enum-name = "GPIO_USB1_ILIM_SEL";
-		};
-
-		gpio_sub_usb_a1_ilimit_sdp: usb_a1_ilimit_sdp {
-			gpios = <&gpio1 3 GPIO_OUTPUT>;
-			enum-name = "GPIO_USB2_ILIM_SEL";
 		};
 
 		gpio_usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {
@@ -95,24 +78,14 @@
 			enum-name = "GPIO_USB_C1_FRS_EN";
 		};
 
-		gpio_sb_1: sb-1 {
-			gpios = <&gpio6 0 GPIO_PULL_UP>;
+		gpio_sb_1: voldn_btn_odl {
+			gpios = <&gpioa 2 GPIO_PULL_UP>;
 			no-auto-init;
 			enum-name = "GPIO_USB_C1_BC12_INT_ODL";
 		};
 
-		gpio_sb_2: sb-2 {
-			gpios = <&gpiod 4 GPIO_OUTPUT>;
-			no-auto-init;
-		};
-
-		gpio_sb_3: sb-3 {
-			gpios = <&gpiof 4 0>;
-			no-auto-init;
-		};
-
-		gpio_sb_4: sb-4 {
-			gpios = <&gpiof 5 GPIO_INPUT>;
+		gpio_sb_2: volup_btn_odl {
+			gpios = <&gpio9 3 GPIO_OUTPUT>;
 			no-auto-init;
 		};
 	};
@@ -209,12 +182,6 @@
 		gpio-controller;
 		#gpio-cells = <2>;
 		ngpios = <8>;
-	};
-
-	usba {
-		compatible = "cros-ec,usba-port-enable-pins";
-		enable-pins = <&gpio_usb_a0_enable &gpio_sb_2>;
-		status = "okay";
 	};
 
 	usbc {

@@ -77,33 +77,13 @@
 	};
 
 	named-gpios {
-		gpio_sb_1: sb-1 {
-			gpios = <&gpio6 0 GPIO_PULL_UP>;
+		gpio_sb_1: voldn_btn_odl {
+			gpios = <&gpioa 2 GPIO_PULL_UP>;
 			no-auto-init;
 		};
-		gpio_sb_2: sb-2 {
-			gpios = <&gpiod 4 GPIO_OUTPUT>;
+		gpio_sb_2: volup_btn_odl {
+			gpios = <&gpio9 3 GPIO_OUTPUT>;
 			no-auto-init;
-		};
-		/*
-		 * Set I2C pins for type C sub-board to be low voltage (I2C5_1).
-		 * We do this for all boards, since the pins are 3.3V tolerant,
-		 * and the only 2 types of sub-boards used on nivviks both have
-		 * type-C ports on them.
-		 */
-		gpio_sb_3: sb-3 {
-			gpios = <&gpiof 4 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
-			no-auto-init;
-		};
-		gpio_sb_4: sb-4 {
-			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-			no-auto-init;
-		};
-		ec-i2c-sensor-scl {
-			gpios = <&gpio9 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
-		};
-		ec-i2c-sensor-sda {
-			gpios = <&gpio8 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 	};
 
@@ -111,24 +91,7 @@
 	 * Aliases used for sub-board GPIOs.
 	 */
 	aliases {
-		/*
-		 * Input GPIO when used with type-C port 1
-		 * Output when used with HDMI sub-board
-		 */
 		gpio-usb-c1-int-odl = &gpio_sb_1;
-		gpio-en-rails-odl = &gpio_sb_1;
-		/*
-		 * Sub-board with type A USB, enable.
-		 */
-		gpio-en-usb-a1-vbus = &gpio_sb_2;
-		/*
-		 * HPD pins for HDMI sub-board.
-		 */
-		gpio-hdmi-en-odl = &gpio_sb_3;
-		gpio-hpd-odl = &gpio_sb_4;
-		/*
-		 * Enable S5 rails for LTE sub-board
-		 */
 		gpio-en-sub-s5-rails = &gpio_sb_2;
 	};
 
@@ -171,21 +134,6 @@
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_ambient>;
 		};
-	};
-
-	usba {
-		compatible = "cros-ec,usba-port-enable-pins";
-		/*
-		 * sb_2 is only configured as GPIO when USB-A1 is present,
-		 * but it's still safe to control when disabled.
-		 *
-		 * ILIM_SEL pins are referred to by legacy enum name,
-		 * GPIO_USB*_ILIM_SEL. The one for port A1 is unused on
-		 * sub-boards that don't have USB-A so is safe to control
-		 * regardless of system configuration.
-		 */
-		enable-pins = <&gpio_en_usb_a0_vbus &gpio_sb_2>;
-		status = "okay";
 	};
 
 	usbc {
