@@ -197,6 +197,12 @@
 	i2c4_data_gpe7_default: i2c4_data_gpe7_default {
 		gpio-voltage = "3v3";
 	};
+	i2c5_clk_gpa4_default: i2c5_clk_gpa4_default {
+		gpio-voltage = "3v3";
+	};
+	i2c5_data_gpa5_default: i2c5_data_gpa5_default {
+		gpio-voltage = "3v3";
+	};
 };
 
 &i2c0 {
