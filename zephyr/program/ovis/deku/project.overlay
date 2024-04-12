@@ -158,6 +158,14 @@
 		};
 	};
 
+	pwr-slp-s0-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SLP_S0_L input from PCH";
+		enum-name = "PWR_SLP_S0";
+		gpios = <&gpio5 0 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+
 	named-i2c-ports {
 		i2c_ec_i2c_usb_c3: ec_i2c_usb_c3 {
 		i2c-port = <&i2c0_0>;
