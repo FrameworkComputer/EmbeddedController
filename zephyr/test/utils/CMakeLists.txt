@@ -8,5 +8,6 @@ project(utils)
 
 target_sources_ifdef(CONFIG_TEST_STATIC_IF app PRIVATE src/static_if.c)
 target_sources_ifdef(CONFIG_TEST_UTILS app PRIVATE src/utils.c)
+target_sources_ifdef(CONFIG_TEST_UTILS_STR app PRIVATE src/utils_str.c)
 
 add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
