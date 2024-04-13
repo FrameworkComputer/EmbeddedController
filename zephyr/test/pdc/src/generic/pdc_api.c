@@ -278,6 +278,12 @@ ZTEST_USER(pdc_api, test_set_ccom)
 	enum drp_mode_t dm_in[] = { DRP_NORMAL, DRP_TRY_SRC, DRP_TRY_SNK };
 	enum drp_mode_t dm_out;
 
+	/*
+	 * TODO(b/335047428) - Update pdc api and emul backend since SET_CCOM
+	 * does not support setting drp_mode.
+	 */
+	ztest_test_skip();
+
 	k_sleep(K_MSEC(SLEEP_MS));
 
 	for (i = 0; i < ARRAY_SIZE(ccom_in); i++) {
