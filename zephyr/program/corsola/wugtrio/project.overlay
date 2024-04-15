@@ -51,12 +51,6 @@
 			handler = "power_signal_interrupt";
 		};
 
-		pogo_prsnt_int: pogo-prsnt-int {
-			irq-pin = <&pogo_prsnt_int_l>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "base_detect_interrupt";
-		};
-
 		usb_c0_ppc_bc12 {
 			handler = "ppc_interrupt";
 		};
@@ -91,10 +85,6 @@
 
 		usb_c0_dp_in_hpd: usb-c0-dp-in-hpd {
 			gpios = <&gpioh 6 GPIO_OUTPUT_LOW>;
-		};
-
-		pogo_prsnt_int_l: pogo_prsnt_int_l {
-			gpios = <&gpioj 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 
 		en_pp4200_s5: en-pp4200-s5 {
@@ -331,12 +321,12 @@
 	};
 
 	named-adc-channels {
-        	adc_temp_sensor_1: adc-temp-sensor-1 {
+		adc_temp_sensor_1: adc-temp-sensor-1 {
 			enum-name = "ADC_TEMP_SENSOR_1";
 			io-channels = <&adc0 5>;
 		};
-		adc_temp_sensor_2: adc-temp-sensor-2 {
-			enum-name = "ADC_TEMP_SENSOR_2";
+		adc_base_det: adc-base-det {
+			enum-name = "ADC_BASE_DET";
 			io-channels = <&adc0 6>;
 		};
 	};
@@ -347,19 +337,11 @@
 		adc = <&adc_temp_sensor_1>;
 	};
 
-	temp_sensor_2_thermistor: sensor-2-thermistor {
-		compatible = "cros-ec,temp-sensor-thermistor";
-		thermistor = <&thermistor_1V8_100K_100K_4250B>;
-		adc = <&adc_temp_sensor_2>;
-	};
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 		temp_sensor_1 {
 			sensor = <&temp_sensor_1_thermistor>;
-		};
-		temp_sensor_2 {
-			sensor = <&temp_sensor_2_thermistor>;
 		};
 		temp_charger: charger {
 			sensor = <&charger_bc12_port1>;

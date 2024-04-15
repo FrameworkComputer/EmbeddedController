@@ -13,10 +13,14 @@
 #include "tablet_mode.h"
 #include "task.h"
 
+#include <zephyr/drivers/adc/adc_emul.h>
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
+
+#define ATTACH_MAX_THRESHOLD_MV 300
+#define UNATTACH_THRESHOLD_MV 1800
 
 extern bool is_held;
 
@@ -52,26 +56,25 @@ ZTEST_SUITE(baes_detect, NULL, base_detect_setup, NULL, NULL, NULL);
 
 ZTEST(baes_detect, test_base_detect_startup)
 {
-	const struct device *pogo_prsnt_gpio = DEVICE_DT_GET(
-		DT_GPIO_CTLR(DT_NODELABEL(pogo_prsnt_int_l), gpios));
-	const gpio_port_pins_t pogo_prsnt_pin =
-		DT_GPIO_PIN(DT_NODELABEL(pogo_prsnt_int_l), gpios);
+	const struct device *adc_dev = DEVICE_DT_GET(DT_NODELABEL(adc0));
+	const uint8_t adc_channel =
+		DT_IO_CHANNELS_INPUT(DT_NODELABEL(adc_base_det));
 
 	/* Verify power on when keyboard is plugged in or out */
-	zassert_ok(gpio_emul_input_set(pogo_prsnt_gpio, pogo_prsnt_pin, 0),
-		   NULL);
-	k_sleep(K_MSEC(100));
 	hook_notify(HOOK_INIT);
+	zassert_ok(adc_emul_const_value_set(adc_dev, adc_channel,
+					    ATTACH_MAX_THRESHOLD_MV));
+	k_sleep(K_MSEC(1000));
+
 	ap_power_ev_send_callbacks(AP_POWER_STARTUP);
 	zassert_equal(0, tablet_get_mode(), NULL);
 
-	zassert_ok(gpio_emul_input_set(pogo_prsnt_gpio, pogo_prsnt_pin, 1),
-		   NULL);
-	k_sleep(K_MSEC(100));
-	hook_notify(HOOK_INIT);
+	zassert_ok(adc_emul_const_value_set(adc_dev, adc_channel,
+					    UNATTACH_THRESHOLD_MV));
+	k_sleep(K_MSEC(1000));
 	ap_power_ev_send_callbacks(AP_POWER_STARTUP);
 	k_sleep(K_MSEC(100));
-	zassert_equal(1, tablet_get_mode(), NULL);
+	zassert_equal(1, tablet_get_mode());
 }
 
 ZTEST(baes_detect, test_base_detect_shutdown)
@@ -84,28 +87,24 @@ ZTEST(baes_detect, test_base_detect_shutdown)
 
 ZTEST(baes_detect, test_base_detect_interrupt)
 {
-	const struct device *pogo_prsnt_gpio = DEVICE_DT_GET(
-		DT_GPIO_CTLR(DT_NODELABEL(pogo_prsnt_int_l), gpios));
-	const gpio_port_pins_t pogo_prsnt_pin =
-		DT_GPIO_PIN(DT_NODELABEL(pogo_prsnt_int_l), gpios);
+	const struct device *adc_dev = DEVICE_DT_GET(DT_NODELABEL(adc0));
+	const uint8_t adc_channel =
+		DT_IO_CHANNELS_INPUT(DT_NODELABEL(adc_base_det));
 
 	/*
 	 * Verify that an interrupt is triggered when the keyboard is
 	 * inserted or removed
 	 */
 	hook_notify(HOOK_INIT);
-	zassert_ok(gpio_emul_input_set(pogo_prsnt_gpio, pogo_prsnt_pin, 0),
-		   NULL);
-	k_sleep(K_MSEC(100));
-	zassert_ok(gpio_emul_input_set(pogo_prsnt_gpio, pogo_prsnt_pin, 1),
-		   NULL);
-	k_sleep(K_MSEC(400));
-	zassert_equal(1, tablet_get_mode(), NULL);
-
-	zassert_ok(gpio_emul_input_set(pogo_prsnt_gpio, pogo_prsnt_pin, 0),
-		   NULL);
-	k_sleep(K_MSEC(400));
+	zassert_ok(adc_emul_const_value_set(adc_dev, adc_channel,
+					    ATTACH_MAX_THRESHOLD_MV));
+	k_sleep(K_MSEC(500));
 	zassert_equal(0, tablet_get_mode(), NULL);
+
+	zassert_ok(adc_emul_const_value_set(adc_dev, adc_channel,
+					    UNATTACH_THRESHOLD_MV));
+	k_sleep(K_MSEC(1000));
+	zassert_equal(1, tablet_get_mode(), NULL);
 }
 
 ZTEST_SUITE(console_cmd_setbasestate, NULL, NULL, NULL, NULL, NULL);
@@ -114,35 +113,38 @@ ZTEST_USER(console_cmd_setbasestate, test_sb_setbasestate)
 {
 	int rv;
 
-	const struct device *pogo_prsnt_gpio = DEVICE_DT_GET(
-		DT_GPIO_CTLR(DT_NODELABEL(pogo_prsnt_int_l), gpios));
-	const gpio_port_pins_t pogo_prsnt_pin =
-		DT_GPIO_PIN(DT_NODELABEL(pogo_prsnt_int_l), gpios);
+	const struct device *adc_dev = DEVICE_DT_GET(DT_NODELABEL(adc0));
+	const uint8_t adc_channel =
+		DT_IO_CHANNELS_INPUT(DT_NODELABEL(adc_base_det));
 
 	/* command to basestate attach*/
 	rv = shell_execute_cmd(get_ec_shell(), "basestate attach");
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected %d, but got %d",
 		      EC_RES_SUCCESS, rv);
+	k_sleep(K_MSEC(500));
 	zassert_equal(0, tablet_get_mode(), NULL);
 
 	/* command to basestate detach*/
 	rv = shell_execute_cmd(get_ec_shell(), "basestate detach");
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected %d, but got %d",
 		      EC_RES_SUCCESS, rv);
+	k_sleep(K_MSEC(500));
 	zassert_equal(1, tablet_get_mode(), NULL);
 
 	/* command to basestate resaet*/
-	zassert_ok(gpio_emul_input_set(pogo_prsnt_gpio, pogo_prsnt_pin, 0),
-		   NULL);
+	zassert_ok(adc_emul_const_value_set(adc_dev, adc_channel,
+					    ATTACH_MAX_THRESHOLD_MV));
 	rv = shell_execute_cmd(get_ec_shell(), "basestate reset");
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected %d, but got %d",
 		      EC_RES_SUCCESS, rv);
+	k_sleep(K_MSEC(1000));
 	zassert_equal(0, tablet_get_mode(), NULL);
 
-	zassert_ok(gpio_emul_input_set(pogo_prsnt_gpio, pogo_prsnt_pin, 1),
-		   NULL);
+	zassert_ok(adc_emul_const_value_set(adc_dev, adc_channel,
+					    UNATTACH_THRESHOLD_MV));
 	rv = shell_execute_cmd(get_ec_shell(), "basestate reset");
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected %d, but got %d",
 		      EC_RES_SUCCESS, rv);
+	k_sleep(K_MSEC(1000));
 	zassert_equal(1, tablet_get_mode(), NULL);
 }
