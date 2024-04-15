@@ -122,6 +122,7 @@
 		};
 		gpio_en_kb_bl: en_kb_bl {
 			gpios = <&gpiog 2 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
+			enum-name = "GPIO_EN_KEYBOARD_BACKLIGHT";
 		};
 		gpio_en_pp3700_s5: en_pp3700_s5 {
 			gpios = <&gpioh 5 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
