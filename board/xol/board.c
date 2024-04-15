@@ -4,6 +4,7 @@
  */
 
 #include "common.h"
+#include "cros_board_info.h"
 #include "driver/mp2964.h"
 #include "hooks.h"
 #include "lid_switch.h"
@@ -84,4 +85,36 @@ __override const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void)
 {
 	return &xol_kb;
+}
+
+static uint32_t board_id = (uint32_t)UINT8_MAX;
+static void set_board_id(void)
+{
+	uint32_t cbi_val;
+
+	/* Board ID, only need to do it once */
+	if (board_id == (uint32_t)UINT8_MAX) {
+		if (cbi_get_board_version(&cbi_val) != EC_SUCCESS ||
+		    cbi_val > UINT8_MAX)
+			CPRINTS("CBI: Read Board ID failed");
+		else
+			board_id = cbi_val;
+		CPRINTS("Read Board ID: %u", board_id);
+	}
+}
+
+uint8_t board_get_finch_version(void)
+{
+	set_board_id();
+
+	switch (board_id) {
+	case 0x1:
+		return 0x23;
+	case 0x3:
+		return 0x30;
+	default:
+		CPRINTS("WARN: cannot map board id(0x%02x) to finch version",
+			board_id);
+		return 0;
+	}
 }
