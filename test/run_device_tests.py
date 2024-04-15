@@ -1102,17 +1102,6 @@ def flash_and_run_test(
         )
         return False
 
-    if test.toggle_power:
-        power_cycle(board_config)
-    else:
-        # In some cases flash_ec leaves the board off, so just ensure it is on
-        power(board_config, power_on=True)
-
-    hw_write_protect(test.enable_hw_write_protect)
-
-    # run the test
-    logging.info('Running test: "%s"', test.config_name)
-
     with ExitStack() as stack:
         if args.remote and args.console_port:
             console_socket = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -1124,6 +1113,17 @@ def flash_and_run_test(
             # pylint: disable-next=consider-using-with
             console_file = open(get_console(board_config), "wb+", buffering=0)
             console = stack.enter_context(console_file)
+
+        if test.toggle_power:
+            power_cycle(board_config)
+        else:
+            # In some cases flash_ec leaves the board off, so just ensure it is on
+            power(board_config, power_on=True)
+
+        hw_write_protect(test.enable_hw_write_protect)
+
+        # run the test
+        logging.info('Running test: "%s"', test.config_name)
 
         return run_test(
             test,
