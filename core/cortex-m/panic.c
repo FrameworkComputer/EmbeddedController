@@ -75,7 +75,12 @@ static void print_reg(int regnum, const uint32_t *regs, int index)
  */
 static int32_t is_frame_in_handler_stack(const uint32_t exc_return)
 {
-	return (exc_return & 0xf) == 1 || (exc_return & 0xf) == 9;
+#ifdef CONFIG_FPU
+	return exc_return == 0xfffffff1 || exc_return == 0xfffffff9 ||
+	       exc_return == 0xffffffe1 || exc_return == 0xffffffe9;
+#else
+	return exc_return == 0xfffffff1 || exc_return == 0xfffffff9;
+#endif /* CONFIG_FPU */
 }
 
 /*
