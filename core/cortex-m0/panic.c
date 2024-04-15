@@ -134,6 +134,10 @@ void __keep report_panic(void)
 	}
 
 	panic_data_print(pdata);
+
+	if (IS_ENABLED(CONFIG_CMD_CRASH_NESTED))
+		command_crash_nested_handler();
+
 	panic_reboot();
 }
 

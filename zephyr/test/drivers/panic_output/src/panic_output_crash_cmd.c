@@ -33,16 +33,28 @@ K_THREAD_STACK_DEFINE(crash_thread_stack, 1024);
 
 /** Captures the last signal number received by `handle_signal()`. */
 static int signal_received;
+/** Captures the number of times `handle_signal()` was called. */
+static int signal_count;
+
+static void handle_signal(int sig);
+static void register_signals(void)
+{
+	signal(SIGSEGV, handle_signal);
+	signal(SIGFPE, handle_signal);
+}
 
 /**
- * @brief Handler for signals sent to the process. Log the signal number and
- *        abort the crash test.
+ * @brief Handler for signals sent to the process. Log the signal number,
+ *        increment the signal count, and abort the crash test.
  *
  * @param sig Signal number, from signal.h
  */
-void handle_signal(int sig)
+static void handle_signal(int sig)
 {
+	register_signals();
+
 	signal_received = sig;
+	signal_count += 1;
 
 	k_thread_abort(&crash_thread);
 }
@@ -65,9 +77,25 @@ static void crash_thread_worker(void *a, void *b, void *c)
 	 * did not return.
 	 */
 	*return_val = RETURN_CODE_CRASHED;
-	signal_received = 0;
-
 	*return_val = test_command_crash(argc, argv);
+}
+
+/**
+ * @brief Worker function for nested crashes. Calls the
+ *        `command_crash_nested_handler()` function.
+ *
+ * @param a UNUSED.
+ * @param b UNUSED.
+ * @param c Pointer to location to write the return value.
+ */
+static void nested_crash_thread_worker(void *a, void *b, void *c)
+{
+	ARG_UNUSED(a);
+	ARG_UNUSED(b);
+	int *return_val = c;
+
+	*return_val = RETURN_CODE_CRASHED;
+	*return_val = command_crash_nested_handler();
 }
 
 /**
@@ -83,6 +111,7 @@ static void crash_thread_worker(void *a, void *b, void *c)
 static int run_crash_command(int argc, const char **argv, k_timeout_t timeout)
 {
 	static int return_val;
+	static int nested_return_val;
 
 	k_thread_create(&crash_thread, crash_thread_stack,
 			K_THREAD_STACK_SIZEOF(crash_thread_stack),
@@ -92,7 +121,32 @@ static int run_crash_command(int argc, const char **argv, k_timeout_t timeout)
 
 	if (k_thread_join(&crash_thread, timeout) == -EAGAIN) {
 		k_thread_abort(&crash_thread);
-		return RETURN_CODE_TIMEOUT;
+		return_val = RETURN_CODE_TIMEOUT;
+	}
+
+	/* Keep running command_crash_nested_handler as long as crashes are
+	 * occurring.
+	 */
+	while (return_val == RETURN_CODE_TIMEOUT ||
+	       return_val == RETURN_CODE_CRASHED) {
+		k_thread_create(&crash_thread, crash_thread_stack,
+				K_THREAD_STACK_SIZEOF(crash_thread_stack),
+				(k_thread_entry_t)nested_crash_thread_worker,
+				(void *)0, NULL, &nested_return_val,
+				CONFIG_ZTEST_THREAD_PRIORITY + 1,
+				K_INHERIT_PERMS, K_NO_WAIT);
+		if (k_thread_join(&crash_thread, K_MSEC(100)) == -EAGAIN) {
+			k_thread_abort(&crash_thread);
+			nested_return_val = RETURN_CODE_TIMEOUT;
+		}
+		/* command_crash_nested_handler returns EC_SUCCESS when
+		 * there are no more nested crashes. Do not overwrite
+		 * the return_val in this case.
+		 */
+		if (nested_return_val == EC_SUCCESS) {
+			break;
+		}
+		return_val = nested_return_val;
 	}
 
 	return return_val;
@@ -105,18 +159,20 @@ ZTEST(panic_output, test_feature_present)
 	zassert_true(feat.flags[1] &
 			     EC_FEATURE_MASK_1(EC_FEATURE_ASSERT_REBOOTS),
 		     "Failed to see feature present");
+	zassert_true(IS_ENABLED(CONFIG_PLATFORM_EC_CONSOLE_CMD_CRASH_NESTED));
 }
 
-ZTEST(panic_output, test_console_cmd__unaligned)
+ZTEST(panic_output, test_console_cmd__unaligned_unaligned)
 {
 	int rv;
-	const char *cmd[] = { "crash", "unaligned" };
+	const char *cmd[] = { "crash", "unaligned", "unaligned" };
 
-	rv = run_crash_command(2, cmd, K_FOREVER);
+	rv = run_crash_command(3, cmd, K_FOREVER);
 
 	zassert_equal(RETURN_CODE_CRASHED, rv,
 		      "Command returned %d but shouldn't have exited", rv);
 	zassert_equal(SIGSEGV, signal_received);
+	zassert_equal(2, signal_count);
 }
 
 ZTEST(panic_output, test_console_cmd__watchdog)
@@ -132,6 +188,7 @@ ZTEST(panic_output, test_console_cmd__watchdog)
 
 	zassert_equal(RETURN_CODE_TIMEOUT, rv,
 		      "Command returned %d but shouldn't have exited", rv);
+	zassert_equal(0, signal_count);
 }
 
 ZTEST(panic_output, test_console_cmd__hang)
@@ -143,6 +200,7 @@ ZTEST(panic_output, test_console_cmd__hang)
 
 	zassert_equal(RETURN_CODE_TIMEOUT, rv,
 		      "Command returned %d but shouldn't have exited", rv);
+	zassert_equal(0, signal_count);
 }
 
 ZTEST(panic_output, test_console_cmd__null)
@@ -155,6 +213,94 @@ ZTEST(panic_output, test_console_cmd__null)
 	zassert_equal(RETURN_CODE_CRASHED, rv,
 		      "Command returned %d but shouldn't have exited", rv);
 	zassert_equal(SIGSEGV, signal_received);
+	zassert_equal(1, signal_count);
+}
+
+ZTEST(panic_output, test_console_cmd__null_null)
+{
+	int rv;
+	const char *cmd[] = { "crash", "null", "null" };
+
+	rv = run_crash_command(3, cmd, K_FOREVER);
+
+	zassert_equal(RETURN_CODE_CRASHED, rv,
+		      "Command returned %d but shouldn't have exited", rv);
+	zassert_equal(SIGSEGV, signal_received);
+	zassert_equal(2, signal_count);
+}
+
+ZTEST(panic_output, test_console_cmd__null_null_null)
+{
+	int rv;
+	const char *cmd[] = { "crash", "null", "null", "null" };
+
+	rv = run_crash_command(4, cmd, K_FOREVER);
+
+	zassert_equal(RETURN_CODE_CRASHED, rv,
+		      "Command returned %d but shouldn't have exited", rv);
+	zassert_equal(SIGSEGV, signal_received);
+	zassert_equal(3, signal_count);
+}
+
+ZTEST(panic_output, test_console_cmd__null_watchdog)
+{
+	int rv;
+	const char *cmd[] = { "crash", "null", "watchdog" };
+
+	rv = run_crash_command(3, cmd, K_FOREVER);
+
+	zassert_equal(RETURN_CODE_TIMEOUT, rv,
+		      "Command returned %d but shouldn't have exited", rv);
+	zassert_equal(SIGSEGV, signal_received);
+	zassert_equal(1, signal_count);
+}
+
+ZTEST(panic_output, test_console_cmd__watchdog_null)
+{
+	int rv;
+	const char *cmd[] = { "crash", "watchdog", "null" };
+
+	rv = run_crash_command(3, cmd, K_MSEC(100));
+
+	zassert_equal(RETURN_CODE_CRASHED, rv,
+		      "Command returned %d but shouldn't have exited", rv);
+	zassert_equal(SIGSEGV, signal_received);
+	zassert_equal(1, signal_count);
+}
+
+ZTEST(panic_output, test_console_cmd__watchdog_watchdog)
+{
+	int rv;
+	const char *cmd[] = { "crash", "watchdog", "watchdog" };
+
+	rv = run_crash_command(3, cmd, K_MSEC(100));
+
+	zassert_equal(RETURN_CODE_TIMEOUT, rv,
+		      "Command returned %d but shouldn't have exited", rv);
+	zassert_equal(0, signal_count);
+}
+
+ZTEST(panic_output, test_console_cmd__null_bad_param)
+{
+	int rv;
+	const char *cmd[] = { "crash", "null", "xyz" };
+
+	rv = run_crash_command(3, cmd, K_FOREVER);
+
+	zassert_equal(EC_ERROR_PARAM1, rv, "Command returned %d", rv);
+	zassert_equal(SIGSEGV, signal_received);
+	zassert_equal(1, signal_count);
+}
+
+ZTEST(panic_output, test_console_cmd__bad_param_null)
+{
+	int rv;
+	const char *cmd[] = { "crash", "xyz", "null" };
+
+	rv = run_crash_command(2, cmd, K_FOREVER);
+
+	zassert_equal(EC_ERROR_PARAM1, rv, "Command returned %d", rv);
+	zassert_equal(0, signal_count);
 }
 
 ZTEST(panic_output, test_console_cmd__bad_param)
@@ -165,6 +311,7 @@ ZTEST(panic_output, test_console_cmd__bad_param)
 	rv = run_crash_command(2, cmd, K_FOREVER);
 
 	zassert_equal(EC_ERROR_PARAM1, rv, "Command returned %d", rv);
+	zassert_equal(0, signal_count);
 }
 
 ZTEST(panic_output, test_console_cmd__no_param)
@@ -175,15 +322,17 @@ ZTEST(panic_output, test_console_cmd__no_param)
 	rv = run_crash_command(1, cmd, K_FOREVER);
 
 	zassert_equal(EC_ERROR_PARAM1, rv, "Command returned %d", rv);
+	zassert_equal(0, signal_count);
 }
 
 static void reset(void *data)
 {
 	ARG_UNUSED(data);
 
-	signal(SIGSEGV, handle_signal);
-	signal(SIGFPE, handle_signal);
+	register_signals();
+
 	signal_received = 0;
+	signal_count = 0;
 }
 
 ZTEST_SUITE(panic_output, drivers_predicate_post_main, NULL, reset, reset,

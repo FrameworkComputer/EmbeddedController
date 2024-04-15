@@ -375,6 +375,9 @@ void __keep report_panic(void)
 	if (IS_ENABLED(CONFIG_ARMV7M_CACHE))
 		cpu_clean_invalidate_dcache();
 
+	if (IS_ENABLED(CONFIG_CMD_CRASH_NESTED))
+		command_crash_nested_handler();
+
 	/* Start safe mode if possible */
 	if (IS_ENABLED(CONFIG_SYSTEM_SAFE_MODE)) {
 		/* Only start safe mode if panic occurred in thread context */

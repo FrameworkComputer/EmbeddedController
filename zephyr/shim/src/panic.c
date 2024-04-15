@@ -171,6 +171,9 @@ void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *esf)
 
 	LOG_PANIC();
 
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_CONSOLE_CMD_CRASH_NESTED))
+		command_crash_nested_handler();
+
 	/* Start system safe mode if possible */
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_SYSTEM_SAFE_MODE)) {
 		if (reason != K_ERR_KERNEL_PANIC &&
