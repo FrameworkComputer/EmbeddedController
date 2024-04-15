@@ -40,6 +40,7 @@ before_script:
   - export MODULES_DIR="$CI_PROJECT_DIR/modules"
   - export ZEPHYR_BASE="${CI_PROJECT_DIR}/zephyr/main"
   - export REPO_BASE="${CI_PROJECT_DIR}/repo"
+  - export DEPOT_TOOLS_UPDATE=0
   - git config --global --add safe.directory '*'
   # Get Zephyr repo and modules
   - checkout_at_date() {
