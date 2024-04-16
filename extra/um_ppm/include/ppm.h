@@ -155,7 +155,7 @@ struct ucsi_memory_region {
 	uint8_t reserved_0;
 	uint8_t message_out[MESSAGE_OUT_SIZE]; /* PPM to OPM buffer */
 	uint8_t reserved_1;
-} __attribute__((__packed__));
+} __attribute__((__packed__, aligned(4)));
 
 /* Commands and data below */
 
