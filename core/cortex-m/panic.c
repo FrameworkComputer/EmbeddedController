@@ -298,12 +298,17 @@ void panic_data_print(const struct panic_data *pdata)
 #endif
 }
 
-/* This is just a placeholder function for returning from exception.
- * It's not expected to actually be executed.
+/*
+ * Handle returning from the exception handler to task context.
+ * The task has already been disabled, but may continue to run
+ * until the next interrupt. Calling `task_disable_task` again
+ * from the task context will force a task switch.
  */
-static void exception_return_placeholder(void)
+static void exception_return_handler(void)
 {
-	panic_printf("Unexpected return from exception\n");
+	/* Force a task switch */
+	task_disable_task(task_get_current());
+	/* Something went wrong, just reboot */
 	panic_reboot();
 	__builtin_unreachable();
 }
@@ -392,14 +397,11 @@ void __keep report_panic(void)
 			 */
 			task_disable_task(task_get_current());
 			/* Return from exception on process stack.
-			 * We should not actually land in
-			 * exception_return_placeholder function. Instead the
-			 * scheduler should interrupt and schedule
-			 * a different task since the current task has
+			 * The scheduler will switch to a different task
+			 * on the next interrupt since the current task has
 			 * been disabled.
 			 */
-			cpu_return_from_exception_psp(
-				exception_return_placeholder);
+			cpu_return_from_exception_psp(exception_return_handler);
 			__builtin_unreachable();
 		}
 		pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_FAIL_PRECONDITIONS;
