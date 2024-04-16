@@ -37,6 +37,7 @@ extern const struct mecc_1_1_tcpc_aic_gpio_config_t mecc_1_1_tcpc_aic_gpios[];
 void board_charging_enable(int port, int enable);
 void board_vbus_enable(int port, int enable);
 void board_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp);
+int board_is_dc_jack_present(void);
 void board_dc_jack_interrupt(enum gpio_signal signal);
 bool is_typec_port(int port);
 #endif /* __INTELRVP_BOARD_H */
