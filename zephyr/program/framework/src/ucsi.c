@@ -195,7 +195,7 @@ int ucsi_write_tunnel(void)
 			cypd_print_buff("UCSI Msg Out: ", message_out, 6);
 	}
 
-	usleep(50);
+	crec_msleep(50);
 	return rv;
 }
 
@@ -491,7 +491,7 @@ void check_ucsi_event_from_host(void)
 			((uint8_t *)message_in)[8] = (((uint8_t *)message_in)[8] & 0xFC) + 1;
 		}
 
-		usleep(2 * MSEC);
+		crec_msleep(2 * MSEC);
 
 		memcpy(host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_MESSAGE_IN), message_in, 16);
 		memcpy(host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_CONN_CHANGE), cci, 4);

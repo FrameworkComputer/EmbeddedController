@@ -59,7 +59,7 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 			if (event < 0x80) {
 				cypd_clear_int(controller, CCG_DEV_INTR);
 			}
-			usleep(50);
+			crec_msleep(50);
 		}
 	}
 
@@ -136,7 +136,7 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 		rv = (event == CCG_RESPONSE_SUCCESS) ? EC_SUCCESS : EC_ERROR_INVAL;
 	}
 
-	usleep(50);
+	crec_msleep(50);
 	return rv;
 }
 
@@ -232,7 +232,7 @@ int check_power_on_port(void)
 	if (!(pd_chip_config[0].state == CCG_STATE_READY &&
 		pd_chip_config[1].state == CCG_STATE_READY)) {
 		CPRINTS("CYPD not ready, just delay 100ms to wait");
-		usleep(100 * MSEC);
+		crec_msleep(100 * MSEC);
 	}
 
 	for (port = 0; port < PD_PORT_COUNT; port++)
@@ -275,7 +275,7 @@ int board_set_active_charge_port(int charge_port)
 		CPRINTS("Disable all type-c port to change the charger port");
 		cypd_write_reg8(0, CCG_CUST_C_CTRL_CONTROL_REG, CCG_P0P1_TURN_OFF_C_CTRL);
 		cypd_write_reg8(1, CCG_CUST_C_CTRL_CONTROL_REG, CCG_P0P1_TURN_OFF_C_CTRL);
-		usleep(250*MSEC);
+		crec_msleep(250*MSEC);
 	}
 
 	update_active_charge_pd_port(charge_port);

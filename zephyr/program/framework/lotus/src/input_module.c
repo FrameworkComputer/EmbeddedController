@@ -72,13 +72,13 @@ static void scan_c_deck(bool full_scan)
 			 * In the specification table Switching Characteristics over Operating
 			 * range the maximum Bus Select Time needs 6.6 ns, so delay a little
 			 */
-			usleep(INPUT_MODULE_MUX_DELAY_US);
+			crec_msleep(INPUT_MODULE_MUX_DELAY_US);
 
 			hub_board_id[i] = get_hardware_id(ADC_HUB_BOARD_ID);
 		}
 	} else {
 		set_hub_mux(TOUCHPAD);
-		usleep(INPUT_MODULE_MUX_DELAY_US);
+		crec_msleep(INPUT_MODULE_MUX_DELAY_US);
 		hub_board_id[TOUCHPAD] = get_hardware_id(ADC_HUB_BOARD_ID);
 	}
 	/* Turn off hub mux pins*/
@@ -339,7 +339,7 @@ static int inputdeck_cmd(int argc, const char **argv)
 			 * In the specification table Switching Characteristics over Operating
 			 * range the maximum Bus Select Time needs 6.6 ns, so delay a little
 			 */
-			usleep(INPUT_MODULE_MUX_DELAY_US);
+			crec_msleep(INPUT_MODULE_MUX_DELAY_US);
 
 			id = get_hardware_id(ADC_HUB_BOARD_ID);
 			mv = adc_read_channel(ADC_HUB_BOARD_ID);

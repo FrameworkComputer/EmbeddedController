@@ -59,7 +59,7 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 			if (event < 0x80) {
 				cypd_clear_int(controller, CCG_DEV_INTR);
 			}
-			usleep(50);
+			crec_msleep(50);
 		}
 	}
 
@@ -112,7 +112,7 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 		rv = (event == CCG_RESPONSE_SUCCESS) ? EC_SUCCESS : EC_ERROR_INVAL;
 	}
 
-	usleep(50);
+	crec_msleep(50);
 	return rv;
 }
 
