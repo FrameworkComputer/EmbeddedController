@@ -60,6 +60,12 @@ config BOARD_PUJJO
 	  Build Google Pujjo board. Pujjo has Intel ADL-N SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_PUJJOGA
+	bool "Google Pujjoga Board"
+	help
+	  Build Google Pujjoga board. Pujjoga has Intel ADL-N SoC
+	  with NPCX993FA0BX EC.
+
 config BOARD_XIVU
         bool "Google Xivu Board"
         help

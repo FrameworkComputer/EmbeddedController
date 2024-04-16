@@ -96,6 +96,11 @@ pujjo = register_nissa_project(
     chip="npcx9/npcx9m3f",
 )
 
+pujjoga = register_nissa_project(
+    project_name="pujjoga",
+    chip="npcx9/npcx9m3f",
+)
+
 xivu = register_nissa_project(
     project_name="xivu",
     chip="npcx9/npcx9m3f",
@@ -171,6 +176,7 @@ assert_rw_fwid_DO_NOT_EDIT(project_name="nivviks", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="nokris", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="pirrha", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="pujjo", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="pujjoga", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="quandiso", addr=0xB7FE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="uldren", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="xivu", addr=0x7FFE0)

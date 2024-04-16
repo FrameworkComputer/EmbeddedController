@@ -81,6 +81,21 @@ tests:
       - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=y
       - CONFIG_PLATFORM_EC_USB_PD_HOST_CMD=y
       - CONFIG_PLATFORM_EC_USB_PD_TCPM_PS8815=y
+  nissa.pujjoga:
+    extra_dtc_overlay_files:
+      - "boards/pujjoga.dts"
+    extra_conf_files:
+      - "prj.conf"
+    extra_configs:
+      - CONFIG_TEST_NISSA_PUJJOGA=y
+      - CONFIG_PLATFORM_EC_ACCELGYRO_LSM6DSO=y
+      - CONFIG_PLATFORM_EC_ACCEL_LIS2DW12=y
+      - CONFIG_PLATFORM_EC_LED_PWM=n
+      - CONFIG_PLATFORM_EC_LED_COMMON=y
+      - CONFIG_PLATFORM_EC_TABLET_MODE=y
+      - CONFIG_PLATFORM_EC_GMR_TABLET_MODE=y
+      - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=y
+      - CONFIG_PLATFORM_EC_USB_PD_HOST_CMD=y
   nissa.sundance:
     extra_dtc_overlay_files:
       - "boards/sundance.dts"
