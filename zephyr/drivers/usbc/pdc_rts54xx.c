@@ -134,7 +134,6 @@ const struct smbus_cmd_t SET_NOTIFICATION_ENABLE = { 0x08, 0x06, 0x01 };
 const struct smbus_cmd_t SET_PDOS = { 0x08, 0x03, 0x03 };
 const struct smbus_cmd_t SET_RDO = { 0x08, 0x06, 0x04 };
 const struct smbus_cmd_t SET_TPC_RP = { 0x08, 0x03, 0x05 };
-const struct smbus_cmd_t SET_TPC_CSD_OPERATION_MODE = { 0x08, 0x03, 0x1D };
 const struct smbus_cmd_t SET_TPC_RECONNECT = { 0x08, 0x03, 0x1F };
 const struct smbus_cmd_t FORCE_SET_POWER_SWITCH = { 0x08, 0x03, 0x21 };
 const struct smbus_cmd_t GET_PDOS = { 0x08, 0x03, 0x83 };
@@ -1939,8 +1938,7 @@ static int rts54_get_vbus_voltage(const struct device *dev, uint16_t *voltage)
 				    (uint8_t *)voltage);
 }
 
-static int rts54_set_ccom(const struct device *dev, enum ccom_t ccom,
-			  enum drp_mode_t dm)
+static int rts54_set_ccom(const struct device *dev, enum ccom_t ccom)
 {
 	struct pdc_data_t *data = dev->data;
 	uint16_t conn_opmode = 0;

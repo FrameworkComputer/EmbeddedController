@@ -130,8 +130,7 @@ static int ccg_get_connector_capability(const struct device *dev,
 	return 0;
 }
 
-static int ccg_set_ccom(const struct device *dev, enum ccom_t ccom,
-			enum drp_mode_t dm)
+static int ccg_set_ccom(const struct device *dev, enum ccom_t ccom)
 {
 	return 0;
 }

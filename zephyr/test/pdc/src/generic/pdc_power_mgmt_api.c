@@ -585,7 +585,6 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 
 	union connector_status_t connector_status;
 	enum ccom_t ccom;
-	enum drp_mode_t dm;
 	union pdr_t pdr;
 	uint32_t timeout = k_ms_to_cyc_ceil32(4000);
 	uint32_t start;
@@ -606,7 +605,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 			k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
 
 			if (test[i].e.check_cc_mode) {
-				emul_pdc_get_ccom(emul, &ccom, &dm);
+				emul_pdc_get_ccom(emul, &ccom);
 
 				if (test[i].e.cc_mode != ccom)
 					continue;
@@ -644,7 +643,6 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_suspend)
 {
 	union connector_status_t connector_status;
 	enum ccom_t ccom;
-	enum drp_mode_t dm;
 	uint32_t timeout = k_ms_to_cyc_ceil32(PDC_TEST_TIMEOUT);
 	uint32_t start;
 
@@ -661,7 +659,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_suspend)
 	start = k_cycle_get_32();
 	while (k_cycle_get_32() - start < timeout) {
 		k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
-		emul_pdc_get_ccom(emul, &ccom, &dm);
+		emul_pdc_get_ccom(emul, &ccom);
 
 		if (ccom != CCOM_RD)
 			continue;
@@ -676,7 +674,6 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume)
 {
 	union connector_status_t connector_status;
 	enum ccom_t ccom;
-	enum drp_mode_t dm;
 
 	emul_pdc_configure_snk(emul, &connector_status);
 	emul_pdc_connect_partner(emul, &connector_status);
@@ -686,7 +683,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume)
 	hook_notify(HOOK_CHIPSET_RESUME);
 	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
 
-	emul_pdc_get_ccom(emul, &ccom, &dm);
+	emul_pdc_get_ccom(emul, &ccom);
 	zassert_equal(CCOM_DRP, ccom);
 }
 
@@ -694,7 +691,6 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_startup)
 {
 	union connector_status_t connector_status;
 	enum ccom_t ccom;
-	enum drp_mode_t dm;
 	uint32_t timeout = k_ms_to_cyc_ceil32(PDC_TEST_TIMEOUT);
 	uint32_t start;
 
@@ -711,7 +707,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_startup)
 	start = k_cycle_get_32();
 	while (k_cycle_get_32() - start < timeout) {
 		k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
-		emul_pdc_get_ccom(emul, &ccom, &dm);
+		emul_pdc_get_ccom(emul, &ccom);
 
 		if (ccom != CCOM_RD)
 			continue;

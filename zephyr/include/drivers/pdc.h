@@ -92,8 +92,7 @@ typedef int (*pdc_get_capability_t)(const struct device *dev,
 				    struct capability_t *caps);
 typedef int (*pdc_get_connector_capability_t)(
 	const struct device *dev, union connector_capability_t *caps);
-typedef int (*pdc_set_ccom_t)(const struct device *dev, enum ccom_t ccom,
-			      enum drp_mode_t dm);
+typedef int (*pdc_set_ccom_t)(const struct device *dev, enum ccom_t ccom);
 typedef int (*pdc_set_uor_t)(const struct device *dev, union uor_t uor);
 typedef int (*pdc_set_pdr_t)(const struct device *dev, union pdr_t pdr);
 typedef int (*pdc_set_sink_path_t)(const struct device *dev, bool en);
@@ -434,8 +433,7 @@ pdc_get_connector_capability(const struct device *dev,
  * @retval -EBUSY if not ready to execute the command
  * @retval -ENOSYS if not implemented
  */
-static inline int pdc_set_ccom(const struct device *dev, enum ccom_t ccom,
-			       enum drp_mode_t dm)
+static inline int pdc_set_ccom(const struct device *dev, enum ccom_t ccom)
 {
 	const struct pdc_driver_api_t *api =
 		(const struct pdc_driver_api_t *)dev->api;
@@ -445,7 +443,7 @@ static inline int pdc_set_ccom(const struct device *dev, enum ccom_t ccom,
 		return -ENOSYS;
 	}
 
-	return api->set_ccom(dev, ccom, dm);
+	return api->set_ccom(dev, ccom);
 }
 
 /**

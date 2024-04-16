@@ -361,8 +361,6 @@ struct pdc_unattached_policy_t {
 	enum usb_typec_current_t tcc;
 	/** CC Operation Mode */
 	enum ccom_t cc_mode;
-	/** DRP Operation Mode */
-	enum drp_mode_t drp_mode;
 };
 
 /**
@@ -704,8 +702,6 @@ static ALWAYS_INLINE void pdc_thread(void *pdc_dev, void *unused1,
 			DT_INST_PROP(inst, policy), unattached_rp_value),    \
 		.port.una_policy.cc_mode = DT_STRING_TOKEN(                  \
 			DT_INST_PROP(inst, policy), unattached_cc_mode),     \
-		.port.una_policy.drp_mode = DT_STRING_TOKEN(                 \
-			DT_INST_PROP(inst, policy), unattached_try),         \
 		.port.suspend = ATOMIC_INIT(0),                              \
 	};                                                                   \
                                                                              \
@@ -1389,8 +1385,7 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 		rv = pdc_set_power_level(port->pdc, port->una_policy.tcc);
 		break;
 	case CMD_PDC_SET_CCOM:
-		rv = pdc_set_ccom(port->pdc, port->una_policy.cc_mode,
-				  port->una_policy.drp_mode);
+		rv = pdc_set_ccom(port->pdc, port->una_policy.cc_mode);
 		break;
 	case CMD_PDC_GET_PDOS:
 		rv = pdc_get_pdos(port->pdc, port->pdo_type, PDO_OFFSET_0,

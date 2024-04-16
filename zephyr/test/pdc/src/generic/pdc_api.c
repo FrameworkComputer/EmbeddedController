@@ -272,31 +272,18 @@ ZTEST_USER(pdc_api, test_get_bus_voltage)
 
 ZTEST_USER(pdc_api, test_set_ccom)
 {
-	int i, j;
+	int i;
 	enum ccom_t ccom_in[] = { CCOM_RP, CCOM_RD, CCOM_DRP };
 	enum ccom_t ccom_out;
-	enum drp_mode_t dm_in[] = { DRP_NORMAL, DRP_TRY_SRC, DRP_TRY_SNK };
-	enum drp_mode_t dm_out;
-
-	/*
-	 * TODO(b/335047428) - Update pdc api and emul backend since SET_CCOM
-	 * does not support setting drp_mode.
-	 */
-	ztest_test_skip();
 
 	k_sleep(K_MSEC(SLEEP_MS));
 
 	for (i = 0; i < ARRAY_SIZE(ccom_in); i++) {
-		for (j = 0; j < ARRAY_SIZE(dm_in); j++) {
-			zassert_ok(pdc_set_ccom(dev, ccom_in[i], dm_in[j]));
+		zassert_ok(pdc_set_ccom(dev, ccom_in[i]));
 
-			k_sleep(K_MSEC(SLEEP_MS));
-			zassert_ok(emul_pdc_get_ccom(emul, &ccom_out, &dm_out));
-			zassert_equal(ccom_in[i], ccom_out);
-			if (ccom_in[i] == CCOM_DRP) {
-				zassert_equal(dm_in[j], dm_out);
-			}
-		}
+		k_sleep(K_MSEC(SLEEP_MS));
+		zassert_ok(emul_pdc_get_ccom(emul, &ccom_out));
+		zassert_equal(ccom_in[i], ccom_out);
 	}
 }
 
