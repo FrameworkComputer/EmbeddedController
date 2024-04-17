@@ -549,12 +549,22 @@ void chipset_throttle_cpu(int throttle)
 
 void control_module_power(void)
 {
-	static int pre_state;
+	static int pre_state, pre_touchpad;
 	int state = chipset_in_state(CHIPSET_STATE_ANY_OFF);
+#ifdef CONCONFIG_PLATFORM_IGNORED_TOUCHPAD_ID
+	int touchpad = BOARD_VERSION_10;
+#else
+	int touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
+#endif /* CONFIG_PLATFORM_IGNORED_TOUCHPAD_ID */
 
-	if (pre_state != state) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), !state);
+	if (pre_state != state || pre_touchpad != touchpad) {
+		if (touchpad >= BOARD_VERSION_2 && touchpad <= BOARD_VERSION_13) {
+						gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), !state);
+		} else {
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), 0);
+		}
 		pre_state = state;
+		pre_touchpad = touchpad;
 	}
 }
 DECLARE_HOOK(HOOK_TICK, control_module_power, HOOK_PRIO_DEFAULT);

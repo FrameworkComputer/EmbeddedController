@@ -33,7 +33,11 @@ DECLARE_DEFERRED(start_fan_deferred);
 
 void check_device_deferred(void)
 {
+#ifdef CONCONFIG_PLATFORM_IGNORED_TOUCHPAD_ID
+	int touchpad = BOARD_VERSION_10;
+#else
 	int touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
+#endif /* CONFIG_PLATFORM_IGNORED_TOUCHPAD_ID */
 	int audio = get_hardware_id(ADC_AUDIO_ID);
 	int product_id;
 
