@@ -2,5 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# Change default linker to LLD. This must be placed before 'source' line.
+# Note that we can't enable it in config file for program, because it breaks
+# compilation with other toolchains.
+choice LLVM_LINKER
+	default LLVM_USE_LLD
+endchoice
+
 # Include LLVM Kconfig from Zephyr
 source "${ZEPHYR_BASE}/cmake/toolchain/llvm/Kconfig"
