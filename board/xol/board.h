@@ -170,6 +170,15 @@
 #include "registers.h"
 #include "usbc_config.h"
 
+/* I2C access in polling mode before task is initialized */
+#define CONFIG_I2C_BITBANG
+
+enum banshee_bitbang_i2c_channel {
+	I2C_BITBANG_CHAN_BRD_ID,
+	I2C_BITBANG_CHAN_COUNT
+};
+#define I2C_BITBANG_PORT_COUNT I2C_BITBANG_CHAN_COUNT
+
 enum adc_channel {
 	ADC_TEMP_SENSOR_1,
 	ADC_TEMP_SENSOR_2,
