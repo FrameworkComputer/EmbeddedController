@@ -559,7 +559,7 @@ void control_module_power(void)
 
 	if (pre_state != state || pre_touchpad != touchpad) {
 		if (touchpad >= BOARD_VERSION_2 && touchpad <= BOARD_VERSION_13) {
-						gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), !state);
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), !state);
 		} else {
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_module_pwr_on), 0);
 		}
