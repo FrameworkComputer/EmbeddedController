@@ -1,7 +1,7 @@
-This directory contains the out-of-tree `i2c-pseudo` Linux kernel module.
+CAUTION: You should not ever need this code. Servod can flash ITE EC chips
+without it now.
 
-Sending this module for upstream consideration is tracked in
-[b/129565355](https://issuetracker.google.com/129565355).
+This directory contains the out-of-tree `i2c-pseudo` Linux kernel module.
 
 Installation:
 ```

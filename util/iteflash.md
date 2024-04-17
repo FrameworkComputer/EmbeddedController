@@ -4,7 +4,7 @@ This doc: [http://go/cros-ite-ec-reflash](https://goto.google.com/cros-ite-ec-re
 <br>
 First written: 2019-04-02
 <br>
-Last updated: 2019-04-03
+Last updated: 2024-04-17
 
 Familiarity with [Chromium OS](https://www.chromium.org/chromium-os) and
 [Embedded Controller (EC)](../README.md) development is assumed.
@@ -77,9 +77,6 @@ The CR50 CCD capabilities must be set to `always`. To achieve this:
 1.  Reset CCD to `factory` mode.
     *   CR50 console: `ccd reset factory`
 
-Reflashing with CR50 also requires the [i2c-pseudo kernel module](#i2c-pseudo),
-unless using the [CR50 CCD sans servod](#ccd-sans-servod) alternative method.
-
 ### Prerequisites for Servo Micro
 
 This section applies whether the
@@ -98,32 +95,6 @@ To upgrade Servo Micro firmware if needed:
 
 If that still results in too old of a firmware version, use `repo sync` and
 `update_chroot` to update your CrOS development environment, then try again.
-
-Reflashing with Servo Micro also requires the
-[i2c-pseudo kernel module](#i2c-pseudo).
-
-### Installing i2c-pseudo {#i2c-pseudo}
-
-1.  Install the `i2c-pseudo` Linux kernel module. (Do this **outside** of the
-    chroot!)
-    *   `$ cd src/platform/ec/extra/i2c_pseudo`
-    *   `$ ./install`
-
-**NOTE**: You will need to restart servod after installation.
-
-If the above fails, your system may be missing packages necessary for building
-kernel modules. Consult your Linux distribution's documentation and support
-forums. After installing any packages that might be missing, simply try the
-install script again.
-
-If DKMS is not available, you will need to reinstall `i2c-pseudo` after each
-kernel upgrade. Otherwise DKMS should automatically install the module in each
-new kernel, which you can verify with `dkms status`.
-
-There is an intention to
-[upstream i2c-pseudo](https://issuetracker.google.com/129565355), though even if
-accepted upstream, it may or may not become included with common Linux
-distribution kernels.
 
 ### Common reflash instructions
 
@@ -162,8 +133,12 @@ be running when using this method.
     *   `$ cd ~/trunk/src/platform/ec`
     *   `$ board=<board_name>`
     *   `$ make -j BOARD="$board"`
-1.  Run iteflash from the build/\<board\>/util directory.
-    *   `$ build/"$board"/util/iteflash --i2c-interface=ccd --i2c-mux
+1.  Get the serial number of your CR50 or Ti50.
+    *   `lsusb -d 18d1:504a -v | grep iSerial`
+    *   `lsusb -d 18d1:5014 -v | grep iSerial`
+1.  Run iteflash from the build/host/util directory.
+    *   `$ build/host/util/iteflash --i2c-interface=usb
+        --serial 12018039-4c59c752
         --send-waveform=1 --erase --write=build/"$board"/ec.bin`
 
 WARNING: The `--i2c-mux` flag is only required for some ITE EC boards. For
