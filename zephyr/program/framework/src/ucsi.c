@@ -393,7 +393,7 @@ int ucsi_startup(int controller)
 			&pd_chip_ucsi_info[controller].version, 2);
 
 		if (rv != EC_SUCCESS)
-			CPRINTS("UCSI start command fail!");
+			CPRINTS("UCSI get version fail!");
 
 		memcpy(host_get_memmap(EC_CUSTOMIZED_MEMMAP_UCSI_VERSION),
 			&pd_chip_ucsi_info[controller].version, 2);
