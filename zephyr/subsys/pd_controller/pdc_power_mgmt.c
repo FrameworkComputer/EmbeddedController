@@ -482,6 +482,8 @@ struct pdc_port_t {
 	ATOMIC_DEFINE(pdc_cmd_flags, CMD_PDC_COUNT);
 	/** Flag to suspend the PDC Power Mgmt state machine */
 	atomic_t suspend;
+	/** Flag to notify that a Hard Reset was sent */
+	atomic_t hard_reset_sent;
 
 	/** Source TypeC attached local state variable */
 	enum src_typec_attached_local_state_t src_typec_attached_local_state;
@@ -903,6 +905,8 @@ static bool handle_connector_status(struct pdc_port_t *port)
 		LOG_INF("C%d: Reset complete indicator", port_number);
 		pdc_power_mgmt_notify_event(port_number,
 					    PD_STATUS_EVENT_HARD_RESET);
+
+		atomic_set(&port->hard_reset_sent, true);
 	}
 
 	if (!status->connect_status) {
@@ -1343,7 +1347,14 @@ static void pdc_snk_attached_run(void *obj)
 		return;
 	case SNK_ATTACHED_RUN:
 		set_attached_pdc_state(port, SNK_ATTACHED_STATE);
-		run_snk_policies(port);
+		/* Hard Reset could disable Sink FET. Re-enable it */
+		if (atomic_get(&port->hard_reset_sent)) {
+			atomic_clear(&port->hard_reset_sent);
+			port->snk_attached_local_state =
+				SNK_ATTACHED_SET_SINK_PATH;
+		} else {
+			run_snk_policies(port);
+		}
 		break;
 	}
 }
@@ -1737,7 +1748,14 @@ static void pdc_snk_typec_only_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
 		return;
 	case SNK_TYPEC_ATTACHED_RUN:
-		send_pending_public_commands(port);
+		/* Hard Reset could disable Sink FET. Re-enable it */
+		if (atomic_get(&port->hard_reset_sent)) {
+			atomic_clear(&port->hard_reset_sent);
+			port->snk_typec_attached_local_state =
+				SNK_TYPEC_ATTACHED_SET_SINK_PATH_ON;
+		} else {
+			send_pending_public_commands(port);
+		}
 		break;
 	}
 }
