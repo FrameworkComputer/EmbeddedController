@@ -34,6 +34,14 @@
 			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_USB_C0_FRS_EN";
 		};
+
+		en_pp5000_usb_a1_vbus: en_pp5000_usb_a1_vbus {
+			gpios = <&gpioa 6 GPIO_OUTPUT_LOW>;
+		};
+
+		usb_a1_fault_odl: usb_a1_fault_odl {
+			gpios = <&gpioa 7 GPIO_INPUT>;
+		};
 	};
 
 	unused-pins {
@@ -50,8 +58,6 @@
 			<&gpioh 3 GPIO_ODR_HIGH>,
 			/* unnamed nc pins */
 			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
-			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
-			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
 			<&gpiod 7 GPIO_INPUT_PULL_DOWN>,
 			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
 			<&gpioh 6 GPIO_INPUT_PULL_DOWN>,
@@ -285,4 +291,10 @@
 	/delete-node/ tusb1064-mux-1@44;
 
 	/delete-node/ ps8743_mux_1;
+};
+
+/* Skitty usba port enable config */
+&usba_port_enable_list {
+	enable-pins = <&en_pp5000_usb_a0_vbus
+		       &en_pp5000_usb_a1_vbus>;
 };
