@@ -551,7 +551,7 @@ void control_module_power(void)
 {
 	static int pre_state, pre_touchpad;
 	int state = chipset_in_state(CHIPSET_STATE_ANY_OFF);
-#ifdef CONCONFIG_PLATFORM_IGNORED_TOUCHPAD_ID
+#ifdef CONFIG_PLATFORM_IGNORED_TOUCHPAD_ID
 	int touchpad = BOARD_VERSION_10;
 #else
 	int touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
