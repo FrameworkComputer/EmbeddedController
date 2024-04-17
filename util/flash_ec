@@ -200,7 +200,7 @@ DEFINE_string dut_ip "" \
 	"DUT IP address"
 DEFINE_string token_db "${EC_DIR}/build/tokens.bin" \
 	"Full pathname of the EC tokenized database to copy to DUT."
-DEFINE_boolean use_i2c_pseudo "${FLAGS_TRUE}" \
+DEFINE_boolean use_i2c_pseudo "${FLAGS_FALSE}" \
 	"Use the linux i2c_pseudo driver instead of accessing the servo " \
 	"i2c endpoint directly."
 
