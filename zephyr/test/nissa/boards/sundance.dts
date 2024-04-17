@@ -36,10 +36,6 @@
 			enum-name = "GPIO_ENTERING_RW";
 		};
 
-		gpio_en_pp5000_pen_x: en_pp5000_pen_x {
-			gpios = <&gpioe 2 GPIO_OUTPUT>;
-		};
-
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
 			gpios = <&gpio0 5 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_PPC_INT_ODL";

@@ -115,9 +115,6 @@
 			gpios = <&gpiob 6 GPIO_OUTPUT>;
 			enum-name = "GPIO_TEMP_SENSOR_POWER";
 		};
-		gpio_en_pp5000_pen_x: en_pp5000_pen_x {
-			gpios = <&gpioe 2 GPIO_OUTPUT>;
-		};
 		gpio_en_pp5000_s5: en_pp5000_s5 {
 			gpios = <&gpio4 0 GPIO_OUTPUT>;
 		};
@@ -147,9 +144,6 @@
 		gpio_lid_open: lid_open {
 			gpios = <&gpiod 2 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
-		};
-		gpio_pen_detect_odl: pen_detect_odl {
-			gpios = <&gpio9 6 GPIO_INPUT_PULL_UP>;
 		};
 		gpio_pg_pp1050_mem_s3_od: pg_pp1050_mem_s3_od {
 			gpios = <&gpiof 0 GPIO_INPUT>;

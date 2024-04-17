@@ -237,6 +237,7 @@ if(DEFINED CONFIG_BOARD_SUNDANCE)
 	zephyr_library_sources(
 			"sundance/src/led.c"
 			"sundance/src/form_factor.c"
+			"sundance/src/board.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "sundance/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "sundance/src/charger.c")
