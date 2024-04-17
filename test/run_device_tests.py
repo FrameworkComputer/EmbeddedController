@@ -121,6 +121,7 @@ DATA_ACCESS_VIOLATION_200B0000_REGEX = re.compile(
 PRINTF_CALLED_REGEX = re.compile(r"printf called\r\n")
 
 BLOONCHIPPER = "bloonchipper"
+BUCCANEER = "buccaneer"
 DARTMONKEY = "dartmonkey"
 HELIPILOT = "helipilot"
 
@@ -569,11 +570,17 @@ HELIPILOT_CONFIG = BoardConfig(
     expected_mcu_power=PowerUtilization(
         idle=RangedValue(34.8, 3.0), sleep=RangedValue(2.7, 2.5)
     ),
+    # TODO(b/336640650): Add helipilot variants once RO is uploaded
     variants={},
 )
 
+BUCCANEER_CONFIG = HELIPILOT_CONFIG
+BUCCANEER_CONFIG.name = BUCCANEER
+# TODO(b/336640151): Add buccaneer variants once RO is created
+
 BOARD_CONFIGS = {
     "bloonchipper": BLOONCHIPPER_CONFIG,
+    "buccaneer": BUCCANEER_CONFIG,
     "dartmonkey": DARTMONKEY_CONFIG,
     "helipilot": HELIPILOT_CONFIG,
 }
