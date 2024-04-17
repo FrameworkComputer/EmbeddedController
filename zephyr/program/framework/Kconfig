@@ -101,6 +101,13 @@ config PLATFORM_MULTI_LED_FREQ
 		The multifunction LED flash frequency is different on each project, use this
 		to configure the frequency. (unit milli period)
 
+config PLATFORM_IGNORED_TOUCHPAD_ID
+	bool "Enable ingonre check Touchpad board id"
+	default n
+	help
+		Enable this option if Touchpad board ID not current at the build phase
+		or need test others TP for verify.
+
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code
 source "subsys/logging/Kconfig.template.log_config"
