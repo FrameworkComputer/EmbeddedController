@@ -93,7 +93,6 @@ static int get_temp(int sensor, const int offset, int *temp)
 	switch (offset) {
 	case F75397_TEMP_LOCAL:
 		rv = raw_read8(sensor, offset, &temp_raw);
-		rv = raw_read8(sensor, F75397_TEMP_LOCAL_LOW_REGISTER, &data);
 		break;
 	case F75397_TEMP_REMOTE1:
 		rv = raw_read8(sensor, offset, &temp_raw);
