@@ -293,20 +293,21 @@ enum ec_error_list derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
 		sizeof(user_id));
 }
 
-enum ec_error_list aes_128_gcm_encrypt(const uint8_t *key, size_t key_size,
-				       const uint8_t *plaintext,
-				       uint8_t *ciphertext, size_t text_size,
-				       const uint8_t *nonce, size_t nonce_size,
-				       uint8_t *tag, size_t tag_size)
+enum ec_error_list aes_128_gcm_encrypt(std::span<const uint8_t> key,
+				       std::span<const uint8_t> plaintext,
+				       std::span<uint8_t> ciphertext,
+				       std::span<const uint8_t> nonce,
+				       std::span<uint8_t> tag)
 {
-	if (nonce_size != FP_CONTEXT_NONCE_BYTES) {
-		CPRINTS("Invalid nonce size %zu bytes", nonce_size);
+	if (nonce.size() != FP_CONTEXT_NONCE_BYTES) {
+		CPRINTS("Invalid nonce size %zu bytes", nonce.size());
 		return EC_ERROR_INVAL;
 	}
 
 	bssl::ScopedEVP_AEAD_CTX ctx;
-	int ret = EVP_AEAD_CTX_init(ctx.get(), EVP_aead_aes_128_gcm(), key,
-				    key_size, tag_size, nullptr);
+	int ret = EVP_AEAD_CTX_init(ctx.get(), EVP_aead_aes_128_gcm(),
+				    key.data(), key.size(), tag.size(),
+				    nullptr);
 	if (!ret) {
 		CPRINTS("Failed to initialize encryption context");
 		return EC_ERROR_UNKNOWN;
@@ -315,19 +316,18 @@ enum ec_error_list aes_128_gcm_encrypt(const uint8_t *key, size_t key_size,
 	size_t out_tag_size = 0;
 	std::span<uint8_t> extra_input; /* no extra input */
 	std::span<uint8_t> additional_data; /* no additional data */
-	ret = EVP_AEAD_CTX_seal_scatter(ctx.get(), ciphertext, tag,
-					&out_tag_size, tag_size, nonce,
-					nonce_size, plaintext, text_size,
-					extra_input.data(), extra_input.size(),
-					additional_data.data(),
-					additional_data.size());
+	ret = EVP_AEAD_CTX_seal_scatter(
+		ctx.get(), ciphertext.data(), tag.data(), &out_tag_size,
+		tag.size(), nonce.data(), nonce.size(), plaintext.data(),
+		plaintext.size(), extra_input.data(), extra_input.size(),
+		additional_data.data(), additional_data.size());
 	if (!ret) {
 		CPRINTS("Failed to encrypt");
 		return EC_ERROR_UNKNOWN;
 	}
-	if (out_tag_size != tag_size) {
+	if (out_tag_size != tag.size()) {
 		CPRINTS("Resulting tag size %zu does not match expected size: %zu",
-			out_tag_size, tag_size);
+			out_tag_size, tag.size());
 		return EC_ERROR_UNKNOWN;
 	}
 	return EC_SUCCESS;

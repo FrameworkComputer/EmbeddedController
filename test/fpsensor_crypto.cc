@@ -814,10 +814,8 @@ test_static ec_error_list test_aes_128_gcm_encrypt_in_place()
 		0xa1, 0xab, 0x8f, 0xb3, 0x70, 0x75, 0xab, 0x48,
 	};
 
-	ec_error_list ret = aes_128_gcm_encrypt(
-		key.data(), key.size(), plaintext.data(), plaintext.data(),
-		plaintext.size(), nonce.data(), nonce.size(), tag.data(),
-		tag.size());
+	ec_error_list ret =
+		aes_128_gcm_encrypt(key, plaintext, plaintext, nonce, tag);
 	TEST_EQ(ret, EC_SUCCESS, "%d");
 	TEST_ASSERT_ARRAY_EQ(plaintext.data(), expected_ciphertext.data(),
 			     plaintext.size());
@@ -873,9 +871,7 @@ test_static ec_error_list test_aes_128_gcm_encrypt_invalid_nonce_size()
 	/* Use an invalid nonce size. */
 	constexpr std::array<uint8_t, FP_CONTEXT_NONCE_BYTES - 1> nonce{};
 
-	ec_error_list ret = aes_128_gcm_encrypt(
-		key.data(), key.size(), text.data(), text.data(), text.size(),
-		nonce.data(), nonce.size(), tag.data(), tag.size());
+	ec_error_list ret = aes_128_gcm_encrypt(key, text, text, nonce, tag);
 	TEST_EQ(ret, EC_ERROR_INVAL, "%d");
 
 	return EC_SUCCESS;
@@ -906,9 +902,7 @@ test_static ec_error_list test_aes_128_gcm_encrypt_invalid_key_size()
 	/* Use an invalid key size. Key must be exactly 128 bits. */
 	constexpr std::array<uint8_t, SBP_ENC_KEY_LEN - 1> key{};
 
-	ec_error_list ret = aes_128_gcm_encrypt(
-		key.data(), key.size(), text.data(), text.data(), text.size(),
-		nonce.data(), nonce.size(), tag.data(), tag.size());
+	ec_error_list ret = aes_128_gcm_encrypt(key, text, text, nonce, tag);
 	TEST_EQ(ret, EC_ERROR_UNKNOWN, "%d");
 
 	return EC_SUCCESS;

@@ -52,9 +52,9 @@ encrypt_data_in_place(uint16_t version,
 	}
 
 	/* Encrypt the secret blob in-place. */
-	ret = aes_128_gcm_encrypt(enc_key.data(), enc_key.size(), data, data,
-				  data_size, info.nonce, sizeof(info.nonce),
-				  info.tag, sizeof(info.tag));
+	std::span data_span(data, data_size);
+	ret = aes_128_gcm_encrypt(enc_key, data_span, data_span, info.nonce,
+				  info.tag);
 	if (ret != EC_SUCCESS) {
 		return ret;
 	}
