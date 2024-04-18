@@ -65,8 +65,10 @@ int cypd_write_reg8_wait_ack(int controller, int reg, int data)
 
 
 	rv = cypd_write_reg8(controller, reg, data);
-	if (rv != EC_SUCCESS)
+	if (rv != EC_SUCCESS) {
 		CPRINTS("Write Reg8 0x%x fail!", reg);
+		return EC_ERROR_INVAL;
+	}
 
 	if (cypd_wait_for_ack(controller, 100) != EC_SUCCESS) {
 		CPRINTS("%s timeout on interrupt", __func__);
