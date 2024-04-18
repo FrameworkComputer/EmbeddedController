@@ -1148,6 +1148,20 @@ static void run_src_policies(struct pdc_port_t *port)
 	send_pending_public_commands(port);
 }
 
+static void run_typec_src_policies(struct pdc_port_t *port)
+{
+	/* Check if Rp value needs to be adjusted */
+	if (atomic_test_and_clear_bit(port->src_policy.flags,
+				      SRC_POLICY_SET_RP)) {
+		queue_internal_cmd(port, CMD_PDC_SET_POWER_LEVEL);
+	} else if (atomic_test_and_clear_bit(port->src_policy.flags,
+					     SRC_POLICY_FORCE_SNK)) {
+		queue_internal_cmd(port, CMD_PDC_SET_CCOM);
+	} else {
+		send_pending_public_commands(port);
+	}
+}
+
 /**
  * @brief Entering unattached state
  */
@@ -1865,13 +1879,7 @@ static void pdc_src_typec_only_run(void *obj)
 		pdc_dpm_add_non_pd_sink(port_number);
 		return;
 	case SRC_TYPEC_ATTACHED_RUN:
-		/* Check if Rp value needs to be adjusted */
-		if (atomic_test_and_clear_bit(port->src_policy.flags,
-					      SRC_POLICY_SET_RP)) {
-			queue_internal_cmd(port, CMD_PDC_SET_POWER_LEVEL);
-		} else {
-			send_pending_public_commands(port);
-		}
+		run_typec_src_policies(port);
 		break;
 	}
 }
