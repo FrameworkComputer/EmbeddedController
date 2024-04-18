@@ -682,12 +682,14 @@ static int hid_target_process_write(struct i2c_target_config *config)
 		 */
 		*data->buffer = power_state;
 
-		if (power_state == 0x00) {
-			i2c_hid_als_init();
-			als_report_control(ALS_REPORT_POLLING);
-		} else
-			als_shutdown();
-
+		if (config->address == 0x51) {
+			/* only control als power state when config address is 0x51 */
+			if (power_state == 0x00) {
+				i2c_hid_als_init();
+				als_report_control(ALS_REPORT_POLLING);
+			} else
+				als_shutdown();
+		}
 		break;
 	default:
 
@@ -757,8 +759,6 @@ static int hid_target_read_requested(struct i2c_target_config *config,
 						struct i2c_hid_target_data,
 						config);
 	uint16_t target_register;
-
-	gpio_pin_set_dt(data->alert_gpio, 1);
 
 	if (data->write_idx) {
 		target_register = data->target_register;
