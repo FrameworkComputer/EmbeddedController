@@ -8577,8 +8577,11 @@ static void cmd_battery_config_help(const char *cmd)
 		"    device_name: Battery's name. Up to 31 chars.\n"
 		"    index: Index of config in CBI to be get or set.\n"
 		"\n"
-		"    Run `ectool battery` for <manuf_name> and <device_name>\n",
-		cmd, cmd);
+		"    Run `ectool battery` for <manuf_name> and <device_name>\n"
+		"\n"
+		"Usage: %s search <json_file> <manuf_name> <device_name> [<index>]\n"
+		"    Search for a matching battery config in the config file.\n",
+		cmd, cmd, cmd);
 }
 
 static int cmd_battery_config_get(int argc, char *argv[])
@@ -8690,7 +8693,7 @@ static int cmd_battery_config_get(int argc, char *argv[])
 	return 0;
 }
 
-static int cmd_battery_config_set(int argc, char *argv[])
+static int cmd_battery_config_set(int argc, char *argv[], bool search_only)
 {
 	FILE *fp = NULL;
 	int size;
@@ -8791,6 +8794,12 @@ static int cmd_battery_config_set(int argc, char *argv[])
 	if (read_u8_from_json(root_dict, "struct_version", &struct_version))
 		return -1;
 
+	if (search_only) {
+		printf("Battery config with identifier: %s,%s is found at %s\n",
+		       manuf_name, device_name, json_file);
+		return 0;
+	}
+
 	/* Clear config to ensure unspecified (optional) fields are 0. */
 	memset(&config, 0, sizeof(config));
 	if (read_battery_config_from_json(root_dict, &config))
@@ -8834,7 +8843,9 @@ static int cmd_battery_config(int argc, char *argv[])
 	if (argc > 1 && !strcasecmp(argv[1], "get"))
 		return cmd_battery_config_get(--argc, ++argv);
 	else if (argc > 1 && !strcasecmp(argv[1], "set"))
-		return cmd_battery_config_set(--argc, ++argv);
+		return cmd_battery_config_set(--argc, ++argv, false);
+	else if (argc > 1 && !strcasecmp(argv[1], "search"))
+		return cmd_battery_config_set(--argc, ++argv, true);
 
 	fprintf(stderr, "Invalid sub-command '%s'\n",
 		argv[1] ? argv[1] : "(null)");
