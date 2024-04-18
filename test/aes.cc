@@ -29,7 +29,6 @@ extern "C" {
 #include "watchdog.h"
 }
 
-#include "aes_gcm_helpers.h"
 #include "openssl/aead.h"
 #include "openssl/aes.h"
 #include "openssl/cipher.h"
