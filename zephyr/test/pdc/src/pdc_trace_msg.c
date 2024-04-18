@@ -39,7 +39,7 @@ FAKE_VALUE_FUNC(bool, pdc_trace_msg_req, int, enum pdc_trace_chip_type,
 FAKE_VALUE_FUNC(bool, pdc_trace_msg_resp, int, enum pdc_trace_chip_type,
 		const uint8_t *, const int);
 
-LOG_MODULE_REGISTER(pdc_trace, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(test_pdc_trace, LOG_LEVEL_INF);
 
 static uint8_t pcap_buf[500];
 static uint16_t msg_seq_num;

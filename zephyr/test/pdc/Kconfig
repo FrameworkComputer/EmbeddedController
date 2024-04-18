@@ -35,4 +35,14 @@ config TEST_PDC_MESSAGE_TRACING
 	  reported in the test run logs and in a separate "rts.pcap"
 	  file in PCAP capture file format.
 
+config TEST_SUITE_PDC_TRACE_MSG
+	bool "Enable PDC message tracing tests"
+	depends on !TEST_PDC_MESSAGE_TRACING
+	help
+	  No help.
+
+	  These tests are incompatible with TEST_PDC_MESSAGE_TRACING
+	  since that config enables an alternate implementation of the
+	  code to be tested here.
+
 source "Kconfig.zephyr"

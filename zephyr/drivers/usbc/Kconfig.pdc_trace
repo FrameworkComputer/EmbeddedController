@@ -1,0 +1,39 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+if PLATFORM_EC_USBC
+
+config USBC_PDC_TRACE_MSG_FIFO_SIZE
+	int "PDC message tracing FIFO size"
+	range 128 65536
+	default 1024
+	depends on USBC_PDC_TRACE_MSG
+	help
+	  This is the byte size of the PDC message tracing FIFO. When
+	  tracing is active, the FIFO needs to be deep enough to absorb
+	  delays on the AP side when retrieving messages. When the FIFO
+	  is full, messages are tail-dropped which effectively disables
+	  tracing until the FIFO drains. The FIFO is allocated in EC
+	  RAM, so some sizing judgment may be necessary on ECs with
+	  limited RAM.
+
+config USBC_PDC_TRACE_MSG_CONSOLE_CMD
+	bool "Enable pdctrace console command"
+	default y if USBC_PDC_TRACE_MSG
+	help
+	  Enable console command for printing PDC communication trace
+	  messages.
+
+config USBC_PDC_TRACE_MSG_HOST_CMD
+	bool "Enable PDC_TRACE host command"
+	default y if USBC_PDC_TRACE_MSG
+	help
+	  Enable host command for collecting PDC communication trace
+	  messages.
+
+module = USBC_PDC_TRACE_MSG
+module-str = usbc_pdc_trace_msg
+source "subsys/logging/Kconfig.template.log_config"
+
+endif # PLATFORM_EC_USBC

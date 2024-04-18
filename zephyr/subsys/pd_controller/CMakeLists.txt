@@ -17,3 +17,5 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_HOSTCMD_TYPEC_CONTROL
 	pdc_stub.c)
 zephyr_library_sources_ifdef(CONFIG_USB_PDC_POWER_MGMT
 	pdc_dpm.c)
+zephyr_library_sources_ifdef(CONFIG_USBC_PDC_TRACE_MSG
+	pdc_trace_msg.c)

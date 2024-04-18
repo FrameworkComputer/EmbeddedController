@@ -8,6 +8,8 @@ module = USBC
 module-str = usbc
 source "subsys/logging/Kconfig.template.log_config"
 
+rsource "Kconfig.pdc_trace"
+
 config USBC_INTEL_ALTMODE
 	bool "USB-C Intel alternate mode configuration driver"
 	default y if DT_HAS_INTEL_PD_ALTMODE_ENABLED
