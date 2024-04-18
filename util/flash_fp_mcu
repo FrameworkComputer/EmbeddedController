@@ -314,9 +314,16 @@ platform_base_name() {
   echo "${base_name//[0-9]/}"
 }
 
-get_chip() {
+get_fp_mcu_board() {
   local board
   board="$(cros_config /fingerprint board)"
+
+  echo "${board}"
+}
+
+get_chip() {
+  local board
+  board="$(get_fp_mcu_board)"
 
   case "${board}" in
     bloonchipper|dartmonkey|nocturne_fp|nami_fp)
@@ -334,7 +341,7 @@ get_chip() {
 
 get_default_fw() {
   local board
-  board="$(cros_config /fingerprint board)"
+  board="$(get_fp_mcu_board)"
 
   # If cros_config returns "", that is okay assuming there is only
   # one firmware file on disk.
