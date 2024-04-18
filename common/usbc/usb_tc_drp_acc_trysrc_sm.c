@@ -2757,14 +2757,16 @@ static void tc_attached_snk_exit(const int port)
 			tcpm_enable_auto_discharge_disconnect(port, 0);
 	}
 
-	/* Clear flags after checking Vconn status */
-	TC_CLR_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP | TC_FLAGS_POWER_OFF_SNK);
-
 	/* Stop drawing power */
 	sink_stop_drawing_current(port);
 
-	if (TC_CHK_FLAG(port, TC_FLAGS_TS_DTS_PARTNER))
+	if (TC_CHK_FLAG(port, TC_FLAGS_TS_DTS_PARTNER) &&
+	    !TC_CHK_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP)) {
 		tcpm_debug_detach(port);
+	}
+
+	/* Clear flags after checking Vconn status */
+	TC_CLR_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP | TC_FLAGS_POWER_OFF_SNK);
 
 	pd_timer_disable(port, TC_TIMER_CC_DEBOUNCE);
 	pd_timer_disable(port, TC_TIMER_TIMEOUT);
@@ -3349,6 +3351,9 @@ static void tc_attached_src_exit(const int port)
 		if (TC_CHK_FLAG(port, TC_FLAGS_VCONN_ON) &&
 		    !TC_CHK_FLAG(port, TC_FLAGS_CTVPD_DETECTED))
 			set_vconn(port, 0);
+
+		if (TC_CHK_FLAG(port, TC_FLAGS_TS_DTS_PARTNER))
+			tcpm_debug_detach(port);
 	}
 
 	/* Clear CTVPD detected after checking for Vconn */
@@ -3356,9 +3361,6 @@ static void tc_attached_src_exit(const int port)
 
 	/* Clear PR swap flag after checking for Vconn */
 	TC_CLR_FLAG(port, TC_FLAGS_REQUEST_PR_SWAP);
-
-	if (TC_CHK_FLAG(port, TC_FLAGS_TS_DTS_PARTNER))
-		tcpm_debug_detach(port);
 
 	pd_timer_disable(port, TC_TIMER_CC_DEBOUNCE);
 	pd_timer_disable(port, TC_TIMER_TIMEOUT);
