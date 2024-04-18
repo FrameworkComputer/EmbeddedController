@@ -241,3 +241,9 @@
 	offset = <0x31000>;
 	size = <0x1000>;
 };
+
+&fan0 {
+	rpm_min = <2300>;
+	rpm_start = <2300>;
+	rpm_max = <4050>;
+};
