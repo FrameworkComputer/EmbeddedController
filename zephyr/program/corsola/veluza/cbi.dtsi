@@ -1,0 +1,110 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+/* Veluza-specific fw_config fields. */
+	veluza-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+		/*
+		 * FW_CONFIG field to defined for STYLUS TYPE.
+		 */
+		stylus {
+			enum-name = "FW_STYLUS";
+			start = <0>;
+			size = <1>;
+
+			stylus-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STYLUS_ABSENT";
+				value = <0>;
+			};
+			stylus-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STYLUS_PRESENT";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for FORM FACTOR TYPE.
+		 */
+		form-factor {
+			enum-name = "FW_FORM_FACTOR";
+			start = <1>;
+			size = <1>;
+
+			form-factor-clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FORM_FACTOR_CLAMSHELL";
+				value = <0>;
+			};
+			form-factor-convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FORM_FACTOR_CONVERTIBLE";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for DB TYPE.
+		 */
+		db-type {
+			enum-name = "FW_DB_TYPE";
+			start = <2>;
+			size = <1>;
+
+			db-type-nohdmi {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_DB_TYPE_NOHDMI";
+				value = <0>;
+			};
+			db-type-hdmi {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_DB_TYPE_HDMI";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for AMP TYPE.
+		 */
+		amp {
+			enum-name = "FW_AMP";
+			start = <28>;
+			size = <2>;
+
+			amp-alc5682i {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_AMP_ALC5682I";
+				value = <0>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for STORAGE TYPE.
+		 */
+		storage {
+			enum-name = "FW_STORAGE";
+			start = <30>;
+			size = <2>;
+
+			storage-emmc {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_EMMC";
+				value = <0>;
+			};
+			storage-nvme {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_NVME";
+				value = <1>;
+			};
+			storage-ufs {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_UFS";
+				value = <2>;
+			};
+		};
+	};
+};

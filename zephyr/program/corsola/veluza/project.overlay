@@ -16,6 +16,7 @@
 #include "../ite_led.dtsi"
 #include "../ite_usbc.dtsi"
 #include "../ite_shi.dtsi"
+#include "./cbi.dtsi"
 #include "./thermistor.dtsi"
 / {
 	named-gpios {
