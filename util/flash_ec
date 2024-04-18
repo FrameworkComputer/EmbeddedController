@@ -1101,18 +1101,21 @@ function flash_openocd() {
 function flash_flashrom() {
 	TOOL_PATH="${EC_DIR}/build/${BOARD}/util:${PATH}:/usr/sbin"
 	FLASHROM=$(PATH="${TOOL_PATH}" which flashrom)
+	local TEMP_DIR
+	TEMP_DIR="$(mktemp -d --suffix="${TEMP_SUFFIX}")"
+	DELETE_LIST+=("${TEMP_DIR}")
 
 	if on_servov3; then
-		FLASHROM_ARGS="-p linux_spi"
+		FLASHROM_ARGS="--programmer=linux_spi"
 	elif on_raiden; then
 	    if [[ "${SERVO_TYPE}" =~ "servo_micro" ]]; then
 		# Servo micro doesn't use the "target" parameter.
-		FLASHROM_ARGS="-p raiden_debug_spi:"
+		FLASHROM_ARGS="--programmer=raiden_debug_spi:"
 	    else
-		FLASHROM_ARGS="-p raiden_debug_spi:target=EC,"
+		FLASHROM_ARGS="--programmer=raiden_debug_spi:target=EC,"
 	    fi
 	else
-		FLASHROM_ARGS="-p ft2232_spi:type=google-servo-v2,port=B,"
+		FLASHROM_ARGS="--programmer=ft2232_spi:type=google-servo-v2,port=B,"
 	fi
 
 	if [ ! -x "${FLASHROM}" ]; then
@@ -1250,6 +1253,16 @@ function flash_flashrom() {
 			fi
 			cat "${IMG}"
 		} > "${T}"
+		fi
+
+		if [[ "${FLAGS_no_preserve}" == "${FLAGS_FALSE}" ]]; then
+			local IMG_CPY
+
+			IMG_CPY="${TEMP_DIR}/ec.new.cpy.bin"
+			cat "${T}" > "${IMG_CPY}"
+			T="${IMG_CPY}"
+			preserve_sections "spi" "${T}" "${TEMP_DIR}"    \
+				"${FLASHROM}" "${FLASHROM_ARGS}" || die "${MSG_PROGRAM_FAIL}"
 		fi
 
 		info "Programming EC firmware image."
@@ -1893,7 +1906,7 @@ function preserve_sections() {
 		CUR_IMG="${TEMP_DIR}/ec.cur.bin"
 		info "Reading FMAP section from EC chip"
 		read_chip_partially "${CHIP_TYPE}" "${NEW_FMAP_OFFSET}" \
-			"${NEW_FMAP_SIZE}" "${CUR_FMAP_IMG}" \
+			"${NEW_FMAP_SIZE}" "${CUR_FMAP_IMG}" "FMAP" \
 			"${CHIP_CMD_PREFIX[@]}"
 		# Verify the partial file starts with the correct FMAP header.
 		# If the FMAP has moved between the current image and new
@@ -1967,7 +1980,7 @@ function preserve_sections_with_fmap_image() {
 			SEC_SIZE=$(echo "${SEC_FMAP_DUMP}" | awk '{print $3}')
 			info "Reading ${line} section from EC chip"
 			read_chip_partially "${CHIP_TYPE}" \
-				"${SEC_OFFSET}" "${SEC_SIZE}" "${SEC_IMG}" "${CHIP_CMD_PREFIX[@]}"
+				"${SEC_OFFSET}" "${SEC_SIZE}" "${SEC_IMG}" "${line}" "${CHIP_CMD_PREFIX[@]}"
 			info "Preserving ${line} section in new image"
 			futility load_fmap "${NEW_IMG}" "${line}:${SEC_IMG}"
 		done
@@ -2004,6 +2017,7 @@ function read_chip_partially() {
 	local OFFSET
 	local SIZE
 	local FILE_PATH
+	local SECTION
 	local CHIP_CMD_PREFIX
 
 	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
@@ -2013,6 +2027,8 @@ function read_chip_partially() {
 	SIZE=${1:?"missing arg 3: Size"}
 	shift
 	FILE_PATH=${1:?"missing arg 4: Image storage path"}
+	shift
+	SECTION=${1:?"missing arg 5: Section name"}
 	shift
 	CHIP_CMD_PREFIX=("$@")
 
@@ -2064,6 +2080,13 @@ function read_chip_partially() {
 		servo_ec_hard_reset_or_die
 		# ITE DFU mode must be re-enabled after each operation
 		ite_dfu_mode
+	elif [ "${CHIP_TYPE}" == "spi" ]; then
+		local FLASHROM_FMAP_RD
+
+		FLASHROM_FMAP_RD=( "sudo" "${CHIP_CMD_PREFIX[@]}" \
+			"--extract" "--include=${SECTION}:${FILE_PATH}")
+		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
+					"${FLASHROM_FMAP_RD[@]}" || die "${MSG_READ_FAIL}"
 	else
 		die "${MSG_CHIP_READ_INVALID}"
 	fi
@@ -2073,6 +2096,7 @@ function read_chip() {
 	local CHIP_TYPE
 	local FILE_PATH
 	local UUT_CUR_RD
+	local FLASHROM_RD
 	local CHIP_CMD_PREFIX
 
 	CHIP_TYPE=${1:?"missing arg 1: Chip type"}
@@ -2094,6 +2118,10 @@ function read_chip() {
 		servo_ec_hard_reset_or_die
 		# ITE DFU mode must be re-enabled after each operation
 		ite_dfu_mode
+	elif [ "${CHIP_TYPE}" == "spi" ]; then
+		FLASHROM_RD=( "sudo" "${CHIP_CMD_PREFIX[@]}" "--read=${FILE_PATH}" )
+		print_or_run timeout -k 10 -s 9 "${FLAGS_timeout}" \
+					"${FLASHROM_RD[@]}" || die "${MSG_READ_FAIL}"
 	else
 		die "${MSG_CHIP_READ_INVALID}"
 	fi
