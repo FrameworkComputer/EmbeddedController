@@ -64,8 +64,6 @@
 		&kso10_gp07
 		&kso11_gp06
 		&kso12_gp05
-		&kso13_gp04
-		&kso14_gp82
 	>;
 	pinctrl-names = "default";
 };

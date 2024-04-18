@@ -64,35 +64,6 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "button_interrupt";
 		};
-		int_usb_c0: usb_c0 {
-			irq-pin = <&gpio_usb_c0_c1_tcpc_int_odl>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "usb_interrupt";
-		};
-		int_usb_c1: usb_c1 {
-			irq-pin = <&gpio_usb_c0_c1_tcpc_rst_odl>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "usb_interrupt";
-		};
-	};
-
-	named-gpios {
-		gpio_sb_1: voldn_btn_odl {
-			gpios = <&gpioa 2 GPIO_PULL_UP>;
-			no-auto-init;
-		};
-		gpio_sb_2: volup_btn_odl {
-			gpios = <&gpio9 3 GPIO_OUTPUT>;
-			no-auto-init;
-		};
-	};
-
-	/*
-	 * Aliases used for sub-board GPIOs.
-	 */
-	aliases {
-		gpio-usb-c1-int-odl = &gpio_sb_1;
-		gpio-en-sub-s5-rails = &gpio_sb_2;
 	};
 
 	temp_memory: memory {
@@ -163,15 +134,10 @@
 		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
-			tcpc = <&tcpc_port0>;
+			tcpc = <&tcpc_port1>;
 			ppc = <&ppc_port1>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&virtual_mux_1>;
-			};
-			usb_mux_chain_1_no_mux: usb-mux-chain-1-no-mux {
-				compatible = "cros-ec,usb-mux-chain";
-				alternative-chain;
 				usb-muxes = <&virtual_mux_1>;
 			};
 		};
@@ -203,6 +169,8 @@
 			<&gpiod 4 0>,
 			<&gpiod 5 0>,
 			<&gpiod 7 0>,
+			<&gpio0 4 0>,
+			<&gpio8 2 0>,
 			<&gpioe 2 0>;
 	 };
 };
@@ -247,14 +215,16 @@
 	label = "I2C_USB_C0_C1_TCPC";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 
-	nct3808_C0: nct3808_C0@70 {
+	nct3808_C0: nct38xx@70 {
 		compatible = "nuvoton,nct38xx";
 		reg = <0x70>;
 
 		tcpc_port0: nct38xx-tcpc {
 			compatible = "nuvoton,nct38xx-tcpc";
 			gpio-dev = <&nct38xx_gpio_C0>;
-			tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+			tcpc-flags = <(
+				TCPC_FLAGS_TCPCI_REV2_0 |
+				TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
 			/* a duplicate of the <&gpio_usb_c0_tcpc_int_odl> node
 			 * in"named-gpios". This is the Zephyr preferred style,
 			 * the "named-gpios" node will be dealt with at a later
@@ -283,17 +253,49 @@
 				gpio-controller;
 				#gpio-cells = <2>;
 				ngpios = <8>;
-				pin_mask = <0xff>;
-				pinmux_mask = <0xf7>;
+				pin_mask = <0xdc>;
+				pinmux_mask = <0xff>;
 			};
-			ioex_c0_port1: gpio@1 {
+		};
+	};
+	nct3808_C1: nct38xx@74 {
+		compatible = "nuvoton,nct38xx";
+		reg = <0x74>;
+
+		tcpc_port1: nct38xx-tcpc {
+			compatible = "nuvoton,nct38xx-tcpc";
+			gpio-dev = <&nct38xx_gpio_C1>;
+			tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+			/* a duplicate of the <&gpio_usb_c0_tcpc_int_odl> node
+			 * in"named-gpios". This is the Zephyr preferred style,
+			 * the "named-gpios" node will be dealt with at a later
+			 * date.
+			 */
+			irq-gpios = <&gpiob 7 GPIO_ACTIVE_LOW>;
+			/* a duplicate of the <&gpio_usb_c0_tcpc_rst_l> node in
+			 * "named-gpios". This is the Zephyr preferred style,
+			 * the "named-gpios" node will be dealt with at a later
+			 * date.
+			 */
+			rst-gpios = <&gpio7 3
+				(GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+		};
+
+		nct38xx_gpio_C1: nct38xx-gpio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "nuvoton,nct38xx-gpio";
+			label = "NCT3808_C1";
+
+			ioex_c1_port0: gpio@0 {
 				compatible = "nuvoton,nct38xx-gpio-port";
-				reg = <0x1>;
-				label = "NCT3808_C0_GPIO0";
+				reg = <0x0>;
+				label = "NCT3808_C1_GPIO0";
 				gpio-controller;
 				#gpio-cells = <2>;
 				ngpios = <8>;
-				pin_mask = <0xff>;
+				pin_mask = <0xdc>;
+				pinmux_mask = <0xff>;
 			};
 		};
 	};
@@ -353,15 +355,6 @@
 &i2c7_0 {
 	label = "I2C_BATTERY";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
-};
-
-&tach2 {
-	status = "okay";
-	pinctrl-0 = <&ta2_1_in_gp73>;
-	pinctrl-names = "default";
-	port = <NPCX_TACH_PORT_A>; /* port-A is selected */
-	sample-clk = <NPCX_TACH_FREQ_LFCLK>; /* Use LFCLK as sampling clock */
-	pulses-per-round = <2>; /* number of pulses per round of encoder */
 };
 
 /* host interface */

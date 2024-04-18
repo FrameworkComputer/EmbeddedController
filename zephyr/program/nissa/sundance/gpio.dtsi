@@ -129,11 +129,11 @@
 			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
-			gpios = <&gpio0 0 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpio0 0 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
-			gpios = <&gpioc 6 GPIO_OUTPUT>;
-			enum-name = "GPIO_POWER_BUTTON_L";
+			gpios = <&gpioc 6 GPIO_INPUT>;
 		};
 		gpio_imu_int_l: imu_int_l {
 			gpios = <&gpio5 6 GPIO_INPUT>;
@@ -166,20 +166,12 @@
 		gpio_slp_sus_l: slp_sus_l {
 			gpios = <&gpio6 2 GPIO_INPUT>;
 		};
-		gpio_sub_usb_a1_ilimit_sdp: sub_usb_a1_ilimit_sdp {
-			gpios = <&gpiod 5 GPIO_OUTPUT>;
-			enum-name = "GPIO_USB2_ILIM_SEL";
-		};
 		gpio_sys_rst_odl: sys_rst_odl {
 			gpios = <&gpioc 5 GPIO_ODR_HIGH>;
 		};
 		gpio_tablet_mode_l: tablet_mode_l {
 			gpios = <&gpio9 5 GPIO_INPUT>;
 			enum-name = "GPIO_TABLET_MODE_L";
-		};
-		gpio_usb_a0_ilimit_sdp: usb_a0_ilimit_sdp {
-			gpios = <&gpio3 3 GPIO_OUTPUT>;
-			enum-name = "GPIO_USB1_ILIM_SEL";
 		};
 		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
 			gpios = <&gpio4 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
@@ -192,17 +184,11 @@
 			gpios = <&gpio7 3 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C0_C1_TCPC_RST_ODL";
 		};
-		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
-			enum-name = "GPIO_USB_C1_TCPC_INT_ODL";
-		};
-		gpio_usb_c1_tcpc_rst_odl: usb_c1_tcpc_rst_l {
-			enum-name = "GPIO_USB_C1_TCPC_RST_L";
-		};
 		gpio_vccin_aux_vid0: vccin_aux_vid0_ec {
 			gpios = <&gpio8 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_vccin_aux_vid1: vccin_aux_vid1_ec {
-			gpios = <&gpio8 2 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 		gpio_voldn_btn_odl: voldn_btn_odl {
 			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;

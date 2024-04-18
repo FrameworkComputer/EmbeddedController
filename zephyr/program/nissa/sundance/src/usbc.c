@@ -85,18 +85,16 @@ int board_set_active_charge_port(int port)
 void reset_nct38xx_port(int port)
 {
 	const struct gpio_dt_spec *reset_gpio_l;
-	const struct device *ioex_port0, *ioex_port1;
+	const struct device *ioex_port0;
 
 	/* TODO(b/225189538): Save and restore ioex signals */
 	if (port == USBC_PORT_C0) {
 		reset_gpio_l = &tcpc_config[0].rst_gpio;
 		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port0));
-		ioex_port1 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port1));
 #if DT_NODE_EXISTS(DT_NODELABEL(nct3807_C1))
 	} else if (port == USBC_PORT_C1) {
 		reset_gpio_l = &tcpc_config[1].rst_gpio;
-		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c1_port0));
-		ioex_port1 = DEVICE_DT_GET(DT_NODELABEL(ioex_c1_port1));
+		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c1_port1));
 #endif
 	} else {
 		/* Invalid port: do nothing */
@@ -113,7 +111,6 @@ void reset_nct38xx_port(int port)
 
 	/* Re-enable the IO expander pins */
 	gpio_reset_port(ioex_port0);
-	gpio_reset_port(ioex_port1);
 }
 
 void pd_power_supply_reset(int port)
@@ -158,22 +155,7 @@ void board_reset_pd_mcu(void)
 {
 	/* Reset TCPC0 */
 	reset_nct38xx_port(USBC_PORT_C0);
-}
-
-/*
- * sundance doesn't support BC1.2 like other nissa devices, so the USB-C
- * interrupt signals aren't shared and don't need any special handling.
- */
-void usb_interrupt(enum gpio_signal signal)
-{
-	int port;
-
-	if (signal == GPIO_SIGNAL(DT_NODELABEL(gpio_usb_c0_c1_tcpc_int_odl))) {
-		port = 0;
-	} else {
-		port = 1;
-	}
-	schedule_deferred_pd_interrupt(port);
+	reset_nct38xx_port(USBC_PORT_C1);
 }
 
 /* Used by Vbus discharge common code with CONFIG_USB_PD_DISCHARGE */
