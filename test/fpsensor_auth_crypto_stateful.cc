@@ -166,9 +166,8 @@ test_fp_decrypt_data_with_gsc_session_key_in_place(void)
 					 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1,
 					 2, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
 
-	TEST_EQ(decrypt_data_with_gsc_session_key_in_place(
-			gsc_session_key.data(), gsc_session_key.size(),
-			iv.data(), iv.size(), data.data(), data.size()),
+	TEST_EQ(decrypt_data_with_gsc_session_key_in_place(gsc_session_key, iv,
+							   data),
 		EC_SUCCESS, "%d");
 
 	std::array<uint8_t, 32> expected_data = {
@@ -203,9 +202,8 @@ test_fp_decrypt_data_with_gsc_session_key_in_place_fail(void)
 					 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1,
 					 2, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
 
-	TEST_NE(decrypt_data_with_gsc_session_key_in_place(
-			gsc_session_key.data(), gsc_session_key.size(),
-			iv.data(), iv.size(), data.data(), data.size()),
+	TEST_NE(decrypt_data_with_gsc_session_key_in_place(gsc_session_key, iv,
+							   data),
 		EC_SUCCESS, "%d");
 
 	return EC_SUCCESS;

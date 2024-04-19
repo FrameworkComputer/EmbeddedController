@@ -138,27 +138,27 @@ generate_gsc_session_key(std::span<const uint8_t> auth_nonce,
 }
 
 enum ec_error_list decrypt_data_with_gsc_session_key_in_place(
-	const uint8_t *gsc_session_key, size_t gsc_session_key_size,
-	const uint8_t *iv, size_t iv_size, uint8_t *data, size_t data_size)
+	std::span<const uint8_t> gsc_session_key, std::span<const uint8_t> iv,
+	std::span<uint8_t> data)
 {
-	if (gsc_session_key_size != 32 || iv_size != AES_BLOCK_SIZE) {
+	if (gsc_session_key.size() != 32 || iv.size() != AES_BLOCK_SIZE) {
 		return EC_ERROR_INVAL;
 	}
 
 	CleanseWrapper<AES_KEY> aes_key;
-	int res = AES_set_encrypt_key(gsc_session_key, 256, &aes_key);
+	int res = AES_set_encrypt_key(gsc_session_key.data(), 256, &aes_key);
 	if (res) {
 		return EC_ERROR_INVAL;
 	}
 
 	std::array<uint8_t, AES_BLOCK_SIZE> aes_iv;
-	std::copy(iv, iv + iv_size, aes_iv.begin());
+	std::copy(iv.begin(), iv.begin() + iv.size(), aes_iv.begin());
 
 	/* The AES CTR uses the same function for encryption & decryption. */
 	unsigned int block_num = 0;
 	std::array<uint8_t, AES_BLOCK_SIZE> ecount_buf;
-	AES_ctr128_encrypt(data, data, data_size, &aes_key, aes_iv.data(),
-			   ecount_buf.data(), &block_num);
+	AES_ctr128_encrypt(data.data(), data.data(), data.size(), &aes_key,
+			   aes_iv.data(), ecount_buf.data(), &block_num);
 
 	return EC_SUCCESS;
 }

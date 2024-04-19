@@ -215,9 +215,7 @@ fp_command_nonce_context(struct host_cmd_handler_args *args)
 		  raw_user_id.data());
 
 	ret = decrypt_data_with_gsc_session_key_in_place(
-		gsc_session_key.data(), gsc_session_key.size(),
-		p->enc_user_id_iv, sizeof(p->enc_user_id_iv),
-		raw_user_id.data(), raw_user_id.size());
+		gsc_session_key, p->enc_user_id_iv, raw_user_id);
 
 	if (ret != EC_SUCCESS) {
 		return EC_RES_ERROR;

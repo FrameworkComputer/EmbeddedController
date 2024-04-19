@@ -163,18 +163,15 @@ generate_gsc_session_key(std::span<const uint8_t> auth_nonce,
  * Note: The GSC session key is equal to the CK in the original design doc.
  *
  * @param[in] gsc_session_key the GSC session key
- * @param[in] gsc_session_key_size the size of GSC session key
  * @param[in] iv the IV of the encrypted data
- * @param[in] iv_size the size of the IV
  * @param[in,out] data the encrypted data
- * @param[in] data_size the output data size
  *
  * @return EC_SUCCESS on success
  * @return EC_ERROR_* on error
  */
 enum ec_error_list decrypt_data_with_gsc_session_key_in_place(
-	const uint8_t *gsc_session_key, size_t gsc_session_key_size,
-	const uint8_t *iv, size_t iv_size, uint8_t *data, size_t data_size);
+	std::span<const uint8_t> gsc_session_key, std::span<const uint8_t> iv,
+	std::span<uint8_t> data);
 /**
  * Encrypt the data with a ECDH public key.
  *
