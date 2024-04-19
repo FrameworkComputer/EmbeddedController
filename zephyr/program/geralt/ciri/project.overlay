@@ -28,6 +28,7 @@
 / {
 	named-gpios {
 		/delete-node/ als-rgb-int-odl;
+		/delete-node/ lid-360-l;
 		/delete-node/ usb-c0-ppc-bc12-int-odl;
 
 		usb_c0_frs_en: usb-c0-frs-en {
@@ -69,6 +70,7 @@
 			 * EC_AP_RSVD0_ODL
 			 */
 			<&gpioh 0 GPIO_INPUT>,
+			<&gpioj 7 GPIO_INPUT_PULL_DOWN>,
 			<&gpiom 2 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>,
 			<&gpiom 6 (GPIO_INPUT_PULL_DOWN | GPIO_VOLTAGE_1P8)>;
 	};
@@ -104,6 +106,8 @@
 
 	gpio-interrupts {
 		compatible = "cros-ec,gpio-interrupts";
+
+		/delete-node/ lid-360-l;
 
 		int_lid_imu: lid-imu {
 			handler = "motion_interrupt";
