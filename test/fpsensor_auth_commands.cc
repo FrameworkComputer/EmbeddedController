@@ -711,7 +711,7 @@ test_fp_command_read_match_secret_with_pubkey_succeed(void)
 			  std::begin(fp_positive_match_salt[fgr]));
 
 	/* Initialize an empty user_id to compare positive_match_secret */
-	std::fill(std::begin(user_id), std::end(user_id), 0);
+	std::ranges::fill(user_id, 0);
 
 	TEST_ASSERT(fp_tpm_seed_is_set());
 	/* Test with the correct matched finger state and the default fake
@@ -787,8 +787,8 @@ test_static enum ec_error_list test_fp_command_template_encrypted(void)
 	static_assert(metadata_size == sizeof(enc_metadata_data));
 	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
 
-	std::fill(template_data.begin(), template_data.end(), 0xc4);
-	std::fill(salt_data.begin(), salt_data.end(), 0xab);
+	std::ranges::fill(template_data, 0xc4);
+	std::ranges::fill(salt_data, 0xab);
 
 	fp_reset_and_clear_context();
 	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
@@ -849,8 +849,8 @@ test_static enum ec_error_list test_fp_command_template_decrypted(void)
 	static_assert(head_size == sizeof(head_data));
 	memcpy(head.data(), &head_data, head.size());
 
-	std::fill(template_data.begin(), template_data.end(), 0xc4);
-	std::fill(salt_data.begin(), salt_data.end(), 0xab);
+	std::ranges::fill(template_data, 0xc4);
+	std::ranges::fill(salt_data, 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
 	encrypt_data_in_place(1, info,
@@ -947,8 +947,8 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 	static_assert(head_size == sizeof(head_data));
 	memcpy(head.data(), &head_data, head.size());
 
-	std::fill(template_data.begin(), template_data.end(), 0xc4);
-	std::fill(salt_data.begin(), salt_data.end(), 0xab);
+	std::ranges::fill(template_data, 0xc4);
+	std::ranges::fill(salt_data, 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
 	encrypt_data_in_place(1, info,
@@ -1097,8 +1097,8 @@ test_fp_command_unlock_template_pre_encrypted_fail(void)
 	static_assert(metadata_size == sizeof(enc_metadata_data));
 	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
 
-	std::fill(template_data.begin(), template_data.end(), 0xc4);
-	std::fill(salt_data.begin(), salt_data.end(), 0xab);
+	std::ranges::fill(template_data, 0xc4);
+	std::ranges::fill(salt_data, 0xab);
 
 	fp_reset_and_clear_context();
 	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
@@ -1171,8 +1171,8 @@ test_fp_command_unlock_template_pre_encrypted(void)
 	static_assert(head_size == sizeof(head_data));
 	memcpy(head.data(), &head_data, head.size());
 
-	std::fill(template_data.begin(), template_data.end(), 0xc4);
-	std::fill(salt_data.begin(), salt_data.end(), 0xab);
+	std::ranges::fill(template_data, 0xc4);
+	std::ranges::fill(salt_data, 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
 	encrypt_data_in_place(1, info,
@@ -1268,7 +1268,7 @@ test_static enum ec_error_list test_fp_command_commit_v2(void)
 	static_assert(head_size == sizeof(head_data));
 	memcpy(head.data(), &head_data, head.size());
 
-	std::fill(template_data.begin(), template_data.end(), 0xc4);
+	std::ranges::fill(template_data, 0xc4);
 
 	struct fp_auth_command_encryption_metadata info;
 	encrypt_data_in_place(1, info, template_data);
@@ -1327,7 +1327,7 @@ test_static enum ec_error_list test_fp_command_commit_v3(void)
 	static_assert(head_size == sizeof(head_data));
 	memcpy(head.data(), &head_data, head.size());
 
-	std::fill(template_data.begin(), template_data.end(), 0xc4);
+	std::ranges::fill(template_data, 0xc4);
 
 	struct fp_auth_command_encryption_metadata info;
 	encrypt_data_in_place(1, info, template_data);
@@ -1397,7 +1397,7 @@ test_static enum ec_error_list test_fp_command_commit_trivial_salt(void)
 	static_assert(head_size == sizeof(head_data));
 	memcpy(head.data(), &head_data, head.size());
 
-	std::fill(template_data.begin(), template_data.end(), 0xc4);
+	std::ranges::fill(template_data, 0xc4);
 
 	struct fp_auth_command_encryption_metadata info;
 	encrypt_data_in_place(1, info,
@@ -1468,8 +1468,8 @@ test_static enum ec_error_list test_fp_command_commit_without_seed(void)
 	static_assert(head_size == sizeof(head_data));
 	memcpy(head.data(), &head_data, head.size());
 
-	std::fill(template_data.begin(), template_data.end(), 0xc4);
-	std::fill(salt_data.begin(), salt_data.end(), 0x12);
+	std::ranges::fill(template_data, 0xc4);
+	std::ranges::fill(salt_data, 0x12);
 
 	struct fp_auth_command_encryption_metadata info;
 
@@ -1530,8 +1530,8 @@ test_fp_command_migrate_template_to_nonce_context(void)
 	static_assert(head_size == sizeof(head_data));
 	memcpy(head.data(), &head_data, head.size());
 
-	std::fill(template_data.begin(), template_data.end(), 0xc4);
-	std::fill(salt_data.begin(), salt_data.end(), 0xab);
+	std::ranges::fill(template_data, 0xc4);
+	std::ranges::fill(salt_data, 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
 	encrypt_data_in_place(1, info,
