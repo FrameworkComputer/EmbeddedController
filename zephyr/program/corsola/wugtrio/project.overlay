@@ -642,6 +642,10 @@
 	/delete-node/ rt1739@70;
 };
 
+&i2c3 {
+	prescale-scl-low = <4>;
+};
+
 &i2c4 {
 	ps8743_mux_1: ps8743-mux-1@10 {
 		compatible = "parade,ps8743";
