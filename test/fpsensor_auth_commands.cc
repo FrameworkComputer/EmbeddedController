@@ -767,12 +767,10 @@ test_static enum ec_error_list test_fp_command_template_encrypted(void)
 		head_size + metadata_size + template_size + salt_size;
 
 	std::array<uint8_t, params_size> params = {};
-	std::span head(params.begin(), params.begin() + head_size);
-	std::span enc_metadata(head.end(), head.end() + metadata_size);
-	std::span template_data(enc_metadata.end(),
-				enc_metadata.end() + template_size);
-	std::span salt_data(template_data.end(),
-			    template_data.end() + salt_size);
+	std::span head(params.begin(), head_size);
+	std::span enc_metadata(head.end(), metadata_size);
+	std::span template_data(enc_metadata.end(), template_size);
+	std::span salt_data(template_data.end(), salt_size);
 
 	struct ec_params_fp_template head_data = {
 		.offset = 0,
@@ -839,12 +837,10 @@ test_static enum ec_error_list test_fp_command_template_decrypted(void)
 		head_size + metadata_size + template_size + salt_size;
 
 	std::array<uint8_t, params_size> params = {};
-	std::span head(params.begin(), params.begin() + head_size);
-	std::span enc_metadata(head.end(), head.end() + metadata_size);
-	std::span template_data(enc_metadata.end(),
-				enc_metadata.end() + template_size);
-	std::span salt_data(template_data.end(),
-			    template_data.end() + salt_size);
+	std::span head(params.begin(), head_size);
+	std::span enc_metadata(head.end(), metadata_size);
+	std::span template_data(enc_metadata.end(), template_size);
+	std::span salt_data(template_data.end(), salt_size);
 
 	struct ec_params_fp_template head_data = {
 		.offset = 0,
@@ -939,12 +935,10 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 		head_size + metadata_size + template_size + salt_size;
 
 	std::array<uint8_t, params_size> params = {};
-	std::span head(params.begin(), params.begin() + head_size);
-	std::span enc_metadata(head.end(), head.end() + metadata_size);
-	std::span template_data(enc_metadata.end(),
-				enc_metadata.end() + template_size);
-	std::span salt_data(template_data.end(),
-			    template_data.end() + salt_size);
+	std::span head(params.begin(), head_size);
+	std::span enc_metadata(head.end(), metadata_size);
+	std::span template_data(enc_metadata.end(), template_size);
+	std::span salt_data(template_data.end(), salt_size);
 
 	struct ec_params_fp_template head_data = {
 		.offset = 0,
@@ -1083,12 +1077,10 @@ test_fp_command_unlock_template_pre_encrypted_fail(void)
 		head_size + metadata_size + template_size + salt_size;
 
 	std::array<uint8_t, params_size> params = {};
-	std::span head(params.begin(), params.begin() + head_size);
-	std::span enc_metadata(head.end(), head.end() + metadata_size);
-	std::span template_data(enc_metadata.end(),
-				enc_metadata.end() + template_size);
-	std::span salt_data(template_data.end(),
-			    template_data.end() + salt_size);
+	std::span head(params.begin(), head_size);
+	std::span enc_metadata(head.end(), metadata_size);
+	std::span template_data(enc_metadata.end(), template_size);
+	std::span salt_data(template_data.end(), salt_size);
 
 	struct ec_params_fp_template head_data = {
 		.offset = 0,
@@ -1167,12 +1159,10 @@ test_fp_command_unlock_template_pre_encrypted(void)
 		head_size + metadata_size + template_size + salt_size;
 
 	std::array<uint8_t, params_size> params = {};
-	std::span head(params.begin(), params.begin() + head_size);
-	std::span enc_metadata(head.end(), head.end() + metadata_size);
-	std::span template_data(enc_metadata.end(),
-				enc_metadata.end() + template_size);
-	std::span salt_data(template_data.end(),
-			    template_data.end() + salt_size);
+	std::span head(params.begin(), head_size);
+	std::span enc_metadata(head.end(), metadata_size);
+	std::span template_data(enc_metadata.end(), template_size);
+	std::span salt_data(template_data.end(), salt_size);
 
 	struct ec_params_fp_template head_data = {
 		.offset = 0,
@@ -1267,10 +1257,9 @@ test_static enum ec_error_list test_fp_command_commit_v2(void)
 		head_size + metadata_size + template_size;
 
 	std::array<uint8_t, params_size> params = {};
-	std::span head(params.begin(), params.begin() + head_size);
-	std::span enc_metadata(head.end(), head.end() + metadata_size);
-	std::span template_data(enc_metadata.end(),
-				enc_metadata.end() + template_size);
+	std::span head(params.begin(), head_size);
+	std::span enc_metadata(head.end(), metadata_size);
+	std::span template_data(enc_metadata.end(), template_size);
 
 	struct ec_params_fp_template head_data = {
 		.offset = 0,
@@ -1327,10 +1316,9 @@ test_static enum ec_error_list test_fp_command_commit_v3(void)
 		head_size + metadata_size + template_size;
 
 	std::array<uint8_t, params_size> params = {};
-	std::span head(params.begin(), params.begin() + head_size);
-	std::span enc_metadata(head.end(), head.end() + metadata_size);
-	std::span template_data(enc_metadata.end(),
-				enc_metadata.end() + template_size);
+	std::span head(params.begin(), head_size);
+	std::span enc_metadata(head.end(), metadata_size);
+	std::span template_data(enc_metadata.end(), template_size);
 
 	struct ec_params_fp_template head_data = {
 		.offset = 0,
@@ -1397,12 +1385,10 @@ test_static enum ec_error_list test_fp_command_commit_trivial_salt(void)
 		head_size + metadata_size + template_size + salt_size;
 
 	std::array<uint8_t, params_size> params = {};
-	std::span head(params.begin(), params.begin() + head_size);
-	std::span enc_metadata(head.end(), head.end() + metadata_size);
-	std::span template_data(enc_metadata.end(),
-				enc_metadata.end() + template_size);
-	std::span salt_data(template_data.end(),
-			    template_data.end() + salt_size);
+	std::span head(params.begin(), head_size);
+	std::span enc_metadata(head.end(), metadata_size);
+	std::span template_data(enc_metadata.end(), template_size);
+	std::span salt_data(template_data.end(), salt_size);
 
 	struct ec_params_fp_template head_data = {
 		.offset = 0,
@@ -1470,12 +1456,10 @@ test_static enum ec_error_list test_fp_command_commit_without_seed(void)
 		head_size + metadata_size + template_size + salt_size;
 
 	std::array<uint8_t, params_size> params = {};
-	std::span head(params.begin(), params.begin() + head_size);
-	std::span enc_metadata(head.end(), head.end() + metadata_size);
-	std::span template_data(enc_metadata.end(),
-				enc_metadata.end() + template_size);
-	std::span salt_data(template_data.end(),
-			    template_data.end() + salt_size);
+	std::span head(params.begin(), head_size);
+	std::span enc_metadata(head.end(), metadata_size);
+	std::span template_data(enc_metadata.end(), template_size);
+	std::span salt_data(template_data.end(), salt_size);
 
 	struct ec_params_fp_template head_data = {
 		.offset = 0,
@@ -1534,12 +1518,10 @@ test_fp_command_migrate_template_to_nonce_context(void)
 		head_size + metadata_size + template_size + salt_size;
 
 	std::array<uint8_t, params_size> params = {};
-	std::span head(params.begin(), params.begin() + head_size);
-	std::span enc_metadata(head.end(), head.end() + metadata_size);
-	std::span template_data(enc_metadata.end(),
-				enc_metadata.end() + template_size);
-	std::span salt_data(template_data.end(),
-			    template_data.end() + salt_size);
+	std::span head(params.begin(), head_size);
+	std::span enc_metadata(head.end(), metadata_size);
+	std::span template_data(enc_metadata.end(), template_size);
+	std::span salt_data(template_data.end(), salt_size);
 
 	struct ec_params_fp_template head_data = {
 		.offset = 0,

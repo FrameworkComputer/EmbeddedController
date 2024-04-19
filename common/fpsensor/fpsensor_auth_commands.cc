@@ -309,10 +309,8 @@ static enum ec_status unlock_template(uint16_t idx)
 	constexpr size_t enc_buffer_size = template_size + salt_size;
 	static_assert(enc_buffer_size <= sizeof(fp_enc_buffer));
 
-	const std::span enc_template(std::begin(fp_enc_buffer),
-				     std::begin(fp_enc_buffer) + template_size);
-	const std::span enc_salt(enc_template.end(),
-				 enc_template.end() + salt_size);
+	const std::span enc_template(fp_enc_buffer, template_size);
+	const std::span enc_salt(enc_template.end(), salt_size);
 	const std::span enc_buffer(fp_enc_buffer, enc_buffer_size);
 
 	std::copy(fp_template[idx], fp_template[idx] + template_size,
