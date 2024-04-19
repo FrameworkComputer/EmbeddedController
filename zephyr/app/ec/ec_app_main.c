@@ -29,6 +29,18 @@ static void boot_allow_sleep(struct k_timer *timer)
 	pm_policy_state_lock_put(PM_STATE_SUSPEND_TO_IDLE, PM_ALL_SUBSTATES);
 }
 
+#if defined(CONFIG_CUSTOMIZED_DESIGN) && defined(CONFIG_PLATFORM_EC_SYSTEM_JUMP_RW_SUPPORT)
+void check_rw_boot(void)
+{
+	if (system_get_image_copy() == EC_IMAGE_RW)
+		system_set_bbram(SYSTEM_BBRAM_IDX_SYSTEM_JUMP_RW_SUCCESS, 1);
+	else
+		system_set_bbram(SYSTEM_BBRAM_IDX_SYSTEM_JUMP_RW_SUCCESS, 0);
+
+}
+DECLARE_DEFERRED(check_rw_boot);
+#endif
+
 /* For testing purposes this is not named main. See main_shim.c for the real
  * main() function.
  */
@@ -79,6 +91,22 @@ void ec_app_main(void)
 	    IS_ENABLED(CONFIG_VOLUME_BUTTONS)) {
 		button_init();
 	}
+
+#if defined(CONFIG_CUSTOMIZED_DESIGN) && defined(CONFIG_PLATFORM_EC_SYSTEM_JUMP_RW_SUPPORT)
+		uint8_t rw_flag, rw_success;
+
+		system_get_bbram(SYSTEM_BBRAM_IDX_SYSTEM_JUMP_RW_FLAG, &rw_flag);
+		system_get_bbram(SYSTEM_BBRAM_IDX_SYSTEM_JUMP_RW_SUCCESS, &rw_success);
+		ccprints("Get boot rw_flag:%d, rw_success:%d", rw_flag, rw_success);
+
+		if (rw_flag && rw_success) {
+			/*Clear flag and boot to RW*/
+			system_set_bbram(SYSTEM_BBRAM_IDX_SYSTEM_JUMP_RW_SUCCESS, 0);
+			system_run_image_copy(system_get_active_copy());
+		}
+
+		hook_call_deferred(&check_rw_boot_data, 5 * SECOND);
+#endif
 
 	if (IS_ENABLED(CONFIG_PLATFORM_EC_VBOOT_EFS2)) {
 		/*
