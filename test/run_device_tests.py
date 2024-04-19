@@ -698,12 +698,16 @@ HELIPILOT_CONFIG = BoardConfig(
     rollback_region1_regex=DATA_ACCESS_VIOLATION_64030000_REGEX,
     mpu_regex=DATA_ACCESS_VIOLATION_200B0000_REGEX,
     mcu_power_supply="pp3300_mcu_mw",
-    # Power utilization numbers were experimentally derived via onboard ADCs and verified with a DMM
+    # The original power utilization numbers were experimentally derived via
+    # onboard ADCs and verified with a DMM on one dev board. However, we have
+    # not formally measured the power variance across multiple dev boards.
+    # Without knowing the true mean, we have just expanded the tolerance
+    # parameter of the RangedValue.
     expected_fp_power=PowerUtilization(
         idle=RangedValue(0.0, 0.1), sleep=RangedValue(0.0, 0.1)
     ),
     expected_mcu_power=PowerUtilization(
-        idle=RangedValue(34.8, 3.0), sleep=RangedValue(2.7, 2.5)
+        idle=RangedValue(34.8, 7.0), sleep=RangedValue(2.7, 2.5)
     ),
     # TODO(b/336640650): Add helipilot variants once RO is uploaded
     variants={},
