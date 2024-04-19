@@ -857,8 +857,9 @@ test_static enum ec_error_list test_fp_command_template_decrypted(void)
 	std::fill(salt_data.begin(), salt_data.end(), 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info, template_data.data(),
-			      template_data.size() + salt_data.size());
+	encrypt_data_in_place(1, info,
+			      { template_data.data(),
+				template_data.size() + salt_data.size() });
 
 	struct ec_fp_template_encryption_metadata enc_metadata_data {
 		.struct_version = 4
@@ -956,8 +957,9 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 	std::fill(salt_data.begin(), salt_data.end(), 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info, template_data.data(),
-			      template_data.size() + salt_data.size());
+	encrypt_data_in_place(1, info,
+			      { template_data.data(),
+				template_data.size() + salt_data.size() });
 
 	struct ec_fp_template_encryption_metadata enc_metadata_data {
 		.struct_version = 4
@@ -1183,8 +1185,9 @@ test_fp_command_unlock_template_pre_encrypted(void)
 	std::fill(salt_data.begin(), salt_data.end(), 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info, template_data.data(),
-			      template_data.size() + salt_data.size());
+	encrypt_data_in_place(1, info,
+			      { template_data.data(),
+				template_data.size() + salt_data.size() });
 
 	struct ec_fp_template_encryption_metadata enc_metadata_data {
 		.struct_version = 4
@@ -1279,8 +1282,7 @@ test_static enum ec_error_list test_fp_command_commit_v2(void)
 	std::fill(template_data.begin(), template_data.end(), 0xc4);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info, template_data.data(),
-			      template_data.size());
+	encrypt_data_in_place(1, info, template_data);
 
 	struct ec_fp_template_encryption_metadata enc_metadata_data {
 		.struct_version = 2
@@ -1340,8 +1342,7 @@ test_static enum ec_error_list test_fp_command_commit_v3(void)
 	std::fill(template_data.begin(), template_data.end(), 0xc4);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info, template_data.data(),
-			      template_data.size());
+	encrypt_data_in_place(1, info, template_data);
 
 	struct ec_fp_template_encryption_metadata enc_metadata_data {
 		.struct_version = 3
@@ -1413,8 +1414,9 @@ test_static enum ec_error_list test_fp_command_commit_trivial_salt(void)
 	std::fill(template_data.begin(), template_data.end(), 0xc4);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info, template_data.data(),
-			      template_data.size() + salt_data.size());
+	encrypt_data_in_place(1, info,
+			      { template_data.data(),
+				template_data.size() + salt_data.size() });
 
 	struct ec_fp_template_encryption_metadata enc_metadata_data {
 		.struct_version = 4
@@ -1550,8 +1552,9 @@ test_fp_command_migrate_template_to_nonce_context(void)
 	std::fill(salt_data.begin(), salt_data.end(), 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info, template_data.data(),
-			      template_data.size() + salt_data.size());
+	encrypt_data_in_place(1, info,
+			      { template_data.data(),
+				template_data.size() + salt_data.size() });
 
 	struct ec_fp_template_encryption_metadata enc_metadata_data {
 		.struct_version = 4

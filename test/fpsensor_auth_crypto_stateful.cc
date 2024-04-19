@@ -50,8 +50,7 @@ test_static enum ec_error_list test_fp_encrypt_decrypt_data(void)
 
 	std::copy(input.begin(), input.end(), data.begin());
 
-	TEST_EQ(encrypt_data_in_place(version, info, data.data(), data.size()),
-		EC_SUCCESS, "%d");
+	TEST_EQ(encrypt_data_in_place(version, info, data), EC_SUCCESS, "%d");
 
 	TEST_EQ(info.struct_version, version, "%d");
 

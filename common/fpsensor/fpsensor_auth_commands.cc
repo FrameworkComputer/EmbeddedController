@@ -119,8 +119,7 @@ fp_command_establish_pairing_key_wrap(struct host_cmd_handler_args *args)
 
 	ret = encrypt_data_in_place(FP_AES_KEY_ENC_METADATA_VERSION,
 				    r->encrypted_pairing_key.info,
-				    r->encrypted_pairing_key.data,
-				    sizeof(r->encrypted_pairing_key.data));
+				    r->encrypted_pairing_key.data);
 	if (ret != EC_SUCCESS) {
 		return EC_RES_UNAVAILABLE;
 	}

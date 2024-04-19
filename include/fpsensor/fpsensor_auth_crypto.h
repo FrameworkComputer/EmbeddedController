@@ -62,7 +62,6 @@ bssl::UniquePtr<EC_KEY> create_ec_key_from_privkey(const uint8_t *privkey,
  * @param[in] version the version of the encryption method
  * @param[out] info the metadata of the encryption output
  * @param[in,out] data the data that need to be encrypted in place
- * @param[in] data_size the size of data
  *
  * @return EC_SUCCESS on success
  * @return EC_ERROR_* on error
@@ -70,7 +69,7 @@ bssl::UniquePtr<EC_KEY> create_ec_key_from_privkey(const uint8_t *privkey,
 enum ec_error_list
 encrypt_data_in_place(uint16_t version,
 		      struct fp_auth_command_encryption_metadata &info,
-		      uint8_t *data, size_t data_size);
+		      std::span<uint8_t> data);
 
 /**
  * Encrypt the @p EC_KEY with a specific version of encryption method.

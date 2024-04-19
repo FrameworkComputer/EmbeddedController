@@ -34,7 +34,7 @@ extern "C" {
 enum ec_error_list
 encrypt_data_in_place(uint16_t version,
 		      struct fp_auth_command_encryption_metadata &info,
-		      uint8_t *data, size_t data_size)
+		      std::span<uint8_t> data)
 {
 	if (version != 1) {
 		return EC_ERROR_INVAL;
@@ -52,9 +52,7 @@ encrypt_data_in_place(uint16_t version,
 	}
 
 	/* Encrypt the secret blob in-place. */
-	std::span data_span(data, data_size);
-	ret = aes_128_gcm_encrypt(enc_key, data_span, data_span, info.nonce,
-				  info.tag);
+	ret = aes_128_gcm_encrypt(enc_key, data, data, info.nonce, info.tag);
 	if (ret != EC_SUCCESS) {
 		return ret;
 	}
@@ -72,8 +70,8 @@ create_encrypted_private_key(const EC_KEY &key, uint16_t version)
 		return std::nullopt;
 	}
 
-	if (encrypt_data_in_place(version, enc_key.info, enc_key.data,
-				  sizeof(enc_key.data)) != EC_SUCCESS) {
+	if (encrypt_data_in_place(version, enc_key.info, enc_key.data) !=
+	    EC_SUCCESS) {
 		return std::nullopt;
 	}
 
