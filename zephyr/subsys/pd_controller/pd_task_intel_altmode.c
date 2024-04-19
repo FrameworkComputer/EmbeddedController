@@ -181,7 +181,10 @@ static bool process_altmode_pd_data(int port)
 		}
 
 		/* Mux is pending. Make sure a connection is established */
-		if (pdc_power_mgmt_is_connected(port)) {
+		if (pdc_power_mgmt_is_connected(port) ||
+		    /* Retimer Firmware update NDA case */
+		    (!pdc_power_mgmt_is_connected(port) &&
+		     mux_pend->mux_mode == USB_PD_MUX_TBT_COMPAT_ENABLED)) {
 			intel_altmode_set_mux(port, mux_pend->mux_mode,
 					      mux_pend->usb_mode,
 					      mux_pend->polarity);
