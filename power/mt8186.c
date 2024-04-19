@@ -219,6 +219,15 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 
 void chipset_force_shutdown_button(void)
 {
+	if (system_is_manual_recovery()) {
+		struct ec_params_reboot_ec p = {
+			.cmd = EC_REBOOT_COLD_AP_OFF,
+			.flags = 0,
+		};
+
+		CPRINTS("In recovery. Scheduled reboot_ap_off.");
+		system_set_reboot_at_shutdown(&p);
+	}
 	chipset_force_shutdown(CHIPSET_SHUTDOWN_BUTTON);
 }
 DECLARE_DEFERRED(chipset_force_shutdown_button);
