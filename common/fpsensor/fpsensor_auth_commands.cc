@@ -258,8 +258,7 @@ fp_command_read_match_secret_with_pubkey(struct host_cmd_handler_args *args)
 	}
 
 	enum ec_error_list ret = encrypt_data_with_ecdh_key_in_place(
-		params->pubkey, secret.data(), secret.size(), response->iv,
-		sizeof(response->iv), response->pubkey);
+		params->pubkey, secret, response->iv, response->pubkey);
 
 	if (ret != EC_SUCCESS) {
 		return EC_RES_UNAVAILABLE;

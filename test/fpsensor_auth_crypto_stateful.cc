@@ -236,9 +236,8 @@ test_static enum ec_error_list test_fp_encrypt_data_with_ecdh_key_in_place(void)
 
 	TEST_ASSERT_ARRAY_EQ(iv, zero_iv, iv.size());
 
-	TEST_EQ(encrypt_data_with_ecdh_key_in_place(
-			*pubkey, enc_secret.data(), enc_secret.size(),
-			iv.data(), iv.size(), response_pubkey),
+	TEST_EQ(encrypt_data_with_ecdh_key_in_place(*pubkey, enc_secret, iv,
+						    response_pubkey),
 		EC_SUCCESS, "%d");
 
 	/* The encrypted data should not be the same as the input. */

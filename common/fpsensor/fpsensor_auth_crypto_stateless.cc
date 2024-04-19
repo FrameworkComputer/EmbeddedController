@@ -164,11 +164,11 @@ enum ec_error_list decrypt_data_with_gsc_session_key_in_place(
 }
 
 enum ec_error_list encrypt_data_with_ecdh_key_in_place(
-	const struct fp_elliptic_curve_public_key &in_pubkey, uint8_t *data,
-	size_t data_size, uint8_t *iv, size_t iv_size,
+	const struct fp_elliptic_curve_public_key &in_pubkey,
+	std::span<uint8_t> data, std::span<uint8_t> iv,
 	struct fp_elliptic_curve_public_key &out_pubkey)
 {
-	if (iv_size != AES_BLOCK_SIZE) {
+	if (iv.size() != AES_BLOCK_SIZE) {
 		return EC_ERROR_INVAL;
 	}
 
@@ -205,20 +205,20 @@ enum ec_error_list encrypt_data_with_ecdh_key_in_place(
 		return EC_ERROR_INVAL;
 	}
 
-	RAND_bytes(iv, iv_size);
+	RAND_bytes(iv.data(), iv.size());
 
 	/* The IV will be changed after the AES_ctr128_encrypt, we need a copy
 	 * for that. */
 	std::array<uint8_t, AES_BLOCK_SIZE> aes_iv;
 
-	std::copy(iv, iv + iv_size, aes_iv.begin());
+	std::copy(iv.begin(), iv.begin() + iv.size(), aes_iv.begin());
 
 	unsigned int block_num = 0;
 	std::array<uint8_t, AES_BLOCK_SIZE> ecount_buf;
 
 	/* The AES CTR uses the same function for encryption & decryption. */
-	AES_ctr128_encrypt(data, data, data_size, &aes_key, aes_iv.data(),
-			   ecount_buf.data(), &block_num);
+	AES_ctr128_encrypt(data.data(), data.data(), data.size(), &aes_key,
+			   aes_iv.data(), ecount_buf.data(), &block_num);
 
 	return EC_SUCCESS;
 }

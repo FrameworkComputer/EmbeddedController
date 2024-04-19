@@ -177,17 +177,15 @@ enum ec_error_list decrypt_data_with_gsc_session_key_in_place(
  *
  * @param[in] in_pubkey the input public key
  * @param[in,out] data the data to be encrypted
- * @param[in] data_size the data size
  * @param[out] iv the output IV
- * @param[in] iv_size the IV size
  * @param[out] out_pubkey the output public key
  *
  * @return EC_SUCCESS on success
  * @return EC_ERROR_* on error
  */
 enum ec_error_list encrypt_data_with_ecdh_key_in_place(
-	const struct fp_elliptic_curve_public_key &in_pubkey, uint8_t *data,
-	size_t data_size, uint8_t *iv, size_t iv_size,
+	const struct fp_elliptic_curve_public_key &in_pubkey,
+	std::span<uint8_t> data, std::span<uint8_t> iv,
 	struct fp_elliptic_curve_public_key &out_pubkey);
 
 #endif /* __CROS_EC_FPSENSOR_FPSENSOR_AUTH_CRYPTO_H */
