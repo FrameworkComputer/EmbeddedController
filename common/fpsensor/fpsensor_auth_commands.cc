@@ -178,7 +178,7 @@ fp_command_generate_nonce(struct host_cmd_handler_args *args)
 
 	RAND_bytes(auth_nonce.data(), auth_nonce.size());
 
-	std::copy(auth_nonce.begin(), auth_nonce.end(), r->nonce);
+	std::ranges::copy(auth_nonce, r->nonce);
 
 	fp_encryption_status |= FP_CONTEXT_AUTH_NONCE_SET;
 
@@ -211,8 +211,7 @@ fp_command_nonce_context(struct host_cmd_handler_args *args)
 
 	static_assert(sizeof(user_id) == sizeof(p->enc_user_id));
 	std::array<uint8_t, sizeof(user_id)> raw_user_id;
-	std::copy(std::begin(p->enc_user_id), std::end(p->enc_user_id),
-		  raw_user_id.data());
+	std::ranges::copy(p->enc_user_id, raw_user_id.begin());
 
 	ret = decrypt_data_with_gsc_session_key_in_place(
 		gsc_session_key, p->enc_user_id_iv, raw_user_id);
@@ -264,7 +263,7 @@ fp_command_read_match_secret_with_pubkey(struct host_cmd_handler_args *args)
 		return EC_RES_UNAVAILABLE;
 	}
 
-	std::copy(secret.begin(), secret.end(), response->enc_secret);
+	std::ranges::copy(secret, response->enc_secret);
 
 	args->response_size = sizeof(*response);
 
@@ -327,10 +326,8 @@ static enum ec_status unlock_template(uint16_t idx)
 		return EC_RES_UNAVAILABLE;
 	}
 
-	std::copy(enc_template.begin(), enc_template.end(), fp_template[idx]);
-
-	std::copy(enc_salt.begin(), enc_salt.end(),
-		  fp_positive_match_salt[idx]);
+	std::ranges::copy(enc_template, fp_template[idx]);
+	std::ranges::copy(enc_salt, fp_positive_match_salt[idx]);
 
 	fp_init_decrypted_template_state_with_user_id(idx);
 	OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));

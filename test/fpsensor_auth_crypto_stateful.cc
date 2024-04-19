@@ -18,6 +18,7 @@
 #include <assert.h>
 #include <stdbool.h>
 
+#include <algorithm>
 #include <array>
 
 namespace
@@ -34,7 +35,7 @@ void init_tpm_seed(void)
 
 	static_assert(fake_tpm_seed.size() == sizeof(tpm_seed));
 
-	std::copy(fake_tpm_seed.begin(), fake_tpm_seed.end(), tpm_seed);
+	std::ranges::copy(fake_tpm_seed, tpm_seed);
 
 	fp_encryption_status |= FP_ENC_STATUS_SEED_SET;
 }

@@ -5,6 +5,7 @@
 
 #include "compile_time_macros.h"
 
+#include <algorithm>
 #include <array>
 
 /* Boringssl headers need to be included before extern "C" section. */
@@ -130,9 +131,9 @@ generate_gsc_session_key(std::span<const uint8_t> auth_nonce,
 	SHA256_update(&ctx, auth_nonce.data(), auth_nonce.size());
 	SHA256_update(&ctx, gsc_nonce.data(), gsc_nonce.size());
 	SHA256_update(&ctx, pairing_key.data(), pairing_key.size());
-	uint8_t *result = SHA256_final(&ctx);
+	std::span result(SHA256_final(&ctx), SHA256_DIGEST_SIZE);
 
-	std::copy(result, result + SHA256_DIGEST_SIZE, gsc_session_key.data());
+	std::ranges::copy(result, gsc_session_key.begin());
 
 	return EC_SUCCESS;
 }
@@ -152,7 +153,7 @@ enum ec_error_list decrypt_data_with_gsc_session_key_in_place(
 	}
 
 	std::array<uint8_t, AES_BLOCK_SIZE> aes_iv;
-	std::copy(iv.begin(), iv.begin() + iv.size(), aes_iv.begin());
+	std::ranges::copy(iv, aes_iv.begin());
 
 	/* The AES CTR uses the same function for encryption & decryption. */
 	unsigned int block_num = 0;
@@ -211,7 +212,7 @@ enum ec_error_list encrypt_data_with_ecdh_key_in_place(
 	 * for that. */
 	std::array<uint8_t, AES_BLOCK_SIZE> aes_iv;
 
-	std::copy(iv.begin(), iv.begin() + iv.size(), aes_iv.begin());
+	std::ranges::copy(iv, aes_iv.begin());
 
 	unsigned int block_num = 0;
 	std::array<uint8_t, AES_BLOCK_SIZE> ecount_buf;

@@ -320,9 +320,8 @@ test_fp_command_read_match_secret_derive_fail(void)
 	positive_match_secret_state = test_state_1;
 	/* Set fp_positive_match_salt to the trivial value */
 	for (size_t fgr = 0; fgr < ARRAY_SIZE(fp_positive_match_salt); ++fgr)
-		std::copy(std::begin(trivial_fp_positive_match_salt),
-			  std::end(trivial_fp_positive_match_salt),
-			  std::begin(fp_positive_match_salt[fgr]));
+		std::ranges::copy(trivial_fp_positive_match_salt,
+				  fp_positive_match_salt[fgr]);
 
 	/* Test with the correct matched finger state and a trivial
 	 * fp_positive_match_salt
@@ -363,9 +362,8 @@ test_fp_command_read_match_secret_derive_succeed(void)
 	positive_match_secret_state = test_state_1;
 	/* Set fp_positive_match_salt to the default value */
 	for (size_t fgr = 0; fgr < ARRAY_SIZE(fp_positive_match_salt); ++fgr)
-		std::copy(std::begin(default_fake_fp_positive_match_salt),
-			  std::end(default_fake_fp_positive_match_salt),
-			  std::begin(fp_positive_match_salt[fgr]));
+		std::ranges::copy(default_fake_fp_positive_match_salt,
+				  fp_positive_match_salt[fgr]);
 
 	/* Initialize an empty user_id to compare positive_match_secret */
 	memset(user_id, 0, sizeof(user_id));

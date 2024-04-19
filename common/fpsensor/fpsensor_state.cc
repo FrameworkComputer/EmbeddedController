@@ -5,6 +5,7 @@
 
 #include "compile_time_macros.h"
 
+#include <algorithm>
 #include <array>
 #include <variant>
 
@@ -92,8 +93,7 @@ void fp_reset_context()
 void fp_init_decrypted_template_state_with_user_id(uint16_t idx)
 {
 	std::array<uint32_t, FP_CONTEXT_USERID_WORDS> raw_user_id;
-	std::copy(std::begin(user_id), std::end(user_id),
-		  std::begin(raw_user_id));
+	std::ranges::copy(user_id, raw_user_id.begin());
 	template_states[idx] = fp_decrypted_template_state{
 		.user_id = raw_user_id,
 	};
