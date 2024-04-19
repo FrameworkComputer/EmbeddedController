@@ -102,10 +102,9 @@ decrypt_data(const struct fp_auth_command_encryption_metadata &info,
 		return EC_ERROR_OVERFLOW;
 	}
 
-	ret = aes_128_gcm_decrypt(enc_key.data(), enc_key.size(), data,
-				  enc_data, data_size, info.nonce,
-				  sizeof(info.nonce), info.tag,
-				  sizeof(info.tag));
+	ret = aes_128_gcm_decrypt(enc_key, { data, data_size },
+				  { enc_data, enc_data_size }, info.nonce,
+				  info.tag);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to decipher data");
 		return ret;

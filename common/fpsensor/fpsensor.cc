@@ -681,12 +681,11 @@ enum ec_status fp_commit_template(const uint8_t *context, size_t context_size)
 		}
 
 		/* Decrypt the secret blob in-place. */
-		ret = aes_128_gcm_decrypt(key, SBP_ENC_KEY_LEN,
-					  encrypted_template,
-					  encrypted_template,
-					  encrypted_blob_size, enc_info->nonce,
-					  FP_CONTEXT_NONCE_BYTES, enc_info->tag,
-					  FP_CONTEXT_TAG_BYTES);
+		std::span encrypted_template_span(encrypted_template,
+						  encrypted_blob_size);
+		ret = aes_128_gcm_decrypt(key, encrypted_template_span,
+					  encrypted_template_span,
+					  enc_info->nonce, enc_info->tag);
 		OPENSSL_cleanse(key, sizeof(key));
 		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to decipher template", idx);

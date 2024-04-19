@@ -316,6 +316,7 @@ static enum ec_status unlock_template(uint16_t idx)
 				     std::begin(fp_enc_buffer) + template_size);
 	const std::span enc_salt(enc_template.end(),
 				 enc_template.end() + salt_size);
+	const std::span enc_buffer(fp_enc_buffer, enc_buffer_size);
 
 	std::copy(fp_template[idx], fp_template[idx] + template_size,
 		  enc_template.begin());
@@ -330,10 +331,8 @@ static enum ec_status unlock_template(uint16_t idx)
 		return EC_RES_UNAVAILABLE;
 	}
 
-	if (aes_128_gcm_decrypt(key.data(), SBP_ENC_KEY_LEN, fp_enc_buffer,
-				fp_enc_buffer, enc_buffer_size, enc_info.nonce,
-				FP_CONTEXT_NONCE_BYTES, enc_info.tag,
-				FP_CONTEXT_TAG_BYTES) != EC_SUCCESS) {
+	if (aes_128_gcm_decrypt(key, enc_buffer, enc_buffer, enc_info.nonce,
+				enc_info.tag) != EC_SUCCESS) {
 		fp_clear_finger_context(idx);
 		OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
 		return EC_RES_UNAVAILABLE;

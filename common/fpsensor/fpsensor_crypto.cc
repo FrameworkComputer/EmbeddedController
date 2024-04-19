@@ -333,31 +333,31 @@ enum ec_error_list aes_128_gcm_encrypt(std::span<const uint8_t> key,
 	return EC_SUCCESS;
 }
 
-enum ec_error_list aes_128_gcm_decrypt(const uint8_t *key, size_t key_size,
-				       uint8_t *plaintext,
-				       const uint8_t *ciphertext,
-				       size_t text_size, const uint8_t *nonce,
-				       size_t nonce_size, const uint8_t *tag,
-				       size_t tag_size)
+enum ec_error_list aes_128_gcm_decrypt(std::span<const uint8_t> key,
+				       std::span<uint8_t> plaintext,
+				       std::span<const uint8_t> ciphertext,
+				       std::span<const uint8_t> nonce,
+				       std::span<const uint8_t> tag)
 {
-	if (nonce_size != FP_CONTEXT_NONCE_BYTES) {
-		CPRINTS("Invalid nonce size %zu bytes", nonce_size);
+	if (nonce.size() != FP_CONTEXT_NONCE_BYTES) {
+		CPRINTS("Invalid nonce size %zu bytes", nonce.size());
 		return EC_ERROR_INVAL;
 	}
 
 	bssl::ScopedEVP_AEAD_CTX ctx;
-	int ret = EVP_AEAD_CTX_init(ctx.get(), EVP_aead_aes_128_gcm(), key,
-				    key_size, tag_size, nullptr);
+	int ret = EVP_AEAD_CTX_init(ctx.get(), EVP_aead_aes_128_gcm(),
+				    key.data(), key.size(), tag.size(),
+				    nullptr);
 	if (!ret) {
 		CPRINTS("Failed to initialize encryption context");
 		return EC_ERROR_UNKNOWN;
 	}
 
 	std::span<uint8_t> additional_data; /* no additional data */
-	ret = EVP_AEAD_CTX_open_gather(ctx.get(), plaintext, nonce, nonce_size,
-				       ciphertext, text_size, tag, tag_size,
-				       additional_data.data(),
-				       additional_data.size());
+	ret = EVP_AEAD_CTX_open_gather(
+		ctx.get(), plaintext.data(), nonce.data(), nonce.size(),
+		ciphertext.data(), ciphertext.size(), tag.data(), tag.size(),
+		additional_data.data(), additional_data.size());
 	if (!ret) {
 		CPRINTS("Failed to decrypt");
 		return EC_ERROR_UNKNOWN;

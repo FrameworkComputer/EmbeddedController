@@ -92,22 +92,17 @@ enum ec_error_list aes_128_gcm_encrypt(std::span<const uint8_t> key,
  * Decrypt |plaintext| using AES-GCM128.
  *
  * @param key the key to use in AES.
- * @param key_size the size of |key| in bytes.
  * @param ciphertext the cipher text to decrypt.
  * @param plaintext buffer to hold decryption result.
- * @param text_size size of both |ciphertext| and output plaintext in bytes.
  * @param nonce the nonce value to use in GCM128.
- * @param nonce_size the size of |nonce| in bytes.
  * @param tag the tag to compare against when decryption finishes.
- * @param tag_size the length of tag to compare against.
  * @return EC_SUCCESS on success and error code otherwise.
  */
-enum ec_error_list aes_128_gcm_decrypt(const uint8_t *key, size_t key_size,
-				       uint8_t *plaintext,
-				       const uint8_t *ciphertext,
-				       size_t text_size, const uint8_t *nonce,
-				       size_t nonce_size, const uint8_t *tag,
-				       size_t tag_size);
+enum ec_error_list aes_128_gcm_decrypt(std::span<const uint8_t> key,
+				       std::span<uint8_t> plaintext,
+				       std::span<const uint8_t> ciphertext,
+				       std::span<const uint8_t> nonce,
+				       std::span<const uint8_t> tag);
 
 #ifdef __cplusplus
 }
