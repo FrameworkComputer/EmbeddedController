@@ -115,24 +115,24 @@ enum ec_error_list generate_ecdh_shared_secret(const EC_KEY &private_key,
 }
 
 enum ec_error_list
-generate_gsc_session_key(const uint8_t *auth_nonce, size_t auth_nonce_size,
-			 const uint8_t *gsc_nonce, size_t gsc_nonce_size,
-			 const uint8_t *pairing_key, size_t pairing_key_size,
-			 uint8_t *gsc_session_key, size_t gsc_session_key_size)
+generate_gsc_session_key(std::span<const uint8_t> auth_nonce,
+			 std::span<const uint8_t> gsc_nonce,
+			 std::span<const uint8_t> pairing_key,
+			 std::span<uint8_t> gsc_session_key)
 {
-	if (auth_nonce_size != 32 || gsc_nonce_size != 32 ||
-	    pairing_key_size != 32 ||
-	    gsc_session_key_size != SHA256_DIGEST_SIZE) {
+	if (auth_nonce.size() != 32 || gsc_nonce.size() != 32 ||
+	    pairing_key.size() != 32 ||
+	    gsc_session_key.size() != SHA256_DIGEST_SIZE) {
 		return EC_ERROR_INVAL;
 	}
 	CleanseWrapper<struct sha256_ctx> ctx;
 	SHA256_init(&ctx);
-	SHA256_update(&ctx, auth_nonce, auth_nonce_size);
-	SHA256_update(&ctx, gsc_nonce, gsc_nonce_size);
-	SHA256_update(&ctx, pairing_key, pairing_key_size);
+	SHA256_update(&ctx, auth_nonce.data(), auth_nonce.size());
+	SHA256_update(&ctx, gsc_nonce.data(), gsc_nonce.size());
+	SHA256_update(&ctx, pairing_key.data(), pairing_key.size());
 	uint8_t *result = SHA256_final(&ctx);
 
-	std::copy(result, result + SHA256_DIGEST_SIZE, gsc_session_key);
+	std::copy(result, result + SHA256_DIGEST_SIZE, gsc_session_key.data());
 
 	return EC_SUCCESS;
 }

@@ -109,11 +109,8 @@ test_static enum ec_error_list test_fp_generate_gsc_session_key(void)
 
 	std::array<uint8_t, 32> gsc_session_key;
 
-	TEST_EQ(generate_gsc_session_key(auth_nonce.data(), auth_nonce.size(),
-					 gsc_nonce.data(), gsc_nonce.size(),
-					 pairing_key.data(), pairing_key.size(),
-					 gsc_session_key.data(),
-					 gsc_session_key.size()),
+	TEST_EQ(generate_gsc_session_key(auth_nonce, gsc_nonce, pairing_key,
+					 gsc_session_key),
 		EC_SUCCESS, "%d");
 
 	std::array<uint8_t, 32> expected_gsc_session_key = {
@@ -144,11 +141,8 @@ test_static enum ec_error_list test_fp_generate_gsc_session_key_fail(void)
 	/* Wrong gsc_session_key size. */
 	std::array<uint8_t, 30> gsc_session_key;
 
-	TEST_NE(generate_gsc_session_key(auth_nonce.data(), auth_nonce.size(),
-					 gsc_nonce.data(), gsc_nonce.size(),
-					 pairing_key.data(), pairing_key.size(),
-					 gsc_session_key.data(),
-					 gsc_session_key.size()),
+	TEST_NE(generate_gsc_session_key(auth_nonce, gsc_nonce, pairing_key,
+					 gsc_session_key),
 		EC_SUCCESS, "%d");
 
 	return EC_SUCCESS;

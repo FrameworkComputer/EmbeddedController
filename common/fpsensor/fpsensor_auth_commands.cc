@@ -203,9 +203,7 @@ fp_command_nonce_context(struct host_cmd_handler_args *args)
 
 	std::array<uint8_t, SHA256_DIGEST_SIZE> gsc_session_key;
 	enum ec_error_list ret = generate_gsc_session_key(
-		auth_nonce.data(), auth_nonce.size(), p->gsc_nonce,
-		sizeof(p->gsc_nonce), pairing_key.data(), pairing_key.size(),
-		gsc_session_key.data(), gsc_session_key.size());
+		auth_nonce, p->gsc_nonce, pairing_key, gsc_session_key);
 
 	if (ret != EC_SUCCESS) {
 		return EC_RES_INVALID_PARAM;

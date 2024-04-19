@@ -145,22 +145,18 @@ enum ec_error_list generate_ecdh_shared_secret(const EC_KEY &private_key,
  * pairing key.
  *
  * @param[in] auth_nonce the auth nonce
- * @param[in] auth_nonce_size the size of auth nonce
  * @param[in] gsc_nonce the auth nonce
- * @param[in] gsc_nonce_size the size of gsc nonce
  * @param[in] pairing_key the auth nonce
- * @param[in] pairing_key_size the size of pairing key
  * @param[in,out] gsc_session_key the output key
- * @param[in] gsc_session_key_size the output key size
  *
  * @return EC_SUCCESS on success
  * @return EC_ERROR_* on error
  */
 enum ec_error_list
-generate_gsc_session_key(const uint8_t *auth_nonce, size_t auth_nonce_size,
-			 const uint8_t *gsc_nonce, size_t gsc_nonce_size,
-			 const uint8_t *pairing_key, size_t pairing_key_size,
-			 uint8_t *gsc_session_key, size_t gsc_session_key_size);
+generate_gsc_session_key(std::span<const uint8_t> auth_nonce,
+			 std::span<const uint8_t> gsc_nonce,
+			 std::span<const uint8_t> pairing_key,
+			 std::span<uint8_t> gsc_session_key);
 
 /**
  * Decrypt the data in place with a GSC session key.
