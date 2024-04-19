@@ -202,4 +202,27 @@ void fp_sensor_configure_detect(void);
  */
 int fp_sensor_finger_status(void);
 
+/**
+ * Lock the FP sensor before SPI transaction.
+ *
+ * The function performs all needed operations before SPI transaction,
+ * it may include locking, power actions etc. The function is blocking,
+ * if the sensor is already locked.
+ *
+ * The function can be called by a thread multiple times. fp_sensor_unlock has
+ * to be called only once to unlock the access.
+ *
+ * @param dev  Pointer to FP sensor device
+ */
+void fp_sensor_lock(const struct device *dev);
+
+/**
+ * Unlock the FP sensor after SPI transaction.
+ *
+ * Unlock access to the FP sensor.
+ *
+ * @param dev  Pointer to FP sensor device
+ */
+void fp_sensor_unlock(const struct device *dev);
+
 #endif /* ZEPHYR_DRIVERS_FINGERPRINT_FPC1025_PRIVATE_H_ */

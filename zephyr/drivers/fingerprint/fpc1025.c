@@ -33,20 +33,40 @@ enum fpc1025_cmd {
 /* The 16-bit hardware ID is 0x021y */
 #define FP_SENSOR_HWID_FPC 0x021
 
+void fp_sensor_lock(const struct device *dev)
+{
+	struct fpc1025_data *data = dev->data;
+
+	/* Lock SPI access only if we are not already the owner. */
+	if (!((k_sem_count_get(&data->sensor_lock) == 0) &&
+	      (data->sensor_owner == k_current_get()))) {
+		k_sem_take(&data->sensor_lock, K_FOREVER);
+		data->sensor_owner = k_current_get();
+	}
+}
+
+void fp_sensor_unlock(const struct device *dev)
+{
+	struct fpc1025_data *data = dev->data;
+
+	/* Clear the owner and return the access. */
+	data->sensor_owner = NULL;
+	k_sem_give(&data->sensor_lock);
+}
+
 static int fpc1025_send_cmd(const struct device *dev, uint8_t cmd)
 {
 	const struct fpc1025_cfg *cfg = dev->config;
-	struct fpc1025_data *data = dev->data;
 	const struct spi_buf tx_buf[1] = { { .buf = &cmd, .len = 1 } };
 	const struct spi_buf_set tx = { .buffers = tx_buf, .count = 1 };
 	int rc;
 
-	k_sem_take(&data->sensor_lock, K_FOREVER);
+	fp_sensor_lock(dev);
 	rc = spi_write_dt(&cfg->spi, &tx);
 
 	/* Release CS line */
 	spi_release_dt(&cfg->spi);
-	k_sem_give(&data->sensor_lock);
+	fp_sensor_unlock(dev);
 
 	return rc;
 }
@@ -54,7 +74,6 @@ static int fpc1025_send_cmd(const struct device *dev, uint8_t cmd)
 static int fpc1025_get_hwid(const struct device *dev, uint16_t *id)
 {
 	const struct fpc1025_cfg *cfg = dev->config;
-	struct fpc1025_data *data = dev->data;
 	uint8_t cmd = FPC1025_CMD_HW_ID;
 	uint8_t tmp;
 	int rc;
@@ -70,12 +89,12 @@ static int fpc1025_get_hwid(const struct device *dev, uint16_t *id)
 	if (id == NULL)
 		return -EINVAL;
 
-	k_sem_take(&data->sensor_lock, K_FOREVER);
+	fp_sensor_lock(dev);
 	rc = spi_transceive_dt(&cfg->spi, &tx, &rx);
 
 	/* Release CS line */
 	spi_release_dt(&cfg->spi);
-	k_sem_give(&data->sensor_lock);
+	fp_sensor_unlock(dev);
 
 	/* HWID is in big endian, so convert it CPU endianness. */
 	*id = sys_be16_to_cpu(*id);
