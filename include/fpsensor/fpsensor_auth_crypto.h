@@ -10,6 +10,8 @@
 
 #include "openssl/ec.h"
 
+#include <span>
+
 extern "C" {
 #include "ec_commands.h"
 }
@@ -94,18 +96,15 @@ create_encrypted_private_key(const EC_KEY &key, uint16_t version);
  *
  * @param[in] info the metadata of the encryption output
  * @param[in] enc_data the encrypted data
- * @param[in] enc_data_size the size of encrypted data
  * @param[in] version the version of the encryption method
  * @param[out] data the decrypted data
- * @param[in] data_size the size of decrypted data
  *
  * @return EC_SUCCESS on success
  * @return EC_ERROR_* on error
  */
 enum ec_error_list
 decrypt_data(const struct fp_auth_command_encryption_metadata &info,
-	     const uint8_t *enc_data, size_t enc_data_size, uint8_t *data,
-	     size_t data_size);
+	     std::span<const uint8_t> enc_data, std::span<uint8_t> data);
 
 /**
  * Decrypt the encrypted private key.

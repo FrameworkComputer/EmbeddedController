@@ -82,8 +82,7 @@ create_encrypted_private_key(const EC_KEY &key, uint16_t version)
 
 enum ec_error_list
 decrypt_data(const struct fp_auth_command_encryption_metadata &info,
-	     const uint8_t *enc_data, size_t enc_data_size, uint8_t *data,
-	     size_t data_size)
+	     std::span<const uint8_t> enc_data, std::span<uint8_t> data)
 {
 	if (info.struct_version != 1) {
 		return EC_ERROR_INVAL;
@@ -97,13 +96,12 @@ decrypt_data(const struct fp_auth_command_encryption_metadata &info,
 		return ret;
 	}
 
-	if (enc_data_size != data_size) {
+	if (enc_data.size() != data.size()) {
 		CPRINTS("Data size mismatch");
 		return EC_ERROR_OVERFLOW;
 	}
 
-	ret = aes_128_gcm_decrypt(enc_key, { data, data_size },
-				  { enc_data, enc_data_size }, info.nonce,
+	ret = aes_128_gcm_decrypt(enc_key, data, enc_data, info.nonce,
 				  info.tag);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to decipher data");
@@ -119,10 +117,9 @@ bssl::UniquePtr<EC_KEY> decrypt_private_key(
 	CleanseWrapper<std::array<uint8_t, sizeof(encrypted_private_key.data)> >
 		privkey;
 
-	enum ec_error_list ret = decrypt_data(
-		encrypted_private_key.info, encrypted_private_key.data,
-		sizeof(encrypted_private_key.data), privkey.data(),
-		privkey.size());
+	enum ec_error_list ret = decrypt_data(encrypted_private_key.info,
+					      encrypted_private_key.data,
+					      privkey);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to decrypt private key");
 		return nullptr;
