@@ -1561,6 +1561,8 @@ static void dap_goog_gpio_monitoring_read(size_t peek_c)
 		rx_buffer[str_len] = '\0';
 		gpios[i] = gpio_find_by_name(rx_buffer);
 	}
+	if (cmsis_dap_unwind_requested())
+		return;
 
 	/*
 	 * Start the one-byte CMSIS-DAP encapsulation header at offset 7 in
@@ -1740,6 +1742,8 @@ void dap_goog_gpio_bitbang(size_t peek_c, bool streaming)
 		queue_blocking_remove(&cmsis_dap_rx_queue, bitbang_data,
 				      data_len - remaning_space);
 	}
+	if (cmsis_dap_unwind_requested())
+		return;
 
 	uint8_t status = validate_received_waveform(data_len, streaming);
 	if (status != 0) {
@@ -1859,10 +1863,24 @@ void dap_goog_gpio_bitbang(size_t peek_c, bool streaming)
  *
  * CAUTION: This handler routine runs on the CMSIS-DAP task, and the code below
  * may block waiting to receive/send data via USB.  This has the potential to
- * conflict with the console task, particularly if that one invokes
- * `stop_all_gpio_bitbanging()`.  There is currently no attempt at detecting
- * the conflict, or handling it by unwinding any partially completed invocation
- * of this function.
+ * conflict with the console task, particularly if that one invokes a function
+ * like `stop_all_gpio_bitbanging()`, which modifies the same state as methods
+ * below.
+ *
+ * As long as clients behave, and do not simultaneously request monitoring or
+ * bitbanging operations though the CMSIS-DAP interface while also sending
+ * `reinit` console command, the one case we are worried about is a bitbanging
+ * or monitoring client having stopped "in the middle" of performing some
+ * CMSIS-DAP operation, leaving the CMSIS-DAP task stuck in one of the handler
+ * functions in this file.  Then the next test session would presumably start by
+ * invoking `reinit`, which will be handled this way: In `cmsis-dap.c` a REINIT
+ * hook is registered with high priority, which will set
+ * `cmsis_dap_unwind_requested()` and will cause any blocking queue operation of
+ * the CMSIS-DAP task to exit.  Handler functions above will respond by exiting
+ * immediately, even if that means possibly leaving inconsistent state (such as
+ * having updated `head_level` but not moved the `head` pointer to match).  The
+ * normal priority REINIT hook in this file will then be called, which resets
+ * the state, such that it will be in a consistent and known initial state.
  */
 void dap_goog_gpio(size_t peek_c)
 {

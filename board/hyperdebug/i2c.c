@@ -429,6 +429,8 @@ void dap_goog_i2c_device(size_t peek_c)
 		queue_blocking_remove(&cmsis_dap_rx_queue, rx_buffer, 5);
 		queue_blocking_remove(&cmsis_dap_rx_queue,
 				      state->prepared_read_data, len);
+		if (cmsis_dap_unwind_requested())
+			return;
 
 		queue_add_unit(&cmsis_dap_tx_queue, rx_buffer);
 		state->prepared_read_len = len;
