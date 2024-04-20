@@ -76,6 +76,20 @@ struct usb_stream_config {
 };
 
 /*
+ * Empty the inbound and/or outbound queues and USART hardware FIFOs, discarding
+ * any pending data.
+ */
+void usb_usart_clear(struct usb_stream_config const *config,
+		     struct usart_config const *usart,
+		     enum clear_which_fifo which);
+
+/* Empty queue of data received from USB. */
+void usb_stream_clear_rx(struct usb_stream_config const *config);
+
+/* Empty the queue of data to go out via USB. */
+void usb_stream_clear_tx(struct usb_stream_config const *config);
+
+/*
  * These function tables are defined by the USB Stream driver and are used to
  * initialize the consumer and producer in the usb_stream_config.
  */
@@ -251,6 +265,7 @@ enum usb_usart {
 	USB_USART_REQ_BAUD = 2,
 	USB_USART_SET_BAUD = 3,
 	USB_USART_BREAK = 4,
+	USB_USART_CLEAR_QUEUES = 5,
 };
 
 /*

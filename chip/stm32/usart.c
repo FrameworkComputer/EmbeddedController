@@ -233,6 +233,18 @@ void usart_set_break(struct usart_config const *config, bool enable)
 }
 #endif
 
+void usart_clear_fifos(struct usart_config const *config,
+		       enum clear_which_fifo which)
+{
+#ifdef STM32_USART_CR1_FIFOEN
+	intptr_t base = config->hw->base;
+	/* Ask UART to drop contents of both inbound and outbound FIFO. */
+	STM32_USART_RQR(base) =
+		(which & CLEAR_RX_FIFO ? BIT(3) /* RXFRQ */ : 0) |
+		(which & CLEAR_TX_FIFO ? BIT(4) /* TXFRQ */ : 0);
+#endif
+}
+
 void usart_interrupt(struct usart_config const *config)
 {
 	config->tx->interrupt(config);

@@ -83,6 +83,43 @@ struct consumer_ops const usb_stream_consumer_ops = {
 	.written = usb_written,
 };
 
+void usb_usart_clear(struct usb_stream_config const *config,
+		     struct usart_config const *usart,
+		     enum clear_which_fifo which)
+{
+	if (which & CLEAR_TX_FIFO) {
+		/*
+		 * Drop data queued to be transmitted on UART, that is, which
+		 * was received via USB.
+		 */
+		usb_stream_clear_rx(config);
+	}
+
+	usart_clear_fifos(usart, which);
+
+	if (which & CLEAR_RX_FIFO) {
+		/*
+		 * Drop data which was received from UART, that is, which has
+		 * been queued to be transmitted via USB.
+		 */
+		usb_stream_clear_tx(config);
+	}
+}
+
+void usb_stream_clear_rx(struct usb_stream_config const *config)
+{
+	/* Remove any data in the queue received via USB. */
+	queue_advance_head(config->producer.queue, (size_t)-1);
+}
+
+void usb_stream_clear_tx(struct usb_stream_config const *config)
+{
+	/* Remove any data in the queue for USB transmission. */
+	queue_advance_head(config->consumer.queue, (size_t)-1);
+	/* Revoke any data already in USB memory marked as ready for sending. */
+	STM32_TOGGLE_EP(config->endpoint, EP_TX_MASK, EP_TX_NAK, 0);
+}
+
 void usb_stream_deferred(struct usb_stream_config const *config)
 {
 	if (!tx_valid(config) && tx_write(config))
@@ -200,6 +237,11 @@ int usb_usart_interface(struct usb_stream_config const *config,
 			 */
 			return -1;
 		}
+		break;
+	/* Discard all queued inbound and/or outbound data. */
+	case USB_USART_CLEAR_QUEUES:
+		usb_usart_clear(config, usart,
+				(enum clear_which_fifo)req.wValue);
 		break;
 	default:
 		return -1;
