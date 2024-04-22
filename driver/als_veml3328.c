@@ -255,7 +255,7 @@ static int veml3328_rgb_read(const struct motion_sensor_t *s, intv3_t v)
 	X = Y * (x / y);
 	Z = (Y / y) - X - Y;
 
-	/* TODO(b/312586806): Figure out what to do with negative Z */
+	/* Non-negative Z, as suggested in b/312586806#comment41 */
 	Z = MAX(Z, 0);
 
 	v[0] = (int)X;
