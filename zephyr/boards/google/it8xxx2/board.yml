@@ -12,3 +12,4 @@ board:
         - name: "512"
     - name: it82302ax
     - name: it82202bw
+    - name: it82302bw
