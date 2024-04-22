@@ -524,7 +524,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* wait VR power good */
 		if (power_wait_signals(IN_VR_PGOOD)) {
 			/* something wrong, turn off power and force to g3 */
-			set_diagnostic(DIAGNOSTICS_VCCIN_AUX_VR, 1);
+			set_diagnostic(DIAGNOSTICS_HW_PGOOD_VR, 1);
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_vr_on), 0);
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_susp_l), 0);
 			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_0p75vs_pwr_en), 0);

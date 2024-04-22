@@ -428,7 +428,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* wait VR power good */
 		if (power_wait_signals(IN_VR_PGOOD)) {
 			/* something wrong, turn off power and force to g3 */
-			set_diagnostic(DIAGNOSTICS_VCCIN_AUX_VR, 1);
+			set_diagnostic(DIAGNOSTICS_HW_PGOOD_VR, 1);
 			chipset_force_g3();
 			return POWER_G3;
 		}
