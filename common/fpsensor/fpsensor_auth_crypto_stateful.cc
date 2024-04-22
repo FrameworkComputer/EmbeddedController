@@ -12,14 +12,11 @@
 #include "crypto/cleanse_wrapper.h"
 #include "crypto/elliptic_curve_key.h"
 #include "openssl/bn.h"
-#include "openssl/ec.h"
 #include "openssl/mem.h"
-#include "openssl/obj_mac.h"
 #include "openssl/rand.h"
 
 extern "C" {
 #include "ec_commands.h"
-#include "sha256.h"
 }
 
 // clang-format off
