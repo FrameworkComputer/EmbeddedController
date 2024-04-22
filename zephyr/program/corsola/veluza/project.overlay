@@ -30,6 +30,12 @@
 			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_USB_C0_FRS_EN";
 		};
+		usb_a1_fault_odl: usb_a1_fault_odl {
+			gpios = <&gpioh 6 GPIO_INPUT>;
+		};
+		en_pp5000_usb_a1_vbus_x: en_pp5000_usb_a1_vbus_x {
+			gpios = <&gpioa 7 GPIO_ODR_HIGH>;
+		};
 	};
 	unused-pins {
 		unused-gpios =
@@ -43,13 +49,15 @@
 			<&gpioe 1 GPIO_INPUT>,
 			/* ec_pen_chg_dis_odl */
 			<&gpioh 3 GPIO_ODR_HIGH>,
+			/* usb_c1_bc12_charger_int_odl */
+			<&gpioj 4 GPIO_INPUT>,
 			/* unnamed nc pins */
+			<&gpioh 2 GPIO_INPUT_PULL_DOWN>,
 			<&gpioa 3 GPIO_INPUT_PULL_DOWN>,
 			<&gpioa 6 GPIO_INPUT_PULL_DOWN>,
-			<&gpioa 7 GPIO_INPUT_PULL_DOWN>,
+			<&gpiof 1 GPIO_INPUT_PULL_DOWN>,
 			<&gpiod 7 GPIO_INPUT_PULL_DOWN>,
 			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,
-			<&gpioh 6 GPIO_INPUT_PULL_DOWN>,
 			<&gpioi 3 GPIO_INPUT_PULL_DOWN>,
 			<&gpioi 6 GPIO_INPUT_PULL_DOWN>,
 			<&gpioi 7 GPIO_INPUT_PULL_DOWN>,
@@ -240,4 +248,10 @@
 &i2c4 {
 	/delete-node/ tusb1064-mux-1@44;
 	/delete-node/ ps8743_mux_1;
+};
+
+/* Veluza usba port enable config */
+&usba_port_enable_list {
+	enable-pins = <&en_pp5000_usb_a0_vbus
+		       &en_pp5000_usb_a1_vbus_x>;
 };
