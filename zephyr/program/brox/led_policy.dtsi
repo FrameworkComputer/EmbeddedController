@@ -125,7 +125,7 @@
 				led-id = "EC_LED_ID_POWER_LED";
 
 				color-0 {
-					led-color = "LED_AMBER";
+					led-color = "LED_OFF";
 				};
 			};
 		};
