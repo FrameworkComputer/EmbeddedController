@@ -81,6 +81,14 @@ config PD_CCG6_SOC_UART_DEBUG_PORT
 		EC needs to switch the external mux to turn on the path for SoC
 		uart.
 
+config PD_CCG6_WAIT_STABLE_TIMER
+	int "The timer to wait X ms to setup the PD chip"
+	default 0
+	depends on PD_CHIP_CCG6
+	help
+	    EC should wait X ms the PD chip run in stable mode then start to
+		communicate.
+
 config PD_COMMON_VBUS_CONTROL
 	bool "Enable CCG common vbus control"
 	help
