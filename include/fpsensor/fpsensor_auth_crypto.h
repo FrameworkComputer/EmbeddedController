@@ -79,7 +79,6 @@ encrypt_data_in_place(uint16_t version,
  *
  * @param[in] key the private
  * @param[in] version the version of the encryption method
- * @param[out] enc_key the encryption output
  *
  * @return @p fp_encrypted_private_key on success
  * @return std::nullopt on error
@@ -95,7 +94,6 @@ create_encrypted_private_key(const EC_KEY &key, uint16_t version);
  *
  * @param[in] info the metadata of the encryption output
  * @param[in] enc_data the encrypted data
- * @param[in] version the version of the encryption method
  * @param[out] data the decrypted data
  *
  * @return EC_SUCCESS on success
@@ -111,12 +109,7 @@ decrypt_data(const struct fp_auth_command_encryption_metadata &info,
  * version 1 is 128 bit AES-GCM, and the encryption key is bound to the TPM
  * seed, rollback secret and user_id.
  *
- * @param[in] info the metadata of the encryption output
- * @param[in] enc_data the encrypted data
- * @param[in] enc_data_size the size of encrypted data
- * @param[in] version the version of the encryption method
- * @param[out] data the decrypted data
- * @param[in] data_size the size of decrypted data
+ * @param[in] encrypted_private_key encrypted private key
  *
  * @return EC_SUCCESS on success
  * @return EC_ERROR_* on error

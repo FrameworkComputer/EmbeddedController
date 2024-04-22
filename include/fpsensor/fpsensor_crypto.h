@@ -42,7 +42,7 @@ enum ec_error_list hkdf_expand(uint8_t *out_key, size_t out_key_size,
 /**
  * Derive hardware encryption key from rollback secret, |salt|, and |info|.
  *
- * @param outkey the pointer to buffer holding the output key.
+ * @param out_key the pointer to buffer holding the output key.
  * @param salt the salt to use in HKDF.
  * @param info the info to use in HKDF.
  * @param info_size the size of |info| in bytes.
