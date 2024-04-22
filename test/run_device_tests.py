@@ -413,7 +413,9 @@ class AllTests:
                 test_name="power_utilization",
                 apptype_to_use=ApplicationType.PRODUCTION,
                 toggle_power=True,
-                pre_test_callback=lambda config=None: set_sleep_mode(False),
+                pre_test_callback=lambda config: power_pre_test(
+                    board_config=config, enter_sleep=False
+                ),
                 post_test_callback=verify_idle_power_utilization,
                 finish_regexes=[RW_IMAGE_BOOTED_REGEX],
             ),
@@ -422,7 +424,9 @@ class AllTests:
                 test_name="power_utilization",
                 apptype_to_use=ApplicationType.PRODUCTION,
                 toggle_power=True,
-                pre_test_callback=lambda config=None: set_sleep_mode(True),
+                pre_test_callback=lambda config: power_pre_test(
+                    board_config=config, enter_sleep=True
+                ),
                 post_test_callback=verify_sleep_power_utilization,
                 finish_regexes=[RW_IMAGE_BOOTED_REGEX],
             ),
@@ -715,6 +719,17 @@ def fp_sensor_sel(
         return True
 
     return False
+
+
+def power_pre_test(board_config: BoardConfig, enter_sleep: bool) -> bool:
+    """
+    Prepare a board for a power_utilization test
+    """
+
+    if not set_sleep_mode(enter_sleep):
+        return False
+
+    return fp_sensor_sel(board_config)
 
 
 def hw_write_protect(enable: bool) -> None:
