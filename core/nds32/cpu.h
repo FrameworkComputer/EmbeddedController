@@ -59,6 +59,12 @@ static inline uint32_t get_itype(void)
 	return ret;
 }
 
+static inline uint32_t get_interrupt_level(void)
+{
+	/* Get interrupt stack level, 0 | 1 | 2 */
+	return (get_psw() & PSW_INTL_MASK) >> PSW_INTL_SHIFT;
+}
+
 /* Generic CPU core initialization */
 void cpu_init(void);
 
