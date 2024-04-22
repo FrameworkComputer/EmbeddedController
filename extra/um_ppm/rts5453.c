@@ -1207,18 +1207,16 @@ static int rts5453_ucsi_init_ppm(struct ucsi_pd_device *device)
 	}
 
 	/* Initialize actions task. */
-	dev->action_data.lock = platform_mutex_init();
-	if (!dev->action_data.lock) {
+	if (platform_mutex_init(&dev->action_data.lock) < 0) {
 		return -1;
 	}
 
-	dev->action_data.condvar = platform_condvar_init();
-	if (!dev->action_data.condvar) {
+	if (platform_condvar_init(&dev->action_data.condvar) < 0) {
 		return -1;
 	}
 
-	dev->action_task = platform_task_init(rts5453_action_task, dev);
-	if (dev->action_task == NULL) {
+	if (platform_task_init(rts5453_action_task, dev, &dev->action_task) <
+	    0) {
 		return -1;
 	}
 
