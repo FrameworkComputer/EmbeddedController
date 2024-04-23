@@ -82,10 +82,10 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		power = ((active_power * 95) / 100) - 20;
 		if (battery_watt == battery_55w) {
 			pl2_watt = MIN((power + 55), 60);
-			pl4_watt = MIN((power + 38), 120);
+			pl4_watt = MIN((power + 78), 120);
 		} else if (battery_watt == battery_61w) {
 			pl2_watt = MIN((power + 61), 60);
-			pl4_watt = MIN((power + 42), 120);
+			pl4_watt = MIN((power + 87), 120);
 		}
 	}
 
