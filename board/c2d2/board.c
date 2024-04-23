@@ -771,8 +771,22 @@ static int command_vref_alternate(int argc, const char **argv,
 		} else {
 			/* Return GPIO back to input for vref detection */
 			gpio_set_flags(vref_signal, GPIO_INPUT);
-			/* Transitioning out of hold, correct vrefs */
-			hook_call_deferred(&update_vrefs_and_shifters_data, 0);
+			if (STM32_USART_CR2(STM32_USART4_BASE) &
+			    STM32_USART_CR2_TXINV) {
+				/*
+				 * GSC UART break condition as GSC reset is
+				 * released, this is how OpenTitan rescue mode
+				 * is triggered.  We cannot afford to
+				 * temporarily disable UART buffers while
+				 * detecting GSC/EC voltages.  Skip detection
+				 * and continue using same driver voltages as
+				 * before reset was applied.
+				 */
+			} else {
+				/* Transitioning out of hold, correct vrefs */
+				hook_call_deferred(
+					&update_vrefs_and_shifters_data, 0);
+			}
 			vref_monitor_disable &= ~state_flag;
 		}
 
