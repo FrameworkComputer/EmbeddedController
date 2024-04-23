@@ -83,38 +83,6 @@ const struct led_pins_node_t *pins_node[] = {
 						PINS_NODE_PTR)
 };
 
-static int power_led_node;
-static void find_pin_node(void)
-{
-		for (int i = 0; i < ARRAY_SIZE(pins_node); i++) {
-			if ((pins_node[i]->led_color == LED_WHITE) &&
-		  	  (pins_node[i]->led_id == EC_LED_ID_POWER_LED)) {
-				power_led_node = i;
-		}
-	}
-}
-DECLARE_HOOK(HOOK_INIT, find_pin_node, HOOK_PRIO_DEFAULT);
-
-void pwm_set_breath_dt(int percent)
-{
-	struct pwm_pin_t *pwm_pins = pins_node[power_led_node]->pwm_pins;
-	uint32_t pulse_ns;
-
-	/*
-	 * pulse_ns = (period_ns*duty_cycle_in_perct)/100
-	 * freq = 100 Hz, period_ns = 1000000000/100 = 10000000ns
-	 * duty_cycle = 50 %, pulse_ns  = (10000000*50)/100 = 5000000ns
-	 */
-
-	pulse_ns = DIV_ROUND_NEAREST(BOARD_LED_PWM_PERIOD_NS * percent, 100);
-
-	pwm_pins->pwm->pulse_ns = pulse_ns;
-	pwm_pins->pwm->transition = LED_TRANSITION_STEP;
-
-	/* we need to update the fp led as soon as possible */
-	board_led_apply_color();
-}
-
 /*
  * Set all the PWM channels defined in the array to the defined value,
  * to enable the color. Defined value is duty cycle in percentage
