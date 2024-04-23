@@ -222,6 +222,8 @@ enum snk_typec_attached_local_state_t {
 	SNK_TYPEC_ATTACHED_SET_CHARGE_CURRENT,
 	/** SNK_TYPEC_ATTACHED_SET_SINK_PATH_ON */
 	SNK_TYPEC_ATTACHED_SET_SINK_PATH_ON,
+	/** SNK_TYPEC_ATTACHED_DEBOUNCE */
+	SNK_TYPEC_ATTACHED_DEBOUNCE,
 	/** SNK_TYPEC_ATTACHED_RUN */
 	SNK_TYPEC_ATTACHED_RUN,
 };
@@ -232,6 +234,8 @@ enum snk_typec_attached_local_state_t {
 enum src_typec_attached_local_state_t {
 	/** SRC_TYPEC_ATTACHED_SET_SINK_PATH_OFF */
 	SRC_TYPEC_ATTACHED_SET_SINK_PATH_OFF,
+	/** SRC_TYPEC_ATTACHED_DEBOUNCE */
+	SRC_TYPEC_ATTACHED_DEBOUNCE,
 	/** SRC_TYPEC_ATTACHED_RUN */
 	SRC_TYPEC_ATTACHED_RUN,
 };
@@ -570,6 +574,8 @@ struct pdc_port_t {
 	uint32_t typec_current_ma;
 	/** Buffer used by public api to receive data from the driver */
 	uint8_t *public_api_buff;
+	/** Timer to used to verify typec_only vs USB-PD port partner */
+	struct k_timer typec_only_timer;
 };
 
 /**
@@ -1688,6 +1694,16 @@ static void pdc_src_typec_only_entry(void *obj)
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
 		port->src_typec_attached_local_state =
 			SRC_TYPEC_ATTACHED_SET_SINK_PATH_OFF;
+
+		/* Start one shot typec only timer. This timer is used to
+		 * differentiate between a port partner that supports USB PD or
+		 * is typec_only. Note that the timer is not explicitly
+		 * stopped. Since there is no callback associated, letting it
+		 * expire in the src.attached state will have no effect and the
+		 * k_timer_start call always resets the timer status.
+		 */
+		k_timer_start(&port->typec_only_timer,
+			      K_USEC(PD_T_SINK_WAIT_CAP), K_NO_WAIT);
 	}
 }
 
@@ -1706,10 +1722,17 @@ static void pdc_src_typec_only_run(void *obj)
 
 	switch (port->src_typec_attached_local_state) {
 	case SRC_TYPEC_ATTACHED_SET_SINK_PATH_OFF:
-		port->src_typec_attached_local_state = SRC_TYPEC_ATTACHED_RUN;
+		port->src_typec_attached_local_state =
+			SRC_TYPEC_ATTACHED_DEBOUNCE;
 
 		port->sink_path_en = false;
 		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
+		return;
+	case SRC_TYPEC_ATTACHED_DEBOUNCE:
+		if (k_timer_status_get(&port->typec_only_timer) > 0) {
+			port->src_typec_attached_local_state =
+				SRC_TYPEC_ATTACHED_RUN;
+		}
 		return;
 	case SRC_TYPEC_ATTACHED_RUN:
 		send_pending_public_commands(port);
@@ -1725,6 +1748,16 @@ static void pdc_snk_typec_only_entry(void *obj)
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
 		port->snk_typec_attached_local_state =
 			SNK_TYPEC_ATTACHED_SET_CHARGE_CURRENT;
+
+		/* Start one shot typec only timer. This timer is used to
+		 * differentiate between a port partner that supports USB PD or
+		 * is typec_only. Note that the timer is not explicitly
+		 * stopped. Since there is no callback associated, letting it
+		 * expire in the snk.attached state will have no effect and the
+		 * k_timer_start call always resets the timer status.
+		 */
+		k_timer_start(&port->typec_only_timer,
+			      K_USEC(PD_T_SINK_WAIT_CAP), K_NO_WAIT);
 	}
 
 	print_current_pdc_state(port);
@@ -1756,9 +1789,16 @@ static void pdc_snk_typec_only_run(void *obj)
 					       CAP_DEDICATED);
 		break;
 	case SNK_TYPEC_ATTACHED_SET_SINK_PATH_ON:
-		port->snk_typec_attached_local_state = SNK_TYPEC_ATTACHED_RUN;
+		port->snk_typec_attached_local_state =
+			SNK_TYPEC_ATTACHED_DEBOUNCE;
 		port->sink_path_en = true;
 		queue_internal_cmd(port, CMD_PDC_SET_SINK_PATH);
+		return;
+	case SNK_TYPEC_ATTACHED_DEBOUNCE:
+		if (k_timer_status_get(&port->typec_only_timer) > 0) {
+			port->snk_typec_attached_local_state =
+				SNK_TYPEC_ATTACHED_RUN;
+		}
 		return;
 	case SNK_TYPEC_ATTACHED_RUN:
 		/* Hard Reset could disable Sink FET. Re-enable it */
@@ -1922,6 +1962,9 @@ static int pdc_subsys_init(const struct device *dev)
 	/* Initialize command mutex */
 	k_mutex_init(&port->mtx);
 	smf_set_initial(&port->ctx, &pdc_states[PDC_INIT]);
+
+	/* Initialize typec only timer */
+	k_timer_init(&port->typec_only_timer, NULL, NULL);
 
 	/* Create the thread for this port */
 	config->create_thread(dev);
