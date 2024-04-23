@@ -223,6 +223,7 @@ class TestConfig:
     passed: bool = field(init=False, default=False)
     num_passes: int = field(init=False, default=0)
     num_fails: int = field(init=False, default=0)
+    skip_for_zephyr: bool = False
 
     # The callbacks below are called before and after a test is executed and
     # may be used for additional test setup, post test activities, or other tasks
@@ -1303,6 +1304,8 @@ def main():
 
     with ThreadPoolExecutor(max_workers=1) as executor:
         for test in test_list:
+            if test.skip_for_zephyr and args.zephyr:
+                continue
             test.passed = flash_and_run_test(test, board_config, args, executor)
 
         colorama.init()
@@ -1310,11 +1313,14 @@ def main():
         for test in test_list:
             # print results
             print('Test "' + test.config_name + '": ', end="")
-            if test.passed:
-                print(colorama.Fore.GREEN + "PASSED")
+            if test.skip_for_zephyr and args.zephyr:
+                print(colorama.Fore.YELLOW + "SKIPPED")
             else:
-                print(colorama.Fore.RED + "FAILED")
-                exit_code = 1
+                if test.passed:
+                    print(colorama.Fore.GREEN + "PASSED")
+                else:
+                    print(colorama.Fore.RED + "FAILED")
+                    exit_code = 1
 
             print(colorama.Style.RESET_ALL)
 
