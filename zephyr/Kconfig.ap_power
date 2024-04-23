@@ -28,6 +28,8 @@ if PLATFORM_EC_BOOT_AP_POWER_REQUIREMENTS
 config PLATFORM_EC_POWER_BUTTON_INIT_TIMEOUT
 	int "Timeout before power button task gives up starting system"
 	depends on HAS_TASK_POWERBTN
+	# The PD Controller needs more time to get current power contract
+	default 4 if PLATFORM_EC_USB_PD_CONTROLLER
 	default 1
 	help
 	  Sets the maximum time, in seconds, before the power button
