@@ -375,6 +375,12 @@
 			};
 		};
 	};
+
+	usbc {
+		port0@0 {
+			/delete-property/ bc12;
+		};
+	};
 };
 
 /* White LED */
@@ -417,13 +423,3 @@
 /delete-node/ &int_usb_c0_bc12;
 /delete-node/ &gpio_usb_c0_bc12_int_odl;
 /delete-node/ &bc12_port0;
-
-/ {
- usbc {
-
-   port0@0 {
-   /delete-property/ bc12;
-   };
- };
-};
-
