@@ -596,7 +596,7 @@ static int rts54_i2c_read(const struct device *dev)
 
 	msg[1].buf = data->rd_buf;
 	msg[1].len = data->ping_status.data_len + 1;
-	msg[1].flags = I2C_MSG_READ | I2C_MSG_STOP;
+	msg[1].flags = I2C_MSG_RESTART | I2C_MSG_READ | I2C_MSG_STOP;
 
 	rv = i2c_transfer_dt(&cfg->i2c, msg, 2);
 	if (rv < 0) {
