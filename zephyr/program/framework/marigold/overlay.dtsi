@@ -51,7 +51,7 @@
 		};
 		temp_sensor_soc: soc-temp {
 			/* just read, no protection */
-			temp_fan_off = <40>;
+			temp_fan_off = <55>;
 			temp_fan_max = <90>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&peci_temp>;
