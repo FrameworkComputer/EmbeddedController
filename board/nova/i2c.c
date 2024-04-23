@@ -50,14 +50,6 @@ const struct i2c_port_t i2c_ports[] = {
 		.sda = GPIO_EC_I2C_USB_C1_PPC_SDA,
 	},
 	{
-		/* I2C5 */
-		.name = "pse",
-		.port = I2C_PORT_PSE,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C_LTC_SCL,
-		.sda = GPIO_EC_I2C_LTC_SDA,
-	},
-	{
 		/* I2C6 */
 		.name = "ADB",
 		.port = I2C_PORT_ADB,

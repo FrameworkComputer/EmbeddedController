@@ -22,7 +22,6 @@
 #include "peripheral_charger.h"
 #include "power.h"
 #include "power_button.h"
-#include "pse_ltc4291.h"
 #include "switch.h"
 #include "throttle_ap.h"
 #include "usbc_config.h"
@@ -36,20 +35,6 @@
 
 static void power_monitor(void);
 DECLARE_DEFERRED(power_monitor);
-
-/*
- * The LTC4291 is a power over ethernet (PoE) power sourcing equipment (PSE)
- * controller.
- *
- * Port 1: 100W
- * Port 2-4: 15W
- */
-const int pse_port_hpmd[4] = {
-	LTC4291_HPMD_MAX,
-	LTC4291_HPMD_MIN,
-	LTC4291_HPMD_MIN,
-	LTC4291_HPMD_MIN,
-};
 
 /******************************************************************************/
 /* USB-A charging control */
