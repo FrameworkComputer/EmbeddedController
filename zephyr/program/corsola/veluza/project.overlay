@@ -218,8 +218,26 @@
 		};
 	};
 	batteries {
-		default_battery: c235 {
-			compatible = "celxpert,c235-41", "battery-smart";
+		default_battery: 313_b7_32_a {
+			compatible = "nvt,313-b7-32-a", "battery-smart";
+		};
+		313_ac_32_a {
+			compatible = "cosmx,313-ac-32-a", "battery-smart";
+		};
+		313_2d_32_a {
+			compatible = "dynapack,313-2d-32-a", "battery-smart";
+		};
+		333_2c_32_a {
+			compatible = "dynapack,333-2c-32-a", "battery-smart";
+		};
+		313_12_32_a {
+			compatible = "smp,313-12-32-a", "battery-smart";
+		};
+		333_17_32_a {
+			compatible = "smp,333-17-32-a", "battery-smart";
+		};
+		333_cf_32_a {
+			compatible = "sunwoda,333-cf-32-a", "battery-smart";
 		};
 	};
 };
