@@ -86,9 +86,6 @@ GPIO(GSC_EC_RECOVERY_BTN_OD,         PIN(2, 2), GPIO_INPUT)
 GPIO(HDMIA_CEC_IN,                   PIN(D, 3), GPIO_INPUT)
 GPIO(HDMIA_CEC_OUT,                  PIN(1, 0), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
 GPIO(HDMIA_CEC_PULL_UP,              PIN(1, 1), GPIO_OUT_HIGH)
-GPIO(HDMIB_CEC_IN,                   PIN(4, 0), GPIO_INPUT)
-GPIO(HDMIB_CEC_OUT,                  PIN(2, 7), GPIO_OUT_HIGH | GPIO_OPEN_DRAIN)
-GPIO(HDMIB_CEC_PULL_UP,              PIN(C, 2), GPIO_OUT_HIGH)
 
 /* I2C SCL/SDA */
 GPIO(EC_I2C_LTC_SCL,                 PIN(3, 3), GPIO_INPUT)
@@ -180,3 +177,6 @@ UNUSED(PIN(A, 3))       /* SPIP_MOSI/GPIOA3 */
 UNUSED(PIN(9, 5))       /* SPIP_MISO/GPIO95 */
 UNUSED(PIN(D, 2))       /* PSL_IN1/GPIOD2 */
 UNUSED(PIN(0, 2))       /* GPIO02/PSL_IN4 */
+UNUSED(PIN(4, 0))       /* GPIO40 */
+UNUSED(PIN(2, 7))       /* GPIO27 */
+UNUSED(PIN(C, 2))       /* GPIOC2 */
