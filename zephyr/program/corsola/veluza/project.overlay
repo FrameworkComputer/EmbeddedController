@@ -17,6 +17,7 @@
 #include "../ite_usbc.dtsi"
 #include "../ite_shi.dtsi"
 #include "./cbi.dtsi"
+#include "./keyboard.dtsi"
 #include "./thermistor.dtsi"
 / {
 	named-gpios {

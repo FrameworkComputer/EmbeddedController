@@ -1,0 +1,25 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+		actual-key-mask = <
+			0x1c  /* C0 */
+			0xff  /* C1 */
+			0xff  /* C2 */
+			0xff  /* C3 */
+			0xff  /* C4 */
+			0xff  /* C5 */
+			0xff  /* C6 */
+			0xa4  /* C7 */
+			0xff  /* C8 */
+			0xff  /* C9 */
+			0x55  /* C10 */
+			0xfb  /* C11 */
+			0xca  /* C12 */
+		>;
+	};
+};
