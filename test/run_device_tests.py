@@ -949,12 +949,16 @@ def run_test_ec(test: TestConfig) -> str:
 
 def run_test_zephyr(test: TestConfig) -> str:
     """Prepare a command to run test on Zephyr"""
-    test_cmd = "ztest run-testcase " + test.test_name
-    # ZTEST console doesn't support passing test arguments
-    # Assume a testsuite for every test + arg combination
-    for test_arg in test.test_args:
-        test_cmd = test_cmd + "_" + test_arg
-    test_cmd = test_cmd + "\n"
+    if len(test.test_args) == 0:
+        # If there are no args just run-all not to be limited by suite name
+        test_cmd = "ztest run-all\n"
+    else:
+        # ZTEST console doesn't support passing test arguments
+        # Assume a testsuite for every test + arg combination
+        test_cmd = "ztest run-testcase " + test.test_name
+        for test_arg in test.test_args:
+            test_cmd = test_cmd + "_" + test_arg
+        test_cmd = test_cmd + "\n"
 
     return test_cmd
 
