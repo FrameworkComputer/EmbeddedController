@@ -309,6 +309,7 @@ static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 	}
 
 	system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, led_level);
+	update_pwr_led_level();
 
 	return EC_RES_SUCCESS;
 }
