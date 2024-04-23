@@ -284,8 +284,8 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 1);
 
 		k_msleep(10);
-		/* TODO: need confirm sequence */
 		if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_prim_pwr_ok)) == 0) {
+			set_diagnostic(DIAGNOSTICS_VCCIN_AUX_VR, true);
 			return POWER_G3;
 		}
 
@@ -369,7 +369,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* wait VR power good */
 		if (power_wait_signals(IN_VR_PGOOD)) {
 			/* something wrong, turn off power and force to g3 */
-			set_diagnostic(DIAGNOSTICS_VCCIN_AUX_VR, 1);
+			set_diagnostic(DIAGNOSTICS_HW_PGOOD_VR, 1);
 			chipset_force_g3();
 			return POWER_G3;
 		}
