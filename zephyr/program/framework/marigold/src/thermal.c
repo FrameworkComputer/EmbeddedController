@@ -31,7 +31,7 @@ uint16_t board_fan_min[2];
 /* 1590,-3130,1590,-31527,15193,14 */
 /* */
 const int32_t apu_coeff[6] = {
-	34, 68, 34, 16384, -30587, 14340
+	22,     44,     22,  16384, -31023,  14727
 };
 struct biquad apu_filtered = {
 	.coeff = apu_coeff,
