@@ -127,8 +127,9 @@ void board_override_fan_control(int fan, int *temp)
 #ifdef CONFIG_GPU
 	int apu_selected_pct = 0;
 	int current_max_temp_idx = TEMP_APU;
-	int apu_filtered_temp = 0;
 #endif
+	int apu_filtered_temp = 0;
+
 	int apu_filtered_pct = 0;
 	int temps_mk[5] = {0};
 
@@ -144,14 +145,21 @@ void board_override_fan_control(int fan, int *temp)
 	 * when chipset suspend or shutdown.
 	 */
 	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		f75303_get_val_mk(TEMP_CPU_F, &apu_temp_mk);
 
-		if (thermal_params[TEMP_CPU].temp_fan_off &&
-			thermal_params[TEMP_CPU].temp_fan_max) {
+		if (fan == 0) {
+			thermal_filter_update(&apu_filtered, temp[TEMP_APU]);
+		}
+		//f75303_get_val_mk(TEMP_CPU_F, &apu_temp_mk);
+
+		apu_filtered_temp = thermal_filter_get(&apu_filtered);
+
+
+		if (thermal_params[TEMP_APU].temp_fan_off &&
+			thermal_params[TEMP_APU].temp_fan_max) {
 			pct = thermal_fan_percent(
-				thermal_params[TEMP_CPU].temp_fan_off * 1000,
-				thermal_params[TEMP_CPU].temp_fan_max * 1000,
-				apu_temp_mk);
+				thermal_params[TEMP_APU].temp_fan_off * 1000,
+				thermal_params[TEMP_APU].temp_fan_max * 1000,
+				C_TO_K(apu_filtered_temp)*1000);
 		}
 
 		new_rpm = fan_percent_to_rpm(fan, pct);
@@ -170,8 +178,8 @@ void board_override_fan_control(int fan, int *temp)
 			/* add temperature histeresis so the fan does not turn off
 			 * unless the system has cooled 0.5C below the fan turn on temperature
 			 */
-			if (thermal_params[TEMP_CPU].temp_fan_off &&
-				apu_temp_mk > (thermal_params[TEMP_CPU].temp_fan_off
+			if (thermal_params[TEMP_APU].temp_fan_off &&
+				apu_temp_mk > (thermal_params[TEMP_APU].temp_fan_off
 					* 1000 - 500)) {
 				deadline.val = get_time().val + FAN_STOP_DELAY_S;
 			}
