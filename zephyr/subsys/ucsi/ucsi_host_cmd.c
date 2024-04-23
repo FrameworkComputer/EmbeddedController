@@ -36,6 +36,11 @@ static int eppm_init(void)
 	struct ppm_common_device *ppm_dev;
 
 	pdc_dev = DEVICE_DT_GET(DT_INST(0, ucsi_ppm));
+	if (!device_is_ready(pdc_dev)) {
+		LOG_ERR("device %s not ready", pdc_dev->name);
+		return -ENODEV;
+	}
+
 	drv = pdc_dev->api;
 	if (!drv) {
 		LOG_ERR("Failed to open PDC");
