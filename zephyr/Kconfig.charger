@@ -230,6 +230,7 @@ config PLATFORM_EC_CHARGER_RT9490
 	default y
 	depends on DT_HAS_RICHTEK_RT9490_ENABLED || DT_HAS_ZEPHYR_RT9490_EMUL_ENABLED
 	depends on PLATFORM_EC_I2C
+	select PLATFORM_EC_CHARGER_NARROW_VDC
 	select PLATFORM_EC_CHARGER_OTG_SUPPORTED
 	help
 	  Enables the driver for the Richtek RT9490 battery charger

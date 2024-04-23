@@ -24,6 +24,10 @@
 #include "usb_pd.h"
 #include "util.h"
 
+#ifndef CONFIG_CHARGER_NARROW_VDC
+#error "RT9490 is a NVDC charger, please enable CONFIG_CHARGER_NARROW_VDC."
+#endif
+
 /* Console output macros */
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
 #define CPRINTS(format, args...) \
