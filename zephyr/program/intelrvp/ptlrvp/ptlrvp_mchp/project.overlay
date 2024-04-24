@@ -3,4 +3,5 @@
  * found in the LICENSE file.
  */
 
+#include "gpio.dtsi"
 #include "../stub.dtsi"
