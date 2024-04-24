@@ -331,7 +331,7 @@ static int command_flash_test1(int argc, const char **argv)
 		error_status = crec_flash_physical_erase(
 			flash_address, CONFIG_FLASH_ERASE_SIZE);
 		if (error_status != EC_SUCCESS) {
-			CPRINTS("Error with crec_flash_physical_erase\n");
+			CPRINTS("Error with crec_flash_physical_erase");
 			return EC_ERROR_UNKNOWN;
 		}
 
@@ -343,7 +343,7 @@ static int command_flash_test1(int argc, const char **argv)
 		ptr = (uint8_t *)flash_address;
 		for (i = 0; i < CONFIG_FLASH_ERASE_SIZE; i++) {
 			if (*ptr++ != 0xff) {
-				CPRINTS("Error with verifying page erase\n");
+				CPRINTS("Error with verifying page erase");
 				return EC_ERROR_UNKNOWN;
 			}
 		}
@@ -357,7 +357,7 @@ static int command_flash_test1(int argc, const char **argv)
 		error_status = crec_flash_physical_write(flash_address,
 							 BUFFER_SIZE, buffer);
 		if (error_status != EC_SUCCESS) {
-			CPRINTS("Error with crec_flash_physical_write\n");
+			CPRINTS("Error with crec_flash_physical_write");
 			return EC_ERROR_UNKNOWN;
 		}
 	}
@@ -390,7 +390,7 @@ static int command_flash_test1(int argc, const char **argv)
 		error_status = crec_flash_physical_erase(
 			flash_address, CONFIG_FLASH_ERASE_SIZE);
 		if (error_status != EC_SUCCESS) {
-			CPRINTS("Error with crec_flash_physical_erase\n");
+			CPRINTS("Error with crec_flash_physical_erase");
 			return EC_ERROR_UNKNOWN;
 		}
 	}

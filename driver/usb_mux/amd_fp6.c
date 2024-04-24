@@ -159,7 +159,7 @@ static int amd_fp6_set_mux(const struct usb_mux *me, mux_state_t mux_state,
 	else if (mux_state & USB_PD_MUX_DP_ENABLED)
 		val = AMD_FP6_MUX_MODE_DP;
 	else {
-		CPRINTSUSB("C%d: unhandled mux_state %x\n", me->usb_port,
+		CPRINTSUSB("C%d: unhandled mux_state %x", me->usb_port,
 			   mux_state);
 		return EC_ERROR_INVAL;
 	}
