@@ -85,7 +85,7 @@
 	};
 	usbc {
 		port0@0 {
-			ppc_alt = <&ppc_port0>;
+			ppc = <&ppc_port0>;
 		};
 		/delete-node/ port1@1;
 	};
