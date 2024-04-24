@@ -95,6 +95,10 @@
 			io-channels = <&adc0 5>;
 		};
 	};
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+		/delete-node/ usb-c1;
+	};
 	temp_ambient: ambient {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_30K9_47K_NCP15WB>;
