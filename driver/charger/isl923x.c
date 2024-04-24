@@ -808,12 +808,6 @@ static void isl923x_init(int chgnum)
 			reg |= ISL923X_C2_TRICKLE_128;
 			if (raw_write16(chgnum, ISL923X_REG_CONTROL2, reg))
 				goto init_fail;
-
-			if (raw_read16(chgnum, ISL9238_REG_CONTROL3, &reg))
-				goto init_fail;
-			reg |= ISL9238_C3_PSYS_GAIN;
-			if (raw_write16(chgnum, ISL9238_REG_CONTROL3, reg))
-				goto init_fail;
 		}
 	}
 
