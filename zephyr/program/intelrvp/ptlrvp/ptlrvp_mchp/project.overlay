@@ -3,5 +3,9 @@
  * found in the LICENSE file.
  */
 
+#include "include/board.h"
+
 #include "gpio.dtsi"
 #include "../stub.dtsi"
+#include "../interrupts.dtsi"
+#include "../power_signals.dtsi"

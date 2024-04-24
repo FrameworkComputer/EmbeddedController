@@ -283,7 +283,7 @@
 		h-caterr-ec-n {
 			gpios = <MCHP_GPIO_DECODE_255 GPIO_INPUT>;
 		};
-		ec-gppc-b14 {
+		en_pp5000_s5: ec-gppc-b14 {
 			gpios = <MCHP_GPIO_DECODE_244 GPIO_OUTPUT_LOW>;
 		};
 		smc_lid: smc-lid {
