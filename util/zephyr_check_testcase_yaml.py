@@ -30,11 +30,9 @@ BLOCKED_FIELDS = {
 def main(argv: Optional[List[str]] = None) -> Optional[int]:
     """Look at all testcase.yaml files passed in on commandline for invalid fields."""
     return_code = 0
-    parser = preupload.lib.argument_parser()
-
-    args = parser.parse_args(argv)
+    args = preupload.lib.parse_args(argv)
     for filename in args.filename:
-        if filename.name == "/testcase.yaml":
+        if filename.name == "testcase.yaml":
             lines = preupload.lib.cat_file(args, filename)
             data = yaml.load(lines, Loader=yaml.SafeLoader)
 
