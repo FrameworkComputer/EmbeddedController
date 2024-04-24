@@ -587,9 +587,7 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 		 * Copy the payload to |fp_enc_buffer| where it will be
 		 * encrypted in-place.
 		 */
-		std::span fp_template_span(fp_template[fgr],
-					   sizeof(fp_template[fgr]));
-		std::ranges::copy(fp_template_span, templ.begin());
+		std::ranges::copy(fp_template[fgr], templ.begin());
 		std::ranges::copy(global_context.fp_positive_match_salt[fgr],
 				  positive_match_salt.begin());
 
