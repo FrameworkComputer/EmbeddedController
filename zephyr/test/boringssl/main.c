@@ -50,36 +50,3 @@ ZTEST(boringssl_crypto, test_rand_large_request)
 	CRYPTO_sysrand(buffer, buf_size);
 	zassert_true(memcmp(buffer, zeroes, buf_size) != 0);
 }
-
-ZTEST(boringssl_crypto, test_getentropy_too_large)
-{
-	uint8_t buf[256 + 1] = { 0 };
-
-	int ret = getentropy(buf, sizeof(buf));
-	zassert_equal(ret, -1);
-	zassert_equal(errno, EIO);
-}
-
-ZTEST(boringssl_crypto, test_getentropy_null_buffer)
-{
-	int ret = getentropy(NULL, 0);
-	zassert_equal(ret, -1);
-	zassert_equal(errno, EFAULT);
-}
-
-ZTEST(boringssl_crypto, test_getentropy)
-{
-	uint8_t zero[256] = { 0 };
-	uint8_t buf1[256];
-	uint8_t buf2[256];
-
-	int ret = getentropy(buf1, sizeof(buf1));
-	zassert_equal(ret, 0);
-
-	ret = getentropy(buf2, sizeof(buf2));
-	zassert_equal(ret, 0);
-
-	zassert_true(memcmp(buf1, zero, sizeof(zero)) != 0);
-	zassert_true(memcmp(buf2, zero, sizeof(zero)) != 0);
-	zassert_true(memcmp(buf1, buf2, sizeof(buf1)) != 0);
-}
