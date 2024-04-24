@@ -47,7 +47,6 @@ set(CMAKE_SKIP_INSTALL_RULES YES)
 # We don't use generated assembly for now.
 set(OPENSSL_NO_ASM "1")
 
-zephyr_include_directories(${BORINGSSL_SOURCES})
 zephyr_include_directories(${BORINGSSL_SOURCES}/include)
 zephyr_include_directories(include)
 
