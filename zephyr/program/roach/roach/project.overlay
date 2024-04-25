@@ -28,3 +28,7 @@
 &touchpad_fw_hashes {
 	size = <((65536 / 1024) * 32)>;
 };
+
+&sha0 {
+	status = "okay";
+};
