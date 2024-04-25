@@ -89,9 +89,31 @@ uint8_t calc_AWFCS(uint8_t *data_blk_ptr, unsigned int length)
 
 static int system_is_ready(void)
 {
+	static bool pre_system_state;
 	uint8_t system_flags = *host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS);
+	static uint64_t timeout;
+	uint64_t now = get_time().val;
+	int rv;
 
-	return !!((system_flags & ACPI_DRIVER_READY) && !chipset_in_state(CHIPSET_STATE_ANY_OFF));
+	if (pre_system_state != !!(system_flags & ACPI_DRIVER_READY)) {
+		if (!!(system_flags & ACPI_DRIVER_READY)) {
+			/* Delay 10 seconds to start PECI communication */
+			timeout = get_time().val + 10 * SECOND;
+		}
+		pre_system_state = !!(system_flags & ACPI_DRIVER_READY);
+	}
+
+	if (!!(system_flags & ACPI_DRIVER_READY) && !chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		if (now >= timeout) {
+			rv = 1;
+		} else {
+			rv = 0;
+		}
+	} else {
+		rv = 0;
+	}
+
+	return rv;
 }
 
 
