@@ -48,9 +48,6 @@ GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
 GPIO(EC_ENTERING_RW,                 PIN(0, 3), GPIO_OUT_LOW)
 GPIO(EC_GSC_PACKET_MODE,             PIN(7, 5), GPIO_OUT_LOW)
 
-/* Fan */
-GPIO(EN_PP5000_FAN,                  PIN(6, 1), GPIO_OUT_HIGH)
-
 /* ADC, need to check the usage */
 GPIO(ANALOG_PPVAR_PWR_IN_IMON_EC,    PIN(4, 2), GPIO_INPUT)
 
@@ -168,3 +165,4 @@ UNUSED(PIN(8, 3))       /* GPIO83 */
 UNUSED(PIN(F, 5))       /* GPIOF5 */
 UNUSED(PIN(A, 0))       /* GPIOA0 */
 UNUSED(PIN(8, 2))       /* GPIO82 */
+UNUSED(PIN(6, 1))       /* GPIO61 */
