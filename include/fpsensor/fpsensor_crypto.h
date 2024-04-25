@@ -68,9 +68,9 @@ enum ec_error_list derive_encryption_key(std::span<uint8_t> out_key,
  * least FP_POSITIVE_MATCH_SALT_BYTES in size.
  * @return EC_SUCCESS on success and error code otherwise.
  */
-enum ec_error_list
-derive_positive_match_secret(uint8_t *output,
-			     const uint8_t *input_positive_match_salt);
+enum ec_error_list derive_positive_match_secret(
+	std::span<uint8_t> output,
+	std::span<const uint8_t> input_positive_match_salt);
 
 /**
  * Encrypt |plaintext| using AES-GCM128.

@@ -200,8 +200,8 @@ enum ec_error_list hkdf_expand(uint8_t *out_key, size_t L, const uint8_t *prk,
 }
 
 enum ec_error_list
-derive_positive_match_secret(uint8_t *output,
-			     const uint8_t *input_positive_match_salt)
+derive_positive_match_secret(std::span<uint8_t> output,
+			     std::span<const uint8_t> input_positive_match_salt)
 {
 	enum ec_error_list ret;
 	uint8_t ikm[IKM_SIZE_BYTES];
@@ -209,8 +209,8 @@ derive_positive_match_secret(uint8_t *output,
 	static const char info_prefix[] = "positive_match_secret for user ";
 	uint8_t info[sizeof(info_prefix) - 1 + sizeof(user_id)];
 
-	if (bytes_are_trivial(input_positive_match_salt,
-			      FP_POSITIVE_MATCH_SALT_BYTES)) {
+	if (bytes_are_trivial(input_positive_match_salt.data(),
+			      input_positive_match_salt.size())) {
 		CPRINTS("Failed to derive positive match secret: "
 			"salt bytes are trivial.");
 		return EC_ERROR_INVAL;
@@ -223,20 +223,20 @@ derive_positive_match_secret(uint8_t *output,
 	}
 
 	/* "Extract" step of HKDF. */
-	hkdf_extract(prk, input_positive_match_salt,
-		     FP_POSITIVE_MATCH_SALT_BYTES, ikm, sizeof(ikm));
+	hkdf_extract(prk, input_positive_match_salt.data(),
+		     input_positive_match_salt.size(), ikm, sizeof(ikm));
 	OPENSSL_cleanse(ikm, sizeof(ikm));
 
 	memcpy(info, info_prefix, strlen(info_prefix));
 	memcpy(info + strlen(info_prefix), user_id, sizeof(user_id));
 
 	/* "Expand" step of HKDF. */
-	ret = hkdf_expand(output, FP_POSITIVE_MATCH_SECRET_BYTES, prk,
-			  sizeof(prk), info, sizeof(info));
+	ret = hkdf_expand(output.data(), output.size(), prk, sizeof(prk), info,
+			  sizeof(info));
 	OPENSSL_cleanse(prk, sizeof(prk));
 
 	/* Check that secret is not full of 0x00 or 0xff. */
-	if (bytes_are_trivial(output, FP_POSITIVE_MATCH_SECRET_BYTES)) {
+	if (bytes_are_trivial(output.data(), output.size())) {
 		CPRINTS("Failed to derive positive match secret: "
 			"derived secret bytes are trivial.");
 		ret = EC_ERROR_HW_INTERNAL;
