@@ -673,10 +673,8 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 
 	enum ec_error_list ret;
 	if (fp_encryption_status & FP_CONTEXT_USER_ID_SET) {
-		ret = derive_encryption_key_with_info(key,
-						      enc_info->encryption_salt,
-						      context.data(),
-						      context.size());
+		ret = derive_encryption_key_with_info(
+			key, enc_info->encryption_salt, context);
 		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to derive key", idx);
 			return EC_RES_UNAVAILABLE;

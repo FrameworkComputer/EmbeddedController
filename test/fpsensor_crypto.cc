@@ -322,8 +322,7 @@ static int test_derive_encryption_key_with_info_raw(
 	uint8_t key[SBP_ENC_KEY_LEN];
 	enum ec_error_list rv;
 
-	rv = derive_encryption_key_with_info(key, salt.data(), info.data(),
-					     info.size());
+	rv = derive_encryption_key_with_info(key, salt, info);
 
 	TEST_ASSERT(rv == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(key, expected_key, sizeof(key));
@@ -397,9 +396,9 @@ test_static int test_derive_encryption_key(void)
 			      sizeof(user_id1) },
 			    key1) == EC_SUCCESS);
 	/* Providing custom info with invalid size should fail. */
-	TEST_ASSERT(derive_encryption_key_with_info(
-			    unused_key, unused_salt, info_wrong_size,
-			    sizeof(info_wrong_size)) == EC_ERROR_INVAL);
+	TEST_ASSERT(derive_encryption_key_with_info(unused_key, unused_salt,
+						    info_wrong_size) ==
+		    EC_ERROR_INVAL);
 
 	return EC_SUCCESS;
 }

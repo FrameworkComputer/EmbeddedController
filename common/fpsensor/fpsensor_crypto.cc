@@ -244,10 +244,10 @@ derive_positive_match_secret(uint8_t *output,
 	return ret;
 }
 
-enum ec_error_list derive_encryption_key_with_info(uint8_t *out_key,
-						   const uint8_t *salt,
-						   const uint8_t *info,
-						   size_t info_size)
+enum ec_error_list
+derive_encryption_key_with_info(std::span<uint8_t> out_key,
+				std::span<const uint8_t> salt,
+				std::span<const uint8_t> info)
 {
 	enum ec_error_list ret;
 	uint8_t ikm[IKM_SIZE_BYTES];
@@ -256,8 +256,8 @@ enum ec_error_list derive_encryption_key_with_info(uint8_t *out_key,
 	BUILD_ASSERT(SBP_ENC_KEY_LEN <= SHA256_DIGEST_SIZE);
 	BUILD_ASSERT(SBP_ENC_KEY_LEN <= CONFIG_ROLLBACK_SECRET_SIZE);
 
-	if (info_size != SHA256_DIGEST_SIZE) {
-		CPRINTS("Invalid info size: %zu", info_size);
+	if (info.size() != SHA256_DIGEST_SIZE) {
+		CPRINTS("Invalid info size: %zu", info.size());
 		return EC_ERROR_INVAL;
 	}
 
@@ -269,8 +269,7 @@ enum ec_error_list derive_encryption_key_with_info(uint8_t *out_key,
 
 	/* TODO (b/276344630): Replace with boringssl version. */
 	/* "Extract step of HKDF. */
-	hkdf_extract(prk, salt, FP_CONTEXT_ENCRYPTION_SALT_BYTES, ikm,
-		     sizeof(ikm));
+	hkdf_extract(prk, salt.data(), salt.size(), ikm, sizeof(ikm));
 	OPENSSL_cleanse(ikm, sizeof(ikm));
 
 	/*
@@ -278,8 +277,8 @@ enum ec_error_list derive_encryption_key_with_info(uint8_t *out_key,
 	 * (user_id in our case) is exactly SHA256_DIGEST_SIZE.
 	 * https://tools.ietf.org/html/rfc5869#section-2.3
 	 */
-	ret = hkdf_expand_one_step(out_key, SBP_ENC_KEY_LEN, prk, sizeof(prk),
-				   info, SHA256_DIGEST_SIZE);
+	ret = hkdf_expand_one_step(out_key.data(), out_key.size(), prk,
+				   sizeof(prk), info.data(), info.size());
 	OPENSSL_cleanse(prk, sizeof(prk));
 
 	return ret;
@@ -290,8 +289,8 @@ enum ec_error_list derive_encryption_key(std::span<uint8_t> out_key,
 {
 	BUILD_ASSERT(sizeof(user_id) == SHA256_DIGEST_SIZE);
 	return derive_encryption_key_with_info(
-		out_key.data(), salt.data(),
-		reinterpret_cast<uint8_t *>(user_id), sizeof(user_id));
+		out_key, salt,
+		{ reinterpret_cast<uint8_t *>(user_id), sizeof(user_id) });
 }
 
 enum ec_error_list aes_128_gcm_encrypt(std::span<const uint8_t> key,
