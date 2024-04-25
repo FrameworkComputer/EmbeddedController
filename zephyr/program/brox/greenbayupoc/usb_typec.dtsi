@@ -14,7 +14,6 @@
 			compatible = "named-usbc-port";
 			reg = <0>;
 			chg = <&charger>;
-			alt-mode = <&pdc_data_port0>;
 			pdc = <&pdc_power_p0>;
 			pd-retimer;
 			policy = <&cros_policy>;
@@ -22,7 +21,6 @@
 		usbc_port1: port0@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
-			alt-mode = <&pdc_data_port1>;
 			pdc = <&pdc_power_p1>;
 			pd-retimer;
 			policy = <&cros_policy>;
@@ -51,19 +49,3 @@
 	};
 };
 
-/* pd-aic-data */
-&i2c3 {
-	pdc_data_port0: rts@50 {
-		compatible = "intel,pd-altmode";
-		reg = <0x50>;
-		irq-gpios = <&gpioj 1 GPIO_ACTIVE_LOW>;
-		irq-flags = <GPIO_INT_LEVEL_LOW>;
-	};
-	pdc_data_port1: rts@52 {
-		compatible = "intel,pd-altmode";
-		reg = <0x52>;
-		irq-gpios = <&gpioj 1 GPIO_ACTIVE_LOW>;
-		irq-shared;
-		irq-flags = <GPIO_INT_LEVEL_LOW>;
-	};
-};
