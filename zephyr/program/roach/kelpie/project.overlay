@@ -181,3 +181,19 @@
 &touchpad_fw_hashes {
 	size = <((65536 / 1024) * 32)>;
 };
+
+&{/binman/wp-ro/ec-ro} {
+	fmap {
+		offset = <0x3c800>;
+	};
+
+	key-ro {
+		offset = <0x3cc00>;
+	};
+
+	unused-pstate {
+		type = "section";
+		offset = <0x3d000>;
+		size = <4096>;
+	};
+};

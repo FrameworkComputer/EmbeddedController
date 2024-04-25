@@ -20,6 +20,7 @@
 				 */
 			};
 			key-ro {
+				compatible = "cros-ec,flash-layout";
 				type = "section";
 				offset = <(0x3e000 - 1024)>;
 				size = <1024>;
