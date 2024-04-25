@@ -632,7 +632,7 @@ validate_template_format(struct ec_fp_template_encryption_metadata *enc_info)
 	return EC_RES_SUCCESS;
 }
 
-enum ec_status fp_commit_template(const uint8_t *context, size_t context_size)
+enum ec_status fp_commit_template(std::span<const uint8_t> context)
 {
 	ScopedFastCpu fast_cpu;
 
@@ -673,8 +673,10 @@ enum ec_status fp_commit_template(const uint8_t *context, size_t context_size)
 
 	enum ec_error_list ret;
 	if (fp_encryption_status & FP_CONTEXT_USER_ID_SET) {
-		ret = derive_encryption_key_with_info(
-			key, enc_info->encryption_salt, context, context_size);
+		ret = derive_encryption_key_with_info(key,
+						      enc_info->encryption_salt,
+						      context.data(),
+						      context.size());
 		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to derive key", idx);
 			return EC_RES_UNAVAILABLE;
@@ -746,8 +748,9 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 	memcpy(&fp_enc_buffer[offset], params->data, size);
 
 	if (xfer_complete) {
-		return fp_commit_template(reinterpret_cast<uint8_t *>(user_id),
-					  sizeof(user_id));
+		return fp_commit_template(
+			{ reinterpret_cast<uint8_t *>(user_id),
+			  sizeof(user_id) });
 	}
 
 	return EC_RES_SUCCESS;
@@ -780,8 +783,8 @@ fp_command_migrate_template_to_nonce_context(struct host_cmd_handler_args *args)
 
 	BUILD_ASSERT(sizeof(params->userid) == SHA256_DIGEST_SIZE);
 	ec_status res = fp_commit_template(
-		reinterpret_cast<const uint8_t *>(params->userid),
-		sizeof(params->userid));
+		{ reinterpret_cast<const uint8_t *>(params->userid),
+		  sizeof(params->userid) });
 	if (res != EC_RES_SUCCESS) {
 		return res;
 	}
