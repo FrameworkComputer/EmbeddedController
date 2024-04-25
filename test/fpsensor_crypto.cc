@@ -293,9 +293,9 @@ test_static int test_derive_encryption_key_failure_seed_not_set(void)
 	return EC_SUCCESS;
 }
 
-static int test_derive_encryption_key_raw(const uint32_t *user_id_,
-					  const uint8_t *salt,
-					  const uint8_t *expected_key)
+static int test_derive_encryption_key_raw(std::span<const uint32_t> user_id_,
+					  std::span<const uint8_t> salt,
+					  std::span<const uint8_t> expected_key)
 {
 	uint8_t key[SBP_ENC_KEY_LEN];
 	enum ec_error_list rv;
@@ -304,8 +304,8 @@ static int test_derive_encryption_key_raw(const uint32_t *user_id_,
 	 * |user_id| is a global variable used as "info" in HKDF expand
 	 * in derive_encryption_key().
 	 */
-	memcpy(user_id, user_id_, sizeof(user_id));
-	rv = derive_encryption_key(key, salt);
+	memcpy(user_id, user_id_.data(), sizeof(user_id));
+	rv = derive_encryption_key(key, salt.data());
 
 	TEST_ASSERT(rv == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(key, expected_key, sizeof(key));
