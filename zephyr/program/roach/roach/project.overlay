@@ -7,7 +7,6 @@
 
 #include <cros/touchpad_hashes.dtsi>
 
-#include "../adc.dtsi"
 #include "../gpio.dtsi"
 #include "../uart.dtsi"
 #include "../i2c.dtsi"

@@ -22,14 +22,6 @@
 			gpios = <&gpioi 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 		};
 
-		base_accel_int_l: base_accel_int_l {
-			gpios = <&gpioh 1 GPIO_INPUT>;
-		};
-
-		en_ec_id_odl: en_ec_id_odl {
-			gpios = <&gpioh 4 GPIO_ODR_HIGH>;
-		};
-
 		tchpad_int_odl: tchpad_int_odl {
 			gpios = <&gpiob 2 GPIO_OPEN_DRAIN>;
 		};
