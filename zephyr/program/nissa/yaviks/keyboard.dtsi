@@ -132,3 +132,11 @@
 		     &kso14_sleep>;
 	pinctrl-names = "default", "sleep";
 };
+
+/* Drop the gpio properties from the kbd node to avoid confusing the named_gpios
+ * script.
+ */
+&kbd {
+       /delete-property/ kso16-gpios;
+       /delete-property/ kso17-gpios;
+};
