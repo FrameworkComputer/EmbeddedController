@@ -426,6 +426,7 @@ enum ccg_response {
 
 enum ccg_pd_state {
 	CCG_STATE_ERROR,
+	CCG_STATE_WAIT_STABLE,
 	CCG_STATE_POWER_ON,
 	CCG_STATE_APP_SETUP,
 	CCG_STATE_READY,
