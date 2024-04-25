@@ -25,6 +25,15 @@ GPIO_INT(USB_A1_OC_ODL,              PIN(3, 0), GPIO_INPUT | GPIO_PULL_UP | GPIO
 /* TPU */
 GPIO(PP3300_TPU_EN,                  PIN(2, 6), GPIO_OUT_HIGH)
 
+/* Scaler and Misc */
+GPIO(EC_SCALER_EN,                   PIN(0, 5), GPIO_OUT_LOW)
+GPIO(EC_IMX8_EN,                     PIN(4, 0), GPIO_OUT_LOW)
+GPIO(PWR_CTRL,                       PIN(6, 2), GPIO_OUT_LOW)
+GPIO(EC_MX8M_ONOFF,                  PIN(7, 0), GPIO_OUT_LOW)
+GPIO(TSUM_WAKEUP_EC,                 PIN(B, 1), GPIO_INPUT)
+GPIO(EC_CAM_V3P3_EN,                 PIN(C, 6), GPIO_OUT_LOW)
+GPIO(EC_MIC_OE,                      PIN(E, 0), GPIO_OUT_HIGH)
+
 /* Wake EC */
 GPIO(WLAN_PCIE_WAKE_EC,              PIN(4, 1), GPIO_INPUT)
 GPIO(LAN_WAKE_EC,                    PIN(9, 3), GPIO_INPUT)
@@ -130,12 +139,10 @@ UNUSED(PIN(1, 3))       /* KSO06/GPO13/GP_SEL# */
 UNUSED(PIN(1, 2))       /* KSO07/GPO12/JEN# */
 UNUSED(PIN(0, 7))       /* KSO10/GPIO07/P80_CLK */
 UNUSED(PIN(0, 6))       /* KSO11/GPIO06/P80_DAT */
-UNUSED(PIN(0, 5))       /* KSO12/GPIO05 */
 UNUSED(PIN(A, 3))       /* SPIP_MOSI/GPIOA3 */
 UNUSED(PIN(9, 5))       /* SPIP_MISO/GPIO95 */
 UNUSED(PIN(D, 2))       /* PSL_IN1/GPIOD2 */
 UNUSED(PIN(0, 2))       /* GPIO02/PSL_IN4 */
-UNUSED(PIN(4, 0))       /* GPIO40 */
 UNUSED(PIN(2, 7))       /* GPIO27 */
 UNUSED(PIN(C, 2))       /* GPIOC2 */
 UNUSED(PIN(9, 6))       /* GPIO96 */
@@ -156,13 +163,8 @@ UNUSED(PIN(E, 4))       /* GPIOE4/I2C6_SCL1 */
 UNUSED(PIN(E, 3))       /* GPIOE3/I2C6_SDA1 */
 UNUSED(PIN(0, 4))       /* GPIO04 */
 UNUSED(PIN(1, 5))       /* GPIO15 */
-UNUSED(PIN(C, 6))       /* GPIOC6 */
 UNUSED(PIN(A, 2))       /* GPIOA2 */
 UNUSED(PIN(8, 3))       /* GPIO83 */
-UNUSED(PIN(6, 2))       /* GPIO62 */
 UNUSED(PIN(F, 5))       /* GPIOF5 */
-UNUSED(PIN(7, 0))       /* GPIO70 */
 UNUSED(PIN(A, 0))       /* GPIOA0 */
-UNUSED(PIN(E, 0))       /* GPIOE0 */
-UNUSED(PIN(B, 1))       /* GPIOB1 */
 UNUSED(PIN(8, 2))       /* GPIO82 */

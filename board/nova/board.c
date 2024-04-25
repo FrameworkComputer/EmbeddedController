@@ -117,6 +117,48 @@ static void board_init(void)
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 
+void board_enable_scaler_rails(int enable)
+{
+	/*
+	 * Toggle scaler power and its downstream USB devices.
+	 */
+	gpio_set_level(GPIO_EC_SCALER_EN, enable);
+	gpio_set_level(GPIO_PWR_CTRL, enable);
+	gpio_set_level(GPIO_EC_MX8M_ONOFF, enable);
+	gpio_set_level(GPIO_EC_CAM_V3P3_EN, enable);
+}
+
+/* Called on AP S5 -> S3 transition */
+static void board_chipset_startup(void)
+{
+	board_enable_scaler_rails(1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_STARTUP, board_chipset_startup, HOOK_PRIO_DEFAULT);
+
+/* Called on AP S3 -> S5 transition */
+static void board_chipset_shutdown(void)
+{
+	board_enable_scaler_rails(0);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, board_chipset_shutdown, HOOK_PRIO_DEFAULT);
+
+/*
+ * TPU is turned on in S0, off in S0ix and lower.
+ */
+static void disable_tpu_power(void)
+{
+	gpio_set_level(GPIO_PP3300_TPU_EN, 0);
+	gpio_set_level(GPIO_EC_IMX8_EN, 0);
+}
+
+static void enable_tpu_power(void)
+{
+	gpio_set_level(GPIO_PP3300_TPU_EN, 1);
+	gpio_set_level(GPIO_EC_IMX8_EN, 1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, disable_tpu_power, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, enable_tpu_power, HOOK_PRIO_DEFAULT);
+
 void board_overcurrent_event(int port, int is_overcurrented)
 {
 	/* Check that port number is valid. */
