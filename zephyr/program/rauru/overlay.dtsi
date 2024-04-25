@@ -249,3 +249,7 @@
 &pwm3 {
 	prescaler-cx = <PWM_PRESCALER_C4>;
 };
+
+&sha0 {
+	status = "okay";
+};
