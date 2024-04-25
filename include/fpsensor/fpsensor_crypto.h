@@ -56,7 +56,8 @@ enum ec_error_list derive_encryption_key_with_info(uint8_t *out_key,
 /**
  * Call derive_encryption_key_with_info with the context user_id as |info|.
  */
-enum ec_error_list derive_encryption_key(uint8_t *out_key, const uint8_t *salt);
+enum ec_error_list derive_encryption_key(std::span<uint8_t> out_key,
+					 std::span<const uint8_t> salt);
 
 /**
  * Derive positive match secret from |input_positive_match_salt| and

@@ -305,7 +305,7 @@ static int test_derive_encryption_key_raw(std::span<const uint32_t> user_id_,
 	 * in derive_encryption_key().
 	 */
 	memcpy(user_id, user_id_.data(), sizeof(user_id));
-	rv = derive_encryption_key(key, salt.data());
+	rv = derive_encryption_key(key, salt);
 
 	TEST_ASSERT(rv == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(key, expected_key, sizeof(key));

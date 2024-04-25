@@ -285,12 +285,13 @@ enum ec_error_list derive_encryption_key_with_info(uint8_t *out_key,
 	return ret;
 }
 
-enum ec_error_list derive_encryption_key(uint8_t *out_key, const uint8_t *salt)
+enum ec_error_list derive_encryption_key(std::span<uint8_t> out_key,
+					 std::span<const uint8_t> salt)
 {
 	BUILD_ASSERT(sizeof(user_id) == SHA256_DIGEST_SIZE);
 	return derive_encryption_key_with_info(
-		out_key, salt, reinterpret_cast<uint8_t *>(user_id),
-		sizeof(user_id));
+		out_key.data(), salt.data(),
+		reinterpret_cast<uint8_t *>(user_id), sizeof(user_id));
 }
 
 enum ec_error_list aes_128_gcm_encrypt(std::span<const uint8_t> key,
