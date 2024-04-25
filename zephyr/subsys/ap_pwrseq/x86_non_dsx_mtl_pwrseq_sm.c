@@ -128,10 +128,9 @@ static int x86_non_dsx_mtl_s3_run(void *data)
 	power_signal_set(PWR_PCH_PWROK,
 			 all_sys_pwrgd_in && !power_signal_get(PWR_SLP_S3));
 
-	if ((power_signal_get(PWR_ALL_SYS_PWRGD) !=
-	     power_signal_get(PWR_PCH_PWROK)) ||
-	    (power_signal_get(PWR_ALL_SYS_PWRGD) !=
-	     power_signal_get(PWR_EC_PCH_SYS_PWROK))) {
+	if (!power_signal_get(PWR_ALL_SYS_PWRGD) ||
+	    !power_signal_get(PWR_PCH_PWROK) ||
+	    !power_signal_get(PWR_EC_PCH_SYS_PWROK)) {
 		/* Make sure these signals levels are stable */
 		return 1;
 	}
