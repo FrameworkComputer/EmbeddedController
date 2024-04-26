@@ -12,9 +12,9 @@
 #define __MOCK_FPSENSOR_CRYPTO_MOCK_H
 
 enum mock_ctrl_fpsensor_crypto_sha256_type {
-	MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_REAL,
-	MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_ZEROS,
-	MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_FF,
+	MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_REAL,
+	MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_ZEROS,
+	MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_FF,
 };
 
 struct mock_ctrl_fpsensor_crypto {
@@ -23,7 +23,8 @@ struct mock_ctrl_fpsensor_crypto {
 
 #define MOCK_CTRL_DEFAULT_FPSENSOR_CRYPTO    \
 	((struct mock_ctrl_fpsensor_crypto){ \
-		.output_type = MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_REAL })
+		.output_type =               \
+			MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_REAL })
 
 extern struct mock_ctrl_fpsensor_crypto mock_ctrl_fpsensor_crypto;
 

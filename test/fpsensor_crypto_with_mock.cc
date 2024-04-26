@@ -437,7 +437,7 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 
 	/* GIVEN that the sha256 output is trivial (0x00) */
 	mock_ctrl_fpsensor_crypto.output_type =
-		MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_ZEROS;
+		MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_ZEROS;
 
 	/* THEN the derivation will fail with EC_ERROR_HW_INTERNAL. */
 	TEST_ASSERT(derive_positive_match_secret(output,
@@ -448,7 +448,7 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 
 	/* GIVEN that the sha256 output is non-trivial */
 	mock_ctrl_fpsensor_crypto.output_type =
-		MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_REAL;
+		MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_REAL;
 
 	/* THEN the derivation will succeed */
 	TEST_ASSERT(derive_positive_match_secret(
@@ -480,7 +480,7 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
 
 	/* GIVEN that the sha256 output is trivial (0xFF) */
 	mock_ctrl_fpsensor_crypto.output_type =
-		MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_FF;
+		MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_FF;
 
 	/* THEN the derivation will fail with EC_ERROR_HW_INTERNAL. */
 	TEST_ASSERT(derive_positive_match_secret(output,
@@ -491,7 +491,7 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
 
 	/* GIVEN that the sha256 output is non-trivial */
 	mock_ctrl_fpsensor_crypto.output_type =
-		MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_REAL;
+		MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_REAL;
 
 	/* THEN the derivation will succeed */
 	TEST_ASSERT(derive_positive_match_secret(
