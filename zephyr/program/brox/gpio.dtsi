@@ -104,7 +104,9 @@
 			/* PCBEEP_EC */
 			<&gpioa 7 0>,
 			/* ADP_DET */
-			<&gpiod 0 0>;
+			<&gpiod 0 0>,
+			/* ec_batt_pres_odl */
+			<&gpioi 7 0>;
 		};
 };
 
@@ -142,3 +144,6 @@ gpio_ec_pch_wake_odl: &gpio_sen_mode1_ec_pch_wake_odl {
 &gpio_acok_ec_od {
 	enum-name = "GPIO_AC_PRESENT";
 };
+
+/* BATT_PRES_ODL not connected on later board versions */
+/delete-node/ &gpio_ec_batt_pres_odl;

@@ -28,4 +28,9 @@ choice PLATFORM_EC_USBC_STACK
 	default PLATFORM_EC_USB_PD_CONTROLLER
 endchoice
 
+# Use access to the fuel gauge over I2C only to determine battery presence.
+choice PLATFORM_EC_BATTERY_PRESENT_MODE
+	default PLATFORM_EC_BATTERY_PRESENT_NONE
+endchoice
+
 source "Kconfig.zephyr"
