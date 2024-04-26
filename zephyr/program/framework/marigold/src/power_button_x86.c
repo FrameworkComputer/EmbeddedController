@@ -213,6 +213,18 @@ static void set_initial_pwrbtn_state(void)
 	} else if (((reset_flags & EC_RESET_FLAG_HIBERNATE) == EC_RESET_FLAG_HIBERNATE) &&
 		(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) == 0)) {
 		/**
+		 * If EC wake from power button and the power button already release.
+		 * check the chassis status and standalone mode status.
+		 */
+		if ((gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0) &&
+			(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_on_off_btn_l)) == 1) &&
+			!get_standalone_mode()) {
+			pwrbtn_state = PWRBTN_STATE_IDLE;
+			CPRINTS("PB ignore signal");
+			return;
+		}
+
+		/**
 		 * EC needs to auto power on after exiting the hibernate mode w/o external power
 		 */
 		pwrbtn_state = PWRBTN_STATE_INIT_ON;
@@ -459,7 +471,7 @@ static void powerbtn_x86_init(void)
 {
 	set_initial_pwrbtn_state();
 }
-DECLARE_HOOK(HOOK_INIT, powerbtn_x86_init, HOOK_PRIO_DEFAULT + 1);
+DECLARE_HOOK(HOOK_INIT, powerbtn_x86_init, HOOK_PRIO_DEFAULT + 2);
 
 void chipset_power_on(void)
 {
