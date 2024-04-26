@@ -92,6 +92,13 @@ config PLATFORM_EC_BATTERY_PRESENT_GPIO
 		alias = "GPIO_BATT_PRES_ODL";
 	    };
 
+config PLATFORM_EC_BATTERY_PRESENT_NONE
+	bool "No battery present signal"
+	help
+	  If the platform doesn't provide a battery present signal, then the
+	  battery support uses I2C accesses only to the battery fuel gauge to
+	  decide if the battery is present.
+
 endchoice # PLATFORM_EC_BATTERY_PRESENT_MODE
 
 config PLATFORM_EC_USE_BATTERY_DEVICE_CHEMISTRY

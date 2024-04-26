@@ -219,6 +219,20 @@ int battery_get_mode(int *mode)
 	return sb_read(SB_BATTERY_MODE, mode);
 }
 
+#if !defined(CONFIG_BATTERY_PRESENT_GPIO) && \
+	!defined(CONFIG_BATTERY_PRESENT_CUSTOM)
+__overridable enum battery_present battery_is_present(void)
+{
+	int temperature;
+
+	if (sb_read(SB_TEMPERATURE, &temperature)) {
+		return BP_NOT_SURE;
+	}
+
+	return BP_YES;
+}
+#endif
+
 /**
  * Force battery to mAh mode (instead of 10mW mode) for reporting capacity.
  *
