@@ -10,3 +10,4 @@ DEFINE_FAKE_VALUE_FUNC(int, touchpad_get_info, struct touchpad_info *);
 DEFINE_FAKE_VALUE_FUNC(int, touchpad_debug, const uint8_t *, unsigned int,
 		       uint8_t **, unsigned int *);
 DEFINE_FAKE_VALUE_FUNC(int, touchpad_update_write, int, int, const uint8_t *);
+DEFINE_FAKE_VALUE_FUNC(enum ec_image, system_get_image_copy);

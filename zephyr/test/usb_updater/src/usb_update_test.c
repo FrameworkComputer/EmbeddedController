@@ -4,6 +4,7 @@
  */
 
 #include "common.h"
+#include "fakes.h"
 #include "queue.h"
 #include "update_fw.h"
 #include "usb-stream.h"
@@ -152,6 +153,10 @@ static void usb_update_before(void *f)
 	/* clear RX/TX queue */
 	queue_init(usb_update.consumer.queue);
 	queue_init(usb_update.producer.queue);
+
+	FFF_FAKES_LIST(RESET_FAKE);
+	FFF_RESET_HISTORY();
+	system_get_image_copy_fake.return_val = EC_IMAGE_RO;
 }
 
 ZTEST_SUITE(usb_update, NULL, NULL, usb_update_before, NULL, NULL);

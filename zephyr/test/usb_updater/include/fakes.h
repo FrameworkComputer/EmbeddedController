@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 #include "ec_commands.h"
+#include "system.h"
 #include "touchpad.h"
 
 #include <zephyr/fff.h>
@@ -13,10 +14,12 @@ DECLARE_FAKE_VALUE_FUNC(int, touchpad_get_info, struct touchpad_info *);
 DECLARE_FAKE_VALUE_FUNC(int, touchpad_debug, const uint8_t *, unsigned int,
 			uint8_t **, unsigned int *);
 DECLARE_FAKE_VALUE_FUNC(int, touchpad_update_write, int, int, const uint8_t *);
+DECLARE_FAKE_VALUE_FUNC(enum ec_image, system_get_image_copy);
 
 #define FFF_FAKES_LIST(FAKE)        \
 	FAKE(system_reset)          \
 	FAKE(system_run_image_copy) \
 	FAKE(touchpad_get_info)     \
 	FAKE(touchpad_debug)        \
-	FAKE(touchpad_update_write)
+	FAKE(touchpad_update_write) \
+	FAKE(system_get_image_copy)
