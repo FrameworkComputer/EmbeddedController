@@ -78,4 +78,4 @@ test-list-y=\
 
 # Note that this variable includes the trailing "/"
 _nocturne_fp_cur_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
--include $(_nocturne_fp_cur_dir)../../private/board/nocturne_fp/build.mk
+-include $(_nocturne_fp_cur_dir)../../../ec-private/board/nocturne_fp/build.mk

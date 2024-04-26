@@ -506,7 +506,9 @@ class AllTests:
         tests = []
         try:
             current_dir = os.path.dirname(__file__)
-            private_dir = os.path.join(current_dir, os.pardir, "private/test")
+            private_dir = os.path.join(
+                current_dir, os.pardir, os.pardir, "ec-private/test"
+            )
             have_private = os.path.isdir(private_dir)
             if not have_private:
                 return []

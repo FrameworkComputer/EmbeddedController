@@ -80,5 +80,5 @@ test-list-y = \
 
 # This is relative to the EC root directory.
 ifneq ($(BOARD_BUCCANEER),y)
--include private/board/helipilot/build.mk
+-include ../ec-private/board/helipilot/build.mk
 endif
