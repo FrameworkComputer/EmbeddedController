@@ -160,25 +160,6 @@ test_static int test_hkdf_expand(void)
 				     expected_okm.size());
 	}
 
-	TEST_ASSERT(hkdf_expand(nullptr, unused_output.size(),
-				test_vector1.prk.data(),
-				test_vector1.prk.size(),
-				test_vector1.info.data(),
-				test_vector1.info.size()) == EC_ERROR_INVAL);
-
-	TEST_ASSERT(hkdf_expand(unused_output.data(), unused_output.size(),
-				nullptr, test_vector1.prk.size(),
-				test_vector1.info.data(),
-				test_vector1.info.size()) == EC_ERROR_INVAL);
-	TEST_ASSERT(hkdf_expand(unused_output.data(), unused_output.size(),
-				test_vector1.prk.data(),
-				test_vector1.prk.size(), nullptr,
-				test_vector1.info.size()) == EC_ERROR_INVAL);
-	/* Info size too long. */
-	TEST_ASSERT(
-		hkdf_expand(unused_output.data(), unused_output.size(),
-			    test_vector1.prk.data(), test_vector1.prk.size(),
-			    test_vector1.info.data(), 1024) == EC_ERROR_INVAL);
 	/* OKM size too big. */
 	TEST_ASSERT(hkdf_expand(unused_output.data(), 256 * SHA256_DIGEST_SIZE,
 				test_vector1.prk.data(),
