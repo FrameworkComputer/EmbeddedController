@@ -1,0 +1,57 @@
+# Copyright 2022 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: "DYNAPACK COSLIGHT_PO02037XL"
+compatible: "dynapack,coslight_po02037xl"
+
+include: battery-smart.yaml
+
+properties:
+  enum-name:
+    type: string
+    default: "dynapack,coslight_po02037xl"
+
+  # Fuel gauge
+  manuf_name:
+    default: "333-2C-14-A"
+  device_name:
+    default: "PO02037XL"
+  ship_mode_reg_addr:
+    default: 0x00
+  ship_mode_reg_data:
+    default: [0x0010, 0x0010]
+  flags:
+    default: 0
+  fet_reg_addr:
+    default: 0x00
+  fet_reg_mask:
+    default: 0x2000
+  fet_disconnect_val:
+    default: 0x2000
+  fet_cfet_mask:
+    default: 0x4000
+  fet_cfet_off_val:
+    default: 0x4000
+
+  # Battery info
+  voltage_max:
+    default: 8700
+  voltage_normal:
+    default: 7600
+  voltage_min:
+    default: 6000
+  precharge_current:
+    default: 256
+  start_charging_min_c:
+    default: 0
+  start_charging_max_c:
+    default: 45
+  charging_min_c:
+    default: 0
+  charging_max_c:
+    default: 45
+  discharging_min_c:
+    default: -10
+  discharging_max_c:
+    default: 60

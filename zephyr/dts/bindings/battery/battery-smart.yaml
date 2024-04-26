@@ -42,6 +42,8 @@ properties:
       - "dynapack,byd_gg02047xl"
       - "dynapack,cosmx_gh02047xl"
       - "dynapack,c140254"
+      - "dynapack,coslight_po02037xl"
+      - "dynapack,highpower_po02037xl"
       - "dynapack,hpp_gg02047xl"
       - "dynapack,313-2d-32-a"
       - "dynapack,333-2c-32-a"

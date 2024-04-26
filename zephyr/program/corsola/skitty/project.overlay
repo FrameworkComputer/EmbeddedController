@@ -259,8 +259,11 @@
 	};
 
 	batteries {
-		default_battery: c235 {
-			compatible = "celxpert,c235-41", "battery-smart";
+		default_battery: dynapack_highpower_po02037xl {
+			compatible = "dynapack,highpower_po02037xl", "battery-smart";
+ 		};
+		dynapack_coslight_po02037xl {
+			compatible = "dynapack,coslight_po02037xl", "battery-smart";
 		};
 	};
 
