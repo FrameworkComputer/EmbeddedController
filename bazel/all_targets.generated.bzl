@@ -1980,6 +1980,11 @@ def all_targets():
         extra_modules = ["cmsis"],
     )
     ec_target(
+        name = "riven",
+        board = "riven",
+        extra_modules = ["cmsis"],
+    )
+    ec_target(
         name = "roach",
         board = "roach",
     )

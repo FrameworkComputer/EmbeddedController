@@ -1,0 +1,146 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+/ {
+	fans {
+		compatible = "cros-ec,fans";
+		fan_0 {
+			pwms = <&pwm5 5 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+			tach = <&tach2>;
+			rpm_min = <2500>;
+			rpm_start = <2500>;
+			rpm_max = <6000>;
+			enable_gpio = <&gpio_fan_enable>;
+		};
+	};
+
+	fan_steps_6w: fan-steps-6w {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp_on = <25>;
+			temp_off = <99>;
+			rpm_target = <0>;
+		};
+		level_1 {
+			temp_on = <40>;
+			temp_off = <35>;
+			rpm_target = <2500>;
+		};
+		level_2 {
+			temp_on = <44>;
+			temp_off = <41>;
+			rpm_target = <2800>;
+		};
+		level_3 {
+			temp_on = <48>;
+			temp_off = <45>;
+			rpm_target = <3000>;
+		};
+		level_4 {
+			temp_on = <52>;
+			temp_off = <49>;
+			rpm_target = <3200>;
+		};
+		level_5 {
+			temp_on = <60>;
+			temp_off = <54>;
+			rpm_target = <3600>;
+		};
+		level_6 {
+			temp_on = <64>;
+			temp_off = <58>;
+			rpm_target = <4000>;
+		};
+		level_7 {
+			temp_on = <67>;
+			temp_off = <62>;
+			rpm_target = <4600>;
+		};
+		level_8 {
+			temp_on = <71>;
+			temp_off = <66>;
+			rpm_target = <5000>;
+		};
+		level_9 {
+			temp_on = <74>;
+			temp_off = <70>;
+			rpm_target = <5500>;
+		};
+	};
+
+	fan_steps_15w: fan-steps-15w {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp_on = <25>;
+			temp_off = <99>;
+			rpm_target = <0>;
+		};
+		level_1 {
+			temp_on = <37>;
+			temp_off = <34>;
+			rpm_target = <2500>;
+		};
+		level_2 {
+			temp_on = <42>;
+			temp_off = <39>;
+			rpm_target = <2800>;
+		};
+		level_3 {
+			temp_on = <46>;
+			temp_off = <43>;
+			rpm_target = <3000>;
+		};
+		level_4 {
+			temp_on = <51>;
+			temp_off = <48>;
+			rpm_target = <3200>;
+		};
+		level_5 {
+			temp_on = <55>;
+			temp_off = <52>;
+			rpm_target = <3600>;
+		};
+		level_6 {
+			temp_on = <59>;
+			temp_off = <56>;
+			rpm_target = <4000>;
+		};
+		level_7 {
+			temp_on = <66>;
+			temp_off = <63>;
+			rpm_target = <4600>;
+		};
+		level_8 {
+			temp_on = <72>;
+			temp_off = <69>;
+			rpm_target = <5000>;
+		};
+		level_9 {
+			temp_on = <74>;
+			temp_off = <71>;
+			rpm_target = <5500>;
+		};
+	};
+};
+
+&pwm5_gpb7 {
+	drive-open-drain;
+};
+
+/* pwm for fan */
+&pwm5 {
+	status = "okay";
+	pinctrl-0 = <&pwm5_gpb7>;
+	pinctrl-names = "default";
+};
+
+/* Tachometer for fan speed measurement */
+&tach2 {
+	status = "okay";
+	pinctrl-0 = <&ta2_1_in_gp73>;
+	pinctrl-names = "default";
+	port = <NPCX_TACH_PORT_A>; /* port-A is selected */
+	sample-clk = <NPCX_TACH_FREQ_LFCLK>; /* Use LFCLK as sampling clock */
+	pulses-per-round = <2>; /* number of pulses per round of encoder */
+};

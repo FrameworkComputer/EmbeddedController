@@ -150,6 +150,12 @@ config BOARD_SUNDANCE
           Build Google Sundance reference board. Nokris has Intel ADL-N SoC
           with NPCX993FA0BX EC.
 
+config BOARD_RIVEN
+	bool "Google Riven Board"
+	help
+	  Build Google Riven board. Riven has Intel TWL SoC
+	  with NPCX993FA0BX EC.
+
 module = NISSA
 module-str = Nissa board-specific code
 source "subsys/logging/Kconfig.template.log_config"

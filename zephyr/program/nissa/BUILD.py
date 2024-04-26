@@ -162,6 +162,11 @@ sundance = register_nissa_project(
     project_name="sundance",
     chip="npcx9/npcx9m3f",
 )
+
+riven = register_nissa_project(
+    project_name="riven",
+    chip="npcx9/npcx9m3f",
+)
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
 assert_rw_fwid_DO_NOT_EDIT(project_name="anraggar", addr=0xBFFE0)
@@ -186,3 +191,4 @@ assert_rw_fwid_DO_NOT_EDIT(project_name="yavilla", addr=0xB7FE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="glassway", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="yavista", addr=0xAFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="sundance", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="riven", addr=0x7FFE0)
