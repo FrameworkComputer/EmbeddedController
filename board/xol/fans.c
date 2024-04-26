@@ -51,13 +51,13 @@ struct fan_step {
 };
 
 static const struct fan_step fan_table[] = {
-	{ .on = 39, .off = 0, .rpm = 0 },
-	{ .on = 43, .off = 35, .rpm = 2100 },
-	{ .on = 47, .off = 39, .rpm = 2400 },
-	{ .on = 50, .off = 43, .rpm = 2700 },
-	{ .on = 53, .off = 46, .rpm = 3100 },
-	{ .on = 56, .off = 49, .rpm = 3500 },
-	{ .on = 127, .off = 52, .rpm = 4000 },
+	{ .on = 38, .off = 0, .rpm = 0 },
+	{ .on = 41, .off = 34, .rpm = 2100 },
+	{ .on = 44, .off = 37, .rpm = 2400 },
+	{ .on = 47, .off = 40, .rpm = 2700 },
+	{ .on = 50, .off = 43, .rpm = 3100 },
+	{ .on = 52, .off = 46, .rpm = 3500 },
+	{ .on = 127, .off = 49, .rpm = 4000 },
 };
 
 int fan_table_to_rpm(int fan, int *temp, enum temp_sensor_id temp_sensor)
