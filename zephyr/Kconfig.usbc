@@ -321,4 +321,17 @@ config PLATFORM_EC_PD_POWER_SUPPLY_TURN_OFF_DELAY
 	  Each platform could have different power sequencing and transition
 	  timing for turning off the power on the PD port.
 
+config PLATFORM_EC_USBC_RETIMER_FW_UPDATE
+	bool "Support firmware update of USB Type-C retimers"
+	depends on PLATFORM_EC_USBC_SS_MUX || PLATFORM_EC_USB_PD_CONTROLLER
+	help
+	   Enable this to support USB Type-C retimer firmware update. Each
+	   Type-C retimer indicates its capability of supporting firmware update
+	   independently in its usb_mux_driver.
+
+	   During AP boot-up, the AP scans each PD port for retimers but only
+	   if there are no Type-C devices attached to the port. The firmware
+	   update can only be performed on retimers which show up in the AP
+	   thunderbolt device entries.
+
 endif  # PLATFORM_EC_USBC

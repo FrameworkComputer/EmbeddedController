@@ -286,8 +286,15 @@ void usb_mux_init(int port);
  * @param usb_config usb2.0 selected function.
  * @param polarity plug polarity (0=CC1, 1=CC2).
  */
+#if defined(CONFIG_USBC_SS_MUX) || defined(CONFIG_ZTEST)
 void usb_mux_set(int port, mux_state_t mux_mode, enum usb_switch usb_config,
 		 int polarity);
+#else
+static inline void usb_mux_set(int port, mux_state_t mux_mode,
+			       enum usb_switch usb_config, int polarity)
+{
+}
+#endif
 
 /**
  * Mark that mux ACK has been received for this port's pending set
@@ -306,15 +313,29 @@ void usb_mux_set_ack_complete(int port);
  * @param usb_config usb2.0 selected function.
  * @param polarity plug polarity (0=CC1, 1=CC2).
  */
+#if defined(CONFIG_USBC_SS_MUX) || defined(CONFIG_ZTEST)
 void usb_mux_set_single(int port, int index, mux_state_t mux_mode,
 			enum usb_switch usb_mode, int polarity);
+#else
+static inline void usb_mux_set_single(int port, int index, mux_state_t mux_mode,
+				      enum usb_switch usb_mode, int polarity)
+{
+}
+#endif
 /**
  * Query superspeed mux status on type-C port.
  *
  * @param port port number.
  * @return current MUX state (USB_PD_MUX_*).
  */
+#if defined(CONFIG_USBC_SS_MUX) || defined(CONFIG_ZTEST)
 mux_state_t usb_mux_get(int port);
+#else
+static inline mux_state_t usb_mux_get(int port)
+{
+	return 0;
+}
+#endif
 
 /**
  * Flip the superspeed muxes on type-C port.
