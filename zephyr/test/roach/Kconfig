@@ -9,6 +9,12 @@ config TEST_AXII
 	bool "Run the tests intended for Axii"
 	help
 	  Run the tests for Axii board.
+
+config TEST_SPIKYROCK
+	bool "Run the tests intended for Spikyrock"
+	help
+	  Run the tests for Spikyrock board.
+	  vivaldi_Keyboard test.
 endchoice
 
 source "Kconfig.zephyr"

@@ -6,3 +6,8 @@ tests:
     - CONFIG_TEST_AXII=y
     extra_dtc_overlay_files:
     - axii.default.overlay
+  roach.spikyrock:
+    extra_configs:
+    - CONFIG_TEST_SPIKYROCK=y
+    extra_dtc_overlay_files:
+    - spikyrock.default.overlay

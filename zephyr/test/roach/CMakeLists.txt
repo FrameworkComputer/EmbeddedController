@@ -16,3 +16,7 @@ target_sources(app PRIVATE src/main.c)
 target_sources_ifdef(CONFIG_TEST_AXII app PRIVATE
 		src/axii.c
 		"${PLATFORM_EC_PROGRAM_DIR}/roach/axii/src/main.c")
+
+target_sources_ifdef(CONFIG_TEST_SPIKYROCK app PRIVATE
+		src/spikyrock_keyboard.c
+		"${PLATFORM_EC_PROGRAM_DIR}/roach/spikyrock/src/keyboard.c")
