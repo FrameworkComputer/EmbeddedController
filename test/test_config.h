@@ -110,7 +110,7 @@ enum battery_type {
 #endif
 
 #if defined(TEST_FPSENSOR) || defined(TEST_FPSENSOR_STATE) || \
-	defined(TEST_FPSENSOR_CRYPTO) ||                      \
+	defined(TEST_FPSENSOR_CRYPTO_WITH_MOCK) ||            \
 	defined(TEST_FPSENSOR_AUTH_CRYPTO_STATELESS) ||       \
 	defined(TEST_FPSENSOR_AUTH_CRYPTO_STATEFUL) ||        \
 	defined(TEST_FPSENSOR_AUTH_COMMANDS)
