@@ -4,7 +4,7 @@
  */
 
 /**
- * @file fpsensor_crypto_mock.c
+ * @file fpsensor_crypto_mock.cc
  * @brief Mock fpsensor_crypto library
  */
 #include "assert.h"
@@ -13,7 +13,10 @@
 #include "ec_commands.h"
 #include "fpsensor/fpsensor_utils.h"
 #include "mock/fpsensor_crypto_mock.h"
+
+extern "C" {
 #include "sha256.h"
+}
 
 #include <stdint.h>
 #include <stdio.h>
@@ -42,8 +45,9 @@ key_message_pair fake_fpsensor_crypto[] = {
 BUILD_ASSERT(sizeof(key_message_pair) == FP_POSITIVE_MATCH_SECRET_BYTES);
 
 /* Mock compute_hmac_sha256 for unit or fuzz tests. */
-void compute_hmac_sha256(uint8_t *output, const uint8_t *key, const int key_len,
-			 const uint8_t *message, const int message_len)
+extern "C" void compute_hmac_sha256(uint8_t *output, const uint8_t *key,
+				    const int key_len, const uint8_t *message,
+				    const int message_len)
 {
 	switch (mock_ctrl_fpsensor_crypto.output_type) {
 	case MOCK_CTRL_FPSENSOR_CRYPTO_SHA256_TYPE_REAL:

@@ -6,6 +6,7 @@
 #include "compile_time_macros.h"
 #include "fpsensor/fpsensor_crypto.h"
 #include "fpsensor/fpsensor_state.h"
+#include "mock/fpsensor_crypto_mock.h"
 
 #include <array>
 
@@ -13,7 +14,6 @@ extern "C" {
 #include "builtin/assert.h"
 #include "common.h"
 #include "ec_commands.h"
-#include "mock/fpsensor_crypto_mock.h"
 #include "mock/fpsensor_state_mock.h"
 #include "mock/rollback_mock.h"
 #include "mock/timer_mock.h"
