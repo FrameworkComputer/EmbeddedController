@@ -153,10 +153,3 @@ void ppc_interrupt(enum gpio_signal signal)
 {
 	syv682x_interrupt(USBC_PORT_C0);
 }
-
-void retimer_interrupt(enum gpio_signal signal)
-{
-	/*
-	 * TODO(b/179513527): add USB-C support
-	 */
-}
