@@ -8,17 +8,15 @@
 #ifndef __CROS_EC_FPSENSOR_FPSENSOR_CRYPTO_H
 #define __CROS_EC_FPSENSOR_FPSENSOR_CRYPTO_H
 
-#include "compile_time_macros.h"
-
+#include <cstdint>
 #include <span>
 
 #ifdef __cplusplus
 extern "C" {
 #endif
 
-#include "sha256.h"
+#include "common.h"
 
-#include <stddef.h>
 #define HKDF_MAX_INFO_SIZE 128
 #define HKDF_SHA256_MAX_BLOCK_COUNT 255
 

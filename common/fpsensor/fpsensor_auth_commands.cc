@@ -16,6 +16,7 @@
 #include "openssl/mem.h"
 #include "openssl/rand.h"
 #include "scoped_fast_cpu.h"
+#include "sha256.h"
 #include "util.h"
 
 #include <algorithm>

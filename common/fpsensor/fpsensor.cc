@@ -26,6 +26,7 @@ extern "C" {
 #include "link_defs.h"
 #include "mkbp_event.h"
 #include "overflow.h"
+#include "sha256.h"
 #include "spi.h"
 #include "system.h"
 #include "task.h"

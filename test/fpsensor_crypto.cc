@@ -17,6 +17,7 @@ extern "C" {
 #include "mock/fpsensor_state_mock.h"
 #include "mock/rollback_mock.h"
 #include "mock/timer_mock.h"
+#include "sha256.h"
 #include "test_util.h"
 #include "util.h"
 }
