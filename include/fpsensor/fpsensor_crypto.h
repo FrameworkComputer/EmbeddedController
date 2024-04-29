@@ -35,6 +35,9 @@ enum ec_error_list hkdf_expand(uint8_t *out_key, size_t out_key_size,
 			       const uint8_t *prk, size_t prk_size,
 			       const uint8_t *info, size_t info_size);
 
+bool hkdf_sha256(std::span<uint8_t> out_key, std::span<const uint8_t> ikm,
+		 std::span<const uint8_t> salt, std::span<const uint8_t> info);
+
 /**
  * Derive hardware encryption key from rollback secret, |salt|, and |info|.
  *

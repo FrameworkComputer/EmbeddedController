@@ -7,6 +7,8 @@
 #include "fpsensor/fpsensor_crypto.h"
 #include "fpsensor/fpsensor_state_without_driver_info.h"
 #include "openssl/aead.h"
+#include "openssl/evp.h"
+#include "openssl/hkdf.h"
 #include "openssl/mem.h"
 
 #include <span>
@@ -197,6 +199,23 @@ enum ec_error_list hkdf_expand(uint8_t *out_key, size_t L, const uint8_t *prk,
 	OPENSSL_cleanse(info_buffer, sizeof(info_buffer));
 	return EC_SUCCESS;
 #undef HASH_LEN
+}
+
+bool hkdf_sha256_impl(std::span<uint8_t> out_key, std::span<const uint8_t> ikm,
+		      std::span<const uint8_t> salt,
+		      std::span<const uint8_t> info)
+{
+	return HKDF(out_key.data(), out_key.size(), EVP_sha256(), ikm.data(),
+		    ikm.size(), salt.data(), salt.size(), info.data(),
+		    info.size());
+}
+
+test_mockable bool hkdf_sha256(std::span<uint8_t> out_key,
+			       std::span<const uint8_t> ikm,
+			       std::span<const uint8_t> salt,
+			       std::span<const uint8_t> info)
+{
+	return hkdf_sha256_impl(out_key, ikm, salt, info);
 }
 
 enum ec_error_list
