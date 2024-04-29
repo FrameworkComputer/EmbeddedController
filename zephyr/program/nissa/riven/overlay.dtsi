@@ -232,7 +232,6 @@
 		port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
-			bc12 = <&bc12_port0>;
 			chg = <&chg_port0>;
 			tcpc = <&tcpc_port0>;
 			usb-mux-chain-0 {
@@ -252,7 +251,6 @@
 		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
-			bc12 = <&bc12_port1>;
 			chg = <&chg_port1>;
 			tcpc = <&tcpc_port1>;
 			usb-mux-chain-1 {
@@ -340,17 +338,6 @@
 	label = "I2C_USB_C0_TCPC";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 
-	bc12_port0: pi3usb9201@5f {
-		compatible = "pericom,pi3usb9201";
-		status = "okay";
-		reg = <0x5f>;
-		/*
-		 * BC1.2 interrupt is shared with TCPC, so
-		 * IRQ is not specified here and handled by
-		 * usb_c0_interrupt.
-		 */
-	};
-
 	chg_port0: isl923x@9 {
 		compatible = "intersil,isl923x";
 		status = "okay";
@@ -369,12 +356,6 @@
 &i2c5_1 {
 	label = "I2C_SUB_C1_TCPC";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
-
-	bc12_port1: pi3usb9201@5f {
-		compatible = "pericom,pi3usb9201";
-		status = "okay";
-		reg = <0x5f>;
-	};
 
 	chg_port1: isl923x@9 {
 		compatible = "intersil,isl923x";
