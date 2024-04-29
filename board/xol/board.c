@@ -74,20 +74,46 @@ static const struct ec_response_keybd_config xol_kb = {
 		TK_PLAY_PAUSE,          /* T10 */
 		TK_MICMUTE,             /* T11 */
 		TK_VOL_MUTE,            /* T12 */
-		TK_VOL_UP,              /* T13 */
-		TK_VOL_DOWN,            /* T14 */
+		TK_VOL_DOWN,            /* T13 */
+		TK_VOL_UP,              /* T14 */
 	},
 	.capabilities = KEYBD_CAP_FUNCTION_KEYS | KEYBD_CAP_SCRNLOCK_KEY |
 			KEYBD_CAP_NUMERIC_KEYPAD,
 };
 
+static const struct ec_response_keybd_config xol_kb2 = {
+	.num_top_row_keys = 15,
+	.action_keys = {
+		TK_BACK,                /* T1 */
+		TK_REFRESH,             /* T2 */
+		TK_FULLSCREEN,          /* T3 */
+		TK_OVERVIEW,            /* T4 */
+		TK_SNAPSHOT,            /* T5 */
+		TK_BRIGHTNESS_DOWN,     /* T6 */
+		TK_BRIGHTNESS_UP,       /* T7 */
+		TK_KBD_BKLIGHT_DOWN,    /* T8 */
+		TK_KBD_BKLIGHT_UP,      /* T9 */
+		TK_DICTATE,             /* T10 */
+		TK_FORWARD,             /* T11 Temporary */
+		TK_PLAY_PAUSE,          /* T12 */
+		TK_VOL_MUTE,            /* T13 */
+		TK_VOL_DOWN,            /* T14 */
+		TK_VOL_UP,              /* T15 */
+	},
+	.capabilities = KEYBD_CAP_FUNCTION_KEYS | KEYBD_CAP_SCRNLOCK_KEY |
+			KEYBD_CAP_NUMERIC_KEYPAD | KEYBD_CAP_ASSISTANT_KEY,
+};
+
+static uint32_t board_id = (uint32_t)UINT8_MAX;
 __override const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void)
 {
-	return &xol_kb;
+	if (get_board_id() <= 2)
+		return &xol_kb;
+	else
+		return &xol_kb2;
 }
 
-static uint32_t board_id = (uint32_t)UINT8_MAX;
 static void set_board_id(void)
 {
 	uint32_t cbi_val;
@@ -107,14 +133,45 @@ uint8_t board_get_finch_version(void)
 {
 	set_board_id();
 
-	switch (board_id) {
-	case 0x1:
+	if (board_id <= 2)
 		return 0x23;
-	case 0x3:
+	else
 		return 0x30;
-	default:
-		CPRINTS("WARN: cannot map board id(0x%02x) to finch version",
-			board_id);
-		return 0;
+}
+
+__override struct key {
+	uint8_t row;
+	uint8_t col;
+} vivaldi_keys[] = {
+	{ .row = 0, .col = 2 }, /* T1 */
+	{ .row = 3, .col = 2 }, /* T2 */
+	{ .row = 2, .col = 2 }, /* T3 */
+	{ .row = 1, .col = 2 }, /* T4 */
+	{ .row = 4, .col = 4 }, /* T5 */
+	{ .row = 2, .col = 4 }, /* T6 */
+	{ .row = 1, .col = 4 }, /* T7 */
+	{ .row = 2, .col = 11 }, /* T8 */
+	{ .row = 1, .col = 9 }, /* T9 */
+	{ .row = 0, .col = 4 }, /* T10 */
+	{ .row = 0, .col = 1 }, /* T11 */
+	{ .row = 1, .col = 5 }, /* T12 */
+	{ .row = 3, .col = 5 }, /* T13 */
+	{ .row = 0, .col = 11 }, /* T14 */
+	{ .row = 0, .col = 12 }, /* T15 */
+};
+BUILD_ASSERT(ARRAY_SIZE(vivaldi_keys) == MAX_TOP_ROW_KEYS);
+
+static void board_init(void)
+{
+	if (get_board_id() <= 2) {
+		vivaldi_keys[4].row = 3;
+		vivaldi_keys[4].col = 4;
+		vivaldi_keys[7].row = 2;
+		vivaldi_keys[7].col = 9;
+		vivaldi_keys[13].row = 0;
+		vivaldi_keys[13].col = 9;
+		vivaldi_keys[14].row = 0;
+		vivaldi_keys[14].col = 12;
 	}
 }
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_PRE_DEFAULT);
