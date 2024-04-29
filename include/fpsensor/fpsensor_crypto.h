@@ -11,11 +11,9 @@
 #include <cstdint>
 #include <span>
 
-#ifdef __cplusplus
 extern "C" {
-#endif
-
 #include "common.h"
+}
 
 #define HKDF_MAX_INFO_SIZE 128
 #define HKDF_SHA256_MAX_BLOCK_COUNT 255
@@ -101,9 +99,5 @@ enum ec_error_list aes_128_gcm_decrypt(std::span<const uint8_t> key,
 				       std::span<const uint8_t> ciphertext,
 				       std::span<const uint8_t> nonce,
 				       std::span<const uint8_t> tag);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* __CROS_EC_FPSENSOR_FPSENSOR_CRYPTO_H */
