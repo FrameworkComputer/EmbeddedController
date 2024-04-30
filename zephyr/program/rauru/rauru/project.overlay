@@ -248,6 +248,20 @@
 		pwms = <&pwm3 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
 		status = "okay";
 	};
+
+	fans {
+		compatible = "cros-ec,fans";
+
+		fan0 {
+			pwms = <&pwm2 0 PWM_KHZ(324) PWM_POLARITY_INVERTED>;
+			tach = <&tach0>;
+			rpm_min = <1000>;
+			rpm_start = <1000>;
+			rpm_max = <4900>;
+			enable_gpio = <&gpio_en_pp5000_fan>;
+			use_fast_start;
+		};
+	};
 };
 
 /*
