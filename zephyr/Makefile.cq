@@ -148,7 +148,6 @@ $(BUILD)/zephyr/%_final.info: $(BUILD)/zephyr/%_stenciled.info
 	'$(PLATFORM_EC)/zephyr/drivers/cros_tabletmode_interrupt/*' \
 	'$(PLATFORM_EC)/zephyr/drivers/fingerprint/*' \
 	'$(PLATFORM_EC)/zephyr/drivers/keyboard_input/*' \
-	'$(PLATFORM_EC)/zephyr/drivers/one_wire_uart/*' \
 	'$(PLATFORM_EC)/zephyr/drivers/sm5803/*' \
 	'$(PLATFORM_EC)/zephyr/drivers/vivaldi_kbd/*' \
 	'$(THIRD_PARTY)/**' \
@@ -160,9 +159,6 @@ $(BUILD)/zephyr/%_final.info: $(BUILD)/zephyr/%_stenciled.info
 	'$(PLATFORM_EC)/zephyr/include/drivers/cros_system.h' \
 	'$(PLATFORM_EC)/zephyr/include/drivers/fingerprint_sim.h' \
 	'$(PLATFORM_EC)/zephyr/include/drivers/fingerprint.h' \
-	'$(PLATFORM_EC)/zephyr/include/drivers/one_wire_uart_internal.h' \
-	'$(PLATFORM_EC)/zephyr/include/drivers/one_wire_uart_stream.h' \
-	'$(PLATFORM_EC)/zephyr/include/drivers/one_wire_uart.h' \
 	'$(PLATFORM_EC)/zephyr/include/drivers/vivaldi_kbd.h' \
 	'$(PLATFORM_EC)/zephyr/shim/chip/**' \
 	'$(PLATFORM_EC)/zephyr/shim/chip/npcx/npcx_monitor/**' \
