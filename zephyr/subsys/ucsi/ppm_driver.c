@@ -152,6 +152,17 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	 * bit 24 and some commands don't use a connector number at all
 	 */
 	switch (ucsi_command) {
+	case UCSI_CMD_ACK_CC_CI: {
+		struct ucsiv3_get_connector_status_data *conn_status;
+
+		if (!data->ppm->get_next_connector_status(data->ppm->dev, &conn,
+							  &conn_status)) {
+			LOG_ERR("Cx: Found no port with CI to ack.");
+			return -ENOMSG;
+		}
+
+		break;
+	}
 	case UCSI_CMD_PPM_RESET:
 	case UCSI_CMD_SET_NOTIFICATION_ENABLE:
 		return -ENOTSUP;
