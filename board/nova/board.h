@@ -59,6 +59,7 @@
 #define GPIO_RECOVERY_L_2 GPIO_GSC_EC_RECOVERY_BTN_OD
 
 /* I2C Bus Configuration */
+#define I2C_PORT_SENSOR NPCX_I2C_PORT3_0
 #define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
 #define I2C_PORT_MP2964 NPCX_I2C_PORT7_0
 
@@ -139,6 +140,27 @@
 /* Include math_util for bitmask_uint64 used in pd_timers */
 #define CONFIG_MATH_UTIL
 
+/* Sensor */
+#undef CONFIG_MOTION_SENSE_RESUME_DELAY_US
+#define CONFIG_MOTION_SENSE_RESUME_DELAY_US (1000 * MSEC)
+#define CONFIG_CMD_ACCEL_INFO
+/* Enable sensor fifo, must also define the _SIZE and _THRES */
+#define CONFIG_ACCEL_FIFO
+/* FIFO size is in power of 2. */
+#define CONFIG_ACCEL_FIFO_SIZE 256
+/* Depends on how fast the AP boots and typical ODRs */
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
+
+/* TCS3400 ALS */
+#define CONFIG_ALS
+#define ALS_COUNT 1
+#define CONFIG_ALS_TCS3400
+#define CONFIG_ALS_TCS3400_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
+
+/* Sensors without hardware FIFO are in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(CLEAR_ALS)
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h" /* needed by registers.h */
@@ -152,6 +174,12 @@ enum adc_channel {
 	ADC_VBUS,
 	ADC_PPVAR_IMON, /* ADC3 */
 	ADC_CH_COUNT
+};
+
+enum sensor_id {
+	CLEAR_ALS,
+	RGB_ALS,
+	SENSOR_COUNT,
 };
 
 enum temp_sensor_id {

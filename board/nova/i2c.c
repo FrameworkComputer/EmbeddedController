@@ -10,6 +10,14 @@
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
 	{
+		/* I2C3 */
+		.name = "sensor",
+		.port = I2C_PORT_SENSOR,
+		.kbps = 400,
+		.scl = GPIO_EC_I2C_ALS_SCL,
+		.sda = GPIO_EC_I2C_ALS_SDA,
+	},
+	{
 		/* I2C7 */
 		.name = "eeprom",
 		.port = I2C_PORT_EEPROM,
