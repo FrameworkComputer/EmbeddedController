@@ -370,7 +370,7 @@ union rts54_response {
 				uint8_t reserved0 : 2;
 				uint8_t latency : 4;
 				uint8_t reserved1 : 4;
-			};
+			} __packed;
 			uint8_t raw_value[5];
 		};
 	} __packed get_cable_property;

@@ -562,6 +562,7 @@ static int get_cable_property(struct rts5453p_emul_pdc_data *data,
 	 * The RTK command only returns 5 bytes of cable property, but
 	 * they map to the first 5 bytes of the 8 byte UCSI response.
 	 */
+	BUILD_ASSERT(sizeof(data->response.get_cable_property) == 1 + 5);
 	data->response.get_cable_property.byte_count =
 		sizeof(data->response.get_cable_property) - 1;
 	memcpy(data->response.get_cable_property.raw_value,
