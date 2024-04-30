@@ -863,25 +863,34 @@ function load_token_db() {
 
 # Find the Loader image to use
 function mchp_loader_image() {
-	# If no image specified on the command line, try default ones
+	# Use the image specified on the command line
 	if [[ -n "${FLAGS_mchp_loader}" ]] ; then
 		if [ -e "${FLAGS_mchp_loader}" ] || \
 		   [ "${FLAGS_mchp_loader}" == "-" ]; then
-			echo "${FLAGS_mchp_loader}"
-			return
+			LOADER=${FLAGS_mchp_loader}
 		fi
-		die "Invalid image path: ${FLAGS_mchp_loader}"
+	# Try default one
 	else
-		if [ -f "${LOCAL_BUILD}" ]; then
-			echo "${LOCAL_BUILD}"
-			return
-		fi
-		if [ -f "${EMERGE_BUILD}" ]; then
-			echo "${EMERGE_BUILD}"
-			return
-		fi
+		for dir in \
+			"$(dirname "${IMG}")" \
+			"${EC_DIR}/build/${BOARD}/output" \
+			"${EC_DIR}/build/zephyr/${BOARD}/output" \
+			"$(dirname "${LOCAL_BUILD}")" \
+			"$(dirname "${EMERGE_BUILD}")" ;
+		do
+			if [ -f "${dir}/second_loader_fw.bin" ] ; then
+				LOADER="${dir}/second_loader_fw.bin"
+				break
+			fi
+		done
 	fi
-	die "No loader image found: build one or specify one"
+
+	if [ -z "${LOADER}" ] ; then
+		die "No loader image found: build one or specify correct one"
+	fi
+
+	info "using MCHP loader: ${LOADER}"
+	echo "${LOADER}"
 }
 
 # Get the correct UART for flashing. The resulting string is concatenated with
@@ -1828,6 +1837,18 @@ function flash_npcx_int_spi() {
 function flash_mchp_int_spi() {
 	EC_UART="$(servo_ec_uart)"
 	EC_UART_PREFIX="$(servo_ec_uart_prefix)"
+	MCHP_DIR="${EC_DIR}/util/mchp"
+
+	# Gather the image information before changing the UART settings
+	MCHP_LOADER=$(mchp_loader_image)
+	EC_IMAGE=$(ec_image)
+
+	# Store the EC UART interpreter status
+	ec_ec3po_interp="$(dut_control_get ec_ec3po_interp_connect)"
+	servo_save_add "ec_ec3po_interp_connect" "${ec_ec3po_interp}"
+
+	# Disable the EC UART interpreter
+	dut_control ec_ec3po_interp_connect:off
 
 	# Use of --value_only argument helps to get only baudrate value.
 	current_baudrate="$(dut_control_get "${EC_UART_PREFIX}"_baudrate)"
@@ -1845,17 +1866,20 @@ function flash_mchp_int_spi() {
 	   dut_control "${EC_UART_PREFIX}"_baudrate:"${sec_load_baudrate}"
 	fi
 	# Load Second loader image into SRAM
-	mchp/crisis_rcvry_util.py -s "$(mchp_loader_image)" -p "${EC_UART}"
+	"${MCHP_DIR}"/crisis_rcvry_util.py -s "${MCHP_LOADER}" -p "${EC_UART}"
 
 	# Set 57600 baudrate to program EC image
 	image_load_baudrate=57600
 	dut_control "${EC_UART_PREFIX}"_baudrate:"${image_load_baudrate}"
 
 	# Flash EC image into the internal flash
-	mchp/crisis_rcvry_util.py -e "$(ec_image)" -p "${EC_UART}"
+	"${MCHP_DIR}"/crisis_rcvry_util.py -e "${EC_IMAGE}" -p "${EC_UART}"
 
 	# Reset chip in firmware execution mode
 	dut_control cold_reset:on fw_up:off cold_reset:off
+
+	# Restore the EC UART interpreter back
+	dut_control ec_ec3po_interp_connect:"${ec_ec3po_interp}"
 }
 
 info "Using ${SERVO_TYPE}."
