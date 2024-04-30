@@ -11,7 +11,7 @@
 		/*
 		 * Interrupt bindings for sensor devices.
 		 */
-		lsm6dso-int = &base_accel;
+		lsm6dsm-int = &base_accel;
 		lis2dw12-int = &lid_accel;
 	};
 
@@ -45,12 +45,6 @@
 				 0 (-1) 0
 				 0 0 1>;
 		};
-
-		base_rot_inverted: base-rotation-inverted {
-			mat33 = <1 0 0
-				 0 (-1) 0
-				 0 0 (-1)>;
-		};
 	};
 
 	/*
@@ -63,13 +57,13 @@
 	 * "struct als_drv_data_t" in accelgyro.h
 	 */
 	motionsense-sensor-data {
-		lsm6dso_accel_data: lsm6dso-accel-drv-data {
-			compatible = "cros-ec,drvdata-lsm6dso";
+		lsm6dsm_data_accel: lsm6dsm-accel-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dsm";
 			status = "okay";
 		};
 
-		lsm6dso_gyro_data: lsm6dso-gyro-drv-data {
-			compatible = "cros-ec,drvdata-lsm6dso";
+		lsm6dsm_data_gyro: lsm6dsm-gyro-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dsm";
 			status = "okay";
 		};
 
@@ -113,19 +107,15 @@
 		};
 
 		base_accel: base-accel {
-			compatible = "cros-ec,lsm6dso-accel";
+			compatible = "cros-ec,lsm6dsm-accel";
 			status = "okay";
 
 			active-mask = "SENSOR_ACTIVE_S0_S3";
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&base_mutex>;
 			port = <&i2c_ec_i2c_sensor>;
-			/*
-			 * May be replaced by alternate depending
-			 * on board config.
-			 */
 			rot-standard-ref = <&base_rot_ref>;
-			drv-data = <&lsm6dso_accel_data>;
+			drv-data = <&lsm6dsm_data_accel>;
 			configs {
 				compatible =
 					"cros-ec,motionsense-sensor-config";
@@ -139,7 +129,7 @@
 		};
 
 		base_gyro: base-gyro {
-			compatible = "cros-ec,lsm6dso-gyro";
+			compatible = "cros-ec,lsm6dsm-gyro";
 			status = "okay";
 
 			active-mask = "SENSOR_ACTIVE_S0_S3";
@@ -147,8 +137,8 @@
 			mutex = <&base_mutex>;
 			port = <&i2c_ec_i2c_sensor>;
 			rot-standard-ref = <&base_rot_ref>;
+			drv-data = <&lsm6dsm_data_gyro>;
 			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
-			drv-data = <&lsm6dso_gyro_data>;
 		};
 	};
 
