@@ -85,7 +85,7 @@ void test_run_step(uint32_t state)
 		run_test_step2();
 	}
 }
-int task_test(void *unused)
+extern "C" int task_test(void *unused)
 {
 	if (IS_ENABLED(SECTION_IS_RW))
 		test_run_multistep();
