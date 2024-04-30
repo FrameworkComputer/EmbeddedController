@@ -263,7 +263,7 @@ fp_command_read_match_secret_with_pubkey(struct host_cmd_handler_args *args)
 	CleanseWrapper<std::array<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES> >
 		secret;
 
-	enum ec_status status = fp_read_match_secret(fgr, secret.data());
+	enum ec_status status = fp_read_match_secret(fgr, secret);
 	if (status != EC_RES_SUCCESS) {
 		return status;
 	}

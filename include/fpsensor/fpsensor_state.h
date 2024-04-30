@@ -20,6 +20,8 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#include <span>
+
 /* if no special memory regions are defined, fallback on regular SRAM */
 #ifndef FP_FRAME_SECTION
 #define FP_FRAME_SECTION
@@ -164,8 +166,9 @@ void fp_disable_positive_match_secret(struct positive_match_secret_state *state)
  * @param fgr the index of positive match salt.
  * @param positive_match_secret the match secret that derived from the salt.
  */
-enum ec_status fp_read_match_secret(
-	int8_t fgr,
-	uint8_t positive_match_secret[FP_POSITIVE_MATCH_SECRET_BYTES]);
+enum ec_status
+fp_read_match_secret(int8_t fgr,
+		     std::span<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES>
+			     positive_match_secret);
 
 #endif /* __CROS_EC_FPSENSOR_FPSENSOR_STATE_H */

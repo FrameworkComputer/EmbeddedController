@@ -326,7 +326,7 @@ void fp_disable_positive_match_secret(struct positive_match_secret_state *state)
 
 enum ec_status fp_read_match_secret(
 	int8_t fgr,
-	uint8_t positive_match_secret[FP_POSITIVE_MATCH_SECRET_BYTES])
+	std::span<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES> positive_match_secret)
 {
 	timestamp_t now = get_time();
 	struct positive_match_secret_state state_copy =
@@ -352,8 +352,8 @@ enum ec_status fp_read_match_secret(
 	}
 
 	if (derive_positive_match_secret(
-		    { positive_match_secret, FP_POSITIVE_MATCH_SECRET_BYTES },
-		    fp_positive_match_salt[fgr], global_context.user_id,
+		    positive_match_secret, fp_positive_match_salt[fgr],
+		    global_context.user_id,
 		    global_context.tpm_seed) != EC_SUCCESS) {
 		CPRINTS("Failed to derive positive match secret for finger %d",
 			fgr);
