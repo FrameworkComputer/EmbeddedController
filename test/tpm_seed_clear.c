@@ -34,22 +34,18 @@ test_static uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
 
 test_static int test_tpm_seed_before_reboot(void)
 {
-	if (IS_ENABLED(SECTION_IS_RW)) {
-		TEST_ASSERT_ARRAY_EQ(tpm_seed, zero_fake_tpm_seed,
-				     FP_CONTEXT_TPM_BYTES);
-		memcpy(tpm_seed, default_fake_tpm_seed, FP_CONTEXT_TPM_BYTES);
-		TEST_ASSERT_ARRAY_EQ(tpm_seed, default_fake_tpm_seed,
-				     FP_CONTEXT_TPM_BYTES);
-	}
+	TEST_ASSERT_ARRAY_EQ(tpm_seed, zero_fake_tpm_seed,
+			     FP_CONTEXT_TPM_BYTES);
+	memcpy(tpm_seed, default_fake_tpm_seed, FP_CONTEXT_TPM_BYTES);
+	TEST_ASSERT_ARRAY_EQ(tpm_seed, default_fake_tpm_seed,
+			     FP_CONTEXT_TPM_BYTES);
 	return EC_SUCCESS;
 }
 
 test_static int test_tpm_seed_after_reboot(void)
 {
-	if (IS_ENABLED(SECTION_IS_RW)) {
-		TEST_ASSERT_ARRAY_EQ(tpm_seed, zero_fake_tpm_seed,
-				     FP_CONTEXT_TPM_BYTES);
-	}
+	TEST_ASSERT_ARRAY_EQ(tpm_seed, zero_fake_tpm_seed,
+			     FP_CONTEXT_TPM_BYTES);
 	return EC_SUCCESS;
 }
 
