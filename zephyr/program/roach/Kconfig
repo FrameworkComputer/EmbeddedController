@@ -22,7 +22,7 @@ config BOARD_KELPIE
 config BOARD_SPIKYROCK
 	bool "Google Spikyrock Board"
 	help
-	  Build Google Spikyrock reference board. Spikyrock is a keyboard EC
-	  using ITE it82202-ax.
+	  Build Google Spikyrock board. Spikyrock is a variant board of
+	  Roach devices.
 
 source "Kconfig.zephyr"
