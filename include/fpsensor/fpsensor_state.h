@@ -36,10 +36,6 @@ extern "C" {
 	(FP_ALGORITHM_TEMPLATE_SIZE + FP_POSITIVE_MATCH_SALT_BYTES + \
 	 sizeof(struct ec_fp_template_encryption_metadata))
 
-/* Events for the FPSENSOR task */
-#define TASK_EVENT_SENSOR_IRQ TASK_EVENT_CUSTOM_BIT(0)
-#define TASK_EVENT_UPDATE_CONFIG TASK_EVENT_CUSTOM_BIT(1)
-
 #define FP_NO_SUCH_TEMPLATE (UINT16_MAX)
 
 /* --- Global variables defined in fpsensor_state.c --- */
