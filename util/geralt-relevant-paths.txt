@@ -1,0 +1,37 @@
+# Here you can place files of interest to be included in the commit message for
+# merge commits to cros/firmware-geralt-15842.B
+common/charge_state.c
+common/dps.c
+common/mkbp_*
+common/rwsig.c
+common/update_fw.c
+common/usb_charger.c
+common/usb_common.c
+common/usb_update.c
+common/usbc/*_pd_*
+common/usbc/dp_alt_mode.c
+common/usbc/usb_pe_drp_sm.c
+common/usbc/usb_prl_sm.c
+common/usbc/usb_sm.c
+common/usbc/usb_tc_drp_acc_trysrc_sm.c
+driver/accelgyro_bmi3xx.c
+driver/accelgyro_bmi_common.c
+driver/accelgyro_lsm6dsm.c
+driver/battery/smart.c
+driver/charger/rt9490.c
+driver/ppc/syv682x.c
+driver/sha256/sha256_it8xxx2.c
+driver/tcpm/it8xxx2.c
+driver/tcpm/ite_pd_intc.c
+driver/tcpm/tcpci.c
+driver/temp_sensor/thermistor.c
+driver/touchpad_elan.c
+driver/usb_mux/ps8743.c
+driver/usb_mux/usb_mux.c
+driver/usb_mux/virtual.c
+power/mt8186.c
+zephyr/boards/riscv/it8xxx2/*
+zephyr/drivers/*
+zephyr/program/geralt/*
+zephyr/program/roach/*
+zephyr/shim/*
