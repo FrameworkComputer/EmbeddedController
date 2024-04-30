@@ -27,7 +27,6 @@ extern "C" {
 #include "watchdog.h"
 }
 
-#include "fpsensor/fpsensor.h"
 #include "fpsensor/fpsensor_console.h"
 #include "fpsensor/fpsensor_crypto.h"
 #include "fpsensor/fpsensor_detect.h"
