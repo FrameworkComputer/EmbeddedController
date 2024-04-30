@@ -176,6 +176,7 @@ if (ZEPHYR_PIGWEED_MODULE_DIR)
     target_compile_options(log_tokenized_config INTERFACE -include
                            ${PLATFORM_EC}/zephyr/include/pigweed/pw_zephyr_tokenized_custom_log.h)
     pw_set_module_config(pw_log_tokenized_CONFIG log_tokenized_config)
+    zephyr_include_directories("${PLATFORM_EC}/zephyr/include/pigweed")
   endif()
 endif()
 
