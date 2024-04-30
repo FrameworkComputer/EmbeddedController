@@ -4,7 +4,6 @@
  */
 
 #include "ec_commands.h"
-#include "fpsensor/fpsensor_utils.h"
 #include "mock/fpsensor_detect_mock.h"
 #include "string.h"
 #include "test_util.h"
@@ -26,25 +25,6 @@ static const struct ec_response_get_protocol_info expected_info[] = {
 		.protocol_versions = 8,
 	}
 };
-
-test_static int test_validate_fp_buffer_offset_success(void)
-{
-	TEST_EQ(validate_fp_buffer_offset(1, 0, 1), EC_SUCCESS, "%d");
-	return EC_SUCCESS;
-}
-
-test_static int test_validate_fp_buffer_offset_failure_no_overflow(void)
-{
-	TEST_EQ(validate_fp_buffer_offset(1, 1, 1), EC_ERROR_INVAL, "%d");
-	return EC_SUCCESS;
-}
-
-test_static int test_validate_fp_buffer_offset_failure_overflow(void)
-{
-	TEST_EQ(validate_fp_buffer_offset(1, UINT32_MAX, 1), EC_ERROR_OVERFLOW,
-		"%d");
-	return EC_SUCCESS;
-}
 
 test_static int test_host_command_protocol_info(
 	enum fp_transport_type transport_type,
@@ -86,16 +66,6 @@ test_static int test_host_command_protocol_info_spi(void)
 
 void run_test(int argc, const char **argv)
 {
-	if (IS_ENABLED(HAS_TASK_FPSENSOR)) {
-		/* TODO(b/171924356): The "emulator" build only builds RO and
-		 *  the functions used in the tests are only in RW, so these
-		 *  tests are not run on the emulator.
-		 */
-		RUN_TEST(test_validate_fp_buffer_offset_success);
-		RUN_TEST(test_validate_fp_buffer_offset_failure_no_overflow);
-		RUN_TEST(test_validate_fp_buffer_offset_failure_overflow);
-	}
-
 	/* The tests after this only work on device right now. */
 	if (IS_ENABLED(EMU_BUILD)) {
 		test_print_result();

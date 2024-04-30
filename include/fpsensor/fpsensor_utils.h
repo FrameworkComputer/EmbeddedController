@@ -13,10 +13,6 @@
 #include <stdbool.h>
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
-
 /**
  * Test that size+offset does not exceed buffer_size
  *
@@ -29,9 +25,5 @@ enum ec_error_list validate_fp_buffer_offset(uint32_t buffer_size,
 					     uint32_t offset, uint32_t size);
 
 bool fp_match_success(int match_result);
-
-#ifdef __cplusplus
-}
-#endif
 
 #endif /* __CROS_EC_FPSENSOR_FPSENSOR_UTILS_H */
