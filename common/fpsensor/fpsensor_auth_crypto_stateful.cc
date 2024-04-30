@@ -25,7 +25,7 @@ extern "C" {
 #include "fpsensor/fpsensor_auth_crypto.h"
 #include "fpsensor/fpsensor_crypto.h"
 #include "fpsensor/fpsensor_state_without_driver_info.h"
-#include "fpsensor/fpsensor_utils.h"
+#include "fpsensor/fpsensor_console.h"
 // clang-format on
 
 enum ec_error_list

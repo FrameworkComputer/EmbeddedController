@@ -11,7 +11,7 @@
 #include "fpc_private.h"
 #include "fpc_sensor.h"
 #include "fpsensor/fpsensor.h"
-#include "fpsensor/fpsensor_utils.h"
+#include "fpsensor/fpsensor_console.h"
 #include "gpio.h"
 #include "link_defs.h"
 #include "spi.h"

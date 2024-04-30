@@ -8,7 +8,7 @@
 #include "console.h"
 #include "fpc_sensor_pal.h"
 #include "fpsensor/fpsensor.h"
-#include "fpsensor/fpsensor_utils.h"
+#include "fpsensor/fpsensor_console.h"
 #include "shared_mem.h"
 #include "spi.h"
 #include "timer.h"

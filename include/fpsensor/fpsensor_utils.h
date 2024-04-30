@@ -17,9 +17,6 @@
 extern "C" {
 #endif
 
-#define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
-#define CPRINTS(format, args...) cprints(CC_FP, format, ##args)
-
 /**
  * Test that size+offset does not exceed buffer_size
  *

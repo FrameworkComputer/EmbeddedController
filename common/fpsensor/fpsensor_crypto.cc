@@ -3,9 +3,9 @@
  * found in the LICENSE file.
  */
 
+#include "fpsensor/fpsensor_console.h"
 #include "fpsensor/fpsensor_crypto.h"
 #include "fpsensor/fpsensor_state_without_driver_info.h"
-#include "fpsensor/fpsensor_utils.h"
 #include "openssl/aead.h"
 #include "openssl/mem.h"
 

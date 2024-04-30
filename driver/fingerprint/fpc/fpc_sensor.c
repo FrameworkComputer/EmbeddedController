@@ -4,8 +4,8 @@
  */
 
 #include "fpsensor/fpsensor.h"
+#include "fpsensor/fpsensor_console.h"
 #include "fpsensor/fpsensor_state_driver.h"
-#include "fpsensor/fpsensor_utils.h"
 #include "timer.h"
 
 #include <stddef.h>
