@@ -75,12 +75,8 @@ zephyr_library_link_libraries(crypto)
 #
 # -Wno-return-type is needed to ignore non-void functions that calls abort() and
 # don't have return statement (e.g. aes_hw_set_encrypt_key()).
-#
-# -std=c11 is necessary because BoringSSL sources use features available in
-# C11, e.g. static_assert().
 set(BORINGSSL_COMPILE_OPTIONS -D_POSIX_C_SOURCE=200809L
-	-Wno-implicit-function-declaration -fno-common -Wno-return-type
-	-std=c11)
+	-Wno-implicit-function-declaration -fno-common -Wno-return-type)
 
 # Create interface library that specifies compile options required by
 # BoringSSL. This is the same trick used by zephyr_library_compile_options()
