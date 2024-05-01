@@ -3474,4 +3474,20 @@ static void test_reset(const struct ztest_unit_test *test, void *data)
 
 ZTEST_RULE(pdc_power_mgmt_test_reset, NULL, test_reset);
 
+bool test_pdc_power_mgmt_is_snk_typec_attached_run(int port)
+{
+	LOG_INF("RPZ SRC %d",
+		pdc_data[port]->port.snk_typec_attached_local_state);
+	return pdc_data[port]->port.snk_typec_attached_local_state ==
+	       SNK_TYPEC_ATTACHED_RUN;
+}
+
+bool test_pdc_power_mgmt_is_src_typec_attached_run(int port)
+{
+	LOG_INF("RPZ SRC %d",
+		pdc_data[port]->port.src_typec_attached_local_state);
+	return pdc_data[port]->port.src_typec_attached_local_state ==
+	       SRC_TYPEC_ATTACHED_RUN;
+}
+
 #endif
