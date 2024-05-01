@@ -17,10 +17,9 @@ ec_commands_file_in="include/ec_commands.h"
 #   0 if command is ok, else 1
 ########################################
 check_cmd() {
-  IFS=" "
   # Remove any tabs that may exist
-  tts=$(echo "$1" | sed 's/\t/ /g')
-  arr=( $tts )
+  tts="${1//\t/ }"
+  IFS=" " read -r -a arr <<< "${tts}"
 
   # Check for 0x
   if [[ "${arr[2]}" != 0x* ]]; then
@@ -34,7 +33,7 @@ check_cmd() {
 
   # Check that hex digits are valid and uppercase
   hd=${arr[2]:2}
-  if ! [[ $hd =~ ^[0-9A-F]{4}$ ]]; then
+  if ! [[ ${hd} =~ ^[0-9A-F]{4}$ ]]; then
     return 1
   fi
 
@@ -49,15 +48,13 @@ check_cmd() {
 # Arguments:
 #   string - potential ec host command
 # Returns:
-#   0 if command is formated properly, else 1
+#   0 if command is formatted properly, else 1
 ########################################
 should_check() {
-  IFS=" "
-  arr=( $1 )
+  IFS=" " read -r -a arr <<< "${1}"
 
   # Check for file.X:#define
-  IFS=":"
-  temp=( ${arr[0]} )
+  IFS=":" read -r -a temp <<< "${arr[0]}"
   # Check for file.X
   if [ ! -f  "${temp[0]}" ]; then
     return 1
@@ -82,44 +79,38 @@ should_check() {
 }
 
 main() {
-
-  # Check if ec_commands.h has changed.
-  echo ${PRESUBMIT_FILES} | grep -q "${ec_commands_file_in}" || exit 0
-
   ec_errors=()
   ei=0
   # Search all file occurrences of "EC_CMD" and store in array
-  IFS=$'\n'
-  ec_cmds=($(grep -H "EC_CMD" "${ec_commands_file_in}"))
+  mapfile -t ec_cmds < <(grep -H "EC_CMD" "${ec_commands_file_in}")
 
   # Loop through and find valid occurrences of "EC_CMD" to check
   length=${#ec_cmds[@]}
   for ((i = 0; i != length; i++)); do
     if should_check "${ec_cmds[i]}"; then
       if ! check_cmd "${ec_cmds[i]}"; then
-        ec_errors[$ei]="${ec_cmds[i]}"
+        ec_errors[${ei}]="${ec_cmds[i]}"
         ((ei++))
       fi
     fi
   done
 
-  # Search all file occurrances of "EC_PRV_CMD" and store in array
-  IFS=$'\n'
-  ec_prv_cmds=($(grep -H "EC_PRV_CMD" "${ec_commands_file_in}"))
+  # Search all file occurrences of "EC_PRV_CMD" and store in array
+  mapfile -t ec_prv_cmds < <(grep -H "EC_PRV_CMD" "${ec_commands_file_in}")
 
   # Loop through and find valid occurrences of "EC_PRV_CMD" to check
   length=${#ec_prv_cmds[@]}
   for ((i = 0; i != length; i++)); do
     if should_check "${ec_prv_cmds[i]}"; then
       if ! check_cmd "${ec_prv_cmds[i]}"; then
-        ec_errors[$ei]="${ec_prv_cmds[i]}"
+        ec_errors[${ei}]="${ec_prv_cmds[i]}"
         ((ei++))
       fi
     fi
   done
 
   # Check if any malformed ec host commands were found
-  if [ ! $ei -eq 0 ]; then
+  if [ ! "${ei}" -eq 0 ]; then
     echo "The following host commands are malformed:"
     # print all malformed host commands
     for ((i = 0; i != ei; i++)); do
