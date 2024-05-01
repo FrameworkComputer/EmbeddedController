@@ -4,6 +4,10 @@
 
 if PLATFORM_EC_USBC
 
+module = USBC
+module-str = usbc
+source "subsys/logging/Kconfig.template.log_config"
+
 config USBC_INTEL_ALTMODE
 	bool "USB-C Intel alternate mode configuration driver"
 	default y if DT_HAS_INTEL_PD_ALTMODE_ENABLED
@@ -27,6 +31,28 @@ config CONSOLE_CMD_PDC_CCG8
 	help
 	  Enable console command to read/write to the power path registers of
 	  CCG8 Power Delivery chip.
+
+config USBC_PDC_TPS6699X
+	bool "TI TPS6699X Power Deleivery Controller driver"
+	default y if DT_HAS_TI_TPS6699_PDC_ENABLED
+	select SMF
+	select SMF_ANCESTOR_SUPPORT
+	help
+	  This option enables the TI TPS6699X Power Delivery Controller.
+
+config USBC_PDC_TPS6699X_STACK_SIZE
+	int "USB-C TI TPS6699X PDC thread stack size"
+	default 1024
+	depends on USBC_PDC_TPS6699X
+	help
+	  Stack size of thread created for each instance.
+
+config USBC_PDC_TPS6699X_THREAD_PRIORITY
+	int "USB-C TI TPS6699x PDC thread priority"
+	default 0
+	depends on USBC_PDC_TPS6699X
+	help
+	  Set thread priority of the USB-C PDC
 
 config USBC_PDC_RTS54XX
 	bool "Realtek RTS545x Power Delivery Controller driver"
