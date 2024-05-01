@@ -9442,6 +9442,29 @@ int cmd_console(int argc, char *argv[])
 	printf("\n");
 	return 0;
 }
+
+static int cmd_console_print(int argc, char *argv[])
+{
+	char *msg;
+	int msg_len;
+
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <msg>\n", argv[0]);
+		return -1;
+	}
+	msg = argv[1];
+	msg_len = strlen(msg);
+	if (msg_len > ec_max_outsize - 1) {
+		/* Truncate message */
+		msg_len = ec_max_outsize - 1;
+		msg[msg_len] = '\0';
+		fprintf(stderr,
+			"Message exceeds max-length(%d), truncating to '%s'\n",
+			ec_max_outsize - 1, msg);
+	}
+	return ec_command(EC_CMD_CONSOLE_PRINT, 0, msg, msg_len + 1, NULL, 0);
+}
+
 struct param_info {
 	const char *name; /* name of this parameter */
 	const char *help; /* help message */
@@ -12078,6 +12101,9 @@ const struct command commands[] = {
 	  "<cmd>\n\tPrints supported version mask for a command number." },
 	{ "console", cmd_console,
 	  "\n\tPrints the last output to the EC debug console." },
+	{ "console_print", cmd_console_print,
+	  "<message>\n"
+	  "\tPrints a message to the EC console." },
 	{ "echash", cmd_ec_hash, "[CMDS]\n\tVarious EC hash commands." },
 	{ "eventclear", cmd_host_event_clear,
 	  "<mask>\n"

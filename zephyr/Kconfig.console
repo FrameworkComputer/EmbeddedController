@@ -137,3 +137,11 @@ config PLATFORM_EC_PRINTF_LONG_IS_32BITS
 	  systems along with any supported conversion specifiers. Note that this also
 	  reenables support for the 'i' printf format. This config will only take
 	  effect if sizeof(long) == sizeof(uint32_t).
+
+config PLATFORM_EC_HOSTCMD_CONSOLE_PRINT
+	bool "Console Print Command"
+	depends on CONSOLE && PLATFORM_EC_HOSTCMD
+	default y
+	help
+	  Enable the EC_CMD_CONSOLE_PRINT host command. This allows the host
+	  to print messages directly to the EC console.
