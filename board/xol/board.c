@@ -101,8 +101,8 @@ static const struct ec_response_keybd_config xol_kb2 = {
 		TK_VOL_DOWN,            /* T14 */
 		TK_VOL_UP,              /* T15 */
 	},
-	.capabilities = KEYBD_CAP_FUNCTION_KEYS | KEYBD_CAP_SCRNLOCK_KEY |
-			KEYBD_CAP_NUMERIC_KEYPAD | KEYBD_CAP_ASSISTANT_KEY,
+	.capabilities = KEYBD_CAP_FUNCTION_KEYS | KEYBD_CAP_NUMERIC_KEYPAD |
+			KEYBD_CAP_ASSISTANT_KEY,
 };
 
 static uint32_t board_id = (uint32_t)UINT8_MAX;
