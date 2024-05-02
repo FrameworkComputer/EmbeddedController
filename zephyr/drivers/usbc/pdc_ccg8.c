@@ -190,7 +190,7 @@ static int ccg_get_current_pdo(const struct device *dev, uint32_t *pdo)
 }
 
 static int ccg_set_handler_cb(const struct device *dev,
-			      pdc_cci_handler_cb_t cci_cb, void *cb_data)
+			      struct pdc_callback *callback)
 {
 	return 0;
 }

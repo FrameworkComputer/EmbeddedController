@@ -641,6 +641,7 @@ struct pdc_port_t {
 	/** SET_DRP variable used with CMD_SET_DRP */
 	enum drp_mode_t drp;
 	/** Callback */
+	struct pdc_callback cc_cb;
 	struct pdc_callback ci_cb;
 	/** Last configured dual role power state */
 	enum pd_dual_role_states dual_role_state;
@@ -2132,9 +2133,12 @@ static const struct smf_state pdc_states[] = {
 /**
  * @brief CCI event handler call back
  */
-static void pdc_cci_handler_cb(union cci_event_t cci_event, void *cb_data)
+static void pdc_cc_handler_cb(const struct device *dev,
+			      const struct pdc_callback *callback,
+			      union cci_event_t cci_event)
 {
-	struct pdc_port_t *port = (struct pdc_port_t *)cb_data;
+	struct pdc_port_t *port =
+		CONTAINER_OF(callback, struct pdc_port_t, cc_cb);
 	bool post_event = false;
 
 	/* Handle busy event from driver */
@@ -2213,8 +2217,9 @@ static int pdc_subsys_init(const struct device *dev)
 
 	init_port_variables(port);
 
-	/* Set cci call back */
-	pdc_set_cc_callback(port->pdc, pdc_cci_handler_cb, (void *)port);
+	/* Set cc call back */
+	port->cc_cb.handler = pdc_cc_handler_cb;
+	pdc_set_cc_callback(port->pdc, &port->cc_cb);
 
 	/* Set ci call back */
 	port->ci_cb.handler = pdc_ci_handler_cb;

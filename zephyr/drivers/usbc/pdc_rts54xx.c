@@ -396,10 +396,10 @@ struct pdc_data_t {
 	union error_status_t error_status;
 	/** CCI Event */
 	union cci_event_t cci_event;
-	/** CCI Event callback */
-	pdc_cci_handler_cb_t cci_cb;
-	/** CCI Event callback data */
-	void *cb_data;
+	/** CC Event callback */
+	struct pdc_callback *cc_cb;
+	/** CC Event one-time callback. If it's NULL, cci_cb will be called. */
+	struct pdc_callback *cc_cb_tmp;
 	/** Asynchronous (CI) Event callbacks */
 	sys_slist_t ci_cb_list;
 	/** Information about the PDC */
@@ -553,16 +553,19 @@ static void call_cci_event_cb(struct pdc_data_t *data)
 		return;
 	}
 
+	LOG_INF("C%d: CCI=0x%x", cfg->connector_number, cci.raw_value);
+
 	/*
 	 * CC and CI events are separately reported. So, we need to call only
 	 * one callback or the other.
 	 */
 	if (cci.connector_change) {
 		pdc_fire_callbacks(&data->ci_cb_list, data->dev, cci);
-	} else if (data->cci_cb) {
-		LOG_INF("C%d: cci_event_cb event=0x%x", cfg->connector_number,
-			data->cci_event.raw_value);
-		data->cci_cb(data->cci_event, data->cb_data);
+	} else if (data->cc_cb_tmp) {
+		data->cc_cb_tmp->handler(data->dev, data->cc_cb_tmp, cci);
+		data->cc_cb_tmp = NULL;
+	} else if (data->cc_cb) {
+		data->cc_cb->handler(data->dev, data->cc_cb, cci);
 	}
 
 	data->cci_event.raw_value = 0;
@@ -1472,9 +1475,10 @@ static const struct smf_state states[] = {
  * @return -EBUSY if command is already pending.
  * @return -ECONNREFUSED if chip communication is disabled
  */
-static int rts54_post_command(const struct device *dev, enum cmd_t cmd,
-			      const uint8_t *buf, uint8_t len,
-			      uint8_t *user_buf)
+static int rts54_post_command_with_callback(const struct device *dev,
+					    enum cmd_t cmd, const uint8_t *buf,
+					    uint8_t len, uint8_t *user_buf,
+					    struct pdc_callback *callback)
 {
 	struct pdc_data_t *data = dev->data;
 
@@ -1498,6 +1502,7 @@ static int rts54_post_command(const struct device *dev, enum cmd_t cmd,
 	data->wr_buf_len = len;
 	data->user_buf = user_buf;
 	data->cmd = cmd;
+	data->cc_cb_tmp = callback;
 
 	if (IS_ENABLED(CONFIG_USBC_PDC_TRACE_MSG)) {
 		const struct pdc_config_t *cfg = dev->config;
@@ -1510,6 +1515,14 @@ static int rts54_post_command(const struct device *dev, enum cmd_t cmd,
 	k_mutex_unlock(&data->mtx);
 
 	return 0;
+}
+
+static int rts54_post_command(const struct device *dev, enum cmd_t cmd,
+			      const uint8_t *buf, uint8_t len,
+			      uint8_t *user_buf)
+{
+	return rts54_post_command_with_callback(dev, cmd, buf, len, user_buf,
+						NULL);
 }
 
 /**
@@ -1545,12 +1558,11 @@ static int rts54_get_ucsi_version(const struct device *dev, uint16_t *version)
 }
 
 static int rts54_set_handler_cb(const struct device *dev,
-				pdc_cci_handler_cb_t cci_cb, void *cb_data)
+				struct pdc_callback *callback)
 {
 	struct pdc_data_t *data = dev->data;
 
-	data->cci_cb = cci_cb;
-	data->cb_data = cb_data;
+	data->cc_cb = callback;
 
 	return 0;
 }
@@ -2399,17 +2411,14 @@ static int rts54_set_pdo(const struct device *dev, enum pdo_type_t type,
 
 #define SMBUS_MAX_BLOCK_SIZE 32
 
-static int rts54_execute_command_sync(const struct device *dev,
-				      uint8_t ucsi_command, uint8_t data_size,
-				      uint8_t *command_specific,
-				      uint8_t *lpm_data_out)
+static int rts54_execute_ucsi_cmd(const struct device *dev,
+				  uint8_t ucsi_command, uint8_t data_size,
+				  uint8_t *command_specific,
+				  uint8_t *lpm_data_out,
+				  struct pdc_callback *callback)
 {
 	struct pdc_data_t *data = dev->data;
 	uint8_t cmd_buffer[SMBUS_MAX_BLOCK_SIZE];
-	pdc_cci_handler_cb_t cci_cb_copy;
-	void *cb_data_copy;
-	int call_counter;
-	int rv;
 
 	if (ucsi_command == UCSI_CMD_GET_CONNECTOR_STATUS &&
 	    data->conn_status_cached) {
@@ -2418,14 +2427,18 @@ static int rts54_execute_command_sync(const struct device *dev,
 		memcpy(lpm_data_out, &data->conn_status,
 		       sizeof(data->conn_status));
 		k_mutex_unlock(&data->mtx);
-		return sizeof(data->conn_status);
+		if (callback) {
+			union cci_event_t cci = {
+				.data_len = sizeof(data->conn_status),
+				.command_completed = 1,
+			};
+			callback->handler(dev, callback, cci);
+		}
+		return 0;
 	}
 
-	/* We don't know yet if the PDC driver is busy or not. */
-	if (get_state(data) != ST_IDLE || data->cmd != CMD_NONE) {
-		LOG_ERR("%s: Failed to run (-EBUSY)", __func__);
+	if (get_state(data) != ST_IDLE)
 		return -EBUSY;
-	}
 
 	cmd_buffer[0] = REALTEK_PD_COMMAND;
 	cmd_buffer[1] = data_size + 2;
@@ -2433,38 +2446,9 @@ static int rts54_execute_command_sync(const struct device *dev,
 	cmd_buffer[3] = 0;
 	memcpy(&cmd_buffer[4], command_specific, data_size);
 
-	rv = rts54_post_command(dev, ucsi_command, cmd_buffer, data_size + 4,
-				lpm_data_out);
-	if (rv < 0) {
-		LOG_ERR("%s: Failed to run (%d)", __func__, rv);
-		return rv;
-	}
-
-	cci_cb_copy = data->cci_cb;
-	cb_data_copy = data->cb_data;
-	rts54_set_handler_cb(dev, NULL, NULL);
-	call_counter = 0;
-
-	do {
-		/* Wait for timeout or event */
-		k_sleep(K_MSEC(20));
-
-		call_counter++;
-		if (call_counter > 100) {
-			LOG_ERR("%s: Block call timeout", __func__);
-			rv = -ETIMEDOUT;
-			break;
-		}
-	} while (!data->cci_event.command_completed && !data->cci_event.error);
-
-	rts54_set_handler_cb(dev, cci_cb_copy, cb_data_copy);
-
-	if (rv == 0) {
-		/* May have read some data. */
-		rv = data->cci_event.data_len;
-	}
-
-	return rv;
+	return rts54_post_command_with_callback(dev, ucsi_command, cmd_buffer,
+						data_size + 4, lpm_data_out,
+						callback);
 }
 
 static int rts54_manage_callback(const struct device *dev,
@@ -2532,7 +2516,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.is_vconn_sourcing = rts54_is_vconn_sourcing,
 	.set_pdos = rts54_set_pdo,
 	.get_pch_data_status = rts54_get_pch_data_status,
-	.execute_command_sync = rts54_execute_command_sync,
+	.execute_ucsi_cmd = rts54_execute_ucsi_cmd,
 	.manage_callback = rts54_manage_callback,
 	.ack_cc_ci = rts54_ack_cc_ci,
 };

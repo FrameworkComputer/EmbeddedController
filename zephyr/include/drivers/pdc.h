@@ -137,10 +137,8 @@ typedef int (*pdc_get_connector_status_t)(
 	const struct device *dev, union connector_status_t *connector_status);
 typedef int (*pdc_get_error_status_t)(const struct device *dev,
 				      union error_status_t *es);
-typedef void (*pdc_cci_handler_cb_t)(union cci_event_t cci_event,
-				     void *cb_data);
 typedef int (*pdc_set_handler_cb_t)(const struct device *dev,
-				    pdc_cci_handler_cb_t cci_cb, void *cb_data);
+				    struct pdc_callback *callback);
 typedef void (*pdc_cci_cb_t)(const struct device *dev,
 			     const struct pdc_callback *callback,
 			     union cci_event_t cci_event);
@@ -177,11 +175,11 @@ typedef int (*pdc_set_pdos_t)(const struct device *dev, enum pdo_type_t type,
 			      uint32_t *pdo, int count);
 typedef int (*pdc_get_pch_data_status_t)(const struct device *dev,
 					 uint8_t port_num, uint8_t *status_reg);
-typedef int (*pdc_execute_command_sync_t)(const struct device *dev,
-					  uint8_t ucsi_command,
-					  uint8_t data_size,
-					  uint8_t *command_specific,
-					  uint8_t *lpm_data_out);
+typedef int (*pdc_execute_ucsi_cmd_t)(const struct device *dev,
+				      uint8_t ucsi_command, uint8_t data_size,
+				      uint8_t *command_specific,
+				      uint8_t *lpm_data_out,
+				      struct pdc_callback *callback);
 typedef int (*pdc_manage_callback_t)(const struct device *dev,
 				     struct pdc_callback *callback, bool set);
 typedef int (*pdc_ack_cc_ci_t)(const struct device *dev,
@@ -227,7 +225,7 @@ __subsystem struct pdc_driver_api_t {
 	pdc_is_vconn_sourcing_t is_vconn_sourcing;
 	pdc_set_pdos_t set_pdos;
 	pdc_get_pch_data_status_t get_pch_data_status;
-	pdc_execute_command_sync_t execute_command_sync;
+	pdc_execute_ucsi_cmd_t execute_ucsi_cmd;
 	pdc_manage_callback_t manage_callback;
 	pdc_ack_cc_ci_t ack_cc_ci;
 };
@@ -586,19 +584,17 @@ static inline int pdc_set_pdr(const struct device *dev, union pdr_t pdr)
  *           <none>
  *
  * @param dev PDC device structure pointer
- * @param cci_cb pointer to callback
- * @param cb_data point to data that's passed to the callback
+ * @param callback Pointer to callback
  */
 static inline void pdc_set_cc_callback(const struct device *dev,
-				       pdc_cci_handler_cb_t cci_cb,
-				       void *cb_data)
+				       struct pdc_callback *callback)
 {
 	const struct pdc_driver_api_t *api =
 		(const struct pdc_driver_api_t *)dev->api;
 
 	__ASSERT(api->set_handler_cb != NULL, "SET_HANDLER_CB is not optional");
 
-	api->set_handler_cb(dev, cci_cb, cb_data);
+	api->set_handler_cb(dev, callback);
 }
 
 /**
@@ -1132,21 +1128,21 @@ bool pdc_trace_msg_resp(int port, enum pdc_trace_chip_type msg_type,
  * @return -ETIMEDOUT if timer expires while waiting for write or read operation
  *         to finish.
  */
-static inline int pdc_execute_command_sync(const struct device *dev,
-					   uint8_t ucsi_command,
-					   uint8_t data_size,
-					   uint8_t *command_specific,
-					   uint8_t *lpm_data_out)
+static inline int pdc_execute_ucsi_cmd(const struct device *dev,
+				       uint8_t ucsi_command, uint8_t data_size,
+				       uint8_t *command_specific,
+				       uint8_t *lpm_data_out,
+				       struct pdc_callback *callback)
 {
 	const struct pdc_driver_api_t *api =
 		(const struct pdc_driver_api_t *)dev->api;
 
-	if (api->execute_command_sync == NULL) {
+	if (api->execute_ucsi_cmd == NULL) {
 		return -ENOSYS;
 	}
 
-	return api->execute_command_sync(dev, ucsi_command, data_size,
-					 command_specific, lpm_data_out);
+	return api->execute_ucsi_cmd(dev, ucsi_command, data_size,
+				     command_specific, lpm_data_out, callback);
 }
 
 /**
@@ -1171,6 +1167,22 @@ static inline int pdc_add_ci_callback(const struct device *dev,
 
 	return api->manage_callback(dev, callback, true);
 }
+
+/**
+ * @typedef pdc_callback_handler_t
+ * @brief Define the application callback handler function signature
+ *
+ * @param port Device struct for the PDC device.
+ * @param cb Original struct pdc_callback owning this handler
+ * @param pins Mask of pins that triggers the callback handler
+ *
+ * Note: cb pointer can be used to retrieve private data through
+ * CONTAINER_OF() if original struct pdc_callback is stored in
+ * another private structure.
+ */
+typedef void (*pdc_callback_handler_t)(const struct device *port,
+				       struct pdc_callback *cb,
+				       union cci_event_t cci_event);
 
 /**
  * @brief PDC callback structure
