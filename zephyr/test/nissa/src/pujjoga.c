@@ -283,11 +283,17 @@ ZTEST(pujjoga, test_led_brightness_range)
 		      "LED_2 is not on");
 
 	memset(brightness, 0, sizeof(brightness));
-	brightness[EC_LED_COLOR_BLUE] = 1;
+	brightness[EC_LED_COLOR_WHITE] = 1;
 	led_set_brightness(EC_LED_ID_POWER_LED, brightness);
 
 	zassert_false(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_power_led)),
 		      "PWR_LED is not on");
+
+	memset(brightness, 0, sizeof(brightness));
+	brightness[EC_LED_COLOR_BLUE] = 1;
+	led_set_brightness(EC_LED_ID_POWER_LED, brightness);
+	zassert_false(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_power_led)),
+		      "PWR_LED is on");
 }
 
 enum pujjoga_sub_board_type pujjoga_get_sb_type(void);
