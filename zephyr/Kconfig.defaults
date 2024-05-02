@@ -50,4 +50,7 @@ config INPUT_NPCX_KBD
 config OUTPUT_DISASSEMBLY
 	default y
 
+config SHELL_BACKEND_SERIAL_INIT_PRIORITY
+	default 51
+
 orsource "Kconfig.defaults-$(ARCH)"
