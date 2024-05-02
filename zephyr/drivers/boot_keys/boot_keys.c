@@ -205,3 +205,24 @@ static int boot_keys_init(void)
 	return 0;
 }
 SYS_INIT(boot_keys_init, POST_KERNEL, 99);
+
+#if CONFIG_TEST
+void test_power_button_change(void)
+{
+	power_button_change();
+}
+
+int test_reinit(void)
+{
+	boot_keys_value = 0;
+	boot_keys_value_external = 0;
+	boot_keys_counter = 0;
+	boot_keys_timeout = false;
+	return boot_keys_init();
+}
+
+bool test_dwork_pending(void)
+{
+	return k_work_delayable_is_pending(&boot_keys_timeout_dwork);
+}
+#endif
