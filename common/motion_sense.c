@@ -995,7 +995,7 @@ void motion_sense_task(void *u)
 			struct motion_sensor_t *sensor = &motion_sensors[i];
 			enum sensor_config cfg_index =
 				motion_sense_get_ec_config();
-			unsigned int ec_rate = 0;
+			int ec_rate = 0;
 
 			if (!motion_sensor_in_forced_mode(sensor) ||
 			    sensor->collection_rate == 0)
