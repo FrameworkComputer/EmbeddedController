@@ -50,19 +50,19 @@
 		/*
 		 * FW_CONFIG field to defined for DB TYPE.
 		 */
-		db-type {
-			enum-name = "FW_DB_TYPE";
+		db_config: db {
+			enum-name = "DB";
 			start = <2>;
 			size = <1>;
 
 			db-type-nohdmi {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_DB_TYPE_NOHDMI";
+				enum-name = "DB_NONE";
 				value = <0>;
 			};
 			db-type-hdmi {
 				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_DB_TYPE_HDMI";
+				enum-name = "DB_USBA_HDMI";
 				value = <1>;
 			};
 		};

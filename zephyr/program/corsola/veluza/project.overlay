@@ -69,6 +69,7 @@
 			<&gpiog 7 GPIO_OUTPUT_LOW>;
 	};
 	gpio-interrupts {
+		/delete-node/ x_ec_gpio2;
 		/delete-node/ usb_c0_ppc_bc12;
 		/delete-node/ base_imu;
 		/delete-node/ lid_imu;
@@ -77,12 +78,27 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "ppc_interrupt";
 		};
+		int_x_ec_gpio2: x_ec_gpio2 {
+			irq-pin = <&gpio_x_ec_gpio2>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "hdmi_hpd_interrupt";
+		};
 	};
 	usbc {
 		port0@0 {
 			ppc = <&ppc_port0>;
 		};
-		/delete-node/ port1@1;
+		port1@1 {
+			/delete-property/ bc12;
+			/delete-property/ ppc;
+			/delete-property/ tcpc;
+			/delete-property/ usb-mux-chain-1;
+			/delete-property/ usb-mux-chain-1-hdmi-db;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
 	};
 	named-adc-channels {
 		adc_ambient: ambient {
@@ -93,6 +109,11 @@
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 		/delete-node/ usb-c1;
+		i2c_hdmi: i2c_hdmi {
+			i2c-port = <&i2c4>;
+			enum-names = "I2C_PORT_USB_C1",
+				"I2C_PORT_USB_MUX1";
+		};
 	};
 	temp_ambient: ambient {
 		compatible = "cros-ec,temp-sensor-thermistor";
