@@ -6,6 +6,7 @@
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "extpower.h"
+#include "hooks.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
 #include "nissa_hdmi.h"
@@ -24,12 +25,21 @@
 #include <dt-bindings/gpio_defines.h>
 #include <typec_control.h>
 
+#define ASSERT_GPIO_FLAGS(spec, expected)                                  \
+	do {                                                               \
+		gpio_flags_t flags;                                        \
+		zassert_ok(gpio_emul_flags_get((spec)->port, (spec)->pin,  \
+					       &flags));                   \
+		zassert_equal(flags, expected,                             \
+			      "actual value was %#x; expected %#x", flags, \
+			      expected);                                   \
+	} while (0)
+
 void reset_nct38xx_port(int port);
 
 LOG_MODULE_REGISTER(nissa, LOG_LEVEL_INF);
 
 FAKE_VOID_FUNC(nissa_configure_hdmi_vcc);
-FAKE_VALUE_FUNC(int, cbi_get_board_version, uint32_t *);
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
 FAKE_VOID_FUNC(usb_charger_task_set_event, int, uint8_t);
@@ -327,5 +337,50 @@ ZTEST(pujjoga, test_db_with_a_and_hdmi)
 
 	/* Set the sub-board, reported configuration is correct. */
 	set_fw_config_value(FW_SUB_BOARD_1);
-	zassert_equal(pujjoga_get_sb_type(), PUJJOGA_SB_HDMI_A);
+	zassert_equal(pujjoga_get_sb_type(), PUJJOGA_SB_HDMI_A,
+		      "SB: HDMI, USB type A");
+
+	init_gpios(NULL);
+	hook_notify(HOOK_INIT);
+
+	/* USB-A controls are enabled. */
+	ASSERT_GPIO_FLAGS(GPIO_DT_FROM_NODELABEL(gpio_en_sub_usb_a1_vbus),
+			  GPIO_OUTPUT); /* A1 VBUS enable */
+}
+
+ZTEST(pujjoga, test_unset_board)
+{
+	cros_cbi_get_fw_config_fake.custom_fake =
+		get_fake_sub_board_fw_config_field;
+
+	/* Reset cached global state. */
+	pujjoga_cached_sub_board = PUJJOGA_SB_UNKNOWN;
+	fw_config_value = -1;
+
+	/* fw_config with an unset sub-board means none is present. */
+	set_fw_config_value(0);
+	zassert_equal(pujjoga_get_sb_type(), PUJJOGA_SB_NONE, "SB: None");
+
+	init_gpios(NULL);
+	hook_notify(HOOK_INIT);
+
+	/* USB-A controls are disabled. */
+	ASSERT_GPIO_FLAGS(GPIO_DT_FROM_NODELABEL(gpio_en_sub_usb_a1_vbus),
+			  GPIO_DISCONNECTED); /* A1 VBUS disable */
+}
+
+static int get_fw_config_error(enum cbi_fw_config_field_id field,
+			       uint32_t *value)
+{
+	return EC_ERROR_UNKNOWN;
+}
+
+ZTEST(pujjoga, test_cbi_error)
+{
+	/*
+	 * Reading fw_config from CBI returns an error, so sub-board is treated
+	 * as absent.
+	 */
+	cros_cbi_get_fw_config_fake.custom_fake = get_fw_config_error;
+	zassert_equal(pujjoga_get_sb_type(), PUJJOGA_SB_NONE, "SB: None");
 }
