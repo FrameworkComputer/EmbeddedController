@@ -3,6 +3,6 @@
 # found in the LICENSE file.
 
 common:
-  platform_allow: native_posix
+  platform_allow: native_sim
 tests:
   fingerprint.algorithm.api: {}
