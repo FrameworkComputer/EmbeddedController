@@ -110,10 +110,10 @@ static const uint8_t expected_positive_match_secret_for_fake_user_id[] = {
 
 test_static int test_get_ikm_failure_seed_not_set(void)
 {
-	uint8_t ikm;
+	uint8_t ikm[CONFIG_ROLLBACK_SECRET_SIZE + FP_CONTEXT_TPM_BYTES];
 
 	TEST_ASSERT(fp_tpm_seed_is_set() == 0);
-	TEST_ASSERT(get_ikm(&ikm) == EC_ERROR_ACCESS_DENIED);
+	TEST_ASSERT(get_ikm(ikm) == EC_ERROR_ACCESS_DENIED);
 	return EC_SUCCESS;
 }
 
