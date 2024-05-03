@@ -13,6 +13,7 @@
 #include "compile_time_macros.h"
 #include "console.h"
 #include "cros_board_info.h"
+#include "driver/als_tcs3400.h"
 #include "driver/cec/bitbang.h"
 #include "driver/tcpm/tcpci.h"
 #include "fw_config.h"
@@ -114,6 +115,7 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_HDMI_CONN_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A0_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A1_OC_ODL);
+	gpio_enable_interrupt(GPIO_EC_RGB_INT_L);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

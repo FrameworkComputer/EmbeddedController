@@ -21,6 +21,7 @@ GPIO_INT(EC_RECOVERY_BTN_OD,         PIN(2, 3), GPIO_INT_BOTH, button_interrupt)
 GPIO_INT(HDMI_CONN_OC_ODL,           PIN(5, 0), GPIO_INPUT | GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A0_OC_ODL,              PIN(3, 1), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A1_OC_ODL,              PIN(3, 0), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
+GPIO_INT(EC_RGB_INT_L,               PIN(9, 7), GPIO_INT_FALLING, tcs3400_interrupt)
 
 /* TPU */
 GPIO(PP3300_TPU_EN,                  PIN(2, 6), GPIO_OUT_HIGH)
@@ -145,7 +146,6 @@ UNUSED(PIN(0, 2))       /* GPIO02/PSL_IN4 */
 UNUSED(PIN(2, 7))       /* GPIO27 */
 UNUSED(PIN(C, 2))       /* GPIOC2 */
 UNUSED(PIN(9, 6))       /* GPIO96 */
-UNUSED(PIN(9, 7))       /* GPIO97 */
 UNUSED(PIN(3, 3))       /* GPIO33/I2C5_SCL0 */
 UNUSED(PIN(3, 6))       /* GPIO36/I2C5_SDA0 */
 UNUSED(PIN(9, 0))       /* GPIO90/I2C1_SCL0 */
