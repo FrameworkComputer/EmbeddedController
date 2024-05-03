@@ -42,8 +42,10 @@ encrypt_data_in_place(uint16_t version,
 	RAND_bytes(info.encryption_salt, sizeof(info.encryption_salt));
 
 	CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > enc_key;
-	enum ec_error_list ret =
-		derive_encryption_key(enc_key, info.encryption_salt);
+	enum ec_error_list ret = derive_encryption_key(enc_key,
+						       info.encryption_salt,
+						       global_context.user_id,
+						       global_context.tpm_seed);
 	if (ret != EC_SUCCESS) {
 		return ret;
 	}
@@ -84,8 +86,10 @@ decrypt_data(const struct fp_auth_command_encryption_metadata &info,
 	}
 
 	CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > enc_key;
-	enum ec_error_list ret =
-		derive_encryption_key(enc_key, info.encryption_salt);
+	enum ec_error_list ret = derive_encryption_key(enc_key,
+						       info.encryption_salt,
+						       global_context.user_id,
+						       global_context.tpm_seed);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to derive key");
 		return ret;

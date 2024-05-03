@@ -182,54 +182,32 @@ test_static int test_derive_encryption_key_failure_seed_not_set(void)
 	static const uint8_t unused_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = {
 		0
 	};
+	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> unused_userid{};
 
 	/* GIVEN that the TPM seed is not set. */
-	if (fp_tpm_seed_is_set()) {
-		ccprintf("%s:%s(): this test should be executed before setting"
-			 " TPM seed.\n",
-			 __FILE__, __func__);
-		return -1;
-	}
+	std::array<uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed{};
 
 	/* THEN derivation will fail. */
-	TEST_ASSERT(derive_encryption_key(unused_key, unused_salt) ==
-		    EC_ERROR_ACCESS_DENIED);
+	TEST_ASSERT(derive_encryption_key(unused_key, unused_salt,
+					  unused_userid,
+					  tpm_seed) == EC_ERROR_ACCESS_DENIED);
 
 	return EC_SUCCESS;
 }
 
-static int test_derive_encryption_key_raw(std::span<const uint32_t> user_id_,
-					  std::span<const uint8_t> salt,
-					  std::span<const uint8_t> expected_key)
-{
-	uint8_t key[SBP_ENC_KEY_LEN];
-	enum ec_error_list rv;
-
-	/*
-	 * |user_id| is a global variable used as "info" in HKDF expand
-	 * in derive_encryption_key().
-	 */
-	memcpy(global_context.user_id, user_id_.data(),
-	       sizeof(global_context.user_id));
-	rv = derive_encryption_key(key, salt);
-
-	TEST_ASSERT(rv == EC_SUCCESS);
-	TEST_ASSERT_ARRAY_EQ(key, expected_key, sizeof(key));
-
-	memset(global_context.user_id, 0, sizeof(global_context.user_id));
-
-	return EC_SUCCESS;
-}
-
-static int test_derive_encryption_key_with_info_raw(
+static int test_derive_encryption_key_raw(
 	std::span<const uint32_t> user_id_, std::span<const uint8_t> salt,
-	std::span<const uint8_t> info, std::span<const uint8_t> expected_key)
+	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed,
+	std::span<const uint8_t> expected_key)
 {
 	uint8_t key[SBP_ENC_KEY_LEN];
 	enum ec_error_list rv;
 
-	rv = derive_encryption_key_with_info(key, salt, info,
-					     default_fake_tpm_seed);
+	rv = derive_encryption_key(
+		key, salt,
+		{ reinterpret_cast<const uint8_t *>(user_id_.data()),
+		  user_id_.size_bytes() },
+		tpm_seed);
 
 	TEST_ASSERT(rv == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(key, expected_key, sizeof(key));
@@ -282,30 +260,26 @@ test_static int test_derive_encryption_key(void)
 	};
 	static const uint8_t info_wrong_size[] = { 0x01, 0x02, 0x03 };
 
-	/*
-	 * GIVEN that the TPM seed is set, and reading the rollback secret will
-	 * succeed.
-	 */
-	TEST_ASSERT(fp_tpm_seed_is_set() &&
-		    !mock_ctrl_rollback.get_secret_fail);
+	/* GIVEN that the TPM seed is set. */
+	TEST_ASSERT(!bytes_are_trivial(default_fake_tpm_seed,
+				       sizeof(default_fake_tpm_seed)));
+
+	/* GIVEN that reading the rollback secret will succeed. */
+	TEST_ASSERT(!mock_ctrl_rollback.get_secret_fail);
 
 	/* THEN the derivation will succeed. */
-	TEST_ASSERT(test_derive_encryption_key_raw(user_id1, salt1, key1) ==
-		    EC_SUCCESS);
+	TEST_ASSERT(test_derive_encryption_key_raw(user_id1, salt1,
+						   default_fake_tpm_seed,
+						   key1) == EC_SUCCESS);
 
-	TEST_ASSERT(test_derive_encryption_key_raw(user_id2, salt2, key2) ==
-		    EC_SUCCESS);
+	TEST_ASSERT(test_derive_encryption_key_raw(user_id2, salt2,
+						   default_fake_tpm_seed,
+						   key2) == EC_SUCCESS);
 
-	/* Providing user_id1 as custom info should still result in key1. */
-	TEST_ASSERT(test_derive_encryption_key_with_info_raw(
-			    user_id1, salt1,
-			    { reinterpret_cast<const uint8_t *>(user_id1),
-			      sizeof(user_id1) },
-			    key1) == EC_SUCCESS);
 	/* Providing custom info with invalid size should fail. */
-	TEST_ASSERT(derive_encryption_key_with_info(
-			    unused_key, unused_salt, info_wrong_size,
-			    default_fake_tpm_seed) == EC_ERROR_INVAL);
+	TEST_ASSERT(
+		derive_encryption_key(unused_key, unused_salt, info_wrong_size,
+				      default_fake_tpm_seed) == EC_ERROR_INVAL);
 
 	return EC_SUCCESS;
 }
@@ -316,20 +290,23 @@ test_static int test_derive_encryption_key_failure_rollback_fail(void)
 	static const uint8_t unused_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = {
 		0
 	};
+	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> userid{};
 
 	/* GIVEN that reading the rollback secret will fail. */
 	mock_ctrl_rollback.get_secret_fail = true;
 	/* THEN the derivation will fail. */
-	TEST_ASSERT(derive_encryption_key(unused_key, unused_salt) ==
+	TEST_ASSERT(derive_encryption_key(unused_key, unused_salt, userid,
+					  default_fake_tpm_seed) ==
 		    EC_ERROR_HW_INTERNAL);
 
 	/* GIVEN that reading the rollback secret will succeed. */
 	mock_ctrl_rollback.get_secret_fail = false;
 	/* GIVEN that the TPM seed has been set. */
-	TEST_ASSERT(fp_tpm_seed_is_set());
+	TEST_ASSERT(!bytes_are_trivial(default_fake_tpm_seed,
+				       sizeof(default_fake_tpm_seed)));
 	/* THEN the derivation will succeed. */
-	TEST_ASSERT(derive_encryption_key(unused_key, unused_salt) ==
-		    EC_SUCCESS);
+	TEST_ASSERT(derive_encryption_key(unused_key, unused_salt, userid,
+					  default_fake_tpm_seed) == EC_SUCCESS);
 
 	return EC_SUCCESS;
 }
@@ -728,6 +705,8 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_derive_positive_match_secret_fail_salt_trivial);
 	RUN_TEST(test_derive_positive_match_secret_fail_trivial_key_0x00);
 	RUN_TEST(test_derive_positive_match_secret_fail_trivial_key_0xff);
+	RUN_TEST(test_derive_encryption_key);
+	RUN_TEST(test_derive_encryption_key_failure_rollback_fail);
 	/*
 	 * Set the TPM seed here because it can only be set once and cannot be
 	 * cleared.
@@ -736,8 +715,6 @@ void run_test(int argc, const char **argv)
 	       EC_SUCCESS);
 
 	/* The following test requires TPM seed to be already set. */
-	RUN_TEST(test_derive_encryption_key);
-	RUN_TEST(test_derive_encryption_key_failure_rollback_fail);
 	RUN_TEST(test_enable_positive_match_secret);
 	RUN_TEST(test_disable_positive_match_secret);
 	RUN_TEST(test_command_read_match_secret);

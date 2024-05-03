@@ -319,8 +319,9 @@ static enum ec_status unlock_template(uint16_t idx)
 		  enc_salt.begin());
 
 	CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > key;
-	if (derive_encryption_key(key, enc_info.encryption_salt) !=
-	    EC_SUCCESS) {
+	if (derive_encryption_key(key, enc_info.encryption_salt,
+				  global_context.user_id,
+				  global_context.tpm_seed) != EC_SUCCESS) {
 		fp_clear_finger_context(idx);
 		OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
 		return EC_RES_UNAVAILABLE;

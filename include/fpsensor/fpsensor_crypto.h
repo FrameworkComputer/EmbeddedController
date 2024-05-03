@@ -48,16 +48,10 @@ bool hkdf_sha256(std::span<uint8_t> out_key, std::span<const uint8_t> ikm,
  * @param tpm_seed the seed from the TPM for deriving secret.
  * @return EC_SUCCESS on success and error code otherwise.
  */
-enum ec_error_list derive_encryption_key_with_info(
-	std::span<uint8_t> out_key, std::span<const uint8_t> salt,
-	std::span<const uint8_t> info,
-	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed);
-
-/**
- * Call derive_encryption_key_with_info with the context user_id as |info|.
- */
-enum ec_error_list derive_encryption_key(std::span<uint8_t> out_key,
-					 std::span<const uint8_t> salt);
+enum ec_error_list
+derive_encryption_key(std::span<uint8_t> out_key, std::span<const uint8_t> salt,
+		      std::span<const uint8_t> info,
+		      std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed);
 
 /**
  * Derive positive match secret from |input_positive_match_salt| and
