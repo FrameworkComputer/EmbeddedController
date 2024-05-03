@@ -22,8 +22,6 @@ uint16_t template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
 test_mockable uint16_t templ_valid;
 /* Bitmap of the templates with local modifications */
 uint32_t templ_dirty;
-/* Part of the IKM used to derive encryption keys received from the TPM. */
-uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
 /* Status of the FP encryption engine & context. */
 uint32_t fp_encryption_status;
 
@@ -32,6 +30,7 @@ atomic_t fp_events;
 uint32_t sensor_mode;
 
 struct fpsensor_context global_context = {
+	.tpm_seed = { 0 },
 	.user_id = { 0 },
 };
 

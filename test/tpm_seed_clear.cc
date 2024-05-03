@@ -5,13 +5,10 @@
 
 #include "common.h"
 #include "ec_commands.h"
+#include "fpsensor/fpsensor_state_without_driver_info.h"
 #include "system.h"
 #include "task.h"
 #include "test_util.h"
-
-#ifdef SECTION_IS_RW
-#include "fpsensor/fpsensor_state_without_driver_info.h"
-#endif
 
 #include <stdint.h>
 #include <string.h>
@@ -34,17 +31,18 @@ test_static uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
 
 test_static int test_tpm_seed_before_reboot(void)
 {
-	TEST_ASSERT_ARRAY_EQ(tpm_seed, zero_fake_tpm_seed,
+	TEST_ASSERT_ARRAY_EQ(global_context.tpm_seed, zero_fake_tpm_seed,
 			     FP_CONTEXT_TPM_BYTES);
-	memcpy(tpm_seed, default_fake_tpm_seed, FP_CONTEXT_TPM_BYTES);
-	TEST_ASSERT_ARRAY_EQ(tpm_seed, default_fake_tpm_seed,
+	memcpy(global_context.tpm_seed, default_fake_tpm_seed,
+	       FP_CONTEXT_TPM_BYTES);
+	TEST_ASSERT_ARRAY_EQ(global_context.tpm_seed, default_fake_tpm_seed,
 			     FP_CONTEXT_TPM_BYTES);
 	return EC_SUCCESS;
 }
 
 test_static int test_tpm_seed_after_reboot(void)
 {
-	TEST_ASSERT_ARRAY_EQ(tpm_seed, zero_fake_tpm_seed,
+	TEST_ASSERT_ARRAY_EQ(global_context.tpm_seed, zero_fake_tpm_seed,
 			     FP_CONTEXT_TPM_BYTES);
 	return EC_SUCCESS;
 }

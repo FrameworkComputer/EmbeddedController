@@ -145,7 +145,8 @@ static enum ec_status fp_command_tpm_seed(struct host_cmd_handler_args *args)
 		CPRINTS("Seed has already been set.");
 		return EC_RES_ACCESS_DENIED;
 	}
-	memcpy(tpm_seed, params->seed, sizeof(tpm_seed));
+	memcpy(global_context.tpm_seed, params->seed,
+	       sizeof(global_context.tpm_seed));
 	fp_encryption_status |= FP_ENC_STATUS_SEED_SET;
 
 	return EC_RES_SUCCESS;

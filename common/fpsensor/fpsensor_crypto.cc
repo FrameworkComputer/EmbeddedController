@@ -25,13 +25,13 @@ extern "C" {
 
 #ifdef CONFIG_OTP_KEY
 constexpr uint8_t IKM_OTP_OFFSET_BYTES =
-	CONFIG_ROLLBACK_SECRET_SIZE + sizeof(tpm_seed);
+	CONFIG_ROLLBACK_SECRET_SIZE + sizeof(global_context.tpm_seed);
 constexpr uint8_t IKM_SIZE_BYTES = IKM_OTP_OFFSET_BYTES + OTP_KEY_SIZE_BYTES;
 BUILD_ASSERT(IKM_SIZE_BYTES == 96);
 
 #else
 constexpr uint8_t IKM_SIZE_BYTES =
-	CONFIG_ROLLBACK_SECRET_SIZE + sizeof(tpm_seed);
+	CONFIG_ROLLBACK_SECRET_SIZE + sizeof(global_context.tpm_seed);
 BUILD_ASSERT(IKM_SIZE_BYTES == 64);
 #endif
 
@@ -62,8 +62,8 @@ get_ikm(std::span<uint8_t, IKM_SIZE_BYTES> ikm)
 	 * IKM is the concatenation of the rollback secret and the seed from
 	 * the TPM.
 	 */
-	memcpy(ikm.data() + CONFIG_ROLLBACK_SECRET_SIZE, tpm_seed,
-	       sizeof(tpm_seed));
+	memcpy(ikm.data() + CONFIG_ROLLBACK_SECRET_SIZE,
+	       global_context.tpm_seed, sizeof(global_context.tpm_seed));
 
 #ifdef CONFIG_OTP_KEY
 	uint8_t otp_key[OTP_KEY_SIZE_BYTES] = { 0 };
