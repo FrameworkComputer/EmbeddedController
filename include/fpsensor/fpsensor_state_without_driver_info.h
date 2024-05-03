@@ -30,8 +30,6 @@ extern uint16_t template_newly_enrolled;
 extern uint16_t templ_valid;
 /* Bitmap of the templates with local modifications */
 extern uint32_t templ_dirty;
-/* Current user ID */
-extern uint32_t user_id[FP_CONTEXT_USERID_WORDS];
 /* Part of the IKM used to derive encryption keys received from the TPM. */
 extern uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
 /* Status of the FP encryption engine & context. */
@@ -51,6 +49,13 @@ struct positive_match_secret_state {
 };
 
 extern struct positive_match_secret_state positive_match_secret_state;
+
+struct fpsensor_context {
+	/** Current user ID */
+	uint32_t user_id[FP_CONTEXT_USERID_WORDS];
+};
+
+extern struct fpsensor_context global_context;
 
 /*
  * Check if FP TPM seed has been set.

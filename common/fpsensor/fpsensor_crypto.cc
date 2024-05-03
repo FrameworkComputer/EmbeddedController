@@ -119,7 +119,7 @@ derive_positive_match_secret(std::span<uint8_t> output,
 	enum ec_error_list ret;
 	CleanseWrapper<std::array<uint8_t, IKM_SIZE_BYTES> > ikm;
 	static const char info_prefix[] = "positive_match_secret for user ";
-	uint8_t info[sizeof(info_prefix) - 1 + sizeof(user_id)];
+	uint8_t info[sizeof(info_prefix) - 1 + sizeof(global_context.user_id)];
 
 	if (bytes_are_trivial(input_positive_match_salt.data(),
 			      input_positive_match_salt.size())) {
@@ -135,7 +135,8 @@ derive_positive_match_secret(std::span<uint8_t> output,
 	}
 
 	memcpy(info, info_prefix, strlen(info_prefix));
-	memcpy(info + strlen(info_prefix), user_id, sizeof(user_id));
+	memcpy(info + strlen(info_prefix), global_context.user_id,
+	       sizeof(global_context.user_id));
 
 	if (!hkdf_sha256(output, ikm, input_positive_match_salt, info)) {
 		CPRINTS("Failed to perform HKDF");
@@ -184,10 +185,11 @@ derive_encryption_key_with_info(std::span<uint8_t> out_key,
 enum ec_error_list derive_encryption_key(std::span<uint8_t> out_key,
 					 std::span<const uint8_t> salt)
 {
-	BUILD_ASSERT(sizeof(user_id) == SHA256_DIGEST_SIZE);
+	BUILD_ASSERT(sizeof(global_context.user_id) == SHA256_DIGEST_SIZE);
 	return derive_encryption_key_with_info(
 		out_key, salt,
-		{ reinterpret_cast<uint8_t *>(user_id), sizeof(user_id) });
+		{ reinterpret_cast<uint8_t *>(global_context.user_id),
+		  sizeof(global_context.user_id) });
 }
 
 enum ec_error_list aes_128_gcm_encrypt(std::span<const uint8_t> key,

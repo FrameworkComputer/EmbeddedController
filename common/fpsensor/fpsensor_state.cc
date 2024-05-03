@@ -85,7 +85,7 @@ void fp_reset_context()
 	template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
 	fp_encryption_status &= FP_ENC_STATUS_SEED_SET;
 	OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
-	OPENSSL_cleanse(user_id, sizeof(user_id));
+	OPENSSL_cleanse(global_context.user_id, sizeof(global_context.user_id));
 	OPENSSL_cleanse(auth_nonce.data(), auth_nonce.size());
 	fp_disable_positive_match_secret(&positive_match_secret_state);
 }
@@ -93,7 +93,7 @@ void fp_reset_context()
 void fp_init_decrypted_template_state_with_user_id(uint16_t idx)
 {
 	std::array<uint32_t, FP_CONTEXT_USERID_WORDS> raw_user_id;
-	std::ranges::copy(user_id, raw_user_id.begin());
+	std::ranges::copy(global_context.user_id, raw_user_id.begin());
 	template_states[idx] = fp_decrypted_template_state{
 		.user_id = raw_user_id,
 	};
@@ -262,12 +262,13 @@ static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 			return EC_RES_ACCESS_DENIED;
 		}
 
-		memcpy(user_id, p->userid, sizeof(user_id));
+		memcpy(global_context.user_id, p->userid,
+		       sizeof(global_context.user_id));
 
 		/* Set the FP_CONTEXT_USER_ID_SET bit if the user_id is
 		 * non-zero. */
-		for (size_t i = 0; i < std::size(user_id); i++) {
-			if (user_id[i] != 0) {
+		for (size_t i = 0; i < std::size(global_context.user_id); i++) {
+			if (global_context.user_id[i] != 0) {
 				fp_encryption_status |= FP_CONTEXT_USER_ID_SET;
 				break;
 			}

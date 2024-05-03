@@ -468,7 +468,7 @@ test_static enum ec_error_list test_fp_command_nonce_context_deny(void)
 
 	TEST_EQ(rv, EC_RES_SUCCESS, "%d");
 
-	for (auto user_id_partial : user_id) {
+	for (auto user_id_partial : global_context.user_id) {
 		TEST_EQ(user_id_partial, 0u, "%d");
 	}
 
@@ -710,7 +710,7 @@ test_fp_command_read_match_secret_with_pubkey_succeed(void)
 				  fp_positive_match_salt[fgr]);
 
 	/* Initialize an empty user_id to compare positive_match_secret */
-	std::ranges::fill(user_id, 0);
+	std::ranges::fill(global_context.user_id, 0);
 
 	TEST_ASSERT(fp_tpm_seed_is_set());
 	/* Test with the correct matched finger state and the default fake
@@ -1190,7 +1190,7 @@ test_fp_command_unlock_template_pre_encrypted(void)
 	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
 
 	std::array<uint32_t, FP_CONTEXT_USERID_WORDS> backup_user_id;
-	std::ranges::copy(user_id, backup_user_id.begin());
+	std::ranges::copy(global_context.user_id, backup_user_id.begin());
 
 	fp_reset_and_clear_context();
 
@@ -1213,7 +1213,7 @@ test_fp_command_unlock_template_pre_encrypted(void)
 				       NULL, 0),
 		EC_RES_SUCCESS, "%d");
 
-	std::ranges::copy(backup_user_id, user_id);
+	std::ranges::copy(backup_user_id, global_context.user_id);
 
 	TEST_EQ(test_send_host_command(EC_CMD_FP_UNLOCK_TEMPLATE, 0,
 				       &unlock_params, sizeof(unlock_params),

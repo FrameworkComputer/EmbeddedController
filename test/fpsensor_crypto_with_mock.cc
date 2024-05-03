@@ -204,13 +204,14 @@ static int test_derive_encryption_key_raw(std::span<const uint32_t> user_id_,
 	 * |user_id| is a global variable used as "info" in HKDF expand
 	 * in derive_encryption_key().
 	 */
-	memcpy(user_id, user_id_.data(), sizeof(user_id));
+	memcpy(global_context.user_id, user_id_.data(),
+	       sizeof(global_context.user_id));
 	rv = derive_encryption_key(key, salt);
 
 	TEST_ASSERT(rv == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(key, expected_key, sizeof(key));
 
-	memset(user_id, 0, sizeof(user_id));
+	memset(global_context.user_id, 0, sizeof(global_context.user_id));
 
 	return EC_SUCCESS;
 }
@@ -350,7 +351,7 @@ test_static int test_derive_new_pos_match_secret(void)
 	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
 
 	/* First, for empty user_id. */
-	memset(user_id, 0, sizeof(user_id));
+	memset(global_context.user_id, 0, sizeof(global_context.user_id));
 
 	/* GIVEN that the encryption salt is not trivial. */
 	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
@@ -374,13 +375,13 @@ test_static int test_derive_new_pos_match_secret(void)
 		sizeof(expected_positive_match_secret_for_empty_user_id));
 
 	/* Now change the user_id to be non-trivial. */
-	memcpy(user_id, fake_user_id, sizeof(fake_user_id));
+	memcpy(global_context.user_id, fake_user_id, sizeof(fake_user_id));
 	TEST_ASSERT(derive_positive_match_secret(
 			    output, fake_positive_match_salt) == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(
 		output, expected_positive_match_secret_for_fake_user_id,
 		sizeof(expected_positive_match_secret_for_fake_user_id));
-	memset(user_id, 0, sizeof(user_id));
+	memset(global_context.user_id, 0, sizeof(global_context.user_id));
 
 	return EC_SUCCESS;
 }
@@ -422,7 +423,7 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
 
 	/* GIVEN that the user ID is set to a known value. */
-	memcpy(user_id, fake_user_id, sizeof(fake_user_id));
+	memcpy(global_context.user_id, fake_user_id, sizeof(fake_user_id));
 
 	/*
 	 * GIVEN that the TPM seed is set, and reading the rollback secret will
@@ -465,7 +466,7 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
 	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
 
 	/* GIVEN that the user ID is set to a known value. */
-	memcpy(user_id, fake_user_id, sizeof(fake_user_id));
+	memcpy(global_context.user_id, fake_user_id, sizeof(fake_user_id));
 
 	/*
 	 * GIVEN that the TPM seed is set, and reading the rollback secret will
@@ -568,7 +569,7 @@ test_static int test_command_read_match_secret(void)
 	timestamp_t now = get_time();
 
 	/* For empty user_id. */
-	memset(user_id, 0, sizeof(user_id));
+	memset(global_context.user_id, 0, sizeof(global_context.user_id));
 
 	/* Invalid finger index should be rejected. */
 	params.fgr = FP_NO_SUCH_TEMPLATE;

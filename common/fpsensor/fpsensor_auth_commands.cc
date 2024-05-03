@@ -34,7 +34,7 @@ std::array<uint8_t, FP_CK_AUTH_NONCE_LEN> auth_nonce;
 
 enum ec_error_list check_context_cleared()
 {
-	for (uint32_t partial : user_id)
+	for (uint32_t partial : global_context.user_id)
 		if (partial != 0)
 			return EC_ERROR_ACCESS_DENIED;
 	for (uint8_t partial : auth_nonce)
@@ -210,8 +210,8 @@ fp_command_nonce_context(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 	}
 
-	static_assert(sizeof(user_id) == sizeof(p->enc_user_id));
-	std::array<uint8_t, sizeof(user_id)> raw_user_id;
+	static_assert(sizeof(global_context.user_id) == sizeof(p->enc_user_id));
+	std::array<uint8_t, sizeof(global_context.user_id)> raw_user_id;
 	std::ranges::copy(p->enc_user_id, raw_user_id.begin());
 
 	ret = decrypt_data_with_gsc_session_key_in_place(
@@ -223,7 +223,7 @@ fp_command_nonce_context(struct host_cmd_handler_args *args)
 
 	/* Set the user_id. */
 	std::copy(raw_user_id.begin(), raw_user_id.end(),
-		  reinterpret_cast<uint8_t *>(user_id));
+		  reinterpret_cast<uint8_t *>(global_context.user_id));
 
 	fp_encryption_status &= FP_ENC_STATUS_SEED_SET;
 	fp_encryption_status |= FP_CONTEXT_USER_ID_SET;
@@ -278,8 +278,9 @@ static enum ec_status unlock_template(uint16_t idx)
 	auto *dec_state =
 		std::get_if<fp_decrypted_template_state>(&template_states[idx]);
 	if (dec_state) {
-		if (safe_memcmp(dec_state->user_id.begin(), user_id,
-				sizeof(user_id)) != 0) {
+		if (safe_memcmp(dec_state->user_id.begin(),
+				global_context.user_id,
+				sizeof(global_context.user_id)) != 0) {
 			return EC_RES_ACCESS_DENIED;
 		}
 		return EC_RES_SUCCESS;

@@ -366,7 +366,7 @@ test_fp_command_read_match_secret_derive_succeed(void)
 				  fp_positive_match_salt[fgr]);
 
 	/* Initialize an empty user_id to compare positive_match_secret */
-	memset(user_id, 0, sizeof(user_id));
+	memset(global_context.user_id, 0, sizeof(global_context.user_id));
 
 	TEST_ASSERT(fp_tpm_seed_is_set());
 	/* Test with the correct matched finger state and the default fake
