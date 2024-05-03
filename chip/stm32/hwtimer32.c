@@ -150,15 +150,15 @@ void __hw_timer_enable_clock(int n, int enable)
 	else if (n >= 15 && n <= 17)
 		mask = STM32_RCC_APB2ENR_TIM15 << (n - 15);
 #endif
-#if defined(CHIP_FAMILY_STM32L4)
+#if defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
 	if (n >= 2 && n <= 7) {
 		reg = &STM32_RCC_APB1ENR1;
 		mask = STM32_RCC_PB1_TIM2 << (n - 2);
-	} else if (n == 1 || n == 15 || n == 16) {
+	} else if (n == 1 || n == 8 || (n >= 15 && n <= 17)) {
 		reg = &STM32_RCC_APB2ENR;
-		mask = (n == 1)	 ? STM32_RCC_APB2ENR_TIM1EN :
-		       (n == 15) ? STM32_RCC_APB2ENR_TIM15EN :
-				   STM32_RCC_APB2ENR_TIM16EN;
+		mask = (n == 1) ? STM32_RCC_APB2ENR_TIM1EN :
+		       (n == 8) ? STM32_RCC_APB2ENR_TIM8EN :
+				  (STM32_RCC_APB2ENR_TIM15EN << (n - 15));
 	}
 #else
 	if (n >= 2 && n <= 7) {
