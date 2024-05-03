@@ -83,7 +83,7 @@ void fp_reset_context()
 	global_context.templ_valid = 0;
 	global_context.templ_dirty = 0;
 	global_context.template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
-	fp_encryption_status &= FP_ENC_STATUS_SEED_SET;
+	global_context.fp_encryption_status &= FP_ENC_STATUS_SEED_SET;
 	OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
 	OPENSSL_cleanse(global_context.user_id, sizeof(global_context.user_id));
 	OPENSSL_cleanse(auth_nonce.data(), auth_nonce.size());
@@ -141,13 +141,13 @@ static enum ec_status fp_command_tpm_seed(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 	}
 
-	if (fp_encryption_status & FP_ENC_STATUS_SEED_SET) {
+	if (global_context.fp_encryption_status & FP_ENC_STATUS_SEED_SET) {
 		CPRINTS("Seed has already been set.");
 		return EC_RES_ACCESS_DENIED;
 	}
 	memcpy(global_context.tpm_seed, params->seed,
 	       sizeof(global_context.tpm_seed));
-	fp_encryption_status |= FP_ENC_STATUS_SEED_SET;
+	global_context.fp_encryption_status |= FP_ENC_STATUS_SEED_SET;
 
 	return EC_RES_SUCCESS;
 }
@@ -160,7 +160,7 @@ fp_command_encryption_status(struct host_cmd_handler_args *args)
 		static_cast<ec_response_fp_encryption_status *>(args->response);
 
 	r->valid_flags = FP_ENC_STATUS_SEED_SET;
-	r->status = fp_encryption_status;
+	r->status = global_context.fp_encryption_status;
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
@@ -257,7 +257,7 @@ static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 		if (sensor_mode & FP_MODE_RESET_SENSOR)
 			return EC_RES_BUSY;
 
-		if (fp_encryption_status &
+		if (global_context.fp_encryption_status &
 		    FP_CONTEXT_STATUS_NONCE_CONTEXT_SET) {
 			/* Reject the request to prevent downgrade attack. */
 			return EC_RES_ACCESS_DENIED;
@@ -270,7 +270,8 @@ static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 		 * non-zero. */
 		for (size_t i = 0; i < std::size(global_context.user_id); i++) {
 			if (global_context.user_id[i] != 0) {
-				fp_encryption_status |= FP_CONTEXT_USER_ID_SET;
+				global_context.fp_encryption_status |=
+					FP_CONTEXT_USER_ID_SET;
 				break;
 			}
 		}

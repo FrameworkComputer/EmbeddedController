@@ -37,7 +37,7 @@ void init_tpm_seed(void)
 
 	std::ranges::copy(fake_tpm_seed, global_context.tpm_seed);
 
-	fp_encryption_status |= FP_ENC_STATUS_SEED_SET;
+	global_context.fp_encryption_status |= FP_ENC_STATUS_SEED_SET;
 }
 
 test_static enum ec_error_list test_fp_encrypt_decrypt_data(void)

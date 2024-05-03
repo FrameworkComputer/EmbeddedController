@@ -24,9 +24,6 @@ extern "C" {
 
 /* --- Global variables defined in fpsensor_state_without_driver_info.c --- */
 
-/* Status of the FP encryption engine & context. */
-extern uint32_t fp_encryption_status;
-
 extern atomic_t fp_events;
 
 extern uint32_t sensor_mode;
@@ -49,6 +46,8 @@ struct fpsensor_context {
 	uint16_t templ_valid;
 	/** Bitmap of the templates with local modifications */
 	uint32_t templ_dirty;
+	/** Status of the FP encryption engine & context. */
+	uint32_t fp_encryption_status;
 	/** Part of the IKM used to derive encryption keys received from the
 	 * TPM.
 	 */

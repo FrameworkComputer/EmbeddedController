@@ -149,16 +149,19 @@ static bool authenticate_fp_match_state(void)
 {
 	/* The rate limit is only meanful for the nonce context, and we don't
 	 * have rate limit for the legacy FP user unlock flow. */
-	if (!(fp_encryption_status & FP_CONTEXT_STATUS_NONCE_CONTEXT_SET)) {
+	if (!(global_context.fp_encryption_status &
+	      FP_CONTEXT_STATUS_NONCE_CONTEXT_SET)) {
 		return true;
 	}
 
-	if (!(fp_encryption_status & FP_CONTEXT_TEMPLATE_UNLOCKED_SET)) {
+	if (!(global_context.fp_encryption_status &
+	      FP_CONTEXT_TEMPLATE_UNLOCKED_SET)) {
 		CPRINTS("Cannot process match without unlock template");
 		return false;
 	}
 
-	if (fp_encryption_status & FP_CONTEXT_STATUS_MATCH_PROCESSED_SET) {
+	if (global_context.fp_encryption_status &
+	    FP_CONTEXT_STATUS_MATCH_PROCESSED_SET) {
 		CPRINTS("Cannot process match twice in nonce context");
 		return false;
 	}
@@ -187,7 +190,8 @@ static uint32_t fp_process_match(void)
 	 * operation after match processed in a nonce context. If we don't do
 	 * that, the attacker can unlock template multiple times in a single
 	 * nonce context. */
-	fp_encryption_status |= FP_CONTEXT_STATUS_MATCH_PROCESSED_SET;
+	global_context.fp_encryption_status |=
+		FP_CONTEXT_STATUS_MATCH_PROCESSED_SET;
 
 	CPRINTS("Matching/%d ...", global_context.templ_valid);
 	if (global_context.templ_valid) {
@@ -658,7 +662,7 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 	}
 
 	enum ec_error_list ret;
-	if (fp_encryption_status & FP_CONTEXT_USER_ID_SET) {
+	if (global_context.fp_encryption_status & FP_CONTEXT_USER_ID_SET) {
 		ret = derive_encryption_key_with_info(
 			key, enc_info->encryption_salt, context);
 		if (ret != EC_SUCCESS) {
@@ -753,7 +757,8 @@ fp_command_migrate_template_to_nonce_context(struct host_cmd_handler_args *args)
 	 * The command is used for migrating legacy templates to be encrypted by
 	 * nonce sessions. No point to call this outside a nonce context.
 	 */
-	if (!(fp_encryption_status & FP_CONTEXT_STATUS_NONCE_CONTEXT_SET)) {
+	if (!(global_context.fp_encryption_status &
+	      FP_CONTEXT_STATUS_NONCE_CONTEXT_SET)) {
 		return EC_RES_ACCESS_DENIED;
 	}
 

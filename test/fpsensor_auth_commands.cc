@@ -136,7 +136,7 @@ test_static enum ec_error_list test_fp_command_check_context_cleared(void)
 	fp_reset_and_clear_context();
 	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
 
-	fp_encryption_status |= FP_CONTEXT_USER_ID_SET;
+	global_context.fp_encryption_status |= FP_CONTEXT_USER_ID_SET;
 	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
 
 	fp_reset_and_clear_context();
@@ -984,7 +984,8 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 	TEST_BITS_SET((int)status, FP_CONTEXT_TEMPLATE_UNLOCKED_SET);
 
 	/* Lock the template manually. */
-	fp_encryption_status &= ~FP_CONTEXT_TEMPLATE_UNLOCKED_SET;
+	global_context.fp_encryption_status &=
+		~FP_CONTEXT_TEMPLATE_UNLOCKED_SET;
 
 	struct ec_params_fp_unlock_template unlock2_params {
 		.fgr_num = 2
@@ -1042,7 +1043,8 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
 	TEST_BITS_CLEARED((int)status, FP_CONTEXT_TEMPLATE_UNLOCKED_SET);
 
-	fp_encryption_status |= FP_CONTEXT_STATUS_MATCH_PROCESSED_SET;
+	global_context.fp_encryption_status |=
+		FP_CONTEXT_STATUS_MATCH_PROCESSED_SET;
 
 	TEST_EQ(test_send_host_command(EC_CMD_FP_UNLOCK_TEMPLATE, 0,
 				       &unlock_params, sizeof(unlock_params),

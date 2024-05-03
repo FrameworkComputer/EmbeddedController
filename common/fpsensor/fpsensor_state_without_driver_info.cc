@@ -16,9 +16,6 @@ struct positive_match_secret_state
 						.val = 0,
 					} };
 
-/* Status of the FP encryption engine & context. */
-uint32_t fp_encryption_status;
-
 atomic_t fp_events;
 
 uint32_t sensor_mode;
@@ -32,6 +29,6 @@ struct fpsensor_context global_context = { .template_newly_enrolled =
 
 int fp_tpm_seed_is_set(void)
 {
-	return fp_encryption_status & FP_ENC_STATUS_SEED_SET;
+	return global_context.fp_encryption_status & FP_ENC_STATUS_SEED_SET;
 }
 }
