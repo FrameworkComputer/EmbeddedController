@@ -431,12 +431,12 @@ static void dap_swj_clock(size_t peek_c)
 static inline __attribute__((always_inline)) void half_clock_delay(void)
 {
 	/* Set counter value.  Timer will immediately begin counting down. */
-	STM32_TIM_CNT(3) = jtag_half_period_count;
+	STM32_TIM_CNT(JTAG_TIMER) = jtag_half_period_count;
 	/*
 	 * Wait for counter value to wrap around zero.  Worst case, counting
 	 * down from 32767 at a 104Mhz clock frequency will finish in 315us.
 	 */
-	while (((int16_t)STM32_TIM_CNT(3)) >= 0)
+	while (((int16_t)STM32_TIM_CNT(JTAG_TIMER)) >= 0)
 		;
 }
 

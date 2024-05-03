@@ -102,9 +102,6 @@
  *
  */
 
-/* Hardware timer used for bitbanging. */
-#define BITBANG_TIMER 5
-
 /* Size of buffer used for bitbanging waveform. */
 #define BITBANG_BUFFER_SIZE 16384
 
