@@ -230,9 +230,11 @@ test_fp_command_read_match_secret_fail_timeout(void)
 	};
 
 	/* Disable positive secret match to create 0 deadline val */
-	fp_disable_positive_match_secret(&positive_match_secret_state);
+	fp_disable_positive_match_secret(
+		&global_context.positive_match_secret_state);
 
-	TEST_ASSERT(positive_match_secret_state.deadline.val == 0);
+	TEST_ASSERT(global_context.positive_match_secret_state.deadline.val ==
+		    0);
 
 	TEST_ASSERT(test_send_host_command(EC_CMD_FP_READ_MATCH_SECRET, 0,
 					   &test_match_secret_1,
@@ -261,7 +263,7 @@ test_fp_command_read_match_secret_unmatched_fgr(void)
 	};
 
 	/* Test for the wrong matched finger state */
-	positive_match_secret_state = test_state;
+	global_context.positive_match_secret_state = test_state;
 
 	TEST_ASSERT(test_send_host_command(EC_CMD_FP_READ_MATCH_SECRET, 0,
 					   &test_match_secret_1,
@@ -290,7 +292,7 @@ test_fp_command_read_match_secret_unreadable_state(void)
 	};
 
 	/* Test for the unreadable state */
-	positive_match_secret_state = test_state;
+	global_context.positive_match_secret_state = test_state;
 
 	TEST_ASSERT(test_send_host_command(EC_CMD_FP_READ_MATCH_SECRET, 0,
 					   &test_match_secret_1,
@@ -317,7 +319,7 @@ test_fp_command_read_match_secret_derive_fail(void)
 		.readable = true,
 		.deadline = { .val = 5000000 },
 	};
-	positive_match_secret_state = test_state_1;
+	global_context.positive_match_secret_state = test_state_1;
 	/* Set fp_positive_match_salt to the trivial value */
 	for (size_t fgr = 0; fgr < ARRAY_SIZE(fp_positive_match_salt); ++fgr)
 		std::ranges::copy(trivial_fp_positive_match_salt,
@@ -359,7 +361,7 @@ test_fp_command_read_match_secret_derive_succeed(void)
 		.readable = true,
 		.deadline = { .val = 5000000 },
 	};
-	positive_match_secret_state = test_state_1;
+	global_context.positive_match_secret_state = test_state_1;
 	/* Set fp_positive_match_salt to the default value */
 	for (size_t fgr = 0; fgr < ARRAY_SIZE(fp_positive_match_salt); ++fgr)
 		std::ranges::copy(default_fake_fp_positive_match_salt,

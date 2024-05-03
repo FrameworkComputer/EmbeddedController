@@ -33,8 +33,6 @@ struct positive_match_secret_state {
 	timestamp_t deadline;
 };
 
-extern struct positive_match_secret_state positive_match_secret_state;
-
 struct fpsensor_context {
 	/** Index of the last enrolled but not retrieved template. */
 	uint16_t template_newly_enrolled;
@@ -52,6 +50,7 @@ struct fpsensor_context {
 	uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
 	/** Current user ID */
 	uint32_t user_id[FP_CONTEXT_USERID_WORDS];
+	struct positive_match_secret_state positive_match_secret_state;
 };
 
 extern struct fpsensor_context global_context;

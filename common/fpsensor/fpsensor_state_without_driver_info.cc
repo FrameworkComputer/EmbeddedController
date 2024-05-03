@@ -9,21 +9,21 @@
 
 extern "C" {
 
-struct positive_match_secret_state
-	positive_match_secret_state = { .template_matched = FP_NO_SUCH_TEMPLATE,
-					.readable = false,
-					.deadline = {
-						.val = 0,
-					} };
-
-struct fpsensor_context global_context = { .template_newly_enrolled =
-						   FP_NO_SUCH_TEMPLATE,
-					   .templ_valid = 0,
-					   .templ_dirty = 0,
-					   .fp_events = 0,
-					   .sensor_mode = 0,
-					   .tpm_seed = { 0 },
-					   .user_id = { 0 } };
+struct fpsensor_context global_context = {
+	.template_newly_enrolled = FP_NO_SUCH_TEMPLATE,
+	.templ_valid = 0,
+	.templ_dirty = 0,
+	.fp_events = 0,
+	.sensor_mode = 0,
+	.tpm_seed = { 0 },
+	.user_id = { 0 },
+	.positive_match_secret_state = {
+		.template_matched = FP_NO_SUCH_TEMPLATE,
+		.readable = false,
+		.deadline = {
+			.val = 0,
+		}},
+};
 
 int fp_tpm_seed_is_set(void)
 {

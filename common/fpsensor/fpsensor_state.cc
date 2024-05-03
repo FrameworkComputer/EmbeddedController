@@ -87,7 +87,8 @@ void fp_reset_context()
 	OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
 	OPENSSL_cleanse(global_context.user_id, sizeof(global_context.user_id));
 	OPENSSL_cleanse(auth_nonce.data(), auth_nonce.size());
-	fp_disable_positive_match_secret(&positive_match_secret_state);
+	fp_disable_positive_match_secret(
+		&global_context.positive_match_secret_state);
 }
 
 void fp_init_decrypted_template_state_with_user_id(uint16_t idx)
@@ -314,9 +315,10 @@ enum ec_status fp_read_match_secret(
 {
 	timestamp_t now = get_time();
 	struct positive_match_secret_state state_copy =
-		positive_match_secret_state;
+		global_context.positive_match_secret_state;
 
-	fp_disable_positive_match_secret(&positive_match_secret_state);
+	fp_disable_positive_match_secret(
+		&global_context.positive_match_secret_state);
 
 	if (fgr < 0 || fgr >= FP_MAX_FINGER_COUNT) {
 		CPRINTS("Invalid finger number %d", fgr);

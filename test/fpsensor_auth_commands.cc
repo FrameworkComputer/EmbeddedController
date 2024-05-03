@@ -130,7 +130,7 @@ test_static enum ec_error_list test_fp_command_check_context_cleared(void)
 	fp_reset_and_clear_context();
 	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
 
-	positive_match_secret_state.template_matched = 0;
+	global_context.positive_match_secret_state.template_matched = 0;
 	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
 
 	fp_reset_and_clear_context();
@@ -703,7 +703,7 @@ test_fp_command_read_match_secret_with_pubkey_succeed(void)
 
 	params.pubkey = pubkey.value();
 
-	positive_match_secret_state = test_state_1;
+	global_context.positive_match_secret_state = test_state_1;
 	/* Set fp_positive_match_salt to the default fake positive match salt */
 	for (size_t fgr = 0; fgr < ARRAY_SIZE(fp_positive_match_salt); ++fgr)
 		std::ranges::copy(default_fake_fp_positive_match_salt,

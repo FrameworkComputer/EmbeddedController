@@ -44,7 +44,8 @@ enum ec_error_list check_context_cleared()
 		return EC_ERROR_ACCESS_DENIED;
 	if (global_context.templ_dirty != 0)
 		return EC_ERROR_ACCESS_DENIED;
-	if (positive_match_secret_state.template_matched != FP_NO_SUCH_TEMPLATE)
+	if (global_context.positive_match_secret_state.template_matched !=
+	    FP_NO_SUCH_TEMPLATE)
 		return EC_ERROR_ACCESS_DENIED;
 	if (global_context.fp_encryption_status & FP_CONTEXT_USER_ID_SET)
 		return EC_ERROR_ACCESS_DENIED;

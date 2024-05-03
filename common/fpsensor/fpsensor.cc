@@ -133,7 +133,7 @@ static uint32_t fp_process_enroll(void)
 				global_context.templ_valid;
 			fp_enable_positive_match_secret(
 				global_context.templ_valid,
-				&positive_match_secret_state);
+				&global_context.positive_match_secret_state);
 			fp_init_decrypted_template_state_with_user_id(
 				global_context.templ_valid);
 			global_context.templ_valid++;
@@ -177,7 +177,8 @@ static uint32_t fp_process_match(void)
 	int32_t fgr = FP_NO_SUCH_TEMPLATE;
 
 	/* match finger against current templates */
-	fp_disable_positive_match_secret(&positive_match_secret_state);
+	fp_disable_positive_match_secret(
+		&global_context.positive_match_secret_state);
 
 	if (!authenticate_fp_match_state()) {
 		res = EC_MKBP_FP_ERR_MATCH_NO_AUTH_FAIL;
@@ -208,7 +209,9 @@ static uint32_t fp_process_match(void)
 			 */
 			if (fgr >= 0 && fgr < FP_MAX_FINGER_COUNT) {
 				fp_enable_positive_match_secret(
-					fgr, &positive_match_secret_state);
+					fgr,
+					&global_context
+						 .positive_match_secret_state);
 			} else {
 				res = EC_MKBP_FP_ERR_MATCH_NO_INTERNAL;
 			}
@@ -603,7 +606,8 @@ static enum ec_status fp_command_stats(struct host_cmd_handler_args *args)
 	 * Note that this is set to FP_NO_SUCH_TEMPLATE when positive match
 	 * secret is read/disabled, and we are not using this field in biod.
 	 */
-	r->template_matched = positive_match_secret_state.template_matched;
+	r->template_matched =
+		global_context.positive_match_secret_state.template_matched;
 
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
@@ -794,8 +798,8 @@ fp_command_migrate_template_to_nonce_context(struct host_cmd_handler_args *args)
 	 * generated for them.
 	 */
 	memset(fp_positive_match_salt[idx], 0, FP_POSITIVE_MATCH_SALT_BYTES);
-	int ret = fp_enable_positive_match_secret(idx,
-						  &positive_match_secret_state);
+	int ret = fp_enable_positive_match_secret(
+		idx, &global_context.positive_match_secret_state);
 	if (ret != EC_SUCCESS) {
 		return EC_RES_ACCESS_DENIED;
 	}
