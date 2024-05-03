@@ -134,6 +134,7 @@ const struct smbus_cmd_t SET_NOTIFICATION_ENABLE = { 0x08, 0x06, 0x01 };
 const struct smbus_cmd_t SET_PDOS = { 0x08, 0x03, 0x03 };
 const struct smbus_cmd_t SET_RDO = { 0x08, 0x06, 0x04 };
 const struct smbus_cmd_t SET_TPC_RP = { 0x08, 0x03, 0x05 };
+const struct smbus_cmd_t SET_TPC_CSD_OPERATION_MODE = { 0x08, 0x03, 0x1D };
 const struct smbus_cmd_t SET_TPC_RECONNECT = { 0x08, 0x03, 0x1F };
 const struct smbus_cmd_t FORCE_SET_POWER_SWITCH = { 0x08, 0x03, 0x21 };
 const struct smbus_cmd_t GET_PDOS = { 0x08, 0x03, 0x83 };
@@ -261,6 +262,8 @@ enum cmd_t {
 	CMD_GET_IC_STATUS,
 	/** Set CCOM */
 	CMD_SET_CCOM,
+	/** Set DRP_MODE */
+	CMD_SET_DRP_MODE,
 	/** Read Power Level */
 	CMD_READ_POWER_LEVEL,
 	/** Get RDO */
@@ -387,6 +390,7 @@ static const char *const cmd_names[] = {
 	[CMD_GET_VBUS_VOLTAGE] = "GET_VBUS_VOLTAGE",
 	[CMD_GET_IC_STATUS] = "GET_IC_STATUS",
 	[CMD_SET_CCOM] = "SET_CCOM",
+	[CMD_SET_DRP_MODE] = "SET_DRP_MODE",
 	[CMD_SET_SINK_PATH] = "SET_SINK_PATH",
 	[CMD_READ_POWER_LEVEL] = "READ_POWER_LEVEL",
 	[CMD_GET_RDO] = "GET_RDO",
@@ -1981,6 +1985,50 @@ static int rts54_set_ccom(const struct device *dev, enum ccom_t ccom)
 				  ARRAY_SIZE(payload), NULL);
 }
 
+static int rts54_set_drp_mode(const struct device *dev, enum drp_mode_t dm)
+{
+	struct pdc_data_t *data = dev->data;
+	uint8_t opmode = 0;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	/* Set CSD mode to DRP */
+	opmode = 0x01;
+	switch (dm) {
+	case DRP_NORMAL:
+		/* No Try.Src or Try.Snk
+		 * opmode |= (0 << 3);
+		 */
+		break;
+	case DRP_TRY_SRC:
+		opmode |= (1 << 3);
+		break;
+	case DRP_TRY_SNK:
+		opmode |= (2 << 3);
+		break;
+	case DRP_INVALID:
+	default:
+		LOG_ERR("Invalid DRP mode: %d", dm);
+		break;
+	}
+
+	/* We always want Accessory Support */
+	opmode |= (1 << 2);
+
+	uint8_t payload[] = {
+		SET_TPC_CSD_OPERATION_MODE.cmd,
+		SET_TPC_CSD_OPERATION_MODE.len,
+		SET_TPC_CSD_OPERATION_MODE.sub,
+		0x00,
+		opmode,
+	};
+
+	return rts54_post_command(dev, CMD_SET_DRP_MODE, payload,
+				  ARRAY_SIZE(payload), NULL);
+}
+
 static int rts54_set_uor(const struct device *dev, union uor_t uor)
 {
 	struct pdc_data_t *data = dev->data;
@@ -2162,6 +2210,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.get_capability = rts54_get_capability,
 	.get_connector_capability = rts54_get_connector_capability,
 	.set_ccom = rts54_set_ccom,
+	.set_drp_mode = rts54_set_drp_mode,
 	.set_uor = rts54_set_uor,
 	.set_pdr = rts54_set_pdr,
 	.set_sink_path = rts54_set_sink_path,

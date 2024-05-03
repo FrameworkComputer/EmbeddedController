@@ -136,6 +136,8 @@ enum drp_mode_t {
 	DRP_TRY_SRC,
 	/** DRP Try.SNK */
 	DRP_TRY_SNK,
+	/** DRP Invalid */
+	DRP_INVALID,
 };
 
 /**

@@ -93,6 +93,7 @@ typedef int (*pdc_get_capability_t)(const struct device *dev,
 typedef int (*pdc_get_connector_capability_t)(
 	const struct device *dev, union connector_capability_t *caps);
 typedef int (*pdc_set_ccom_t)(const struct device *dev, enum ccom_t ccom);
+typedef int (*pdc_set_drp_mode_t)(const struct device *dev, enum drp_mode_t dm);
 typedef int (*pdc_set_uor_t)(const struct device *dev, union uor_t uor);
 typedef int (*pdc_set_pdr_t)(const struct device *dev, union pdr_t pdr);
 typedef int (*pdc_set_sink_path_t)(const struct device *dev, bool en);
@@ -147,6 +148,7 @@ __subsystem struct pdc_driver_api_t {
 	pdc_get_capability_t get_capability;
 	pdc_get_connector_capability_t get_connector_capability;
 	pdc_set_ccom_t set_ccom;
+	pdc_set_drp_mode_t set_drp_mode;
 	pdc_set_uor_t set_uor;
 	pdc_set_pdr_t set_pdr;
 	pdc_set_sink_path_t set_sink_path;
@@ -444,6 +446,33 @@ static inline int pdc_set_ccom(const struct device *dev, enum ccom_t ccom)
 	}
 
 	return api->set_ccom(dev, ccom);
+}
+
+/**
+ * @brief Sets the DRP mode of the PDC
+ * @note CCI Events set
+ *           busy: if PDC is busy
+ *           error: command was unsuccessful
+ *           command_commpleted: DRP mode was set
+ *
+ * @param dev PDC device structure pointer
+ * @param dm DRP mode
+ *
+ * @retval 0 on success
+ * @retval -EBUSY if not ready to execute the command
+ * @retval -ENOSYS if not implemented
+ */
+static inline int pdc_set_drp_mode(const struct device *dev, enum drp_mode_t dm)
+{
+	const struct pdc_driver_api_t *api =
+		(const struct pdc_driver_api_t *)dev->api;
+
+	/* This is an optional feature, so it might not be implemented */
+	if (api->set_drp_mode == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->set_drp_mode(dev, dm);
 }
 
 /**

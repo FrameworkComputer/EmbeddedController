@@ -287,6 +287,23 @@ ZTEST_USER(pdc_api, test_set_ccom)
 	}
 }
 
+ZTEST_USER(pdc_api, test_set_drp_mode)
+{
+	int i;
+	enum drp_mode_t dm_in[] = { DRP_NORMAL, DRP_TRY_SRC, DRP_TRY_SNK };
+	enum drp_mode_t dm_out;
+
+	k_sleep(K_MSEC(SLEEP_MS));
+
+	for (i = 0; i < ARRAY_SIZE(dm_in); i++) {
+		zassert_ok(pdc_set_drp_mode(dev, dm_in[i]));
+
+		k_sleep(K_MSEC(SLEEP_MS));
+		zassert_ok(emul_pdc_get_drp_mode(emul, &dm_out));
+		zassert_equal(dm_in[i], dm_out);
+	}
+}
+
 ZTEST_USER(pdc_api, test_set_sink_path)
 {
 	int i;

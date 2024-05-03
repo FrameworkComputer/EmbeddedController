@@ -25,6 +25,9 @@ typedef int (*emul_pdc_set_connector_capability_t)(
 	const struct emul *target, const union connector_capability_t *caps);
 typedef int (*emul_pdc_get_ccom_t)(const struct emul *target,
 				   enum ccom_t *ccom);
+typedef int (*emul_pdc_get_drp_mode_t)(const struct emul *target,
+				       enum drp_mode_t *dm);
+
 typedef int (*emul_pdc_get_uor_t)(const struct emul *target, union uor_t *uor);
 typedef int (*emul_pdc_get_pdr_t)(const struct emul *target, union pdr_t *pdr);
 typedef int (*emul_pdc_get_sink_path_t)(const struct emul *target, bool *en);
@@ -77,6 +80,7 @@ __subsystem struct emul_pdc_api_t {
 	emul_pdc_set_capability_t set_capability;
 	emul_pdc_set_connector_capability_t set_connector_capability;
 	emul_pdc_get_ccom_t get_ccom;
+	emul_pdc_get_drp_mode_t get_drp_mode;
 	emul_pdc_get_uor_t get_uor;
 	emul_pdc_get_pdr_t get_pdr;
 	emul_pdc_get_sink_path_t get_sink_path;
@@ -182,6 +186,21 @@ static inline int emul_pdc_get_ccom(const struct emul *target,
 
 	if (api->get_ccom) {
 		return api->get_ccom(target, ccom);
+	}
+	return -ENOSYS;
+}
+
+static inline int emul_pdc_get_drp_mode(const struct emul *target,
+					enum drp_mode_t *dm)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_api_t *api = target->backend_api;
+
+	if (api->get_drp_mode) {
+		return api->get_drp_mode(target, dm);
 	}
 	return -ENOSYS;
 }
