@@ -22,7 +22,7 @@ extern "C" {
 #include "util.h"
 }
 
-extern int get_ikm(uint8_t *ikm);
+extern enum ec_error_list get_ikm(std::span<uint8_t, 64> ikm);
 
 #include <stdbool.h>
 
