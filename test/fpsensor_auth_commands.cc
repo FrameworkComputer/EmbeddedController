@@ -124,7 +124,7 @@ test_static enum ec_error_list test_fp_command_check_context_cleared(void)
 	fp_reset_and_clear_context();
 	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
 
-	templ_dirty |= BIT(0);
+	global_context.templ_dirty |= BIT(0);
 	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
 
 	fp_reset_and_clear_context();

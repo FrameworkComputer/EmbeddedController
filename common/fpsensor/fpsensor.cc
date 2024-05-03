@@ -122,7 +122,7 @@ static uint32_t fp_process_enroll(void)
 	if (res < 0)
 		return EC_MKBP_FP_ENROLL |
 		       EC_MKBP_FP_ERRCODE(EC_MKBP_FP_ERR_ENROLL_INTERNAL);
-	templ_dirty |= BIT(global_context.templ_valid);
+	global_context.templ_dirty |= BIT(global_context.templ_valid);
 	if (percent == 100) {
 		res = fp_enrollment_finish(
 			fp_template[global_context.templ_valid]);
@@ -219,7 +219,7 @@ static uint32_t fp_process_match(void)
 		}
 
 		if (res == EC_MKBP_FP_ERR_MATCH_YES_UPDATED)
-			templ_dirty |= updated;
+			global_context.templ_dirty |= updated;
 	} else {
 		CPRINTS("No enrolled templates");
 		res = EC_MKBP_FP_ERR_MATCH_NO_TEMPLATES;
@@ -435,7 +435,7 @@ static enum ec_status fp_command_info(struct host_cmd_handler_args *args)
 	r->template_size = FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE;
 	r->template_max = FP_MAX_FINGER_COUNT;
 	r->template_valid = global_context.templ_valid;
-	r->template_dirty = templ_dirty;
+	r->template_dirty = global_context.templ_dirty;
 	r->template_version = FP_TEMPLATE_FORMAT_VERSION;
 
 	/* V1 is identical to V0 with more information appended */
@@ -568,7 +568,7 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 			CPRINTS("fgr%d: Failed to encrypt template", fgr);
 			return EC_RES_UNAVAILABLE;
 		}
-		templ_dirty &= ~BIT(fgr);
+		global_context.templ_dirty &= ~BIT(fgr);
 	}
 	memcpy(out, fp_enc_buffer + offset, size);
 	args->response_size = size;
@@ -793,7 +793,7 @@ fp_command_migrate_template_to_nonce_context(struct host_cmd_handler_args *args)
 	 * be fetched again (and encrypted differently) and its match secret
 	 * needs to be freshly generated.
 	 */
-	templ_dirty |= BIT(idx);
+	global_context.templ_dirty |= BIT(idx);
 	global_context.template_newly_enrolled = idx;
 
 	return EC_RES_SUCCESS;

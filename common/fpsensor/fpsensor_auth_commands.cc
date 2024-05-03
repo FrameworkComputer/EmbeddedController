@@ -42,7 +42,7 @@ enum ec_error_list check_context_cleared()
 			return EC_ERROR_ACCESS_DENIED;
 	if (global_context.templ_valid != 0)
 		return EC_ERROR_ACCESS_DENIED;
-	if (templ_dirty != 0)
+	if (global_context.templ_dirty != 0)
 		return EC_ERROR_ACCESS_DENIED;
 	if (positive_match_secret_state.template_matched != FP_NO_SUCH_TEMPLATE)
 		return EC_ERROR_ACCESS_DENIED;
