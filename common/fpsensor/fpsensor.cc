@@ -748,9 +748,7 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 	memcpy(&fp_enc_buffer[offset], params->data, size);
 
 	if (xfer_complete) {
-		return fp_commit_template(
-			{ reinterpret_cast<uint8_t *>(global_context.user_id),
-			  sizeof(global_context.user_id) });
+		return fp_commit_template(global_context.user_id);
 	}
 
 	return EC_RES_SUCCESS;

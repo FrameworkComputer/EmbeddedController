@@ -1191,7 +1191,7 @@ test_fp_command_unlock_template_pre_encrypted(void)
 	static_assert(metadata_size == sizeof(enc_metadata_data));
 	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
 
-	std::array<uint32_t, FP_CONTEXT_USERID_WORDS> backup_user_id;
+	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> backup_user_id;
 	std::ranges::copy(global_context.user_id, backup_user_id.begin());
 
 	fp_reset_and_clear_context();

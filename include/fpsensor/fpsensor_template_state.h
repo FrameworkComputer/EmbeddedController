@@ -30,7 +30,7 @@ struct fp_encrypted_template_state {
 struct fp_decrypted_template_state {
 	/* The user_id that will be used to check the unlock template request is
 	 * valid or not. */
-	std::array<uint32_t, FP_CONTEXT_USERID_WORDS> user_id;
+	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id;
 };
 
 /* The template can only be one of these states.

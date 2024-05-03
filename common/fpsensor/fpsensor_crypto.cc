@@ -186,10 +186,8 @@ enum ec_error_list derive_encryption_key(std::span<uint8_t> out_key,
 					 std::span<const uint8_t> salt)
 {
 	BUILD_ASSERT(sizeof(global_context.user_id) == SHA256_DIGEST_SIZE);
-	return derive_encryption_key_with_info(
-		out_key, salt,
-		{ reinterpret_cast<uint8_t *>(global_context.user_id),
-		  sizeof(global_context.user_id) });
+	return derive_encryption_key_with_info(out_key, salt,
+					       global_context.user_id);
 }
 
 enum ec_error_list aes_128_gcm_encrypt(std::span<const uint8_t> key,

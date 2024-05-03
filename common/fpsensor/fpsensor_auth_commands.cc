@@ -34,7 +34,7 @@ std::array<uint8_t, FP_CK_AUTH_NONCE_LEN> auth_nonce;
 
 enum ec_error_list check_context_cleared()
 {
-	for (uint32_t partial : global_context.user_id)
+	for (uint8_t partial : global_context.user_id)
 		if (partial != 0)
 			return EC_ERROR_ACCESS_DENIED;
 	for (uint8_t partial : auth_nonce)
@@ -227,7 +227,7 @@ fp_command_nonce_context(struct host_cmd_handler_args *args)
 
 	/* Set the user_id. */
 	std::copy(raw_user_id.begin(), raw_user_id.end(),
-		  reinterpret_cast<uint8_t *>(global_context.user_id));
+		  global_context.user_id);
 
 	global_context.fp_encryption_status &= FP_ENC_STATUS_SEED_SET;
 	global_context.fp_encryption_status |= FP_CONTEXT_USER_ID_SET;

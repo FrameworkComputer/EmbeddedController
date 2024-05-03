@@ -93,7 +93,7 @@ void fp_reset_context()
 
 void fp_init_decrypted_template_state_with_user_id(uint16_t idx)
 {
-	std::array<uint32_t, FP_CONTEXT_USERID_WORDS> raw_user_id;
+	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> raw_user_id;
 	std::ranges::copy(global_context.user_id, raw_user_id.begin());
 	template_states[idx] = fp_decrypted_template_state{
 		.user_id = raw_user_id,

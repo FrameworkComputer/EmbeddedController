@@ -8026,7 +8026,8 @@ struct ec_response_fp_info {
 
 /* Constants for encryption parameters */
 #define FP_CONTEXT_NONCE_BYTES 12
-#define FP_CONTEXT_USERID_WORDS (32 / sizeof(uint32_t))
+#define FP_CONTEXT_USERID_BYTES 32
+#define FP_CONTEXT_USERID_WORDS (FP_CONTEXT_USERID_BYTES / sizeof(uint32_t))
 #define FP_CONTEXT_TAG_BYTES 16
 #define FP_CONTEXT_ENCRYPTION_SALT_BYTES 16
 #define FP_CONTEXT_TPM_BYTES 32
