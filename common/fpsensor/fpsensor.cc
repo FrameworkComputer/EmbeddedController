@@ -75,7 +75,7 @@ void fps_event(enum gpio_signal signal)
 
 static void send_mkbp_event(uint32_t event)
 {
-	atomic_or(&fp_events, event);
+	atomic_or(&global_context.fp_events, event);
 	mkbp_send_event(EC_MKBP_EVENT_FINGERPRINT);
 }
 

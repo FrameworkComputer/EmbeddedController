@@ -16,14 +16,13 @@ struct positive_match_secret_state
 						.val = 0,
 					} };
 
-atomic_t fp_events;
-
 uint32_t sensor_mode;
 
 struct fpsensor_context global_context = { .template_newly_enrolled =
 						   FP_NO_SUCH_TEMPLATE,
 					   .templ_valid = 0,
 					   .templ_dirty = 0,
+					   .fp_events = 0,
 					   .tpm_seed = { 0 },
 					   .user_id = { 0 } };
 

@@ -119,7 +119,8 @@ static enum ec_error_list fp_console_action(uint32_t mode)
 
 	while (tries--) {
 		if (!(sensor_mode & FP_MODE_ANY_CAPTURE)) {
-			CPRINTS("done (events:%x)", (int)fp_events);
+			CPRINTS("done (events:%x)",
+				(int)global_context.fp_events);
 			return EC_SUCCESS;
 		}
 		crec_usleep(100 * MSEC);
@@ -236,7 +237,7 @@ static int command_fpenroll(int argc, const char **argv)
 				       FP_MODE_ENROLL_IMAGE);
 		if (rc != EC_SUCCESS)
 			break;
-		event = atomic_clear(&fp_events);
+		event = atomic_clear(&global_context.fp_events);
 		percent = EC_MKBP_FP_ENROLL_PROGRESS(event);
 		CPRINTS("Enroll capture: %s (%d%%)",
 			enroll_str[EC_MKBP_FP_ERRCODE(event) & 3], percent);
@@ -257,7 +258,7 @@ DECLARE_CONSOLE_COMMAND_FLAGS(fpenroll, command_fpenroll, NULL,
 static int command_fpmatch(int argc, const char **argv)
 {
 	enum ec_error_list rc = fp_console_action(FP_MODE_MATCH);
-	uint32_t event = atomic_clear(&fp_events);
+	uint32_t event = atomic_clear(&global_context.fp_events);
 
 	if (rc == EC_SUCCESS && event & EC_MKBP_FP_MATCH) {
 		uint32_t match_errcode = EC_MKBP_FP_ERRCODE(event);
@@ -283,7 +284,7 @@ static int command_fpclear(int argc, const char **argv)
 	if (rc != EC_SUCCESS)
 		CPRINTS("Failed to clear fingerprint context: %d", rc);
 
-	atomic_clear(&fp_events);
+	atomic_clear(&global_context.fp_events);
 
 	return rc;
 }
