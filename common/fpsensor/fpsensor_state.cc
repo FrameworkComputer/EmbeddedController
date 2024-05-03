@@ -338,8 +338,8 @@ enum ec_status fp_read_match_secret(
 
 	if (derive_positive_match_secret(
 		    { positive_match_secret, FP_POSITIVE_MATCH_SECRET_BYTES },
-		    fp_positive_match_salt[fgr],
-		    global_context.user_id) != EC_SUCCESS) {
+		    fp_positive_match_salt[fgr], global_context.user_id,
+		    global_context.tpm_seed) != EC_SUCCESS) {
 		CPRINTS("Failed to derive positive match secret for finger %d",
 			fgr);
 		/* Keep the template and encryption salt. */

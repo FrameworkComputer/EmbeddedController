@@ -116,7 +116,8 @@ test_mockable bool hkdf_sha256(std::span<uint8_t> out_key,
 enum ec_error_list derive_positive_match_secret(
 	std::span<uint8_t> output,
 	std::span<const uint8_t> input_positive_match_salt,
-	std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id)
+	std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id,
+	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed)
 {
 	enum ec_error_list ret;
 	CleanseWrapper<std::array<uint8_t, IKM_SIZE_BYTES> > ikm;
@@ -130,7 +131,7 @@ enum ec_error_list derive_positive_match_secret(
 		return EC_ERROR_INVAL;
 	}
 
-	ret = get_ikm(ikm, global_context.tpm_seed);
+	ret = get_ikm(ikm, tpm_seed);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to get IKM: %d", ret);
 		return ret;

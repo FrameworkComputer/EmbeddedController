@@ -339,15 +339,15 @@ test_static int test_derive_positive_match_secret_fail_seed_not_set(void)
 	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
 
 	/* GIVEN that seed is not set. */
-	TEST_ASSERT(!fp_tpm_seed_is_set());
+	std::array<uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed{};
 	/* THEN EVEN IF the encryption salt is not trivial. */
 	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
 				       sizeof(fake_positive_match_salt)));
 
 	/* Deriving positive match secret will fail. */
 	TEST_ASSERT(derive_positive_match_secret(
-			    output, fake_positive_match_salt, user_id) ==
-		    EC_ERROR_ACCESS_DENIED);
+			    output, fake_positive_match_salt, user_id,
+			    tpm_seed) == EC_ERROR_ACCESS_DENIED);
 
 	return EC_SUCCESS;
 }
@@ -363,29 +363,32 @@ test_static int test_derive_new_pos_match_secret(void)
 	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
 				       sizeof(fake_positive_match_salt)));
 	/*
-	 * GIVEN that the TPM seed is set, and reading the rollback secret will
+	 * GIVEN that reading the rollback secret will
 	 * succeed.
 	 */
-	TEST_ASSERT(fp_tpm_seed_is_set() &&
-		    !mock_ctrl_rollback.get_secret_fail);
+	TEST_ASSERT(!mock_ctrl_rollback.get_secret_fail);
 
 	/* GIVEN that the salt is not trivial. */
 	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
 				       sizeof(fake_positive_match_salt)));
 
+	/* GIVEN that the TPM seed is set. */
+	TEST_ASSERT(!bytes_are_trivial(default_fake_tpm_seed,
+				       sizeof(default_fake_tpm_seed)));
+
 	/* THEN the derivation will succeed. */
-	TEST_ASSERT(derive_positive_match_secret(output,
-						 fake_positive_match_salt,
-						 user_id) == EC_SUCCESS);
+	TEST_ASSERT(derive_positive_match_secret(
+			    output, fake_positive_match_salt, user_id,
+			    default_fake_tpm_seed) == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(
 		output, expected_positive_match_secret_for_empty_user_id,
 		sizeof(expected_positive_match_secret_for_empty_user_id));
 
 	/* Now change the user_id to be non-trivial. */
 	memcpy(user_id.data(), fake_user_id, sizeof(fake_user_id));
-	TEST_ASSERT(derive_positive_match_secret(output,
-						 fake_positive_match_salt,
-						 user_id) == EC_SUCCESS);
+	TEST_ASSERT(derive_positive_match_secret(
+			    output, fake_positive_match_salt, user_id,
+			    default_fake_tpm_seed) == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(
 		output, expected_positive_match_secret_for_fake_user_id,
 		sizeof(expected_positive_match_secret_for_fake_user_id));
@@ -405,9 +408,9 @@ test_static int test_derive_positive_match_secret_fail_rollback_fail(void)
 				       sizeof(fake_positive_match_salt)));
 
 	/* Deriving positive match secret will fail. */
-	TEST_ASSERT(
-		derive_positive_match_secret(output, fake_positive_match_salt,
-					     user_id) == EC_ERROR_HW_INTERNAL);
+	TEST_ASSERT(derive_positive_match_secret(
+			    output, fake_positive_match_salt, user_id,
+			    default_fake_tpm_seed) == EC_ERROR_HW_INTERNAL);
 	mock_ctrl_rollback.get_secret_fail = false;
 
 	return EC_SUCCESS;
@@ -422,7 +425,8 @@ test_static int test_derive_positive_match_secret_fail_salt_trivial(void)
 	static const uint8_t salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = { 0 };
 
 	/* THEN deriving positive match secret will fail. */
-	TEST_ASSERT(derive_positive_match_secret(output, salt, user_id) ==
+	TEST_ASSERT(derive_positive_match_secret(output, salt, user_id,
+						 default_fake_tpm_seed) ==
 		    EC_ERROR_INVAL);
 	return EC_SUCCESS;
 }
@@ -436,11 +440,9 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 	memcpy(user_id.data(), fake_user_id, sizeof(fake_user_id));
 
 	/*
-	 * GIVEN that the TPM seed is set, and reading the rollback secret will
-	 * succeed.
+	 * GIVEN that reading the rollback secret will succeed.
 	 */
-	TEST_ASSERT(fp_tpm_seed_is_set() &&
-		    !mock_ctrl_rollback.get_secret_fail);
+	TEST_ASSERT(!mock_ctrl_rollback.get_secret_fail);
 
 	/* GIVEN that the salt is not trivial. */
 	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
@@ -450,10 +452,14 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 	mock_ctrl_fpsensor_crypto.output_type =
 		MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_ZEROS;
 
+	/* GIVEN that the TPM seed is set. */
+	TEST_ASSERT(!bytes_are_trivial(default_fake_tpm_seed,
+				       sizeof(default_fake_tpm_seed)));
+
 	/* THEN the derivation will fail with EC_ERROR_HW_INTERNAL. */
-	TEST_ASSERT(
-		derive_positive_match_secret(output, fake_positive_match_salt,
-					     user_id) == EC_ERROR_HW_INTERNAL);
+	TEST_ASSERT(derive_positive_match_secret(
+			    output, fake_positive_match_salt, user_id,
+			    default_fake_tpm_seed) == EC_ERROR_HW_INTERNAL);
 
 	/* Now verify success is possible after reverting */
 
@@ -462,9 +468,9 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 		MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_REAL;
 
 	/* THEN the derivation will succeed */
-	TEST_ASSERT(derive_positive_match_secret(output,
-						 fake_positive_match_salt,
-						 user_id) == EC_SUCCESS);
+	TEST_ASSERT(derive_positive_match_secret(
+			    output, fake_positive_match_salt, user_id,
+			    default_fake_tpm_seed) == EC_SUCCESS);
 
 	/* Clean up any mock changes */
 	mock_ctrl_fpsensor_crypto = MOCK_CTRL_DEFAULT_FPSENSOR_CRYPTO;
@@ -481,11 +487,9 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
 	memcpy(user_id.data(), fake_user_id, sizeof(fake_user_id));
 
 	/*
-	 * GIVEN that the TPM seed is set, and reading the rollback secret will
-	 * succeed.
+	 * Given that reading the rollback secret will succeed.
 	 */
-	TEST_ASSERT(fp_tpm_seed_is_set() &&
-		    !mock_ctrl_rollback.get_secret_fail);
+	TEST_ASSERT(!mock_ctrl_rollback.get_secret_fail);
 
 	/* GIVEN that the salt is not trivial. */
 	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
@@ -495,10 +499,14 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
 	mock_ctrl_fpsensor_crypto.output_type =
 		MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_FF;
 
+	/* GIVEN that the TPM seed is set. */
+	TEST_ASSERT(!bytes_are_trivial(default_fake_tpm_seed,
+				       sizeof(default_fake_tpm_seed)));
+
 	/* THEN the derivation will fail with EC_ERROR_HW_INTERNAL. */
-	TEST_ASSERT(
-		derive_positive_match_secret(output, fake_positive_match_salt,
-					     user_id) == EC_ERROR_HW_INTERNAL);
+	TEST_ASSERT(derive_positive_match_secret(
+			    output, fake_positive_match_salt, user_id,
+			    default_fake_tpm_seed) == EC_ERROR_HW_INTERNAL);
 
 	/* Now verify success is possible after reverting */
 
@@ -507,9 +515,9 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
 		MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_REAL;
 
 	/* THEN the derivation will succeed */
-	TEST_ASSERT(derive_positive_match_secret(output,
-						 fake_positive_match_salt,
-						 user_id) == EC_SUCCESS);
+	TEST_ASSERT(derive_positive_match_secret(
+			    output, fake_positive_match_salt, user_id,
+			    default_fake_tpm_seed) == EC_SUCCESS);
 
 	/* Clean up any mock changes */
 	mock_ctrl_fpsensor_crypto = MOCK_CTRL_DEFAULT_FPSENSOR_CRYPTO;
@@ -714,6 +722,11 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_get_ikm_failure_seed_not_set);
 	RUN_TEST(test_get_ikm_failure_cannot_get_rollback_secret);
 	RUN_TEST(test_get_ikm_success);
+	RUN_TEST(test_derive_new_pos_match_secret);
+	RUN_TEST(test_derive_positive_match_secret_fail_rollback_fail);
+	RUN_TEST(test_derive_positive_match_secret_fail_salt_trivial);
+	RUN_TEST(test_derive_positive_match_secret_fail_trivial_key_0x00);
+	RUN_TEST(test_derive_positive_match_secret_fail_trivial_key_0xff);
 	/*
 	 * Set the TPM seed here because it can only be set once and cannot be
 	 * cleared.
@@ -724,11 +737,6 @@ void run_test(int argc, const char **argv)
 	/* The following test requires TPM seed to be already set. */
 	RUN_TEST(test_derive_encryption_key);
 	RUN_TEST(test_derive_encryption_key_failure_rollback_fail);
-	RUN_TEST(test_derive_new_pos_match_secret);
-	RUN_TEST(test_derive_positive_match_secret_fail_rollback_fail);
-	RUN_TEST(test_derive_positive_match_secret_fail_salt_trivial);
-	RUN_TEST(test_derive_positive_match_secret_fail_trivial_key_0x00);
-	RUN_TEST(test_derive_positive_match_secret_fail_trivial_key_0xff);
 	RUN_TEST(test_enable_positive_match_secret);
 	RUN_TEST(test_disable_positive_match_secret);
 	RUN_TEST(test_command_read_match_secret);

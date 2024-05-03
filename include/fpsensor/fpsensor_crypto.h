@@ -67,12 +67,14 @@ enum ec_error_list derive_encryption_key(std::span<uint8_t> out_key,
  * @param input_positive_match_salt the salt for deriving secret, must be at
  * least FP_POSITIVE_MATCH_SALT_BYTES in size.
  * @param user_id the user_id used for deriving secret.
+ * @param tpm_seed the seed from the TPM for deriving secret.
  * @return EC_SUCCESS on success and error code otherwise.
  */
 enum ec_error_list derive_positive_match_secret(
 	std::span<uint8_t> output,
 	std::span<const uint8_t> input_positive_match_salt,
-	std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id);
+	std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id,
+	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed);
 
 /**
  * Encrypt |plaintext| using AES-GCM128.
