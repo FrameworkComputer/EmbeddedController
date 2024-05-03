@@ -40,7 +40,7 @@ enum ec_error_list check_context_cleared()
 	for (uint8_t partial : auth_nonce)
 		if (partial != 0)
 			return EC_ERROR_ACCESS_DENIED;
-	if (templ_valid != 0)
+	if (global_context.templ_valid != 0)
 		return EC_ERROR_ACCESS_DENIED;
 	if (templ_dirty != 0)
 		return EC_ERROR_ACCESS_DENIED;
@@ -365,7 +365,7 @@ fp_command_unlock_template(struct host_cmd_handler_args *args)
 	}
 
 	fp_encryption_status |= FP_CONTEXT_TEMPLATE_UNLOCKED_SET;
-	templ_valid = fgr_num;
+	global_context.templ_valid = fgr_num;
 
 	return EC_RES_SUCCESS;
 }

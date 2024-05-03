@@ -16,8 +16,6 @@ struct positive_match_secret_state
 						.val = 0,
 					} };
 
-/* Number of used templates */
-test_mockable uint16_t templ_valid;
 /* Bitmap of the templates with local modifications */
 uint32_t templ_dirty;
 /* Status of the FP encryption engine & context. */
@@ -29,6 +27,7 @@ uint32_t sensor_mode;
 
 struct fpsensor_context global_context = { .template_newly_enrolled =
 						   FP_NO_SUCH_TEMPLATE,
+					   .templ_valid = 0,
 					   .tpm_seed = { 0 },
 					   .user_id = { 0 } };
 

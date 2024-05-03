@@ -118,7 +118,7 @@ test_static enum ec_error_list test_fp_command_check_context_cleared(void)
 	fp_reset_and_clear_context();
 	TEST_EQ(check_context_cleared(), EC_SUCCESS, "%d");
 
-	templ_valid++;
+	global_context.templ_valid++;
 	TEST_EQ(check_context_cleared(), EC_ERROR_ACCESS_DENIED, "%d");
 
 	fp_reset_and_clear_context();
@@ -413,7 +413,7 @@ test_static enum ec_error_list test_fp_command_nonce_context(void)
 	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
 	TEST_BITS_CLEARED((int)status, FP_CONTEXT_USER_ID_SET);
 
-	templ_valid = 1;
+	global_context.templ_valid = 1;
 
 	rv = test_send_host_command(EC_CMD_FP_GENERATE_NONCE, 0, NULL, 0,
 				    &nonce_response, sizeof(nonce_response));
@@ -431,7 +431,7 @@ test_static enum ec_error_list test_fp_command_nonce_context(void)
 	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
 	TEST_BITS_SET((int)status, FP_CONTEXT_USER_ID_SET);
 
-	TEST_EQ(templ_valid, 1u, "%d");
+	TEST_EQ(global_context.templ_valid, 1u, "%d");
 
 	return EC_SUCCESS;
 }
@@ -1560,7 +1560,7 @@ test_fp_command_migrate_template_to_nonce_context(void)
 			EC_CMD_FP_MIGRATE_TEMPLATE_TO_NONCE_CONTEXT, 0,
 			&migrate_params, sizeof(migrate_params), NULL, 0),
 		EC_RES_SUCCESS, "%d");
-	TEST_EQ(templ_valid, 1, "%d");
+	TEST_EQ(global_context.templ_valid, 1, "%d");
 
 	return EC_SUCCESS;
 }
@@ -1593,13 +1593,13 @@ test_fp_command_migrate_template_to_nonce_context_failure(void)
 			&migrate_params, sizeof(migrate_params), NULL, 0),
 		EC_RES_INVALID_PARAM, "%d");
 
-	templ_valid = 5;
+	global_context.templ_valid = 5;
 	/* Migrate command should fail without overflow. */
 	TEST_EQ(test_send_host_command(
 			EC_CMD_FP_MIGRATE_TEMPLATE_TO_NONCE_CONTEXT, 0,
 			&migrate_params, sizeof(migrate_params), NULL, 0),
 		EC_RES_OVERFLOW, "%d");
-	templ_valid = 0;
+	global_context.templ_valid = 0;
 	return EC_SUCCESS;
 }
 

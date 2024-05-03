@@ -80,7 +80,7 @@ void fp_clear_finger_context(uint16_t idx)
 
 void fp_reset_context()
 {
-	templ_valid = 0;
+	global_context.templ_valid = 0;
 	templ_dirty = 0;
 	global_context.template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
 	fp_encryption_status &= FP_ENC_STATUS_SEED_SET;
@@ -181,7 +181,7 @@ static int validate_fp_mode(const uint32_t mode)
 		return EC_ERROR_INVAL;
 
 	if ((mode & FP_MODE_ENROLL_SESSION) &&
-	    templ_valid >= FP_MAX_FINGER_COUNT) {
+	    global_context.templ_valid >= FP_MAX_FINGER_COUNT) {
 		CPRINTS("Maximum number of fingers already enrolled: %d",
 			FP_MAX_FINGER_COUNT);
 		return EC_ERROR_INVAL;

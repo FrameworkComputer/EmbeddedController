@@ -115,24 +115,28 @@ static uint32_t fp_process_enroll(void)
 			"read yet.");
 
 	/* begin/continue enrollment */
-	CPRINTS("[%d]Enrolling ...", templ_valid);
+	CPRINTS("[%d]Enrolling ...", global_context.templ_valid);
 	res = fp_finger_enroll(fp_buffer, &percent);
-	CPRINTS("[%d]Enroll =>%d (%d%%)", templ_valid, res, percent);
+	CPRINTS("[%d]Enroll =>%d (%d%%)", global_context.templ_valid, res,
+		percent);
 	if (res < 0)
 		return EC_MKBP_FP_ENROLL |
 		       EC_MKBP_FP_ERRCODE(EC_MKBP_FP_ERR_ENROLL_INTERNAL);
-	templ_dirty |= BIT(templ_valid);
+	templ_dirty |= BIT(global_context.templ_valid);
 	if (percent == 100) {
-		res = fp_enrollment_finish(fp_template[templ_valid]);
+		res = fp_enrollment_finish(
+			fp_template[global_context.templ_valid]);
 		if (res) {
 			res = EC_MKBP_FP_ERR_ENROLL_INTERNAL;
 		} else {
-			global_context.template_newly_enrolled = templ_valid;
+			global_context.template_newly_enrolled =
+				global_context.templ_valid;
 			fp_enable_positive_match_secret(
-				templ_valid, &positive_match_secret_state);
+				global_context.templ_valid,
+				&positive_match_secret_state);
 			fp_init_decrypted_template_state_with_user_id(
-				templ_valid);
-			templ_valid++;
+				global_context.templ_valid);
+			global_context.templ_valid++;
 		}
 		sensor_mode &= ~FP_MODE_ENROLL_SESSION;
 		enroll_session &= ~FP_MODE_ENROLL_SESSION;
@@ -185,9 +189,10 @@ static uint32_t fp_process_match(void)
 	 * nonce context. */
 	fp_encryption_status |= FP_CONTEXT_STATUS_MATCH_PROCESSED_SET;
 
-	CPRINTS("Matching/%d ...", templ_valid);
-	if (templ_valid) {
-		res = fp_finger_match(fp_template[0], templ_valid, fp_buffer,
+	CPRINTS("Matching/%d ...", global_context.templ_valid);
+	if (global_context.templ_valid) {
+		res = fp_finger_match(fp_template[0],
+				      global_context.templ_valid, fp_buffer,
 				      &fgr, &updated);
 		CPRINTS("Match =>%d (finger %d)", res, fgr);
 
@@ -429,7 +434,7 @@ static enum ec_status fp_command_info(struct host_cmd_handler_args *args)
 
 	r->template_size = FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE;
 	r->template_max = FP_MAX_FINGER_COUNT;
-	r->template_valid = templ_valid;
+	r->template_valid = global_context.templ_valid;
 	r->template_dirty = templ_dirty;
 	r->template_version = FP_TEMPLATE_FORMAT_VERSION;
 
@@ -484,7 +489,7 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 
 	if (fgr >= FP_MAX_FINGER_COUNT)
 		return EC_RES_INVALID_PARAM;
-	if (fgr >= templ_valid)
+	if (fgr >= global_context.templ_valid)
 		return EC_RES_UNAVAILABLE;
 	ret = validate_fp_buffer_offset(sizeof(fp_enc_buffer), offset, size);
 	if (ret != EC_SUCCESS)
@@ -617,7 +622,7 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 {
 	ScopedFastCpu fast_cpu;
 
-	uint16_t idx = templ_valid;
+	uint16_t idx = global_context.templ_valid;
 	struct ec_fp_template_encryption_metadata *enc_info;
 	/* Encrypted template is after the metadata. */
 	uint8_t *encrypted_template = fp_enc_buffer + sizeof(*enc_info);
@@ -699,7 +704,7 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 	memcpy(fp_positive_match_salt[idx], positive_match_salt,
 	       sizeof(fp_positive_match_salt[0]));
 
-	templ_valid++;
+	global_context.templ_valid++;
 	return EC_RES_SUCCESS;
 }
 
@@ -710,7 +715,7 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 	uint32_t size = params->size & ~FP_TEMPLATE_COMMIT;
 	bool xfer_complete = params->size & FP_TEMPLATE_COMMIT;
 	uint32_t offset = params->offset;
-	uint16_t idx = templ_valid;
+	uint16_t idx = global_context.templ_valid;
 
 	/* Can we store one more template ? */
 	if (idx >= FP_MAX_FINGER_COUNT)
@@ -742,7 +747,7 @@ fp_command_migrate_template_to_nonce_context(struct host_cmd_handler_args *args)
 	const auto *params = static_cast<
 		const ec_params_fp_migrate_template_to_nonce_context *>(
 		args->params);
-	uint16_t idx = templ_valid;
+	uint16_t idx = global_context.templ_valid;
 
 	/*
 	 * The command is used for migrating legacy templates to be encrypted by

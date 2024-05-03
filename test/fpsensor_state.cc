@@ -127,7 +127,7 @@ test_static enum ec_error_list test_fp_set_sensor_mode(void)
 	uint32_t output_mode = 0;
 
 	/* Validate initial conditions */
-	TEST_ASSERT(templ_valid == 0);
+	TEST_ASSERT(global_context.templ_valid == 0);
 	TEST_ASSERT(sensor_mode == 0);
 
 	/* GIVEN missing output parameter, THEN get error */
@@ -160,7 +160,7 @@ test_static enum ec_error_list test_fp_set_sensor_mode(void)
 	/* GIVEN max number of fingers already enrolled */
 	sensor_mode = 0;
 	output_mode = 0xdeadbeef;
-	templ_valid = FP_MAX_FINGER_COUNT;
+	global_context.templ_valid = FP_MAX_FINGER_COUNT;
 	requested_mode = FP_MODE_ENROLL_SESSION;
 	/* THEN additional enroll attempt will fail */
 	TEST_ASSERT(fp_set_sensor_mode(requested_mode, &output_mode) ==
