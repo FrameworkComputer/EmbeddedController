@@ -115,6 +115,49 @@ void set_device_complete(int done)
 	device_complete = done;
 }
 
+#define YES_NO_BIT(bit) (((hw_diagnostics & BIT(bit)) == BIT(bit)) ? "Yes" : "No ")
+#define YES_NO(b) (b ? "Yes" : "No ")
+
+void print_diag_details(void)
+{
+	CPRINTS("  Power");
+	/* Never set: 3V5V power rail is controlled by EC PSL signal, if 3V5V */
+	/* power rail is abnormal, EC shouldn't run the code */
+	CPRINTS("    HW PGOOD 3V5V:          %s", YES_NO_BIT(DIAGNOSTICS_HW_PGOOD_3V5V));
+	CPRINTS("    VR power bad. Force G3: %s", YES_NO_BIT(DIAGNOSTICS_VCCIN_AUX_VR));
+	/* TODO: gpio_slp_s4_l asserted low. What does that mean? */
+	CPRINTS("    SLP S4:                 %s", YES_NO_BIT(DIAGNOSTICS_SLP_S4));
+	/* TODO: Not set. Will add before DVT2 */
+	CPRINTS("    HW PGOOD VR:            %s", YES_NO_BIT(DIAGNOSTICS_HW_PGOOD_VR));
+
+	CPRINTS("  Removables (All 'No' if in standalone mode)");
+	CPRINTS("    No eDP:                 %s", YES_NO_BIT(DIAGNOSTICS_NO_EDP));
+	CPRINTS("    No Battery:             %s", YES_NO_BIT(DIAGNOSTICS_HW_NO_BATTERY));
+
+#ifdef CONFIG_BOARD_LOTUS
+	CPRINTS("  Required Removables");
+	CPRINTS("    Input Module Fault:     %s", YES_NO_BIT(DIAGNOSTICS_INPUT_MODULE_FAULT));
+	CPRINTS("    No Right Fan:           %s", YES_NO_BIT(DIAGNOSTICS_NO_LEFT_FAN));
+	CPRINTS("    No Left Fan:            %s", YES_NO_BIT(DIAGNOSTICS_NO_RIGHT_FAN));
+	CPRINTS("    GPU Module Fault:       %s", YES_NO_BIT(DIAGNOSTICS_GPU_MODULE_FAULT));
+#else
+	CPRINTS("    No Touchpad:            %s", YES_NO_BIT(DIAGNOSTICS_TOUCHPAD));
+	CPRINTS("  Required Removables");
+	CPRINTS("    No Audio Board:         %s", YES_NO_BIT(DIAGNOSTICS_AUDIO_DAUGHTERBOARD));
+	CPRINTS("    No Fan:                 %s", YES_NO_BIT(DIAGNOSTICS_NOFAN));
+
+	/* It's not removable, if Yes probably I2C config wrong */
+	CPRINTS("    No Thermal Sensor:      %s", YES_NO_BIT(DIAGNOSTICS_THERMAL_SENSOR));
+#endif
+	CPRINTS("    No DDR:                 %s", YES_NO_BIT(DIAGNOSTICS_NO_DDR));
+	CPRINTS("  Miscellaneous");
+	/* TODO: False, if we're resuming. What exactly does that mean? */
+	CPRINTS("    No S0:                  %s", YES_NO_BIT(DIAGNOSTICS_NO_S0));
+	CPRINTS("    Standalone Mode:        %s", YES_NO(get_standalone_mode()));
+	CPRINTS("    Device (Diag) Complete: %s", YES_NO(device_complete));
+	CPRINTS("    BIOS Complete:          %s", YES_NO(bios_complete));
+}
+
 bool diagnostics_tick(void)
 {
 	/* Don't need to run the diagnostic */
@@ -127,13 +170,17 @@ bool diagnostics_tick(void)
 		return false;
 	}
 
-	/* Wait 15 seconds for checks to complete */
-	if (++diagnostic_tick < 60 * TICK_PER_SEC)
+	/* Wait 90 seconds for checks to complete
+	 * We really want the system to start within 60 seconds,
+	 * but a complete init with lots of RAM and peripherals can take longer */
+	if (++diagnostic_tick < 90 * TICK_PER_SEC)
 		return false;
 
-	/* Everything is ok after minimum 15 seconds of checking */
+	/* Everything is ok after minimum 90 seconds of checking */
 	if (bios_complete && hw_diagnostics == 0)
 		return false;
+
+	/* Turn on LEDs on both sides */
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 1);
 
@@ -145,6 +192,7 @@ bool diagnostics_tick(void)
 			set_diagnostic_leds(LED_WHITE);
 			bios_code = port_80_last();
 			CPRINTS("Boot issue: HW 0x%08x BIOS: 0x%04x", hw_diagnostics, bios_code);
+			print_diag_details();
 		} else if (diagnostics_ctr  < DIAGNOSTICS_HW_FINISH) {
 			set_diagnostic_leds((hw_diagnostics & (1 << diagnostics_ctr))
 				? LED_RED : LED_GREEN);
@@ -189,3 +237,25 @@ uint8_t is_device_complete(void)
 {
 	return device_complete;
 }
+
+static int cmd_diag(int argc, const char **argv)
+{
+	if (device_complete == 0) {
+		CPRINTS("Diagnostics not completed.");
+		return EC_SUCCESS;
+	}
+	if (hw_diagnostics == 0) {
+		CPRINTS("No diag issues: 0x%08x BIOS: 0x%04x", hw_diagnostics, bios_code);
+	} else {
+		CPRINTS("Boot issue:     0x%08x BIOS: 0x%04x", hw_diagnostics, bios_code);
+	}
+
+	bios_code = port_80_last();
+	print_diag_details();
+	/* TODO: Print how long the boot took */
+
+	return EC_SUCCESS;
+}
+DECLARE_CONSOLE_COMMAND(diag, cmd_diag,
+			"[]",
+			"print diagnostics");

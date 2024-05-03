@@ -26,9 +26,10 @@ jobs:
       matrix:
         platform: [
           # Marigold builder uses same folder for all
-          { name: marigold, folder: marigold1 },
-          { name: lotus, folder: marigold1 },
-          { name: azalea, folder: marigold1 },
+          { name: marigold, folder: marigold1, ver: "1.0.4", sha_len: 7, zephyr_ref: "marigold", cmsis_ref: "cros/chromeos-main" },
+          # Lotus and Azalea official releases are NOT coming from this branch
+          { name: lotus, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "marigold", cmsis_ref: "cros/chromeos-main" },
+          { name: azalea, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "marigold", cmsis_ref: "cros/chromeos-main" },
         ]
 
 
@@ -38,18 +39,6 @@ jobs:
         working-directory: /${{ matrix.platform.folder }}/ec_home/chromiumos
 
     steps:
-      # Need to use git
-      #- name: Checkout EC code
-      #  uses: actions/checkout@v4
-      #  with:
-      #    path: /${{ matrix.platform.folder }}/ec_home/chromiumos/src/platform/ec
-
-      #- name: Checkout Zephyr code
-      #  uses: actions/checkout@v2
-      #    path: /${{ matrix.platform.folder }}/ec_home/chromiumos/src/third_party/zephyr/main
-      #    ref: lotus-zephyr
-      #    repository: ssh://git@github.com/FrameworkComputer/zephyr-ec
-
       # Need to manually checkout
       # actions/checkout@v4 complains:
       # Error: Repository path '/data/ec_home/chromiumos/src/platform/ec' is not under '/data/ec_home/actions-runner/_work/ec/ec'
@@ -66,16 +55,26 @@ jobs:
           pushd src/third_party/zephyr/main
           git fetch github-private
           git clean -ffdx
-          # Previous one is: ee0cd57778e00c49269068d049a4b7e237500134
-          # New one is:      b3843c543ca1d8d4811fd7f7e37484b19207c54b
-          git reset --hard github-private/marigold.upstream-merge
+          git reset --hard github-private/${{ matrix.platform.zephyr_ref }}
+          popd
+
+          pushd src/third_party/zephyr/cmsis
+          git fetch cros
+          git clean -ffdx
+          git reset --hard ${{ matrix.platform.cmsis_ref }}
           popd
 
       # Note:
       # By default cros_sdk changes into src/scripts folder.
       # But that will make zmake pick up the scripts git commit SHA
       # To embed the ec repo's commit SHA we need to change pwd there
-      - name: Build ${{ matrix.platform.name }}
+      - name: Build ${{ matrix.platform.name }} (versioned)
+        if: ${{ matrix.platform.zephyr_ref == 'marigold' }}
+        run: cros_sdk bash -c 'pushd ../platform/ec; zmake -D build -v ${{ matrix.platform.ver }} ${{ matrix.platform.name }}'
+
+      # zmake on lotus-zephyr branch doesn't have the -v flag
+      - name: Build ${{ matrix.platform.name }} (unversioned)
+        if: ${{ matrix.platform.zephyr_ref == 'lotus-zephyr' }}
         run: cros_sdk bash -c 'pushd ../platform/ec; zmake -D build ${{ matrix.platform.name }}'
 
       - name: File sha256
@@ -84,7 +83,7 @@ jobs:
       - name: Check version embedded in binary
         run: |
           strings src/platform/ec/build/zephyr/${{ matrix.platform.name }}/output/ec.bin | grep ${{ matrix.platform.name }} | tee bin-strings.txt
-          grep $(echo "$GITHUB_SHA" | cut -c1-7) bin-strings.txt
+          grep $(echo "$GITHUB_SHA" | cut -c1-${{ matrix.platform.sha_len }}) bin-strings.txt
 
       - name: Generate artifact version
         run: |

@@ -354,6 +354,7 @@ enum power_state power_handle_state(enum power_state state)
 						ap_boot_delay = 9;
 						s5_exit_tries = 0;
 						stress_test_enable = 0;
+						clear_rtcwake();
 						set_diagnostic(DIAGNOSTICS_SLP_S4, 1);
 						/* SLP_S5 asserted, power down to G3S5 state */
 						return POWER_S5G3;
@@ -427,7 +428,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* wait VR power good */
 		if (power_wait_signals(IN_VR_PGOOD)) {
 			/* something wrong, turn off power and force to g3 */
-			set_diagnostic(DIAGNOSTICS_VCCIN_AUX_VR, 1);
+			set_diagnostic(DIAGNOSTICS_HW_PGOOD_VR, 1);
 			chipset_force_g3();
 			return POWER_G3;
 		}

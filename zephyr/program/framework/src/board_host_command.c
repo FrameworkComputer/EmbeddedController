@@ -174,6 +174,10 @@ static enum ec_status enter_non_acpi_mode(struct host_cmd_handler_args *args)
 
 	clear_power_flags();
 
+#ifdef CONFIG_PLATFORM_EC_TOUCHPAD_CUSTOMIZED
+	tp_int_count_clear();
+#endif
+
 	*host_get_memmap(EC_CUSTOMIZED_MEMMAP_SYSTEM_FLAGS) &= ~ACPI_DRIVER_READY;
 	*host_get_memmap(EC_MEMMAP_POWER_SLIDE) = 0x0;
 	*host_get_memmap(EC_MEMMAP_STT_TABLE_NUMBER) = 0x0;
@@ -280,6 +284,32 @@ DECLARE_HOST_COMMAND(EC_CMD_UPDATE_KEYBOARD_MATRIX, update_keyboard_matrix, EC_V
 
 static enum ec_status fp_led_level_control(struct host_cmd_handler_args *args)
 {
+	const struct ec_params_fp_led_control *p = args->params;
+	struct ec_response_fp_led_level *r = args->response;
+	uint8_t led_level = FP_LED_HIGH;
+
+	if (p->get_led_level) {
+		system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &r->level);
+		args->response_size = sizeof(*r);
+		return EC_RES_SUCCESS;
+	}
+
+	switch (p->set_led_level) {
+	case FP_LED_BRIGHTNESS_HIGH:
+		led_level = FP_LED_HIGH;
+		break;
+	case FP_LED_BRIGHTNESS_MEDIUM:
+		led_level = FP_LED_MEDIUM;
+		break;
+	case FP_LED_BRIGHTNESS_LOW:
+		led_level = FP_LED_LOW;
+		break;
+	default:
+		return EC_RES_INVALID_PARAM;
+	}
+
+	system_set_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, led_level);
+
 	return EC_RES_SUCCESS;
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_LED_LEVEL_CONTROL, fp_led_level_control, EC_VER_MASK(0));
@@ -350,15 +380,17 @@ DECLARE_HOST_COMMAND(EC_CMD_CHASSIS_COUNTER, chassis_counter, EC_VER_MASK(0));
 static enum ec_status  host_command_get_simple_version(struct host_cmd_handler_args *args)
 {
 	struct ec_response_get_custom_version *r = args->response;
-	char temp_version[32];
+	char temp_version[32] = {0};
 	int idx;
+	int shift = CONFIG_PLATFORM_SIMPLE_VERSION_SHIFT_IDX;
+	enum ec_image active_slot = system_get_active_copy();
 
-	strzcpy(temp_version, system_get_version(EC_IMAGE_RO),
+	strzcpy(temp_version, system_get_version(active_slot),
 		sizeof(temp_version));
 
-	for (idx = 0; idx < sizeof(r->simple_version); idx++) {
-		r->simple_version[idx] = temp_version[idx +
-			CONFIG_PLATFORM_SIMPLE_VERSION_SHIFT_IDX];
+	memset(r->simple_version, '\0', sizeof(r->simple_version));
+	for (idx = 0; idx < MIN(sizeof(r->simple_version), sizeof(temp_version) - shift); idx++) {
+		r->simple_version[idx] = temp_version[idx + shift];
 	}
 
 	args->response_size = sizeof(*r);

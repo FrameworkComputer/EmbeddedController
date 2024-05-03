@@ -81,6 +81,14 @@ config PD_CCG6_SOC_UART_DEBUG_PORT
 		EC needs to switch the external mux to turn on the path for SoC
 		uart.
 
+config PD_CCG6_WAIT_STABLE_TIMER
+	int "The timer to wait X ms to setup the PD chip"
+	default 0
+	depends on PD_CHIP_CCG6
+	help
+	    EC should wait X ms the PD chip run in stable mode then start to
+		communicate.
+
 config PD_COMMON_VBUS_CONTROL
 	bool "Enable CCG common vbus control"
 	help
@@ -92,7 +100,7 @@ config PLATFORM_SIMPLE_VERSION_SHIFT_IDX
 	default 18
 	help
 		The simple version will take commit from EC_IMAGE_RO, than we should shift
-		idx for retrieve commit id example ec:xxxxxx.
+		idx for retrieve commit id from, for example "marigold-1.00-7f2d422" (15 shift)
 
 config PLATFORM_MULTI_LED_FREQ
 	int "set the framework multifunction led flash frequency"
@@ -100,6 +108,13 @@ config PLATFORM_MULTI_LED_FREQ
 	help
 		The multifunction LED flash frequency is different on each project, use this
 		to configure the frequency. (unit milli period)
+
+config PLATFORM_IGNORED_TOUCHPAD_ID
+	bool "Enable ingonre check Touchpad board id"
+	default n
+	help
+		Enable this option if Touchpad board ID not current at the build phase
+		or need test others TP for verify.
 
 module = FRAMEWORK
 module-str = FRAMEWORK board-specific code

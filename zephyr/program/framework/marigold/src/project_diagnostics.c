@@ -20,9 +20,18 @@
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ## args)
 
-#define F75303_I2C_ADDR_FLAGS_4D 0x4D
-#define F75303_PRODUCT_ID 0xFD
+#define THERMAL_UN2_ADDR_FLAG_4D 0x4D
+#define F75303_PRODUCT_ID_ADDR 0xFD
 #define F75303_ID	0x21
+#define NCT7719W_PRODUCT_ID_ADDR 0xFE
+#define NCT7719W_ID 0x5C
+
+#define THERMAL_UN3_ADDR_FLAG_4C 0x4C
+#define UN3_PRODUCT_ID_ADDR 0xFE
+#define F75397_ID 0x50
+#define G788P81U_ID 0x47
+#define NCT7718W_ID 0x50
+
 
 void start_fan_deferred(void)
 {
@@ -33,7 +42,11 @@ DECLARE_DEFERRED(start_fan_deferred);
 
 void check_device_deferred(void)
 {
+#ifdef CONFIG_PLATFORM_IGNORED_TOUCHPAD_ID
+	int touchpad = BOARD_VERSION_10;
+#else
 	int touchpad = get_hardware_id(ADC_TOUCHPAD_ID);
+#endif /* CONFIG_PLATFORM_IGNORED_TOUCHPAD_ID */
 	int audio = get_hardware_id(ADC_AUDIO_ID);
 	int product_id;
 
@@ -41,7 +54,7 @@ void check_device_deferred(void)
 	if (battery_is_present() == BP_YES || get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_HW_NO_BATTERY, false);
 
-	if ((touchpad <= BOARD_VERSION_1 || touchpad >= BOARD_VERSION_14) &&
+	if ((touchpad < BOARD_VERSION_1 || touchpad >= BOARD_VERSION_14) &&
 		!get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_TOUCHPAD, true);
 
@@ -49,9 +62,16 @@ void check_device_deferred(void)
 		!get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_AUDIO_DAUGHTERBOARD, true);
 
-	i2c_read8(I2C_PORT_SENSOR, F75303_I2C_ADDR_FLAGS_4D, F75303_PRODUCT_ID, &product_id);
+	i2c_read8(I2C_PORT_SENSOR, THERMAL_UN2_ADDR_FLAG_4D, F75303_PRODUCT_ID_ADDR, &product_id);
+	if (product_id != F75303_ID) {
+		i2c_read8(I2C_PORT_SENSOR, THERMAL_UN2_ADDR_FLAG_4D, NCT7719W_PRODUCT_ID_ADDR,
+					 &product_id);
+		if (product_id != NCT7719W_ID)
+			set_diagnostic(DIAGNOSTICS_THERMAL_SENSOR, true);
+	}
 
-	if (product_id != F75303_ID)
+	i2c_read8(I2C_PORT_SENSOR, THERMAL_UN3_ADDR_FLAG_4C, UN3_PRODUCT_ID_ADDR, &product_id);
+	if (product_id != F75397_ID && product_id != G788P81U_ID && product_id != NCT7718W_ID)
 		set_diagnostic(DIAGNOSTICS_THERMAL_SENSOR, true);
 
 	if (!(fan_get_rpm_actual(0) > 100))
@@ -59,9 +79,6 @@ void check_device_deferred(void)
 
 	/* Exit the duty mode and let thermal to control the fan */
 	dptf_set_fan_duty_target(-1);
-
-	if (amd_ddr_initialized_check())
-		set_bios_diagnostic(CODE_DDR_FAIL);
 
 	set_device_complete(true);
 }

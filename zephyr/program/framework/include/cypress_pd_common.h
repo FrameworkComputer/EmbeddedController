@@ -426,6 +426,7 @@ enum ccg_response {
 
 enum ccg_pd_state {
 	CCG_STATE_ERROR,
+	CCG_STATE_WAIT_STABLE,
 	CCG_STATE_POWER_ON,
 	CCG_STATE_APP_SETUP,
 	CCG_STATE_READY,
@@ -607,9 +608,8 @@ void cypd_print_buff(const char *msg, void *buff, int len);
  *
  * @param power_state	Set PD power state
  * @param controller	PD chip controller
- * @return int
  */
-int cypd_set_power_state(int power_state, int controller);
+void cypd_set_power_state(int power_state, int controller);
 
 #ifdef CONFIG_PD_CHIP_CCG6
 /**
