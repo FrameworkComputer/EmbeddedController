@@ -331,6 +331,7 @@ test_static int test_derive_encryption_key_failure_rollback_fail(void)
 test_static int test_derive_positive_match_secret_fail_seed_not_set(void)
 {
 	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
 
 	/* GIVEN that seed is not set. */
 	TEST_ASSERT(!fp_tpm_seed_is_set());
@@ -339,8 +340,8 @@ test_static int test_derive_positive_match_secret_fail_seed_not_set(void)
 				       sizeof(fake_positive_match_salt)));
 
 	/* Deriving positive match secret will fail. */
-	TEST_ASSERT(derive_positive_match_secret(output,
-						 fake_positive_match_salt) ==
+	TEST_ASSERT(derive_positive_match_secret(
+			    output, fake_positive_match_salt, user_id) ==
 		    EC_ERROR_ACCESS_DENIED);
 
 	return EC_SUCCESS;
@@ -351,7 +352,7 @@ test_static int test_derive_new_pos_match_secret(void)
 	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
 
 	/* First, for empty user_id. */
-	memset(global_context.user_id, 0, sizeof(global_context.user_id));
+	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
 
 	/* GIVEN that the encryption salt is not trivial. */
 	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
@@ -368,20 +369,21 @@ test_static int test_derive_new_pos_match_secret(void)
 				       sizeof(fake_positive_match_salt)));
 
 	/* THEN the derivation will succeed. */
-	TEST_ASSERT(derive_positive_match_secret(
-			    output, fake_positive_match_salt) == EC_SUCCESS);
+	TEST_ASSERT(derive_positive_match_secret(output,
+						 fake_positive_match_salt,
+						 user_id) == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(
 		output, expected_positive_match_secret_for_empty_user_id,
 		sizeof(expected_positive_match_secret_for_empty_user_id));
 
 	/* Now change the user_id to be non-trivial. */
-	memcpy(global_context.user_id, fake_user_id, sizeof(fake_user_id));
-	TEST_ASSERT(derive_positive_match_secret(
-			    output, fake_positive_match_salt) == EC_SUCCESS);
+	memcpy(user_id.data(), fake_user_id, sizeof(fake_user_id));
+	TEST_ASSERT(derive_positive_match_secret(output,
+						 fake_positive_match_salt,
+						 user_id) == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(
 		output, expected_positive_match_secret_for_fake_user_id,
 		sizeof(expected_positive_match_secret_for_fake_user_id));
-	memset(global_context.user_id, 0, sizeof(global_context.user_id));
 
 	return EC_SUCCESS;
 }
@@ -389,6 +391,7 @@ test_static int test_derive_new_pos_match_secret(void)
 test_static int test_derive_positive_match_secret_fail_rollback_fail(void)
 {
 	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
 
 	/* GIVEN that reading secret from anti-rollback block will fail. */
 	mock_ctrl_rollback.get_secret_fail = true;
@@ -397,9 +400,9 @@ test_static int test_derive_positive_match_secret_fail_rollback_fail(void)
 				       sizeof(fake_positive_match_salt)));
 
 	/* Deriving positive match secret will fail. */
-	TEST_ASSERT(derive_positive_match_secret(output,
-						 fake_positive_match_salt) ==
-		    EC_ERROR_HW_INTERNAL);
+	TEST_ASSERT(
+		derive_positive_match_secret(output, fake_positive_match_salt,
+					     user_id) == EC_ERROR_HW_INTERNAL);
 	mock_ctrl_rollback.get_secret_fail = false;
 
 	return EC_SUCCESS;
@@ -408,12 +411,13 @@ test_static int test_derive_positive_match_secret_fail_rollback_fail(void)
 test_static int test_derive_positive_match_secret_fail_salt_trivial(void)
 {
 	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
 
 	/* GIVEN that the salt is trivial. */
 	static const uint8_t salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = { 0 };
 
 	/* THEN deriving positive match secret will fail. */
-	TEST_ASSERT(derive_positive_match_secret(output, salt) ==
+	TEST_ASSERT(derive_positive_match_secret(output, salt, user_id) ==
 		    EC_ERROR_INVAL);
 	return EC_SUCCESS;
 }
@@ -421,9 +425,10 @@ test_static int test_derive_positive_match_secret_fail_salt_trivial(void)
 test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 {
 	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
 
 	/* GIVEN that the user ID is set to a known value. */
-	memcpy(global_context.user_id, fake_user_id, sizeof(fake_user_id));
+	memcpy(user_id.data(), fake_user_id, sizeof(fake_user_id));
 
 	/*
 	 * GIVEN that the TPM seed is set, and reading the rollback secret will
@@ -441,9 +446,9 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 		MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_ZEROS;
 
 	/* THEN the derivation will fail with EC_ERROR_HW_INTERNAL. */
-	TEST_ASSERT(derive_positive_match_secret(output,
-						 fake_positive_match_salt) ==
-		    EC_ERROR_HW_INTERNAL);
+	TEST_ASSERT(
+		derive_positive_match_secret(output, fake_positive_match_salt,
+					     user_id) == EC_ERROR_HW_INTERNAL);
 
 	/* Now verify success is possible after reverting */
 
@@ -452,8 +457,9 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 		MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_REAL;
 
 	/* THEN the derivation will succeed */
-	TEST_ASSERT(derive_positive_match_secret(
-			    output, fake_positive_match_salt) == EC_SUCCESS);
+	TEST_ASSERT(derive_positive_match_secret(output,
+						 fake_positive_match_salt,
+						 user_id) == EC_SUCCESS);
 
 	/* Clean up any mock changes */
 	mock_ctrl_fpsensor_crypto = MOCK_CTRL_DEFAULT_FPSENSOR_CRYPTO;
@@ -464,9 +470,10 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
 {
 	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
 
 	/* GIVEN that the user ID is set to a known value. */
-	memcpy(global_context.user_id, fake_user_id, sizeof(fake_user_id));
+	memcpy(user_id.data(), fake_user_id, sizeof(fake_user_id));
 
 	/*
 	 * GIVEN that the TPM seed is set, and reading the rollback secret will
@@ -484,9 +491,9 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
 		MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_FF;
 
 	/* THEN the derivation will fail with EC_ERROR_HW_INTERNAL. */
-	TEST_ASSERT(derive_positive_match_secret(output,
-						 fake_positive_match_salt) ==
-		    EC_ERROR_HW_INTERNAL);
+	TEST_ASSERT(
+		derive_positive_match_secret(output, fake_positive_match_salt,
+					     user_id) == EC_ERROR_HW_INTERNAL);
 
 	/* Now verify success is possible after reverting */
 
@@ -495,8 +502,9 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
 		MOCK_CTRL_FPSENSOR_CRYPTO_HKDF_SHA256_TYPE_REAL;
 
 	/* THEN the derivation will succeed */
-	TEST_ASSERT(derive_positive_match_secret(
-			    output, fake_positive_match_salt) == EC_SUCCESS);
+	TEST_ASSERT(derive_positive_match_secret(output,
+						 fake_positive_match_salt,
+						 user_id) == EC_SUCCESS);
 
 	/* Clean up any mock changes */
 	mock_ctrl_fpsensor_crypto = MOCK_CTRL_DEFAULT_FPSENSOR_CRYPTO;

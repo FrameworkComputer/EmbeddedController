@@ -112,14 +112,15 @@ test_mockable bool hkdf_sha256(std::span<uint8_t> out_key,
 	return hkdf_sha256_impl(out_key, ikm, salt, info);
 }
 
-enum ec_error_list
-derive_positive_match_secret(std::span<uint8_t> output,
-			     std::span<const uint8_t> input_positive_match_salt)
+enum ec_error_list derive_positive_match_secret(
+	std::span<uint8_t> output,
+	std::span<const uint8_t> input_positive_match_salt,
+	std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id)
 {
 	enum ec_error_list ret;
 	CleanseWrapper<std::array<uint8_t, IKM_SIZE_BYTES> > ikm;
 	static const char info_prefix[] = "positive_match_secret for user ";
-	uint8_t info[sizeof(info_prefix) - 1 + sizeof(global_context.user_id)];
+	uint8_t info[sizeof(info_prefix) - 1 + user_id.size_bytes()];
 
 	if (bytes_are_trivial(input_positive_match_salt.data(),
 			      input_positive_match_salt.size())) {
@@ -135,8 +136,8 @@ derive_positive_match_secret(std::span<uint8_t> output,
 	}
 
 	memcpy(info, info_prefix, strlen(info_prefix));
-	memcpy(info + strlen(info_prefix), global_context.user_id,
-	       sizeof(global_context.user_id));
+	memcpy(info + strlen(info_prefix), user_id.data(),
+	       user_id.size_bytes());
 
 	if (!hkdf_sha256(output, ikm, input_positive_match_salt, info)) {
 		CPRINTS("Failed to perform HKDF");
