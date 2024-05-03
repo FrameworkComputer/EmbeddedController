@@ -270,7 +270,7 @@
 	label = "I2C_USB_C0_TCPC";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 
-	nct3808_C0: nct3808_C0@70 {
+	nct3808_C0: nct38xx@70 {
 		compatible = "nuvoton,nct38xx";
 		reg = <0x70>;
 
@@ -314,7 +314,7 @@
 		};
 	};
 
-		nct3808_C1: nct3807_C1@74 {
+		nct3808_C1: nct38xx@74 {
 		compatible = "nuvoton,nct38xx";
 		reg = <0x74>;
 
