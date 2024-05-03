@@ -24,8 +24,6 @@ extern "C" {
 
 /* --- Global variables defined in fpsensor_state_without_driver_info.c --- */
 
-/* Index of the last enrolled but not retrieved template. */
-extern uint16_t template_newly_enrolled;
 /* Number of used templates */
 extern uint16_t templ_valid;
 /* Bitmap of the templates with local modifications */
@@ -49,6 +47,8 @@ struct positive_match_secret_state {
 extern struct positive_match_secret_state positive_match_secret_state;
 
 struct fpsensor_context {
+	/** Index of the last enrolled but not retrieved template. */
+	uint16_t template_newly_enrolled;
 	/** Part of the IKM used to derive encryption keys received from the
 	 * TPM.
 	 */

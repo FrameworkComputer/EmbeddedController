@@ -110,7 +110,7 @@ static uint32_t fp_process_enroll(void)
 	int percent = 0;
 	int res;
 
-	if (template_newly_enrolled != FP_NO_SUCH_TEMPLATE)
+	if (global_context.template_newly_enrolled != FP_NO_SUCH_TEMPLATE)
 		CPRINTS("Warning: previously enrolled template has not been "
 			"read yet.");
 
@@ -127,7 +127,7 @@ static uint32_t fp_process_enroll(void)
 		if (res) {
 			res = EC_MKBP_FP_ERR_ENROLL_INTERNAL;
 		} else {
-			template_newly_enrolled = templ_valid;
+			global_context.template_newly_enrolled = templ_valid;
 			fp_enable_positive_match_secret(
 				templ_valid, &positive_match_secret_state);
 			fp_init_decrypted_template_state_with_user_id(
@@ -523,13 +523,14 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 				FP_CONTEXT_ENCRYPTION_SALT_BYTES);
 		trng_exit();
 
-		if (fgr == template_newly_enrolled) {
+		if (fgr == global_context.template_newly_enrolled) {
 			/*
 			 * Newly enrolled templates need new positive match
 			 * salt, new positive match secret and new validation
 			 * value.
 			 */
-			template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
+			global_context.template_newly_enrolled =
+				FP_NO_SUCH_TEMPLATE;
 			trng_init();
 			trng_rand_bytes(fp_positive_match_salt[fgr],
 					FP_POSITIVE_MATCH_SALT_BYTES);
@@ -788,7 +789,7 @@ fp_command_migrate_template_to_nonce_context(struct host_cmd_handler_args *args)
 	 * needs to be freshly generated.
 	 */
 	templ_dirty |= BIT(idx);
-	template_newly_enrolled = idx;
+	global_context.template_newly_enrolled = idx;
 
 	return EC_RES_SUCCESS;
 }

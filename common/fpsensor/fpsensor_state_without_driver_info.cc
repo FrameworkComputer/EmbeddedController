@@ -16,8 +16,6 @@ struct positive_match_secret_state
 						.val = 0,
 					} };
 
-/* Index of the last enrolled but not retrieved template. */
-uint16_t template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
 /* Number of used templates */
 test_mockable uint16_t templ_valid;
 /* Bitmap of the templates with local modifications */
@@ -29,10 +27,10 @@ atomic_t fp_events;
 
 uint32_t sensor_mode;
 
-struct fpsensor_context global_context = {
-	.tpm_seed = { 0 },
-	.user_id = { 0 },
-};
+struct fpsensor_context global_context = { .template_newly_enrolled =
+						   FP_NO_SUCH_TEMPLATE,
+					   .tpm_seed = { 0 },
+					   .user_id = { 0 } };
 
 int fp_tpm_seed_is_set(void)
 {
