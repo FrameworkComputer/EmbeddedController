@@ -5,6 +5,7 @@
 
 #include "uart.h"
 
+#include <stdint.h>
 #include <stdlib.h>
 
 #include <zephyr/logging/log.h>
@@ -288,6 +289,31 @@ static int cmd_pdc_dualrole(const struct shell *sh, size_t argc, char **argv)
 	return EC_SUCCESS;
 }
 
+static int cmd_pdc_trysrc(const struct shell *sh, size_t argc, char **argv)
+{
+	int rv;
+	uint8_t enable = 0;
+	char *e;
+
+	enable = strtoul(argv[1], &e, 10);
+	if (*e) {
+		shell_error(sh, "unable to parse TrySrc value");
+		return -EINVAL;
+	}
+	if (!(enable == 0 || enable == 1)) {
+		shell_error(sh, "expecting [0|1]");
+		return -EINVAL;
+	}
+
+	rv = pdc_power_mgmt_set_trysrc(0, enable);
+	if (rv) {
+		shell_error(sh, "Could not set trysrc %d", rv);
+		return rv;
+	}
+	shell_info(sh, "Try.SRC Forced %s", enable ? "ON" : "OFF");
+	return EC_SUCCESS;
+}
+
 static int cmd_pdc_reset(const struct shell *sh, size_t argc, char **argv)
 {
 	uint8_t port;
@@ -421,6 +447,10 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Set dualrole mode\n"
 		      "Usage: pdc dualrole  <port> [on|off|freeze|sink|source]",
 		      cmd_pdc_dualrole, 3, 0),
+	SHELL_CMD_ARG(trysrc, NULL,
+		      "Set trysrc mode\n"
+		      "Usage: pdc trysrc [0|1]",
+		      cmd_pdc_trysrc, 2, 0),
 	SHELL_CMD_ARG(conn_reset, NULL,
 		      "Trigger hard or data reset\n"
 		      "Usage: pdc conn_reset  <port> [hard|data]",

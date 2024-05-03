@@ -10,6 +10,7 @@
 #include <zephyr/ztest.h>
 
 #define TEST_PORT 0
+#define SLEEP_MS 120
 
 static void console_cmd_pdc_setup(void)
 {
@@ -38,4 +39,25 @@ ZTEST_USER(console_cmd_pdc, test_cable_prop)
 	rv = shell_execute_cmd(get_ec_shell(), "pdc cable_prop 0");
 	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
 		      rv);
+}
+
+ZTEST_USER(console_cmd_pdc, test_trysrc)
+{
+	int rv;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc enable");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+	k_sleep(K_MSEC(SLEEP_MS));
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 1");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+	k_sleep(K_MSEC(SLEEP_MS));
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 2");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
 }

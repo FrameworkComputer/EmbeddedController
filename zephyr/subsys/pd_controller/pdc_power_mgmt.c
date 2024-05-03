@@ -2713,6 +2713,20 @@ void pdc_power_mgmt_set_dual_role(int port, enum pd_dual_role_states state)
 	}
 }
 
+int pdc_power_mgmt_set_trysrc(int port, bool enable)
+{
+	int rv;
+
+	LOG_INF("PD setting TrySrc=%d", enable);
+	if (enable) {
+		rv = pdc_set_drp_mode(pdc_data[port]->port.pdc, DRP_TRY_SRC);
+	} else {
+		rv = pdc_set_drp_mode(pdc_data[port]->port.pdc, DRP_NORMAL);
+	}
+
+	return rv;
+}
+
 /**
  * PDC Chipset state Policies
  */

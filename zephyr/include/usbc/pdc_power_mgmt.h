@@ -507,4 +507,14 @@ enum usb_typec_current_t pdc_power_mgmt_get_default_current_limit(int port);
  */
 int pdc_power_mgmt_frs_enable(int port_num, bool enable);
 
+/**
+ * @brief Enable/Disable PDC TrySRC on a port
+ *
+ * @param port USB-C port number
+ * @param enable enable or disable TrySRC on port
+ *
+ * @retval 0 if successful or error code
+ */
+int pdc_power_mgmt_set_trysrc(int port, bool enable);
+
 #endif /* __CROS_EC_PDC_POWER_MGMT_H */
