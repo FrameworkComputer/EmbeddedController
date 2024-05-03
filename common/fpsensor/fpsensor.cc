@@ -138,7 +138,7 @@ static uint32_t fp_process_enroll(void)
 				global_context.templ_valid);
 			global_context.templ_valid++;
 		}
-		sensor_mode &= ~FP_MODE_ENROLL_SESSION;
+		global_context.sensor_mode &= ~FP_MODE_ENROLL_SESSION;
 		enroll_session &= ~FP_MODE_ENROLL_SESSION;
 	}
 	return EC_MKBP_FP_ENROLL | EC_MKBP_FP_ERRCODE(res) |
@@ -244,8 +244,8 @@ static void fp_process_finger(void)
 	int res;
 
 	CPRINTS("Capturing ...");
-	res = fp_acquire_image_with_mode(fp_buffer,
-					 FP_CAPTURE_TYPE(sensor_mode));
+	res = fp_acquire_image_with_mode(
+		fp_buffer, FP_CAPTURE_TYPE(global_context.sensor_mode));
 	capture_time_us = time_since32(t0);
 	if (!res) {
 		uint32_t evt = EC_MKBP_FP_IMAGE_READY;
@@ -263,12 +263,12 @@ static void fp_process_finger(void)
 		/* we need CPU power to do the computations */
 		ScopedFastCpu fast_cpu;
 
-		if (sensor_mode & FP_MODE_ENROLL_IMAGE)
+		if (global_context.sensor_mode & FP_MODE_ENROLL_IMAGE)
 			evt = fp_process_enroll();
-		else if (sensor_mode & FP_MODE_MATCH)
+		else if (global_context.sensor_mode & FP_MODE_MATCH)
 			evt = fp_process_match();
 
-		sensor_mode &= ~FP_MODE_ANY_CAPTURE;
+		global_context.sensor_mode &= ~FP_MODE_ANY_CAPTURE;
 		overall_time_us = time_since32(overall_t0);
 		send_mkbp_event(evt);
 	} else {
@@ -296,7 +296,7 @@ extern "C" void fp_task(void)
 		evt = task_wait_event(timeout_us);
 
 		if (evt & TASK_EVENT_UPDATE_CONFIG) {
-			uint32_t mode = sensor_mode;
+			uint32_t mode = global_context.sensor_mode;
 			/*
 			 * TODO(b/316859625): Remove CONFIG_ZEPHYR block after
 			 * migration to Zephyr is completed.
@@ -313,28 +313,29 @@ extern "C" void fp_task(void)
 			if ((mode ^ enroll_session) & FP_MODE_ENROLL_SESSION) {
 				if (mode & FP_MODE_ENROLL_SESSION) {
 					if (fp_enrollment_begin())
-						sensor_mode &=
+						global_context.sensor_mode &=
 							~FP_MODE_ENROLL_SESSION;
 				} else {
 					fp_enrollment_finish(NULL);
 				}
-				enroll_session = sensor_mode &
+				enroll_session = global_context.sensor_mode &
 						 FP_MODE_ENROLL_SESSION;
 			}
 			if (is_test_capture(mode)) {
 				fp_acquire_image_with_mode(
 					fp_buffer, FP_CAPTURE_TYPE(mode));
-				sensor_mode &= ~FP_MODE_CAPTURE;
+				global_context.sensor_mode &= ~FP_MODE_CAPTURE;
 				send_mkbp_event(EC_MKBP_FP_IMAGE_READY);
 				continue;
-			} else if (sensor_mode & FP_MODE_ANY_DETECT_FINGER) {
+			} else if (global_context.sensor_mode &
+				   FP_MODE_ANY_DETECT_FINGER) {
 				/* wait for a finger on the sensor */
 				fp_configure_detect();
 			}
-			if (sensor_mode & FP_MODE_DEEPSLEEP)
+			if (global_context.sensor_mode & FP_MODE_DEEPSLEEP)
 				/* Shutdown the sensor */
 				fp_sensor_low_power();
-			if (sensor_mode & FP_MODE_FINGER_UP)
+			if (global_context.sensor_mode & FP_MODE_FINGER_UP)
 				/* Poll the sensor to detect finger removal */
 				timeout_us = FINGER_POLLING_DELAY;
 			else
@@ -352,10 +353,12 @@ extern "C" void fp_task(void)
 #endif
 			} else if (mode & FP_MODE_RESET_SENSOR) {
 				fp_reset_and_clear_context();
-				sensor_mode &= ~FP_MODE_RESET_SENSOR;
+				global_context.sensor_mode &=
+					~FP_MODE_RESET_SENSOR;
 			} else if (mode & FP_MODE_SENSOR_MAINTENANCE) {
 				fp_maintenance();
-				sensor_mode &= ~FP_MODE_SENSOR_MAINTENANCE;
+				global_context.sensor_mode &=
+					~FP_MODE_SENSOR_MAINTENANCE;
 			} else {
 				fp_sensor_low_power();
 			}
@@ -373,27 +376,32 @@ extern "C" void fp_task(void)
 #else
 			gpio_disable_interrupt(GPIO_FPS_INT);
 #endif
-			if (sensor_mode & FP_MODE_ANY_DETECT_FINGER) {
+			if (global_context.sensor_mode &
+			    FP_MODE_ANY_DETECT_FINGER) {
 				st = fp_finger_status();
 				if (st == FINGER_PRESENT &&
-				    sensor_mode & FP_MODE_FINGER_DOWN) {
+				    global_context.sensor_mode &
+					    FP_MODE_FINGER_DOWN) {
 					CPRINTS("Finger!");
-					sensor_mode &= ~FP_MODE_FINGER_DOWN;
+					global_context.sensor_mode &=
+						~FP_MODE_FINGER_DOWN;
 					send_mkbp_event(EC_MKBP_FP_FINGER_DOWN);
 				}
 				if (st == FINGER_NONE &&
-				    sensor_mode & FP_MODE_FINGER_UP) {
-					sensor_mode &= ~FP_MODE_FINGER_UP;
+				    global_context.sensor_mode &
+					    FP_MODE_FINGER_UP) {
+					global_context.sensor_mode &=
+						~FP_MODE_FINGER_UP;
 					timeout_us = -1;
 					send_mkbp_event(EC_MKBP_FP_FINGER_UP);
 				}
 			}
 
 			if (st == FINGER_PRESENT &&
-			    sensor_mode & FP_MODE_ANY_CAPTURE)
+			    global_context.sensor_mode & FP_MODE_ANY_CAPTURE)
 				fp_process_finger();
 
-			if (sensor_mode & FP_MODE_ANY_WAIT_IRQ) {
+			if (global_context.sensor_mode & FP_MODE_ANY_WAIT_IRQ) {
 				fp_configure_detect();
 
 				/* In Zephyr FPMCU interrupts are enabled by the
@@ -473,7 +481,7 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 		/* The host requested a frame. */
 		if (system_is_locked())
 			return EC_RES_ACCESS_DENIED;
-		if (!is_raw_capture(sensor_mode))
+		if (!is_raw_capture(global_context.sensor_mode))
 			offset += FP_SENSOR_IMAGE_OFFSET;
 
 		ret = validate_fp_buffer_offset(sizeof(fp_buffer), offset,

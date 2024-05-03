@@ -172,7 +172,7 @@ static int validate_fp_mode(const uint32_t mode)
 {
 	uint32_t capture_type = FP_CAPTURE_TYPE(mode);
 	uint32_t algo_mode = mode & ~FP_MODE_CAPTURE_TYPE_MASK;
-	uint32_t cur_mode = sensor_mode;
+	uint32_t cur_mode = global_context.sensor_mode;
 
 	if (capture_type >= FP_CAPTURE_TYPE_MAX)
 		return EC_ERROR_INVAL;
@@ -212,11 +212,11 @@ enum ec_status fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output)
 	}
 
 	if (!(mode & FP_MODE_DONT_CHANGE)) {
-		sensor_mode = mode;
+		global_context.sensor_mode = mode;
 		task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_UPDATE_CONFIG);
 	}
 
-	*mode_output = sensor_mode;
+	*mode_output = global_context.sensor_mode;
 	return EC_RES_SUCCESS;
 }
 
@@ -242,7 +242,7 @@ static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 
 	switch (p->action) {
 	case FP_CONTEXT_ASYNC:
-		if (sensor_mode & FP_MODE_RESET_SENSOR)
+		if (global_context.sensor_mode & FP_MODE_RESET_SENSOR)
 			return EC_RES_BUSY;
 
 		/**
@@ -254,7 +254,7 @@ static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 		return fp_set_sensor_mode(FP_MODE_RESET_SENSOR, &mode_output);
 
 	case FP_CONTEXT_GET_RESULT:
-		if (sensor_mode & FP_MODE_RESET_SENSOR)
+		if (global_context.sensor_mode & FP_MODE_RESET_SENSOR)
 			return EC_RES_BUSY;
 
 		if (global_context.fp_encryption_status &

@@ -128,26 +128,26 @@ test_static enum ec_error_list test_fp_set_sensor_mode(void)
 
 	/* Validate initial conditions */
 	TEST_ASSERT(global_context.templ_valid == 0);
-	TEST_ASSERT(sensor_mode == 0);
+	TEST_ASSERT(global_context.sensor_mode == 0);
 
 	/* GIVEN missing output parameter, THEN get error */
 	TEST_ASSERT(fp_set_sensor_mode(0, NULL) == EC_RES_INVALID_PARAM);
 	/* THEN sensor_mode is unchanged */
-	TEST_ASSERT(sensor_mode == 0);
+	TEST_ASSERT(global_context.sensor_mode == 0);
 
 	/* GIVEN requested mode includes FP_MODE_DONT_CHANGE, THEN succeed */
-	TEST_ASSERT(sensor_mode == 0);
+	TEST_ASSERT(global_context.sensor_mode == 0);
 	TEST_ASSERT(output_mode == 0);
 	requested_mode = FP_MODE_DONT_CHANGE;
 	TEST_ASSERT(fp_set_sensor_mode(requested_mode, &output_mode) ==
 		    EC_RES_SUCCESS);
 	/* THEN sensor_mode is unchanged */
-	TEST_ASSERT(sensor_mode == 0);
+	TEST_ASSERT(global_context.sensor_mode == 0);
 	/* THEN output_mode matches sensor_mode */
-	TEST_ASSERT(output_mode == sensor_mode);
+	TEST_ASSERT(output_mode == global_context.sensor_mode);
 
 	/* GIVEN request to change to valid sensor mode */
-	TEST_ASSERT(sensor_mode == 0);
+	TEST_ASSERT(global_context.sensor_mode == 0);
 	requested_mode = FP_MODE_ENROLL_SESSION;
 	/* THEN succeed */
 	TEST_ASSERT(fp_set_sensor_mode(requested_mode, &output_mode) ==
@@ -155,10 +155,10 @@ test_static enum ec_error_list test_fp_set_sensor_mode(void)
 	/* THEN requested mode is returned */
 	TEST_ASSERT(requested_mode == output_mode);
 	/* THEN sensor_mode is updated */
-	TEST_ASSERT(sensor_mode == requested_mode);
+	TEST_ASSERT(global_context.sensor_mode == requested_mode);
 
 	/* GIVEN max number of fingers already enrolled */
-	sensor_mode = 0;
+	global_context.sensor_mode = 0;
 	output_mode = 0xdeadbeef;
 	global_context.templ_valid = FP_MAX_FINGER_COUNT;
 	requested_mode = FP_MODE_ENROLL_SESSION;
@@ -168,7 +168,7 @@ test_static enum ec_error_list test_fp_set_sensor_mode(void)
 	/* THEN output parameters is unchanged */
 	TEST_ASSERT(output_mode = 0xdeadbeef);
 	/* THEN sensor_mode is unchanged */
-	TEST_ASSERT(sensor_mode == 0);
+	TEST_ASSERT(global_context.sensor_mode == 0);
 
 	return EC_SUCCESS;
 }
@@ -178,14 +178,14 @@ test_static enum ec_error_list test_fp_set_maintenance_mode(void)
 	uint32_t output_mode = 0;
 
 	/* GIVEN request to change to maintenance sensor mode */
-	TEST_ASSERT(sensor_mode == 0);
+	TEST_ASSERT(global_context.sensor_mode == 0);
 	/* THEN succeed */
 	TEST_ASSERT(fp_set_sensor_mode(FP_MODE_SENSOR_MAINTENANCE,
 				       &output_mode) == EC_RES_SUCCESS);
 	/* THEN requested mode is returned */
 	TEST_ASSERT(output_mode == FP_MODE_SENSOR_MAINTENANCE);
 	/* THEN sensor_mode is updated */
-	TEST_ASSERT(sensor_mode == FP_MODE_SENSOR_MAINTENANCE);
+	TEST_ASSERT(global_context.sensor_mode == FP_MODE_SENSOR_MAINTENANCE);
 
 	return EC_SUCCESS;
 }
