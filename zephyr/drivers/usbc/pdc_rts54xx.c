@@ -79,10 +79,26 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 
 /**
  * @brief Offsets of data fields in the GET_IC_STATUS response
+ *
+ * Note that in the Realtek spec version 3.3.22, bit offsets and byte
+ * numbers are inconsistent. Byte numbers appear to be accurate.
+ *
+ * "Data Byte 0" is the first byte after "Byte Count" and is available
+ * at .rd_buf[1].
  */
-#define RTS54XX_GET_IC_STATUS_FWVER_MAJOR_OFFSET (4)
-#define RTS54XX_GET_IC_STATUS_FWVER_MINOR_OFFSET (5)
-#define RTS54XX_GET_IC_STATUS_FWVER_PATCH_OFFSET (6)
+#define RTS54XX_GET_IC_STATUS_RUNNING_FLASH_CODE 1
+#define RTS54XX_GET_IC_STATUS_FWVER_MAJOR_OFFSET 4
+#define RTS54XX_GET_IC_STATUS_FWVER_MINOR_OFFSET 5
+#define RTS54XX_GET_IC_STATUS_FWVER_PATCH_OFFSET 6
+#define RTS54XX_GET_IC_STATUS_VID_L 10
+#define RTS54XX_GET_IC_STATUS_VID_H 11
+#define RTS54XX_GET_IC_STATUS_PID_L 12
+#define RTS54XX_GET_IC_STATUS_PID_H 13
+#define RTS54XX_GET_IC_STATUS_RUNNING_FLASH_BANK 15
+#define RTS54XX_GET_IC_STATUS_PD_REV_MAJOR_OFFSET 23
+#define RTS54XX_GET_IC_STATUS_PD_REV_MINOR_OFFSET 24
+#define RTS54XX_GET_IC_STATUS_PD_VER_MAJOR_OFFSET 25
+#define RTS54XX_GET_IC_STATUS_PD_VER_MINOR_OFFSET 26
 
 /**
  * @brief Macro to transition to init or idle state and return
@@ -1156,10 +1172,11 @@ static void st_read_run(void *o)
 	case CMD_GET_IC_STATUS: {
 		struct pdc_info_t *info = (struct pdc_info_t *)data->user_buf;
 
-		/* Realtek Is running flash code: Byte 1 */
-		info->is_running_flash_code = data->rd_buf[1];
+		/* Realtek Is running flash code: Data Byte0 */
+		info->is_running_flash_code =
+			data->rd_buf[RTS54XX_GET_IC_STATUS_RUNNING_FLASH_CODE];
 
-		/* Realtek FW main version: Byte4, Byte5, Byte6 */
+		/* Realtek FW main version: Data Byte3..5 */
 		info->fw_version =
 			data->rd_buf[RTS54XX_GET_IC_STATUS_FWVER_MAJOR_OFFSET]
 				<< 16 |
@@ -1167,20 +1184,28 @@ static void st_read_run(void *o)
 				<< 8 |
 			data->rd_buf[RTS54XX_GET_IC_STATUS_FWVER_PATCH_OFFSET];
 
-		/* Realtek VID PID: Byte10, Byte11, Byte12, Byte13
-		 * (little-endian) */
-		info->vid_pid = data->rd_buf[11] << 24 |
-				data->rd_buf[10] << 16 | data->rd_buf[13] << 8 |
-				data->rd_buf[12];
+		/* Realtek VID PID: Data Byte9..12 (little-endian) */
+		info->vid_pid =
+			data->rd_buf[RTS54XX_GET_IC_STATUS_VID_H] << 24 |
+			data->rd_buf[RTS54XX_GET_IC_STATUS_VID_L] << 16 |
+			data->rd_buf[RTS54XX_GET_IC_STATUS_PID_H] << 8 |
+			data->rd_buf[RTS54XX_GET_IC_STATUS_PID_L];
 
-		/* Realtek Running flash bank offset: Byte15 */
-		info->running_in_flash_bank = data->rd_buf[15];
+		/* Realtek Running flash bank offset: Data Byte14 */
+		info->running_in_flash_bank =
+			data->rd_buf[RTS54XX_GET_IC_STATUS_RUNNING_FLASH_BANK];
 
-		/* Realtek PD Revision: Byte23, Byte24 (big-endian) */
-		info->pd_revision = data->rd_buf[23] << 8 | data->rd_buf[24];
+		/* Realtek PD Revision: Data Byte22..23 (big-endian) */
+		info->pd_revision =
+			data->rd_buf[RTS54XX_GET_IC_STATUS_PD_REV_MAJOR_OFFSET]
+				<< 8 |
+			data->rd_buf[RTS54XX_GET_IC_STATUS_PD_REV_MINOR_OFFSET];
 
-		/* Realtek PD Version: Byte25, Byte26 (big-endian) */
-		info->pd_version = data->rd_buf[25] << 8 | data->rd_buf[26];
+		/* Realtek PD Version: Data Byte24..25 (big-endian) */
+		info->pd_version =
+			data->rd_buf[RTS54XX_GET_IC_STATUS_PD_VER_MAJOR_OFFSET]
+				<< 8 |
+			data->rd_buf[RTS54XX_GET_IC_STATUS_PD_VER_MINOR_OFFSET];
 
 		/* Only print this log on init */
 		if (data->init_local_state != INIT_PDC_COMPLETE) {
