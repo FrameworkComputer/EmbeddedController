@@ -326,6 +326,17 @@ ZTEST(one_wire_uart_driver, test_max_retry_count)
 	zassert_equal(k_msgq_num_used_get(data->tx_queue), 0);
 }
 
+ZTEST(one_wire_uart_driver, test_disable)
+{
+	struct one_wire_uart_data *data = dev->data;
+	struct k_msgq *tx_queue = data->tx_queue;
+
+	one_wire_uart_disable(dev);
+
+	zassert_equal(one_wire_uart_send(dev, 1, NULL, 0), -ESHUTDOWN);
+	zassert_equal(k_msgq_num_used_get(tx_queue), 0);
+}
+
 struct one_wire_uart_fixture {
 	one_wire_uart_msg_received_cb_t orig_cb;
 };
@@ -345,6 +356,7 @@ static void *one_wire_uart_setup(void)
 
 static void one_wire_uart_driver_before(void *f)
 {
+	one_wire_uart_enable(dev);
 	one_wire_uart_reset(dev);
 
 	RESET_FAKE(on_message_received);

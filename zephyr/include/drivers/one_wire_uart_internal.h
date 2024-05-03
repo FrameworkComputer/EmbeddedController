@@ -57,6 +57,8 @@ struct one_wire_uart_data {
 	bool msg_pending;
 	timestamp_t last_send_time;
 	int retry_count;
+
+	bool enabled;
 };
 
 enum RoachCommand {
