@@ -40,11 +40,12 @@ BUILD_ASSERT(IKM_SIZE_BYTES == 64);
 #endif
 
 test_export_static enum ec_error_list
-get_ikm(std::span<uint8_t, IKM_SIZE_BYTES> ikm)
+get_ikm(std::span<uint8_t, IKM_SIZE_BYTES> ikm,
+	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed)
 {
 	enum ec_error_list ret;
 
-	if (!fp_tpm_seed_is_set()) {
+	if (bytes_are_trivial(tpm_seed.data(), tpm_seed.size_bytes())) {
 		CPRINTS("Seed hasn't been set.");
 		return EC_ERROR_ACCESS_DENIED;
 	}
@@ -62,8 +63,8 @@ get_ikm(std::span<uint8_t, IKM_SIZE_BYTES> ikm)
 	 * IKM is the concatenation of the rollback secret and the seed from
 	 * the TPM.
 	 */
-	memcpy(ikm.data() + CONFIG_ROLLBACK_SECRET_SIZE,
-	       global_context.tpm_seed, sizeof(global_context.tpm_seed));
+	memcpy(ikm.data() + CONFIG_ROLLBACK_SECRET_SIZE, tpm_seed.data(),
+	       tpm_seed.size_bytes());
 
 #ifdef CONFIG_OTP_KEY
 	uint8_t otp_key[OTP_KEY_SIZE_BYTES] = { 0 };
@@ -129,7 +130,7 @@ enum ec_error_list derive_positive_match_secret(
 		return EC_ERROR_INVAL;
 	}
 
-	ret = get_ikm(ikm);
+	ret = get_ikm(ikm, global_context.tpm_seed);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to get IKM: %d", ret);
 		return ret;
@@ -169,7 +170,7 @@ derive_encryption_key_with_info(std::span<uint8_t> out_key,
 		return EC_ERROR_INVAL;
 	}
 
-	ret = get_ikm(ikm);
+	ret = get_ikm(ikm, global_context.tpm_seed);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to get IKM: %d", ret);
 		return ret;
