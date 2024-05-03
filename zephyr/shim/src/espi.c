@@ -78,28 +78,28 @@ static bool init_done;
  * functional application of M to 2-tuples of (platform/ec signal,
  * zephyr vwire).
  */
-#define VW_SIGNAL_TRANSLATION_LIST(M)                                      \
-	M(VW_SLP_S3_L, ESPI_VWIRE_SIGNAL_SLP_S3)                           \
-	M(VW_SLP_S4_L, ESPI_VWIRE_SIGNAL_SLP_S4)                           \
-	M(VW_SLP_S5_L, ESPI_VWIRE_SIGNAL_SLP_S5)                           \
-	M(VW_SUS_STAT_L, ESPI_VWIRE_SIGNAL_SUS_STAT)                       \
-	M(VW_PLTRST_L, ESPI_VWIRE_SIGNAL_PLTRST)                           \
-	M(VW_OOB_RST_WARN, ESPI_VWIRE_SIGNAL_OOB_RST_WARN)                 \
-	M(VW_OOB_RST_ACK, ESPI_VWIRE_SIGNAL_OOB_RST_ACK)                   \
-	M(VW_WAKE_L, ESPI_VWIRE_SIGNAL_WAKE)                               \
-	M(VW_PME_L, ESPI_VWIRE_SIGNAL_PME)                                 \
-	M(VW_ERROR_FATAL, ESPI_VWIRE_SIGNAL_ERR_FATAL)                     \
-	M(VW_ERROR_NON_FATAL, ESPI_VWIRE_SIGNAL_ERR_NON_FATAL)             \
-	M(VW_PERIPHERAL_BTLD_STATUS_DONE, ESPI_VWIRE_SIGNAL_SLV_BOOT_DONE) \
-	M(VW_SCI_L, ESPI_VWIRE_SIGNAL_SCI)                                 \
-	M(VW_SMI_L, ESPI_VWIRE_SIGNAL_SMI)                                 \
-	M(VW_HOST_RST_ACK, ESPI_VWIRE_SIGNAL_HOST_RST_ACK)                 \
-	M(VW_HOST_RST_WARN, ESPI_VWIRE_SIGNAL_HOST_RST_WARN)               \
-	M(VW_SUS_ACK, ESPI_VWIRE_SIGNAL_SUS_ACK)                           \
-	M(VW_SUS_WARN_L, ESPI_VWIRE_SIGNAL_SUS_WARN)                       \
-	M(VW_SUS_PWRDN_ACK_L, ESPI_VWIRE_SIGNAL_SUS_PWRDN_ACK)             \
-	M(VW_SLP_A_L, ESPI_VWIRE_SIGNAL_SLP_A)                             \
-	M(VW_SLP_LAN, ESPI_VWIRE_SIGNAL_SLP_LAN)                           \
+#define VW_SIGNAL_TRANSLATION_LIST(M)                                         \
+	M(VW_SLP_S3_L, ESPI_VWIRE_SIGNAL_SLP_S3)                              \
+	M(VW_SLP_S4_L, ESPI_VWIRE_SIGNAL_SLP_S4)                              \
+	M(VW_SLP_S5_L, ESPI_VWIRE_SIGNAL_SLP_S5)                              \
+	M(VW_SUS_STAT_L, ESPI_VWIRE_SIGNAL_SUS_STAT)                          \
+	M(VW_PLTRST_L, ESPI_VWIRE_SIGNAL_PLTRST)                              \
+	M(VW_OOB_RST_WARN, ESPI_VWIRE_SIGNAL_OOB_RST_WARN)                    \
+	M(VW_OOB_RST_ACK, ESPI_VWIRE_SIGNAL_OOB_RST_ACK)                      \
+	M(VW_WAKE_L, ESPI_VWIRE_SIGNAL_WAKE)                                  \
+	M(VW_PME_L, ESPI_VWIRE_SIGNAL_PME)                                    \
+	M(VW_ERROR_FATAL, ESPI_VWIRE_SIGNAL_ERR_FATAL)                        \
+	M(VW_ERROR_NON_FATAL, ESPI_VWIRE_SIGNAL_ERR_NON_FATAL)                \
+	M(VW_PERIPHERAL_BTLD_STATUS_DONE, ESPI_VWIRE_SIGNAL_TARGET_BOOT_DONE) \
+	M(VW_SCI_L, ESPI_VWIRE_SIGNAL_SCI)                                    \
+	M(VW_SMI_L, ESPI_VWIRE_SIGNAL_SMI)                                    \
+	M(VW_HOST_RST_ACK, ESPI_VWIRE_SIGNAL_HOST_RST_ACK)                    \
+	M(VW_HOST_RST_WARN, ESPI_VWIRE_SIGNAL_HOST_RST_WARN)                  \
+	M(VW_SUS_ACK, ESPI_VWIRE_SIGNAL_SUS_ACK)                              \
+	M(VW_SUS_WARN_L, ESPI_VWIRE_SIGNAL_SUS_WARN)                          \
+	M(VW_SUS_PWRDN_ACK_L, ESPI_VWIRE_SIGNAL_SUS_PWRDN_ACK)                \
+	M(VW_SLP_A_L, ESPI_VWIRE_SIGNAL_SLP_A)                                \
+	M(VW_SLP_LAN, ESPI_VWIRE_SIGNAL_SLP_LAN)                              \
 	M(VW_SLP_WLAN, ESPI_VWIRE_SIGNAL_SLP_WLAN)
 
 /*

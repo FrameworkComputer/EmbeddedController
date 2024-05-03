@@ -60,7 +60,7 @@ __override void board_overcurrent_event(int port, int is_overcurrented)
 	 * Meteorlake PCH uses Virtual Wire for over current error,
 	 * hence Send 'Over Current Virtual Wire' eSPI signal.
 	 */
-	espi_send_vwire(espi_dev, port + ESPI_VWIRE_SIGNAL_SLV_GPIO_0,
+	espi_send_vwire(espi_dev, port + ESPI_VWIRE_SIGNAL_TARGET_GPIO_0,
 			!is_overcurrented);
 }
 
