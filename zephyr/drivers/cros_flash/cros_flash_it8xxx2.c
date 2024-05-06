@@ -337,6 +337,9 @@ static uint32_t cros_flash_it8xxx2_get_protect_flags(const struct device *dev)
 
 	flags |= flash_check_wp();
 
+	if (data->all_protected)
+		flags |= EC_FLASH_PROTECT_ALL_NOW;
+
 	/* Check if blocks were stuck locked at pre-init */
 	if (data->stuck_locked)
 		flags |= EC_FLASH_PROTECT_ERROR_STUCK;
@@ -393,10 +396,6 @@ static int cros_flash_it8xxx2_protect_now(const struct device *dev, int all)
 {
 	struct gctrl_it8xxx2_regs *const gctrl_base = GCTRL_IT8XXX2_REG_BASE;
 	struct cros_flash_it8xxx2_data *const data = DRV_DATA(dev);
-
-	if (gctrl_base->GCTRL_EPLR & IT8XXX2_GCTRL_EPLR_ENABLE) {
-		return -EACCES;
-	}
 
 	if (all) {
 		/* Protect the entire flash */
