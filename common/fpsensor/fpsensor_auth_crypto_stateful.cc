@@ -113,14 +113,16 @@ decrypt_data(const struct fp_auth_command_encryption_metadata &info,
 }
 
 bssl::UniquePtr<EC_KEY> decrypt_private_key(
-	const struct fp_encrypted_private_key &encrypted_private_key)
+	const struct fp_encrypted_private_key &encrypted_private_key,
+	std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id,
+	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed)
 {
 	CleanseWrapper<std::array<uint8_t, sizeof(encrypted_private_key.data)> >
 		privkey;
 
-	enum ec_error_list ret = decrypt_data(
-		encrypted_private_key.info, global_context.user_id,
-		global_context.tpm_seed, encrypted_private_key.data, privkey);
+	enum ec_error_list ret =
+		decrypt_data(encrypted_private_key.info, user_id, tpm_seed,
+			     encrypted_private_key.data, privkey);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to decrypt private key");
 		return nullptr;

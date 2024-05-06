@@ -88,7 +88,8 @@ test_static enum ec_error_list test_fp_encrypt_decrypt_key(void)
 
 	TEST_EQ(enc_key->info.struct_version, version, "%d");
 
-	bssl::UniquePtr<EC_KEY> out_key = decrypt_private_key(*enc_key);
+	bssl::UniquePtr<EC_KEY> out_key = decrypt_private_key(
+		*enc_key, global_context.user_id, global_context.tpm_seed);
 
 	TEST_NE(key.get(), nullptr, "%p");
 

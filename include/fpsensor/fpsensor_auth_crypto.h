@@ -122,12 +122,16 @@ decrypt_data(const struct fp_auth_command_encryption_metadata &info,
  * seed, rollback secret and user_id.
  *
  * @param[in] encrypted_private_key encrypted private key
+ * @param[in] user_id the user_id used for deriving secret
+ * @param[in] tpm_seed the seed from the TPM for deriving secret
  *
  * @return EC_SUCCESS on success
  * @return EC_ERROR_* on error
  */
 bssl::UniquePtr<EC_KEY> decrypt_private_key(
-	const struct fp_encrypted_private_key &encrypted_private_key);
+	const struct fp_encrypted_private_key &encrypted_private_key,
+	std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id,
+	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed);
 
 /**
  * Generate the ECDH shared secret from private key and public key.

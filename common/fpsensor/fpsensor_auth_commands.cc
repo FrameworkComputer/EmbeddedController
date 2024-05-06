@@ -102,8 +102,9 @@ fp_command_establish_pairing_key_wrap(struct host_cmd_handler_args *args)
 
 	ScopedFastCpu fast_cpu;
 
-	bssl::UniquePtr<EC_KEY> private_key =
-		decrypt_private_key(params->encrypted_private_key);
+	bssl::UniquePtr<EC_KEY> private_key = decrypt_private_key(
+		params->encrypted_private_key, global_context.user_id,
+		global_context.tpm_seed);
 	if (private_key == nullptr) {
 		return EC_RES_UNAVAILABLE;
 	}
