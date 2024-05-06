@@ -1667,10 +1667,12 @@ static void pdc_send_cmd_start_run(void *obj)
 	 * If the PDC is still processing a command (not in the IDLE state),
 	 * then will remain in this state and CCI_CMD_COMPLETED can be set via
 	 * the cci_event_cb function when the PDC driver finishes with the
-	 * previous command. This flag is only meaningful for the command that
-	 * was just sent to the PDC.
+	 * previous command, which previously didn't complete or fail within
+	 * WAIT_MAX. This flag is only meaningful for the command that was just
+	 * sent to the PDC.
 	 */
 	atomic_clear_bit(port->cci_flags, CCI_CMD_COMPLETED);
+	atomic_clear_bit(port->cci_flags, CCI_ERROR);
 
 	/* Test if command was successful. If not, try again until max
 	 * retries is reached */
