@@ -194,11 +194,11 @@
 /* Timer selection */
 #define UNUSED_TIMER_1 1
 #define TIM_CLOCK32 2
-#define JTAG_TIMER 3
+#define UNUSED_TIMER_3 3
 #define UNUSED_TIMER_4 4
 #define UNUSED_TIMER_5 5
 #define BITBANG_TIMER 6
-#define UNUSED_TIMER_7 7
+#define JTAG_TIMER 7
 #define UNUSED_TIMER_8 8
 #define UNUSED_TIMER_15 15
 #define UNUSED_TIMER_16 16

@@ -199,12 +199,6 @@ static void board_init(void)
 	usart_init(&usart4);
 	usart_init(&usart5);
 
-	/*
-	 * Enable TIMER3 in downward mode for precise JTAG bit-banging.
-	 */
-	STM32_RCC_APB1ENR1 |= STM32_RCC_APB1ENR1_TIM3EN;
-	STM32_TIM_CR1(3) = STM32_TIM_CR1_DIR_DOWN | STM32_TIM_CR1_CEN;
-
 	/* Enable ADC */
 	STM32_RCC_AHB2ENR |= STM32_RCC_AHB2ENR_ADCEN;
 	/* Initialize the ADC by performing a fake reading */
