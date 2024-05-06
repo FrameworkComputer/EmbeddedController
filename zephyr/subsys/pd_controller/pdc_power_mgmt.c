@@ -2056,26 +2056,34 @@ static const struct smf_state pdc_states[] = {
 static void pdc_cci_handler_cb(union cci_event_t cci_event, void *cb_data)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)cb_data;
+	bool post_event = false;
 
 	/* Handle busy event from driver */
 	if (cci_event.busy) {
 		atomic_set_bit(port->cci_flags, CCI_BUSY);
+		post_event = true;
 	}
 
 	/* Handle error event from driver */
 	if (cci_event.error) {
 		atomic_set_bit(port->cci_flags, CCI_ERROR);
+		post_event = true;
 	}
 
 	/* Handle command completed event from driver */
 	if (cci_event.command_completed) {
 		atomic_set_bit(port->cci_flags, CCI_CMD_COMPLETED);
+		post_event = true;
 	}
 
 	/* Handle generic vendor defined event from driver */
 	if (cci_event.vendor_defined_indicator) {
 		atomic_set_bit(port->cci_flags, CCI_EVENT);
+		post_event = true;
 	}
+
+	if (post_event)
+		k_event_post(&port->sm_event, PDC_SM_EVENT);
 }
 
 static void init_port_variables(struct pdc_port_t *port)
