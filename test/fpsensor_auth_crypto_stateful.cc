@@ -80,7 +80,8 @@ test_static enum ec_error_list test_fp_encrypt_decrypt_key(void)
 
 	TEST_NE(key.get(), nullptr, "%p");
 
-	auto enc_key = create_encrypted_private_key(*key, version);
+	auto enc_key = create_encrypted_private_key(
+		*key, version, global_context.user_id, global_context.tpm_seed);
 	TEST_ASSERT(enc_key.has_value());
 
 	TEST_EQ(enc_key->info.struct_version, version, "%d");

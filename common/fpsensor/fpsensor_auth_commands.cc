@@ -67,7 +67,9 @@ fp_command_establish_pairing_key_keygen(struct host_cmd_handler_args *args)
 
 	std::optional<fp_encrypted_private_key> encrypted_private_key =
 		create_encrypted_private_key(*ecdh_key,
-					     FP_AES_KEY_ENC_METADATA_VERSION);
+					     FP_AES_KEY_ENC_METADATA_VERSION,
+					     global_context.user_id,
+					     global_context.tpm_seed);
 	if (!encrypted_private_key.has_value()) {
 		CPRINTS("pairing_keygen: Failed to fill response encrypted private key");
 		return EC_RES_UNAVAILABLE;

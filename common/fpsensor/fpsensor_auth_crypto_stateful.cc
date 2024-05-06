@@ -59,8 +59,10 @@ encrypt_data_in_place(uint16_t version,
 	return EC_SUCCESS;
 }
 
-std::optional<fp_encrypted_private_key>
-create_encrypted_private_key(const EC_KEY &key, uint16_t version)
+std::optional<fp_encrypted_private_key> create_encrypted_private_key(
+	const EC_KEY &key, uint16_t version,
+	std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id,
+	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed)
 {
 	fp_encrypted_private_key enc_key;
 
@@ -69,8 +71,7 @@ create_encrypted_private_key(const EC_KEY &key, uint16_t version)
 		return std::nullopt;
 	}
 
-	if (encrypt_data_in_place(version, enc_key.info, global_context.user_id,
-				  global_context.tpm_seed,
+	if (encrypt_data_in_place(version, enc_key.info, user_id, tpm_seed,
 				  enc_key.data) != EC_SUCCESS) {
 		return std::nullopt;
 	}

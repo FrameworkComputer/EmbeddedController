@@ -83,12 +83,16 @@ encrypt_data_in_place(uint16_t version,
  *
  * @param[in] key the private
  * @param[in] version the version of the encryption method
+ * @param[in] user_id the user_id used for deriving secret
+ * @param[in] tpm_seed the seed from the TPM for deriving secret
  *
  * @return @p fp_encrypted_private_key on success
  * @return std::nullopt on error
  */
-std::optional<fp_encrypted_private_key>
-create_encrypted_private_key(const EC_KEY &key, uint16_t version);
+std::optional<fp_encrypted_private_key> create_encrypted_private_key(
+	const EC_KEY &key, uint16_t version,
+	std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id,
+	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed);
 
 /**
  * Decrypt the encrypted data.
