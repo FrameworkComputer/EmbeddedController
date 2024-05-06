@@ -31,6 +31,8 @@ extern "C" {
 enum ec_error_list
 encrypt_data_in_place(uint16_t version,
 		      struct fp_auth_command_encryption_metadata &info,
+		      std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id,
+		      std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed,
 		      std::span<uint8_t> data)
 {
 	if (version != 1) {
@@ -42,10 +44,8 @@ encrypt_data_in_place(uint16_t version,
 	RAND_bytes(info.encryption_salt, sizeof(info.encryption_salt));
 
 	CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > enc_key;
-	enum ec_error_list ret = derive_encryption_key(enc_key,
-						       info.encryption_salt,
-						       global_context.user_id,
-						       global_context.tpm_seed);
+	enum ec_error_list ret = derive_encryption_key(
+		enc_key, info.encryption_salt, user_id, tpm_seed);
 	if (ret != EC_SUCCESS) {
 		return ret;
 	}
@@ -69,8 +69,9 @@ create_encrypted_private_key(const EC_KEY &key, uint16_t version)
 		return std::nullopt;
 	}
 
-	if (encrypt_data_in_place(version, enc_key.info, enc_key.data) !=
-	    EC_SUCCESS) {
+	if (encrypt_data_in_place(version, enc_key.info, global_context.user_id,
+				  global_context.tpm_seed,
+				  enc_key.data) != EC_SUCCESS) {
 		return std::nullopt;
 	}
 

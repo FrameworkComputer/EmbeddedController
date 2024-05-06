@@ -851,7 +851,8 @@ test_static enum ec_error_list test_fp_command_template_decrypted(void)
 	std::ranges::fill(salt_data, 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info,
+	encrypt_data_in_place(1, info, global_context.user_id,
+			      global_context.tpm_seed,
 			      { template_data.data(),
 				template_data.size() + salt_data.size() });
 
@@ -946,7 +947,8 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 	std::ranges::fill(salt_data, 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info,
+	encrypt_data_in_place(1, info, global_context.user_id,
+			      global_context.tpm_seed,
 			      { template_data.data(),
 				template_data.size() + salt_data.size() });
 
@@ -1169,7 +1171,8 @@ test_fp_command_unlock_template_pre_encrypted(void)
 	std::ranges::fill(salt_data, 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info,
+	encrypt_data_in_place(1, info, global_context.user_id,
+			      global_context.tpm_seed,
 			      { template_data.data(),
 				template_data.size() + salt_data.size() });
 
@@ -1260,7 +1263,8 @@ test_static enum ec_error_list test_fp_command_commit_v2(void)
 	std::ranges::fill(template_data, 0xc4);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info, template_data);
+	encrypt_data_in_place(1, info, global_context.user_id,
+			      global_context.tpm_seed, template_data);
 
 	struct ec_fp_template_encryption_metadata enc_metadata_data {
 		.struct_version = 2
@@ -1316,7 +1320,8 @@ test_static enum ec_error_list test_fp_command_commit_v3(void)
 	std::ranges::fill(template_data, 0xc4);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info, template_data);
+	encrypt_data_in_place(1, info, global_context.user_id,
+			      global_context.tpm_seed, template_data);
 
 	struct ec_fp_template_encryption_metadata enc_metadata_data {
 		.struct_version = 3
@@ -1383,7 +1388,8 @@ test_static enum ec_error_list test_fp_command_commit_trivial_salt(void)
 	std::ranges::fill(template_data, 0xc4);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info,
+	encrypt_data_in_place(1, info, global_context.user_id,
+			      global_context.tpm_seed,
 			      { template_data.data(),
 				template_data.size() + salt_data.size() });
 
@@ -1511,7 +1517,8 @@ test_fp_command_migrate_template_to_nonce_context(void)
 	std::ranges::fill(salt_data, 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info,
+	encrypt_data_in_place(1, info, global_context.user_id,
+			      global_context.tpm_seed,
 			      { template_data.data(),
 				template_data.size() + salt_data.size() });
 
