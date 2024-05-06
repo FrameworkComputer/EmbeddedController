@@ -159,6 +159,7 @@ fp_command_load_pairing_key(struct host_cmd_handler_args *args)
 	}
 
 	ret = decrypt_data(params->encrypted_pairing_key.info,
+			   global_context.user_id, global_context.tpm_seed,
 			   params->encrypted_pairing_key.data, pairing_key);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("load_pairing_key: Failed to decrypt pairing key");

@@ -81,6 +81,8 @@ std::optional<fp_encrypted_private_key> create_encrypted_private_key(
 
 enum ec_error_list
 decrypt_data(const struct fp_auth_command_encryption_metadata &info,
+	     std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id,
+	     std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed,
 	     std::span<const uint8_t> enc_data, std::span<uint8_t> data)
 {
 	if (info.struct_version != 1) {
@@ -88,10 +90,8 @@ decrypt_data(const struct fp_auth_command_encryption_metadata &info,
 	}
 
 	CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > enc_key;
-	enum ec_error_list ret = derive_encryption_key(enc_key,
-						       info.encryption_salt,
-						       global_context.user_id,
-						       global_context.tpm_seed);
+	enum ec_error_list ret = derive_encryption_key(
+		enc_key, info.encryption_salt, user_id, tpm_seed);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to derive key");
 		return ret;
@@ -118,9 +118,9 @@ bssl::UniquePtr<EC_KEY> decrypt_private_key(
 	CleanseWrapper<std::array<uint8_t, sizeof(encrypted_private_key.data)> >
 		privkey;
 
-	enum ec_error_list ret = decrypt_data(encrypted_private_key.info,
-					      encrypted_private_key.data,
-					      privkey);
+	enum ec_error_list ret = decrypt_data(
+		encrypted_private_key.info, global_context.user_id,
+		global_context.tpm_seed, encrypted_private_key.data, privkey);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to decrypt private key");
 		return nullptr;

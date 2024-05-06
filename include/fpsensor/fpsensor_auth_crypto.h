@@ -101,6 +101,8 @@ std::optional<fp_encrypted_private_key> create_encrypted_private_key(
  * seed, rollback secret and user_id.
  *
  * @param[in] info the metadata of the encryption output
+ * @param[in] user_id the user_id used for deriving secret
+ * @param[in] tpm_seed the seed from the TPM for deriving secret
  * @param[in] enc_data the encrypted data
  * @param[out] data the decrypted data
  *
@@ -109,6 +111,8 @@ std::optional<fp_encrypted_private_key> create_encrypted_private_key(
  */
 enum ec_error_list
 decrypt_data(const struct fp_auth_command_encryption_metadata &info,
+	     std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id,
+	     std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed,
 	     std::span<const uint8_t> enc_data, std::span<uint8_t> data);
 
 /**

@@ -61,7 +61,9 @@ test_static enum ec_error_list test_fp_encrypt_decrypt_data(void)
 	TEST_ASSERT_ARRAY_NE(data, input, data.size());
 
 	std::array<uint8_t, 32> output;
-	TEST_EQ(decrypt_data(info, data, output), EC_SUCCESS, "%d");
+	TEST_EQ(decrypt_data(info, global_context.user_id,
+			     global_context.tpm_seed, data, output),
+		EC_SUCCESS, "%d");
 
 	TEST_ASSERT_ARRAY_EQ(input, output, sizeof(input));
 
