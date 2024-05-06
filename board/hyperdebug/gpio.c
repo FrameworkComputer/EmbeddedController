@@ -15,6 +15,7 @@
 #include "gpio_chip.h"
 #include "hooks.h"
 #include "hwtimer.h"
+#include "panic.h"
 #include "registers.h"
 #include "task.h"
 #include "timer.h"
@@ -1258,10 +1259,32 @@ void IRQ_HANDLER(IRQ_TIM(BITBANG_TIMER))(void)
 		STM32_TIM_CR1(BITBANG_TIMER) = 0;
 		return;
 	}
+
+	/*
+	 * Read current level of all pins part of bit-banging.  If some of the
+	 * pins are in push-pull mode, this will be what was written the
+	 * previous tick.
+	 */
+	uint8_t input_data = 0;
+	for (uint8_t i = 0; i < num_bitbang_pins; i++) {
+		input_data |= !!(STM32_GPIO_IDR(bitbang_pin_bases[i]) &
+				 bitbang_pin_masks[i])
+			      << i;
+	}
+
+	/*
+	 * See if there are reasons for not yet proceeding with the remaining
+	 * part of the waveform.
+	 */
 	if (bitbang_countdown) {
 		bitbang_countdown--;
 		return;
 	}
+
+	/*
+	 * Past reasons to pause have been resolved.  Now inspect the next byte
+	 * of the waveform encoding.
+	 */
 	uint8_t data_byte = *bitbang_data_ptr(bitbang_irq);
 	if (data_byte & BITBANG_DELAY_BIT) {
 		/* Maintain current levels for a number of cycles. */
@@ -1274,22 +1297,14 @@ void IRQ_HANDLER(IRQ_TIM(BITBANG_TIMER))(void)
 			delay_scale += 7;
 			data_byte = *bitbang_data_ptr(bitbang_irq);
 		} while (data_byte & BITBANG_DELAY_BIT);
-		/* One cycle of delay already spent processing */
-		bitbang_countdown--;
-		return;
+		if (bitbang_countdown > 0) {
+			/* One cycle of delay already spent processing */
+			bitbang_countdown--;
+			return;
+		}
+		panic("Invalid waveform encoding");
 	}
-	/*
-	 * Read current level of all pins part of bit-banging.  If some of the
-	 * pins are in push-pull mode, this will be what was written the
-	 * previous tick.
-	 */
-	uint8_t input_data = 0;
-	for (uint8_t i = 0; i < num_bitbang_pins; i++) {
-		input_data |= !!(STM32_GPIO_IDR(bitbang_pin_bases[i]) &
-				 bitbang_pin_masks[i])
-			      << i;
-	}
-	*bitbang_data_ptr(bitbang_irq++) = input_data;
+
 	/*
 	 * Set drive of all pins which are part of bit-banging.  If some of the
 	 * pins are in input mode, this will have no effect.
@@ -1303,6 +1318,9 @@ void IRQ_HANDLER(IRQ_TIM(BITBANG_TIMER))(void)
 				bitbang_pin_masks[i] << 16;
 		}
 	}
+
+	/* Record sampled data, overwriting the given waveform. */
+	*bitbang_data_ptr(bitbang_irq++) = input_data;
 }
 
 /*
@@ -1674,29 +1692,33 @@ static uint8_t validate_received_waveform(uint16_t data_len, bool streaming)
 	uint32_t idx = bitbang_irq_tail;
 	uint32_t valid_idx = idx;
 	while (idx != tail_goal) {
-		if (*bitbang_data_ptr(idx) & BITBANG_DELAY_BIT) {
-			uint8_t delay_scale = 0;
-			while (idx != tail_goal &&
-			       *bitbang_data_ptr(idx) & BITBANG_DELAY_BIT) {
-				/*
-				 * Shifting right by 32 - delay_scale
-				 * effectively gives us the low bytes of the
-				 * upper 32 bits of what we would have gotten by
-				 * shifting left by delay_scale.  If that is
-				 * non-zero, it means that the encoded value
-				 * would exceed 32 bits.
-				 */
-				if ((*bitbang_data_ptr(idx) &
-				     BITBANG_DATA_MASK) >>
-				    (32 - delay_scale)) {
-					return STATUS_ERROR_WAVEFORM;
-				}
-				delay_scale += 7;
-				idx++;
-			}
-		} else {
+		if (!(*bitbang_data_ptr(idx) & BITBANG_DELAY_BIT)) {
+			/*
+			 * Single-byte sample for output.  The interrupt routine
+			 * is prepared for this being the last byte in the valid
+			 * range of the buffer.
+			 */
 			idx++;
 			valid_idx = idx;
+			continue;
+		}
+		uint8_t delay_scale = 0;
+		while (idx != tail_goal &&
+		       *bitbang_data_ptr(idx) & BITBANG_DELAY_BIT) {
+			uint8_t data = *bitbang_data_ptr(idx) &
+				       BITBANG_DATA_MASK;
+			/*
+			 * Shifting right by 32 - delay_scale effectively gives
+			 * us the low bytes of the upper 32 bits of what we
+			 * would have gotten by shifting left by delay_scale.
+			 * If that is non-zero, it means that the encoded value
+			 * would exceed 32 bits.
+			 */
+			if (data >> (32 - delay_scale)) {
+				return STATUS_ERROR_WAVEFORM;
+			}
+			delay_scale += 7;
+			idx++;
 		}
 	}
 
@@ -1732,12 +1754,12 @@ void dap_goog_gpio_bitbang(size_t peek_c, bool streaming)
 	if (tail_ptr + data_len <= bitbang_data + sizeof(bitbang_data)) {
 		queue_blocking_remove(&cmsis_dap_rx_queue, tail_ptr, data_len);
 	} else {
-		uint16_t remaning_space =
+		uint16_t remaining_space =
 			bitbang_data + sizeof(bitbang_data) - tail_ptr;
 		queue_blocking_remove(&cmsis_dap_rx_queue, tail_ptr,
-				      remaning_space);
+				      remaining_space);
 		queue_blocking_remove(&cmsis_dap_rx_queue, bitbang_data,
-				      data_len - remaning_space);
+				      data_len - remaining_space);
 	}
 	if (cmsis_dap_unwind_requested())
 		return;
