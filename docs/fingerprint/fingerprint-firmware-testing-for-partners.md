@@ -59,9 +59,6 @@ This document will assume you are using Servo V4.
 
 # enter the chroot
 (outside chroot) $ cros_sdk
-
-# build autotest for the board to be tested
-(chroot) $ emerge-<BOARD> autotest
 ```
 
 ### Start servod
@@ -91,7 +88,7 @@ test_that --board=<BOARD> <IP> <test name>
 For example:
 
 ```bash
-test_that --board=nocturne <IP> firmware_Fingerprint.ReadFlash
+tast run <IP> firmware.FpReadFlash
 ```
 
 ## Run the Entire Fingerprint Firmware Test Suite
@@ -99,7 +96,7 @@ test_that --board=nocturne <IP> firmware_Fingerprint.ReadFlash
 To run the entire suite, use this command in your chroot:
 
 ```bash
-test_that --board=<BOARD> <IP> suite:fingerprint
+tast run <IP> '("group:fingerprint-cq")'
 ```
 
 <!-- Links -->
