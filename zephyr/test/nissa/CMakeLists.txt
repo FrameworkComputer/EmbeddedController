@@ -120,6 +120,7 @@ if(CONFIG_TEST_NISSA_PUJJOGA)
     target_sources(
             app PRIVATE
             src/pujjoga.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/pujjoga/src/board.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/pujjoga/src/charger.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/pujjoga/src/hdmi.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/pujjoga/src/led.c

@@ -245,6 +245,7 @@ endif()
 if(DEFINED CONFIG_BOARD_PUJJOGA)
 	project(pujjoga)
 	zephyr_library_sources(
+			"pujjoga/src/board.c"
 			"pujjoga/src/led.c"
 			"pujjoga/src/hdmi.c"
 			"pujjoga/src/sub_board.c"

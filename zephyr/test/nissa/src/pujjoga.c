@@ -6,6 +6,7 @@
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 #include "extpower.h"
+#include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
@@ -38,6 +39,8 @@
 	} while (0)
 
 void reset_nct38xx_port(int port);
+void pen_detect_change(struct ap_power_ev_callback *cb,
+		       struct ap_power_ev_data data);
 
 LOG_MODULE_REGISTER(nissa, LOG_LEVEL_INF);
 
@@ -78,6 +81,11 @@ static void test_before(void *fixture)
 static int gpio_emul_output_get_dt(const struct gpio_dt_spec *dt)
 {
 	return gpio_emul_output_get(dt->port, dt->pin);
+}
+
+static int gpio_emul_input_set_dt(const struct gpio_dt_spec *dt, int value)
+{
+	return gpio_emul_input_set(dt->port, dt->pin, value);
 }
 
 ZTEST_SUITE(pujjoga, NULL, NULL, test_before, NULL, NULL);
@@ -411,4 +419,47 @@ ZTEST(pujjoga, test_cbi_error)
 	 */
 	cros_cbi_get_fw_config_fake.custom_fake = get_fw_config_error;
 	zassert_equal(pujjoga_get_sb_type(), PUJJOGA_SB_NONE, "SB: None");
+}
+
+ZTEST(pujjoga, test_pen_detect_interrupt)
+{
+	const struct gpio_dt_spec *const pen_power_gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_en_pp5000_pen);
+	const struct gpio_dt_spec *const pen_irq =
+		GPIO_DT_FROM_NODELABEL(gpio_pen_detect_odl);
+
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_pen_det_l));
+	gpio_emul_input_set(pen_irq->port, pen_irq->pin, 0);
+	zassert_equal(gpio_emul_output_get_dt(pen_power_gpio), 1);
+
+	/*  De-assert the IRQ */
+	gpio_emul_input_set(pen_irq->port, pen_irq->pin, 1);
+	zassert_equal(gpio_emul_output_get_dt(pen_power_gpio), 0);
+}
+
+ZTEST(pujjoga, test_pen_power_control)
+{
+	const struct gpio_dt_spec *const pen_detect_gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_pen_detect_odl);
+	const struct gpio_dt_spec *const pen_power_gpio =
+		GPIO_DT_FROM_NODELABEL(gpio_en_pp5000_pen);
+	const struct gpio_int_config *const pen_detect_int =
+		GPIO_INT_FROM_NODELABEL(int_pen_det_l);
+	struct ap_power_ev_data data;
+
+	hook_notify(HOOK_INIT);
+	zassert_ok(gpio_emul_input_set_dt(pen_detect_gpio, 1), NULL);
+
+	data.event = AP_POWER_STARTUP;
+	pen_detect_change(NULL, data);
+	/* gpio_en_pp5000_pen_x become high */
+	gpio_enable_dt_interrupt(pen_detect_int);
+	zassert_ok(gpio_emul_input_set_dt(pen_detect_gpio, 0), NULL);
+	zassert_equal(gpio_emul_output_get_dt(pen_power_gpio), 1);
+
+	/* gpio_en_pp5000_pen_x keep low if AP_POWER_SHUTDOWN */
+	data.event = AP_POWER_SHUTDOWN;
+	pen_detect_change(NULL, data);
+	gpio_disable_dt_interrupt(pen_detect_int);
+	zassert_equal(gpio_emul_output_get_dt(pen_power_gpio), 0);
 }
