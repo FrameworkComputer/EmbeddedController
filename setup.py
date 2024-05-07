@@ -6,17 +6,6 @@ from setuptools import setup
 
 
 setup(
-    name="ecusb",
-    version="1.0",
-    author="Nick Sanders",
-    author_email="nsanders@chromium.org",
-    url="https://www.chromium.org/chromium-os/ec-development",
-    package_dir={"": "extra/tigertool"},
-    packages=["ecusb"],
-    description="Tiny implementation of servod.",
-)
-
-setup(
     name="powerlog",
     version="1.0",
     author="Nick Sanders",
