@@ -132,11 +132,11 @@
 			enum-name = "GPIO_AC_PRESENT";
 		};
 		gpio_ec_pwr_btn_odl: ec_pwr_btn_odl {
-			gpios = <&gpio0 0 GPIO_INPUT_PULL_UP>;
+			gpios = <&gpio0 0 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
 		};
 		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
-			gpios = <&gpioc 6 GPIO_OUTPUT>;
-			enum-name = "GPIO_POWER_BUTTON_L";
+			gpios = <&gpioc 6 GPIO_INPUT>;
 		};
 		gpio_imu_int_l: imu_int_l {
 			gpios = <&gpio5 6 GPIO_INPUT>;
