@@ -105,7 +105,7 @@
 			gpios = <&gpioa 4 GPIO_ODR_HIGH>;
 		};
 		gpio_ec_touch_en: ec_touch_en {
-			gpios = <&gpio8 3 GPIO_OUTPUT_LOW>;
+			gpios = <&gpio7 3 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_wp_odl: ec_wp_odl {
 			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;

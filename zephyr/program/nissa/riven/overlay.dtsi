@@ -280,7 +280,7 @@
 			<&gpio6 0 0>,
 			<&gpio6 3 0>,
 			<&gpio6 6 0>,
-			<&gpio7 3 0>,
+			<&gpio8 3 0>,
 			<&gpio8 6 0>,
 			<&gpioa 0 0>,
 			<&gpiob 1 0>,
