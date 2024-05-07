@@ -29,7 +29,7 @@ i2c3ALT: &i2c3 {
 #include "../power_signals_gpios.dtsi"
 #include "../pwm.dtsi"
 #include "../temp_sensors.dtsi"
-#include "../usb_typec.dtsi"
+#include "usb_typec.dtsi"
 #include "../usba.dtsi"
 
 /* Greenbayupoc project DTS includes*/
