@@ -191,7 +191,7 @@ tampered with by an attacker controlling the AP.
 
 ##### SBP secret generation
 
-The SBP generates a new 128-bit random number `SBP_Src_Key` every time the user
+The SBP generates a new 256-bit random number `SBP_Src_Key` every time the user
 goes through recovery or powerwashes the device. The [clobber-state] script
 sends a command to the SBP to make it immediately regenerate a new `SBP_Src_Key`
 immediately after requesting a TPM clear.
