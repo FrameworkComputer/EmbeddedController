@@ -43,6 +43,13 @@ config PLATFORM_EC_ACCEL_KX022
 	  The driver supports Kionix's KX022 triaxial low-g acceleration sensor.
 	  It allows measurements of acceleration in three perpendicular axes.
 
+config PLATFORM_EC_ACCEL_LIS2DE
+	bool "LIS2DE12 Accelerometer Driver"
+	select PLATFORM_EC_STM_MEMS_COMMON
+	help
+	  The driver supports ST's LIS2DE12 3D digital accelerometer sensor.
+	  It allows measurements of acceleration in three perpendicular axes.
+
 config PLATFORM_EC_ACCEL_LIS2DS
 	bool "LIS2DS12 Accelerometer Driver"
 	select PLATFORM_EC_STM_MEMS_COMMON
