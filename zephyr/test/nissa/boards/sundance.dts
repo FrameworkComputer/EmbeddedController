@@ -88,6 +88,12 @@
 			gpios = <&gpio9 3 GPIO_OUTPUT>;
 			no-auto-init;
 		};
+		gpio_led_1_odl: led_1_odl {
+			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_led_2_odl: led_2_odl {
+			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
+		};
 	};
 
 	named-i2c-ports {
@@ -191,7 +197,6 @@
 		port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
-			bc12 = <&pi3usb9201_emul0>;
 			tcpc = <&tcpc_port0>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
@@ -210,7 +215,6 @@
 		port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
-			bc12 = <&pi3usb9201_emul1>;
 			tcpc = <&tcpc_port1>;
 			usb-mux-chain-1 {
 				compatible = "cros-ec,usb-mux-chain";
@@ -249,25 +253,13 @@
 			rst-gpios = <&gpio7 3 0x7>;
 		};
 	};
-
-	tcpc_port1: ps8xxx_emul@b {
-		compatible = "cros,ps8xxx-emul";
-		reg = <0xb>;
-		rst-gpios = <&gpiod 7 0x7>;
-		p0-i2c-addr = <0x8>;
-		p1-i2c-addr = <0x9>;
-		gpio-i2c-addr = <0x1a>;
-	};
-
-	pi3usb9201_emul0: pi3usb9201@5d {
-		compatible = "pericom,pi3usb9201";
-		status = "okay";
-		reg = <0x5d>;
-	};
-
-	pi3usb9201_emul1: pi3usb9201@5e {
-		compatible = "pericom,pi3usb9201";
-		status = "okay";
-		reg = <0x5e>;
+	nct38xx@74 {
+		compatible = "nuvoton,nct38xx";
+		reg = <0x74>;
+		tcpc_port1: nct38xx-tcpc {
+			compatible = "cros,nct38xx-emul",
+				"nuvoton,nct38xx-tcpc";
+			rst-gpios = <&gpio7 3 0x7>;
+		};
 	};
 };

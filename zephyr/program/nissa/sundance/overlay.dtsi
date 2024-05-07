@@ -66,6 +66,14 @@
 		};
 	};
 
+	named-gpios {
+		gpio_led_1_odl: led_1_odl {
+			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_led_2_odl: led_2_odl {
+			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
+		};
+	};
 	temp_memory: memory {
 		compatible = "cros-ec,temp-sensor-thermistor";
 		thermistor = <&thermistor_3V3_51K1_47K_4050B>;

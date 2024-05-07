@@ -4,6 +4,7 @@
  */
 
 #include "extpower.h"
+#include "led_onoff_states.h"
 #include "nissa_sub_board.h"
 #include "system.h"
 #include "typec_control.h"
@@ -193,4 +194,17 @@ ZTEST(sundance, test_reset_pd_mcu)
 	board_reset_pd_mcu();
 	zassert_equal(nct38xx_reset_notify_fake.call_count, 2);
 	zassert_equal(nct38xx_reset_notify_fake.arg0_val, 0);
+}
+
+ZTEST(sundance, test_led)
+{
+	/* led pin is low active, status 0 is turn on */
+	zassert_false(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_led_1_odl)),
+		      "LED_1 is not on");
+	zassert_false(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_led_2_odl)),
+		      "LED_2 is not on");
+	/*
+	 * Case for led pin is untestable because emulated GPIOs don't
+	 * allow getting the current value of output pins.
+	 */
 }
