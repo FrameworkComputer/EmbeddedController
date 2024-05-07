@@ -1189,6 +1189,7 @@ static void pdc_unattached_entry(void *obj)
 	discovery_info_init(port);
 
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
+		invalidate_charger_settings(port);
 		port->unattached_local_state = UNATTACHED_SET_SINK_PATH_OFF;
 		/* Update source current limit policy */
 		pdc_dpm_remove_sink(port_number);
@@ -1234,6 +1235,7 @@ static void pdc_src_attached_entry(void *obj)
 	port->send_cmd.intern.pending = false;
 
 	if (get_pdc_state(port) != port->send_cmd_return_state) {
+		invalidate_charger_settings(port);
 		port->src_attached_local_state = SRC_ATTACHED_SET_SINK_PATH_OFF;
 	}
 }
@@ -1566,10 +1568,6 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 		rv = pdc_get_vbus_voltage(port->pdc, &port->vbus);
 		break;
 	case CMD_PDC_SET_SINK_PATH:
-		/* Charger settings are invalid when sink path is off */
-		if (!port->sink_path_en) {
-			invalidate_charger_settings(port);
-		}
 		rv = pdc_set_sink_path(port->pdc, port->sink_path_en);
 		break;
 	case CMD_PDC_READ_POWER_LEVEL:
