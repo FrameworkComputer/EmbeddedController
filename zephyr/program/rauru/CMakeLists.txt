@@ -21,4 +21,8 @@ target_sources_ifdef(CONFIG_RAURU_BOARD_HAS_HDMI_SUPPORT app PRIVATE
 if(DEFINED CONFIG_BOARD_RAURU)
 	project(rauru)
 	add_subdirectory(rauru)
+
+elseif(DEFINED CONFIG_BOARD_NAVI)
+	project(navi)
+	add_subdirectory(navi)
 endif()

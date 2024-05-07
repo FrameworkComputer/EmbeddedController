@@ -1612,6 +1612,10 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "navi",
+        board = "navi",
+    )
+    ec_target(
         name = "nereid",
         board = "nereid",
     )

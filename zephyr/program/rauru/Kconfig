@@ -15,6 +15,12 @@ config BOARD_RAURU
 	  Build Google Rauru reference board. Rauru has MediaTek SoC
 	  with ITE it82202-ax EC.
 
+config BOARD_NAVI
+	bool "Google Navi Board"
+	help
+	  Build Google Navi board. Navi has MediaTek SoC
+	  with ITE it82202-ax EC.
+
 module = RAURU
 module-str = Rauru board-specific code
 source "subsys/logging/Kconfig.template.log_config"
