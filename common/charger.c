@@ -659,7 +659,7 @@ enum ec_error_list charger_device_id(int *id)
 	return chg_chips[chgnum].drv->device_id(chgnum, id);
 }
 
-enum ec_error_list charger_set_frequency(int freq_khz)
+test_mockable enum ec_error_list charger_set_frequency(int freq_khz)
 {
 	int chgnum = 0;
 

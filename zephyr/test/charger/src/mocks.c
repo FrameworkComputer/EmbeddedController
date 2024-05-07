@@ -9,3 +9,7 @@ __weak uint8_t board_get_usb_pd_port_count(void)
 {
 	return 2;
 }
+__weak enum ec_error_list charger_set_frequency(int freq_khz)
+{
+	return 0;
+}
