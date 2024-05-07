@@ -10,6 +10,12 @@ config HW_TEST_ABORT
 	  The test verify if abort() call works correctly and validates panic
 	  data.
 
+config HW_TEST_AES
+	bool "AES test"
+	select ZTEST
+	help
+	  The test verifies AES functions.
+
 config HW_TEST_CORTEXM_FPU
 	bool "Cortex-M FPU test"
 	select ZTEST
