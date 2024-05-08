@@ -2014,24 +2014,28 @@ static void pdc_suspended_run(void *obj)
  */
 static const struct smf_state pdc_states[] = {
 	/* Normal States */
-	[PDC_INIT] = SMF_CREATE_STATE(pdc_init_entry, pdc_init_run, NULL, NULL),
-	[PDC_UNATTACHED] = SMF_CREATE_STATE(pdc_unattached_entry,
-					    pdc_unattached_run, NULL, NULL),
-	[PDC_SNK_ATTACHED] = SMF_CREATE_STATE(pdc_snk_attached_entry,
-					      pdc_snk_attached_run, NULL, NULL),
-	[PDC_SRC_ATTACHED] = SMF_CREATE_STATE(pdc_src_attached_entry,
-					      pdc_src_attached_run, NULL, NULL),
-	[PDC_SEND_CMD_START] = SMF_CREATE_STATE(
-		pdc_send_cmd_start_entry, pdc_send_cmd_start_run, NULL, NULL),
-	[PDC_SEND_CMD_WAIT] = SMF_CREATE_STATE(pdc_send_cmd_wait_entry,
-					       pdc_send_cmd_wait_run,
-					       pdc_send_cmd_wait_exit, NULL),
-	[PDC_SRC_TYPEC_ONLY] = SMF_CREATE_STATE(
-		pdc_src_typec_only_entry, pdc_src_typec_only_run, NULL, NULL),
-	[PDC_SNK_TYPEC_ONLY] = SMF_CREATE_STATE(
-		pdc_snk_typec_only_entry, pdc_snk_typec_only_run, NULL, NULL),
+	[PDC_INIT] = SMF_CREATE_STATE(pdc_init_entry, pdc_init_run, NULL, NULL,
+				      NULL),
+	[PDC_UNATTACHED] = SMF_CREATE_STATE(
+		pdc_unattached_entry, pdc_unattached_run, NULL, NULL, NULL),
+	[PDC_SNK_ATTACHED] = SMF_CREATE_STATE(
+		pdc_snk_attached_entry, pdc_snk_attached_run, NULL, NULL, NULL),
+	[PDC_SRC_ATTACHED] = SMF_CREATE_STATE(
+		pdc_src_attached_entry, pdc_src_attached_run, NULL, NULL, NULL),
+	[PDC_SEND_CMD_START] = SMF_CREATE_STATE(pdc_send_cmd_start_entry,
+						pdc_send_cmd_start_run, NULL,
+						NULL, NULL),
+	[PDC_SEND_CMD_WAIT] =
+		SMF_CREATE_STATE(pdc_send_cmd_wait_entry, pdc_send_cmd_wait_run,
+				 pdc_send_cmd_wait_exit, NULL, NULL),
+	[PDC_SRC_TYPEC_ONLY] = SMF_CREATE_STATE(pdc_src_typec_only_entry,
+						pdc_src_typec_only_run, NULL,
+						NULL, NULL),
+	[PDC_SNK_TYPEC_ONLY] = SMF_CREATE_STATE(pdc_snk_typec_only_entry,
+						pdc_snk_typec_only_run, NULL,
+						NULL, NULL),
 	[PDC_SUSPENDED] = SMF_CREATE_STATE(pdc_suspended_entry,
-					   pdc_suspended_run, NULL, NULL),
+					   pdc_suspended_run, NULL, NULL, NULL),
 };
 
 /**

@@ -213,10 +213,11 @@ AP_POWER_SM_HANDLER_DECL(exit);
  * @retval Defines global structure with action handlers to be used by AP
  * power sequence state machine.
  **/
-#define AP_POWER_SM_CREATE_STATE(name, level, _entry, _run, _exit, parent) \
-	SMF_CREATE_STATE(AP_POWER_SM_ACTION(name, level, entry, _entry),   \
-			 AP_POWER_SM_ACTION(name, level, run, _run),       \
-			 AP_POWER_SM_ACTION(name, level, exit, _exit), parent)
+#define AP_POWER_SM_CREATE_STATE(name, level, _entry, _run, _exit, parent)     \
+	SMF_CREATE_STATE(AP_POWER_SM_ACTION(name, level, entry, _entry),       \
+			 AP_POWER_SM_ACTION(name, level, run, _run),           \
+			 AP_POWER_SM_ACTION(name, level, exit, _exit), parent, \
+			 NULL)
 
 /**
  * @brief Define architecture level state action handlers.

@@ -1361,18 +1361,23 @@ static void st_suspended_run(void *o)
 
 /* Populate cmd state table */
 static const struct smf_state states[] = {
-	[ST_INIT] = SMF_CREATE_STATE(st_init_entry, st_init_run, NULL, NULL),
-	[ST_IDLE] = SMF_CREATE_STATE(st_idle_entry, st_idle_run, NULL, NULL),
-	[ST_WRITE] = SMF_CREATE_STATE(st_write_entry, st_write_run, NULL, NULL),
-	[ST_PING_STATUS] = SMF_CREATE_STATE(st_ping_status_entry,
-					    st_ping_status_run, NULL, NULL),
-	[ST_READ] = SMF_CREATE_STATE(st_read_entry, st_read_run, NULL, NULL),
-	[ST_ERROR_RECOVERY] = SMF_CREATE_STATE(
-		st_error_recovery_entry, st_error_recovery_run, NULL, NULL),
-	[ST_DISABLE] =
-		SMF_CREATE_STATE(st_disable_entry, st_disable_run, NULL, NULL),
+	[ST_INIT] =
+		SMF_CREATE_STATE(st_init_entry, st_init_run, NULL, NULL, NULL),
+	[ST_IDLE] =
+		SMF_CREATE_STATE(st_idle_entry, st_idle_run, NULL, NULL, NULL),
+	[ST_WRITE] = SMF_CREATE_STATE(st_write_entry, st_write_run, NULL, NULL,
+				      NULL),
+	[ST_PING_STATUS] = SMF_CREATE_STATE(
+		st_ping_status_entry, st_ping_status_run, NULL, NULL, NULL),
+	[ST_READ] =
+		SMF_CREATE_STATE(st_read_entry, st_read_run, NULL, NULL, NULL),
+	[ST_ERROR_RECOVERY] = SMF_CREATE_STATE(st_error_recovery_entry,
+					       st_error_recovery_run, NULL,
+					       NULL, NULL),
+	[ST_DISABLE] = SMF_CREATE_STATE(st_disable_entry, st_disable_run, NULL,
+					NULL, NULL),
 	[ST_SUSPENDED] = SMF_CREATE_STATE(st_suspended_entry, st_suspended_run,
-					  NULL, NULL),
+					  NULL, NULL, NULL),
 
 };
 
