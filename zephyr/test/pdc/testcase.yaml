@@ -31,3 +31,7 @@ tests:
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_HOSTCMD=y
     - CONFIG_PLATFORM_EC_HOSTCMD_PD_CHIP_INFO=y
+
+  pdc.ucsi:
+    extra_configs:
+    - CONFIG_TEST_SUITE_PDC_UCSI=y
