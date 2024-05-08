@@ -421,6 +421,35 @@ static int cmd_pdc_comms_state(const struct shell *sh, size_t argc, char **argv)
 	return rv;
 }
 
+static int cmd_pdc_src_voltage(const struct shell *sh, size_t argc, char **argv)
+{
+	int rv;
+	int mv;
+	uint8_t port;
+	char *e;
+
+	/* Get PD port number */
+	rv = cmd_get_pd_port(sh, argv[1], &port);
+	if (rv)
+		return rv;
+
+	if (argc > 2) {
+		/* Request a particular voltage and convert to mV */
+		mv = strtol(argv[2], &e, 10) * 1000;
+		if (*e)
+			return EC_ERROR_PARAM2;
+	} else {
+		/* Use max */
+		mv = pd_get_max_voltage();
+		shell_fprintf(sh, SHELL_INFO, "Using max voltage (%dmV)\n", mv);
+	}
+
+	shell_fprintf(sh, SHELL_INFO, "Requesting to source %dmV\n", mv);
+	pd_request_source_voltage(port, mv);
+
+	return 0;
+}
+
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_pdc_cmds,
 	SHELL_CMD_ARG(status, NULL,
@@ -467,6 +496,11 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Print the UCSI GET_CABLE_PROPERTY\n"
 		      "Usage pdc cable_prop <port>",
 		      cmd_pdc_get_cable_prop, 2, 0),
+	SHELL_CMD_ARG(src_voltage, NULL,
+		      "Request to source a given voltage from PSU. "
+		      "Omit last arg to use maximum supported voltage.\n"
+		      "Usage: pdc src_voltage <port> [volts]",
+		      cmd_pdc_src_voltage, 2, 1),
 	SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(pdc, &sub_pdc_cmds, "PDC console commands", NULL);
