@@ -31,13 +31,13 @@ struct thermal_temps {
 	int typecStatus;
 };
 
-const struct thermal_temps thermal_up[] = { { 53, 47, 0 },
-					    { 65, 56, 1 },
+const struct thermal_temps thermal_up[] = { { 53, 46, 0 },
+					    { 65, 53, 1 },
 					    { 255, 255, 1 } };
 
 const struct thermal_temps thermal_down[] = { { 0, 0, 0 },
-					      { 48, 47, 0 },
-					      { 54, 56, 1 } };
+					      { 48, 46, 0 },
+					      { 54, 53, 1 } };
 
 static void board_thermal_management(void)
 {
