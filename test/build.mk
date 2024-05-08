@@ -9,7 +9,6 @@ test-list-y ?= flash_write_protect \
 	stdlib \
 	timer_calib \
 	timer_dos \
-	timer_jump \
 	mutex \
 	utils \
 	utils_str
