@@ -19,7 +19,6 @@
 extern "C" {
 #endif
 
-#define SBP_ENC_KEY_LEN 16
 #define FP_NO_SUCH_TEMPLATE (UINT16_MAX)
 
 /* --- Global variables defined in fpsensor_state_without_driver_info.c --- */

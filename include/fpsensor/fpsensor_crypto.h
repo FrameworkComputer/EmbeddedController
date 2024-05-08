@@ -16,6 +16,8 @@ extern "C" {
 #include "ec_commands.h"
 }
 
+#define SBP_ENC_KEY_LEN 16
+
 #define HKDF_MAX_INFO_SIZE 128
 #define HKDF_SHA256_MAX_BLOCK_COUNT 255
 
