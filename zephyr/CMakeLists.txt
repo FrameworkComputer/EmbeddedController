@@ -541,7 +541,12 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_POWER_DELIVERY
                                                 "${PLATFORM_EC}/common/usbc/usb_pd_timer.c"
                                                 "${PLATFORM_EC}/common/usbc/usb_sm.c"
                                                 "${PLATFORM_EC}/common/usbc_intr_task.c"
+                                                "${PLATFORM_EC}/common/usbc_utils.c"
                                                 "${PLATFORM_EC}/common/usb_pd_flags.c")
+
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_CONTROLLER
+                                                "${PLATFORM_EC}/common/usbc_utils.c")
+
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_TOUCHPAD_ELAN
                                                 "${PLATFORM_EC}/driver/touchpad_elan.c")
 
