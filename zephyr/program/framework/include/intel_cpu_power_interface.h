@@ -6,8 +6,6 @@
 #ifndef __CROS_EC_INTEL_CPU_POWER_INTERFACE_H
 #define __CROS_EC_INTEL_CPU_POWER_INTERFACE_H
 
-#define POWER_LIMIT_1_W	30
-
 /******************** Tau Value (TimeWindow)*************************************
  * 0.5sec: 0x1; 0.6sec : 0x52, 0.7sec: 0x92; 0.8sec : 0xD2
  * 1sec: 0x14;  1.25sec: 0x54; 1.5sec: 0x94; 1.75sec: 0xD4
