@@ -4,7 +4,6 @@
  */
 
 #include "fpsensor/fpsensor_crypto.h"
-#include "fpsensor/fpsensor_state_without_driver_info.h"
 
 #include <array>
 #include <vector>

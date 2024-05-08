@@ -7,7 +7,6 @@
 #include "crypto/elliptic_curve_key.h"
 #include "ec_commands.h"
 #include "fpsensor/fpsensor_auth_crypto.h"
-#include "fpsensor/fpsensor_state_without_driver_info.h"
 #include "openssl/aes.h"
 #include "openssl/bn.h"
 #include "openssl/ec.h"

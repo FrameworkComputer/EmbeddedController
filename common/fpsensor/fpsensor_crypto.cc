@@ -6,7 +6,6 @@
 #include "crypto/cleanse_wrapper.h"
 #include "fpsensor/fpsensor_console.h"
 #include "fpsensor/fpsensor_crypto.h"
-#include "fpsensor/fpsensor_state_without_driver_info.h"
 #include "openssl/aead.h"
 #include "openssl/evp.h"
 #include "openssl/hkdf.h"
