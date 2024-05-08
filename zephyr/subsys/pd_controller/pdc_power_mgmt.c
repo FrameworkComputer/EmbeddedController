@@ -2207,6 +2207,7 @@ static int public_api_block(int port, enum pdc_cmd_t pdc_cmd)
 			/* something went wrong */
 			LOG_ERR("C%d: Public API blocking timeout: %s", port,
 				pdc_cmd_names[public_cmd->cmd]);
+			public_cmd->pending = false;
 			return -EBUSY;
 		}
 
