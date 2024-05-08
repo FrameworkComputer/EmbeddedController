@@ -243,7 +243,7 @@ def all_targets():
     ec_target(
         name = "bloonchipper_zephyr",
         board = "bloonchipper",
-        extra_modules = ["hal_stm32", "cmsis"],
+        extra_modules = ["hal_stm32", "cmsis", "fpc"],
     )
     ec_target(
         name = "bobba",

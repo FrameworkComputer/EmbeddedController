@@ -28,7 +28,7 @@ def register_fpmcu_variant(
 bloonchipper = register_fpmcu_variant(
     project_name="bloonchipper",
     zephyr_board="google_dragonclaw",
-    variant_modules=["hal_stm32", "cmsis"],
+    variant_modules=["hal_stm32", "cmsis", "fpc"],
     variant_dts_overlays=[
         here / "bloonchipper" / "bloonchipper.dts",
         here / "bloonchipper" / "ec_quirks.dts",
