@@ -4,6 +4,7 @@
  */
 
 #include "uart.h"
+#include "usb_common.h"
 
 #include <stdint.h>
 #include <stdlib.h>
@@ -466,6 +467,73 @@ static int cmd_pdc_src_voltage(const struct shell *sh, size_t argc, char **argv)
 	return 0;
 }
 
+static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
+{
+	int rv;
+	uint8_t port;
+
+	/* Get PD port number */
+	rv = cmd_get_pd_port(sh, argv[1], &port);
+	if (rv)
+		return rv;
+
+	const uint32_t *const src_caps = pdc_power_mgmt_get_src_caps(port);
+	uint8_t src_caps_count = pdc_power_mgmt_get_src_cap_cnt(port);
+
+	if (src_caps == NULL || src_caps_count == 0) {
+		shell_fprintf(sh, SHELL_ERROR, "No source caps for port %u\n",
+			      port);
+		return 0;
+	}
+
+	for (uint8_t i = 0; i < src_caps_count; i++) {
+		uint32_t src_cap = src_caps[i];
+		uint32_t max_ma = 0, max_mv = 0, min_mv = 0;
+		const char *type_str;
+
+		pd_extract_pdo_power(src_cap, &max_ma, &max_mv, &min_mv);
+
+		switch (src_cap & PDO_TYPE_MASK) {
+		case PDO_TYPE_FIXED:
+			type_str = "FIX";
+			/* Fixed PDOs have flags and a single voltage */
+			shell_fprintf(
+				sh, SHELL_INFO,
+				"Src %02u: %08x %s %13umV, %5umA "
+				"[%s %s %s %s %s]\n",
+				i, src_cap, type_str, max_mv, max_ma,
+				src_cap & PDO_FIXED_DUAL_ROLE ? "DRP" : "   ",
+				src_cap & PDO_FIXED_UNCONSTRAINED ? "UP" : "  ",
+				src_cap & PDO_FIXED_COMM_CAP ? "USB" : "   ",
+				src_cap & PDO_FIXED_DATA_SWAP ? "DRD" : "   ",
+				src_cap & PDO_FIXED_FRS_CURR_MASK ? "FRS" :
+								    "   ");
+			continue;
+		case PDO_TYPE_BATTERY:
+			type_str = "BAT";
+			break;
+		case PDO_TYPE_VARIABLE:
+			type_str = "VAR";
+			break;
+		case PDO_TYPE_AUGMENTED:
+			type_str = "AUG";
+			break;
+		}
+
+		/* Battery, variable, and augmented PDOs have voltage
+		 * ranges but no flags.
+		 */
+		shell_fprintf(sh, SHELL_INFO,
+			      "Src %02u: %08x %s %5umV-%5umV, %5um%c\n", i,
+			      src_cap, type_str, min_mv, max_mv, max_ma,
+			      (((src_cap & PDO_TYPE_MASK) == PDO_TYPE_BATTERY) ?
+				       'W' :
+				       'A'));
+	}
+
+	return 0;
+}
+
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_pdc_cmds,
 	SHELL_CMD_ARG(status, NULL,
@@ -518,6 +586,11 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Omit last arg to use maximum supported voltage.\n"
 		      "Usage: pdc src_voltage <port> [volts]",
 		      cmd_pdc_src_voltage, 2, 1),
+	SHELL_CMD_ARG(srccaps, NULL,
+		      "Print current source capability PDOs received by the "
+		      "given port.\n"
+		      "Usage pdc srccaps <port>",
+		      cmd_pdc_srccaps, 2, 0),
 	SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(pdc, &sub_pdc_cmds, "PDC console commands", NULL);

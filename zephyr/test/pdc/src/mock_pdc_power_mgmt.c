@@ -34,6 +34,8 @@ DEFINE_FAKE_VOID_FUNC(pdc_power_mgmt_set_dual_role, int,
 DEFINE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_set_trysrc, int, bool);
 DEFINE_FAKE_VOID_FUNC(pdc_power_mgmt_request_source_voltage, int, int);
 DEFINE_FAKE_VALUE_FUNC(unsigned int, pdc_power_mgmt_get_max_voltage);
+DEFINE_FAKE_VALUE_FUNC(uint8_t, pdc_power_mgmt_get_src_cap_cnt, int);
+DEFINE_FAKE_VALUE_FUNC(const uint32_t *const, pdc_power_mgmt_get_src_caps, int);
 
 void helper_reset_pdc_power_mgmt_fakes(void)
 {
@@ -55,4 +57,6 @@ void helper_reset_pdc_power_mgmt_fakes(void)
 	RESET_FAKE(pdc_power_mgmt_set_trysrc);
 	RESET_FAKE(pdc_power_mgmt_request_source_voltage);
 	RESET_FAKE(pdc_power_mgmt_get_max_voltage);
+	RESET_FAKE(pdc_power_mgmt_get_src_cap_cnt);
+	RESET_FAKE(pdc_power_mgmt_get_src_caps);
 }

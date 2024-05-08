@@ -2654,7 +2654,7 @@ test_mockable int pdc_power_mgmt_reset(int port)
 	return 0;
 }
 
-uint8_t pdc_power_mgmt_get_src_cap_cnt(int port)
+test_mockable uint8_t pdc_power_mgmt_get_src_cap_cnt(int port)
 {
 	/* Make sure port is Sink connected */
 	if (!pdc_power_mgmt_is_sink_connected(port)) {
@@ -2664,7 +2664,7 @@ uint8_t pdc_power_mgmt_get_src_cap_cnt(int port)
 	return pdc_data[port]->port.snk_policy.src.pdo_count;
 }
 
-const uint32_t *const pdc_power_mgmt_get_src_caps(int port)
+test_mockable const uint32_t *const pdc_power_mgmt_get_src_caps(int port)
 {
 	/* Make sure port is Sink connected */
 	if (!pdc_power_mgmt_is_sink_connected(port)) {

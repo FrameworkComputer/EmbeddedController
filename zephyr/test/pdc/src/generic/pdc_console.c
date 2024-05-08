@@ -724,3 +724,109 @@ ZTEST_USER(console_cmd_pdc, test_connector_status)
 	zassert_not_null(strstr(
 		outbuffer, "   voltage                          : 20000 mV"));
 }
+
+/** Test PDOs for `test_srccaps` */
+static const uint32_t source_caps[] = {
+	PDO_FIXED(5000 /*mV*/, 3000 /*mA*/, PDO_FIXED_DUAL_ROLE),
+	PDO_FIXED(5000 /*mV*/, 3000 /*mA*/, PDO_FIXED_UNCONSTRAINED),
+	PDO_FIXED(5000 /*mV*/, 3000 /*mA*/, PDO_FIXED_COMM_CAP),
+	PDO_FIXED(5000 /*mV*/, 3000 /*mA*/, PDO_FIXED_DATA_SWAP),
+	PDO_FIXED(5000 /*mV*/, 3000 /*mA*/, PDO_FIXED_FRS_CURR_MASK),
+	PDO_VAR(5000 /*mV*/, 20000 /*mV*/, 1500 /*mA*/),
+	PDO_BATT(5000 /*mV*/, 20000 /*mV*/, 50000 /*mW*/),
+	PDO_AUG(9000 /*mV*/, 15000 /*mV*/, 2000 /*mA*/),
+};
+
+/**
+ * @brief Custom fake for pdc_power_mgmt_get_src_caps(). Because the return
+ *        value of this function is a const ptr to a const, we cannot override
+ *        the `.return_val` member in the fake's FFF struct. Instead, use a
+ *        custom fake to return a source cap list.
+ */
+static const uint32_t *const custom_fake_pdc_power_mgmt_get_src_caps(int port)
+{
+	return (const uint32_t *const)&source_caps;
+}
+
+ZTEST_USER(console_cmd_pdc, test_srccaps)
+{
+	int rv;
+	const char *outbuffer;
+	size_t buffer_size;
+
+	/* Invalid port number */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc srccaps 99");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* No source caps present */
+	pdc_power_mgmt_get_src_cap_cnt_fake.return_val = 0;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc srccaps 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	zassert_equal(1, pdc_power_mgmt_get_src_caps_fake.call_count);
+	zassert_equal(1, pdc_power_mgmt_get_src_cap_cnt_fake.call_count);
+
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+
+	zassert_true(buffer_size > 0, NULL);
+	zassert_not_null(strstr(outbuffer, "No source caps for port"));
+
+	RESET_FAKE(pdc_power_mgmt_get_src_caps);
+	RESET_FAKE(pdc_power_mgmt_get_src_cap_cnt);
+
+	/* Successful path w/ source caps */
+	pdc_power_mgmt_get_src_caps_fake.custom_fake =
+		&custom_fake_pdc_power_mgmt_get_src_caps;
+	pdc_power_mgmt_get_src_cap_cnt_fake.return_val =
+		ARRAY_SIZE(source_caps);
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc srccaps 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	zassert_equal(1, pdc_power_mgmt_get_src_caps_fake.call_count);
+	zassert_equal(1, pdc_power_mgmt_get_src_cap_cnt_fake.call_count);
+
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+
+	zassert_true(buffer_size > 0, NULL);
+
+	/*
+	 * Sample output:
+	 *
+	 * Src 00: 2001912c FIX          5000mV,  3000mA [DRP               ]
+	 * Src 01: 0801912c FIX          5000mV,  3000mA [    UP            ]
+	 * Src 02: 0401912c FIX          5000mV,  3000mA [       USB        ]
+	 * Src 03: 0201912c FIX          5000mV,  3000mA [           DRD    ]
+	 * Src 04: 0181912c FIX          5000mV,  3000mA [               FRS]
+	 * Src 05: 99019096 VAR  5000mV-20000mV,  1500mA
+	 * Src 06: 590190c8 BAT  5000mV-20000mV,  3000mW
+	 * Src 07: c12c5a28 AUG  9000mV-15000mV,  2000mA
+	 */
+
+	zassert_not_null(strstr(outbuffer,
+				"Src 00: 2001912c FIX          5000mV,  3000mA "
+				"[DRP               ]"));
+	zassert_not_null(strstr(outbuffer,
+				"Src 01: 0801912c FIX          5000mV,  3000mA "
+				"[    UP            ]"));
+	zassert_not_null(strstr(outbuffer,
+				"Src 02: 0401912c FIX          5000mV,  3000mA "
+				"[       USB        ]"));
+	zassert_not_null(strstr(outbuffer,
+				"Src 03: 0201912c FIX          5000mV,  3000mA "
+				"[           DRD    ]"));
+	zassert_not_null(strstr(outbuffer,
+				"Src 04: 0181912c FIX          5000mV,  3000mA "
+				"[               FRS]"));
+	zassert_not_null(strstr(
+		outbuffer, "Src 05: 99019096 VAR  5000mV-20000mV,  1500mA"));
+	zassert_not_null(strstr(
+		outbuffer, "Src 06: 590190c8 BAT  5000mV-20000mV,  3000mW"));
+	zassert_not_null(strstr(
+		outbuffer, "Src 07: c12c5a28 AUG  9000mV-15000mV,  2000mA"));
+}
