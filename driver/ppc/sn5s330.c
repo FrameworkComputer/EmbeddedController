@@ -26,8 +26,12 @@
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 
+#define SN5S330_MAX_CONSECUTIVE_INTERRUPTS 10
+
 static atomic_t irq_pending; /* Bitmask of ports signaling an interrupt. */
 static int source_enabled[CONFIG_USB_PD_PORT_MAX_COUNT];
+
+static void sn5s330_handle_interrupt(int port);
 
 static int read_reg(uint8_t port, int reg, int *regval)
 {
@@ -641,6 +645,17 @@ static int sn5s330_set_sbu(int port, int enable)
 }
 #endif /* CONFIG_USBC_PPC_SBU */
 
+static void sn5s330_irq_deferred(void)
+{
+	int i;
+	uint32_t pending = atomic_clear(&irq_pending);
+
+	for (i = 0; i < board_get_usb_pd_port_count(); i++)
+		if (BIT(i) & pending)
+			sn5s330_handle_interrupt(i);
+}
+DECLARE_DEFERRED(sn5s330_irq_deferred);
+
 static void sn5s330_handle_interrupt(int port)
 {
 	int attempt = 0;
@@ -662,6 +677,13 @@ static void sn5s330_handle_interrupt(int port)
 			ppc_prints("Could not clear interrupts on first "
 				   "try, retrying",
 				   port);
+
+		if (attempt > SN5S330_MAX_CONSECUTIVE_INTERRUPTS) {
+			ppc_prints("Rescheduling interrupt handler", port);
+			atomic_or(&irq_pending, BIT(port));
+			hook_call_deferred(&sn5s330_irq_deferred_data, MSEC);
+			return;
+		}
 
 		read_reg(port, SN5S330_INT_TRIP_RISE_REG1, &rise);
 		read_reg(port, SN5S330_INT_TRIP_FALL_REG1, &fall);
@@ -710,17 +732,6 @@ static void sn5s330_handle_interrupt(int port)
 #endif /* CONFIG_USB_PD_VBUS_DETECT_PPC && CONFIG_USB_CHARGER */
 	}
 }
-
-static void sn5s330_irq_deferred(void)
-{
-	int i;
-	uint32_t pending = atomic_clear(&irq_pending);
-
-	for (i = 0; i < board_get_usb_pd_port_count(); i++)
-		if (BIT(i) & pending)
-			sn5s330_handle_interrupt(i);
-}
-DECLARE_DEFERRED(sn5s330_irq_deferred);
 
 void sn5s330_interrupt(int port)
 {

@@ -122,4 +122,7 @@ DECLARE_FAKE_VOID_FUNC(lid_angle_peripheral_enable, int);
 DECLARE_FAKE_VALUE_FUNC(int, gpio_config_unused_pins);
 DECLARE_FAKE_VALUE_FUNC(int, gpio_configure_port_pin, int, int, int);
 
+/* Mocks for drivers */
+DECLARE_FAKE_VALUE_FUNC(int, ppc_get_alert_status, int);
+
 #endif /* __TEST_DRIVERS_TEST_MOCKS_H */

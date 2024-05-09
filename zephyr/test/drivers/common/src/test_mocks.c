@@ -26,6 +26,9 @@ DEFINE_FAKE_VOID_FUNC(lid_angle_peripheral_enable, int);
 DEFINE_FAKE_VALUE_FUNC(int, gpio_config_unused_pins);
 DEFINE_FAKE_VALUE_FUNC(int, gpio_configure_port_pin, int, int, int);
 
+/* Mocks for drivers */
+DEFINE_FAKE_VALUE_FUNC(int, ppc_get_alert_status, int);
+
 /**
  * @brief Reset all the fakes before each test.
  */
@@ -46,6 +49,7 @@ static void fff_reset_rule_before(const struct ztest_unit_test *test,
 	RESET_FAKE(lid_angle_peripheral_enable);
 	RESET_FAKE(gpio_config_unused_pins);
 	RESET_FAKE(gpio_configure_port_pin);
+	RESET_FAKE(ppc_get_alert_status);
 }
 
 ZTEST_RULE(fff_reset_rule, fff_reset_rule_before, NULL);
