@@ -138,70 +138,17 @@ struct ioexpander_config_t ioex_config[] = {
 BUILD_ASSERT(ARRAY_SIZE(ioex_config) == CONFIG_IO_EXPANDER_PORT_COUNT);
 #endif /* !CONFIG_ZEPHYR */
 
-__override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
-{
-	enum ioex_signal rst_signal;
-
-	if (me->usb_port == USBC_PORT_C0) {
-/* TODO: explore how to handle board id in zephyr*/
-#ifndef CONFIG_ZEPHYR
-		rst_signal = IOEX_USB_C0_RT_RST_ODL;
-#else
-		/* On Zephyr use bb_controls generated from DTS */
-		rst_signal = bb_controls[me->usb_port].retimer_rst_gpio;
-#endif /* !CONFIG_ZEPHYR */
-	} else if (me->usb_port == USBC_PORT_C2) {
-/* TODO: explore how to handle board id in zephyr*/
-#ifndef CONFIG_ZEPHYR
-		rst_signal = IOEX_USB_C2_RT_RST_ODL;
-#else
-		/* On Zephyr use bb_controls generated from DTS */
-		rst_signal = bb_controls[me->usb_port].retimer_rst_gpio;
-#endif /* !CONFIG_ZEPHYR */
-	} else {
-		return EC_ERROR_INVAL;
-	}
-
-	/*
-	 * We do not have a load switch for the burnside bridge chips,
-	 * so we only need to sequence reset.
-	 */
-
-	if (enable) {
-		/*
-		 * Tpw, minimum time from VCC to RESET_N de-assertion is 100us.
-		 * For boards that don't provide a load switch control, the
-		 * retimer_init() function ensures power is up before calling
-		 * this function.
-		 */
-		ioex_set_level(rst_signal, 1);
-		/*
-		 * Allow 1ms time for the retimer to power up lc_domain
-		 * which powers I2C controller within retimer
-		 */
-		crec_msleep(1);
-	} else {
-		ioex_set_level(rst_signal, 0);
-		crec_msleep(1);
-	}
-	return EC_SUCCESS;
-}
-
 void board_reset_pd_mcu(void)
 {
 }
 
 static void board_tcpc_init(void)
 {
-	/* Don't reset TCPCs after initial reset */
-	if (!system_jumped_late())
-		board_reset_pd_mcu();
-
-		/*
-		 * These IO expander pins are implemented using the
-		 * C0/C2 TCPC, so they must be set up after the TCPC has
-		 * been taken out of reset.
-		 */
+	/*
+	 * These IO expander pins are implemented using the
+	 * C0/C2 TCPC, so they must be set up after the TCPC has
+	 * been taken out of reset.
+	 */
 #ifndef CONFIG_ZEPHYR
 	ioex_init(IOEX_C0_NCT38XX);
 	ioex_init(IOEX_C2_NCT38XX);
