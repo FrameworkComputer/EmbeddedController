@@ -22,7 +22,6 @@ _fpsensor_utils_obj:=$(_fpsensor_dir)fpsensor_utils.o
 _fpsensor_auth_commands_obj:=$(_fpsensor_dir)fpsensor_auth_commands.o
 _fpsensor_auth_crypto_stateful_obj:=$(_fpsensor_dir)fpsensor_auth_crypto_stateful.o
 _fpsensor_auth_crypto_stateless_obj:=$(_fpsensor_dir)fpsensor_auth_crypto_stateless.o
-_fpsensor_state_without_driver_info_obj:=$(_fpsensor_dir)fpsensor_state_without_driver_info.o
 
 $(out)/RW/$(_fpsensor_state_obj): CFLAGS+=$(fpsensor_CFLAGS)
 $(out)/RW/$(_fpsensor_crypto_obj): CFLAGS+=$(fpsensor_CFLAGS)
@@ -33,7 +32,6 @@ $(out)/RW/$(_fpsensor_utils_obj): CFLAGS+=$(fpsensor_CFLAGS)
 $(out)/RW/$(_fpsensor_auth_commands_obj): CFLAGS+=$(fpsensor_CFLAGS)
 $(out)/RW/$(_fpsensor_auth_crypto_stateful_obj): CFLAGS+=$(fpsensor_CFLAGS)
 $(out)/RW/$(_fpsensor_auth_crypto_stateless_obj): CFLAGS+=$(fpsensor_CFLAGS)
-$(out)/RW/$(_fpsensor_state_without_driver_info_obj): CFLAGS+=$(fpsensor_CFLAGS)
 
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_state_obj)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_obj)
@@ -54,13 +52,11 @@ endif # fpsensor projects.
 # If HAS_TASK_FPSENSOR is not empty.
 ifneq (,$(HAS_TASK_FPSENSOR))
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_crypto_obj)
-all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_state_without_driver_info_obj)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_auth_crypto_stateful_obj)
 endif # HAS_TASK_FPSENSOR.
 # Or we are building stateful fpsensor related projects.
 ifeq (fpsensor,$(findstring fpsensor,$(PROJECT))$(findstring stateless,$(PROJECT)))
 all-obj-y+=$(_fpsensor_crypto_obj)
-all-obj-y+=$(_fpsensor_state_without_driver_info_obj)
 all-obj-y+=$(_fpsensor_auth_crypto_stateful_obj)
 endif # stateful fpsensor projects.
 

@@ -60,6 +60,27 @@ uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
 /* The states for different fingers. */
 std::array<fp_template_state, FP_MAX_FINGER_COUNT> template_states;
 
+struct fpsensor_context global_context = {
+	.template_newly_enrolled = FP_NO_SUCH_TEMPLATE,
+	.templ_valid = 0,
+	.templ_dirty = 0,
+	.fp_events = 0,
+	.sensor_mode = 0,
+	.tpm_seed = { 0 },
+	.user_id = { 0 },
+	.positive_match_secret_state = {
+		.template_matched = FP_NO_SUCH_TEMPLATE,
+		.readable = false,
+		.deadline = {
+			.val = 0,
+		}},
+};
+
+int fp_tpm_seed_is_set(void)
+{
+	return global_context.fp_encryption_status & FP_ENC_STATUS_SEED_SET;
+}
+
 /* LCOV_EXCL_START */
 __test_only void fp_task_simulate(void)
 {
