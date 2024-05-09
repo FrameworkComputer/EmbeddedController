@@ -16,6 +16,10 @@
 	};
 
 	named-i2c-ports {
+		i2c_ec_i2c_batt: ec_i2c_batt {
+			i2c-port = <&i2c_ctrl7>;
+			enum-names = "I2C_PORT_BATTERY";
+		};
 		i2c_ec_i2c_sensor: ec_i2c_sensor {
 			i2c-port = <&i2c_ctrl1>;
 			enum-names = "I2C_PORT_SENSOR";
@@ -52,6 +56,15 @@
 		pwm_led_0@0 {
 			reg = <0>;
 			ec-led-name = "EC_LED_ID_BATTERY_LED";
+		};
+	};
+
+	batteries {
+		default_battery: getac_pg01jh3353 {
+			compatible = "getac,pg01jh3353", "battery-smart";
+		};
+		default_battery_3s: getac_pg01lj3353 {
+			compatible = "getac,pg01lj3353", "battery-smart";
 		};
 	};
 };

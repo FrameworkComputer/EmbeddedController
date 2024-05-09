@@ -21,11 +21,14 @@
 	};
 
 	batteries {
-		default_battery: getac_pg01lj3353 {
+		default_battery_3s: getac_pg01lj3353 {
 			compatible = "getac,pg01lj3353", "battery-smart";
 		};
 		cosmx_pg01lj3353 {
 			compatible = "cosmx,pg01lj3353", "battery-smart";
+		};
+		default_battery: getac_pg01jh3353 {
+			compatible = "getac,pg01jh3353", "battery-smart";
 		};
 	};
 
