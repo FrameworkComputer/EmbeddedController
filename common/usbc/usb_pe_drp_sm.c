@@ -2852,8 +2852,11 @@ static void pe_src_transition_supply_run(int port)
 	/*
 	 * Transition to the PE_SRC_Hard_Reset state when:
 	 *  1) A Protocol Error occurs.
+	 *  2) receiving unexpected message during a power transition
+	 *     (Tx pending message is discarded).
 	 */
-	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR)) {
+	if (PE_CHK_FLAG(port, PE_FLAGS_PROTOCOL_ERROR) ||
+	    PE_CHK_FLAG(port, PE_FLAGS_MSG_DISCARDED)) {
 		PE_CLR_FLAG(port, PE_FLAGS_PROTOCOL_ERROR);
 		pe_set_hard_reset(port);
 	}
