@@ -45,6 +45,7 @@ import argparse
 from collections import namedtuple
 import concurrent
 from concurrent.futures.thread import ThreadPoolExecutor
+import copy
 from dataclasses import dataclass
 from dataclasses import field
 from enum import Enum
@@ -579,7 +580,7 @@ HELIPILOT_CONFIG = BoardConfig(
     variants={},
 )
 
-BUCCANEER_CONFIG = HELIPILOT_CONFIG
+BUCCANEER_CONFIG = copy.deepcopy(HELIPILOT_CONFIG)
 BUCCANEER_CONFIG.name = BUCCANEER
 # TODO(b/336640151): Add buccaneer variants once RO is created
 
