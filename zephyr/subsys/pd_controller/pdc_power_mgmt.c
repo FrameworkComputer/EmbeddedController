@@ -1961,14 +1961,11 @@ static void pdc_snk_typec_only_run(void *obj)
 		}
 		return;
 	case SNK_TYPEC_ATTACHED_RUN:
-		/* Hard Reset could disable Sink FET. Re-enable it */
-		if (atomic_get(&port->hard_reset_sent)) {
-			atomic_clear(&port->hard_reset_sent);
-			port->snk_typec_attached_local_state =
-				SNK_TYPEC_ATTACHED_SET_SINK_PATH_ON;
-		} else {
-			send_pending_public_commands(port);
-		}
+		/* Note - hard resets specifically not checked for here.
+		 * We don't expect hard resets while connected to a non-PD
+		 * partner.
+		 */
+		send_pending_public_commands(port);
 		break;
 	}
 }
