@@ -97,6 +97,8 @@ properties:
       - "smp,l21m4pg0"
       - "smp,l22m3pg0"
       - "smp,l22m3pg1"
+      - "smp,byd_pc-vp-bp162"
+      - "smp,cosmx_pc-vp-bp162"
       - "smp,pc-vp-bp153"
       - "smp,pc-vp-bp162"
       - "smp,coslight_gh02047xl"
