@@ -22,7 +22,7 @@ static enum ec_status hc_remote_pd_chip_info(struct host_cmd_handler_args *args)
 	struct ec_response_pd_chip_info_v1 resp = { 0 };
 	struct pdc_info_t pdc_info;
 
-	if (pdc_power_mgmt_get_info(p->port, &pdc_info)) {
+	if (pdc_power_mgmt_get_info(p->port, &pdc_info, p->live)) {
 		return EC_RES_ERROR;
 	}
 

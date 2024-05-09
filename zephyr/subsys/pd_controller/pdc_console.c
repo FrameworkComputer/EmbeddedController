@@ -187,6 +187,7 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 {
 	int rv;
 	uint8_t port;
+	bool live = true;
 	struct pdc_info_t pdc_info = { 0 };
 
 	/* Get PD port number */
@@ -194,21 +195,34 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 	if (rv)
 		return rv;
 
+	if (argc > 2) {
+		/* Parse optional live parameter */
+		char *e;
+		int live_param = strtoul(argv[2], &e, 0);
+		if (*e) {
+			shell_error(sh, "Pass 0/1 for live");
+			return -EINVAL;
+		}
+
+		live = !!live_param;
+	}
+
 	/* Get PDC Status */
-	rv = pdc_power_mgmt_get_info(port, &pdc_info);
+	rv = pdc_power_mgmt_get_info(port, &pdc_info, live);
 	if (rv) {
 		shell_error(sh, "Could not get port %u info (%d)", port, rv);
 		return rv;
 	}
 
 	shell_fprintf(sh, SHELL_INFO,
+		      "Live: %d\n"
 		      "FW Ver: %u.%u.%u\n"
 		      "PD Rev: %u\n"
 		      "PD Ver: %u\n"
 		      "VID/PID: %04x:%04x\n"
 		      "Running Flash Code: %c\n"
 		      "Flash Bank: %u\n",
-		      PDC_FWVER_GET_MAJOR(pdc_info.fw_version),
+		      live, PDC_FWVER_GET_MAJOR(pdc_info.fw_version),
 		      PDC_FWVER_GET_MINOR(pdc_info.fw_version),
 		      PDC_FWVER_GET_PATCH(pdc_info.fw_version),
 		      pdc_info.pd_revision, pdc_info.pd_version,
@@ -457,9 +471,10 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Usage: pdc status <port>",
 		      cmd_pdc_get_status, 2, 0),
 	SHELL_CMD_ARG(info, NULL,
-		      "Get PDC chip info\n"
-		      "Usage: pdc info <port>",
-		      cmd_pdc_get_info, 2, 0),
+		      "Get PDC chip info. Live defaults to 1 to force a new "
+		      "read from chip. Pass 0 to use cached info.\n"
+		      "Usage: pdc info <port> [live]",
+		      cmd_pdc_get_info, 2, 1),
 	SHELL_CMD_ARG(prs, NULL,
 		      "Trigger power role swap\n"
 		      "Usage: pdc prs <port>",

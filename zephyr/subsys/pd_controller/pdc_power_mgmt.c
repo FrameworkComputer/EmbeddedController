@@ -1555,7 +1555,7 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 		rv = pdc_reset(port->pdc);
 		break;
 	case CMD_PDC_GET_INFO:
-		rv = pdc_get_info(port->pdc, &port->info);
+		rv = pdc_get_info(port->pdc, &port->info, true);
 		break;
 	case CMD_PDC_SET_POWER_LEVEL:
 		rv = pdc_set_power_level(port->pdc, port->una_policy.tcc);
@@ -2880,7 +2880,8 @@ static void pd_chipset_shutdown(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pd_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
-test_mockable int pdc_power_mgmt_get_info(int port, struct pdc_info_t *pdc_info)
+test_mockable int pdc_power_mgmt_get_info(int port, struct pdc_info_t *pdc_info,
+					  bool live)
 {
 	int ret;
 
@@ -2893,18 +2894,27 @@ test_mockable int pdc_power_mgmt_get_info(int port, struct pdc_info_t *pdc_info)
 		return -EINVAL;
 	}
 
-	/* Block until command completes */
-	ret = public_api_block(port, CMD_PDC_GET_INFO);
-	if (ret) {
-		return ret;
+	if (live) {
+		/* Caller wants live chip info. Set up a public API call to
+		 * retrieve it from the PDC.
+		 */
+		ret = public_api_block(port, CMD_PDC_GET_INFO);
+		if (ret) {
+			return ret;
+		}
+
+		/* Provide a copy of the current info struct to avoid exposing
+		 * internal data structs.
+		 */
+		memcpy(pdc_info, &pdc_data[port]->port.info,
+		       sizeof(struct pdc_info_t));
+		return 0;
 	}
 
-	/* Provide a copy of the current info struct to avoid exposing internal
-	 * data structs.
+	/* Non-live requests can be handled synchronously by calling directly
+	 * into the PDC driver.
 	 */
-
-	memcpy(pdc_info, &pdc_data[port]->port.info, sizeof(struct pdc_info_t));
-	return 0;
+	return pdc_get_info(pdc_data[port]->port.pdc, pdc_info, false);
 }
 
 int pdc_power_mgmt_get_bus_info(int port, struct pdc_bus_info_t *pdc_bus_info)

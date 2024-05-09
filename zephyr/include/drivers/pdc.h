@@ -31,6 +31,8 @@ extern "C" {
 #define PDC_VIDPID_GET_VID(vidpid) (((vidpid) >> 16) & 0xFFFF)
 #define PDC_VIDPID_GET_PID(vidpid) ((vidpid) & 0xFFFF)
 
+#define PDC_VIDPID_INVALID (0x00000000)
+
 /**
  * Extract the major, minor, and patch elements from a 32-bit version in
  * `struct pdc_info_t`
@@ -38,6 +40,8 @@ extern "C" {
 #define PDC_FWVER_GET_MAJOR(fwver) (((fwver) >> 16) & 0xFF)
 #define PDC_FWVER_GET_MINOR(fwver) (((fwver) >> 8) & 0xFF)
 #define PDC_FWVER_GET_PATCH(fwver) ((fwver) & 0xFF)
+
+#define PDC_FWVER_INVALID (0x00000000)
 
 /**
  * @brief Power Delivery Controller Information
@@ -130,8 +134,8 @@ typedef int (*pdc_get_pdos_t)(const struct device *dev,
 			      bool port_partner_pdo, uint32_t *pdos);
 typedef int (*pdc_get_rdo_t)(const struct device *dev, uint32_t *rdo);
 typedef int (*pdc_set_rdo_t)(const struct device *dev, uint32_t rdo);
-typedef int (*pdc_get_info_t)(const struct device *dev,
-			      struct pdc_info_t *info);
+typedef int (*pdc_get_info_t)(const struct device *dev, struct pdc_info_t *info,
+			      bool live);
 typedef int (*pdc_get_bus_info_t)(const struct device *dev,
 				  struct pdc_bus_info_t *info);
 typedef int (*pdc_get_current_pdo_t)(const struct device *dev, uint32_t *pdo);
@@ -649,20 +653,21 @@ static inline int pdc_get_pdos(const struct device *dev,
  *
  * @param dev PDC device structure pointer
  * @param info pointer to where the PDC information is stored
+ * @param live If true, force a read from chip. Else used cached version.
  *
  * @retval 0 on success
  * @retval -EBUSY if not ready to execute the command
  * @retval -EINVAL if fw_version pointers is NULL
  */
 static inline int pdc_get_info(const struct device *dev,
-			       struct pdc_info_t *info)
+			       struct pdc_info_t *info, bool live)
 {
 	const struct pdc_driver_api_t *api =
 		(const struct pdc_driver_api_t *)dev->api;
 
 	__ASSERT(api->get_info != NULL, "GET_INFO is not optional");
 
-	return api->get_info(dev, info);
+	return api->get_info(dev, info, live);
 }
 
 /**

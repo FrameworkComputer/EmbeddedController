@@ -200,7 +200,8 @@ static int ccg_read_power_level(const struct device *dev)
 	return 0;
 }
 
-static int ccg_get_info(const struct device *dev, struct pdc_info_t *info)
+static int ccg_get_info(const struct device *dev, struct pdc_info_t *info,
+			bool live)
 {
 	return 0;
 }
