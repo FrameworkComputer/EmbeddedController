@@ -3970,6 +3970,11 @@ struct ec_result_keyscan_seq_ctrl {
  * Get the next pending MKBP event.
  *
  * Returns EC_RES_UNAVAILABLE if there is no event pending.
+ *
+ * V0: ec_response_get_next_data
+ * V1: ec_response_get_next_data_v1. Increased key_matrix size from 13 -> 16.
+ * V2: Added EC_MKBP_HAS_MORE_EVENTS.
+ * V3: ec_response_get_next_data_v3. Increased key_matrix size from 16 -> 18.
  */
 #define EC_CMD_GET_NEXT_EVENT 0x0067
 
@@ -4107,6 +4112,34 @@ union __ec_align_offset1 ec_response_get_next_data_v1 {
 };
 BUILD_ASSERT(sizeof(union ec_response_get_next_data_v1) == 16);
 
+union __ec_align_offset1 ec_response_get_next_data_v3 {
+	uint8_t key_matrix[18];
+
+	/* Unaligned */
+	uint32_t host_event;
+	uint64_t host_event64;
+
+	struct __ec_todo_unpacked {
+		/* For aligning the fifo_info */
+		uint8_t reserved[3];
+		struct ec_response_motion_sense_fifo_info info;
+	} sensor_fifo;
+
+	uint32_t buttons;
+
+	uint32_t switches;
+
+	uint32_t fp_events;
+
+	uint32_t sysrq;
+
+	/* CEC events from enum mkbp_cec_event */
+	uint32_t cec_events;
+
+	uint8_t cec_message[16];
+};
+BUILD_ASSERT(sizeof(union ec_response_get_next_data_v3) == 18);
+
 struct ec_response_get_next_event {
 	uint8_t event_type;
 	/* Followed by event data if any */
@@ -4117,6 +4150,12 @@ struct ec_response_get_next_event_v1 {
 	uint8_t event_type;
 	/* Followed by event data if any */
 	union ec_response_get_next_data_v1 data;
+} __ec_align1;
+
+struct ec_response_get_next_event_v3 {
+	uint8_t event_type;
+	/* Followed by event data if any */
+	union ec_response_get_next_data_v3 data;
 } __ec_align1;
 
 /* Bit indices for buttons and switches.*/

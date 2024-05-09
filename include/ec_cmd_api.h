@@ -237,6 +237,12 @@ static inline int ec_cmd_fp_template(CROS_EC_COMMAND_INFO *h,
 #define _CROS_EC_C1_F_RF(_cmd, _fn) _CROS_EC_CV_F_R(_cmd, 1, _fn##_v1, _fn##_v1)
 
 /*
+ * Shorthand for host command version 3 where response name is derived
+ * from the function name and there is no param.
+ */
+#define _CROS_EC_C3_F_RF(_cmd, _fn) _CROS_EC_CV_F_R(_cmd, 3, _fn##_v3, _fn##_v3)
+
+/*
  * Shorthand for host command version 0 where response and there are no
  * params or response.
  */
@@ -312,6 +318,7 @@ _CROS_EC_C0_F_RF(EC_CMD_GET_FEATURES, get_features);
 _CROS_EC_CV_F_R(EC_CMD_GET_KEYBD_CONFIG, 0, get_keybd_config, keybd_config);
 _CROS_EC_C0_F_RF(EC_CMD_GET_NEXT_EVENT, get_next_event);
 _CROS_EC_C1_F_RF(EC_CMD_GET_NEXT_EVENT, get_next_event);
+_CROS_EC_C3_F_RF(EC_CMD_GET_NEXT_EVENT, get_next_event);
 _CROS_EC_CV_F_R(EC_CMD_GET_NEXT_EVENT, 2, get_next_event_v2, get_next_event_v1);
 _CROS_EC_C0_F_PF_RF(EC_CMD_GET_PD_PORT_CAPS, get_pd_port_caps);
 _CROS_EC_C0_F_RF(EC_CMD_GET_PROTOCOL_INFO, get_protocol_info);
