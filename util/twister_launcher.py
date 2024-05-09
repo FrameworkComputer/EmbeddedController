@@ -111,6 +111,7 @@ EC_TEST_PATHS = [
 ZEPHYR_TEST_PATHS = [
     Path("tests/drivers/fuel_gauge/sbs_gauge"),
     Path("tests/drivers/gpio"),
+    Path("tests/drivers/flash/stm32"),
     Path("tests/subsys/shell"),
 ]
 
