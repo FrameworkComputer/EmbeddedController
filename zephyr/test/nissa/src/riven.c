@@ -584,3 +584,49 @@ ZTEST(riven, test_touch_enable)
 	k_sleep(K_MSEC(TOUCH_ENABLE_DELAY_MS));
 	zassert_equal(gpio_emul_output_get(touch_en->port, touch_en->pin), 0);
 }
+
+ZTEST(riven, test_get_scancode_set2)
+{
+	/* Test some special keys of the customization matrix */
+	zassert_equal(get_scancode_set2(6, 15), SCANCODE_LEFT_WIN);
+	zassert_equal(get_scancode_set2(0, 12), SCANCODE_F15);
+
+	/* Test out of the matrix range */
+	zassert_equal(get_scancode_set2(8, 12), 0);
+	zassert_equal(get_scancode_set2(0, 18), 0);
+}
+
+ZTEST(riven, test_set_scancode_set2)
+{
+	/* Set some special keys and read back */
+	zassert_equal(get_scancode_set2(1, 0), 0);
+	set_scancode_set2(1, 0, SCANCODE_LEFT_WIN);
+	zassert_equal(get_scancode_set2(1, 0), SCANCODE_LEFT_WIN);
+
+	zassert_equal(get_scancode_set2(4, 0), 0);
+	set_scancode_set2(4, 0, SCANCODE_CAPSLOCK);
+	zassert_equal(get_scancode_set2(4, 0), SCANCODE_CAPSLOCK);
+
+	zassert_equal(get_scancode_set2(0, 13), 0);
+	set_scancode_set2(0, 13, SCANCODE_F15);
+	zassert_equal(get_scancode_set2(0, 13), SCANCODE_F15);
+}
+
+ZTEST(riven, test_get_keycap_label)
+{
+	zassert_equal(get_keycap_label(6, 15), KLLI_SEARC);
+	zassert_equal(get_keycap_label(0, 12), KLLI_F15);
+	zassert_equal(get_keycap_label(8, 12), KLLI_UNKNO);
+	zassert_equal(get_keycap_label(0, 18), KLLI_UNKNO);
+}
+
+ZTEST(riven, test_set_keycap_label)
+{
+	zassert_equal(get_keycap_label(2, 0), KLLI_UNKNO);
+	set_keycap_label(2, 0, KLLI_SEARC);
+	zassert_equal(get_keycap_label(2, 0), KLLI_SEARC);
+
+	zassert_equal(get_keycap_label(0, 14), KLLI_UNKNO);
+	set_keycap_label(0, 14, KLLI_F15);
+	zassert_equal(get_keycap_label(0, 14), KLLI_F15);
+}

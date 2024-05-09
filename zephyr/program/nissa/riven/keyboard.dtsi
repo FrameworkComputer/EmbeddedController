@@ -3,6 +3,52 @@
  * found in the LICENSE file.
  */
 
+/ {
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+		actual-key-mask = <
+			0x08  /* C0 */
+			0xff  /* C1 */
+			0xff  /* C2 */
+			0xff  /* C3 */
+			0xff  /* C4 */
+			0xff  /* C5 */
+			0xff  /* C6 */
+			0xa0  /* C7 */
+			0xff  /* C8 */
+			0xf7  /* C9 */
+			0x01  /* C10 */
+			0xff  /* C11 */
+			0xff  /* C12 */
+			0x40  /* C13 */
+			0x0a  /* C14 */
+			0x40  /* C15 */
+			0x01  /* C16 */
+			0xc6  /* C17 */
+		>;
+	};
+};
+
+&vivaldi_kbd {
+	vivaldi-keys = <
+		KBD_RC(0, 2)   /* T1 */
+		KBD_RC(3, 2)   /* T2 */
+		KBD_RC(2, 2)   /* T3 */
+		KBD_RC(1, 2)   /* T4 */
+		KBD_RC(4, 4)   /* T5 */
+		KBD_RC(2, 4)   /* T6 */
+		KBD_RC(1, 4)   /* T7 */
+		KBD_RC(2, 11)  /* T8 */
+		KBD_RC(1, 9)   /* T9 */
+		KBD_RC(0, 4)   /* T10 */
+		KBD_RC(0, 1)   /* T11 */
+		KBD_RC(1, 5)   /* T12 */
+		KBD_RC(3, 5)   /* T13 */
+		KBD_RC(0, 11)  /* T14 */
+		KBD_RC(0, 12)  /* T15 */
+	>;
+};
+
 &kbd_config_0 {
 	vivaldi-codes = <
 		VIVALDI_TK_BACK             /* T1 */
@@ -12,10 +58,16 @@
 		VIVALDI_TK_SNAPSHOT         /* T5 */
 		VIVALDI_TK_BRIGHTNESS_DOWN  /* T6 */
 		VIVALDI_TK_BRIGHTNESS_UP    /* T7 */
-		VIVALDI_TK_VOL_MUTE         /* T8 */
-		VIVALDI_TK_VOL_DOWN         /* T9 */
-		VIVALDI_TK_VOL_UP           /* T10 */
+		VIVALDI_TK_DICTATE          /* T8 */
+		VIVALDI_TK_ACCESSIBILITY    /* T9 */
+		VIVALDI_TK_PLAY_PAUSE       /* T10 */
+		VIVALDI_TK_MICMUTE          /* T11 */
+		VIVALDI_TK_VOL_MUTE         /* T12 */
+		VIVALDI_TK_VOL_DOWN         /* T13 */
+		VIVALDI_TK_VOL_UP           /* T14 */
 	>;
+	capabilities = <(VIVALDI_KEYBD_CAP_FUNCTION_KEYS |
+			VIVALDI_KEYBD_CAP_SCRNLOCK_KEY)>;
 };
 
 &cros_kb_raw {
@@ -44,6 +96,9 @@
 		&kso12_gp05
 		&kso13_gp04
 		&kso14_gp82
+		&kso15_gp83
+		&kso16_gp03
+		&kso17_gpb1
 	>;
 	pinctrl-1 = <
 		&ksi0_gpio_gp31
@@ -68,6 +123,9 @@
 		&kso12_gpio_gp05
 		&kso13_gpio_gp04
 		&kso14_gpio_gp82
+		&kso15_gpio_gp83
+		&kso16_gpio_gp03
+		&kso17_gpio_gpb1
 	>;
 	pinctrl-names = "default", "sleep";
 };

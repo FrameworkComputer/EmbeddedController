@@ -156,6 +156,13 @@ config PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 	  then you should be looking at overriding board_vivaldi_keybd_config()
 	  instead.
 
+config PLATFORM_EC_KEYBOARD_DEBUG
+	bool "Enable keyboard debug prints"
+	help
+	  Enable keyboard debug prints to show up in early bringup, for example
+	  if the board is currently headless and keyboard functionality is being
+	  checked.
+
 config TEST_DISABLE_AP_PWRSEQ
 	bool "Disable CONFIG_AP_PWRSEQ"
 	default n

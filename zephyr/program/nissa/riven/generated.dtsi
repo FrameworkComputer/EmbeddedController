@@ -58,7 +58,7 @@
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 		};
 		gpio_ec_entering_rw: ec_entering_rw {
-			gpios = <&gpio0 3 GPIO_OUTPUT>;
+			gpios = <&gpio6 3 GPIO_OUTPUT>;
 			enum-name = "GPIO_ENTERING_RW";
 		};
 		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
