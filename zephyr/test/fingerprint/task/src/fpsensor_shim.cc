@@ -164,7 +164,7 @@ ZTEST_USER(fpsensor_shim, test_shim_finger_status_error)
 	struct fingerprint_sensor_state state;
 
 	fingerprint_get_state(fp_sim, &state);
-	state.finger_state = -EINVAL;
+	state.finger_state = static_cast<fingerprint_finger_state>(-EINVAL);
 	fingerprint_set_state(fp_sim, &state);
 
 	zassert_equal(fp_finger_status(), FINGER_NONE);

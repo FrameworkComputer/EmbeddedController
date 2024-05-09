@@ -8,16 +8,16 @@ project(fpsensor_task_test)
 
 target_sources(app PRIVATE src/mock_fingerprint_algorithm.c)
 target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_CAPTURE app PRIVATE
-	src/fpsensor_capture.c)
+	src/fpsensor_capture.cc)
 target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_ENROLL app PRIVATE
-	src/fpsensor_enroll.c)
+	src/fpsensor_enroll.cc)
 target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_FINGER_PRESENCE app PRIVATE
-	src/fpsensor_finger_presence.c)
+	src/fpsensor_finger_presence.cc)
 target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_INIT app PRIVATE
-	src/fpsensor_init.c)
+	src/fpsensor_init.cc)
 target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_MATCH app PRIVATE
-	src/fpsensor_match.c)
+	src/fpsensor_match.cc)
 target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_SHIM app PRIVATE
-	src/fpsensor_shim.c)
+	src/fpsensor_shim.cc)
 target_sources_ifdef(CONFIG_LINK_TEST_SUITE_FINGERPRINT_TEMPLATE app PRIVATE
-	src/fpsensor_template.c)
+	src/fpsensor_template.cc)

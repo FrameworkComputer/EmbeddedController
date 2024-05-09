@@ -13,6 +13,10 @@
 
 #include <drivers/fingerprint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct fingerprint_sensor_state {
 	uint16_t bad_pixels;
 	bool maintenance_ran;
@@ -65,5 +69,10 @@ __syscall void fingerprint_run_callback(const struct device *dev);
  */
 __syscall void fingerprint_load_image(const struct device *dev, uint8_t *image,
 				      size_t image_size);
+
+#ifdef __cplusplus
+}
+#endif
+
 #include <syscalls/fingerprint_sim.h>
 #endif /* ZEPHYR_INCLUDE_DRIVERS_FINGERPRINT_SIM_H_ */
