@@ -21,14 +21,6 @@
 	};
 
 	named-gpios {
-		gpio_voldn_btn_odl: voldn_btn_odl {
-			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_VOLUME_DOWN_L";
-		};
-		gpio_volup_btn_odl: volup_btn_odl {
-			gpios = <&gpioa 2 GPIO_INPUT_PULL_UP>;
-			enum-name = "GPIO_VOLUME_UP_L";
-		};
 		gpio_lid_open: lid_open {
 			gpios = <&gpiod 2 GPIO_INPUT>;
 			enum-name = "GPIO_LID_OPEN";
@@ -56,16 +48,6 @@
 	};
 
 	gpio-interrupts {
-		int_vol_down: vol_down {
-			irq-pin = <&gpio_voldn_btn_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "button_interrupt";
-		};
-		int_vol_up: vol_up {
-			irq-pin = <&gpio_volup_btn_odl>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "button_interrupt";
-		};
 		int_lid_open: lid_open {
 			irq-pin = <&gpio_lid_open>;
 			flags = <GPIO_INT_EDGE_BOTH>;

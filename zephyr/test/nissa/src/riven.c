@@ -5,7 +5,6 @@
 
 #include "battery_fuel_gauge.h"
 #include "board_config.h"
-#include "button.h"
 #include "charge_manager.h"
 #include "chipset.h"
 #include "common.h"
@@ -107,28 +106,6 @@ static int cbi_get_board_version_mock(uint32_t *value)
 int clock_get_freq(void)
 {
 	return 16000000;
-}
-
-ZTEST(riven, test_volum_up_dn_buttons)
-{
-	cbi_get_board_version_fake.custom_fake = cbi_get_board_version_mock;
-
-	nissa_get_sb_type_fake.return_val = NISSA_SB_C_A;
-
-	board_version = 1;
-	buttons_init();
-	zassert_equal(buttons[BUTTON_VOLUME_UP].gpio, GPIO_VOLUME_UP_L);
-	zassert_equal(buttons[BUTTON_VOLUME_DOWN].gpio, GPIO_VOLUME_DOWN_L);
-
-	board_version = 2;
-	buttons_init();
-	zassert_equal(buttons[BUTTON_VOLUME_UP].gpio, GPIO_VOLUME_UP_L);
-	zassert_equal(buttons[BUTTON_VOLUME_DOWN].gpio, GPIO_VOLUME_DOWN_L);
-
-	board_version = 3;
-	buttons_init();
-	zassert_equal(buttons[BUTTON_VOLUME_UP].gpio, GPIO_VOLUME_DOWN_L);
-	zassert_equal(buttons[BUTTON_VOLUME_DOWN].gpio, GPIO_VOLUME_UP_L);
 }
 
 static bool has_keypad;
