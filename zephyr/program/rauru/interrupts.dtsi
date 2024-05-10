@@ -82,8 +82,8 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "tcs3400_interrupt";
 		};
-		int_ap_xhci_init_done: ap-xhci-init-done-r {
-			irq-pin = <&gpio_ap_xhci_init_done_r>;
+		int_ap_xhci_init_done: ap-xhci-init-done {
+			irq-pin = <&gpio_ap_xhci_init_done>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "xhci_interrupt";
 		};
