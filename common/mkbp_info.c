@@ -73,7 +73,7 @@ static enum ec_status mkbp_get_info(struct host_cmd_handler_args *args)
 #ifdef CONFIG_KEYBOARD_PROTOCOL_MKBP
 		/* Version 0 just returns info about the keyboard. */
 		r->rows = KEYBOARD_ROWS;
-		r->cols = KEYBOARD_COLS_MAX;
+		r->cols = keyboard_cols;
 #else
 		r->rows = 0;
 		r->cols = 0;

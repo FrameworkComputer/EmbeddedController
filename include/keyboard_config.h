@@ -21,12 +21,14 @@
 #define KEYBOARD_COLS_NO_KEYPAD 13
 
 /*
- * KEYBOARD_COLS has the column size of the default matrix. KEYBOARD_COLS_MAX
+ * KEYBOARD_COLS is the column size of the default matrix. KEYBOARD_COLS_MAX
  * has the column size of the largest matrix. It's used to statically allocate
  * arrays used by the scanner. keyboard_cols holds a runtime column size. The
  * scanner uses it as a loop terminal.
  */
-#ifdef CONFIG_KEYBOARD_KEYPAD
+#ifdef CONFIG_KEYBOARD_COLS
+#define KEYBOARD_COLS CONFIG_KEYBOARD_COLS
+#elif defined(CONFIG_KEYBOARD_KEYPAD)
 #define KEYBOARD_COLS KEYBOARD_COLS_WITH_KEYPAD
 #else
 #define KEYBOARD_COLS KEYBOARD_COLS_NO_KEYPAD

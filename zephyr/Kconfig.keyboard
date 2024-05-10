@@ -115,6 +115,13 @@ config PLATFORM_EC_KEYBOARD_KEYPAD
 	  placed on the far right. This contains nuumber keys and also some
 	  commonly used symbols, to help speed up numeric data entry.
 
+config PLATFORM_EC_KEYBOARD_COLS
+	int "Number of columns scanned by keyboard subsystem"
+	default 15 if PLATFORM_EC_KEYBOARD_KEYPAD
+	default 13
+	help
+	  Number of the columns the keyboard subsystem scans.
+
 config PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 	bool "Support keyboard customization"
 	help
