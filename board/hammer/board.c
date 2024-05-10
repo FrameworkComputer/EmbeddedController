@@ -253,14 +253,14 @@ void board_touchpad_reset(void)
 {
 #ifdef HAS_EN_PP3300_TP_ACTIVE_HIGH
 	gpio_set_level(GPIO_EN_PP3300_TP, 0);
-	msleep(100);
+	crec_msleep(100);
 	gpio_set_level(GPIO_EN_PP3300_TP, 1);
-	msleep(100);
+	crec_msleep(100);
 #else
 	gpio_set_level(GPIO_EN_PP3300_TP_ODL, 1);
-	msleep(10);
+	crec_msleep(10);
 	gpio_set_level(GPIO_EN_PP3300_TP_ODL, 0);
-	msleep(10);
+	crec_msleep(10);
 #endif
 }
 #endif /* !HAS_NO_TOUCHPAD */
@@ -300,7 +300,7 @@ int board_get_entropy(void *buffer, int len)
 		while (!(STM32_CRS_ISR & STM32_CRS_ISR_SYNCOKF)) {
 			if ((__hw_clock_source_read() - start) > timeout)
 				return 0;
-			usleep(500);
+			crec_usleep(500);
 		}
 		/* Pick 8 bits, including FEDIR and 7 LSB of FECAP. */
 		data[i] = STM32_CRS_ISR >> 15;

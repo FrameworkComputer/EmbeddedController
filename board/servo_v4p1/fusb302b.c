@@ -167,7 +167,7 @@ int get_cc(int *cc1, int *cc2)
 	/* CC1 is now being measured by FUSB302. */
 
 	/* Wait on measurement */
-	usleep(250);
+	crec_usleep(250);
 
 	tcpc_read(TCPC_REG_STATUS0, &bc_lvl_cc1);
 
@@ -189,7 +189,7 @@ int get_cc(int *cc1, int *cc2)
 	/* CC2 is now being measured by FUSB302. */
 
 	/* Wait on measurement */
-	usleep(250);
+	crec_usleep(250);
 
 	tcpc_read(TCPC_REG_STATUS0, &bc_lvl_cc2);
 

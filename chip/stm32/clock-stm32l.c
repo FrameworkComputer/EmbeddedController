@@ -291,9 +291,9 @@ void __enter_hibernate(uint32_t seconds, uint32_t microseconds)
 
 	if (seconds || microseconds) {
 		if (seconds)
-			sleep(seconds);
+			crec_sleep(seconds);
 		if (microseconds)
-			usleep(microseconds);
+			crec_usleep(microseconds);
 	} else {
 		while (1)
 			task_wait_event(-1);

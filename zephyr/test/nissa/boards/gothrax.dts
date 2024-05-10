@@ -2,6 +2,8 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/pwm/pwm.h>
 #include <it8xxx2_emul.dts>
 #include "../program/nissa/cbi.dtsi"
 #include "../program/nissa/gothrax/cbi.dtsi"
@@ -43,6 +45,10 @@
 		};
 		gpio_fan_enable: fan-enable {
 			gpios = <&gpiog 3 GPIO_OUTPUT>;
+			no-auto-init;
+		};
+		gpio_ec_soc_dsw_pwrok: ec_soc_dsw_pwrok {
+			gpios = <&gpiol 7 GPIO_OUTPUT>;
 			no-auto-init;
 		};
 	};
@@ -111,6 +117,131 @@
 			};
 		};
 	};
+	pwms {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		pwm2: pwm@6 {
+			compatible = "cros,pwm-mock";
+			reg = <6 2>;
+			#pwm-cells = <3>;
+			status = "okay";
+		};
+	};
+	tachs {
+		#address-cells = <1>;
+		#size-cells = <1>;
+		tach1: tach@1 {
+			compatible = "cros,tach-mock";
+			reg = <1 1>;
+			#tach-cells = <3>;
+			status = "okay";
+		};
+	};
+	fans {
+		compatible = "cros-ec,fans";
+		fan0: fan_0 {
+			pwms = <&pwm2 2 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+			tach = <&tach1>;
+			rpm_min = <2500>;
+			rpm_start = <2500>;
+			rpm_max = <4800>;
+			rpm_deviation = <1>;
+			enable_gpio = <&gpio_fan_enable>;
+		};
+	};
+	fan_steps {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp_on = <36 0 0>;
+			temp_off = <99 0 0>;
+			rpm_target = <0>;
+		};
+		level_1 {
+			temp_on = <41 0 0>;
+			temp_off = <38 0 0>;
+			rpm_target = <3000>;
+		};
+		level_2 {
+			temp_on = <47 0 0>;
+			temp_off = <44 0 0>;
+			rpm_target = <3500>;
+		};
+		level_3 {
+			temp_on = <53 0 0>;
+			temp_off = <50 0 0>;
+			rpm_target = <4000>;
+		};
+		level_4 {
+			temp_on = <63 0 0>;
+			temp_off = <60 0 0>;
+			rpm_target = <4500>;
+		};
+		level_5 {
+			temp_on = <70 0 0>;
+			temp_off = <67 0 0>;
+			rpm_target = <4800>;
+		};
+	};
+	named-adc-channels {
+		compatible = "named-adc-channels";
+		adc_temp_sensor_1: temp_sensor_1 {
+			enum-name = "ADC_TEMP_SENSOR_1";
+			io-channels = <&adc0 2>;
+		};
+		adc_temp_sensor_2: temp_sensor_2 {
+			enum-name = "ADC_TEMP_SENSOR_2";
+			io-channels = <&adc0 3>;
+		};
+		adc_temp_sensor_3: temp_sensor_3 {
+			enum-name = "ADC_TEMP_SENSOR_3";
+			io-channels = <&adc0 13>;
+		};
+	};
+	temp_memory_thermistor: memory {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_1>;
+	};
+	temp_charger_thermistor: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_2>;
+	};
+	temp_ambient_thermistor: ambient {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_3>;
+	};
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_memory: memory {
+			temp_fan_off = <38>;
+			temp_fan_max = <76>;
+			temp_host_high = <102>;
+			temp_host_halt = <104>;
+			temp_host_release_high = <94>;
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_memory_thermistor>;
+		};
+		temp_charger: charger {
+			temp_fan_off = <35>;
+			temp_fan_max = <60>;
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_charger_thermistor>;
+		};
+		temp_ambient: ambient {
+			temp_fan_off = <35>;
+			temp_fan_max = <60>;
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_ambient_thermistor>;
+		};
+	};
 };
 
 &i2c4 {
@@ -132,4 +263,7 @@
 		reg = <0x3e>;
 		board-set = "board_anx7483_c1_mux_set";
 	};
+};
+&thermistor_3V3_51K1_47K_4050B  {
+	status = "okay";
 };

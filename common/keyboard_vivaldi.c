@@ -67,6 +67,7 @@ static const uint16_t action_scancodes[] = {
 	[TK_MICMUTE] = SCANCODE_MICMUTE,
 	[TK_KBD_BKLIGHT_TOGGLE] = SCANCODE_KBD_BKLIGHT_TOGGLE,
 	[TK_MENU] = SCANCODE_MENU,
+	[TK_DICTATE] = SCANCODE_DICTATE,
 };
 BUILD_ASSERT(ARRAY_SIZE(action_scancodes) == TK_COUNT);
 
@@ -158,7 +159,7 @@ static void vivaldi_init(void)
 		row = vivaldi_keys[i].row;
 		col = vivaldi_keys[i].col;
 
-		if (col >= KEYBOARD_COLS_MAX || row >= KEYBOARD_ROWS) {
+		if (col >= keyboard_cols || row >= KEYBOARD_ROWS) {
 			CPRINTS("VIVALDI: Bad (row,col) for T-%u: (%u,%u)", i,
 				row, col);
 			ASSERT(false);

@@ -1,0 +1,53 @@
+description: "Gfl NB0346-427689"
+compatible: "gfl,nb0346-427689"
+
+include: battery-smart.yaml
+
+properties:
+  enum-name:
+    type: string
+    default: "gfl,nb0346-427689"
+
+  # Fuel gauge
+  manuf_name:
+    default: "GFL"
+  device_name:
+    default: "NB0346-427689"
+  ship_mode_reg_addr:
+    default: 0x00
+  ship_mode_reg_data:
+    default: [0x0010, 0x0010]
+  flags:
+    default: 0x04
+  fet_reg_addr:
+    default: 0x54
+  fet_reg_mask:
+    default: 0x0006
+  fet_disconnect_val:
+    default: 0x0000
+  fet_cfet_mask:
+    default: 0x4000
+  fet_cfet_off_val:
+    default: 0x4000
+
+  # Battery info
+  voltage_max:
+    default: 8800
+  voltage_normal:
+    default: 7700
+  voltage_min:
+    default: 6000
+  precharge_current:
+    default: 256
+  start_charging_min_c:
+    default: 4
+  start_charging_max_c:
+    default: 45
+  charging_min_c:
+    default: 4
+  charging_max_c:
+    default: 56
+  discharging_min_c:
+    default: -20
+  discharging_max_c:
+    default: 60

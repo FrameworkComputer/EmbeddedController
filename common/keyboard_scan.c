@@ -102,7 +102,7 @@ BUILD_ASSERT(ARRAY_SIZE(boot_key_list) == BOOT_KEY_COUNT);
 static uint32_t boot_key_value = BOOT_KEY_NONE;
 #endif
 
-uint8_t keyboard_cols = KEYBOARD_COLS_MAX;
+uint8_t keyboard_cols = KEYBOARD_COLS;
 
 /* Debounced key matrix */
 static uint8_t debounced_state[KEYBOARD_COLS_MAX];
@@ -139,6 +139,16 @@ static volatile int force_poll;
 
 /* Indicates keyboard_scan_task has started. */
 test_export_static uint8_t keyboard_scan_task_started;
+
+uint8_t keyboard_get_cols(void)
+{
+	return keyboard_cols;
+}
+
+void keyboard_set_cols(uint8_t cols)
+{
+	keyboard_cols = cols;
+}
 
 test_export_static int keyboard_scan_is_enabled(void)
 {
@@ -208,7 +218,7 @@ static void ensure_keyboard_scanned(int old_polls)
 	 */
 	while ((kbd_polls == old_polls) &&
 	       (get_time().val - start_time < SCAN_TASK_TIMEOUT_US))
-		usleep(keyscan_config.scan_period_us);
+		crec_usleep(keyscan_config.scan_period_us);
 }
 
 #ifdef CONFIG_KEYBOARD_SCAN_ADC
@@ -288,8 +298,8 @@ static void simulate_key(int row, int col, int pressed)
 	 * That means it needs to have run and for enough time.
 	 */
 	ensure_keyboard_scanned(old_polls);
-	usleep(pressed ? keyscan_config.debounce_down_us :
-			 keyscan_config.debounce_up_us);
+	crec_usleep(pressed ? keyscan_config.debounce_down_us :
+			      keyscan_config.debounce_up_us);
 	ensure_keyboard_scanned(kbd_polls);
 }
 
@@ -421,7 +431,7 @@ test_export_static uint8_t key_vol_up_col = KEYBOARD_DEFAULT_COL_VOL_UP;
 
 void set_vol_up_key(uint8_t row, uint8_t col)
 {
-	if (col < KEYBOARD_COLS_MAX && row < KEYBOARD_ROWS) {
+	if (col < keyboard_cols && row < KEYBOARD_ROWS) {
 		key_vol_up_row = row;
 		key_vol_up_col = col;
 	}
@@ -923,6 +933,11 @@ const uint8_t *keyboard_scan_get_state(void)
 
 void keyboard_scan_init(void)
 {
+	CPRINTS("Custom=%d Keypad=%d Vivaldi=%d",
+		IS_ENABLED(CONFIG_KEYBOARD_CUSTOMIZATION),
+		IS_ENABLED(CONFIG_KEYBOARD_KEYPAD),
+		IS_ENABLED(CONFIG_KEYBOARD_VIVALDI));
+
 	if (IS_ENABLED(CONFIG_KEYBOARD_STRICT_DEBOUNCE) &&
 	    keyscan_config.debounce_down_us != keyscan_config.debounce_up_us) {
 		/*
@@ -1083,7 +1098,7 @@ void keyboard_scan_task(void *u)
 			if (wait_time < post_scan_clock_us)
 				wait_time = post_scan_clock_us;
 
-			usleep(wait_time);
+			crec_usleep(wait_time);
 		}
 	}
 }

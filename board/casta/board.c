@@ -127,7 +127,7 @@ void i2c_start_xfer_notify(const int port, const uint16_t addr_flags)
 	if (time_delta_us >= BATTERY_FREE_MIN_DELTA_US)
 		return;
 
-	usleep(BATTERY_FREE_MIN_DELTA_US - time_delta_us);
+	crec_usleep(BATTERY_FREE_MIN_DELTA_US - time_delta_us);
 }
 
 void i2c_end_xfer_notify(const int port, const uint16_t addr_flags)

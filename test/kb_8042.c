@@ -12,6 +12,7 @@
 #include "gpio.h"
 #include "i8042_protocol.h"
 #include "keyboard_8042.h"
+#include "keyboard_8042_sharedlib.h"
 #include "keyboard_protocol.h"
 #include "keyboard_scan.h"
 #include "lpc.h"
@@ -109,7 +110,7 @@ int _wait_for_data(int delay_ms)
 			break;
 		delay_ms -= 1;
 
-		msleep(1);
+		crec_msleep(1);
 	}
 	TEST_ASSERT(output_buffer.full);
 
@@ -136,7 +137,7 @@ int _wait_for_data(int delay_ms)
 
 #define VERIFY_LPC_CHAR_DELAY(s, d)                    \
 	do {                                           \
-		msleep(d);                             \
+		crec_msleep(d);                        \
 		VERIFY_LPC_CHAR_ALL(s, 10, false, -1); \
 	} while (0)
 #define VERIFY_LPC_CHAR(s) VERIFY_LPC_CHAR_ALL(s, 30, false, -1)
@@ -144,7 +145,7 @@ int _wait_for_data(int delay_ms)
 
 #define VERIFY_NO_CHAR()                              \
 	do {                                          \
-		msleep(30);                           \
+		crec_msleep(30);                      \
 		TEST_EQ(output_buffer.full, 0, "%d"); \
 	} while (0)
 
@@ -156,7 +157,7 @@ int _wait_for_data(int delay_ms)
 #define VERIFY_AUX_TO_DEVICE(expected_data)                                   \
 	do {                                                                  \
 		uint8_t _data;                                                \
-		msleep(30);                                                   \
+		crec_msleep(30);                                              \
 		TEST_EQ(queue_remove_unit(&aux_to_device, &_data), (size_t)1, \
 			"%zd");                                               \
 		TEST_EQ(_data, expected_data, "%#x");                         \
@@ -164,7 +165,7 @@ int _wait_for_data(int delay_ms)
 
 #define VERIFY_AUX_TO_DEVICE_EMPTY()                         \
 	do {                                                 \
-		msleep(30);                                  \
+		crec_msleep(30);                             \
 		TEST_ASSERT(queue_is_empty(&aux_to_device)); \
 	} while (0)
 
@@ -461,13 +462,13 @@ test_8042_keyboard_key_pressed_before_inhibit_using_cmd_byte(void)
 	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
 	keyboard_host_write(I8042_XLATE | I8042_KBD_DIS, 0);
 	/* Wait for controller to processes the command */
-	msleep(10);
+	crec_msleep(10);
 
 	/* Stop inhibiting the keyboard */
 	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
 	keyboard_host_write(I8042_XLATE, 0);
 	/* Wait for controller to processes the command */
-	msleep(10);
+	crec_msleep(10);
 
 	/* Verify the scan codes from above */
 	VERIFY_LPC_CHAR("\x01");
@@ -496,7 +497,7 @@ test_8042_keyboard_key_pressed_before_inhibit_using_cmd_byte_with_read(void)
 	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
 	keyboard_host_write(I8042_XLATE | I8042_KBD_DIS, 0);
 	/* Wait for controller to processes the command */
-	msleep(10);
+	crec_msleep(10);
 
 	/* Read the key press scan code from the output buffer. */
 	VERIFY_LPC_CHAR("\x01");
@@ -514,7 +515,7 @@ test_8042_keyboard_key_pressed_before_inhibit_using_cmd_byte_with_read(void)
 	keyboard_host_write(I8042_WRITE_CMD_BYTE, 1);
 	keyboard_host_write(I8042_XLATE, 0);
 	/* Wait for controller to processes the command */
-	msleep(10);
+	crec_msleep(10);
 
 	/* Verify the key release scan code from above */
 	/*
@@ -755,7 +756,7 @@ test_static int test_atkbd_set_leds_keypress_during(void)
 	press_key(1, 1, 0);
 
 	/* Scancode is kept in queue during SETLEDS. */
-	msleep(15);
+	crec_msleep(15);
 	TEST_EQ(output_buffer.full, 0, "%d");
 
 	/* 2nd byte arrives (before timer expires) */
@@ -781,11 +782,11 @@ test_static int test_atkbd_set_leds_keypress_timeout(void)
 	press_key(1, 1, 0);
 
 	/* Scancode is kept in queue during SETLEDS. */
-	msleep(15);
+	crec_msleep(15);
 	TEST_EQ(output_buffer.full, 0, "%d");
 
 	/* Further wait until timer expires. */
-	msleep(15);
+	crec_msleep(15);
 
 	/* Scancode previously queued should be sent now. */
 	VERIFY_LPC_CHAR("\x01\x81");
@@ -864,7 +865,7 @@ test_static int test_power_button(void)
 	ENABLE_KEYSTROKE(0);
 
 	gpio_set_level(GPIO_POWER_BUTTON_L, 1);
-	msleep(100);
+	crec_msleep(100);
 
 	SET_SCANCODE(1);
 	ENABLE_KEYSTROKE(1);
@@ -997,12 +998,37 @@ test_static int test_vivaldi_top_keys(void)
 	return EC_SUCCESS;
 }
 
+static scancode_set2_t scancode_test = {
+	{ 0, 1, 2, 3, 4, 5, 6, 7 },
+};
+
+extern scancode_set2_t *scancode_set2;
+
+static int test_register_scancode_set2(void)
+{
+	/* Save */
+	scancode_set2_t *scancode_default = scancode_set2;
+	uint8_t cols = keyboard_get_cols();
+
+	register_scancode_set2(&scancode_test, 1);
+	TEST_ASSERT(keyboard_get_cols() == 1);
+	TEST_ASSERT(scancode_set2 == &scancode_test);
+	/* Out of bounds */
+	TEST_ASSERT(get_scancode_set2(0, cols + 1) == 0);
+
+	/* Restore */
+	register_scancode_set2(scancode_default, cols);
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, const char **argv)
 {
 	test_reset();
 	wait_for_task_started();
 
 	if (system_get_image_copy() == EC_IMAGE_RO) {
+		RUN_TEST(test_register_scancode_set2);
 		RUN_TEST(test_8042_aux_loopback);
 		RUN_TEST(test_8042_aux_two_way_communication);
 		RUN_TEST(test_8042_aux_inhibit);

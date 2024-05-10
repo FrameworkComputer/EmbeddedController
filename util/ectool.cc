@@ -657,6 +657,7 @@ static const char *const ec_feature_names[] = {
 	[EC_FEATURE_TOKENIZED_LOGGING] = "Tokenized Logging",
 	[EC_FEATURE_AMD_STB_DUMP] = "AMD STB dump",
 	[EC_FEATURE_MEMORY_DUMP] = "Memory Dump",
+	[EC_FEATURE_UCSI_PPM] = "UCSI PPM",
 };
 
 int cmd_inventory(int argc, char *argv[])
@@ -5321,6 +5322,9 @@ static int cmd_motionsense(int argc, char **argv)
 			case MOTIONSENSE_CHIP_BMI220:
 				printf("bmi220\n");
 				break;
+			case MOTIONSENSE_CHIP_VEML3328:
+				printf("veml3328\n");
+				break;
 			default:
 				printf("unknown\n");
 			}
@@ -6592,6 +6596,7 @@ const char *action_key_names[] = {
 	[TK_KBD_BKLIGHT_TOGGLE] = "Keyboard Backlight Toggle",
 	[TK_MICMUTE] = "Microphone Mute",
 	[TK_MENU] = "Menu",
+	[TK_DICTATE] = "Dictation",
 };
 
 BUILD_ASSERT(ARRAY_SIZE(action_key_names) == TK_COUNT);
@@ -8572,8 +8577,11 @@ static void cmd_battery_config_help(const char *cmd)
 		"    device_name: Battery's name. Up to 31 chars.\n"
 		"    index: Index of config in CBI to be get or set.\n"
 		"\n"
-		"    Run `ectool battery` for <manuf_name> and <device_name>\n",
-		cmd, cmd);
+		"    Run `ectool battery` for <manuf_name> and <device_name>\n"
+		"\n"
+		"Usage: %s search <json_file> <manuf_name> <device_name> [<index>]\n"
+		"    Search for a matching battery config in the config file.\n",
+		cmd, cmd, cmd);
 }
 
 static int cmd_battery_config_get(int argc, char *argv[])
@@ -8685,7 +8693,7 @@ static int cmd_battery_config_get(int argc, char *argv[])
 	return 0;
 }
 
-static int cmd_battery_config_set(int argc, char *argv[])
+static int cmd_battery_config_set(int argc, char *argv[], bool search_only)
 {
 	FILE *fp = NULL;
 	int size;
@@ -8786,6 +8794,12 @@ static int cmd_battery_config_set(int argc, char *argv[])
 	if (read_u8_from_json(root_dict, "struct_version", &struct_version))
 		return -1;
 
+	if (search_only) {
+		printf("Battery config with identifier: %s,%s is found at %s\n",
+		       manuf_name, device_name, json_file);
+		return 0;
+	}
+
 	/* Clear config to ensure unspecified (optional) fields are 0. */
 	memset(&config, 0, sizeof(config));
 	if (read_battery_config_from_json(root_dict, &config))
@@ -8829,7 +8843,9 @@ static int cmd_battery_config(int argc, char *argv[])
 	if (argc > 1 && !strcasecmp(argv[1], "get"))
 		return cmd_battery_config_get(--argc, ++argv);
 	else if (argc > 1 && !strcasecmp(argv[1], "set"))
-		return cmd_battery_config_set(--argc, ++argv);
+		return cmd_battery_config_set(--argc, ++argv, false);
+	else if (argc > 1 && !strcasecmp(argv[1], "search"))
+		return cmd_battery_config_set(--argc, ++argv, true);
 
 	fprintf(stderr, "Invalid sub-command '%s'\n",
 		argv[1] ? argv[1] : "(null)");
@@ -9426,6 +9442,29 @@ int cmd_console(int argc, char *argv[])
 	printf("\n");
 	return 0;
 }
+
+static int cmd_console_print(int argc, char *argv[])
+{
+	char *msg;
+	int msg_len;
+
+	if (argc != 2) {
+		fprintf(stderr, "Usage: %s <msg>\n", argv[0]);
+		return -1;
+	}
+	msg = argv[1];
+	msg_len = strlen(msg);
+	if (msg_len > ec_max_outsize - 1) {
+		/* Truncate message */
+		msg_len = ec_max_outsize - 1;
+		msg[msg_len] = '\0';
+		fprintf(stderr,
+			"Message exceeds max-length(%d), truncating to '%s'\n",
+			ec_max_outsize - 1, msg);
+	}
+	return ec_command(EC_CMD_CONSOLE_PRINT, 0, msg, msg_len + 1, NULL, 0);
+}
+
 struct param_info {
 	const char *name; /* name of this parameter */
 	const char *help; /* help message */
@@ -12062,6 +12101,9 @@ const struct command commands[] = {
 	  "<cmd>\n\tPrints supported version mask for a command number." },
 	{ "console", cmd_console,
 	  "\n\tPrints the last output to the EC debug console." },
+	{ "console_print", cmd_console_print,
+	  "<message>\n"
+	  "\tPrints a message to the EC console." },
 	{ "echash", cmd_ec_hash, "[CMDS]\n\tVarious EC hash commands." },
 	{ "eventclear", cmd_host_event_clear,
 	  "<mask>\n"

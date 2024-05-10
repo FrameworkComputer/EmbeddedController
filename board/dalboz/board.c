@@ -201,7 +201,7 @@ static void board_chipset_resume(void)
 
 	if (ec_config_has_hdmi_retimer_pi3hdx1204()) {
 		ioex_set_level(IOEX_EN_PWR_HDMI_DB, 1);
-		msleep(PI3HDX1204_POWER_ON_DELAY_MS);
+		crec_msleep(PI3HDX1204_POWER_ON_DELAY_MS);
 		pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS, 1);
 	}
 }
@@ -463,11 +463,11 @@ static void reset_nct38xx_port(int port)
 		return;
 
 	gpio_set_level(reset_gpio_l, 0);
-	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
+	crec_msleep(NCT38XX_RESET_HOLD_DELAY_MS);
 	gpio_set_level(reset_gpio_l, 1);
 	nct38xx_reset_notify(port);
 	if (NCT3807_RESET_POST_DELAY_MS != 0)
-		msleep(NCT3807_RESET_POST_DELAY_MS);
+		crec_msleep(NCT3807_RESET_POST_DELAY_MS);
 }
 
 void board_reset_pd_mcu(void)

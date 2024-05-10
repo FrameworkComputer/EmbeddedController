@@ -167,13 +167,14 @@ void board_reset_pd_mcu(void)
 	if (battery_hw_present())
 		gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 0);
 
-	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS, PS8815_PWR_H_RST_H_DELAY_MS));
+	crec_msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
+				PS8815_PWR_H_RST_H_DELAY_MS));
 
 	gpio_set_level(GPIO_USB_C0_TCPC_RST_ODL, 1);
 	gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 1);
 
 	/* wait for chips to come up */
-	msleep(PS8815_FW_INIT_DELAY_MS);
+	crec_msleep(PS8815_FW_INIT_DELAY_MS);
 }
 
 static void board_tcpc_init(void)
@@ -264,13 +265,6 @@ void ppc_interrupt(enum gpio_signal signal)
 	default:
 		break;
 	}
-}
-
-void retimer_interrupt(enum gpio_signal signal)
-{
-	/*
-	 * TODO(b/179513527): add USB-C support
-	 */
 }
 
 __override bool board_is_dts_port(int port)

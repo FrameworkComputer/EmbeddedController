@@ -59,19 +59,19 @@ This document will assume you are using Servo V4.
 
 # enter the chroot
 (outside chroot) $ cros_sdk
-
-# build autotest for the board to be tested
-(chroot) $ emerge-<BOARD> autotest
 ```
+### Servod setup
+
+Follow [servod outside chroot] instructions.
 
 ### Start servod
 
 ```bash
-(chroot) $ sudo servod --board=<BOARD>
+(outside) $ start-servod --channel=release --board=$BOARD -p 9999
 ```
 
-At this point the servod daemon should be running and listening to port 9999 by
-default. If it isn't, check the hardware connection.
+At this point the servod daemon should be running and listening to port 9999.
+If it isn't, check the hardware connection.
 
 ## Run a Single Fingerprint Firmware Test
 
@@ -91,7 +91,7 @@ test_that --board=<BOARD> <IP> <test name>
 For example:
 
 ```bash
-test_that --board=nocturne <IP> firmware_Fingerprint.ReadFlash
+tast run <IP> firmware.FpReadFlash
 ```
 
 ## Run the Entire Fingerprint Firmware Test Suite
@@ -99,7 +99,7 @@ test_that --board=nocturne <IP> firmware_Fingerprint.ReadFlash
 To run the entire suite, use this command in your chroot:
 
 ```bash
-test_that --board=<BOARD> <IP> suite:fingerprint
+tast run <IP> '("group:fingerprint-cq")'
 ```
 
 <!-- Links -->
@@ -110,3 +110,4 @@ test_that --board=<BOARD> <IP> suite:fingerprint
 [Servo V4]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/docs/servo_v4.md
 [have the prerequisites]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#Prerequisites
 [get the source]: https://chromium.googlesource.com/chromiumos/docs/+/HEAD/developer_guide.md#get-the-source
+[servod outside chroot]: https://chromium.googlesource.com/chromiumos/third_party/hdctools/+/HEAD/docs/servod_outside_chroot.md

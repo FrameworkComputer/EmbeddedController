@@ -1,0 +1,425 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/usbc_mux.h>
+#include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	aliases {
+		gpio-cbi-wp = &gpio_ec_cbi_wp;
+		gpio-wp = &gpio_ec_wp_odl;
+		int-wp = &int_wp_l;
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
+	};
+
+	ec-console {
+		compatible = "ec-console";
+		disabled = "events", "lpc", "hostcmd";
+	};
+
+	batteries {
+		default_battery: smp {
+			compatible = "smp,l22m3pg0", "battery-smart";
+		};
+		smp_l22m3pg1 {
+			compatible = "smp,l22m3pg1", "battery-smart";
+		};
+		sunwoda_l22d3pg0 {
+			compatible = "sunwoda,l22d3pg0", "battery-smart";
+		};
+		sunwoda_l22d3pg1 {
+			compatible = "sunwoda,l22d3pg1", "battery-smart";
+		};
+		celxpert_l22c3pg0 {
+			compatible = "celxpert,l22c3pg0", "battery-smart";
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_power_button: power_button {
+			irq-pin = <&gpio_ec_pwr_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+		int_wp_l: wp_l {
+			irq-pin = <&gpio_ec_wp_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "switch_interrupt";
+		};
+		int_lid_open: lid_open {
+			irq-pin = <&gpio_lid_open>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+		int_tablet_mode: tablet_mode {
+			irq-pin = <&gpio_tablet_mode_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "gmr_tablet_switch_isr";
+		};
+		int_imu: ec_imu {
+			irq-pin = <&gpio_imu_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lsm6dsm_interrupt";
+		};
+		int_vol_down: vol_down {
+			irq-pin = <&gpio_voldn_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+		int_vol_up: vol_up {
+			irq-pin = <&gpio_volup_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+	};
+
+	named-gpios {
+		ec-i2c-sensor-scl {
+			gpios = <&gpio9 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec-i2c-sensor-sda {
+			gpios = <&gpio8 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ioex_soc_usb_oc0: soc_usb_oc0 {
+			gpios = <&ioex_port1 4 GPIO_OUTPUT_LOW>;
+		};
+		ioex_soc_usb_oc1: soc_usb_oc1 {
+			gpios = <&ioex_port2 4 GPIO_OUTPUT_LOW>;
+		};
+		ioex_usb_c0_frs_en: usb_c0_frs_en {
+			gpios = <&ioex_port1 6 GPIO_OUTPUT_LOW>;
+		};
+		ioex_usb_c1_frs_en: usb_c1_frs_en {
+			gpios = <&ioex_port2 6 GPIO_OUTPUT_LOW>;
+		};
+		gpio_power_led: power_led {
+			gpios = <&gpioc 2 GPIO_OUTPUT_LOW>;
+		};
+		gpio_led_1_odl: led_1_odl {
+			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
+		};
+		gpio_led_2_odl: led_2_odl {
+			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
+		};
+	};
+
+	/*
+	 * Aliases used for sub-board GPIOs.
+	 */
+	aliases {
+		gpio-hdmi-en-odl = &gpio_ec_hdmi_pwr;
+		gpio-en-usb-a1-vbus = &gpio_en_sub_usb_a1_vbus;
+	};
+
+	temp_memory: memory {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_1>;
+	};
+	temp_chassis: chassis {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_2>;
+	};
+	temp_ambient: ambient {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_3>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		memory {
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_memory>;
+		};
+		chassis {
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_chassis>;
+		};
+		ambient {
+			temp_host_high = <85>;
+			temp_host_halt = <90>;
+			temp_host_release_high = <80>;
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_ambient>;
+		};
+	};
+
+	usba {
+		compatible = "cros-ec,usba-port-enable-pins";
+		enable-pins = <&gpio_en_sub_usb_a1_vbus>;
+		status = "okay";
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			chg = <&charger>;
+			tcpc = <&tcpc_port0>;
+			ppc = <&ppc_port0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+		/*
+		 * TODO(b:211693800): port1 may not be present on some
+		 * sub-boards.
+		 */
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			tcpc = <&tcpc_port1>;
+			ppc = <&ppc_port1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+
+	 /*
+	  * Declare unused GPIOs so that they are shut down
+	  * and use minimal power
+	  */
+	  unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpio0 2 0>,
+			<&gpio3 2 0>,
+			<&gpio3 5 0>,
+			<&gpio3 6 0>,
+			<&gpio5 7 0>,
+			<&gpio6 0 0>,
+			<&gpio6 6 0>,
+			<&gpio8 1 0>,
+			<&gpio8 6 0>,
+			<&gpioa 0 0>,
+			<&gpioc 0 0>,
+			<&gpioc 7 0>,
+			<&gpiod 5 0>,
+			<&gpiod 7 0>,
+			<&gpiof 2 0>,
+			<&gpiof 3 0>;
+	 };
+};
+
+&thermistor_3V3_51K1_47K_4050B {
+	status = "okay";
+};
+
+&adc_ec_vsense_pp3300_s5 {
+	/*
+	 * Voltage divider on input has 47k upper and 220k lower legs with
+	 * 2714 mV full-scale reading on the ADC. Apply the largest possible
+	 * multiplier (without overflowing int32) to get the best possible
+	 * approximation of the actual ratio, but derate by a factor of two to
+	 * ensure unexpectedly high values won't overflow.
+	 */
+	mul = <(791261 / 2)>;
+	div = <(651975 / 2)>;
+};
+
+/* Set bus speeds for I2C */
+&i2c0_0 {
+	label = "I2C_EEPROM";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+};
+
+&i2c1_0 {
+	label = "I2C_SENSOR";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c2_0 {
+	label = "I2C_USB_C0_TCPC";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+
+	nct3808_C0: nct38xx@70 {
+		compatible = "nuvoton,nct38xx";
+		reg = <0x70>;
+
+		tcpc_port0: nct38xx-tcpc {
+			compatible = "nuvoton,nct38xx-tcpc";
+			gpio-dev = <&nct38xx_gpio_0_P1>;
+			tcpc-flags = <(
+				TCPC_FLAGS_TCPCI_REV2_0 |
+				TCPC_FLAGS_NO_DEBUG_ACC_CONTROL)>;
+			/* a duplicate of the <&gpio_usb_c0_tcpc_int_odl> node
+			 * in"named-gpios". This is the Zephyr preferred style,
+			 * the "named-gpios" node will be dealt with at a later
+			 * date.
+			 */
+			irq-gpios = <&gpiob 7 GPIO_ACTIVE_LOW>;
+			/* a duplicate of the <&gpio_usb_c0_tcpc_rst_l> node in
+			 * "named-gpios". This is the Zephyr preferred style,
+			 * the "named-gpios" node will be dealt with at a later
+			 * date.
+			 */
+			rst-gpios = <&gpio7 3
+				(GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+		};
+
+		nct38xx_gpio_0_P1: nct38xx-gpio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "nuvoton,nct38xx-gpio";
+			label = "NCT3808_0_P1";
+
+			ioex_port1: gpio@0 {
+				compatible = "nuvoton,nct38xx-gpio-port";
+				reg = <0x0>;
+				label = "NCT3808_0_P1_GPIO0";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <8>;
+				pin_mask = <0xdc>;
+				pinmux_mask = <0xff>;
+			};
+		};
+	};
+
+		nct3808_C1: nct38xx@74 {
+		compatible = "nuvoton,nct38xx";
+		reg = <0x74>;
+
+		tcpc_port1: nct38xx-tcpc {
+			compatible = "nuvoton,nct38xx-tcpc";
+			gpio-dev = <&nct38xx_gpio_0_P2>;
+			tcpc-flags = <(TCPC_FLAGS_TCPCI_REV2_0)>;
+			/* a duplicate of the <&gpio_usb_c0_tcpc_int_odl> node
+			 * in"named-gpios". This is the Zephyr preferred style,
+			 * the "named-gpios" node will be dealt with at a later
+			 * date.
+			 */
+			irq-gpios = <&gpiob 7 GPIO_ACTIVE_LOW>;
+			/* a duplicate of the <&gpio_usb_c0_tcpc_rst_l> node in
+			 * "named-gpios". This is the Zephyr preferred style,
+			 * the "named-gpios" node will be dealt with at a later
+			 * date.
+			 */
+			rst-gpios = <&gpio7 3
+				(GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW)>;
+		};
+
+		nct38xx_gpio_0_P2: nct38xx-gpio {
+			#address-cells = <1>;
+			#size-cells = <0>;
+			compatible = "nuvoton,nct38xx-gpio";
+			label = "NCT3808_0_P2";
+
+			ioex_port2: gpio@0 {
+				compatible = "nuvoton,nct38xx-gpio-port";
+				reg = <0x0>;
+				label = "NCT3808_0_P2_GPIO0";
+				gpio-controller;
+				#gpio-cells = <2>;
+				ngpios = <8>;
+				pin_mask = <0xdc>;
+				pinmux_mask = <0xff>;
+			};
+		};
+	};
+};
+
+&i2c3_0 {
+	label = "I2C_USB_C0";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+
+	ppc_port0: ppc_syv@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&ioex_usb_c0_frs_en>;
+		/* a duplicate of the <&gpio_usb_c0_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpio4 3 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&i2c5_1 {
+	label = "I2C_USB_C1";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+
+	ppc_port1: ppc_syv@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&ioex_usb_c1_frs_en>;
+		/* a duplicate of the <&gpio_usb_c1_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpioe 1 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&i2c6_1 {
+	label = "I2C_CHARGER";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	charger: bq25710@9 {
+		compatible = "ti,bq25710";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
+
+&i2c7_0 {
+	label = "I2C_BATTERY";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+/* host interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};
+
+/*
+ * Declare GPIOs that have leakage current caused by board issues here. NPCX ec
+ * will disable their input buffers before entering deep sleep and restore them
+ * after waking up automatically for better power consumption.
+ */
+&power_leakage_io {
+	leak-gpios = <&gpioa 4 GPIO_OPEN_DRAIN
+		      &gpiof 1 GPIO_OPEN_DRAIN>;
+};

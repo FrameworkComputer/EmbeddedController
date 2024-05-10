@@ -17,6 +17,9 @@ um_ppm: rts5453.o rts5453_usermode.o smbus_usermode.o um_ppm_chardev.o platform_
 local_tests:
 	$(MAKE) -C test run_local_tests
 
+remote_tests:
+	$(MAKE) -C test remote_unit_tests
+
 clean:
 	rm -f *.o um_ppm
 	$(MAKE) -C test clean

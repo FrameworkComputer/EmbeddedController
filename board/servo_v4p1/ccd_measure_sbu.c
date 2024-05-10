@@ -99,13 +99,13 @@ static void ccd_measure_sbu(void)
 		if (mux_en) {
 			/* Disable mux as it's disconnected now. */
 			gpio_set_level(GPIO_SBU_MUX_EN, 0);
-			msleep(10);
+			crec_msleep(10);
 			CPRINTS("CCD: disconnected.");
 		} else {
 			/* SBU flip = polarity */
 			sbu_flip_sel(polarity);
 			gpio_set_level(GPIO_SBU_MUX_EN, 1);
-			msleep(10);
+			crec_msleep(10);
 			CPRINTS("CCD: connected %s",
 				polarity ? "flip" : "noflip");
 		}

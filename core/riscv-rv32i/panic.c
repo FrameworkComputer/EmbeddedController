@@ -145,6 +145,10 @@ void report_panic(uint32_t *regs)
 		pdata->riscv.regs[i] = regs[i];
 
 	print_panic_information(regs, mcause, mepc);
+
+	if (IS_ENABLED(CONFIG_CMD_CRASH_NESTED))
+		command_crash_nested_handler();
+
 	panic_reboot();
 }
 

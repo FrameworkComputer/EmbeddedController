@@ -277,7 +277,7 @@ int gl3590_enable_ports(int hub, uint8_t port_mask, bool enable)
 		if (rv)
 			return rv;
 
-		usleep(200 * MSEC);
+		crec_usleep(200 * MSEC);
 
 		/* Verify whether port is enabled/disabled */
 		rv = gl3590_read(hub, GL3590_PORT_EN_STS_REG, &tmp, 1);

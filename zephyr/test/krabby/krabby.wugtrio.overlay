@@ -1,0 +1,193 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "common.dtsi"
+#include "../program/corsola/ite_gpio.dtsi"
+#include "../program/corsola/ite_interrupts.dtsi"
+#include "../program/corsola/power_signal.dtsi"
+
+/* remove pinctrl to avoid pull in too many unwanted dependency */
+/delete-node/ &pinctrl;
+
+/delete-node/ &int_usb_c0_ppc_bc12;
+/delete-node/ &int_volume_up;
+/delete-node/ &int_volume_down;
+/delete-node/ &int_tablet_mode;
+/delete-node/ &int_xhci;
+/delete-node/ &int_wp;
+/delete-node/ &int_spi0_cs;
+/delete-node/ &int_x_ec_gpio2;
+/delete-node/ &int_ccd_mode_odl;
+/delete-node/ &int_base_imu;
+/delete-node/ &int_lid_imu;
+
+&{/aliases} {
+	/delete-property/ int-wp;
+};
+
+/ {
+	aliases {
+		/*
+		 * motion sense's <>_INT_EVENT is handled
+		 * by alias. Using the alias, each driver creates
+		 * its own <>_INT_EVENT.
+		 */
+		bmi3xx-int = &lid_accel;
+		lsm6dsm-int = &lid_accel;
+	};
+
+	/delete-node/ unused-pins;
+
+	named-gpios {
+		/delete-node/ tablet_mode_l;
+
+		en_pp5000_base_x: en_pp5000_base_x{
+			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
+		};
+		pogo_prsnt_int_l: pogo_prsnt_int_l {
+			gpios = <&gpioj 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		en_pp4200_s5: en-pp4200-s5 {
+			gpios = <&gpiod 2 GPIO_OUTPUT_LOW>;
+		};
+		pg_pp4200_s5_od: pg-pp4200-s5-od {
+			gpios = <&gpioe 1 GPIO_INPUT>;
+			enum-name = "GPIO_PG_PP4200_S5_OD";
+		};
+		pmic_ec_resetb: pmic-ec-resetb {
+			gpios = <&gpioh 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_PMIC_EC_RESETB";
+		};
+	};
+
+	gpio-interrupts {
+		int_usb_c0_ppc_bc12: usb_c0_ppc_bc12 {
+			irq-pin = <&usb_c0_ppc_bc12_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "ppc_interrupt";
+		};
+		int_x_ec_gpio2: x_ec_gpio2 {
+			irq-pin = <&gpio_x_ec_gpio2>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "ppc_interrupt";
+		};
+		int_base_imu: base_imu {
+			irq-pin = <&base_imu_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "motion_interrupt";
+		};
+		pogo_prsnt_int: pogo-prsnt-int {
+			irq-pin = <&pogo_prsnt_int_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "base_detect_interrupt";
+		};
+	};
+
+	power_signal_list: power-signal-list {
+		 compatible = "mediatek,mt8188-power-signal-list";
+
+		 pg_pp4200_s5 {
+			power-enum-name = "PG_PP4200_S5";
+			power-gpio-pin = <&pg_pp4200_s5_od>;
+		};
+		 pmic_ap_reset {
+			power-enum-name = "PMIC_AP_RST";
+			power-gpio-pin = <&pmic_ec_resetb>;
+		};
+	};
+
+	/* Wugtrio-specific ssfc fields. */
+	Wugtrio-ssfc {
+		compatible = "cros-ec,cbi-ssfc";
+
+		/* SSFC field to identify BASE motion sensor. */
+		lid-sensor {
+			enum-name = "BASE_SENSOR";
+			size = <3>;
+
+			lid_sensor_0: bmi323 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+				default;
+			};
+			lid_sensor_1: lsm6dsm {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <2>;
+			};
+		};
+	};
+
+	motionsense-sensor-data {
+		bmi323_data: bmi323-drv-data {
+			compatible = "cros-ec,drvdata-bmi3xx";
+			status = "okay";
+		};
+		lsm6dsm_data: lsm6dsm-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dsm";
+			status = "okay";
+		};
+	};
+
+	motionsense-sensor {
+		/delete-node/ base-accel;
+		/delete-node/ base-gyro;
+
+		lid_accel: lid-accel {
+			compatible = "cros-ec,bmi3xx-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+		};
+
+		lid_gyro: lid-gyro {
+			compatible = "cros-ec,bmi3xx-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+		};
+	};
+
+	motionsense-sensor-alt {
+		alt_lid_accel: alt-lid-accel {
+			compatible = "cros-ec,lsm6dsm-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+		};
+
+		alt_lid_gyro: alt-lid-gyro {
+			compatible = "cros-ec,lsm6dsm-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+		};
+	};
+
+	motionsense-sensor-info {
+		compatible = "cros-ec,motionsense-sensor-info";
+
+		sensor-irqs = <&int_base_imu>;
+	};
+};
+
+/* open-drain is not supported in gpio emul, re-config to push-pull  */
+&ec_pmic_en_odl {
+	gpios = <&gpiod 0 (GPIO_OUTPUT_HIGH | GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+};
+&sys_rst_odl {
+	gpios = <&gpiog 1 GPIO_OUTPUT_LOW>;
+};
+
+/* set default gpio-emul state */
+&power_button_l {
+	gpios = <&gpioe 4 (GPIO_INPUT | GPIO_PULL_UP)>;
+};

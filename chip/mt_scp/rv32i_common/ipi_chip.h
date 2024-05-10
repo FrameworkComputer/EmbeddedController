@@ -62,6 +62,13 @@ void ipi_enable_irq(void);
 extern void (*const ipi_handler_table[])(int32_t, void *, uint32_t);
 extern int *const ipi_wakeup_table[];
 
+/* IPI operations */
+void ipi_op_wake_ap(void);
+int ipi_op_scp2ap_is_irq_set(void);
+void ipi_op_scp2ap_irq_set(void);
+void ipi_op_ap2scp_irq_clr(void);
+int ipi_op_ap2scp_is_irq_set(void);
+
 /* Helper macros to build the IPI handler and wakeup functions. */
 #define IPI_HANDLER(id) CONCAT3(ipi_, id, _handler)
 #define IPI_WAKEUP(id) CONCAT3(ipi_, id, _wakeup)

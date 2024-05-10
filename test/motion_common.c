@@ -126,7 +126,7 @@ void wait_for_valid_sample(void)
 	uint8_t *lpc_status = host_get_memmap(EC_MEMMAP_ACC_STATUS);
 
 	sample = *lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK;
-	usleep(TEST_LID_EC_RATE);
+	crec_usleep(TEST_LID_EC_RATE);
 	while ((*lpc_status & EC_MEMMAP_ACC_STATUS_SAMPLE_ID_MASK) == sample)
-		usleep(TEST_LID_SLEEP_RATE);
+		crec_usleep(TEST_LID_SLEEP_RATE);
 }

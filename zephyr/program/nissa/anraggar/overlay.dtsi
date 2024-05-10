@@ -71,6 +71,11 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "motion_interrupt";
 		};
+		int_lid_imu: lid_imu {
+			irq-pin = <&gpio_acc_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lid_accel_interrupt";
+		};
 		int_ac_present: ac_present {
 			irq-pin = <&gpio_ec_acok_od>;
 			flags = <GPIO_INT_EDGE_BOTH>;
@@ -241,7 +246,7 @@
 	};
 };
 
-&i2c0 {
+&i2c2 {
 	label = "I2C_EEPROM";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
@@ -256,6 +261,10 @@
 	pinctrl-0 = <&i2c0_clk_gpb3_default
 		     &i2c0_data_gpb4_default>;
 	pinctrl-names = "default";
+	scl-gpios = <&gpiob 3 0>;
+	sda-gpios = <&gpiob 4 0>;
+	channel-switch-sel = <I2C_CHA_LOCATE>;
+	status = "okay";
 };
 
 &i2c1 {
@@ -266,12 +275,16 @@
 	pinctrl-names = "default";
 };
 
-&i2c2 {
+&i2c0 {
 	label = "I2C_SENSOR";
 	clock-frequency = <I2C_BITRATE_FAST>;
 	pinctrl-0 = <&i2c2_clk_gpf6_default
 		     &i2c2_data_gpf7_default>;
 	pinctrl-names = "default";
+	scl-gpios = <&gpiof 6 0>;
+	sda-gpios = <&gpiof 7 0>;
+	channel-switch-sel = <I2C_CHC_LOCATE>;
+	status = "okay";
 };
 
 &i2c4 {

@@ -54,7 +54,7 @@ __override void board_kblight_init(void)
 	/* turn on keyboard backlight power */
 	gpio_set_level(GPIO_KYBL_EN, 1);
 	gpio_set_level(GPIO_EC_KB_BL_EN_L, 1);
-	msleep(10);
+	crec_msleep(10);
 }
 
 /* keyboard factory test */

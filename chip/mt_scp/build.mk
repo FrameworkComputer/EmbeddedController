@@ -15,7 +15,7 @@ dirs-y+=chip/$(CHIP)/mt818x
 include chip/$(CHIP)/mt818x/build.mk
 endif
 
-ifeq ($(CHIP_VARIANT),$(filter $(CHIP_VARIANT),mt8192 mt8195))
+ifeq ($(CHIP_VARIANT),$(filter $(CHIP_VARIANT),mt8192 mt8195 mt8188))
 CPPFLAGS+=-Ichip/$(CHIP)/rv32i_common -Ichip/$(CHIP)/$(CHIP_VARIANT)
 dirs-y+=chip/$(CHIP)/rv32i_common chip/$(CHIP)/$(CHIP_VARIANT)
 include chip/$(CHIP)/rv32i_common/build.mk

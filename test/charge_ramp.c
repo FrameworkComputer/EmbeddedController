@@ -109,7 +109,7 @@ static void unplug_charger(void)
 static int unplug_charger_and_check(void)
 {
 	unplug_charger();
-	usleep(CHARGE_DETECT_DELAY_TEST);
+	crec_usleep(CHARGE_DETECT_DELAY_TEST);
 	return charge_limit_ma == 0;
 }
 
@@ -136,7 +136,7 @@ static int test_no_ramp(void)
 	 * the charge limit.  This just needs at least transition to the
 	 * CHG_RAMP_OVERCURRENT_DETECT state.
 	 */
-	usleep(CHARGE_DETECT_DELAY_TEST + 200 * MSEC);
+	crec_usleep(CHARGE_DETECT_DELAY_TEST + 200 * MSEC);
 	/* That's right. Start at 500 mA */
 	TEST_ASSERT(charge_limit_ma == 500);
 	TEST_ASSERT(wait_stable_no_overcurrent());
@@ -152,7 +152,7 @@ static int test_full_ramp(void)
 	system_load_current_ma = 3000;
 	/* Now you get to ramp with this 3A charger */
 	plug_charger(CHARGE_SUPPLIER_TEST4, 0, 500, 3000, 3000);
-	usleep(CHARGE_DETECT_DELAY_TEST);
+	crec_usleep(CHARGE_DETECT_DELAY_TEST);
 	/* Start with something around 500 mA */
 	TEST_ASSERT(is_in_range(charge_limit_ma, 500, 800));
 	TEST_ASSERT(wait_stable_no_overcurrent());
@@ -181,16 +181,16 @@ static int test_overcurrent(void)
 	system_load_current_ma = 3000;
 	/* Huh...VBUS doesn't dip before the charger shuts down */
 	plug_charger(CHARGE_SUPPLIER_TEST6, 0, 500, 3000, 1500);
-	usleep(CHARGE_DETECT_DELAY_TEST);
+	crec_usleep(CHARGE_DETECT_DELAY_TEST);
 	/* Ramp starts at 500 mA */
 	TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 
 	while (task_wait_event(RAMP_STABLE_DELAY) == TASK_EVENT_OVERCURRENT) {
 		/* Charger goes away but comes back after 0.6 seconds */
 		unplug_charger();
-		usleep(MSEC * 600);
+		crec_usleep(MSEC * 600);
 		plug_charger(CHARGE_SUPPLIER_TEST6, 0, 500, 3000, 1500);
-		usleep(CHARGE_DETECT_DELAY_TEST);
+		crec_usleep(CHARGE_DETECT_DELAY_TEST);
 		/* Ramp restarts at 500 mA */
 		TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 	}
@@ -214,11 +214,11 @@ static int test_switch_outlet(void)
 	 * they decide to move it 5 times!
 	 */
 	for (i = 0; i < 5; ++i) {
-		usleep(SECOND * 20);
+		crec_usleep(SECOND * 20);
 		unplug_charger();
-		usleep(SECOND * 1.5);
+		crec_usleep(SECOND * 1.5);
 		plug_charger(CHARGE_SUPPLIER_TEST6, 0, 500, 3000, 3000);
-		usleep(CHARGE_DETECT_DELAY_TEST);
+		crec_usleep(CHARGE_DETECT_DELAY_TEST);
 		/* Ramp restarts at 500 mA */
 		TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 	}
@@ -243,11 +243,11 @@ static int test_fast_switch(void)
 	 * outlet really quickly. Fortunately this time they only do it twice.
 	 */
 	for (i = 0; i < 2; ++i) {
-		usleep(SECOND * 20);
+		crec_usleep(SECOND * 20);
 		unplug_charger();
-		usleep(600 * MSEC);
+		crec_usleep(600 * MSEC);
 		plug_charger(CHARGE_SUPPLIER_TEST4, 0, 500, 3000, 3000);
-		usleep(CHARGE_DETECT_DELAY_TEST);
+		crec_usleep(CHARGE_DETECT_DELAY_TEST);
 		/* Ramp restarts at 500 mA */
 		TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 	}
@@ -265,20 +265,20 @@ static int test_overcurrent_after_switch_outlet(void)
 	system_load_current_ma = 3000;
 	/* Here's a less powerful charger */
 	plug_charger(CHARGE_SUPPLIER_TEST5, 0, 500, 3000, 1500);
-	usleep(SECOND * 5);
+	crec_usleep(SECOND * 5);
 
 	/* Now the user decides to move it to a nearby outlet */
 	unplug_charger();
-	usleep(SECOND * 1.5);
+	crec_usleep(SECOND * 1.5);
 	plug_charger(CHARGE_SUPPLIER_TEST5, 0, 500, 3000, 1500);
 
 	/* Okay the user is satisified */
 	while (task_wait_event(RAMP_STABLE_DELAY) == TASK_EVENT_OVERCURRENT) {
 		/* Charger goes away but comes back after 0.6 seconds */
 		unplug_charger();
-		usleep(MSEC * 600);
+		crec_usleep(MSEC * 600);
 		plug_charger(CHARGE_SUPPLIER_TEST5, 0, 500, 3000, 1500);
-		usleep(CHARGE_DETECT_DELAY_TEST);
+		crec_usleep(CHARGE_DETECT_DELAY_TEST);
 		/* Ramp restarts at 500 mA */
 		TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 	}
@@ -309,9 +309,9 @@ static int test_partial_load(void)
 	while (task_wait_event(RAMP_STABLE_DELAY) == TASK_EVENT_OVERCURRENT) {
 		/* Charger goes away but comes back after 0.6 seconds */
 		unplug_charger();
-		usleep(MSEC * 600);
+		crec_usleep(MSEC * 600);
 		plug_charger(CHARGE_SUPPLIER_TEST4, 0, 500, 3000, 2500);
-		usleep(CHARGE_DETECT_DELAY_TEST);
+		crec_usleep(CHARGE_DETECT_DELAY_TEST);
 		/* Ramp restarts at 500 mA */
 		TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 	}
@@ -332,10 +332,10 @@ static int test_charge_supplier_stable(void)
 	 * And then it decides it's actually TEST2 after 0.5 seconds,
 	 * why? Well, this charger is just evil.
 	 */
-	usleep(500 * MSEC);
+	crec_usleep(500 * MSEC);
 	plug_charger(CHARGE_SUPPLIER_TEST2, 0, 3000, 3000, 3000);
 	/* We should get 3A right away. */
-	usleep(SECOND);
+	crec_usleep(SECOND);
 	TEST_ASSERT(charge_limit_ma == 3000);
 
 	TEST_ASSERT(unplug_charger_and_check());
@@ -351,7 +351,7 @@ static int test_charge_supplier_stable_ramp(void)
 	 * After 0.5 seconds, it's decided that the supplier is actually
 	 * a 1.5A ramp supplier.
 	 */
-	usleep(500 * MSEC);
+	crec_usleep(500 * MSEC);
 	plug_charger(CHARGE_SUPPLIER_TEST5, 0, 500, 1400, 1500);
 	TEST_ASSERT(wait_stable_no_overcurrent());
 	TEST_ASSERT(is_in_range(charge_limit_ma, 1200, 1400));
@@ -370,7 +370,7 @@ static int test_charge_supplier_change(void)
 
 	/* The charger decides to change type to a 1.5A non-ramp supplier */
 	plug_charger(CHARGE_SUPPLIER_TEST1, 0, 1500, 3000, 3000);
-	usleep(500 * MSEC);
+	crec_usleep(500 * MSEC);
 	TEST_ASSERT(charge_limit_ma == 1500);
 	TEST_ASSERT(wait_stable_no_overcurrent());
 	TEST_ASSERT(charge_limit_ma == 1500);
@@ -394,7 +394,7 @@ static int test_charge_port_change(void)
 
 	/* Now we have a 2.5A non-ramp charge supplier on port 0 */
 	plug_charger(CHARGE_SUPPLIER_TEST1, 0, 2500, 3000, 3000);
-	usleep(SECOND);
+	crec_usleep(SECOND);
 	TEST_ASSERT(charge_limit_ma == 2500);
 	TEST_ASSERT(wait_stable_no_overcurrent());
 	TEST_ASSERT(charge_limit_ma == 2500);
@@ -473,21 +473,21 @@ static int test_ramp_limit(void)
 
 	/* Plug in supplier that is limited to 1.6A */
 	plug_charger(CHARGE_SUPPLIER_TEST7, 0, 500, 3000, 3000);
-	usleep(SECOND);
+	crec_usleep(SECOND);
 	TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 	TEST_ASSERT(wait_stable_no_overcurrent());
 	TEST_ASSERT(charge_limit_ma == 1600);
 
 	/* Switch to supplier that is limited to 2.4A */
 	plug_charger(CHARGE_SUPPLIER_TEST8, 1, 500, 3000, 3000);
-	usleep(SECOND);
+	crec_usleep(SECOND);
 	TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 	TEST_ASSERT(wait_stable_no_overcurrent());
 	TEST_ASSERT(charge_limit_ma == 2400);
 
 	/* Go back to 1.6A limited, but VBUS goes low before that point */
 	plug_charger(CHARGE_SUPPLIER_TEST7, 0, 500, 1200, 1300);
-	usleep(SECOND);
+	crec_usleep(SECOND);
 	TEST_ASSERT(is_in_range(charge_limit_ma, 500, 700));
 	TEST_ASSERT(wait_stable_no_overcurrent());
 	TEST_ASSERT(is_in_range(charge_limit_ma, 1000, 1200));

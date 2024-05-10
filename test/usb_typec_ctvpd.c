@@ -1526,7 +1526,7 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_pe_all_states_named);
 
 	/* Some handlers are still running after the test ends. */
-	sleep(1);
+	crec_sleep(1);
 
 	test_print_result();
 }

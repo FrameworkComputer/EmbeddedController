@@ -715,7 +715,7 @@ static uint32_t sequence_S5S3(void)
 	/* The controllers need 100us after power is applied before they'll
 	 * respond. Don't return early, because we still want to initialize the
 	 * lightbar even if another message comes along while we're waiting. */
-	usleep(100);
+	crec_usleep(100);
 	lb_init(1);
 	lb_set_rgb(NUM_LEDS, 0, 0, 0);
 	lb_on();

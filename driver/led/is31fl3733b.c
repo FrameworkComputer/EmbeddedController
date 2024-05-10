@@ -194,7 +194,7 @@ static int is31fl3733b_init(struct rgbkbd *ctx)
 	int i, rv;
 
 	rv = is31fl3733b_reset(ctx);
-	msleep(3);
+	crec_msleep(3);
 
 	/* enable all led */
 	rv = is31fl3733b_set_page(ctx, IS31FL3733B_PAGE_CTRL);

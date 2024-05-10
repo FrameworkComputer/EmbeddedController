@@ -971,7 +971,7 @@ static enum ec_error_list rt946x_post_init(int chgnum)
 		return rv;
 
 	/* Need 5ms to ramp after choose current limit source */
-	msleep(5);
+	crec_msleep(5);
 
 	/* Disable ILIM pin */
 	rv = rt946x_enable_ilim_pin(chgnum, 0);
@@ -1355,7 +1355,7 @@ int rt946x_get_adc(enum rt946x_adc_in_sel adc_sel, int *adc_val)
 		goto out;
 
 	for (i = 0; i < max_wait_times; i++) {
-		msleep(35);
+		crec_msleep(35);
 		rv = mt6370_pmu_reg_test_bit(CHARGER_SOLO, RT946X_REG_CHGADC,
 					     RT946X_SHIFT_ADC_START,
 					     &adc_start);
@@ -1526,7 +1526,7 @@ static void rt946x_bc12_workaround(void)
 	 * and then detect the voltage of D-.
 	 */
 	rt946x_toggle_bc12_detection();
-	msleep(10);
+	crec_msleep(10);
 	rt946x_toggle_bc12_detection();
 }
 DECLARE_DEFERRED(rt946x_bc12_workaround);
@@ -1673,7 +1673,7 @@ int rt946x_cutoff_battery(void)
 	mt6370_enable_hidden_mode(CHARGER_SOLO, 0);
 	if (rv)
 		goto out;
-	msleep(50);
+	crec_msleep(50);
 	/* enter shipping mode */
 	rv = rt946x_set_bit(CHARGER_SOLO, RT946X_REG_CHGCTRL2,
 			    RT946X_MASK_SHIP_MODE);
@@ -1848,24 +1848,24 @@ int mt6370_reduce_db_bl_driving(void)
 				ARRAY_SIZE(mt6370_val_en_test_mode));
 	if (rv)
 		return rv;
-	msleep(1);
+	crec_msleep(1);
 	rv = rt946x_write8(CHARGER_SOLO, MT6370_REG_BANK, MT6370_MASK_REG_TM);
 	if (rv)
 		return rv;
-	msleep(1);
+	crec_msleep(1);
 	/* reduce bl driving */
 	rv = rt946x_update_bits(CHARGER_SOLO, MT6370_TM_REG_BL3,
 				MT6370_TM_MASK_BL3_SL, MT6370_TM_REDUCE_BL3_SL);
 	if (rv)
 		return rv;
-	msleep(1);
+	crec_msleep(1);
 	/* reduce db driving */
 	rv = rt946x_update_bits(CHARGER_SOLO, MT6370_TM_REG_DSV1,
 				MT6370_TM_MASK_DSV1_SL,
 				MT6370_TM_REDUCE_DSV1_SL);
 	if (rv)
 		return rv;
-	msleep(1);
+	crec_msleep(1);
 	/* Leave test mode */
 	return rt946x_write8(CHARGER_SOLO, MT6370_REG_TM_PAS_CODE1,
 			     MT6370_LEAVE_TM);

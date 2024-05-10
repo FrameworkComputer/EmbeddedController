@@ -30,7 +30,7 @@ enum last_error_type {
 /* Internal data for ppm common implementation.  Exposed for test purposes. */
 struct ppm_common_device {
 	/* Parent PD driver instance. Not OWNED. */
-	struct ucsi_pd_driver *pd;
+	const struct ucsi_pd_driver *pd;
 
 	/* Doorbell notification callback (and context). */
 	ucsi_ppm_notify *opm_notify;
@@ -73,6 +73,13 @@ struct ppm_common_device {
  * up. The PPM will retain a pointer to the pd driver in order to execute
  * commands (and any other PD driver specific actions).
  */
-struct ucsi_ppm_driver *ppm_open(struct ucsi_pd_driver *pd_driver);
+struct ucsi_ppm_driver *ppm_open(const struct ucsi_pd_driver *pd_driver);
+
+/**
+ * Allocate memory for the platform dependent part of the PPM.
+ *
+ * @return NULL on error.
+ */
+struct ucsi_ppm_driver *platform_allocate_ppm(void);
 
 #endif /* UM_PPM_PPM_COMMON_H_ */

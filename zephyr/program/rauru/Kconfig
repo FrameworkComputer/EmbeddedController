@@ -2,6 +2,13 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config RAURU_BOARD_HAS_HDMI_SUPPORT
+	bool "Board supports HDMI sub-boards"
+	default $(dt_nodelabel_enabled,gpio_en_hdmi_pwr)
+	help
+	  Enable board code for managing the state of HDMI connections on
+	  the board.
+
 config BOARD_RAURU
 	bool "Google Rauru Board"
 	help

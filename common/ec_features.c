@@ -147,7 +147,11 @@ uint32_t get_feature_flags1(void)
 		| EC_FEATURE_MASK_1(EC_FEATURE_EFS2)
 #endif
 #ifdef CONFIG_IPI
+#if defined(SCP_CORE_SN) && SCP_CORE_SN == 1
+		| EC_FEATURE_MASK_1(EC_FEATURE_SCP_C1)
+#else
 		| EC_FEATURE_MASK_1(EC_FEATURE_SCP)
+#endif
 #endif
 #ifdef CHIP_ISH
 		| EC_FEATURE_MASK_1(EC_FEATURE_ISH)
@@ -188,6 +192,9 @@ uint32_t get_feature_flags1(void)
 #endif
 #ifdef CONFIG_USB_PD_DP21_MODE
 		| EC_FEATURE_MASK_1(EC_FEATURE_TYPEC_DP2_1)
+#endif
+#ifdef CONFIG_UCSI_PPM
+		| EC_FEATURE_MASK_1(EC_FEATURE_UCSI_PPM)
 #endif
 		;
 	return board_override_feature_flags1(result);

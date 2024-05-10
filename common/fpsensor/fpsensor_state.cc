@@ -5,6 +5,7 @@
 
 #include "compile_time_macros.h"
 
+#include <algorithm>
 #include <array>
 #include <variant>
 
@@ -27,10 +28,10 @@ extern "C" {
 
 #include "fpsensor/fpsensor.h"
 #include "fpsensor/fpsensor_auth_commands.h"
+#include "fpsensor/fpsensor_console.h"
 #include "fpsensor/fpsensor_crypto.h"
 #include "fpsensor/fpsensor_state.h"
 #include "fpsensor/fpsensor_template_state.h"
-#include "fpsensor/fpsensor_utils.h"
 #include "fpsensor_driver.h"
 #include "fpsensor_matcher.h"
 
@@ -79,21 +80,21 @@ void fp_clear_finger_context(uint16_t idx)
 
 void fp_reset_context()
 {
-	templ_valid = 0;
-	templ_dirty = 0;
-	template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
-	fp_encryption_status &= FP_ENC_STATUS_SEED_SET;
+	global_context.templ_valid = 0;
+	global_context.templ_dirty = 0;
+	global_context.template_newly_enrolled = FP_NO_SUCH_TEMPLATE;
+	global_context.fp_encryption_status &= FP_ENC_STATUS_SEED_SET;
 	OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
-	OPENSSL_cleanse(user_id, sizeof(user_id));
+	OPENSSL_cleanse(global_context.user_id, sizeof(global_context.user_id));
 	OPENSSL_cleanse(auth_nonce.data(), auth_nonce.size());
-	fp_disable_positive_match_secret(&positive_match_secret_state);
+	fp_disable_positive_match_secret(
+		&global_context.positive_match_secret_state);
 }
 
 void fp_init_decrypted_template_state_with_user_id(uint16_t idx)
 {
 	std::array<uint32_t, FP_CONTEXT_USERID_WORDS> raw_user_id;
-	std::copy(std::begin(user_id), std::end(user_id),
-		  std::begin(raw_user_id));
+	std::ranges::copy(global_context.user_id, raw_user_id.begin());
 	template_states[idx] = fp_decrypted_template_state{
 		.user_id = raw_user_id,
 	};
@@ -123,7 +124,7 @@ void fp_reset_and_clear_context(void)
 
 int fp_get_next_event(uint8_t *out)
 {
-	uint32_t event_out = atomic_clear(&fp_events);
+	uint32_t event_out = atomic_clear(&global_context.fp_events);
 
 	memcpy(out, &event_out, sizeof(event_out));
 
@@ -141,12 +142,13 @@ static enum ec_status fp_command_tpm_seed(struct host_cmd_handler_args *args)
 		return EC_RES_INVALID_PARAM;
 	}
 
-	if (fp_encryption_status & FP_ENC_STATUS_SEED_SET) {
+	if (global_context.fp_encryption_status & FP_ENC_STATUS_SEED_SET) {
 		CPRINTS("Seed has already been set.");
 		return EC_RES_ACCESS_DENIED;
 	}
-	memcpy(tpm_seed, params->seed, sizeof(tpm_seed));
-	fp_encryption_status |= FP_ENC_STATUS_SEED_SET;
+	memcpy(global_context.tpm_seed, params->seed,
+	       sizeof(global_context.tpm_seed));
+	global_context.fp_encryption_status |= FP_ENC_STATUS_SEED_SET;
 
 	return EC_RES_SUCCESS;
 }
@@ -159,7 +161,7 @@ fp_command_encryption_status(struct host_cmd_handler_args *args)
 		static_cast<ec_response_fp_encryption_status *>(args->response);
 
 	r->valid_flags = FP_ENC_STATUS_SEED_SET;
-	r->status = fp_encryption_status;
+	r->status = global_context.fp_encryption_status;
 	args->response_size = sizeof(*r);
 
 	return EC_RES_SUCCESS;
@@ -171,7 +173,7 @@ static int validate_fp_mode(const uint32_t mode)
 {
 	uint32_t capture_type = FP_CAPTURE_TYPE(mode);
 	uint32_t algo_mode = mode & ~FP_MODE_CAPTURE_TYPE_MASK;
-	uint32_t cur_mode = sensor_mode;
+	uint32_t cur_mode = global_context.sensor_mode;
 
 	if (capture_type >= FP_CAPTURE_TYPE_MAX)
 		return EC_ERROR_INVAL;
@@ -180,7 +182,7 @@ static int validate_fp_mode(const uint32_t mode)
 		return EC_ERROR_INVAL;
 
 	if ((mode & FP_MODE_ENROLL_SESSION) &&
-	    templ_valid >= FP_MAX_FINGER_COUNT) {
+	    global_context.templ_valid >= FP_MAX_FINGER_COUNT) {
 		CPRINTS("Maximum number of fingers already enrolled: %d",
 			FP_MAX_FINGER_COUNT);
 		return EC_ERROR_INVAL;
@@ -211,11 +213,11 @@ enum ec_status fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output)
 	}
 
 	if (!(mode & FP_MODE_DONT_CHANGE)) {
-		sensor_mode = mode;
+		global_context.sensor_mode = mode;
 		task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_UPDATE_CONFIG);
 	}
 
-	*mode_output = sensor_mode;
+	*mode_output = global_context.sensor_mode;
 	return EC_RES_SUCCESS;
 }
 
@@ -241,7 +243,7 @@ static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 
 	switch (p->action) {
 	case FP_CONTEXT_ASYNC:
-		if (sensor_mode & FP_MODE_RESET_SENSOR)
+		if (global_context.sensor_mode & FP_MODE_RESET_SENSOR)
 			return EC_RES_BUSY;
 
 		/**
@@ -253,22 +255,24 @@ static enum ec_status fp_command_context(struct host_cmd_handler_args *args)
 		return fp_set_sensor_mode(FP_MODE_RESET_SENSOR, &mode_output);
 
 	case FP_CONTEXT_GET_RESULT:
-		if (sensor_mode & FP_MODE_RESET_SENSOR)
+		if (global_context.sensor_mode & FP_MODE_RESET_SENSOR)
 			return EC_RES_BUSY;
 
-		if (fp_encryption_status &
+		if (global_context.fp_encryption_status &
 		    FP_CONTEXT_STATUS_NONCE_CONTEXT_SET) {
 			/* Reject the request to prevent downgrade attack. */
 			return EC_RES_ACCESS_DENIED;
 		}
 
-		memcpy(user_id, p->userid, sizeof(user_id));
+		memcpy(global_context.user_id, p->userid,
+		       sizeof(global_context.user_id));
 
 		/* Set the FP_CONTEXT_USER_ID_SET bit if the user_id is
 		 * non-zero. */
-		for (size_t i = 0; i < std::size(user_id); i++) {
-			if (user_id[i] != 0) {
-				fp_encryption_status |= FP_CONTEXT_USER_ID_SET;
+		for (size_t i = 0; i < std::size(global_context.user_id); i++) {
+			if (global_context.user_id[i] != 0) {
+				global_context.fp_encryption_status |=
+					FP_CONTEXT_USER_ID_SET;
 				break;
 			}
 		}
@@ -311,9 +315,10 @@ enum ec_status fp_read_match_secret(
 {
 	timestamp_t now = get_time();
 	struct positive_match_secret_state state_copy =
-		positive_match_secret_state;
+		global_context.positive_match_secret_state;
 
-	fp_disable_positive_match_secret(&positive_match_secret_state);
+	fp_disable_positive_match_secret(
+		&global_context.positive_match_secret_state);
 
 	if (fgr < 0 || fgr >= FP_MAX_FINGER_COUNT) {
 		CPRINTS("Invalid finger number %d", fgr);
@@ -331,9 +336,9 @@ enum ec_status fp_read_match_secret(
 		return EC_RES_ACCESS_DENIED;
 	}
 
-	if (derive_positive_match_secret(positive_match_secret,
-					 fp_positive_match_salt[fgr]) !=
-	    EC_SUCCESS) {
+	if (derive_positive_match_secret(
+		    { positive_match_secret, FP_POSITIVE_MATCH_SECRET_BYTES },
+		    fp_positive_match_salt[fgr]) != EC_SUCCESS) {
 		CPRINTS("Failed to derive positive match secret for finger %d",
 			fgr);
 		/* Keep the template and encryption salt. */

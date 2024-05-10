@@ -575,10 +575,10 @@ void board_reset_pd_mcu(void)
 		       TCPC_FLAGS_RESET_ACTIVE_HIGH);
 
 	gpio_set_level(GPIO_USB_C0_TCPC_RST, level);
-	msleep(BOARD_TCPC_C0_RESET_HOLD_DELAY);
+	crec_msleep(BOARD_TCPC_C0_RESET_HOLD_DELAY);
 	gpio_set_level(GPIO_USB_C0_TCPC_RST, !level);
 	if (BOARD_TCPC_C0_RESET_POST_DELAY)
-		msleep(BOARD_TCPC_C0_RESET_POST_DELAY);
+		crec_msleep(BOARD_TCPC_C0_RESET_POST_DELAY);
 }
 
 int board_set_active_charge_port(int port)
@@ -666,7 +666,7 @@ int board_is_c10_gate_enabled(void)
 	 * core rails while in S0 because HDMI should remain powered.
 	 * EN_PP5000_HDMI is a separate EC output on all other boards.
 	 */
-	return board_version != 0;
+	return 0;
 }
 
 void board_enable_s0_rails(int enable)

@@ -147,6 +147,45 @@ ZTEST(hid_i2c_touchpad, test_bad_input)
 	zassert_equal(0, read_len);
 }
 
+ZTEST(hid_i2c_touchpad, test_get_report)
+{
+	struct i2c_target_data *data = dev->data;
+	struct i2c_target_config *target_cfg = &data->config;
+	const struct i2c_target_callbacks *callbacks = target_cfg->callbacks;
+	uint8_t get_report_request[] = {
+		0x05, 0x00, /* CMD_REG */
+		0x00, /* REPORT_ID (empty) */
+		0x02, /* OP_CODE GET_REPORT */
+		0x06, 0x00, /* DATA_REG */
+	};
+	uint8_t *read_ptr;
+	uint32_t read_len;
+
+	/* verify that the size and id in the response buffer is correct */
+	get_report_request[2] = REPORT_ID_DEVICE_CERT;
+	callbacks->buf_write_received(target_cfg, get_report_request,
+				      sizeof(get_report_request));
+	callbacks->buf_read_requested(target_cfg, &read_ptr, &read_len);
+	callbacks->stop(target_cfg);
+	zassert_equal(*(uint16_t *)read_ptr, 257);
+	zassert_equal(read_ptr[2], REPORT_ID_DEVICE_CERT);
+
+	get_report_request[2] = REPORT_ID_DEVICE_CAPS;
+	callbacks->buf_write_received(target_cfg, get_report_request,
+				      sizeof(get_report_request));
+	callbacks->buf_read_requested(target_cfg, &read_ptr, &read_len);
+	callbacks->stop(target_cfg);
+	zassert_equal(*(uint16_t *)read_ptr, 3);
+	zassert_equal(read_ptr[2], REPORT_ID_DEVICE_CAPS);
+
+	get_report_request[2] = 99;
+	callbacks->buf_write_received(target_cfg, get_report_request,
+				      sizeof(get_report_request));
+	callbacks->buf_read_requested(target_cfg, &read_ptr, &read_len);
+	callbacks->stop(target_cfg);
+	zassert_equal(*(uint16_t *)read_ptr, 0);
+}
+
 static void hid_i2c_touchpad_before(void *fixture)
 {
 	const struct gpio_dt_spec *hid_irq =

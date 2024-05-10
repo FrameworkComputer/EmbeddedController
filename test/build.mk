@@ -50,7 +50,9 @@ test-list-host += fpsensor_auth_commands
 test-list-host += fpsensor_auth_crypto_stateful
 test-list-host += fpsensor_auth_crypto_stateless
 test-list-host += fpsensor_crypto
+test-list-host += fpsensor_crypto_with_mock
 test-list-host += fpsensor_state
+test-list-host += fpsensor_utils
 test-list-host += gettimeofday
 test-list-host += gyro_cal
 test-list-host += hooks
@@ -156,12 +158,6 @@ endif
 cov-dont-test = is_enabled_error
 # static_if_error is a shell script that does not produce coverage results
 cov-dont-test += static_if_error
-# fpsensor: genhtml looks for build/host/fpsensor/cryptoc/util.c
-cov-dont-test += fpsensor
-# fpsensor_crypto: genhtml looks for build/host/fpsensor_crypto/cryptoc/util.c
-cov-dont-test += fpsensor_crypto
-# fpsensor_state: genhtml looks for build/host/fpsensor_state/cryptoc/util.c
-cov-dont-test += fpsensor_state
 # otp_key: genhtml looks for build/host/chip/npcx/otp_key.c
 cov-dont-test  += otp_key
 # version: Only works in a chroot.
@@ -170,7 +166,7 @@ cov-dont-test += version
 cov-dont-test += interrupt
 # Flaky tests. The number of covered lines changes from run to run
 # b/213374060
-cov-dont-test += accel_cal entropy flash float kb_mkbp kb_scan kb_scan_strict
+cov-dont-test += accel_cal entropy flash float kb_mkbp kb_scan_strict
 cov-dont-test += rsa
 
 cov-test-list-host = $(filter-out $(cov-dont-test), $(test-list-host))
@@ -215,8 +211,10 @@ fpsensor_auth_commands-y=fpsensor_auth_commands.o
 fpsensor_auth_crypto_stateful-y=fpsensor_auth_crypto_stateful.o
 fpsensor_auth_crypto_stateless-y=fpsensor_auth_crypto_stateless.o
 fpsensor_crypto-y=fpsensor_crypto.o
+fpsensor_crypto_with_mock-y=fpsensor_crypto_with_mock.o
 fpsensor_hw-y=fpsensor_hw.o
 fpsensor_state-y=fpsensor_state.o
+fpsensor_utils-y=fpsensor_utils.o
 ftrapv-y=ftrapv.o
 gettimeofday-y=gettimeofday.o
 global_initialization-y=global_initialization.o

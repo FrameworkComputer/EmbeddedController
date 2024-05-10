@@ -365,14 +365,14 @@ static int si114x_initialize(const struct motion_sensor_t *s)
 			 SI114X_COMMAND_RESET);
 	if (ret != EC_SUCCESS)
 		return ret;
-	msleep(20);
+	crec_msleep(20);
 
 	/* hardware key, magic value */
 	ret = raw_write8(s->port, s->i2c_spi_addr_flags, SI114X_HW_KEY,
 			 SI114X_HW_KEY_VALUE);
 	if (ret != EC_SUCCESS)
 		return ret;
-	msleep(20);
+	crec_msleep(20);
 
 	/* interrupt configuration, interrupt output enable */
 	ret = raw_write8(s->port, s->i2c_spi_addr_flags, SI114X_INT_CFG,

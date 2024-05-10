@@ -103,12 +103,12 @@ void board_reset_pd_mcu(void)
 	/*
 	 * delay for power-on to reset-off and min. assertion time
 	 */
-	msleep(20);
+	crec_msleep(20);
 
 	gpio_set_level(GPIO_USB_C0_RT_RST_R_ODL, 1);
 
 	/* wait for chips to come up */
-	msleep(50);
+	crec_msleep(50);
 }
 
 static void board_tcpc_init(void)
@@ -173,11 +173,4 @@ void ppc_interrupt(enum gpio_signal signal)
 	default:
 		break;
 	}
-}
-
-void retimer_interrupt(enum gpio_signal signal)
-{
-	/*
-	 * TODO(b/179513527): add USB-C support
-	 */
 }

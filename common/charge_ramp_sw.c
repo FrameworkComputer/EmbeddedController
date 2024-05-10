@@ -350,7 +350,7 @@ void chg_ramp_task(void *u)
 			 * and we don't want to wake up task until we have
 			 * slept this amount of time.
 			 */
-			usleep(task_wait_time);
+			crec_usleep(task_wait_time);
 		else
 			task_wait_event(task_wait_time);
 	}

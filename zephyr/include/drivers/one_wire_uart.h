@@ -42,6 +42,13 @@ int one_wire_uart_send(const struct device *dev, uint8_t cmd,
 void one_wire_uart_enable(const struct device *dev);
 
 /**
+ * @brief Disable the one-wire UART device.
+ *
+ * @param dev One-Wire UART device instance.
+ */
+void one_wire_uart_disable(const struct device *dev);
+
+/**
  * @brief Application callback function signature for
  * one_wire_uart_set_callback().
  *

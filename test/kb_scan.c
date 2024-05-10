@@ -55,7 +55,7 @@ static int reset_called;
 static void task_wake_then_sleep_1ms(int task_id)
 {
 	task_wake(task_id);
-	msleep(1);
+	crec_msleep(1);
 }
 
 #ifdef CONFIG_LID_SWITCH
@@ -141,7 +141,7 @@ static void reset_key_state(void)
 	memset(key_state, 0, sizeof(key_state));
 	memset(key_state_change, 0, sizeof(key_state_change));
 	task_wake(TASK_ID_KEYSCAN);
-	msleep(NO_KEYDOWN_DELAY_MS);
+	crec_msleep(NO_KEYDOWN_DELAY_MS);
 	total_key_state_change = 0;
 }
 
@@ -151,7 +151,7 @@ static int expect_keychange(void)
 	int retry = KEYDOWN_RETRY;
 	task_wake(TASK_ID_KEYSCAN);
 	while (retry--) {
-		msleep(KEYDOWN_DELAY_MS);
+		crec_msleep(KEYDOWN_DELAY_MS);
 		if (fifo_add_count > old_count)
 			return EC_SUCCESS;
 	}
@@ -162,7 +162,7 @@ static int expect_no_keychange(void)
 {
 	int old_count = fifo_add_count;
 	task_wake(TASK_ID_KEYSCAN);
-	msleep(NO_KEYDOWN_DELAY_MS);
+	crec_msleep(NO_KEYDOWN_DELAY_MS);
 	return (fifo_add_count == old_count) ? EC_SUCCESS : EC_ERROR_UNKNOWN;
 }
 
@@ -183,16 +183,27 @@ static int verify_key_presses(int old, int expected)
 	int retry = KEYDOWN_RETRY;
 
 	if (expected == 0) {
-		msleep(NO_KEYDOWN_DELAY_MS);
+		crec_msleep(NO_KEYDOWN_DELAY_MS);
 		return (fifo_add_count == old) ? EC_SUCCESS : EC_ERROR_UNKNOWN;
 	} else {
 		while (retry--) {
-			msleep(KEYDOWN_DELAY_MS);
+			crec_msleep(KEYDOWN_DELAY_MS);
 			if (fifo_add_count == old + expected)
 				return EC_SUCCESS;
 		}
 		return EC_ERROR_UNKNOWN;
 	}
+}
+
+static int set_cols_test(void)
+{
+	const uint8_t cols = keyboard_get_cols();
+
+	keyboard_set_cols(cols + 1);
+	TEST_ASSERT(keyboard_get_cols() == cols + 1);
+	keyboard_set_cols(cols);
+
+	return EC_SUCCESS;
 }
 
 static int deghost_test(void)
@@ -353,7 +364,7 @@ static int debounce_test(void)
 	reset_key_state();
 
 	/* One brief keypress is detected. */
-	msleep(40);
+	crec_msleep(40);
 	mock_key(1, 1, 1);
 	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
 	mock_key(1, 1, 0);
@@ -361,7 +372,7 @@ static int debounce_test(void)
 	CHECK_KEY_COUNT(old_count, 2);
 
 	/* Brief bounce, followed by continuous press is detected as one. */
-	msleep(40);
+	crec_msleep(40);
 	mock_key(1, 1, 1);
 	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
 	mock_key(1, 1, 0);
@@ -371,7 +382,7 @@ static int debounce_test(void)
 	CHECK_KEY_COUNT(old_count, 1);
 
 	/* Brief lifting, then re-presseing is detected as new keypress. */
-	msleep(40);
+	crec_msleep(40);
 	mock_key(1, 1, 0);
 	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
 	mock_key(1, 1, 1);
@@ -379,7 +390,7 @@ static int debounce_test(void)
 	CHECK_KEY_COUNT(old_count, 2);
 
 	/* One bouncy re-contact while lifting is ignored. */
-	msleep(40);
+	crec_msleep(40);
 	mock_key(1, 1, 0);
 	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
 	mock_key(1, 1, 1);
@@ -392,7 +403,7 @@ static int debounce_test(void)
 	 * Debounce interval of first key is not affected by continued
 	 * activity of other keys.
 	 */
-	msleep(40);
+	crec_msleep(40);
 	/* Push the first key */
 	mock_key(0, 1, 0);
 	task_wake_then_sleep_1ms(TASK_ID_KEYSCAN);
@@ -403,13 +414,13 @@ static int debounce_test(void)
 	for (i = 1; i < 8; i++) {
 		mock_key(i, 1, 1);
 		task_wake(TASK_ID_KEYSCAN);
-		msleep(3);
+		crec_msleep(3);
 		mock_key(i - 1, 1, 0);
 		task_wake(TASK_ID_KEYSCAN);
-		msleep(1);
+		crec_msleep(1);
 		mock_key(i - 1, 1, 1);
 		task_wake(TASK_ID_KEYSCAN);
-		msleep(1);
+		crec_msleep(1);
 	}
 	/* Verify that the bounces were. ignored */
 	CHECK_KEY_COUNT(old_count, 8);
@@ -438,16 +449,16 @@ static int simulate_key_test(void)
 	reset_key_state();
 
 	task_wake(TASK_ID_KEYSCAN);
-	msleep(40); /* Wait for debouncing to settle */
+	crec_msleep(40); /* Wait for debouncing to settle */
 
 	old_count = fifo_add_count;
 	host_command_simulate(1, 1, 1);
 	TEST_ASSERT(fifo_add_count > old_count);
-	msleep(40);
+	crec_msleep(40);
 	old_count = fifo_add_count;
 	host_command_simulate(1, 1, 0);
 	TEST_ASSERT(fifo_add_count > old_count);
-	msleep(40);
+	crec_msleep(40);
 
 	return EC_SUCCESS;
 }
@@ -459,7 +470,7 @@ static int wait_variable_set(int *var)
 	*var = 0;
 	task_wake(TASK_ID_KEYSCAN);
 	while (retry--) {
-		msleep(KEYDOWN_DELAY_MS);
+		crec_msleep(KEYDOWN_DELAY_MS);
 		if (*var == 1)
 			return EC_SUCCESS;
 	}
@@ -470,7 +481,7 @@ static int verify_variable_not_set(int *var)
 {
 	*var = 0;
 	task_wake(TASK_ID_KEYSCAN);
-	msleep(NO_KEYDOWN_DELAY_MS);
+	crec_msleep(NO_KEYDOWN_DELAY_MS);
 	return *var ? EC_ERROR_UNKNOWN : EC_SUCCESS;
 }
 
@@ -520,11 +531,11 @@ static int lid_test(void)
 {
 	reset_key_state();
 
-	msleep(40); /* Allow debounce to settle */
+	crec_msleep(40); /* Allow debounce to settle */
 
 	lid_open = 0;
 	hook_notify(HOOK_LID_CHANGE);
-	msleep(1); /* Allow hooks to run */
+	crec_msleep(1); /* Allow hooks to run */
 	mock_key(1, 1, 1);
 	TEST_ASSERT(expect_no_keychange() == EC_SUCCESS);
 	mock_key(1, 1, 0);
@@ -532,7 +543,7 @@ static int lid_test(void)
 
 	lid_open = 1;
 	hook_notify(HOOK_LID_CHANGE);
-	msleep(1); /* Allow hooks to run */
+	crec_msleep(1); /* Allow hooks to run */
 	mock_key(1, 1, 1);
 	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 	mock_key(1, 1, 0);
@@ -565,7 +576,7 @@ static int power_button_mask_test(void)
 	power_button_counter_divider = 28;
 	power_button_counter = 0;
 	reset_key_state();
-	msleep(40);
+	crec_msleep(40);
 	mock_key(1, 1, 1);
 	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 
@@ -578,11 +589,11 @@ static int power_button_mask_test(void)
 	power_button_counter_divider = 1;
 	power_button_counter = 0;
 	reset_key_state();
-	msleep(40);
+	crec_msleep(40);
 	mock_key(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH, 1);
 	mock_key(1, 1, 1);
 	task_wake(TASK_ID_KEYSCAN);
-	msleep(40);
+	crec_msleep(40);
 	TEST_EQ(key_state_change[KEYBOARD_ROW_REFRESH][KEYBOARD_COL_REFRESH], 0,
 		"%d");
 	TEST_EQ(key_state_change[1][1], 1, "%d");
@@ -597,7 +608,7 @@ static int test_check_boot_esc(void)
 	TEST_ASSERT(keyboard_scan_get_boot_keys() == BIT(BOOT_KEY_ESC));
 	mock_key(KEYBOARD_ROW_ESC, KEYBOARD_COL_ESC, 0);
 	task_wake(TASK_ID_KEYSCAN);
-	msleep(40);
+	crec_msleep(40);
 	TEST_ASSERT(keyboard_scan_get_boot_keys() == 0);
 	return EC_SUCCESS;
 }
@@ -609,12 +620,12 @@ static int test_check_boot_down(void)
 
 	mock_key(6, 11, 0);
 	task_wake(TASK_ID_KEYSCAN);
-	msleep(40);
+	crec_msleep(40);
 	TEST_ASSERT(keyboard_scan_get_boot_keys() == BIT(BOOT_KEY_REFRESH));
 
 	mock_key(KEYBOARD_ROW_REFRESH, KEYBOARD_COL_REFRESH, 0);
 	task_wake(TASK_ID_KEYSCAN);
-	msleep(40);
+	crec_msleep(40);
 	TEST_ASSERT(keyboard_scan_get_boot_keys() == 0);
 
 	return EC_SUCCESS;
@@ -647,8 +658,9 @@ static void run_test_step1(void)
 	lid_open = 1;
 	hook_notify(HOOK_LID_CHANGE);
 	test_reset();
-	msleep(1);
+	crec_msleep(1);
 
+	RUN_TEST(set_cols_test);
 	RUN_TEST(deghost_test);
 
 	if (IS_ENABLED(CONFIG_KEYBOARD_STRICT_DEBOUNCE))
@@ -678,7 +690,7 @@ static void run_test_step2(void)
 	lid_open = 1;
 	hook_notify(HOOK_LID_CHANGE);
 	test_reset();
-	msleep(1);
+	crec_msleep(1);
 
 	RUN_TEST(test_check_boot_esc);
 
@@ -693,7 +705,7 @@ static void run_test_step3(void)
 	lid_open = 1;
 	hook_notify(HOOK_LID_CHANGE);
 	test_reset();
-	msleep(1);
+	crec_msleep(1);
 
 	RUN_TEST(test_check_boot_down);
 
@@ -721,6 +733,6 @@ int test_task(void *data)
 
 void run_test(int argc, const char **argv)
 {
-	msleep(30); /* Wait for TASK_ID_TEST to initialize */
+	crec_msleep(30); /* Wait for TASK_ID_TEST to initialize */
 	task_wake(TASK_ID_TEST);
 }

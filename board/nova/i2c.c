@@ -10,60 +10,12 @@
 /* I2C port map configuration */
 const struct i2c_port_t i2c_ports[] = {
 	{
-		/* I2C0 C1 TCPC */
-		.name = "tcpc1",
-		.port = I2C_PORT_USB_C1_TCPC,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C_USB_C1_TCPC_SCL,
-		.sda = GPIO_EC_I2C_USB_C1_TCPC_SDA,
-	},
-	{
-		/* I2C1 */
-		.name = "tcpc0,2",
-		.port = I2C_PORT_USB_C0_C2_TCPC,
-		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C0_C2_TCPC_SCL,
-		.sda = GPIO_EC_I2C_USB_C0_C2_TCPC_SDA,
-	},
-	{
-		/* I2C2 */
-		.name = "ppc0,2",
-		.port = I2C_PORT_USB_C0_C2_PPC,
-		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C0_C2_PPC_SCL,
-		.sda = GPIO_EC_I2C_USB_C0_C2_PPC_SDA,
-	},
-	{
 		/* I2C3 */
-		.name = "retimer0,2",
-		.port = I2C_PORT_USB_C0_C2_MUX,
-		.kbps = 1000,
-		.scl = GPIO_EC_I2C_USB_C0_C2_RT_SCL,
-		.sda = GPIO_EC_I2C_USB_C0_C2_RT_SDA,
-	},
-	{
-		/* I2C4 */
-		.name = "ppc1",
-		.port = I2C_PORT_USB_C1_PPC,
+		.name = "sensor",
+		.port = I2C_PORT_SENSOR,
 		.kbps = 400,
-		.scl = GPIO_EC_I2C_USB_C1_PPC_SCL,
-		.sda = GPIO_EC_I2C_USB_C1_PPC_SDA,
-	},
-	{
-		/* I2C5 */
-		.name = "pse",
-		.port = I2C_PORT_PSE,
-		.kbps = 400,
-		.scl = GPIO_EC_I2C_LTC_SCL,
-		.sda = GPIO_EC_I2C_LTC_SDA,
-	},
-	{
-		/* I2C6 */
-		.name = "ADB",
-		.port = I2C_PORT_ADB,
-		.kbps = 1000,
-		.scl = GPIO_EC_I2C_ADB_SCL,
-		.sda = GPIO_EC_I2C_ADB_SDA,
+		.scl = GPIO_EC_I2C_ALS_SCL,
+		.sda = GPIO_EC_I2C_ALS_SDA,
 	},
 	{
 		/* I2C7 */

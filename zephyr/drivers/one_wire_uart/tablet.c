@@ -64,7 +64,6 @@ static void ec_ec_comm_init(void)
 	ap_power_ev_add_callback(&cb);
 
 	one_wire_uart_set_callback(one_wire_uart, recv_cb);
-	one_wire_uart_enable(one_wire_uart);
 
 #ifdef CONFIG_I2C_TARGET
 	i2c_target_driver_register(DEVICE_DT_GET(DT_NODELABEL(hid_i2c_target)));

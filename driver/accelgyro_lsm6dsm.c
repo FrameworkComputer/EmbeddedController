@@ -675,7 +675,7 @@ static int init(struct motion_sensor_t *s)
 			 * Refer to AN4987, wait 15ms for accelerometer to doing
 			 * full reboot.
 			 */
-			msleep(15);
+			crec_msleep(15);
 
 			/* Power OFF Accel. */
 			ret = st_raw_write8(s->port, s->i2c_spi_addr_flags,

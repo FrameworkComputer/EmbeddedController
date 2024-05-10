@@ -187,12 +187,12 @@ static void stubs_interrupt_init(void)
 
 	/* Reset generic TCPCI on port 0. */
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(usb_c0_tcpc_rst_l), 1);
-	msleep(1);
+	crec_msleep(1);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(usb_c0_tcpc_rst_l), 0);
 
 	/* Reset PS8XXX on port 1. */
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(usb_c1_tcpc_rst_l), 1);
-	msleep(PS8XXX_RESET_DELAY_MS);
+	crec_msleep(PS8XXX_RESET_DELAY_MS);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(usb_c1_tcpc_rst_l), 0);
 
 	/* Enable SwitchCap interrupt */

@@ -172,7 +172,7 @@ static void anx74xx_set_power_mode(int port, int mode)
 		 * Delay between setting cable_det low and setting RESET_L low
 		 * as recommended the ANX3429 datasheet.
 		 */
-		msleep(1);
+		crec_msleep(1);
 		/* Put chip into standby mode */
 		board_set_tcpc_power_mode(port, mode);
 	}
@@ -255,12 +255,12 @@ void anx74xx_tcpc_update_hpd_status(const struct usb_mux *me,
 		uint64_t now = get_time().val;
 		/* wait for the minimum spacing between IRQ_HPD if needed */
 		if (now < hpd_deadline[port])
-			usleep(hpd_deadline[port] - now);
+			crec_usleep(hpd_deadline[port] - now);
 
 		mux_read(me, ANX74XX_REG_HPD_CTRL_0, &reg);
 		reg &= ~ANX74XX_REG_HPD_OUT_DATA;
 		mux_write(me, ANX74XX_REG_HPD_CTRL_0, reg);
-		usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
+		crec_usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
 		reg |= ANX74XX_REG_HPD_OUT_DATA;
 		mux_write(me, ANX74XX_REG_HPD_CTRL_0, reg);
 	}
@@ -945,10 +945,10 @@ static int anx74xx_tcpm_transmit(int port, enum tcpci_msg_type type,
 		reg = ANX74XX_REG_TX_BIST_START | ANX74XX_REG_TX_BIXT_FOREVER |
 		      (0x02 << 4);
 		ret = tcpc_write(port, ANX74XX_REG_TX_BIST_CTRL, reg);
-		msleep(1);
+		crec_msleep(1);
 		ret = tcpc_write(port, ANX74XX_REG_TX_BIST_CTRL,
 				 reg | ANX74XX_REG_TX_BIST_ENABLE);
-		msleep(30);
+		crec_msleep(30);
 		tcpc_read(port, ANX74XX_REG_TX_BIST_CTRL, &reg);
 		ret = tcpc_write(port, ANX74XX_REG_TX_BIST_CTRL,
 				 reg | ANX74XX_REG_TX_BIST_STOP);

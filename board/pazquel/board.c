@@ -451,10 +451,10 @@ void board_reset_pd_mcu(void)
 
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
-	msleep(PS8XXX_RESET_DELAY_MS);
+	crec_msleep(PS8XXX_RESET_DELAY_MS);
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
-	msleep(PS8805_FW_INIT_DELAY_MS);
+	crec_msleep(PS8805_FW_INIT_DELAY_MS);
 }
 
 void board_set_tcpc_power_mode(int port, int mode)

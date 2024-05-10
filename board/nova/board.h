@@ -16,7 +16,7 @@
 #define CONFIG_MP2964
 
 /* Barrel Jack */
-#define DEDICATED_CHARGE_PORT 3
+#define DEDICATED_CHARGE_PORT 0
 
 /* HDMI CEC */
 #define CONFIG_CEC
@@ -25,34 +25,6 @@
 /* USB Type A Features */
 #define USB_PORT_COUNT 2
 #define CONFIG_USB_PORT_POWER_DUMB
-
-/* USB Type C and USB PD defines */
-#define CONFIG_USB_PD_REQUIRE_AP_MODE_ENTRY
-
-#define CONFIG_IO_EXPANDER
-#define CONFIG_IO_EXPANDER_NCT38XX
-#define CONFIG_IO_EXPANDER_PORT_COUNT 2
-
-#define CONFIG_USB_PD_PPC
-#define CONFIG_USB_PD_TCPM_RT1715
-#define CONFIG_USBC_RETIMER_INTEL_BB
-
-#define CONFIG_USBC_PPC_SYV682X
-#undef CONFIG_SYV682X_HV_ILIM
-#define CONFIG_SYV682X_HV_ILIM SYV682X_HV_ILIM_5_50
-
-/* TODO: b/177608416 - measure and check these values on brya */
-#define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
-#define PD_POWER_SUPPLY_TURN_OFF_DELAY 30000 /* us */
-#define PD_VCONN_SWAP_DELAY 5000 /* us */
-
-/* Not support typec adapter. */
-/* TODO(b/293975611): Set the max PD to 0W.
- */
-#define PD_OPERATING_POWER_MW CONFIG_CHARGER_MIN_POWER_MW_FOR_POWER_ON
-#define PD_MAX_POWER_MW 0
-#define PD_MAX_CURRENT_MA 0
-#define PD_MAX_VOLTAGE_MV 5000
 
 /*
  * Macros for GPIO signals used in common code that don't match the
@@ -87,20 +59,7 @@
 #define GPIO_RECOVERY_L_2 GPIO_GSC_EC_RECOVERY_BTN_OD
 
 /* I2C Bus Configuration */
-#define I2C_PORT_USB_C0_C2_TCPC NPCX_I2C_PORT1_0
-#define I2C_PORT_USB_C1_TCPC NPCX_I2C_PORT0_0
-
-#define I2C_PORT_USB_C0_C2_PPC NPCX_I2C_PORT2_0
-#define I2C_PORT_USB_C1_PPC NPCX_I2C_PORT4_1
-
-#define I2C_PORT_USB_C0_C2_BC12 NPCX_I2C_PORT2_0
-#define I2C_PORT_USB_C1_BC12 NPCX_I2C_PORT4_1
-
-#define I2C_PORT_USB_C0_C2_MUX NPCX_I2C_PORT3_0
-
-#define I2C_PORT_PSE NPCX_I2C_PORT5_0
-#define I2C_PORT_ADB NPCX_I2C_PORT6_1
-
+#define I2C_PORT_SENSOR NPCX_I2C_PORT3_0
 #define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
 #define I2C_PORT_MP2964 NPCX_I2C_PORT7_0
 
@@ -108,17 +67,60 @@
 
 #define I2C_ADDR_MP2964_FLAGS 0x20
 
-#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR 0x59
+/* USBC BC1.2 */
+#undef CONFIG_USB_CHARGER
+#undef CONFIG_BC12_DETECT_PI3USB9201
 
-/* Enabling Thunderbolt-compatible mode */
-#define CONFIG_USB_PD_TBT_COMPAT_MODE
+/* USB Type C and USB PD defines */
+#undef CONFIG_USB_PD_TCPMV2
+#undef CONFIG_USB_DRP_ACC_TRYSRC
+#undef CONFIG_USB_PD_REV30
 
-/* Enabling USB4 mode */
-#define CONFIG_USB_PD_USB4
-#define CONFIG_USB_PD_DATA_RESET_MSG
+#undef CONFIG_CMD_HCDEBUG
+#undef CONFIG_CMD_PPC_DUMP
+#undef CONFIG_CMD_TCPC_DUMP
 
-/* Retimer */
-#define CONFIG_USBC_RETIMER_FW_UPDATE
+#undef CONFIG_USB_POWER_DELIVERY
+#undef CONFIG_USB_PD_ALT_MODE
+#undef CONFIG_USB_PD_ALT_MODE_DFP
+#undef CONFIG_USB_PD_ALT_MODE_UFP
+#undef CONFIG_USB_PD_DISCHARGE_PPC
+#undef CONFIG_USB_PD_DUAL_ROLE
+#undef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
+#undef CONFIG_USB_PD_TCPC_LOW_POWER
+#undef CONFIG_USB_PD_TCPM_TCPCI
+#undef CONFIG_USB_PD_TCPM_NCT38XX
+
+#undef CONFIG_USB_PD_TCPM_MUX
+#undef CONFIG_HOSTCMD_PD_CONTROL
+#undef CONFIG_CMD_USB_PD_PE
+
+#define CONFIG_USB_PD_PORT_MAX_COUNT 0
+
+#undef CONFIG_USB_PD_USB32_DRD
+
+#undef CONFIG_USB_PD_TRY_SRC
+#undef CONFIG_USB_PD_VBUS_DETECT_TCPC
+
+#undef CONFIG_USBC_PPC
+#undef CONFIG_USBC_PPC_POLARITY
+#undef CONFIG_USBC_PPC_SBU
+#undef CONFIG_USBC_PPC_VCONN
+#undef CONFIG_USBC_PPC_DEDICATED_INT
+
+#undef CONFIG_USBC_SS_MUX
+#undef CONFIG_USB_MUX_VIRTUAL
+
+#undef CONFIG_USBC_VCONN
+#undef CONFIG_USBC_VCONN_SWAP
+
+#undef CONFIG_CMD_USB_PD_CABLE
+#undef CONFIG_USB_PD_DECODE_SOP
+
+#undef CONFIG_IO_EXPANDER
+
+/* Charger */
+#undef CONFIG_CHARGE_MANAGER
 
 /* Thermal features */
 #define CONFIG_THERMISTOR
@@ -129,9 +131,6 @@
 /* ADC */
 #define CONFIG_ADC
 
-/* PSE */
-#define CONFIG_PSE_LTC4291
-
 /*
  * TODO(b/197478860): Enable the fan control. We need
  * to check the sensor value and adjust the fan speed.
@@ -141,19 +140,31 @@
 /* Include math_util for bitmask_uint64 used in pd_timers */
 #define CONFIG_MATH_UTIL
 
+/* Sensor */
+#undef CONFIG_MOTION_SENSE_RESUME_DELAY_US
+#define CONFIG_MOTION_SENSE_RESUME_DELAY_US (1000 * MSEC)
+#define CONFIG_CMD_ACCEL_INFO
+/* Enable sensor fifo, must also define the _SIZE and _THRES */
+#define CONFIG_ACCEL_FIFO
+/* FIFO size is in power of 2. */
+#define CONFIG_ACCEL_FIFO_SIZE 256
+/* Depends on how fast the AP boots and typical ODRs */
+#define CONFIG_ACCEL_FIFO_THRES (CONFIG_ACCEL_FIFO_SIZE / 3)
+
+/* TCS3400 ALS */
+#define CONFIG_ALS
+#define ALS_COUNT 1
+#define CONFIG_ALS_TCS3400
+#define CONFIG_ALS_TCS3400_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(CLEAR_ALS)
+
+/* Sensors without hardware FIFO are in forced mode */
+#define CONFIG_ACCEL_FORCE_MODE_MASK BIT(CLEAR_ALS)
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h" /* needed by registers.h */
 #include "registers.h"
-#include "usbc_config.h"
-
-enum charge_port {
-	CHARGE_PORT_TYPEC0,
-	CHARGE_PORT_TYPEC1,
-	CHARGE_PORT_TYPEC2,
-	CHARGE_PORT_BARRELJACK,
-	CHARGE_PORT_ENUM_COUNT
-};
 
 enum adc_channel {
 	ADC_TEMP_SENSOR_1_CPU,
@@ -163,6 +174,12 @@ enum adc_channel {
 	ADC_VBUS,
 	ADC_PPVAR_IMON, /* ADC3 */
 	ADC_CH_COUNT
+};
+
+enum sensor_id {
+	CLEAR_ALS,
+	RGB_ALS,
+	SENSOR_COUNT,
 };
 
 enum temp_sensor_id {
@@ -186,7 +203,7 @@ enum fan_channel { FAN_CH_0 = 0, FAN_CH_COUNT };
 
 enum mft_channel { MFT_CH_0 = 0, MFT_CH_COUNT };
 
-enum cec_port { CEC_PORT_0, CEC_PORT_1, CEC_PORT_COUNT };
+enum cec_port { CEC_PORT_0, CEC_PORT_COUNT };
 
 extern void adp_connect_interrupt(enum gpio_signal signal);
 

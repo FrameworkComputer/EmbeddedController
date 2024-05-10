@@ -7,7 +7,7 @@
 
 #include "common.h"
 #include "console.h"
-#include "fpsensor/fpsensor_utils.h"
+#include "fpsensor/fpsensor_console.h"
 #include "shared_mem.h"
 #include "uart.h"
 

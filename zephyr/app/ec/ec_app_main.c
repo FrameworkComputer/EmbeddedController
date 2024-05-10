@@ -71,6 +71,14 @@ void ec_app_main(void)
 		lpc_init_mask();
 	}
 
+	/*
+	 * Copy this block in case you need even earlier hooks instead of moving
+	 * it. Callbacks of this type are expected to handle multiple calls.
+	 */
+	if (IS_ENABLED(CONFIG_PLATFORM_EC_HOOKS)) {
+		hook_notify(HOOK_INIT_EARLY);
+	}
+
 	if (IS_ENABLED(HAS_TASK_KEYSCAN)) {
 		keyboard_scan_init();
 	}

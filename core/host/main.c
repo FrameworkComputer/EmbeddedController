@@ -47,6 +47,9 @@ static int test_main(void)
 	test_init();
 
 	timer_init();
+
+	hook_notify(HOOK_INIT_EARLY);
+
 #ifdef HAS_TASK_KEYSCAN
 	keyboard_scan_init();
 #endif
@@ -94,7 +97,7 @@ int LLVMFuzzerTestOneInput(const uint8_t *data, size_t size)
 		/* We can't sleep yet, busy loop waiting for tasks to start. */
 		wait_for_task_started_nosleep();
 		/* Let tasks settle. */
-		msleep(50 * MSEC);
+		crec_msleep(50 * MSEC);
 	}
 
 	return test_fuzz_one_input(data, size);

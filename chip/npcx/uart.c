@@ -346,7 +346,7 @@ int uart_alt_pad_write_read(uint8_t *tx, int tx_len, uint8_t *rx, int rx_len,
 	uartn_tx_start(NPCX_UART_PORT0);
 
 	do {
-		usleep(100);
+		crec_usleep(100);
 
 		/* Pad switched during transaction. */
 		if (pad != UART_ALTERNATE_PAD) {

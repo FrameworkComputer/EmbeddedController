@@ -3,8 +3,7 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-"""
-Script to program a Microchip EC with erased or a bricked flash.
+"""Script to program a Microchip EC with erased or a bricked flash.
 
 General usage:
 1. Assert UART crisis recovery pin and toggle EC reset

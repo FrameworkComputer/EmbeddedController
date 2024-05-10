@@ -282,25 +282,25 @@ void board_set_tcpc_power_mode(int port, int mode)
 	case 0:
 		if (mode) {
 			gpio_set_level(GPIO_USB_C0_TCPC_PWR, 1);
-			msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
+			crec_msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
 			gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
 		} else {
 			gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-			msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
+			crec_msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
 			gpio_set_level(GPIO_USB_C0_TCPC_PWR, 0);
-			msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
+			crec_msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 		}
 		break;
 	case 1:
 		if (mode) {
 			gpio_set_level(GPIO_USB_C1_TCPC_PWR, 1);
-			msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
+			crec_msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
 			gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
 		} else {
 			gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
-			msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
+			crec_msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
 			gpio_set_level(GPIO_USB_C1_TCPC_PWR, 0);
-			msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
+			crec_msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 		}
 		break;
 	}
@@ -311,15 +311,15 @@ void board_reset_pd_mcu(void)
 	/* Assert reset */
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
-	msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
+	crec_msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
 	/* Disable power */
 	gpio_set_level(GPIO_USB_C0_TCPC_PWR, 0);
 	gpio_set_level(GPIO_USB_C1_TCPC_PWR, 0);
-	msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
+	crec_msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 	/* Enable power */
 	gpio_set_level(GPIO_USB_C0_TCPC_PWR, 1);
 	gpio_set_level(GPIO_USB_C1_TCPC_PWR, 1);
-	msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
+	crec_msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
 	/* Deassert reset */
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
@@ -333,7 +333,7 @@ void board_tcpc_init(void)
 	/* Wait for disconnected battery to wake up */
 	while (battery_hw_present() == BP_YES &&
 	       battery_is_present() == BP_NO) {
-		usleep(100 * MSEC);
+		crec_usleep(100 * MSEC);
 		/* Give up waiting after 2 seconds */
 		if (++count > 20)
 			break;

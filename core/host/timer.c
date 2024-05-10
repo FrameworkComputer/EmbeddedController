@@ -17,7 +17,7 @@
 static timestamp_t boot_time;
 static int time_set;
 
-int usleep(unsigned int us)
+int crec_usleep(unsigned int us)
 {
 	if (!task_start_called() || task_get_current() == TASK_ID_INVALID) {
 		udelay(us);

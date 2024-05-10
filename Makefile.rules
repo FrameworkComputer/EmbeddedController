@@ -468,11 +468,11 @@ bldversion=$(shell (./util/getversion.sh ; echo VERSION) | $(CPP) -P -)
 cmd_lcov=lcov --rc branch_coverage=1 --gcov-tool \
 	$(HOSTGCOV) -q -o $@ -c -d build/coverage/$* -t $* \
 	--exclude '*/ec/test/*' --exclude '*/ec/include/tests/*' \
-	--ignore-errors unused,unused,inconsistent,inconsistent
+	--ignore-errors unused,unused,inconsistent,inconsistent,negative,negative
 cmd_lcov-initial=lcov --rc branch_coverage=1 --gcov-tool \
 	$(GCOV) -q -o $@ -c -d build/coverage/initial-$* \
 	-i -t $* --exclude '*/ec/test/*' --exclude '*/ec/include/tests/*' \
-	--ignore-errors unused,unused,inconsistent,inconsistent
+	--ignore-errors unused,unused,inconsistent,inconsistent,negative,negative
 cmd_merge_cov=lcov --rc branch_coverage=1 -o build/coverage/lcov.info \
 	$(foreach info,$^,-a ${info})
 cmd_report_cov=genhtml --branch-coverage -q -o build/coverage/coverage_rpt -t \

@@ -27,6 +27,12 @@
 #define COP_OP_FLUSH_DCACHE 0x1C
 #define COP_OP_FLUSH_DCACHE_ADDR 0x1D
 
+#ifdef CHIP_VARIANT_MT8188
+#define CACHE_LINE_SIZE (128)
+#else
+#define CACHE_LINE_SIZE (32)
+#endif
+
 static inline void cache_op_all(uint32_t op)
 {
 	register int t0 asm("t0") = op;
@@ -42,7 +48,7 @@ static inline int cache_op_addr(uintptr_t addr, uint32_t length, uint32_t op)
 	if (addr & GENMASK(3, 0))
 		return EC_ERROR_INVAL;
 
-	for (offset = 0; offset < length; offset += 4) {
+	for (offset = 0; offset < length; offset += CACHE_LINE_SIZE) {
 		t0 = addr + offset + op;
 		asm volatile(".word " STRINGIFY(COP(5))::"r"(t0));
 	}

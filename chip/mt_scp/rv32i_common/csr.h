@@ -42,8 +42,13 @@ static inline uint32_t clear_csr(uint32_t reg, uint32_t bit)
 }
 
 /* VIC */
+#ifdef CHIP_FAMILY_RV55
+#define CSR_VIC_MICAUSE (0x5c5)
+#define CSR_VIC_MILMS_G (0x5c4)
+#else
 #define CSR_VIC_MICAUSE (0x5c0)
 #define CSR_VIC_MIEMS (0x5c2)
+#endif
 #define CSR_VIC_MIPEND_G0 (0x5d0)
 #define CSR_VIC_MIMASK_G0 (0x5d8)
 #define CSR_VIC_MIWAKEUP_G0 (0x5e0)
@@ -58,7 +63,11 @@ static inline uint32_t clear_csr(uint32_t reg, uint32_t bit)
 #define CSR_MCTREN_ITCM BIT(2)
 #define CSR_MCTREN_DTCM BIT(3)
 #define CSR_MCTREN_BTB BIT(4)
+#ifdef CHIP_FAMILY_RV55
+#define CSR_MCTREN_TLP BIT(5)
+#else
 #define CSR_MCTREN_RAS BIT(5)
+#endif
 #define CSR_MCTREN_VIC BIT(6)
 #define CSR_MCTREN_CG BIT(7)
 #define CSR_MCTREN_MPU BIT(8)

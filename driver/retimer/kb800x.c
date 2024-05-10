@@ -470,7 +470,7 @@ static int kb800x_init(const struct usb_mux *me)
 	 * logic. If after the delay, the reset is still held low - return an
 	 * error.
 	 */
-	msleep(KB800X_POWER_ON_DELAY_MS);
+	crec_msleep(KB800X_POWER_ON_DELAY_MS);
 	if (!gpio_get_level(kb800x_control[me->usb_port].retimer_rst_gpio))
 		return EC_ERROR_NOT_POWERED;
 

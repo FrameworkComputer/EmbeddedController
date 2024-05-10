@@ -233,10 +233,10 @@ void board_reset_pd_mcu(void)
 	cflush();
 	gpio_set_level(GPIO_USBC_DP_PD_RST_L, 0);
 	gpio_set_level(GPIO_USBC_UF_RESET_L, 0);
-	msleep(PS8805_FW_INIT_DELAY_MS);
+	crec_msleep(PS8805_FW_INIT_DELAY_MS);
 	gpio_set_level(GPIO_USBC_DP_PD_RST_L, 1);
 	gpio_set_level(GPIO_USBC_UF_RESET_L, 1);
-	msleep(PS8805_FW_INIT_DELAY_MS);
+	crec_msleep(PS8805_FW_INIT_DELAY_MS);
 }
 
 void board_enable_usbc_interrupts(void)
@@ -422,10 +422,10 @@ static int command_dplane(int argc, const char **argv)
 
 	/* put MST into reset */
 	gpio_set_level(GPIO_MST_RST_L, 0);
-	msleep(1);
+	crec_msleep(1);
 	/* Set lane control to requested level */
 	gpio_set_level(GPIO_MST_HUB_LANE_SWITCH, lane == 2 ? 1 : 0);
-	msleep(1);
+	crec_msleep(1);
 	/* Take MST out of reset */
 	gpio_set_level(GPIO_MST_RST_L, 1);
 

@@ -108,3 +108,8 @@ tests:
     extra_dtc_overlay_files:
     - kingler.ponyta.overlay
     - boards/ponyta.dtsi
+  kingler.kyogre_sensor:
+    extra_configs:
+    - CONFIG_TEST_KYOGRE_SENSOR_PROBE=y
+    extra_dtc_overlay_files:
+    - kingler.kyogre.overlay

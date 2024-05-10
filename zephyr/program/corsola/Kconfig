@@ -14,6 +14,12 @@ config BOARD_KINGLER
 	  Build Google Kingler reference board. Krabby has MediaTek MT8186 SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_KYOGRE
+	bool "Google Kyogre Board"
+	help
+	  Build Google Kyogre variant board. Kyogre is a variant of Kingler
+	  and has MediaTek MT8186 SoC with NPCX993FA0BX EC.
+
 config BOARD_STARMIE
 	bool "Google Starmie Board"
 	help
@@ -60,6 +66,24 @@ config BOARD_WOOBAT
 	bool "Google Woobat Board"
 	help
 	  Build Google Woobat variant board. Woobat is a variant of Krabby
+	  and has MediaTek MT8186 SoC with ITE it81202-bx EC
+
+config BOARD_WUGTRIO
+	bool "Google Wugtrio Board"
+	help
+	  Build Google Wugtrio variant board. Wugtrio is a variant of Krabby
+	  and has MediaTek MT8186 SoC with ITE it81202-bx EC
+
+config BOARD_SKITTY
+	bool "Google Skitty Board"
+	help
+	  Build Google Skitty variant board. Skitty is a variant of Krabby
+	  and has MediaTek MT8186 SoC with ITE it81202-bx EC
+
+config BOARD_VELUZA
+	bool "Google Veluza Board"
+	help
+	  Build Google Veluza variant board. Veluza is a variant of Krabby
 	  and has MediaTek MT8186 SoC with ITE it81202-bx EC
 
 config VARIANT_CORSOLA_DB_DETECTION

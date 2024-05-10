@@ -201,7 +201,7 @@ static int svdm_tbt_compat_response_enter_mode(int port, uint32_t *payload)
 		 * before sending the reply without violating that timer.
 		 */
 		if (!usb_mux_set_completed(port))
-			usleep(PD_T_VDM_E_MODE / 2);
+			crec_usleep(PD_T_VDM_E_MODE / 2);
 
 		CPRINTS("UFP Enter TBT mode");
 		return 1; /* ACK */

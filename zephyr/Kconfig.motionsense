@@ -18,6 +18,12 @@ menuconfig PLATFORM_EC_MOTIONSENSE
 
 if PLATFORM_EC_MOTIONSENSE
 
+config PLATFORM_EC_SENSOR_EC_RATE_FORCE_MODE
+    bool "Use force mode (no interrupts) if ec_rate is set"
+    help
+      Enable this to toggle interrupt mode sensors to force mode at specific low
+      intervals in order to save power in low power states (S3 and S5)
+
 config PLATFORM_EC_ACCEL_FIFO
     bool "Sensor FIFO"
     help

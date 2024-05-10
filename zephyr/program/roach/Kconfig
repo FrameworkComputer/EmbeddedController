@@ -19,4 +19,10 @@ config BOARD_KELPIE
 	  Build Google Kelpie board. Kelpie is a variant board of
 	  Roach devices.
 
+config BOARD_SPIKYROCK
+	bool "Google Spikyrock Board"
+	help
+	  Build Google Spikyrock board. Spikyrock is a variant board of
+	  Roach devices.
+
 source "Kconfig.zephyr"

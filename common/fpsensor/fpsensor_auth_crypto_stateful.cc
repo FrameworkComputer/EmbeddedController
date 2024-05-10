@@ -12,14 +12,11 @@
 #include "crypto/cleanse_wrapper.h"
 #include "crypto/elliptic_curve_key.h"
 #include "openssl/bn.h"
-#include "openssl/ec.h"
 #include "openssl/mem.h"
-#include "openssl/obj_mac.h"
 #include "openssl/rand.h"
 
 extern "C" {
 #include "ec_commands.h"
-#include "sha256.h"
 }
 
 // clang-format off
@@ -28,13 +25,13 @@ extern "C" {
 #include "fpsensor/fpsensor_auth_crypto.h"
 #include "fpsensor/fpsensor_crypto.h"
 #include "fpsensor/fpsensor_state_without_driver_info.h"
-#include "fpsensor/fpsensor_utils.h"
+#include "fpsensor/fpsensor_console.h"
 // clang-format on
 
 enum ec_error_list
 encrypt_data_in_place(uint16_t version,
 		      struct fp_auth_command_encryption_metadata &info,
-		      uint8_t *data, size_t data_size)
+		      std::span<uint8_t> data)
 {
 	if (version != 1) {
 		return EC_ERROR_INVAL;
@@ -46,15 +43,13 @@ encrypt_data_in_place(uint16_t version,
 
 	CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > enc_key;
 	enum ec_error_list ret =
-		derive_encryption_key(enc_key.data(), info.encryption_salt);
+		derive_encryption_key(enc_key, info.encryption_salt);
 	if (ret != EC_SUCCESS) {
 		return ret;
 	}
 
 	/* Encrypt the secret blob in-place. */
-	ret = aes_gcm_encrypt(enc_key.data(), enc_key.size(), data, data,
-			      data_size, info.nonce, sizeof(info.nonce),
-			      info.tag, sizeof(info.tag));
+	ret = aes_128_gcm_encrypt(enc_key, data, data, info.nonce, info.tag);
 	if (ret != EC_SUCCESS) {
 		return ret;
 	}
@@ -72,8 +67,8 @@ create_encrypted_private_key(const EC_KEY &key, uint16_t version)
 		return std::nullopt;
 	}
 
-	if (encrypt_data_in_place(version, enc_key.info, enc_key.data,
-				  sizeof(enc_key.data)) != EC_SUCCESS) {
+	if (encrypt_data_in_place(version, enc_key.info, enc_key.data) !=
+	    EC_SUCCESS) {
 		return std::nullopt;
 	}
 
@@ -82,8 +77,7 @@ create_encrypted_private_key(const EC_KEY &key, uint16_t version)
 
 enum ec_error_list
 decrypt_data(const struct fp_auth_command_encryption_metadata &info,
-	     const uint8_t *enc_data, size_t enc_data_size, uint8_t *data,
-	     size_t data_size)
+	     std::span<const uint8_t> enc_data, std::span<uint8_t> data)
 {
 	if (info.struct_version != 1) {
 		return EC_ERROR_INVAL;
@@ -91,20 +85,19 @@ decrypt_data(const struct fp_auth_command_encryption_metadata &info,
 
 	CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > enc_key;
 	enum ec_error_list ret =
-		derive_encryption_key(enc_key.data(), info.encryption_salt);
+		derive_encryption_key(enc_key, info.encryption_salt);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to derive key");
 		return ret;
 	}
 
-	if (enc_data_size != data_size) {
+	if (enc_data.size() != data.size()) {
 		CPRINTS("Data size mismatch");
 		return EC_ERROR_OVERFLOW;
 	}
 
-	ret = aes_gcm_decrypt(enc_key.data(), enc_key.size(), data, enc_data,
-			      data_size, info.nonce, sizeof(info.nonce),
-			      info.tag, sizeof(info.tag));
+	ret = aes_128_gcm_decrypt(enc_key, data, enc_data, info.nonce,
+				  info.tag);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to decipher data");
 		return ret;
@@ -119,10 +112,9 @@ bssl::UniquePtr<EC_KEY> decrypt_private_key(
 	CleanseWrapper<std::array<uint8_t, sizeof(encrypted_private_key.data)> >
 		privkey;
 
-	enum ec_error_list ret = decrypt_data(
-		encrypted_private_key.info, encrypted_private_key.data,
-		sizeof(encrypted_private_key.data), privkey.data(),
-		privkey.size());
+	enum ec_error_list ret = decrypt_data(encrypted_private_key.info,
+					      encrypted_private_key.data,
+					      privkey);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to decrypt private key");
 		return nullptr;

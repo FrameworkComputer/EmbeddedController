@@ -7,6 +7,11 @@
 	gpio_interrupts: gpio-interrupts {
 		compatible = "cros-ec,gpio-interrupts";
 
+		int_ac_present: ac_present {
+			irq-pin = <&gpio_acok_ec_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
 		int_power_button: power_button {
 			irq-pin = <&gpio_gsc_ec_pwr_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
@@ -22,6 +27,18 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "button_interrupt";
 		};
+		int_lid_open: lid_open {
+			irq-pin = <&gpio_lid_open>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+	};
+
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-irqs = <&int_ac_present
+			       &int_power_button
+			       &int_lid_open>;
 	};
 };
 

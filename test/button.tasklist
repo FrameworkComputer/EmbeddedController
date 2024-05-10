@@ -7,4 +7,5 @@
  * See CONFIG_TASK_LIST in config.h for details.
  */
 #define CONFIG_TEST_TASK_LIST \
-        TASK_TEST(KEYPROTO, keyboard_protocol_task, NULL, TASK_STACK_SIZE)
+        TASK_TEST(KEYPROTO, keyboard_protocol_task, NULL, TASK_STACK_SIZE)    \
+	TASK_TEST(KEYSCAN, keyboard_scan_task, NULL, TASK_STACK_SIZE)

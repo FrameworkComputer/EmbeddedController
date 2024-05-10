@@ -721,7 +721,7 @@ ZTEST_USER(bb_retimer, test_bb_init)
 	zassert_equal(0, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_LS_EN_PORT),
 		      NULL);
 
-	msleep(1);
+	crec_msleep(1);
 	zassert_equal(
 		0, gpio_emul_output_get(gpio_dev, GPIO_USB_C1_RT_RST_ODL_PORT),
 		NULL);

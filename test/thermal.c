@@ -111,7 +111,7 @@ static void reset_mocks(void)
 static int test_init_val(void)
 {
 	reset_mocks();
-	sleep(2);
+	crec_sleep(2);
 
 	TEST_ASSERT(host_throttled == 0);
 	TEST_ASSERT(cpu_throttled == 0);
@@ -119,7 +119,7 @@ static int test_init_val(void)
 	TEST_ASSERT(fan_pct == 0);
 	TEST_ASSERT(no_temps_read);
 
-	sleep(2);
+	crec_sleep(2);
 
 	TEST_ASSERT(host_throttled == 0);
 	TEST_ASSERT(cpu_throttled == 0);
@@ -135,7 +135,7 @@ static int test_sensors_can_be_read(void)
 	reset_mocks();
 	mock_temp[2] = 100;
 
-	sleep(2);
+	crec_sleep(2);
 
 	TEST_ASSERT(host_throttled == 0);
 	TEST_ASSERT(cpu_throttled == 0);
@@ -153,35 +153,35 @@ static int test_one_fan(void)
 	thermal_params[2].temp_fan_max = 200;
 
 	all_temps(50);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 0);
 
 	all_temps(100);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 0);
 
 	all_temps(101);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 1);
 
 	all_temps(130);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 30);
 
 	all_temps(150);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 50);
 
 	all_temps(170);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 70);
 
 	all_temps(200);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 100);
 
 	all_temps(300);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 100);
 
 	return EC_SUCCESS;
@@ -197,38 +197,38 @@ static int test_two_fans(void)
 	thermal_params[2].temp_fan_max = 200;
 
 	all_temps(50);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 0);
 
 	all_temps(100);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 0);
 
 	all_temps(101);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 1);
 
 	all_temps(130);
-	sleep(2);
+	crec_sleep(2);
 	/* fan 2 is still higher */
 	TEST_ASSERT(fan_pct == 30);
 
 	all_temps(150);
-	sleep(2);
+	crec_sleep(2);
 	/* now fan 1 is higher: 150 = 75% of [120-160] */
 	TEST_ASSERT(fan_pct == 75);
 
 	all_temps(170);
-	sleep(2);
+	crec_sleep(2);
 	/* fan 1 is maxed now */
 	TEST_ASSERT(fan_pct == 100);
 
 	all_temps(200);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 100);
 
 	all_temps(300);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 100);
 
 	return EC_SUCCESS;
@@ -248,69 +248,69 @@ static int test_all_fans(void)
 	thermal_params[3].temp_fan_max = 500;
 
 	set_temps(1, 1, 1, 1);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 0);
 
 	/* Each sensor has its own range */
 	set_temps(40, 0, 0, 0);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 50);
 
 	set_temps(0, 140, 0, 0);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 50);
 
 	set_temps(0, 0, 150, 0);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 50);
 
 	set_temps(0, 0, 0, 400);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 50);
 
 	set_temps(60, 0, 0, 0);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 100);
 
 	set_temps(0, 160, 0, 0);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 100);
 
 	set_temps(0, 0, 200, 0);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 100);
 
 	set_temps(0, 0, 0, 500);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 100);
 
 	/* But sensor 0 needs the most cooling */
 	all_temps(20);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 0);
 
 	all_temps(21);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 2);
 
 	all_temps(30);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 25);
 
 	all_temps(40);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 50);
 
 	all_temps(50);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 75);
 
 	all_temps(60);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 100);
 
 	all_temps(65);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(fan_pct == 100);
 
 	return EC_SUCCESS;
@@ -324,85 +324,85 @@ static int test_one_limit(void)
 	thermal_params[2].temp_host[EC_TEMP_THRESH_HALT] = 300;
 
 	all_temps(50);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 0);
 	TEST_ASSERT(cpu_throttled == 0);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	all_temps(100);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 0);
 	TEST_ASSERT(cpu_throttled == 0);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	all_temps(101);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 0);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	all_temps(100);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 0);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	all_temps(99);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 0);
 	TEST_ASSERT(cpu_throttled == 0);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	all_temps(199);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 0);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	all_temps(200);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 0);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	all_temps(201);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 1);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	all_temps(200);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 1);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	all_temps(199);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 0);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	all_temps(99);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 0);
 	TEST_ASSERT(cpu_throttled == 0);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	all_temps(201);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 1);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	all_temps(99);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 0);
 	TEST_ASSERT(cpu_throttled == 0);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	all_temps(301);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 1);
 	TEST_ASSERT(cpu_shutdown == 1);
@@ -410,14 +410,14 @@ static int test_one_limit(void)
 	/* We probably won't be able to read the CPU temp while shutdown,
 	 * so nothing will change. */
 	all_temps(-1);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 1);
 	/* cpu_shutdown is only set for testing purposes. The thermal task
 	 * doesn't do anything that could clear it. */
 
 	all_temps(50);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 0);
 	TEST_ASSERT(cpu_throttled == 0);
 
@@ -441,37 +441,37 @@ static int test_several_limits(void)
 	thermal_params[3].temp_host[EC_TEMP_THRESH_HALT] = 40;
 
 	set_temps(500, 100, 150, 10);
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 1); /* 1=low, 2=warn, 3=low */
 	TEST_ASSERT(cpu_throttled == 0);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	set_temps(500, 50, -1, 10); /* 1=low, 2=X, 3=low */
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 0);
 	TEST_ASSERT(cpu_throttled == 0);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	set_temps(500, 170, 210, 10); /* 1=warn, 2=high, 3=low */
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 1);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	set_temps(500, 100, 50, 40); /* 1=low, 2=low, 3=high */
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 1);
 	TEST_ASSERT(cpu_shutdown == 0);
 
 	set_temps(500, 100, 50, 41); /* 1=low, 2=low, 3=shutdown */
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 1);
 	TEST_ASSERT(cpu_throttled == 1);
 	TEST_ASSERT(cpu_shutdown == 1);
 
 	all_temps(0); /* reset from shutdown */
-	sleep(2);
+	crec_sleep(2);
 	TEST_ASSERT(host_throttled == 0);
 	TEST_ASSERT(cpu_throttled == 0);
 

@@ -74,10 +74,10 @@
 		 irq-gpios = <&gpiof 1 GPIO_ACTIVE_LOW>;
 	};
 
-	ps8802_mux_0: ps8802-mx-0@17 {
+	ps8802_mux_0: ps8802-mx-0@8 {
 		compatible = "parade,ps8802";
 		status = "okay";
-		reg = <0x17>;
+		reg = <0x8>;
 	};
 };
 

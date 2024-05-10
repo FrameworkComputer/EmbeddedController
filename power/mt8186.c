@@ -109,7 +109,7 @@ static bool power_is_enough(void)
 
 	while (!system_can_boot_ap() &&
 	       !timestamp_expired(poll_deadline, NULL)) {
-		usleep(CAN_BOOT_AP_CHECK_WAIT);
+		crec_usleep(CAN_BOOT_AP_CHECK_WAIT);
 	}
 
 	return system_can_boot_ap();
@@ -119,9 +119,9 @@ static bool power_is_enough(void)
 static void set_pmic_pwron(void)
 {
 	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
-	msleep(PMIC_EN_PULSE_MS);
+	crec_msleep(PMIC_EN_PULSE_MS);
 	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 0);
-	msleep(PMIC_EN_PULSE_MS);
+	crec_msleep(PMIC_EN_PULSE_MS);
 	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
 }
 
@@ -141,7 +141,7 @@ static void set_pmic_pwroff(void)
 	pmic_off_timeout.val += PMIC_HARD_OFF_DELAY;
 
 	while (!timestamp_expired(pmic_off_timeout, NULL)) {
-		msleep(100);
+		crec_msleep(100);
 	};
 
 	GPIO_SET_LEVEL(GPIO_EC_PMIC_EN_ODL, 1);
@@ -219,6 +219,15 @@ void chipset_force_shutdown(enum chipset_shutdown_reason reason)
 
 void chipset_force_shutdown_button(void)
 {
+	if (system_is_manual_recovery()) {
+		struct ec_params_reboot_ec p = {
+			.cmd = EC_REBOOT_COLD_AP_OFF,
+			.flags = 0,
+		};
+
+		CPRINTS("In recovery. Scheduled reboot_ap_off.");
+		system_set_reboot_at_shutdown(&p);
+	}
 	chipset_force_shutdown(CHIPSET_SHUTDOWN_BUTTON);
 }
 DECLARE_DEFERRED(chipset_force_shutdown_button);
@@ -228,6 +237,7 @@ static void mt8186_exit_off(void)
 	is_exiting_off = true;
 	chipset_exit_hard_off();
 }
+DECLARE_DEFERRED(mt8186_exit_off);
 
 static void reset_flag_deferred(void)
 {
@@ -248,7 +258,7 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 	is_resetting = true;
 	hook_call_deferred(&reset_flag_deferred_data, RESET_FLAG_TIMEOUT);
 	GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 0);
-	usleep(SYS_RST_PULSE_LENGTH);
+	crec_usleep(SYS_RST_PULSE_LENGTH);
 	GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 1);
 }
 
@@ -353,9 +363,16 @@ enum power_state power_chipset_init(void)
 		 */
 		battery_wait_for_stable();
 
-	if (exit_hard_off && init_state == POWER_G3)
+	if (exit_hard_off && init_state == POWER_G3) {
 		/* Auto-power on */
+#if CONFIG_PLATFORM_EC_PP3700_DISCHARGE_TIME_MS
+		hook_call_deferred(&mt8186_exit_off_data,
+				   CONFIG_PLATFORM_EC_PP3700_DISCHARGE_TIME_MS *
+					   MSEC);
+#else
 		mt8186_exit_off();
+#endif
+	}
 
 	if (init_state != POWER_G3 && !exit_hard_off) {
 		/* Force shutdown from S5 if the PMIC is already up. */
@@ -535,8 +552,11 @@ enum power_state power_handle_state(enum power_state state)
 						    PMIC_AP_RESET_TIMEOUT))
 			CPRINTS("PMIC reset AP timeout. Forcing PMIC off");
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_pp4200_s5), 0);
+#ifdef CONFIG_PLATFORM_EC_PP3700_DISCHARGE_TIME_MS
+		crec_msleep(CONFIG_PLATFORM_EC_PP3700_DISCHARGE_TIME_MS);
+#endif /* CONFIG_PLATFORM_EC_PP3700_DISCHARGE_TIME_MS */
 		power_signal_disable_interrupt(GPIO_PMIC_EC_RESETB);
-#endif
+#endif /* DT_NODE_EXISTS(DT_NODELABEL(en_pp4200_s5)) */
 		return POWER_G3;
 	default:
 		CPRINTS("Unexpected power state %d", state);

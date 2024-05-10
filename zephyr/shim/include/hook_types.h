@@ -40,9 +40,10 @@
  */
 #define HOOK_TYPES_LIST                                                     \
 	LIST_DROP_EMPTY(                                                    \
-		HOOK_INIT, HOOK_PRE_FREQ_CHANGE, HOOK_FREQ_CHANGE,          \
-		HOOK_SYSJUMP, HOOK_CHIPSET_PRE_INIT, HOOK_CHIPSET_STARTUP,  \
-		HOOK_CHIPSET_RESUME, HOOK_CHIPSET_SUSPEND,                  \
+		HOOK_INIT, HOOK_INIT_EARLY, HOOK_PRE_FREQ_CHANGE,           \
+		HOOK_FREQ_CHANGE, HOOK_SYSJUMP, HOOK_CHIPSET_PRE_INIT,      \
+		HOOK_CHIPSET_STARTUP, HOOK_CHIPSET_RESUME,                  \
+		HOOK_CHIPSET_SUSPEND,                                       \
 		IF_ENABLED(CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK,     \
 			   (HOOK_CHIPSET_RESUME_INIT,                       \
 			    HOOK_CHIPSET_SUSPEND_COMPLETE, ))               \

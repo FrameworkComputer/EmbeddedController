@@ -23,7 +23,9 @@ test-list-y=\
        fpsensor \
        fpsensor_auth_crypto_stateful \
        fpsensor_auth_crypto_stateless \
+       fpsensor_crypto \
        fpsensor_hw \
+       fpsensor_utils \
        libc_printf \
        mpu \
        mutex \

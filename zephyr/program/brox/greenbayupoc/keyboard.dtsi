@@ -1,0 +1,97 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	kblight: kblight {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
+	};
+
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+		debounce-down = <15000>;
+		actual-key-mask = <
+			0x14 /* C0 */
+			0xff /* C1 */
+			0xff /* C2 */
+			0x02 /* C3 */
+			0xff /* C4 */
+			0xff /* C5 */
+			0xf4 /* C6 */
+			0x08 /* C7 */
+			0xff /* C8 */
+			0xa0 /* C9 */
+			0xff /* C10 */
+			0xff /* C11 */
+			0xff /* C12 */
+			0x41 /* C13 */
+			0xfa /* C14 */
+			0xff /* C15 */
+		>;
+	};
+};
+
+&cros_kb_raw {
+	status = "okay";
+	pinctrl-0 = <&ksi0_default
+		     &ksi1_default
+		     &ksi2_default
+		     &ksi3_default
+		     &ksi4_default
+		     &ksi5_default
+		     &ksi6_default
+		     &ksi7_default
+		     &kso0_default
+		     &kso1_default
+		     &kso3_default
+		     &kso4_default
+		     &kso5_default
+		     &kso6_default
+		     &kso7_default
+		     &kso8_default
+		     &kso9_default
+		     &kso10_default
+		     &kso11_default
+		     &kso12_default
+		     &kso13_default
+		     &kso14_default
+		     &kso15_default>;
+	pinctrl-names = "default";
+};
+
+&vivaldi_kbd {
+	vivaldi-keys = <
+	       KBD_RC(0, 2)  /* T1 */
+	       KBD_RC(3, 2)  /* T2 */
+	       KBD_RC(2, 2)  /* T3 */
+	       KBD_RC(1, 2)  /* T4 */
+	       KBD_RC(3, 5)  /* T5 */
+	       KBD_RC(2, 5)  /* T6 */
+	       KBD_RC(1, 5)  /* T7 */
+	       KBD_RC(0, 5)  /* T8 */
+	       KBD_RC(3, 11)  /* T9 */
+	       KBD_RC(2, 11)  /* T10 */
+	       KBD_RC(1, 11)  /* T11 */
+	       KBD_RC(0, 11)  /* T12 */
+	>;
+};
+
+&kbd_config_0 {
+	vivaldi-codes = <
+		VIVALDI_TK_BACK               /* T1 */
+		VIVALDI_TK_REFRESH            /* T2 */
+		VIVALDI_TK_FULLSCREEN         /* T3 */
+		VIVALDI_TK_KBD_BKLIGHT_TOGGLE /* T4 */
+		VIVALDI_TK_VOL_MUTE           /* T5 */
+		VIVALDI_TK_VOL_DOWN           /* T6 */
+		VIVALDI_TK_VOL_UP             /* T7 */
+		VIVALDI_TK_MICMUTE            /* T8 */
+		VIVALDI_TK_PREV_TRACK         /* T9 */
+		VIVALDI_TK_PLAY_PAUSE         /* T10 */
+		VIVALDI_TK_BRIGHTNESS_DOWN    /* T11 */
+		VIVALDI_TK_BRIGHTNESS_UP      /* T12 */
+	>;
+	capabilities = <0>;                  /* No lock button */
+};

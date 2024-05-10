@@ -19,13 +19,10 @@
 
 /* TODO(b/279096907): Investigate de-duping with other FPMCU boards*/
 
-/* create alias to fit spi_devices declaration in 80 chars */
-#define FP_SPI_CS GPIO_SPI_MCU_CS_FP_L
-
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
 	/* Fingerprint sensor (SCLK at 4Mhz) */
-	{ .port = CONFIG_SPI_FP_PORT, .div = 3, .gpio_cs = FP_SPI_CS }
+	{ .port = CONFIG_SPI_FP_PORT, .div = 3, .gpio_cs = GPIO_FP_SPI_CS }
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 

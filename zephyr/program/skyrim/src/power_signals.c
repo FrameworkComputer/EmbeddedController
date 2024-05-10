@@ -150,7 +150,7 @@ void board_pwrbtn_to_pch(int level)
 	    !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l))) {
 		start = get_time();
 		do {
-			usleep(500);
+			crec_usleep(500);
 			if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
 				    gpio_ec_soc_rsmrst_l)))
 				break;
@@ -160,7 +160,7 @@ void board_pwrbtn_to_pch(int level)
 			    GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l)))
 			ccprints("Error pwrbtn: RSMRST_L still low");
 
-		msleep(EDS_PWR_BTN_RSMRST_T1A_DELAY);
+		crec_msleep(EDS_PWR_BTN_RSMRST_T1A_DELAY);
 	}
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_pwr_btn_l), level);
 }

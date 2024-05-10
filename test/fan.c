@@ -28,7 +28,7 @@ static int test_fan(void)
 	/* "actual" fan speed from board/host/fan.c */
 	extern int mock_rpm;
 
-	sleep(2);
+	crec_sleep(2);
 
 	/* Fans initialize disabled. */
 	TEST_ASSERT(fan_get_rpm_actual(0) == 0);

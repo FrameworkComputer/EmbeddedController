@@ -62,7 +62,7 @@ static int anx7451_wake_up(const struct usb_mux *me)
 		rv = anx7451_read(me, 0x0, &val);
 		if (!rv)
 			break;
-		usleep(ANX7451_I2C_WAKE_RETRY_DELAY_US);
+		crec_usleep(ANX7451_I2C_WAKE_RETRY_DELAY_US);
 	} while (time_since32(start) < ANX7451_I2C_WAKE_TIMEOUT_MS * MSEC);
 	if (rv) {
 		CPRINTS("ANX7451: Failed to wake mux rv:%d", rv);

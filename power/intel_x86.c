@@ -594,7 +594,7 @@ void common_intel_x86_handle_rsmrst(enum power_state state)
 	 * and deasserting RSMRST to PCH.
 	 */
 	if (IS_ENABLED(CONFIG_CHIPSET_X86_RSMRST_DELAY) && rsmrst_in)
-		msleep(10);
+		crec_msleep(10);
 
 	gpio_set_level(GPIO_PCH_RSMRST_L, rsmrst_in);
 
@@ -703,7 +703,7 @@ enum ec_error_list intel_x86_wait_power_up_ok(void)
 	 * in case we're trying to boot the AP with no battery.
 	 */
 	while ((tries < CHARGER_INITIALIZED_TRIES) && is_power_up_inhibited()) {
-		msleep(CHARGER_INITIALIZED_DELAY_MS);
+		crec_msleep(CHARGER_INITIALIZED_DELAY_MS);
 		tries++;
 	}
 
@@ -728,7 +728,7 @@ enum ec_error_list intel_x86_wait_power_up_ok(void)
 	 * which causes (short-powered) system to brown out.
 	 */
 	while (!system_can_boot_ap())
-		msleep(200);
+		crec_msleep(200);
 #endif
 
 	return EC_SUCCESS;

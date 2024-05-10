@@ -302,6 +302,11 @@ $(1)-incs-y += $(addprefix $(2)/,$($(3)-incs-y))
 $(1)-dirs-y += $(addprefix $(2)/,$($(3)-dirs-y))
 endef
 
+# Include all subdirs under feature-x.
+feature-x-builds = $(wildcard private/feature-x/*/build.mk)
+include $(feature-x-builds)
+$(eval $(call vars_from_dir,private,feature-x,feature-x))
+
 # Get build configuration from sub-directories
 # Note that this re-includes the board and chip makefiles
 

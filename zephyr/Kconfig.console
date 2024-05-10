@@ -129,3 +129,19 @@ config PLATFORM_EC_LOG_CUSTOM_TIMESTAMP
 	help
 	  Change the default format of the timestamp, to the one EC uses -
 	  "[s.us]" at the beginning of a log.
+
+config PLATFORM_EC_PRINTF_LONG_IS_32BITS
+	bool "Support %l in 32-bit systems"
+	help
+	  Allow the use of the "long" printf length modifier ('l') to be in 32-bit
+	  systems along with any supported conversion specifiers. Note that this also
+	  reenables support for the 'i' printf format. This config will only take
+	  effect if sizeof(long) == sizeof(uint32_t).
+
+config PLATFORM_EC_HOSTCMD_CONSOLE_PRINT
+	bool "Console Print Command"
+	depends on CONSOLE && PLATFORM_EC_HOSTCMD
+	default y
+	help
+	  Enable the EC_CMD_CONSOLE_PRINT host command. This allows the host
+	  to print messages directly to the EC console.

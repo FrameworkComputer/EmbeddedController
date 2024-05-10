@@ -5,6 +5,11 @@
 
 #include "common.h"
 
-void board_dc_jack_interrupt(enum gpio_signal signal)
+void board_charging_enable(int port, int enable)
 {
+}
+
+int board_vbus_source_enabled(int port)
+{
+	return 0;
 }

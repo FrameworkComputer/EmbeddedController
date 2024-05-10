@@ -85,7 +85,7 @@ static enum cts_rc test_ticks(void)
 	 * task starts. We only need to wait for just more than a second
 	 * to allow it fires for the second time.
 	 */
-	msleep(1300);
+	crec_msleep(1300);
 
 	interval = tick_time[1].val - tick_time[0].val;
 	error_pct = (interval - HOOK_TICK_INTERVAL) * 100 / HOOK_TICK_INTERVAL;
@@ -106,7 +106,7 @@ static enum cts_rc test_ticks(void)
 
 static enum cts_rc test_priority(void)
 {
-	usleep(HOOK_TICK_INTERVAL);
+	crec_usleep(HOOK_TICK_INTERVAL);
 	if (tick_hook_count != tick2_hook_count)
 		return CTS_RC_FAILURE;
 	if (tick_hook_count != tick_count_seen_by_tick2)
@@ -122,7 +122,7 @@ static enum cts_rc test_deferred(void)
 		CPRINTL("deferred_call_count=%d", deferred_call_count);
 		return CTS_RC_FAILURE;
 	}
-	msleep(100);
+	crec_msleep(100);
 	if (deferred_call_count != 1) {
 		CPRINTL("deferred_call_count=%d", deferred_call_count);
 		return CTS_RC_FAILURE;
@@ -131,9 +131,9 @@ static enum cts_rc test_deferred(void)
 	/* Test cancellation */
 	deferred_call_count = 0;
 	hook_call_deferred(&deferred_func_data, 50 * MSEC);
-	msleep(25);
+	crec_msleep(25);
 	hook_call_deferred(&deferred_func_data, -1);
-	msleep(75);
+	crec_msleep(75);
 	if (deferred_call_count != 0) {
 		CPRINTL("deferred_call_count=%d", deferred_call_count);
 		return CTS_RC_FAILURE;
@@ -146,7 +146,7 @@ static enum cts_rc test_deferred(void)
 		CPRINTL("non_deferred_func_data");
 		return CTS_RC_FAILURE;
 	}
-	msleep(100);
+	crec_msleep(100);
 	if (deferred_call_count != 0) {
 		CPRINTL("deferred_call_count=%d", deferred_call_count);
 		return CTS_RC_FAILURE;

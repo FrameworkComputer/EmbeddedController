@@ -6,7 +6,7 @@
 #ifndef UM_PPM_INCLUDE_PD_DRIVER_H_
 #define UM_PPM_INCLUDE_PD_DRIVER_H_
 
-#include "include/ppm.h"
+#include "ppm.h"
 
 #include <stddef.h>
 #include <stdint.h>

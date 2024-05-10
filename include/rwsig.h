@@ -77,8 +77,10 @@ void rwsig_jump_now(void);
 #endif /* ! CONFIG_RO_PUBKEY_SIZE */
 #ifndef CONFIG_RO_PUBKEY_ADDR
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
+#ifndef CONFIG_RO_PUBKEY_STORAGE_OFF
 #define CONFIG_RO_PUBKEY_STORAGE_OFF \
 	(CONFIG_RO_STORAGE_OFF + CONFIG_RO_SIZE - CONFIG_RO_PUBKEY_SIZE)
+#endif /* CONFIG_RO_PUBKEY_STORAGE_OFF */
 
 /* The pubkey resides at the end of the RO image */
 #define CONFIG_RO_PUBKEY_ADDR                                           \

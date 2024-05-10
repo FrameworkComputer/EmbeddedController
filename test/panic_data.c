@@ -148,6 +148,6 @@ int task_test(void *unused)
 void run_test(int argc, const char **argv)
 {
 	test_reset();
-	msleep(30); /* Wait for TASK_ID_TEST to initialize */
+	crec_msleep(30); /* Wait for TASK_ID_TEST to initialize */
 	task_wake(TASK_ID_TEST);
 }

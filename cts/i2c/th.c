@@ -56,7 +56,7 @@ static int wait_for_in_flag(uint32_t timeout_ms)
 	while (get_time().val < end_time) {
 		if (data_received)
 			return 0;
-		msleep(5);
+		crec_msleep(5);
 		watchdog_reload();
 	}
 	return 1;

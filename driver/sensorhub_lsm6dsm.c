@@ -117,7 +117,7 @@ static int enable_i2c_pass_through(const struct motion_sensor_t *s, int *cache)
 			s->name, s->type, ret);
 		return ret;
 	}
-	msleep(10);
+	crec_msleep(10);
 
 	ret = st_raw_write8(
 		s->port, s->i2c_spi_addr_flags, LSM6DSM_CONTROLLER_CFG_ADDR,

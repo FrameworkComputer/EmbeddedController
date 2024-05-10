@@ -242,13 +242,13 @@ void board_reset_pd_mcu(void)
 	/* Assert reset */
 	gpio_set_level(GPIO_USB_PD_RST_C0, 1);
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 0);
-	msleep(1);
+	crec_msleep(1);
 	gpio_set_level(GPIO_USB_PD_RST_C0, 0);
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);
 	/* After TEST_R release, anx7447/3447 needs 2ms to finish eFuse
 	 * loading.
 	 */
-	msleep(2);
+	crec_msleep(2);
 }
 
 /*

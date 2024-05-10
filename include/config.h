@@ -53,6 +53,9 @@
  * BOARD_*, CHIP_*, and CHIP_FAMILY_*.
  */
 
+/* When the ec_rate config is set, put the sensor in force mode */
+#undef CONFIG_SENSOR_EC_RATE_FORCE_MODE
+
 /* Add support for sensor FIFO */
 #undef CONFIG_ACCEL_FIFO
 
@@ -353,6 +356,9 @@
 
 /* Define to include the clear channel driver for the tcs3400 light sensor */
 #undef CONFIG_ALS_TCS3400
+
+/* Define to include Vishay VEML3328 driver */
+#undef CONFIG_ALS_VEML3328
 
 /*
  * Define the event to raise when a sensor interrupt triggers.
@@ -1817,6 +1823,13 @@
  */
 #undef CONFIG_PANIC_ON_WATCHDOG_WARNING
 
+/**
+ * Enables nesting for the `crash` console command.
+ * Calling the crash console command with multiple crash arguments
+ * will result in nested crashes in the order specified.
+ */
+#define CONFIG_CMD_CRASH_NESTED
+
 /*
  * Provide the default GPIO abstraction layer.
  * You want this unless you are doing a really tiny firmware.
@@ -1932,6 +1945,11 @@
 
 /* Enable verbose output to UART console and extra timestamp print precision. */
 #define CONFIG_CONSOLE_VERBOSE
+
+/* Enable the console print command. This allows the host to print messages
+ * directly in the EC console.
+ */
+#define CONFIG_HOSTCMD_CONSOLE_PRINT
 
 /*****************************************************************************/
 /* Support for EC-EC communication */
@@ -4125,9 +4143,6 @@
 #undef CONFIG_SPI
 #endif /* CONFIG_ZEPHYR */
 
-/* Support deprecated SPI protocol version 2. */
-#undef CONFIG_SPI_PROTOCOL_V2
-
 /* Define the SPI port to use to access SPI accelerometer */
 #undef CONFIG_SPI_ACCEL_PORT
 
@@ -5284,17 +5299,6 @@
 #undef CONFIG_PD_USE_DAC_AS_REF
 
 /*
- * Request for a PDO which voltage is closest to PD_PREFER_MV for sink.
- * This config in theory could achieve better charging efficiency.  Note this
- * may not always pick the PD_PREFER_MV if available (if the PDO's
- * power not sufficient for the system), it will pick second closest PDO until
- * the system desired power is low enough to be charged by the designed PDO.
- *
- * If defined, must also define `struct pd_pref_config_t pd_pref_config`.
- */
-#undef CONFIG_USB_PD_PREFER_MV
-
-/*
  * The Fast Role Swap trigger can be implemented in either the TCPC or PPC
  * driver. If either CONFIG_USB_PD_FRS_TCPC or CONFIG_USB_PD_FRS_PPC is set,
  * CONFIG_USB_FRS will be set automatically to enable the protocol-side of FRS.
@@ -6047,6 +6051,12 @@
  */
 #undef CONFIG_GOOGLETEST
 
+/*
+ * When this option is enabled, some of the experimental features (aka finch)
+ * will be enabled for CROS_EC.
+ */
+#undef CONFIG_FEATURE_FINCH
+
 /*****************************************************************************/
 /*
  * Include board and core configs, since those hold the CONFIG_ constants for a
@@ -6540,7 +6550,7 @@
 	defined(CONFIG_CHARGER_ISL9238C) || defined(CONFIG_CHARGER_ISL9241) || \
 	defined(CONFIG_CHARGER_RAA489000) || defined(CONFIG_CHARGER_SM5803) || \
 	defined(CONFIG_CHARGER_BQ25710) || defined(CONFIG_CHARGER_BQ25720) ||  \
-	defined(CONFIG_CHARGER_RAA489110)
+	defined(CONFIG_CHARGER_RAA489110) || defined(CONFIG_CHARGER_RT9490)
 #define CONFIG_CHARGER_NARROW_VDC
 #endif
 
@@ -6930,6 +6940,13 @@
 #if (defined(CONFIG_USBC_RETIMER_INTEL_BB) || \
      defined(CONFIG_USBC_RETIMER_KB800X))
 #define CONFIG_CMD_RETIMER
+#endif
+
+/**
+ * CONFIG_CMD_CRASH_NESTED depends on CONFIG_CMD_CRASH
+ */
+#if !defined(CONFIG_CMD_CRASH) && defined(CONFIG_CMD_CRASH_NESTED)
+#error "CONFIG_CMD_CRASH_NESTED depends on CONFIG_CMD_CRASH"
 #endif
 
 /*****************************************************************************/

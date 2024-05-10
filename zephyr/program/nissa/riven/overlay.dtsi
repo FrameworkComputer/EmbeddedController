@@ -1,0 +1,408 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/usbc_mux.h>
+#include <dt-bindings/usb_pd_tcpm.h>
+
+/ {
+	aliases {
+		gpio-cbi-wp = &gpio_ec_cbi_wp;
+		gpio-wp = &gpio_ec_wp_odl;
+		int-wp = &int_wp_l;
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
+	};
+
+	ec-console {
+		compatible = "ec-console";
+		disabled = "events", "lpc", "hostcmd";
+	};
+
+	batteries {
+		default_battery: lgc {
+			compatible = "lgc,ap18c8k", "battery-smart";
+		};
+		lgc_ap19b8m {
+			compatible = "lgc,ap19b8m", "battery-smart";
+		};
+		cosmx {
+			compatible = "cosmx,ap20cbl", "battery-smart";
+		};
+		cosmx-4 {
+			compatible = "cosmx,ap20cbl-4", "battery-smart";
+		};
+		smp_ap23a7l {
+			compatible = "smp,ap23a7l", "battery-smart";
+		};
+		panasonic_ap23a5l {
+			compatible = "panasonic,ap23a5l", "battery-smart";
+		};
+		lges-ap23a8l {
+			compatible = "lges,ap23a8l", "battery-smart";
+		};
+	};
+
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-irqs = <
+			&int_power_button
+			&int_lid_open
+		>;
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_power_button: power_button {
+			irq-pin = <&gpio_gsc_ec_pwr_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+		int_wp_l: wp_l {
+			irq-pin = <&gpio_ec_wp_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "switch_interrupt";
+		};
+		int_lid_open: lid_open {
+			irq-pin = <&gpio_lid_open>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+		int_tablet_mode: tablet_mode {
+			irq-pin = <&gpio_tablet_mode_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "gmr_tablet_switch_isr";
+		};
+		int_imu: ec_imu {
+			irq-pin = <&gpio_imu_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "motion_interrupt";
+		};
+		int_lid_accel: ec_lid_accel {
+			irq-pin = <&gpio_acc_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lid_accel_interrupt";
+		};
+		int_vol_down: vol_down {
+			irq-pin = <&gpio_voldn_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+		int_vol_up: vol_up {
+			irq-pin = <&gpio_volup_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+		int_usb_c0: usb_c0 {
+			irq-pin = <&gpio_usb_c0_int_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_interrupt";
+		};
+		int_usb_c1: usb_c1 {
+			irq-pin = <&gpio_sb_1>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "usb_interrupt";
+		};
+		int_soc_edp_bl_en: soc_edp_bl_en {
+			irq-pin = <&gpio_soc_edp_bl_en>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "soc_edp_bl_interrupt";
+		};
+	};
+
+	named-gpios {
+		gpio_sb_1: sb-1 {
+			gpios = <&gpio0 2 GPIO_PULL_UP>;
+			no-auto-init;
+		};
+
+		gpio_sb_2: sb-2 {
+			gpios = <&gpiod 4 GPIO_OUTPUT>;
+			no-auto-init;
+		};
+
+		/*
+		 * Set I2C pins for type C sub-board to be low voltage (I2C5_1).
+		 * We do this for all boards, since the pins are 3.3V tolerant,
+		 * and the only 2 types of sub-boards used on nivviks both have
+		 * type-C ports on them.
+		 */
+		gpio_sb_3: sb-3 {
+			gpios = <&gpiof 5 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
+			no-auto-init;
+		};
+		gpio_sb_4: sb-4 {
+			gpios = <&gpiof 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			no-auto-init;
+		};
+		gpio_fan_enable: fan-enable {
+			gpios = <&gpio6 3 GPIO_OUTPUT>;
+			no-auto-init;
+		};
+		ec-i2c-sensor-scl {
+			gpios = <&gpio9 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec-i2c-sensor-sda {
+			gpios = <&gpio8 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+	};
+
+	/*
+	 * Aliases used for sub-board GPIOs.
+	 */
+	aliases {
+		/*
+		 * Input GPIO when used with type-C port 1
+		 * Output when used with HDMI sub-board
+		 */
+		gpio-usb-c1-int-odl = &gpio_sb_1;
+		gpio-en-rails-odl = &gpio_sb_1;
+		/*
+		 * Sub-board with type A USB, enable.
+		 */
+		gpio-en-usb-a1-vbus = &gpio_sb_2;
+		/*
+		 * HPD pins for HDMI sub-board.
+		 */
+		gpio-hdmi-en-odl = &gpio_sb_3;
+		gpio-hpd-odl = &gpio_sb_4;
+		/*
+		 * Enable S5 rails for LTE sub-board
+		 */
+		gpio-en-sub-s5-rails = &gpio_sb_2;
+	};
+
+	temp_memory_thermistor: memory {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_1>;
+	};
+	temp_charger_thermistor: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_2>;
+	};
+	temp_ambient_thermistor: ambient {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_3>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_memory: memory {
+			temp_host_high = <78>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <0>;
+			temp_host_release_halt = <75>;
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_memory_thermistor>;
+		};
+		temp_charger: charger {
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_charger_thermistor>;
+		};
+		temp_ambient: ambient {
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_ambient_thermistor>;
+		};
+	};
+
+	usba {
+		compatible = "cros-ec,usba-port-enable-pins";
+		/*
+		 * sb_2 is only configured as GPIO when USB-A1 is present,
+		 * but it's still safe to control when disabled.
+		 *
+		 * ILIM_SEL pins are referred to by legacy enum name,
+		 * GPIO_USB*_ILIM_SEL. The one for port A1 is unused on
+		 * sub-boards that don't have USB-A so is safe to control
+		 * regardless of system configuration.
+		 */
+		enable-pins = <&gpio_en_usb_a0_vbus &gpio_sb_2>;
+		status = "okay";
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			chg = <&chg_port0>;
+			tcpc = <&tcpc_port0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+		/*
+		 * TODO(b:211693800): port1 may not be present on some
+		 * sub-boards.
+		 */
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			chg = <&chg_port1>;
+			tcpc = <&tcpc_port1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1 &anx7483_mux_1>;
+			};
+			usb_mux_chain_1_no_mux: usb-mux-chain-1-no-mux {
+				compatible = "cros-ec,usb-mux-chain";
+				alternative-chain;
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+
+	kblight {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm6 6 PWM_KHZ(10) PWM_POLARITY_NORMAL>;
+	};
+
+	 /*
+	  * Declare unused GPIOs so that they are shut down
+	  * and use minimal power
+	  */
+	  unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpio3 2 0>,
+			<&gpio3 5 0>,
+			<&gpio3 6 0>,
+			<&gpio5 7 0>,
+			<&gpio6 0 0>,
+			<&gpio6 3 0>,
+			<&gpio6 6 0>,
+			<&gpio7 3 0>,
+			<&gpio8 6 0>,
+			<&gpiob 1 0>,
+			<&gpiob 7 0>,
+			<&gpiof 2 0>,
+			<&gpiof 3 0>;
+	 };
+};
+
+&thermistor_3V3_51K1_47K_4050B {
+	status = "okay";
+};
+
+&adc_ec_vsense_pp3300_s5 {
+	/*
+	 * Voltage divider on input has 47k upper and 220k lower legs with
+	 * 2714 mV full-scale reading on the ADC. Apply the largest possible
+	 * multiplier (without overflowing int32) to get the best possible
+	 * approximation of the actual ratio, but derate by a factor of two to
+	 * ensure unexpectedly high values won't overflow.
+	 */
+	mul = <(791261 / 2)>;
+	div = <(651975 / 2)>;
+};
+
+/* Set bus speeds for I2C */
+&i2c0_0 {
+	label = "I2C_EEPROM";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+};
+
+&i2c1_0 {
+	label = "I2C_SENSOR";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c3_0 {
+	label = "I2C_USB_C0_TCPC";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+
+	chg_port0: isl923x@9 {
+		compatible = "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+	};
+
+	tcpc_port0: raa489000@22 {
+		compatible = "renesas,raa489000";
+		reg = <0x22>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_VBUS_MONITOR)>;
+	};
+};
+
+&i2c5_1 {
+	label = "I2C_SUB_C1_TCPC";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+
+	chg_port1: isl923x@9 {
+		compatible = "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+	};
+
+	tcpc_port1: raa489000@22 {
+		compatible = "renesas,raa489000";
+		reg = <0x22>;
+		tcpc-flags = <(
+			TCPC_FLAGS_TCPCI_REV2_0 |
+			TCPC_FLAGS_VBUS_MONITOR)>;
+	};
+
+	anx7483_mux_1: anx7483-mux-1@3e {
+		compatible = "analogix,anx7483";
+		reg = <0x3e>;
+		board-set = "anx7483_set_default_tuning";
+		flags = <USB_MUX_FLAG_RESETS_IN_G3>;
+	};
+};
+
+&i2c7_0 {
+	label = "I2C_BATTERY";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+};
+
+&pwm6 {
+	status = "okay";
+	pinctrl-0 = <&pwm6_gpc0>;
+	pinctrl-names = "default";
+};
+
+/* host interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};
+
+/*
+ * Declare GPIOs that have leakage current caused by board issues here. NPCX ec
+ * will disable their input buffers before entering deep sleep and restore them
+ * after waking up automatically for better power consumption.
+ */
+&power_leakage_io {
+	leak-gpios = <&gpioa 4 GPIO_OPEN_DRAIN
+		      &gpiof 1 GPIO_OPEN_DRAIN>;
+};

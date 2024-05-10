@@ -413,7 +413,7 @@ int crec_flash_physical_erase(int offset, int size)
 		       (get_time().val < deadline.val)) {
 			/*
 			 * Interrupts may not be enabled, so we are using
-			 * udelay() instead of usleep() which can trigger
+			 * udelay() instead of crec_usleep() which can trigger
 			 * Forced Hard Fault (see b/180761547).
 			 */
 			udelay(5000);

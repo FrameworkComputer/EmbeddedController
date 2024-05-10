@@ -5,3 +5,4 @@
 cros_ec_library_include_directories(include)
 
 zephyr_library_sources(clock.c)
+zephyr_library_sources_ifdef(CONFIG_TEST debug.c)

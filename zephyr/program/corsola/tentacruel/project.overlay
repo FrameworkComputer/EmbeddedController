@@ -413,6 +413,9 @@
 		default_battery: dynapack_c140254 {
 			compatible = "dynapack,c140254", "battery-smart";
 		};
+		smp_c223_50 {
+			compatible = "smp,c223-50", "battery-smart";
+		};
 	};
 };
 

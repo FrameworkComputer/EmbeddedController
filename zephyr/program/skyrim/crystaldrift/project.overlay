@@ -27,6 +27,9 @@
 		gfl_mfp-549358 {
 			compatible = "gfl,mfp-549358", "battery-smart";
 		};
+		gfl_mfp-466894 {
+			compatible = "gfl,mfp-466894", "battery-smart";
+		};
 	};
 
 	named-gpios {

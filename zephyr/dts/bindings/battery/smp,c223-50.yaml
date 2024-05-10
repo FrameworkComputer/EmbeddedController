@@ -1,0 +1,55 @@
+description: "SMP AS1GTBFE3KA"
+compatible: "smp,c223-50"
+
+include: battery-smart.yaml
+
+properties:
+  enum-name:
+    type: string
+    default: "smp,c223-50"
+
+  # Fuel gauge
+  manuf_name:
+    default: "AS1GTBFE3KA"
+  device_name:
+    default: "C223-50"
+  ship_mode_reg_addr:
+    default: 0x00
+  ship_mode_reg_data:
+    default: [0x0010, 0x0010]
+  # Charging/Discharging FETs Status
+  # Register SBS_PackStatus_ACCESS (0x99)
+  # Bit-3: XDSG
+  # Bit-2: XCHG
+  fet_reg_addr:
+    default: 0x99
+  fet_reg_mask:
+    default: 0x0C
+  fet_disconnect_val:
+    default: 0x0C
+  fet_cfet_mask:
+    default: 0x04
+  fet_cfet_off_val:
+    default: 0x04
+
+  # Battery info
+  voltage_max:
+    default: 8000
+  voltage_normal:
+    default: 7920
+  voltage_min:
+    default: 6000
+  precharge_current:
+    default: 256
+  start_charging_min_c:
+    default: 0
+  start_charging_max_c:
+    default: 45
+  charging_min_c:
+    default: 0
+  charging_max_c:
+    default: 60
+  discharging_min_c:
+    default: -20
+  discharging_max_c:
+    default: 60

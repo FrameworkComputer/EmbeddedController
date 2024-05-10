@@ -127,7 +127,7 @@ test_static int wait_charging_state(void)
 {
 	enum led_pwr_state state;
 	task_wake(TASK_ID_CHARGER);
-	msleep(WAIT_CHARGER_TASK);
+	crec_msleep(WAIT_CHARGER_TASK);
 	state = led_pwr_get_state();
 	ccprintf("[CHARGING TEST] state = %d\n", state);
 	return state;
@@ -219,7 +219,7 @@ test_static int test_charge_state(void)
 	ccprintf("[CHARGING TEST] Detach battery\n");
 	TEST_ASSERT(test_detach_i2c(I2C_PORT_BATTERY, BATTERY_ADDR_FLAGS) ==
 		    EC_SUCCESS);
-	msleep(BATTERY_DETACH_DELAY);
+	crec_msleep(BATTERY_DETACH_DELAY);
 	state = wait_charging_state();
 	TEST_ASSERT(state == LED_PWRS_ERROR);
 
@@ -264,7 +264,7 @@ test_static int test_charge_state(void)
 	TEST_ASSERT(state == LED_PWRS_DISCHARGE);
 	sb_write(SB_TEMPERATURE, CELSIUS_TO_DECI_KELVIN(90));
 	state = wait_charging_state();
-	sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
+	crec_sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
 	TEST_ASSERT(is_shutdown);
 	TEST_ASSERT(state == LED_PWRS_DISCHARGE);
 	sb_write(SB_TEMPERATURE, CELSIUS_TO_DECI_KELVIN(40));
@@ -319,8 +319,8 @@ test_static int test_low_battery(void)
 	ccprintf("[CHARGING TEST] Low battery with AC and negative current\n");
 	sb_write(SB_CURRENT, -1000);
 	wait_charging_state();
-	sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
-	TEST_ASSERT(is_hibernated);
+	crec_sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
+	TEST_ASSERT(!is_hibernated);
 
 	ccprintf("[CHARGING TEST] Low battery shutdown S0->S5\n");
 	mock_chipset_state = CHIPSET_STATE_ON;
@@ -335,7 +335,7 @@ test_static int test_low_battery(void)
 	hook_notify(HOOK_CHIPSET_SHUTDOWN);
 	wait_charging_state();
 	/* after a while, the EC should hibernate */
-	sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
+	crec_sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
 	TEST_ASSERT(is_hibernated);
 
 	ccprintf("[CHARGING TEST] Low battery shutdown S5\n");
@@ -345,7 +345,7 @@ test_static int test_low_battery(void)
 	sb_write(SB_RELATIVE_STATE_OF_CHARGE, 2);
 	wait_charging_state();
 	/* after a while, the EC should hibernate */
-	sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
+	crec_sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
 	TEST_ASSERT(is_hibernated);
 
 	ccprintf("[CHARGING TEST] Low battery AP shutdown\n");
@@ -359,7 +359,7 @@ test_static int test_low_battery(void)
 	sb_write(SB_CURRENT, -1000);
 	sb_write(SB_RELATIVE_STATE_OF_CHARGE, 2);
 	wait_charging_state();
-	usleep(32 * SECOND);
+	crec_usleep(32 * SECOND);
 	wait_charging_state();
 	TEST_ASSERT(is_shutdown);
 
@@ -383,7 +383,7 @@ test_static int test_deep_charge_battery(void)
 	 * Battery voltage keep bellow voltage_min,
 	 * precharge over time CONFIG_BATTERY_LOW_VOLTAGE_TIMEOUT
 	 */
-	usleep(CONFIG_BATTERY_LOW_VOLTAGE_TIMEOUT);
+	crec_usleep(CONFIG_BATTERY_LOW_VOLTAGE_TIMEOUT);
 	state = charge_get_state();
 	TEST_ASSERT(state == ST_IDLE);
 
@@ -405,11 +405,13 @@ test_static int test_high_temp_battery(void)
 	wait_charging_state();
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_SHUTDOWN));
 	TEST_ASSERT(!is_shutdown);
-	sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
+	crec_sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
 	TEST_ASSERT(is_shutdown);
 
-	ccprintf("[CHARGING TEST] High battery temp S0->S5 hibernate\n");
+	ccprintf(
+		"[CHARGING TEST] High battery temp && AC off S0->S5 hibernate\n");
 	mock_chipset_state = CHIPSET_STATE_SOFT_OFF;
+	gpio_set_level(GPIO_AC_PRESENT, 0);
 	wait_charging_state();
 	TEST_ASSERT(is_hibernated);
 
@@ -424,7 +426,7 @@ test_static int test_cold_battery_with_ac(void)
 	ev_clear(EC_HOST_EVENT_BATTERY_SHUTDOWN);
 	sb_write(SB_TEMPERATURE, CELSIUS_TO_DECI_KELVIN(-90));
 	wait_charging_state();
-	sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
+	crec_sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
 	TEST_ASSERT(!is_shutdown);
 
 	return EC_SUCCESS;
@@ -440,7 +442,7 @@ test_static int test_cold_battery_no_ac(void)
 	wait_charging_state();
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_SHUTDOWN));
 	TEST_ASSERT(!is_shutdown);
-	sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
+	crec_sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
 	TEST_ASSERT(is_shutdown);
 
 	return EC_SUCCESS;
@@ -823,7 +825,7 @@ test_static int test_low_battery_hostevents(void)
 	TEST_ASSERT(ev_is_set(EC_HOST_EVENT_BATTERY_SHUTDOWN));
 	TEST_ASSERT(!is_shutdown);
 	/* after a while, the AP should shut down */
-	sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
+	crec_sleep(CONFIG_BATTERY_CRITICAL_SHUTDOWN_TIMEOUT);
 	TEST_ASSERT(is_shutdown);
 
 	return EC_SUCCESS;

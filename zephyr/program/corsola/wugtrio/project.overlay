@@ -1,0 +1,669 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Corsola program common DTS includes */
+
+#include "../common.dtsi"
+#include "../power_signal.dtsi"
+#include "../ite_adc.dtsi"
+#include "../ite_gpio.dtsi"
+#include "../ite_i2c.dtsi"
+#include "../ite_interrupts.dtsi"
+#include "../ite_usbc.dtsi"
+#include "../ite_shi.dtsi"
+#include "./thermistor.dtsi"
+#include "../ite_keyboard.dtsi"
+#include "../usba.dtsi"
+#include <dt-bindings/battery.h>
+#include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/motionsense/utils.h>
+
+
+/ {
+	batteries {
+		default_battery: nb0346-427689 {
+			compatible = "gfl,nb0346-427689", "battery-smart";
+		};
+	};
+
+	gpio-interrupts {
+		/delete-node/ usb_c1_bc12_charger;
+		/delete-node/ lid_imu;
+		/delete-node/ tablet_mode;
+
+		int_base_imu: base_imu {
+			irq-pin = <&base_imu_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "motion_interrupt";
+		};
+
+		int_pmic_ec_resetb: pmic-ec-resetb {
+			irq-pin = <&pmic_ec_resetb>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+
+		int_pg_pp4200_s5: pg-pp4200-s5 {
+			irq-pin = <&pg_pp4200_s5_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+
+		pogo_prsnt_int: pogo-prsnt-int {
+			irq-pin = <&pogo_prsnt_int_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "base_detect_interrupt";
+		};
+
+		usb_c0_ppc_bc12 {
+			handler = "ppc_interrupt";
+		};
+	};
+
+	named-gpios {
+		/delete-node/ lid_accel_int_l;
+		/delete-node/ usb_c0_ppc_frsinfo;
+		/delete-node/ entering_rw;
+		/delete-node/ tablet_mode_l;
+		/delete-node/ usb_c1_bc12_charger_int_odl;
+
+		usb_a0_fault_odl: usb_a0_fault_odl {
+			gpios = <&gpioa 6 GPIO_INPUT>;
+		};
+
+		en_pp5000_usb_a0_vbus: en_pp5000_usb_a0_vbus {
+			gpios = <&gpioa 7 GPIO_OUTPUT_LOW>;
+		};
+
+		gpio_hdmi_prsnt_odl: hdmi_prsnt_odl {
+			gpios = <&gpioj 3 GPIO_INPUT_PULL_UP>;
+		};
+
+		en_pp5000_z2: en_pp5000_z2 {
+			gpios = <&gpioc 6 GPIO_OUTPUT_LOW>;
+		};
+
+		en_pp5000_base_x: en_pp5000_base_x{
+			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
+		};
+
+		usb_c0_dp_in_hpd: usb-c0-dp-in-hpd {
+			gpios = <&gpioh 6 GPIO_OUTPUT_LOW>;
+		};
+
+		pogo_prsnt_int_l: pogo_prsnt_int_l {
+			gpios = <&gpioj 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+
+		en_pp4200_s5: en-pp4200-s5 {
+			gpios = <&gpiob 7 GPIO_OUTPUT_LOW>;
+		};
+
+		pg_pp4200_s5_od: pg-pp4200-s5-od {
+			gpios = <&gpioc 5 GPIO_INPUT>;
+			enum-name = "GPIO_PG_PP4200_S5_OD";
+		};
+
+		pmic_ec_resetb: pmic-ec-resetb {
+			gpios = <&gpioj 6 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
+					   GPIO_ACTIVE_LOW)>;
+			enum-name = "GPIO_PMIC_EC_RESETB";
+		};
+
+		/*
+		 * Not used, only to make system.c compilable.
+		 * TODO: find a better way to remove this.
+		 */
+		entering_rw: entering-rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+
+		usb_c0_frs_en: usb_c0_frs_en {
+			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_USB_C0_FRS_EN";
+		};
+	};
+
+	unused-pins {
+		unused-gpios =
+			/* adp_on_n */
+			<&gpioa 3 GPIO_INPUT>,
+			/* ec_pen_chg_dis_odl */
+			<&gpioh 3 GPIO_INPUT>,
+			/* adp_present */
+			<&gpiom 2 GPIO_INPUT>,
+			/* pg_pp5000_z1_od */
+			<&gpiod 2 GPIO_INPUT>,
+			/* charge_en */
+			<&gpioe 1 GPIO_INPUT>,
+			/* ec_en_pp3300_wcam */
+			<&gpiof 1 GPIO_INPUT>,
+			/* unused nc pins */
+			<&gpiog 2 GPIO_INPUT_PULL_DOWN>,
+			<&gpioh 0 GPIO_INPUT_PULL_DOWN>,	//EC_AP_RSVD1_ODL
+			<&gpioi 3 GPIO_INPUT_PULL_DOWN>,	//EC_AP_RSVD0_ODL
+			<&gpioj 4 GPIO_INPUT_PULL_DOWN>,	//USB_C1_BC12_CHARGER_INT_ODL
+			/* spi_clk_gpg6 */
+			<&gpiog 6 GPIO_INPUT_PULL_UP>,
+			/* spi_mosi_gpg4 */
+			<&gpiog 4 GPIO_OUTPUT_LOW>,
+			/* spi_miso_gpg5 */
+			<&gpiog 5 GPIO_OUTPUT_LOW>,
+			/* spi_cs_gpg7 */
+			<&gpiog 7 GPIO_OUTPUT_LOW>;
+	};
+
+	/delete-node/ cros-keyscan;
+
+	/* Wugtrio-specific ssfc fields. */
+	Wugtrio-ssfc {
+		compatible = "cros-ec,cbi-ssfc";
+
+		/* SSFC field to identify BASE motion sensor. */
+		lid-sensor {
+			enum-name = "BASE_SENSOR";
+			size = <3>;
+
+			lid_sensor_0: bmi323 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+				default;
+			};
+			lid_sensor_1: lsm6dsm {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <2>;
+			};
+		};
+	};
+
+	aliases {
+		/*
+		 * motion sense's <>_INT_EVENT is handled
+		 * by alias. Using the alias, each driver creates
+		 * its own <>_INT_EVENT.
+		 */
+		bmi3xx-int = &lid_accel;
+		lsm6dsm-int = &lid_accel;
+	};
+
+	motionsense-mutex {
+		compatible = "cros-ec,motionsense-mutex";
+		lid_mutex_bmi323: bmi323-mutex {
+		};
+		lid_mutex_lsm6dsm: lsm6dsm-mutex {
+		};
+	};
+
+	/* Rotation matrix used by drivers. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref_bmi: lid-rotation-ref-bmi {
+			mat33 = <(-1) 0 0
+				 0 1 0
+				 0 0 (-1)>;
+		};
+		lid_rot_ref_lsm6dsm: lid-rotation-ref-lsm6dsm {
+			mat33 = <0 (-1) 0
+				 (-1) 0 0
+				 0 0 (-1)>;
+		};
+	};
+
+	motionsense-sensor-data {
+		bmi323_data: bmi323-drv-data {
+			compatible = "cros-ec,drvdata-bmi3xx";
+			status = "okay";
+		};
+		lsm6dsm_data: lsm6dsm-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dsm";
+			status = "okay";
+		};
+	};
+
+	motionsense-sensor {
+		/delete-node/ base-accel;
+		/delete-node/ base-gyro;
+
+		lid_accel: lid-accel {
+			compatible = "cros-ec,bmi3xx-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex_bmi323>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref_bmi>;
+			default-range = <2>;
+			drv-data = <&bmi323_data>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
+		lid_gyro: lid-gyro {
+			compatible = "cros-ec,bmi3xx-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex_bmi323>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref_bmi>;
+			drv-data = <&bmi323_data>;
+		};
+	};
+
+	motionsense-sensor-alt {
+		alt_lid_accel: alt-lid-accel {
+			compatible = "cros-ec,lsm6dsm-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex_lsm6dsm>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref_lsm6dsm>;
+			drv-data = <&lsm6dsm_data>;
+			alternate-for = <&lid_accel>;
+			alternate-ssfc-indicator = <&lid_sensor_1>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+					ec-rate = <(100 * USEC_PER_MSEC)>;
+				};
+				ec-s3 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+					ec-rate = <0>;
+				};
+			};
+		};
+
+		alt_lid_gyro: alt-lid-gyro {
+			compatible = "cros-ec,lsm6dsm-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex_lsm6dsm>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref_lsm6dsm>;
+			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
+			drv-data = <&lsm6dsm_data>;
+			alternate-for = <&lid_gyro>;
+			alternate-ssfc-indicator = <&lid_sensor_1>;
+		};
+	};
+
+	motionsense-sensor-info {
+		compatible = "cros-ec,motionsense-sensor-info";
+
+		/*
+		 * list of GPIO interrupts that have to
+		 * be enabled at initial stage
+		 */
+		sensor-irqs = <&int_base_imu>;
+	};
+
+	power_signal_list: power-signal-list {
+		compatible = "mediatek,mt8188-power-signal-list";
+
+		pg_pp4200_s5 {
+			power-enum-name = "PG_PP4200_S5";
+			power-gpio-pin = <&pg_pp4200_s5_od>;
+		};
+		pmic_ap_reset {
+			power-enum-name = "PMIC_AP_RST";
+			power-gpio-pin = <&pmic_ec_resetb>;
+		};
+	};
+
+	named-adc-channels {
+        	adc_temp_sensor_1: adc-temp-sensor-1 {
+			enum-name = "ADC_TEMP_SENSOR_1";
+			io-channels = <&adc0 5>;
+		};
+		adc_temp_sensor_2: adc-temp-sensor-2 {
+			enum-name = "ADC_TEMP_SENSOR_2";
+			io-channels = <&adc0 6>;
+		};
+	};
+
+	temp_sensor_1_thermistor: sensor-1-thermistor {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_1V8_100K_100K_4250B>;
+		adc = <&adc_temp_sensor_1>;
+	};
+
+	temp_sensor_2_thermistor: sensor-2-thermistor {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_1V8_100K_100K_4250B>;
+		adc = <&adc_temp_sensor_2>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_sensor_1 {
+			sensor = <&temp_sensor_1_thermistor>;
+		};
+		temp_sensor_2 {
+			sensor = <&temp_sensor_2_thermistor>;
+		};
+		temp_charger: charger {
+			sensor = <&charger_bc12_port1>;
+		};
+	};
+	/*
+	 * The hardware design sets PWM0 as the amber light,
+	 * PWM1 as the white light and PWM2 as none.
+	 */
+	pwmleds{
+		compatible = "pwm-leds";
+
+		led_power_white: ec_led1_odl {
+			pwms = <&pwm2 PWM_CHANNEL_2 PWM_HZ(324) 0>;
+		};
+		led_battery_amber: ec_led2_odl {
+			pwms = <&pwm0 PWM_CHANNEL_0 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+		led_battery_white: ec_led3_odl {
+			pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		battery_led: battery-led {
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pwms = <&led_battery_amber &led_battery_white>;
+
+			color-battery-off {
+				led-color = "LED_OFF";
+				led-values = <0 0>;
+			};
+
+			color-battery-amber {
+				led-color = "LED_AMBER";
+				led-values = <100 0>;
+			};
+
+			color-battery-white {
+				led-color = "LED_WHITE";
+				led-values = <0 100>;
+			};
+		};
+
+		power_led: power-led {
+			led-id = "EC_LED_ID_POWER_LED";
+			led-pwms = <&led_power_white>;
+
+			color-power-white {
+				led-color = "LED_WHITE";
+				led-values = <100>;
+			};
+
+			color-power-off {
+				led-color = "LED_OFF";
+				led-values = <0>;
+			};
+		};
+	};
+
+	led-colors {
+		compatible = "cros-ec,led-policy";
+
+		sysrq-alias = "EC_LED_ID_BATTERY_LED";
+		sysrq-led-control-color = "LED_WHITE";
+
+		recovery-hw-reinit-alias = "EC_LED_ID_BATTERY_LED";
+		recovery-hw-reinit-led-control-color = "LED_AMBER";
+
+		bat-state-charge {
+			charge-state = "LED_PWRS_CHARGE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_AMBER";
+				};
+			};
+		};
+
+		bat-state-charge-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		bat-state-discharge-lvl-1 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			/* Battery percent range (<= 5%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_CRITICAL>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		bat-state-discharge-lvl-2 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			/* Battery percent range (>= 6%) */
+			batt-lvl = <(BATTERY_LEVEL_CRITICAL + 1) BATTERY_LEVEL_FULL>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		bat-state-error {
+			charge-state = "LED_PWRS_ERROR";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		bat-state-charge-idle {
+			charge-state = "LED_PWRS_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		bat-state-charge-forced-idle {
+			charge-state = "LED_PWRS_FORCED_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <2000>;
+				};
+				color-1 {
+					led-color = "LED_WHITE";
+					period-ms = <2000>;
+				};
+			};
+		};
+
+		pwr-state-on-s0 {
+			chipset-state = "POWER_S0";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		pwr-state-off-s3 {
+			chipset-state = "POWER_S3";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		pwr-state-off-s5 {
+			chipset-state = "POWER_S5";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+	};
+
+	usbc {
+		port0@0{
+			/delete-property/ bc12;
+			ppc = <&ppc_port0>;
+			usb-mux-chain-0{
+				usb-muxes = <&ps8743_mux_0 &virtual_mux_0>;
+			};
+		};
+
+		port1@1{
+			/delete-property/ bc12;
+			usb-mux-chain-1{
+				usb-muxes = <&ps8743_mux_1 &virtual_mux_1>;
+			};
+		};
+	};
+};
+
+/* LED1 */
+&pwm0 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm0_gpa0_default>;
+	pinctrl-names = "default";
+};
+
+/* LED2 */
+&pwm1 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm1_gpa1_default>;
+	pinctrl-names = "default";
+};
+
+/* LED3 */
+&pwm2 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm2_gpa2_default>;
+	pinctrl-names = "default";
+};
+
+&i2c0{
+	charger_bc12_port1: rt9490@53{
+		compatible = "richtek,rt9490";
+		thermistor = <&thermistor_rt9490>;
+		/delete-property/ irq;
+	};
+};
+
+&i2c2 {
+	ps8743_mux_0: ps8743-mux-0@10 {
+		compatible = "parade,ps8743";
+		reg = <0x10>;
+	};
+
+	ppc_port0: syv682x@40 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x40>;
+		frs_en_gpio = <&usb_c0_frs_en>;
+	};
+
+	/delete-node/ it5205-mux-0@48;
+	/delete-node/ rt1739@70;
+};
+
+&i2c3 {
+	prescale-scl-low = <4>;
+};
+
+&i2c4 {
+	ps8743_mux_1: ps8743-mux-1@10 {
+		compatible = "parade,ps8743";
+		reg = <0x10>;
+	};
+
+	/delete-node/ tusb1064-mux-1@44;
+};
+
+&adc0 {
+	status = "okay";
+	pinctrl-0 = <&adc0_ch0_gpi0_default
+		     &adc0_ch5_gpi5_default
+		     &adc0_ch6_gpi6_default
+		     &adc0_ch7_gpi7_default>;
+	pinctrl-names = "default";
+};
+
+&thermistor_1V8_100K_100K_4250B{
+	status = "okay";
+};

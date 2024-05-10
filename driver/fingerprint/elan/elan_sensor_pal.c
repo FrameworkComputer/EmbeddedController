@@ -132,7 +132,7 @@ __staticlib_hook int raw_capture(uint16_t *short_raw)
 	/* Polling scan status */
 	cnt_timer = 0;
 	while (1) {
-		usleep(1000);
+		crec_usleep(1000);
 		cnt_timer++;
 		regdata[0] = SENSOR_STATUS;
 		elan_spi_transaction(regdata, 2, regdata, 2);
@@ -247,19 +247,19 @@ int elan_set_hv_chip(bool state)
 
 	if (state) {
 		elan_write_cmd(FUSE_LOAD);
-		usleep(1000);
+		crec_usleep(1000);
 
 		tx_buf[0] = 0x0B;
 		tx_buf[1] = 0x02;
 
 		ret = spi_transaction(&spi_devices[0], tx_buf, 2, rx_buf, 2);
-		usleep(1000);
+		crec_usleep(1000);
 	} else {
 		tx_buf[0] = 0x0B;
 		tx_buf[1] = 0x00;
 
 		ret |= spi_transaction(&spi_devices[0], tx_buf, 2, rx_buf, 2);
-		usleep(1000);
+		crec_usleep(1000);
 
 		const uint8_t charge_pump[] = { 0x00,
 						(uint8_t)CHARGE_PUMP_HVIC };
@@ -274,7 +274,12 @@ int elan_set_hv_chip(bool state)
 		tx_buf[1] = 0x02;
 
 		ret |= spi_transaction(&spi_devices[0], tx_buf, 2, rx_buf, 2);
-		usleep(1000);
+		crec_usleep(1000);
 	}
 	return ret;
+}
+
+__staticlib_hook int usleep(unsigned int us)
+{
+	return crec_usleep(us);
 }

@@ -121,7 +121,7 @@ static enum cr50_comm_err send_to_cr50(const uint8_t *data, size_t size)
 				res.error = res.error | c << (i * 8);
 				break;
 			}
-			msleep(1);
+			crec_msleep(1);
 			timeout = timestamp_expired(until, NULL);
 		}
 	}
@@ -176,7 +176,7 @@ static enum cr50_comm_err cmd_to_cr50(enum cr50_comm_cmd cmd,
 				  sizeof(s.preamble) + sizeof(*p) + p->size);
 		if (is_valid_cr50_response(rv))
 			break;
-		msleep(5);
+		crec_msleep(5);
 	} while (--retry);
 
 	return rv;
@@ -190,7 +190,7 @@ static enum cr50_comm_err verify_hash(void)
 	/* Wake up Cr50 beforehand in case it's asleep. */
 	board_enable_packet_mode(true);
 	CPRINTS("Ping Cr50");
-	msleep(1);
+	crec_msleep(1);
 	board_enable_packet_mode(false);
 
 	rv = vboot_get_rw_hash(&hash);

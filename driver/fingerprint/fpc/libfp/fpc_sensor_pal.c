@@ -8,7 +8,7 @@
 #include "console.h"
 #include "fpc_sensor_pal.h"
 #include "fpsensor/fpsensor.h"
-#include "fpsensor/fpsensor_utils.h"
+#include "fpsensor/fpsensor_console.h"
 #include "shared_mem.h"
 #include "spi.h"
 #include "timer.h"
@@ -29,7 +29,7 @@ __staticlib_hook void fpc_pal_log_entry(const char *tag, int log_level,
 __staticlib_hook int fpc_pal_delay_us(uint64_t us)
 {
 	if (us > 250)
-		usleep(us);
+		crec_usleep(us);
 	else
 		udelay(us);
 	return 0;

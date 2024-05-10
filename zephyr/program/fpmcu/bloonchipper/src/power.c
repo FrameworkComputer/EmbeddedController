@@ -98,13 +98,8 @@ static int gpio_init(void)
 	const struct device *dev_gpioc = DEVICE_DT_GET(DT_NODELABEL(gpioc));
 	const struct device *dev_gpioh = DEVICE_DT_GET(DT_NODELABEL(gpioh));
 
-	if (!pm_device_action_run(dev_gpioc, PM_DEVICE_ACTION_SUSPEND)) {
-		pm_device_state_lock(dev_gpioc);
-	}
-
-	if (!pm_device_action_run(dev_gpioh, PM_DEVICE_ACTION_SUSPEND)) {
-		pm_device_state_lock(dev_gpioh);
-	}
+	pm_device_action_run(dev_gpioc, PM_DEVICE_ACTION_SUSPEND);
+	pm_device_action_run(dev_gpioh, PM_DEVICE_ACTION_SUSPEND);
 
 	return 0;
 }

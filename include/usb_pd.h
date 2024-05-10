@@ -1229,6 +1229,7 @@ enum pd_cc_states pd_get_task_cc_state(int port);
  * @return PD state
  * Note: TCPMv1 returns enum pd_states
  *       TCPMv2 returns enum usb_tc_state
+ *       PD_CONTROLLER returns enum pdc_state_t
  */
 uint8_t pd_get_task_state(int port);
 

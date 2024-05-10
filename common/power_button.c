@@ -92,11 +92,11 @@ int power_button_wait_for_release(int timeout_us)
 			return EC_ERROR_TIMEOUT;
 		}
 		/*
-		 * We use task_wait_event() instead of usleep() here. It will
-		 * be woken up immediately if the power button is debouned and
-		 * changed. However, it is not guaranteed, like the cases that
-		 * the power button is debounced but not changed, or the power
-		 * button has not been debounced.
+		 * We use task_wait_event() instead of crec_usleep() here. It
+		 * will be woken up immediately if the power button is debouned
+		 * and changed. However, it is not guaranteed, like the cases
+		 * that the power button is debounced but not changed, or the
+		 * power button has not been debounced.
 		 */
 		task_wait_event(
 			MIN(power_button.debounce_us, deadline.val - now.val));

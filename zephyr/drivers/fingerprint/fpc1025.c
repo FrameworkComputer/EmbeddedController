@@ -11,6 +11,7 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/drivers/spi.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/pm/device.h>
 #include <zephyr/sys/byteorder.h>
 
 #include <drivers/fingerprint.h>
@@ -33,20 +34,60 @@ enum fpc1025_cmd {
 /* The 16-bit hardware ID is 0x021y */
 #define FP_SENSOR_HWID_FPC 0x021
 
+void fp_sensor_lock(const struct device *dev)
+{
+	__maybe_unused const struct fpc1025_cfg *cfg = dev->config;
+	struct fpc1025_data *data = dev->data;
+
+	/* Lock SPI access only if we are not already the owner. */
+	if (!((k_sem_count_get(&data->sensor_lock) == 0) &&
+	      (data->sensor_owner == k_current_get()))) {
+		k_sem_take(&data->sensor_lock, K_FOREVER);
+		data->sensor_owner = k_current_get();
+
+#ifdef CONFIG_PM_DEVICE
+		/* Enable clock gating for SPI module and configure SPI pins
+		 * into an alternate mode.
+		 */
+		pm_device_action_run(cfg->spi.bus, PM_DEVICE_ACTION_RESUME);
+#endif /* CONFIG_PM_DEVICE */
+	}
+}
+
+void fp_sensor_unlock(const struct device *dev)
+{
+	__maybe_unused const struct fpc1025_cfg *cfg = dev->config;
+	struct fpc1025_data *data = dev->data;
+
+#ifdef CONFIG_PM_DEVICE
+	/* Disable SPI mainly to reconfigure SPI pins to sleep state
+	 * (CLK, MISO, MOSI set to output low) to reduce power
+	 * consumption by the sensor.
+	 *
+	 * The SPI drivers disable the SPI module after a transaction,
+	 * which puts the pins into floating state.
+	 */
+	pm_device_action_run(cfg->spi.bus, PM_DEVICE_ACTION_SUSPEND);
+#endif /* CONFIG_PM_DEVICE */
+
+	/* Clear the owner and return the access. */
+	data->sensor_owner = NULL;
+	k_sem_give(&data->sensor_lock);
+}
+
 static int fpc1025_send_cmd(const struct device *dev, uint8_t cmd)
 {
 	const struct fpc1025_cfg *cfg = dev->config;
-	struct fpc1025_data *data = dev->data;
 	const struct spi_buf tx_buf[1] = { { .buf = &cmd, .len = 1 } };
 	const struct spi_buf_set tx = { .buffers = tx_buf, .count = 1 };
 	int rc;
 
-	k_sem_take(&data->sensor_lock, K_FOREVER);
+	fp_sensor_lock(dev);
 	rc = spi_write_dt(&cfg->spi, &tx);
 
 	/* Release CS line */
 	spi_release_dt(&cfg->spi);
-	k_sem_give(&data->sensor_lock);
+	fp_sensor_unlock(dev);
 
 	return rc;
 }
@@ -54,7 +95,6 @@ static int fpc1025_send_cmd(const struct device *dev, uint8_t cmd)
 static int fpc1025_get_hwid(const struct device *dev, uint16_t *id)
 {
 	const struct fpc1025_cfg *cfg = dev->config;
-	struct fpc1025_data *data = dev->data;
 	uint8_t cmd = FPC1025_CMD_HW_ID;
 	uint8_t tmp;
 	int rc;
@@ -70,12 +110,12 @@ static int fpc1025_get_hwid(const struct device *dev, uint16_t *id)
 	if (id == NULL)
 		return -EINVAL;
 
-	k_sem_take(&data->sensor_lock, K_FOREVER);
+	fp_sensor_lock(dev);
 	rc = spi_transceive_dt(&cfg->spi, &tx, &rx);
 
 	/* Release CS line */
 	spi_release_dt(&cfg->spi);
-	k_sem_give(&data->sensor_lock);
+	fp_sensor_unlock(dev);
 
 	/* HWID is in big endian, so convert it CPU endianness. */
 	*id = sys_be16_to_cpu(*id);

@@ -22,6 +22,7 @@ endif
 
 # Optional chip modules
 chip-$(CONFIG_COMMON_TIMER)+=rv32i_common/hrtimer.o
-chip-$(CONFIG_IPI)+=rv32i_common/ipi.o rv32i_common/ipi_table.o
+chip-$(CONFIG_IPI)+=rv32i_common/ipi.o rv32i_common/ipi_table.o rv32i_common/ipi_ops.o
 chip-$(CONFIG_WATCHDOG)+=rv32i_common/watchdog.o
 chip-$(HAS_TASK_HOSTCMD)+=rv32i_common/hostcmd.o
+chip-$(HAS_TASK_SR)+=rv32i_common/clock_s3.o

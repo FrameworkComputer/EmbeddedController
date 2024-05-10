@@ -152,7 +152,7 @@ static int wait_sr1_poll(int port, int mask, int val, int poll)
 			return EC_SUCCESS;
 
 		/* I2C is slow, so let other things run while we wait */
-		usleep(poll);
+		crec_usleep(poll);
 	}
 
 	CPRINTS("I2C timeout: p:%d m:%x", port, mask);
@@ -242,7 +242,7 @@ static int wait_fmpi2c_isr_poll(int port, int mask, int val, int poll)
 			return EC_SUCCESS;
 
 		/* I2C is slow, so let other things run while we wait */
-		usleep(poll);
+		crec_usleep(poll);
 	}
 
 	CPRINTS("FMPI2C timeout p:%d, m:0x%08x", port, mask);
@@ -505,7 +505,7 @@ xfer_exit:
 		for (i = 0; i < 10; i++) {
 			if (!(STM32_FMPI2C_ISR(port) & FMPI2C_ISR_BUSY))
 				break;
-			usleep(10);
+			crec_usleep(10);
 		}
 
 		/*
@@ -514,7 +514,7 @@ xfer_exit:
 		 * the next start condition.
 		 */
 		STM32_FMPI2C_CR1(port) &= ~FMPI2C_CR1_PE;
-		usleep(10);
+		crec_usleep(10);
 		STM32_FMPI2C_CR1(port) |= FMPI2C_CR1_PE;
 	}
 
@@ -667,7 +667,7 @@ xfer_exit:
 		for (i = 0; i < 10; i++) {
 			if (!(STM32_I2C_SR2(port) & STM32_I2C_SR2_BUSY))
 				break;
-			usleep(10);
+			crec_usleep(10);
 		}
 
 		/*
@@ -675,7 +675,7 @@ xfer_exit:
 		 * This allows peripherals on the bus to detect bus-idle before
 		 * the next start condition.
 		 */
-		usleep(10);
+		crec_usleep(10);
 	}
 
 	return rv;

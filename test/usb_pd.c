@@ -294,7 +294,7 @@ static void unplug(int port)
 	/* Indicate that the CC lines have changed. */
 	task_set_event(PD_PORT_TO_TASK_ID(port), PD_EVENT_CC);
 	task_wake(PD_PORT_TO_TASK_ID(port));
-	usleep(30 * MSEC);
+	crec_usleep(30 * MSEC);
 }
 
 void pd_snk_give_back(int port, uint32_t *const ma, uint32_t *const mv)
@@ -896,14 +896,14 @@ static int test_sink(void)
 
 	/* Wake from pd_start_tx */
 	task_wake(PD_PORT_TO_TASK_ID(port));
-	usleep(30 * MSEC);
+	crec_usleep(30 * MSEC);
 
 	/* Looks good. Ack the source cap. */
 	simulate_goodcrc(port, PD_ROLE_SINK, pd_port[port].msg_tx_id);
 
 	/* Wake from pd_rx_start */
 	task_wake(PD_PORT_TO_TASK_ID(port));
-	usleep(30 * MSEC);
+	crec_usleep(30 * MSEC);
 	inc_tx_id(port);
 
 	/* We're done */

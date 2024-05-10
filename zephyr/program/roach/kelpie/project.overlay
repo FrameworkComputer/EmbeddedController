@@ -7,7 +7,6 @@
 
 #include <cros/touchpad_hashes.dtsi>
 
-#include "../adc.dtsi"
 #include "../gpio.dtsi"
 #include "../uart.dtsi"
 #include "../i2c.dtsi"
@@ -181,4 +180,20 @@
 
 &touchpad_fw_hashes {
 	size = <((65536 / 1024) * 32)>;
+};
+
+&{/binman/wp-ro/ec-ro} {
+	fmap {
+		offset = <0x3c800>;
+	};
+
+	key-ro {
+		offset = <0x3cc00>;
+	};
+
+	unused-pstate {
+		type = "section";
+		offset = <0x3d000>;
+		size = <4096>;
+	};
 };

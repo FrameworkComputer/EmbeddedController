@@ -30,6 +30,9 @@
 
 #define HID_DESC_LENGTH 30
 
+#define OP_CODE_RESET 1
+#define OP_CODE_GET_REPORT 2
+
 const static struct device *one_wire_uart =
 	DEVICE_DT_GET(DT_NODELABEL(one_wire_uart));
 
@@ -41,6 +44,28 @@ static void hid_reset(const struct device *dev)
 	k_msgq_purge(data->touchpad_report_queue);
 	gpio_pin_set_dt(&cfg->irq, 1);
 	data->in_reset = true;
+}
+
+static int hid_get_report(int report_id, uint8_t *out)
+{
+	if (report_id == REPORT_ID_DEVICE_CERT) {
+		*(uint16_t *)out = 257;
+		out[2] = REPORT_ID_DEVICE_CERT;
+		/* TODO:
+		 * Fill the buf with 256 zeroes looks fine for linux kernel,
+		 * check if we really need the device cert.
+		 */
+		memset(out + 3, 0, 256);
+	} else if (report_id == REPORT_ID_DEVICE_CAPS) {
+		*(uint16_t *)out = 3;
+		out[2] = REPORT_ID_DEVICE_CAPS;
+		out[3] = MAX_FINGERS;
+		out[4] = 0;
+	} else {
+		*(uint16_t *)out = 0;
+	}
+
+	return *(uint16_t *)out;
 }
 
 /**
@@ -108,10 +133,16 @@ static int hid_handler(const struct device *dev, const uint8_t *in, int in_size,
 		int cmd = in[2] | (in[3] << 8);
 		int op_code = (cmd >> 8) & 0xF;
 
-		if (op_code == 1) { /* RESET */
+		switch (op_code) {
+		case OP_CODE_RESET:
 			hid_reset(dev);
+			break;
+		case OP_CODE_GET_REPORT:
+			return hid_get_report(cmd & 0xF, out);
+		default:
+			break;
 		}
-		/* TODO: implement GET_REPORT and SET_REPORT */
+
 		return 0;
 	}
 

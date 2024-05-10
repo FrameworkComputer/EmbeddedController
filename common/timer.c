@@ -5,6 +5,12 @@
 
 /* Timer module for Chrome EC operating system */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 13
+
 #include "atomic.h"
 #include "builtin/assert.h"
 #include "common.h"
@@ -176,7 +182,7 @@ void timer_cancel(task_id_t tskid)
  * probability of delay longer than 2*us (and possibly infinite delay)
  * increases.
  */
-int usleep(unsigned int us)
+int crec_usleep(unsigned int us)
 {
 	uint32_t evt = 0;
 	uint32_t t0;

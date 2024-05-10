@@ -180,7 +180,7 @@ void board_reset_pd_mcu(void)
 		 * enough charge to last the reboot as well
 		 */
 		gpio_set_level(GPIO_USB_C0_PD_RST_ODL, 0);
-		msleep(PS8XXX_RESET_DELAY_MS);
+		crec_msleep(PS8XXX_RESET_DELAY_MS);
 		gpio_set_level(GPIO_USB_C0_PD_RST_ODL, 1);
 	}
 #else
@@ -197,9 +197,9 @@ void board_reset_pd_mcu(void)
 	if (gpio_is_implemented(GPIO_USB_C0_PD_RST) &&
 	    battery_is_present() == BP_YES) {
 		gpio_set_level(GPIO_USB_C0_PD_RST, 1);
-		msleep(ANX74XX_RESET_HOLD_MS);
+		crec_msleep(ANX74XX_RESET_HOLD_MS);
 		gpio_set_level(GPIO_USB_C0_PD_RST, 0);
-		msleep(ANX74XX_RESET_FINISH_MS);
+		crec_msleep(ANX74XX_RESET_FINISH_MS);
 	}
 #endif
 	/*
@@ -212,7 +212,7 @@ void board_reset_pd_mcu(void)
 		 * enough charge to last the reboot as well
 		 */
 		gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 0);
-		msleep(PS8XXX_RESET_DELAY_MS);
+		crec_msleep(PS8XXX_RESET_DELAY_MS);
 		gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);
 	} else {
 		CPRINTS("Skipping C1 TCPC reset because no battery");

@@ -328,7 +328,7 @@ static void board_chipset_resume(void)
 	ioex_set_level(IOEX_USB_A1_PD_R_L, 1);
 	ioex_set_level(IOEX_EN_PWR_HDMI, 1);
 	ioex_set_level(IOEX_HDMI_DATA_EN, 1);
-	msleep(PI3HDX1204_POWER_ON_DELAY_MS);
+	crec_msleep(PI3HDX1204_POWER_ON_DELAY_MS);
 	pi3hdx1204_enable(I2C_PORT_TCPC1, PI3HDX1204_I2C_ADDR_FLAGS,
 			  check_hdmi_hpd_status());
 }

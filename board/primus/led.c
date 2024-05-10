@@ -195,7 +195,7 @@ static void suspend_led_update(void)
 				     tick * LED_BAT_S3_PWM_RESCALE);
 			pwm_set_duty(PWM_CH_LED4,
 				     tick * LED_BAT_S3_PWM_RESCALE);
-			msleep(LED_BAT_S3_TICK_MS);
+			crec_msleep(LED_BAT_S3_TICK_MS);
 		} else if (tick <= TICKS_STEP3_OFF) {
 			/* decrease 5 duty every 50ms until PWM=0
 			 * enter here 20 times, total duartion is 1sec
@@ -208,10 +208,10 @@ static void suspend_led_update(void)
 			pwm_set_duty(PWM_CH_LED4,
 				     (TICKS_STEP3_OFF - tick) *
 					     LED_BAT_S3_PWM_RESCALE);
-			msleep(LED_BAT_S3_TICK_MS);
+			crec_msleep(LED_BAT_S3_TICK_MS);
 		} else {
 			tick = TICKS_STEP1_BRIGHTER;
-			msleep(LED_BAT_S3_OFF_TIME_MS);
+			crec_msleep(LED_BAT_S3_OFF_TIME_MS);
 		}
 	}
 }

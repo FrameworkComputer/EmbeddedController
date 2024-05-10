@@ -518,7 +518,7 @@ void bist_mode_2_rx(int port)
 			 */
 			if (num_bits == -1)
 				break;
-			msleep(10);
+			crec_msleep(10);
 			pd_rx_enable_monitoring(port);
 		}
 	} else {
@@ -897,7 +897,7 @@ int tcpc_run(int port, int evt)
 
 		/* CC pull changed, wait 1ms for CC voltage to stabilize */
 		if (evt & PD_EVENT_CC)
-			usleep(MSEC);
+			crec_usleep(MSEC);
 
 		/* check CC lines */
 		for (i = 0; i < 2; i++) {

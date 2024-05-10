@@ -237,10 +237,10 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 		 * Allow 1ms time for the retimer to power up lc_domain
 		 * which powers I2C controller within retimer
 		 */
-		msleep(1);
+		crec_msleep(1);
 	} else {
 		ioex_set_level(rst_signal, 0);
-		msleep(1);
+		crec_msleep(1);
 	}
 	return EC_SUCCESS;
 }
@@ -252,9 +252,9 @@ __override int bb_retimer_reset(const struct usb_mux *me)
 	 * QS Silicon is complete
 	 */
 	bb_retimer_power_enable(me, false);
-	msleep(5);
+	crec_msleep(5);
 	bb_retimer_power_enable(me, true);
-	msleep(25);
+	crec_msleep(25);
 
 	return EC_SUCCESS;
 }
@@ -276,14 +276,14 @@ void board_reset_pd_mcu(void)
 	 * delay for power-on to reset-off and min. assertion time
 	 */
 
-	msleep(20);
+	crec_msleep(20);
 
 	gpio_set_level(tcpc_rst, 1);
 	gpio_set_level(GPIO_USB_C1_RT_RST_R_L, 1);
 
 	/* wait for chips to come up */
 
-	msleep(50);
+	crec_msleep(50);
 }
 
 static void enable_ioex(int ioex)
@@ -392,9 +392,6 @@ void ppc_interrupt(enum gpio_signal signal)
 
 void retimer_interrupt(enum gpio_signal signal)
 {
-	/*
-	 * TODO(b/179513527): add USB-C support
-	 */
 }
 
 __override bool board_is_dts_port(int port)

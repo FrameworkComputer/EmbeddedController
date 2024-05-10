@@ -499,7 +499,7 @@ __override void board_pulse_entering_rw(void)
 	 */
 	gpio_set_level(GPIO_EC_ENTERING_RW, 1);
 	gpio_set_level(GPIO_EC_ENTERING_RW2, 1);
-	usleep(MSEC);
+	crec_usleep(MSEC);
 	gpio_set_level(GPIO_EC_ENTERING_RW, 0);
 	gpio_set_level(GPIO_EC_ENTERING_RW2, 0);
 }

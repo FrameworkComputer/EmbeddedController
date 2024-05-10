@@ -329,7 +329,7 @@ static int init(struct motion_sensor_t *s)
 	if (ret != EC_SUCCESS)
 		goto err_unlock;
 
-	msleep(20);
+	crec_msleep(20);
 
 	/* Enable BDU */
 	ret = st_write_data_with_mask(s, LIS2DS_BDU_ADDR, LIS2DS_BDU_MASK,

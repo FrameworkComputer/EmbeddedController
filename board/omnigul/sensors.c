@@ -132,7 +132,7 @@ struct motion_sensor_t motion_sensors[] = {
 		.max_frequency = LSM6DSO_ODR_MAX_VAL,
 	},
 };
-const unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
+unsigned int motion_sensor_count = ARRAY_SIZE(motion_sensors);
 
 static void baseboard_sensors_init(void)
 {
@@ -142,6 +142,7 @@ static void baseboard_sensors_init(void)
 		/* Enable gpio interrupt for base accelgyro sensor */
 		gpio_enable_interrupt(GPIO_EC_IMU_INT_R_L);
 	} else {
+		motion_sensor_count = 0;
 		gmr_tablet_switch_disable();
 		/* Base accel is not stuffed, don't allow line to float */
 		gpio_set_flags(GPIO_EC_ACCEL_INT_R_L,

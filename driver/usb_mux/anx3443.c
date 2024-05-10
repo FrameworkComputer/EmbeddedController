@@ -73,7 +73,7 @@ static int anx3443_wake_up(const struct usb_mux *me)
 		rv = anx3443_read(me, 0x0, &val);
 		if (!rv)
 			break;
-		usleep(ANX3443_I2C_WAKE_RETRY_DELAY_US);
+		crec_usleep(ANX3443_I2C_WAKE_RETRY_DELAY_US);
 	} while (time_since32(start) < ANX3443_I2C_WAKE_TIMEOUT_MS * MSEC);
 	if (rv) {
 		CPRINTS("ANX3443: Failed to wake mux rv:%d", rv);
@@ -161,7 +161,7 @@ static int anx3443_init(const struct usb_mux *me)
 	 */
 	now = get_time().val;
 	if (now < ANX3443_I2C_READY_DELAY)
-		usleep(ANX3443_I2C_READY_DELAY - now);
+		crec_usleep(ANX3443_I2C_READY_DELAY - now);
 
 	RETURN_ERROR(anx3443_wake_up(me));
 

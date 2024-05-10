@@ -7,7 +7,7 @@
 	fans {
 		compatible = "cros-ec,fans";
 
-		fan_0 {
+		fan0: fan_0 {
 			pwms = <&pwm5 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
 			rpm_min = <2200>;
 			rpm_start = <2200>;

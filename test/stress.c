@@ -54,7 +54,7 @@ static int stress(const char *name, int (*test_routine)(void),
 	for (i = 0; i < iteration; ++i) {
 		if (i % 10 == 0) {
 			ccprintf("\r%s...%d/%d", name, i, iteration);
-			usleep(RAND_US());
+			crec_usleep(RAND_US());
 		}
 		if (test_routine() != EC_SUCCESS)
 			return EC_ERROR_UNKNOWN;

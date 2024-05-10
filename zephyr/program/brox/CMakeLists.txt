@@ -6,11 +6,24 @@ cmake_minimum_required(VERSION 3.20.1)
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 
 zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ "src/board_power.c")
-zephyr_library_sources_ifdef(CONFIG_AP_PWRSEQ "src/charger.c")
 
 if(DEFINED CONFIG_BOARD_BROX)
 	project(brox)
 	add_subdirectory(brox)
+
+	zephyr_library_sources("src/hibernate.c")
+	zephyr_library_sources("src/suspend_resume.c")
+	zephyr_library_sources("src/usbc.c")
+elseif(DEFINED CONFIG_BOARD_GREENBAYUPOC)
+	project(greenbayupoc)
+	add_subdirectory(greenbayupoc)
+
+	zephyr_library_sources("src/hibernate.c")
+	zephyr_library_sources("src/suspend_resume.c")
+	zephyr_library_sources("src/usbc.c")
+elseif(DEFINED CONFIG_BOARD_LOTSO)
+	project(lotso)
+	add_subdirectory(lotso)
 
 	zephyr_library_sources("src/hibernate.c")
 	zephyr_library_sources("src/suspend_resume.c")

@@ -19,7 +19,6 @@
  * after use.
  *
  * @tparam T The type of the data to be wrapped.
- * @tparam Enable The enable_if_t helper field.
  */
 template <typename T> class CleanseWrapper : public T {
     public:

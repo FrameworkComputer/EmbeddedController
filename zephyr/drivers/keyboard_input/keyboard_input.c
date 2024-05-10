@@ -20,7 +20,24 @@ LOG_MODULE_REGISTER(kbd_input, CONFIG_INPUT_LOG_LEVEL);
 
 #define CROS_EC_KEYBOARD_NODE DT_CHOSEN(cros_ec_keyboard)
 
+static const struct device *const kbd_dev =
+	DEVICE_DT_GET(CROS_EC_KEYBOARD_NODE);
+
 static atomic_t disable_scan_mask;
+
+uint8_t keyboard_get_cols(void)
+{
+	const struct input_kbd_matrix_common_config *cfg = kbd_dev->config;
+
+	return cfg->col_size;
+}
+
+uint8_t keyboard_get_rows(void)
+{
+	const struct input_kbd_matrix_common_config *cfg = kbd_dev->config;
+
+	return cfg->row_size;
+}
 
 void keyboard_scan_enable(int enable, enum kb_scan_disable_masks mask)
 {
@@ -58,4 +75,4 @@ static void keyboard_input_cb(struct input_event *evt)
 		keyboard_state_changed(row, col, pressed);
 	}
 }
-INPUT_CALLBACK_DEFINE(DEVICE_DT_GET(CROS_EC_KEYBOARD_NODE), keyboard_input_cb);
+INPUT_CALLBACK_DEFINE(kbd_dev, keyboard_input_cb);

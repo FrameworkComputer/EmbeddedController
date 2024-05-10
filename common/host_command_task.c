@@ -409,7 +409,7 @@ void host_command_task(void *u)
 		 */
 		if (t1.val - t_recess.val > CONFIG_HOSTCMD_RATE_LIMITING_PERIOD)
 			/* Short recess */
-			usleep(CONFIG_HOSTCMD_RATE_LIMITING_RECESS);
+			crec_usleep(CONFIG_HOSTCMD_RATE_LIMITING_RECESS);
 	}
 }
 

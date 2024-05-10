@@ -181,7 +181,7 @@ int test_pd_timers(void)
 		TEST_ASSERT(!pd_timer_is_expired(port, bit));
 
 	/* Allow the PRL timers to expire and verify that they have expired. */
-	msleep(21);
+	crec_msleep(21);
 	for (bit = PR_TIMER_START; bit <= PR_TIMER_END; ++bit)
 		TEST_ASSERT(pd_timer_is_expired(port, bit));
 

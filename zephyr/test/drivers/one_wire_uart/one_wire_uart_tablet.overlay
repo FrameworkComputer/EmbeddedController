@@ -4,7 +4,7 @@
  */
 
 &i2c0 {
-	hid_i2c_target: hid-i2c-target@56 {
+	hid_i2c_target: hid-i2c-target@57 {
 		compatible = "cros-ec,hid-i2c-touchpad";
 
 		reg = <0x56>;

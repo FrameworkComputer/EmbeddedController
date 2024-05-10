@@ -7,6 +7,3 @@ include chromiumos/owners:v1:/firmware/OWNERS.cros_fp_lrs
 
 # Allow SIEs to maintain ec
 include chromiumos/owners:v1:/sie/OWNERS.chromeos_sie_lrs
-
-# Don't inherit owners from elsewhere in the manifest
-set noparent

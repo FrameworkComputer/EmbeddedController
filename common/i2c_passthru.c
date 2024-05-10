@@ -32,18 +32,17 @@
 #define PTHRUPRINTF(format, args...)
 #endif
 
-#define EC_PARAMS_I2C_PASSTHRU_PORT(args) \
-	(((struct ec_params_i2c_passthru *)(args->params))->port)
-
 static uint8_t port_protected[I2C_PORT_COUNT + I2C_BITBANG_PORT_COUNT];
 
 /**
  * Perform the voluminous checking required for this message
  *
+ * @param port	I2C port number
  * @param args	Arguments
  * @return 0 if OK, EC_RES_INVALID_PARAM on error
  */
-static int check_i2c_params(const struct host_cmd_handler_args *args)
+static int check_i2c_params(const uint8_t port,
+			    const struct host_cmd_handler_args *args)
 {
 	const struct ec_params_i2c_passthru *params = args->params;
 	const struct ec_params_i2c_passthru_msg *msg;
@@ -77,8 +76,7 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 	     msgnum++, msg++) {
 		unsigned int addr_flags = msg->addr_flags;
 
-		PTHRUPRINTS("port=%d, %s, addr=0x%x(7-bit), len=%d",
-			    params->port,
+		PTHRUPRINTS("port=%d, %s, addr=0x%x(7-bit), len=%d", port,
 			    addr_flags & EC_I2C_FLAG_READ ? "read" : "write",
 			    addr_flags & EC_I2C_ADDR_MASK, msg->len);
 
@@ -93,7 +91,7 @@ static int check_i2c_params(const struct host_cmd_handler_args *args)
 #ifdef CONFIG_I2C_PASSTHRU_RESTRICTED
 		if (system_is_locked()) {
 			const struct i2c_cmd_desc_t cmd_desc = {
-				.port = params->port,
+				.port = port,
 				.addr_flags = addr_flags,
 				.cmd = cmd_id,
 			};
@@ -136,14 +134,16 @@ static inline int is_i2c_port_virtual_battery(int port)
 
 static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 {
+	/* Force casting (const void *) to (struct ec_params_i2c_passthru *) */
+	const struct ec_params_i2c_passthru *params =
+		(struct ec_params_i2c_passthru *)args->params;
+	uint8_t port = params->port;
 #ifdef CONFIG_ZEPHYR
 	/* For Zephyr, convert the received remote port number to a port number
 	 * used in EC.
 	 */
-	EC_PARAMS_I2C_PASSTHRU_PORT(args) = i2c_get_port_from_remote_port(
-		EC_PARAMS_I2C_PASSTHRU_PORT(args));
+	port = i2c_get_port_from_remote_port(params->port);
 #endif
-	const struct ec_params_i2c_passthru *params = args->params;
 	const struct ec_params_i2c_passthru_msg *msg;
 	struct ec_response_i2c_passthru *resp = args->response;
 	const struct i2c_port_t *i2c_port;
@@ -160,15 +160,15 @@ static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 		return EC_RES_ACCESS_DENIED;
 #endif
 
-	i2c_port = get_i2c_port(params->port);
+	i2c_port = get_i2c_port(port);
 	if (!i2c_port)
 		return EC_RES_INVALID_PARAM;
 
-	ret = check_i2c_params(args);
+	ret = check_i2c_params(port, args);
 	if (ret)
 		return ret;
 
-	if (port_protected[params->port]) {
+	if (port_protected[port]) {
 		if (!i2c_port->passthru_allowed)
 			return EC_RES_ACCESS_DENIED;
 
@@ -204,7 +204,7 @@ static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 			xferflags |= I2C_XFER_STOP;
 
 #ifdef CONFIG_I2C_VIRTUAL_BATTERY
-		if (is_i2c_port_virtual_battery(params->port) &&
+		if (is_i2c_port_virtual_battery(port) &&
 		    addr_flags == VIRTUAL_BATTERY_ADDR_FLAGS) {
 			if (virtual_battery_handler(resp, in_len, &rv,
 						    xferflags, read_len,
@@ -213,8 +213,8 @@ static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 		}
 #endif
 		/* Transfer next message */
-		PTHRUPRINTS("xfer port=%x addr=0x%x rlen=%d flags=0x%x",
-			    params->port, addr_flags, read_len, xferflags);
+		PTHRUPRINTS("xfer port=%x addr=0x%x rlen=%d flags=0x%x", port,
+			    addr_flags, read_len, xferflags);
 		if (write_len) {
 			PTHRUPRINTF("  out:");
 			for (i = 0; i < write_len; i++)
@@ -223,10 +223,10 @@ static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 		}
 		if (rv) {
 			if (!port_is_locked)
-				i2c_lock(params->port, (port_is_locked = 1));
-			rv = i2c_xfer_unlocked(params->port, addr_flags, out,
-					       write_len, &resp->data[in_len],
-					       read_len, xferflags);
+				i2c_lock(port, (port_is_locked = 1));
+			rv = i2c_xfer_unlocked(port, addr_flags, out, write_len,
+					       &resp->data[in_len], read_len,
+					       xferflags);
 		}
 
 		if (rv) {
@@ -245,7 +245,7 @@ static enum ec_status i2c_command_passthru(struct host_cmd_handler_args *args)
 
 	/* Unlock port */
 	if (port_is_locked)
-		i2c_lock(params->port, 0);
+		i2c_lock(port, 0);
 
 	/*
 	 * Return success even if transfer failed so response is sent.  Host
@@ -299,14 +299,17 @@ static void i2c_passthru_protect_tcpc_ports(void)
 static enum ec_status
 i2c_command_passthru_protect(struct host_cmd_handler_args *args)
 {
+	/* Force casting (const void *) to (struct
+	 * ec_params_i2c_passthru_protect *) */
+	const struct ec_params_i2c_passthru_protect *params =
+		(struct ec_params_i2c_passthru_protect *)args->params;
+	uint8_t port = params->port;
 #ifdef CONFIG_ZEPHYR
 	/* For Zephyr, convert the received remote port number to a port number
 	 * used in EC.
 	 */
-	EC_PARAMS_I2C_PASSTHRU_PORT(args) = i2c_get_port_from_remote_port(
-		EC_PARAMS_I2C_PASSTHRU_PORT(args));
+	port = i2c_get_port_from_remote_port(params->port);
 #endif
-	const struct ec_params_i2c_passthru_protect *params = args->params;
 	struct ec_response_i2c_passthru_protect *resp = args->response;
 
 	if (args->params_size < sizeof(*params)) {
@@ -327,8 +330,8 @@ i2c_command_passthru_protect(struct host_cmd_handler_args *args)
 		return EC_RES_SUCCESS;
 	}
 
-	if (!get_i2c_port(params->port)) {
-		PTHRUPRINTS("protect invalid port %d", params->port);
+	if (!get_i2c_port(port)) {
+		PTHRUPRINTS("protect invalid port %d", port);
 		return EC_RES_INVALID_PARAM;
 	}
 
@@ -340,10 +343,10 @@ i2c_command_passthru_protect(struct host_cmd_handler_args *args)
 			return EC_RES_INVALID_PARAM;
 		}
 
-		resp->status = port_protected[params->port];
+		resp->status = port_protected[port];
 		args->response_size = sizeof(*resp);
 	} else if (params->subcmd == EC_CMD_I2C_PASSTHRU_PROTECT_ENABLE) {
-		i2c_passthru_protect_port(params->port);
+		i2c_passthru_protect_port(port);
 	} else {
 		return EC_RES_INVALID_COMMAND;
 	}

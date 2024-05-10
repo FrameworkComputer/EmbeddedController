@@ -75,7 +75,12 @@ static void print_reg(int regnum, const uint32_t *regs, int index)
  */
 static int32_t is_frame_in_handler_stack(const uint32_t exc_return)
 {
-	return (exc_return & 0xf) == 1 || (exc_return & 0xf) == 9;
+#ifdef CONFIG_FPU
+	return exc_return == 0xfffffff1 || exc_return == 0xfffffff9 ||
+	       exc_return == 0xffffffe1 || exc_return == 0xffffffe9;
+#else
+	return exc_return == 0xfffffff1 || exc_return == 0xfffffff9;
+#endif /* CONFIG_FPU */
 }
 
 /*
@@ -293,12 +298,17 @@ void panic_data_print(const struct panic_data *pdata)
 #endif
 }
 
-/* This is just a placeholder function for returning from exception.
- * It's not expected to actually be executed.
+/*
+ * Handle returning from the exception handler to task context.
+ * The task has already been disabled, but may continue to run
+ * until the next interrupt. Calling `task_disable_task` again
+ * from the task context will force a task switch.
  */
-static void exception_return_placeholder(void)
+static void exception_return_handler(void)
 {
-	panic_printf("Unexpected return from exception\n");
+	/* Force a task switch */
+	task_disable_task(task_get_current());
+	/* Something went wrong, just reboot */
 	panic_reboot();
 	__builtin_unreachable();
 }
@@ -370,10 +380,15 @@ void __keep report_panic(void)
 	if (IS_ENABLED(CONFIG_ARMV7M_CACHE))
 		cpu_clean_invalidate_dcache();
 
+	if (IS_ENABLED(CONFIG_CMD_CRASH_NESTED))
+		command_crash_nested_handler();
+
 	/* Start safe mode if possible */
 	if (IS_ENABLED(CONFIG_SYSTEM_SAFE_MODE)) {
-		/* TODO: check for nested exceptions */
-		if (start_system_safe_mode() == EC_SUCCESS) {
+		/* Only start safe mode if panic occurred in thread context */
+		if (!is_frame_in_handler_stack(
+			    pdata->cm.regs[CORTEX_PANIC_REGISTER_LR]) &&
+		    start_system_safe_mode() == EC_SUCCESS) {
 			pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_STARTED;
 			/* If not in an interrupt context (e.g. software_panic),
 			 * the next highest priority task will immediately
@@ -382,14 +397,11 @@ void __keep report_panic(void)
 			 */
 			task_disable_task(task_get_current());
 			/* Return from exception on process stack.
-			 * We should not actually land in
-			 * exception_return_placeholder function. Instead the
-			 * scheduler should interrupt and schedule
-			 * a different task since the current task has
+			 * The scheduler will switch to a different task
+			 * on the next interrupt since the current task has
 			 * been disabled.
 			 */
-			cpu_return_from_exception_psp(
-				exception_return_placeholder);
+			cpu_return_from_exception_psp(exception_return_handler);
 			__builtin_unreachable();
 		}
 		pdata->flags |= PANIC_DATA_FLAG_SAFE_MODE_FAIL_PRECONDITIONS;

@@ -114,7 +114,7 @@ int raa489000_init(int port)
 	 * otherwise the board may die (See b/150702984, b/178728138).  This
 	 * works as this part is a combined charger IC and TCPC.
 	 */
-	usleep(853);
+	crec_usleep(853);
 	charger_get_vbus_voltage(port, &vbus_mv);
 
 	/*

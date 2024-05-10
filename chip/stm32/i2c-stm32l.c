@@ -82,7 +82,7 @@ static int wait_sr1(int port, int mask)
 			return EC_SUCCESS;
 
 		/* I2C is slow, so let other things run while we wait */
-		usleep(100);
+		crec_usleep(100);
 	}
 
 	return EC_ERROR_TIMEOUT;

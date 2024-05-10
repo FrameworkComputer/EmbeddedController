@@ -27,8 +27,8 @@ void board_ap_power_force_shutdown(void)
 {
 	int timeout_ms = X86_NON_DSX_MTL_FORCE_SHUTDOWN_TO_MS;
 
-	/* Turn off PCH_RMSRST to meet tPCH12 */
-	power_signal_set(PWR_EC_PCH_RSMRST, 0);
+	/* Assert PCH_RSMRST to meet tPCH12 */
+	power_signal_set(PWR_EC_PCH_RSMRST, 1);
 
 	/* Turn off PRIM load switch. */
 	power_signal_set(PWR_EN_PP3300_A, 0);

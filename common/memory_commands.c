@@ -6,6 +6,7 @@
 /* System module for Chrome EC */
 
 #include "console.h"
+#include "system.h"
 #include "timer.h"
 #include "util.h"
 #include "watchdog.h"
@@ -61,6 +62,11 @@ static int command_mem_dump(int argc, const char **argv)
 	char *e;
 	enum format fmt = FMT_WORD;
 
+#ifdef CONFIG_BOARD_FINGERPRINT
+	if (system_is_locked())
+		return EC_ERROR_ACCESS_DENIED;
+#endif /* CONFIG_BOARD_FINGERPRINT */
+
 	if (argc > 1) {
 		if ((argv[1][0] == '.') && (strlen(argv[1]) == 2)) {
 			switch (argv[1][1]) {
@@ -97,7 +103,7 @@ static int command_mem_dump(int argc, const char **argv)
 		 * Let other things happen, too */
 		if (!(i % 0x100)) {
 			watchdog_reload();
-			usleep(10 * MSEC);
+			crec_usleep(10 * MSEC);
 		}
 	}
 	ccprintf("\n");
@@ -119,6 +125,11 @@ static int command_read_word(int argc, const char **argv)
 	unsigned int access_size = 4;
 	unsigned int argc_offs = 0;
 	char *e;
+
+#ifdef CONFIG_BOARD_FINGERPRINT
+	if (system_is_locked())
+		return EC_ERROR_ACCESS_DENIED;
+#endif /* CONFIG_BOARD_FINGERPRINT */
 
 	if (argc < 2)
 		return EC_ERROR_PARAM_COUNT;

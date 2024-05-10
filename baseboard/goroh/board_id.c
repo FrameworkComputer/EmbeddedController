@@ -53,7 +53,7 @@ static int adc_value_to_numeric_id(enum adc_channel ch)
 
 	gpio_set_level(GPIO_EN_EC_ID_ODL, 0);
 	/* Wait to allow cap charge */
-	msleep(10);
+	crec_msleep(10);
 
 	mv = adc_read_channel(ch);
 	if (mv == ADC_READ_ERROR)

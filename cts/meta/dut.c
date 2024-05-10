@@ -44,7 +44,7 @@ enum cts_rc hang_test(void)
 {
 	while (1) {
 		watchdog_reload();
-		sleep(1);
+		crec_sleep(1);
 	}
 
 	return CTS_RC_SUCCESS;

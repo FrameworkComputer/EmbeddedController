@@ -13,7 +13,7 @@ test_mockable enum fp_sensor_type fpsensor_detect_get_type(void)
 	enum fp_sensor_type ret;
 
 	gpio_set_level(GPIO_DIVIDER_HIGHSIDE, 1);
-	usleep(1);
+	crec_usleep(1);
 	switch (gpio_get_level(GPIO_FP_SENSOR_SEL)) {
 	case 0:
 		ret = FP_SENSOR_TYPE_ELAN;

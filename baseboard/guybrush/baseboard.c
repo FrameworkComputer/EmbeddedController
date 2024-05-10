@@ -586,11 +586,11 @@ static void reset_nct38xx_port(int port)
 	}
 
 	gpio_set_level(reset_gpio_l, 0);
-	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
+	crec_msleep(NCT38XX_RESET_HOLD_DELAY_MS);
 	gpio_set_level(reset_gpio_l, 1);
 	nct38xx_reset_notify(port);
 	if (NCT3807_RESET_POST_DELAY_MS != 0)
-		msleep(NCT3807_RESET_POST_DELAY_MS);
+		crec_msleep(NCT3807_RESET_POST_DELAY_MS);
 
 	/* Re-init ioex after resetting the TCPC */
 	ioex_init(port);
@@ -711,7 +711,7 @@ void board_pwrbtn_to_pch(int level)
 	if (!level && !gpio_get_level(GPIO_PCH_RSMRST_L)) {
 		start = get_time();
 		do {
-			usleep(200);
+			crec_usleep(200);
 			if (gpio_get_level(GPIO_PCH_RSMRST_L))
 				break;
 		} while (time_since32(start) < timeout_rsmrst_rise_us);
@@ -719,7 +719,7 @@ void board_pwrbtn_to_pch(int level)
 		if (!gpio_get_level(GPIO_PCH_RSMRST_L))
 			ccprints("Error pwrbtn: RSMRST_L still low");
 
-		msleep(G3_TO_PWRBTN_DELAY_MS);
+		crec_msleep(G3_TO_PWRBTN_DELAY_MS);
 	}
 	gpio_set_level(GPIO_PCH_PWRBTN_L, level);
 }
@@ -740,7 +740,7 @@ void board_hibernate(void)
 		pd_request_source_voltage(port, SAFE_RESET_VBUS_MV);
 
 		/* Give PD task and PPC chip time to get to 5V */
-		msleep(SAFE_RESET_VBUS_DELAY_MS);
+		crec_msleep(SAFE_RESET_VBUS_DELAY_MS);
 	}
 
 	/* Try to put our battery fuel gauge into sleep mode */

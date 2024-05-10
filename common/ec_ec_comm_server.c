@@ -66,7 +66,7 @@ static void discard_queue(void)
 	do {
 		queue_advance_head(&ec_ec_comm_server_input,
 				   queue_count(&ec_ec_comm_server_input));
-		usleep(1 * MSEC);
+		crec_usleep(1 * MSEC);
 	} while (queue_count(&ec_ec_comm_server_input) > 0);
 }
 

@@ -40,11 +40,12 @@ struct ap_pwrseq_sm_data {
  **/
 #define AP_POWER_ARCH_STATE_WEAK_DEFINE(name)                 \
 	const struct smf_state __weak arch_##name##_actions = \
-		SMF_CREATE_STATE(NULL, NULL, NULL, NULL);
+		SMF_CREATE_STATE(NULL, NULL, NULL, NULL, NULL);
 
-#define AP_POWER_CHIPSET_STATE_WEAK_DEFINE(name)                 \
-	const struct smf_state __weak chipset_##name##_actions = \
-		SMF_CREATE_STATE(NULL, NULL, NULL, &arch_##name##_actions);
+#define AP_POWER_CHIPSET_STATE_WEAK_DEFINE(name)                           \
+	const struct smf_state __weak chipset_##name##_actions =           \
+		SMF_CREATE_STATE(NULL, NULL, NULL, &arch_##name##_actions, \
+				 NULL);
 
 /**
  * Declare weak `struct ap_pwrseq_smf` definitions of all ACPI states for
@@ -52,11 +53,11 @@ struct ap_pwrseq_sm_data {
  * power sequence state machine hierarchy in case corresponding state action
  * handlers are not provided by implementation.
  **/
-#define AP_POWER_APP_STATE_WEAK_DEFINE(name)                            \
-	const struct ap_pwrseq_smf __weak app_state_##name = {          \
-		.actions = SMF_CREATE_STATE(NULL, NULL, NULL,           \
-					    &chipset_##name##_actions), \
-		.state = name                                           \
+#define AP_POWER_APP_STATE_WEAK_DEFINE(name)                                  \
+	const struct ap_pwrseq_smf __weak app_state_##name = {                \
+		.actions = SMF_CREATE_STATE(NULL, NULL, NULL,                 \
+					    &chipset_##name##_actions, NULL), \
+		.state = name                                                 \
 	};
 
 #define AP_POWER_STATE_WEAK_DEFINE(name)         \

@@ -130,7 +130,7 @@ static void clear_pending_command(struct ppm_common_device *dev)
 
 static void ppm_common_handle_async_event(struct ppm_common_device *dev)
 {
-	uint8_t port;
+	uint8_t port = 0;
 	struct ucsiv3_get_connector_status_data *port_status;
 	bool alert_port = false;
 
@@ -172,8 +172,7 @@ static void ppm_common_handle_async_event(struct ppm_common_device *dev)
 				sizeof(struct ucsiv3_get_connector_status_data));
 
 			if (dev->pd->execute_cmd(dev->pd->dev, &get_cs_cmd,
-						 (uint8_t *)port_status) ==
-			    -1) {
+						 (uint8_t *)port_status) < 0) {
 				ELOG("Failed to read port %d status. No recovery.",
 				     port + 1);
 			} else {
@@ -422,6 +421,7 @@ static void ppm_common_handle_pending_command(struct ppm_common_device *dev)
 			ppm_common_opm_notify(dev);
 			/* Intentional fallthrough since we are now processing.
 			 */
+			/* fallthrough */
 		case PPM_STATE_PROCESSING_COMMAND:
 			/* TODO - Handle the case where we have a command that
 			 * takes multiple smbus calls to process (i.e. firmware
@@ -672,30 +672,31 @@ static int ppm_common_init_and_wait(struct ucsi_ppm_device *device,
 	ucsi_data->version.lpm_address = 0x0;
 
 	/* Init lock to sync PPM task and main task context. */
-	dev->ppm_lock = platform_mutex_init();
-	if (!dev->ppm_lock) {
+	if (platform_mutex_init(&dev->ppm_lock)) {
+		ELOG("Failed to init ppm_lock");
 		return -1;
 	}
 
 	/* Init condvar to notify PPM task. */
-	dev->ppm_condvar = platform_condvar_init();
-	if (!dev->ppm_condvar) {
+	if (platform_condvar_init(&dev->ppm_condvar)) {
+		ELOG("Failed to init ppm_condvar");
 		return -1;
 	}
 
 	/* Allocate per port status (used for PPM async event notifications). */
-	dev->num_ports = num_ports;
-	dev->per_port_status = platform_calloc(
-		dev->num_ports,
-		sizeof(struct ucsiv3_get_connector_status_data));
+	if (num_ports != dev->num_ports) {
+		dev->num_ports = num_ports;
+		dev->per_port_status = platform_calloc(
+			dev->num_ports,
+			sizeof(struct ucsiv3_get_connector_status_data));
+	}
 	dev->last_connector_changed = -1;
 
 	DLOG("Ready to initialize PPM task!");
 
 	/* Initialize the PPM task. */
-	dev->ppm_task_handle =
-		platform_task_init((void *)ppm_common_task, (void *)dev);
-	if (!dev->ppm_task_handle) {
+	if (platform_task_init((void *)ppm_common_task, (void *)dev,
+			       &dev->ppm_task_handle)) {
 		ELOG("No ppm task created.");
 		return -1;
 	}
@@ -960,24 +961,18 @@ static void ppm_common_cleanup(struct ucsi_ppm_driver *driver)
 	}
 }
 
-struct ucsi_ppm_driver *ppm_open(struct ucsi_pd_driver *pd_driver)
+struct ucsi_ppm_driver *ppm_open(const struct ucsi_pd_driver *pd_driver)
 {
 	struct ppm_common_device *dev = NULL;
 	struct ucsi_ppm_driver *drv = NULL;
 
-	dev = platform_calloc(1, sizeof(struct ppm_common_device));
-	if (!dev) {
-		goto handle_error;
-	}
+	drv = platform_allocate_ppm();
+	if (!drv)
+		return NULL;
 
+	dev = (struct ppm_common_device *)drv->dev;
 	dev->pd = pd_driver;
 
-	drv = platform_calloc(1, sizeof(struct ucsi_ppm_driver));
-	if (!drv) {
-		goto handle_error;
-	}
-
-	drv->dev = (struct ucsi_ppm_device *)dev;
 	drv->init_and_wait = ppm_common_init_and_wait;
 	drv->get_data_region = ppm_common_get_data_region;
 	drv->get_next_connector_status = ppm_common_get_next_connector_status;
@@ -989,10 +984,4 @@ struct ucsi_ppm_driver *ppm_open(struct ucsi_pd_driver *pd_driver)
 	drv->cleanup = ppm_common_cleanup;
 
 	return drv;
-
-handle_error:
-	platform_free(dev);
-	platform_free(drv);
-
-	return NULL;
 }

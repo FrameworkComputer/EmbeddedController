@@ -60,7 +60,7 @@ __override void board_overcurrent_event(int port, int is_overcurrented)
 	 * Meteorlake PCH uses Virtual Wire for over current error,
 	 * hence Send 'Over Current Virtual Wire' eSPI signal.
 	 */
-	espi_send_vwire(espi_dev, port + ESPI_VWIRE_SIGNAL_SLV_GPIO_0,
+	espi_send_vwire(espi_dev, port + ESPI_VWIRE_SIGNAL_TARGET_GPIO_0,
 			!is_overcurrented);
 }
 
@@ -94,11 +94,11 @@ void reset_nct38xx_port(int port)
 	}
 
 	gpio_pin_set_dt(reset_gpio_l, 1);
-	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
+	crec_msleep(NCT38XX_RESET_HOLD_DELAY_MS);
 	gpio_pin_set_dt(reset_gpio_l, 0);
 	nct38xx_reset_notify(port);
 	if (NCT3807_RESET_POST_DELAY_MS != 0) {
-		msleep(NCT3807_RESET_POST_DELAY_MS);
+		crec_msleep(NCT3807_RESET_POST_DELAY_MS);
 	}
 
 	/* Re-enable the IO expander pins */

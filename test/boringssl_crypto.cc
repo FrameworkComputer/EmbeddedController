@@ -20,19 +20,20 @@ extern "C" {
 
 #include <array>
 #include <memory>
+#include <unistd.h>
 
 test_static enum ec_error_list test_rand(void)
 {
-	constexpr uint8_t zero[256] = { 0 };
-	uint8_t buf1[256];
-	uint8_t buf2[256];
+	constexpr std::array<uint8_t, 256> zero{};
+	std::array<uint8_t, 256> buf1{};
+	std::array<uint8_t, 256> buf2{};
 
-	RAND_bytes(buf1, sizeof(buf1));
-	RAND_bytes(buf2, sizeof(buf2));
+	RAND_bytes(buf1.data(), buf1.size());
+	RAND_bytes(buf2.data(), buf2.size());
 
-	TEST_ASSERT_ARRAY_NE(buf1, zero, sizeof(zero));
-	TEST_ASSERT_ARRAY_NE(buf2, zero, sizeof(zero));
-	TEST_ASSERT_ARRAY_NE(buf1, buf2, sizeof(buf1));
+	TEST_ASSERT(buf1 != zero);
+	TEST_ASSERT(buf2 != zero);
+	TEST_ASSERT(buf1 != buf2);
 
 	return EC_SUCCESS;
 }
@@ -209,6 +210,51 @@ test_static enum ec_error_list test_cleanse_wrapper_normal_usage(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_getentropy_too_large()
+{
+	std::array<uint8_t, 256 + 1> buf{};
+
+	int ret = getentropy(buf.data(), buf.size());
+	TEST_EQ(ret, -1, "%d");
+	TEST_EQ(errno, EIO, "%d");
+
+	return EC_SUCCESS;
+}
+
+test_static int test_getentropy_null_buffer()
+{
+	int ret = getentropy(nullptr, 0);
+	TEST_EQ(ret, -1, "%d");
+	TEST_EQ(errno, EFAULT, "%d");
+
+	return EC_SUCCESS;
+}
+
+test_static int test_getentropy()
+{
+	constexpr std::array<uint8_t, 256> zero{};
+	std::array<uint8_t, 256> buf1{};
+	std::array<uint8_t, 256> buf2{};
+
+	int ret = getentropy(buf1.data(), buf1.size());
+	TEST_EQ(ret, 0, "%d");
+
+	ret = getentropy(buf2.data(), buf2.size());
+	TEST_EQ(ret, 0, "%d");
+
+	TEST_ASSERT(buf1 != zero);
+	TEST_ASSERT(buf2 != zero);
+
+	/* The host TRNG (chip/host/trng.c) is deterministic for testing. */
+	if (IS_ENABLED(BOARD_HOST)) {
+		TEST_ASSERT(buf1 == buf2);
+	} else {
+		TEST_ASSERT(buf1 != buf2);
+	}
+
+	return EC_SUCCESS;
+}
+
 extern "C" void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_rand);
@@ -217,5 +263,8 @@ extern "C" void run_test(int argc, const char **argv)
 	RUN_TEST(test_cleanse_wrapper_sha256);
 	RUN_TEST(test_cleanse_wrapper_custom_struct);
 	RUN_TEST(test_cleanse_wrapper_normal_usage);
+	RUN_TEST(test_getentropy_too_large);
+	RUN_TEST(test_getentropy_null_buffer);
+	RUN_TEST(test_getentropy);
 	test_print_result();
 }

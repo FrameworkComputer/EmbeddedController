@@ -197,7 +197,7 @@ static void shutdown_s5_rails(void)
 {
 	gpio_set_level(GPIO_PCH_RSMRST_L, 0);
 	/* tPCH12: RSMRST to VCCPRIM (PPVAR_VPRIM_CORE_A) off >400ns */
-	usleep(1);
+	crec_usleep(1);
 	gpio_set_level(GPIO_EN_PP1800_A, 0);
 	gpio_set_level(GPIO_EN_ROA_RAILS, 0);
 #ifdef CONFIG_POWER_PP5000_CONTROL
@@ -305,7 +305,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (power_wait_signals(POWER_SIGNAL_MASK(PP1800_A_PGOOD) |
 				       POWER_SIGNAL_MASK(PP1050_A_PGOOD)))
 			return pgood_timeout(POWER_S5G3);
-		msleep(10); /* tPCH03: VCCPRIM good -> RSMRST >10ms */
+		crec_msleep(10); /* tPCH03: VCCPRIM good -> RSMRST >10ms */
 		gpio_set_level(GPIO_PCH_RSMRST_L, 1);
 		break;
 
@@ -325,7 +325,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (power_wait_analog(ADC_SNS_PP1050, 1000) != EC_SUCCESS)
 			return pgood_timeout(POWER_S3S5);
 		gpio_set_level(GPIO_EN_S0_RAILS, 1);
-		msleep(2);
+		crec_msleep(2);
 		gpio_set_level(GPIO_EN_PP950_VCCIO, 1);
 		if (power_wait_signals(POWER_SIGNAL_MASK(PP950_VCCIO_PGOOD)))
 			return pgood_timeout(POWER_S3S5);
@@ -333,11 +333,11 @@ enum power_state power_handle_state(enum power_state state)
 		/* Power-up steps 5a-5h */
 		gpio_set_level(GPIO_VCCST_PG_OD, 1);
 		gpio_set_level(GPIO_EN_IMVP8_VR, 1);
-		msleep(2);
+		crec_msleep(2);
 		gpio_set_level(GPIO_EC_PCH_SYS_PWROK, 1);
 		if (power_wait_signals(POWER_SIGNAL_MASK(IMVP8_READY)))
 			return pgood_timeout(POWER_S3S5);
-		msleep(2);
+		crec_msleep(2);
 		gpio_set_level(GPIO_EC_PCH_PWROK, 1);
 
 		board_enable_s0_rails(1);

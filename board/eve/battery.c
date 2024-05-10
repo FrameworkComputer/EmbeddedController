@@ -554,7 +554,7 @@ static int board_battery_disable_cto(uint32_t value)
 		board_battery_write_flash(SB_VENDOR_ENABLED_PROTECT_C,
 					  EXPECTED_CTO_DISABLE_VALUE, 1);
 		/* After flash write, allow time for it to complete */
-		msleep(100);
+		crec_msleep(100);
 		/* Read the current protect_c register value */
 		if (board_battery_read_flash(SB_VENDOR_ENABLED_PROTECT_C, 1,
 					     &protect_c) == EC_SUCCESS)
@@ -565,7 +565,7 @@ static int board_battery_disable_cto(uint32_t value)
 
 	if (board_battery_seal()) {
 		/* If failed, then wait one more time and seal again */
-		msleep(100);
+		crec_msleep(100);
 		if (board_battery_seal())
 			return EC_RES_ERROR;
 	}
@@ -591,7 +591,7 @@ static int board_battery_fix_otd_recovery_temp(uint32_t value)
 		board_battery_write_flash(SB_VENDOR_OTD_RECOVERY_TEMP,
 					  EXPECTED_OTD_RECOVERY_TEMP, 2);
 		/* After flash write, allow time for it to complete */
-		msleep(100);
+		crec_msleep(100);
 		/* Read the current OTD recovery temperature */
 		if (!board_battery_read_flash(SB_VENDOR_OTD_RECOVERY_TEMP, 2,
 					      (uint8_t *)&otd_recovery_temp))
@@ -602,7 +602,7 @@ static int board_battery_fix_otd_recovery_temp(uint32_t value)
 
 	if (board_battery_seal()) {
 		/* If failed, then wait one more time and seal again */
-		msleep(100);
+		crec_msleep(100);
 		if (board_battery_seal())
 			return EC_RES_ERROR;
 	}

@@ -124,6 +124,7 @@ static void tablet_before(void *fixture)
 	const struct gpio_dt_spec *hid_irq =
 		GPIO_DT_FROM_NODELABEL(gpio_ec_ap_hid_int_odl);
 
+	one_wire_uart_enable(dev);
 	one_wire_uart_reset(dev);
 
 	RESET_FAKE(mkbp_keyboard_add);

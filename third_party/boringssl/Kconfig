@@ -6,6 +6,7 @@ config BORINGSSL_CRYPTO
 	bool "BoringSSL support"
 	depends on COMMON_LIBC_MALLOC_ARENA_SIZE >= 2048 || \
 		   NEWLIB_LIBC_MIN_REQUIRED_HEAP_SIZE >= 2048
+	select REQUIRES_STD_C11
 	help
 	  This option enables BoringSSL cryptography library.
 	  The library is provided as external module.
@@ -15,7 +16,7 @@ if BORINGSSL_CRYPTO
 config BORINGSSL_HARDWARE_ENTROPY
 	bool "Provide entropy from hardware RNG"
 	default y
-	select ENTROPY_GENERATOR
+	depends on GETENTROPY
 	help
 	  This option enables support for providing entropy to BoringSSL.
 	  Entropy comes from hardware RNG selected in DTS.

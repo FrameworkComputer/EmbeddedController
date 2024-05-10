@@ -269,11 +269,11 @@ test_export_static void reset_nct38xx_port(int port)
 			      ARRAY_SIZE(saved_port1_flags));
 
 	gpio_pin_set_dt(reset_gpio_l, 1);
-	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
+	crec_msleep(NCT38XX_RESET_HOLD_DELAY_MS);
 	gpio_pin_set_dt(reset_gpio_l, 0);
 	nct38xx_reset_notify(port);
 	if (NCT3807_RESET_POST_DELAY_MS != 0)
-		msleep(NCT3807_RESET_POST_DELAY_MS);
+		crec_msleep(NCT3807_RESET_POST_DELAY_MS);
 
 	/* Re-enable the IO expander pins */
 	gpio_restore_port_config(ioex_port0, saved_port0_flags,
@@ -374,7 +374,7 @@ void board_hibernate(void)
 		pd_request_source_voltage(port, SKYRIM_SAFE_RESET_VBUS_MV);
 
 		/* Give PD task and PPC chip time to get to 5V */
-		msleep(SAFE_RESET_VBUS_DELAY_MS);
+		crec_msleep(SAFE_RESET_VBUS_DELAY_MS);
 	}
 
 	/* Try to put our battery fuel gauge into sleep mode */

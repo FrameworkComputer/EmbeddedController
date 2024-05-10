@@ -1,0 +1,60 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_posix.dts>
+#include <cros/binman.dtsi>
+#include <cros/touchpad_hashes.dtsi>
+
+/ {
+	chosen {
+		cros-ec,flash-controller = &cros_flash;
+	};
+
+	cros_flash: cros-flash {
+		compatible = "cros-ec,flash-emul";
+	};
+
+	aliases {
+		gpio-wp = &gpio_wp_l;
+		/delete-property/ led0;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+		gpio_wp_l: wp_l {
+			gpios = <&gpio0 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+	};
+
+	/delete-node/ leds;
+
+	flash-controller@0 {
+		flash@0 {
+			partitions {
+				compatible = "fixed-partitions";
+				ro: ro@0x100000 {
+					label = "ro";
+					reg = <0x100000 0x40000>;
+				};
+				rw: rw@0x140000 {
+					label = "rw";
+					reg = <0x140000 0x40000>;
+				};
+				rollback0: rollback0@0x180000 {
+					label = "rollback0";
+					reg = <0x180000 0x1000>;
+				};
+				rollback1: rollback1@0x181000 {
+					label = "rollback1";
+					reg = <0x181000 0x1000>;
+				};
+			};
+		};
+	};
+};
+
+&touchpad_fw_hashes {
+	size = <((65536 / 1024) * 32)>;
+};

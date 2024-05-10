@@ -17,6 +17,8 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/smf.h>
+#include <zephyr/sys/atomic.h>
+#include <zephyr/sys/util.h>
 LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 #include "usbc/utils.h"
 
@@ -104,6 +106,11 @@ K_EVENT_DEFINE(irq_event);
  */
 #define NUM_PDC_RTS54XX_PORTS DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT)
 
+/**
+ * @brief RTS54XX I2C block read command
+ */
+#define RTS54XX_BLOCK_READ_CMD 0x80
+
 /* TODO: b/323371550 */
 BUILD_ASSERT(NUM_PDC_RTS54XX_PORTS <= 2,
 	     "rts54xx driver supports a maximum of 2 ports");
@@ -124,7 +131,7 @@ struct smbus_cmd_t {
 
 const struct smbus_cmd_t VENDOR_CMD_ENABLE = { 0x01, 0x03, 0xDA };
 const struct smbus_cmd_t SET_NOTIFICATION_ENABLE = { 0x08, 0x06, 0x01 };
-const struct smbus_cmd_t SET_PDOS = { 0x08, 0x03, 0x03 };
+const struct smbus_cmd_t SET_PDO = { 0x08, 0x03, 0x03 };
 const struct smbus_cmd_t SET_RDO = { 0x08, 0x06, 0x04 };
 const struct smbus_cmd_t SET_TPC_RP = { 0x08, 0x03, 0x05 };
 const struct smbus_cmd_t SET_TPC_CSD_OPERATION_MODE = { 0x08, 0x03, 0x1D };
@@ -135,18 +142,20 @@ const struct smbus_cmd_t GET_RDO = { 0x08, 0x02, 0x84 };
 const struct smbus_cmd_t GET_VDO = { 0x08, 0x03, 0x9A };
 const struct smbus_cmd_t GET_CURRENT_PARTNER_SRC_PDO = { 0x08, 0x02, 0xA7 };
 const struct smbus_cmd_t GET_POWER_SWITCH_STATE = { 0x08, 0x02, 0xA9 };
-const struct smbus_cmd_t GET_RTK_STATUS = { 0x09, 0x03, 0x00 };
+const struct smbus_cmd_t GET_RTK_STATUS = { 0x09, 0x03 };
 const struct smbus_cmd_t PPM_RESET = { 0x0E, 0x02, 0x01 };
 const struct smbus_cmd_t CONNECTOR_RESET = { 0x0E, 0x03, 0x03 };
 const struct smbus_cmd_t GET_CAPABILITY = { 0x0E, 0x02, 0x06 };
 const struct smbus_cmd_t GET_CONNECTOR_CAPABILITY = { 0x0E, 0x03, 0x07 };
 const struct smbus_cmd_t SET_UOR = { 0x0E, 0x04, 0x09 };
 const struct smbus_cmd_t SET_PDR = { 0x0E, 0x04, 0x0B };
+const struct smbus_cmd_t UCSI_GET_CONNECTOR_STATUS = { 0x0E, 0x3, 0x12 };
 const struct smbus_cmd_t UCSI_GET_ERROR_STATUS = { 0x0E, 0x03, 0x13 };
 const struct smbus_cmd_t UCSI_READ_POWER_LEVEL = { 0x0E, 0x05, 0x1E };
-const struct smbus_cmd_t GET_IC_STATUS = { 0x3A, 0x03, 0x00 };
+const struct smbus_cmd_t UCSI_SET_CCOM = { 0x0E, 0x04, 0x08 };
+const struct smbus_cmd_t GET_IC_STATUS = { 0x3A, 0x03 };
 const struct smbus_cmd_t SET_RETIMER_FW_UPDATE_MODE = { 0x20, 0x03, 0x00 };
-const struct smbus_cmd_t GET_CABLE_PROPERTY = { 0x0E, 0x02, 0x11 };
+const struct smbus_cmd_t GET_CABLE_PROPERTY = { 0x0E, 0x03, 0x11 };
 
 /**
  * @brief PDC Command states
@@ -192,7 +201,9 @@ enum state_t {
 	/** Error Recovery State */
 	ST_ERROR_RECOVERY,
 	/** Disable State */
-	ST_DISABLE
+	ST_DISABLE,
+	/** PDC communication suspended */
+	ST_SUSPENDED,
 };
 
 /**
@@ -251,6 +262,8 @@ enum cmd_t {
 	CMD_GET_IC_STATUS,
 	/** Set CCOM */
 	CMD_SET_CCOM,
+	/** Set DRP_MODE */
+	CMD_SET_DRP_MODE,
 	/** Read Power Level */
 	CMD_READ_POWER_LEVEL,
 	/** Get RDO */
@@ -273,6 +286,10 @@ enum cmd_t {
 	CMD_GET_VDO,
 	/** CMD_GET_IDENTITY_DISCOVERY */
 	CMD_GET_IDENTITY_DISCOVERY,
+	/** CMD_GET_IS_VCONN_SOURCING */
+	CMD_GET_IS_VCONN_SOURCING,
+	/** CMD_SET_PDO */
+	CMD_SET_PDO,
 };
 
 /**
@@ -375,6 +392,7 @@ static const char *const cmd_names[] = {
 	[CMD_GET_VBUS_VOLTAGE] = "GET_VBUS_VOLTAGE",
 	[CMD_GET_IC_STATUS] = "GET_IC_STATUS",
 	[CMD_SET_CCOM] = "SET_CCOM",
+	[CMD_SET_DRP_MODE] = "SET_DRP_MODE",
 	[CMD_SET_SINK_PATH] = "SET_SINK_PATH",
 	[CMD_READ_POWER_LEVEL] = "READ_POWER_LEVEL",
 	[CMD_GET_RDO] = "GET_RDO",
@@ -386,6 +404,8 @@ static const char *const cmd_names[] = {
 	[CMD_GET_CABLE_PROPERTY] = "GET_CABLE_PROPERTY",
 	[CMD_GET_VDO] = "GET VDO",
 	[CMD_GET_IDENTITY_DISCOVERY] = "CMD_GET_IDENTITY_DISCOVERY",
+	[CMD_GET_IS_VCONN_SOURCING] = "CMD_GET_IS_VCONN_SOURCING",
+	[CMD_SET_PDO] = "CMD_SET_PDO",
 };
 
 /**
@@ -400,6 +420,7 @@ static const char *const state_names[] = {
 	[ST_READ] = "READ",
 	[ST_ERROR_RECOVERY] = "ERROR_RECOVERY",
 	[ST_DISABLE] = "PDC_DISABLED",
+	[ST_SUSPENDED] = "PDC_SUSPENDED",
 };
 
 static const struct device *irq_shared_port;
@@ -429,6 +450,31 @@ static void set_state(struct pdc_data_t *data, const enum state_t next_state)
 {
 	data->last_state = get_state(data);
 	smf_set_state(SMF_CTX(data), &states[next_state]);
+}
+
+/**
+ * Atomic flag to suspend sending new commands to chip
+ *
+ * This flag is shared across driver instances.
+ *
+ * TODO(b/323371550) When more than one PDC is supported, this flag will need
+ * to be tracked per-chip.
+ */
+static atomic_t suspend_comms_flag = ATOMIC_INIT(0);
+
+static void suspend_comms(void)
+{
+	atomic_set(&suspend_comms_flag, 1);
+}
+
+static void enable_comms(void)
+{
+	atomic_set(&suspend_comms_flag, 0);
+}
+
+static bool check_comms_suspended(void)
+{
+	return atomic_get(&suspend_comms_flag) != 0;
 }
 
 static void print_current_state(struct pdc_data_t *data)
@@ -548,7 +594,7 @@ static int rts54_i2c_read(const struct device *dev)
 	struct pdc_data_t *data = dev->data;
 	const struct pdc_config_t *cfg = dev->config;
 	struct i2c_msg msg[2];
-	uint8_t cmd = 0x80;
+	uint8_t cmd = RTS54XX_BLOCK_READ_CMD;
 	int rv;
 
 	msg[0].buf = &cmd;
@@ -557,7 +603,7 @@ static int rts54_i2c_read(const struct device *dev)
 
 	msg[1].buf = data->rd_buf;
 	msg[1].len = data->ping_status.data_len + 1;
-	msg[1].flags = I2C_MSG_READ | I2C_MSG_STOP;
+	msg[1].flags = I2C_MSG_RESTART | I2C_MSG_READ | I2C_MSG_STOP;
 
 	rv = i2c_transfer_dt(&cfg->i2c, msg, 2);
 	if (rv < 0) {
@@ -565,6 +611,12 @@ static int rts54_i2c_read(const struct device *dev)
 	}
 
 	data->rd_buf_len = data->ping_status.data_len;
+
+	if (IS_ENABLED(CONFIG_USBC_PDC_TRACE_MSG)) {
+		pdc_trace_msg_resp(cfg->connector_number,
+				   PDC_TRACE_CHIP_TYPE_RTS54XX, data->rd_buf,
+				   data->ping_status.data_len + 1);
+	}
 
 	return rv;
 }
@@ -643,6 +695,12 @@ static void st_init_run(void *o)
 	const struct pdc_config_t *cfg = data->dev->config;
 	int cnum = cfg->connector_number;
 	int rv;
+
+	/* Do not start executing commands if suspended */
+	if (check_comms_suspended()) {
+		set_state(data, ST_SUSPENDED);
+		return;
+	}
 
 	switch (data->init_local_state) {
 	case INIT_PDC_ENABLE:
@@ -816,6 +874,12 @@ static void st_idle_entry(void *o)
 static void st_idle_run(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
+
+	/* Do not start executing commands if suspended */
+	if (check_comms_suspended()) {
+		set_state(data, ST_SUSPENDED);
+		return;
+	}
 
 	/*
 	 * Priority of events:
@@ -1115,9 +1179,12 @@ static void st_read_run(void *o)
 
 		/* Only print this log on init */
 		if (data->init_local_state != INIT_PDC_COMPLETE) {
-			LOG_INF("C%d: Realtek: FW Version: %04x",
-				cfg->connector_number, info->fw_version);
-			LOG_INF("C%d: Realtek: PD Version: %04x, Rev %04x",
+			LOG_INF("C%d: Realtek: FW Version: %u.%u.%u",
+				cfg->connector_number,
+				PDC_FWVER_GET_MAJOR(info->fw_version),
+				PDC_FWVER_GET_MINOR(info->fw_version),
+				PDC_FWVER_GET_PATCH(info->fw_version));
+			LOG_INF("C%d: Realtek: PD Version: %u, Rev %u",
 				cfg->connector_number, info->pd_version,
 				info->pd_revision);
 		}
@@ -1125,81 +1192,15 @@ static void st_read_run(void *o)
 	}
 	case CMD_GET_VBUS_VOLTAGE:
 		/*
-		 * Realtek Voltage reading is on Byte16 and Byte17, but
+		 * Realtek Voltage reading is on Byte18 and Byte19, but
 		 * the READ_RTK_STATUS command was issued with reading
-		 * 2-bytes from offset 16, so the data is read from
+		 * 2-bytes from offset 18, so the data is read from
 		 * rd_buf at Byte1 and Byte2.
 		 */
 		*(uint16_t *)data->user_buf =
 			((data->rd_buf[2] << 8) | data->rd_buf[1]) *
 			VOLTAGE_SCALE_FACTOR;
 		break;
-	case CMD_GET_CONNECTOR_STATUS: {
-		/* Map Realtek GET_RTK_STATUS bits to UCSI GET_CONNECTOR_STATUS
-		 */
-		struct connector_status_t *cs =
-			(struct connector_status_t *)data->user_buf;
-
-		/*
-		 * NOTE: Realtek sets an additional 16-bits of status_change
-		 *       events in bytes 3 and 4, but they are not part of the
-		 *       UCSI spec, so are ignored.
-		 */
-		cs->conn_status_change_bits.raw_value = data->rd_buf[2] << 8 |
-							data->rd_buf[1];
-		/* ignore data->rd_buf[3] */
-		/* ignore data->rd_buf[4] */
-
-		/* Realtek Port Operation Mode: Byte5, Bit1:3 */
-		cs->power_operation_mode = ((data->rd_buf[5] >> 1) & 7);
-
-		/* Realtek Connection Status: Byte5, Bit7 */
-		cs->connect_status = ((data->rd_buf[5] >> 7) & 1);
-
-		/* Realtek Power Direction: Byte5, Bit6 */
-		cs->power_direction = ((data->rd_buf[5] >> 6) & 1);
-
-		/* Realtek Connector Partner Flags: Byte6, Bit0:7 */
-		cs->conn_partner_flags = data->rd_buf[6];
-
-		/* Realtek Connector Partner Type: Byte11, Bit0:2 */
-		cs->conn_partner_type = (data->rd_buf[11] & 7);
-
-		/* Realtek RDO: Bytes [7:10] */
-		cs->rdo = data->rd_buf[10] << 24 | data->rd_buf[9] << 16 |
-			  data->rd_buf[8] << 8 | data->rd_buf[7];
-
-		/* Realtek Battery Charging Capability Status, Byte 11, Bit3:4
-		 */
-		cs->battery_charging_cap = 0; /* NOTE: Not set in this register
-						 by Realtek */
-		cs->provider_caps_limited = 0; /* NOTE: Not set in this register
-						  by Realtek */
-
-		/* Realtek bcdPDVersion Operation Mode, Byte13, Bit6:7 */
-		cs->bcd_pd_version = ((((data->rd_buf[13] >> 6) & 3) + 1) << 8);
-
-		/* Realtek Plug Direction, Byte 12, Bit5 */
-		cs->orientation = ((data->rd_buf[12] >> 5) & 1);
-
-		/* Realtek VBSIN_EN switch status, Byte 13, Bit0:1 */
-		cs->sink_path_status = (((data->rd_buf[13]) & 3) == 3);
-
-		/* Not Set by Realtek */
-		cs->reverse_current_protection_status = 0;
-		cs->power_reading_ready = 0;
-		cs->current_scale = 0;
-		cs->peak_current = 0;
-		cs->average_current = 0;
-
-		/* Realtek voltage scale is 1010b - 50mV */
-		cs->voltage_scale = 0xa;
-
-		/* Realtek Voltage Reading Byte 17 (low byte) and Byte 18 (high
-		 * byte) */
-		cs->voltage_reading = data->rd_buf[18] << 8 | data->rd_buf[17];
-		break;
-	}
 	case CMD_GET_ERROR_STATUS: {
 		/* Map Realtek GET_ERROR_STATUS bits to UCSI GET_ERROR_STATUS */
 		union error_status_t *es =
@@ -1228,6 +1229,13 @@ static void st_read_run(void *o)
 		es->overcurrent = 0;
 		es->undefined = 0;
 		es->port_partner_rejected_swap = 0;
+		/*
+		 * Note: If Realtek did indicate Hard Reset, then it would also
+		 * make sense to notify the host of PD_STATUS_EVENT_HARD_RESET.
+		 * However, this would be redundant with the notification that
+		 * will be generated later, upon completion of
+		 * GET_CONNECTOR_STATUS.
+		 */
 		es->hard_reset = 0;
 		es->ppm_policy_conflict = 0;
 		es->swap_rejected = 0;
@@ -1244,6 +1252,13 @@ static void st_read_run(void *o)
 
 		/* Realtek Altmode related state, Byte 14 bits 0-2*/
 		*disc_state = (data->rd_buf[14] & 0x07);
+		break;
+	}
+	case CMD_GET_IS_VCONN_SOURCING: {
+		bool *vconn_sourcing = (bool *)data->user_buf;
+
+		/* Realtek PD Sourcing VCONN, Byte 11, bit 5 */
+		*vconn_sourcing = (data->rd_buf[11] & 0x20);
 		break;
 	}
 	default:
@@ -1282,6 +1297,12 @@ static void st_error_recovery_run(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
 
+	/* Don't continue trying if we are suspending communication */
+	if (check_comms_suspended()) {
+		set_state(data, ST_SUSPENDED);
+		return;
+	}
+
 	if (data->error_recovery_counter >= N_MAX_ERROR_RECOVERY_COUNT) {
 		set_state(data, ST_DISABLE);
 		return;
@@ -1314,18 +1335,49 @@ static void st_disable_run(void *o)
 	/* Stay here until reset */
 }
 
+static void st_suspended_entry(void *o)
+{
+	struct pdc_data_t *data = (struct pdc_data_t *)o;
+
+	print_current_state(data);
+}
+
+static void st_suspended_run(void *o)
+{
+	struct pdc_data_t *data = (struct pdc_data_t *)o;
+
+	/* Stay here while suspended */
+	if (check_comms_suspended()) {
+		return;
+	}
+
+	/* Otherwise, return back to init state...
+	 *
+	 * Start the driver initialization routine to put everything
+	 * back into a known state (This includes a driver + PDC reset)
+	 */
+	perform_pdc_init(data);
+}
+
 /* Populate cmd state table */
 static const struct smf_state states[] = {
-	[ST_INIT] = SMF_CREATE_STATE(st_init_entry, st_init_run, NULL, NULL),
-	[ST_IDLE] = SMF_CREATE_STATE(st_idle_entry, st_idle_run, NULL, NULL),
-	[ST_WRITE] = SMF_CREATE_STATE(st_write_entry, st_write_run, NULL, NULL),
-	[ST_PING_STATUS] = SMF_CREATE_STATE(st_ping_status_entry,
-					    st_ping_status_run, NULL, NULL),
-	[ST_READ] = SMF_CREATE_STATE(st_read_entry, st_read_run, NULL, NULL),
-	[ST_ERROR_RECOVERY] = SMF_CREATE_STATE(
-		st_error_recovery_entry, st_error_recovery_run, NULL, NULL),
-	[ST_DISABLE] =
-		SMF_CREATE_STATE(st_disable_entry, st_disable_run, NULL, NULL),
+	[ST_INIT] =
+		SMF_CREATE_STATE(st_init_entry, st_init_run, NULL, NULL, NULL),
+	[ST_IDLE] =
+		SMF_CREATE_STATE(st_idle_entry, st_idle_run, NULL, NULL, NULL),
+	[ST_WRITE] = SMF_CREATE_STATE(st_write_entry, st_write_run, NULL, NULL,
+				      NULL),
+	[ST_PING_STATUS] = SMF_CREATE_STATE(
+		st_ping_status_entry, st_ping_status_run, NULL, NULL, NULL),
+	[ST_READ] =
+		SMF_CREATE_STATE(st_read_entry, st_read_run, NULL, NULL, NULL),
+	[ST_ERROR_RECOVERY] = SMF_CREATE_STATE(st_error_recovery_entry,
+					       st_error_recovery_run, NULL,
+					       NULL, NULL),
+	[ST_DISABLE] = SMF_CREATE_STATE(st_disable_entry, st_disable_run, NULL,
+					NULL, NULL),
+	[ST_SUSPENDED] = SMF_CREATE_STATE(st_suspended_entry, st_suspended_run,
+					  NULL, NULL, NULL),
 
 };
 
@@ -1336,13 +1388,20 @@ static const struct smf_state states[] = {
  * @param buf Command payload to copy into write buffer
  * @param len Length of paylaod buffer
  * @param user_buf Pointer to buffer where response data will be written.
- * @return 0 on success, -EBUSY if command is already pending.
+ * @return 0 on success
+ * @return -EBUSY if command is already pending.
+ * @return -ECONNREFUSED if chip communication is disabled
  */
 static int rts54_post_command(const struct device *dev, enum cmd_t cmd,
 			      const uint8_t *buf, uint8_t len,
 			      uint8_t *user_buf)
 {
 	struct pdc_data_t *data = dev->data;
+
+	/* Return an error if chip communication is suspended */
+	if (check_comms_suspended()) {
+		return -ECONNREFUSED;
+	}
 
 	k_mutex_lock(&data->mtx, K_FOREVER);
 
@@ -1360,11 +1419,26 @@ static int rts54_post_command(const struct device *dev, enum cmd_t cmd,
 	data->user_buf = user_buf;
 	data->cmd = cmd;
 
+	if (IS_ENABLED(CONFIG_USBC_PDC_TRACE_MSG)) {
+		const struct pdc_config_t *cfg = dev->config;
+
+		pdc_trace_msg_req(cfg->connector_number,
+				  PDC_TRACE_CHIP_TYPE_RTS54XX, data->wr_buf,
+				  data->wr_buf_len);
+	}
+
 	k_mutex_unlock(&data->mtx);
 
 	return 0;
 }
 
+/**
+ * @param offset Starting location in PD Status information payload.
+ *               Note that offset values refer to the payload data
+ *               following the byte-count byte present in all response
+ *               messages. For example, the 4 PD status bytes are at
+ *               offset 0, not 1.
+ */
 static int rts54_get_rtk_status(const struct device *dev, uint8_t offset,
 				uint8_t len, enum cmd_t cmd, uint8_t *buf)
 {
@@ -1373,11 +1447,7 @@ static int rts54_get_rtk_status(const struct device *dev, uint8_t offset,
 	}
 
 	uint8_t payload[] = {
-		GET_RTK_STATUS.cmd,
-		GET_RTK_STATUS.len,
-		GET_RTK_STATUS.sub + offset,
-		0x00,
-		len,
+		GET_RTK_STATUS.cmd, GET_RTK_STATUS.len, offset, 0x00, len,
 	};
 
 	return rts54_post_command(dev, cmd, payload, ARRAY_SIZE(payload), buf);
@@ -1575,6 +1645,16 @@ static int rts54_set_power_level(const struct device *dev,
 		break;
 	}
 
+	/*
+	 * Apply the same value to both TPC Rp and PD Rp as 0 is a reserved
+	 * value and without setting both fields, the command will fail.
+	 *
+	 * bits 1:0 reserved
+	 * bits 3:2 TPC Rp
+	 * bits 5:4 PD Rp
+	 */
+	byte |= (byte << 2);
+
 	uint8_t payload[] = {
 		SET_TPC_RP.cmd, SET_TPC_RP.len, SET_TPC_RP.sub, 0x00, byte,
 	};
@@ -1686,7 +1766,7 @@ static int rts54_get_connector_capability(const struct device *dev,
 }
 
 static int rts54_get_connector_status(const struct device *dev,
-				      struct connector_status_t *cs)
+				      union connector_status_t *cs)
 {
 	struct pdc_data_t *data = dev->data;
 
@@ -1698,14 +1778,16 @@ static int rts54_get_connector_status(const struct device *dev,
 		return -EINVAL;
 	}
 
-	/*
-	 * NOTE: Realtek's get connector status command doesn't provide all the
-	 * information in the UCSI get connector status command, but the
-	 * get rtk status command comes close.
-	 */
+	uint8_t payload[] = {
+		UCSI_GET_CONNECTOR_STATUS.cmd,
+		UCSI_GET_CONNECTOR_STATUS.len,
+		UCSI_GET_CONNECTOR_STATUS.sub,
+		0x00, /* Data Length --> set to 0x00 */
+		0x00, /* Connector number --> don't care for Realtek */
+	};
 
-	return rts54_get_rtk_status(dev, 0, 18, CMD_GET_CONNECTOR_STATUS,
-				    (uint8_t *)cs);
+	return rts54_post_command(dev, CMD_GET_CONNECTOR_STATUS, payload,
+				  ARRAY_SIZE(payload), (uint8_t *)cs);
 }
 
 static int rts54_get_cable_property(const struct device *dev,
@@ -1725,6 +1807,7 @@ static int rts54_get_cable_property(const struct device *dev,
 		GET_CABLE_PROPERTY.cmd,
 		GET_CABLE_PROPERTY.len,
 		GET_CABLE_PROPERTY.sub,
+		0x00,
 		0x00,
 	};
 
@@ -1845,11 +1928,7 @@ static int rts54_get_info(const struct device *dev, struct pdc_info_t *info)
 	}
 
 	uint8_t payload[] = {
-		GET_IC_STATUS.cmd,
-		GET_IC_STATUS.len,
-		GET_IC_STATUS.sub,
-		0x00,
-		26,
+		GET_IC_STATUS.cmd, GET_IC_STATUS.len, 0, 0x00, 26,
 	};
 
 	return rts54_post_command(dev, CMD_GET_IC_STATUS, payload,
@@ -1884,15 +1963,19 @@ static int rts54_get_vbus_voltage(const struct device *dev, uint16_t *voltage)
 		return -EINVAL;
 	}
 
-	return rts54_get_rtk_status(dev, 16, 2, CMD_GET_VBUS_VOLTAGE,
+	return rts54_get_rtk_status(dev, 17, 2, CMD_GET_VBUS_VOLTAGE,
 				    (uint8_t *)voltage);
 }
 
-static int rts54_set_ccom(const struct device *dev, enum ccom_t ccom,
-			  enum drp_mode_t dm)
+static int rts54_set_ccom(const struct device *dev, enum ccom_t ccom)
 {
 	struct pdc_data_t *data = dev->data;
-	uint8_t byte = 0;
+	uint16_t conn_opmode = 0;
+	/*
+	 * From bit 32, the first 7 bits are connector. The next 4 bits are for
+	 * the CC operation mode.
+	 */
+	const uint8_t opmode_offset = 7;
 
 	if (get_state(data) != ST_IDLE) {
 		return -EBUSY;
@@ -1900,39 +1983,67 @@ static int rts54_set_ccom(const struct device *dev, enum ccom_t ccom,
 
 	switch (ccom) {
 	case CCOM_RP:
-		byte = 0x02;
-		break;
-	case CCOM_DRP:
-		byte = 0x01;
-		switch (dm) {
-		case DRP_NORMAL:
-			/* No Try.Src or Try.Snk */
-			break;
-		case DRP_TRY_SRC:
-			byte |= (1 << 3);
-			break;
-		case DRP_TRY_SNK:
-			byte |= (2 << 3);
-			break;
-		}
+		conn_opmode = 1 << (opmode_offset + 0);
 		break;
 	case CCOM_RD:
-		byte = 0;
+		conn_opmode = 1 << (opmode_offset + 1);
+		break;
+	case CCOM_DRP:
+		conn_opmode = 1 << (opmode_offset + 2);
+		break;
+	}
+
+	uint8_t payload[] = {
+		UCSI_SET_CCOM.cmd,  UCSI_SET_CCOM.len,
+		UCSI_SET_CCOM.sub,  0x00 /* data length */,
+		conn_opmode & 0xff, (conn_opmode >> 8) & 0xff,
+	};
+
+	return rts54_post_command(dev, CMD_SET_CCOM, payload,
+				  ARRAY_SIZE(payload), NULL);
+}
+
+static int rts54_set_drp_mode(const struct device *dev, enum drp_mode_t dm)
+{
+	struct pdc_data_t *data = dev->data;
+	uint8_t opmode = 0;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	/* Set CSD mode to DRP */
+	opmode = 0x01;
+	switch (dm) {
+	case DRP_NORMAL:
+		/* No Try.Src or Try.Snk
+		 * opmode |= (0 << 3);
+		 */
+		break;
+	case DRP_TRY_SRC:
+		opmode |= (1 << 3);
+		break;
+	case DRP_TRY_SNK:
+		opmode |= (2 << 3);
+		break;
+	case DRP_INVALID:
+	default:
+		LOG_ERR("Invalid DRP mode: %d", dm);
 		break;
 	}
 
 	/* We always want Accessory Support */
-	byte |= (1 << 2);
+	opmode |= (1 << 2);
 
 	uint8_t payload[] = {
 		SET_TPC_CSD_OPERATION_MODE.cmd,
 		SET_TPC_CSD_OPERATION_MODE.len,
 		SET_TPC_CSD_OPERATION_MODE.sub,
 		0x00,
-		byte,
+		opmode,
 	};
 
-	return rts54_post_command(dev, CMD_SET_CCOM, payload,
+	return rts54_post_command(dev, CMD_SET_DRP_MODE, payload,
 				  ARRAY_SIZE(payload), NULL);
 }
 
@@ -2010,6 +2121,23 @@ static int rts54_get_identity_discovery(const struct device *dev,
 				    (uint8_t *)disc_state);
 }
 
+static int rts54_is_vconn_sourcing(const struct device *dev,
+				   bool *vconn_sourcing)
+{
+	struct pdc_data_t *data = dev->data;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	if (vconn_sourcing == NULL) {
+		return -EINVAL;
+	}
+
+	return rts54_get_rtk_status(dev, 0, 11, CMD_GET_IS_VCONN_SOURCING,
+				    (uint8_t *)vconn_sourcing);
+}
+
 static bool rts54_is_init_done(const struct device *dev)
 {
 	struct pdc_data_t *data = dev->data;
@@ -2054,6 +2182,77 @@ static int rts54_get_vdo(const struct device *dev, union get_vdo_t vdo_req,
 				  (uint8_t *)vdo);
 }
 
+/** Allow 3 seconds for the driver to suspend itself. */
+#define SUSPEND_TIMEOUT_USEC (3 * USEC_PER_SEC)
+
+static int rts54_set_comms_state(const struct device *dev, bool comms_active)
+{
+	struct pdc_data_t *data = dev->data;
+
+	if (comms_active) {
+		/* Re-enable communications. Clearing the suspend flag will
+		 * trigger a reset. Note: if the driver is in the disabled
+		 * state due to a previous comms failure, it will remain
+		 * disabled. (Thus, suspending/resuming comms on a disabled
+		 * PDC driver is a no-op)
+		 */
+		enable_comms();
+
+	} else {
+		/* Request communication to be stopped. This allows in-progress
+		 * operations to complete first.
+		 */
+		suspend_comms();
+
+		if (get_state(data) == ST_DISABLE) {
+			/* The driver is already permanently shut down. */
+			return 0;
+		}
+
+		/* Wait for driver to enter the suspended state */
+		if (!WAIT_FOR((get_state(data) == ST_SUSPENDED),
+			      SUSPEND_TIMEOUT_USEC,
+			      k_sleep(K_MSEC(T_PING_STATUS)))) {
+			return -ETIMEDOUT;
+		}
+	}
+
+	return 0;
+}
+
+static int rts54_set_pdo(const struct device *dev, enum pdo_type_t type,
+			 uint32_t *pdo, int count)
+{
+	struct pdc_data_t *data = dev->data;
+	uint8_t pdo_info;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	/*
+	 * TODO(b/319643480): Current implementation only supports setting the
+	 * first SNK or SRC CAP.
+	 */
+	if (count != 1) {
+		count = 1;
+		LOG_WRN("rts54xx: set_pdos only sets the first PDO passed in");
+	}
+
+	pdo_info = (count & 0x7) | (type << 3);
+
+	uint8_t payload[] = {
+		SET_PDO.cmd,   SET_PDO.len + sizeof(uint32_t) * count,
+		SET_PDO.sub,   0x00,
+		pdo_info,      BYTE0(pdo[0]),
+		BYTE1(pdo[0]), BYTE2(pdo[0]),
+		BYTE3(pdo[0]),
+	};
+
+	return rts54_post_command(dev, CMD_SET_PDO, payload,
+				  ARRAY_SIZE(payload), NULL);
+}
+
 static const struct pdc_driver_api_t pdc_driver_api = {
 	.is_init_done = rts54_is_init_done,
 	.get_ucsi_version = rts54_get_ucsi_version,
@@ -2062,6 +2261,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.get_capability = rts54_get_capability,
 	.get_connector_capability = rts54_get_connector_capability,
 	.set_ccom = rts54_set_ccom,
+	.set_drp_mode = rts54_set_drp_mode,
 	.set_uor = rts54_set_uor,
 	.set_pdr = rts54_set_pdr,
 	.set_sink_path = rts54_set_sink_path,
@@ -2082,6 +2282,9 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.get_cable_property = rts54_get_cable_property,
 	.get_vdo = rts54_get_vdo,
 	.get_identity_discovery = rts54_get_identity_discovery,
+	.set_comms_state = rts54_set_comms_state,
+	.is_vconn_sourcing = rts54_is_vconn_sourcing,
+	.set_pdos = rts54_set_pdo,
 };
 
 static void pdc_interrupt_callback(const struct device *dev,
@@ -2167,6 +2370,7 @@ static int pdc_init(const struct device *dev)
 
 static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 {
+	const struct pdc_config_t *cfg = ((const struct device *)dev)->config;
 	struct pdc_data_t *data = ((const struct device *)dev)->data;
 	uint32_t events;
 
@@ -2177,6 +2381,17 @@ static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 					      false, K_MSEC(T_PING_STATUS));
 			if (events) {
 				k_event_clear(&irq_event, RTS54XX_IRQ_EVENT);
+
+				/* If PDC communications are suspended, do not
+				 * process interrupts, as it will cause the
+				 * handler to read from the chip via the ARA
+				 * address.
+				 */
+				if (check_comms_suspended()) {
+					LOG_INF("C%d: Ignoring interrupt",
+						cfg->connector_number);
+					continue;
+				}
 				handle_irqs(data);
 			}
 		} else {

@@ -314,9 +314,16 @@ platform_base_name() {
   echo "${base_name//[0-9]/}"
 }
 
-get_chip() {
+get_fp_mcu_board() {
   local board
   board="$(cros_config /fingerprint board)"
+
+  echo "${board}"
+}
+
+get_chip() {
+  local board
+  board="$(get_fp_mcu_board)"
 
   case "${board}" in
     bloonchipper|dartmonkey|nocturne_fp|nami_fp)
@@ -334,7 +341,7 @@ get_chip() {
 
 get_default_fw() {
   local board
-  board="$(cros_config /fingerprint board)"
+  board="$(get_fp_mcu_board)"
 
   # If cros_config returns "", that is okay assuming there is only
   # one firmware file on disk.
@@ -420,7 +427,8 @@ flash_fp_mcu_npcx() {
     cmd_flash_monitor+=" --opr=wr --addr=0x200c3020"
 
     #TODO(b/294944527): Make sure this file is available in image
-    cmd_flash_monitor+=" --file /opt/google/biod/fw/npcx_monitor.bin"
+    cmd_flash_monitor+=" \
+      --file /usr/local/share/npcx/npcx_monitor_$(get_fp_mcu_name).bin"
 
     # Reset sequence to enter bootloader mode
     gpio 0 "${gpio_nrst}"
@@ -815,20 +823,30 @@ config_nami() {
 }
 
 config_nocturne() {
-  local device="/dev/spidev1.0"
-  # Support kernel version 4.4 during transition to 5.10
-  match_kernel_regex "^4\.4\." && device="/dev/spidev32765.0"
-
   readonly TRANSPORT="SPI"
-  readonly DEVICE="${device}"
+  readonly DEVICE="/dev/spidev1.0"
 
-  readonly GPIO_CHIP="gpiochip360"
-  # FPMCU RST_ODL is on GPP_C10 = 360 + 58 = 418
-  readonly GPIO_NRST=418
-  # FPMCU BOOT0 is on GPP_C8 = 360 + 56 = 416
-  readonly GPIO_BOOT0=416
-  # FP_PWR_EN is on GPP_A11 = 360 + 11 = 371
-  readonly GPIO_PWREN=371
+  # See kernel/v5.4/drivers/pinctrl/intel/pinctrl-sunrisepoint.c
+  # for pin name and pin number.
+
+  local gpiochip_dev_path="pci0000:00/INT344B:00/gpio"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
+
+  readonly GPIO_CHIP="gpiochip${gpiobase}"
+
+  # FPMCU RST_ODL is on GPP_C10 = 58
+  local gpionrst=58
+  readonly GPIO_NRST=$(( gpionrst + gpiobase ))
+  # FPMCU BOOT0 is on GPP_C8 = 56
+  local gpioboot=56
+  readonly GPIO_BOOT0=$(( gpioboot + gpiobase ))
+  # FP_PWR_EN is on GPP_A11 = 11
+  local gpiopwren=11
+  readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
 }
 
 config_strongbad() {
@@ -1030,16 +1048,26 @@ config_guybrush() {
 
 config_skyrim() {
   readonly TRANSPORT="UART"
-
   readonly DEVICE="/dev/ttyS1"
 
-  readonly GPIO_CHIP="gpiochip768"
-  # FPMCU RST_ODL is on AGPIO 12 = 768 + 12 = 780
-  readonly GPIO_NRST=780
-  # FPMCU BOOT0 is on AGPIO 130 = 768 + 130 = 898
-  readonly GPIO_BOOT0=898
-  # FPMCU PWR_EN is on AGPIO 4 = 768 + 4 = 772
-  readonly GPIO_PWREN=772
+  local gpiochip_dev_path="platform/AMD0030:00/gpio"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
+
+  readonly GPIO_CHIP="gpiochip${gpiobase}"
+
+  # FPMCU RST_ODL is on AGPIO 12
+  local gpionrst=12
+  readonly GPIO_NRST=$(( gpionrst + gpiobase ))
+  # FPMCU BOOT0 is on AGPIO 130
+  local gpioboot=130
+  readonly GPIO_BOOT0=$(( gpioboot + gpiobase ))
+  # FPMCU PWR_EN is on AGPIO 4
+  local gpiopwren=4
+  readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
 }
 
 config_myst() {

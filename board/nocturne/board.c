@@ -679,9 +679,9 @@ void board_reset_pd_mcu(void)
 	cflush();
 	/* GPIO_USB_PD_RST_L resets all the TCPCs. */
 	gpio_set_level(GPIO_USB_PD_RST_L, 0);
-	msleep(10); /* TODO(aaboagye): Verify min hold time. */
+	crec_msleep(10); /* TODO(aaboagye): Verify min hold time. */
 	gpio_set_level(GPIO_USB_PD_RST_L, 1);
-	msleep(PS8805_FW_INIT_DELAY_MS);
+	crec_msleep(PS8805_FW_INIT_DELAY_MS);
 }
 
 void board_set_tcpc_power_mode(int port, int mode)

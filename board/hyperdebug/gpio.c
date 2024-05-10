@@ -43,7 +43,13 @@
  * such "cluster" is to be all concatenated (least significant bits in first
  * bytes), in order to form an integer number of clock ticks of delay.  A delay
  * of one tick is equivalent to repeating the last sample (and thus does not
- * save any memory), a delay of zero ticks is invalid.
+ * save any memory).
+ *
+ * A delay of zero ticks is invalid, so the encoding of one or more consecutive
+ * bytes with value 0x80, surrounded by bytes with a high bit of zero, is used
+ * as escape for special features.  Currently the four byte sequence: [0x80 0x80
+ * mask pattern] is used to request an indefinite delay until sampled pins equal
+ * the given `pattern` for all bits which are set to one in the given `mask`.
  *
  * +----------------+---------------+-----------------+---------------+
  * | cmsis_cmd : 1B | gpio_cmd : 1B | data count : 2B | data  (>= 0B) |
@@ -101,9 +107,6 @@
  *                described above).
  *
  */
-
-/* Hardware timer used for bitbanging. */
-#define BITBANG_TIMER 5
 
 /* Size of buffer used for bitbanging waveform. */
 #define BITBANG_BUFFER_SIZE 16384
@@ -1240,6 +1243,14 @@ static volatile uint32_t bitbang_head = 0;
  */
 static uint32_t bitbang_countdown;
 
+/*
+ * In case the encoded data indicates a "pause" until certain input trigger,
+ * this is represented by `bitbang_mask` being non-zero.  Only once the sampled
+ * input pins match `bitbang_pattern` for all of the bits set in `bitbang_mask`
+ * will processing of the remaining part of the bitbanging waveform resume.
+ */
+static uint8_t bitbang_mask, bitbang_pattern;
+
 #define BITBANG_DELAY_BIT 0x80
 #define BITBANG_DATA_MASK 0x7F
 
@@ -1261,26 +1272,7 @@ void IRQ_HANDLER(IRQ_TIM(BITBANG_TIMER))(void)
 		STM32_TIM_CR1(BITBANG_TIMER) = 0;
 		return;
 	}
-	if (bitbang_countdown) {
-		bitbang_countdown--;
-		return;
-	}
-	uint8_t data_byte = *bitbang_data_ptr(bitbang_irq);
-	if (data_byte & BITBANG_DELAY_BIT) {
-		/* Maintain current levels for a number of cycles. */
-		uint8_t delay_scale = 0;
-		bitbang_countdown = 0;
-		do {
-			bitbang_irq++;
-			bitbang_countdown += ((data_byte & BITBANG_DATA_MASK)
-					      << delay_scale);
-			delay_scale += 7;
-			data_byte = *bitbang_data_ptr(bitbang_irq);
-		} while (data_byte & BITBANG_DELAY_BIT);
-		/* One cycle of delay already spent processing */
-		bitbang_countdown--;
-		return;
-	}
+
 	/*
 	 * Read current level of all pins part of bit-banging.  If some of the
 	 * pins are in push-pull mode, this will be what was written the
@@ -1292,7 +1284,68 @@ void IRQ_HANDLER(IRQ_TIM(BITBANG_TIMER))(void)
 				 bitbang_pin_masks[i])
 			      << i;
 	}
-	*bitbang_data_ptr(bitbang_irq++) = input_data;
+
+	/*
+	 * See if there are reasons for not yet proceeding with the remaining
+	 * part of the waveform.
+	 */
+	if (bitbang_countdown) {
+		/* Waiting for a fixed duration to pass. */
+		bitbang_countdown--;
+		return;
+	}
+	if (bitbang_mask) {
+		/* Waiting for a particular trigger pattern. */
+		if ((input_data ^ bitbang_pattern) & bitbang_mask) {
+			/* No match, sample again next cycle */
+			return;
+		}
+		/* Match, proceed */
+		bitbang_mask = 0;
+	}
+
+	/*
+	 * Past reasons to pause have been resolved.  Now inspect the next byte
+	 * of the waveform encoding.
+	 */
+	uint8_t data_byte = *bitbang_data_ptr(bitbang_irq);
+	while (data_byte & BITBANG_DELAY_BIT) {
+		/* Maintain current levels for a number of cycles. */
+		uint8_t delay_scale = 0;
+		bitbang_countdown = 0;
+		do {
+			bitbang_irq++;
+			bitbang_countdown += ((data_byte & BITBANG_DATA_MASK)
+					      << delay_scale);
+			delay_scale += 7;
+			data_byte = *bitbang_data_ptr(bitbang_irq);
+		} while (data_byte & BITBANG_DELAY_BIT);
+		if (bitbang_countdown > 0) {
+			/* One cycle of delay already spent processing */
+			bitbang_countdown--;
+			return;
+		}
+		/*
+		 * Zero-cycle delay is not possible, the encoding is used as
+		 * escape for "special" commands, in this case waiting
+		 * indefinitely for a particular trigger.
+		 */
+		bitbang_mask = *bitbang_data_ptr(bitbang_irq++);
+		bitbang_pattern = *bitbang_data_ptr(bitbang_irq++);
+
+		if ((input_data ^ bitbang_pattern) & bitbang_mask) {
+			/* No match, sample again next cycle */
+			return;
+		}
+		/*
+		 * Match, immediately proceed, taking care that next byte could
+		 * either be a sample or another delay/wait, hence the need for
+		 * another iteration in the loop.
+		 */
+		bitbang_mask = 0;
+		data_byte = *bitbang_data_ptr(bitbang_irq);
+	}
+
 	/*
 	 * Set drive of all pins which are part of bit-banging.  If some of the
 	 * pins are in input mode, this will have no effect.
@@ -1306,6 +1359,9 @@ void IRQ_HANDLER(IRQ_TIM(BITBANG_TIMER))(void)
 				bitbang_pin_masks[i] << 16;
 		}
 	}
+
+	/* Record sampled data, overwriting the given waveform. */
+	*bitbang_data_ptr(bitbang_irq++) = input_data;
 }
 
 /*
@@ -1561,6 +1617,8 @@ static void dap_goog_gpio_monitoring_read(size_t peek_c)
 		rx_buffer[str_len] = '\0';
 		gpios[i] = gpio_find_by_name(rx_buffer);
 	}
+	if (cmsis_dap_unwind_requested())
+		return;
 
 	/*
 	 * Start the one-byte CMSIS-DAP encapsulation header at offset 7 in
@@ -1675,29 +1733,59 @@ static uint8_t validate_received_waveform(uint16_t data_len, bool streaming)
 	uint32_t idx = bitbang_irq_tail;
 	uint32_t valid_idx = idx;
 	while (idx != tail_goal) {
-		if (*bitbang_data_ptr(idx) & BITBANG_DELAY_BIT) {
-			uint8_t delay_scale = 0;
-			while (idx != tail_goal &&
-			       *bitbang_data_ptr(idx) & BITBANG_DELAY_BIT) {
-				/*
-				 * Shifting right by 32 - delay_scale
-				 * effectively gives us the low bytes of the
-				 * upper 32 bits of what we would have gotten by
-				 * shifting left by delay_scale.  If that is
-				 * non-zero, it means that the encoded value
-				 * would exceed 32 bits.
-				 */
-				if ((*bitbang_data_ptr(idx) &
-				     BITBANG_DATA_MASK) >>
-				    (32 - delay_scale)) {
-					return STATUS_ERROR_WAVEFORM;
-				}
-				delay_scale += 7;
-				idx++;
-			}
-		} else {
+		if (!(*bitbang_data_ptr(idx) & BITBANG_DELAY_BIT)) {
+			/*
+			 * Single-byte sample for output.  The interrupt routine
+			 * is prepared for this being the last byte in the valid
+			 * range of the buffer.
+			 */
 			idx++;
 			valid_idx = idx;
+			continue;
+		}
+		uint8_t delay_scale = 0, num_bytes = 0;
+		bool all_zeroes = true;
+		while (idx != tail_goal &&
+		       *bitbang_data_ptr(idx) & BITBANG_DELAY_BIT) {
+			uint8_t data = *bitbang_data_ptr(idx) &
+				       BITBANG_DATA_MASK;
+			/*
+			 * Shifting right by 32 - delay_scale effectively gives
+			 * us the low bytes of the upper 32 bits of what we
+			 * would have gotten by shifting left by delay_scale.
+			 * If that is non-zero, it means that the encoded value
+			 * would exceed 32 bits.
+			 */
+			if (data >> (32 - delay_scale)) {
+				return STATUS_ERROR_WAVEFORM;
+			}
+			delay_scale += 7;
+			num_bytes++;
+			if (data != 0)
+				all_zeroes = false;
+			idx++;
+		}
+		if (idx != tail_goal && all_zeroes) {
+			/*
+			 * Zero-cycle delay is invalid, the encoding is used as
+			 * escape for "special" commands.
+			 */
+			if (num_bytes == 2) {
+				/*
+				 * Request to wait for particular pattern of
+				 * input pins.  Verify that required parameters
+				 * are present.
+				 */
+				if (++idx == tail_goal)
+					break;
+				if (++idx == tail_goal)
+					break;
+			} else {
+				/*
+				 * Unrecognized special request encoding.
+				 */
+				return STATUS_ERROR_WAVEFORM;
+			}
 		}
 	}
 
@@ -1733,13 +1821,15 @@ void dap_goog_gpio_bitbang(size_t peek_c, bool streaming)
 	if (tail_ptr + data_len <= bitbang_data + sizeof(bitbang_data)) {
 		queue_blocking_remove(&cmsis_dap_rx_queue, tail_ptr, data_len);
 	} else {
-		uint16_t remaning_space =
+		uint16_t remaining_space =
 			bitbang_data + sizeof(bitbang_data) - tail_ptr;
 		queue_blocking_remove(&cmsis_dap_rx_queue, tail_ptr,
-				      remaning_space);
+				      remaining_space);
 		queue_blocking_remove(&cmsis_dap_rx_queue, bitbang_data,
-				      data_len - remaning_space);
+				      data_len - remaining_space);
 	}
+	if (cmsis_dap_unwind_requested())
+		return;
 
 	uint8_t status = validate_received_waveform(data_len, streaming);
 	if (status != 0) {
@@ -1859,10 +1949,24 @@ void dap_goog_gpio_bitbang(size_t peek_c, bool streaming)
  *
  * CAUTION: This handler routine runs on the CMSIS-DAP task, and the code below
  * may block waiting to receive/send data via USB.  This has the potential to
- * conflict with the console task, particularly if that one invokes
- * `stop_all_gpio_bitbanging()`.  There is currently no attempt at detecting
- * the conflict, or handling it by unwinding any partially completed invocation
- * of this function.
+ * conflict with the console task, particularly if that one invokes a function
+ * like `stop_all_gpio_bitbanging()`, which modifies the same state as methods
+ * below.
+ *
+ * As long as clients behave, and do not simultaneously request monitoring or
+ * bitbanging operations though the CMSIS-DAP interface while also sending
+ * `reinit` console command, the one case we are worried about is a bitbanging
+ * or monitoring client having stopped "in the middle" of performing some
+ * CMSIS-DAP operation, leaving the CMSIS-DAP task stuck in one of the handler
+ * functions in this file.  Then the next test session would presumably start by
+ * invoking `reinit`, which will be handled this way: In `cmsis-dap.c` a REINIT
+ * hook is registered with high priority, which will set
+ * `cmsis_dap_unwind_requested()` and will cause any blocking queue operation of
+ * the CMSIS-DAP task to exit.  Handler functions above will respond by exiting
+ * immediately, even if that means possibly leaving inconsistent state (such as
+ * having updated `head_level` but not moved the `head` pointer to match).  The
+ * normal priority REINIT hook in this file will then be called, which resets
+ * the state, such that it will be in a consistent and known initial state.
  */
 void dap_goog_gpio(size_t peek_c)
 {

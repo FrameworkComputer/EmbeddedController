@@ -194,10 +194,10 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 		 * Allow 1ms time for the retimer to power up lc_domain
 		 * which powers I2C controller within retimer
 		 */
-		msleep(1);
+		crec_msleep(1);
 	} else {
 		ioex_set_level(rst_signal, 0);
-		msleep(1);
+		crec_msleep(1);
 	}
 	return EC_SUCCESS;
 }
@@ -210,7 +210,7 @@ void board_reset_pd_mcu(void)
 	/*
 	 * delay for power-on to reset-off and min. assertion time
 	 */
-	msleep(NCT38XX_RESET_HOLD_DELAY_MS);
+	crec_msleep(NCT38XX_RESET_HOLD_DELAY_MS);
 
 	gpio_set_level(GPIO_USB_C0_TCPC_RST_ODL, 1);
 	gpio_set_level(GPIO_USB_C1_TCPC_RST_ODL, 1);
@@ -220,7 +220,7 @@ void board_reset_pd_mcu(void)
 
 	/* wait for chips to come up */
 	if (NCT3807_RESET_POST_DELAY_MS != 0)
-		msleep(NCT3807_RESET_POST_DELAY_MS);
+		crec_msleep(NCT3807_RESET_POST_DELAY_MS);
 }
 
 static void board_tcpc_init(void)
@@ -310,9 +310,6 @@ void ppc_interrupt(enum gpio_signal signal)
 
 void retimer_interrupt(enum gpio_signal signal)
 {
-	/*
-	 * TODO(b/179513527): add USB-C support
-	 */
 }
 
 __override bool board_is_dts_port(int port)

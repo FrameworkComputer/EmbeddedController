@@ -303,6 +303,9 @@ __reset:
         csrw mtvec, t0
         /* reset scratch register */
         csrw mscratch, zero
+#if defined(CHIP_FAMILY_RV55)
+        j 1f /* doesn't support mideleg and medeleg */
+#endif
         /* The M-mode handles interrupt/exception */
         csrwi mideleg, 0
         csrwi medeleg, 0
@@ -314,6 +317,7 @@ __reset:
         ori  t1, t1, 0x8
         sb t1, 0(t0)
 #endif
+1:
         /* Clear BSS */
         la t0, __bss_start
         la t1, __bss_end

@@ -54,6 +54,7 @@
 /* Sensor console commands */
 #define CONFIG_CMD_ACCELS
 #define CONFIG_CMD_ACCEL_INFO
+#define CONFIG_DYNAMIC_MOTION_SENSOR_COUNT
 
 /* USB Type A Features */
 #define USB_PORT_COUNT 1

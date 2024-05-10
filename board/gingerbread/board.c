@@ -233,10 +233,10 @@ void board_reset_pd_mcu(void)
 	 */
 	gpio_set_level(GPIO_USBC_DP_PD_RST_L, 0);
 	gpio_set_level(GPIO_USBC_UF_RESET_L, 0);
-	msleep(PS8805_FW_INIT_DELAY_MS);
+	crec_msleep(PS8805_FW_INIT_DELAY_MS);
 	gpio_set_level(GPIO_USBC_DP_PD_RST_L, 1);
 	gpio_set_level(GPIO_USBC_UF_RESET_L, 1);
-	msleep(PS8805_FW_INIT_DELAY_MS);
+	crec_msleep(PS8805_FW_INIT_DELAY_MS);
 }
 
 /* Power Delivery and charging functions */

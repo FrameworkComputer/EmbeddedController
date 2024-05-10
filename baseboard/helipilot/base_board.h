@@ -286,17 +286,6 @@
  *-------------------------------------------------------------------------*
  */
 
-/*
- * Macros for GPIO signals used in common code that don't match the
- * schematic names. Signal names in gpio.inc match the schematic and are
- * then redefined here to so it's more clear which signal is being used for
- * which purpose.
- */
-#define GPIO_WP GPIO_HOST_MCU_WP_OD
-#define GPIO_SHI_CS_L GPIO_SPI_HOST_CS_MCU_ODL
-#define GPIO_FPS_INT GPIO_FP_MCU_INT_L
-#define GPIO_EC_INT_L GPIO_MCU_PLATFORM_INT_L
-
 #ifndef __ASSEMBLER__
 
 #include "base_board_rw.h"

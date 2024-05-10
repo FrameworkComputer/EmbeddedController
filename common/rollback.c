@@ -370,7 +370,12 @@ int rollback_add_entropy(const uint8_t *data, unsigned int len)
 	if (IS_ENABLED(CONFIG_OTP_KEY)) {
 		uint32_t status = EC_ERROR_UNKNOWN;
 
+		/* Power on OTP memory. */
+		otp_key_init();
 		status = otp_key_provision();
+		/* Power off OTP memory. */
+		otp_key_exit();
+
 		if (status != EC_SUCCESS) {
 			ccprintf("failed to provision OTP key with status=%d",
 				 status);

@@ -63,6 +63,9 @@
 #define CONFIG_CMD_ACCEL_INFO
 #define CONFIG_CMD_BUTTON
 
+/* Remove console commands for RAM savings */
+#undef CONFIG_CMD_CBI
+
 /* Port80 */
 #undef CONFIG_PORT80_HISTORY_LEN
 #define CONFIG_PORT80_HISTORY_LEN 256

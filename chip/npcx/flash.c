@@ -115,7 +115,7 @@ static int flash_wait_ready(void)
 		/* Busy bit is clear */
 		if ((NPCX_UMA_DB0 & mask) == 0)
 			break;
-		usleep(10);
+		crec_usleep(10);
 	} while (!timestamp_expired(deadline, NULL)); /* Wait for Busy clear */
 
 	/* Chip Select high. */
@@ -608,7 +608,7 @@ int crec_flash_physical_erase(int offset, int size)
 		/*
 		 * Reload the watchdog timer, so that erasing many flash pages
 		 * doesn't cause a watchdog reset.  May not need this now that
-		 * we're using msleep() below.
+		 * we're using crec_usleep() below.
 		 */
 		watchdog_reload();
 

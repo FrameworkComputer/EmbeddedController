@@ -114,6 +114,7 @@ union dp_mode_cfg {
 	};
 	uint32_t raw_value;
 };
+BUILD_ASSERT(sizeof(union dp_mode_cfg) == sizeof(uint32_t));
 
 #define VDM_VERS_MINOR \
 	(IS_ENABLED(CONFIG_USB_PD_DP21_MODE) ? VDO_SVDM_VERS_MINOR(1) : 0)

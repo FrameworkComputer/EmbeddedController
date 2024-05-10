@@ -16,10 +16,15 @@
 
 DEFINE_FFF_GLOBALS;
 
+static const struct input_kbd_matrix_common_config kbd_cfg = {
+	.col_size = 88,
+	.row_size = 99,
+};
+
 static const struct device *const fake_dev =
 	DEVICE_DT_GET(DT_NODELABEL(fake_input_device));
 
-DEVICE_DT_DEFINE(DT_INST(0, vnd_input_device), NULL, NULL, NULL, NULL,
+DEVICE_DT_DEFINE(DT_INST(0, vnd_input_device), NULL, NULL, NULL, &kbd_cfg,
 		 PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEVICE, NULL);
 
 FAKE_VOID_FUNC(keyboard_state_changed, int, int, int);
@@ -114,6 +119,20 @@ ZTEST(keyboard_input, test_kso_gpio)
 	input_kbd_matrix_drive_column_hook(fake_dev,
 					   INPUT_KBD_MATRIX_COLUMN_DRIVE_NONE);
 	zassert_equal(gpio_emul_output_get(gpio_dev, pin), 0);
+}
+
+uint8_t keyboard_get_cols(void);
+
+ZTEST(keyboard_input, test_get_cols)
+{
+	zassert_equal(keyboard_get_cols(), 88);
+}
+
+uint8_t keyboard_get_rows(void);
+
+ZTEST(keyboard_input, test_get_rows)
+{
+	zassert_equal(keyboard_get_rows(), 99);
 }
 
 static void reset(void *fixture)

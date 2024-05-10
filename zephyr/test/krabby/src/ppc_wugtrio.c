@@ -1,0 +1,79 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "gpio.h"
+#include "gpio/gpio_int.h"
+#include "hooks.h"
+#include "usbc/ppc.h"
+
+#include <zephyr/devicetree.h>
+#include <zephyr/drivers/emul.h>
+#include <zephyr/drivers/gpio/gpio_emul.h>
+#include <zephyr/fff.h>
+#include <zephyr/ztest.h>
+
+FAKE_VOID_FUNC(ppc_chip_0_interrupt, int);
+FAKE_VOID_FUNC(ppc_chip_1_interrupt, int);
+
+ZTEST(ppc_wugtrio, test_c0_ppc_init)
+{
+	const struct device *ppc_int_gpio = DEVICE_DT_GET(
+		DT_GPIO_CTLR(DT_NODELABEL(usb_c0_ppc_bc12_int_odl), gpios));
+	const gpio_port_pins_t ppc_int_pin =
+		DT_GPIO_PIN(DT_NODELABEL(usb_c0_ppc_bc12_int_odl), gpios);
+
+	hook_notify(HOOK_INIT);
+	zassert_ok(gpio_emul_input_set(ppc_int_gpio, ppc_int_pin, 1), NULL);
+	k_sleep(K_MSEC(100));
+	zassert_ok(gpio_emul_input_set(ppc_int_gpio, ppc_int_pin, 0), NULL);
+	k_sleep(K_MSEC(100));
+
+	zassert_equal(ppc_chip_0_interrupt_fake.call_count, 1);
+}
+
+ZTEST(ppc_wugtrio, test_c1_ppc_init)
+{
+	const struct device *ppc_int_gpio = DEVICE_DT_GET(
+		DT_GPIO_CTLR(DT_NODELABEL(gpio_x_ec_gpio2), gpios));
+	const gpio_port_pins_t ppc_int_pin =
+		DT_GPIO_PIN(DT_NODELABEL(gpio_x_ec_gpio2), gpios);
+
+	hook_notify(HOOK_INIT);
+	zassert_ok(gpio_emul_input_set(ppc_int_gpio, ppc_int_pin, 1), NULL);
+	k_sleep(K_MSEC(100));
+	zassert_ok(gpio_emul_input_set(ppc_int_gpio, ppc_int_pin, 0), NULL);
+	k_sleep(K_MSEC(100));
+
+	zassert_equal(ppc_chip_1_interrupt_fake.call_count, 1);
+}
+
+static void *ppc_wugtrio_init(void)
+{
+	static struct ppc_drv fake_ppc_drv_0;
+	static struct ppc_drv fake_ppc_drv_1;
+
+	zassert_equal(ppc_cnt, 2);
+
+	/* inject mocked interrupt handlers into ppc_drv */
+	fake_ppc_drv_0 = *ppc_chips[0].drv;
+	fake_ppc_drv_0.interrupt = ppc_chip_0_interrupt;
+	ppc_chips[0].drv = &fake_ppc_drv_0;
+
+	fake_ppc_drv_1 = *ppc_chips[1].drv;
+	fake_ppc_drv_1.interrupt = ppc_chip_1_interrupt;
+	ppc_chips[1].drv = &fake_ppc_drv_1;
+
+	return NULL;
+}
+
+static void ppc_wugtrio_before(void *fixture)
+{
+	RESET_FAKE(ppc_chip_0_interrupt);
+	RESET_FAKE(ppc_chip_1_interrupt);
+
+	gpio_enable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_x_ec_gpio2));
+}
+ZTEST_SUITE(ppc_wugtrio, NULL, ppc_wugtrio_init, ppc_wugtrio_before, NULL,
+	    NULL);

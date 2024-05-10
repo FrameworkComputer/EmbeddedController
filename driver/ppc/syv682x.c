@@ -126,7 +126,7 @@ static int syv682x_wait_for_ready(int port, int reg)
 			return EC_ERROR_TIMEOUT;
 		}
 
-		msleep(1);
+		crec_msleep(1);
 	} while (1);
 
 	return EC_SUCCESS;
@@ -261,6 +261,35 @@ static bool syv682x_interrupt_filter(int port, int regval, int regmask,
 	return false;
 }
 
+#ifdef CONFIG_USB_PD_FRS_PPC
+#define CC_RP_DEBOUNCE 1000
+/*
+ * According to the syv682 manual, the FRS process of SYV682 only determines
+ * Rd pull down. Unplugging the dock may trigger FRS. Base on USB PD 3.2 spec,
+ * Version 1.0, Sections 8.3.2.9. The source port drives CC to ground for
+ * no larger than tFRSwapTx(MAX). In order to avoid FRS errors in syv682,
+ * add CC status judgment after FRS triggered.
+ */
+static int check_cc_rp_timeout(int port, int timeout)
+{
+#ifdef CONFIG_ZTEST
+	return EC_SUCCESS;
+#endif
+	enum tcpc_cc_voltage_status cc1, cc2;
+
+	tcpm_get_cc(port, &cc1, &cc2);
+
+	while (((cc_is_rp(cc1)) || (cc_is_rp(cc2))) != true) {
+		if (task_wait_event(timeout) == TASK_EVENT_TIMER) {
+			return EC_ERROR_TIMEOUT;
+		}
+		tcpm_get_cc(port, &cc1, &cc2);
+	}
+
+	return EC_SUCCESS;
+}
+#endif
+
 /*
  * Two status registers can trigger the ALERT_L pin, STATUS and CONTROL_4
  * These registers are clear on read if the condition has been cleared.
@@ -270,6 +299,7 @@ static bool syv682x_interrupt_filter(int port, int regval, int regmask,
  */
 static void syv682x_handle_status_interrupt(int port, int regval)
 {
+#ifdef CONFIG_USB_PD_FRS_PPC
 	/*
 	 * An FRS will automatically disable sinking immediately, and enable the
 	 * source path if VBUS is <5V. The FRS GPIO must remain asserted until
@@ -279,16 +309,20 @@ static void syv682x_handle_status_interrupt(int port, int regval)
 	 * Note the FRS Alert will remain asserted until VBUS has fallen below
 	 * 5V or the frs_en gpio is de-asserted. So use the rising edge trigger.
 	 */
-	if (IS_ENABLED(CONFIG_USB_PD_FRS_PPC)) {
-		if (syv682x_interrupt_filter(port, regval, SYV682X_STATUS_FRS,
-					     SYV682X_FLAGS_FRS)) {
-			atomic_or(&flags[port], SYV682X_FLAGS_SOURCE_ENABLED);
-			atomic_clear_bits(&flags[port],
-					  SYV682X_FLAGS_SINK_ENABLED);
-			if (!tcpm_tcpc_has_frs_control(port))
-				pd_got_frs_signal(port);
+	if (syv682x_interrupt_filter(port, regval, SYV682X_STATUS_FRS,
+				     SYV682X_FLAGS_FRS)) {
+		/* Add CC status judgment after FRS trigger. */
+		if (check_cc_rp_timeout(port, CC_RP_DEBOUNCE)) {
+			pd_set_error_recovery(port);
+			return;
 		}
+
+		atomic_or(&flags[port], SYV682X_FLAGS_SOURCE_ENABLED);
+		atomic_clear_bits(&flags[port], SYV682X_FLAGS_SINK_ENABLED);
+		if (!tcpm_tcpc_has_frs_control(port))
+			pd_got_frs_signal(port);
 	}
+#endif
 
 	/*
 	 * 5V OC is actually notifying that it is current limiting
@@ -757,6 +791,7 @@ static int syv682x_init(int port)
 	if (rv)
 		return rv;
 	atomic_clear(&sink_ocp_count[port]);
+	atomic_clear(&flags[port]);
 
 	/*
 	 * Disable FRS prior to configuring the power paths

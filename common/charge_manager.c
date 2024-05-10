@@ -1193,9 +1193,6 @@ void pd_set_input_current_limit(int port, uint32_t max_ma,
 {
 	struct charge_port_info charge;
 
-	if (IS_ENABLED(CONFIG_USB_PD_PREFER_MV))
-		charge_reset_stable_current();
-
 	charge.current = max_ma;
 	charge.voltage = supply_voltage;
 	charge_manager_update_charge(CHARGE_SUPPLIER_PD, port, &charge);
@@ -1299,7 +1296,7 @@ void charge_manager_leave_safe_mode(void)
 	 * CHARGE_PORT_NONE around init time and not cut off the
 	 * input FETs.
 	 */
-	msleep(board_get_leave_safe_mode_delay_ms());
+	crec_msleep(board_get_leave_safe_mode_delay_ms());
 	CPRINTS("%s()", __func__);
 	cflush();
 	left_safe_mode = 1;

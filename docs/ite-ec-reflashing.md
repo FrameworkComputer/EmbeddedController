@@ -4,7 +4,7 @@ This doc: [http://go/cros-ite-reflash-design](https://goto.google.com/cros-ite-e
 <br>
 First written: 2022-08-15
 <br>
-Last updated: 2022-08-24
+Last updated: 2024-04-17
 
 Familiarity with [Chromium OS](https://www.chromium.org/chromium-os) and
 [Embedded Controller (EC)](../README.md) development is assumed.
@@ -18,8 +18,6 @@ Familiarity with [Chromium OS](https://www.chromium.org/chromium-os) and
 * Googlers, and Partners involved in ITE EC projects only:
   [The State of ITE CrOS EC Reflashing](https://goto.google.com/cros-ite-ec-reflash-state)
   * That document is not public, do not request access if you lack it.
-* `i2c-pseudo` [README](../extra/i2c_pseudo/README)
-* `i2c-pseudo` [Documentation.txt](../extra/i2c_pseudo/Documentation.txt)
 
 ### Terminology
 
@@ -82,7 +80,7 @@ is the user interface for all Chrome OS device EC reflashing via Servos.
 
 The original implementation of ITE EC reflashing via Servo is only compatible
 with Servo v2, due to interfacing directly with its FTDI USB to MPSSE IC
-(FTDI FT4232HL).
+(FTDI FT4232HL). There aren't any servo v2 devices available anymore.
 
 1.  `flash_ec` tells `servod` to close its interface for controlling the
     `Servo v2` FTDI USB device.
@@ -100,16 +98,8 @@ with Servo v2, due to interfacing directly with its FTDI USB to MPSSE IC
 
 ### New control flow through servod, for all other DUT controller servo types
 
-1.  When `servod` starts, it creates a pseudo I2C adapter in Linux for every
-    servo I2C bus it controls, if the `i2c-pseudo` module is loaded.
-    * This pseudo I2C adapter can be used on the host system as if it were a
-      native I2C bus, including from userspace if the `i2c-dev` module is
-      loaded.
-    * For more information on the `i2c-pseudo` module see
-      [Reflashing an ITE EC](../util/iteflash.md), as well as `i2c-pseudo`'s
-      [README](../extra/i2c_pseudo/README) and
-      [Documentation.txt](../extra/i2c_pseudo/Documentation.txt).
-1.  `flash_ec` issues a `servod` command for the DUT controller servo to send
+1.  When `servod` uses I2C, it immediately unlocks the interface afterwards.
+2.  `flash_ec` issues a `servod` command for the DUT controller servo to send
     the special waveforms.
     * For `Servo Micro` and `C2D2` all `servod` needs to do is issue a
       servo console command, `enable_ite_dfu`, which triggers a
@@ -121,74 +111,14 @@ with Servo v2, due to interfacing directly with its FTDI USB to MPSSE IC
     * `CR50` (CCD) is mostly the same, except:
       1.  CCD must be unlocked and the `ccd_i2c_en` CCD capability must be set
           to `Always`.
-      1.  The `CR50` firmware function for sending the special waveforms is
+      2.  The `CR50` firmware function for sending the special waveforms is
           invoked by a special I2C message, not a console command.
-      1.  `CR50` must reboot itself to perform the special waveforms. During
+      3.  `CR50` must reboot itself to perform the special waveforms. During
           normal operation `CR50` has deliberate clock jitter which would
           prevent accurately preforming the waveforms. This jitter cannot
           safely be disabled, except on reset, and only while the `AP` is held
           in reset.
-    * [Future] If we were to support this control flow with `Servo v2`, the
-      cleanest way would be to move the FTDI-based bit-banging of the
-      special waveforms from `iteflash` into `servod` itself, as a C/C++
-      extension, so that `flash_ec` can trigger it with a `servod` command the
-      same as for other servo types. This would allow removing the hack in
-      `servod` to relinquish control of the `Servo v2` FTDI USB interface.
-      * Proof-of-concept [CL:1522847](https://crrev.com/c/1522847) adds support
-        for using Servo v2 via `servod`. However as of this writing that CL
-        ([patchset 14](https://crrev.com/c/1522847/14)) only changes the I2C
-        communication path, it does NOT move the special waveforms into
-        `servod`, which is needed to remove the `servod` I2C interface
-        close + reopen hack and fully merge the Servo v2 ITE EC reflashing into
-        this new control flow.
-1.  `flash_ec` asks `servod` for the local Linux i2c-dev path of the
-    DUT Controller Servo's DUT-connected I2C interface (which is backed by
-    `servod` itself via the `i2c-pseudo` module).
-1.  `flash_ec` invokes `iteflash`, passing it the i2c-dev path given by
+3.  `flash_ec` asks `servod` for the serial number of the servo device.
+4.  `flash_ec` invokes `iteflash`, passing it the serial given by
     `servod`.
-1.  `iteflash` performs the EC firmware update via the i2c-dev interface.
-
-## Why `i2c-pseudo` and alternative implementations considered
-
-Instead of using `i2c-dev` Linux I2C interfaces, `iteflash` could communicate
-directly with `servod` using a custom protocol. This would make `iteflash`
-dependent on `servod` and whatever custom protocol we come up with, as there is
-no standard userspace<->userspace I2C interface to implement.
-
-In the future we may choose to implement Servo I2C interfaces as actual
-host-side Linux drivers, which `servod` would use via `i2c-dev`
-(which it supports already!). Since the `flash_ec` and `iteflash` portions of
-this process are built around `i2c-dev` now, they should continue working with
-no changes needed for this scenario.
-
-Why bother with i2c-pseudo at all then? Why not go straight to reimplementing
-the Servo I2C interfaces as new Linux I2C adapter drivers, instead of
-implementing the new `i2c-pseudo` driver?
-
-Rearchitecting the Servo I2C interfaces is not something to be considered
-lightly, and not worthwhile just for ITE EC reflashing. By staying with the
-existing `servod` Servo I2C implementations we have not introduced any
-dependency on new kernel modules for *existing* `servod` functionality. Only
-the new ITE EC reflashing functionality depends on `i2c-pseudo`. As with
-`i2c-pseudo` we would need to rely on out-of-tree kernel module distribution
-for these new Servo I2C modules until eventual upstream acceptance +
-percolation down to distribution Linux kernels, with no guarantee of acceptance
-for our obscure Servo hardware. Depending on a new kernel module for this one
-new function of ITE EC reflashing is one thing. Requiring new modules for all
-`servod` use would be quite another. Realistically we would need to maintain
-fallback code in `servod` to use its existing internal Servo I2C interface
-implementations when the kernel ones aren't available, but that has a
-maintenance cost too. These same issues would be faced with every new
-generation of Servo, so this broad Servo + `servod` architectural change is not
-something to be considered lightly or just for ITE EC reflashing.
-
-`i2c-pseudo` has potential uses in the CrOS ecosystem beyond ITE EC reflashing.
-A big one is mocking I2C interfaces for driver and system tests. There is the
-longstanding `i2c-stub` module for this purpose, but its functionality is
-limited compared to `i2c-pseudo`, not all I2C device behavior can be modeled
-with `i2c-stub`. Also by having the `servod` I2C pseudo interfaces, one can
-conveniently use the standard Linux I2C command line tools
-(i2cget(8), i2cset(8), i2ctransfer(8), etc) for interfacing with Servo and DUT
-I2C devices. While it is unlikely that i2c-pseudo will have any use in CrOS
-itself, it is expected to have further uses in both developer tooling and
-code tests.
+5.  `iteflash` performs the EC firmware update via the USB i2c interface.

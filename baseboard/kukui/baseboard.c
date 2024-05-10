@@ -156,7 +156,7 @@ int board_get_version(void)
 
 	gpio_set_level(GPIO_EC_BOARD_ID_EN_L, 0);
 	/* Wait to allow cap charge */
-	msleep(20);
+	crec_msleep(20);
 	mv = adc_read_channel(ADC_BOARD_ID);
 
 	if (mv == ADC_READ_ERROR)

@@ -25,3 +25,4 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_CONSOLE_CMD
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_HOST_CMD
                                                 "${PLATFORM_EC}/common/usb_pd_host_cmd.c"
                                                 "${PLATFORM_EC}/common/usbc/usb_pd_host.c")
+zephyr_library_sources("${PLATFORM_EC}/zephyr/shim/src/tcpc.c")

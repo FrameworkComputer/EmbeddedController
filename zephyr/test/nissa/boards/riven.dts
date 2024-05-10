@@ -1,0 +1,330 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/pwm/pwm.h>
+#include <cros/vivaldi_kbd_default.dtsi>
+
+#include "generic_npcx.dts"
+#include "../program/nissa/riven/cbi.dtsi"
+#include "../program/nissa/riven/motionsense.dtsi"
+
+/ {
+	chosen {
+		cros-ec,raw-kb = &cros_kb_raw;
+	};
+
+	cros_kb_raw: kb-raw-emul {
+		compatible = "cros-ec,kb-raw-emul";
+	};
+
+	named-gpios {
+		gpio_lid_open: lid_open {
+			gpios = <&gpiod 2 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		gpio_imu_int_l: imu_int_l {
+			gpios = <&gpio5 6 GPIO_INPUT>;
+		};
+		gpio_acc_int_l: acc_int_l {
+			gpios = <&gpio5 0 GPIO_INPUT>;
+		};
+		gpio_tablet_mode_l: tablet_mode_l {
+			gpios = <&gpio9 5 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
+		};
+		gpio_fan_enable: fan-enable {
+			gpios = <&gpio6 3 GPIO_OUTPUT>;
+			no-auto-init;
+		};
+		gpio_ec_touch_en: ec_touch_en {
+			gpios = <&gpio8 3 GPIO_OUTPUT_LOW>;
+		};
+		gpio_soc_edp_bl_en: soc_edp_bl_en {
+			gpios = <&gpioc 7 GPIO_INPUT>;
+		};
+	};
+
+	gpio-interrupts {
+		int_lid_open: lid_open {
+			irq-pin = <&gpio_lid_open>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+		int_imu: ec_imu {
+			irq-pin = <&gpio_imu_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "motion_interrupt";
+		};
+		int_lid_accel: ec_lid_accel {
+			irq-pin = <&gpio_acc_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lid_accel_interrupt";
+		};
+		int_tablet_mode: tablet_mode {
+			irq-pin = <&gpio_tablet_mode_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "gmr_tablet_switch_isr";
+		};
+		int_soc_edp_bl_en: soc_edp_bl_en {
+			irq-pin = <&gpio_soc_edp_bl_en>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "soc_edp_bl_interrupt";
+		};
+	};
+
+	named-i2c-ports {
+		i2c_ec_i2c_sensor: ec_i2c_sensor {
+			i2c-port = <&i2c_ctrl1>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+	};
+
+	batteries {
+		default_battery: lgc {
+			compatible = "lgc,ap18c8k", "battery-smart";
+		};
+		battery_cosmx: cosmx {
+			compatible = "cosmx,ap20cbl", "battery-smart";
+		};
+		battery_cosmx_2: cosmx-2 {
+			compatible = "cosmx,ap20cbl-2", "battery-smart";
+		};
+	};
+
+	/* LEDs need to exist for testing, but aren't actually used. */
+	led-pwms {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		pwm_red: pwm@0 {
+			compatible = "cros,pwm-mock";
+			reg = <0 1>;
+			#pwm-cells = <3>;
+		};
+		pwm_gre: pwm@1 {
+			compatible = "cros,pwm-mock";
+			reg = <1 1>;
+			#pwm-cells = <3>;
+		};
+		pwm_blu: pwm@2 {
+			compatible = "cros,pwm-mock";
+			reg = <2 1>;
+			#pwm-cells = <3>;
+		};
+	};
+
+	pwm-leds {
+		compatible = "pwm-leds";
+
+		pwm_led0: led0 {
+			pwms = <&pwm_red 0 PWM_HZ(324) PWM_POLARITY_INVERTED>,
+			       <&pwm_gre 1 PWM_HZ(324) PWM_POLARITY_INVERTED>,
+			       <&pwm_blu 2 PWM_HZ(324) PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	cros-pwmleds {
+		compatible = "cros-ec,pwm-leds";
+		leds = <&pwm_led0>;
+
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		pwm_led_0@0 {
+			reg = <0>;
+			ec-led-name = "EC_LED_ID_BATTERY_LED";
+		};
+	};
+
+	pwms {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		pwm_fan: pwm@6 {
+			compatible = "cros,pwm-mock";
+			reg = <6 1>;
+			#pwm-cells = <3>;
+			status = "okay";
+		};
+	};
+
+	tachs {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		tach_fan: tach@0 {
+			compatible = "cros,tach-mock";
+			reg = <0 1>;
+			#tach-cells = <3>;
+			status = "okay";
+		};
+	};
+
+	fans {
+		compatible = "cros-ec,fans";
+
+		fan_0 {
+			pwms = <&pwm_fan 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+			tach = <&tach_fan>;
+			rpm_min = <2500>;
+			rpm_start = <2500>;
+			rpm_max = <6000>;
+			enable_gpio = <&gpio_fan_enable>;
+		};
+	};
+
+	fan_steps_6w: fan-steps-6w {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp_on = <25>;
+			temp_off = <99>;
+			rpm_target = <0>;
+		};
+		level_1 {
+			temp_on = <40>;
+			temp_off = <35>;
+			rpm_target = <2500>;
+		};
+		level_2 {
+			temp_on = <44>;
+			temp_off = <41>;
+			rpm_target = <2800>;
+		};
+		level_3 {
+			temp_on = <48>;
+			temp_off = <45>;
+			rpm_target = <3000>;
+		};
+		level_4 {
+			temp_on = <52>;
+			temp_off = <49>;
+			rpm_target = <3200>;
+		};
+		level_5 {
+			temp_on = <60>;
+			temp_off = <54>;
+			rpm_target = <3600>;
+		};
+		level_6 {
+			temp_on = <64>;
+			temp_off = <58>;
+			rpm_target = <4000>;
+		};
+		level_7 {
+			temp_on = <67>;
+			temp_off = <62>;
+			rpm_target = <4600>;
+		};
+		level_8 {
+			temp_on = <71>;
+			temp_off = <66>;
+			rpm_target = <5000>;
+		};
+		level_9 {
+			temp_on = <74>;
+			temp_off = <70>;
+			rpm_target = <5500>;
+		};
+	};
+
+	fan_steps_15w: fan-steps-15w {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp_on = <25>;
+			temp_off = <99>;
+			rpm_target = <0>;
+		};
+		level_1 {
+			temp_on = <37>;
+			temp_off = <34>;
+			rpm_target = <2500>;
+		};
+		level_2 {
+			temp_on = <42>;
+			temp_off = <39>;
+			rpm_target = <2800>;
+		};
+		level_3 {
+			temp_on = <46>;
+			temp_off = <43>;
+			rpm_target = <3000>;
+		};
+		level_4 {
+			temp_on = <51>;
+			temp_off = <48>;
+			rpm_target = <3200>;
+		};
+		level_5 {
+			temp_on = <55>;
+			temp_off = <52>;
+			rpm_target = <3600>;
+		};
+		level_6 {
+			temp_on = <59>;
+			temp_off = <56>;
+			rpm_target = <4000>;
+		};
+		level_7 {
+			temp_on = <66>;
+			temp_off = <63>;
+			rpm_target = <4600>;
+		};
+		level_8 {
+			temp_on = <72>;
+			temp_off = <69>;
+			rpm_target = <5000>;
+		};
+		level_9 {
+			temp_on = <74>;
+			temp_off = <71>;
+			rpm_target = <5500>;
+		};
+	};
+
+	adc0: adc {
+		compatible = "zephyr,adc-emul";
+		nchannels = <6>;
+		ref-internal-mv = <3300>;
+		#io-channel-cells = <1>;
+		status = "okay";
+	};
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_temp_sensor_1: temp_sensor_1 {
+			enum-name = "ADC_TEMP_SENSOR_1";
+			io-channels = <&adc0 1>;
+		};
+	};
+
+	temp_memory_thermistor: memory {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_1>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		temp_memory: memory {
+			status = "okay";
+			sensor = <&temp_memory_thermistor>;
+		};
+	};
+};
+
+&thermistor_3V3_51K1_47K_4050B  {
+	status = "okay";
+};
+
+&vivaldi_kbd {
+	status = "okay";
+
+	kbd_config_1: kbd-config-1 {
+		vivaldi-codes = <0 0 0 0 0 0 0 0 0 0>;
+		capabilities = <0>;
+	};
+};

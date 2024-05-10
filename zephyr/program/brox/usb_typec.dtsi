@@ -75,11 +75,13 @@
 		compatible = "intel,pd-altmode";
 		reg = <0x68>;
 		irq-gpios = <&gpioj 1 GPIO_ACTIVE_LOW>;
+		irq-flags = <GPIO_INT_LEVEL_LOW>;
 	};
 	pdc_data_port1: rts@69 {
 		compatible = "intel,pd-altmode";
 		reg = <0x69>;
 		irq-gpios = <&gpioj 1 GPIO_ACTIVE_LOW>;
 		irq-shared;
+		irq-flags = <GPIO_INT_LEVEL_LOW>;
 	};
 };

@@ -9,7 +9,7 @@
 
 		ap_in_rst {
 			power-enum-name = "AP_IN_RST";
-			power-gpio-pin = <&gpio_sys_rst_odl>;
+			power-gpio-pin = <&gpio_ap_ec_sysrst_odl>;
 		};
 		ap_in_s3 {
 			power-enum-name = "AP_IN_S3";

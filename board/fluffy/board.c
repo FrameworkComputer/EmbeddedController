@@ -92,12 +92,12 @@ static int command_cc_flip(int argc, const char *argv[])
 		gpio_set_level(enabled_port, 0);
 		gpio_set_level(GPIO_EN_USB_MUX2, 0);
 		/* Wait long enough for CC to discharge. */
-		usleep(500 * MSEC);
+		crec_usleep(500 * MSEC);
 	}
 
 	gpio_set_level(GPIO_EN_CC_FLIP, enable);
 	/* Allow some time for new CC configuration to settle. */
-	usleep(500 * MSEC);
+	crec_usleep(500 * MSEC);
 
 	if (output_en) {
 		gpio_set_level(enabled_port, 1);
@@ -213,10 +213,10 @@ static void board_init(void)
 	/* Do a sweeping LED dance. */
 	for (enum led_ch led = 0; led < LED_COUNT; led++) {
 		set_led(led, 1);
-		msleep(100);
+		crec_msleep(100);
 	}
 
-	msleep(500);
+	crec_msleep(500);
 
 	for (enum led_ch led = 0; led < LED_COUNT; led++)
 		set_led(led, 0);
@@ -293,7 +293,7 @@ static int command_portctl(int argc, const char **argv)
 		CPRINTS("Port %d: disabled", enabled_port - GPIO_EN_C0);
 
 	/* Allow time for an "unplug" to allow VBUS and CC to fall. */
-	usleep(1 * SECOND);
+	crec_usleep(1 * SECOND);
 
 	/*
 	 * The USB 2.0 lines are arranged using 3x 8:1 muxes.  Ports 0-7 are

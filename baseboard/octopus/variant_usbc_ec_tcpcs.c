@@ -65,7 +65,7 @@ static void board_it83xx_hpd_status(const struct usb_mux *me,
 	gpio_set_level(gpio, hpd_lvl);
 	if (hpd_irq) {
 		gpio_set_level(gpio, 1);
-		msleep(1);
+		crec_msleep(1);
 		gpio_set_level(gpio, hpd_lvl);
 	}
 }
@@ -144,7 +144,7 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_USB_C0_PD_RST_ODL, 0);
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 0);
 
-	msleep(PS8XXX_RESET_DELAY_MS);
+	crec_msleep(PS8XXX_RESET_DELAY_MS);
 
 	gpio_set_level(GPIO_USB_C0_PD_RST_ODL, 1);
 	gpio_set_level(GPIO_USB_C1_PD_RST_ODL, 1);

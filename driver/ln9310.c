@@ -316,7 +316,7 @@ static int ln9310_precharge_cfly(uint64_t *precharge_timeout)
 				LN9310_FORCE_SC21_CTRL_2_FORCE_SW_CTRL_REQ_ON);
 
 	/* delay long enough to ensure CFLY has time to fully precharge */
-	usleep(LN9310_CFLY_PRECHARGE_DELAY);
+	crec_usleep(LN9310_CFLY_PRECHARGE_DELAY);
 
 	/* locking and leaving test mode will stop CFLY precharge */
 	*precharge_timeout = get_time().val + LN9310_CFLY_PRECHARGE_TIMEOUT;
@@ -414,7 +414,7 @@ int ln9310_init(void)
 	field_update8(LN9310_REG_SPARE_0, LN9310_SPARE_0_LB_MIN_FREQ_SEL_MASK,
 		      LN9310_SPARE_0_LB_MIN_FREQ_SEL_ON);
 
-	usleep(LN9310_CDC_DELAY);
+	crec_usleep(LN9310_CDC_DELAY);
 	CPRINTS("LN9310 OP_MODE Update method: Self-sync");
 
 	if (startup_workaround_required) {

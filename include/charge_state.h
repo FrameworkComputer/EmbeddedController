@@ -316,21 +316,6 @@ board_critical_shutdown_check(struct charge_state_data *curr);
 uint8_t board_set_battery_level_shutdown(void);
 
 /**
- * Return system PLT power and battery's desired power.
- *
- * @return desired power in mW
- */
-int charge_get_plt_plus_bat_desired_mw(void);
-
-/**
- * Get the stable battery charging current. The current will be
- * CHARGE_CURRENT_UNINITIALIZED if not yet stable.
- *
- * @return stable battery charging current in mA
- */
-int charge_get_stable_current(void);
-
-/**
  * Select which charger IC will actually be performing the charger switching.
  *
  * @param idx The index into the chg_chips table.
@@ -342,34 +327,6 @@ void charge_set_active_chg_chip(int idx);
  * switching.
  */
 int charge_get_active_chg_chip(void);
-
-/**
- * Set the stable current.
- *
- * @param ma: battery charging current in mA
- */
-void charge_set_stable_current(int ma);
-
-/**
- * Reset stable current counter stable_ts. Calling this function would set
- * stable_current to CHARGE_CURRENT_UNINITIALIZED.
- */
-void charge_reset_stable_current(void);
-
-/**
- * Reset stable current counter stable_ts. Calling this function would set
- * stable_current to CHARGE_CURRENT_UNINITIALIZED.
- *
- * @param us: sample stable current until us later.
- */
-void charge_reset_stable_current_us(uint64_t us);
-
-/**
- * Check if the battery charging current is stable by examining the timestamp.
- *
- * @return true if stable timestamp expired, false otherwise.
- */
-bool charge_is_current_stable(void);
 
 /**
  * Reset the OCPC internal state data and set the target VSYS to the current

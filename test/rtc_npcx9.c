@@ -10,7 +10,11 @@
 #include "test_util.h"
 #include "timer.h"
 
-static const int rtc_delay_seconds = 2;
+/*
+ * b/328779928: If you increase this value to 2, the test fails when run with
+ * run_device_tests.py, but passes when run on the console manually.
+ */
+static const int rtc_delay_seconds = 1;
 static atomic_t interrupt_counter;
 static atomic_t rtc_fired;
 
@@ -24,7 +28,7 @@ test_static int test_rtc_alarm_fired(void)
 	atomic_clear(&interrupt_counter);
 	system_set_rtc_alarm(rtc_delay_seconds, 0);
 
-	sleep(2 * rtc_delay_seconds);
+	crec_sleep(2 * rtc_delay_seconds);
 
 	rtc_fired = atomic_get(&interrupt_counter);
 
@@ -39,7 +43,7 @@ test_static int test_rtc_alarm_not_fired(void)
 	atomic_clear(&interrupt_counter);
 	system_set_rtc_alarm(rtc_delay_seconds, 0);
 
-	sleep(0.5 * rtc_delay_seconds);
+	crec_sleep(0.5 * rtc_delay_seconds);
 
 	rtc_fired = atomic_get(&interrupt_counter);
 
@@ -57,12 +61,11 @@ test_static int test_rtc_series_alarm_fired(void)
 
 	for (int i = 0; i < rtc_alarm_iterations; ++i) {
 		system_set_rtc_alarm(rtc_delay_seconds, 0);
-		sleep(2 * rtc_delay_seconds);
+		crec_sleep(2 * rtc_delay_seconds);
+		rtc_fired = atomic_get(&interrupt_counter);
+		TEST_EQ(i + 1, rtc_fired, "%d");
+		TEST_EQ(0, system_get_rtc_alarm(), "%d");
 	}
-
-	rtc_fired = atomic_get(&interrupt_counter);
-
-	TEST_EQ(rtc_alarm_iterations, rtc_fired, "%d");
 
 	return EC_SUCCESS;
 }

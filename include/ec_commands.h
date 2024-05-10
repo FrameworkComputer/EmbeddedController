@@ -1723,6 +1723,14 @@ enum ec_feature_code {
 	 * The EC supports DP2.1 capability
 	 */
 	EC_FEATURE_TYPEC_DP2_1 = 52,
+	/*
+	 * The MCU is System Companion Processor Core 1
+	 */
+	EC_FEATURE_SCP_C1 = 53,
+	/*
+	 * The EC supports UCSI PPM.
+	 */
+	EC_FEATURE_UCSI_PPM = 54,
 };
 
 #define EC_FEATURE_MASK_0(event_code) BIT(event_code % 32)
@@ -2929,6 +2937,7 @@ enum motionsensor_chip {
 	MOTIONSENSE_CHIP_BMI323 = 28,
 	MOTIONSENSE_CHIP_BMI220 = 29,
 	MOTIONSENSE_CHIP_CM32183 = 30,
+	MOTIONSENSE_CHIP_VEML3328 = 31,
 	MOTIONSENSE_CHIP_MAX,
 };
 
@@ -4607,6 +4616,9 @@ enum ec_console_read_subcmd {
 struct ec_params_console_read_v1 {
 	uint8_t subcmd; /* enum ec_console_read_subcmd */
 } __ec_align1;
+
+/* Print directly to EC console from host. */
+#define EC_CMD_CONSOLE_PRINT 0x00AC
 
 /*****************************************************************************/
 
@@ -6380,7 +6392,7 @@ enum cbi_data_tag {
 
 union ec_common_control {
 	struct {
-		uint32_t bcic_enabled : 1; /* Unused. Take it over as yours. */
+		uint32_t ucsi_enabled : 1;
 	};
 	uint32_t raw_value;
 };
@@ -6820,6 +6832,7 @@ enum action_key {
 	TK_KBD_BKLIGHT_TOGGLE = 18,
 	TK_MICMUTE = 19,
 	TK_MENU = 20,
+	TK_DICTATE = 21,
 
 	TK_COUNT
 };
@@ -6845,6 +6858,11 @@ enum action_key {
  * Whether the keyboard has a screenlock key.
  */
 #define KEYBD_CAP_SCRNLOCK_KEY BIT(2)
+
+/*
+ * Whether the keyboard has an assistant key.
+ */
+#define KEYBD_CAP_ASSISTANT_KEY BIT(3)
 
 struct ec_response_keybd_config {
 	/*
@@ -7185,6 +7203,7 @@ enum tcpc_cc_polarity {
 #define PD_STATUS_EVENT_VDM_REQ_REPLY BIT(6)
 #define PD_STATUS_EVENT_VDM_REQ_FAILED BIT(7)
 #define PD_STATUS_EVENT_VDM_ATTENTION BIT(8)
+#define PD_STATUS_EVENT_COUNT 9
 
 /*
  * Encode and decode for BCD revision response
@@ -8270,6 +8289,21 @@ struct ec_response_fp_read_match_secret_with_pubkey {
 struct ec_params_fp_unlock_template {
 	uint16_t fgr_num;
 } __ec_align4;
+
+/*
+ * Migrate a legacy FP template (here, legacy refers to being generated in a
+ * raw user_id context instead of a nonce context) by wiping its match secret
+ * salt and treating it as a newly-enrolled template.
+ * The legacy FP template needs to be uploaded by FP_TEMPLATE command first
+ * without committing, then this command will commit it.
+ */
+#define EC_CMD_FP_MIGRATE_TEMPLATE_TO_NONCE_CONTEXT 0x0418
+
+struct ec_params_fp_migrate_template_to_nonce_context {
+	/* The context userid used to encrypt this template when it was created.
+	 */
+	uint32_t userid[FP_CONTEXT_USERID_WORDS];
+};
 
 /*****************************************************************************/
 /* Touchpad MCU commands: range 0x0500-0x05FF */

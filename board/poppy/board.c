@@ -281,13 +281,13 @@ void board_set_tcpc_power_mode(int port, int mode)
 
 	if (mode) {
 		gpio_set_level(GPIO_USB_C0_TCPC_PWR, 1);
-		msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
+		crec_msleep(ANX74XX_PWR_H_RST_H_DELAY_MS);
 		gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
 	} else {
 		gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-		msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
+		crec_msleep(ANX74XX_RST_L_PWR_L_DELAY_MS);
 		gpio_set_level(GPIO_USB_C0_TCPC_PWR, 0);
-		msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
+		crec_msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 	}
 }
 
@@ -297,12 +297,12 @@ void board_reset_pd_mcu(void)
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 0);
 
-	msleep(MAX(1, ANX74XX_RST_L_PWR_L_DELAY_MS));
+	crec_msleep(MAX(1, ANX74XX_RST_L_PWR_L_DELAY_MS));
 	gpio_set_level(GPIO_USB_C1_PD_RST_L, 1);
 	/* Disable TCPC0 (anx3429) power */
 	gpio_set_level(GPIO_USB_C0_TCPC_PWR, 0);
 
-	msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
+	crec_msleep(ANX74XX_PWR_L_PWR_H_DELAY_MS);
 	board_set_tcpc_power_mode(USB_PD_PORT_ANX74XX, 1);
 }
 
@@ -314,7 +314,7 @@ void board_tcpc_init(void)
 	if (!system_jumped_late()) {
 		gpio_set_level(GPIO_PP3300_USB_PD, 1);
 		/* TODO(crosbug.com/p/61098): How long do we need to wait? */
-		msleep(10);
+		crec_msleep(10);
 		board_reset_pd_mcu();
 	}
 

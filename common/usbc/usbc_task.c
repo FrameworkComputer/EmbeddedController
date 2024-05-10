@@ -39,6 +39,12 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 47
+
 #define USBC_EVENT_TIMEOUT (5 * MSEC)
 #define USBC_MIN_EVENT_TIMEOUT (1 * MSEC)
 
@@ -177,7 +183,7 @@ void pd_task(void *u)
 		return;
 
 #if CONFIG_USB_PD_STARTUP_DELAY_MS > 0
-	msleep(CONFIG_USB_PD_STARTUP_DELAY_MS);
+	crec_msleep(CONFIG_USB_PD_STARTUP_DELAY_MS);
 #endif
 
 	while (1) {

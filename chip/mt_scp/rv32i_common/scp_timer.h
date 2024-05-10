@@ -6,8 +6,9 @@
 #ifndef __SCP_TIMER_H
 #define __SCP_TIMER_H
 
-/* detect existance of 26m clock in S3 stage */
-#define TIMER_SR 4
+#define TIMER_EVENT 3
+#define TIMER_SR 4 /* detect existance of 26m clock in S3 stage */
+#define TIMER_SYSTEM 5
 
 void timer_enable(int n);
 void timer_disable(int n);

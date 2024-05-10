@@ -256,7 +256,7 @@ __override void board_kblight_init(void)
 	 */
 	gpio_set_level(GPIO_RGBKBD_SDB_L, 1);
 	gpio_set_level(GPIO_RGBKBD_POWER, 1);
-	msleep(10);
+	crec_msleep(10);
 }
 
 #endif
@@ -328,7 +328,7 @@ int board_get_entropy(void *buffer, int len)
 		while (!(STM32_CRS_ISR & STM32_CRS_ISR_SYNCOKF)) {
 			if ((__hw_clock_source_read() - start) > timeout)
 				return 0;
-			usleep(500);
+			crec_usleep(500);
 		}
 		/* Pick 8 bits, including FEDIR and 7 LSB of FECAP. */
 		data[i] = STM32_CRS_ISR >> 15;

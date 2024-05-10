@@ -109,7 +109,7 @@ static int usb_wait_console(void)
 			if (wait_time_us < MSEC)
 				udelay(wait_time_us);
 			else
-				usleep(wait_time_us);
+				crec_usleep(wait_time_us);
 			wait_time_us *= 2;
 		}
 	} else {
@@ -147,7 +147,7 @@ static int __tx_char(void *context, int c)
 	crc32_ctx_hash8(&usb_tx_crc_ctx, c);
 
 	while (queue_add_unit(&tx_q, &c) != 1)
-		usleep(500);
+		crec_usleep(500);
 
 	return EC_SUCCESS;
 #else

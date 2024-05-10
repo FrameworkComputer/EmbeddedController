@@ -4,6 +4,7 @@
  */
 
 #include "include/platform.h"
+#include "ppm_common.h"
 
 #include <stdarg.h>
 #include <stdio.h>
@@ -81,23 +82,25 @@ struct task_handle {
 	pthread_t thread;
 };
 
-struct task_handle *platform_task_init(void *start_fn, void *arg)
+int platform_task_init(void *start_fn, void *arg, struct task_handle **handle)
 {
-	struct task_handle *handle = malloc(sizeof(struct task_handle));
-	if (!handle) {
-		ELOG("Failed to allocate task handle");
-		return NULL;
+	if (!*handle) {
+		*handle = malloc(sizeof(struct task_handle));
+		if (!*handle) {
+			ELOG("Failed to allocate task handle");
+			return -1;
+		}
 	}
 
-	int res = pthread_create(&handle->thread, NULL, start_fn, arg);
+	int res = pthread_create(&(*handle)->thread, NULL, start_fn, arg);
 	if (res != 0) {
 		ELOG("Failed to start thread with error %d for start_fn %p",
 		     res, start_fn);
-		free(handle);
-		return NULL;
+		free(*handle);
+		return -1;
 	}
 
-	return handle;
+	return 0;
 }
 
 void platform_task_exit()
@@ -114,19 +117,20 @@ struct platform_mutex {
 	pthread_mutex_t lock;
 };
 
-struct platform_mutex *platform_mutex_init()
+int platform_mutex_init(struct platform_mutex **mutex)
 {
-	struct platform_mutex *mutex = malloc(sizeof(struct platform_mutex));
-	if (!mutex) {
-		return NULL;
+	if (!*mutex) {
+		*mutex = malloc(sizeof(struct platform_mutex));
+		if (!*mutex)
+			return -1;
 	}
 
-	if (pthread_mutex_init(&mutex->lock, NULL)) {
-		free(mutex);
-		return NULL;
+	if (pthread_mutex_init(&(*mutex)->lock, NULL)) {
+		free(*mutex);
+		return -1;
 	}
 
-	return mutex;
+	return 0;
 }
 
 void platform_mutex_lock(struct platform_mutex *mutex)
@@ -142,19 +146,20 @@ struct platform_condvar {
 	pthread_cond_t var;
 };
 
-struct platform_condvar *platform_condvar_init()
+int platform_condvar_init(struct platform_condvar **cond)
 {
-	struct platform_condvar *cond = malloc(sizeof(struct platform_condvar));
-	if (!cond) {
-		return NULL;
+	if (!*cond) {
+		*cond = malloc(sizeof(struct platform_condvar));
+		if (!*cond)
+			return -1;
 	}
 
-	if (pthread_cond_init(&cond->var, NULL)) {
-		free(cond);
-		return NULL;
+	if (pthread_cond_init(&(*cond)->var, NULL)) {
+		free(*cond);
+		return -1;
 	}
 
-	return cond;
+	return 0;
 }
 
 void platform_condvar_wait(struct platform_condvar *condvar,
@@ -166,4 +171,30 @@ void platform_condvar_wait(struct platform_condvar *condvar,
 void platform_condvar_signal(struct platform_condvar *condvar)
 {
 	pthread_cond_signal(&condvar->var);
+}
+
+struct ucsi_ppm_driver *platform_allocate_ppm(void)
+{
+	struct ppm_common_device *dev = NULL;
+	struct ucsi_ppm_driver *drv = NULL;
+
+	dev = platform_calloc(1, sizeof(struct ppm_common_device));
+	if (!dev) {
+		goto handle_error;
+	}
+
+	drv = platform_calloc(1, sizeof(struct ucsi_ppm_driver));
+	if (!drv) {
+		goto handle_error;
+	}
+
+	drv->dev = (struct ucsi_ppm_device *)dev;
+
+	return drv;
+
+handle_error:
+	platform_free(dev);
+	platform_free(drv);
+
+	return NULL;
 }

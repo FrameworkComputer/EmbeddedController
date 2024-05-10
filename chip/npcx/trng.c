@@ -3,7 +3,18 @@
  * found in the LICENSE file.
  */
 
-/* Hardware Random Number Generator */
+/*
+ * Deterministic Random Bit Generator (DRBG) using Nuvoton Cryptographic
+ * Library (NCL) APIs.
+ *
+ * Note that despite the name of this file, it is not a non-deterministic random
+ * bit generator (NRBG) aka true random number generator (TRNG).
+ *
+ * This DRBG follows NIST SP 800-90A Rev. 1.
+ * https://nvlpubs.nist.gov/nistpubs/SpecialPublications/NIST.SP.800-90Ar1.pdf
+ * and has been validated:
+ * https://csrc.nist.gov/projects/cryptographic-module-validation-program/certificate/4603
+ */
 
 #include "common.h"
 #include "console.h"

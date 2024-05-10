@@ -198,7 +198,7 @@ void board_reset_pd_mcu(void)
 	 * delay for power-on to reset-off and min. assertion time
 	 */
 
-	msleep(20);
+	crec_msleep(20);
 
 	gpio_set_level(GPIO_USB_C1_RST_ODL, 1);
 	gpio_set_level(GPIO_USB_C1_RT_RST_R_ODL, 1);
@@ -206,7 +206,7 @@ void board_reset_pd_mcu(void)
 
 	/* wait for chips to come up */
 
-	msleep(50);
+	crec_msleep(50);
 }
 
 static void board_tcpc_init(void)
@@ -295,9 +295,6 @@ void ppc_interrupt(enum gpio_signal signal)
 
 void retimer_interrupt(enum gpio_signal signal)
 {
-	/*
-	 * TODO(b/179513527): add USB-C support
-	 */
 }
 
 __override bool board_is_dts_port(int port)

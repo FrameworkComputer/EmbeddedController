@@ -34,6 +34,8 @@ struct pd_altmode_config {
 	struct gpio_dt_spec int_gpio;
 	/* Shared interrupt pin in dual port solution */
 	bool shared_irq;
+	/* Zephyr config flag for interrupt */
+	int irq_flags;
 };
 
 struct pd_altmode_data {
@@ -177,8 +179,13 @@ static int intel_altmode_init(const struct device *dev)
 			return rv;
 		}
 
+		/*
+		 * If board specific GPIO flags available use them, or default
+		 * to GPIO_INT_EDGE_FALLING
+		 */
 		rv = gpio_pin_interrupt_configure_dt(&cfg->int_gpio,
-						     GPIO_INT_LEVEL_LOW);
+						     cfg->irq_flags);
+
 		if (rv < 0) {
 			LOG_ERR("Unable to configure interrupt");
 			return rv;
@@ -195,6 +202,8 @@ static int intel_altmode_init(const struct device *dev)
 		.i2c = I2C_DT_SPEC_INST_GET(inst),                        \
 		.int_gpio = GPIO_DT_SPEC_INST_GET(inst, irq_gpios),       \
 		.shared_irq = DT_INST_PROP(inst, irq_shared),             \
+		.irq_flags = DT_INST_PROP_OR(inst, irq_flags,             \
+					     GPIO_INT_EDGE_FALLING),      \
 	};                                                                \
                                                                           \
 	DEVICE_DT_INST_DEFINE(inst, intel_altmode_init, NULL,             \

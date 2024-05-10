@@ -42,7 +42,7 @@ static int mt6370_init(int port)
 			return rv;
 
 		/* Need 1 ms for software reset. */
-		msleep(1);
+		crec_msleep(1);
 	}
 
 	/* The earliest point that we can do generic init. */

@@ -17,6 +17,16 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_button_interrupt";
 		};
+		int_volume_up: volume-up {
+			irq-pin = <&gpio_ec_volup_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+		int_volume_down: volume-down {
+			irq-pin = <&gpio_ec_voldn_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
 		int_lid_open: lid-open {
 			irq-pin = <&gpio_lid_open_3v3>;
 			flags = <GPIO_INT_EDGE_BOTH>;
@@ -51,6 +61,31 @@
 			irq-pin = <&gpio_ap_ec_sysrst_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "power_signal_interrupt";
+		};
+		int_hdmi_ec_hpd: hdmi-ec-hpd {
+			irq-pin = <&gpio_hdmi_ec_hpd>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "hdmi_hpd_interrupt";
+		};
+		int_lid_accel: lid-accel {
+			irq-pin = <&gpio_lid_accel_int_ec_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lis2dw12_interrupt";
+		};
+		int_imu: ec-imu {
+			irq-pin = <&gpio_imu_int_ec_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bmi3xx_interrupt";
+		};
+		int_als_rgb: ec_als_rgb {
+			irq-pin = <&gpio_als_int_ec_odl>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcs3400_interrupt";
+		};
+		int_ap_xhci_init_done: ap-xhci-init-done-r {
+			irq-pin = <&gpio_ap_xhci_init_done_r>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "xhci_interrupt";
 		};
 	};
 };

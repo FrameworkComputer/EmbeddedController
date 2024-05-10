@@ -371,7 +371,7 @@ void board_reset_pd_mcu(void)
 	cflush();
 
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 0);
-	msleep(PS8XXX_RESET_DELAY_MS);
+	crec_msleep(PS8XXX_RESET_DELAY_MS);
 	gpio_set_level(GPIO_USB_C0_PD_RST_L, 1);
 }
 

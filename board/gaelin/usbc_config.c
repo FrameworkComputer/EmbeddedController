@@ -147,9 +147,10 @@ static void ps8815_reset(int port)
 	}
 
 	gpio_set_level(ps8xxx_rst_odl, 0);
-	msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS, PS8815_PWR_H_RST_H_DELAY_MS));
+	crec_msleep(GENERIC_MAX(PS8XXX_RESET_DELAY_MS,
+				PS8815_PWR_H_RST_H_DELAY_MS));
 	gpio_set_level(ps8xxx_rst_odl, 1);
-	msleep(PS8815_FW_INIT_DELAY_MS);
+	crec_msleep(PS8815_FW_INIT_DELAY_MS);
 
 	CPRINTS("[C%d] %s: patching ps8815 registers", port, __func__);
 
@@ -157,7 +158,7 @@ static void ps8815_reset(int port)
 		CPRINTS("ps8815: reg 0x0f was %02x", val);
 	else {
 		CPRINTS("delay 10ms to make sure ps8815 is waken from idle");
-		msleep(10);
+		crec_msleep(10);
 	}
 
 	if (i2c_write8(i2c_port, i2c_addr_flags, 0x0f, 0x31) == EC_SUCCESS)
@@ -260,13 +261,6 @@ void ppc_interrupt(enum gpio_signal signal)
 	default:
 		break;
 	}
-}
-
-void retimer_interrupt(enum gpio_signal signal)
-{
-	/*
-	 * TODO(b/179513527): add USB-C support
-	 */
 }
 
 __override bool board_is_dts_port(int port)

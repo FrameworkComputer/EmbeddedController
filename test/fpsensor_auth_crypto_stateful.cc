@@ -18,6 +18,7 @@
 #include <assert.h>
 #include <stdbool.h>
 
+#include <algorithm>
 #include <array>
 
 namespace
@@ -32,11 +33,11 @@ void init_tpm_seed(void)
 		0x82, 0xce, 0x06, 0x3f, 0xcc, 0x23, 0xb9, 0xe7,
 	};
 
-	static_assert(fake_tpm_seed.size() == sizeof(tpm_seed));
+	static_assert(fake_tpm_seed.size() == sizeof(global_context.tpm_seed));
 
-	std::copy(fake_tpm_seed.begin(), fake_tpm_seed.end(), tpm_seed);
+	std::ranges::copy(fake_tpm_seed, global_context.tpm_seed);
 
-	fp_encryption_status |= FP_ENC_STATUS_SEED_SET;
+	global_context.fp_encryption_status |= FP_ENC_STATUS_SEED_SET;
 }
 
 test_static enum ec_error_list test_fp_encrypt_decrypt_data(void)
@@ -50,8 +51,7 @@ test_static enum ec_error_list test_fp_encrypt_decrypt_data(void)
 
 	std::copy(input.begin(), input.end(), data.begin());
 
-	TEST_EQ(encrypt_data_in_place(version, info, data.data(), data.size()),
-		EC_SUCCESS, "%d");
+	TEST_EQ(encrypt_data_in_place(version, info, data), EC_SUCCESS, "%d");
 
 	TEST_EQ(info.struct_version, version, "%d");
 
@@ -59,9 +59,7 @@ test_static enum ec_error_list test_fp_encrypt_decrypt_data(void)
 	TEST_ASSERT_ARRAY_NE(data, input, data.size());
 
 	std::array<uint8_t, 32> output;
-	TEST_EQ(decrypt_data(info, data.data(), data.size(), output.data(),
-			     output.size()),
-		EC_SUCCESS, "%d");
+	TEST_EQ(decrypt_data(info, data, output), EC_SUCCESS, "%d");
 
 	TEST_ASSERT_ARRAY_EQ(input, output, sizeof(input));
 
@@ -112,11 +110,8 @@ test_static enum ec_error_list test_fp_generate_gsc_session_key(void)
 
 	std::array<uint8_t, 32> gsc_session_key;
 
-	TEST_EQ(generate_gsc_session_key(auth_nonce.data(), auth_nonce.size(),
-					 gsc_nonce.data(), gsc_nonce.size(),
-					 pairing_key.data(), pairing_key.size(),
-					 gsc_session_key.data(),
-					 gsc_session_key.size()),
+	TEST_EQ(generate_gsc_session_key(auth_nonce, gsc_nonce, pairing_key,
+					 gsc_session_key),
 		EC_SUCCESS, "%d");
 
 	std::array<uint8_t, 32> expected_gsc_session_key = {
@@ -147,11 +142,8 @@ test_static enum ec_error_list test_fp_generate_gsc_session_key_fail(void)
 	/* Wrong gsc_session_key size. */
 	std::array<uint8_t, 30> gsc_session_key;
 
-	TEST_NE(generate_gsc_session_key(auth_nonce.data(), auth_nonce.size(),
-					 gsc_nonce.data(), gsc_nonce.size(),
-					 pairing_key.data(), pairing_key.size(),
-					 gsc_session_key.data(),
-					 gsc_session_key.size()),
+	TEST_NE(generate_gsc_session_key(auth_nonce, gsc_nonce, pairing_key,
+					 gsc_session_key),
 		EC_SUCCESS, "%d");
 
 	return EC_SUCCESS;
@@ -175,9 +167,8 @@ test_fp_decrypt_data_with_gsc_session_key_in_place(void)
 					 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1,
 					 2, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
 
-	TEST_EQ(decrypt_data_with_gsc_session_key_in_place(
-			gsc_session_key.data(), gsc_session_key.size(),
-			iv.data(), iv.size(), data.data(), data.size()),
+	TEST_EQ(decrypt_data_with_gsc_session_key_in_place(gsc_session_key, iv,
+							   data),
 		EC_SUCCESS, "%d");
 
 	std::array<uint8_t, 32> expected_data = {
@@ -212,9 +203,8 @@ test_fp_decrypt_data_with_gsc_session_key_in_place_fail(void)
 					 1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1,
 					 2, 3, 4, 5, 6, 7, 8, 9, 1, 2 };
 
-	TEST_NE(decrypt_data_with_gsc_session_key_in_place(
-			gsc_session_key.data(), gsc_session_key.size(),
-			iv.data(), iv.size(), data.data(), data.size()),
+	TEST_NE(decrypt_data_with_gsc_session_key_in_place(gsc_session_key, iv,
+							   data),
 		EC_SUCCESS, "%d");
 
 	return EC_SUCCESS;
@@ -247,9 +237,8 @@ test_static enum ec_error_list test_fp_encrypt_data_with_ecdh_key_in_place(void)
 
 	TEST_ASSERT_ARRAY_EQ(iv, zero_iv, iv.size());
 
-	TEST_EQ(encrypt_data_with_ecdh_key_in_place(
-			*pubkey, enc_secret.data(), enc_secret.size(),
-			iv.data(), iv.size(), response_pubkey),
+	TEST_EQ(encrypt_data_with_ecdh_key_in_place(*pubkey, enc_secret, iv,
+						    response_pubkey),
 		EC_SUCCESS, "%d");
 
 	/* The encrypted data should not be the same as the input. */

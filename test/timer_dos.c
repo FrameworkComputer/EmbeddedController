@@ -75,6 +75,6 @@ void run_test(int argc, const char **argv)
 	task_wake(TASK_ID_TMRC);
 	task_wake(TASK_ID_TMRB);
 	task_wake(TASK_ID_TMRA);
-	usleep(TEST_TIME + SECOND);
+	crec_usleep(TEST_TIME + SECOND);
 	test_pass();
 }

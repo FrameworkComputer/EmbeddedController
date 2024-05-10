@@ -68,7 +68,7 @@ __maybe_unused static void board_power_sequence(int enable)
 				       board_power_seq[i].level);
 			CPRINTS("power seq: rail = %d", i);
 			if (board_power_seq[i].delay_ms)
-				msleep(board_power_seq[i].delay_ms);
+				crec_msleep(board_power_seq[i].delay_ms);
 		}
 	} else {
 		for (i = board_power_seq_count - 1; i >= 0; i--) {
@@ -171,10 +171,10 @@ void baseboard_set_mst_lane_control(int mf)
 	if (mf != gpio_get_level(GPIO_MST_HUB_LANE_SWITCH)) {
 		/* put MST into reset */
 		gpio_set_level(GPIO_MST_RST_L, 0);
-		msleep(1);
+		crec_msleep(1);
 		gpio_set_level(GPIO_MST_HUB_LANE_SWITCH, mf);
 		CPRINTS("MST: lane control = %s", mf ? "high" : "low");
-		msleep(1);
+		crec_msleep(1);
 		/* lane control is set, take MST out of reset */
 		gpio_set_level(GPIO_MST_RST_L, 1);
 	}
@@ -187,7 +187,7 @@ static void baseboard_enable_mp4245(void)
 
 	mp4245_set_voltage_out(5000);
 	mp4245_votlage_out_enable(1);
-	msleep(MP4245_VOUT_5V_DELAY_MS);
+	crec_msleep(MP4245_VOUT_5V_DELAY_MS);
 	mp3245_get_vbus(&mv, &ma);
 	CPRINTS("mp4245: vout @ %d mV enabled", mv);
 }
@@ -281,7 +281,7 @@ static void baseboard_power_on(void)
 	 */
 	for (port = 0; port < port_max; port++) {
 		ppc_init(port);
-		msleep(1000);
+		crec_msleep(1000);
 		/* Inform TC state machine that it can resume */
 		pd_set_suspend(port, 0);
 	}
@@ -336,7 +336,7 @@ static void baseboard_toggle_mf(void)
 		 * take effect.
 		 */
 		pd_set_suspend(USB_PD_PORT_HOST, 1);
-		msleep(250);
+		crec_msleep(250);
 		pd_set_suspend(USB_PD_PORT_HOST, 0);
 	}
 }

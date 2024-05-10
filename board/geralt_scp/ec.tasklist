@@ -1,0 +1,27 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/**
+ * See CONFIG_TASK_LIST in config.h for details.
+ */
+#ifdef BOARD_GERALT_SCP_CORE1
+#define FEATURE_TASK_LIST \
+	TASK_ALWAYS(IMG_SERVICE, img_service_task, NULL, 8192) \
+	TASK_ALWAYS(IMG_HANDLER, img_handler_task, NULL, 58368) \
+	TASK_ALWAYS(CAM_SERVICE, cam_service_task, NULL, 6016)
+#else
+#define FEATURE_TASK_LIST
+#endif
+
+#define CONFIG_TASK_LIST \
+	TASK_ALWAYS(HOOKS, hook_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_ALWAYS(HOSTCMD, host_command_task, NULL, LARGER_TASK_STACK_SIZE) \
+	TASK_ALWAYS(CONSOLE, console_task, NULL, LARGER_TASK_STACK_SIZE) \
+	FEATURE_TASK_LIST \
+	TASK_ALWAYS(SR, sr_task, NULL, TASK_STACK_SIZE) \
+	TASK_ALWAYS(VDEC_SERVICE, vdec_service_task, NULL, 4096) \
+	TASK_ALWAYS(VDEC_CORE_SERVICE, vdec_core_service_task, NULL, 4096) \
+	TASK_ALWAYS(VENC_SERVICE, venc_service_task, NULL, TRENTA_TASK_STACK_SIZE) \
+	TASK_ALWAYS(MDP_SERVICE, mdp_service_task, NULL, 4096)

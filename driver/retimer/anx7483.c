@@ -277,7 +277,7 @@ test_export_static int anx7483_init(const struct usb_mux *me)
 		rv = anx7483_read(me, ANX7483_ANALOG_STATUS_CTRL_REG, &val);
 		if (!rv)
 			break;
-		usleep(ANX7483_I2C_WAKE_RETRY_DELAY_US);
+		crec_usleep(ANX7483_I2C_WAKE_RETRY_DELAY_US);
 	} while (time_since32(start) < ANX7483_I2C_WAKE_TIMEOUT_MS * MSEC);
 
 	if (rv) {

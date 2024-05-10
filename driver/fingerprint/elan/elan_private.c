@@ -9,7 +9,7 @@
 #include "elan_sensor_pal.h"
 #include "elan_setting.h"
 #include "fpsensor/fpsensor.h"
-#include "fpsensor/fpsensor_utils.h"
+#include "fpsensor/fpsensor_console.h"
 #include "gpio.h"
 #include "link_defs.h"
 #include "math_util.h"

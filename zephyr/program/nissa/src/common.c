@@ -23,6 +23,7 @@ LOG_MODULE_REGISTER(nissa, CONFIG_NISSA_LOG_LEVEL);
 __overridable void board_power_change(struct ap_power_ev_callback *cb,
 				      struct ap_power_ev_data data)
 {
+#if DT_NODE_EXISTS(DT_NODELABEL(gpio_en_pp5000_pen_x))
 	/*
 	 * Enable power to pen garage when system is active (safe even if no
 	 * pen is present).
@@ -40,6 +41,7 @@ __overridable void board_power_change(struct ap_power_ev_callback *cb,
 	default:
 		break;
 	}
+#endif
 }
 
 static void board_setup_init(void)

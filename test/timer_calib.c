@@ -35,7 +35,7 @@ int timer_calib_task(void *data)
 		cflush();
 		ccprintf("Go...");
 		t0 = get_time();
-		usleep(1000000);
+		crec_usleep(1000000);
 		t1 = get_time();
 		ccprintf("done. delay = %d us\n", difftime(t0, t1));
 
@@ -44,7 +44,7 @@ int timer_calib_task(void *data)
 		cflush();
 		for (d = 128; d > 0; d = d / 2) {
 			t0 = get_time();
-			usleep(d);
+			crec_usleep(d);
 			t1 = get_time();
 			ccprintf("  %d us => %d us\n", d, difftime(t0, t1));
 			cflush();

@@ -6,6 +6,7 @@
 /* Console output module for Chrome EC */
 
 #include "console.h"
+#include "host_command.h"
 #include "printf.h"
 #include "uart.h"
 #include "usb_console.h"
@@ -204,3 +205,23 @@ DECLARE_SAFE_CONSOLE_COMMAND(chan, command_ch,
 			     "[ save | restore | <mask> | <name> ]",
 			     "Save, restore, get or set console channel mask");
 #endif /* CONFIG_CONSOLE_CHANNEL */
+
+#ifdef CONFIG_HOSTCMD_CONSOLE_PRINT
+static enum ec_status
+host_command_console_print(struct host_cmd_handler_args *args)
+{
+	char *msg = (char *)args->params;
+
+	if (args->params_size <= 0)
+		return EC_RES_INVALID_PARAM;
+	/* Ensure message is null terminated */
+	msg[args->params_size - 1] = '\0';
+	/* No response */
+	args->response_size = 0;
+	/* Print message to console */
+	ccprints("Host: %s", msg);
+	return EC_RES_SUCCESS;
+}
+DECLARE_HOST_COMMAND(EC_CMD_CONSOLE_PRINT, host_command_console_print,
+		     EC_VER_MASK(0));
+#endif

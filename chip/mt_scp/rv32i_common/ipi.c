@@ -19,6 +19,8 @@
 #define CPRINTF(format, args...) cprintf(CC_IPI, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_IPI, format, ##args)
 
+#define SCP_AP2SCP_IRQ CONCAT2(SCP_IRQ_GIPC_IN, SCP_CORE_SN)
+
 static uint8_t init_done;
 
 static struct mutex ipi_lock;
@@ -44,7 +46,7 @@ void ipi_enable_irq(void)
 
 static int ipi_is_busy(void)
 {
-	return SCP_SCP2APMCU_IPC_SET & IPC_SCP2HOST;
+	return ipi_op_scp2ap_is_irq_set();
 }
 
 static void ipi_wake_ap(int32_t id)
@@ -53,7 +55,7 @@ static void ipi_wake_ap(int32_t id)
 		return;
 
 	if (*ipi_wakeup_table[id])
-		SCP_SCP2SPM_IPC_SET = IPC_SCP2HOST;
+		ipi_op_wake_ap();
 }
 
 int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
@@ -105,7 +107,7 @@ int ipi_send(int32_t id, const void *buf, uint32_t len, int wait)
 
 	/* interrupt AP to handle the message */
 	ipi_wake_ap(id);
-	SCP_SCP2APMCU_IPC_SET = IPC_SCP2HOST;
+	ipi_op_scp2ap_irq_set();
 
 	if (wait)
 		while (ipi_is_busy())
@@ -117,6 +119,17 @@ error:
 	ipi_enable_irq();
 	return ret;
 }
+
+#ifndef HAVE_PRIVATE_MT_SCP
+__overridable uint32_t video_get_dec_capability(void)
+{
+	return 0;
+}
+__overridable uint32_t video_get_enc_capability(void)
+{
+	return 0;
+}
+#endif
 
 static void ipi_enable_deferred(void)
 {
@@ -143,7 +156,7 @@ static void ipi_enable_deferred(void)
 	hostcmd_init();
 #endif
 
-	task_enable_irq(SCP_IRQ_GIPC_IN0);
+	task_enable_irq(SCP_AP2SCP_IRQ);
 }
 DECLARE_DEFERRED(ipi_enable_deferred);
 
@@ -164,8 +177,6 @@ static void ipi_handler(void)
 		return;
 	}
 
-	CPRINTS("IPI %d", ipi_recv_buf->id);
-
 	ipi_handler_table[ipi_recv_buf->id](
 		ipi_recv_buf->id, ipi_recv_buf->buffer, ipi_recv_buf->len);
 }
@@ -174,9 +185,9 @@ static void irq_group7_handler(void)
 {
 	extern volatile int ec_int;
 
-	if (SCP_GIPC_IN_SET & GIPC_IN(0)) {
+	if (ipi_op_ap2scp_is_irq_set()) {
 		ipi_handler();
-		SCP_GIPC_IN_CLR = GIPC_IN(0);
+		ipi_op_ap2scp_irq_clr();
 		asm volatile("fence.i" ::: "memory");
 		task_clear_pending_irq(ec_int);
 	}

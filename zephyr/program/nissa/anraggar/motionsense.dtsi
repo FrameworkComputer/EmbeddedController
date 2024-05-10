@@ -13,6 +13,8 @@
 		 */
 		bmi3xx-int = &base_accel;
 		lsm6dsm-int = &base_accel;
+		bma4xx-int = &lid_accel;
+		lis2dw12-int = &lid_accel;
 	};
 
 	/*
@@ -222,6 +224,7 @@
 			port = <&i2c_ec_i2c_sensor>;
 			rot-standard-ref = <&base_rot_lsm6dsm>;
 			drv-data = <&lsm6dsm_gyro_data>;
+			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
 			alternate-for = <&base_gyro>;
 			alternate-ssfc-indicator = <&base_sensor_lsm6dsm>;
 		};
@@ -234,8 +237,6 @@
 		 * list of GPIO interrupts that have to
 		 * be enabled at initial stage
 		 */
-		sensor-irqs = <&int_imu>;
-		/* list of sensors in force mode */
-		accel-force-mode-sensors = <&lid_accel>;
+		sensor-irqs = <&int_imu &int_lid_imu>;
 	};
 };

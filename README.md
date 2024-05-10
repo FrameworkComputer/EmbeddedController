@@ -374,9 +374,9 @@ Most code run on the EC after initialization is run in the context of a task
 there is no heap (malloc). All variable storage must be explicitly declared at
 build-time. The EC (and system) will reboot if any task has a stack overflow.
 Tasks typically have a top-level loop with a call to task_wait_event() or
-usleep() to set a delay in uSec before continuing. A watchdog will trigger if a
-task runs for too long. The watchdog timeout varies by EC chip and the clock
-speed the EC is running at.
+crec_usleep() to set a delay in uSec before continuing. A watchdog will trigger
+if a task runs for too long. The watchdog timeout varies by EC chip and the
+clock speed the EC is running at.
 
 The list of tasks for a board is specified in ec.tasklist in the `board/$BOARD/`
 sub-directory. Tasks are listed in priority order with the lowest priority task

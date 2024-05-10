@@ -45,13 +45,13 @@ static int test_lid_angle_less180(void)
 	/* Go to S0 state */
 	hook_notify(HOOK_CHIPSET_SUSPEND);
 	hook_notify(HOOK_CHIPSET_RESUME);
-	msleep(1000);
+	crec_msleep(1000);
 	TEST_ASSERT(sensor_active == SENSOR_ACTIVE_S0);
 	TEST_ASSERT(lid->drv->get_data_rate(lid) == TEST_LID_FREQUENCY);
 
 	/* Open lid, testing close to 180 degree. */
 	gpio_set_level(GPIO_LID_OPEN, 1);
-	msleep(1000);
+	crec_msleep(1000);
 
 	cprints(CC_ACCEL, "start loop");
 	/* Check we will never enter tablet mode. */

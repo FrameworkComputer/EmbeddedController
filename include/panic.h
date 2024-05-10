@@ -203,6 +203,11 @@ uint32_t get_panic_stack_pointer(const struct panic_data *pdata);
  */
 void chip_panic_data_backup(void);
 
+/**
+ * Called from the panic handler to trigging nested crashes for testing.
+ */
+int command_crash_nested_handler(void);
+
 #ifdef __cplusplus
 }
 #endif

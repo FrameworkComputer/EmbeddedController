@@ -3,10 +3,12 @@
  * found in the LICENSE file.
  */
 
+#include <zephyr/toolchain.h>
+
 /* Used to implement POPCOUNT(), adapted from:
  * src/third_party/llvm-project/compiler-rt/lib/builtins/popcountsi2.c
  */
-int __popcountsi2(int x)
+int __used __popcountsi2(int x)
 {
 	x = x - ((x >> 1) & 0x55555555);
 	x = ((x >> 2) & 0x33333333) + (x & 0x33333333);

@@ -47,7 +47,7 @@ static void run_bc12_test(int reg_value, enum charge_supplier expected_result)
 		     NULL);
 
 	usb_charger_task_set_event(port, USB_CHG_EVENT_VBUS);
-	msleep(1);
+	crec_msleep(1);
 	zassert_true(rt9490_emul_peek_reg(emul, RT9490_REG_CHG_CTRL2) &
 			     RT9490_BC12_EN,
 		     NULL);
@@ -62,7 +62,7 @@ static void run_bc12_test(int reg_value, enum charge_supplier expected_result)
 		rt9490_emul_write_reg(emul, RT9490_REG_CHG_STATUS1, reg_value));
 	rt9490_interrupt(port);
 	/* wait for deferred task scheduled, this takes longer. */
-	msleep(500);
+	crec_msleep(500);
 	zassert_false(rt9490_emul_peek_reg(emul, RT9490_REG_CHG_CTRL2) &
 			      RT9490_BC12_EN,
 		      NULL);
@@ -76,7 +76,7 @@ static void run_bc12_test(int reg_value, enum charge_supplier expected_result)
 		      NULL);
 
 	usb_charger_task_set_event(port, USB_CHG_EVENT_VBUS);
-	msleep(1);
+	crec_msleep(1);
 	zassert_equal(charge_manager_get_supplier(), CHARGE_SUPPLIER_NONE,
 		      NULL);
 }
@@ -86,12 +86,12 @@ ZTEST(rt9490_bc12, test_detection_flow)
 	int port = 0;
 
 	/* make charge manager thinks port 0 is chargable */
-	msleep(500);
+	crec_msleep(500);
 	usb_charger_task_set_event(port, USB_CHG_EVENT_DR_UFP);
 	charge_manager_update_dualrole(port, CAP_DEDICATED);
 	zassert_equal(charge_manager_get_supplier(), CHARGE_SUPPLIER_NONE,
 		      NULL);
-	msleep(1);
+	crec_msleep(1);
 
 	run_bc12_test(RT9490_DCP << RT9490_VBUS_STAT_SHIFT,
 		      CHARGE_SUPPLIER_BC12_DCP);

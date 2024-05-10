@@ -105,3 +105,35 @@ tests:
     - CONFIG_PLATFORM_EC_ACCELGYRO_BMI_COMM_I2C=y
     extra_dtc_overlay_files:
     - krabby.woobat.overlay
+  krabby.wugtrio:
+    extra_configs:
+    - CONFIG_TEST_WUGTRIO=y
+    - CONFIG_AP_ARM_MTK_MT8186=y
+    - CONFIG_PLATFORM_EC_BASE_ATTACHED_SWITCH=y
+    - CONFIG_PLATFORM_EC_CHIPSET_RESUME_INIT_HOOK=y
+    - CONFIG_PLATFORM_EC_DETACHABLE_BASE=y
+    - CONFIG_PLATFORM_EC_EXTPOWER_GPIO=y
+    - CONFIG_PLATFORM_EC_POWERSEQ=y
+    - CONFIG_PLATFORM_EC_POWERSEQ_PP5000_CONTROL=n
+    - CONFIG_PLATFORM_EC_TABLET_MODE=y
+    - CONFIG_SHIMMED_TASKS=y
+    extra_dtc_overlay_files:
+    - krabby.wugtrio.overlay
+  krabby.skitty:
+    extra_configs:
+    - CONFIG_TEST_SKITTY=y
+    - CONFIG_PLATFORM_EC_CHARGER_PROFILE_OVERRIDE=y
+    - CONFIG_EEPROM=y
+    - CONFIG_EEPROM_SIMULATOR=n
+    - CONFIG_PLATFORM_EC_USB_MUX_TUSB546=n
+    extra_dtc_overlay_files:
+    - krabby.skitty.overlay
+  krabby.veluza:
+    extra_configs:
+    - CONFIG_TEST_VELUZA=y
+    - CONFIG_PLATFORM_EC_CHARGER_PROFILE_OVERRIDE=y
+    - CONFIG_EEPROM=y
+    - CONFIG_EEPROM_SIMULATOR=n
+    - CONFIG_PLATFORM_EC_USB_MUX_TUSB546=n
+    extra_dtc_overlay_files:
+    - krabby.veluza.overlay

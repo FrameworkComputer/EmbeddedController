@@ -11,7 +11,7 @@
 #include "fpc_private.h"
 #include "fpc_sensor.h"
 #include "fpsensor/fpsensor.h"
-#include "fpsensor/fpsensor_utils.h"
+#include "fpsensor/fpsensor_console.h"
 #include "gpio.h"
 #include "link_defs.h"
 #include "spi.h"
@@ -168,10 +168,10 @@ static int fpc_pulse_hw_reset(void)
 
 	/* Ensure we pulse reset low to initiate the startup */
 	gpio_set_level(GPIO_FP_RST_ODL, 0);
-	usleep(FP_SENSOR_RESET_DURATION_US);
+	crec_usleep(FP_SENSOR_RESET_DURATION_US);
 	gpio_set_level(GPIO_FP_RST_ODL, 1);
 	/* the IRQ line should be set high by the sensor */
-	usleep(FP_SENSOR_IRQ_MAX_DELAY_US);
+	crec_usleep(FP_SENSOR_IRQ_MAX_DELAY_US);
 	if (!gpio_get_level(GPIO_FPS_INT)) {
 		CPRINTS("Sensor IRQ not ready");
 		errors |= FP_ERROR_NO_IRQ;
@@ -223,7 +223,7 @@ int fp_sensor_init(void)
 			CPRINTS("H/W sensor reset failed, error flags: 0x%x",
 				errors);
 			cflush();
-			usleep(FP_SENSOR_OPEN_DELAY_US);
+			crec_usleep(FP_SENSOR_OPEN_DELAY_US);
 			continue;
 		}
 
@@ -245,7 +245,7 @@ int fp_sensor_init(void)
 		 */
 		if (!res)
 			break;
-		usleep(FP_SENSOR_OPEN_DELAY_US);
+		crec_usleep(FP_SENSOR_OPEN_DELAY_US);
 	} while (attempt < FP_SENSOR_MAX_INIT_ATTEMPTS);
 	if (res)
 		errors |= FP_ERROR_INIT_FAIL;

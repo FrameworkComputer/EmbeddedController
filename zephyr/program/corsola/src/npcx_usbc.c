@@ -135,6 +135,19 @@ __override int board_rt1718s_init(int port)
 					  RT1718S_RT2_BC12_SRC_FUNC_BC12_SRC_EN,
 					  0));
 
+#ifndef CONFIG_BC12_DETECT_RT1718S
+	/*
+	 * TODO(b:339533884) After BC1.2 is removed, the
+	 * DPDM switch needs to be enabled.
+	 */
+	RETURN_ERROR(
+		rt1718s_update_bits8(port, RT1718S_RT2_SBU_CTRL_01,
+				     RT1718S_RT2_SBU_CTRL_01_DPDM_VIEN |
+					     RT1718S_RT2_SBU_CTRL_01_DM_SWEN |
+					     RT1718S_RT2_SBU_CTRL_01_DP_SWEN,
+				     0xFF));
+#endif
+
 	return EC_SUCCESS;
 }
 
@@ -159,12 +172,12 @@ void board_reset_pd_mcu(void)
 	/* reset C0 ANX3447 */
 	/* Assert reset */
 	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 1);
-	msleep(1);
+	crec_msleep(1);
 	gpio_pin_set_dt(&tcpc_config[0].rst_gpio, 0);
 	/* After TEST_R release, anx7447/3447 needs 2ms to finish eFuse
 	 * loading.
 	 */
-	msleep(2);
+	crec_msleep(2);
 
 #if CONFIG_USB_PD_PORT_MAX_COUNT > 1
 	/* reset C1 RT1718s */

@@ -73,12 +73,12 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
 #define THERMAL_MEMORY           \
 	{                        \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
 		}, \
 		.temp_fan_off = 0, \
 		.temp_fan_max = 0, \
@@ -89,12 +89,12 @@ __maybe_unused static const struct ec_thermal_config thermal_memory =
 #define THERMAL_SOC              \
 	{                        \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
 		}, \
 		.temp_fan_off = 0, \
 		.temp_fan_max = 0, \
@@ -104,12 +104,12 @@ __maybe_unused static const struct ec_thermal_config thermal_soc = THERMAL_SOC;
 #define THERMAL_AMBIENT          \
 	{                        \
 		.temp_host = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(80), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(90), \
 		}, \
 		.temp_host_release = { \
-			[EC_TEMP_THRESH_HIGH] = C_TO_K(70), \
-			[EC_TEMP_THRESH_HALT] = C_TO_K(80), \
+			[EC_TEMP_THRESH_HIGH] = C_TO_K(75), \
+			[EC_TEMP_THRESH_HALT] = C_TO_K(85), \
 		}, \
 		.temp_fan_off = 0, \
 		.temp_fan_max = 0, \

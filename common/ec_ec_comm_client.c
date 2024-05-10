@@ -122,7 +122,7 @@ static int write_command(uint16_t command, uint8_t *data, int req_len,
 	 * TODO(b:65697962): We can be much smarter than this, and record the
 	 * last transaction time instead of just sleeping blindly.
 	 */
-	usleep(10 * MSEC);
+	crec_usleep(10 * MSEC);
 
 #ifdef DEBUG_EC_COMM_STATS
 	if ((comm_stats.total % 128) == 0) {

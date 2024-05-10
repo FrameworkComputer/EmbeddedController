@@ -129,7 +129,7 @@ static void it83xx_tcpc_update_hpd_status(const struct usb_mux *me,
 	gpio_set_level(gpio, hpd_lvl);
 	if (hpd_irq) {
 		gpio_set_level(gpio, 1);
-		msleep(1);
+		crec_msleep(1);
 		gpio_set_level(gpio, hpd_lvl);
 	}
 }
@@ -428,7 +428,7 @@ void board_hibernate(void)
 	chipset_do_shutdown();
 
 	/* Added delay to allow AP to settle down */
-	msleep(100);
+	crec_msleep(100);
 
 	/* Enable both the VBUS & VCC ports before entering PG3 */
 	bd9995x_select_input_port(BD9995X_CHARGE_PORT_BOTH, 1);
@@ -465,7 +465,7 @@ int board_get_version(void)
 	gpio_set_flags(GPIO_EC_BRD_ID_EN_ODL, GPIO_ODR_HIGH);
 	gpio_set_level(GPIO_EC_BRD_ID_EN_ODL, 0);
 	/* Wait to allow cap charge */
-	msleep(1);
+	crec_msleep(1);
 	mv = adc_read_channel(ADC_BOARD_ID);
 	/* FIXME(dhendrix): disable ADC */
 	gpio_set_level(GPIO_EC_BRD_ID_EN_ODL, 1);

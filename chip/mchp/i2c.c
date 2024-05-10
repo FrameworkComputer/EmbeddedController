@@ -584,7 +584,7 @@ static int i2c_check_recover(int port, int controller)
 		 * enough that the peripheral will see the new start condition
 		 * below.
 		 */
-		usleep(1000);
+		crec_usleep(1000);
 		reg = MCHP_I2C_STATUS(raddr);
 		lines = get_line_level(port);
 		if ((reg & (STS_BER | STS_LAB)) || !(reg & STS_NBB) ||

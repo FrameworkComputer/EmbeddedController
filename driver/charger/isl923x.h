@@ -122,6 +122,11 @@
 #define ISL923X_C0_DCHOT_5A BIT(3)
 #define ISL923X_C0_DCHOT_4A (2 << 3)
 #define ISL923X_C0_DCHOT_3A (3 << 3)
+/* Control0: battery DCHOT reference for RS2 == 5mOhm */
+#define ISL923X_C0_DCHOT_5MOHM_24A (0 << 3)
+#define ISL923X_C0_DCHOT_5MOHM_20A (1 << 3)
+#define ISL923X_C0_DCHOT_5MOHM_16A (2 << 3)
+#define ISL923X_C0_DCHOT_5MOHM_12A (3 << 3)
 #define ISL923X_C0_DCHOT_MASK (3 << 3)
 
 /* Control0: adjusts phase comparator threshold offset for forward buck */
@@ -162,6 +167,17 @@
 #define ISL923X_C1_SWITCH_FREQ_635K (6 << 7)
 #define ISL9237_C1_SWITCH_FREQ_599K (7 << 7)
 #define ISL923X_C1_SWITCH_FREQ_MASK (7 << 7)
+
+/* Control1: switch frequency for RAA489000 */
+#define RAA489000_C1_SWITCH_FREQ_1500K (0 << 7)
+#define RAA489000_C1_SWITCH_FREQ_1235K (1 << 7)
+#define RAA489000_C1_SWITCH_FREQ_1050K (2 << 7)
+#define RAA489000_C1_SWITCH_FREQ_913K (3 << 7)
+#define RAA489000_C1_SWITCH_FREQ_808K (4 << 7)
+#define RAA489000_C1_SWITCH_FREQ_724K (5 << 7) /* default */
+#define RAA489000_C1_SWITCH_FREQ_656K (6 << 7)
+#define RAA489000_C1_SWITCH_FREQ_600K (7 << 7)
+#define RAA489000_C1_SWITCH_FREQ_MASK (7 << 7)
 
 /* Control1: turbo mode */
 #define ISL923X_C1_TURBO_MODE BIT(6)

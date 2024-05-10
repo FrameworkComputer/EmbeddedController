@@ -219,6 +219,20 @@ int battery_get_mode(int *mode)
 	return sb_read(SB_BATTERY_MODE, mode);
 }
 
+#if !defined(CONFIG_BATTERY_PRESENT_GPIO) && \
+	!defined(CONFIG_BATTERY_PRESENT_CUSTOM)
+__overridable enum battery_present battery_is_present(void)
+{
+	int temperature;
+
+	if (sb_read(SB_TEMPERATURE, &temperature)) {
+		return BP_NOT_SURE;
+	}
+
+	return BP_YES;
+}
+#endif
+
 /**
  * Force battery to mAh mode (instead of 10mW mode) for reporting capacity.
  *
@@ -346,7 +360,7 @@ test_mockable int battery_time_at_rate(int rate, int *minutes)
 			return EC_SUCCESS;
 		} else {
 			/* wait 10ms for AT_RATE_OK */
-			msleep(10);
+			crec_msleep(10);
 		}
 	}
 	return EC_ERROR_TIMEOUT;
@@ -578,7 +592,7 @@ int battery_wait_for_stable(void)
 	while (get_time().val < wait_timeout) {
 		/* Starting pinging battery */
 		if (battery_status(&status) != EC_SUCCESS) {
-			msleep(25); /* clock stretching could hold 25ms */
+			crec_msleep(25); /* clock stretching could hold 25ms */
 			continue;
 		}
 
@@ -587,7 +601,7 @@ int battery_wait_for_stable(void)
 		     CONFIG_BATT_ALARM_MASK1) ||
 		    ((status & CONFIG_BATT_ALARM_MASK2) ==
 		     CONFIG_BATT_ALARM_MASK2)) {
-			msleep(25);
+			crec_msleep(25);
 			continue;
 		}
 #endif

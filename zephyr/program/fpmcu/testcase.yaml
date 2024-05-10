@@ -1,0 +1,20 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+tests:
+  abort:
+    extra_configs:
+    - CONFIG_HW_TEST_ABORT=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  cortexm_fpu:
+    extra_configs:
+    - CONFIG_HW_TEST_CORTEXM_FPU=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  crc:
+    extra_configs:
+    - CONFIG_HW_TEST_CRC=y
+    extra_conf_files:
+    - prj_hw_tests.conf

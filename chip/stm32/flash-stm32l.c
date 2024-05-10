@@ -283,7 +283,7 @@ int crec_flash_physical_erase(int offset, int size)
 		/* Wait for erase to complete */
 		while ((STM32_FLASH_SR & 1) &&
 		       (get_time().val < deadline.val)) {
-			usleep(300);
+			crec_usleep(300);
 		}
 		if (STM32_FLASH_SR & 1) {
 			res = EC_ERROR_TIMEOUT;

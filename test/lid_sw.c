@@ -33,12 +33,12 @@ static int test_hook(void)
 {
 	/* Close lid for testing */
 	gpio_set_level(GPIO_LID_OPEN, 0);
-	msleep(100);
+	crec_msleep(100);
 	lid_hook_count = 0;
 	host_clear_events(0xffffffff);
 
 	gpio_set_level(GPIO_LID_OPEN, 1);
-	msleep(50);
+	crec_msleep(50);
 	TEST_ASSERT(lid_hook_count == 1);
 	TEST_ASSERT(lid_is_open());
 	TEST_ASSERT(lid_memmap_state());
@@ -46,7 +46,7 @@ static int test_hook(void)
 		    EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN));
 
 	gpio_set_level(GPIO_LID_OPEN, 0);
-	msleep(50);
+	crec_msleep(50);
 	TEST_ASSERT(lid_hook_count == 2);
 	TEST_ASSERT(!lid_is_open());
 	TEST_ASSERT(!lid_memmap_state());
@@ -60,12 +60,12 @@ static int test_debounce(void)
 {
 	/* Close lid for testing */
 	gpio_set_level(GPIO_LID_OPEN, 0);
-	msleep(100);
+	crec_msleep(100);
 	lid_hook_count = 0;
 	host_clear_events(0xffffffff);
 
 	gpio_set_level(GPIO_LID_OPEN, 1);
-	msleep(20);
+	crec_msleep(20);
 	TEST_ASSERT(lid_hook_count == 0);
 	TEST_ASSERT(!lid_is_open());
 	TEST_ASSERT(!lid_memmap_state());
@@ -73,7 +73,7 @@ static int test_debounce(void)
 		      EC_HOST_EVENT_MASK(EC_HOST_EVENT_LID_OPEN)));
 
 	gpio_set_level(GPIO_LID_OPEN, 0);
-	msleep(50);
+	crec_msleep(50);
 	TEST_ASSERT(lid_hook_count == 0);
 	TEST_ASSERT(!lid_is_open());
 	TEST_ASSERT(!lid_memmap_state());

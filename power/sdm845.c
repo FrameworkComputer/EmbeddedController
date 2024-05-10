@@ -257,7 +257,7 @@ static void wait_switchcap_power_good(int enable)
 	poll_deadline.val += SWITCHCAP_PG_CHECK_TIMEOUT;
 	while (enable != gpio_get_level(GPIO_DA9313_GPIO0) &&
 	       get_time().val < poll_deadline.val) {
-		usleep(SWITCHCAP_PG_CHECK_WAIT);
+		crec_usleep(SWITCHCAP_PG_CHECK_WAIT);
 	}
 
 	/*
@@ -315,7 +315,7 @@ static void wait_pmic_pwron(int enable, unsigned int timeout)
 	poll_deadline.val += timeout;
 	while (enable != is_pmic_pwron() &&
 	       get_time().val < poll_deadline.val) {
-		usleep(PMIC_POWER_AP_WAIT);
+		crec_usleep(PMIC_POWER_AP_WAIT);
 	}
 
 	/* Check the timeout case */
@@ -342,7 +342,7 @@ static void set_system_power(int enable)
 	wait_switchcap_power_good(enable);
 	gpio_set_level(GPIO_VBOB_EN, enable);
 	if (enable) {
-		usleep(SYSTEM_POWER_ON_DELAY);
+		crec_usleep(SYSTEM_POWER_ON_DELAY);
 	} else {
 		/* Ensure POWER_GOOD drop to low if it is a forced shutdown */
 		wait_pmic_pwron(0, FORCE_OFF_RESPONSE_TIMEOUT);
@@ -502,7 +502,7 @@ static int power_is_enough(void)
 	 */
 	while (!system_can_boot_ap() && !charge_want_shutdown() &&
 	       get_time().val < poll_deadline.val) {
-		usleep(CAN_BOOT_AP_CHECK_WAIT);
+		crec_usleep(CAN_BOOT_AP_CHECK_WAIT);
 	}
 
 	return system_can_boot_ap() && !charge_want_shutdown();
@@ -709,7 +709,7 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 	 */
 
 	gpio_set_level(GPIO_PMIC_RESIN_L, 0);
-	usleep(PMIC_RESIN_PULSE_LENGTH);
+	crec_usleep(PMIC_RESIN_PULSE_LENGTH);
 	gpio_set_level(GPIO_PMIC_RESIN_L, 1);
 
 	rv = power_wait_signals_timeout(IN_AP_RST_ASSERTED,

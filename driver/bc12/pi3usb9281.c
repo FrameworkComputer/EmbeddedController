@@ -228,7 +228,7 @@ static int pi3usb9281_reset(int port)
 
 	if (!rv)
 		/* Reset takes ~15ms. Wait for 20ms to be safe. */
-		msleep(PI3USB9281_SW_RESET_DELAY);
+		crec_msleep(PI3USB9281_SW_RESET_DELAY);
 
 	return rv;
 }
@@ -298,7 +298,7 @@ static int pc3usb9281_read_interrupt(int port)
 		if (pi3usb9281_get_interrupts(port) &
 		    PI3USB9281_INT_ATTACH_DETACH)
 			return EC_SUCCESS;
-		msleep(PI3USB9281_RESET_STARTUP_DELAY_INTERVAL_MS);
+		crec_msleep(PI3USB9281_RESET_STARTUP_DELAY_INTERVAL_MS);
 	} while (get_time().val < timeout.val);
 	return EC_ERROR_TIMEOUT;
 }
@@ -338,7 +338,7 @@ static uint32_t bc12_detect(int port)
 		pi3usb9281_set_pins(port, 0);
 
 		/* Delay to debounce pin attach order */
-		msleep(PI3USB9281_DETECT_DEBOUNCE_MS);
+		crec_msleep(PI3USB9281_DETECT_DEBOUNCE_MS);
 
 		/*
 		 * Reset PI3USB9281 to refresh detection registers. After reset,
@@ -362,7 +362,7 @@ static uint32_t bc12_detect(int port)
 		 * Wait after reset, before re-enabling interrupt, so that
 		 * spurious interrupts from this port are ignored.
 		 */
-		msleep(PI3USB9281_RESET_DEBOUNCE_MS);
+		crec_msleep(PI3USB9281_RESET_DEBOUNCE_MS);
 
 		/* Re-enable interrupts */
 		pi3usb9281_enable_interrupts(port);

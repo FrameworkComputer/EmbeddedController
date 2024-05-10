@@ -1,0 +1,87 @@
+/*
+ * Copyright 2023 The ChromiumOS Authors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <usbc-policy.dtsi>
+
+ /{
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		usbc_port0: port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			chg = <&charger>;
+			alt-mode = <&pdc_data_port0>;
+			pdc = <&pdc_power_p0>;
+			pd-retimer;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+			policy = <&cros_policy>;
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+		usbc_port1: port0@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			alt-mode = <&pdc_data_port1>;
+			pdc = <&pdc_power_p1>;
+			pd-retimer;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+			policy = <&cros_policy>;
+		};
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};
+
+&i2c1 {
+	pdc_power_p0: rts54-pdc@66 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x66>;
+		irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
+	};
+	pdc_power_p1: rts54-pdc@67 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x67>;
+		irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&i2c4 {
+	charger: isl9238@9 {
+		compatible = "intersil,isl923x";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
+
+/* pd-aic-data */
+&i2c3 {
+	pdc_data_port0: rts@50 {
+		compatible = "intel,pd-altmode";
+		reg = <0x50>;
+		irq-gpios = <&gpioj 1 GPIO_ACTIVE_LOW>;
+		irq-flags = <GPIO_INT_LEVEL_LOW>;
+	};
+	pdc_data_port1: rts@52 {
+		compatible = "intel,pd-altmode";
+		reg = <0x52>;
+		irq-gpios = <&gpioj 1 GPIO_ACTIVE_LOW>;
+		irq-shared;
+		irq-flags = <GPIO_INT_LEVEL_LOW>;
+	};
+};

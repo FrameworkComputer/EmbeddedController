@@ -21,12 +21,6 @@ enum ec_status board_set_tbt_ufp_reply(int port, enum typec_tbt_ufp_reply reply)
 	return EC_RES_UNAVAILABLE;
 }
 
-void pd_clear_events(int port, uint32_t clear_mask)
-{
-	ARG_UNUSED(port);
-	ARG_UNUSED(clear_mask);
-}
-
 void pd_dpm_request(int port, enum pd_dpm_request req)
 {
 	ARG_UNUSED(port);

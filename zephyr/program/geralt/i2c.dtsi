@@ -75,6 +75,7 @@
 		     &i2c1_data_gpc2_default>;
 	pinctrl-names = "default";
 	fifo-enable;
+	push-pull-recovery;
 };
 
 &i2c2 {
@@ -85,6 +86,7 @@
 		     &i2c2_data_gpf7_default>;
 	pinctrl-names = "default";
 	/delete-property/ fifo-enable;
+	push-pull-recovery;
 
 	ppc_port0: rt1739@70 {
 		compatible = "richtek,rt1739-ppc";

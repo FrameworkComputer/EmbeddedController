@@ -423,7 +423,7 @@ static int configure_mux(int port, int index, enum mux_config_type config,
 			task_wait_event_mask(PD_EVENT_AP_MUX_DONE, 100 * MSEC);
 			ack_task[port] = TASK_ID_INVALID;
 
-			usleep(12.5 * MSEC);
+			crec_usleep(12.5 * MSEC);
 		}
 	}
 

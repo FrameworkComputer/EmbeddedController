@@ -22,6 +22,7 @@ Kconfig Option                          | Default | Documentation
 `CONFIG_PLATFORM_EC_ACCEL_KX022`        | n       | [KX022]
 `CONFIG_PLATFORM_EC_ACCEL_LIS2DW12`     | n       | [LIS2DW12]
 `CONFIG_PLATFORM_EC_ALS_TCS3400`        | n       | [TCS3400]
+`CONFIG_PLATFORM_EC_ALS_VEML3328`       | n       | [VEML3328]
 
 ### CONFIG_PLATFORM_EC_ACCELGYRO_BMI_COMM choice
 

@@ -4,6 +4,7 @@
  */
 
 #include <cros/st/stm32.dtsi>
+#include <zephyr/dt-bindings/pinctrl/stm32-pinctrl.h>
 
 &iwdg {
 	status = "okay";
@@ -76,14 +77,40 @@
 	cs-gpios = <&gpioa 4 (GPIO_ACTIVE_LOW | GPIO_PULL_UP)>;
 };
 
+/*
+ * Introduce additional pinctrl nodes that describe PB13, PB14, PB15 pin
+ * configuration used when SPI module goes to sleep state. Without that
+ * these pins are connected to disabled SPI module which increases power
+ * consumption by the sensor.
+ */
+&pinctrl {
+	gpio_out_low_pb13: gpio_out_low_pb13 {
+		pinmux = <STM32_PINMUX('B', 13, GPIO)>;
+		output-low;
+	};
+	gpio_out_low_pb14: gpio_out_low_pb14 {
+		pinmux = <STM32_PINMUX('B', 14, GPIO)>;
+		output-low;
+	};
+	gpio_out_low_pb15: gpio_out_low_pb15 {
+		pinmux = <STM32_PINMUX('B', 15, GPIO)>;
+		output-low;
+	};
+};
+
 &spi2 {
 	/*
 	 * Exclude spi2_nss_pb12 from pinctrl-0. Without CS pin the driver will
 	 * disable hardware CS management. This is necessary because deasserting
 	 * CS pin clears command context in the sensor.
 	 */
-	pinctrl-0 = <&spi2_sck_pb13 &spi2_miso_pb14
-		     &spi2_mosi_pb15>;
+	pinctrl-0 = <&spi2_sck_pb13 &spi2_miso_pb14 &spi2_mosi_pb15>;
+	/*
+	 * Set the sleep state as output low to reduce FP sensor
+	 * power consumption.
+	 */
+	pinctrl-1 = <&gpio_out_low_pb13 &gpio_out_low_pb14 &gpio_out_low_pb15>;
+	pinctrl-names = "default", "sleep";
 
 	dmas = <&dma1 4 0 0x38440 0x03>,
 		<&dma1 3 0 0x38480 0x03>;

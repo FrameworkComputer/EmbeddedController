@@ -399,10 +399,10 @@ void ps8xxx_tcpc_update_hpd_status(const struct usb_mux *me,
 		uint64_t now = get_time().val;
 		/* wait for the minimum spacing between IRQ_HPD if needed */
 		if (now < hpd_deadline[port])
-			usleep(hpd_deadline[port] - now);
+			crec_usleep(hpd_deadline[port] - now);
 
 		dp_set_irq(me, 0);
-		usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
+		crec_usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
 		dp_set_irq(me, hpd_irq);
 	}
 	/* enforce 2-ms delay between HPD pulses */
@@ -448,7 +448,7 @@ static int ps8xxx_tcpm_release(int port)
 	status = tcpc_read(port, reg, &version);
 	if (status != 0) {
 		/* wait for chip to wake up */
-		msleep(10);
+		crec_msleep(10);
 	}
 
 	return tcpci_tcpm_release(port);
@@ -460,7 +460,7 @@ static void ps8xxx_role_control_delay(int port)
 
 	delay = ps8xxx_role_control_delay_ms[port];
 	if (delay)
-		msleep(delay);
+		crec_msleep(delay);
 }
 
 #ifdef CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE
@@ -662,12 +662,12 @@ static int ps8xxx_lpm_recovery_delay(int port)
 		status = tcpc_read(port, fw_reg, &val);
 		if (status != EC_SUCCESS) {
 			/* wait for chip to wake up */
-			msleep(PS8XXX_I2C_RECOVERY_DELAY_MS);
+			crec_msleep(PS8XXX_I2C_RECOVERY_DELAY_MS);
 			continue;
 		}
 		if (val != 0)
 			break;
-		msleep(1);
+		crec_msleep(1);
 	}
 
 	return EC_SUCCESS;
@@ -953,7 +953,7 @@ static int ps8751_get_gcc(int port, enum tcpc_cc_voltage_status *cc1,
 		return rv;
 
 	/* Derived empirically */
-	usleep(300);
+	crec_usleep(300);
 
 	return tcpci_tcpm_get_cc(port, cc1, cc2);
 }
@@ -1011,7 +1011,7 @@ static int ps8xxx_tcpm_set_vconn(int port, int enable)
 	 * https://partnerissuetracker.corp.google.com/issues/185202064
 	 */
 	if (!enable)
-		msleep(PS8XXX_VCONN_TURN_OFF_DELAY_US);
+		crec_msleep(PS8XXX_VCONN_TURN_OFF_DELAY_US);
 
 	return tcpci_tcpm_set_vconn(port, enable);
 }
@@ -1098,7 +1098,7 @@ void ps8xxx_wake_from_standby(const struct usb_mux *me)
 
 	/* Since we are waking up device, this call will most likely fail */
 	mux_read(me, PS8XXX_REG_I2C_DEBUGGING_ENABLE, &reg);
-	msleep(10);
+	crec_msleep(10);
 }
 
 static int ps8xxx_mux_set(const struct usb_mux *me, mux_state_t mux_state,

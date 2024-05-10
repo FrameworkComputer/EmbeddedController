@@ -67,4 +67,10 @@ config PLATFORM_EC_RWSIG_TYPE_USBPD1
 
 endchoice
 
+config PLATFORM_EC_RO_PUBKEY_STORAGE_OFF
+	int "Offset of RWSIG public key"
+	default $(dt_node_int_prop_int,/binman/wp-ro/ec-ro/key-ro,offset)
+	help
+	  Offset of the RWSIG public key, relative to RO firmware.
+
 endif # PLATFORM_EC_RWSIG

@@ -10,6 +10,8 @@
 
 #include "openssl/ec.h"
 
+#include <span>
+
 extern "C" {
 #include "ec_commands.h"
 }
@@ -60,7 +62,6 @@ bssl::UniquePtr<EC_KEY> create_ec_key_from_privkey(const uint8_t *privkey,
  * @param[in] version the version of the encryption method
  * @param[out] info the metadata of the encryption output
  * @param[in,out] data the data that need to be encrypted in place
- * @param[in] data_size the size of data
  *
  * @return EC_SUCCESS on success
  * @return EC_ERROR_* on error
@@ -68,7 +69,7 @@ bssl::UniquePtr<EC_KEY> create_ec_key_from_privkey(const uint8_t *privkey,
 enum ec_error_list
 encrypt_data_in_place(uint16_t version,
 		      struct fp_auth_command_encryption_metadata &info,
-		      uint8_t *data, size_t data_size);
+		      std::span<uint8_t> data);
 
 /**
  * Encrypt the @p EC_KEY with a specific version of encryption method.
@@ -78,7 +79,6 @@ encrypt_data_in_place(uint16_t version,
  *
  * @param[in] key the private
  * @param[in] version the version of the encryption method
- * @param[out] enc_key the encryption output
  *
  * @return @p fp_encrypted_private_key on success
  * @return std::nullopt on error
@@ -94,18 +94,14 @@ create_encrypted_private_key(const EC_KEY &key, uint16_t version);
  *
  * @param[in] info the metadata of the encryption output
  * @param[in] enc_data the encrypted data
- * @param[in] enc_data_size the size of encrypted data
- * @param[in] version the version of the encryption method
  * @param[out] data the decrypted data
- * @param[in] data_size the size of decrypted data
  *
  * @return EC_SUCCESS on success
  * @return EC_ERROR_* on error
  */
 enum ec_error_list
 decrypt_data(const struct fp_auth_command_encryption_metadata &info,
-	     const uint8_t *enc_data, size_t enc_data_size, uint8_t *data,
-	     size_t data_size);
+	     std::span<const uint8_t> enc_data, std::span<uint8_t> data);
 
 /**
  * Decrypt the encrypted private key.
@@ -113,12 +109,7 @@ decrypt_data(const struct fp_auth_command_encryption_metadata &info,
  * version 1 is 128 bit AES-GCM, and the encryption key is bound to the TPM
  * seed, rollback secret and user_id.
  *
- * @param[in] info the metadata of the encryption output
- * @param[in] enc_data the encrypted data
- * @param[in] enc_data_size the size of encrypted data
- * @param[in] version the version of the encryption method
- * @param[out] data the decrypted data
- * @param[in] data_size the size of decrypted data
+ * @param[in] encrypted_private_key encrypted private key
  *
  * @return EC_SUCCESS on success
  * @return EC_ERROR_* on error
@@ -147,56 +138,47 @@ enum ec_error_list generate_ecdh_shared_secret(const EC_KEY &private_key,
  * pairing key.
  *
  * @param[in] auth_nonce the auth nonce
- * @param[in] auth_nonce_size the size of auth nonce
  * @param[in] gsc_nonce the auth nonce
- * @param[in] gsc_nonce_size the size of gsc nonce
  * @param[in] pairing_key the auth nonce
- * @param[in] pairing_key_size the size of pairing key
  * @param[in,out] gsc_session_key the output key
- * @param[in] gsc_session_key_size the output key size
  *
  * @return EC_SUCCESS on success
  * @return EC_ERROR_* on error
  */
 enum ec_error_list
-generate_gsc_session_key(const uint8_t *auth_nonce, size_t auth_nonce_size,
-			 const uint8_t *gsc_nonce, size_t gsc_nonce_size,
-			 const uint8_t *pairing_key, size_t pairing_key_size,
-			 uint8_t *gsc_session_key, size_t gsc_session_key_size);
+generate_gsc_session_key(std::span<const uint8_t> auth_nonce,
+			 std::span<const uint8_t> gsc_nonce,
+			 std::span<const uint8_t> pairing_key,
+			 std::span<uint8_t> gsc_session_key);
 
 /**
  * Decrypt the data in place with a GSC session key.
  * Note: The GSC session key is equal to the CK in the original design doc.
  *
  * @param[in] gsc_session_key the GSC session key
- * @param[in] gsc_session_key_size the size of GSC session key
  * @param[in] iv the IV of the encrypted data
- * @param[in] iv_size the size of the IV
  * @param[in,out] data the encrypted data
- * @param[in] data_size the output data size
  *
  * @return EC_SUCCESS on success
  * @return EC_ERROR_* on error
  */
 enum ec_error_list decrypt_data_with_gsc_session_key_in_place(
-	const uint8_t *gsc_session_key, size_t gsc_session_key_size,
-	const uint8_t *iv, size_t iv_size, uint8_t *data, size_t data_size);
+	std::span<const uint8_t> gsc_session_key, std::span<const uint8_t> iv,
+	std::span<uint8_t> data);
 /**
  * Encrypt the data with a ECDH public key.
  *
  * @param[in] in_pubkey the input public key
  * @param[in,out] data the data to be encrypted
- * @param[in] data_size the data size
  * @param[out] iv the output IV
- * @param[in] iv_size the IV size
  * @param[out] out_pubkey the output public key
  *
  * @return EC_SUCCESS on success
  * @return EC_ERROR_* on error
  */
 enum ec_error_list encrypt_data_with_ecdh_key_in_place(
-	const struct fp_elliptic_curve_public_key &in_pubkey, uint8_t *data,
-	size_t data_size, uint8_t *iv, size_t iv_size,
+	const struct fp_elliptic_curve_public_key &in_pubkey,
+	std::span<uint8_t> data, std::span<uint8_t> iv,
 	struct fp_elliptic_curve_public_key &out_pubkey);
 
 #endif /* __CROS_EC_FPSENSOR_FPSENSOR_AUTH_CRYPTO_H */

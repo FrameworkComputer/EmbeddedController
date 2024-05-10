@@ -234,7 +234,7 @@ static struct mutex dp_hw_lock;
 void board_reset_pd_mcu(void)
 {
 	gpio_set_level(GPIO_USB_PD_RST_L, 0);
-	usleep(100);
+	crec_usleep(100);
 	gpio_set_level(GPIO_USB_PD_RST_L, 1);
 }
 
@@ -401,10 +401,10 @@ void board_typec_dp_on(int port)
 			uint64_t now = get_time().val;
 			/* wait for the minimum spacing between IRQ_HPD */
 			if (now < hpd_deadline[port])
-				usleep(hpd_deadline[port] - now);
+				crec_usleep(hpd_deadline[port] - now);
 
 			board_typec_set_dp_hpd(port, 0);
-			usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
+			crec_usleep(HPD_DSTREAM_DEBOUNCE_IRQ);
 			board_typec_set_dp_hpd(port, 1);
 		}
 	}
@@ -525,7 +525,7 @@ void vbus_task(void *u)
 			if (((bc12[port].vbus >> port) & 1) == vbus)
 				continue;
 			/* wait 1.2 seconds and check BC 1.2 status */
-			msleep(1200);
+			crec_msleep(1200);
 
 			if (vbus)
 				bc12[port].vbus |= 1 << port;

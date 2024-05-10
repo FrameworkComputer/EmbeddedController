@@ -161,7 +161,7 @@ static int spi_nor_wait(const struct spi_nor_device_t *spi_nor_device)
 	while (status_register_value & SPI_NOR_STATUS_REGISTER_WIP) {
 		/* Reload the watchdog before sleeping. */
 		watchdog_reload();
-		usleep(SPI_NOR_WIP_SLEEP_USEC);
+		crec_usleep(SPI_NOR_WIP_SLEEP_USEC);
 
 		/* Give up if the deadline has been exceeded. */
 		if (get_time().val > timeout.val)

@@ -216,7 +216,7 @@ const struct usb_mux_chain usb_muxes[CONFIG_USB_PD_PORT_MAX_COUNT] = {
 void board_reset_pd_mcu(void)
 {
 	gpio_set_level(GPIO_USB_PD_RST_L, 0);
-	msleep(PS8XXX_RST_L_RST_H_DELAY_MS);
+	crec_msleep(PS8XXX_RST_L_RST_H_DELAY_MS);
 	gpio_set_level(GPIO_USB_PD_RST_L, 1);
 }
 

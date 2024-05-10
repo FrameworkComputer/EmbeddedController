@@ -83,7 +83,7 @@ static void set_board_legacy_i2c_speeds(void)
 	if (get_board_id() >= BOARD_ID_FAST_PLUS_CAPABLE)
 		return;
 
-	ccprints("setting USB DB I2C buses to 400 kHz\n");
+	ccprints("setting USB DB I2C buses to 400 kHz");
 
 	i2c_set_freq(I2C_PORT_USB_C1_TCPC, I2C_FREQ_400KHZ);
 	i2c_set_freq(I2C_PORT_USB_C1_PPC, I2C_FREQ_400KHZ);

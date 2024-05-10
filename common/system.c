@@ -47,6 +47,12 @@
 #include "util.h"
 #include "watchdog.h"
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 55
+
 /* Console output macros */
 #define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
@@ -573,7 +579,7 @@ const char *ec_image_to_string(enum ec_image copy)
 __overridable void board_pulse_entering_rw(void)
 {
 	gpio_set_level(GPIO_ENTERING_RW, 1);
-	usleep(MSEC);
+	crec_usleep(MSEC);
 	gpio_set_level(GPIO_ENTERING_RW, 0);
 }
 
@@ -1046,6 +1052,9 @@ static int handle_pending_reboot(struct ec_params_reboot_ec *p)
 		return system_run_image_copy(system_get_active_copy());
 	case EC_REBOOT_COLD:
 	case EC_REBOOT_COLD_AP_OFF:
+		if (IS_ENABLED(CONFIG_AP_X86_INTEL))
+			chipset_force_shutdown(CHIPSET_SHUTDOWN_G3);
+
 		/*
 		 * Reboot the PD chip(s) as well, but first suspend the ports
 		 * if this board has PD tasks running so they don't query the
@@ -1062,7 +1071,7 @@ static int handle_pending_reboot(struct ec_params_reboot_ec *p)
 			 * Give enough time to apply CC Open and brown out if
 			 * we are running with out a battery.
 			 */
-			msleep(20);
+			crec_msleep(20);
 		}
 
 		/* Reset external PD chips. */
@@ -1091,7 +1100,7 @@ static int handle_pending_reboot(struct ec_params_reboot_ec *p)
 		 * immediate wake up.
 		 */
 		CPRINTS("Waiting 1s before hibernating...");
-		msleep(1000);
+		crec_msleep(1000);
 		CPRINTS("system hibernating");
 		system_hibernate(hibernate_seconds, hibernate_microseconds);
 		/* That shouldn't return... */

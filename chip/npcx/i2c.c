@@ -183,7 +183,7 @@ static int i2c_wait_stop_completed(int controller, int timeout)
 		if (!IS_BIT_SET(NPCX_SMBCTL1(controller), NPCX_SMBCTL1_STOP))
 			break;
 		if (--timeout > 0)
-			msleep(1);
+			crec_msleep(1);
 	}
 
 	if (timeout)
@@ -225,7 +225,7 @@ static int i2c_reset(int controller)
 			       NPCX_SMBCTL3_SCL_LVL) &&
 		    IS_BIT_SET(NPCX_SMBCTL3(controller), NPCX_SMBCTL3_SDA_LVL))
 			break;
-		msleep(1);
+		crec_msleep(1);
 	}
 
 	if (timeout == 0) {
@@ -843,7 +843,7 @@ static void i2c_controller_int_handler(int controller)
 		/* SDAST still issued with unexpected state machine */
 		if (IS_BIT_SET(NPCX_SMBST(controller), NPCX_SMBST_SDAST) &&
 		    p_status->oper_state != SMB_WRITE_SUSPEND) {
-			cprints(CC_I2C, "i2c %d unknown state %d, error %d\n",
+			cprints(CC_I2C, "i2c %d unknown state %d, error %d",
 				controller, p_status->oper_state,
 				p_status->err_code);
 		}

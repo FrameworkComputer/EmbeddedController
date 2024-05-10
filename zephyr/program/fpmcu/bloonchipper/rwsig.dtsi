@@ -7,6 +7,7 @@
 	wp-ro {
 		ec-ro {
 			key-ro {
+				compatible = "cros-ec,flash-layout";
 				type = "section";
 				offset = <0x1fc00>;
 				size = <0x400>;

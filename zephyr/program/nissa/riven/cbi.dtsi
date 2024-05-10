@@ -1,0 +1,243 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* Craask-specific fw_config fields. */
+	nissa-fw-config {
+		/*
+		 * FW_CONFIG field to describe Lid sensor orientation.
+		 */
+		lid-inversion {
+			enum-name = "FW_LID_INVERSION";
+			start = <8>;
+			size = <1>;
+
+			/*
+			 * 0: regular placement of the lid sensor
+			 * 1: rotate 180' of xy plane.
+			 */
+			regular {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_LID_REGULAR";
+				value = <0>;
+				default;
+			};
+			xy_rotate_180 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_LID_XY_ROT_180";
+				value = <1>;
+			};
+		};
+		/*
+		 * FW_CONFIG field to describe Clamshell/Convertible.
+		 */
+		form_factor {
+			enum-name = "FORM_FACTOR";
+			start = <9>;
+			size = <1>;
+
+			/*
+			 * 0: convertible, 1: clamshell
+			 */
+			convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CONVERTIBLE";
+				value = <0>;
+			};
+			clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "CLAMSHELL";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to select thermal solution.
+		 */
+		thermal_solution {
+			enum-name = "FW_THERMAL";
+			start = <10>;
+			size = <3>;
+
+			6w-thermal {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_6W";
+				value = <0>;
+				default;
+			};
+			15w-thermal {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_15W";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to indicate which keyboard numeric
+		 * pad should be used.
+		 */
+		kb-numeric-pad {
+			enum-name = "FW_KB_NUMERIC_PAD";
+			start = <16>;
+			size = <1>;
+
+			no-kb-numpad {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_NUMERIC_PAD_ABSENT";
+				value = <0>;
+				default;
+			};
+			kb-numpad-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_NUMERIC_PAD_PRESENT";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to enable fan or not.
+		 */
+		fan {
+			enum-name = "FW_FAN";
+			start = <17>;
+			size = <1>;
+
+			no-fan {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_NOT_PRESENT";
+				value = <0>;
+			};
+			fan-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_PRESENT";
+				value = <1>;
+				/*
+				 * Set as default so that unprovisioned
+				 * configs will run the fan regardless.
+				 */
+				default;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to enable KB back light or not.
+		 */
+		kb-bl {
+			enum-name = "FW_KB_BL";
+			start = <18>;
+			size = <1>;
+
+			no-kb-bl {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_NOT_PRESENT";
+				value = <0>;
+			};
+			kb-bl-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_PRESENT";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to change scancode setting for special
+		 * keyboard type.
+		 */
+		kb-type {
+			enum-name = "FW_KB_TYPE";
+			start = <19>;
+			size = <2>;
+
+			kb-type-default {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_TYPE_DEFAULT";
+				value = <0>;
+			};
+			kb-type-ca-fr {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_TYPE_CA_FR";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to enable touch panel power sequence
+		 * control or not.
+		 */
+		touch-en {
+			enum-name = "FW_TOUCH_EN";
+			start = <21>;
+			size = <1>;
+
+			touch-en-disable {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TOUCH_EN_DISABLE";
+				value = <0>;
+			};
+			touch-en-enable {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_TOUCH_EN_ENABLE";
+				value = <1>;
+			};
+		};
+
+	};
+	/* Craask-specific ssfc fields. */
+	cbi-ssfc {
+		compatible = "cros-ec,cbi-ssfc";
+		/*
+		 * SSFC bit0-1 was defined for AUDIO CODEC.
+		 * 0: ALC5682I_VS
+		 * 1: NAU8825
+		 */
+		audio_codec {
+			enum-name = "AUDIO_CODEC";
+			size = <2>;
+		};
+		/*
+		 * SSFC field to identify LID motion sensor.
+		 */
+		lid-sensor {
+			enum-name = "LID_SENSOR";
+			size = <2>;
+
+			lid_sensor_0: lis2dw12 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <0>;
+				default;
+			};
+			lid_sensor_1: bma422 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+			};
+		};
+		/*
+		 * SSFC field to identify BASE motion sensor.
+		 */
+		base-sensor {
+			enum-name = "BASE_SENSOR";
+			size = <2>;
+
+			base_sensor_0: lsm6dso {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <0>;
+				default;
+			};
+			base_sensor_1: bmi323 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <1>;
+			};
+			base_sensor_2: bma422 {
+				compatible = "cros-ec,cbi-ssfc-value";
+				status = "okay";
+				value = <2>;
+			};
+		};
+	};
+};

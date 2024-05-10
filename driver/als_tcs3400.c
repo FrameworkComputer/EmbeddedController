@@ -384,7 +384,7 @@ static int tcs3400_post_events(struct motion_sensor_t *s, uint32_t last_ts,
 			/* Make sure data is valid */
 			if (status & TCS_I2C_STATUS_RGBC_VALID)
 				break;
-			msleep(20);
+			crec_msleep(20);
 			/*
 			 * When not in interrupt mode, we could have scheduled
 			 * the handler too early.

@@ -26,9 +26,9 @@ DECLARE_HOOK(HOOK_SYSJUMP, disable_usb, HOOK_PRIO_DEFAULT);
 static uint16_t detect_type(uint16_t det_type)
 {
 	STM32_USB_BCDR &= 0;
-	usleep(1);
+	crec_usleep(1);
 	STM32_USB_BCDR |= (STM32_USB_BCDR_BCDEN | det_type);
-	usleep(1);
+	crec_usleep(1);
 	STM32_USB_BCDR &= ~(STM32_USB_BCDR_BCDEN | det_type);
 	return STM32_USB_BCDR;
 }

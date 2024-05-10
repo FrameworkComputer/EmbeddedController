@@ -81,6 +81,7 @@
 #undef CONFIG_CONSOLE_HISTORY
 #undef CONFIG_HIBERNATE
 #undef CONFIG_CMD_CRASH
+#undef CONFIG_CMD_CRASH_NESTED
 
 /*
  * Allow dangerous commands all the time, since we don't have a write protect

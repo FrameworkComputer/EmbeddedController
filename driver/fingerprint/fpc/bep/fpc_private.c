@@ -9,7 +9,7 @@
 #include "fpc_bio_algorithm.h"
 #include "fpc_sensor.h"
 #include "fpsensor/fpsensor.h"
-#include "fpsensor/fpsensor_utils.h"
+#include "fpsensor/fpsensor_console.h"
 #include "gpio.h"
 #include "spi.h"
 #include "system.h"

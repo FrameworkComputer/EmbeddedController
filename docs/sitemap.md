@@ -62,6 +62,7 @@
 *   [Proof-of-Concept-Device Bringup](./zephyr/zephyr_poc_device_bringup.md)
 *   [Shimming](./zephyr/zephyr_shim.md)
 *   [Zephyr Testing](./zephyr/ztest.md)
+*   [Zephyr FPMCU test migration](./zephyr/zephyr_fpmcu_test_migration.md)
 
 ## Miscellaneous
 

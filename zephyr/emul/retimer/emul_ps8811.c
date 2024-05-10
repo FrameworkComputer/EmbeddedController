@@ -3,6 +3,12 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #include "driver/retimer/ps8811.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_stub_device.h"

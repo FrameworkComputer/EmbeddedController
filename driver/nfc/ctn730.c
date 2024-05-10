@@ -149,7 +149,7 @@ static int _i2c_read(int i2c_port, uint8_t *in, int in_len)
 
 	rv = i2c_xfer(i2c_port, CTN730_I2C_ADDR, NULL, 0, in, in_len);
 	if (rv) {
-		msleep(_wake_up_delay_ms);
+		crec_msleep(_wake_up_delay_ms);
 		rv = i2c_xfer(i2c_port, CTN730_I2C_ADDR, NULL, 0, in, in_len);
 	}
 	if (rv)
@@ -175,7 +175,7 @@ static int _send_command(struct pchg *ctx, const struct ctn730_msg *cmd)
 		      sizeof(*cmd) + cmd->length, NULL, 0);
 
 	if (rv) {
-		msleep(_wake_up_delay_ms);
+		crec_msleep(_wake_up_delay_ms);
 		rv = i2c_xfer(i2c_port, CTN730_I2C_ADDR, (void *)cmd,
 			      sizeof(*cmd) + cmd->length, NULL, 0);
 	}
@@ -409,7 +409,7 @@ static int _process_payload_event(struct pchg *ctx, struct ctn730_msg *res)
 			 * ctn730 isn't immediately ready for i2c write after
 			 * normal mode initialization (b:178096436).
 			 */
-			msleep(5);
+			crec_msleep(5);
 		} else if (buf[0] == WLC_HOST_CTRL_RESET_EVT_DOWNLOAD_MODE) {
 			if (len != WLC_HOST_CTRL_RESET_EVT_DOWNLOAD_MODE_SIZE)
 				return EC_ERROR_INVAL;

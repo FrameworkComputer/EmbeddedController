@@ -97,7 +97,7 @@ void pd_request_power_swap(int port)
 
 static void wait_for_charge_manager_refresh(void)
 {
-	msleep(CHARGE_MANAGER_SLEEP_MS);
+	crec_msleep(CHARGE_MANAGER_SLEEP_MS);
 }
 
 static void initialize_charge_table(int current, int voltage, int ceil)
@@ -797,7 +797,7 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_unknown_dualrole_capability);
 
 	/* Some handlers are still running after the test ends. */
-	sleep(2);
+	crec_sleep(2);
 
 	test_print_result();
 }

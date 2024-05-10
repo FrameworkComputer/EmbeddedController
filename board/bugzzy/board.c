@@ -801,7 +801,7 @@ static void panel_power_change_deferred(void)
 	}
 	if (board_id < 4) {
 		gpio_set_level(GPIO_EN_LCD_ENP, signal);
-		msleep(1);
+		crec_msleep(1);
 		gpio_set_level(GPIO_EN_LCD_ENN, signal);
 	} else if (signal != 0) {
 		i2c_write8(I2C_PORT_LCD, I2C_ADDR_ISL98607_FLAGS,

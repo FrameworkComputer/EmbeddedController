@@ -7,6 +7,7 @@
 #include "common.h"
 #include "consumer.h"
 #include "gpio.h"
+#include "panic.h"
 #include "producer.h"
 #include "queue.h"
 #include "queue_policies.h"
@@ -125,6 +126,8 @@ const uint32_t GOOG_CAP_I2c = BIT(0);
 const uint32_t GOOG_CAP_I2cDevice = BIT(1);
 const uint32_t GOOG_CAP_GpioMonitoring = BIT(2);
 const uint32_t GOOG_CAP_GpioBitbanging = BIT(3);
+/* This bit indicates support for a particular UART USB control request */
+const uint32_t GOOG_CAP_UartClearQueue = BIT(4);
 
 /* Bitfield used in DAP_SWJ_Pins request */
 const uint8_t PIN_SwClk_Tck = 0x01;
@@ -175,7 +178,7 @@ static uint16_t jtag_half_period_count =
 
 void queue_blocking_add(struct queue const *q, const void *src, size_t count)
 {
-	while (true) {
+	while (!cmsis_dap_unwind_requested()) {
 		size_t progress = queue_add_units(q, src, count);
 		src += progress;
 		if (progress >= count)
@@ -191,14 +194,14 @@ void queue_blocking_add(struct queue const *q, const void *src, size_t count)
 
 void queue_blocking_remove(struct queue const *q, void *dest, size_t count)
 {
-	while (true) {
+	while (!cmsis_dap_unwind_requested()) {
 		size_t progress = queue_remove_units(q, dest, count);
 		dest += progress;
 		if (progress >= count)
 			return;
 		count -= progress;
 		/*
-		 * Wait for queue consumer to wake up this task, when there is
+		 * Wait for queue producer to wake up this task, when there is
 		 * more data in the queue.
 		 */
 		task_wait_event(0);
@@ -332,7 +335,7 @@ static void dap_reset_target(size_t peek_c)
 
 	if (shield_reset_pin != GPIO_COUNT) {
 		gpio_set_level(shield_reset_pin, false);
-		usleep(100000);
+		crec_usleep(100000);
 		gpio_set_level(shield_reset_pin, true);
 		tx_buffer[2] = 1;
 	} else {
@@ -367,7 +370,7 @@ static void dap_swj_pins(size_t peek_c)
 	if ((pin_mask & PIN_Reset) && shield_reset_pin != GPIO_COUNT)
 		gpio_set_level(shield_reset_pin, !!(pin_value & PIN_Reset));
 
-	usleep(wait_us);
+	crec_usleep(wait_us);
 
 	tx_buffer[1] = 0;
 	queue_add_units(&cmsis_dap_tx_queue, tx_buffer, 2);
@@ -428,12 +431,12 @@ static void dap_swj_clock(size_t peek_c)
 static inline __attribute__((always_inline)) void half_clock_delay(void)
 {
 	/* Set counter value.  Timer will immediately begin counting down. */
-	STM32_TIM_CNT(3) = jtag_half_period_count;
+	STM32_TIM_CNT(JTAG_TIMER) = jtag_half_period_count;
 	/*
 	 * Wait for counter value to wrap around zero.  Worst case, counting
 	 * down from 32767 at a 104Mhz clock frequency will finish in 315us.
 	 */
-	while (((int16_t)STM32_TIM_CNT(3)) >= 0)
+	while (((int16_t)STM32_TIM_CNT(JTAG_TIMER)) >= 0)
 		;
 }
 
@@ -576,9 +579,9 @@ static void dap_jtag_sequence(size_t peek_c)
 /* Vendor command (HyperDebug): Discover Google-specific capabilities. */
 static void dap_goog_info(size_t peek_c)
 {
-	const uint16_t CAPABILITIES = GOOG_CAP_I2c | GOOG_CAP_I2cDevice |
-				      GOOG_CAP_GpioMonitoring |
-				      GOOG_CAP_GpioBitbanging;
+	const uint16_t CAPABILITIES =
+		GOOG_CAP_I2c | GOOG_CAP_I2cDevice | GOOG_CAP_GpioMonitoring |
+		GOOG_CAP_GpioBitbanging | GOOG_CAP_UartClearQueue;
 
 	if (peek_c < 2)
 		return;
@@ -639,13 +642,49 @@ static void cmsis_dap_dispatch(void)
 }
 
 /*
+ * If cmsis_dap_unwind_requested_by is any value other than TASK_ID_INVALID,
+ * it means that the given task (typically HOOKS or CONSOLE) has requested
+ * that the CMSIS_DAP task abort any partially received request or partially
+ * sent response, and return to its main loop ASAP.  Before setting
+ * cmsis_dap_unwind_requested_by, the unwind_mutex must be locked by the
+ * requesting task must, and it must be held until the CMSIS_DAP task has
+ * acknowledged by writing TASK_ID_INVALID again.
+ *
+ * The CMSIS_DAP task only writes to cmsis_dap_unwind_requested_by if it sees
+ * a value other than TASK_ID_INVALID, and in that case, we know that no other
+ * task could be overwriting, due to the convention above.
+ */
+static volatile task_id_t cmsis_dap_unwind_requested_by = TASK_ID_INVALID;
+
+static K_MUTEX_DEFINE(unwind_mutex);
+
+bool cmsis_dap_unwind_requested(void)
+{
+	return cmsis_dap_unwind_requested_by != TASK_ID_INVALID;
+}
+
+/*
  * Main entry point for handling CMSIS-DAP requests received via USB.
  */
 void cmsis_dap_task(void *unused)
 {
 	while (true) {
+		/*
+		 * If another task has requested unwinding, we can now report
+		 * that the CMSIS task has returned to main loop.
+		 */
+		if (cmsis_dap_unwind_requested()) {
+			task_id_t requesting_task =
+				cmsis_dap_unwind_requested_by;
+			cmsis_dap_unwind_requested_by = TASK_ID_INVALID;
+			task_wake(requesting_task);
+		}
+
 		/* Wait for cmsis_dap_written() to wake up this task. */
 		task_wait_event(0);
+		if (cmsis_dap_unwind_requested())
+			continue;
+
 		/* Dispatch CMSIS request, if fully received. */
 		cmsis_dap_dispatch();
 	}
@@ -696,22 +735,6 @@ DECLARE_CONSOLE_COMMAND_FLAGS(jtag, command_jtag, "",
 			      "set-pins <TCLK> <TMS> <TDI> <TDO> <TRSTn>",
 			      CMD_FLAG_RESTRICTED);
 
-static void cmsis_dap_reinit(void)
-{
-	/* Discard any partial requests in the CMSIS-DAP incoming queue. */
-	queue_advance_head(&cmsis_dap_rx_queue,
-			   queue_count(&cmsis_dap_rx_queue));
-	/*
-	 * In case JTAG was enabled in dap_connect(), but not properly disabled
-	 * with dap_disconnect(), the affected GPIO pins will be restored to
-	 * default input setting by hook in `gpio.c`.  In order for next
-	 * dap_connect() to have proper effect, below we record the fact that
-	 * JTAG connection has been disabled.
-	 */
-	jtag_enabled = false;
-}
-DECLARE_HOOK(HOOK_REINIT, cmsis_dap_reinit, HOOK_PRIO_DEFAULT);
-
 /*
  * Declare USB interface for CMSIS-DAP.
  */
@@ -721,6 +744,46 @@ USB_STREAM_CONFIG_FULL(cmsis_dap_usb, USB_IFACE_CMSIS_DAP,
 		       USB_EP_CMSIS_DAP, USB_MAX_PACKET_SIZE,
 		       USB_MAX_PACKET_SIZE, cmsis_dap_rx_queue,
 		       cmsis_dap_tx_queue, 0, 1);
+
+static void cmsis_dap_reinit(void)
+{
+	mutex_lock(&unwind_mutex);
+
+	/* Discard any partial data in the inbound queue. */
+	usb_stream_clear_rx(&cmsis_dap_usb);
+
+	/*
+	 * Cause the CMSIS task to unwind any method blocked on receiving or
+	 * sending more data.  Then wait for the task to finish unwinding.
+	 */
+	cmsis_dap_unwind_requested_by = task_get_current();
+	task_wake(TASK_ID_CMSIS_DAP);
+	do {
+		if (TASK_EVENT_TIMER & task_wait_event(10000)) {
+			panic("CMSIS-DAP task is stuck");
+		}
+	} while (cmsis_dap_unwind_requested_by != TASK_ID_INVALID);
+
+	/* Discard any partial responses in the outgoing queue. */
+	usb_stream_clear_tx(&cmsis_dap_usb);
+
+	/*
+	 * In case JTAG was enabled in dap_connect(), but not properly disabled
+	 * with dap_disconnect(), the affected GPIO pins will be restored to
+	 * default input setting by hook in `gpio.c`.  In order for next
+	 * dap_connect() to have proper effect, below we record the fact that
+	 * JTAG connection has been disabled.
+	 */
+	jtag_enabled = false;
+
+	mutex_unlock(&unwind_mutex);
+}
+/*
+ * Runs this hook before DEFAULT such as if the CMSIS_DAP task is blocked in any
+ * dap_xxx() methods in gpio.c or i2c.c, it will be unwound before the hook in
+ * these files are executed to reset their state.
+ */
+DECLARE_HOOK(HOOK_REINIT, cmsis_dap_reinit, HOOK_PRIO_PRE_DEFAULT);
 
 static void cmsis_dap_written(struct consumer const *consumer, size_t count)
 {

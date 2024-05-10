@@ -1141,7 +1141,7 @@ static int command_i2ctest(int argc, const char **argv)
 			} while (j);
 		}
 
-		usleep(udelay);
+		crec_usleep(udelay);
 	}
 
 	ccprintf("\n**********final result **********\n");
@@ -1153,7 +1153,7 @@ static int command_i2ctest(int argc, const char **argv)
 		for (i = 0; i < i2c_test_dev_used; i++) {
 			i2c_s_test = i2c_stress_tests[i].i2c_test;
 			i2c_test_status(&i2c_s_test->test_results, i + 1);
-			msleep(100);
+			crec_msleep(100);
 		}
 	}
 	cflush();

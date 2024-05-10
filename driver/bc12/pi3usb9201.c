@@ -219,7 +219,7 @@ static void bc12_power_up(int port)
 		 * Give the pi3usb9201 time so it's ready to receive i2c
 		 * messages
 		 */
-		msleep(1);
+		crec_msleep(1);
 	}
 
 	pi3usb9201_interrupt_mask(port, 1);

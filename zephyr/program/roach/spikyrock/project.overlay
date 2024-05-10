@@ -1,0 +1,45 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/touchpad_hashes.dtsi>
+
+#include "../gpio.dtsi"
+#include "../uart.dtsi"
+#include "../i2c.dtsi"
+#include "../interrupts.dtsi"
+#include "../keyboard.dtsi"
+#include "../pwm.dtsi"
+#include "../rwsig.dtsi"
+
+&i2c0 {
+	touchpad@15 {
+		logical_max_x = <2644>;
+		logical_max_y = <1440>;
+		physical_max_x = <839>;
+		physical_max_y = <457>;
+	};
+};
+
+&touchpad_fw_hashes {
+	size = <((65536 / 1024) * 32)>;
+};
+
+
+/ {
+	aliases {
+		usb-hid-tp = &usb_hid_tp;
+	};
+};
+
+&usb0 {
+	status = "okay";
+	pinctrl-0 = <&usb0_dm_gph5_default
+		     &usb0_dp_gph6_default>;
+	pinctrl-names = "default";
+
+	usb_hid_tp: usb-hid-tp {
+		compatible = "cros-ec,usb-hid-touchpad";
+	};
+};

@@ -9,8 +9,14 @@ project(pdc)
 # Include FFF fakes
 add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 
+zephyr_include_directories(include)
+
 target_sources(app PRIVATE src/main.c)
 target_sources(app PRIVATE src/fakes.c)
+
+target_sources_ifdef(CONFIG_TEST_PDC_MESSAGE_TRACING  app PRIVATE
+	src/util_pcap.c
+	src/pdc_trace_msg.c)
 
 if (DEFINED CONFIG_TEST_SUITE_PDC_GENERIC)
 	target_sources(app PRIVATE src/generic/pdc_api.c)
@@ -23,4 +29,8 @@ endif()
 
 if (DEFINED CONFIG_TEST_SUITE_PDC_RETIMER_FW_UPDATE)
 	target_sources(app PRIVATE src/generic/retimer_fw_update.c)
+endif()
+
+if (DEFINED CONFIG_TEST_SUITE_PDC_CONSOLE)
+	target_sources(app PRIVATE src/generic/pdc_console.c)
 endif()

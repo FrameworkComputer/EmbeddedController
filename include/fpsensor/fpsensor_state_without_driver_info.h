@@ -24,23 +24,6 @@ extern "C" {
 
 /* --- Global variables defined in fpsensor_state_without_driver_info.c --- */
 
-/* Index of the last enrolled but not retrieved template. */
-extern uint16_t template_newly_enrolled;
-/* Number of used templates */
-extern uint16_t templ_valid;
-/* Bitmap of the templates with local modifications */
-extern uint32_t templ_dirty;
-/* Current user ID */
-extern uint32_t user_id[FP_CONTEXT_USERID_WORDS];
-/* Part of the IKM used to derive encryption keys received from the TPM. */
-extern uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
-/* Status of the FP encryption engine & context. */
-extern uint32_t fp_encryption_status;
-
-extern atomic_t fp_events;
-
-extern uint32_t sensor_mode;
-
 struct positive_match_secret_state {
 	/* Index of the most recently matched template. */
 	uint16_t template_matched;
@@ -50,7 +33,27 @@ struct positive_match_secret_state {
 	timestamp_t deadline;
 };
 
-extern struct positive_match_secret_state positive_match_secret_state;
+struct fpsensor_context {
+	/** Index of the last enrolled but not retrieved template. */
+	uint16_t template_newly_enrolled;
+	/** Number of used templates */
+	uint16_t templ_valid;
+	/** Bitmap of the templates with local modifications */
+	uint32_t templ_dirty;
+	/** Status of the FP encryption engine & context. */
+	uint32_t fp_encryption_status;
+	atomic_t fp_events;
+	uint32_t sensor_mode;
+	/** Part of the IKM used to derive encryption keys received from the
+	 * TPM.
+	 */
+	uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
+	/** Current user ID */
+	uint32_t user_id[FP_CONTEXT_USERID_WORDS];
+	struct positive_match_secret_state positive_match_secret_state;
+};
+
+extern struct fpsensor_context global_context;
 
 /*
  * Check if FP TPM seed has been set.

@@ -288,7 +288,7 @@ void pd_transition_voltage(int idx)
 		 * msec. The max loop count and this sleep time gives plenty
 		 * of time for this change.
 		 */
-		msleep(2);
+		crec_msleep(2);
 	}
 
 	CPRINTS("usbc[%d]: Vbus transition timeout: target = %d, measure = %d",

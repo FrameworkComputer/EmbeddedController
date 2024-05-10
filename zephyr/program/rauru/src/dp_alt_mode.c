@@ -6,27 +6,92 @@
 #include "chipset.h"
 #include "console.h"
 #include "hooks.h"
+#include "rauru_dp.h"
 #include "timer.h"
 #include "typec_control.h"
 #include "usb_mux.h"
 #include "usb_pd.h"
+#include "usb_pd_dp_hpd_gpio.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 
-enum dp_port {
-	DP_PORT_NONE = -1,
-	DP_PORT_C0 = 0,
-	DP_PORT_C1,
-	DP_PORT_HDMI,
-};
-
 static int active_dp_port = DP_PORT_NONE;
 
-static void set_dp_path_sel(int port)
+bool rauru_is_hpd_high(enum rauru_dp_port port)
 {
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_dp_path_usb_c1_en), port);
-	CPRINTS("Set DP path C%d", port);
+#if CONFIG_RAURU_BOARD_HAS_HDMI_SUPPORT
+	if (port == DP_PORT_HDMI) {
+		return gpio_pin_get_dt(
+			GPIO_DT_FROM_NODELABEL(gpio_hdmi_ec_hpd));
+	}
+#endif
+
+	return PD_VDO_DPSTS_HPD_LVL(dp_status[port]);
+}
+
+enum rauru_dp_port rauru_get_dp_path(void)
+{
+	return active_dp_port;
+}
+
+void rauru_detach_dp_path(enum rauru_dp_port port)
+{
+	if (port != active_dp_port) {
+		return;
+	}
+
+	/* Detach and then rotate. Priority: HDMI -> C0 -> C1 */
+#if CONFIG_RAURU_BOARD_HAS_HDMI_SUPPORT
+	if (port != DP_PORT_HDMI && rauru_is_hpd_high(DP_PORT_HDMI)) {
+		rauru_set_dp_path(DP_PORT_HDMI);
+		return;
+	}
+#endif
+
+	for (int i = 0; i < board_get_usb_pd_port_count(); i++) {
+		if (i != port && rauru_is_hpd_high(i)) {
+			/* TODO(yllin): should set IRQ_HPD as well? */
+			rauru_set_dp_path(i);
+			return;
+		}
+	}
+
+	/* no other active port,  */
+	rauru_set_dp_path(DP_PORT_NONE);
+}
+
+void rauru_set_dp_path(enum rauru_dp_port port)
+{
+	const struct gpio_dt_spec *c1_en =
+		GPIO_DT_FROM_NODELABEL(gpio_dp_path_usb_c1_en);
+	const struct gpio_dt_spec *hdmi_en =
+		GPIO_DT_FROM_NODELABEL(gpio_dp_path_hdmi_en);
+
+	if (port == active_dp_port) {
+		return;
+	}
+
+	/*
+	 * DP Pipe -> DPMux -> C1
+	 *              |----> DP Mux -> HDMI
+	 *                       |-----> C0
+	 * Also, set EN pin to LOW for power saving when unused.
+	 */
+	if (port == DP_PORT_C1) {
+		gpio_pin_set_dt(c1_en, 1);
+		gpio_pin_set_dt(hdmi_en, 0);
+	} else {
+		gpio_pin_set_dt(c1_en, 0);
+		if (port == DP_PORT_HDMI) {
+			gpio_pin_set_dt(hdmi_en, 1);
+		} else {
+			/* C0, None, and other invalid ports */
+			gpio_pin_set_dt(hdmi_en, 0);
+		}
+	}
+	active_dp_port = port;
+	CPRINTS("DP p%d", port);
 }
 
 int svdm_get_hpd_gpio(int port)
@@ -35,39 +100,12 @@ int svdm_get_hpd_gpio(int port)
 	return !gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_ap_dp_hpd_l));
 }
 
-static void reset_aux_deferred(void)
-{
-	if (active_dp_port == DP_PORT_NONE)
-		/* reset to 1 for lower power consumption. */
-		set_dp_path_sel(1);
-}
-DECLARE_DEFERRED(reset_aux_deferred);
-
 void svdm_set_hpd_gpio(int port, int en)
 {
-	/*
-	 * HPD is low active, inverse the en.
-	 *
-	 * Implement FCFS policy:
-	 * 1) Enable hpd if no active port.
-	 * 2) Disable hpd if active port is the given port.
-	 */
-	if (en && active_dp_port < 0) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_ap_dp_hpd_l), 0);
-		active_dp_port = port;
-		hook_call_deferred(&reset_aux_deferred_data, -1);
-	}
+	if (port != active_dp_port)
+		return;
 
-	if (!en && active_dp_port == port) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_ap_dp_hpd_l), 1);
-		active_dp_port = DP_PORT_NONE;
-		/*
-		 * This might be a HPD debounce to send a HPD IRQ (500us), so
-		 * do not reset the aux path immediately. Defer this call and
-		 * re-check if this is a real disable.
-		 */
-		hook_call_deferred(&reset_aux_deferred_data, 1 * MSEC);
-	}
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_ap_dp_hpd_l), !en);
 }
 
 __override void svdm_dp_post_config(int port)
@@ -76,72 +114,48 @@ __override void svdm_dp_post_config(int port)
 
 	typec_set_sbu(port, true);
 
-	/*
-	 * Prior to post-config, the mux will be reset to safe mode, and this
-	 * will break mux config and aux path config we did in the first DP
-	 * status command. Only enable this if the port is the current aux-port.
-	 */
+	dp_flags[port] |= DP_FLAGS_DP_ON;
+
 	if (port == active_dp_port) {
 		usb_mux_set(port, mux_mode, USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(port)));
 		usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL |
 						 USB_PD_MUX_HPD_IRQ_DEASSERTED);
 	} else {
-		usb_mux_set(port, mux_mode & USB_PD_MUX_USB_ENABLED,
+		usb_mux_set(port, mux_mode & (~USB_PD_MUX_DP_ENABLED),
 			    USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(port)));
 	}
-
-	dp_flags[port] |= DP_FLAGS_DP_ON;
 }
 
-static int is_dp_muxable(enum dp_port port)
+int rauru_is_dp_muxable(enum rauru_dp_port port)
 {
-	int i;
-	/* TODO: query anx7510 GPIO1 instead. */
-	int hdmi_in_use = false;
-
-	/* check HDMI HPD event */
-	if (hdmi_in_use && port != DP_PORT_HDMI) {
-		return 0;
-	}
-
-	for (i = 0; i < board_get_usb_pd_port_count(); i++) {
-		if (i != port) {
-			if (usb_mux_get(i) & USB_PD_MUX_DP_ENABLED) {
-				return 0;
-			}
-		}
-	}
-
-	return 1;
+	return port == active_dp_port || port == DP_PORT_NONE;
 }
 
 __override int svdm_dp_attention(int port, uint32_t *payload)
 {
 	int lvl = PD_VDO_DPSTS_HPD_LVL(payload[1]);
 	int irq = PD_VDO_DPSTS_HPD_IRQ(payload[1]);
-#ifdef CONFIG_USB_PD_DP_HPD_GPIO
-	int cur_lvl = svdm_get_hpd_gpio(port);
-#endif /* CONFIG_USB_PD_DP_HPD_GPIO */
 	mux_state_t mux_state, mux_mode;
 
 	mux_mode = svdm_dp_get_mux_mode(port);
 	dp_status[port] = payload[1];
 
-	if (!is_dp_muxable(port)) {
+	if (!rauru_is_dp_muxable(port)) {
 		/* TODO(waihong): Info user? */
 		CPRINTS("p%d: The other port is already muxed.", port);
 		return 0; /* nak */
 	}
 
 	if (lvl) {
-		set_dp_path_sel(port);
-
+		rauru_set_dp_path(port);
 		usb_mux_set(port, mux_mode, USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(port)));
 	} else {
-		usb_mux_set(port, USB_PD_MUX_USB_ENABLED, USB_SWITCH_CONNECT,
+		rauru_detach_dp_path(port);
+		usb_mux_set(port, mux_mode & (~USB_PD_MUX_USB_ENABLED),
+			    USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(port)));
 	}
 
@@ -155,50 +169,27 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		}
 	}
 
-#ifdef CONFIG_USB_PD_DP_HPD_GPIO
-	if (irq && !lvl) {
-		/*
-		 * IRQ can only be generated when the level is high, because
-		 * the IRQ is signaled by a short low pulse from the high level.
-		 */
-		CPRINTF("ERR:HPD:IRQ&LOW\n");
-		return 0; /* nak */
+	if (dp_hpd_gpio_set(port, lvl, irq) != EC_SUCCESS) {
+		return 0;
 	}
 
-	if (irq && cur_lvl) {
-		uint64_t now = get_time().val;
-		/* wait for the minimum spacing between IRQ_HPD if needed */
-		if (now < svdm_hpd_deadline[port]) {
-			usleep(svdm_hpd_deadline[port] - now);
-		}
-
-		/* generate IRQ_HPD pulse */
-		svdm_set_hpd_gpio(port, 0);
-		/*
-		 * b/171172053#comment14: since the HPD_DSTREAM_DEBOUNCE_IRQ is
-		 * very short (500us), we can use udelay instead of usleep for
-		 * more stable pulse period.
-		 */
-		udelay(HPD_DSTREAM_DEBOUNCE_IRQ);
-		svdm_set_hpd_gpio(port, 1);
-	} else {
-		svdm_set_hpd_gpio(port, lvl);
-	}
-
-	/* set the minimum time delay (2ms) for the next HPD IRQ */
-	svdm_hpd_deadline[port] = get_time().val + HPD_USTREAM_DEBOUNCE_LVL;
-#endif /* CONFIG_USB_PD_DP_HPD_GPIO */
-
+	/*
+	 * Populate MUX state before dp path mux, so we can keep the HPD status.
+	 */
 	mux_state = (lvl ? USB_PD_MUX_HPD_LVL : USB_PD_MUX_HPD_LVL_DEASSERTED) |
 		    (irq ? USB_PD_MUX_HPD_IRQ : USB_PD_MUX_HPD_IRQ_DEASSERTED);
 	usb_mux_hpd_update(port, mux_state);
 
-#ifdef USB_PD_PORT_TCPC_MST
-	if (port == USB_PD_PORT_TCPC_MST) {
-		baseboard_mst_enable_control(port, lvl);
-	}
-#endif
-
 	/* ack */
 	return 1;
+}
+
+__overridable void svdm_exit_dp_mode(int port)
+{
+	dp_flags[port] = 0;
+	dp_status[port] = 0;
+	dp_hpd_gpio_set(port, false, false);
+	usb_mux_hpd_update(port, USB_PD_MUX_HPD_LVL_DEASSERTED |
+					 USB_PD_MUX_HPD_IRQ_DEASSERTED);
+	rauru_detach_dp_path(port);
 }

@@ -85,7 +85,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 			bmi_enable_fifo(s, 0);
 		/* disable sensor */
 		ret = enable_sensor(s, 0);
-		msleep(3);
+		crec_msleep(3);
 		data->odr = 0;
 		return ret;
 	} else if (data->odr == 0) {
@@ -94,7 +94,7 @@ static int set_data_rate(const struct motion_sensor_t *s, int rate, int rnd)
 		if (ret)
 			return ret;
 		/* Wait for accel/gyro to wake up */
-		msleep(wakeup_time[s->type]);
+		crec_msleep(wakeup_time[s->type]);
 	}
 
 	ret = bmi_get_normalized_rate(s, rate, rnd, &normalized_rate, &reg_val);
@@ -181,7 +181,7 @@ static int wait_and_read_data(const struct motion_sensor_t *s, intv3_t v,
 
 	/* Check if data is ready */
 	while (try_cnt && !(status & BMI260_DRDY_ACC)) {
-		msleep(msec);
+		crec_msleep(msec);
 		ret = bmi_read8(s->port, s->i2c_spi_addr_flags, BMI260_STATUS,
 				&status);
 		if (ret)
@@ -522,7 +522,7 @@ static int init_config(const struct motion_sensor_t *s)
 
 	/* disable advance power save but remain fifo self wakeup*/
 	bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_PWR_CONF, 2);
-	msleep(1);
+	crec_msleep(1);
 	/* prepare for config load */
 	bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_INIT_CTRL, 0);
 
@@ -536,7 +536,7 @@ static int init_config(const struct motion_sensor_t *s)
 		return ret;
 	/* wait INTERNAL_STATUS.message to be 0x1 which take at most 150ms */
 	for (i = 0; i < 15; ++i) {
-		msleep(10);
+		crec_msleep(10);
 		ret = bmi_read8(s->port, s->i2c_spi_addr_flags,
 				BMI260_INTERNAL_STATUS, &init_status);
 		if (ret)
@@ -580,7 +580,7 @@ static int init(struct motion_sensor_t *s)
 		/* Reset the chip to be in a good state */
 		bmi_write8(s->port, s->i2c_spi_addr_flags, BMI260_CMD_REG,
 			   BMI260_CMD_SOFT_RESET);
-		msleep(2);
+		crec_msleep(2);
 		if (init_config(s))
 			return EC_ERROR_INVALID_CONFIG;
 

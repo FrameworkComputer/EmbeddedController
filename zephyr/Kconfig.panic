@@ -38,6 +38,15 @@ config PLATFORM_EC_CONSOLE_CMD_CRASH
 	     watchdog            - watchdog timer fired
 	     hang                - infinite loop in the EC code
 
+config PLATFORM_EC_CONSOLE_CMD_CRASH_NESTED
+	bool "Enable nesting for the crash console command"
+	default y
+	depends on PLATFORM_EC_CONSOLE_CMD_CRASH
+	help
+	  Enables nesting for the crash console command.
+	  Calling the crash console command with multiple crash arguments
+	  will result in nested crashes in the order specified.
+
 config PLATFORM_EC_DEBUG_ASSERT_BRIEF
 	bool "Enable brief panic messages"
 	default n

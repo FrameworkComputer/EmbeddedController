@@ -1,0 +1,120 @@
+
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+/ {
+	thermistor_rt9490: thermistor-rt9490 {
+		status = "okay";
+		compatible = "cros-ec,thermistor";
+		scaling-factor = <3>;
+		num-pairs = <21>;
+		steinhart-reference-mv = <4900>;
+		steinhart-reference-res = <10000>;
+		sample-datum-0 {
+			milivolt = <(731 / 3)>;
+			temp = <0>;
+			sample-index = <0>;
+		};
+		sample-datum-1 {
+			milivolt = <(708 / 3)>;
+			temp = <5>;
+			sample-index = <1>;
+		};
+		sample-datum-2 {
+			milivolt = <(682 / 3)>;
+			temp = <10>;
+			sample-index = <2>;
+		};
+		sample-datum-3 {
+			milivolt = <(653 / 3)>;
+			temp = <15>;
+			sample-index = <3>;
+		};
+		sample-datum-4 {
+			milivolt = <(622 / 3)>;
+			temp = <20>;
+			sample-index = <4>;
+		};
+		sample-datum-5 {
+			milivolt = <(589 / 3)>;
+			temp = <25>;
+			sample-index = <5>;
+		};
+		sample-datum-6 {
+			milivolt = <(554 / 3)>;
+			temp = <30>;
+			sample-index = <6>;
+		};
+		sample-datum-7 {
+			milivolt = <(519 / 3)>;
+			temp = <35>;
+			sample-index = <7>;
+		};
+		sample-datum-8 {
+			milivolt = <(483 / 3)>;
+			temp = <40>;
+			sample-index = <8>;
+		};
+		sample-datum-9 {
+			milivolt = <(446 / 3)>;
+			temp = <45>;
+			sample-index = <9>;
+		};
+		sample-datum-10 {
+			milivolt = <(411 / 3)>;
+			temp = <50>;
+			sample-index = <10>;
+		};
+		sample-datum-11 {
+			milivolt = <(376 / 3)>;
+			temp = <55>;
+			sample-index = <11>;
+		};
+		sample-datum-12 {
+			milivolt = <(343 / 3)>;
+			temp = <60>;
+			sample-index = <12>;
+		};
+		sample-datum-13 {
+			milivolt = <(312 / 3)>;
+			temp = <65>;
+			sample-index = <13>;
+		};
+		sample-datum-14 {
+			milivolt = <(284 / 3)>;
+			temp = <70>;
+			sample-index = <14>;
+		};
+		sample-datum-15 {
+			milivolt = <(257 / 3)>;
+			temp = <75>;
+			sample-index = <15>;
+		};
+		sample-datum-16 {
+			milivolt = <(232 / 3)>;
+			temp = <80>;
+			sample-index = <16>;
+		};
+		sample-datum-17 {
+			milivolt = <(209 / 3)>;
+			temp = <85>;
+			sample-index = <17>;
+		};
+		sample-datum-18 {
+			milivolt = <(188 / 3)>;
+			temp = <90>;
+			sample-index = <18>;
+		};
+		sample-datum-19 {
+			milivolt = <(169 / 3)>;
+			temp = <95>;
+			sample-index = <19>;
+		};
+		sample-datum-20 {
+			milivolt = <(152 / 3)>;
+			temp = <100>;
+			sample-index = <20>;
+		};
+	};
+};

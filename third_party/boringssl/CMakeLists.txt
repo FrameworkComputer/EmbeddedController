@@ -4,7 +4,7 @@
 
 if(CONFIG_BORINGSSL_CRYPTO)
 
-zephyr_library_named(boringssl)
+zephyr_interface_library_named(boringssl)
 
 # Currently BoringSSL is not as a module, so we need to provide a path to
 # sources.
@@ -37,26 +37,12 @@ else()
 	set(CMAKE_BUILD_TYPE Release)
 endif()
 
-# TODO(b/273639386): Remove these workarounds when the upstream supports
-# better way to disable the filesystem, threads and locks usages.
-set(CMAKE_SYSTEM_NAME Linux)
-set(ANDROID TRUE)
-zephyr_compile_definitions(__TRUSTY__)
-
-# Zephyr defines _XOPEN_SOURCE=600 when compiling 'posix' architecture,
-# but BoringSSL defines _XOPEN_SOURCE=700. Since redefining is not allowed
-# in compiler command line, undefine _XOPEN_SOURCE.
-if (DEFINED CONFIG_ARCH_POSIX)
-	set(CMAKE_C_FLAGS "${CMAKE_C_FLAGS} -U_XOPEN_SOURCE")
-endif()
-
 # We are not going to install BoringSSL, so don't generate install rules.
 set(CMAKE_SKIP_INSTALL_RULES YES)
 
 # We don't use generated assembly for now.
 set(OPENSSL_NO_ASM "1")
 
-zephyr_include_directories(${BORINGSSL_SOURCES})
 zephyr_include_directories(${BORINGSSL_SOURCES}/include)
 zephyr_include_directories(include)
 
@@ -70,15 +56,10 @@ add_subdirectory(${BORINGSSL_SOURCES} build EXCLUDE_FROM_ALL)
 # Link 'crypto' library into boringssl library.
 zephyr_library_link_libraries(crypto)
 
-# Provide implementation of CRYPTO_sysrand() using Zephyr Entropy Device.
-zephyr_library_sources_ifdef(CONFIG_BORINGSSL_HARDWARE_ENTROPY
-	common/sysrand_zephyr.c)
-
-# Change language to C11 because sysrand_zephyr.c includes header from
-# BoringSSL which requires that.
-zephyr_library_compile_options(-std=c11)
-
 # Add compile options required by BoringSSL.
+# -D_POSIX_C_SOURCE=200809L is needed because BoringSSL uses strdup() function
+# is guarded by __POSIX_VISIBLE >=200809 in Newlib's string.h file.
+#
 # -Wno-implicit-function-declaration is needed because BoringSSL sources use
 # functions not defined in Zephyr: fflush(), getenv(), sscanf(). We won't get
 # any linker issues because code that uses these functions is unused and will
@@ -87,10 +68,21 @@ zephyr_library_compile_options(-std=c11)
 # -fno-common disables merging tentative definitions (uninitialized global
 # variables) into pre-existing definition (initialized global variable).
 # Recommended by BoringSSL.
+set(BORINGSSL_COMPILE_OPTIONS -D_POSIX_C_SOURCE=200809L
+	-Wno-implicit-function-declaration -fno-common)
+
+# Create interface library that specifies compile options required by
+# BoringSSL. This is the same trick used by zephyr_library_compile_options()
+# macro to make sure that order of compilation options is correct.
 #
-# -std=c11 is necessary because BoringSSL sources use features available in
-# C11, e.g. static_assert().
-set(BORINGSSL_COMPILE_OPTIONS -Wno-implicit-function-declaration -fno-common -std=c11)
+# We can't use the macro, because it uses target_link_libraries() with keyword
+# signature (like we do for 'fipsmodule' below) and BoringSSL uses the plain
+# signature for 'crypto' target. CMake forbids to mix plain signature and
+# keyword signature for target. That's also the reason why we don't specify
+# PUBLIC or PRIVATE when linking libraries to 'crypto' target.
+add_library(boringssl_compile_options_lib INTERFACE)
+target_compile_options(boringssl_compile_options_lib INTERFACE
+	${BORINGSSL_COMPILE_OPTIONS})
 
 # Target 'fipsmodule' is a object library. It compiles source files, but
 # doesn't archive or link object files into library. Other targets should
@@ -98,19 +90,11 @@ set(BORINGSSL_COMPILE_OPTIONS -Wno-implicit-function-declaration -fno-common -st
 # Sources from the target are compiled with the object library flags, not
 # flags from target that reference objects. As a result we need to add compile
 # options to 'fipsmodule' separately.
-set(ZEPHYR_CURRENT_LIBRARY fipsmodule)
 target_link_libraries(fipsmodule PUBLIC zephyr_interface)
+target_link_libraries(fipsmodule PRIVATE boringssl_compile_options_lib)
 
-# -Wno-return-type is needed to ignore non-void functions that calls abort() and
-# don't have return statement (e.g. aes_hw_set_encrypt_key()).
-zephyr_library_compile_options(-Wno-return-type ${BORINGSSL_COMPILE_OPTIONS})
-
-# Now we can set compile options for 'crypto' library.
-set(ZEPHYR_CURRENT_LIBRARY crypto)
-target_link_libraries(crypto PUBLIC zephyr_interface)
-
-# Add recommended compile options.
-zephyr_library_compile_options(${BORINGSSL_COMPILE_OPTIONS})
+# Add recommended compile options for 'crypto' library.
+target_link_libraries(crypto zephyr_interface boringssl_compile_options_lib)
 
 # Enable LTO if enabled for 'app' library.
 get_property(APP_LTO_PROPERTY TARGET app PROPERTY INTERPROCEDURAL_OPTIMIZATION)

@@ -16,10 +16,7 @@
 /* Deku project DTS includes */
 #include "led_pins.dtsi"
 #include "temp_sensors.dtsi"
-/*
- * TODO(b/285166688): need led_policy.dtsi once that has been
- * implemented to match Ovis requirements
- */
+#include "led_policy.dtsi"
 
 / {
 	named-adc-channels {
@@ -84,11 +81,11 @@
 		gpio_ec_spare_gpio02: ec_spare_gpio02 {
 			gpios = <&gpio0 2 GPIO_OUTPUT>;
 		};
-		gpio_ec_spare_gpio06: ec_spare_gpio06 {
-			gpios = <&gpio0 6 GPIO_OUTPUT>;
+		gpio_poe_cs_out: poe_cs_out {
+			gpios = <&gpio0 6 GPIO_OUTPUT_LOW>;
 		};
-		gpio_ec_spare_gpio07: ec_spare_gpio07 {
-			gpios = <&gpio0 7 GPIO_OUTPUT>;
+		gpio_poe_check_l: poe_check_l {
+			gpios = <&gpio0 7 GPIO_INPUT>;
 		};
 		gpio_ec_spare_gpio17: ec_spare_gpio17 {
 			gpios = <&gpio1 7 GPIO_OUTPUT>;
@@ -161,6 +158,14 @@
 		};
 	};
 
+	pwr-slp-s0-l {
+		compatible = "intel,ap-pwrseq-gpio";
+		dbg-label = "SLP_S0_L input from PCH";
+		enum-name = "PWR_SLP_S0";
+		gpios = <&gpio5 0 GPIO_ACTIVE_LOW>;
+		interrupt-flags = <GPIO_INT_EDGE_BOTH>;
+	};
+
 	named-i2c-ports {
 		i2c_ec_i2c_usb_c3: ec_i2c_usb_c3 {
 		i2c-port = <&i2c0_0>;
@@ -231,8 +236,14 @@
 &cbi_flash {
 	/*
 	 * CBI section size is 0x1000 bytes, the CBI portion lies at the end of
-	 * EC_RO section. EC_RO section ends at 0x50000 byte which is the offset
+	 * EC_RO section. EC_RO section ends at 0x31000 byte which is the offset
 	 */
 	offset = <0x31000>;
 	size = <0x1000>;
+};
+
+&fan0 {
+	rpm_min = <2300>;
+	rpm_start = <2300>;
+	rpm_max = <4050>;
 };

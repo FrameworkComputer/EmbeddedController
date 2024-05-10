@@ -263,7 +263,7 @@ static void power_seq_run(const struct power_seq_op *power_seq_ops,
 		gpio_set_level(power_seq_ops[i].signal, power_seq_ops[i].level);
 		if (!power_seq_ops[i].delay)
 			continue;
-		msleep(power_seq_ops[i].delay);
+		crec_msleep(power_seq_ops[i].delay);
 	}
 }
 
@@ -370,7 +370,7 @@ enum power_state power_handle_state(enum power_state state)
 			static int total_sleep_ms;
 
 			if (total_sleep_ms < 4000) {
-				msleep(10);
+				crec_msleep(10);
 				total_sleep_ms += 10;
 				return POWER_G3S5;
 			}
@@ -383,7 +383,7 @@ enum power_state power_handle_state(enum power_state state)
 		 */
 		while (charge_prevent_power_on(0) &&
 		       tries++ < CHARGER_INITIALIZED_TRIES) {
-			msleep(CHARGER_INITIALIZED_DELAY_MS);
+			crec_msleep(CHARGER_INITIALIZED_DELAY_MS);
 		}
 
 		/* Return to G3 if battery level is too low. */
@@ -418,9 +418,9 @@ enum power_state power_handle_state(enum power_state state)
 
 		/* If PMIC is off, switch it on by pulsing PMIC enable. */
 		if (!(power_get_signals() & IN_PGOOD_PMIC)) {
-			msleep(PMIC_EN_PULSE_MS);
+			crec_msleep(PMIC_EN_PULSE_MS);
 			gpio_set_level(GPIO_PMIC_EN_ODL, 0);
-			msleep(PMIC_EN_PULSE_MS);
+			crec_msleep(PMIC_EN_PULSE_MS);
 			gpio_set_level(GPIO_PMIC_EN_ODL, 1);
 		}
 
@@ -559,7 +559,7 @@ enum power_state power_handle_state(enum power_state state)
 		if (power_get_signals() & IN_PGOOD_PMIC) {
 			CPRINTS("Forcing PMIC off");
 			gpio_set_level(GPIO_PMIC_FORCE_RESET_ODL, 0);
-			msleep(5);
+			crec_msleep(5);
 			hook_call_deferred(&release_pmic_force_reset_data,
 					   PMIC_FORCE_RESET_TIME);
 

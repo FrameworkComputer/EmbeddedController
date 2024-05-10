@@ -211,7 +211,7 @@ ZTEST_USER(temp_sensor, test_temp_sensor_pct2075)
 		 * update temperature in the 1 second periodic hook, so
 		 * we need to wait for it.
 		 */
-		msleep(1100);
+		crec_msleep(1100);
 		zassert_equal(EC_SUCCESS,
 			      temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(
 						       named_pct2075)),
@@ -234,7 +234,7 @@ ZTEST_USER(temp_sensor, test_temp_sensor_pct2075_fail)
 
 	/* Set initial temperature */
 	pct2075_emul_set_temp(dev, mk1);
-	msleep(1100);
+	crec_msleep(1100);
 
 	zassert_equal(EC_SUCCESS, temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(
 							   named_pct2075)),
@@ -246,7 +246,7 @@ ZTEST_USER(temp_sensor, test_temp_sensor_pct2075_fail)
 	i2c_common_emul_set_read_fail_reg(&data->common, PCT2075_REG_TEMP);
 	pct2075_emul_set_temp(dev, mk2);
 	/* Wait for potential update */
-	msleep(1100);
+	crec_msleep(1100);
 
 	/* Make sure the temperature is not changed */
 	zassert_equal(EC_SUCCESS, temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(
@@ -258,7 +258,7 @@ ZTEST_USER(temp_sensor, test_temp_sensor_pct2075_fail)
 	i2c_common_emul_set_read_fail_reg(&data->common,
 					  I2C_COMMON_EMUL_NO_FAIL_REG);
 	/* Wait for update */
-	msleep(1100);
+	crec_msleep(1100);
 	/* Make sure the temperature is updated */
 	zassert_equal(EC_SUCCESS, temp_sensor_read(TEMP_SENSOR_ID(DT_NODELABEL(
 							   named_pct2075)),

@@ -20,9 +20,9 @@ void board_reset_pd_mcu(void)
 	/* Reset TCPC1 */
 	if (usb_db_type == FW_USB_DB_USB3 && tcpc_config[1].rst_gpio.port) {
 		gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 1);
-		msleep(PS8XXX_RESET_DELAY_MS);
+		crec_msleep(PS8XXX_RESET_DELAY_MS);
 		gpio_pin_set_dt(&tcpc_config[1].rst_gpio, 0);
-		msleep(PS8815_FW_INIT_DELAY_MS);
+		crec_msleep(PS8815_FW_INIT_DELAY_MS);
 	}
 }
 

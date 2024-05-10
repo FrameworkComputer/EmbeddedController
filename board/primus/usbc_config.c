@@ -168,13 +168,13 @@ __override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
 		 * Allow 1ms time for the retimer to power up lc_domain
 		 * which powers I2C controller within retimer
 		 */
-		msleep(1);
+		crec_msleep(1);
 
 		/* This will allow power saving on BB retimer */
 		gpio_set_level(GPIO_TBT_PWR_EN, 1);
 	} else {
 		gpio_set_level(rst_signal, 0);
-		msleep(1);
+		crec_msleep(1);
 		gpio_set_level(GPIO_TBT_PWR_EN, 0);
 	}
 	return EC_SUCCESS;
@@ -272,9 +272,6 @@ void ppc_interrupt(enum gpio_signal signal)
 
 void retimer_interrupt(enum gpio_signal signal)
 {
-	/*
-	 * TODO(b/179513527): add USB-C support
-	 */
 }
 
 __override bool board_is_dts_port(int port)

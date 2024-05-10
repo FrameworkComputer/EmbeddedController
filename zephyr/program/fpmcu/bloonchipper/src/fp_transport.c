@@ -60,9 +60,7 @@ test_export_static int fp_transport_init(void)
 	switch (get_fp_transport_type()) {
 	case FP_TRANSPORT_TYPE_UART:
 #ifdef CONFIG_EC_HOST_CMD_BACKEND_SPI
-		if (!pm_device_action_run(dev_spi, PM_DEVICE_ACTION_SUSPEND)) {
-			pm_device_state_lock(dev_spi);
-		}
+		pm_device_action_run(dev_spi, PM_DEVICE_ACTION_SUSPEND);
 #endif /* CONFIG_EC_HOST_CMD_BACKEND_SPI */
 #ifdef CONFIG_EC_HOST_CMD_BACKEND_UART
 		ec_host_cmd_init(ec_host_cmd_backend_get_uart(dev_uart));
@@ -71,9 +69,7 @@ test_export_static int fp_transport_init(void)
 		break;
 	case FP_TRANSPORT_TYPE_SPI:
 #ifdef CONFIG_EC_HOST_CMD_BACKEND_UART
-		if (!pm_device_action_run(dev_uart, PM_DEVICE_ACTION_SUSPEND)) {
-			pm_device_state_lock(dev_uart);
-		}
+		pm_device_action_run(dev_uart, PM_DEVICE_ACTION_SUSPEND);
 #endif /* CONFIG_EC_HOST_CMD_BACKEND_UART */
 #ifdef CONFIG_EC_HOST_CMD_BACKEND_SPI
 		ec_host_cmd_init(ec_host_cmd_backend_get_spi(&cs));

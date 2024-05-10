@@ -12,8 +12,10 @@
 #include "emul/retimer/emul_anx7483.h"
 #include "emul/tcpc/emul_tcpci.h"
 #include "extpower.h"
+#include "fan.h"
 #include "gothrax.h"
 #include "gpio/gpio_int.h"
+#include "hooks.h"
 #include "keyboard_protocol.h"
 #include "mock/isl923x.h"
 #include "motionsense_sensors.h"
@@ -21,6 +23,8 @@
 #include "system.h"
 #include "tablet_mode.h"
 #include "tcpm/tcpci.h"
+#include "temp_sensor/temp_sensor.h"
+#include "thermal.h"
 #include "typec_control.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
@@ -61,7 +65,6 @@ FAKE_VALUE_FUNC(int, cbi_get_ssfc, uint32_t *);
 FAKE_VOID_FUNC(bmi3xx_interrupt, enum gpio_signal);
 FAKE_VOID_FUNC(bma4xx_interrupt, enum gpio_signal);
 
-FAKE_VOID_FUNC(fan_set_count, int);
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
 
@@ -81,7 +84,6 @@ static void test_before(void *fixture)
 	RESET_FAKE(charge_manager_get_active_charge_port);
 	RESET_FAKE(charger_discharge_on_ac);
 	RESET_FAKE(chipset_in_state);
-	RESET_FAKE(fan_set_count);
 
 	raa489000_is_acok_fake.custom_fake = raa489000_is_acok_absent;
 
@@ -619,10 +621,11 @@ ZTEST(gothrax, test_fan_present)
 {
 	int flags;
 
+	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_fan_enable),
+			      GPIO_DISCONNECTED);
 	cros_cbi_get_fw_config_fake.custom_fake = get_fan_config_present;
 	fan_init();
 
-	zassert_equal(fan_set_count_fake.call_count, 0);
 	zassert_ok(gpio_pin_get_config_dt(
 		GPIO_DT_FROM_NODELABEL(gpio_fan_enable), &flags));
 	zassert_equal(flags, GPIO_OUTPUT | GPIO_OUTPUT_INIT_LOW,
@@ -633,17 +636,74 @@ ZTEST(gothrax, test_fan_absent)
 {
 	int flags;
 
+	gpio_pin_configure_dt(GPIO_DT_FROM_NODELABEL(gpio_fan_enable),
+			      GPIO_DISCONNECTED);
 	cros_cbi_get_fw_config_fake.custom_fake = get_fan_config_absent;
 	fan_init();
-
-	zassert_equal(fan_set_count_fake.call_count, 1,
-		      "function actually called %d times",
-		      fan_set_count_fake.call_count);
-	zassert_equal(fan_set_count_fake.arg0_val, 0, "parameter value was %d",
-		      fan_set_count_fake.arg0_val);
 
 	/* Fan enable is left unconfigured */
 	zassert_ok(gpio_pin_get_config_dt(
 		GPIO_DT_FROM_NODELABEL(gpio_fan_enable), &flags));
 	zassert_equal(flags, 0, "actual GPIO flags were %#x", flags);
+}
+static int chipset_state;
+static int chipset_in_state_mock(int state_mask)
+{
+	if (state_mask & chipset_state)
+		return 1;
+	return 0;
+}
+ZTEST(gothrax, test_board_override_fan_control)
+{
+	int temp = 35;
+
+	fan_channel_setup(0, FAN_USE_RPM_MODE);
+	fan_set_enabled(0, 1);
+	chipset_in_state_fake.custom_fake = chipset_in_state_mock;
+	chipset_state = CHIPSET_STATE_ON;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 0);
+	temp = 45;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 3000);
+	temp = 47;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 3500);
+	temp = 53;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 4000);
+	temp = 63;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 4500);
+	temp = 70;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 4800);
+	temp = 85;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 4800);
+	temp = 66;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 4500);
+
+	temp = 49;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 3500);
+
+	temp = 43;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 3000);
+	temp = 37;
+	board_override_fan_control(0, &temp);
+	zassert_equal(fan_get_rpm_mode(0), 1);
+	zassert_equal(fan_get_rpm_target(0), 0);
 }

@@ -5,6 +5,7 @@
 
 #include "compile_time_macros.h"
 
+#include <algorithm>
 #include <array>
 
 /* Boringssl headers need to be included before extern "C" section. */
@@ -14,7 +15,6 @@
 #include "openssl/bn.h"
 #include "openssl/ec.h"
 #include "openssl/ecdh.h"
-#include "openssl/mem.h"
 #include "openssl/obj_mac.h"
 #include "openssl/rand.h"
 
@@ -115,60 +115,60 @@ enum ec_error_list generate_ecdh_shared_secret(const EC_KEY &private_key,
 }
 
 enum ec_error_list
-generate_gsc_session_key(const uint8_t *auth_nonce, size_t auth_nonce_size,
-			 const uint8_t *gsc_nonce, size_t gsc_nonce_size,
-			 const uint8_t *pairing_key, size_t pairing_key_size,
-			 uint8_t *gsc_session_key, size_t gsc_session_key_size)
+generate_gsc_session_key(std::span<const uint8_t> auth_nonce,
+			 std::span<const uint8_t> gsc_nonce,
+			 std::span<const uint8_t> pairing_key,
+			 std::span<uint8_t> gsc_session_key)
 {
-	if (auth_nonce_size != 32 || gsc_nonce_size != 32 ||
-	    pairing_key_size != 32 ||
-	    gsc_session_key_size != SHA256_DIGEST_SIZE) {
+	if (auth_nonce.size() != 32 || gsc_nonce.size() != 32 ||
+	    pairing_key.size() != 32 ||
+	    gsc_session_key.size() != SHA256_DIGEST_SIZE) {
 		return EC_ERROR_INVAL;
 	}
 	CleanseWrapper<struct sha256_ctx> ctx;
 	SHA256_init(&ctx);
-	SHA256_update(&ctx, auth_nonce, auth_nonce_size);
-	SHA256_update(&ctx, gsc_nonce, gsc_nonce_size);
-	SHA256_update(&ctx, pairing_key, pairing_key_size);
-	uint8_t *result = SHA256_final(&ctx);
+	SHA256_update(&ctx, auth_nonce.data(), auth_nonce.size());
+	SHA256_update(&ctx, gsc_nonce.data(), gsc_nonce.size());
+	SHA256_update(&ctx, pairing_key.data(), pairing_key.size());
+	std::span result(SHA256_final(&ctx), SHA256_DIGEST_SIZE);
 
-	std::copy(result, result + SHA256_DIGEST_SIZE, gsc_session_key);
+	std::ranges::copy(result, gsc_session_key.begin());
 
 	return EC_SUCCESS;
 }
 
 enum ec_error_list decrypt_data_with_gsc_session_key_in_place(
-	const uint8_t *gsc_session_key, size_t gsc_session_key_size,
-	const uint8_t *iv, size_t iv_size, uint8_t *data, size_t data_size)
+	std::span<const uint8_t> gsc_session_key, std::span<const uint8_t> iv,
+	std::span<uint8_t> data)
 {
-	if (gsc_session_key_size != 32 || iv_size != AES_BLOCK_SIZE) {
+	if (gsc_session_key.size() != 32 || iv.size() != AES_BLOCK_SIZE) {
 		return EC_ERROR_INVAL;
 	}
 
 	CleanseWrapper<AES_KEY> aes_key;
-	int res = AES_set_encrypt_key(gsc_session_key, 256, &aes_key);
+	int res = AES_set_encrypt_key(gsc_session_key.data(), 256, &aes_key);
 	if (res) {
 		return EC_ERROR_INVAL;
 	}
 
 	std::array<uint8_t, AES_BLOCK_SIZE> aes_iv;
-	std::copy(iv, iv + iv_size, aes_iv.begin());
+	std::ranges::copy(iv, aes_iv.begin());
 
 	/* The AES CTR uses the same function for encryption & decryption. */
 	unsigned int block_num = 0;
 	std::array<uint8_t, AES_BLOCK_SIZE> ecount_buf;
-	AES_ctr128_encrypt(data, data, data_size, &aes_key, aes_iv.data(),
-			   ecount_buf.data(), &block_num);
+	AES_ctr128_encrypt(data.data(), data.data(), data.size(), &aes_key,
+			   aes_iv.data(), ecount_buf.data(), &block_num);
 
 	return EC_SUCCESS;
 }
 
 enum ec_error_list encrypt_data_with_ecdh_key_in_place(
-	const struct fp_elliptic_curve_public_key &in_pubkey, uint8_t *data,
-	size_t data_size, uint8_t *iv, size_t iv_size,
+	const struct fp_elliptic_curve_public_key &in_pubkey,
+	std::span<uint8_t> data, std::span<uint8_t> iv,
 	struct fp_elliptic_curve_public_key &out_pubkey)
 {
-	if (iv_size != AES_BLOCK_SIZE) {
+	if (iv.size() != AES_BLOCK_SIZE) {
 		return EC_ERROR_INVAL;
 	}
 
@@ -205,20 +205,20 @@ enum ec_error_list encrypt_data_with_ecdh_key_in_place(
 		return EC_ERROR_INVAL;
 	}
 
-	RAND_bytes(iv, iv_size);
+	RAND_bytes(iv.data(), iv.size());
 
 	/* The IV will be changed after the AES_ctr128_encrypt, we need a copy
 	 * for that. */
 	std::array<uint8_t, AES_BLOCK_SIZE> aes_iv;
 
-	std::copy(iv, iv + iv_size, aes_iv.begin());
+	std::ranges::copy(iv, aes_iv.begin());
 
 	unsigned int block_num = 0;
 	std::array<uint8_t, AES_BLOCK_SIZE> ecount_buf;
 
 	/* The AES CTR uses the same function for encryption & decryption. */
-	AES_ctr128_encrypt(data, data, data_size, &aes_key, aes_iv.data(),
-			   ecount_buf.data(), &block_num);
+	AES_ctr128_encrypt(data.data(), data.data(), data.size(), &aes_key,
+			   aes_iv.data(), ecount_buf.data(), &block_num);
 
 	return EC_SUCCESS;
 }

@@ -13,6 +13,8 @@
 #include "util.h"
 
 static int init_hook_count;
+static int init_early_hook_count;
+static bool init_early_before_init;
 static int tick_hook_count;
 static int tick2_hook_count;
 static int tick_count_seen_by_tick2;
@@ -26,6 +28,13 @@ static void init_hook(void)
 	init_hook_count++;
 }
 DECLARE_HOOK(HOOK_INIT, init_hook, HOOK_PRIO_DEFAULT);
+
+static void init_early_hook(void)
+{
+	init_early_hook_count++;
+	init_early_before_init = init_hook_count == 0;
+}
+DECLARE_HOOK(HOOK_INIT_EARLY, init_early_hook, HOOK_PRIO_DEFAULT);
 
 static void tick_hook(void)
 {
@@ -70,6 +79,13 @@ static int test_init_hook(void)
 	return EC_SUCCESS;
 }
 
+static int test_init_early_hook(void)
+{
+	TEST_ASSERT(init_early_hook_count == 1);
+	TEST_ASSERT(init_early_before_init == true);
+	return EC_SUCCESS;
+}
+
 static int test_ticks(void)
 {
 	int64_t interval;
@@ -80,7 +96,7 @@ static int test_ticks(void)
 	 * task starts. We only need to wait for just more than a second
 	 * to allow it fires for the second time.
 	 */
-	usleep(1300 * MSEC);
+	crec_usleep(1300 * MSEC);
 
 	interval = tick_time[1].val - tick_time[0].val;
 	error_pct = (interval - HOOK_TICK_INTERVAL) * 100 / HOOK_TICK_INTERVAL;
@@ -95,7 +111,7 @@ static int test_ticks(void)
 
 static int test_priority(void)
 {
-	usleep(HOOK_TICK_INTERVAL);
+	crec_usleep(HOOK_TICK_INTERVAL);
 	TEST_ASSERT(tick_hook_count == tick2_hook_count);
 	TEST_ASSERT(tick_hook_count == tick_count_seen_by_tick2);
 
@@ -106,26 +122,26 @@ static int test_deferred(void)
 {
 	deferred_call_count = 0;
 	hook_call_deferred(&deferred_func_data, 50 * MSEC);
-	usleep(100 * MSEC);
+	crec_usleep(100 * MSEC);
 	TEST_ASSERT(deferred_call_count == 1);
 
 	hook_call_deferred(&deferred_func_data, 50 * MSEC);
-	usleep(25 * MSEC);
+	crec_usleep(25 * MSEC);
 	hook_call_deferred(&deferred_func_data, -1);
-	usleep(75 * MSEC);
+	crec_usleep(75 * MSEC);
 	TEST_ASSERT(deferred_call_count == 1);
 
 	hook_call_deferred(&deferred_func_data, 50 * MSEC);
-	usleep(25 * MSEC);
+	crec_usleep(25 * MSEC);
 	hook_call_deferred(&deferred_func_data, -1);
-	usleep(15 * MSEC);
+	crec_usleep(15 * MSEC);
 	hook_call_deferred(&deferred_func_data, 25 * MSEC);
-	usleep(50 * MSEC);
+	crec_usleep(50 * MSEC);
 	TEST_ASSERT(deferred_call_count == 2);
 
 	TEST_ASSERT(hook_call_deferred(&non_deferred_func_data, 50 * MSEC) !=
 		    EC_SUCCESS);
-	usleep(100 * MSEC);
+	crec_usleep(100 * MSEC);
 	TEST_ASSERT(deferred_call_count == 2);
 
 	return EC_SUCCESS;
@@ -139,18 +155,18 @@ static void deferred_repeating_func(void)
 {
 	++repeating_deferred_count;
 
-	usleep(100 * MSEC);
+	crec_usleep(100 * MSEC);
 	if (repeating_deferred_count < 5)
 		hook_call_deferred(&deferred_repeating_func_data, SECOND);
 
-	usleep(100 * MSEC);
+	crec_usleep(100 * MSEC);
 }
 
 static int test_repeating_deferred(void)
 {
 	repeating_deferred_count = 0;
 	hook_call_deferred(&deferred_repeating_func_data, 0);
-	usleep(MINUTE);
+	crec_usleep(MINUTE);
 	TEST_EQ(repeating_deferred_count, 5, "%d");
 
 	return EC_SUCCESS;
@@ -161,6 +177,7 @@ void run_test(int argc, const char **argv)
 	test_reset();
 
 	RUN_TEST(test_init_hook);
+	RUN_TEST(test_init_early_hook);
 	RUN_TEST(test_ticks);
 	RUN_TEST(test_priority);
 	RUN_TEST(test_deferred);

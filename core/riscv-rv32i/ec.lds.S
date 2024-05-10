@@ -51,6 +51,15 @@ MEMORY
 #ifdef CONFIG_DRAM_BASE
 	DRAM (rwx) : ORIGIN = CONFIG_DRAM_BASE, LENGTH = CONFIG_DRAM_SIZE
 #endif
+
+#if defined(CHIP_VARIANT_MT8195) && defined(CONFIG_CHIP_MEMORY_REGIONS)
+#define REGION(name, attr, start, size) \
+	name(attr) : ORIGIN = (start), LENGTH = (size)
+#define REGION_LOAD REGION
+#include "memory_regions.inc"
+#undef REGION
+#undef REGION_LOAD
+#endif /* CONFIG_MEMORY_REGIONS */
 }
 
 SECTIONS
@@ -90,7 +99,11 @@ SECTIONS
 		OUTDIR/chip/it83xx/hwtimer.o (.rodata)
 		. = ALIGN(16);
 #endif
+#if SCP_CORE_SN == 1
+		EXCLUDE_FILE (STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o) STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/img*.o) STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/libmt_imgsys.a:*.o)) *(.text*)
+#else
 		*(.text*)
+#endif
 		. = ALIGN(4);
 #if defined(CONFIG_FLASH_PHYSICAL)
 #	if defined(CHIP_FAMILY_IT8XXX2)
@@ -132,6 +145,10 @@ SECTIONS
 		__hooks_init = .;
 		KEEP(*(.rodata.HOOK_INIT))
 		__hooks_init_end = .;
+
+		__hooks_init_early = .;
+		KEEP(*(.rodata.HOOK_EARLY_INIT))
+		__hooks_init_early_end = .;
 
 		__hooks_pre_freq_change = .;
 		KEEP(*(.rodata.HOOK_PRE_FREQ_CHANGE))
@@ -248,7 +265,12 @@ SECTIONS
 		__deferred_funcs_end = .;
 
 		. = ALIGN(4);
+
+#if SCP_CORE_SN == 1
+		EXCLUDE_FILE (STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o) STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/img*.o) STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/libmt_imgsys.a:*.o)) *(.rodata*)
+#else
 		*(.rodata*)
+#endif
 
 #ifdef CONFIG_CHIP_INIT_ROM_REGION
 	ASSERT(0, "CONFIG_CHIP_INIT_ROM_REGION not supported by linker script")
@@ -304,7 +326,11 @@ SECTIONS
 	.data : {
 		. = ALIGN(4);
 		__data_start = .;
+#if SCP_CORE_SN == 1
+		EXCLUDE_FILE (STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o) STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/img*.o) STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/libmt_imgsys.a:*.o)) *(.data)
+#else
 		*(.data)
+#endif
 		*(.sdata)
 		. = ALIGN(4);
 		__data_end = .;
@@ -328,7 +354,11 @@ SECTIONS
 		*(.sbss)
 		. = ALIGN(4);
 		/* Rest of .bss takes care of its own alignment */
+#if SCP_CORE_SN == 1
+		EXCLUDE_FILE (STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o) STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/img*.o) STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/libmt_imgsys.a:*.o)) *(.bss)
+#else
 		*(.bss)
+#endif
 
 		/*
 		 * Reserve space for deferred function firing times.
@@ -431,6 +461,11 @@ SECTIONS
 		. = ALIGN(4);
 		KEEP(*(SORT(.dram.text.keep.*)))
 		*(SORT(.dram.text.*))
+#if SCP_CORE_SN == 1
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/libmt_imgsys.a:*.o) (.text*)
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o) (.text*)
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/img*.o) (.text*)
+#endif
 		. = ALIGN(4);
 	} > DRAM
 
@@ -438,6 +473,11 @@ SECTIONS
 		. = ALIGN(4);
 		KEEP(*(SORT(.dram.rodata.keep.*)))
 		*(SORT(.dram.rodata.*))
+#if SCP_CORE_SN == 1
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/libmt_imgsys.a:*.o) (.rodata*)
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o) (.rodata*)
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/img*.o) (.rodata*)
+#endif
 		. = ALIGN(4);
 	} > DRAM
 
@@ -449,6 +489,11 @@ SECTIONS
 		. = ALIGN(4);
 		__dram_data_start = .;
 		*(.dram.data*)
+#if SCP_CORE_SN == 1
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/libmt_imgsys.a:*.o) (.data)
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o) (.data)
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/img*.o) (.data)
+#endif
 		. = ALIGN(4);
 		__dram_data_end = .;
 
@@ -470,10 +515,39 @@ SECTIONS
 		. = ALIGN(4);
 		__dram_bss_start = .;
 		*(SORT(.dram.bss*))
+#if SCP_CORE_SN == 1
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/libmt_imgsys.a:*.o) (.bss)
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/cam*.o) (.bss)
+		STRINGIFY(OUTDIR/private-mt-scp/board/BOARD/img*.o) (.bss)
+#endif
 		. = ALIGN(4);
 		__dram_bss_end = .;
 	} > DRAM
 #endif /* CONFIG_DRAM_BASE */
+
+#if defined(CHIP_VARIANT_MT8195) && defined(CONFIG_CHIP_MEMORY_REGIONS)
+#define REGION(name, attr, start, size) \
+	.name(NOLOAD) : { \
+		. = ALIGN(4); \
+		__##name##_start = .; \
+		KEEP(*(SORT(.name.keep.*))) \
+		*(SORT(.name.*)) \
+		. = ALIGN(4); \
+		__##name##_end = .; \
+	} > name
+#define REGION_LOAD(name, attr, start, size) \
+	.name : { \
+		. = ALIGN(4); \
+		__##name##_start = .; \
+		KEEP(*(SORT(.name.keep.*))) \
+		*(SORT(.name.*)) \
+		. = ALIGN(4); \
+		__##name##_end = .; \
+	} > name
+#include "memory_regions.inc"
+#undef REGION
+#undef REGION_LOAD
+#endif /* CONFIG_CHIP_MEMORY_REGIONS */
 
 #if !(defined(SECTION_IS_RO) && defined(CONFIG_FLASH_CROS))
 	/DISCARD/ : { *(.google) }

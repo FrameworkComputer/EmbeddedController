@@ -11,6 +11,7 @@
 #include "emul/emul_pdc.h"
 #include "emul/emul_realtek_rts54xx_public.h"
 #include "i2c.h"
+#include "pdc_trace_msg.h"
 #include "zephyr/sys/util.h"
 #include "zephyr/sys/util_macro.h"
 
@@ -60,6 +61,9 @@ static void rts54xx_before_test(void *data)
 {
 	emul_pdc_reset(emul);
 	emul_pdc_set_response_delay(emul, 0);
+	if (IS_ENABLED(CONFIG_TEST_PDC_MESSAGE_TRACING)) {
+		set_pdc_trace_msg_mocks();
+	}
 }
 
 static int emul_get_src_pdos(enum pdo_offset_t pdo_offset, uint8_t pdo_count,

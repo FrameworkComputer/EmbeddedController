@@ -366,7 +366,7 @@ static int max17055_poll_flag_clear(int regno, int mask, int timeout)
 		if (!(mask & reg))
 			return EC_SUCCESS;
 
-		msleep(10);
+		crec_msleep(10);
 		timeout -= 10;
 	} while (timeout > 0);
 
@@ -422,7 +422,7 @@ static int max17055_load_ocv_table(const struct max17055_batt_profile *config)
 		}
 		if (i == MAX17055_OCV_TABLE_SIZE)
 			break;
-		msleep(20);
+		crec_msleep(20);
 	}
 	if (!retries)
 		return EC_ERROR_TIMEOUT;
@@ -432,7 +432,7 @@ static int max17055_load_ocv_table(const struct max17055_batt_profile *config)
 	 * battery parameters. Otherwise, the initialization operation
 	 * has a very small probability of failure.
 	 */
-	msleep(180);
+	crec_msleep(180);
 
 	return EC_SUCCESS;
 }
@@ -635,7 +635,7 @@ static void max17055_init(void)
 			MAX17055_READ_DEBUG(REG_FSTAT, &reg);
 			if (!(FSTAT_DNR & reg))
 				break;
-			msleep(10);
+			crec_msleep(10);
 		}
 		if (!retries) {
 			CPRINTS("%s: timeout waiting for FSTAT.DNR cleared",

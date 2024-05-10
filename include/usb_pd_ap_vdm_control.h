@@ -8,6 +8,12 @@
  * Note: Stubs of APIs are implemented for linking if feature is not enabled
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 16
+
 #ifndef __CROS_EC_USB_AP_VDM_CONTROL_H
 #define __CROS_EC_USB_AP_VDM_CONTROL_H
 

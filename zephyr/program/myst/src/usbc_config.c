@@ -260,7 +260,7 @@ void board_hibernate(void)
 		pd_request_source_voltage(port, SAFE_RESET_VBUS_MV);
 
 		/* Give PD task and PPC chip time to get to 5V */
-		msleep(SAFE_RESET_VBUS_DELAY_MS);
+		crec_msleep(SAFE_RESET_VBUS_DELAY_MS);
 	}
 
 	/* Try to put our battery fuel gauge into sleep mode */

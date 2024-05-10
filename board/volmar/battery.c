@@ -166,7 +166,7 @@ const struct batt_conf_embed board_battery_info[] = {
 	},
 	/* PANASONIC AP23A5L Battery Information */
 	[BATTERY_AP23A5L] = {
-		.manuf_name = "LGC KT0030G024",
+		.manuf_name = "PANASONIC KT00305014",
 		.device_name = "AP23A5L",
 		.config = {
 			.fuel_gauge = {
