@@ -18,8 +18,7 @@
 #include "../binman.dtsi"
 #include "../brox.dtsi"
 #include "../fan.dtsi"
-#include "../generated.dtsi"
-#include "../gpio.dtsi"
+#include "gpio.dtsi"
 #include "../i2c.dtsi"
 #include "../interrupts.dtsi"
 #include "../led_pins.dtsi"
@@ -33,7 +32,7 @@
 #include "../usb_typec.dtsi"
 #include "../usba.dtsi"
 
-/* Brox project DTS includes*/
+/* Lotso project DTS includes*/
 
 /* Lotso overrides follow... */
 
@@ -42,6 +41,11 @@
                 default_battery: lgc_ap18c8k {
                         compatible = "lgc,ap18c8k", "battery-smart";
                 };
+        };
+
+        gpio-interrupts {
+                /delete-node/ volume_up;
+                /delete-node/ volume_down;
         };
 };
 

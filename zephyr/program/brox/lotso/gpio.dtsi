@@ -1,0 +1,264 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_charger_amon: charger_amon {
+			enum-name = "ADC_AMON_BMON";
+			io-channels = <&adc0 1>;
+		};
+		adc_temp_sensor_1: temp_sensor_1 {
+			enum-name = "ADC_TEMP_SENSOR_1_DDR_SOC";
+			io-channels = <&adc0 4>;
+		};
+		adc_temp_sensor_2: temp_sensor_2 {
+			enum-name = "ADC_TEMP_SENSOR_2_AMBIENT";
+			io-channels = <&adc0 5>;
+		};
+		adc_temp_sensor_3: temp_sensor_3 {
+			enum-name = "ADC_TEMP_SENSOR_3_CHARGER";
+			io-channels = <&adc0 3>;
+		};
+		adc_temp_sensor_4: temp_sensor_4 {
+			enum-name = "ADC_TEMP_SENSOR_PP5000_Z1";
+			io-channels = <&adc0 2>;
+		};
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_acok_ec_od: acok_ec_od {
+			gpios = <&gpiob 0 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_all_sys_pg: all_sys_pg {
+			gpios = <&gpiob 3 GPIO_INPUT>;
+		};
+		gpio_amp_mute_l: amp_mute_l {
+			gpios = <&gpioj 6 (GPIO_OUTPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_bat_disconnect_ec_odl: bat_disconnect_ec_odl {
+			gpios = <&gpioc 0 GPIO_ODR_LOW>;
+		};
+		gpio_ccd_mode_odl: ccd_mode_odl {
+			gpios = <&gpioe 6 GPIO_INPUT>;
+		};
+		gpio_ec_accel_db_int_l: ec_accel_db_int_l {
+			gpios = <&gpioj 7 GPIO_INPUT>;
+		};
+		gpio_ec_accel_mb_int_l: ec_accel_mb_int_l {
+			gpios = <&gpioj 0 GPIO_INPUT>;
+		};
+		gpio_ec_dsw_pwrok: ec_dsw_pwrok {
+			gpios = <&gpiod 3 GPIO_OUTPUT>;
+		};
+		gpio_ec_en_edp_bl: ec_en_edp_bl {
+			gpios = <&gpioh 0 GPIO_OUTPUT>;
+			enum-name = "GPIO_ENABLE_BACKLIGHT";
+		};
+		gpio_ec_en_pp3300_wlan: ec_en_pp3300_wlan {
+			gpios = <&gpiog 2 GPIO_OUTPUT>;
+		};
+		/* The legacy system code requires GPIO_ENTERING_RW symbol */
+		gpio_ec_entering_rw: ec_entering_rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
+			gpios = <&gpioe 3 GPIO_OUTPUT>;
+			enum-name = "GPIO_PACKET_MODE_EN";
+		};
+		gpio_ec_i2c_pmc_pd_int_odl: ec_i2c_pmc_pd_int_odl {
+			gpios = <&gpioj 1 GPIO_INPUT>;
+		};
+		gpio_ec_kb_bl_en: ec_kb_bl_en {
+			gpios = <&gpiod 4 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_EN_KEYBOARD_BACKLIGHT";
+		};
+		gpio_ec_kso_02_inv: ec_kso_02_inv {
+			gpios = <&gpioksol 2 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_sen_mode2_ec_pch_int_odl: sen_mode2_ec_pch_int_odl {
+			gpios = <&gpiog 1 GPIO_ODR_LOW>;
+			enum-name = "GPIO_EC_INT_L";
+		};
+		gpio_ec_pch_pwrok: ec_pch_pwrok {
+			gpios = <&gpiob 5 GPIO_OUTPUT>;
+		};
+		gpio_ec_pch_pwr_btn_odl: ec_pch_pwr_btn_odl {
+			gpios = <&gpiob 2 GPIO_ODR_LOW>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		gpio_ec_pch_rtcrst: ec_pch_rtcrst {
+			gpios = <&gpioh 5 GPIO_OUTPUT_LOW>;
+		};
+		gpio_ec_pch_sys_pwrok: ec_pch_sys_pwrok {
+			gpios = <&gpiod 5 GPIO_OUTPUT>;
+		};
+		gpio_ec_prochot_odl: ec_prochot_odl {
+			gpios = <&gpioi 0 GPIO_ODR_LOW>;
+		};
+		gpio_ec_rsmrst_l: ec_rsmrst_l {
+			gpios = <&gpioi 6 GPIO_OUTPUT>;
+		};
+		gpio_ec_slp_s3_l: ec_slp_s3_l {
+			gpios = <&gpioc 6 GPIO_INPUT>;
+		};
+		gpio_ec_slp_s4_l: ec_slp_s4_l {
+			gpios = <&gpioc 4 GPIO_INPUT>;
+		};
+		gpio_ec_slp_sus_l: ec_slp_sus_l {
+			gpios = <&gpioe 5 GPIO_INPUT>;
+		};
+		gpio_ec_wp_odl: ec_wp_odl {
+			gpios = <&gpioj 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_en_pp5000_fan: en_pp5000_fan {
+			gpios = <&gpioj 4 GPIO_INPUT>;
+		};
+		gpio_en_pp5000_usba: en_pp5000_usba {
+			gpios = <&gpiof 4 GPIO_OUTPUT>;
+		};
+		gpio_en_s5_rails: en_s5_rails {
+			gpios = <&gpiof 2 GPIO_OUTPUT>;
+		};
+		gpio_en_slp_z: en_slp_z {
+			gpios = <&gpioa 0 GPIO_OUTPUT>;
+		};
+		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
+			gpios = <&gpioe 4 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_imvp9_vrrdy_od: imvp9_vrrdy_od {
+			gpios = <&gpioh 3 GPIO_INPUT>;
+		};
+		gpio_ish_i2c_ec_scl: ish_i2c_ec_scl {
+			gpios = <&gpioc 7 GPIO_INPUT>;
+		};
+		gpio_ish_i2c_ec_sda: ish_i2c_ec_sda {
+			gpios = <&gpiof 7 GPIO_INPUT>;
+		};
+		gpio_lid_open: lid_open {
+			gpios = <&gpiob 1 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		gpio_notebook_mode_r: notebook_mode_r {
+			gpios = <&gpiod 0 GPIO_INPUT>;
+		};
+		gpio_pdc_rst_r: pdc_rst_r {
+			gpios = <&gpiob 4 GPIO_OUTPUT>;
+		};
+		gpio_pg_vccin_aux_od: pg_vccin_aux_od {
+			gpios = <&gpiof 3 GPIO_INPUT>;
+		};
+		gpio_sen_mode1_ec_pch_wake_odl: sen_mode1_ec_pch_wake_odl {
+			gpios = <&gpiob 6 GPIO_ODR_LOW>;
+		};
+		gpio_sys_rst_r_odl: sys_rst_r_odl {
+			gpios = <&gpiog 0 GPIO_ODR_LOW>;
+		};
+		gpio_sys_slp_s0ix_l: sys_slp_s0ix_l {
+			gpios = <&gpioj 5 GPIO_INPUT>;
+		};
+		gpio_tablet_mode_l: tablet_mode_l {
+			gpios = <&gpiod 1 GPIO_INPUT>;
+		};
+		gpio_usb_pd_int_odl: usb_pd_int_odl {
+			gpios = <&gpiof 5 GPIO_INPUT>;
+		};
+		gpio_vccst_pwrgd_od: vccst_pwrgd_od {
+			gpios = <&gpioh 4 GPIO_ODR_LOW>;
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_pd_prog: ec_i2c_pd_prog {
+			i2c-port = <&i2c1>;
+			enum-names = "I2C_PORT_PD";
+		};
+		i2c_i2c_ec_pmc_pd: i2c_ec_pmc_pd {
+			i2c-port = <&i2c3ALT>;
+			enum-names = "I2C_PORT_PMC_PD";
+		};
+		i2c_ec_i2c_charger: ec_i2c_charger {
+			i2c-port = <&i2c4>;
+			enum-names = "I2C_PORT_BATTERY";
+		};
+		i2c_ec_i2c_sensor: ec_i2c_sensor {
+			i2c-port = <&i2c5>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+	};
+
+	unused-pins {
+		compatible = "unused-gpios";
+
+		unused-gpios =
+			/* SPI_EC_DI_BIOS_DO */
+			<&gpiog 5 0>,
+			/* PRIVACY */
+			<&gpiog 3 0>,
+			/* EC_PCH_PECI */
+			<&gpiof 6 0>,
+			/* EC_ME_WR_L */
+			<&gpiog 6 0>,
+			/* SPI_EC_CLK */
+			<&gpiog 7 0>,
+			/* 5VA_PWR_MODE */
+			<&gpiog 4 0>,
+			/* EC_EN_IMVP91_NC */
+			<&gpioh 6 0>,
+			/* EC_ESPI_ALERT_L_NC */
+			<&gpiom 6 0>,
+			/* LED_STA2_N */
+			<&gpioa 2 0>,
+			/* PCBEEP_EC */
+			<&gpioa 7 0>,
+			/* USB3_REDRIVER_PD */
+			<&gpiod 7 0>,
+			/* ec_batt_pres_odl */
+			<&gpioi 7 0>,
+			/* I2C_EC_PMC_PD_SCL */
+			<&gpioh 1 GPIO_INPUT>,
+			/* I2C_EC_PMC_PD_SDA */
+			<&gpioh 2 GPIO_INPUT>;
+		};
+};
+
+&adc0 {
+	status = "okay";
+};
+
+&i2c1 {
+	status = "okay";
+};
+
+&i2c3ALT {
+	status = "okay";
+};
+
+&i2c4 {
+	status = "okay";
+};
+
+&i2c5 {
+	status = "okay";
+};
+
+/* The eSPI shim requires this GPIO nodelabel */
+gpio_ec_pch_wake_odl: &gpio_sen_mode1_ec_pch_wake_odl {
+};
+
+/* Default PROCHOT high so it's not asserted
+ * TODO: b/214509787 - zephyr: subsys/ap_pwrseq: support chipset interface APIs
+ */
+&gpio_ec_prochot_odl {
+	gpios = <&gpioi 0 GPIO_ODR_HIGH>;
+};
