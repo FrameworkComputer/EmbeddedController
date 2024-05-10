@@ -13,6 +13,7 @@
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
+		/* QN3 sensor close to voltage regulators */
 		temp_sensor_local: local-f75397 {
 			temp_host_high = <88>;
 			temp_host_halt = <98>;
@@ -22,6 +23,7 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&local_f75397>;
 		};
+		/* QN2 sensor close to CPU */
 		temp_sensor_cpu: cpu-f75303 {
 			temp_host_high = <88>;
 			temp_host_halt = <98>;
@@ -40,6 +42,7 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&battery_temp>;
 		};
+		/* QN1 sensor. Located next to RAM */
 		temp_sensor_ddr: ddr-f75303 {
 			temp_host_high = <87>;
 			temp_host_halt = <97>;
