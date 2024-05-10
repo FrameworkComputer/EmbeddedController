@@ -26,10 +26,12 @@ jobs:
       matrix:
         platform: [
           # Marigold builder uses same folder for all
-          { name: marigold, folder: marigold1, ver: "1.0.4", sha_len: 7, zephyr_ref: "marigold", cmsis_ref: "cros/chromeos-main" },
+          # Not official release on track-upstream branch.
+          # And need to use zephyr on track-upstream as well
+          { name: marigold, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "marigold.track-upstream", cmsis_ref: "cros/chromeos-main" },
           # Lotus and Azalea official releases are NOT coming from this branch
-          { name: lotus, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "marigold", cmsis_ref: "cros/chromeos-main" },
-          { name: azalea, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "marigold", cmsis_ref: "cros/chromeos-main" },
+          { name: lotus, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "marigold.track-upstream", cmsis_ref: "cros/chromeos-main" },
+          { name: azalea, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "marigold.track-upstream", cmsis_ref: "cros/chromeos-main" },
         ]
 
 
@@ -69,7 +71,7 @@ jobs:
       # But that will make zmake pick up the scripts git commit SHA
       # To embed the ec repo's commit SHA we need to change pwd there
       - name: Build ${{ matrix.platform.name }} (versioned)
-        if: ${{ matrix.platform.zephyr_ref == 'marigold' }}
+        if: ${{ matrix.platform.zephyr_ref == 'marigold.track-upstream' }}
         run: cros_sdk bash -c 'pushd ../platform/ec; zmake -D build -v ${{ matrix.platform.ver }} ${{ matrix.platform.name }}'
 
       # zmake on lotus-zephyr branch doesn't have the -v flag
