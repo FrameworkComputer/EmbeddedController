@@ -1310,30 +1310,7 @@ static int command_gpio_monitoring(int argc, const char **argv)
 }
 
 /*
- * For speed of interrupt handler, each pin to be manipulated by bitbanging is
- * recorded as the base address of the GPIO bank, as well as the 16-bit "mask"
- * to use to access the particular pin in the bank.
- */
-static uint8_t num_bitbang_pins;
-static size_t bitbang_pin_bases[7];
-static uint32_t bitbang_pin_masks[7];
-
-/*
- * Cyclic buffer storing the waveform to output, as well as recorded samples.
- */
-static uint8_t bitbang_data[BITBANG_BUFFER_SIZE];
-
-/*
- * Obtain address into bitbang_data, corresponding to given index.
- */
-static inline uint8_t *bitbang_data_ptr(uint32_t idx)
-{
-	BUILD_ASSERT(POWER_OF_TWO(BITBANG_BUFFER_SIZE));
-	return bitbang_data + (idx & (BITBANG_BUFFER_SIZE - 1));
-}
-
-/*
- * Organization of bitbang_data.  The indices move to the right, as data is
+ * Organization of bitbang.data.  The indices move to the right, as data is
  * being read/written:
  *
  *      CMSIS reads data           IRQ reads and overwrites     CMSIS writes
@@ -1342,54 +1319,85 @@ static inline uint8_t *bitbang_data_ptr(uint32_t idx)
  * |    | samples to be sent to PC | waveform data from PC      |            |
  * +----+--------------------------+----------------------------+------------+
  *      ^                          ^                         ^  ^
- *      bitbang_head               bitbang_irq               |  bitbang_tail
- *                                                           bitbang_irq_tail
+ *      bitbang.head               bitbang.irq               |  bitbang.tail
+ *                                                           bitbang.irq_tail
  */
+struct bitbang_state_t {
+	/*
+	 * Cyclic buffer storing the waveform to output, as well as recorded
+	 * samples.
+	 */
+	uint8_t data[BITBANG_BUFFER_SIZE];
 
-/* Index incremented by CMSIS_DAP task when data arrives from PC. */
-static volatile uint32_t bitbang_tail = 0;
+	/* Index incremented by CMSIS_DAP task when data arrives from PC. */
+	volatile uint32_t tail;
+
+	/*
+	 * Index indicating how far the interrupt handler can process, set by
+	 * CMSIS_DAP task when data arrives from PC.  Usually it will be
+	 * identical to bitbang.tail, but may lag by a few bytes, in cases when
+	 * a multi-byte encoding has been only partially received.  We do not
+	 * want the interrupt handler to "see" partially received instructions,
+	 * as that would require more complicated code.
+	 */
+	volatile uint32_t irq_tail;
+
+	/*
+	 * Index incremented by timer interrupt handler.  At each tick, the
+	 * interrupt handler will read the byte at this index, and use it do
+	 * drive GPIO outputs, and then replace it with GPIO input levels as
+	 * they were measured just before the output levels were applied.
+	 */
+	volatile uint32_t irq;
+
+	/* Index incremented by CMSIS_DAP task when data is sent to PC. */
+	volatile uint32_t head;
+
+	/*
+	 * For the cases where encoded data indicates a "pause" of several clock
+	 * ticks between waveform edges, this counter is used to record how many
+	 * future interrupts should "do nothing", before the next byte is
+	 * applied to GPIOs.
+	 */
+	uint32_t countdown;
+
+	/*
+	 * In case the encoded data indicates a "pause" until certain input
+	 * trigger, this is represented by `bitbang.mask` being non-zero.  Only
+	 * once the sampled input pins match `bitbang.pattern` for all of the
+	 * bits set in `bitbang.mask` will processing of the remaining part of
+	 * the bitbanging waveform resume.
+	 */
+	uint8_t mask, pattern;
+
+	/*
+	 * For speed of interrupt handler, each pin to be manipulated by
+	 * bitbanging is recorded as the base address of the GPIO bank, as well
+	 * as the 16-bit "mask" to use to access the particular pin in the bank.
+	 */
+	uint8_t num_pins;
+	size_t pin_bases[7];
+	uint32_t pin_masks[7];
+};
+
+struct bitbang_state_t bitbang;
 
 /*
- * Index indicating how far the interrupt handler can process, set by CMSIS_DAP
- * task when data arrives from PC.  Usually it will be identical to
- * bitbang_tail, but may lag by a few bytes, in cases when a multi-byte delay
- * encoding has been only partially received from the USB host.
+ * Obtain address into bitbang_data, corresponding to given index.
  */
-static volatile uint32_t bitbang_irq_tail = 0;
-
-/*
- * Index incremented by timer interrupt handler.  At each tick, the tnterrupt
- * handler will read the byte at this index, and use it do drive GPIO outputs,
- * and then replace it with GPIO input levels as they were measured just before
- * the output levels were applied.
- */
-static volatile uint32_t bitbang_irq = 0;
-
-/* Index incremented by CMSIS_DAP task when data is sent to PC. */
-static volatile uint32_t bitbang_head = 0;
-
-/*
- * For the cases where encoded data indicates a "pause" of several clock ticks
- * between waveform edges, this counter is used to record how many future
- * interrupts should "do nothing", before the next byte is applied to GPIOs.
- */
-static uint32_t bitbang_countdown;
-
-/*
- * In case the encoded data indicates a "pause" until certain input trigger,
- * this is represented by `bitbang_mask` being non-zero.  Only once the sampled
- * input pins match `bitbang_pattern` for all of the bits set in `bitbang_mask`
- * will processing of the remaining part of the bitbanging waveform resume.
- */
-static uint8_t bitbang_mask, bitbang_pattern;
+static inline uint8_t *bitbang_data_ptr(uint32_t idx)
+{
+	BUILD_ASSERT(POWER_OF_TWO(BITBANG_BUFFER_SIZE));
+	return bitbang.data + (idx & (BITBANG_BUFFER_SIZE - 1));
+}
 
 #define BITBANG_DELAY_BIT 0x80
 #define BITBANG_DATA_MASK 0x7F
 
 /*
  * Bitbang timer interrupt handler.  Will read the status of GPIOs, then set
- * GPIO output according to the byte at `bitbang_irq`, before overwriting it
- * with the sampled GPIOs and incrementing `bitbang_irq`.  (Except when high
+ * GPIO output according to the byte at `bitbang.irq`, before overwriting it
+ * with the sampled GPIOs and incrementing `bitbang.irq`.  (Except when high
  * bit of byte it set, which means to pause for a number of cycles.)
  */
 void IRQ_HANDLER(IRQ_TIM(BITBANG_TIMER))(void)
@@ -1399,7 +1407,7 @@ void IRQ_HANDLER(IRQ_TIM(BITBANG_TIMER))(void)
 		return;
 	}
 	STM32_TIM_SR(BITBANG_TIMER) = 0xFFFE;
-	if (bitbang_irq == bitbang_irq_tail) {
+	if (bitbang.irq == bitbang.irq_tail) {
 		/* End of waveform, stop timer */
 		STM32_TIM_CR1(BITBANG_TIMER) = 0;
 		return;
@@ -1411,9 +1419,9 @@ void IRQ_HANDLER(IRQ_TIM(BITBANG_TIMER))(void)
 	 * previous tick.
 	 */
 	uint8_t input_data = 0;
-	for (uint8_t i = 0; i < num_bitbang_pins; i++) {
-		input_data |= !!(STM32_GPIO_IDR(bitbang_pin_bases[i]) &
-				 bitbang_pin_masks[i])
+	for (uint8_t i = 0; i < bitbang.num_pins; i++) {
+		input_data |= !!(STM32_GPIO_IDR(bitbang.pin_bases[i]) &
+				 bitbang.pin_masks[i])
 			      << i;
 	}
 
@@ -1421,40 +1429,40 @@ void IRQ_HANDLER(IRQ_TIM(BITBANG_TIMER))(void)
 	 * See if there are reasons for not yet proceeding with the remaining
 	 * part of the waveform.
 	 */
-	if (bitbang_countdown) {
+	if (bitbang.countdown) {
 		/* Waiting for a fixed duration to pass. */
-		bitbang_countdown--;
+		bitbang.countdown--;
 		return;
 	}
-	if (bitbang_mask) {
+	if (bitbang.mask) {
 		/* Waiting for a particular trigger pattern. */
-		if ((input_data ^ bitbang_pattern) & bitbang_mask) {
+		if ((input_data ^ bitbang.pattern) & bitbang.mask) {
 			/* No match, sample again next cycle */
 			return;
 		}
 		/* Match, proceed */
-		bitbang_mask = 0;
+		bitbang.mask = 0;
 	}
 
 	/*
 	 * Past reasons to pause have been resolved.  Now inspect the next byte
 	 * of the waveform encoding.
 	 */
-	uint8_t data_byte = *bitbang_data_ptr(bitbang_irq);
+	uint8_t data_byte = *bitbang_data_ptr(bitbang.irq);
 	while (data_byte & BITBANG_DELAY_BIT) {
 		/* Maintain current levels for a number of cycles. */
 		uint8_t delay_scale = 0;
-		bitbang_countdown = 0;
+		bitbang.countdown = 0;
 		do {
-			bitbang_irq++;
-			bitbang_countdown += ((data_byte & BITBANG_DATA_MASK)
+			bitbang.irq++;
+			bitbang.countdown += ((data_byte & BITBANG_DATA_MASK)
 					      << delay_scale);
 			delay_scale += 7;
-			data_byte = *bitbang_data_ptr(bitbang_irq);
+			data_byte = *bitbang_data_ptr(bitbang.irq);
 		} while (data_byte & BITBANG_DELAY_BIT);
-		if (bitbang_countdown > 0) {
+		if (bitbang.countdown > 0) {
 			/* One cycle of delay already spent processing */
-			bitbang_countdown--;
+			bitbang.countdown--;
 			return;
 		}
 		/*
@@ -1462,10 +1470,10 @@ void IRQ_HANDLER(IRQ_TIM(BITBANG_TIMER))(void)
 		 * escape for "special" commands, in this case waiting
 		 * indefinitely for a particular trigger.
 		 */
-		bitbang_mask = *bitbang_data_ptr(bitbang_irq++);
-		bitbang_pattern = *bitbang_data_ptr(bitbang_irq++);
+		bitbang.mask = *bitbang_data_ptr(bitbang.irq++);
+		bitbang.pattern = *bitbang_data_ptr(bitbang.irq++);
 
-		if ((input_data ^ bitbang_pattern) & bitbang_mask) {
+		if ((input_data ^ bitbang.pattern) & bitbang.mask) {
 			/* No match, sample again next cycle */
 			return;
 		}
@@ -1474,26 +1482,26 @@ void IRQ_HANDLER(IRQ_TIM(BITBANG_TIMER))(void)
 		 * either be a sample or another delay/wait, hence the need for
 		 * another iteration in the loop.
 		 */
-		bitbang_mask = 0;
-		data_byte = *bitbang_data_ptr(bitbang_irq);
+		bitbang.mask = 0;
+		data_byte = *bitbang_data_ptr(bitbang.irq);
 	}
 
 	/*
 	 * Set drive of all pins which are part of bit-banging.  If some of the
 	 * pins are in input mode, this will have no effect.
 	 */
-	for (uint8_t i = 0; i < num_bitbang_pins; i++) {
+	for (uint8_t i = 0; i < bitbang.num_pins; i++) {
 		if (data_byte & (1 << i)) {
-			STM32_GPIO_BSRR(bitbang_pin_bases[i]) =
-				bitbang_pin_masks[i];
+			STM32_GPIO_BSRR(bitbang.pin_bases[i]) =
+				bitbang.pin_masks[i];
 		} else {
-			STM32_GPIO_BSRR(bitbang_pin_bases[i]) =
-				bitbang_pin_masks[i] << 16;
+			STM32_GPIO_BSRR(bitbang.pin_bases[i]) =
+				bitbang.pin_masks[i] << 16;
 		}
 	}
 
 	/* Record sampled data, overwriting the given waveform. */
-	*bitbang_data_ptr(bitbang_irq++) = input_data;
+	*bitbang_data_ptr(bitbang.irq++) = input_data;
 }
 
 /*
@@ -1539,10 +1547,10 @@ static void stop_all_gpio_bitbanging(void)
 	 * the queue, we count on OpenTitanTool not simultaneously requesting
 	 * big-banging via one USB endpoint and re-initialization on another.
 	 */
-	bitbang_tail = 0;
-	bitbang_irq = 0;
-	bitbang_irq_tail = 0;
-	bitbang_head = 0;
+	bitbang.tail = 0;
+	bitbang.irq = 0;
+	bitbang.irq_tail = 0;
+	bitbang.head = 0;
 }
 
 static int command_gpio_bit_bang(int argc, const char **argv)
@@ -1591,10 +1599,10 @@ static int command_gpio_bit_bang(int argc, const char **argv)
 	/*
 	 * All input valid, now record the request.
 	 */
-	num_bitbang_pins = gpio_num;
-	for (int i = 0; i < num_bitbang_pins; i++) {
-		bitbang_pin_bases[i] = gpio_list[gpios[i]].port;
-		bitbang_pin_masks[i] = gpio_list[gpios[i]].mask;
+	bitbang.num_pins = gpio_num;
+	for (int i = 0; i < bitbang.num_pins; i++) {
+		bitbang.pin_bases[i] = gpio_list[gpios[i]].port;
+		bitbang.pin_masks[i] = gpio_list[gpios[i]].mask;
 	}
 
 	/* Appropriate power of two for prescaling */
@@ -2056,9 +2064,9 @@ const uint8_t STATUS_ERROR_WAVEFORM = 0x80;
  */
 static uint8_t validate_received_waveform(uint16_t data_len, bool streaming)
 {
-	uint32_t tail_goal = bitbang_tail + data_len;
+	uint32_t tail_goal = bitbang.tail + data_len;
 
-	uint32_t idx = bitbang_irq_tail;
+	uint32_t idx = bitbang.irq_tail;
 	uint32_t valid_idx = idx;
 	while (idx != tail_goal) {
 		if (!(*bitbang_data_ptr(idx) & BITBANG_DELAY_BIT)) {
@@ -2117,7 +2125,7 @@ static uint8_t validate_received_waveform(uint16_t data_len, bool streaming)
 		}
 	}
 
-	if (!streaming && valid_idx != bitbang_tail + data_len) {
+	if (!streaming && valid_idx != bitbang.tail + data_len) {
 		/*
 		 * Possibly incomplete delay encoding at end of waveform, but no
 		 * further waveform data is expected.  IRQ handler is not coded
@@ -2127,15 +2135,15 @@ static uint8_t validate_received_waveform(uint16_t data_len, bool streaming)
 		return STATUS_ERROR_WAVEFORM;
 	}
 
-	bitbang_tail = tail_goal;
-	bitbang_irq_tail = valid_idx;
+	bitbang.tail = tail_goal;
+	bitbang.irq_tail = valid_idx;
 
 	return 0;
 }
 
 /*
- * Receive more bitbanging data to be inserted at bitbang_tail, then offload
- * data between bitbang_head and bitbang_irq.
+ * Receive more bitbanging data to be inserted at bitbang.tail, then offload
+ * data between bitbang.head and bitbang.irq.
  */
 void dap_goog_gpio_bitbang(size_t peek_c, bool streaming)
 {
@@ -2145,15 +2153,15 @@ void dap_goog_gpio_bitbang(size_t peek_c, bool streaming)
 	uint16_t data_len = rx_buffer[2] + (rx_buffer[3] << 8);
 	queue_advance_head(&cmsis_dap_rx_queue, 4);
 
-	uint8_t *tail_ptr = bitbang_data_ptr(bitbang_tail);
-	if (tail_ptr + data_len <= bitbang_data + sizeof(bitbang_data)) {
+	uint8_t *tail_ptr = bitbang_data_ptr(bitbang.tail);
+	if (tail_ptr + data_len <= bitbang.data + sizeof(bitbang.data)) {
 		queue_blocking_remove(&cmsis_dap_rx_queue, tail_ptr, data_len);
 	} else {
 		uint16_t remaining_space =
-			bitbang_data + sizeof(bitbang_data) - tail_ptr;
+			bitbang.data + sizeof(bitbang.data) - tail_ptr;
 		queue_blocking_remove(&cmsis_dap_rx_queue, tail_ptr,
 				      remaining_space);
-		queue_blocking_remove(&cmsis_dap_rx_queue, bitbang_data,
+		queue_blocking_remove(&cmsis_dap_rx_queue, bitbang.data,
 				      data_len - remaining_space);
 	}
 	if (cmsis_dap_unwind_requested())
@@ -2165,7 +2173,7 @@ void dap_goog_gpio_bitbang(size_t peek_c, bool streaming)
 
 		/* How much buffer space is free. */
 		uint16_t free_bytes =
-			bitbang_irq + BITBANG_BUFFER_SIZE - bitbang_tail;
+			bitbang.irq + BITBANG_BUFFER_SIZE - bitbang.tail;
 
 		tx_buffer[1] = status;
 		*(uint16_t *)(tx_buffer + 2) = free_bytes;
@@ -2176,7 +2184,7 @@ void dap_goog_gpio_bitbang(size_t peek_c, bool streaming)
 
 	uint32_t timer_cr1 = STM32_TIM_CR1(BITBANG_TIMER);
 	if (!(timer_cr1 & STM32_TIM_CR1_CEN) &&
-	    bitbang_irq_tail != bitbang_irq) {
+	    bitbang.irq_tail != bitbang.irq) {
 		/*
 		 * Hardware timer is not running, and we have received one or
 		 * more byte of bitbang waveform.  This means that it is time
@@ -2202,7 +2210,7 @@ void dap_goog_gpio_bitbang(size_t peek_c, bool streaming)
 			STM32_TIM32_CNT(BITBANG_TIMER) =
 				STM32_TIM32_ARR(BITBANG_TIMER) -
 				DIV_ROUND_UP(counts_in_1ms, prescaler);
-			bitbang_countdown = 0;
+			bitbang.countdown = 0;
 		} else {
 			/*
 			 * Fast bit-banging clock.  First few interrupts may
@@ -2212,7 +2220,7 @@ void dap_goog_gpio_bitbang(size_t peek_c, bool streaming)
 			 * requested waveform begins.
 			 */
 			STM32_TIM32_CNT(BITBANG_TIMER) = 0;
-			bitbang_countdown = 3;
+			bitbang.countdown = 3;
 		}
 
 		/* Start counting */
@@ -2241,39 +2249,39 @@ void dap_goog_gpio_bitbang(size_t peek_c, bool streaming)
 			if (!(STM32_TIM_CR1(BITBANG_TIMER) & STM32_TIM_CR1_CEN))
 				break;
 		} else {
-			uint16_t used_bytes = bitbang_tail - bitbang_head;
-			if (bitbang_irq - bitbang_head >= used_bytes / 2)
+			uint16_t used_bytes = bitbang.tail - bitbang.head;
+			if (bitbang.irq - bitbang.head >= used_bytes / 2)
 				break;
 		}
 	} while (time_since32(start) < MAX_USB_RESPONSE_TIME_US);
 
-	uint32_t idx = bitbang_irq;
-	tx_buffer[1] = bitbang_head != bitbang_tail ? STATUS_BITBANG_ONGOING :
+	uint32_t idx = bitbang.irq;
+	tx_buffer[1] = bitbang.head != bitbang.tail ? STATUS_BITBANG_ONGOING :
 						      STATUS_BITBANG_IDLE;
 
 	/* Number of data bytes to return in this response. */
-	data_len = idx - bitbang_head;
+	data_len = idx - bitbang.head;
 
 	/* How much buffer space will be free after sending this response. */
-	uint16_t free_bytes = idx + BITBANG_BUFFER_SIZE - bitbang_tail;
+	uint16_t free_bytes = idx + BITBANG_BUFFER_SIZE - bitbang.tail;
 
 	*(uint16_t *)(tx_buffer + 2) = free_bytes;
 	*(uint16_t *)(tx_buffer + 4) = data_len;
 
-	uint8_t *head_ptr = bitbang_data_ptr(bitbang_head);
-	if (head_ptr + data_len <= bitbang_data + sizeof(bitbang_data)) {
+	uint8_t *head_ptr = bitbang_data_ptr(bitbang.head);
+	if (head_ptr + data_len <= bitbang.data + sizeof(bitbang.data)) {
 		queue_add_units(&cmsis_dap_tx_queue, tx_buffer, 6);
 		queue_blocking_add(&cmsis_dap_tx_queue, head_ptr, data_len);
 	} else {
 		uint16_t remaining_space =
-			bitbang_data + sizeof(bitbang_data) - head_ptr;
+			bitbang.data + sizeof(bitbang.data) - head_ptr;
 		queue_add_units(&cmsis_dap_tx_queue, tx_buffer, 6);
 		queue_blocking_add(&cmsis_dap_tx_queue, head_ptr,
 				   remaining_space);
-		queue_blocking_add(&cmsis_dap_tx_queue, bitbang_data,
+		queue_blocking_add(&cmsis_dap_tx_queue, bitbang.data,
 				   data_len - remaining_space);
 	}
-	bitbang_head = idx;
+	bitbang.head = idx;
 }
 
 /*
