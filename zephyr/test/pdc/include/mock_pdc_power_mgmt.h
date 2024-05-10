@@ -15,7 +15,8 @@ DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_get_cable_prop, int,
 			union cable_property_t *);
 DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_get_connector_status, int,
 			union connector_status_t *);
-DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_get_info, int, struct pdc_info_t *);
+DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_get_info, int, struct pdc_info_t *,
+			bool);
 DECLARE_FAKE_VALUE_FUNC(bool, pdc_power_mgmt_get_partner_data_swap_capable,
 			int);
 DECLARE_FAKE_VALUE_FUNC(enum pd_power_role, pdc_power_mgmt_get_power_role, int);

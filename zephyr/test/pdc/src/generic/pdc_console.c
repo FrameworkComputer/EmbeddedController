@@ -6,6 +6,7 @@
 #include "common.h"
 #include "console.h"
 #include "drivers/ucsi_v3.h"
+#include "emul/emul_pdc.h"
 #include "mock_pdc_power_mgmt.h"
 
 #include <zephyr/shell/shell.h>
@@ -14,9 +15,22 @@
 
 #define TEST_PORT 0
 #define SLEEP_MS 120
+#define RTS5453P_NODE DT_NODELABEL(rts5453p_emul)
+
+static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
 
 static void console_cmd_pdc_setup(void)
 {
+	struct pdc_info_t info = {
+		.fw_version = 0x001a2b3c,
+		.pd_version = 0xabcd,
+		.pd_revision = 0x1234,
+		.vid_pid = 0x12345678,
+	};
+
+	/* Set a FW version in the emulator for `test_info` */
+	emul_pdc_set_info(emul, &info);
+
 	zassume(TEST_PORT < CONFIG_USB_PD_PORT_MAX_COUNT,
 		"TEST_PORT is invalid");
 }
@@ -153,4 +167,27 @@ ZTEST_USER(console_cmd_pdc, test_trysrc)
 
 	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 2");
 	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+}
+
+ZTEST_USER(console_cmd_pdc, test_info)
+{
+	int rv;
+
+	/* Bad chip number */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc info x");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Bad live param (should be int) */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc info 0 y");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Get chip #0 info live */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc info 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	/* Get chip #0 info cached */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc info 0 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
 }

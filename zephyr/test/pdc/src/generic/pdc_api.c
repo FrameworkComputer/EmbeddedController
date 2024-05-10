@@ -334,27 +334,87 @@ ZTEST_USER(pdc_api, test_reconnect)
 	zassert_equal(expected, val);
 }
 
+/**
+ * @brief Clears the cached PDC FW info struct inside the driver.
+ */
+void helper_clear_cached_chip_info(void)
+{
+	struct pdc_info_t zero = { 0 }, out;
+
+	emul_pdc_set_info(emul, &zero);
+	zassert_ok(pdc_get_info(dev, &out, true));
+	k_sleep(K_MSEC(SLEEP_MS));
+}
+
+/* Two sets of chip info to test against */
+static const struct pdc_info_t info_in1 = {
+	.fw_version = 0x001a2b3c,
+	.pd_version = 0xabcd,
+	.pd_revision = 0x1234,
+	.vid_pid = 0x12345678,
+};
+
+static const struct pdc_info_t info_in2 = {
+	.fw_version = 0x002a3b4c,
+	.pd_version = 0xef01,
+	.pd_revision = 0x5678,
+	.vid_pid = 0x9abcdef0,
+};
+
 ZTEST_USER(pdc_api, test_get_info)
 {
-	struct pdc_info_t in, out;
+	struct pdc_info_t out = { 0 };
 
-	zassert_equal(-EINVAL, pdc_get_info(dev, NULL));
+	/* Test output param NULL check */
+	zassert_equal(-EINVAL, pdc_get_info(dev, NULL, true));
 
-	in.fw_version = 0x010203;
-	in.pd_version = 0x0506;
-	in.pd_revision = 0x0708;
-	in.vid_pid = 0xFEEDBEEF;
+	/* Part 0: Cached read, but driver does not have valid cached info */
 
-	emul_pdc_set_info(emul, &in);
-	zassert_ok(pdc_get_info(dev, &out));
+	helper_clear_cached_chip_info();
+	zassert_equal(-EAGAIN, pdc_get_info(dev, &out, false));
 	k_sleep(K_MSEC(SLEEP_MS));
 
-	zassert_equal(in.fw_version, out.fw_version, "in=0x%X, out=0x%X",
-		      in.fw_version, out.fw_version);
-	zassert_equal(in.pd_version, out.pd_version);
-	zassert_equal(in.pd_revision, out.pd_revision);
-	zassert_equal(in.vid_pid, out.vid_pid, "in=0x%X, out=0x%X", in.vid_pid,
-		      out.vid_pid);
+	/* Part 1: Live read -- Set `info_in1`, `out` should match `info_in1` */
+
+	emul_pdc_set_info(emul, &info_in1);
+	zassert_ok(pdc_get_info(dev, &out, true));
+	k_sleep(K_MSEC(SLEEP_MS));
+
+	zassert_equal(info_in1.fw_version, out.fw_version, "in=0x%X, out=0x%X",
+		      info_in1.fw_version, out.fw_version);
+	zassert_equal(info_in1.pd_version, out.pd_version);
+	zassert_equal(info_in1.pd_revision, out.pd_revision);
+	zassert_equal(info_in1.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
+		      info_in1.vid_pid, out.vid_pid);
+
+	/* Part 2: Cached read -- Set `info_in2`, `out` should match the cached
+	 * `info_in1` again
+	 */
+
+	emul_pdc_set_info(emul, &info_in2);
+	zassert_ok(pdc_get_info(dev, &out, false));
+	k_sleep(K_MSEC(SLEEP_MS));
+
+	zassert_equal(info_in1.fw_version, out.fw_version, "in=0x%X, out=0x%X",
+		      info_in1.fw_version, out.fw_version);
+	zassert_equal(info_in1.pd_version, out.pd_version);
+	zassert_equal(info_in1.pd_revision, out.pd_revision);
+	zassert_equal(info_in1.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
+		      info_in1.vid_pid, out.vid_pid);
+
+	/* Part 3: Live read -- Don't set emul, `out` should match `info_in2`
+	 * this time
+	 */
+
+	zassert_ok(pdc_get_info(dev, &out, true));
+	k_sleep(K_MSEC(SLEEP_MS));
+
+	zassert_equal(info_in2.fw_version, out.fw_version, "in=0x%X, out=0x%X",
+		      info_in2.fw_version, out.fw_version);
+	zassert_equal(info_in2.pd_version, out.pd_version);
+	zassert_equal(info_in2.pd_revision, out.pd_revision);
+	zassert_equal(info_in2.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
+		      info_in2.vid_pid, out.vid_pid);
 }
 
 /* PDO0 is reserved for a fixed PDO at 5V. */
@@ -397,4 +457,61 @@ ZTEST_USER(pdc_api, test_get_cable_property)
 	k_sleep(K_MSEC(SLEEP_MS));
 	zassert_ok(memcmp(&read_property, &property,
 			  sizeof(union cable_property_t)));
+}
+
+/*
+ * Suspended tests - ensure API calls behave correctly when PDC communication
+ * is suspended.
+ */
+
+void *pdc_suspended_setup(void)
+{
+	struct pdc_info_t out;
+
+	emul_pdc_reset(emul);
+	emul_pdc_set_response_delay(emul, 0);
+	if (IS_ENABLED(CONFIG_TEST_PDC_MESSAGE_TRACING)) {
+		set_pdc_trace_msg_mocks();
+	}
+
+	/* Before suspending, force a read of chip info so the driver has
+	 * something known cached.
+	 */
+	emul_pdc_set_info(emul, &info_in1);
+	zassert_ok(pdc_get_info(dev, &out, true));
+	k_sleep(K_MSEC(SLEEP_MS));
+
+	/* Suspend chip communications */
+	zassert_ok(pdc_set_comms_state(dev, false));
+
+	return NULL;
+}
+
+void pdc_suspended_teardown(void *fixture)
+{
+	ARG_UNUSED(fixture);
+
+	zassert_ok(pdc_set_comms_state(dev, true));
+}
+
+ZTEST_SUITE(pdc_api_suspended, NULL, pdc_suspended_setup, NULL, NULL,
+	    pdc_suspended_teardown);
+
+ZTEST_USER(pdc_api_suspended, test_get_info)
+{
+	struct pdc_info_t out;
+
+	/* Live read should return busy because comms are blocked */
+	zassert_equal(-EBUSY, pdc_get_info(dev, &out, true));
+
+	/* Should still be able to get a cached read. */
+	zassert_ok(pdc_get_info(dev, &out, false));
+
+	/* Compare against the value we set in the suite setup function */
+	zassert_equal(info_in1.fw_version, out.fw_version, "in=0x%X, out=0x%X",
+		      info_in1.fw_version, out.fw_version);
+	zassert_equal(info_in1.pd_version, out.pd_version);
+	zassert_equal(info_in1.pd_revision, out.pd_revision);
+	zassert_equal(info_in1.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
+		      info_in1.vid_pid, out.vid_pid);
 }

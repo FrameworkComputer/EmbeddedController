@@ -239,7 +239,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_non_pd_public_cmd)
 	k_msleep(100);
 
 	LOG_INF("Sending GET INFO");
-	ret = pdc_power_mgmt_get_info(TEST_PORT, &pdc_info);
+	ret = pdc_power_mgmt_get_info(TEST_PORT, &pdc_info, true);
 	zassert_equal(-EBUSY, ret,
 		      "pdc_power_mgmt_get_info() returned %d (expected %d)",
 		      ret, -EBUSY);
@@ -253,7 +253,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_non_pd_public_cmd)
 	k_msleep(250);
 
 	/* Public API command should now succeed. */
-	ret = pdc_power_mgmt_get_info(TEST_PORT, &pdc_info);
+	ret = pdc_power_mgmt_get_info(TEST_PORT, &pdc_info, true);
 	zassert_false(ret, "pdc_power_mgmt_get_info() failed (%d)", ret);
 }
 
@@ -369,31 +369,60 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_data_swap_capable)
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_info)
 {
-	struct pdc_info_t in, out;
+	struct pdc_info_t in1 = {
+		.fw_version = 0x001a2b3c,
+		.pd_version = 0xabcd,
+		.pd_revision = 0x1234,
+		.vid_pid = 0x12345678,
+	};
+	struct pdc_info_t in2 = {
+		.fw_version = 0x002a3b4c,
+		.pd_version = 0xef01,
+		.pd_revision = 0x5678,
+		.vid_pid = 0x9abcdef0,
+	};
+	struct pdc_info_t out = { 0 };
 	union connector_status_t connector_status;
 
-	in.fw_version = 0x010203;
-	in.pd_version = 0x0506;
-	in.pd_revision = 0x0708;
-	in.vid_pid = 0xFEEDBEEF;
+	zassert_equal(-ERANGE,
+		      pdc_power_mgmt_get_info(CONFIG_USB_PD_PORT_MAX_COUNT,
+					      &out, true));
+	zassert_equal(-EINVAL, pdc_power_mgmt_get_info(TEST_PORT, NULL, true));
 
-	zassert_equal(-ERANGE, pdc_power_mgmt_get_info(
-				       CONFIG_USB_PD_PORT_MAX_COUNT, &out));
-	zassert_equal(-EINVAL, pdc_power_mgmt_get_info(TEST_PORT, NULL));
-
-	emul_pdc_set_info(emul, &in);
+	emul_pdc_set_info(emul, &in1);
 	emul_pdc_configure_src(emul, &connector_status);
 	emul_pdc_connect_partner(emul, &connector_status);
 	zassert_true(
 		TEST_WAIT_FOR(pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
 
-	zassert_ok(pdc_power_mgmt_get_info(TEST_PORT, &out));
-	zassert_equal(in.fw_version, out.fw_version, "in=0x%X, out=0x%X",
-		      in.fw_version, out.fw_version);
-	zassert_equal(in.pd_version, out.pd_version);
-	zassert_equal(in.pd_revision, out.pd_revision);
-	zassert_equal(in.vid_pid, out.vid_pid, "in=0x%X, out=0x%X", in.vid_pid,
-		      out.vid_pid);
+	zassert_ok(pdc_power_mgmt_get_info(TEST_PORT, &out, true));
+	zassert_equal(in1.fw_version, out.fw_version, "in=0x%X, out=0x%X",
+		      in1.fw_version, out.fw_version);
+	zassert_equal(in1.pd_version, out.pd_version);
+	zassert_equal(in1.pd_revision, out.pd_revision);
+	zassert_equal(in1.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
+		      in1.vid_pid, out.vid_pid);
+
+	/* Repeat but non-live. The cached info should match the original
+	 * read instead of `in2`.
+	 */
+	emul_pdc_set_info(emul, &in2);
+	zassert_ok(pdc_power_mgmt_get_info(TEST_PORT, &out, false));
+	zassert_equal(in1.fw_version, out.fw_version, "in=0x%X, out=0x%X",
+		      in1.fw_version, out.fw_version);
+	zassert_equal(in1.pd_version, out.pd_version);
+	zassert_equal(in1.pd_revision, out.pd_revision);
+	zassert_equal(in1.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
+		      in1.vid_pid, out.vid_pid);
+
+	/* Live read again. This time we should get `in2`. */
+	zassert_ok(pdc_power_mgmt_get_info(TEST_PORT, &out, true));
+	zassert_equal(in2.fw_version, out.fw_version, "in=0x%X, out=0x%X",
+		      in2.fw_version, out.fw_version);
+	zassert_equal(in2.pd_version, out.pd_version);
+	zassert_equal(in2.pd_revision, out.pd_revision);
+	zassert_equal(in2.vid_pid, out.vid_pid, "in=0x%X, out=0x%X",
+		      in2.vid_pid, out.vid_pid);
 
 	emul_pdc_disconnect(emul);
 	zassert_true(
