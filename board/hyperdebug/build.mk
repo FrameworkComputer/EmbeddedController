@@ -13,4 +13,5 @@ CHIP_VARIANT:=stm32l552xe
 # These files are compiled into RO
 chip-ro=bkpdata.o system.o
 
-board-rw=board.o board_util.o gpio.o gpio_edge.o spi.o i2c.o cmsis-dap.o
+board-rw=board.o board_util.o gpio.o gpio_bitbang.o gpio_edge.o spi.o i2c.o \
+	cmsis-dap.o
