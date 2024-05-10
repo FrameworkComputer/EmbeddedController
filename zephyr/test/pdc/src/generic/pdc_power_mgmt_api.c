@@ -12,7 +12,10 @@
 
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/emul.h>
+#include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
+
+LOG_MODULE_REGISTER(pdc_power_mgmt_api);
 
 #define PDC_TEST_TIMEOUT 2000
 #define RTS5453P_NODE DT_NODELABEL(rts5453p_emul)
@@ -175,6 +178,83 @@ ZTEST_USER(pdc_power_mgmt_api, test_pd_capable)
 	connector_status.power_operation_mode = PD_OPERATION;
 	emul_pdc_connect_partner(emul, &connector_status);
 	zassert_true(TEST_WAIT_FOR(pd_capable(TEST_PORT), PDC_TEST_TIMEOUT));
+}
+
+K_THREAD_STACK_DEFINE(test_stack, 256);
+static bool test_done;
+
+static void test_thread_entry(void *a, void *b, void *c)
+{
+	union connector_status_t connector_status;
+	union conn_status_change_bits_t status_change_bits;
+
+	memset(&connector_status, 0, sizeof(union connector_status_t));
+	memset(&status_change_bits, 0, sizeof(union conn_status_change_bits_t));
+
+	connector_status.power_operation_mode = USB_TC_CURRENT_5A;
+	connector_status.power_direction = 0;
+	status_change_bits.attention = 0;
+	connector_status.raw_conn_status_change_bits =
+		status_change_bits.raw_value;
+
+	LOG_INF("Emul PDC disconnect partner");
+	emul_pdc_connect_partner(emul, &connector_status);
+	test_done = false;
+
+	while (!test_done) {
+		k_msleep(50);
+
+		/* Toggle attention on each pass to keep the PDC busy */
+		status_change_bits.attention ^= status_change_bits.attention;
+		connector_status.raw_conn_status_change_bits =
+			status_change_bits.raw_value;
+
+		LOG_INF("Emul PDC toggle attention");
+		emul_pdc_connect_partner(emul, &connector_status);
+	}
+}
+
+/* Verify that public commands complete when a non PD partner is connected */
+ZTEST_USER(pdc_power_mgmt_api, test_non_pd_public_cmd)
+{
+	struct pdc_info_t pdc_info;
+	struct k_thread test_thread_data;
+	int ret;
+
+	LOG_INF("Emul PDC disconnect partner");
+	emul_pdc_disconnect(emul);
+	zassert_false(TEST_WAIT_FOR(pd_capable(TEST_PORT), PDC_TEST_TIMEOUT));
+
+	/*
+	 * Create a new thread to toggle keep the PDC busy with interrupts.
+	 * Thread priority set to cooperative to ensure it preempts the PDC
+	 * subsystem.
+	 */
+	k_tid_t test_thread = k_thread_create(&test_thread_data, test_stack,
+					      K_THREAD_STACK_SIZEOF(test_stack),
+					      test_thread_entry, NULL, NULL,
+					      NULL, -1, 0, K_NO_WAIT);
+
+	/* Allow the test thread some cycles to run. */
+	k_msleep(100);
+
+	LOG_INF("Sending GET INFO");
+	ret = pdc_power_mgmt_get_info(TEST_PORT, &pdc_info);
+	zassert_equal(-EBUSY, ret,
+		      "pdc_power_mgmt_get_info() returned %d (expected %d)",
+		      ret, -EBUSY);
+
+	/* Allow the test thread to exit. */
+	test_done = true;
+	k_msleep(100);
+	k_thread_suspend(test_thread);
+
+	/* All the PDC subsystem to settle. */
+	k_msleep(250);
+
+	/* Public API command should now succeed. */
+	ret = pdc_power_mgmt_get_info(TEST_PORT, &pdc_info);
+	zassert_false(ret, "pdc_power_mgmt_get_info() failed (%d)", ret);
 }
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_partner_usb_comm_capable)
