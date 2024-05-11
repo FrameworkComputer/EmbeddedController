@@ -10,6 +10,10 @@
 #include <zephyr_cec.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Size of the buffer inside the rx queue */
 #define CEC_RX_BUFFER_SIZE 20
 #if CEC_RX_BUFFER_SIZE < MAX_CEC_MSG_LEN + 1
@@ -250,4 +254,9 @@ void cec_task_set_event(int port, uint32_t event);
  * @param event		Event type (enum mkbp_cec_event)
  */
 void send_mkbp_event(int port, uint32_t event);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

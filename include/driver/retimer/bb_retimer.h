@@ -11,6 +11,10 @@
 #include "driver/retimer/bb_retimer_public.h"
 #include "usb_mux.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Burnside Bridge I2C Configuration Space */
 #define BB_RETIMER_REG_VENDOR_ID 0
 #define BB_RETIMER_VENDOR_ID_1 0x8086
@@ -51,5 +55,9 @@
 #define BB_RETIMER_REG_EXT_CONNECTION_MODE 7
 
 #define BB_RETIMER_REG_COUNT 8
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_BB_RETIMER_H */

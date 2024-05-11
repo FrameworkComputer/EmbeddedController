@@ -19,6 +19,10 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/pwm.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NODE_ID_AND_COMMA(node_id) node_id,
 enum fan_channel {
 #if DT_NODE_EXISTS(DT_INST(0, cros_ec_fans))
@@ -258,6 +262,10 @@ extern struct fan_data fan_data[];
  * Return       Fan status (see fan_status enum definition)
  */
 enum fan_status board_override_fan_control_duty(int ch);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_FAN_H */

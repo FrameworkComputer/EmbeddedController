@@ -14,6 +14,10 @@
 enum ioex_signal; /* from gpio_signal.h */
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* IO expander signal definition structure */
 struct ioex_info {
 	/* Signal name */
@@ -245,5 +249,9 @@ int ioex_save_gpio_state(int ioex, int *state, int state_len);
 int ioex_restore_gpio_state(int ioex, const int *state, int state_len);
 
 #endif /* CONFIG_ZEPHYR */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_IOEXPANDER_H */

@@ -8,6 +8,10 @@
 
 #include "task.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Checks if running in system safe mode
  *
@@ -56,6 +60,10 @@ void handle_system_safe_mode_timeout(void);
  * Directly set safe mode flag. Only used in tests.
  */
 void set_system_safe_mode(bool mode);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_SYSTEM_SAFE_MODE_H */

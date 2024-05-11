@@ -19,6 +19,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Reference: VESA DisplayPort Alt Mode on USB Type-C Standard Version 2.1 */
 enum dpam_version {
 	DPAM_VERSION_20,
@@ -331,4 +335,9 @@ static inline enum dp_bit_rate dp_get_cable_bit_rate(int port)
 }
 
 #endif /* CONFIG_USB_PD_DP_MODE */
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_USB_DP_ALT_MODE_H */

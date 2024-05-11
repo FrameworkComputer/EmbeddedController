@@ -16,6 +16,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct consumer;
 struct producer;
 
@@ -37,5 +41,9 @@ struct producer {
 
 	struct producer_ops const *ops;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_PRODUCER_H */

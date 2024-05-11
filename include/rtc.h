@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SECS_PER_MINUTE 60
 #define SECS_PER_HOUR (60 * SECS_PER_MINUTE)
 #define SECS_PER_DAY (24 * SECS_PER_HOUR)
@@ -44,5 +48,9 @@ uint32_t date_to_sec(struct calendar_date time);
  * @return the calendar date (years, months, and days).
  */
 struct calendar_date sec_to_date(uint32_t sec);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_RTC_H */

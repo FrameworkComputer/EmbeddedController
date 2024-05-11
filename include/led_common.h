@@ -10,6 +10,10 @@
 
 #include "ec_commands.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Defined in led_<board>.c, not needed if led_is_supported is overridden */
 extern const enum ec_led_id supported_led_ids[];
 
@@ -98,5 +102,9 @@ void board_led_auto_control(void);
  *
  */
 void led_control(enum ec_led_id id, enum ec_led_state state);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_LED_COMMON_H */

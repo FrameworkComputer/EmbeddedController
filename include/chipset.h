@@ -20,6 +20,10 @@
 #include "gpio_signal.h"
 #include "stddef.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Chipset state mask
  *
@@ -243,5 +247,9 @@ void chipset_watchdog_interrupt(enum gpio_signal signal);
 __override_proto enum critical_shutdown
 board_system_is_idle(uint64_t last_shutdown_time, uint64_t *target,
 		     uint64_t now);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_CHIPSET_H */

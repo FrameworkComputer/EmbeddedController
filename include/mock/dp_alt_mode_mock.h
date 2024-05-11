@@ -9,6 +9,14 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void mock_dp_alt_mode_reset(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MOCK_DP_ALT_MODE_MOCK_H */

@@ -8,7 +8,15 @@
 
 #include "console.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CPRINTF(format, args...) cprintf(CC_FP, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_FP, format, ##args)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_FPSENSOR_FPSENSOR_CONSOLE_H */

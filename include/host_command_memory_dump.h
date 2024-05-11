@@ -10,6 +10,10 @@
 
 #include "stdint.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Register a memory range to be included in the memory dump.
  *
@@ -25,5 +29,9 @@ int register_memory_dump(uint32_t address, uint32_t size);
  * @returns EC_SUCCESS or EC_XXX on error
  */
 int clear_memory_dump(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_HOST_COMMAND_MEMORY_DUMP_H */

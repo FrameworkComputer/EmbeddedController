@@ -9,6 +9,10 @@
 #include "config.h"
 #include "rsa.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef __ASSEMBLER__
 #ifdef HAS_TASK_RWSIG
 /* The functions below only make sense if RWSIG task is defined. */
@@ -132,6 +136,10 @@ void rwsig_jump_now(void);
 #endif
 #ifndef CONFIG_RW_B_SIG_ADDR
 #define CONFIG_RW_B_SIG_ADDR (RW_B_ADDR + RW_SIG_OFFSET)
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_RWSIG_H */

@@ -347,6 +347,10 @@
 /* Canonical list of module IDs */
 #include "module_id.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* List of common error codes that can be returned */
 enum ec_error_list {
 	/* Success - no error */
@@ -592,5 +596,9 @@ enum ec_error_list {
 #define STATIC_IF_NOT(option) \
 	__cfg_select(option, extern, COND_CODE_1(option, (extern), (static)))
 #endif /* CONFIG_ZEPHYR */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_COMMON_H */

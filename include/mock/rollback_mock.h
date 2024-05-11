@@ -13,6 +13,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct mock_ctrl_rollback {
 	bool get_secret_fail;
 };
@@ -24,5 +28,9 @@ struct mock_ctrl_rollback {
 	}
 
 extern struct mock_ctrl_rollback mock_ctrl_rollback;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MOCK_ROLLBACK_MOCK_H */

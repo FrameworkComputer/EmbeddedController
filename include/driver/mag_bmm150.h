@@ -11,6 +11,10 @@
 #include "accelgyro.h"
 #include "mag_cal.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BMM150_ADDR0_FLAGS 0x10
 #define BMM150_ADDR1_FLAGS 0x11
 #define BMM150_ADDR2_FLAGS 0x12
@@ -142,5 +146,9 @@ void bmm150_normalize(const struct motion_sensor_t *s, intv3_t v,
 int bmm150_set_offset(const struct motion_sensor_t *s, const intv3_t offset);
 
 int bmm150_get_offset(const struct motion_sensor_t *s, intv3_t offset);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_MAG_BMM150_H */

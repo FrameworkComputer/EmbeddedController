@@ -8,6 +8,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Common APIs for USB Type-C Overcurrent Protection (OCP) Module */
 
 /*
@@ -72,5 +76,9 @@ void usbc_ocp_snk_is_connected(int port, bool connected);
  * @param is_overcurrented: 1 if port overcurrented, 0 if the condition is gone.
  */
 __override_proto void board_overcurrent_event(int port, int is_overcurrented);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !defined(__CROS_EC_USBC_OCP_H) */

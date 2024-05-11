@@ -11,6 +11,10 @@
 
 #include "stdint.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * USB PD VBUS detect (0-2)
  */
@@ -86,4 +90,9 @@ void set_usb_pd_charger_otg(enum usb_pd_charger_otg charger_otg);
  * @return the USB PD charger OTG.
  */
 enum usb_pd_charger_otg get_usb_pd_charger_otg(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_USB_PD_FLAGS_H */

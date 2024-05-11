@@ -10,6 +10,10 @@
 
 #include "compiler.h" /* for typeof() on Zephyr */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Function pointer that implements a portion of a usb state */
 typedef void (*state_execution)(const int port);
 
@@ -109,5 +113,9 @@ struct test_sm_data {
 
 /* Creates a state machine state that will never link. Useful with IS_ENABLED */
 #define GEN_NOT_SUPPORTED(state) extern typeof(state) state##_NOT_SUPPORTED
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_SM_H */

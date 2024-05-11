@@ -15,6 +15,10 @@
 #include "stdbool.h"
 #include "timer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Stuff that's common to all charger implementations can go here. */
 
 /* Seconds to spend trying to wake a non-responsive battery */
@@ -372,6 +376,10 @@ __test_only bool charging_progress_displayed(void);
  * @return True for requesting bypass on. False for requesting bypass off.
  */
 int board_should_charger_bypass(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 /* Config Charger */
 #include "charge_state.h"

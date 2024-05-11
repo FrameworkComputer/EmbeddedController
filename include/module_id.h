@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum module_id {
 	MODULE_ADC,
 	MODULE_CEC,
@@ -61,5 +65,9 @@ enum module_id {
 	/* Module count; not an actual module */
 	MODULE_COUNT
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

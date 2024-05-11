@@ -10,6 +10,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct charge_state_data;
 
 /* allocate power between the base and the lid */
@@ -60,5 +64,9 @@ int charger_base_get_input_voltage(const struct charge_state_data *curr);
 /* Set the input voltage for the base */
 void charger_base_set_input_voltage(struct charge_state_data *curr,
 				    int input_voltage);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_CHARGER_BASE_H */

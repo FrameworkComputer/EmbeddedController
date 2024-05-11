@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PECI_TARGET_ADDRESS 0x30
 #define PECI_WRITE_DATA_FIFO_SIZE 15
 #define PECI_READ_DATA_FIFO_SIZE 16
@@ -61,5 +65,9 @@ int peci_temp_sensor_get_val(int idx, int *temp_ptr);
  * @return zero if successful, non-zero if error
  */
 int peci_transaction(struct peci_data *peci);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_PECI_H */

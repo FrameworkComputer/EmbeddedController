@@ -11,6 +11,10 @@
 #include "common.h"
 #include "stdbool.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ISL923X_ADDR_FLAGS (0x09)
 
 extern const struct charger_drv isl923x_drv;
@@ -80,5 +84,9 @@ void raa489000_check_ac_present(void);
 
 enum ec_error_list isl9238c_hibernate(int chgnum);
 enum ec_error_list isl9238c_resume(int chgnum);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_DRIVER_CHARGER_ISL923X_PUBLIC_H */

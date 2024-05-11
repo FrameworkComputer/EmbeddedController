@@ -10,6 +10,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Symbol map for base32 encoding */
 extern const char base32_map[33];
 
@@ -70,5 +74,9 @@ int base32_encode(char *dest, int destlen_chars, const void *srcbits,
  */
 int base32_decode(uint8_t *dest, int destlen_bits, const char *src,
 		  int crc_after_every);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

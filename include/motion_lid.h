@@ -11,6 +11,10 @@
 #include "host_command.h"
 #include "math_util.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * We will change our tablet mode status when we are "convinced" that it has
  * changed.  This means we will have to consecutively calculate our new tablet
@@ -33,5 +37,9 @@ int motion_lid_get_angle(void);
 enum ec_status host_cmd_motion_lid(struct host_cmd_handler_args *args);
 
 void motion_lid_calc(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_MOTION_LID_H */

@@ -10,6 +10,10 @@
 
 #include "host_command.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * SPI Clock polarity and phase mode (0 - 3)
  * @code
@@ -139,6 +143,10 @@ static inline void spi_event(enum gpio_signal signal)
 {
 }
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_SPI_H */

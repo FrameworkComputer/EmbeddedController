@@ -8,6 +8,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct event_log_entry {
 	uint32_t timestamp; /* relative timestamp in milliseconds */
 	uint8_t type; /* event type, caller-defined */
@@ -33,5 +37,9 @@ void log_add_event(uint8_t type, uint8_t size, uint16_t data, void *payload,
  * Returns size of log entry *r.
  */
 int log_dequeue_event(struct event_log_entry *r);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_EVENT_LOG_H */

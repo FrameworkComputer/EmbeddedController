@@ -10,6 +10,10 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Controller for TCPC state */
 struct mock_tcpc_ctrl {
 	enum tcpc_cc_voltage_status cc1;
@@ -38,5 +42,9 @@ void mock_tcpc_reset(void);
 
 extern const struct tcpm_drv mock_tcpc_driver;
 extern struct mock_tcpc_ctrl mock_tcpc;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MOCK_TCPC_MOCK_H */

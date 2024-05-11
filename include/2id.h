@@ -16,6 +16,10 @@
 #define VBOOT_REFERENCE_VBOOT_2ID_H_
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define VB2_ID_NUM_BYTES 20
 
 struct vb2_id {
@@ -43,5 +47,9 @@ struct vb2_id {
 			0x05, 0x12, \
 		}                   \
 	}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* VBOOT_REFERENCE_VBOOT_2ID_H_ */

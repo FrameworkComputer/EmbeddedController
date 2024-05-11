@@ -12,6 +12,10 @@
 #include "ocpc.h"
 #include "stdbool.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Charger information
  * voltage unit: mV
  * current unit: mA
@@ -447,5 +451,9 @@ void charge_wakeup(void);
  * @param is_full Battery is full
  */
 int charge_request(bool use_curr, bool is_full);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_CHARGER_H */

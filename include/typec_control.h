@@ -10,6 +10,10 @@
 
 #include "usb_pd_tcpm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Sets the polarity of the port
  *
@@ -42,5 +46,9 @@ __override_proto void typec_set_source_current_limit(int port,
  * @param enable true:enable, false:disable
  */
 void typec_set_vconn(int port, bool enable);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_TYPEC_CONTROL_H */

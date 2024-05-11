@@ -13,6 +13,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum mock_ctrl_latest_rollback_type {
 	GET_LATEST_ROLLBACK_FAIL,
 	GET_LATEST_ROLLBACK_ZEROS,
@@ -32,5 +36,9 @@ extern struct mock_ctrl_latest_rollback mock_ctrl_latest_rollback;
 extern const struct rollback_data fake_latest_rollback_zeros;
 
 extern const struct rollback_data fake_latest_rollback_real;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MOCK_ROLLBACK_LATEST_MOCK_H */

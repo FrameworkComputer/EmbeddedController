@@ -10,6 +10,10 @@
 
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Get tablet mode state
  *
@@ -62,5 +66,9 @@ int board_sensor_at_360(void);
 
 /** Reset internal tablet mode state, used for testing. */
 __test_only void tablet_reset(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_TABLET_MODE_H */

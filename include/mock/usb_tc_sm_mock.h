@@ -12,6 +12,10 @@
 #include "usb_pd_tcpm.h"
 #include "usb_tc_sm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct mock_tc_port_t {
 	int rev;
 	int pd_enable;
@@ -29,5 +33,9 @@ struct mock_tc_port_t {
 extern struct mock_tc_port_t mock_tc_port[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void mock_tc_port_reset(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MOCK_USB_TC_SM_MOCK_H */

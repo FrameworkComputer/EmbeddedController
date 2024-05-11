@@ -10,6 +10,10 @@
 #include "common.h"
 #include "usb_pd_dpm_sm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Defaults should all be 0 values. */
 struct mock_dpm_port_t {
 	bool mode_entry_done;
@@ -19,5 +23,9 @@ struct mock_dpm_port_t {
 extern struct mock_dpm_port_t dpm[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void mock_dpm_reset(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MOCK_USB_PD_DPM_MOCK_H */

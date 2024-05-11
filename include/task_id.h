@@ -24,6 +24,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* define the name of the header containing the list of tasks */
 #define STRINGIFY0(name) #name
 #define STRINGIFY(name) STRINGIFY0(name)
@@ -72,5 +76,8 @@ enum {
 };
 #undef TASK
 
+#ifdef __cplusplus
+}
+#endif
 #endif /* CONFIG_ZEPHYR */
 #endif /* __CROS_EC_TASK_ID_H */

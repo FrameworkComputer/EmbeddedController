@@ -10,6 +10,10 @@
 
 #include "usb_pe_sm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Port Discovery DR Swap Policy
  *
@@ -49,5 +53,9 @@ __override_proto bool port_discovery_vconn_swap_policy(int port,
  * @param return True if FRS disable is delayed, else False.
  */
 __override_proto bool port_frs_disable_until_source_on(int port);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_PD_POLICY_H */

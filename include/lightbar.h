@@ -7,6 +7,10 @@
 #ifndef __CROS_EC_LIGHTBAR_H
 #define __CROS_EC_LIGHTBAR_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /****************************************************************************/
 /* Internal stuff */
 
@@ -54,4 +58,9 @@ extern void demo_battery_level(int inc);
 extern void demo_is_charging(int ischarge);
 extern void demo_brightness(int inc);
 extern void demo_tap(void);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_LIGHTBAR_H */

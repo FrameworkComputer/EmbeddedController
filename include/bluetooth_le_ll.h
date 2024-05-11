@@ -9,6 +9,10 @@
 #include "btle_hci_int.h"
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum ll_state_t {
 	UNINITIALIZED,
 	STANDBY,
@@ -152,5 +156,9 @@ uint8_t ll_test_end(uint8_t *return_params);
 
 void ll_ble_test_rx(void);
 void ll_ble_test_rx(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_BLUETOOTH_LE_LL_H */

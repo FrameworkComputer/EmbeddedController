@@ -16,6 +16,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct thermistor_data_pair {
 	uint8_t mv; /* Scaled voltage level at ADC (in mV) */
 	uint8_t temp; /* Temperature in Celsius */
@@ -170,5 +174,9 @@ int get_temp_3v3_30k9_47k_4050b(int idx_adc, int *temp_ptr);
  */
 int thermistor_get_temperature(int idx_adc, int *temp_ptr,
 			       const struct thermistor_info *info);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_TEMP_SENSOR_THERMISTOR_NCP15WB_H */

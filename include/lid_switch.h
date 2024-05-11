@@ -17,6 +17,10 @@
 #include "common.h"
 #include "stdbool.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Debounce time for lid switch
  */
@@ -42,5 +46,9 @@ void lid_interrupt(enum gpio_signal signal);
  * @param enable    Flag that enables or disables lid interrupt.
  */
 void enable_lid_detect(bool enable);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_LID_SWITCH_H */

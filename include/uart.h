@@ -19,6 +19,10 @@
 
 #include <stdarg.h> /* For va_list */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initialize the UART module.
  */
@@ -395,5 +399,9 @@ int uart_console_read_buffer(uint8_t type, char *dest, uint16_t dest_size,
  * Initialize tx buffer head and tail
  */
 void uart_init_buffer(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_UART_H */

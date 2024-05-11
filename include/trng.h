@@ -10,6 +10,10 @@
 
 #include <common.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef CONFIG_ZEPHYR
 /*
  * Zephyr driver is responsible for initializing, enabling and disabling
@@ -49,5 +53,9 @@ void trng_exit(void);
  * Not supported on all platforms.
  **/
 void trng_rand_bytes(void *buffer, size_t len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EC_INCLUDE_TRNG_H */

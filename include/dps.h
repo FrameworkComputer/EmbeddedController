@@ -10,6 +10,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define DPS_FLAG_DISABLED BIT(0)
 #define DPS_FLAG_NO_SRCCAP BIT(1)
 #define DPS_FLAG_WAITING BIT(2)
@@ -85,6 +89,10 @@ __test_only int dps_get_fake_ma(void);
 __test_only int *dps_get_debug_level(void);
 __test_only int dps_get_flag(void);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_DPS__H */

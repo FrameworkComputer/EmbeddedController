@@ -9,6 +9,10 @@
 #include "common.h"
 #include "usb_pd_tcpm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Common APIs for USB Type-C Power Path Controllers (PPC) */
 
 /* The role of connected device. */
@@ -337,5 +341,9 @@ int ppc_set_frs_enable(int port, int enable);
  * @return true if Type-C port has PPC else false
  */
 __override_proto bool board_port_has_ppc(int port);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !defined(__CROS_EC_USBC_PPC_H) */

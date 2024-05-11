@@ -10,6 +10,10 @@
 
 #include "stdbool.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Input state flags. */
 #define IN_PCH_SLP_S3_DEASSERTED POWER_SIGNAL_MASK(X86_SLP_S3_DEASSERTED)
 #define IN_PCH_SLP_S4_DEASSERTED POWER_SIGNAL_MASK(X86_SLP_S4_DEASSERTED)
@@ -102,5 +106,9 @@ extern const struct intel_x86_pwrok_signal pwrok_signal_assert_list[];
 extern const int pwrok_signal_assert_count;
 extern const struct intel_x86_pwrok_signal pwrok_signal_deassert_list[];
 extern const int pwrok_signal_deassert_count;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ICELAKE_H */

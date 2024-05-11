@@ -15,6 +15,12 @@
 #include <stdint.h>
 #endif /* CONFIG_ZEPHYR */
 
+#ifndef HOST_TOOLS_BUILD
+#ifdef __cplusplus
+extern "C" {
+#endif
+#endif
+
 /* Use software implementation */
 
 /* Static context variant */
@@ -66,6 +72,12 @@ uint32_t crc32_ctx_result(uint32_t *ctx);
  * @return the crc-16 of the input data.
  */
 uint16_t cros_crc16(const uint8_t *data, int len, uint16_t previous_crc);
+
+#ifndef HOST_TOOLS_BUILD
+#ifdef __cplusplus
+}
+#endif
+#endif
 
 #endif /* CONFIG_HW_CRC && !HOST_TOOLS_BUILD */
 

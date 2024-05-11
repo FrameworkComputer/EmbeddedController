@@ -11,6 +11,10 @@
 #include "common.h"
 #include "ec_commands.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Update the state of buttons
  *
@@ -28,5 +32,9 @@ uint32_t mkbp_get_button_state(void);
  * Retrieve state of switches [Lid open/closed, tablet mode switch, etc]
  */
 uint32_t mkbp_get_switch_state(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_MKBP_INPUT_DEVICES_H */

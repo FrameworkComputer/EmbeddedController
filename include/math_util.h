@@ -13,6 +13,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef CONFIG_FPU
 typedef float fp_t;
 typedef float fp_inter_t;
@@ -243,6 +247,10 @@ int round_divide(int64_t dividend, int divisor);
 uint64_t bitmask_uint64(int offset);
 #else
 #define bitmask_uint64(o) ((uint64_t)1 << (o))
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_MATH_UTIL_H */

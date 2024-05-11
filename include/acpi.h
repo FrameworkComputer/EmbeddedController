@@ -10,6 +10,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Handle AP write to EC via the ACPI I/O port.
  *
@@ -73,5 +77,9 @@ int acpi_dptf_set_profile_num(int n);
  *                      host using EC shared memory.
  */
 int acpi_dptf_get_profile_num(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ACPI_H */

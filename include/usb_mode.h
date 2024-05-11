@@ -17,6 +17,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Initialize USB4 state for the specified port.
  *
@@ -89,5 +93,9 @@ void enter_usb_rejected(int port, enum tcpci_msg_type type);
  * @param type    Transmit type (SOP, SOP', SOP'') for request
  */
 uint32_t enter_usb_setup_next_msg(int port, enum tcpci_msg_type *type);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

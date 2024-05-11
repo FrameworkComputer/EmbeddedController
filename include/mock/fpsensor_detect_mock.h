@@ -8,6 +8,10 @@
 
 #include "fpsensor/fpsensor_detect.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct mock_ctrl_fpsensor_detect {
 	enum fp_sensor_type fpsensor_detect_get_type_return;
 	enum fp_transport_type get_fp_transport_type_return;
@@ -23,5 +27,9 @@ struct mock_ctrl_fpsensor_detect {
 	}
 
 extern struct mock_ctrl_fpsensor_detect mock_ctrl_fpsensor_detect;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MOCK_FPSENSOR_DETECT_MOCK_H */

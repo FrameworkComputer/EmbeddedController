@@ -19,6 +19,10 @@
 #include <linker.h>
 #endif
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Console commands */
 extern const struct console_command __cmds[];
 extern const struct console_command __cmds_end[];
@@ -172,6 +176,10 @@ extern const char __preserved_logs_start[];
 extern const char __preserved_logs_size[];
 #else
 #define __preserved_logs(name)
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_LINK_DEFS_H */

@@ -17,6 +17,10 @@
 #include "common.h"
 #include "stdint.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * I2C-HID registers
  *
@@ -63,5 +67,9 @@ struct __packed i2c_hid_descriptor {
 	uint16_t wVersionID;
 	uint32_t reserved;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_I2C_HID_H */

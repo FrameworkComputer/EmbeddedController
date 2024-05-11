@@ -10,6 +10,10 @@
 
 #include "gpio_signal.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Signal through VW */
 enum espi_vw_signal {
 	/* The first valid VW signal is 0x2000 */
@@ -100,5 +104,9 @@ int espi_signal_is_vw(int signal);
  */
 void espi_wait_vw_not_dirty(enum espi_vw_signal signal,
 			    unsigned int timeout_us);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ESPI_H */

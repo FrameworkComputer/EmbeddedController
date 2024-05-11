@@ -12,6 +12,10 @@
 #include "util.h"
 #include "vec4.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef float mat44_float_t[4][4];
 typedef fp_t mat44_fp_t[4][4];
 typedef size_t sizev4_t[4];
@@ -22,4 +26,9 @@ void mat44_fp_swap_rows(mat44_fp_t A, const size_t i, const size_t j);
 
 void mat44_fp_solve(mat44_fp_t A, fpv4_t x, const fpv4_t b,
 		    const sizev4_t pivot);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_MAT_44_H */

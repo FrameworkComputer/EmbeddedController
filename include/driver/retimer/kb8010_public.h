@@ -12,6 +12,10 @@
 
 #include "usb_mux.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const struct usb_mux_driver kb8010_usb_retimer_driver;
 
 /* Retimer driver hardware specific controls */
@@ -22,5 +26,9 @@ struct kb8010_control {
 	const enum gpio_signal dp_enable_gpio;
 };
 extern const struct kb8010_control kb8010_controls[];
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_RETIMER_KB8010_PUBLIC_H */

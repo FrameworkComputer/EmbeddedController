@@ -9,6 +9,10 @@
 
 #include "math_util.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef float floatv3_t[3];
 typedef fp_t fpv3_t[3];
 
@@ -79,5 +83,9 @@ fp_t fpv3_norm_squared(const fpv3_t v);
  * @return The length of the vector.
  */
 fp_t fpv3_norm(const fpv3_t v);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_VEC_3_H */

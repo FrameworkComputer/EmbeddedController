@@ -8,6 +8,10 @@
 
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MT6360_PMU_I2C_ADDR_FLAGS 0x34
 #define MT6360_PMIC_I2C_ADDR_FLAGS 0x1a
 #define MT6360_LDO_I2C_ADDR_FLAGS 0x64
@@ -58,5 +62,9 @@ struct mt6360_config_t {
 	int i2c_addr_flags;
 };
 extern const struct bc12_drv mt6360_drv;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_DRIVER_BC12_MT6360_PUBLIC_H */

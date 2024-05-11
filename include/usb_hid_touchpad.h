@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define USB_HID_TOUCHPAD_TIMESTAMP_UNIT 100 /* usec */
 
 #define REPORT_ID_TOUCHPAD 0x01
@@ -161,5 +165,9 @@ struct usb_hid_touchpad_report {
 
 /* class implementation interfaces */
 void set_touchpad_report(struct usb_hid_touchpad_report *report);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

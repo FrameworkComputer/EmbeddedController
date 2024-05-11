@@ -8,6 +8,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Board dependent hooks on voltage regulators.
  *
@@ -51,5 +55,9 @@ int board_regulator_set_voltage(uint32_t index, uint32_t min_mv,
  * Note that this might be called before the regulator is enabled.
  */
 int board_regulator_get_voltage(uint32_t index, uint32_t *voltage_mv);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* !defined(__CROS_EC_REGULATOR_H) */

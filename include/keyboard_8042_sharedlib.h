@@ -14,6 +14,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct button_8042_t {
 	uint16_t scancode;
 	int repeat;
@@ -188,5 +192,9 @@ enum scancode_values {
 
 	SCANCODE_CTRL_BREAK = 0xe07e,
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_KEYBOARD_8042_SHAREDLIB_H */

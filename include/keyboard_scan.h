@@ -12,6 +12,10 @@
 #include "compile_time_macros.h"
 #include "keyboard_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef CONFIG_ZTEST
 extern uint8_t key_vol_up_row;
 extern uint8_t key_vol_up_col;
@@ -214,5 +218,9 @@ int keyboard_scan_is_enabled(void);
  */
 void test_keyboard_scan_debounce_reset(void);
 #endif /* TEST_BUILD */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_KEYBOARD_SCAN_H */

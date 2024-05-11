@@ -11,6 +11,10 @@
 /* The thermal configuration for a single temp sensor is defined here. */
 #include "ec_commands.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* We need to to hold a config for each board's sensors. Not const, so we can
  * tweak it at run-time if we have to.
  */
@@ -26,5 +30,9 @@ int thermal_fan_percent(int low, int high, int cur);
  *            TEMP_SENSOR_COUNT)
  */
 void board_override_fan_control(int fan, int *tmp);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_THERMAL_H */

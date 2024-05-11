@@ -14,6 +14,10 @@
 #include "gpio_signal.h"
 #include "task_id.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 FORWARD_DECLARE_ENUM(power_state){
 	/* Steady states */
 	POWER_G3 = 0, /*
@@ -466,5 +470,9 @@ void power_fake_s0(void);
  */
 void power_fake_disable(void);
 #endif /* defined(CONFIG_POWER_FAKE_CONTROL) */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_POWER_H */

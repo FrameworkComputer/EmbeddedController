@@ -8,6 +8,10 @@
 
 #include "i2c.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef BOARD_MUSHU
 #define F75303_I2C_ADDR_FLAGS 0x4D
 #else
@@ -82,5 +86,9 @@ int f75303_get_val_mk(int idx, int *temp_mk_ptr);
 #ifdef CONFIG_ZEPHYR
 void f75303_update_temperature(int idx);
 #endif /* CONFIG_ZEPHYR */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_F75303_H */

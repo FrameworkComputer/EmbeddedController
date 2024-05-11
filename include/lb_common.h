@@ -11,6 +11,10 @@
 
 #include "ec_commands.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* How many (logical) LEDs do we have? */
 #define NUM_LEDS 4
 
@@ -37,5 +41,9 @@ void lb_hc_cmd_reg(const struct ec_params_lightbar *in);
  * Returns true if a change to the rails was made, false if it wasn't.
  */
 int lb_power(int enabled);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_LB_COMMON_H */

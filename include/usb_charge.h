@@ -19,6 +19,10 @@
 #include "ec_commands.h"
 #include "task.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* USB charger voltage */
 #define USB_CHARGER_VOLTAGE_MV 5000
 /* USB charger minimum current */
@@ -233,5 +237,9 @@ int board_is_sourcing_vbus(int port);
  * @return EC_SUCCESS if OK, EC_ERROR_INVAL if @port is invalid
  */
 int board_vbus_sink_enable(int port, int enable);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_CHARGE_H */

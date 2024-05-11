@@ -15,6 +15,10 @@
 #include "common.h"
 #include "ec_commands.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Charge port that indicates no active port */
 #define CHARGE_PORT_NONE -1
 #define CHARGE_CEIL_NONE -1
@@ -378,5 +382,9 @@ int is_pd_port(int port);
  * Board specific callback to modify the delay time of leaving safe mode
  */
 __override_proto int board_get_leave_safe_mode_delay_ms(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_CHARGE_MANAGER_H */

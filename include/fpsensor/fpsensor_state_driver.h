@@ -10,9 +10,17 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* --- Global variables defined in fpsensor_state.c --- */
 
 /* Last acquired frame (aligned as it is used by arbitrary binary libraries) */
 extern uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE];
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_FPSENSOR_FPSENSOR_STATE_DRIVER_INFO_H */

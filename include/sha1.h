@@ -14,6 +14,10 @@
 #define DIV_ROUND_UP(x, y) (((x) + ((y)-1)) / (y))
 #else
 #include "util.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 #endif
 
 #define SHA1_DIGEST_SIZE 20
@@ -32,5 +36,9 @@ struct sha1_ctx {
 void sha1_init(struct sha1_ctx *ctx);
 void sha1_update(struct sha1_ctx *ctx, const uint8_t *data, uint32_t len);
 uint8_t *sha1_final(struct sha1_ctx *ctx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_SHA1_H */

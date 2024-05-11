@@ -12,6 +12,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Current challenge protocol version */
 #define RMA_CHALLENGE_VERSION 0
 
@@ -77,5 +81,9 @@ int rma_try_authcode(const char *code);
  * the ID. The buffer must be of size RMA_DEVICE_ID_SIZE.
  */
 void get_rma_device_id(uint8_t rma_device_id[RMA_DEVICE_ID_SIZE]);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

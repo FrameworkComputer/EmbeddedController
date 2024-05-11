@@ -10,6 +10,10 @@
 
 #include "usb_pd_tcpm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define RT1718S_I2C_ADDR1_FLAGS 0x43
 #define RT1718S_I2C_ADDR2_FLAGS 0x40
 
@@ -22,5 +26,9 @@
 
 extern const struct tcpm_drv rt1718s_tcpm_drv;
 extern const struct bc12_drv rt1718s_bc12_drv;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_DRIVER_TCPM_RT1718S_PUBLIC_H */

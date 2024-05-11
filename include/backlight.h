@@ -11,6 +11,10 @@
 #include "common.h"
 #include "gpio.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Interrupt handler for backlight.
  *
@@ -28,5 +32,9 @@ static inline void backlight_interrupt(enum gpio_signal signal)
  * Activate/Deactivate the backlight GPIO pin considering active high or low.
  */
 void enable_backlight(int enabled);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_BACKLIGHT_H */

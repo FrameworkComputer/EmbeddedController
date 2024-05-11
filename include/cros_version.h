@@ -17,6 +17,10 @@
 #include "common.h"
 #include "system.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CROS_EC_IMAGE_DATA_COOKIE1 0xce778899
 #define CROS_EC_IMAGE_DATA_COOKIE2 0xceaabbdd
 #define CROS_EC_IMAGE_DATA_COOKIE3 0xceeeff00
@@ -56,4 +60,9 @@ extern const void *__image_size;
  * @return Number of commits in integer or 0 on error
  */
 int ver_get_num_commits(enum ec_image copy);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_VERSION_H */

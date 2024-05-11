@@ -10,6 +10,10 @@
 #include "common.h"
 #include "ec_commands.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CBI_VERSION_MAJOR 0
 #define CBI_VERSION_MINOR 0
 
@@ -257,6 +261,10 @@ void cbi_latch_eeprom_wp(void);
  * @return EC_RES_SUCCESS on success or EC_RES_* otherwise.
  */
 int cbi_write(void);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_CROS_BOARD_INFO_H */

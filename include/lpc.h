@@ -17,6 +17,10 @@
 #include "common.h"
 #include "host_command.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Return a pointer to the memory-mapped buffer.
  *
@@ -174,5 +178,9 @@ void lpc_init_mask(void);
  * mask these events until host unmasks them itself.
  */
 void lpc_s3_resume_clear_masks(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_LPC_H */

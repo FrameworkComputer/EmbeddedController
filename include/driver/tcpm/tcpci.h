@@ -14,6 +14,10 @@
 #include "usb_mux.h"
 #include "usb_pd_tcpm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define TCPC_REG_VENDOR_ID 0x0
 #define TCPC_REG_PRODUCT_ID 0x2
 #define TCPC_REG_BCD_DEV 0x4
@@ -400,5 +404,9 @@ bool tcpci_tcpm_get_src_ctrl(int port);
 int tcpci_tcpm_set_src_ctrl(int port, int enable);
 
 int tcpci_tcpc_fast_role_swap_enable(int port, int enable);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_PD_TCPM_TCPCI_H */

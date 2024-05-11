@@ -10,6 +10,10 @@
 
 #include "usb_mux.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define AN7447_TCPC0_I2C_ADDR_FLAGS 0x2C
 #define AN7447_TCPC1_I2C_ADDR_FLAGS 0x2B
 #define AN7447_TCPC2_I2C_ADDR_FLAGS 0x2A
@@ -25,4 +29,9 @@ extern const struct usb_mux_driver anx7447_usb_mux_driver;
 
 void anx7447_tcpc_update_hpd_status(const struct usb_mux *me,
 				    mux_state_t mux_state, bool *ack_required);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_DRIVER_TCPM_ANX7447_PUBLIC_H */

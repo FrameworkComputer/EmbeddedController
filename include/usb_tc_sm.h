@@ -12,6 +12,10 @@
 #include "usb_pd_tcpm.h"
 #include "usb_sm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum try_src_override_t {
 	TRY_SRC_OVERRIDE_OFF,
 	TRY_SRC_OVERRIDE_ON,
@@ -402,4 +406,9 @@ void tc_reset_support_timer(int port);
  */
 void tc_ctvpd_detected(int port);
 #endif /* CONFIG_USB_CTVPD */
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_USB_TC_H */

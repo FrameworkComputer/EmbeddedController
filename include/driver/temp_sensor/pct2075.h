@@ -8,6 +8,10 @@
 
 #include "i2c.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PCT2075_I2C_ADDR_FLAGS0 (0x48 | I2C_FLAG_BIG_ENDIAN)
 #define PCT2075_I2C_ADDR_FLAGS1 (0x49 | I2C_FLAG_BIG_ENDIAN)
 #define PCT2075_I2C_ADDR_FLAGS2 (0x4A | I2C_FLAG_BIG_ENDIAN)
@@ -71,5 +75,9 @@ void pct2075_init(void);
 #ifdef CONFIG_ZEPHYR
 void pct2075_update_temperature(int idx);
 #endif /* CONFIG_ZEPHYR */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_PCT2075_H */

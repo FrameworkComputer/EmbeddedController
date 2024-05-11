@@ -10,6 +10,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * This file contains structures used to facilitate EC firmware updates
  * over USB (and over TPM for cr50).
@@ -285,5 +289,9 @@ int touchpad_debug(const uint8_t *param, unsigned int param_size,
 
 /* SHA256 hash of the touchpad firmware expected by this image. */
 extern const uint8_t touchpad_fw_full_hash[32];
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ! __CROS_EC_UPDATE_FW_H */

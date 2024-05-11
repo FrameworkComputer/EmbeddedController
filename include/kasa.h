@@ -10,6 +10,10 @@
 
 #include "vec3.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct kasa_fit {
 	fp_t acc_x, acc_y, acc_z, acc_w;
 	fp_t acc_xx, acc_xy, acc_xz, acc_xw;
@@ -42,5 +46,9 @@ void kasa_accumulate(struct kasa_fit *kasa, fp_t x, fp_t y, fp_t z);
  * @param radius Pointer to a fp_t that will hold the computed radius.
  */
 void kasa_compute(struct kasa_fit *kasa, fpv3_t bias, fp_t *radius);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_KASA_H */

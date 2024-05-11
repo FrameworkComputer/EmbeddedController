@@ -8,6 +8,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Curve25519.
  *
  * Curve25519 is an elliptic curve. See https://tools.ietf.org/html/rfc7748.
@@ -66,5 +70,9 @@ void X25519_public_from_private(uint8_t out_public_value[32],
 void x25519_scalar_mult(uint8_t out[32],
 			const uint8_t scalar[32],
 			const uint8_t point[32]);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_CURVE25519_H */

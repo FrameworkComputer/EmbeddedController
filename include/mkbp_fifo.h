@@ -11,6 +11,10 @@
 #include "common.h"
 #include "ec_commands.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define FIFO_DEPTH 16
 
 /**
@@ -48,5 +52,9 @@ int mkbp_fifo_add(uint8_t event_type, const uint8_t *buffp);
  * @return size of the returned event, EC_ERROR_BUSY if type mismatch.
  */
 int mkbp_fifo_get_next_event(uint8_t *out, enum ec_mkbp_event evt);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_MKBP_FIFO_H */

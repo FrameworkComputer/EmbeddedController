@@ -23,6 +23,10 @@
 #include "common.h"
 #include "util.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BLUETOOTH_ADDR_OCTETS 6
 
 /*
@@ -384,5 +388,9 @@ int ble_radio_read_allow_list_size(uint8_t *ret_size);
 int ble_radio_add_device_to_allow_list(const uint8_t *addr_ptr, uint8_t rand);
 int ble_radio_remove_device_from_allow_list(const uint8_t *addr_ptr,
 					    uint8_t rand);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_BLE_H */

@@ -13,6 +13,10 @@
 #include "timer.h"
 #include "vb21_struct.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Validate key contents.
  *
@@ -191,6 +195,10 @@ __override_proto bool vboot_allow_usb_pd(void);
  * Set the vboot_allow_usb_pd flag to false.
  */
 __test_only void vboot_disable_pd(void);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_INCLUDE_VBOOT_H */

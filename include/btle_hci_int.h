@@ -12,6 +12,11 @@
 #define _HCI_INT_H_
 
 #include "util.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define HCI_DEV_NAME_LEN 248
 
 #define HCI_INQUIRY_LENGTH_UNIT 1280 /* msec */
@@ -3221,5 +3226,9 @@ struct hciEvtAuthedPayloadTimeoutExpired {
 /* ==== BT 4.1 ==== */
 
 #define HCI_ERR_CoarseClock_AdjFailed_Will_Try_clock_Dragging 0x40
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

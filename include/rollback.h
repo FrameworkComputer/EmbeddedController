@@ -12,6 +12,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Get minimum version set by rollback protection blocks.
  *
@@ -69,6 +73,10 @@ int rollback_lock(void);
  */
 int board_get_entropy(void *buffer, int len);
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_ROLLBACK_H */

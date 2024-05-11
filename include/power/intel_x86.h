@@ -27,6 +27,10 @@
 #include "icelake.h"
 #elif defined(CONFIG_CHIPSET_SKYLAKE)
 #include "skylake.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 #endif
 
 /* GPIO for power signal */
@@ -95,5 +99,9 @@ enum ec_error_list intel_x86_wait_power_up_ok(void);
  * this function
  */
 __override_proto void intel_x86_sys_reset_delay(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_INTEL_X86_H */

@@ -46,6 +46,10 @@
 
 #endif /* CONFIG_ZEPHYR */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Full-capacity change reqd for host event */
 #define LFCC_EVENT_THRESH 5
 
@@ -529,5 +533,9 @@ int update_static_battery_info(void);
  * Read dynamic battery info from a main battery and store it in a cache.
  */
 void update_dynamic_battery_info(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_BATTERY_H */

@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum port_80_event {
 	PORT_80_EVENT_RESUME = 0x1001, /* S3->S0 transition */
 	PORT_80_EVENT_RESET = 0x1002, /* RESET transition */
@@ -30,5 +34,9 @@ void port_80_write(int data);
  *	or PORT_80_IGNORE if no data is available.
  */
 int port_80_read(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_PORT80_H */

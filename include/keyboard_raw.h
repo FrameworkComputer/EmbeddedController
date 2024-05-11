@@ -18,6 +18,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Column values for keyboard_raw_drive_column() */
 enum keyboard_column_index {
 	KEYBOARD_COLUMN_ALL = -2, /* Drive all columns */
@@ -125,6 +129,10 @@ static inline void keyboard_raw_set_cols(int cols)
  *             Otherwise, do nothing.
  */
 void board_keyboard_drive_col(int col);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_KEYBOARD_RAW_H */

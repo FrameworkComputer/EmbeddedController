@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* "enum temp_sensor_id" must be defined for each board in board.h. */
 enum temp_sensor_id;
 
@@ -71,5 +75,9 @@ int temp_sensor_read(enum temp_sensor_id id, int *temp_ptr);
  * @return EC_SUCCESS, or non-zero if error.
  */
 int print_temps(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_TEMP_SENSOR_H */

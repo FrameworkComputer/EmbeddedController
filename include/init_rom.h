@@ -14,6 +14,10 @@
 
 #include "stdbool.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Get the memory mapped address of an .init_rom data object.
  *
@@ -60,6 +64,10 @@ void init_rom_unmap(const void *addr, int size);
 int init_rom_copy(int offset, int size, char *data);
 #else
 #define init_rom_copy(offset, size, data) 0
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_INIT_ROM_H */

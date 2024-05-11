@@ -10,6 +10,10 @@
 
 #include "usbc_ppc.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NX20P3483_ADDR0_FLAGS 0x70
 #define NX20P3483_ADDR1_FLAGS 0x71
 #define NX20P3483_ADDR2_FLAGS 0x72
@@ -28,5 +32,9 @@ extern const struct ppc_drv nx20p348x_drv;
  * @param port: The Type-C port which triggered the interrupt.
  */
 void nx20p348x_interrupt(int port);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_DRIVER_PPC_NX20P348X_PUBLIC_H */

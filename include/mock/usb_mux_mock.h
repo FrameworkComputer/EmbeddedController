@@ -9,6 +9,10 @@
 
 #include "usb_mux.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Controller for mux state */
 struct mock_usb_mux_ctrl {
 	mux_state_t state;
@@ -20,5 +24,9 @@ void mock_usb_mux_reset(void);
 
 extern const struct usb_mux_driver mock_usb_mux_driver;
 extern struct mock_usb_mux_ctrl mock_usb_mux;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MOCK_USB_MUX_MOCK_H */

@@ -11,6 +11,10 @@
 #include "stdbool.h"
 #include "vec3.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct gyro_still_det {
 	/**
 	 * Variance threshold for the stillness confidence score.
@@ -87,5 +91,9 @@ fp_t gyro_still_det_compute(struct gyro_still_det *gyro_still_det);
  */
 void gyro_still_det_reset(struct gyro_still_det *gyro_still_det,
 			  bool reset_stats);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_GYRO_STILL_DET_H */

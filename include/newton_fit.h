@@ -12,6 +12,10 @@
 #include "stdbool.h"
 #include "vec3.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct newton_fit_orientation {
 	/** An orientations. */
 	fpv3_t orientation;
@@ -113,5 +117,9 @@ bool newton_fit_accumulate(struct newton_fit *fit, fp_t x, fp_t y, fp_t z);
  *               the calculation will be skipped.
  */
 void newton_fit_compute(struct newton_fit *fit, fpv3_t bias, fp_t *radius);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_NEWTON_FIT_H */

@@ -10,6 +10,10 @@
 
 #include "accel_bma2x2_public.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*** Chip-specific registers ***/
 /* REGISTER ADDRESS DEFINITIONS */
 #define BMA2x2_EEP_OFFSET 0x16
@@ -150,5 +154,9 @@
 
 /* Sensor resolution in number of bits. This sensor has fixed resolution. */
 #define BMA2x2_RESOLUTION 12
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ACCEL_BMA2x2_H */

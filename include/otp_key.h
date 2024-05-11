@@ -10,6 +10,10 @@
 
 #include <common.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define OTP_KEY_SIZE_BYTES 32
 #define OTP_KEY_ADDR 0x300
 
@@ -43,5 +47,9 @@ enum ec_error_list otp_key_provision(void);
  * Not supported by all platforms.
  **/
 void otp_key_exit(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __EC_INCLUDE_OTP_KEY_H */

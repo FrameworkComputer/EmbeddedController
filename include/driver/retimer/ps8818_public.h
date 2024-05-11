@@ -6,6 +6,10 @@
  */
 #include "usb_mux.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef __CROS_EC_USB_RETIMER_PS8818_H
 #define __CROS_EC_USB_RETIMER_PS8818_H
 
@@ -95,5 +99,9 @@ int ps8818_i2c_read(const struct usb_mux *me, int page, int offset, int *data);
 int ps8818_i2c_write(const struct usb_mux *me, int page, int offset, int data);
 int ps8818_i2c_field_update8(const struct usb_mux *me, int page, int offset,
 			     uint8_t field_mask, uint8_t set_value);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_RETIMER_PS8818_H */

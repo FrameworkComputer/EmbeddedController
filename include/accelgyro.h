@@ -10,6 +10,10 @@
 #include "math_util.h"
 #include "motion_sense.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Header file for accelerometer / gyro drivers. */
 
 /*
@@ -261,5 +265,9 @@ struct als_drv_data_t {
 
 /* Individual channel scale value between 0 and 2 represented in 16 bits */
 #define ALS_CHANNEL_SCALE(_x) ((_x) * MOTION_SENSE_DEFAULT_SCALE)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ACCELGYRO_H */

@@ -8,6 +8,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Priority for ALS HOOK int */
 #define HOOK_PRIO_ALS_INIT (HOOK_PRIO_DEFAULT + 1)
 
@@ -33,5 +37,9 @@ extern struct als_t als[];
  * @return EC_SUCCESS, or non-zero if error.
  */
 int als_read(enum als_id id, int *lux);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ALS_H */

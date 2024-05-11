@@ -36,6 +36,10 @@
 #endif
 #define KEYBOARD_ROWS 8
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * WARNING: Do not directly modify it. You should call keyboard_raw_set_cols,
  * instead. It checks whether you're eligible or not.
@@ -87,6 +91,10 @@ extern uint8_t keyboard_cols;
 #else
 #define KEYBOARD_MASKED_BY_POWERBTN \
 	(KEYBOARD_MASK_REFRESH | KEYBOARD_ROW_TO_MASK(0))
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_KEYBOARD_CONFIG_H */

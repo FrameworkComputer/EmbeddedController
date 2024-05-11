@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef CONFIG_BOARD_PRE_INIT
 /**
  * Configure board before any inits are called.
@@ -77,5 +81,9 @@ void chip_pre_init(void);
  */
 __override_proto uint32_t board_override_feature_flags0(uint32_t flags0);
 __override_proto uint32_t board_override_feature_flags1(uint32_t flags1);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_BOARD_CONFIG_H */

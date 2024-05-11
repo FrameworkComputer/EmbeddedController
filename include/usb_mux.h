@@ -24,6 +24,10 @@
 
 #else /* !CONFIG_ZEPHYR */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Flags used for usb_mux.flags */
 #define USB_MUX_FLAG_NOT_TCPC BIT(0) /* TCPC/MUX device used only as MUX */
 #define USB_MUX_FLAG_SET_WITHOUT_FLIP BIT(1) /* SET should not flip */
@@ -376,4 +380,9 @@ int usb_mux_retimer_fw_update_port_info(void);
  * @return True if all pending mux sets have completed
  */
 bool usb_mux_set_completed(int port);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif

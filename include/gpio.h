@@ -150,6 +150,10 @@
 
 #endif /* CONFIG_ZEPHYR */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Common flag combinations */
 #define GPIO_OUT_LOW (GPIO_OUTPUT | GPIO_LOW)
 #define GPIO_OUT_HIGH (GPIO_OUTPUT | GPIO_HIGH)
@@ -528,5 +532,9 @@ int signal_is_gpio(int signal);
  *                     as a wake pin. 0 to disable it.
  */
 void gpio_set_wakepin(enum gpio_signal signal, uint32_t flags);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_GPIO_H */

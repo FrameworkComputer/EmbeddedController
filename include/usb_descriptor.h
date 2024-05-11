@@ -10,6 +10,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define USB_MAX_PACKET_SIZE 64
 
 /* USB 2.0 chapter 9 definitions */
@@ -400,5 +404,9 @@ extern const uint8_t usb_string_desc[];
 extern const void *const usb_fw_version;
 extern const struct bos_context bos_ctx;
 extern const void *webusb_url;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_DESCRIPTOR_H */

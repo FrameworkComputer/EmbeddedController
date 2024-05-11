@@ -14,6 +14,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Represent a battery config embedded in FW.
  */
@@ -84,5 +88,9 @@ __override_proto bool board_batt_conf_enabled(void);
  */
 __override_proto int
 board_battery_imbalance_mv(const struct board_batt_params *info);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_BATTERY_FUEL_GAUGE_H */

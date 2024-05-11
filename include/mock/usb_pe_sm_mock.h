@@ -11,6 +11,10 @@
 #include "usb_pd_tcpm.h"
 #include "usb_pe_sm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct mock_pe_port_t {
 	enum tcpci_msg_type sop;
 
@@ -26,5 +30,9 @@ struct mock_pe_port_t {
 extern struct mock_pe_port_t mock_pe_port[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void mock_pe_port_reset(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MOCK_USB_PE_SM_MOCK_H */

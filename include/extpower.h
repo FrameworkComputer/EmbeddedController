@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum gpio_signal; /* from gpio_signal.h */
 
 /**
@@ -36,5 +40,9 @@ void extpower_interrupt(enum gpio_signal signal);
  * @param is_present	State of external power (1 = present, 0 = not present)
  */
 void extpower_handle_update(int is_present);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_EXTPOWER_H */

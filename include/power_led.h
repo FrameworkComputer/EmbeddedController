@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum powerled_state {
 	POWERLED_STATE_OFF,
 	POWERLED_STATE_ON,
@@ -32,6 +36,10 @@ static inline void powerled_set_state(enum powerled_state state)
 {
 }
 
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_POWER_LED_H */

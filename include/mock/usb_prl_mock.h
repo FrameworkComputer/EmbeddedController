@@ -13,6 +13,10 @@
 #include "usb_pd_tcpm.h"
 #include "usb_pe_sm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void mock_prl_reset(void);
 
 int mock_prl_wait_for_tx_msg(int port, enum tcpci_msg_type tx_type,
@@ -31,5 +35,9 @@ void mock_prl_message_received(int port);
 
 void mock_prl_report_error(int port, enum pe_error e,
 			   enum tcpci_msg_type tx_type);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MOCK_DP_ALT_MODE_MOCK_H */

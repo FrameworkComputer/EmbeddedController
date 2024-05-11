@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Smart battery and charger I2C address */
 #define BATTERY_ADDR_FLAGS 0x0B
 #define CHARGER_ADDR_FLAGS 0x09
@@ -198,5 +202,9 @@ int sb_read_mfgacc(int cmd, int block, uint8_t *data, int len);
 
 /* Read manufactures access data from the battery */
 int sb_read_mfgacc_block(int cmd, int block, uint8_t *data, int len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_BATTERY_SMART_H */

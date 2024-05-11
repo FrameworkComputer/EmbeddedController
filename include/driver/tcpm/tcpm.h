@@ -20,6 +20,10 @@
 #include "usb_pd_tcpm.h"
 #include "util.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(CONFIG_USB_PD_DUAL_ROLE_AUTO_TOGGLE) && \
 	!defined(CONFIG_USB_PD_DUAL_ROLE)
 #error "DRP auto toggle requires board to have DRP support"
@@ -683,5 +687,9 @@ static inline void tcpm_dump_registers(int port)
  * @return EC_SUCCESS on success, or an error
  */
 int tcpm_reset_bist_type_2(int port);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif
