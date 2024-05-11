@@ -479,10 +479,11 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_PSE_LTC4291
                                                 "${PLATFORM_EC}/driver/pse_ltc4291.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RSA
                                                 "${PLATFORM_EC}/common/rsa.c")
+zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RWSIG
+                                                "${PLATFORM_EC}/common/vboot/vb21_lib.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_RWSIG_VERIFY
                                                 "${PLATFORM_EC}/common/rwsig.c"
-                                                "${PLATFORM_EC}/common/vboot/common.c"
-                                                "${PLATFORM_EC}/common/vboot/vb21_lib.c")
+                                                "${PLATFORM_EC}/common/vboot/common.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_ROLLBACK
                                                 "${PLATFORM_EC}/common/rollback.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_SHA256_SW
