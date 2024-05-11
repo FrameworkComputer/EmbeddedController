@@ -4,6 +4,9 @@
  */
 /* Mock USB Type-C mux */
 
+#ifndef __MOCK_USB_MUX_MOCK_H
+#define __MOCK_USB_MUX_MOCK_H
+
 #include "usb_mux.h"
 
 /* Controller for mux state */
@@ -17,3 +20,5 @@ void mock_usb_mux_reset(void);
 
 extern const struct usb_mux_driver mock_usb_mux_driver;
 extern struct mock_usb_mux_ctrl mock_usb_mux;
+
+#endif /* __MOCK_USB_MUX_MOCK_H */

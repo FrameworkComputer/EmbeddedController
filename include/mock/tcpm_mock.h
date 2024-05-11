@@ -4,6 +4,9 @@
  */
 /* Mock for the TCPM interface */
 
+#ifndef __MOCK_TCPM_MOCK_H
+#define __MOCK_TCPM_MOCK_H
+
 #include "common.h"
 #include "tcpm/tcpm.h"
 
@@ -21,3 +24,5 @@ extern struct mock_tcpm_t mock_tcpm[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void mock_tcpm_reset(void);
 void mock_tcpm_rx_msg(int port, uint16_t header, int cnt, const uint32_t *data);
+
+#endif /* __MOCK_TCPM_MOCK_H */

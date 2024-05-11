@@ -4,6 +4,9 @@
  */
 /* Mock for the TCPC interface */
 
+#ifndef __MOCK_TCPC_MOCK_H
+#define __MOCK_TCPC_MOCK_H
+
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
@@ -35,3 +38,5 @@ void mock_tcpc_reset(void);
 
 extern const struct tcpm_drv mock_tcpc_driver;
 extern struct mock_tcpc_ctrl mock_tcpc;
+
+#endif /* __MOCK_TCPC_MOCK_H */
