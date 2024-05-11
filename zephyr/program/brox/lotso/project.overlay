@@ -56,3 +56,13 @@
 &gpio_ec_i2c_pmc_pd_int_odl {
 	no-auto-init;
 };
+
+&i2c4 {
+	/delete-node/ isl9238@9;
+
+        charger: bq25710@9 {
+		compatible = "ti,bq25710";
+		status = "okay";
+		reg = <0x9>;
+	};
+};

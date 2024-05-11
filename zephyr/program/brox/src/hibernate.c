@@ -9,7 +9,9 @@
 
 __override void board_hibernate(void)
 {
+#if defined(CONFIG_CHARGER_ISL9238C) || defined(CONFIG_ZTEST)
 	isl9238c_hibernate(CHARGER_SOLO);
+#endif
 }
 
 __override void board_hibernate_late(void)
