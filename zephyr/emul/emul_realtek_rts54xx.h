@@ -260,6 +260,19 @@ union rts54_request {
 		struct rts54_subcommand_header header;
 		uint8_t port_num;
 	} get_pch_data_status;
+
+	struct ack_cc_ci_req {
+		uint8_t command_code;
+		uint8_t data_len;
+		uint8_t reserved;
+		uint8_t port_num;
+		union conn_status_change_bits_t ci;
+		uint16_t vendor_defined_ci;
+		struct {
+			uint8_t cc_ack : 1;
+			uint8_t rsvd : 7;
+		};
+	} __packed ack_cc_ci;
 };
 
 union rts54_response {

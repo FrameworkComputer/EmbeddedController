@@ -156,6 +156,27 @@ static int ppm_reset(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int ack_cc_ci(struct rts5453p_emul_pdc_data *data,
+		     const union rts54_request *req)
+{
+	uint16_t ci_mask;
+
+	/*
+	 * The bits which are set in the change indicator bits should clear any
+	 * change indicator bits which are set the connector status message.
+	 */
+	ci_mask = ~req->ack_cc_ci.ci.raw_value;
+	data->connector_status.raw_conn_status_change_bits &= ci_mask;
+
+	LOG_INF("ACK_CC_CI port=%d, ci.raw = 0x%x", req->ack_cc_ci.port_num,
+		req->ack_cc_ci.ci.raw_value);
+
+	memset(&data->response, 0, sizeof(union rts54_response));
+	send_response(data);
+
+	return 0;
+}
+
 static int connector_reset(struct rts5453p_emul_pdc_data *data,
 			   const union rts54_request *req)
 {
@@ -768,7 +789,7 @@ const struct commands rts54_commands[] = {
 	{ .code = 0x01, SUBCMD_DEF(sub_cmd_x01) },
 	{ .code = 0x08, SUBCMD_DEF(sub_cmd_x08) },
 	{ .code = 0x09, HANDLER_DEF(get_rtk_status) },
-	{ .code = 0x0A, HANDLER_DEF(unsupported) },
+	{ .code = 0x0A, HANDLER_DEF(ack_cc_ci) },
 	{ .code = 0x0E, SUBCMD_DEF(sub_cmd_x0E) },
 	{ .code = 0x12, SUBCMD_DEF(sub_cmd_x12) },
 	{ .code = 0x20, SUBCMD_DEF(sub_cmd_x20) },
