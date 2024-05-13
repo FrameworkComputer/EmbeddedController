@@ -255,12 +255,10 @@ if(DEFINED CONFIG_BOARD_PUJJOGA)
 endif()
 if(DEFINED CONFIG_BOARD_RIVEN)
 	zephyr_library_sources(
-			"riven/src/fan.c"
 			"riven/src/form_factor.c"
 			"riven/src/keyboard.c"
 			"riven/src/kb_backlight.c"
 			"riven/src/led.c"
-			"riven/src/thermal.c"
 			"riven/src/touch_panel.c"
 	)
 	project(riven)

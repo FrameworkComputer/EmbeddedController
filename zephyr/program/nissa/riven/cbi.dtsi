@@ -54,27 +54,6 @@
 		};
 
 		/*
-		 * FW_CONFIG field to select thermal solution.
-		 */
-		thermal_solution {
-			enum-name = "FW_THERMAL";
-			start = <10>;
-			size = <3>;
-
-			6w-thermal {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_THERMAL_6W";
-				value = <0>;
-				default;
-			};
-			15w-thermal {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_THERMAL_15W";
-				value = <1>;
-			};
-		};
-
-		/*
 		 * FW_CONFIG field to indicate which keyboard numeric
 		 * pad should be used.
 		 */
@@ -93,31 +72,6 @@
 				compatible = "cros-ec,cbi-fw-config-value";
 				enum-name = "FW_KB_NUMERIC_PAD_PRESENT";
 				value = <1>;
-			};
-		};
-
-		/*
-		 * FW_CONFIG field to enable fan or not.
-		 */
-		fan {
-			enum-name = "FW_FAN";
-			start = <17>;
-			size = <1>;
-
-			no-fan {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_FAN_NOT_PRESENT";
-				value = <0>;
-			};
-			fan-present {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_FAN_PRESENT";
-				value = <1>;
-				/*
-				 * Set as default so that unprovisioned
-				 * configs will run the fan regardless.
-				 */
-				default;
 			};
 		};
 

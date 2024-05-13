@@ -6,7 +6,6 @@
 #include "../cbi.dtsi"
 
 #include "cbi.dtsi"
-#include "fan.dtsi"
 #include "generated.dtsi"
 #include "keyboard.dtsi"
 #include "motionsense.dtsi"
