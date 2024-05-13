@@ -183,6 +183,7 @@ ZTEST_USER(fpsensor_template, test_fp_frame_raw_image_system_is_locked)
 
 ZTEST_USER(fpsensor_template, test_fp_frame_raw_image_size_too_big)
 {
+	uint8_t buffer[IMAGE_SIZE + 1];
 	struct ec_params_fp_frame frame_request = {
 		.offset = FP_FRAME_INDEX_RAW_IMAGE << FP_FRAME_INDEX_SHIFT,
 		.size = IMAGE_SIZE + 1,
@@ -192,7 +193,7 @@ ZTEST_USER(fpsensor_template, test_fp_frame_raw_image_size_too_big)
 	 * Confirm that FP_FRAME host command will return an error when
 	 * requested more than fingerprint frame size.
 	 */
-	zassert_equal(ec_cmd_fp_frame(NULL, &frame_request, frame_buffer),
+	zassert_equal(ec_cmd_fp_frame(NULL, &frame_request, buffer),
 		      EC_RES_INVALID_PARAM);
 }
 
