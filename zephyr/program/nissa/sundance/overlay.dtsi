@@ -35,6 +35,11 @@
 	gpio-interrupts {
 		compatible = "cros-ec,gpio-interrupts";
 
+		int_ac_present: ac_present {
+			irq-pin = <&acok_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
 		int_power_button: power_button {
 			irq-pin = <&gpio_ec_pwr_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
