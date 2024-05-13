@@ -38,13 +38,6 @@
 #define ELOG(fmt, ...) \
 	platform_eprintf("ERR: %s: " fmt "\n", __func__, ##__VA_ARGS__)
 
-#define DLOG_HEXDUMP(array, array_size, prefix_fmt, ...)     \
-	{                                                    \
-		DLOG_START(prefix_fmt " : [ ", __VA_ARGS__); \
-		platform_hexdump(array, array_size);         \
-		DLOG_END(" ]");                              \
-	}
-
 void *platform_malloc(size_t size);
 void *platform_calloc(size_t nmemb, size_t size);
 void platform_free(void *ptr);
@@ -58,8 +51,6 @@ void platform_printf(const char *format, ...);
 void platform_eprintf(const char *format, ...);
 
 void platform_usleep(uint32_t usec);
-
-void platform_hexdump(const uint8_t *data, size_t len);
 
 /* Opaque task id type.*/
 struct task_handle;

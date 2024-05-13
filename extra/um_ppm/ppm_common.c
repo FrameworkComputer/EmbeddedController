@@ -8,6 +8,10 @@
 #include "include/ppm.h"
 #include "ppm_common.h"
 
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(ppm_common, LOG_LEVEL_INF);
+
 const char *ppm_state_strings[PPM_STATE_MAX] = {
 	"PPM_STATE_NOT_READY",	    "PPM_STATE_IDLE",
 	"PPM_STATE_IDLE_NOTIFY",    "PPM_STATE_PROCESSING_COMMAND",
@@ -311,10 +315,11 @@ success:
 	     ucsi_command_to_string(ucsi_command), ret);
 	clear_cci(dev);
 
-	if (ret > 0)
-		DLOG_HEXDUMP(message_in, ret, "Command 0x%x (%s) response",
-			     ucsi_command,
-			     ucsi_command_to_string(ucsi_command));
+	if (ret > 0) {
+		DLOG("Command 0x%x (%s) response", ucsi_command,
+		     ucsi_command_to_string(ucsi_command));
+		LOG_HEXDUMP_DBG(message_in, ret, "");
+	}
 
 	/* Post-success command handling */
 	if (ack_ci) {
