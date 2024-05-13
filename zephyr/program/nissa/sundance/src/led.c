@@ -17,12 +17,11 @@
 #include "ec_commands.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
-#include "led_pwm.h"
 
 #define LED_OFF_LVL 1
 #define LED_ON_LVL 0
 
-__override const int led_charge_lvl_1;
+__override const int led_charge_lvl_1 = 0;
 __override const int led_charge_lvl_2 = 100;
 
 __override struct led_descriptor
@@ -33,12 +32,10 @@ __override struct led_descriptor
 					     LED_INDEFINITE } },
 		[STATE_CHARGING_FULL_CHARGE] = { { EC_LED_COLOR_WHITE,
 						   LED_INDEFINITE } },
-		[STATE_DISCHARGE_S0] = { { EC_LED_COLOR_AMBER,
+		[STATE_DISCHARGE_S0] = { { EC_LED_COLOR_WHITE,
 					   LED_INDEFINITE } },
-		[STATE_DISCHARGE_S3] = { { EC_LED_COLOR_AMBER,
-					   LED_INDEFINITE } },
-		[STATE_DISCHARGE_S5] = { { EC_LED_COLOR_AMBER,
-					   LED_INDEFINITE } },
+		[STATE_DISCHARGE_S3] = { { LED_OFF, LED_INDEFINITE } },
+		[STATE_DISCHARGE_S5] = { { LED_OFF, LED_INDEFINITE } },
 		[STATE_BATTERY_ERROR] = { { EC_LED_COLOR_AMBER,
 					    1 * LED_ONE_SEC },
 					  { LED_OFF, 2 * LED_ONE_SEC } },
