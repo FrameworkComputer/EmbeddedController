@@ -11,6 +11,7 @@
 
 #include "charge_manager.h"
 #include "hooks.h"
+#include "test/util.h"
 #include "usbc/pdc_dpm.h"
 #include "usbc/pdc_power_mgmt.h"
 
@@ -19,6 +20,10 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/smf.h>
 #include <zephyr/sys/atomic.h>
+
+#ifdef CONFIG_ZTEST
+#include <zephyr/ztest.h>
+#endif
 
 #include <drivers/pdc.h>
 #include <usbc/utils.h>
@@ -3400,3 +3405,46 @@ int pdc_power_mgmt_get_pch_data_status(int port, uint8_t *status)
 	memcpy(status, pdc_data[port]->port.pch_data_status, 5);
 	return 0;
 }
+
+#ifdef CONFIG_ZTEST
+
+/*
+ * Reset the state machine for each port to its unattached state. This ensures
+ * that tests start from the same state and prevents commands from a previous
+ * test from impacting subsequently run tests.
+ */
+static void test_reset(const struct ztest_unit_test *test, void *data)
+{
+	int num_unattached;
+
+	ARG_UNUSED(test);
+	ARG_UNUSED(data);
+
+	for (int i = 0; i < ARRAY_SIZE(pdc_data); i++) {
+		set_pdc_state(&pdc_data[i]->port, PDC_UNATTACHED);
+	}
+
+	/* Wait for up to 20 * 100ms for all ports to become unattached. */
+	for (int i = 0; i < 20; i++) {
+		num_unattached = 0;
+
+		for (int port = 0; port < ARRAY_SIZE(pdc_data); port++) {
+			if (pdc_data[i]->port.unattached_local_state ==
+			    UNATTACHED_RUN) {
+				num_unattached++;
+			}
+		}
+
+		if (num_unattached == ARRAY_SIZE(pdc_data)) {
+			break;
+		}
+
+		k_msleep(100);
+	}
+
+	zassert_equal(num_unattached, ARRAY_SIZE(pdc_data));
+}
+
+ZTEST_RULE(pdc_power_mgmt_test_reset, NULL, test_reset);
+
+#endif
