@@ -3,25 +3,6 @@
  * found in the LICENSE file.
  */
 
-&vivaldi_kbd {
-       kbd_config_1: kbd-config-1 {
-		vivaldi-codes = <
-			VIVALDI_TK_BACK             /* T1 */
-			VIVALDI_TK_REFRESH          /* T2 */
-			VIVALDI_TK_FULLSCREEN       /* T3 */
-			VIVALDI_TK_OVERVIEW         /* T4 */
-			VIVALDI_TK_SNAPSHOT         /* T5 */
-			VIVALDI_TK_BRIGHTNESS_DOWN  /* T6 */
-			VIVALDI_TK_BRIGHTNESS_UP    /* T7 */
-			VIVALDI_TK_VOL_MUTE         /* T8 */
-			VIVALDI_TK_VOL_DOWN         /* T9 */
-			VIVALDI_TK_VOL_UP           /* T10 */
-		>;
-		capabilities = <(VIVALDI_KEYBD_CAP_SCRNLOCK_KEY |
-				 VIVALDI_KEYBD_CAP_NUMERIC_KEYPAD)>;
-	};
-};
-
 &kbd_config_0 {
 	vivaldi-codes = <
 		VIVALDI_TK_BACK             /* T1 */

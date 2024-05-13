@@ -3,8 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include "button.h"
-#include "cros_cbi.h"
 #include "ec_commands.h"
 #include "hooks.h"
 #include "keyboard_8042_sharedlib.h"
@@ -14,65 +12,6 @@
 #include <drivers/vivaldi_kbd.h>
 
 LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
-
-static bool key_pad = FW_KB_NUMERIC_PAD_ABSENT;
-
-int8_t board_vivaldi_keybd_idx(void)
-{
-	if (key_pad == FW_KB_NUMERIC_PAD_ABSENT) {
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_0));
-	} else {
-		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_1));
-	}
-}
-
-/*
- * Keyboard function decided by FW config.
- */
-test_export_static void kb_init(void)
-{
-	int ret;
-	uint32_t val;
-
-	ret = cros_cbi_get_fw_config(FW_KB_NUMERIC_PAD, &val);
-
-	if (ret != 0) {
-		LOG_ERR("Error retrieving CBI FW_CONFIG field %d",
-			FW_KB_NUMERIC_PAD);
-	}
-
-	if (val == FW_KB_NUMERIC_PAD_ABSENT) {
-		/* Disable scanning KSO13 & 14 if keypad isn't present. */
-		keyboard_raw_set_cols(KEYBOARD_COLS_NO_KEYPAD);
-		key_pad = FW_KB_NUMERIC_PAD_ABSENT;
-	} else {
-		key_pad = FW_KB_NUMERIC_PAD_PRESENT;
-		/* Setting scan mask KSO11, KSO12, KSO13 and KSO14 */
-		keyscan_config.actual_key_mask[11] = 0xfe;
-		keyscan_config.actual_key_mask[12] = 0xff;
-		keyscan_config.actual_key_mask[13] = 0xff;
-		keyscan_config.actual_key_mask[14] = 0xff;
-	}
-
-	ret = cros_cbi_get_fw_config(FW_KB_TYPE, &val);
-
-	if (ret != 0) {
-		LOG_ERR("Error retrieving CBI FW_CONFIG field %d", FW_KB_TYPE);
-	}
-
-	if (val == FW_KB_TYPE_CA_FR) {
-		/*
-		 * Canadian French keyboard (US type),
-		 *   \|:     0x0061->0x61->0x56
-		 *   r-ctrl: 0xe014->0x14->0x1d
-		 */
-		uint16_t tmp = get_scancode_set2(4, 0);
-
-		set_scancode_set2(4, 0, get_scancode_set2(2, 7));
-		set_scancode_set2(2, 7, tmp);
-	}
-}
-DECLARE_HOOK(HOOK_INIT, kb_init, HOOK_PRIO_POST_FIRST);
 
 /*
  * We have total 30 pins for keyboard connecter {-1, -1} mean

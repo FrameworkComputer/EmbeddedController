@@ -97,76 +97,6 @@ int clock_get_freq(void)
 	return 16000000;
 }
 
-static bool has_keypad;
-
-static int cbi_get_keyboard_configuration(enum cbi_fw_config_field_id field,
-					  uint32_t *value)
-{
-	if (field != FW_KB_NUMERIC_PAD)
-		return -EINVAL;
-
-	*value = has_keypad ? FW_KB_NUMERIC_PAD_PRESENT :
-			      FW_KB_NUMERIC_PAD_ABSENT;
-	return 0;
-}
-
-ZTEST(riven, test_keyboard_configuration)
-{
-	cros_cbi_get_fw_config_fake.custom_fake =
-		cbi_get_keyboard_configuration;
-
-	has_keypad = false;
-	kb_init();
-	zassert_equal(keyboard_raw_get_cols(), KEYBOARD_COLS_NO_KEYPAD);
-	zassert_equal(keyscan_config.actual_key_mask[11], 0xfa);
-	zassert_equal(keyscan_config.actual_key_mask[12], 0xca);
-	zassert_equal(keyscan_config.actual_key_mask[13], 0x00);
-	zassert_equal(keyscan_config.actual_key_mask[14], 0x00);
-	zassert_equal(board_vivaldi_keybd_idx(), 0);
-
-	/* Initialize keyboard_cols for next test */
-	keyboard_raw_set_cols(KEYBOARD_COLS_MAX);
-
-	has_keypad = true;
-	kb_init();
-	zassert_equal(keyboard_raw_get_cols(), KEYBOARD_COLS_WITH_KEYPAD);
-	zassert_equal(keyscan_config.actual_key_mask[11], 0xfe);
-	zassert_equal(keyscan_config.actual_key_mask[12], 0xff);
-	zassert_equal(keyscan_config.actual_key_mask[13], 0xff);
-	zassert_equal(keyscan_config.actual_key_mask[14], 0xff);
-	zassert_equal(board_vivaldi_keybd_idx(), 1);
-}
-
-static bool keyboard_ca_fr;
-
-static int cbi_get_keyboard_type_config(enum cbi_fw_config_field_id field,
-					uint32_t *value)
-{
-	if (field != FW_KB_TYPE)
-		return -EINVAL;
-
-	*value = keyboard_ca_fr ? FW_KB_TYPE_CA_FR : FW_KB_TYPE_DEFAULT;
-	return 0;
-}
-
-ZTEST(riven, test_keyboard_type)
-{
-	uint16_t forwardslash_pipe_key = get_scancode_set2(2, 7);
-	uint16_t right_control_key = get_scancode_set2(4, 0);
-
-	cros_cbi_get_fw_config_fake.custom_fake = cbi_get_keyboard_type_config;
-
-	keyboard_ca_fr = false;
-	kb_init();
-	zassert_equal(get_scancode_set2(4, 0), right_control_key);
-	zassert_equal(get_scancode_set2(2, 7), forwardslash_pipe_key);
-
-	keyboard_ca_fr = true;
-	kb_init();
-	zassert_equal(get_scancode_set2(4, 0), forwardslash_pipe_key);
-	zassert_equal(get_scancode_set2(2, 7), right_control_key);
-}
-
 static bool clamshell_mode;
 
 static int cbi_get_form_factor_config(enum cbi_fw_config_field_id field,
@@ -736,45 +666,6 @@ ZTEST(riven, test_process_pd_alert)
 	zassert_equal(usb_charger_task_set_event_sync_fake.arg0_val, 1);
 	zassert_equal(usb_charger_task_set_event_sync_fake.arg1_val,
 		      USB_CHG_EVENT_BC12);
-}
-
-static bool kb_backlight_sku;
-
-static int cbi_get_kb_bl_fw_config(enum cbi_fw_config_field_id field,
-				   uint32_t *value)
-{
-	zassert_equal(field, FW_KB_BL);
-	*value = kb_backlight_sku ? FW_KB_BL_PRESENT : FW_KB_BL_NOT_PRESENT;
-	return 0;
-}
-
-ZTEST(riven, test_keyboard_backlight)
-{
-	/* For PLATFORM_EC_PWM_KBLIGHT default enabled, EC_FEATURE_PWM_KEYB
-	 * is set.
-	 */
-	uint32_t flags0 = EC_FEATURE_MASK_0(EC_FEATURE_PWM_KEYB);
-	uint32_t result;
-
-	/* Support keyboard backlight */
-	cros_cbi_get_fw_config_fake.custom_fake = cbi_get_kb_bl_fw_config;
-	kb_backlight_sku = true;
-	result = board_override_feature_flags0(flags0);
-	zassert_equal(result, flags0,
-		      "Support kblight, should keep PWM_KEYB feature.");
-
-	/* Error reading fw_config */
-	RESET_FAKE(cros_cbi_get_fw_config);
-	cros_cbi_get_fw_config_fake.return_val = EINVAL;
-	result = board_override_feature_flags0(flags0);
-	zassert_equal(result, flags0,
-		      "Unchange ec feature, keep PWM_KEYB feature.");
-
-	/* Not support keyboard backlight */
-	cros_cbi_get_fw_config_fake.custom_fake = cbi_get_kb_bl_fw_config;
-	kb_backlight_sku = false;
-	result = board_override_feature_flags0(flags0);
-	zassert_equal(result, 0, "No kblight should clear PWM_KEYB feature.");
 }
 
 ZTEST(riven, test_led_pwm)

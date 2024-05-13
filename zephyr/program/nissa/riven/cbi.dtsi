@@ -30,69 +30,6 @@
 		};
 
 		/*
-		 * FW_CONFIG field to indicate which keyboard numeric
-		 * pad should be used.
-		 */
-		kb-numeric-pad {
-			enum-name = "FW_KB_NUMERIC_PAD";
-			start = <16>;
-			size = <1>;
-
-			no-kb-numpad {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_KB_NUMERIC_PAD_ABSENT";
-				value = <0>;
-				default;
-			};
-			kb-numpad-present {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_KB_NUMERIC_PAD_PRESENT";
-				value = <1>;
-			};
-		};
-
-		/*
-		 * FW_CONFIG field to enable KB back light or not.
-		 */
-		kb-bl {
-			enum-name = "FW_KB_BL";
-			start = <18>;
-			size = <1>;
-
-			no-kb-bl {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_KB_BL_NOT_PRESENT";
-				value = <0>;
-			};
-			kb-bl-present {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_KB_BL_PRESENT";
-				value = <1>;
-			};
-		};
-
-		/*
-		 * FW_CONFIG field to change scancode setting for special
-		 * keyboard type.
-		 */
-		kb-type {
-			enum-name = "FW_KB_TYPE";
-			start = <19>;
-			size = <2>;
-
-			kb-type-default {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_KB_TYPE_DEFAULT";
-				value = <0>;
-			};
-			kb-type-ca-fr {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_KB_TYPE_CA_FR";
-				value = <1>;
-			};
-		};
-
-		/*
 		 * FW_CONFIG field to enable touch panel power sequence
 		 * control or not.
 		 */
