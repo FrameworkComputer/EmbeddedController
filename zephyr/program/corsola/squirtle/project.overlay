@@ -99,6 +99,98 @@
 		};
 	};
 
+	/*
+	 * Driver specific data. A driver-specific data can be shared with
+	 * different motion sensors while they are using the same driver.
+	 *
+	 * If a node's compatible starts with "cros-ec,accelgyro-", it is for
+	 * a common structure defined in accelgyro.h.
+	 * e.g) compatible = "cros-ec,accelgyro-als-drv-data" is for
+	 * "struct als_drv_data_t" in accelgyro.h
+	 */
+	motionsense-sensor-data {
+		lid_data: lis2de12-lid-data {
+			compatible = "cros-ec,drvdata-lis2de";
+			status = "okay";
+		};
+
+		base_data: lis2de12-base-data {
+			compatible = "cros-ec,drvdata-lis2de";
+			status = "okay";
+		};
+	};
+
+	/*
+	 * List of motion sensors that creates motion_sensors array.
+	 * The nodelabel "lid_accel" and "base_accel" are used to indicate
+	 * motion sensor IDs for lid angle calculation.
+	 * TODO(b/238139272): The first entries of the array must be
+	 * accelerometers,then gyroscope. Fix this dependency in the DTS
+	 * processing which makes the devicetree entries independent.
+	 */
+	motionsense-sensor {
+		lid_accel: lid-accel {
+			compatible = "cros-ec,lis2de";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&lid_rot_lis2de12>;
+			default-range = <2>;
+			drv-data = <&lid_data>;
+			i2c-spi-addr-flags = "LIS2DH_ADDR0_FLAGS";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
+		base_accel: base-accel {
+			compatible = "cros-ec,lis2de";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&base_rot_lis2de12>;
+			default-range = <2>;
+			drv-data = <&base_data>;
+			i2c-spi-addr-flags = "LIS2DH_ADDR1_FLAGS";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+					ec-rate = <(100 * USEC_PER_MSEC)>;
+				};
+				ec-s3 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+					ec-rate = <0>;
+				};
+			};
+		};
+	};
+
+	motionsense-sensor-info {
+		compatible = "cros-ec,motionsense-sensor-info";
+
+		/*
+		 * list of GPIO interrupts that have to
+		 * be enabled at initial stage
+		 */
+		/* list of sensors in force mode */
+		accel-force-mode-sensors = <&lid_accel &base_accel>;
+	};
+
 	led-colors {
 		compatible = "cros-ec,led-policy";
 
