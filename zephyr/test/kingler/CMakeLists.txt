@@ -83,6 +83,10 @@ target_sources_ifdef(
 	PRIVATE
         ${PLATFORM_EC_PROGRAM_DIR}/corsola/kyogre/src/battery_detection.c
 	src/kyogre_battery_detection.c)
+target_sources_ifdef(CONFIG_TEST_KYOGRE_PEN_CHARGE_PROBE app PRIVATE
+        ${PLATFORM_EC_PROGRAM_DIR}/corsola/kyogre/src/pen_charge.c
+        src/kyogre_pen_charge.c)
+
 target_sources_ifdef(CONFIG_TEST_SQUIRTLE
 			app PRIVATE
                         src/voltorb_usbc.c

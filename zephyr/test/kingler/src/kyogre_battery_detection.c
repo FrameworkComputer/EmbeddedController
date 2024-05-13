@@ -14,6 +14,7 @@
 FAKE_VOID_FUNC(x_ec_interrupt);
 FAKE_VOID_FUNC(lsm6dso_interrupt);
 FAKE_VOID_FUNC(lis2dw12_interrupt);
+FAKE_VOID_FUNC(pen_fault_interrupt);
 
 static void *kyogre_battery_detection_setup(void)
 {

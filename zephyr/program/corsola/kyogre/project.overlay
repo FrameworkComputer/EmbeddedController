@@ -40,11 +40,15 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "lsm6dso_interrupt";
 		};
-
 		int_lid_imu: lid_imu {
 			irq-pin = <&lid_accel_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "lis2dw12_interrupt";
+		};
+		int_pen_fault: pen_fault {
+			irq-pin = <&pen_fault_od>;
+			flags = <GPIO_INT_EDGE_RISING>;
+			handler = "pen_fault_interrupt";
 		};
 	};
 
@@ -60,7 +64,10 @@
 		charger_prochot_odl {
 			gpios = <&gpiof 2 GPIO_INPUT>;
 		};
-		pen_fault_od {
+		ec_pen_chg_dis_odl: ec_pen_chg_dis_odl {
+ 			gpios = <&gpioe 4 GPIO_ODR_HIGH>;
+		};
+		pen_fault_od: pen_fault_od {
 			gpios = <&gpiof 3 GPIO_INPUT>;
 		};
 		ec_batt_pres_odl: ec_batt_pres_odl {

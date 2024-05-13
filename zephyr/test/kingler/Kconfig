@@ -125,6 +125,12 @@ config TEST_KYOGRE_BATTERY_DETECTION_PROBE
 	  Include kyogre_battery_detection.c into the binary to test the kyogre
 	  battery detection probe.
 
+config TEST_KYOGRE_PEN_CHARGE_PROBE
+	bool "Run the tests intended for kyogre pen charge probe"
+	help
+	  Include kyogre_pen_charge.c into the binary to test the kyogre pen charge
+	  probe with GPIO interrupt.
+
 config TEST_BUILD_FAKE
 	bool "Build fakes.c"
 	default y
