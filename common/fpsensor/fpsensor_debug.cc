@@ -2,18 +2,19 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include "compile_time_macros.h"
 
-#ifdef CONFIG_ZEPHYR
-#include <zephyr/shell/shell.h>
-#endif
-
-extern "C" {
 #include "atomic.h"
 #include "clock.h"
 #include "common.h"
+#include "compile_time_macros.h"
 #include "console.h"
 #include "ec_commands.h"
+#include "fpsensor/fpsensor_console.h"
+#include "fpsensor/fpsensor_crypto.h"
+#include "fpsensor/fpsensor_detect.h"
+#include "fpsensor/fpsensor_modes.h"
+#include "fpsensor/fpsensor_state.h"
+#include "fpsensor/fpsensor_utils.h"
 #include "gpio.h"
 #include "host_command.h"
 #include "link_defs.h"
@@ -25,14 +26,10 @@ extern "C" {
 #include "trng.h"
 #include "util.h"
 #include "watchdog.h"
-}
 
-#include "fpsensor/fpsensor_console.h"
-#include "fpsensor/fpsensor_crypto.h"
-#include "fpsensor/fpsensor_detect.h"
-#include "fpsensor/fpsensor_modes.h"
-#include "fpsensor/fpsensor_state.h"
-#include "fpsensor/fpsensor_utils.h"
+#ifdef CONFIG_ZEPHYR
+#include <zephyr/shell/shell.h>
+#endif
 
 #ifdef CONFIG_CMD_FPSENSOR_DEBUG
 /* --- Debug console commands --- */

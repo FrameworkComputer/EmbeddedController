@@ -10,17 +10,14 @@
 #include "openssl/evp.h"
 #include "openssl/hkdf.h"
 #include "openssl/mem.h"
-
-#include <span>
-
-extern "C" {
 #include "otp_key.h"
 #include "rollback.h"
 #include "sha256.h"
 #include "util.h"
-}
 
 #include <stdbool.h>
+
+#include <span>
 
 #ifdef CONFIG_OTP_KEY
 constexpr uint8_t IKM_OTP_OFFSET_BYTES =

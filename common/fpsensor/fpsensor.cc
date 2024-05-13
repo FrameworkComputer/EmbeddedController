@@ -2,38 +2,14 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include "compile_time_macros.h"
 
-/* Boringssl headers need to be included before extern "C" section. */
-#include "openssl/mem.h"
-
-#ifdef CONFIG_ZEPHYR
-#include <zephyr/shell/shell.h>
-#endif
-
-#include <array>
-#include <variant>
-
-extern "C" {
 #include "assert.h"
 #include "atomic.h"
 #include "clock.h"
 #include "common.h"
+#include "compile_time_macros.h"
 #include "console.h"
 #include "ec_commands.h"
-#include "gpio.h"
-#include "host_command.h"
-#include "link_defs.h"
-#include "mkbp_event.h"
-#include "sha256.h"
-#include "spi.h"
-#include "system.h"
-#include "task.h"
-#include "trng.h"
-#include "util.h"
-#include "watchdog.h"
-}
-
 #include "fpsensor/fpsensor.h"
 #include "fpsensor/fpsensor_console.h"
 #include "fpsensor/fpsensor_crypto.h"
@@ -42,7 +18,26 @@ extern "C" {
 #include "fpsensor/fpsensor_state.h"
 #include "fpsensor/fpsensor_template_state.h"
 #include "fpsensor/fpsensor_utils.h"
+#include "gpio.h"
+#include "host_command.h"
+#include "link_defs.h"
+#include "mkbp_event.h"
+#include "openssl/mem.h"
 #include "scoped_fast_cpu.h"
+#include "sha256.h"
+#include "spi.h"
+#include "system.h"
+#include "task.h"
+#include "trng.h"
+#include "util.h"
+#include "watchdog.h"
+
+#include <array>
+#include <variant>
+
+#ifdef CONFIG_ZEPHYR
+#include <zephyr/shell/shell.h>
+#endif
 
 #if !defined(CONFIG_RNG)
 #error "fpsensor requires RNG"
@@ -68,7 +63,7 @@ static uint8_t timestamps_invalid;
 BUILD_ASSERT(sizeof(struct ec_fp_template_encryption_metadata) % 4 == 0);
 
 /* Interrupt line from the fingerprint sensor */
-void fps_event(enum gpio_signal signal)
+extern "C" void fps_event(enum gpio_signal signal)
 {
 	task_set_event(TASK_ID_FPSENSOR, TASK_EVENT_SENSOR_IRQ);
 }

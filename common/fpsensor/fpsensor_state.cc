@@ -3,29 +3,10 @@
  * found in the LICENSE file.
  */
 
-#include "compile_time_macros.h"
-
-#include <algorithm>
-#include <array>
-#include <variant>
-
-/* Boringssl headers need to be included before extern "C" section. */
-#include "openssl/mem.h"
-
-#ifdef CONFIG_ZEPHYR
-#include <zephyr/shell/shell.h>
-#endif
-
-extern "C" {
 #include "atomic.h"
 #include "common.h"
+#include "compile_time_macros.h"
 #include "ec_commands.h"
-#include "host_command.h"
-#include "system.h"
-#include "task.h"
-#include "util.h"
-}
-
 #include "fpsensor/fpsensor.h"
 #include "fpsensor/fpsensor_auth_commands.h"
 #include "fpsensor/fpsensor_console.h"
@@ -34,6 +15,19 @@ extern "C" {
 #include "fpsensor/fpsensor_template_state.h"
 #include "fpsensor_driver.h"
 #include "fpsensor_matcher.h"
+#include "host_command.h"
+#include "openssl/mem.h"
+#include "system.h"
+#include "task.h"
+#include "util.h"
+
+#ifdef CONFIG_ZEPHYR
+#include <zephyr/shell/shell.h>
+#endif
+
+#include <algorithm>
+#include <array>
+#include <variant>
 
 /* Last acquired frame (aligned as it is used by arbitrary binary libraries) */
 uint8_t fp_buffer[FP_SENSOR_IMAGE_SIZE] FP_FRAME_SECTION __aligned(4);

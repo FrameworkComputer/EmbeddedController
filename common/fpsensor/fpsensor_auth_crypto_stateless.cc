@@ -4,26 +4,20 @@
  */
 
 #include "compile_time_macros.h"
-
-#include <algorithm>
-#include <array>
-
-/* Boringssl headers need to be included before extern "C" section. */
 #include "crypto/cleanse_wrapper.h"
 #include "crypto/elliptic_curve_key.h"
+#include "ec_commands.h"
+#include "fpsensor/fpsensor_auth_crypto.h"
 #include "openssl/aes.h"
 #include "openssl/bn.h"
 #include "openssl/ec.h"
 #include "openssl/ecdh.h"
 #include "openssl/obj_mac.h"
 #include "openssl/rand.h"
-
-extern "C" {
-#include "ec_commands.h"
 #include "sha256.h"
-}
 
-#include "fpsensor/fpsensor_auth_crypto.h"
+#include <algorithm>
+#include <array>
 
 std::optional<fp_elliptic_curve_public_key>
 create_pubkey_from_ec_key(const EC_KEY &key)
