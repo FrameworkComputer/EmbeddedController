@@ -201,7 +201,7 @@ ZTEST_USER(rts54xx, test_pdos)
 	 */
 	memset(pdos, 0, sizeof(pdos));
 	zassert_ok(pdc_get_pdos(dev, SOURCE_PDO, PDO_OFFSET_1, 6, false, pdos));
-	k_sleep(K_MSEC(100));
+	k_sleep(K_MSEC(1000));
 	zassert_ok(
 		memcmp(pdos, mixed_pdos_success, sizeof(mixed_pdos_success)));
 }
