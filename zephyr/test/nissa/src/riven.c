@@ -43,7 +43,6 @@ LOG_MODULE_REGISTER(nissa, LOG_LEVEL_INF);
 
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
-FAKE_VALUE_FUNC(int, cbi_get_board_version, uint32_t *);
 FAKE_VALUE_FUNC(int, cbi_get_ssfc, uint32_t *);
 FAKE_VALUE_FUNC(enum nissa_sub_board_type, nissa_get_sb_type);
 FAKE_VOID_FUNC(usb_interrupt_c1, enum gpio_signal);
@@ -66,7 +65,6 @@ FAKE_VOID_FUNC(lpc_keyboard_resume_irq);
 
 static void test_before(void *fixture)
 {
-	RESET_FAKE(cbi_get_board_version);
 	RESET_FAKE(cros_cbi_get_fw_config);
 	RESET_FAKE(cbi_get_ssfc);
 	RESET_FAKE(nissa_get_sb_type);
@@ -93,14 +91,6 @@ static void test_before(void *fixture)
 }
 
 ZTEST_SUITE(riven, NULL, NULL, test_before, NULL, NULL);
-
-static int board_version;
-
-static int cbi_get_board_version_mock(uint32_t *value)
-{
-	*value = board_version;
-	return 0;
-}
 
 int clock_get_freq(void)
 {
@@ -175,85 +165,6 @@ ZTEST(riven, test_keyboard_type)
 	kb_init();
 	zassert_equal(get_scancode_set2(4, 0), forwardslash_pipe_key);
 	zassert_equal(get_scancode_set2(2, 7), right_control_key);
-}
-
-static bool lid_inverted;
-
-static int cbi_get_lid_orientation_config(enum cbi_fw_config_field_id field,
-					  uint32_t *value)
-{
-	if (field == FW_LID_INVERSION)
-		*value = lid_inverted ? FW_LID_XY_ROT_180 : FW_LID_REGULAR;
-
-	return 0;
-}
-
-ZTEST(riven, test_base_orientation)
-{
-	const int BASE_SENSOR = SENSOR_ID(DT_NODELABEL(base_accel));
-	const void *const normal_rotation =
-		&SENSOR_ROT_STD_REF_NAME(DT_NODELABEL(base_rot_ref));
-	const void *const inverted_rotation =
-		&SENSOR_ROT_STD_REF_NAME(DT_NODELABEL(base_rot_ver1));
-
-	motion_sensors[BASE_SENSOR].rot_standard_ref = normal_rotation;
-
-	cbi_get_board_version_fake.custom_fake = cbi_get_board_version_mock;
-	board_version = 2;
-	form_factor_init();
-	zassert_equal_ptr(motion_sensors[BASE_SENSOR].rot_standard_ref,
-			  normal_rotation,
-			  "base normal orientation should be base_rot_ref");
-
-	RESET_FAKE(cbi_get_board_version);
-	cbi_get_board_version_fake.return_val = EINVAL;
-	form_factor_init();
-	zassert_equal_ptr(motion_sensors[BASE_SENSOR].rot_standard_ref,
-			  normal_rotation,
-			  "errors should leave the rotation unchanged");
-
-	cbi_get_board_version_fake.custom_fake = cbi_get_board_version_mock;
-	board_version = 1;
-	form_factor_init();
-	zassert_equal_ptr(motion_sensors[BASE_SENSOR].rot_standard_ref,
-			  inverted_rotation,
-			  "base inverted orientation should be base_rot_ver1");
-}
-
-ZTEST(riven, test_lid_orientation)
-{
-	const int LID_SENSOR = SENSOR_ID(DT_NODELABEL(lid_accel));
-	const void *const normal_rotation =
-		&SENSOR_ROT_STD_REF_NAME(DT_NODELABEL(lid_rot_ref));
-	const void *const inverted_rotation =
-		&SENSOR_ROT_STD_REF_NAME(DT_NODELABEL(lid_rot_bma422));
-
-	motion_sensors[LID_SENSOR].rot_standard_ref = normal_rotation;
-
-	cros_cbi_get_fw_config_fake.custom_fake =
-		cbi_get_lid_orientation_config;
-
-	lid_inverted = false;
-	form_factor_init();
-	zassert_equal_ptr(motion_sensors[LID_SENSOR].rot_standard_ref,
-			  normal_rotation,
-			  "normal orientation should be lid_rot_ref");
-
-	RESET_FAKE(cros_cbi_get_fw_config);
-	cros_cbi_get_fw_config_fake.return_val = EINVAL;
-	form_factor_init();
-	zassert_equal_ptr(motion_sensors[LID_SENSOR].rot_standard_ref,
-			  normal_rotation,
-			  "errors should leave the rotation unchanged");
-
-	cros_cbi_get_fw_config_fake.custom_fake =
-		cbi_get_lid_orientation_config;
-
-	lid_inverted = true;
-	form_factor_init();
-	zassert_equal_ptr(
-		motion_sensors[LID_SENSOR].rot_standard_ref, inverted_rotation,
-		"inverted orientation should be same as lid_rot_bma422");
 }
 
 static bool clamshell_mode;

@@ -7,35 +7,11 @@
 	/* Craask-specific fw_config fields. */
 	nissa-fw-config {
 		/*
-		 * FW_CONFIG field to describe Lid sensor orientation.
-		 */
-		lid-inversion {
-			enum-name = "FW_LID_INVERSION";
-			start = <8>;
-			size = <1>;
-
-			/*
-			 * 0: regular placement of the lid sensor
-			 * 1: rotate 180' of xy plane.
-			 */
-			regular {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_LID_REGULAR";
-				value = <0>;
-				default;
-			};
-			xy_rotate_180 {
-				compatible = "cros-ec,cbi-fw-config-value";
-				enum-name = "FW_LID_XY_ROT_180";
-				value = <1>;
-			};
-		};
-		/*
 		 * FW_CONFIG field to describe Clamshell/Convertible.
 		 */
 		form_factor {
 			enum-name = "FORM_FACTOR";
-			start = <9>;
+			start = <3>;
 			size = <1>;
 
 			/*

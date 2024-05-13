@@ -57,12 +57,6 @@
 				 0 0 (-1)>;
 		};
 
-		base_rot_ver1: base-rotation-ver1 {
-			mat33 = <(-1) 0 0
-				 0 (-1) 0
-				 0 0 1>;
-		};
-
 		lid_rot_bma422: lid-rotation-bma {
 			mat33 = <1 0 0
 				 0 (-1) 0
