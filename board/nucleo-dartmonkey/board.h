@@ -49,7 +49,13 @@
 #endif /* SECTION_IS_RW */
 
 #ifndef __ASSEMBLER__
+#ifdef __cplusplus
+extern "C" {
+#endif
 void fps_event(enum gpio_signal signal);
+#ifdef __cplusplus
+}
+#endif
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __BOARD_H */

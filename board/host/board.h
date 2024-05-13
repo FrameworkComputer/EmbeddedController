@@ -90,7 +90,13 @@ enum {
 #define CONFIG_SPI_FP_PORT 1 /* SPI1: third master config */
 
 #define CONFIG_RNG
+#ifdef __cplusplus
+extern "C" {
+#endif
 void fps_event(enum gpio_signal signal);
+#ifdef __cplusplus
+}
+#endif
 
 #define CONFIG_CRC8
 #define CONFIG_SHA256_SW
