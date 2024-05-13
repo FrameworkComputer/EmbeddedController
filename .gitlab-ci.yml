@@ -98,6 +98,7 @@ before_script:
   - ec_commit_date="$(cd ${EC_DIR} ; git log -1 HEAD --format=%cd --date=iso)"
   - checkout_at_date "https://chromium.googlesource.com/chromium/tools/depot_tools.git" "main" "${CI_PROJECT_DIR}/depot_tools" "${ec_commit_date}"
   - export PATH="${CI_PROJECT_DIR}/depot_tools:$PATH"
+  - mkdir "${MODULES_DIR}/fpc"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/cryptoc" "main" "${MODULES_DIR}/cryptoc" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr" "main" "${ZEPHYR_BASE}" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis" "chromeos-main" "${MODULES_DIR}/cmsis" "${ec_commit_date}"
