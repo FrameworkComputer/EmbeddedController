@@ -115,7 +115,7 @@ int read_rollback(int region, struct rollback_data *data)
  * Get the most recent rollback information.
  *
  * @data: Returns most recent rollback data block. The data is filled
- *        with zeros if no valid rollback block is present
+ *        with default values if no valid rollback block is present.
  *
  * Return most recent region index on success (>= 0, or 0 if no rollback
  * region is valid), negative value on error.
@@ -146,8 +146,15 @@ test_mockable_static int get_latest_rollback(struct rollback_data *data)
 		if (read_rollback(min_region, data))
 			goto failed;
 	} else {
-		min_region = 0;
+		/*
+		 * No valid rollback region was found. Initialize 'data'
+		 * with reasonable defaults.
+		 */
 		clear_rollback(data);
+		data->id = 0;
+		data->rollback_min_version = 0;
+		data->cookie = CROS_EC_ROLLBACK_COOKIE;
+		min_region = 0;
 	}
 	ret = min_region;
 
