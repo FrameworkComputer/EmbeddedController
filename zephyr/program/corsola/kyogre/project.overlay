@@ -164,6 +164,21 @@
 		sensor-irqs = <&int_base_imu &int_lid_imu>;
 	};
 
+	/* Rotation matrix used by drivers. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_ref: lid-rotation-ref {
+			mat33 = <(-1) 0 0
+				 0 (-1) 0
+				 0 0 1>;
+		};
+		base_rot_ref: base-rotation-ref {
+			mat33 = <0 (-1) 0
+				 (-1) 0 0
+				 0 0 (-1)>;
+		};
+	};
+
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
