@@ -79,6 +79,12 @@
 		status = "okay";
 		reg = <0x8>;
 	};
+
+	dp_bridge: anx7510-bridge@0x40 {
+		compatible = "analogix,anx7510";
+		status = "okay";
+		reg = <0x40>;
+	};
 };
 
 &i2c4 {
