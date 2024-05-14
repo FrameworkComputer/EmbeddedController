@@ -28,17 +28,9 @@ static void base_update(bool attached)
 		GPIO_DT_FROM_NODELABEL(en_cc_lid_base_pu);
 	const static struct device *one_wire_uart =
 		DEVICE_DT_GET(DT_NODELABEL(one_wire_uart));
-	bool base_en;
 
-	if (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED)) {
-		enable_lid_detect(attached);
-		base_en = attached && !chipset_in_state(CHIPSET_STATE_ANY_OFF);
-	} else {
-		base_en = attached;
-	}
-
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_ppvar_base_x), base_en);
-	if (base_en) {
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_ppvar_base_x), attached);
+	if (attached) {
 		one_wire_uart_enable(one_wire_uart);
 	} else {
 		one_wire_uart_disable(one_wire_uart);
@@ -96,20 +88,9 @@ static void base_startup_hook(struct ap_power_ev_callback *cb,
 	switch (data.event) {
 	case AP_POWER_STARTUP:
 		base_detect_enable(true);
-		if (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED)) {
-			if (base_get_state())
-				gpio_pin_set_dt(
-					GPIO_DT_FROM_NODELABEL(en_ppvar_base_x),
-					true);
-		}
 		break;
 	case AP_POWER_SHUTDOWN:
-		if (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED)) {
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_ppvar_base_x),
-					false);
-		} else {
-			base_detect_enable(false);
-		}
+		base_detect_enable(false);
 		break;
 	default:
 		return;
@@ -132,11 +113,6 @@ void base_init_setting(void)
 {
 	if (adc_read_channel(ADC_BASE_DET) > DETACH_MIN_THRESHOLD_MV) {
 		base_update(false);
-	}
-
-	if (IS_ENABLED(CONFIG_GERALT_LID_DETECTION_SELECTED) ||
-	    !chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
-		base_detect_enable(true);
 	}
 }
 DECLARE_HOOK(HOOK_INIT, base_init_setting, HOOK_PRIO_DEFAULT);
