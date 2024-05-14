@@ -137,7 +137,12 @@ class IshBinPacker(BasePacker):
 
     def pack_firmware(self, work_dir, jobclient, dir_map, version_string=""):
         del version_string
-        yield dir_map["singleimage"] / "zephyr" / "ish_fw.bin", "ish_fw.bin"
+        single_dir = dir_map["singleimage"]
+        yield single_dir / "zephyr" / "ish_fw.bin", "ish_fw.bin"
+        yield (
+            single_dir / "zephyr" / "component_manifest.json",
+            "component_manifest.json",
+        )
 
 
 class BinmanPacker(BasePacker):
