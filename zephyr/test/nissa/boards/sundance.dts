@@ -9,11 +9,7 @@
 
 / {
 	aliases {
-		/* type-C */
-		gpio-usb-c1-int-odl = &gpio_sb_1;
-		/* LTE */
 		gpio-en-sub-s5-rails = &gpio_sb_2;
-
 		gpio-wp = &gpio_ec_wp_odl;
 	};
 
@@ -41,11 +37,6 @@
 		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
 			gpios = <&gpio0 6 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
 			enum-name = "GPIO_USB_C1_PPC_INT_ODL";
-		};
-
-		gpio_usb_c0_bc12_int_odl: usb_c0_bc12_int_odl {
-			gpios = <&gpio6 6 GPIO_INPUT>;
-			enum-name = "GPIO_USB_C0_BC12_INT_ODL";
 		};
 
 		acok_od: acok_od {
@@ -77,13 +68,6 @@
 			gpios = <&gpio8 1 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_USB_C1_FRS_EN";
 		};
-
-		gpio_sb_1: voldn_btn_odl {
-			gpios = <&gpioa 2 GPIO_PULL_UP>;
-			no-auto-init;
-			enum-name = "GPIO_USB_C1_BC12_INT_ODL";
-		};
-
 		gpio_sb_2: volup_btn_odl {
 			gpios = <&gpio9 3 GPIO_OUTPUT>;
 			no-auto-init;
@@ -115,16 +99,6 @@
 	gpio-interrupts {
 		compatible = "cros-ec,gpio-interrupts";
 
-		int_usb_c0_bc12: usb_c0_bc12 {
-			irq-pin = <&gpio_usb_c0_bc12_int_odl>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "bc12_interrupt";
-		};
-		int_usb_c1_bc12: usb_c1_bc12 {
-			irq-pin = <&gpio_sb_1>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "bc12_interrupt";
-		};
 		int_usb_c0: usb_c0 {
 			irq-pin = <&gpio_usb_c0_c1_tcpc_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
