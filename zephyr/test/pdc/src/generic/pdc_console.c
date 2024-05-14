@@ -151,22 +151,52 @@ ZTEST_USER(console_cmd_pdc, test_cable_prop)
 ZTEST_USER(console_cmd_pdc, test_trysrc)
 {
 	int rv;
+	const char *outbuffer;
+	size_t buffer_size;
 
+	/* Invalid param */
 	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc enable");
 	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
 
+	/* Invalid param */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 2");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Internal failure of pdc_power_mgmt_set_trysrc() */
+	pdc_power_mgmt_set_trysrc_fake.return_val = 1;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 0");
+	zassert_equal(rv, pdc_power_mgmt_set_trysrc_fake.return_val,
+		      "Expected %d, but got %d",
+		      pdc_power_mgmt_set_trysrc_fake.return_val, rv);
+
+	RESET_FAKE(pdc_power_mgmt_set_trysrc);
+
+	/* Disable Try.SRC */
+	shell_backend_dummy_clear_output(get_ec_shell());
 	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 0");
 	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
 		      rv);
 	k_sleep(K_MSEC(SLEEP_MS));
 
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+
+	zassert_not_null(strstr(outbuffer, "Try.SRC Forced OFF"));
+
+	/* Enable Try.SRC */
+	shell_backend_dummy_clear_output(get_ec_shell());
 	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 1");
 	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
 		      rv);
 	k_sleep(K_MSEC(SLEEP_MS));
 
-	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 2");
-	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+
+	zassert_not_null(strstr(outbuffer, "Try.SRC Forced ON"));
 }
 
 ZTEST_USER(console_cmd_pdc, test_info)
