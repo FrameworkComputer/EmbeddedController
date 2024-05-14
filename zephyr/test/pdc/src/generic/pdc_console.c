@@ -318,3 +318,30 @@ ZTEST_USER(console_cmd_pdc, test_conn_reset)
 		      pdc_power_mgmt_connector_reset_fake.return_val, rv);
 	zassert_equal(1, pdc_power_mgmt_connector_reset_fake.call_count);
 }
+
+ZTEST_USER(console_cmd_pdc, test_reset)
+{
+	int rv;
+
+	/* Invalid port number */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc reset 99");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Successful reset */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc reset 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+	zassert_equal(1, pdc_power_mgmt_reset_fake.call_count);
+	zassert_equal(0, pdc_power_mgmt_reset_fake.arg0_history[0]);
+
+	RESET_FAKE(pdc_power_mgmt_reset);
+
+	/* Error while triggering reset */
+	pdc_power_mgmt_reset_fake.return_val = 1;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc reset 0");
+	zassert_equal(rv, pdc_power_mgmt_reset_fake.return_val,
+		      "Expected %d, but got %d",
+		      pdc_power_mgmt_reset_fake.return_val, rv);
+	zassert_equal(1, pdc_power_mgmt_reset_fake.call_count);
+}
