@@ -27,7 +27,9 @@
 #include <ec_tasks.h>
 #include <fpsensor/fpsensor_state.h>
 #include <host_command.h>
+#include <mkbp_event.h>
 #include <rollback.h>
+#include <system.h>
 
 DEFINE_FFF_GLOBALS;
 

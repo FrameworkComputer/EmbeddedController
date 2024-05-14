@@ -18,6 +18,7 @@
 #include <drivers/fingerprint_sim.h>
 #include <fpsensor/fpsensor.h>
 #include <fpsensor/fpsensor_detect.h>
+#include <mkbp_event.h>
 
 DEFINE_FFF_GLOBALS;
 
