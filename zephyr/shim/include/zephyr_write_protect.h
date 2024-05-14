@@ -11,6 +11,10 @@
 
 #include <zephyr/drivers/gpio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Check the WP state. The function depends on the alias 'gpio_wp'. It is used
  * to replace the enum-name.
@@ -40,5 +44,9 @@ static inline int write_protect_enable_interrupt(void)
 	return -1;
 #endif
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ZEPHYR_WRITE_PROTECT_H */

@@ -20,6 +20,11 @@
 
 /* Implementation for Cortex-M */
 #ifdef CONFIG_CPU_CORTEX_M
+
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 static inline float sqrtf(float v)
 {
 	float root;
@@ -55,6 +60,11 @@ static inline float fabsf(float v)
 	__asm__("fabs.s %0, %1" : "=f"(abs) : "f"(v));
 	return abs;
 }
+
+#ifdef __cplusplus
+}
+#endif
+
 #elif defined(CONFIG_BOARD_NATIVE_POSIX) || defined(CONFIG_SOC_FAMILY_INTEL_ISH)
 #include <math.h>
 #else

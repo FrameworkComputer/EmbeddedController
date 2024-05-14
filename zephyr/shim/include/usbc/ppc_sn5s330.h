@@ -5,6 +5,10 @@
 
 #include "ppc/sn5s330_public.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SN5S330_COMPAT ti_sn5s330
 #define SN5S330_EMUL_COMPAT cros_sn5s330_emul
 
@@ -14,3 +18,7 @@
 		.i2c_addr_flags = DT_REG_ADDR(id), .drv = &sn5s330_drv, \
 		.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {}),     \
 	}
+
+#ifdef __cplusplus
+}
+#endif

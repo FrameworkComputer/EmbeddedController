@@ -9,6 +9,10 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/toolchain.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LID_ACCEL SENSOR_ID(DT_NODELABEL(lid_accel))
 
 #define SENSOR_NODE DT_PATH(motionsense_sensor)
@@ -3445,6 +3449,10 @@ BUILD_ASSERT((DT_NUM_INST_STATUS_OKAY(mps_mp2964)) == 1,
 #undef CONFIG_HOSTCMD_CONSOLE_PRINT
 #ifdef CONFIG_PLATFORM_EC_HOSTCMD_CONSOLE_PRINT
 #define CONFIG_HOSTCMD_CONSOLE_PRINT
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_CONFIG_CHIP_H */

@@ -10,6 +10,10 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Zephyr based interrupt handling.
  * Uses device tree to configure the interrupt handling.
@@ -83,5 +87,9 @@ DT_FOREACH_CHILD(DT_COMPAT_GET_ANY_STATUS_OKAY(cros_ec_gpio_interrupts),
 
 #undef GPIO_INT_DECLARE
 #undef GPIO_INT_DECLARE_NODE
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZEPHYR_SHIM_INCLUDE_GPIO_GPIO_INT_H_ */

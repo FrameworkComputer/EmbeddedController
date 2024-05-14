@@ -8,6 +8,10 @@
 
 #include "usb_mux.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define AMD_FP6_USB_MUX_COMPAT amd_usbc_mux_amd_fp6
 
 #define USB_MUX_CONFIG_AMD_FP6(mux_id)                         \
@@ -17,5 +21,9 @@
 			.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
 			.i2c_addr_flags = DT_REG_ADDR(mux_id), \
 	}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ZEPHYR_SHIM_AMD_FP6_USB_MUX_H */

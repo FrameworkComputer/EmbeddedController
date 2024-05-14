@@ -8,6 +8,10 @@
 
 #include "driver/usb_mux/tusb1064.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define TUSB1064_EMUL_COMPAT zephyr_tusb1064_emul
 
 #if defined(CONFIG_USB_MUX_TUSB1044)
@@ -41,5 +45,9 @@
 	}
 /* clang-format on */
 #endif /* defined(CONFIG_USB_MUX_TUSB1044) */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ZEPHYR_SHIM_TUBS1064_USB_MUX_H */

@@ -15,6 +15,10 @@
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Initializes and runs the host command handler loop.  */
 void host_command_task(void *u);
 
@@ -66,3 +70,7 @@ k_tid_t get_hostcmd_thread(void);
 	int __remove_##command = ((int)(routine))
 
 #endif /* CONFIG_PLATFORM_EC_HOSTCMD */
+
+#ifdef __cplusplus
+}
+#endif

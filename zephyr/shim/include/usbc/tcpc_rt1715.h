@@ -8,6 +8,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define RT1715_TCPC_COMPAT richtek_rt1715_tcpc
 
 /* clang-format off */
@@ -26,3 +30,7 @@
 
 DT_FOREACH_STATUS_OKAY(RT1715_TCPC_COMPAT,
 		       TCPC_VERIFY_NO_FLAGS_ACTIVE_ALERT_HIGH)
+
+#ifdef __cplusplus
+}
+#endif

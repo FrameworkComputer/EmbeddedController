@@ -8,6 +8,10 @@
 
 #include "usb_mux/it5205_public.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define IT5205_USB_MUX_COMPAT ite_it5205
 
 /* clang-format off */
@@ -19,5 +23,9 @@
 		.i2c_addr_flags = DT_REG_ADDR(mux_id), \
 	}
 /* clang-format on */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ZEPHYR_SHIM_IT5205_USB_MUX_H */

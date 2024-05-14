@@ -5,6 +5,10 @@
 
 #include "driver/ppc/rt1739.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define RT1739_PPC_COMPAT richtek_rt1739_ppc
 #define RT1739_PPC_EMUL_COMPAT zephyr_rt1739_emul
 
@@ -17,3 +21,7 @@
 			(GPIO_SIGNAL(DT_PHANDLE(id, frs_en_gpio))), (0)),  \
 		.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {}),        \
 	}
+
+#ifdef __cplusplus
+}
+#endif

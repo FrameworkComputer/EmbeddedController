@@ -16,6 +16,10 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/toolchain.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(named_i2c_ports) == 1,
 	     "only one named-i2c-ports compatible node may be present");
 
@@ -220,5 +224,9 @@ int i2c_get_port_from_remote_port(int remote_port);
  * @return i2c_ports enum if match is found, or -1 if not.
  */
 enum i2c_ports i2c_get_port_from_device(const struct device *i2c_dev);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZEPHYR_CHROME_I2C_I2C_H */

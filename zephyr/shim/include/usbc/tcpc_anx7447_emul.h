@@ -7,6 +7,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ANX7447_EMUL_COMPAT cros_anx7447_tcpc_emul
 
 /* clang-format off */
@@ -22,3 +26,7 @@
 		.rst_gpio = GPIO_DT_SPEC_GET_OR(id, rst_gpios, {}),            \
 	}
 /* clang-format on */
+
+#ifdef __cplusplus
+}
+#endif

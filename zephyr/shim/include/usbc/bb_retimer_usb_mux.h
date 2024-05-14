@@ -8,6 +8,10 @@
 
 #include "driver/retimer/bb_retimer_public.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_BB
 #define BB_RETIMER_USB_MUX_COMPAT intel_jhl8040r
 #elif CONFIG_PLATFORM_EC_USBC_RETIMER_INTEL_HB
@@ -111,5 +115,9 @@
 #define BB_RETIMER_INSTANCES_LIST                                             \
 	(LISTIFY(DT_NUM_INST_STATUS_OKAY(BB_RETIMER_USB_MUX_COMPAT), DT_INST, \
 		 (, ), BB_RETIMER_USB_MUX_COMPAT))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ZEPHYR_SHIM_BB_RETIMER_USB_MUX_H */

@@ -8,6 +8,10 @@
 
 #include "driver/retimer/anx7452_public.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ANX7452_USB_MUX_COMPAT analogix_anx7452
 
 #define ANX7452_USB_EN_GPIO(mux_id) GPIO_SIGNAL(DT_PHANDLE(mux_id, usb_en_pin))
@@ -37,5 +41,9 @@
 			.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
 			.i2c_addr_flags = DT_REG_ADDR(mux_id), \
 	}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ZEPHYR_SHIM_ANX7452_USB_MUX_H */

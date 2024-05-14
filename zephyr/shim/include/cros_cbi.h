@@ -10,6 +10,10 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/kernel.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Macros are _INST_ types, so require DT_DRV_COMPAT to be defined.
  */
@@ -115,5 +119,9 @@ bool cros_cbi_ssfc_check_match(enum cbi_ssfc_value_id value_id);
  */
 int cros_cbi_get_fw_config(enum cbi_fw_config_field_id field_id,
 			   uint32_t *value);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_CROS_CBI_H */

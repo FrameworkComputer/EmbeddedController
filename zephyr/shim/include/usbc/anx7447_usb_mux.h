@@ -8,6 +8,10 @@
 
 #include "tcpm/anx7447_public.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ANX7447_USB_MUX_COMPAT analogix_usbc_mux_anx7447
 
 /* clang-format off */
@@ -19,5 +23,9 @@
 			(&anx7447_tcpc_update_hpd_status), (NULL)),            \
 	}
 /* clang-format on */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ZEPHYR_SHIM_ANX7447_USB_MUX_H */

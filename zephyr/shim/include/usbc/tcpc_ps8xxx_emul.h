@@ -7,6 +7,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PS8XXX_EMUL_COMPAT cros_ps8xxx_emul
 
 /* clang-format off */
@@ -27,3 +31,7 @@
 				(GPIO_LIMIT)))),                               \
 	}
 /* clang-format on */
+
+#ifdef __cplusplus
+}
+#endif

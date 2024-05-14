@@ -8,6 +8,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define TCPCI_EMUL_COMPAT cros_tcpci_generic_emul
 
 /* clang-format off */
@@ -28,3 +32,7 @@
 				(GPIO_LIMIT)))),                               \
 	}
 /* clang-format on */
+
+#ifdef __cplusplus
+}
+#endif

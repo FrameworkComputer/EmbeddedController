@@ -10,6 +10,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const struct charger_config_t chg_chips_alt[];
 
 #define ALT_CHG_CHIP_CHK(usbc_id, usb_port_num)                              \
@@ -29,5 +33,9 @@ extern const struct charger_config_t chg_chips_alt[];
 		memcpy(&chg_chips[usb_port_num], &chg_chips_alt[usb_port_num], \
 		       sizeof(struct charger_config_t));                       \
 	} while (0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_CHARGER_CHIPS_H */

@@ -10,6 +10,10 @@
 
 #include <zephyr/drivers/pwm.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct board_led_pwm_dt_channel {
 	const struct device *dev;
 	uint32_t channel;
@@ -24,5 +28,9 @@ struct board_led_pwm_dt_channel {
 	}
 
 #define BOARD_LED_HZ_TO_PERIOD_NS(freq_hz) (NSEC_PER_SEC / freq_hz)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __BOARD_LED_H */

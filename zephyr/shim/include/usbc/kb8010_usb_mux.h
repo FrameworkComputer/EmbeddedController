@@ -8,6 +8,10 @@
 
 #include "driver/retimer/kb8010_public.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define KB8010_USB_MUX_COMPAT kandou_kb8010
 
 #define KB8010_RST_GPIO(mux_id) GPIO_SIGNAL(DT_PHANDLE(mux_id, reset_pin))
@@ -33,5 +37,9 @@
 			.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
 			.i2c_addr_flags = DT_REG_ADDR(mux_id), \
 	}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ZEPHYR_SHIM_KB8010_USB_MUX_H */

@@ -14,6 +14,10 @@
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * The internal data structure stored for a deferred function.
  */
@@ -62,3 +66,7 @@ struct zephyr_shim_hook_list {
 		.routine = _routine,                                       \
 		.priority = _priority,                                     \
 	}
+
+#ifdef __cplusplus
+}
+#endif

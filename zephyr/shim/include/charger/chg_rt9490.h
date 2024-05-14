@@ -7,6 +7,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define RT9490_CHG_COMPAT richtek_rt9490
 #define RT9490_EMUL_COMPAT zephyr_rt9490_emul
 
@@ -16,3 +20,7 @@
 		.i2c_addr_flags = DT_REG_ADDR(id), \
 		.drv = &rt9490_drv,                \
 	},
+
+#ifdef __cplusplus
+}
+#endif

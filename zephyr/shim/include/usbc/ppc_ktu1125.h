@@ -5,6 +5,10 @@
 
 #include "ppc/ktu1125_public.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define KTU1125_COMPAT kinetic_ktu1125
 
 #define PPC_CHIP_KTU1125(id)                                            \
@@ -13,3 +17,7 @@
 		.i2c_addr_flags = DT_REG_ADDR(id), .drv = &ktu1125_drv, \
 		.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {}),     \
 	}
+
+#ifdef __cplusplus
+}
+#endif

@@ -10,6 +10,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern struct motion_sensor_t motion_sensors_alt[];
 
 /*
@@ -71,5 +75,9 @@ void motion_sensors_check_ssfc(void);
 		if (!motion_sense_probe(SENSOR_ID(DT_NODELABEL(nodelabel)))) \
 			ENABLE_ALT_MOTION_SENSOR(DT_NODELABEL(nodelabel));   \
 	} while (0)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_MOTIONSENSE_SENSORS_H */

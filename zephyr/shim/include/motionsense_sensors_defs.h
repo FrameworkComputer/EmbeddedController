@@ -10,6 +10,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SENSOR_ID(id) DT_CAT(SENSOR_, id)
 
 /* Define the SENSOR_ID if:
@@ -99,6 +103,10 @@ enum sensor_alt_id {
 #define CONFIG_ACCEL_FORCE_MODE_MASK                                        \
 	(0 LISTIFY(DT_PROP_LEN(SENSOR_INFO_NODE, accel_force_mode_sensors), \
 		   SENSOR_IN_FORCE_MODE, (), SENSOR_INFO_NODE))
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_MOTIONSENSE_SENSORS_DEFS_H */

@@ -9,6 +9,10 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/gpio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if CONFIG_CROS_EC_POWER_SIGNAL_LIST
 
 #define POWER_SIGNAL_LIST_NODE DT_NODELABEL(power_signal_list)
@@ -23,4 +27,9 @@ enum power_signal {
 };
 
 #endif /* CONFIG_CROS_EC_POWER_SIGNAL_LIST */
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* ZEPHYR_CHROME_POWER_POWER_H */

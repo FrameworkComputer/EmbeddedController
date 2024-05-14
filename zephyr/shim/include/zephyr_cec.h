@@ -8,6 +8,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CEC_COMPAT cros_ec_cec
 #define CEC_NODE DT_INST(0, CEC_COMPAT)
 
@@ -20,5 +24,9 @@ enum cec_port {
 	CEC_PORT_COUNT
 };
 /* clang-format on */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ZEPHYR_CEC_H */

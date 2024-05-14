@@ -5,6 +5,10 @@
 
 #include "ppc/syv682x_public.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SYV682X_COMPAT silergy_syv682x
 #define SYV682X_EMUL_COMPAT zephyr_syv682x_emul
 
@@ -17,3 +21,7 @@
 			(GPIO_SIGNAL(DT_PHANDLE(id, frs_en_gpio))), (0)), \
 		.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {}),       \
 	}
+
+#ifdef __cplusplus
+}
+#endif

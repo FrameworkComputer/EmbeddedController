@@ -19,6 +19,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define TCPCI_COMPAT cros_ec_tcpci
 
 /**
@@ -118,3 +122,7 @@ DT_FOREACH_USBC_DRIVER_STATUS_OK_VARGS(TCPC_ALT_DECLARE, TCPC_DRIVERS)
 	memcpy(&tcpc_config[usb_port_num],                          \
 	       &TCPC_ALT_FROM_NODELABEL(nodelabel),                 \
 	       sizeof(struct tcpc_config_t))
+
+#ifdef __cplusplus
+}
+#endif

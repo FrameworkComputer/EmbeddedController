@@ -7,6 +7,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define RAA489000_TCPC_COMPAT renesas_raa489000
 
 /* clang-format off */
@@ -21,3 +25,7 @@
 		.flags = DT_PROP(id, tcpc_flags),      \
 	}
 /* clang-format on */
+
+#ifdef __cplusplus
+}
+#endif

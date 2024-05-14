@@ -8,6 +8,10 @@
 
 #include <zephyr/shell/shell.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct zephyr_console_command {
 	/* Handler for the command.  argv[0] will be the command name. */
 	int (*handler)(int argc, const char **argv);
@@ -87,5 +91,9 @@ size_t console_buf_notify_chars(const char *s, size_t len);
  * @returns Backend shell thread id or NULL if not enabled
  */
 k_tid_t get_shell_thread(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ZEPHYR_CONSOLE_SHIM_H */

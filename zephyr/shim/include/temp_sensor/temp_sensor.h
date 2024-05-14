@@ -11,6 +11,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef CONFIG_PLATFORM_EC_TEMP_SENSOR
 
 #define PCT2075_COMPAT nxp_pct2075
@@ -171,5 +175,9 @@ struct zephyr_temp_sensor {
 };
 
 #endif /* CONFIG_PLATFORM_EC_TEMP_SENSOR */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZEPHYR_SHIM_INCLUDE_TEMP_SENSOR_TEMP_SENSOR_H_ */
