@@ -98,7 +98,6 @@ before_script:
   - ec_commit_date="$(cd ${EC_DIR} ; git log -1 HEAD --format=%cd --date=iso)"
   - checkout_at_date "https://chromium.googlesource.com/chromium/tools/depot_tools.git" "main" "${CI_PROJECT_DIR}/depot_tools" "${ec_commit_date}"
   - export PATH="${CI_PROJECT_DIR}/depot_tools:$PATH"
-  - mkdir -p "${MODULES_DIR}/fpc"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/cryptoc" "main" "${MODULES_DIR}/cryptoc" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr" "main" "${ZEPHYR_BASE}" "${ec_commit_date}"
   - checkout_at_date "https://chromium.googlesource.com/chromiumos/third_party/zephyr/cmsis" "chromeos-main" "${MODULES_DIR}/cmsis" "${ec_commit_date}"
@@ -436,6 +435,7 @@ zephyr_coverage:
     expire_in: 1 week
   coverage: '/lines\.*: \d+\.\d+%/'
 
+# Bloonchipper won't build because it depends on private zephyr modules.
 zephyr_boards_coverage:
   stage: build
   needs: []
@@ -444,6 +444,7 @@ zephyr_boards_coverage:
     - cd ${EC_DIR}
     - projects=( $(zmake --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" list-projects |
+      grep -v bloonchipper |
       split -n r/"${CI_NODE_INDEX}"/"${CI_NODE_TOTAL}") )
     - zmake --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" -l DEBUG build
