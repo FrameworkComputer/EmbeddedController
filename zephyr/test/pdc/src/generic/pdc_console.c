@@ -54,6 +54,23 @@ ZTEST_USER(console_cmd_pdc, test_no_args)
 		      SHELL_CMD_HELP_PRINTED, rv);
 }
 
+ZTEST_USER(console_cmd_pdc, test_pd_version)
+{
+	const char *outbuffer;
+	size_t buffer_size;
+
+	/* `pd version` should return 3 on PDC devices. This is used by TAST to
+	 * detect PDC DUTs.
+	 */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "pd version"));
+
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+
+	zassert_not_null(strstr(outbuffer, "3\r\n"));
+}
+
 /**
  * @brief Custom fake for pdc_power_mgmt_get_cable_prop that outputs some test
  *        cable property info.
