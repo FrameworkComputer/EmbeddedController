@@ -330,6 +330,10 @@ static int ppm_common_execute_pending_cmd(struct ppm_common_device *dev)
 			dev->last_error = ERROR_PPM;
 			dev->ppm_error_result.error_information
 				.unrecognized_command = 1;
+		} else if (ret == -EBUSY || ret == -ETIMEDOUT) {
+			dev->last_error = ERROR_PPM;
+			dev->ppm_error_result.error_information
+				.ppm_policy_conflict = 1;
 		} else {
 			dev->last_error = ERROR_LPM;
 		}
