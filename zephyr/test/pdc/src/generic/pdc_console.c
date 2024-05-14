@@ -345,3 +345,66 @@ ZTEST_USER(console_cmd_pdc, test_reset)
 		      pdc_power_mgmt_reset_fake.return_val, rv);
 	zassert_equal(1, pdc_power_mgmt_reset_fake.call_count);
 }
+
+ZTEST_USER(console_cmd_pdc, test_status)
+{
+	int rv;
+	const char *outbuffer;
+	size_t buffer_size;
+
+	/* Invalid port number */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc status 99");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Successful path */
+	pdc_power_mgmt_get_power_role_fake.return_val = PD_ROLE_SINK;
+	pdc_power_mgmt_pd_get_data_role_fake.return_val = PD_ROLE_DFP;
+	pdc_power_mgmt_pd_get_polarity_fake.return_val = POLARITY_CC2;
+	pdc_power_mgmt_is_connected_fake.return_val = true;
+	pdc_power_mgmt_get_task_state_name_fake.return_val = "StateName";
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc status 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	zassert_equal(1, pdc_power_mgmt_get_power_role_fake.call_count);
+	zassert_equal(1, pdc_power_mgmt_pd_get_data_role_fake.call_count);
+	zassert_equal(1, pdc_power_mgmt_pd_get_polarity_fake.call_count);
+	zassert_equal(1, pdc_power_mgmt_is_connected_fake.call_count);
+	zassert_equal(1, pdc_power_mgmt_get_task_state_name_fake.call_count);
+
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+
+	zassert_not_null(strstr(
+		outbuffer,
+		"Port C0 CC2, Enable - Role: SNK-DFP PDC State: StateName"));
+
+	helper_reset_pdc_power_mgmt_fakes();
+
+	/* Successful path with different values */
+	pdc_power_mgmt_get_power_role_fake.return_val = PD_ROLE_SOURCE;
+	pdc_power_mgmt_pd_get_data_role_fake.return_val = PD_ROLE_UFP;
+	pdc_power_mgmt_pd_get_polarity_fake.return_val = POLARITY_CC1;
+	pdc_power_mgmt_is_connected_fake.return_val = false;
+	pdc_power_mgmt_get_task_state_name_fake.return_val = "StateName2";
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc status 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	zassert_equal(1, pdc_power_mgmt_get_power_role_fake.call_count);
+	zassert_equal(1, pdc_power_mgmt_pd_get_data_role_fake.call_count);
+	zassert_equal(1, pdc_power_mgmt_pd_get_polarity_fake.call_count);
+	zassert_equal(1, pdc_power_mgmt_is_connected_fake.call_count);
+	zassert_equal(1, pdc_power_mgmt_get_task_state_name_fake.call_count);
+
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+
+	zassert_not_null(strstr(
+		outbuffer,
+		"Port C0 CC1, Disable - Role: SRC-UFP PDC State: StateName2"));
+}
