@@ -274,3 +274,47 @@ ZTEST_USER(console_cmd_pdc, test_comms_state)
 		      pdc_power_mgmt_set_comms_state_fake.return_val, rv);
 	zassert_equal(1, pdc_power_mgmt_set_comms_state_fake.call_count);
 }
+
+ZTEST_USER(console_cmd_pdc, test_conn_reset)
+{
+	int rv;
+
+	/* Invalid port number */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc conn_reset 99 hard");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Invalid param */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc conn_reset 0 xyz");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Successful hard reset */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc conn_reset 0 hard");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+	zassert_equal(1, pdc_power_mgmt_connector_reset_fake.call_count);
+	zassert_equal(0, pdc_power_mgmt_connector_reset_fake.arg0_history[0]);
+	zassert_equal(PD_HARD_RESET,
+		      pdc_power_mgmt_connector_reset_fake.arg1_history[0]);
+
+	RESET_FAKE(pdc_power_mgmt_connector_reset);
+
+	/* Successful data reset */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc conn_reset 0 data");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+	zassert_equal(1, pdc_power_mgmt_connector_reset_fake.call_count);
+	zassert_equal(0, pdc_power_mgmt_connector_reset_fake.arg0_history[0]);
+	zassert_equal(PD_DATA_RESET,
+		      pdc_power_mgmt_connector_reset_fake.arg1_history[0]);
+
+	RESET_FAKE(pdc_power_mgmt_connector_reset);
+
+	/* Error while triggering reset*/
+	pdc_power_mgmt_connector_reset_fake.return_val = 1;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc conn_reset 0 data");
+	zassert_equal(rv, pdc_power_mgmt_connector_reset_fake.return_val,
+		      "Expected %d, but got %d",
+		      pdc_power_mgmt_connector_reset_fake.return_val, rv);
+	zassert_equal(1, pdc_power_mgmt_connector_reset_fake.call_count);
+}
