@@ -2607,3 +2607,42 @@ static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 			      &pdc_driver_api);
 
 DT_INST_FOREACH_STATUS_OKAY(PDC_DEFINE)
+
+#ifdef CONFIG_ZTEST
+
+struct pdc_data_t;
+
+#define PDC_TEST_DEFINE(inst) &pdc_data_##inst,
+
+static struct pdc_data_t *pdc_data[] = { DT_INST_FOREACH_STATUS_OKAY(
+	PDC_TEST_DEFINE) };
+
+/*
+ * Wait for drivers to become idle.
+ */
+bool pdc_rts54xx_test_idle_wait(void)
+{
+	int num_finished;
+
+	/* Wait for up to 20 * 100ms for all drivers to become idle. */
+	for (int i = 0; i < 20; i++) {
+		num_finished = 0;
+
+		for (int port = 0; port < ARRAY_SIZE(pdc_data); port++) {
+			if (get_state(pdc_data[port]) == ST_IDLE &&
+			    pdc_data[port]->cmd == CMD_NONE) {
+				num_finished++;
+			}
+		}
+
+		if (num_finished == ARRAY_SIZE(pdc_data)) {
+			return true;
+		}
+
+		k_msleep(100);
+	}
+
+	return false;
+}
+
+#endif

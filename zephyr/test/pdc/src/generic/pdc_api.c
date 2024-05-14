@@ -29,6 +29,8 @@ LOG_MODULE_REGISTER(test_pdc_api, LOG_LEVEL_INF);
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
 static const struct device *dev = DEVICE_DT_GET(RTS5453P_NODE);
 
+bool pdc_rts54xx_test_idle_wait(void);
+
 void pdc_before_test(void *data)
 {
 	emul_pdc_reset(emul);
@@ -36,6 +38,8 @@ void pdc_before_test(void *data)
 	if (IS_ENABLED(CONFIG_TEST_PDC_MESSAGE_TRACING)) {
 		set_pdc_trace_msg_mocks();
 	}
+
+	zassert_true(pdc_rts54xx_test_idle_wait());
 }
 
 ZTEST_SUITE(pdc_api, NULL, NULL, pdc_before_test, NULL, NULL);
