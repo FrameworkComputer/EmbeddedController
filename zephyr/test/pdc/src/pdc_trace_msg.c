@@ -21,12 +21,13 @@
  */
 
 struct pdc_trace_header {
+	uint16_t seq_num;
 	uint8_t port_num;
 	uint8_t direction;
 	uint8_t msg_type;
-};
+} __packed;
 
-BUILD_ASSERT(sizeof(struct pdc_trace_header) == 3);
+BUILD_ASSERT(sizeof(struct pdc_trace_header) == 5);
 
 #define LINK_RX 0
 #define LINK_TX 1
@@ -41,6 +42,10 @@ FAKE_VALUE_FUNC(bool, pdc_trace_msg_resp, int, enum pdc_trace_chip_type,
 LOG_MODULE_REGISTER(pdc_trace, LOG_LEVEL_INF);
 
 static uint8_t pcap_buf[500];
+static uint16_t msg_seq_num;
+
+BUILD_ASSERT(sizeof(msg_seq_num) ==
+	     member_size(struct pdc_trace_header, seq_num));
 
 static void pcap_out(const uint8_t *pcap_buf, size_t buf_len)
 {
@@ -68,6 +73,7 @@ static bool mock_pdc_trace_msg_req(int port, enum pdc_trace_chip_type msg_type,
 	LOG_HEXDUMP_INF(buf, count, "message:");
 
 	const struct pdc_trace_header th = {
+		.seq_num = msg_seq_num,
 		.port_num = TRACE_PORT,
 		.direction = LINK_TX,
 		.msg_type = msg_type,
@@ -76,6 +82,8 @@ static bool mock_pdc_trace_msg_req(int port, enum pdc_trace_chip_type msg_type,
 	memcpy(pcap_buf, &th, sizeof(th));
 	pl_size = MIN(count, sizeof(pcap_buf) - sizeof(th));
 	memcpy(&pcap_buf[sizeof(th)], buf, pl_size);
+
+	++msg_seq_num;
 
 	pcap_out(pcap_buf, sizeof(th) + pl_size);
 
@@ -97,6 +105,7 @@ static bool mock_pdc_trace_msg_resp(int port, enum pdc_trace_chip_type msg_type,
 	LOG_HEXDUMP_INF(buf, count, "message:");
 
 	const struct pdc_trace_header th = {
+		.seq_num = msg_seq_num,
 		.port_num = TRACE_PORT,
 		.direction = LINK_RX,
 		.msg_type = msg_type,
@@ -104,6 +113,8 @@ static bool mock_pdc_trace_msg_resp(int port, enum pdc_trace_chip_type msg_type,
 	memcpy(pcap_buf, &th, sizeof(th));
 	pl_size = MIN(count, sizeof(pcap_buf) - sizeof(th));
 	memcpy(&pcap_buf[sizeof(th)], buf, pl_size);
+
+	++msg_seq_num;
 
 	pcap_out(pcap_buf, sizeof(th) + pl_size);
 
