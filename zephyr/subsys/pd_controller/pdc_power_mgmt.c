@@ -1095,6 +1095,8 @@ static void run_unattached_policies(struct pdc_port_t *port)
 					     UNA_POLICY_TCC)) {
 		/* Set RP current policy */
 		queue_internal_cmd(port, CMD_PDC_SET_POWER_LEVEL);
+		/* Make sure new Rp value is applied */
+		atomic_set_bit(port->una_policy.flags, UNA_POLICY_CC_MODE);
 		return;
 	}
 
