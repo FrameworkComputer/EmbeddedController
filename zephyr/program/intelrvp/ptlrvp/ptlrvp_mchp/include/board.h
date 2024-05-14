@@ -16,4 +16,9 @@
 #define PWR_EC_PCH_SYS_PWROK MCHP_GPIO_DECODE_015
 #define PWR_ALL_SYS_PWRGD MCHP_GPIO_DECODE_057
 
+/* I2C Ports */
+#define CHARGER_I2C i2c_smb_0
+
+#define PD_POW_I2C i2c_smb_1
+
 #endif /* PTLRVP_MCHP_BOARD_H_ */

@@ -6,6 +6,8 @@
 #include "include/board.h"
 
 #include "gpio.dtsi"
+#include "i2c.dts"
+#include "../i2c.dtsi"
 #include "../stub.dtsi"
 #include "../interrupts.dtsi"
 #include "../power_signals.dtsi"
