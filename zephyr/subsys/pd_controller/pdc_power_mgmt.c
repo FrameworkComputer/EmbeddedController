@@ -1137,7 +1137,7 @@ static void run_snk_policies(struct pdc_port_t *port)
 {
 	if (atomic_test_and_clear_bit(port->snk_policy.flags,
 				      SNK_POLICY_SET_ACTIVE_CHARGE_PORT)) {
-		port->snk_attached_local_state = SNK_ATTACHED_GET_PDOS;
+		port->snk_attached_local_state = SNK_ATTACHED_SET_SINK_PATH;
 		return;
 	} else if (atomic_test_and_clear_bit(port->snk_policy.flags,
 					     SNK_POLICY_SWAP_TO_SRC)) {
