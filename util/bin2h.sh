@@ -26,10 +26,10 @@ variable_name="${1}"
 input_file="${2}"
 output_file="${3}"
 
-key_dump="$(od -An -tx1 -w8 ${input_file} | \
+key_dump="$(od -An -tx1 -w8 "${input_file}" | \
     sed 's/^ /\t0x/;s/ /, 0x/g;s/$/, \\/')"
 
-cat > ${output_file} <<EOF
+cat > "${output_file}" <<EOF
 /*
  * This is a generated file, do not edit.
  */

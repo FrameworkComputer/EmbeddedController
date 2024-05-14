@@ -52,9 +52,8 @@ if [[ -z "${BRANCH_POINT}" ]]; then
 fi
 
 # Derive tag base string from the upstream branch name as described above.
-TAG_BASE="$(sed 's/.*-//       # drop everything up to including the last -
-                 s/\./_/g      # replace dots and dashes with underscores
-      ' <<< "${UPSTREAM}" )"
+TAG_BASE="${UPSTREAM/*-/}"  # drop everything up to including the last -
+TAG_BASE="${TAG_BASE//./_}" # replace dots and dashes with underscores
 
 if [[ "${TAG_BASE}" == "main" ]]; then
   echo "Nothing to tag in main branch" >&2
@@ -71,14 +70,14 @@ echo "Will run git tag -a -m \"firmware branch ${TAG}\" ${TAG} ${BASE_SHA}"
 if git tag -a -m "firmware branch ${TAG}" "${TAG}" "${BASE_SHA}"; then
   cat <<EOF
 
-A new tag '$TAG' has been set. Use the following command
+A new tag '${TAG}' has been set. Use the following command
 to push it to the server
 
 git push --tags ${ORIGIN} ${TAG}
 
 Or if you want to delete it:
 
-git tag -d $TAG
+git tag -d ${TAG}
 
 EOF
 fi

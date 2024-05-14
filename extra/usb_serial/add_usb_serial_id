@@ -29,4 +29,4 @@ file="/sys/bus/usb-serial/drivers/generic/new_id"
 #
 # Only add the device ID pair if it isn't already in the ID list.
 #
-grep -q "$device_id" $file || echo $device_id > $file
+grep -q "${device_id}" "${file}" || echo "${device_id}" > "${file}"

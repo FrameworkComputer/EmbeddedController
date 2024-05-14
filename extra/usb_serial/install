@@ -1,4 +1,4 @@
-#!/bin/sh -e
+#!/bin/bash -e
 #
 # Copyright 2016 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
@@ -13,7 +13,7 @@ error() {
     echo "${bold}Install failed${normal}"
 }
 
-trap "error $LINENO" ERR
+trap 'error ${LINENO}' ERR
 
 fallback=false
 
@@ -43,7 +43,7 @@ if [ $# -ne 0 ]; then
     exit 1
 fi
 
-if [ "$fallback" = "false" ]; then
+if [ "${fallback}" = "false" ]; then
     #
     # The normal path builds and installs the raiden module
     #
@@ -59,10 +59,10 @@ if [ "$fallback" = "false" ]; then
 	sudo make modules_install &&
 	sudo depmod -a
     } || {
-	echo $bold
+	echo "${bold}"
 	echo "Building and/or installing the raiden module failed, you may"
 	echo "want to use the --fallback option."
-	echo $normal
+	echo "${normal}"
 	exit 1;
     }
 else
@@ -83,6 +83,7 @@ sudo install -m644  51-google-serial.rules /etc/udev/rules.d
 # Google Vendor ID.  Limiting triggering like this prevents unwanted resetting
 # of some device state, even with the change action specified.
 #
-for syspath in $(dirname $(grep -rxl --include=idVendor 18d1 /sys/devices)); do
-    sudo udevadm trigger --action=change --parent-match=${syspath}
+for syspath in $(dirname "$(grep -rxl --include=idVendor 18d1 /sys/devices)")
+do
+    sudo udevadm trigger --action=change --parent-match="${syspath}"
 done

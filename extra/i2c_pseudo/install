@@ -18,10 +18,10 @@ fi
 
 if which dkms >/dev/null; then
   # Install with DKMS
-  package_version="$(. dkms.conf ; echo "$PACKAGE_VERSION")"
+  package_version="$(. dkms.conf ; echo "${PACKAGE_VERSION}")"
   sudo dkms add ./
-  sudo dkms build i2c-pseudo/"$package_version" --force
-  sudo dkms install i2c-pseudo/"$package_version" --force
+  sudo dkms build i2c-pseudo/"${package_version}" --force
+  sudo dkms install i2c-pseudo/"${package_version}" --force
   sudo rmmod i2c-pseudo &> /dev/null || true
   sudo modprobe i2c-pseudo
   echo "SUCCESS: installed i2c-pseudo module with DKMS and loaded"
@@ -32,23 +32,23 @@ else
   ret=0
   sudo make modules_install || ret="$?"
 
-  if [ "$ret" -eq 0 ]; then
+  if [ "${ret}" -eq 0 ]; then
     make clean
     sudo depmod -a
     sudo rmmod i2c-pseudo &> /dev/null || true
     sudo modprobe i2c-pseudo
     echo "SUCCESS: installed and loaded i2c-pseudo module"
   else
-    echo 1>&2 "WARNING: make modules_install failed with exit status $ret."
+    echo 1>&2 "WARNING: make modules_install failed with exit status ${ret}."
     echo 1>&2 "The module has not been installed for future reuse."
     echo 1>&2 "Will still attempt to load the module, using insmod instead of "\
   "modprobe."
     ret=0
     sudo rmmod i2c-pseudo &> /dev/null || true
     sudo insmod drivers/i2c/i2c-pseudo.ko || ret="$?"
-    if [ "$ret" -ne 0 ]; then
+    if [ "${ret}" -ne 0 ]; then
       make clean
-      exit "$ret"
+      exit "${ret}"
     fi
     echo "PARTIAL SUCCESS: loaded i2c-pseudo module (not installed)"
     make clean

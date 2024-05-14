@@ -13,7 +13,7 @@ BAD_ERROR_MSG="This error should not be seen in the compiler output!"
 fail() {
   echo "Fail"
   echo "$1"
-  echo "$BUILD_OUTPUT"
+  echo "${BUILD_OUTPUT}"
   TEST_ERROR_COUNT=$((TEST_ERROR_COUNT+1))
 }
 
@@ -22,20 +22,20 @@ for test_macro in STATIC_IF STATIC_IF_NOT; do
     echo -n "Running TEST_MACRO=${test_macro} TEST_VALUE=${test_value}..."
     TEST_CMD_COMPLETE="
       ${TEST_CMD} \"-DTEST_MACRO=${test_macro}\" \"-DTEST_VALUE=${test_value}\""
-    echo "$TEST_CMD_COMPLETE"
-    if BUILD_OUTPUT="$(sh -c "$TEST_CMD_COMPLETE" 2>&1)"; then
+    echo "${TEST_CMD_COMPLETE}"
+    if BUILD_OUTPUT="$(sh -c "${TEST_CMD_COMPLETE}" 2>&1)"; then
       fail "Compilation should not have succeeded."
       continue
     fi
 
-    if grep -q "$BAD_ERROR_MSG" <<<"$BUILD_OUTPUT"; then
+    if grep -q "${BAD_ERROR_MSG}" <<<"${BUILD_OUTPUT}"; then
       fail "TEST_MACRO was not defined."
       continue
     fi
   done
 done
 
-if [[ $TEST_ERROR_COUNT -eq 0 ]]; then
+if [[ ${TEST_ERROR_COUNT} -eq 0 ]]; then
   echo "Pass!"
 else
   echo "Fail! (${TEST_ERROR_COUNT} tests)"
