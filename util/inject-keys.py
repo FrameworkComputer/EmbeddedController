@@ -1,13 +1,10 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
+# pylint:disable=invalid-name,missing-module-docstring
 # -*- coding: utf-8 -*-
 #
 # Copyright 2016 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
-
-# Note: This is a py2/3 compatible file.
-
-from __future__ import print_function
 
 import string
 import subprocess
@@ -209,7 +206,7 @@ def inject_event(key, press):
     if len(key) >= 2 and key[0] != "<":
         key = "<" + key + ">"
     if key not in KEYMATRIX:
-        print("%s: invalid key: %s" % (this_script, key))
+        print(f"{this_script}: invalid key: {key}")
         sys.exit(1)
     (row, col) = KEYMATRIX[key]
     subprocess.call(
@@ -223,17 +220,17 @@ def inject_key(key):
     inject_event(key, False)
 
 
-def inject_string(string):
+def inject_string(s):
     """Function inject_string()."""
-    for c in string:
-        if c in KEYMATRIX:
-            inject_key(c)
-        elif c in UNSHIFT_TABLE:
+    for cc in s:
+        if cc in KEYMATRIX:
+            inject_key(cc)
+        elif cc in UNSHIFT_TABLE:
             inject_event("<shift_l>", True)
-            inject_key(UNSHIFT_TABLE[c])
+            inject_key(UNSHIFT_TABLE[cc])
             inject_event("<shift_l>", False)
         else:
-            print("unimplemented character:", c)
+            print("unimplemented character:", cc)
             sys.exit(1)
 
 
@@ -252,23 +249,23 @@ def read_dutmodel():
 def usage():
     """Function usage()."""
     print(
-        "Usage: %s [-s <string>] [-k <key>]" % this_script,
+        f"Usage: {this_script} [-s <string>] [-k <key>]",
         "[-p <pressed-key>] [-r <released-key>] ...",
     )
     print("Examples:")
-    print("%s -s MyPassw0rd -k enter" % this_script)
-    print("%s -p ctrl_l -p alt_l -k f3 -r alt_l -r ctrl_l" % this_script)
+    print(f"{this_script} -s MyPassw0rd -k enter")
+    print(f"{this_script} -p ctrl_l -p alt_l -k f3 -r alt_l -r ctrl_l")
 
 
-def help():
+def help():  # pylint:disable=redefined-builtin
     """Function help()."""
     usage()
     print("Valid keys are:")
-    i = 0
+    ii = 0
     for key in KEYMATRIX:
-        print("%12s" % key, end="")
-        i += 1
-        if i % 4 == 0:
+        print(f"{key:12}", end="")
+        ii += 1
+        if ii % 4 == 0:
             print()
     print()
     print("angle brackets may be omitted")
@@ -278,7 +275,7 @@ def usage_check(asserted_condition, message):
     """Function usage_check()."""
     if asserted_condition:
         return
-    print("%s:" % this_script, message)
+    print(f"{this_script}:", message)
     usage()
     sys.exit(1)
 
@@ -286,27 +283,25 @@ def usage_check(asserted_condition, message):
 # -- main
 
 this_script = sys.argv[0]
-arg_len = len(sys.argv)
+ARG_LEN = len(sys.argv)
 
-if arg_len > 1 and sys.argv[1] == "--help":
+if ARG_LEN > 1 and sys.argv[1] == "--help":
     help()
     sys.exit(0)
 
-usage_check(arg_len > 1, "not enough arguments")
-usage_check(arg_len % 2 == 1, "mismatched arguments")
+usage_check(ARG_LEN > 1, "not enough arguments")
+usage_check(ARG_LEN % 2 == 1, "mismatched arguments")
 
-for i in range(1, arg_len, 2):
+for i in range(1, ARG_LEN, 2):
     usage_check(
         sys.argv[i] in ("-s", "-k", "-p", "-r"),
-        "unknown flag: %s" % sys.argv[i],
+        f"unknown flag: {sys.argv[i]}",
     )
 
-KEYMATRIX = KEYMATRIX_0
-model = read_dutmodel()
-if model in MODEL_KBMATRIX_MAP:
-    KEYMATRIX = MODEL_KBMATRIX_MAP[model]
+MODEL = read_dutmodel()
+KEYMATRIX = MODEL_KBMATRIX_MAP.get(MODEL, KEYMATRIX_0)
 
-for i in range(1, arg_len, 2):
+for i in range(1, ARG_LEN, 2):
     flag = sys.argv[i]
     arg = sys.argv[i + 1]
     if flag == "-s":

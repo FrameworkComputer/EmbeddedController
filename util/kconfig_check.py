@@ -58,10 +58,10 @@ def prefix_adhoc_tuple(arg_string):
     """
     try:
         prefix_tuple = tuple(arg_string.split(","))
-    except:
+    except Exception as err:
         raise argparse.ArgumentTypeError(
             "Replace argument must 'prefix,replace`"
-        )
+        ) from err
 
     if len(prefix_tuple) != 2:
         raise argparse.ArgumentTypeError(
@@ -244,13 +244,9 @@ class KconfigCheck:
             List of CONFIG_xxx options found in the file, with the 'CONFIG_'
                 prefix removed
         """
-        with open(configs_file, "r") as inf:
+        with open(configs_file, "r", encoding="utf-8") as inf:
             configs = re.findall(
-                "%sCONFIG_([A-Za-z0-9_]*)%s"
-                % (
-                    (use_defines and "#define " or ""),
-                    (use_defines and " " or ""),
-                ),
+                f'{use_defines and "#define " or ""}CONFIG_([A-Za-z0-9_]*){use_defines and " " or ""}',
                 inf.read(),
             )
         return configs
@@ -266,7 +262,7 @@ class KconfigCheck:
             List of CONFIG_xxx options found in the file, with the 'CONFIG_'
                 prefix removed
         """
-        with open(allowed_file, "r") as inf:
+        with open(allowed_file, "r", encoding="utf-8") as inf:
             configs = re.findall("CONFIG_([A-Za-z0-9_]*)", inf.read())
         return configs
 
@@ -385,7 +381,7 @@ class KconfigCheck:
             # Remove the prefix if present
             expr = re.compile(r"\n(config|menuconfig) ([A-Za-z0-9_]*)\n")
             for fname in cls.find_kconfigs(srcdir):
-                with open(fname) as inf:
+                with open(fname, encoding="utf-8") as inf:
                     found = re.findall(expr, inf.read())
                     symbols += [name for kctype, name in found]
 
@@ -483,7 +479,7 @@ class KconfigCheck:
             search_paths,
         )
         if new_adhoc:
-            file_list = "\n".join(["CONFIG_%s" % name for name in new_adhoc])
+            file_list = "\n".join([f"CONFIG_{name}" for name in new_adhoc])
             print(
                 f"""Error:\tThe EC is in the process of migrating to Zephyr.
 \tZephyr uses Kconfig for configuration rather than ad-hoc #defines.
@@ -507,11 +503,11 @@ To temporarily disable this, use: ALLOW_CONFIG=1 make ...
             ignore = []
         unneeded_adhoc = [name for name in unneeded_adhoc if name not in ignore]
         if unneeded_adhoc:
-            with open(NEW_ALLOWED_FNAME, "w") as out:
+            with open(NEW_ALLOWED_FNAME, "w", encoding="utf-8") as out:
                 for config in updated_adhoc:
-                    print("CONFIG_%s" % config, file=out)
+                    print(f"CONFIG_{config}", file=out)
             now_in_kconfig = "\n".join(
-                ["CONFIG_%s" % name for name in unneeded_adhoc]
+                [f"CONFIG_{name}" for name in unneeded_adhoc]
             )
             print(
                 f"""The following options are now in Kconfig:
@@ -560,7 +556,7 @@ update in your CL:
             use_defines,
             search_paths,
         )
-        with open(NEW_ALLOWED_FNAME, "w") as out:
+        with open(NEW_ALLOWED_FNAME, "w", encoding="utf-8") as out:
             combined = sorted(new_adhoc + updated_adhoc)
             for config in combined:
                 print(f"CONFIG_{config}", file=out)
@@ -602,7 +598,7 @@ update in your CL:
             os.path.join(srcdir, "driver/**/*.h"), recursive=True
         )
         for filename in files_to_check:
-            with open(filename, "r") as config_h:
+            with open(filename, "r", encoding="utf-8") as config_h:
                 depth = 0
                 ignore_depth = 0
                 line_count = 0

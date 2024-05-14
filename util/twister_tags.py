@@ -78,7 +78,7 @@ def main(args):
 
         for testcase_yaml in testcase_yamls:
             logger.info("Validating test tags in %s", testcase_yaml)
-            with open(testcase_yaml) as yaml_fd:
+            with open(testcase_yaml, encoding="utf-8") as yaml_fd:
                 yaml_obj = yaml.safe_load(yaml_fd)
                 for tag in test_tags_generator(yaml_obj):
                     if tag not in TAG_TO_DESCRIPTION:

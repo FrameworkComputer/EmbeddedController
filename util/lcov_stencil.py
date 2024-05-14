@@ -72,7 +72,7 @@ def parse_template_file(filename) -> Dict[str, Set[str]]:
         A dictionary of filename to set of covered line numbers (as strings)
     """
     logging.info("Reading template file %s", filename)
-    with open(filename, "r") as template_file:
+    with open(filename, "r", encoding="utf-8") as template_file:
         data_by_path: Dict[str, Set[str]] = defaultdict(set)
         file_name = None
         for line in template_file.readlines():
@@ -114,7 +114,7 @@ def filter_coverage_file(filename, output_file, data_by_path):
     after filtering, and records that refer to unknown files are omitted.
     """
     logging.info("Merging file %s", filename)
-    with open(filename, "r") as input_file:
+    with open(filename, "r", encoding="utf-8") as input_file:
 
         def empty_record():
             return {
@@ -193,17 +193,17 @@ def filter_coverage_file(filename, output_file, data_by_path):
                 else:
                     logging.debug("Omitting %s", line)
             elif line.startswith("FNF:"):
-                record["text"] += "FNF:%s\n" % record.get("functions_found", 0)
+                record["text"] += f"FNF:{record.get('functions_found', 0)}\n"
             elif line.startswith("FNH:"):
-                record["text"] += "FNH:%s\n" % record.get("functions_hit", 0)
+                record["text"] += f"FNH:{record.get('functions_hit', 0)}\n"
             elif line.startswith("BRF:"):
-                record["text"] += "BRF:%s\n" % record.get("branches_found", 0)
+                record["text"] += f"BRF:{record.get('branches_found', 0)}\n"
             elif line.startswith("BRH:"):
-                record["text"] += "BRH:%s\n" % record.get("branches_hit", 0)
+                record["text"] += f"BRH:{record.get('branches_hit', 0)}\n"
             elif line.startswith("LF:"):
-                record["text"] += "LF:%s\n" % record.get("lines_found", 0)
+                record["text"] += f"LF:{record.get('lines_found', 0)}\n"
             elif line.startswith("LH:"):
-                record["text"] += "LH:%s\n" % record.get("lines_hit", 0)
+                record["text"] += f"LH:{record.get('lines_hit', 0)}\n"
             else:
                 logging.debug("record = %s", record)
                 raise NotImplementedError(line)
@@ -218,7 +218,7 @@ def main(argv=None):
     if opts.output_file:
         logging.info("Writing output to %s", opts.output_file)
         output_file = open(  # pylint:disable=consider-using-with
-            opts.output_file, "w"
+            opts.output_file, "w", encoding="utf-8"
         )
 
     data_by_path = parse_template_file(opts.template_file)

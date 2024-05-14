@@ -9,8 +9,6 @@ Script to ensure that all configuration options for the Chrome EC are defined
 in config.h.
 """
 
-from __future__ import print_function
-
 import enum
 import os
 import re
@@ -74,7 +72,7 @@ def obtain_current_config_options():
 
     config_options = []
     config_option_re = re.compile(r"^#(define|undef)\s+(CONFIG_[A-Z0-9_]+)")
-    with open(CONFIG_FILE, "r") as config_file:
+    with open(CONFIG_FILE, "r", encoding="utf-8") as config_file:
         for line in config_file:
             result = config_option_re.search(line)
             if not result:
@@ -124,7 +122,7 @@ def obtain_config_options_in_use():
     for file in file_list:
         if CONFIG_FILE in file:
             continue
-        with open(file, "r") as cur_file:
+        with open(file, "r", encoding="utf-8") as cur_file:
             for line in cur_file:
                 match = config_option_re.findall(line)
                 if match:
@@ -136,7 +134,7 @@ def obtain_config_options_in_use():
     # Since debug options can be turned on at any time, assume that they are
     # always in use in case any aren't being used.
 
-    with open(CONFIG_FILE, "r") as config_file:
+    with open(CONFIG_FILE, "r", encoding="utf-8") as config_file:
         for line in config_file:
             match = config_debug_option_re.findall(line)
             if match:
@@ -210,31 +208,26 @@ def print_missing_config_options(hunks, config_options):
                     if print_banner:
                         print(
                             "The following config options were found to be missing "
-                            "from %s.\n"
+                            f"from {CONFIG_FILE}.\n"
                             "Please add new config options there along with "
-                            "descriptions.\n\n" % CONFIG_FILE
+                            "descriptions.\n\n"
                         )
                         print_banner = False
                         missing_config_option = True
                     # Print the misssing config option.
                     print(
-                        "> %-*s %s:%s"
-                        % (
-                            max_option_length,
-                            option,
-                            hunk.filename,
-                            line.line_num,
-                        )
+                        f"> {option:<{max_option_length}} "
+                        f"{hunk.filename}:{line.line_num}"
                     )
 
     if deprecated_options:
         print(
             "\n\nThe following config options are being removed and also appear"
             " to be the last uses\nof that option.  Please remove these "
-            "options from %s.\n\n" % CONFIG_FILE
+            f"options from {CONFIG_FILE}.\n\n"
         )
         for option in deprecated_options:
-            print("> %s" % option)
+            print(f"> {option}")
             missing_config_option = True
 
     return missing_config_option

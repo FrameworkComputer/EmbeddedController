@@ -98,7 +98,8 @@ def is_tcp_port_open(host: str, tcp_port: int) -> bool:
 
 
 def create_jlink_command_file(firmware_file, config):
-    tmp = tempfile.NamedTemporaryFile()
+    """Creates a jlink command file."""
+    tmp = tempfile.NamedTemporaryFile()  # pylint:disable=consider-using-with
     tmp.write(
         JLINK_COMMANDS.format(
             FIRMWARE=firmware_file, FLASH_ADDRESS=config.flash_address
@@ -109,6 +110,7 @@ def create_jlink_command_file(firmware_file, config):
 
 
 def flash(jlink_exe, remote, device, interface, cmd_file):
+    """Uses jlink to flash device."""
     cmd = [
         jlink_exe,
     ]
@@ -122,11 +124,11 @@ def flash(jlink_exe, remote, device, interface, cmd_file):
 
         host = remote_components[0]
         try:
-            ip = socket.gethostbyname(host)
-        except socket.gaierror as e:
-            logging.error(f'Failed to resolve host "{host}": {e}.')
+            ip_addr = socket.gethostbyname(host)
+        except socket.gaierror as err:
+            logging.error(f'Failed to resolve host "{host}": {err}.')
             return 1
-        logging.debug(f"Resolved {host} as {ip}.")
+        logging.debug(f"Resolved {host} as {ip_addr}.")
         port = DEFAULT_SEGGER_REMOTE_PORT
 
         if len(remote_components) == 2:
@@ -138,10 +140,10 @@ def flash(jlink_exe, remote, device, interface, cmd_file):
                 )
                 return 1
 
-        remote = f"{ip}:{port}"
+        remote = f"{ip_addr}:{port}"
 
         logging.debug(f"Checking connection to {remote}.")
-        if not is_tcp_port_open(ip, port):
+        if not is_tcp_port_open(ip_addr, port):
             logging.error(
                 f"JLink server doesn't seem to be listening on {remote}."
             )
@@ -166,14 +168,13 @@ def flash(jlink_exe, remote, device, interface, cmd_file):
         ]
     )
     logging.debug('Running command: "%s"', " ".join(cmd))
-    completed_process = subprocess.run(
-        cmd
-    )  # pylint: disable=subprocess-run-check
+    completed_process = subprocess.run(cmd, check=False)
     logging.debug("JLink return code: %d", completed_process.returncode)
     return completed_process.returncode
 
 
 def main(argv: list):
+    """Main function."""
     parser = argparse.ArgumentParser()
 
     default_jlink = "./JLink_Linux_V684a_x86_64/JLinkExe"

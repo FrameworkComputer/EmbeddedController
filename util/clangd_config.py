@@ -90,9 +90,10 @@ def zephyr_build(ec_root: Path, board: str, image: str) -> Optional[Path]:
     )
 
     target.write_text(
-        target.read_text().replace(
+        target.read_text(encoding="utf-8").replace(
             chromiumos_path_inside_chroot, chromiumos_path_outside_chroot
-        )
+        ),
+        encoding="utf-8",
     )
 
     return target

@@ -17,7 +17,8 @@ disable=
     too-many-branches,
     too-many-locals,
     too-many-nested-blocks,
-    too-many-statements
+    too-many-statements,
+    too-many-instance-attributes
 
 [format]
 

@@ -3,6 +3,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# pylint:disable=too-many-lines
+
 """Statically analyze stack usage of EC firmware.
 
   Example:
@@ -12,8 +14,6 @@
         ./build/elm/RW/ec.RW.elf
 
 """
-
-from __future__ import print_function
 
 import argparse
 import collections
@@ -50,7 +50,7 @@ class TaskInfo(ctypes.Structure):
     ]
 
 
-class Task(object):
+class Task:
     """Task information.
 
     Attributes:
@@ -96,7 +96,7 @@ class Task(object):
         )
 
 
-class Symbol(object):
+class Symbol:
     """Symbol information.
 
     Attributes:
@@ -141,7 +141,7 @@ class Symbol(object):
         )
 
 
-class Callsite(object):
+class Callsite:
     """Function callsite.
 
     Attributes:
@@ -189,14 +189,14 @@ class Callsite(object):
 
         if self.callee is None:
             return other.callee is None
-        elif other.callee is None:
+        if other.callee is None:
             return False
 
         # Assume the addresses of functions are unique.
         return self.callee.address == other.callee.address
 
 
-class Function(object):
+class Function:
     """Function.
 
     Attributes:
@@ -224,7 +224,7 @@ class Function(object):
         self.stack_max_usage = None
         self.stack_max_path = None
 
-    def __eq__(self, other):
+    def __eq__(self, other):  # pylint:disable=too-many-return-statements
         """Function equality.
 
         Args:
@@ -247,7 +247,7 @@ class Function(object):
 
         if self.stack_max_path is None:
             return other.stack_max_path is None
-        elif other.stack_max_path is None:
+        if other.stack_max_path is None:
             return False
 
         if len(self.stack_max_path) != len(other.stack_max_path):
@@ -266,7 +266,7 @@ class Function(object):
         return id(self)
 
 
-class AndesAnalyzer(object):
+class AndesAnalyzer:
     """Disassembly analyzer for Andes architecture.
 
     Public Methods:
@@ -291,18 +291,18 @@ class AndesAnalyzer(object):
         "nes",
         "eqs",
     ]
-    CONDITION_CODES_RE = "({})".format("|".join(CONDITION_CODES))
+    CONDITION_CODES_RE = f"({'|'.join(CONDITION_CODES)})"
 
     IMM_ADDRESS_RE = r"([0-9A-Fa-f]+)\s+<([^>]+)>"
     # Branch instructions.
     JUMP_OPCODE_RE = re.compile(
-        r"^(b{0}|j|jr|jr.|jrnez)(\d?|\d\d)$".format(CONDITION_CODES_RE)
+        rf"^(b{CONDITION_CODES_RE}|j|jr|jr.|jrnez)(\d?|\d\d)$"
     )
     # Call instructions.
     CALL_OPCODE_RE = re.compile(
         r"^(jal|jral|jral.|jralnez|beqzal|bltzal|bgezal)(\d)?$"
     )
-    CALL_OPERAND_RE = re.compile(r"^{}$".format(IMM_ADDRESS_RE))
+    CALL_OPERAND_RE = re.compile(rf"^{IMM_ADDRESS_RE}$")
     # Ignore lp register because it's for return.
     INDIRECT_CALL_OPERAND_RE = re.compile(
         r"^\$r\d{1,}$|\$fp$|\$gp$|\$ta$|\$sp$|\$pc$"
@@ -327,7 +327,9 @@ class AndesAnalyzer(object):
         r"\t\s*(?P<opcode>\S+)(\s+(?P<operand>[^;]*))?"
     )
 
-    def ParseInstruction(self, line, function_end):
+    def ParseInstruction(
+        self, line, function_end
+    ):  # pylint:disable=invalid-name
         """Parse the line of instruction.
 
         Args:
@@ -358,7 +360,10 @@ class AndesAnalyzer(object):
 
         return (address, words, opcode, operand_text)
 
-    def AnalyzeFunction(self, function_symbol, instructions):
+    def AnalyzeFunction(
+        self, function_symbol, instructions
+    ):  # pylint:disable=invalid-name
+        """Analyze a single function."""
         stack_frame = 0
         callsites = []
         for address, words, opcode, operand_text in instructions:
@@ -419,14 +424,14 @@ class AndesAnalyzer(object):
                     ):
                         # capture number & transfer string to integer
                         oprandgrouphead = operandgroup_text.split(",")[0]
-                        rx = int(
+                        rrx = int(
                             "".join(
                                 filter(
                                     str.isdigit, oprandgrouphead.split("~")[0]
                                 )
                             )
                         )
-                        ry = int(
+                        rry = int(
                             "".join(
                                 filter(
                                     str.isdigit, oprandgrouphead.split("~")[1]
@@ -435,7 +440,7 @@ class AndesAnalyzer(object):
                         )
 
                         stack_frame += (
-                            len(operandgroup_text.split(",")) + ry - rx
+                            len(operandgroup_text.split(",")) + rry - rrx
                         ) * self.GENERAL_PURPOSE_REGISTER_SIZE
                     else:
                         stack_frame += (
@@ -455,14 +460,14 @@ class AndesAnalyzer(object):
                     ):
                         # capture number & transfer string to integer
                         oprandgrouphead = operandgroup_text.split(",")[0]
-                        rx = int(
+                        rrx = int(
                             "".join(
                                 filter(
                                     str.isdigit, oprandgrouphead.split("~")[0]
                                 )
                             )
                         )
-                        ry = int(
+                        rry = int(
                             "".join(
                                 filter(
                                     str.isdigit, oprandgrouphead.split("~")[1]
@@ -471,7 +476,7 @@ class AndesAnalyzer(object):
                         )
 
                         stack_frame += (
-                            len(operandgroup_text.split(",")) + ry - rx
+                            len(operandgroup_text.split(",")) + rry - rrx
                         ) * self.GENERAL_PURPOSE_REGISTER_SIZE
                     else:
                         stack_frame += (
@@ -482,7 +487,7 @@ class AndesAnalyzer(object):
         return (stack_frame, callsites)
 
 
-class ArmAnalyzer(object):
+class ArmAnalyzer:
     """Disassembly analyzer for ARM architecture.
 
     Public Methods:
@@ -511,23 +516,23 @@ class ArmAnalyzer(object):
         "gt",
         "le",
     ]
-    CONDITION_CODES_RE = "({})".format("|".join(CONDITION_CODES))
+    CONDITION_CODES_RE = f"({'|'.join(CONDITION_CODES)})"
     # Assume there is no function name containing ">".
     IMM_ADDRESS_RE = r"([0-9A-Fa-f]+)\s+<([^>]+)>"
 
     # Fuzzy regular expressions for instruction and operand parsing.
     # Branch instructions.
     JUMP_OPCODE_RE = re.compile(
-        r"^(b{0}|bx{0})(\.\w)?$".format(CONDITION_CODES_RE)
+        rf"^(b{CONDITION_CODES_RE}|bx{CONDITION_CODES_RE})(\.\w)?$"
     )
     # Call instructions.
     CALL_OPCODE_RE = re.compile(
-        r"^(bl{0}|blx{0})(\.\w)?$".format(CONDITION_CODES_RE)
+        rf"^(bl{CONDITION_CODES_RE}|blx{CONDITION_CODES_RE})(\.\w)?$"
     )
-    CALL_OPERAND_RE = re.compile(r"^{}$".format(IMM_ADDRESS_RE))
+    CALL_OPERAND_RE = re.compile(rf"^{IMM_ADDRESS_RE}$")
     CBZ_CBNZ_OPCODE_RE = re.compile(r"^(cbz|cbnz)(\.\w)?$")
     # Example: "r0, 1009bcbe <host_cmd_motion_sense+0x1d2>"
-    CBZ_CBNZ_OPERAND_RE = re.compile(r"^[^,]+,\s+{}$".format(IMM_ADDRESS_RE))
+    CBZ_CBNZ_OPERAND_RE = re.compile(rf"^[^,]+,\s+{IMM_ADDRESS_RE}$")
     # Ignore lr register because it's for return.
     INDIRECT_CALL_OPERAND_RE = re.compile(r"^r\d+|sb|sl|fp|ip|sp|pc$")
     # TODO(cheyuw): Handle conditional versions of following
@@ -549,7 +554,9 @@ class ArmAnalyzer(object):
         r"\t\s*(?P<opcode>\S+)(\s+(?P<operand>[^;]*))?"
     )
 
-    def ParseInstruction(self, line, function_end):
+    def ParseInstruction(
+        self, line, function_end
+    ):  # pylint:disable=invalid-name
         """Parse the line of instruction.
 
         Args:
@@ -579,7 +586,9 @@ class ArmAnalyzer(object):
 
         return (address, opcode, operand_text)
 
-    def AnalyzeFunction(self, function_symbol, instructions):
+    def AnalyzeFunction(
+        self, function_symbol, instructions
+    ):  # pylint:disable=invalid-name
         """Analyze function, resolve the size of stack frame and callsites.
 
         Args:
@@ -671,7 +680,7 @@ class ArmAnalyzer(object):
         return (stack_frame, callsites)
 
 
-class RiscvAnalyzer(object):
+class RiscvAnalyzer:
     """Disassembly analyzer for RISC-V architecture.
 
     Public Methods:
@@ -697,16 +706,16 @@ class RiscvAnalyzer(object):
         "ltu",
         "geu",
     ]
-    CONDITION_CODES_RE = "({})".format("|".join(CONDITION_CODES))
+    CONDITION_CODES_RE = f"({'|'.join(CONDITION_CODES)})"
     # Branch instructions.
-    JUMP_OPCODE_RE = re.compile(r"^(b{0}|j|jr)$".format(CONDITION_CODES_RE))
+    JUMP_OPCODE_RE = re.compile(rf"^(b{CONDITION_CODES_RE}|j|jr)$")
     # Call instructions.
     CALL_OPCODE_RE = re.compile(r"^(jal|jalr)$")
     # Example: "j		8009b318 <set_state_prl_hr>" or
     #          "jal	ra,800a4394 <power_get_signals>" or
     #          "bltu	t0,t1,80080300 <data_loop>"
     JUMP_ADDRESS_RE = r"((\w(\w|\d\d),){0,2})([0-9A-Fa-f]+)\s+<([^>]+)>"
-    CALL_OPERAND_RE = re.compile(r"^{}$".format(JUMP_ADDRESS_RE))
+    CALL_OPERAND_RE = re.compile(rf"^{JUMP_ADDRESS_RE}$")
     # Capture address, Example:  800a4394
     CAPTURE_ADDRESS = re.compile(r"[0-9A-Fa-f]{8}")
     # Indirect jump, Example: jalr	a5
@@ -721,7 +730,9 @@ class RiscvAnalyzer(object):
         r"\t\s*(?P<opcode>\S+)(\s+(?P<operand>[^;]*))?"
     )
 
-    def ParseInstruction(self, line, function_end):
+    def ParseInstruction(
+        self, line, function_end
+    ):  # pylint:disable=invalid-name
         """Parse the line of instruction.
 
         Args:
@@ -751,7 +762,10 @@ class RiscvAnalyzer(object):
 
         return (address, opcode, operand_text)
 
-    def AnalyzeFunction(self, function_symbol, instructions):
+    def AnalyzeFunction(
+        self, function_symbol, instructions
+    ):  # pylint:disable=invalid-name
+        """Analyzes a single function."""
         stack_frame = 0
         callsites = []
         for address, opcode, operand_text in instructions:
@@ -798,7 +812,7 @@ class RiscvAnalyzer(object):
         return (stack_frame, callsites)
 
 
-class StackAnalyzer(object):
+class StackAnalyzer:
     """Class to analyze stack usage.
 
     Public Methods:
@@ -816,7 +830,7 @@ class StackAnalyzer(object):
     # C function name from the prefix of symbol name.
     # Example: "SHA256_transform.constprop.28"
     FUNCTION_PREFIX_NAME_RE = re.compile(
-        r"^(?P<name>[{0}]+)([^{0}].*)?$".format(C_FUNCTION_NAME)
+        rf"^(?P<name>[{C_FUNCTION_NAME}]+)([^{C_FUNCTION_NAME}].*)?$"
     )
 
     # Errors of annotation resolving.
@@ -842,7 +856,9 @@ class StackAnalyzer(object):
         self.annotation = annotation
         self.address_to_line_cache = {}
 
-    def AddressToLine(self, address, resolve_inline=False):
+    def AddressToLine(
+        self, address, resolve_inline=False
+    ):  # pylint:disable=invalid-name
         """Convert address to line.
 
         Args:
@@ -865,16 +881,18 @@ class StackAnalyzer(object):
                 "-f",
                 "-e",
                 self.options.elf_path,
-                "{:x}".format(address),
+                f"{address:x}",
             ]
             if resolve_inline:
                 args.append("-i")
 
             line_text = subprocess.check_output(args, encoding="utf-8")
-        except subprocess.CalledProcessError:
-            raise StackAnalyzerError("addr2line failed to resolve lines.")
-        except OSError:
-            raise StackAnalyzerError("Failed to run addr2line.")
+        except subprocess.CalledProcessError as err:
+            raise StackAnalyzerError(
+                "addr2line failed to resolve lines."
+            ) from err
+        except OSError as err:
+            raise StackAnalyzerError("Failed to run addr2line.") from err
 
         lines = [line.strip() for line in line_text.splitlines()]
         # Assume the output has at least one pair like "function\nlocation\n", and
@@ -903,7 +921,7 @@ class StackAnalyzer(object):
         self.address_to_line_cache[cache_key] = line_infos
         return line_infos
 
-    def AnalyzeDisassembly(self, disasm_text):
+    def AnalyzeDisassembly(self, disasm_text):  # pylint:disable=invalid-name
         """Parse the disassembly text, analyze, and build a map of all functions.
 
         Args:
@@ -928,7 +946,7 @@ class StackAnalyzer(object):
             r"^(?P<address>[0-9A-Fa-f]+)\s+<(?P<name>[^>]+)>:$"
         )
 
-        def DetectFunctionHead(line):
+        def DetectFunctionHead(line):  # pylint:disable=invalid-name
             """Check if the line is a function head.
 
             Args:
@@ -1046,7 +1064,9 @@ class StackAnalyzer(object):
 
         return function_map
 
-    def MapAnnotation(self, function_map, signature_set):
+    def MapAnnotation(
+        self, function_map, signature_set
+    ):  # pylint:disable=invalid-name
         """Map annotation signatures to functions.
 
         Args:
@@ -1129,7 +1149,7 @@ class StackAnalyzer(object):
 
         return (signature_map, sig_error_map)
 
-    def LoadAnnotation(self):
+    def LoadAnnotation(self):  # pylint:disable=invalid-name
         """Load annotation rules.
 
         Returns:
@@ -1142,7 +1162,7 @@ class StackAnalyzer(object):
             r"^(?P<name>[^\[]+)(\[(?P<path>[^:]+)(:(?P<linenum>\d+))?\])?$"
         )
 
-        def NormalizeSignature(signature_text):
+        def NormalizeSignature(signature_text):  # pylint:disable=invalid-name
             """Parse and normalize the annotation signature.
 
             Args:
@@ -1172,7 +1192,7 @@ class StackAnalyzer(object):
 
             return (name_result.group("name").strip(), path, linenum)
 
-        def ExpandArray(dic):
+        def ExpandArray(dic):  # pylint:disable=invalid-name
             """Parse and expand a symbol array
 
             Args:
@@ -1217,7 +1237,7 @@ class StackAnalyzer(object):
 
                 if not name:
                     raise StackAnalyzerError(
-                        "Cannot find function for address %s." % hex(val)
+                        f"Cannot find function for address {val:x}."
                     )
 
                 output.append((name, None, None))
@@ -1225,7 +1245,7 @@ class StackAnalyzer(object):
             return output
 
         add_rules = collections.defaultdict(set)
-        remove_rules = list()
+        remove_rules = []
         invalid_sigtxts = set()
 
         if "add" in self.annotation and self.annotation["add"] is not None:
@@ -1301,7 +1321,7 @@ class StackAnalyzer(object):
 
         return (add_rules, remove_rules, invalid_sigtxts)
 
-    def ResolveAnnotation(self, function_map):
+    def ResolveAnnotation(self, function_map):  # pylint:disable=invalid-name
         """Resolve annotation.
 
         Args:
@@ -1312,7 +1332,7 @@ class StackAnalyzer(object):
           callsite addresses, set of annotation signatures which can't be resolved.
         """
 
-        def StringifySignature(signature):
+        def StringifySignature(signature):  # pylint:disable=invalid-name
             """Stringify the tupled signature.
 
             Args:
@@ -1326,9 +1346,9 @@ class StackAnalyzer(object):
             if path is not None:
                 path = os.path.relpath(path)
                 if linenum is None:
-                    bracket_text = "[{}]".format(path)
+                    bracket_text = f"[{path}]"
                 else:
-                    bracket_text = "[{}:{}]".format(path, linenum)
+                    bracket_text = f"[{path}:{linenum}]"
 
             return name + bracket_text
 
@@ -1370,7 +1390,7 @@ class StackAnalyzer(object):
 
         # Generate the annotation sets.
         add_set = set()
-        remove_list = list()
+        remove_list = []
         eliminated_addrs = set()
 
         for src_sig, dst_sigs in add_rules.items():
@@ -1419,12 +1439,11 @@ class StackAnalyzer(object):
                     # whole broken remove path.
                     skip_flag = True
                     break
-                else:
-                    # Append each function of the current signature to the all previous
-                    # remove paths.
-                    remove_paths = [
-                        p + [f] for p in remove_paths for f in remove_funcs
-                    ]
+                # Append each function of the current signature to the all previous
+                # remove paths.
+                remove_paths = [
+                    p + [f] for p in remove_paths for f in remove_funcs
+                ]
 
             if skip_flag:
                 # Ignore the broken remove path.
@@ -1445,7 +1464,7 @@ class StackAnalyzer(object):
 
         return (add_set, remove_list, eliminated_addrs, failed_sigtxts)
 
-    def PreprocessAnnotation(
+    def PreprocessAnnotation(  # pylint:disable=invalid-name,no-self-use
         self, function_map, add_set, remove_list, eliminated_addrs
     ):
         """Preprocess the annotation and callgraph.
@@ -1467,7 +1486,7 @@ class StackAnalyzer(object):
           List of remaining remove paths.
         """
 
-        def CheckEdge(path):
+        def CheckEdge(path):  # pylint:disable=invalid-name
             """Check if all edges of the path are on the callgraph.
 
             Args:
@@ -1514,7 +1533,9 @@ class StackAnalyzer(object):
 
         return [p for p in remove_list if len(p) >= 3 and CheckEdge(p)]
 
-    def AnalyzeCallGraph(self, function_map, remove_list):
+    def AnalyzeCallGraph(
+        self, function_map, remove_list
+    ):  # pylint:disable=invalid-name,no-self-use
         """Analyze callgraph.
 
         It will update the max stack size and path for each function.
@@ -1527,7 +1548,7 @@ class StackAnalyzer(object):
           List of function cycles.
         """
 
-        def Traverse(curr_state):
+        def Traverse(curr_state):  # pylint:disable=invalid-name
             """Traverse the callgraph and calculate the max stack usages of functions.
 
             Args:
@@ -1709,14 +1730,16 @@ class StackAnalyzer(object):
 
         return cycle_functions
 
-    def Analyze(self):
+    def Analyze(self):  # pylint:disable=invalid-name
         """Run the stack analysis.
 
         Raises:
           StackAnalyzerError: If disassembly fails.
         """
 
-        def OutputInlineStack(address, prefix=""):
+        def OutputInlineStack(
+            address, prefix=""
+        ):  # pylint:disable=invalid-name
             """Output beautiful inline stack.
 
             Args:
@@ -1742,16 +1765,12 @@ class StackAnalyzer(object):
                     (function_name, path, linenum) = line_info
 
                 line_texts.append(
-                    "{}[{}:{}]".format(
-                        function_name, os.path.relpath(path), linenum
-                    )
+                    f"{function_name}[{os.path.relpath(path)}:{linenum}]"
                 )
 
-            output = "{}-> {} {:x}\n".format(prefix, line_texts[0], address)
+            output = f"{prefix}-> {line_texts[0]} {address:x}\n"
             for depth, line_text in enumerate(line_texts[1:]):
-                output += "{}   {}- {}\n".format(
-                    prefix, "  " * depth, line_text
-                )
+                output += f"{prefix}   {'  ' * depth}- {line_text}\n"
 
             # Remove the last newline character.
             return (order_key, output.rstrip("\n"))
@@ -1762,10 +1781,10 @@ class StackAnalyzer(object):
                 [self.options.objdump, "-d", self.options.elf_path],
                 encoding="utf-8",
             )
-        except subprocess.CalledProcessError:
-            raise StackAnalyzerError("objdump failed to disassemble.")
-        except OSError:
-            raise StackAnalyzerError("Failed to run objdump.")
+        except subprocess.CalledProcessError as err:
+            raise StackAnalyzerError("objdump failed to disassemble.") from err
+        except OSError as err:
+            raise StackAnalyzerError("Failed to run objdump.") from err
 
         function_map = self.AnalyzeDisassembly(disasm_text)
         result = self.ResolveAnnotation(function_map)
@@ -1782,13 +1801,10 @@ class StackAnalyzer(object):
         for task in self.tasklist:
             routine_func = function_map[task.routine_address]
             print(
-                "Task: {}, Max size: {} ({} + {}), Allocated size: {}".format(
-                    task.name,
-                    routine_func.stack_max_usage + extra_stack_frame,
-                    routine_func.stack_max_usage,
-                    extra_stack_frame,
-                    task.stack_max_size,
-                )
+                f"Task: {task.name}, Max size: "
+                f"{routine_func.stack_max_usage + extra_stack_frame} "
+                f"({routine_func.stack_max_usage} + {extra_stack_frame}), "
+                f"Allocated size: {task.stack_max_size}"
             )
 
             print("Call Trace:")
@@ -1803,13 +1819,8 @@ class StackAnalyzer(object):
                     (_, path, linenum) = line_info
 
                 print(
-                    "    {} ({}) [{}:{}] {:x}".format(
-                        curr_func.name,
-                        curr_func.stack_frame,
-                        os.path.relpath(path),
-                        linenum,
-                        curr_func.address,
-                    )
+                    f"    {curr_func.name} ({curr_func.stack_frame}) "
+                    f"[{os.path.relpath(path)}:{linenum}] {curr_func.address:x}"
                 )
 
                 if depth + 1 < len(max_stack_path):
@@ -1821,7 +1832,7 @@ class StackAnalyzer(object):
                             if callsite.address is None:
                                 order_text = (
                                     None,
-                                    "{}-> [annotation]".format(indent_prefix),
+                                    f"{indent_prefix}-> [annotation]",
                                 )
                             else:
                                 order_text = OutputInlineStack(
@@ -1841,7 +1852,7 @@ class StackAnalyzer(object):
                     indirect_callsites.append(callsite.address)
 
             if len(indirect_callsites) > 0:
-                print("    In function {}:".format(function.name))
+                print(f"    In function {function.name}:")
                 text_list = []
                 for address in indirect_callsites:
                     text_list.append(OutputInlineStack(address, "        "))
@@ -1851,19 +1862,15 @@ class StackAnalyzer(object):
 
         print("Unresolved annotation signatures:")
         for sigtxt, error in failed_sigtxts:
-            print("    {}: {}".format(sigtxt, error))
+            print(f"    {sigtxt}: {error}")
 
         if len(cycle_functions) > 0:
             print("There are cycles in the following function sets:")
             for functions in cycle_functions:
-                print(
-                    "[{}]".format(
-                        ", ".join(function.name for function in functions)
-                    )
-                )
+                print(f"[{', '.join(function.name for function in functions)}]")
 
 
-def ParseArgs():
+def ParseArgs():  # pylint:disable=invalid-name
     """Parse commandline arguments.
 
     Returns:
@@ -1897,7 +1904,7 @@ def ParseArgs():
     return parser.parse_args()
 
 
-def ParseSymbolText(symbol_text):
+def ParseSymbolText(symbol_text):  # pylint:disable=invalid-name
     """Parse the content of the symbol text.
 
     Args:
@@ -1931,7 +1938,7 @@ def ParseSymbolText(symbol_text):
     return symbols
 
 
-def ParseRoDataText(rodata_text):
+def ParseRoDataText(rodata_text):  # pylint:disable=invalid-name
     """Parse the content of rodata
 
     Args:
@@ -1981,7 +1988,9 @@ def ParseRoDataText(rodata_text):
     return (base_offset, rodata)
 
 
-def LoadTasklist(section, export_taskinfo, symbols):
+def LoadTasklist(
+    section, export_taskinfo, symbols
+):  # pylint:disable=invalid-name
     """Load the task information.
 
     Args:
@@ -1993,8 +2002,8 @@ def LoadTasklist(section, export_taskinfo, symbols):
       tasklist: Task list.
     """
 
-    TaskInfoPointer = ctypes.POINTER(TaskInfo)
-    taskinfos = TaskInfoPointer()
+    task_info_pointer = ctypes.POINTER(TaskInfo)
+    taskinfos = task_info_pointer()
     if section == SECTION_RO:
         get_taskinfos_func = export_taskinfo.get_ro_taskinfos
     else:
@@ -2043,33 +2052,29 @@ def main():
             annotation = {}
         elif not os.path.exists(options.annotation):
             print(
-                "Warning: Annotation file {} does not exist.".format(
-                    options.annotation
-                )
+                f"Warning: Annotation file {options.annotation} does not exist."
             )
             annotation = {}
         else:
             try:
-                with open(options.annotation, "r") as annotation_file:
+                with open(
+                    options.annotation, "r", encoding="utf-8"
+                ) as annotation_file:
                     annotation = yaml.safe_load(annotation_file)
 
-            except yaml.YAMLError:
+            except yaml.YAMLError as err:
                 raise StackAnalyzerError(
-                    "Failed to parse annotation file {}.".format(
-                        options.annotation
-                    )
-                )
-            except IOError:
+                    f"Failed to parse annotation file {options.annotation}."
+                ) from err
+            except IOError as err:
                 raise StackAnalyzerError(
-                    "Failed to open annotation file {}.".format(
-                        options.annotation
-                    )
-                )
+                    f"Failed to open annotation file {options.annotation}."
+                ) from err
 
             # TODO(cheyuw): Do complete annotation format verification.
             if not isinstance(annotation, dict):
                 raise StackAnalyzerError(
-                    "Invalid annotation file {}.".format(options.annotation)
+                    f"Invalid annotation file {options.annotation}."
                 )
 
         # Generate and parse the symbols.
@@ -2081,12 +2086,12 @@ def main():
                 [options.objdump, "-s", "-j", ".rodata", options.elf_path],
                 encoding="utf-8",
             )
-        except subprocess.CalledProcessError:
+        except subprocess.CalledProcessError as err:
             raise StackAnalyzerError(
                 "objdump failed to dump symbol table or rodata."
-            )
-        except OSError:
-            raise StackAnalyzerError("Failed to run objdump.")
+            ) from err
+        except OSError as err:
+            raise StackAnalyzerError("Failed to run objdump.") from err
 
         symbols = ParseSymbolText(symbol_text)
         rodata = ParseRoDataText(rodata_text)
@@ -2094,15 +2099,15 @@ def main():
         # Load the tasklist.
         try:
             export_taskinfo = ctypes.CDLL(options.export_taskinfo)
-        except OSError:
-            raise StackAnalyzerError("Failed to load export_taskinfo.")
+        except OSError as err:
+            raise StackAnalyzerError("Failed to load export_taskinfo.") from err
 
         tasklist = LoadTasklist(options.section, export_taskinfo, symbols)
 
         analyzer = StackAnalyzer(options, symbols, rodata, tasklist, annotation)
         analyzer.Analyze()
-    except StackAnalyzerError as e:
-        print("Error: {}".format(e))
+    except StackAnalyzerError as err:
+        print(f"Error: {err}")
 
 
 if __name__ == "__main__":

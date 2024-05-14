@@ -3,8 +3,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# A script to pack EC binary into SPI flash image for MEC172x
-# Based on MEC172x_ROM_Description.pdf revision 6/8/2020
+# pylint:disable=too-many-lines
+
+"""A script to pack EC binary into SPI flash image for MEC172x
+Based on MEC172x_ROM_Description.pdf revision 6/8/2020
+"""
+
 import argparse
 import hashlib
 import os
@@ -73,84 +77,84 @@ CRC_TABLE = [
 ]
 
 
-def mock_print(*args, **kwargs):
-    pass
+def mock_print(*_args, **_kwargs):
+    """Does nothing"""
 
 
 debug_print = mock_print
 
 
-# Debug helper routine
 def dumpsects(spi_list):
-    debug_print("spi_list has {0} entries".format(len(spi_list)))
-    for s in spi_list:
-        debug_print("0x{0:x} 0x{1:x} {2:s}".format(s[0], len(s[1]), s[2]))
+    """Debug helper routine"""
+    debug_print(f"spi_list has {len(spi_list)} entries")
+    for sss in spi_list:
+        debug_print(f"0x{sss[0]:x} 0x{len(sss[1]):x} {sss[2]:s}")
 
 
-def printByteArrayAsHex(ba, title):
+def printByteArrayAsHex(ba, title):  # pylint:disable=invalid-name
+    """Prints a byte array as hex"""
     debug_print(title, "= ")
-    if ba == None:
+    if ba is None:
         debug_print("None")
         return
 
     count = 0
-    for b in ba:
+    for bbb in ba:
         count = count + 1
-        debug_print("0x{0:02x}, ".format(b), end="")
+        debug_print(f"0x{bbb:02x}, ", end="")
         if (count % 8) == 0:
             debug_print("")
     debug_print("")
 
 
-def Crc8(crc, data):
+def Crc8(crc, data):  # pylint:disable=invalid-name
     """Update CRC8 value."""
-    for v in data:
-        crc = ((crc << 4) & 0xFF) ^ (CRC_TABLE[(crc >> 4) ^ (v >> 4)])
-        crc = ((crc << 4) & 0xFF) ^ (CRC_TABLE[(crc >> 4) ^ (v & 0xF)])
+    for vvv in data:
+        crc = ((crc << 4) & 0xFF) ^ (CRC_TABLE[(crc >> 4) ^ (vvv >> 4)])
+        crc = ((crc << 4) & 0xFF) ^ (CRC_TABLE[(crc >> 4) ^ (vvv & 0xF)])
     return crc ^ 0x55
 
 
-def GetEntryPoint(payload_file):
+def GetEntryPoint(payload_file):  # pylint:disable=invalid-name
     """Read entry point from payload EC image."""
-    with open(payload_file, "rb") as f:
-        f.seek(4)
-        s = f.read(4)
-    return int.from_bytes(s, byteorder="little")
+    with open(payload_file, "rb") as fff:
+        fff.seek(4)
+        sss = fff.read(4)
+    return int.from_bytes(sss, byteorder="little")
 
 
-def GetPayloadFromOffset(payload_file, offset, chip_dict):
+def GetPayloadFromOffset(
+    payload_file, offset, chip_dict
+):  # pylint:disable=invalid-name
     """Read payload and pad it to chip_dict["PAD_SIZE"]."""
     padsize = chip_dict["PAD_SIZE"]
-    with open(payload_file, "rb") as f:
-        f.seek(offset)
-        payload = bytearray(f.read())
+    with open(payload_file, "rb") as fff:
+        fff.seek(offset)
+        payload = bytearray(fff.read())
     rem_len = len(payload) % padsize
     debug_print(
-        "GetPayload: padsize={0:0x} len(payload)={1:0x} rem={2:0x}".format(
-            padsize, len(payload), rem_len
-        )
+        f"GetPayload: padsize={padsize:0x} len(payload)={len(payload):0x} rem={rem_len:0x}"
     )
 
     if rem_len:
         payload += chip_dict["PAYLOAD_PAD_BYTE"] * (padsize - rem_len)
-        debug_print(
-            "GetPayload: Added {0} padding bytes".format(padsize - rem_len)
-        )
+        debug_print(f"GetPayload: Added {padsize - rem_len} padding bytes")
 
     return payload
 
 
-def GetPayload(payload_file, chip_dict):
+def GetPayload(payload_file, chip_dict):  # pylint:disable=invalid-name
     """Read payload and pad it to chip_dict["PAD_SIZE"]"""
     return GetPayloadFromOffset(payload_file, 0, chip_dict)
 
 
-def GetPublicKey(pem_file):
+def GetPublicKey(pem_file):  # pylint:disable=invalid-name
     """Extract public exponent and modulus from PEM file."""
     result = subprocess.run(
         ["openssl", "rsa", "-in", pem_file, "-text", "-noout"],
         stdout=subprocess.PIPE,
         encoding="utf-8",
+        check=True,
     )
     modulus_raw = []
     in_modulus = False
@@ -168,137 +172,144 @@ def GetPublicKey(pem_file):
     return struct.pack("<Q", exp), modulus
 
 
-def GetSpiClockParameter(args):
-    assert args.spi_clock in SPI_CLOCK_LIST, (
-        "Unsupported SPI clock speed %d MHz" % args.spi_clock
-    )
+def GetSpiClockParameter(args):  # pylint:disable=invalid-name
+    """Returns the spi clock parameter."""
+    assert (
+        args.spi_clock in SPI_CLOCK_LIST
+    ), f"Unsupported SPI clock speed {args.spi_clock:d} MHz"
     return SPI_CLOCK_LIST.index(args.spi_clock)
 
 
-def GetSpiReadCmdParameter(args):
-    assert args.spi_read_cmd in SPI_READ_CMD_LIST, (
-        "Unsupported SPI read command 0x%x" % args.spi_read_cmd
-    )
+def GetSpiReadCmdParameter(args):  # pylint:disable=invalid-name
+    """Returns the spi read cmd."""
+    assert (
+        args.spi_read_cmd in SPI_READ_CMD_LIST
+    ), f"Unsupported SPI read command 0x{args.spi_read_cmd:x}"
     return SPI_READ_CMD_LIST.index(args.spi_read_cmd)
 
 
-def GetEncodedSpiDriveStrength(args):
-    assert args.spi_drive_str in SPI_DRIVE_STR_DICT, (
-        "Unsupported SPI drive strength %d mA" % args.spi_drive_str
-    )
+def GetEncodedSpiDriveStrength(args):  # pylint:disable=invalid-name
+    """Returns the encoded spi drive strength."""
+    assert (
+        args.spi_drive_str in SPI_DRIVE_STR_DICT
+    ), f"Unsupported SPI drive strength {args.spi_drive_str:d} mA"
     return SPI_DRIVE_STR_DICT.get(args.spi_drive_str)
 
 
-# Return 0=Slow slew rate or 1=Fast slew rate
-def GetSpiSlewRate(args):
-    if args.spi_slew_fast == True:
+def GetSpiSlewRate(args):  # pylint:disable=invalid-name
+    """Return 0=Slow slew rate or 1=Fast slew rate"""
+    if args.spi_slew_fast:
         return 1
     return 0
 
 
-# Return SPI CPOL = 0 or 1
-def GetSpiCpol(args):
+def GetSpiCpol(args):  # pylint:disable=invalid-name
+    """Return SPI CPOL = 0 or 1"""
     if args.spi_cpol == 0:
         return 0
     return 1
 
 
-# Return SPI CPHA_MOSI
-# 0 = SPI Master drives data is stable on inactive to clock edge
-# 1 = SPI Master drives data is stable on active to inactive clock edge
-def GetSpiCphaMosi(args):
+def GetSpiCphaMosi(args):  # pylint:disable=invalid-name
+    """Return SPI CPHA_MOSI
+    0 = SPI Master drives data is stable on inactive to clock edge
+    1 = SPI Master drives data is stable on active to inactive clock edge
+    """
     if args.spi_cpha_mosi == 0:
         return 0
     return 1
 
 
-# Return SPI CPHA_MISO 0 or 1
-# 0 = SPI Master samples data on inactive to active clock edge
-# 1 = SPI Master samples data on active to inactive clock edge
-def GetSpiCphaMiso(args):
+def GetSpiCphaMiso(args):  # pylint:disable=invalid-name
+    """Return SPI CPHA_MISO 0 or 1
+    0 = SPI Master samples data on inactive to active clock edge
+    1 = SPI Master samples data on active to inactive clock edge
+    """
     if args.spi_cpha_miso == 0:
         return 0
     return 1
 
 
-def PadZeroTo(data, size):
+def PadZeroTo(data, size):  # pylint:disable=invalid-name
+    """Pads zeros on data."""
     data.extend(b"\0" * (size - len(data)))
 
 
-#
-# Build SPI image header for MEC172x
-# MEC172x image header size = 320(0x140) bytes
-#
-# Description using Python slice notation [start:start+len]
-#
-# header[0:4] = 'PHCM'
-# header[4] = header version = 0x03(MEC172x)
-# header[5] = SPI clock speed, drive strength, sampling mode
-#   bits[1:0] = SPI clock speed: 0=48, 1=24, 2=16, 3=12
-#   bits[3:2] = SPI controller pins drive strength
-#               00b=2mA, 01b=4mA, 10b=8mA, 11b=12mA
-#   bit[4] = SPI controller pins slew rate: 0=slow, 1=fast
-#   bit[5] = SPI CPOL: 0=SPI clock idle is low, 1=idle is high
-#   bit[6] = CHPHA_MOSI
-#       1:data change on first inactive to active clock edge
-#       0:data change on first active to inactive clock edge
-#   bit[7] = CHPHA_MISO:
-#       1: Data captured on first inactive to active clock edge
-#       0: Data captured on first active to inactive clock edge
-# header[6] Boot-ROM loader flags
-#   bits[0] = 0(use header[5] b[1:0]), 1(96 MHz)
-#   bits[2:1] = 0 reserved
-#   bits[5:3] = 111b
-#   bit[6]: For MEC172x controls authentication
-#           0=Authentication disabled. Signature is SHA-384 of FW payload
-#           1=Authentication enabled. Signature is ECDSA P-384
-#   bit[7]: 0=FW pyload not encrypted, 1=FW payload is encrypted
-# header[7]: SPI Flash read command
-#            0 -> 0x03 1-1-1 read freq < 33MHz
-#            1 -> 0x0B 1-1-1 + 8 clocks(data tri-stated)
-#            2 -> 0x3B 1-1-2 + 8 clocks(data tri-stated). Data phase is dual I/O
-#            3 -> 0x6B 1-1-4 + 8 clocks(data tri-stated). Data phase is Quad I/O
-#            NOTE: Quad requires SPI flash device QE(quad enable) bit
-#            to be factory set. Enabling QE disables HOLD# and WP#
-#            functionality of the SPI flash device.
-# header[0x8:0xC] SRAM Load address little-endian format
-# header[0xC:0x10] SRAM FW entry point. Boot-ROM jumps to
-#                  this address on successful load. (little-endian)
-# header[0x10:0x12] little-endian format: FW binary size in units of
-#                   128 bytes(MEC172x)
-# header[0x12:0x14] = 0 reserved
-# header[0x14:0x18] = Little-ending format: Unsigned offset from start of
-#                     header to FW payload.
-#                     MEC172x: Offset must be a multiple of 128
-#                     Offset must be >= header size.
-#                     NOTE: If Authentication is enabled size includes
-#                     the appended signature.
-# MEC172x:
-# header[0x18] = Authentication key select. Set to 0 for no Authentication.
-# header[0x19] = SPI flash device(s) drive strength feature flags
-#                 b[0]=1 SPI flash device 0 has drive strength feature
-#                 b[1]=SPI flash 0: DrvStr Write format(0=2 bytes, 1=1 byte)
-#                 b[2]=1 SPI flash device 1 has drive strength feature
-#                 b[3]=SPI flash 1: DrvStr Write format(0=2 bytes, 1=1 byte)
-#                 b[7:4] = 0 reserved
-# header[0x1A:0x20] = 0 reserved
-# header[0x20] = SPI opcode to read drive strength from SPI flash 0
-# header[0x21] = SPI opcode to write drive strength to SPI flash 0
-# header[0x22] = SPI flash 0: drvStr value
-# header[0x23] = SPI flash 0: drvStr mask
-# header[0x24] = SPI opcode to read drive strength from SPI flash 1
-# header[0x25] = SPI opcode to write drive strength to SPI flash 1
-# header[0x26] = SPI flash 1: drvStr value
-# header[0x27] = SPI flash 1: drvStr mask
-# header[0x28:0x48] = reserved, may be any value
-# header[0x48:0x50] = reserved for customer use
-# header[0x50:0x80] = ECDSA-384 public key x-coord. = 0 Auth. disabled
-# header[0x80:0xB0] = ECDSA-384 public key y-coord. = 0 Auth. disabled
-# header[0xB0:0xE0] = SHA-384 digest of header[0:0xB0]
-# header[0xE0:0x110] = Header ECDSA-384 signature x-coord. = 0 Auth. disabled
-# header[0x110:0x140] = Header ECDSA-384 signature y-coor. = 0 Auth. disabled
-#
-def BuildHeader2(args, chip_dict, payload_len, load_addr, payload_entry):
+def BuildHeader2(
+    args, chip_dict, payload_len, load_addr, payload_entry
+):  # pylint:disable=invalid-name
+    """Build SPI image header for MEC172x
+    MEC172x image header size = 320(0x140) bytes
+
+    Description using Python slice notation [start:start+len]
+
+    header[0:4] = 'PHCM'
+    header[4] = header version = 0x03(MEC172x)
+    header[5] = SPI clock speed, drive strength, sampling mode
+    bits[1:0] = SPI clock speed: 0=48, 1=24, 2=16, 3=12
+    bits[3:2] = SPI controller pins drive strength
+                00b=2mA, 01b=4mA, 10b=8mA, 11b=12mA
+    bit[4] = SPI controller pins slew rate: 0=slow, 1=fast
+    bit[5] = SPI CPOL: 0=SPI clock idle is low, 1=idle is high
+    bit[6] = CHPHA_MOSI
+        1:data change on first inactive to active clock edge
+        0:data change on first active to inactive clock edge
+    bit[7] = CHPHA_MISO:
+        1: Data captured on first inactive to active clock edge
+        0: Data captured on first active to inactive clock edge
+    header[6] Boot-ROM loader flags
+    bits[0] = 0(use header[5] b[1:0]), 1(96 MHz)
+    bits[2:1] = 0 reserved
+    bits[5:3] = 111b
+    bit[6]: For MEC172x controls authentication
+            0=Authentication disabled. Signature is SHA-384 of FW payload
+            1=Authentication enabled. Signature is ECDSA P-384
+    bit[7]: 0=FW pyload not encrypted, 1=FW payload is encrypted
+    header[7]: SPI Flash read command
+            0 -> 0x03 1-1-1 read freq < 33MHz
+            1 -> 0x0B 1-1-1 + 8 clocks(data tri-stated)
+            2 -> 0x3B 1-1-2 + 8 clocks(data tri-stated). Data phase is dual I/O
+            3 -> 0x6B 1-1-4 + 8 clocks(data tri-stated). Data phase is Quad I/O
+            NOTE: Quad requires SPI flash device QE(quad enable) bit
+            to be factory set. Enabling QE disables HOLD# and WP#
+            functionality of the SPI flash device.
+    header[0x8:0xC] SRAM Load address little-endian format
+    header[0xC:0x10] SRAM FW entry point. Boot-ROM jumps to
+                    this address on successful load. (little-endian)
+    header[0x10:0x12] little-endian format: FW binary size in units of
+                    128 bytes(MEC172x)
+    header[0x12:0x14] = 0 reserved
+    header[0x14:0x18] = Little-ending format: Unsigned offset from start of
+                        header to FW payload.
+                        MEC172x: Offset must be a multiple of 128
+                        Offset must be >= header size.
+                        NOTE: If Authentication is enabled size includes
+                        the appended signature.
+    MEC172x:
+    header[0x18] = Authentication key select. Set to 0 for no Authentication.
+    header[0x19] = SPI flash device(s) drive strength feature flags
+                    b[0]=1 SPI flash device 0 has drive strength feature
+                    b[1]=SPI flash 0: DrvStr Write format(0=2 bytes, 1=1 byte)
+                    b[2]=1 SPI flash device 1 has drive strength feature
+                    b[3]=SPI flash 1: DrvStr Write format(0=2 bytes, 1=1 byte)
+                    b[7:4] = 0 reserved
+    header[0x1A:0x20] = 0 reserved
+    header[0x20] = SPI opcode to read drive strength from SPI flash 0
+    header[0x21] = SPI opcode to write drive strength to SPI flash 0
+    header[0x22] = SPI flash 0: drvStr value
+    header[0x23] = SPI flash 0: drvStr mask
+    header[0x24] = SPI opcode to read drive strength from SPI flash 1
+    header[0x25] = SPI opcode to write drive strength to SPI flash 1
+    header[0x26] = SPI flash 1: drvStr value
+    header[0x27] = SPI flash 1: drvStr mask
+    header[0x28:0x48] = reserved, may be any value
+    header[0x48:0x50] = reserved for customer use
+    header[0x50:0x80] = ECDSA-384 public key x-coord. = 0 Auth. disabled
+    header[0x80:0xB0] = ECDSA-384 public key y-coord. = 0 Auth. disabled
+    header[0xB0:0xE0] = SHA-384 digest of header[0:0xB0]
+    header[0xE0:0x110] = Header ECDSA-384 signature x-coord. = 0 Auth. disabled
+    header[0x110:0x140] = Header ECDSA-384 signature y-coor. = 0 Auth. disabled
+    """
     header_size = chip_dict["HEADER_SIZE"]
 
     # allocate zero filled header
@@ -310,11 +321,11 @@ def BuildHeader2(args, chip_dict, payload_len, load_addr, payload_entry):
     header[4] = chip_dict["HEADER_VER"]
 
     # SPI frequency, drive strength, CPOL/CPHA encoding same for both chips
-    spiFreqIndex = GetSpiClockParameter(args)
-    if spiFreqIndex > 3:
+    spi_freq_index = GetSpiClockParameter(args)
+    if spi_freq_index > 3:
         header[6] |= 0x01
     else:
-        header[5] = spiFreqIndex
+        header[5] = spi_freq_index
 
     header[5] |= (GetEncodedSpiDriveStrength(args) & 0x03) << 2
     header[5] |= (GetSpiSlewRate(args) & 0x01) << 4
@@ -338,16 +349,12 @@ def BuildHeader2(args, chip_dict, payload_len, load_addr, payload_entry):
 
     # bytes 0x10 - 0x11 payload length in units of 128 bytes
     assert payload_len % chip_dict["PAYLOAD_GRANULARITY"] == 0, print(
-        "Payload size not a multiple of {0}".format(
-            chip_dict["PAYLOAD_GRANULARITY"]
-        )
+        f"Payload size not a multiple of {chip_dict['PAYLOAD_GRANULARITY']}"
     )
 
     payload_units = int(payload_len // chip_dict["PAYLOAD_GRANULARITY"])
     assert payload_units < 0x10000, print(
-        "Payload too large: len={0} units={1}".format(
-            payload_len, payload_units
-        )
+        f"Payload too large: len={payload_len} units={payload_units}"
     )
 
     header[0x10:0x12] = payload_units.to_bytes(2, "little")
@@ -356,7 +363,7 @@ def BuildHeader2(args, chip_dict, payload_len, load_addr, payload_entry):
     # loaded by Boot-ROM. We ask Boot-ROM to load (LFW || EC_RO).
     # LFW location provided on the command line.
     assert args.lfw_loc % 4096 == 0, print(
-        "LFW location not on a 4KB boundary! 0x{0:0x}".format(args.lfw_loc)
+        f"LFW location not on a 4KB boundary! 0x{args.lfw_loc:0x}"
     )
 
     assert args.lfw_loc >= (args.header_loc + chip_dict["HEADER_SIZE"]), print(
@@ -392,90 +399,82 @@ def BuildHeader2(args, chip_dict, payload_len, load_addr, payload_entry):
     return header
 
 
-#
-# MEC172x 128-byte EC Info Block appended to end of padded FW binary.
-# Python slice notation
-# byte[0:0x64] are undefined, we set to 0xFF
-# byte[0x64] = FW Build LSB
-# byte[0x65] = FW Build MSB
-# byte[0x66:0x68] = undefined, set to 0xFF
-# byte[0x68:0x78] = Roll back permissions bit maps
-# byte[0x78:0x7c] = key revocation bit maps
-# byte[0x7c] = platform ID LSB
-# byte[0x7d] = platform ID MSB
-# byte[0x7e] = auto-rollback protection enable
-# byte[0x7f] = current imeage revision
-#
-def GenEcInfoBlock(args, chip_dict):
+def GenEcInfoBlock(_args, chip_dict):  # pylint:disable=invalid-name
+    """MEC172x 128-byte EC Info Block appended to end of padded FW binary.
+    Python slice notation
+    byte[0:0x64] are undefined, we set to 0xFF
+    byte[0x64] = FW Build LSB
+    byte[0x65] = FW Build MSB
+    byte[0x66:0x68] = undefined, set to 0xFF
+    byte[0x68:0x78] = Roll back permissions bit maps
+    byte[0x78:0x7c] = key revocation bit maps
+    byte[0x7c] = platform ID LSB
+    byte[0x7d] = platform ID MSB
+    byte[0x7e] = auto-rollback protection enable
+    byte[0x7f] = current imeage revision
+    """
     # ecinfo = bytearray([0xff] * chip_dict["EC_INFO_BLK_SZ"])
     ecinfo = bytearray(chip_dict["EC_INFO_BLK_SZ"])
     return ecinfo
 
 
-#
-# Generate SPI FW image co-signature.
-# MEC172x cosignature is 96 bytes used by OEM FW
-# developer to sign their binary with ECDSA-P384-SHA384 or
-# some other signature algorithm that fits in 96 bytes.
-# At this time Cros-EC is not using this field, fill with 0xFF.
-# If this feature is implemented we need to read the OEM's
-# generated signature from a file and extract the binary
-# signature.
-#
-def GenCoSignature(args, chip_dict, payload):
+def GenCoSignature(_args, chip_dict, _payload):  # pylint:disable=invalid-name
+    """Generate SPI FW image co-signature.
+    MEC172x cosignature is 96 bytes used by OEM FW
+    developer to sign their binary with ECDSA-P384-SHA384 or
+    some other signature algorithm that fits in 96 bytes.
+    At this time Cros-EC is not using this field, fill with 0xFF.
+    If this feature is implemented we need to read the OEM's
+    generated signature from a file and extract the binary
+    signature.
+    """
     return bytearray(b"\xff" * chip_dict["COSIG_SZ"])
 
 
-#
-# Generate SPI FW Image trailer.
-# MEC172x: Size = 160 bytes
-#   binary = payload || encryption_key_header || ec_info_block || cosignature
-#   trailer[0:48] = SHA384(binary)
-#   trailer[48:144] = 0xFF
-#   trailer[144:160] = 0xFF. Boot-ROM spec. says these bytes should be random.
-#       Authentication & encryption are not used therefore random data
-#       is not necessary.
-def GenTrailer(
-    args, chip_dict, payload, encryption_key_header, ec_info_block, cosignature
+def GenTrailer(  # pylint:disable=invalid-name
+    _args, chip_dict, payload, encryption_key_header, ec_info_block, cosignature
 ):
+    """Generate SPI FW Image trailer.
+    MEC172x: Size = 160 bytes
+    binary = payload || encryption_key_header || ec_info_block || cosignature
+    trailer[0:48] = SHA384(binary)
+    trailer[48:144] = 0xFF
+    trailer[144:160] = 0xFF. Boot-ROM spec. says these bytes should be random.
+        Authentication & encryption are not used therefore random data
+        is not necessary.
+    """
     debug_print("GenTrailer SHA384 computation")
     trailer = bytearray(chip_dict["TAILER_PAD_BYTE"] * chip_dict["TRAILER_SZ"])
     hasher = hashlib.sha384()
     hasher.update(payload)
-    debug_print("  Update: payload len=0x{0:0x}".format(len(payload)))
-    if ec_info_block != None:
+    debug_print(f"  Update: payload len=0x{len(payload):0x}")
+    if ec_info_block is not None:
         hasher.update(ec_info_block)
-        debug_print(
-            "  Update: ec_info_block len=0x{0:0x}".format(len(ec_info_block))
-        )
-    if encryption_key_header != None:
+        debug_print(f"  Update: ec_info_block len=0x{len(ec_info_block):0x}")
+    if encryption_key_header is not None:
         hasher.update(encryption_key_header)
         debug_print(
-            "  Update: encryption_key_header len=0x{0:0x}".format(
-                len(encryption_key_header)
-            )
+            f"  Update: encryption_key_header len=0x{len(encryption_key_header):0x}"
         )
-    if cosignature != None:
+    if cosignature is not None:
         hasher.update(cosignature)
-        debug_print(
-            "  Update: cosignature len=0x{0:0x}".format(len(cosignature))
-        )
+        debug_print(f"  Update: cosignature len=0x{len(cosignature):0x}")
     trailer[0:48] = hasher.digest()
     trailer[-16:] = 16 * b"\xff"
 
     return trailer
 
 
-# MEC172x supports two 32-bit Tags located at offsets 0x0 and 0x4
-# in the SPI flash.
-# Tag format:
-#   bits[23:0] correspond to bits[31:8] of the Header SPI address
-#       Header is always on a 256-byte boundary.
-#   bits[31:24] = CRC8-ITU of bits[23:0].
-# Notice there is no chip-select field in the Tag both Tag's point
-# to the same flash part.
-#
-def BuildTag(args):
+def BuildTag(args):  # pylint:disable=invalid-name
+    """MEC172x supports two 32-bit Tags located at offsets 0x0 and 0x4
+    in the SPI flash.
+    Tag format:
+    bits[23:0] correspond to bits[31:8] of the Header SPI address
+        Header is always on a 256-byte boundary.
+    bits[31:24] = CRC8-ITU of bits[23:0].
+    Notice there is no chip-select field in the Tag both Tag's point
+    to the same flash part.
+    """
     tag = bytearray(
         [
             (args.header_loc >> 8) & 0xFF,
@@ -487,7 +486,8 @@ def BuildTag(args):
     return tag
 
 
-def BuildTagFromHdrAddr(header_loc):
+def BuildTagFromHdrAddr(header_loc):  # pylint:disable=invalid-name
+    """Builds a tag from a header address."""
     tag = bytearray(
         [
             (header_loc >> 8) & 0xFF,
@@ -499,18 +499,19 @@ def BuildTagFromHdrAddr(header_loc):
     return tag
 
 
-# FlashMap is an option for MEC172x
-# It is a 32 bit structure
-# bits[18:0] = bits[30:12] of second SPI flash base address
-# bits[23:19] = 0 reserved
-# bits[31:24] = CRC8 of bits[23:0]
-# Input:
-#   integer containing base address of second SPI flash
-#   This value is usually equal to the size of the first
-#   SPI flash and should be a multiple of 4KB
-# Output:
-#   bytearray of length 4
-def BuildFlashMap(secondSpiFlashBaseAddr):
+def BuildFlashMap(secondSpiFlashBaseAddr):  # pylint:disable=invalid-name
+    """FlashMap is an option for MEC172x
+    It is a 32 bit structure
+    bits[18:0] = bits[30:12] of second SPI flash base address
+    bits[23:19] = 0 reserved
+    bits[31:24] = CRC8 of bits[23:0]
+    Input:
+    integer containing base address of second SPI flash
+    This value is usually equal to the size of the first
+    SPI flash and should be a multiple of 4KB
+    Output:
+    bytearray of length 4
+    """
     flashmap = bytearray(4)
     flashmap[0] = (secondSpiFlashBaseAddr >> 12) & 0xFF
     flashmap[1] = (secondSpiFlashBaseAddr >> 20) & 0xFF
@@ -527,45 +528,47 @@ def BuildFlashMap(secondSpiFlashBaseAddr):
 #  (assumes RO/RW images have been padded with 0xFF
 # Returns temporary file name
 #
-def PacklfwRoImage(rorw_file, loader_file, image_size):
+def PacklfwRoImage(
+    rorw_file, loader_file, image_size
+):  # pylint:disable=invalid-name
     """Create a temp file with the
     first image_size bytes from the loader file and append bytes
     from the rorw file.
     return the filename"""
-    fo = tempfile.NamedTemporaryFile(delete=False)  # Need to keep file around
-    with open(loader_file, "rb") as fin1:  # read 4KB loader file
-        pro = fin1.read()
-    fo.write(pro)  # write 4KB loader data to temp file
-    with open(rorw_file, "rb") as fin:
-        ro = fin.read(image_size)
+    with tempfile.NamedTemporaryFile(
+        delete=False
+    ) as outfile:  # Need to keep file around
+        with open(loader_file, "rb") as fin1:  # read 4KB loader file
+            pro = fin1.read()
+        outfile.write(pro)  # write 4KB loader data to temp file
+        with open(rorw_file, "rb") as fin:
+            readbytes = fin.read(image_size)
 
-    fo.write(ro)
-    fo.close()
+        outfile.write(readbytes)
 
-    return fo.name
+        return outfile.name
 
 
-#
-# Generate a test EC_RW image of same size
-# as original.
-# Preserve image_data structure and fill all
-# other bytes with 0xA5.
-# useful for testing SPI read and EC build
-# process hash generation.
-#
 def gen_test_ecrw(pldrw):
+    """Generate a test EC_RW image of same size
+    as original.
+    Preserve image_data structure and fill all
+    other bytes with 0xA5.
+    useful for testing SPI read and EC build
+    process hash generation.
+    """
     debug_print("gen_test_ecrw: pldrw type =", type(pldrw))
     debug_print("len pldrw =", len(pldrw), " = ", hex(len(pldrw)))
     cookie1_pos = pldrw.find(b"\x99\x88\x77\xce")
     cookie2_pos = pldrw.find(b"\xdd\xbb\xaa\xce", cookie1_pos + 4)
-    t = struct.unpack("<L", pldrw[cookie1_pos + 0x24 : cookie1_pos + 0x28])
-    size = t[0]
+    ttt = struct.unpack("<L", pldrw[cookie1_pos + 0x24 : cookie1_pos + 0x28])
+    size = ttt[0]
     debug_print("EC_RW size =", size, " = ", hex(size))
 
     debug_print("Found cookie1 at ", hex(cookie1_pos))
     debug_print("Found cookie2 at ", hex(cookie2_pos))
 
-    if cookie1_pos > 0 and cookie2_pos > cookie1_pos:
+    if cookie2_pos > cookie1_pos > 0:
         for i in range(0, cookie1_pos):
             pldrw[i] = 0xA5
         for i in range(cookie2_pos + 4, len(pldrw)):
@@ -576,8 +579,7 @@ def gen_test_ecrw(pldrw):
 
 
 def parseargs():
-    rpath = os.path.dirname(os.path.relpath(__file__))
-
+    """Parses command line arguments."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-i",
@@ -710,6 +712,7 @@ def parseargs():
 
 
 def print_args(args):
+    """Prints all the command ling arguments."""
     debug_print("parsed arguments:")
     debug_print(".input  = ", args.input)
     debug_print(".output = ", args.output)
@@ -740,12 +743,9 @@ def print_args(args):
 
 def spi_list_append(mylist, loc, data, description):
     """Append SPI data block tuple to list"""
-    t = (loc, data, description)
-    mylist.append(t)
+    mylist.append((loc, data, description))
     debug_print(
-        "Add SPI entry: offset=0x{0:08x} len=0x{1:0x} descr={2}".format(
-            loc, len(data), description
-        )
+        f"Add SPI entry: offset=0x{loc:08x} len=0x{len(data):0x} descr={description}"
     )
 
 
@@ -785,7 +785,8 @@ def spi_list_append(mylist, loc, data, description):
 #                       || 48 * [0]
 #
 def main():
-    global debug_print
+    """Main function."""
+    global debug_print  # pylint:disable=global-statement,invalid-name
 
     args = parseargs()
 
@@ -804,7 +805,6 @@ def main():
     # the smallest flash erase block size.
 
     spi_size = args.spi_size * 1024
-    spi_image_size = spi_size // 2
 
     rorofile = PacklfwRoImage(args.input, args.loader_file, args.image_size)
     debug_print("Temporary file containing LFW + EC_RO is ", rorofile)
@@ -827,9 +827,7 @@ def main():
     # 32-bit word at offset 0x4 address of reset handler
     # NOTE: reset address will have bit[0]=1 to ensure thumb mode.
     lfw_ecro_entry = GetEntryPoint(rorofile)
-    debug_print(
-        "LFW Entry point from GetEntryPoint = 0x{0:08x}".format(lfw_ecro_entry)
-    )
+    debug_print(f"LFW Entry point from GetEntryPoint = 0x{lfw_ecro_entry:08x}")
 
     # Chromebooks are not using MEC BootROM SPI header/payload authentication
     # or payload encryption. In this case the header authentication signature
@@ -869,9 +867,7 @@ def main():
     ecrw_len = len(ecrw)
     if ecrw_len > args.image_size:
         debug_print(
-            "Truncate EC_RW len={0:0x} to image_size={1:0x}".format(
-                ecrw_len, args.image_size
-            )
+            f"Truncate EC_RW len={ecrw_len:0x} to image_size={args.image_size:0x}"
         )
         ecrw = ecrw[: args.image_size]
         ecrw_len = len(ecrw)
@@ -917,34 +913,34 @@ def main():
     spi_list_append(spi_list, args.lfw_loc, lfw_ecro, "LFW-EC_RO FW")
 
     offset = args.lfw_loc + len(lfw_ecro)
-    debug_print("SPI offset after LFW_ECRO = 0x{0:08x}".format(offset))
+    debug_print(f"SPI offset after LFW_ECRO = 0x{offset:08x}")
 
-    if ec_info_block != None:
+    if ec_info_block is not None:
         spi_list_append(spi_list, offset, ec_info_block, "LFW-EC_RO Info Block")
         offset += len(ec_info_block)
 
-    debug_print("SPI offset after ec_info_block = 0x{0:08x}".format(offset))
+    debug_print(f"SPI offset after ec_info_block = 0x{offset:08x}")
 
-    if cosignature != None:
+    if cosignature is not None:
         # spi_list.append((offset, co-signature, "ECRO Co-signature"))
         spi_list_append(spi_list, offset, cosignature, "LFW-EC_RO Co-signature")
         offset += len(cosignature)
 
-    debug_print("SPI offset after co-signature = 0x{0:08x}".format(offset))
+    debug_print(f"SPI offset after co-signature = 0x{offset:08x}")
 
-    if trailer != None:
+    if trailer is not None:
         # spi_list.append((offset, trailer, "ECRO Trailer"))
         spi_list_append(spi_list, offset, trailer, "LFW-EC_RO trailer")
         offset += len(trailer)
 
-    debug_print("SPI offset after trailer = 0x{0:08x}".format(offset))
+    debug_print(f"SPI offset after trailer = 0x{offset:08x}")
 
     # EC_RW location
     rw_offset = int(spi_size // 2)
     if args.rw_loc >= 0:
         rw_offset = args.rw_loc
 
-    debug_print("rw_offset = 0x{0:08x}".format(rw_offset))
+    debug_print(f"rw_offset = 0x{rw_offset:08x}")
 
     # spi_list.append((rw_offset, ecrw, "ecrw"))
     spi_list_append(spi_list, rw_offset, ecrw, "EC_RW")
@@ -959,30 +955,30 @@ def main():
     # MEC172x Boot-ROM locates TAG0/1 at SPI offset 0
     # instead of end of SPI.
     #
-    with open(args.output, "wb") as f:
+    with open(args.output, "wb") as output_file:
         debug_print("Write spi list to file", args.output)
         addr = 0
-        for s in spi_list:
-            if addr < s[0]:
+        for loc, data, _ in spi_list:
+            if addr < loc:
                 debug_print(
                     "Offset ",
                     hex(addr),
                     " Length",
-                    hex(s[0] - addr),
+                    hex(loc - addr),
                     "fill with 0xff",
                 )
-                f.write(b"\xff" * (s[0] - addr))
-                addr = s[0]
+                output_file.write(b"\xff" * (loc - addr))
+                addr = loc
                 debug_print(
                     "Offset ",
                     hex(addr),
                     " Length",
-                    hex(len(s[1])),
+                    hex(len(data)),
                     "write data",
                 )
 
-            f.write(s[1])
-            addr += len(s[1])
+            output_file.write(data)
+            addr += len(data)
 
         if addr < spi_size:
             debug_print(
@@ -992,9 +988,9 @@ def main():
                 hex(spi_size - addr),
                 "fill with 0xff",
             )
-            f.write(b"\xff" * (spi_size - addr))
+            output_file.write(b"\xff" * (spi_size - addr))
 
-        f.flush()
+        output_file.flush()
 
 
 if __name__ == "__main__":

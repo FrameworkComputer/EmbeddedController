@@ -1,4 +1,4 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright 2017 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
@@ -6,10 +6,6 @@
 """Program to convert power logging config from a servo_ina device
    to a sweetberry config.
 """
-
-# Note: This is a py2/3 compatible file.
-
-from __future__ import print_function
 
 import os
 import sys
@@ -33,9 +29,10 @@ def fetch_records(basename):
 
 
 def main(argv):
+    """Main function."""
     if len(argv) != 2:
         print("usage:")
-        print(" %s input.py" % argv[0])
+        print(f" {argv[0]} input.py")
         return
 
     inputf = argv[1]
@@ -43,40 +40,36 @@ def main(argv):
     outputf = basename + ".board"
     outputs = basename + ".scenario"
 
-    print("Converting %s to %s, %s" % (inputf, outputf, outputs))
+    print(f"Converting {inputf} to {outputf}, {outputs}")
 
     inas = fetch_records(basename)
 
-    boardfile = open(outputf, "w")
-    scenario = open(outputs, "w")
+    with open(outputf, "w", encoding="utf-8") as boardfile, open(
+        outputs, "w", encoding="utf-8"
+    ) as scenario:
+        boardfile.write("[\n")
+        scenario.write("[\n")
+        start = True
 
-    boardfile.write("[\n")
-    scenario.write("[\n")
-    start = True
+        for rec in inas:
+            if start:
+                start = False
+            else:
+                boardfile.write(",\n")
+                scenario.write(",\n")
 
-    for rec in inas:
-        if start:
-            start = False
-        else:
-            boardfile.write(",\n")
-            scenario.write(",\n")
-
-        record = (
-            '  {"name": "%s", "rs": %f, "sweetberry": "A", "channel": %d}'
-            % (
-                rec[2],
-                rec[4],
-                rec[1] - 64,
+            record = (
+                f'  {{"name": "{rec[2]}", "rs": {rec[4]:f}, '
+                f'"sweetberry": "A", "channel": {rec[1] - 64:d}}}'
             )
-        )
-        boardfile.write(record)
-        scenario.write('"%s"' % rec[2])
+            boardfile.write(record)
+            scenario.write(f'"{rec[2]}"')
 
-    boardfile.write("\n")
-    boardfile.write("]")
+        boardfile.write("\n")
+        boardfile.write("]")
 
-    scenario.write("\n")
-    scenario.write("]")
+        scenario.write("\n")
+        scenario.write("]")
 
 
 if __name__ == "__main__":

@@ -15,7 +15,8 @@ import sys
 TESTS = ["meta", "gpio", "hook", "i2c", "interrupt", "mutex", "task", "timer"]
 
 
-class CtsRunner(object):
+# pylint:disable=missing-function-docstring,no-self-use
+class CtsRunner:
     """Class running eCTS tests."""
 
     def __init__(self, ec_dir, dryrun):
@@ -27,8 +28,8 @@ class CtsRunner(object):
 
     def run_cmd(self, cmd):
         try:
-            rc = subprocess.call(cmd)
-            if rc != 0:
+            ret = subprocess.call(cmd)
+            if ret != 0:
                 return False
         except OSError:
             return False

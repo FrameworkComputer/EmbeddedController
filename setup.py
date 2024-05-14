@@ -2,6 +2,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Pip config for some tools that are probably not used any longer."""
+
 from setuptools import setup
 
 

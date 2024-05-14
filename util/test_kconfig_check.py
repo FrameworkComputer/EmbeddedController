@@ -75,7 +75,7 @@ class KconfigCheck(unittest.TestCase):
         """Check that kconfigs can be read."""
         checker = kconfig_check.KconfigCheck()
         with tempfile.NamedTemporaryFile() as configs:
-            with open(configs.name, "w") as out:
+            with open(configs.name, "w", encoding="utf-8") as out:
                 prefix = "#define " if use_defines else ""
                 suffix = " " if use_defines else "="
                 out.write(
@@ -106,7 +106,9 @@ class KconfigCheck(unittest.TestCase):
         Args:
             srctree: Directory to write to
         """
-        with open(os.path.join(srctree, "Kconfig"), "w") as out:
+        with open(
+            os.path.join(srctree, "Kconfig"), "w", encoding="utf-8"
+        ) as out:
             out.write(
                 f"""config {PREFIX}MY_KCONFIG
 \tbool "my kconfig"
@@ -116,7 +118,9 @@ rsource "subdir/Kconfig.wibble"
             )
         subdir = os.path.join(srctree, "subdir")
         os.mkdir(subdir)
-        with open(os.path.join(subdir, "Kconfig.wibble"), "w") as out:
+        with open(
+            os.path.join(subdir, "Kconfig.wibble"), "w", encoding="utf-8"
+        ) as out:
             out.write(
                 f"""menuconfig {PREFIX}MENU_KCONFIG
 
@@ -128,8 +132,10 @@ config {CONSOLE_PREFIX}WIBBLE
         # Add a directory which should be ignored
         bad_subdir = os.path.join(subdir, "Kconfig")
         os.mkdir(bad_subdir)
-        with open(os.path.join(bad_subdir, "Kconfig.bad"), "w") as out:
-            out.write("menuconfig %sBAD_KCONFIG" % PREFIX)
+        with open(
+            os.path.join(bad_subdir, "Kconfig.bad"), "w", encoding="utf-8"
+        ) as out:
+            out.write(f"menuconfig {PREFIX}BAD_KCONFIG")
 
     @classmethod
     def setup_zephyr_base(cls, zephyr_base):
@@ -138,7 +144,9 @@ config {CONSOLE_PREFIX}WIBBLE
         Args:
             zephyr_base: Directory to write to
         """
-        with open(os.path.join(zephyr_base, "Kconfig.zephyr"), "w") as out:
+        with open(
+            os.path.join(zephyr_base, "Kconfig.zephyr"), "w", encoding="utf-8"
+        ) as out:
             out.write(
                 """config ZCONFIG
 \tbool "zephyr kconfig"
@@ -148,13 +156,17 @@ rsource "subdir/Kconfig.wobble"
             )
         subdir = os.path.join(zephyr_base, "subdir")
         os.mkdir(subdir)
-        with open(os.path.join(subdir, "Kconfig.wobble"), "w") as out:
+        with open(
+            os.path.join(subdir, "Kconfig.wobble"), "w", encoding="utf-8"
+        ) as out:
             out.write("menuconfig WOBBLE_MENU_KCONFIG\n")
 
         # Add a directory which should be ignored
         bad_subdir = os.path.join(subdir, "Kconfig")
         os.mkdir(bad_subdir)
-        with open(os.path.join(bad_subdir, "Kconfig.bad"), "w") as out:
+        with open(
+            os.path.join(bad_subdir, "Kconfig.bad"), "w", encoding="utf-8"
+        ) as out:
             out.write("menuconfig BAD_KCONFIG")
 
     def test_find_kconfigs(self):
@@ -196,11 +208,11 @@ rsource "subdir/Kconfig.wobble"
             configs_fname: Filename to which CONFIGs to check should be written
             add_new_one: True to add CONFIG_NEW_ONE to the configs_fname file
         """
-        with open(allowed_fname, "w") as out:
+        with open(allowed_fname, "w", encoding="utf-8") as out:
             out.write("CONFIG_CMD_WIBBLE\n")
             out.write("CONFIG_OLD_ONE\n")
             out.write("CONFIG_MENU_KCONFIG\n")
-        with open(configs_fname, "w") as out:
+        with open(configs_fname, "w", encoding="utf-8") as out:
             to_add = [
                 "CONFIG_OLD_ONE",
                 "CONFIG_MY_KCONFIG",
@@ -326,7 +338,9 @@ rsource "subdir/Kconfig.wobble"
         self.assertEqual("", stderr.getvalue())
         found = re.findall("(CONFIG_.*)", stdout.getvalue())
         self.assertEqual(["CONFIG_CMD_WIBBLE", "CONFIG_MENU_KCONFIG"], found)
-        allowed = kconfig_check.NEW_ALLOWED_FNAME.read_text().splitlines()
+        allowed = kconfig_check.NEW_ALLOWED_FNAME.read_text(
+            encoding="utf-8"
+        ).splitlines()
         self.assertEqual(["CONFIG_OLD_ONE"], allowed)
 
 

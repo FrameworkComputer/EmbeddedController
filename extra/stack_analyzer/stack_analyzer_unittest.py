@@ -5,7 +5,8 @@
 
 """Tests for Stack Analyzer classes and functions."""
 
-from __future__ import print_function
+# TODO: Clean up the lint errors and remove these disables.
+# pylint:disable=invalid-name,missing-function-docstring,no-self-use,too-many-lines
 
 import os
 import subprocess
@@ -770,13 +771,13 @@ class StackAnalyzerTest(unittest.TestCase):
         )
         checkoutput_mock.reset_mock()
 
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             sa.StackAnalyzerError, "addr2line failed to resolve lines."
         ):
             checkoutput_mock.side_effect = subprocess.CalledProcessError(1, "")
             self.analyzer.AddressToLine(0x5678)
 
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             sa.StackAnalyzerError, "Failed to run addr2line."
         ):
             checkoutput_mock.side_effect = OSError()
@@ -835,13 +836,13 @@ class StackAnalyzerTest(unittest.TestCase):
                 ]
             )
 
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             sa.StackAnalyzerError, "Failed to run objdump."
         ):
             checkoutput_mock.side_effect = OSError()
             self.analyzer.Analyze()
 
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             sa.StackAnalyzerError, "objdump failed to disassemble."
         ):
             checkoutput_mock.side_effect = subprocess.CalledProcessError(1, "")
@@ -900,13 +901,13 @@ class StackAnalyzerTest(unittest.TestCase):
                 ]
             )
 
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             sa.StackAnalyzerError, "Failed to run objdump."
         ):
             checkoutput_mock.side_effect = OSError()
             self.analyzer.Analyze()
 
-        with self.assertRaisesRegexp(
+        with self.assertRaisesRegex(
             sa.StackAnalyzerError, "objdump failed to disassemble."
         ):
             checkoutput_mock.side_effect = subprocess.CalledProcessError(1, "")
@@ -914,7 +915,9 @@ class StackAnalyzerTest(unittest.TestCase):
 
     @mock.patch("subprocess.check_output")
     @mock.patch("stack_analyzer.ParseArgs")
-    def testMain(self, parseargs_mock, checkoutput_mock):
+    def testMain(
+        self, parseargs_mock, checkoutput_mock
+    ):  # pylint:disable=no-self-use,invalid-name
         symbol_text = (
             "1000 g     F .text  0000015c .hidden hook_task\n"
             "2000 g     F .text  0000051c .hidden console_task\n"
@@ -958,7 +961,9 @@ class StackAnalyzerTest(unittest.TestCase):
                 with mock.patch("builtins.open", mock.mock_open()) as open_mock:
                     open_mock.return_value.read.side_effect = ["{", ""]
                     sa.main()
-                    open_mock.assert_called_once_with("fake", "r")
+                    open_mock.assert_called_once_with(
+                        "fake", "r", encoding="utf-8"
+                    )
                     print_mock.assert_called_once_with(
                         "Error: Failed to parse annotation file fake."
                     )

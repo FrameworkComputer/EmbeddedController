@@ -83,7 +83,7 @@ class EdtArgumentParser(argparse.ArgumentParser):
     """Argument parser class that adds all default zephyr arguments"""
 
     def __init__(self, *args, **kwargs):
-        super(EdtArgumentParser, self).__init__(*args, **kwargs)
+        super().__init__(*args, **kwargs)
 
         self.add_argument(
             "--zephyr-base",
