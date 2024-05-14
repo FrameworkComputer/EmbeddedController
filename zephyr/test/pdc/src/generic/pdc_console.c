@@ -5,6 +5,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "mock_pdc_power_mgmt.h"
 
 #include <zephyr/shell/shell.h>
 #include <zephyr/ztest.h>
@@ -18,7 +19,13 @@ static void console_cmd_pdc_setup(void)
 		"TEST_PORT is invalid");
 }
 
-ZTEST_SUITE(console_cmd_pdc, NULL, console_cmd_pdc_setup, NULL, NULL, NULL);
+static void console_cmd_pdc_reset(void *fixture)
+{
+	helper_reset_pdc_power_mgmt_fakes();
+}
+
+ZTEST_SUITE(console_cmd_pdc, NULL, console_cmd_pdc_setup, console_cmd_pdc_reset,
+	    console_cmd_pdc_reset, NULL);
 
 ZTEST_USER(console_cmd_pdc, test_no_args)
 {

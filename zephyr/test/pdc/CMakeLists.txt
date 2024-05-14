@@ -33,4 +33,5 @@ endif()
 
 if (DEFINED CONFIG_TEST_SUITE_PDC_CONSOLE)
 	target_sources(app PRIVATE src/generic/pdc_console.c)
+	target_sources(app PRIVATE src/mock_pdc_power_mgmt.c)
 endif()

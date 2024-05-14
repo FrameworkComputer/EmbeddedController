@@ -2254,7 +2254,7 @@ static bool pdc_power_mgmt_is_source_connected(int port)
 	return pdc_data[port]->port.attached_state == SRC_ATTACHED_STATE;
 }
 
-bool pdc_power_mgmt_is_connected(int port)
+test_mockable bool pdc_power_mgmt_is_connected(int port)
 {
 	if (!is_pdc_port_valid(port)) {
 		return false;
@@ -2448,7 +2448,7 @@ void pdc_power_mgmt_request_data_swap_to_dfp(int port)
 	pdc_power_mgmt_request_data_swap_intern(port, PD_ROLE_DFP);
 }
 
-void pdc_power_mgmt_request_data_swap(int port)
+test_mockable void pdc_power_mgmt_request_data_swap(int port)
 {
 	if (pdc_power_mgmt_pd_get_data_role(port) == PD_ROLE_DFP) {
 		pdc_power_mgmt_request_data_swap_intern(port, PD_ROLE_UFP);
@@ -2495,7 +2495,7 @@ void pdc_power_mgmt_request_swap_to_snk(int port)
 	pdc_power_mgmt_request_power_swap_intern(port, PD_ROLE_SINK);
 }
 
-void pdc_power_mgmt_request_power_swap(int port)
+test_mockable void pdc_power_mgmt_request_power_swap(int port)
 {
 	if (pdc_power_mgmt_is_sink_connected(port)) {
 		pdc_power_mgmt_request_power_swap_intern(port, PD_ROLE_SOURCE);
@@ -2504,7 +2504,7 @@ void pdc_power_mgmt_request_power_swap(int port)
 	}
 }
 
-enum tcpc_cc_polarity pdc_power_mgmt_pd_get_polarity(int port)
+test_mockable enum tcpc_cc_polarity pdc_power_mgmt_pd_get_polarity(int port)
 {
 	if (pdc_data[port]->port.connector_status.orientation) {
 		return POLARITY_CC2;
@@ -2513,7 +2513,7 @@ enum tcpc_cc_polarity pdc_power_mgmt_pd_get_polarity(int port)
 	return POLARITY_CC1;
 }
 
-enum pd_data_role pdc_power_mgmt_pd_get_data_role(int port)
+test_mockable enum pd_data_role pdc_power_mgmt_pd_get_data_role(int port)
 {
 	/* Make sure port is connected */
 	if (!pdc_power_mgmt_is_connected(port)) {
@@ -2528,7 +2528,7 @@ enum pd_data_role pdc_power_mgmt_pd_get_data_role(int port)
 	return PD_ROLE_DFP;
 }
 
-enum pd_power_role pdc_power_mgmt_get_power_role(int port)
+test_mockable enum pd_power_role pdc_power_mgmt_get_power_role(int port)
 {
 	/* Make sure port is connected */
 	if (!pdc_power_mgmt_is_connected(port)) {
@@ -2588,7 +2588,7 @@ bool pdc_power_mgmt_get_partner_dual_role_power(int port)
 	return pdc_data[port]->port.ccaps.op_mode_drp;
 }
 
-bool pdc_power_mgmt_get_partner_data_swap_capable(int port)
+test_mockable bool pdc_power_mgmt_get_partner_data_swap_capable(int port)
 {
 	/* Make sure port is connected */
 	if (!pdc_power_mgmt_is_connected(port)) {
@@ -2624,7 +2624,7 @@ uint32_t pdc_power_mgmt_get_vbus_voltage(int port)
 	return pdc_data[port]->port.vbus;
 }
 
-int pdc_power_mgmt_reset(int port)
+test_mockable int pdc_power_mgmt_reset(int port)
 {
 	int rv;
 
@@ -2666,7 +2666,7 @@ const uint32_t *const pdc_power_mgmt_get_src_caps(int port)
 	return (const uint32_t *const)pdc_data[port]->port.snk_policy.src.pdos;
 }
 
-const char *pdc_power_mgmt_get_task_state_name(int port)
+test_mockable const char *pdc_power_mgmt_get_task_state_name(int port)
 {
 	enum pdc_state_t indicated_state,
 		actual_state = get_pdc_state(&pdc_data[port]->port);
@@ -2684,7 +2684,8 @@ const char *pdc_power_mgmt_get_task_state_name(int port)
 	return pdc_state_names[indicated_state];
 }
 
-void pdc_power_mgmt_set_dual_role(int port, enum pd_dual_role_states state)
+test_mockable void pdc_power_mgmt_set_dual_role(int port,
+						enum pd_dual_role_states state)
 {
 	struct pdc_port_t *port_data = &pdc_data[port]->port;
 
@@ -2737,7 +2738,7 @@ void pdc_power_mgmt_set_dual_role(int port, enum pd_dual_role_states state)
 	}
 }
 
-int pdc_power_mgmt_set_trysrc(int port, bool enable)
+test_mockable int pdc_power_mgmt_set_trysrc(int port, bool enable)
 {
 	int rv;
 
@@ -2876,7 +2877,7 @@ static void pd_chipset_shutdown(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, pd_chipset_shutdown, HOOK_PRIO_DEFAULT);
 
-int pdc_power_mgmt_get_info(int port, struct pdc_info_t *pdc_info)
+test_mockable int pdc_power_mgmt_get_info(int port, struct pdc_info_t *pdc_info)
 {
 	int ret;
 
@@ -3004,7 +3005,8 @@ pdc_power_mgmt_get_identity_discovery(int port, enum tcpci_msg_type type)
 	}
 }
 
-int pdc_power_mgmt_connector_reset(int port, enum connector_reset reset_type)
+test_mockable int
+pdc_power_mgmt_connector_reset(int port, enum connector_reset reset_type)
 {
 	/* Make sure port is in range and that an output buffer is provided */
 	if (!is_pdc_port_valid(port)) {
@@ -3140,7 +3142,7 @@ uint8_t pdc_power_mgmt_get_product_type(int port)
  * chips rather than all ports at once. It should take a chip ID as a param and
  * track current comms status by chip.
  */
-int pdc_power_mgmt_set_comms_state(bool enable_comms)
+test_mockable int pdc_power_mgmt_set_comms_state(bool enable_comms)
 {
 	int ret;
 	int status = 0;
@@ -3222,8 +3224,9 @@ int pdc_power_mgmt_set_comms_state(bool enable_comms)
 	return status;
 }
 
-int pdc_power_mgmt_get_connector_status(
-	int port, union connector_status_t *connector_status)
+test_mockable int
+pdc_power_mgmt_get_connector_status(int port,
+				    union connector_status_t *connector_status)
 {
 	struct pdc_port_t *pdc;
 
@@ -3291,7 +3294,8 @@ void pdc_power_mgmt_request_source_voltage(int port, int mv)
 	}
 }
 
-int pdc_power_mgmt_get_cable_prop(int port, union cable_property_t *cable_prop)
+test_mockable int
+pdc_power_mgmt_get_cable_prop(int port, union cable_property_t *cable_prop)
 {
 	if (!is_pdc_port_valid(port)) {
 		return -ERANGE;
