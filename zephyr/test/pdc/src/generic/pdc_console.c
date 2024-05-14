@@ -238,3 +238,39 @@ ZTEST_USER(console_cmd_pdc, test_info)
 	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
 		      rv);
 }
+
+ZTEST_USER(console_cmd_pdc, test_comms_state)
+{
+	int rv;
+
+	/* Invalid param */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc comms xyz");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Successful suspend */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc comms suspend");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+	zassert_equal(1, pdc_power_mgmt_set_comms_state_fake.call_count);
+	zassert_false(pdc_power_mgmt_set_comms_state_fake.arg0_history[0]);
+
+	RESET_FAKE(pdc_power_mgmt_set_comms_state);
+
+	/* Successful resume */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc comms resume");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+	zassert_equal(1, pdc_power_mgmt_set_comms_state_fake.call_count);
+	zassert_true(pdc_power_mgmt_set_comms_state_fake.arg0_history[0]);
+
+	RESET_FAKE(pdc_power_mgmt_set_comms_state);
+
+	/* Error while setting comms state */
+	pdc_power_mgmt_set_comms_state_fake.return_val = 1;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc comms suspend");
+	zassert_equal(rv, pdc_power_mgmt_set_comms_state_fake.return_val,
+		      "Expected %d, but got %d",
+		      pdc_power_mgmt_set_comms_state_fake.return_val, rv);
+	zassert_equal(1, pdc_power_mgmt_set_comms_state_fake.call_count);
+}

@@ -379,6 +379,7 @@ static int cmd_pdc_connector_reset(const struct shell *sh, size_t argc,
 	return rv;
 }
 
+/* LCOV_EXCL_START - No known way to test tab-completion feature */
 /**
  * @brief Tab-completion of "suspend" or "resume" for the comms subcommand
  */
@@ -402,6 +403,7 @@ static void pdc_console_get_suspend_or_resume(size_t idx,
 
 SHELL_DYNAMIC_CMD_CREATE(dsub_suspend_or_resume,
 			 pdc_console_get_suspend_or_resume);
+/* LCOV_EXCL_STOP */
 
 static int cmd_pdc_comms_state(const struct shell *sh, size_t argc, char **argv)
 {
