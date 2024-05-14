@@ -67,9 +67,18 @@ void rauru_set_dp_path(enum rauru_dp_port port)
 		GPIO_DT_FROM_NODELABEL(gpio_dp_path_usb_c1_en);
 	const struct gpio_dt_spec *hdmi_en =
 		GPIO_DT_FROM_NODELABEL(gpio_dp_path_hdmi_en);
+	const struct gpio_dt_spec *dp_in_hpd[] = {
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_dp_in_hpd),
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c1_dp_in_hpd),
+	};
 
 	if (port == active_dp_port) {
 		return;
+	}
+
+	/* Enable retimer/redriver transmitting */
+	for (int i = 0; i < DP_PORT_HDMI; i++) {
+		gpio_pin_set_dt(dp_in_hpd[i], i == port);
 	}
 
 	/*
