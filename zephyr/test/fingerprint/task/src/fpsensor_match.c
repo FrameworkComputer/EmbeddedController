@@ -33,7 +33,7 @@ FAKE_VALUE_FUNC(int, mkbp_send_event, uint8_t);
 		DT_CHOSEN(cros_fp_fingerprint_sensor))
 static uint8_t image_buffer[IMAGE_SIZE];
 
-static const char fake_rollback_entropy[] = "some_rollback_entropy";
+static const uint8_t fake_rollback_entropy[] = "some_rollback_entropy";
 
 /* The fake TPM seed is "very_secret_32_bytes_of_tpm_seed" */
 #define FAKE_TPM_SEED                                                         \
