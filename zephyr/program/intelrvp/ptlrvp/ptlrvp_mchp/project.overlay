@@ -5,6 +5,7 @@
 
 #include "include/board.h"
 
+#include "adc.dtsi"
 #include "gpio.dtsi"
 #include "i2c.dts"
 #include "../i2c.dtsi"
