@@ -29,9 +29,9 @@ def cat_file(args, filename) -> str:
         raise Exception(f"filename = {filename}") from err
 
 
-def argument_parser():
+def argument_parser(description=None):
     """Returns an ArgumentParser with standard options configured."""
-    parser = argparse.ArgumentParser()
+    parser = argparse.ArgumentParser(description=description)
     parser.add_argument("-c", "--commit")
     parser.add_argument("filename", nargs="*", type=Path)
     return parser

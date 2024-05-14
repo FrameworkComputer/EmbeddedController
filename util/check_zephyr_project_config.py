@@ -5,13 +5,14 @@
 
 """Validate Zephyr project configuration files."""
 
-import argparse
 import logging
 import os
 import pathlib
 import site
 import sys
 import tempfile
+
+import preupload.lib
 
 
 EC_BASE = pathlib.Path(__file__).parent.parent
@@ -43,7 +44,7 @@ CONF_FILE_EXT = (".conf", ".overlay", "_defconfig")
 
 
 def _parse_args(argv):
-    parser = argparse.ArgumentParser(description=__doc__)
+    parser = preupload.lib.argument_parser(description=__doc__)
 
     parser.add_argument(
         "-v", "--verbose", action="store_true", help="Verbose Output"
@@ -54,14 +55,10 @@ def _parse_args(argv):
         action="store_true",
         help="Check for options that depends on a DT_HAS_..._ENABLE symbol.",
     )
-    parser.add_argument(
-        "CONFIG_FILE",
-        nargs="*",
-        help="List of config files to be checked, non config files are ignored.",
-        type=pathlib.Path,
-    )
 
-    return parser.parse_args(argv)
+    args = parser.parse_args(argv)
+    preupload.lib.populate_default_filenames(args)
+    return args
 
 
 def _init_log(verbose):
@@ -290,7 +287,7 @@ def main(argv):
 
     kconfig_checker = KconfigCheck(args.verbose)
 
-    return kconfig_checker.run_checks(args.CONFIG_FILE, args.dt_has)
+    return kconfig_checker.run_checks(args.filename, args.dt_has)
 
 
 if __name__ == "__main__":
