@@ -326,7 +326,13 @@ static int ppm_common_execute_pending_cmd(struct ppm_common_device *dev)
 		ELOG("Error with UCSI command 0x%x. Return was %d",
 		     ucsi_command, ret);
 		clear_last_error(dev);
-		dev->last_error = ERROR_LPM;
+		if (ret == -ENOTSUP) {
+			dev->last_error = ERROR_PPM;
+			dev->ppm_error_result.error_information
+				.unrecognized_command = 1;
+		} else {
+			dev->last_error = ERROR_LPM;
+		}
 		set_cci_error(dev);
 		return ret;
 	}
