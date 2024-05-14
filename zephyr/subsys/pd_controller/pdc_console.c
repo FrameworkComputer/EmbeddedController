@@ -156,10 +156,10 @@ static int cmd_pdc_get_cable_prop(const struct shell *sh, size_t argc,
 		      "   bm_speed_supported               : 0x%04x\n",
 		      cable_prop.bm_speed_supported);
 	shell_fprintf(sh, SHELL_INFO,
-		      "   b_current_capablilty             : %d mA\n",
-		      cable_prop.b_current_capablilty * 50);
+		      "   b_current_capability             : %d mA\n",
+		      cable_prop.b_current_capability * 50);
 	shell_fprintf(sh, SHELL_INFO,
-		      "   vbus_in_cables                   : %d\n",
+		      "   vbus_in_cable                    : %d\n",
 		      cable_prop.vbus_in_cable);
 	shell_fprintf(sh, SHELL_INFO,
 		      "   cable_type                       : %d\n",

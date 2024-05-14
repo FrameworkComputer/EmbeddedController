@@ -380,7 +380,7 @@ ZTEST_USER(pdc_api, test_get_cable_property)
 {
 	/* Properties chosen to be spread throughout the bytes of the union. */
 	const union cable_property_t property = {
-		.b_current_capablilty = 50,
+		.b_current_capability = 50,
 		.plug_end_type = USB_TYPE_C,
 		.latency = 4,
 	};

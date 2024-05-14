@@ -52,7 +52,7 @@ custom_fake_pdc_power_mgmt_get_cable_prop(int port, union cable_property_t *out)
 	*out = (union cable_property_t){
 		.bm_speed_supported = 0xabcd,
 		/* 50mA units. This should represent 500mA */
-		.b_current_capablilty = 10,
+		.b_current_capability = 10,
 		.vbus_in_cable = 1,
 		.cable_type = 1,
 		.directionality = 1,
@@ -98,8 +98,8 @@ ZTEST_USER(console_cmd_pdc, test_cable_prop)
 	 * ec:> pdc cable_prop 0
 	 * Port 0 GET_CABLE_PROP:
 	 *    bm_speed_supported               : 0x0000
-	 *    b_current_capablilty             : 0 mA
-	 *    vbus_in_cables                   : 0
+	 *    b_current_capability             : 0 mA
+	 *    vbus_in_cable                    : 0
 	 *    cable_type                       : 0
 	 *    directionality                   : 0
 	 *    plug_end_type                    : 0
@@ -117,9 +117,9 @@ ZTEST_USER(console_cmd_pdc, test_cable_prop)
 	zassert_not_null(
 		strstr(outbuffer, "bm_speed_supported               : 0xabcd"));
 	zassert_not_null(
-		strstr(outbuffer, "b_current_capablilty             : 500 mA"));
+		strstr(outbuffer, "b_current_capability             : 500 mA"));
 	zassert_not_null(
-		strstr(outbuffer, "vbus_in_cables                   : 1"));
+		strstr(outbuffer, "vbus_in_cable                    : 1"));
 	zassert_not_null(
 		strstr(outbuffer, "cable_type                       : 1"));
 	zassert_not_null(
