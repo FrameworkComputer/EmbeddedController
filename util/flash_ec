@@ -789,7 +789,7 @@ if [[ -n "${EC_DIR}" ]]; then
 elif [[ -d "${HOME}/trunk/src/platform/ec" ]]; then
 	BASEBOARD=$(make --quiet -C "${HOME}"/trunk/src/platform/ec \
 		BOARD="${BOARD}" print-baseboard 2>/dev/null)
-else
+elif [ -z "${FLAGS_image}" ] ; then
 	info "Could not find ec build folder to calculate baseboard."
 fi
 # shellcheck disable=SC2181
@@ -1660,7 +1660,9 @@ function flash_npcx_uut() {
 	local TEMP_SUFFIX
 	local TEMP_DIR
 	local TOOL_PATH="${EC_DIR}/build/${BOARD}/util:${PATH}"
+	set +e
 	NPCX_UUT=$(PATH="${TOOL_PATH}" which uartupdatetool)
+	set -e
 	EC_UART="$(servo_ec_uart)"
 	TEMP_SUFFIX=".$(basename "${SCRIPT}").${CHIP}.$$"
 	TEMP_DIR="$(mktemp -d --suffix="${TEMP_SUFFIX}")"
