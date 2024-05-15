@@ -9,6 +9,13 @@ config RAURU_BOARD_HAS_HDMI_SUPPORT
 	  Enable board code for managing the state of HDMI connections on
 	  the board.
 
+config RAURU_DUAL_DP_PIPELINE
+	bool "Board supports dual dp pipeline"
+	default !$(dt_nodelabel_enabled,gpio_dp_path_hdmi_en)
+	help
+	  Enable board code for managing dp_alt_mode on
+	  the board.
+
 config BOARD_RAURU
 	bool "Google Rauru Board"
 	help

@@ -12,45 +12,68 @@
 #include "../usba.dtsi"
 #include "../generated.dtsi"
 #include "../interrupts.dtsi"
-#include "../motionsense.dtsi"
 #include "../keyboard.dtsi"
 #include "../overlay.dtsi"
 #include "../power_signal.dtsi"
 
 / {
 	aliases {
-		bmi3xx-int = &base_accel;
-		lis2dw12-int = &lid_accel;
-		gpio-en-hdmi-pwr = &gpio_en_hdmi_pwr;
 		tcs3400-int = &als_clear;
 	};
 
-	/* Rotation matrix used by drivers. */
-	motionsense-rotation-ref {
-		compatible = "cros-ec,motionsense-rotation-ref";
-		lid_rot_ref: lid-rotation-ref {
-			mat33 = <(-1) 0 0
-				 0 1 0
-				 0 0 (-1)>;
+	named-adc-channels {
+			adc_temp_sensor_3: temp_sensor_2 {
+			enum-name = "ADC_TEMP_SENSOR_2";
+			io-channels = <&adc0 5>;
 		};
-
-		base_rot_ref: base-rotation-ref-bmi {
-			mat33 = <(-1) 0 0
-				 0 (-1) 0
-				 0 0 1>;
+			adc_temp_sensor_4: temp_sensor_3 {
+			enum-name = "ADC_TEMP_SENSOR_3";
+			io-channels = <&adc0 6>;
 		};
 	};
 
-	motionsense-sensor-data {
-		lis2dw12_data: lis2dw12-drv-data {
-			compatible = "cros-ec,drvdata-lis2dw12";
-			status = "okay";
-		};
+	gpio-interrupts {
+		/delete-node/ volume-up ;
+		/delete-node/ volume-down ;
+		/delete-node/ hdmi-ec-hpd ;
+		/delete-node/ lid-accel;
+		/delete-node/ ec-imu;
+	};
 
-		bmi323_data: bmi323-drv-data {
-			compatible = "cros-ec,drvdata-bmi3xx";
-			status = "okay";
+	named-gpios {
+		/delete-node/ en_pp5000_fan;
+		/delete-node/ imu_int_ec_l;
+		/delete-node/ lid_accel_int_ec_l;
+		/delete-node/ ec_ap_hid_int_odl;
+		/delete-node/ ec_voldn_btn_odl;
+		/delete-node/ ec_volup_btn_odl;
+		/delete-node/ dp_path_usb_c1_en;
+		/delete-node/ en_kb_bl;
+		/delete-node/ en_pp5000_pen_l;
+		/delete-node/ hdmi_ec_hpd;
+		/delete-node/ dp_path_hdmi_en;
+		/delete-node/ en_hdmi_pwr;
+		/delete-node/ ec_gpa7_test;
+		/delete-node/ lid_360_l;
+
+		gpio_kb_bl_det_5v:kb_bl_dev_5v {
+			gpios = <&gpioa 7 GPIO_INPUT>;
 		};
+		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
+			gpios = <&gpioc 7 (GPIO_INPUT)>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		gpio_ec_cbi_wp: ec_cbi_wp {
+			gpios = <&gpiod 0 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
+		};
+	};
+
+	/* Rotation matrix used by drivers. */
+	/delete-node/ motionsense-rotation-ref;
+
+	motionsense-sensor-data {
+		/delete-node/ lis2dw12-drv-data;
+		/delete-node/ bmi323-drv-data;
 
 		tcs_clear_data: tcs3400-clear-drv-data {
 			compatible = "cros-ec,drvdata-tcs3400-clear";
@@ -123,74 +146,12 @@
 	 * corresponding sensor driver needs to use the
 	 * instance of the mutex.
 	 */
-	motionsense-mutex {
-		compatible = "cros-ec,motionsense-mutex";
-		lid_mutex: lis2dw12-mutex {
-		};
-
-		base_mutex: base-mutex {
-		};
-
-	};
+	/delete-node/ motionsense-mutex;
 
 	motionsense-sensor {
-		lid_accel: lid-accel {
-			compatible = "cros-ec,lis2dw12";
-			status = "okay";
-
-			active-mask = "SENSOR_ACTIVE_S0_S3";
-			location = "MOTIONSENSE_LOC_LID";
-			mutex = <&lid_mutex>;
-			port = <&i2c_ec_i2c_sensor_scl_1v8>;
-			rot-standard-ref = <&lid_rot_ref>;
-			default-range = <2>;
-			drv-data = <&lis2dw12_data>;
-			i2c-spi-addr-flags = "LIS2DWL_ADDR0_FLAGS";
-			configs {
-				compatible =
-					"cros-ec,motionsense-sensor-config";
-				ec-s0 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
-				};
-				ec-s3 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
-				};
-			};
-		};
-
-		base_accel: base-accel {
-			compatible = "cros-ec,bmi3xx-accel";
-			status = "okay";
-
-			active-mask = "SENSOR_ACTIVE_S0_S3";
-			location = "MOTIONSENSE_LOC_BASE";
-			mutex = <&base_mutex>;
-			port = <&i2c_ec_i2c_sensor_scl_1v8>;
-			rot-standard-ref = <&base_rot_ref>;
-			drv-data = <&bmi323_data>;
-			configs {
-				compatible =
-					"cros-ec,motionsense-sensor-config";
-				ec-s0 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
-				};
-				ec-s3 {
-					odr = <(10000 | ROUND_UP_FLAG)>;
-				};
-			};
-		};
-
-		base_gyro: base-gyro {
-			compatible = "cros-ec,bmi3xx-gyro";
-			status = "okay";
-
-			active-mask = "SENSOR_ACTIVE_S0_S3";
-			location = "MOTIONSENSE_LOC_BASE";
-			mutex = <&base_mutex>;
-			port = <&i2c_ec_i2c_sensor_scl_1v8>;
-			rot-standard-ref = <&base_rot_ref>;
-			drv-data = <&bmi323_data>;
-		};
+		/delete-node/ lid-accel;
+		/delete-node/ base-accel;
+		/delete-node/ base-gyro;
 
 		als_clear: base-als-clear {
 			compatible = "cros-ec,tcs3400-clear";
@@ -232,7 +193,7 @@
 		 * list of GPIO interrupts that have to
 		 * be enabled at initial stage
 		 */
-		sensor-irqs = <&int_imu &int_als_rgb>;
+		sensor-irqs = <&int_als_rgb>;
 		/* list of sensors in force mode */
 		accel-force-mode-sensors = <&als_clear>;
 	};
@@ -247,20 +208,6 @@
 		compatible = "cros-ec,kblight-pwm";
 		pwms = <&pwm3 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
 		status = "okay";
-	};
-
-	fans {
-		compatible = "cros-ec,fans";
-
-		fan0 {
-			pwms = <&pwm2 0 PWM_KHZ(324) PWM_POLARITY_INVERTED>;
-			tach = <&tach0>;
-			rpm_min = <1000>;
-			rpm_start = <1000>;
-			rpm_max = <4900>;
-			enable_gpio = <&gpio_en_pp5000_fan>;
-			use_fast_start;
-		};
 	};
 };
 
