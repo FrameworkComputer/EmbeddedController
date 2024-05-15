@@ -131,9 +131,9 @@ tests:
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
 
-  pdc.ppm:
+  pdc.ppm_state_machine:
     extra_configs:
-    - CONFIG_TEST_SUITE_PPM=y
+    - CONFIG_TEST_SUITE_PPM_STATE_MACHINE=y
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
 

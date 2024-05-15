@@ -1039,7 +1039,7 @@ struct ucsi_ppm_device *ppm_data_init(const struct ucsi_pd_driver *pd_driver,
 	return &dev;
 }
 
-#ifdef CONFIG_TEST_SUITE_PPM
+#ifdef CONFIG_ZTEST
 
 enum ppm_states ppm_test_get_state(const struct ucsi_ppm_device *dev)
 {

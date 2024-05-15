@@ -72,8 +72,8 @@ if (DEFINED CONFIG_TEST_SUITE_PDC_UCSI)
 	target_sources(app PRIVATE src/ucsi/ucsi.c)
 endif()
 
-if (DEFINED CONFIG_TEST_SUITE_PPM)
-	target_sources(app PRIVATE src/generic/ppm.c)
+if (DEFINED CONFIG_TEST_SUITE_PPM_STATE_MACHINE)
+	target_sources(app PRIVATE src/generic/ppm_state_machine.c)
 
 	zephyr_include_directories(${PLATFORM_EC}/zephyr/subsys/ucsi)
 	target_sources(app PRIVATE ${PLATFORM_EC}/zephyr/subsys/ucsi/ppm_common.c)

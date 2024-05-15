@@ -45,8 +45,10 @@ config TEST_SUITE_PPM_DRIVER
 config TEST_SUITE_PDC_UCSI
 	bool "Enable UCSI tests"
 
-config TEST_SUITE_PPM
-	bool "Enable PPM tests"
+config TEST_SUITE_PPM_STATE_MACHINE
+	bool "Enable PPM state machine tests"
+	help
+	  Enable tests for the state machine (ppm_common) of the PPM.
 
 config TEST_PDC_MESSAGE_TRACING
 	bool "Enable PDC message tracing"
