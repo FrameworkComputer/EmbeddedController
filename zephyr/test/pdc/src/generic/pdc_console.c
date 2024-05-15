@@ -543,3 +543,22 @@ ZTEST_USER(console_cmd_pdc, test_drs)
 	zassert_equal(1, pdc_power_mgmt_request_data_swap_fake.call_count);
 	zassert_equal(0, pdc_power_mgmt_request_data_swap_fake.arg0_history[0]);
 }
+
+ZTEST_USER(console_cmd_pdc, test_prs)
+{
+	int rv;
+
+	/* Invalid port number */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc prs 99");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Successful swap request */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc prs 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	/* A power role swap should have been initiated on port 0 */
+	zassert_equal(1, pdc_power_mgmt_request_power_swap_fake.call_count);
+	zassert_equal(0,
+		      pdc_power_mgmt_request_power_swap_fake.arg0_history[0]);
+}
