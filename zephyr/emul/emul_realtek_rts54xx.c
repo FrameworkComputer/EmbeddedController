@@ -601,6 +601,54 @@ static int get_vdo(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int get_pch_data_status(struct rts5453p_emul_pdc_data *data,
+			       const union rts54_request *req)
+{
+	uint32_t pch_data_status_output = 0;
+
+	memset(&data->response, 0, sizeof(data->response));
+
+	/* Data transfer Length */
+	data->response.get_pch_data_status.byte_count = 5;
+
+	/* Data_Connection_Present */
+	pch_data_status_output =
+		data->connector_status.connect_status ? BIT(0) : 0;
+	/* Connection Orientation */
+	pch_data_status_output |= data->connector_status.orientation ? BIT(1) :
+								       0;
+	/* USB2_Connection */
+	pch_data_status_output |=
+		data->connector_status.conn_partner_flags & BIT(0) ? BIT(4) : 0;
+	/* USB3.2_Connection */
+	pch_data_status_output |=
+		data->connector_status.conn_partner_flags & BIT(0) ? BIT(5) : 0;
+	/* DP_Connection */
+	pch_data_status_output |=
+		data->connector_status.conn_partner_flags & BIT(1) ? BIT(8) : 0;
+	/* USB4 */
+	pch_data_status_output |=
+		data->connector_status.conn_partner_flags & BIT(2) ? BIT(23) :
+								     0;
+	pch_data_status_output |=
+		data->connector_status.conn_partner_flags & BIT(3) ? BIT(23) :
+								     0;
+
+	data->response.get_pch_data_status.pch_data_status[0] =
+		pch_data_status_output & 0xFF;
+	data->response.get_pch_data_status.pch_data_status[1] =
+		(pch_data_status_output >> 8) & 0xFF;
+	data->response.get_pch_data_status.pch_data_status[2] =
+		(pch_data_status_output >> 16) & 0xFF;
+	data->response.get_pch_data_status.pch_data_status[3] =
+		(pch_data_status_output >> 24) & 0xFF;
+	LOG_INF("GET_PCH_DATA_STATUS PORT_NUM:%d data_status:0x%x",
+		req->get_pch_data_status.port_num, pch_data_status_output);
+
+	send_response(data);
+	return 0;
+}
+
 static bool send_response(struct rts5453p_emul_pdc_data *data)
 {
 	if (data->delay_ms > 0) {
@@ -682,6 +730,7 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0xA8, HANDLER_DEF(unsupported) },
 	{ .code = 0xA9, HANDLER_DEF(unsupported) },
 	{ .code = 0xAA, HANDLER_DEF(unsupported) },
+	{ .code = 0xE0, HANDLER_DEF(get_pch_data_status) },
 };
 
 const struct commands sub_cmd_x0E[] = {
