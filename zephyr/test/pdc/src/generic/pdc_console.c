@@ -511,3 +511,35 @@ ZTEST_USER(console_cmd_pdc, test_dualrole)
 	zassert_equal(PD_DRP_FORCE_SOURCE,
 		      pdc_power_mgmt_set_dual_role_fake.arg1_history[4]);
 }
+
+ZTEST_USER(console_cmd_pdc, test_drs)
+{
+	int rv;
+
+	/* Invalid port number */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc drs 99");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Port partner does not support data role swaps */
+	pdc_power_mgmt_get_partner_data_swap_capable_fake.return_val = 0;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc drs 0");
+	zassert_equal(rv, -EIO, "Expected %d, but got %d", -EIO, rv);
+
+	/* A data role swap should NOT have been initiated */
+	zassert_equal(0, pdc_power_mgmt_request_data_swap_fake.call_count);
+
+	RESET_FAKE(pdc_power_mgmt_request_data_swap);
+	RESET_FAKE(pdc_power_mgmt_get_partner_data_swap_capable);
+
+	/* Successful swap request */
+	pdc_power_mgmt_get_partner_data_swap_capable_fake.return_val = 1;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc drs 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	/* A data role swap should have been initiated on port 0 */
+	zassert_equal(1, pdc_power_mgmt_request_data_swap_fake.call_count);
+	zassert_equal(0, pdc_power_mgmt_request_data_swap_fake.arg0_history[0]);
+}
