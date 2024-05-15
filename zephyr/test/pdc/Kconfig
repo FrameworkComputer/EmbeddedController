@@ -20,6 +20,9 @@ config TEST_SUITE_PDC_HOSTCMD
 config TEST_SUITE_PDC_UCSI
 	bool "Enable UCSI tests"
 
+config TEST_SUITE_PPM
+	bool "Enable PPM tests"
+
 config TEST_PDC_MESSAGE_TRACING
 	bool "Enable PDC message tracing"
 	help

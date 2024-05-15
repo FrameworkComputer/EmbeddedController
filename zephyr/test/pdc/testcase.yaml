@@ -35,3 +35,7 @@ tests:
   pdc.ucsi:
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_UCSI=y
+
+  pdc.ppm:
+    extra_configs:
+    - CONFIG_TEST_SUITE_PPM=y
