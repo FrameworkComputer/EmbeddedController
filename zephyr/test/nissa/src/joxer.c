@@ -460,6 +460,8 @@ static int cros_cbi_get_fw_config_mock(enum cbi_fw_config_field_id field_id,
 	case 3:
 		*value = FW_KB_FEATURE_BL_PRESENT_US2;
 		break;
+	case -1:
+		return -EINVAL;
 	default:
 		return 0;
 	}
@@ -469,6 +471,12 @@ static int cros_cbi_get_fw_config_mock(enum cbi_fw_config_field_id field_id,
 ZTEST(joxer, test_kb_layout_init)
 {
 	cros_cbi_get_fw_config_fake.custom_fake = cros_cbi_get_fw_config_mock;
+
+	keyboard_layout = -1;
+	kb_layout_init();
+	zassert_equal(set_scancode_set2_fake.call_count, 0);
+	zassert_equal(get_scancode_set2_fake.call_count, 0);
+	zassert_equal(board_vivaldi_keybd_idx(), -1);
 
 	keyboard_layout = 0;
 	kb_layout_init();

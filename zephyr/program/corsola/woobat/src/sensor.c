@@ -15,16 +15,31 @@
 #include "motionsense_sensors.h"
 #include "tablet_mode.h"
 
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(board_sensor, LOG_LEVEL_INF);
+
 test_export_static bool base_is_none;
 test_export_static bool lid_is_none;
 
 void base_sensor_interrupt(enum gpio_signal signal)
 {
 	uint32_t val;
+	int ret;
 
-	cros_cbi_get_fw_config(FORM_FACTOR, &val);
+	ret = cros_cbi_get_fw_config(FORM_FACTOR, &val);
+	if (ret < 0) {
+		LOG_ERR("error retriving CBI config: %d", ret);
+		return;
+	}
+
 	if (val == CONVERTIBLE) {
-		cros_cbi_get_fw_config(BASE_SENSOR, &val);
+		ret = cros_cbi_get_fw_config(BASE_SENSOR, &val);
+		if (ret < 0) {
+			LOG_ERR("error retriving CBI config: %d", ret);
+			return;
+		}
+
 		if (val == BASE_BMI323) {
 			bmi3xx_interrupt(signal);
 		}
@@ -40,10 +55,21 @@ void base_sensor_interrupt(enum gpio_signal signal)
 void lid_sensor_interrupt(enum gpio_signal signal)
 {
 	uint32_t val;
+	int ret;
 
-	cros_cbi_get_fw_config(FORM_FACTOR, &val);
+	ret = cros_cbi_get_fw_config(FORM_FACTOR, &val);
+	if (ret < 0) {
+		LOG_ERR("error retriving CBI config: %d", ret);
+		return;
+	}
+
 	if (val == CONVERTIBLE) {
-		cros_cbi_get_fw_config(LID_SENSOR, &val);
+		ret = cros_cbi_get_fw_config(LID_SENSOR, &val);
+		if (ret < 0) {
+			LOG_ERR("error retriving CBI config: %d", ret);
+			return;
+		}
+
 		if (val == LID_BMA422) {
 			bma4xx_interrupt(signal);
 		}
@@ -73,8 +99,14 @@ DECLARE_HOOK(HOOK_INIT, disable_base_lid_irq, HOOK_PRIO_POST_DEFAULT);
 static void board_sensor_init(void)
 {
 	uint32_t val;
+	int ret;
 
-	cros_cbi_get_fw_config(FORM_FACTOR, &val);
+	ret = cros_cbi_get_fw_config(FORM_FACTOR, &val);
+	if (ret < 0) {
+		LOG_ERR("error retriving CBI config: %d", ret);
+		return;
+	}
+
 	if (val == CLAMSHELL) {
 		motion_sensor_count = 0;
 		gmr_tablet_switch_disable();
@@ -82,7 +114,12 @@ static void board_sensor_init(void)
 	} else if (val == CONVERTIBLE) {
 		ccprints("Board is Convertible");
 
-		cros_cbi_get_fw_config(BASE_SENSOR, &val);
+		ret = cros_cbi_get_fw_config(BASE_SENSOR, &val);
+		if (ret < 0) {
+			LOG_ERR("error retriving CBI config: %d", ret);
+			return;
+		}
+
 		if (val == BASE_ICM42607) {
 			ccprints("Base sensor is ICM42607");
 		} else if (val == BASE_BMI323) {
@@ -91,7 +128,12 @@ static void board_sensor_init(void)
 			ccprints("Base sensor is BMI323");
 		}
 
-		cros_cbi_get_fw_config(LID_SENSOR, &val);
+		ret = cros_cbi_get_fw_config(LID_SENSOR, &val);
+		if (ret < 0) {
+			LOG_ERR("error retriving CBI config: %d", ret);
+			return;
+		}
+
 		if (val == LID_LIS2DWLTR) {
 			ccprints("Lid sensnor is LIS2DWLTR");
 		} else if (val == LID_BMA422) {

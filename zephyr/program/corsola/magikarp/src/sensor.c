@@ -11,11 +11,21 @@
 #include "hooks.h"
 #include "motionsense_sensors.h"
 
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(board_sensor, LOG_LEVEL_INF);
+
 void motion_interrupt(enum gpio_signal signal)
 {
 	uint32_t val;
+	int ret;
 
-	cros_cbi_get_fw_config(FW_BASE_GYRO, &val);
+	ret = cros_cbi_get_fw_config(FW_BASE_GYRO, &val);
+	if (ret < 0) {
+		LOG_ERR("error retriving CBI config: %d", ret);
+		return;
+	}
+
 	if (val == FW_BASE_ICM42607) {
 		icm42607_interrupt(signal);
 	} else if (val == FW_BASE_BMI323) {
@@ -26,8 +36,14 @@ void motion_interrupt(enum gpio_signal signal)
 static void motionsense_init(void)
 {
 	uint32_t val;
+	int ret;
 
-	cros_cbi_get_fw_config(FW_BASE_GYRO, &val);
+	ret = cros_cbi_get_fw_config(FW_BASE_GYRO, &val);
+	if (ret < 0) {
+		LOG_ERR("error retriving CBI config: %d", ret);
+		return;
+	}
+
 	if (val == FW_BASE_ICM42607) {
 		ccprints("BASE ACCEL is ICM42607");
 	} else if (val == FW_BASE_BMI323) {

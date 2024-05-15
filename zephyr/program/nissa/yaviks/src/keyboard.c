@@ -19,8 +19,13 @@ LOG_MODULE_DECLARE(nissa, CONFIG_NISSA_LOG_LEVEL);
 int8_t board_vivaldi_keybd_idx(void)
 {
 	uint32_t val;
+	int ret;
 
-	cros_cbi_get_fw_config(FW_KB_BACKLIGHT, &val);
+	ret = cros_cbi_get_fw_config(FW_KB_BACKLIGHT, &val);
+	if (ret < 0) {
+		LOG_ERR("error retriving CBI config: %d", ret);
+		return -1;
+	}
 
 	if (val == FW_KB_BACKLIGHT_OFF) {
 		return DT_NODE_CHILD_IDX(DT_NODELABEL(kbd_config_1));

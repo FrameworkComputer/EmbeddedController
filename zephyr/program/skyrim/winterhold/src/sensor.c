@@ -11,6 +11,10 @@
 #include "hooks.h"
 #include "motionsense_sensors.h"
 
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(board_sensor, LOG_LEVEL_INF);
+
 static int cbi_boardversion = -1;
 static int cbi_fwconfig;
 
@@ -34,7 +38,16 @@ static void motionsense_init(void)
 	int ret;
 
 	ret = cbi_get_board_version(&cbi_boardversion);
-	cros_cbi_get_fw_config(FW_BASE_SENSOR, &cbi_fwconfig);
+	if (ret < 0) {
+		LOG_ERR("error retriving CBI board revision: %d", ret);
+		return;
+	}
+
+	ret = cros_cbi_get_fw_config(FW_BASE_SENSOR, &cbi_fwconfig);
+	if (ret < 0) {
+		LOG_ERR("error retriving CBI config: %d", ret);
+		return;
+	}
 
 	if (ret == EC_SUCCESS && cbi_boardversion < 1) {
 		MOTIONSENSE_ENABLE_ALTERNATE(alt_base_accel);
