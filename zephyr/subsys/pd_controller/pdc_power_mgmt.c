@@ -635,6 +635,8 @@ struct pdc_port_t {
 	uint8_t pch_data_status[5];
 	/** SET_DRP variable used with CMD_SET_DRP */
 	enum drp_mode_t drp;
+	/** Callback */
+	struct pdc_callback ci_cb;
 };
 
 /**
@@ -2085,6 +2087,18 @@ static void pdc_cci_handler_cb(union cci_event_t cci_event, void *cb_data)
 		post_event = true;
 	}
 
+	if (post_event)
+		k_event_post(&port->sm_event, PDC_SM_EVENT);
+}
+
+static void pdc_ci_handler_cb(const struct device *dev,
+			      const struct pdc_callback *callback,
+			      union cci_event_t cci_event)
+{
+	struct pdc_port_t *port =
+		CONTAINER_OF(callback, struct pdc_port_t, ci_cb);
+	bool post_event = false;
+
 	/* Handle generic vendor defined event from driver */
 	if (cci_event.vendor_defined_indicator) {
 		atomic_set_bit(port->cci_flags, CCI_EVENT);
@@ -2121,6 +2135,7 @@ static int pdc_subsys_init(const struct device *dev)
 	struct pdc_data_t *data = dev->data;
 	struct pdc_port_t *port = &data->port;
 	const struct pdc_config_t *const config = dev->config;
+	int rv;
 
 	/* Make sure PD Controller is ready */
 	if (!device_is_ready(port->pdc)) {
@@ -2131,7 +2146,13 @@ static int pdc_subsys_init(const struct device *dev)
 	init_port_variables(port);
 
 	/* Set cci call back */
-	pdc_set_handler_cb(port->pdc, pdc_cci_handler_cb, (void *)port);
+	pdc_set_cc_callback(port->pdc, pdc_cci_handler_cb, (void *)port);
+
+	/* Set ci call back */
+	port->ci_cb.handler = pdc_ci_handler_cb;
+	rv = pdc_add_ci_callback(port->pdc, &port->ci_cb);
+	if (rv)
+		LOG_ERR("Failed to add CI callback (%d)", rv);
 
 	/* Initialize state machine run event */
 	k_event_init(&port->sm_event);

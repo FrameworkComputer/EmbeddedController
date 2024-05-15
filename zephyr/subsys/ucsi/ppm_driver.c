@@ -90,6 +90,7 @@ struct ppm_data {
 	struct ucsi_ppm_driver *ppm;
 	struct ucsiv3_get_connector_status_data
 		port_status[NUM_PORTS] __aligned(4);
+	struct pdc_callback ci_cb;
 };
 static struct ppm_data ppm_data;
 
@@ -175,6 +176,29 @@ static int ucsi_get_active_port_count(const struct device *dev)
 	return NUM_PORTS;
 }
 
+/*
+ * Callback for connector change events. It's shared by all the connectors.
+ */
+static void ppm_ci_cb(const struct device *dev,
+		      const struct pdc_callback *callback,
+		      union cci_event_t cci_event)
+{
+	const struct ppm_config *cfg = (const struct ppm_config *)dev->config;
+	struct ppm_data *data = CONTAINER_OF(callback, struct ppm_data, ci_cb);
+	struct ucsi_ppm_driver *api = data->ppm;
+
+	LOG_DBG("%s: CCI=0x%08x", __func__, cci_event.raw_value);
+
+	if (cci_event.connector_change == 0 ||
+	    cci_event.connector_change > cfg->active_port_count) {
+		LOG_WRN("%s: Received CI on invalid connector = %u", __func__,
+			cci_event.connector_change);
+		return;
+	}
+
+	api->lpm_alert(api->dev, cci_event.connector_change);
+}
+
 static struct ucsi_pd_driver ppm_drv = {
 	.init_ppm = ucsi_ppm_init,
 	.get_ppm = ucsi_ppm_get,
@@ -184,7 +208,9 @@ static struct ucsi_pd_driver ppm_drv = {
 
 static int ppm_init(const struct device *device)
 {
-	struct ppm_data *dat = (struct ppm_data *)device->data;
+	const struct ppm_config *cfg =
+		(const struct ppm_config *)device->config;
+	struct ppm_data *data = (struct ppm_data *)device->data;
 	const struct ucsi_pd_driver *drv = device->api;
 	union ec_common_control ctrl;
 
@@ -194,10 +220,23 @@ static int ppm_init(const struct device *device)
 	}
 
 	/* Initialize the PPM. */
-	dat->ppm = ppm_open(drv, dat->port_status);
-	if (!dat->ppm) {
+	data->ppm = ppm_open(drv, data->port_status);
+	if (!data->ppm) {
 		LOG_ERR("Failed to open PPM");
 		return -ENODEV;
+	}
+
+	/*
+	 * Register connector change callback. Command completion callback will
+	 * be registered on every command execution.
+	 */
+	data->ci_cb.handler = ppm_ci_cb;
+	for (int i = 0; i < cfg->active_port_count; i++) {
+		int rv = pdc_add_ci_callback(cfg->lpm[i], &data->ci_cb);
+		if (rv) {
+			LOG_ERR("C%d: Failed to add CI callback (%d)", i, rv);
+			return rv;
+		}
 	}
 
 	return 0;
