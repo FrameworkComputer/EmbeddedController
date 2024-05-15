@@ -7,6 +7,7 @@ find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 
 zephyr_include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 target_sources(app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/rauru/src/usbc.c
+			${PLATFORM_EC_PROGRAM_DIR}/rauru/src/common.c
 			${PLATFORM_EC_PROGRAM_DIR}/rauru/src/i2c.c
 			${PLATFORM_EC_PROGRAM_DIR}/rauru/src/backlight.c
 			${PLATFORM_EC_PROGRAM_DIR}/rauru/src/hibernate.c
