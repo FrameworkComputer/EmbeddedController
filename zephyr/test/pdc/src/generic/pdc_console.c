@@ -408,3 +408,49 @@ ZTEST_USER(console_cmd_pdc, test_status)
 		outbuffer,
 		"Port C0 CC1, Disable - Role: SRC-UFP PDC State: StateName2"));
 }
+
+ZTEST_USER(console_cmd_pdc, test_src_voltage)
+{
+	int rv;
+
+	/* Invalid port number */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc src_voltage 99");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Invalid voltage parameter */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc src_voltage 0 xyz");
+	zassert_equal(rv, EC_ERROR_PARAM2, "Expected %d, but got %d",
+		      EC_ERROR_PARAM2, rv);
+
+	/* Successful path using optional parameter */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc src_voltage 0 20");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+	zassert_equal(1, pdc_power_mgmt_request_source_voltage_fake.call_count);
+	/* Port number */
+	zassert_equal(
+		0, pdc_power_mgmt_request_source_voltage_fake.arg0_history[0]);
+	/* Voltage in mV (1000 times the number passed in) */
+	zassert_equal(
+		20 * 1000,
+		pdc_power_mgmt_request_source_voltage_fake.arg1_history[0]);
+
+	RESET_FAKE(pdc_power_mgmt_request_source_voltage);
+
+	/* Successful path using max voltage (no param) */
+	pdc_power_mgmt_get_max_voltage_fake.return_val = 15000; /* mV */
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc src_voltage 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+	zassert_equal(1, pdc_power_mgmt_request_source_voltage_fake.call_count);
+	/* Port number */
+	zassert_equal(
+		0, pdc_power_mgmt_request_source_voltage_fake.arg0_history[0]);
+	/* Voltage should be set to the value pdc_power_mgmt_get_max_voltage()
+	 * returned.
+	 */
+	zassert_equal(
+		pdc_power_mgmt_get_max_voltage_fake.return_val,
+		pdc_power_mgmt_request_source_voltage_fake.arg1_history[0]);
+}

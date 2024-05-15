@@ -3291,12 +3291,12 @@ void pdc_power_mgmt_set_max_voltage(unsigned int mv)
 	pdc_max_request_mv = mv;
 }
 
-unsigned int pdc_power_mgmt_get_max_voltage(void)
+test_mockable unsigned int pdc_power_mgmt_get_max_voltage(void)
 {
 	return pdc_max_request_mv;
 }
 
-void pdc_power_mgmt_request_source_voltage(int port, int mv)
+test_mockable void pdc_power_mgmt_request_source_voltage(int port, int mv)
 {
 	pdc_power_mgmt_set_max_voltage(mv);
 
