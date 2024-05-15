@@ -86,6 +86,8 @@ ZTEST(pujjoga, test_hdmi_power)
 {
 	const struct gpio_dt_spec *hdmi_vcc =
 		GPIO_DT_FROM_NODELABEL(gpio_ec_hdmi_pwr);
+	const struct gpio_dt_spec *vbus_rail =
+		GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus);
 	struct ap_power_ev_data data;
 
 	nissa_configure_hdmi_power_gpios();
@@ -98,9 +100,11 @@ ZTEST(pujjoga, test_hdmi_power)
 	data.event = AP_POWER_STARTUP;
 	hdmi_power_handler(NULL, data);
 	zassert_equal(gpio_emul_output_get_dt(hdmi_vcc), 1);
+	zassert_equal(gpio_emul_output_get_dt(vbus_rail), 1);
 	data.event = AP_POWER_SHUTDOWN;
 	hdmi_power_handler(NULL, data);
 	zassert_equal(gpio_emul_output_get_dt(hdmi_vcc), 0);
+	zassert_equal(gpio_emul_output_get_dt(vbus_rail), 0);
 }
 
 ZTEST(pujjoga, test_board_check_extpower)
@@ -360,7 +364,7 @@ ZTEST(pujjoga, test_db_with_a_and_hdmi)
 	fw_config_value = -1;
 
 	/* Set the sub-board, reported configuration is correct. */
-	set_fw_config_value(FW_SUB_BOARD_1);
+	set_fw_config_value(FW_SUB_BOARD_3);
 	zassert_equal(pujjoga_get_sb_type(), PUJJOGA_SB_HDMI_A,
 		      "SB: HDMI, USB type A");
 
