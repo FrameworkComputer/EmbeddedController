@@ -607,3 +607,120 @@ ZTEST_USER(console_cmd_pdc, test_info)
 	zassert_not_null(strstr(outbuffer, "Running Flash Code: Y"));
 	zassert_not_null(strstr(outbuffer, "Flash Bank: 16"));
 }
+
+/**
+ * @brief Custom fake for pdc_power_mgmt_get_connector_status_fake that outputs
+ *        some test connector status info.
+ */
+static int custom_fake_pdc_power_mgmt_get_connector_status_fake(
+	int port, union connector_status_t *out)
+{
+	zassert_not_null(out);
+
+	*out = (union connector_status_t){
+		.raw_conn_status_change_bits = 0x1234,
+		.power_operation_mode = USB_TC_CURRENT_5A,
+		.connect_status = 1,
+		.power_direction = 1,
+		.conn_partner_flags = 0xaa,
+		.conn_partner_type = DEBUG_ACCESSORY_ATTACHED,
+		.rdo = 0x12345678,
+		.battery_charging_cap_status = 3,
+		.provider_caps_limited_reason = 1,
+		.bcd_pd_version = 0x6789,
+		.orientation = 1,
+		.sink_path_status = 1,
+		.reverse_current_protection_status = 1,
+		.power_reading_ready = 1,
+		.peak_current = 2345,
+		.average_current = 4567,
+		/* Unit of voltage used by `.voltage_reading`. Each count here
+		 * represents 5mV. 10 here means each count in
+		 * `.voltage_reading` represents 5*10 = 50mV.
+		 */
+		.voltage_scale = 10,
+		/* 400 * 50mV increments = 20V (20000mV) */
+		.voltage_reading = 400,
+	};
+
+	return 0;
+}
+
+ZTEST_USER(console_cmd_pdc, test_connector_status)
+{
+	int rv;
+	const char *outbuffer;
+	size_t buffer_size;
+
+	/* Invalid port number */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc connector_status x");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Error getting chip info */
+	pdc_power_mgmt_get_connector_status_fake.return_val = 1;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc connector_status 0");
+	zassert_equal(rv, pdc_power_mgmt_get_connector_status_fake.return_val,
+		      "Expected %d, but got %d",
+		      pdc_power_mgmt_get_connector_status_fake.return_val, rv);
+
+	RESET_FAKE(pdc_power_mgmt_get_connector_status);
+
+	/* Successful path */
+	pdc_power_mgmt_get_connector_status_fake.custom_fake =
+		custom_fake_pdc_power_mgmt_get_connector_status_fake;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc connector_status 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	/* Ensure we called get_connector_status once with the correct port */
+	zassert_equal(1, pdc_power_mgmt_get_connector_status_fake.call_count);
+	zassert_equal(0,
+		      pdc_power_mgmt_get_connector_status_fake.arg0_history[0]);
+
+	/* Check console output for correctness */
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+
+	zassert_not_null(strstr(outbuffer, "Port 0 GET_CONNECTOR_STATUS:"));
+	zassert_not_null(strstr(
+		outbuffer, "   change bits                      : 0x1234"));
+	zassert_not_null(
+		strstr(outbuffer, "   power_operation_mode             : 6"));
+	zassert_not_null(
+		strstr(outbuffer, "   connect_status                   : 1"));
+	zassert_not_null(
+		strstr(outbuffer, "   power_direction                  : 1"));
+	zassert_not_null(strstr(outbuffer,
+				"   conn_partner_flags               : 0xaa"));
+	zassert_not_null(
+		strstr(outbuffer, "   conn_partner_type                : 5"));
+	zassert_not_null(strstr(
+		outbuffer, "   rdo                              : 0x12345678"));
+	zassert_not_null(
+		strstr(outbuffer, "   battery_charging_cap_status      : 3"));
+	zassert_not_null(
+		strstr(outbuffer, "   provider_caps_limited_reason     : 1"));
+	zassert_not_null(strstr(
+		outbuffer, "   bcd_pd_version                   : 0x6789"));
+	zassert_not_null(
+		strstr(outbuffer, "   orientation                      : 1"));
+	zassert_not_null(
+		strstr(outbuffer, "   sink_path_status                 : 1"));
+	zassert_not_null(
+		strstr(outbuffer, "   reverse_current_protection_status: 1"));
+	zassert_not_null(
+		strstr(outbuffer, "   power_reading_ready              : 1"));
+	zassert_not_null(strstr(outbuffer,
+				"   peak_current                     : 2345"));
+	zassert_not_null(strstr(outbuffer,
+				"   average_current                  : 4567"));
+	zassert_not_null(
+		strstr(outbuffer, "   voltage_scale                    : 10"));
+	zassert_not_null(
+		strstr(outbuffer, "   voltage_reading                  : 400"));
+	zassert_not_null(strstr(
+		outbuffer, "   voltage                          : 20000 mV"));
+}
