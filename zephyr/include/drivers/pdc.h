@@ -51,7 +51,7 @@ struct pdc_info_t {
 	uint32_t fw_version;
 	/** Power Delivery Revision supported by the PDC */
 	uint16_t pd_revision;
-	/** Power Delivery Version supported byt the PDC */
+	/** Power Delivery Version supported by the PDC */
 	uint16_t pd_version;
 	/** VID:PID of the PDC (optional) */
 	uint32_t vid_pid;

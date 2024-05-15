@@ -216,29 +216,6 @@ ZTEST_USER(console_cmd_pdc, test_trysrc)
 	zassert_not_null(strstr(outbuffer, "Try.SRC Forced ON"));
 }
 
-ZTEST_USER(console_cmd_pdc, test_info)
-{
-	int rv;
-
-	/* Bad chip number */
-	rv = shell_execute_cmd(get_ec_shell(), "pdc info x");
-	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
-
-	/* Bad live param (should be int) */
-	rv = shell_execute_cmd(get_ec_shell(), "pdc info 0 y");
-	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
-
-	/* Get chip #0 info live */
-	rv = shell_execute_cmd(get_ec_shell(), "pdc info 0");
-	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
-		      rv);
-
-	/* Get chip #0 info cached */
-	rv = shell_execute_cmd(get_ec_shell(), "pdc info 0 0");
-	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
-		      rv);
-}
-
 ZTEST_USER(console_cmd_pdc, test_comms_state)
 {
 	int rv;
@@ -561,4 +538,72 @@ ZTEST_USER(console_cmd_pdc, test_prs)
 	zassert_equal(1, pdc_power_mgmt_request_power_swap_fake.call_count);
 	zassert_equal(0,
 		      pdc_power_mgmt_request_power_swap_fake.arg0_history[0]);
+}
+
+/**
+ * @brief Custom fake for pdc_power_mgmt_get_info that outputs some test PDC
+ *        chip info.
+ */
+static int custom_fake_pdc_power_mgmt_get_info(int port, struct pdc_info_t *out)
+{
+	zassert_not_null(out);
+
+	*out = (struct pdc_info_t){
+		/* 10.20.30 */
+		.fw_version = (10 << 16) | (20 << 8) | (30 << 0),
+		.pd_revision = 123,
+		.pd_version = 456,
+		/* VID:PID = 7890:3456 */
+		.vid_pid = (0x7890 << 16) | (0x3456 << 0),
+		.is_running_flash_code = 1,
+		.running_in_flash_bank = 16,
+		.extra = 0xffff,
+	};
+
+	return 0;
+}
+
+ZTEST_USER(console_cmd_pdc, test_info)
+{
+	int rv;
+	const char *outbuffer;
+	size_t buffer_size;
+
+	/* Invalid port number */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc info 99");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Error getting chip info */
+	pdc_power_mgmt_get_info_fake.return_val = 1;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc info 0");
+	zassert_equal(rv, pdc_power_mgmt_get_info_fake.return_val,
+		      "Expected %d, but got %d",
+		      pdc_power_mgmt_get_info_fake.return_val, rv);
+
+	RESET_FAKE(pdc_power_mgmt_get_info);
+
+	/* Successful path */
+	pdc_power_mgmt_get_info_fake.custom_fake =
+		custom_fake_pdc_power_mgmt_get_info;
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc info 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	/* Ensure we called get_info once with the correct port # */
+	zassert_equal(1, pdc_power_mgmt_get_info_fake.call_count);
+	zassert_equal(0, pdc_power_mgmt_get_info_fake.arg0_history[0]);
+
+	/* Check console output for correctness */
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+
+	zassert_not_null(strstr(outbuffer, "FW Ver: 10.20.30"));
+	zassert_not_null(strstr(outbuffer, "PD Rev: 123"));
+	zassert_not_null(strstr(outbuffer, "PD Ver: 456"));
+	zassert_not_null(strstr(outbuffer, "VID/PID: 7890:3456"));
+	zassert_not_null(strstr(outbuffer, "Running Flash Code: Y"));
+	zassert_not_null(strstr(outbuffer, "Flash Bank: 16"));
 }
