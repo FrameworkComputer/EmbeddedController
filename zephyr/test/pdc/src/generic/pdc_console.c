@@ -454,3 +454,60 @@ ZTEST_USER(console_cmd_pdc, test_src_voltage)
 		pdc_power_mgmt_get_max_voltage_fake.return_val,
 		pdc_power_mgmt_request_source_voltage_fake.arg1_history[0]);
 }
+
+ZTEST_USER(console_cmd_pdc, test_dualrole)
+{
+	int rv;
+
+	/* Invalid port number */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc dualrole 99 on");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Invalid dualrole mode */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc dualrole 0 xyz");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Successful paths for each dualrole mode option */
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc dualrole 0 on");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc dualrole 0 off");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc dualrole 0 freeze");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc dualrole 0 sink");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	rv = shell_execute_cmd(get_ec_shell(), "pdc dualrole 0 source");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	/* Ensure we got one call for each mode tested above */
+	zassert_equal(5, pdc_power_mgmt_set_dual_role_fake.call_count);
+
+	/* Check all calls were for port 0 */
+	zassert_equal(0, pdc_power_mgmt_set_dual_role_fake.arg0_history[0]);
+	zassert_equal(0, pdc_power_mgmt_set_dual_role_fake.arg0_history[1]);
+	zassert_equal(0, pdc_power_mgmt_set_dual_role_fake.arg0_history[2]);
+	zassert_equal(0, pdc_power_mgmt_set_dual_role_fake.arg0_history[3]);
+	zassert_equal(0, pdc_power_mgmt_set_dual_role_fake.arg0_history[4]);
+
+	/* Check the mode for each call */
+	zassert_equal(PD_DRP_TOGGLE_ON,
+		      pdc_power_mgmt_set_dual_role_fake.arg1_history[0]);
+	zassert_equal(PD_DRP_TOGGLE_OFF,
+		      pdc_power_mgmt_set_dual_role_fake.arg1_history[1]);
+	zassert_equal(PD_DRP_FREEZE,
+		      pdc_power_mgmt_set_dual_role_fake.arg1_history[2]);
+	zassert_equal(PD_DRP_FORCE_SINK,
+		      pdc_power_mgmt_set_dual_role_fake.arg1_history[3]);
+	zassert_equal(PD_DRP_FORCE_SOURCE,
+		      pdc_power_mgmt_set_dual_role_fake.arg1_history[4]);
+}
