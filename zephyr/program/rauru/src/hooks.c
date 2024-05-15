@@ -7,6 +7,7 @@
 #include "gpio/gpio_int.h"
 #include "gpio_signal.h"
 #include "hooks.h"
+#include "rauru_sub_board.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
 #include "usb_tc_sm.h"
@@ -17,6 +18,9 @@ static void rauru_common_init(void)
 {
 	gpio_enable_dt_interrupt(
 		GPIO_INT_FROM_NODELABEL(int_ap_xhci_init_done));
+
+	/* TODO(yllin): move this to usb redriver/retimer configure place */
+	rauru_get_sb_type();
 }
 DECLARE_HOOK(HOOK_INIT, rauru_common_init, HOOK_PRIO_PRE_DEFAULT);
 
