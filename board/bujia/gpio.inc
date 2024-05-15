@@ -102,6 +102,7 @@ GPIO(LED_RED_L,                      PIN(C, 4), GPIO_OUT_LOW)
 GPIO(USB_C0_FRS_EN,                  PIN(9, 4), GPIO_OUT_LOW)
 GPIO(USB_C0_HPD,                     PIN(0, 4), GPIO_OUT_LOW)
 GPIO(USB_C0_OC_ODL,                  PIN(7, 0), GPIO_OUT_LOW)
+GPIO(USB_C0_RT_RST_ODL,              PIN(0, 2), GPIO_ODR_LOW)
 
 /* UART alternate functions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)              /* GPIO64/CR_SIN1, GPO65/CR_SOUT1/FLPRG1_L */
@@ -122,9 +123,6 @@ ALTERNATE(PIN_MASK(C, 0x18), 0, MODULE_PWM, 0)               /* GPIOC4/PWM2, GPI
 ALTERNATE(PIN_MASK(3, 0x10), 0, MODULE_ADC, 0)               /* GPIO34/PS2_DAT2/ADC6 */
 ALTERNATE(PIN_MASK(4, 0x38), 0, MODULE_ADC, 0)               /* GPIO45/ADC0, GPIO44/ADC1, GPIO43/ADC2 */
 ALTERNATE(PIN_MASK(E, 0x02), 0, MODULE_ADC, 0)               /* GPIOE1/ADC7 */
-
-/* NC pins, enable internal pull-down to avoid floating state. */
-GPIO(GPIO02_NC,                      PIN(0, 2), GPIO_INPUT | GPIO_PULL_DOWN)
 
 /* Unused Pins */
 UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
