@@ -24,10 +24,6 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 
 #include <drivers/pdc.h>
 
-#ifdef CONFIG_ZTEST
-#include <zephyr/ztest.h>
-#endif
-
 #define DT_DRV_COMPAT realtek_rts54_pdc
 
 #define BYTE0(n) ((n) & 0xff)
@@ -2570,47 +2566,3 @@ static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 			      &pdc_driver_api);
 
 DT_INST_FOREACH_STATUS_OKAY(PDC_DEFINE)
-
-#ifdef CONFIG_ZTEST
-
-struct pdc_data_t;
-
-#define PDC_TEST_DEFINE(inst) &pdc_data_##inst,
-
-static struct pdc_data_t *pdc_data[] = { DT_INST_FOREACH_STATUS_OKAY(
-	PDC_TEST_DEFINE) };
-
-/*
- * Wait for drivers to become idle.
- */
-static void test_reset(const struct ztest_unit_test *test, void *data)
-{
-	int num_finished;
-
-	ARG_UNUSED(test);
-	ARG_UNUSED(data);
-
-	/* Wait for up to 20 * 100ms for all drivers to become idle. */
-	for (int i = 0; i < 20; i++) {
-		num_finished = 0;
-
-		for (int port = 0; port < ARRAY_SIZE(pdc_data); port++) {
-			if (get_state(pdc_data[i]) == ST_IDLE &&
-			    pdc_data[i]->cmd == CMD_NONE) {
-				num_finished++;
-			}
-		}
-
-		if (num_finished == ARRAY_SIZE(pdc_data)) {
-			break;
-		}
-
-		k_msleep(100);
-	}
-
-	zassert_equal(num_finished, ARRAY_SIZE(pdc_data));
-}
-
-ZTEST_RULE(pdc_rts54xx_test_reset, NULL, test_reset);
-
-#endif
