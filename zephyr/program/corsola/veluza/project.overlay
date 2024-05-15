@@ -35,7 +35,7 @@
 			gpios = <&gpioh 6 GPIO_INPUT>;
 		};
 		en_pp5000_usb_a1_vbus_x: en_pp5000_usb_a1_vbus_x {
-			gpios = <&gpioa 7 GPIO_ODR_HIGH>;
+			gpios = <&gpioa 7 GPIO_OUTPUT_LOW>;
 		};
 	};
 	unused-pins {
