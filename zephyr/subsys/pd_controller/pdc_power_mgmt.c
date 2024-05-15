@@ -86,6 +86,8 @@ enum pdc_cmd_t {
 	CMD_PDC_SET_POWER_LEVEL,
 	/** CMD_PDC_SET_CCOM */
 	CMD_PDC_SET_CCOM,
+	/** CMD_PDC_SET_DRP */
+	CMD_PDC_SET_DRP,
 	/** CMD_PDC_GET_PDOS */
 	CMD_PDC_GET_PDOS,
 	/** CMD_PDC_GET_RDO */
@@ -315,6 +317,7 @@ test_export_static const char *const pdc_cmd_names[] = {
 	[CMD_PDC_RESET] = "PDC_RESET",
 	[CMD_PDC_SET_POWER_LEVEL] = "PDC_SET_POWER_LEVEL",
 	[CMD_PDC_SET_CCOM] = "PDC_SET_CCOM",
+	[CMD_PDC_SET_DRP] = "PDC_SET_DRP",
 	[CMD_PDC_GET_PDOS] = "PDC_GET_PDOS",
 	[CMD_PDC_GET_RDO] = "PDC_GET_RDO",
 	[CMD_PDC_SET_RDO] = "PDC_SET_RDO",
@@ -630,6 +633,8 @@ struct pdc_port_t {
 	struct set_pdos_t set_pdos;
 	/** Buffer used by public api to receive data from the driver */
 	uint8_t pch_data_status[5];
+	/** SET_DRP variable used with CMD_SET_DRP */
+	enum drp_mode_t drp;
 };
 
 /**
@@ -1557,6 +1562,9 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 		break;
 	case CMD_PDC_SET_CCOM:
 		rv = pdc_set_ccom(port->pdc, port->una_policy.cc_mode);
+		break;
+	case CMD_PDC_SET_DRP:
+		rv = pdc_set_drp_mode(port->pdc, port->drp);
 		break;
 	case CMD_PDC_GET_PDOS:
 		rv = pdc_get_pdos(port->pdc, port->get_pdo.pdo_type,
@@ -2740,16 +2748,11 @@ test_mockable void pdc_power_mgmt_set_dual_role(int port,
 
 test_mockable int pdc_power_mgmt_set_trysrc(int port, bool enable)
 {
-	int rv;
-
 	LOG_INF("PD setting TrySrc=%d", enable);
-	if (enable) {
-		rv = pdc_set_drp_mode(pdc_data[port]->port.pdc, DRP_TRY_SRC);
-	} else {
-		rv = pdc_set_drp_mode(pdc_data[port]->port.pdc, DRP_NORMAL);
-	}
 
-	return rv;
+	pdc_data[port]->port.drp = (enable ? DRP_TRY_SRC : DRP_NORMAL);
+
+	return public_api_block(port, CMD_PDC_SET_DRP);
 }
 
 /**
