@@ -42,8 +42,11 @@ def main() -> int:
                         in active_name
                         and not "src/third_party/zephyr/main/arch/arm/core/aarch32/mpu/arm_mpu.c"
                         in active_name
-                        and not "src/third_party/zephyr/main/drivers/clock_control/clock_control_mchp_xec.c"
-                        in active_name
+                        and not (
+                            "src/third_party/zephyr/main/drivers/"
+                            "clock_control/clock_control_mchp_xec.c"
+                            in active_name
+                        )
                         and not "src/third_party/zephyr/main/lib/libc/minimal/include/"
                         in active_name
                         and not "src/third_party/zephyr/main/subsys/testsuite/ztest/"

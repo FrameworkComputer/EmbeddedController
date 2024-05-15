@@ -753,7 +753,8 @@ class powerlog:  # pylint:disable=invalid-name
                 if integration_us != integration_us_new:
                     raise Exception(
                         "FAIL",
-                        f"Integration on A: {integration_us:d}us != integration on B {integration_us_new:d}us",
+                        f"Integration on A: {integration_us:d}us != integration"
+                        f" on B {integration_us_new:d}us",
                     )
             integration_us = integration_us_new
 

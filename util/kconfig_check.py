@@ -246,7 +246,8 @@ class KconfigCheck:
         """
         with open(configs_file, "r", encoding="utf-8") as inf:
             configs = re.findall(
-                f'{use_defines and "#define " or ""}CONFIG_([A-Za-z0-9_]*){use_defines and " " or ""}',
+                f'{use_defines and "#define " or ""}CONFIG_([A-Za-z0-9_]*)'
+                f'{use_defines and " " or ""}',
                 inf.read(),
             )
         return configs
