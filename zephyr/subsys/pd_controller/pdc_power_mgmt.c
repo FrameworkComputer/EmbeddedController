@@ -2724,15 +2724,15 @@ test_mockable void pdc_power_mgmt_set_dual_role(int port,
 			port_data->pdr.swap_to_snk = 1;
 			atomic_set_bit(port_data->src_policy.flags,
 				       SRC_POLICY_SWAP_TO_SNK);
-
-			/*
-			 * If PRS to Sink fails, disconnect and reconnect as
-			 * Sink.
-			 */
-			port_data->una_policy.cc_mode = CCOM_RD;
-			atomic_set_bit(port_data->src_policy.flags,
-				       SRC_POLICY_FORCE_SNK);
 		}
+
+		/*
+		 * If PRS to Sink fails, or if not connected via PD, disconnect
+		 * and reconnect as Sink.
+		 */
+		port_data->una_policy.cc_mode = CCOM_RD;
+		atomic_set_bit(port_data->src_policy.flags,
+			       SRC_POLICY_FORCE_SNK);
 		break;
 	/* Switch to source */
 	case PD_DRP_FORCE_SOURCE:
