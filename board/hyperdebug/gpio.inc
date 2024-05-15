@@ -157,9 +157,9 @@ GPIO_INT(CN11_9,		PIN(F, 6), GPIO_INPUT | ANY_EDGE, gpio_edge)
 /* CN11_10 is NC */
 /*GPIO_INT(CN11_11,		PIN(F, 7), GPIO_INPUT | ANY_EDGE, gpio_edge)*/
 /* CN11_12 is IOREF */
-GPIO_INT(CN11_13,		PIN(A, 13), GPIO_INPUT | ANY_EDGE, gpio_edge) /* ST-link SWD */
+GPIO_INT(CN11_13,		PIN(A, 13), GPIO_ALTERNATE | ANY_EDGE, gpio_edge) /* ST-link SWD */
 /* CN11_14 is NRST */
-GPIO_INT(CN11_15,		PIN(A, 14), GPIO_INPUT | ANY_EDGE, gpio_edge) /* ST-link SWD */
+GPIO_INT(CN11_15,		PIN(A, 14), GPIO_ALTERNATE | ANY_EDGE, gpio_edge) /* ST-link SWD */
 /* CN11_16 is 3V3 */
 GPIO_INT(CN11_17,		PIN(A, 15), GPIO_INPUT | ANY_EDGE, gpio_edge)
 /* CN11_18 is 5V */
