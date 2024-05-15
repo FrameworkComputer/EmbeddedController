@@ -3,6 +3,28 @@
  * found in the LICENSE file.
  */
 
+/ {
+        cbi-fw-config {
+                compatible = "cros-ec,cbi-fw-config";
+                field-1 {
+                        enum-name = "FW_CONFIG_FIELD_1";
+                        start = <0>;
+                        size = <2>;
+                        val-0 {
+                                compatible = "cros-ec,cbi-fw-config-value";
+                                enum-name = "FW_FIELD_1_A";
+                                value = <0>;
+                        };
+                        val-1 {
+                                compatible = "cros-ec,cbi-fw-config-value";
+                                enum-name = "FW_FIELD_1_B";
+                                value = <1>;
+                                default;
+                        };
+                };
+        };
+};
+
 &vivaldi_kbd {
 	kbd_config_1: kbd-config-1 {
 		vivaldi-codes = <
