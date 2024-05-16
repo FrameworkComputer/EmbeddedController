@@ -63,6 +63,7 @@ ALS_PREFIXES = [
 
 # A list of different possible suffixes in the compatible name for each ctype
 CTYPE_SUFFIXES = {
+    "pdc": ["pdc"],
     "ppc": ["ppc"],
     "tcpc": ["tcpc"],
     "bc12": ["bc12"],
@@ -129,7 +130,7 @@ class Manifest:
             "component_name": name,
             "i2c": {"port": i2c_port, "addr": i2c_addr},
         }
-        if usbc_port:
+        if usbc_port is not None:
             component.update({"usbc": {"port": usbc_port}})
         if ssfc:
             component.update({"ssfc": ssfc})
@@ -409,6 +410,10 @@ def iterate_usbc_components(edtlib, edt, i2c_portmap, manifest):
         if "tcpc" in node.props:
             tcpc = node.props["tcpc"].val
             insert_i2c_component("tcpc", tcpc, port, i2c_portmap, manifest)
+
+        if "pdc" in node.props:
+            pdc = node.props["pdc"].val
+            insert_i2c_component("pdc", pdc, port, i2c_portmap, manifest)
 
 
 def insert_motionsense_component(
