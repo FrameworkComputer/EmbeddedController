@@ -28,6 +28,11 @@
 	label = "I2C_CHARGER";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 	status = "okay";
+
+	kb_discrete: ite-it8801@39 {
+		compatible = "ite,it8801";
+		reg = <0x39>;
+	};
 };
 
 /* typec-aic1-power */

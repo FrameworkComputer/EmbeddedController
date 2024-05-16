@@ -1,0 +1,39 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	/* IOEX_KBD_GPIO IT8801 */
+	ioex-kbd-gpio {
+		compatible = "cros,ioex-chip";
+		i2c-port = <&i2c_charger>;
+		i2c-addr = <0x39>;
+		drv = "it8801_ioexpander_drv";
+		flags = <0x00>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		ioex_it8801_port0: it8801_port@0 {
+			compatible = "cros,ioex-port";
+			reg = <0>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+		};
+		ioex_it8801_port1: it8801_port@1 {
+			compatible = "cros,ioex-port";
+			reg = <1>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+		};
+		ioex_it8801_port2: it8801_port@2 {
+			compatible = "cros,ioex-port";
+			reg = <2>;
+			gpio-controller;
+			#gpio-cells = <2>;
+			ngpios = <8>;
+		};
+	};
+};
