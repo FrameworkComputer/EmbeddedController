@@ -42,10 +42,6 @@
 		unused-gpios =
 			/* pg_pp5000_z2_od */
 			<&gpiod 2 GPIO_INPUT>,
-			/* GPIO_VOLUME_DOWN_L */
-			<&gpiod 5 GPIO_INPUT>,
-			/* GPIO_VOLUME_UP_L */
-			<&gpiod 6 GPIO_INPUT>,
 			/* pg_mt6315_proc_b_odl */
 			<&gpioe 1 GPIO_INPUT>,
 			/* ec_pen_chg_dis_odl */
@@ -73,8 +69,6 @@
 			<&gpiog 7 GPIO_OUTPUT_LOW>;
 	};
 	gpio-interrupts {
-		/delete-node/ volume_up;
-		/delete-node/ volume_down;
 		/delete-node/ usb_c0_ppc_bc12;
 		/delete-node/ base_imu;
 		/delete-node/ lid_imu;
