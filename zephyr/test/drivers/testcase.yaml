@@ -1369,6 +1369,9 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USBC_FRS=y
     - CONFIG_PLATFORM_EC_USB_PD_FRS_TCPC=y
+  drivers.usbc_power_contract:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_USBC_POWER_CONTRACT=y
   drivers.usbc_frs.ec_host_cmd:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USBC_FRS=y

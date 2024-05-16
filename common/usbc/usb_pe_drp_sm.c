@@ -1984,8 +1984,10 @@ static void send_source_cap(int port)
 	const int src_pdo_cnt = dpm_get_source_pdo(&src_pdo, port);
 
 	if (src_pdo_cnt == 0) {
+		tx_emsg[port].len = 0;
 		/* No source capabilities defined, sink only */
 		send_ctrl_msg(port, TCPCI_MSG_SOP, PD_CTRL_REJECT);
+		return;
 	}
 
 	tx_emsg[port].len = src_pdo_cnt * 4;

@@ -258,6 +258,10 @@ config LINK_TEST_SUITE_USBC_FRS
 	select LOG
 	select PLATFORM_EC_USB_PD_FRS
 
+config LINK_TEST_SUITE_USBC_POWER_CONTRACT
+	bool "Link tests for USBC Power Contract"
+	select LOG
+
 config LINK_TEST_SUITE_USBC_OCP
 	bool "Link tests for common USBC OCP code"
 
