@@ -8,5 +8,6 @@ project(ptlrvp_mchp)
 
 zephyr_include_directories("${CMAKE_CURRENT_SOURCE_DIR}/include")
 
+zephyr_library_sources("src/board_id.c")
 zephyr_library_sources("src/board_kbd.c")
 zephyr_library_sources("src/board_power.c")

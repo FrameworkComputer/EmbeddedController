@@ -33,6 +33,25 @@
 		compatible = "ite,it8801";
 		reg = <0x39>;
 	};
+	pca95xx_0: pca95xx@22 {
+		compatible = "nxp,pca95xx";
+		label = "PCA95XX";
+		reg = <0x22>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <16>;
+	};
+	rvp_board_id: rvp-board-id {
+		compatible = "intel,rvp-board-id";
+		bom-gpios = <&pca95xx_0 14 0>, <&pca95xx_0 15 0>,
+			    <&pca95xx_0 0 0>;
+
+		fab-gpios = <&pca95xx_0 1 0>, <&pca95xx_0 2 0>;
+
+		board-gpios = <&pca95xx_0 8 0>, <&pca95xx_0 9 0>,
+			      <&pca95xx_0 10 0>, <&pca95xx_0 11 0>,
+			      <&pca95xx_0 12 0>, <&pca95xx_0 13 0>;
+	};
 };
 
 /* typec-aic1-power */
