@@ -109,12 +109,12 @@ enum battery_type {
 #define CONFIG_MAG_CALIBRATE
 #endif
 
-#if defined(TEST_FPSENSOR) || defined(TEST_FPSENSOR_STATE) || \
-	defined(TEST_FPSENSOR_CRYPTO) ||                      \
-	defined(TEST_FPSENSOR_CRYPTO_WITH_MOCK) ||            \
-	defined(TEST_FPSENSOR_UTILS) ||                       \
-	defined(TEST_FPSENSOR_AUTH_CRYPTO_STATELESS) ||       \
-	defined(TEST_FPSENSOR_AUTH_CRYPTO_STATEFUL) ||        \
+#if defined(TEST_FP_TRANSPORT) || defined(TEST_FPSENSOR_STATE) || \
+	defined(TEST_FPSENSOR_CRYPTO) ||                          \
+	defined(TEST_FPSENSOR_CRYPTO_WITH_MOCK) ||                \
+	defined(TEST_FPSENSOR_UTILS) ||                           \
+	defined(TEST_FPSENSOR_AUTH_CRYPTO_STATELESS) ||           \
+	defined(TEST_FPSENSOR_AUTH_CRYPTO_STATEFUL) ||            \
 	defined(TEST_FPSENSOR_AUTH_COMMANDS)
 #define CONFIG_BORINGSSL_CRYPTO
 #define CONFIG_ROLLBACK_SECRET_SIZE 32

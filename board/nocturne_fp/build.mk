@@ -33,7 +33,7 @@ test-list-y=\
        exception \
        flash_physical \
        flash_write_protect \
-       fpsensor \
+       fp_transport \
        fpsensor_auth_crypto_stateful \
        fpsensor_auth_crypto_stateless \
        fpsensor_crypto \
