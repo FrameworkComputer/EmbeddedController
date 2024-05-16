@@ -589,8 +589,9 @@ test_static int test_command_read_match_secret(void)
 		params.fgr, &global_context.positive_match_secret_state);
 
 	/* GIVEN that salt is non-trivial. */
-	memcpy(fp_positive_match_salt[0], fake_positive_match_salt,
-	       sizeof(fp_positive_match_salt[0]));
+	memcpy(global_context.fp_positive_match_salt[0],
+	       fake_positive_match_salt,
+	       sizeof(global_context.fp_positive_match_salt[0]));
 	/* THEN reading positive match secret should succeed. */
 	rv = test_send_host_command(EC_CMD_FP_READ_MATCH_SECRET, 0, &params,
 				    sizeof(params), &resp, sizeof(resp));
@@ -658,8 +659,9 @@ test_static int test_command_read_match_secret_timeout(void)
 	set_time(global_context.positive_match_secret_state.deadline);
 
 	/* EVEN IF encryption salt is non-trivial. */
-	memcpy(fp_positive_match_salt[0], fake_positive_match_salt,
-	       sizeof(fp_positive_match_salt[0]));
+	memcpy(global_context.fp_positive_match_salt[0],
+	       fake_positive_match_salt,
+	       sizeof(global_context.fp_positive_match_salt[0]));
 	/* Reading secret will fail. */
 	rv = test_send_host_command(EC_CMD_FP_READ_MATCH_SECRET, 0, &params,
 				    sizeof(params), NULL, 0);
@@ -684,8 +686,9 @@ test_static int test_command_read_match_secret_unreadable(void)
 		params.fgr);
 
 	/* EVEN IF encryption salt is non-trivial. */
-	memcpy(fp_positive_match_salt[0], fake_positive_match_salt,
-	       sizeof(fp_positive_match_salt[0]));
+	memcpy(global_context.fp_positive_match_salt[0],
+	       fake_positive_match_salt,
+	       sizeof(global_context.fp_positive_match_salt[0]));
 	/* Reading secret will fail. */
 	rv = test_send_host_command(EC_CMD_FP_READ_MATCH_SECRET, 0, &params,
 				    sizeof(params), NULL, 0);

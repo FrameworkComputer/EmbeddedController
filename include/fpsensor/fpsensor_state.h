@@ -47,9 +47,6 @@ extern uint8_t fp_template[FP_MAX_FINGER_COUNT][FP_ALGORITHM_TEMPLATE_SIZE];
  * ciphered data.
  */
 extern uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE];
-/* Salt used in derivation of positive match secret. */
-extern uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
-				     [FP_POSITIVE_MATCH_SALT_BYTES];
 
 struct positive_match_secret_state {
 	/* Index of the most recently matched template. */
@@ -78,6 +75,9 @@ struct fpsensor_context {
 	/** Current user ID */
 	uint8_t user_id[FP_CONTEXT_USERID_BYTES];
 	struct positive_match_secret_state positive_match_secret_state;
+	/** Salt used in derivation of positive match secret. */
+	uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
+				      [FP_POSITIVE_MATCH_SALT_BYTES];
 };
 
 extern struct fpsensor_context global_context;

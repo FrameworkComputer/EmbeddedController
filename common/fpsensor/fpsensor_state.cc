@@ -48,9 +48,7 @@ static_assert(
  * ciphered data.
  */
 uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE] FP_TEMPLATE_SECTION;
-/* Salt used in derivation of positive match secret. */
-uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
-			      [FP_POSITIVE_MATCH_SALT_BYTES];
+
 /* The states for different fingers. */
 std::array<fp_template_state, FP_MAX_FINGER_COUNT> template_states;
 
@@ -68,6 +66,7 @@ struct fpsensor_context global_context = {
 		.deadline = {
 			.val = 0,
 		}},
+	.fp_positive_match_salt = {{0}}
 };
 
 int fp_tpm_seed_is_set(void)
@@ -88,8 +87,8 @@ __test_only void fp_task_simulate(void)
 void fp_clear_finger_context(uint16_t idx)
 {
 	OPENSSL_cleanse(fp_template[idx], sizeof(fp_template[0]));
-	OPENSSL_cleanse(fp_positive_match_salt[idx],
-			sizeof(fp_positive_match_salt[0]));
+	OPENSSL_cleanse(global_context.fp_positive_match_salt[idx],
+			sizeof(global_context.fp_positive_match_salt[0]));
 	template_states[idx] = std::monostate();
 }
 
@@ -352,7 +351,8 @@ enum ec_status fp_read_match_secret(
 	}
 
 	if (derive_positive_match_secret(
-		    positive_match_secret, fp_positive_match_salt[fgr],
+		    positive_match_secret,
+		    global_context.fp_positive_match_salt[fgr],
 		    global_context.user_id,
 		    global_context.tpm_seed) != EC_SUCCESS) {
 		CPRINTS("Failed to derive positive match secret for finger %d",

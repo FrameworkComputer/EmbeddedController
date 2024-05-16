@@ -515,8 +515,9 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 		/* Positive match salt is after the template. */
 		uint8_t *positive_match_salt =
 			encrypted_template + sizeof(fp_template[0]);
-		size_t encrypted_blob_size = sizeof(fp_template[0]) +
-					     sizeof(fp_positive_match_salt[0]);
+		size_t encrypted_blob_size =
+			sizeof(fp_template[0]) +
+			sizeof(global_context.fp_positive_match_salt[0]);
 
 		/* b/114160734: Not more than 1 encrypted message per second. */
 		if (!timestamp_expired(encryption_deadline, &now))
@@ -547,8 +548,9 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 			global_context.template_newly_enrolled =
 				FP_NO_SUCH_TEMPLATE;
 			trng_init();
-			trng_rand_bytes(fp_positive_match_salt[fgr],
-					FP_POSITIVE_MATCH_SALT_BYTES);
+			trng_rand_bytes(
+				global_context.fp_positive_match_salt[fgr],
+				FP_POSITIVE_MATCH_SALT_BYTES);
 			trng_exit();
 		}
 
@@ -566,8 +568,9 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 		 */
 		memcpy(encrypted_template, fp_template[fgr],
 		       sizeof(fp_template[0]));
-		memcpy(positive_match_salt, fp_positive_match_salt[fgr],
-		       sizeof(fp_positive_match_salt[0]));
+		memcpy(positive_match_salt,
+		       global_context.fp_positive_match_salt[fgr],
+		       sizeof(global_context.fp_positive_match_salt[0]));
 
 		/* Encrypt the secret blob in-place. */
 		std::span encrypted_template_span(encrypted_template,
@@ -651,7 +654,8 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 	}
 
 	size_t encrypted_blob_size =
-		sizeof(fp_template[0]) + sizeof(fp_positive_match_salt[0]);
+		sizeof(fp_template[0]) +
+		sizeof(global_context.fp_positive_match_salt[0]);
 
 	enum ec_error_list ret;
 	if (global_context.fp_encryption_status & FP_CONTEXT_USER_ID_SET) {
@@ -684,14 +688,15 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 	}
 
 	memcpy(fp_template[idx], encrypted_template, sizeof(fp_template[0]));
-	if (bytes_are_trivial(positive_match_salt,
-			      sizeof(fp_positive_match_salt[0]))) {
+	if (bytes_are_trivial(
+		    positive_match_salt,
+		    sizeof(global_context.fp_positive_match_salt[0]))) {
 		CPRINTS("fgr%d: Trivial positive match salt.", idx);
 		OPENSSL_cleanse(fp_template[idx], sizeof(fp_template[0]));
 		return EC_RES_INVALID_PARAM;
 	}
-	memcpy(fp_positive_match_salt[idx], positive_match_salt,
-	       sizeof(fp_positive_match_salt[0]));
+	memcpy(global_context.fp_positive_match_salt[idx], positive_match_salt,
+	       sizeof(global_context.fp_positive_match_salt[0]));
 
 	global_context.templ_valid++;
 	return EC_RES_SUCCESS;
@@ -768,7 +773,8 @@ fp_command_migrate_template_to_nonce_context(struct host_cmd_handler_args *args)
 	 * match secrets of legacy templates. New match secret needs to be
 	 * generated for them.
 	 */
-	memset(fp_positive_match_salt[idx], 0, FP_POSITIVE_MATCH_SALT_BYTES);
+	memset(global_context.fp_positive_match_salt[idx], 0,
+	       FP_POSITIVE_MATCH_SALT_BYTES);
 	int ret = fp_enable_positive_match_secret(
 		idx, &global_context.positive_match_secret_state);
 	if (ret != EC_SUCCESS) {

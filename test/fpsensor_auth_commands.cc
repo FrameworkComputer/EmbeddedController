@@ -705,9 +705,10 @@ test_fp_command_read_match_secret_with_pubkey_succeed(void)
 
 	global_context.positive_match_secret_state = test_state_1;
 	/* Set fp_positive_match_salt to the default fake positive match salt */
-	for (size_t fgr = 0; fgr < ARRAY_SIZE(fp_positive_match_salt); ++fgr)
+	for (size_t fgr = 0;
+	     fgr < ARRAY_SIZE(global_context.fp_positive_match_salt); ++fgr)
 		std::ranges::copy(default_fake_fp_positive_match_salt,
-				  fp_positive_match_salt[fgr]);
+				  global_context.fp_positive_match_salt[fgr]);
 
 	/* Initialize an empty user_id to compare positive_match_secret */
 	std::ranges::fill(global_context.user_id, 0);
@@ -760,7 +761,8 @@ test_static enum ec_error_list test_fp_command_template_encrypted(void)
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 
@@ -830,7 +832,8 @@ test_static enum ec_error_list test_fp_command_template_decrypted(void)
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 
@@ -926,7 +929,8 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 
@@ -1068,7 +1072,8 @@ test_fp_command_unlock_template_pre_encrypted_fail(void)
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 
@@ -1150,7 +1155,8 @@ test_fp_command_unlock_template_pre_encrypted(void)
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 
@@ -1311,7 +1317,8 @@ test_static enum ec_error_list test_fp_command_commit_trivial_salt(void)
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 
@@ -1380,7 +1387,8 @@ test_static enum ec_error_list test_fp_command_commit_without_seed(void)
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 
@@ -1439,7 +1447,8 @@ test_fp_command_migrate_template_to_nonce_context(void)
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 

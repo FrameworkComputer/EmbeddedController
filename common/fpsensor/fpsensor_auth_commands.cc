@@ -312,16 +312,17 @@ static enum ec_status unlock_template(uint16_t idx)
 	 * want to allocate a huge array on the stack.
 	 * Note: fp_enc_buffer = fp_template || fp_positive_match_salt */
 	constexpr std::span enc_template(fp_enc_buffer, sizeof(fp_template[0]));
-	constexpr std::span enc_salt(enc_template.end(),
-				     sizeof(fp_positive_match_salt[0]));
+	constexpr std::span enc_salt(
+		enc_template.end(),
+		sizeof(global_context.fp_positive_match_salt[0]));
 	constexpr std::span enc_buffer(fp_enc_buffer,
 				       enc_template.size() + enc_salt.size());
 	static_assert(enc_buffer.size() <= sizeof(fp_enc_buffer));
 
 	std::copy(fp_template[idx], fp_template[idx] + enc_template.size(),
 		  enc_template.begin());
-	std::copy(fp_positive_match_salt[idx],
-		  fp_positive_match_salt[idx] + enc_salt.size(),
+	std::copy(global_context.fp_positive_match_salt[idx],
+		  global_context.fp_positive_match_salt[idx] + enc_salt.size(),
 		  enc_salt.begin());
 
 	CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > key;
@@ -341,7 +342,7 @@ static enum ec_status unlock_template(uint16_t idx)
 	}
 
 	std::ranges::copy(enc_template, fp_template[idx]);
-	std::ranges::copy(enc_salt, fp_positive_match_salt[idx]);
+	std::ranges::copy(enc_salt, global_context.fp_positive_match_salt[idx]);
 
 	fp_init_decrypted_template_state_with_user_id(idx);
 	OPENSSL_cleanse(fp_enc_buffer, sizeof(fp_enc_buffer));
