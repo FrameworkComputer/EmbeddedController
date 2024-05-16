@@ -189,6 +189,14 @@ void chip_pre_init(void)
 		     STM32_RCC_PB1_WWDG | STM32_RCC_PB1_IWDG;
 	apb2fz_reg = STM32_RCC_PB2_TIM1 | STM32_RCC_PB2_TIM8;
 #endif
+#elif defined(CHIP_FAMILY_STM32L5)
+	apb1fz_reg = STM32_RCC_PB1_TIM2 | STM32_RCC_PB1_TIM3 |
+		     STM32_RCC_PB1_TIM4 | STM32_RCC_PB1_TIM5 |
+		     STM32_RCC_PB1_TIM6 | STM32_RCC_PB1_TIM7 |
+		     STM32_RCC_PB1_WWDG | STM32_RCC_PB1_IWDG;
+	apb2fz_reg = STM32_RCC_PB2_TIM1 | STM32_RCC_PB2_TIM8 |
+		     STM32_RCC_PB2_TIM15 | STM32_RCC_PB2_TIM16 |
+		     STM32_RCC_PB2_TIM17;
 #elif defined(CHIP_FAMILY_STM32L)
 	apb1fz_reg = STM32_RCC_PB1_TIM2 | STM32_RCC_PB1_TIM3 |
 		     STM32_RCC_PB1_TIM4 | STM32_RCC_PB1_WWDG |
@@ -207,15 +215,10 @@ void chip_pre_init(void)
 #elif defined(CHIP_FAMILY_STM32H7)
 	/* TODO(b/67081508) */
 #endif
-#if defined(CHIP_FAMILY_STM32L5)
-	(void)apb1fz_reg;
-	(void)apb2fz_reg;
-#else
 	if (apb1fz_reg)
 		STM32_DBGMCU_APB1FZ |= apb1fz_reg;
 	if (apb2fz_reg)
 		STM32_DBGMCU_APB2FZ |= apb2fz_reg;
-#endif
 }
 
 #ifdef CONFIG_PVD
