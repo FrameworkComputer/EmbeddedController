@@ -50,6 +50,10 @@ ZTEST(cros_cbi, test_fw_config)
 		     "Expected no error return from cros_cbi_get_fw_config");
 	zassert_false(value == FW_FIELD_2_X,
 		      "Expected field value to not match FW_FIELD_2_X");
+
+	ret = cros_cbi_get_fw_config(CBI_FW_CONFIG_FIELDS_COUNT, &value);
+	zassert_equal(ret, -EINVAL,
+		      "Expected error return from cros_cbi_get_fw_config");
 }
 
 ZTEST_SUITE(cros_cbi, drivers_predicate_post_main, NULL, NULL, NULL, NULL);
