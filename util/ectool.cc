@@ -10945,10 +10945,10 @@ int cmd_pd_control(int argc, char *argv[])
 int cmd_pd_chip_info(int argc, char *argv[])
 {
 	struct ec_params_pd_chip_info p;
-	struct ec_response_pd_chip_info_v1 r;
+	struct ec_response_pd_chip_info_v2 r;
 	char *e;
 	int rv;
-	int cmdver = 1;
+	int cmdver;
 
 	if (argc < 2 || 3 < argc) {
 		fprintf(stderr,
@@ -10976,8 +10976,9 @@ int cmd_pd_chip_info(int argc, char *argv[])
 		}
 	}
 
-	if (!ec_cmd_version_supported(EC_CMD_PD_CHIP_INFO, cmdver))
-		cmdver = 0;
+	rv = ec_get_highest_supported_cmd_version(EC_CMD_PD_CHIP_INFO, &cmdver);
+	if (rv)
+		return rv;
 
 	rv = ec_command(EC_CMD_PD_CHIP_INFO, cmdver, &p, sizeof(p), &r,
 			sizeof(r));
@@ -10988,9 +10989,15 @@ int cmd_pd_chip_info(int argc, char *argv[])
 	printf("product_id: 0x%x\n", r.product_id);
 	printf("device_id: 0x%x\n", r.device_id);
 
-	if (r.fw_version_number != -1)
+	if (r.fw_version_number != -1) {
 		printf("fw_version: 0x%" PRIx64 "\n", r.fw_version_number);
-	else
+
+		printf("fw_version_dec: %u.%u.%u.%u.%u.%u.%u.%u\n",
+		       r.fw_version_string[7], r.fw_version_string[6],
+		       r.fw_version_string[5], r.fw_version_string[4],
+		       r.fw_version_string[3], r.fw_version_string[2],
+		       r.fw_version_string[1], r.fw_version_string[0]);
+	} else
 		printf("fw_version: UNSUPPORTED\n");
 
 	if (cmdver >= 1)
@@ -10998,6 +11005,14 @@ int cmd_pd_chip_info(int argc, char *argv[])
 		       r.min_req_fw_version_number);
 	else
 		printf("min_req_fw_version: UNSUPPORTED\n");
+
+	if (cmdver >= 2) {
+		printf("fw_update_flags: 0x%04x\n", r.fw_update_flags);
+		printf("fw_name_str: '%s'\n", r.fw_name_str);
+	} else {
+		printf("fw_update_flags: UNSUPPORTED\n");
+		printf("fw_name_str: UNSUPPORTED\n");
+	}
 
 	return 0;
 }

@@ -6293,6 +6293,37 @@ struct ec_response_pd_chip_info_v1 {
 	} __ec_align2;
 } __ec_align2;
 
+/** Indicates the chip should NOT receive a firmware update, if set. This is
+ *  useful when multiple ports are serviced by a single chip, to avoid
+ *  performing redundant updates. The host command implementation shall ensure
+ *  only one port out of each physical chip has FW updates active.
+ */
+#define USB_PD_CHIP_INFO_FWUP_FLAG_NO_UPDATE BIT(0)
+
+/** Maximum length of a project name embedded in a PDC FW image. This length
+ *  does NOT include a NUL-terminator.
+ */
+#define USB_PD_CHIP_INFO_PROJECT_NAME_LEN 12
+struct ec_response_pd_chip_info_v2 {
+	uint16_t vendor_id;
+	uint16_t product_id;
+	uint16_t device_id;
+	union {
+		uint8_t fw_version_string[8];
+		uint64_t fw_version_number;
+	} __ec_align2;
+	union {
+		uint8_t min_req_fw_version_string[8];
+		uint64_t min_req_fw_version_number;
+	} __ec_align2;
+	/** Flag to control the FW update process for this chip. */
+	uint16_t fw_update_flags;
+	/** Project name string associated with the chip's FW. Add an extra
+	 *  byte for a NUL-terminator.
+	 */
+	char fw_name_str[USB_PD_CHIP_INFO_PROJECT_NAME_LEN + 1];
+} __ec_align2;
+
 /* Run RW signature verification and get status */
 #define EC_CMD_RWSIG_CHECK_STATUS 0x011C
 

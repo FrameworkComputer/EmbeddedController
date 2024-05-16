@@ -368,6 +368,8 @@ _CROS_EC_CV_F_P(EC_CMD_OVERRIDE_DEDICATED_CHARGER_LIMIT, 0,
 _CROS_EC_C0_F_RF(EC_CMD_PCHG_COUNT, pchg_count);
 _CROS_EC_CV_F_P(EC_CMD_PD_CHARGE_PORT_OVERRIDE, 0, pd_charge_port_override,
 		charge_port_override);
+_CROS_EC_CV_F_P_R(EC_CMD_PD_CHIP_INFO, 2, pd_chip_info_v2, pd_chip_info,
+		  pd_chip_info_v2);
 _CROS_EC_CV_F_P_R(EC_CMD_PD_CHIP_INFO, 1, pd_chip_info_v1, pd_chip_info,
 		  pd_chip_info_v1);
 _CROS_EC_C0_F_PF_RF(EC_CMD_PD_CHIP_INFO, pd_chip_info);

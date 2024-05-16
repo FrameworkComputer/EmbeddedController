@@ -100,6 +100,13 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 #define RTS54XX_GET_IC_STATUS_PD_VER_MAJOR_OFFSET 25
 #define RTS54XX_GET_IC_STATUS_PD_VER_MINOR_OFFSET 26
 #define RTS54XX_GET_IC_STATUS_PROG_NAME_STR 27
+#define RTS54XX_GET_IC_STATUS_PROG_NAME_STR_LEN 12
+
+/* FW project name length should not exceed the max length supported in struct
+ * pdc_info_t
+ */
+BUILD_ASSERT(RTS54XX_GET_IC_STATUS_PROG_NAME_STR_LEN <=
+	     (sizeof(((struct pdc_info_t *)0)->project_name) - 1));
 
 /**
  * @brief Macro to transition to init or idle state and return
@@ -1212,8 +1219,9 @@ static void st_read_run(void *o)
 		/* Project name string is supported on version >= 0.3.x */
 		memcpy(info->project_name,
 		       &data->rd_buf[RTS54XX_GET_IC_STATUS_PROG_NAME_STR],
-		       PDC_FW_PROJECT_NAME_LEN);
-		info->project_name[PDC_FW_PROJECT_NAME_LEN] = '\0';
+		       RTS54XX_GET_IC_STATUS_PROG_NAME_STR_LEN);
+		info->project_name[RTS54XX_GET_IC_STATUS_PROG_NAME_STR_LEN] =
+			'\0';
 
 		/* Only print this log on init */
 		if (data->init_local_state != INIT_PDC_COMPLETE) {

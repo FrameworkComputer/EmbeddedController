@@ -11,6 +11,7 @@
 #ifndef ZEPHYR_INCLUDE_DRIVERS_PDC_H_
 #define ZEPHYR_INCLUDE_DRIVERS_PDC_H_
 
+#include "ec_commands.h"
 #include "ucsi_v3.h"
 #include "usb_pd.h"
 
@@ -51,11 +52,6 @@ extern "C" {
 
 #define PDC_FWVER_INVALID (0x00000000)
 
-/** Maximum length of a project name embedded in a PDC FW image. This length
- *  does NOT include a NUL-terminator.
- */
-#define PDC_FW_PROJECT_NAME_LEN 12
-
 /**
  * @brief Power Delivery Controller Information
  */
@@ -73,7 +69,7 @@ struct pdc_info_t {
 	/** Set to the currently used flash bank (optional) */
 	uint8_t running_in_flash_bank;
 	/** 12-byte program name string plus NUL terminator */
-	char project_name[PDC_FW_PROJECT_NAME_LEN + 1];
+	char project_name[USB_PD_CHIP_INFO_PROJECT_NAME_LEN + 1];
 	/** Extra information (optional) */
 	uint16_t extra;
 };

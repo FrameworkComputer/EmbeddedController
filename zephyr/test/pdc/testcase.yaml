@@ -26,3 +26,8 @@ tests:
   pdc.console:
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_CONSOLE=y
+
+  pdc.hostcmd:
+    extra_configs:
+    - CONFIG_TEST_SUITE_PDC_HOSTCMD=y
+    - CONFIG_PLATFORM_EC_HOSTCMD_PD_CHIP_INFO=y
