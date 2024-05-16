@@ -3,9 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "base_state.h"
 #include "charger.h"
-#include "chipset.h"
 #include "driver/charger/rt9490.h"
 #include "extpower.h"
 #include "gpio/gpio_int.h"
@@ -57,28 +55,12 @@ static void board_disable_i2c3(void)
 }
 DECLARE_HOOK(HOOK_CHIPSET_HARD_OFF, board_disable_i2c3, HOOK_PRIO_LAST);
 
-static void base_attached_hook(void)
-{
-	const struct device *touchpad =
-		DEVICE_DT_GET(DT_NODELABEL(hid_i2c_target));
-	bool hid_enable = true;
-
-	hid_enable = hid_enable && base_get_state();
-	hid_enable = hid_enable &&
-		     chipset_in_or_transitioning_to_state(CHIPSET_STATE_ON);
-
-	if (hid_enable) {
-		i2c_target_driver_register(touchpad);
-	} else {
-		i2c_target_driver_unregister(touchpad);
-	}
-}
-DECLARE_HOOK(HOOK_BASE_ATTACHED_CHANGE, base_attached_hook, HOOK_PRIO_DEFAULT);
-
 static void board_suspend_handler(struct ap_power_ev_callback *cb,
 				  struct ap_power_ev_data data)
 {
 	int value;
+	const struct device *touchpad =
+		DEVICE_DT_GET(DT_NODELABEL(hid_i2c_target));
 
 	switch (data.event) {
 	default:
@@ -86,14 +68,15 @@ static void board_suspend_handler(struct ap_power_ev_callback *cb,
 
 	case AP_POWER_RESUME:
 		value = 1;
+		i2c_target_driver_register(touchpad);
 		break;
 
 	case AP_POWER_SUSPEND:
 		value = 0;
+		i2c_target_driver_unregister(touchpad);
 		break;
 	}
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_en_5v_usm), value);
-	base_attached_hook();
 }
 
 static int install_suspend_handler(void)
