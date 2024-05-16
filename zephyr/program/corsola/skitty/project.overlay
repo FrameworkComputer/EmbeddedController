@@ -319,9 +319,9 @@
 };
 
 &i2c4 {
-	/delete-node/ tusb1064-mux-1@44;
+	/delete-node/ syv682x@40;
 
-	/delete-node/ ps8743_mux_1;
+	/delete-node/ tusb1064-mux-1@44;
 };
 
 /* Skitty usba port enable config */
