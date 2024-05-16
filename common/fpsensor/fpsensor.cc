@@ -682,9 +682,10 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 		}
 		fp_init_decrypted_template_state_with_user_id(idx);
 	} else {
-		template_states[idx] = fp_encrypted_template_state{
-			.enc_metadata = *enc_info,
-		};
+		global_context.template_states[idx] =
+			fp_encrypted_template_state{
+				.enc_metadata = *enc_info,
+			};
 	}
 
 	memcpy(fp_template[idx], encrypted_template, sizeof(fp_template[0]));

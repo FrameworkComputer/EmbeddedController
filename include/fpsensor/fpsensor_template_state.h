@@ -39,7 +39,4 @@ using fp_template_state =
 	std::variant<std::monostate, fp_encrypted_template_state,
 		     fp_decrypted_template_state>;
 
-/* The states for different fingers. */
-extern std::array<fp_template_state, FP_MAX_FINGER_COUNT> template_states;
-
 #endif /* __CROS_EC_FPSENSOR_TEMPLATE_STATE_H */

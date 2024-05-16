@@ -49,9 +49,6 @@ static_assert(
  */
 uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE] FP_TEMPLATE_SECTION;
 
-/* The states for different fingers. */
-std::array<fp_template_state, FP_MAX_FINGER_COUNT> template_states;
-
 struct fpsensor_context global_context = {
 	.template_newly_enrolled = FP_NO_SUCH_TEMPLATE,
 	.templ_valid = 0,
@@ -66,7 +63,8 @@ struct fpsensor_context global_context = {
 		.deadline = {
 			.val = 0,
 		}},
-	.fp_positive_match_salt = {{0}}
+	.fp_positive_match_salt = {{0}},
+	.template_states = {},
 };
 
 int fp_tpm_seed_is_set(void)
@@ -89,7 +87,7 @@ void fp_clear_finger_context(uint16_t idx)
 	OPENSSL_cleanse(fp_template[idx], sizeof(fp_template[0]));
 	OPENSSL_cleanse(global_context.fp_positive_match_salt[idx],
 			sizeof(global_context.fp_positive_match_salt[0]));
-	template_states[idx] = std::monostate();
+	global_context.template_states[idx] = std::monostate();
 }
 
 void fp_reset_context()
@@ -109,7 +107,7 @@ void fp_init_decrypted_template_state_with_user_id(uint16_t idx)
 {
 	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> raw_user_id;
 	std::ranges::copy(global_context.user_id, raw_user_id.begin());
-	template_states[idx] = fp_decrypted_template_state{
+	global_context.template_states[idx] = fp_decrypted_template_state{
 		.user_id = raw_user_id,
 	};
 }

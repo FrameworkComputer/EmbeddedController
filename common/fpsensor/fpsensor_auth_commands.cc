@@ -286,8 +286,8 @@ DECLARE_HOST_COMMAND(EC_CMD_FP_READ_MATCH_SECRET_WITH_PUBKEY,
 
 static enum ec_status unlock_template(uint16_t idx)
 {
-	auto *dec_state =
-		std::get_if<fp_decrypted_template_state>(&template_states[idx]);
+	auto *dec_state = std::get_if<fp_decrypted_template_state>(
+		&global_context.template_states[idx]);
 	if (dec_state) {
 		if (safe_memcmp(dec_state->user_id.begin(),
 				global_context.user_id,
@@ -297,8 +297,8 @@ static enum ec_status unlock_template(uint16_t idx)
 		return EC_RES_SUCCESS;
 	}
 
-	auto *enc_state =
-		std::get_if<fp_encrypted_template_state>(&template_states[idx]);
+	auto *enc_state = std::get_if<fp_encrypted_template_state>(
+		&global_context.template_states[idx]);
 	if (!enc_state) {
 		return EC_RES_INVALID_PARAM;
 	}
@@ -368,7 +368,7 @@ fp_command_unlock_template(struct host_cmd_handler_args *args)
 		return EC_RES_ACCESS_DENIED;
 	}
 
-	if (fgr_num > template_states.size()) {
+	if (fgr_num > global_context.template_states.size()) {
 		return EC_RES_OVERFLOW;
 	}
 
