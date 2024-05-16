@@ -189,10 +189,14 @@ static
 		if (IS_ENABLED(CONFIG_USBC_VCONN))
 			ccprintf("%s ", tc_is_vconn_src(port) ? "-VC" : "");
 
-		ccprintf("TC State: %s, Flags: 0x%04x",
+		/* PD-FAFT requires a space before the TC State in the following
+		 * print */
+		ccprintf(" TC State: %s, Flags: 0x%04x",
 			 tc_get_current_state(port), tc_get_flags(port));
 
 		if (IS_ENABLED(CONFIG_USB_PE_SM)) {
+			/* PD-FAFT requires a space before the PE State in the
+			 * following print */
 			ccprintf(" PE State: %s, Flags: 0x%04x",
 				 pe_get_current_state(port),
 				 pe_get_flags(port));
