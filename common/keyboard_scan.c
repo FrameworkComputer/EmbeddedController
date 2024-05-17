@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "atomic_bit.h"
+#include "battery.h"
 #include "chipset.h"
 #include "clock.h"
 #include "common.h"
@@ -897,10 +898,21 @@ static uint32_t check_boot_key(const uint8_t *state)
 	 * we don't want to accidentally enter recovery mode even if a refresh
 	 * key or whatever key is pressed (as previously allowed).
 	 */
-	if (!(system_get_reset_flags() & EC_RESET_FLAG_RESET_PIN))
-		return BOOT_KEY_NONE;
+	if ((system_get_reset_flags() & EC_RESET_FLAG_RESET_PIN))
+		return check_key_list(state);
 
-	return check_key_list(state);
+#ifdef CONFIG_BATTERY
+	/*
+	 * (b/341023382)
+	 * Fixed an issue where recovery mode cannot be entered in AC-only
+	 * state.
+	 */
+	if ((system_get_reset_flags() & EC_RESET_FLAG_POWER_ON) &&
+	    battery_is_present() == BP_NO)
+		return check_key_list(state);
+#endif
+
+	return BOOT_KEY_NONE;
 }
 #endif
 
