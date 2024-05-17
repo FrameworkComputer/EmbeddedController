@@ -18,6 +18,10 @@ BOARD ?= elm
 # Directory where the board is configured (includes /$(BOARD) at the end)
 BDIR:=$(wildcard board/$(BOARD))
 # Private board directory
+# (b/341194123): The private board directory is not visible by default. It
+# needs additional local manifest setup and only limited people can access it.
+# DO NOT remove PBDIR and PDIR before you read the bug and make sure that's the
+# right thing to do.
 PBDIR:=$(wildcard private-*/board/$(BOARD))
 
 # We need either public, or private board directory, or both.
