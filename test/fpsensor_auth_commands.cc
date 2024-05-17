@@ -1234,64 +1234,7 @@ test_fp_command_unlock_template_pre_encrypted(void)
 	return EC_SUCCESS;
 }
 
-// Test that legacy format (v2) isn't accepted by commit function.
-test_static enum ec_error_list test_fp_command_commit_v2(void)
-{
-	fp_reset_and_clear_context();
-
-	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
-
-	constexpr size_t head_size = offsetof(ec_params_fp_template, data);
-	constexpr size_t metadata_size =
-		sizeof(ec_fp_template_encryption_metadata);
-	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t params_size =
-		head_size + metadata_size + template_size;
-
-	std::array<uint8_t, params_size> params = {};
-	std::span head(params.begin(), head_size);
-	std::span enc_metadata(head.end(), metadata_size);
-	std::span template_data(enc_metadata.end(), template_size);
-
-	struct ec_params_fp_template head_data = {
-		.offset = 0,
-		.size = FP_TEMPLATE_COMMIT | (params_size - head_size),
-	};
-	static_assert(head_size == sizeof(head_data));
-	memcpy(head.data(), &head_data, head.size());
-
-	std::ranges::fill(template_data, 0xc4);
-
-	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info, global_context.user_id,
-			      global_context.tpm_seed, template_data);
-
-	struct ec_fp_template_encryption_metadata enc_metadata_data {
-		.struct_version = 2
-	};
-
-	static_assert(sizeof(info.nonce) == sizeof(enc_metadata_data.nonce));
-	std::ranges::copy(info.nonce, enc_metadata_data.nonce);
-
-	static_assert(sizeof(info.encryption_salt) ==
-		      sizeof(enc_metadata_data.encryption_salt));
-	std::ranges::copy(info.encryption_salt,
-			  enc_metadata_data.encryption_salt);
-
-	static_assert(sizeof(info.tag) == sizeof(enc_metadata_data.tag));
-	std::ranges::copy(info.tag, enc_metadata_data.tag);
-
-	static_assert(metadata_size == sizeof(enc_metadata_data));
-	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
-
-	TEST_EQ(test_send_host_command(EC_CMD_FP_TEMPLATE, 0, params.data(),
-				       params.size(), NULL, 0),
-		EC_RES_INVALID_PARAM, "%d");
-
-	return EC_SUCCESS;
-}
-
-// Test that legacy format (v3) is still accepted for commit.
+// Test that legacy format (v3) isn't accepted by commit function.
 test_static enum ec_error_list test_fp_command_commit_v3(void)
 {
 	fp_reset_and_clear_context();
@@ -1343,7 +1286,7 @@ test_static enum ec_error_list test_fp_command_commit_v3(void)
 
 	TEST_EQ(test_send_host_command(EC_CMD_FP_TEMPLATE, 0, params.data(),
 				       params.size(), NULL, 0),
-		EC_RES_SUCCESS, "%d");
+		EC_RES_INVALID_PARAM, "%d");
 
 	return EC_SUCCESS;
 }
@@ -1641,7 +1584,6 @@ extern "C" void run_test(int argc, const char **argv)
 	RUN_TEST(test_fp_command_unlock_template);
 	RUN_TEST(test_fp_command_unlock_template_pre_encrypted_fail);
 	RUN_TEST(test_fp_command_unlock_template_pre_encrypted);
-	RUN_TEST(test_fp_command_commit_v2);
 	RUN_TEST(test_fp_command_commit_v3);
 	RUN_TEST(test_fp_command_commit_trivial_salt);
 	RUN_TEST(test_fp_command_migrate_template_to_nonce_context);

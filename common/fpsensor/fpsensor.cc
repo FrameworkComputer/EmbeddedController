@@ -611,19 +611,9 @@ static enum ec_status fp_command_stats(struct host_cmd_handler_args *args)
 }
 DECLARE_HOST_COMMAND(EC_CMD_FP_STATS, fp_command_stats, EC_VER_MASK(0));
 
-static bool template_needs_validation_value(
-	struct ec_fp_template_encryption_metadata *enc_info)
-{
-	return enc_info->struct_version == 3 && FP_TEMPLATE_FORMAT_VERSION == 4;
-}
-
 static enum ec_status
 validate_template_format(struct ec_fp_template_encryption_metadata *enc_info)
 {
-	if (template_needs_validation_value(enc_info))
-		/* The host requested migration to v4. */
-		return EC_RES_SUCCESS;
-
 	if (enc_info->struct_version != FP_TEMPLATE_FORMAT_VERSION) {
 		CPRINTS("Invalid template format %d", enc_info->struct_version);
 		return EC_RES_INVALID_PARAM;
@@ -694,13 +684,6 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 	}
 
 	memcpy(fp_template[idx], encrypted_template, sizeof(fp_template[0]));
-	if (template_needs_validation_value(enc_info)) {
-		CPRINTS("fgr%d: Generating positive match salt.", idx);
-		trng_init();
-		trng_rand_bytes(positive_match_salt,
-				FP_POSITIVE_MATCH_SALT_BYTES);
-		trng_exit();
-	}
 	if (bytes_are_trivial(positive_match_salt,
 			      sizeof(fp_positive_match_salt[0]))) {
 		CPRINTS("fgr%d: Trivial positive match salt.", idx);
