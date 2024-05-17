@@ -337,11 +337,14 @@ void usb_spi_board_disable(void)
 
 /* I2C ports */
 const struct i2c_port_t i2c_ports[] = {
-	{ .name = "master",
-	  .port = I2C_PORT_MASTER,
-	  .kbps = 100,
-	  .scl = GPIO_MASTER_I2C_SCL,
-	  .sda = GPIO_MASTER_I2C_SDA },
+	{
+		.name = "master",
+		.port = I2C_PORT_MASTER,
+		.kbps = 100,
+		.scl = GPIO_MASTER_I2C_SCL,
+		.sda = GPIO_MASTER_I2C_SDA,
+		.flags = I2C_PORT_FLAG_DYNAMIC_SPEED,
+	},
 };
 const unsigned int i2c_ports_used = ARRAY_SIZE(i2c_ports);
 
