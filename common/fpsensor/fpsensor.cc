@@ -529,14 +529,16 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 
 		/* Host has requested the first chunk, do the encryption. */
 		timestamp_t now = get_time();
+
 		/* Encrypted template is after the metadata. */
-		uint8_t *encrypted_template = fp_enc_buffer + sizeof(*enc_info);
+		std::span templ(fp_enc_buffer + sizeof(*enc_info),
+				sizeof(fp_template[0]));
 		/* Positive match salt is after the template. */
-		uint8_t *positive_match_salt =
-			encrypted_template + sizeof(fp_template[0]);
-		size_t encrypted_blob_size =
-			sizeof(fp_template[0]) +
-			sizeof(global_context.fp_positive_match_salt[0]);
+		std::span positive_match_salt(templ.end(),
+					      FP_POSITIVE_MATCH_SALT_BYTES);
+		std::span encrypted_template_and_positive_match_salt(
+			templ.data(),
+			templ.size_bytes() + positive_match_salt.size_bytes());
 
 		/* b/114160734: Not more than 1 encrypted message per second. */
 		if (!timestamp_expired(encryption_deadline, &now))
@@ -585,18 +587,17 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 		 * Copy the payload to |fp_enc_buffer| where it will be
 		 * encrypted in-place.
 		 */
-		memcpy(encrypted_template, fp_template[fgr],
-		       sizeof(fp_template[0]));
-		memcpy(positive_match_salt,
-		       global_context.fp_positive_match_salt[fgr],
-		       sizeof(global_context.fp_positive_match_salt[0]));
+		std::span fp_template_span(fp_template[fgr],
+					   sizeof(fp_template[fgr]));
+		std::ranges::copy(fp_template_span, templ.begin());
+		std::ranges::copy(global_context.fp_positive_match_salt[fgr],
+				  positive_match_salt.begin());
 
 		/* Encrypt the secret blob in-place. */
-		std::span encrypted_template_span(encrypted_template,
-						  encrypted_blob_size);
-		ret = aes_128_gcm_encrypt(key, encrypted_template_span,
-					  encrypted_template_span,
-					  enc_info->nonce, enc_info->tag);
+		ret = aes_128_gcm_encrypt(
+			key, encrypted_template_and_positive_match_salt,
+			encrypted_template_and_positive_match_salt,
+			enc_info->nonce, enc_info->tag);
 		OPENSSL_cleanse(key, sizeof(key));
 		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to encrypt template", fgr);
