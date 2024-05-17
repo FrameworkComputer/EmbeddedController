@@ -649,11 +649,6 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 
 	uint16_t idx = global_context.templ_valid;
 	struct ec_fp_template_encryption_metadata *enc_info;
-	/* Encrypted template is after the metadata. */
-	uint8_t *encrypted_template = fp_enc_buffer + sizeof(*enc_info);
-	/* Positive match salt is after the template. */
-	uint8_t *positive_match_salt =
-		encrypted_template + sizeof(fp_template[0]);
 	uint8_t key[SBP_ENC_KEY_LEN];
 
 	/*
@@ -672,9 +667,15 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 		return EC_RES_INVALID_PARAM;
 	}
 
-	size_t encrypted_blob_size =
-		sizeof(fp_template[0]) +
-		sizeof(global_context.fp_positive_match_salt[0]);
+	/* Encrypted template is after the metadata. */
+	std::span templ(fp_enc_buffer + sizeof(*enc_info),
+			sizeof(fp_template[0]));
+	/* Positive match salt is after the template. */
+	std::span positive_match_salt(templ.end(),
+				      FP_POSITIVE_MATCH_SALT_BYTES);
+	std::span encrypted_template_and_positive_match_salt(
+		templ.data(),
+		templ.size_bytes() + positive_match_salt.size_bytes());
 
 	enum ec_error_list ret;
 	if (global_context.fp_encryption_status & FP_CONTEXT_USER_ID_SET) {
@@ -686,11 +687,10 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 		}
 
 		/* Decrypt the secret blob in-place. */
-		std::span encrypted_template_span(encrypted_template,
-						  encrypted_blob_size);
-		ret = aes_128_gcm_decrypt(key, encrypted_template_span,
-					  encrypted_template_span,
-					  enc_info->nonce, enc_info->tag);
+		ret = aes_128_gcm_decrypt(
+			key, encrypted_template_and_positive_match_salt,
+			encrypted_template_and_positive_match_salt,
+			enc_info->nonce, enc_info->tag);
 		OPENSSL_cleanse(key, sizeof(key));
 		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to decipher template", idx);
@@ -707,16 +707,15 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 			};
 	}
 
-	memcpy(fp_template[idx], encrypted_template, sizeof(fp_template[0]));
-	if (bytes_are_trivial(
-		    positive_match_salt,
-		    sizeof(global_context.fp_positive_match_salt[0]))) {
+	std::ranges::copy(templ, fp_template[idx]);
+	if (bytes_are_trivial(positive_match_salt.data(),
+			      positive_match_salt.size_bytes())) {
 		CPRINTS("fgr%d: Trivial positive match salt.", idx);
 		OPENSSL_cleanse(fp_template[idx], sizeof(fp_template[0]));
 		return EC_RES_INVALID_PARAM;
 	}
-	memcpy(global_context.fp_positive_match_salt[idx], positive_match_salt,
-	       sizeof(global_context.fp_positive_match_salt[0]));
+	std::ranges::copy(positive_match_salt,
+			  global_context.fp_positive_match_salt[idx]);
 
 	global_context.templ_valid++;
 	return EC_RES_SUCCESS;
