@@ -81,6 +81,7 @@
 		/delete-node/ usb_c0_ppc_bc12;
 		/delete-node/ base_imu;
 		/delete-node/ lid_imu;
+		/delete-node/ usb_c1_bc12_charger;
 
 		int_usb_c0_ppc: usb_c0_ppc {
 			irq-pin = <&usb_c0_ppc_int_odl>;
@@ -91,10 +92,13 @@
 
 	usbc {
 		port0@0 {
+			/delete-property/ bc12;
+
 			ppc = <&ppc_port0>;
 		};
 
 		/delete-node/ port1@1;
+		/delete-node/ port1-muxes;
 	};
 
 	named-adc-channels {
@@ -306,10 +310,13 @@
 &i2c0 {
 	charger_bc12_port1: rt9490@53 {
 		thermistor = <&thermistor_rt9490>;
+		/delete-property/ irq;
 	};
 };
 
 &i2c2 {
+	/delete-node/ rt1739@70;
+
 	ppc_port0: syv682x@40 {
 		compatible = "silergy,syv682x";
 		status = "okay";
