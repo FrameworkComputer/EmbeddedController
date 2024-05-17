@@ -17,9 +17,26 @@ BOARD ?= elm
 
 # Directory where the board is configured (includes /$(BOARD) at the end)
 BDIR:=$(wildcard board/$(BOARD))
+# Private board directory
+PBDIR:=$(wildcard private-*/board/$(BOARD))
 
-ifeq (,$(BDIR))
+# We need either public, or private board directory, or both.
+ifeq (,$(BDIR)$(PBDIR))
 $(error unable to locate BOARD $(BOARD))
+endif
+
+# Setup PDIR (private directory root).
+ifneq (,$(PBDIR))
+ifneq (1,$(words $(PBDIR)))
+$(error multiple private definitions for BOARD $(BOARD): $(PBDIR))
+endif
+
+PDIR:=$(subst /board/$(BOARD),,$(PBDIR))
+endif
+
+# If only private is present, use that as BDIR.
+ifeq (,$(BDIR))
+BDIR:=$(PBDIR)
 endif
 
 PROJECT?=ec
@@ -315,6 +332,12 @@ include driver/build.mk
 include fuzz/build.mk
 include power/build.mk
 -include private/build.mk
+ifneq ($(PDIR),)
+include $(PDIR)/build.mk
+endif
+ifneq ($(PBDIR),)
+include $(PBDIR)/build.mk
+endif
 include test/build.mk
 include util/build.mk
 include util/lock/build.mk
@@ -345,6 +368,12 @@ all-obj-$(1)+=$(call objs_from_dir_p,chip/$(CHIP),chip,$(1))
 all-obj-$(1)+=$(call objs_from_dir_p,$(BASEDIR),baseboard,$(1))
 all-obj-$(1)+=$(call objs_from_dir_p,$(BDIR),board,$(1))
 all-obj-$(1)+=$(call objs_from_dir_p,private,private,$(1))
+ifneq ($(PDIR),)
+all-obj-$(1)+=$(call objs_from_dir_p,$(PDIR),$(PDIR),$(1))
+endif
+ifneq ($(PBDIR),)
+all-obj-$(1)+=$(call objs_from_dir_p,$(PBDIR),board-private,$(1))
+endif
 all-obj-$(1)+=$(call objs_from_dir_p,common,common,$(1))
 ifeq ($(USE_BUILTIN_STDLIB), 1)
 all-obj-$(1)+=$(call objs_from_dir_p,builtin,builtin,$(1))
@@ -404,7 +433,7 @@ host-srcs-cxx := $(foreach u,$(host-util-bin-cxx-y), \
 
 dirs=core/$(CORE) chip/$(CHIP) $(BASEDIR) $(BDIR) common fuzz power test \
 	cts/common cts/$(CTS_MODULE) $(out)/gen
-dirs+= private
+dirs+= private $(PDIR) $(PBDIR)
 dirs+=$(shell find common -type d)
 dirs+=$(shell find driver -type d)
 ifeq ($(USE_BUILTIN_STDLIB), 1)
