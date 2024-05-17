@@ -22,6 +22,8 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
 
+#include <ap_power/ap_power.h>
+#include <ap_power/ap_power_events.h>
 #include <dt-bindings/gpio_defines.h>
 #include <typec_control.h>
 
@@ -39,7 +41,12 @@ void reset_nct38xx_port(int port);
 
 LOG_MODULE_REGISTER(nissa, LOG_LEVEL_INF);
 
-FAKE_VOID_FUNC(nissa_configure_hdmi_vcc);
+void hdmi_power_handler(struct ap_power_ev_callback *cb,
+			struct ap_power_ev_data data);
+void pujjoga_configure_hdmi_vcc(void);
+
+int init_gpios(const struct device *unused);
+
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
 FAKE_VOID_FUNC(usb_charger_task_set_event, int, uint8_t);
@@ -56,7 +63,6 @@ int ppc_cnt = 2;
 
 static void test_before(void *fixture)
 {
-	RESET_FAKE(nissa_configure_hdmi_vcc);
 	RESET_FAKE(usb_charger_task_set_event);
 	RESET_FAKE(ppc_is_sourcing_vbus);
 	RESET_FAKE(ppc_vbus_source_enable);
@@ -69,12 +75,32 @@ static void test_before(void *fixture)
 	RESET_FAKE(cros_cbi_get_fw_config);
 }
 
+static int gpio_emul_output_get_dt(const struct gpio_dt_spec *dt)
+{
+	return gpio_emul_output_get(dt->port, dt->pin);
+}
+
 ZTEST_SUITE(pujjoga, NULL, NULL, test_before, NULL, NULL);
 
 ZTEST(pujjoga, test_hdmi_power)
 {
+	const struct gpio_dt_spec *hdmi_vcc =
+		GPIO_DT_FROM_NODELABEL(gpio_ec_hdmi_pwr);
+	struct ap_power_ev_data data;
+
 	nissa_configure_hdmi_power_gpios();
-	zassert_equal(nissa_configure_hdmi_vcc_fake.call_count, 1);
+	pujjoga_configure_hdmi_vcc();
+	zassert_equal(gpio_emul_output_get_dt(hdmi_vcc), 0);
+
+	init_gpios(NULL);
+	hook_notify(HOOK_INIT);
+
+	data.event = AP_POWER_STARTUP;
+	hdmi_power_handler(NULL, data);
+	zassert_equal(gpio_emul_output_get_dt(hdmi_vcc), 1);
+	data.event = AP_POWER_SHUTDOWN;
+	hdmi_power_handler(NULL, data);
+	zassert_equal(gpio_emul_output_get_dt(hdmi_vcc), 0);
 }
 
 ZTEST(pujjoga, test_board_check_extpower)
@@ -323,8 +349,6 @@ get_fake_sub_board_fw_config_field(enum cbi_fw_config_field_id field_id,
 	*value = fw_config_value;
 	return 0;
 }
-
-int init_gpios(const struct device *unused);
 
 ZTEST(pujjoga, test_db_with_a_and_hdmi)
 {

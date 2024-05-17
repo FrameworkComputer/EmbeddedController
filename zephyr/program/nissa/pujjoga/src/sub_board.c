@@ -62,8 +62,8 @@ enum pujjoga_sub_board_type pujjoga_get_sb_type(void)
 }
 
 #if CONFIG_NISSA_BOARD_HAS_HDMI_SUPPORT
-static void hdmi_power_handler(struct ap_power_ev_callback *cb,
-			       struct ap_power_ev_data data)
+void hdmi_power_handler(struct ap_power_ev_callback *cb,
+			struct ap_power_ev_data data)
 {
 	/* Enable VCC on the HDMI port. */
 	const struct gpio_dt_spec *s3_rail =
@@ -84,7 +84,7 @@ static void hdmi_power_handler(struct ap_power_ev_callback *cb,
 	}
 }
 
-void nissa_configure_hdmi_vcc(void)
+void pujjoga_configure_hdmi_vcc(void)
 {
 	gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_hdmi_en_odl),
 			      GPIO_OUTPUT_INACTIVE | GPIO_OPEN_DRAIN |

@@ -96,6 +96,7 @@ tests:
       - CONFIG_PLATFORM_EC_GMR_TABLET_MODE=y
       - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=y
       - CONFIG_PLATFORM_EC_USB_PD_HOST_CMD=y
+      - CONFIG_NISSA_BOARD_HAS_HDMI_SUPPORT=y
   nissa.sundance:
     extra_dtc_overlay_files:
       - "boards/sundance.dts"

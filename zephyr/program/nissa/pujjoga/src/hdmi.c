@@ -4,8 +4,9 @@
  */
 
 #include "nissa_hdmi.h"
+#include "pujjoga_sub_board.h"
 
 __override void nissa_configure_hdmi_power_gpios(void)
 {
-	nissa_configure_hdmi_vcc();
+	pujjoga_configure_hdmi_vcc();
 }
