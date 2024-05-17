@@ -1469,6 +1469,7 @@ function ite_dfu_mode() {
 	if [[ "${SERVO_TYPE}" =~ "servo_micro" || \
 	      "${SERVO_TYPE}" =~ "c2d2" ]] ; then
 		info "Asking servo to send the dbgr special waveform to ${CHIP}"
+		sleep 3
 		dut_control_or_die enable_ite_dfu
 	elif servo_is_ccd; then
 		local CCD_I2C_CAP
