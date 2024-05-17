@@ -642,7 +642,6 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 	/* Positive match salt is after the template. */
 	uint8_t *positive_match_salt =
 		encrypted_template + sizeof(fp_template[0]);
-	size_t encrypted_blob_size;
 	uint8_t key[SBP_ENC_KEY_LEN];
 
 	/*
@@ -661,14 +660,8 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 		return EC_RES_INVALID_PARAM;
 	}
 
-	// TODO(b/335132437): Remove support for older templates (with
-	// struct_version < 4) after migration is completed.
-	if (enc_info->struct_version <= 3) {
-		encrypted_blob_size = sizeof(fp_template[0]);
-	} else {
-		encrypted_blob_size = sizeof(fp_template[0]) +
-				      sizeof(fp_positive_match_salt[0]);
-	}
+	size_t encrypted_blob_size =
+		sizeof(fp_template[0]) + sizeof(fp_positive_match_salt[0]);
 
 	enum ec_error_list ret;
 	if (global_context.fp_encryption_status & FP_CONTEXT_USER_ID_SET) {
