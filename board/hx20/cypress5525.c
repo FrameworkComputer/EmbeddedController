@@ -387,6 +387,16 @@ int cypd_update_power_status(void)
 	return rv;
 }
 
+static void port_to_safe_mode(int port)
+{
+	uint8_t data[2] = {0x00, CCG_PD_USER_MUX_CONFIG_SAFE};
+
+	data[0] = PORT_TO_CONTROLLER_PORT(port);
+	cypd_write_reg_block(PORT_TO_CONTROLLER(port), CYP5225_MUX_CFG_REG, data, 2);
+	cypd_write_reg_block(PORT_TO_CONTROLLER(port), CYP5225_DEINIT_PORT_REG, data, 1);
+	CPRINTS("P%d: Safe", port);
+}
+
 void enable_compliance_mode(int controller)
 {
 	int rv;
@@ -550,6 +560,120 @@ int cyp5525_setup(int controller)
 		cypd_clear_int(controller, cypd_setup_cmds[i].status_reg);
 	}
 	return EC_SUCCESS;
+}
+
+
+static bool pending_dp_poweroff[PD_PORT_COUNT];
+static void poweroff_dp_check(void)
+{
+	int i;
+	int alt_active = 0;
+
+	for (i = 0; i < PD_PORT_COUNT; i++) {
+		if (pending_dp_poweroff[i]) {
+			/* see if alt mode is active */
+			cypd_read_reg8(PORT_TO_CONTROLLER(i),
+				CYP5525_DP_ALT_MODE_CONFIG_REG(PORT_TO_CONTROLLER_PORT(i)),
+				&alt_active);
+			/*
+			 * DP_ALT should be on bit 1 always, but there is a bug
+			 * in the PD stack that if a port does not have TBT mode
+			 * enabled, it will shift the DP alt mode enable bit to
+			 * bit 0. Since we only whitelist DP alt mode cards, just
+			 * mask on both as a workaround.
+			 */
+			if ((alt_active & (BIT(1) + BIT(0))) == 0)
+				port_to_safe_mode(i);
+
+			pending_dp_poweroff[i] = 0;
+		}
+	}
+}
+static void poweroff_dp_deferred(void)
+{
+	task_set_event(TASK_ID_CYPD, CYPD_EVT_DPALT_DISABLE, 0);
+
+}
+DECLARE_DEFERRED(poweroff_dp_deferred);
+
+struct framework_dp_ids {
+	uint16_t vid;
+	uint16_t pid;
+} const cypd_altmode_ids[] = {
+	{0x32AC, 0x0002},
+	{0x32AC, 0x0003},
+	{0x32AC, 0x000E},
+};
+struct match_vdm_header {
+	uint8_t idx;
+	uint8_t val;
+} const framework_vdm_hdr_match[] = {
+	{0, 0x8f},
+	/*{1, 0x52},*/
+	{2, 0},
+	{4, 0x41},
+	/*{5, 0xa0},*/
+	{6, 0x00},
+	{7, 0xFF},
+	/*{8, 0xAC}, Framework VID */
+	/*{9, 0x32}, */
+	/*{10, 0x00},*/
+	/*{11, 0x6C}*/
+};
+
+void cypd_handle_vdm(int controller, int port, uint8_t *data, int len)
+{
+	/* parse vdm
+	 * if we get a DP alt mode VDM that matches our
+	 * HDMI or DP VID/PID we will start a timer
+	 * to set the port mux to safe/isolate
+	 * if we get a enter alt mode later on,
+	 * we will cancel the timer so that PD can
+	 * properly enter the alt mode
+	 *
+	 *                       ID HDR            ProductVDO
+	 *   hdr  SOP R VDMHDR   VDO      VDO      VDO
+	 * HDMI
+	 * 0x8f52 00 00 41a000ff ac32006c 00000000 00000200 18000000
+	 * DP
+	 * 0x8f52 00 00 41a000ff ac32006c 00000000 00000300 18000000
+	 *   0 1  2  3  4        8        12       16
+	 * 180W Power Adapter
+	 * 0x8f59 00 00 41a800ff ac32c001 00000000 00000e00 01008020
+	 */
+	int i;
+	uint16_t vid, pid;
+	bool trigger_deferred_update = false;
+
+	for (i = 0; i < sizeof(framework_vdm_hdr_match)/sizeof(struct match_vdm_header); i++) {
+		if (framework_vdm_hdr_match[i].idx >= len)
+			continue;
+
+		if (data[framework_vdm_hdr_match[i].idx] !=
+			framework_vdm_hdr_match[i].val) {
+			return;
+			}
+	}
+
+	for (i = 0; i < sizeof(cypd_altmode_ids)/sizeof(struct framework_dp_ids); i++) {
+		vid = cypd_altmode_ids[i].vid;
+		pid = cypd_altmode_ids[i].pid;
+		if ((vid & 0xFF) == data[8] &&
+			((vid>>8) & 0xFF) == data[9] &&
+			(pid & 0xFF) == data[18] &&
+			((pid>>8) & 0xFF) == data[19]
+			) {
+			pending_dp_poweroff[port + (controller<<1)] = true;
+			trigger_deferred_update = true;
+				CPRINTS(" vdm vidpid match");
+
+		}
+
+	}
+	if (trigger_deferred_update) {
+		hook_call_deferred(&poweroff_dp_deferred_data, 30000 * MSEC);
+	}
+
 }
 
 
@@ -1008,6 +1132,11 @@ void cyp5525_port_int(int controller, int port)
 		cypd_handle_extend_msg(controller, port, response_len, sop_type);
 		CPRINTS("CYP_RESPONSE_RX_EXT_MSG");
 		break;
+	case CYPD_RESPONSE_VDM_RX:
+		i2c_read_offset16_block(i2c_port, addr_flags,
+			CYP5525_READ_DATA_MEMORY_REG(port, 0), data2, MIN(response_len, 32));
+		cypd_handle_vdm(controller, port, data2, response_len);
+		CPRINTS("CYPD_RESPONSE_VDM_RX");
 	default:
 		if (response_len && verbose_msg_logging) {
 			CPRINTF("Port:%d Data:0x", port_idx);
@@ -1087,7 +1216,6 @@ void cypd_handle_state(int controller)
 	case CYP5525_STATE_APP_SETUP:
 			gpio_disable_interrupt(pd_chip_config[controller].gpio);
 			cyp5525_get_version(controller);
-			cypd_write_reg8_wait_ack(controller, CYP5225_USER_MAINBOARD_VERSION, board_get_version());
 
 			/*for(i=0; i < 50;i++) {
 				if (gpio_get_level(GPIO_PWR_3V5V_PG) && 
@@ -1331,6 +1459,9 @@ void cypd_interrupt_handler_task(void *p)
 		}
 		if (evt & CYPD_EVT_INT_CTRL_1) {
 			cyp5525_interrupt(1);
+		}
+		if (evt & CYPD_EVT_DPALT_DISABLE) {
+			poweroff_dp_check();
 		}
 		if (evt & CYPD_EVT_STATE_CTRL_0) {
 			cypd_handle_state(0);

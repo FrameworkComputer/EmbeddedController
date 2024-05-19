@@ -31,9 +31,13 @@
 #define CYP5525_ICL_STS_REG				0x0042
 #define CYP5525_ICL_BB_RETIMER_CMD_REG	0x0046
 #define CYP5525_ICL_BB_RETIMER_DAT_REG	0x0048
-#define CYP5225_USER_MAINBOARD_VERSION	0x004F
-#define CYP5225_USER_BB_POWER_EVT		0x004E
-#define CYP5225_USER_DISABLE_LOCKOUT	0x004D
+#define CYP5225_USER_DISABLE_LOCKOUT	0x004A
+#define CYP5225_USER_BB_POWER_EVT		0x004B
+/* Hx30 uses to control mux and bbretimer */
+#define CYP5225_MUX_CFG_REG				0x004D
+#define CYP5225_DEINIT_PORT_REG			0x004E
+
+
 
 #define CYP5525_RESPONSE_REG            0x007E
 #define CYP5525_DATA_MEM_REG            0x1404
@@ -129,6 +133,11 @@
 #define CYP5525_POWERSTATE_S4	0x02
 #define CYP5525_POWERSTATE_S5	0x03
 
+/************************************************/
+/*  HELPER FUNCTIONS                            */
+/************************************************/
+#define PORT_TO_CONTROLLER(x)		((x) >> 1)
+#define PORT_TO_CONTROLLER_PORT(x)	((x) & 0x01)
 
 /************************************************
  *	PD COMMAND DEFINITION
@@ -151,6 +160,18 @@ enum cypd_pd_command {
 	CYPD_PD_CMD_EC_INIT_COMPLETE = 0x10,
 	CYPD_PD_CMD_PORT_DISABLE = 0x11,
 	CYPD_PD_CMD_CHANGE_PD_PORT_PARAMS = 0x14,
+};
+
+/************************************************
+ * USER MUXCFG for register 0x0041
+ * This allows us to override the PD mux
+ * configuration for a specific port.
+ ************************************************/
+enum ccg_usermux_configuration {
+	CCG_PD_USER_MUX_CONFIG_ISOLATE = 0,
+	CCG_PD_USER_MUX_CONFIG_SAFE,
+	CCG_PD_USER_MUX_CONFIG_SS_ONLY,
+	CCG_PD_USER_MUX_CONFIG_DEBUG_ACCESSORY = 0x0A
 };
 
 /************************************************
@@ -393,7 +414,8 @@ enum pd_task_evt {
 	CYPD_EVT_UCSI_POLL_CTRL_0 = BIT(7),
 	CYPD_EVT_UCSI_POLL_CTRL_1 = BIT(8),
 	CYPD_EVT_RETIMER_PWR = BIT(9),
-	CYPD_EVT_UPDATE_PWRSTAT = BIT(10)
+	CYPD_EVT_UPDATE_PWRSTAT = BIT(10),
+	CYPD_EVT_DPALT_DISABLE = BIT(16),
 };
 
 /* PD CHIP */

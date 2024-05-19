@@ -1,35 +1,57 @@
 # Add 'repo' label to any root file changes
 repo:
-  - ./*
+- changed-files:
+  - any-glob-to-any-file:
+    - ./*
 
 hx20:
-  - board/hx20/*
-  - board/hx20/**/*
+- changed-files:
+  - any-glob-to-any-file:
+    - board/hx20/*
+    - board/hx20/**/*
 
 hx30:
-  - board/hx30/*
-  - board/hx30/**/*
+- changed-files:
+  - any-glob-to-any-file:
+    - board/hx30/*
+    - board/hx30/**/*
 
 board-mistake:
-  - any: ['board/**/*', '!board/hx20/*', '!board/hx30/*']
+- changed-files:
+  - any-glob-to-any-file:
+    - board/**/*
+  - all-globs-to-all-files: ['!board/hx20/*', '!board/hx30/*']
 
 mchp:
-  - chip/mchp/**/*
+- changed-files:
+  - any-glob-to-any-file:
+    - chip/mchp/**/*
 
 chip-mistake:
-  - any: ['chip/**/*', '!chip/mchp/*']
+- changed-files:
+  - any-glob-to-any-file:
+    - chip/**/*
+  - all-globs-to-all-files: '!chip/mchp/*'
 
 common:
-  - common/*
-  - common/**/*
+- changed-files:
+  - any-glob-to-any-file:
+    - common/*
+    - common/**/*
 
 baseboard:
-  - baseboard/*
-  - baseboard/**/*
+- changed-files:
+  - any-glob-to-any-file:
+    - baseboard/*
+    - baseboard/**/*
 
 workflow:
-  - .github/*
-  - .github/**/*
+- changed-files:
+  - any-glob-to-any-file:
+    - .github/*
+    - .github/**/*
 
-project: 
-  - .vscode/*
+project:
+- changed-files:
+  - any-glob-to-any-file:
+    - .vscode/*
