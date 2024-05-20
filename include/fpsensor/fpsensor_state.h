@@ -36,6 +36,13 @@
 	(FP_ALGORITHM_TEMPLATE_SIZE + FP_POSITIVE_MATCH_SALT_BYTES + \
 	 sizeof(struct ec_fp_template_encryption_metadata))
 
+struct enc_buffer {
+	struct ec_fp_template_encryption_metadata metadata {};
+	std::array<uint8_t, FP_ALGORITHM_TEMPLATE_SIZE> fp_template{};
+	std::array<uint8_t, FP_POSITIVE_MATCH_SALT_BYTES> positive_match_salt{};
+};
+BUILD_ASSERT(sizeof(enc_buffer) == FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE);
+
 #define FP_NO_SUCH_TEMPLATE (UINT16_MAX)
 
 /* --- Global variables defined in fpsensor_state.c --- */
@@ -48,7 +55,7 @@ extern uint8_t fp_template[FP_MAX_FINGER_COUNT][FP_ALGORITHM_TEMPLATE_SIZE];
  * Store the encryption metadata at the beginning of the buffer containing the
  * ciphered data.
  */
-extern uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE];
+extern struct enc_buffer fp_enc_buffer;
 
 struct positive_match_secret_state {
 	/* Index of the most recently matched template. */

@@ -531,11 +531,10 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 		timestamp_t now = get_time();
 
 		/* Encrypted template is after the metadata. */
-		std::span templ(fp_enc_buffer + sizeof(*enc_info),
-				sizeof(fp_template[0]));
+		std::span templ = fp_enc_buffer.fp_template;
 		/* Positive match salt is after the template. */
-		std::span positive_match_salt(templ.end(),
-					      FP_POSITIVE_MATCH_SALT_BYTES);
+		std::span positive_match_salt =
+			fp_enc_buffer.positive_match_salt;
 		std::span encrypted_template_and_positive_match_salt(
 			templ.data(),
 			templ.size_bytes() + positive_match_salt.size_bytes());
@@ -545,14 +544,12 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 			return EC_RES_BUSY;
 		encryption_deadline.val = now.val + (1 * SECOND);
 
-		memset(fp_enc_buffer, 0, sizeof(fp_enc_buffer));
+		memset(&fp_enc_buffer, 0, sizeof(fp_enc_buffer));
 		/*
 		 * The beginning of the buffer contains nonce, encryption_salt
 		 * and tag.
 		 */
-		enc_info = reinterpret_cast<
-			struct ec_fp_template_encryption_metadata *>(
-			fp_enc_buffer);
+		enc_info = &fp_enc_buffer.metadata;
 		enc_info->struct_version = FP_TEMPLATE_FORMAT_VERSION;
 		trng_init();
 		trng_rand_bytes(enc_info->nonce, FP_CONTEXT_NONCE_BYTES);
@@ -603,7 +600,7 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 		}
 		global_context.templ_dirty &= ~BIT(fgr);
 	}
-	memcpy(out, fp_enc_buffer + offset, size);
+	memcpy(out, reinterpret_cast<uint8_t *>(&fp_enc_buffer) + offset, size);
 	args->response_size = size;
 
 	return EC_RES_SUCCESS;
@@ -659,7 +656,7 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 	 * The beginning of the buffer contains nonce, encryption_salt
 	 * and tag.
 	 */
-	enc_info = (struct ec_fp_template_encryption_metadata *)fp_enc_buffer;
+	enc_info = &fp_enc_buffer.metadata;
 	enum ec_status res = validate_template_format(enc_info);
 	if (res != EC_RES_SUCCESS) {
 		CPRINTS("fgr%d: Template format not supported", idx);
@@ -667,11 +664,9 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 	}
 
 	/* Encrypted template is after the metadata. */
-	std::span templ(fp_enc_buffer + sizeof(*enc_info),
-			sizeof(fp_template[0]));
+	std::span templ = fp_enc_buffer.fp_template;
 	/* Positive match salt is after the template. */
-	std::span positive_match_salt(templ.end(),
-				      FP_POSITIVE_MATCH_SALT_BYTES);
+	std::span positive_match_salt = fp_enc_buffer.positive_match_salt;
 	std::span encrypted_template_and_positive_match_salt(
 		templ.data(),
 		templ.size_bytes() + positive_match_salt.size_bytes());
@@ -741,7 +736,8 @@ static enum ec_status fp_command_template(struct host_cmd_handler_args *args)
 	if (ret != EC_SUCCESS)
 		return EC_RES_INVALID_PARAM;
 
-	memcpy(&fp_enc_buffer[offset], params->data, size);
+	memcpy(reinterpret_cast<uint8_t *>(&fp_enc_buffer) + offset,
+	       params->data, size);
 
 	if (xfer_complete) {
 		return fp_commit_template(global_context.user_id);
