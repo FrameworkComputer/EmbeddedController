@@ -490,15 +490,8 @@ enum ec_error_list {
 
 /*
  * Attribute for generating an error if a function is used.
- *
- * Clang does not have a function attribute to do this. Rely on linker
- * errors. :(
  */
-#ifdef __clang__
-#define __error(msg) __attribute__((section("/DISCARD/")))
-#else
 #define __error(msg) __attribute__((error(msg)))
-#endif
 
 /*
  * Getting something that works in C and CPP for an arg that may or may
