@@ -544,7 +544,8 @@ ZTEST_USER(console_cmd_pdc, test_prs)
  * @brief Custom fake for pdc_power_mgmt_get_info that outputs some test PDC
  *        chip info.
  */
-static int custom_fake_pdc_power_mgmt_get_info(int port, struct pdc_info_t *out)
+static int custom_fake_pdc_power_mgmt_get_info(int port, struct pdc_info_t *out,
+					       bool live)
 {
 	zassert_not_null(out);
 
@@ -573,6 +574,10 @@ ZTEST_USER(console_cmd_pdc, test_info)
 	rv = shell_execute_cmd(get_ec_shell(), "pdc info 99");
 	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
 
+	/* Invalid live/cached param */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc info 0 xyz");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
 	/* Error getting chip info */
 	pdc_power_mgmt_get_info_fake.return_val = 1;
 
@@ -591,9 +596,12 @@ ZTEST_USER(console_cmd_pdc, test_info)
 	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
 		      rv);
 
-	/* Ensure we called get_info once with the correct port # */
+	/* Ensure we called get_info once with the correct port # and requested
+	 * a live reading by default
+	 */
 	zassert_equal(1, pdc_power_mgmt_get_info_fake.call_count);
 	zassert_equal(0, pdc_power_mgmt_get_info_fake.arg0_history[0]);
+	zassert_true(pdc_power_mgmt_get_info_fake.arg2_history[0]);
 
 	/* Check console output for correctness */
 	outbuffer =
@@ -606,6 +614,17 @@ ZTEST_USER(console_cmd_pdc, test_info)
 	zassert_not_null(strstr(outbuffer, "VID/PID: 7890:3456"));
 	zassert_not_null(strstr(outbuffer, "Running Flash Code: Y"));
 	zassert_not_null(strstr(outbuffer, "Flash Bank: 16"));
+
+	RESET_FAKE(pdc_power_mgmt_get_info);
+
+	/* Successful path, but with a cached read */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc info 0 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	zassert_equal(1, pdc_power_mgmt_get_info_fake.call_count);
+	zassert_equal(0, pdc_power_mgmt_get_info_fake.arg0_history[0]);
+	zassert_false(pdc_power_mgmt_get_info_fake.arg2_history[0]);
 }
 
 /**
