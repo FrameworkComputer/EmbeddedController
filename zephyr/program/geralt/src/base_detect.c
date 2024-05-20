@@ -114,6 +114,11 @@ void base_init_setting(void)
 	if (adc_read_channel(ADC_BASE_DET) > DETACH_MIN_THRESHOLD_MV) {
 		base_update(false);
 	}
+
+	/* For system jump case to enable base detect */
+	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
+		base_detect_enable(true);
+	}
 }
 DECLARE_HOOK(HOOK_INIT, base_init_setting, HOOK_PRIO_DEFAULT);
 
