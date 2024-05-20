@@ -120,6 +120,12 @@ config BOARD_CRAASKOV
 	  Build Google Craaskov reference board. Craaskov has Intel ADL-N SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_ORISA
+	bool "Google Orisa Board"
+	help
+	  Build Google Orisa reference board. Orisa has Intel ADL-N SoC
+	  with NPCX993FA0BX EC.
+
 config BOARD_QUANDISO
 	bool "Google Quandiso Board"
 	help

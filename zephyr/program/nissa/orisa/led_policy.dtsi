@@ -1,0 +1,118 @@
+#include <dt-bindings/battery.h>
+
+/ {
+	led-colors {
+		compatible = "cros-ec,led-policy";
+
+		power-state-charge {
+			charge-state = "LED_PWRS_CHARGE";
+
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_AMBER";
+				};
+			};
+		};
+
+		power-state-discharge-s0 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S0";
+			/* Battery percent range (> Empty, <= Full) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_FULL>;
+
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_BLUE";
+				};
+			};
+		};
+
+		power-state-discharge-s3 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S3";
+
+			/* Amber 1 sec, off 3 sec */
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
+			};
+		};
+
+		power-state-discharge-s5 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S5";
+
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		power-state-error {
+			charge-state = "LED_PWRS_ERROR";
+
+			/* Amber 1 sec, off 1 sec */
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		power-state-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_BLUE";
+				};
+			};
+		};
+
+		power-state-forced-idle {
+			charge-state = "LED_PWRS_FORCED_IDLE";
+
+			/* Amber 2 sec, Blue 2 sec */
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <2000>;
+				};
+				color-1 {
+					led-color = "LED_BLUE";
+					period-ms = <2000>;
+				};
+			};
+		};
+
+		power-state-idle {
+			charge-state = "LED_PWRS_IDLE";
+
+			batter-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+				color-0 {
+					led-color = "LED_BLUE";
+				};
+			};
+		};
+	};
+};
