@@ -11,6 +11,94 @@
 		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
 	};
 
+	rauru-fw-config {
+		compatible = "cros-ec,cbi-fw-config";
+
+		form-factor {
+			enum-name = "FW_FORM_FACTOR";
+			start = <16>;
+			size = <2>;
+			clamshell {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FORM_FACTOR_CLAMSHELL";
+				value = <0>;
+			};
+			convertible {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FORM_FACTOR_CONVERTIBLE";
+				value = <1>;
+			};
+			detchable {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FORM_FACTOR_DETACHABLE";
+				value = <2>;
+				default;
+			};
+			chromebox {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FORM_FACTOR_CHROMEBOX";
+				value = <3>;
+			};
+		};
+		panel {
+			enum-name = "FW_PANEL";
+			start = <18>;
+			size = <5>;
+			default-panel {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_PANEL_DEFAULT";
+				value = <0>;
+				default;
+			};
+			old {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_PANEL_OLD";
+				value = <1>;
+			};
+		};
+		fan {
+			enum-name = "FW_FAN";
+			start = <23>;
+			size = <1>;
+
+			no-fan {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_NOT_PRESENT";
+				value = <0>;
+			};
+			fan-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FAN_PRESENT";
+				value = <1>;
+				/*
+				 * Set as default so that unprovisioned
+				 * configs will run the fan regardless.
+				 */
+				default;
+			};
+		};
+		amp {
+			enum-name = "FW_AMP";
+			start = <28>;
+			size = <2>;
+		};
+		storage {
+			enum-name = "FW_STORAGE";
+			start = <30>;
+			size = <2>;
+			ufs {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_UFS";
+				value = <0>;
+			};
+			nvme {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_NVME";
+				value = <1>;
+			};
+		};
+	};
+
 	named-adc-channels {
 		adc_ec_usb_c0_vbus_sense: ec_usb_c0_vbus_sense {
 			mul = <10>;
