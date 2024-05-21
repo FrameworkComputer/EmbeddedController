@@ -107,4 +107,10 @@ config CORSOLA_HIBERNATE_PRE_OFF_5V
 	  Set PP5000_Z2 to deactivate before executing normal corsola hibernate.
 	default n
 
+config CORSOLA_BOARD_CHIPSET_CUSTOM
+	bool "Corsola Platform Board Chipset Customization"
+	help
+	  Enable corsola platform customized AP power callbacks.
+	default n
+
 source "Kconfig.zephyr"

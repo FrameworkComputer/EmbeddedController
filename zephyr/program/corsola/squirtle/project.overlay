@@ -29,19 +29,26 @@
 			/* en_ec_id_odl */
 			/*<&gpio7 6 0>,*/
 			<&gpiof 3 0>,
-			<&gpiof 2 0>,
 			<&gpiof 1 0>,
 			<&gpiod 7 0>,
 			<&gpio8 3 0>,
 			<&gpio8 5 0>,
 			<&gpio8 6 0>,
 			<&gpio9 5 0>,
-			<&gpioa 6 0>,
 			<&gpio4 1 0>,
 			<&gpioa 5 0>,
 			<&gpiob 0 0>,
 			<&gpio9 3 0>,
 			<&gpioa 7 0>;
+	};
+
+	named-gpios {
+		gpio_tp_en: tp_en {
+			gpios = <&gpioa 6 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_ap_bl_en_odl: gpio_ap_bl_en_odl{
+			gpios = <&gpiof 2 GPIO_INPUT>;
+		};
 	};
 
 	batteries {
@@ -421,6 +428,12 @@
 /* interrupts overrides */
 / {
 	gpio-interrupts {
+		int_ap_bl_en: int_ap__bl_en{
+			irq-pin = <&gpio_ap_bl_en_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "ap_bl_en_interrupt";
+		};
+
 		/delete-node/ base_imu;
 		/delete-node/ usb_c0_bc12;
 	};
