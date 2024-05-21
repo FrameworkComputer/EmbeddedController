@@ -12,6 +12,7 @@
 #include <include/pd_driver.h>
 #include <include/platform.h>
 #include <include/ppm.h>
+#line 16 /* For coverage. Put after #includes and point to next line. */
 
 #define PDC_NUM_PORTS 2
 #define PDC_DEFAULT_CONNECTOR 1
@@ -562,4 +563,27 @@ ZTEST_USER_F(ppm_test,
 
 	struct ucsi_cci cci = { .connector_changed = PDC_DEFAULT_CONNECTOR };
 	zassert_true(check_cci_matches(fixture, &cci));
+}
+
+/*
+ * While in the processing command state, the PPM is busy and should reject any
+ * new commands that are sent.
+ */
+ZTEST_EXPECT_SKIP(ppm_test, test_PROCESSING_busy_rejects_commands);
+ZTEST_USER_F(ppm_test, test_PROCESSING_busy_rejects_commands)
+{
+	/* TODO(b/340895744) - Not yet implemented. */
+	ztest_test_skip();
+}
+
+/*
+ * While in the processing command state, we still allow the cancel command to
+ * be sent WHILE a command is in progress. If a command is cancellable, it will
+ * replace the current command.
+ */
+ZTEST_EXPECT_SKIP(ppm_test, test_PROCESSING_busy_allows_cancel_command);
+ZTEST_USER_F(ppm_test, test_PROCESSING_busy_allows_cancel_command)
+{
+	/* TODO(b/340895744) - Cancel is not yet implemented. */
+	ztest_test_skip();
 }
