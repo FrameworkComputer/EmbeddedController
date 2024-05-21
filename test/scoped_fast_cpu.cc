@@ -42,7 +42,7 @@ test_static int fast_cpu_enable_at_start()
 	return EC_SUCCESS;
 }
 
-extern "C" void run_test(int argc, const char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

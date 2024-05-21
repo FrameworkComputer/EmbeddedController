@@ -174,7 +174,7 @@ test_static enum ec_error_list test_fp_generate_ecdh_shared_secret(void)
 
 } // namespace
 
-extern "C" void run_test(int argc, const char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_fp_create_ec_key_from_pubkey);
 	RUN_TEST(test_fp_create_ec_key_from_pubkey_fail);

@@ -389,7 +389,7 @@ test_fp_command_read_match_secret_derive_succeed(void)
 	return EC_SUCCESS;
 }
 
-extern "C" void run_test(int argc, const char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_fp_enc_status_valid_flags);
 	RUN_TEST(test_fp_tpm_seed_not_set);

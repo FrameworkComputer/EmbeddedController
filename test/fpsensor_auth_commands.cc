@@ -1576,7 +1576,7 @@ test_fp_command_migrate_template_to_nonce_context_failure(void)
 
 } // namespace
 
-extern "C" void run_test(int argc, const char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_fp_command_establish_pairing_key_without_seed);
 	RUN_TEST(test_fp_command_check_context_cleared);

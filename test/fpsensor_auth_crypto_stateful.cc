@@ -278,7 +278,7 @@ test_static enum ec_error_list test_fp_encrypt_data_with_ecdh_key_in_place(void)
 
 } // namespace
 
-extern "C" void run_test(int argc, const char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_fp_encrypt_decrypt_data);
 	RUN_TEST(test_fp_encrypt_decrypt_key);

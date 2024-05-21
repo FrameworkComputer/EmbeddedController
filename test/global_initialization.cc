@@ -42,7 +42,7 @@ static int test_global_init()
 	return EC_SUCCESS;
 }
 
-extern "C" void run_test(int, const char **)
+void run_test(int, const char **)
 {
 	test_reset();
 	RUN_TEST(test_global_init);

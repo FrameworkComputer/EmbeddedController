@@ -252,7 +252,7 @@ test_static int test_getentropy()
 	return EC_SUCCESS;
 }
 
-extern "C" void run_test(int argc, const char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_rand);
 	RUN_TEST(test_ecc_keygen);
