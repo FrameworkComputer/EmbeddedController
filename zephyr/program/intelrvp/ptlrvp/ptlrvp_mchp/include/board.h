@@ -21,4 +21,7 @@
 
 #define PD_POW_I2C i2c_smb_1
 
+/* PD Interrupts */
+#define PD_POW_IRQ_GPIO MCHP_GPIO_DECODE_143
+
 #endif /* PTLRVP_MCHP_BOARD_H_ */

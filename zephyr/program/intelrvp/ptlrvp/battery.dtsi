@@ -1,0 +1,17 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	aliases {
+		getac-3s = &default_battery;
+	};
+
+	batteries {
+		default_battery: getac-smp-hhp-408-3s {
+			compatible = "getac,bq40z50-R3-S3", "battery-smart";
+			voltage_normal = <13000>;
+		};
+	};
+};

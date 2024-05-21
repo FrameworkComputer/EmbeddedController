@@ -188,6 +188,7 @@ register_intelrvp_project(
     ],
     extra_kconfig_files=[
         here / "ptlrvp/ptlrvp_mchp/project.conf",
+        here / "ptlrvp/pd.conf",
         here / "zephyr_ap_pwrseq.conf",
     ],
 )
