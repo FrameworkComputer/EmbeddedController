@@ -338,8 +338,9 @@ static enum ec_status unlock_template(uint16_t idx)
 
 	std::ranges::copy(enc_template, fp_template[idx]);
 	std::ranges::copy(enc_salt, global_context.fp_positive_match_salt[idx]);
-
-	fp_init_decrypted_template_state_with_user_id(idx);
+	global_context.template_states[idx] = fp_decrypted_template_state{
+		.user_id = global_context.user_id,
+	};
 	OPENSSL_cleanse(&fp_enc_buffer, sizeof(fp_enc_buffer));
 	return EC_RES_SUCCESS;
 }

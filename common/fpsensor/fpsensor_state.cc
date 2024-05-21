@@ -104,13 +104,6 @@ void fp_reset_context()
 		&global_context.positive_match_secret_state);
 }
 
-void fp_init_decrypted_template_state_with_user_id(uint16_t idx)
-{
-	global_context.template_states[idx] = fp_decrypted_template_state{
-		.user_id = global_context.user_id,
-	};
-}
-
 /**
  * @warning |fp_buffer| contains data used by the matching algorithm that must
  * be released by calling fp_sensor_deinit() first. Call
