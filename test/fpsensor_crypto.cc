@@ -4,6 +4,7 @@
  */
 
 #include "fpsensor/fpsensor_crypto.h"
+#include "rollback.h"
 #include "sha256.h"
 #include "test_util.h"
 
@@ -18,7 +19,7 @@ struct HkdfTestVector {
 	std::vector<uint8_t> okm;
 };
 
-extern "C" enum ec_error_list rollback_get_secret(uint8_t *secret)
+enum ec_error_list rollback_get_secret(uint8_t *secret)
 {
 	// We should not call this function in the test.
 	TEST_ASSERT(false);
