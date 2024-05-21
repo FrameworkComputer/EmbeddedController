@@ -208,10 +208,6 @@ void chip_panic_data_backup(void);
  */
 int command_crash_nested_handler(void);
 
-#ifdef __cplusplus
-}
-#endif
-
 #ifdef TEST_BUILD
 /**
  * @brief Wrapper for accessing the command_crash() console command
@@ -227,5 +223,9 @@ int command_crash_nested_handler(void);
  */
 int test_command_crash(int argc, const char **argv);
 #endif /* TEST_BUILD*/
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_PANIC_H */
