@@ -6,6 +6,7 @@
 #include "ppm_common.h"
 
 #include <zephyr/device.h>
+#include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
 #include <include/pd_driver.h>
@@ -14,8 +15,21 @@
 
 #define PDC_NUM_PORTS 2
 #define PDC_DEFAULT_CONNECTOR 1
-
 #define PDC_WAIT_FOR_ITERATIONS 3
+
+#define CMD_WAIT_TIMEOUT K_MSEC(200)
+#define CMD_QUEUE_SIZE 4
+
+#define LPM_DATA_MAX 32
+struct expected_command_t {
+	uint32_t queue_header;
+
+	uint8_t ucsi_command;
+	int result;
+
+	bool has_lpm_data;
+	uint8_t lpm_data[LPM_DATA_MAX];
+} __attribute__((aligned(4)));
 
 struct ppm_test_fixture {
 	struct ucsi_pd_driver *pd;
@@ -24,6 +38,20 @@ struct ppm_test_fixture {
 	struct ucsiv3_get_connector_status_data port_status[PDC_NUM_PORTS];
 
 	int notified_count;
+
+	/* Commands handling. */
+	struct expected_command_t next_command_result;
+	struct k_queue *cmd_queue;
+	struct k_sem cmd_sem;
+
+	/* Allocate fixed array of commands and use a free queue to avoid
+	 * allocations.
+	 */
+	struct k_queue *free_cmd_queue;
+	struct expected_command_t cmd_memory[CMD_QUEUE_SIZE];
+
+	/* Notifications handling. */
+	struct k_sem opm_sem;
 };
 
 static const struct ucsi_control enable_all_notifications = {
@@ -37,7 +65,7 @@ static void opm_notify_cb(void *ctx)
 	struct ppm_test_fixture *fixture = (struct ppm_test_fixture *)ctx;
 
 	fixture->notified_count++;
-	/* TODO(b/340895744) - Signal to test that there's a notification */
+	k_sem_give(&fixture->opm_sem);
 }
 
 static struct ppm_common_device *get_ppm_data(struct ppm_test_fixture *fixture)
@@ -51,9 +79,101 @@ static enum ppm_states get_ppm_state(struct ppm_test_fixture *fixture)
 	return get_ppm_data(fixture)->ppm_state;
 }
 
+/* TODO(b/339702957) - Move into ppm_common.h */
+static bool check_async_is_pending(struct ppm_test_fixture *fixture)
+{
+	bool pending;
+
+	platform_mutex_lock(get_ppm_data(fixture)->ppm_lock);
+	pending = get_ppm_data(fixture)->pending.async_event;
+	platform_mutex_unlock(get_ppm_data(fixture)->ppm_lock);
+
+	return pending;
+}
+
+/* TODO(b/339702957) - Move into ppm_common.h */
+static bool check_cmd_is_pending(struct ppm_test_fixture *fixture)
+{
+	bool pending;
+
+	platform_mutex_lock(get_ppm_data(fixture)->ppm_lock);
+	pending = get_ppm_data(fixture)->pending.command;
+	platform_mutex_unlock(get_ppm_data(fixture)->ppm_lock);
+
+	return pending;
+}
+
+static bool check_cci_matches(struct ppm_test_fixture *fixture,
+			      const struct ucsi_cci *cci)
+{
+	struct ucsi_cci actual_cci;
+	int rv = fixture->ppm->read(fixture->ppm->dev, UCSI_CCI_OFFSET,
+				    (void *)&actual_cci, sizeof(actual_cci));
+
+	if (rv < 0) {
+		return false;
+	}
+
+	return *((uint32_t *)cci) == *((uint32_t *)&actual_cci);
+}
+
+static void unblock_fake_driver_with_command(struct ppm_test_fixture *fixture,
+					     uint8_t ucsi_command, int result,
+					     uint8_t *lpm_data)
+{
+	fixture->next_command_result.ucsi_command = ucsi_command;
+	fixture->next_command_result.result = result;
+	fixture->next_command_result.has_lpm_data = lpm_data != NULL;
+	if (lpm_data) {
+		memcpy(fixture->next_command_result.lpm_data, lpm_data,
+		       LPM_DATA_MAX);
+	}
+
+	k_sem_give(&fixture->cmd_sem);
+	DLOG("Signaled for command 0x%x", ucsi_command);
+}
+
+static void queue_command_for_fake_driver(struct ppm_test_fixture *fixture,
+					  uint8_t ucsi_command, int result,
+					  uint8_t *lpm_data)
+{
+	struct expected_command_t *cmd =
+		k_queue_get(fixture->free_cmd_queue, K_NO_WAIT);
+	zassert_true(cmd != NULL);
+	if (!cmd) {
+		return;
+	}
+
+	DLOG("Queueing command result for 0x%x with result %d", ucsi_command,
+	     result);
+
+	cmd->ucsi_command = ucsi_command;
+	cmd->result = result;
+	cmd->has_lpm_data = lpm_data != NULL;
+	if (lpm_data) {
+		memcpy(cmd->lpm_data, lpm_data, LPM_DATA_MAX);
+	}
+
+	k_queue_append(fixture->cmd_queue, cmd);
+}
+
 static int initialize_fake(struct ppm_test_fixture *fixture)
 {
 	return fixture->pd->init_ppm((const struct device *)fixture);
+}
+
+static void trigger_expected_connector_change(struct ppm_test_fixture *fixture,
+					      uint8_t connector)
+{
+	uint8_t lpm_data[LPM_DATA_MAX];
+	struct ucsiv3_get_connector_status_data *data =
+		(struct ucsiv3_get_connector_status_data *)lpm_data;
+
+	data->connector_status_change = 1;
+
+	queue_command_for_fake_driver(fixture, UCSI_CMD_GET_CONNECTOR_STATUS,
+				      /*result=*/0, lpm_data);
+	fixture->ppm->lpm_alert(fixture->ppm->dev, connector);
 }
 
 static int write_command(struct ppm_test_fixture *fixture,
@@ -64,19 +184,31 @@ static int write_command(struct ppm_test_fixture *fixture,
 				   sizeof(struct ucsi_control));
 }
 
+static int write_ack_command(struct ppm_test_fixture *fixture,
+			     bool connector_change_ack,
+			     bool command_complete_ack)
+{
+	struct ucsi_control control = { .command = UCSI_CMD_ACK_CC_CI,
+					.data_length = 0 };
+	struct ucsiv3_ack_cc_ci_cmd ack_data = {
+		.connector_change_ack = connector_change_ack,
+		.command_complete_ack = command_complete_ack
+	};
+	memcpy(control.command_specific, &ack_data, sizeof(ack_data));
+	return write_command(fixture, &control);
+}
+
 static bool wait_for_async_event_to_process(struct ppm_test_fixture *fixture)
 {
 	bool is_async_pending = false;
 
 	/*
 	 * After an lpm alert is sent, the async event should process only if
-	 * the state machine is in the right state. We check the pending state
-	 * behind the lock and then sleep to allow the loop to run.
+	 * the state machine is in the right state. Try reading the pending
+	 * state a few times to see if it clears.
 	 */
 	for (int i = 0; i < PDC_WAIT_FOR_ITERATIONS; ++i) {
-		platform_mutex_lock(get_ppm_data(fixture)->ppm_lock);
-		is_async_pending = get_ppm_data(fixture)->pending.async_event;
-		platform_mutex_unlock(get_ppm_data(fixture)->ppm_lock);
+		is_async_pending = check_async_is_pending(fixture);
 
 		DLOG("[%d]: Async is %s", i,
 		     (is_async_pending ? "pending" : "not pending"));
@@ -96,13 +228,11 @@ static bool wait_for_cmd_to_process(struct ppm_test_fixture *fixture)
 
 	/*
 	 * After calling write, the command will be pending and will trigger the
-	 * main loop. We sleep after grabbing mutex + checking the pending to
-	 * give the main loop time to run.
+	 * main loop. Try reading the pending state a few times to see if it
+	 * clears.
 	 */
 	for (int i = 0; i < PDC_WAIT_FOR_ITERATIONS; ++i) {
-		platform_mutex_lock(get_ppm_data(fixture)->ppm_lock);
-		is_cmd_pending = get_ppm_data(fixture)->pending.command;
-		platform_mutex_unlock(get_ppm_data(fixture)->ppm_lock);
+		is_cmd_pending = check_cmd_is_pending(fixture);
 
 		DLOG("[%d]: Command is %s", i,
 		     (is_cmd_pending ? "pending" : "not pending"));
@@ -114,6 +244,41 @@ static bool wait_for_cmd_to_process(struct ppm_test_fixture *fixture)
 	}
 
 	return !is_cmd_pending;
+}
+
+static bool wait_for_notification(struct ppm_test_fixture *fixture,
+				  int expected_count)
+{
+	if (expected_count <= fixture->notified_count)
+		return true;
+
+	while (fixture->notified_count < expected_count) {
+		if (k_sem_take(&fixture->opm_sem, CMD_WAIT_TIMEOUT) < 0) {
+			return false;
+		}
+	}
+
+	return true;
+}
+
+static void initialize_fake_to_idle_notify(struct ppm_test_fixture *fixture)
+{
+	zassert_false(initialize_fake(fixture) < 0);
+
+	struct ucsi_control control;
+	memcpy(&control, &enable_all_notifications, sizeof(control));
+
+	zassert_false(write_command(fixture, &control) < 0);
+	zassert_true(wait_for_cmd_to_process(fixture));
+	zassert_equal(get_ppm_state(fixture), PPM_STATE_WAITING_CC_ACK);
+
+	queue_command_for_fake_driver(fixture, UCSI_CMD_ACK_CC_CI,
+				      /*result=*/0, /*lpm_data=*/NULL);
+	zassert_false(write_ack_command(fixture,
+					/*connector_change_ack*/ false,
+					/*command_complete_ack*/ true) < 0);
+	zassert_true(wait_for_cmd_to_process(fixture));
+	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE_NOTIFY);
 }
 
 /* Fake PD driver implementations. */
@@ -143,7 +308,60 @@ static int fake_pd_execute_cmd(const struct device *device,
 			       struct ucsi_control *control,
 			       uint8_t *lpm_data_out)
 {
-	return 0;
+	struct ppm_test_fixture *fixture = (struct ppm_test_fixture *)device;
+	uint8_t ucsi_command = control->command;
+	int rv;
+
+	DLOG("Executing fake cmd for UCSI_CMD:0x%x", ucsi_command);
+
+	/* Return any commands that were queued up to return. */
+	if (!k_queue_is_empty(fixture->cmd_queue)) {
+		struct expected_command_t *cmd =
+			(struct expected_command_t *)k_queue_get(
+				fixture->cmd_queue, K_NO_WAIT);
+
+		if (cmd == NULL) {
+			DLOG("Command queue is unexpectedly empty!");
+			return -ENOTSUP;
+		}
+
+		k_queue_append(fixture->free_cmd_queue, cmd);
+
+		if (ucsi_command != cmd->ucsi_command) {
+			DLOG("Expected queued command 0x%x doesn't match actual 0x%x",
+			     cmd->ucsi_command, ucsi_command);
+			return -ENOTSUP;
+		}
+
+		if (cmd->has_lpm_data) {
+			memcpy(lpm_data_out, cmd->lpm_data, LPM_DATA_MAX);
+		}
+
+		DLOG("Returning queued result: %d", cmd->result);
+		return cmd->result;
+	}
+
+	/* Since there were no commands queued up, wait for a signal to use a
+	 * single next command.
+	 */
+	rv = k_sem_take(&fixture->cmd_sem, CMD_WAIT_TIMEOUT);
+
+	if (rv != 0 ||
+	    ucsi_command != fixture->next_command_result.ucsi_command) {
+		DLOG("Sem take result(%d). Expected command %x vs actual %x",
+		     fixture->next_command_result.ucsi_command, ucsi_command);
+		return -ENOTSUP;
+	}
+
+	if (fixture->next_command_result.has_lpm_data) {
+		memcpy(lpm_data_out, fixture->next_command_result.lpm_data,
+		       LPM_DATA_MAX);
+	}
+
+	rv = fixture->next_command_result.result;
+
+	DLOG("Returning specific result: %d", rv);
+	return rv;
 }
 
 static int fake_pd_get_active_port_count(const struct device *dev)
@@ -154,6 +372,8 @@ static int fake_pd_get_active_port_count(const struct device *dev)
 /* Globals for the tests. */
 
 static struct ppm_test_fixture test_fixture;
+K_QUEUE_DEFINE(cmd_queue);
+K_QUEUE_DEFINE(free_cmd_queue);
 
 /* Fake PD driver used for emulating peer PDC. */
 static struct ucsi_pd_driver fake_pd_driver = {
@@ -168,11 +388,37 @@ static void *ppm_test_setup(void)
 	platform_set_debug(true);
 
 	test_fixture.pd = &fake_pd_driver;
+
+	test_fixture.cmd_queue = &cmd_queue;
+	test_fixture.free_cmd_queue = &free_cmd_queue;
+
+	for (int i = 0; i < CMD_QUEUE_SIZE; ++i) {
+		k_queue_append(test_fixture.free_cmd_queue,
+			       &test_fixture.cmd_memory[i]);
+	}
+
+	k_sem_init(&test_fixture.cmd_sem, 0, 1);
+	k_sem_init(&test_fixture.opm_sem, 0, 1);
+
 	return &test_fixture;
 }
 
 static void ppm_test_before(void *f)
 {
+	/* Clear command queue. */
+	struct expected_command_t *cmd;
+	while ((cmd = k_queue_get(test_fixture.cmd_queue, K_NO_WAIT))) {
+		k_queue_append(test_fixture.free_cmd_queue, cmd);
+	}
+
+	/* Reset semaphores. */
+	k_sem_reset(&test_fixture.cmd_sem);
+	k_sem_reset(&test_fixture.opm_sem);
+
+	queue_command_for_fake_driver(&test_fixture, UCSI_CMD_PPM_RESET,
+				      /*result=*/0,
+				      /*lpm_data=*/NULL);
+
 	/* Open ppm_common implementation with fake driver for testing. */
 	test_fixture.ppm = ppm_open(test_fixture.pd, test_fixture.port_status,
 				    (const struct device *)&test_fixture);
@@ -183,6 +429,11 @@ static void ppm_test_after(void *f)
 	/* Must clean up between tests to re-init the state machine. */
 	test_fixture.ppm->cleanup(test_fixture.ppm);
 }
+
+const struct ucsi_cci cci_cmd_complete = { .cmd_complete = 1 };
+const struct ucsi_cci cci_busy = { .busy = 1 };
+const struct ucsi_cci cci_error = { .error = 1, .cmd_complete = 1 };
+const struct ucsi_cci cci_ack_command = { .ack_command = 1 };
 
 ZTEST_SUITE(ppm_test, /*predicate=*/NULL, ppm_test_setup, ppm_test_before,
 	    ppm_test_after, /*teardown=*/NULL);
@@ -250,4 +501,65 @@ ZTEST_USER_F(ppm_test, test_IDLE_silently_processes_async_event)
 	zassert_true(wait_for_async_event_to_process(fixture));
 	zassert_equal(fixture->notified_count, 0);
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE);
+}
+
+/* From the Idle Notify, complete a full command loop:
+ *   - Send command, CCI notifies busy
+ *   - Command complete, CCI notifies command complete.
+ *   - Send ACK_CC_CI, CCI notifies busy
+ *   - Command complete, CCI notifies ack command complete.
+ */
+ZTEST_USER_F(ppm_test, test_IDLENOTIFY_full_command_loop)
+{
+	initialize_fake_to_idle_notify(fixture);
+	int notified_count = 0;
+	fixture->notified_count = 0;
+
+	/* Emulate a UCSI write from the OPM, and wait for a notification with
+	 * CCI.busy=1
+	 */
+	struct ucsi_control control = { .command = UCSI_CMD_GET_ALTERNATE_MODES,
+					.data_length = 0 };
+	zassert_false(write_command(fixture, &control) < 0);
+	zassert_true(wait_for_notification(fixture, ++notified_count));
+	zassert_true(check_cci_matches(fixture, &cci_busy));
+
+	/* Send a fake response from the PD driver, and expect a notification to
+	 * the OPM with CCI.cmd_complete=1.
+	 */
+	unblock_fake_driver_with_command(fixture, UCSI_CMD_GET_ALTERNATE_MODES,
+					 /*result=*/0, /*lpm_data=*/NULL);
+	zassert_true(wait_for_cmd_to_process(fixture));
+	zassert_true(wait_for_notification(fixture, ++notified_count));
+	zassert_true(check_cci_matches(fixture, &cci_cmd_complete));
+
+	/* OPM acknowledges the PPM's cmd_complete. */
+	queue_command_for_fake_driver(fixture, UCSI_CMD_ACK_CC_CI,
+				      /*result=*/0,
+				      /*lpm_data=*/NULL);
+	zassert_false(write_ack_command(fixture,
+					/*connector_change_ack*/ false,
+					/*command_complete_ack*/ true) < 0);
+	zassert_true(wait_for_notification(fixture, ++notified_count));
+	zassert_true(check_cci_matches(fixture, &cci_ack_command));
+	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE_NOTIFY);
+}
+
+/* When processing an async event, PPM will figure out which port changed and
+ * then send the connector change event for that port.
+ */
+ZTEST_USER_F(ppm_test,
+	     test_IDLENOTIFY_process_async_event_and_send_connector_change)
+{
+	initialize_fake_to_idle_notify(fixture);
+
+	int notified_count = 0;
+	fixture->notified_count = 0;
+
+	trigger_expected_connector_change(fixture, PDC_DEFAULT_CONNECTOR);
+	zassert_true(wait_for_async_event_to_process(fixture));
+	zassert_true(wait_for_notification(fixture, ++notified_count));
+
+	struct ucsi_cci cci = { .connector_changed = PDC_DEFAULT_CONNECTOR };
+	zassert_true(check_cci_matches(fixture, &cci));
 }
