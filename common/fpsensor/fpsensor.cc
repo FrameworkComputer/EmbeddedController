@@ -74,6 +74,16 @@ static void send_mkbp_event(uint32_t event)
 	mkbp_send_event(EC_MKBP_EVENT_FINGERPRINT);
 }
 
+/*
+ * Returns true if the mode is one that yields a frame in which
+ * all bytes should be returned over EC_CMD_FP_FRAME.
+ *
+ * Other captures modes (simple, pattern0, pattern1, and reset_test) are
+ * only interested in the height*width*bpp image bytes that are offset inside
+ * the frame.
+ *
+ * These modes correspond to using the ectool fpframe "raw" modifier.
+ */
 static inline int is_raw_capture(uint32_t mode)
 {
 	int capture_type = FP_CAPTURE_TYPE(mode);
@@ -83,6 +93,10 @@ static inline int is_raw_capture(uint32_t mode)
 }
 
 #ifdef HAVE_FP_PRIVATE_DRIVER
+/*
+ * Returns true if the mode is a test capture that does not require finger
+ * touch.
+ */
 static inline int is_test_capture(uint32_t mode)
 {
 	int capture_type = FP_CAPTURE_TYPE(mode);
@@ -479,6 +493,11 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 		/* The host requested a frame. */
 		if (system_is_locked())
 			return EC_RES_ACCESS_DENIED;
+		/*
+		 * Checks if the capture mode is one where we only care about
+		 * the embedded/offset image bytes, like simple, pattern0,
+		 * pattern1, and reset_test.
+		 */
 		if (!is_raw_capture(global_context.sensor_mode))
 			offset += FP_SENSOR_IMAGE_OFFSET;
 
