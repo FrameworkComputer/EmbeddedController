@@ -4,12 +4,9 @@
  * found in the LICENSE file.
  */
 
-#include "test_util.h"
-
-extern "C" {
 #include "shared_mem.h"
+#include "test_util.h"
 #include "timer.h"
-}
 
 test_static int benchmark_unaligned_access()
 {

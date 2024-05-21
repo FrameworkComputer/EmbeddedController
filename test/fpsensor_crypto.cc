@@ -4,14 +4,11 @@
  */
 
 #include "fpsensor/fpsensor_crypto.h"
+#include "sha256.h"
+#include "test_util.h"
 
 #include <array>
 #include <vector>
-
-extern "C" {
-#include "sha256.h"
-#include "test_util.h"
-}
 
 struct HkdfTestVector {
 	std::vector<uint8_t> ikm;

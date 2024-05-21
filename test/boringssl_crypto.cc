@@ -11,12 +11,9 @@
 #include "openssl/mem.h"
 #include "openssl/obj_mac.h"
 #include "openssl/rand.h"
+#include "sha256.h"
 #include "test_util.h"
 #include "util.h"
-
-extern "C" {
-#include "sha256.h"
-}
 
 #include <array>
 #include <memory>

@@ -6,10 +6,7 @@
  */
 
 #include "benchmark.h"
-
-extern "C" {
 #include "test_util.h"
-}
 
 /* Sample function for the benchmark */
 static void float_mult()

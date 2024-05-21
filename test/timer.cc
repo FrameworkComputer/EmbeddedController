@@ -13,12 +13,9 @@
 #include "math_util.h"
 #include "task.h"
 #include "test_util.h"
-
-extern "C" {
 #include "timer.h"
 #include "uart.h"
 #include "watchdog.h"
-}
 
 test_static int test_usleep(void)
 {

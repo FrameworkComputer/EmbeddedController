@@ -3,15 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <exception>
-
-extern "C" {
 #include "common.h"
 #include "panic.h"
 #include "system.h"
 #include "task.h"
 #include "test_util.h"
-}
+
+#include <exception>
 
 test_static int test_exception()
 {

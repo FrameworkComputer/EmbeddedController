@@ -4,10 +4,7 @@
  */
 
 #include "fpsensor/fpsensor_utils.h"
-
-extern "C" {
 #include "test_util.h"
-}
 
 extern "C" enum ec_error_list rollback_get_secret(uint8_t *secret)
 {

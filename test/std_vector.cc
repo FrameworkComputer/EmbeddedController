@@ -5,14 +5,12 @@
  * Basic test of std::vector and dynamic memory allocation.
  */
 
-#include <array>
-#include <vector>
-
-extern "C" {
 #include "common.h"
 #include "console.h"
 #include "test_util.h"
-}
+
+#include <array>
+#include <vector>
 
 test_static int stack_init_elements()
 {

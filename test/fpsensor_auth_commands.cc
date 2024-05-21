@@ -15,12 +15,9 @@
 #include "openssl/bn.h"
 #include "openssl/ec.h"
 #include "openssl/obj_mac.h"
+#include "sha256.h"
 #include "test_util.h"
 #include "util.h"
-
-extern "C" {
-#include "sha256.h"
-}
 
 #include <stdbool.h>
 #include <stddef.h>

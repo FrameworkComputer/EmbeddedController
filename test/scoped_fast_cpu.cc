@@ -6,14 +6,10 @@
  */
 
 #include "common.h"
-
-extern "C" {
 #include "console.h"
-#include "test_util.h"
-}
-
 #include "mock/clock_mock.h"
 #include "scoped_fast_cpu.h"
+#include "test_util.h"
 
 test_static int fast_cpu_disable_at_start()
 {

@@ -8,10 +8,7 @@
  */
 
 #include "test_util.h"
-
-extern "C" {
 #include "timer.h"
-}
 
 #include <chrono>
 

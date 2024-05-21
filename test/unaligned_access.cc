@@ -5,14 +5,12 @@
 /**
  * Test if unaligned access works properly
  */
+#include "panic.h"
+#include "test_util.h"
+
 #include <array>
 #include <cstdio>
 #include <cstring>
-
-extern "C" {
-#include "panic.h"
-#include "test_util.h"
-}
 
 test_static int test_unaligned_access()
 {
