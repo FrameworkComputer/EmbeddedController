@@ -2620,6 +2620,7 @@ static struct pdc_data_t *pdc_data[] = { DT_INST_FOREACH_STATUS_OKAY(
 /*
  * Wait for drivers to become idle.
  */
+/* LCOV_EXCL_START */
 bool pdc_rts54xx_test_idle_wait(void)
 {
 	int num_finished;
@@ -2628,6 +2629,7 @@ bool pdc_rts54xx_test_idle_wait(void)
 	for (int i = 0; i < 20; i++) {
 		num_finished = 0;
 
+		k_msleep(100);
 		for (int port = 0; port < ARRAY_SIZE(pdc_data); port++) {
 			if (get_state(pdc_data[port]) == ST_IDLE &&
 			    pdc_data[port]->cmd == CMD_NONE) {
@@ -2638,11 +2640,10 @@ bool pdc_rts54xx_test_idle_wait(void)
 		if (num_finished == ARRAY_SIZE(pdc_data)) {
 			return true;
 		}
-
-		k_msleep(100);
 	}
 
 	return false;
 }
+/* LCOV_EXCL_STOP */
 
 #endif
