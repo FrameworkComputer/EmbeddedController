@@ -9,6 +9,8 @@
 #include "task.h"
 #include "test_util.h"
 
+#include <algorithm>
+
 #ifdef SECTION_IS_RW
 #include "fpsensor/fpsensor_state.h"
 
@@ -31,8 +33,8 @@ test_static int test_tpm_seed_before_reboot(void)
 {
 	TEST_ASSERT_ARRAY_EQ(global_context.tpm_seed, zero_fake_tpm_seed,
 			     FP_CONTEXT_TPM_BYTES);
-	memcpy(global_context.tpm_seed, default_fake_tpm_seed,
-	       FP_CONTEXT_TPM_BYTES);
+	std::ranges::copy(default_fake_tpm_seed,
+			  global_context.tpm_seed.begin());
 	TEST_ASSERT_ARRAY_EQ(global_context.tpm_seed, default_fake_tpm_seed,
 			     FP_CONTEXT_TPM_BYTES);
 	return EC_SUCCESS;

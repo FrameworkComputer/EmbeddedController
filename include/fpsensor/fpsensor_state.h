@@ -80,9 +80,9 @@ struct fpsensor_context {
 	/** Part of the IKM used to derive encryption keys received from the
 	 * TPM.
 	 */
-	uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
+	std::array<uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed;
 	/** Current user ID */
-	uint8_t user_id[FP_CONTEXT_USERID_BYTES];
+	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id;
 	struct positive_match_secret_state positive_match_secret_state;
 	/** Salt used in derivation of positive match secret. */
 	uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]

@@ -1230,7 +1230,7 @@ test_fp_command_unlock_template_pre_encrypted(void)
 				       NULL, 0),
 		EC_RES_SUCCESS, "%d");
 
-	std::ranges::copy(backup_user_id, global_context.user_id);
+	std::ranges::copy(backup_user_id, global_context.user_id.begin());
 
 	TEST_EQ(test_send_host_command(EC_CMD_FP_UNLOCK_TEMPLATE, 0,
 				       &unlock_params, sizeof(unlock_params),

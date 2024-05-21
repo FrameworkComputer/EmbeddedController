@@ -232,8 +232,7 @@ fp_command_nonce_context(struct host_cmd_handler_args *args)
 	}
 
 	/* Set the user_id. */
-	std::copy(raw_user_id.begin(), raw_user_id.end(),
-		  global_context.user_id);
+	std::ranges::copy(raw_user_id, global_context.user_id.begin());
 
 	global_context.fp_encryption_status &= FP_ENC_STATUS_SEED_SET;
 	global_context.fp_encryption_status |= FP_CONTEXT_USER_ID_SET;
@@ -290,7 +289,7 @@ static enum ec_status unlock_template(uint16_t idx)
 		&global_context.template_states[idx]);
 	if (dec_state) {
 		if (safe_memcmp(dec_state->user_id.begin(),
-				global_context.user_id,
+				global_context.user_id.begin(),
 				sizeof(global_context.user_id)) != 0) {
 			return EC_RES_ACCESS_DENIED;
 		}

@@ -17,6 +17,7 @@
 #include "test_util.h"
 #include "util.h"
 
+#include <algorithm>
 #include <array>
 
 extern enum ec_error_list
@@ -566,7 +567,7 @@ test_static int test_command_read_match_secret(void)
 	timestamp_t now = get_time();
 
 	/* For empty user_id. */
-	memset(global_context.user_id, 0, sizeof(global_context.user_id));
+	std::ranges::fill(global_context.user_id, 0);
 
 	/* Invalid finger index should be rejected. */
 	params.fgr = FP_NO_SUCH_TEMPLATE;
