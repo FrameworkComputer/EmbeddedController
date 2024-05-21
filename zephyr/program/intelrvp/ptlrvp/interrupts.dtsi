@@ -11,6 +11,11 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "extpower_interrupt";
 		};
+		int_dc_jack_present: dc_jack_present {
+			irq-pin = <&std_adp_prsnt>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "board_dc_jack_interrupt";
+		};
 		int_ioex_kbd_intr_n: ioex_kbd_intr_n {
 			irq-pin = <&ioex_kbd_intr_n>;
 			flags = <GPIO_INT_EDGE_FALLING>;
