@@ -21,7 +21,6 @@
 #include "gpio.dtsi"
 #include "../i2c.dtsi"
 #include "../interrupts.dtsi"
-#include "../keyboard.dtsi"
 #include "../motionsense.dtsi"
 #include "../power_signals.dtsi"
 #include "../power_signals_gpios.dtsi"
@@ -31,6 +30,7 @@
 #include "../usba.dtsi"
 
 /* Lotso project DTS includes*/
+#include "keyboard.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
 
