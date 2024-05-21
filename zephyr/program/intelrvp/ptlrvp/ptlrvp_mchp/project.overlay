@@ -14,3 +14,4 @@
 #include "../interrupts.dtsi"
 #include "../keyboard.dtsi"
 #include "../power_signals.dtsi"
+#include "../temp_sensor.dts"
