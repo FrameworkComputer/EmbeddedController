@@ -9,15 +9,12 @@
 #define __CROS_EC_FPSENSOR_TEMPLATE_STATE_H
 
 #include "ec_commands.h"
+#include "fpsensor_driver.h"
 
 #include <stdbool.h>
 
 #include <array>
 #include <variant>
-
-extern "C" {
-#include "fpsensor_driver.h"
-}
 
 /* The extra information for the encrypted template.
  * Note: the encrypted template content and encrypted positive match salt will

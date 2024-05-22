@@ -8,13 +8,11 @@
 #ifndef __CROS_EC_FPSENSOR_FPSENSOR_CRYPTO_H
 #define __CROS_EC_FPSENSOR_FPSENSOR_CRYPTO_H
 
-#include <cstdint>
-#include <span>
-
-extern "C" {
 #include "common.h"
 #include "ec_commands.h"
-}
+
+#include <cstdint>
+#include <span>
 
 #define SBP_ENC_KEY_LEN 16
 

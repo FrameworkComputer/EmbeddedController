@@ -8,15 +8,11 @@
 #ifndef __CROS_EC_FPSENSOR_FPSENSOR_AUTH_CRYPTO_H
 #define __CROS_EC_FPSENSOR_FPSENSOR_AUTH_CRYPTO_H
 
+#include "ec_commands.h"
 #include "openssl/ec.h"
 
-#include <span>
-
-extern "C" {
-#include "ec_commands.h"
-}
-
 #include <optional>
+#include <span>
 
 /**
  * Create a @fp_elliptic_curve_public_key with the content of boringssl @p
