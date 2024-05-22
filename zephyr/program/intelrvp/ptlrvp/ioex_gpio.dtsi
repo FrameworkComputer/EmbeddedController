@@ -9,6 +9,56 @@
 	};
 
 	named-gpios {
+		/* IOEX present on main board */
+		cs-indicate-led {
+			gpios = <&pca95xx_1 15  GPIO_INPUT>;
+		};
+		c10-gate-led {
+			gpios = <&pca95xx_1 14  GPIO_INPUT>;
+		};
+		kbc-scrollock {
+			gpios = <&pca95xx_1 13  GPIO_INPUT>;
+		};
+		tp-ec-typec-sink-disable1{
+			gpios = <&pca95xx_1 12  GPIO_INPUT>;
+		};
+		tp-ec-typec-sink-disable2{
+			gpios = <&pca95xx_1 11  GPIO_INPUT>;
+		};
+		pd-aic-detect-slot-id {
+			gpios = <&pca95xx_1 10  GPIO_INPUT>;
+		};
+		tp-ec-io1-1 {
+			gpios = <&pca95xx_1 9  GPIO_INPUT>;
+		};
+		espi-testcrd-det {
+			gpios = <&pca95xx_1 8  GPIO_INPUT>;
+		};
+		virtual-dock-det-n {
+			gpios = <&pca95xx_1 7  GPIO_INPUT>;
+		};
+		virtual-battery {
+			gpios = <&pca95xx_1 6  GPIO_INPUT>;
+		};
+		ec-m2-ssd-pln-delay {
+			gpios = <&pca95xx_1 5  GPIO_INPUT>;
+		};
+		ec-soc-vr-cntrl-pe {
+			gpios = <&pca95xx_1 4  GPIO_INPUT>;
+		};
+		pmc-gpio-boot-halt {
+			gpios = <&pca95xx_1 3  GPIO_INPUT>;
+		};
+		pnp-npnp-sku {
+			gpios = <&pca95xx_1 2  GPIO_INPUT>;
+		};
+		mod-tcss2-detect {
+			gpios = <&pca95xx_1 1  GPIO_INPUT>;
+		};
+		mod-tcss1-detect {
+			gpios = <&pca95xx_1 0  GPIO_INPUT>;
+		};
+
 		/* KBD IOEX configuration, IOEX present on GSC AIC */
 		chgr-led-pwm4 {
 			gpios = <&ioex_it8801_port1 5 GPIO_INPUT>;
