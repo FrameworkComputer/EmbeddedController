@@ -175,7 +175,7 @@ test_static int test_get_ikm_success(void)
 
 test_static int test_derive_encryption_key_failure_seed_not_set(void)
 {
-	static uint8_t unused_key[SBP_ENC_KEY_LEN];
+	FpEncryptionKey unused_key{};
 	static const uint8_t unused_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = {
 		0
 	};
@@ -197,7 +197,7 @@ static int test_derive_encryption_key_raw(
 	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed,
 	std::span<const uint8_t> expected_key)
 {
-	uint8_t key[SBP_ENC_KEY_LEN];
+	FpEncryptionKey key;
 	enum ec_error_list rv;
 
 	rv = derive_encryption_key(
@@ -251,7 +251,8 @@ test_static int test_derive_encryption_key(void)
 		0x9c, 0xe2, 0xe2, 0x6f, 0xe6, 0x66, 0x3d, 0x3a,
 	};
 
-	static uint8_t unused_key[SBP_ENC_KEY_LEN];
+	FpEncryptionKey unused_key{};
+
 	static const uint8_t unused_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = {
 		0
 	};
@@ -283,7 +284,7 @@ test_static int test_derive_encryption_key(void)
 
 test_static int test_derive_encryption_key_failure_rollback_fail(void)
 {
-	static uint8_t unused_key[SBP_ENC_KEY_LEN];
+	FpEncryptionKey unused_key{};
 	static const uint8_t unused_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = {
 		0
 	};

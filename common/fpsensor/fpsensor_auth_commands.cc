@@ -321,7 +321,7 @@ static enum ec_status unlock_template(uint16_t idx)
 	std::ranges::copy(global_context.fp_positive_match_salt[idx],
 			  enc_salt.begin());
 
-	CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > key;
+	FpEncryptionKey key;
 	if (derive_encryption_key(key, enc_info.encryption_salt,
 				  global_context.user_id,
 				  global_context.tpm_seed) != EC_SUCCESS) {
