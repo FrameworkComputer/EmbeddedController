@@ -4,6 +4,7 @@
  */
 
 #include "extpower.h"
+#include "led_common.h"
 #include "led_onoff_states.h"
 #include "nissa_sub_board.h"
 #include "system.h"
@@ -23,7 +24,6 @@ void reset_nct38xx_port(int port);
 
 LOG_MODULE_REGISTER(nissa, LOG_LEVEL_INF);
 
-FAKE_VALUE_FUNC(int, cbi_get_board_version, uint32_t *);
 FAKE_VALUE_FUNC(int, nissa_get_sb_type);
 FAKE_VOID_FUNC(usb_charger_task_set_event, int, uint8_t);
 FAKE_VALUE_FUNC(int, ppc_is_sourcing_vbus, int);
@@ -198,13 +198,55 @@ ZTEST(sundance, test_reset_pd_mcu)
 
 ZTEST(sundance, test_led)
 {
+	led_set_color_battery(EC_LED_COLOR_AMBER);
 	/* led pin is low active, status 0 is turn on */
 	zassert_false(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_led_1_odl)),
 		      "LED_1 is not on");
+	led_set_color_battery(EC_LED_COLOR_WHITE);
 	zassert_false(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_led_2_odl)),
 		      "LED_2 is not on");
 	/*
 	 * Case for led pin is untestable because emulated GPIOs don't
 	 * allow getting the current value of output pins.
 	 */
+}
+
+ZTEST(sundance, test_led_brightness_range)
+{
+	uint8_t brightness[EC_LED_COLOR_COUNT] = { 0 };
+
+	/* Verify LED set to OFF */
+	led_set_brightness(EC_LED_ID_BATTERY_LED, brightness);
+	zassert_false(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_led_1_odl)),
+		      "LED_1 is on");
+	zassert_false(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_led_2_odl)),
+		      "LED_2 is on");
+
+	led_get_brightness_range(EC_LED_ID_BATTERY_LED, brightness);
+	zassert_equal(brightness[EC_LED_COLOR_AMBER], 1);
+	zassert_equal(brightness[EC_LED_COLOR_WHITE], 1);
+
+	brightness[EC_LED_COLOR_WHITE] = 1;
+	led_set_brightness(EC_LED_ID_BATTERY_LED, brightness);
+	zassert_false(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_led_2_odl)),
+		      "LED_2 is not on");
+
+	brightness[EC_LED_COLOR_AMBER] = 1;
+	led_set_brightness(EC_LED_ID_BATTERY_LED, brightness);
+	zassert_false(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_led_1_odl)),
+		      "LED_1 is not on");
+
+	brightness[EC_LED_COLOR_AMBER] = 1;
+	led_set_brightness(EC_LED_ID_BATTERY_LED, brightness);
+	zassert_false(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_led_1_odl)),
+		      "LED_1 is on");
+	zassert_false(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_led_2_odl)),
+		      "LED_2 is not on");
+
+	brightness[EC_LED_COLOR_WHITE] = 1;
+	led_set_brightness(EC_LED_ID_BATTERY_LED, brightness);
+	zassert_false(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_led_1_odl)),
+		      "LED_1 is not on");
+	zassert_false(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_led_2_odl)),
+		      "LED_2 is on");
 }

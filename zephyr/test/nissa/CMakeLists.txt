@@ -86,6 +86,7 @@ if(CONFIG_TEST_NISSA_SUNDANCE)
             src/sundance.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/sundance/src/charger.c
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/sundance/src/usbc.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/sundance/src/led.c
     )
 endif()
 
