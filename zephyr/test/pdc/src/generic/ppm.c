@@ -857,3 +857,37 @@ ZTEST_USER_F(ppm_test, test_CIACK_fail_if_no_active_connector_indication)
 	zassert_true(wait_for_cmd_to_process(fixture));
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE_NOTIFY);
 }
+
+/*
+ * When an LPM command fails, check that the appropriate CCI bits are set, and
+ * that the next command succeeds.
+ */
+ZTEST_USER_F(ppm_test, test_lpm_error_accepts_new_command)
+{
+	initialize_fake_to_idle_notify(fixture);
+	int notified_count = fixture->notified_count;
+
+	struct ucsi_control control = {
+		.command = UCSI_CMD_GET_CONNECTOR_CAPABILITY, .data_length = 0
+	};
+
+	/* Return an error from the LPM and expect a CCI error. */
+	queue_command_for_fake_driver(fixture,
+				      UCSI_CMD_GET_CONNECTOR_CAPABILITY,
+				      /*result=*/-EBUSY, /*lpm_data=*/NULL);
+	zassert_false(write_command(fixture, &control) < 0);
+	notified_count += 2;
+	zassert_true(wait_for_notification(fixture, notified_count));
+	zassert_true(check_cci_matches(fixture, &cci_error));
+	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE_NOTIFY);
+
+	/* Test acceptance of new message. */
+	queue_command_for_fake_driver(fixture,
+				      UCSI_CMD_GET_CONNECTOR_CAPABILITY,
+				      /*result=*/0, /*lpm_data=*/NULL);
+	zassert_false(write_command(fixture, &control) < 0);
+	notified_count += 2;
+	zassert_true(wait_for_notification(fixture, notified_count));
+	zassert_true(check_cci_matches(fixture, &cci_cmd_complete));
+	zassert_equal(get_ppm_state(fixture), PPM_STATE_WAITING_CC_ACK);
+}
