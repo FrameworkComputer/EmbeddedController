@@ -3456,6 +3456,7 @@ bool test_pdc_power_mgmt_is_src_typec_attached_run(int port)
  * that tests start from the same state and prevents commands from a previous
  * test from impacting subsequently run tests.
  */
+/* LCOV_EXCL_START */
 bool pdc_power_mgmt_test_wait_unattached(void)
 {
 	int num_unattached;
@@ -3483,5 +3484,6 @@ bool pdc_power_mgmt_test_wait_unattached(void)
 
 	return false;
 }
+/* LCOV_EXCL_STOP */
 
 #endif
