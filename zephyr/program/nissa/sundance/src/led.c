@@ -13,6 +13,7 @@
  * white LED will light up. In other case, the LED status is off.
  */
 
+#include "chipset.h"
 #include "common.h"
 #include "ec_commands.h"
 #include "led_common.h"
@@ -92,4 +93,14 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 			led_set_color_battery(LED_OFF);
 	}
 	return EC_SUCCESS;
+}
+
+__override enum led_states board_led_get_state(enum led_states desired_state)
+{
+	if (chipset_in_state(CHIPSET_STATE_ON))
+		return desired_state;
+	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		return STATE_DISCHARGE_S3;
+	else
+		return STATE_DISCHARGE_S5;
 }
