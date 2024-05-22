@@ -20,23 +20,6 @@
 #define HKDF_SHA256_MAX_BLOCK_COUNT 255
 
 /**
- * Expand hkdf pseudorandom key |prk| to length |out_key_size|.
- *
- * @param out_key the buffer to hold output key material.
- * @param out_key_size length of output key in bytes. Must be less than
- * or equal to HKDF_SHA256_MAX_BLOCK_COUNT * SHA256_DIGEST_SIZE bytes.
- * @param prk pseudorandom key.
- * @param prk_size length of |prk| in bytes.
- * @param info optional context.
- * @param info_size size of |info| in bytes, must be less than or equal to
- * HKDF_MAX_INFO_SIZE bytes.
- * @return EC_SUCCESS on success and error code otherwise.
- */
-enum ec_error_list hkdf_expand(uint8_t *out_key, size_t out_key_size,
-			       const uint8_t *prk, size_t prk_size,
-			       const uint8_t *info, size_t info_size);
-
-/**
  * Computes HKDF (as specified by RFC 5869) using SHA-256 as the digest.
  *
  * @param[out] out_key buffer to hold output key material. Max size must be less
