@@ -440,6 +440,7 @@ const struct ucsi_cci cci_cmd_complete = { .cmd_complete = 1 };
 const struct ucsi_cci cci_busy = { .busy = 1 };
 const struct ucsi_cci cci_error = { .error = 1, .cmd_complete = 1 };
 const struct ucsi_cci cci_ack_command = { .ack_command = 1 };
+const struct ucsi_cci cci_connector_change_1 = { .connector_changed = 1 };
 
 ZTEST_SUITE(ppm_test, /*predicate=*/NULL, ppm_test_setup, ppm_test_before,
 	    ppm_test_after, /*teardown=*/NULL);
@@ -796,4 +797,63 @@ ZTEST_USER_F(ppm_test, test_CCACK_fail_if_no_ack)
 	zassert_true(wait_for_notification(fixture, ++notified_count));
 	zassert_true(check_cci_matches(fixture, &cci_error));
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_WAITING_CC_ACK);
+}
+
+/* When waiting for a Connection Indicator Ack, we accept an immediate ACK_CC_CI
+ * to switch the state back to Idle with Notifications. Trying to use command
+ * complete in that state should also fail.
+ */
+ZTEST_USER_F(ppm_test, test_CIACK_ack_immediately)
+{
+	initialize_fake_to_idle_notify(fixture);
+	int notified_count = fixture->notified_count;
+
+	trigger_expected_connector_change(fixture, PDC_DEFAULT_CONNECTOR);
+	zassert_true(wait_for_async_event_to_process(fixture));
+	zassert_true(wait_for_notification(fixture, ++notified_count));
+	zassert_true(check_cci_matches(fixture, &cci_connector_change_1));
+
+	notified_count = 0;
+	fixture->notified_count = 0;
+
+	queue_command_for_fake_driver(fixture, UCSI_CMD_ACK_CC_CI, /*result=*/0,
+				      /*lpm_data=*/NULL);
+	zassert_false(write_ack_command(fixture,
+					/*connector_change_ack=*/true,
+					/*command_complete_ack=*/false) < 0);
+	zassert_true(wait_for_notification(fixture, ++notified_count));
+	zassert_true(check_cci_matches(fixture, &cci_ack_command));
+	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE_NOTIFY);
+
+	/* Re-trigger a connector change. */
+	trigger_expected_connector_change(fixture, PDC_DEFAULT_CONNECTOR);
+	zassert_true(wait_for_async_event_to_process(fixture));
+	zassert_true(wait_for_notification(fixture, ++notified_count));
+	zassert_true(check_cci_matches(fixture, &cci_connector_change_1));
+
+	/* Trying to do command complete in ASYNC_EV_ACK stage should fail. */
+	zassert_false(write_ack_command(fixture,
+					/*connector_change_ack=*/false,
+					/*command_complete_ack=*/true) < 0);
+	zassert_true(wait_for_notification(fixture, ++notified_count));
+	zassert_true(check_cci_matches(fixture, &cci_error));
+}
+
+/* If we get an ACK_CC_CI when there is no active connector indication, we
+ * should fail. In this scenario, the starting state needs to be IdleNotify but
+ * occurs when the OPM sends other commands after receiving Connector Change
+ * Indication.
+ */
+ZTEST_USER_F(ppm_test, test_CIACK_fail_if_no_active_connector_indication)
+{
+	initialize_fake_to_idle_notify(fixture);
+	int notified_count = fixture->notified_count;
+
+	zassert_false(write_ack_command(fixture,
+					/*connector_change_ack=*/true,
+					/*command_complete_ack=*/false) < 0);
+	zassert_true(wait_for_notification(fixture, ++notified_count));
+	zassert_true(check_cci_matches(fixture, &cci_error));
+	zassert_true(wait_for_cmd_to_process(fixture));
+	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE_NOTIFY);
 }
