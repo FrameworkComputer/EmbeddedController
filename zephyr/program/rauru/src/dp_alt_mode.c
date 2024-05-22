@@ -139,7 +139,7 @@ __override void svdm_dp_post_config(int port)
 
 int rauru_is_dp_muxable(enum rauru_dp_port port)
 {
-	return port == active_dp_port || port == DP_PORT_NONE;
+	return port == active_dp_port || active_dp_port == DP_PORT_NONE;
 }
 
 __override int svdm_dp_attention(int port, uint32_t *payload)
