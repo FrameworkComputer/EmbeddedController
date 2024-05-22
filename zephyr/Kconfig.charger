@@ -150,6 +150,7 @@ config PLATFORM_EC_CHARGER_ISL9241
 config PLATFORM_EC_CHARGER_RAA489110
 	bool "Use the RAA489110 charger"
 	depends on PLATFORM_EC_I2C
+	select PLATFORM_EC_CHARGER_ISL9241
 	# Hardware based charge ramp is broken in the ISL9241 (b/169350714)
 	# Probably also broken for RAA489110.
 	select PLATFORM_EC_CHARGER_CHGRAMP_BROKEN
