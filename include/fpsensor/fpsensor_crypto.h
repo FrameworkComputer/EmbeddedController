@@ -16,9 +16,6 @@
 
 #define SBP_ENC_KEY_LEN 16
 
-#define HKDF_MAX_INFO_SIZE 128
-#define HKDF_SHA256_MAX_BLOCK_COUNT 255
-
 /**
  * Computes HKDF (as specified by RFC 5869) using SHA-256 as the digest.
  *
