@@ -36,6 +36,18 @@ enum ec_error_list hkdf_expand(uint8_t *out_key, size_t out_key_size,
 			       const uint8_t *prk, size_t prk_size,
 			       const uint8_t *info, size_t info_size);
 
+/**
+ * Computes HKDF (as specified by RFC 5869) using SHA-256 as the digest.
+ *
+ * @param[out] out_key buffer to hold output key material. Max size must be less
+ * than or equal to 255 * 32 (SHA256_DIGEST_SIZE) bytes = 8160 bytes.
+ * @param[in] ikm input keying material.
+ * @param[in] salt optional salt value (a non-secret random value).
+ * @param[in] info optional context and application specific information (can be
+ * a zero-length string).
+ * @return true on success
+ * @return false on failure
+ */
 bool hkdf_sha256(std::span<uint8_t> out_key, std::span<const uint8_t> ikm,
 		 std::span<const uint8_t> salt, std::span<const uint8_t> info);
 
