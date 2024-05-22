@@ -78,6 +78,9 @@
 #define CONFIG_STREAM_USB
 #define CONFIG_CMD_USART_INFO
 
+/* Use faster SYSCLK for the UARTS used for USB forwarding */
+#define CONFIG_USART_SYSCLK
+
 /* The UART console is on LPUART (UART9), connected to st-link debugger. */
 #undef CONFIG_UART_CONSOLE
 #define CONFIG_UART_CONSOLE 9
@@ -100,6 +103,9 @@
 #define CONFIG_USB
 #define CONFIG_USB_PID 0x520e
 #define CONFIG_USB_CONSOLE
+
+/* Reduced control endpoint buffer usage, to allow more for UART forwarding */
+#define CONFIG_USB_MAX_CONTROL_PACKET_SIZE 32
 
 /*
  * Some commands take a list of GPIO names, which can exceed the default 80
