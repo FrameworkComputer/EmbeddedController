@@ -30,6 +30,9 @@
 		default_battery: getac_pg01jh3353 {
 			compatible = "getac,pg01jh3353", "battery-smart";
 		};
+		smp_pg01nl3353 {
+			compatible = "smp,pg01nl3353", "battery-smart";
+		};
 	};
 
 	hibernate-wake-pins {
