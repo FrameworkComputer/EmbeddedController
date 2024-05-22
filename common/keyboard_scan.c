@@ -1027,8 +1027,13 @@ void keyboard_scan_task(void *u)
 					new_disable_scanning);
 
 			if (!new_disable_scanning) {
-				/* Enabled now */
+				/*
+				 * Enabled now, then wait a bit to let
+				 * keyboard_raw_read_rows() below gets correct
+				 * results.
+				 */
 				keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
+				udelay(keyscan_config.output_settle_us);
 			} else if (!local_disable_scanning) {
 				/*
 				 * Scanning isn't enabled but it was last time
