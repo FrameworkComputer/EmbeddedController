@@ -121,6 +121,11 @@ void usart_set_baud_f0_l(struct usart_config const *config, int baud,
 {
 	int div = DIV_ROUND_NEAREST(frequency_hz, baud);
 	intptr_t base = config->hw->base;
+	bool was_active = STM32_USART_CR1(base) & STM32_USART_CR1_UE;
+
+	/* Make sure UART is disabled before modifying settings. */
+	if (was_active)
+		STM32_USART_CR1(base) &= ~STM32_USART_CR1_UE;
 
 #ifdef STM32_USART9_BASE
 	if (config->hw->base == STM32_USART9_BASE) /* LPUART */
@@ -142,20 +147,34 @@ void usart_set_baud_f0_l(struct usart_config const *config, int baud,
 		STM32_USART_BRR(base) = ((div / 8) << 4) | (div & 7);
 		STM32_USART_CR1(base) |= STM32_USART_CR1_OVER8;
 	}
+
+	/* Restore active state. */
+	if (was_active)
+		STM32_USART_CR1(base) |= STM32_USART_CR1_UE;
 }
 
 void usart_set_baud_f(struct usart_config const *config, int baud,
 		      int frequency_hz)
 {
 	int div = DIV_ROUND_NEAREST(frequency_hz, baud);
+	intptr_t base = config->hw->base;
+	bool was_active = STM32_USART_CR1(base) & STM32_USART_CR1_UE;
+
+	/* Make sure UART is disabled before modifying settings. */
+	if (was_active)
+		STM32_USART_CR1(base) &= ~STM32_USART_CR1_UE;
 
 #ifdef STM32_USART9_BASE
-	if (config->hw->base == STM32_USART9_BASE) /* LPUART */
+	if (base == STM32_USART9_BASE) /* LPUART */
 		div *= 256;
 #endif
 
 	/* STM32F only supports x16 oversampling */
-	STM32_USART_BRR(config->hw->base) = div;
+	STM32_USART_BRR(base) = div;
+
+	/* Restore active state. */
+	if (was_active)
+		STM32_USART_CR1(base) |= STM32_USART_CR1_UE;
 }
 
 int usart_get_parity(struct usart_config const *config)
@@ -176,15 +195,15 @@ int usart_get_parity(struct usart_config const *config)
  */
 void usart_set_parity(struct usart_config const *config, int parity)
 {
-	uint32_t ue;
 	intptr_t base = config->hw->base;
+	bool was_active = STM32_USART_CR1(base) & STM32_USART_CR1_UE;
 
 	if ((parity < 0) || (parity > 2))
 		return;
 
-	/* Record active state and disable the UART. */
-	ue = STM32_USART_CR1(base) & STM32_USART_CR1_UE;
-	STM32_USART_CR1(base) &= ~STM32_USART_CR1_UE;
+	/* Make sure UART is disabled before modifying settings. */
+	if (was_active)
+		STM32_USART_CR1(base) &= ~STM32_USART_CR1_UE;
 
 	if (parity) {
 		/* Set parity control enable. */
@@ -202,7 +221,8 @@ void usart_set_parity(struct usart_config const *config, int parity)
 	}
 
 	/* Restore active state. */
-	STM32_USART_CR1(base) |= ue;
+	if (was_active)
+		STM32_USART_CR1(base) |= STM32_USART_CR1_UE;
 }
 
 /*
@@ -211,12 +231,12 @@ void usart_set_parity(struct usart_config const *config, int parity)
 #ifdef CONFIG_STREAM_USB
 void usart_set_break(struct usart_config const *config, bool enable)
 {
-	uint32_t ue;
 	intptr_t base = config->hw->base;
+	bool was_active = STM32_USART_CR1(base) & STM32_USART_CR1_UE;
 
-	/* Record active state and disable the UART. */
-	ue = STM32_USART_CR1(base) & STM32_USART_CR1_UE;
-	STM32_USART_CR1(base) &= ~STM32_USART_CR1_UE;
+	/* Make sure UART is disabled before modifying settings. */
+	if (was_active)
+		STM32_USART_CR1(base) &= ~STM32_USART_CR1_UE;
 
 	/*
 	 * Generate break by temporarily inverting the logic levels on the TX
@@ -229,7 +249,8 @@ void usart_set_break(struct usart_config const *config, bool enable)
 	}
 
 	/* Restore active state. */
-	STM32_USART_CR1(base) |= ue;
+	if (was_active)
+		STM32_USART_CR1(base) |= STM32_USART_CR1_UE;
 }
 #endif
 
