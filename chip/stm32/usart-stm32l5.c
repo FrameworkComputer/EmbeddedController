@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 #include "clock.h"
+#include "clock_chip.h"
 #include "common.h"
 #include "compile_time_macros.h"
 #include "hooks.h"
@@ -18,6 +19,14 @@
  */
 #define STM32_USARTS_MAX 6
 
+#if defined(CONFIG_USART_SYSCLK)
+#define USART_CLOCK_FREQ (clock_get_freq())
+#elif defined(CONFIG_USART_HSI16)
+#define USART_CLOCK_FREQ (16000000)
+#else
+#define USART_CLOCK_FREQ (clock_get_apb_freq())
+#endif
+
 static struct usart_config const *configs[STM32_USARTS_MAX];
 
 struct usart_configs usart_get_configs(void)
@@ -30,10 +39,19 @@ static void usart_variant_enable(struct usart_config const *config)
 	/* Use single-bit sampling */
 	STM32_USART_CR3(config->hw->base) |= STM32_USART_CR3_ONEBIT;
 
+#if defined(CONFIG_USART_SYSCLK)
+	/* Set clock source of the particular UART to core clock */
+	STM32_RCC_CCIPR1 &= ~(STM32_RCC_CCIPR_MASK << (2 * config->hw->index));
+	STM32_RCC_CCIPR1 |=
+		(STM32_RCC_CCIPR_UART_SYSCLK << (2 * config->hw->index));
+#elif defined(CONFIG_USART_HSI16)
 	/* Set clock source of the particular UART to 16MHz HSI */
-	STM32_RCC_CCIPR1 &= ~(3 << (2 * config->hw->index));
+	STM32_RCC_CCIPR1 &= ~(STM32_RCC_CCIPR_MASK << (2 * config->hw->index));
 	STM32_RCC_CCIPR1 |=
 		(STM32_RCC_CCIPR_UART_HSI16 << (2 * config->hw->index));
+#else
+	/* Leave at power-on default, which is APB PCLK */
+#endif
 
 	/*
 	 * Make sure we register this config before enabling the HW.
@@ -43,7 +61,7 @@ static void usart_variant_enable(struct usart_config const *config)
 	 */
 	configs[config->hw->index] = config;
 
-	usart_set_baud_f0_l(config, config->baud, 16000000);
+	usart_set_baud_f0_l(config, config->baud, USART_CLOCK_FREQ);
 
 	task_enable_irq(config->hw->irq);
 }
@@ -51,13 +69,13 @@ static void usart_variant_enable(struct usart_config const *config)
 #ifdef CONFIG_STREAM_USB
 int usart_get_baud(struct usart_config const *config)
 {
-	return usart_get_baud_f0_l(config, 16000000);
+	return usart_get_baud_f0_l(config, USART_CLOCK_FREQ);
 }
 #endif
 
 void usart_set_baud(struct usart_config const *config, int baud)
 {
-	usart_set_baud_f0_l(config, baud, 16000000);
+	usart_set_baud_f0_l(config, baud, USART_CLOCK_FREQ);
 }
 
 static void usart_variant_disable(struct usart_config const *config)
@@ -71,6 +89,19 @@ static struct usart_hw_ops const usart_variant_hw_ops = {
 	.enable = usart_variant_enable,
 	.disable = usart_variant_disable,
 };
+
+#ifndef CONFIG_USART_HSI16
+static void freq_change(void)
+{
+	size_t i;
+
+	for (i = 0; i < ARRAY_SIZE(configs); ++i)
+		if (configs[i])
+			usart_set_baud_f0_l(configs[i], configs[i]->baud,
+					    USART_CLOCK_FREQ);
+}
+DECLARE_HOOK(HOOK_FREQ_CHANGE, freq_change, HOOK_PRIO_DEFAULT);
+#endif
 
 void usart_clear_tc(struct usart_config const *config)
 {

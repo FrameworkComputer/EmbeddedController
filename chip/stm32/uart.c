@@ -311,7 +311,8 @@ void uart_init(void)
 #if UARTN != 9
 	/* USARTn clock source from HSI16 */
 	STM32_RCC_CCIPR &=
-		~(0x03 << CONCAT3(STM32_RCC_CCIPR_USART, UARTN, SEL_SHIFT));
+		~(STM32_RCC_CCIPR_MASK
+		  << CONCAT3(STM32_RCC_CCIPR_USART, UARTN, SEL_SHIFT));
 	/* For STM32L4, use HSI for UART, to wake up from low power mode */
 	STM32_RCC_CCIPR |=
 		(STM32_RCC_CCIPR_UART_HSI16
