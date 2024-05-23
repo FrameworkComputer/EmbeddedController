@@ -2,6 +2,43 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config USB_DEVICE_GOOGLE_UPDATE
+	bool "USB Google support"
+	depends on USB_DEVICE_STACK
+	depends on PLATFORM_EC_USB_UPDATE
+	select NET_BUF
+	default y
+	help
+	  Enable Google vender specific class.
+
+config GOOGLE_UPDATE_RX_THREAD_PRIORTY
+	int "Google update RX thread priority"
+	depends on USB_DEVICE_GOOGLE_UPDATE
+	default 8
+	help
+	  Set thread priority of the Google update RX.
+
+config GOOGLE_UPDATE_RX_STACK_SIZE
+	int "Size of the Rx thread stack"
+	depends on USB_DEVICE_GOOGLE_UPDATE
+	default 2048
+	help
+	  Size of the Rx thread stack.
+
+config GOOGLE_UPDATE_TX_THREAD_PRIORTY
+	int "Google update TX thread priority"
+	depends on USB_DEVICE_GOOGLE_UPDATE
+	default 8
+	help
+	  Set thread priority of the Google update TX.
+
+config GOOGLE_UPDATE_TX_STACK_SIZE
+	int "Size of the Tx thread stack"
+	depends on USB_DEVICE_GOOGLE_UPDATE
+	default 1024
+	help
+	  Size of the Tx thread stack.
+
 config USB_DC_HID_KEYBOARD
 	bool "Enable support USB HID keyboard"
 	depends on USB_DEVICE_STACK
