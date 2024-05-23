@@ -56,7 +56,7 @@ static const struct ec_response_keybd_config xol_kb2 = {
 		TK_KBD_BKLIGHT_DOWN,    /* T8 */
 		TK_KBD_BKLIGHT_UP,      /* T9 */
 		TK_DICTATE,             /* T10 */
-		TK_FORWARD,             /* T11 Temporary */
+		TK_ACCESSIBILITY,       /* T11 */
 		TK_PLAY_PAUSE,          /* T12 */
 		TK_VOL_MUTE,            /* T13 */
 		TK_VOL_DOWN,            /* T14 */
