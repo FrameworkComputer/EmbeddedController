@@ -464,6 +464,47 @@ __attribute((section(".bss.vector_table"))) void (*sram_vectors[125])(void);
 
 #define CORTEX_VTABLE REG32(0xE000ED08)
 
+static void (*saved_gpio_edge_vectors[16])(void);
+
+static void enable_asm_gpio_edge_handlers(void)
+{
+	/*
+	 * Disable handling of the blue button while GPIO monitoring is ongoing.
+	 */
+	gpio_disable_interrupt(GPIO_NUCLEO_USER_BTN);
+
+	/*
+	 * Update GPIO edge interrupt vectors to point directly at copies of
+	 * edge_int(), thereby bypassing the scheduling wrapper of
+	 * DECLARE_IRQ().
+	 *
+	 * This is safe because these interrupts do not cause any task to become
+	 * runnable.
+	 */
+	for (int i = 0; i < 16; i++) {
+		sram_vectors[16 + STM32_IRQ_EXTI0 + i] =
+			DATA_TO_THUMB_CODE_PTR(&monitoring_slots[i].code);
+	}
+}
+
+static void disable_asm_gpio_edge_handlers(void)
+{
+	/*
+	 * Update GPIO edge interrupt vectors to their EC RTOS defaults.
+	 */
+	for (int i = 0; i < 16; i++) {
+		/* Reinstate default edge interrupt handlers. */
+		sram_vectors[16 + STM32_IRQ_EXTI0 + i] =
+			saved_gpio_edge_vectors[i];
+	}
+
+	/*
+	 * Re-enable handling of the blue button as GPIO monitoring is done.
+	 */
+	gpio_clear_pending_interrupt(GPIO_NUCLEO_USER_BTN);
+	gpio_enable_interrupt(GPIO_NUCLEO_USER_BTN);
+}
+
 static void board_gpio_init(void)
 {
 	size_t interrupt_handler_size = THUMB_CODE_TO_DATA_PTR(&edge_int_end) -
@@ -488,23 +529,14 @@ static void board_gpio_init(void)
 	 * presses will not be handled while gpio monitoring is ongoing.)
 	 */
 	memcpy(sram_vectors, vectors, sizeof(sram_vectors));
+	CORTEX_VTABLE = (uint32_t)(sram_vectors);
 	for (int i = 0; i < 16; i++) {
 		memcpy(monitoring_slots[i].code,
 		       THUMB_CODE_TO_DATA_PTR(&edge_int),
 		       interrupt_handler_size);
 		replace(&monitoring_slots[i], &load_pin_mask_replacement, i);
-		/*
-		 * Update GPIO edge interrupt vector to point directly at
-		 * gpio_interrupt(), thereby bypassing the scheduling wrapper of
-		 * DECLARE_IRQ().
-		 *
-		 * This is safe because these interrupts do not cause any task
-		 * to become runnable.
-		 *
-		 * Set low bit of address to indicate thumb instruction set.
-		 */
-		sram_vectors[16 + STM32_IRQ_EXTI0 + i] =
-			DATA_TO_THUMB_CODE_PTR(&monitoring_slots[i].code);
+		saved_gpio_edge_vectors[i] =
+			sram_vectors[16 + STM32_IRQ_EXTI0 + i];
 	}
 
 	/*
@@ -587,9 +619,7 @@ static void stop_all_gpio_monitoring(void)
 
 	/* Ensure handling of the blue user button of Nucleo-L552ZE-Q is
 	 * enabled. */
-	CORTEX_VTABLE = (uint32_t)(vectors);
-	gpio_clear_pending_interrupt(GPIO_NUCLEO_USER_BTN);
-	gpio_enable_interrupt(GPIO_NUCLEO_USER_BTN);
+	disable_asm_gpio_edge_handlers();
 }
 
 /*
@@ -946,10 +976,8 @@ static int command_gpio_monitoring_start(int argc, const char **argv)
 
 	/* Disable handling of the blue user button while monitoring is ongoing.
 	 */
-	if (!num_cur_monitoring) {
-		gpio_disable_interrupt(GPIO_NUCLEO_USER_BTN);
-		CORTEX_VTABLE = (uint32_t)(sram_vectors);
-	}
+	if (!num_cur_monitoring)
+		enable_asm_gpio_edge_handlers();
 
 	buf->head = buf->tail = buf->data;
 	buf->end = buf->data + cyclic_buffer_size;
@@ -1261,11 +1289,8 @@ static int command_gpio_monitoring_stop(int argc, const char **argv)
 
 	/* Re-enable handling of the blue user button once monitoring is done.
 	 */
-	if (!num_cur_monitoring) {
-		CORTEX_VTABLE = (uint32_t)(vectors);
-		gpio_clear_pending_interrupt(GPIO_NUCLEO_USER_BTN);
-		gpio_enable_interrupt(GPIO_NUCLEO_USER_BTN);
-	}
+	if (!num_cur_monitoring)
+		disable_asm_gpio_edge_handlers();
 
 	free_cyclic_buffer(buf);
 	return EC_SUCCESS;
