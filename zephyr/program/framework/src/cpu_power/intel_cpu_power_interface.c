@@ -302,6 +302,7 @@ int peci_temp_sensor_get_val(int idx, int *temp_ptr)
 int pl1_watt;
 int pl2_watt;
 int pl4_watt;
+int psyspl2_watt;
 bool manual_ctl;
 
 static int peci_update_power_limit_1(int watt)
@@ -441,11 +442,46 @@ static int peci_update_power_limit_4(int watt)
 	return EC_SUCCESS;
 }
 
-int set_pl_limits(int pl1, int pl2, int pl4)
+static int peci_update_power_limit_psys_pl2(int watt)
+{
+	int ret;
+	uint8_t read_buf[6];
+	uint32_t data;
+
+	if (!system_is_ready())
+		return EC_ERROR_NOT_POWERED;
+
+	data = PECI_PSYS_PL2_CONTROL_TIME_WINDOWS(TIME_WINDOW_PSYSPL2) |
+		PECI_PSYS_PL2_POWER_LIMIT_ENABLE(1) | PECI_PSYS_PL2_POWER_LIMIT(watt);
+
+	ret = request_wrpkgconfig(PECI_INDEX_POWER_LIMITS_PSYS_PL2,
+		PECI_PARAMS_POWER_LIMITS_PSYS_PL2, data);
+
+	if (ret) {
+		CPRINTS("OOB req failed %d", ret);
+		return EC_ERROR_UNKNOWN;
+	}
+
+	ret = retrieve_packet(read_buf);
+	if (ret) {
+		CPRINTS("OOB retrieve failed %d", ret);
+		return EC_ERROR_UNKNOWN;
+	}
+
+	if (read_buf[5] != 0x40) {
+		CPRINTS("psys_pl2 update fail, CC:0x%02x", read_buf[5]);
+		return EC_ERROR_UNKNOWN;
+	}
+
+	return EC_SUCCESS;
+}
+
+int set_pl_limits(int pl1, int pl2, int pl4, int psyspl2)
 {
 	RETURN_ERROR(peci_update_power_limit_1(pl1));
 	RETURN_ERROR(peci_update_power_limit_2(pl2));
 	RETURN_ERROR(peci_update_power_limit_4(pl4));
+	RETURN_ERROR(peci_update_power_limit_psys_pl2(psyspl2));
 
 	return EC_SUCCESS;
 }
@@ -473,7 +509,7 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, update_soc_power_limit_boot, HOOK_PRIO_DEFAULT
 
 static int cmd_cpupower(int argc, const char **argv)
 {
-	uint32_t pl1, pl2, pl4;
+	uint32_t pl1, pl2, pl4, psyspl2;
 	char *e;
 
 	if (argc >= 2) {
@@ -484,7 +520,7 @@ static int cmd_cpupower(int argc, const char **argv)
 		}
 	}
 
-	if (argc >= 4) {
+	if (argc >= 5) {
 		pl1 = strtoi(argv[1], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM1;
@@ -494,6 +530,9 @@ static int cmd_cpupower(int argc, const char **argv)
 		pl4 = strtoi(argv[4], &e, 0);
 		if (*e)
 			return EC_ERROR_PARAM4;
+		psyspl2 = strtoi(argv[4], &e, 0);
+		if (*e)
+			return EC_ERROR_PARAM4;
 
 		manual_ctl = true;
 		CPRINTF("Manual update ");
@@ -501,15 +540,17 @@ static int cmd_cpupower(int argc, const char **argv)
 		pl1_watt = pl1;
 		pl2_watt = pl2;
 		pl4_watt = pl4;
-		set_pl_limits(pl1_watt, pl2_watt, pl4_watt);
+		psyspl2_watt = psyspl2;
+
+		set_pl_limits(pl1_watt, pl2_watt, pl4_watt, psyspl2_watt);
 
 	}
 
-	CPRINTS("Power Limit: PL1 %dW, PL2 %dW, PL4 %dW",
-		pl1_watt, pl2_watt, pl4_watt);
+	CPRINTS("Power Limit: PL1 %dW, PL2 %dW, PL4 %dW, PSYSPL2 %dW",
+		pl1_watt, pl2_watt, pl4_watt, psyspl2_watt);
 
 	return EC_SUCCESS;
 }
 DECLARE_CONSOLE_COMMAND(cpupower, cmd_cpupower,
-			"cpupower pl1 pl2 pl4 ",
+			"cpupower pl1 pl2 pl4 psyspl2 ",
 			"Set/Get the cpupower limit");

@@ -51,6 +51,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	static int old_pl1_watt = -1;
 	static int old_pl2_watt = -1;
 	static int old_pl4_watt = -1;
+	static int old_psyspl2_watt = -1;
 	static bool communication_fail;
 
 	battery_watt = get_battery_wattage();
@@ -61,18 +62,19 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		active_power = 0;
 	}
 
-	if (!extpower_is_present()) {
+	if (!extpower_is_present()  || active_power == 0) {
 		/* Battery only */
 		pl1_watt = 25;
 		pl2_watt = 30;
 		if (battery_watt == battery_55w) {
 			/* battery_55w */
 			pl4_watt = 72;
+			psyspl2_watt = 53;
 		} else {
 			/* battery_61w */
 			pl4_watt = 80;
+			psyspl2_watt = 58;
 		}
-
 	} else if (battery_percent > 30 && active_power >= 55) {
 		/* ADP >= 55W and Battery percentage > 30% */
 		pl1_watt = 30;
@@ -81,15 +83,18 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		if (battery_watt == battery_55w) {
 			/* battery_55w */
 			pl4_watt = MIN((active_power + 52), 120);
+			psyspl2_watt = ((active_power * 95) / 100) + 39;
 		} else {
 			/* battery_61w */
 			pl4_watt = MIN((active_power + 60), 120);
+			psyspl2_watt = ((active_power * 95) / 100) + 43;
 		}
 	} else {
 		if (active_power >= 55) {
-			/* ADP >= 55W and Battery percentage <= 30% */
+			/* ADP >= 55W */
 			pl1_watt = 25;
 			pl2_watt = MIN((((active_power * 90) / 100) - 20), 60);
+			psyspl2_watt = ((active_power * 95) / 100);
 
 			if (battery_watt == battery_55w) {
 				pl4_watt = MIN((active_power + 52), 120);
@@ -103,6 +108,8 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 			/*ADP < 55W*/
 			pl1_watt = 25;
 			pl2_watt = 30;
+			psyspl2_watt = ((active_power * 95) / 100);
+
 			if (battery_watt == battery_55w || battery_watt == battery_61w)
 				pl4_watt = 80;
 			else
@@ -111,15 +118,16 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	}
 
 	if (pl1_watt != old_pl1_watt || pl2_watt != old_pl2_watt || pl4_watt != old_pl4_watt ||
-			force_update || communication_fail) {
+			psyspl2_watt != old_psyspl2_watt || force_update || communication_fail) {
 		old_pl1_watt = pl1_watt;
 		old_pl2_watt = pl2_watt;
 		old_pl4_watt = pl4_watt;
+		old_psyspl2_watt = psyspl2_watt;
 
-		communication_fail = set_pl_limits(pl1_watt, pl2_watt, pl4_watt);
+		communication_fail = set_pl_limits(pl1_watt, pl2_watt, pl4_watt, psyspl2_watt);
 
 		if (!communication_fail)
-			CPRINTS("PL1:%d, PL2:%d and PL4:%d updated success",
-				pl1_watt, pl2_watt, pl4_watt);
+			CPRINTS("PL1:%d, PL2:%d, PL4:%d, PSYSPL2:%d updated success",
+				pl1_watt, pl2_watt, pl4_watt, psyspl2_watt);
 	}
 }

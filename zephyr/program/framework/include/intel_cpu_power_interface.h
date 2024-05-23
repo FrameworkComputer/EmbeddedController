@@ -17,6 +17,7 @@
  *******************************************************************************/
 #define TIME_WINDOW_PL1		0xDC
 #define TIME_WINDOW_PL2		0xDC
+#define TIME_WINDOW_PSYSPL2		0xDC
 
 /******************** PL3 TimeWindow *******************************************
  * 1ms: 0x00;  1.25ms: 0x40;  1.5ms: 0xC0;  1.75ms: 0x80
@@ -62,9 +63,10 @@
 
 extern int pl1_watt;
 extern int pl2_watt;
-extern int pl4_watt;
 extern int pl3_watt;
+extern int pl4_watt;
+extern int psyspl2_watt;
 
-int set_pl_limits(int pl1, int pl2, int pl4);
+int set_pl_limits(int pl1, int pl2, int pl4, int psyspl2);
 
 #endif
