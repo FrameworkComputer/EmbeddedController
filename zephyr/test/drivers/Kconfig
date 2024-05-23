@@ -64,6 +64,9 @@ config LINK_TEST_SUITE_CEC_BITBANG
 config LINK_TEST_SUITE_CEC_IT83XX
 	bool "Link and run tests for driver/cec/it83xx"
 
+config LINK_TEST_SUITE_CHARGE_MANAGER
+	bool "Link and test the charge manager tests"
+
 config LINK_TEST_SUITE_CHARGESPLASH
 	bool "Link and test the chargesplash tests"
 
