@@ -34,6 +34,14 @@
 		status = "okay";
 		reg = <0x9>;
 	};
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
 	kb_discrete: ite-it8801@39 {
 		compatible = "ite,it8801";
 		reg = <0x39>;
