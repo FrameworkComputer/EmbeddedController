@@ -93,9 +93,9 @@
 		};
 
 		base_rot_lis2de12: base-rotation-ref-lis2de12 {
-			mat33 = <0 (-1) 0
+			mat33 = <0 1 0
 				 1 0 0
-				 0 0 1>;
+				 0 0 (-1)>;
 		};
 	};
 
@@ -146,9 +146,11 @@
 					"cros-ec,motionsense-sensor-config";
 				ec-s0 {
 					odr = <(12500 | ROUND_UP_FLAG)>;
+					ec-rate = <(100 * USEC_PER_MSEC)>;
 				};
 				ec-s3 {
 					odr = <(12500 | ROUND_UP_FLAG)>;
+					ec-rate = <0>;
 				};
 			};
 		};
