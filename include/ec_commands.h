@@ -6833,6 +6833,7 @@ enum action_key {
 	TK_MICMUTE = 19,
 	TK_MENU = 20,
 	TK_DICTATE = 21,
+	TK_ACCESSIBILITY = 22,
 
 	TK_COUNT
 };

@@ -6597,6 +6597,7 @@ const char *action_key_names[] = {
 	[TK_MICMUTE] = "Microphone Mute",
 	[TK_MENU] = "Menu",
 	[TK_DICTATE] = "Dictation",
+	[TK_ACCESSIBILITY] = "Accessibility",
 };
 
 BUILD_ASSERT(ARRAY_SIZE(action_key_names) == TK_COUNT);
