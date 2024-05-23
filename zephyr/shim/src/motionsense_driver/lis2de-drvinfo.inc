@@ -20,7 +20,7 @@
  * (compatible = "cros-ec,drvdata-lis2de")
  */
 #define CREATE_SENSOR_DATA_LIS2DE(id, drvdata_name) \
-	static struct accelgyro_saved_data_t drvdata_name;
+	static struct motion_sensor_t drvdata_name;
 
 CREATE_SENSOR_DATA(cros_ec_drvdata_lis2de, CREATE_SENSOR_DATA_LIS2DE)
 
