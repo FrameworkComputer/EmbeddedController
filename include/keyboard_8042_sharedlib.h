@@ -170,6 +170,7 @@ enum scancode_values {
 	SCANCODE_MICMUTE = 0xe05b, /* e01b in codeset 1 */
 	SCANCODE_DICTATE = 0xe04c, /* e027 in codeset 1 */
 	SCANCODE_ACCESSIBILITY = 0xe00e, /* e029 in codeset 1 */
+	SCANCODE_DONOTDISTURB = 0xe052, /* e028 in codeset 1 */
 
 	SCANCODE_UP = 0xe075,
 	SCANCODE_DOWN = 0xe072,
