@@ -38,6 +38,11 @@ config PLATFORM_EC_USB_PD_VBUS_MEASURE_BY_BOARD
 	  Enable this if there are different VBUS measurement approaches on
 	  the board, and also `board_get_vbus_voltage()` has to be implemented.
 
+config PLATFORM_EC_USB_PD_VBUS_MEASURE_PDC
+	bool "PD controller supports VBUS measurement"
+	help
+	  Enable this if the VBUS voltage can be read using the on-board PDC.
+
 endchoice # PLATFORM_EC_USB_PD_VBUS_MEASURE_MODE
 
 config PLATFORM_EC_CMD_VBUS

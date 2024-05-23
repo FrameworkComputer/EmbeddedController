@@ -5223,6 +5223,9 @@
 /* Define if there is a specific method to measure Vbus voltage */
 #undef CONFIG_USB_PD_VBUS_MEASURE_BY_BOARD
 
+/* Define if the PDC on the board supports VBUS measurement */
+#undef CONFIG_USB_PD_VBUS_MEASURE_PDC
+
 /* Define the type-c port controller I2C base address. */
 #define CONFIG_TCPC_I2C_BASE_ADDR_FLAGS 0x4E
 
