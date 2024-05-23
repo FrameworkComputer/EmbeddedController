@@ -90,11 +90,11 @@ void reset_nct38xx_port(int port)
 	/* TODO(b/225189538): Save and restore ioex signals */
 	if (port == USBC_PORT_C0) {
 		reset_gpio_l = &tcpc_config[0].rst_gpio;
-		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c0_port0));
+		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_port1));
 #if DT_NODE_EXISTS(DT_NODELABEL(nct3807_C1))
 	} else if (port == USBC_PORT_C1) {
 		reset_gpio_l = &tcpc_config[1].rst_gpio;
-		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_c1_port1));
+		ioex_port0 = DEVICE_DT_GET(DT_NODELABEL(ioex_port2));
 #endif
 	} else {
 		/* Invalid port: do nothing */

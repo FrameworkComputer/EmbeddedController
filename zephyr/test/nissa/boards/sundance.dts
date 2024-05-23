@@ -64,9 +64,11 @@
 			enum-name = "GPIO_USB_C1_TCPC_RST_L";
 		};
 
+		ioex_usb_c0_frs_en: usb_c0_frs_en {
+			gpios = <&ioex_port1 6 GPIO_OUTPUT_LOW>;
+		};
 		ioex_usb_c1_frs_en: usb_c1_frs_en {
-			gpios = <&gpio8 1 GPIO_OUTPUT_LOW>;
-			enum-name = "GPIO_USB_C1_FRS_EN";
+			gpios = <&ioex_port2 6 GPIO_OUTPUT_LOW>;
 		};
 		gpio_sb_2: volup_btn_odl {
 			gpios = <&gpio9 3 GPIO_OUTPUT>;
@@ -112,7 +114,7 @@
 		};
 	};
 
-	ioex_c0_port0: gpio@1100 {
+	ioex_port1: gpio@1100 {
 		status = "okay";
 		compatible = "zephyr,gpio-emul";
 		reg = <0x1100 0x4>;
@@ -125,7 +127,7 @@
 		ngpios = <8>;
 	};
 
-	ioex_c0_port1: gpio@1200 {
+	ioex_port2: gpio@1200 {
 		status = "okay";
 		compatible = "zephyr,gpio-emul";
 		reg = <0x1200 0x4>;
