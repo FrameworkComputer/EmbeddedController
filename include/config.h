@@ -5451,6 +5451,12 @@
 /* The delay in ms from power off to power on for MAX14637 */
 #define CONFIG_BC12_MAX14637_DELAY_FROM_OFF_TO_ON_MS 1
 
+/*
+ * Max. size of packets for the control endpoint, valid values: 8, 16, 32, 64.
+ * Defaults to the largest supported value.
+ */
+#undef CONFIG_USB_MAX_CONTROL_PACKET_SIZE
+
 /* Enable USB serial console module. */
 #undef CONFIG_USB_CONSOLE
 

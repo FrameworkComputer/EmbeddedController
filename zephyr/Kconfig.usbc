@@ -169,10 +169,18 @@ config PLATFORM_EC_USB_VID
 	default 0x18d1
 	help
 	  This specifies the USB vendor ID used for boards which expose a
-	  USB endpont when the port is in UFP mode. The default value is
+	  USB endpoint when the port is in UFP mode. The default value is
 	  set to Google's assigned VID and typically would not need to be
 	  changed. But, in certain cases this may need to be changed to
 	  match an OEM's vendor ID.
+
+config PLATFORM_EC_USB_MAX_CONTROL_PACKET_SIZE
+	int "USB control endpoint max transfer size"
+	default 64
+	help
+	  This controls the amount of USB memory dedicated to the control
+	  endpoint, by specifying the maximum number of bytes in a packet
+	  to/from this endpoint.  Valid values: 8, 16, 32, 64.
 
 config PLATFORM_EC_USB_MS_EXTENDED_COMPAT_ID_DESCRIPTOR
 	bool "USB MS Extended Compat ID Feature Descriptor"

@@ -44,6 +44,15 @@
 static int usb_load_serial(void);
 #endif
 
+#ifndef CONFIG_USB_MAX_CONTROL_PACKET_SIZE
+#define EP0_MAX_PACKET_SIZE USB_MAX_PACKET_SIZE
+#else
+#define EP0_MAX_PACKET_SIZE CONFIG_USB_MAX_CONTROL_PACKET_SIZE
+#endif
+
+BUILD_ASSERT(EP0_MAX_PACKET_SIZE == 8 || EP0_MAX_PACKET_SIZE == 16 ||
+	     EP0_MAX_PACKET_SIZE == 32 || EP0_MAX_PACKET_SIZE == 64);
+
 #define USB_RESUME_TIMEOUT_MS 3000
 
 /* USB Standard Device Descriptor */
@@ -54,7 +63,7 @@ static const struct usb_device_descriptor dev_desc = {
 	.bDeviceClass = USB_DEV_CLASS,
 	.bDeviceSubClass = 0x00,
 	.bDeviceProtocol = 0x00,
-	.bMaxPacketSize0 = USB_MAX_PACKET_SIZE,
+	.bMaxPacketSize0 = EP0_MAX_PACKET_SIZE,
 	.idVendor = CONFIG_USB_VID,
 	.idProduct = CONFIG_USB_PID,
 	.bcdDevice = CONFIG_USB_BCD_DEV,
@@ -122,8 +131,8 @@ const struct usb_ms_ext_compat_id_desc winusb_desc = {
 /* Endpoint table in USB controller RAM */
 struct stm32_endpoint btable_ep[USB_EP_COUNT] __aligned(8) __usb_btable;
 /* Control endpoint (EP0) buffers */
-static usb_uint ep0_buf_tx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
-static usb_uint ep0_buf_rx[USB_MAX_PACKET_SIZE / 2] __usb_ram;
+static usb_uint ep0_buf_tx[EP0_MAX_PACKET_SIZE / 2] __usb_ram;
+static usb_uint ep0_buf_rx[EP0_MAX_PACKET_SIZE / 2] __usb_ram;
 
 #define EP0_BUF_TX_SRAM_ADDR ((void *)usb_sram_addr(ep0_buf_tx))
 
@@ -192,10 +201,10 @@ static void ep0_send_descriptor(const uint8_t *desc, int len,
 	 * if we cannot transmit everything at once,
 	 * keep the remainder for the next IN packet
 	 */
-	if (len >= USB_MAX_PACKET_SIZE) {
-		desc_left = len - USB_MAX_PACKET_SIZE;
-		desc_ptr = desc + USB_MAX_PACKET_SIZE;
-		len = USB_MAX_PACKET_SIZE;
+	if (len >= EP0_MAX_PACKET_SIZE) {
+		desc_left = len - EP0_MAX_PACKET_SIZE;
+		desc_ptr = desc + EP0_MAX_PACKET_SIZE;
+		len = EP0_MAX_PACKET_SIZE;
 	}
 	memcpy_to_usbram_ep0_patch(desc, len);
 	if (fixup_size) /* set the real descriptor size */
@@ -379,7 +388,7 @@ static void ep0_tx(void)
 	}
 	if (desc_ptr) {
 		/* we have an on-going descriptor transfer */
-		int len = MIN(desc_left, USB_MAX_PACKET_SIZE);
+		int len = MIN(desc_left, EP0_MAX_PACKET_SIZE);
 		memcpy_to_usbram(EP0_BUF_TX_SRAM_ADDR, desc_ptr, len);
 		btable_ep[0].tx_count = len;
 		desc_left -= len;
@@ -414,7 +423,7 @@ static void ep0_event(enum usb_ep_event evt)
 
 	btable_ep[0].tx_addr = usb_sram_addr(ep0_buf_tx);
 	btable_ep[0].rx_addr = usb_sram_addr(ep0_buf_rx);
-	btable_ep[0].rx_count = 0x8000 | ((USB_MAX_PACKET_SIZE / 32 - 1) << 10);
+	btable_ep[0].rx_count = usb_ep_rx_size(EP0_MAX_PACKET_SIZE);
 	btable_ep[0].tx_count = 0;
 }
 USB_DECLARE_EP(0, ep0_tx, ep0_rx, ep0_event);

@@ -95,6 +95,9 @@ void *memcpy_to_usbram_ep0_patch(const void *src, size_t n);
 /* Compute the address inside dedicate SRAM for the USB controller */
 #define usb_sram_addr(x) ((x - __usb_ram_start) * sizeof(uint16_t))
 
+/* Compute value to put into rx_count */
+#define usb_ep_rx_size(x) ((x) < 64 ? (x) << 9 : 0x8000 | (((x)-32) << 5))
+
 /* Helpers for endpoint declaration */
 #define _EP_HANDLER2(num, suffix) CONCAT3(ep_, num, suffix)
 #define _EP_TX_HANDLER(num) _EP_HANDLER2(num, _tx)
