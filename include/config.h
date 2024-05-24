@@ -3148,6 +3148,9 @@
 /* Add support for a switch that indicates if the device is in tablet mode. */
 #undef CONFIG_KEYBOARD_TABLET_MODE_SWITCH
 
+/* Add support for skipping lid close when the system into tablet mode. */
+#undef CONFIG_TABLET_MODE_SKIP_LID_CLOSE
+
 /*
  * Minimum CPU clocks between scans.  This ensures that keyboard scanning
  * doesn't starve the other EC tasks of CPU when running at a decreased system
