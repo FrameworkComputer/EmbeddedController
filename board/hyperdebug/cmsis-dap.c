@@ -700,9 +700,17 @@ static int command_jtag_set_pins(int argc, const char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	for (int i = 0; i < JTAG_INVALID; i++) {
-		new_pins[i] = gpio_find_by_name(argv[2]);
+		new_pins[i] = gpio_find_by_name(argv[2 + i]);
 		if (new_pins[i] == GPIO_COUNT)
 			return EC_ERROR_PARAM2 + i;
+		/* Check if same pin listed twice. */
+		for (int j = 0; j < i; j++) {
+			if (new_pins[i] == new_pins[j]) {
+				ccprintf("Error: Pin %s listed twice\n",
+					 gpio_list[jtag_pins[i]].name);
+				return EC_ERROR_PARAM2 + i;
+			}
+		}
 	}
 
 	/* No errors parsing command line, now apply the new settings. */
