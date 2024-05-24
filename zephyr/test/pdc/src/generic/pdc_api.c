@@ -10,7 +10,6 @@
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_pdc.h"
 #include "i2c.h"
-#include "include/ppm.h"
 #include "pdc_trace_msg.h"
 #include "zephyr/sys/util.h"
 #include "zephyr/sys/util_macro.h"
@@ -21,6 +20,8 @@
 #include <zephyr/fff.h>
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
+
+#include <usbc/ppm.h>
 
 LOG_MODULE_REGISTER(test_pdc_api, LOG_LEVEL_INF);
 

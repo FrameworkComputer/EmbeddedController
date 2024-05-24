@@ -11,9 +11,9 @@
 #include "emul/emul_pdc.h"
 #include "emul/emul_realtek_rts54xx_public.h"
 #include "i2c.h"
-#include "include/ppm.h"
 #include "pdc_trace_msg.h"
 #include "test/util.h"
+#include "usbc/ppm.h"
 #include "zephyr/sys/util.h"
 #include "zephyr/sys/util_macro.h"
 

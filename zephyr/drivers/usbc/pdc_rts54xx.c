@@ -24,7 +24,7 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 #include "usbc/utils.h"
 
 #include <drivers/pdc.h>
-#include <include/ppm.h>
+#include <usbc/ppm.h>
 
 #define DT_DRV_COMPAT realtek_rts54_pdc
 

@@ -9,10 +9,9 @@
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
-#include <include/pd_driver.h>
-#include <include/platform.h>
-#include <include/ppm.h>
-#line 16 /* For coverage. Put after #includes and point to next line. */
+#include <platform.h>
+#include <usbc/ppm.h>
+#line 15 /* For coverage. Put after #includes and point to next line. */
 
 #define PDC_NUM_PORTS 2
 #define PDC_DEFAULT_CONNECTOR 1

@@ -8,14 +8,14 @@
 #include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "include/pd_driver.h"
-#include "include/platform.h"
-#include "include/ppm.h"
+#include "platform.h"
 #include "ppm_common.h"
 #include "usb_pd.h"
 
 #include <zephyr/devicetree.h>
 #include <zephyr/logging/log.h>
+
+#include <usbc/ppm.h>
 
 LOG_MODULE_REGISTER(ucsi, LOG_LEVEL_INF);
 

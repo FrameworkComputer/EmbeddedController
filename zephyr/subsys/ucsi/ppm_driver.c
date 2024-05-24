@@ -7,8 +7,6 @@
 
 #include "cros_board_info.h"
 #include "ec_commands.h"
-#include "include/pd_driver.h"
-#include "include/ppm.h"
 #include "ppm_common.h"
 #include "usb_pd.h"
 #include "util.h"
@@ -19,6 +17,7 @@
 #include <zephyr/sys_clock.h>
 
 #include <drivers/pdc.h>
+#include <usbc/ppm.h>
 
 LOG_MODULE_REGISTER(ppm, LOG_LEVEL_INF);
 

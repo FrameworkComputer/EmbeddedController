@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "include/platform.h"
+#include "platform.h"
 #include "ppm_common.h"
 
 #include <stdarg.h>
