@@ -5,5 +5,4 @@
 zephyr_library_sources(ppm_driver.c)
 zephyr_library_sources(ucsi_host_cmd.c)
 zephyr_library_sources(platform_zephyr.c)
-# This should move to zephyr/subsys/ucsi (b/339702957).
-zephyr_library_sources(${PLATFORM_EC}/extra/um_ppm/ppm_common.c)
+zephyr_library_sources(ppm_common.c)

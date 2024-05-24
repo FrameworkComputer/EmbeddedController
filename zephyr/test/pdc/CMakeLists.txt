@@ -53,8 +53,7 @@ endif()
 if (DEFINED CONFIG_TEST_SUITE_PPM)
 	target_sources(app PRIVATE src/generic/ppm.c)
 
-	# TODO(b/339702957) - Move files out of extra/um_ppm
-	target_sources(app PRIVATE ${PLATFORM_EC}/extra/um_ppm/ppm_common.c)
 	zephyr_include_directories(${PLATFORM_EC}/zephyr/subsys/ucsi)
+	target_sources(app PRIVATE ${PLATFORM_EC}/zephyr/subsys/ucsi/ppm_common.c)
 	target_sources(app PRIVATE ${PLATFORM_EC}/zephyr/subsys/ucsi/platform_zephyr.c)
 endif()

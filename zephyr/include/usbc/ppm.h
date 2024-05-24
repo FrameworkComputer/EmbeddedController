@@ -273,16 +273,6 @@ typedef int(ucsi_ppm_init_and_wait)(struct ucsi_ppm_device *device,
 				    uint8_t num_ports);
 
 /**
- * Get access to the UCSI data region.
- *
- * @param device: Data for PPM implementation.
- *
- * @return Pointer to UCSI shared data.
- */
-typedef struct ucsi_memory_region *(
-	ucsi_ppm_get_data_region)(struct ucsi_ppm_device *device);
-
-/**
  * Get the next connector status if a connector change indication is
  * currently active.
  *
@@ -388,7 +378,6 @@ struct ucsi_ppm_driver {
 	struct ucsi_ppm_device *dev;
 
 	ucsi_ppm_init_and_wait *init_and_wait;
-	ucsi_ppm_get_data_region *get_data_region;
 	ucsi_ppm_get_next_connector_status *get_next_connector_status;
 	ucsi_ppm_read *read;
 	ucsi_ppm_write *write;
