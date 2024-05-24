@@ -3,6 +3,12 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #include "driver/tcpm/ps8xxx.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_stub_device.h"
@@ -16,6 +22,12 @@
 #include <zephyr/drivers/i2c_emul.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
+
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 31
 
 #define DT_DRV_COMPAT cros_ps8xxx_emul
 #define PS8XXX_REG_MUX_IN_HPD_ASSERTION MUX_IN_HPD_ASSERTION_REG
