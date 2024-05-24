@@ -10,6 +10,7 @@ project(pdc)
 add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 
 zephyr_include_directories(include)
+zephyr_include_directories(${PLATFORM_EC}/extra/um_ppm)
 
 target_sources(app PRIVATE src/main.c)
 target_sources(app PRIVATE src/fakes.c)

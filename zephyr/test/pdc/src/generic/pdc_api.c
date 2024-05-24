@@ -10,6 +10,7 @@
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_pdc.h"
 #include "i2c.h"
+#include "include/ppm.h"
 #include "pdc_trace_msg.h"
 #include "zephyr/sys/util.h"
 #include "zephyr/sys/util_macro.h"
@@ -28,6 +29,8 @@ LOG_MODULE_REGISTER(test_pdc_api, LOG_LEVEL_INF);
 
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
 static const struct device *dev = DEVICE_DT_GET(RTS5453P_NODE);
+static bool test_cc_cb_called;
+static union cci_event_t test_cc_cb_cci;
 
 bool pdc_rts54xx_test_idle_wait(void);
 
@@ -40,6 +43,9 @@ void pdc_before_test(void *data)
 	}
 
 	zassert_true(pdc_rts54xx_test_idle_wait());
+
+	test_cc_cb_called = false;
+	test_cc_cb_cci.raw_value = 0;
 }
 
 ZTEST_SUITE(pdc_api, NULL, NULL, pdc_before_test, NULL, NULL);
@@ -469,6 +475,78 @@ ZTEST_USER(pdc_api, test_get_cable_property)
 	k_sleep(K_MSEC(SLEEP_MS));
 	zassert_ok(memcmp(&read_property, &property,
 			  sizeof(union cable_property_t)));
+}
+
+static void test_cc_cb(const struct device *dev,
+		       const struct pdc_callback *callback,
+		       union cci_event_t cci_event)
+{
+	test_cc_cb_called = true;
+	test_cc_cb_cci = cci_event;
+}
+
+ZTEST_USER(pdc_api, test_execute_ucsi_cmd)
+{
+	struct ucsi_memory_region ucsi_data;
+	struct ucsi_control *control = &ucsi_data.control;
+	struct pdc_callback callback;
+	union error_status_t in, *out;
+
+	memset(&ucsi_data, 0, sizeof(ucsi_data));
+
+	in.raw_value = 0;
+	in.unrecognized_command = 1;
+	zassert_ok(emul_pdc_set_error_status(emul, &in));
+
+	control->command_specific[0] = 1;
+	callback.handler = test_cc_cb;
+	zassert_ok(pdc_execute_ucsi_cmd(dev, UCSI_CMD_GET_ERROR_STATUS, 1,
+					control->command_specific,
+					ucsi_data.message_in, &callback));
+	k_sleep(K_MSEC(SLEEP_MS));
+	zassert_true(test_cc_cb_called);
+	zassert_true(test_cc_cb_cci.command_completed);
+
+	out = (union error_status_t *)ucsi_data.message_in;
+	zassert_equal(out->raw_value, in.raw_value);
+}
+
+ZTEST_USER(pdc_api, test_execute_ucsi_cmd_get_connector_status)
+{
+	struct ucsi_memory_region ucsi_data;
+	struct ucsi_control *control = &ucsi_data.control;
+	struct pdc_callback callback;
+	union connector_status_t in;
+	union connector_status_t *out =
+		(union connector_status_t *)ucsi_data.message_in;
+
+	memset(&ucsi_data, 0, sizeof(ucsi_data));
+	memset(in.raw_value, 0, sizeof(in.raw_value));
+	in.connect_status = 1;
+	zassert_ok(emul_pdc_set_connector_status(emul, &in));
+
+	/* Trigger IRQ to clear the cache. */
+	emul_pdc_pulse_irq(emul);
+	k_sleep(K_MSEC(SLEEP_MS));
+
+	callback.handler = test_cc_cb;
+	zassert_ok(pdc_execute_ucsi_cmd(dev, UCSI_CMD_GET_CONNECTOR_STATUS, 0,
+					control->command_specific,
+					ucsi_data.message_in, &callback));
+	k_sleep(K_MSEC(SLEEP_MS));
+	zassert_equal(out->connect_status, 1);
+
+	/*
+	 * Expect the command to ignore the emul status and return the previous
+	 * status (from the cache).
+	 */
+	in.connect_status = 0;
+	zassert_ok(emul_pdc_set_connector_status(emul, &in));
+	zassert_ok(pdc_execute_ucsi_cmd(dev, UCSI_CMD_GET_CONNECTOR_STATUS, 0,
+					control->command_specific,
+					ucsi_data.message_in, &callback));
+	k_sleep(K_MSEC(SLEEP_MS));
+	zassert_equal(out->connect_status, 1);
 }
 
 /*
