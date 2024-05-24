@@ -85,7 +85,7 @@ int platform_task_init(void *start_fn, void *arg, struct task_handle **handle)
 
 	(*handle)->thread = k_thread_create(
 		&(*handle)->thread_data, stack, STACK_SIZE, start_fn, arg, 0, 0,
-		CONFIG_PDC_POWER_MGMT_THREAD_PRIORTY, K_ESSENTIAL, K_NO_WAIT);
+		CONFIG_PDC_POWER_MGMT_THREAD_PRIORTY, 0, K_NO_WAIT);
 
 	return 0;
 }

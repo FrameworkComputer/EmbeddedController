@@ -45,7 +45,7 @@ struct ucsi_commands_t {
 		.command = cmd, .command_copy_length = length, \
 	}
 
-struct ucsi_commands_t ucsi_commands[UCSI_CMD_VENDOR_CMD + 1] = {
+struct ucsi_commands_t ucsi_commands[] = {
 	UCSI_CMD_ENTRY(UCSI_CMD_RESERVED, 0),
 	UCSI_CMD_ENTRY(UCSI_CMD_PPM_RESET, 0),
 	UCSI_CMD_ENTRY(UCSI_CMD_CANCEL, 0),
@@ -80,6 +80,9 @@ struct ucsi_commands_t ucsi_commands[UCSI_CMD_VENDOR_CMD + 1] = {
 	UCSI_CMD_ENTRY(UCSI_CMD_CHUNKING_SUPPORT, 1),
 	UCSI_CMD_ENTRY(UCSI_CMD_VENDOR_CMD, 6),
 };
+
+BUILD_ASSERT(ARRAY_SIZE(ucsi_commands) == UCSI_CMD_MAX,
+	     "Not all UCSI commands are handled.");
 
 #define PHANDLE_TO_DEV(node_id, prop, idx) \
 	[idx] = DEVICE_DT_GET(DT_PHANDLE_BY_IDX(node_id, prop, idx)),
@@ -138,7 +141,7 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	k_timepoint_t timeout;
 	int rv;
 
-	if (ucsi_command == 0 || ucsi_command > UCSI_CMD_VENDOR_CMD) {
+	if (ucsi_command == 0 || ucsi_command >= UCSI_CMD_MAX) {
 		LOG_ERR("Invalid command 0x%x", ucsi_command);
 		return -1;
 	}
@@ -298,7 +301,7 @@ static int ppm_init(const struct device *device)
 	}
 
 	/* Initialize the PPM. */
-	data->ppm = ppm_open(drv, data->port_status);
+	data->ppm = ppm_open(drv, data->port_status, device);
 	if (!data->ppm) {
 		LOG_ERR("Failed to open PPM");
 		return -ENODEV;

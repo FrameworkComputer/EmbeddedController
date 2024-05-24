@@ -96,6 +96,7 @@ enum ucsi_commands {
 	UCSI_CMD_READ_POWER_LEVEL = 0x1E,
 	UCSI_CMD_CHUNKING_SUPPORT = 0x1F,
 	UCSI_CMD_VENDOR_CMD = 0x20,
+	UCSI_CMD_MAX,
 };
 
 /* Byte offsets to UCSI data */

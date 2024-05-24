@@ -480,8 +480,7 @@ TEST_F(PpmTest, Idle_DropsUnexpectedCommands)
 	ASSERT_EQ(Initialize(), 0);
 
 	// Try all commands except PPM_RESET and SET_NOTIFICATION_ENABLE
-	for (uint8_t cmd = UCSI_CMD_PPM_RESET; cmd <= UCSI_CMD_VENDOR_CMD;
-	     cmd++) {
+	for (uint8_t cmd = UCSI_CMD_PPM_RESET; cmd < UCSI_CMD_MAX; cmd++) {
 		if (cmd == UCSI_CMD_PPM_RESET ||
 		    cmd == UCSI_CMD_SET_NOTIFICATION_ENABLE) {
 			continue;
