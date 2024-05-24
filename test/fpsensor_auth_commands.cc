@@ -702,10 +702,11 @@ test_fp_command_read_match_secret_with_pubkey_succeed(void)
 
 	global_context.positive_match_secret_state = test_state_1;
 	/* Set fp_positive_match_salt to the default fake positive match salt */
-	for (size_t fgr = 0;
-	     fgr < ARRAY_SIZE(global_context.fp_positive_match_salt); ++fgr)
+	for (auto &fp_positive_match_salt :
+	     global_context.fp_positive_match_salt) {
 		std::ranges::copy(default_fake_fp_positive_match_salt,
-				  global_context.fp_positive_match_salt[fgr]);
+				  fp_positive_match_salt);
+	}
 
 	/* Initialize an empty user_id to compare positive_match_secret */
 	std::ranges::fill(global_context.user_id, 0);
