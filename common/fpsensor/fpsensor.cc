@@ -757,8 +757,7 @@ fp_command_migrate_template_to_nonce_context(struct host_cmd_handler_args *args)
 	 * match secrets of legacy templates. New match secret needs to be
 	 * generated for them.
 	 */
-	memset(global_context.fp_positive_match_salt[idx], 0,
-	       FP_POSITIVE_MATCH_SALT_BYTES);
+	std::ranges::fill(global_context.fp_positive_match_salt[idx], 0);
 	int ret = fp_enable_positive_match_secret(
 		idx, &global_context.positive_match_secret_state);
 	if (ret != EC_SUCCESS) {
