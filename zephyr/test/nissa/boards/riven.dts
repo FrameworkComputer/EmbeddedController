@@ -49,15 +49,10 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "lid_interrupt";
 		};
-		int_imu: ec_imu {
-			irq-pin = <&gpio_imu_int_l>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "motion_interrupt";
-		};
 		int_lid_accel: ec_lid_accel {
 			irq-pin = <&gpio_acc_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "lid_accel_interrupt";
+			handler = "bma4xx_interrupt";
 		};
 		int_tablet_mode: tablet_mode {
 			irq-pin = <&gpio_tablet_mode_l>;
@@ -75,6 +70,10 @@
 		i2c_ec_i2c_sensor: ec_i2c_sensor {
 			i2c-port = <&i2c_ctrl1>;
 			enum-names = "I2C_PORT_SENSOR";
+		};
+		i2c_ec_i2c_sensor_2: ec_i2c_sensor_2 {
+			i2c-port = <&i2c_ctrl4>;
+			enum-names = "I2C_PORT_SENSOR_2";
 		};
 	};
 

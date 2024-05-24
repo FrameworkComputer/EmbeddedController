@@ -63,48 +63,5 @@
 			enum-name = "AUDIO_CODEC";
 			size = <2>;
 		};
-		/*
-		 * SSFC field to identify LID motion sensor.
-		 */
-		lid-sensor {
-			enum-name = "LID_SENSOR";
-			size = <2>;
-
-			lid_sensor_0: lis2dw12 {
-				compatible = "cros-ec,cbi-ssfc-value";
-				status = "okay";
-				value = <0>;
-				default;
-			};
-			lid_sensor_1: bma422 {
-				compatible = "cros-ec,cbi-ssfc-value";
-				status = "okay";
-				value = <1>;
-			};
-		};
-		/*
-		 * SSFC field to identify BASE motion sensor.
-		 */
-		base-sensor {
-			enum-name = "BASE_SENSOR";
-			size = <2>;
-
-			base_sensor_0: lsm6dso {
-				compatible = "cros-ec,cbi-ssfc-value";
-				status = "okay";
-				value = <0>;
-				default;
-			};
-			base_sensor_1: bmi323 {
-				compatible = "cros-ec,cbi-ssfc-value";
-				status = "okay";
-				value = <1>;
-			};
-			base_sensor_2: bma422 {
-				compatible = "cros-ec,cbi-ssfc-value";
-				status = "okay";
-				value = <2>;
-			};
-		};
 	};
 };

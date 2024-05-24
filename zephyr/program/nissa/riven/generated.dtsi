@@ -219,6 +219,10 @@
 			i2c-port = <&i2c3_0>;
 			enum-names = "I2C_PORT_USB_C0_TCPC";
 		};
+		i2c_ec_i2c_sensor_2: ec_i2c_sensor_2 {
+			i2c-port = <&i2c4_1>;
+			enum-names = "I2C_PORT_SENSOR_2";
+		};
 		i2c_ec_i2c_sub_usb_c1: ec_i2c_sub_usb_c1 {
 			i2c-port = <&i2c5_1>;
 			enum-names = "I2C_PORT_USB_C1_TCPC";
@@ -265,6 +269,12 @@
 	pinctrl-names = "default";
 };
 
+&i2c4_1 {
+	status = "okay";
+	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
+	pinctrl-names = "default";
+};
+
 &i2c5_1 {
 	status = "okay";
 	pinctrl-0 = <&i2c5_1_sda_scl_gpf4_f5>;
@@ -287,6 +297,10 @@
 };
 
 &i2c_ctrl3 {
+	status = "okay";
+};
+
+&i2c_ctrl4 {
 	status = "okay";
 };
 

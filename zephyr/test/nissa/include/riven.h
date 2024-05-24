@@ -15,7 +15,6 @@ extern const struct batt_conf_embed *battery_conf;
 extern int charge_port;
 
 void clamshell_init(void);
-void alt_sensor_init(void);
 void fan_init(void);
 void thermal_init(void);
 
