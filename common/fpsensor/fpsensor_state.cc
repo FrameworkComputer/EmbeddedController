@@ -205,12 +205,10 @@ static int validate_fp_mode(const uint32_t mode)
 
 enum ec_status fp_set_sensor_mode(uint32_t mode, uint32_t *mode_output)
 {
-	int ret;
-
 	if (mode_output == NULL)
 		return EC_RES_INVALID_PARAM;
 
-	ret = validate_fp_mode(mode);
+	int ret = validate_fp_mode(mode);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Invalid FP mode 0x%x", mode);
 		return EC_RES_INVALID_PARAM;
@@ -291,15 +289,13 @@ DECLARE_HOST_COMMAND(EC_CMD_FP_CONTEXT, fp_command_context, EC_VER_MASK(1));
 int fp_enable_positive_match_secret(uint16_t fgr,
 				    struct positive_match_secret_state *state)
 {
-	timestamp_t now;
-
 	if (state->readable) {
 		CPRINTS("Error: positive match secret already readable.");
 		fp_disable_positive_match_secret(state);
 		return EC_ERROR_UNKNOWN;
 	}
 
-	now = get_time();
+	timestamp_t now = get_time();
 	state->template_matched = fgr;
 	state->readable = true;
 	state->deadline.val = now.val + (5 * SECOND);

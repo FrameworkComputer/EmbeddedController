@@ -87,7 +87,6 @@ static uint32_t enroll_session;
 static uint32_t fp_process_enroll(void)
 {
 	int percent = 0;
-	int res;
 
 	if (global_context.template_newly_enrolled != FP_NO_SUCH_TEMPLATE)
 		CPRINTS("Warning: previously enrolled template has not been "
@@ -95,7 +94,7 @@ static uint32_t fp_process_enroll(void)
 
 	/* begin/continue enrollment */
 	CPRINTS("[%d]Enrolling ...", global_context.templ_valid);
-	res = fp_finger_enroll(fp_buffer, &percent);
+	int res = fp_finger_enroll(fp_buffer, &percent);
 	CPRINTS("[%d]Enroll =>%d (%d%%)", global_context.templ_valid, res,
 		percent);
 	if (res < 0)
@@ -226,10 +225,9 @@ static uint32_t fp_process_match(void)
 static void fp_process_finger(void)
 {
 	timestamp_t t0 = get_time();
-	int res;
 
 	CPRINTS("Capturing ...");
-	res = fp_acquire_image_with_mode(
+	int res = fp_acquire_image_with_mode(
 		fp_buffer, FP_CAPTURE_TYPE(global_context.sensor_mode));
 	capture_time_us = time_since32(t0);
 	if (!res) {
@@ -274,11 +272,10 @@ extern "C" void fp_task(void)
 	fp_sensor_init();
 
 	while (1) {
-		uint32_t evt;
 		enum finger_state st = FINGER_NONE;
 
 		/* Wait for a sensor IRQ or a new mode configuration */
-		evt = task_wait_event(timeout_us);
+		uint32_t evt = task_wait_event(timeout_us);
 
 		if (evt & TASK_EVENT_UPDATE_CONFIG) {
 			uint32_t mode = global_context.sensor_mode;
@@ -454,8 +451,6 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 	uint16_t idx = FP_FRAME_GET_BUFFER_INDEX(params->offset);
 	uint32_t offset = params->offset & FP_FRAME_OFFSET_MASK;
 	uint32_t size = params->size;
-	uint16_t fgr;
-	struct ec_fp_template_encryption_metadata *enc_info;
 	enum ec_error_list ret;
 
 	if (size > args->response_max)
@@ -486,7 +481,7 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 	/* The host requested a template. */
 
 	/* Templates are numbered from 1 in this host request. */
-	fgr = idx - FP_FRAME_INDEX_TEMPLATE;
+	uint16_t fgr = idx - FP_FRAME_INDEX_TEMPLATE;
 
 	if (fgr >= FP_MAX_FINGER_COUNT)
 		return EC_RES_INVALID_PARAM;
@@ -521,7 +516,8 @@ static enum ec_status fp_command_frame(struct host_cmd_handler_args *args)
 		 * The beginning of the buffer contains nonce, encryption_salt
 		 * and tag.
 		 */
-		enc_info = &fp_enc_buffer.metadata;
+		struct ec_fp_template_encryption_metadata *enc_info =
+			&fp_enc_buffer.metadata;
 		enc_info->struct_version = FP_TEMPLATE_FORMAT_VERSION;
 		trng_init();
 		trng_rand_bytes(enc_info->nonce, FP_CONTEXT_NONCE_BYTES);
@@ -616,7 +612,6 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 	ScopedFastCpu fast_cpu;
 
 	uint16_t idx = global_context.templ_valid;
-	struct ec_fp_template_encryption_metadata *enc_info;
 
 	/*
 	 * The complete encrypted template has been received, start
@@ -627,7 +622,8 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 	 * The beginning of the buffer contains nonce, encryption_salt
 	 * and tag.
 	 */
-	enc_info = &fp_enc_buffer.metadata;
+	struct ec_fp_template_encryption_metadata *enc_info =
+		&fp_enc_buffer.metadata;
 	enum ec_status res = validate_template_format(enc_info);
 	if (res != EC_RES_SUCCESS) {
 		CPRINTS("fgr%d: Template format not supported", idx);
@@ -642,11 +638,11 @@ enum ec_status fp_commit_template(std::span<const uint8_t> context)
 		templ.data(),
 		templ.size_bytes() + positive_match_salt.size_bytes());
 
-	enum ec_error_list ret;
 	if (global_context.fp_encryption_status & FP_CONTEXT_USER_ID_SET) {
 		FpEncryptionKey key;
-		ret = derive_encryption_key(key, enc_info->encryption_salt,
-					    context, global_context.tpm_seed);
+		enum ec_error_list ret =
+			derive_encryption_key(key, enc_info->encryption_salt,
+					      context, global_context.tpm_seed);
 		if (ret != EC_SUCCESS) {
 			CPRINTS("fgr%d: Failed to derive key", idx);
 			return EC_RES_UNAVAILABLE;

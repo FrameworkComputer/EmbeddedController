@@ -39,8 +39,6 @@ test_export_static enum ec_error_list
 get_ikm(std::span<uint8_t, IKM_SIZE_BYTES> ikm,
 	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed)
 {
-	enum ec_error_list ret;
-
 	if (bytes_are_trivial(tpm_seed.data(), tpm_seed.size_bytes())) {
 		CPRINTS("Seed hasn't been set.");
 		return EC_ERROR_ACCESS_DENIED;
@@ -50,7 +48,7 @@ get_ikm(std::span<uint8_t, IKM_SIZE_BYTES> ikm,
 	 * The first CONFIG_ROLLBACK_SECRET_SIZE bytes of IKM are read from the
 	 * anti-rollback blocks.
 	 */
-	ret = rollback_get_secret(ikm.data());
+	enum ec_error_list ret = rollback_get_secret(ikm.data());
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to read rollback secret: %d", ret);
 		return EC_ERROR_HW_INTERNAL;
@@ -115,7 +113,6 @@ enum ec_error_list derive_positive_match_secret(
 	std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id,
 	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed)
 {
-	enum ec_error_list ret;
 	CleanseWrapper<std::array<uint8_t, IKM_SIZE_BYTES> > ikm;
 	static const char info_prefix[] = "positive_match_secret for user ";
 	uint8_t info[sizeof(info_prefix) - 1 + user_id.size_bytes()];
@@ -127,7 +124,7 @@ enum ec_error_list derive_positive_match_secret(
 		return EC_ERROR_INVAL;
 	}
 
-	ret = get_ikm(ikm, tpm_seed);
+	enum ec_error_list ret = get_ikm(ikm, tpm_seed);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to get IKM: %d", ret);
 		return ret;
@@ -156,7 +153,6 @@ derive_encryption_key(std::span<uint8_t> out_key, std::span<const uint8_t> salt,
 		      std::span<const uint8_t> info,
 		      std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed)
 {
-	enum ec_error_list ret;
 	CleanseWrapper<std::array<uint8_t, IKM_SIZE_BYTES> > ikm;
 
 	if (info.size() != SHA256_DIGEST_SIZE) {
@@ -164,7 +160,7 @@ derive_encryption_key(std::span<uint8_t> out_key, std::span<const uint8_t> salt,
 		return EC_ERROR_INVAL;
 	}
 
-	ret = get_ikm(ikm, tpm_seed);
+	enum ec_error_list ret = get_ikm(ikm, tpm_seed);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to get IKM: %d", ret);
 		return ret;
