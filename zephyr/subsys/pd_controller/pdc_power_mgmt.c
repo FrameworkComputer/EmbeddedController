@@ -2636,7 +2636,7 @@ test_mockable bool pdc_power_mgmt_get_partner_data_swap_capable(int port)
 	       pdc_data[port]->port.ccaps.swap_to_ufp;
 }
 
-uint32_t pdc_power_mgmt_get_vbus_voltage(int port)
+int pdc_power_mgmt_get_vbus_voltage(int port)
 {
 	/* Make sure port is connected */
 	if (!pdc_power_mgmt_is_connected(port)) {

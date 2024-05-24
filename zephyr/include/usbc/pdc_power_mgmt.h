@@ -210,9 +210,9 @@ bool pdc_power_mgmt_pd_capable(int port);
  *
  * @param port USB-C port number
  *
- * @retval VBUS voltage
+ * @retval VBUS voltage in millivolts
  */
-uint32_t pdc_power_mgmt_get_vbus_voltage(int port);
+int pdc_power_mgmt_get_vbus_voltage(int port);
 
 /**
  * @brief Resets the PDC
