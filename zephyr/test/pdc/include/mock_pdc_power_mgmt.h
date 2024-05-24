@@ -32,6 +32,8 @@ DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_reset, int);
 DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_set_comms_state, bool);
 DECLARE_FAKE_VOID_FUNC(pdc_power_mgmt_set_dual_role, int,
 		       enum pd_dual_role_states);
+DECLARE_FAKE_VALUE_FUNC(enum pd_dual_role_states, pdc_power_mgmt_get_dual_role,
+			int);
 DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_set_trysrc, int, bool);
 DECLARE_FAKE_VOID_FUNC(pdc_power_mgmt_request_source_voltage, int, int);
 DECLARE_FAKE_VALUE_FUNC(unsigned int, pdc_power_mgmt_get_max_voltage);

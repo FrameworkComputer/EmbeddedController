@@ -290,22 +290,53 @@ static int cmd_pdc_dualrole(const struct shell *sh, size_t argc, char **argv)
 	if (rv)
 		return rv;
 
-	if (!strcmp(argv[2], "on")) {
-		state = PD_DRP_TOGGLE_ON;
-	} else if (!strcmp(argv[2], "off")) {
-		state = PD_DRP_TOGGLE_OFF;
-	} else if (!strcmp(argv[2], "freeze")) {
-		state = PD_DRP_FREEZE;
-	} else if (!strcmp(argv[2], "sink")) {
-		state = PD_DRP_FORCE_SINK;
-	} else if (!strcmp(argv[2], "source")) {
-		state = PD_DRP_FORCE_SOURCE;
-	} else {
-		shell_error(sh, "Invalid dualrole mode");
-		return -EINVAL;
+	if (argc >= 3) {
+		/* Set dual role state */
+		if (!strcmp(argv[2], "on")) {
+			state = PD_DRP_TOGGLE_ON;
+		} else if (!strcmp(argv[2], "off")) {
+			state = PD_DRP_TOGGLE_OFF;
+		} else if (!strcmp(argv[2], "freeze")) {
+			state = PD_DRP_FREEZE;
+		} else if (!strcmp(argv[2], "sink")) {
+			state = PD_DRP_FORCE_SINK;
+		} else if (!strcmp(argv[2], "source")) {
+			state = PD_DRP_FORCE_SOURCE;
+		} else {
+			shell_error(sh, "Invalid dualrole mode");
+			return -EINVAL;
+		}
+
+		pdc_power_mgmt_set_dual_role(port, state);
 	}
 
-	pdc_power_mgmt_set_dual_role(port, state);
+	/* Print current state */
+	const char *state_str;
+
+	state = pdc_power_mgmt_get_dual_role(port);
+
+	switch (state) {
+	case PD_DRP_TOGGLE_ON:
+		state_str = "TOGGLE_ON";
+		break;
+	case PD_DRP_TOGGLE_OFF:
+		state_str = "TOGGLE_OFF";
+		break;
+	case PD_DRP_FREEZE:
+		state_str = "FREEZE";
+		break;
+	case PD_DRP_FORCE_SINK:
+		state_str = "FORCE_SINK";
+		break;
+	case PD_DRP_FORCE_SOURCE:
+		state_str = "FORCE_SOURCE";
+		break;
+	default:
+		state_str = "Unknown";
+		break;
+	}
+
+	shell_info(sh, "Dual role state: %s", state_str);
 
 	return EC_SUCCESS;
 }
@@ -564,9 +595,9 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Usage: pdc reset <port>",
 		      cmd_pdc_reset, 2, 0),
 	SHELL_CMD_ARG(dualrole, NULL,
-		      "Set dualrole mode\n"
+		      "Set or get dualrole mode\n"
 		      "Usage: pdc dualrole  <port> [on|off|freeze|sink|source]",
-		      cmd_pdc_dualrole, 3, 0),
+		      cmd_pdc_dualrole, 2, 1),
 	SHELL_CMD_ARG(trysrc, NULL,
 		      "Set trysrc mode\n"
 		      "Usage: pdc trysrc [0|1]",

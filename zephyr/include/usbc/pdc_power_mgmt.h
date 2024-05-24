@@ -249,6 +249,14 @@ uint8_t pdc_power_mgmt_get_src_cap_cnt(int port);
 void pdc_power_mgmt_set_dual_role(int port, enum pd_dual_role_states state);
 
 /**
+ * @brief Get the previously set dual role state
+ *
+ * @param port USB-C port number
+ * @return most recently-set dual role state, or -1 if never set.
+ */
+enum pd_dual_role_states pdc_power_mgmt_get_dual_role(int port);
+
+/**
  * @brief Get the current PD state name of USB-C port
  *
  * @param port USB-C port number

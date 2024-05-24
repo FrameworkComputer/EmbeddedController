@@ -637,6 +637,8 @@ struct pdc_port_t {
 	enum drp_mode_t drp;
 	/** Callback */
 	struct pdc_callback ci_cb;
+	/** Last configured dual role power state */
+	enum pd_dual_role_states dual_role_state;
 };
 
 /**
@@ -782,6 +784,7 @@ static ALWAYS_INLINE void pdc_thread(void *pdc_dev, void *unused1,
 		.port.una_policy.cc_mode = DT_STRING_TOKEN(                  \
 			DT_INST_PROP(inst, policy), unattached_cc_mode),     \
 		.port.suspend = ATOMIC_INIT(0),                              \
+		.port.dual_role_state = PD_DRP_TOGGLE_ON,                    \
 	};                                                                   \
                                                                              \
 	static struct pdc_config_t config_##inst = {                         \
@@ -2765,6 +2768,15 @@ test_mockable void pdc_power_mgmt_set_dual_role(int port,
 		}
 		break;
 	}
+
+	port_data->dual_role_state = state;
+}
+
+test_mockable enum pd_dual_role_states pdc_power_mgmt_get_dual_role(int port)
+{
+	struct pdc_port_t *port_data = &pdc_data[port]->port;
+
+	return port_data->dual_role_state;
 }
 
 test_mockable int pdc_power_mgmt_set_trysrc(int port, bool enable)

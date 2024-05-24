@@ -794,6 +794,9 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 		}
 
 		pd_set_dual_role(TEST_PORT, test[i].s.state);
+
+		zassert_equal(test[i].s.state, pd_get_dual_role(TEST_PORT));
+
 		start = k_cycle_get_32();
 
 		while (k_cycle_get_32() - start < timeout) {

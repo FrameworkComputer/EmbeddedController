@@ -432,7 +432,7 @@ ZTEST_USER(console_cmd_pdc, test_src_voltage)
 		pdc_power_mgmt_request_source_voltage_fake.arg1_history[0]);
 }
 
-ZTEST_USER(console_cmd_pdc, test_dualrole)
+ZTEST_USER(console_cmd_pdc, test_dualrole_set)
 {
 	int rv;
 
@@ -487,6 +487,51 @@ ZTEST_USER(console_cmd_pdc, test_dualrole)
 		      pdc_power_mgmt_set_dual_role_fake.arg1_history[3]);
 	zassert_equal(PD_DRP_FORCE_SOURCE,
 		      pdc_power_mgmt_set_dual_role_fake.arg1_history[4]);
+}
+
+/**
+ * @brief Helper for test_dualrole_get that sets the mock's return value and
+ *        compares the console output against the provided string
+ *
+ * @param state Dual role mode to set mock to
+ * @param state_str Expected string to see in console output
+ * @return true if state_str appears in console output
+ */
+bool helper_set_and_check_dual_role_mode(enum pd_dual_role_states state,
+					 const char *state_str)
+{
+	int rv;
+	const char *outbuffer;
+	size_t buffer_size;
+
+	shell_backend_dummy_clear_output(get_ec_shell());
+
+	pdc_power_mgmt_get_dual_role_fake.return_val = state;
+	rv = shell_execute_cmd(get_ec_shell(), "pdc dualrole 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+
+	return strstr(outbuffer, state_str) != NULL;
+}
+
+ZTEST_USER(console_cmd_pdc, test_dualrole_get)
+{
+	zassert_true(helper_set_and_check_dual_role_mode(
+		PD_DRP_TOGGLE_ON, "Dual role state: TOGGLE_ON"));
+	zassert_true(helper_set_and_check_dual_role_mode(
+		PD_DRP_TOGGLE_OFF, "Dual role state: TOGGLE_OFF"));
+	zassert_true(helper_set_and_check_dual_role_mode(
+		PD_DRP_FREEZE, "Dual role state: FREEZE"));
+	zassert_true(helper_set_and_check_dual_role_mode(
+		PD_DRP_FORCE_SINK, "Dual role state: FORCE_SINK"));
+	zassert_true(helper_set_and_check_dual_role_mode(
+		PD_DRP_FORCE_SOURCE, "Dual role state: FORCE_SOURCE"));
+	zassert_true(helper_set_and_check_dual_role_mode(
+		-1, "Dual role state: Unknown"));
 }
 
 ZTEST_USER(console_cmd_pdc, test_drs)
