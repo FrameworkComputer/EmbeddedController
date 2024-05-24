@@ -928,7 +928,7 @@ test_static int test_sysjump_cont(void)
 }
 
 test_static const struct ec_response_keybd_config keybd_config = {
-	.num_top_row_keys = 13,
+	.num_top_row_keys = 15,
 	.action_keys = {
 		TK_BACK,		/* T1 */
 		TK_REFRESH,		/* T2 */
@@ -943,6 +943,8 @@ test_static const struct ec_response_keybd_config keybd_config = {
 		TK_VOL_MUTE,		/* T11 */
 		TK_VOL_DOWN,		/* T12 */
 		TK_VOL_UP,		/* T13 */
+		TK_ACCESSIBILITY,	/* T14 */
+		TK_DICTATE,		/* T15 */
 	},
 };
 
@@ -994,6 +996,22 @@ test_static int test_vivaldi_top_keys(void)
 
 	press_key(5, 3, 1); /* Press T2 */
 	VERIFY_LPC_CHAR("\xe0\x30"); /* Check VOL_UP scancode in set-1 */
+
+	/* Test ACCESSIBILITY key */
+	WRITE_CMD_BYTE(READ_CMD_BYTE() | I8042_XLATE);
+	if (IS_ENABLED(CONFIG_FINCH))
+		press_key(11, 0, 1); /* Press T14 */
+	else
+		press_key(9, 0, 1); /* Press T14 */
+	VERIFY_LPC_CHAR("\xe0\x29"); /* Check ACCESSIBILITY scancode in set-1 */
+
+	/* Test DICTATE key */
+	WRITE_CMD_BYTE(READ_CMD_BYTE() | I8042_XLATE);
+	if (IS_ENABLED(CONFIG_FINCH))
+		press_key(12, 0, 1); /* Press T15 */
+	else
+		press_key(11, 0, 1); /* Press T15 */
+	VERIFY_LPC_CHAR("\xe0\x27"); /* Check DICTATE scancode in set-1 */
 
 	return EC_SUCCESS;
 }
