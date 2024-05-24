@@ -312,7 +312,6 @@ endef
 # Include all subdirs under feature-x.
 feature-x-builds = $(wildcard ../feature-x/*/ec/build.mk)
 include $(feature-x-builds)
-$(eval $(call vars_from_dir,private,../feature-x,feature-x))
 
 # Get build configuration from sub-directories
 # Note that this re-includes the board and chip makefiles
@@ -356,14 +355,14 @@ include crypto/build.mk
 endif
 
 # Collect all includes.
-includes-y+=$(call objs_from_dir_p,$(ec-private),private-incs,y)
+includes-y+=$(addprefix ../feature-x,$(feature-x-incs-y))
 includes-y+=$(addprefix ../,$(druid-incs-y))
 includes+=$(includes-y)
 
 # Collect all build object output directories.
 # This is different than the dirs variable, which serves as include path
 # and build output directory creation.
-dirs-y+=$(call objs_from_dir_p,$(ec-private),private-dirs,y)
+dirs-y+=$(call objs_from_dir_p,feature-x,feature-x-dirs,y)
 dirs-y+=$(call objs_from_dir_p,third_party/druid,druid-dirs,y)
 dirs-y+=$(call objs_from_dir_p,test/third_party/druid,druid-dirs,y)
 
@@ -377,7 +376,7 @@ all-obj-$(1)+=$(call objs_from_dir_p,core/$(CORE),core,$(1))
 all-obj-$(1)+=$(call objs_from_dir_p,chip/$(CHIP),chip,$(1))
 all-obj-$(1)+=$(call objs_from_dir_p,$(BASEDIR),baseboard,$(1))
 all-obj-$(1)+=$(call objs_from_dir_p,$(BDIR),board,$(1))
-all-obj-$(1)+=$(call objs_from_dir_p,$(ec-private),private,$(1))
+all-obj-$(1)+=$(call objs_from_dir_p,feature-x,feature-x,$(1))
 ifneq ($(PDIR),)
 all-obj-$(1)+=$(call objs_from_dir_p,$(PDIR),$(PDIR),$(1))
 endif
