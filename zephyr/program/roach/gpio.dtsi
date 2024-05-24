@@ -52,8 +52,6 @@
 
 			/* gpiob6 */
 			<&gpiob 6 GPIO_INPUT_PULL_DOWN>,
-			/* gpiob7 */
-			<&gpiob 7 GPIO_INPUT_PULL_DOWN>,
 
 			/* gpioc0 */
 			<&gpioc 0 GPIO_INPUT_PULL_DOWN>,
