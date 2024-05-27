@@ -6,7 +6,7 @@
 / {
 	kblight: kblight {
 		compatible = "cros-ec,kblight-pwm";
-		pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
+		pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(324) PWM_POLARITY_NORMAL>;
 	};
 
 	cros-keyscan {

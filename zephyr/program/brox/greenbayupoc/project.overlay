@@ -27,7 +27,7 @@ i2c3ALT: &i2c3 {
 #include "keyboard.dtsi"
 #include "../power_signals.dtsi"
 #include "../power_signals_gpios.dtsi"
-#include "../pwm.dtsi"
+#include "pwm.dtsi"
 #include "../temp_sensors.dtsi"
 #include "usb_typec.dtsi"
 #include "../usba.dtsi"
