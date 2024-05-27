@@ -63,7 +63,7 @@
 		int_imu: ec_imu {
 			irq-pin = <&gpio_imu_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "lsm6dso_interrupt";
+			handler = "lsm6dsm_interrupt";
 		};
 		int_vol_down: vol_down {
 			irq-pin = <&gpio_voldn_btn_odl>;
@@ -83,6 +83,12 @@
 		};
 		gpio_led_2_odl: led_2_odl {
 			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
+		};
+		ec-i2c-sensor-scl {
+			gpios = <&gpio9 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec-i2c-sensor-sda {
+			gpios = <&gpio8 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 	};
 	temp_memory: memory {
