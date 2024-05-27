@@ -145,6 +145,52 @@ ZTEST(usb_update, test_bad_block)
 	zassert_equal(resp, UPDATE_GEN_ERROR);
 }
 
+ZTEST(usb_update, test_bad_digest)
+{
+	const struct queue *rx_queue = usb_update.producer.queue;
+	const struct queue *tx_queue = usb_update.consumer.queue;
+	uint8_t rx_buf[] = { 'H', 'e', 'l', 'l', 'o' };
+	const struct device *flash_dev =
+		DEVICE_DT_GET(DT_NODELABEL(flashcontroller0));
+	size_t flash_size;
+	uint8_t *flash = flash_simulator_get_memory(flash_dev, &flash_size);
+	uint8_t resp;
+	struct first_response_pdu first_response_pdu;
+	uint32_t update_done = sys_cpu_to_be32(UPDATE_DONE);
+
+	/* send first pdu, expect receive EC_SUCCESS */
+	send_pdu(0, 0, 0);
+	zassert_equal(queue_count(tx_queue), sizeof(first_response_pdu));
+	queue_remove_units(tx_queue, &first_response_pdu,
+			   sizeof(first_response_pdu));
+	zassert_equal(first_response_pdu.return_value, 0);
+
+	/* send block start, sha256("Hello") = "B38D5F18..." */
+	send_pdu(sizeof(rx_buf), 0xb38d5f18, CONFIG_RW_MEM_OFF);
+
+	/* send "Hello" to the flash */
+	queue_add_units(rx_queue, rx_buf, sizeof(rx_buf));
+	zassert_equal(queue_count(tx_queue), 1);
+	zassert_equal(queue_remove_unit(tx_queue, &resp), 1);
+	zassert_equal(resp, 0);
+	zassert_mem_equal(flash + CONFIG_RW_MEM_OFF, rx_buf, sizeof(rx_buf));
+
+	/* send block start with incorrect digest */
+	send_pdu(sizeof(rx_buf), 0x11111111, CONFIG_RW_MEM_OFF);
+
+	/* send "Hello" to the flash */
+	queue_add_units(rx_queue, rx_buf, sizeof(rx_buf));
+	zassert_equal(queue_count(tx_queue), 1);
+	zassert_equal(queue_remove_unit(tx_queue, &resp), 1);
+	zassert_equal(resp, UPDATE_DATA_ERROR);
+
+	/* send UPDATE_DONE, expect EC_SUCCESS */
+	queue_add_units(rx_queue, &update_done, sizeof(update_done));
+	zassert_equal(queue_count(tx_queue), 1);
+	zassert_equal(queue_remove_unit(tx_queue, &resp), 1);
+	zassert_equal(resp, 0);
+}
+
 static void usb_update_before(void *f)
 {
 	/* reset the usb_updater's internal state */

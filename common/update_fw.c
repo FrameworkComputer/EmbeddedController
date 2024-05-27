@@ -120,7 +120,25 @@ static uint8_t check_update_chunk(uint32_t block_offset, size_t body_size)
 
 int update_pdu_valid(struct update_command *cmd_body, size_t cmd_size)
 {
+#if defined(CONFIG_SHA256_HW_ACCELERATE) || defined(CONFIG_SHA256_SW)
+	size_t body_size = cmd_size - sizeof(struct update_command);
+	const void *body = cmd_body + 1;
+	struct sha256_ctx ctx;
+	const uint8_t *tmp;
+	uint32_t block_digest = be32toh(cmd_body->block_digest);
+
+	if (body_size == 0 || block_digest == 0) {
+		return 1;
+	}
+
+	SHA256_init(&ctx);
+	SHA256_update(&ctx, body, body_size);
+	tmp = SHA256_final(&ctx);
+
+	return memcmp(&block_digest, tmp, sizeof(uint32_t)) == 0;
+#else
 	return 1;
+#endif
 }
 
 static int chunk_came_too_soon(uint32_t block_offset)

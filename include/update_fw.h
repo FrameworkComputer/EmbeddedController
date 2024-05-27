@@ -42,7 +42,7 @@ extern "C" {
 /*
  * This is the format of the update PDU header.
  *
- * block digest: the first four bytes of the sha1 digest of the rest of the
+ * block digest: the first four bytes of the sha256 digest of the rest of the
  *               structure (can be 0 on boards where digest is ignored).
  * block_base:   offset of this PDU into the flash SPI.
  */
