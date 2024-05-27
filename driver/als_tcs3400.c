@@ -21,6 +21,7 @@
 #endif
 
 #define CPRINTS(fmt, args...) cprints(CC_ACCEL, "%s " fmt, __func__, ##args)
+#define CPRINTF(fmt, args...) cprintf(CC_ACCEL, fmt, ##args)
 
 volatile uint32_t last_interrupt_timestamp;
 
@@ -109,7 +110,7 @@ static int tcs3400_read(const struct motion_sensor_t *s, intv3_t v)
 
 static int tcs3400_rgb_read(const struct motion_sensor_t *s, intv3_t v)
 {
-	ccprintf("WARNING: tcs3400_rgb_read() should never be called\n");
+	CPRINTF("WARNING: tcs3400_rgb_read() should never be called\n");
 	return EC_SUCCESS;
 }
 

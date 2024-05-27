@@ -381,7 +381,7 @@ int system_add_jump_tag(uint16_t tag, int version, int size, const void *data)
 	new_entry_size = ROUNDUP4(size) + sizeof(struct jump_tag);
 
 	if (system_usable_ram_end() - new_entry_size < JUMP_DATA_MIN_ADDRESS) {
-		ccprintf("ERROR: out of space for jump tags\n");
+		CPRINTF("ERROR: out of space for jump tags\n");
 		return EC_ERROR_INVAL;
 	}
 

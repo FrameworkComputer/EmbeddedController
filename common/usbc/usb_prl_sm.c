@@ -2197,10 +2197,10 @@ static void prl_rx_wait_for_phy_message(const int port, int evt)
 	    prl_debug_level >= DEBUG_LEVEL_3) {
 		int p;
 
-		ccprintf("C%d: RECV %04x/%d ", port, header, cnt);
+		CPRINTF("C%d: RECV %04x/%d ", port, header, cnt);
 		for (p = 0; p < cnt; p++)
-			ccprintf("[%d]%08x ", p, pdmsg[port].rx_chk_buf[p]);
-		ccprintf("\n");
+			CPRINTF("[%d]%08x ", p, pdmsg[port].rx_chk_buf[p]);
+		CPRINTF("\n");
 	}
 
 	/*

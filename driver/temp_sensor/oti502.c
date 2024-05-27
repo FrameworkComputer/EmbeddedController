@@ -12,6 +12,9 @@
 #include "oti502.h"
 #include "util.h"
 
+#define CPRINTS(format, args...) cprints(CC_THERMAL, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_THERMAL, format, ##args)
+
 static int temp_val_ambient; /* Ambient is chip temperature*/
 static int temp_val_object; /* Object is IR temperature */
 
@@ -48,7 +51,7 @@ static void temp_sensor_poll(void)
 	if (temp_val[2] >= 0x80) {
 		/* Treat temperature as 0 degree C if temperature is negative*/
 		temp_val_ambient = 0;
-		ccprintf("Temperature ambient is negative !\n");
+		CPRINTF("Temperature ambient is negative !\n");
 	} else {
 		temp_val_ambient = ((temp_val[1] << 8) + temp_val[0]) / 200;
 		temp_val_ambient = C_TO_K(temp_val_ambient);
@@ -57,7 +60,7 @@ static void temp_sensor_poll(void)
 	if (temp_val[5] >= 0x80) {
 		/* Treat temperature as 0 degree C if temperature is negative*/
 		temp_val_object = 0;
-		ccprintf("Temperature object is negative !\n");
+		CPRINTF("Temperature object is negative !\n");
 	} else {
 		temp_val_object = ((temp_val[4] << 8) + temp_val[5]) / 200;
 		temp_val_object = C_TO_K(temp_val_object);

@@ -14,6 +14,7 @@
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 
 #if defined(PD_MAX_VOLTAGE_MV) && defined(PD_OPERATING_POWER_MW)
 /*
@@ -371,7 +372,7 @@ int pd_get_saved_port_flags(int port, uint8_t *flags)
 {
 	if (system_get_bbram(get_bbram_idx(port), flags) != EC_SUCCESS) {
 #ifndef CHIP_HOST
-		ccprintf("PD NVRAM FAIL");
+		CPRINTF("PD NVRAM FAIL");
 #endif
 		return EC_ERROR_UNKNOWN;
 	}
@@ -383,7 +384,7 @@ static void pd_set_saved_port_flags(int port, uint8_t flags)
 {
 	if (system_set_bbram(get_bbram_idx(port), flags) != EC_SUCCESS) {
 #ifndef CHIP_HOST
-		ccprintf("PD NVRAM FAIL");
+		CPRINTF("PD NVRAM FAIL");
 #endif
 	}
 }

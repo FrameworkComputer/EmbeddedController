@@ -56,7 +56,7 @@ int gl3590_write(int hub, uint8_t reg, uint8_t *data, int count)
 
 	/* GL3590 registers accept 4 bytes at max */
 	if (count > (sizeof(buf) - 1)) {
-		ccprintf("Too many bytes to write");
+		CPRINTF("Too many bytes to write");
 		return EC_ERROR_INVAL;
 	}
 
@@ -134,70 +134,70 @@ void gl3590_irq_handler(int hub)
 
 	/* Verify that irq is pending */
 	if (gl3590_read(hub, GL3590_INT_REG, &buf, sizeof(buf))) {
-		ccprintf("Cannot read from the host hub i2c\n");
+		CPRINTF("Cannot read from the host hub i2c\n");
 		goto exit;
 	}
 
 	if ((buf & GL3590_INT_PENDING) == 0) {
-		ccprintf("Invalid hub event\n");
+		CPRINTF("Invalid hub event\n");
 		goto exit;
 	}
 
 	/* Get the hub event reason */
 	if (gl3590_read(hub, GL3590_RESPONSE_REG, res_reg, sizeof(res_reg))) {
-		ccprintf("Cannot read from the host hub i2c\n");
+		CPRINTF("Cannot read from the host hub i2c\n");
 		goto exit;
 	}
 
 	if ((res_reg[0] & GL3590_RESPONSE_REG_SYNC_MASK) == 0)
-		ccprintf("Host hub response: ");
+		CPRINTF("Host hub response: ");
 	else
-		ccprintf("Host hub event! ");
+		CPRINTF("Host hub event! ");
 
 	switch (res_reg[0]) {
 	case 0x0:
-		ccprintf("No response");
+		CPRINTF("No response");
 		break;
 	case 0x1:
-		ccprintf("Successful");
+		CPRINTF("Successful");
 		break;
 	case 0x2:
-		ccprintf("Invalid command");
+		CPRINTF("Invalid command");
 		break;
 	case 0x3:
-		ccprintf("Invalid arguments");
+		CPRINTF("Invalid arguments");
 		break;
 	case 0x4:
-		ccprintf("Invalid port: %d", res_reg[1]);
+		CPRINTF("Invalid port: %d", res_reg[1]);
 		break;
 	case 0x5:
-		ccprintf("Command not completed");
+		CPRINTF("Command not completed");
 		break;
 	case 0x80:
-		ccprintf("Reset complete");
+		CPRINTF("Reset complete");
 		break;
 	case 0x81:
-		ccprintf("Power operation mode change");
+		CPRINTF("Power operation mode change");
 		break;
 	case 0x82:
-		ccprintf("Connect change");
+		CPRINTF("Connect change");
 		break;
 	case 0x83:
-		ccprintf("Error on the specific port");
+		CPRINTF("Error on the specific port");
 		break;
 	case 0x84:
-		ccprintf("Hub state change");
+		CPRINTF("Hub state change");
 		break;
 	case 0x85:
-		ccprintf("SetFeature PORT_POWER failure");
+		CPRINTF("SetFeature PORT_POWER failure");
 		break;
 	default:
-		ccprintf("Unknown value: 0x%0x", res_reg[0]);
+		CPRINTF("Unknown value: 0x%0x", res_reg[0]);
 	}
-	ccprintf("\n");
+	CPRINTF("\n");
 
 	if (res_reg[1])
-		ccprintf("Affected port %d\n", res_reg[1]);
+		CPRINTF("Affected port %d\n", res_reg[1]);
 
 exit:
 	/* Try to clear interrupt */
