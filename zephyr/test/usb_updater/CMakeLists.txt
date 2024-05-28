@@ -10,6 +10,7 @@ zephyr_include_directories(include)
 
 target_sources(app PRIVATE
 	src/fakes.c
+	src/main.c
 	src/update_fw_test.c
 	src/usb_update_test.c
 	src/vendor_command_test.c
