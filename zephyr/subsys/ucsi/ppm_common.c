@@ -112,16 +112,6 @@ static int ppm_common_opm_notify(struct ppm_common_device *dev)
 	return 0;
 }
 
-static int ppm_common_apply_platform_policy(struct ppm_common_device *dev)
-{
-	if (!dev->apply_platform_policy) {
-		ELOG("User error: No platform policy specified!");
-		return -1;
-	}
-
-	return dev->apply_platform_policy(dev->apply_platform_policy_context);
-}
-
 static void clear_pending_command(struct ppm_common_device *dev)
 {
 	if (dev->pending.command) {
@@ -376,9 +366,6 @@ success:
 	/* If we reset, we only surface up the reset completed event after busy.
 	 */
 	if (ucsi_command == UCSI_CMD_PPM_RESET) {
-		/* Handle platform policy if we just completed a PPM Reset. */
-		ppm_common_apply_platform_policy(dev);
-
 		cci->reset_completed = 1;
 	} else {
 		cci->data_length = ret & 0xFF;
@@ -543,6 +530,122 @@ static void ppm_common_handle_pending_command(struct ppm_common_device *dev)
 	}
 }
 
+static void ppm_common_taskloop(struct ppm_common_device *dev)
+{
+	/* We will handle async events only in idle state if there is
+	 * one pending.
+	 */
+	bool handle_async_event = (dev->ppm_state <= PPM_STATE_IDLE_NOTIFY) &&
+				  is_pending_async_event(dev);
+	/* Wait for a task from OPM unless we are already processing a
+	 * command or we need to fall through for a pending command or
+	 * handleable async event.
+	 */
+	if (dev->ppm_state != PPM_STATE_PROCESSING_COMMAND &&
+	    !is_pending_command(dev) && !handle_async_event) {
+		DLOG("Waiting for next command at state %d (%s)...",
+		     dev->ppm_state, ppm_state_to_string(dev->ppm_state));
+		platform_condvar_wait(dev->ppm_condvar, dev->ppm_lock);
+	}
+
+	DLOG("Handling next task at state %d (%s)", dev->ppm_state,
+	     ppm_state_to_string(dev->ppm_state));
+
+	bool is_ppm_reset = match_pending_command(dev, UCSI_CMD_PPM_RESET);
+
+	switch (dev->ppm_state) {
+	/* Idle with notifications enabled. */
+	case PPM_STATE_IDLE:
+		if (is_pending_command(dev)) {
+			/* Only handle SET_NOTIFICATION_ENABLE or
+			 * PPM_RESET. Otherwise clear the pending
+			 * command.
+			 */
+			if (match_pending_command(
+				    dev, UCSI_CMD_SET_NOTIFICATION_ENABLE) ||
+			    is_ppm_reset) {
+				ppm_common_handle_pending_command(dev);
+			} else {
+				clear_pending_command(dev);
+			}
+		} else if (is_pending_async_event(dev)) {
+			ppm_common_handle_async_event(dev);
+		}
+		break;
+
+	/* Idle and waiting for a command or event. */
+	case PPM_STATE_IDLE_NOTIFY:
+		/* Check if you're acking in the right state for
+		 * ACK_CC_CI. Only CI acks are allowed here. i.e. we are
+		 * still waiting for a CI ack after a command loop was
+		 * completed.
+		 */
+		if (is_pending_command(dev) &&
+		    match_pending_command(dev, UCSI_CMD_ACK_CC_CI) &&
+		    is_invalid_ack(dev)) {
+			invalid_ack_notify(dev);
+			break;
+		}
+
+		if (is_pending_command(dev)) {
+			ppm_common_handle_pending_command(dev);
+		} else if (is_pending_async_event(dev)) {
+			ppm_common_handle_async_event(dev);
+		}
+		break;
+
+	/* Processing a command. We only ever enter this state for
+	 * firmware update (for example if we're breaking up a chunk of
+	 * firmware into multiple transactions).
+	 */
+	case PPM_STATE_PROCESSING_COMMAND:
+		ppm_common_handle_pending_command(dev);
+		break;
+
+	/* Waiting for a command completion acknowledge. */
+	case PPM_STATE_WAITING_CC_ACK:
+		if (is_pending_command(dev)) {
+			if (!is_ppm_reset &&
+			    (!match_pending_command(dev, UCSI_CMD_ACK_CC_CI) ||
+			     is_invalid_ack(dev))) {
+				invalid_ack_notify(dev);
+				break;
+			}
+			ppm_common_handle_pending_command(dev);
+		}
+		break;
+
+	/* Waiting for async event ack. */
+	case PPM_STATE_WAITING_ASYNC_EV_ACK:
+		if (is_pending_command(dev)) {
+			bool is_ack =
+				match_pending_command(dev, UCSI_CMD_ACK_CC_CI);
+			if (!is_ppm_reset && is_ack && is_invalid_ack(dev)) {
+				invalid_ack_notify(dev);
+				break;
+			}
+			/* Waiting ASYNC_EV_ACK is a weird state. It can
+			 * directly ACK the CI or it can go into a
+			 * PROCESSING_COMMAND state (in which case it
+			 * should be treated as a IDLE_NOTIFY).
+			 *
+			 * Thus, if we don't get UCSI_CMD_ACK_CC_CI
+			 * here, we just treat this as IDLE_NOTIFY
+			 * state.
+			 */
+			if (!is_ack) {
+				DLOG("ASYNC EV ACK state turned into IDLE_NOTIFY state");
+				dev->ppm_state = PPM_STATE_IDLE_NOTIFY;
+			}
+			ppm_common_handle_pending_command(dev);
+		}
+		break;
+
+	default:
+		break;
+	}
+}
+
 static void ppm_common_task(void *context)
 {
 	struct ppm_common_device *dev = (struct ppm_common_device *)context;
@@ -567,9 +670,6 @@ static void ppm_common_task(void *context)
 	dev->ucsi_data.control.command = UCSI_CMD_PPM_RESET;
 	if (dev->pd->execute_cmd(ppm, &dev->ucsi_data.control,
 				 dev->ucsi_data.message_in) >= 0) {
-		/* Set platform policy before starting the state machine. */
-		ppm_common_apply_platform_policy(dev);
-
 		dev->ppm_state = PPM_STATE_IDLE;
 		platform_memset(&dev->ucsi_data.cci, 0,
 				sizeof(struct ucsi_cci));
@@ -579,124 +679,7 @@ static void ppm_common_task(void *context)
 	 * PPM lock; may need to  fix that.
 	 */
 	do {
-		/* We will handle async events only in idle state if there is
-		 * one pending.
-		 */
-		bool handle_async_event =
-			(dev->ppm_state <= PPM_STATE_IDLE_NOTIFY) &&
-			is_pending_async_event(dev);
-		/* Wait for a task from OPM unless we are already processing a
-		 * command or we need to fall through for a pending command or
-		 * handleable async event.
-		 */
-		if (dev->ppm_state != PPM_STATE_PROCESSING_COMMAND &&
-		    !is_pending_command(dev) && !handle_async_event) {
-			DLOG("Waiting for next command at state %d (%s)...",
-			     dev->ppm_state,
-			     ppm_state_to_string(dev->ppm_state));
-			platform_condvar_wait(dev->ppm_condvar, dev->ppm_lock);
-		}
-
-		DLOG("Handling next task at state %d (%s)", dev->ppm_state,
-		     ppm_state_to_string(dev->ppm_state));
-
-		bool is_ppm_reset =
-			match_pending_command(dev, UCSI_CMD_PPM_RESET);
-
-		switch (dev->ppm_state) {
-		/* Idle with notifications enabled. */
-		case PPM_STATE_IDLE:
-			if (is_pending_command(dev)) {
-				/* Only handle SET_NOTIFICATION_ENABLE or
-				 * PPM_RESET. Otherwise clear the pending
-				 * command.
-				 */
-				if (match_pending_command(
-					    dev,
-					    UCSI_CMD_SET_NOTIFICATION_ENABLE) ||
-				    is_ppm_reset) {
-					ppm_common_handle_pending_command(dev);
-				} else {
-					clear_pending_command(dev);
-				}
-			} else if (is_pending_async_event(dev)) {
-				ppm_common_handle_async_event(dev);
-			}
-			break;
-
-		/* Idle and waiting for a command or event. */
-		case PPM_STATE_IDLE_NOTIFY:
-			/* Check if you're acking in the right state for
-			 * ACK_CC_CI. Only CI acks are allowed here. i.e. we are
-			 * still waiting for a CI ack after a command loop was
-			 * completed.
-			 */
-			if (is_pending_command(dev) &&
-			    match_pending_command(dev, UCSI_CMD_ACK_CC_CI) &&
-			    is_invalid_ack(dev)) {
-				invalid_ack_notify(dev);
-				break;
-			}
-
-			if (is_pending_command(dev)) {
-				ppm_common_handle_pending_command(dev);
-			} else if (is_pending_async_event(dev)) {
-				ppm_common_handle_async_event(dev);
-			}
-			break;
-
-		/* Processing a command. We only ever enter this state for
-		 * firmware update (for example if we're breaking up a chunk of
-		 * firmware into multiple transactions).
-		 */
-		case PPM_STATE_PROCESSING_COMMAND:
-			ppm_common_handle_pending_command(dev);
-			break;
-
-		/* Waiting for a command completion acknowledge. */
-		case PPM_STATE_WAITING_CC_ACK:
-			if (is_pending_command(dev)) {
-				if (!is_ppm_reset &&
-				    (!match_pending_command(
-					     dev, UCSI_CMD_ACK_CC_CI) ||
-				     is_invalid_ack(dev))) {
-					invalid_ack_notify(dev);
-					break;
-				}
-				ppm_common_handle_pending_command(dev);
-			}
-			break;
-
-		/* Waiting for async event ack. */
-		case PPM_STATE_WAITING_ASYNC_EV_ACK:
-			if (is_pending_command(dev)) {
-				bool is_ack = match_pending_command(
-					dev, UCSI_CMD_ACK_CC_CI);
-				if (!is_ppm_reset && is_ack &&
-				    is_invalid_ack(dev)) {
-					invalid_ack_notify(dev);
-					break;
-				}
-				/* Waiting ASYNC_EV_ACK is a weird state. It can
-				 * directly ACK the CI or it can go into a
-				 * PROCESSING_COMMAND state (in which case it
-				 * should be treated as a IDLE_NOTIFY).
-				 *
-				 * Thus, if we don't get UCSI_CMD_ACK_CC_CI
-				 * here, we just treat this as IDLE_NOTIFY
-				 * state.
-				 */
-				if (!is_ack) {
-					DLOG("ASYNC EV ACK state turned into IDLE_NOTIFY state");
-					dev->ppm_state = PPM_STATE_IDLE_NOTIFY;
-				}
-				ppm_common_handle_pending_command(dev);
-			}
-			break;
-
-		default:
-			break;
-		}
+		ppm_common_taskloop(dev);
 	} while (!dev->cleaning_up);
 
 	platform_mutex_unlock(dev->ppm_lock);
@@ -947,25 +930,6 @@ static int ppm_common_register_notify(struct ucsi_ppm_device *device,
 	return ret;
 }
 
-static int
-ppm_common_register_platform_policy(struct ucsi_ppm_device *device,
-				    ucsi_ppm_apply_platform_policy *callback,
-				    void *context)
-{
-	struct ppm_common_device *dev = (struct ppm_common_device *)device;
-	int ret = 0;
-
-	if (dev->apply_platform_policy) {
-		DLOG("Replacing platform policy callback!");
-		ret = 1;
-	}
-
-	dev->apply_platform_policy = callback;
-	dev->apply_platform_policy_context = context;
-
-	return ret;
-}
-
 static void ppm_common_lpm_alert(struct ucsi_ppm_device *device, uint8_t lpm_id)
 {
 	struct ppm_common_device *dev = (struct ppm_common_device *)device;
@@ -1036,7 +1000,6 @@ struct ucsi_ppm_driver *ppm_open(const struct ucsi_pd_driver *pd_driver,
 	drv->read = ppm_common_read;
 	drv->write = ppm_common_write;
 	drv->register_notify = ppm_common_register_notify;
-	drv->register_platform_policy = ppm_common_register_platform_policy;
 	drv->lpm_alert = ppm_common_lpm_alert;
 	drv->cleanup = ppm_common_cleanup;
 

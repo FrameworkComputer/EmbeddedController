@@ -333,31 +333,6 @@ typedef int(ucsi_ppm_register_notify)(struct ucsi_ppm_device *device,
 				      ucsi_ppm_notify *callback, void *context);
 
 /**
- * Function to apply platform policy after a PPM reset.
- *
- * Note that this needs to operate directly on the PD driver outside the PPM
- * state machine. This method will be called after every PPM reset completes.
- *
- * @param context: Context data for the callback. Depends on implementer.
- */
-typedef int(ucsi_ppm_apply_platform_policy)(void *context);
-
-/**
- * Register a platform policy callback with the driver. This callback will be
- * invoked every time PPM reset completes and will restore any policy settings
- * that need to be applied for the system.
- *
- * @param device: Data for PPM implementation.
- * @param callback: Function to call to set platform policy.
- * @param context: Context data to pass back to callback.
- *
- * @return 0 if new callback set or 1 if callback replaced.
- */
-typedef int(ucsi_ppm_register_platform_policy)(
-	struct ucsi_ppm_device *device,
-	ucsi_ppm_apply_platform_policy *callback, void *context);
-
-/**
  * Alert the PPM that an LPM has sent a notification.
  *
  * @param device: Data for PPM implementation.
@@ -382,7 +357,6 @@ struct ucsi_ppm_driver {
 	ucsi_ppm_read *read;
 	ucsi_ppm_write *write;
 	ucsi_ppm_register_notify *register_notify;
-	ucsi_ppm_register_platform_policy *register_platform_policy;
 	ucsi_ppm_lpm_alert *lpm_alert;
 
 	ucsi_ppm_cleanup *cleanup;

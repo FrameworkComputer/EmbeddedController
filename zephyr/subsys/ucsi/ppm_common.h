@@ -43,10 +43,6 @@ struct ppm_common_device {
 	ucsi_ppm_notify *opm_notify;
 	void *opm_context;
 
-	/* Platform policy callback and context. */
-	ucsi_ppm_apply_platform_policy *apply_platform_policy;
-	void *apply_platform_policy_context;
-
 	/* PPM task */
 	struct task_handle *ppm_task_handle;
 	struct platform_mutex *ppm_lock;
