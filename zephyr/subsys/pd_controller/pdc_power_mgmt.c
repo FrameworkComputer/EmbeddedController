@@ -3507,4 +3507,37 @@ bool pdc_power_mgmt_test_wait_unattached(void)
 }
 /* LCOV_EXCL_STOP */
 
+/*
+ * Ensure that the PDC attached state is either SRC_ATTACHED or SNK_ATTACHED and
+ * that the substate has reached the stead state for the attached state.
+ */
+/* LCOV_EXCL_START */
+bool pdc_power_mgmt_test_wait_attached(int port)
+{
+	/*
+	 * Wait for up to 20 * 100ms for the ports to be attached, and in its
+	 * run substate.
+	 */
+	for (int i = 0; i < 20; i++) {
+		k_msleep(100);
+
+		if ((pdc_data[port]->port.attached_state ==
+		     SNK_ATTACHED_STATE) &&
+		    (pdc_data[port]->port.snk_attached_local_state ==
+		     SNK_ATTACHED_RUN)) {
+			return true;
+		}
+
+		if ((pdc_data[port]->port.attached_state ==
+		     SRC_ATTACHED_STATE) &&
+		    (pdc_data[port]->port.src_attached_local_state ==
+		     SRC_ATTACHED_RUN)) {
+			return true;
+		}
+	}
+
+	return false;
+}
+/* LCOV_EXCL_STOP */
+
 #endif
