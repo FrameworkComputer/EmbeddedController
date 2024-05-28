@@ -175,6 +175,7 @@ if(DEFINED CONFIG_BOARD_CRAASKOV)
 	project(craaskov)
 	zephyr_include_directories("craaskov/include")
 	zephyr_library_sources(
+			"craaskov/src/board.c"
 			"craaskov/src/keyboard.c"
 			"craaskov/src/hdmi.c"
 			"craaskov/src/touch_panel.c"
