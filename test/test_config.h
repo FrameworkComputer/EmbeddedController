@@ -115,7 +115,9 @@ enum battery_type {
 	defined(TEST_FPSENSOR_UTILS) ||                           \
 	defined(TEST_FPSENSOR_AUTH_CRYPTO_STATELESS) ||           \
 	defined(TEST_FPSENSOR_AUTH_CRYPTO_STATEFUL) ||            \
-	defined(TEST_FPSENSOR_AUTH_COMMANDS)
+	defined(TEST_FPSENSOR_AUTH_COMMANDS) ||                   \
+	defined(TEST_HOST_COMMAND_FUZZ)
+#define CONFIG_FINGERPRINT_MCU
 #define CONFIG_BORINGSSL_CRYPTO
 #define CONFIG_ROLLBACK_SECRET_SIZE 32
 #endif
