@@ -75,6 +75,11 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "pen_detect_interrupt";
 		};
+		int_ac_present: ac_present {
+			irq-pin = <&acok_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
 	};
 
 	named-gpios {
