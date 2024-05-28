@@ -167,7 +167,6 @@ const struct smbus_cmd_t GET_PDOS = { 0x08, 0x03, 0x83 };
 const struct smbus_cmd_t GET_RDO = { 0x08, 0x02, 0x84 };
 const struct smbus_cmd_t GET_VDO = { 0x08, 0x03, 0x9A };
 const struct smbus_cmd_t GET_CURRENT_PARTNER_SRC_PDO = { 0x08, 0x02, 0xA7 };
-const struct smbus_cmd_t GET_POWER_SWITCH_STATE = { 0x08, 0x02, 0xA9 };
 const struct smbus_cmd_t GET_RTK_STATUS = { 0x09, 0x03 };
 const struct smbus_cmd_t PPM_RESET = { 0x0E, 0x02, 0x01 };
 const struct smbus_cmd_t CONNECTOR_RESET = { 0x0E, 0x03, 0x03 };
