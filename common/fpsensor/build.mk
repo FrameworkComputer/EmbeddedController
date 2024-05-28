@@ -37,7 +37,7 @@ all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_state_obj)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_obj)
 all-obj-$(HAS_TASK_CONSOLE)+=$(_fpsensor_detect_strings_obj)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_debug_obj)
-all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_utils_obj)
+all-obj-$(HAS_TASK_CONSOLE)+=$(_fpsensor_utils_obj)
 all-obj-$(HAS_TASK_FPSENSOR)+=$(_fpsensor_auth_commands_obj)
 
 # If HAS_TASK_FPSENSOR is not empty.
