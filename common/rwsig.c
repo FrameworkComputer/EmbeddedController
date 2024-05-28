@@ -245,7 +245,7 @@ out:
 
 static enum rwsig_status rwsig_status;
 
-enum rwsig_status rwsig_get_status(void)
+test_mockable enum rwsig_status rwsig_get_status(void)
 {
 	return rwsig_status;
 }

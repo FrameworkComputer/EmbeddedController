@@ -19,6 +19,9 @@
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/ztest.h>
 
+#include <fcntl.h>
+#include <sys/mman.h>
+
 void send_error_reset(uint8_t resp_value);
 
 static void send_vendor_command(enum update_extra_command command,
@@ -111,12 +114,12 @@ int custom_touchpad_debug(const uint8_t *param, unsigned int param_size,
 	return 0;
 }
 
-ZTEST(vendor_command, test_touchpad)
+ZTEST(vendor_command, test_touchpad_info)
 {
 	const struct queue *tx_queue = usb_update.consumer.queue;
 	struct touchpad_info tp_info;
+	uint8_t resp;
 
-	/* TOUCHPAD_INFO */
 	touchpad_get_info_fake.return_val = sizeof(struct touchpad_info);
 	send_vendor_command(UPDATE_EXTRA_CMD_TOUCHPAD_INFO, NULL, 0);
 	zassert_equal(queue_count(tx_queue), sizeof(tp_info));
@@ -124,7 +127,22 @@ ZTEST(vendor_command, test_touchpad)
 	zassert_equal(tp_info.fw_address, CONFIG_TOUCHPAD_VIRTUAL_OFF);
 	zassert_equal(tp_info.fw_size, CONFIG_TOUCHPAD_VIRTUAL_SIZE);
 
-	/* TOUCHPAD_DEBUG, expect return the string "Hello" */
+	touchpad_get_info_fake.return_val = 0;
+	send_vendor_command(UPDATE_EXTRA_CMD_TOUCHPAD_INFO, NULL, 0);
+	zassert_equal(queue_count(tx_queue), 1);
+	queue_remove_units(tx_queue, &resp, 1);
+	zassert_equal(resp, EC_RES_ERROR);
+
+	touchpad_get_info_fake.return_val = sizeof(struct touchpad_info);
+	send_vendor_command(UPDATE_EXTRA_CMD_TOUCHPAD_INFO, " ", 1);
+	zassert_equal(queue_count(tx_queue), 1);
+	queue_remove_units(tx_queue, &resp, 1);
+	zassert_equal(resp, EC_RES_INVALID_PARAM);
+}
+
+ZTEST(vendor_command, test_touchpad_debug)
+{
+	const struct queue *tx_queue = usb_update.consumer.queue;
 	char output[5];
 
 	touchpad_debug_fake.custom_fake = custom_touchpad_debug;
@@ -156,6 +174,78 @@ ZTEST(vendor_command, test_invalid_command)
 	zassert_equal(resp, EC_RES_INVALID_COMMAND);
 }
 
+ZTEST(vendor_command, test_jump_to_rw)
+{
+	const struct queue *tx_queue = usb_update.consumer.queue;
+	uint8_t resp;
+
+	rwsig_get_status_fake.return_val = RWSIG_UNKNOWN;
+	send_vendor_command(UPDATE_EXTRA_CMD_JUMP_TO_RW, NULL, 0);
+	zassert_equal(queue_count(tx_queue), 1);
+	queue_remove_units(tx_queue, &resp, 1);
+	zassert_equal(resp, EC_RES_ERROR);
+
+	rwsig_get_status_fake.return_val = RWSIG_IN_PROGRESS;
+	send_vendor_command(UPDATE_EXTRA_CMD_JUMP_TO_RW, NULL, 0);
+	zassert_equal(queue_count(tx_queue), 1);
+	queue_remove_units(tx_queue, &resp, 1);
+	zassert_equal(resp, EC_RES_IN_PROGRESS);
+
+	rwsig_get_status_fake.return_val = RWSIG_VALID;
+	send_vendor_command(UPDATE_EXTRA_CMD_JUMP_TO_RW, NULL, 0);
+	zassert_equal(queue_count(tx_queue), 1);
+	queue_remove_units(tx_queue, &resp, 1);
+	zassert_equal(resp, EC_RES_SUCCESS);
+
+	rwsig_get_status_fake.return_val = RWSIG_INVALID;
+	send_vendor_command(UPDATE_EXTRA_CMD_JUMP_TO_RW, NULL, 0);
+	zassert_equal(queue_count(tx_queue), 1);
+	queue_remove_units(tx_queue, &resp, 1);
+	zassert_equal(resp, EC_RES_INVALID_CHECKSUM);
+
+	rwsig_get_status_fake.return_val = RWSIG_ABORTED;
+	send_vendor_command(UPDATE_EXTRA_CMD_JUMP_TO_RW, NULL, 0);
+	zassert_equal(queue_count(tx_queue), 1);
+	queue_remove_units(tx_queue, &resp, 1);
+	zassert_equal(resp, EC_RES_ERROR);
+}
+
+ZTEST(vendor_command, test_stay_in_ro)
+{
+	const struct queue *tx_queue = usb_update.consumer.queue;
+	uint8_t resp;
+
+	send_vendor_command(UPDATE_EXTRA_CMD_STAY_IN_RO, NULL, 0);
+	zassert_equal(queue_count(tx_queue), 1);
+	queue_remove_units(tx_queue, &resp, 1);
+	/* Always success */
+	zassert_equal(resp, EC_SUCCESS);
+}
+
+ZTEST(vendor_command, test_unlock_rw)
+{
+	const struct queue *tx_queue = usb_update.consumer.queue;
+	uint8_t resp;
+
+	send_vendor_command(UPDATE_EXTRA_CMD_UNLOCK_RW, NULL, 0);
+	zassert_equal(queue_count(tx_queue), 1);
+	queue_remove_units(tx_queue, &resp, 1);
+	/* Always success */
+	zassert_equal(resp, EC_SUCCESS);
+}
+
+ZTEST(vendor_command, test_unlock_rollback)
+{
+	const struct queue *tx_queue = usb_update.consumer.queue;
+	uint8_t resp;
+
+	send_vendor_command(UPDATE_EXTRA_CMD_UNLOCK_ROLLBACK, NULL, 0);
+	zassert_equal(queue_count(tx_queue), 1);
+	queue_remove_units(tx_queue, &resp, 1);
+	/* Always success */
+	zassert_equal(resp, EC_SUCCESS);
+}
+
 static void vendor_command_before(void *f)
 {
 	const struct device *flash_dev =
@@ -175,6 +265,7 @@ static void vendor_command_before(void *f)
 	       sizeof(initial_rollback));
 	memcpy(flash + CONFIG_ROLLBACK_OFF + CONFIG_FLASH_ERASE_SIZE,
 	       &initial_rollback, sizeof(initial_rollback));
+	msync(flash, flash_size, MS_SYNC | MS_INVALIDATE);
 
 	/* reset the usb_updater's internal state */
 	send_error_reset(0);
