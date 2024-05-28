@@ -32,11 +32,62 @@ test_static int test_validate_fp_buffer_offset_failure_overflow(void)
 	return EC_SUCCESS;
 }
 
+test_static int test_is_test_capture()
+{
+	TEST_ASSERT(!is_test_capture(FP_MODE_CAPTURE |
+				     FP_CAPTURE_VENDOR_FORMAT
+					     << FP_MODE_CAPTURE_TYPE_SHIFT));
+	TEST_ASSERT(!is_test_capture(FP_MODE_CAPTURE |
+				     FP_CAPTURE_SIMPLE_IMAGE
+					     << FP_MODE_CAPTURE_TYPE_SHIFT));
+	TEST_ASSERT(is_test_capture(FP_MODE_CAPTURE |
+				    FP_CAPTURE_PATTERN0
+					    << FP_MODE_CAPTURE_TYPE_SHIFT));
+	TEST_ASSERT(is_test_capture(FP_MODE_CAPTURE |
+				    FP_CAPTURE_PATTERN1
+					    << FP_MODE_CAPTURE_TYPE_SHIFT));
+	TEST_ASSERT(!is_test_capture(FP_MODE_CAPTURE |
+				     FP_CAPTURE_QUALITY_TEST
+					     << FP_MODE_CAPTURE_TYPE_SHIFT));
+	TEST_ASSERT(is_test_capture(FP_MODE_CAPTURE |
+				    FP_CAPTURE_RESET_TEST
+					    << FP_MODE_CAPTURE_TYPE_SHIFT));
+
+	return EC_SUCCESS;
+}
+
+test_static int test_is_raw_capture()
+{
+	TEST_ASSERT(is_raw_capture(FP_MODE_CAPTURE |
+				   FP_CAPTURE_VENDOR_FORMAT
+					   << FP_MODE_CAPTURE_TYPE_SHIFT));
+	TEST_ASSERT(!is_raw_capture(FP_MODE_CAPTURE |
+				    FP_CAPTURE_SIMPLE_IMAGE
+					    << FP_MODE_CAPTURE_TYPE_SHIFT));
+	TEST_ASSERT(!is_raw_capture(FP_MODE_CAPTURE |
+				    FP_CAPTURE_PATTERN0
+					    << FP_MODE_CAPTURE_TYPE_SHIFT));
+	TEST_ASSERT(!is_raw_capture(FP_MODE_CAPTURE |
+				    FP_CAPTURE_PATTERN1
+					    << FP_MODE_CAPTURE_TYPE_SHIFT));
+	TEST_ASSERT(is_raw_capture(FP_MODE_CAPTURE |
+				   FP_CAPTURE_QUALITY_TEST
+					   << FP_MODE_CAPTURE_TYPE_SHIFT));
+	TEST_ASSERT(!is_raw_capture(FP_MODE_CAPTURE |
+				    FP_CAPTURE_RESET_TEST
+					    << FP_MODE_CAPTURE_TYPE_SHIFT));
+
+	return EC_SUCCESS;
+}
+
 void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_validate_fp_buffer_offset_success);
 	RUN_TEST(test_validate_fp_buffer_offset_failure_no_overflow);
 	RUN_TEST(test_validate_fp_buffer_offset_failure_overflow);
+
+	RUN_TEST(test_is_test_capture);
+	RUN_TEST(test_is_raw_capture);
 
 	test_print_result();
 }
