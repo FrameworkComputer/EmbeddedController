@@ -193,7 +193,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	return 1;
 }
 
-__overridable void svdm_exit_dp_mode(int port)
+__override void svdm_exit_dp_mode(int port)
 {
 	dp_flags[port] = 0;
 	dp_status[port] = 0;
