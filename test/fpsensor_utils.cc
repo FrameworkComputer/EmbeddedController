@@ -77,6 +77,10 @@ test_static int test_is_raw_capture()
 				    FP_CAPTURE_RESET_TEST
 					    << FP_MODE_CAPTURE_TYPE_SHIFT));
 
+	/* Check the case where FP_MODE_CAPTURE is not set. */
+	TEST_ASSERT(!is_raw_capture(FP_CAPTURE_VENDOR_FORMAT
+				    << FP_MODE_CAPTURE_TYPE_SHIFT));
+
 	return EC_SUCCESS;
 }
 
