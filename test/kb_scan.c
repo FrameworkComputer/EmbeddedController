@@ -581,9 +581,9 @@ static int power_button_mask_test(void)
 	TEST_ASSERT(expect_keychange() == EC_SUCCESS);
 
 	/*
-	 * Make power_button_raw_pressed return 1 continuously. Refresh key row
-	 * should be masked by the scanner because it can't tell whether it's
-	 * for the column it's driving or other columns driven by the GSC.
+	 * Make power_button_raw_pressed return 1 continuously. Refresh key
+	 * should get it back because we know all columns driven by the GSC
+	 * if the power button and refresh key are pressed at boot.
 	 */
 	ccprintf("\nTest continuous power button press.\n");
 	power_button_counter_divider = 1;
@@ -594,7 +594,7 @@ static int power_button_mask_test(void)
 	mock_key(1, 1, 1);
 	task_wake(TASK_ID_KEYSCAN);
 	crec_msleep(40);
-	TEST_EQ(key_state_change[KEYBOARD_ROW_REFRESH][KEYBOARD_COL_REFRESH], 0,
+	TEST_EQ(key_state_change[KEYBOARD_ROW_REFRESH][KEYBOARD_COL_REFRESH], 1,
 		"%d");
 	TEST_EQ(key_state_change[1][1], 1, "%d");
 
