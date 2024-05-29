@@ -164,7 +164,6 @@ DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, baseboard_chipset_shutdown,
 /* Called by APL power state machine when transitioning to G3. */
 void chipset_do_shutdown(void)
 {
-#ifdef VARIANT_OCTOPUS_EC_ITE8320
 	/*
 	 * We want the processor to be reset before dropping the PP3300_A rail
 	 * below, otherwise the PP3300_LDO and PP3300_EC rails can be overloaded
@@ -176,7 +175,6 @@ void chipset_do_shutdown(void)
 		while (gpio_get_level(GPIO_PCH_SLP_S4_L))
 			;
 	}
-#endif
 
 	/* Disable PMIC */
 	gpio_set_level(GPIO_PMIC_EN, 0);
