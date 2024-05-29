@@ -265,12 +265,10 @@ struct ucsi_ppm_driver;
  * Wait for the PPM to be initialized and ready for use.
  *
  * @param device: Data for PPM implementation.
- * @param num_ports: Number of ports to initialize for this PPM.
  *
  * @return 0 on success and -1 on error.
  */
-typedef int(ucsi_ppm_init_and_wait)(struct ucsi_ppm_device *device,
-				    uint8_t num_ports);
+typedef int(ucsi_ppm_init_and_wait)(struct ucsi_ppm_device *device);
 
 /**
  * Get the next connector status if a connector change indication is

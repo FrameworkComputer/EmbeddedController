@@ -4,5 +4,4 @@
 
 zephyr_library_sources(ppm_driver.c)
 zephyr_library_sources(ucsi_host_cmd.c)
-zephyr_library_sources(platform_zephyr.c)
 zephyr_library_sources(ppm_common.c)

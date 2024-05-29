@@ -107,18 +107,16 @@ static struct ppm_data ppm_data;
 
 static int ucsi_ppm_init(const struct device *device)
 {
-	const struct ppm_config *cfg =
-		(const struct ppm_config *)device->config;
-	struct ppm_data *dat = (struct ppm_data *)device->data;
+	struct ppm_data *data = (struct ppm_data *)device->data;
 
-	return dat->ppm->init_and_wait(dat->ppm->dev, cfg->active_port_count);
+	return data->ppm->init_and_wait(data->ppm->dev);
 }
 
 static struct ucsi_ppm_driver *ucsi_ppm_get(const struct device *device)
 {
-	struct ppm_data *dat = (struct ppm_data *)device->data;
+	struct ppm_data *data = (struct ppm_data *)device->data;
 
-	return dat->ppm;
+	return data->ppm;
 }
 
 #define SYNC_CMD_TIMEOUT_MSEC 2000
@@ -131,8 +129,6 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	const struct ppm_config *cfg =
 		(const struct ppm_config *)device->config;
 	struct ppm_data *data = (struct ppm_data *)device->data;
-	struct ppm_common_device *dev =
-		(struct ppm_common_device *)data->ppm->dev;
 	uint8_t ucsi_command = control->command;
 	uint8_t conn; /* 1:port=0, 2:port=1, ... */
 	uint8_t data_size;
@@ -192,7 +188,7 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 		conn = 1;
 	}
 
-	if (conn == 0 || conn > dev->num_ports) {
+	if (conn == 0 || conn > NUM_PORTS) {
 		LOG_ERR("Invalid conn=%d", conn);
 		return -EINVAL;
 	}

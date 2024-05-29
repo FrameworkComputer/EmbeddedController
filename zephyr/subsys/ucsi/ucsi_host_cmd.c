@@ -8,7 +8,6 @@
 #include "ec_commands.h"
 #include "hooks.h"
 #include "host_command.h"
-#include "platform.h"
 #include "ppm_common.h"
 #include "usb_pd.h"
 
@@ -18,8 +17,6 @@
 #include <usbc/ppm.h>
 
 LOG_MODULE_REGISTER(ucsi, LOG_LEVEL_INF);
-
-#define DEV_CAST_FROM(v) (struct ppm_common_device *)(v)
 
 static struct ucsi_ppm_driver *ppm_drv;
 
@@ -33,7 +30,6 @@ static int eppm_init(void)
 {
 	const struct ucsi_pd_driver *drv;
 	const struct device *pdc_dev;
-	struct ppm_common_device *ppm_dev;
 
 	pdc_dev = DEVICE_DT_GET(DT_INST(0, ucsi_ppm));
 	if (!device_is_ready(pdc_dev)) {
@@ -54,8 +50,8 @@ static int eppm_init(void)
 	}
 
 	ppm_drv = drv->get_ppm(pdc_dev);
-	ppm_dev = DEV_CAST_FROM(ppm_drv->dev);
-	LOG_INF("Initialized PPM num_ports=%u", ppm_dev->num_ports);
+	LOG_INF("Initialized PPM num_ports=%u",
+		drv->get_active_port_count(pdc_dev));
 	ppm_drv->register_notify(ppm_drv->dev, opm_notify, NULL);
 
 	return 0;

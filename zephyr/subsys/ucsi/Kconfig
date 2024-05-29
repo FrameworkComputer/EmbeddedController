@@ -8,6 +8,19 @@ config UCSI_PPM
 	help
 	  Enable this to support UCSI platform policy manager (PPM).
 
+config UCSI_PPM_STACK_SIZE
+	int "UCSI PPM implementation thread stack size"
+	default 1024
+	help
+	  Stack size of thread created for PPM.
+
+config UCSI_PPM_THREAD_PRIORITY
+	int "UCSI PPM thread priority"
+	default 0
+	help
+	  Set thread priority of the PPM.
+
+
 module = UCSI_PPM
 module-str = UCSI PPM
 source "subsys/logging/Kconfig.template.log_config"

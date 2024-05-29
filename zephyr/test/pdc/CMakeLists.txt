@@ -55,5 +55,4 @@ if (DEFINED CONFIG_TEST_SUITE_PPM)
 
 	zephyr_include_directories(${PLATFORM_EC}/zephyr/subsys/ucsi)
 	target_sources(app PRIVATE ${PLATFORM_EC}/zephyr/subsys/ucsi/ppm_common.c)
-	target_sources(app PRIVATE ${PLATFORM_EC}/zephyr/subsys/ucsi/platform_zephyr.c)
 endif()
