@@ -703,6 +703,7 @@ flash_fp_mcu_board() {
   if [[ "${PLATFORM_BASE_NAME}" != "strongbad" ]] &&
      [[ "${PLATFORM_BASE_NAME}" != "zork" ]] &&
      [[ "${PLATFORM_BASE_NAME}" != "myst" ]] &&
+     [[ "${PLATFORM_BASE_NAME}" != "rauru" ]] &&
      [[ "${PLATFORM_BASE_NAME}" != "skyrim" ]]; then
     gpio in       "${gpio_boot0}" "${gpio_nrst}"
   fi
@@ -859,6 +860,27 @@ config_nocturne() {
   # FP_PWR_EN is on GPP_A11 = 11
   local gpiopwren=11
   readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
+}
+
+config_rauru() {
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev5.0"
+
+  local dev_path="platform/soc/1002d000.pinctrl/gpio"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
+
+  readonly GPIO_CHIP="gpiochip${gpiobase}"
+  # FPMCU RST_ODL is $(gpiofind FP_RST_1V8_S3_L) is gpiochip0 26
+  readonly GPIO_NRST=$((gpiobase + $(gpiofind FP_RST_1V8_S3_L|cut -f2 -d" ")))
+  # FPMCU BOOT0 is $(gpiofind AP_FP_FW_UP_STRAP) is gpiochip0 27
+  readonly GPIO_BOOT0=$((gpiobase + $(gpiofind AP_FP_FW_UP_STRAP|cut -f2 -d" ")))
+
+  # EN FP RAILS is $(gpiofind EN_PWR_FP) is gpiochip0 173
+  readonly GPIO_PWREN=$((gpiobase + $(gpiofind EN_PWR_FP|cut -f2 -d" ")))
 }
 
 config_strongbad() {
