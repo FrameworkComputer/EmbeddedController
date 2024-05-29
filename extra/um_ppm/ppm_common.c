@@ -516,7 +516,9 @@ static void ppm_common_handle_pending_command(struct ppm_common_device *dev)
 			 * |ppm_common_execute_pending_cmd|.
 			 */
 			ret = ppm_common_execute_pending_cmd(dev);
-			if (ret >= 0) {
+			if (ret >= 0 && next_command == UCSI_CMD_PPM_RESET) {
+				dev->ppm_state = PPM_STATE_IDLE;
+			} else if (ret >= 0) {
 				dev->ppm_state = PPM_STATE_IDLE_NOTIFY;
 
 				clear_cci(dev);
@@ -600,6 +602,9 @@ static void ppm_common_task(void *context)
 		DLOG("Handling next task at state %d (%s)", dev->ppm_state,
 		     ppm_state_to_string(dev->ppm_state));
 
+		bool is_ppm_reset =
+			match_pending_command(dev, UCSI_CMD_PPM_RESET);
+
 		switch (dev->ppm_state) {
 		/* Idle with notifications enabled. */
 		case PPM_STATE_IDLE:
@@ -611,8 +616,7 @@ static void ppm_common_task(void *context)
 				if (match_pending_command(
 					    dev,
 					    UCSI_CMD_SET_NOTIFICATION_ENABLE) ||
-				    match_pending_command(dev,
-							  UCSI_CMD_PPM_RESET)) {
+				    is_ppm_reset) {
 					ppm_common_handle_pending_command(dev);
 				} else {
 					clear_pending_command(dev);
@@ -654,9 +658,10 @@ static void ppm_common_task(void *context)
 		/* Waiting for a command completion acknowledge. */
 		case PPM_STATE_WAITING_CC_ACK:
 			if (is_pending_command(dev)) {
-				if (!match_pending_command(
-					    dev, UCSI_CMD_ACK_CC_CI) ||
-				    is_invalid_ack(dev)) {
+				if (!is_ppm_reset &&
+				    (!match_pending_command(
+					     dev, UCSI_CMD_ACK_CC_CI) ||
+				     is_invalid_ack(dev))) {
 					invalid_ack_notify(dev);
 					break;
 				}
@@ -669,7 +674,8 @@ static void ppm_common_task(void *context)
 			if (is_pending_command(dev)) {
 				bool is_ack = match_pending_command(
 					dev, UCSI_CMD_ACK_CC_CI);
-				if (is_ack && is_invalid_ack(dev)) {
+				if (!is_ppm_reset && is_ack &&
+				    is_invalid_ack(dev)) {
 					invalid_ack_notify(dev);
 					break;
 				}

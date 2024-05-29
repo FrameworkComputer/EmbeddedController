@@ -201,6 +201,13 @@ static int write_ack_command(struct ppm_test_fixture *fixture,
 	return write_command(fixture, &control);
 }
 
+static int write_ppm_reset(struct ppm_test_fixture *fixture)
+{
+	struct ucsi_control control = { .command = UCSI_CMD_PPM_RESET,
+					.data_length = 0 };
+	return write_command(fixture, &control);
+}
+
 static bool wait_for_async_event_to_process(struct ppm_test_fixture *fixture)
 {
 	bool is_async_pending = false;
@@ -264,10 +271,8 @@ static bool wait_for_notification(struct ppm_test_fixture *fixture,
 	return true;
 }
 
-static void initialize_fake_to_idle_notify(struct ppm_test_fixture *fixture)
+static void enable_notifications_from_idle(struct ppm_test_fixture *fixture)
 {
-	zassert_false(initialize_fake(fixture) < 0);
-
 	struct ucsi_control control;
 	memcpy(&control, &enable_all_notifications, sizeof(control));
 
@@ -282,6 +287,12 @@ static void initialize_fake_to_idle_notify(struct ppm_test_fixture *fixture)
 					/*command_complete_ack*/ true) < 0);
 	zassert_true(wait_for_cmd_to_process(fixture));
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE_NOTIFY);
+}
+
+static void initialize_fake_to_idle_notify(struct ppm_test_fixture *fixture)
+{
+	zassert_false(initialize_fake(fixture) < 0);
+	enable_notifications_from_idle(fixture);
 }
 
 /* Fake PD driver implementations. */
@@ -890,4 +901,47 @@ ZTEST_USER_F(ppm_test, test_lpm_error_accepts_new_command)
 	zassert_true(wait_for_notification(fixture, notified_count));
 	zassert_true(check_cci_matches(fixture, &cci_cmd_complete));
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_WAITING_CC_ACK);
+}
+
+/* Make sure we can call PPM_RESET in all states. We already test the IDLE state
+ * but we should also test IDLE_NOTIFY, WAITING_CC_ACK and WAITING_ASYNC_EV_ACK.
+ */
+ZTEST_USER_F(ppm_test, test_ppm_reset_works_in_all_states)
+{
+	/* Test at IDLE_NOTIFY. */
+	initialize_fake_to_idle_notify(fixture);
+	zassert_false(write_ppm_reset(fixture) < 0);
+	zassert_true(wait_for_cmd_to_process(fixture));
+	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE);
+
+	/* Test at WAITING_CC_ACK. */
+	enable_notifications_from_idle(fixture);
+	struct ucsi_control control = {
+		.command = UCSI_CMD_GET_CONNECTOR_CAPABILITY, .data_length = 0
+	};
+	queue_command_for_fake_driver(fixture,
+				      UCSI_CMD_GET_CONNECTOR_CAPABILITY,
+				      /*result=*/0,
+				      /*lpm_data=*/NULL);
+
+	zassert_false(write_command(fixture, &control) < 0);
+	zassert_true(wait_for_cmd_to_process(fixture));
+	zassert_equal(get_ppm_state(fixture), PPM_STATE_WAITING_CC_ACK);
+
+	zassert_false(write_ppm_reset(fixture) < 0);
+	zassert_true(wait_for_cmd_to_process(fixture));
+	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE);
+
+	/* Test at WAITING_ASYNC_EV_ACK. */
+	enable_notifications_from_idle(fixture);
+	int notified_count = fixture->notified_count;
+
+	trigger_expected_connector_change(fixture, PDC_DEFAULT_CONNECTOR);
+	zassert_true(wait_for_async_event_to_process(fixture));
+	zassert_true(wait_for_notification(fixture, ++notified_count));
+	zassert_equal(get_ppm_state(fixture), PPM_STATE_WAITING_ASYNC_EV_ACK);
+
+	zassert_false(write_ppm_reset(fixture) < 0);
+	zassert_true(wait_for_cmd_to_process(fixture));
+	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE);
 }
