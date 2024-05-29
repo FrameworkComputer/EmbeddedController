@@ -1008,7 +1008,8 @@ static int emul_realtek_rts54xx_reset(const struct emul *target)
 	memset(data->src_pdos, 0xFF, sizeof(data->src_pdos));
 	memset(data->snk_pdos, 0xFF, sizeof(data->snk_pdos));
 
-	data->src_pdos[0] = RTS5453P_FIXED_SRC;
+	data->src_pdos[0] = RTS5453P_FIXED1_SRC;
+	data->src_pdos[1] = RTS5453P_FIXED2_SRC;
 
 	data->snk_pdos[0] = RTS5453P_FIXED_SNK;
 	data->snk_pdos[1] = RTS5453P_BATT_SNK;

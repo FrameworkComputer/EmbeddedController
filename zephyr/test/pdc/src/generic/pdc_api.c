@@ -444,7 +444,7 @@ ZTEST_USER(pdc_api, test_get_pdo)
 	zassert_ok(pdc_get_pdos(dev, SOURCE_PDO, PDO_OFFSET_0, 1, false,
 				&fixed_pdo));
 	k_sleep(K_MSEC(SLEEP_MS));
-	zassert_equal(PDO_FIXED_GET_VOLT(fixed_pdo), 5000);
+	zassert_equal(PDO_FIXED_GET_VOLT(fixed_pdo), 12000);
 
 	/* Test sink fixed pdo. */
 	fixed_pdo = 0;

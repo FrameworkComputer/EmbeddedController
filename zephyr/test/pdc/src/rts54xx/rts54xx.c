@@ -105,9 +105,10 @@ ZTEST_USER(rts54xx, test_emul_reset)
 	/* Test source PDO reset values. */
 	memset(pdos, 0, sizeof(pdos));
 	zassert_ok(emul_get_src_pdos(PDO_OFFSET_0, 8, pdos));
-	zassert_equal(pdos[0], RTS5453P_FIXED_SRC);
+	zassert_equal(pdos[0], RTS5453P_FIXED1_SRC);
+	zassert_equal(pdos[1], RTS5453P_FIXED2_SRC);
 
-	for (int i = 0; i < 7; i++) {
+	for (int i = 1; i < 7; i++) {
 		zassert_equal(pdos[i + 1], 0xFFFFFFFF);
 	}
 

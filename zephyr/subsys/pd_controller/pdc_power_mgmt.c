@@ -1399,7 +1399,7 @@ static void pdc_snk_attached_run(void *obj)
 	int port_num = config->connector_num;
 	uint32_t max_ma, max_mv, max_mw;
 	uint32_t tmp_curr_ma, tmp_volt_mv, tmp_pwr_mw;
-	uint32_t pdo_pwr_mw;
+	uint32_t pdo_pwr_mw, pdo_volt_mv;
 	uint32_t flags;
 
 	/* The CCI_EVENT is set on a connector disconnect, so check the
@@ -1468,6 +1468,7 @@ static void pdc_snk_attached_run(void *obj)
 	case SNK_ATTACHED_EVALUATE_PDOS:
 		port->snk_attached_local_state = SNK_ATTACHED_START_CHARGING;
 		pdo_pwr_mw = 0;
+		pdo_volt_mv = 0;
 		flags = 0;
 
 		for (int i = 0; i < PDO_NUM; i++) {
@@ -1486,14 +1487,17 @@ static void pdc_snk_attached_run(void *obj)
 				port->snk_policy.src.pdos[i], tmp_volt_mv,
 				tmp_curr_ma, tmp_pwr_mw);
 
-			if ((tmp_pwr_mw > pdo_pwr_mw) &&
+			if ((tmp_pwr_mw >= pdo_pwr_mw) &&
 			    (tmp_pwr_mw <= pdc_max_operating_power) &&
-			    (tmp_volt_mv <= pdc_max_request_mv)) {
-				pdo_pwr_mw = tmp_pwr_mw;
-				port->snk_policy.pdo_index = i;
-				port->snk_policy.pdo =
-					port->snk_policy.src.pdos[i];
-			}
+			    (tmp_volt_mv <= pdc_max_request_mv))
+				if ((tmp_pwr_mw > pdo_pwr_mw) ||
+				    (tmp_volt_mv > pdo_volt_mv)) {
+					pdo_pwr_mw = tmp_pwr_mw;
+					pdo_volt_mv = tmp_volt_mv;
+					port->snk_policy.pdo_index = i;
+					port->snk_policy.pdo =
+						port->snk_policy.src.pdos[i];
+				}
 		}
 
 		/* Extract Current, Voltage, and calculate Power */
