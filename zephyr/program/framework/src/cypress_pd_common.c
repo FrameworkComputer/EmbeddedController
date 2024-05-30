@@ -1632,6 +1632,9 @@ void cypd_port_int(int controller, int port)
 		cypd_handle_extend_msg(controller, port, response_len, sop_type);
 		CPRINTS("CYP_RESPONSE_RX_EXT_MSG");
 		break;
+	case CCG_RESPONSE_OVER_CURRENT:
+		CPRINTS("CCG_RESPONSE_OVER_CURRENT %d", port_idx);
+		break;
 	case CCG_RESPONSE_VDM_RX:
 		i2c_read_offset16_block(i2c_port, addr_flags,
 			CCG_READ_DATA_MEMORY_REG(port, 0), data2, MIN(response_len, 32));
