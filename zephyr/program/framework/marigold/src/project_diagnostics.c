@@ -54,7 +54,7 @@ void check_device_deferred(void)
 	if (battery_is_present() == BP_YES || get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_HW_NO_BATTERY, false);
 
-	if ((touchpad <= BOARD_VERSION_1 || touchpad >= BOARD_VERSION_14) &&
+	if ((touchpad < BOARD_VERSION_1 || touchpad >= BOARD_VERSION_14) &&
 		!get_standalone_mode())
 		set_diagnostic(DIAGNOSTICS_TOUCHPAD, true);
 
