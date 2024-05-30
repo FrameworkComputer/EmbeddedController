@@ -25,6 +25,10 @@
 #include "throttle_ap.h"
 #include "zephyr_console_shim.h"
 
+#ifdef CONFIG_BOARD_MARIGOLD
+#include "marigold/charger.h"
+#endif
+
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
@@ -296,6 +300,10 @@ int board_set_active_charge_port(int charge_port)
 
 	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
 	CPRINTS("Updating %s port %d", __func__, charge_port);
+
+#ifdef CONFIG_BOARD_MARIGOLD
+	acok_control(pd_port_states[charge_port].voltage);
+#endif	/*CONFIG_BOARD_MARIGOLD*/
 
 	return EC_SUCCESS;
 }

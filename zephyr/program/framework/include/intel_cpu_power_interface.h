@@ -6,8 +6,6 @@
 #ifndef __CROS_EC_INTEL_CPU_POWER_INTERFACE_H
 #define __CROS_EC_INTEL_CPU_POWER_INTERFACE_H
 
-#define POWER_LIMIT_1_W	30
-
 /******************** Tau Value (TimeWindow)*************************************
  * 0.5sec: 0x1; 0.6sec : 0x52, 0.7sec: 0x92; 0.8sec : 0xD2
  * 1sec: 0x14;  1.25sec: 0x54; 1.5sec: 0x94; 1.75sec: 0xD4
@@ -19,6 +17,7 @@
  *******************************************************************************/
 #define TIME_WINDOW_PL1		0xDC
 #define TIME_WINDOW_PL2		0xDC
+#define TIME_WINDOW_PSYSPL2		0xDC
 
 /******************** PL3 TimeWindow *******************************************
  * 1ms: 0x00;  1.25ms: 0x40;  1.5ms: 0xC0;  1.75ms: 0x80
@@ -64,9 +63,10 @@
 
 extern int pl1_watt;
 extern int pl2_watt;
-extern int pl4_watt;
 extern int pl3_watt;
+extern int pl4_watt;
+extern int psyspl2_watt;
 
-int set_pl_limits(int pl1, int pl2, int pl4);
+int set_pl_limits(int pl1, int pl2, int pl4, int psyspl2);
 
 #endif

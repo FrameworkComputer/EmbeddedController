@@ -45,12 +45,13 @@ enum battery_wattage get_battery_wattage(void)
 void update_soc_power_limit(bool force_update, bool force_no_adapter)
 {
 	int active_power;
-	int power;
 	int battery_percent;
 	enum battery_wattage battery_watt;
 
+	static int old_pl1_watt = -1;
 	static int old_pl2_watt = -1;
 	static int old_pl4_watt = -1;
+	static int old_psyspl2_watt = -1;
 	static bool communication_fail;
 
 	battery_watt = get_battery_wattage();
@@ -61,44 +62,72 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 		active_power = 0;
 	}
 
-	if (!extpower_is_present() || (active_power < 55)) {
-		/* Battery only or ADP < 55W */
+	if (!extpower_is_present()  || active_power == 0) {
+		/* Battery only */
+		pl1_watt = 25;
+		pl2_watt = 30;
 		if (battery_watt == battery_55w) {
-			pl2_watt = 35;
-			pl4_watt = 50;
-		} else if (battery_watt == battery_61w) {
-			pl2_watt = 41;
-			pl4_watt = 60;
+			/* battery_55w */
+			pl4_watt = 72;
+			psyspl2_watt = 53;
+		} else {
+			/* battery_61w */
+			pl4_watt = 80;
+			psyspl2_watt = 58;
 		}
-
-	} else if (battery_percent <= 30) {
-		/* ADP >= 55W and Battery percentage <= 30% */
-		power = ((active_power * 95) / 100);
-		pl2_watt = MIN((power-20), 60);
-		pl4_watt = power;
-
-	} else {
+	} else if (battery_percent > 30 && active_power >= 55) {
 		/* ADP >= 55W and Battery percentage > 30% */
-		power = ((active_power * 95) / 100) - 20;
+		pl1_watt = 30;
+		pl2_watt = 60;
+
 		if (battery_watt == battery_55w) {
-			pl2_watt = MIN((power + 55), 60);
-			pl4_watt = MIN((power + 78), 120);
-		} else if (battery_watt == battery_61w) {
-			pl2_watt = MIN((power + 61), 60);
-			pl4_watt = MIN((power + 87), 120);
+			/* battery_55w */
+			pl4_watt = MIN((active_power + 52), 120);
+			psyspl2_watt = ((active_power * 95) / 100) + 39;
+		} else {
+			/* battery_61w */
+			pl4_watt = MIN((active_power + 60), 120);
+			psyspl2_watt = ((active_power * 95) / 100) + 43;
+		}
+	} else {
+		if (active_power >= 55) {
+			/* ADP >= 55W */
+			pl1_watt = 25;
+			pl2_watt = MIN((((active_power * 90) / 100) - 20), 60);
+			psyspl2_watt = ((active_power * 95) / 100);
+
+			if (battery_watt == battery_55w) {
+				pl4_watt = MIN((active_power + 52), 120);
+			} else if (battery_watt == battery_61w) {
+				pl4_watt = MIN((active_power + 60), 120);
+			} else {
+				pl4_watt = MIN(active_power, 120);
+			}
+
+		} else {
+			/*ADP < 55W*/
+			pl1_watt = 25;
+			pl2_watt = 30;
+			psyspl2_watt = ((active_power * 95) / 100);
+
+			if (battery_watt == battery_55w || battery_watt == battery_61w)
+				pl4_watt = 80;
+			else
+				pl4_watt = active_power;
 		}
 	}
 
-	if (pl2_watt != old_pl2_watt || pl4_watt != old_pl4_watt ||
-			force_update || communication_fail) {
-		old_pl4_watt = pl4_watt;
+	if (pl1_watt != old_pl1_watt || pl2_watt != old_pl2_watt || pl4_watt != old_pl4_watt ||
+			psyspl2_watt != old_psyspl2_watt || force_update || communication_fail) {
+		old_pl1_watt = pl1_watt;
 		old_pl2_watt = pl2_watt;
+		old_pl4_watt = pl4_watt;
+		old_psyspl2_watt = psyspl2_watt;
 
-		pl1_watt = POWER_LIMIT_1_W;
-		communication_fail = set_pl_limits(pl1_watt, pl2_watt, pl4_watt);
+		communication_fail = set_pl_limits(pl1_watt, pl2_watt, pl4_watt, psyspl2_watt);
 
 		if (!communication_fail)
-			CPRINTS("PL1:%d, PL2:%d and PL4:%d updated success",
-				pl1_watt, pl2_watt, pl4_watt);
+			CPRINTS("PL1:%d, PL2:%d, PL4:%d, PSYSPL2:%d updated success",
+				pl1_watt, pl2_watt, pl4_watt, psyspl2_watt);
 	}
 }

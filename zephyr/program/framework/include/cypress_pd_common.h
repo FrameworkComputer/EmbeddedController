@@ -773,6 +773,13 @@ int cypd_vbus_state_check(void);
 int cypd_get_ac_power(void);
 
 /**
+ * Return active port voltage, return by mV.
+ *
+ * @return int
+ */
+int cypd_get_active_port_voltage(void);
+
+/**
  * Set Pdo profile for safety action
  *
  * @param controller	PD chip controller

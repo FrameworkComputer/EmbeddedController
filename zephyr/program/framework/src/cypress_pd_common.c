@@ -957,6 +957,7 @@ static void clear_port_state(int controller, int port)
 	pd_port_states[port_idx].current = 0;
 	pd_port_states[port_idx].voltage = 0;
 }
+
 void cypd_update_port_state(int controller, int port)
 {
 	int rv;
@@ -1043,6 +1044,8 @@ void cypd_update_port_state(int controller, int port)
 		typec_set_input_current_limit(port_idx, type_c_current, TYPE_C_VOLTAGE);
 		charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
 							type_c_current);
+		pd_port_states[port_idx].current = type_c_current;
+		pd_port_states[port_idx].voltage = TYPE_C_VOLTAGE;
 	} else {
 		typec_set_input_current_limit(port_idx, 0, 0);
 		charge_manager_set_ceil(port,
@@ -1378,6 +1381,11 @@ int cypd_get_ac_power(void)
 		* pd_port_states[prev_charge_port].voltage);
 
 	return (ac_power_mW / 1000);
+}
+
+int cypd_get_active_port_voltage(void)
+{
+	return pd_port_states[prev_charge_port].voltage;
 }
 
 /*****************************************************************************/
