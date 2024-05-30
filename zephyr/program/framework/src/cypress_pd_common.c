@@ -38,7 +38,7 @@
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 
-#define PRODUCT_ID	0x0001
+#define PRODUCT_ID	CONFIG_PD_USB_PID
 #define VENDOR_ID	0x32ac
 
 #undef CCG_INIT_STATE

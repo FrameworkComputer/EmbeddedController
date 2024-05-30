@@ -35,6 +35,13 @@ config CHIPSET_AMD
 	  Framework project which uses the AMD chipset.
 	  Enable the AMD feature.
 
+config PD_USB_PID
+	hex "PD Controller's USB PID"
+	default 0x0001
+	help
+		The USB Product ID (PID) of the PD controller
+		Default is the one we used on 11th Gen and forgot to update on every project since.
+
 config PD_CHIP_CCG8
 	bool "Select CCG8 PD chip"
 	default n
