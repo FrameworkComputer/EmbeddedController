@@ -75,7 +75,7 @@ fp_command_establish_pairing_key_keygen(struct host_cmd_handler_args *args)
 		return EC_RES_UNAVAILABLE;
 	}
 
-	r->encrypted_private_key = std::move(encrypted_private_key).value();
+	r->encrypted_private_key = encrypted_private_key.value();
 
 	std::optional<fp_elliptic_curve_public_key> pubkey =
 		create_pubkey_from_ec_key(*ecdh_key);
@@ -83,7 +83,7 @@ fp_command_establish_pairing_key_keygen(struct host_cmd_handler_args *args)
 		return EC_RES_UNAVAILABLE;
 	}
 
-	r->pubkey = std::move(pubkey).value();
+	r->pubkey = pubkey.value();
 
 	args->response_size = sizeof(*r);
 	return EC_RES_SUCCESS;
