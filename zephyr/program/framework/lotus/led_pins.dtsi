@@ -80,6 +80,7 @@
 
 			color_power_white: color-power-white {
 				led-color = "LED_WHITE";
+				/* maximum duty */
 				led-values = <55>;
 			};
 		};
