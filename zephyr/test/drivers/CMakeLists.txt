@@ -14,6 +14,7 @@ get_target_property(TEST_SOURCES app SOURCES)
 # Add linked suites here
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_DEFAULT default)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_DEFAULT_CONSOLE_CMDS default/src/console_cmd)
+add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_ACPI_STRINGS_FIFO acpi_strings_fifo)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_AMD_FP6_USB_MUX amd_fp6_usb_mux)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_ANX7447 anx7447)
 add_subdirectory_ifdef(CONFIG_LINK_TEST_SUITE_AP_MUX_CONTROL ap_mux_control)

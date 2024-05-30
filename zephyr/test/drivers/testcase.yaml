@@ -182,6 +182,12 @@ tests:
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
     - default/boards/native_posix.overlay
+  drivers.acpi_strings_fifo:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_ACPI_STRINGS_FIFO=y
+    extra_conf_files:
+    - prj.conf
+    - acpi_strings_fifo/prj.conf
   drivers.amd_fp6_usb_mux:
     extra_dtc_overlay_files:
     - ./boards/native_posix.overlay

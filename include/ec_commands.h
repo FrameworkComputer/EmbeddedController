@@ -527,6 +527,65 @@ extern "C" {
 	(((x) & 0xf0) >> USB_RETIMER_FW_UPDATE_OP_SHIFT)
 
 /*
+ * Offset 0x15 is reserved for PBOK, added to Coreboot in
+ * https://crrev.com/c/3840943 and proposed for inclusion here
+ * in https://crrev.com/c/3547317.
+ */
+
+/*
+ * Get extended strings from the EC.
+ * Write:
+ *     String index, or 0 to probe for EC support.
+ * Read:
+ *     String bytes, following by repeating null bytes.
+ *
+ * Writing a byte (EC_ACPI_MEM_STRINGS_FIFO_ID_*) selects a string, and the
+ * following reads return the non-null bytes of the string in sequence until
+ * the end of the string is reached. After the end of the string, reads 0 until
+ * another byte is written. This interface allows ACPI firmware to read longer
+ * strings from the EC than can reasonably fit into the shared memory region.
+ *
+ * To probe for EC support, write FIFO_ID_VERSION and read will return at least
+ * one nonzero (MEM_STRINGS_FIFO_V1 for example) if MEM_STRINGS_FIFO is
+ * supported. Returned values will indicate which strings are supported. If the
+ * first byte is 0xff, the strings FIFO is unsupported.
+ */
+#define EC_ACPI_MEM_STRINGS_FIFO 0x16
+
+/* String index to probe EC support. */
+#define EC_ACPI_MEM_STRINGS_FIFO_ID_VERSION 0
+#define EC_ACPI_MEM_STRINGS_FIFO_V1 1
+/*
+ * 0xff is the value the EC returns for unimplemented reads, indicating
+ * the current EC firmware does not implement this command.
+ */
+#define EC_ACPI_MEM_STRINGS_FIFO_UNSUPPORTED 0xff
+
+/*
+ * Battery model number for the selected battery. Supported since V1.
+ * Presents the same data as EC_MEMMAP_BATT_MODEL, but can provide more
+ * than 8 bytes.
+ *
+ * This and the other FIFO_ID_BATTERY strings can select one of multiple
+ * batteries by changing the value at EC_MEMMAP_BATT_INDEX. Once that index
+ * is changed, reads of these strings will return information for the
+ * corresponding battery, if present.
+ */
+#define EC_ACPI_MEM_STRINGS_FIFO_ID_BATTERY_MODEL 1
+/*
+ * Battery serial number for the selected battery. Supported since V1.
+ * Presents the same data as EC_MEMMAP_BATT_SERIAL, but can provide more
+ * than 8 bytes.
+ */
+#define EC_ACPI_MEM_STRINGS_FIFO_ID_BATTERY_SERIAL 2
+/*
+ * Battery manufacturer for the selected battery. Supported since V1.
+ * Presents the same data as EC_MEMMAP_BATT_MFGR, but can provide more
+ * than 8 bytes.
+ */
+#define EC_ACPI_MEM_STRINGS_FIFO_ID_BATTERY_MANUFACTURER 3
+
+/*
  * ACPI addresses 0x20 - 0xff map to EC_MEMMAP offset 0x00 - 0xdf.  This data
  * is read-only from the AP.  Added in EC_ACPI_MEM_VERSION 2.
  */
