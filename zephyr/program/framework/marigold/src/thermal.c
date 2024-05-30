@@ -153,15 +153,22 @@ void board_override_fan_control(int fan, int *temp)
 
 		apu_filtered_temp = thermal_filter_get(&apu_filtered);
 
+		f75303_get_val_mk(TEMP_CPU_F, &temps_mk[1]);
+		if (thermal_params[TEMP_CPU].temp_fan_off &&
+			thermal_params[TEMP_CPU].temp_fan_max) {
+			apu_pct = thermal_fan_percent(thermal_params[TEMP_CPU].temp_fan_off * 1000,
+						thermal_params[TEMP_CPU].temp_fan_max * 1000,
+						temps_mk[1]);
+		}
 
 		if (thermal_params[TEMP_APU].temp_fan_off &&
 			thermal_params[TEMP_APU].temp_fan_max) {
-			pct = thermal_fan_percent(
+			apu_filtered_pct = thermal_fan_percent(
 				thermal_params[TEMP_APU].temp_fan_off * 1000,
 				thermal_params[TEMP_APU].temp_fan_max * 1000,
 				C_TO_K(apu_filtered_temp)*1000);
 		}
-
+		pct = MAX(apu_pct, apu_filtered_pct)
 		new_rpm = fan_percent_to_rpm(fan, pct);
 		actual_rpm = fan_get_rpm_actual(FAN_CH(fan));
 
