@@ -49,9 +49,15 @@
 #define CCG_CUST_C_CTRL_CONTROL_REG	0x003B
 #define CCG_HPI_VERSION			0x003C
 /*User registers from 0x40 to 0x48 are used for BB retimer */
+#ifdef CONFIG_PD_CHIP_CCG8
 #define CCG_DPM_CMD_REG			0x0040
 #define CCG_MUX_CFG_REG			0x0041
 #define CCG_DEINIT_PORT_REG		0x0042
+#elif defined(CONFIG_PD_CHIP_CCG6)
+#define CCG_DPM_CMD_REG			0x004C
+#define CCG_MUX_CFG_REG			0x004D
+#define CCG_DEINIT_PORT_REG		0x004E
+#endif
 #define CCG_ICL_STS_REG			0x0042
 #define CCG_ICL_BB_RETIMER_CMD_REG	0x0046
 #define CCG_ICL_BB_RETIMER_DAT_REG	0x0048
@@ -426,6 +432,7 @@ enum ccg_response {
 
 enum ccg_pd_state {
 	CCG_STATE_ERROR,
+	CCG_STATE_WAIT_STABLE,
 	CCG_STATE_POWER_ON,
 	CCG_STATE_APP_SETUP,
 	CCG_STATE_READY,
@@ -764,6 +771,13 @@ int cypd_vbus_state_check(void);
  * @return int
  */
 int cypd_get_ac_power(void);
+
+/**
+ * Return active port voltage, return by mV.
+ *
+ * @return int
+ */
+int cypd_get_active_port_voltage(void);
 
 /**
  * Set Pdo profile for safety action

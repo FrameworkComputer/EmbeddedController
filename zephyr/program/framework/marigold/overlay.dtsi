@@ -13,7 +13,8 @@
 
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		local-f75397 {
+		/* QN3 sensor close to voltage regulators */
+		temp_sensor_local: local-f75397 {
 			temp_host_high = <88>;
 			temp_host_halt = <98>;
 			temp_host_release_high = <78>;
@@ -22,16 +23,17 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&local_f75397>;
 		};
-		cpu-f75303 {
+		/* QN2 sensor close to CPU */
+		temp_sensor_cpu: cpu-f75303 {
 			temp_host_high = <88>;
 			temp_host_halt = <98>;
 			temp_host_release_high = <78>;
-			temp_fan_off = <55>;
-			temp_fan_max = <65>;
+			temp_fan_off = <52>;
+			temp_fan_max = <57>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&cpu_f75303>;
 		};
-		battery-temp {
+		temp_sensor_battery: battery-temp {
 			temp_host_high = <50>;
 			temp_host_halt = <60>;
 			temp_host_release_high = <40>;
@@ -40,7 +42,8 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&battery_temp>;
 		};
-		ddr-f75303 {
+		/* QN1 sensor. Located next to RAM */
+		temp_sensor_ddr: ddr-f75303 {
 			temp_host_high = <87>;
 			temp_host_halt = <97>;
 			temp_host_release_high = <77>;
@@ -49,10 +52,10 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&ddr_f75303>;
 		};
-		soc-temp {
+		temp_sensor_soc: soc-temp {
 			/* just read, no protection */
-			temp_fan_off = <103>;
-			temp_fan_max = <105>;
+			temp_fan_off = <55>;
+			temp_fan_max = <85>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&peci_temp>;
 		};

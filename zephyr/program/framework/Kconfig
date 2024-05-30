@@ -35,6 +35,13 @@ config CHIPSET_AMD
 	  Framework project which uses the AMD chipset.
 	  Enable the AMD feature.
 
+config PD_USB_PID
+	hex "PD Controller's USB PID"
+	default 0x0001
+	help
+		The USB Product ID (PID) of the PD controller
+		Default is the one we used on 11th Gen and forgot to update on every project since.
+
 config PD_CHIP_CCG8
 	bool "Select CCG8 PD chip"
 	default n
@@ -80,6 +87,14 @@ config PD_CCG6_SOC_UART_DEBUG_PORT
 	help
 		EC needs to switch the external mux to turn on the path for SoC
 		uart.
+
+config PD_CCG6_WAIT_STABLE_TIMER
+	int "The timer to wait X ms to setup the PD chip"
+	default 0
+	depends on PD_CHIP_CCG6
+	help
+	    EC should wait X ms the PD chip run in stable mode then start to
+		communicate.
 
 config PD_COMMON_VBUS_CONTROL
 	bool "Enable CCG common vbus control"

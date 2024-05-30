@@ -38,8 +38,16 @@
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
 
-#define PRODUCT_ID	0x0001
+#define PRODUCT_ID	CONFIG_PD_USB_PID
 #define VENDOR_ID	0x32ac
+
+#undef CCG_INIT_STATE
+#ifdef CONFIG_PD_CHIP_CCG6
+#define CCG_INIT_STATE CCG_STATE_WAIT_STABLE
+#else
+#define CCG_INIT_STATE CCG_STATE_POWER_ON
+#endif
+
 
 /*
  * Unimplemented functions:
@@ -56,13 +64,13 @@ struct pd_chip_config_t pd_chip_config[] = {
 	[PD_CHIP_0] = {
 		.i2c_port = I2C_PORT_PD_MCU0,
 		.addr_flags = CCG_I2C_CHIP0 | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
-		.state = CCG_STATE_POWER_ON,
+		.state = CCG_INIT_STATE,
 		.gpio = GPIO_EC_PD_INTA_L,
 	},
 	[PD_CHIP_1] = {
 		.i2c_port = I2C_PORT_PD_MCU1,
 		.addr_flags = CCG_I2C_CHIP1 | I2C_FLAG_ADDR16_LITTLE_ENDIAN,
-		.state = CCG_STATE_POWER_ON,
+		.state = CCG_INIT_STATE,
 		.gpio = GPIO_EC_PD_INTB_L,
 	},
 };
@@ -390,7 +398,11 @@ static int pd_3a_flag;
 static int pd_3a_set;
 static int pd_3a_controller;
 static int pd_3a_port;
+static int first_3a_controller;
+static int first_3a_port;
+static int first_port_idx;
 static int pd_ports_1_5A_flag[PD_PORT_COUNT];
+static int rdo_3a_flag[PD_PORT_COUNT];
 
 int cypd_port_3a_status(int controller, int port)
 {
@@ -416,6 +428,16 @@ int cypd_port_3a_set(int controller, int port)
 	pd_3a_port = port_idx;
 
 	return true;
+}
+
+void cypd_port_3a_change(int controller, int port)
+{
+	int port_idx = (controller << 1) + port;
+
+	pd_3a_set = 1;
+	pd_3a_flag = 1;
+	pd_3a_controller = controller;
+	pd_3a_port = port_idx;
 }
 
 void cypd_port_1_5a_set(int controller, int port)
@@ -454,6 +476,7 @@ void cypd_release_port(int controller, int port)
 		pd_3a_flag = 0;
 	}
 	pd_ports_1_5A_flag[port_idx] = 0;
+	rdo_3a_flag[port_idx] = 0;
 }
 
 void cypd_clear_port(int controller, int port)
@@ -465,6 +488,7 @@ void cypd_clear_port(int controller, int port)
 		pd_3a_flag = 0;
 	}
 	pd_ports_1_5A_flag[port_idx] = 0;
+	rdo_3a_flag[port_idx] = 0;
 }
 
 /*
@@ -576,6 +600,7 @@ void cypd_set_typec_profile(int controller, int port)
 	uint8_t rdo_reg[4];
 
 	int rdo_max_current = 0;
+	int rdo_3a_idx = 0;
 	int port_idx = (controller << 1) + port;
 
 	rv = cypd_read_reg_block(controller, CCG_PD_STATUS_REG(port), pd_status_reg, 4);
@@ -597,25 +622,39 @@ void cypd_set_typec_profile(int controller, int port)
 
 			cypd_read_reg_block(controller, CCG_CURRENT_RDO_REG(port), rdo_reg, 4);
 			rdo_max_current = (((rdo_reg[1]>>2) + (rdo_reg[2]<<6)) & 0x3FF)*10;
+			if (rdo_max_current > 1500) {
+				rdo_3a_flag[port_idx] = 1;
+				for (int i = 0; i < PD_PORT_COUNT; i++) {
+					rdo_3a_idx += rdo_3a_flag[i];
+				}
+			}
 
-			if ((cypd_port_force_3A(controller, port) && !pd_3a_flag) ||
+			/* The first device force 3A PDO */
+			if (!pd_3a_flag && cypd_port_3a_set(controller, port)) {
+				rv = cypd_modify_profile(controller, port,
+						CCG_PD_CMD_SET_TYPEC_3A);
+				first_3a_controller = controller;
+				first_3a_port = port;
+				first_port_idx = (controller << 1) + port;
+			/* Another device requires 3A, and the first device can drop to 1.5A */
+			} else if (rdo_3a_flag[port_idx] && rdo_3a_idx == 1) {
+				if (first_port_idx == port_idx)
+					return;
+				rv = cypd_modify_profile(controller, port,
+						CCG_PD_CMD_SET_TYPEC_3A);
+				cypd_select_rp(first_port_idx, CCG_PD_CMD_SET_TYPEC_1_5A);
+				rv = cypd_modify_profile(first_3a_controller, first_3a_port,
+						CCG_PD_CMD_SET_TYPEC_1_5A);
+				cypd_port_3a_change(controller, port);
+			} else if ((cypd_port_force_3A(controller, port) && !pd_3a_flag) ||
 				cypd_port_3a_status(controller, port)) {
 				if (!cypd_port_3a_set(controller, port))
 					return;
 				rv = cypd_modify_profile(controller, port,
 						CCG_PD_CMD_SET_TYPEC_3A);
-			} else if (rdo_max_current <= 1500) {
-				if (cypd_profile_check(controller, port))
-					return;
+			} else if (!cypd_port_3a_status(controller, port))
 				rv = cypd_modify_profile(controller, port,
 						CCG_PD_CMD_SET_TYPEC_1_5A);
-			} else if (!pd_3a_flag && cypd_port_3a_set(controller, port))
-				rv = cypd_modify_profile(controller, port,
-						CCG_PD_CMD_SET_TYPEC_3A);
-			else if (!cypd_profile_check(controller, port))
-				rv = cypd_modify_profile(controller, port,
-						CCG_PD_CMD_SET_TYPEC_1_5A);
-
 		} else {
 			cypd_write_reg8(controller, CCG_PD_CONTROL_REG(port),
 				CCG_PD_CMD_SET_TYPEC_1_5A);
@@ -918,6 +957,7 @@ static void clear_port_state(int controller, int port)
 	pd_port_states[port_idx].current = 0;
 	pd_port_states[port_idx].voltage = 0;
 }
+
 void cypd_update_port_state(int controller, int port)
 {
 	int rv;
@@ -1004,6 +1044,8 @@ void cypd_update_port_state(int controller, int port)
 		typec_set_input_current_limit(port_idx, type_c_current, TYPE_C_VOLTAGE);
 		charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
 							type_c_current);
+		pd_port_states[port_idx].current = type_c_current;
+		pd_port_states[port_idx].voltage = TYPE_C_VOLTAGE;
 	} else {
 		typec_set_input_current_limit(port_idx, 0, 0);
 		charge_manager_set_ceil(port,
@@ -1158,6 +1200,22 @@ static void cypd_handle_state(int controller)
 	int delay = 0;
 
 	switch (pd_chip_config[controller].state) {
+#ifdef CONFIG_PD_CHIP_CCG6
+	case CCG_STATE_WAIT_STABLE:
+		uint64_t timer = get_time().val;
+
+		if (timer > CONFIG_PD_CCG6_WAIT_STABLE_TIMER * MSEC)
+			pd_chip_config[controller].state = CCG_STATE_POWER_ON;
+
+		if (controller == 0) {
+			hook_call_deferred(&pd0_update_state_deferred_data,
+				CONFIG_PD_CCG6_WAIT_STABLE_TIMER * MSEC);
+		} else {
+			hook_call_deferred(&pd1_update_state_deferred_data,
+				CONFIG_PD_CCG6_WAIT_STABLE_TIMER * MSEC);
+		}
+		break;
+#endif
 	case CCG_STATE_POWER_ON:
 		/* poll to see if the controller has booted yet */
 		if (cypd_read_reg8(controller, CCG_DEVICE_MODE, &data) == EC_SUCCESS) {
@@ -1325,6 +1383,11 @@ int cypd_get_ac_power(void)
 	return (ac_power_mW / 1000);
 }
 
+int cypd_get_active_port_voltage(void)
+{
+	return pd_port_states[prev_charge_port].voltage;
+}
+
 /*****************************************************************************/
 /* Interrupt handler */
 
@@ -1339,8 +1402,11 @@ int cypd_device_int(int controller)
 		switch (data & 0xFF) {
 		case CCG_RESPONSE_RESET_COMPLETE:
 			CPRINTS("PD%d Reset Complete", controller);
+#ifdef CONFIG_PD_CHIP_CCG6
+			if (pd_chip_config[controller].state != CCG_STATE_WAIT_STABLE)
+#endif
+				pd_chip_config[controller].state = CCG_STATE_POWER_ON;
 
-			pd_chip_config[controller].state = CCG_STATE_POWER_ON;
 			/* Run state handler to set up controller */
 			task_set_event(TASK_ID_CYPD, 4 << controller);
 			break;

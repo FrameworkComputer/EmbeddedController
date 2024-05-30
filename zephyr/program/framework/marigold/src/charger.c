@@ -12,6 +12,7 @@
 #include "charge_state.h"
 #include "charger.h"
 #include "console.h"
+#include "cypress_pd_common.h"
 #include "driver/charger/isl9241.h"
 #include "extpower.h"
 #include "hooks.h"
@@ -21,6 +22,8 @@
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ## args)
+
+static bool charger_psys_enable_flag;
 
 #ifdef CONFIG_PLATFORM_EC_CHARGER_INIT_CUSTOM
 static void charger_chips_init(void);
@@ -80,9 +83,9 @@ static void charger_chips_init(void)
 			CHARGER_SOLO, no_battery_current_limit_override_ma);
 	}
 
-	/* According to Power team suggest, Set ACOK reference to 4.544V */
+	/* According to Power team suggest, Set ACOK reference to 3.072V */
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(4544)))
+		ISL9241_REG_ACOK_REFERENCE, ISL9241_MV_TO_ACOK_REFERENCE(3072)))
 		goto init_fail;
 
 
@@ -242,6 +245,8 @@ void charger_psys_enable(uint8_t enable)
 	int control4 = 0x0000;
 	int data = 0x0000;
 
+	charger_psys_enable_flag = enable;
+
 	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL1, &control1)) {
 		CPRINTS("read psys control1 fail");
@@ -256,7 +261,8 @@ void charger_psys_enable(uint8_t enable)
 		control1 &= ~ISL9241_CONTROL1_IMON;
 		control1 |= ISL9241_CONTROL1_PSYS;
 		control4 &= ~ISL9241_CONTROL4_GP_COMPARATOR;
-		data = 0x0BC0;		/* Set ACOK reference to 4.544V */
+		/* Set ACOK reference Vadp>15V acok=4.544V, Vadp<=15V acok=3.072V */
+		data = (cypd_get_active_port_voltage() > 15000 ? 0x0BC0 : 0x0800);
 		CPRINTS("Power saving disable");
 	} else {
 		control1 |= ISL9241_CONTROL1_IMON;
@@ -304,4 +310,26 @@ __override void board_hibernate(void)
 	/* Turn off BGATE and NGATE for power saving */
 	charger_psys_enable(0);
 	charge_gate_onoff(0);
+}
+
+void acok_control(int voltage)
+{
+	static int pre_acok_data;
+	int acok_data = 0x00;
+
+	if (!charger_psys_enable_flag)
+		return;
+
+	if (voltage > 15000)
+		acok_data = 0x0BC0; /*set ACOK 4.544V*/
+	else
+		acok_data = 0x0800; /*set ACOK 3.072V*/
+
+	if (acok_data != pre_acok_data) {
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+				ISL9241_REG_ACOK_REFERENCE, acok_data)) {
+			CPRINTS("Update ACOK reference fail");
+		}
+		pre_acok_data = acok_data;
+	}
 }
