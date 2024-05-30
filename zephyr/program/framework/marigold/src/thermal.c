@@ -168,7 +168,7 @@ void board_override_fan_control(int fan, int *temp)
 				thermal_params[TEMP_APU].temp_fan_max * 1000,
 				C_TO_K(apu_filtered_temp)*1000);
 		}
-		pct = MAX(apu_pct, apu_filtered_pct)
+		pct = MAX(apu_pct, apu_filtered_pct);
 		new_rpm = fan_percent_to_rpm(fan, pct);
 		actual_rpm = fan_get_rpm_actual(FAN_CH(fan));
 
