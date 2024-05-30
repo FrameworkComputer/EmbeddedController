@@ -30,12 +30,6 @@
 /* Events for pd_interrupt_handler_task */
 #define PD_PROCESS_INTERRUPT BIT(0)
 
-/*
- * Theoretically, we may need to support up to 1800 USB-PD packets per second
- * for intensive operations such as BIST compliance tests. This value has tested
- * well preventing watchdog resets with a single bad port partner plugged in.
- */
-#define ALERT_STORM_MAX_COUNT 1800
 #define ALERT_STORM_INTERVAL SECOND
 
 static uint8_t pd_int_task_id[CONFIG_USB_PD_PORT_MAX_COUNT];
@@ -72,7 +66,7 @@ static void service_one_port(int port)
 		 * now
 		 */
 		storm_tracker[port].count = 1;
-	} else if (++storm_tracker[port].count > ALERT_STORM_MAX_COUNT) {
+	} else if (++storm_tracker[port].count > CONFIG_USB_PD_INT_STORM_MAX) {
 		CPRINTS("C%d: Interrupt storm detected."
 			" Disabling port temporarily",
 			port);

@@ -444,6 +444,13 @@ config PLATFORM_EC_USB_PD_RESET_PRESERVE_RECOVERY_FLAGS
 	  micro and therefore can't use cros_ec_hardrec_power. See b/293545949
 	  and b/295363809.
 
+config PLATFORM_EC_USB_PD_INT_STORM_MAX
+	int "Interrupt limit per second"
+	default 1800
+	help
+	  Maximum rate of interrupts from PD stack (per second) that EC
+	  can support without causing a watchdog.
+
 rsource "Kconfig.svdm_rsp"
 
 endif  # PLATFORM_EC_USB_POWER_DELIVERY

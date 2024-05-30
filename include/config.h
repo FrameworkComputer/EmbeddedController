@@ -5623,6 +5623,13 @@
  */
 #undef CONFIG_USB_PD_MAX_TOTAL_SOURCE_CURRENT
 
+/*
+ * Maximum number of interrupts in a second. Exceeding this limit
+ * will cause the TCPM to break the PD connection to avoid a
+ * watchdog timeout crash
+ */
+#define CONFIG_USB_PD_INT_STORM_MAX 1800
+
 /******************************************************************************/
 /* stm32f4 dwc usb configs. */
 
