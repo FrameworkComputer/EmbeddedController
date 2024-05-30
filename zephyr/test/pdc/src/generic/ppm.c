@@ -165,6 +165,18 @@ static void trigger_expected_connector_change(struct ppm_test_fixture *fixture,
 	fixture->ppm->lpm_alert(fixture->ppm->dev, connector);
 }
 
+static int raw_ppm_read(struct ppm_test_fixture *fixture, uint32_t offset,
+			void *buf, size_t length)
+{
+	return fixture->ppm->read(fixture->ppm->dev, offset, buf, length);
+}
+
+static int raw_ppm_write(struct ppm_test_fixture *fixture, uint32_t offset,
+			 const void *buf, size_t length)
+{
+	return fixture->ppm->write(fixture->ppm->dev, offset, buf, length);
+}
+
 static int write_command(struct ppm_test_fixture *fixture,
 			 struct ucsi_control *control)
 {
@@ -979,4 +991,60 @@ ZTEST_USER_F(ppm_test, test_ppm_reset_works_in_all_states)
 	zassert_false(write_ppm_reset(fixture) < 0);
 	zassert_true(wait_for_cmd_to_process(fixture));
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE);
+}
+
+/* Check that read and write do proper bounds checking. */
+ZTEST_USER_F(ppm_test, test_invalid_read_writes)
+{
+	size_t ucsi_region_size = sizeof(struct ucsi_memory_region);
+	const char buf[32];
+
+	initialize_fake_to_idle_notify(fixture);
+
+	/* Read outside bounds of UCSI memory region should fail. */
+	zassert_equal(raw_ppm_read(fixture, /*offset=*/0, /*buf=*/NULL,
+				   /*length=*/ucsi_region_size + 1),
+		      -EINVAL);
+	zassert_equal(raw_ppm_read(fixture, /*offset=*/ucsi_region_size,
+				   /*buf=*/NULL,
+				   /*length=*/1),
+		      -EINVAL);
+
+	/* Buf and length must be specified for writes. */
+	zassert_equal(raw_ppm_write(fixture, /*offset=*/0, /*buf=*/NULL,
+				    /*length=*/4),
+		      -EINVAL);
+	zassert_equal(raw_ppm_write(fixture, /*offset=*/0, buf, /*length=*/0),
+		      -EINVAL);
+
+	/*
+	 * OPM can only write to CONTROL and anywhere in MESSAGE_OUT region.
+	 * Fail everything else.
+	 */
+	zassert_equal(raw_ppm_write(fixture, UCSI_CONTROL_OFFSET - 1, buf,
+				    sizeof(struct ucsi_control)),
+		      -EINVAL);
+	zassert_equal(raw_ppm_write(fixture, UCSI_CONTROL_OFFSET + 4, buf,
+				    sizeof(struct ucsi_control)),
+		      -EINVAL);
+	zassert_equal(raw_ppm_write(fixture, UCSI_MESSAGE_OUT_OFFSET - 1, buf,
+				    sizeof(struct ucsi_control)),
+		      -EINVAL);
+	zassert_equal(
+		raw_ppm_write(fixture, UCSI_MESSAGE_OUT_OFFSET + 1, buf,
+			      sizeof(struct ucsi_control) + MESSAGE_OUT_SIZE),
+		-EINVAL);
+
+	/* Invalid writes to control should fail. */
+	zassert_equal(raw_ppm_write(fixture, UCSI_CONTROL_OFFSET, buf,
+				    sizeof(struct ucsi_control) + 1),
+		      -EINVAL);
+
+	/* Writing while busy should result in failure. */
+	struct ucsi_control control = {
+		.command = UCSI_CMD_GET_CONNECTOR_CAPABILITY, .data_length = 0
+	};
+	/* First write succeeds and second one responds with -EBUSY. */
+	zassert_false(write_command(fixture, &control) < 0);
+	zassert_equal(write_command(fixture, &control), -EBUSY);
 }
