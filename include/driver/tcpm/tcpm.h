@@ -34,7 +34,7 @@ extern "C" {
  * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
  * #line marks the *next* line, so it is off by one.
  */
-#line 34
+#line 38
 
 #ifndef CONFIG_USB_PD_TCPC
 
