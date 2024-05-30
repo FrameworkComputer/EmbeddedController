@@ -33,6 +33,18 @@
 	};
 };
 
+&uart2 {
+	status = "disabled";
+
+	one_wire_uart: one-wire-uart {
+		status = "disabled";
+	};
+};
+
+&ite_uart2_wrapper {
+	status = "disabled";
+};
+
 &usb0 {
 	status = "okay";
 	pinctrl-0 = <&usb0_dm_gph5_default
