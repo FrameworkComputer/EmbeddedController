@@ -40,6 +40,7 @@
 #include <libec/add_entropy_command.h>
 #include <libec/ec_panicinfo.h>
 #include <libec/fingerprint/fp_encryption_status_command.h>
+#include <libec/fingerprint/fp_frame_command.h>
 #include <libec/flash_protect_command.h>
 #include <libec/rand_num_command.h>
 #include <libec/versions_command.h>
@@ -1869,22 +1870,16 @@ int cmd_apreset(int argc, char *argv[])
  *   0  (aka FP_FRAME_INDEX_RAW_IMAGE) for the full vendor raw finger image.
  *   1..n for a finger template.
  *
- * @returns a pointer to the buffer allocated to contain the frame or NULL
- * if case of error. The caller must call free() once it no longer needs the
- * buffer.
+ * @returns a vector<uint8_t> containing the the requested frame.
  */
-static void *fp_download_frame(struct ec_response_fp_info *info, int index)
+static std::unique_ptr<std::vector<uint8_t> >
+fp_download_frame(struct ec_response_fp_info *info, int index)
 {
-	struct ec_params_fp_frame p;
 	int rv = 0;
-	size_t stride, size;
-	void *buffer;
-	uint8_t *ptr;
+	size_t size;
 	int cmdver = ec_cmd_version_supported(EC_CMD_FP_INFO, 1) ? 1 : 0;
 	int rsize = cmdver == 1 ? sizeof(*info) :
 				  sizeof(struct ec_response_fp_info_v0);
-	const int max_attempts = 3;
-	int num_attempts;
 
 	/* templates not supported in command v0 */
 	if (index > 0 && cmdver == 0)
@@ -1903,38 +1898,22 @@ static void *fp_download_frame(struct ec_response_fp_info *info, int index)
 		size = info->template_size;
 	}
 
-	buffer = malloc(size);
-	if (!buffer) {
-		fprintf(stderr, "Cannot allocate memory for the image\n");
-		return NULL;
+	auto frame_cmd = ec::FpFrameCommand::Create(index, size, ec_max_insize);
+	if (!frame_cmd) {
+		fprintf(stderr, "Fp Frame command given invalid params\n");
+		return nullptr;
+	}
+	if (!frame_cmd->Run(comm_get_fd())) {
+		const char *error_str = strerror(errno);
+		if (frame_cmd->Result() != ec::kEcCommandUninitializedResult) {
+			error_str = frame_cmd->ResultString().c_str();
+		}
+		fprintf(stderr, "Fp Frame command failed with error: %s\n",
+			error_str);
+		return nullptr;
 	}
 
-	ptr = (uint8_t *)(buffer);
-	p.offset = index << FP_FRAME_INDEX_SHIFT;
-	while (size) {
-		stride = MIN(ec_max_insize, size);
-		p.size = stride;
-		num_attempts = 0;
-		while (num_attempts < max_attempts) {
-			num_attempts++;
-			rv = ec_command(EC_CMD_FP_FRAME, 0, &p, sizeof(p), ptr,
-					stride);
-			if (rv >= 0)
-				break;
-			if (rv == -EECRESULT - EC_RES_ACCESS_DENIED)
-				break;
-			usleep(100000);
-		}
-		if (rv < 0) {
-			free(buffer);
-			return NULL;
-		}
-		p.offset += stride;
-		size -= stride;
-		ptr += stride;
-	}
-
-	return buffer;
+	return frame_cmd->frame();
 }
 
 int cmd_fp_mode(int argc, char *argv[])
@@ -2185,31 +2164,28 @@ int cmd_fp_frame(int argc, char *argv[])
 	int idx = (argc == 2 && !strcasecmp(argv[1], "raw")) ?
 			  FP_FRAME_INDEX_RAW_IMAGE :
 			  FP_FRAME_INDEX_SIMPLE_IMAGE;
-	uint8_t *buffer = (uint8_t *)(fp_download_frame(&r, idx));
-	uint8_t *ptr = buffer;
-	int x, y;
-
-	if (!buffer) {
+	auto fp_frame = fp_download_frame(&r, idx);
+	if (!fp_frame) {
 		fprintf(stderr, "Failed to get FP sensor frame\n");
 		return -1;
 	}
 
 	if (idx == FP_FRAME_INDEX_RAW_IMAGE) {
-		fwrite(buffer, r.frame_size, 1, stdout);
-		goto frame_done;
+		assert(fp_frame->size() == r.frame_size);
+		fwrite(fp_frame->data(), r.frame_size, 1, stdout);
+		return 0;
 	}
 
 	/* Print 8-bpp PGM ASCII header */
 	printf("P2\n%d %d\n%d\n", r.width, r.height, (1 << r.bpp) - 1);
 
-	for (y = 0; y < r.height; y++) {
-		for (x = 0; x < r.width; x++, ptr++)
+	uint8_t *ptr = fp_frame->data();
+	for (int y = 0; y < r.height; y++) {
+		for (int x = 0; x < r.width; x++, ptr++)
 			printf("%d ", *ptr);
 		printf("\n");
 	}
 	printf("# END OF FILE\n");
-frame_done:
-	free(buffer);
 	return 0;
 }
 
@@ -2235,13 +2211,13 @@ int cmd_fp_template(int argc, char *argv[])
 
 	idx = strtol(argv[1], &e, 0);
 	if (!(e && *e)) {
-		buffer = (char *)(fp_download_frame(&r, idx + 1));
-		if (!buffer) {
+		auto fp_frame = fp_download_frame(&r, idx + 1);
+		if (!fp_frame) {
 			fprintf(stderr, "Failed to get FP template %d\n", idx);
 			return -1;
 		}
-		fwrite(buffer, r.template_size, 1, stdout);
-		free(buffer);
+		assert(fp_frame->size() == r.template_size);
+		fwrite(fp_frame->data(), r.template_size, 1, stdout);
 		return 0;
 	}
 	/* not an index, is it a filename ? */
