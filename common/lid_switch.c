@@ -14,6 +14,7 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#line 18
 #include "hooks.h"
 #include "host_command.h"
 #include "keyboard_scan.h"

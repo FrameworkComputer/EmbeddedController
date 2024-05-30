@@ -14,6 +14,7 @@
 #include "common.h"
 #include "console.h"
 #include "display_7seg.h"
+#line 18
 #include "hooks.h"
 #include "host_command.h"
 #include "port80.h"
