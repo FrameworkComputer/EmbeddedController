@@ -98,22 +98,22 @@ int fan_percent_to_rpm(int fan_index, int temp_ratio)
 }
 
 bool log_thermal;
-// battery-temp
+/* battery-temp */
 #define TEMP_BATTERY TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_battery))
 
-// TODO: Rename to SOC
-// soc-temp
+/* TODO: Rename to SOC */
+/* soc-temp */
 #define TEMP_APU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_soc))
 
-// ddr-f75303
+/* ddr-f75303 */
 #define TEMP_DDR TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_ddr))
 #define TEMP_DDR_F F75303_SENSOR_ID(DT_NODELABEL(ddr_f75303))
 
-// cpu-f75303
+/* cpu-f75303 */
 #define TEMP_CPU TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_cpu))
 #define TEMP_CPU_F F75303_SENSOR_ID(DT_NODELABEL(cpu_f75303))
 
-// local-f75397
+/* local-f75397 */
 #define TEMP_LOCAL TEMP_SENSOR_ID(DT_NODELABEL(temp_sensor_local))
 #define TEMP_LOCAL_F F75397_SENSOR_ID(DT_NODELABEL(local_f75397))
 
@@ -136,7 +136,9 @@ void board_override_fan_control(int fan, int *temp)
 	static timestamp_t deadline;
 	timestamp_t now = get_time();
 
-	// CPRINTS("fan: %d, is_thermal_control_enabled: %d", fan, is_thermal_control_enabled(fan));
+	/*
+	 * CPRINTS("fan: %d, is_thermal_control_enabled: %d", fan, is_thermal_control_enabled(fan));
+	 * */
 	if (!is_thermal_control_enabled(fan))
 		return;
 
@@ -149,7 +151,7 @@ void board_override_fan_control(int fan, int *temp)
 		if (fan == 0) {
 			thermal_filter_update(&apu_filtered, temp[TEMP_APU]);
 		}
-		//f75303_get_val_mk(TEMP_CPU_F, &apu_temp_mk);
+		/*f75303_get_val_mk(TEMP_CPU_F, &apu_temp_mk); */
 
 		apu_filtered_temp = thermal_filter_get(&apu_filtered);
 
@@ -206,7 +208,9 @@ void board_override_fan_control(int fan, int *temp)
 				"\t%d\t"
 				"\t%d\t%d\t%d\t"
 				"\t%d\t%d",
-				MILLI_KELVIN_TO_CELSIUS(temps_mk[0]), MILLI_KELVIN_TO_CELSIUS(temps_mk[1]), MILLI_KELVIN_TO_CELSIUS(temps_mk[2]),
+				MILLI_KELVIN_TO_CELSIUS(temps_mk[0]),
+				MILLI_KELVIN_TO_CELSIUS(temps_mk[1]),
+				MILLI_KELVIN_TO_CELSIUS(temps_mk[2]),
 				temp[TEMP_BATTERY], temp[TEMP_APU],
 				thermal_filter_get(&apu_filtered),
 				pct, apu_pct, apu_filtered_pct,
