@@ -93,13 +93,6 @@ struct node_prop_t {
 	bool state_active;
 };
 
-enum breath_status {
-	BREATH_LIGHT_UP = 0,
-	BREATH_LIGHT_DOWN,
-	BREATH_HOLD,
-	BREATH_OFF,
-};
-
 #define PATTERN_NODE_ARRAY(id) DT_CAT(PATTERN_ARRAY_, id)
 #define GEN_PATTERN_NODE_ARRAY(id, fn1, fn2)          \
 	struct led_pattern_node_t PATTERN_NODE_ARRAY( \
@@ -144,6 +137,10 @@ const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED,
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
+static int led_tick_time = 200;
+static bool pre_multifunction_led_state;
+static bool pre_fingerprint_led_state;
+
 test_export_static enum power_state get_chipset_state(void)
 {
 	enum power_state chipset_state = 0;
@@ -165,17 +162,73 @@ test_export_static enum power_state get_chipset_state(void)
 	return chipset_state;
 }
 
+static void change_pwm_led_maximum_duty(void)
+{
+	int node_idx, pattern_idx, color_idx, num_patterns;
+	enum ec_led_id id;
+	struct led_pattern_node_t *patt;
+	struct pwm_pin_t *target_pwm;
+	uint8_t fingerpint_led_level;
+	uint64_t pulse_ns;
+
+	system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &fingerpint_led_level);
+
+	if (fingerpint_led_level == 0)
+		fingerpint_led_level = FP_LED_HIGH;
+
+	pulse_ns = DIV_ROUND_NEAREST(BOARD_LED_PWM_PERIOD_NS * fingerpint_led_level, 100);
+
+	/* found the power led id */
+	for (node_idx = 0; node_idx < ARRAY_SIZE(node_array); node_idx++) {
+
+		num_patterns = node_array[node_idx].num_patterns;
+		patt = node_array[node_idx].led_patterns;
+
+		for (pattern_idx = 0; pattern_idx < num_patterns; pattern_idx++) {
+
+			id = patt[pattern_idx].pattern_color[0].led_color_node->led_id;
+			if (id == EC_LED_ID_POWER_LED) {
+
+				for (color_idx = 0; color_idx < patt->pattern_len;
+					color_idx++) {
+					target_pwm =
+					  patt->pattern_color[color_idx].led_color_node->pwm_pins;
+
+					if (target_pwm->pulse_ns != 0)
+						target_pwm->pulse_ns = pulse_ns;
+				}
+			}
+		}
+	}
+}
+DECLARE_DEFERRED(change_pwm_led_maximum_duty);
+DECLARE_HOOK(HOOK_INIT, change_pwm_led_maximum_duty, HOOK_PRIO_DEFAULT + 1);
+
+void update_pwr_led_level(void)
+{
+	hook_call_deferred(&change_pwm_led_maximum_duty_data, 100 * MSEC);
+}
+
 static void set_color(int node_idx)
 {
 	struct led_pattern_node_t *patterns = node_array[node_idx].led_patterns;
+	enum ec_led_id led_id;
 
 	for (int i = 0; i < node_array[node_idx].num_patterns; i++) {
-		if (patterns[i].pattern_color[0].led_color_node->led_id == EC_LED_ID_POWER_LED)
+
+		led_id = patterns[i].pattern_color[0].led_color_node->led_id;
+
+		/* Auto control is disabled, factory control */
+		if (!led_auto_control_is_enabled(led_id))
 			continue;
 
-		if (!led_auto_control_is_enabled(
-			    patterns[i].pattern_color[0].led_color_node->led_id))
-			continue; /* Auto control is disabled */
+		/* customized fingerprint led feature is enabled */
+		if (pre_fingerprint_led_state && led_id == EC_LED_ID_POWER_LED)
+			continue;
+
+		/* customized multifunctino led feature is enabled */
+		if (pre_multifunction_led_state && led_id == EC_LED_ID_BATTERY_LED)
+			continue;
 
 		led_set_color_with_pattern(&patterns[i]);
 
@@ -207,19 +260,26 @@ static int match_node(int node_idx)
 		enum led_pwr_state pwr_state = led_pwr_get_state();
 		int port = charge_manager_get_active_charge_port();
 
-		if (pwr_state == LED_PWRS_DISCHARGE || pwr_state == LED_PWRS_DISCHARGE_FULL ||
-			(pwr_state == LED_PWRS_IDLE && port < 0)) {
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 0);
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 0);
-		} else {
-			if (port < 0) {
-				LOG_ERR("Illegal condition, port:%d, pwr:%d", port, pwr_state);
-				return -1;
+		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED) &&
+			!pre_multifunction_led_state) {
+			if (pwr_state == LED_PWRS_DISCHARGE ||
+				pwr_state == LED_PWRS_DISCHARGE_FULL ||
+				(pwr_state == LED_PWRS_IDLE && port < 0)) {
+				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 0);
+				gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 0);
+			} else {
+				if (port < 0) {
+					LOG_ERR("Illegal condition, port:%d, pwr:%d",
+						port, pwr_state);
+					return -1;
+				}
+				gpio_pin_set_dt(
+					GPIO_DT_FROM_NODELABEL(gpio_right_side),
+						(port < 2) ? 1 : 0);
+				gpio_pin_set_dt(
+					GPIO_DT_FROM_NODELABEL(gpio_left_side),
+						(port >= 2) ? 1 : 0);
 			}
-			gpio_pin_set_dt(
-				GPIO_DT_FROM_NODELABEL(gpio_right_side), (port < 2) ? 1 : 0);
-			gpio_pin_set_dt(
-				GPIO_DT_FROM_NODELABEL(gpio_left_side), (port >= 2) ? 1 : 0);
 		}
 
 		if (node_array[node_idx].pwr_state != pwr_state) {
@@ -285,194 +345,6 @@ static int match_node(int node_idx)
 	return node_idx;
 }
 
-/* =========== Breath API =========== */
-
-uint8_t breath_led_light_up;
-uint8_t breath_led_light_down;
-uint8_t breath_led_hold;
-uint8_t breath_led_off;
-
-int breath_pwm_enable;
-int breath_led_status;
-static void breath_led_pwm_deferred(void);
-DECLARE_DEFERRED(breath_led_pwm_deferred);
-
-static void multifunction_pwr_leds_control(int *colors, int num_color, int period)
-{
-	static uint32_t ticks;
-	static int idx;
-
-	ticks++;
-
-	if ((ticks * 200) >= period) {
-		ticks = 0;
-		idx++;
-
-		if (idx >= num_color)
-			idx = 0;
-	}
-
-	led_set_color(colors[idx], EC_LED_ID_POWER_LED);
-	board_led_apply_color();
-}
-
-/*
- *	Breath LED API
- *	Max duty (percentage) = BREATH_LIGHT_LENGTH (100%)
- *	Fade time (second) = 1000ms(In) / 1000ms(Out)
- *	Duration time (second) = BREATH_HOLD_LENGTH(500ms)
- *	Interval time (second) = BREATH_OFF_LENGTH(2000ms)
- */
-static void breath_led_pwm_deferred(void)
-{
-	uint8_t led_hold_length;
-	uint8_t led_duty_percentage;
-	uint8_t bbram_led_level;
-
-#ifdef CONFIG_BOARD_LOTUS
-	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
-		bbram_led_level = FP_LED_LOW;
-	else
-#endif
-		system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &bbram_led_level);
-
-	switch (bbram_led_level) {
-	case FP_LED_LOW:
-		led_duty_percentage = FP_LED_LOW;
-		led_hold_length = BREATH_ON_LENGTH_LOW;
-		break;
-	case FP_LED_MEDIUM:
-		led_duty_percentage = FP_LED_MEDIUM;
-		led_hold_length = BREATH_ON_LENGTH_MID;
-		break;
-	case FP_LED_HIGH:
-	default:
-		led_duty_percentage = FP_LED_HIGH;
-		led_hold_length = BREATH_ON_LENGTH_HIGH;
-		break;
-	}
-
-	switch (breath_led_status) {
-	case BREATH_LIGHT_UP:
-
-		if (breath_led_light_up <= led_duty_percentage)
-			pwm_set_breath_dt(breath_led_light_up++);
-		else {
-			breath_led_light_up = 0;
-			breath_led_light_down = led_duty_percentage;
-			breath_led_status = BREATH_HOLD;
-		}
-
-		break;
-	case BREATH_HOLD:
-
-		if (breath_led_hold <= led_hold_length)
-			breath_led_hold++;
-		else {
-			breath_led_hold = 0;
-			breath_led_status = BREATH_LIGHT_DOWN;
-		}
-
-		break;
-	case BREATH_LIGHT_DOWN:
-
-		if (breath_led_light_down != 0)
-			pwm_set_breath_dt(--breath_led_light_down);
-		else {
-			breath_led_light_down = led_duty_percentage;
-			breath_led_status = BREATH_OFF;
-		}
-
-		break;
-	case BREATH_OFF:
-
-		if (breath_led_off <= BREATH_OFF_LENGTH)
-			breath_led_off++;
-		else {
-			breath_led_off = 0;
-			breath_led_status = BREATH_LIGHT_UP;
-		}
-
-		break;
-	}
-
-	if (breath_pwm_enable)
-		hook_call_deferred(&breath_led_pwm_deferred_data, 10 * MSEC);
-}
-
-void breath_led_run(uint8_t enable)
-{
-	if (enable && !breath_pwm_enable) {
-		breath_pwm_enable = true;
-		breath_led_status = BREATH_LIGHT_UP;
-		hook_call_deferred(&breath_led_pwm_deferred_data, 10 * MSEC);
-	} else if (!enable && breath_pwm_enable) {
-		breath_pwm_enable = false;
-		breath_led_light_up = 0;
-		breath_led_light_down = 0;
-		breath_led_hold = 0;
-		breath_led_off = 0;
-		breath_led_status = BREATH_OFF;
-		hook_call_deferred(&breath_led_pwm_deferred_data, -1);
-	}
-}
-
-static void board_led_set_power(void)
-{
-	uint8_t bbram_led_level;
-	int colors[3] = {LED_OFF, LED_OFF, LED_OFF};
-
-	system_get_bbram(SYSTEM_BBRAM_IDX_FP_LED_LEVEL, &bbram_led_level);
-
-	/* turn off led when lid is close*/
-	if (!lid_is_open()) {
-		breath_led_run(0);
-		led_set_color(LED_OFF, EC_LED_ID_POWER_LED);
-		return;
-	}
-
-	if (check_s0ix_status()) {
-		breath_led_run(1);
-		return;
-	}
-
-	breath_led_run(0);
-
-	if (chipset_in_state(CHIPSET_STATE_ON)) {
-		if (charge_get_percent() < 3 && !extpower_is_present()) {
-			colors[0] = LED_WHITE;
-			colors[1] = LED_OFF;
-			colors[2] = LED_OFF;
-			multifunction_pwr_leds_control(colors, 2, 500);
-		} else {
-			pwm_set_breath_dt(bbram_led_level ? bbram_led_level : FP_LED_HIGH);
-		}
-	} else
-		led_set_color(LED_OFF, EC_LED_ID_POWER_LED);
-}
-
-static void multifunction_leds_control(int *colors, int num_color, int period)
-{
-	static uint32_t ticks;
-	static int idx;
-
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 1);
-
-	ticks++;
-
-	if ((ticks * 200) >= period) {
-		ticks = 0;
-		idx++;
-
-		if (idx >= num_color)
-			idx = 0;
-	}
-
-	led_set_color(colors[idx], EC_LED_ID_BATTERY_LED);
-	board_led_apply_color();
-}
-
 static void board_led_set_color(void)
 {
 	bool found_node = false;
@@ -497,33 +369,45 @@ static void board_led_set_color(void)
 		LOG_ERR("Node with matching prop not found");
 }
 
-/* Called by hook task every HOOK_TICK_INTERVAL_MS */
-static void led_tick(void)
+static void customized_leds_set_color(int *colors, int num_color,
+			int period, enum ec_led_id id)
 {
+	static uint32_t ticks;
+	static int idx;
 
+	ticks++;
+
+	if ((ticks * led_tick_time) >= period) {
+		ticks = 0;
+		idx++;
+
+		if (idx >= num_color)
+			idx = 0;
+	}
+
+	led_set_color(colors[idx], id);
+}
+
+static bool multifunction_leds_control(void)
+{
 	int colors[3] = {LED_OFF, LED_OFF, LED_OFF};
 
-	if (led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
-		board_led_set_power();
-
-	/* Facotry test */
-	if (!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 1);
-		return;
-	}
+	/* In facotry mode, don't control led */
+	if (!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
+		return false;
 
 	/* Debug Active */
 	if (diagnostics_tick())
-		return;
+		return true;
 
 	/* Battery disconnect active signal */
 	if (battery_is_cut_off()) {
 		colors[0] = LED_RED;
 		colors[1] = LED_BLUE;
 		colors[2] = LED_OFF;
-		multifunction_leds_control(colors, 2, CONFIG_PLATFORM_MULTI_LED_FREQ);
-		return;
+		customized_leds_set_color(colors, 2, CONFIG_PLATFORM_MULTI_LED_FREQ,
+			EC_LED_ID_BATTERY_LED);
+		return true;
 	}
 
 	/* Battery is not present, ignored if in standalone mode */
@@ -531,8 +415,9 @@ static void led_tick(void)
 		colors[0] = LED_RED;
 		colors[1] = LED_BLUE;
 		colors[2] = LED_OFF;
-		multifunction_leds_control(colors, 2, CONFIG_PLATFORM_MULTI_LED_FREQ);
-		return;
+		customized_leds_set_color(colors, 2, CONFIG_PLATFORM_MULTI_LED_FREQ,
+			EC_LED_ID_BATTERY_LED);
+		return true;
 	}
 
 	/* C cover detect switch open */
@@ -542,8 +427,8 @@ static void led_tick(void)
 		colors[0] = LED_RED;
 		colors[1] = LED_OFF;
 		colors[2] = LED_OFF;
-		multifunction_leds_control(colors, 2, 1000);
-		return;
+		customized_leds_set_color(colors, 2, 1000, EC_LED_ID_BATTERY_LED);
+		return true;
 	}
 
 #ifdef CONFIG_BOARD_LOTUS
@@ -553,8 +438,8 @@ static void led_tick(void)
 		colors[0] = LED_RED;
 		colors[1] = LED_AMBER;
 		colors[2] = LED_OFF;
-		multifunction_leds_control(colors, 3, 1000);
-		return;
+		customized_leds_set_color(colors, 3, 1000, EC_LED_ID_BATTERY_LED);
+		return true;
 	}
 
 	/* GPU Bay Module Fault */
@@ -562,8 +447,8 @@ static void led_tick(void)
 		colors[0] = LED_RED;
 		colors[1] = LED_AMBER;
 		colors[2] = LED_OFF;
-		multifunction_leds_control(colors, 3, 1000);
-		return;
+		customized_leds_set_color(colors, 3, 1000, EC_LED_ID_BATTERY_LED);
+		return true;
 	}
 
 	/* Input Deck not fully populated */
@@ -572,15 +457,74 @@ static void led_tick(void)
 		colors[0] = LED_RED;
 		colors[1] = LED_BLUE;
 		colors[2] = LED_OFF;
-		multifunction_leds_control(colors, 3, 500);
-		return;
+		customized_leds_set_color(colors, 3, 500, EC_LED_ID_BATTERY_LED);
+		return true;
 	}
 #endif
 
+	return false;
+}
+
+static bool fingerprint_led_control(void)
+{
+	int colors[3] = {LED_OFF, LED_OFF, LED_OFF};
+
+	/* In facotry mode, don't control led */
+	if (!led_auto_control_is_enabled(EC_LED_ID_POWER_LED))
+		return false;
+
+	if (chipset_in_state(CHIPSET_STATE_ON) && (charge_get_percent() < 3) &&
+		!extpower_is_present()) {
+		colors[0] = LED_WHITE;
+		colors[1] = LED_OFF;
+		colors[2] = LED_OFF;
+		customized_leds_set_color(colors, 2, 500, EC_LED_ID_POWER_LED);
+		return true;
+	}
+
+	return false;
+}
+
+/* Called by hook task every HOOK_TICK_INTERVAL_MS */
+static void led_tick(void);
+DECLARE_DEFERRED(led_tick);
+static void led_tick(void)
+{
+	int enable;
+
+	/* If multifunction leds is enabled, disable the battery led auto control */
+	enable = multifunction_leds_control();
+	if (pre_multifunction_led_state != enable)
+		pre_multifunction_led_state = enable;
+
+	/* If multifunction leds is enabled, disable the power led auto control */
+	enable = fingerprint_led_control();
+	if (pre_fingerprint_led_state != enable)
+		pre_fingerprint_led_state = enable;
+
+	/* Facotry test */
+	if (!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED) ||
+		pre_fingerprint_led_state || pre_multifunction_led_state) {
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 1);
+	}
+
+	if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+		led_tick_time = 10;
+	else
+		led_tick_time = 200;
+
 	board_led_set_color();
 	board_led_apply_color();
+
+	hook_call_deferred(&led_tick_data, led_tick_time * MSEC);
 }
-DECLARE_HOOK(HOOK_TICK, led_tick, HOOK_PRIO_DEFAULT);
+
+static void led_hook_init(void)
+{
+	hook_call_deferred(&led_tick_data, 200 * MSEC);
+}
+DECLARE_HOOK(HOOK_INIT, led_hook_init, HOOK_PRIO_DEFAULT);
 
 void led_control(enum ec_led_id led_id, enum ec_led_state state)
 {

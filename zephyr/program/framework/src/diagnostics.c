@@ -86,7 +86,6 @@ void cancel_diagnostics(void)
 static void set_diagnostic_leds(int color)
 {
 	led_set_color(color, EC_LED_ID_BATTERY_LED);
-	board_led_apply_color();
 }
 
 void set_diagnostic(enum diagnostics_device_idx idx, bool error)
@@ -179,10 +178,6 @@ bool diagnostics_tick(void)
 	/* Everything is ok after minimum 90 seconds of checking */
 	if (bios_complete && hw_diagnostics == 0)
 		return false;
-
-	/* Turn on LEDs on both sides */
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 1);
 
 	/* If something is wrong, display the diagnostic via the LED */
 	if (diagnostic_tick & 0x01)
