@@ -173,6 +173,27 @@ static int write_command(struct ppm_test_fixture *fixture,
 				   sizeof(struct ucsi_control));
 }
 
+static int read_command_result(struct ppm_test_fixture *fixture, uint8_t *out,
+			       size_t out_size)
+{
+	struct ucsi_cci cci;
+	int rv = fixture->ppm->read(fixture->ppm->dev, UCSI_CCI_OFFSET,
+				    (void *)&cci, sizeof(cci));
+
+	if (rv < 0) {
+		return rv;
+	}
+
+	if (out_size < cci.data_length) {
+		LOG_ERR("Data length in CCI (0x%x) greater than expected 0x%0x",
+			cci.data_length, out_size);
+		return -EINVAL;
+	}
+
+	return fixture->ppm->read(fixture->ppm->dev, UCSI_MESSAGE_IN_OFFSET,
+				  out, cci.data_length);
+}
+
 static int write_ack_command(struct ppm_test_fixture *fixture,
 			     bool connector_change_ack,
 			     bool command_complete_ack)
@@ -565,6 +586,35 @@ ZTEST_USER_F(ppm_test,
 
 	struct ucsi_cci cci = { .connector_changed = PDC_DEFAULT_CONNECTOR };
 	zassert_true(check_cci_matches(fixture, &cci));
+}
+
+/* Send invalid UCSI command and expect an error. */
+ZTEST_USER_F(ppm_test, test_IDLENOTIFY_send_invalid_ucsi_command)
+{
+	initialize_fake_to_idle_notify(fixture);
+
+	struct ucsi_control control = { .command = UCSI_CMD_MAX,
+					.data_length = 0 };
+
+	zassert_false(write_command(fixture, &control) < 0);
+	zassert_true(wait_for_cmd_to_process(fixture));
+	zassert_true(check_cci_matches(fixture, &cci_error));
+
+	int notified_count = fixture->notified_count;
+	control.command = UCSI_CMD_GET_ERROR_STATUS;
+	zassert_false(write_command(fixture, &control) < 0);
+	zassert_true(wait_for_cmd_to_process(fixture));
+	notified_count += 2;
+	zassert_true(wait_for_notification(fixture, notified_count));
+
+	struct ucsiv3_get_error_status_data data;
+	struct ucsi_cci complete_with_size = cci_cmd_complete;
+	complete_with_size.data_length = sizeof(data);
+
+	zassert_true(check_cci_matches(fixture, &complete_with_size));
+	zassert_false(read_command_result(fixture, (uint8_t *)&data,
+					  sizeof(data)) < 0);
+	zassert_true(data.error_information.unrecognized_command);
 }
 
 /*
