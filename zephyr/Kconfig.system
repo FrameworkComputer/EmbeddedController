@@ -122,4 +122,12 @@ config PLATFORM_EC_HOST_COMMAND_MEMORY_DUMP
 	  debugging panics. May not dump all memory, e.g. sensitive memory will
 	  not be dumped.
 
+config PLATFORM_EC_SYSTEM_JUMP_RW_SUPPORT
+	bool "Enable system jump to rw support"
+	default n
+	help
+	  Enable system boot to rw support, system will check bbram flag (SYSTEM_
+	  BBRAM_IDX_SYSTEM_JUMP_RW_FLAG and SYSTEM_BBRAM_IDX_SYSTEM_JUMP_RW_SUCCESS)
+	  to determine whether to jump to rw on boot. Default will boot from ro.
+
 endif # PLATFORM_EC

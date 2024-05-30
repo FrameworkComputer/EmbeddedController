@@ -134,6 +134,14 @@
 			offset = <0x4c>;
 			size = <0x01>;
 		};
+		system_jump_rw_flag {
+			offset = <0x4d>;
+			size = <0x01>;
+		};
+		system_jump_rw_success {
+			offset = <0x4e>;
+			size = <0x01>;
+		};
 	};
 };
 

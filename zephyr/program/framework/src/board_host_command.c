@@ -384,7 +384,12 @@ static enum ec_status  host_command_get_simple_version(struct host_cmd_handler_a
 	char temp_version[32] = {0};
 	int idx;
 	int shift = CONFIG_PLATFORM_SIMPLE_VERSION_SHIFT_IDX;
-	enum ec_image active_slot = system_get_active_copy();
+	enum ec_image active_slot;
+
+	if (system_get_image_copy() == EC_IMAGE_RO)
+		active_slot = EC_IMAGE_RO;
+	else
+		active_slot = system_get_active_copy();
 
 	strzcpy(temp_version, system_get_version(active_slot),
 		sizeof(temp_version));

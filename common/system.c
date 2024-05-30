@@ -1043,9 +1043,21 @@ static int handle_pending_reboot(struct ec_params_reboot_ec *p)
 		return system_run_image_copy_with_flags(
 			EC_IMAGE_RO, EC_RESET_FLAG_STAY_IN_RO);
 	case EC_REBOOT_JUMP_RW:
+#if defined(CONFIG_CUSTOMIZED_DESIGN) && defined(CONFIG_PLATFORM_EC_SYSTEM_JUMP_RW_SUPPORT)
+		system_set_bbram(SYSTEM_BBRAM_IDX_SYSTEM_JUMP_RW_FLAG, 1);
+		system_set_bbram(SYSTEM_BBRAM_IDX_SYSTEM_JUMP_RW_SUCCESS, 0);
+#endif
 		return system_run_image_copy(system_get_active_copy());
 	case EC_REBOOT_COLD:
 	case EC_REBOOT_COLD_AP_OFF:
+#if defined(CONFIG_CUSTOMIZED_DESIGN) && defined(CONFIG_PLATFORM_EC_SYSTEM_JUMP_RW_SUPPORT)
+		/*
+		 * Flash RW image doesn't work if you're already in RW. Need to reboot to RO
+		 * and then jump again, so clear the flag here.
+		 */
+		system_set_bbram(SYSTEM_BBRAM_IDX_SYSTEM_JUMP_RW_FLAG, 0);
+		system_set_bbram(SYSTEM_BBRAM_IDX_SYSTEM_JUMP_RW_SUCCESS, 0);
+#endif
 		/*
 		 * Reboot the PD chip(s) as well, but first suspend the ports
 		 * if this board has PD tasks running so they don't query the
