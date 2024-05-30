@@ -273,6 +273,19 @@ config PLATFORM_EC_KEYBOARD_STRICT_DEBOUNCE
 
 endif # PLATFORM_EC_KEYBOARD
 
+config PLATFORM_EC_KEYBOARD_BOOT_KEYS
+	bool "Support for boot key combinations"
+	default y if PLATFORM_EC_KEYBOARD
+	help
+	  Enable this to support for boot key combinations (e.g. refresh key
+	  being held on boot to trigger recovery).
+
+config PLATFORM_EC_KEYBOARD_RUNTIME_KEYS
+	bool "Support for extra runtime key combinations"
+	default y if PLATFORM_EC_KEYBOARD
+	help
+	  Enable this to support for extra runtime key combinations (e.g.
+	  alt+volup+h/r for hibernate and warm reboot, respectively).
 
 menuconfig PLATFORM_EC_RGB_KEYBOARD
 	bool "RGB keyboard support"
