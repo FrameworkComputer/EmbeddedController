@@ -39,12 +39,14 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&apu_f75303>;
 		};
-		amd-apu {
+		temp_sensor_apu_die: amd-apu {
 			temp_host_warn = <108>;
 			temp_host_high = <108>;
 			temp_host_halt = <127>;
 			temp_host_release_warn = <60>;
 			temp_host_release_high = <60>;
+			temp_fan_off = <65>;
+			temp_fan_max = <97>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&temp_cpu>;
 		};
@@ -64,7 +66,9 @@
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_vram_f75303>;
 		};
-		gpu-amdr23m {
+		temp_sensor_gpu_die: gpu-amdr23m {
+			temp_fan_off = <50>;
+			temp_fan_max = <80>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&gpu_amdr23m>;
 		};
