@@ -304,27 +304,35 @@
 	/* I2C property setting */
 	i2c0_clk_gpb3_default: i2c0_clk_gpb3_default {
 		gpio-voltage = "3v3";
+		drive-strength = "low";
 	};
 	i2c0_data_gpb4_default: i2c0_data_gpb4_default {
 		gpio-voltage = "3v3";
+		drive-strength = "low";
 	};
 	i2c1_clk_gpc1_default: i2c1_clk_gpc1_default {
 		gpio-voltage = "3v3";
+		drive-strength = "low";
 	};
 	i2c1_data_gpc2_default: i2c1_data_gpc2_default {
 		gpio-voltage = "3v3";
+		drive-strength = "low";
 	};
 	i2c2_clk_gpf6_default: i2c2_clk_gpf6_default {
 		gpio-voltage = "3v3";
+		drive-strength = "low";
 	};
 	i2c2_data_gpf7_default: i2c2_data_gpf7_default {
 		gpio-voltage = "3v3";
+		drive-strength = "low";
 	};
 	i2c3_clk_gpb2_default: i2c3_clk_gpb2_default {
 		gpio-voltage = "1v8";
+		drive-strength = "low";
 	};
 	i2c3_data_gpb5_default: i2c3_data_gpb5_default {
 		gpio-voltage = "1v8";
+		drive-strength = "low";
 	};
 	i2c3_clk_gpb2_sleep: i2c3_clk_gpb2_sleep {
 		pinmuxs = <&pinctrlb 2 IT8XXX2_ALT_DEFAULT>;
@@ -336,9 +344,11 @@
 	};
 	i2c4_clk_gpe0_default: i2c4_clk_gpe0_default {
 		gpio-voltage = "3v3";
+		drive-strength = "low";
 	};
 	i2c4_data_gpe7_default: i2c4_data_gpe7_default {
 		gpio-voltage = "3v3";
+		drive-strength = "low";
 	};
 	i2c5_clk_gpa4_default: i2c5_clk_gpa4_default {
 		gpio-voltage = "3v3";
@@ -350,18 +360,22 @@
 
 &i2c0 {
 	label = "I2C_PWR_CBI";
+	prescale-scl-low = <8>;
 	clock-frequency = <I2C_BITRATE_FAST>;
 };
 
 &i2c1 {
 	label = "I2C_BATTERY";
-	clock-frequency = <50000>;
+	/* Only i2c1 uses 100kHz SMBus which needs data-hold-time */
+	data-hold-time = <10>;
+	prescale-scl-low = <8>;
+	clock-frequency = <100000>;
 };
 
 &i2c2 {
 	label = "I2C_USB_C0";
+	prescale-scl-low = <8>;
 	clock-frequency = <I2C_BITRATE_FAST>;
-
 };
 
 &i2c3 {
@@ -372,13 +386,13 @@
 	pinctrl-1 = <&i2c3_clk_gpb2_sleep
 			&i2c3_data_gpb5_sleep>;
 	pinctrl-names = "default", "sleep";
-	prescale-scl-low = <1>;
+	prescale-scl-low = <8>;
 };
 
 &i2c4 {
 	label = "I2C_USB_C1";
 	clock-frequency = <I2C_BITRATE_FAST>;
-	prescale-scl-low = <1>;
+	prescale-scl-low = <8>;
 };
 
 &i2c5ALT {
