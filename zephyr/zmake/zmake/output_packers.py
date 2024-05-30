@@ -312,11 +312,11 @@ class NpcxPacker(BinmanPacker):
         ro_dir = dir_map["ro"]
         rw_dir = dir_map["rw"]
         ro_size = util.read_kconfig_autoconf_value(
-            ro_dir / "zephyr" / "include" / "generated",
+            ro_dir / "zephyr" / "include" / "generated" / "zephyr",
             "CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES",
         )
         rw_size = util.read_kconfig_autoconf_value(
-            rw_dir / "zephyr" / "include" / "generated",
+            rw_dir / "zephyr" / "include" / "generated" / "zephyr",
             "CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES",
         )
         return max(int(ro_size, 0), int(rw_size, 0))
@@ -359,11 +359,11 @@ class MchpPacker(BinmanPacker):
         ro_dir = dir_map["ro"]
         rw_dir = dir_map["rw"]
         ro_size = util.read_kconfig_autoconf_value(
-            ro_dir / "zephyr" / "include" / "generated",
+            ro_dir / "zephyr" / "include" / "generated" / "zephyr",
             "CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES",
         )
         rw_size = util.read_kconfig_autoconf_value(
-            rw_dir / "zephyr" / "include" / "generated",
+            rw_dir / "zephyr" / "include" / "generated" / "zephyr",
             "CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES",
         )
         return max(int(ro_size, 0), int(rw_size, 0))
