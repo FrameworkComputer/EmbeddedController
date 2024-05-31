@@ -146,8 +146,8 @@ main() {
       fi
       ;;
     *_scp)
-      if [[ -d ./private-mt-scp ]]; then
-        dir_list+=( ./private-mt-scp )
+      if [[ -d ../private-mt-scp ]]; then
+        dir_list+=( ../private-mt-scp )
       fi
       ;;
   esac

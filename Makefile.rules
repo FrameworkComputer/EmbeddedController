@@ -13,7 +13,7 @@ BUILD_DIR := $(firstword $(subst /, ,$(out)))
 # Don't do a build test on the following boards:
 skip_boards = OWNERS cr50 host
 boards := $(filter-out $(skip_boards), \
-	$(notdir $(wildcard board/* private*/board/*)))
+	$(notdir $(wildcard board/* ../private*/board/*)))
 
 # Create output directories if necessary
 _common_dir_create := $(foreach d,$(common_dirs) $(common-dirs-y),\

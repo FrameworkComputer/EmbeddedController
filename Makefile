@@ -24,7 +24,7 @@ BDIR:=$(wildcard board/$(BOARD))
 # The rule below is reserved for the SCP firmware branches and local builds.
 # DO NOT remove PBDIR and PDIR before you read the bug and make sure that's the
 # right thing to do.
-PBDIR:=$(wildcard private-*/board/$(BOARD))
+PBDIR:=$(wildcard ../private-*/board/$(BOARD))
 
 # We need either public, or private board directory, or both.
 ifeq (,$(BDIR)$(PBDIR))
@@ -381,7 +381,8 @@ ifneq ($(PDIR),)
 all-obj-$(1)+=$(call objs_from_dir_p,$(PDIR),$(PDIR),$(1))
 endif
 ifneq ($(PBDIR),)
-all-obj-$(1)+=$(call objs_from_dir_p,$(PBDIR),board-private,$(1))
+all-obj-$(1)+= \
+	$(call objs_from_dir_p,$(subst ../,$(empty),$(PBDIR)),board-private,$(1))
 endif
 all-obj-$(1)+=$(call objs_from_dir_p,common,common,$(1))
 ifeq ($(USE_BUILTIN_STDLIB), 1)
