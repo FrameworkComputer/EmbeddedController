@@ -9142,7 +9142,7 @@ static int cmd_cbi_bin(int argc, char *argv[])
 {
 	char *e;
 	int rv;
-	int packet_max_size = 64;
+	constexpr int packet_max_size = 64;
 
 	if (argc != 4) {
 		fprintf(stderr, "Invalid number of params\n");
