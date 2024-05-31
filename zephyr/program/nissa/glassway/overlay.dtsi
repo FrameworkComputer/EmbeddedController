@@ -258,7 +258,6 @@
 			<&gpioa 2 0>,
 			<&gpiob 1 0>,
 			<&gpiob 7 0>,
-			<&gpioc 0 0>,
 			<&gpioc 4 0>,
 			<&gpioc 6 0>,
 			<&gpioc 7 0>,

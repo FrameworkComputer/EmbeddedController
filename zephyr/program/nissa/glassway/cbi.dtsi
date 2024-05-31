@@ -71,5 +71,24 @@
 				value = <1>;
 			};
 		};
+		/*
+		 * FW_CONFIG field to enable keyboard backlight.
+		 */
+		kb_bl {
+			enum-name = "FW_KB_BL";
+			start = <13>;
+			size = <1>;
+
+			kb-bl-absent {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_ABSENT";
+				value = <0>;
+			};
+			kb-bl-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_BL_PRESENT";
+				value = <1>;
+			};
+		};
 	};
 };
