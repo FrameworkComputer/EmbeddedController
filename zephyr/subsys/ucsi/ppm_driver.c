@@ -154,13 +154,19 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	switch (ucsi_command) {
 	case UCSI_CMD_ACK_CC_CI: {
 		struct ucsiv3_get_connector_status_data *conn_status;
+		struct ucsiv3_ack_cc_ci_cmd *cmd =
+			(struct ucsiv3_ack_cc_ci_cmd *)control->command_specific;
 
+		if (!cmd->connector_change_ack) {
+			/* This ACK is only for CC. Internally handle it. */
+			return 0;
+		}
+		/* This ACK includes only CI or both CC and CI. */
 		if (!data->ppm->get_next_connector_status(data->ppm->dev, &conn,
 							  &conn_status)) {
 			LOG_ERR("Cx: Found no port with CI to ack.");
 			return -ENOMSG;
 		}
-
 		break;
 	}
 	case UCSI_CMD_PPM_RESET:

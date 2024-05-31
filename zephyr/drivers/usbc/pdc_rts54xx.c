@@ -2483,10 +2483,6 @@ static int rts54_execute_ucsi_cmd(const struct device *dev,
 			cmd_buffer[6] = 0xff;
 			cmd_buffer[7] = 0xff;
 		}
-
-		if (cmd->command_complete_ack) {
-			cmd_buffer[8] = 0x1;
-		}
 		break;
 	}
 	case UCSI_CMD_GET_CONNECTOR_STATUS:
