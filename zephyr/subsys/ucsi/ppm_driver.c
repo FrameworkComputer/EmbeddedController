@@ -165,7 +165,7 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	}
 	case UCSI_CMD_PPM_RESET:
 	case UCSI_CMD_SET_NOTIFICATION_ENABLE:
-		return -ENOTSUP;
+		return 0;
 	case UCSI_CMD_CONNECTOR_RESET:
 	case UCSI_CMD_GET_CONNECTOR_CAPABILITY:
 	case UCSI_CMD_GET_CAM_SUPPORTED:
