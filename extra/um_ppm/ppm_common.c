@@ -268,7 +268,6 @@ static void ppm_common_reset_data(struct ppm_common_device *dev)
 	memset(dev->per_port_status, 0,
 	       sizeof(struct ucsiv3_get_connector_status_data) *
 		       dev->num_ports);
-	memset(&dev->ucsi_data, 0, sizeof(dev->ucsi_data));
 }
 
 static int ppm_common_execute_pending_cmd(struct ppm_common_device *dev)
