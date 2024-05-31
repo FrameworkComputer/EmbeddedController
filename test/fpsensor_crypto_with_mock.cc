@@ -257,13 +257,6 @@ test_static int test_derive_encryption_key(void)
 		}
 	};
 
-	FpEncryptionKey unused_key{};
-
-	static const uint8_t unused_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = {
-		0
-	};
-	static const uint8_t info_wrong_size[] = { 0x01, 0x02, 0x03 };
-
 	/* GIVEN that the TPM seed is set. */
 	TEST_ASSERT(!bytes_are_trivial(default_fake_tpm_seed,
 				       sizeof(default_fake_tpm_seed)));
@@ -283,6 +276,10 @@ test_static int test_derive_encryption_key(void)
 			    test_vector2.key) == EC_SUCCESS);
 
 	/* Providing custom info with invalid size should fail. */
+	FpEncryptionKey unused_key{};
+	constexpr std::array<uint8_t, FP_CONTEXT_ENCRYPTION_SALT_BYTES>
+		unused_salt{};
+	constexpr std::array<uint8_t, 3> info_wrong_size = { 0x01, 0x02, 0x03 };
 	TEST_ASSERT(
 		derive_encryption_key(unused_key, unused_salt, info_wrong_size,
 				      default_fake_tpm_seed) == EC_ERROR_INVAL);
