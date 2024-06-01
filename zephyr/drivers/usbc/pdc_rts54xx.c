@@ -19,6 +19,7 @@
 #include <zephyr/smf.h>
 #include <zephyr/sys/atomic.h>
 #include <zephyr/sys/util.h>
+#include <zephyr/sys_clock.h>
 LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 #include "usbc/utils.h"
 
@@ -117,14 +118,14 @@ BUILD_ASSERT(RTS54XX_GET_IC_STATUS_PROG_NAME_STR_LEN <=
 	return
 
 /**
- * @brief IRQ Event used to signal that an interrupt is pending
- */
-K_EVENT_DEFINE(irq_event);
-
-/**
- * @brief IRQ Event set by the interrupt handler
+ * @brief IRQ Event set by the interrupt handler.
  */
 #define RTS54XX_IRQ_EVENT BIT(0)
+
+/**
+ * @brief Event set to run next state of state machine.
+ */
+#define RTS54XX_NEXT_STATE_READY BIT(1)
 
 /**
  * @brief Number of RTS54XX ports detected
@@ -379,6 +380,8 @@ struct pdc_data_t {
 	struct k_thread thread_data;
 	/** Ping status */
 	union ping_status_t ping_status;
+	/** Timepoint for when we can next call ping status. */
+	k_timepoint_t next_ping_status;
 	/** Ping status retry counter */
 	uint8_t ping_retry_counter;
 	/** Number of time the init process has been attempted */
@@ -423,6 +426,8 @@ struct pdc_data_t {
 	union connector_status_t conn_status;
 	/** Connector Status Cache State */
 	bool conn_status_cached;
+	/* Driver specific events to handle. */
+	struct k_event driver_event;
 };
 
 /**
@@ -499,6 +504,11 @@ static int rts54_get_error_status(const struct device *dev,
  */
 static struct pdc_data_t *pdc_data[NUM_PDC_RTS54XX_PORTS];
 
+/**
+ * @brief Pointer to thread specific k_event that handles interrupts.
+ */
+static struct k_event *irq_event;
+
 static enum state_t get_state(struct pdc_data_t *data)
 {
 	return data->ctx.current - &states[0];
@@ -508,6 +518,7 @@ static void set_state(struct pdc_data_t *data, const enum state_t next_state)
 {
 	data->last_state = get_state(data);
 	smf_set_state(SMF_CTX(data), &states[next_state]);
+	k_event_post(&data->driver_event, RTS54XX_NEXT_STATE_READY);
 }
 
 /**
@@ -998,7 +1009,8 @@ static void st_write_run(void *o)
 		return;
 	}
 
-	/* I2C transaction succeeded */
+	/* I2C transaction succeeded. Set timepoint for next ping status. */
+	data->next_ping_status = sys_timepoint_calc(K_MSEC(T_PING_STATUS));
 	set_state(data, ST_PING_STATUS);
 }
 
@@ -1027,8 +1039,20 @@ static void st_ping_status_run(void *o)
 	const struct pdc_config_t *cfg = data->dev->config;
 	int rv;
 
+	/*
+	 * Make sure that we've waited sufficient time before re-reading ping
+	 * status. Otherwise PDC may be starved of time to execute commands.
+	 */
+	if (!sys_timepoint_expired(data->next_ping_status)) {
+		k_sleep(sys_timepoint_timeout(data->next_ping_status));
+	}
+
 	/* Read the Ping Status */
 	rv = get_ping_status(data->dev);
+
+	/* Reset time until next ping status. */
+	data->next_ping_status = sys_timepoint_calc(K_MSEC(T_PING_STATUS));
+
 	if (rv < 0) {
 		if (max_i2c_retry_reached(data, I2C_MSG_READ)) {
 			set_state(data, ST_ERROR_RECOVERY);
@@ -1522,6 +1546,8 @@ static int rts54_post_command_with_callback(const struct device *dev,
 	}
 
 	k_mutex_unlock(&data->mtx);
+	/* Posting the event reduces latency to start executing the command. */
+	k_event_post(&data->driver_event, RTS54XX_NEXT_STATE_READY);
 
 	return 0;
 }
@@ -2597,7 +2623,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 static void pdc_interrupt_callback(const struct device *dev,
 				   struct gpio_callback *cb, uint32_t pins)
 {
-	k_event_post(&irq_event, RTS54XX_IRQ_EVENT);
+	k_event_post(irq_event, RTS54XX_IRQ_EVENT);
 }
 
 static int pdc_init(const struct device *dev)
@@ -2618,9 +2644,13 @@ static int pdc_init(const struct device *dev)
 		return -ENODEV;
 	}
 
+	k_event_init(&data->driver_event);
+
 	if (!irq_init_done) {
 		irq_shared_port = cfg->irq_gpios.port;
 		irq_share_pin = cfg->irq_gpios.pin;
+
+		irq_event = &data->driver_event;
 
 		rv = gpio_pin_configure_dt(&cfg->irq_gpios, GPIO_INPUT);
 		if (rv < 0) {
@@ -2645,7 +2675,7 @@ static int pdc_init(const struct device *dev)
 		}
 
 		/* Trigger IRQ on startup to read any pending interrupts */
-		k_event_post(&irq_event, RTS54XX_IRQ_EVENT);
+		k_event_post(irq_event, RTS54XX_IRQ_EVENT);
 		irq_init_done = true;
 	} else {
 		if (irq_shared_port != cfg->irq_gpios.port ||
@@ -2681,29 +2711,31 @@ static void rts54xx_thread(void *dev, void *unused1, void *unused2)
 	const struct pdc_config_t *cfg = ((const struct device *)dev)->config;
 	struct pdc_data_t *data = ((const struct device *)dev)->data;
 	uint32_t events;
+	bool irq_pending_for_idle = false;
 
 	while (1) {
 		smf_run_state(SMF_CTX(data));
-		if (get_state(data) == ST_IDLE) {
-			events = k_event_wait(&irq_event, RTS54XX_IRQ_EVENT,
-					      false, K_MSEC(T_PING_STATUS));
-			if (events) {
-				k_event_clear(&irq_event, RTS54XX_IRQ_EVENT);
 
-				/* If PDC communications are suspended, do not
-				 * process interrupts, as it will cause the
-				 * handler to read from the chip via the ARA
-				 * address.
-				 */
-				if (check_comms_suspended()) {
-					LOG_INF("C%d: Ignoring interrupt",
-						cfg->connector_number);
-					continue;
-				}
-				handle_irqs(data);
+		events = k_event_wait(&data->driver_event,
+				      RTS54XX_IRQ_EVENT |
+					      RTS54XX_NEXT_STATE_READY,
+				      false, K_MSEC(T_PING_STATUS));
+
+		if (events & RTS54XX_IRQ_EVENT) {
+			irq_pending_for_idle = true;
+		}
+
+		k_event_clear(&data->driver_event, events);
+
+		/* We only handle irq on idle. */
+		if (get_state(data) == ST_IDLE && irq_pending_for_idle) {
+			irq_pending_for_idle = false;
+			if (check_comms_suspended()) {
+				LOG_INF("C%d: Ignoring interrupt",
+					cfg->connector_number);
+				continue;
 			}
-		} else {
-			k_sleep(K_MSEC(T_PING_STATUS));
+			handle_irqs(data);
 		}
 	}
 }

@@ -12,6 +12,7 @@
 #include "emul/emul_realtek_rts54xx_public.h"
 #include "i2c.h"
 #include "pdc_trace_msg.h"
+#include "test/util.h"
 #include "zephyr/sys/util.h"
 #include "zephyr/sys/util_macro.h"
 
@@ -25,6 +26,12 @@
 LOG_MODULE_REGISTER(test_rts54xx, LOG_LEVEL_INF);
 
 #define RTS5453P_NODE DT_NODELABEL(rts5453p_emul)
+#define RTS5453P_NODE2 DT_NODELABEL(rts5453p_emul2)
+
+#define EMUL_PORT 0
+#define EMUL2_PORT 1
+
+#define NUM_PORTS 2
 
 static const uint32_t epr_pdos[] = {
 	PDO_AUG_EPR(5000, 20000, 140, 0), PDO_AUG_EPR(5000, 20000, 140, 0),
@@ -55,7 +62,9 @@ static const uint32_t mixed_pdos_failure[] = {
 };
 
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
+static const struct emul *emul2 = EMUL_DT_GET(RTS5453P_NODE2);
 static const struct device *dev = DEVICE_DT_GET(RTS5453P_NODE);
+static const struct device *dev2 = DEVICE_DT_GET(RTS5453P_NODE2);
 
 bool pdc_rts54xx_test_idle_wait(void);
 
@@ -222,4 +231,71 @@ ZTEST_USER(rts54xx, test_get_bus_info)
 	zassert_equal(info.bus_type, PDC_BUS_TYPE_I2C);
 	zassert_equal(info.i2c.bus, i2c_spec.bus);
 	zassert_equal(info.i2c.addr, i2c_spec.addr);
+}
+
+static volatile struct {
+	const struct device *port_devs[NUM_PORTS];
+	bool port_interrupt[NUM_PORTS];
+} shared_cb_data;
+
+static void ci_handler_cb(const struct device *cidev,
+			  const struct pdc_callback *callback,
+			  union cci_event_t cci_event)
+{
+	if (cci_event.vendor_defined_indicator) {
+		for (int i = 0; i < NUM_PORTS; ++i) {
+			if (shared_cb_data.port_devs[i] == cidev) {
+				LOG_INF("Interrupt on port %d", i);
+				shared_cb_data.port_interrupt[i] = true;
+				break;
+			}
+		}
+	}
+}
+
+bool port_interrupt(int port)
+{
+	return shared_cb_data.port_interrupt[port];
+}
+
+/* Validate IRQ handling for both happy and edge cases. */
+ZTEST_USER(rts54xx, test_irq)
+{
+#define IRQ_TEST_TIMEOUT_MS (TEST_WAIT_FOR_INTERVAL_MS * 5)
+
+	union connector_status_t status1;
+	union connector_status_t status2;
+	struct capability_t unused_caps;
+	struct pdc_callback ci_cb;
+
+	shared_cb_data.port_devs[EMUL_PORT] = dev;
+	shared_cb_data.port_devs[EMUL2_PORT] = dev2;
+	for (int i = 0; i < NUM_PORTS; ++i) {
+		shared_cb_data.port_interrupt[i] = false;
+	}
+
+	ci_cb.handler = ci_handler_cb;
+	zassert_ok(pdc_add_ci_callback(dev, &ci_cb));
+	zassert_ok(pdc_add_ci_callback(dev2, &ci_cb));
+
+	/* Put driver in non-idle state and then queue interrupts. */
+	emul_pdc_set_response_delay(emul, IRQ_TEST_TIMEOUT_MS);
+	zassert_ok(pdc_get_capability(dev, &unused_caps));
+
+	/* Disconnect both ports but expect that we don't see interrupts until
+	 * the command is completed.
+	 */
+	zassert_ok(emul_pdc_connect_partner(emul, &status1));
+	zassert_ok(emul_pdc_connect_partner(emul2, &status2));
+	zassert_false(TEST_WAIT_FOR((port_interrupt(EMUL_PORT) ||
+				     port_interrupt(EMUL2_PORT)),
+				    TEST_WAIT_FOR_INTERVAL_MS * 4));
+
+	/* Let command complete. */
+	k_sleep(K_MSEC(IRQ_TEST_TIMEOUT_MS * 2));
+
+	/* Now interrupts should work. */
+	zassert_true(TEST_WAIT_FOR((port_interrupt(EMUL_PORT) &&
+				    port_interrupt(EMUL2_PORT)),
+				   IRQ_TEST_TIMEOUT_MS));
 }
