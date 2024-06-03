@@ -241,6 +241,35 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 	return EC_SUCCESS;
 }
 
+static int cmd_lpm_ppm_info(const struct shell *sh, size_t argc, char **argv)
+{
+	struct lpm_ppm_info_t info;
+	uint8_t port;
+	int rv;
+
+	/* Get PD port number */
+	rv = cmd_get_pd_port(sh, argv[1], &port);
+	if (rv)
+		return rv;
+
+	/* Get PDC info using UCSI GET_LPM_PPM_INFO command */
+	rv = pdc_power_mgmt_get_lpm_ppm_info(port, &info);
+	if (rv) {
+		shell_error(sh, "Could not get port %u info (%d)", port, rv);
+		return rv;
+	}
+
+	shell_fprintf(sh, SHELL_INFO,
+		      "VID/PID: %04x:%04x\n"
+		      "XID: %08x\n"
+		      "FW Ver: %u.%u\n"
+		      "HW Ver: %08x\n",
+		      info.vid, info.pid, info.xid, info.fw_ver,
+		      info.fw_ver_sub, info.hw_ver);
+
+	return 0;
+}
+
 static int cmd_pdc_prs(const struct shell *sh, size_t argc, char **argv)
 {
 	int rv;
@@ -628,6 +657,10 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "given port.\n"
 		      "Usage pdc srccaps <port>",
 		      cmd_pdc_srccaps, 2, 0),
+	SHELL_CMD_ARG(lpm_ppm_info, NULL,
+		      "Get PDC chip info via GET_LPM_PPM_INFO UCSI cmd\n"
+		      "Usage: pdc lpm_ppm_info <port>",
+		      cmd_lpm_ppm_info, 2, 0),
 	SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(pdc, &sub_pdc_cmds, "PDC console commands", NULL);
