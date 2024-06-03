@@ -63,30 +63,6 @@ typedef void (*download_from_flash_ptr)(uint32_t src_offset, uint32_t dest_addr,
 					uint32_t exe_addr,
 					enum API_RETURN_STATUS_T *ec_status);
 
-/* true: OTP hardware on, false: OTP hardware off */
-typedef enum API_RETURN_STATUS_T (*otpi_power_ptr)(bool on);
-
-/*
- * address - OTP address to read from
- * data - pointer to 8-bit variable to store read data
- */
-typedef enum API_RETURN_STATUS_T (*otpi_read_ptr)(uint32_t address,
-						  uint8_t *data);
-
-/*
- * address - OTP address to write to
- * data -  8-bit data value
- */
-typedef enum API_RETURN_STATUS_T (*otpi_write_ptr)(uint32_t address,
-						   uint8_t data);
-
-/*
- * address - OTP address to protect, 16B aligned
- * size - Number of bytes to be protected, 16B aligned
- */
-typedef enum API_RETURN_STATUS_T (*otpi_write_prot_ptr)(uint32_t address,
-							uint32_t size);
-
 /******************************************************************************/
 /*
  * Inline functions for ROM APIs
@@ -102,40 +78,27 @@ static inline void download_from_flash(uint32_t src_offset, uint32_t dest_addr,
 		src_offset, dest_addr, size, sign, exe_addr, status);
 }
 
-#ifndef HAS_MOCK_OTPI
-static const volatile uint32_t *ADDR_OTPI_POWER = (uint32_t *)0x4C;
-static inline enum API_RETURN_STATUS_T otpi_power(bool on)
-{
-	return ((otpi_power_ptr)*ADDR_OTPI_POWER)(on);
-}
+/**
+ * @param on true: OTP hardware on, false: OTP hardware off.
+ */
+enum API_RETURN_STATUS_T otpi_power(bool on);
 
-static const volatile uint32_t *ADDR_OTPI_READ = (uint32_t *)0x50;
+/**
+ * @param address OTP address to read from.
+ * @param data pointer to 8-bit variable to store read data.
+ */
+enum API_RETURN_STATUS_T otpi_read(uint32_t address, uint8_t *data);
 
-static inline enum API_RETURN_STATUS_T otpi_read(uint32_t address,
-						 uint8_t *data)
-{
-	return ((otpi_read_ptr)*ADDR_OTPI_READ)(address, data);
-}
+/**
+ * @param address OTP address to write to.
+ * @param data 8-bit data value.
+ */
+enum API_RETURN_STATUS_T otpi_write(uint32_t address, uint8_t data);
 
-static const volatile uint32_t *ADDR_OTPI_WRITE = (uint32_t *)0x54;
-static inline enum API_RETURN_STATUS_T otpi_write(uint32_t address,
-						  uint8_t data)
-{
-	return ((otpi_write_ptr)*ADDR_OTPI_WRITE)(address, data);
-}
-
-static const volatile uint32_t *ADDR_OTPI_WRITE_PROTECT = (uint32_t *)0x5C;
-static inline enum API_RETURN_STATUS_T otpi_write_protect(uint32_t address,
-							  uint32_t size)
-{
-	return ((otpi_write_prot_ptr)*ADDR_OTPI_WRITE_PROTECT)(address, size);
-}
-#else
-extern enum API_RETURN_STATUS_T otpi_power(bool on);
-extern enum API_RETURN_STATUS_T otpi_read(uint32_t address, uint8_t *data);
-extern enum API_RETURN_STATUS_T otpi_write(uint32_t address, uint8_t data);
-extern enum API_RETURN_STATUS_T otpi_write_protect(uint32_t address,
-						   uint32_t size);
-#endif
+/**
+ * @param address OTP address to protect, 16B aligned.
+ * @param size Number of bytes to be protected, 16B aligned.
+ */
+enum API_RETURN_STATUS_T otpi_write_protect(uint32_t address, uint32_t size);
 
 #endif /* __CROS_EC_ROM_CHIP_H_ */
