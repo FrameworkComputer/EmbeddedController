@@ -44,6 +44,14 @@ config PLATFORM_EC_HIBERNATE_PSL
 	  rail for ultra-low power consumption and uses PSL inputs rely on VSBY
 	  power rail to wake up ec and the whole system.
 
+config PLATFORM_EC_HIBERNATE_VCI
+	bool "System hibernating with VCI mechanism"
+	depends on SOC_FAMILY_MICROCHIP_MEC
+	help
+	  Use VCI (VBAT-Powered Control Interface) for hibernating. It turns off
+	  VTR power rail for ultra-low power consumption and uses VCI inputs which
+	  rely on VBAT power rail to wake up ec and the whole system.
+
 config PLATFORM_EC_HIBERNATE_WAKE_PINS
 	bool "System hibernating with wake-source pins"
 	help
