@@ -49,34 +49,17 @@ enum API_RETURN_STATUS_T {
  * Declarations of ROM API functions
  */
 
-/*
- * src_offset -  The offset of the data to be downloaded
- * dest_addr - The address of the downloaded data in the RAM
- * size - Number of bytes to download
- * sign - Need CRC check or not
- * exe_addr - jump to this address after download if not zero
- * status - Status of download
+/**
+ * @param src_offset The offset of the data to be downloaded.
+ * @param dest_addr The address of the downloaded data in the RAM.
+ * @param size Number of bytes to download.
+ * @param sign Need CRC check or not.
+ * @param exe_addr jump to this address after download if not zero.
+ * @param status Status of download.
  */
-typedef void (*download_from_flash_ptr)(uint32_t src_offset, uint32_t dest_addr,
-					uint32_t size,
-					enum API_SIGN_OPTIONS_T sign,
-					uint32_t exe_addr,
-					enum API_RETURN_STATUS_T *ec_status);
-
-/******************************************************************************/
-/*
- * Inline functions for ROM APIs
- */
-static const volatile uint32_t *ADDR_DOWNLOAD_FROM_FLASH = (uint32_t *)0x40;
-static inline void download_from_flash(uint32_t src_offset, uint32_t dest_addr,
-				       uint32_t size,
-				       enum API_SIGN_OPTIONS_T sign,
-				       uint32_t exe_addr,
-				       enum API_RETURN_STATUS_T *status)
-{
-	((download_from_flash_ptr)*ADDR_DOWNLOAD_FROM_FLASH)(
-		src_offset, dest_addr, size, sign, exe_addr, status);
-}
+void download_from_flash(uint32_t src_offset, uint32_t dest_addr, uint32_t size,
+			 enum API_SIGN_OPTIONS_T sign, uint32_t exe_addr,
+			 enum API_RETURN_STATUS_T *status);
 
 /**
  * @param on true: OTP hardware on, false: OTP hardware off.
