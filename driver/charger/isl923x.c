@@ -773,6 +773,23 @@ static void isl923x_init(int chgnum)
 		}
 	}
 
+	/* Set board defined thresholds for PROCHOT.
+	 * Note that the DC PROCHOT function requires PSYS is enabled
+	 * if an AC adapter is not present.
+	 */
+	if (CONFIG_CHARGER_DC_PROCHOT_CURRENT_MA != -1) {
+		if (isl923x_set_dc_prochot(
+			    chgnum, CONFIG_CHARGER_DC_PROCHOT_CURRENT_MA)) {
+			goto init_fail;
+		}
+	}
+	if (CONFIG_CHARGER_AC_PROCHOT_CURRENT_MA != -1) {
+		if (isl923x_set_ac_prochot(
+			    chgnum, CONFIG_CHARGER_AC_PROCHOT_CURRENT_MA)) {
+			goto init_fail;
+		}
+	}
+
 	if (IS_ENABLED(CONFIG_CHARGER_ISL9238C)) {
 		if (CONFIG_ISL9238C_INPUT_VOLTAGE_MV != -1) {
 			reg = (CONFIG_ISL9238C_INPUT_VOLTAGE_MV /
