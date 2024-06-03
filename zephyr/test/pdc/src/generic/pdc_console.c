@@ -920,3 +920,71 @@ ZTEST_USER(console_cmd_pdc, test_srccaps)
 	zassert_not_null(strstr(
 		outbuffer, "Src 07: c12c5a28 AUG  9000mV-15000mV,  2000mA"));
 }
+
+/**
+ * @brief Custom fake for pdc_power_mgmt_get_lpm_ppm_info that outputs some
+ *        test PDC chip info.
+ */
+static int
+custom_fake_pdc_power_mgmt_get_lpm_ppm_info(int port,
+					    struct lpm_ppm_info_t *out)
+{
+	zassert_not_null(out);
+
+	*out = (struct lpm_ppm_info_t){
+		.vid = 0x1234,
+		.pid = 0x5678,
+		.xid = 0xa1b2c3d4,
+		.fw_ver = 123,
+		.fw_ver_sub = 456,
+		.hw_ver = 0xa5b6c7de,
+	};
+
+	return 0;
+}
+
+ZTEST_USER(console_cmd_pdc, test_lpm_ppm_info)
+{
+	int rv;
+	const char *outbuffer;
+	size_t buffer_size;
+
+	/* Invalid port number */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc lpm_ppm_info 99");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* API call fails */
+	pdc_power_mgmt_get_lpm_ppm_info_fake.return_val = 1;
+	rv = shell_execute_cmd(get_ec_shell(), "pdc lpm_ppm_info 0");
+	zassert_equal(rv, pdc_power_mgmt_get_lpm_ppm_info_fake.return_val,
+		      "Expected %d, but got %d",
+		      pdc_power_mgmt_get_lpm_ppm_info_fake.return_val, rv);
+
+	RESET_FAKE(pdc_power_mgmt_get_lpm_ppm_info);
+
+	/* Successful */
+	pdc_power_mgmt_get_lpm_ppm_info_fake.custom_fake =
+		custom_fake_pdc_power_mgmt_get_lpm_ppm_info;
+	rv = shell_execute_cmd(get_ec_shell(), "pdc lpm_ppm_info 0");
+	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
+		      rv);
+
+	zassert_equal(1, pdc_power_mgmt_get_lpm_ppm_info_fake.call_count);
+
+	outbuffer =
+		shell_backend_dummy_get_output(get_ec_shell(), &buffer_size);
+
+	/* Sample output:
+	 *
+	 * VID/PID: 0000:0000
+	 * XID: 00000000
+	 * FW Ver: 0.0
+	 * HW Ver: 00000000
+	 */
+
+	zassert_true(buffer_size > 0, NULL);
+	zassert_not_null(strstr(outbuffer, "VID/PID: 1234:5678"));
+	zassert_not_null(strstr(outbuffer, "XID: a1b2c3d4"));
+	zassert_not_null(strstr(outbuffer, "FW Ver: 123.456"));
+	zassert_not_null(strstr(outbuffer, "HW Ver: a5b6c7de"));
+}

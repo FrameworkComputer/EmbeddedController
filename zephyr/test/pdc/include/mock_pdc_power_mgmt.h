@@ -40,6 +40,8 @@ DECLARE_FAKE_VALUE_FUNC(unsigned int, pdc_power_mgmt_get_max_voltage);
 DECLARE_FAKE_VALUE_FUNC(uint8_t, pdc_power_mgmt_get_src_cap_cnt, int);
 DECLARE_FAKE_VALUE_FUNC(const uint32_t *const, pdc_power_mgmt_get_src_caps,
 			int);
+DECLARE_FAKE_VALUE_FUNC(int, pdc_power_mgmt_get_lpm_ppm_info, int,
+			struct lpm_ppm_info_t *);
 
 /**
  * @brief Reset the above set of fakes
