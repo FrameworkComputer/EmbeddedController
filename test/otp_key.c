@@ -26,14 +26,12 @@ test_static int test_otp_key(void)
 
 	otp_key_init();
 
-	ccprints("OTP Key provision");
 	status = otp_key_provision();
 	if (status != EC_SUCCESS) {
 		ccprints("Failed to read OTP key");
 		return EC_ERROR_UNKNOWN;
 	}
 
-	ccprints("OTP Key read");
 	status = otp_key_read(otp_key_buffer);
 	if (status != EC_SUCCESS) {
 		ccprints("Failed to read OTP key");
@@ -52,7 +50,6 @@ test_static int test_otp_key(void)
 
 void run_test(int argc, const char **argv)
 {
-	ccprintf("Running otp_key test\n");
 	RUN_TEST(test_otp_key);
 	test_print_result();
 }
