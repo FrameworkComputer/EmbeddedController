@@ -821,19 +821,21 @@ config PLATFORM_EC_ISL9238C_BUCK_PHASE_VOLTAGE
 	  Adjusts the phase comparator threshold offset for forward buck
 	  and buck-boost.
 
-config PLATFORM_EC_AC_PROCHOT_CURRENT_MA
+config PLATFORM_EC_CHARGER_AC_PROCHOT_CURRENT_MA
 	int "Value of the prochot threshold current in mA"
-	default 3328
+	default -1
 	help
 	  To set the PROCHOT# assertion threshold for adapter overcurrent
-	  conditions.
+	  conditions.  Set to -1 to accept the default setting of the charger
+	  chip.
 
-config PLATFORM_EC_DC_PROCHOT_CURRENT_MA
+config PLATFORM_EC_CHARGER_DC_PROCHOT_CURRENT_MA
 	int "Value of the prochot threshold current in mA"
-	default 6570
+	default -1
 	help
 	  To set the PROCHOT# signal assertion threshold for battery over
-	  discharging current conditions.
+	  discharging current conditions.  Set to -1 to accept the default
+	  setting of the charger chip.
 
 config PLATFORM_EC_CHARGER_DUMP_PROCHOT
 	bool "Enable support for prochot status dumping functions"

@@ -1025,6 +1025,18 @@
 #undef CONFIG_CHARGER_PSYS_READ
 
 /*
+ * Sets the AC current threshold that triggers PROCHOT assertion from the
+ * charger.  -1 uses the power on reset threshold defined by the charger chip.
+ */
+#define CONFIG_CHARGER_AC_PROCHOT_CURRENT_MA -1
+
+/*
+ * Sets the DC current threshold that triggers PROCHOT assertion from the
+ * charger.  -1 uses the power on reset threshold defined by the charger chip.
+ */
+#define CONFIG_CHARGER_DC_PROCHOT_CURRENT_MA -1
+
+/*
  * Board supports discharge mode.  In this mode, the battery will discharge
  * even if AC is present.  Used for testing.
  */
