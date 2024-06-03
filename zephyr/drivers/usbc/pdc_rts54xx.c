@@ -502,7 +502,7 @@ static int rts54_get_error_status(const struct device *dev,
 /**
  * @brief PDC port data used in interrupt handler
  */
-static struct pdc_data_t *pdc_data[NUM_PDC_RTS54XX_PORTS];
+static struct pdc_data_t *pdc_data[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 /**
  * @brief Pointer to thread specific k_event that handles interrupts.
@@ -904,7 +904,16 @@ static void handle_irqs(struct pdc_data_t *data)
 	uint8_t ara;
 	int rv;
 
-	for (int i = 0; i < NUM_PDC_RTS54XX_PORTS; i++) {
+	/*
+	 * Since we use edge triggered interrupts, we need to check ARA for all
+	 * ports. Earliest port on bus will respond to ARAs in order and we need
+	 * to iterate until there are no ARA responses left to get interrupt
+	 * line de-asserted fully.
+	 *
+	 * This assumes that this driver is valid for all PD controllers on the
+	 * system.
+	 */
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
 		/*
 		 * Read the Alert Response Address to determine
 		 * which port generated the interrupt.
