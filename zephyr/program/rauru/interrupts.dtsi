@@ -60,7 +60,7 @@
 		int_ap_in_rst: ap-in-rst {
 			irq-pin = <&gpio_ap_ec_sysrst_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "power_signal_interrupt";
+			handler = "chipset_warm_reset_interrupt";
 		};
 		int_hdmi_ec_hpd: hdmi-ec-hpd {
 			irq-pin = <&gpio_hdmi_ec_hpd>;
