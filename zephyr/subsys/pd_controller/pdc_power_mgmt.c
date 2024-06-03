@@ -128,6 +128,8 @@ enum pdc_cmd_t {
 	CMD_PDC_GET_PCH_DATA_STATUS,
 	/** CMD_PDC_ACK_CC_CI */
 	CMD_PDC_ACK_CC_CI,
+	/** CMD_PDC_GET_LPM_PPM_INFO */
+	CMD_PDC_GET_LPM_PPM_INFO,
 	/** CMD_PDC_COUNT */
 	CMD_PDC_COUNT
 };
@@ -342,6 +344,7 @@ test_export_static const char *const pdc_cmd_names[] = {
 	[CMD_PDC_SET_PDOS] = "PDC_SET_PDOS",
 	[CMD_PDC_GET_PCH_DATA_STATUS] = "PDC_GET_PCH_DATA_STATUS",
 	[CMD_PDC_ACK_CC_CI] = "PDC_ACK_CC_CI",
+	[CMD_PDC_GET_LPM_PPM_INFO] = "PDC_GET_LPM_PPM_INFO",
 };
 const int pdc_cmd_types = CMD_PDC_COUNT;
 
@@ -615,6 +618,8 @@ struct pdc_port_t {
 	enum attached_state_t attached_state;
 	/** GET_VDO temp variable used with CMD_GET_VDO */
 	union get_vdo_t vdo_req;
+	/** LPM_PPM_INFO temp variable to hold user buffer pointer */
+	struct lpm_ppm_info_t *lpm_ppm_info;
 	/** Array used to hold the list of VDO types to request */
 	uint8_t vdo_type[VDO_NUM];
 	/** Array used to store VDOs returned from the GET_VDO command */
@@ -1714,6 +1719,9 @@ static int send_pdc_cmd(struct pdc_port_t *port)
 		rv = pdc_ack_cc_ci(port->pdc, port->ci, port->cc,
 				   port->vendor_defined_ci);
 		break;
+	case CMD_PDC_GET_LPM_PPM_INFO:
+		rv = pdc_get_lpm_ppm_info(port->pdc, port->lpm_ppm_info);
+		break;
 	default:
 		LOG_ERR("Invalid command: %d", port->cmd->cmd);
 		return -EIO;
@@ -2259,6 +2267,8 @@ static bool is_connectionless_cmd(enum pdc_cmd_t pdc_cmd)
 	case CMD_PDC_SET_POWER_LEVEL:
 		__fallthrough;
 	case CMD_PDC_GET_INFO:
+		__fallthrough;
+	case CMD_PDC_GET_LPM_PPM_INFO:
 		return true;
 	default:
 		return false;
@@ -3022,6 +3032,30 @@ test_mockable int pdc_power_mgmt_get_info(int port, struct pdc_info_t *pdc_info,
 	 * into the PDC driver.
 	 */
 	return pdc_get_info(pdc_data[port]->port.pdc, pdc_info, false);
+}
+
+test_mockable int pdc_power_mgmt_get_lpm_ppm_info(int port,
+						  struct lpm_ppm_info_t *info)
+{
+	int ret;
+
+	/* Make sure port is in range and that an output buffer is provided */
+	if (!is_pdc_port_valid(port)) {
+		return -ERANGE;
+	}
+
+	if (info == NULL) {
+		return -EINVAL;
+	}
+
+	pdc_data[port]->port.lpm_ppm_info = info;
+
+	ret = public_api_block(port, CMD_PDC_GET_LPM_PPM_INFO);
+	if (ret) {
+		return ret;
+	}
+
+	return 0;
 }
 
 int pdc_power_mgmt_get_bus_info(int port, struct pdc_bus_info_t *pdc_bus_info)

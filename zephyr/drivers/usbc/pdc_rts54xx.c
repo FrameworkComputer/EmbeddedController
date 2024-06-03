@@ -192,6 +192,8 @@ static const struct smbus_cmd_t RTS_UCSI_GET_CABLE_PROPERTY = { 0x0E, 0x03,
 								0x11 };
 static const struct smbus_cmd_t GET_PCH_DATA_STATUS = { 0x08, 0x02, 0xE0 };
 static const struct smbus_cmd_t ACK_CC_CI = { 0x0A, 0x07, 0x00 };
+static const struct smbus_cmd_t RTS_UCSI_GET_LPM_PPM_INFO = { 0x0E, 0x03,
+							      0x22 };
 
 /**
  * @brief PDC Command states
@@ -333,6 +335,8 @@ enum cmd_t {
 	/** Raw UCSI call.
 	 * Special handling of the data read from a PDC will be skipped. */
 	CMD_RAW_UCSI,
+	/** CMD_GET_LPM_PPM_INFO */
+	CMD_GET_LPM_PPM_INFO,
 };
 
 /**
@@ -458,6 +462,7 @@ static const char *const cmd_names[] = {
 	[CMD_GET_PCH_DATA_STATUS] = "CMD_GET_PCH_DATA_STATUS",
 	[CMD_ACK_CC_CI] = "CMD_ACK_CC_CI",
 	[CMD_RAW_UCSI] = "CMD_RAW_UCSI",
+	[CMD_GET_LPM_PPM_INFO] = "CMD_GET_LPM_PPM_INFO",
 };
 
 /**
@@ -2529,6 +2534,27 @@ static int rts54_ack_cc_ci(const struct device *dev,
 				  ARRAY_SIZE(payload), NULL);
 }
 
+static int rts54_get_lpm_ppm_info(const struct device *dev,
+				  struct lpm_ppm_info_t *info)
+{
+	struct pdc_data_t *data = dev->data;
+
+	if (get_state(data) != ST_IDLE) {
+		return -EBUSY;
+	}
+
+	if (info == NULL) {
+		return -EINVAL;
+	}
+
+	uint8_t payload[] = { RTS_UCSI_GET_LPM_PPM_INFO.cmd,
+			      RTS_UCSI_GET_LPM_PPM_INFO.len,
+			      RTS_UCSI_GET_LPM_PPM_INFO.sub, 0x00, 0x00 };
+
+	return rts54_post_command(dev, CMD_GET_LPM_PPM_INFO, payload,
+				  ARRAY_SIZE(payload), (uint8_t *)info);
+}
+
 static const struct pdc_driver_api_t pdc_driver_api = {
 	.is_init_done = rts54_is_init_done,
 	.get_ucsi_version = rts54_get_ucsi_version,
@@ -2565,6 +2591,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.execute_ucsi_cmd = rts54_execute_ucsi_cmd,
 	.manage_callback = rts54_manage_callback,
 	.ack_cc_ci = rts54_ack_cc_ci,
+	.get_lpm_ppm_info = rts54_get_lpm_ppm_info,
 };
 
 static void pdc_interrupt_callback(const struct device *dev,

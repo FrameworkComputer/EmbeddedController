@@ -185,6 +185,8 @@ typedef int (*pdc_manage_callback_t)(const struct device *dev,
 typedef int (*pdc_ack_cc_ci_t)(const struct device *dev,
 			       union conn_status_change_bits_t ci, bool cc,
 			       uint16_t vendor_defined);
+typedef int (*pdc_get_lpm_ppm_info_t)(const struct device *dev,
+				      struct lpm_ppm_info_t *info);
 
 /**
  * @cond INTERNAL_HIDDEN
@@ -228,6 +230,7 @@ __subsystem struct pdc_driver_api_t {
 	pdc_execute_ucsi_cmd_t execute_ucsi_cmd;
 	pdc_manage_callback_t manage_callback;
 	pdc_ack_cc_ci_t ack_cc_ci;
+	pdc_get_lpm_ppm_info_t get_lpm_ppm_info;
 };
 /**
  * @endcond
@@ -1166,6 +1169,29 @@ static inline int pdc_add_ci_callback(const struct device *dev,
 	}
 
 	return api->manage_callback(dev, callback, true);
+}
+
+/**
+ * @brief Query UCSI LPM PPM info
+ *
+ * @param dev PDC device structure pointer
+ * @param info Caller-provided output struct for received data
+ *
+ * @return 0 on success
+ * @return -ENOSYS if not implemented
+ * @return -EINVAL for other errors
+ */
+static inline int pdc_get_lpm_ppm_info(const struct device *dev,
+				       struct lpm_ppm_info_t *info)
+{
+	const struct pdc_driver_api_t *api =
+		(const struct pdc_driver_api_t *)dev->api;
+
+	if (api->get_lpm_ppm_info == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->get_lpm_ppm_info(dev, info);
 }
 
 /**

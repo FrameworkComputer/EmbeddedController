@@ -1256,6 +1256,24 @@ union get_vdo_t {
 	uint8_t raw_value;
 };
 
+/**
+ * @brief response for UCSI_GET_LPM_PPM_INFO
+ */
+struct lpm_ppm_info_t {
+	/** USB vendor ID */
+	uint16_t vid;
+	/** USB product ID */
+	uint16_t pid;
+	/** ID assigned by USB-IF for compliance */
+	uint32_t xid;
+	/** FW version */
+	uint32_t fw_ver;
+	/** FW sub-version */
+	uint32_t fw_ver_sub;
+	/** Hardware version */
+	uint32_t hw_ver;
+};
+
 #ifdef __cplusplus
 }
 #endif

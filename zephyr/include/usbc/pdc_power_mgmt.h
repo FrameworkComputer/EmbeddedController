@@ -536,4 +536,15 @@ int pdc_power_mgmt_set_trysrc(int port, bool enable);
  * @retval 0 if successful or error code
  */
 int pdc_power_mgmt_get_pch_data_status(int port, uint8_t *status);
+
+/**
+ * @brief Run the USCI_GET_LPM_PPM_INFO command on the PDC
+ *
+ * @param port USB-C port number
+ * @param info Pointer to user-supplied output location for response
+ *
+ * @retval 0 if successful or error code
+ */
+int pdc_power_mgmt_get_lpm_ppm_info(int port, struct lpm_ppm_info_t *info);
+
 #endif /* __CROS_EC_PDC_POWER_MGMT_H */
