@@ -257,9 +257,9 @@ void chipset_reset(enum chipset_shutdown_reason reason)
 
 	is_resetting = true;
 	hook_call_deferred(&reset_flag_deferred_data, RESET_FLAG_TIMEOUT);
+	/* Hold GPIO_SYS_RST_ODL to S5 and it will be released during S5->S3. */
 	GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 0);
 	crec_usleep(SYS_RST_PULSE_LENGTH);
-	GPIO_SET_LEVEL(GPIO_SYS_RST_ODL, 1);
 }
 
 #ifdef CONFIG_POWER_TRACK_HOST_SLEEP_STATE
@@ -283,7 +283,7 @@ static void power_reset_host_sleep_state(void)
  *  G3 |         1 |                   x |               1|
  *
  * S5 is a temp stage, which will be put into G3 after s5_inactivity_timeout.
- * is_resetting flag indicates it's resetting chipset, and always S0.
+ * is_resetting flag indicates it's resetting chipset.
  * is_held flag indicates the AP reset is held by servo or GSC, and always S0.
  * is_shutdown flag indicates it's shutting down the AP, it goes for S5.
  * is_s5g3_passed flag indicates it has shutdown from S5 to G3 since last
@@ -293,16 +293,8 @@ static enum power_state power_get_signal_state(void)
 {
 	if (is_shutdown)
 		return POWER_S5;
-	/*
-	 * - We are processing a chipset reset(S0->S0), so we don't check the
-	 * power signals until the reset is finished. This is because
-	 * while the chipset is resetting, the intermediate power signal state
-	 * is not reflecting the current power state.
-	 *
-	 * - GSC or Servo is holding the SYS_RST, in this case, we should stay
-	 * at S0.
-	 */
-	if (is_resetting || is_held)
+	/* GSC or Servo is holding the SYS_RST, in this case, we stay at S0. */
+	if (is_held)
 		return POWER_S0;
 	if (power_get_signals() & IN_AP_RST) {
 		/* If it has been put to G3 from S5 idle, then stay at G3.*/
@@ -393,7 +385,8 @@ enum power_state power_handle_state(enum power_state state)
 		break;
 
 	case POWER_S5:
-		if (is_exiting_off)
+		/* Go back to S0 if is_resetting */
+		if (is_exiting_off || is_resetting)
 			return POWER_S5S3;
 		else if (next_state == POWER_G3)
 			return POWER_S5G3;
@@ -412,8 +405,6 @@ enum power_state power_handle_state(enum power_state state)
 	case POWER_S0:
 		if (next_state != POWER_S0)
 			return POWER_S0S3;
-		is_resetting = false;
-
 		break;
 
 	case POWER_G3S5:
@@ -437,6 +428,7 @@ enum power_state power_handle_state(enum power_state state)
 		/* Off state exited. */
 		is_exiting_off = false;
 		is_s5g3_passed = false;
+		is_resetting = false;
 		hook_notify(HOOK_CHIPSET_PRE_INIT);
 
 		power_signal_enable_interrupt(GPIO_AP_IN_SLEEP_L);
