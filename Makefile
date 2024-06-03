@@ -18,8 +18,10 @@ BOARD ?= elm
 # Directory where the board is configured (includes /$(BOARD) at the end)
 BDIR:=$(wildcard board/$(BOARD))
 # Private board directory
-# (b/341194123): The private board directory is not visible by default. It
-# needs additional local manifest setup and only limited people can access it.
+# (b/342416995, b/341194123): There's a secret MTK SCP repo and it's not in the
+# internal manifest - it needs additional local manifest setup and only limited
+# people can access it. No ToT EC CQ is set up for that repo.
+# The rule below is reserved for the SCP firmware branches and local builds.
 # DO NOT remove PBDIR and PDIR before you read the bug and make sure that's the
 # right thing to do.
 PBDIR:=$(wildcard private-*/board/$(BOARD))
