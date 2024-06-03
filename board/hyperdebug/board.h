@@ -56,6 +56,7 @@
 #define CPU_CLOCK 110000000
 
 #define CONFIG_ADC
+#define CONFIG_ADC_CHANNELS_RUNTIME_CONFIG
 #define CONFIG_ADC_SAMPLE_TIME STM32_ADC_SMPR_247_5_CY
 #undef CONFIG_ADC_WATCHDOG
 #define CONFIG_BOARD_PRE_INIT
@@ -233,6 +234,7 @@ enum usb_strings {
 
 /* ADC signal */
 enum adc_channel {
+	ADC_VREFINT, /* ADC12_IN0 */
 	ADC_CN9_11, /* ADC12_IN1 */
 	ADC_CN9_9, /* ADC12_IN2 */
 	/* ADC_CN10_9, */ /* ADC12_IN3, Nucleo USB VBUS sense */

@@ -4,6 +4,7 @@
  */
 /* HyperDebug GPIO logic and console commands */
 
+#include "adc.h"
 #include "atomic.h"
 #include "builtin/assert.h"
 #include "clock_chip.h"
@@ -192,6 +193,13 @@ const struct dac_t dac_channels[GPIO_COUNT] = {
 	[GPIO_CN7_9] = { 0, STM32_DAC_CR_EN1, &STM32_DAC_DHR12R1 },
 	[GPIO_CN7_10] = { 1, STM32_DAC_CR_EN2, &STM32_DAC_DHR12R2 },
 };
+
+/*
+ * A voltage measured in millivolts has to be multiplied by then divided by the
+ * two values below, in order to get a 12-bit value suitable for putting into
+ * the DAC register.
+ */
+int dac_multiplier = 4096, dac_divisor = 3300;
 
 /*
  * GPIO structure for keeping extra flags such as GPIO_OPEN_DRAIN, to be applied
@@ -506,6 +514,49 @@ static void disable_asm_gpio_edge_handlers(void)
 	gpio_enable_interrupt(GPIO_NUCLEO_USER_BTN);
 }
 
+#define STM32_VREFINT_CALIBRATION REG16(0x0BFA05AA)
+
+static void calibrate_adc(void)
+{
+	int reading = 0;
+	const int num_readings = 16;
+
+	/*
+	 * Disable the re-enable ADC, in order to trigger calibration.
+	 */
+	adc_disable();
+	/* Initialize the ADC by performing a fake reading */
+	adc_read_channel(ADC_CN9_11);
+
+	/*
+	 * Make a number of consecutive readings of the internal voltage
+	 * reference.
+	 */
+	for (int i = 0; i < num_readings; i++)
+		reading += adc_read_channel(ADC_VREFINT);
+
+	/*
+	 * Based on the recent readings of the known voltage reference, compute
+	 * ratio between voltage in millivolts and ADC/DAC counts in the range
+	 * 0-4095.
+	 */
+	dac_divisor = 3000 * STM32_VREFINT_CALIBRATION / 256;
+	dac_multiplier = 4096 * reading / num_readings / 256;
+
+	/*
+	 * Set conversion factor for all the ADC channels (inverse of DAC
+	 * conversion direction), excluding the VREFINT channel, which does not
+	 * do any conversion, as we are interested in the raw reading, for
+	 * calibration.
+	 */
+	for (int i = 0; i < ADC_CH_COUNT; i++) {
+		if (i == ADC_VREFINT)
+			continue;
+		adc_channels[i].factor_mul = dac_divisor;
+		adc_channels[i].factor_div = dac_multiplier;
+	}
+}
+
 static void board_gpio_init(void)
 {
 	size_t interrupt_handler_size = THUMB_CODE_TO_DATA_PTR(&edge_int_end) -
@@ -585,6 +636,18 @@ static void board_gpio_init(void)
 		for (int j = 0; j < 4; j++)
 			timer_pwm_use[i].channel_pin[j] = GPIO_COUNT;
 	}
+
+	/* Enable ADC */
+	STM32_RCC_AHB2ENR |= STM32_RCC_AHB2ENR_ADCEN;
+	/* Enable internal VREFINT voltage reference. */
+	STM32_ADC1_CCR |= BIT(22);
+	/* Initialize the ADC by performing a fake reading */
+	adc_read_channel(ADC_CN9_11);
+	/* Perform first calibration (again on every reinit()). */
+	calibrate_adc();
+
+	/* Enable DAC */
+	STM32_RCC_APB1ENR |= STM32_RCC_APB1ENR1_DAC1EN;
 }
 DECLARE_HOOK(HOOK_INIT, board_gpio_init, HOOK_PRIO_DEFAULT);
 
@@ -757,7 +820,7 @@ DECLARE_CONSOLE_COMMAND_FLAGS(gpiopullmode, command_gpio_pull_mode,
 
 static int set_dac(int gpio, const char *value)
 {
-	int milli_volts;
+	int milli_volts, dac_value;
 	char *e;
 	if (dac_channels[gpio].enable_mask == 0) {
 		ccprintf("Error: Pin does not support dac\n");
@@ -768,12 +831,13 @@ static int set_dac(int gpio, const char *value)
 	if (*e)
 		return EC_ERROR_PARAM6;
 
-	if (milli_volts <= 0)
+	dac_value = milli_volts * dac_multiplier / dac_divisor;
+	if (dac_value <= 0)
 		*dac_channels[gpio].data_register = 0;
-	else if (milli_volts >= 3300)
+	else if (dac_value >= 4096)
 		*dac_channels[gpio].data_register = 4095;
 	else
-		*dac_channels[gpio].data_register = milli_volts * 4096 / 3300;
+		*dac_channels[gpio].data_register = dac_value;
 
 	return EC_SUCCESS;
 }
@@ -1756,6 +1820,8 @@ static int command_gpio_dac_bang(int argc, const char **argv)
 		panic("Interrupt handler does not fit");
 	sram_vectors[16 + IRQ_TIM(BITBANG_TIMER)] = DATA_TO_THUMB_CODE_PTR(
 		&bitbang_int - &bitbang_int_begin + bitbang.code);
+
+	ccprintf("Calibration: %d %d\n", dac_multiplier, dac_divisor);
 	return EC_SUCCESS;
 }
 
@@ -1999,6 +2065,8 @@ static void gpio_reinit(void)
 	 * shields.
 	 */
 	shield_reset_pin = GPIO_CN10_29;
+
+	calibrate_adc();
 }
 DECLARE_HOOK(HOOK_REINIT, gpio_reinit, HOOK_PRIO_DEFAULT);
 
