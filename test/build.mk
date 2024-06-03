@@ -87,6 +87,7 @@ test-list-host += newton_fit
 test-list-host += nvidia_gpu
 test-list-host += online_calibration
 test-list-host += online_calibration_spoof
+test-list-host += otp_key
 test-list-host += pingpong
 test-list-host += power_button
 test-list-host += printf

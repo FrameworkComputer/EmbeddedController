@@ -126,6 +126,11 @@ enum battery_type {
 #define CONFIG_BORINGSSL_CRYPTO
 #endif
 
+#if defined(TEST_OTP_KEY)
+#define CONFIG_BORINGSSL_CRYPTO
+#define CONFIG_OTP_KEY
+#endif
+
 #ifdef TEST_ROLLBACK_SECRET
 #define CONFIG_ROLLBACK
 #define CONFIG_ROLLBACK_SECRET_SIZE 32
