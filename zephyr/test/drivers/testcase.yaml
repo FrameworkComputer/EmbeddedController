@@ -674,6 +674,11 @@ tests:
   drivers.isl923x:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_ISL923X=y
+  drivers.isl923x.prochot_override:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_ISL923X=y
+    - CONFIG_PLATFORM_EC_CHARGER_AC_PROCHOT_CURRENT_MA=640
+    - CONFIG_PLATFORM_EC_CHARGER_DC_PROCHOT_CURRENT_MA=1280
   drivers.isl9238c:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_ISL923X=y

@@ -163,6 +163,9 @@ void isl923x_emul_reset_registers(const struct emul *emulator)
 	memset(data, 0, sizeof(struct isl923x_emul_data));
 	data->common = common_backup;
 	data->battery_emul = battery_emul;
+
+	data->ac_prochot_reg = ISL923X_EMUL_AC_PROCHOT_POR;
+	data->dc_prochot_reg = ISL923X_EMUL_DC_PROCHOT_POR;
 }
 
 void isl923x_emul_set_manufacturer_id(const struct emul *emulator,

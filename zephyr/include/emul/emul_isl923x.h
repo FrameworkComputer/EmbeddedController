@@ -10,6 +10,15 @@
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c_emul.h>
 
+/* Stub power on reset defaults for some registers */
+
+/*
+ * These do not correspond to real values, but allows us to validate
+ * when the driver code overrides the power on reset setting.
+ */
+#define ISL923X_EMUL_AC_PROCHOT_POR 0x1F80
+#define ISL923X_EMUL_DC_PROCHOT_POR 0x3F00
+
 /**
  * @brief Get the emulator's parent bus device
  *
