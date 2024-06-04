@@ -1,1 +1,0 @@
-DEVPATH=="/devices/virtual/i2c-pseudo/*", GROUP="plugdev", MODE="0660"
