@@ -35,6 +35,12 @@ LOG_MODULE_REGISTER(cros_kb_raw, LOG_LEVEL_ERR);
 #define KEYBOARD_KSI_PIN_COUNT IT8XXX2_DT_INST_WUCCTRL_LEN(0)
 #define KSOH_PIN_MASK (((1 << (KEYBOARD_COLS_MAX - 8)) - 1) & 0xff)
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 43
+
 /* Device config */
 struct cros_kb_raw_wuc_map_cfg {
 	/* WUC control device structure */
