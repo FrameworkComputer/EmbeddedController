@@ -63,6 +63,10 @@
 		pen_fault_od {
 			gpios = <&gpiof 3 GPIO_INPUT>;
 		};
+		ec_batt_pres_odl: ec_batt_pres_odl {
+			gpios = <&gpioe 0 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
 	};
 
 	/*

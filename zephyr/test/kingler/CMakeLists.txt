@@ -77,6 +77,12 @@ target_sources_ifdef(
         src/ponyta_board.c)
 
 target_sources_ifdef(CONFIG_TEST_KYOGRE_SENSOR_PROBE app PRIVATE src/kyogre_sensor.c)
+target_sources_ifdef(
+	CONFIG_TEST_KYOGRE_BATTERY_DETECTION_PROBE
+	app
+	PRIVATE
+        ${PLATFORM_EC_PROGRAM_DIR}/corsola/kyogre/src/battery_detection.c
+	src/kyogre_battery_detection.c)
 target_sources_ifdef(CONFIG_TEST_SQUIRTLE
 			app PRIVATE
                         src/voltorb_usbc.c

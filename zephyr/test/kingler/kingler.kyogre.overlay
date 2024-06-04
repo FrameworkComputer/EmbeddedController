@@ -43,6 +43,10 @@
 		lid_accel_int_l:lid_accel_int_l {
 			gpios = <&gpiob 3 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
+		ec_batt_pres_odl: ec_batt_pres_odl {
+			gpios = <&gpioe 0 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
 	};
 
 	motionsense-sensor-info {
