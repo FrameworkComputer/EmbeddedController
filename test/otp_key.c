@@ -11,24 +11,20 @@
 
 void print_key_buffer(uint8_t *key_buff)
 {
-	uint8_t i;
-
 	ccprintf("key buffer: 0x");
-	for (i = 0; i < OTP_KEY_SIZE_BYTES; i++)
+	for (uint8_t i = 0; i < OTP_KEY_SIZE_BYTES; i++)
 		ccprintf("%02X", key_buff[i]);
 	ccprintf("\n");
 }
 
 test_static int test_otp_key(void)
 {
-	uint32_t status;
-	uint8_t otp_key_buffer[OTP_KEY_SIZE_BYTES] = { 0 };
-
 	otp_key_init();
 
-	status = otp_key_provision();
+	uint32_t status = otp_key_provision();
 	TEST_EQ(status, EC_SUCCESS, "%d");
 
+	uint8_t otp_key_buffer[OTP_KEY_SIZE_BYTES] = { 0 };
 	status = otp_key_read(otp_key_buffer);
 	TEST_EQ(status, EC_SUCCESS, "%d");
 
