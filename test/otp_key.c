@@ -36,6 +36,8 @@ test_static int test_otp_key(void)
 
 	print_key_buffer(otp_key_buffer);
 
+	otp_key_exit();
+
 	return EC_SUCCESS;
 }
 
