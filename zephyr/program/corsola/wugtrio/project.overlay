@@ -208,7 +208,11 @@
 			compatible = "cros-ec,drvdata-bmi3xx";
 			status = "okay";
 		};
-		lsm6dsm_data: lsm6dsm-drv-data {
+		lsm6dsm_data_accel: lsm6dsm-accel-drv-data {
+			compatible = "cros-ec,drvdata-lsm6dsm";
+			status = "okay";
+		};
+		lsm6dsm_data_gyro: lsm6dsm-gyro-drv-data {
 			compatible = "cros-ec,drvdata-lsm6dsm";
 			status = "okay";
 		};
@@ -264,7 +268,7 @@
 			mutex = <&lid_mutex_lsm6dsm>;
 			port = <&i2c_sensor>;
 			rot-standard-ref = <&lid_rot_ref_lsm6dsm>;
-			drv-data = <&lsm6dsm_data>;
+			drv-data = <&lsm6dsm_data_accel>;
 			alternate-for = <&lid_accel>;
 			alternate-ssfc-indicator = <&lid_sensor_1>;
 			configs {
@@ -291,7 +295,7 @@
 			port = <&i2c_sensor>;
 			rot-standard-ref = <&lid_rot_ref_lsm6dsm>;
 			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
-			drv-data = <&lsm6dsm_data>;
+			drv-data = <&lsm6dsm_data_gyro>;
 			alternate-for = <&lid_gyro>;
 			alternate-ssfc-indicator = <&lid_sensor_1>;
 		};
