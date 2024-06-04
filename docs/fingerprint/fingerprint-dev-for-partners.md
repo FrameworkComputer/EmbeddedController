@@ -185,9 +185,6 @@ You should see something like this. Leave it running:
 2023-02-03 15:05:30,661 - Interface.Build - INFO - /dev/pts/2
 2023-02-03 15:05:30,661 - Servod - INFO - Initializing interface 2 to stm32_i2c
 2023-02-03 15:05:30,661 - Interface.Build - INFO - Si2cBus: interface: {'name': 'stm32_i2c', 'interface': 4, 'index': 2}
-2023-02-03 15:05:30,661 - root - INFO - Skipping modprobe of i2c-dev: it is already loaded per existence of: /sys/module/i2c_dev/
-2023-02-03 15:05:30,661 - root - INFO - Executing command: ['modprobe', '--quiet', '--', 'i2c-pseudo']
-2023-02-03 15:05:30,664 - i2c_base - INFO - path b'/dev/i2c-pseudo-controller' not found, cannot start I2C pseudo adapter
 2023-02-03 15:05:30,665 - Servod - INFO - Initializing interface 3 to stm32_uart
 2023-02-03 15:05:30,666 - Interface.Build - INFO - Suart: interface: {'name': 'stm32_uart', 'interface': 3, 'index': 3}
 2023-02-03 15:05:30,670 - Interface.Build - INFO - /dev/pts/3
