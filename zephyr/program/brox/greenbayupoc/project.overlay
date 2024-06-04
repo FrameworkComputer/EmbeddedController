@@ -38,8 +38,8 @@ i2c3ALT: &i2c3 {
 
 /{
         batteries {
-                default_battery: lgc_ap18c8k {
-                        compatible = "lgc,ap18c8k", "battery-smart";
+                default_battery: dynapack_313-2d-32-a {
+                        compatible = "dynapack,313-2d-32-a", "battery-smart";
                 };
         };
 };
