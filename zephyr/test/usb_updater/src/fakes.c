@@ -11,6 +11,3 @@ DEFINE_FAKE_VALUE_FUNC(int, touchpad_debug, const uint8_t *, unsigned int,
 		       uint8_t **, unsigned int *);
 DEFINE_FAKE_VALUE_FUNC(int, touchpad_update_write, int, int, const uint8_t *);
 DEFINE_FAKE_VALUE_FUNC(enum ec_image, system_get_image_copy);
-DEFINE_FAKE_VOID_FUNC(touchpad_task, void *);
-DEFINE_FAKE_VALUE_FUNC(const char *, system_get_version, enum ec_image);
-DEFINE_FAKE_VALUE_FUNC(enum rwsig_status, rwsig_get_status);

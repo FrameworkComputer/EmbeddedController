@@ -191,22 +191,6 @@ ZTEST(usb_update, test_bad_digest)
 	zassert_equal(resp, 0);
 }
 
-ZTEST(usb_update, test_rwsig_busy)
-{
-	const struct queue *tx_queue = usb_update.consumer.queue;
-	struct first_response_pdu first_response_pdu;
-	int resp;
-
-	rwsig_get_status_fake.return_val = RWSIG_IN_PROGRESS;
-	/* send first pdu */
-	send_pdu(0, 0, 0);
-	zassert_equal(queue_count(tx_queue), sizeof(first_response_pdu));
-	queue_remove_units(tx_queue, &first_response_pdu,
-			   sizeof(first_response_pdu));
-	resp = sys_be32_to_cpu(first_response_pdu.return_value);
-	zassert_equal(resp, UPDATE_RWSIG_BUSY);
-}
-
 static void usb_update_before(void *f)
 {
 	/* reset the usb_updater's internal state */

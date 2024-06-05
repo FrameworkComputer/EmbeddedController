@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 #include "ec_commands.h"
-#include "rwsig.h"
 #include "system.h"
 #include "touchpad.h"
 
@@ -16,9 +15,6 @@ DECLARE_FAKE_VALUE_FUNC(int, touchpad_debug, const uint8_t *, unsigned int,
 			uint8_t **, unsigned int *);
 DECLARE_FAKE_VALUE_FUNC(int, touchpad_update_write, int, int, const uint8_t *);
 DECLARE_FAKE_VALUE_FUNC(enum ec_image, system_get_image_copy);
-DECLARE_FAKE_VOID_FUNC(touchpad_task, void *);
-DECLARE_FAKE_VALUE_FUNC(const char *, system_get_version, enum ec_image);
-DECLARE_FAKE_VALUE_FUNC(enum rwsig_status, rwsig_get_status);
 
 #define FFF_FAKES_LIST(FAKE)        \
 	FAKE(system_reset)          \
@@ -26,7 +22,4 @@ DECLARE_FAKE_VALUE_FUNC(enum rwsig_status, rwsig_get_status);
 	FAKE(touchpad_get_info)     \
 	FAKE(touchpad_debug)        \
 	FAKE(touchpad_update_write) \
-	FAKE(system_get_image_copy) \
-	FAKE(touchpad_task)         \
-	FAKE(system_get_version)    \
-	FAKE(rwsig_get_status)
+	FAKE(system_get_image_copy)
