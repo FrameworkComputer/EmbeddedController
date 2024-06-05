@@ -3136,8 +3136,10 @@ pdc_power_mgmt_get_identity_discovery(int port, enum tcpci_msg_type type)
 		cmd = CMD_PDC_GET_IDENTITY_DISCOVERY;
 		break;
 	case TCPCI_MSG_SOP_PRIME:
-		cmd = CMD_PDC_GET_CABLE_PROPERTY;
-		break;
+		return (pdc_data[port]->port.cable_prop.cable_type &&
+			pdc_data[port]->port.cable_prop.mode_support) ?
+			       PD_DISC_COMPLETE :
+			       PD_DISC_FAIL;
 	default:
 		return PD_DISC_FAIL;
 	}
@@ -3148,15 +3150,8 @@ pdc_power_mgmt_get_identity_discovery(int port, enum tcpci_msg_type type)
 		return PD_DISC_NEEDED;
 	}
 
-	if (cmd == CMD_PDC_GET_IDENTITY_DISCOVERY) {
-		return pdc_data[port]->port.discovery_state ? PD_DISC_COMPLETE :
-							      PD_DISC_FAIL;
-	} else {
-		return (pdc_data[port]->port.cable_prop.cable_type &&
-			pdc_data[port]->port.cable_prop.mode_support) ?
-			       PD_DISC_COMPLETE :
-			       PD_DISC_FAIL;
-	}
+	return pdc_data[port]->port.discovery_state ? PD_DISC_COMPLETE :
+						      PD_DISC_FAIL;
 }
 
 test_mockable int
