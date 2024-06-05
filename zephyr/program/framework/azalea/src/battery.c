@@ -300,6 +300,9 @@ __override void board_battery_compensate_params(struct batt_params *batt)
 	batt->flags &= ~BATT_FLAG_BAD_ANY;
 	batt->flags |= BATT_FLAG_RESPONSIVE;
 	batt_cache.flags |= BATT_FLAG_RESPONSIVE;
+
+	/* override the display charge value for Windows system */
+	batt->display_charge = get_system_percentage();
 }
 
 /*****************************************************************************/
