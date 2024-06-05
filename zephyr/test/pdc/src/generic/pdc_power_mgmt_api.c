@@ -1178,6 +1178,114 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_cable_prop)
 				   PDC_TEST_TIMEOUT));
 }
 
+ZTEST_USER(pdc_power_mgmt_api, test_get_identity_discovery)
+{
+	struct setup_t {
+		enum tcpci_msg_type type;
+		bool cable_type;
+		bool mode_support;
+	};
+	struct expect_t {
+		bool check_cc_mode;
+		enum ccom_t cc_mode;
+		bool check_pdr;
+		union pdr_t pdr;
+	};
+	struct {
+		char *description;
+		struct setup_t s;
+		enum pd_discovery_state expected_state;
+	} test[] = {
+		{
+			.description = "SOP with alt mode support",
+			.s = { .type = TCPCI_MSG_SOP,
+			       .cable_type = false,
+			       .mode_support = true, },
+			.expected_state = PD_DISC_COMPLETE,
+		},
+		{
+			.description = "SOP without alt mode support",
+			.s = { .type = TCPCI_MSG_SOP,
+			       .cable_type = false,
+			       .mode_support = false, },
+			.expected_state = PD_DISC_FAIL,
+		},
+		{
+			.description = "SOP' with alt mode support",
+			.s = { .type = TCPCI_MSG_SOP_PRIME,
+			       .cable_type = true,
+			       .mode_support = true, },
+			.expected_state = PD_DISC_COMPLETE,
+		},
+		{
+			.description = "SOP' without alt mode support",
+			.s = { .type = TCPCI_MSG_SOP_PRIME,
+			       .cable_type = true,
+			       .mode_support = false, },
+			.expected_state = PD_DISC_FAIL,
+		},
+		{
+			/* SOP'' not supported and should always fail. */
+			.description = "SOP'' with alt mode support",
+			.s = { .type = TCPCI_MSG_SOP_PRIME_PRIME,
+			       .cable_type = true,
+			       .mode_support = true, },
+			.expected_state = PD_DISC_FAIL,
+		},
+	};
+
+	union cable_property_t in;
+	union connector_status_t in_conn_status;
+	union conn_status_change_bits_t in_conn_status_change_bits;
+	enum pd_discovery_state actual_state;
+
+	in_conn_status_change_bits.external_supply_change = 1;
+	in_conn_status_change_bits.connector_partner = 1;
+	in_conn_status_change_bits.connect_change = 1;
+	in_conn_status.raw_conn_status_change_bits =
+		in_conn_status_change_bits.raw_value;
+
+	in_conn_status.conn_partner_type = UFP_ATTACHED;
+	in_conn_status.rdo = 0x01234567;
+	emul_pdc_configure_snk(emul, &in_conn_status);
+
+	for (int i = 0; i < ARRAY_SIZE(test); i++) {
+		LOG_INF("Testing %s", test[i].description);
+
+		if (test[i].s.mode_support) {
+			in_conn_status.conn_partner_flags =
+				CONNECTOR_PARTNER_FLAG_ALTERNATE_MODE;
+		} else {
+			in_conn_status.conn_partner_flags =
+				CONNECTOR_PARTNER_FLAG_USB;
+		}
+		in.cable_type = test[i].s.cable_type;
+		in.mode_support = test[i].s.mode_support;
+
+		emul_pdc_set_cable_property(emul, in);
+
+		emul_pdc_connect_partner(emul, &in_conn_status);
+		zassert_true(
+			TEST_WAIT_FOR(pdc_power_mgmt_is_connected(TEST_PORT),
+				      PDC_TEST_TIMEOUT));
+
+		actual_state = pdc_power_mgmt_get_identity_discovery(
+			TEST_PORT, test[i].s.type);
+		zassert_equal(test[i].expected_state, actual_state,
+			      "%s: expected state %d, actual %d",
+			      test[i].description, test[i].expected_state);
+
+		emul_pdc_disconnect(emul);
+		zassert_true(
+			TEST_WAIT_FOR(!pdc_power_mgmt_is_connected(TEST_PORT),
+				      PDC_TEST_TIMEOUT));
+	}
+
+	zassert_equal(pdc_power_mgmt_get_identity_discovery(TEST_PORT,
+							    TCPCI_MSG_SOP),
+		      PD_DISC_NEEDED);
+};
+
 /*
  * Validate that all possible PDC power management states have a name
  * assigned.  This could possibly be done with some macrobatics, but

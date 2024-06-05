@@ -352,6 +352,21 @@ static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 	data->response.rtk_status.plug_direction =
 		data->connector_status.orientation & BIT_MASK(1);
 
+	/* Byte 14 */
+	/* If the partner type supports PD (alternate mode or USB4(),
+	 * set the alternate mode status as if all configuration is complete.
+	 */
+	if (data->connector_status.connect_status &&
+	    data->connector_status.conn_partner_flags &
+		    CONNECTOR_PARTNER_PD_CAPABLE) {
+		/* 6 = DP Configure Command Done */
+		data->response.rtk_status.alt_mode_related_status = 0x6;
+	} else {
+		/* 0 = Discovery Identity not done, partner doesn't support PD
+		 */
+		data->response.rtk_status.alt_mode_related_status = 0x0;
+	}
+
 	/* BYTE 16-17 */
 	data->response.rtk_status.average_current_low = 0;
 	data->response.rtk_status.average_current_high = 0;
