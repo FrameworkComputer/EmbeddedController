@@ -164,8 +164,8 @@
 		/* Skitty LED bat charge */
 		bat-power-state-charge {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery percent range (>= Empty, <= 94%) */
-			batt-lvl = <BATTERY_LEVEL_EMPTY 94>;
+			/* Battery percent range (>= Empty, <= 99%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 99>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
@@ -178,11 +178,94 @@
 
 		bat-power-state-charge-near-full {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery percent range (>= 95%, <= Full) */
-			batt-lvl = <95 BATTERY_LEVEL_FULL>;
+			chipset-state = "POWER_S3";
+			/* Battery percent range (> 99%, <= Full) */
+			batt-lvl = <BATTERY_LEVEL_FULL BATTERY_LEVEL_FULL>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		bat-power-state-charge-near-full-s0 {
+			charge-state = "LED_PWRS_CHARGE";
+			chipset-state = "POWER_S0";
+			/* Battery percent range (> 99%, <= Full) */
+			batt-lvl = <BATTERY_LEVEL_FULL BATTERY_LEVEL_FULL>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		bat-power-state-charge-near-full-s5 {
+			charge-state = "LED_PWRS_CHARGE";
+			chipset-state = "POWER_S5";
+			/* Battery percent range (> 99%, <= Full) */
+			batt-lvl = <BATTERY_LEVEL_FULL BATTERY_LEVEL_FULL>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		bat-power-state-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+			chipset-state = "POWER_S3";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		bat-power-state-near-full-s0 {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+			chipset-state = "POWER_S0";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		bat-power-state-near-full-s5 {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+			chipset-state = "POWER_S5";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
 				color-0 {
 					led-color = "LED_WHITE";
 				};
@@ -200,7 +283,26 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		bat-power-state-discharge-s3 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S3";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
 					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
 				};
 			};
 		};
@@ -211,8 +313,29 @@
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
+
 				color-0 {
 					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		/* STARMIE LED low bat discharge */
+		bat-power-state-discharge-s0-bat-low {
+			charge-state = "LED_PWRS_DISCHARGE";
+			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
 				};
 			};
 		};
@@ -226,13 +349,13 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_AMBER";
-					period-ms = <1000>;
+					led-color = "LED_WHITE";
+					period-ms = <500>;
 				};
 
 				color-1 {
 					led-color = "LED_OFF";
-					period-ms = <1000>;
+					period-ms = <500>;
 				};
 			};
 		};
@@ -246,12 +369,12 @@
 
 				color-0 {
 					led-color = "LED_WHITE";
-					period-ms = <1000>;
+					period-ms = <500>;
 				};
 
 				color-1 {
 					led-color = "LED_OFF";
-					period-ms = <3000>;
+					period-ms = <500>;
 				};
 			};
 		};
