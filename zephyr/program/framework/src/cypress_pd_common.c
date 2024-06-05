@@ -1414,7 +1414,9 @@ int cypd_device_int(int controller)
 			CPRINTS("PD%d Message Overflow", controller);
 			break;
 		default:
-			CPRINTS("INTR_REG CTRL:%d TODO Device 0x%x", controller, data & 0xFF);
+			/* reduce the EC logs without debugging */
+			if (verbose_msg_logging)
+				CPRINTS("C%d device response: 0x%x", controller, data & 0xFF);
 		}
 	} else
 		return EC_ERROR_INVAL;
@@ -1543,6 +1545,8 @@ void cypd_port_int(int controller, int port)
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
 	int port_idx = (controller << 1) + port;
 	enum tcpci_msg_type sop_type;
+	static int snk_transition_flags;
+
 	/* enum pd_msg_type sop_type; */
 	rv = i2c_read_offset16_block(i2c_port, addr_flags,
 		CCG_PORT_PD_RESPONSE_REG(port), data2, 4);
@@ -1612,6 +1616,8 @@ void cypd_port_int(int controller, int port)
 			pd_port_states[port_idx].epr_support = 1;
 			CPRINTS("P%d EPR mode capable", port_idx);
 		}
+
+		snk_transition_flags = 1;
 		break;
 #ifdef CONFIG_PD_CCG8_EPR
 	case CCG_RESPONSE_EPR_EVENT:
@@ -1620,6 +1626,13 @@ void cypd_port_int(int controller, int port)
 		cypd_update_port_state(controller, port);
 		break;
 #endif
+	case CCG_RESPONSE_ACCEPT_MSG_RX:
+		CPRINTS("CCG_RESPONSE_ACCEPT_MSG_RX %d", port_idx);
+		if (snk_transition_flags) {
+			charge_manager_force_ceil(port_idx, 500);
+			snk_transition_flags = 0;
+		}
+		break;
 	case CCG_RESPONSE_EXT_MSG_SOP_RX:
 	case CCG_RESPONSE_EXT_SOP1_RX:
 	case CCG_RESPONSE_EXT_SOP2_RX:
@@ -1866,13 +1879,14 @@ enum pd_power_role pd_get_power_role(int port)
 
 void pd_request_power_swap(int port)
 {
-	CPRINTS("TODO Implement %s port %d", __func__, port);
+	/* We probably dont need to do this */
+	return;
 }
 
 void pd_set_new_power_request(int port)
 {
 	/* We probably dont need to do this since we will always request max. */
-	CPRINTS("TODO Implement %s port %d", __func__, port);
+	return;
 }
 
 int pd_is_connected(int port)
@@ -1917,6 +1931,8 @@ int get_active_charge_pd_port(void)
 
 void update_active_charge_pd_port(int update_charger_port)
 {
+	CPRINTS("%s port %d, prev:%d", __func__, update_charger_port, prev_charge_port);
+
 	prev_charge_port = update_charger_port;
 }
 
