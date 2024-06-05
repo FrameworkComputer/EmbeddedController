@@ -28,6 +28,7 @@ GPIO_INT(USB_A0_OC_ODL,              PIN(3, 1), GPIO_INPUT | GPIO_PULL_UP | GPIO
 GPIO_INT(USB_A1_OC_ODL,              PIN(3, 0), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A2_OC_ODL,              PIN(2, 7), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A3_OC_ODL,              PIN(2, 6), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
+GPIO_INT(OPS_PS_ON,                  PIN(D, 2), GPIO_INT_BOTH, ps_on_interrupt)
 
 /* CCD */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
@@ -142,7 +143,6 @@ UNUSED(PIN(A, 3))
 UNUSED(PIN(B, 1))
 UNUSED(PIN(B, 5))
 UNUSED(PIN(B, 4))
-UNUSED(PIN(D, 2))
 UNUSED(PIN(D, 4))
 UNUSED(PIN(F, 5))
 UNUSED(PIN(0, 5))

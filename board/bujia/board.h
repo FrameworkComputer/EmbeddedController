@@ -167,6 +167,8 @@ enum cec_port { CEC_PORT_0, CEC_PORT_COUNT };
 
 extern void adp_connect_interrupt(enum gpio_signal signal);
 
+void ps_on_interrupt(enum gpio_signal signal);
+
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */
