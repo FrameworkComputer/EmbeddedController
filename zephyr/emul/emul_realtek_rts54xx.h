@@ -297,7 +297,12 @@ union rts54_response {
 		uint8_t pd_revision[2];
 		uint8_t pd_version[2];
 		uint8_t project_name[12];
-	} ic_status;
+	} __packed ic_status;
+
+	struct rts54_ucsi_get_lpm_ppm_info {
+		uint8_t byte_count;
+		struct lpm_ppm_info_t info;
+	} __packed lpm_ppm_info;
 
 	struct get_capability_response {
 		uint8_t byte_count;
@@ -465,6 +470,7 @@ struct rts5453p_emul_pdc_data {
 	struct force_set_power_switch_t set_power_switch_data;
 	uint8_t set_tpc_reconnect_param;
 	struct pdc_info_t info;
+	struct lpm_ppm_info_t lpm_ppm_info;
 	union cable_property_t cable_property;
 
 	union rts54_request request;

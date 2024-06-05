@@ -1272,7 +1272,7 @@ struct lpm_ppm_info_t {
 	uint32_t fw_ver_sub;
 	/** Hardware version */
 	uint32_t hw_ver;
-};
+} __packed;
 
 #ifdef __cplusplus
 }

@@ -138,6 +138,20 @@ static int get_ic_status(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int get_lpm_ppm_info(struct rts5453p_emul_pdc_data *data,
+			    const union rts54_request *req)
+{
+	LOG_INF("UCSI_GET_LPM_PPM_INFO");
+
+	data->response.lpm_ppm_info.byte_count = sizeof(struct lpm_ppm_info_t);
+
+	data->response.lpm_ppm_info.info = data->lpm_ppm_info;
+
+	send_response(data);
+
+	return 0;
+}
+
 static int block_read(struct rts5453p_emul_pdc_data *data,
 		      const union rts54_request *req)
 {
@@ -774,6 +788,7 @@ const struct commands sub_cmd_x0E[] = {
 	{ .code = 0x12, HANDLER_DEF(get_connector_status) },
 	{ .code = 0x13, HANDLER_DEF(get_error_status) },
 	{ .code = 0x1E, HANDLER_DEF(read_power_level) },
+	{ .code = 0x22, HANDLER_DEF(get_lpm_ppm_info) },
 };
 
 const struct commands sub_cmd_x12[] = {
@@ -1288,6 +1303,18 @@ static int emul_realtek_rts54xx_set_info(const struct emul *target,
 	return 0;
 }
 
+static int
+emul_realtek_rts54xx_set_lpm_ppm_info(const struct emul *target,
+				      const struct lpm_ppm_info_t *info)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	data->lpm_ppm_info = *info;
+
+	return 0;
+}
+
 static int emul_realtek_rts54xx_get_pdos(const struct emul *target,
 					 enum pdo_type_t pdo_type,
 					 enum pdo_offset_t pdo_offset,
@@ -1349,6 +1376,7 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.get_reconnect_req = emul_realtek_rts54xx_get_reconnect_req,
 	.pulse_irq = emul_realtek_rts54xx_pulse_irq,
 	.set_info = emul_realtek_rts54xx_set_info,
+	.set_lpm_ppm_info = emul_realtek_rts54xx_set_lpm_ppm_info,
 	.set_pdos = emul_realtek_rts54xx_set_pdos,
 	.get_pdos = emul_realtek_rts54xx_get_pdos,
 	.get_cable_property = emul_realtek_rts54xx_get_cable_property,

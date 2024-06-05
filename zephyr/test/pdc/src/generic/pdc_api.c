@@ -435,6 +435,40 @@ ZTEST_USER(pdc_api, test_get_info)
 			  sizeof(info_in2.project_name));
 }
 
+ZTEST_USER(pdc_api, test_get_lpm_ppm_info)
+{
+	struct lpm_ppm_info_t out = { 0 };
+	struct lpm_ppm_info_t in = {
+		.vid = 0x1234,
+		.pid = 0x5678,
+		.xid = 0xa1b2c3d4,
+		.fw_ver = 123,
+		.fw_ver_sub = 456,
+		.hw_ver = 0xa5b6c7de,
+	};
+
+	/* Test output param NULL check */
+	zassert_equal(-EINVAL, pdc_get_lpm_ppm_info(dev, NULL));
+
+	/* Successful */
+	emul_pdc_set_lpm_ppm_info(emul, &in);
+	zassert_equal(EC_SUCCESS, pdc_get_lpm_ppm_info(dev, &out));
+	k_sleep(K_MSEC(SLEEP_MS));
+
+	zassert_equal(in.vid, out.vid, "Got $%04x, expected $%04x", out.vid,
+		      in.vid);
+	zassert_equal(in.pid, out.pid, "Got $%04x, expected $%04x", out.pid,
+		      in.pid);
+	zassert_equal(in.xid, out.xid, "Got $%08x, expected $%08x", out.xid,
+		      in.xid);
+	zassert_equal(in.fw_ver, out.fw_ver, "Got %u, expected %u", out.fw_ver,
+		      in.fw_ver);
+	zassert_equal(in.fw_ver_sub, out.fw_ver_sub, "Got %u, expected %u",
+		      out.fw_ver_sub, in.fw_ver_sub);
+	zassert_equal(in.hw_ver, out.hw_ver, "Got %08x, expected $%08x",
+		      out.hw_ver, in.hw_ver);
+}
+
 /* PDO0 is reserved for a fixed PDO at 5V. */
 ZTEST_USER(pdc_api, test_get_pdo)
 {
@@ -606,4 +640,12 @@ ZTEST_USER(pdc_api_suspended, test_get_info)
 		      info_in1.vid_pid, out.vid_pid);
 	zassert_mem_equal(info_in1.project_name, out.project_name,
 			  sizeof(info_in1.project_name));
+}
+
+ZTEST_USER(pdc_api_suspended, test_get_lpm_ppm_info)
+{
+	struct lpm_ppm_info_t out;
+
+	/* Read should return busy because comms are blocked */
+	zassert_equal(-EBUSY, pdc_get_lpm_ppm_info(dev, &out));
 }

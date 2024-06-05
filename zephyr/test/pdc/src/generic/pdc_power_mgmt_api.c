@@ -510,6 +510,43 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_info)
 		TEST_WAIT_FOR(!pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
 }
 
+ZTEST_USER(pdc_power_mgmt_api, test_get_lpm_ppm_info)
+{
+	struct lpm_ppm_info_t out = { 0 };
+	struct lpm_ppm_info_t in = {
+		.vid = 0x1234,
+		.pid = 0x5678,
+		.xid = 0xa1b2c3d4,
+		.fw_ver = 123,
+		.fw_ver_sub = 456,
+		.hw_ver = 0xa5b6c7de,
+	};
+
+	/* Bad params */
+	zassert_equal(-ERANGE, pdc_power_mgmt_get_lpm_ppm_info(
+				       CONFIG_USB_PD_PORT_MAX_COUNT, &out));
+	zassert_equal(-EINVAL,
+		      pdc_power_mgmt_get_lpm_ppm_info(TEST_PORT, NULL));
+
+	/* Successful */
+	emul_pdc_set_lpm_ppm_info(emul, &in);
+	zassert_equal(EC_SUCCESS,
+		      pdc_power_mgmt_get_lpm_ppm_info(TEST_PORT, &out));
+
+	zassert_equal(in.vid, out.vid, "Got $%04x, expected $%04x", out.vid,
+		      in.vid);
+	zassert_equal(in.pid, out.pid, "Got $%04x, expected $%04x", out.pid,
+		      in.pid);
+	zassert_equal(in.xid, out.xid, "Got $%08x, expected $%08x", out.xid,
+		      in.xid);
+	zassert_equal(in.fw_ver, out.fw_ver, "Got %u, expected %u", out.fw_ver,
+		      in.fw_ver);
+	zassert_equal(in.fw_ver_sub, out.fw_ver_sub, "Got %u, expected %u",
+		      out.fw_ver_sub, in.fw_ver_sub);
+	zassert_equal(in.hw_ver, out.hw_ver, "Got %08x, expected $%08x",
+		      out.hw_ver, in.hw_ver);
+}
+
 ZTEST_USER(pdc_power_mgmt_api, test_request_power_swap)
 {
 	int i;
