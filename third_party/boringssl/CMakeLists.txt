@@ -60,6 +60,10 @@ zephyr_library_link_libraries(crypto)
 # -D_POSIX_C_SOURCE=200809L is needed because BoringSSL uses strdup() function
 # is guarded by __POSIX_VISIBLE >=200809 in Newlib's string.h file.
 #
+# -DPTHREAD_RWLOCK_INITIALIZER=POSIX_RWLOCK_INITIALIZER is due to an
+# inconsistent naming of the rwlock initialization macro in the Zephyr posix
+# implementation.
+#
 # -Wno-implicit-function-declaration is needed because BoringSSL sources use
 # functions not defined in Zephyr: fflush(), getenv(), sscanf(). We won't get
 # any linker issues because code that uses these functions is unused and will
@@ -68,8 +72,12 @@ zephyr_library_link_libraries(crypto)
 # -fno-common disables merging tentative definitions (uninitialized global
 # variables) into pre-existing definition (initialized global variable).
 # Recommended by BoringSSL.
-set(BORINGSSL_COMPILE_OPTIONS -D_POSIX_C_SOURCE=200809L
-	-Wno-implicit-function-declaration -fno-common)
+set(BORINGSSL_COMPILE_OPTIONS
+	-D_POSIX_C_SOURCE=200809L
+	-DPTHREAD_RWLOCK_INITIALIZER=POSIX_RWLOCK_INITIALIZER
+	-Wno-implicit-function-declaration
+	-fno-common
+)
 
 # Create interface library that specifies compile options required by
 # BoringSSL. This is the same trick used by zephyr_library_compile_options()
