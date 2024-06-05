@@ -22,6 +22,8 @@
 #define CONFIG_LIB_DRUID_WRAPPER
 #define CONFIG_LIB_DRUID_ARMV7
 
+#define FILTERSIZE 25
+
 #endif /* SECTION_IS_RW */
 
 #endif /* __CROS_EC_BOARD_H */
