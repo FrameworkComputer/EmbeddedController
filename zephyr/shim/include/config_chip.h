@@ -634,7 +634,7 @@ extern char mock_jump_data[CONFIG_PLATFORM_EC_PRESERVED_END_OF_RAM_SIZE];
 #undef CONFIG_FLASH_PSTATE_LOCKED
 #ifdef CONFIG_PLATFORM_EC_FLASH_CROS
 
-#ifdef CONFIG_BOARD_NATIVE_POSIX
+#if defined(CONFIG_BOARD_NATIVE_POSIX) || defined(CONFIG_BOARD_NATIVE_SIM)
 #include "flash_chip_native_posix.h"
 #else
 #include "flash_chip.h"

@@ -3,6 +3,4 @@
  * found in the LICENSE file.
  */
 
-#include <board-overlays/native_posix.dts>
-
-/* No additional nodes to the native_posix overlay */
+#include <board-overlays/native_sim.dts>

@@ -3,7 +3,7 @@
 # found in the LICENSE file.
 
 common:
-  platform_allow: native_posix
+  platform_allow: native_sim
 tests:
   # ISL923x common tests
   isl923x.extpower.nissa.craask:
@@ -13,7 +13,7 @@ tests:
 
   isl923x.extpower.nissa.craaskov:
     extra_dtc_overlay_files:
-      - boards/native_posix.overlay
+      - boards/native_sim.overlay
       - boards/craaskov_xivu.overlay
     extra_configs:
       - CONFIG_TEST_BOARD_CRAASKOV=y
@@ -46,7 +46,7 @@ tests:
 
   isl923x.extpower.nissa.xivu:
     extra_dtc_overlay_files:
-      - boards/native_posix.overlay
+      - boards/native_sim.overlay
       - boards/craaskov_xivu.overlay
     extra_configs:
       - CONFIG_TEST_BOARD_XIVU=y

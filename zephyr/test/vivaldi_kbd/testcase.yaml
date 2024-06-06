@@ -1,5 +1,5 @@
 common:
-  platform_allow: native_posix
+  platform_allow: native_sim
 tests:
   vivaldi_kbd.default: {}
   vivaldi_kbd.two-configs-0:

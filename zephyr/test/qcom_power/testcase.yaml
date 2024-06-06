@@ -1,12 +1,12 @@
 common:
-  platform_allow: native_posix
+  platform_allow: native_sim
 tests:
   qcom_power.default: {}
   qcom_power.power_gpio_keys:
     extra_configs:
     - CONFIG_PLATFORM_EC_POWER_BUTTON=n
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./boards/power_button.dtsi
   qcom_power.power_gpio_keys_ro:
     extra_args:
@@ -14,7 +14,7 @@ tests:
     extra_configs:
     - CONFIG_PLATFORM_EC_POWER_BUTTON=n
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./boards/power_button.dtsi
   qcom_power.power_gpio_keys_rw:
     extra_args:
@@ -22,5 +22,5 @@ tests:
     extra_configs:
     - CONFIG_PLATFORM_EC_POWER_BUTTON=n
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./boards/power_button.dtsi

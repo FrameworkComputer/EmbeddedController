@@ -1,4 +1,4 @@
 common:
-  platform_allow: native_posix
+  platform_allow: native_sim
 tests:
   ocpc.default: {}

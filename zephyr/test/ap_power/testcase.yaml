@@ -1,9 +1,9 @@
 common:
-  platform_allow: native_posix
+  platform_allow: native_sim
 tests:
   ap_power.alderlake:
     extra_dtc_overlay_files:
-    - boards/native_posix.overlay
+    - boards/native_sim.overlay
     - boards/alderlake.dts
     extra_configs:
     - CONFIG_TEST_AP_POWER_ADL=y
@@ -16,8 +16,8 @@ tests:
     - CONFIG_AP_PWRSEQ_DRIVER=n
   ap_power.brox:
     extra_dtc_overlay_files:
-    - boards/native_posix.overlay
-    - boards/brox_native_posix.overlay
+    - boards/native_sim.overlay
+    - boards/brox_native_sim.overlay
     extra_configs:
     - CONFIG_TEST_AP_POWER_BROX=y
     - CONFIG_EMUL_POWER_SIGNALS=y
@@ -28,7 +28,7 @@ tests:
     - CONFIG_AP_PWRSEQ_DRIVER=n
   ap_power.meteorlake:
     extra_dtc_overlay_files:
-    - boards/native_posix.overlay
+    - boards/native_sim.overlay
     - boards/meteorlake.dts
     extra_configs:
     - CONFIG_TEST_AP_POWER_MTL=y
@@ -42,7 +42,7 @@ tests:
     - CONFIG_AP_PWRSEQ_DRIVER=n
   ap_power_drv.alderlake:
     extra_dtc_overlay_files:
-    - boards/native_posix.overlay
+    - boards/native_sim.overlay
     - boards/alderlake.dts
     extra_configs:
     - CONFIG_TEST_AP_POWER_ADL=y
@@ -55,7 +55,7 @@ tests:
     - CONFIG_AP_PWRSEQ_DRIVER=y
   ap_power_drv.meteorlake:
     extra_dtc_overlay_files:
-    - boards/native_posix.overlay
+    - boards/native_sim.overlay
     - boards/meteorlake.dts
     extra_configs:
     - CONFIG_TEST_AP_POWER_MTL=y

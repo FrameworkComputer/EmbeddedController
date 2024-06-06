@@ -3,11 +3,11 @@
 # found in the LICENSE file.
 
 common:
-  platform_allow: native_posix
+  platform_allow: native_sim
 tests:
   rex.usb_pd_policy:
     extra_dtc_overlay_files:
-      - boards/native_posix.overlay
+      - boards/native_sim.overlay
     extra_configs:
       - CONFIG_TEST_PROGRAM_USB_PD_POLICY=y
       - CONFIG_TEST_DISABLE_INLINE_CHIPSET_IN_STATE=y
@@ -38,7 +38,7 @@ tests:
 
   rex.battery_present:
     extra_dtc_overlay_files:
-      - boards/native_posix.overlay
+      - boards/native_sim.overlay
       - boards/power.dtsi
     extra_configs:
       - CONFIG_TEST_PROGRAM_BATTERY_PRESENT=y
@@ -111,7 +111,7 @@ tests:
 
   rex.screebo.board:
     extra_dtc_overlay_files:
-      - boards/native_posix.overlay
+      - boards/native_sim.overlay
     extra_configs:
       - CONFIG_TEST_PROJECT_SCREEBO=y
       - CONFIG_TEST_PROJECT_BOARD=y
@@ -122,7 +122,7 @@ tests:
 
   rex.screebo.i2c_policy:
     extra_dtc_overlay_files:
-      - boards/native_posix.overlay
+      - boards/native_sim.overlay
       - boards/screebo/i2c.dtsi
     extra_configs:
       - CONFIG_TEST_PROJECT_SCREEBO=y

@@ -3,4 +3,4 @@
  * found in the LICENSE file.
  */
 
-#include <board-overlays/native_posix.dts>
+#include <board-overlays/native_sim.dts>
