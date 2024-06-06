@@ -318,5 +318,5 @@ z_impl_cros_flash_physical_get_status(const struct device *dev, uint8_t *sr1,
 /**
  * @}
  */
-#include <syscalls/cros_flash.h>
+#include <zephyr/syscalls/cros_flash.h>
 #endif /* ZEPHYR_INCLUDE_DRIVERS_CROS_FLASH_H_ */

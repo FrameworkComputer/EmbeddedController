@@ -85,5 +85,5 @@ static inline int z_impl_cros_shi_disable(const struct device *dev)
 /**
  * @}
  */
-#include <syscalls/cros_shi.h>
+#include <zephyr/syscalls/cros_shi.h>
 #endif /* ZEPHYR_INCLUDE_DRIVERS_CROS_SHI_H_ */

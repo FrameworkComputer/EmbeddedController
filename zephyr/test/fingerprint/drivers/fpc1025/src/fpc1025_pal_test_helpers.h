@@ -18,6 +18,6 @@ __syscall void fpc1025_pal_timebase_busy_wait(uint32_t ms);
 __syscall void *fpc1025_pal_malloc(uint32_t size);
 __syscall void fpc1025_pal_free(void *data);
 
-#include <syscalls/fpc1025_pal_test_helpers.h>
+#include <zephyr/syscalls/fpc1025_pal_test_helpers.h>
 
 #endif /* ZEPHYR_TEST_DRIVERS_FPC1025_SRC_TEST_HELPERS_H_ */

@@ -74,5 +74,5 @@ __syscall void fingerprint_load_image(const struct device *dev, uint8_t *image,
 }
 #endif
 
-#include <syscalls/fingerprint_sim.h>
+#include <zephyr/syscalls/fingerprint_sim.h>
 #endif /* ZEPHYR_INCLUDE_DRIVERS_FINGERPRINT_SIM_H_ */

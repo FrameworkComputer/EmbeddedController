@@ -325,6 +325,6 @@ static inline void z_impl_pd_altmode_set_result_cb(const struct device *dev,
 /**
  * @}
  */
-#include <syscalls/intel_altmode.h>
+#include <zephyr/syscalls/intel_altmode.h>
 
 #endif /* ZEPHYR_INCLUDE_DRIVERS_INTEL_ALTMODE_H_ */
