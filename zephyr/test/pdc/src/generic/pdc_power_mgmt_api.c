@@ -729,9 +729,14 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_unconstr_power)
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_vbus_voltage)
 {
+/* Keep in line with |pdc_power_mgmt_api.c|. */
+#define VBUS_READ_CACHE_MS 500
+
 	union connector_status_t connector_status;
+	union conn_status_change_bits_t change_bits;
 	uint32_t mv_units = 50;
 	const uint32_t expected_voltage_mv = 5000;
+	uint32_t next_expected_voltage_mv = 6000;
 	uint16_t out;
 	uint32_t timeout = k_ms_to_cyc_ceil32(PDC_TEST_TIMEOUT);
 	uint32_t start;
@@ -755,6 +760,36 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_vbus_voltage)
 
 	zassert_equal(expected_voltage_mv, out, "expected=%d, out=%d",
 		      expected_voltage_mv, out);
+
+	/*
+	 * Change the voltage and expect that we keep getting cached value until
+	 * 500ms has passed.
+	 */
+	connector_status.voltage_reading = next_expected_voltage_mv / mv_units;
+	emul_pdc_set_connector_status(emul, &connector_status);
+	k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
+	zassert_equal(expected_voltage_mv,
+		      pdc_power_mgmt_get_vbus_voltage(TEST_PORT));
+
+	zassert_true(TEST_WAIT_FOR(
+		next_expected_voltage_mv ==
+			pdc_power_mgmt_get_vbus_voltage(TEST_PORT),
+		VBUS_READ_CACHE_MS));
+
+	/*
+	 * Connector status change bits can also immediately trigger vbus reads.
+	 */
+	change_bits.raw_value = 0;
+	change_bits.negotiated_power_level = 1;
+	next_expected_voltage_mv += 100;
+	connector_status.voltage_reading = next_expected_voltage_mv / mv_units;
+	connector_status.raw_conn_status_change_bits = change_bits.raw_value;
+	emul_pdc_set_connector_status(emul, &connector_status);
+	emul_pdc_pulse_irq(emul);
+	k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
+
+	zassert_equal(next_expected_voltage_mv,
+		      pdc_power_mgmt_get_vbus_voltage(TEST_PORT));
 
 	emul_pdc_disconnect(emul);
 	zassert_true(
