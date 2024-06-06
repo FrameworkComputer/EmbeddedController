@@ -140,7 +140,7 @@ static void charger_chips_init(void)
 		goto init_fail;
 
 	/* TODO: should we need to talk to PD chip after initial complete ? */
-	CPRINTS("ISL9241 customized initial complete!  3F:%d", value);
+	CPRINTS("ISL9241 customized initial complete!");
 	return;
 
 init_fail:

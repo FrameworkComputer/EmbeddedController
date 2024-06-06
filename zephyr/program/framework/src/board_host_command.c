@@ -497,7 +497,6 @@ static enum ec_status bb_retimer_control(struct host_cmd_handler_args *args)
 	const struct ec_params_bb_retimer_control_mode *p = args->params;
 	struct ec_response_bb_retimer_control_mode *r = args->response;
 
-	CPRINTS("TODO: bb-retimer interface :%d", p->controller);
 	r->status = 0;
 	args->response_size = sizeof(*r);
 
