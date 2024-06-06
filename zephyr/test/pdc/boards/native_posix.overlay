@@ -97,7 +97,6 @@
 	smbus_ara_emul: smbus_ara@c {
 		compatible = "zephyr,smbus-ara-emul";
 		reg = <0xc>;
-		device-address = <0x66>;
 	};
 
 	rts5453p_emul: rts5453p@66 {

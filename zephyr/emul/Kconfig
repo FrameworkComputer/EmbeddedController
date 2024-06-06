@@ -181,7 +181,7 @@ config EMUL_SMBUS_ARA
 config EMUL_REALTEK_RTS54_PDC
 	bool "Realtek RTS5453P Type-C Power Delivery Controller emulator"
 	default y
-	depends on DT_HAS_REALTEK_RTS54_PDC_ENABLED && EMUL
+	depends on DT_HAS_REALTEK_RTS54_PDC_ENABLED && EMUL_SMBUS_ARA && EMUL
 	select EMUL_COMMON_I2C
 	help
 	  Enable the Realtek RTS5453P emulator. This driver use emulated I2C bus.

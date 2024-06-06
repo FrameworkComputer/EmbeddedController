@@ -5,7 +5,6 @@
 
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_pdc.h"
-#include "emul/emul_smbus_ara.h"
 #include "hooks.h"
 #include "test/util.h"
 #include "usbc/pdc_power_mgmt.h"
@@ -23,9 +22,6 @@ LOG_MODULE_REGISTER(pdc_power_mgmt_api);
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
 #define TEST_PORT 0
 
-#define SMBUS_ARA_NODE DT_NODELABEL(smbus_ara_emul)
-static const struct emul *ara = EMUL_DT_GET(SMBUS_ARA_NODE);
-
 bool pdc_power_mgmt_test_wait_unattached(void);
 bool pdc_power_mgmt_test_wait_attached(int port);
 bool pdc_rts54xx_test_idle_wait(void);
@@ -41,9 +37,6 @@ void pdc_power_mgmt_setup(void)
 
 void pdc_power_mgmt_before(void *fixture)
 {
-	uint8_t addr = DT_REG_ADDR(RTS5453P_NODE);
-
-	emul_smbus_ara_set_address(ara, addr);
 	emul_pdc_set_response_delay(emul, 0);
 	emul_pdc_disconnect(emul);
 	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);

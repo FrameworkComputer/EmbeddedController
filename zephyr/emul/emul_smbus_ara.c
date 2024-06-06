@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "config.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_stub_device.h"
 
@@ -20,14 +21,24 @@
 
 struct smbus_ara_emul_data {
 	struct i2c_common_emul_data common;
-	uint8_t device_address;
+	uint8_t device_address[CONFIG_USB_PD_PORT_MAX_COUNT];
+	uint8_t addr_used_map;
 };
 
-int emul_smbus_ara_set_address(const struct emul *emul, uint8_t address)
+BUILD_ASSERT(CONFIG_USB_PD_PORT_MAX_COUNT < 8,
+	     "Too many ports to represent with u8 bitmap");
+
+int emul_smbus_ara_queue_address(const struct emul *emul, int port,
+				 uint8_t address)
 {
 	struct smbus_ara_emul_data *data = emul->data;
 
-	data->device_address = address;
+	if (port >= CONFIG_USB_PD_PORT_MAX_COUNT) {
+		return -EINVAL;
+	}
+
+	data->addr_used_map |= (1 << port);
+	data->device_address[port] = address;
 
 	return 0;
 }
@@ -41,10 +52,20 @@ static int smbus_ara_emul_read_byte(const struct emul *emul, int reg,
 				    uint8_t *val, int bytes)
 {
 	struct smbus_ara_emul_data *data = emul->data;
+	uint8_t min_addr = 0;
 
-	/* Address placed in 7 MSB of response */
-	*val = data->device_address << 1;
+	/* Return lowest port stored address for ARA. */
+	if (data->addr_used_map) {
+		for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; ++i) {
+			if (data->addr_used_map & (1 << i)) {
+				min_addr = data->device_address[i];
+				data->addr_used_map &= ~(1 << i);
+				break;
+			}
+		}
+	}
 
+	*val = min_addr << 1;
 	return 0;
 }
 
@@ -69,6 +90,8 @@ static int smbus_ara_emul_init(const struct emul *emul,
 	data->common.i2c = parent;
 	data->common.cfg = cfg;
 
+	data->addr_used_map = 0;
+
 	i2c_common_emul_init(&data->common);
 
 	return 0;
@@ -82,7 +105,6 @@ static int smbus_ara_emul_init(const struct emul *emul,
 			.finish_read = smbus_ara_emul_finish_read,	\
 			.access_reg = smbus_ara_emul_access_reg,	\
 		},							\
-		.device_address = DT_INST_PROP(n, device_address), \
 	};       \
 	static const struct i2c_common_emul_cfg smbus_ara_emul_cfg_##n = {    \
 		.dev_label = DT_NODE_FULL_NAME(DT_DRV_INST(n)),               \

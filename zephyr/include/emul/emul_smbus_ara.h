@@ -8,11 +8,15 @@
 #include <zephyr/drivers/emul.h>
 
 /**
- * @brief Set ARA address to respond with when ARA occurs
+ * @brief Queue ARA address to respond on next request (which will get
+ * consumed). Addresses will respond from lowest port to highest when read.
  *
  * @param emul Pointer to SMBus ARA emulator
- * @param address  Device address
+ * @param address Device address
+ *
+ * @return -1 if parameters are invalid.
  */
-int emul_smbus_ara_set_address(const struct emul *emul, uint8_t address);
+int emul_smbus_ara_queue_address(const struct emul *emul, int port,
+				 uint8_t address);
 
 #endif /* __EMUL_SMBUS_ARA_H */
