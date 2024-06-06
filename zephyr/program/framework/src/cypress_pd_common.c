@@ -37,10 +37,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-
-#define PRODUCT_ID	CONFIG_PD_USB_PID
-#define VENDOR_ID	0x32ac
-
 #undef CCG_INIT_STATE
 #ifdef CONFIG_PD_CHIP_CCG6
 #define CCG_INIT_STATE CCG_STATE_WAIT_STABLE
@@ -687,6 +683,7 @@ static void cypd_ppm_port_clear(void)
 	hook_call_deferred(&pdo_init_deferred_data, 1);
 }
 
+#ifdef CONFIG_PD_COMMON_EXTENDED_MESSAGE
 /*
  * send a message using DM_CONTROL to port partner
  * pd_header is using chromium PD header with upper bits defining SOP type
@@ -744,6 +741,7 @@ void cypd_send_msg(int controller, int port, uint32_t pd_header, uint16_t ext_hd
 
 	cypd_write_reg16(controller, CCG_DM_CONTROL_REG(port), dm_control_data);
 }
+
 
 void cypd_response_get_battery_capability(int controller, int port,
 	uint32_t pd_header, enum tcpci_msg_type sop_type)
@@ -942,6 +940,7 @@ int cypd_handle_extend_msg(int controller, int port, int len, enum tcpci_msg_typ
 
 	return rv;
 }
+#endif
 
 static void clear_port_state(int controller, int port)
 {
@@ -1194,6 +1193,15 @@ __overridable void cypd_customize_app_setup(int controller)
 	 */
 }
 
+#ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
+static void pd_batt_init_deferred(void)
+{
+	cypd_customize_battery_cap();
+	cypd_customize_battery_status();
+}
+DECLARE_DEFERRED(pd_batt_init_deferred);
+#endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
+
 static void cypd_handle_state(int controller)
 {
 	int data;
@@ -1259,8 +1267,12 @@ static void cypd_handle_state(int controller)
 			gpio_enable_interrupt(pd_chip_config[controller].gpio);
 
 			/* Update PDO format after init complete */
-			if (controller)
+			if (controller) {
+#ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
+				hook_call_deferred(&pd_batt_init_deferred_data, 100 * MSEC);
+#endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
 				hook_call_deferred(&pdo_init_deferred_data, 25 * MSEC);
+			}
 
 			CPRINTS("CYPD %d Ready!", controller);
 			pd_chip_config[controller].state = CCG_STATE_READY;
@@ -1642,8 +1654,10 @@ void cypd_port_int(int controller, int port)
 			sop_type = TCPCI_MSG_SOP_PRIME;
 		else if (data2[0] == CCG_RESPONSE_EXT_MSG_SOP_RX)
 			sop_type = TCPCI_MSG_SOP_PRIME_PRIME;
+#ifdef CONFIG_PD_COMMON_EXTENDED_MESSAGE
 		cypd_handle_extend_msg(controller, port, response_len, sop_type);
 		CPRINTS("CYP_RESPONSE_RX_EXT_MSG");
+#endif /* CONFIG_PD_COMMON_EXTENDED_MESSAGE */
 		break;
 	case CCG_RESPONSE_OVER_CURRENT:
 		CPRINTS("CCG_RESPONSE_OVER_CURRENT %d", port_idx);

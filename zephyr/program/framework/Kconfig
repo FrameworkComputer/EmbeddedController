@@ -96,11 +96,27 @@ config PD_CCG6_WAIT_STABLE_TIMER
 	    EC should wait X ms the PD chip run in stable mode then start to
 		communicate.
 
+config PD_CCG6_CUSTOMIZE_BATT_MESSAGE
+	bool "Enable CCG6 Customize battery response"
+	default n
+	depends on PD_CHIP_CCG6
+	help
+	    Enable customize battery response for GRL test, EC will write specific
+		register 0x4f to PD for GET_BATTERY_CAP and GET_BATTERY_STATUS.
+
 config PD_COMMON_VBUS_CONTROL
 	bool "Enable CCG common vbus control"
 	help
 		Enable Cypress CCG common vbus control, if not enable please modify
 		board_set_active_charge_port at board for customize vbus control.
+
+config PD_COMMON_EXTENDED_MESSAGE
+	bool "Enable CCG common extended message"
+	default n
+	help
+		Enable Cypress CCG common extended message, if we need send message to PD
+		please add the response for extended message.
+		ex: get battery status or capability.
 
 config PLATFORM_SIMPLE_VERSION_SHIFT_IDX
 	int "Shift idx for return commit id to BIOS"

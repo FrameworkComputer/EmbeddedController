@@ -550,3 +550,142 @@ int check_tbt_mode(int controller)
 
 	return data;
 }
+
+#ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
+/*****************************************************************
+ * Customize response battery status
+ ****************************************************************/
+
+static struct pd_battery_cap_t pd_battery_cap;
+static struct pd_battery_status_t pd_battery_status;
+static int pd_batt_soc;
+bool cypd_batt_update;
+
+void cypd_customize_battery_cap(void)
+{
+	int i;
+	uint32_t c, v;
+	bool battery_can_discharge = (battery_is_present() == BP_YES) &
+		battery_get_disconnect_state();
+
+	/* only send status when PD ready */
+	if (!(pd_chip_config[0].state == CCG_STATE_READY &&
+		pd_chip_config[1].state == CCG_STATE_READY)) {
+		return;
+	}
+
+	if (!battery_can_discharge) {
+		cypd_batt_update = false;
+		pd_battery_cap.design_cap = 0x0000;
+		pd_battery_cap.last_full_cap = 0x0000;
+		pd_battery_cap.battery_type = 0x1;
+
+	} else {
+		cypd_batt_update = true;
+		pd_battery_cap.reg = 0;
+		pd_battery_cap.vid = VENDOR_ID;
+		pd_battery_cap.pid = PRODUCT_ID;
+		pd_battery_cap.battery_type = 0x0;
+
+		if (battery_design_voltage(&v) == 0) {
+			if (battery_design_capacity(&c) == 0) {
+				/*
+				 * Wh = (c * v) / 1000000
+				 * 10th of a Wh = Wh * 10
+				 */
+				pd_battery_cap.design_cap = DIV_ROUND_NEAREST((c * v),
+							100000);
+			}
+			if (battery_full_charge_capacity(&c) == 0) {
+				/*
+				 * Wh = (c * v) / 1000000
+				 * 10th of a Wh = Wh * 10
+				 */
+				pd_battery_cap.last_full_cap = DIV_ROUND_NEAREST((c * v),
+							100000);
+			}
+		}
+	}
+
+	for (i = 0; i < PD_CHIP_COUNT; i++)
+		cypd_write_reg_block(i, CCG_BATTERT_STATE,
+				&pd_battery_cap, sizeof(pd_battery_cap));
+
+}
+
+void cypd_customize_battery_status(void)
+{
+	int i, soc_wh;
+	uint8_t	batt_info;
+	uint32_t c, v;
+	struct batt_params batt;
+	bool battery_can_discharge = (battery_is_present() == BP_YES) &
+		battery_get_disconnect_state();
+
+	battery_get_params(&batt);
+
+	/* only send status when PD ready */
+	if (!(pd_chip_config[0].state == CCG_STATE_READY &&
+		pd_chip_config[1].state == CCG_STATE_READY)) {
+		return;
+	}
+
+	/* only update data when soc change */
+	if (batt.state_of_charge == pd_batt_soc)
+		return;
+
+	pd_batt_soc = batt.state_of_charge;
+
+	if (!battery_can_discharge) {
+
+		pd_battery_status.reg = 0x1;
+		pd_battery_status.battery_info = 0;
+		pd_battery_status.batt_present_cap = 0xFFFF;
+
+	} else {
+
+		/**
+		 * if battery didn't set cap info at first time pd init
+		 * need set again when battery ready.
+		 * ex: resume from dead battery, or ac only boot and then plug-in batt
+		 */
+		if (!cypd_batt_update)
+			cypd_customize_battery_cap();
+
+		if (battery_design_voltage(&v) == 0) {
+			if (battery_remaining_capacity(&c) == 0) {
+				/*
+				 * Wh = (c * v) / 1000000
+				 * 10th of a Wh = Wh * 10
+				 */
+				soc_wh = DIV_ROUND_NEAREST((c * v), 100000);
+			}
+		}
+
+		if (battery_status(&c) != 0) {
+			batt_info = 0; /* batt not present */
+		} else {
+			if (c & STATUS_FULLY_CHARGED)
+				/* Fully charged */
+				batt_info = CCG6_BATT_IS_IDLE | CCG6_BATT_IS_PRESENT;
+			else if (c & STATUS_DISCHARGING)
+				/* Discharging */
+				batt_info = CCG6_BATT_IS_DISCHARGING | CCG6_BATT_IS_PRESENT;
+			else
+				/* else battery is charging.*/
+				batt_info = CCG6_BATT_IS_PRESENT;
+		}
+
+		pd_battery_status.reg = 0x1;
+		pd_battery_status.battery_info = batt_info;
+		pd_battery_status.batt_present_cap = soc_wh;
+	}
+
+	for (i = 0; i < PD_CHIP_COUNT; i++)
+		cypd_write_reg_block(i, CCG_BATTERT_STATE,
+				&pd_battery_status, sizeof(pd_battery_status));
+
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, cypd_customize_battery_status, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, cypd_customize_battery_status, HOOK_PRIO_DEFAULT);
+#endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
