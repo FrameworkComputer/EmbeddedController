@@ -1,0 +1,38 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/gpio_defines.h>
+#include <dt-bindings/native-posix-gpio.h>
+
+#define GPIO_VOLTAGE_1P8 NATIVE_POSIX_GPIO_VOLTAGE_1P8
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+
+		entering-rw {
+			gpios = <&gpio99 0 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+
+	/*
+	 * The GPIO_ENTERING_RW signal is used on nearly every board.
+	 * Allocate a dedicated GPIO controller for this signal to avoid
+	 * conflicts with board tests.
+	 */
+	gpio99: gpio@9900 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x9900 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <1>;
+	};
+};
