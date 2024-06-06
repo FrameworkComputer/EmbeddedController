@@ -610,7 +610,7 @@ void cypd_customize_battery_cap(void)
 	}
 
 	for (i = 0; i < PD_CHIP_COUNT; i++)
-		cypd_write8_reg_block(i, CCG_BATTERT_STATE,
+		cypd_write_reg_block(i, CCG_BATTERT_STATE,
 				&pd_battery_cap, sizeof(pd_battery_cap));
 
 }
@@ -684,7 +684,7 @@ void cypd_customize_battery_status(void)
 	}
 
 	for (i = 0; i < PD_CHIP_COUNT; i++)
-		cypd_write8_reg_block(i, CCG_BATTERT_STATE,
+		cypd_write_reg_block(i, CCG_BATTERT_STATE,
 				&pd_battery_status, sizeof(pd_battery_status));
 
 }

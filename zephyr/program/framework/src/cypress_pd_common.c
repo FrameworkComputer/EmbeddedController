@@ -112,18 +112,6 @@ int cypd_write_reg_block(int controller, int reg, void *data, int len)
 	return rv;
 }
 
-int cypd_write8_reg_block(int controller, int reg, void *data, int len)
-{
-	int rv;
-	uint16_t i2c_port = pd_chip_config[controller].i2c_port;
-	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
-
-	rv = i2c_write_block(i2c_port, addr_flags, reg, data, len);
-	if (rv != EC_SUCCESS)
-		CPRINTS("%s failed: ctrl=0x%x, reg=0x%02x", __func__, controller, reg);
-	return rv;
-}
-
 int cypd_write_reg16(int controller, int reg, int data)
 {
 	int rv;

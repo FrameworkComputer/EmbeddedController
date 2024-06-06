@@ -580,7 +580,6 @@ extern struct pd_port_current_state_t pd_port_states[];
  */
 int cypd_write_reg8(int controller, int reg, int data);
 int cypd_write_reg16(int controller, int reg, int data);
-int cypd_write8_reg_block(int controller, int reg, void *data, int len);
 int cypd_write_reg_block(int controller, int reg, void *data, int len);
 
 /**
