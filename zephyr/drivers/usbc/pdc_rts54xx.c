@@ -583,7 +583,6 @@ static void call_cci_event_cb(struct pdc_data_t *data)
 		pdc_fire_callbacks(&data->ci_cb_list, data->dev, cci);
 	} else if (data->cc_cb_tmp) {
 		data->cc_cb_tmp->handler(data->dev, data->cc_cb_tmp, cci);
-		data->cc_cb_tmp = NULL;
 	} else if (data->cc_cb) {
 		data->cc_cb->handler(data->dev, data->cc_cb, cci);
 	}
