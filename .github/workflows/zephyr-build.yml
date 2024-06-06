@@ -26,7 +26,7 @@ jobs:
       matrix:
         platform: [
           # Marigold builder uses same folder for all
-          { name: marigold, folder: marigold1, ver: "2.0.0", sha_len: 7, zephyr_ref: "marigold", cmsis_ref: "cros/chromeos-main" },
+          { name: marigold, folder: marigold1, ver: "2.0.1", sha_len: 7, zephyr_ref: "marigold", cmsis_ref: "cros/chromeos-main" },
           # Lotus and Azalea official releases are NOT coming from this branch
           { name: lotus, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "marigold", cmsis_ref: "cros/chromeos-main" },
           { name: azalea, folder: marigold1, ver: "0.0.0", sha_len: 7, zephyr_ref: "marigold", cmsis_ref: "cros/chromeos-main" },
