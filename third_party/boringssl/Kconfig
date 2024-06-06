@@ -16,7 +16,7 @@ if BORINGSSL_CRYPTO
 config BORINGSSL_HARDWARE_ENTROPY
 	bool "Provide entropy from hardware RNG"
 	default y
-	depends on GETENTROPY
+	depends on POSIX_C_LIB_EXT
 	help
 	  This option enables support for providing entropy to BoringSSL.
 	  Entropy comes from hardware RNG selected in DTS.
