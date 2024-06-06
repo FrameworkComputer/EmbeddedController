@@ -87,7 +87,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "zinger",
     # Boards that use CHIP:=mchp
     # git grep --name-only 'CHIP:=mchp' | sed 's#board/\(.*\)/build.mk#"\1",#'
-    "adlrvpp_mchp1521",
     "adlrvpp_mchp1727",
     "mchpevb1",
     "reef_mchp",
@@ -294,6 +293,7 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     # Boards that use CHIP:=npcx
     "garg",
     # Boards that don't fit in flash with clang
+    "adlrvpp_mchp1521",
     "bellis",
     "cerise",
     "corori2",
