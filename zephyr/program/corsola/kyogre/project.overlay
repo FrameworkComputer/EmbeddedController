@@ -400,18 +400,18 @@
 	cros-keyscan {
 		compatible = "cros-ec,keyscan";
 		actual-key-mask = <
-			0x1c	/* C0 */
+			0x08	/* C0 */
 			0xff	/* C1 */
 			0xff	/* C2 */
 			0xff	/* C3 */
 			0xff	/* C4 */
-			0xf5	/* C5 */
+			0xff	/* C5 */
 			0xff	/* C6 */
-			0xa4	/* C7 */
+			0xa1	/* C7 */
 			0xff	/* C8 */
-			0xfe	/* C9 */
-			0x55	/* C10 */
-			0xfa	/* C11 */
+			0xfa	/* C9 */
+			0x01	/* C10 */
+			0xf6	/* C11 */
 			0xca	/* C12 */
 			0x40	/* C13 */
 			0x0a	/* C14 */
