@@ -6,6 +6,7 @@
 #include <cros/thermistor/thermistor.dtsi>
 #include <dt-bindings/usbc_mux.h>
 #include <dt-bindings/usb_pd_tcpm.h>
+#include <usbc-policy.dtsi>
 
 / {
 	aliases {
@@ -78,29 +79,14 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "button_interrupt";
 		};
-		int_usb_c0: usb_c0 {
-			irq-pin = <&gpio_usb_c0_int_odl>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "usb_interrupt";
-		};
-		int_soc_edp_bl_en: soc_edp_bl_en {
-			irq-pin = <&gpio_soc_edp_bl_en>;
+		int_ac_present: ac_present {
+			irq-pin = <&gpio_ec_acok_od>;
 			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "soc_edp_bl_interrupt";
+			handler = "extpower_interrupt";
 		};
 	};
 
 	named-gpios {
-		gpio_sb_1: sb-1 {
-			gpios = <&gpio0 2 GPIO_PULL_UP>;
-			no-auto-init;
-		};
-
-		gpio_sb_2: sb-2 {
-			gpios = <&gpiod 4 GPIO_OUTPUT>;
-			no-auto-init;
-		};
-
 		/*
 		 * Set I2C pins for type C sub-board to be low voltage (I2C5_1).
 		 * We do this for all boards, since the pins are 3.3V tolerant,
@@ -134,10 +120,6 @@
 	 */
 	aliases {
 		/*
-		 * Sub-board with type A USB, enable.
-		 */
-		gpio-en-usb-a1-vbus = &gpio_sb_2;
-		/*
 		 * HPD pins for HDMI sub-board.
 		 */
 		gpio-hdmi-en-odl = &gpio_sb_3;
@@ -165,28 +147,14 @@
 		memory {
 			temp_fan_off = <35>;
 			temp_fan_max = <70>;
-			temp_host_warn = <45>;
-			temp_host_high = <100>;
-			temp_host_halt = <105>;
-			temp_host_release_warn = <40>;
-			temp_host_release_high = <90>;
-			temp_host_release_halt = <95>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_memory>;
 		};
 		charger {
-			temp_host_high = <98>;
-			temp_host_halt = <105>;
-			temp_host_release_high = <90>;
-			temp_host_release_halt = <95>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_charger>;
 		};
 		ambient {
-			temp_host_high = <100>;
-			temp_host_halt = <105>;
-			temp_host_release_high = <90>;
-			temp_host_release_halt = <95>;
 			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
 			sensor = <&temp_ambient>;
 		};
@@ -203,23 +171,24 @@
 		 * sub-boards that don't have USB-A so is safe to control
 		 * regardless of system configuration.
 		 */
-		enable-pins = <&gpio_en_usb_a0_vbus &gpio_sb_2>;
+		enable-pins = <&gpio_en_usb_a0_vbus &gpio_en_sub_usb_a1_vbus>;
 		status = "okay";
 	};
 
 	usbc {
 		#address-cells = <1>;
 		#size-cells = <0>;
-
-		port0@0 {
+		usbc_port0: port0@0 {
 			compatible = "named-usbc-port";
 			reg = <0>;
-			chg = <&chg_port0>;
-			tcpc = <&tcpc_port0>;
+			chg = <&charger>;
+			alt-mode = <&pdc_data_port0>;
+			pdc = <&pdc_power_p0>;
 			usb-mux-chain-0 {
 				compatible = "cros-ec,usb-mux-chain";
 				usb-muxes = <&virtual_mux_0>;
 			};
+			policy = <&cros_policy>;
 		};
 		port0-muxes {
 			virtual_mux_0: virtual-mux-0 {
@@ -255,13 +224,14 @@
 			<&gpio5 7 0>,
 			<&gpio6 0 0>,
 			<&gpio6 6 0>,
-			<&gpio8 5 0>,
+			<&gpio8 3 0>,
 			<&gpio8 6 0>,
 			<&gpio9 6 0>,
 			<&gpioa 0 0>,
 			<&gpiob 1 0>,
 			<&gpiob 7 0>,
 			<&gpiod 5 0>,
+			<&gpioe 2 0>,
 			<&gpiof 2 0>,
 			<&gpiof 3 0>;
 	 };
@@ -304,27 +274,37 @@
 };
 
 &i2c3_0 {
-	label = "I2C_USB_C0_TCPC";
+	label = "I2C_PORT_PD";
 	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
 
-	chg_port0: isl923x@9 {
-		compatible = "intersil,isl923x";
-		status = "okay";
-		reg = <0x9>;
+	pdc_power_p0: rts54-pdc@67 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x67>;
+		irq-gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
 	};
+};
 
-	tcpc_port0: raa489000@22 {
-		compatible = "renesas,raa489000";
-		reg = <0x22>;
-		tcpc-flags = <(
-			TCPC_FLAGS_TCPCI_REV2_0 |
-			TCPC_FLAGS_VBUS_MONITOR)>;
+&i2c4_1 {
+	label = "I2C_PORT_PMC_PD";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	pdc_data_port0: rts@69 {
+		compatible = "intel,pd-altmode";
+		reg = <0x69>;
+		irq-gpios = <&gpio3 6 GPIO_ACTIVE_LOW>;
 	};
 };
 
 &i2c7_0 {
 	label = "I2C_BATTERY";
+	label = "I2C_PORT_CHARGER";
+
 	clock-frequency = <I2C_BITRATE_STANDARD>;
+	charger: bq25710@9 {
+		compatible = "ti,bq25710";
+		status = "okay";
+		reg = <0x9>;
+	};
 };
 
 &pwm5_gpb7 {

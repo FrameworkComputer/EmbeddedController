@@ -166,4 +166,8 @@ module = NISSA
 module-str = Nissa board-specific code
 source "subsys/logging/Kconfig.template.log_config"
 
+choice PLATFORM_EC_USBC_STACK
+	default PLATFORM_EC_USB_PD_CONTROLLER if BOARD_ORISA
+endchoice
+
 source "Kconfig.zephyr"
