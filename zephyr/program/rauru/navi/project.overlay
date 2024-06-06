@@ -199,8 +199,11 @@
 	};
 
 	batteries {
-		default_battery: cosmx-3 {
-			compatible = "cosmx,ap20cbl-3", "battery-smart";
+		default_battery: smp {
+			compatible = "smp,l21m4pg5", "battery-smart";
+		};
+		sunwoda_l21d4pg4 {
+			compatible = "sunwoda,l21d4pg4", "battery-smart";
 		};
 	};
 
