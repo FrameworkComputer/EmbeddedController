@@ -19,6 +19,8 @@
 #include "ec_commands.h"
 #include "task.h"
 
+#line 23
+
 #ifdef __cplusplus
 extern "C" {
 #endif
