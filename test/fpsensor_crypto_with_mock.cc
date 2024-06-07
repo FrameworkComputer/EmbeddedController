@@ -92,7 +92,7 @@ static constexpr std::array<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES>
 
 test_static int test_get_ikm_failure_seed_not_set(void)
 {
-	uint8_t ikm[IKM_SIZE_BYTES];
+	std::array<uint8_t, IKM_SIZE_BYTES> ikm;
 	std::array<uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed{};
 
 	TEST_ASSERT(get_ikm(ikm, tpm_seed) == EC_ERROR_ACCESS_DENIED);
@@ -101,7 +101,7 @@ test_static int test_get_ikm_failure_seed_not_set(void)
 
 test_static int test_get_ikm_failure_cannot_get_rollback_secret(void)
 {
-	uint8_t ikm[IKM_SIZE_BYTES];
+	std::array<uint8_t, IKM_SIZE_BYTES> ikm;
 
 	/* Given that the TPM seed has been set. */
 	TEST_ASSERT(!bytes_are_trivial(default_fake_tpm_seed,
@@ -129,8 +129,8 @@ test_static int test_get_ikm_success(void)
 	 * Expected ikm is the concatenation of the rollback secret and the
 	 * seed from the TPM.
 	 */
-	uint8_t ikm[IKM_SIZE_BYTES];
-	static const uint8_t expected_ikm[] = {
+	std::array<uint8_t, IKM_SIZE_BYTES> ikm;
+	constexpr std::array<uint8_t, IKM_SIZE_BYTES> expected_ikm = {
 		0xcf, 0xe3, 0x23, 0x76, 0x35, 0x04, 0xc2, 0x0f, 0x0d, 0xb6,
 		0x02, 0xa9, 0x68, 0xba, 0x2a, 0x61, 0x86, 0x2a, 0x85, 0xd1,
 		0xca, 0x09, 0x54, 0x8a, 0x6b, 0xe2, 0xe3, 0x38, 0xde, 0x5d,
@@ -157,9 +157,8 @@ test_static int test_get_ikm_success(void)
 test_static int test_derive_encryption_key_failure_seed_not_set(void)
 {
 	FpEncryptionKey unused_key{};
-	static const uint8_t unused_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = {
-		0
-	};
+	constexpr std::array<uint8_t, FP_CONTEXT_ENCRYPTION_SALT_BYTES>
+		unused_salt{};
 	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> unused_userid{};
 
 	/* GIVEN that the TPM seed is not set. */
@@ -270,9 +269,8 @@ test_static int test_derive_encryption_key(void)
 test_static int test_derive_encryption_key_failure_rollback_fail(void)
 {
 	FpEncryptionKey unused_key{};
-	static const uint8_t unused_salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = {
-		0
-	};
+	constexpr std::array<uint8_t, FP_CONTEXT_ENCRYPTION_SALT_BYTES>
+		unused_salt{};
 	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> userid{};
 
 	/* GIVEN that reading the rollback secret will fail. */
@@ -296,7 +294,7 @@ test_static int test_derive_encryption_key_failure_rollback_fail(void)
 
 test_static int test_derive_positive_match_secret_fail_seed_not_set(void)
 {
-	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+	std::array<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES> output;
 	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
 
 	/* GIVEN that seed is not set. */
@@ -315,7 +313,7 @@ test_static int test_derive_positive_match_secret_fail_seed_not_set(void)
 
 test_static int test_derive_new_pos_match_secret(void)
 {
-	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+	std::array<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES> output;
 
 	/* First, for empty user_id. */
 	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
@@ -359,7 +357,7 @@ test_static int test_derive_new_pos_match_secret(void)
 
 test_static int test_derive_positive_match_secret_fail_rollback_fail(void)
 {
-	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+	std::array<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES> output;
 	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
 
 	/* GIVEN that reading secret from anti-rollback block will fail. */
@@ -379,11 +377,11 @@ test_static int test_derive_positive_match_secret_fail_rollback_fail(void)
 
 test_static int test_derive_positive_match_secret_fail_salt_trivial(void)
 {
-	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+	std::array<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES> output;
 	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
 
 	/* GIVEN that the salt is trivial. */
-	static const uint8_t salt[FP_CONTEXT_ENCRYPTION_SALT_BYTES] = { 0 };
+	constexpr std::array<uint8_t, FP_CONTEXT_ENCRYPTION_SALT_BYTES> salt{};
 
 	/* THEN deriving positive match secret will fail. */
 	TEST_ASSERT(derive_positive_match_secret(output, salt, user_id,
@@ -394,7 +392,7 @@ test_static int test_derive_positive_match_secret_fail_salt_trivial(void)
 
 test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 {
-	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+	std::array<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES> output;
 	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
 
 	/* GIVEN that the user ID is set to a known value. */
@@ -441,7 +439,7 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 
 test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
 {
-	static uint8_t output[FP_POSITIVE_MATCH_SECRET_BYTES];
+	std::array<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES> output;
 	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
 
 	/* GIVEN that the user ID is set to a known value. */
