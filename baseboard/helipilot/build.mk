@@ -79,4 +79,6 @@ test-list-y = \
        utils_str
 
 # This is relative to the EC root directory.
+ifneq ($(BOARD_BUCCANEER),y)
 -include private/board/helipilot/build.mk
+endif
