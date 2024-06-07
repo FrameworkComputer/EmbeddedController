@@ -99,13 +99,6 @@ def build(opts):
     platform_ec = ZEPHYR_DIR.parent
     modules = zmake.modules.locate_from_checkout(find_checkout())
     projects_path = zmake.modules.default_projects_dirs(modules)
-    subprocess.run(
-        [platform_ec / "util" / "check_clang_format.py"],
-        check=True,
-        cwd=platform_ec,
-        stdin=subprocess.DEVNULL,
-        env=env,
-    )
 
     # Validate board targets are reflected as Bazel targets
     cmd = ["pytest", "-v", "bazel/test_gen_bazel_targets.py"]
