@@ -194,7 +194,7 @@
 			gpios = <&gpio9 3 GPIO_INPUT_PULL_UP>;
 			enum-name = "GPIO_VOLUME_UP_L";
 		};
-		gpio_soc_edp_bl_en: soc_edp_bl_en {
+		gpio_soc_enbkl: soc_enbkl {
 			gpios = <&gpioc 7 GPIO_INPUT>;
 		};
 		gpio_usb_pd_int_odl: usb_pd_int_odl {
