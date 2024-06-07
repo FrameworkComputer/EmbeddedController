@@ -715,6 +715,18 @@ flash_fp_mcu_board() {
     klog "Binding cros-ec driver"
     echo "" > "/sys/bus/spi/devices/${deviceid}/driver_override"
     echo "${deviceid}" > /sys/bus/spi/drivers/cros-ec-spi/bind
+
+    # Factory expects SWWP = 0 after flash_fp_mcu, so disable it, see
+    # b/341193125.
+    if [[ "${chip_type}" == "NPCX" ]]; then
+      cmd="ectool --name=cros_fp flashprotect disable"
+      echo "# ${cmd}"
+      ${cmd}
+      cmd_exit_status=$?
+      if [[ "${cmd_exit_status}" -eq 0 ]]; then
+        echo "Failed to disable WP after flashing NPCX."
+      fi
+    fi
   else
     # FPMCU can still have ro_now protection (sector write protection) enabled
     # e.g. when flash_fp_mcu was run with --read option. It is disabled when
