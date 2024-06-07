@@ -302,6 +302,13 @@ config EMUL_LSM6DSO
 	help
 	  Enable the LSM6DSO accelerometer and gyroscope emulator.
 
+config EMUL_TOUCHPAD_ELAN
+	bool "elan touchpad emulator"
+	default y
+	depends on ZTEST && DT_HAS_ELAN_EKTH3000_ENABLED
+	help
+	  Enable the Elan touchpad emulator.
+
 rsource "Kconfig.ln9310"
 rsource "Kconfig.lis2dw12"
 rsource "Kconfig.i2c_mock"

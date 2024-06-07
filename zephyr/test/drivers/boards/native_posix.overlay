@@ -318,6 +318,9 @@
 		gpio_hdmi_cec_pull_up: gpio_hdmi_cec_pull_up {
 			gpios = <&gpio1 19 GPIO_OUTPUT_HIGH>;
 		};
+		gpio_touchpad_elan_int: gpio_touchpad_elan_int {
+			gpios = <&gpio1 20 GPIO_INPUT>;
+		};
 	};
 
 	gpio1: gpio@101 {
@@ -330,7 +333,7 @@
 		low-level;
 		gpio-controller;
 		#gpio-cells = <2>;
-		ngpios = <20>;
+		ngpios = <21>;
 	};
 
 	gpio-interrupts {

@@ -16,6 +16,7 @@ tests:
     - default/prj.conf
     extra_dtc_overlay_files:
     - default/boards/native_posix.overlay
+    - default/boards/touchpad.dtsi
   drivers.default.dp21:
     timeout: 360
     extra_configs:
@@ -32,6 +33,7 @@ tests:
     - default/prj.conf
     extra_dtc_overlay_files:
     - default/boards/native_posix.overlay
+    - default/boards/touchpad.dtsi
   drivers.default.ec_host_cmd:
     timeout: 360
     extra_configs:
@@ -48,6 +50,7 @@ tests:
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
     - default/boards/native_posix.overlay
+    - default/boards/touchpad.dtsi
   drivers.default.bring_up:
     timeout: 360
     extra_configs:
@@ -64,6 +67,7 @@ tests:
     - default/prj.conf
     extra_dtc_overlay_files:
     - default/boards/native_posix.overlay
+    - default/boards/touchpad.dtsi
   drivers.default.bring_up.ec_host_cmd:
     timeout: 360
     extra_configs:
@@ -81,6 +85,7 @@ tests:
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
     - default/boards/native_posix.overlay
+    - default/boards/touchpad.dtsi
   drivers.default.console_cmds:
     timeout: 360
     extra_configs:
@@ -166,6 +171,7 @@ tests:
     - default/prj.conf
     extra_dtc_overlay_files:
     - default/boards/native_posix.overlay
+    - default/boards/touchpad.dtsi
   drivers.default.mock_power.ec_host_cmd:
     timeout: 360
     extra_configs:
@@ -182,6 +188,7 @@ tests:
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
     - default/boards/native_posix.overlay
+    - default/boards/touchpad.dtsi
   drivers.acpi_strings_fifo:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_ACPI_STRINGS_FIFO=y

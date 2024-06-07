@@ -50,6 +50,7 @@ target_sources(app PRIVATE
     src/tcs3400.c
     src/temp_sensor.c
     src/thermistor.c
+    src/touchpad_elan.c
     src/uart_hostcmd.c
     src/usb_mux.c
     src/util.c
