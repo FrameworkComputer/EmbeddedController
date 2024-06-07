@@ -181,6 +181,28 @@ static void clear_pending_command(struct ppm_common_device *dev)
 	dev->pending.command = 0;
 }
 
+/*
+ * All calls to |execute_cmd| on the PD driver should go through here and unlock
+ * the ppm_lock before executing. This ensures that we don't accidentally create
+ * deadlocks due to events from the PDC triggering at the same time we're
+ * running commands on the driver.
+ *
+ * All calls to this function MUST be behind |ppm_lock|.
+ */
+static int ppm_common_execute_command_unlocked(struct ppm_common_device *dev,
+					       struct ucsi_control *control,
+					       uint8_t *lpm_data_out)
+{
+	const struct device *ppm = dev->device;
+	int ret;
+
+	k_mutex_unlock(&dev->ppm_lock);
+	ret = dev->pd->execute_cmd(ppm, control, lpm_data_out);
+	k_mutex_lock(&dev->ppm_lock, K_FOREVER);
+
+	return ret;
+}
+
 static void ppm_common_handle_async_event(struct ppm_common_device *dev)
 {
 	uint8_t port = 0;
@@ -205,8 +227,6 @@ static void ppm_common_handle_async_event(struct ppm_common_device *dev)
 		 * LPM alert.
 		 */
 		if (dev->last_connector_alerted) {
-			const struct device *ppm = dev->device;
-
 			LOG_DBG("Calling GET_CONNECTOR_STATUS on port %d",
 				dev->last_connector_alerted);
 
@@ -225,8 +245,9 @@ static void ppm_common_handle_async_event(struct ppm_common_device *dev)
 			memset(port_status, 0,
 			       sizeof(struct ucsiv3_get_connector_status_data));
 
-			if (dev->pd->execute_cmd(ppm, &get_cs_cmd,
-						 (uint8_t *)port_status) < 0) {
+			if (ppm_common_execute_command_unlocked(
+				    dev, &get_cs_cmd, (uint8_t *)port_status) <
+			    0) {
 				LOG_ERR("Failed to read port %d status. No recovery.",
 					port + 1);
 			} else {
@@ -327,7 +348,6 @@ static int ppm_common_execute_pending_cmd(struct ppm_common_device *dev)
 	struct ucsiv3_ack_cc_ci_cmd *ack_cmd;
 	int ret = -1;
 	bool ack_ci = false;
-	const struct device *ppm = dev->device;
 
 	if (control->command == 0 || control->command >= UCSI_CMD_MAX) {
 		LOG_ERR("Invalid command 0x%x", control->command);
@@ -374,7 +394,7 @@ static int ppm_common_execute_pending_cmd(struct ppm_common_device *dev)
 	}
 
 	/* Do driver specific execute command. */
-	ret = dev->pd->execute_cmd(ppm, control, message_in);
+	ret = ppm_common_execute_command_unlocked(dev, control, message_in);
 
 	/* Clear command since we just executed it. */
 	memset(control, 0, sizeof(struct ucsi_control));
@@ -709,8 +729,6 @@ static void ppm_common_taskloop(struct ppm_common_device *dev)
 static void ppm_common_task(void *context)
 {
 	struct ppm_common_device *dev = (struct ppm_common_device *)context;
-	const struct device *ppm = dev->device;
-
 	LOG_DBG("PPM: Starting the ppm task");
 
 	k_mutex_lock(&dev->ppm_lock, K_FOREVER);
@@ -721,15 +739,13 @@ static void ppm_common_task(void *context)
 	/* Send PPM reset and set state to IDLE if successful. */
 	memset(&dev->ucsi_data.control, 0, sizeof(struct ucsi_control));
 	dev->ucsi_data.control.command = UCSI_CMD_PPM_RESET;
-	if (dev->pd->execute_cmd(ppm, &dev->ucsi_data.control,
-				 dev->ucsi_data.message_in) >= 0) {
+	if (ppm_common_execute_command_unlocked(dev, &dev->ucsi_data.control,
+						dev->ucsi_data.message_in) >=
+	    0) {
 		dev->ppm_state = PPM_STATE_IDLE;
 		memset(&dev->ucsi_data.cci, 0, sizeof(struct ucsi_cci));
 	}
 
-	/* TODO - Note to self:  Smbus function calls are currently done with
-	 * PPM lock; may need to  fix that.
-	 */
 	do {
 		ppm_common_taskloop(dev);
 	} while (!dev->cleaning_up);
@@ -809,9 +825,14 @@ bool ppm_common_get_next_connector_status(
 	struct ppm_common_device *dev = (struct ppm_common_device *)device;
 
 	if (dev->last_connector_changed) {
-		*out_port_num = (uint8_t)dev->last_connector_changed;
-		*out_connector_status =
-			&dev->per_port_status[dev->last_connector_changed - 1];
+		if (out_port_num) {
+			*out_port_num = (uint8_t)dev->last_connector_changed;
+		}
+		if (out_connector_status) {
+			*out_connector_status =
+				&dev->per_port_status
+					 [dev->last_connector_changed - 1];
+		}
 		return true;
 	}
 
