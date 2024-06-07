@@ -20,8 +20,10 @@
 #include <algorithm>
 #include <array>
 
+constexpr size_t IKM_SIZE_BYTES = 64;
+
 extern enum ec_error_list
-get_ikm(std::span<uint8_t, 64> ikm,
+get_ikm(std::span<uint8_t, IKM_SIZE_BYTES> ikm,
 	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed);
 
 #include <stdbool.h>
@@ -110,7 +112,7 @@ static const uint8_t expected_positive_match_secret_for_fake_user_id[] = {
 
 test_static int test_get_ikm_failure_seed_not_set(void)
 {
-	uint8_t ikm[CONFIG_ROLLBACK_SECRET_SIZE + FP_CONTEXT_TPM_BYTES];
+	uint8_t ikm[IKM_SIZE_BYTES];
 	std::array<uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed{};
 
 	TEST_ASSERT(get_ikm(ikm, tpm_seed) == EC_ERROR_ACCESS_DENIED);
@@ -119,7 +121,7 @@ test_static int test_get_ikm_failure_seed_not_set(void)
 
 test_static int test_get_ikm_failure_cannot_get_rollback_secret(void)
 {
-	uint8_t ikm[CONFIG_ROLLBACK_SECRET_SIZE + FP_CONTEXT_TPM_BYTES];
+	uint8_t ikm[IKM_SIZE_BYTES];
 
 	/* Given that the TPM seed has been set. */
 	TEST_ASSERT(!bytes_are_trivial(default_fake_tpm_seed,
@@ -147,7 +149,7 @@ test_static int test_get_ikm_success(void)
 	 * Expected ikm is the concatenation of the rollback secret and the
 	 * seed from the TPM.
 	 */
-	uint8_t ikm[CONFIG_ROLLBACK_SECRET_SIZE + FP_CONTEXT_TPM_BYTES];
+	uint8_t ikm[IKM_SIZE_BYTES];
 	static const uint8_t expected_ikm[] = {
 		0xcf, 0xe3, 0x23, 0x76, 0x35, 0x04, 0xc2, 0x0f, 0x0d, 0xb6,
 		0x02, 0xa9, 0x68, 0xba, 0x2a, 0x61, 0x86, 0x2a, 0x85, 0xd1,
@@ -167,9 +169,7 @@ test_static int test_get_ikm_success(void)
 
 	/* THEN get_ikm will succeed. */
 	TEST_ASSERT(get_ikm(ikm, default_fake_tpm_seed) == EC_SUCCESS);
-	TEST_ASSERT_ARRAY_EQ(ikm, expected_ikm,
-			     CONFIG_ROLLBACK_SECRET_SIZE +
-				     FP_CONTEXT_TPM_BYTES);
+	TEST_ASSERT_ARRAY_EQ(ikm, expected_ikm, IKM_SIZE_BYTES);
 
 	return EC_SUCCESS;
 }
