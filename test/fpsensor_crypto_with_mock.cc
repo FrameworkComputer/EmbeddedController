@@ -28,12 +28,13 @@ get_ikm(std::span<uint8_t, IKM_SIZE_BYTES> ikm,
 
 #include <stdbool.h>
 
-static const uint8_t fake_positive_match_salt[] = {
-	0x04, 0x1f, 0x5a, 0xac, 0x5f, 0x79, 0x10, 0xaf,
-	0x04, 0x1d, 0x46, 0x3a, 0x5f, 0x08, 0xee, 0xcb,
-};
+static constexpr std::array<uint8_t, FP_POSITIVE_MATCH_SALT_BYTES>
+	fake_positive_match_salt = {
+		0x04, 0x1f, 0x5a, 0xac, 0x5f, 0x79, 0x10, 0xaf,
+		0x04, 0x1d, 0x46, 0x3a, 0x5f, 0x08, 0xee, 0xcb,
+	};
 
-static const uint8_t fake_user_id[] = {
+static constexpr std::array<uint8_t, FP_CONTEXT_USERID_BYTES> fake_user_id = {
 	0x28, 0xb5, 0x5a, 0x55, 0x57, 0x1b, 0x26, 0x88, 0xce, 0xc5, 0xd1,
 	0xfe, 0x1d, 0x58, 0x5b, 0x94, 0x51, 0xa2, 0x60, 0x49, 0x9f, 0xea,
 	0xb1, 0xea, 0xf7, 0x04, 0x2f, 0x0b, 0x20, 0xa5, 0x93, 0x64,
@@ -55,11 +56,13 @@ static const uint8_t fake_user_id[] = {
  * -kdfopt hexinfo:706f7369746976655f6d617463685f73656372657420666f722075736572\
  *    200000000000000000000000000000000000000000000000000000000000000000 HKDF
  */
-static const uint8_t expected_positive_match_secret_for_empty_user_id[] = {
-	0x8d, 0xc4, 0x5b, 0xdf, 0x55, 0x1e, 0xa8, 0x72, 0xd6, 0xdd, 0xa1,
-	0x4c, 0xb8, 0xa1, 0x76, 0x2b, 0xde, 0x38, 0xd5, 0x03, 0xce, 0xe4,
-	0x74, 0x51, 0x63, 0x6c, 0x6a, 0x26, 0xa9, 0xb7, 0xfa, 0x68,
-};
+static constexpr std::array<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES>
+	expected_positive_match_secret_for_empty_user_id = {
+		0x8d, 0xc4, 0x5b, 0xdf, 0x55, 0x1e, 0xa8, 0x72,
+		0xd6, 0xdd, 0xa1, 0x4c, 0xb8, 0xa1, 0x76, 0x2b,
+		0xde, 0x38, 0xd5, 0x03, 0xce, 0xe4, 0x74, 0x51,
+		0x63, 0x6c, 0x6a, 0x26, 0xa9, 0xb7, 0xfa, 0x68,
+	};
 
 /**
  * Same as |expected_positive_match_secret_for_empty_user_id| but use
@@ -79,11 +82,13 @@ static const uint8_t expected_positive_match_secret_for_empty_user_id[] = {
  * -kdfopt hexinfo:706f7369746976655f6d617463685f73656372657420666f722075736572\
  *2028b55a55571b2688cec5d1fe1d585b9451a260499feab1eaf7042f0b20a59364 HKDF
  */
-static const uint8_t expected_positive_match_secret_for_fake_user_id[] = {
-	0x0d, 0xf5, 0xac, 0x7c, 0xad, 0x37, 0x0a, 0x66, 0x2f, 0x71, 0xf6,
-	0xc6, 0xca, 0x8a, 0x41, 0x69, 0x8a, 0xd3, 0xcf, 0x0b, 0xc4, 0x5a,
-	0x5f, 0x4d, 0x54, 0xeb, 0x7b, 0xad, 0x5d, 0x1b, 0xbe, 0x30,
-};
+static constexpr std::array<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES>
+	expected_positive_match_secret_for_fake_user_id = {
+		0x0d, 0xf5, 0xac, 0x7c, 0xad, 0x37, 0x0a, 0x66,
+		0x2f, 0x71, 0xf6, 0xc6, 0xca, 0x8a, 0x41, 0x69,
+		0x8a, 0xd3, 0xcf, 0x0b, 0xc4, 0x5a, 0x5f, 0x4d,
+		0x54, 0xeb, 0x7b, 0xad, 0x5d, 0x1b, 0xbe, 0x30,
+	};
 
 test_static int test_get_ikm_failure_seed_not_set(void)
 {
@@ -297,8 +302,8 @@ test_static int test_derive_positive_match_secret_fail_seed_not_set(void)
 	/* GIVEN that seed is not set. */
 	std::array<uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed{};
 	/* THEN EVEN IF the encryption salt is not trivial. */
-	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
-				       sizeof(fake_positive_match_salt)));
+	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt.data(),
+				       fake_positive_match_salt.size()));
 
 	/* Deriving positive match secret will fail. */
 	TEST_ASSERT(derive_positive_match_secret(
@@ -316,8 +321,8 @@ test_static int test_derive_new_pos_match_secret(void)
 	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
 
 	/* GIVEN that the encryption salt is not trivial. */
-	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
-				       sizeof(fake_positive_match_salt)));
+	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt.data(),
+				       fake_positive_match_salt.size()));
 	/*
 	 * GIVEN that reading the rollback secret will
 	 * succeed.
@@ -325,8 +330,8 @@ test_static int test_derive_new_pos_match_secret(void)
 	TEST_ASSERT(!mock_ctrl_rollback.get_secret_fail);
 
 	/* GIVEN that the salt is not trivial. */
-	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
-				       sizeof(fake_positive_match_salt)));
+	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt.data(),
+				       fake_positive_match_salt.size()));
 
 	/* GIVEN that the TPM seed is set. */
 	TEST_ASSERT(!bytes_are_trivial(default_fake_tpm_seed,
@@ -341,7 +346,7 @@ test_static int test_derive_new_pos_match_secret(void)
 		sizeof(expected_positive_match_secret_for_empty_user_id));
 
 	/* Now change the user_id to be non-trivial. */
-	memcpy(user_id.data(), fake_user_id, sizeof(fake_user_id));
+	std::ranges::copy(fake_user_id, user_id.begin());
 	TEST_ASSERT(derive_positive_match_secret(
 			    output, fake_positive_match_salt, user_id,
 			    default_fake_tpm_seed) == EC_SUCCESS);
@@ -360,8 +365,8 @@ test_static int test_derive_positive_match_secret_fail_rollback_fail(void)
 	/* GIVEN that reading secret from anti-rollback block will fail. */
 	mock_ctrl_rollback.get_secret_fail = true;
 	/* THEN EVEN IF the encryption salt is not trivial. */
-	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
-				       sizeof(fake_positive_match_salt)));
+	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt.data(),
+				       fake_positive_match_salt.size()));
 
 	/* Deriving positive match secret will fail. */
 	TEST_ASSERT(derive_positive_match_secret(
@@ -393,7 +398,7 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
 
 	/* GIVEN that the user ID is set to a known value. */
-	memcpy(user_id.data(), fake_user_id, sizeof(fake_user_id));
+	std::ranges::copy(fake_user_id, user_id.begin());
 
 	/*
 	 * GIVEN that reading the rollback secret will succeed.
@@ -401,8 +406,8 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 	TEST_ASSERT(!mock_ctrl_rollback.get_secret_fail);
 
 	/* GIVEN that the salt is not trivial. */
-	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
-				       sizeof(fake_positive_match_salt)));
+	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt.data(),
+				       fake_positive_match_salt.size()));
 
 	/* GIVEN that the sha256 output is trivial (0x00) */
 	mock_ctrl_fpsensor_crypto.output_type =
@@ -440,7 +445,7 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
 	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
 
 	/* GIVEN that the user ID is set to a known value. */
-	memcpy(user_id.data(), fake_user_id, sizeof(fake_user_id));
+	std::ranges::copy(fake_user_id, user_id.begin());
 
 	/*
 	 * Given that reading the rollback secret will succeed.
@@ -448,8 +453,8 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
 	TEST_ASSERT(!mock_ctrl_rollback.get_secret_fail);
 
 	/* GIVEN that the salt is not trivial. */
-	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt,
-				       sizeof(fake_positive_match_salt)));
+	TEST_ASSERT(!bytes_are_trivial(fake_positive_match_salt.data(),
+				       fake_positive_match_salt.size()));
 
 	/* GIVEN that the sha256 output is trivial (0xFF) */
 	mock_ctrl_fpsensor_crypto.output_type =
