@@ -439,9 +439,8 @@ test_static int test_derive_new_pos_match_secret(void)
 		sizeof(expected_positive_match_secret_for_empty_user_id));
 
 	/* Now change the user_id to be non-trivial. */
-	std::ranges::copy(fake_user_id, user_id.begin());
 	TEST_ASSERT(derive_positive_match_secret(
-			    output, fake_positive_match_salt, user_id,
+			    output, fake_positive_match_salt, fake_user_id,
 			    default_fake_tpm_seed) == EC_SUCCESS);
 	TEST_ASSERT_ARRAY_EQ(
 		output, expected_positive_match_secret_for_fake_user_id,
@@ -488,10 +487,6 @@ test_static int test_derive_positive_match_secret_fail_salt_trivial(void)
 test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 {
 	std::array<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES> output;
-	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
-
-	/* GIVEN that the user ID is set to a known value. */
-	std::ranges::copy(fake_user_id, user_id.begin());
 
 	/*
 	 * GIVEN that reading the rollback secret will succeed.
@@ -512,7 +507,7 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 
 	/* THEN the derivation will fail with EC_ERROR_HW_INTERNAL. */
 	TEST_ASSERT(derive_positive_match_secret(
-			    output, fake_positive_match_salt, user_id,
+			    output, fake_positive_match_salt, fake_user_id,
 			    default_fake_tpm_seed) == EC_ERROR_HW_INTERNAL);
 
 	/* Now verify success is possible after reverting */
@@ -523,7 +518,7 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 
 	/* THEN the derivation will succeed */
 	TEST_ASSERT(derive_positive_match_secret(
-			    output, fake_positive_match_salt, user_id,
+			    output, fake_positive_match_salt, fake_user_id,
 			    default_fake_tpm_seed) == EC_SUCCESS);
 
 	/* Clean up any mock changes */
@@ -535,10 +530,6 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0x00(void)
 test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
 {
 	std::array<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES> output;
-	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id{};
-
-	/* GIVEN that the user ID is set to a known value. */
-	std::ranges::copy(fake_user_id, user_id.begin());
 
 	/*
 	 * Given that reading the rollback secret will succeed.
@@ -559,7 +550,7 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
 
 	/* THEN the derivation will fail with EC_ERROR_HW_INTERNAL. */
 	TEST_ASSERT(derive_positive_match_secret(
-			    output, fake_positive_match_salt, user_id,
+			    output, fake_positive_match_salt, fake_user_id,
 			    default_fake_tpm_seed) == EC_ERROR_HW_INTERNAL);
 
 	/* Now verify success is possible after reverting */
@@ -570,7 +561,7 @@ test_static int test_derive_positive_match_secret_fail_trivial_key_0xff(void)
 
 	/* THEN the derivation will succeed */
 	TEST_ASSERT(derive_positive_match_secret(
-			    output, fake_positive_match_salt, user_id,
+			    output, fake_positive_match_salt, fake_user_id,
 			    default_fake_tpm_seed) == EC_SUCCESS);
 
 	/* Clean up any mock changes */
