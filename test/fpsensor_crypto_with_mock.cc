@@ -39,60 +39,21 @@ static const uint8_t fake_user_id[] = {
 	0xb1, 0xea, 0xf7, 0x04, 0x2f, 0x0b, 0x20, 0xa5, 0x93, 0x64,
 };
 
-/*
- * |expected_positive_match_secret_for_empty_user_id| is obtained by running
- * BoringSSL locally.
- * From https://boringssl.googlesource.com/boringssl
- * commit 365b7a0fcbf273b1fa704d151059e419abd6cfb8
+/**
+ * expected_positive_match_secret_for_empty_user_id =
+ *   HKDF_HMAC-SHA256(salt=fake_positive_match_salt,
+ *                    ikm=fake_rollback_secret || default_fake_tpm_seed,
+ *                    info="positive_match_secret for user " ||
+ * 0x0000000000000000000000000000000000000000000000000000000000000000)
  *
- * Steps to reproduce:
+ * Generated with the following command:
  *
- * Open boringssl/crypto/hkdf/hkdf_test.cc
- * Add the following case to static const HKDFTestVector kTests[]
- *
- * // test positive match secret
- * {
- *   EVP_sha256,
- *   {
- *     // IKM:
- *     // fake_rollback_secret
- *     [ ***Copy 32 octets of fake_rollback_secret here*** ]
- *     // fake_tpm_seed
- *     [ ***Copy 32 octets of fake_tpm_seed here*** ]
- *   }, 64,
- *   {
- *     // fake_positive_match_salt
- *     [ ***Copy 16 octets of fake_positive_match_salt here*** ]
- *   }, 16,
- *   {
- *     // Info:
- *     // "positive_match_secret for user "
- *     0x70, 0x6f, 0x73, 0x69, 0x74, 0x69, 0x76, 0x65,
- *     0x5f, 0x6d, 0x61, 0x74, 0x63, 0x68, 0x5f, 0x73,
- *     0x65, 0x63, 0x72, 0x65, 0x74, 0x20, 0x66, 0x6f,
- *     0x72, 0x20, 0x75, 0x73, 0x65, 0x72, 0x20,
- *     // user_id
- *     [ ***Type 32 octets of 0x00 here*** ]
- *   }, 63,
- *   {  // Expected PRK:
- *     0xc2, 0xff, 0x50, 0x2d, 0xb1, 0x7e, 0x87, 0xb1,
- *     0x25, 0x36, 0x3a, 0x88, 0xe1, 0xdb, 0x4f, 0x98,
- *     0x22, 0xb5, 0x66, 0x8c, 0xab, 0xb7, 0xc7, 0x5e,
- *     0xd7, 0x56, 0xbe, 0xde, 0x82, 0x3f, 0xd0, 0x62,
- *   }, 32,
- *   32, { // 32 = L = FP_POSITIVE_MATCH_SECRET_BYTES
- *     // Expected positive match secret:
- *     [ ***Copy 32 octets of expected positive_match_secret here*** ]
- *   }
- * },
- *
- * Then from boringssl/ execute:
- * mkdir build
- * cd build
- * cmake ..
- * make
- * cd ..
- * go run util/all_tests.go
+ * openssl kdf -keylen 32 -kdfopt digest:SHA2-256\
+ * -kdfopt hexkey:cfe323763504c20f0db602a968ba2a61862a85d1ca09548a6be2e338de5d5\
+ *    914d971afc4cd36e360f85aa0a62cb3f5e2ebb9d82fb5785c7982ce063fcc23b9e7\
+ * -kdfopt hexsalt:041f5aac5f7910af041d463a5f08eecb\
+ * -kdfopt hexinfo:706f7369746976655f6d617463685f73656372657420666f722075736572\
+ *    200000000000000000000000000000000000000000000000000000000000000000 HKDF
  */
 static const uint8_t expected_positive_match_secret_for_empty_user_id[] = {
 	0x8d, 0xc4, 0x5b, 0xdf, 0x55, 0x1e, 0xa8, 0x72, 0xd6, 0xdd, 0xa1,
@@ -100,9 +61,23 @@ static const uint8_t expected_positive_match_secret_for_empty_user_id[] = {
 	0x74, 0x51, 0x63, 0x6c, 0x6a, 0x26, 0xa9, 0xb7, 0xfa, 0x68,
 };
 
-/*
+/**
  * Same as |expected_positive_match_secret_for_empty_user_id| but use
  * |fake_user_id| instead of all-zero user_id.
+ *
+ * expected_positive_match_secret_for_fake_user_id =
+ *   HKDF_HMAC-SHA256(salt=fake_positive_match_salt,
+ *                    ikm=fake_rollback_secret || default_fake_tpm_seed,
+ *                    info="positive_match_secret for user " || fake_user_id)
+
+* Generated with the following command:
+ *
+ * openssl kdf -keylen 32 -kdfopt digest:SHA2-256\
+ * -kdfopt hexkey:cfe323763504c20f0db602a968ba2a61862a85d1ca09548a6be2e338de5d5\
+ *    914d971afc4cd36e360f85aa0a62cb3f5e2ebb9d82fb5785c7982ce063fcc23b9e7\
+ * -kdfopt hexsalt:041f5aac5f7910af041d463a5f08eecb\
+ * -kdfopt hexinfo:706f7369746976655f6d617463685f73656372657420666f722075736572\
+ *2028b55a55571b2688cec5d1fe1d585b9451a260499feab1eaf7042f0b20a59364 HKDF
  */
 static const uint8_t expected_positive_match_secret_for_fake_user_id[] = {
 	0x0d, 0xf5, 0xac, 0x7c, 0xad, 0x37, 0x0a, 0x66, 0x2f, 0x71, 0xf6,
