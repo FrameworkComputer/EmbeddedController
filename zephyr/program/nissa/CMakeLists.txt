@@ -192,6 +192,7 @@ if(DEFINED CONFIG_BOARD_ORISA)
 	zephyr_include_directories("orisa/include")
 	zephyr_library_sources(
 			"orisa/src/usbc.c"
+			"orisa/src/sub_board.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 	"orisa/src/keyboard.c"
