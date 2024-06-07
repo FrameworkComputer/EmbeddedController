@@ -148,6 +148,7 @@ if(CONFIG_TEST_NISSA_CRAASK)
     target_sources(
 	    app PRIVATE
 	    src/craask.c
+	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/battery.c
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/charger.c
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/fan.c
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/craask/src/form_factor.c

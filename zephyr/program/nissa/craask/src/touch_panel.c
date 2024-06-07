@@ -40,7 +40,7 @@ void soc_edp_bl_interrupt(enum gpio_signal signal)
 	LOG_INF("%s: %d", __func__, state);
 }
 
-static void touch_enable_init(void)
+test_export_static void touch_enable_init(void)
 {
 	int ret;
 	uint32_t val;

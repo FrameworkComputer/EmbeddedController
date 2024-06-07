@@ -844,7 +844,7 @@ static void notify_host_of_over_current(struct batt_params *batt)
 	}
 }
 
-const struct batt_params *charger_current_battery_params(void)
+test_mockable const struct batt_params *charger_current_battery_params(void)
 {
 	return &curr.batt;
 }

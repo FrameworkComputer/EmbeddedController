@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "battery.h"
 #include "battery_fuel_gauge.h"
 #include "board_config.h"
 #include "button.h"
@@ -43,6 +44,8 @@
 
 LOG_MODULE_REGISTER(nissa, LOG_LEVEL_INF);
 
+const struct board_batt_params *get_batt_params(void);
+
 FAKE_VALUE_FUNC(int, cros_cbi_get_fw_config, enum cbi_fw_config_field_id,
 		uint32_t *);
 FAKE_VALUE_FUNC(int, cbi_get_board_version, uint32_t *);
@@ -68,6 +71,11 @@ FAKE_VOID_FUNC(lpc_keyboard_resume_irq);
 
 FAKE_VALUE_FUNC(enum ec_error_list, charger_set_frequency, int);
 
+FAKE_VALUE_FUNC(const struct batt_params *, charger_current_battery_params);
+FAKE_VALUE_FUNC(int, sb_read, int, int *);
+FAKE_VALUE_FUNC(int, battery_manufacturer_name, char *, int);
+FAKE_VALUE_FUNC(int, battery_device_name, char *, int);
+
 static void test_before(void *fixture)
 {
 	RESET_FAKE(cbi_get_board_version);
@@ -86,6 +94,10 @@ static void test_before(void *fixture)
 	RESET_FAKE(charger_discharge_on_ac);
 	RESET_FAKE(set_pwm_led_color);
 	RESET_FAKE(charger_set_frequency);
+	RESET_FAKE(charger_current_battery_params);
+	RESET_FAKE(sb_read);
+	RESET_FAKE(battery_manufacturer_name);
+	RESET_FAKE(battery_device_name);
 
 	raa489000_is_acok_fake.custom_fake = raa489000_is_acok_absent;
 
@@ -1172,7 +1184,7 @@ ZTEST(craask, test_touch_enable)
 	cbi_read_fail = false;
 	cros_cbi_get_fw_config_fake.custom_fake = cbi_get_touch_en_config;
 
-	hook_notify(HOOK_INIT);
+	touch_enable_init();
 
 	/* touch_en become high after TOUCH_ENABLE_DELAY_MS delay */
 	zassert_ok(gpio_emul_input_set(bl_en->port, bl_en->pin, 1), NULL);
@@ -1189,7 +1201,7 @@ ZTEST(craask, test_touch_enable)
 	/* touch_en keep low if fw_config is not enabled */
 	cbi_touch_en = false;
 	gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_edp_bl_en));
-	hook_notify(HOOK_INIT);
+	touch_enable_init();
 
 	zassert_ok(gpio_emul_input_set(bl_en->port, bl_en->pin, 1), NULL);
 	zassert_equal(gpio_emul_output_get(touch_en->port, touch_en->pin), 0);
@@ -1200,7 +1212,7 @@ ZTEST(craask, test_touch_enable)
 	/* touch_en keep low if fw_config read fail */
 	cbi_read_fail = true;
 	gpio_disable_dt_interrupt(GPIO_INT_FROM_NODELABEL(int_soc_edp_bl_en));
-	hook_notify(HOOK_INIT);
+	touch_enable_init();
 
 	zassert_ok(gpio_emul_input_set(bl_en->port, bl_en->pin, 0), NULL);
 	zassert_equal(gpio_emul_output_get(touch_en->port, touch_en->pin), 0);
@@ -1218,17 +1230,17 @@ ZTEST(craask, test_update_charger_config_enable)
 
 	/* Craask/Craaskbowl/Craaskvin */
 	board_version = 0x05;
-	hook_notify(HOOK_INIT);
+	update_charger_config();
 	zassert_equal(charger_set_frequency_fake.call_count, 1);
 
 	/* Craasneto */
 	board_version = 0x22;
-	hook_notify(HOOK_INIT);
+	update_charger_config();
 	zassert_equal(charger_set_frequency_fake.call_count, 2);
 
 	/* Craaskino/Craasula */
 	board_version = 0x33;
-	hook_notify(HOOK_INIT);
+	update_charger_config();
 	zassert_equal(charger_set_frequency_fake.call_count, 3);
 }
 
@@ -1238,11 +1250,108 @@ ZTEST(craask, test_update_charger_config_disable)
 
 	/* Craaskana */
 	board_version = 0x0b;
-	hook_notify(HOOK_INIT);
+	update_charger_config();
 	zassert_equal(charger_set_frequency_fake.call_count, 0);
 
 	/* Craaswell */
 	board_version = 0x0d;
-	hook_notify(HOOK_INIT);
+	update_charger_config();
 	zassert_equal(charger_set_frequency_fake.call_count, 0);
+}
+
+static bool batt_flag_responsive;
+static bool battery_seems_disconnected;
+
+static const struct batt_params *charger_current_battery_params_mock(void)
+{
+	static struct batt_params battery_param;
+
+	battery_param.flags = batt_flag_responsive ? BATT_FLAG_RESPONSIVE : 0;
+
+	return &battery_param;
+}
+
+static int sb_read_mock(int cmd, int *param)
+{
+	const struct board_batt_params *params = get_batt_params();
+
+	if (batt_flag_responsive && !battery_seems_disconnected &&
+	    cmd == params->fuel_gauge.fet.reg_addr) {
+		*param = ~params->fuel_gauge.fet.disconnect_val;
+		return EC_SUCCESS;
+	}
+
+	if (battery_seems_disconnected &&
+	    cmd == params->fuel_gauge.fet.reg_addr)
+		return EC_ERROR_ACCESS_DENIED;
+
+	return batt_flag_responsive ? EC_SUCCESS : EC_ERROR_ACCESS_DENIED;
+}
+
+ZTEST(craask, test_init_battery_not_responsive)
+{
+	battery_conf = &board_battery_info[1];
+
+	/* Battery is not responsive suddenly but B/I pin still present so
+	 * trigger process_battery_present_change to initialize the battery
+	 * type which will call board_get_default_battery_type.
+	 */
+	batt_flag_responsive = false;
+	battery_seems_disconnected = true;
+	charger_current_battery_params_fake.custom_fake =
+		charger_current_battery_params_mock;
+	sb_read_fake.custom_fake = sb_read_mock;
+	init_battery_type();
+	battery_manufacturer_name_fake.call_count = 0;
+	k_sleep(K_MSEC(501));
+	zassert_equal(battery_manufacturer_name_fake.call_count, 0);
+}
+
+ZTEST(craask, test_init_battery_within_retries)
+{
+	battery_conf = &board_battery_info[1];
+
+	/* Battery is responsive now. */
+	batt_flag_responsive = true;
+	battery_seems_disconnected = true;
+	charger_current_battery_params_fake.custom_fake =
+		charger_current_battery_params_mock;
+	sb_read_fake.custom_fake = sb_read_mock;
+	init_battery_type();
+	battery_manufacturer_name_fake.call_count = 0;
+	k_sleep(K_MSEC(501));
+	zassert_equal(battery_manufacturer_name_fake.call_count, 1);
+
+	/* Find battery configuration so battery is not disconnected */
+	battery_seems_disconnected = false;
+	sb_read_fake.custom_fake = sb_read_mock;
+	k_sleep(K_MSEC(501));
+	zassert_equal(battery_manufacturer_name_fake.call_count, 1);
+}
+
+ZTEST(craask, test_init_battery_not_within_retries)
+{
+	battery_conf = &board_battery_info[1];
+
+	/* Battery is responsive now. */
+	batt_flag_responsive = true;
+	battery_seems_disconnected = true;
+	charger_current_battery_params_fake.custom_fake =
+		charger_current_battery_params_mock;
+	sb_read_fake.custom_fake = sb_read_mock;
+	init_battery_type();
+	battery_manufacturer_name_fake.call_count = 0;
+	k_sleep(K_MSEC(501));
+	zassert_equal(battery_manufacturer_name_fake.call_count, 1);
+	k_sleep(K_MSEC(501));
+	zassert_equal(battery_manufacturer_name_fake.call_count, 2);
+	k_sleep(K_MSEC(501));
+	zassert_equal(battery_manufacturer_name_fake.call_count, 3);
+	k_sleep(K_MSEC(501));
+	zassert_equal(battery_manufacturer_name_fake.call_count, 4);
+	k_sleep(K_MSEC(501));
+	/* Only retries 5 times */
+	zassert_equal(battery_manufacturer_name_fake.call_count, 5);
+	k_sleep(K_MSEC(501));
+	zassert_equal(battery_manufacturer_name_fake.call_count, 5);
 }
