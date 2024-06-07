@@ -23,6 +23,9 @@
 		default_battery: smp {
 			compatible = "smp,c31n2005", "battery-smart";
 		};
+		dynapack_b140435 {
+			compatible = "dynapack,b140435","battery-smart";
+		};
 	};
 
 	hibernate-wake-pins {
