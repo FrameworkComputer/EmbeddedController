@@ -110,6 +110,9 @@ enum ucsi_command_t {
 	UCSI_SET_USB = 0x21,
 	/** UCSI GET LPM PPM INFO */
 	UCSI_GET_LPM_PPM_INFO = 0x22,
+
+	/** Invalid command used for bounds-checking only. */
+	UCSI_CMD_MAX,
 };
 
 /**
@@ -1245,6 +1248,31 @@ union connector_reset_t {
 };
 
 /**
+ * @brief Acknowledge CC/CI with PPM.
+ */
+union ack_cc_ci_t {
+	struct {
+		/**
+		 * This field is set to acknowledge the last connector change
+		 * indicated by the PPM.
+		 */
+		uint16_t connector_change_ack : 1;
+		/**
+		 * This field is set to acknowledge a command complete.
+		 */
+		uint16_t command_complete_ack : 1;
+
+		/* Remaining 46 bits are reserved. */
+		uint16_t reserved_0 : 14;
+		uint32_t reserved_1;
+	} __packed;
+	uint8_t raw_value[6];
+};
+
+BUILD_ASSERT(sizeof(union ack_cc_ci_t) == 6,
+	     "sizeof(ack_cc_ci_t) incorrect size");
+
+/**
  * @brief GET_VDO command
  */
 union get_vdo_t {
@@ -1265,6 +1293,21 @@ union get_vdo_t {
 };
 
 /**
+ * @brief GET_PD_MESSAGE command
+ */
+union get_pd_message_t {
+	struct {
+		uint32_t connector_number : 7;
+		uint32_t recipient : 3;
+		uint32_t message_offset : 8;
+		uint32_t number_of_bytes : 8;
+		uint32_t response_message_type : 6;
+	} __packed;
+
+	uint8_t raw_value[6];
+};
+
+/**
  * @brief response for UCSI_GET_LPM_PPM_INFO
  */
 struct lpm_ppm_info_t {
@@ -1282,6 +1325,58 @@ struct lpm_ppm_info_t {
 	uint32_t hw_ver;
 } __packed;
 
+/* Byte offsets to UCSI data for OPM-PPM communication. */
+#define UCSI_VERSION_OFFSET 0
+#define UCSI_CCI_OFFSET 4
+#define UCSI_CONTROL_OFFSET 8
+#define UCSI_MESSAGE_IN_OFFSET 16
+#define UCSI_MESSAGE_OUT_OFFSET 272
+
+/* Message sizes in UCSI data structure */
+#define MESSAGE_IN_SIZE 255 /* 2040 / 8 */
+#define MESSAGE_OUT_SIZE 255 /* 2040 / 8 */
+
+/* UCSI version struct */
+struct ucsi_version_t {
+	uint16_t version;
+	uint8_t lpm_address;
+	uint8_t unused0;
+} __packed;
+
+/* UCSI Control Data structure */
+struct ucsi_control_t {
+	uint8_t command;
+	uint8_t data_length;
+	uint8_t command_specific[6];
+} __packed;
+
+/* Overall memory layout for OPM to PPM communication. */
+struct ucsi_memory_region {
+	struct ucsi_version_t version;
+	union cci_event_t cci;
+	struct ucsi_control_t control;
+	/* TODO - Message sizes depends on chunking support. */
+	/* May not need to be full 256. */
+	uint8_t message_in[MESSAGE_IN_SIZE]; /* PPM output */
+	uint8_t reserved_0;
+	uint8_t message_out[MESSAGE_OUT_SIZE]; /* PPM input */
+	uint8_t reserved_1;
+} __packed __aligned(4);
+
+BUILD_ASSERT(offsetof(struct ucsi_memory_region, version) ==
+		     UCSI_VERSION_OFFSET,
+	     "Offset of version invalid");
+BUILD_ASSERT(offsetof(struct ucsi_memory_region, cci) == UCSI_CCI_OFFSET,
+	     "Offset of CCI invalid");
+BUILD_ASSERT(offsetof(struct ucsi_memory_region, control) ==
+		     UCSI_CONTROL_OFFSET,
+	     "Offset of Control invalid");
+BUILD_ASSERT(offsetof(struct ucsi_memory_region, message_in) ==
+		     UCSI_MESSAGE_IN_OFFSET,
+	     "Offset of Message In invalid");
+BUILD_ASSERT(offsetof(struct ucsi_memory_region, message_out) ==
+		     UCSI_MESSAGE_OUT_OFFSET,
+	     "Offset of Message Out invalid");
 #ifdef __cplusplus
 }
 #endif

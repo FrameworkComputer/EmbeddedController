@@ -1395,7 +1395,7 @@ static void st_read_run(void *o)
 		 * GET_CAPABILITIES so that we can Discover Identity Response.
 		 */
 		if (data->wr_buf[0] == REALTEK_PD_COMMAND &&
-		    data->wr_buf[2] == UCSI_CMD_GET_CAPABILITY) {
+		    data->wr_buf[2] == UCSI_GET_CAPABILITY) {
 			struct capability_t *caps =
 				(struct capability_t *)data->user_buf;
 			caps->bmOptionalFeatures.get_pd_message = 1;
@@ -2481,7 +2481,7 @@ static int rts54_execute_ucsi_cmd(const struct device *dev,
 	uint8_t cmd_buffer[SMBUS_MAX_BLOCK_SIZE];
 	enum cmd_t use_cmd = CMD_RAW_UCSI;
 
-	if (ucsi_command == UCSI_CMD_GET_CONNECTOR_STATUS &&
+	if (ucsi_command == UCSI_GET_CONNECTOR_STATUS &&
 	    data->conn_status_cached) {
 		LOG_INF("%s: Read conn status from cache", __func__);
 		k_mutex_lock(&data->mtx, K_FOREVER);
@@ -2509,9 +2509,8 @@ static int rts54_execute_ucsi_cmd(const struct device *dev,
 
 	/* Convert standard UCSI command to Realtek vendor specific formats. */
 	switch (ucsi_command) {
-	case UCSI_CMD_ACK_CC_CI: {
-		struct ucsiv3_ack_cc_ci_cmd *cmd =
-			(struct ucsiv3_ack_cc_ci_cmd *)command_specific;
+	case UCSI_ACK_CC_CI: {
+		union ack_cc_ci_t *cmd = (union ack_cc_ci_t *)command_specific;
 
 		data_size = 5;
 		memset(cmd_buffer, 0, ACK_CC_CI.len + 2);
@@ -2540,14 +2539,14 @@ static int rts54_execute_ucsi_cmd(const struct device *dev,
 		}
 		break;
 	}
-	case UCSI_CMD_GET_PD_MESSAGE: {
+	case UCSI_GET_PD_MESSAGE: {
 		/* The Realtek PDC does not support GET_PD_MESSAGE, but it can
 		 * return SOP/SOP' identity with GET_VDO. If the GET_PD_MESSAGE
 		 * request is for the discover identity response, map it to the
 		 * corresponding GET_VDO command.
 		 */
-		struct ucsiv3_get_pd_message_cmd *get_pd_message_cmd =
-			(struct ucsiv3_get_pd_message_cmd *)command_specific;
+		union get_pd_message_t *get_pd_message_cmd =
+			(union get_pd_message_t *)command_specific;
 
 		if (get_pd_message_cmd->response_message_type != 4) {
 			LOG_ERR("Unsupported Response Message type in GET_PD_MESSAGE: %d",
@@ -2581,7 +2580,7 @@ static int rts54_execute_ucsi_cmd(const struct device *dev,
 		cmd_buffer[11] = 0x06;
 		break;
 	}
-	case UCSI_CMD_GET_CONNECTOR_STATUS:
+	case UCSI_GET_CONNECTOR_STATUS:
 		use_cmd = CMD_GET_CONNECTOR_STATUS;
 		break;
 	default:

@@ -39,45 +39,45 @@ struct ucsi_commands_t {
 	uint8_t command_copy_length;
 };
 
-#define UCSI_CMD_ENTRY(cmd, length)                            \
-	{                                                      \
-		.command = cmd, .command_copy_length = length, \
+#define UCSI_ENTRY(cmd, length)                \
+	[cmd] = {                              \
+		.command = cmd,                \
+		.command_copy_length = length, \
 	}
 
 struct ucsi_commands_t ucsi_commands[] = {
-	UCSI_CMD_ENTRY(UCSI_CMD_RESERVED, 0),
-	UCSI_CMD_ENTRY(UCSI_CMD_PPM_RESET, 0),
-	UCSI_CMD_ENTRY(UCSI_CMD_CANCEL, 0),
-	UCSI_CMD_ENTRY(UCSI_CMD_CONNECTOR_RESET, 1),
-	UCSI_CMD_ENTRY(UCSI_CMD_ACK_CC_CI, 1),
-	UCSI_CMD_ENTRY(UCSI_CMD_SET_NOTIFICATION_ENABLE, 3),
-	UCSI_CMD_ENTRY(UCSI_CMD_GET_CAPABILITY, 0),
-	UCSI_CMD_ENTRY(UCSI_CMD_GET_CONNECTOR_CAPABILITY, 1),
-	UCSI_CMD_ENTRY(UCSI_CMD_SET_CCOM, 2),
-	UCSI_CMD_ENTRY(UCSI_CMD_SET_UOR, 2),
-	UCSI_CMD_ENTRY(obsolete_UCSI_CMD_SET_PDM, 0),
-	UCSI_CMD_ENTRY(UCSI_CMD_SET_PDR, 2),
-	UCSI_CMD_ENTRY(UCSI_CMD_GET_ALTERNATE_MODES, 4),
-	UCSI_CMD_ENTRY(UCSI_CMD_GET_CAM_SUPPORTED, 1),
-	UCSI_CMD_ENTRY(UCSI_CMD_GET_CURRENT_CAM, 1),
-	UCSI_CMD_ENTRY(UCSI_CMD_SET_NEW_CAM, 6),
-	UCSI_CMD_ENTRY(UCSI_CMD_GET_PDOS, 3),
-	UCSI_CMD_ENTRY(UCSI_CMD_GET_CABLE_PROPERTY, 1),
-	UCSI_CMD_ENTRY(UCSI_CMD_GET_CONNECTOR_STATUS, 1),
-	UCSI_CMD_ENTRY(UCSI_CMD_GET_ERROR_STATUS, 1),
-	UCSI_CMD_ENTRY(UCSI_CMD_SET_POWER_LEVEL, 6),
-	UCSI_CMD_ENTRY(UCSI_CMD_GET_PD_MESSAGE, 4),
-	UCSI_CMD_ENTRY(UCSI_CMD_GET_ATTENTION_VDO, 1),
-	UCSI_CMD_ENTRY(UCSI_CMD_reserved_0x17, 0),
-	UCSI_CMD_ENTRY(UCSI_CMD_GET_CAM_CS, 2),
-	UCSI_CMD_ENTRY(UCSI_CMD_LPM_FW_UPDATE_REQUEST, 4),
-	UCSI_CMD_ENTRY(UCSI_CMD_SECURITY_REQUEST, 5),
-	UCSI_CMD_ENTRY(UCSI_CMD_SET_RETIMER_MODE, 5),
-	UCSI_CMD_ENTRY(UCSI_CMD_SET_SINK_PATH, 1),
-	UCSI_CMD_ENTRY(UCSI_CMD_SET_PDOS, 3),
-	UCSI_CMD_ENTRY(UCSI_CMD_READ_POWER_LEVEL, 3),
-	UCSI_CMD_ENTRY(UCSI_CMD_CHUNKING_SUPPORT, 1),
-	UCSI_CMD_ENTRY(UCSI_CMD_VENDOR_CMD, 6),
+	UCSI_ENTRY(UCSI_PPM_RESET, 0),
+	UCSI_ENTRY(UCSI_CANCEL, 0),
+	UCSI_ENTRY(UCSI_CONNECTOR_RESET, 1),
+	UCSI_ENTRY(UCSI_ACK_CC_CI, 1),
+	UCSI_ENTRY(UCSI_SET_NOTIFICATION_ENABLE, 3),
+	UCSI_ENTRY(UCSI_GET_CAPABILITY, 0),
+	UCSI_ENTRY(UCSI_GET_CONNECTOR_CAPABILITY, 1),
+	UCSI_ENTRY(UCSI_SET_CCOM, 2),
+	UCSI_ENTRY(UCSI_SET_UOR, 2),
+	UCSI_ENTRY(UCSI_SET_PDR, 2),
+	UCSI_ENTRY(UCSI_GET_ALTERNATE_MODES, 4),
+	UCSI_ENTRY(UCSI_GET_CAM_SUPPORTED, 1),
+	UCSI_ENTRY(UCSI_GET_CURRENT_CAM, 1),
+	UCSI_ENTRY(UCSI_SET_NEW_CAM, 6),
+	UCSI_ENTRY(UCSI_GET_PDOS, 3),
+	UCSI_ENTRY(UCSI_GET_CABLE_PROPERTY, 1),
+	UCSI_ENTRY(UCSI_GET_CONNECTOR_STATUS, 1),
+	UCSI_ENTRY(UCSI_GET_ERROR_STATUS, 1),
+	UCSI_ENTRY(UCSI_SET_POWER_LEVEL, 6),
+	UCSI_ENTRY(UCSI_GET_PD_MESSAGE, 4),
+	UCSI_ENTRY(UCSI_GET_ATTENTION_VDO, 1),
+	UCSI_ENTRY(UCSI_GET_CAM_CS, 2),
+	UCSI_ENTRY(UCSI_LPM_FW_UPDATE_REQUEST, 4),
+	UCSI_ENTRY(UCSI_SECURITY_REQUEST, 5),
+	UCSI_ENTRY(UCSI_SET_RETIMER_MODE, 5),
+	UCSI_ENTRY(UCSI_SET_SINK_PATH, 1),
+	UCSI_ENTRY(UCSI_SET_PDOS, 3),
+	UCSI_ENTRY(UCSI_READ_POWER_LEVEL, 3),
+	UCSI_ENTRY(UCSI_CHUNKING_SUPPORT, 1),
+	UCSI_ENTRY(UCSI_VENDOR_DEFINED_COMMAND, 6),
+	UCSI_ENTRY(UCSI_SET_USB, 6),
+	UCSI_ENTRY(UCSI_GET_LPM_PPM_INFO, 1),
 };
 
 BUILD_ASSERT(ARRAY_SIZE(ucsi_commands) == UCSI_CMD_MAX,
@@ -96,9 +96,8 @@ static const struct ppm_config ppm_config = {
 };
 
 struct ppm_data {
-	struct ucsi_ppm_driver *ppm;
-	struct ucsiv3_get_connector_status_data
-		port_status[NUM_PORTS] __aligned(4);
+	struct ucsi_ppm_device *ppm_dev;
+	union connector_status_t port_status[NUM_PORTS] __aligned(4);
 	struct pdc_callback cc_cb;
 	struct pdc_callback ci_cb;
 	union cci_event_t cci_event;
@@ -109,21 +108,21 @@ static int ucsi_ppm_init(const struct device *device)
 {
 	struct ppm_data *data = (struct ppm_data *)device->data;
 
-	return data->ppm->init_and_wait(data->ppm->dev);
+	return ucsi_ppm_init_and_wait(data->ppm_dev);
 }
 
-static struct ucsi_ppm_driver *ucsi_ppm_get(const struct device *device)
+static struct ucsi_ppm_device *ucsi_ppm_get_ppm_dev(const struct device *device)
 {
 	struct ppm_data *data = (struct ppm_data *)device->data;
 
-	return data->ppm;
+	return data->ppm_dev;
 }
 
 #define SYNC_CMD_TIMEOUT_MSEC 2000
 #define RETRY_INTERVAL_MS 20
 
 static int ucsi_ppm_execute_cmd_sync(const struct device *device,
-				     struct ucsi_control *control,
+				     struct ucsi_control_t *control,
 				     uint8_t *lpm_data_out)
 {
 	const struct ppm_config *cfg =
@@ -147,41 +146,41 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	 * bit 24 and some commands don't use a connector number at all
 	 */
 	switch (ucsi_command) {
-	case UCSI_CMD_ACK_CC_CI: {
-		struct ucsiv3_get_connector_status_data *conn_status;
-		struct ucsiv3_ack_cc_ci_cmd *cmd =
-			(struct ucsiv3_ack_cc_ci_cmd *)control->command_specific;
+	case UCSI_ACK_CC_CI: {
+		union connector_status_t *conn_status;
+		union ack_cc_ci_t *cmd =
+			(union ack_cc_ci_t *)control->command_specific;
 
 		if (!cmd->connector_change_ack) {
 			/* This ACK is only for CC. Internally handle it. */
 			return 0;
 		}
 		/* This ACK includes only CI or both CC and CI. */
-		if (!data->ppm->get_next_connector_status(data->ppm->dev, &conn,
-							  &conn_status)) {
+		if (!ucsi_ppm_get_next_connector_status(data->ppm_dev, &conn,
+							&conn_status)) {
 			LOG_ERR("Cx: Found no port with CI to ack.");
 			return -ENOMSG;
 		}
 		break;
 	}
-	case UCSI_CMD_PPM_RESET:
-	case UCSI_CMD_SET_NOTIFICATION_ENABLE:
+	case UCSI_PPM_RESET:
+	case UCSI_SET_NOTIFICATION_ENABLE:
 		return 0;
-	case UCSI_CMD_CONNECTOR_RESET:
-	case UCSI_CMD_GET_CONNECTOR_CAPABILITY:
-	case UCSI_CMD_GET_CAM_SUPPORTED:
-	case UCSI_CMD_GET_CURRENT_CAM:
-	case UCSI_CMD_SET_NEW_CAM:
-	case UCSI_CMD_GET_PDOS:
-	case UCSI_CMD_GET_CABLE_PROPERTY:
-	case UCSI_CMD_GET_CONNECTOR_STATUS:
-	case UCSI_CMD_GET_ERROR_STATUS:
-	case UCSI_CMD_GET_PD_MESSAGE:
-	case UCSI_CMD_GET_ATTENTION_VDO:
-	case UCSI_CMD_GET_CAM_CS:
+	case UCSI_CONNECTOR_RESET:
+	case UCSI_GET_CONNECTOR_CAPABILITY:
+	case UCSI_GET_CAM_SUPPORTED:
+	case UCSI_GET_CURRENT_CAM:
+	case UCSI_SET_NEW_CAM:
+	case UCSI_GET_PDOS:
+	case UCSI_GET_CABLE_PROPERTY:
+	case UCSI_GET_CONNECTOR_STATUS:
+	case UCSI_GET_ERROR_STATUS:
+	case UCSI_GET_PD_MESSAGE:
+	case UCSI_GET_ATTENTION_VDO:
+	case UCSI_GET_CAM_CS:
 		conn = UCSI_7BIT_PORTMASK(control->command_specific[0]);
 		break;
-	case UCSI_CMD_GET_ALTERNATE_MODES:
+	case UCSI_GET_ALTERNATE_MODES:
 		conn = UCSI_7BIT_PORTMASK(control->command_specific[1]);
 		break;
 	default:
@@ -239,7 +238,9 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 
 static int ucsi_get_active_port_count(const struct device *dev)
 {
-	return NUM_PORTS;
+	const struct ppm_config *cfg = (const struct ppm_config *)dev->config;
+
+	return cfg->active_port_count;
 }
 
 /*
@@ -278,7 +279,6 @@ static void ppm_ci_cb(const struct device *dev,
 {
 	const struct ppm_config *cfg = (const struct ppm_config *)dev->config;
 	struct ppm_data *data = CONTAINER_OF(callback, struct ppm_data, ci_cb);
-	struct ucsi_ppm_driver *api = data->ppm;
 
 	LOG_DBG("%s: CCI=0x%08x", __func__, cci_event.raw_value);
 
@@ -289,12 +289,12 @@ static void ppm_ci_cb(const struct device *dev,
 		return;
 	}
 
-	api->lpm_alert(api->dev, cci_event.connector_change);
+	ucsi_ppm_lpm_alert(data->ppm_dev, cci_event.connector_change);
 }
 
 static struct ucsi_pd_driver ppm_drv = {
 	.init_ppm = ucsi_ppm_init,
-	.get_ppm = ucsi_ppm_get,
+	.get_ppm_dev = ucsi_ppm_get_ppm_dev,
 	.execute_cmd = ucsi_ppm_execute_cmd_sync,
 	.get_active_port_count = ucsi_get_active_port_count,
 };
@@ -313,8 +313,9 @@ static int ppm_init(const struct device *device)
 	}
 
 	/* Initialize the PPM. */
-	data->ppm = ppm_open(drv, data->port_status, device);
-	if (!data->ppm) {
+	data->ppm_dev = ppm_data_init(drv, device, data->port_status,
+				      cfg->active_port_count);
+	if (!data->ppm_dev) {
 		LOG_ERR("Failed to open PPM");
 		return -ENODEV;
 	}
