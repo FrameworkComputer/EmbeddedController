@@ -296,11 +296,11 @@ config EMUL_ICM42607
 	  Enable the ICM42607 accelerometer and gyroscope emulator.
 
 config EMUL_LSM6DSO
-  bool "lsm6dso emulator"
-  default y
-  depends on DT_HAS_CROS_LSM6DSO_EMUL_ENABLED
-  help
-    Enable the LSM6DSO accelerometer and gyroscope emulator.
+	bool "lsm6dso emulator"
+	default y
+	depends on DT_HAS_CROS_LSM6DSO_EMUL_ENABLED
+	help
+	  Enable the LSM6DSO accelerometer and gyroscope emulator.
 
 rsource "Kconfig.ln9310"
 rsource "Kconfig.lis2dw12"
