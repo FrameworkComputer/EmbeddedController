@@ -11,6 +11,7 @@
 #include "emul/emul_pdc.h"
 #include "emul/emul_realtek_rts54xx_public.h"
 #include "i2c.h"
+#include "include/ppm.h"
 #include "pdc_trace_msg.h"
 #include "test/util.h"
 #include "zephyr/sys/util.h"
@@ -298,4 +299,59 @@ ZTEST_USER(rts54xx, test_irq)
 	zassert_true(TEST_WAIT_FOR((port_interrupt(EMUL_PORT) &&
 				    port_interrupt(EMUL2_PORT)),
 				   IRQ_TEST_TIMEOUT_MS));
+}
+
+/* UCSI command callback handler. */
+void ucsi_cc_callback(const struct device *port, struct pdc_callback *cb,
+		      union cci_event_t cci_event)
+{
+}
+
+/* TODO(b/331801899) - Workarounds we have in place for GET_PD_MESSAGE not being
+ * correctly implemented in FW. Remove this after GET_PD_MESSAGE is correctly
+ * implemented.
+ */
+ZTEST_USER(rts54xx, test_get_pd_message_workarounds)
+{
+#define DISCOVER_IDENTITY_RESPONSE 4
+#define GET_PD_MESSAGE_DATA_SIZE 4
+	static struct pdc_callback cc_cb;
+	struct ucsiv3_get_pd_message_cmd cmd;
+	struct capability_t read_caps;
+	struct capability_t caps;
+	uint8_t response[32];
+
+	cc_cb.handler = ucsi_cc_callback;
+
+	/* Set an arbitrary capability to validate. */
+	caps.bmOptionalFeatures.cable_details = 1;
+
+	emul_pdc_set_capability(emul, &caps);
+
+	/* Normal api path doesn't insert GET_PD_MESSAGE bit into caps. */
+	zassert_ok(pdc_get_capability(dev, &read_caps));
+	k_sleep(K_MSEC(TEST_WAIT_FOR_INTERVAL_MS));
+	zassert_equal(read_caps.bmOptionalFeatures.raw_value,
+		      caps.bmOptionalFeatures.raw_value);
+
+	/* Use UCSI path to check capabilities and expect bit is set. */
+	zassert_ok(pdc_execute_ucsi_cmd(dev, UCSI_GET_CAPABILITY,
+					/*command specific=*/0, NULL,
+					(uint8_t *)&read_caps, &cc_cb));
+	k_sleep(K_MSEC(TEST_WAIT_FOR_INTERVAL_MS));
+	zassert_true(read_caps.bmOptionalFeatures.get_pd_message);
+
+	/* Anything that's not for Discover Identity will be rejected. */
+	memset(&cmd, 0, sizeof(cmd));
+	zassert_equal(pdc_execute_ucsi_cmd(dev, UCSI_GET_PD_MESSAGE,
+					   GET_PD_MESSAGE_DATA_SIZE,
+					   (uint8_t *)&cmd, response, &cc_cb),
+		      -ENOTSUP);
+
+	/* Response type of Discover identity should queue command. */
+	cmd.response_message_type = DISCOVER_IDENTITY_RESPONSE;
+	zassert_ok(pdc_execute_ucsi_cmd(dev, UCSI_GET_PD_MESSAGE,
+					GET_PD_MESSAGE_DATA_SIZE,
+					(uint8_t *)&cmd, response, &cc_cb));
+	k_sleep(K_MSEC(TEST_WAIT_FOR_INTERVAL_MS));
 }

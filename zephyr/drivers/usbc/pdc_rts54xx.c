@@ -1385,6 +1385,19 @@ static void st_read_run(void *o)
 		k_mutex_unlock(&data->mtx);
 		data->conn_status_cached = true;
 		break;
+	case CMD_RAW_UCSI:
+		memcpy(data->user_buf, data->rd_buf + offset, len);
+
+		/* TODO(b/331801899) - Set GET_PD_MESSAGE bit in
+		 * GET_CAPABILITIES so that we can Discover Identity Response.
+		 */
+		if (data->wr_buf[0] == REALTEK_PD_COMMAND &&
+		    data->wr_buf[2] == UCSI_CMD_GET_CAPABILITY) {
+			struct capability_t *caps =
+				(struct capability_t *)data->user_buf;
+			caps->bmOptionalFeatures.get_pd_message = 1;
+		}
+		break;
 	default:
 		/* No preprocessing needed for the user data */
 		memcpy(data->user_buf, data->rd_buf + offset, len);
@@ -2522,6 +2535,47 @@ static int rts54_execute_ucsi_cmd(const struct device *dev,
 			cmd_buffer[6] = 0xff;
 			cmd_buffer[7] = 0xff;
 		}
+		break;
+	}
+	case UCSI_CMD_GET_PD_MESSAGE: {
+		/* The Realtek PDC does not support GET_PD_MESSAGE, but it can
+		 * return SOP/SOP' identity with GET_VDO. If the GET_PD_MESSAGE
+		 * request is for the discover identity response, map it to the
+		 * corresponding GET_VDO command.
+		 */
+		struct ucsiv3_get_pd_message_cmd *get_pd_message_cmd =
+			(struct ucsiv3_get_pd_message_cmd *)command_specific;
+
+		if (get_pd_message_cmd->response_message_type != 4) {
+			LOG_ERR("Unsupported Response Message type in GET_PD_MESSAGE: %d",
+				get_pd_message_cmd->response_message_type);
+			return -ENOTSUP;
+		}
+
+		data_size = 8; /* Everything after port num. */
+		memset(cmd_buffer, 0, data_size + 4);
+		cmd_buffer[0] = GET_VDO.cmd;
+		cmd_buffer[1] = data_size + 2;
+
+		/* GET_VDO sub command */
+		cmd_buffer[2] = GET_VDO.sub;
+		/* Fixed port-num = 0 */
+		cmd_buffer[3] = 0x00;
+		/* Recipient | Num VDOs (7) */
+		cmd_buffer[4] = (get_pd_message_cmd->recipient << 3) | 7;
+		/* VDOs in the Discover identity response. GET_PD_MESSAGE
+		 * also returns the VDM header, so cmd_buffer[5] requests a
+		 * reserved value as a placeholder. cmd_buffer[6] through
+		 * cmd_buffer[11] request the ID header VDO, Cert Stat VDO,
+		 * and Product VDO followed by Product Type VDOs 1-3.
+		 */
+		cmd_buffer[5] = 0x00;
+		cmd_buffer[6] = 0x01;
+		cmd_buffer[7] = 0x02;
+		cmd_buffer[8] = 0x03;
+		cmd_buffer[9] = 0x04;
+		cmd_buffer[10] = 0x05;
+		cmd_buffer[11] = 0x06;
 		break;
 	}
 	case UCSI_CMD_GET_CONNECTOR_STATUS:
