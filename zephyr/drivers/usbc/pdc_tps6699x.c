@@ -867,7 +867,7 @@ static int write_task_cmd(struct pdc_config_t const *cfg,
 	union reg_command cmd;
 	int rv;
 
-	cmd.raw_value[RV_DATA_START] = task;
+	cmd.command = task;
 
 	if (cmd_data) {
 		rv = tps_rw_data_for_cmd1(&cfg->i2c, cmd_data, I2C_MSG_WRITE);
