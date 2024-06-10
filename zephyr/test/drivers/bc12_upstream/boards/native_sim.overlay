@@ -8,7 +8,7 @@
  * "diodes,pi3usb9201" compatible.
  */
 
- #include "../../boards/native_posix.overlay"
+ #include "../../boards/native_sim.overlay"
 
 /delete-node/ &int_usb_c0_bc12;
 /delete-node/ &int_usb_c1_bc12;
