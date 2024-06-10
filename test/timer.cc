@@ -146,6 +146,7 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_usleep);
 	RUN_TEST(test_timestamp_expired);
 	RUN_TEST(test_timestamp_expired_null);
+	RUN_TEST(test_usleep_warning);
 
 	test_print_result();
 }
