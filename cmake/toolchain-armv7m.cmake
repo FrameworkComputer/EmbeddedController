@@ -17,5 +17,11 @@ include("${CMAKE_CURRENT_LIST_DIR}/toolchain-common.cmake")
 add_compile_options(-mcpu=cortex-m4)
 add_compile_options(-mfloat-abi=hard)
 
-add_link_options(-lclang_rt.builtins-armv7m)
+# libclang_rt.builtins is automatically linked in, but by mentioning it
+# explicitly, we cause it to be used for symbol resolution before newlib's
+# libc. This avoids some duplicate symbol errors we would otherwise get.
+# For more details, b/346309204
+execute_process(COMMAND "${CROSS_COMPILE}-clang" --print-resource-dir
+                RESULT_VARIABLE LIBCLANG_RT_PATH)
+add_link_options("${LIBCLANG_RT_PATH}/libclang_rt.builtins-armv7m.a")
 add_link_options(-lnosys)
