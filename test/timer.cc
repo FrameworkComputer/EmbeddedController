@@ -24,7 +24,7 @@ test_static int test_usleep(void)
 	timestamp_t start_time = get_time();
 	crec_usleep(expected_duration);
 	int sleep_duration = time_since32(start_time);
-	int error_threshold;
+	int error_threshold = 100;
 
 	/* Helipilot uses the LFCLK for events which runs at 32768 Hz with an
 	 * error of 2%. This gives a 30.5 us resolution and a max error of 246.9
@@ -37,8 +37,6 @@ test_static int test_usleep(void)
 
 		/* Assume a worst case error of max_error + 1 clock tick */
 		error_threshold = static_cast<int>(max_error + clock_tick_us);
-	} else {
-		error_threshold = 100;
 	}
 
 	TEST_NEAR(expected_duration, sleep_duration, error_threshold, "%d");
