@@ -444,7 +444,6 @@ zephyr_boards_coverage:
     - cd ${EC_DIR}
     - projects=( $(zmake --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" list-projects |
-      grep -v bloonchipper |
       split -n r/"${CI_NODE_INDEX}"/"${CI_NODE_TOTAL}") )
     - zmake --zephyr-base "${ZEPHYR_BASE}"
       --modules-dir "${MODULES_DIR}" -l DEBUG build
