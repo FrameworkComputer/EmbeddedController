@@ -20,6 +20,15 @@
 		left-shift-rc = <KBD_RC(5, 7)>;
 		refresh-rc = <KBD_RC(2, 2)>;
 	};
+
+	runtime-keys {
+		compatible = "cros-ec,runtime-keys";
+		vol-up-rc = <KBD_RC(0, 4)>;
+		left-alt-rc = <KBD_RC(0, 10)>;
+		right-alt-rc = <KBD_RC(6, 10)>;
+		h-rc = <KBD_RC(1, 6)>;
+		r-rc = <KBD_RC(7, 3)>;
+	};
 };
 
 &pwm3 {
