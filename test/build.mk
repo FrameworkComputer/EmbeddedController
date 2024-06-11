@@ -173,6 +173,13 @@ cov-dont-test += rsa
 
 cov-test-list-host = $(filter-out $(cov-dont-test), $(test-list-host))
 
+rw-test = rw
+ifeq ($(and $(BOARD_HOST),$(TEST_BUILD)),y)
+# TODO(b/346616972): The "emulator" (TEST_BUILD=y with BOARD=host) runs the
+# tests from the RO image, so we need to build for RO.
+rw-test = ro
+endif
+
 abort-y=abort.o
 accel_cal-y=accel_cal.o
 aes-y=aes.o
