@@ -686,7 +686,7 @@ test_fp_command_read_match_secret_with_pubkey_succeed(void)
 	struct positive_match_secret_state test_state_1 = {
 		.template_matched = matched_fgr,
 		.readable = true,
-		.deadline = { .val = 5000000 },
+		.deadline = { .val = get_time().val + (5 * SECOND) },
 	};
 
 	bssl::UniquePtr<EC_KEY> ecdh_key = generate_elliptic_curve_key();
