@@ -4,6 +4,8 @@
 
 """Registry of known Zephyr modules."""
 
+import os
+
 from zmake import build_config
 from zmake import util
 
@@ -25,14 +27,19 @@ known_modules = {
     "hal_stm32": third_party_module,
     "cmsis": third_party_module,
     "ec": lambda name, checkout: (checkout / "src" / "platform" / "ec"),
-    "fpc": lambda name, checkout: (
-        checkout / "src" / "platform" / "fingerprint" / "fpc"
-    ),
     "nanopb": third_party_module,
     "pigweed": lambda name, checkout: (checkout / "src" / "third_party" / name),
     "hal_intel_public": third_party_module,
     "picolibc": third_party_module,
 }
+
+FPC_EXISTS = os.path.exists(
+    os.path.join(os.getcwd(), os.pardir, "fingerprint/fpc")
+)
+if FPC_EXISTS:
+    known_modules["fpc"] = lambda name, checkout: (
+        checkout / "src" / "platform" / "fingerprint" / "fpc"
+    )
 
 
 def locate_from_checkout(checkout_dir):

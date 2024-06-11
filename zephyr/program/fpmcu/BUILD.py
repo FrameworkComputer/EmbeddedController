@@ -4,6 +4,8 @@
 
 """Define zmake projects for FPMCUs."""
 
+import os
+
 
 def register_fpmcu_variant(
     project_name,
@@ -25,10 +27,20 @@ def register_fpmcu_variant(
     )
 
 
+FPC_EXISTS = os.path.exists(
+    os.path.join(os.getcwd(), os.pardir, "fingerprint/fpc")
+)
+
+variant_modules_list = ["hal_stm32", "cmsis"]
+
+if FPC_EXISTS:
+    variant_modules_list.append("fpc")
+
+
 bloonchipper = register_fpmcu_variant(
     project_name="bloonchipper",
     zephyr_board="google_dragonclaw",
-    variant_modules=["hal_stm32", "cmsis", "fpc"],
+    variant_modules=variant_modules_list,
     variant_dts_overlays=[
         here / "bloonchipper" / "bloonchipper.dts",
         here / "bloonchipper" / "ec_quirks.dts",
