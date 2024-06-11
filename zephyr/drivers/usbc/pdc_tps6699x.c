@@ -229,6 +229,8 @@ static const struct smf_state states[];
 static void cmd_set_tpc_rp(struct pdc_data_t *data);
 static void cmd_get_rdo(struct pdc_data_t *data);
 static void cmd_get_ic_status(struct pdc_data_t *data);
+static int cmd_get_ic_status_sync_internal(const struct i2c_dt_spec *i2c,
+					   struct pdc_info_t *info);
 static void cmd_get_vbus_voltage(struct pdc_data_t *data);
 static void cmd_get_vdo(struct pdc_data_t *data);
 static void cmd_get_identity_discovery(struct pdc_data_t *data);
@@ -387,12 +389,28 @@ static void st_init_entry(void *o)
 static void st_init_run(void *o)
 {
 	struct pdc_data_t *data = (struct pdc_data_t *)o;
+	struct pdc_config_t const *cfg = data->dev->config;
+	int rv;
 
 	/* Do not start executing commands if suspended */
 	if (check_comms_suspended()) {
 		set_state(data, ST_SUSPENDED);
 		return;
 	}
+
+	/* Pre-fetch PDC chip info and save it in the driver struct */
+	rv = cmd_get_ic_status_sync_internal(&cfg->i2c, &data->info);
+	if (rv) {
+		LOG_ERR("DR%d: Cannot obtain initial chip info (%d)",
+			cfg->connector_number, rv);
+		set_state(data, ST_ERROR_RECOVERY);
+		return;
+	}
+
+	LOG_INF("DR%d: FW Version %u.%u.%u", cfg->connector_number,
+		PDC_FWVER_GET_MAJOR(data->info.fw_version),
+		PDC_FWVER_GET_MINOR(data->info.fw_version),
+		PDC_FWVER_GET_PATCH(data->info.fw_version));
 
 	/* Set PDC notifications */
 	data->cmd = CMD_SET_NOTIFICATION_ENABLE;
@@ -776,29 +794,35 @@ error_recovery:
 	set_state(data, ST_ERROR_RECOVERY);
 }
 
-static void cmd_get_ic_status(struct pdc_data_t *data)
+/**
+ * @brief Helper function for internal use that synchronously obtains FW ver
+ *        and TX identity.
+ *
+ * @param i2c Pointer to the I2C bus DT spec
+ * @param info Output param for chip info
+ * @return 0 on success or an error code
+ */
+static int cmd_get_ic_status_sync_internal(const struct i2c_dt_spec *i2c,
+					   struct pdc_info_t *info)
 {
-	struct pdc_info_t *info = (struct pdc_info_t *)data->user_buf;
-	struct pdc_config_t const *cfg = data->dev->config;
 	union reg_version version;
 	union reg_tx_identity tx_identity;
 	int rv;
 
-	if (data->user_buf == NULL) {
-		LOG_ERR("Null user buffer; can't read IC status");
-		goto error_recovery;
+	if (info == NULL) {
+		return -EINVAL;
 	}
 
-	rv = tps_rd_version(&cfg->i2c, &version);
+	rv = tps_rd_version(i2c, &version);
 	if (rv) {
 		LOG_ERR("Failed to read version");
-		goto error_recovery;
+		return rv;
 	}
 
-	rv = tps_rw_tx_identity(&cfg->i2c, &tx_identity, I2C_MSG_READ);
+	rv = tps_rw_tx_identity(i2c, &tx_identity, I2C_MSG_READ);
 	if (rv) {
 		LOG_ERR("Failed to read Tx identity");
-		goto error_recovery;
+		return rv;
 	}
 
 	/* TI Is running flash code */
@@ -807,8 +831,7 @@ static void cmd_get_ic_status(struct pdc_data_t *data)
 	/* TI FW main version */
 	info->fw_version = version.version;
 
-	/* TI VID PID
-	 * (little-endian) */
+	/* TI VID PID (little-endian) */
 	info->vid_pid = (*(uint16_t *)tx_identity.vendor_id) << 2 |
 			*(uint16_t *)tx_identity.product_id;
 
@@ -820,6 +843,24 @@ static void cmd_get_ic_status(struct pdc_data_t *data)
 
 	/* TI PD Version (big-endian) */
 	info->pd_version = 0x0000;
+
+	return 0;
+}
+
+static void cmd_get_ic_status(struct pdc_data_t *data)
+{
+	struct pdc_info_t *info = (struct pdc_info_t *)data->user_buf;
+	struct pdc_config_t const *cfg = data->dev->config;
+	int rv;
+
+	rv = cmd_get_ic_status_sync_internal(&cfg->i2c, info);
+	if (rv) {
+		LOG_ERR("Could not get chip info (%d)", rv);
+		goto error_recovery;
+	}
+
+	/* Retain a cached copy of this data */
+	data->info = *info;
 
 	/* Command has completed */
 	data->cci_event.command_completed = 1;
@@ -1319,6 +1360,41 @@ static int tps_get_pdos(const struct device *dev, enum pdo_type_t pdo_type,
 static int tps_get_info(const struct device *dev, struct pdc_info_t *info,
 			bool live)
 {
+	const struct pdc_config_t *cfg = dev->config;
+	struct pdc_data_t *data = dev->data;
+
+	if (info == NULL) {
+		return -EINVAL;
+	}
+
+	/* If caller is OK with a non-live value and we have one, we can
+	 * immediately return a cached value. (synchronous)
+	 */
+	if (live == false) {
+		k_mutex_lock(&data->mtx, K_FOREVER);
+
+		/* Check FW ver for valid value to ensure we have a resident
+		 * value.
+		 */
+		if (data->info.fw_version == PDC_FWVER_INVALID) {
+			k_mutex_unlock(&data->mtx);
+
+			/* No cached value. Caller should request a live read */
+			return -EAGAIN;
+		}
+
+		*info = data->info;
+		k_mutex_unlock(&data->mtx);
+
+		LOG_DBG("DR%d: Use cached chip info (%u.%u.%u)",
+			cfg->connector_number,
+			PDC_FWVER_GET_MAJOR(data->info.fw_version),
+			PDC_FWVER_GET_MINOR(data->info.fw_version),
+			PDC_FWVER_GET_PATCH(data->info.fw_version));
+		return 0;
+	}
+
+	/* Perform a live read (async) */
 	return tps_post_command(dev, CMD_GET_IC_STATUS, info);
 }
 
