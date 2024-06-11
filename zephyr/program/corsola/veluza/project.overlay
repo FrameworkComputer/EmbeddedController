@@ -137,19 +137,8 @@
 				"I2C_PORT_USB_MUX1";
 		};
 	};
-	temp_ambient: ambient {
-		compatible = "cros-ec,temp-sensor-thermistor";
-		thermistor = <&thermistor_3V3_30K9_47K_NCP15WB>;
-		adc = <&adc_ambient>;
-	};
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		ambient {
-			temp_host_high = <56>;
-			temp_host_halt = <80>;
-			temp_host_release_high = <42>;
-			sensor = <&temp_ambient>;
-		};
 		temp_charger: charger {
 			temp_host_high = <68>;
 			temp_host_halt = <90>;
@@ -299,9 +288,6 @@
 		     &adc0_ch1_gpi1_default
 		     &adc0_ch2_gpi2_default
 			 &adc0_ch5_gpi5_default>;
-};
-&thermistor_3V3_30K9_47K_NCP15WB {
-	status = "okay";
 };
 &i2c0 {
 	charger_bc12_port1: rt9490@53 {
