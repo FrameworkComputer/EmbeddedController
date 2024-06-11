@@ -23,6 +23,13 @@ LOG_MODULE_REGISTER(usbc, CONFIG_USBC_LOG_LEVEL);
 #include "usbc/utils.h"
 
 #include <drivers/pdc.h>
+#include <timer.h>
+
+#define INCBIN_PREFIX g_
+#define INCBIN_STYLE INCBIN_STYLE_SNAKE
+#include "third_party/incbin/incbin.h"
+INCBIN(tps6699x_fw, "/mnt/host/source/src/platform/ec/zephyr/"
+		    "drivers/usbc/tps6699x_19.8.0.bin");
 
 #define DT_DRV_COMPAT ti_tps6699_pdc
 
