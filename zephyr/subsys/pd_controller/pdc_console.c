@@ -600,6 +600,37 @@ static int cmd_pdc_srccaps(const struct shell *sh, size_t argc, char **argv)
 	return 0;
 }
 
+#ifdef CONFIG_USBC_PDC_TPS6699X
+/* LCOV_EXCL_START - non-shipping code */
+extern int tps_pdc_do_firmware_update(void);
+
+static int cmd_pdc_fwupdate(const struct shell *sh, size_t argc, char **argv)
+{
+	int rv;
+
+	/* Disable all comms before doing update. */
+	rv = pdc_power_mgmt_set_comms_state(/*enable=*/false);
+	if (rv) {
+		shell_fprintf(sh, SHELL_ERROR, "Could not suspend PDC: %d\n",
+			      rv);
+		return rv;
+	}
+
+	rv = tps_pdc_do_firmware_update();
+	if (rv) {
+		shell_fprintf(sh, SHELL_ERROR, "Could not update fw: %d\n", rv);
+	}
+
+	if (pdc_power_mgmt_set_comms_state(/*enable=*/true)) {
+		shell_fprintf(sh, SHELL_ERROR,
+			      "Could not resume PDC. May want to restart EC.");
+	}
+
+	return rv;
+}
+/* LCOV_EXCL_STOP - non-shipping code */
+#endif /* defined(CONFIG_USBC_PDC_TPS6699X) */
+
 SHELL_STATIC_SUBCMD_SET_CREATE(
 	sub_pdc_cmds,
 	SHELL_CMD_ARG(status, NULL,
@@ -661,6 +692,12 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      "Get PDC chip info via GET_LPM_PPM_INFO UCSI cmd\n"
 		      "Usage: pdc lpm_ppm_info <port>",
 		      cmd_lpm_ppm_info, 2, 0),
+#ifdef CONFIG_USBC_PDC_TPS6699X
+	SHELL_CMD_ARG(fwupdate, NULL,
+		      "Updates TPS6699x firmware\n"
+		      "Usage pdc fwupdate",
+		      cmd_pdc_fwupdate, 1, 0),
+#endif /* defined(CONFIG_USBC_PDC_TPS6699X) */
 	SHELL_SUBCMD_SET_END);
 
 SHELL_CMD_REGISTER(pdc, &sub_pdc_cmds, "PDC console commands", NULL);

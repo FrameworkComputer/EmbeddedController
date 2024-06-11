@@ -360,4 +360,18 @@ int tps_rw_connection_manager_control(const struct i2c_dt_spec *i2c,
 int tps_rd_connection_manager_status(const struct i2c_dt_spec *i2c,
 				     union reg_connection_manager_status *buf);
 
+/**
+ * @brief Perform bulk transfers to the PDC
+ *
+ * @param i2c device pointer to i2c device
+ * @param broadcast_address I2C address to stream data to
+ * @param buf Data payload to transmit
+ * @param buf_len Number of bytes from `buf` to transmit
+ *
+ * @return 0 on success, or negative error code
+ */
+int tps_stream_data(const struct i2c_dt_spec *i2c,
+		    const uint8_t broadcast_address, const uint8_t *buf,
+		    size_t buf_len);
+
 #endif /* ZEPHYR_DRIVERS_USBC_TPS6699X_H_ */

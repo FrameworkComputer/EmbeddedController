@@ -17,19 +17,13 @@
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/smf.h>
-LOG_MODULE_REGISTER(usbc, CONFIG_USBC_LOG_LEVEL);
+LOG_MODULE_REGISTER(tps6699x, CONFIG_USBC_LOG_LEVEL);
 #include "tps6699x_cmd.h"
 #include "tps6699x_reg.h"
 #include "usbc/utils.h"
 
 #include <drivers/pdc.h>
 #include <timer.h>
-
-#define INCBIN_PREFIX g_
-#define INCBIN_STYLE INCBIN_STYLE_SNAKE
-#include "third_party/incbin/incbin.h"
-INCBIN(tps6699x_fw, "/mnt/host/source/src/platform/ec/zephyr/"
-		    "drivers/usbc/tps6699x_19.8.0.bin");
 
 #define DT_DRV_COMPAT ti_tps6699_pdc
 
@@ -1629,6 +1623,21 @@ static int pdc_init(const struct device *dev)
 
 	return 0;
 }
+
+/* LCOV_EXCL_START - temporary code */
+
+/* See tps6699x_fwup.c */
+extern int tps6699x_do_firmware_update_internal(const struct i2c_dt_spec *dev);
+
+int tps_pdc_do_firmware_update(void)
+{
+	/* Get DT node for first PDC port */
+	const struct device *dev = DEVICE_DT_GET(DT_INST(0, DT_DRV_COMPAT));
+	const struct pdc_config_t *cfg = dev->config;
+
+	return tps6699x_do_firmware_update_internal(&cfg->i2c);
+}
+/* LCOV_EXCL_STOP - temporary code */
 
 static void tps_thread(void *dev, void *unused1, void *unused2)
 {

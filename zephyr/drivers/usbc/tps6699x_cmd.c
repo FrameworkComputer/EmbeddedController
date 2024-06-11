@@ -19,6 +19,7 @@
 #include <zephyr/drivers/smbus.h>
 #include <zephyr/kernel.h>
 #include <zephyr/logging/log.h>
+LOG_MODULE_DECLARE(tps6699x, CONFIG_USBC_LOG_LEVEL);
 #include <zephyr/smf.h>
 
 #include <drivers/pdc.h>
@@ -293,4 +294,51 @@ int tps_rd_connection_manager_status(const struct i2c_dt_spec *i2c,
 	return tps_xfer_reg(i2c, REG_CONNECTION_MANAGER_STATUS, buf->raw_value,
 			    sizeof(union reg_connection_manager_status),
 			    I2C_MSG_READ);
+}
+
+/** Split streaming transfers down into chunks of this size for more manageable
+ *  I2C write lengths.
+ */
+#define TPS_STREAM_CHUNK_SIZE (64)
+
+int tps_stream_data(const struct i2c_dt_spec *i2c,
+		    const uint8_t broadcast_address, const uint8_t *buf,
+		    size_t buf_len)
+{
+	struct i2c_msg msg[1];
+	int rv;
+
+	/* Create new i2c target for transfer. */
+	const struct i2c_dt_spec stream_i2c = {
+		.bus = i2c->bus,
+		.addr = (uint16_t)broadcast_address,
+	};
+
+	/* Perform the transfer in chunks */
+	for (int chunk_offset = 0; chunk_offset < buf_len;
+	     chunk_offset += TPS_STREAM_CHUNK_SIZE) {
+		/* Set up I2C write */
+		msg[0].buf = (uint8_t *)buf + chunk_offset;
+		msg[0].len = MIN(TPS_STREAM_CHUNK_SIZE, buf_len - chunk_offset);
+		msg[0].flags = I2C_MSG_WRITE | I2C_MSG_STOP;
+
+		rv = i2c_transfer_dt(&stream_i2c, msg, 1);
+		if (rv) {
+			LOG_ERR("Streaming data block failed (ret=%d, "
+				"offset_into_block=%d, total_block_size=%u,"
+				"chunk_size=%d)",
+				rv, chunk_offset, buf_len,
+				TPS_STREAM_CHUNK_SIZE);
+			return rv;
+		}
+
+		/* Periodically print a progress log message */
+		if ((chunk_offset / TPS_STREAM_CHUNK_SIZE) % 32 == 0) {
+			LOG_INF("  Block progress %u / %u", chunk_offset,
+				buf_len);
+		}
+	}
+
+	LOG_INF("  Block complete (%u)", buf_len);
+	return 0;
 }
