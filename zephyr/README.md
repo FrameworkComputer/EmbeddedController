@@ -11,7 +11,7 @@ EC.
 ## native-posix development
 
 Zephyr can be built to run on your host machine, making it easier to develop
-and test features. This is called the native_posix build.
+and test features. This is called the minimal-posix build.
 
 To build it::
 
@@ -23,7 +23,7 @@ To build it::
 and run it:
 
 ```
-  build/zephyr/minimal-posix/build-singleimage/zephyr/zephyr.elf
+  build/zephyr/minimal-posix/build-singleimage/zephyr/zephyr.exe
 ```
 
 Check the display for the pseudotty and connect an xterm to it, e.g.:
