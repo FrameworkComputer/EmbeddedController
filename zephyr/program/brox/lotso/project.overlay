@@ -38,9 +38,12 @@
 
 /{
         batteries {
-                default_battery: lgc_ap18c8k {
-                        compatible = "lgc,ap18c8k", "battery-smart";
-                };
+		default_battery: sunwoda_l24d3pg1 {
+			compatible = "sunwoda,l24d3pg1", "battery-smart";
+		};
+		cosmx_l24x3pg1 {
+			compatible = "cosmx,l24x3pg1", "battery-smart";
+		};
         };
 
         gpio-interrupts {
