@@ -67,7 +67,7 @@ appear to be caused in part by using relative paths instead of absolute paths.)
 
 To build the Zephyr unit tests for code coverage run:
 
-`./twister -v -i --coverage -p native_posix -p unit_testing`
+`./twister -v -i --coverage -p native_sim -p unit_testing`
 
 The coverage report top-level page is
 `twister-out/coverage/index.html`.
@@ -77,7 +77,7 @@ also, so that you can include code that is not part of any test as well.
 
 ```
 zmake build --coverage herobrine
-./twister -v -i --coverage -p native_posix -p unit_testing
+./twister -v -i --coverage -p native_sim -p unit_testing
 genhtml -q -s --branch-coverage -o build/zephyr/coverage_rpt/ \
   twister-out/coverage.info build/zephyr/herobrine/output/zephyr.info
 ```
@@ -86,10 +86,10 @@ The coverage report top-level page is
 `build/zephyr/coverage_rpt/index.html`.
 
 For coverage report for a single test you can run: `./twister -v -i --coverage
--p native_posix -p unit_testing -s <testDir>/<testName>`
+-p native_sim -p unit_testing -s <testDir>/<testName>`
 
 Example of running test `tasks.default` from `zephyr/test/tasks/testcase.yaml`:
-`./twister -v -i --coverage -p native_posix -p unit_testing -s
+`./twister -v -i --coverage -p native_sim -p unit_testing -s
 tasks/tasks.default`
 
 ## Code Coverage in CQ

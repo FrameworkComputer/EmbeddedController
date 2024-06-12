@@ -154,7 +154,7 @@ You can find more info on code coverage at
 [Zephyr ztest code coverage](../code_coverage.md#Zephyr_ztest_code_coverage).
 
 ```shell
-platform/ec$ ./twister -p native_posix -p unit_testing --coverage
+platform/ec$ ./twister -p native_sim -p unit_testing --coverage
 ```
 
 ### Get more info on twister
@@ -179,14 +179,14 @@ skip and didn't use assume by mistake when you meant to use assert.
 
 ## Debugging
 
-If the test targets `native_posix` or `unit_testins` platforms, you can run it
+If the test targets `native_sim` or `unit_testins` platforms, you can run it
 through your choice of debugger (lldb is provided in the chroot). Additionally,
 it's possible to run only a subset of the tests via:
 
 ```shell
-$ ./twister-out/native_posix/zephyr/test/.../zephyr/zephyr.exe -list
+$ ./twister-out/native_sim/zephyr/test/.../zephyr/zephyr.exe -list
 # List of all tests in the binary in the format of <suite_name:test_name>
-$ ./twister-out/native_posix/zephyr/test/.../zephyr/zephyr.exe -test=suite0:*,suite1:test0
+$ ./twister-out/native_sim/zephyr/test/.../zephyr/zephyr.exe -test=suite0:*,suite1:test0
 # Runs all tests under suite0 and test0 from suite1
 $ lldb ./twister-out/unit_testing/.../testbinary
 # Starts lldb for the test binary

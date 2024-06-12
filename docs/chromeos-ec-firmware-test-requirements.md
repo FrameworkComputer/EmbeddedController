@@ -18,7 +18,7 @@ Starting 2H’22, all new Chromebook projects use the Zephyr RTOS as the
 foundation for the ChromeOS EC firmware.  As part of the switch to Zephyr RTOS,
 Google wrote unit and integration tests to verify functionality of the EC
 firmware.  These tests run directly on your development system using the
-native_posix environment and do not require any Chromebook hardware.
+native_sim environment and do not require any Chromebook hardware.
 
 These tests improve the quality of the EC firmware, reducing the number of EC
 crashes and bugs found on shipping Chromebooks.
