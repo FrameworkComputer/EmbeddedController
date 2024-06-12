@@ -96,7 +96,7 @@ def test_prune_modules(modules):
     project = zmake.project.Project(
         zmake.project.ProjectConfig(
             project_name="prunetest",
-            zephyr_board="native_posix",
+            zephyr_board="native_sim",
             output_packer=zmake.output_packers.ElfPacker,
             supported_toolchains=["coreboot-sdk"],
             project_dir=pathlib.Path("/fake"),
@@ -118,7 +118,7 @@ def test_prune_modules_unavailable():
     project = zmake.project.Project(
         zmake.project.ProjectConfig(
             project_name="prunetest",
-            zephyr_board="native_posix",
+            zephyr_board="native_sim",
             output_packer=zmake.output_packers.ElfPacker,
             supported_toolchains=["coreboot-sdk"],
             project_dir=pathlib.Path("/fake"),
@@ -173,7 +173,7 @@ def test_find_projects(tmp_path):
     assert projects["one"].config.project_dir == cf1_dir
 
     assert projects["two"].config.project_dir == cf1_dir
-    assert projects["two"].config.zephyr_board == "native_posix"
+    assert projects["two"].config.zephyr_board == "native_sim"
 
     assert projects["three"].config.project_dir == cf1_dir
     assert projects["three"].config.zephyr_board == "three"
