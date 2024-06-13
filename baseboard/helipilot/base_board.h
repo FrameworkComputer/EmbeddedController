@@ -58,31 +58,62 @@
 #undef CONFIG_WP_STORAGE_SIZE
 
 /*-------------------------------------------------------------------------*
- * Patch for reducing program memory size to increase data RAM
+ * Increase data RAM from defaults.
  *-------------------------------------------------------------------------*
  */
+
+/**
+ * RAM reserved for code.
+ *
+ * Can be increased/decreased in conjunction with HELIPILOT_DATA_RAM_SIZE_BYTES
+ * to adjust the split between code and data RAM.
+ */
+#define HELIPILOT_CODE_RAM_SIZE_BYTES (352 * 1024)
+
+/**
+ * RAM reserved for data.
+ *
+ * Can be increased/decreased in conjunction with HELIPILOT_CODE_RAM_SIZE_BYTES
+ * to adjust the split between code and data RAM.
+ */
+#define HELIPILOT_DATA_RAM_SIZE_BYTES (156 * 1024)
+
+/**
+ * RAM reserved for ROM functions.
+ *
+ * Cannot be adjusted.
+ */
+#define __ROM_DATA_RAM_SIZE_BYTES (4 * 1024)
+
+/**
+ * All data RAM (data RAM that can be used by our code and data RAM reserved for
+ * ROM functions).
+ */
+#define __TOTAL_DATA_RAM_SIZE_BYTES \
+	(HELIPILOT_DATA_RAM_SIZE_BYTES + __ROM_DATA_RAM_SIZE_BYTES)
+
+/**
+ * By default, the memory map expects 96K of data RAM (92K for data RAM used by
+ * our code and 4K for data used by ROM functions).
+ */
+#define __DEFAULT_TOTAL_DATA_RAM_SIZE_BYTES (96 * 1024)
+
 #undef NPCX_PROGRAM_MEMORY_SIZE
-/* 352 KB program RAM */
-#define NPCX_PROGRAM_MEMORY_SIZE ((416 - 64) * 1024)
+#define NPCX_PROGRAM_MEMORY_SIZE HELIPILOT_CODE_RAM_SIZE_BYTES
 
 #undef CONFIG_PROGRAM_MEMORY_BASE
 #define CONFIG_PROGRAM_MEMORY_BASE 0x10058000
 
 #undef CONFIG_RAM_BASE
-/*
- * Adjust the base address of the Data RAM
- * 0x200C0000 - 64K (0x10000) memory address of Data RAM
- */
-#define CONFIG_RAM_BASE 0x200B0000
+#define CONFIG_RAM_BASE \
+	(0x200C0000 -   \
+	 (__TOTAL_DATA_RAM_SIZE_BYTES - __DEFAULT_TOTAL_DATA_RAM_SIZE_BYTES))
 
 #undef CONFIG_DATA_RAM_SIZE
-/*
- * Define Data RAM size  = 160KB - 4KB (Reserved for booter).
- */
-#define CONFIG_DATA_RAM_SIZE ((96 + 64) * 1024)
+#define CONFIG_DATA_RAM_SIZE __TOTAL_DATA_RAM_SIZE_BYTES
 
 #undef CONFIG_RAM_SIZE
-#define CONFIG_RAM_SIZE (CONFIG_DATA_RAM_SIZE - 0x1000)
+#define CONFIG_RAM_SIZE (CONFIG_DATA_RAM_SIZE - __ROM_DATA_RAM_SIZE_BYTES)
 /*-------------------------------------------------------------------------*/
 
 #define CONFIG_SHAREDLIB_SIZE 0
