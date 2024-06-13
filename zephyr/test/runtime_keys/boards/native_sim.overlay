@@ -1,0 +1,29 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_sim.dts>
+#include <dt-bindings/kbd.h>
+
+/ {
+	chosen {
+		cros-ec,keyboard = &fake_keyboard;
+	};
+
+	fake_keyboard: fake-device {
+		compatible = "gpio-kbd-matrix";
+		row-gpios = <&gpio0 0 0>;
+		col-gpios = <&gpio0 0 0>;
+		debounce-down-ms = <100>;
+
+		test_runtime_keys: runtime-keys {
+			compatible = "cros-ec,runtime-keys";
+			vol-up-rc = <KBD_RC(0, 1)>;
+			left-alt-rc = <KBD_RC(2, 3)>;
+			right-alt-rc = <KBD_RC(4, 5)>;
+			h-rc = <KBD_RC(6, 7)>;
+			r-rc = <KBD_RC(8, 9)>;
+		};
+	};
+};
