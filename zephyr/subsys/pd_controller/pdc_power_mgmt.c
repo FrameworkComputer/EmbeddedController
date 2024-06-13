@@ -1324,8 +1324,6 @@ static void pdc_src_attached_entry(void *obj)
 static void pdc_src_attached_run(void *obj)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
-	const struct pdc_config_t *config = port->dev->config;
-	int port_num = config->connector_num;
 
 	/* The CCI_EVENT is set on a connector disconnect, so check the
 	 * connector status and take the appropriate action. */
@@ -1366,13 +1364,6 @@ static void pdc_src_attached_run(void *obj)
 	case SRC_ATTACHED_SET_DR_SWAP_POLICY:
 		port->src_attached_local_state =
 			SRC_ATTACHED_SET_PR_SWAP_POLICY;
-		/* Bits 1:0 must not both be clear or both be set */
-		port->uor.raw_value = 0;
-		if (pdc_power_mgmt_pd_get_data_role(port_num) == PD_ROLE_DFP) {
-			port->uor.swap_to_dfp = 1;
-		} else {
-			port->uor.swap_to_ufp = 1;
-		}
 		port->uor.accept_dr_swap = 1; /* TODO read from DT */
 		queue_internal_cmd(port, CMD_PDC_SET_UOR);
 		return;
@@ -1380,7 +1371,7 @@ static void pdc_src_attached_run(void *obj)
 		port->src_attached_local_state = SRC_ATTACHED_GET_VDO;
 		/* TODO: read from DT */
 		port->pdr = (union pdr_t){ .accept_pr_swap = 1,
-					   .swap_to_src = 1,
+					   .swap_to_src = 0,
 					   .swap_to_snk = 0 };
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
 		return;
@@ -1427,7 +1418,6 @@ static void pdc_snk_attached_run(void *obj)
 {
 	struct pdc_port_t *port = (struct pdc_port_t *)obj;
 	const struct pdc_config_t *const config = port->dev->config;
-	int port_num = config->connector_num;
 	uint32_t max_ma, max_mv, max_mw;
 	uint32_t tmp_curr_ma, tmp_volt_mv, tmp_pwr_mw;
 	uint32_t pdo_pwr_mw, pdo_volt_mv;
@@ -1464,13 +1454,6 @@ static void pdc_snk_attached_run(void *obj)
 	case SNK_ATTACHED_SET_DR_SWAP_POLICY:
 		port->snk_attached_local_state =
 			SNK_ATTACHED_SET_PR_SWAP_POLICY;
-		/* Bits 1:0 must not both be clear or both be set */
-		port->uor.raw_value = 0;
-		if (pdc_power_mgmt_pd_get_data_role(port_num) == PD_ROLE_DFP) {
-			port->uor.swap_to_dfp = 1;
-		} else {
-			port->uor.swap_to_ufp = 1;
-		}
 		port->uor.accept_dr_swap = 1; /* TODO read from DT */
 		queue_internal_cmd(port, CMD_PDC_SET_UOR);
 		return;
@@ -1479,7 +1462,7 @@ static void pdc_snk_attached_run(void *obj)
 		/* TODO: read from DT */
 		port->pdr = (union pdr_t){ .accept_pr_swap = 1,
 					   .swap_to_src = 0,
-					   .swap_to_snk = 1 };
+					   .swap_to_snk = 0 };
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
 		return;
 	case SNK_ATTACHED_READ_POWER_LEVEL:
