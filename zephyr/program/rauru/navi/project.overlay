@@ -209,6 +209,24 @@
 		pwms = <&pwm3 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
 		status = "okay";
 	};
+
+	usbc{
+		port0@0 {
+			/delete-node/  usb-mux-chain-0 ;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&it5205_mux_0 &virtual_mux_0>;
+			};
+		};
+
+		port1@1 {
+			/delete-node/  usb-mux-chain-1 ;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&ps8802_mux_0 &virtual_mux_1>;
+			};
+		};
+	};
 };
 
 /*
@@ -246,4 +264,37 @@
 			size = <0x1000>;
 		};
 	};
+};
+
+&i2c2ALT {
+	it5205_mux_0: it5205-mux-0@48 {
+		compatible = "ite,it5205";
+		reg = <0x48>;
+	};
+
+	/delete-node/ ps8802-mx-0@8;
+	/delete-node/ anx7510-bridge@40;
+};
+
+&i2c4 {
+	ppc_port1: syv682x@42 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x42>;
+		frs_en_gpio = <&gpio_usb_c1_frs_en>;
+		/* a duplicate of the <&usb_c1_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiod 4 GPIO_ACTIVE_LOW>;
+	};
+
+	ps8802_mux_0: ps8802-mx-0@8 {
+		compatible = "parade,ps8802";
+		status = "okay";
+		reg = <0x8>;
+	};
+
+	/delete-node/ syv682x@40;
+	/delete-node/ tusb1046-mux-1@12;
 };
