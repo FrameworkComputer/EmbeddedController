@@ -54,6 +54,12 @@
 			handler = "ppc_interrupt";
 		};
 
+		int_lid_open_for_pogo: lid_open_for_pogo {
+			irq-pin = <&lid_open>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "enable_base_by_lid";
+		};
+
 		/delete-node/ usb_c1_bc12_charger;
 		/delete-node/ lid_imu;
 	};
