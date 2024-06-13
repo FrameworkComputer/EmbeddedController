@@ -33,6 +33,7 @@ DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"
 BOARDS_UNIT_TEST = [
     "bloonchipper",
     "dartmonkey",
+    "helipilot",
 ]
 
 # Interesting regions to show in gerrit
