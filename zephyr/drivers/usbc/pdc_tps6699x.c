@@ -102,6 +102,8 @@ enum cmd_t {
 	CMD_GET_VDO,
 	/** CMD_GET_IDENTITY_DISCOVERY */
 	CMD_GET_IDENTITY_DISCOVERY,
+	/** CMD_GET_PCH_DATA_STATUS */
+	CMD_GET_PCH_DATA_STATUS,
 };
 
 /**
@@ -228,6 +230,7 @@ static int cmd_get_ic_status_sync_internal(const struct i2c_dt_spec *i2c,
 static void cmd_get_vbus_voltage(struct pdc_data_t *data);
 static void cmd_get_vdo(struct pdc_data_t *data);
 static void cmd_get_identity_discovery(struct pdc_data_t *data);
+static void cmd_get_pdc_data_status_reg(struct pdc_data_t *data);
 static void task_gaid(struct pdc_data_t *data);
 static void task_srdy(struct pdc_data_t *data);
 static void task_ucsi(struct pdc_data_t *data,
@@ -542,6 +545,8 @@ static void st_idle_run(void *o)
 		case CMD_GET_IDENTITY_DISCOVERY:
 			cmd_get_identity_discovery(data);
 			break;
+		case CMD_GET_PCH_DATA_STATUS:
+			cmd_get_pdc_data_status_reg(data);
 		}
 	}
 }
@@ -890,6 +895,43 @@ static void cmd_get_vbus_voltage(struct pdc_data_t *data)
 
 	*vbus = cfg->connector_number ? adc_results.pa_vbus :
 					adc_results.pb_vbus;
+
+	/* Command has completed */
+	data->cci_event.command_completed = 1;
+	/* Inform the system of the event */
+	call_cci_event_cb(data);
+
+	set_state(data, ST_IDLE);
+	return;
+
+error_recovery:
+	set_state(data, ST_ERROR_RECOVERY);
+}
+
+static void cmd_get_pdc_data_status_reg(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	union reg_data_status data_status;
+
+	int rv;
+
+	if (data->user_buf == NULL) {
+		LOG_ERR("Null user buffer; can't read data status reg");
+		goto error_recovery;
+	}
+
+	rv = tps_rd_data_status_reg(&cfg->i2c, &data_status);
+	if (rv) {
+		LOG_ERR("Failed to read data status reg (%d)", rv);
+		goto error_recovery;
+	}
+
+	/* Copy over the 5 status bytes, skipping the reg and length bytes */
+	data->user_buf[0] = data_status.raw_value[2];
+	data->user_buf[1] = data_status.raw_value[3];
+	data->user_buf[2] = data_status.raw_value[4];
+	data->user_buf[3] = data_status.raw_value[5];
+	data->user_buf[4] = data_status.raw_value[6];
 
 	/* Command has completed */
 	data->cci_event.command_completed = 1;
@@ -1518,6 +1560,18 @@ static bool tps_is_init_done(const struct device *dev)
 	return data->init_done;
 }
 
+static int tps_get_pch_data_status(const struct device *dev, uint8_t port_num,
+				   uint8_t *status_reg)
+{
+	ARG_UNUSED(port_num);
+
+	if (status_reg == NULL) {
+		return -EINVAL;
+	}
+
+	return tps_post_command(dev, CMD_GET_PCH_DATA_STATUS, status_reg);
+}
+
 static const struct pdc_driver_api_t pdc_driver_api = {
 	.is_init_done = tps_is_init_done,
 	.get_ucsi_version = tps_get_ucsi_version,
@@ -1549,6 +1603,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.manage_callback = tps_manage_callback,
 	.ack_cc_ci = tps_ack_cc_ci,
 	.set_comms_state = tps_set_comms_state,
+	.get_pch_data_status = tps_get_pch_data_status,
 };
 
 static void pdc_interrupt_callback(const struct device *dev,
