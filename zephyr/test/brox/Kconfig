@@ -22,6 +22,11 @@ choice TEST_BOARD_VARIANT
 		help
 		  Enable Lotso tests.
 
+	config TEST_BOARD_GREENBAYUPOC
+		bool "Enable greenbayupoc-specific tests"
+		help
+		  Enable Greenbayupoc tests.
+
 endchoice # TEST_BOARD_VARIANT
 
 config TEST_BOARD_NAME
@@ -46,5 +51,8 @@ config PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 
 config PLATFORM_EC_KEYBOARD_DEBUG
 	bool "Enable keyboard debug prints"
+
+config TEST_BOARD_GREENBAYUPOC_KEYBOARD
+	bool "Enable greenbayupoc keyboard tests"
 
 source "Kconfig.zephyr"
