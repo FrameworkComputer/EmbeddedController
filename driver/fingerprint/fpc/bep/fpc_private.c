@@ -232,20 +232,14 @@ int fp_sensor_deinit(void)
 
 int fp_sensor_get_info(struct ec_response_fp_info *resp)
 {
-	int rc;
-
-	spi_buf[0] = FPC_CMD_HW_ID;
+	uint16_t sensor_id;
 
 	memcpy(resp, &ec_fp_sensor_info, sizeof(struct ec_response_fp_info));
 
-	fp_sensor_lock();
-	rc = spi_transaction(SPI_FP_DEVICE, spi_buf, 3, spi_buf,
-			     SPI_READBACK_ALL);
-	fp_sensor_unlock();
-	if (rc)
+	if (fpc_get_hwid(&sensor_id))
 		return EC_RES_ERROR;
 
-	resp->model_id = (spi_buf[1] << 8) | spi_buf[2];
+	resp->model_id = sensor_id;
 	resp->errors = errors;
 
 	return EC_SUCCESS;
