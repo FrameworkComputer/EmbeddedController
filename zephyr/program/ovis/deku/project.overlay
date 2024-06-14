@@ -151,7 +151,7 @@
 			gpios = <&gpio9 4 GPIO_INPUT>;
 		};
 		gpio_usb_c3_rt_rst_l: usb_c3_rt_rst_l {
-			gpios = <&gpio1 6 GPIO_ODR_HIGH>;
+			gpios = <&gpio1 6 GPIO_ODR_LOW>;
 		};
 		gpio_usb_c3_tcpc_int_odl: usb_c3_tcpc_int_odl {
 			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
