@@ -222,7 +222,7 @@
 		compatible = "cros-ec,fans";
 
 		fan_0 {
-			pwms = <&pwm5 5 PWM_KHZ(1) PWM_POLARITY_NORMAL>;
+			pwms = <&pwm5 5 PWM_KHZ(24) PWM_POLARITY_NORMAL>;
 			rpm_min = <2200>;
 			rpm_start = <2200>;
 			rpm_max = <4200>;
@@ -355,13 +355,8 @@
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 };
 
-&pwm5_gpb7 {
-	drive-open-drain;
-};
-
 &pwm5 {
 	status = "okay";
-	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 	pinctrl-0 = <&pwm5_gpb7>;
 	pinctrl-names = "default";
 };
