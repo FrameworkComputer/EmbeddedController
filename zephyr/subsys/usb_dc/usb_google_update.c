@@ -65,7 +65,12 @@ struct usb_google_update_config {
 		.wMaxPacketSize = sys_cpu_to_le16(mps), .bInterval = 0, \
 	}
 
-USBD_CLASS_DESCR_DEFINE(primary, 0)
+/* Coreboot only parses the first interface descriptor for boot keyboard
+ * detection. And the USB descriptors are sorted by name in the linker
+ * scripts. The string "gupdate" is set in the instance field to ensure
+ * that the Google update descriptor is placed after the HID class.
+ */
+USBD_CLASS_DESCR_DEFINE(primary, gupdate)
 struct usb_google_update_config google_update_cfg = {
 	.if0 = INITIALIZER_IF(EP_NUM, USB_BCC_VENDOR,
 			      USB_SUBCLASS_GOOGLE_UPDATE,
