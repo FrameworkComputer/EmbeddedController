@@ -545,6 +545,12 @@ class AllTests:
                 test_name="zephyr_flash_stm32f4_block_registers",
                 exclude_boards=[DARTMONKEY, HELIPILOT],
             ),
+            TestConfig(
+                zephyr_name="drivers.counter.basic_api.stm32_subsec",
+                test_name="zephyr_counter_basic_api_stm32_subsec",
+                exclude_boards=[DARTMONKEY, HELIPILOT],
+                timeout_secs=20,
+            ),
         ]
 
         for test in tests:
