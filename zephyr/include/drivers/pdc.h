@@ -756,6 +756,8 @@ static inline int pdc_set_rdo(const struct device *dev, uint32_t rdo)
 	const struct pdc_driver_api_t *api =
 		(const struct pdc_driver_api_t *)dev->api;
 
+	__ASSERT(api->set_rdo != NULL, "SET_RDO is not optional");
+
 	return api->set_rdo(dev, rdo);
 }
 
@@ -1024,6 +1026,10 @@ static inline int pdc_set_pdos(const struct device *dev, enum pdo_type_t type,
 {
 	const struct pdc_driver_api_t *api =
 		(const struct pdc_driver_api_t *)dev->api;
+
+	if (api->set_pdos == NULL) {
+		return -ENOSYS;
+	}
 
 	return api->set_pdos(dev, type, pdo, count);
 }
