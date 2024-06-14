@@ -67,8 +67,7 @@ static void pwr_led_pwm_set_duty(const struct board_led_pwm_dt_channel *ch,
 	int rv;
 
 	if (!device_is_ready(ch->dev)) {
-		LOG_ERR("device ");
-		// LOG_ERR("device %s not ready", ch->dev->name);
+		LOG_ERR("device %s not ready", ch->dev->name);
 		return;
 	}
 
@@ -194,33 +193,43 @@ static void led_set_battery(void)
 	switch (led_pwr_get_state()) {
 	case LED_PWRS_CHARGE:
 		/* Always indicate when charging, even in suspend. */
-		led_set_color_battery(LED_AMBER);
+		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
+			led_set_color_battery(LED_AMBER);
 		break;
 	case LED_PWRS_DISCHARGE:
-		if (charge_get_percent() < BATT_LOW_BCT)
+		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
+			if (charge_get_percent() < BATT_LOW_BCT)
+				led_set_color_battery(
+					(battery_ticks % LED_TICKS_PER_CYCLE <
+					 LED_ON_TICKS) ?
+						LED_WHITE :
+						LED_OFF);
+			else
+				led_set_color_battery(LED_OFF);
+		}
+		break;
+	case LED_PWRS_ERROR:
+		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
+			led_set_color_battery(
+				(battery_ticks & 0x1) ? LED_AMBER : LED_OFF);
+		}
+		break;
+	case LED_PWRS_CHARGE_NEAR_FULL:
+		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
+			led_set_color_battery(LED_WHITE);
+		break;
+	case LED_PWRS_IDLE: /* External power connected in IDLE */
+		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED))
+			led_set_color_battery(LED_WHITE);
+		break;
+	case LED_PWRS_FORCED_IDLE:
+		if (led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED)) {
 			led_set_color_battery(
 				(battery_ticks % LED_TICKS_PER_CYCLE <
 				 LED_ON_TICKS) ?
-					LED_WHITE :
+					LED_AMBER :
 					LED_OFF);
-		else
-			led_set_color_battery(LED_OFF);
-		break;
-	case LED_PWRS_ERROR:
-		led_set_color_battery((battery_ticks & 0x1) ? LED_AMBER :
-							      LED_OFF);
-		break;
-	case LED_PWRS_CHARGE_NEAR_FULL:
-		led_set_color_battery(LED_WHITE);
-		break;
-	case LED_PWRS_IDLE: /* External power connected in IDLE */
-		led_set_color_battery(LED_WHITE);
-		break;
-	case LED_PWRS_FORCED_IDLE:
-		led_set_color_battery(
-			(battery_ticks % LED_TICKS_PER_CYCLE < LED_ON_TICKS) ?
-				LED_AMBER :
-				LED_OFF);
+		}
 		break;
 	default:
 		/* Other states don't alter LED behavior */
