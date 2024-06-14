@@ -25,6 +25,10 @@ if (DEFINED CONFIG_TEST_SUITE_PDC_GENERIC)
 	target_sources(app PRIVATE src/generic/pdc_pmc_debug_api.c)
 endif()
 
+if (DEFINED CONFIG_TEST_SUITE_PDC_API_NULL_CHECK)
+	target_sources(app PRIVATE src/generic/pdc_null_api.c)
+endif()
+
 if (DEFINED CONFIG_TEST_SUITE_PDC_RTS54XX)
 	target_sources(app PRIVATE src/rts54xx/rts54xx.c)
 endif()

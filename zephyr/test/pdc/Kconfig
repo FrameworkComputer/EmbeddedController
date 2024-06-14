@@ -5,6 +5,9 @@
 config TEST_SUITE_PDC_GENERIC
 	bool "Enable generic PDC tests"
 
+config TEST_SUITE_PDC_API_NULL_CHECK
+	bool "Enable PDC API null-protection checks"
+
 config TEST_SUITE_PDC_RTS54XX
 	bool "Enable generic PDC tests"
 
