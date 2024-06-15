@@ -1616,6 +1616,20 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.get_pch_data_status = tps_get_pch_data_status,
 };
 
+static int pdc_interrupt_mask_init(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	union reg_interrupt irq_mask = {
+		.pd_hardreset = 1,
+		.plug_insert_or_removal = 1,
+		.status_updated = 1,
+		.power_event_occurred_error = 1,
+		.externl_dcdc_event_received = 1,
+	};
+
+	return tps_rw_interrupt_mask(&cfg->i2c, &irq_mask, I2C_MSG_WRITE);
+}
+
 static void pdc_interrupt_callback(const struct device *dev,
 				   struct gpio_callback *cb, uint32_t pins)
 {
@@ -1680,6 +1694,13 @@ static int pdc_init(const struct device *dev)
 
 	/* Create the thread for this port */
 	cfg->create_thread(dev);
+
+	/* Setup I2C1 interrupt mask for this port */
+	rv = pdc_interrupt_mask_init(data);
+	if (rv < 0) {
+		LOG_ERR("Write interrupt mask failed");
+		return rv;
+	}
 
 	/* Trigger an interrupt on startup */
 	k_event_post(&data->pdc_event, PDC_IRQ_EVENT);
