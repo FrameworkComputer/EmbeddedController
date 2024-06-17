@@ -498,26 +498,14 @@ int tps6699x_do_firmware_update_internal(const struct i2c_dt_spec *i2c)
 	}
 
 	/* Check the status with TFUq */
-	struct tps6699x_tfu_query_output *tfuq;
-
 	ret = tfuq_run(i2c, rbuf);
 	if (ret) {
 		LOG_ERR("Could not query FW update status (%d)", ret);
 		goto cleanup;
 	}
 
-	tfuq = (struct tps6699x_tfu_query_output *)rbuf;
-	LOG_INF("Block bitmask: 0x%04x", tfuq->blocks_written);
-	LOG_INF("TFU State: 0x%02x, Complete Image: 0x%02x", tfuq->tfu_state,
-		tfuq->complete_image);
-	LOG_INF("Header Bytes: %u, Data Bytes: %u, Appconfig Bytes: %u",
-		tfuq->num_header_bytes_written, tfuq->num_data_bytes_written,
-		tfuq->num_appconfig_bytes_written);
-
-	for (int i = 0; i < MAX_NUM_BLOCKS; i++) {
-		LOG_INF("  Block %d status: 0x%08x", i,
-			tfuq->per_block_status[i]);
-	}
+	LOG_HEXDUMP_INF(rbuf, sizeof(struct tps6699x_tfu_query_output),
+			"TFUq raw data");
 
 	/* Finish update with a TFU copy. */
 	struct tfu_complete tfuc;
