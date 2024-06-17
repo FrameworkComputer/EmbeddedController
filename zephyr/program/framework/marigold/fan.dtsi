@@ -12,7 +12,7 @@
 			tach = <&tach2>;
 			rpm_min = <2100>;
 			rpm_start = <2100>;
-			rpm_max = <6000>;
+			rpm_max = <6100>;
 			rpm_deviation = <3>;
 			pgood_gpio = <&gpio_slp_s3_l>;
 		};
