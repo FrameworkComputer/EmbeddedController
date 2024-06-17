@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "driver/touchpad_elan.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_stub_device.h"
 #include "emul/emul_touchpad_elan.h"
@@ -12,19 +13,8 @@
 #define DT_DRV_COMPAT elan_ekth3000
 
 #define NO_REG -1
-#define ETP_I2C_STAND_CMD 0x0005
-#define ETP_I2C_PATTERN_CMD 0x0100
-#define ETP_I2C_IC_TYPE_CMD 0x0103
-#define ETP_I2C_XY_TRACENUM_CMD 0x0105
-#define ETP_I2C_MAX_X_AXIS_CMD 0x0106
-#define ETP_I2C_MAX_Y_AXIS_CMD 0x0107
-#define ETP_I2C_RESOLUTION_CMD 0x0108
-#define ETP_I2C_PRESSURE_CMD 0x010A
-#define ETP_I2C_IAP_VERSION_CMD 0x0110
-#define ETP_I2C_SET_CMD 0x300
-#define ETP_I2C_POWER_CMD 0x0307
-
-#define ETP_I2C_REPORT_LEN 34
+/* fake debug command used in touchpad_elan.test_debug test */
+#define TOUCHPAD_DEBUG_TEST_CMD 0xAAAA
 
 struct touchpad_elan_emul_data {
 	struct i2c_common_emul_data common_data;
@@ -32,9 +22,12 @@ struct touchpad_elan_emul_data {
 	uint16_t val16;
 	uint8_t raw_report[ETP_I2C_REPORT_LEN];
 
+	/* mutable regs */
 	uint16_t reg_power;
 	uint16_t reg_set;
 	uint16_t reg_stand;
+	uint16_t reg_iap_cmd;
+	uint16_t reg_iap_type;
 };
 
 void touchpad_elan_emul_set_raw_report(const struct emul *emul,
@@ -64,6 +57,12 @@ static int touchpad_elan_emul_read(const struct emul *emul, int reg,
 	case ETP_I2C_PATTERN_CMD:
 		val16 = 0x0100;
 		break;
+	case ETP_I2C_UNIQUEID_CMD:
+		val16 = 0x002E;
+		break;
+	case ETP_I2C_FW_VERSION_CMD:
+		val16 = 0x0003;
+		break;
 	case ETP_I2C_IC_TYPE_CMD:
 		val16 = 0x1000;
 		break;
@@ -88,8 +87,25 @@ static int touchpad_elan_emul_read(const struct emul *emul, int reg,
 	case ETP_I2C_SET_CMD:
 		val16 = emul_data->reg_set;
 		break;
+	case ETP_I2C_IAP_TYPE_CMD:
+		val16 = emul_data->reg_iap_type;
+		break;
 	case ETP_I2C_POWER_CMD:
 		val16 = emul_data->reg_power;
+		break;
+	case ETP_I2C_FW_CHECKSUM_CMD:
+		val16 = 0xF7AC;
+		break;
+	case ETP_I2C_IAP_CTRL_CMD:
+		val16 = (emul_data->reg_iap_cmd == ETP_I2C_IAP_PASSWORD ?
+				 0 :
+				 ETP_I2C_MAIN_MODE_ON);
+		break;
+	case ETP_I2C_IAP_CMD:
+		val16 = emul_data->reg_iap_cmd;
+		break;
+	case TOUCHPAD_DEBUG_TEST_CMD:
+		val16 = 0xBBBB;
 		break;
 	default:
 		return -1;
@@ -123,12 +139,6 @@ static int touchpad_elan_emul_write(const struct emul *emul, int reg,
 	case 3:
 		emul_data->val16 |= (val << 8);
 		break;
-	default:
-		return -1;
-	}
-
-	if (bytes >= 4) {
-		return -1;
 	}
 
 	return 0;
@@ -138,6 +148,11 @@ static int touchpad_elan_emul_finish_write(const struct emul *emul, int reg,
 					   int bytes)
 {
 	struct touchpad_elan_emul_data *emul_data = emul->data;
+
+	/* update firmware cmd, ignore the payload */
+	if (emul_data->reg16 == ETP_I2C_IAP_REG) {
+		return 0;
+	}
 
 	/* write */
 	if (bytes == 4) {
@@ -153,22 +168,32 @@ static int touchpad_elan_emul_finish_write(const struct emul *emul, int reg,
 		case ETP_I2C_SET_CMD:
 			emul_data->reg_set = val;
 			return 0;
+		case ETP_I2C_IAP_TYPE_CMD:
+			emul_data->reg_iap_type = val;
+			return 0;
 		case ETP_I2C_POWER_CMD:
 			emul_data->reg_power = val;
+			return 0;
+		case ETP_I2C_IAP_CMD:
+			emul_data->reg_iap_cmd = val;
+			return 0;
+		case ETP_I2C_IAP_RESET_CMD:
+			if (val == ETP_I2C_IAP_RESET) {
+				emul_data->reg_iap_cmd = 0;
+			}
 			return 0;
 		default:
 			return -1;
 		}
 	}
 
-	if (bytes != 2) {
-		emul_data->reg16 = NO_REG;
-
-		return -1;
+	/* read */
+	if (bytes == 2) {
+		return 0;
 	}
 
-	/* read */
-	return 0;
+	emul_data->reg16 = NO_REG;
+	return -1;
 }
 
 static int touchpad_elan_emul_finish_read(const struct emul *emul, int reg,
