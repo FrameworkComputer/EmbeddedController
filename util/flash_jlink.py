@@ -50,7 +50,9 @@ class BoardConfig:
 
 SWD_INTERFACE = "SWD"
 INTERFACE_SPEED_AUTO = "auto"
+INTERFACE_SPEED_4_MHZ = "4000"
 STM32_DEFAULT_FLASH_ADDRESS = "0x8000000"
+NPCX_DEFAULT_FLASH_ADDRESS = "0x64000000"
 DRAGONCLAW_CONFIG = BoardConfig(
     interface=SWD_INTERFACE,
     device="STM32F412CG",
@@ -63,6 +65,12 @@ ICETOWER_CONFIG = BoardConfig(
     speed=INTERFACE_SPEED_AUTO,
     flash_address=STM32_DEFAULT_FLASH_ADDRESS,
 )
+HELIPILOT_CONFIG = BoardConfig(
+    interface=SWD_INTERFACE,
+    device="NPCX9mnx",
+    speed=INTERFACE_SPEED_4_MHZ,
+    flash_address=NPCX_DEFAULT_FLASH_ADDRESS,
+)
 
 BOARD_CONFIGS = {
     "dragonclaw": DRAGONCLAW_CONFIG,
@@ -72,6 +80,7 @@ BOARD_CONFIGS = {
     "icetower": ICETOWER_CONFIG,
     "nucleo-dartmonkey": ICETOWER_CONFIG,
     "nucleo-h743zi": ICETOWER_CONFIG,
+    "helipilot": HELIPILOT_CONFIG,
 }
 
 
