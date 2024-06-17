@@ -1258,6 +1258,9 @@ static void st_read_run(void *o)
 				<< 8 |
 			data->rd_buf[RTS54XX_GET_IC_STATUS_FWVER_PATCH_OFFSET];
 
+		/* The Realtek PDC does not currently provide this. */
+		info->fw_config_version = 0;
+
 		/* Realtek VID PID: Data Byte9..12 (little-endian) */
 		info->vid_pid =
 			data->rd_buf[RTS54XX_GET_IC_STATUS_VID_H] << 24 |

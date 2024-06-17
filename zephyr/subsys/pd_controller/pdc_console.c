@@ -222,6 +222,7 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 	shell_fprintf(sh, SHELL_INFO,
 		      "Live: %d\n"
 		      "FW Ver: %u.%u.%u\n"
+		      "FW Config Ver: %u\n"
 		      "PD Rev: %u\n"
 		      "PD Ver: %u\n"
 		      "VID/PID: %04x:%04x\n"
@@ -231,8 +232,8 @@ static int cmd_pdc_get_info(const struct shell *sh, size_t argc, char **argv)
 		      live, PDC_FWVER_GET_MAJOR(pdc_info.fw_version),
 		      PDC_FWVER_GET_MINOR(pdc_info.fw_version),
 		      PDC_FWVER_GET_PATCH(pdc_info.fw_version),
-		      pdc_info.pd_revision, pdc_info.pd_version,
-		      PDC_VIDPID_GET_VID(pdc_info.vid_pid),
+		      pdc_info.fw_config_version, pdc_info.pd_revision,
+		      pdc_info.pd_version, PDC_VIDPID_GET_VID(pdc_info.vid_pid),
 		      PDC_VIDPID_GET_PID(pdc_info.vid_pid),
 		      pdc_info.is_running_flash_code ? 'Y' : 'N',
 		      pdc_info.running_in_flash_bank,

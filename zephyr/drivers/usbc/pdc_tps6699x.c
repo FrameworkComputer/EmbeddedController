@@ -807,6 +807,7 @@ static int cmd_get_ic_status_sync_internal(const struct i2c_dt_spec *i2c,
 	union reg_version version;
 	union reg_tx_identity tx_identity;
 	int rv;
+	union reg_customer_use customer_val;
 
 	if (info == NULL) {
 		return -EINVAL;
@@ -815,6 +816,12 @@ static int cmd_get_ic_status_sync_internal(const struct i2c_dt_spec *i2c,
 	rv = tps_rd_version(i2c, &version);
 	if (rv) {
 		LOG_ERR("Failed to read version");
+		return rv;
+	}
+
+	rv = tps_rw_customer_use(i2c, &customer_val, I2C_MSG_READ);
+	if (rv) {
+		LOG_ERR("Failed to read customer register");
 		return rv;
 	}
 
@@ -829,6 +836,9 @@ static int cmd_get_ic_status_sync_internal(const struct i2c_dt_spec *i2c,
 
 	/* TI FW main version */
 	info->fw_version = version.version;
+
+	/* FW config version for this FW version */
+	info->fw_config_version = customer_val.fw_config_version;
 
 	/* TI VID PID (little-endian) */
 	info->vid_pid = (*(uint16_t *)tx_identity.vendor_id) << 2 |

@@ -223,7 +223,12 @@ union reg_customer_use {
 		uint8_t _intern_reg : 8;
 		uint8_t _intern_len : 8;
 
-		uint8_t data[8];
+		/**
+		 * The first byte is a version code, set using the firmware
+		 * config tool.
+		 */
+		uint8_t fw_config_version;
+		uint8_t data[7];
 	} __packed;
 	uint8_t raw_value[10];
 };
