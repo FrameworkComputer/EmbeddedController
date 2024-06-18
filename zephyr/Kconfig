@@ -140,6 +140,14 @@ config PLATFORM_EC_AP_RESET_LOG
 	  Enable logging of AP reset events. This information is provided in
 	  response to the EC_CMD_GET_UPTIME_INFO host command.
 
+config PLATFORM_EC_SBRK
+	bool "Use CrosEC implementation of the sbrk function"
+	default y if NEWLIB_LIBC
+	select NEWLIB_LIBC_CUSTOM_SBRK if NEWLIB_LIBC
+	help
+	  Enable using CrosEC version of the sbrk function. The function
+	  prevents from using the end of RAM, which stores jump data.
+
 config PLATFORM_EC_BACKLIGHT_LID
 	bool "Control the display backlight based on the lid switch"
 	depends on PLATFORM_EC_HOSTCMD
