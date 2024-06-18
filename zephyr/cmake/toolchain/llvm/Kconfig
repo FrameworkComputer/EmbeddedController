@@ -9,5 +9,12 @@ choice LLVM_LINKER
 	default LLVM_USE_LLD
 endchoice
 
+# The armv7m-cros-eabi compiler-rt was compiled with assumption that it will
+# run on Cortex-M4 MCU with enabled FPU. It means that even with '-mfpu=none'
+# option the floating point instructions will be used (because they are used in
+# compiler-rt). Let's enable FPU always when compiling for ARMv7-M with FPU.
+config FPU
+	default y if ARMV7_M_ARMV8_M_FP
+
 # Include LLVM Kconfig from Zephyr
 source "${ZEPHYR_BASE}/cmake/toolchain/llvm/Kconfig"
