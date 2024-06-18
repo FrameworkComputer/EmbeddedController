@@ -56,15 +56,6 @@ enum ppm_states {
 	PPM_STATE_MAX,
 };
 
-/* Indicators of pending data states in the PPM. */
-struct ppm_pending_data {
-	/* Async events are received from the LPM. */
-	uint16_t async_event : 1;
-
-	/* Command is pending from OPM. */
-	uint16_t command : 1;
-};
-
 /* Forward declarations. */
 struct ucsi_ppm_device;
 
@@ -144,13 +135,6 @@ int ucsi_ppm_register_notify(struct ucsi_ppm_device *device,
  * @param port_id: Port on which the change was made.
  */
 void ucsi_ppm_lpm_alert(struct ucsi_ppm_device *device, uint8_t port_id);
-
-/**
- * Clean up the given PPM driver. Call before freeing.
- *
- * @param device: Data for PPM implementation.
- */
-void ucsi_ppm_cleanup(struct ucsi_ppm_device *device);
 
 /**
  * Configure LPM IRQ for this PD driver.

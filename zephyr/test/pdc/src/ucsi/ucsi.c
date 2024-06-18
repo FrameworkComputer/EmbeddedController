@@ -14,21 +14,27 @@
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
+extern const char *const ucsi_invalid_name;
+extern const char *const ucsi_deprecated_name;
+
 ZTEST_SUITE(ucsi, NULL, NULL, NULL, NULL, NULL);
 
 ZTEST_USER(ucsi, test_ucsi_command_names)
 {
 	enum ucsi_command_t cmd;
 
-	for (cmd = 0; cmd <= UCSI_GET_LPM_PPM_INFO; cmd++) {
+	for (cmd = 0; cmd < UCSI_CMD_MAX; cmd++) {
 		if (cmd == 0x00 || cmd == 0x0a || cmd == 0x17) {
-			zassert_is_null(
+			zassert_equal(
 				get_ucsi_command_name(cmd),
-				"Obsolete or Reserved UCSI command %d used",
+				ucsi_deprecated_name,
+				"Obsolete or Reserved UCSI command %d not identified",
 				cmd);
 		} else {
 			zassert_not_null(get_ucsi_command_name(cmd),
 					 "UCSI command %d missing name", cmd);
 		}
 	}
+
+	zassert_equal(get_ucsi_command_name(UCSI_CMD_MAX), ucsi_invalid_name);
 }

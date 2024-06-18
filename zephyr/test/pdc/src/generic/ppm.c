@@ -141,11 +141,6 @@ static void queue_command_for_fake_driver(struct ppm_test_fixture *fixture,
 	k_queue_append(fixture->cmd_queue, cmd);
 }
 
-static int initialize_fake(struct ppm_test_fixture *fixture)
-{
-	return fixture->pd->init_ppm((const struct device *)fixture);
-}
-
 static void trigger_expected_connector_change(struct ppm_test_fixture *fixture,
 					      uint8_t connector)
 {
@@ -302,9 +297,15 @@ static void enable_notifications_from_idle(struct ppm_test_fixture *fixture)
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE_NOTIFY);
 }
 
+static bool initialize_fake(struct ppm_test_fixture *fixture)
+{
+	write_ppm_reset(fixture);
+	return wait_for_cmd_to_process(fixture);
+}
+
 static void initialize_fake_to_idle_notify(struct ppm_test_fixture *fixture)
 {
-	zassert_false(initialize_fake(fixture) < 0);
+	zassert_true(initialize_fake(fixture));
 	enable_notifications_from_idle(fixture);
 }
 
@@ -425,6 +426,17 @@ static void *ppm_test_setup(void)
 	k_sem_init(&test_fixture.cmd_sem, 0, 1);
 	k_sem_init(&test_fixture.opm_sem, 0, 1);
 
+	queue_command_for_fake_driver(&test_fixture, UCSI_PPM_RESET,
+				      /*result=*/0,
+				      /*lpm_data=*/NULL);
+
+	/* Open ppm_common implementation with fake driver for testing. */
+	test_fixture.ppm_dev = ppm_data_init(
+		test_fixture.pd, (const struct device *)&test_fixture,
+		test_fixture.port_status, PDC_NUM_PORTS);
+
+	test_fixture.pd->init_ppm((const struct device *)&test_fixture);
+
 	return &test_fixture;
 }
 
@@ -442,21 +454,6 @@ static void ppm_test_before(void *f)
 	/* Reset semaphores. */
 	k_sem_reset(&test_fixture.cmd_sem);
 	k_sem_reset(&test_fixture.opm_sem);
-
-	queue_command_for_fake_driver(&test_fixture, UCSI_PPM_RESET,
-				      /*result=*/0,
-				      /*lpm_data=*/NULL);
-
-	/* Open ppm_common implementation with fake driver for testing. */
-	test_fixture.ppm_dev = ppm_data_init(
-		test_fixture.pd, (const struct device *)&test_fixture,
-		test_fixture.port_status, PDC_NUM_PORTS);
-}
-
-static void ppm_test_after(void *f)
-{
-	/* Must clean up between tests to re-init the state machine. */
-	ucsi_ppm_cleanup(test_fixture.ppm_dev);
 }
 
 const union cci_event_t cci_cmd_complete = { .command_completed = 1 };
@@ -466,12 +463,12 @@ const union cci_event_t cci_ack_command = { .acknowledge_command = 1 };
 const union cci_event_t cci_connector_change_1 = { .connector_change = 1 };
 
 ZTEST_SUITE(ppm_test, /*predicate=*/NULL, ppm_test_setup, ppm_test_before,
-	    ppm_test_after, /*teardown=*/NULL);
+	    /*after=*/NULL, /*teardown=*/NULL);
 
 /* On init, PPM should go into the Idle State. */
 ZTEST_USER_F(ppm_test, test_initialize_to_idle)
 {
-	zassert_equal(initialize_fake(fixture), 0);
+	zassert_true(initialize_fake(fixture));
 
 	/* System should be in the idle state at the end of init. */
 	zassert_equal(get_ppm_state(fixture), PPM_STATE_IDLE);
@@ -481,7 +478,7 @@ ZTEST_USER_F(ppm_test, test_initialize_to_idle)
  */
 ZTEST_USER_F(ppm_test, test_IDLE_drops_unexpected_commands)
 {
-	zassert_equal(initialize_fake(fixture), 0);
+	zassert_true(initialize_fake(fixture));
 
 	/* Try all commands except PPM_RESET and SET_NOTIFICATION_ENABLE.
 	 * They should result in no change to the state.
@@ -522,7 +519,7 @@ ZTEST_USER_F(ppm_test, test_IDLE_drops_unexpected_commands)
  */
 ZTEST_USER_F(ppm_test, test_IDLE_silently_processes_async_event)
 {
-	zassert_equal(initialize_fake(fixture), 0);
+	zassert_true(initialize_fake(fixture));
 	fixture->notified_count = 0;
 
 	/* Send an alert on default connector. */
@@ -652,7 +649,7 @@ ZTEST_USER_F(ppm_test, test_PROCESSING_busy_allows_cancel_command)
  */
 ZTEST_USER_F(ppm_test, test_CCACK_error_if_not_command_complete)
 {
-	zassert_equal(initialize_fake(fixture), 0);
+	zassert_true(initialize_fake(fixture));
 
 	int notified_count = 0;
 	fixture->notified_count = 0;

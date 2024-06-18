@@ -5,6 +5,9 @@
 
 #include <drivers/ucsi_v3.h>
 
+const char *const ucsi_invalid_name = "OUTSIDE_VALID_RANGE";
+const char *const ucsi_deprecated_name = "DEPRECATED";
+
 static const char *const ucsi_command_names[] = {
 	[UCSI_PPM_RESET] = "PPM_RESET",
 	[UCSI_CANCEL] = "CANCEL",
@@ -42,5 +45,11 @@ static const char *const ucsi_command_names[] = {
 
 const char *const get_ucsi_command_name(enum ucsi_command_t cmd)
 {
-	return ucsi_command_names[cmd];
+	if (cmd >= UCSI_CMD_MAX) {
+		return ucsi_invalid_name;
+	} else if (!ucsi_command_names[cmd]) {
+		return ucsi_deprecated_name;
+	} else {
+		return ucsi_command_names[cmd];
+	}
 }
