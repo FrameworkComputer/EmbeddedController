@@ -16,6 +16,7 @@
 #include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
+#include "cros_board_info.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi323.h"
@@ -873,6 +874,25 @@ static void setup_mux(void)
 		ccprints("PS8762 USB MUX");
 }
 
+#ifdef BOARD_MAGOLOR
+/*
+ * Bit masks to SKU ID 0xC0000 ~ 0xCFFFF
+ * for magister sku table return 1
+ */
+#define MAGISTER_MASK (BIT(19) | BIT(18) | BIT(17) | BIT(16))
+static uint32_t sku_id;
+int check_magister_skuid(void)
+{
+	uint32_t val;
+	if (cbi_get_sku_id(&val) != EC_SUCCESS)
+		return 0;
+	sku_id = val;
+	return (((MAGISTER_MASK & sku_id) == 0xC0000) && sku_id <= 0xCFFFF) ?
+		       1 :
+		       0;
+}
+#endif
+
 void board_init(void)
 {
 	int on;
@@ -928,11 +948,17 @@ void board_init(void)
 
 		if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_KX022) {
 			motion_sensors[LID_ACCEL] = kx022_lid_accel;
-			ccprints("LID_ACCEL is KX022");
-		} else {
-			if (system_get_board_version() >= 5) {
+			if (check_magister_skuid()) {
 				motion_sensors[LID_ACCEL].rot_standard_ref =
 					&lid_magister_ref;
+				ccprints("Magister");
+			}
+			ccprints("LID_ACCEL is KX022");
+		} else {
+			if (check_magister_skuid()) {
+				motion_sensors[LID_ACCEL].rot_standard_ref =
+					&lid_magister_ref;
+				ccprints("Magister");
 			}
 			ccprints("LID_ACCEL is BMA253");
 		}
