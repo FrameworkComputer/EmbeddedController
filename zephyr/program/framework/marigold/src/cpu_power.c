@@ -92,7 +92,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	} else {
 		if (active_power >= 55) {
 			/* ADP >= 55W */
-			pl1_watt = 25;
+			pl1_watt = 30;
 			pl2_watt = MIN((((active_power * 90) / 100) - 20), 60);
 			psyspl2_watt = ((active_power * 95) / 100);
 
@@ -106,7 +106,7 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 
 		} else {
 			/*ADP < 55W*/
-			pl1_watt = 25;
+			pl1_watt = 30;
 			pl2_watt = 30;
 			psyspl2_watt = ((active_power * 95) / 100);
 
