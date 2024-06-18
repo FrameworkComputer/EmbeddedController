@@ -72,6 +72,9 @@
 			gpios = <&gpioc 3 GPIO_OUTPUT>;
 		};
 
+		gpio_ec_mech_rec_btn_odl: ec_mech_rec_btn_odl {
+			gpios = <&gpio2 3 GPIO_INPUT>;
+		};
 		gpio_ec_prochot_odl: ec_prochot_odl {
 			gpios = <&gpio9 5 GPIO_ODR_HIGH>;
 		};
@@ -89,9 +92,6 @@
 		};
 		gpio_ec_spare_gpio17: ec_spare_gpio17 {
 			gpios = <&gpio1 7 GPIO_OUTPUT>;
-		};
-		gpio_ec_spare_gpio23: ec_spare_gpio23 {
-			gpios = <&gpio2 3 GPIO_OUTPUT>;
 		};
 		gpio_ec_spare_gpio24: ec_spare_gpio24 {
 			gpios = <&gpio2 4 GPIO_OUTPUT>;
