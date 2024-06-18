@@ -33,6 +33,7 @@ __override struct led_descriptor
 					     LED_INDEFINITE } },
 		[STATE_CHARGING_FULL_CHARGE] = { { EC_LED_COLOR_WHITE,
 						   LED_INDEFINITE } },
+		[STATE_CHARGING_FULL_S5] = { { LED_OFF, LED_INDEFINITE } },
 		[STATE_DISCHARGE_S0] = { { EC_LED_COLOR_WHITE,
 					   LED_INDEFINITE } },
 		[STATE_DISCHARGE_S3] = { { LED_OFF, LED_INDEFINITE } },
@@ -97,10 +98,9 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 
 __override enum led_states board_led_get_state(enum led_states desired_state)
 {
-	if (chipset_in_state(CHIPSET_STATE_ON))
-		return desired_state;
-	else if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
-		return STATE_DISCHARGE_S3;
-	else
-		return STATE_DISCHARGE_S5;
+	if (desired_state == STATE_CHARGING_FULL_CHARGE) {
+		if (chipset_in_state(CHIPSET_STATE_ANY_SUSPEND))
+			desired_state = STATE_CHARGING_FULL_S5;
+	}
+	return desired_state;
 }
