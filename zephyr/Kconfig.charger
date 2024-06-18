@@ -124,6 +124,7 @@ config PLATFORM_EC_CHARGER_ISL9238C
 	depends on PLATFORM_EC_I2C
 	select PLATFORM_EC_CHARGER_NARROW_VDC
 	select PLATFORM_EC_CHARGER_OTG_SUPPORTED
+	select PLATFORM_EC_CHARGER_TRICKLE
 	help
 	  Enable a driver for the ISL9238 Rev C VCD Battery Charger. This
 	  is a digitally-configurable, buck-boost battery charger that
