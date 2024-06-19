@@ -15,10 +15,10 @@
 
 &i2c0 {
 	touchpad@15 {
-		logical_max_x = <2644>;
-		logical_max_y = <1440>;
-		physical_max_x = <839>;
-		physical_max_y = <457>;
+		logical_max_x = <2721>;
+		logical_max_y = <1291>;
+		physical_max_x = <864>;
+		physical_max_y = <410>;
 	};
 };
 
