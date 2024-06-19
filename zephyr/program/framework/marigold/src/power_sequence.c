@@ -462,6 +462,7 @@ enum power_state power_handle_state(enum power_state state)
 		resume_ms_flag = 0;
 		system_in_s0ix = 0;
 		lpc_s0ix_resume_restore_masks();
+		cypd_set_power_active();
 		/* Call hooks now that rails are up */
 		hook_notify(HOOK_CHIPSET_RESUME);
 		return POWER_S0;
@@ -471,6 +472,7 @@ enum power_state power_handle_state(enum power_state state)
 		system_in_s0ix = 1;
 		CPRINTS("PH S0->S0ix");
 		lpc_s0ix_suspend_clear_masks();
+		cypd_set_power_active();
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 		return POWER_S0ix;

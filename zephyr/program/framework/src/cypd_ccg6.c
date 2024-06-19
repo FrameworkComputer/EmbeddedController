@@ -330,46 +330,51 @@ void cypd_set_error_recovery(void)
 void update_system_power_state(int controller)
 {
 	enum power_state ps = power_get_state();
+	/* CCG6 does not support power state G3, just for initial state */
+	static uint8_t pre_state = CCG_POWERSTATE_G3;
 
 	switch (ps) {
 	case POWER_G3:
 	case POWER_S5G3:
-		cypd_set_power_state(CCG_POWERSTATE_G3, controller);
-		break;
 	case POWER_S5:
 	case POWER_S3S5:
 	case POWER_S4S5:
-		cypd_set_power_state(CCG_POWERSTATE_S5, controller);
+		/* Do not update the same state again */
+		if (pre_state != CCG_POWERSTATE_S5)
+			cypd_set_power_state(CCG_POWERSTATE_S5, controller);
+
+		pre_state = CCG_POWERSTATE_S5;
 		reconnect_flag = true;
 		break;
 	case POWER_S3:
 	case POWER_S4S3:
 	case POWER_S5S3:
 	case POWER_S0S3:
-	case POWER_S0ixS3: /* S0ix -> S3 */
-		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
+	case POWER_S0ix:
+	case POWER_S0S0ix: /* S0 -> S0ix */
+		/* Do not update the same state again */
+		if (pre_state != CCG_POWERSTATE_S3)
+			cypd_set_power_state(CCG_POWERSTATE_S3, controller);
+		pre_state = CCG_POWERSTATE_S3;
 		break;
 	case POWER_S0:
 	case POWER_S3S0:
 	case POWER_S0ixS0: /* S0ix -> S0 */
-		cypd_set_error_recovery();
-		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
+		if (pre_state != CCG_POWERSTATE_S0) {
+			cypd_set_error_recovery();
+			cypd_set_power_state(CCG_POWERSTATE_S0, controller);
+		}
+		pre_state = CCG_POWERSTATE_S0;
+
 		if (reconnect_flag) {
 			CPRINTS("CYPD reconnect");
 			cypd_reconnect();
 			reconnect_flag = false;
 		}
 		break;
-	case POWER_S0ix:
-	case POWER_S3S0ix: /* S3 -> S0ix */
-	case POWER_S0S0ix: /* S0 -> S0ix */
-		cypd_set_power_state(CCG_POWERSTATE_S0ix, controller);
-		break;
-
 	default:
 		break;
 	}
-
 }
 
 int cypd_reconnect_port_disable(int controller)
@@ -441,35 +446,38 @@ void cypd_reconnect(void)
 void update_system_power_state(int controller)
 {
 	enum power_state ps = power_get_state();
+	/* CCG6 does not support power state G3, just for initial state */
+	static uint8_t pre_state = CCG_POWERSTATE_G3;
 
 	switch (ps) {
 	case POWER_G3:
 	case POWER_S5G3:
-		cypd_set_power_state(CCG_POWERSTATE_G3, controller);
-		break;
 	case POWER_S5:
 	case POWER_S3S5:
 	case POWER_S4S5:
-		cypd_set_power_state(CCG_POWERSTATE_S5, controller);
+		/* Do not update the same state again */
+		if (pre_state != CCG_POWERSTATE_S5)
+			cypd_set_power_state(CCG_POWERSTATE_S5, controller);
+		pre_state = CCG_POWERSTATE_S5;
 		break;
 	case POWER_S3:
 	case POWER_S4S3:
 	case POWER_S5S3:
 	case POWER_S0S3:
-	case POWER_S0ixS3: /* S0ix -> S3 */
-		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
+	case POWER_S0ix:
+	case POWER_S0S0ix: /* S0 -> S0ix */
+		/* Do not update the same state again */
+		if (pre_state != CCG_POWERSTATE_S3)
+			cypd_set_power_state(CCG_POWERSTATE_S3, controller);
+		pre_state = CCG_POWERSTATE_S3;
 		break;
 	case POWER_S0:
 	case POWER_S3S0:
 	case POWER_S0ixS0: /* S0ix -> S0 */
-		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
+		if (pre_state != CCG_POWERSTATE_S0)
+			cypd_set_power_state(CCG_POWERSTATE_S0, controller);
+		pre_state = CCG_POWERSTATE_S0;
 		break;
-	case POWER_S0ix:
-	case POWER_S3S0ix: /* S3 -> S0ix */
-	case POWER_S0S0ix: /* S0 -> S0ix */
-		cypd_set_power_state(CCG_POWERSTATE_S0ix, controller);
-		break;
-
 	default:
 		break;
 	}
