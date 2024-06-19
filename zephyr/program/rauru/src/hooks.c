@@ -5,6 +5,7 @@
 
 #include "charger.h"
 #include "driver/charger/bq257x0_regs.h"
+#include "fan.h"
 #include "gpio.h"
 #include "gpio/gpio_int.h"
 #include "gpio_signal.h"
@@ -76,3 +77,14 @@ __override enum pd_dual_role_states pd_get_drp_state_in_s0(void)
 		return PD_DRP_FORCE_SINK;
 	}
 }
+
+#if DT_NODE_EXISTS(DT_NODELABEL(fan0))
+static void fan_low_rpm(void)
+{
+	/* TODO(b:308941437): drop when thermal control ready */
+	fan_set_rpm_mode(0, 1);
+	fan_set_rpm_target(0, 3000);
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, fan_low_rpm, HOOK_PRIO_LAST);
+DECLARE_HOOK(HOOK_INIT, fan_low_rpm, HOOK_PRIO_LAST);
+#endif
