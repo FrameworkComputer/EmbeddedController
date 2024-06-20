@@ -6492,7 +6492,7 @@ enum cbi_data_tag {
 
 union ec_common_control {
 	struct {
-		uint32_t ucsi_enabled : 1;
+		uint32_t ucsi_disabled : 1;
 	};
 	uint32_t raw_value;
 };
