@@ -306,26 +306,6 @@ struct ioexpander_config_t ioex_config[] = {
 BUILD_ASSERT(ARRAY_SIZE(ioex_config) == USBC_PORT_COUNT);
 BUILD_ASSERT(CONFIG_IO_EXPANDER_PORT_COUNT == USBC_PORT_COUNT);
 
-/* Keyboard scan setting */
-__override struct keyboard_scan_config keyscan_config = {
-	/*
-	 * F3 key scan cycle completed but scan input is not
-	 * charging to logic high when EC start scan next
-	 * column for "T" key, so we set .output_settle_us
-	 * to 80us
-	 */
-	.output_settle_us = 80,
-	.debounce_down_us = 6 * MSEC,
-	.debounce_up_us = 30 * MSEC,
-	.scan_period_us = 1500,
-	.min_post_scan_delay_us = 1000,
-	.poll_timeout_us = SECOND,
-	.actual_key_mask = {
-		0x3c, 0xff, 0xff, 0xff, 0xff, 0xf5, 0xff,
-		0xa4, 0xff, 0xfe, 0x55, 0xfa, 0xca  /* full set */
-	},
-};
-
 const struct pwm_t pwm_channels[] = {
 	[PWM_CH_FAN] = {
 		.channel = 0,
