@@ -81,11 +81,11 @@
 		default_battery: lgc {
 			compatible = "lgc,ap18c8k", "battery-smart";
 		};
-		battery_cosmx: cosmx {
-			compatible = "cosmx,ap20cbl", "battery-smart";
+		smp_ap23a7l_2 {
+			compatible = "smp,ap23a7l-2", "battery-smart";
 		};
-		battery_cosmx_2: cosmx-2 {
-			compatible = "cosmx,ap20cbl-2", "battery-smart";
+		cosmx_ap23abl {
+			compatible = "cosmx,ap23abl", "battery-smart";
 		};
 	};
 
