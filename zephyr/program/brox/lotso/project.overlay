@@ -14,7 +14,6 @@
 
 #include <cros/cbi_flash.dtsi>
 
-#include "../adc.dtsi"
 #include "../binman.dtsi"
 #include "../brox.dtsi"
 #include "../fan.dtsi"
@@ -25,7 +24,6 @@
 #include "../power_signals.dtsi"
 #include "../power_signals_gpios.dtsi"
 #include "../pwm.dtsi"
-#include "../temp_sensors.dtsi"
 #include "../usb_typec.dtsi"
 #include "../usba.dtsi"
 
@@ -33,6 +31,7 @@
 #include "keyboard.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
+#include "temp_sensors.dtsi"
 
 /* Lotso overrides follow... */
 
@@ -83,4 +82,13 @@
 		status = "okay";
 		reg = <0x9>;
 	};
+};
+
+&adc0 {
+	pinctrl-0 = <&adc0_ch1_gpi1_default
+		     &adc0_ch2_gpi2_default
+		     &adc0_ch3_gpi3_default
+		     &adc0_ch4_gpi4_default
+		     &adc0_ch5_gpi5_default>;
+	pinctrl-names = "default";
 };
