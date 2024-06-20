@@ -781,6 +781,7 @@ class Zmake:
                 project.config.project_name,
                 version,
                 static=static_version,
+                git_path=self.module_paths["ec"],
             )
 
             # The version header needs to generated during the build phase
