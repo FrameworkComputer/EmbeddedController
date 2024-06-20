@@ -44,7 +44,9 @@ SPECIAL_BOARDS = [
     "geralt",
     "roach",
     "ovis",
+    # Brox variants
     "brox",
+    "brox-sku4",
     "rauru",
     # Nissa variants
     "nereid",

@@ -388,6 +388,16 @@ brox_coverage:
     PROJECT: "brox"
   <<: *coverage_template
 
+brox_sku4:
+  variables:
+    PROJECT: "brox-sku4"
+  <<: *build_template
+
+brox_sku4_coverage:
+  variables:
+    PROJECT: "brox-sku4"
+  <<: *coverage_template
+
 rauru:
   variables:
     PROJECT: "rauru"
