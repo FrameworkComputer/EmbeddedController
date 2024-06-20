@@ -510,7 +510,7 @@ static void led_tick(void)
 
 	/* Facotry test */
 	if (!led_auto_control_is_enabled(EC_LED_ID_BATTERY_LED) ||
-		pre_fingerprint_led_state || pre_multifunction_led_state) {
+		pre_multifunction_led_state) {
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_right_side), 1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_left_side), 1);
 	}
