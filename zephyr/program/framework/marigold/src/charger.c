@@ -125,7 +125,8 @@ static void charger_chips_init(void)
 		goto init_fail;
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
-		ISL9241_REG_CONTROL0, 0x0000))
+		ISL9241_REG_CONTROL0,
+		ISL9241_CONTROL0_CSIN_SINK_DISCHARGE))
 		goto init_fail;
 
 	val = ISL9241_CONTROL1_PROCHOT_REF_6800;
