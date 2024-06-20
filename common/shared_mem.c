@@ -22,8 +22,10 @@ BUILD_ASSERT(
 static int buf_in_use;
 static int max_used;
 
+#ifdef CONFIG_FAKE_SHMEM
 /* 1 MB buffer for fake shared memory implementation */
-STATIC_IF(CONFIG_FAKE_SHMEM) char fake_shmem_buf[BIT(20)];
+char fake_shmem_buf[BIT(20)];
+#endif /* CONFIG_FAKE_SHMEM */
 
 int shared_mem_size(void)
 {
