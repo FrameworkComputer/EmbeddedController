@@ -41,22 +41,26 @@ exit
 class BoardConfig:
     """Board configuration."""
 
-    def __init__(self, interface, device, flash_address):
+    def __init__(self, interface, device, speed, flash_address):
         self.interface = interface
         self.device = device
+        self.speed = speed
         self.flash_address = flash_address
 
 
 SWD_INTERFACE = "SWD"
+INTERFACE_SPEED_AUTO = "auto"
 STM32_DEFAULT_FLASH_ADDRESS = "0x8000000"
 DRAGONCLAW_CONFIG = BoardConfig(
     interface=SWD_INTERFACE,
     device="STM32F412CG",
+    speed=INTERFACE_SPEED_AUTO,
     flash_address=STM32_DEFAULT_FLASH_ADDRESS,
 )
 ICETOWER_CONFIG = BoardConfig(
     interface=SWD_INTERFACE,
     device="STM32H743ZI",
+    speed=INTERFACE_SPEED_AUTO,
     flash_address=STM32_DEFAULT_FLASH_ADDRESS,
 )
 
@@ -109,7 +113,7 @@ def create_jlink_command_file(firmware_file, config):
     return tmp
 
 
-def flash(jlink_exe, remote, device, interface, cmd_file):
+def flash(jlink_exe, remote, device, interface, speed, cmd_file):
     """Uses jlink to flash device."""
     cmd = [
         jlink_exe,
@@ -158,7 +162,7 @@ def flash(jlink_exe, remote, device, interface, cmd_file):
             "-if",
             interface,
             "-speed",
-            "auto",
+            speed,
             "-autoconnect",
             "1",
             "-NoGui",
@@ -229,7 +233,12 @@ def main(argv: list):
 
     cmd_file = create_jlink_command_file(args.image, config)
     ret_code = flash(
-        args.jlink, args.remote, config.device, config.interface, cmd_file.name
+        args.jlink,
+        args.remote,
+        config.device,
+        config.interface,
+        config.speed,
+        cmd_file.name,
     )
     cmd_file.close()
     return ret_code
