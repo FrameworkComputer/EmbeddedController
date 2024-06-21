@@ -11,7 +11,8 @@
         };
 
 	fake_input_device: fake-device {
-		compatible = "vnd,input-device";
+		compatible = "vnd,keyboard-input-device";
+		col-size = <10>;
 
 		kso_gpio: kso-gpio {
 			compatible = "cros-ec,col-gpio";

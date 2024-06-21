@@ -14,6 +14,7 @@
 #include <zephyr/input/input.h>
 #include <zephyr/input/input_kbd_matrix.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/shell/shell.h>
 #include <zephyr/sys/atomic.h>
 
 LOG_MODULE_REGISTER(kbd_input, CONFIG_INPUT_LOG_LEVEL);
@@ -76,3 +77,49 @@ static void keyboard_input_cb(struct input_event *evt)
 	}
 }
 INPUT_CALLBACK_DEFINE(kbd_dev, keyboard_input_cb);
+
+/* referenced in common/keyboard_8042.c */
+uint8_t keyboard_cols = DT_PROP(CROS_EC_KEYBOARD_NODE, col_size);
+
+static int cmd_ksstate(const struct shell *sh, size_t argc, char **argv)
+{
+	shell_fprintf(sh, SHELL_NORMAL, "Keyboard scan disable mask: 0x%08lx\n",
+		      atomic_get(&disable_scan_mask));
+
+	return 0;
+}
+
+SHELL_CMD_REGISTER(ksstate, NULL, "Show keyboard scan state", cmd_ksstate);
+
+static int cmd_kbpress(const struct shell *sh, size_t argc, char **argv)
+{
+	int err = 0;
+	uint32_t row, col, val;
+
+	col = shell_strtoul(argv[1], 0, &err);
+	if (err) {
+		shell_error(sh, "Invalid argument: %s", argv[1]);
+		return err;
+	}
+
+	row = shell_strtoul(argv[2], 0, &err);
+	if (err) {
+		shell_error(sh, "Invalid argument: %s", argv[1]);
+		return err;
+	}
+
+	val = shell_strtoul(argv[3], 0, &err);
+	if (err) {
+		shell_error(sh, "Invalid argument: %s", argv[1]);
+		return err;
+	}
+
+	input_report_abs(kbd_dev, INPUT_ABS_X, col, false, K_FOREVER);
+	input_report_abs(kbd_dev, INPUT_ABS_Y, row, false, K_FOREVER);
+	input_report_key(kbd_dev, INPUT_BTN_TOUCH, val, true, K_FOREVER);
+
+	return 0;
+}
+
+SHELL_CMD_ARG_REGISTER(kbpress, NULL, "Simulate keypress: ksstate col row 0|1",
+		       cmd_kbpress, 4, 0);
