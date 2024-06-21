@@ -161,19 +161,8 @@ int adc_read_channel(enum adc_channel ch)
 			STM32_ADC1_CR |= STM32_ADC1_CR_ADVREGEN;
 		}
 
-		/*
-		 * Delay for ADC internal voltage regulator stabilization.
-		 * Compute number of CPU cycles to wait for, from delay in us.
-		 *
-		 * Note: Variable divided by 2 to compensate partially
-		 * CPU processing cycles (depends on compilation optimization).
-		 *
-		 * Note: If system core clock frequency is below 200kHz, wait
-		 * time is only a few CPU processing cycles.
-		 */
-		wait_loop_index = ((20 * (80000000 / (100000 * 2))) / 10);
-		while (wait_loop_index-- != 0)
-			;
+		/* Delay for ADC internal voltage regulator stabilization. */
+		udelay(20);
 
 		/* Run ADC self calibration */
 		STM32_ADC1_CR |= STM32_ADC1_CR_ADCAL;
