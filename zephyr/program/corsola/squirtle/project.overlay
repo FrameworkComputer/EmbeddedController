@@ -95,8 +95,8 @@
 	motionsense-rotation-ref {
 		compatible = "cros-ec,motionsense-rotation-ref";
 		lid_rot_lis2de12: lid-rotation-ref-lis2de12 {
-			mat33 = <0 (-1) 0
-				 (-1) 0 0
+			mat33 = <0 1 0
+				 1 0 0
 				 0 0 (-1)>;
 		};
 
