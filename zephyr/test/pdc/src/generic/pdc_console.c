@@ -15,7 +15,7 @@
 
 #define TEST_PORT 0
 #define SLEEP_MS 120
-#define RTS5453P_NODE DT_NODELABEL(rts5453p_emul)
+#define RTS5453P_NODE DT_NODELABEL(pdc_emul1)
 
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
 

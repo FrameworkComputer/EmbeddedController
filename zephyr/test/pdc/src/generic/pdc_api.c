@@ -25,7 +25,7 @@
 
 LOG_MODULE_REGISTER(test_pdc_api, LOG_LEVEL_INF);
 
-#define RTS5453P_NODE DT_NODELABEL(rts5453p_emul)
+#define RTS5453P_NODE DT_NODELABEL(pdc_emul1)
 #define SLEEP_MS 120
 
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);

@@ -1,0 +1,20 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+&i2c0 {
+	pdc_emul1: rts5453p@66 {
+		compatible = "realtek,rts54-pdc";
+		status = "okay";
+		reg = <0x66>;
+		irq-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+	};
+
+	pdc_emul2: rts5453p@67 {
+		compatible = "realtek,rts54-pdc";
+		status = "okay";
+		reg = <0x67>;
+		irq-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+	};
+};

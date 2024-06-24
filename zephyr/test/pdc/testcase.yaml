@@ -1,5 +1,8 @@
 common:
   platform_allow: native_sim
+  extra_dtc_overlay_files:
+  - "./boards/native_sim.overlay"
+  - "./boards/rts5453p.overlay"
 tests:
   pdc.generic:
     timeout: 300

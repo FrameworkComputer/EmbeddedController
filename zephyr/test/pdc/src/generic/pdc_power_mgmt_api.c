@@ -17,7 +17,7 @@
 LOG_MODULE_REGISTER(pdc_power_mgmt_api);
 
 #define PDC_TEST_TIMEOUT 2000
-#define RTS5453P_NODE DT_NODELABEL(rts5453p_emul)
+#define RTS5453P_NODE DT_NODELABEL(pdc_emul1)
 
 static const struct emul *emul = EMUL_DT_GET(RTS5453P_NODE);
 #define TEST_PORT 0
