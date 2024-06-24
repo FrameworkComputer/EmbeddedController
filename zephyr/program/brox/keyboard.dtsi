@@ -32,6 +32,10 @@
 };
 
 &cros_kb_raw {
+	/* NOTE: the project is using the &kbd node below by default, this node
+	 * is ignored and will be removed. (b/349304225)
+	 */
+
 	status = "okay";
 	pinctrl-0 = <&ksi0_default
 		     &ksi1_default

@@ -4,12 +4,20 @@
  */
 
  / {
+	chosen {
+		cros-ec,keyboard = &kbd;
+	};
+
 	kblight: kblight {
 		compatible = "cros-ec,kblight-pwm";
 		pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
 	};
 
 	cros-keyscan {
+		/* NOTE: the project is using the &kbd node below by default,
+		 * this node is ignored and will be removed. (b/349304225)
+		 */
+
 		compatible = "cros-ec,keyscan";
 		debounce-down = <15000>;
 		debounce-up = <15000>;
@@ -34,9 +42,30 @@
 			0xc4 /* C17 */
 		>;
 	};
+
+	boot-keys {
+		compatible = "cros-ec,boot-keys";
+		down-arrow-rc = <KBD_RC(6, 11)>;
+		esc-rc = <KBD_RC(1, 1)>;
+		left-shift-rc = <KBD_RC(5, 7)>;
+		refresh-rc = <KBD_RC(3, 2)>;
+	};
+
+	runtime-keys {
+		compatible = "cros-ec,runtime-keys";
+		vol-up-rc = <KBD_RC(0, 11)>;
+		left-alt-rc = <KBD_RC(6, 13)>;
+		right-alt-rc = <KBD_RC(0, 10)>;
+		h-rc = <KBD_RC(1, 6)>;
+		r-rc = <KBD_RC(7, 9)>;
+	};
 };
 
 &cros_kb_raw {
+	/* NOTE: the project is using the &kbd node below by default, this node
+	 * is ignored and will be removed. (b/349304225)
+	 */
+
 	status = "okay";
 	pinctrl-0 = <
 		&ksi0_default
@@ -106,5 +135,51 @@
 		capabilities = <(VIVALDI_KEYBD_CAP_FUNCTION_KEYS |
 				VIVALDI_KEYBD_CAP_SCRNLOCK_KEY |
 				VIVALDI_KEYBD_CAP_ASSISTANT_KEY)>;
+	};
+};
+
+&kbd {
+	status = "okay";
+	pinctrl-0 = <
+		&ksi0_default
+		&ksi1_default
+		&ksi2_default
+		&ksi3_default
+		&ksi4_default
+		&ksi5_default
+		&ksi6_default
+		&ksi7_default
+		&kso0_default
+		&kso1_default
+		&kso3_default
+		&kso4_default
+		&kso5_default
+		&kso6_default
+		&kso7_default
+		&kso8_default
+		&kso9_default
+		&kso10_default
+		&kso11_default
+		&kso12_default
+		&kso13_default
+		&kso14_default
+		&kso15_default
+		&kso16_gpc3_default
+		&kso17_gpc5_default
+	>;
+	pinctrl-names = "default";
+	row-size = <8>;
+	col-size = <18>;
+	settle-time-us = <80>;
+	debounce-down-ms = <15>;
+	debounce-up-ms = <15>;
+	actual-key-mask = <0x08 0xff 0xff 0xff 0xff 0xff 0xff 0xa0
+			   0xff 0xff 0x01 0xff 0xff 0x40 0x0a 0x40
+			   0x01 0xc4>;
+
+	kso-gpio {
+		compatible = "cros-ec,col-gpio";
+		col-num = <2>;
+		col-gpios = <&gpioksol 2 GPIO_ACTIVE_HIGH>;
 	};
 };
