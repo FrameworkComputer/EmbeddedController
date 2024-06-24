@@ -164,8 +164,8 @@
 		/* Skitty LED bat charge */
 		bat-power-state-charge {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery percent range (>= Empty, <= 99%) */
-			batt-lvl = <BATTERY_LEVEL_EMPTY 99>;
+			/* Battery percent range (>= Empty, <= 96%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 96>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
@@ -179,8 +179,8 @@
 		bat-power-state-charge-near-full {
 			charge-state = "LED_PWRS_CHARGE";
 			chipset-state = "POWER_S3";
-			/* Battery percent range (> 99%, <= Full) */
-			batt-lvl = <BATTERY_LEVEL_FULL BATTERY_LEVEL_FULL>;
+			/* Battery percent range (>= 97%, <= Full) */
+			batt-lvl = <97 BATTERY_LEVEL_FULL>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
@@ -200,8 +200,8 @@
 		bat-power-state-charge-near-full-s0 {
 			charge-state = "LED_PWRS_CHARGE";
 			chipset-state = "POWER_S0";
-			/* Battery percent range (> 99%, <= Full) */
-			batt-lvl = <BATTERY_LEVEL_FULL BATTERY_LEVEL_FULL>;
+			/* Battery percent range (>= 97%, <= Full) */
+			batt-lvl = <97 BATTERY_LEVEL_FULL>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
@@ -215,8 +215,8 @@
 		bat-power-state-charge-near-full-s5 {
 			charge-state = "LED_PWRS_CHARGE";
 			chipset-state = "POWER_S5";
-			/* Battery percent range (> 99%, <= Full) */
-			batt-lvl = <BATTERY_LEVEL_FULL BATTERY_LEVEL_FULL>;
+			/* Battery percent range (>= 97%, <= Full) */
+			batt-lvl = <97 BATTERY_LEVEL_FULL>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
