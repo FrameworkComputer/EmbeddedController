@@ -672,7 +672,10 @@ test_fp_command_read_match_secret_with_pubkey_succeed(void)
 		.fgr = matched_fgr,
 	};
 
-	/* Expected positive_match_secret same as  in test/fpsensor_crypto.c */
+	/*
+	 * Expected positive_match_secret same as in
+	 * test/fpsensor_crypto_with_mock.cc.
+	 */
 #ifdef CONFIG_OTP_KEY
 	static const uint8_t
 		expected_positive_match_secret_for_empty_user_id[] = {
