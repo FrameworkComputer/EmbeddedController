@@ -76,22 +76,22 @@
 	       KBD_RC(1, 11)  /* T11 */
 	       KBD_RC(0, 11)  /* T12 */
 	>;
-};
 
-&kbd_config_0 {
-	vivaldi-codes = <
-		VIVALDI_TK_BACK               /* T1 */
-		VIVALDI_TK_REFRESH            /* T2 */
-		VIVALDI_TK_FULLSCREEN         /* T3 */
-		VIVALDI_TK_KBD_BKLIGHT_TOGGLE /* T4 */
-		VIVALDI_TK_VOL_MUTE           /* T5 */
-		VIVALDI_TK_VOL_DOWN           /* T6 */
-		VIVALDI_TK_VOL_UP             /* T7 */
-		VIVALDI_TK_MICMUTE            /* T8 */
-		VIVALDI_TK_PREV_TRACK         /* T9 */
-		VIVALDI_TK_PLAY_PAUSE         /* T10 */
-		VIVALDI_TK_BRIGHTNESS_DOWN    /* T11 */
-		VIVALDI_TK_BRIGHTNESS_UP      /* T12 */
-	>;
-	capabilities = <0>;                  /* No lock button */
+	kbd_config_0: kbd-config-0 {
+		vivaldi-codes = <
+			VIVALDI_TK_BACK               /* T1 */
+			VIVALDI_TK_REFRESH            /* T2 */
+			VIVALDI_TK_FULLSCREEN         /* T3 */
+			VIVALDI_TK_KBD_BKLIGHT_TOGGLE /* T4 */
+			VIVALDI_TK_VOL_MUTE           /* T5 */
+			VIVALDI_TK_VOL_DOWN           /* T6 */
+			VIVALDI_TK_VOL_UP             /* T7 */
+			VIVALDI_TK_MICMUTE            /* T8 */
+			VIVALDI_TK_PREV_TRACK         /* T9 */
+			VIVALDI_TK_PLAY_PAUSE         /* T10 */
+			VIVALDI_TK_BRIGHTNESS_DOWN    /* T11 */
+			VIVALDI_TK_BRIGHTNESS_UP      /* T12 */
+		>;
+		capabilities = <0>;                  /* No lock button */
+	};
 };
