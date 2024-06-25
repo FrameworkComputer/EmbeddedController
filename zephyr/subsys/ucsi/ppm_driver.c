@@ -27,7 +27,7 @@ LOG_MODULE_REGISTER(ppm, LOG_LEVEL_INF);
 #define NUM_PORTS DT_PROP_LEN(DT_PPM_DRV, lpm)
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1,
-	     "Exactly one instance of ucsi,ppm should be defined.");
+	     "Exactly one instance of ucsi-ppm should be defined.");
 
 K_EVENT_DEFINE(ppm_event);
 #define PPM_EVENT_CMD_COMPLETE BIT(0)
