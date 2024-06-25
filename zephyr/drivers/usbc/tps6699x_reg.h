@@ -486,7 +486,7 @@ union reg_interrupt {
 		uint8_t sink_transition_completeed : 1;
 		uint8_t plug_early_notification : 1;
 		uint8_t prochot_notification : 1;
-		uint8_t reserved10 : 1;
+		uint8_t ucsi_connector_status_change_notification : 1;
 		uint8_t unable_to_source_error : 1;
 		uint8_t reserved11 : 1;
 
