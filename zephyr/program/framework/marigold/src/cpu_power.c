@@ -17,6 +17,9 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ## args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ## args)
 
+#define ROP 15
+#define batt_rating 61
+
 enum battery_wattage { none, battery_55w, battery_61w };
 enum battery_wattage get_battery_wattage(void)
 {
@@ -63,58 +66,35 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 	}
 
 	if (!extpower_is_present()  || active_power == 0) {
-		/* Battery only */
-		pl1_watt = 25;
-		pl2_watt = 30;
-		if (battery_watt == battery_55w) {
-			/* battery_55w */
-			pl4_watt = 72;
-			psyspl2_watt = 53;
-		} else {
-			/* battery_61w */
-			pl4_watt = 80;
-			psyspl2_watt = 58;
-		}
-	} else if (battery_percent > 30 && active_power >= 55) {
-		/* ADP >= 55W and Battery percentage > 30% */
+		/* Battery only, same for 61wh and 55wh battery */
+		pl1_watt = 28;
+		pl2_watt = batt_rating - ROP;
+		pl4_watt = 80;
+		psyspl2_watt = (batt_rating * 95) / 100;
+	} else if (battery_watt == none && active_power >= 60) {
+		/*Standalone mode AC only and AC >= 60W*/
+		pl1_watt = 30;
+		pl2_watt = 40;
+		pl4_watt = ((active_power * 95) / 100);
+		psyspl2_watt = ((active_power * 95) / 100);
+	} else if (battery_percent >= 30 && active_power >= 55) {
+		/* ADP >= 55W and Battery percentage >= 30% */
 		pl1_watt = 30;
 		pl2_watt = 60;
-
-		if (battery_watt == battery_55w) {
-			/* battery_55w */
-			pl4_watt = MIN((active_power + 52), 120);
-			psyspl2_watt = ((active_power * 95) / 100) + 39;
-		} else {
-			/* battery_61w */
-			pl4_watt = MIN((active_power + 60), 120);
-			psyspl2_watt = ((active_power * 95) / 100) + 43;
-		}
+		pl4_watt = 120;
+		psyspl2_watt = ((active_power * 95) / 100) + ((batt_rating * 70) / 100);
+	} else if (battery_percent < 30 && active_power >= 55) {
+		/* ADP >= 55W and Battery percentage < 30% */
+		pl1_watt = 30;
+		pl2_watt = MIN(((active_power * 90) / 100) - ROP, 60);
+		pl4_watt = MIN(((active_power * 90) / 100) + 80, 120);
+		psyspl2_watt = ((active_power * 95) / 100);
 	} else {
-		if (active_power >= 55) {
-			/* ADP >= 55W */
-			pl1_watt = 30;
-			pl2_watt = MIN((((active_power * 90) / 100) - 20), 60);
-			psyspl2_watt = ((active_power * 95) / 100);
-
-			if (battery_watt == battery_55w) {
-				pl4_watt = MIN((active_power + 52), 120);
-			} else if (battery_watt == battery_61w) {
-				pl4_watt = MIN((active_power + 60), 120);
-			} else {
-				pl4_watt = MIN(active_power, 120);
-			}
-
-		} else {
-			/*ADP < 55W*/
-			pl1_watt = 30;
-			pl2_watt = 30;
-			psyspl2_watt = ((active_power * 95) / 100);
-
-			if (battery_watt == battery_55w || battery_watt == battery_61w)
-				pl4_watt = 80;
-			else
-				pl4_watt = active_power;
-		}
+		/*AC+DC and AC < 55W*/
+		pl1_watt = 28;
+		pl2_watt = batt_rating - ROP;
+		pl4_watt = 80;
+		psyspl2_watt = ((batt_rating * 95) / 100);
 	}
 
 	if (pl1_watt != old_pl1_watt || pl2_watt != old_pl2_watt || pl4_watt != old_pl4_watt ||
