@@ -20,8 +20,11 @@ LOG_MODULE_DECLARE(tps6699x, CONFIG_USBC_LOG_LEVEL);
 #define INCBIN_PREFIX g_
 #define INCBIN_STYLE INCBIN_STYLE_SNAKE
 #include "third_party/incbin/incbin.h"
-/* Relative to `build-ro/` and `build-rw/` dirs */
-INCBIN(tps6699x_fw, "../../../../zephyr/drivers/usbc/tps6699x_19.8.0.bin");
+
+/* TPS6699X_FW_ROOT is defined in this directory's CMakeLists.txt and points to
+ * ${PLATFORM_EC}/zephyr/drivers/usbc
+ */
+INCBIN(tps6699x_fw, STRINGIFY(TPS6699X_FW_ROOT) "/tps6699x_19.8.0.bin");
 
 /* LCOV_EXCL_START - non-shipping code */
 struct tfu_initiate {
