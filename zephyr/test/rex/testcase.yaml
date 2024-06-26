@@ -122,7 +122,6 @@ tests:
 
   rex.screebo.i2c_policy:
     extra_dtc_overlay_files:
-      - boards/native_sim.overlay
       - boards/screebo/i2c.dtsi
     extra_configs:
       - CONFIG_TEST_PROJECT_SCREEBO=y
