@@ -398,6 +398,11 @@
 		port0@0 {
 			/delete-property/ bc12;
 		};
+		port1@1{
+			/delete-property/ bc12;
+			/delete-property/ tcpc;
+			/delete-property/ ppc;
+		};
 	};
 
 	cros-keyscan {
