@@ -9,7 +9,10 @@ config TEST_SUITE_PDC_API_NULL_CHECK
 	bool "Enable PDC API null-protection checks"
 
 config TEST_SUITE_PDC_RTS54XX
-	bool "Enable generic PDC tests"
+	bool "Enable RTS54xx PDC tests"
+
+config TEST_SUITE_PDC_TPS6699X
+	bool "Enable TPS6699x PDC tests"
 
 config TEST_SUITE_PDC_RETIMER_FW_UPDATE
 	bool "Enable retimer FW update tests"
