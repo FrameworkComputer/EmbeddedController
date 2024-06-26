@@ -12,6 +12,8 @@
 #include "zephyr/sys/util.h"
 #include "zephyr/sys/util_macro.h"
 
+#include <stdint.h>
+
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/gpio/gpio_emul.h>
@@ -27,6 +29,9 @@
 
 #define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
 LOG_MODULE_REGISTER(realtek_rts5453_emul);
+
+/* TODO(b/349609367): Do not rely on this test-only driver function. */
+bool pdc_rts54xx_test_idle_wait(void);
 
 static bool send_response(struct rts5453p_emul_pdc_data *data);
 
@@ -1384,6 +1389,19 @@ emul_realtek_rts54xx_set_cable_property(const struct emul *target,
 	return 0;
 }
 
+static int emul_realtek_rts54xx_idle_wait(const struct emul *target)
+{
+	/* TODO(b/349609367): This should be handled entirely in the emulator,
+	 * not in the driver, and it should be specific to the passed-in target.
+	 */
+
+	ARG_UNUSED(target);
+
+	if (pdc_rts54xx_test_idle_wait())
+		return 0;
+	return -ETIMEDOUT;
+}
+
 struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.reset = emul_realtek_rts54xx_reset,
 	.set_response_delay = emul_realtek_rts54xx_set_response_delay,
@@ -1408,6 +1426,7 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.get_pdos = emul_realtek_rts54xx_get_pdos,
 	.get_cable_property = emul_realtek_rts54xx_get_cable_property,
 	.set_cable_property = emul_realtek_rts54xx_set_cable_property,
+	.idle_wait = emul_realtek_rts54xx_idle_wait,
 };
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \

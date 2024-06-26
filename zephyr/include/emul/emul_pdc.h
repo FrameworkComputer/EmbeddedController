@@ -74,6 +74,8 @@ typedef int (*emul_pdc_get_cable_property_t)(const struct emul *target,
 typedef int (*emul_pdc_set_cable_property_t)(
 	const struct emul *target, const union cable_property_t property);
 
+typedef int (*emul_pdc_idle_wait_t)(const struct emul *target);
+
 __subsystem struct emul_pdc_api_t {
 	emul_pdc_set_response_delay_t set_response_delay;
 	emul_pdc_set_ucsi_version_t set_ucsi_version;
@@ -101,6 +103,7 @@ __subsystem struct emul_pdc_api_t {
 	emul_pdc_pulse_irq_t pulse_irq;
 	emul_pdc_set_cable_property_t set_cable_property;
 	emul_pdc_get_cable_property_t get_cable_property;
+	emul_pdc_idle_wait_t idle_wait;
 };
 
 static inline int emul_pdc_set_ucsi_version(const struct emul *target,
@@ -537,6 +540,20 @@ static inline int emul_pdc_disconnect(const struct emul *target)
 	emul_pdc_pulse_irq(target);
 
 	return 0;
+}
+
+static inline int emul_pdc_idle_wait(const struct emul *target)
+{
+	if (!target || !target->backend_api) {
+		return -ENOTSUP;
+	}
+
+	const struct emul_pdc_api_t *api = target->backend_api;
+
+	if (api->idle_wait) {
+		return api->idle_wait(target);
+	}
+	return -ENOSYS;
 }
 
 #endif /* ZEPHYR_INCLUDE_EMUL_PDC_H_ */
