@@ -428,7 +428,7 @@ ec_coverage:
 zephyr_coverage:
   stage: test
   needs: []
-  parallel: 6
+  parallel: 8
   script:
     - export PIGWEED_DIR=${MODULES_DIR}/pigweed
     - python3 ${EC_DIR}/twister --coverage --outdir "${TWISTER_OUT_DIR}"
