@@ -19,7 +19,7 @@
 
 LOG_MODULE_REGISTER(runtime_keys, LOG_LEVEL_INF);
 
-#define CROS_EC_KEYBOARD_NODE DT_CHOSEN(cros_ec_keyboard)
+#define CROS_EC_KEYBOARD_NODE DT_INST_PARENT(0)
 
 static uint32_t runtime_keys_counter;
 static uint8_t runtime_keys_mask;

@@ -12,23 +12,6 @@
 		compatible = "cros-ec,kblight-pwm";
 		pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(324) PWM_POLARITY_NORMAL>;
 	};
-
-	boot-keys {
-		compatible = "cros-ec,boot-keys";
-		down-arrow-rc = <KBD_RC(6, 14)>;
-		esc-rc = <KBD_RC(1, 1)>;
-		left-shift-rc = <KBD_RC(5, 9)>;
-		refresh-rc = <KBD_RC(3, 2)>;
-	};
-
-	runtime-keys {
-		compatible = "cros-ec,runtime-keys";
-		vol-up-rc = <KBD_RC(1, 5)>;
-		left-alt-rc = <KBD_RC(6, 13)>;
-		right-alt-rc = <KBD_RC(0, 13)>;
-		h-rc = <KBD_RC(1, 8)>;
-		r-rc = <KBD_RC(7, 4)>;
-	};
 };
 
 &vivaldi_kbd {
@@ -105,5 +88,22 @@
 		compatible = "cros-ec,col-gpio";
 		col-num = <2>;
 		col-gpios = <&gpioksol 2 GPIO_ACTIVE_HIGH>;
+	};
+
+	boot-keys {
+		compatible = "cros-ec,boot-keys";
+		down-arrow-rc = <KBD_RC(6, 14)>;
+		esc-rc = <KBD_RC(1, 1)>;
+		left-shift-rc = <KBD_RC(5, 9)>;
+		refresh-rc = <KBD_RC(3, 2)>;
+	};
+
+	runtime-keys {
+		compatible = "cros-ec,runtime-keys";
+		vol-up-rc = <KBD_RC(1, 5)>;
+		left-alt-rc = <KBD_RC(6, 13)>;
+		right-alt-rc = <KBD_RC(0, 13)>;
+		h-rc = <KBD_RC(1, 8)>;
+		r-rc = <KBD_RC(7, 4)>;
 	};
 };

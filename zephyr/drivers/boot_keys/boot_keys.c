@@ -22,7 +22,7 @@
 
 LOG_MODULE_REGISTER(boot_keys, LOG_LEVEL_INF);
 
-#define CROS_EC_KEYBOARD_NODE DT_CHOSEN(cros_ec_keyboard)
+#define CROS_EC_KEYBOARD_NODE DT_INST_PARENT(0)
 
 /* Give the keyboard driver enough time to do a full scan and down debouncing
  * with some headroom to make sure we detect all keys pressed at boot time.
