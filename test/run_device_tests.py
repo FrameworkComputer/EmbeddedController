@@ -424,10 +424,6 @@ class AllTests:
             TestConfig(test_name="sbrk", imagetype_to_use=ImageType.RO),
             TestConfig(test_name="sha256"),
             TestConfig(test_name="sha256_unrolled"),
-            TestConfig(
-                test_name="sram_mpu_protection",
-                exclude_boards=[BLOONCHIPPER, DARTMONKEY],
-            ),
             TestConfig(test_name="static_if"),
             TestConfig(test_name="stdlib"),
             TestConfig(test_name="std_vector"),

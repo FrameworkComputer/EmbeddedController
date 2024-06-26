@@ -292,7 +292,6 @@ scoped_fast_cpu-y=scoped_fast_cpu.o
 sha256-y=sha256.o
 sha256_unrolled-y=sha256.o
 shmalloc-y=shmalloc.o
-sram_mpu_protection-y=sram_mpu_protection.o
 static_if-y=static_if.o
 stdlib-y=stdlib.o
 std_vector-y=std_vector.o
