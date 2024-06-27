@@ -6,4 +6,5 @@ cmake_minimum_required(VERSION 3.13.1)
 
 find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 
+zephyr_library_sources("src/board.c")
 zephyr_library_sources("src/keyboard.c")
