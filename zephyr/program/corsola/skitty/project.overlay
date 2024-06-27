@@ -115,7 +115,7 @@
 
 	temp_ambient: ambient {
 		compatible = "cros-ec,temp-sensor-thermistor";
-		thermistor = <&thermistor_3V3_30K9_47K_NCP15WB>;
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
 		adc = <&adc_ambient>;
 	};
 
@@ -426,7 +426,7 @@
 			 &adc0_ch5_gpi5_default>;
 };
 
-&thermistor_3V3_30K9_47K_NCP15WB {
+&thermistor_3V3_100K_100K_4250B {
 	status = "okay";
 };
 
