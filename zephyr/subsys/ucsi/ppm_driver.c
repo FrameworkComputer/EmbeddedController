@@ -305,12 +305,6 @@ static int ppm_init(const struct device *device)
 		(const struct ppm_config *)device->config;
 	struct ppm_data *data = (struct ppm_data *)device->data;
 	const struct ucsi_pd_driver *drv = device->api;
-	union ec_common_control ctrl;
-
-	if (cbi_get_common_control(&ctrl) || !ctrl.ucsi_enabled) {
-		LOG_INF("PPM disabled in CBI");
-		return -ENODEV;
-	}
 
 	/* Initialize the PPM. */
 	data->ppm_dev = ppm_data_init(drv, device, data->port_status,
