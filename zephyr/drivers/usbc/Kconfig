@@ -8,8 +8,6 @@ module = USBC
 module-str = usbc
 source "subsys/logging/Kconfig.template.log_config"
 
-rsource "Kconfig.pdc_trace"
-
 config USBC_INTEL_ALTMODE
 	bool "USB-C Intel alternate mode configuration driver"
 	default y if DT_HAS_INTEL_PD_ALTMODE_ENABLED
@@ -85,5 +83,7 @@ config USBC_PDC_TRACE_MSG
 	  Enable communication tracing between the EC and the PDC.
 	  Messages between the EC and PDC are saved in a pre-allocated
 	  FIFO so they can be retrieved by EC host and console commands.
+
+rsource "Kconfig.pdc_trace"
 
 endif # PLATFORM_EC_USBC
