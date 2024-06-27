@@ -16,6 +16,12 @@ config HW_TEST_AES
 	help
 	  The test verifies AES functions.
 
+config HW_TEST_BENCHMARK
+	bool "Benchmark test"
+	select ZTEST
+	help
+	  The test verifies benchmark feature.
+
 config HW_TEST_CORTEXM_FPU
 	bool "Cortex-M FPU test"
 	select ZTEST

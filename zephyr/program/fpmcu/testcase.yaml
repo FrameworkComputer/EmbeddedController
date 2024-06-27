@@ -14,6 +14,11 @@ tests:
     - CONFIG_ZTEST_STACK_SIZE=3072
     extra_conf_files:
     - prj_hw_tests.conf
+  benchmark:
+    extra_configs:
+    - CONFIG_HW_TEST_BENCHMARK=y
+    extra_conf_files:
+    - prj_hw_tests.conf
   cortexm_fpu:
     extra_configs:
     - CONFIG_HW_TEST_CORTEXM_FPU=y
