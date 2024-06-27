@@ -590,6 +590,7 @@ enum power_state power_handle_state(enum power_state state)
 		hook_notify(HOOK_CHIPSET_SHUTDOWN);
 		cypd_set_power_active(POWER_S5);
 		set_non_acpi_mode(0);
+		hook_notify(HOOK_CHIPSET_SHUTDOWN_COMPLETE);
 		power_s5_up = 0;
 		return POWER_S5;
 		break;
