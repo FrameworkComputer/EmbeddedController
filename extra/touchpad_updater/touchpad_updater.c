@@ -23,15 +23,29 @@
 /* Command line options */
 static uint16_t vid = 0x18d1; /* Google */
 static uint16_t pid = 0x5022; /* Hammer */
-static uint8_t ep_num = 4; /* console endpoint */
+static uint16_t rsize = 637; /* Read size */
+typedef struct {
+	uint8_t addr; /* Endpoint address */
+	uint8_t len; /* Max. packet size */
+} ep_info_t;
+static ep_info_t in_ep;
+static ep_info_t out_ep;
 static uint8_t extended_i2c_exercise; /* non-zero to exercise */
 static char *firmware_binary = "144.0_2.0.bin"; /* firmware blob */
 
+#define USB_I2C_SUBCLASS 0x52
+#define USB_I2C_PROTOCOL 0x01
 /* Firmware binary blob related */
 #define MAX_FW_PAGE_SIZE 512
 #define MAX_FW_PAGE_COUNT 1024
 #define MAX_FW_SIZE (128 * 1024)
 #define I2C_RESPONSE_OFFSET 4
+
+#define SAFE_FREE(p)      \
+	if (p) {          \
+		free(p);  \
+		p = NULL; \
+	}
 
 static uint8_t fw_data[MAX_FW_SIZE];
 int fw_page_count;
@@ -53,11 +67,11 @@ static int be_bytes_to_int(uint8_t *buf)
 
 /* Command line parsing related */
 static char *progname;
-static char *short_opts = ":f:v:p:e:hd";
+static char *short_opts = ":f:v:p:r:hd";
 static const struct option long_opts[] = {
 	/* name    hasarg *flag val */
 	{ "file", 1, NULL, 'f' }, { "vid", 1, NULL, 'v' },
-	{ "pid", 1, NULL, 'p' },  { "ep", 1, NULL, 'e' },
+	{ "pid", 1, NULL, 'p' },  { "rsize", 1, NULL, 'r' },
 	{ "help", 0, NULL, 'h' }, { "debug", 0, NULL, 'd' },
 	{ NULL, 0, NULL, 0 },
 };
@@ -73,12 +87,12 @@ static void usage(int errs)
 	       "  -f,--file   STR         Firmware binary (default %s)\n"
 	       "  -v,--vid    HEXVAL      Vendor ID (default %04x)\n"
 	       "  -p,--pid    HEXVAL      Product ID (default %04x)\n"
-	       "  -e,--ep     NUM         Endpoint (default %d)\n"
+	       "  -r,--rsize  VAL         Read Size (default %d)\n"
 	       "  -d,--debug              Exercise extended read I2C over USB\n"
 	       "                          and print verbose debug messages.\n"
 	       "  -h,--help               Show this message\n"
 	       "\n",
-	       progname, firmware_binary, vid, pid, ep_num);
+	       progname, firmware_binary, vid, pid, rsize);
 
 	exit(!!errs);
 }
@@ -114,8 +128,8 @@ static void parse_cmdline(int argc, char *argv[])
 				errorcnt++;
 			}
 			break;
-		case 'e':
-			ep_num = (uint8_t)strtoull(optarg, &e, 0);
+		case 'r':
+			rsize = (uint16_t)strtoull(optarg, &e, 0);
 			if (!*optarg || (e && *e)) {
 				printf("Invalid argument: \"%s\"\n", optarg);
 				errorcnt++;
@@ -152,7 +166,7 @@ static void parse_cmdline(int argc, char *argv[])
 }
 
 /* USB transfer related */
-static uint8_t rx_buf[1024];
+static uint8_t *rx_buf;
 static uint8_t tx_buf[1024];
 
 static struct libusb_device_handle *devh;
@@ -186,6 +200,9 @@ static void request_exit(const char *format, ...)
 		libusb_close(devh);
 	}
 	libusb_exit(NULL);
+
+	SAFE_FREE(rx_buf);
+
 	exit(1);
 }
 
@@ -197,7 +214,7 @@ static void sighandler(int signum)
 	request_exit("caught signal %d: %s\n", signum, strsignal(signum));
 }
 
-static int find_interface_with_endpoint(int want_ep_num)
+static int find_endpoints()
 {
 	int iface_num = -1;
 	int r, i, j, k;
@@ -218,13 +235,25 @@ static int find_interface_with_endpoint(int want_ep_num)
 		iface0 = &conf->interface[i];
 		for (j = 0; j < iface0->num_altsetting; j++) {
 			iface = &iface0->altsetting[j];
+			if (iface->bInterfaceClass != 0xFF ||
+			    iface->bInterfaceSubClass != USB_I2C_SUBCLASS ||
+			    iface->bInterfaceProtocol != USB_I2C_PROTOCOL) {
+				continue;
+			}
 			for (k = 0; k < iface->bNumEndpoints; k++) {
 				ep = &iface->endpoint[k];
-				if (ep->bEndpointAddress == want_ep_num) {
-					iface_num = i;
-					break;
+				if ((ep->bEndpointAddress &
+				     LIBUSB_ENDPOINT_DIR_MASK) ==
+				    LIBUSB_ENDPOINT_IN) {
+					in_ep.addr = ep->bEndpointAddress;
+					in_ep.len = ep->wMaxPacketSize;
+				} else {
+					out_ep.addr = ep->bEndpointAddress;
+					out_ep.len = ep->wMaxPacketSize;
 				}
+				iface_num = i;
 			}
+			break;
 		}
 	}
 
@@ -246,11 +275,12 @@ static void init_with_libusb(void)
 	if (!devh)
 		request_exit("can't find device\n");
 
-	iface_num = find_interface_with_endpoint(ep_num);
+	iface_num = find_endpoints();
 	if (iface_num < 0)
-		request_exit("can't find interface owning EP %d\n", ep_num);
+		request_exit("can't find interface");
 
-	printf("claim_interface %d to use endpoint %d\n", iface_num, ep_num);
+	printf("claim_interface %d to use IN ep 0x%x and OUT ep 0x%x\n",
+	       iface_num, in_ep.addr, out_ep.addr);
 	r = libusb_claim_interface(devh, iface_num);
 	if (r < 0)
 		DIE("claim interface", r);
@@ -348,14 +378,22 @@ static int libusb_single_write_and_read(const uint8_t *to_write,
 	while (sent_bytes < (offset + write_length)) {
 		tx_ready = remains = (offset + write_length) - sent_bytes;
 
-		r = libusb_bulk_transfer(devh, (ep_num | LIBUSB_ENDPOINT_OUT),
-					 tx_buf + sent_bytes, tx_ready,
-					 &actual_length, 5000);
+		r = libusb_bulk_transfer(devh, out_ep.addr, tx_buf + sent_bytes,
+					 tx_ready, &actual_length, 5000);
 		if (r == 0 && actual_length == tx_ready) {
-			r = libusb_bulk_transfer(devh,
-						 (ep_num | LIBUSB_ENDPOINT_IN),
-						 rx_buf, sizeof(rx_buf),
-						 &actual_length, 5000);
+			int rx_len = 0;
+
+			actual_length = 0;
+			do {
+				r = libusb_bulk_transfer(devh, in_ep.addr,
+							 rx_buf + actual_length,
+							 rsize, &rx_len, 5000);
+				if (r) {
+					break;
+				}
+				actual_length += rx_len;
+				usleep(100 * 1000);
+			} while ((read_length + 4) != actual_length);
 		}
 		r = check_read_status(r,
 				      (remains == tx_ready) ? read_length : 0,
@@ -702,17 +740,25 @@ static void probe_device(void)
 
 int main(int argc, char *argv[])
 {
+	int ret = 0;
 	uint16_t local_checksum;
 	uint16_t remote_checksum;
 
 	parse_cmdline(argc, argv);
+
+	rx_buf = (uint8_t *)calloc(rsize, sizeof(uint8_t));
+	if (!rx_buf) {
+		printf("failed to allocate rx buffer\n");
+		return -ENOMEM;
+	}
 
 	probe_device();
 	if (bus_type == BUS_USB) {
 		init_with_libusb();
 	} else if (bus_type != BUS_I2C) {
 		printf("device %04hx:%04hx not found\n", vid, pid);
-		exit(1);
+		ret = -ENODEV;
+		goto out;
 	}
 	register_sigaction();
 
@@ -732,7 +778,8 @@ int main(int argc, char *argv[])
 	if (fread(fw_data, 1, fw_size, f) != (unsigned int)fw_size)
 		request_exit("binary size mismatch, expect %d\n", fw_size);
 
-	/* Trigger an I2C transaction of expecting reading of 633 bytes. */
+	/* Trigger an I2C transaction of expecting reading of (rsize - 4) bytes.
+	 */
 	if (extended_i2c_exercise) {
 		tx_buf[0] = 0x05;
 		tx_buf[1] = 0x00;
@@ -740,8 +787,9 @@ int main(int argc, char *argv[])
 		tx_buf[3] = 0x02;
 		tx_buf[4] = 0x06;
 		tx_buf[5] = 0x00;
-		single_write_and_read(tx_buf, 6, rx_buf, 633);
-		pretty_print_buffer(rx_buf, 637);
+		single_write_and_read(tx_buf, 6, rx_buf,
+				      rsize - I2C_RESPONSE_OFFSET);
+		pretty_print_buffer(rx_buf, rsize);
 	}
 
 	/* Get the trackpad ready for receiving update */
@@ -757,5 +805,9 @@ int main(int argc, char *argv[])
 
 	/* Print the updated firmware information */
 	elan_get_fw_info();
-	return 0;
+
+out:
+	SAFE_FREE(rx_buf);
+
+	return ret;
 }
