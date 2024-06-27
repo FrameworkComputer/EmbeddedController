@@ -307,7 +307,7 @@ static int ppm_init(const struct device *device)
 	const struct ucsi_pd_driver *drv = device->api;
 	union ec_common_control ctrl;
 
-	if (cbi_get_common_control(&ctrl) || ctrl.ucsi_disabled) {
+	if (cbi_get_common_control(&ctrl) || !ctrl.ucsi_enabled) {
 		LOG_INF("PPM disabled in CBI");
 		return -ENODEV;
 	}
