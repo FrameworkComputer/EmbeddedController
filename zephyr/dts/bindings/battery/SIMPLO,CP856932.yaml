@@ -2,21 +2,21 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-description: "SMP KYOGRE2S"
-compatible: "smp,kyogre2s"
+description: "SIMPLO CP856932"
+compatible: "SIMPLO,CP856932"
 
 include: battery-smart.yaml
 
 properties:
   enum-name:
     type: string
-    default: "smp,kyogre2s"
+    default: "SIMPLO,CP856932"
 
   # Fuel gauge
   manuf_name:
-    default: "SMP"
+    default: "SIMPLO"
   device_name:
-    default: "KYOGRE2S"
+    default: "CP856932"
   ship_mode_reg_addr:
     default: 0x3A
   ship_mode_reg_data:
@@ -36,11 +36,11 @@ properties:
 
   # Battery info
   voltage_max:
-    default: 9000
+    default: 12900
   voltage_normal:
-    default: 7800
+    default: 11490
   voltage_min:
-    default: 6000
+    default: 9000
   precharge_current:
     default: 204
   start_charging_min_c:

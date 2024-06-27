@@ -192,8 +192,11 @@
 	};
 
 	batteries {
-		default_battery: smp_kyogre2s {
-			compatible = "smp,kyogre2s", "battery-smart";
+		default_battery: SIMPLO_CP856931 {
+			compatible = "SIMPLO,CP856931", "battery-smart";
+		};
+		SIMPLO_CP856932 {
+			compatible = "SIMPLO,CP856932", "battery-smart";
 		};
 	};
 
