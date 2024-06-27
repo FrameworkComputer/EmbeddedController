@@ -300,7 +300,7 @@ int board_set_active_charge_port(int charge_port)
 	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
 
 #ifdef CONFIG_BOARD_MARIGOLD
-	acok_control(pd_port_states[charge_port].voltage);
+	acok_control(pd_port_states[charge_port].voltage, charge_port);
 #endif	/*CONFIG_BOARD_MARIGOLD*/
 
 	return EC_SUCCESS;

@@ -126,7 +126,7 @@ static void charger_chips_init(void)
 
 	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
 		ISL9241_REG_CONTROL0,
-		ISL9241_CONTROL0_CSIN_SINK_DISCHARGE))
+		0x0000))
 		goto init_fail;
 
 	val = ISL9241_CONTROL1_PROCHOT_REF_6800;
@@ -313,10 +313,28 @@ __override void board_hibernate(void)
 	charge_gate_onoff(0);
 }
 
-void acok_control(int voltage)
+void acok_control(int voltage, int port)
 {
 	static int pre_acok_data;
 	int acok_data = 0x00;
+	int control0 = 0x0000;
+
+	/* when detect AC but PD not connect, set BIT15 for fast Discharge */
+	if (extpower_is_present() && port == -1) {
+
+		if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+			ISL9241_REG_CONTROL0, &control0)) {
+			CPRINTS("ISL9241: read control0 fail");
+		}
+
+		CPRINTS("CSIN SINK Discharge Enable");
+		control0 |= ISL9241_CONTROL0_CSIN_SINK_DISCHARGE;
+
+		if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL0, control0)) {
+			CPRINTS("ISL9241: Enable CSIN SINK control0 fail");
+		}
+	}
 
 	if (!charger_psys_enable_flag)
 		return;
@@ -334,3 +352,26 @@ void acok_control(int voltage)
 		pre_acok_data = acok_data;
 	}
 }
+
+/* only disable the fast discharge when the acok deasserts */
+void disable_fast_discharge(void)
+{
+	int control0 = 0x0000;
+
+	if (extpower_is_present())
+		return;
+
+	if (i2c_read16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL0, &control0)) {
+		CPRINTS("ISL9241: read control0 fail");
+	}
+
+	CPRINTS("CSIN SINK Discharge Disable");
+	control0 &= ~ISL9241_CONTROL0_CSIN_SINK_DISCHARGE;
+
+	if (i2c_write16(I2C_PORT_CHARGER, ISL9241_ADDR_FLAGS,
+		ISL9241_REG_CONTROL0, control0)) {
+		CPRINTS("ISL9241: Disable CSIN SINK control0 fail");
+	}
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, disable_fast_discharge, HOOK_PRIO_DEFAULT);

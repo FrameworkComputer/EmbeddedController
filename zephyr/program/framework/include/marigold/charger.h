@@ -10,7 +10,8 @@
  * Control ACOK by active charger port voltage
  *
  * @param voltage			active port voltage
+ * @param port			    active port
  */
-void acok_control(int voltage);
+void acok_control(int voltage, int port);
 
 #endif /* __CHARGER_H__ */
