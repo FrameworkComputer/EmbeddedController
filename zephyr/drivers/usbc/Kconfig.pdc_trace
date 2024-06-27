@@ -17,6 +17,22 @@ config USBC_PDC_TRACE_MSG_FIFO_SIZE
 	  RAM, so some sizing judgment may be necessary on ECs with
 	  limited RAM.
 
+config USBC_PDC_TRACE_MSG_PORT
+	prompt "Default PDC trace port number"
+	int
+	range 0 255
+	default 255 # EC_PDC_TRACE_MSG_PORT_NONE
+	help
+	  This is the initial PDC port number to trace before tracing
+	  behavior can be specified using the EC console or host
+	  commands. Use this if tracing is required during early boot
+	  time. By default, tracing is disabled until explicitly
+	  enabled. There are two special values to keep in mind:
+	    255: EC_PDC_TRACE_MSG_PORT_NONE
+	         tracing is disabled
+	    254: EC_PDC_TRACE_MSG_PORT_ALL
+	         tracing is enabled on all ports
+
 config USBC_PDC_TRACE_MSG_CONSOLE_CMD
 	bool "Enable pdc trace console command"
 	default y

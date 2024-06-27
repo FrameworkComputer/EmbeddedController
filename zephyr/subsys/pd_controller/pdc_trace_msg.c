@@ -44,7 +44,7 @@ static struct {
 /*
  * Note: protected by msg_fifo.lock.
  */
-static uint8_t pdc_trace_port = EC_PDC_TRACE_MSG_PORT_NONE;
+static uint8_t pdc_trace_port = CONFIG_USBC_PDC_TRACE_MSG_PORT;
 RING_BUF_DECLARE(msg_fifo_rbuf, MSG_FIFO_SIZE);
 K_MUTEX_DEFINE(msg_fifo_mutex);
 
