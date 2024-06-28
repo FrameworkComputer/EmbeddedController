@@ -22,6 +22,12 @@ config HW_TEST_BENCHMARK
 	help
 	  The test verifies benchmark feature.
 
+config HW_TEST_BORINGSSL_CRYPTO
+	bool "Benchmark test"
+	select ZTEST
+	help
+	  The test verifies the boringssl library.
+
 config HW_TEST_CORTEXM_FPU
 	bool "Cortex-M FPU test"
 	select ZTEST

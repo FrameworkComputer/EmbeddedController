@@ -15,6 +15,7 @@ migrated_tests="
 test/abort.c
 test/aes.cc
 test/benchmark.cc
+test/boringssl_crypto.cc
 test/cortexm_fpu.c
 test/crc.c
 test/flash_write_protect.c

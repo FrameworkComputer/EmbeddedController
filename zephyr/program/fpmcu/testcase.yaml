@@ -19,6 +19,12 @@ tests:
     - CONFIG_HW_TEST_BENCHMARK=y
     extra_conf_files:
     - prj_hw_tests.conf
+  boringssl_crypto:
+    extra_configs:
+    - CONFIG_HW_TEST_BORINGSSL_CRYPTO=y
+    - CONFIG_ZTEST_STACK_SIZE=2048
+    extra_conf_files:
+    - prj_hw_tests.conf
   cortexm_fpu:
     extra_configs:
     - CONFIG_HW_TEST_CORTEXM_FPU=y
