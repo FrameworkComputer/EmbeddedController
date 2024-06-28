@@ -14,6 +14,12 @@ config BOARD_GREENBAYUPOC
 	  Build Google Greenbayupoc reference board.  This board uses an Intel RPL SoC
 	  and ITE EC
 
+config BOARD_JUBILANT
+	bool "Google Jubilant Board"
+	help
+	  Build Google Jubilant variant board. This board uses an Intel RPL SoC
+	  and ITE EC
+
 config BOARD_LOTSO
 	bool "Google Lotso Board"
 	help
