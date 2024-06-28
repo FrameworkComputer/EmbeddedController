@@ -8,7 +8,9 @@
 #include "emul/emul_tps6699x.h"
 #include "usbc/utils.h"
 
+#include <stdbool.h>
 #include <stdint.h>
+#include <string.h>
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
@@ -42,44 +44,116 @@ tps6699x_emul_get_pdc_data(const struct emul *emul)
 	return &data->pdc_data;
 }
 
+static bool register_is_valid(const struct tps6699x_emul_pdc_data *data,
+			      int reg)
+{
+	return reg <= sizeof(data->reg_val) / sizeof(*data->reg_val);
+}
+
+static bool register_access_is_valid(const struct tps6699x_emul_pdc_data *data,
+				     int reg, int bytes)
+{
+	return register_is_valid(data, reg) && bytes <= sizeof(*data->reg_val);
+}
+
 static int tps6699x_emul_start_write(const struct emul *emul, int reg)
 {
+	struct tps6699x_emul_pdc_data *data = tps6699x_emul_get_pdc_data(emul);
+
+	LOG_DBG("start_write reg=%#x", reg);
+
+	if (register_is_valid(data, reg)) {
+		return -EIO;
+	}
+
+	memset(&data->reg_val[reg], 0, sizeof(data->reg_val[reg]));
+
+	data->reg_addr = reg;
+
 	return 0;
 }
 
 static int tps6699x_emul_write_byte(const struct emul *emul, int reg,
 				    uint8_t val, int bytes)
 {
+	struct tps6699x_emul_pdc_data *data = tps6699x_emul_get_pdc_data(emul);
+
+	LOG_DBG("write_byte reg=%#x, val=%#02x, bytes=%d", reg, val, bytes);
+
+	if (register_access_is_valid(data, reg, bytes)) {
+		return -EIO;
+	}
+
+	data->reg_val[reg][bytes] = val;
+
 	return 0;
 }
 
 static int tps6699x_emul_finish_write(const struct emul *emul, int reg,
 				      int bytes)
 {
+	LOG_DBG("finish_write reg=%#x, bytes=%d", reg, bytes);
+
+	/* TODO(b/345292002): Actually handle register accesses. */
+
 	return 0;
 }
 
 static int tps6699x_emul_start_read(const struct emul *emul, int reg)
 {
+	struct tps6699x_emul_pdc_data *data = tps6699x_emul_get_pdc_data(emul);
+
+	LOG_DBG("start_read reg=%#x", reg);
+
+	if (register_is_valid(data, reg)) {
+		return -EIO;
+	}
+
+	data->reg_addr = reg;
+
 	return 0;
 }
 
 static int tps6699x_emul_read_byte(const struct emul *emul, int reg,
 				   uint8_t *val, int bytes)
 {
+	struct tps6699x_emul_pdc_data *data = tps6699x_emul_get_pdc_data(emul);
+
+	if (register_access_is_valid(data, reg, bytes)) {
+		return -EIO;
+	}
+
+	/*
+	 * Response byte 0 is always the number of bytes read.
+	 * Remaining bytes are read starting at offset.
+	 * Note that the byte following the number of bytes is
+	 * considered to be at offset 0.
+	 */
+	if (bytes == 0) {
+		*val = bytes;
+	} else {
+		*val = data->reg_val[reg][bytes];
+	}
+
+	LOG_DBG("read_byte reg=%#x, bytes=%d, val=%#02x", reg, bytes, *val);
+
 	return 0;
 }
 
 static int tps6699x_emul_finish_read(const struct emul *emul, int reg,
 				     int bytes)
 {
+	LOG_DBG("finish_read reg=%#x, bytes=%d", reg, bytes);
+
+	/* TODO(b/345292002): Actually handle register accesses. */
+
 	return 0;
 }
 
 static int tps6699x_emul_access_reg(const struct emul *emul, int reg, int bytes,
 				    bool read)
 {
-	return 0;
+	return reg;
 }
 
 static int emul_tps669x_set_response_delay(const struct emul *target,
