@@ -43,6 +43,9 @@ class ProjectConfig:
     modules: typing.Iterable[str] = dataclasses.field(
         default_factory=lambda: ["ec"],
     )
+    optional_modules: typing.Iterable[str] = dataclasses.field(
+        default_factory=list
+    )
     dts_overlays: "list[str]" = dataclasses.field(default_factory=list)
     kconfig_files: "list[pathlib.Path]" = dataclasses.field(
         default_factory=list
@@ -154,6 +157,15 @@ class Project:
                     f"The {module!r} module is required by the "
                     f"{self.config.project_dir} project, but is not available."
                 ) from e
+        for module in self.config.optional_modules:
+            try:
+                result[module] = module_paths[module]
+            except KeyError:
+                logging.warning(
+                    "Optional module %a is not present. Your firmware "
+                    "will have limited functionality.",
+                    module,
+                )
         return result
 
     def get_toolchain(self, module_paths, override=None):
