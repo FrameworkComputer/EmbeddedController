@@ -383,7 +383,6 @@ static int tfus_run(const struct i2c_dt_spec *i2c)
 		}
 
 		k_sleep(K_MSEC(100));
-		attempts++;
 	}
 
 	if (ret) {
