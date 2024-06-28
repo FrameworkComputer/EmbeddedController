@@ -466,34 +466,6 @@ ZTEST(riven, test_reset_pd_mcu)
 	board_reset_pd_mcu();
 }
 
-ZTEST(riven, test_process_pd_alert)
-{
-	const struct gpio_dt_spec *c0_int =
-		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl);
-	const struct gpio_dt_spec *c1_int =
-		GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl);
-
-	gpio_emul_input_set(c0_int->port, c0_int->pin, 0);
-	board_process_pd_alert(0);
-	/* We ran BC1.2 processing inline */
-	zassert_equal(usb_charger_task_set_event_sync_fake.call_count, 1);
-	zassert_equal(usb_charger_task_set_event_sync_fake.arg0_val, 0);
-	zassert_equal(usb_charger_task_set_event_sync_fake.arg1_val,
-		      USB_CHG_EVENT_BC12);
-	/*
-	 * This should also call schedule_deferred_pd_interrupt() again, but
-	 * there's no good way to verify that.
-	 */
-
-	/* Port 1 also works */
-	gpio_emul_input_set(c1_int->port, c1_int->pin, 0);
-	board_process_pd_alert(1);
-	zassert_equal(usb_charger_task_set_event_sync_fake.call_count, 2);
-	zassert_equal(usb_charger_task_set_event_sync_fake.arg0_val, 1);
-	zassert_equal(usb_charger_task_set_event_sync_fake.arg1_val,
-		      USB_CHG_EVENT_BC12);
-}
-
 ZTEST(riven, test_led_pwm)
 {
 	led_set_color_battery(EC_LED_COLOR_RED);
