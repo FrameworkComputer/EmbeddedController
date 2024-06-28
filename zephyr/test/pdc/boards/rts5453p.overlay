@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include "native_sim.overlay"
+
 &i2c0 {
 	pdc_emul1: rts5453p@66 {
 		compatible = "realtek,rts54-pdc";

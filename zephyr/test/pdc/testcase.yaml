@@ -9,7 +9,6 @@ tests:
     - CONFIG_USBC_PDC_TRACE_MSG=y
     - CONFIG_USB_PDC_LOG_LEVEL_DBG=y
     extra_dtc_overlay_files:
-    - "./boards/native_sim.overlay"
     - "./boards/rts5453p.overlay"
 
   pdc.generic.tps6699x:
@@ -21,7 +20,6 @@ tests:
     - CONFIG_USBC_PDC_TRACE_MSG=y
     - CONFIG_USB_PDC_LOG_LEVEL_DBG=y
     extra_dtc_overlay_files:
-    - "./boards/native_sim.overlay"
     - "./boards/tps6699x.overlay"
 
   pdc.generic.api_null_check:
@@ -30,7 +28,6 @@ tests:
     - CONFIG_TEST_SUITE_PDC_API_NULL_CHECK=y
     - CONFIG_ASSERT_TEST=y
     extra_dtc_overlay_files:
-    - "./boards/native_sim.overlay"
     - "./boards/rts5453p.overlay"
 
   pdc.rts54xx:
@@ -39,7 +36,6 @@ tests:
     - CONFIG_TEST_PDC_MESSAGE_TRACING=y
     - CONFIG_USBC_PDC_TRACE_MSG=y
     extra_dtc_overlay_files:
-    - "./boards/native_sim.overlay"
     - "./boards/rts5453p.overlay"
 
   pdc.retimer_fw_update:
@@ -50,14 +46,12 @@ tests:
     - CONFIG_TEST_PDC_MESSAGE_TRACING=y
     - CONFIG_USBC_PDC_TRACE_MSG=y
     extra_dtc_overlay_files:
-    - "./boards/native_sim.overlay"
     - "./boards/rts5453p.overlay"
 
   pdc.console:
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_CONSOLE=y
     extra_dtc_overlay_files:
-    - "./boards/native_sim.overlay"
     - "./boards/rts5453p.overlay"
 
   pdc.hostcmd:
@@ -65,21 +59,18 @@ tests:
     - CONFIG_TEST_SUITE_PDC_HOSTCMD=y
     - CONFIG_PLATFORM_EC_HOSTCMD_PD_CHIP_INFO=y
     extra_dtc_overlay_files:
-    - "./boards/native_sim.overlay"
     - "./boards/rts5453p.overlay"
 
   pdc.ucsi:
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_UCSI=y
     extra_dtc_overlay_files:
-    - "./boards/native_sim.overlay"
     - "./boards/rts5453p.overlay"
 
   pdc.ppm:
     extra_configs:
     - CONFIG_TEST_SUITE_PPM=y
     extra_dtc_overlay_files:
-    - "./boards/native_sim.overlay"
     - "./boards/rts5453p.overlay"
 
   pdc.trace_msg:
@@ -88,5 +79,4 @@ tests:
     - CONFIG_USBC_PDC_TRACE_MSG=y
     - CONFIG_USBC_PDC_TRACE_MSG_LOG_LEVEL_DBG=y
     extra_dtc_overlay_files:
-    - "./boards/native_sim.overlay"
     - "./boards/rts5453p.overlay"
