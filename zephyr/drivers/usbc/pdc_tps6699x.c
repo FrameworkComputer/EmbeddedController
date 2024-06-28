@@ -1659,6 +1659,14 @@ static int pdc_init(const struct device *dev)
 		return -ENODEV;
 	}
 
+	k_event_init(&data->pdc_event);
+	k_mutex_init(&data->mtx);
+
+	data->cmd = CMD_NONE;
+	data->dev = dev;
+	pdc_data[cfg->connector_number] = data;
+	data->init_done = false;
+
 	rv = gpio_pin_configure_dt(&cfg->irq_gpios, GPIO_INPUT);
 	if (rv < 0) {
 		LOG_ERR("Unable to configure GPIO");
@@ -1680,14 +1688,6 @@ static int pdc_init(const struct device *dev)
 		LOG_ERR("Unable to configure interrupt");
 		return rv;
 	}
-
-	k_event_init(&data->pdc_event);
-	k_mutex_init(&data->mtx);
-
-	data->cmd = CMD_NONE;
-	data->dev = dev;
-	pdc_data[cfg->connector_number] = data;
-	data->init_done = false;
 
 	/* Set initial state */
 	smf_set_initial(SMF_CTX(data), &states[ST_INIT]);
