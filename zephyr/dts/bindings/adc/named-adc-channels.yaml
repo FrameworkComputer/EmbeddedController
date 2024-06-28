@@ -113,3 +113,4 @@ child-binding:
         - ADC_EVB_CH_2
         - ADC_EVB_CH_3
         - ADC_EVB_CH_4
+        - ADC_PROCHOT

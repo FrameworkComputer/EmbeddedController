@@ -4,7 +4,8 @@
  */
 
 &adc0 {
-	pinctrl-0 = <&adc0_ch1_gpi1_default
+	pinctrl-0 = <&adc0_ch0_gpi0_default
+		     &adc0_ch1_gpi1_default
 		     &adc0_ch4_gpi4_default
 		     &adc0_ch5_gpi5_default>;
 	pinctrl-names = "default";
