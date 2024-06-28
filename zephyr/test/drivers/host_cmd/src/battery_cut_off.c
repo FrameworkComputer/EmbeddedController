@@ -111,7 +111,7 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_at_shutdown)
 	zassert_equal(EC_RES_SUCCESS, rv, "Expected 0, but got %d", rv);
 	zassert_false(battery_is_cut_off(), NULL);
 	test_set_chipset_to_g3();
-	zassert_true(WAIT_FOR(battery_is_cut_off(), 1500000, k_msleep(250)));
+	zassert_true(WAIT_FOR(battery_is_cut_off(), 2105000, k_msleep(250)));
 }
 
 void boot_key_set(enum boot_key key);
@@ -131,7 +131,7 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_by_unplug)
 	/* This fails because AC is on. */
 	hook_notify(HOOK_AC_CHANGE);
 	zassert_false(
-		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
+		WAIT_FOR(battery_cutoff_in_progress(), 2105000, k_msleep(250)));
 
 	/*
 	 * Unplug AC to start scheduled cutoff (that will fail because the
@@ -141,7 +141,7 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_by_unplug)
 	set_ac_enabled(false);
 	hook_notify(HOOK_AC_CHANGE);
 	zassert_true(
-		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
+		WAIT_FOR(battery_cutoff_in_progress(), 2105000, k_msleep(250)));
 
 	boot_key_clear(BOOT_KEY_REFRESH);
 
@@ -152,7 +152,7 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_by_unplug)
 	set_ac_enabled(true);
 	hook_notify(HOOK_AC_CHANGE);
 	zassert_false(
-		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
+		WAIT_FOR(battery_cutoff_in_progress(), 2105000, k_msleep(250)));
 }
 
 ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_by_volume_up)
@@ -164,7 +164,7 @@ ZTEST_USER(host_cmd_battery_cut_off, test_cutoff_by_volume_up)
 	set_ac_enabled(false);
 	hook_notify(HOOK_AC_CHANGE);
 	zassert_true(
-		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
+		WAIT_FOR(battery_cutoff_in_progress(), 2105000, k_msleep(250)));
 
 	boot_button_clear(BUTTON_VOLUME_UP);
 }
@@ -177,7 +177,7 @@ ZTEST_USER(host_cmd_battery_cut_off, test_no_cutoff_by_key)
 	set_ac_enabled(false);
 	hook_notify(HOOK_AC_CHANGE);
 	zassert_false(
-		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
+		WAIT_FOR(battery_cutoff_in_progress(), 2105000, k_msleep(250)));
 }
 
 static void host_cmd_battery_cut_off_before_ac_off(void *f)
@@ -203,5 +203,5 @@ ZTEST_USER(host_cmd_battery_cut_off2, test_no_cutoff_by_was_ac_on)
 	boot_key_set(BOOT_KEY_REFRESH);
 	hook_notify(HOOK_AC_CHANGE);
 	zassert_false(
-		WAIT_FOR(battery_cutoff_in_progress(), 1500000, k_msleep(250)));
+		WAIT_FOR(battery_cutoff_in_progress(), 2105000, k_msleep(250)));
 }

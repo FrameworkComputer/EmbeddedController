@@ -35,7 +35,7 @@ const static int batt_host_shutdown_pct = CONFIG_BATT_HOST_SHUTDOWN_PERCENTAGE;
 #ifdef CONFIG_BATTERY_CUT_OFF
 
 #ifndef CONFIG_BATTERY_CUTOFF_DELAY_US
-#define CONFIG_BATTERY_CUTOFF_DELAY_US (1500 * MSEC)
+#define CONFIG_BATTERY_CUTOFF_DELAY_US (2105 * MSEC)
 #endif
 
 static enum battery_cutoff_states battery_cutoff_state =
