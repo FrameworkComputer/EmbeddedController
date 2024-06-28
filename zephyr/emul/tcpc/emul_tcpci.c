@@ -21,6 +21,7 @@
 #include <zephyr/logging/log.h>
 #include <zephyr/sys/byteorder.h>
 
+#line 25
 LOG_MODULE_REGISTER(tcpci_emul, CONFIG_TCPCI_EMUL_LOG_LEVEL);
 
 /**

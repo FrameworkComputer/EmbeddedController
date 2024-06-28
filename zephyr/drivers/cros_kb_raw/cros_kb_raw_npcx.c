@@ -16,12 +16,6 @@
 #include "soc_miwu.h"
 #include "task.h"
 
-/*
- * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
- * #line marks the *next* line, so it is off by one.
- */
-#line 24
-
 #include <assert.h>
 
 #include <zephyr/drivers/clock_control.h>
@@ -33,6 +27,8 @@
 #include <drivers/cros_kb_raw.h>
 #include <soc.h>
 #include <soc/nuvoton_npcx/reg_def_cros.h>
+
+#line 32
 LOG_MODULE_REGISTER(cros_kb_raw, LOG_LEVEL_ERR);
 
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED
