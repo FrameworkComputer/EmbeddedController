@@ -28,6 +28,8 @@
 #include "../usba.dtsi"
 
 /* Lotso project DTS includes*/
+#include "alt_motionsense.dtsi"
+#include "cbi.dtsi"
 #include "keyboard.dtsi"
 #include "led_pins.dtsi"
 #include "led_policy.dtsi"
@@ -49,21 +51,6 @@
                 /delete-node/ volume_up;
                 /delete-node/ volume_down;
         };
-
-	/* Rotation matrix used by drivers. */
-	motionsense-rotation-ref {
-		compatible = "cros-ec,motionsense-rotation-ref";
-		lid_rot_ref: lid-rotation-ref {
-			mat33 = <0 (-1) 0
-				 1 0 0
-				 0 0 1>;
-		};
-		base_rot_ref: base-rotation-ref {
-			mat33 = <0 1 0
-				 (-1) 0 0
-				 0 0 1>;
-		};
-	};
 };
 
 /* These GPIOS are initialized by the PDC driver */

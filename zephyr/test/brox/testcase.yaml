@@ -50,3 +50,10 @@ tests:
     - CONFIG_PLATFORM_EC_KEYBOARD_DEBUG=y
     extra_dtc_overlay_files:
     - boards/baseboard/baseboard.overlay
+
+  brox.lotso.sensor:
+    extra_configs:
+    - CONFIG_TEST_BOARD_LOTSO=y
+    - CONFIG_TEST_BOARD_LOTSO_SENSOR=y
+    extra_dtc_overlay_files:
+    - boards/lotso.overlay

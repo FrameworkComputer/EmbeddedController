@@ -164,7 +164,7 @@ static int cros_cbi_ssfc_get_parent_field_value(union cbi_ssfc cached_ssfc,
 	return 0;
 }
 
-bool cros_cbi_ssfc_check_match(enum cbi_ssfc_value_id value_id)
+test_mockable bool cros_cbi_ssfc_check_match(enum cbi_ssfc_value_id value_id)
 {
 	int rc;
 	uint32_t value;
