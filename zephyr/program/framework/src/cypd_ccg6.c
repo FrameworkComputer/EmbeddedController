@@ -531,7 +531,14 @@ void entry_tbt_mode(int controller)
 {
 	int rv;
 	uint8_t force_tbt_mode = 0x01;
+	int debug_ctl = 0x0100;
 
+	/* Write 0x0100 to address 0x0046 */
+	rv = cypd_write_reg16(controller, CCG_ICL_BB_RETIMER_CMD_REG, debug_ctl);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_BB_RETIMER_CMD_REG fail");
+
+	/* Write 0x01 to address 0x0040 */
 	rv = cypd_write_reg8(controller, CCG_ICL_CTRL_REG, force_tbt_mode);
 	if (rv != EC_SUCCESS)
 		CPRINTS("Write CYP5525_ICL_CTRL_REG fail");
@@ -541,10 +548,17 @@ void exit_tbt_mode(int controller)
 {
 	int rv;
 	uint8_t force_tbt_mode = 0x00;
+	int debug_ctl = 0x0000;
 
+	/* Write 0x00 to address 0x0040 */
 	rv = cypd_write_reg8(controller, CCG_ICL_CTRL_REG, force_tbt_mode);
 	if (rv != EC_SUCCESS)
 		CPRINTS("Write CYP5525_ICL_CTRL_REG fail");
+
+	/* Write 0x0000 to address 0x0046 */
+	rv = cypd_write_reg16(controller, CCG_ICL_BB_RETIMER_CMD_REG, debug_ctl);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_BB_RETIMER_CMD_REG fail");
 }
 
 int check_tbt_mode(int controller)
