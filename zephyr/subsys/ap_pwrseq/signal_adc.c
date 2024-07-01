@@ -157,10 +157,13 @@ DT_INST_FOREACH_STATUS_OKAY_VARGS(ADC_CB_DEFINE, low)
 
 #define ADC_CB_COMMA(inst, lev) ADC_CB(inst, lev),
 
+static const struct sensor_trigger power_signal_trig = {
+	.type = SENSOR_TRIG_THRESHOLD,
+	.chan = SENSOR_CHAN_VOLTAGE,
+};
+
 void power_signal_adc_init(void)
 {
-	struct sensor_trigger trig = { .type = SENSOR_TRIG_THRESHOLD,
-				       .chan = SENSOR_CHAN_VOLTAGE };
 	sensor_trigger_handler_t low_cb[] = { DT_INST_FOREACH_STATUS_OKAY_VARGS(
 		ADC_CB_COMMA, low) };
 	sensor_trigger_handler_t high_cb[] = {
@@ -197,8 +200,10 @@ void power_signal_adc_init(void)
 			}
 		}
 		/* Set high and low trigger callbacks */
-		sensor_trigger_set(config[i].dev_trig_high, &trig, high_cb[i]);
-		sensor_trigger_set(config[i].dev_trig_low, &trig, low_cb[i]);
+		sensor_trigger_set(config[i].dev_trig_high, &power_signal_trig,
+				   high_cb[i]);
+		sensor_trigger_set(config[i].dev_trig_low, &power_signal_trig,
+				   low_cb[i]);
 		power_signal_adc_enable(i);
 	}
 }
