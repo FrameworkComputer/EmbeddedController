@@ -205,6 +205,12 @@
 		sunwoda_l21d4pg4 {
 			compatible = "sunwoda,l21d4pg4", "battery-smart";
 		};
+		smp_l23m4pg4 {
+			compatible = "smp,l23m4pg4", "battery-smart";
+		};
+		sunwoda_l23d4pg4 {
+			compatible = "sunwoda,l23d4pg4", "battery-smart";
+		};
 	};
 
 	kb_bl_pwm {
