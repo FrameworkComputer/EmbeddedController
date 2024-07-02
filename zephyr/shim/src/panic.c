@@ -126,6 +126,7 @@ void panic_data_print(const struct panic_data *pdata)
 #endif
 }
 
+#if !defined(CONFIG_ZTEST_FATAL_HOOK)
 static void copy_esf_to_panic_data(const struct arch_esf *esf,
 				   struct panic_data *pdata)
 {
@@ -195,6 +196,7 @@ void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf)
 	panic_reboot();
 	__ASSERT_UNREACHABLE;
 }
+#endif /* CONFIG_ZTEST_FATAL_HOOK */
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 {
