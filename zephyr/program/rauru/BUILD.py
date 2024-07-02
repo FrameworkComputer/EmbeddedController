@@ -22,10 +22,11 @@ def register_rauru_project(project_name):
 
 
 register_rauru_project(project_name="rauru")
-
+register_rauru_project(project_name="rauru-pdc")
 register_rauru_project(project_name="navi")
 
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
 assert_rw_fwid_DO_NOT_EDIT(project_name="rauru", addr=0x60098)
+assert_rw_fwid_DO_NOT_EDIT(project_name="rauru-pdc", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="navi", addr=0x60098)

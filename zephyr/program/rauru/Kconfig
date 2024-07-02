@@ -22,6 +22,12 @@ config BOARD_RAURU
 	  Build Google Rauru reference board. Rauru has MediaTek SoC
 	  with ITE it82202-ax EC.
 
+config BOARD_RAURU_PDC
+	bool "Google Rauru Board with PDC sub-board"
+	help
+	  Build Google Rauru reference board with PDC sub-board. Rauru has
+	  MediaTek SoC with ITE it82202-ax EC.
+
 config BOARD_NAVI
 	bool "Google Navi Board"
 	help
