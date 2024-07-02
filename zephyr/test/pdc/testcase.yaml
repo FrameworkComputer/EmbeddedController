@@ -30,6 +30,15 @@ tests:
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
 
+  pdc.generic.device_not_ready:
+    timeout: 30
+    extra_configs:
+    - CONFIG_TEST_SUITE_PDC_DEVICE_NOT_READY=y
+    - CONFIG_ASSERT_TEST=y
+    - CONFIG_ZTEST_FATAL_HOOK=y
+    extra_dtc_overlay_files:
+    - "./boards/rts5453p_deferred.overlay"
+
   pdc.rts54xx:
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_RTS54XX=y

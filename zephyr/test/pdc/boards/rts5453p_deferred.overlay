@@ -1,0 +1,38 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "native_sim.overlay"
+
+/* The realtek,rts54-pdc nodes are deferred-init to cause device_is_ready() to
+ * return false and named-usbc-port init to fail. The named-usbc-port nodes are
+ * deferred init to allow a test to initialize these devices directly and
+ * inspect the results.
+ */
+
+&i2c0 {
+	pdc_emul1: rts5453p@66 {
+		compatible = "realtek,rts54-pdc";
+		status = "okay";
+		reg = <0x66>;
+		irq-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+		zephyr,deferred-init;
+	};
+
+	pdc_emul2: rts5453p@67 {
+		compatible = "realtek,rts54-pdc";
+		status = "okay";
+		reg = <0x67>;
+		irq-gpios = <&gpio0 0 GPIO_ACTIVE_LOW>;
+		zephyr,deferred-init;
+	};
+};
+
+&usbc0 {
+	zephyr,deferred-init;
+};
+
+&usbc1 {
+	zephyr,deferred-init;
+};

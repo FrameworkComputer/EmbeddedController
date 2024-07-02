@@ -8,6 +8,9 @@ config TEST_SUITE_PDC_GENERIC
 config TEST_SUITE_PDC_API_NULL_CHECK
 	bool "Enable PDC API null-protection checks"
 
+config TEST_SUITE_PDC_DEVICE_NOT_READY
+	bool "Enable PDC subsystem tests for device-not-ready"
+
 config TEST_SUITE_PDC_RTS54XX
 	bool "Enable RTS54xx PDC tests"
 

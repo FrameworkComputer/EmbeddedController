@@ -2233,6 +2233,8 @@ static int pdc_subsys_init(const struct device *dev)
 	/* Make sure PD Controller is ready */
 	if (!device_is_ready(port->pdc)) {
 		LOG_ERR("PDC not ready");
+		k_oops();
+		/* Unreachable */
 		return -ENODEV;
 	}
 
