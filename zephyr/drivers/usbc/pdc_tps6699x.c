@@ -435,8 +435,10 @@ static void st_idle_entry(void *o)
 
 	print_current_state(data);
 
-	/* Reset the command */
-	data->cmd = CMD_NONE;
+	/* Reset the command if no pending PDC_CMD_EVENT */
+	if (!k_event_test(&data->pdc_event, PDC_CMD_EVENT)) {
+		data->cmd = CMD_NONE;
+	}
 }
 
 static void st_idle_run(void *o)
