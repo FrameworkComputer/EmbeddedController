@@ -11,6 +11,7 @@ zephyr_library_sources_ifdef(CONFIG_HW_TEST_BENCHMARK src/benchmark.cc)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_BORINGSSL_CRYPTO src/boringssl_crypto.cc)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_CORTEXM_FPU src/cortexm_fpu.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_CRC ${PLATFORM_EC}/zephyr/test/crc/main.c)
+zephyr_library_sources_ifdef(CONFIG_HW_TEST_EXCEPTION src/exception.cc)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_FLASH_PHYSICAL src/flash_physical.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_FLASH_WRITE_PROTECT src/flash_write_protect.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_FP_TRANSPORT src/fp_transport.c)
@@ -29,3 +30,12 @@ zephyr_library_sources_ifdef(CONFIG_HW_TEST_STATIC_IF ${PLATFORM_EC}/zephyr/test
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_SYSTEM_IS_LOCKED src/system_is_locked.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_UTILS ${PLATFORM_EC}/zephyr/test/utils/src/utils.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_UTILS_STR ${PLATFORM_EC}/zephyr/test/utils/src/utils_str.c)
+
+# Create an external lib for tests. The Zephyr build doesn't allow using
+# try/throw instructions, when exceptions are disabled.
+if(${CONFIG_HW_TEST_EXCEPTION})
+  zephyr_library_named(exception_lib)
+  zephyr_library_sources(src/exception_lib.cc)
+  zephyr_library_compile_options(-fexceptions)
+  set(ZEPHYR_CURRENT_LIBRARY ec_shim)
+endif()

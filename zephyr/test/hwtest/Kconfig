@@ -37,6 +37,10 @@ config HW_TEST_CRC
 	bool "CRC test"
 	select ZTEST
 
+config HW_TEST_EXCEPTION
+	bool "Exception test"
+	select ZTEST
+
 config HW_TEST_FLASH_PHYSICAL
 	bool "Flash physical test"
 	select ZTEST
