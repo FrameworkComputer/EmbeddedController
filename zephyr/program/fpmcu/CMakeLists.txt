@@ -9,6 +9,11 @@ find_package(Zephyr REQUIRED HINTS "${ZEPHYR_BASE}")
 # USAGE FAULT on int overflow
 zephyr_compile_options(-ftrapv)
 
+# Include directory with POSIX headers from Zephyr.
+# We could enable CONFIG_POSIX_API, but it selects so many features that are
+# not necessary.
+zephyr_include_directories(${ZEPHYR_BASE}/include/zephyr/posix)
+
 if (DEFINED CONFIG_BOARD_BLOONCHIPPER)
 	add_subdirectory(bloonchipper)
 	project(bloonchipper)
