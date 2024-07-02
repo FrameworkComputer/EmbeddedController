@@ -270,7 +270,7 @@ def merge_token_databases(databases, merged_db):
     merged_db: Merged token database output path.
     """
     checkout = locate_cros_checkout()
-    modules = zmake.modules.locate_from_checkout(pathlib.Path("."))
+    modules = zmake.modules.locate_from_checkout(checkout)
     jobclient = zmake.jobserver.GNUMakeJobServer()
 
     proc = jobclient.popen(
