@@ -162,6 +162,12 @@ config BOARD_RIVEN
 	  Build Google Riven board. Riven has Intel TWL SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_DOMIKA
+	bool "Google Domika Board"
+	help
+	  Build Google Domika board. Domika has Intel TWL SoC
+	  with IT81302 EC.
+
 module = NISSA
 module-str = Nissa board-specific code
 source "subsys/logging/Kconfig.template.log_config"

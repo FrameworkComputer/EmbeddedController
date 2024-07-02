@@ -287,3 +287,18 @@ if(CONFIG_TEST_NISSA_RIVEN)
 	    ${PLATFORM_EC_PROGRAM_DIR}/nissa/riven/src/usbc.c
     )
 endif()
+
+if(CONFIG_TEST_NISSA_DOMIKA)
+    target_compile_definitions(app PRIVATE CHARGER_PRIMARY=0 CHARGER_SECONDARY=1)
+    zephyr_include_directories("${PLATFORM_EC}/zephyr/shim/chip/it8xxx2/include")
+    target_sources(
+            app PRIVATE
+            src/domika.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/domika/src/board.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/domika/src/charger.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/domika/src/fan.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/domika/src/keyboard.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/domika/src/thermal.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/domika/src/usbc.c
+    )
+endif()

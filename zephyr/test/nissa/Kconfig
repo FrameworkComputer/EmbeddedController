@@ -126,6 +126,11 @@ choice TEST_TARGET
 	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	  help
 		The test target that exercises nissa/riven/*.c
+
+	config TEST_NISSA_DOMIKA
+	  bool "Tests for Domika-specific code"
+	  help
+		The test target that exercises nissa/domika/*.c
 endchoice
 
 config TEST_DISABLE_INLINE_CHIPSET_IN_STATE

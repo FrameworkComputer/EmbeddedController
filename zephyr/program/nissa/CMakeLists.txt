@@ -285,3 +285,15 @@ if(DEFINED CONFIG_BOARD_RIVEN)
 	"riven/src/keyboard_customization.c"
 	)
 endif()
+if(DEFINED CONFIG_BOARD_DOMIKA)
+	project(domika)
+	zephyr_library_sources(
+			"domika/src/led.c"
+			"domika/src/keyboard.c"
+			"domika/src/board.c"
+			"domika/src/thermal.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "domika/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "domika/src/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "domika/src/fan.c")
+endif()
