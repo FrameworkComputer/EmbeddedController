@@ -25,7 +25,7 @@ FAKE_VOID_FUNC(tablet_disable);
 
 void test_power_button_change(void);
 void test_reset(void);
-int test_reinit(void);
+void test_reinit(void);
 bool test_dwork_pending(void);
 uint32_t keyboard_scan_get_boot_keys(void);
 
