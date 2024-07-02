@@ -202,6 +202,13 @@ static int boot_keys_init(void)
 	k_work_reschedule(&boot_keys_timeout_dwork,
 			  K_MSEC(BOOT_KEYS_SETTLE_TIME_MS));
 
+	while (k_work_delayable_is_pending(&boot_keys_timeout_dwork)) {
+		/* delay the rest of the boot until we finished checking for
+		 * boot keys so that the host is notified before VB runs
+		 */
+		k_sleep(K_MSEC(1));
+	}
+
 	return 0;
 }
 SYS_INIT(boot_keys_init, POST_KERNEL, 99);
@@ -212,12 +219,16 @@ void test_power_button_change(void)
 	power_button_change();
 }
 
-int test_reinit(void)
+void test_reset(void)
 {
 	boot_keys_value = 0;
 	boot_keys_value_external = 0;
 	boot_keys_counter = 0;
 	boot_keys_timeout = false;
+}
+
+int test_reinit(void)
+{
 	return boot_keys_init();
 }
 

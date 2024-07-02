@@ -24,13 +24,12 @@ FAKE_VALUE_FUNC(int, power_button_is_pressed);
 FAKE_VOID_FUNC(tablet_disable);
 
 void test_power_button_change(void);
+void test_reset(void);
 int test_reinit(void);
 bool test_dwork_pending(void);
 uint32_t keyboard_scan_get_boot_keys(void);
 
 #define CROS_EC_KEYBOARD_NODE DT_CHOSEN(cros_ec_keyboard)
-#define DELAY_NO_TRIGGER DT_PROP(CROS_EC_KEYBOARD_NODE, debounce_down_ms)
-#define DELAY_TRIGGER (DT_PROP(CROS_EC_KEYBOARD_NODE, debounce_down_ms) * 4)
 
 #define TEST_BOOT_KEYS_NODE DT_NODELABEL(test_boot_keys)
 #define ESC_ROW KBD_RC_ROW(DT_PROP(TEST_BOOT_KEYS_NODE, esc_rc))
@@ -59,20 +58,13 @@ ZTEST(boot_keys, test_recovery_normal)
 	system_jumped_late_fake.return_val = 0;
 	system_get_reset_flags_fake.return_val = EC_RESET_FLAG_RESET_PIN;
 
-	test_reinit();
-
-	k_sleep(K_MSEC(DELAY_NO_TRIGGER));
-	zassert_equal(test_dwork_pending(), true);
-	zassert_equal(host_set_single_event_fake.call_count, 0);
-	zassert_equal(tablet_disable_fake.call_count, 0);
-	zassert_equal(keyboard_scan_get_boot_keys(), 0);
-
 	power_button_is_pressed_fake.return_val = 1;
 	test_power_button_change();
 	report_fake(ESC_ROW, ESC_COL, true);
 	report_fake(REFRESH_ROW, REFRESH_COL, true);
 
-	k_sleep(K_MSEC(DELAY_TRIGGER));
+	test_reinit();
+
 	zassert_equal(test_dwork_pending(), false);
 	zassert_equal(host_set_single_event_fake.call_count, 1);
 	zassert_equal(tablet_disable_fake.call_count, 1);
@@ -84,14 +76,6 @@ ZTEST(boot_keys, test_recovery_release_power_early)
 	system_jumped_late_fake.return_val = 0;
 	system_get_reset_flags_fake.return_val = EC_RESET_FLAG_RESET_PIN;
 
-	test_reinit();
-
-	k_sleep(K_MSEC(DELAY_NO_TRIGGER));
-	zassert_equal(test_dwork_pending(), true);
-	zassert_equal(host_set_single_event_fake.call_count, 0);
-	zassert_equal(tablet_disable_fake.call_count, 0);
-	zassert_equal(keyboard_scan_get_boot_keys(), 0);
-
 	power_button_is_pressed_fake.return_val = 1;
 	test_power_button_change();
 	report_fake(ESC_ROW, ESC_COL, true);
@@ -99,7 +83,8 @@ ZTEST(boot_keys, test_recovery_release_power_early)
 	power_button_is_pressed_fake.return_val = 0;
 	test_power_button_change();
 
-	k_sleep(K_MSEC(DELAY_TRIGGER));
+	test_reinit();
+
 	zassert_equal(test_dwork_pending(), false);
 	zassert_equal(host_set_single_event_fake.call_count, 1);
 	zassert_equal(tablet_disable_fake.call_count, 1);
@@ -111,14 +96,6 @@ ZTEST(boot_keys, test_recovery_stray_keys)
 	system_jumped_late_fake.return_val = 0;
 	system_get_reset_flags_fake.return_val = EC_RESET_FLAG_RESET_PIN;
 
-	test_reinit();
-
-	k_sleep(K_MSEC(DELAY_NO_TRIGGER));
-	zassert_equal(test_dwork_pending(), true);
-	zassert_equal(host_set_single_event_fake.call_count, 0);
-	zassert_equal(tablet_disable_fake.call_count, 0);
-	zassert_equal(keyboard_scan_get_boot_keys(), 0);
-
 	power_button_is_pressed_fake.return_val = 1;
 	test_power_button_change();
 	report_fake(ESC_ROW, ESC_COL, true);
@@ -128,7 +105,8 @@ ZTEST(boot_keys, test_recovery_stray_keys)
 	report_fake(12, 13, true);
 	report_fake(10, 11, false); /* test the release path */
 
-	k_sleep(K_MSEC(DELAY_TRIGGER));
+	test_reinit();
+
 	zassert_equal(test_dwork_pending(), false);
 	zassert_equal(host_set_single_event_fake.call_count, 0);
 	zassert_equal(tablet_disable_fake.call_count, 0);
@@ -140,15 +118,14 @@ ZTEST(boot_keys, test_recovery_retraining)
 	system_jumped_late_fake.return_val = 0;
 	system_get_reset_flags_fake.return_val = EC_RESET_FLAG_RESET_PIN;
 
-	test_reinit();
-
 	power_button_is_pressed_fake.return_val = 1;
 	test_power_button_change();
 	report_fake(ESC_ROW, ESC_COL, true);
 	report_fake(REFRESH_ROW, REFRESH_COL, true);
 	report_fake(LEFT_SHIFT_ROW, LEFT_SHIFT_COL, true);
 
-	k_sleep(K_MSEC(DELAY_TRIGGER));
+	test_reinit();
+
 	zassert_equal(test_dwork_pending(), false);
 	zassert_equal(host_set_single_event_fake.call_count, 2);
 	zassert_equal(tablet_disable_fake.call_count, 1);
@@ -160,13 +137,6 @@ ZTEST(boot_keys, test_ignore_keys)
 	system_jumped_late_fake.return_val = 0;
 	system_get_reset_flags_fake.return_val = EC_RESET_FLAG_RESET_PIN;
 
-	test_reinit();
-
-	k_sleep(K_MSEC(DELAY_NO_TRIGGER));
-	zassert_equal(test_dwork_pending(), true);
-	zassert_equal(host_set_single_event_fake.call_count, 0);
-	zassert_equal(keyboard_scan_get_boot_keys(), 0);
-
 	power_button_is_pressed_fake.return_val = 1;
 	test_power_button_change();
 	report_fake(ESC_ROW, ESC_COL, true);
@@ -177,7 +147,8 @@ ZTEST(boot_keys, test_ignore_keys)
 	report_fake(REFRESH_ROW, 11, true);
 	report_fake(REFRESH_ROW, 12, true);
 
-	k_sleep(K_MSEC(DELAY_TRIGGER));
+	test_reinit();
+
 	zassert_equal(test_dwork_pending(), false);
 
 	if (IS_ENABLED(CONFIG_BOOT_KEYS_GHOST_REFRESH_WORKAROUND)) {
@@ -197,10 +168,6 @@ ZTEST(boot_keys, test_normal_boot)
 
 	test_reinit();
 
-	k_sleep(K_MSEC(DELAY_NO_TRIGGER));
-	zassert_equal(test_dwork_pending(), true);
-
-	k_sleep(K_MSEC(DELAY_TRIGGER));
 	zassert_equal(test_dwork_pending(), false);
 	zassert_equal(host_set_single_event_fake.call_count, 0);
 	zassert_equal(tablet_disable_fake.call_count, 0);
@@ -246,6 +213,8 @@ static void reset(void *fixture)
 	RESET_FAKE(system_get_reset_flags);
 	RESET_FAKE(power_button_is_pressed);
 	RESET_FAKE(tablet_disable);
+
+	test_reset();
 }
 
 ZTEST_SUITE(boot_keys, NULL, NULL, reset, reset, NULL);
