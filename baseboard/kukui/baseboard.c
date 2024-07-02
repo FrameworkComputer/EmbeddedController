@@ -199,24 +199,3 @@ int board_allow_i2c_passthru(const struct i2c_cmd_desc_t *cmd_desc)
 {
 	return (cmd_desc->port == I2C_PORT_VIRTUAL_BATTERY);
 }
-
-/* Enable or disable input devices, based on chipset state and tablet mode */
-#ifdef VARIANT_KUKUI_JACUZZI
-__override void lid_angle_peripheral_enable(int enable)
-{
-	int chipset_in_s0 = chipset_in_state(CHIPSET_STATE_ON);
-
-	if (enable) {
-		keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_ANGLE);
-	} else {
-		/*
-		 * Ensure that the chipset is off before disabling the
-		 * keyboard. When the chipset is on, the EC keeps the
-		 * keyboard enabled and the AP decides whether to
-		 * ignore input devices or not.
-		 */
-		if (!chipset_in_s0)
-			keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_ANGLE);
-	}
-}
-#endif
