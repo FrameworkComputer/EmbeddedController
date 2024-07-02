@@ -158,11 +158,11 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	}
 
 	if (lvl) {
+		/* connect the DP pipeline before setting HPD if HPG high */
 		rauru_set_dp_path(port);
 		usb_mux_set(port, mux_mode, USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(port)));
 	} else {
-		rauru_detach_dp_path(port);
 		usb_mux_set(port, mux_mode & (~USB_PD_MUX_USB_ENABLED),
 			    USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(port)));
@@ -180,6 +180,11 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 
 	if (dp_hpd_gpio_set(port, lvl, irq) != EC_SUCCESS) {
 		return 0;
+	}
+
+	if (!lvl) {
+		/* detach DP pipeline after setting HPD */
+		rauru_detach_dp_path(port);
 	}
 
 	/*
