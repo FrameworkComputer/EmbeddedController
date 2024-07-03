@@ -23,6 +23,7 @@ test/flash_write_protect.c
 test/fp_transport.c
 test/fpsensor_auth_crypto_stateful.cc
 test/fpsensor_auth_crypto_stateless.cc
+test/fpsensor_crypto.cc
 test/ftrapv.c
 test/libc_printf.c
 test/malloc.c
