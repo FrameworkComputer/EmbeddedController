@@ -90,6 +90,12 @@ config HW_TEST_LIBC_PRINTF
 	help
 	  Prints a hardcoded string to check by a test runner.
 
+config HW_TEST_LIBCXX
+	bool "libcxx test"
+	select ZTEST
+	help
+	  The test verifies time measurement system_clock vs udelay.
+
 config HW_TEST_MALLOC
 	bool "malloc test"
 	select ZTEST

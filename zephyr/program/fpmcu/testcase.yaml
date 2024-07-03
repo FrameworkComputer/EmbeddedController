@@ -97,6 +97,11 @@ tests:
     - CONFIG_HW_TEST_LIBC_PRINTF=y
     extra_conf_files:
     - prj_hw_tests.conf
+  libcxx:
+    extra_configs:
+    - CONFIG_HW_TEST_LIBCXX=y
+    extra_conf_files:
+    - prj_hw_tests.conf
   malloc:
     extra_configs:
     - CONFIG_HW_TEST_MALLOC=y
