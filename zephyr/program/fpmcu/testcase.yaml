@@ -59,6 +59,12 @@ tests:
     - CONFIG_PM=n
     extra_conf_files:
     - prj_hw_tests.conf
+  fpsensor_auth_crypto_stateful:
+    extra_configs:
+    - CONFIG_HW_TEST_FPSENSOR_AUTH_CRYPTO_STATEFUL=y
+    - CONFIG_ZTEST_STACK_SIZE=2048
+    extra_conf_files:
+    - prj_hw_tests.conf
   ftrapv:
     extra_configs:
     - CONFIG_HW_TEST_FTRAPV=y

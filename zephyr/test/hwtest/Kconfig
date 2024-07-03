@@ -56,6 +56,11 @@ config HW_TEST_FP_TRANSPORT
 	select ZTEST
 	depends on EC_HOST_CMD
 
+config HW_TEST_FPSENSOR_AUTH_CRYPTO_STATEFUL
+	bool "FP sensor auth crypto stateful test"
+	select ZTEST
+	select MOCK_ROLLBACK
+
 config HW_TEST_FTRAPV
 	bool "ftrapv test"
 	select ZTEST
@@ -151,3 +156,6 @@ config HW_TEST_UTILS_STR
 	select ZTEST
 	help
 	  The test verifies util string functions.
+
+config MOCK_ROLLBACK
+	bool "Mock rollback for tests"
