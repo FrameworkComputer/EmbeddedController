@@ -22,6 +22,6 @@ add_compile_options(-mfloat-abi=hard)
 # libc. This avoids some duplicate symbol errors we would otherwise get.
 # For more details, b/346309204
 execute_process(COMMAND "${CROSS_COMPILE}-clang" --print-resource-dir
-                RESULT_VARIABLE LIBCLANG_RT_PATH)
-add_link_options("${LIBCLANG_RT_PATH}/libclang_rt.builtins-armv7m.a")
+                RESULT_VARIABLE CLANG_RESOURCE_DIR)
+add_link_options("${CLANG_RESOURCE_DIR}/lib/baremetal/libclang_rt.builtins-armv7m.a")
 add_link_options(-lnosys)
