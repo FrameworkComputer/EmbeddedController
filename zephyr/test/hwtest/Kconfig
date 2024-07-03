@@ -73,6 +73,10 @@ config HW_TEST_FPSENSOR_HW
 	bool "FP sensor hw test"
 	select ZTEST
 
+config HW_TEST_FPSENSOR_UTILS
+	bool "FP sensor utils test"
+	select ZTEST
+
 config HW_TEST_FTRAPV
 	bool "ftrapv test"
 	select ZTEST

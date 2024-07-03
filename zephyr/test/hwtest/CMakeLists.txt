@@ -19,6 +19,7 @@ zephyr_library_sources_ifdef(CONFIG_HW_TEST_FPSENSOR_AUTH_CRYPTO_STATEFUL src/fp
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_FPSENSOR_AUTH_CRYPTO_STATELESS src/fpsensor_auth_crypto_stateless.cc)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_FPSENSOR_CRYPTO src/fpsensor_crypto.cc)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_FPSENSOR_HW src/fpsensor_hw.cc)
+zephyr_library_sources_ifdef(CONFIG_HW_TEST_FPSENSOR_UTILS ${PLATFORM_EC}/zephyr/test/fingerprint/task/src/fpsensor_utils.cc)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_FTRAPV src/ftrapv.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_LIBC_PRINTF src/libc_printf.c)
 zephyr_library_sources_ifdef(CONFIG_HW_TEST_MALLOC src/malloc.c)

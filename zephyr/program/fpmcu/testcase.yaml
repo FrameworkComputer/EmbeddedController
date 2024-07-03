@@ -82,6 +82,11 @@ tests:
     - CONFIG_HW_TEST_FPSENSOR_HW=y
     extra_conf_files:
     - prj_hw_tests.conf
+  fpsensor_utils:
+    extra_configs:
+    - CONFIG_HW_TEST_FPSENSOR_UTILS=y
+    extra_conf_files:
+    - prj_hw_tests.conf
   ftrapv:
     extra_configs:
     - CONFIG_HW_TEST_FTRAPV=y
