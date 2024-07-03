@@ -359,7 +359,8 @@ class AllTests:
                 test_name="libc_printf",
                 finish_regexes=[PRINTF_CALLED_REGEX],
             ),
-            TestConfig(test_name="global_initialization"),
+            # Handled by Zephyr - cpp.main.* tests
+            TestConfig(test_name="global_initialization", skip_for_zephyr=True),
             TestConfig(test_name="libcxx"),
             TestConfig(test_name="malloc", imagetype_to_use=ImageType.RO),
             # MPU functionality is handled by Zephyr code.
@@ -550,6 +551,14 @@ class AllTests:
         """Return Zephyr upstream test configs."""
         # Make sure proper paths are added in the twister script, see ZEPHYR_TEST_PATHS
         tests = [
+            TestConfig(
+                zephyr_name="cpp.main.newlib",
+                test_name="zephyr_cpp_newlib",
+            ),
+            TestConfig(
+                zephyr_name="cpp.main.cpp20",
+                test_name="zephyr_cpp_std20",
+            ),
             TestConfig(
                 zephyr_name="drivers.entropy",
                 test_name="zephyr_drivers_entropy",

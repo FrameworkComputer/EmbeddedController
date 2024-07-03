@@ -127,6 +127,7 @@ ZEPHYR_TEST_PATHS = [
     Path("tests/drivers/fuel_gauge/sbs_gauge"),
     Path("tests/drivers/gpio"),
     Path("tests/kernel/poll"),
+    Path("tests/lib/cpp/cxx"),
     Path("tests/subsys/pm"),
     Path("tests/subsys/shell"),
 ]

@@ -9,3 +9,10 @@
 #   platforms:
 #     - native_sim
 #   comment: "Explain why test breaks"
+
+- scenarios:
+    - cpp.main.picolibc
+  platforms:
+    - native_sim
+  comment: "Picolibc detects builtin functions incorrectly for clang,
+            see https://github.com/picolibc/picolibc/issues/805"
