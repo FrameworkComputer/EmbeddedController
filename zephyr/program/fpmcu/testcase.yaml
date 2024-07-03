@@ -77,6 +77,11 @@ tests:
     - CONFIG_ZTEST_STACK_SIZE=9216
     extra_conf_files:
     - prj_hw_tests.conf
+  fpsensor_hw:
+    extra_configs:
+    - CONFIG_HW_TEST_FPSENSOR_HW=y
+    extra_conf_files:
+    - prj_hw_tests.conf
   ftrapv:
     extra_configs:
     - CONFIG_HW_TEST_FTRAPV=y
