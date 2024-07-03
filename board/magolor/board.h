@@ -126,6 +126,10 @@
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50 /* 7b address */
 
+#undef CONFIG_I2C_NACK_RETRY_COUNT
+#define CONFIG_I2C_NACK_RETRY_COUNT 10
+#define CONFIG_SMBUS_PEC
+
 /*
  * I2C pin names for baseboard
  *
