@@ -1,0 +1,20 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_sim.dts>
+#include <dt-bindings/kbd.h>
+
+/ {
+	prochot-vcmp {
+		compatible = "cros-ec,prochot-vcmp";
+		vcmp = <&vcmp>;
+		high-level-mv = <1000>;
+	};
+
+	vcmp: vcmp {
+		compatible = "test-sensor";
+		status = "okay";
+	};
+};

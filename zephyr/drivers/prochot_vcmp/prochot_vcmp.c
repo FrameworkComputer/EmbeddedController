@@ -20,6 +20,8 @@
 #include <zephyr/drivers/sensor/it8xxx2_vcmp.h>
 #elif defined(CONFIG_ADC_CMP_NPCX)
 #include <zephyr/drivers/sensor/adc_cmp_npcx.h>
+#elif defined(CONFIG_TEST)
+#include <test_vcmp_sensor.h>
 #else
 #error Unsupported platform
 #endif
@@ -137,3 +139,10 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(DT_DRV_COMPAT) == 1);
 DEVICE_DT_INST_DEFINE(0, prochot_vcmp_init, NULL, &prochot_vcmp_data,
 		      &prochot_vcmp_cfg, POST_KERNEL,
 		      CONFIG_SENSOR_INIT_PRIORITY, NULL);
+
+#if CONFIG_TEST
+int test_reinit(void)
+{
+	return prochot_vcmp_init(DEVICE_DT_GET(DT_INST(0, DT_DRV_COMPAT)));
+}
+#endif
