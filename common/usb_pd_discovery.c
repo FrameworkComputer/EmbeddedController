@@ -448,7 +448,9 @@ bool is_cable_speed_gen2_capable(int port)
 		return disc->identity.product_t1.p_rev30.ss ==
 			       USB_R30_SS_U32_U40_GEN2 ||
 		       disc->identity.product_t1.p_rev30.ss ==
-			       USB_R30_SS_U40_GEN3;
+			       USB_R30_SS_U40_GEN3 ||
+		       disc->identity.product_t1.p_rev30.ss ==
+			       USB_R30_SS_U40_GEN4;
 	default:
 		return false;
 	}

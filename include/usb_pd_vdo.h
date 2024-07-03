@@ -24,15 +24,15 @@ extern "C" {
 /*
  * ############################################################################
  *
- * Reference: USB Power Delivery Specification Revision 3.0, Version 2.0
- * Updated to ECN released on Feb 07, 2020
+ * Reference: USB Power Delivery Specification Revision 3.2, Version 1.0
+ * Updated to ECN released on October, 2023
  *
  * ############################################################################
  */
 
 /*****************************************************************************/
 /*
- * Table 6-29 ID Header VDO
+ * Table 6-34 ID Header VDO
  * -------------------------------------------------------------
  * <31>    : USB Communications Capable as USB Host
  * <30>    : USB Communications Capable as a USB Device
@@ -81,7 +81,7 @@ enum idh_ptype_dfp {
 };
 /*****************************************************************************/
 /*
- * Table 6-33 Cert Stat VDO (Note: same as Revision 2.0)
+ * Table 6-38 Cert Stat VDO (Note: same as Revision 2.0)
  * -------------------------------------------------------------
  * <31:0>  : XID assigned by USB-IF
  */
@@ -91,7 +91,7 @@ struct cert_stat_vdo {
 
 /*****************************************************************************/
 /*
- * Table 6-34 Product VDO (Note: same as Revision 2.0)
+ * Table 6-39 Product VDO (Note: same as Revision 2.0)
  * -------------------------------------------------------------
  * <31:16> : USB Product ID
  * <15:0>  : bcdDevice
@@ -103,7 +103,7 @@ struct product_vdo {
 
 /*****************************************************************************/
 /*
- * USB PD r 3.1 v 1.8 Table 6-39 UFP VDO
+ * USB PD r 3.2 v 1.0 Table 6-40 UFP VDO
  * -------------------------------------------------------------
  * <31:29> : UFP VDO version
  *           Version 1.0 = 000b
@@ -154,7 +154,8 @@ struct product_vdo {
  *           001b = USB 3.2 Gen1
  *           010b = USB 3.2/USB4 Gen2
  *           011b = USB4 Gen3
- *           100b…111b = Reserved, Shall Not be used
+ *           100b = USB4 Gen4
+ *           101b…111b = Reserved, Shall Not be used
  */
 
 enum usb_rev30_ss {
@@ -162,7 +163,7 @@ enum usb_rev30_ss {
 	USB_R30_SS_U32_U40_GEN1,
 	USB_R30_SS_U32_U40_GEN2,
 	USB_R30_SS_U40_GEN3,
-	USB_R30_SS_RES_4,
+	USB_R30_SS_U40_GEN4,
 	USB_R30_SS_RES_5,
 	USB_R30_SS_RES_6,
 	USB_R30_SS_RES_7,
@@ -216,7 +217,7 @@ union ufp_vdo_rev30 {
 
 /*****************************************************************************/
 /*
- * Table 6-37 DFP VDO
+ * Table 6-41 DFP VDO
  * -------------------------------------------------------------
  * <31:29> : DFP VDO version
  *           Version 1.0 = 000b
@@ -247,7 +248,7 @@ union ufp_vdo_rev30 {
 
 /*****************************************************************************/
 /*
- * Table 6-38 Passive Cable VDO
+ * Table 6-42 Passive Cable VDO
  * -------------------------------------------------------------
  * <31:28> : HW Version
  *           0000b..1111b assigned by the VID owner
@@ -303,7 +304,8 @@ union ufp_vdo_rev30 {
  *           001b = [USB 3.2]/[USB4] Gen1
  *           010b = [USB 3.2]/[USB4] Gen2
  *           011b = [USB4] Gen3
- *           100b..111b = Reserved, Shall Not be used
+ *           100b = [USB4] Gen4
+ *           101b..111b = Reserved, Shall Not be used
  */
 
 /*
@@ -358,7 +360,7 @@ union passive_cable_vdo_rev30 {
 
 /*****************************************************************************/
 /*
- * Table 6-39 Active Cable VDO 1
+ * Table 6-43 Active Cable VDO 1
  * -------------------------------------------------------------
  * <31:28> : HW Version 0000b..1111b assigned by the VID owner
  * <27:24> : Firmware Version 0000b..1111b assigned by the VID owner
@@ -419,7 +421,8 @@ union passive_cable_vdo_rev30 {
  *           001b = [USB 3.2]/[USB4] Gen1
  *           010b = [USB 3.2]/[USB4] Gen2
  *           011b = [USB4] Gen3
- *           100b..111b = Reserved, Shall Not be used
+ *           100b = [USB4] Gen4
+ *           101b..111b = Reserved, Shall Not be used
  */
 
 #define VDO_REV30_ACTIVE_1(ss, sop_pp, vbus_cable, vbus_cur, sbu_type,   \
@@ -457,7 +460,7 @@ union active_cable_vdo1_rev30 {
 
 /*****************************************************************************/
 /*
- * Table 6-40 Active Cable VDO 2
+ * Table 6-44 Active Cable VDO 2
  * -------------------------------------------------------------
  * <31:24> : Maximum Operating Temperature
  *           The maximum internal operating temperature.
@@ -594,7 +597,7 @@ union active_cable_vdo2_rev30 {
 
 /*****************************************************************************/
 /*
- * Table 6-42 VPD VDO
+ * Table 6-45 VPD VDO
  * -------------------------------------------------------------
  * <31:28> : HW Version
  *           0000b..1111b assigned by the VID owner
@@ -608,9 +611,9 @@ union active_cable_vdo2_rev30 {
  * <16:15> : Maximum VBUS Voltage
  *           Maximum Cable VBUS Voltage:
  *           00b – 20V
- *           01b – 30V
- *           10b – 40V
- *           11b – 50V
+ *           01b – 30V [Deprecated]
+ *           10b – 40V [Deprecated]
+ *           11b – 50V [Deprecated]
  * <14>    : Charge Through Current Support
  *           Charge Through Support bit=1b:
  *           0b - 3A capable;
@@ -670,7 +673,7 @@ enum vpd_cts_support {
 /*
  * Table 6-23 ID Header VDO
  *
- * Note: PD 3.0 ID header (Table 6-29, PD Revision 3.0 Spec) makes use of
+ * Note: PD 3.0 ID header (Table 6-34, PD Revision 3.1 Spec) makes use of
  * reserved bits 25:21 for a connector type and product type (DFP).  It is not
  * advised to create a structure using these bits however, as the DFP product
  * type crosses a byte boundary and causes problems with gcc's structure
@@ -966,7 +969,7 @@ enum ama_usb_ss {
 };
 
 /*
- * Enter USB Data Object (Ref: USB PD 3.2 Version 2.0 Table 6-47)
+ * Enter USB Data Object (Ref: USB PD 3.2 Version 1.0 Table 6-50)
  * -----------------------
  * <31>    : Reserved
  * <30:28> : USB Mode
@@ -986,7 +989,8 @@ enum ama_usb_ss {
  *           001b - [USB 3.2] Gen1
  *           010b - [USB 3.2] Gen2 and [USB4] Gen2
  *           011b - [USB4] Gen3
- *           111b..100b: Reserved, Shall not be used
+ *           100b - [USB4] Gen4
+ *           101b..111b: Reserved, Shall not be used
  * <20:19> : Cable Type
  *           00b - Passive
  *           01b - Active Re-timer

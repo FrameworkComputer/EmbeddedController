@@ -2399,6 +2399,7 @@ void pd_ufp_enable_hpd_send(int port);
  * @return      True if Cable supports speed USB_R20_SS_U31_GEN1_GEN2/
  *                                           USB_R30_SS_U32_U40_GEN2/
  *                                           USB_R30_SS_U40_GEN3,
+ *                                           USB_R30_SS_U40_GEN4
  *             False otherwise
  */
 bool is_cable_speed_gen2_capable(int port);
