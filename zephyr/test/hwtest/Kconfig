@@ -181,6 +181,12 @@ config HW_TEST_STDLIB
 	help
 	  The test builtin stdlib functions used by Zephyr.
 
+config HW_TEST_TIMER
+	bool "timer test"
+	select ZTEST
+	help
+	  The test verifies some functions defined in timer.h.
+
 config HW_TEST_SYSTEM_IS_LOCKED
 	bool "system_is_locked test"
 	select ZTEST

@@ -42,6 +42,7 @@ test/static_if.c
 test/std_vector.cc
 test/stdlib.c
 test/system_is_locked.c
+test/timer.cc
 test/utils_str.c
 test/utils.c"
 
