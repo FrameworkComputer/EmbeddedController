@@ -43,6 +43,7 @@ test/std_vector.cc
 test/stdlib.c
 test/system_is_locked.c
 test/timer.cc
+test/tpm_seed_clear.cc
 test/utils_str.c
 test/utils.c"
 

@@ -187,6 +187,12 @@ config HW_TEST_TIMER
 	help
 	  The test verifies some functions defined in timer.h.
 
+config HW_TEST_TPM_SEED_CLEAR
+	bool "TPM seed clear test"
+	select ZTEST
+	help
+	  The test verifies if the tpm seed is cleared after reboot.
+
 config HW_TEST_SYSTEM_IS_LOCKED
 	bool "system_is_locked test"
 	select ZTEST
