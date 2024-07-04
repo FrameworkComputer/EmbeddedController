@@ -457,7 +457,8 @@ class AllTests:
             # and it is verified by the kernel.poll test.
             TestConfig(test_name="timer_dos", skip_for_zephyr=True),
             TestConfig(test_name="tpm_seed_clear"),
-            TestConfig(test_name="uart"),
+            # UART buffering is not used with Zephyr.
+            TestConfig(test_name="uart", skip_for_zephyr=True),
             TestConfig(test_name="unaligned_access"),
             TestConfig(test_name="unaligned_access_benchmark"),
             TestConfig(test_name="utils", timeout_secs=25),
