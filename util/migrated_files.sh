@@ -34,6 +34,7 @@ test/panic.c
 test/printf.c
 test/queue.c
 test/restricted_console.c
+test/rng_benchmark.cc
 test/rollback.c
 test/rollback_entropy.c
 test/sha256.c

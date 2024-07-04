@@ -110,6 +110,7 @@ EC_TEST_PATHS = [
 # Paths under ZEPHYR_BASE that we also wish to search for test cases.
 ZEPHYR_TEST_PATHS = [
     Path("tests/drivers/counter/counter_basic_api"),
+    Path("tests/drivers/entropy"),
     Path("tests/drivers/flash/stm32"),
     Path("tests/drivers/fuel_gauge/sbs_gauge"),
     Path("tests/drivers/gpio"),

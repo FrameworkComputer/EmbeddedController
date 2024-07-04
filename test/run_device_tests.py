@@ -550,6 +550,10 @@ class AllTests:
         # Make sure proper paths are added in the twister script, see ZEPHYR_TEST_PATHS
         tests = [
             TestConfig(
+                zephyr_name="drivers.entropy",
+                test_name="zephyr_drivers_entropy",
+            ),
+            TestConfig(
                 zephyr_name="drivers.flash.stm32.f4",
                 test_name="zephyr_flash_stm32f4",
                 exclude_boards=[DARTMONKEY, HELIPILOT],
