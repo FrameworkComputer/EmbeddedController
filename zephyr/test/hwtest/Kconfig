@@ -169,6 +169,12 @@ config HW_TEST_STATIC_IF
 	help
 	  The test verifies SHA256 functions with forced unrolled config.
 
+config HW_TEST_STD_VECTOR
+	bool "std_vector test"
+	select ZTEST
+	help
+	  The test verifies std::vector and dynamic memory allocation.
+
 config HW_TEST_STDLIB
 	bool "stdlib test"
 	select ZTEST

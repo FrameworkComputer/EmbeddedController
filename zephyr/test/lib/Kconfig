@@ -2,6 +2,11 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+config TEST_LIB_STD_VECTOR
+	bool "std_vector tests"
+	help
+	  Basic test of std::vector and dynamic memory allocation.
+
 config TEST_LIB_STDLIB
 	bool "stdlib tests"
 	help

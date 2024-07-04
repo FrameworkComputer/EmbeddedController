@@ -163,6 +163,11 @@ tests:
     - CONFIG_HW_TEST_STATIC_IF=y
     extra_conf_files:
     - prj_hw_tests.conf
+  std_vector:
+    extra_configs:
+    - CONFIG_HW_TEST_STD_VECTOR=y
+    extra_conf_files:
+    - prj_hw_tests.conf
   system_is_locked:
     extra_configs:
     - CONFIG_HW_TEST_SYSTEM_IS_LOCKED=y
