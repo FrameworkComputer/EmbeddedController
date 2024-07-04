@@ -11,6 +11,7 @@
 #include <zephyr/fff.h>
 #include <zephyr/input/input.h>
 #include <zephyr/input/input_kbd_matrix.h>
+#include <zephyr/shell/shell_dummy.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/ztest.h>
 
@@ -142,8 +143,6 @@ ZTEST(keyboard_input, test_keyboard_cols)
 {
 	zassert_equal(keyboard_cols, 10);
 }
-
-#include <zephyr/shell/shell_dummy.h>
 
 ZTEST(keyboard_input, test_ksstate)
 {
