@@ -66,6 +66,14 @@
 		gpio_ec_cbi_wp: ec_cbi_wp {
 			gpios = <&gpiod 0 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
+		gpio_gsc_acok_od: gsc_acok_od {
+			gpios = <&gpioa 4 (GPIO_INPUT)>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		gpio_gsc_ec_pwr_btn_odl: gsc_ec_pwr_btn_odl {
+			gpios = <&gpioa 5 (GPIO_INPUT)>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
 	};
 
 	/* Rotation matrix used by drivers. */
@@ -238,6 +246,12 @@
 	};
 };
 
+&adc0 {
+	pinctrl-0 = <&adc0_ch0_gpi0_default
+		&adc0_ch5_gpi5_default
+		&adc0_ch6_gpi6_default>;
+};
+
 /*
  * When CBI in flash is enabled, setup RO flash layout as follows:
  *   RO binary:    0x00000:0x5DFFF
@@ -306,4 +320,15 @@
 
 	/delete-node/ syv682x@40;
 	/delete-node/ tusb1046-mux-1@12;
+};
+
+&i2c5 {
+	pinctrl-0 = <&i2c5_clk_gpe1_default
+		&i2c5_data_gpe2_default>;
+	pinctrl-names = "default";
+};
+
+&i2c5ALT {
+	/delete-property/ pinctrl-0;
+	/delete-property/ pinctrl-names;
 };
