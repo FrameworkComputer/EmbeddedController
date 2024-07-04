@@ -187,18 +187,8 @@
 			compatible = "named-usbc-port";
 			reg = <0>;
 			chg = <&charger>;
-			alt-mode = <&pdc_data_port0>;
 			pdc = <&pdc_power_p0>;
-			usb-mux-chain-0 {
-				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&virtual_mux_0>;
-			};
 			policy = <&cros_policy>;
-		};
-		port0-muxes {
-			virtual_mux_0: virtual-mux-0 {
-				compatible = "cros-ec,usbc-mux-virtual";
-			};
 		};
 	};
 
@@ -290,14 +280,7 @@
 };
 
 &i2c4_1 {
-	label = "I2C_PORT_PMC_PD";
 	clock-frequency = <I2C_BITRATE_FAST>;
-
-	pdc_data_port0: rts@69 {
-		compatible = "intel,pd-altmode";
-		reg = <0x69>;
-		irq-gpios = <&gpio3 6 GPIO_ACTIVE_LOW>;
-	};
 };
 
 &i2c7_0 {
