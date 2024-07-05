@@ -1751,9 +1751,7 @@ static int ucsi_tunnel_disabled;
 void cypd_interrupt_handler_task(void *p)
 {
 	int i, j, evt;
-#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
-	int events;
-#endif /* CONFIG_PD_CCG6_ERROR_RECOVERY */
+
 	/* Initialize all charge suppliers to 0 */
 	for (i = 0; i < CHARGE_PORT_COUNT; i++) {
 		for (j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
@@ -1803,29 +1801,6 @@ void cypd_interrupt_handler_task(void *p)
 			cypd_handle_state(1);
 			task_wait_event_mask(TASK_EVENT_TIMER,10);
 		}
-
-#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
-
-		if (evt & CCG_EVT_PORT_DISABLE) {
-			CPRINTS("CCG_EVT_PORT_DISABLE");
-			cypd_reconnect_port_disable(0);
-			cypd_reconnect_port_disable(1);
-			/*
-			 * In the specification section 4.2.3.14, stopping an active
-			 * PD port can take a long time (~1 second) in case VBus is
-			 * being provided andneeds to be discharged
-			 */
-			events = task_wait_event_mask(TASK_EVENT_TIMER, 1000*MSEC);
-			if (events & TASK_EVENT_TIMER)
-				task_set_event(TASK_ID_CYPD, CCG_EVT_PORT_ENABLE);
-		}
-
-		if (evt & CCG_EVT_PORT_ENABLE) {
-			CPRINTS("CCG_EVT_PORT_ENABLE");
-			cypd_reconnect_port_enable(0);
-			cypd_reconnect_port_enable(1);
-		}
-#endif /* CONFIG_PD_CCG6_ERROR_RECOVERY */
 
 		if (evt & CCG_EVT_PDO_INIT_0) {
 			/* update new PDO format to select pdo register */

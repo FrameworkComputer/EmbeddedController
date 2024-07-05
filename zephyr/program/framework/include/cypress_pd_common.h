@@ -57,7 +57,7 @@
 #define CCG_MUX_CFG_REG			0x0041
 #define CCG_DEINIT_PORT_REG		0x0042
 #elif defined(CONFIG_PD_CHIP_CCG6)
-#define CCG_DPM_CMD_REG			0x004C
+#define CCG_DPM_CMD_REG			0x004B
 #define CCG_MUX_CFG_REG			0x004D
 #define CCG_DEINIT_PORT_REG		0x004E
 #ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
@@ -692,30 +692,6 @@ void exit_tbt_mode(int controller);
  * @return int
  */
 int check_tbt_mode(int controller);
-
-#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
-/**
- * Function can cmd PD to do disconnect both ports.
- *
- * @param controller	PD chip controller
- * @return int
- */
-int cypd_reconnect_port_disable(int controller);
-
-/**
- * Function can cmd PD to do connect both ports.
- *
- * @param controller	PD chip controller
- * @return int
- */
-int cypd_reconnect_port_enable(int controller);
-
-/**
- * Delay 100 MSEC execution PD event CCG_EVT_PORT_DISABLE
- */
-void cypd_reconnect(void);
-
-#endif /* CONFIG_PD_CCG6_ERROR_RECOVERY */
 
 #ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
 /**

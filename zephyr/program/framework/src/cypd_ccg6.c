@@ -308,24 +308,46 @@ int board_set_active_charge_port(int charge_port)
 #endif /* CONFIG_PD_COMMON_VBUS_CONTROL */
 
 #ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
-
 /*****************************************************************
  * Error Recovery Functions
  ****************************************************************/
 
-static bool reconnect_flag;
-void cypd_set_error_recovery(void)
+static void perform_error_recovery(int controller)
 {
 	int i;
+	uint8_t data[2] = {0x00, CCG_PD_USER_CMD_TYPEC_ERR_RECOVERY};
+	uint32_t batt_os_percentage = get_system_percentage();
 
-	for (i = 0;  i < PD_CHIP_COUNT; i++) {
-		/* We use port reconnect (0x2C) to replace error recovery (0xC1) for GRL issue.
-		 * GRL FV 3.1.2.3.
-		 * 0xC0 means no recovery.
-		 */
-		cypd_write_reg8_wait_ack(i, CCG_SYS_PWR_STATE, 0xC0);
+	if (controller < 2)
+		for (i = 0; i < 2; i++) {
+			if (!((controller*2 + i) == get_active_charge_pd_port() &&
+				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
+
+				data[0] = PORT_TO_CONTROLLER_PORT(i);
+				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
+									CCG_DPM_CMD_REG,
+									data, 2);
+			}
+		}
+	else {
+		/* Hard reset all ports that are not supplying power in dead battery mode */
+		for (i = 0; i < PD_PORT_COUNT; i++) {
+			if (!(i == get_active_charge_pd_port() &&
+			    battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
+
+				if ((pd_port_states[i].c_state == CCG_STATUS_SOURCE) &&
+				   (batt_os_percentage < 3) && (i == get_active_charge_pd_port()))
+					continue;
+
+				data[0] = PORT_TO_CONTROLLER_PORT(i);
+				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
+									CCG_DPM_CMD_REG,
+									data, 2);
+			}
+		}
 	}
 }
+#endif /* CONFIG_PD_CCG6_ERROR_RECOVERY */
 
 void update_system_power_state(int controller)
 {
@@ -342,16 +364,12 @@ void update_system_power_state(int controller)
 		/* Do not update the same state again */
 		if (pre_state != CCG_POWERSTATE_S5)
 			cypd_set_power_state(CCG_POWERSTATE_S5, controller);
-
 		pre_state = CCG_POWERSTATE_S5;
-		reconnect_flag = true;
 		break;
 	case POWER_S3:
 	case POWER_S4S3:
 	case POWER_S5S3:
 	case POWER_S0S3:
-	case POWER_S0ix:
-	case POWER_S0S0ix: /* S0 -> S0ix */
 		/* Do not update the same state again */
 		if (pre_state != CCG_POWERSTATE_S3)
 			cypd_set_power_state(CCG_POWERSTATE_S3, controller);
@@ -361,131 +379,26 @@ void update_system_power_state(int controller)
 	case POWER_S3S0:
 	case POWER_S0ixS0: /* S0ix -> S0 */
 		if (pre_state != CCG_POWERSTATE_S0) {
-			cypd_set_error_recovery();
 			cypd_set_power_state(CCG_POWERSTATE_S0, controller);
+#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
+			/* only execute the error recovery when the system power on */
+			if (pre_state != CCG_POWERSTATE_S0ix)
+				perform_error_recovery(controller);
+#endif
 		}
 		pre_state = CCG_POWERSTATE_S0;
-
-		if (reconnect_flag) {
-			CPRINTS("CYPD reconnect");
-			cypd_reconnect();
-			reconnect_flag = false;
-		}
 		break;
-	default:
-		break;
-	}
-}
-
-int cypd_reconnect_port_disable(int controller)
-{
-	int rv;
-	uint8_t pd_status_reg[4];
-	int port_power_role;
-	int portEnable = 0; /* default disable all port*/
-	bool battery_can_discharge = (battery_is_present() == BP_YES) &
-			battery_get_disconnect_state();
-
-	/* check the first port's status */
-	rv = cypd_read_reg_block(controller, CCG_PD_STATUS_REG(0), pd_status_reg, 4);
-	if (rv != EC_SUCCESS)
-		CPRINTS("CCG_PD_STATUS_REG failed");
-
-	port_power_role = pd_status_reg[1] & BIT(0);
-	/* Does not disable the source port */
-	if (port_power_role == PD_ROLE_SINK && (pd_status_reg[1] & BIT(2)) == BIT(2))
-		portEnable |= BIT(0);
-
-	/* check the second port's status */
-	rv = cypd_read_reg_block(controller, CCG_PD_STATUS_REG(1), pd_status_reg, 4);
-	if (rv != EC_SUCCESS)
-		CPRINTS("CCG_PD_STATUS_REG failed");
-
-	port_power_role = pd_status_reg[1] & BIT(0);
-	/* Does not disable the source port */
-	if (port_power_role == PD_ROLE_SINK && (pd_status_reg[1] & BIT(2)) == BIT(2))
-		portEnable |= BIT(1);
-
-	/* If there is DC, just force reconnect port. */
-	if (battery_can_discharge)
-		portEnable = 0x0;
-
-	rv = cypd_write_reg8(controller, CCG_PDPORT_ENABLE_REG, portEnable);
-	if (rv != EC_SUCCESS)
-		return rv;
-
-	CPRINTS("disable controller: %d, Port: 0x%02x", controller, portEnable);
-
-	return rv;
-}
-
-int cypd_reconnect_port_enable(int controller)
-{
-	int rv;
-
-	rv = cypd_write_reg8(controller, CCG_PDPORT_ENABLE_REG, 3);
-	if (rv != EC_SUCCESS)
-		return rv;
-
-	CPRINTS("enable controller: %d", controller);
-
-	return rv;
-}
-
-void cypd_reconnect(void)
-{
-	int events;
-
-	/* trigger port reconnect, will check ac status while disable port */
-	events = task_wait_event_mask(TASK_EVENT_TIMER, 100*MSEC);
-	if (events & TASK_EVENT_TIMER)
-		task_set_event(TASK_ID_CYPD, CCG_EVT_PORT_DISABLE);
-}
-#else
-
-void update_system_power_state(int controller)
-{
-	enum power_state ps = power_get_state();
-	/* CCG6 does not support power state G3, just for initial state */
-	static uint8_t pre_state = CCG_POWERSTATE_G3;
-
-	switch (ps) {
-	case POWER_G3:
-	case POWER_S5G3:
-	case POWER_S5:
-	case POWER_S3S5:
-	case POWER_S4S5:
-		/* Do not update the same state again */
-		if (pre_state != CCG_POWERSTATE_S5)
-			cypd_set_power_state(CCG_POWERSTATE_S5, controller);
-		pre_state = CCG_POWERSTATE_S5;
-		break;
-	case POWER_S3:
-	case POWER_S4S3:
-	case POWER_S5S3:
-	case POWER_S0S3:
 	case POWER_S0ix:
 	case POWER_S0S0ix: /* S0 -> S0ix */
 		/* Do not update the same state again */
-		if (pre_state != CCG_POWERSTATE_S3)
+		if (pre_state != CCG_POWERSTATE_S0ix)
 			cypd_set_power_state(CCG_POWERSTATE_S3, controller);
-		pre_state = CCG_POWERSTATE_S3;
-		break;
-	case POWER_S0:
-	case POWER_S3S0:
-	case POWER_S0ixS0: /* S0ix -> S0 */
-		if (pre_state != CCG_POWERSTATE_S0)
-			cypd_set_power_state(CCG_POWERSTATE_S0, controller);
-		pre_state = CCG_POWERSTATE_S0;
+		pre_state = CCG_POWERSTATE_S0ix;
 		break;
 	default:
 		break;
 	}
-
 }
-
-#endif /* PD_CCG6_ERROR_RECOVERY */
-
 
 /*****************************************************************
  * BB Retimer Functions
