@@ -883,13 +883,6 @@ menuconfig PLATFORM_EC_TIMER
 	  This option is needed by many features in the EC. Disabling it will
 	  likely cause build errors.
 
-
-config PLATFORM_EC_ALLOW_UNALIGNED_ACCESS
-	bool "Allow Unaligned Access"
-	help
-	  Allow unaligned access by removing the unaligned trap. This can allow
-	  enabling this configuration for different boards.
-
 config PLATFORM_EC_VBOOT_EFS2
 	bool "EFS2 verified EC boot"
 	default y if !SOC_POSIX
