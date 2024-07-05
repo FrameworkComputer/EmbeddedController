@@ -199,6 +199,12 @@ config HW_TEST_SYSTEM_IS_LOCKED
 	help
 	  The test verifies system_is_locked function with wp on/off.
 
+config HW_TEST_UNALIGNED_ACCESS
+	bool "Unaligned access test"
+	select ZTEST
+	help
+	  The test verifies unaligned access works properly.
+
 config HW_TEST_UTILS
 	bool "Utils test"
 	select ZTEST
