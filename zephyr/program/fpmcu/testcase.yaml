@@ -188,6 +188,11 @@ tests:
     - CONFIG_HW_TEST_UNALIGNED_ACCESS=y
     extra_conf_files:
     - prj_hw_tests.conf
+  unaligned_access_benchmark:
+    extra_configs:
+    - CONFIG_HW_TEST_UNALIGNED_ACCESS_BENCHMARK=y
+    extra_conf_files:
+    - prj_hw_tests.conf
   utils:
     extra_configs:
     - CONFIG_HW_TEST_UTILS=y

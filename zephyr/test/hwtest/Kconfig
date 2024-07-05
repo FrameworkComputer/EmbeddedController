@@ -205,6 +205,12 @@ config HW_TEST_UNALIGNED_ACCESS
 	help
 	  The test verifies unaligned access works properly.
 
+config HW_TEST_UNALIGNED_ACCESS_BENCHMARK
+	bool "Unaligned access benchmark test"
+	select ZTEST
+	help
+	  The benchmark test of unaligned access.
+
 config HW_TEST_UTILS
 	bool "Utils test"
 	select ZTEST
