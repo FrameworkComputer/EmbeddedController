@@ -12,6 +12,7 @@
 #include "console.h"
 #include "driver/tcpm/mt6370.h"
 #include "ec_commands.h"
+#include "hooks.h"
 #include "util.h"
 
 #define TEMP_OUT_OF_RANGE TEMP_ZONE_COUNT
@@ -27,6 +28,11 @@
 #define BAT_LEVEL_PD_LIMIT 85
 
 #define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
+
+#ifdef BATTERY_PROTECTION_POLICY
+#define BATTERY_PROTECTION_TIMEOUT_HOURS 24
+static int time_minute = -1;
+#endif
 
 enum battery_type { BATTERY_CPT = 0, BATTERY_COUNT };
 
@@ -190,6 +196,21 @@ int charger_profile_override(struct charge_state_data *curr)
 		}
 	}
 
+#ifdef BATTERY_PROTECTION_POLICY
+	/*
+	 *  In S3 and S5, the battery voltage will be limited to 4.1V after 24
+	 * hours.
+	 */
+	if (curr->state == ST_CHARGE || curr->state == ST_PRECHARGE) {
+		if (time_minute == (BATTERY_PROTECTION_TIMEOUT_HOURS * 60)) {
+			curr->requested_voltage =
+				MIN(4100, curr->requested_voltage);
+			curr->requested_current =
+				MIN(1, curr->requested_current);
+		}
+	}
+#endif
+
 #ifdef VARIANT_KUKUI_CHARGER_MT6370
 	mt6370_charger_profile_override(curr);
 #endif /* CONFIG_CHARGER_MT6370 */
@@ -218,3 +239,28 @@ int get_battery_manufacturer_name(char *dest, int size)
 	strzcpy(dest, name[BATT_ID], size);
 	return EC_SUCCESS;
 }
+
+#ifdef BATTERY_PROTECTION_POLICY
+static void battery_protection_enable(void);
+DECLARE_DEFERRED(battery_protection_enable);
+
+static void battery_protection_enable(void)
+{
+	time_minute++;
+	hook_call_deferred(&battery_protection_enable_data, 1 * MINUTE);
+	if (time_minute == (BATTERY_PROTECTION_TIMEOUT_HOURS * 60))
+		hook_call_deferred(&battery_protection_enable_data, -1);
+}
+DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, battery_protection_enable,
+	     HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, battery_protection_enable,
+	     HOOK_PRIO_DEFAULT);
+
+static void battery_protection_disable(void)
+{
+	hook_call_deferred(&battery_protection_enable_data, -1);
+	time_minute = -1;
+}
+DECLARE_HOOK(HOOK_CHIPSET_RESUME, battery_protection_disable,
+	     HOOK_PRIO_DEFAULT);
+#endif
