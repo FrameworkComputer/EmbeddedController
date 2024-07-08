@@ -1087,22 +1087,14 @@ static void task_ucsi(struct pdc_data_t *data, enum ucsi_command_t ucsi_command)
 		}
 		break;
 	case CMD_SET_UOR:
-		if (data->uor.swap_to_dfp) {
-			cmd_data.data[2] |= (1 << 7);
-		} else if (data->uor.swap_to_ufp) {
-			cmd_data.data[3] = 1;
-		} else if (data->uor.accept_dr_swap) {
-			cmd_data.data[3] = 2;
-		}
+		cmd_data.data[2] |= (data->uor.swap_to_dfp << 7);
+		cmd_data.data[3] = (data->uor.swap_to_ufp |
+				    (data->uor.accept_dr_swap << 1));
 		break;
 	case CMD_SET_PDR:
-		if (data->pdr.swap_to_src) {
-			cmd_data.data[2] |= (1 << 7);
-		} else if (data->pdr.swap_to_snk) {
-			cmd_data.data[3] = 1;
-		} else if (data->pdr.accept_pr_swap) {
-			cmd_data.data[3] = 2;
-		}
+		cmd_data.data[2] |= (data->pdr.swap_to_src << 7);
+		cmd_data.data[3] = (data->pdr.swap_to_snk |
+				    (data->pdr.accept_pr_swap << 1));
 		break;
 	case CMD_SET_NOTIFICATION_ENABLE:
 		*(uint32_t *)&cmd_data.data[2] = cfg->bits.raw_value;
