@@ -10,7 +10,6 @@
 / {
 	chosen {
 		cros-ec,flash-controller = &cros_flash;
-		/delete-property/ zephyr,code-partition;
 	};
 
 	cros_flash: cros-flash {
@@ -32,33 +31,24 @@
 	/delete-node/ leds;
 
 	flash-controller@0 {
-		reg = <0 DT_SIZE_M(1)>;
-
 		flash@0 {
-			reg = <0 DT_SIZE_M(1)>;
-
-			/delete-node/ partitions;
-
 			partitions {
 				compatible = "fixed-partitions";
-				#address-cells = <1>;
-				#size-cells = <1>;
-
-				ro: ro@800000 {
+				ro: ro@0x100000 {
 					label = "ro";
-					reg = <0 DT_SIZE_K(256)>;
+					reg = <0x100000 0x40000>;
 				};
-				rw: rw@840000 {
+				rw: rw@0x140000 {
 					label = "rw";
-					reg = <0x40000 DT_SIZE_K(256)>;
+					reg = <0x140000 0x40000>;
 				};
-				rollback0: rollback0@880000 {
+				rollback0: rollback0@0x180000 {
 					label = "rollback0";
-					reg = <0x80000 DT_SIZE_K(4)>;
+					reg = <0x180000 0x1000>;
 				};
-				rollback1: rollback1@881000 {
+				rollback1: rollback1@0x181000 {
 					label = "rollback1";
-					reg = <0x81000 DT_SIZE_K(4)>;
+					reg = <0x181000 0x1000>;
 				};
 			};
 		};
