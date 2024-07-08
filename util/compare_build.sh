@@ -40,7 +40,7 @@
 . "${SHFLAGS:-/usr/share/misc/shflags}" || exit 1
 
 FLAGS_PRIVATE_DEFAULT="${FLAGS_FALSE}"
-if [[ -d private ]]; then
+if [[ -d ../ec-private && -d ../fingerprint ]]; then
   FLAGS_PRIVATE_DEFAULT="${FLAGS_TRUE}"
 fi
 
@@ -218,8 +218,9 @@ printf "%s\n" "${BOARDS[@]}" | sort | column
 # Symbolically linked directories
 LINKS=( )
 if [[ "${FLAGS_private}" == "${FLAGS_TRUE}" ]]; then
-  echo "# Requesting private directory link"
-  LINKS+=( private )
+  echo "# Requesting ec-private and fingerprint directory links"
+  LINKS+=( ec-private )
+  LINKS+=( fingerprint )
 fi
 
 ##########################################################################
@@ -233,6 +234,7 @@ fi
 echo "# Preparing Makefile"
 cat > "${TMP_DIR}/Makefile" <<HEREDOC
 ORIGIN ?= $(realpath .)
+PARENT_DIR ?= $(realpath ../)
 BORINGSSL_DIR ?= $(realpath ../../third_party/boringssl)
 CRYPTOC_DIR ?= $(realpath ../../third_party/cryptoc)
 ZEPHYR_BASE ?= $(realpath ../../../src/third_party/zephyr/main)
@@ -243,14 +245,14 @@ LINKS ?= ${LINKS[*]}
 all: build-${OLD_REF} build-${NEW_REF}
 
 ec-%:
-	git clone --quiet --no-checkout --shared \$(ORIGIN) \$@
-	git -C \$@ checkout --quiet \$(@:ec-%=%)
+	git clone --quiet --no-checkout --shared \$(ORIGIN) \$(addprefix \$@/, ec)
+	git -C \$(addprefix \$@/, ec) checkout --quiet \$(@:ec-%=%)
 ifneq (\$(LINKS),)
-	ln -s \$(addprefix \$(ORIGIN)/,\$(LINKS)) \$@
+	ln -s \$(addprefix \$(PARENT_DIR)/,\$(LINKS)) \$@
 endif
 
 build-%: ec-%
-	\$(MAKE) --no-print-directory -C \$(@:build-%=ec-%)                   \\
+	\$(MAKE) --no-print-directory -C \$(@:build-%=\$(addprefix ec-%/, ec))  \\
 		STATIC_VERSION=1                                              \\
 		BORINGSSL_DIR=\$(BORINGSSL_DIR)                               \\
 		CRYPTOC_DIR=\$(CRYPTOC_DIR)                                   \\
@@ -260,9 +262,9 @@ build-%: ec-%
 	@mkdir -p \$@
 	@for b in \$(BOARDS); do	                                      \\
 		printf "  CP -l   '%s' to '%s'\n"                             \\
-			"\$(@:build-%=ec-%)/build/\$\$b/ec.bin"               \\
+			"\$(@:build-%=ec-%)/ec/build/\$\$b/ec.bin"               \\
                         "\$@/\$\$b-ec.bin";                                   \\
-		cp -l \$(@:build-%=ec-%)/build/\$\$b/ec.bin \$@/\$\$b-ec.bin; \\
+		cp -l \$(@:build-%=ec-%)/ec/build/\$\$b/ec.bin \$@/\$\$b-ec.bin; \\
 	done
 
 # So that make doesn't try to remove them
