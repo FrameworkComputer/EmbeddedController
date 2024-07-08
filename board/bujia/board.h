@@ -116,6 +116,7 @@
 /* Fan feature */
 #define CONFIG_FANS FAN_CH_COUNT
 #define CONFIG_CUSTOM_FAN_CONTROL
+#define RPM_DEVIATION 1
 
 /* Include math_util for bitmask_uint64 used in pd_timers */
 #define CONFIG_MATH_UTIL
