@@ -65,28 +65,28 @@ ZTEST(keyboard_input, test_keyboard_input_enable_disable)
 	zassert_equal(keyboard_state_changed_fake.call_count, 1);
 
 	/* disable A */
-	keyboard_scan_enable(0, KB_SCAN_DISABLE_A);
+	keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_CLOSED);
 
 	input_report_key(fake_dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
 
 	zassert_equal(keyboard_state_changed_fake.call_count, 1);
 
 	/* disable B */
-	keyboard_scan_enable(0, KB_SCAN_DISABLE_B);
+	keyboard_scan_enable(0, KB_SCAN_DISABLE_POWER_BUTTON);
 
 	input_report_key(fake_dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
 
 	zassert_equal(keyboard_state_changed_fake.call_count, 1);
 
 	/* enable A */
-	keyboard_scan_enable(1, KB_SCAN_DISABLE_A);
+	keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_CLOSED);
 
 	input_report_key(fake_dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
 
 	zassert_equal(keyboard_state_changed_fake.call_count, 1);
 
 	/* enable B */
-	keyboard_scan_enable(1, KB_SCAN_DISABLE_B);
+	keyboard_scan_enable(1, KB_SCAN_DISABLE_POWER_BUTTON);
 
 	input_report_key(fake_dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
 
@@ -164,7 +164,7 @@ ZTEST(keyboard_input, test_ksstate)
 
 	shell_backend_dummy_clear_output(shell_zephyr);
 
-	keyboard_scan_enable(0, KB_SCAN_DISABLE_A);
+	keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_CLOSED);
 
 	zassert_ok(shell_execute_cmd(shell_zephyr, "ksstate"));
 	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
@@ -173,7 +173,7 @@ ZTEST(keyboard_input, test_ksstate)
 	zassert_not_null(
 		strstr(outbuffer, "Keyboard scan disable mask: 0x00000001"));
 
-	keyboard_scan_enable(1, KB_SCAN_DISABLE_A);
+	keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_CLOSED);
 
 	zassert_ok(shell_execute_cmd(shell_zephyr, "ksstate"));
 	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);

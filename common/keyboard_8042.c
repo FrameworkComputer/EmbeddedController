@@ -469,7 +469,7 @@ void clear_typematic_key(void)
 	typematic_len = 0;
 }
 
-void keyboard_state_changed(int row, int col, int is_pressed)
+test_mockable void keyboard_state_changed(int row, int col, int is_pressed)
 {
 	uint8_t scan_code[MAX_SCAN_CODE_LEN];
 	int32_t len = 0;
