@@ -1121,6 +1121,7 @@ static int emul_realtek_rts54xx_set_response_delay(const struct emul *target,
 
 	return 0;
 }
+
 static int
 emul_realtek_rts54xx_get_connector_reset(const struct emul *target,
 					 union connector_reset_t *reset)
