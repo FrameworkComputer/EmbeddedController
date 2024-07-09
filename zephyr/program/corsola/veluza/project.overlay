@@ -13,13 +13,25 @@
 #include "../ite_keyboard.dtsi"
 #include "../ite_i2c.dtsi"
 #include "../ite_interrupts.dtsi"
-#include "../ite_led.dtsi"
 #include "../ite_usbc.dtsi"
 #include "../ite_shi.dtsi"
 #include "./cbi.dtsi"
 #include "./keyboard.dtsi"
 #include "./thermistor.dtsi"
+#include "../ite_motionsense.dtsi"
+#include "./pwm_leds.dtsi"
+
 / {
+	aliases {
+		/*
+		 * motion sense's <>_INT_EVENT is handled
+		 * by alias. Using the alias, each driver creates
+		 * its own <>_INT_EVENT.
+		 */
+		bmi3xx-int = &base_accel;
+		bma4xx-int = &lid_accel;
+	};
+
 	named-gpios {
 		/delete-node/ usb_c0_ppc_bc12_int_odl;
 		usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
@@ -35,17 +47,19 @@
 			gpios = <&gpioh 6 GPIO_INPUT>;
 		};
 		en_pp5000_usb_a1_vbus_x: en_pp5000_usb_a1_vbus_x {
-			gpios = <&gpioa 7 GPIO_ODR_HIGH>;
+			gpios = <&gpioa 7 GPIO_OUTPUT_LOW>;
+		};
+		gpio_battery_led_amber_l: battery_led_amber_l {
+			gpios = <&gpioa 1 GPIO_OUTPUT_HIGH>;
+		};
+		gpio_battery_led_white_l: battery_led_white_l {
+			gpios = <&gpioa 2 GPIO_OUTPUT_HIGH>;
 		};
 	};
 	unused-pins {
 		unused-gpios =
 			/* pg_pp5000_z2_od */
 			<&gpiod 2 GPIO_INPUT>,
-			/* GPIO_VOLUME_DOWN_L */
-			<&gpiod 5 GPIO_INPUT>,
-			/* GPIO_VOLUME_UP_L */
-			<&gpiod 6 GPIO_INPUT>,
 			/* pg_mt6315_proc_b_odl */
 			<&gpioe 1 GPIO_INPUT>,
 			/* ec_pen_chg_dis_odl */
@@ -73,22 +87,40 @@
 			<&gpiog 7 GPIO_OUTPUT_LOW>;
 	};
 	gpio-interrupts {
-		/delete-node/ volume_up;
-		/delete-node/ volume_down;
+		/delete-node/ x_ec_gpio2;
 		/delete-node/ usb_c0_ppc_bc12;
-		/delete-node/ base_imu;
-		/delete-node/ lid_imu;
+		int_base_imu: base_imu {
+			handler = "base_sensor_interrupt";
+		};
+		int_lid_imu: lid_imu {
+			handler = "lid_sensor_interrupt";
+		};
 		int_usb_c0_ppc: usb_c0_ppc {
 			irq-pin = <&usb_c0_ppc_int_odl>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "ppc_interrupt";
+		};
+		int_x_ec_gpio2: x_ec_gpio2 {
+			irq-pin = <&gpio_x_ec_gpio2>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "hdmi_hpd_interrupt";
 		};
 	};
 	usbc {
 		port0@0 {
 			ppc = <&ppc_port0>;
 		};
-		/delete-node/ port1@1;
+		port1@1 {
+			/delete-property/ bc12;
+			/delete-property/ ppc;
+			/delete-property/ tcpc;
+			/delete-property/ usb-mux-chain-1;
+			/delete-property/ usb-mux-chain-1-hdmi-db;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
 	};
 	named-adc-channels {
 		adc_ambient: ambient {
@@ -99,20 +131,14 @@
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 		/delete-node/ usb-c1;
-	};
-	temp_ambient: ambient {
-		compatible = "cros-ec,temp-sensor-thermistor";
-		thermistor = <&thermistor_3V3_30K9_47K_NCP15WB>;
-		adc = <&adc_ambient>;
+		i2c_hdmi: i2c_hdmi {
+			i2c-port = <&i2c4>;
+			enum-names = "I2C_PORT_USB_C1",
+				"I2C_PORT_USB_MUX1";
+		};
 	};
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
-		ambient {
-			temp_host_high = <56>;
-			temp_host_halt = <80>;
-			temp_host_release_high = <42>;
-			sensor = <&temp_ambient>;
-		};
 		temp_charger: charger {
 			temp_host_high = <68>;
 			temp_host_halt = <90>;
@@ -120,106 +146,117 @@
 			sensor = <&charger_bc12_port1>;
 		};
 	};
-	led-colors {
-		compatible = "cros-ec,led-policy";
-		/* Veluza LED bat charge */
-		bat-power-state-charge {
-			charge-state = "LED_PWRS_CHARGE";
-			/* Battery percent range (>= Empty, <= 94%) */
-			batt-lvl = <BATTERY_LEVEL_EMPTY 94>;
-			battery-led {
-				led-id = "EC_LED_ID_BATTERY_LED";
-				color-0 {
-					led-color = "LED_AMBER";
-				};
-			};
+
+	/*
+	 * Declare mutexes used by sensor drivers.
+	 * A mutex node is used to create an instance of mutex_t.
+	 * A mutex node is referenced by a sensor node if the
+	 * corresponding sensor driver needs to use the
+	 * instance of the mutex.
+	 */
+	motionsense-mutex {
+		base_mutex_bmi323: bmi323-mutex {
 		};
-		bat-power-state-charge-near-full {
-			charge-state = "LED_PWRS_CHARGE";
-			/* Battery percent range (>= 95%, <= Full) */
-			batt-lvl = <95 BATTERY_LEVEL_FULL>;
-			battery-led {
-				led-id = "EC_LED_ID_BATTERY_LED";
-				color-0 {
-					led-color = "LED_WHITE";
-				};
-			};
-		};
-		/* Veluza LED bat discharge */
-		bat-power-state-discharge-s0 {
-			charge-state = "LED_PWRS_DISCHARGE";
-			chipset-state = "POWER_S0";
-			/* Battery percent range (>= 11%, <= Full) */
-			batt-lvl = <(BATTERY_LEVEL_LOW + 1) BATTERY_LEVEL_FULL>;
-			battery-led {
-				led-id = "EC_LED_ID_BATTERY_LED";
-				color-0 {
-					led-color = "LED_WHITE";
-				};
-			};
-		};
-		bat-power-state-discharge-s5 {
-			charge-state = "LED_PWRS_DISCHARGE";
-			chipset-state = "POWER_S5";
-			battery-led {
-				led-id = "EC_LED_ID_BATTERY_LED";
-				color-0 {
-					led-color = "LED_OFF";
-				};
-			};
-		};
-		/* Veluza LED bat error */
-		bat-power-state-error {
-			charge-state = "LED_PWRS_ERROR";
-			chipset-state = "POWER_S0";
-			battery-led {
-				led-id = "EC_LED_ID_BATTERY_LED";
-				color-0 {
-					led-color = "LED_AMBER";
-					period-ms = <1000>;
-				};
-				color-1 {
-					led-color = "LED_OFF";
-					period-ms = <1000>;
-				};
-			};
-		};
-		bat-power-state-error-s3 {
-			charge-state = "LED_PWRS_ERROR";
-			chipset-state = "POWER_S3";
-			battery-led {
-				led-id = "EC_LED_ID_BATTERY_LED";
-				color-0 {
-					led-color = "LED_WHITE";
-					period-ms = <1000>;
-				};
-				color-1 {
-					led-color = "LED_OFF";
-					period-ms = <3000>;
-				};
-			};
-		};
-		bat-power-state-error-s5 {
-			charge-state = "LED_PWRS_ERROR";
-			chipset-state = "POWER_S5";
-			battery-led {
-				led-id = "EC_LED_ID_BATTERY_LED";
-				color-0 {
-					led-color = "LED_OFF";
-				};
-			};
+
+		lid_mutex_bma422: bma422-mutex {
 		};
 	};
-	pwm-led-pins {
-		compatible = "cros-ec,pwm-led-pins";
-		power_led: power-led {
-			led-id = "EC_LED_ID_POWER_LED";
-			led-pwms = <&led_power_white>;
-			/* Overwrite Power LED white to off */
-			color-power-white {
-				led-color = "LED_WHITE";
-				led-values = <0>;
+
+	/* Rotation matrix used by drivers. */
+	motionsense-rotation-ref {
+		lid_rot_ref_bma422: lid-rotation-ref-bma422 {
+			mat33 = <0 1 0
+				 1 0 0
+				 0 0 (-1)>;
+		};
+
+		base_rot_ref_bmi323: base-rotation-ref-bmi323 {
+			mat33 = <0 1 0
+				 (-1) 0 0
+				 0 0 1>;
+		};
+	};
+
+	/*
+	 * Driver specific data. A driver-specific data can be shared with
+	 * different motion sensors while they are using the same driver.
+	 *
+	 * If a node's compatible starts with "cros-ec,accelgyro-", it is for
+	 * a common structure defined in accelgyro.h.
+	 * e.g) compatible = "cros-ec,accelgyro-als-drv-data" is for
+	 * "struct als_drv_data_t" in accelgyro.h
+	 */
+	motionsense-sensor-data {
+		bmi323_data: bmi323-drv-data {
+			compatible = "cros-ec,drvdata-bmi3xx";
+			status = "okay";
+		};
+
+		bma422_data: bma422-drv-data {
+			compatible = "cros-ec,drvdata-bma4xx";
+			status = "okay";
+		};
+	};
+	motionsense-sensor {
+		/delete-node/ lid_accel;
+		/delete-node/ base-accel;
+		/delete-node/ base-gyro;
+		lid_accel: lid-accel {
+			compatible = "cros-ec,bma4xx";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex_bma422>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&lid_rot_ref_bma422>;
+			default-range = <2>;
+			drv-data = <&bma422_data>;
+			i2c-spi-addr-flags = "BMA4_I2C_ADDR_PRIMARY";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
 			};
+		};
+
+		base_accel: base-accel {
+			compatible = "cros-ec,bmi3xx-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&base_rot_ref>;
+			drv-data = <&bmi323_data>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
+		base_gyro: base-gyro {
+			compatible = "cros-ec,bmi3xx-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&base_rot_ref>;
+			drv-data = <&bmi323_data>;
 		};
 	};
 	batteries {
@@ -251,9 +288,6 @@
 		     &adc0_ch1_gpi1_default
 		     &adc0_ch2_gpi2_default
 			 &adc0_ch5_gpi5_default>;
-};
-&thermistor_3V3_30K9_47K_NCP15WB {
-	status = "okay";
 };
 &i2c0 {
 	charger_bc12_port1: rt9490@53 {

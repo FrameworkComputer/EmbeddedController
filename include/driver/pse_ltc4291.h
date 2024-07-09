@@ -8,9 +8,16 @@
  * controller.
  */
 
+#ifndef __CROS_EC_DRIVER_PSE_LTC4291_H
+#define __CROS_EC_DRIVER_PSE_LTC4291_H
+
 #include "i2c.h"
 #include "timer.h"
 #include "util.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define LTC4291_I2C_ADDR 0x2C
 
@@ -58,3 +65,9 @@
 	i2c_write8(I2C_PORT_PSE, LTC4291_I2C_ADDR, LTC4291_REG_##reg, (data))
 
 extern const int pse_port_hpmd[LTC4291_PORT_MAX];
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __CROS_EC_DRIVER_PSE_LTC4291_H */

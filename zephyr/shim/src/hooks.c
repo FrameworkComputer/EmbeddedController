@@ -19,6 +19,12 @@
 
 #include <zephyr/kernel.h>
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 27
+
 #include <ap_power/ap_power.h>
 #include <ap_power/ap_power_events.h>
 

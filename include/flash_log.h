@@ -11,6 +11,10 @@
 #include "config.h"
 #include "stddef.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum flash_event_type {
 	FE_LOG_START = 0,
 	FE_LOG_CORRUPTED = 1,
@@ -153,6 +157,10 @@ void flash_log_init(void);
 extern uint32_t last_used_timestamp;
 extern uint32_t lock_failures_count;
 extern uint8_t log_event_in_progress;
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_EVENT_LOG_H */

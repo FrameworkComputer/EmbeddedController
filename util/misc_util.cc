@@ -123,6 +123,41 @@ int ec_get_cmd_versions(int cmd, uint32_t *pmask)
 }
 
 /**
+ * @brief Gets the highest version number of a command supported by the EC
+ *
+ * @param cmd The command to query support for
+ * @param ver Output parameter to write max version to.
+ *
+ * @return 0 on success
+ * @return -EC_RES_INVALID_PARAM if ver is NULL
+ * @return -EC_RES_INVALID_COMMAND if no version of this command is supported
+ *         or if command does not exist.
+ */
+int ec_get_highest_supported_cmd_version(int cmd, int *ver)
+{
+	int rv;
+	uint32_t mask = 0;
+
+	if (!ver) {
+		return -EC_RES_INVALID_PARAM;
+	}
+
+	rv = ec_get_cmd_versions(cmd, &mask);
+	if (rv < 0) {
+		return rv;
+	}
+
+	if (mask == 0) {
+		/* No version of this command is supported */
+		return -EC_RES_INVALID_COMMAND;
+	}
+
+	*ver = 31 - __builtin_clz(mask);
+
+	return EC_RES_SUCCESS;
+}
+
+/**
  * Return non-zero if the EC supports the command and version
  *
  * @param cmd		Command to check

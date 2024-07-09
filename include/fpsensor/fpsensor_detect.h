@@ -8,11 +8,11 @@
 #ifndef __CROS_EC_FPSENSOR_FPSENSOR_DETECT_H
 #define __CROS_EC_FPSENSOR_FPSENSOR_DETECT_H
 
+#include "fpsensor_types.h"
+
 #ifdef __cplusplus
 extern "C" {
 #endif
-
-#include "fpsensor_types.h"
 
 const char *fp_transport_type_to_str(enum fp_transport_type type);
 const char *fp_sensor_type_to_str(enum fp_sensor_type type);

@@ -2,6 +2,18 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+/ {
+	kblight {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm6 6 PWM_KHZ(10) PWM_POLARITY_NORMAL>;
+	};
+};
+
+&pwm6 {
+	status = "okay";
+	pinctrl-0 = <&pwm6_gpc0>;
+	pinctrl-names = "default";
+};
 
 &kbd_config_0 {
 	vivaldi-codes = <

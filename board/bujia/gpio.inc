@@ -28,6 +28,7 @@ GPIO_INT(USB_A0_OC_ODL,              PIN(3, 1), GPIO_INPUT | GPIO_PULL_UP | GPIO
 GPIO_INT(USB_A1_OC_ODL,              PIN(3, 0), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A2_OC_ODL,              PIN(2, 7), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
 GPIO_INT(USB_A3_OC_ODL,              PIN(2, 6), GPIO_INPUT | GPIO_PULL_UP | GPIO_INT_BOTH, port_ocp_interrupt)
+GPIO_INT(OPS_PS_ON,                  PIN(D, 2), GPIO_INT_BOTH, ps_on_interrupt)
 
 /* CCD */
 GPIO(CCD_MODE_ODL,                   PIN(E, 5), GPIO_INPUT)
@@ -102,6 +103,7 @@ GPIO(LED_RED_L,                      PIN(C, 4), GPIO_OUT_LOW)
 GPIO(USB_C0_FRS_EN,                  PIN(9, 4), GPIO_OUT_LOW)
 GPIO(USB_C0_HPD,                     PIN(0, 4), GPIO_OUT_LOW)
 GPIO(USB_C0_OC_ODL,                  PIN(7, 0), GPIO_OUT_LOW)
+GPIO(USB_C0_RT_RST_ODL,              PIN(0, 2), GPIO_ODR_LOW)
 
 /* UART alternate functions */
 ALTERNATE(PIN_MASK(6, 0x30), 0, MODULE_UART, 0)              /* GPIO64/CR_SIN1, GPO65/CR_SOUT1/FLPRG1_L */
@@ -123,9 +125,6 @@ ALTERNATE(PIN_MASK(3, 0x10), 0, MODULE_ADC, 0)               /* GPIO34/PS2_DAT2/
 ALTERNATE(PIN_MASK(4, 0x38), 0, MODULE_ADC, 0)               /* GPIO45/ADC0, GPIO44/ADC1, GPIO43/ADC2 */
 ALTERNATE(PIN_MASK(E, 0x02), 0, MODULE_ADC, 0)               /* GPIOE1/ADC7 */
 
-/* NC pins, enable internal pull-down to avoid floating state. */
-GPIO(GPIO02_NC,                      PIN(0, 2), GPIO_INPUT | GPIO_PULL_DOWN)
-
 /* Unused Pins */
 UNUSED(PIN(D, 6))       /* GPOD6/CR_SOUT3/SHDF_ESPI_L */
 UNUSED(PIN(3, 2))       /* GPO32/TRIS_L */
@@ -144,7 +143,6 @@ UNUSED(PIN(A, 3))
 UNUSED(PIN(B, 1))
 UNUSED(PIN(B, 5))
 UNUSED(PIN(B, 4))
-UNUSED(PIN(D, 2))
 UNUSED(PIN(D, 4))
 UNUSED(PIN(F, 5))
 UNUSED(PIN(0, 5))

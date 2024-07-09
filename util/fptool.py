@@ -32,11 +32,12 @@ def cmd_flash(args: argparse.Namespace) -> int:
 
     print(f'Running {" ".join(cmd)}.')
     sys.stdout.flush()
-    p = subprocess.run(cmd)  # pylint: disable=subprocess-run-check
-    return p.returncode
+    ppp = subprocess.run(cmd, check=False)
+    return ppp.returncode
 
 
 def main(argv: list) -> int:
+    """Main function"""
     parser = argparse.ArgumentParser(description=__doc__)
     subparsers = parser.add_subparsers(dest="subcommand", title="subcommands")
     # This method of setting required is more compatible with older python.

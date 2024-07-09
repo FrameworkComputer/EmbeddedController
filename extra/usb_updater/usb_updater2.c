@@ -52,10 +52,15 @@ enum exit_values {
 	update_error = 3 /* Something went wrong. */
 };
 
+typedef struct {
+	uint8_t addr; /* Endpoint address */
+	uint8_t len; /* Max. packet size */
+} ep_info_t;
+
 struct usb_endpoint {
 	struct libusb_device_handle *devh;
-	uint8_t ep_num;
-	int chunk_len;
+	ep_info_t in_ep;
+	ep_info_t out_ep;
 };
 
 struct transfer_descriptor {
@@ -269,8 +274,8 @@ static void do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 	/* Send data out */
 	if (outbuf && outlen) {
 		actual = 0;
-		r = libusb_bulk_transfer(uep->devh, uep->ep_num, outbuf, outlen,
-					 &actual, 2000);
+		r = libusb_bulk_transfer(uep->devh, uep->out_ep.addr, outbuf,
+					 outlen, &actual, 2000);
 		if (r < 0) {
 			USB_ERROR("libusb_bulk_transfer", r);
 			exit(update_error);
@@ -285,7 +290,7 @@ static void do_xfer(struct usb_endpoint *uep, void *outbuf, int outlen,
 	/* Read reply back */
 	if (inbuf && inlen) {
 		actual = 0;
-		r = libusb_bulk_transfer(uep->devh, uep->ep_num | 0x80, inbuf,
+		r = libusb_bulk_transfer(uep->devh, uep->in_ep.addr, inbuf,
 					 inlen, &actual, 5000);
 		if (r < 0) {
 			USB_ERROR("libusb_bulk_transfer", r);
@@ -317,10 +322,25 @@ static int find_endpoint(const struct libusb_interface_descriptor *iface,
 
 	if (iface->bInterfaceClass == 255 &&
 	    iface->bInterfaceSubClass == SUBCLASS &&
-	    iface->bInterfaceProtocol == PROTOCOL && iface->bNumEndpoints) {
-		ep = &iface->endpoint[0];
-		uep->ep_num = ep->bEndpointAddress & 0x7f;
-		uep->chunk_len = ep->wMaxPacketSize;
+	    iface->bInterfaceProtocol == PROTOCOL) {
+		if (iface->bNumEndpoints == 2) {
+			for (int i = 0; i < iface->bNumEndpoints; i++) {
+				ep = &iface->endpoint[i];
+				if ((ep->bEndpointAddress &
+				     LIBUSB_ENDPOINT_DIR_MASK) ==
+				    LIBUSB_ENDPOINT_IN) {
+					uep->in_ep.addr = ep->bEndpointAddress;
+					uep->in_ep.len = ep->wMaxPacketSize;
+				} else {
+					uep->out_ep.addr = ep->bEndpointAddress;
+					uep->out_ep.len = ep->wMaxPacketSize;
+				}
+			}
+		} else {
+			USB_ERROR("Invalid endpoint number",
+				  iface->bNumEndpoints);
+			return 0;
+		}
 		return 1;
 	}
 
@@ -467,13 +487,14 @@ static void usb_findit(uint16_t vid, uint16_t pid, char *serialno,
 		fprintf(stderr, "USB FW update not supported by that device\n");
 		shut_down(uep);
 	}
-	if (!uep->chunk_len) {
+	if (!uep->in_ep.len || !uep->out_ep.len) {
 		fprintf(stderr, "wMaxPacketSize isn't valid\n");
 		shut_down(uep);
 	}
 
-	printf("found interface %d endpoint %d, chunk_len %d\n", iface_num,
-	       uep->ep_num, uep->chunk_len);
+	printf("Found interface %d, IN ep 0x%x(%d), OUT ep 0x%x(%d)\n",
+	       iface_num, uep->in_ep.addr, uep->in_ep.len, uep->out_ep.addr,
+	       uep->out_ep.len);
 
 	libusb_set_auto_detach_kernel_driver(uep->devh, 1);
 	r = libusb_claim_interface(uep->devh, iface_num);
@@ -501,7 +522,7 @@ static int transfer_block(struct usb_endpoint *uep,
 	for (transfer_size = 0; transfer_size < payload_size;) {
 		int chunk_size;
 
-		chunk_size = MIN((size_t)uep->chunk_len,
+		chunk_size = MIN((size_t)uep->out_ep.len,
 				 payload_size - transfer_size);
 		xfer(uep, transfer_data_ptr, chunk_size, NULL, 0, 0);
 		transfer_data_ptr += chunk_size;
@@ -509,7 +530,7 @@ static int transfer_block(struct usb_endpoint *uep,
 	}
 
 	/* Now get the reply. */
-	r = libusb_bulk_transfer(uep->devh, uep->ep_num | 0x80, (void *)&reply,
+	r = libusb_bulk_transfer(uep->devh, uep->in_ep.addr, (void *)&reply,
 				 sizeof(reply), &actual, 5000);
 	if (r) {
 		if (r == -7) {
@@ -760,12 +781,12 @@ static void setup_connection(struct transfer_descriptor *td)
 	printf("start\n");
 
 	struct update_frame_header ufh;
-	uint8_t inbuf[td->uep.chunk_len];
+	uint8_t inbuf[td->uep.in_ep.len];
 	int actual = 0;
 
 	/* Flush all data from endpoint to recover in case of error. */
-	while (!libusb_bulk_transfer(td->uep.devh, td->uep.ep_num | 0x80,
-				     (void *)&inbuf, td->uep.chunk_len, &actual,
+	while (!libusb_bulk_transfer(td->uep.devh, td->uep.in_ep.addr,
+				     (void *)&inbuf, td->uep.in_ep.len, &actual,
 				     10)) {
 		printf("flush\n");
 	}

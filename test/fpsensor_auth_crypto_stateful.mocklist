@@ -4,4 +4,5 @@
  */
 
 #define CONFIG_TEST_MOCK_LIST \
+	MOCK(OTPI) \
 	MOCK(ROLLBACK)

@@ -8,6 +8,7 @@
 #include "common.h"
 #include "compile_time_macros.h"
 #include "console.h"
+#include "ec_commands.h"
 #include "fan.h"
 #include "fan_chip.h"
 #include "hooks.h"
@@ -39,7 +40,7 @@ static const struct fan_conf fan_conf_0 = {
 static const struct fan_rpm fan_rpm_0 = {
 	.rpm_min = 2400,
 	.rpm_start = 2400,
-	.rpm_max = 6000,
+	.rpm_max = 5300,
 };
 
 const struct fan_t fans[FAN_CH_COUNT] = {
@@ -48,3 +49,39 @@ const struct fan_t fans[FAN_CH_COUNT] = {
 		.rpm = &fan_rpm_0,
 	},
 };
+
+static const int temp_fan_off = C_TO_K(35);
+static const int temp_fan_max = C_TO_K(55);
+
+static const struct fan_step_1_1 fan_table0[] = {
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(35),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(41),
+	  .rpm = 2400 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(40),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(44),
+	  .rpm = 2900 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(42),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(46),
+	  .rpm = 3400 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(44),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(48),
+	  .rpm = 3900 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(46),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(50),
+	  .rpm = 4400 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(48),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(52),
+	  .rpm = 4900 },
+	{ .decreasing_temp_ratio_threshold = TEMP_TO_RATIO(50),
+	  .increasing_temp_ratio_threshold = TEMP_TO_RATIO(55),
+	  .rpm = 5300 },
+};
+#define NUM_FAN_LEVELS ARRAY_SIZE(fan_table0)
+
+static const struct fan_step_1_1 *fan_table = fan_table0;
+
+int fan_percent_to_rpm(int fan, int temp_ratio)
+{
+	return temp_ratio_to_rpm_hysteresis(fan_table, NUM_FAN_LEVELS, fan,
+					    temp_ratio, NULL);
+}

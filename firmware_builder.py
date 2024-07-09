@@ -33,6 +33,7 @@ DEFAULT_BUNDLE_METADATA_FILE = "/tmp/artifact_bundle_metadata"
 BOARDS_UNIT_TEST = [
     "bloonchipper",
     "dartmonkey",
+    "helipilot",
 ]
 
 # Interesting regions to show in gerrit
@@ -96,8 +97,6 @@ def build(opts):
         with open(opts.metrics, "w", encoding="utf-8") as file:
             file.write(json_format.MessageToJson(metric_list))
         return
-
-    subprocess.run([ec_dir / "util" / "check_clang_format.py"], check=True)
 
     cmd = ["make", "clobber"]
     print(f"# Running {' '.join(cmd)}.")

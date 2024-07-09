@@ -67,6 +67,7 @@ Flash sector | Flash sector size | Offset             | Firmware Region
 [Section 2.4 Embedded SRAM]: https://www.st.com/resource/en/reference_manual/dm00314099-stm32h742-stm32h743-753-and-stm32h750-value-line-advanced-arm-based-32-bit-mcus-stmicroelectronics.pdf#page=135
 [`make BOARD=dartmonkey`]: ./fingerprint.md
 [`make BOARD=bloonchipper`]: ./fingerprint.md
+[`make BOARD=helipilot`]: ./fingerprint.md
 [256 KB]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/board/nocturne_fp/board.h;l=62;drc=ed42e86fd3c444982aa7c313c4530ad89c310191
 [768 KB]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/board/nocturne_fp/board.h;l=58;drc=ed42e86fd3c444982aa7c313c4530ad89c310191
 [1024 KB]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/board/nocturne_fp/board.h;l=66-67;drc=ed42e86fd3c444982aa7c313c4530ad89c310191
@@ -107,3 +108,48 @@ Flash sector | Flash sector size | Offset           | Firmware Region
 [256 KB]: https://www.st.com/resource/en/datasheet/stm32f412cg.pdf
 [128 KB]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/board/hatch_fp/board.h;l=66;drc=643635b91ee40def104188cf9623a9a28f25bd4f
 [STM32F412 Rollback]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/board/hatch_fp/board.h;l=70;drc=643635b91ee40def104188cf9623a9a28f25bd4f
+
+## NPCX99FP (Helipilot)
+
+Total Flash: [1 MB][NPCX99FP Reference Manual]
+
+Total SRAM: [512 KB][NPCX99FP Reference Manual]
+
+`helipilot` is different from the other FPMCU boards in that it cannot execute
+code quickly from Flash. Instead, all code is loaded in RAM and execute from
+RAM. This means that RAM must be partitioned into Code RAM and Data RAM.
+
+### RAM Partition
+
+Description                | Size
+-------------------------- | ------------------------------
+Code RAM                   | [352 KB][helipilot Code RAM]
+Data RAM                   | [156 KB][helipilot Data RAM]
+Data RAM for ROM functions | [4 KB][helipilot ROM Data RAM]
+
+[helipilot Code RAM]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/baseboard/helipilot/base_board.h;l=65-71;drc=c0f65dc488d48c4c9634276520337dcde4f57107
+[helipilot Data RAM]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/baseboard/helipilot/base_board.h;l=73-79;drc=c0f65dc488d48c4c9634276520337dcde4f57107
+[helipilot ROM Data RAM]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/baseboard/helipilot/base_board.h;l=81-86;drc=c0f65dc488d48c4c9634276520337dcde4f57107
+
+### Flash
+
+Flash section               | Size                                             | Amount Used
+--------------------------- | ------------------------------------------------ | -----------
+[Nuvoton bootloader header] | [4 KB][helipilot RO]                             | [64 bytes][NPCX firmware header]
+Read-only (RO)              | [124 KB][helipilot RO]                           | See [`make BOARD=helipilot`] output.
+Rollback                    | [128 KB (two 64 KB sectors)][helipilot Rollback] | [44 bytes in each of the two sections]
+Read-write (RW)             | 768 KB ([320 KB usable][helipilot RW])           | See [`make BOARD=helipilot`] output. Note that the usable RW size is [limited by the amount of SRAM][helipilot RW].
+
+[helipilot RO]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/baseboard/helipilot/base_board.h;l=122;drc=c0f65dc488d48c4c9634276520337dcde4f57107
+[helipilot Rollback]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/baseboard/helipilot/base_board.h;l=297;drc=c0f65dc488d48c4c9634276520337dcde4f57107
+[helipilot RW]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/baseboard/helipilot/base_board.h;l=141-148;drc=c0f65dc488d48c4c9634276520337dcde4f57107
+[Nuvoton bootloader header]: http://go/cros-fp-npcx99fp-bootloader
+[NPCX firmware header]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/chip/npcx/header.c;l=43-58;drc=88684b2a25d0349bcd57cdba2a5aadb60d7bef07
+
+### Flash Layout
+
+NPCX99FP supports erase size of 64 KB, 32 KB, and 4 KB. Our code configures it
+with a [uniform flash sector size of 64 KB][NPCX99FP sector size].
+
+[NPCX99FP sector size]: https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform/ec/chip/npcx/config_flash_layout.h;l=103-110;drc=29c7712541e8f85c53bac4d23147604585a764d8
+[NPCX99FP Reference Manual]: http://go/cros-fp-npcx99fp-ref-manual

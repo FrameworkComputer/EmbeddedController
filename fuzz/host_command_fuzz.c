@@ -25,8 +25,12 @@
 #define TASK_EVENT_FUZZ TASK_EVENT_CUSTOM_BIT(0)
 #define TASK_EVENT_HOSTCMD_DONE TASK_EVENT_CUSTOM_BIT(1)
 
-/* Request/response buffer size (and maximum command length) */
-#define BUFFER_SIZE 128
+/*
+ * Request/response buffer size (and maximum command length).
+ * See comments in libec/ec_command.h:
+ * https://source.chromium.org/chromiumos/chromiumos/codesearch/+/main:src/platform2/libec/ec_command.h;l=43-58;drc=2d8cc86c157e60b412f82bc536e542fd1c164ccb
+ */
+#define BUFFER_SIZE 544
 
 struct host_packet pkt;
 static uint8_t resp_buf[BUFFER_SIZE];
@@ -81,7 +85,7 @@ static int hostcmd_fill(const uint8_t *data, size_t size)
 #endif
 
 	/*
-	 * TODO(chromium:854975): We should probably malloc req_buf with the
+	 * TODO(crbug.com/172212308): We should probably malloc req_buf with the
 	 * correct size, to make we do not read uninitialized req_buf data.
 	 */
 	memset(req_buf, 0, sizeof(req_buf));

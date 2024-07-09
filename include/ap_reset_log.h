@@ -10,6 +10,10 @@
 #include "stddef.h"
 #include "stdint.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef CONFIG_CMD_AP_RESET_LOG
 
 /**
@@ -81,5 +85,9 @@ uint32_t test_chipset_get_ap_resets_since_ec_boot(void);
  */
 void test_chipset_corrupt_reset_log_checksum(void);
 #endif /* TEST_BUILD */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_AP_RESET_LOG_H */

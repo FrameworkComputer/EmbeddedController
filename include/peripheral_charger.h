@@ -14,6 +14,10 @@
 #include "stdbool.h"
 #include "task.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Peripheral charge manager
  *
@@ -397,5 +401,9 @@ __override_proto void board_pchg_power_on(int port, bool on);
  * Return counts for PCHG charger.
  */
 int board_get_pchg_count(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_PERIPHERAL_CHARGER_H */

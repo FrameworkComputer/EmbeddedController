@@ -32,7 +32,7 @@
 
 /* These values are used for public or host (emulator) tests. */
 #if !defined(HAVE_PRIVATE) || defined(EMU_BUILD)
-#define FP_ALGORITHM_TEMPLATE_SIZE 0
+#define FP_ALGORITHM_TEMPLATE_SIZE 4
 #define FP_MAX_FINGER_COUNT 5
 #endif /* !HAVE_PRIVATE || EMU_BUILD */
 

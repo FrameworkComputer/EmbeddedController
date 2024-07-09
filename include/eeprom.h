@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initialize the module.
  */
@@ -51,5 +55,9 @@ int eeprom_write(int block, int offset, int size, const char *data);
  * @param block		Block number
  */
 int eeprom_hide(int block);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_EEPROM_H */

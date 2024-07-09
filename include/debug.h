@@ -9,6 +9,10 @@
 #include "common.h"
 #include "stdbool.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Indicates if a debugger is actively connected.
  */
@@ -22,5 +26,9 @@ __override_proto bool debugger_is_connected(void);
  * This should be true while a debugger is actively connected, too.
  */
 __override_proto bool debugger_was_connected(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_DEBUG_H */

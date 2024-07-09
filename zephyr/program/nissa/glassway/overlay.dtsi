@@ -21,11 +21,17 @@
 	};
 
 	batteries {
-		default_battery: getac_pg01lj3353 {
+		default_battery_3s: getac_pg01lj3353 {
 			compatible = "getac,pg01lj3353", "battery-smart";
 		};
 		cosmx_pg01lj3353 {
 			compatible = "cosmx,pg01lj3353", "battery-smart";
+		};
+		default_battery: getac_pg01jh3353 {
+			compatible = "getac,pg01jh3353", "battery-smart";
+		};
+		smp_pg01nl3353 {
+			compatible = "smp,pg01nl3353", "battery-smart";
 		};
 	};
 
@@ -216,7 +222,7 @@
 		compatible = "cros-ec,fans";
 
 		fan_0 {
-			pwms = <&pwm5 5 PWM_KHZ(1) PWM_POLARITY_NORMAL>;
+			pwms = <&pwm5 5 PWM_KHZ(24) PWM_POLARITY_NORMAL>;
 			rpm_min = <2200>;
 			rpm_start = <2200>;
 			rpm_max = <4200>;
@@ -252,7 +258,6 @@
 			<&gpioa 2 0>,
 			<&gpiob 1 0>,
 			<&gpiob 7 0>,
-			<&gpioc 0 0>,
 			<&gpioc 4 0>,
 			<&gpioc 6 0>,
 			<&gpioc 7 0>,
@@ -350,13 +355,8 @@
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 };
 
-&pwm5_gpb7 {
-	drive-open-drain;
-};
-
 &pwm5 {
 	status = "okay";
-	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
 	pinctrl-0 = <&pwm5_gpb7>;
 	pinctrl-names = "default";
 };

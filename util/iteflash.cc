@@ -139,6 +139,7 @@ struct common_hnd {
 	int flash_cmd_v2; /* boolean */
 	int dbgr_addr_3bytes; /* boolean */
 	bool instruction_set_v2;
+	bool it5xxxx; /* it5xxxx special */
 	union {
 		int i2c_dev_fd;
 		struct usb_endpoint uep;
@@ -589,6 +590,23 @@ static int get_3rd_chip_id_byte(struct common_hnd *chnd, uint8_t *chip_id)
 	return ret;
 }
 
+/* Get E-flash Size for it5xxxx */
+static int it5xxxx_get_eflash_size(struct common_hnd *chnd,
+				   uint8_t *eflash_size)
+{
+	int ret = 0;
+
+	ret = i2c_write_byte(chnd, 0x80, 0xf0);
+	ret |= i2c_write_byte(chnd, 0x2f, 0x10);
+	ret |= i2c_write_byte(chnd, 0x2e, 0x80);
+	ret |= i2c_read_byte(chnd, 0x30, eflash_size);
+
+	if (ret < 0)
+		fprintf(stderr, "Failed to get eflash size.");
+
+	return ret;
+}
+
 static int check_flashid(struct common_hnd *chnd)
 {
 	int ret = 0;
@@ -633,6 +651,7 @@ static int check_chipid(struct common_hnd *chnd)
 {
 	int ret;
 	uint8_t ver = 0xff;
+	uint8_t eflash_size = 0xff;
 	uint32_t id = 0xffff;
 	uint16_t v2[7] = { 128, 192, 256, 384, 512, 0, 1024 };
 	/*
@@ -662,7 +681,14 @@ static int check_chipid(struct common_hnd *chnd)
 	 * 4:256KB
 	 * 8:512KB
 	 * C:1024KB
+	 *
+	 * flash size of it5xxxx series at offset 0xF01080 bit 3-0
+	 * 0x1:128KB
+	 * 0x2:256KB
+	 * 0xE:512KB
+	 * 0xF:1024KB
 	 */
+	chnd->it5xxxx = 0;
 
 	ret = i2c_read_byte(chnd, 0x00, (uint8_t *)&id + 1);
 	if (ret < 0)
@@ -686,6 +712,15 @@ static int check_chipid(struct common_hnd *chnd)
 			if ((id & 0xf00f) == 0x2002) {
 				chnd->instruction_set_v2 = true;
 			}
+		} else if ((id & 0xf0000) == 0x50000) {
+			/* Reset and halt CPU*/
+			i2c_write_byte(chnd, 0x27, 0x81);
+
+			chnd->it5xxxx = 1;
+			chnd->flash_cmd_v2 = 1;
+			chnd->dbgr_addr_3bytes = 1;
+			ret = it5xxxx_get_eflash_size(chnd,
+						      (uint8_t *)&eflash_size);
 		} else {
 			fprintf(stderr, "Invalid chip id: %05x\n", id);
 			return -EINVAL;
@@ -698,7 +733,18 @@ static int check_chipid(struct common_hnd *chnd)
 			chnd->flash_cmd_v2 = 0;
 	}
 	/* compute embedded flash size from CHIPVER field */
-	if (chnd->flash_cmd_v2)
+	if (chnd->it5xxxx) {
+		if (eflash_size == 0x01) {
+			chnd->flash_size = 128 * 1024;
+		} else if (eflash_size == 0x02) {
+			chnd->flash_size = 256 * 1024;
+		} else if (eflash_size == 0x0E) {
+			chnd->flash_size = 512 * 1024;
+		} else if (eflash_size == 0x0F) {
+			chnd->flash_size = 1024 * 1024;
+		}
+
+	} else if (chnd->flash_cmd_v2)
 		chnd->flash_size = v2[(ver & 0xF0) >> 5] * 1024;
 	else
 		chnd->flash_size = (128 + (ver & 0xF0)) * 1024;

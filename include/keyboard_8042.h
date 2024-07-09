@@ -12,6 +12,10 @@
 #include "common.h"
 #include "stdbool.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Called by power button handler and button interrupt handler.
  *
@@ -107,5 +111,9 @@ __test_only void test_keyboard_8042_set_resend_command(const uint8_t *data,
  */
 __test_only void test_keyboard_8042_reset(void);
 #endif /* TEST_BUILD */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_KEYBOARD_8042_H */

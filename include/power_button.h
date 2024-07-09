@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Return non-zero if power button is pressed.
  *
@@ -75,5 +79,9 @@ void board_pwrbtn_to_pch(int level);
  * @param duration	Simulated power button press duration in ms.
  */
 void power_button_simulate_press(unsigned int duration);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_POWER_BUTTON_H */

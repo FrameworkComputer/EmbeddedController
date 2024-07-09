@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "clock_chip.h"
 #include "cmsis-dap.h"
 #include "common.h"
 #include "consumer.h"
@@ -173,8 +174,7 @@ static int jtag_pins[JTAG_INVALID] = {
 };
 static int saved_pin_flags[JTAG_INVALID];
 static bool jtag_enabled = false;
-static uint16_t jtag_half_period_count =
-	CPU_CLOCK / DEFAULT_JTAG_CLOCK_HZ / 2 - OVERHEAD_CLOCK_CYCLES;
+static uint16_t jtag_half_period_count;
 
 void queue_blocking_add(struct queue const *q, const void *src, size_t count)
 {
@@ -390,18 +390,19 @@ static void dap_swj_clock(size_t peek_c)
 	if (!new_clock_hz) {
 		tx_buffer[1] = STATUS_Error;
 	} else {
-		new_half_period_count = CPU_CLOCK / new_clock_hz / 2;
+		new_half_period_count =
+			clock_get_timer_freq() / new_clock_hz / 2;
 
 		/*
 		 * At this point, new_half_period_count contains the number of
-		 * CPU clock cycles for a half JTAG clock period.  This will be
-		 * used in a wait loop in the bit banging logic.
+		 * timer clock cycles for a half JTAG clock period.  This will
+		 * be used in a wait loop in the bit banging logic.
 		 *
-		 * Empirically, it has been stablished that at least 50 CPU
+		 * Empirically, it has been stablished that at least 50 timer
 		 * clock cycles are used by execution of GPIO manipulations
 		 * involved in clock toggling and data shifting, so we subtract
 		 * that from the number of cycles that will be "burned" in each
-		 * clock phaze while generating the waveform.
+		 * clock phase while generating the waveform.
 		 */
 		if (new_half_period_count <= OVERHEAD_CLOCK_CYCLES) {
 			/*
@@ -430,13 +431,14 @@ static void dap_swj_clock(size_t peek_c)
 /* Busy-wait half a JTAG clock cycle. */
 static inline __attribute__((always_inline)) void half_clock_delay(void)
 {
-	/* Set counter value.  Timer will immediately begin counting down. */
-	STM32_TIM_CNT(JTAG_TIMER) = jtag_half_period_count;
+	/* Calculate the future timer value, that we want to wait for. */
+	uint16_t until = STM32_TIM_CNT(JTAG_TIMER) + jtag_half_period_count;
+
 	/*
-	 * Wait for counter value to wrap around zero.  Worst case, counting
-	 * down from 32767 at a 104Mhz clock frequency will finish in 315us.
+	 * Busy-wait until counter is past the value (taking care around
+	 * wrapping).
 	 */
-	while (((int16_t)STM32_TIM_CNT(JTAG_TIMER)) >= 0)
+	while (((int16_t)(STM32_TIM_CNT(JTAG_TIMER) - until)) < 0)
 		;
 }
 
@@ -698,9 +700,17 @@ static int command_jtag_set_pins(int argc, const char **argv)
 		return EC_ERROR_PARAM_COUNT;
 
 	for (int i = 0; i < JTAG_INVALID; i++) {
-		new_pins[i] = gpio_find_by_name(argv[2]);
+		new_pins[i] = gpio_find_by_name(argv[2 + i]);
 		if (new_pins[i] == GPIO_COUNT)
 			return EC_ERROR_PARAM2 + i;
+		/* Check if same pin listed twice. */
+		for (int j = 0; j < i; j++) {
+			if (new_pins[i] == new_pins[j]) {
+				ccprintf("Error: Pin %s listed twice\n",
+					 gpio_list[jtag_pins[i]].name);
+				return EC_ERROR_PARAM2 + i;
+			}
+		}
 	}
 
 	/* No errors parsing command line, now apply the new settings. */
@@ -745,6 +755,14 @@ USB_STREAM_CONFIG_FULL(cmsis_dap_usb, USB_IFACE_CMSIS_DAP,
 		       USB_MAX_PACKET_SIZE, cmsis_dap_rx_queue,
 		       cmsis_dap_tx_queue, 0, 1);
 
+static void cmsis_dap_init(void)
+{
+	jtag_half_period_count =
+		clock_get_timer_freq() / DEFAULT_JTAG_CLOCK_HZ / 2 -
+		OVERHEAD_CLOCK_CYCLES;
+}
+DECLARE_HOOK(HOOK_REINIT, cmsis_dap_init, HOOK_PRIO_DEFAULT);
+
 static void cmsis_dap_reinit(void)
 {
 	mutex_lock(&unwind_mutex);
@@ -775,6 +793,9 @@ static void cmsis_dap_reinit(void)
 	 * JTAG connection has been disabled.
 	 */
 	jtag_enabled = false;
+	jtag_half_period_count =
+		clock_get_timer_freq() / DEFAULT_JTAG_CLOCK_HZ / 2 -
+		OVERHEAD_CLOCK_CYCLES;
 
 	mutex_unlock(&unwind_mutex);
 }

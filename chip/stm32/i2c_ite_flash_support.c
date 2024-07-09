@@ -122,7 +122,6 @@ static int cprint_ite_chip_id(void)
 
 	int ret;
 	int chip_version;
-	int flash_kb;
 
 	i2c_lock(ite_dfu_config.i2c_port, 1);
 
@@ -144,82 +143,11 @@ unlock:
 	if (ret != EC_SUCCESS)
 		return ret;
 
-	/*
-	 * Compute chip version and embedded flash size from the CHIPVER value.
-	 *
-	 * Chip version is mapping from bit 3-0
-	 * Flash size is mapping from bit 7-4
-	 *
-	 * Chip Version (bits 3-0)
-	 * 0: AX
-	 * 1: BX
-	 * 2: CX
-	 * 3: DX
-	 *
-	 * CX or prior flash size (bits 7-4)
-	 * 0:128KB
-	 * 4:192KB
-	 * 8:256KB
-	 *
-	 * DX flash size (bits 7-4)
-	 * 0:128KB
-	 * 2:192KB
-	 * 4:256KB
-	 * 6:384KB
-	 * 8:512KB
-	 */
 	chip_version = chipver[0] & 0x07;
-	if (chip_version < 0x3) {
-		/* Chip version is CX or earlier. */
-		switch (chipver[0] >> 4) {
-		case 0:
-			flash_kb = 128;
-			break;
-		case 4:
-			flash_kb = 192;
-			break;
-		case 8:
-			flash_kb = 256;
-			break;
-		default:
-			flash_kb = -2;
-		}
-	} else if (chip_version == 0x3) {
-		/* Chip version is DX. */
-		switch (chipver[0] >> 4) {
-		case 0:
-			flash_kb = 128;
-			break;
-		case 2:
-			flash_kb = 192;
-			break;
-		case 4:
-			flash_kb = 256;
-			break;
-		case 6:
-			flash_kb = 384;
-			break;
-		case 8:
-			flash_kb = 512;
-			break;
-		default:
-			flash_kb = -3;
-		}
-	} else {
-		/* Unrecognized chip version. */
-		flash_kb = -1;
-	}
 
 	ccprintf("ITE EC info: CHIPID1=0x%02X CHIPID2=0x%02X CHIPVER=0x%02X ",
 		 chipid1[0], chipid2[0], chipver[0]);
-	ccprintf("version=%d flash_bytes=%d\n", chip_version, flash_kb << 10);
-
-	/*
-	 * IT8320_eflash_SMBus_Programming_Guide.pdf says it is an error if
-	 * CHIPID1 != 0x83.
-	 */
-	if (chipid1[0] != 0x83)
-		ret = EC_ERROR_HW_INTERNAL;
+	ccprintf("version=%d\n", chip_version);
 
 	return ret;
 }
@@ -349,6 +277,5 @@ static int command_get_ite_chipid(int argc, const char **argv)
 
 	return cprint_ite_chip_id();
 }
-DECLARE_CONSOLE_COMMAND(
-	get_ite_chipid, command_get_ite_chipid, "",
-	"Read ITE EC chip ID, version, flash size (must be in DFU mode)");
+DECLARE_CONSOLE_COMMAND(get_ite_chipid, command_get_ite_chipid, "",
+			"Read ITE EC chip ID and version (must be in DFU mode)");

@@ -1,4 +1,4 @@
-/* Copyright 2022 Google LLC
+/* Copyright 2022 The ChromiumOS Authors
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
@@ -8,6 +8,10 @@
 
 #include <zephyr/devicetree.h>
 #include <zephyr/toolchain.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(named_bbram_regions) == 1,
 	     "only one named-bbram-regions compatible node may be present");
@@ -29,5 +33,9 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(named_bbram_regions) == 1,
  * Get the offset of a specific region.
  */
 #define BBRAM_REGION_OFFSET(name) (DT_PROP(DT_CHILD(BBRAM_NODE, name), offset))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_BBRAM_H */

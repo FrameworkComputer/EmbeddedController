@@ -137,7 +137,12 @@ class IshBinPacker(BasePacker):
 
     def pack_firmware(self, work_dir, jobclient, dir_map, version_string=""):
         del version_string
-        yield dir_map["singleimage"] / "zephyr" / "ish_fw.bin", "ish_fw.bin"
+        single_dir = dir_map["singleimage"]
+        yield single_dir / "zephyr" / "ish_fw.bin", "ish_fw.bin"
+        yield (
+            single_dir / "zephyr" / "component_manifest.json",
+            "component_manifest.json",
+        )
 
 
 class BinmanPacker(BasePacker):
@@ -307,11 +312,11 @@ class NpcxPacker(BinmanPacker):
         ro_dir = dir_map["ro"]
         rw_dir = dir_map["rw"]
         ro_size = util.read_kconfig_autoconf_value(
-            ro_dir / "zephyr" / "include" / "generated",
+            ro_dir / "zephyr" / "include" / "generated" / "zephyr",
             "CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES",
         )
         rw_size = util.read_kconfig_autoconf_value(
-            rw_dir / "zephyr" / "include" / "generated",
+            rw_dir / "zephyr" / "include" / "generated" / "zephyr",
             "CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES",
         )
         return max(int(ro_size, 0), int(rw_size, 0))
@@ -354,11 +359,11 @@ class MchpPacker(BinmanPacker):
         ro_dir = dir_map["ro"]
         rw_dir = dir_map["rw"]
         ro_size = util.read_kconfig_autoconf_value(
-            ro_dir / "zephyr" / "include" / "generated",
+            ro_dir / "zephyr" / "include" / "generated" / "zephyr",
             "CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES",
         )
         rw_size = util.read_kconfig_autoconf_value(
-            rw_dir / "zephyr" / "include" / "generated",
+            rw_dir / "zephyr" / "include" / "generated" / "zephyr",
             "CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES",
         )
         return max(int(ro_size, 0), int(rw_size, 0))

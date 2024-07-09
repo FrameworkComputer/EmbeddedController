@@ -7,30 +7,23 @@
  * rely on global state. */
 
 #include "compile_time_macros.h"
-
-/* Boringssl headers need to be included before extern "C" section. */
 #include "crypto/cleanse_wrapper.h"
 #include "crypto/elliptic_curve_key.h"
+#include "ec_commands.h"
+#include "fpsensor/fpsensor_auth_crypto.h"
+#include "fpsensor/fpsensor_console.h"
+#include "fpsensor/fpsensor_crypto.h"
 #include "openssl/bn.h"
 #include "openssl/mem.h"
 #include "openssl/rand.h"
 
-extern "C" {
-#include "ec_commands.h"
-}
-
-// clang-format off
 #include <array>
-
-#include "fpsensor/fpsensor_auth_crypto.h"
-#include "fpsensor/fpsensor_crypto.h"
-#include "fpsensor/fpsensor_state_without_driver_info.h"
-#include "fpsensor/fpsensor_console.h"
-// clang-format on
 
 enum ec_error_list
 encrypt_data_in_place(uint16_t version,
 		      struct fp_auth_command_encryption_metadata &info,
+		      std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id,
+		      std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed,
 		      std::span<uint8_t> data)
 {
 	if (version != 1) {
@@ -41,9 +34,9 @@ encrypt_data_in_place(uint16_t version,
 	RAND_bytes(info.nonce, sizeof(info.nonce));
 	RAND_bytes(info.encryption_salt, sizeof(info.encryption_salt));
 
-	CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > enc_key;
-	enum ec_error_list ret =
-		derive_encryption_key(enc_key, info.encryption_salt);
+	FpEncryptionKey enc_key;
+	enum ec_error_list ret = derive_encryption_key(
+		enc_key, info.encryption_salt, user_id, tpm_seed);
 	if (ret != EC_SUCCESS) {
 		return ret;
 	}
@@ -57,8 +50,10 @@ encrypt_data_in_place(uint16_t version,
 	return EC_SUCCESS;
 }
 
-std::optional<fp_encrypted_private_key>
-create_encrypted_private_key(const EC_KEY &key, uint16_t version)
+std::optional<fp_encrypted_private_key> create_encrypted_private_key(
+	const EC_KEY &key, uint16_t version,
+	std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id,
+	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed)
 {
 	fp_encrypted_private_key enc_key;
 
@@ -67,8 +62,8 @@ create_encrypted_private_key(const EC_KEY &key, uint16_t version)
 		return std::nullopt;
 	}
 
-	if (encrypt_data_in_place(version, enc_key.info, enc_key.data) !=
-	    EC_SUCCESS) {
+	if (encrypt_data_in_place(version, enc_key.info, user_id, tpm_seed,
+				  enc_key.data) != EC_SUCCESS) {
 		return std::nullopt;
 	}
 
@@ -77,15 +72,17 @@ create_encrypted_private_key(const EC_KEY &key, uint16_t version)
 
 enum ec_error_list
 decrypt_data(const struct fp_auth_command_encryption_metadata &info,
+	     std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id,
+	     std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed,
 	     std::span<const uint8_t> enc_data, std::span<uint8_t> data)
 {
 	if (info.struct_version != 1) {
 		return EC_ERROR_INVAL;
 	}
 
-	CleanseWrapper<std::array<uint8_t, SBP_ENC_KEY_LEN> > enc_key;
-	enum ec_error_list ret =
-		derive_encryption_key(enc_key, info.encryption_salt);
+	FpEncryptionKey enc_key;
+	enum ec_error_list ret = derive_encryption_key(
+		enc_key, info.encryption_salt, user_id, tpm_seed);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to derive key");
 		return ret;
@@ -107,14 +104,16 @@ decrypt_data(const struct fp_auth_command_encryption_metadata &info,
 }
 
 bssl::UniquePtr<EC_KEY> decrypt_private_key(
-	const struct fp_encrypted_private_key &encrypted_private_key)
+	const struct fp_encrypted_private_key &encrypted_private_key,
+	std::span<const uint8_t, FP_CONTEXT_USERID_BYTES> user_id,
+	std::span<const uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed)
 {
 	CleanseWrapper<std::array<uint8_t, sizeof(encrypted_private_key.data)> >
 		privkey;
 
-	enum ec_error_list ret = decrypt_data(encrypted_private_key.info,
-					      encrypted_private_key.data,
-					      privkey);
+	enum ec_error_list ret =
+		decrypt_data(encrypted_private_key.info, user_id, tpm_seed,
+			     encrypted_private_key.data, privkey);
 	if (ret != EC_SUCCESS) {
 		CPRINTS("Failed to decrypt private key");
 		return nullptr;

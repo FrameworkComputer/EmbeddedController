@@ -184,37 +184,6 @@ void board_reset_pd_mcu(void)
 	 */
 }
 
-/*
- * Because the TCPCs and BC1.2 chips share interrupt lines, it's possible
- * for an interrupt to be lost if one asserts the IRQ, the other does the same
- * then the first releases it: there will only be one falling edge to trigger
- * the interrupt, and the line will be held low. We handle this by polling the
- * IRQ GPIO on the USB-PD task after processing TCPC interrupts, synchronously
- * running the BC1.2 interrupt handler to ensure we continue processing
- * interrupts as long as either source is asserting the IRQ.
- */
-void board_process_pd_alert(int port)
-{
-	const struct gpio_dt_spec *gpio;
-
-	if (port == 0) {
-		gpio = GPIO_DT_FROM_NODELABEL(gpio_usb_c0_int_odl);
-	} else {
-		gpio = GPIO_DT_FROM_ALIAS(gpio_usb_c1_int_odl);
-	}
-
-	if (!gpio_pin_get_dt(gpio)) {
-		usb_charger_task_set_event_sync(port, USB_CHG_EVENT_BC12);
-	}
-
-	/*
-	 * Immediately schedule another TCPC interrupt if it seems we haven't
-	 * cleared all pending interrupts.
-	 */
-	if (!gpio_pin_get_dt(gpio))
-		schedule_deferred_pd_interrupt(port);
-}
-
 void usb_interrupt(enum gpio_signal signal)
 {
 	int port;
@@ -224,7 +193,7 @@ void usb_interrupt(enum gpio_signal signal)
 	} else {
 		port = 1;
 	}
-	/* Trigger polling of TCPC and BC1.2 in USB-PD task */
+	/* Trigger polling of TCPC in USB-PD task */
 	schedule_deferred_pd_interrupt(port);
 }
 

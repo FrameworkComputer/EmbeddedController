@@ -1,0 +1,309 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/cbi_flash.dtsi>
+#include <dt-bindings/motionsense/utils.h>
+
+#include "../arbitrage.dtsi"
+#include "../common.dtsi"
+#include "../usbc.dtsi"
+#include "../usba.dtsi"
+#include "../generated.dtsi"
+#include "../interrupts.dtsi"
+#include "../overlay.dtsi"
+#include "../power_signal.dtsi"
+#include "keyboard.dtsi"
+
+/ {
+	aliases {
+		tcs3400-int = &als_clear;
+	};
+
+	named-adc-channels {
+			adc_temp_sensor_3: temp_sensor_2 {
+			enum-name = "ADC_TEMP_SENSOR_2";
+			io-channels = <&adc0 5>;
+		};
+			adc_temp_sensor_4: temp_sensor_3 {
+			enum-name = "ADC_TEMP_SENSOR_3";
+			io-channels = <&adc0 6>;
+		};
+	};
+
+	gpio-interrupts {
+		/delete-node/ volume-up ;
+		/delete-node/ volume-down ;
+		/delete-node/ hdmi-ec-hpd ;
+		/delete-node/ lid-accel;
+		/delete-node/ ec-imu;
+	};
+
+	named-gpios {
+		/delete-node/ en_pp5000_fan;
+		/delete-node/ imu_int_ec_l;
+		/delete-node/ lid_accel_int_ec_l;
+		/delete-node/ ec_ap_hid_int_odl;
+		/delete-node/ ec_voldn_btn_odl;
+		/delete-node/ ec_volup_btn_odl;
+		/delete-node/ dp_path_usb_c1_en;
+		/delete-node/ en_kb_bl;
+		/delete-node/ en_pp5000_pen_l;
+		/delete-node/ hdmi_ec_hpd;
+		/delete-node/ dp_path_hdmi_en;
+		/delete-node/ en_hdmi_pwr;
+		/delete-node/ ec_gpa7_test;
+		/delete-node/ lid_360_l;
+
+		gpio_kb_bl_det_5v:kb_bl_dev_5v {
+			gpios = <&gpioa 7 GPIO_INPUT>;
+		};
+		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
+			gpios = <&gpioc 7 (GPIO_INPUT)>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		gpio_ec_cbi_wp: ec_cbi_wp {
+			gpios = <&gpiod 0 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
+		};
+	};
+
+	/* Rotation matrix used by drivers. */
+	/delete-node/ motionsense-rotation-ref;
+
+	motionsense-sensor-data {
+		/delete-node/ lis2dw12-drv-data;
+		/delete-node/ bmi323-drv-data;
+
+		tcs_clear_data: tcs3400-clear-drv-data {
+			compatible = "cros-ec,drvdata-tcs3400-clear";
+			status = "okay";
+
+			als-drv-data {
+				compatible = "cros-ec,accelgyro-als-drv-data";
+				als-cal {
+					scale = <1>;
+					uscale = <0>;
+					offset = <0>;
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = <1>;
+					};
+				};
+			};
+		};
+
+		tcs_rgb_data: tcs3400-rgb-drv-data {
+			compatible = "cros-ec,drvdata-tcs3400-rgb";
+			status = "okay";
+
+			/* node for rgb_calibration_t defined in accelgyro.h */
+			rgb_calibration {
+				compatible =
+					"cros-ec,accelgyro-rgb-calibration";
+
+				irt = <1>;
+
+				rgb-cal-x {
+					offset = <0>;
+					coeff = <0 0 0 1>;
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = <1>;
+					};
+				};
+				rgb-cal-y {
+					offset = <0>;
+					coeff = <0 0 0 1>;
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = <1>;
+					};
+				};
+				rgb-cal-z {
+					offset = <0>;
+					coeff = <0 0 0 1>;
+					als-channel-scale {
+					compatible =
+					"cros-ec,accelgyro-als-channel-scale";
+						k-channel-scale = <1>;
+						cover-scale = <1>;
+					};
+				};
+			};
+		};
+	};
+	/*
+	 * Declare mutexes used by sensor drivers.
+	 * A mutex node is used to create an instance of mutex_t.
+	 * A mutex node is referenced by a sensor node if the
+	 * corresponding sensor driver needs to use the
+	 * instance of the mutex.
+	 */
+	/delete-node/ motionsense-mutex;
+
+	motionsense-sensor {
+		/delete-node/ lid-accel;
+		/delete-node/ base-accel;
+		/delete-node/ base-gyro;
+
+		als_clear: base-als-clear {
+			compatible = "cros-ec,tcs3400-clear";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_LID";
+			port = <&i2c_ec_i2c_sensor_scl_1v8>;
+			default-range = <0x10000>;
+			drv-data = <&tcs_clear_data>;
+			i2c-spi-addr-flags = "TCS3400_I2C_ADDR_FLAGS";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					/* Run ALS sensor in S0 */
+					odr = <1000>;
+				};
+			};
+		};
+
+		base-als-rgb {
+			compatible = "cros-ec,tcs3400-rgb";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0";
+			location = "MOTIONSENSE_LOC_LID";
+			default-range = <0x10000>; /* scale = 1x, uscale = 0 */
+			drv-data = <&tcs_rgb_data>;
+		};
+	};
+
+	motionsense-sensor-info {
+		compatible = "cros-ec,motionsense-sensor-info";
+
+		/* list of entries for motion_als_sensors */
+		als-sensors = <&als_clear>;
+		/*
+		 * list of GPIO interrupts that have to
+		 * be enabled at initial stage
+		 */
+		sensor-irqs = <&int_als_rgb>;
+		/* list of sensors in force mode */
+		accel-force-mode-sensors = <&als_clear>;
+	};
+
+	batteries {
+		default_battery: smp {
+			compatible = "smp,l21m4pg5", "battery-smart";
+		};
+		sunwoda_l21d4pg4 {
+			compatible = "sunwoda,l21d4pg4", "battery-smart";
+		};
+		smp_l23m4pg4 {
+			compatible = "smp,l23m4pg4", "battery-smart";
+		};
+		sunwoda_l23d4pg4 {
+			compatible = "sunwoda,l23d4pg4", "battery-smart";
+		};
+	};
+
+	kb_bl_pwm {
+		compatible = "cros-ec,kblight-pwm";
+		pwms = <&pwm3 0 PWM_HZ(324) PWM_POLARITY_NORMAL>;
+		status = "okay";
+	};
+
+	usbc{
+		port0@0 {
+			/delete-node/  usb-mux-chain-0 ;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&it5205_mux_0 &virtual_mux_0>;
+			};
+		};
+
+		port1@1 {
+			/delete-node/  usb-mux-chain-1 ;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&ps8802_mux_0 &virtual_mux_1>;
+			};
+		};
+	};
+};
+
+/*
+ * When CBI in flash is enabled, setup RO flash layout as follows:
+ *   RO binary:    0x00000:0x5DFFF
+ *   FMAP:         0x5DC00:0x5DFFF
+ *   CBI flash:    0x5E000:0x5EFFF
+ *   PSTATE block: 0x5F000:0x5FFFF
+ */
+&binman {
+	wp-ro {
+		/*
+		 * Delete the pstate node so that we can force it to be the
+		 * last sub-section. binman doesn't handle sub-sections with
+		 * out of order offsets.
+		 */
+		 /delete-node/ pstate;
+
+		 ec-ro {
+			fmap {
+				offset =  <(0x60000 - (0x1000 * 2) - 0x400)>;
+				/*
+				* don't specify 'size = <0x400>' here so
+				* it is auto-assigned to the fmap size.
+				*/
+			};
+		};
+		cbi {
+			offset = <(0x60000 - (0x1000 * 2))>;
+			size = <0x1000>;
+		};
+		pstate {
+			type = "section";
+			offset = <(0x60000 - (0x1000 * 1))>;
+			size = <0x1000>;
+		};
+	};
+};
+
+&i2c2ALT {
+	it5205_mux_0: it5205-mux-0@48 {
+		compatible = "ite,it5205";
+		reg = <0x48>;
+	};
+
+	/delete-node/ ps8802-mx-0@8;
+	/delete-node/ anx7510-bridge@40;
+};
+
+&i2c4 {
+	ppc_port1: syv682x@42 {
+		compatible = "silergy,syv682x";
+		status = "okay";
+		reg = <0x42>;
+		frs_en_gpio = <&gpio_usb_c1_frs_en>;
+		/* a duplicate of the <&usb_c1_ppc_int_odl> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <&gpiod 4 GPIO_ACTIVE_LOW>;
+	};
+
+	ps8802_mux_0: ps8802-mx-0@8 {
+		compatible = "parade,ps8802";
+		status = "okay";
+		reg = <0x8>;
+	};
+
+	/delete-node/ syv682x@40;
+	/delete-node/ tusb1046-mux-1@12;
+};

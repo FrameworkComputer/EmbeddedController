@@ -11,6 +11,10 @@
 #include "button.h"
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Routines common to all protocols */
 
 /**
@@ -64,5 +68,9 @@ int board_has_keyboard_backlight(void);
  */
 __override_proto const struct ec_response_keybd_config *
 board_vivaldi_keybd_config(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_KEYBOARD_PROTOCOL_H */

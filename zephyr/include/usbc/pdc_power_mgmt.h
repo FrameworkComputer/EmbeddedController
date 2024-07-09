@@ -210,9 +210,9 @@ bool pdc_power_mgmt_pd_capable(int port);
  *
  * @param port USB-C port number
  *
- * @retval VBUS voltage
+ * @retval VBUS voltage in millivolts
  */
-uint32_t pdc_power_mgmt_get_vbus_voltage(int port);
+int pdc_power_mgmt_get_vbus_voltage(int port);
 
 /**
  * @brief Resets the PDC
@@ -249,6 +249,14 @@ uint8_t pdc_power_mgmt_get_src_cap_cnt(int port);
 void pdc_power_mgmt_set_dual_role(int port, enum pd_dual_role_states state);
 
 /**
+ * @brief Get the previously set dual role state
+ *
+ * @param port USB-C port number
+ * @return most recently-set dual role state, or -1 if never set.
+ */
+enum pd_dual_role_states pdc_power_mgmt_get_dual_role(int port);
+
+/**
  * @brief Get the current PD state name of USB-C port
  *
  * @param port USB-C port number
@@ -275,10 +283,12 @@ void pdc_power_mgmt_request_data_swap(int port);
  *
  * @param port USB-C port number
  * @param pdc_info Output struct for chip info
+ * @param live True forces a read from the chip. False returns a cached value
+ *        from driver initialization or latest live read.
  *
  * @retval 0 if successful or error code
  */
-int pdc_power_mgmt_get_info(int port, struct pdc_info_t *pdc_info);
+int pdc_power_mgmt_get_info(int port, struct pdc_info_t *pdc_info, bool live);
 
 /**
  * @brief Query bus info from PDC used to access the chip
@@ -516,5 +526,25 @@ int pdc_power_mgmt_frs_enable(int port_num, bool enable);
  * @retval 0 if successful or error code
  */
 int pdc_power_mgmt_set_trysrc(int port, bool enable);
+
+/*
+ * @brief Return PCH DATA STATUS register for PMC Debug
+ *
+ * @param port USB-C port number
+ * @param status PCH data status Output variable to store register value
+ *
+ * @retval 0 if successful or error code
+ */
+int pdc_power_mgmt_get_pch_data_status(int port, uint8_t *status);
+
+/**
+ * @brief Run the USCI_GET_LPM_PPM_INFO command on the PDC
+ *
+ * @param port USB-C port number
+ * @param info Pointer to user-supplied output location for response
+ *
+ * @retval 0 if successful or error code
+ */
+int pdc_power_mgmt_get_lpm_ppm_info(int port, struct lpm_ppm_info_t *info);
 
 #endif /* __CROS_EC_PDC_POWER_MGMT_H */

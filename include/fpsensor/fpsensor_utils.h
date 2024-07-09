@@ -25,4 +25,22 @@ enum ec_error_list validate_fp_buffer_offset(uint32_t buffer_size,
 
 bool fp_match_success(int match_result);
 
+/**
+ * @param mode sensor mode
+ * @return true if the mode is a test capture that does not require finger
+ * touch.
+ */
+bool is_test_capture(uint32_t mode);
+
+/**
+ * @param mode sensor mode
+ * @return true if the mode is one that yields a frame in which all bytes should
+ * be returned over EC_CMD_FRAME.
+ * Other captures modes (simple, pattern0, pattern1, and reset_test) are
+ * only interested in the height*width*bpp image bytes that are offset inside
+ * the frame.
+ * These modes correspond to using the ectool fpframe "raw" modifier.
+ */
+bool is_raw_capture(uint32_t mode);
+
 #endif /* __CROS_EC_FPSENSOR_FPSENSOR_UTILS_H */

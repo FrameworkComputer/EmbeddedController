@@ -5,7 +5,7 @@
 """Define zmake projects for nissa."""
 
 # Nivviks and Craask, Pujjo, Xivu, Xivur, Uldren has NPCX993F, Nereid
-# and Joxer, Yaviks, Yavilla, Yavista, Quandiso has ITE81302
+# and Joxer, Yaviks, Yavilla, Yavista, Quandiso, Domika has ITE81302
 
 
 def register_nissa_project(
@@ -143,6 +143,10 @@ craaskov = register_nissa_project(
     project_name="craaskov",
     chip="npcx9/npcx9m3f",
 )
+orisa = register_nissa_project(
+    project_name="orisa",
+    chip="npcx9/npcx9m3f",
+)
 pirrha = register_nissa_project(
     project_name="pirrha",
     chip="it8xxx2/it81302bx",
@@ -167,11 +171,17 @@ riven = register_nissa_project(
     project_name="riven",
     chip="npcx9/npcx9m3f",
 )
+
+domika = register_nissa_project(
+    project_name="domika",
+    chip="it8xxx2/it81302bx",
+)
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
 assert_rw_fwid_DO_NOT_EDIT(project_name="anraggar", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="craask", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="craaskov", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="orisa", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="gothrax", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="joxer", addr=0xBFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="naktal", addr=0xBFFE0)
@@ -192,3 +202,4 @@ assert_rw_fwid_DO_NOT_EDIT(project_name="glassway", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="yavista", addr=0xAFFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="sundance", addr=0x7FFE0)
 assert_rw_fwid_DO_NOT_EDIT(project_name="riven", addr=0x7FFE0)
+assert_rw_fwid_DO_NOT_EDIT(project_name="domika", addr=0xB7FE0)

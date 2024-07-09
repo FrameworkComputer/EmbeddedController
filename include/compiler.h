@@ -6,6 +6,11 @@
 #ifndef __CROS_EC_COMPILER_H
 #define __CROS_EC_COMPILER_H
 
+#ifdef CONFIG_ZEPHYR
+/* Get the TOOLCHAIN_GCC_VERSION define. */
+#include <zephyr/toolchain.h>
+#endif /* CONFIG_ZEPHYR */
+
 /*
  * See https://gcc.gnu.org/onlinedocs/cpp/Common-Predefined-Macros.html
  */

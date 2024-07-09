@@ -12,6 +12,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Sends EC_CMD_BATTERY_GET_DYNAMIC command to server, and writes the
  * battery dynamic information into battery_dynamic[BATT_IDX_BASE].
@@ -54,5 +58,9 @@ int ec_ec_client_base_charge_control(int max_current, int otg_voltage,
  * response, else forwards the error code from the server.
  */
 int ec_ec_client_hibernate(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* EC_EC_COMM_CLIENT_H_ */

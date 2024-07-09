@@ -3,9 +3,16 @@
  * found in the LICENSE file.
  */
 
+#ifndef __MOCK_TCPCI_I2C_MOCK_H
+#define __MOCK_TCPCI_I2C_MOCK_H
+
 #include "common.h"
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 #define MOCK_TCPCI_I2C_ADDR_FLAGS 0x99
 
@@ -48,3 +55,9 @@ void mock_tcpci_receive(enum tcpci_msg_type sop, uint16_t header,
 			uint32_t *payload);
 
 void tcpci_register_dump(void);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __MOCK_TCPCI_I2C_MOCK_H */

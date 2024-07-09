@@ -20,4 +20,4 @@ else
   dest_dir="$(dirname "${h_file}")"
   [[ -d "${dest_dir}" ]] || mkdir -p "${dest_dir}"
 fi
-printf "${current_set}" > "${h_file}"
+printf "%s" "${current_set}" > "${h_file}"

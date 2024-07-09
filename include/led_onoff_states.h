@@ -10,6 +10,10 @@
 
 #include "ec_commands.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define LED_INDEFINITE UINT8_MAX
 #define LED_ONE_SEC (1000 / HOOK_TICK_INTERVAL_MS)
 #define LED_OFF EC_LED_COLOR_COUNT
@@ -80,5 +84,9 @@ __override_proto void led_set_color_power(enum ec_led_colors color);
 
 __override_proto enum led_states
 board_get_led_state(enum led_states desired_state);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ONOFFSTATES_LED_H */

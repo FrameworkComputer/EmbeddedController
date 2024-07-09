@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum port_80_event {
 	PORT_80_EVENT_RESUME = 0x1001, /* S3->S0 transition */
 	PORT_80_EVENT_RESET = 0x1002, /* RESET transition */
@@ -45,6 +49,10 @@ int port_80_last(void);
  * @return 0: ddr detect; 1: ddr no detect.
  */
 int amd_ddr_initialized_check(void);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_PORT80_H */

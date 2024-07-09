@@ -96,6 +96,7 @@ enum ucsi_commands {
 	UCSI_CMD_READ_POWER_LEVEL = 0x1E,
 	UCSI_CMD_CHUNKING_SUPPORT = 0x1F,
 	UCSI_CMD_VENDOR_CMD = 0x20,
+	UCSI_CMD_MAX,
 };
 
 /* Byte offsets to UCSI data */
@@ -155,7 +156,7 @@ struct ucsi_memory_region {
 	uint8_t reserved_0;
 	uint8_t message_out[MESSAGE_OUT_SIZE]; /* PPM to OPM buffer */
 	uint8_t reserved_1;
-} __attribute__((__packed__));
+} __attribute__((__packed__, aligned(4)));
 
 /* Commands and data below */
 

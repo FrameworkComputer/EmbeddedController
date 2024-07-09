@@ -10,6 +10,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define USB_MAX_PACKET_SIZE 64
 
 /* USB 2.0 chapter 9 definitions */
@@ -27,6 +31,7 @@
 #define USB_DT_BOS 0x0f
 #define USB_DT_DEVICE_CAPABILITY 0x10
 
+#ifndef CONFIG_ZEPHYR
 /* USB Device Descriptor */
 struct usb_device_descriptor {
 	uint8_t bLength;
@@ -44,6 +49,24 @@ struct usb_device_descriptor {
 	uint8_t iSerialNumber;
 	uint8_t bNumConfigurations;
 } __packed;
+
+/* Setup Packet */
+struct usb_setup_packet {
+	uint8_t bmRequestType;
+	uint8_t bRequest;
+	uint16_t wValue;
+	uint16_t wIndex;
+	uint16_t wLength;
+};
+
+/* String Descriptor */
+struct usb_string_descriptor {
+	uint8_t bLength;
+	uint8_t bDescriptorType;
+	uint16_t wData[1];
+} __packed;
+#endif /* CONFIG_ZEPHYR */
+
 #define USB_DT_DEVICE_SIZE 18
 
 /* BOS Descriptor ( USB3.1 rev1 Section 9.6.2 ) */
@@ -132,13 +155,6 @@ struct usb_config_descriptor {
 	uint8_t bMaxPower;
 } __packed;
 #define USB_DT_CONFIG_SIZE 9
-
-/* String Descriptor */
-struct usb_string_descriptor {
-	uint8_t bLength;
-	uint8_t bDescriptorType;
-	uint16_t wData[1];
-} __packed;
 
 /* Interface Descriptor */
 struct usb_interface_descriptor {
@@ -281,15 +297,6 @@ struct usb_endpoint_descriptor {
 			USB_URL_SCHEME_##scheme, str               \
 	}
 
-/* Setup Packet */
-struct usb_setup_packet {
-	uint8_t bmRequestType;
-	uint8_t bRequest;
-	uint16_t wValue;
-	uint16_t wIndex;
-	uint16_t wLength;
-};
-
 /*
  * Extended Compat ID OS Feature Descriptor Specification for Windows v1.0 USB
  * Descriptors.
@@ -400,5 +407,9 @@ extern const uint8_t usb_string_desc[];
 extern const void *const usb_fw_version;
 extern const struct bos_context bos_ctx;
 extern const void *webusb_url;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_DESCRIPTOR_H */

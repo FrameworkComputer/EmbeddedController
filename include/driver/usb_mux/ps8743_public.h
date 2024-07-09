@@ -12,6 +12,10 @@
 
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PS8743_I2C_ADDR0_FLAG 0x10
 #define PS8743_I2C_ADDR1_FLAG 0x11
 #define PS8743_I2C_ADDR2_FLAG 0x19
@@ -111,5 +115,9 @@ int ps8743_read(const struct usb_mux *me, uint8_t reg, int *val);
 int ps8743_field_update(const struct usb_mux *me, uint8_t reg, uint8_t mask,
 			uint8_t val);
 int ps8743_check_chip_id(const struct usb_mux *me, int *val);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_DRIVER_USB_MUX_PS8743_PUBLIC_H */

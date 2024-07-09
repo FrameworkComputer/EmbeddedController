@@ -1,0 +1,24 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <dt-bindings/gpio_defines.h>
+
+/* typec-aic1-power */
+&PD_POW_I2C {
+	pd_pow_port0: rts54-pdc@20 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x20>;
+		irq-gpios = <PD_POW_IRQ_GPIO GPIO_ACTIVE_LOW>;
+	};
+	pd_pow_port1: rts54-pdc@24 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x24>;
+		irq-gpios = <PD_POW_IRQ_GPIO GPIO_ACTIVE_LOW>;
+	};
+};
+
+&gpio_pdc_pow_irq {
+	no-auto-init;
+};

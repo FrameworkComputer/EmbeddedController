@@ -13,8 +13,6 @@ good-names=BUILD
 [MESSAGES CONTROL]
 
 disable=
-    bad-continuation,
-    bad-whitespace,
     # These have nothing to do with black, they are just annoying
     fixme,
     too-many-arguments,
@@ -22,6 +20,3 @@ disable=
     too-many-branches,
     too-many-locals
 
-[format]
-
-string-quote=double

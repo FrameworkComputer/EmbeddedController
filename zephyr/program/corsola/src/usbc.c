@@ -30,6 +30,8 @@
 /* a flag for indicating the tasks are inited. */
 test_export_static bool tasks_inited;
 
+#define SET_DUAL_ROLE_DEBOUNCE (2 * MSEC)
+static int xhci_state;
 /* Baseboard */
 test_export_static void baseboard_init(void)
 {
@@ -74,10 +76,30 @@ uint8_t board_get_adjusted_usb_pd_port_count(void)
 	}
 }
 
+static void pd_set_dual_role_deferred(void)
+{
+	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
+		/*
+		 * Enable DRP toggle after XHCI inited. This is used to follow
+		 * USB 3.2 spec 10.3.1.1.
+		 */
+		if (xhci_state) {
+			pd_set_dual_role(i, PD_DRP_TOGGLE_ON);
+		} else if (tc_is_attached_src(i)) {
+			/*
+			 * This is a AP reset S0->S0 transition.
+			 * We should set the role back to sink.
+			 */
+			pd_set_dual_role(i, PD_DRP_FORCE_SINK);
+		}
+	}
+}
+DECLARE_DEFERRED(pd_set_dual_role_deferred);
+
 /* USB-A */
 void xhci_interrupt(enum gpio_signal signal)
 {
-	const int xhci_stat = gpio_get_level(signal);
+	xhci_state = gpio_get_level(signal);
 
 #ifdef USB_PORT_ENABLE_COUNT
 	enum usb_charge_mode mode = gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(
@@ -90,21 +112,8 @@ void xhci_interrupt(enum gpio_signal signal)
 	}
 #endif /* USB_PORT_ENABLE_COUNT */
 
-	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		/*
-		 * Enable DRP toggle after XHCI inited. This is used to follow
-		 * USB 3.2 spec 10.3.1.1.
-		 */
-		if (xhci_stat) {
-			pd_set_dual_role(i, PD_DRP_TOGGLE_ON);
-		} else if (tc_is_attached_src(i)) {
-			/*
-			 * This is a AP reset S0->S0 transition.
-			 * We should set the role back to sink.
-			 */
-			pd_set_dual_role(i, PD_DRP_FORCE_SINK);
-		}
-	}
+	hook_call_deferred(&pd_set_dual_role_deferred_data,
+			   SET_DUAL_ROLE_DEBOUNCE);
 }
 
 __override enum pd_dual_role_states pd_get_drp_state_in_s0(void)

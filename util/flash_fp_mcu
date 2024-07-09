@@ -703,6 +703,7 @@ flash_fp_mcu_board() {
   if [[ "${PLATFORM_BASE_NAME}" != "strongbad" ]] &&
      [[ "${PLATFORM_BASE_NAME}" != "zork" ]] &&
      [[ "${PLATFORM_BASE_NAME}" != "myst" ]] &&
+     [[ "${PLATFORM_BASE_NAME}" != "rauru" ]] &&
      [[ "${PLATFORM_BASE_NAME}" != "skyrim" ]]; then
     gpio in       "${gpio_boot0}" "${gpio_nrst}"
   fi
@@ -715,6 +716,18 @@ flash_fp_mcu_board() {
     klog "Binding cros-ec driver"
     echo "" > "/sys/bus/spi/devices/${deviceid}/driver_override"
     echo "${deviceid}" > /sys/bus/spi/drivers/cros-ec-spi/bind
+
+    # Factory expects SWWP = 0 after flash_fp_mcu, so disable it, see
+    # b/341193125.
+    if [[ "${chip_type}" == "NPCX" ]]; then
+      cmd="ectool --name=cros_fp flashprotect disable"
+      echo "# ${cmd}"
+      ${cmd}
+      cmd_exit_status=$?
+      if [[ "${cmd_exit_status}" -eq 0 ]]; then
+        echo "Failed to disable WP after flashing NPCX."
+      fi
+    fi
   else
     # FPMCU can still have ro_now protection (sector write protection) enabled
     # e.g. when flash_fp_mcu was run with --read option. It is disabled when
@@ -847,6 +860,27 @@ config_nocturne() {
   # FP_PWR_EN is on GPP_A11 = 11
   local gpiopwren=11
   readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
+}
+
+config_rauru() {
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev5.0"
+
+  local dev_path="platform/soc/1002d000.pinctrl/gpio"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
+
+  readonly GPIO_CHIP="gpiochip${gpiobase}"
+  # FPMCU RST_ODL is $(gpiofind FP_RST_1V8_S3_L) is gpiochip0 26
+  readonly GPIO_NRST=$((gpiobase + $(gpiofind FP_RST_1V8_S3_L|cut -f2 -d" ")))
+  # FPMCU BOOT0 is $(gpiofind AP_FP_FW_UP_STRAP) is gpiochip0 27
+  readonly GPIO_BOOT0=$((gpiobase + $(gpiofind AP_FP_FW_UP_STRAP|cut -f2 -d" ")))
+
+  # EN FP RAILS is $(gpiofind EN_PWR_FP) is gpiochip0 173
+  readonly GPIO_PWREN=$((gpiobase + $(gpiofind EN_PWR_FP|cut -f2 -d" ")))
 }
 
 config_strongbad() {
@@ -1082,6 +1116,39 @@ config_myst() {
   readonly GPIO_BOOT0=900
   # FPMCU PWR_EN is on AGPIO 4 = 768 + 4 = 772
   readonly GPIO_PWREN=772
+}
+
+config_brox() {
+  readonly TRANSPORT="SPI"
+  readonly DEVICE="/dev/spidev0.0"
+
+  # Raptorlake uses Alderlake-P PCH and hence
+  # exports INTC1055 ACPI ID matching with tigerlake-pinctrl.c
+  # See kernel/v6.6/drivers/pinctrl/intel/pinctrl-tigerlake.c
+  # for pin name and pin number.
+  # Examine `cat /sys/kernel/debug/pinctrl/INTC1055:00/gpio-ranges` on a
+  # lotso device to determine gpio number from pin number.
+  # For example: GPP_E21, the pin number is 247 from the pinctrl-tigerlake.c.
+  # From the gpio-ranges, the gpio value is 832 + (247-226) = 853
+
+  local gpiochip_dev_path="pci0000:00/INTC1055:00/gpio"
+  local gpiobase
+  if ! gpiobase=$(get_sysfs_gpiochip_base "${gpiochip_dev_path}"); then
+    echo "Unable to find gpio chip base"
+    return "${EXIT_PRECONDITION}"
+  fi
+
+  readonly GPIO_CHIP="gpiochip${gpiobase}"
+
+  # FPMCU RST_ODL is on GPP_E21 = 320 + (247 - 226) = 341
+  local gpionrst=341
+  readonly GPIO_NRST=$(( gpionrst + gpiobase ))
+  # FPMCU BOOT0 is on GPP_D9 = 160 + (108 - 99) = 169
+  local gpioboot=169
+  readonly GPIO_BOOT0=$(( gpioboot + gpiobase ))
+  # FP_PWR_EN is on GPP_E20 = 320 + (246-226) = 340
+  local gpiopwren=340
+  readonly GPIO_PWREN=$(( gpiopwren + gpiobase ))
 }
 
 main() {

@@ -34,7 +34,7 @@ void board_config_pre_init(void)
  * Forward UARTs as a USB serial interface.
  */
 
-#define USB_STREAM_RX_SIZE 16
+#define USB_STREAM_RX_SIZE 64
 #define USB_STREAM_TX_SIZE 64
 
 /******************************************************************************
@@ -144,11 +144,11 @@ const void *const usb_strings[] = {
 BUILD_ASSERT(ARRAY_SIZE(usb_strings) == USB_STR_COUNT);
 
 /******************************************************************************
- * Set up USB PD
+ * Set up ADC
  */
 
 /* ADC channels */
-const struct adc_t adc_channels[] = {
+struct adc_t adc_channels[] = {
 	/*
 	 * All available ADC signals, converted to mV (3300mV/4096).  Every one
 	 * is declared with same name as the GPIO signal on the same pin, that
@@ -160,6 +160,7 @@ const struct adc_t adc_channels[] = {
 	 * also serve as calibration as the supply voltage may not be 3300mV
 	 * exactly.
 	 */
+	[ADC_VREFINT] = { "VREFINT", 1, 1, 0, STM32_AIN(0) },
 	[ADC_CN9_11] = { "CN9_11", 3300, 4096, 0, STM32_AIN(1) },
 	[ADC_CN9_9] = { "CN9_9", 3300, 4096, 0, STM32_AIN(2) },
 	/*[ADC_CN10_9] = { "CN10_9", 3300, 4096, 0, STM32_AIN(3) },*/
@@ -198,22 +199,8 @@ static void board_init(void)
 	usart_init(&usart3);
 	usart_init(&usart4);
 	usart_init(&usart5);
-
-	/*
-	 * Enable TIMER3 in downward mode for precise JTAG bit-banging.
-	 */
-	STM32_RCC_APB1ENR1 |= STM32_RCC_APB1ENR1_TIM3EN;
-	STM32_TIM_CR1(3) = STM32_TIM_CR1_DIR_DOWN | STM32_TIM_CR1_CEN;
-
-	/* Enable ADC */
-	STM32_RCC_AHB2ENR |= STM32_RCC_AHB2ENR_ADCEN;
-	/* Initialize the ADC by performing a fake reading */
-	adc_read_channel(ADC_CN9_11);
-
-	/* Enable DAC */
-	STM32_RCC_APB1ENR |= STM32_RCC_APB1ENR1_DAC1EN;
 }
-DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_PRE_DEFAULT);
 
 static void usart_reinit(struct usb_stream_config const *usart_usb,
 			 struct usart_config const *usart)

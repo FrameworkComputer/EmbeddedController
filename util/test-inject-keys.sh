@@ -11,20 +11,20 @@ TMPX=/tmp/inject-key-test$$_x
 TMPY=/tmp/inject-key-test$$_y
 
 cleanup() {
-  rm -f ./ectool $TMPX $TMPY
+  rm -f ./ectool "${TMPX}" "${TMPY}"
 }
 
 fail() {
-  echo $*
+  echo "$@"
   exit 1
 }
 
 trap cleanup SIGINT
 
-PATH=.:$PATH
+PATH=.:${PATH}
 
 if [ -e ectool ]; then
-  if [ "$(echo $(cat ectool))" != '#! /bin/bash echo $*' ]; then
+  if [ "$(cat ectool)" != $'#! /bin/bash\necho $*' ]; then
     echo "./ectool exists, please remove it to run this script"
     exit 1
   fi
@@ -48,9 +48,9 @@ chmod a+x ectool
 # tests that should succeed with the expected output
 
 # simple string
-./inject-keys.py -s abcd > $TMPX
+./inject-keys.py -s abcd > "${TMPX}"
 
-cat > $TMPY <<EOF
+cat > "${TMPY}" <<EOF
 kbpress 4 1 1
 kbpress 4 1 0
 kbpress 0 3 1
@@ -61,12 +61,12 @@ kbpress 4 2 1
 kbpress 4 2 0
 EOF
 
-cmp $TMPX $TMPY || fail $TMPX and $TMPY differ
+cmp "${TMPX}" "${TMPY}" || fail "${TMPX} and ${TMPY} differ"
 
 # string with shifted characters
-./inject-keys.py -s A@%Bx > $TMPX
+./inject-keys.py -s A@%Bx > "${TMPX}"
 
-cat > $TMPY <<EOF
+cat > "${TMPY}" <<EOF
 kbpress 5 7 1
 kbpress 4 1 1
 kbpress 4 1 0
@@ -87,25 +87,25 @@ kbpress 5 4 1
 kbpress 5 4 0
 EOF
 
-cmp $TMPX $TMPY || fail $TMPX and $TMPY differ
+cmp "${TMPX}" "${TMPY}" || fail "${TMPX} and ${TMPY} differ"
 
 # keystroke injection
-./inject-keys.py -k enter > $TMPX
+./inject-keys.py -k enter > "${TMPX}"
 
-cat > $TMPY <<EOF
+cat > "${TMPY}" <<EOF
 kbpress 4 11 1
 kbpress 4 11 0
 EOF
 
-cmp $TMPX $TMPY || fail $TMPX and $TMPY differ
+cmp "${TMPX}" "${TMPY}" || fail "${TMPX} and ${TMPY} differ"
 
 # key event injection
-./inject-keys.py -p enter > $TMPX
+./inject-keys.py -p enter > "${TMPX}"
 
-cat > $TMPY <<EOF
+cat > "${TMPY}" <<EOF
 kbpress 4 11 1
 EOF
 
-cmp $TMPX $TMPY || fail $TMPX and $TMPY differ
+cmp "${TMPX}" "${TMPY}" || fail "${TMPX} and ${TMPY} differ"
 
 cleanup

@@ -11,6 +11,10 @@
 
 #include "usb_mux.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PS8833_ADDR0 0x10
 #define PS8833_ADDR1 0x20
 #define PS8833_ADDR3 0x30
@@ -43,5 +47,9 @@
 #define PS8833_REG_TBT3_USB4_USB4_EN BIT(7)
 
 extern const struct usb_mux_driver ps8833_usb_retimer_driver;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_MUX_PARADE8833_H */

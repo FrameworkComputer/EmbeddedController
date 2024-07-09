@@ -5,6 +5,10 @@
 
 #include "ppc/aoz1380_public.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define AOZ1380_COMPAT aoz_aoz1380
 
 /* Note: This chip has no i2c interface */
@@ -13,3 +17,7 @@
 		.drv = &aoz1380_drv,                                \
 		.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {}), \
 	}
+
+#ifdef __cplusplus
+}
+#endif

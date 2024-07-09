@@ -13,6 +13,10 @@
 #include "ec_commands.h"
 #include "gpio_signal.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BUTTON_FLAG_ACTIVE_HIGH BIT(0)
 #define BUTTON_FLAG_DISABLED BIT(1) /* Button disabled */
 
@@ -124,5 +128,9 @@ enum debug_state {
 __test_only void reset_button_debug_state(void);
 
 __test_only enum debug_state get_button_debug_state(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_BUTTON_H */

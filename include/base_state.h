@@ -3,7 +3,14 @@
  * found in the LICENSE file.
  */
 
+#ifndef __CROS_EC_BASE_STATE_H
+#define __CROS_EC_BASE_STATE_H
+
 #include "ec_commands.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /**
  * Return 1 if base attached, 0 otherwise.
@@ -22,3 +29,9 @@ void base_set_state(int state);
  * 1 meaning attached and 2 meaning reset to the original state.
  */
 void base_force_state(enum ec_set_base_state_cmd state);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __CROS_EC_BASE_STATE_H */

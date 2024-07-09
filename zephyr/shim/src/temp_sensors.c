@@ -72,12 +72,14 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(TEMP_SENSORS_COMPAT) == 1,
 
 #ifndef CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN
 
+#if DT_HAS_COMPAT_STATUS_OKAY(THERMISTOR_COMPAT)
 static int thermistor_get_temp(const struct temp_sensor_t *sensor,
 			       int *temp_ptr)
 {
 	return thermistor_get_temperature(sensor->idx, temp_ptr,
 					  sensor->zephyr_info->thermistor);
 }
+#endif
 
 #define GET_THERMISTOR_DATUM(node_sample_id)                                 \
 	[DT_PROP(node_sample_id,                                             \

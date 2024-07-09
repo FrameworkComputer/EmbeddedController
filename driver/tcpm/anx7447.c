@@ -307,8 +307,7 @@ static int anx7447_init(int port)
 		}
 	}
 	if (!I2C_STRIP_FLAGS(anx[port].i2c_addr_flags)) {
-		ccprintf(
-			"TCPC I2C addr 0x%x is invalid for ANX7447\n",
+		CPRINTF("TCPC I2C addr 0x%x is invalid for ANX7447\n",
 			I2C_STRIP_FLAGS(tcpc_config[port].i2c_info.addr_flags));
 		return EC_ERROR_UNKNOWN;
 	}
@@ -578,8 +577,8 @@ static int anx7447_mux_init(const struct usb_mux *me)
 		}
 	}
 	if (!I2C_STRIP_FLAGS(anx[port].i2c_addr_flags)) {
-		ccprintf("TCPC I2C addr 0x%x is invalid for ANX7447\n",
-			 I2C_STRIP_FLAGS(usb_muxes[port].mux->i2c_addr_flags));
+		CPRINTF("TCPC I2C addr 0x%x is invalid for ANX7447\n",
+			I2C_STRIP_FLAGS(usb_muxes[port].mux->i2c_addr_flags));
 		return EC_ERROR_UNKNOWN;
 	}
 

@@ -21,12 +21,14 @@
 #define KEYBOARD_COLS_NO_KEYPAD 13
 
 /*
- * KEYBOARD_COLS has the column size of the default matrix. KEYBOARD_COLS_MAX
+ * KEYBOARD_COLS is the column size of the default matrix. KEYBOARD_COLS_MAX
  * has the column size of the largest matrix. It's used to statically allocate
  * arrays used by the scanner. keyboard_cols holds a runtime column size. The
  * scanner uses it as a loop terminal.
  */
-#ifdef CONFIG_KEYBOARD_KEYPAD
+#ifdef CONFIG_KEYBOARD_COLS
+#define KEYBOARD_COLS CONFIG_KEYBOARD_COLS
+#elif defined(CONFIG_KEYBOARD_KEYPAD)
 #define KEYBOARD_COLS KEYBOARD_COLS_WITH_KEYPAD
 #else
 #define KEYBOARD_COLS KEYBOARD_COLS_NO_KEYPAD
@@ -35,6 +37,10 @@
 #define KEYBOARD_COLS_MAX KEYBOARD_COLS
 #endif
 #define KEYBOARD_ROWS 8
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /*
  * WARNING: Do not directly modify it. You should call keyboard_raw_set_cols,
@@ -87,6 +93,10 @@ extern uint8_t keyboard_cols;
 #else
 #define KEYBOARD_MASKED_BY_POWERBTN \
 	(KEYBOARD_MASK_REFRESH | KEYBOARD_ROW_TO_MASK(0))
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_KEYBOARD_CONFIG_H */

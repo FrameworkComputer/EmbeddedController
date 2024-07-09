@@ -5,15 +5,12 @@
 
 #include "driver/ppc/ktu1125.h"
 #include "emul/emul_ktu1125.h"
+#include "test/drivers/test_mocks.h"
 #include "test/drivers/test_state.h"
 #include "usbc_ppc.h"
 
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
-
-FAKE_VALUE_FUNC(int, ppc_get_alert_status, int);
-
-#define FFF_FAKES_LIST(FAKE) FAKE(ppc_get_alert_status)
 
 #define INVALID_PORT 99
 
@@ -140,8 +137,7 @@ ZTEST(ppc_ktu1125, test_cover_init)
 
 static void ktu1125_test_before(void *data)
 {
-	FFF_FAKES_LIST(RESET_FAKE);
-	FFF_RESET_HISTORY();
+	RESET_FAKE(ppc_get_alert_status);
 
 	ktu1125_emul_reset(ktu1125_emul);
 }

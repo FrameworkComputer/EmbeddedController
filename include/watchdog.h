@@ -12,6 +12,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initialize the watchdog.
  *
@@ -51,6 +55,10 @@ void watchdog_reload(void);
 #else
 test_mockable_static_inline void watchdog_reload(void)
 {
+}
+#endif
+
+#ifdef __cplusplus
 }
 #endif
 

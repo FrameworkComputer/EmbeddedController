@@ -174,10 +174,9 @@ static void wake_tx(void)
 }
 DECLARE_DEFERRED(wake_tx);
 
-/* retry every 2ms */
-#define RETRY_INTERVAL (2 * MSEC)
-/* b/319924645#comment23, temporary increase from 20 to 50. */
-#define MAX_RETRY 50
+/* retry every 2.5ms * 100 times */
+#define RETRY_INTERVAL (5 * MSEC / 2)
+#define MAX_RETRY 100
 
 static void start_error_recovery(void)
 {

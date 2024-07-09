@@ -477,6 +477,8 @@ cros_cbi_get_fw_config_kb_blight(enum cbi_fw_config_field_id field_id,
 	case 1:
 		*value = FW_KB_BACKLIGHT_OFF;
 		break;
+	case -1:
+		return -EINVAL;
 	default:
 		return 0;
 	}
@@ -515,6 +517,9 @@ ZTEST(yaviks, test_board_vivaldi_keybd_idx)
 
 	kb_blight = 0;
 	zassert_equal(board_vivaldi_keybd_idx(), 0);
+
+	kb_blight = -1;
+	zassert_equal(board_vivaldi_keybd_idx(), -1);
 }
 
 ZTEST(yaviks, test_kb_layout_init)
@@ -691,6 +696,9 @@ static int cros_cbi_get_fw_config_fan_type(enum cbi_fw_config_field_id field_id,
 		break;
 	case 1:
 		*value = FW_FAN_TYPE_2;
+		break;
+	case -1:
+		*value = -EINVAL;
 		break;
 	default:
 		return 0;
@@ -934,4 +942,15 @@ ZTEST(yaviks, test_fan_type_2)
 	board_override_fan_control(0, temp);
 	zassert_equal(fan_get_rpm_mode(0), 1);
 	zassert_equal(fan_get_rpm_target(0), 0);
+}
+
+bool is_fan_type_2(void);
+
+ZTEST(yaviks, test_fan_type_cbi_error)
+{
+	cros_cbi_get_fw_config_fake.custom_fake =
+		cros_cbi_get_fw_config_fan_type;
+	fan_type = -1;
+
+	zassert_equal(is_fan_type_2(), false);
 }

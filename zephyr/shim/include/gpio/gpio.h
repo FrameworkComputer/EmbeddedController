@@ -11,6 +11,10 @@
 #include <zephyr/drivers/gpio.h>
 #include <zephyr/toolchain.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Validate interrupt flags are valid for the Zephyr GPIO driver.
  */
@@ -122,5 +126,9 @@ BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(unused_gpios) <= 1,
 #else
 #define UNUSED_GPIO_CONFIG_LIST /* Nothing if no 'unused-pins' node */
 #endif /* DT_NODE_EXISTS(UNUSED_GPIOS_NODE) */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZEPHYR_SHIM_INCLUDE_GPIO_GPIO_H_ */

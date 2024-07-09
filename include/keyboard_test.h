@@ -11,6 +11,10 @@
 
 #include <timer.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Keyboard scan test item - contains a single scan to 'present' to key scan
  * logic.
@@ -38,5 +42,9 @@ uint8_t keyscan_seq_get_scan(int column, uint8_t scan);
  *	-1 if there is no future key scan event (e.g. testing is complete)
  */
 int keyscan_seq_next_event_delay(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

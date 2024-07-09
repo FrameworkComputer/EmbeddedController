@@ -174,7 +174,7 @@ struct rts5453_ucsi_commands {
 		.command = cmd, .command_copy_length = length, \
 	}
 
-struct rts5453_ucsi_commands ucsi_commands[UCSI_CMD_VENDOR_CMD + 1] = {
+struct rts5453_ucsi_commands ucsi_commands[UCSI_CMD_MAX] = {
 	UCSI_CMD_ENTRY(UCSI_CMD_RESERVED, 0),
 	UCSI_CMD_ENTRY(UCSI_CMD_PPM_RESET, 0),
 	UCSI_CMD_ENTRY(UCSI_CMD_CANCEL, 0),
@@ -604,7 +604,7 @@ static int rts5453_ucsi_execute_cmd(struct ucsi_pd_device *device,
 	uint8_t port_num = RTS_DEFAULT_PORT;
 	int ret = 0;
 
-	if (control->command == 0 || control->command > UCSI_CMD_VENDOR_CMD) {
+	if (control->command == 0 || control->command >= UCSI_CMD_MAX) {
 		ELOG("Invalid command 0x%x", control->command);
 		return -1;
 	}

@@ -1,0 +1,89 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+
+/ {
+	temp_ambient: ambient {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V0_22K6_47K_4050B>;
+		adc = <&adc_ambient>;
+	};
+	temp_ddr: ddr {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V0_22K6_47K_4050B>;
+		adc = <&adc_ddr>;
+	};
+	temp_skin: skin {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V0_22K6_47K_4050B>;
+		adc = <&adc_skin>;
+	};
+	temp_vr: vr {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V0_22K6_47K_4050B>;
+		adc = <&adc_vr>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		ambient {
+			temp_fan_off = <15>;
+			temp_fan_max = <50>;
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
+			sensor = <&temp_ambient>;
+		};
+
+		/*
+		 * TDB: battery temp read api is not using thermistor and
+		 * zephyr shim layer doesn't support to configure custom read
+		 * function.
+		 *
+		 * battery {
+		 *	compatible = "cros-ec,temp-sensor-thermistor",
+		 *		     "cros-ec,temp-sensor";
+		 *	thermistor = < >;
+		 *	enum-name = "";
+		 *	temp_fan_off = <15>;
+		 *	temp_fan_max = <50>;
+		 *	temp_host_high = <75>;
+		 *	temp_host_halt = <80>;
+		 *	temp_host_release_high = <65>;
+		 *	adc = <&adc_battery>;
+		 * };
+		 */
+
+		ddr {
+			temp_fan_off = <15>;
+			temp_fan_max = <50>;
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
+			sensor = <&temp_ddr>;
+		};
+		skin {
+			temp_fan_off = <15>;
+			temp_fan_max = <50>;
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
+			sensor = <&temp_skin>;
+		};
+		vr {
+			temp_fan_off = <15>;
+			temp_fan_max = <50>;
+			temp_host_high = <75>;
+			temp_host_halt = <80>;
+			temp_host_release_high = <65>;
+			sensor = <&temp_vr>;
+		};
+	};
+};
+
+&thermistor_3V0_22K6_47K_4050B {
+	status = "okay";
+};

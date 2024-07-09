@@ -13,6 +13,10 @@
 #define SHA256_DIGEST_SIZE 32
 #define SHA256_BLOCK_SIZE 64
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef CONFIG_PLATFORM_EC_SHA256_HW_ZEPHYR
 /*
  * The chip's header file must implement the SHA256 context structure and
@@ -44,5 +48,9 @@ uint8_t *SHA256_final(struct sha256_ctx *ctx);
 
 void hmac_SHA256(uint8_t *output, const uint8_t *key, const int key_len,
 		 const uint8_t *message, const int message_len);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_SHA256_H */

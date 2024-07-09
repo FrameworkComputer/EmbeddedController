@@ -10,6 +10,10 @@
 
 #include "usb_pd_vdo.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * NOTE: Throughout the file, some of the bit fields in the structures are for
  * information purpose, they might not be actually used in the current code.
@@ -290,5 +294,9 @@ union tbt_dev_mode_enter_cmd {
 	};
 	uint32_t raw_value;
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_PD_TBT_COMPAT_H */

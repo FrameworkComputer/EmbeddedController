@@ -12,8 +12,6 @@ http://go/cros-fingerprint-firmware-branching-and-signing and now used by other
 boards.
 """
 
-from __future__ import print_function
-
 import argparse
 import os
 from pathlib import Path

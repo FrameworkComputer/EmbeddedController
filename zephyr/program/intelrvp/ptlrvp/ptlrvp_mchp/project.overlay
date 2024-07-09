@@ -1,0 +1,21 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "include/board.h"
+
+#include "adc.dtsi"
+#include "fan.dtsi"
+#include "gpio.dtsi"
+#include "i2c.dts"
+#include "../battery.dtsi"
+#include "../i2c.dtsi"
+#include "../ioex.dtsi"
+#include "../ioex_gpio.dtsi"
+#include "../interrupts.dtsi"
+#include "../keyboard.dtsi"
+#include "../pd.dtsi"
+#include "../power_signals.dtsi"
+#include "../temp_sensor.dts"
+#include "../usbc.dtsi"

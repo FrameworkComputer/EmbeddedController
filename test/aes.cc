@@ -15,24 +15,20 @@
  * CONNECTION WITH THE USE OR PERFORMANCE OF THIS SOFTWARE. */
 
 #include "benchmark.h"
-#include "common.h"
-#include "test_util.h"
-
-#include <memory>
-#include <span>
-
-extern "C" {
 #include "builtin/assert.h"
+#include "common.h"
 #include "console.h"
-#include "timer.h"
-#include "util.h"
-#include "watchdog.h"
-}
-
 #include "openssl/aead.h"
 #include "openssl/aes.h"
 #include "openssl/cipher.h"
 #include "openssl/err.h"
+#include "test_util.h"
+#include "timer.h"
+#include "util.h"
+#include "watchdog.h"
+
+#include <memory>
+#include <span>
 
 /* Temporary buffer, to avoid using too much stack space. */
 static uint8_t tmp[512];

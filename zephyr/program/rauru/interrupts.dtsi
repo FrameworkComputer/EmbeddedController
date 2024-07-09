@@ -60,7 +60,7 @@
 		int_ap_in_rst: ap-in-rst {
 			irq-pin = <&gpio_ap_ec_sysrst_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "power_signal_interrupt";
+			handler = "chipset_warm_reset_interrupt";
 		};
 		int_hdmi_ec_hpd: hdmi-ec-hpd {
 			irq-pin = <&gpio_hdmi_ec_hpd>;
@@ -82,10 +82,15 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "tcs3400_interrupt";
 		};
-		int_ap_xhci_init_done: ap-xhci-init-done-r {
-			irq-pin = <&gpio_ap_xhci_init_done_r>;
+		int_ap_xhci_init_done: ap-xhci-init-done {
+			irq-pin = <&gpio_ap_xhci_init_done>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "xhci_interrupt";
+		};
+		int_wp: wp {
+			irq-pin = <&gpio_ec_flash_wp_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "switch_interrupt";
 		};
 	};
 };

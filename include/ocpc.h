@@ -12,6 +12,10 @@
 
 #include "battery.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define OCPC_UNINIT 0xdededede
 
 struct ocpc_data {
@@ -123,6 +127,10 @@ void test_ocpc_reset_resistance_state(void);
  */
 enum ec_error_list ocpc_calc_resistances(struct ocpc_data *ocpc,
 					 struct batt_params *battery);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_OCPC_H */

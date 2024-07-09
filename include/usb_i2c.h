@@ -10,6 +10,10 @@
 #include "usb_descriptor.h"
 #include "util.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef __CROS_USB_I2C_H
 #define __CROS_USB_I2C_H
 
@@ -218,5 +222,9 @@ int usb_i2c_board_is_enabled(void);
  */
 int usb_i2c_register_cros_cmd_handler(int (*cmd_handler)(
 	void *data_in, size_t in_size, void *data_out, size_t out_size));
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_USB_I2C_H */

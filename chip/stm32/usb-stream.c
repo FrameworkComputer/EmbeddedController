@@ -143,14 +143,6 @@ void usb_stream_rx(struct usb_stream_config const *config)
 	hook_call_deferred(config->deferred, 0);
 }
 
-static usb_uint usb_ep_rx_size(size_t bytes)
-{
-	if (bytes < 64)
-		return bytes << 9;
-	else
-		return 0x8000 | ((bytes - 32) << 5);
-}
-
 void usb_stream_event(struct usb_stream_config const *config,
 		      enum usb_ep_event evt)
 {

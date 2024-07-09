@@ -1,0 +1,45 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* This file removes the downstream legacy PI3USB9201 drivers that use the
+ * "pericom,pi3usb9201" compatible with the upstream driver that uses the
+ * "diodes,pi3usb9201" compatible.
+ */
+
+ #include "../../boards/native_sim.overlay"
+
+/delete-node/ &int_usb_c0_bc12;
+/delete-node/ &int_usb_c1_bc12;
+
+/* TODO: b/299979653 - Cleanup LED tests under zephyr/test/drivers
+ * Prevent the devicetree LED driver from spamming the output
+ */
+/delete-node/ &{/led-colors};
+
+&i2c2
+{
+	/delete-node/ pi3usb9201@5f;
+
+        pi3usb9201_emul0: pi3usb9201@5f
+	{
+		compatible = "diodes,pi3usb9201";
+		reg = <0x5f>;
+		intb-gpios = <&gpio1 10 GPIO_ACTIVE_LOW>;
+		charging-mode = "BC12_TYPE_CDP";
+	};
+};
+
+&i2c3
+{
+	/delete-node/ pi3usb9201@5d;
+
+        pi3usb9201_emul1: pi3usb9201@5d
+	{
+		compatible = "diodes,pi3usb9201";
+		reg = <0x5d>;
+		intb-gpios = <&gpio1 11 GPIO_ACTIVE_LOW>;
+		charging-mode = "BC12_TYPE_CDP";
+	};
+};

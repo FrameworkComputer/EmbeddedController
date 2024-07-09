@@ -11,16 +11,14 @@
 #include "fpsensor/fpsensor_state.h"
 #include "fpsensor/fpsensor_template_state.h"
 #include "mock/fpsensor_state_mock.h"
+#include "mock/otpi_mock.h"
 #include "openssl/aes.h"
 #include "openssl/bn.h"
 #include "openssl/ec.h"
 #include "openssl/obj_mac.h"
+#include "sha256.h"
 #include "test_util.h"
 #include "util.h"
-
-extern "C" {
-#include "sha256.h"
-}
 
 #include <stdbool.h>
 #include <stddef.h>
@@ -674,7 +672,19 @@ test_fp_command_read_match_secret_with_pubkey_succeed(void)
 		.fgr = matched_fgr,
 	};
 
-	/* Expected positive_match_secret same as  in test/fpsensor_crypto.c */
+	/*
+	 * Expected positive_match_secret same as in
+	 * test/fpsensor_crypto_with_mock.cc.
+	 */
+#ifdef CONFIG_OTP_KEY
+	static const uint8_t
+		expected_positive_match_secret_for_empty_user_id[] = {
+			0x2f, 0x78, 0x2d, 0xd2, 0x0a, 0xa9, 0xa2, 0x17,
+			0xc6, 0x4d, 0xa3, 0x1a, 0x02, 0xef, 0x4e, 0x2c,
+			0xf9, 0x23, 0xe1, 0x2d, 0x12, 0x3e, 0xa9, 0xe3,
+			0xc9, 0x16, 0x6f, 0x98, 0x39, 0x8b, 0x0e, 0xc5,
+		};
+#else
 	static const uint8_t
 		expected_positive_match_secret_for_empty_user_id[] = {
 			0x8d, 0xc4, 0x5b, 0xdf, 0x55, 0x1e, 0xa8, 0x72,
@@ -682,6 +692,7 @@ test_fp_command_read_match_secret_with_pubkey_succeed(void)
 			0xde, 0x38, 0xd5, 0x03, 0xce, 0xe4, 0x74, 0x51,
 			0x63, 0x6c, 0x6a, 0x26, 0xa9, 0xb7, 0xfa, 0x68,
 		};
+#endif
 
 	/* Create positive secret match state with valid deadline value,
 	 * readable state, and correct template matched
@@ -689,7 +700,7 @@ test_fp_command_read_match_secret_with_pubkey_succeed(void)
 	struct positive_match_secret_state test_state_1 = {
 		.template_matched = matched_fgr,
 		.readable = true,
-		.deadline = { .val = 5000000 },
+		.deadline = { .val = get_time().val + (5 * SECOND) },
 	};
 
 	bssl::UniquePtr<EC_KEY> ecdh_key = generate_elliptic_curve_key();
@@ -705,9 +716,11 @@ test_fp_command_read_match_secret_with_pubkey_succeed(void)
 
 	global_context.positive_match_secret_state = test_state_1;
 	/* Set fp_positive_match_salt to the default fake positive match salt */
-	for (size_t fgr = 0; fgr < ARRAY_SIZE(fp_positive_match_salt); ++fgr)
+	for (auto &fp_positive_match_salt :
+	     global_context.fp_positive_match_salt) {
 		std::ranges::copy(default_fake_fp_positive_match_salt,
-				  fp_positive_match_salt[fgr]);
+				  fp_positive_match_salt);
+	}
 
 	/* Initialize an empty user_id to compare positive_match_secret */
 	std::ranges::fill(global_context.user_id, 0);
@@ -760,7 +773,8 @@ test_static enum ec_error_list test_fp_command_template_encrypted(void)
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 
@@ -789,13 +803,14 @@ test_static enum ec_error_list test_fp_command_template_encrypted(void)
 	std::ranges::fill(salt_data, 0xab);
 
 	fp_reset_and_clear_context();
-	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+	TEST_ASSERT(std::holds_alternative<std::monostate>(
+		global_context.template_states[0]));
 
 	TEST_EQ(test_send_host_command(EC_CMD_FP_TEMPLATE, 0, params.data(),
 				       params.size(), NULL, 0),
 		EC_RES_SUCCESS, "%d");
 	TEST_ASSERT(std::holds_alternative<fp_encrypted_template_state>(
-		template_states[0]));
+		global_context.template_states[0]));
 
 	return EC_SUCCESS;
 }
@@ -803,7 +818,8 @@ test_static enum ec_error_list test_fp_command_template_encrypted(void)
 test_static enum ec_error_list test_fp_command_template_decrypted(void)
 {
 	fp_reset_and_clear_context();
-	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+	TEST_ASSERT(std::holds_alternative<std::monostate>(
+		global_context.template_states[0]));
 
 	struct ec_response_fp_generate_nonce nonce_response;
 	struct ec_params_fp_nonce_context nonce_params = {};
@@ -824,13 +840,15 @@ test_static enum ec_error_list test_fp_command_template_decrypted(void)
 				       NULL, 0),
 		EC_RES_SUCCESS, "%d");
 
-	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+	TEST_ASSERT(std::holds_alternative<std::monostate>(
+		global_context.template_states[0]));
 
 	constexpr size_t head_size = offsetof(ec_params_fp_template, data);
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 
@@ -851,7 +869,8 @@ test_static enum ec_error_list test_fp_command_template_decrypted(void)
 	std::ranges::fill(salt_data, 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info,
+	encrypt_data_in_place(1, info, global_context.user_id,
+			      global_context.tpm_seed,
 			      { template_data.data(),
 				template_data.size() + salt_data.size() });
 
@@ -879,7 +898,7 @@ test_static enum ec_error_list test_fp_command_template_decrypted(void)
 
 	uint32_t status;
 	TEST_ASSERT(std::holds_alternative<fp_decrypted_template_state>(
-		template_states[0]));
+		global_context.template_states[0]));
 	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
 	TEST_BITS_SET((int)status, FP_CONTEXT_TEMPLATE_UNLOCKED_SET);
 
@@ -888,7 +907,7 @@ test_static enum ec_error_list test_fp_command_template_decrypted(void)
 		EC_RES_SUCCESS, "%d");
 
 	TEST_ASSERT(std::holds_alternative<fp_decrypted_template_state>(
-		template_states[0]));
+		global_context.template_states[0]));
 	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
 	TEST_BITS_CLEARED((int)status, FP_CONTEXT_TEMPLATE_UNLOCKED_SET);
 
@@ -898,7 +917,8 @@ test_static enum ec_error_list test_fp_command_template_decrypted(void)
 test_static enum ec_error_list test_fp_command_unlock_template(void)
 {
 	fp_reset_and_clear_context();
-	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+	TEST_ASSERT(std::holds_alternative<std::monostate>(
+		global_context.template_states[0]));
 
 	struct ec_params_fp_unlock_template unlock_params {
 		.fgr_num = 1
@@ -919,13 +939,15 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 				       NULL, 0),
 		EC_RES_SUCCESS, "%d");
 
-	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+	TEST_ASSERT(std::holds_alternative<std::monostate>(
+		global_context.template_states[0]));
 
 	constexpr size_t head_size = offsetof(ec_params_fp_template, data);
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 
@@ -946,7 +968,8 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 	std::ranges::fill(salt_data, 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info,
+	encrypt_data_in_place(1, info, global_context.user_id,
+			      global_context.tpm_seed,
 			      { template_data.data(),
 				template_data.size() + salt_data.size() });
 
@@ -979,7 +1002,7 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 
 	uint32_t status;
 	TEST_ASSERT(std::holds_alternative<fp_decrypted_template_state>(
-		template_states[0]));
+		global_context.template_states[0]));
 	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
 	TEST_BITS_SET((int)status, FP_CONTEXT_TEMPLATE_UNLOCKED_SET);
 
@@ -997,7 +1020,7 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 		EC_RES_INVALID_PARAM, "%d");
 
 	TEST_ASSERT(std::holds_alternative<fp_decrypted_template_state>(
-		template_states[0]));
+		global_context.template_states[0]));
 	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
 	TEST_BITS_CLEARED((int)status, FP_CONTEXT_TEMPLATE_UNLOCKED_SET);
 
@@ -1011,7 +1034,7 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 		EC_RES_OVERFLOW, "%d");
 
 	TEST_ASSERT(std::holds_alternative<fp_decrypted_template_state>(
-		template_states[0]));
+		global_context.template_states[0]));
 	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
 	TEST_BITS_CLEARED((int)status, FP_CONTEXT_TEMPLATE_UNLOCKED_SET);
 
@@ -1021,7 +1044,7 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 		EC_RES_SUCCESS, "%d");
 
 	TEST_ASSERT(std::holds_alternative<fp_decrypted_template_state>(
-		template_states[0]));
+		global_context.template_states[0]));
 	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
 	TEST_BITS_SET((int)status, FP_CONTEXT_TEMPLATE_UNLOCKED_SET);
 
@@ -1039,7 +1062,7 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 		EC_RES_ACCESS_DENIED, "%d");
 
 	TEST_ASSERT(std::holds_alternative<fp_decrypted_template_state>(
-		template_states[0]));
+		global_context.template_states[0]));
 	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
 	TEST_BITS_CLEARED((int)status, FP_CONTEXT_TEMPLATE_UNLOCKED_SET);
 
@@ -1052,7 +1075,7 @@ test_static enum ec_error_list test_fp_command_unlock_template(void)
 		EC_RES_ACCESS_DENIED, "%d");
 
 	TEST_ASSERT(std::holds_alternative<fp_decrypted_template_state>(
-		template_states[0]));
+		global_context.template_states[0]));
 	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
 	TEST_BITS_CLEARED((int)status, FP_CONTEXT_TEMPLATE_UNLOCKED_SET);
 
@@ -1066,7 +1089,8 @@ test_fp_command_unlock_template_pre_encrypted_fail(void)
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 
@@ -1095,13 +1119,14 @@ test_fp_command_unlock_template_pre_encrypted_fail(void)
 	std::ranges::fill(salt_data, 0xab);
 
 	fp_reset_and_clear_context();
-	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+	TEST_ASSERT(std::holds_alternative<std::monostate>(
+		global_context.template_states[0]));
 
 	TEST_EQ(test_send_host_command(EC_CMD_FP_TEMPLATE, 0, params.data(),
 				       params.size(), NULL, 0),
 		EC_RES_SUCCESS, "%d");
 	TEST_ASSERT(std::holds_alternative<fp_encrypted_template_state>(
-		template_states[0]));
+		global_context.template_states[0]));
 
 	struct ec_response_fp_generate_nonce nonce_response;
 	struct ec_params_fp_nonce_context nonce_params = {};
@@ -1129,7 +1154,8 @@ test_static enum ec_error_list
 test_fp_command_unlock_template_pre_encrypted(void)
 {
 	fp_reset_and_clear_context();
-	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+	TEST_ASSERT(std::holds_alternative<std::monostate>(
+		global_context.template_states[0]));
 
 	struct ec_response_fp_generate_nonce nonce_response;
 	struct ec_params_fp_nonce_context nonce_params = {};
@@ -1142,13 +1168,15 @@ test_fp_command_unlock_template_pre_encrypted(void)
 				       NULL, 0),
 		EC_RES_SUCCESS, "%d");
 
-	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+	TEST_ASSERT(std::holds_alternative<std::monostate>(
+		global_context.template_states[0]));
 
 	constexpr size_t head_size = offsetof(ec_params_fp_template, data);
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 
@@ -1169,7 +1197,8 @@ test_fp_command_unlock_template_pre_encrypted(void)
 	std::ranges::fill(salt_data, 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info,
+	encrypt_data_in_place(1, info, global_context.user_id,
+			      global_context.tpm_seed,
 			      { template_data.data(),
 				template_data.size() + salt_data.size() });
 
@@ -1191,7 +1220,7 @@ test_fp_command_unlock_template_pre_encrypted(void)
 	static_assert(metadata_size == sizeof(enc_metadata_data));
 	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
 
-	std::array<uint32_t, FP_CONTEXT_USERID_WORDS> backup_user_id;
+	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> backup_user_id;
 	std::ranges::copy(global_context.user_id, backup_user_id.begin());
 
 	fp_reset_and_clear_context();
@@ -1201,7 +1230,7 @@ test_fp_command_unlock_template_pre_encrypted(void)
 		EC_RES_SUCCESS, "%d");
 
 	TEST_ASSERT(std::holds_alternative<fp_encrypted_template_state>(
-		template_states[0]));
+		global_context.template_states[0]));
 
 	struct ec_params_fp_unlock_template unlock_params {
 		.fgr_num = 1
@@ -1215,7 +1244,7 @@ test_fp_command_unlock_template_pre_encrypted(void)
 				       NULL, 0),
 		EC_RES_SUCCESS, "%d");
 
-	std::ranges::copy(backup_user_id, global_context.user_id);
+	std::ranges::copy(backup_user_id, global_context.user_id.begin());
 
 	TEST_EQ(test_send_host_command(EC_CMD_FP_UNLOCK_TEMPLATE, 0,
 				       &unlock_params, sizeof(unlock_params),
@@ -1224,19 +1253,20 @@ test_fp_command_unlock_template_pre_encrypted(void)
 
 	uint32_t status;
 	TEST_ASSERT(std::holds_alternative<fp_decrypted_template_state>(
-		template_states[0]));
+		global_context.template_states[0]));
 	TEST_EQ(get_fp_encryption_status(&status), EC_SUCCESS, "%d");
 	TEST_BITS_SET((int)status, FP_CONTEXT_TEMPLATE_UNLOCKED_SET);
 
 	return EC_SUCCESS;
 }
 
-// Test that legacy format (v2) isn't accepted by commit function.
-test_static enum ec_error_list test_fp_command_commit_v2(void)
+// Test that legacy format (v3) isn't accepted by commit function.
+test_static enum ec_error_list test_fp_command_commit_v3(void)
 {
 	fp_reset_and_clear_context();
 
-	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+	TEST_ASSERT(std::holds_alternative<std::monostate>(
+		global_context.template_states[0]));
 
 	constexpr size_t head_size = offsetof(ec_params_fp_template, data);
 	constexpr size_t metadata_size =
@@ -1260,10 +1290,11 @@ test_static enum ec_error_list test_fp_command_commit_v2(void)
 	std::ranges::fill(template_data, 0xc4);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info, template_data);
+	encrypt_data_in_place(1, info, global_context.user_id,
+			      global_context.tpm_seed, template_data);
 
 	struct ec_fp_template_encryption_metadata enc_metadata_data {
-		.struct_version = 2
+		.struct_version = 3
 	};
 
 	static_assert(sizeof(info.nonce) == sizeof(enc_metadata_data.nonce));
@@ -1287,62 +1318,6 @@ test_static enum ec_error_list test_fp_command_commit_v2(void)
 	return EC_SUCCESS;
 }
 
-// Test that legacy format (v3) is still accepted for commit.
-test_static enum ec_error_list test_fp_command_commit_v3(void)
-{
-	fp_reset_and_clear_context();
-
-	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
-
-	constexpr size_t head_size = offsetof(ec_params_fp_template, data);
-	constexpr size_t metadata_size =
-		sizeof(ec_fp_template_encryption_metadata);
-	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t params_size =
-		head_size + metadata_size + template_size;
-
-	std::array<uint8_t, params_size> params = {};
-	std::span head(params.begin(), head_size);
-	std::span enc_metadata(head.end(), metadata_size);
-	std::span template_data(enc_metadata.end(), template_size);
-
-	struct ec_params_fp_template head_data = {
-		.offset = 0,
-		.size = FP_TEMPLATE_COMMIT | (params_size - head_size),
-	};
-	static_assert(head_size == sizeof(head_data));
-	memcpy(head.data(), &head_data, head.size());
-
-	std::ranges::fill(template_data, 0xc4);
-
-	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info, template_data);
-
-	struct ec_fp_template_encryption_metadata enc_metadata_data {
-		.struct_version = 3
-	};
-
-	static_assert(sizeof(info.nonce) == sizeof(enc_metadata_data.nonce));
-	std::ranges::copy(info.nonce, enc_metadata_data.nonce);
-
-	static_assert(sizeof(info.encryption_salt) ==
-		      sizeof(enc_metadata_data.encryption_salt));
-	std::ranges::copy(info.encryption_salt,
-			  enc_metadata_data.encryption_salt);
-
-	static_assert(sizeof(info.tag) == sizeof(enc_metadata_data.tag));
-	std::ranges::copy(info.tag, enc_metadata_data.tag);
-
-	static_assert(metadata_size == sizeof(enc_metadata_data));
-	memcpy(enc_metadata.data(), &enc_metadata_data, enc_metadata.size());
-
-	TEST_EQ(test_send_host_command(EC_CMD_FP_TEMPLATE, 0, params.data(),
-				       params.size(), NULL, 0),
-		EC_RES_SUCCESS, "%d");
-
-	return EC_SUCCESS;
-}
-
 // Test that trivial positive match salt will be detected into an error.
 test_static enum ec_error_list test_fp_command_commit_trivial_salt(void)
 {
@@ -1357,13 +1332,15 @@ test_static enum ec_error_list test_fp_command_commit_trivial_salt(void)
 				       sizeof(ctx_params), NULL, 0),
 		EC_RES_SUCCESS, "%d");
 
-	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+	TEST_ASSERT(std::holds_alternative<std::monostate>(
+		global_context.template_states[0]));
 
 	constexpr size_t head_size = offsetof(ec_params_fp_template, data);
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 
@@ -1383,7 +1360,8 @@ test_static enum ec_error_list test_fp_command_commit_trivial_salt(void)
 	std::ranges::fill(template_data, 0xc4);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info,
+	encrypt_data_in_place(1, info, global_context.user_id,
+			      global_context.tpm_seed,
 			      { template_data.data(),
 				template_data.size() + salt_data.size() });
 
@@ -1425,13 +1403,15 @@ test_static enum ec_error_list test_fp_command_commit_without_seed(void)
 				       sizeof(ctx_params), NULL, 0),
 		EC_RES_SUCCESS, "%d");
 
-	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+	TEST_ASSERT(std::holds_alternative<std::monostate>(
+		global_context.template_states[0]));
 
 	constexpr size_t head_size = offsetof(ec_params_fp_template, data);
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 
@@ -1484,13 +1464,15 @@ test_fp_command_migrate_template_to_nonce_context(void)
 	fp_reset_and_clear_context();
 
 	/* Prepare an uncommitted template. */
-	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+	TEST_ASSERT(std::holds_alternative<std::monostate>(
+		global_context.template_states[0]));
 
 	constexpr size_t head_size = offsetof(ec_params_fp_template, data);
 	constexpr size_t metadata_size =
 		sizeof(ec_fp_template_encryption_metadata);
 	constexpr size_t template_size = sizeof(fp_template[0]);
-	constexpr size_t salt_size = sizeof(fp_positive_match_salt[0]);
+	constexpr size_t salt_size =
+		sizeof(global_context.fp_positive_match_salt[0]);
 	constexpr size_t params_size =
 		head_size + metadata_size + template_size + salt_size;
 
@@ -1511,7 +1493,8 @@ test_fp_command_migrate_template_to_nonce_context(void)
 	std::ranges::fill(salt_data, 0xab);
 
 	struct fp_auth_command_encryption_metadata info;
-	encrypt_data_in_place(1, info,
+	encrypt_data_in_place(1, info, global_context.user_id,
+			      global_context.tpm_seed,
 			      { template_data.data(),
 				template_data.size() + salt_data.size() });
 
@@ -1573,7 +1556,8 @@ test_fp_command_migrate_template_to_nonce_context_failure(void)
 	fp_reset_and_clear_context();
 
 	/* Prepare an uncommitted template. */
-	TEST_ASSERT(std::holds_alternative<std::monostate>(template_states[0]));
+	TEST_ASSERT(std::holds_alternative<std::monostate>(
+		global_context.template_states[0]));
 
 	struct ec_params_fp_migrate_template_to_nonce_context
 		migrate_params = {};
@@ -1607,12 +1591,20 @@ test_fp_command_migrate_template_to_nonce_context_failure(void)
 
 } // namespace
 
-extern "C" void run_test(int argc, const char **argv)
+void run_test(int argc, const char **argv)
 {
 	RUN_TEST(test_fp_command_establish_pairing_key_without_seed);
 	RUN_TEST(test_fp_command_check_context_cleared);
 	RUN_TEST(test_fp_command_generate_nonce);
 	RUN_TEST(test_fp_command_commit_without_seed);
+
+	/*
+	 * Set the OTP key here since the following tests require it.
+	 */
+	if (IS_ENABLED(CONFIG_OTP_KEY)) {
+		std::ranges::copy(default_fake_otp_key,
+				  mock_otp.otp_key_buffer);
+	}
 
 	// All tests after this require the TPM seed to be set.
 	RUN_TEST(test_set_fp_tpm_seed);
@@ -1634,7 +1626,6 @@ extern "C" void run_test(int argc, const char **argv)
 	RUN_TEST(test_fp_command_unlock_template);
 	RUN_TEST(test_fp_command_unlock_template_pre_encrypted_fail);
 	RUN_TEST(test_fp_command_unlock_template_pre_encrypted);
-	RUN_TEST(test_fp_command_commit_v2);
 	RUN_TEST(test_fp_command_commit_v3);
 	RUN_TEST(test_fp_command_commit_trivial_salt);
 	RUN_TEST(test_fp_command_migrate_template_to_nonce_context);

@@ -13,6 +13,10 @@
 #include "driver/accelgyro_bmi260_public.h"
 #include "mag_bmm150.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BMI260_CHIP_ID 0x00
 /* BMI260 chip identifier */
 #define BMI260_CHIP_ID_MAJOR 0x27
@@ -347,5 +351,9 @@
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(bmi260_int)))
 #endif
 #endif /* CONFIG_ZEPHYR */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ACCELGYRO_BMI260_H */

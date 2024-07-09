@@ -95,10 +95,6 @@ GPIO(USB_A_OC_SOC_L,                 PIN(8, 0), GPIO_OUT_HIGH)
 GPIO(LED_WHITE_L,                    PIN(C, 3), GPIO_OUT_LOW)
 GPIO(LED_RED_L,                      PIN(C, 4), GPIO_OUT_LOW)
 
-/* USBC */
-GPIO(USB_C0_C2_TCPC_RST_ODL,         PIN(A, 7), GPIO_ODR_LOW)
-GPIO(USB_C1_FRS_EN,                  PIN(9, 4), GPIO_OUT_LOW)
-
 /* GPIO07_P2 to PU */
 
 /* UART alternate functions */
@@ -166,3 +162,5 @@ UNUSED(PIN(F, 5))       /* GPIOF5 */
 UNUSED(PIN(A, 0))       /* GPIOA0 */
 UNUSED(PIN(8, 2))       /* GPIO82 */
 UNUSED(PIN(6, 1))       /* GPIO61 */
+UNUSED(PIN(9, 4))       /* GPIO94 */
+UNUSED(PIN(A, 7))       /* GPIOA7 */

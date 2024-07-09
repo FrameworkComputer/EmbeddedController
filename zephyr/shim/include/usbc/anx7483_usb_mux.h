@@ -8,6 +8,10 @@
 
 #include "driver/retimer/anx7483_public.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ANX7483_USB_MUX_COMPAT analogix_anx7483
 
 /* clang-format off */
@@ -19,5 +23,9 @@
 		.i2c_addr_flags = DT_REG_ADDR(mux_id), \
 	}
 /* clang-format on */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ZEPHYR_SHIM_ANX7483_USB_MUX_H */

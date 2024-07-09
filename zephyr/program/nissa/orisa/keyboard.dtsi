@@ -1,0 +1,55 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+		actual-key-mask = <
+			0x1c  /* C0 */
+			0xff  /* C1 */
+			0xff  /* C2 */
+			0xff  /* C3 */
+			0xff  /* C4 */
+			0xff  /* C5 */
+			0xff  /* C6 */
+			0xa4  /* C7 */
+			0xff  /* C8 */
+			0xff  /* C9 */
+			0x55  /* C10 */
+			0xfb  /* C11 */
+			0xca  /* C12 */
+		>;
+	};
+};
+
+&cros_kb_raw {
+	status = "okay";
+	/* No KSO2 (it's inverted and implemented by GPIO) */
+	pinctrl-0 = <
+		&ksi0_gp31
+		&ksi1_gp30
+		&ksi2_gp27
+		&ksi3_gp26
+		&ksi4_gp25
+		&ksi5_gp24
+		&ksi6_gp23
+		&ksi7_gp22
+		&kso00_gp21
+		&kso01_gp20
+		&kso03_gp16
+		&kso04_gp15
+		&kso05_gp14
+		&kso06_gp13
+		&kso07_gp12
+		&kso08_gp11
+		&kso09_gp10
+		&kso10_gp07
+		&kso11_gp06
+		&kso12_gp05
+		&kso13_gp04
+		&kso14_gp82
+	>;
+	pinctrl-names = "default";
+};

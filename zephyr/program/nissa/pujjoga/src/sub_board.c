@@ -53,7 +53,7 @@ enum pujjoga_sub_board_type pujjoga_get_sb_type(void)
 	default:
 		LOG_WRN("No sub-board defined");
 		break;
-	case FW_SUB_BOARD_1:
+	case FW_SUB_BOARD_3:
 		pujjoga_cached_sub_board = PUJJOGA_SB_HDMI_A;
 		LOG_INF("SB: HDMI, USB type A");
 		break;
@@ -62,21 +62,25 @@ enum pujjoga_sub_board_type pujjoga_get_sb_type(void)
 }
 
 #if CONFIG_NISSA_BOARD_HAS_HDMI_SUPPORT
-static void hdmi_power_handler(struct ap_power_ev_callback *cb,
-			       struct ap_power_ev_data data)
+void hdmi_power_handler(struct ap_power_ev_callback *cb,
+			struct ap_power_ev_data data)
 {
 	/* Enable VCC on the HDMI port. */
 	const struct gpio_dt_spec *s3_rail =
 		GPIO_DT_FROM_ALIAS(gpio_hdmi_en_odl);
+	const struct gpio_dt_spec *vbus_rail =
+		GPIO_DT_FROM_ALIAS(gpio_en_usb_a1_vbus);
 
 	switch (data.event) {
 	case AP_POWER_STARTUP:
 		LOG_DBG("Enabling HDMI VCC");
 		gpio_pin_set_dt(s3_rail, 1);
+		gpio_pin_set_dt(vbus_rail, 1);
 		break;
 	case AP_POWER_SHUTDOWN:
 		LOG_DBG("Disabling HDMI VCC");
 		gpio_pin_set_dt(s3_rail, 0);
+		gpio_pin_set_dt(vbus_rail, 0);
 		break;
 	default:
 		LOG_ERR("Unhandled HDMI power event %d", data.event);
@@ -84,7 +88,7 @@ static void hdmi_power_handler(struct ap_power_ev_callback *cb,
 	}
 }
 
-void nissa_configure_hdmi_vcc(void)
+void pujjoga_configure_hdmi_vcc(void)
 {
 	gpio_pin_configure_dt(GPIO_DT_FROM_ALIAS(gpio_hdmi_en_odl),
 			      GPIO_OUTPUT_INACTIVE | GPIO_OPEN_DRAIN |

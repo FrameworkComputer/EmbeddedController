@@ -13,6 +13,10 @@
 
 #include "i2c.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Chip-level function to transmit one block of raw data, then receive one
  * block of raw data.
@@ -50,5 +54,9 @@ int chip_i2c_set_freq(int port, enum i2c_freq freq);
  * @return Bus speed
  */
 enum i2c_freq chip_i2c_get_freq(int port);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_I2C_PRIVATE_H */

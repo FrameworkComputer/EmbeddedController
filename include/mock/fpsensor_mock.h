@@ -14,6 +14,10 @@
 #include "common.h"
 #include "fpsensor/fpsensor.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct mock_ctrl_fp_sensor {
 	int fp_sensor_init_return;
 	int fp_sensor_deinit_return;
@@ -45,5 +49,9 @@ struct mock_ctrl_fp_sensor {
 	}
 
 extern struct mock_ctrl_fp_sensor mock_ctrl_fp_sensor;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MOCK_FP_SENSOR_MOCK_H */

@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Wireless power state for wireless_set_state() */
 enum wireless_power_state { WIRELESS_OFF, WIRELESS_SUSPEND, WIRELESS_ON };
 
@@ -21,6 +25,10 @@ void wireless_set_state(enum wireless_power_state state);
 #else
 static inline void wireless_set_state(enum wireless_power_state state)
 {
+}
+#endif
+
+#ifdef __cplusplus
 }
 #endif
 

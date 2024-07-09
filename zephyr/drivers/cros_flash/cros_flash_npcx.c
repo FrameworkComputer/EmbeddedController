@@ -230,10 +230,32 @@ static void flash_get_status(const struct device *dev, uint8_t *sr1,
 	crec_flash_lock_mapped_storage(0);
 }
 
+/*
+ * Check if Status Register Protect 0 (SRP0) bit in the Status 1 Register
+ * is set.
+ */
+static bool flash_check_status_reg_srp(const struct device *dev)
+{
+	uint8_t sr1, sr2;
+
+	flash_get_status(dev, &sr1, &sr2);
+
+	return (sr1 & SPI_FLASH_SR1_SRP0);
+}
+
+static int is_int_flash_protected(const struct device *dev)
+{
+	return cros_flash_npcx_write_protection_is_set(dev);
+}
+
 static int flash_set_status(const struct device *dev, uint8_t sr1, uint8_t sr2)
 {
 	int rv;
 	uint8_t regs[2];
+
+	if (is_int_flash_protected(dev) && flash_check_status_reg_srp(dev)) {
+		return EC_ERROR_ACCESS_DENIED;
+	}
 
 	regs[0] = sr1;
 	regs[1] = sr2;
@@ -245,11 +267,6 @@ static int flash_set_status(const struct device *dev, uint8_t sr1, uint8_t sr2)
 	crec_flash_lock_mapped_storage(0);
 
 	return rv;
-}
-
-static int is_int_flash_protected(const struct device *dev)
-{
-	return cros_flash_npcx_write_protection_is_set(dev);
 }
 
 static void flash_protect_int_flash(const struct device *dev, int enable)
@@ -279,6 +296,8 @@ static void flash_uma_lock(const struct device *dev, int enable)
 static int flash_set_status_for_prot(const struct device *dev, int reg1,
 				     int reg2)
 {
+	int rv;
+
 	/*
 	 * Writing SR regs will fail if our UMA lock is enabled. If WP
 	 * is deasserted then remove the lock and allow the write.
@@ -298,7 +317,10 @@ static int flash_set_status_for_prot(const struct device *dev, int reg1,
 	 */
 	flash_protect_int_flash(dev, write_protect_is_asserted());
 
-	flash_set_status(dev, reg1, reg2);
+	rv = flash_set_status(dev, reg1, reg2);
+	if (rv != EC_SUCCESS) {
+		return rv;
+	}
 
 	spi_flash_reg_to_protect(reg1, reg2, &addr_prot_start,
 				 &addr_prot_length);

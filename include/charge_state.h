@@ -15,6 +15,10 @@
 #include "stdbool.h"
 #include "timer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Stuff that's common to all charger implementations can go here. */
 
 /* Seconds to spend trying to wake a non-responsive battery */
@@ -375,6 +379,7 @@ __test_only bool charging_progress_displayed(void);
  */
 int board_should_charger_bypass(void);
 
+
 #ifdef CONFIG_CHARGER_BYPASS_REVERSE_TURBO
 /**
  * Callback for boards to call the charger_enable_bypass_mode without mode change.
@@ -384,11 +389,15 @@ int board_should_charger_bypass(void);
 int board_want_charger_change_mode(void);
 #endif
 
-/* Config Charger */
-#include "charge_state.h"
-
 #ifdef CONFIG_CUSTOMIZED_DESIGN
 void battery_customize(struct charge_state_data *curr_batt);
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
+/* Config Charger */
+#include "charge_state.h"
 
 #endif /* __CROS_EC_CHARGE_STATE_H */

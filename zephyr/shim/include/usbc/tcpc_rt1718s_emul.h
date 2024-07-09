@@ -16,6 +16,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define RT1718S_EMUL_COMPAT cros_rt1718s_tcpc_emul
 
 /* clang-format off */
@@ -30,5 +34,9 @@
 		.irq_gpio = GPIO_DT_SPEC_GET_OR(id, irq_gpios, {}),            \
 	}
 /* clang-format on */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ZEPHYR_SHIM_TPCP_RT1718S_EMUL_H */

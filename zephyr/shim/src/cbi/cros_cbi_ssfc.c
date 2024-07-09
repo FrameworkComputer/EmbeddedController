@@ -3,6 +3,12 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #include "cros_board_info.h"
 #include "cros_cbi.h"
 
@@ -158,7 +164,7 @@ static int cros_cbi_ssfc_get_parent_field_value(union cbi_ssfc cached_ssfc,
 	return 0;
 }
 
-bool cros_cbi_ssfc_check_match(enum cbi_ssfc_value_id value_id)
+test_mockable bool cros_cbi_ssfc_check_match(enum cbi_ssfc_value_id value_id)
 {
 	int rc;
 	uint32_t value;

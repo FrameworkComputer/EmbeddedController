@@ -1,0 +1,53 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: "SMP L24M3PG2"
+compatible: "smp,l24m3pg2"
+
+include: battery-smart.yaml
+
+properties:
+  enum-name:
+    type: string
+    default: "smp,l24m3pg2"
+
+  # Fuel gauge
+  manuf_name:
+    default: "SMP"
+  device_name:
+    default: "L24M3PG2"
+  ship_mode_reg_addr:
+    default: 0x34
+  ship_mode_reg_data:
+    default: [0x0000, 0x1000]
+  flags:
+    default: 0
+  fet_reg_addr:
+    default: 0x00
+  fet_reg_mask:
+    default: 0x0018
+  fet_disconnect_val:
+    default: 0x0000
+
+  # Battery info
+  voltage_max:
+    default: 13200
+  voltage_normal:
+    default: 11310
+  voltage_min:
+    default: 9000
+  precharge_current:
+    default: 208
+  start_charging_min_c:
+    default: 0
+  start_charging_max_c:
+    default: 50
+  charging_min_c:
+    default: 0
+  charging_max_c:
+    default: 60
+  discharging_min_c:
+    default: -20
+  discharging_max_c:
+    default: 60

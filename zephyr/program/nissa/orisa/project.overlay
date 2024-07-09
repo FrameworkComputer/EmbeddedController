@@ -1,0 +1,24 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../cbi.dtsi"
+
+#include "cbi.dtsi"
+#include "generated.dtsi"
+#include "keyboard.dtsi"
+#include "motionsense.dtsi"
+#include "overlay.dtsi"
+#include "power_signals.dtsi"
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+
+/* These GPIOS are initialized by the PDC driver */
+&gpio_usb_pd_int_odl {
+	no-auto-init;
+};
+
+&gpio_ec_i2c_pmc_pd_int_odl {
+	no-auto-init;
+};

@@ -8,6 +8,10 @@
 
 #include <zephyr/crypto/crypto.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct sha256_ctx {
 	/*
 	 * This is used to buffer:
@@ -19,5 +23,9 @@ struct sha256_ctx {
 } __aligned(4);
 
 void SHA256_abort(struct sha256_ctx *ctx);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_SHA256_CHIP_H */

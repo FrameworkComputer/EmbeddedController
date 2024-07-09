@@ -8,6 +8,10 @@
 
 #include "system.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct pwr_con_t {
 	uint16_t volts;
 	uint16_t milli_amps;
@@ -21,5 +25,9 @@ inline int pwr_con_to_milliwatts(struct pwr_con_t *pwr)
 {
 	return (pwr->volts * pwr->milli_amps);
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

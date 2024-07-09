@@ -10,6 +10,10 @@
 #include "gpio.h"
 #include "stdbool.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct ite_dfu_config_t {
 	/* I2C port to communicate on */
 	int i2c_port;
@@ -31,5 +35,9 @@ struct ite_dfu_config_t {
 
 /* Provided by board implementation if CONFIG_ITE_FLASH_SUPPORT is used */
 const extern struct ite_dfu_config_t ite_dfu_config;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_I2C_ITE_FLASH_SUPPORT_H */

@@ -188,8 +188,8 @@ zephyr/CMakeFiles/zephyr.dir/misc/generated/configs.c.s:1869: Error: missing exp
 
 ## Statically initialized objects
 
-The `zephyr.elf` output file can be used with gdb to analyze all the statically
-allocated structures, for example:
+The `zephyr.elf` (or `zephyr.exe`) output file can be used with gdb to analyze
+all the statically allocated structures, for example:
 
 ```
 $ arm-none-eabi-gdb build/zephyr/$PROJECT/output/zephyr-ro.elf
@@ -204,7 +204,7 @@ If the symbol has been optimized, try rebuilding with `CONFIG_LTO=n`.
 
 ## Using GDB for debugging unit tests
 
-Unit tests running on `native_posix` produce an executable file that can be
+Unit tests running on `native_sim` produce an executable file that can be
 rebuilt directly with ninja to save time, and run with GDB to help out
 debugging. This can be found after a twister run in the `twister-out`
 directory. For example:
@@ -212,26 +212,26 @@ directory. For example:
 ```
 $ ./twister -v -T zephyr/test/hooks
 ...
-INFO - 1/1 native_posix hooks.default PASSED (native 0.042s)
+INFO - 1/1 native_sim hooks.default PASSED (native 0.042s)
 ...
 
 # Modify the test code
 
-$ ninja -C twister-out/native_posix/hooks.default
+$ ninja -C twister-out/native_sim/hooks.default
 ...
-[7/7] Linking C executable zephyr/zephyr.elf
+[7/7] Linking C executable zephyr/zephyr.exe
 
-$ ./twister-out/native_posix/hooks.default/zephyr/zephyr.elf
+$ ./twister-out/native_sim/hooks.default/zephyr/zephyr.exe
 ...
 PROJECT EXECUTION SUCCESSFUL
 
-$ gdb ./twister-out/native_posix/hooks.default/zephyr/zephyr.elf
-Reading symbols from ./twister-out/native_posix/hooks.default/zephyr/zephyr.elf...
+$ gdb ./twister-out/native_sim/hooks.default/zephyr/zephyr.exe
+Reading symbols from ./twister-out/native_sim/hooks.default/zephyr/zephyr.exe...
 (gdb) b main
-Breakpoint 1 at 0x80568a9: file boards/posix/native_posix/main.c, line 112.
+Breakpoint 1 at 0x80568a9: file boards/posix/native_sim/main.c, line 112.
 (gdb) run
-Starting program: /mnt/host/source/src/platform/ec/twister-out/native_posix/hooks.default/zephyr/zephyr.elf
-Breakpoint 1, main (argc=-17520, argv=0xffffbc24) at boards/posix/native_posix/main.c:112
+Starting program: /mnt/host/source/src/platform/ec/twister-out/native_sim/hooks.default/zephyr/zephyr.exe
+Breakpoint 1, main (argc=-17520, argv=0xffffbc24) at boards/posix/native_sim/main.c:112
 112             posix_init(argc, argv);
 ...
 ```

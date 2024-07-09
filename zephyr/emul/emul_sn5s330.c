@@ -194,13 +194,13 @@ static void sn5s330_emul_set_int_pin(const struct emul *emul, bool val)
 	__ASSERT_NO_MSG(res == 0);
 }
 
-static void sn5s330_emul_assert_interrupt(const struct emul *emul)
+void sn5s330_emul_assert_interrupt(const struct emul *emul)
 {
 	sn5s330_emul_interrupt_set_stub();
 	sn5s330_emul_set_int_pin(emul, false);
 }
 
-static void sn5s330_emul_deassert_interrupt(const struct emul *emul)
+void sn5s330_emul_deassert_interrupt(const struct emul *emul)
 {
 	sn5s330_emul_set_int_pin(emul, true);
 }

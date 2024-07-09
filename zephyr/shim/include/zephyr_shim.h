@@ -10,6 +10,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Included shimed version of gpio signal. */
 #include "gpio_signal.h"
 
@@ -31,6 +35,10 @@
  */
 #ifdef CONFIG_PLATFORM_EC_OCPC
 #include "charger_enum.h"
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __BOARD_H */

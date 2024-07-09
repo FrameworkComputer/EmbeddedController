@@ -1,0 +1,16 @@
+# Copyright 2024 Google LLC
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: TI TPS6699X PDC
+
+compatible: "ti,tps6699-pdc"
+
+include: ["i2c-device.yaml"]
+
+properties:
+  irq-gpios:
+    type: phandle-array
+    required: true
+    description: |
+      Interrupt line from the PD for power path (zephyr standard GPIO format)

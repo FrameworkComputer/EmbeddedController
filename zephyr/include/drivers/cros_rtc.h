@@ -220,5 +220,5 @@ static inline int z_impl_cros_rtc_reset_alarm(const struct device *dev)
 /**
  * @}
  */
-#include <syscalls/cros_rtc.h>
+#include <zephyr/syscalls/cros_rtc.h>
 #endif /* ZEPHYR_INCLUDE_DRIVERS_CROS_RTC_H_ */

@@ -243,7 +243,7 @@ def all_targets():
     ec_target(
         name = "bloonchipper_zephyr",
         board = "bloonchipper",
-        extra_modules = ["hal_stm32", "cmsis"],
+        extra_modules = ["hal_stm32", "cmsis", "fpc"],
     )
     ec_target(
         name = "bobba",
@@ -299,6 +299,10 @@ def all_targets():
         board = "brox-ish-ec",
     )
     ec_target(
+        name = "brox-sku4",
+        board = "brox-sku4",
+    )
+    ec_target(
         name = "brox-tokenized",
         board = "brox-tokenized",
         extra_modules = ["picolibc", "pigweed"],
@@ -310,11 +314,6 @@ def all_targets():
         chip = "npcx",
         core = "cortex-m",
         zephyr = False,
-    )
-    ec_target(
-        name = "brya_pdc",
-        board = "brya_pdc",
-        extra_modules = ["cmsis"],
     )
     ec_target(
         name = "brya_zephyr",
@@ -667,6 +666,10 @@ def all_targets():
         chip = "it83xx",
         core = "riscv-rv32i",
         zephyr = False,
+    )
+    ec_target(
+        name = "domika",
+        board = "domika",
     )
     ec_target(
         name = "don",
@@ -1612,6 +1615,10 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "navi",
+        board = "navi",
+    )
+    ec_target(
         name = "nereid",
         board = "nereid",
     )
@@ -1774,6 +1781,11 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "orisa",
+        board = "orisa",
+        extra_modules = ["cmsis"],
+    )
+    ec_target(
         name = "osiris",
         baseboard = "brya",
         board = "osiris",
@@ -1886,6 +1898,11 @@ def all_targets():
         chip = "stm32",
         core = "cortex-m0",
         zephyr = False,
+    )
+    ec_target(
+        name = "ptlrvp_mchp",
+        board = "ptlrvp_mchp",
+        extra_modules = ["cmsis"],
     )
     ec_target(
         name = "puff",
@@ -2081,6 +2098,11 @@ def all_targets():
     ec_target(
         name = "spikyrock",
         board = "spikyrock",
+    )
+    ec_target(
+        name = "squirtle",
+        board = "squirtle",
+        extra_modules = ["cmsis"],
     )
     ec_target(
         name = "staff",

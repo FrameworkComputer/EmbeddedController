@@ -3,8 +3,16 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #include "cros_board_info.h"
 #include "cros_cbi.h"
+
+#include <stdbool.h>
 
 #include <zephyr/logging/log.h>
 
@@ -153,7 +161,8 @@ DT_FOREACH_STATUS_OKAY(CBI_FW_CONFIG_VALUE_COMPAT, FW_VALUE_BUILD_ASSERT)
 #define FW_FIELD_NODES(inst, cached, value) \
 	DT_FOREACH_CHILD_STATUS_OKAY_VARGS(inst, FW_FIELD_CASE, cached, value)
 
-uint32_t cached_fw_config;
+static uint32_t cached_fw_config;
+static bool cached_fw_config_ready;
 
 void cros_cbi_fw_config_init(void)
 {
@@ -169,6 +178,8 @@ void cros_cbi_fw_config_init(void)
 	}
 
 	LOG_INF("Read CBI FW Config : 0x%08X\n", cached_fw_config);
+
+	cached_fw_config_ready = true;
 }
 
 static int cros_cbi_fw_config_get_field(uint32_t cached_fw_config,
@@ -194,8 +205,16 @@ test_mockable int cros_cbi_get_fw_config(enum cbi_fw_config_field_id field_id,
 {
 	int rc;
 
+	if (!cached_fw_config_ready) {
+		LOG_ERR("trying to read CBI config before init");
+		return -EINVAL;
+	}
+
 	rc = cros_cbi_fw_config_get_field(cached_fw_config, field_id, value);
-	if (rc)
+	if (rc) {
 		LOG_ERR("CBI FW Config field not found: %d\n", field_id);
-	return rc;
+		return rc;
+	}
+
+	return 0;
 }

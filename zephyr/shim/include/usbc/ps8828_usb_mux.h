@@ -8,6 +8,10 @@
 
 #include "driver/retimer/ps8828.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PS8828_USB_MUX_COMPAT parade_ps8828
 
 #define USB_MUX_CONFIG_PS8828(mux_id)                          \
@@ -17,5 +21,9 @@
 			.i2c_port = I2C_PORT_BY_DEV(mux_id),   \
 			.i2c_addr_flags = DT_REG_ADDR(mux_id), \
 	}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ZEPHYR_SHIM_PS8828_USB_MUX_H */

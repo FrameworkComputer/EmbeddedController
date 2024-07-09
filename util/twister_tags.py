@@ -17,12 +17,11 @@ testcase.yaml files to see if they only used predefined tags.
 # >
 # [VPYTHON:END]
 
-import argparse
 import logging
 import os
-import pathlib
 import sys
 
+import preupload.lib
 import yaml  # pylint: disable=import-error
 
 
@@ -39,13 +38,13 @@ SCRIPT_PATH = os.path.realpath(__file__)
 
 def main(args):
     """List and/or validate testcase.yaml tags."""
-    parser = argparse.ArgumentParser()
+    parser = preupload.lib.argument_parser()
     parser.add_argument("-l", "--list-tags", action="store_true")
-    parser.add_argument("--validate-files", nargs="*", type=pathlib.Path)
     args = parser.parse_args()
+    preupload.lib.populate_default_filenames(args)
 
     list_tags = args.list_tags
-    validate_files = args.validate_files
+    validate_files = args.filename
 
     logging.basicConfig(level=logging.INFO)
     logger = logging.getLogger(__file__)
@@ -78,7 +77,7 @@ def main(args):
 
         for testcase_yaml in testcase_yamls:
             logger.info("Validating test tags in %s", testcase_yaml)
-            with open(testcase_yaml) as yaml_fd:
+            with open(testcase_yaml, encoding="utf-8") as yaml_fd:
                 yaml_obj = yaml.safe_load(yaml_fd)
                 for tag in test_tags_generator(yaml_obj):
                     if tag not in TAG_TO_DESCRIPTION:

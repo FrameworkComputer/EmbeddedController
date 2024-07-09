@@ -6,14 +6,10 @@
  */
 
 #include "common.h"
-
-extern "C" {
 #include "console.h"
-#include "test_util.h"
-}
-
 #include "mock/clock_mock.h"
 #include "scoped_fast_cpu.h"
+#include "test_util.h"
 
 test_static int fast_cpu_disable_at_start()
 {
@@ -46,7 +42,7 @@ test_static int fast_cpu_enable_at_start()
 	return EC_SUCCESS;
 }
 
-extern "C" void run_test(int argc, const char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 

@@ -11,6 +11,9 @@
 #include "timer.h"
 #include "util.h"
 
+#define CPRINTS(format, args...) cprints(CC_I2C, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_I2C, format, ##args)
+
 #define MP2964_STARTUP_WAIT_US (50 * MSEC)
 #define MP2964_STORE_WAIT_US (300 * MSEC)
 #define MP2964_RESTORE_WAIT_US (2 * MSEC)
@@ -52,8 +55,8 @@ static int mp2964_select_page(enum reg_page page)
 
 	status = mp2964_write8(MP2964_PAGE, page);
 	if (status != EC_SUCCESS) {
-		ccprintf("%s: could not select page 0x%02x, error %d\n",
-			 __func__, page, status);
+		CPRINTF("%s: could not select page 0x%02x, error %d\n",
+			__func__, page, status);
 	}
 	return status;
 }
@@ -69,12 +72,12 @@ static void mp2964_write_vec16(const struct mp2964_reg_val *init_list,
 	for (i = 0; i < count; ++i, ++reg_val) {
 		mp2964_read16(reg_val->reg, &outval);
 		if (outval == reg_val->val) {
-			ccprintf("mp2964: reg 0x%02x already 0x%04x\n",
-				 reg_val->reg, outval);
+			CPRINTF("mp2964: reg 0x%02x already 0x%04x\n",
+				reg_val->reg, outval);
 			continue;
 		}
-		ccprintf("mp2964: tuning reg 0x%02x from 0x%04x to 0x%04x\n",
-			 reg_val->reg, outval, reg_val->val);
+		CPRINTF("mp2964: tuning reg 0x%02x from 0x%04x to 0x%04x\n",
+			reg_val->reg, outval, reg_val->val);
 		mp2964_write16(reg_val->reg, reg_val->val);
 		*delta += 1;
 	}
@@ -86,7 +89,7 @@ static int mp2964_store_user_all(void)
 	const uint8_t rd = MP2964_RESTORE_USER_ALL;
 	int status;
 
-	ccprintf("%s: updating persistent settings\n", __func__);
+	CPRINTF("%s: updating persistent settings\n", __func__);
 
 	status = i2c_xfer_unlocked(I2C_PORT_MP2964, I2C_ADDR_MP2964_FLAGS, &wr,
 				   sizeof(wr), NULL, 0, I2C_XFER_SINGLE);
@@ -135,7 +138,7 @@ int mp2964_tune(const struct mp2964_reg_val *rail_a, int count_a,
 
 		status = mp2964_store_user_all();
 		if (status != EC_SUCCESS)
-			ccprintf("%s: STORE_USER_ALL failed\n", __func__);
+			CPRINTF("%s: STORE_USER_ALL failed\n", __func__);
 	} while (--tries > 0);
 
 	i2c_lock(I2C_PORT_MP2964, 0);

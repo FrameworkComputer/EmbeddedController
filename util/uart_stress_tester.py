@@ -17,10 +17,6 @@ Prerequisite:
         e.g. dut-control cr50_uart_timestamp:off
 """
 
-from __future__ import absolute_import
-from __future__ import division
-from __future__ import print_function
-
 import argparse
 import atexit
 import logging
@@ -49,10 +45,7 @@ TPM_CMD = (
 )
 # A ChromeOS TPM command for the cr50 stress
 # purpose.
-CR50_LOAD_GEN_CMD = "while [[ -f %s ]]; do   %s; done &" % (
-    FLAG_FILENAME,
-    TPM_CMD,
-)
+CR50_LOAD_GEN_CMD = f"while [[ -f {FLAG_FILENAME} ]]; do {TPM_CMD}; done &"
 # A command line to run TPM_CMD in background
 # infinitely.
 
@@ -234,13 +227,12 @@ class UartSerial:
                 # an undesirable status.
                 if prompt_txt:
                     raise ChargenTestError(
-                        "%s: Got an unknown prompt text: %s\n"
-                        "Check manually whether %s is available."
-                        % (self.serial.port, prompt_txt, self.serial.port)
+                        f"{self.serial.port}: Got an unknown prompt text: {prompt_txt}\n"
+                        f"Check manually whether {self.serial.port} is available."
                     )
                 raise ChargenTestError(
-                    "%s: Got no input. Close any other connections"
-                    " to this port, and try it again." % self.serial.port
+                    f"{self.serial.port}: Got no input. Close any other connections"
+                    " to this port, and try it again."
                 )
 
             self.logger.info(
@@ -275,8 +267,7 @@ class UartSerial:
             # Check whether chargen command is available.
             if "0000" not in tmp_txt:
                 raise ChargenTestError(
-                    "%s: Chargen got an unexpected result: %s"
-                    % (self.dev_prof["device_type"], tmp_txt)
+                    f"{self.dev_prof['device_type']}: Chargen got an unexpected result: {tmp_txt}"
                 )
 
             self.num_ch_exp = int(self.serial.baudrate * self.duration / 10)
@@ -416,7 +407,7 @@ class UartSerial:
         # from other than chargen are mixed. Stop processing further.
         if self.num_ch_exp < self.num_ch_cap:
             raise ChargenTestError(
-                "%s: UART output is corrupted." % self.dev_prof["device_type"]
+                f"{self.dev_prof['device_type']}: UART output is corrupted."
             )
 
         # Get the count difference between the expected to the captured
@@ -458,10 +449,10 @@ class ChargenTest:
         for port in ports:
             try:
                 mode = os.stat(port).st_mode
-            except OSError as e:
-                raise ChargenTestError(e)
+            except OSError as err:
+                raise ChargenTestError(err) from err
             if not stat.S_ISCHR(mode):
-                raise ChargenTestError("%s is not a character device." % port)
+                raise ChargenTestError(f"{port} is not a character device.")
 
         if duration <= 0:
             raise ChargenTestError("Input error: duration is not positive.")
@@ -498,7 +489,7 @@ class ChargenTest:
             char_lost += tmp_lost
 
         # If any characters are lost, then test fails.
-        msg = "lost %d character(s) from the test" % char_lost
+        msg = f"lost {char_lost:d} character(s) from the test"
         if char_lost > 0:
             self.logger.error("FAIL: %s", msg)
         else:
@@ -529,7 +520,7 @@ class ChargenTest:
         char_lost = self.print_result()
         if char_lost:
             raise ChargenTestError(
-                "Test failed: lost %d character(s)" % char_lost
+                f"Test failed: lost {char_lost:d} character(s)"
             )
 
         self.logger.info("Test is done")
@@ -619,8 +610,8 @@ def main():
     except KeyboardInterrupt:
         sys.exit(0)
 
-    except ChargenTestError as e:
-        logging.error(str(e))
+    except ChargenTestError as err:
+        logging.error(str(err))
         sys.exit(1)
 
 

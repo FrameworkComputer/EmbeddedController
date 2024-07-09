@@ -151,7 +151,7 @@ def get_testsuite_config_tags(twister_dir, testsuite):
     dot_config = f"{suite_path}/zephyr/.config"
 
     if pathlib.Path(dot_config).exists():
-        with open(dot_config) as file:
+        with open(dot_config, encoding="utf-8") as file:
             lines = file.readlines()
 
             for line in lines:
@@ -185,7 +185,7 @@ def create_base_tags(data):
 
 def json_to_resultdb(result_file):
     """Translates Twister json test report to ResultDB format"""
-    with open(result_file) as file:
+    with open(result_file, encoding="utf-8") as file:
         data = json.load(file)
         results = []
         base_tags = create_base_tags(data)
@@ -218,17 +218,16 @@ class BytesEncoder(json.JSONEncoder):
 
 def upload_results(results):
     """Upload results to ResultDB"""
-    with open(os.environ["LUCI_CONTEXT"]) as file:
+    with open(os.environ["LUCI_CONTEXT"], encoding="utf-8") as file:
         sink = json.load(file)["result_sink"]
 
     # Uploads all test results at once.
     res = requests.post(
-        url="http://%s/prpc/luci.resultsink.v1.Sink/ReportTestResults"
-        % sink["address"],
+        url=f"http://{sink['address']}/prpc/luci.resultsink.v1.Sink/ReportTestResults",
         headers={
             "Content-Type": "application/json",
             "Accept": "application/json",
-            "Authorization": "ResultSink %s" % sink["auth_token"],
+            "Authorization": f"ResultSink {sink['auth_token']}",
         },
         data=json.dumps({"testResults": results}, cls=BytesEncoder),
     )

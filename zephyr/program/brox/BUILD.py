@@ -53,6 +53,20 @@ register_brox_project(
     ],
 )
 
+register_brox_project(
+    project_name="brox-sku4",
+    kconfig_files=[
+        # Common to all projects.
+        here / "program.conf",
+        # Parent project's config
+        here / "brox" / "project.conf",
+        # Project-specific KConfig customization.
+        here / "brox-sku4" / "project.conf",
+        # Common sensor configs
+        here / "motionsense.conf",
+    ],
+)
+
 brox.variant(
     project_name="brox-tokenized",
     kconfig_files=[
@@ -103,3 +117,4 @@ assert_rw_fwid_DO_NOT_EDIT(project_name="brox-ish-ec", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="brox-tokenized", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="greenbayupoc", addr=0x60098)
 assert_rw_fwid_DO_NOT_EDIT(project_name="lotso", addr=0x60098)
+assert_rw_fwid_DO_NOT_EDIT(project_name="brox-sku4", addr=0x70098)

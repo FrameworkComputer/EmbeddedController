@@ -14,16 +14,15 @@
 #include "fpsensor_driver.h"
 #include "fpsensor_matcher.h"
 #include "fpsensor_state_driver.h"
-#include "fpsensor_state_without_driver_info.h"
+#include "fpsensor_template_state.h"
 #include "link_defs.h"
 #include "timer.h"
 
 #include <stdbool.h>
 #include <stdint.h>
 
-#ifdef __cplusplus
-extern "C" {
-#endif
+#include <array>
+#include <span>
 
 /* if no special memory regions are defined, fallback on regular SRAM */
 #ifndef FP_FRAME_SECTION
@@ -37,9 +36,14 @@ extern "C" {
 	(FP_ALGORITHM_TEMPLATE_SIZE + FP_POSITIVE_MATCH_SALT_BYTES + \
 	 sizeof(struct ec_fp_template_encryption_metadata))
 
-/* Events for the FPSENSOR task */
-#define TASK_EVENT_SENSOR_IRQ TASK_EVENT_CUSTOM_BIT(0)
-#define TASK_EVENT_UPDATE_CONFIG TASK_EVENT_CUSTOM_BIT(1)
+struct enc_buffer {
+	struct ec_fp_template_encryption_metadata metadata {};
+	std::array<uint8_t, FP_ALGORITHM_TEMPLATE_SIZE> fp_template{};
+	std::array<uint8_t, FP_POSITIVE_MATCH_SALT_BYTES> positive_match_salt{};
+};
+BUILD_ASSERT(sizeof(enc_buffer) == FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE);
+
+#define FP_NO_SUCH_TEMPLATE (UINT16_MAX)
 
 /* --- Global variables defined in fpsensor_state.c --- */
 
@@ -51,13 +55,59 @@ extern uint8_t fp_template[FP_MAX_FINGER_COUNT][FP_ALGORITHM_TEMPLATE_SIZE];
  * Store the encryption metadata at the beginning of the buffer containing the
  * ciphered data.
  */
-extern uint8_t fp_enc_buffer[FP_ALGORITHM_ENCRYPTED_TEMPLATE_SIZE];
-/* Salt used in derivation of positive match secret. */
-extern uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
-				     [FP_POSITIVE_MATCH_SALT_BYTES];
+extern struct enc_buffer fp_enc_buffer;
+
+struct positive_match_secret_state {
+	/* Index of the most recently matched template. */
+	uint16_t template_matched;
+	/* Flag indicating positive match secret can be read. */
+	bool readable;
+	/* Deadline to read positive match secret. */
+	timestamp_t deadline;
+};
+
+struct fpsensor_context {
+	/** Index of the last enrolled but not retrieved template. */
+	uint16_t template_newly_enrolled;
+	/** Number of used templates */
+	uint16_t templ_valid;
+	/** Bitmap of the templates with local modifications */
+	uint32_t templ_dirty;
+	/** Status of the FP encryption engine & context. */
+	uint32_t fp_encryption_status;
+	atomic_t fp_events;
+	uint32_t sensor_mode;
+	/** Part of the IKM used to derive encryption keys received from the
+	 * TPM.
+	 */
+	std::array<uint8_t, FP_CONTEXT_TPM_BYTES> tpm_seed;
+	/** Current user ID */
+	std::array<uint8_t, FP_CONTEXT_USERID_BYTES> user_id;
+	struct positive_match_secret_state positive_match_secret_state;
+	/** Salt used in derivation of positive match secret. */
+	uint8_t fp_positive_match_salt[FP_MAX_FINGER_COUNT]
+				      [FP_POSITIVE_MATCH_SALT_BYTES];
+	/** The states for different fingers. */
+	std::array<fp_template_state, FP_MAX_FINGER_COUNT> template_states;
+};
+
+extern struct fpsensor_context global_context;
+
+/*
+ * Check if FP TPM seed has been set.
+ *
+ * @return 1 if the seed has been set, 0 otherwise.
+ */
+int fp_tpm_seed_is_set(void);
 
 /* Simulation for unit tests. */
+#ifdef __cplusplus
+extern "C" {
+#endif
 __test_only void fp_task_simulate(void);
+#ifdef __cplusplus
+}
+#endif
 
 /*
  * Clear one fingerprint template.
@@ -72,11 +122,6 @@ void fp_clear_finger_context(uint16_t idx);
 void fp_reset_context(void);
 
 /**
- * Init the decrypted template state with the current user_id.
- */
-void fp_init_decrypted_template_state_with_user_id(uint16_t idx);
-
-/**
  * Clear all fingerprint templates associated with the current user id and
  * reset the sensor.
  */
@@ -87,7 +132,13 @@ void fp_reset_and_clear_context(void);
  *
  * @param out the pointer to the output event.
  */
+#ifdef __cplusplus
+extern "C" {
+#endif
 int fp_get_next_event(uint8_t *out);
+#ifdef __cplusplus
+}
+#endif
 
 /**
  * Change the sensor mode.
@@ -121,12 +172,9 @@ void fp_disable_positive_match_secret(struct positive_match_secret_state *state)
  * @param fgr the index of positive match salt.
  * @param positive_match_secret the match secret that derived from the salt.
  */
-enum ec_status fp_read_match_secret(
-	int8_t fgr,
-	uint8_t positive_match_secret[FP_POSITIVE_MATCH_SECRET_BYTES]);
-
-#ifdef __cplusplus
-}
-#endif
+enum ec_status
+fp_read_match_secret(int8_t fgr,
+		     std::span<uint8_t, FP_POSITIVE_MATCH_SECRET_BYTES>
+			     positive_match_secret);
 
 #endif /* __CROS_EC_FPSENSOR_FPSENSOR_STATE_H */

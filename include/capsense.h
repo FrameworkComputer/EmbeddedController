@@ -9,6 +9,14 @@
 #include "common.h"
 #include "gpio.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void capsense_interrupt(enum gpio_signal signal);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_CAPSENSE_H */

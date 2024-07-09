@@ -21,11 +21,6 @@
 		zephyr,flash = &flash0;
 		zephyr,flash-controller = &flashctrl;
 	};
-
-	/* Override keyboard scanning */
-	soc {
-		/delete-node/ kbd@f01d00;
-	};
 };
 
 &uart1 {
@@ -39,4 +34,10 @@
 	pinctrl-0 = <&uart1_rx_gpb0_default
 		     &uart1_tx_gpb1_default>;
 	pinctrl-names = "default";
+};
+
+&kbd {
+	actual-key-mask = <0x1c 0xff 0xff 0xff 0xff
+			   0xf5 0xff 0xa4 0xff 0xfe
+			   0x55 0xfa 0xca>;
 };

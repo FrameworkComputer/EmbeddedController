@@ -8,6 +8,10 @@
 
 #include "cros_board_info.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #if defined(CONFIG_CBI_FLASH)
 extern const struct cbi_storage_config_t flash_cbi_config;
 #endif
@@ -19,4 +23,9 @@ extern const struct cbi_storage_config_t eeprom_cbi_config;
 #if defined(CONFIG_CBI_GPIO)
 extern const struct cbi_storage_config_t gpio_cbi_config;
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_CBI_CONFIG_H */

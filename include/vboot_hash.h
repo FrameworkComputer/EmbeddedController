@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Get hash of RW image.
  *
@@ -57,5 +61,9 @@ int vboot_hash_in_progress(void);
  * Abort hash currently in progress, and invalidate any completed hash.
  */
 void vboot_hash_abort(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_VBOOT_HASH_H */

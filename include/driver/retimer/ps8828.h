@@ -11,6 +11,10 @@
 
 #include "usb_mux.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PS8828_I2C_ADDR0_FLAG 0x10
 #define PS8828_I2C_ADDR1_FLAG 0x30
 #define PS8828_I2C_ADDR2_FLAG 0x50
@@ -31,5 +35,9 @@
 #define PS8828_DPHPD_PLUGGED BIT(6)
 
 extern const struct usb_mux_driver ps8828_usb_retimer_driver;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_MUX_PARADE8828_H */

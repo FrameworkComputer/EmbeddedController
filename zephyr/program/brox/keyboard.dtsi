@@ -4,13 +4,38 @@
  */
 
 / {
+	chosen {
+		cros-ec,keyboard = &kbd;
+	};
+
 	kblight: kblight {
 		compatible = "cros-ec,kblight-pwm";
 		pwms = <&pwm1 PWM_CHANNEL_1 PWM_HZ(2400) PWM_POLARITY_NORMAL>;
 	};
+
+	boot-keys {
+		compatible = "cros-ec,boot-keys";
+		down-arrow-rc = <KBD_RC(6, 11)>;
+		esc-rc = <KBD_RC(1, 1)>;
+		left-shift-rc = <KBD_RC(5, 7)>;
+		refresh-rc = <KBD_RC(3, 2)>;
+	};
+
+	runtime-keys {
+		compatible = "cros-ec,runtime-keys";
+		vol-up-rc = <KBD_RC(0, 4)>;
+		left-alt-rc = <KBD_RC(0, 10)>;
+		right-alt-rc = <KBD_RC(6, 10)>;
+		h-rc = <KBD_RC(1, 6)>;
+		r-rc = <KBD_RC(7, 3)>;
+	};
 };
 
 &cros_kb_raw {
+	/* NOTE: the project is using the &kbd node below by default, this node
+	 * is ignored and will be removed. (b/349304225)
+	 */
+
 	status = "okay";
 	pinctrl-0 = <&ksi0_default
 		     &ksi1_default
@@ -49,4 +74,40 @@
 		VIVALDI_TK_VOL_UP            /* T10 */
 	>;
 	capabilities = <0>;                  /* No lock button */
+};
+
+&kbd {
+	status = "okay";
+	pinctrl-0 = <
+		&ksi0_default
+		&ksi1_default
+		&ksi2_default
+		&ksi3_default
+		&ksi4_default
+		&ksi5_default
+		&ksi6_default
+		&ksi7_default
+		&kso0_default
+		&kso1_default
+		&kso3_default
+		&kso4_default
+		&kso5_default
+		&kso6_default
+		&kso7_default
+		&kso8_default
+		&kso9_default
+		&kso10_default
+		&kso11_default
+		&kso12_default
+	>;
+	pinctrl-names = "default";
+	row-size = <8>;
+	col-size = <13>;
+	settle-time-us = <80>;
+
+	kso-gpio {
+		compatible = "cros-ec,col-gpio";
+		col-num = <2>;
+		col-gpios = <&gpioksol 2 GPIO_ACTIVE_HIGH>;
+	};
 };

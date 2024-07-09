@@ -22,9 +22,8 @@
 
 #define CONFIG_MKBP_USE_HOST_EVENT
 
-/* Work around Grunt KSI03 HW bug and rework (b/79758966) */
+/* Keyboard */
 #define CONFIG_KEYBOARD_REFRESH_ROW3
-#define CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI3
 
 /* Power and battery LEDs */
 #define CONFIG_LED_COMMON

@@ -10,15 +10,13 @@
  */
 
 #include "common.h"
+#include "compiler.h"
 #include "math_util.h"
 #include "task.h"
 #include "test_util.h"
-
-extern "C" {
 #include "timer.h"
 #include "uart.h"
 #include "watchdog.h"
-}
 
 test_static int test_usleep(void)
 {
@@ -27,22 +25,22 @@ test_static int test_usleep(void)
 	timestamp_t start_time = get_time();
 	crec_usleep(expected_duration);
 	int sleep_duration = time_since32(start_time);
-	int error_threshold;
+	int error_threshold = 100;
 
 	/* Helipilot uses the LFCLK for events which runs at 32768 Hz with an
 	 * error of 2%. This gives a 30.5 us resolution and a max error of 246.9
 	 * us on 12345 us. This is considerably lower resolution and higher
 	 * error than the stm32 boards and may result in higher deltas.
 	 */
+	DISABLE_CLANG_WARNING("-Wignored-attributes"); // TODO(b/346419141)
 	if (IS_ENABLED(BASEBOARD_HELIPILOT)) {
 		double max_error = expected_duration * 0.02;
 		double clock_tick_us = (1.0 / 32768.0) * 1000000.0;
 
 		/* Assume a worst case error of max_error + 1 clock tick */
 		error_threshold = static_cast<int>(max_error + clock_tick_us);
-	} else {
-		error_threshold = 100;
 	}
+	ENABLE_CLANG_WARNING("-Wignored-attributes"); // TODO(b/346419141)
 
 	TEST_NEAR(expected_duration, sleep_duration, error_threshold, "%d");
 
@@ -149,6 +147,7 @@ void run_test(int argc, const char **argv)
 	RUN_TEST(test_usleep);
 	RUN_TEST(test_timestamp_expired);
 	RUN_TEST(test_timestamp_expired_null);
+	RUN_TEST(test_usleep_warning);
 
 	test_print_result();
 }

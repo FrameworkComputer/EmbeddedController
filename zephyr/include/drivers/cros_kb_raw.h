@@ -240,5 +240,5 @@ static inline void cros_kb_raw_set_col2(int level)
 /**
  * @}
  */
-#include <syscalls/cros_kb_raw.h>
+#include <zephyr/syscalls/cros_kb_raw.h>
 #endif /* ZEPHYR_INCLUDE_DRIVERS_CROS_KB_RAW_H_ */

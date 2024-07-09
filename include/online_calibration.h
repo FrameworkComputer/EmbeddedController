@@ -9,6 +9,10 @@
 #include "motion_sense.h"
 #include "stdbool.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Initialize the online calibration caches.
  */
@@ -42,5 +46,9 @@ bool online_calibration_has_new_values(void);
  */
 bool online_calibration_read(struct motion_sensor_t *sensor,
 			     struct ec_response_online_calibration_data *out);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ONLINE_CALIBRATION_H */

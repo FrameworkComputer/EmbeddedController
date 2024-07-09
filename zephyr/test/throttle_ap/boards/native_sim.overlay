@@ -1,0 +1,39 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_sim.dts>
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	aliases {
+		gpio-prochot-l = &gpio_prochot_l;
+	};
+	/*
+	 * Keep these GPIOs in pin order.
+	 * If you need to add one, make sure you increase
+	 * ngpios in the gpio0 node further down.
+	 */
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_prochot_l: prochot_l {
+			gpios = <&gpio0 0 GPIO_INPUT>;
+			enum-name = "GPIO_CPU_PROCHOT";
+		};
+	};
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_prochot: prochot {
+			irq-pin = <&gpio_prochot_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "throttle_ap_prochot_input_interrupt";
+		};
+	};
+};
+
+&gpio0 {
+	ngpios = <2>;
+};

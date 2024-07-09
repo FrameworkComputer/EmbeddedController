@@ -14,6 +14,10 @@
 #include "stdbool.h"
 #include "stillness_detector.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct accel_cal_algo {
 	struct kasa_fit kasa_fit;
 	struct newton_fit newton_fit;
@@ -48,5 +52,9 @@ void accel_cal_reset(struct accel_cal *cal);
  */
 bool accel_cal_accumulate(struct accel_cal *cal, uint32_t sample_time, fp_t x,
 			  fp_t y, fp_t z, fp_t temp);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ACCEL_CAL_H */

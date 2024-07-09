@@ -1,0 +1,7 @@
+common:
+  platform_allow: native_sim
+tests:
+  boot_keys.default: {}
+  boot_keys.ignore_key:
+    extra_configs:
+      - CONFIG_BOOT_KEYS_GHOST_REFRESH_WORKAROUND=y

@@ -169,7 +169,7 @@ DECLARE_EVENT_SOURCE(EC_MKBP_EVENT_SYSRQ, sysrq_get_next_event);
 #endif
 
 /************************ Keyboard press simulation ************************/
-#ifndef HAS_TASK_KEYSCAN
+#if !(defined(HAS_TASK_KEYSCAN) || defined(CONFIG_CROS_EC_KEYBOARD_INPUT))
 /* Keys simulated-pressed */
 static uint8_t simulated_key[KEYBOARD_COLS_MAX];
 uint8_t keyboard_cols = KEYBOARD_COLS_MAX;

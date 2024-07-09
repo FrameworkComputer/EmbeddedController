@@ -3,15 +3,13 @@
  * found in the LICENSE file.
  */
 
-#include <exception>
-
-extern "C" {
 #include "common.h"
 #include "panic.h"
 #include "system.h"
 #include "task.h"
 #include "test_util.h"
-}
+
+#include <exception>
 
 test_static int test_exception()
 {
@@ -81,7 +79,7 @@ extern "C" int task_test(void *unused)
 	return EC_SUCCESS;
 }
 
-extern "C" void run_test(int argc, const char **argv)
+void run_test(int argc, const char **argv)
 {
 	test_reset();
 	crec_msleep(30); /* Wait for TASK_ID_TEST to initialize */

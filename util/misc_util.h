@@ -78,6 +78,19 @@ int ec_get_cmd_versions(int cmd, uint32_t *pmask);
 int ec_cmd_version_supported(int cmd, int ver);
 
 /**
+ * @brief Gets the highest version number of a command supported by the EC
+ *
+ * @param cmd The command to query support for
+ * @param ver Output parameter to write max version to.
+ *
+ * @return 0 on success
+ * @return -EC_RES_INVALID_PARAM if ver is NULL
+ * @return -EC_RES_INVALID_COMMAND if no version of this command is supported
+ *         or if command does not exist.
+ */
+int ec_get_highest_supported_cmd_version(int cmd, int *ver);
+
+/**
  * Return 1 is the current kernel version is greater or equal to
  * <major>.<minor>.<sublevel>
  */

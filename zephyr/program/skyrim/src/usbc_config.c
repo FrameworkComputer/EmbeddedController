@@ -227,19 +227,11 @@ void usb_pd_soc_interrupt(enum gpio_signal signal)
 /* Round up 3250 max current to multiple of 128mA for ISL9241 AC prochot. */
 static void charger_prochot_init_isl9241(void)
 {
-	isl9241_set_ac_prochot(CHARGER_SOLO, CONFIG_AC_PROCHOT_CURRENT_MA);
+	isl9241_set_ac_prochot(CHARGER_SOLO,
+			       CONFIG_CHARGER_AC_PROCHOT_CURRENT_MA);
 }
 DECLARE_HOOK(HOOK_INIT, charger_prochot_init_isl9241, HOOK_PRIO_DEFAULT);
 #endif /* CONFIG_CHARGER_ISL9241 */
-
-#ifdef CONFIG_CHARGER_ISL9238
-static void charger_prochot_init_isl9238(void)
-{
-	isl923x_set_ac_prochot(CHARGER_SOLO, CONFIG_AC_PROCHOT_CURRENT_MA);
-	isl923x_set_dc_prochot(CHARGER_SOLO, CONFIG_DC_PROCHOT_CURRENT_MA);
-}
-DECLARE_HOOK(HOOK_INIT, charger_prochot_init_isl9238, HOOK_PRIO_DEFAULT);
-#endif /* CONFIG_CHARGER_ISL9238 */
 
 test_export_static void reset_nct38xx_port(int port)
 {

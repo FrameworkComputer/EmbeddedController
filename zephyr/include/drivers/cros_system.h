@@ -268,5 +268,5 @@ z_impl_cros_system_deep_sleep_ticks(const struct device *dev)
 /**
  * @}
  */
-#include <syscalls/cros_system.h>
+#include <zephyr/syscalls/cros_system.h>
 #endif /* ZEPHYR_INCLUDE_DRIVERS_CROS_SYSTEM_H_ */

@@ -7,6 +7,8 @@
 
 #include <zephyr/fff.h>
 
+FFF_EXTERN_C
+
 DECLARE_FAKE_VALUE_FUNC(int, mock_alg_init,
 			const struct fingerprint_algorithm *const);
 DECLARE_FAKE_VALUE_FUNC(int, mock_alg_exit,
@@ -21,3 +23,5 @@ DECLARE_FAKE_VALUE_FUNC(int, mock_alg_enroll_finish,
 DECLARE_FAKE_VALUE_FUNC(int, mock_alg_match,
 			const struct fingerprint_algorithm *const, void *,
 			uint32_t, const uint8_t *const, int32_t *, uint32_t *);
+
+FFF_END_EXTERN_C

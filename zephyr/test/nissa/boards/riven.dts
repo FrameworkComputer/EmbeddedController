@@ -35,10 +35,6 @@
 			gpios = <&gpio9 5 GPIO_INPUT>;
 			enum-name = "GPIO_TABLET_MODE_L";
 		};
-		gpio_fan_enable: fan-enable {
-			gpios = <&gpio6 3 GPIO_OUTPUT>;
-			no-auto-init;
-		};
 		gpio_ec_touch_en: ec_touch_en {
 			gpios = <&gpio8 3 GPIO_OUTPUT_LOW>;
 		};
@@ -53,15 +49,10 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "lid_interrupt";
 		};
-		int_imu: ec_imu {
-			irq-pin = <&gpio_imu_int_l>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "motion_interrupt";
-		};
 		int_lid_accel: ec_lid_accel {
 			irq-pin = <&gpio_acc_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "lid_accel_interrupt";
+			handler = "bma4xx_interrupt";
 		};
 		int_tablet_mode: tablet_mode {
 			irq-pin = <&gpio_tablet_mode_l>;
@@ -80,17 +71,21 @@
 			i2c-port = <&i2c_ctrl1>;
 			enum-names = "I2C_PORT_SENSOR";
 		};
+		i2c_ec_i2c_sensor_2: ec_i2c_sensor_2 {
+			i2c-port = <&i2c_ctrl4>;
+			enum-names = "I2C_PORT_SENSOR_2";
+		};
 	};
 
 	batteries {
 		default_battery: lgc {
 			compatible = "lgc,ap18c8k", "battery-smart";
 		};
-		battery_cosmx: cosmx {
-			compatible = "cosmx,ap20cbl", "battery-smart";
+		smp_ap23a7l_2 {
+			compatible = "smp,ap23a7l-2", "battery-smart";
 		};
-		battery_cosmx_2: cosmx-2 {
-			compatible = "cosmx,ap20cbl-2", "battery-smart";
+		cosmx_ap23abl {
+			compatible = "cosmx,ap23abl", "battery-smart";
 		};
 	};
 
@@ -139,151 +134,6 @@
 		};
 	};
 
-	pwms {
-		#address-cells = <1>;
-		#size-cells = <1>;
-
-		pwm_fan: pwm@6 {
-			compatible = "cros,pwm-mock";
-			reg = <6 1>;
-			#pwm-cells = <3>;
-			status = "okay";
-		};
-	};
-
-	tachs {
-		#address-cells = <1>;
-		#size-cells = <1>;
-
-		tach_fan: tach@0 {
-			compatible = "cros,tach-mock";
-			reg = <0 1>;
-			#tach-cells = <3>;
-			status = "okay";
-		};
-	};
-
-	fans {
-		compatible = "cros-ec,fans";
-
-		fan_0 {
-			pwms = <&pwm_fan 0 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
-			tach = <&tach_fan>;
-			rpm_min = <2500>;
-			rpm_start = <2500>;
-			rpm_max = <6000>;
-			enable_gpio = <&gpio_fan_enable>;
-		};
-	};
-
-	fan_steps_6w: fan-steps-6w {
-		compatible = "cros-ec,fan-steps";
-		level_0 {
-			temp_on = <25>;
-			temp_off = <99>;
-			rpm_target = <0>;
-		};
-		level_1 {
-			temp_on = <40>;
-			temp_off = <35>;
-			rpm_target = <2500>;
-		};
-		level_2 {
-			temp_on = <44>;
-			temp_off = <41>;
-			rpm_target = <2800>;
-		};
-		level_3 {
-			temp_on = <48>;
-			temp_off = <45>;
-			rpm_target = <3000>;
-		};
-		level_4 {
-			temp_on = <52>;
-			temp_off = <49>;
-			rpm_target = <3200>;
-		};
-		level_5 {
-			temp_on = <60>;
-			temp_off = <54>;
-			rpm_target = <3600>;
-		};
-		level_6 {
-			temp_on = <64>;
-			temp_off = <58>;
-			rpm_target = <4000>;
-		};
-		level_7 {
-			temp_on = <67>;
-			temp_off = <62>;
-			rpm_target = <4600>;
-		};
-		level_8 {
-			temp_on = <71>;
-			temp_off = <66>;
-			rpm_target = <5000>;
-		};
-		level_9 {
-			temp_on = <74>;
-			temp_off = <70>;
-			rpm_target = <5500>;
-		};
-	};
-
-	fan_steps_15w: fan-steps-15w {
-		compatible = "cros-ec,fan-steps";
-		level_0 {
-			temp_on = <25>;
-			temp_off = <99>;
-			rpm_target = <0>;
-		};
-		level_1 {
-			temp_on = <37>;
-			temp_off = <34>;
-			rpm_target = <2500>;
-		};
-		level_2 {
-			temp_on = <42>;
-			temp_off = <39>;
-			rpm_target = <2800>;
-		};
-		level_3 {
-			temp_on = <46>;
-			temp_off = <43>;
-			rpm_target = <3000>;
-		};
-		level_4 {
-			temp_on = <51>;
-			temp_off = <48>;
-			rpm_target = <3200>;
-		};
-		level_5 {
-			temp_on = <55>;
-			temp_off = <52>;
-			rpm_target = <3600>;
-		};
-		level_6 {
-			temp_on = <59>;
-			temp_off = <56>;
-			rpm_target = <4000>;
-		};
-		level_7 {
-			temp_on = <66>;
-			temp_off = <63>;
-			rpm_target = <4600>;
-		};
-		level_8 {
-			temp_on = <72>;
-			temp_off = <69>;
-			rpm_target = <5000>;
-		};
-		level_9 {
-			temp_on = <74>;
-			temp_off = <71>;
-			rpm_target = <5500>;
-		};
-	};
-
 	adc0: adc {
 		compatible = "zephyr,adc-emul";
 		nchannels = <6>;
@@ -318,13 +168,4 @@
 
 &thermistor_3V3_51K1_47K_4050B  {
 	status = "okay";
-};
-
-&vivaldi_kbd {
-	status = "okay";
-
-	kbd_config_1: kbd-config-1 {
-		vivaldi-codes = <0 0 0 0 0 0 0 0 0 0>;
-		capabilities = <0>;
-	};
 };

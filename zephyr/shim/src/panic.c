@@ -126,7 +126,8 @@ void panic_data_print(const struct panic_data *pdata)
 #endif
 }
 
-static void copy_esf_to_panic_data(const z_arch_esf_t *esf,
+#if !defined(CONFIG_ZTEST_FATAL_HOOK)
+static void copy_esf_to_panic_data(const struct arch_esf *esf,
 				   struct panic_data *pdata)
 {
 	pdata->arch = PANIC_ARCH;
@@ -141,7 +142,7 @@ static void copy_esf_to_panic_data(const z_arch_esf_t *esf,
 	PANIC_REG_LIST(PANIC_COPY_REGS, PANIC_COPY_REGS_GPR);
 }
 
-void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *esf)
+void k_sys_fatal_error_handler(unsigned int reason, const struct arch_esf *esf)
 {
 	struct panic_data *pdata = get_panic_data_write();
 
@@ -195,6 +196,7 @@ void k_sys_fatal_error_handler(unsigned int reason, const z_arch_esf_t *esf)
 	panic_reboot();
 	__ASSERT_UNREACHABLE;
 }
+#endif /* CONFIG_ZTEST_FATAL_HOOK */
 
 void panic_set_reason(uint32_t reason, uint32_t info, uint8_t exception)
 {

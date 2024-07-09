@@ -192,13 +192,13 @@ test_mockable __keep int main(void)
 	if (IS_ENABLED(CONFIG_EEPROM_CBI_WP) && system_is_locked())
 		cbi_latch_eeprom_wp();
 
-		/*
-		 * Keyboard scan init/Button init can set recovery events to
-		 * indicate to host entry into recovery mode. Before this is
-		 * done, LPC_HOST_EVENT_ALWAYS_REPORT mask needs to be
-		 * initialized correctly.
-		 */
 #ifdef CONFIG_HOSTCMD_X86
+	/*
+	 * Keyboard scan init/Button init can set recovery events to
+	 * indicate to host entry into recovery mode. Before this is
+	 * done, LPC_HOST_EVENT_ALWAYS_REPORT mask needs to be
+	 * initialized correctly.
+	 */
 	lpc_init_mask();
 #endif
 	if (IS_ENABLED(CONFIG_I2C_CONTROLLER)) {

@@ -27,7 +27,7 @@ i2c3ALT: &i2c3 {
 #include "keyboard.dtsi"
 #include "../power_signals.dtsi"
 #include "../power_signals_gpios.dtsi"
-#include "../pwm.dtsi"
+#include "pwm.dtsi"
 #include "../temp_sensors.dtsi"
 #include "usb_typec.dtsi"
 #include "../usba.dtsi"
@@ -38,8 +38,8 @@ i2c3ALT: &i2c3 {
 
 /{
         batteries {
-                default_battery: lgc_ap18c8k {
-                        compatible = "lgc,ap18c8k", "battery-smart";
+                default_battery: dynapack_313-2d-32-a {
+                        compatible = "dynapack,313-2d-32-a", "battery-smart";
                 };
         };
 };

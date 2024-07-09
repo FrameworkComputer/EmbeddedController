@@ -11,7 +11,6 @@ cros_ec_library_include_directories(include)
 # Include selected EC source from the baseboard
 zephyr_library_sources(
 	"src/board.c"
-	"src/board_chipset.c"
 	"src/hibernate.c"
 )
 
@@ -19,6 +18,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/usbc.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "src/usb_pd_policy.c")
 zephyr_library_sources_ifdef(CONFIG_VARIANT_CORSOLA_DB_DETECTION
 			     "src/variant_db_detection.c")
+zephyr_library_sources_ifndef(CONFIG_CORSOLA_BOARD_CHIPSET_CUSTOM "src/board_chipset.c")
 
 if(DEFINED CONFIG_BOARD_KRABBY)
 	project(krabby)
@@ -62,4 +62,7 @@ elseif(DEFINED CONFIG_BOARD_SKITTY)
 elseif(DEFINED CONFIG_BOARD_VELUZA)
 	project(veluza)
 	add_subdirectory(veluza)
+elseif(DEFINED CONFIG_BOARD_SQUIRTLE)
+	project(squirtle)
+	add_subdirectory(squirtle)
 endif()

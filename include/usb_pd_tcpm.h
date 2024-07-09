@@ -21,6 +21,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Time to wait for TCPC to complete transmit */
 #define PD_T_TCPC_TX_TIMEOUT (100 * MSEC)
 
@@ -715,4 +719,9 @@ void tcpc_dump_std_registers(int port);
 void tcpc_dump_registers(int port, const struct tcpc_reg_dump_map *reg,
 			 int count);
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_USB_PD_TCPM_H */

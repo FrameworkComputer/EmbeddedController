@@ -17,6 +17,16 @@ choice TEST_BOARD_VARIANT
 		help
 		  Enable Brox tests.
 
+	config TEST_BOARD_LOTSO
+		bool "Enable lotso-specific tests"
+		help
+		  Enable Lotso tests.
+
+	config TEST_BOARD_GREENBAYUPOC
+		bool "Enable greenbayupoc-specific tests"
+		help
+		  Enable Greenbayupoc tests.
+
 endchoice # TEST_BOARD_VARIANT
 
 config TEST_BOARD_NAME
@@ -32,5 +42,20 @@ config TEST_BOARD_SUSPEND_RESUME
 
 config TEST_BOARD_USBC
 	bool "Run USB-C tests"
+
+config TEST_BOARD_LOTSO_KEYBOARD
+	bool "Enable lotso keyboard tests"
+
+config PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+	bool "Support keyboard customization"
+
+config PLATFORM_EC_KEYBOARD_DEBUG
+	bool "Enable keyboard debug prints"
+
+config TEST_BOARD_GREENBAYUPOC_KEYBOARD
+	bool "Enable greenbayupoc keyboard tests"
+
+config TEST_BOARD_LOTSO_SENSOR
+	bool "Enable lotso sensor tests"
 
 source "Kconfig.zephyr"

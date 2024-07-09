@@ -10,6 +10,10 @@
 
 #include "charge_state.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define TEMPC_TENTHS_OF_DEG(c) ((c) * 10)
 
 #define CHARGER_PROF_TEMP_C_LAST_RANGE 0xFFFF
@@ -83,5 +87,9 @@ enum ec_status charger_profile_override_get_param(uint32_t param,
 						  uint32_t *value);
 enum ec_status charger_profile_override_set_param(uint32_t param,
 						  uint32_t value);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_CHARGER_PROFILE_OVERRIDE_H */

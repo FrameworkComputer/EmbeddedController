@@ -21,7 +21,7 @@ else
 fi
 
 DUT_IP="$2"
-INFILE="build/$BOARD/ec.bin"
+INFILE="build/${BOARD}/ec.bin"
 
 case "$3" in
 bin)
@@ -29,16 +29,16 @@ bin)
 elf|"") # Default
   # ec.obj is an elf file that has the right memory layout to be loaded
   # from the AP/kernel.
-  INFILE="build/$BOARD/ec.obj"
+  INFILE="build/${BOARD}/ec.obj"
   ;;
 *)
   usage
   ;;
 esac
 
-scp "$INFILE" "$DUT_IP":/lib/firmware/scp.img
+scp "${INFILE}" "${DUT_IP}":/lib/firmware/scp.img
 
-ssh "$DUT_IP" sh -x -c "'
+ssh "${DUT_IP}" sh -x -c "'
     sync;
     echo stop > /sys/class/remoteproc/remoteproc0/state;
     echo start > /sys/class/remoteproc/remoteproc0/state'"

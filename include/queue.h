@@ -13,6 +13,10 @@
 #include <stddef.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Generic queue container. */
 
 /*
@@ -258,5 +262,9 @@ queue_peek_memcpy(struct queue const *q, void *dest, size_t i, size_t count,
                                                                      \
 		result;                                              \
 	})
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_QUEUE_H */

@@ -109,8 +109,11 @@ EC_TEST_PATHS = [
 
 # Paths under ZEPHYR_BASE that we also wish to search for test cases.
 ZEPHYR_TEST_PATHS = [
+    Path("tests/drivers/counter/counter_basic_api"),
+    Path("tests/drivers/flash/stm32"),
     Path("tests/drivers/fuel_gauge/sbs_gauge"),
     Path("tests/drivers/gpio"),
+    Path("tests/subsys/pm"),
     Path("tests/subsys/shell"),
 ]
 
@@ -469,6 +472,7 @@ def main():
     # including -h/--help so that Twister's own help text gets displayed.
     parser = argparse.ArgumentParser(add_help=False, allow_abbrev=False)
     parser.add_argument("-T", "--testsuite-root", action="append")
+    parser.add_argument("--quarantine-list", action="append")
     parser.add_argument("-p", "--platform", action="append")
     parser.add_argument("-v", "--verbose", action="count", default=0)
     parser.add_argument("--gcov-tool")
@@ -552,15 +556,27 @@ def main():
         for path in ZEPHYR_TEST_PATHS:
             twister_cli.extend(["-T", str(zephyr_base / path)])
 
+    if intercepted_args.quarantine_list:
+        # Pass user-provided arg when present
+        for arg in intercepted_args.quarantine_list:
+            twister_cli.extend(["--quarantine-list", arg])
+    else:
+        # Use default quarantine list.
+        twister_cli.extend(
+            [
+                "--quarantine-list",
+                str(Path(__file__).resolve().parent / "broken_tests.yaml"),
+            ]
+        )
+
     if intercepted_args.platform:
         # Pass user-provided -p args when present.
         for arg in intercepted_args.platform:
             twister_cli.extend(["-p", arg])
     else:
-        # posix_native and unit_testing when nothing was requested by user.
-        twister_cli.extend(["-p", "native_posix"])
-        twister_cli.extend(["-p", "unit_testing"])
+        # native_sim and unit_testing when nothing was requested by user.
         twister_cli.extend(["-p", "native_sim"])
+        twister_cli.extend(["-p", "unit_testing"])
 
     twister_cli.extend(["--outdir", intercepted_args.outdir])
 

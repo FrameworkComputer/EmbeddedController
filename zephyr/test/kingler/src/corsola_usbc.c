@@ -89,10 +89,6 @@ ZTEST(corsola_usbc, test_xhci_interrupt_0_src_attached)
 		zassert_equal(usb_charge_set_mode_fake.arg2_history[i],
 			      USB_ALLOW_SUSPEND_CHARGE);
 	}
-
-	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		zassert_equal(pd_get_dual_role(i), PD_DRP_FORCE_SINK);
-	}
 }
 
 ZTEST(corsola_usbc, test_xhci_interrupt_0)
@@ -127,10 +123,6 @@ ZTEST(corsola_usbc, test_xhci_interrupt_1)
 			      USB_CHARGE_MODE_ENABLED);
 		zassert_equal(usb_charge_set_mode_fake.arg2_history[i],
 			      USB_ALLOW_SUSPEND_CHARGE);
-	}
-
-	for (int i = 0; i < CONFIG_USB_PD_PORT_MAX_COUNT; i++) {
-		zassert_equal(pd_get_dual_role(i), PD_DRP_TOGGLE_ON);
 	}
 }
 

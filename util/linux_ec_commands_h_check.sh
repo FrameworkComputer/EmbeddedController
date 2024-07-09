@@ -6,26 +6,40 @@
 
 set -e
 
-: "${ZEPHYR_BASE:=$(realpath ../../../src/third_party/zephyr/main)}"
+# Get the script's absolute directory path.
+chromiumos_src_dir=$(dirname "$(realpath "$0")")
 
-ec_commands_file_in="include/ec_commands.h"
-ec_commands_file_out="build/kernel/include/linux/mfd/cros_ec_commands.h"
+# Loop until we reach the root directory.
+while [[ ${chromiumos_src_dir} != "/" ]]; do
+  # Check if .repo directory exists.
+  if [[ -d ${chromiumos_src_dir}/.repo ]]; then
+    echo "${chromiumos_src_dir}"
+    break
+  fi
+  # Go up one level in the directory tree.
+  chromiumos_src_dir=$(dirname "${chromiumos_src_dir}")
+done
 
-# Check if ec_commands.h has changed.
-echo "${PRESUBMIT_FILES:?}" | xargs -d'\n' -- grep -q \
-  "${ec_commands_file_in}" || exit 0
+: "${ZEPHYR_BASE:=${chromiumos_src_dir}/src/third_party/zephyr/main}"
+TMP="$(mktemp -d)"
+ec_commands_file_out="${TMP}/cros_ec_commands.h"
 
-if [ ! -f "${ec_commands_file_out}" ]; then
-  echo "A new cros_ec_commands.h must be generated."
-  echo 'Please run "make buildall" or "make build_cros_ec_commands"'.
-  exit 1
-fi
+cleanup() {
+  rm -rf "${TMP:?}"
+}
 
-if [ "${ec_commands_file_out}" -ot "${ec_commands_file_in}" ]; then
-  echo "cros_ec_commands.h is out of date."
-  echo 'Please run "make buildall" or "make build_cros_ec_commands"'.
-  exit 1
-fi
+trap cleanup EXIT
+
+# Get unifdef from CIPD, and add to PATH
+cipd ensure -ensure-file - -root "${TMP:?}" <<EOF
+chromiumos/infra/tools/unifdef latest
+EOF
+export PATH="${TMP:?}/bin:${PATH}"
+
+./util/make_linux_ec_commands_h.sh include/ec_commands.h \
+  "${ec_commands_file_out}"
 
 "${ZEPHYR_BASE}/scripts/checkpatch.pl" -f "${ec_commands_file_out}" \
   --ignore=BRACKET_SPACE
+
+cleanup

@@ -21,6 +21,7 @@ endif
 
 # Required chip modules
 chip-y=header.o clock.o gpio.o hwtimer.o system.o uart.o uartn.o sib.o
+chip-y+=rom_chip.o
 chip-y+=system-$(CHIP_FAMILY).o
 chip-y+=gpio-$(CHIP_FAMILY).o
 
@@ -43,6 +44,9 @@ chip-$(CONFIG_PWM)+=pwm.o
 chip-$(CONFIG_SPI)+=spi.o
 chip-$(CONFIG_RNG)+=trng.o
 chip-$(CONFIG_WATCHDOG)+=watchdog.o
+ifdef CONFIG_MPU
+chip-$(CONFIG_RAM_LOCK)+=ram_lock.o
+endif
 ifndef CONFIG_KEYBOARD_DISCRETE
 chip-$(HAS_TASK_KEYSCAN)+=keyboard_raw.o
 endif

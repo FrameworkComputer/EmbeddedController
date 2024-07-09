@@ -14,6 +14,7 @@ config PLATFORM_EC_TOUCHPAD
 
 config PLATFORM_EC_TOUCHPAD_ELAN
 	bool "Elan touchpad driver"
+	default y if DT_HAS_ELAN_EKTH3000_ENABLED
 	select PLATFORM_EC_TOUCHPAD
 	help
 	  Adds support for Elan I2C touchpad.

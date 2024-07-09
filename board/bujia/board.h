@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-/* Lisbon board configuration */
+/* Bujia board configuration */
 
 #ifndef __CROS_EC_BOARD_H
 #define __CROS_EC_BOARD_H
@@ -28,10 +28,20 @@
 /* USB Type C and USB PD defines */
 #define CONFIG_USB_PD_PPC
 #define CONFIG_USB_PD_TCPM_RT1715
-#define CONFIG_USBC_RETIMER_PS8818
 #define CONFIG_USBC_PPC_SYV682X
+#define CONFIG_USBC_RETIMER_INTEL_BB
 #undef CONFIG_SYV682X_HV_ILIM
 #define CONFIG_SYV682X_HV_ILIM SYV682X_HV_ILIM_5_50
+
+/* Enabling Thunderbolt-compatible mode */
+#define CONFIG_USB_PD_TBT_COMPAT_MODE
+
+/* Enabling USB4 mode */
+#define CONFIG_USB_PD_USB4
+#define CONFIG_USB_PD_DATA_RESET_MSG
+
+/* Retimer */
+#define CONFIG_USBC_RETIMER_FW_UPDATE
 
 /* TODO: b/177608416 - measure and check these values on brya */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
@@ -91,6 +101,8 @@
 #define I2C_PORT_EEPROM NPCX_I2C_PORT7_0
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50
+
+#define USBC_PORT_C0_BB_RETIMER_I2C_ADDR 0x58
 
 /* Thermal features */
 #define CONFIG_THERMISTOR
@@ -154,6 +166,8 @@ enum mft_channel { MFT_CH_0 = 0, MFT_CH_COUNT };
 enum cec_port { CEC_PORT_0, CEC_PORT_COUNT };
 
 extern void adp_connect_interrupt(enum gpio_signal signal);
+
+void ps_on_interrupt(enum gpio_signal signal);
 
 #endif /* !__ASSEMBLER__ */
 

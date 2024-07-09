@@ -25,6 +25,9 @@ known_modules = {
     "hal_stm32": third_party_module,
     "cmsis": third_party_module,
     "ec": lambda name, checkout: (checkout / "src" / "platform" / "ec"),
+    "fpc": lambda name, checkout: (
+        checkout / "src" / "platform" / "fingerprint" / "fpc"
+    ),
     "nanopb": third_party_module,
     "pigweed": lambda name, checkout: (checkout / "src" / "third_party" / name),
     "hal_intel_public": third_party_module,
@@ -48,7 +51,9 @@ def locate_from_checkout(checkout_dir):
     """
     result = {}
     for name, locator in known_modules.items():
-        result[name] = locator(name, checkout_dir)
+        path = locator(name, checkout_dir)
+        if path.exists():
+            result[name] = path
     return result
 
 

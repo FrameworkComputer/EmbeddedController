@@ -13,6 +13,7 @@
 #include "console.h"
 #include "stdbool.h"
 #include "task.h"
+#line 17
 #include "usb_pd.h"
 #include "usb_sm.h"
 #include "util.h"

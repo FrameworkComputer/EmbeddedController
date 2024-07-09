@@ -43,9 +43,8 @@ config SYS_CLOCK_HW_CYCLES_PER_SEC
 if WATCHDOG
 
 # Set the delay time for printing panic data.
-# 1 cycle is about 32ms. 500ms is about 16 cycles.
-config WDT_NPCX_DELAY_CYCLES
-	default 16
+config WDT_NPCX_WARNING_LEADING_TIME_MS
+	default 500
 
 endif # WATCHDOG
 

@@ -9,12 +9,9 @@
 
 #include "common.h"
 #include "test_util.h"
+#include "uart.h"
 
 #include <stddef.h>
-
-extern "C" {
-#include "uart.h"
-}
 
 test_static int test_uart_buffer_used(void)
 {

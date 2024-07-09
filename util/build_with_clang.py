@@ -30,7 +30,8 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "nucleo-f412zg",
     "nucleo-h743zi",
     # Boards that use CHIP:=stm32 and *not* CHIP_FAMILY:=stm32f0
-    # git grep  --name-only 'CHIP:=stm32' | xargs grep -L 'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
+    # git grep  --name-only 'CHIP:=stm32' | xargs grep -L \
+    #   'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "baklava",
     "discovery",
     "gingerbread",
@@ -46,7 +47,8 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "stm32l476g-eval",
     "sweetberry",
     # Boards that use CHIP:=stm32 *and* CHIP_FAMILY:=stm32f0
-    # git grep  --name-only 'CHIP:=stm32' | xargs grep -L 'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
+    # git grep  --name-only 'CHIP:=stm32' | xargs grep -L \
+    #   'CHIP_FAMILY:=stm32f0' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "bland",
     "c2d2",
     "coffeecake",
@@ -85,7 +87,6 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "zinger",
     # Boards that use CHIP:=mchp
     # git grep --name-only 'CHIP:=mchp' | sed 's#board/\(.*\)/build.mk#"\1",#'
-    "adlrvpp_mchp1521",
     "adlrvpp_mchp1727",
     "mchpevb1",
     "reef_mchp",
@@ -225,7 +226,8 @@ BOARDS_THAT_COMPILE_SUCCESSFULLY_WITH_CLANG = [
     "xol",
     "yorp",
     # CHIP=mt_scp *and* CHIP_VARIANT=mt818x
-    # git grep --name-only 'CHIP:=mt_scp' | xargs grep -L 'CHIP_VARIANT:=mt818' | sed 's#board/\(.*\)/build.mk#"\1",#'
+    # git grep --name-only 'CHIP:=mt_scp' | xargs grep -L \
+    #   'CHIP_VARIANT:=mt818' | sed 's#board/\(.*\)/build.mk#"\1",#'
     "corsola_scp",
     "kukui_scp",
     # Boards that use CORE:=minute-ia
@@ -291,6 +293,7 @@ BOARDS_THAT_FAIL_WITH_CLANG = [
     # Boards that use CHIP:=npcx
     "garg",
     # Boards that don't fit in flash with clang
+    "adlrvpp_mchp1521",
     "bellis",
     "cerise",
     "corori2",

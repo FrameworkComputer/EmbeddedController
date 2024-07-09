@@ -1,0 +1,146 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_sim.dts>
+#include <cros/binman.dtsi>
+
+/ {
+	chosen {
+		cros-ec,flash = &flash1;
+		cros-ec,flash-controller = &cros_flash;
+		zephyr,shell-uart = &test_uart;
+	};
+	aliases {
+		gpio-wp = &gpio_wp_l;
+	};
+	named-gpios {
+		compatible = "named-gpios";
+		ec_gsc_packet_mode {
+			gpios = <&gpio0 2 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_PACKET_MODE_EN";
+		};
+		gpio_wp_l: wp_l {
+			gpios = <&gpio0 3 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
+			gpios = <&gpio0 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		ec_batt_pres_odl {
+			gpios = <&gpio0 5 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+	};
+	cros_flash: cros-flash {
+		compatible = "cros-ec,flash-emul";
+	};
+	flash1: flash@64000000 {
+		reg = <0x64000000 DT_SIZE_K(512)>;
+	};
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		named_i2c0: i2c0 {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_BATTERY",
+				"I2C_PORT_CHARGER";
+		};
+		named_i2c2: i2c2 {
+			i2c-port = <&i2c2>;
+			dynamic-speed;
+			enum-names = "I2C_PORT_USB_C0";
+		};
+	};
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			bc12 = <&pi3usb9201_emul>;
+			chg = <&isl923x_emul>;
+			tcpc = <&tcpci_emul>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&tcpci_mux_c0>;
+			};
+		};
+		port0-muxes {
+			tcpci_mux_c0: tcpci-mux-c0 {
+				compatible = "cros-ec,usbc-mux-tcpci";
+			};
+		};
+	};
+	i2c2: i2c@500 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x500 4>;
+
+		pi3usb9201_emul: pi3usb9201@5f {
+			compatible = "pericom,pi3usb9201";
+			reg = <0x5f>;
+		};
+		tcpci_emul: tcpci_emul@82 {
+			compatible = "cros,tcpci-generic-emul";
+			status = "okay";
+			reg = <0x82>;
+			irq-gpios = <&gpio0 4 GPIO_ACTIVE_LOW>;
+		};
+	};
+	adc0: adc {
+		compatible = "zephyr,adc-emul";
+		nchannels = <6>;
+		ref-internal-mv = <3300>;
+		#io-channel-cells = <1>;
+		status = "okay";
+	};
+	named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_charger: charger {
+			enum-name = "ADC_TEMP_SENSOR_CHARGER";
+			io-channels = <&adc0 0>;
+		};
+	};
+	batteries {
+		default_battery: lgc_ac17a8m {
+			compatible = "lgc,ac17a8m", "battery-smart";
+		};
+	};
+	test_uart: uart@55556666 {
+		compatible = "vnd,serial";
+		reg = <0x55556666 0x1000>;
+		status = "okay";
+		buffer-size = <200>;
+	};
+};
+
+&gpio0 {
+	ngpios = <6>;
+};
+
+&i2c0 {
+	battery: sb@b {
+		compatible = "zephyr,smart-battery-emul";
+		reg = <0xb>;
+		cycle-count = <99>;
+		version = "BATTERY_SPEC_VER_1_1_WITH_PEC";
+		/* Real battery voltages are multiples of 4.4V. */
+		desired-charg-volt = <5000>;
+		desired-charg-cur = <1000>;
+		mf-name = "LGC";
+		dev-name = "AC17A8M";
+	};
+
+	isl923x_emul: isl923x@9 {
+		compatible = "cros,isl923x-emul";
+		status = "okay";
+		reg = <0x9>;
+		battery = <&battery>;
+	};
+};

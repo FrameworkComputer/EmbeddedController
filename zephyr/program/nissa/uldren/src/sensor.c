@@ -86,8 +86,17 @@ static void motionsense_init(void)
 		return;
 	}
 
-	cros_cbi_get_fw_config(FW_TABLET, &tablet_present);
-	cros_cbi_get_fw_config(MOTIONSENSE_SENSOR, &sensor_fwconfig);
+	ret = cros_cbi_get_fw_config(FW_TABLET, &tablet_present);
+	if (ret < 0) {
+		LOG_ERR("error retriving CBI config: %d", ret);
+		return;
+	}
+
+	ret = cros_cbi_get_fw_config(MOTIONSENSE_SENSOR, &sensor_fwconfig);
+	if (ret < 0) {
+		LOG_ERR("error retriving CBI config: %d", ret);
+		return;
+	}
 
 	if (cbi_boardversion < 2) {
 		if (tablet_present == FW_TABLET_PRESENT) {

@@ -1,0 +1,72 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	pwmleds {
+		compatible = "pwm-leds";
+
+		led_battery_red: ec_led1_l {
+			pwms = <&pwm5 PWM_CHANNEL_5 PWM_HZ(324)
+				PWM_POLARITY_NORMAL>;
+		};
+		led_battery_green: ec_led2_l {
+			pwms = <&pwm4 PWM_CHANNEL_4 PWM_HZ(324)
+				PWM_POLARITY_NORMAL>;
+		};
+		led_suspend_white: ec_led3_l {
+			pwms = <&pwm3 PWM_CHANNEL_3 PWM_HZ(324)
+				PWM_POLARITY_NORMAL>;
+		};
+	};
+
+	pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		battery_led: battery-led {
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pwms = <&led_battery_red
+				    &led_battery_green>;
+
+			color-battery-off {
+				led-color = "LED_OFF";
+				led-values = <0 0>;
+			};
+
+			color-battery-red {
+				led-color = "LED_RED";
+				led-values = <100 0>;
+			};
+
+			color-battery-green {
+				led-color = "LED_GREEN";
+				led-values = <0 100>;
+			};
+
+			color-battery-amber {
+				led-color = "LED_AMBER";
+				led-values = <70 50>;
+			};
+		};
+
+		power_led: power-led {
+			led-id = "EC_LED_ID_POWER_LED";
+			led-pwms = <&led_suspend_white>;
+
+			color-power-off {
+				led-color = "LED_OFF";
+				led-values = <0>;
+			};
+
+			color-power-white {
+				led-color = "LED_WHITE";
+				led-values = <100>;
+			};
+		};
+	};
+};
+
+&pwm2 {
+	status = "disabled";
+};

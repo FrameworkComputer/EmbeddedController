@@ -55,8 +55,8 @@ iprintf() {
 	shift
 
 	local n=$((INDENT_WIDTH*level))
-	if [[ $n -ne 0 ]]; then
-		eval printf '"${INDENT_CHAR}%.0s"' "{1..$n}"
+	if [[ ${n} -ne 0 ]]; then
+		eval printf '"${INDENT_CHAR}%.0s"' "{1..${n}}"
 	fi
 	# shellcheck disable=SC2059
 	printf "$@"
@@ -88,7 +88,7 @@ parse-cfg-image() {
 		return 1
 	fi
 	# Remove known board part
-	cfg=${cfg#${board}}
+	cfg=${cfg#"${board}"}
 	cfg=${cfg#":"}
 	# Use default image if none set
 	cfg=${cfg:-${DEFAULT_IMAGE}}

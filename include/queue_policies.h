@@ -11,6 +11,10 @@
 #include "producer.h"
 #include "queue.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * The direct notification policy manages a 1-to-1 producer consumer model.
  * When new units are added to the queue the consumer is notified directly, in
@@ -47,5 +51,9 @@ void queue_remove_direct(struct queue_policy const *policy, size_t count);
  */
 extern struct producer const null_producer;
 extern struct consumer const null_consumer;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_QUEUE_POLICIES_H */

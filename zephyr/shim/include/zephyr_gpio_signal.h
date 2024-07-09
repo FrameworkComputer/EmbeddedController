@@ -11,6 +11,10 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/toolchain.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 BUILD_ASSERT(DT_NUM_INST_STATUS_OKAY(named_gpios) == 1,
 	     "only one named-gpios compatible node may be present");
 
@@ -184,3 +188,7 @@ enum ioexpander_id {
 const struct gpio_dt_spec *gpio_get_dt_spec(enum gpio_signal signal);
 
 #undef IOEXPANDER_ID_FROM_INST_WITH_COMMA
+
+#ifdef __cplusplus
+}
+#endif

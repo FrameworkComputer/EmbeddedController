@@ -16,6 +16,10 @@
 
 #include "usb_pd_tcpm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct ppc_drv;
 extern const struct ppc_drv aoz1380_drv;
 
@@ -39,5 +43,9 @@ int board_aoz1380_set_vbus_source_current_limit(int port,
  * @param port: The Type-C port which triggered the interrupt.
  */
 void aoz1380_interrupt(int port);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* defined(__CROS_EC_AOZ1380_H) */

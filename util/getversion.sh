@@ -121,12 +121,12 @@ main() {
   if [[ -d ../../third_party/cryptoc ]]; then
     fp_common_dir_list+=( ../../third_party/cryptoc )
   fi
-  if [[ -d ./private ]]; then
-    fp_common_dir_list+=( ./private )
+  if [[ -d ../ec-private ]]; then
+    fp_common_dir_list+=( ../ec-private )
   fi
   # Example: bloonchipper-druid
-  if [[ -d ./private/fingerprint/druid && "${BOARD}" =~ -druid$ ]]; then
-    fp_common_dir_list+=( ./private/fingerprint/druid )
+  if [[ -d ../ec-private/fingerprint/druid && "${BOARD}" =~ -druid$ ]]; then
+    fp_common_dir_list+=( ../ec-private/fingerprint/druid  )
   fi
 
   case "${BOARD}" in
@@ -135,19 +135,19 @@ main() {
       ;;
     *_fp|*dartmonkey*|*bloonchipper*|helipilot*)
       dir_list+=( "${fp_common_dir_list[@]}" )
-      if [[ -d ./private/fingerprint/fpc ]]; then
-        dir_list+=( ./private/fingerprint/fpc )
+      if [[ -d ../fingerprint/fpc ]]; then
+        dir_list+=( ../fingerprint/fpc )
       fi
       ;;
     buccaneer*)
       dir_list+=( "${fp_common_dir_list[@]}" )
-      if [[ -d ./private/fingerprint/elan ]]; then
-        dir_list+=( ./private/fingerprint/elan )
+      if [[ -d ../fingerprint/elan ]]; then
+        dir_list+=( ../fingerprint/elan )
       fi
       ;;
     *_scp)
-      if [[ -d ./private-mt-scp ]]; then
-        dir_list+=( ./private-mt-scp )
+      if [[ -d ../private-mt-scp ]]; then
+        dir_list+=( ../private-mt-scp )
       fi
       ;;
   esac

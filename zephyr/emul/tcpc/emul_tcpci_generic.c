@@ -3,6 +3,12 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_stub_device.h"
 #include "emul/tcpc/emul_tcpci.h"
@@ -16,6 +22,7 @@
 #ifdef CONFIG_ZTEST
 #include <zephyr/ztest.h>
 #endif
+#line 26
 
 #define DT_DRV_COMPAT cros_tcpci_generic_emul
 

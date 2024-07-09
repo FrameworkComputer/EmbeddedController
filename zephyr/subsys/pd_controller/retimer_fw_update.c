@@ -204,6 +204,7 @@ static void exit_retimer_fw_update(struct k_work *work_item)
 	resume_pd_intel_altmode_task();
 }
 
+#if defined(CONFIG_PLATFORM_EC_USBC_SS_MUX)
 int usb_retimer_fw_update_get_result(void)
 {
 	if (last_port < 0 && last_port >= CONFIG_USB_PD_PORT_MAX_COUNT)
@@ -276,6 +277,64 @@ int usb_retimer_fw_update_get_result(void)
 
 	return last_result;
 }
+#else
+int usb_retimer_fw_update_get_result(void)
+{
+	if (last_port < 0 && last_port >= CONFIG_USB_PD_PORT_MAX_COUNT)
+		return USB_RETIMER_FW_UPDATE_ERR;
+
+	/* Check if any retimer present */
+	if (!pd_retimer_present(last_port))
+		return USB_RETIMER_FW_UPDATE_ERR;
+
+	/*
+	 * Check retimer firmware update status flag.
+	 * TODO(b:317507791) - Error Recovery for update.
+	 */
+	if (atomic_test_bit(&fw_update_status, USB_PD_RETIMER_FW_UPDATE_ERROR))
+		return USB_RETIMER_FW_UPDATE_ERR;
+
+	switch (last_op) {
+	case USB_RETIMER_FW_UPDATE_QUERY_PORT:
+		last_result = port_info;
+		break;
+	case USB_RETIMER_FW_UPDATE_RESUME_PD:
+		if (!atomic_test_bit(&fw_update_status,
+				     USB_PD_RETIMER_FW_UPDATE_LTD_RUN))
+			last_result = 1;
+		else
+			last_result = USB_RETIMER_FW_UPDATE_INVALID_MUX;
+		break;
+	case USB_RETIMER_FW_UPDATE_SUSPEND_PD:
+		last_result = is_pd_intel_altmode_task_suspended() ?
+				      0 :
+				      USB_RETIMER_FW_UPDATE_INVALID_MUX;
+		break;
+	/*
+	 * For PDC-PMC, USB MUX is disabled at EC.
+	 * Hence return known values to ensure AP do not abort the
+	 * firmware update procedure.
+	 */
+	case USB_RETIMER_FW_UPDATE_SET_USB:
+		last_result = USB_PD_MUX_USB_ENABLED;
+		break;
+	case USB_RETIMER_FW_UPDATE_SET_SAFE:
+		last_result = USB_PD_MUX_SAFE_MODE;
+		break;
+	case USB_RETIMER_FW_UPDATE_SET_TBT:
+		last_result = USB_PD_MUX_TBT_COMPAT_ENABLED;
+		break;
+	case USB_RETIMER_FW_UPDATE_GET_MUX:
+	case USB_RETIMER_FW_UPDATE_DISCONNECT:
+		last_result = USB_PD_MUX_NONE;
+		break;
+	default:
+		break;
+	}
+
+	return last_result;
+}
+#endif
 
 void usb_retimer_fw_update_process_op(int port, int op)
 {

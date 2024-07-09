@@ -8,8 +8,16 @@
 
 #include "timer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 void set_time(timestamp_t now_);
 
 timestamp_t get_time(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __MOCK_TIMER_MOCK_H */

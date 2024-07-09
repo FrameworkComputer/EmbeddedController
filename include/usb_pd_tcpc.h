@@ -12,6 +12,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* If we are a TCPC but not a TCPM, then we implement the peripheral TCPCI */
 #if defined(CONFIG_USB_PD_TCPC) && !defined(CONFIG_USB_PD_TCPM_STUB)
 #define TCPCI_I2C_PERIPHERAL
@@ -66,5 +70,9 @@ int tcpc_transmit(int port, enum tcpci_msg_type type, uint16_t header,
 		  const uint32_t *data);
 int rx_buf_is_empty(int port);
 void rx_buf_clear(int port);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_PD_TCPC_H */

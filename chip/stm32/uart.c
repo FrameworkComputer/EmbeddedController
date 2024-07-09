@@ -311,7 +311,8 @@ void uart_init(void)
 #if UARTN != 9
 	/* USARTn clock source from HSI16 */
 	STM32_RCC_CCIPR &=
-		~(0x03 << CONCAT3(STM32_RCC_CCIPR_USART, UARTN, SEL_SHIFT));
+		~(STM32_RCC_CCIPR_MASK
+		  << CONCAT3(STM32_RCC_CCIPR_USART, UARTN, SEL_SHIFT));
 	/* For STM32L4, use HSI for UART, to wake up from low power mode */
 	STM32_RCC_CCIPR |=
 		(STM32_RCC_CCIPR_UART_HSI16
@@ -359,8 +360,9 @@ void uart_init(void)
 	/* Configure GPIOs */
 	gpio_config_module(MODULE_UART, 1);
 
-#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) || \
-	defined(CHIP_FAMILY_STM32H7) || defined(CHIP_FAMILY_STM32L4)
+#if defined(CHIP_FAMILY_STM32F0) || defined(CHIP_FAMILY_STM32F3) ||     \
+	defined(CHIP_FAMILY_STM32H7) || defined(CHIP_FAMILY_STM32L4) || \
+	defined(CHIP_FAMILY_STM32L5)
 	/*
 	 * Wake up on start bit detection. WUS can only be written when UE=0,
 	 * so clear UE first.
@@ -379,7 +381,7 @@ void uart_init(void)
 	 * UART enabled, 8 Data bits, oversampling x16, no parity,
 	 * TX and RX enabled.
 	 */
-#ifdef CHIP_FAMILY_STM32L4
+#if defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
 	STM32_USART_CR1(UARTN_BASE) = STM32_USART_CR1_TE | STM32_USART_CR1_RE;
 #else
 	STM32_USART_CR1(UARTN_BASE) = STM32_USART_CR1_UE | STM32_USART_CR1_TE |
@@ -421,7 +423,7 @@ void uart_init(void)
 	/* Enable interrupts */
 	task_enable_irq(STM32_IRQ_USART(UARTN));
 
-#ifdef CHIP_FAMILY_STM32L4
+#if defined(CHIP_FAMILY_STM32L4) || defined(CHIP_FAMILY_STM32L5)
 	STM32_USART_CR1(UARTN_BASE) |= STM32_USART_CR1_UE;
 #endif
 

@@ -1,0 +1,164 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_sim.dts>
+#include <dt-bindings/gpio_defines.h>
+#include <cros/binman.dtsi>
+
+/ {
+	chosen {
+		cros-ec,espi = &espi0;
+		cros-ec,flash-controller = &cros_flash;
+	};
+	aliases {
+		gpio-wp = &gpio_wp_l;
+	};
+	cros_flash: cros-flash {
+		compatible = "cros-ec,flash-emul";
+	};
+
+	/*
+	 * Keep these GPIOs in pin order.
+	 * If you need to add one, make sure you increase
+	 * ngpios in the gpio0 node further down.
+	 *
+	 * Note that all outputs need to also be set as input pins to
+	 * read them from a test.
+	 */
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_acok_od: acok_od {
+			gpios = <&gpio0 0 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		ec_bl_disable_l {
+			gpios = <&gpio0 1 GPIO_INPUT>;
+			enum-name = "GPIO_ENABLE_BACKLIGHT";
+		};
+		gpio_slp_s3_l: slp_s3_l {
+			gpios = <&gpio0 2 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S3_L";
+			alias = "GPIO_PCH_SLP_S0_L";
+		};
+		gpio_slp_s5_l: slp_s5_l {
+			gpios = <&gpio0 3 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S5_L";
+		};
+		gpio_pg_pwr_s5: pg_pwr_s5 {
+			gpios = <&gpio0 4 GPIO_INPUT>;
+			enum-name = "GPIO_S5_PGOOD";
+		};
+		gpio_s0_pgood: s0_pgood {
+			gpios = <&gpio0 5 GPIO_INPUT>;
+			enum-name = "GPIO_S0_PGOOD";
+		};
+		gpio_en_pwr_s5: en_pwr_s5 {
+			gpios = <&gpio0 6 (GPIO_OUTPUT_LOW | GPIO_INPUT)>;
+			enum-name = "GPIO_EN_PWR_A";
+		};
+		gpio_wp_l: wp_l {
+			gpios = <&gpio0 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_ec_soc_rsmrst_l: ec_soc_rsmrst_l {
+			gpios = <&gpio0 8 (GPIO_OUTPUT_LOW | GPIO_INPUT)>;
+			enum-name = "GPIO_PCH_RSMRST_L";
+		};
+		gpio_lid_open_ec: lid_open_ec {
+			/* GPIO_PULL_UP will cause this start asserted. */
+			gpios = <&gpio0 9 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		gpio_mech_pwr_btn_odl: mech_pwr_btn_odl {
+			/* PULL_UP to start as not pressed */
+			gpios = <&gpio0 10 (GPIO_INPUT | GPIO_PULL_UP)>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		gpio_ec_soc_pwr_btn_l: ec_soc_pwr_btn_l {
+			gpios = <&gpio0 11 GPIO_OUTPUT_HIGH>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		gpio_sys_rst_l: ec_sys_rst_l {
+			gpios = <&gpio0 12 GPIO_OUTPUT_HIGH>;
+			enum-name = "GPIO_SYS_RESET_L";
+		};
+		gpio_prochot_odl: prochot_odl {
+			gpios = <&gpio0 13 (GPIO_ODR_HIGH | GPIO_INPUT)>;
+			enum-name = "GPIO_CPU_PROCHOT";
+		};
+		pch-sys-prwok {
+			gpios = <&gpio0 14 (GPIO_OUTPUT_LOW | GPIO_INPUT)>;
+			enum-name = "GPIO_PCH_SYS_PWROK";
+		};
+		gpio_ec_pch_wake_odl: ec_soc_wake_l {
+			gpios = <&gpio0 15 GPIO_OUTPUT_HIGH>;
+		};
+
+		/* STB dumping GPIOs */
+		gpio_ec_sfh_int_h: ec_sfh_int_h {
+			gpios = <&gpio0 16 GPIO_OUTPUT_LOW>;
+		};
+		gpio_sfh_ec_int_h: sfh_ec_int_h {
+			gpios = <&gpio0 17 GPIO_INPUT>;
+		};
+
+		gpio_ap_ec_int_l: ap_ec_int_l {
+			gpios = <&gpio0 18 GPIO_OUTPUT_HIGH>;
+			enum-name = "GPIO_EC_INT_L";
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_lid_open_ec: lid_open_ec {
+			irq-pin = <&gpio_lid_open_ec>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+		int_power_button: power_button {
+			irq-pin = <&gpio_mech_pwr_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+		int_slp_s3: slp_s3 {
+			irq-pin = <&gpio_slp_s3_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_slp_s5: slp_s5 {
+			irq-pin = <&gpio_slp_s5_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_s5_pgood: s5_pgood {
+			irq-pin = <&gpio_pg_pwr_s5>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_s0_pgood: s0_pgood {
+			irq-pin = <&gpio_s0_pgood>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_signal_interrupt";
+		};
+		int_stb_dump: stb_dump {
+			irq-pin = <&gpio_sfh_ec_int_h>;
+			flags = <GPIO_INT_EDGE_RISING>;
+			handler = "amd_stb_dump_interrupt";
+		};
+	};
+};
+
+&gpio0 {
+	ngpios = <19>;
+};
+
+&espi0 {
+	espi-host@0 {
+		status = "okay";
+		compatible = "zephyr,espi-emul-espi-host";
+		reg = <0x0>;
+	};
+};

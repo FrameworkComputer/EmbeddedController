@@ -13,6 +13,10 @@
 #include "math_util.h"
 #include "vec4.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define MAG_CAL_MAX_SAMPLES 0xffff
 #define MAG_CAL_MIN_BATCH_WINDOW_US (2 * SECOND)
 #define MAG_CAL_MIN_BATCH_SIZE 50 /* samples */
@@ -38,4 +42,9 @@ void init_mag_cal(struct mag_cal_t *moc);
  * @return    1 if a new calibration value is available, 0 otherwise.
  */
 int mag_cal_update(struct mag_cal_t *moc, const intv3_t v);
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_MAG_CAL_H */

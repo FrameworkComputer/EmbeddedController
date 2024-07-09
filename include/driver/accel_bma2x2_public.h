@@ -10,6 +10,10 @@
 
 #include "accelgyro.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const struct accelgyro_drv bma2x2_accel_drv;
 
 /* I2C ADDRESS DEFINITIONS    */
@@ -45,5 +49,9 @@ extern const struct accelgyro_drv bma2x2_accel_drv;
  */
 #define BMA255_ACCEL_MIN_FREQ 7810
 #define BMA255_ACCEL_MAX_FREQ MOTION_MAX_SENSOR_FREQUENCY(125000, 15625)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* CROS_EC_DRIVER_ACCEL_BMA2x2_PUBLIC_H */

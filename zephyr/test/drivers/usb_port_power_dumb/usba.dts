@@ -5,7 +5,7 @@
 
 / {
 	/* Add a USB-A port to the board. Uses a GPIO pin defined in
-	 * zephyr/test/drivers/boards/native_posix.overlay
+	 * zephyr/test/drivers/boards/native_sim.overlay
 	 */
 	usba-port-enable-list {
 		compatible = "cros-ec,usba-port-enable-pins";

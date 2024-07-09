@@ -11,6 +11,10 @@
 #include "thermal.h"
 #include "util.h"
 
+#include <zephyr/logging/log.h>
+
+LOG_MODULE_REGISTER(board_thermal, LOG_LEVEL_INF);
+
 #define TEMP_CPU TEMP_SENSOR_ID(DT_NODELABEL(temp_cpu))
 #define TEMP_5V TEMP_SENSOR_ID(DT_NODELABEL(temp_5v_regulator))
 #define TEMP_CHARGER TEMP_SENSOR_ID(DT_NODELABEL(temp_charger))
@@ -48,13 +52,20 @@ BUILD_ASSERT(ARRAY_SIZE(fan_table_1) == ARRAY_SIZE(fan_table_2),
 	     "fan tables must have the same size");
 #define NUM_FAN_LEVELS ARRAY_SIZE(fan_table_1)
 
+STATIC_IF_NOT(CONFIG_TEST)
 bool is_fan_type_2(void)
 {
 	uint32_t val;
+	int ret;
+
 	/*
 	 * Retrieve the fan type config.
 	 */
-	cros_cbi_get_fw_config(FAN_TYPE, &val);
+	ret = cros_cbi_get_fw_config(FAN_TYPE, &val);
+	if (ret < 0) {
+		LOG_ERR("error retriving CBI config: %d", ret);
+		return false;
+	}
 
 	if (val == FW_FAN_TYPE_2) {
 		return true;

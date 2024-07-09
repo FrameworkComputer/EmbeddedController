@@ -126,6 +126,10 @@
 #define CONFIG_LID_ANGLE_SENSOR_BASE BASE_ACCEL
 #define CONFIG_LID_ANGLE_SENSOR_LID LID_ACCEL
 
+/* Decrease the max sensor frequency to 125Hz to
+ * prevent deadlock on the sensor i2c port (b/346492855).
+ */
+#define CONFIG_EC_MAX_SENSOR_FREQ_MILLIHZ 125000
 /* Enable sensor fifo, must also define the _SIZE and _THRES */
 #define CONFIG_ACCEL_FIFO
 /* FIFO size is a power of 2. */

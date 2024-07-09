@@ -1,0 +1,18 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* charger */
+&CHARGER_I2C {
+	pinctrl-0 = <&i2c00_scl_gpio004 &i2c00_sda_gpio003>;
+	pinctrl-names = "default";
+	port_sel = <0>;
+};
+
+/* typec-aic1-power */
+&PD_POW_I2C {
+	pinctrl-0 = <&i2c06_scl_gpio140 &i2c06_sda_gpio132>;
+	pinctrl-names = "default";
+	port_sel = <6>;
+};

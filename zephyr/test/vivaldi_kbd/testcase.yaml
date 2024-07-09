@@ -1,5 +1,5 @@
 common:
-  platform_allow: native_posix
+  platform_allow: native_sim
 tests:
   vivaldi_kbd.default: {}
   vivaldi_kbd.two-configs-0:
@@ -20,3 +20,10 @@ tests:
     extra_configs:
       - CONFIG_VIVALDI_KBD_TEST_USE_IDX=y
       - CONFIG_VIVALDI_KBD_TEST_IDX_VALUE=-1
+  vivaldi_kbd.cbi-race:
+    extra_args:
+      - EXTRA_DTC_OVERLAY_FILE=two-configs.overlay
+    extra_configs:
+      - CONFIG_VIVALDI_KBD_TEST_USE_IDX=y
+      - CONFIG_VIVALDI_KBD_TEST_IDX_VALUE=1
+      - CONFIG_VIVALDI_KBD_CBI_RACE_TEST=y

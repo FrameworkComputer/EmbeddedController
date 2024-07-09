@@ -22,19 +22,13 @@
 
 	batteries {
 		default_battery: smp {
-			compatible = "smp,l22m3pg0", "battery-smart";
+			compatible = "smp,l24m3pg2", "battery-smart";
 		};
-		smp_l22m3pg1 {
-			compatible = "smp,l22m3pg1", "battery-smart";
+		sunwoda_l24d3pg2 {
+			compatible = "sunwoda,l24d3pg2", "battery-smart";
 		};
-		sunwoda_l22d3pg0 {
-			compatible = "sunwoda,l22d3pg0", "battery-smart";
-		};
-		sunwoda_l22d3pg1 {
-			compatible = "sunwoda,l22d3pg1", "battery-smart";
-		};
-		celxpert_l22c3pg0 {
-			compatible = "celxpert,l22c3pg0", "battery-smart";
+		cosmx_l24x3pg2 {
+			compatible = "cosmx,l24x3pg2", "battery-smart";
 		};
 	};
 
@@ -75,6 +69,16 @@
 			irq-pin = <&gpio_volup_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "button_interrupt";
+		};
+		int_pen_det_l: pen_det_l {
+			irq-pin = <&gpio_pen_detect_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "pen_detect_interrupt";
+		};
+		int_ac_present: ac_present {
+			irq-pin = <&acok_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
 		};
 	};
 

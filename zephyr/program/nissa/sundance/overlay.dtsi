@@ -24,11 +24,22 @@
 		default_battery: pc_vp_bp162 {
 			compatible = "smp,pc-vp-bp162", "battery-smart";
 		};
+		smp_cosmx_pc-vp-bp162 {
+			compatible = "smp,cosmx_pc-vp-bp162", "battery-smart";
+		};
+		smp_byd_pc-vp-bp162 {
+			compatible = "smp,byd_pc-vp-bp162", "battery-smart";
+		};
 	};
 
 	gpio-interrupts {
 		compatible = "cros-ec,gpio-interrupts";
 
+		int_ac_present: ac_present {
+			irq-pin = <&acok_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
 		int_power_button: power_button {
 			irq-pin = <&gpio_ec_pwr_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
@@ -52,7 +63,7 @@
 		int_imu: ec_imu {
 			irq-pin = <&gpio_imu_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "lsm6dso_interrupt";
+			handler = "lsm6dsm_interrupt";
 		};
 		int_vol_down: vol_down {
 			irq-pin = <&gpio_voldn_btn_odl>;
@@ -67,11 +78,29 @@
 	};
 
 	named-gpios {
+		ioex_soc_usb_oc0: soc_usb_oc0 {
+			gpios = <&ioex_port1 4 GPIO_OUTPUT_LOW>;
+		};
+		ioex_soc_usb_oc1: soc_usb_oc1 {
+			gpios = <&ioex_port2 4 GPIO_OUTPUT_LOW>;
+		};
+		ioex_usb_c0_frs_en: usb_c0_frs_en {
+			gpios = <&ioex_port1 6 GPIO_OUTPUT_LOW>;
+		};
+		ioex_usb_c1_frs_en: usb_c1_frs_en {
+			gpios = <&ioex_port2 6 GPIO_OUTPUT_LOW>;
+		};
 		gpio_led_1_odl: led_1_odl {
 			gpios = <&gpioc 4 GPIO_OUTPUT_LOW>;
 		};
 		gpio_led_2_odl: led_2_odl {
 			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
+		};
+		ec-i2c-sensor-scl {
+			gpios = <&gpio9 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec-i2c-sensor-sda {
+			gpios = <&gpio8 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
 	};
 	temp_memory: memory {
@@ -254,7 +283,7 @@
 			compatible = "nuvoton,nct38xx-gpio";
 			label = "NCT3808_C0";
 
-			ioex_c0_port0: gpio@0 {
+			ioex_port1: gpio@0 {
 				compatible = "nuvoton,nct38xx-gpio-port";
 				reg = <0x0>;
 				label = "NCT3808_C0_GPIO0";
@@ -295,7 +324,7 @@
 			compatible = "nuvoton,nct38xx-gpio";
 			label = "NCT3808_C1";
 
-			ioex_c1_port0: gpio@0 {
+			ioex_port2: gpio@0 {
 				compatible = "nuvoton,nct38xx-gpio-port";
 				reg = <0x0>;
 				label = "NCT3808_C1_GPIO0";
@@ -317,7 +346,7 @@
 		compatible = "silergy,syv682x";
 		status = "okay";
 		reg = <0x40>;
-
+		frs_en_gpio = <&ioex_usb_c0_frs_en>;
 		/* a duplicate of the <&gpio_usb_c0_ppc_int_odl> node in
 		 * "named-gpios". This is the Zephyr preferred style,
 		 * the "named-gpios" node will be dealt with at a later date.
@@ -341,6 +370,7 @@
 		compatible = "silergy,syv682x";
 		status = "okay";
 		reg = <0x40>;
+		frs_en_gpio = <&ioex_usb_c1_frs_en>;
 		/* a duplicate of the <&gpio_usb_c1_ppc_int_odl> node in
 		 * "named-gpios". This is the Zephyr preferred style,
 		 * the "named-gpios" node will be dealt with at a later date.

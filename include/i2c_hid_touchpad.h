@@ -12,6 +12,10 @@
 #include "stdbool.h"
 #include "stdint.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Max fingers to support */
 #define I2C_HID_TOUCHPAD_MAX_FINGERS 5
 
@@ -77,5 +81,9 @@ int i2c_hid_touchpad_process(unsigned int len, uint8_t *buffer,
  * @param touchpad_event	Touchpad event data
  */
 void i2c_hid_compile_report(struct touchpad_event *event);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_I2C_HID_TOUCHPAD_H */

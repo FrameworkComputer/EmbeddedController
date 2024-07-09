@@ -87,14 +87,14 @@ BUILD_ASSERT(ARRAY_SIZE(temp_sensors) == TEMP_SENSOR_COUNT);
  */
 static const struct ec_thermal_config thermal_cpu = {
 	.temp_host = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(75),
-		[EC_TEMP_THRESH_HALT] = C_TO_K(85),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(70),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
 	},
-	.temp_fan_off = C_TO_K(37),
-	.temp_fan_max = C_TO_K(90),
+	.temp_fan_off = C_TO_K(35),
+	.temp_fan_max = C_TO_K(55),
 };
 
 /*

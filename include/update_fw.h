@@ -10,6 +10,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * This file contains structures used to facilitate EC firmware updates
  * over USB (and over TPM for cr50).
@@ -38,7 +42,7 @@
 /*
  * This is the format of the update PDU header.
  *
- * block digest: the first four bytes of the sha1 digest of the rest of the
+ * block digest: the first four bytes of the sha256 digest of the rest of the
  *               structure (can be 0 on boards where digest is ignored).
  * block_base:   offset of this PDU into the flash SPI.
  */
@@ -285,5 +289,9 @@ int touchpad_debug(const uint8_t *param, unsigned int param_size,
 
 /* SHA256 hash of the touchpad firmware expected by this image. */
 extern const uint8_t touchpad_fw_full_hash[32];
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ! __CROS_EC_UPDATE_FW_H */

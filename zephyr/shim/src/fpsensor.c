@@ -7,7 +7,7 @@
 #include <fingerprint/fingerprint_alg.h>
 #include <fpsensor/fpsensor.h>
 #include <fpsensor/fpsensor_detect.h>
-#include <fpsensor/fpsensor_state.h>
+#include <fpsensor/fpsensor_state_driver.h>
 #include <fpsensor_driver.h>
 #include <task.h>
 

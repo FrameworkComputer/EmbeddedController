@@ -10,6 +10,10 @@
 
 #include "driver/als_tcs3400_public.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* ID for TCS34001 and TCS34005 */
 #define TCS340015_DEVICE_ID 0x90
 
@@ -137,5 +141,9 @@ enum crbg_index {
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(tcs3400_int)))
 #endif
 #endif /* CONFIG_ZEPHYR */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ALS_TCS3400_H */

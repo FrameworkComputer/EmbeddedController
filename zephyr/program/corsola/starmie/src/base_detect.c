@@ -126,6 +126,8 @@ static void base_init(void)
 	if (!chipset_in_state(CHIPSET_STATE_ANY_OFF)) {
 		base_detect_enable(true);
 	}
+	gpio_enable_dt_interrupt(
+		GPIO_INT_FROM_NODELABEL(int_lid_open_for_pogo));
 }
 DECLARE_HOOK(HOOK_INIT, base_init, HOOK_PRIO_DEFAULT);
 
@@ -146,4 +148,13 @@ void base_force_state(enum ec_set_base_state_cmd state)
 		break;
 	}
 	k_mutex_unlock(&modify_base_detection_mutex);
+}
+
+void enable_base_by_lid(void)
+{
+	if (gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(lid_open))) {
+		base_detect_enable(true);
+	} else {
+		base_detect_enable(false);
+	}
 }

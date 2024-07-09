@@ -81,6 +81,7 @@
 		/delete-node/ usb_c0_ppc_bc12;
 		/delete-node/ base_imu;
 		/delete-node/ lid_imu;
+		/delete-node/ usb_c1_bc12_charger;
 
 		int_usb_c0_ppc: usb_c0_ppc {
 			irq-pin = <&usb_c0_ppc_int_odl>;
@@ -91,10 +92,13 @@
 
 	usbc {
 		port0@0 {
+			/delete-property/ bc12;
+
 			ppc = <&ppc_port0>;
 		};
 
 		/delete-node/ port1@1;
+		/delete-node/ port1-muxes;
 	};
 
 	named-adc-channels {
@@ -111,7 +115,7 @@
 
 	temp_ambient: ambient {
 		compatible = "cros-ec,temp-sensor-thermistor";
-		thermistor = <&thermistor_3V3_30K9_47K_NCP15WB>;
+		thermistor = <&thermistor_3V3_100K_100K_4250B>;
 		adc = <&adc_ambient>;
 	};
 
@@ -160,8 +164,8 @@
 		/* Skitty LED bat charge */
 		bat-power-state-charge {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery percent range (>= Empty, <= 94%) */
-			batt-lvl = <BATTERY_LEVEL_EMPTY 94>;
+			/* Battery percent range (>= Empty, <= 96%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 96>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
@@ -174,11 +178,94 @@
 
 		bat-power-state-charge-near-full {
 			charge-state = "LED_PWRS_CHARGE";
-			/* Battery percent range (>= 95%, <= Full) */
-			batt-lvl = <95 BATTERY_LEVEL_FULL>;
+			chipset-state = "POWER_S3";
+			/* Battery percent range (>= 97%, <= Full) */
+			batt-lvl = <97 BATTERY_LEVEL_FULL>;
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		bat-power-state-charge-near-full-s0 {
+			charge-state = "LED_PWRS_CHARGE";
+			chipset-state = "POWER_S0";
+			/* Battery percent range (>= 97%, <= Full) */
+			batt-lvl = <97 BATTERY_LEVEL_FULL>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		bat-power-state-charge-near-full-s5 {
+			charge-state = "LED_PWRS_CHARGE";
+			chipset-state = "POWER_S5";
+			/* Battery percent range (>= 97%, <= Full) */
+			batt-lvl = <97 BATTERY_LEVEL_FULL>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		bat-power-state-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+			chipset-state = "POWER_S3";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		bat-power-state-near-full-s0 {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+			chipset-state = "POWER_S0";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		bat-power-state-near-full-s5 {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+			chipset-state = "POWER_S5";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
 				color-0 {
 					led-color = "LED_WHITE";
 				};
@@ -196,7 +283,26 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		bat-power-state-discharge-s3 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S3";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
 					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
 				};
 			};
 		};
@@ -207,8 +313,29 @@
 
 			battery-led {
 				led-id = "EC_LED_ID_BATTERY_LED";
+
 				color-0 {
 					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		/* STARMIE LED low bat discharge */
+		bat-power-state-discharge-s0-bat-low {
+			charge-state = "LED_PWRS_DISCHARGE";
+			batt-lvl = <BATTERY_LEVEL_EMPTY BATTERY_LEVEL_LOW>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
 				};
 			};
 		};
@@ -222,13 +349,13 @@
 				led-id = "EC_LED_ID_BATTERY_LED";
 
 				color-0 {
-					led-color = "LED_AMBER";
-					period-ms = <1000>;
+					led-color = "LED_WHITE";
+					period-ms = <500>;
 				};
 
 				color-1 {
 					led-color = "LED_OFF";
-					period-ms = <1000>;
+					period-ms = <500>;
 				};
 			};
 		};
@@ -242,12 +369,12 @@
 
 				color-0 {
 					led-color = "LED_WHITE";
-					period-ms = <1000>;
+					period-ms = <500>;
 				};
 
 				color-1 {
 					led-color = "LED_OFF";
-					period-ms = <3000>;
+					period-ms = <500>;
 				};
 			};
 		};
@@ -299,17 +426,20 @@
 			 &adc0_ch5_gpi5_default>;
 };
 
-&thermistor_3V3_30K9_47K_NCP15WB {
+&thermistor_3V3_100K_100K_4250B {
 	status = "okay";
 };
 
 &i2c0 {
 	charger_bc12_port1: rt9490@53 {
 		thermistor = <&thermistor_rt9490>;
+		/delete-property/ irq;
 	};
 };
 
 &i2c2 {
+	/delete-node/ rt1739@70;
+
 	ppc_port0: syv682x@40 {
 		compatible = "silergy,syv682x";
 		status = "okay";
@@ -319,9 +449,9 @@
 };
 
 &i2c4 {
-	/delete-node/ tusb1064-mux-1@44;
+	/delete-node/ syv682x@40;
 
-	/delete-node/ ps8743_mux_1;
+	/delete-node/ tusb1064-mux-1@44;
 };
 
 /* Skitty usba port enable config */

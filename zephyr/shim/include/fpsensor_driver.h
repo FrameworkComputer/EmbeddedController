@@ -8,6 +8,10 @@
 
 #include <drivers/fingerprint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef CONFIG_FINGERPRINT_SENSOR_IMAGE_OFFSET
 #define FP_SENSOR_IMAGE_OFFSET CONFIG_FINGERPRINT_SENSOR_IMAGE_OFFSET
 #else
@@ -32,5 +36,9 @@
  * build. If the build is public, we will provide mocks.
  */
 #define HAVE_FP_PRIVATE_DRIVER
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ZEPHYR_SHIM_INCLUDE_FPSENSOR_DRIVER_H__ */

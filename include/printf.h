@@ -16,6 +16,10 @@
 #include <stddef.h> /* For size_t */
 #include <stdio.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Buffer size in bytes large enough to hold the largest possible timestamp.
  */
@@ -150,5 +154,9 @@ int snprintf_hex_buffer(char *str, size_t size,
  * terminating '\0').
  */
 size_t hex_str_buf_size(size_t num_bytes);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_PRINTF_H */

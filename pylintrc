@@ -2,14 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# Changes to make pylint and black agree on the formatting.
-
 [MESSAGES CONTROL]
 
 disable=
-    bad-continuation,
-    bad-whitespace,
-    line-too-long,
     # These have nothing to do with black, they are just annoying
     fixme,
     too-few-public-methods,
@@ -17,8 +12,5 @@ disable=
     too-many-branches,
     too-many-locals,
     too-many-nested-blocks,
-    too-many-statements
-
-[format]
-
-string-quote=double
+    too-many-statements,
+    too-many-instance-attributes

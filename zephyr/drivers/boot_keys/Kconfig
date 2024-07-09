@@ -1,0 +1,26 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config CROS_EC_BOOT_KEYS
+	bool "Boot keys support"
+	depends on DT_HAS_CROS_EC_BOOT_KEYS_ENABLED
+	depends on INPUT
+	default y
+	help
+	  Enable support for detecting boot keys combination to enter recovery
+	  mode, force memory retraining and booting without starting the AP.
+
+config BOOT_KEYS_GHOST_REFRESH_WORKAROUND
+	bool "Ignore stray refresh keys keys workaround"
+	depends on CROS_EC_BOOT_KEYS
+	default y if PLATFORM_EC_POWER_BUTTON
+	help
+	  Ignore stray keys on the refresh key row when looking for boot key
+	  combination.
+	  Some TI50 versions have a bug where they keep the refresh key row
+	  asserted the whole time that the power button is pressed, this causes
+	  a stray press to show up on all other column on the row corresponding
+	  to the rfresh key. This option ignores such presses, so that they
+	  don't trigger the stray key check code which would otherwise prevent
+	  from entering boot mode due (b/300418915).

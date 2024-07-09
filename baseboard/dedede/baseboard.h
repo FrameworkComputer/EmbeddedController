@@ -242,6 +242,11 @@
 #define CONFIG_CMD_CHARGEN
 #endif
 
+#if defined(VARIANT_DEDEDE_EC_IT8320)
+#undef CONFIG_USB_PD_INT_STORM_MAX
+#define CONFIG_USB_PD_INT_STORM_MAX 280
+#endif
+
 /* Define typical operating power and max power. */
 #define PD_MAX_CURRENT_MA 3000
 #define PD_MAX_POWER_MW 45000

@@ -126,7 +126,7 @@ def pixel_value_to_hex(value: int) -> str:
     """Convert an 8-bit pixel value to a hex string of two characters"""
     if value < 0 or value > 255:
         raise ValueError(f"Pixel value {value} outside range 0-255")
-    return "{:02x}".format(value)
+    return f"{value:02x}"
 
 
 def image_to_hex_str(image: Image, byte_order: SensorByteOrder) -> str:
@@ -222,7 +222,9 @@ def main():
 
     with ExitStack() as stack:
         console = stack.enter_context(
-            open(get_console(board_config), "wb+", buffering=0)
+            open(  # pylint:disable=consider-using-with
+                get_console(board_config), "wb+", buffering=0
+            )
         )
         for cmd in fpupload_cmds:
             console.write(cmd.encode())

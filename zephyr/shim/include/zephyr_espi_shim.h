@@ -9,6 +9,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Check if the message is an ACPI command.
  *
@@ -56,5 +60,9 @@ uint32_t get_8042_type(uint32_t data);
  * @return The data component of the message.
  */
 uint32_t get_8042_data(uint32_t data);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ZEPHYR_ESPI_SHIM_H */

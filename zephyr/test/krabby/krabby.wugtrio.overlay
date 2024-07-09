@@ -46,9 +46,6 @@
 		en_pp5000_base_x: en_pp5000_base_x{
 			gpios = <&gpiod 7 GPIO_OUTPUT_LOW>;
 		};
-		pogo_prsnt_int_l: pogo_prsnt_int_l {
-			gpios = <&gpioj 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-		};
 		en_pp4200_s5: en-pp4200-s5 {
 			gpios = <&gpiod 2 GPIO_OUTPUT_LOW>;
 		};
@@ -78,11 +75,6 @@
 			irq-pin = <&base_imu_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "motion_interrupt";
-		};
-		pogo_prsnt_int: pogo-prsnt-int {
-			irq-pin = <&pogo_prsnt_int_l>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "base_detect_interrupt";
 		};
 	};
 
@@ -176,6 +168,13 @@
 		compatible = "cros-ec,motionsense-sensor-info";
 
 		sensor-irqs = <&int_base_imu>;
+	};
+
+	named-adc-channels {
+		adc_base_det: adc-base-det {
+			enum-name = "ADC_BASE_DET";
+			io-channels = <&adc0 0>;
+		};
 	};
 };
 

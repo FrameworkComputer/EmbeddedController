@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "battery_fuel_gauge.h"
 #include "cros_cbi.h"
 #include "driver/charger/isl923x_public.h"
 #include "driver/tcpm/raa489000.h"
@@ -58,6 +59,8 @@ FAKE_VALUE_FUNC(enum ec_error_list, charger_discharge_on_ac, int);
 FAKE_VALUE_FUNC(int, chipset_in_state, int);
 FAKE_VOID_FUNC(usb_charger_task_set_event_sync, int, uint8_t);
 FAKE_VOID_FUNC(usb_interrupt_c1, enum gpio_signal);
+FAKE_VALUE_FUNC(enum battery_present, battery_is_present);
+FAKE_VALUE_FUNC(int, board_get_battery_soc);
 
 void board_usb_pd_count_init(void);
 static uint32_t fw_config_value;

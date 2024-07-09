@@ -14,9 +14,7 @@
 #include "util.h"
 
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
-
-/* The macro is used to prevent a DBZ exception while decoding PDOs. */
-#define PROCESS_ZERO_DIVISOR(x) ((x) == 0 ? 1 : (x))
+#define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
 
 #if defined(PD_MAX_VOLTAGE_MV) && defined(PD_OPERATING_POWER_MW)
 /*
@@ -135,46 +133,6 @@ int pd_find_pdo_index(uint32_t src_cap_cnt, const uint32_t *const src_caps,
 		*selected_pdo = src_caps[ret];
 
 	return ret;
-}
-
-void pd_extract_pdo_power(uint32_t pdo, uint32_t *ma, uint32_t *max_mv,
-			  uint32_t *min_mv)
-{
-	int max_ma, mw;
-
-	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_FIXED) {
-		*max_mv = PDO_FIXED_VOLTAGE(pdo);
-		*min_mv = *max_mv;
-	} else if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_AUGMENTED) {
-		*max_mv = PDO_AUG_MAX_VOLTAGE(pdo);
-		*min_mv = PDO_AUG_MIN_VOLTAGE(pdo);
-	} else if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_VARIABLE) {
-		*max_mv = PDO_VAR_MAX_VOLTAGE(pdo);
-		*min_mv = PDO_VAR_MIN_VOLTAGE(pdo);
-	} else {
-		*max_mv = PDO_BATT_MAX_VOLTAGE(pdo);
-		*min_mv = PDO_BATT_MIN_VOLTAGE(pdo);
-	}
-
-	if (*max_mv == 0) {
-		*ma = 0;
-		*min_mv = 0;
-		return;
-	}
-
-	if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_FIXED) {
-		max_ma = PDO_FIXED_CURRENT(pdo);
-	} else if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_AUGMENTED) {
-		max_ma = PDO_AUG_MAX_CURRENT(pdo);
-	} else if ((pdo & PDO_TYPE_MASK) == PDO_TYPE_VARIABLE) {
-		max_ma = PDO_VAR_MAX_CURRENT(pdo);
-	} else {
-		mw = PDO_BATT_MAX_POWER(pdo);
-		max_ma = 1000 * mw / PROCESS_ZERO_DIVISOR(*min_mv);
-	}
-	max_ma = MIN(max_ma,
-		     PD_MAX_POWER_MW * 1000 / PROCESS_ZERO_DIVISOR(*min_mv));
-	*ma = MIN(max_ma, PD_MAX_CURRENT_MA);
 }
 
 void pd_build_request(int32_t vpd_vdo, uint32_t *rdo, uint32_t *ma,
@@ -414,7 +372,7 @@ int pd_get_saved_port_flags(int port, uint8_t *flags)
 {
 	if (system_get_bbram(get_bbram_idx(port), flags) != EC_SUCCESS) {
 #ifndef CHIP_HOST
-		ccprintf("PD NVRAM FAIL");
+		CPRINTF("PD NVRAM FAIL");
 #endif
 		return EC_ERROR_UNKNOWN;
 	}
@@ -426,7 +384,7 @@ static void pd_set_saved_port_flags(int port, uint8_t flags)
 {
 	if (system_set_bbram(get_bbram_idx(port), flags) != EC_SUCCESS) {
 #ifndef CHIP_HOST
-		ccprintf("PD NVRAM FAIL");
+		CPRINTF("PD NVRAM FAIL");
 #endif
 	}
 }

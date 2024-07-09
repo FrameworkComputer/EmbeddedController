@@ -30,6 +30,10 @@ extern uint8_t keyboard_cols;
 #define KEYBOARD_ROW_TO_MASK(r) (1 << (r))
 
 /* Columns and masks for keys we particularly care about */
+
+/* NOTE: the project is using the key configuration from keyboard.dtsi by
+ * default, this file is ignored and will be removed. (b/349304225)
+ */
 #define KEYBOARD_COL_DOWN 14
 #define KEYBOARD_ROW_DOWN 6
 #define KEYBOARD_MASK_DOWN KEYBOARD_ROW_TO_MASK(KEYBOARD_ROW_DOWN)

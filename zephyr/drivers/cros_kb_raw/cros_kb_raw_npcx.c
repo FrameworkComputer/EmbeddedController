@@ -27,6 +27,8 @@
 #include <drivers/cros_kb_raw.h>
 #include <soc.h>
 #include <soc/nuvoton_npcx/reg_def_cros.h>
+
+#line 32
 LOG_MODULE_REGISTER(cros_kb_raw, LOG_LEVEL_ERR);
 
 #ifdef CONFIG_PLATFORM_EC_KEYBOARD_COL2_INVERTED

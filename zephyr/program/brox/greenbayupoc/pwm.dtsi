@@ -1,0 +1,53 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Fan - use a prescaler for operation about 324 Hz */
+/* Fan */
+&pwm6 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C6>;
+	pinctrl-0 = <&pwm6_gpa6_default>;
+	pinctrl-names = "default";
+};
+
+/* Keyboard backlight*/
+&pwm1 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm1_gpa1_default>;
+	pinctrl-names = "default";
+};
+
+/* Board LEDs - share one prescaler reference, all clocks must be configured
+ * for 324 Hz or lower so LEDs work in low power mode.
+ */
+
+&pwm2 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm2_gpa2_default>;
+	pinctrl-names = "default";
+};
+
+&pwm3 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm3_gpa3_default>;
+	pinctrl-names = "default";
+};
+
+&pwm4 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm4_gpa4_default>;
+	pinctrl-names = "default";
+};
+
+&pwm5 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C4>;
+	pinctrl-0 = <&pwm5_gpa5_default>;
+	pinctrl-names = "default";
+};

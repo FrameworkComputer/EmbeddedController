@@ -82,6 +82,4 @@ microcontroller. There are additional GPIO and configuration options that must
 be enabled in this case. - The KSO_02/COL2 signal is always inverted. Explicitly
 configure the GPIO to default low. `c GPIO(KBD_KSO2, PIN(1, 7), GPIO_OUT_LOW) /*
 KSO_02 inverted */` - Add the define `CONFIG_KEYBOARD_COL2_INVERTED` to
-`baseboard.h` or `board.h`. - If required by the board, define one of the
-following options to configure the KSI pin routed to the H1 microcontroller. -
-`CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI2` - `CONFIG_KEYBOARD_PWRBTN_ASSERTS_KSI3`
+`baseboard.h` or `board.h`.

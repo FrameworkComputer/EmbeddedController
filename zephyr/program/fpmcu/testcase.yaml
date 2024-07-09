@@ -18,3 +18,88 @@ tests:
     - CONFIG_HW_TEST_CRC=y
     extra_conf_files:
     - prj_hw_tests.conf
+  flash_physical:
+    extra_configs:
+    - CONFIG_HW_TEST_FLASH_PHYSICAL=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  flash_write_protect:
+    extra_configs:
+    - CONFIG_HW_TEST_FLASH_WRITE_PROTECT=y
+    # Added to reduce RO flash usage
+    - CONFIG_PM=n
+    extra_conf_files:
+    - prj_hw_tests.conf
+  fp_transport:
+    extra_configs:
+    - CONFIG_HW_TEST_FP_TRANSPORT=y
+    # Added to reduce RO flash usage
+    - CONFIG_PM=n
+    extra_conf_files:
+    - prj_hw_tests.conf
+  ftrapv:
+    extra_configs:
+    - CONFIG_HW_TEST_FTRAPV=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  libc_printf:
+    extra_configs:
+    - CONFIG_HW_TEST_LIBC_PRINTF=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  malloc:
+    extra_configs:
+    - CONFIG_HW_TEST_MALLOC=y
+    # Added to reduce RO flash usage
+    - CONFIG_PM=n
+    extra_conf_files:
+    - prj_hw_tests.conf
+  panic:
+    extra_configs:
+    - CONFIG_HW_TEST_PANIC=y
+    - CONFIG_PLATFORM_EC_PANIC_STRIP_GPR=n
+    extra_conf_files:
+    - prj_hw_tests.conf
+  printf:
+    extra_configs:
+    - CONFIG_HW_TEST_PRINTF=y
+    - CONFIG_ZTEST_STACK_SIZE=2048
+    extra_conf_files:
+    - prj_hw_tests.conf
+  queue:
+    extra_configs:
+    - CONFIG_HW_TEST_QUEUE=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  restricted_console:
+    extra_configs:
+    - CONFIG_HW_TEST_RESTRICTED_CONSOLE=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  rollback:
+    extra_configs:
+    - CONFIG_HW_TEST_ROLLBACK=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  rollback_entropy:
+    extra_configs:
+    - CONFIG_HW_TEST_ROLLBACK_ENTROPY=y
+    # Added to reduce RO flash usage
+    - CONFIG_PM=n
+    extra_conf_files:
+    - prj_hw_tests.conf
+  sha256:
+    extra_configs:
+    - CONFIG_HW_TEST_SHA256=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  sha256_unrolled:
+    extra_configs:
+    - CONFIG_HW_TEST_SHA256_UNROLLED=y
+    extra_conf_files:
+    - prj_hw_tests.conf
+  static_if:
+    extra_configs:
+    - CONFIG_HW_TEST_STATIC_IF=y
+    extra_conf_files:
+    - prj_hw_tests.conf

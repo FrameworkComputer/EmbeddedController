@@ -3,6 +3,12 @@
  * found in the LICENSE file.
  */
 
+/*
+ * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
+ * #line marks the *next* line, so it is off by one.
+ */
+#line 11
+
 #include "adc.h"
 #include "atomic.h"
 #include "battery.h"
@@ -26,6 +32,9 @@
 #include "usb_pd_dpm_sm.h"
 #include "usb_pd_tcpm.h"
 #include "util.h"
+#ifdef CONFIG_ZEPHYR
+#include "zephyr/include/usbc/pdc_power_mgmt.h"
+#endif
 
 #ifdef HAS_MOCK_CHARGE_MANAGER
 #error Mock defined HAS_MOCK_CHARGE_MANAGER
@@ -408,6 +417,8 @@ static int get_vbus_voltage(int port, enum usb_power_roles current_role)
 		voltage_mv = 0;
 #elif defined(CONFIG_USB_PD_VBUS_MEASURE_BY_BOARD)
 		voltage_mv = board_get_vbus_voltage(port);
+#elif defined(CONFIG_USB_PD_VBUS_MEASURE_PDC)
+		voltage_mv = pdc_power_mgmt_get_vbus_voltage(port);
 #else
 		/* There is a single ADC that measures joint Vbus */
 		voltage_mv = adc_read_channel(ADC_VBUS);

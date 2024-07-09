@@ -14,6 +14,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct button_8042_t {
 	uint16_t scancode;
 	int repeat;
@@ -165,6 +169,8 @@ enum scancode_values {
 	SCANCODE_PLAY_PAUSE = 0xe054, /* e01a in codeset 1 */
 	SCANCODE_MICMUTE = 0xe05b, /* e01b in codeset 1 */
 	SCANCODE_DICTATE = 0xe04c, /* e027 in codeset 1 */
+	SCANCODE_ACCESSIBILITY = 0xe00e, /* e029 in codeset 1 */
+	SCANCODE_DONOTDISTURB = 0xe052, /* e028 in codeset 1 */
 
 	SCANCODE_UP = 0xe075,
 	SCANCODE_DOWN = 0xe072,
@@ -206,4 +212,9 @@ enum scancode_values {
 void board_caps_led_control(int data);
 void simulate_keyboard(uint16_t scancode, int is_pressed);
 #endif /* CONFIG_CUSTOMIZED_DESIGN */
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_KEYBOARD_8042_SHAREDLIB_H */

@@ -44,28 +44,4 @@ config PLATFORM_EC_USB_MUX_VIRTUAL
 	  and is is informed when status changes, via the
 	  EC_CMD_USB_PD_MUX_INFO host command.
 
-config PLATFORM_EC_USBC_RETIMER_FW_UPDATE
-	bool "Support firmware update of USB Type-C retimers"
-	depends on PLATFORM_EC_USBC_SS_MUX
-	help
-	   Enable this to support USB Type-C retimer firmware update. Each
-	   Type-C retimer indicates its capability of supporting firmware update
-	   independently in its usb_mux_driver.
-
-	   During AP boot-up, the AP scans each PD port for retimers but only
-	   if there are no Type-C devices attached to the port. The firmware
-	   update can only be performed on retimers which show up in the AP
-	   thunderbolt device entries.
-
-config PLATFORM_EC_CONSOLE_CMD_TYPEC
-	bool "Console command: typec"
-	default y
-	help
-	  Enable the 'typec' console command. Use this command to override
-	  the USB Type-C connector mux configuration on a specified port.
-
-	  Passing in 'debug' instead of a port number turns on additional
-	  debug messages whenever the EC application modifies the mux state.
-
-
 endif  # PLATFORM_EC_USBC_SS_MUX

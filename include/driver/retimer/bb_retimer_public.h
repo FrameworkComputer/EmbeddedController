@@ -10,6 +10,10 @@
 
 #include "usb_mux.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct usb_mux;
 
 /* Supported USB retimer drivers */
@@ -63,5 +67,9 @@ void bb_retimer_hpd_update(const struct usb_mux *me, mux_state_t hpd_state,
  * @param enable BB retimer DP state to be changed
  */
 int bb_retimer_set_dp_connection(const struct usb_mux *me, bool enable);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_DRIVER_RETIMER_BB_RETIMER_PUBLIC_H */

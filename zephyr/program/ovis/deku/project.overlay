@@ -72,6 +72,9 @@
 			gpios = <&gpioc 3 GPIO_OUTPUT>;
 		};
 
+		gpio_ec_mech_rec_btn_odl: ec_mech_rec_btn_odl {
+			gpios = <&gpio2 3 GPIO_INPUT>;
+		};
 		gpio_ec_prochot_odl: ec_prochot_odl {
 			gpios = <&gpio9 5 GPIO_ODR_HIGH>;
 		};
@@ -89,9 +92,6 @@
 		};
 		gpio_ec_spare_gpio17: ec_spare_gpio17 {
 			gpios = <&gpio1 7 GPIO_OUTPUT>;
-		};
-		gpio_ec_spare_gpio23: ec_spare_gpio23 {
-			gpios = <&gpio2 3 GPIO_OUTPUT>;
 		};
 		gpio_ec_spare_gpio24: ec_spare_gpio24 {
 			gpios = <&gpio2 4 GPIO_OUTPUT>;
@@ -151,7 +151,7 @@
 			gpios = <&gpio9 4 GPIO_INPUT>;
 		};
 		gpio_usb_c3_rt_rst_l: usb_c3_rt_rst_l {
-			gpios = <&gpio1 6 GPIO_ODR_HIGH>;
+			gpios = <&gpio1 6 GPIO_ODR_LOW>;
 		};
 		gpio_usb_c3_tcpc_int_odl: usb_c3_tcpc_int_odl {
 			gpios = <&gpioc 7 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
@@ -236,9 +236,10 @@
 &cbi_flash {
 	/*
 	 * CBI section size is 0x1000 bytes, the CBI portion lies at the end of
-	 * EC_RO section. EC_RO section ends at 0x31000 byte which is the offset
+	 * EC_RO section. WP_RO section size is 0x40000 bytes, EC_RO will be
+	 * trimmed down to 0x3e000 and CBI will be added at 0x3e000.
 	 */
-	offset = <0x31000>;
+	offset = <0x3e000>;
 	size = <0x1000>;
 };
 

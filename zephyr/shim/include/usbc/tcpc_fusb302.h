@@ -8,6 +8,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define FUSB302_TCPC_COMPAT fairchild_fusb302
 
 /* clang-format off */
@@ -31,3 +35,7 @@
 
 DT_FOREACH_STATUS_OKAY(FUSB302_TCPC_COMPAT,
 		       TCPC_VERIFY_NO_FLAGS_ACTIVE_ALERT_HIGH)
+
+#ifdef __cplusplus
+}
+#endif

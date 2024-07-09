@@ -10,7 +10,15 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Initializes the module. */
 int memory_commands_init(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_MEMORY_COMMANDS_H */

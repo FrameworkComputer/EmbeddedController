@@ -7,6 +7,10 @@
 
 #include <zephyr/sys/util_macro.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Some config macros are defined but without any value for some boards, so
  * IF_ENABLED checks cannot be used. In addition, config values may not be set
@@ -57,5 +61,9 @@
 			HOOK_USB_PD_DISCONNECT,                             \
 		HOOK_USB_PD_CONNECT, HOOK_POWER_SUPPLY_CHANGE,              \
 		HOOK_TYPES_TEST_BUILD)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

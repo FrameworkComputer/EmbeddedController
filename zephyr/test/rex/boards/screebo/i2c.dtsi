@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "../native_posix.overlay"
+#include "../native_sim.overlay"
 #include "../../../../program/rex/screebo/cbi.dtsi"
 
 / {

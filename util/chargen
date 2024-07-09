@@ -3,6 +3,8 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+"""Generate a stream of characters on the console."""
+
 import sys
 
 
@@ -20,10 +22,10 @@ def chargen(modulo, max_chars):
     """
 
     base = "0"
-    c = base
+    char = base
     counter = 0
     while True:
-        sys.stdout.write(c)
+        sys.stdout.write(char)
         counter = counter + 1
 
         if (max_chars != 0) and (counter == max_chars):
@@ -31,17 +33,17 @@ def chargen(modulo, max_chars):
             return
 
         if modulo and ((counter % modulo) == 0):
-            c = base
+            char = base
             continue
 
-        if c == "z":
-            c = base
-        elif c == "Z":
-            c = "a"
-        elif c == "9":
-            c = "A"
+        if char == "z":
+            char = base
+        elif char == "Z":
+            char = "a"
+        elif char == "9":
+            char = "A"
         else:
-            c = "%c" % (ord(c) + 1)
+            char = chr((ord(char) + 1))
 
 
 def main(args):

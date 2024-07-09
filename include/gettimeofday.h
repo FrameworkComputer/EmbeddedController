@@ -10,6 +10,10 @@
 
 #include <sys/time.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Get the time.
  *
@@ -23,5 +27,9 @@
  */
 enum ec_error_list ec_gettimeofday(struct timeval *restrict tv,
 				   void *restrict tz);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_GETTIMEOFDAY_H */

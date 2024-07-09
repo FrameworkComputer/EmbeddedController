@@ -10,6 +10,10 @@
 #include "tcpm/ps8xxx_public.h"
 #include "tcpm/tcpci.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define TCPCI_TCPM_USB_MUX_COMPAT cros_ec_usbc_mux_tcpci
 #define PS8XXX_USB_MUX_COMPAT parade_usbc_mux_ps8xxx
 
@@ -43,5 +47,9 @@
 	COND_CODE_1(DT_NODE_HAS_PROP(mux_id, reg),                \
 		    (USB_MUX_CONFIG_TCPCI_TCPM_WITH_I2C(mux_id)), \
 		    (USB_MUX_CONFIG_TCPCI_TCPM_WO_I2C(mux_id)))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ZEPHYR_SHIM_TCPCI_USB_MUX_H */

@@ -2,18 +2,19 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
-#include "compile_time_macros.h"
 
-#ifdef CONFIG_ZEPHYR
-#include <zephyr/shell/shell.h>
-#endif
-
-extern "C" {
 #include "atomic.h"
 #include "clock.h"
 #include "common.h"
+#include "compile_time_macros.h"
 #include "console.h"
 #include "ec_commands.h"
+#include "fpsensor/fpsensor_console.h"
+#include "fpsensor/fpsensor_crypto.h"
+#include "fpsensor/fpsensor_detect.h"
+#include "fpsensor/fpsensor_modes.h"
+#include "fpsensor/fpsensor_state.h"
+#include "fpsensor/fpsensor_utils.h"
 #include "gpio.h"
 #include "host_command.h"
 #include "link_defs.h"
@@ -25,14 +26,10 @@ extern "C" {
 #include "trng.h"
 #include "util.h"
 #include "watchdog.h"
-}
 
-#include "fpsensor/fpsensor_console.h"
-#include "fpsensor/fpsensor_crypto.h"
-#include "fpsensor/fpsensor_detect.h"
-#include "fpsensor/fpsensor_modes.h"
-#include "fpsensor/fpsensor_state.h"
-#include "fpsensor/fpsensor_utils.h"
+#ifdef CONFIG_ZEPHYR
+#include <zephyr/shell/shell.h>
+#endif
 
 #ifdef CONFIG_CMD_FPSENSOR_DEBUG
 /* --- Debug console commands --- */
@@ -78,7 +75,6 @@ extern "C" {
  */
 static void upload_pgm_image(uint8_t *frame)
 {
-	int x, y;
 	uint8_t *ptr = frame;
 
 	/* fake Z-modem ZRQINIT signature */
@@ -87,9 +83,9 @@ static void upload_pgm_image(uint8_t *frame)
 	/* Print 8-bpp PGM ASCII header */
 	CPRINTF("P2\n%d %d\n255\n", FP_SENSOR_RES_X, FP_SENSOR_RES_Y);
 
-	for (y = 0; y < FP_SENSOR_RES_Y; y++) {
+	for (int y = 0; y < FP_SENSOR_RES_Y; y++) {
 		watchdog_reload();
-		for (x = 0; x < FP_SENSOR_RES_X; x++, ptr++)
+		for (int x = 0; x < FP_SENSOR_RES_X; x++, ptr++)
 			CPRINTF("%d ", *ptr);
 		CPRINTF("\n");
 		cflush();
@@ -100,14 +96,11 @@ static void upload_pgm_image(uint8_t *frame)
 
 static enum ec_error_list fp_console_action(uint32_t mode)
 {
-	int tries = 200;
-	uint32_t mode_output = 0;
-	int rc = 0;
-
 	if (!(global_context.sensor_mode & FP_MODE_RESET_SENSOR))
 		CPRINTS("Waiting for finger ...");
 
-	rc = fp_set_sensor_mode(mode, &mode_output);
+	uint32_t mode_output = 0;
+	int rc = fp_set_sensor_mode(mode, &mode_output);
 
 	if (rc != EC_RES_SUCCESS) {
 		/*
@@ -117,6 +110,7 @@ static enum ec_error_list fp_console_action(uint32_t mode)
 		return EC_ERROR_UNKNOWN;
 	}
 
+	int tries = 200;
 	while (tries--) {
 		if (!(global_context.sensor_mode & FP_MODE_ANY_CAPTURE)) {
 			CPRINTS("done (events:%x)",
@@ -130,14 +124,12 @@ static enum ec_error_list fp_console_action(uint32_t mode)
 
 static int command_fpcapture(int argc, const char **argv)
 {
-	int capture_type = FP_CAPTURE_SIMPLE_IMAGE;
-	uint32_t mode;
-	enum ec_error_list rc;
-
 #ifdef CONFIG_ZEPHYR
 	if (system_is_locked())
 		return EC_ERROR_ACCESS_DENIED;
 #endif
+
+	int capture_type = FP_CAPTURE_SIMPLE_IMAGE;
 
 	if (argc >= 2) {
 		char *e;
@@ -146,10 +138,11 @@ static int command_fpcapture(int argc, const char **argv)
 		if (*e || capture_type < 0)
 			return EC_ERROR_PARAM1;
 	}
-	mode = FP_MODE_CAPTURE | ((capture_type << FP_MODE_CAPTURE_TYPE_SHIFT) &
-				  FP_MODE_CAPTURE_TYPE_MASK);
+	uint32_t mode = FP_MODE_CAPTURE |
+			((capture_type << FP_MODE_CAPTURE_TYPE_SHIFT) &
+			 FP_MODE_CAPTURE_TYPE_MASK);
 
-	rc = fp_console_action(mode);
+	enum ec_error_list rc = fp_console_action(mode);
 	if (rc == EC_SUCCESS)
 		upload_pgm_image(fp_buffer + FP_SENSOR_IMAGE_OFFSET);
 
@@ -169,20 +162,16 @@ DECLARE_CONSOLE_COMMAND_FLAGS(fpcapture, command_fpcapture, NULL,
  */
 static int command_fpupload(int argc, const char **argv)
 {
-	const char *pixels_str;
-	uint8_t *dest;
-	int offset;
-
 	if (argc != 3)
 		return EC_ERROR_PARAM1;
 	if (system_is_locked())
 		return EC_ERROR_ACCESS_DENIED;
-	offset = atoi(argv[1]);
+	int offset = atoi(argv[1]);
 	if (offset < 0)
 		return EC_ERROR_PARAM1;
-	dest = fp_buffer + FP_SENSOR_IMAGE_OFFSET + offset;
+	uint8_t *dest = fp_buffer + FP_SENSOR_IMAGE_OFFSET + offset;
 
-	pixels_str = argv[2];
+	const char *pixels_str = argv[2];
 	while (*pixels_str) {
 		if (dest >= fp_buffer + FP_SENSOR_IMAGE_SIZE)
 			return EC_ERROR_PARAM1;
@@ -221,7 +210,6 @@ static int command_fpenroll(int argc, const char **argv)
 {
 	enum ec_error_list rc;
 	int percent = 0;
-	uint32_t event;
 	static const char *const enroll_str[] = { "OK", "Low Quality",
 						  "Immobile", "Low Coverage" };
 
@@ -237,7 +225,7 @@ static int command_fpenroll(int argc, const char **argv)
 				       FP_MODE_ENROLL_IMAGE);
 		if (rc != EC_SUCCESS)
 			break;
-		event = atomic_clear(&global_context.fp_events);
+		uint32_t event = atomic_clear(&global_context.fp_events);
 		percent = EC_MKBP_FP_ENROLL_PROGRESS(event);
 		CPRINTS("Enroll capture: %s (%d%%)",
 			enroll_str[EC_MKBP_FP_ERRCODE(event) & 3], percent);
@@ -297,9 +285,7 @@ static int command_fpmaintenance(int argc, const char **argv)
 {
 #ifdef HAVE_FP_PRIVATE_DRIVER
 	uint32_t mode_output = 0;
-	int rc = 0;
-
-	rc = fp_set_sensor_mode(FP_MODE_SENSOR_MAINTENANCE, &mode_output);
+	int rc = fp_set_sensor_mode(FP_MODE_SENSOR_MAINTENANCE, &mode_output);
 
 	if (rc != EC_RES_SUCCESS) {
 		/*

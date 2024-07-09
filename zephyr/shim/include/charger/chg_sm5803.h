@@ -7,6 +7,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define SM5803_CHG_COMPAT siliconmitus_sm5803
 
 #define CHG_CONFIG_SM5803(id)                      \
@@ -15,3 +19,7 @@
 		.i2c_addr_flags = DT_REG_ADDR(id), \
 		.drv = &sm5803_drv,                \
 	},
+
+#ifdef __cplusplus
+}
+#endif

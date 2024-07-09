@@ -12,6 +12,10 @@
 #include "driver/accelgyro_bmi160_public.h"
 #include "mag_bmm150.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define BMI160_CHIP_ID 0x00
 #define BMI160_CHIP_ID_MAJOR 0xd1
 #define BMI168_CHIP_ID_MAJOR 0xd2
@@ -404,5 +408,9 @@ int bmi160_sec_raw_write8(const int port, const uint16_t addr_flags,
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(SENSOR_ID(DT_ALIAS(bmi160_int)))
 #endif
 #endif /* CONFIG_ZEPHYR */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ACCELGYRO_BMI160_H */

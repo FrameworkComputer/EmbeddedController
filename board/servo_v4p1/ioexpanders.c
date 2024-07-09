@@ -56,13 +56,13 @@ int init_ioexpanders(void)
 	if (dat[2] == PCAL6524HE_DEVICE_ID2 &&
 	    dat[1] == PCAL6524HE_DEVICE_ID1 &&
 	    dat[0] == PCAL6524HE_DEVICE_ID0) {
-		ccprintf("Detected PCAL6524HE\n");
+		CPRINTF("Detected PCAL6524HE\n");
 		i2c_write8(PCAL6524HE_PORT, PCAL6524HE_ADDR,
 			   PCAL6524HE_INT_MASK_REG_PORT1, 0);
 		i2c_write8(PCAL6524HE_PORT, PCAL6524HE_ADDR,
 			   PCAL6524HE_INT_MASK_REG_PORT2, 0xbe);
 	} else {
-		ccprintf("Detected TCA6424A\n");
+		CPRINTF("Detected TCA6424A\n");
 	}
 
 	/* Clear any faults and other IRQs */

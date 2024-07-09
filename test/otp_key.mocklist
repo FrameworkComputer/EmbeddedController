@@ -3,5 +3,7 @@
  * found in the LICENSE file.
  */
 
+#ifdef BOARD_HOST
 #define CONFIG_TEST_MOCK_LIST \
   MOCK(OTPI)
+#endif

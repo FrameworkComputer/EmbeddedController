@@ -8,7 +8,14 @@
  * author.
  */
 
+#ifndef __CROS_EC_BTLE_HCI2_H
+#define __CROS_EC_BTLE_HCI2_H
+
 #include "btle_hci_int.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 struct hciCmdHdr {
 	uint16_t opcode;
@@ -51,3 +58,9 @@ void hci_cmd(uint8_t *hciCmdbuf);
 void hci_acl_to_host(uint8_t *data, uint16_t hdr, uint16_t len);
 void hci_acl_from_host(uint8_t *hciAclbuf);
 void hci_event(uint8_t event_code, uint8_t len, uint8_t *params);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __CROS_EC_BTLE_HCI2_H */

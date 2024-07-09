@@ -454,5 +454,5 @@ static inline int z_impl_fingerprint_finger_status(const struct device *dev)
 /**
  * @}
  */
-#include <syscalls/fingerprint.h>
+#include <zephyr/syscalls/fingerprint.h>
 #endif /* ZEPHYR_INCLUDE_DRIVERS_FINGERPRINT_H_ */

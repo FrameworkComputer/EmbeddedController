@@ -96,7 +96,7 @@ def test_prune_modules(modules):
     project = zmake.project.Project(
         zmake.project.ProjectConfig(
             project_name="prunetest",
-            zephyr_board="native_posix",
+            zephyr_board="native_sim",
             output_packer=zmake.output_packers.ElfPacker,
             supported_toolchains=["coreboot-sdk"],
             project_dir=pathlib.Path("/fake"),
@@ -118,7 +118,7 @@ def test_prune_modules_unavailable():
     project = zmake.project.Project(
         zmake.project.ProjectConfig(
             project_name="prunetest",
-            zephyr_board="native_posix",
+            zephyr_board="native_sim",
             output_packer=zmake.output_packers.ElfPacker,
             supported_toolchains=["coreboot-sdk"],
             project_dir=pathlib.Path("/fake"),
@@ -127,6 +127,52 @@ def test_prune_modules_unavailable():
     )
     with pytest.raises(KeyError):
         project.prune_modules(module_paths)
+
+
+def test_prune_modules_optional():
+    """Test if the Project.prune_modules includes optional modules
+    when they are available."""
+
+    module_paths = {
+        "hal_stm32": pathlib.Path("/mod/halstm"),
+        "fpc": pathlib.Path("/mod/fpc"),
+    }
+
+    project = zmake.project.Project(
+        zmake.project.ProjectConfig(
+            project_name="prunetest",
+            zephyr_board="native_sim",
+            output_packer=zmake.output_packers.ElfPacker,
+            supported_toolchains=["coreboot-sdk"],
+            project_dir=pathlib.Path("/fake"),
+            modules=["hal_stm32"],
+            optional_modules=["fpc"],
+        ),
+    )
+    assert set(project.prune_modules(module_paths)) == set(module_paths)
+
+
+def test_prune_modules_optional_missing():
+    """Test if the Project.prune_modules skips optional modules
+    when they are not available."""
+
+    # Missing 'fpc'
+    module_paths = {
+        "hal_stm32": pathlib.Path("/mod/halstm"),
+    }
+
+    project = zmake.project.Project(
+        zmake.project.ProjectConfig(
+            project_name="prunetest",
+            zephyr_board="native_sim",
+            output_packer=zmake.output_packers.ElfPacker,
+            supported_toolchains=["coreboot-sdk"],
+            project_dir=pathlib.Path("/fake"),
+            modules=["hal_stm32"],
+            optional_modules=["fpc"],
+        ),
+    )
+    assert set(project.prune_modules(module_paths)) == set(module_paths)
 
 
 def test_find_projects_empty(tmp_path):
@@ -173,7 +219,7 @@ def test_find_projects(tmp_path):
     assert projects["one"].config.project_dir == cf1_dir
 
     assert projects["two"].config.project_dir == cf1_dir
-    assert projects["two"].config.zephyr_board == "native_posix"
+    assert projects["two"].config.zephyr_board == "native_sim"
 
     assert projects["three"].config.project_dir == cf1_dir
     assert projects["three"].config.zephyr_board == "three"

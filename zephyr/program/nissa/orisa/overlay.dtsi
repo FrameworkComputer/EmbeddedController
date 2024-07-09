@@ -1,0 +1,333 @@
+/* Copyright 2021 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/usbc_mux.h>
+#include <dt-bindings/usb_pd_tcpm.h>
+#include <usbc-policy.dtsi>
+
+/ {
+	aliases {
+		gpio-cbi-wp = &gpio_ec_cbi_wp;
+		gpio-wp = &gpio_ec_wp_odl;
+		int-wp = &int_wp_l;
+		gpio-kbd-kso2 = &gpio_ec_kso_02_inv;
+	};
+
+	ec-console {
+		compatible = "ec-console";
+		disabled = "events", "lpc", "hostcmd";
+	};
+
+	batteries {
+		default_battery: cosmx_ap20cbl-4 {
+			compatible = "cosmx,ap20cbl-4", "battery-smart";
+		};
+		lges_ap23a8l {
+			compatible = "lges,ap23a8l", "battery-smart";
+		};
+		panasonic_ap23a5l {
+			compatible = "panasonic,ap23a5l", "battery-smart";
+		};
+	};
+
+	hibernate-wake-pins {
+		compatible = "cros-ec,hibernate-wake-pins";
+		wakeup-irqs = <
+			&int_power_button
+			&int_lid_open
+		>;
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_power_button: power_button {
+			irq-pin = <&gpio_gsc_ec_pwr_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "power_button_interrupt";
+		};
+		int_wp_l: wp_l {
+			irq-pin = <&gpio_ec_wp_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "switch_interrupt";
+		};
+		int_lid_open: lid_open {
+			irq-pin = <&gpio_lid_open>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
+		int_tablet_mode: tablet_mode {
+			irq-pin = <&gpio_tablet_mode_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "gmr_tablet_switch_isr";
+		};
+		int_lid_accel: ec_lid_accel  {
+			irq-pin = <&gpio_acc_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "bma4xx_interrupt";
+		};
+		int_vol_down: vol_down {
+			irq-pin = <&gpio_voldn_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+		int_vol_up: vol_up {
+			irq-pin = <&gpio_volup_btn_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "button_interrupt";
+		};
+		int_ac_present: ac_present {
+			irq-pin = <&gpio_ec_acok_od>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "extpower_interrupt";
+		};
+		int_soc_enkbl: soc_enbkl {
+			irq-pin = <&gpio_soc_enbkl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "soc_signal_interrupt";
+		};
+	};
+
+	named-gpios {
+		/*
+		 * Set I2C pins for type C sub-board to be low voltage (I2C5_1).
+		 * We do this for all boards, since the pins are 3.3V tolerant,
+		 * and the only 2 types of sub-boards used on nivviks both have
+		 * type-C ports on them.
+		 */
+		gpio_sb_3: sb-3 {
+			gpios = <&gpiof 4 (GPIO_OPEN_DRAIN | GPIO_VOLTAGE_1P8)>;
+			no-auto-init;
+		};
+		gpio_sb_4: sb-4 {
+			gpios = <&gpiof 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			no-auto-init;
+		};
+		gpio_fan_enable: fan-enable {
+			gpios = <&gpio6 3 GPIO_OUTPUT>;
+		};
+		gpio_fan_tach: fan-tach {
+			gpios = <&gpio7 3 GPIO_INPUT_PULL_UP>;
+		};
+		ec-i2c-sensor-scl {
+			gpios = <&gpio9 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+		ec-i2c-sensor-sda {
+			gpios = <&gpio8 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+		};
+	};
+
+	/*
+	 * Aliases used for sub-board GPIOs.
+	 */
+	aliases {
+		/*
+		 * HPD pins for HDMI sub-board.
+		 */
+		gpio-hdmi-en-odl = &gpio_sb_3;
+		gpio-hpd-odl = &gpio_sb_4;
+	};
+
+	temp_memory: memory {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_1>;
+	};
+	temp_charger: charger {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_2>;
+	};
+	temp_ambient: ambient {
+		compatible = "cros-ec,temp-sensor-thermistor";
+		thermistor = <&thermistor_3V3_51K1_47K_4050B>;
+		adc = <&adc_temp_sensor_3>;
+	};
+
+	named-temp-sensors {
+		compatible = "cros-ec,temp-sensors";
+		memory {
+			temp_fan_off = <35>;
+			temp_fan_max = <70>;
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_memory>;
+		};
+		charger {
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_charger>;
+		};
+		ambient {
+			power-good-pin = <&gpio_ec_soc_dsw_pwrok>;
+			sensor = <&temp_ambient>;
+		};
+	};
+
+	usba {
+		compatible = "cros-ec,usba-port-enable-pins";
+		/*
+		 * sb_2 is only configured as GPIO when USB-A1 is present,
+		 * but it's still safe to control when disabled.
+		 *
+		 * ILIM_SEL pins are referred to by legacy enum name,
+		 * GPIO_USB*_ILIM_SEL. The one for port A1 is unused on
+		 * sub-boards that don't have USB-A so is safe to control
+		 * regardless of system configuration.
+		 */
+		enable-pins = <&gpio_en_usb_a0_vbus &gpio_en_sub_usb_a1_vbus>;
+		status = "okay";
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		usbc_port0: port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			chg = <&charger>;
+			pdc = <&pdc_power_p0>;
+			policy = <&cros_policy>;
+		};
+	};
+
+	fans {
+		compatible = "cros-ec,fans";
+
+		fan_0 {
+			pwms = <&pwm5 5 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+			rpm_min = <2200>;
+			rpm_start = <2200>;
+			rpm_max = <6900>;
+			tach = <&tach2>;
+			enable_gpio = <&gpio_fan_enable>;
+		};
+	};
+
+	 /*
+	  * Declare unused GPIOs so that they are shut down
+	  * and use minimal power
+	  */
+	  unused-pins {
+		compatible = "unused-gpios";
+		unused-gpios =
+			<&gpio3 2 0>,
+			<&gpio3 3 0>,
+			<&gpio3 5 0>,
+			<&gpio3 6 0>,
+			<&gpio5 7 0>,
+			<&gpio6 0 0>,
+			<&gpio6 6 0>,
+			<&gpio8 3 0>,
+			<&gpio8 6 0>,
+			<&gpio9 6 0>,
+			<&gpioa 0 0>,
+			<&gpiob 1 0>,
+			<&gpiob 7 0>,
+			<&gpiod 5 0>,
+			<&gpioe 2 0>,
+			<&gpiof 2 0>,
+			<&gpiof 3 0>;
+	 };
+};
+
+&thermistor_3V3_51K1_47K_4050B {
+	status = "okay";
+};
+
+&adc_ec_vsense_pp3300_s5 {
+	/*
+	 * Voltage divider on input has 47k upper and 220k lower legs with
+	 * 2714 mV full-scale reading on the ADC. Apply the largest possible
+	 * multiplier (without overflowing int32) to get the best possible
+	 * approximation of the actual ratio, but derate by a factor of two to
+	 * ensure unexpectedly high values won't overflow.
+	 */
+	mul = <(791261 / 2)>;
+	div = <(651975 / 2)>;
+};
+
+/* Set bus speeds for I2C */
+&i2c0_0 {
+	label = "I2C_EEPROM";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+};
+
+&i2c1_0 {
+	label = "I2C_SENSOR";
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c3_0 {
+	label = "I2C_PORT_PD";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+
+	pdc_power_p0: rts54-pdc@67 {
+		compatible = "realtek,rts54-pdc";
+		reg = <0x67>;
+		irq-gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&i2c4_1 {
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
+
+&i2c7_0 {
+	label = "I2C_BATTERY";
+	label = "I2C_PORT_CHARGER";
+
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	charger: bq25710@9 {
+		compatible = "ti,bq25710";
+		status = "okay";
+		reg = <0x9>;
+	};
+};
+
+&pwm5_gpb7 {
+	drive-open-drain;
+};
+
+&pwm5 {
+	status = "okay";
+	pinctrl-0 = <&pwm5_gpb7>;
+	pinctrl-names = "default";
+};
+
+/* Tachometer for fan speed measurement */
+&tach2 {
+	status = "okay";
+	pinctrl-0 = <&ta2_1_in_gp73>;
+	pinctrl-names = "default";
+	port = <NPCX_TACH_PORT_A>; /* port-A is selected */
+	sample-clk = <NPCX_TACH_FREQ_LFCLK>; /* Use LFCLK as sampling clock */
+	pulses-per-round = <2>; /* number of pulses per round of encoder */
+};
+
+/* host interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};
+
+/*
+ * Declare GPIOs that have leakage current caused by board issues here. NPCX ec
+ * will disable their input buffers before entering deep sleep and restore them
+ * after waking up automatically for better power consumption.
+ */
+&power_leakage_io {
+	leak-gpios = <&gpioa 4 GPIO_OPEN_DRAIN
+		      &gpiof 1 GPIO_OPEN_DRAIN>;
+};

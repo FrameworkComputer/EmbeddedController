@@ -11,6 +11,7 @@
 #include <zephyr/fff.h>
 #include <zephyr/input/input.h>
 #include <zephyr/input/input_kbd_matrix.h>
+#include <zephyr/shell/shell_dummy.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/ztest.h>
 
@@ -24,8 +25,9 @@ static const struct input_kbd_matrix_common_config kbd_cfg = {
 static const struct device *const fake_dev =
 	DEVICE_DT_GET(DT_NODELABEL(fake_input_device));
 
-DEVICE_DT_DEFINE(DT_INST(0, vnd_input_device), NULL, NULL, NULL, &kbd_cfg,
-		 PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEVICE, NULL);
+DEVICE_DT_DEFINE(DT_INST(0, vnd_keyboard_input_device), NULL, NULL, NULL,
+		 &kbd_cfg, PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEVICE,
+		 NULL);
 
 FAKE_VOID_FUNC(keyboard_state_changed, int, int, int);
 
@@ -135,11 +137,100 @@ ZTEST(keyboard_input, test_get_rows)
 	zassert_equal(keyboard_get_rows(), 99);
 }
 
+extern uint8_t keyboard_cols;
+
+ZTEST(keyboard_input, test_keyboard_cols)
+{
+	zassert_equal(keyboard_cols, 10);
+}
+
+ZTEST(keyboard_input, test_ksstate)
+{
+	const struct shell *shell_zephyr = shell_backend_dummy_get_ptr();
+	const char *outbuffer;
+	size_t buffer_size;
+
+	/* Give the backend time to initialize */
+	k_sleep(K_MSEC(100));
+
+	shell_backend_dummy_clear_output(shell_zephyr);
+
+	zassert_ok(shell_execute_cmd(shell_zephyr, "ksstate"));
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+
+	zassert_not_null(
+		strstr(outbuffer, "Keyboard scan disable mask: 0x00000000"));
+
+	shell_backend_dummy_clear_output(shell_zephyr);
+
+	keyboard_scan_enable(0, KB_SCAN_DISABLE_A);
+
+	zassert_ok(shell_execute_cmd(shell_zephyr, "ksstate"));
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+
+	zassert_not_null(
+		strstr(outbuffer, "Keyboard scan disable mask: 0x00000001"));
+
+	keyboard_scan_enable(1, KB_SCAN_DISABLE_A);
+
+	zassert_ok(shell_execute_cmd(shell_zephyr, "ksstate"));
+	outbuffer = shell_backend_dummy_get_output(shell_zephyr, &buffer_size);
+	zassert_true(buffer_size > 0, NULL);
+
+	zassert_not_null(
+		strstr(outbuffer, "Keyboard scan disable mask: 0x00000000"));
+}
+
+struct {
+	int x;
+	int y;
+	int touch;
+	int count;
+} last_evt;
+
+static void test_input_cb_handler(struct input_event *evt)
+{
+	if (evt->type == INPUT_EV_ABS && evt->code == INPUT_ABS_X) {
+		last_evt.x = evt->value;
+	} else if (evt->type == INPUT_EV_ABS && evt->code == INPUT_ABS_Y) {
+		last_evt.y = evt->value;
+	} else if (evt->type == INPUT_EV_KEY && evt->code == INPUT_BTN_TOUCH) {
+		last_evt.touch = evt->value;
+	}
+	last_evt.count++;
+}
+
+INPUT_CALLBACK_DEFINE(fake_dev, test_input_cb_handler);
+
+ZTEST(keyboard_input, test_kbpress)
+{
+	const struct shell *shell_zephyr = shell_backend_dummy_get_ptr();
+
+	zassert_equal(shell_execute_cmd(shell_zephyr, "kbpress"), -EINVAL);
+	zassert_equal(shell_execute_cmd(shell_zephyr, "kbpress x 2 3"),
+		      -EINVAL);
+	zassert_equal(shell_execute_cmd(shell_zephyr, "kbpress 1 x 3"),
+		      -EINVAL);
+	zassert_equal(shell_execute_cmd(shell_zephyr, "kbpress 1 2 x"),
+		      -EINVAL);
+
+	zassert_ok(shell_execute_cmd(shell_zephyr, "kbpress 3 5 1"));
+
+	zassert_equal(last_evt.x, 3);
+	zassert_equal(last_evt.y, 5);
+	zassert_equal(last_evt.touch, 1);
+	zassert_equal(last_evt.count, 3);
+}
+
 static void reset(void *fixture)
 {
 	ARG_UNUSED(fixture);
 
 	RESET_FAKE(keyboard_state_changed);
+
+	memset(&last_evt, 0, sizeof(last_evt));
 }
 
 ZTEST_SUITE(keyboard_input, NULL, NULL, reset, reset, NULL);

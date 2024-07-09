@@ -1,0 +1,28 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "baseboard/baseboard.overlay"
+#include "../program/brox/motionsense.dtsi"
+#include "../program/brox/lotso/cbi.dtsi"
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_ec_accel_db_int_l: ec_accel_db_int_l {
+			gpios = <&gpioj 7 GPIO_INPUT>;
+		};
+	};
+
+	gpio_interrupts: gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_lid_imu: int-lid-imu {
+			irq-pin = <&gpio_ec_accel_db_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "motion_interrupt";
+		};
+	};
+};

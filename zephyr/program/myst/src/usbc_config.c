@@ -129,7 +129,8 @@ int board_set_active_charge_port(int port)
 /* Round up 3250 max current to multiple of 128mA for ISL9241 AC prochot. */
 static void charger_prochot_init_isl9241(void)
 {
-	isl9241_set_ac_prochot(CHARGER_SOLO, CONFIG_AC_PROCHOT_CURRENT_MA);
+	isl9241_set_ac_prochot(CHARGER_SOLO,
+			       CONFIG_CHARGER_AC_PROCHOT_CURRENT_MA);
 }
 DECLARE_HOOK(HOOK_INIT, charger_prochot_init_isl9241, HOOK_PRIO_DEFAULT);
 

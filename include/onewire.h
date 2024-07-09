@@ -19,6 +19,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Reset the 1-wire bus.
  *
@@ -39,5 +43,9 @@ int onewire_read(void);
  * @param data		Byte to write
  */
 void onewire_write(int data);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_ONEWIRE_H */

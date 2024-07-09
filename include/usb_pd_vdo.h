@@ -10,6 +10,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * NOTE: Throughout the file, some of the bit fields in the structures are for
  * information purpose, they might not be actually used in the current code.
@@ -1090,5 +1094,9 @@ union product_type_vdo2 {
 	uint32_t raw_value;
 };
 BUILD_ASSERT(sizeof(uint32_t) == sizeof(union product_type_vdo2));
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_PD_VDO_H */

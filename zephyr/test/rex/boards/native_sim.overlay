@@ -1,0 +1,100 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <board-overlays/native_sim.dts>
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	/* GPIOs shared by all projects */
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_usb_c1_rst_odl: usb_c1_rst_odl {
+			gpios = <&gpio0 1 GPIO_ODR_LOW>;
+		};
+		gpio_usb_c1_rt_int_odl: usb_c1_rt_int_odl {
+			gpios = <&gpio0 2 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_usb_c1_rt_rst_r_odl: usb_c1_rt_rst_r_odl {
+			gpios = <&gpio0 3 GPIO_ODR_HIGH>;
+		};
+		gpio_usb_c1_frs_en: usb_c1_frs_en {
+			gpios = <&gpio0 4 GPIO_ODR_HIGH>;
+		};
+		gpio_en_z1_rails: en_z1_rails {
+			gpios = <&gpio0 5 GPIO_OUTPUT>;
+		};
+		gpio_ec_batt_pres_odl: ec_batt_pres_odl {
+			gpios = <&gpio0 6 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		gpio_en_pp5000_usba_r: en_pp5000_usba_r {
+			gpios = <&gpio0 7 GPIO_OUTPUT>;
+		};
+	};
+
+	/*
+	 * This is a 2nd GPIO bank to be used by variants to
+	 * avoid conflicts with common GPIO assignments.
+	 */
+	gpio1: gpio@101 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x101 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <32>;
+	};
+
+	i2c1_0: i2c@100 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x100 4>;
+	};
+	i2c2_0: i2c@200 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x200 4>;
+	};
+	i2c3_0: i2c@300 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x300 4>;
+	};
+	i2c4_1: i2c@410 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x410 4>;
+	};
+	i2c6_1: i2c@610 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x610 4>;
+	};
+
+	usba-port-enable-list {
+		compatible = "cros-ec,usba-port-enable-pins";
+		enable-pins = <&gpio_en_pp5000_usba_r>;
+	};
+};

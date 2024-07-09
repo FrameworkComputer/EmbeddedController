@@ -1,0 +1,440 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Corsola program common DTS includes */
+
+#include "../common.dtsi"
+#include "../power_signal.dtsi"
+#include "../usba.dtsi"
+#include "../npcx_adc.dtsi"
+#include "../npcx_gpio.dtsi"
+#include "../npcx_host_interface.dtsi"
+#include "../npcx_i2c.dtsi"
+#include "../npcx_interrupts.dtsi"
+#include "../npcx_keyboard.dtsi"
+#include "../npcx_usbc.dtsi"
+#include "../npcx_default_gpio_pinctrl.dtsi"
+#include <cros/thermistor/thermistor.dtsi>
+#include <dt-bindings/motionsense/utils.h>
+#include <dt-bindings/battery.h>
+
+/ {
+	unused-pins {
+		compatible = "unused-gpios";
+
+		unused-gpios=
+			<&gpio5 7 0>,
+			/* en_ec_id_odl */
+			/*<&gpio7 6 0>,*/
+			<&gpiof 3 0>,
+			<&gpiof 1 0>,
+			<&gpiod 7 0>,
+			<&gpio8 3 0>,
+			<&gpio8 5 0>,
+			<&gpio8 6 0>,
+			<&gpio9 5 0>,
+			<&gpio4 1 0>,
+			<&gpioa 5 0>,
+			<&gpiob 0 0>,
+			<&gpio9 3 0>,
+			<&gpioa 7 0>;
+	};
+
+	named-gpios {
+		gpio_tp_en: tp_en {
+			gpios = <&gpioa 6 (GPIO_ODR_HIGH | GPIO_VOLTAGE_1P8)>;
+		};
+		gpio_ap_bl_en_odl: gpio_ap_bl_en_odl{
+			gpios = <&gpiof 2 GPIO_INPUT>;
+		};
+	};
+
+	batteries {
+		default_battery: lges-ap23a8l {
+			compatible = "lges,ap23a8l", "battery-smart";
+		};
+		smp_ap23a7l {
+			compatible = "smp,ap23a7l", "battery-smart";
+		};
+	};
+
+	cros-keyscan {
+		compatible = "cros-ec,keyscan";
+
+		debounce-down = <20000>;
+		debounce-up = <20000>;
+
+		actual-key-mask = <
+			0x1c	/* C0 */
+			0xff	/* C1 */
+			0xff	/* C2 */
+			0xff	/* C3 */
+			0xff	/* C4 */
+			0xf5	/* C5 */
+			0xff	/* C6 */
+			0xa4	/* C7 */
+			0xff	/* C8 */
+			0xfe	/* C9 */
+			0x55	/* C10 */
+			0xfa	/* C11 */
+			0xca	/* C12 */
+		>;
+	};
+
+	motionsense-mutex {
+		compatible = "cros-ec,motionsense-mutex";
+		lid_mutex: lid-mutex {
+		};
+		base_mutex: base-mutex {
+		};
+	};
+
+	/* Rotation matrix used by drivers. */
+	motionsense-rotation-ref {
+		compatible = "cros-ec,motionsense-rotation-ref";
+		lid_rot_lis2de12: lid-rotation-ref-lis2de12 {
+			mat33 = <0 1 0
+				 1 0 0
+				 0 0 (-1)>;
+		};
+
+		base_rot_lis2de12: base-rotation-ref-lis2de12 {
+			mat33 = <0 1 0
+				 1 0 0
+				 0 0 (-1)>;
+		};
+	};
+
+	/*
+	 * Driver specific data. A driver-specific data can be shared with
+	 * different motion sensors while they are using the same driver.
+	 *
+	 * If a node's compatible starts with "cros-ec,accelgyro-", it is for
+	 * a common structure defined in accelgyro.h.
+	 * e.g) compatible = "cros-ec,accelgyro-als-drv-data" is for
+	 * "struct als_drv_data_t" in accelgyro.h
+	 */
+	motionsense-sensor-data {
+		lid_data: lis2de12-lid-data {
+			compatible = "cros-ec,drvdata-lis2de";
+			status = "okay";
+		};
+
+		base_data: lis2de12-base-data {
+			compatible = "cros-ec,drvdata-lis2de";
+			status = "okay";
+		};
+	};
+
+	/*
+	 * List of motion sensors that creates motion_sensors array.
+	 * The nodelabel "lid_accel" and "base_accel" are used to indicate
+	 * motion sensor IDs for lid angle calculation.
+	 * TODO(b/238139272): The first entries of the array must be
+	 * accelerometers,then gyroscope. Fix this dependency in the DTS
+	 * processing which makes the devicetree entries independent.
+	 */
+	motionsense-sensor {
+		lid_accel: lid-accel {
+			compatible = "cros-ec,lis2de";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_LID";
+			mutex = <&lid_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&lid_rot_lis2de12>;
+			default-range = <2>;
+			drv-data = <&lid_data>;
+			i2c-spi-addr-flags = "LIS2DH_ADDR0_FLAGS";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+					ec-rate = <(100 * USEC_PER_MSEC)>;
+				};
+				ec-s3 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+					ec-rate = <0>;
+				};
+			};
+		};
+
+		base_accel: base-accel {
+			compatible = "cros-ec,lis2de";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_sensor>;
+			rot-standard-ref = <&base_rot_lis2de12>;
+			default-range = <2>;
+			drv-data = <&base_data>;
+			i2c-spi-addr-flags = "LIS2DH_ADDR1_FLAGS";
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+					ec-rate = <(100 * USEC_PER_MSEC)>;
+				};
+				ec-s3 {
+					odr = <(12500 | ROUND_UP_FLAG)>;
+					ec-rate = <0>;
+				};
+			};
+		};
+	};
+
+	motionsense-sensor-info {
+		compatible = "cros-ec,motionsense-sensor-info";
+
+		/*
+		 * list of GPIO interrupts that have to
+		 * be enabled at initial stage
+		 */
+		/* list of sensors in force mode */
+		accel-force-mode-sensors = <&lid_accel &base_accel>;
+	};
+
+	led-colors {
+		compatible = "cros-ec,led-policy";
+
+		/* Squirtle LED bat charge */
+		bat-power-state-charge {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery display percent range (>= Empty, <= 99%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 99>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+				};
+			};
+		};
+
+		/* Squirtle LED bat charge, full batt-lvl */
+		bat-power-state-charge-full {
+			charge-state = "LED_PWRS_CHARGE";
+			/* Battery display percent range (100%) */
+			batt-lvl = <BATTERY_LEVEL_FULL BATTERY_LEVEL_FULL>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_BLUE";
+				};
+			};
+		};
+
+		/* Squirtle LED bat charge near full */
+		bat-power-state-charge-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_BLUE";
+				};
+			};
+		};
+
+		/* Squirtle LED bat discharge */
+		bat-power-state-discharge-s0 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S0";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_BLUE";
+				};
+			};
+		};
+		bat-power-state-discharge-s3 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S3";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
+			};
+		};
+		bat-power-state-discharge-s5 {
+			charge-state = "LED_PWRS_DISCHARGE";
+			chipset-state = "POWER_S5";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		/* Squirtle LED bat error */
+		bat-power-state-error {
+			charge-state = "LED_PWRS_ERROR";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+
+		/* Squirtle LED power idle */
+		power-state-idle {
+			charge-state = "LED_PWRS_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_BLUE";
+				};
+			};
+		};
+
+		/* Squirtle LED power forced idle */
+		power-state-forced-idle {
+			charge-state = "LED_PWRS_FORCED_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+					period-ms = <2000>;
+				};
+				color-1 {
+					led-color = "LED_BLUE";
+					period-ms = <2000>;
+				};
+			};
+		};
+	};
+
+	pwmleds {
+		compatible = "pwm-leds";
+
+		led_amber: ec_led1_odl {
+			pwms = <&pwm0 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+
+		led_blue: ec_led2_odl {
+			pwms = <&pwm1 0 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+	};
+
+	pwm-led-pins {
+		compatible = "cros-ec,pwm-led-pins";
+
+		battery_led: battery-led {
+			led-id = "EC_LED_ID_BATTERY_LED";
+			led-pwms = <&led_amber &led_blue>;
+
+			color-off {
+				led-color = "LED_OFF";
+				led-values = <0 0>;
+			};
+
+			color-amber {
+				led-color = "LED_AMBER";
+				led-values = <100 0>;
+			};
+
+			color_blue {
+				led-color = "LED_BLUE";
+				led-values = <0 100>;
+			};
+		};
+	};
+
+	usbc {
+		port0@0{
+			/delete-property/ bc12;
+		};
+		port1@1{
+			/delete-property/ bc12;
+		};
+	};
+};
+
+&i2c1_0 {
+	/delete-node/ pi3usb9201@5f;
+};
+
+&i2c2_0 {
+	/delete-node/ rt1718s-bc12@40;
+};
+
+/* Amber LED */
+&pwm0_gpc3 {
+	drive-open-drain;
+};
+
+&pwm0 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm0_gpc3>;
+	pinctrl-names = "default";
+};
+
+/* Blue LED */
+&pwm1_gpc2 {
+	drive-open-drain;
+};
+
+&pwm1 {
+	status = "okay";
+	clock-bus = "NPCX_CLOCK_BUS_LFCLK";
+	pinctrl-0 = <&pwm1_gpc2>;
+	pinctrl-names = "default";
+};
+
+/* gpio overrides */
+/ {
+	named-gpios {
+		/delete-node/ ec_pen_chg_dis_odl;
+	};
+};
+
+/* interrupts overrides */
+/ {
+	gpio-interrupts {
+		int_ap_bl_en: int_ap__bl_en{
+			irq-pin = <&gpio_ap_bl_en_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "ap_bl_en_interrupt";
+		};
+
+		/delete-node/ base_imu;
+		/delete-node/ usb_c0_bc12;
+	};
+};

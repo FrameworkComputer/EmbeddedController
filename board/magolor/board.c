@@ -16,8 +16,10 @@
 #include "chipset.h"
 #include "common.h"
 #include "compile_time_macros.h"
+#include "cros_board_info.h"
 #include "driver/accel_bma2x2.h"
 #include "driver/accel_kionix.h"
+#include "driver/accelgyro_bmi323.h"
 #include "driver/accelgyro_bmi_common.h"
 #include "driver/accelgyro_icm426xx.h"
 #include "driver/accelgyro_icm_common.h"
@@ -625,6 +627,8 @@ static const mat33_fp_t base_icm_ref = { { FLOAT_TO_FP(-1), 0, 0 },
 
 /* ICM426 private data */
 static struct icm_drv_data_t g_icm426xx_data;
+/* BMI160 private data */
+static struct bmi_drv_data_t g_bmi323_data;
 /* KX022 private data */
 static struct kionix_accel_data g_kx022_data;
 
@@ -699,6 +703,52 @@ struct motion_sensor_t icm426xx_base_gyro = {
 	.rot_standard_ref = &base_icm_ref,
 	.min_frequency = ICM426XX_GYRO_MIN_FREQ,
 	.max_frequency = ICM426XX_GYRO_MAX_FREQ,
+};
+
+struct motion_sensor_t bmi323_base_accel = {
+	.name = "Base Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_BMI323,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &bmi3xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_bmi323_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = BMI3_ADDR_I2C_PRIM,
+	.rot_standard_ref = &base_standard_ref,
+	.min_frequency = BMI_ACCEL_MIN_FREQ,
+	.max_frequency = BMI_ACCEL_MAX_FREQ,
+	.default_range = 4,  /* g, to meet CDD 7.3.1/C-1-4 reqs */
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* Sensor on in S3 */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+			.ec_rate = 0,
+		},
+	},
+};
+
+struct motion_sensor_t bmi323_base_gyro = {
+	.name = "Base Gyro",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_BMI323,
+	.type = MOTIONSENSE_TYPE_GYRO,
+	.location = MOTIONSENSE_LOC_BASE,
+	.drv = &bmi3xx_drv,
+	.mutex = &g_base_mutex,
+	.drv_data = &g_bmi323_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = BMI3_ADDR_I2C_PRIM,
+	.default_range = 1000, /* dps */
+	.rot_standard_ref = &base_standard_ref,
+	.min_frequency = BMI_GYRO_MIN_FREQ,
+	.max_frequency = BMI_GYRO_MAX_FREQ,
 };
 #endif
 
@@ -824,6 +874,25 @@ static void setup_mux(void)
 		ccprints("PS8762 USB MUX");
 }
 
+#ifdef BOARD_MAGOLOR
+/*
+ * Bit masks to SKU ID 0xC0000 ~ 0xCFFFF
+ * for magister sku table return 1
+ */
+#define MAGISTER_MASK (BIT(19) | BIT(18) | BIT(17) | BIT(16))
+static uint32_t sku_id;
+int check_magister_skuid(void)
+{
+	uint32_t val;
+	if (cbi_get_sku_id(&val) != EC_SUCCESS)
+		return 0;
+	sku_id = val;
+	return (((MAGISTER_MASK & sku_id) == 0xC0000) && sku_id <= 0xCFFFF) ?
+		       1 :
+		       0;
+}
+#endif
+
 void board_init(void)
 {
 	int on;
@@ -870,16 +939,26 @@ void board_init(void)
 			motion_sensors[BASE_ACCEL] = icm426xx_base_accel;
 			motion_sensors[BASE_GYRO] = icm426xx_base_gyro;
 			ccprints("BASE GYRO is ICM426XX");
+		} else if (get_cbi_ssfc_base_sensor() == SSFC_SENSOR_BMI323) {
+			motion_sensors[BASE_ACCEL] = bmi323_base_accel;
+			motion_sensors[BASE_GYRO] = bmi323_base_gyro;
+			ccprints("BASE GYRO is BMI323");
 		} else
 			ccprints("BASE GYRO is BMI160");
 
 		if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_KX022) {
 			motion_sensors[LID_ACCEL] = kx022_lid_accel;
-			ccprints("LID_ACCEL is KX022");
-		} else {
-			if (system_get_board_version() >= 5) {
+			if (check_magister_skuid()) {
 				motion_sensors[LID_ACCEL].rot_standard_ref =
 					&lid_magister_ref;
+				ccprints("Magister");
+			}
+			ccprints("LID_ACCEL is KX022");
+		} else {
+			if (check_magister_skuid()) {
+				motion_sensors[LID_ACCEL].rot_standard_ref =
+					&lid_magister_ref;
+				ccprints("Magister");
 			}
 			ccprints("LID_ACCEL is BMA253");
 		}
@@ -925,6 +1004,9 @@ void motion_interrupt(enum gpio_signal signal)
 	switch (get_cbi_ssfc_base_sensor()) {
 	case SSFC_SENSOR_ICM426XX:
 		icm426xx_interrupt(signal);
+		break;
+	case SSFC_SENSOR_BMI323:
+		bmi3xx_interrupt(signal);
 		break;
 	case SSFC_SENSOR_BMI160:
 	default:

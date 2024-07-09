@@ -15,12 +15,18 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum API_RETURN_STATUS_T {
 	/* OTP API succeeded */
 	API_RET_OTP_STATUS_OK = 0xA5A5,
 	/* OTP API failed */
 	API_RET_OTP_STATUS_FAIL = 0x5A5A
 };
+
+extern const uint8_t default_fake_otp_key[OTP_KEY_SIZE_BYTES];
 
 struct mock_otp {
 	bool powered_on;
@@ -31,4 +37,9 @@ struct mock_otp {
 	((struct mock_otp){ .powered_on = false, .otp_key_buffer = { 0 } })
 
 extern struct mock_otp mock_otp;
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __MOCK_OTP_KEY_MOCK_H */

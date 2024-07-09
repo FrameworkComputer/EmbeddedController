@@ -6,6 +6,7 @@
 #include "accelgyro.h"
 #include "common.h"
 #include "cros_cbi.h"
+#include "dps.h"
 #include "driver/accelgyro_bmi3xx.h"
 #include "driver/accelgyro_lsm6dsm.h"
 #include "gpio/gpio_int.h"
@@ -37,3 +38,14 @@ static void alt_sensor_init(void)
 	motion_sensors_check_ssfc();
 }
 DECLARE_HOOK(HOOK_INIT, alt_sensor_init, HOOK_PRIO_POST_I2C);
+
+/* DPS parameters adapted for RT9490 charger */
+__override struct dps_config_t dps_config = {
+	.k_less_pwr = 87,
+	.k_more_pwr = 91,
+	.k_sample = 1,
+	.k_window = 3,
+	.t_stable = 10 * SECOND,
+	.t_check = 5 * SECOND,
+	.is_more_efficient = NULL,
+};

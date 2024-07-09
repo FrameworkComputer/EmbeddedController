@@ -83,7 +83,7 @@
 		compatible = "intel,ap-pwrseq-gpio";
 		dbg-label = "VRRDY input from IMVP9";
 		enum-name = "PWR_IMVP9_VRRDY";
-		gpios = <&gpio4 3 0>;
+		gpios = <&gpiob 1 0>;
 	};
 	pwr-pch-pwrok {
 		compatible = "intel,ap-pwrseq-gpio";

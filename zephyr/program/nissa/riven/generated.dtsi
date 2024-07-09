@@ -58,7 +58,7 @@
 			enum-name = "GPIO_ENABLE_BACKLIGHT";
 		};
 		gpio_ec_entering_rw: ec_entering_rw {
-			gpios = <&gpio0 3 GPIO_OUTPUT>;
+			gpios = <&gpio6 3 GPIO_OUTPUT>;
 			enum-name = "GPIO_ENTERING_RW";
 		};
 		gpio_ec_gsc_packet_mode: ec_gsc_packet_mode {
@@ -105,14 +105,10 @@
 			gpios = <&gpioa 4 GPIO_ODR_HIGH>;
 		};
 		gpio_ec_touch_en: ec_touch_en {
-			gpios = <&gpio8 3 GPIO_OUTPUT_LOW>;
+			gpios = <&gpio7 3 GPIO_OUTPUT_LOW>;
 		};
 		gpio_ec_wp_odl: ec_wp_odl {
 			gpios = <&gpioa 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-		};
-		gpio_en_kb_bl: en_kb_bl {
-			gpios = <&gpioa 0 GPIO_OUTPUT>;
-			enum-name = "GPIO_EN_KEYBOARD_BACKLIGHT";
 		};
 		gpio_en_pp3300_s5: en_pp3300_s5 {
 			gpios = <&gpiob 6 GPIO_OUTPUT>;
@@ -171,20 +167,12 @@
 		gpio_slp_sus_l: slp_sus_l {
 			gpios = <&gpio6 2 GPIO_INPUT>;
 		};
-		gpio_sub_usb_a1_ilimit_sdp: sub_usb_a1_ilimit_sdp {
-			gpios = <&gpiod 5 GPIO_OUTPUT>;
-			enum-name = "GPIO_USB2_ILIM_SEL";
-		};
 		gpio_sys_rst_odl: sys_rst_odl {
 			gpios = <&gpioc 5 GPIO_ODR_HIGH>;
 		};
 		gpio_tablet_mode_l: tablet_mode_l {
 			gpios = <&gpio9 5 GPIO_INPUT>;
 			enum-name = "GPIO_TABLET_MODE_L";
-		};
-		gpio_usb_a0_ilimit_sdp: usb_a0_ilimit_sdp {
-			gpios = <&gpio3 3 GPIO_OUTPUT>;
-			enum-name = "GPIO_USB1_ILIM_SEL";
 		};
 		gpio_usb_c0_int_odl: usb_c0_int_odl {
 			gpios = <&gpio0 1 GPIO_INPUT_PULL_UP>;
@@ -222,6 +210,10 @@
 		i2c_ec_i2c_usb_c0: ec_i2c_usb_c0 {
 			i2c-port = <&i2c3_0>;
 			enum-names = "I2C_PORT_USB_C0_TCPC";
+		};
+		i2c_ec_i2c_sensor_2: ec_i2c_sensor_2 {
+			i2c-port = <&i2c4_1>;
+			enum-names = "I2C_PORT_SENSOR_2";
 		};
 		i2c_ec_i2c_sub_usb_c1: ec_i2c_sub_usb_c1 {
 			i2c-port = <&i2c5_1>;
@@ -269,6 +261,12 @@
 	pinctrl-names = "default";
 };
 
+&i2c4_1 {
+	status = "okay";
+	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
+	pinctrl-names = "default";
+};
+
 &i2c5_1 {
 	status = "okay";
 	pinctrl-0 = <&i2c5_1_sda_scl_gpf4_f5>;
@@ -291,6 +289,10 @@
 };
 
 &i2c_ctrl3 {
+	status = "okay";
+};
+
+&i2c_ctrl4 {
 	status = "okay";
 };
 

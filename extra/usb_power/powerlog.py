@@ -1,19 +1,16 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright 2016 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
+
+# pylint:disable=too-many-lines
 
 """Program to fetch power logging data from a sweetberry device
    or other usb device that exports a USB power logging interface.
 """
 
-# Note: This is a py2/3 compatible file.
-
-from __future__ import print_function
-
 import argparse
-import array
-from distutils import sysconfig
+from distutils import sysconfig  # pylint:disable=deprecated-module
 import json
 import logging
 import os
@@ -21,7 +18,6 @@ import pprint
 import struct
 import sys
 import time
-import traceback
 
 from stats_manager import StatsManager  # pylint:disable=import-error
 import usb  # pylint:disable=import-error
@@ -42,6 +38,7 @@ CONFIG_LOCATIONS = [
 
 
 def logoutput(msg):
+    """Logs some output to stdout."""
     print(msg)
     sys.stdout.flush()
 
@@ -71,10 +68,10 @@ def process_filename(filename):
         file_at_dir = os.path.join(dirname, filename)
         if os.path.isfile(file_at_dir):
             return file_at_dir
-    raise IOError("No such file or directory: '%s'" % filename)
+    raise IOError(f"No such file or directory: '{filename}'")
 
 
-class Spower(object):
+class Spower:
     """Power class to access devices on the bus.
 
     Usage:
@@ -158,7 +155,12 @@ class Spower(object):
     }
 
     def __init__(
-        self, board, vendor=0x18D1, product=0x5020, interface=1, serialname=None
+        self,
+        board,
+        vendor=0x18D1,
+        product=0x5020,
+        interface=1,  # pylint:disable=unused-argument
+        serialname=None,
     ):
         self._logger = logging.getLogger(__name__)
         self._board = board
@@ -167,24 +169,26 @@ class Spower(object):
         dev_g = usb.core.find(idVendor=vendor, idProduct=product, find_all=True)
         dev_list = list(dev_g)
         if not dev_list:
-            raise Exception("Power", "USB device not found")
+            raise FileNotFoundError("Power USB device not found")
 
         # Check if we have multiple stm32s and we've specified the serial.
         dev = None
         if serialname:
-            for d in dev_list:
+            for ddd in dev_list:
                 dev_serial = "PyUSB dioesn't have a stable interface"
                 try:
-                    dev_serial = usb.util.get_string(d, 256, d.iSerialNumber)
+                    dev_serial = usb.util.get_string(
+                        ddd, 256, ddd.iSerialNumber
+                    )
                 except ValueError:
                     # Incompatible pyUsb version.
-                    dev_serial = usb.util.get_string(d, d.iSerialNumber)
+                    dev_serial = usb.util.get_string(ddd, ddd.iSerialNumber)
                 if dev_serial == serialname:
-                    dev = d
+                    dev = ddd
                     break
             if dev is None:
-                raise Exception(
-                    "Power", "USB device(%s) not found" % serialname
+                raise FileNotFoundError(
+                    f"Power USB device({serialname}) not found"
                 )
         else:
             dev = dev_list[0]
@@ -235,19 +239,20 @@ class Spower(object):
         self.clear_ina_struct()
 
         self._logger.debug("Found power logging USB endpoint.")
+        self._brdcfg = []
 
     def clear_ina_struct(self):
         """Clear INA description struct."""
         self._inas = []
 
     def append_ina_struct(
-        self, name, rs, port, addr, data=None, ina_type=INA_POWER
+        self, name, sense_resistor, port, addr, data=None, ina_type=INA_POWER
     ):
         """Add an INA descriptor into the list of active INAs.
 
         Args:
           name:	Readable name of this channel.
-          rs:	Sense resistor value in ohms, floating point.
+          sense_resistor:	Sense resistor value in ohms, floating point.
           port:	I2C channel this INA is connected to.
           addr: 	I2C addr of this INA.
           data:	Misc data for special handling, board specific.
@@ -255,7 +260,7 @@ class Spower(object):
         """
         ina = {}
         ina["name"] = name
-        ina["rs"] = rs
+        ina["rs"] = sense_resistor
         ina["port"] = port
         ina["addr"] = addr
         ina["type"] = ina_type
@@ -263,7 +268,7 @@ class Spower(object):
         # (see INA231 spec p.15)
         # CurrentLSB = uA per div = 80mV / (Rsh * 2^15)
         # CurrentLSB uA = 80000000nV / (Rsh mOhm * 0x8000)
-        ina["uAscale"] = 80000000.0 / (rs * 0x8000)
+        ina["uAscale"] = 80000000.0 / (sense_resistor * 0x8000)
         ina["uWscale"] = 25.0 * ina["uAscale"]
         ina["mVscale"] = 1.25
         ina["uVscale"] = 2.5
@@ -295,9 +300,6 @@ class Spower(object):
         )
 
         # Clean up args from python style to correct types.
-        write_length = 0
-        if write_list:
-            write_length = len(write_list)
         if not read_count:
             read_count = 0
 
@@ -319,8 +321,7 @@ class Spower(object):
             self._logger.debug("STATUS: 0x%02x", int(bytesread[0]))
             if read_count == 1:
                 return bytesread[0]
-            else:
-                return bytesread
+            return bytesread
 
         return None
 
@@ -334,7 +335,7 @@ class Spower(object):
                 self._logger.debug(
                     "Try Clear: read %s", "success" if ret == 0 else "failure"
                 )
-        except:
+        except Exception:  # pylint:disable=broad-except
             pass
 
     def send_reset(self):
@@ -359,11 +360,11 @@ class Spower(object):
             try:
                 self.send_reset()
                 return
-            except Exception as e:
+            except Exception as err:  # pylint:disable=broad-except
                 self.clear()
                 self.clear()
                 self._logger.debug(
-                    "TRY %d of %d: %s", count, max_reset_retry, e
+                    "TRY %d of %d: %s", count, max_reset_retry, err
                 )
                 time.sleep(count * 0.01)
         raise Exception("Power", "Failed to reset")
@@ -417,7 +418,7 @@ class Spower(object):
 
         for datum in self._brdcfg:
             if datum["name"] == name:
-                rs = int(float(datum["rs"]) * 1000.0)
+                sense_resistor = int(float(datum["rs"]) * 1000.0)
                 board = datum["sweetberry"]
 
                 if board == self._board:
@@ -427,11 +428,12 @@ class Spower(object):
                     else:
                         channel = int(datum["channel"])
                         port, addr = self.CHMAP[channel]
-                    self.add_ina(port, ina_type, addr, 0, rs, data=datum)
+                    self.add_ina(
+                        port, ina_type, addr, 0, sense_resistor, data=datum
+                    )
                     return True
-                else:
-                    return False
-        raise Exception("Power", "Failed to find INA %s" % name)
+                return False
+        raise Exception("Power", f"Failed to find INA {name}")
 
     def set_time(self, timestamp_us):
         """Set sweetberry time to match host time.
@@ -466,7 +468,7 @@ class Spower(object):
             if data:
                 name = data["name"]
             else:
-                name = "ina%d_%02x" % (bus, addr)
+                name = f"ina{bus:d}_{addr:02x}"
             self.append_ina_struct(
                 name, resistance, bus, addr, data=data, ina_type=ina_type
             )
@@ -474,7 +476,7 @@ class Spower(object):
             "Command ADD_INA: %s", "success" if ret == 0 else "failure"
         )
 
-    def report_header_size(self):
+    def report_header_size(self):  # pylint:disable=no-self-use
         """Helper function to calculate power record header size."""
         result = 2
         timestamp = 8
@@ -501,8 +503,8 @@ class Spower(object):
             expected_bytes = self.report_size(len(self._inas))
             cmd = struct.pack("<H", self.CMD_NEXT)
             bytesread = self.wr_command(cmd, read_count=expected_bytes)
-        except usb.core.USBError as e:
-            self._logger.error("READ LINE FAILED %s", e)
+        except usb.core.USBError as err:
+            self._logger.error("READ LINE FAILED %s", err)
             return None
 
         if len(bytesread) == 1:
@@ -593,7 +595,7 @@ class Spower(object):
         Args:
           brdfile:	Filename of a json file decribing the INA wiring of this board.
         """
-        with open(process_filename(brdfile)) as data_file:
+        with open(process_filename(brdfile), encoding="utf-8") as data_file:
             data = json.load(data_file)
 
         # TODO: validate this.
@@ -601,7 +603,7 @@ class Spower(object):
         self._logger.debug(pprint.pformat(data))
 
 
-class powerlog(object):
+class powerlog:  # pylint:disable=invalid-name
     """Power class to log aggregated power.
 
     Usage:
@@ -666,27 +668,27 @@ class powerlog(object):
         if serial_b:
             self._pwr["B"] = Spower("B", serialname=serial_b)
 
-        with open(process_filename(cfgfile)) as data_file:
+        with open(process_filename(cfgfile), encoding="utf-8") as data_file:
             names = json.load(data_file)
         self._names = self.process_scenario(names)
 
-        for key in self._pwr:
-            self._pwr[key].load_board(brdfile)
-            self._pwr[key].reset()
+        for key, val in self._pwr.items():
+            val.load_board(brdfile)
+            val.reset()
 
         # Allocate the rails to the appropriate boards.
         used_boards = []
         for name in self._names:
             success = False
-            for key in self._pwr.keys():
-                if self._pwr[key].add_ina_name(name):
+            for key, val in self._pwr.items():
+                if val.add_ina_name(name):
                     success = True
                     if key not in used_boards:
                         used_boards.append(key)
             if not success:
                 raise Exception(
-                    "Failed to add %s (maybe missing "
-                    "sweetberry, or bad board file?)" % name
+                    f"Failed to add {name} (maybe missing "
+                    "sweetberry, or bad board file?)"
                 )
 
         # Evict unused boards.
@@ -694,13 +696,13 @@ class powerlog(object):
             if key not in used_boards:
                 self._pwr.pop(key)
 
-        for key in self._pwr.keys():
+        for key, val in self._pwr.items():
             if sync_date:
-                self._pwr[key].set_time(time.time() * 1000000)
+                val.set_time(time.time() * 1000000)
             else:
-                self._pwr[key].set_time(0)
+                val.set_time(0)
 
-    def process_scenario(self, name_list):
+    def process_scenario(self, name_list):  # pylint:disable=no-self-use
         """Return list of tuples indicating name and type.
 
         Args:
@@ -714,25 +716,24 @@ class powerlog(object):
             if isinstance(entry, list):
                 name = entry[0]
                 if entry[1] == "POWER":
-                    type = Spower.INA_POWER
+                    power_type = Spower.INA_POWER
                 elif entry[1] == "BUSV":
-                    type = Spower.INA_BUSV
+                    power_type = Spower.INA_BUSV
                 elif entry[1] == "CURRENT":
-                    type = Spower.INA_CURRENT
+                    power_type = Spower.INA_CURRENT
                 elif entry[1] == "SHUNTV":
-                    type = Spower.INA_SHUNTV
+                    power_type = Spower.INA_SHUNTV
                 else:
                     raise Exception(
                         "Invalid INA type",
-                        "Type of %s [%s] not recognized,"
-                        " try one of POWER, BUSV, CURRENT"
-                        % (entry[0], entry[1]),
+                        f"Type of {entry[0]} [{entry[1]}] not recognized,"
+                        " try one of POWER, BUSV, CURRENT",
                     )
             else:
                 name = entry
-                type = Spower.INA_POWER
+                power_type = Spower.INA_POWER
 
-            names.append((name, type))
+            names.append((name, power_type))
         return names
 
     def start(self, integration_us_request, seconds, sync_speed=0.8):
@@ -746,20 +747,19 @@ class powerlog(object):
         # We will get back the actual integration us.
         # It should be the same for all devices.
         integration_us = None
-        for key in self._pwr:
-            integration_us_new = self._pwr[key].start(integration_us_request)
+        for val in self._pwr.values():
+            integration_us_new = val.start(integration_us_request)
             if integration_us:
                 if integration_us != integration_us_new:
                     raise Exception(
                         "FAIL",
-                        # pylint:disable=bad-string-format-type
-                        "Integration on A: %dus != integration on B %dus"
-                        % (integration_us, integration_us_new),
+                        f"Integration on A: {integration_us:d}us != integration"
+                        f" on B {integration_us_new:d}us",
                     )
             integration_us = integration_us_new
 
         # CSV header
-        title = "ts:%dus" % integration_us
+        title = f"ts:{integration_us:d}us"
         for name_tuple in self._names:
             name, ina_type = name_tuple
 
@@ -772,7 +772,7 @@ class powerlog(object):
             elif ina_type == Spower.INA_SHUNTV:
                 unit = "uV"
 
-            title += ", %s %s" % (name, unit)
+            title += f", {name} {unit}"
             name_type = name + Spower.INA_SUFFIX[ina_type]
             self._data.SetUnit(name_type, unit)
         title += ", status"
@@ -788,8 +788,8 @@ class powerlog(object):
             while forever or end_time > time.time():
                 if integration_us > 5000:
                     time.sleep((integration_us / 1000000.0) * sync_speed)
-                for key in self._pwr:
-                    records = self._pwr[key].read_line()
+                for _, val in self._pwr.items():
+                    records = val.read_line()
                     if not records:
                         continue
 
@@ -813,7 +813,7 @@ class powerlog(object):
                         break
 
                     if aggregate_record["boards"] == set(self._pwr.keys()):
-                        csv = "%f" % aggregate_record["ts"]
+                        csv = f"{aggregate_record['ts']:f}"
                         for name in self._names:
                             if name in aggregate_record:
                                 multiplier = (
@@ -825,29 +825,29 @@ class powerlog(object):
                                     else 1
                                 )
                                 value = aggregate_record[name] * multiplier
-                                csv += ", %.2f" % value
+                                csv += f", {value:.2f}"
                                 name_type = name[0] + Spower.INA_SUFFIX[name[1]]
                                 self._data.AddSample(name_type, value)
                             else:
                                 csv += ", "
-                        csv += ", %d" % aggregate_record["status"]
+                        csv += f", {aggregate_record['status']:d}"
                         if self._print_raw_data:
                             logoutput(csv)
 
                         aggregate_record = {"boards": set()}
-                        for r in range(0, len(self._pwr)):
+                        for _ in range(0, len(self._pwr)):
                             pending_records.pop(0)
 
         except KeyboardInterrupt:
             self._logger.info("\nCTRL+C caught.")
 
         finally:
-            for key in self._pwr:
-                self._pwr[key].stop()
+            for _, val in self._pwr.items():
+                val.stop()
             self._data.CalculateStats()
             if self._print_stats:
                 print(self._data.SummaryToString())
-            save_dir = "sweetberry%s" % time.time()
+            save_dir = f"sweetberry{time.time()}"
             if self._stats_dir:
                 stats_dir = os.path.join(self._stats_dir, save_dir)
                 self._data.SaveSummary(stats_dir)
@@ -860,6 +860,7 @@ class powerlog(object):
 
 
 def main(argv=None):
+    """Main function."""
     if argv is None:
         argv = sys.argv[1:]
     # Command line argument description.
@@ -1025,14 +1026,12 @@ def main(argv=None):
     serial_b = args.serial_b
     sync_date = args.date
     use_ms = args.ms
-    use_mW = args.mW
+    use_mw = args.mW
     print_stats = args.print_stats
     stats_dir = args.stats_dir
     stats_json_dir = args.stats_json_dir
     print_raw_data = args.print_raw_data
     raw_data_dir = args.raw_data_dir
-
-    boards = []
 
     sync_speed = 0.8
     if args.slow:
@@ -1046,7 +1045,7 @@ def main(argv=None):
         serial_b=serial_b,
         sync_date=sync_date,
         use_ms=use_ms,
-        use_mW=use_mW,
+        use_mW=use_mw,
         print_stats=print_stats,
         stats_dir=stats_dir,
         stats_json_dir=stats_json_dir,

@@ -17,6 +17,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PS8XXX_COMPAT parade_ps8xxx
 
 /* clang-format off */
@@ -41,5 +45,9 @@
 /* clang-format on */
 
 DT_FOREACH_STATUS_OKAY(PS8XXX_COMPAT, TCPC_VERIFY_NO_FLAGS_ACTIVE_ALERT_HIGH)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_TCPC_PS8XXX_H */

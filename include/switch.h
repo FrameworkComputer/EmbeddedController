@@ -11,6 +11,10 @@
 #include "common.h"
 #include "gpio.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef CONFIG_SWITCH
 /**
  * Interrupt handler for switch inputs.
@@ -23,5 +27,9 @@ static inline void switch_interrupt(enum gpio_signal signal)
 {
 }
 #endif /* !CONFIG_SWITCH */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_SWITCH_H */

@@ -1,0 +1,26 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../../boards/native_sim.overlay"
+
+/delete-node/ &cros_flash;
+
+/ {
+	chosen {
+		cros-ec,flash-controller = &cros_flash;
+	};
+
+	soc {
+		cros_flash: cros-flash {
+			compatible = "cros-ec,cros-flash";
+		};
+	};
+};
+
+&flash0 {
+        erase-block-size = <0x4000>;
+        write-block-size = <1>;
+        reg = <0x00000000 DT_SIZE_K(512)>;
+};

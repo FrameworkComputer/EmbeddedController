@@ -41,6 +41,10 @@
 #include "common.h"
 #include "util.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
 /* RSA public key definition, VBoot2 packing */
 struct rsa_public_key {
@@ -62,5 +66,9 @@ int rsa_verify(const struct rsa_public_key *key, const uint8_t *signature,
 	       const uint8_t *sha, uint32_t *workbuf32);
 
 #endif /* !__ASSEMBLER__ */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_RSA_H */

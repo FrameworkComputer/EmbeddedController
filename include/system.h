@@ -21,11 +21,15 @@
 #include "ec_commands.h"
 #include "timer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * TODO(b/272518464): Work around coreboot GCC preprocessor bug.
  * #line marks the *next* line, so it is off by one.
  */
-#line 29
+#line 33
 
 #ifdef CONFIG_ZEPHYR
 #ifdef CONFIG_CPU_CORTEX_M
@@ -828,5 +832,9 @@ uint32_t flash_get_rw_offset(enum ec_image copy);
  * Compensate for the RTC after hibernation wake-up.
  */
 void system_compensate_rtc(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_SYSTEM_H */

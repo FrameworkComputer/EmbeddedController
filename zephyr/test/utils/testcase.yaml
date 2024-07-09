@@ -1,0 +1,6 @@
+common:
+  platform_allow: native_sim
+tests:
+  utils.static_if:
+    extra_configs:
+    - CONFIG_TEST_STATIC_IF=y

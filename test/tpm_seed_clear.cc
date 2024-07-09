@@ -5,10 +5,14 @@
 
 #include "common.h"
 #include "ec_commands.h"
-#include "fpsensor/fpsensor_state_without_driver_info.h"
 #include "system.h"
 #include "task.h"
 #include "test_util.h"
+
+#include <algorithm>
+
+#ifdef SECTION_IS_RW
+#include "fpsensor/fpsensor_state.h"
 
 #include <stdint.h>
 #include <string.h>
@@ -25,16 +29,12 @@ test_static const uint8_t zero_fake_tpm_seed[] = {
 	0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00, 0x00,
 };
 
-#ifdef SECTION_IS_RO
-test_static uint8_t tpm_seed[FP_CONTEXT_TPM_BYTES];
-#endif
-
 test_static int test_tpm_seed_before_reboot(void)
 {
 	TEST_ASSERT_ARRAY_EQ(global_context.tpm_seed, zero_fake_tpm_seed,
 			     FP_CONTEXT_TPM_BYTES);
-	memcpy(global_context.tpm_seed, default_fake_tpm_seed,
-	       FP_CONTEXT_TPM_BYTES);
+	std::ranges::copy(default_fake_tpm_seed,
+			  global_context.tpm_seed.begin());
 	TEST_ASSERT_ARRAY_EQ(global_context.tpm_seed, default_fake_tpm_seed,
 			     FP_CONTEXT_TPM_BYTES);
 	return EC_SUCCESS;
@@ -83,6 +83,8 @@ void test_run_step(uint32_t state)
 		run_test_step2();
 	}
 }
+#endif
+
 extern "C" int task_test(void *unused)
 {
 	if (IS_ENABLED(SECTION_IS_RW))

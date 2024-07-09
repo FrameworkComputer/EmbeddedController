@@ -13,7 +13,7 @@ documentation] for instructions on adding a new variant.
 
 # Building
 
-To build the `native_posix` example, run:
+To build the `minimal-posix` example, run:
 
 ``` shellsession
 (chroot) $ zmake build minimal-posix

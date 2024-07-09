@@ -106,6 +106,13 @@ config TEST_PONYTA
 	  Include ponyta_boart.c into the binary to test the alt sensor probe via
 	  SSFC and clamshell or convertible.
 
+
+config TEST_SQUIRTLE
+	bool "Run the tests intended for squirtle"
+	help
+	  Include voltorb_usbc.c into the binary to test the type-c output
+	  current limit function.
+
 config TEST_KYOGRE_SENSOR_PROBE
 	bool "Run the tests intended for kyogre sensor probe"
 	help

@@ -138,6 +138,7 @@ config PLATFORM_EC_CHARGER_ISL9238C
 	depends on PLATFORM_EC_I2C
 	select PLATFORM_EC_CHARGER_NARROW_VDC
 	select PLATFORM_EC_CHARGER_OTG_SUPPORTED
+	select PLATFORM_EC_CHARGER_TRICKLE
 	help
 	  Enable a driver for the ISL9238 Rev C VCD Battery Charger. This
 	  is a digitally-configurable, buck-boost battery charger that
@@ -164,6 +165,7 @@ config PLATFORM_EC_CHARGER_ISL9241
 config PLATFORM_EC_CHARGER_RAA489110
 	bool "Use the RAA489110 charger"
 	depends on PLATFORM_EC_I2C
+	select PLATFORM_EC_CHARGER_ISL9241
 	# Hardware based charge ramp is broken in the ISL9241 (b/169350714)
 	# Probably also broken for RAA489110.
 	select PLATFORM_EC_CHARGER_CHGRAMP_BROKEN
@@ -834,19 +836,21 @@ config PLATFORM_EC_ISL9238C_BUCK_PHASE_VOLTAGE
 	  Adjusts the phase comparator threshold offset for forward buck
 	  and buck-boost.
 
-config PLATFORM_EC_AC_PROCHOT_CURRENT_MA
+config PLATFORM_EC_CHARGER_AC_PROCHOT_CURRENT_MA
 	int "Value of the prochot threshold current in mA"
-	default 3328
+	default -1
 	help
 	  To set the PROCHOT# assertion threshold for adapter overcurrent
-	  conditions.
+	  conditions.  Set to -1 to accept the default setting of the charger
+	  chip.
 
-config PLATFORM_EC_DC_PROCHOT_CURRENT_MA
+config PLATFORM_EC_CHARGER_DC_PROCHOT_CURRENT_MA
 	int "Value of the prochot threshold current in mA"
-	default 6570
+	default -1
 	help
 	  To set the PROCHOT# signal assertion threshold for battery over
-	  discharging current conditions.
+	  discharging current conditions.  Set to -1 to accept the default
+	  setting of the charger chip.
 
 config PLATFORM_EC_CHARGER_DUMP_PROCHOT
 	bool "Enable support for prochot status dumping functions"

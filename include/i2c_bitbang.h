@@ -9,6 +9,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 extern const struct i2c_drv bitbang_drv;
 
 extern const struct i2c_port_t i2c_bitbang_ports[];
@@ -39,6 +43,10 @@ int bitbang_start_cond(const struct i2c_port_t *i2c_port);
 void bitbang_stop_cond(const struct i2c_port_t *i2c_port);
 int bitbang_write_byte(const struct i2c_port_t *i2c_port, uint8_t byte);
 void bitbang_set_started(int val);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_I2C_BITBANG_H */

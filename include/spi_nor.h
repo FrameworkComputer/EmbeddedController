@@ -14,6 +14,10 @@
 #include "task.h"
 #include "util.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Driver compatibility requirements based on JEDEC SFDP support:
  *
  * Parameter     | SFDP v1.(5+)     | SFDP v1.0 | All others
@@ -180,5 +184,9 @@ int spi_nor_write(const struct spi_nor_device_t *spi_nor_device,
  */
 int spi_nor_write_ear(const struct spi_nor_device_t *spi_nor_device,
 		      const uint8_t value);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_SPI_NOR_H */

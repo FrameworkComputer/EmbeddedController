@@ -4,15 +4,12 @@
  */
 
 #include "fpsensor/fpsensor_crypto.h"
-#include "fpsensor/fpsensor_state_without_driver_info.h"
+#include "rollback.h"
+#include "sha256.h"
+#include "test_util.h"
 
 #include <array>
 #include <vector>
-
-extern "C" {
-#include "sha256.h"
-#include "test_util.h"
-}
 
 struct HkdfTestVector {
 	std::vector<uint8_t> ikm;
@@ -22,7 +19,7 @@ struct HkdfTestVector {
 	std::vector<uint8_t> okm;
 };
 
-extern "C" enum ec_error_list rollback_get_secret(uint8_t *secret)
+enum ec_error_list rollback_get_secret(uint8_t *secret)
 {
 	// We should not call this function in the test.
 	TEST_ASSERT(false);
@@ -166,10 +163,24 @@ test_static int test_hkdf_expand(void)
 
 test_static ec_error_list test_aes_128_gcm_encrypt_in_place()
 {
-	constexpr std::array<uint8_t, SBP_ENC_KEY_LEN> key = {
-		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-		0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
-	};
+	const FpEncryptionKey key = { {
+		0x00,
+		0x01,
+		0x02,
+		0x03,
+		0x04,
+		0x05,
+		0x06,
+		0x07,
+		0x08,
+		0x09,
+		0x0A,
+		0x0B,
+		0x0C,
+		0x0D,
+		0x0E,
+		0x0F,
+	} };
 	std::array<uint8_t, 16> plaintext = { 0x00, 0x00, 0x00, 0x00,
 					      0x00, 0x00, 0x00, 0x00,
 					      0x00, 0x00, 0x00, 0x00,
@@ -200,10 +211,24 @@ test_static ec_error_list test_aes_128_gcm_encrypt_in_place()
 
 test_static ec_error_list test_aes_128_gcm_decrypt_in_place()
 {
-	constexpr std::array<uint8_t, SBP_ENC_KEY_LEN> key = {
-		0x00, 0x01, 0x02, 0x03, 0x04, 0x05, 0x06, 0x07,
-		0x08, 0x09, 0x0A, 0x0B, 0x0C, 0x0D, 0x0E, 0x0F,
-	};
+	const FpEncryptionKey key = { {
+		0x00,
+		0x01,
+		0x02,
+		0x03,
+		0x04,
+		0x05,
+		0x06,
+		0x07,
+		0x08,
+		0x09,
+		0x0A,
+		0x0B,
+		0x0C,
+		0x0D,
+		0x0E,
+		0x0F,
+	} };
 	/* Using the same values as from test_aes_gcm_encrypt_in_place means we
 	 * should get back the original plaintext from that function.
 	 */
@@ -236,7 +261,7 @@ test_static ec_error_list test_aes_128_gcm_decrypt_in_place()
 
 test_static ec_error_list test_aes_128_gcm_encrypt_invalid_nonce_size()
 {
-	constexpr std::array<uint8_t, SBP_ENC_KEY_LEN> key{};
+	const FpEncryptionKey key{};
 	std::array<uint8_t, 16> text{};
 	std::array<uint8_t, FP_CONTEXT_TAG_BYTES> tag{};
 
@@ -251,7 +276,7 @@ test_static ec_error_list test_aes_128_gcm_encrypt_invalid_nonce_size()
 
 test_static ec_error_list test_aes_128_gcm_decrypt_invalid_nonce_size()
 {
-	constexpr std::array<uint8_t, SBP_ENC_KEY_LEN> key{};
+	const FpEncryptionKey key{};
 	std::array<uint8_t, 16> text{};
 	constexpr std::array<uint8_t, FP_CONTEXT_TAG_BYTES> tag{};
 
@@ -270,7 +295,8 @@ test_static ec_error_list test_aes_128_gcm_encrypt_invalid_key_size()
 	constexpr std::array<uint8_t, FP_CONTEXT_NONCE_BYTES> nonce{};
 
 	/* Use an invalid key size. Key must be exactly 128 bits. */
-	constexpr std::array<uint8_t, SBP_ENC_KEY_LEN - 1> key{};
+	BUILD_ASSERT(sizeof(FpEncryptionKey) == 16);
+	constexpr std::array<uint8_t, 15> key{};
 
 	ec_error_list ret = aes_128_gcm_encrypt(key, text, text, nonce, tag);
 	TEST_EQ(ret, EC_ERROR_UNKNOWN, "%d");
@@ -285,7 +311,8 @@ test_static ec_error_list test_aes_128_gcm_decrypt_invalid_key_size()
 	constexpr std::array<uint8_t, FP_CONTEXT_NONCE_BYTES> nonce{};
 
 	/* Use an invalid key size. Key must be exactly 128 bits. */
-	constexpr std::array<uint8_t, SBP_ENC_KEY_LEN - 1> key{};
+	BUILD_ASSERT(sizeof(FpEncryptionKey) == 16);
+	constexpr std::array<uint8_t, 15> key{};
 
 	ec_error_list ret = aes_128_gcm_decrypt(key, text, text, nonce, tag);
 	TEST_EQ(ret, EC_ERROR_UNKNOWN, "%d");

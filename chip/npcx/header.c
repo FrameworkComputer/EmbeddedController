@@ -39,7 +39,10 @@
 /* Firmware Size -> Booter loads RO region after hard reset (16 bytes aligned)*/
 #define FW_SIZE CONFIG_RO_SIZE
 
-/* FW Header used by NPCX5M5G Booter */
+/**
+ * FW Header used by NPCX Booter
+ * Documentation: go/cros-fp-npcx99fp-bootloader
+ */
 struct __packed fw_header_t {
 	uint32_t anchor; /* A constant used to verify FW header       */
 	uint16_t ext_anchor; /* Enable/disable firmware header CRC check  */
@@ -56,6 +59,7 @@ struct __packed fw_header_t {
 	uint32_t sig_header; /* The CRC signature of the firmware header  */
 	uint32_t sig_fw_image; /* The CRC or Checksum of the firmware image */
 } __aligned(1);
+BUILD_ASSERT(sizeof(struct fw_header_t) == 64);
 
 __keep __attribute__((section(".header")))
 const struct fw_header_t fw_header = {

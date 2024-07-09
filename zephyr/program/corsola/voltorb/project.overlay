@@ -43,6 +43,9 @@
 		cosmx_ap20cbl-2 {
 			compatible = "cosmx,ap20cbl-2", "battery-smart";
 		};
+		cosmx_ap23abl {
+			compatible = "cosmx,ap23abl", "battery-smart";
+		};
 		lgc_ap19b8k {
 			compatible = "lgc,ap19b8k", "battery-smart";
 		};
@@ -57,6 +60,9 @@
 		};
 		smp_ap18c7k {
 			compatible = "smp,ap18c7k", "battery-smart";
+		};
+		smp_ap23a7l {
+			compatible = "smp,ap23a7l", "battery-smart";
 		};
 	};
 

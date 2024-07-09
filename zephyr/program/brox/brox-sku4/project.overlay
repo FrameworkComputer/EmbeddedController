@@ -1,0 +1,71 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Brox program common DTS includes */
+
+/* Arbitrage generates an incorrect node label when using alternate pins.
+ * Create a 2nd node label on I2C3 as a workaround.
+ * TODO: b/310227384 - I2C alternate selection not detected automatically.
+ */
+i2c3ALT: &i2c3 {
+};
+
+#include <cros/cbi_flash.dtsi>
+
+#include "../adc.dtsi"
+#include "binman.dtsi"
+#include "../brox.dtsi"
+#include "../fan.dtsi"
+#include "../generated.dtsi"
+#include "../gpio.dtsi"
+#include "../i2c.dtsi"
+#include "../interrupts.dtsi"
+#include "../led_pins.dtsi"
+#include "../led_policy.dtsi"
+#include "../keyboard.dtsi"
+#include "../motionsense.dtsi"
+#include "../power_signals.dtsi"
+#include "../power_signals_gpios.dtsi"
+#include "../pwm.dtsi"
+#include "../temp_sensors.dtsi"
+#include "../usb_typec.dtsi"
+#include "../usba.dtsi"
+
+/* Brox project DTS includes*/
+
+/* Brox overrides follow... */
+
+/delete-node/ &pdc_power_p0;
+/delete-node/ &pdc_power_p1;
+
+&i2c1 {
+        pdc_power_p0: tps6699-pdc@20 {
+                compatible = "ti,tps6699-pdc";
+                reg = <0x20>;
+                irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
+        };
+
+        pdc_power_p1: tps6699-pdc@24 {
+                compatible = "ti,tps6699-pdc";
+                reg = <0x24>;
+                irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
+        };
+};
+
+/{
+        batteries {
+                default_battery: lgc_ap18c8k {
+                        compatible = "lgc,ap18c8k", "battery-smart";
+                };
+        };
+};
+
+/* These GPIOS are initialized by the PDC driver */
+&gpio_usb_pd_int_odl {
+	no-auto-init;
+};
+&gpio_ec_i2c_pmc_pd_int_odl {
+	no-auto-init;
+};

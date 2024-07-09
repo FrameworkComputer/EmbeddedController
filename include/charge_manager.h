@@ -15,6 +15,10 @@
 #include "common.h"
 #include "ec_commands.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Charge port that indicates no active port */
 #define CHARGE_PORT_NONE -1
 #define CHARGE_CEIL_NONE -1
@@ -384,4 +388,9 @@ __override_proto int board_get_leave_safe_mode_delay_ms(void);
 extern int check_power_on_port(void);
 #endif /* CONFIG_PD_COMMON_VBUS_CONTROL */
 #endif /* CONFIG_CUSTOMIZED_DESIGN */
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_CHARGE_MANAGER_H */

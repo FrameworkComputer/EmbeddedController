@@ -1,0 +1,178 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+ #include <dt-bindings/battery.h>
+
+/ {
+	led-colors {
+		compatible = "cros-ec,led-policy";
+
+		power-state-charge-lvl-1 {
+			charge-state = "LED_PWRS_CHARGE";
+
+			/* Battery display percent range (>= Empty, <= 4%) */
+			batt-lvl = <BATTERY_LEVEL_EMPTY 4>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_RED";
+				};
+			};
+		};
+
+		power-state-charge-lvl-2 {
+			charge-state = "LED_PWRS_CHARGE";
+
+			/* Battery display percent range (>= 5%, <= 96%) */
+			batt-lvl = <5 96>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_AMBER";
+				};
+			};
+		};
+
+		power-state-charge-lvl-3 {
+			charge-state = "LED_PWRS_CHARGE";
+
+			/* Battery display percent range (>= 97) */
+			batt-lvl = <97 100>;
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_GREEN";
+				};
+			};
+		};
+
+		power-state-near-full {
+			charge-state = "LED_PWRS_CHARGE_NEAR_FULL";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_GREEN";
+				};
+			};
+		};
+
+		power-state-discharge {
+			charge-state = "LED_PWRS_DISCHARGE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+
+		power-state-error {
+			charge-state = "LED_PWRS_ERROR";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* Red 1 sec on, 1 sec off */
+				color-0 {
+					led-color = "LED_RED";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <1000>;
+				};
+			};
+		};
+
+
+		power-state-forced-idle {
+			charge-state = "LED_PWRS_FORCED_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* Red 2 sec on, Green 2 sec on */
+				color-0 {
+					led-color = "LED_RED";
+					period-ms = <2000>;
+				};
+				color-1 {
+					led-color = "LED_GREEN";
+					period-ms = <2000>;
+				};
+			};
+		};
+
+		power-state-idle {
+			charge-state = "LED_PWRS_IDLE";
+
+			battery-led {
+				led-id = "EC_LED_ID_BATTERY_LED";
+
+				/* Red 2 sec on, Green 2 sec on */
+				color-0 {
+					led-color = "LED_RED";
+					period-ms = <2000>;
+				};
+				color-1 {
+					led-color = "LED_GREEN";
+					period-ms = <2000>;
+				};
+			};
+		};
+
+		chipset-state-s0 {
+			chipset-state = "POWER_S0";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = "LED_WHITE";
+				};
+			};
+		};
+
+		chipset-state-s3 {
+			chipset-state = "POWER_S3";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				/* White 1 sec on, 3 sec off */
+				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <1000>;
+				};
+				color-1 {
+					led-color = "LED_OFF";
+					period-ms = <3000>;
+				};
+			};
+		};
+
+		chipset-state-s5 {
+			chipset-state = "POWER_S5";
+
+			power-led {
+				led-id = "EC_LED_ID_POWER_LED";
+
+				color-0 {
+					led-color = "LED_OFF";
+				};
+			};
+		};
+	};
+};

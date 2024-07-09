@@ -54,10 +54,3 @@ __override void board_hibernate(void)
 	LOG_INF("Charger(s) hibernated");
 	cflush();
 }
-
-static void charger_prochot_init(void)
-{
-	isl923x_set_ac_prochot(CHARGER_SOLO, 3500);
-	isl923x_set_dc_prochot(CHARGER_SOLO, 6528);
-}
-DECLARE_HOOK(HOOK_INIT, charger_prochot_init, HOOK_PRIO_POST_FIRST);

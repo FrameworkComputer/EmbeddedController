@@ -10,6 +10,10 @@
 
 #include "common.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* "enum temp_sensor_id" must be defined for each board in board.h. */
 enum temp_sensor_id;
 
@@ -81,6 +85,10 @@ __override_proto int board_temp_smi_evet(void);
  * Update the mk unit namespace for intel DTT feature
  */
 __override_proto void board_update_temperature_mk(enum temp_sensor_id id);
-
 #endif
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_TEMP_SENSOR_H */

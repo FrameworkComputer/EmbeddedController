@@ -10,6 +10,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define NCT38XX_TCPC_COMPAT nuvoton_nct38xx_tcpc
 #define NCT38XX_GPIO_COMPAT nuvoton_nct38xx_gpio
 
@@ -48,5 +52,9 @@
  * @return NULL if failed, otherwise a pointer to NCT38XX GPIO device
  */
 const struct device *nct38xx_get_gpio_device_from_port(const int port);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_TCPC_NCT38XX_H */

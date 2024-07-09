@@ -32,7 +32,7 @@ test-list-y = \
        exception \
        flash_physical \
        flash_write_protect \
-       fpsensor \
+       fp_transport \
        fpsensor_auth_crypto_stateful \
        fpsensor_auth_crypto_stateless \
        fpsensor_crypto \
@@ -77,4 +77,4 @@ test-list-y = \
        utils_str
 
 # This is relative to the EC root directory.
--include private/board/hatch_fp/build.mk
+-include ../ec-private/board/hatch_fp/build.mk

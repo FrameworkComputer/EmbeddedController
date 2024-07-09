@@ -281,8 +281,11 @@ ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent)
 {
 	const struct emul *emul = EMUL;
 	uint8_t int_trip_rise_reg1;
+	int vals[] = { [0] = 0xff, 0, 0 };
 
 	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
+
+	SET_RETURN_SEQ(ppc_get_alert_status, vals, ARRAY_SIZE(vals));
 
 	sn5s330_emul_make_vbus_overcurrent(emul);
 	/*
@@ -299,12 +302,15 @@ ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent)
 	sn5s330_emul_peek_reg(emul, SN5S330_INT_TRIP_RISE_REG1,
 			      &int_trip_rise_reg1);
 	zassert_equal(int_trip_rise_reg1 & SN5S330_ILIM_PP1_MASK, 0);
+
+	RESET_FAKE(ppc_get_alert_status);
 }
 
 ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent_late_jump)
 {
 	const struct emul *emul = EMUL;
 	uint8_t int_trip_rise_reg1;
+	int vals[] = { [0] = 0xff, 0, 0 };
 
 	/* Simulate the system jumping late. The second call to init() will
 	 * skip certain interrupt setup work. Make sure the interrupt continues
@@ -315,6 +321,8 @@ ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent_late_jump)
 	system_jumped_late_fake.return_val = 1;
 	zassert_ok(sn5s330_drv.init(SN5S330_PORT));
 
+	SET_RETURN_SEQ(ppc_get_alert_status, vals, ARRAY_SIZE(vals));
+
 	sn5s330_emul_make_vbus_overcurrent(emul);
 	/*
 	 * TODO(b/201420132): Replace arbitrary sleeps.
@@ -330,6 +338,7 @@ ZTEST(ppc_sn5s330, test_sn5s330_vbus_overcurrent_late_jump)
 	sn5s330_emul_peek_reg(emul, SN5S330_INT_TRIP_RISE_REG1,
 			      &int_trip_rise_reg1);
 	zassert_equal(int_trip_rise_reg1 & SN5S330_ILIM_PP1_MASK, 0);
+	RESET_FAKE(ppc_get_alert_status);
 }
 
 ZTEST(ppc_sn5s330, test_sn5s330_disable_vbus_low_interrupt)
@@ -359,6 +368,30 @@ ZTEST(ppc_sn5s330, test_sn5s330_disable_vbus_low_interrupt_late_jump)
 	/* Would normally cause a vbus low interrupt */
 	sn5s330_emul_lower_vbus_below_minv(emul);
 	zassert_equal(sn5s330_emul_interrupt_set_stub_fake.call_count, 0);
+}
+
+ZTEST(ppc_sn5s330, test_sn5s330_sticky_interrupt)
+{
+	const struct emul *emul = EMUL;
+
+	/*
+	 * The sn5s330 interrupt handler takes evasive action after
+	 * SN5S330_MAX_CONSECUTIVE_INTERRUPTS attempts to clear chip
+	 * interrupts. Verify evasive aciton is called.
+	 */
+	int vals[] = { [0 ...(10)] = 0xff, 0, 0 };
+
+	SET_RETURN_SEQ(ppc_get_alert_status, vals, ARRAY_SIZE(vals));
+
+	sn5s330_emul_assert_interrupt(emul);
+	sn5s330_emul_deassert_interrupt(emul);
+
+	/* Wait for deferred irq handler to run. */
+	k_sleep(K_SECONDS(1));
+	zassert_true(sn5s330_emul_interrupt_set_stub_fake.call_count > 0);
+	zassert_equal(ppc_get_alert_status_fake.call_count, 12);
+
+	RESET_FAKE(ppc_get_alert_status);
 }
 
 ZTEST(ppc_sn5s330, test_sn5s330_set_vconn_fet)

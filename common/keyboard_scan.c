@@ -7,6 +7,7 @@
 
 #include "adc.h"
 #include "atomic_bit.h"
+#include "battery.h"
 #include "chipset.h"
 #include "clock.h"
 #include "common.h"
@@ -327,11 +328,12 @@ static int read_matrix(uint8_t *state, bool at_boot)
 {
 	int c;
 	int pressed = 0;
+	int pb_pressed;
+
+	pb_pressed = power_button_raw_pressed();
 
 	/* 1. Read input pins */
 	for (c = 0; c < keyboard_cols; c++) {
-		int pb_pressed;
-
 		/*
 		 * Skip if scanning becomes disabled. Clear the state
 		 * to make sure we don't mix new and old states in the
@@ -344,8 +346,6 @@ static int read_matrix(uint8_t *state, bool at_boot)
 			continue;
 		}
 
-		pb_pressed = power_button_raw_pressed();
-
 		/* Select column, then wait a bit for it to settle */
 		keyboard_raw_drive_column(c);
 		udelay(keyscan_config.output_settle_us);
@@ -357,16 +357,26 @@ static int read_matrix(uint8_t *state, bool at_boot)
 		state[c] = keyboard_raw_read_rows();
 #endif
 
-		if (pb_pressed != power_button_raw_pressed()) {
-			c--;
-			continue;
-		} else if (pb_pressed) {
-			state[c] &= ~KEYBOARD_MASKED_BY_POWERBTN;
-		}
-
 		/* Use simulated keyscan sequence instead if testing active */
 		if (IS_ENABLED(CONFIG_KEYBOARD_TEST))
 			state[c] = keyscan_seq_get_scan(c, state[c]);
+	}
+
+	if (pb_pressed && at_boot) {
+		/* Check if KSI2 (or KSI3) is asserted on all columns */
+		for (c = 0; c < keyboard_cols; c++) {
+			if (!(state[c] & KEYBOARD_MASKED_BY_POWERBTN)) {
+				break;
+			}
+		}
+
+		if (c == keyboard_cols) {
+			for (c = 0; c < keyboard_cols; c++) {
+				if (c == KEYBOARD_COL_REFRESH)
+					continue;
+				state[c] &= ~KEYBOARD_MASKED_BY_POWERBTN;
+			}
+		}
 	}
 
 #ifdef CONFIG_KEYBOARD_SCAN_ADC
@@ -897,10 +907,21 @@ static uint32_t check_boot_key(const uint8_t *state)
 	 * we don't want to accidentally enter recovery mode even if a refresh
 	 * key or whatever key is pressed (as previously allowed).
 	 */
-	if (!(system_get_reset_flags() & EC_RESET_FLAG_RESET_PIN))
-		return BOOT_KEY_NONE;
+	if ((system_get_reset_flags() & EC_RESET_FLAG_RESET_PIN))
+		return check_key_list(state);
 
-	return check_key_list(state);
+#ifdef CONFIG_BATTERY
+	/*
+	 * (b/341023382)
+	 * Fixed an issue where recovery mode cannot be entered in AC-only
+	 * state.
+	 */
+	if ((system_get_reset_flags() & EC_RESET_FLAG_POWER_ON) &&
+	    battery_is_present() == BP_NO)
+		return check_key_list(state);
+#endif
+
+	return BOOT_KEY_NONE;
 }
 #endif
 
@@ -1027,8 +1048,13 @@ void keyboard_scan_task(void *u)
 					new_disable_scanning);
 
 			if (!new_disable_scanning) {
-				/* Enabled now */
+				/*
+				 * Enabled now, then wait a bit to let
+				 * keyboard_raw_read_rows() below gets correct
+				 * results.
+				 */
 				keyboard_raw_drive_column(KEYBOARD_COLUMN_ALL);
+				udelay(keyscan_config.output_settle_us);
 			} else if (!local_disable_scanning) {
 				/*
 				 * Scanning isn't enabled but it was last time
@@ -1062,8 +1088,21 @@ void keyboard_scan_task(void *u)
 			     !gpio_get_level(GPIO_RFR_KEY_L)))
 				break;
 #endif
-			else
+			else {
+#ifdef CONFIG_KEYBOARD_BOOT_KEYS
+				/*
+				 * This is needed to fix boot_key_value in case
+				 * keys are released before the scanner is
+				 * ready. If any key is being pressed, the 1st
+				 * inner loop is exited above and the 2nd loop
+				 * corrects boot_key_value. If no key is being
+				 * pressed, we come here and clear all boot
+				 * keys.
+				 */
+				boot_key_value &= BIT(BOOT_KEY_POWER);
+#endif /* CONFIG_KEYBOARD_BOOT_KEYS */
 				task_wait_event(-1);
+			}
 		}
 
 		/* We're about to poll, so any existing forces are fulfilled */

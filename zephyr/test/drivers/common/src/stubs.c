@@ -36,7 +36,7 @@ LOG_MODULE_REGISTER(stubs);
 /* All of these definitions are just to get the test to link. None of these
  * functions are useful or behave as they should. Please remove them once the
  * real code is able to be added.  Most of the things here should either be
- * in emulators or in the native_posix board-specific code or part of the
+ * in emulators or in the native_sim board-specific code or part of the
  * device tree.
  */
 

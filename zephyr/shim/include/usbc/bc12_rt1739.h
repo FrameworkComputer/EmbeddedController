@@ -5,6 +5,10 @@
 
 #include "driver/ppc/rt1739.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define RT1739_BC12_COMPAT richtek_rt1739_bc12
 #define RT1739_BC12_EMUL_COMPAT zephyr_rt1739_emul
 
@@ -12,3 +16,7 @@
 	{                                \
 		.drv = &rt1739_bc12_drv, \
 	},
+
+#ifdef __cplusplus
+}
+#endif

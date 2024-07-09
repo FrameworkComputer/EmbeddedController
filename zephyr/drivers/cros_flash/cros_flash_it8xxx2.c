@@ -136,7 +136,7 @@ static void try_lock_rw_rb(void)
 #ifdef CONFIG_FLASH_PROTECT_NEXT_BOOT
 	bool need_reset = false;
 	uint8_t unlock_flags = 0;
-	__maybe_unused bool lock_rw, lock_rb;
+	__maybe_unused bool lock_rw, lock_rb, lock_all;
 
 	if (read_bbram_flags(&unlock_flags)) {
 		LOG_ERR("read_unlock_flags failed, lock all regions.");
@@ -171,6 +171,23 @@ static void try_lock_rw_rb(void)
 		}
 	}
 #endif
+	lock_all = !(unlock_flags & IT8XXX2_UNLOCK_ALL_AT_BOOT);
+	if (lock_all) {
+		flash_protect_banks(
+			0, CONFIG_FLASH_SIZE_BYTES / CONFIG_FLASH_BANK_SIZE,
+			FLASH_WP_EC);
+	}
+	for (int i = 0; i < CONFIG_FLASH_SIZE_BYTES / CONFIG_FLASH_BANK_SIZE;
+	     i++) {
+		/* Check if we want lock_all but can't lock the flash.
+		 *
+		 * The inverse does not hold: !lock_all does not imply
+		 * all region must be unlocked.
+		 */
+		if (lock_all && !crec_flash_physical_get_protect(i)) {
+			need_reset = true;
+		}
+	}
 
 	if (need_reset) {
 		LOG_ERR("Can't modify flash protection, try hard reset!");
@@ -337,8 +354,10 @@ static uint32_t cros_flash_it8xxx2_get_protect_flags(const struct device *dev)
 
 	flags |= flash_check_wp();
 
+#ifndef CONFIG_FLASH_PROTECT_NEXT_BOOT
 	if (data->all_protected)
 		flags |= EC_FLASH_PROTECT_ALL_NOW;
+#endif
 
 	/* Check if blocks were stuck locked at pre-init */
 	if (data->stuck_locked)

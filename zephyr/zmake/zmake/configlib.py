@@ -25,7 +25,7 @@ def _register_project(**kwargs):
 
 def register_host_project(**kwargs):
     """Register a project that runs on a posix host."""
-    kwargs.setdefault("zephyr_board", "native_posix")
+    kwargs.setdefault("zephyr_board", "native_sim")
     kwargs.setdefault("supported_toolchains", ["llvm", "host"])
     kwargs.setdefault("output_packer", zmake.output_packers.ElfPacker)
     return _register_project(**kwargs)

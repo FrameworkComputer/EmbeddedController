@@ -52,6 +52,7 @@ if(DEFINED CONFIG_BOARD_NAKTAL)
 endif()
 if(DEFINED CONFIG_BOARD_CRAASK)
 	zephyr_library_sources(
+			"craask/src/battery.c"
 			"craask/src/fan.c"
 			"craask/src/form_factor.c"
 			"craask/src/keyboard.c"
@@ -175,6 +176,7 @@ if(DEFINED CONFIG_BOARD_CRAASKOV)
 	project(craaskov)
 	zephyr_include_directories("craaskov/include")
 	zephyr_library_sources(
+			"craaskov/src/board.c"
 			"craaskov/src/keyboard.c"
 			"craaskov/src/hdmi.c"
 			"craaskov/src/touch_panel.c"
@@ -184,6 +186,19 @@ if(DEFINED CONFIG_BOARD_CRAASKOV)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 	"craaskov/src/keyboard.c"
 	"craaskov/src/keyboard_customization.c"
+	)
+endif()
+if(DEFINED CONFIG_BOARD_ORISA)
+	project(orisa)
+	zephyr_include_directories("orisa/include")
+	zephyr_library_sources(
+			"orisa/src/usbc.c"
+			"orisa/src/sub_board.c"
+			"orisa/src/touch_panel.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+	"orisa/src/keyboard.c"
+	"orisa/src/keyboard_customization.c"
 	)
 endif()
 if(DEFINED CONFIG_BOARD_QUANDISO)
@@ -216,6 +231,7 @@ if(DEFINED CONFIG_BOARD_ANRAGGAR)
 	zephyr_library_sources(
 			"anraggar/src/board.c"
 			"anraggar/src/sub_board.c"
+			"anraggar/src/prochot.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "anraggar/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "anraggar/src/charger.c")
@@ -227,6 +243,7 @@ if(DEFINED CONFIG_BOARD_GLASSWAY)
 	project(glassway)
 	zephyr_library_sources(
 			"glassway/src/sub_board.c"
+			"glassway/src/kb_backlight.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "glassway/src/fan.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "glassway/src/usbc.c")
@@ -245,6 +262,7 @@ endif()
 if(DEFINED CONFIG_BOARD_PUJJOGA)
 	project(pujjoga)
 	zephyr_library_sources(
+			"pujjoga/src/board.c"
 			"pujjoga/src/led.c"
 			"pujjoga/src/hdmi.c"
 			"pujjoga/src/sub_board.c"
@@ -253,16 +271,29 @@ if(DEFINED CONFIG_BOARD_PUJJOGA)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "pujjoga/src/charger.c")
 endif()
 if(DEFINED CONFIG_BOARD_RIVEN)
+	zephyr_include_directories("riven/include")
 	zephyr_library_sources(
-			"riven/src/fan.c"
 			"riven/src/form_factor.c"
-			"riven/src/keyboard.c"
-			"riven/src/kb_backlight.c"
 			"riven/src/led.c"
-			"riven/src/thermal.c"
 			"riven/src/touch_panel.c"
 	)
 	project(riven)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "riven/src/usbc.c")
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "riven/src/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+	"riven/src/keyboard.c"
+	"riven/src/keyboard_customization.c"
+	)
+endif()
+if(DEFINED CONFIG_BOARD_DOMIKA)
+	project(domika)
+	zephyr_library_sources(
+			"domika/src/led.c"
+			"domika/src/keyboard.c"
+			"domika/src/board.c"
+			"domika/src/thermal.c"
+	)
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USBC "domika/src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CHARGER "domika/src/charger.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_FAN "domika/src/fan.c")
 endif()

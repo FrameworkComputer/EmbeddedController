@@ -4,8 +4,15 @@
  */
 /* Mock for the TCPM interface */
 
+#ifndef __MOCK_TCPM_MOCK_H
+#define __MOCK_TCPM_MOCK_H
+
 #include "common.h"
 #include "tcpm/tcpm.h"
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Copied from usb_prl_sm.c, line 99. */
 #define MOCK_CHK_BUF_SIZE 7
@@ -21,3 +28,9 @@ extern struct mock_tcpm_t mock_tcpm[CONFIG_USB_PD_PORT_MAX_COUNT];
 
 void mock_tcpm_reset(void);
 void mock_tcpm_rx_msg(int port, uint16_t header, int cnt, const uint32_t *data);
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __MOCK_TCPM_MOCK_H */

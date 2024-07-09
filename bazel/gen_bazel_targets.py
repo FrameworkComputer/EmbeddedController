@@ -45,7 +45,11 @@ def _find_zephyr_ec_projects():
 
     for project in zmake.project.find_projects(projects_path).values():
         result = {"board": project.config.project_name}
-        extra_modules = [x for x in project.config.modules if x != "ec"]
+        extra_modules = [
+            x
+            for x in project.config.modules + project.config.optional_modules
+            if x != "ec"
+        ]
         if extra_modules:
             result["extra_modules"] = extra_modules
         yield project.config.project_name, result

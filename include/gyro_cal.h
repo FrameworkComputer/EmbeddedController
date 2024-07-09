@@ -13,6 +13,10 @@
 #include "stddef.h"
 #include "vec3.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct temperature_mean_data {
 	int16_t temperature_min_kelvin;
 	int16_t temperature_max_kelvin;
@@ -159,5 +163,9 @@ void gyro_cal_update_mag(struct gyro_cal *gyro_cal, uint32_t sample_time_us,
 /** Update the gyro calibration with accel data [m/sec^2]. */
 void gyro_cal_update_accel(struct gyro_cal *gyro_cal, uint32_t sample_time_us,
 			   fp_t x, fp_t y, fp_t z);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_GYRO_CAL_H */

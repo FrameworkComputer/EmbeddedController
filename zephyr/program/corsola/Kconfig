@@ -86,6 +86,12 @@ config BOARD_VELUZA
 	  Build Google Veluza variant board. Veluza is a variant of Krabby
 	  and has MediaTek MT8186 SoC with ITE it81202-bx EC
 
+config BOARD_SQUIRTLE
+	bool "Google Squirtle Board"
+	help
+	  Build Google Squirtle variant board. Squirtle is a variant of Kingler
+	  and has MediaTek MT8186/MT8186T SoC with NPCX993FA0BX EC.
+
 config VARIANT_CORSOLA_DB_DETECTION
 	bool "Corsola Platform Runtime Daughter Board Detection"
 	depends on PLATFORM_EC_USB_PD_TCPC_RUNTIME_CONFIG
@@ -99,6 +105,12 @@ config CORSOLA_HIBERNATE_PRE_OFF_5V
 	bool "Corsola Platform Hibernate Power Sequence Selection"
 	help
 	  Set PP5000_Z2 to deactivate before executing normal corsola hibernate.
+	default n
+
+config CORSOLA_BOARD_CHIPSET_CUSTOM
+	bool "Corsola Platform Board Chipset Customization"
+	help
+	  Enable corsola platform customized AP power callbacks.
 	default n
 
 source "Kconfig.zephyr"

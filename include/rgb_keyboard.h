@@ -3,11 +3,18 @@
  * found in the LICENSE file.
  */
 
+#ifndef __CROS_EC_RGB_KEYBOARD_H
+#define __CROS_EC_RGB_KEYBOARD_H
+
 #include "common.h"
 #include "ec_commands.h"
 #include "stddef.h"
 
 #include <stdbool.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 
 /* Use this instead of '3' for readability where applicable. */
 #define SIZE_OF_RGB sizeof(struct rgb_s)
@@ -195,3 +202,9 @@ extern const size_t rgbkbd_map_size;
  * Driver for keyboard_backlight.
  */
 extern const struct kblight_drv kblight_rgbkbd;
+
+#ifdef __cplusplus
+}
+#endif
+
+#endif /* __CROS_EC_RGB_KEYBOARD_H */

@@ -12,6 +12,10 @@
 #include "compile_time_macros.h"
 #include "keyboard_config.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef CONFIG_ZTEST
 extern uint8_t key_vol_up_row;
 extern uint8_t key_vol_up_col;
@@ -90,7 +94,8 @@ enum boot_key {
 };
 BUILD_ASSERT(BOOT_KEY_COUNT < 31);
 
-#if defined(HAS_TASK_KEYSCAN) && defined(CONFIG_KEYBOARD_BOOT_KEYS)
+#if (defined(HAS_TASK_KEYSCAN) && defined(CONFIG_KEYBOARD_BOOT_KEYS)) || \
+	defined(CONFIG_CROS_EC_BOOT_KEYS)
 /**
  * Returns mask of all the keys held down at boot time in addition to the
  * keyboard-controlled reset keys. If more than one boot key is held, mask bits
@@ -214,5 +219,9 @@ int keyboard_scan_is_enabled(void);
  */
 void test_keyboard_scan_debounce_reset(void);
 #endif /* TEST_BUILD */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_KEYBOARD_SCAN_H */

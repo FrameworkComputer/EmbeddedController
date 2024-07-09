@@ -1,5 +1,5 @@
 common:
-  platform_allow: native_posix
+  platform_allow: native_sim
 tests:
   drivers.default:
     timeout: 360
@@ -15,7 +15,8 @@ tests:
     - prj.conf
     - default/prj.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
+    - default/boards/touchpad.dtsi
   drivers.default.dp21:
     timeout: 360
     extra_configs:
@@ -31,7 +32,8 @@ tests:
     - prj.conf
     - default/prj.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
+    - default/boards/touchpad.dtsi
   drivers.default.ec_host_cmd:
     timeout: 360
     extra_configs:
@@ -47,7 +49,8 @@ tests:
     - default/prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
+    - default/boards/touchpad.dtsi
   drivers.default.bring_up:
     timeout: 360
     extra_configs:
@@ -63,7 +66,8 @@ tests:
     - prj.conf
     - default/prj.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
+    - default/boards/touchpad.dtsi
   drivers.default.bring_up.ec_host_cmd:
     timeout: 360
     extra_configs:
@@ -80,7 +84,8 @@ tests:
     - default/prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
+    - default/boards/touchpad.dtsi
   drivers.default.console_cmds:
     timeout: 360
     extra_configs:
@@ -90,7 +95,7 @@ tests:
     - prj.conf
     - default/prj.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
   drivers.default.console_cmds_ro:
     timeout: 360
     extra_args:
@@ -102,7 +107,7 @@ tests:
     - prj.conf
     - default/prj.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
   drivers.default.console_cmds_rw:
     timeout: 360
     extra_args:
@@ -114,7 +119,7 @@ tests:
     - prj.conf
     - default/prj.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
   drivers.default.console_cmds.ec_host_cmd:
     timeout: 360
     extra_configs:
@@ -125,7 +130,7 @@ tests:
     - default/prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
   drivers.default.console_cmds.gpio_keys:
     timeout: 360
     extra_configs:
@@ -136,7 +141,7 @@ tests:
     - prj.conf
     - default/prj.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
     - default/boards/power_button.dtsi
   drivers.default.console_cmds.gpio_keys.ec_host_cmd:
     timeout: 360
@@ -149,7 +154,7 @@ tests:
     - default/prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
     - default/boards/power_button.dtsi
   drivers.default.mock_power:
     timeout: 360
@@ -165,7 +170,8 @@ tests:
     - prj.conf
     - default/prj.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
+    - default/boards/touchpad.dtsi
   drivers.default.mock_power.ec_host_cmd:
     timeout: 360
     extra_configs:
@@ -181,16 +187,23 @@ tests:
     - default/prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
+    - default/boards/touchpad.dtsi
+  drivers.acpi_strings_fifo:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_ACPI_STRINGS_FIFO=y
+    extra_conf_files:
+    - prj.conf
+    - acpi_strings_fifo/prj.conf
   drivers.amd_fp6_usb_mux:
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./amd_fp6_usb_mux/usbc.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_AMD_FP6_USB_MUX=y
   drivers.amd_fp6_usb_mux.ec_host_cmd:
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./amd_fp6_usb_mux/usbc.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_AMD_FP6_USB_MUX=y
@@ -204,7 +217,7 @@ tests:
     - prj.conf
     - anx7447/prj.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./anx7447/tcpc_policy.dts
   drivers.anx7447.ec_host_cmd:
     extra_configs:
@@ -214,7 +227,7 @@ tests:
     - anx7447/prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./anx7447/tcpc_policy.dts
   drivers.ap_mux_control:
     extra_configs:
@@ -267,7 +280,7 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_BMI3XX=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./bmi3xx/sensor.dts
     extra_conf_files:
     - prj.conf
@@ -276,7 +289,7 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_BMI3XX=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./bmi3xx/sensor.dts
     extra_conf_files:
     - prj.conf
@@ -308,7 +321,7 @@ tests:
     - CONFIG_PLATFORM_EC_EMULATED_SYSRQ=y
     - CONFIG_PLATFORM_EC_DETACHABLE_BASE=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./button/detachable_led.overlay
   drivers.cbi_flash:
     extra_configs:
@@ -316,7 +329,7 @@ tests:
     - CONFIG_PLATFORM_EC_CBI_FLASH=y
     - CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES=0x80000
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./cbi_flash/binman.dts
   drivers.cbi_flash.ec_host_cmd:
     extra_configs:
@@ -324,7 +337,7 @@ tests:
     - CONFIG_PLATFORM_EC_CBI_FLASH=y
     - CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES=0x80000
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./cbi_flash/binman.dts
     extra_conf_files:
     - prj.conf
@@ -336,8 +349,14 @@ tests:
     - CONFIG_PLATFORM_EC_FLASH_SIZE_BYTES=0x80000
     - CONFIG_PLATFORM_EC_CBI_TRANSFER_EEPROM_FLASH=y
     extra_dtc_overlay_files:
-    - boards/native_posix.overlay
+    - boards/native_sim.overlay
     - cbi_flash/binman.dts
+  drivers.charge_manager:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_CHARGE_MANAGER=y
+    - CONFIG_PLATFORM_EC_USB_PD_VBUS_MEASURE_PDC=y
+    extra_dtc_overlay_files:
+    - boards/native_sim.overlay
   drivers.common_cbi:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_COMMON_CBI=y
@@ -370,7 +389,7 @@ tests:
     - CONFIG_PLATFORM_EC_CEC_IT83XX=y
     - CONFIG_PLATFORM_EC_CEC_DEBUG=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./cec_common/cec_common.dts
   drivers.cec_common.ec_host_cmd:
     extra_configs:
@@ -380,7 +399,7 @@ tests:
     - CONFIG_PLATFORM_EC_CEC_IT83XX=y
     - CONFIG_PLATFORM_EC_CEC_DEBUG=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./cec_common/cec_common.dts
     extra_conf_files:
     - prj.conf
@@ -394,7 +413,7 @@ tests:
     - CONFIG_PLATFORM_EC_CEC_DEBUG=y
     - CONFIG_SYS_CLOCK_TICKS_PER_SEC=100000
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./cec_common/cec_common.dts
   drivers.cec_it83xx:
     extra_configs:
@@ -404,7 +423,7 @@ tests:
     - CONFIG_PLATFORM_EC_CEC_IT83XX=y
     - CONFIG_PLATFORM_EC_CEC_DEBUG=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./cec_common/cec_common.dts
   drivers.common_charger:
     extra_configs:
@@ -470,7 +489,7 @@ tests:
     - prj.conf
     - default/prj.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
   drivers.console_cmd_crash.ec_host_cmd:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_CONSOLE_CMD_CRASH=y
@@ -481,7 +500,7 @@ tests:
     - default/prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
   drivers.console_cmd_mfallow:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_CONSOLE_CMD_MFALLOW=y
@@ -504,7 +523,7 @@ tests:
     - CONFIG_PLATFORM_EC_FLASH_INIT_PRIORITY=60
     - CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY=72
     extra_dtc_overlay_files:
-    - cros_flash/boards/native_posix.overlay
+    - cros_flash/boards/native_sim.overlay
   drivers.cros_flash.ec_host_cmd:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_CROS_FLASH=y
@@ -514,7 +533,7 @@ tests:
     - CONFIG_PLATFORM_EC_FLASH_INIT_PRIORITY=60
     - CONFIG_PLATFORM_EC_SYSTEM_PRE_INIT_PRIORITY=72
     extra_dtc_overlay_files:
-    - cros_flash/boards/native_posix.overlay
+    - cros_flash/boards/native_sim.overlay
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
@@ -538,7 +557,7 @@ tests:
     - prj.conf
     - fan/prj.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./fan/fans.dts
   drivers.fan.ec_host_cmd:
     extra_configs:
@@ -548,7 +567,7 @@ tests:
     - fan/prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./fan/fans.dts
   drivers.flash:
     extra_configs:
@@ -651,7 +670,7 @@ tests:
     - CONFIG_PLATFORM_EC_ACCELGYRO_ICM42607=y
     - CONFIG_PLATFORM_EC_ACCELGYRO_ICM_COMM_I2C=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./icm42607/sensor.dts
   drivers.icm42607.ec_host_cmd:
     extra_configs:
@@ -660,7 +679,7 @@ tests:
     - CONFIG_PLATFORM_EC_ACCELGYRO_ICM42607=y
     - CONFIG_PLATFORM_EC_ACCELGYRO_ICM_COMM_I2C=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./icm42607/sensor.dts
     extra_conf_files:
     - prj.conf
@@ -668,6 +687,11 @@ tests:
   drivers.isl923x:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_ISL923X=y
+  drivers.isl923x.prochot_override:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_ISL923X=y
+    - CONFIG_PLATFORM_EC_CHARGER_AC_PROCHOT_CURRENT_MA=640
+    - CONFIG_PLATFORM_EC_CHARGER_DC_PROCHOT_CURRENT_MA=1280
   drivers.isl9238c:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_ISL923X=y
@@ -707,7 +731,7 @@ tests:
     - CONFIG_PLATFORM_EC_CONSOLE_CMD_CHARGER_DUMP=y
     - CONFIG_PLATFORM_EC_CHARGER_ISL9241=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./isl9241/usbc.dts
   drivers.isl9241.ec_host_cmd:
     extra_configs:
@@ -716,7 +740,7 @@ tests:
     - CONFIG_PLATFORM_EC_CONSOLE_CMD_CHARGER_DUMP=y
     - CONFIG_PLATFORM_EC_CHARGER_ISL9241=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./isl9241/usbc.dts
     extra_conf_files:
     - prj.conf
@@ -725,13 +749,13 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_I2C_CONTROLLER=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - i2c_controller/i2c.dts
   drivers.i2c_controller.ec_host_cmd:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_I2C_CONTROLLER=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - i2c_controller/i2c.dts
     extra_conf_files:
     - prj.conf
@@ -776,7 +800,7 @@ tests:
     - prj.conf
     - led_driver/prj.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./led_driver/led_pins.dts
     - ./led_driver/led_policy.dts
   drivers.led_driver_alias:
@@ -786,7 +810,7 @@ tests:
     - prj.conf
     - led_driver/prj.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./led_driver/led_pins.dts
     - ./led_driver/led_policy_alias.dts
   drivers.led_driver.ec_host_cmd:
@@ -797,7 +821,7 @@ tests:
     - led_driver/prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./led_driver/led_pins.dts
     - ./led_driver/led_policy.dts
   drivers.led_common:
@@ -817,7 +841,7 @@ tests:
     extra_conf_files:
     - prj.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./led_pwm_fade/led_policy.dts
   drivers.locate_chip:
     extra_configs:
@@ -856,21 +880,21 @@ tests:
     - CONFIG_LINK_TEST_SUITE_NCT38XX=y
     - CONFIG_PLATFORM_EC_USB_PD_TCPC_LOW_POWER=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./nct38xx/tcpc_policy.dts
   drivers.nct38xx.ec_host_cmd:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_NCT38XX=y
     - CONFIG_PLATFORM_EC_USB_PD_TCPC_LOW_POWER=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./nct38xx/tcpc_policy.dts
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
   drivers.nx20p3481:
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./nx20p348x/usbc.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_NX20P348X=y
@@ -878,7 +902,7 @@ tests:
     - CONFIG_PLATFORM_EC_USBC_PPC_NX20P3483=n
   drivers.nx20p3481.ec_host_cmd:
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./nx20p348x/usbc.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_NX20P348X=y
@@ -889,14 +913,14 @@ tests:
     - ec_host_cmd.conf
   drivers.nx20p3483:
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./nx20p348x/usbc.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_NX20P348X=y
     - CONFIG_PLATFORM_EC_USBC_PPC_NX20P3483=y
   drivers.nx20p3483.ec_host_cmd:
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./nx20p348x/usbc.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_NX20P348X=y
@@ -976,7 +1000,7 @@ tests:
     - prj.conf
     - ps8743/prj.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./ps8743/mux.dts
   drivers.ps8xxx:
     extra_configs:
@@ -985,7 +1009,7 @@ tests:
     - prj.conf
     - ps8xxx/prj.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./ps8xxx/usbc.dts"
   drivers.ps8xxx.ec_host_cmd:
     extra_configs:
@@ -995,7 +1019,7 @@ tests:
     - ps8xxx/prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./ps8xxx/usbc.dts"
   drivers.rt1715:
     extra_configs:
@@ -1005,7 +1029,7 @@ tests:
     - prj.conf
     - rt1715/prj.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./rt1715/rt1715.dts
   drivers.rt1718s:
     extra_configs:
@@ -1014,7 +1038,7 @@ tests:
     - prj.conf
     - rt1718s/prj.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./rt1718s/ppc_tcpc.dts
   drivers.rt1718s.ec_host_cmd:
     extra_configs:
@@ -1024,7 +1048,7 @@ tests:
     - rt1718s/prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./rt1718s/ppc_tcpc.dts
   drivers.ktu1125:
     extra_configs:
@@ -1033,7 +1057,7 @@ tests:
     - prj.conf
     - ktu1125/prj.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./ktu1125/ktu1125.dts
   drivers.rt1739:
     extra_configs:
@@ -1042,7 +1066,7 @@ tests:
     - prj.conf
     - rt1739/prj.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./rt1739/ppc.dts
   drivers.rt1739.ec_host_cmd:
     extra_configs:
@@ -1052,7 +1076,7 @@ tests:
     - rt1739/prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./rt1739/ppc.dts
   drivers.rt9490:
     extra_configs:
@@ -1061,7 +1085,7 @@ tests:
     - prj.conf
     - rt9490/prj.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./rt9490/charger.dts
   drivers.rt9490.ec_host_cmd:
     extra_configs:
@@ -1071,7 +1095,7 @@ tests:
     - rt9490/prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./rt9490/charger.dts
   drivers.random:
     extra_configs:
@@ -1080,7 +1104,7 @@ tests:
     - CONFIG_PLATFORM_EC_HOSTCMD_RAND=y
     - CONFIG_PLATFORM_EC_CONSOLE_CMD_RAND=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
   drivers.random.ec_host_cmd:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_RANDOM=y
@@ -1088,7 +1112,7 @@ tests:
     - CONFIG_PLATFORM_EC_HOSTCMD_RAND=y
     - CONFIG_PLATFORM_EC_CONSOLE_CMD_RAND=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
@@ -1098,7 +1122,7 @@ tests:
     extra_conf_files:
     - prj.conf
     extra_dtc_overlay_files:
-    - boards/native_posix.overlay
+    - boards/native_sim.overlay
     - shim_gpio_id/gpio_id.dts
   drivers.shim_gpio_id.ec_host_cmd:
     extra_configs:
@@ -1107,7 +1131,7 @@ tests:
     - prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - boards/native_posix.overlay
+    - boards/native_sim.overlay
     - shim_gpio_id/gpio_id.dts
   drivers.shim_pwm_hc:
     extra_configs:
@@ -1140,7 +1164,7 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_SM5803=y
     extra_dtc_overlay_files:
-    - boards/native_posix.overlay
+    - boards/native_sim.overlay
     - sm5803/sm5803.dts
     timeout: 120
   drivers.sm5803.ec_host_cmd:
@@ -1151,7 +1175,7 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_SM5803=y
     extra_dtc_overlay_files:
-    - boards/native_posix.overlay
+    - boards/native_sim.overlay
     - sm5803/sm5803.dts
     timeout: 120
   drivers.system:
@@ -1193,7 +1217,7 @@ tests:
     - ec_host_cmd.conf
   drivers.upstream_fuel_gauge:
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./upstream_fuel_gauge/fuel_gauge.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_UPSTREAM_FUEL_GAUGE=y
@@ -1201,7 +1225,7 @@ tests:
     - CONFIG_EMUL=y
   drivers.upstream_fuel_gauge.ec_host_cmd:
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./upstream_fuel_gauge/fuel_gauge.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_UPSTREAM_FUEL_GAUGE=y
@@ -1224,14 +1248,14 @@ tests:
     - CONFIG_LINK_TEST_SUITE_USB_PORT_POWER_DUMB=y
     - CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./usb_port_power_dumb/usba.dts
   drivers.usb_port_power_dumb.ec_host_cmd:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USB_PORT_POWER_DUMB=y
     - CONFIG_PLATFORM_EC_USB_PORT_POWER_DUMB=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./usb_port_power_dumb/usba.dts
     extra_conf_files:
     - prj.conf
@@ -1344,14 +1368,14 @@ tests:
     - CONFIG_LINK_TEST_SUITE_USBC_CONSOLE_PD=y
     - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
     - ./usbc_console_pd/usbc_legacy.dts
   drivers.usbc_console_pd_legacy.ec_host_cmd:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USBC_CONSOLE_PD=y
     - CONFIG_PLATFORM_EC_TCPC_INTERRUPT=n
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
     - ./usbc_console_pd/usbc_legacy.dts
     extra_conf_files:
     - prj.conf
@@ -1369,6 +1393,9 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USBC_FRS=y
     - CONFIG_PLATFORM_EC_USB_PD_FRS_TCPC=y
+  drivers.usbc_power_contract:
+    extra_configs:
+    - CONFIG_LINK_TEST_SUITE_USBC_POWER_CONTRACT=y
   drivers.usbc_frs.ec_host_cmd:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USBC_FRS=y
@@ -1389,20 +1416,20 @@ tests:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USBC_PPC=y
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
     - ./usbc_ppc/ppc_alts.dts
   drivers.usbc_ppc.ec_host_cmd:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USBC_PPC=y
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
     - ./usbc_ppc/ppc_alts.dts
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
   drivers.usbc_tcpc:
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
     - usbc_tcpc/tcpc_alts.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USBC_TCPC=y
@@ -1410,7 +1437,7 @@ tests:
     - CONFIG_PLATFORM_EC_USB_PD_DISCHARGE_TCPC=n
   drivers.usbc_tcpc.ec_host_cmd:
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
     - usbc_tcpc/tcpc_alts.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USBC_TCPC=y
@@ -1444,7 +1471,7 @@ tests:
     - prj.conf
     - usbc_svdm_dfp_only/prj.conf
     extra_dtc_overlay_files:
-    - usbc_svdm_dfp_only/boards/native_posix.overlay
+    - usbc_svdm_dfp_only/boards/native_sim.overlay
   drivers.usbc_svdm_dfp_only.ec_host_cmd:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USBC_SVDM_DFP_ONLY=y
@@ -1453,7 +1480,7 @@ tests:
     - usbc_svdm_dfp_only/prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - usbc_svdm_dfp_only/boards/native_posix.overlay
+    - usbc_svdm_dfp_only/boards/native_sim.overlay
   drivers.usbc_tbt_mode:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_USBC_TBT_MODE=y
@@ -1498,7 +1525,7 @@ tests:
     - ec_host_cmd.conf
   drivers.bc12_upstream:
     extra_dtc_overlay_files:
-    - bc12_upstream/boards/native_posix.overlay
+    - bc12_upstream/boards/native_sim.overlay
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_BC12_UPSTREAM=y
     - CONFIG_USB_BC12=y
@@ -1538,7 +1565,7 @@ tests:
     - prj.conf
     - anx7452/prj.conf
     extra_dtc_overlay_files:
-    - boards/native_posix.overlay
+    - boards/native_sim.overlay
     - anx7452/usbc.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_ANX7452=y
@@ -1548,7 +1575,7 @@ tests:
     - anx7452/prj.conf
     - ec_host_cmd.conf
     extra_dtc_overlay_files:
-    - boards/native_posix.overlay
+    - boards/native_sim.overlay
     - anx7452/usbc.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_ANX7452=y
@@ -1557,14 +1584,14 @@ tests:
     - prj.conf
     - kb8010/prj.conf
     extra_dtc_overlay_files:
-    - boards/native_posix.overlay
+    - boards/native_sim.overlay
     - ktu1125/ktu1125.dts
     - kb8010/kb8010.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_KB8010=y
   drivers.flash_cbi:
     extra_dtc_overlay_files:
-    - boards/native_posix.overlay
+    - boards/native_sim.overlay
     - cbi_flash/binman.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_FLASH=y
@@ -1573,7 +1600,7 @@ tests:
     - CONFIG_PLATFORM_EC_CBI_FLASH=y
   drivers.flash_cbi.ec_host_cmd:
     extra_dtc_overlay_files:
-    - boards/native_posix.overlay
+    - boards/native_sim.overlay
     - cbi_flash/binman.dts
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_FLASH=y
@@ -1605,21 +1632,21 @@ tests:
     - CONFIG_PLATFORM_EC_WATCHDOG_HELPER=y
     - CONFIG_LINK_TEST_SUITE_WATCHDOG_HELPER=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./watchdog_helper/watchdog_helper.dts
   drivers.watchdog_helper.ec_host_cmd:
     extra_configs:
     - CONFIG_PLATFORM_EC_WATCHDOG_HELPER=y
     - CONFIG_LINK_TEST_SUITE_WATCHDOG_HELPER=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./watchdog_helper/watchdog_helper.dts
     extra_conf_files:
     - prj.conf
     - ec_host_cmd.conf
   drivers.one_wire_uart.keyboard:
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./one_wire_uart/one_wire_uart.overlay
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_ONE_WIRE_UART=y
@@ -1627,7 +1654,7 @@ tests:
     - CONFIG_PLATFORM_EC_KEYBOARD_PROTOCOL_MKBP=n
   drivers.one_wire_uart.tablet:
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
+    - ./boards/native_sim.overlay
     - ./one_wire_uart/one_wire_uart.overlay
     - ./one_wire_uart/one_wire_uart_tablet.overlay
     extra_configs:
@@ -1642,11 +1669,11 @@ tests:
     - prj.conf
     - default/prj.conf
     extra_dtc_overlay_files:
-    - default/boards/native_posix.overlay
+    - default/boards/native_sim.overlay
   drivers.tabletmode_interrupt:
     extra_configs:
     - CONFIG_LINK_TEST_SUITE_TABLETMODE_INTERRUPT=y
     - CONFIG_LINK_TEST_SUITE_KEYBOARD_SCAN=y
     extra_dtc_overlay_files:
-    - ./boards/native_posix.overlay
-    - ./tabletmode_interrupt/boards/native_posix.overlay
+    - ./boards/native_sim.overlay
+    - ./tabletmode_interrupt/boards/native_sim.overlay

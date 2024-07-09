@@ -200,9 +200,9 @@ DEFINE_string dut_ip "" \
 	"DUT IP address"
 DEFINE_string token_db "${EC_DIR}/build/tokens.bin" \
 	"Full pathname of the EC tokenized database to copy to DUT."
+# shellcheck disable=SC2034 # Remove someday when autorepair doesn't use it.
 DEFINE_boolean use_i2c_pseudo "${FLAGS_FALSE}" \
-	"Use the linux i2c_pseudo driver instead of accessing the servo " \
-	"i2c endpoint directly."
+	"Ignored."
 
 # Parse command line
 FLAGS_HELP="usage: $0 [flags]"
@@ -789,7 +789,7 @@ if [[ -n "${EC_DIR}" ]]; then
 elif [[ -d "${HOME}/trunk/src/platform/ec" ]]; then
 	BASEBOARD=$(make --quiet -C "${HOME}"/trunk/src/platform/ec \
 		BOARD="${BOARD}" print-baseboard 2>/dev/null)
-else
+elif [ -z "${FLAGS_image}" ] ; then
 	info "Could not find ec build folder to calculate baseboard."
 fi
 # shellcheck disable=SC2181
@@ -1441,34 +1441,12 @@ function flash_stm32_dfu() {
 		-d "${DFU_DEVICE}" -s "${ADDR}:${SIZE}" -D "${IMG}"
 }
 
-function dut_i2c_dev() {
-	if [ -n "${DUT_I2C_DEV}" ]; then
-		[ -e "${DUT_I2C_DEV}" ] ||
-			die "\$DUT_I2C_DEV is a non-existent path: ${DUT_I2C_DEV}"
-		echo "${DUT_I2C_DEV}"
-		return
-	fi
-
-	local has_i2c_pseudo
-	has_i2c_pseudo="$(dut_control_get_or_die \
-		"${ACTIVE_DEVICE}_i2c_pseudo_is_running")"
-	if [[ "${has_i2c_pseudo}" == False ]]; then
-		error "i2c-pseudo module is not running on ${ACTIVE_DEVICE}."
-		error "Please follow https://chromium.googlesource.com/chromiumos/platform/ec/+/HEAD/util/iteflash.md#i2c-pseudo"
-		die "to install i2c-pseudo module."
-	fi
-
-	local adap_num=
-	adap_num="$(dut_control_get_or_die \
-	    "${ACTIVE_DEVICE}_i2c_pseudo_adapter_num")"
-	echo /dev/i2c-"${adap_num}"
-}
-
 function ite_dfu_mode() {
 	# Send the special waveform to the ITE EC.
 	if [[ "${SERVO_TYPE}" =~ "servo_micro" || \
 	      "${SERVO_TYPE}" =~ "c2d2" ]] ; then
 		info "Asking servo to send the dbgr special waveform to ${CHIP}"
+		sleep 3
 		dut_control_or_die enable_ite_dfu
 	elif servo_is_ccd; then
 		local CCD_I2C_CAP
@@ -1553,14 +1531,6 @@ function flash_it83xx() {
 
 	if [[ "${SERVO_TYPE}" == "servo_v2" ]]; then
 		ITEFLASH_ARGS+=( "--send-waveform=1" "--i2c-interface=ftdi" )
-	elif [[ "${FLAGS_use_i2c_pseudo}" == "${FLAGS_TRUE}" ]]; then
-		sudo modprobe i2c-dev
-		ITEFLASH_ARGS=( "sudo" "--" "${ITEFLASH_ARGS[@]}" \
-			"--send-waveform=0" "--i2c-interface=linux" \
-			"--i2c-dev-path=$(dut_i2c_dev)" )
-		if servo_is_ccd; then
-			ITEFLASH_ARGS+=( "--block-write-size=256" )
-		fi
 	else
 		ITEFLASH_ARGS+=( "--send-waveform=0" "--i2c-interface=usb" \
 			"-s" "$(get_serial)" )
@@ -1660,7 +1630,9 @@ function flash_npcx_uut() {
 	local TEMP_SUFFIX
 	local TEMP_DIR
 	local TOOL_PATH="${EC_DIR}/build/${BOARD}/util:${PATH}"
+	set +e
 	NPCX_UUT=$(PATH="${TOOL_PATH}" which uartupdatetool)
+	set -e
 	EC_UART="$(servo_ec_uart)"
 	TEMP_SUFFIX=".$(basename "${SCRIPT}").${CHIP}.$$"
 	TEMP_DIR="$(mktemp -d --suffix="${TEMP_SUFFIX}")"

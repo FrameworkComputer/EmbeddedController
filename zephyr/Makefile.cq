@@ -27,8 +27,8 @@ GENERATED_AND_SYSTEM_PATTERNS='$(PLATFORM_EC)/build/**' \
 	'**/picolibc/picolibc/include/**'
 TEST_PATTERNS='$(PLATFORM_EC)/test/**' \
 	'$(PLATFORM_EC)/include/tests/**' \
-	'$(PLATFORM_EC)/private/test/**' \
-	'$(PLATFORM_EC)/private/fingerprint/*/mcutest/**' \
+	'$(PLATFORM_EC)/../ec-private/test/**' \
+	'$(PLATFORM_EC)/../fingerprint/*/mcutest/**' \
 	'$(PLATFORM_EC)/zephyr/test/**' \
 	'$(THIRD_PARTY)/zephyr/main/subsys/testsuite/**' \
 	'$(PLATFORM_EC)/include/mock/**' \

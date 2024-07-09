@@ -33,7 +33,7 @@ test-list-y=\
        exception \
        flash_physical \
        flash_write_protect \
-       fpsensor \
+       fp_transport \
        fpsensor_auth_crypto_stateful \
        fpsensor_auth_crypto_stateless \
        fpsensor_crypto \
@@ -78,4 +78,4 @@ test-list-y=\
 
 # Note that this variable includes the trailing "/"
 _nocturne_fp_cur_dir:=$(dir $(lastword $(MAKEFILE_LIST)))
--include $(_nocturne_fp_cur_dir)../../private/board/nocturne_fp/build.mk
+-include $(_nocturne_fp_cur_dir)../../../ec-private/board/nocturne_fp/build.mk

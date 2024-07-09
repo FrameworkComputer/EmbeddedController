@@ -9,6 +9,10 @@
 
 #include "stdint.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * Common abstract layer
  */
@@ -252,5 +256,9 @@ extern uintptr_t audio_codec_wov_lang_buf_addr;
  * Task for running WoV.
  */
 void audio_codec_wov_task(void *arg);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif

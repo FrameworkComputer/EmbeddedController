@@ -447,6 +447,8 @@ cros_cbi_get_fw_config_kb_tablet(enum cbi_fw_config_field_id field_id,
 	case 1:
 		*value = FW_TABLET_PRESENT;
 		break;
+	case -1:
+		return -EINVAL;
 	default:
 		return 0;
 	}
@@ -485,6 +487,9 @@ ZTEST(yavilla, test_board_vivaldi_keybd_idx)
 
 	kb_tablet = 0;
 	zassert_equal(board_vivaldi_keybd_idx(), 1);
+
+	kb_tablet = -1;
+	zassert_equal(board_vivaldi_keybd_idx(), -1);
 }
 
 ZTEST(yavilla, test_kb_layout_init)

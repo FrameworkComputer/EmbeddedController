@@ -1,0 +1,88 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_charger: charger {
+			i2c-port = <&CHARGER_I2C>;
+			enum-names = "I2C_PORT_CHARGER",
+				"I2C_PORT_BATTERY",
+				"I2C_PORT_KB_DISCRETE",
+				"I2C_PORT_PORT80",
+				"I2C_PORT_EEPROM",
+				"I2C_PORT_RAA2250";
+		};
+		ec_pd_power: typec-aic1-power {
+			i2c-port = <&PD_POW_I2C>;
+			enum-names = "I2C_PORT_TYPEC_AIC_1";
+		};
+	};
+};
+
+/* charger */
+&CHARGER_I2C {
+	label = "I2C_CHARGER";
+	clock-frequency = <I2C_BITRATE_STANDARD>;
+	status = "okay";
+
+	charger: raa489@9 {
+		compatible = "intersil,isl9241";
+		status = "okay";
+		reg = <0x9>;
+	};
+	cbi_eeprom: eeprom@50 {
+		compatible = "atmel,at24";
+		reg = <0x50>;
+		size = <2048>;
+		pagesize = <16>;
+		address-width = <8>;
+		timeout = <5>;
+	};
+	kb_discrete: ite-it8801@39 {
+		compatible = "ite,it8801";
+		reg = <0x39>;
+	};
+	pca95xx_0: pca95xx@22 {
+		compatible = "nxp,pca95xx";
+		label = "PCA95XX";
+		reg = <0x22>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <16>;
+	};
+	pca95xx_1: pca95xx@23 {
+		compatible = "nxp,pca95xx";
+		label = "PCA95XX";
+		reg = <0x23>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <16>;
+	};
+	rvp_board_id: rvp-board-id {
+		compatible = "intel,rvp-board-id";
+		bom-gpios = <&pca95xx_0 14 0>, <&pca95xx_0 15 0>,
+			    <&pca95xx_0 0 0>;
+
+		fab-gpios = <&pca95xx_0 1 0>, <&pca95xx_0 2 0>;
+
+		board-gpios = <&pca95xx_0 8 0>, <&pca95xx_0 9 0>,
+			      <&pca95xx_0 10 0>, <&pca95xx_0 11 0>,
+			      <&pca95xx_0 12 0>, <&pca95xx_0 13 0>;
+	};
+	seven_seg_display: max695x-seven-seg-display@38 {
+		compatible = "maxim,max695x";
+		reg = <0x38>;
+		label = "MAX695X_SEVEN_SEG_DISPLAY";
+	};
+};
+
+/* typec-aic1-power */
+&PD_POW_I2C {
+	label = "I2C_PD_POWER";
+	clock-frequency = <I2C_BITRATE_FAST>;
+	status = "okay";
+};

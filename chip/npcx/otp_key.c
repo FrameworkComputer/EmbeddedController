@@ -5,6 +5,7 @@
 
 /* One-Time Programmable (OTP) Key */
 
+#include "chip/npcx/rom_chip.h"
 #include "common.h"
 #include "console.h"
 #include "openssl/mem.h"
@@ -12,7 +13,6 @@
 #include "panic.h"
 #include "printf.h"
 #include "registers.h"
-#include "rom_chip.h"
 #include "system.h"
 #include "task.h"
 #include "trng.h"
@@ -55,7 +55,7 @@ enum ec_error_list otp_key_read(uint8_t *key_buffer)
 	return EC_SUCCESS;
 }
 
-static enum ec_error_list otp_key_write(uint8_t *key_buffer)
+static enum ec_error_list otp_key_write(const uint8_t *key_buffer)
 {
 	enum API_RETURN_STATUS_T status = API_RET_OTP_STATUS_FAIL;
 	uint8_t i;

@@ -126,6 +126,10 @@
 
 #define I2C_ADDR_EEPROM_FLAGS 0x50 /* 7b address */
 
+#undef CONFIG_I2C_NACK_RETRY_COUNT
+#define CONFIG_I2C_NACK_RETRY_COUNT 10
+#define CONFIG_SMBUS_PEC
+
 /*
  * I2C pin names for baseboard
  *
@@ -146,6 +150,7 @@
 #ifdef BOARD_MAGOLOR
 #define CONFIG_ACCEL_KX022 /* Lid accel */
 #define CONFIG_ACCELGYRO_ICM426XX /* Base accel second source*/
+#define CONFIG_ACCELGYRO_BMI3XX /* BMI323 Base accel/gyro */
 #endif
 
 /* Lid operates in forced mode, base in FIFO */
@@ -159,6 +164,8 @@
 
 #ifdef BOARD_MAGOLOR
 #define CONFIG_ACCELGYRO_ICM426XX_INT_EVENT \
+	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
+#define CONFIG_ACCELGYRO_BMI3XX_INT_EVENT \
 	TASK_EVENT_MOTION_SENSOR_INTERRUPT(BASE_ACCEL)
 #endif
 

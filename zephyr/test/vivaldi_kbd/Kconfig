@@ -12,4 +12,8 @@ config VIVALDI_KBD_TEST_IDX_VALUE
 	int "Value to return for board_vivaldi_keybd_idx"
 	depends on VIVALDI_KBD_TEST_USE_IDX
 
+config VIVALDI_KBD_CBI_RACE_TEST
+	bool "Test for vivaldi config for CBI initialization sequence"
+	depends on VIVALDI_KBD_TEST_USE_IDX
+
 source "Kconfig.zephyr"

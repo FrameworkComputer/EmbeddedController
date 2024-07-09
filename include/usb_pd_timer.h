@@ -13,6 +13,10 @@
 
 #include <stdbool.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /*
  * List of all timers that will be managed by usb_pd_timer
  */
@@ -379,5 +383,9 @@ extern ATOMIC_DEFINE(timer_disabled, PD_TIMER_COUNT *MAX_PD_PORTS);
 	atomic_test_bit(timer_disabled, (p) * PD_TIMER_COUNT + (bit))
 
 #endif /* TEST_BUILD */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_PD_TIMER_H */

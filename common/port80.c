@@ -15,6 +15,7 @@
 #include "console.h"
 #include "chipset.h"
 #include "display_7seg.h"
+#line 18
 #include "hooks.h"
 #include "host_command.h"
 #include "port80.h"

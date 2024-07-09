@@ -9,7 +9,15 @@
 
 #include "math_util.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 typedef float floatv4_t[4];
 typedef fp_t fpv4_t[4];
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_VEC_4_H */

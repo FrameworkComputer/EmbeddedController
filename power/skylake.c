@@ -18,6 +18,7 @@
 
 /* Console output macros */
 #define CPRINTS(format, args...) cprints(CC_CHIPSET, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_CHIPSET, format, ##args)
 
 static int forcing_shutdown; /* Forced shutdown in progress? */
 
@@ -164,7 +165,7 @@ void chipset_handle_reboot(void)
 	if (flags & EC_RESET_FLAG_AP_OFF) {
 		/* Do not issue PMIC reset if board cannot save reset flags */
 		if (!board_has_working_reset_flags()) {
-			ccprintf("Skip PMIC reset due to board issue.\n");
+			CPRINTF("Skip PMIC reset due to board issue.\n");
 			cflush();
 			return;
 		}
@@ -176,7 +177,7 @@ void chipset_handle_reboot(void)
 	chip_panic_data_backup();
 #endif
 
-	ccprintf("Restarting system with PMIC.\n");
+	CPRINTF("Restarting system with PMIC.\n");
 	/* Flush console */
 	cflush();
 

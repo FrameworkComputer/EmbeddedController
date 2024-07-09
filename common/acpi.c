@@ -172,6 +172,69 @@ static int acpi_read(uint8_t addr)
 	}
 }
 
+static uint8_t strings_fifo_index;
+static size_t strings_fifo_offset;
+
+#ifdef CONFIG_BATTERY_V2
+static char read_battery_string(size_t field_offset, size_t field_size,
+				size_t str_offset)
+{
+	uint8_t battery_index = *host_get_memmap(EC_MEMMAP_BATT_INDEX);
+	if (battery_index >= CONFIG_BATTERY_COUNT) {
+		return 0;
+	}
+	if (str_offset >= field_size) {
+		return 0;
+	}
+	return *((const char *)(&battery_static[battery_index]) + field_offset +
+		 str_offset);
+}
+#endif
+
+static char strings_fifo_read_work(size_t offset)
+{
+	switch (strings_fifo_index) {
+	case EC_ACPI_MEM_STRINGS_FIFO_ID_VERSION:
+		if (offset == 0) {
+			return EC_ACPI_MEM_STRINGS_FIFO_V1;
+		}
+		return 0;
+
+#ifdef CONFIG_BATTERY_V2
+	case EC_ACPI_MEM_STRINGS_FIFO_ID_BATTERY_MODEL:
+		return read_battery_string(
+			offsetof(struct battery_static_info, model_ext),
+			sizeof(battery_static[0].model_ext), offset);
+	case EC_ACPI_MEM_STRINGS_FIFO_ID_BATTERY_SERIAL:
+		return read_battery_string(
+			offsetof(struct battery_static_info, serial_ext),
+			sizeof(battery_static[0].serial_ext), offset);
+	case EC_ACPI_MEM_STRINGS_FIFO_ID_BATTERY_MANUFACTURER:
+		return read_battery_string(
+			offsetof(struct battery_static_info, manufacturer_ext),
+			sizeof(battery_static[0].manufacturer_ext), offset);
+#endif
+
+	default:
+		return 0;
+	}
+}
+
+static char strings_fifo_read(void)
+{
+	char out = strings_fifo_read_work(strings_fifo_offset);
+	if (out != 0) {
+		strings_fifo_offset += 1;
+	}
+	return out;
+}
+
+static void strings_fifo_write(uint8_t value)
+{
+	strings_fifo_index = value;
+	strings_fifo_offset = 0;
+}
+
 /*
  * This handles AP writes to the EC via the ACPI I/O port. There are only a few
  * ACPI commands (EC_CMD_ACPI_*), but they are all handled here.
@@ -304,6 +367,9 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 			result = usb_retimer_fw_update_get_result();
 			break;
 #endif
+		case EC_ACPI_MEM_STRINGS_FIFO:
+			result = strings_fifo_read();
+			break;
 		default:
 			result = acpi_read(acpi_addr);
 			break;
@@ -408,6 +474,11 @@ int acpi_ap_to_ec(int is_cmd, uint8_t value, uint8_t *resultptr)
 				EC_ACPI_MEM_USB_RETIMER_OP(data));
 			break;
 #endif
+		case EC_ACPI_MEM_STRINGS_FIFO:
+			CPRINTS("Handling ACPI strings FIFO write (index %d)",
+				data);
+			strings_fifo_write(data);
+			break;
 		default:
 			CPRINTS("ACPI write 0x%02x = 0x%02x (ignored)",
 				acpi_addr, data);

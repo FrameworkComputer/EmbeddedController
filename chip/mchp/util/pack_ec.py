@@ -3,8 +3,10 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# A script to pack EC binary into SPI flash image for MEC17xx
-# Based on MEC170x_ROM_Description.pdf DS00002225C (07-28-17).
+"""A script to pack EC binary into SPI flash image for MEC17xx
+Based on MEC170x_ROM_Description.pdf DS00002225C (07-28-17).
+"""
+
 import argparse
 import hashlib
 import os
@@ -13,6 +15,8 @@ import subprocess
 import tempfile
 import zlib  # CRC32
 
+
+# pylint:disable=invalid-name
 
 # MEC1701 has 256KB SRAM from 0xE0000 - 0x120000
 # SRAM is divided into contiguous CODE & DATA
@@ -48,8 +52,8 @@ CRC_TABLE = [
 ]
 
 
-def mock_print(*args, **kwargs):
-    pass
+def mock_print(*_args, **_kwargs):
+    """Does nothing."""
 
 
 debug_print = mock_print
@@ -93,6 +97,7 @@ def GetPublicKey(pem_file):
         ["openssl", "rsa", "-in", pem_file, "-text", "-noout"],
         stdout=subprocess.PIPE,
         encoding="utf-8",
+        check=True,
     )
     modulus_raw = []
     in_modulus = False
@@ -111,24 +116,28 @@ def GetPublicKey(pem_file):
 
 
 def GetSpiClockParameter(args):
-    assert args.spi_clock in SPI_CLOCK_LIST, (
-        "Unsupported SPI clock speed %d MHz" % args.spi_clock
-    )
+    """Return the SPI clock parameter."""
+    assert (
+        args.spi_clock in SPI_CLOCK_LIST
+    ), f"Unsupported SPI clock speed {args.spi_clock:d} MHz"
     return SPI_CLOCK_LIST.index(args.spi_clock)
 
 
 def GetSpiReadCmdParameter(args):
-    assert args.spi_read_cmd in SPI_READ_CMD_LIST, (
-        "Unsupported SPI read command 0x%x" % args.spi_read_cmd
-    )
+    """Return the SPI read cmd parameter."""
+    assert (
+        args.spi_read_cmd in SPI_READ_CMD_LIST
+    ), f"Unsupported SPI read command 0x{args.spi_read_cmd:x}"
     return SPI_READ_CMD_LIST.index(args.spi_read_cmd)
 
 
 def PadZeroTo(data, size):
+    """Pad data with zeros."""
     data.extend(b"\0" * (size - len(data)))
 
 
 def BuildHeader(args, payload_len, load_addr, rorofile):
+    """Builds a header."""
     # Identifier and header version
     header = bytearray(b"PHCM\0")
 
@@ -164,6 +173,7 @@ def BuildHeader(args, payload_len, load_addr, rorofile):
 
 
 def BuildHeader2(args, payload_len, load_addr, payload_entry):
+    """Build a header, but differently than BuildHeader()."""
     # Identifier and header version
     header = bytearray(b"PHCM\0")
 
@@ -198,11 +208,8 @@ def BuildHeader2(args, payload_len, load_addr, payload_entry):
     return header
 
 
-#
-# Compute SHA-256 of data and return digest
-# as a bytearray
-#
 def HashByteArray(data):
+    """Compute SHA-256 of data and return digest as a bytearray"""
     hasher = hashlib.sha256()
     hasher.update(data)
     h = hasher.digest()
@@ -210,27 +217,26 @@ def HashByteArray(data):
     return bah
 
 
-#
-# Return 64-byte signature of byte array data.
-# Signature is SHA256 of data with 32 0 bytes appended
-#
 def SignByteArray(data):
+    """Return 64-byte signature of byte array data.
+    Signature is SHA256 of data with 32 0 bytes appended
+    """
     debug_print("Signature is SHA-256 of data")
     sigb = HashByteArray(data)
     sigb.extend(b"\0" * 32)
     return sigb
 
 
-# MEC1701H supports two 32-bit Tags located at offsets 0x0 and 0x4
-# in the SPI flash.
-# Tag format:
-#   bits[23:0] correspond to bits[31:8] of the Header SPI address
-#       Header is always on a 256-byte boundary.
-#   bits[31:24] = CRC8-ITU of bits[23:0].
-# Notice there is no chip-select field in the Tag both Tag's point
-# to the same flash part.
-#
 def BuildTag(args):
+    """MEC1701H supports two 32-bit Tags located at offsets 0x0 and 0x4
+    in the SPI flash.
+    Tag format:
+    bits[23:0] correspond to bits[31:8] of the Header SPI address
+        Header is always on a 256-byte boundary.
+    bits[31:24] = CRC8-ITU of bits[23:0].
+    Notice there is no chip-select field in the Tag both Tag's point
+    to the same flash part.
+    """
     tag = bytearray(
         [
             (args.header_loc >> 8) & 0xFF,
@@ -243,6 +249,7 @@ def BuildTag(args):
 
 
 def BuildTagFromHdrAddr(header_loc):
+    """Build a tag from a header address."""
     tag = bytearray(
         [
             (header_loc >> 8) & 0xFF,
@@ -267,27 +274,26 @@ def PacklfwRoImage(rorw_file, loader_file, image_size):
     first image_size bytes from the loader file and append bytes
     from the rorw file.
     return the filename"""
-    fo = tempfile.NamedTemporaryFile(delete=False)  # Need to keep file around
-    with open(loader_file, "rb") as fin1:  # read 4KB loader file
-        pro = fin1.read()
-    fo.write(pro)  # write 4KB loader data to temp file
-    with open(rorw_file, "rb") as fin:
-        ro = fin.read(image_size)
+    with tempfile.NamedTemporaryFile(
+        delete=False
+    ) as fo:  # Need to keep file around
+        with open(loader_file, "rb") as fin1:  # read 4KB loader file
+            pro = fin1.read()
+        fo.write(pro)  # write 4KB loader data to temp file
+        with open(rorw_file, "rb") as fin:
+            ro = fin.read(image_size)
 
-    fo.write(ro)
-    fo.close()
-    return fo.name
+        fo.write(ro)
+        return fo.name
 
 
-#
-# Generate a test EC_RW image of same size
-# as original.
-# Preserve image_data structure and fill all
-# other bytes with 0xA5.
-# useful for testing SPI read and EC build
-# process hash generation.
-#
 def gen_test_ecrw(pldrw):
+    """Generate a test EC_RW image of same size as original.
+    Preserve image_data structure and fill all
+    other bytes with 0xA5.
+    useful for testing SPI read and EC build
+    process hash generation.
+    """
     debug_print("gen_test_ecrw: pldrw type =", type(pldrw))
     debug_print("len pldrw =", len(pldrw), " = ", hex(len(pldrw)))
     cookie1_pos = pldrw.find(b"\x99\x88\x77\xce")
@@ -299,7 +305,7 @@ def gen_test_ecrw(pldrw):
     debug_print("Found cookie1 at ", hex(cookie1_pos))
     debug_print("Found cookie2 at ", hex(cookie2_pos))
 
-    if cookie1_pos > 0 and cookie2_pos > cookie1_pos:
+    if cookie2_pos > cookie1_pos > 0:
         for i in range(0, cookie1_pos):
             pldrw[i] = 0xA5
         for i in range(cookie2_pos + 4, len(pldrw)):
@@ -310,8 +316,7 @@ def gen_test_ecrw(pldrw):
 
 
 def parseargs():
-    rpath = os.path.dirname(os.path.relpath(__file__))
-
+    """Parse command line args."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-i",
@@ -398,25 +403,27 @@ def parseargs():
     return parser.parse_args()
 
 
-# Debug helper routine
 def dumpsects(spi_list):
-    debug_print("spi_list has {0} entries".format(len(spi_list)))
+    """Debug helper routine"""
+    debug_print(f"spi_list has {len(spi_list)} entries")
     for s in spi_list:
-        debug_print("0x{0:x} 0x{1:x} {2:s}".format(s[0], len(s[1]), s[2]))
+        debug_print(f"0x{s[0]:x} 0x{len(s[1]):x} {s[2]:s}")
 
 
 def printByteArrayAsHex(ba, title):
+    """Print a byte array as hex."""
     debug_print(title, "= ")
     count = 0
     for b in ba:
         count = count + 1
-        debug_print("0x{0:02x}, ".format(b), end="")
+        debug_print(f"0x{b:02x}, ", end="")
         if (count % 8) == 0:
             debug_print("")
     debug_print("\n")
 
 
 def print_args(args):
+    """Print all of the command line args."""
     debug_print("parsed arguments:")
     debug_print(".input  = ", args.input)
     debug_print(".output = ", args.output)
@@ -441,7 +448,8 @@ def print_args(args):
 # Verbose mode when V=1
 #
 def main():
-    global debug_print
+    """Main function."""
+    global debug_print  # pylint:disable=global-statement
 
     args = parseargs()
 
@@ -483,10 +491,10 @@ def main():
     # compute CRC32 of EC_RO except for last 4 bytes
     # skip over 4KB LFW
     # Store CRC32 in last 4 bytes
-    if args.test_spi == True:
+    if args.test_spi:
         crc = zlib.crc32(bytes(payload[LFW_SIZE : (payload_len - 4)]))
         crc_ofs = payload_len - 4
-        debug_print("EC_RO CRC32 = 0x{0:08x} @ 0x{1:08x}".format(crc, crc_ofs))
+        debug_print(f"EC_RO CRC32 = 0x{crc:08x} @ 0x{crc_ofs:08x}")
         for i in range(4):
             payload[crc_ofs + i] = crc & 0xFF
             crc = crc >> 8
@@ -543,12 +551,10 @@ def main():
     # SPI image integrity test
     # compute CRC32 of EC_RW except for last 4 bytes
     # Store CRC32 in last 4 bytes
-    if args.test_spi == True:
+    if args.test_spi:
         crc = zlib.crc32(bytes(payload_rw[: (payload_rw_len - 32)]))
         crc_ofs = payload_rw_len - 4
-        debug_print(
-            "EC_RW CRC32 = 0x{0:08x} at offset 0x{1:08x}".format(crc, crc_ofs)
-        )
+        debug_print(f"EC_RW CRC32 = 0x{crc:08x} at offset 0x{crc_ofs:08x}")
         for i in range(4):
             payload_rw[crc_ofs + i] = crc & 0xFF
             crc = crc >> 8
@@ -584,7 +590,7 @@ def main():
     if args.rw_loc >= 0:
         rw_offset = args.rw_loc
 
-    debug_print("rw_offset = 0x{0:08x}".format(rw_offset))
+    debug_print(f"rw_offset = 0x{rw_offset:08x}")
 
     if rw_offset < offset + len(payload_signature):
         print("ERROR: EC_RW overlaps EC_RO")

@@ -14,36 +14,20 @@
 			compatible = "named-usbc-port";
 			reg = <0>;
 			chg = <&charger>;
-			alt-mode = <&pdc_data_port0>;
 			pdc = <&pdc_power_p0>;
 			pd-retimer;
-			usb-mux-chain-0 {
-				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&virtual_mux_0>;
-			};
 			policy = <&cros_policy>;
-		};
-		port0-muxes {
-			virtual_mux_0: virtual-mux-0 {
-				compatible = "cros-ec,usbc-mux-virtual";
-			};
 		};
 		usbc_port1: port0@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
-			alt-mode = <&pdc_data_port1>;
 			pdc = <&pdc_power_p1>;
 			pd-retimer;
-			usb-mux-chain-1 {
-				compatible = "cros-ec,usb-mux-chain";
-				usb-muxes = <&virtual_mux_1>;
-			};
 			policy = <&cros_policy>;
 		};
-		port1-muxes {
-			virtual_mux_1: virtual-mux-1 {
-				compatible = "cros-ec,usbc-mux-virtual";
-			};
+		ppm-driver {
+			compatible = "ucsi-ppm";
+			lpm = <&pdc_power_p0 &pdc_power_p1>;
 		};
 	};
 };
@@ -66,22 +50,5 @@
 		compatible = "intersil,isl923x";
 		status = "okay";
 		reg = <0x9>;
-	};
-};
-
-/* pd-aic-data */
-&i2c3 {
-	pdc_data_port0: rts@68 {
-		compatible = "intel,pd-altmode";
-		reg = <0x68>;
-		irq-gpios = <&gpioj 1 GPIO_ACTIVE_LOW>;
-		irq-flags = <GPIO_INT_LEVEL_LOW>;
-	};
-	pdc_data_port1: rts@69 {
-		compatible = "intel,pd-altmode";
-		reg = <0x69>;
-		irq-gpios = <&gpioj 1 GPIO_ACTIVE_LOW>;
-		irq-shared;
-		irq-flags = <GPIO_INT_LEVEL_LOW>;
 	};
 };

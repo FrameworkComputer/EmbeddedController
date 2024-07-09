@@ -31,3 +31,8 @@ if((DEFINED CONFIG_BOARD_MTLRVP_M1723) OR (DEFINED CONFIG_BOARD_MTLRVP_MCHP) OR
   zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_USB_PD_TCPMV2 "src/chg_usb_tcpc.c")
   zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_DEDICATED_CHARGE_PORT "src/dc_jack.c")
 endif()
+
+if(DEFINED CONFIG_BOARD_PTLRVP_MCHP)
+  add_subdirectory(ptlrvp)
+  zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_DEDICATED_CHARGE_PORT "src/dc_jack.c")
+endif()

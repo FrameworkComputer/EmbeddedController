@@ -7,6 +7,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define CCGXXF_TCPC_COMPAT cypress_ccgxxf
 
 /* clang-format off */
@@ -28,3 +32,7 @@
 				(GPIO_LIMIT)))),                               \
 	}
 /* clang-format on */
+
+#ifdef __cplusplus
+}
+#endif

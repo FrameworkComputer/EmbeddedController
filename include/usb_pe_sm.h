@@ -11,6 +11,10 @@
 #include "usb_pd_tcpm.h"
 #include "usb_sm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Policy Engine Receive and Transmit Errors */
 enum pe_error {
 	ERR_RCH_CHUNKED,
@@ -231,5 +235,9 @@ void pe_snk_epr_explicit_exit(int port);
  * @return true if the port can enter EPR mode or false.
  */
 bool pe_snk_can_enter_epr_mode(int port);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_PE_H */

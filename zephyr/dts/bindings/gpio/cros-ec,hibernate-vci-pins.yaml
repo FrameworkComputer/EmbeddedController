@@ -1,0 +1,27 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+description: Hibernate VCI Pins Configurations
+
+compatible: "cros-ec,hibernate-vci-pins"
+
+child-binding:
+  description: VCI child node
+  properties:
+    gpios:
+      required: true
+      type: phandle-array
+      description: Reference to a VCI instance.
+
+    vci-polarity:
+      required: true
+      type: string
+      description: VCI input polarity (0=active low)
+      enum:
+        - "Active_Low"
+        - "Active_High"
+
+    vci-latch-enable:
+      type: boolean
+      description: If present enable latching of VCI input

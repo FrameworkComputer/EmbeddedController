@@ -22,7 +22,8 @@ config PLATFORM_EC_WATCHDOG_WARNING_LEADING_TIME_MS
 	  PLATFORM_EC_WATCHDOG_PERIOD_MS -
 	  PLATFORM_EC_WATCHDOG_WARNING_LEADING_TIME_MS.
 
-	  For the NPCX chip, use WDT_NPCX_DELAY_CYCLES instead of this config.
+	  For the NPCX chip, use WDT_NPCX_WARNING_LEADING_TIME_MS instead
+	  of this config.
 	  For the MCHP chip, use WDT_XEC_DELAY_CYCLES instead of this config.
 	  For the ITE chip, use CONFIG_WDT_ITE_WARNING_LEADING_TIME_MS instead
 	  of this config.

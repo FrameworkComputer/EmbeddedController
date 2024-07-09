@@ -41,6 +41,20 @@ void sn5s330_emul_reset(const struct emul *emul);
 void sn5s330_emul_make_vbus_overcurrent(const struct emul *emul);
 
 /**
+ * @brief Emulate interrupt pin assertion.
+ *
+ * @param emul The sn5s330 chip emulator.
+ */
+void sn5s330_emul_assert_interrupt(const struct emul *emul);
+
+/**
+ * @brief Emulate interrupt pin de-assertion.
+ *
+ * @param emul The sn5s330 chip emulator.
+ */
+void sn5s330_emul_deassert_interrupt(const struct emul *emul);
+
+/**
  * @brief Emulate vbus voltage is below min 0.6V.
  *
  * @param emul The sn5s330 chip emulator.

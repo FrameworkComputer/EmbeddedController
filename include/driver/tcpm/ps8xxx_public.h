@@ -10,6 +10,10 @@
 
 #include "usb_mux.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* I2C interface */
 #define PS8XXX_I2C_ADDR1_P1_FLAGS 0x09
 #define PS8XXX_I2C_ADDR1_P2_FLAGS 0x0A
@@ -90,5 +94,9 @@ extern struct i2c_stress_test_dev ps8xxx_i2c_stress_test_dev;
  * RD when mux should work.
  */
 extern const struct usb_mux_driver ps8xxx_usb_mux_driver;
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_DRIVER_TCPM_PS8XXX_PUBLIC_H */

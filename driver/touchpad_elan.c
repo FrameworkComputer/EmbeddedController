@@ -12,6 +12,7 @@
 
 #include "common.h"
 #include "console.h"
+#include "driver/touchpad_elan.h"
 #include "gpio.h"
 #include "hooks.h"
 #include "hwtimer.h"
@@ -36,72 +37,11 @@
 
 #define TASK_EVENT_POWER TASK_EVENT_CUSTOM_BIT(0)
 
-/******************************************************************************/
-/* How to talk to the controller */
-/******************************************************************************/
-
-#define ELAN_VENDOR_ID 0x04f3
-
-#define ETP_I2C_RESET 0x0100
-#define ETP_I2C_WAKE_UP 0x0800
-#define ETP_I2C_SLEEP 0x0801
-
-#define ETP_I2C_STAND_CMD 0x0005
-#define ETP_I2C_PATTERN_CMD 0x0100
-#define ETP_I2C_UNIQUEID_CMD 0x0101
-#define ETP_I2C_FW_VERSION_CMD 0x0102
-#define ETP_I2C_IC_TYPE_CMD 0x0103
-#define ETP_I2C_OSM_VERSION_CMD 0x0103
-#define ETP_I2C_XY_TRACENUM_CMD 0x0105
-#define ETP_I2C_MAX_X_AXIS_CMD 0x0106
-#define ETP_I2C_MAX_Y_AXIS_CMD 0x0107
-#define ETP_I2C_RESOLUTION_CMD 0x0108
-#define ETP_I2C_IAP_VERSION_CMD 0x0110
-#define ETP_I2C_IC_TYPE_P0_CMD 0x0110
-#define ETP_I2C_IAP_VERSION_P0_CMD 0x0111
-#define ETP_I2C_PRESSURE_CMD 0x010A
-#define ETP_I2C_SET_CMD 0x0300
-#define ETP_I2C_IAP_TYPE_CMD 0x0304
-#define ETP_I2C_POWER_CMD 0x0307
-#define ETP_I2C_FW_CHECKSUM_CMD 0x030F
-
-#define ETP_ENABLE_ABS 0x0001
-
-#define ETP_DISABLE_POWER 0x0001
-
-#define ETP_I2C_REPORT_LEN 34
-
-#define ETP_MAX_FINGERS 5
-#define ETP_FINGER_DATA_LEN 5
-
-#define ETP_PRESSURE_OFFSET 25
-#define ETP_FWIDTH_REDUCE 90
-
-#define ETP_REPORT_ID 0x5D
-#define ETP_REPORT_ID_OFFSET 2
-#define ETP_TOUCH_INFO_OFFSET 3
-#define ETP_FINGER_DATA_OFFSET 4
-#define ETP_HOVER_INFO_OFFSET 30
-#define ETP_MAX_REPORT_LEN 34
-
-#define ETP_IAP_START_ADDR 0x0083
-
-#define ETP_I2C_IAP_RESET_CMD 0x0314
-#define ETP_I2C_IAP_RESET 0xF0F0
-#define ETP_I2C_IAP_CTRL_CMD 0x0310
-#define ETP_I2C_MAIN_MODE_ON BIT(9)
-#define ETP_I2C_IAP_CMD 0x0311
-#define ETP_I2C_IAP_PASSWORD 0x1EA5
-
-#define ETP_I2C_IAP_REG_L 0x01
-#define ETP_I2C_IAP_REG_H 0x06
-
-#define ETP_FW_IAP_PAGE_ERR BIT(5)
-#define ETP_FW_IAP_INTF_ERR BIT(4)
-
-#ifdef CONFIG_USB_UPDATE
+#if defined(CONFIG_USB_UPDATE)
 /* The actual FW_SIZE depends on IC. */
 #define FW_SIZE CONFIG_TOUCHPAD_VIRTUAL_SIZE
+#elif defined(CONFIG_EMUL_TOUCHPAD_ELAN)
+#define FW_SIZE 65536
 #endif
 
 #ifdef CONFIG_ZEPHYR
@@ -418,7 +358,7 @@ static int elan_query_product(void)
 }
 
 /* Initialize the controller ICs after reset */
-static void elan_tp_init(void)
+test_export_static void elan_tp_init(void)
 {
 	int rv;
 	uint8_t val[2];
@@ -523,7 +463,7 @@ out:
 }
 DECLARE_DEFERRED(elan_tp_init);
 
-#ifdef CONFIG_USB_UPDATE
+#if defined(CONFIG_USB_UPDATE) || defined(CONFIG_TEST)
 int touchpad_get_info(struct touchpad_info *tp)
 {
 	int rv;
@@ -732,7 +672,7 @@ int touchpad_update_write(int offset, int size, const uint8_t *data)
 #define TOUCHPAD_ELAN_DEBUG_CMD_LENGTH 50
 #define TOUCHPAD_ELAN_DEBUG_NUM_CMD 2
 
-static const uint8_t allowed_command_hashes
+test_mockable_static const uint8_t allowed_command_hashes
 	[TOUCHPAD_ELAN_DEBUG_NUM_CMD][SHA256_DIGEST_SIZE] = {
 		{ 0x0a, 0xf6, 0x37, 0x03, 0x93, 0xb2, 0xde, 0x8c,
 		  0x56, 0x7b, 0x86, 0xba, 0xa6, 0x79, 0xe3, 0xa3,

@@ -122,6 +122,13 @@ config PLATFORM_EC_KEYBOARD_KEYPAD
 	  placed on the far right. This contains nuumber keys and also some
 	  commonly used symbols, to help speed up numeric data entry.
 
+config PLATFORM_EC_KEYBOARD_COLS
+	int "Number of columns scanned by keyboard subsystem"
+	default 15 if PLATFORM_EC_KEYBOARD_KEYPAD
+	default 13
+	help
+	  Number of the columns the keyboard subsystem scans.
+
 config PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 	bool "Support keyboard customization"
 	help
@@ -286,6 +293,19 @@ config PLATFORM_KEYBOARD_SCANCODE_CALLBACK
 
 endif # PLATFORM_EC_KEYBOARD
 
+config PLATFORM_EC_KEYBOARD_BOOT_KEYS
+	bool "Support for boot key combinations"
+	default y if PLATFORM_EC_KEYBOARD
+	help
+	  Enable this to support for boot key combinations (e.g. refresh key
+	  being held on boot to trigger recovery).
+
+config PLATFORM_EC_KEYBOARD_RUNTIME_KEYS
+	bool "Support for extra runtime key combinations"
+	default y if PLATFORM_EC_KEYBOARD
+	help
+	  Enable this to support for extra runtime key combinations (e.g.
+	  alt+volup+h/r for hibernate and warm reboot, respectively).
 
 menuconfig PLATFORM_EC_RGB_KEYBOARD
 	bool "RGB keyboard support"

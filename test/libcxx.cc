@@ -8,10 +8,7 @@
  */
 
 #include "test_util.h"
-
-extern "C" {
 #include "timer.h"
-}
 
 #include <chrono>
 
@@ -28,7 +25,7 @@ static int test_system_clock()
 	return EC_SUCCESS;
 }
 
-extern "C" void run_test(int, const char **)
+void run_test(int, const char **)
 {
 	test_reset();
 	RUN_TEST(test_system_clock);

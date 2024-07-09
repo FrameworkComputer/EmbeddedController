@@ -10,6 +10,10 @@
 
 #ifdef CONFIG_ZEPHYR
 #include <zephyr/drivers/pwm.h>
+
+#ifdef __cplusplus
+extern "C" {
+#endif
 #endif
 
 #ifdef CONFIG_ZEPHYR
@@ -69,5 +73,9 @@ extern struct pwm_led_color_map led_color_map[EC_LED_COLOR_COUNT];
 extern struct pwm_led pwm_leds[CONFIG_LED_PWM_COUNT];
 
 void set_pwm_led_color(enum pwm_led_id id, int color);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* defined(__CROS_EC_LED_PWM_H) */

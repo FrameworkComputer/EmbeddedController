@@ -18,6 +18,10 @@
 #include <zephyr/device.h>
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief List of all supported PPC drivers and emulators. Format is
  * (compatible, config).
@@ -108,5 +112,9 @@ extern struct ppc_config_t ppc_chips_alt[];
 #define PPC_ENABLE_ALTERNATE_BY_NODELABEL(usb_port_num, nodelabel)           \
 	memcpy(&ppc_chips[usb_port_num], &PPC_ALT_FROM_NODELABEL(nodelabel), \
 	       sizeof(struct ppc_config_t))
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZEPHYR_CHROME_USBC_PPC_H */

@@ -949,7 +949,17 @@ DECLARE_HOOK(HOOK_CHIPSET_RESUME, bq25710_chipset_startup, HOOK_PRIO_DEFAULT);
 /* Called on AP S0 -> S0iX/S3 or S3 -> S5 transition */
 static void bq25710_chipset_suspend(void)
 {
-	bq25710_set_low_power_mode(CHARGER_SOLO, 1);
+	int reg;
+	if (raw_read16(CHARGER_SOLO, BQ25710_REG_CHARGE_OPTION_0, &reg))
+		return;
+
+	/*
+	 * Enable low power mode regardless of current performance mode.
+	 * The current state would be restored on the following startup
+	 */
+
+	reg = SET_BQ_FIELD(BQ257X0, CHARGE_OPTION_0, EN_LWPWR, true, reg);
+	raw_write16(CHARGER_SOLO, BQ25710_REG_CHARGE_OPTION_0, reg);
 }
 DECLARE_HOOK(HOOK_CHIPSET_SUSPEND, bq25710_chipset_suspend, HOOK_PRIO_DEFAULT);
 DECLARE_HOOK(HOOK_CHIPSET_SHUTDOWN, bq25710_chipset_suspend, HOOK_PRIO_DEFAULT);

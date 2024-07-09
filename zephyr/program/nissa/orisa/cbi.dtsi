@@ -1,0 +1,140 @@
+/* Copyright 2023 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+/* Orisa-specific fw_config fields. */
+	nissa-fw-config {
+		/*
+		 * FW_CONFIG field to defined for THERMAL SOLUTION.
+		 */
+		thermal-solution {
+			enum-name = "FW_THERMAL_SOLUTION";
+			start = <0>;
+			size = <1>;
+
+			thermal-solution-6w {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_SOLUTION_6W";
+				value = <0>;
+			};
+			thermal-solution-15w {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_THERMAL_SOLUTION_15W";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for KB TYPE.
+		 */
+		kb-type {
+			enum-name = "FW_KB_TYPE";
+			start = <1>;
+			size = <1>;
+
+			kb-type-default {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_TYPE_DEFAULT";
+				value = <0>;
+			};
+			kb-type-ansi-canadian {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_TYPE_ANSI_CANADIAN";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for SAR ID.
+		 */
+		sar-id {
+			enum-name = "FW_SAR_ID";
+			start = <2>;
+			size = <1>;
+
+			sar-id-0 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SAR_ID_0";
+				value = <0>;
+			};
+			sar-id-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SAR_ID_1";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for SUB BOARD.
+		 */
+		sub-board {
+			enum-name = "FW_SUB_BOARD";
+			start = <3>;
+			size = <2>;
+
+			sub-board-1 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_1";
+				value = <0>;
+			};
+			sub-board-2 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_2";
+				value = <1>;
+			};
+			sub-board-3 {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SUB_BOARD_3";
+				value = <2>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for SD BOOT.
+		 */
+		sd-boot {
+			enum-name = "FW_SD_BOOT";
+			start = <29>;
+			size = <1>;
+
+			sd-boot-enalbe {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SD_BOOT_ENABLE";
+				value = <0>;
+			};
+			sd-boot-disable {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_SD_BOOT_DISABLE";
+				value = <1>;
+			};
+		};
+
+		/*
+		 * FW_CONFIG field to defined for STORAGE TYPE.
+		 */
+		storage {
+			enum-name = "FW_STORAGE";
+			start = <30>;
+			size = <2>;
+
+			storage-emmc {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_EMMC";
+				value = <0>;
+			};
+			storage-nvme {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_NVME";
+				value = <1>;
+			};
+			storage-ufs {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_STORAGE_UFS";
+				value = <2>;
+			};
+		};
+/delete-node/ fan;
+	};
+};

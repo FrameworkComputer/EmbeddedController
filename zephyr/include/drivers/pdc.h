@@ -11,6 +11,7 @@
 #ifndef ZEPHYR_INCLUDE_DRIVERS_PDC_H_
 #define ZEPHYR_INCLUDE_DRIVERS_PDC_H_
 
+#include "ec_commands.h"
 #include "ucsi_v3.h"
 #include "usb_pd.h"
 
@@ -18,6 +19,7 @@
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/i2c.h>
+#include <zephyr/sys/slist.h>
 #include <zephyr/types.h>
 
 #ifdef __cplusplus
@@ -31,6 +33,16 @@ extern "C" {
 #define PDC_VIDPID_GET_VID(vidpid) (((vidpid) >> 16) & 0xFFFF)
 #define PDC_VIDPID_GET_PID(vidpid) ((vidpid) & 0xFFFF)
 
+#define PDC_VIDPID_INVALID (0x00000000)
+
+/**
+ * Compare PDC versions
+ */
+#define PDC_FWVER_AT_LEAST(ver_in, major, minor)    \
+	(PDC_FWVER_GET_MAJOR(ver_in) > (major) ||   \
+	 (PDC_FWVER_GET_MAJOR(ver_in) == (major) && \
+	  PDC_FWVER_GET_MINOR(ver_in) >= (minor)))
+
 /**
  * Extract the major, minor, and patch elements from a 32-bit version in
  * `struct pdc_info_t`
@@ -39,15 +51,19 @@ extern "C" {
 #define PDC_FWVER_GET_MINOR(fwver) (((fwver) >> 8) & 0xFF)
 #define PDC_FWVER_GET_PATCH(fwver) ((fwver) & 0xFF)
 
+#define PDC_FWVER_INVALID (0x00000000)
+
 /**
  * @brief Power Delivery Controller Information
  */
 struct pdc_info_t {
 	/** Firmware version running on the PDC */
 	uint32_t fw_version;
+	/** Config version of the firmware, specific to this firmware version */
+	uint8_t fw_config_version;
 	/** Power Delivery Revision supported by the PDC */
 	uint16_t pd_revision;
-	/** Power Delivery Version supported byt the PDC */
+	/** Power Delivery Version supported by the PDC */
 	uint16_t pd_version;
 	/** VID:PID of the PDC (optional) */
 	uint32_t vid_pid;
@@ -55,6 +71,8 @@ struct pdc_info_t {
 	uint8_t is_running_flash_code;
 	/** Set to the currently used flash bank (optional) */
 	uint8_t running_in_flash_bank;
+	/** 12-byte program name string plus NUL terminator */
+	char project_name[USB_PD_CHIP_INFO_PROJECT_NAME_LEN + 1];
 	/** Extra information (optional) */
 	uint16_t extra;
 };
@@ -97,6 +115,8 @@ struct get_pdo_t {
 	enum pdo_source_t pdo_source;
 };
 
+struct pdc_callback;
+
 /**
  * @typedef
  * @brief These are the API function types
@@ -119,10 +139,11 @@ typedef int (*pdc_get_connector_status_t)(
 	const struct device *dev, union connector_status_t *connector_status);
 typedef int (*pdc_get_error_status_t)(const struct device *dev,
 				      union error_status_t *es);
-typedef void (*pdc_cci_handler_cb_t)(union cci_event_t cci_event,
-				     void *cb_data);
 typedef int (*pdc_set_handler_cb_t)(const struct device *dev,
-				    pdc_cci_handler_cb_t cci_cb, void *cb_data);
+				    struct pdc_callback *callback);
+typedef void (*pdc_cci_cb_t)(const struct device *dev,
+			     const struct pdc_callback *callback,
+			     union cci_event_t cci_event);
 typedef int (*pdc_get_vbus_t)(const struct device *dev, uint16_t *vbus);
 typedef int (*pdc_get_pdos_t)(const struct device *dev,
 			      enum pdo_type_t pdo_type,
@@ -130,8 +151,8 @@ typedef int (*pdc_get_pdos_t)(const struct device *dev,
 			      bool port_partner_pdo, uint32_t *pdos);
 typedef int (*pdc_get_rdo_t)(const struct device *dev, uint32_t *rdo);
 typedef int (*pdc_set_rdo_t)(const struct device *dev, uint32_t rdo);
-typedef int (*pdc_get_info_t)(const struct device *dev,
-			      struct pdc_info_t *info);
+typedef int (*pdc_get_info_t)(const struct device *dev, struct pdc_info_t *info,
+			      bool live);
 typedef int (*pdc_get_bus_info_t)(const struct device *dev,
 				  struct pdc_bus_info_t *info);
 typedef int (*pdc_get_current_pdo_t)(const struct device *dev, uint32_t *pdo);
@@ -154,6 +175,20 @@ typedef int (*pdc_is_vconn_sourcing_t)(const struct device *dev,
 				       bool *vconn_sourcing);
 typedef int (*pdc_set_pdos_t)(const struct device *dev, enum pdo_type_t type,
 			      uint32_t *pdo, int count);
+typedef int (*pdc_get_pch_data_status_t)(const struct device *dev,
+					 uint8_t port_num, uint8_t *status_reg);
+typedef int (*pdc_execute_ucsi_cmd_t)(const struct device *dev,
+				      uint8_t ucsi_command, uint8_t data_size,
+				      uint8_t *command_specific,
+				      uint8_t *lpm_data_out,
+				      struct pdc_callback *callback);
+typedef int (*pdc_manage_callback_t)(const struct device *dev,
+				     struct pdc_callback *callback, bool set);
+typedef int (*pdc_ack_cc_ci_t)(const struct device *dev,
+			       union conn_status_change_bits_t ci, bool cc,
+			       uint16_t vendor_defined);
+typedef int (*pdc_get_lpm_ppm_info_t)(const struct device *dev,
+				      struct lpm_ppm_info_t *info);
 
 /**
  * @cond INTERNAL_HIDDEN
@@ -193,6 +228,11 @@ __subsystem struct pdc_driver_api_t {
 	pdc_set_comms_state_t set_comms_state;
 	pdc_is_vconn_sourcing_t is_vconn_sourcing;
 	pdc_set_pdos_t set_pdos;
+	pdc_get_pch_data_status_t get_pch_data_status;
+	pdc_execute_ucsi_cmd_t execute_ucsi_cmd;
+	pdc_manage_callback_t manage_callback;
+	pdc_ack_cc_ci_t ack_cc_ci;
+	pdc_get_lpm_ppm_info_t get_lpm_ppm_info;
 };
 /**
  * @endcond
@@ -543,24 +583,23 @@ static inline int pdc_set_pdr(const struct device *dev, union pdr_t pdr)
 }
 
 /**
- * @brief Sets the callback the driver uses to communicate events to the TCPM
+ * @brief Sets the callback the driver uses to communicate CC events to the
+ *        TCPM.
  * @note CCI Events set
  *           <none>
  *
  * @param dev PDC device structure pointer
- * @param cci_cb pointer to callback
- * @param cb_data point to data that's passed to the callback
+ * @param callback Pointer to callback
  */
-static inline void pdc_set_handler_cb(const struct device *dev,
-				      pdc_cci_handler_cb_t cci_cb,
-				      void *cb_data)
+static inline void pdc_set_cc_callback(const struct device *dev,
+				       struct pdc_callback *callback)
 {
 	const struct pdc_driver_api_t *api =
 		(const struct pdc_driver_api_t *)dev->api;
 
 	__ASSERT(api->set_handler_cb != NULL, "SET_HANDLER_CB is not optional");
 
-	api->set_handler_cb(dev, cci_cb, cb_data);
+	api->set_handler_cb(dev, callback);
 }
 
 /**
@@ -640,20 +679,21 @@ static inline int pdc_get_pdos(const struct device *dev,
  *
  * @param dev PDC device structure pointer
  * @param info pointer to where the PDC information is stored
+ * @param live If true, force a read from chip. Else used cached version.
  *
  * @retval 0 on success
  * @retval -EBUSY if not ready to execute the command
  * @retval -EINVAL if fw_version pointers is NULL
  */
 static inline int pdc_get_info(const struct device *dev,
-			       struct pdc_info_t *info)
+			       struct pdc_info_t *info, bool live)
 {
 	const struct pdc_driver_api_t *api =
 		(const struct pdc_driver_api_t *)dev->api;
 
 	__ASSERT(api->get_info != NULL, "GET_INFO is not optional");
 
-	return api->get_info(dev, info);
+	return api->get_info(dev, info, live);
 }
 
 /**
@@ -717,6 +757,8 @@ static inline int pdc_set_rdo(const struct device *dev, uint32_t rdo)
 {
 	const struct pdc_driver_api_t *api =
 		(const struct pdc_driver_api_t *)dev->api;
+
+	__ASSERT(api->set_rdo != NULL, "SET_RDO is not optional");
 
 	return api->set_rdo(dev, rdo);
 }
@@ -849,6 +891,29 @@ static inline int pdc_update_retimer_fw(const struct device *dev, bool enable)
 }
 
 /**
+ * @brief Command to get the PDC PCH DATA STATUS REG value.
+ *
+ * @param enable True->enter, False->exit get pch data status.
+ *
+ * @retval 0 if success.
+ * @retval -EIO if input/output error.
+ * @retval -ENOSYS if API not implemented.
+ */
+static inline int pdc_get_pch_data_status(const struct device *dev,
+					  uint8_t port_num, uint8_t *status_reg)
+{
+	const struct pdc_driver_api_t *api =
+		(const struct pdc_driver_api_t *)dev->api;
+
+	/* Temporarily optional feature, so it might not be implemented */
+	if (api->get_pch_data_status == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->get_pch_data_status(dev, port_num, status_reg);
+}
+
+/**
  * @brief Gets the attached cable properties
  * @note CCI Events set
  *           busy: if PDC is busy
@@ -964,6 +1029,10 @@ static inline int pdc_set_pdos(const struct device *dev, enum pdo_type_t type,
 	const struct pdc_driver_api_t *api =
 		(const struct pdc_driver_api_t *)dev->api;
 
+	if (api->set_pdos == NULL) {
+		return -ENOSYS;
+	}
+
 	return api->set_pdos(dev, type, pdo, count);
 }
 
@@ -988,6 +1057,35 @@ static inline int pdc_is_vconn_sourcing(const struct device *dev,
 	}
 
 	return api->is_vconn_sourcing(dev, vconn_sourcing);
+}
+
+/**
+ * @brief Acknowledge command complete (cc) or change indicator (ci)
+ * @note CCI Events set
+ *           busy: if the PDC is busy
+ *           error: if command fails
+ *           command_commpleted: ack_cc_ci write successful
+ *
+ * @param dev PDC device structure pointer
+ * @param ci Change Indicator bits
+ * @param cc Complete complete bit
+ * @param vendor_defined Vendor specified change indicator bits
+ *
+ * @retval 0 on success
+ * @retval -EBUSY if not ready to execute the command
+ */
+static inline int pdc_ack_cc_ci(const struct device *dev,
+				union conn_status_change_bits_t ci, bool cc,
+				uint16_t vendor_defined)
+{
+	const struct pdc_driver_api_t *api =
+		(const struct pdc_driver_api_t *)dev->api;
+
+	if (api->ack_cc_ci == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->ack_cc_ci(dev, ci, cc, vendor_defined);
 }
 
 /**
@@ -1024,6 +1122,173 @@ bool pdc_trace_msg_req(int port, enum pdc_trace_chip_type msg_type,
  */
 bool pdc_trace_msg_resp(int port, enum pdc_trace_chip_type msg_type,
 			const uint8_t *buf, const int count);
+
+/**
+ * @brief Execute UCSI command synchronously
+ *
+ * @param dev PDC device structure pointer
+ * @param ucsi_command UCSI command
+ * @param data_size Size of the command specific data.
+ * @param command_specific Command specific data to be sent
+ * @param lpm_data_out Buffer to receive data returned from a PDC
+ *
+ * @return 0 on success
+ * @return -EBUSY if PDC is busy with serving another request.
+ * @return -ECONNREFUSED if PDC is suspended.
+ * @retval -ENOSYS if not implemented
+ * @return -ETIMEDOUT if timer expires while waiting for write or read operation
+ *         to finish.
+ */
+static inline int pdc_execute_ucsi_cmd(const struct device *dev,
+				       uint8_t ucsi_command, uint8_t data_size,
+				       uint8_t *command_specific,
+				       uint8_t *lpm_data_out,
+				       struct pdc_callback *callback)
+{
+	const struct pdc_driver_api_t *api =
+		(const struct pdc_driver_api_t *)dev->api;
+
+	if (api->execute_ucsi_cmd == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->execute_ucsi_cmd(dev, ucsi_command, data_size,
+				     command_specific, lpm_data_out, callback);
+}
+
+/**
+ * @brief Add callback for connector change events.
+ *
+ * @param dev PDC device structure pointer
+ * @param callback Callback handler and data
+ *
+ * @return 0 on success
+ * @return -ENOSYS if not implemented
+ * @return -EINVAL for other errors
+ */
+static inline int pdc_add_ci_callback(const struct device *dev,
+				      struct pdc_callback *callback)
+{
+	const struct pdc_driver_api_t *api =
+		(const struct pdc_driver_api_t *)dev->api;
+
+	if (api->manage_callback == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->manage_callback(dev, callback, true);
+}
+
+/**
+ * @brief Query UCSI LPM PPM info
+ *
+ * @param dev PDC device structure pointer
+ * @param info Caller-provided output struct for received data
+ *
+ * @return 0 on success
+ * @return -ENOSYS if not implemented
+ * @return -EINVAL for other errors
+ */
+static inline int pdc_get_lpm_ppm_info(const struct device *dev,
+				       struct lpm_ppm_info_t *info)
+{
+	const struct pdc_driver_api_t *api =
+		(const struct pdc_driver_api_t *)dev->api;
+
+	if (api->get_lpm_ppm_info == NULL) {
+		return -ENOSYS;
+	}
+
+	return api->get_lpm_ppm_info(dev, info);
+}
+
+/**
+ * @typedef pdc_callback_handler_t
+ * @brief Define the application callback handler function signature
+ *
+ * @param port Device struct for the PDC device.
+ * @param cb Original struct pdc_callback owning this handler
+ * @param pins Mask of pins that triggers the callback handler
+ *
+ * Note: cb pointer can be used to retrieve private data through
+ * CONTAINER_OF() if original struct pdc_callback is stored in
+ * another private structure.
+ */
+typedef void (*pdc_callback_handler_t)(const struct device *port,
+				       struct pdc_callback *cb,
+				       union cci_event_t cci_event);
+
+/**
+ * @brief PDC callback structure
+ *
+ * Used to register a callback in the driver instance callback list.
+ * As many callbacks as needed can be added as long as each of them
+ * are unique pointers of struct pdc_callback.
+ * Beware such structure should not be allocated on stack.
+ */
+struct pdc_callback {
+	/** This is meant to be used in the driver and the user should not
+	 * mess with it.
+	 */
+	sys_snode_t node;
+
+	/** Actual callback function being called when relevant. */
+	pdc_cci_cb_t handler;
+};
+
+/**
+ * @brief Generic function to append or remove a callback from a callback list
+ * @note This should only be called by PDC drivers and not the user.
+ *
+ * @param callbacks A pointer to the original list of callbacks (can be NULL)
+ * @param callback A pointer of the callback to append or remove from the list
+ * @param set A boolean indicating insertion or removal of the callback
+ *
+ * @return 0 on success, negative errno otherwise.
+ */
+static inline int pdc_manage_callbacks(sys_slist_t *callbacks,
+				       struct pdc_callback *callback, bool set)
+{
+	__ASSERT(callback, "No callback!");
+	__ASSERT(callback->handler, "No callback handler!");
+
+	if (!sys_slist_is_empty(callbacks)) {
+		if (!sys_slist_find_and_remove(callbacks, &callback->node)) {
+			if (!set) {
+				return -EINVAL;
+			}
+		}
+	} else if (!set) {
+		return -EINVAL;
+	}
+
+	if (set) {
+		sys_slist_append(callbacks, &callback->node);
+	}
+
+	return 0;
+}
+
+/**
+ * @brief Generic function to go through and fire callback from a callback list
+ * @note This should only be called by PDC drivers and not the user.
+ *
+ * @param list A pointer on the gpio callback list
+ * @param dev A pointer to the PDC device instance
+ * @param cci_event The actual CCI event mask that triggered the interrupt
+ */
+static inline void pdc_fire_callbacks(sys_slist_t *list,
+				      const struct device *dev,
+				      union cci_event_t cci_event)
+{
+	struct pdc_callback *cb, *tmp;
+
+	SYS_SLIST_FOR_EACH_CONTAINER_SAFE(list, cb, tmp, node)
+	{
+		__ASSERT(cb->handler, "No callback handler!");
+		cb->handler(dev, cb, cci_event);
+	}
+}
 
 #ifdef __cplusplus
 }

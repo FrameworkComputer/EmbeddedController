@@ -6,7 +6,7 @@
 
 register_host_project(
     project_name="minimal-posix",
-    zephyr_board="native_posix",
+    zephyr_board="native_sim",
 )
 
 register_npcx_project(

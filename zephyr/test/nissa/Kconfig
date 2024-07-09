@@ -126,6 +126,11 @@ choice TEST_TARGET
 	  select TEST_DISABLE_INLINE_CHIPSET_IN_STATE
 	  help
 		The test target that exercises nissa/riven/*.c
+
+	config TEST_NISSA_DOMIKA
+	  bool "Tests for Domika-specific code"
+	  help
+		The test target that exercises nissa/domika/*.c
 endchoice
 
 config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
@@ -155,6 +160,13 @@ config PLATFORM_EC_KEYBOARD_CUSTOMIZATION
 	  than the top row, and you are looking only for top row customization,
 	  then you should be looking at overriding board_vivaldi_keybd_config()
 	  instead.
+
+config PLATFORM_EC_KEYBOARD_DEBUG
+	bool "Enable keyboard debug prints"
+	help
+	  Enable keyboard debug prints to show up in early bringup, for example
+	  if the board is currently headless and keyboard functionality is being
+	  checked.
 
 config TEST_DISABLE_AP_PWRSEQ
 	bool "Disable CONFIG_AP_PWRSEQ"

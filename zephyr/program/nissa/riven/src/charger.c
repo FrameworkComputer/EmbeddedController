@@ -62,8 +62,7 @@ __override int board_get_leave_safe_mode_delay_ms(void)
 	const struct batt_conf_embed *const batt = get_batt_conf();
 
 	/* If it's COSMX battery, there's need more delay time. */
-	if (!strcasecmp(batt->manuf_name, "COSMX KT0030B002") ||
-	    !strcasecmp(batt->manuf_name, "COSMX KT0030B004"))
+	if (!strcasecmp(batt->manuf_name, "COSMX KT0030B005"))
 		return 2000;
 	else
 		return 500;

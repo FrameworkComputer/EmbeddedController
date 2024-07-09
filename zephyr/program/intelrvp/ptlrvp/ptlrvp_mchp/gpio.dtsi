@@ -1,0 +1,445 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+
+		/**
+		NOTE: Used for i2c_smb_0-data, do not define.
+		smb-bs-data {
+			gpios = <MCHP_GPIO_DECODE_003 GPIO_INPUT>;
+		};
+		NOTE: Used for i2c_smb_0-clk, do not define.
+		smb-bs-clk {
+			gpios = <MCHP_GPIO_DECODE_004 GPIO_INPUT>;
+		};
+		**/
+		kbc-numlock {
+			gpios = <MCHP_GPIO_DECODE_154 GPIO_INPUT>;
+		};
+		bc_acok: bc-acok-ec-in {
+			gpios = <MCHP_GPIO_DECODE_155 GPIO_INPUT>;
+			enum-name = "GPIO_AC_PRESENT";
+		};
+		ps2-kb-clk {
+			gpios = <MCHP_GPIO_DECODE_007 GPIO_INPUT>;
+		};
+		ps2-kb-data {
+			gpios = <MCHP_GPIO_DECODE_010 GPIO_INPUT>;
+		};
+		gpio_pdc_pow_irq: typec-ec-smbus-alert {
+			gpios = <MCHP_GPIO_DECODE_143 GPIO_INPUT>;
+		};
+		ec_wake: ec-gpio144-wake {
+			gpios = <MCHP_GPIO_DECODE_144 GPIO_INPUT>;
+		};
+		m2-ssd-ec-i2c05-data {
+			gpios = <MCHP_GPIO_DECODE_141 GPIO_INPUT>;
+		};
+		m2-ssd-ec-i2c05-clk {
+			gpios = <MCHP_GPIO_DECODE_142 GPIO_INPUT>;
+		};
+		ec-jtag-tdi {
+			gpios = <MCHP_GPIO_DECODE_145 GPIO_INPUT>;
+		};
+		ec-jtag-tdo {
+			gpios = <MCHP_GPIO_DECODE_146 GPIO_INPUT>;
+		};
+		ec-jtag-tck {
+			gpios = <MCHP_GPIO_DECODE_147 GPIO_INPUT>;
+		};
+		ec-jtag-tms {
+			gpios = <MCHP_GPIO_DECODE_150 GPIO_INPUT>;
+		};
+		pca9555-1-int {
+			gpios = <MCHP_GPIO_DECODE_062 GPIO_INPUT>;
+		};
+		tp-ec-h9 {
+			gpios = <MCHP_GPIO_DECODE_114 GPIO_INPUT>;
+		};
+		tp-ec-n12 {
+			gpios = <MCHP_GPIO_DECODE_115 GPIO_INPUT>;
+		};
+		ec-tcpc-aic-reset-n {
+			gpios = <MCHP_GPIO_DECODE_043 GPIO_INPUT>;
+		};
+		kbd-bklt-ctrl {
+			gpios = <MCHP_GPIO_DECODE_153 GPIO_INPUT>;
+		};
+		ec-pm-bat-status-led2 {
+			gpios = <MCHP_GPIO_DECODE_157 GPIO_OUTPUT_HIGH>;
+		};
+		ec-pm-bat-status-led1 {
+			gpios = <MCHP_GPIO_DECODE_156 GPIO_OUTPUT_HIGH>;
+		};
+		/**
+		NOTE: Used for adc07, do not define.
+		skin-therm-in {
+			gpios = <MCHP_GPIO_DECODE_207 GPIO_INPUT>;
+		};
+		NOTE: Used for adc06, do not define.
+		ddr-therm-in {
+			gpios = <MCHP_GPIO_DECODE_206 GPIO_INPUT>;
+		};
+		NOTE: Used for adc05, do not define.
+		vr-therm-in {
+			gpios = <MCHP_GPIO_DECODE_205 GPIO_INPUT>;
+		};
+		NOTE: Used for adc04, do not define.
+		ambient-therm-in {
+			gpios = <MCHP_GPIO_DECODE_204 GPIO_INPUT>;
+		};
+		NOTE: Used for adc03, do not define.
+		et-therm-in3 {
+			gpios = <MCHP_GPIO_DECODE_203 GPIO_INPUT>;
+		};
+		NOTE: Used for adc02, do not define.
+		et-therm-in2 {
+			gpios = <MCHP_GPIO_DECODE_202 GPIO_INPUT>;
+		};
+		NOTE: Used for adc01, do not define.
+		et-therm-in1 {
+			gpios = <MCHP_GPIO_DECODE_201 GPIO_INPUT>;
+		};
+		**/
+		ec-edp1-bklt-en {
+			gpios = <MCHP_GPIO_DECODE_200 GPIO_INPUT>;
+		};
+		/**
+		NOTE: Used for uart0-tx, do not define.
+		ec-uart-tx {
+			gpios = <MCHP_GPIO_DECODE_104 GPIO_INPUT>;
+		};
+		NOTE: Used for uart0-rx, do not define.
+		ec-uart-rx {
+			gpios = <MCHP_GPIO_DECODE_105 GPIO_INPUT>;
+		};
+		**/
+		ec-jtag-strap {
+			gpios = <MCHP_GPIO_DECODE_170 GPIO_INPUT>;
+		};
+		prochot-ec-r {
+			gpios = <MCHP_GPIO_DECODE_171 GPIO_INPUT>;
+			enum-name = "GPIO_CPU_PROCHOT";
+		};
+		kbc-capslock {
+			gpios = <MCHP_GPIO_DECODE_127 GPIO_INPUT>;
+		};
+		all_sys_pwrgd: all-sys-pwrgd {
+			gpios = <MCHP_GPIO_DECODE_057 GPIO_INPUT>;
+			enum-name = "GPIO_PG_EC_ALL_SYS_PWRGD";
+		};
+		peci-ec {
+			gpios = <MCHP_GPIO_DECODE_042 GPIO_INPUT>;
+		};
+		/**
+		 * All `kbc-scanin-x` pins are configured as input GPIO's,
+		 * discrete keyboard connected to IO expander will be used.
+		 **/
+		kbc-scanin-7 {
+			gpios = <MCHP_GPIO_DECODE_032 GPIO_INPUT>;
+		};
+		kbc-scanin-6 {
+			gpios = <MCHP_GPIO_DECODE_031 GPIO_INPUT>;
+		};
+		kbc-scanin-5 {
+			gpios = <MCHP_GPIO_DECODE_030 GPIO_INPUT>;
+		};
+		kbc-scanin-4 {
+			gpios = <MCHP_GPIO_DECODE_027 GPIO_INPUT>;
+		};
+		kbc-scanin-3 {
+			gpios = <MCHP_GPIO_DECODE_026 GPIO_INPUT>;
+		};
+		kbc-scanin-2 {
+			gpios = <MCHP_GPIO_DECODE_021 GPIO_INPUT>;
+		};
+		kbc-scanin-1 {
+			gpios = <MCHP_GPIO_DECODE_020 GPIO_INPUT>;
+		};
+		kbc-scanin-0 {
+			gpios = <MCHP_GPIO_DECODE_017 GPIO_INPUT>;
+		};
+		/**
+		 * All `kbc-scanout-x` pins are configured as input GPIO's,
+		 * discrete keyboard connected to IO expander will be used.
+		 **/
+		kbc-scanout-15 {
+			gpios = <MCHP_GPIO_DECODE_151 GPIO_INPUT>;
+		};
+		kbc-scanout-14 {
+			gpios = <MCHP_GPIO_DECODE_152 GPIO_INPUT>;
+		};
+		kbc-scanout-13 {
+			gpios = <MCHP_GPIO_DECODE_126 GPIO_INPUT>;
+		};
+		kbc-scanout-12 {
+			gpios = <MCHP_GPIO_DECODE_125 GPIO_INPUT>;
+		};
+		kbc-scanout-11 {
+			gpios = <MCHP_GPIO_DECODE_124 GPIO_INPUT>;
+		};
+		kbc-scanout-10 {
+			gpios = <MCHP_GPIO_DECODE_123 GPIO_INPUT>;
+		};
+		kbc-scanout-9 {
+			gpios = <MCHP_GPIO_DECODE_122 GPIO_INPUT>;
+		};
+		kbc-scanout-8 {
+			gpios = <MCHP_GPIO_DECODE_121 GPIO_INPUT>;
+		};
+		kbc-scanout-7 {
+			gpios = <MCHP_GPIO_DECODE_120 GPIO_INPUT>;
+		};
+		kbc-scanout-6 {
+			gpios = <MCHP_GPIO_DECODE_113 GPIO_INPUT>;
+		};
+		kbc-scanout-5 {
+			gpios = <MCHP_GPIO_DECODE_112 GPIO_INPUT>;
+		};
+		kbc-scanout-4 {
+			gpios = <MCHP_GPIO_DECODE_107 GPIO_INPUT>;
+		};
+		kbc-scanout-3 {
+			gpios = <MCHP_GPIO_DECODE_047 GPIO_INPUT>;
+		};
+		kbc-scanout-2 {
+			gpios = <MCHP_GPIO_DECODE_046 GPIO_INPUT>;
+		};
+		kbc-scanout-1 {
+			gpios = <MCHP_GPIO_DECODE_045 GPIO_INPUT>;
+		};
+		kbc-scanout-0 {
+			gpios = <MCHP_GPIO_DECODE_040 GPIO_INPUT>;
+		};
+		/**
+		NOTE: Used for i2c_smb_1-data, do not define.
+		typec-ec-smbus1-data {
+			gpios = <MCHP_GPIO_DECODE_132 GPIO_INPUT>;
+		};
+		NOTE: Used for i2c_smb_1-clk, do not define.
+		typec-ec-smbus1-clk {
+			gpios = <MCHP_GPIO_DECODE_140 GPIO_INPUT>;
+		};
+		**/
+		ec-cse-early-sw {
+			gpios = <MCHP_GPIO_DECODE_064 GPIO_INPUT>;
+		};
+		pwrbtn: pwrbtn-ec-in-n {
+			gpios = <MCHP_GPIO_DECODE_106 GPIO_INPUT>;
+			enum-name = "GPIO_POWER_BUTTON_L";
+		};
+		en_pp3300_a: ec-pg3-r {
+			gpios = <MCHP_GPIO_DECODE_226 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_EN_PP3300_A";
+			alias = "GPIO_TEMP_SENSOR_POWER";
+		};
+		pm-pwrbtn-led {
+			gpios = <MCHP_GPIO_DECODE_241 GPIO_INPUT>;
+		};
+		vol_up_ec: vol-up-ec {
+			gpios = <MCHP_GPIO_DECODE_242 GPIO_INPUT>;
+			enum-name = "GPIO_VOLUME_UP_L";
+		};
+		vol_dn_ec: vol-downn-ec {
+			gpios = <MCHP_GPIO_DECODE_246 GPIO_INPUT>;
+			enum-name = "GPIO_VOLUME_DOWN_L";
+		};
+		m2-bt-led2-ec-n {
+			gpios = <MCHP_GPIO_DECODE_175 GPIO_INPUT>;
+		};
+		btp-ec-r {
+			gpios = <MCHP_GPIO_DECODE_221 GPIO_INPUT>;
+		};
+		pm-batlow-ec-n {
+			gpios = <MCHP_GPIO_DECODE_165 GPIO_INPUT>;
+		};
+		/* Keep low to prioritize AC brick power source selection */
+		std-adpt-cntrl-gpio-r {
+			gpios = <MCHP_GPIO_DECODE_254 GPIO_OUTPUT_LOW>;
+		};
+		usb-pb-ppc-int-od-n {
+			gpios = <MCHP_GPIO_DECODE_240 GPIO_INPUT>;
+		};
+		/* Test point, add blue wire if used for additional feature */
+		tp-ec-m12 {
+			gpios = <MCHP_GPIO_DECODE_025 GPIO_OUTPUT_LOW>;
+		};
+		/**
+		NOTE: Used for pwm8, do not define.
+		cpu-pwm-fan {
+			gpios = <MCHP_GPIO_DECODE_035 GPIO_INPUT>;
+		};
+		**/
+		gpio_fan_control: fan-pwr-disable {
+			gpios = <MCHP_GPIO_DECODE_060 GPIO_OUTPUT_LOW>;
+		};
+		usb-pa-ppc-int-od-n {
+			gpios = <MCHP_GPIO_DECODE_036 GPIO_INPUT>;
+		};
+		h-caterr-ec-n {
+			gpios = <MCHP_GPIO_DECODE_255 GPIO_INPUT>;
+		};
+		en_pp5000_s5: ec-gppc-b14 {
+			gpios = <MCHP_GPIO_DECODE_244 GPIO_OUTPUT_LOW>;
+		};
+		smc_lid: smc-lid {
+			gpios = <MCHP_GPIO_DECODE_033 GPIO_INPUT>;
+			enum-name = "GPIO_LID_OPEN";
+		};
+		/**
+		NOTE: Used for tach0, do not define.
+		cpu-tach0-fan {
+			gpios = <MCHP_GPIO_DECODE_050 GPIO_INPUT>;
+		};
+		**/
+		tcss-ec-i2c-int-n {
+			gpios = <MCHP_GPIO_DECODE_051 GPIO_INPUT>;
+		};
+		ec-pdb-ctrl {
+			gpios = <MCHP_GPIO_DECODE_245 GPIO_INPUT>;
+		};
+		std_adp_prsnt: std-adp-prsnt-ec {
+			gpios = <MCHP_GPIO_DECODE_243 GPIO_INPUT>;
+		};
+		gpio_ec_pch_wake_odl: smc-wake-sci-ec {
+			gpios = <MCHP_GPIO_DECODE_034 GPIO_ODR_HIGH>;
+		};
+		saf-g3-detect {
+			gpios = <MCHP_GPIO_DECODE_022 GPIO_INPUT>;
+		};
+		recvry-indicator-n {
+			gpios = <MCHP_GPIO_DECODE_023 GPIO_INPUT>;
+		};
+		gpio_mod_tcss_ec_sx_cntrl: mod-tcss-ec-sx-cntrl {
+			gpios = <MCHP_GPIO_DECODE_024 GPIO_INPUT>;
+		};
+		vref-adc-ec {
+			gpios = <MCHP_GPIO_DECODE_067 GPIO_INPUT>;
+		};
+		/**
+		NOTE: Used for vref-vtt, do not define.
+		vref-peci-ec {
+			gpios = <MCHP_GPIO_DECODE_044 GPIO_INPUT>;
+		};
+		**/
+		ec-sml-data {
+			gpios = <MCHP_GPIO_DECODE_130 GPIO_INPUT>;
+		};
+		ec-sml-clk {
+			gpios = <MCHP_GPIO_DECODE_131 GPIO_INPUT>;
+		};
+		rsmrst_pwrgd: rsmrst-pwrgd-ec-n {
+			gpios = <MCHP_GPIO_DECODE_012 GPIO_INPUT>;
+			enum-name = "GPIO_PG_EC_RSMRST_ODL";
+		};
+		cpu-c10-gate-n-r {
+			gpios = <MCHP_GPIO_DECODE_013 GPIO_INPUT>;
+		};
+		pch_slp_s0_n: pm-slp-s0-r-n {
+			gpios = <MCHP_GPIO_DECODE_052 GPIO_INPUT>;
+			enum-name = "GPIO_PCH_SLP_S0_L";
+		};
+		ec-spi-hold {
+			gpios = <MCHP_GPIO_DECODE_016 GPIO_INPUT>;
+		};
+		ec-spi-miso {
+			gpios = <MCHP_GPIO_DECODE_224 GPIO_INPUT>;
+		};
+		ec-spi-mosi {
+			gpios = <MCHP_GPIO_DECODE_223 GPIO_INPUT>;
+		};
+		ec-spi-wp {
+			gpios = <MCHP_GPIO_DECODE_227 GPIO_INPUT>;
+		};
+		ec-spi-cs0-n {
+			gpios = <MCHP_GPIO_DECODE_055 GPIO_INPUT>;
+		};
+		ec-spi-clk {
+			gpios = <MCHP_GPIO_DECODE_056 GPIO_INPUT>;
+		};
+		ec-pd-usbc-i2c-int-n {
+			gpios = <MCHP_GPIO_DECODE_002 GPIO_INPUT>;
+		};
+		dnx-force-reload-ec {
+			gpios = <MCHP_GPIO_DECODE_014 GPIO_INPUT>;
+		};
+		gpio_mic_privacy_ec: mic-privacy-ec {
+			gpios = <MCHP_GPIO_DECODE_053 GPIO_OUTPUT_LOW>;
+		};
+		ec_pch_rsmrst_l: pm-rsmrst-ec-n {
+			gpios = <MCHP_GPIO_DECODE_054 GPIO_OUTPUT>;
+			enum-name = "GPIO_PCH_RSMRST_L";
+		};
+		sys_pwrok_ec: sys-pwrok-ec-r {
+			gpios = <MCHP_GPIO_DECODE_015 GPIO_ODR_LOW>;
+			enum-name = "GPIO_PCH_SYS_PWROK";
+		};
+		ec-slatemode-hallout-snsr-r {
+			gpios = <MCHP_GPIO_DECODE_222 GPIO_INPUT>;
+		};
+		bat-id-r {
+			gpios = <MCHP_GPIO_DECODE_162 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+		peci-mux-ctrl-er-int {
+			gpios = <MCHP_GPIO_DECODE_161 GPIO_INPUT>;
+		};
+		tp-bgp1 {
+			gpios = <MCHP_GPIO_DECODE_101 GPIO_INPUT>;
+		};
+		tp-bgp2 {
+			gpios = <MCHP_GPIO_DECODE_102 GPIO_INPUT>;
+		};
+		ioex_kbd_intr_n: home-btn-ec-rvp-aep-id {
+			gpios = <MCHP_GPIO_DECODE_000 GPIO_INPUT>;
+			enum-name = "GPIO_KB_DISCRETE_INT";
+		};
+		/**
+		NOTE: Used for espi_rst, do not define.
+		espi-rst-ec-r-n {
+			gpios = <MCHP_GPIO_DECODE_061 GPIO_INPUT>;
+		};
+		**/
+		espi-alert0-ec-n {
+			gpios = <MCHP_GPIO_DECODE_063 GPIO_INPUT>;
+		};
+		/**
+		NOTE: Used for espi_clk, do not define.
+		espi-clk-ec-r {
+			gpios = <MCHP_GPIO_DECODE_065 GPIO_INPUT>;
+		};
+		NOTE: Used for espi_cs_n, do not define.
+		espi-cs0-ec-r-n {
+			gpios = <MCHP_GPIO_DECODE_066 GPIO_INPUT>;
+		};
+		NOTE: Used for espi_io0, do not define.
+		espi-io0-ec-r {
+			gpios = <MCHP_GPIO_DECODE_070 GPIO_INPUT>;
+		};
+		NOTE: Used for espi_io1, do not define.
+		espi-io1-ec-r {
+			gpios = <MCHP_GPIO_DECODE_071 GPIO_INPUT>;
+		};
+		NOTE: Used for espi_io2, do not define.
+		espi-io2-ec-r {
+			gpios = <MCHP_GPIO_DECODE_072 GPIO_INPUT>;
+		};
+		NOTE: Used for espi_io3, do not define.
+		espi-io3-ec-r {
+			gpios = <MCHP_GPIO_DECODE_073 GPIO_INPUT>;
+		};
+		**/
+		prwbtn: pm-pwrbtn-n-r {
+			gpios = <MCHP_GPIO_DECODE_011 GPIO_ODR_HIGH>;
+			enum-name = "GPIO_PCH_PWRBTN_L";
+		};
+		ec_pch_pwrok_od: ec-pm-pch-pwrok {
+			gpios = <MCHP_GPIO_DECODE_100 GPIO_ODR_LOW>;
+			enum-name = "GPIO_PCH_PWROK";
+		};
+	};
+};

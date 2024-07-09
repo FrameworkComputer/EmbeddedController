@@ -288,6 +288,7 @@ static void board_init(void)
 	gpio_enable_interrupt(GPIO_USB_A1_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A2_OC_ODL);
 	gpio_enable_interrupt(GPIO_USB_A3_OC_ODL);
+	gpio_enable_interrupt(GPIO_OPS_PS_ON);
 }
 DECLARE_HOOK(HOOK_INIT, board_init, HOOK_PRIO_DEFAULT);
 

@@ -9,6 +9,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * crc8
  * Return CRC-8 of the data, using x^8 + x^2 + x + 1 polynomial.  A table-based
@@ -32,5 +36,9 @@ uint8_t cros_crc8(const uint8_t *data, int len);
  * @return the crc-8 of the input data.
  */
 uint8_t cros_crc8_arg(const uint8_t *data, int len, uint8_t previous_crc);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_CRC8_H */

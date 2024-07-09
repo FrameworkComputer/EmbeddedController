@@ -188,7 +188,7 @@ def iterate_power_states(edt, project_name):
         ]
 
     num_errors = 0
-    for led_id in led_id_list:
+    for led_id in led_id_list:  # pylint:disable=too-many-nested-blocks
         for charge_state in charge_state_list:
             for charge_port in charge_port_list:
                 for chipset_state in chipset_state_list:

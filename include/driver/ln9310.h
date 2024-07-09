@@ -11,6 +11,10 @@
 #include "common.h"
 #include "gpio_signal.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* I2C address */
 #define LN9310_I2C_ADDR_0_FLAGS 0x72
 #define LN9310_I2C_ADDR_1_FLAGS 0x73
@@ -240,5 +244,9 @@ enum battery_cell_type board_get_battery_cell_type(void);
  *  @brief Resets LN9310 Driver State
  */
 __test_only void ln9310_reset_to_initial_state(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_LN9310_H */

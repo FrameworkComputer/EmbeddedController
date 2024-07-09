@@ -7,6 +7,3 @@
  * See CONFIG_TASK_LIST in config.h for details.
  */
 #define CONFIG_TEST_TASK_LIST
-
-#undef CONSOLE_TASK_STACK_SIZE
-#define CONSOLE_TASK_STACK_SIZE 6144

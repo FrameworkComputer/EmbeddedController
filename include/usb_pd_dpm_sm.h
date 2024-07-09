@@ -21,6 +21,10 @@
 #include "usb_pd_tcpm.h"
 #include "usb_sm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Sets the debug level for the DPM layer
  *
@@ -234,4 +238,9 @@ enum dpm_pd_button_state {
 	DPM_PD_BUTTON_IDLE,
 	DPM_PD_BUTTON_PRESSED,
 };
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_USB_DPM_H */

@@ -10,6 +10,10 @@
 
 #include "timer.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* Charge ramp state used for checking VBUS */
 enum chg_ramp_vbus_state { CHG_RAMP_VBUS_RAMPING, CHG_RAMP_VBUS_STABLE };
 
@@ -86,6 +90,10 @@ static inline void
 chg_ramp_charge_supplier_change(int port, int supplier,
 				timestamp_t registration_time)
 {
+}
+#endif
+
+#ifdef __cplusplus
 }
 #endif
 

@@ -14,10 +14,12 @@
 #include "common.h"
 #include "console.h"
 #include "gpio.h"
+#line 18
 #include "hooks.h"
 #include "host_command.h"
 #include "keyboard_scan.h"
 #include "lid_switch.h"
+#include "tablet_mode.h"
 #include "timer.h"
 #include "util.h"
 
@@ -73,6 +75,14 @@ static void lid_switch_close(void)
 		return;
 	}
 
+#ifdef CONFIG_TABLET_MODE_SKIP_LID_CLOSE
+	if (tablet_get_mode()) {
+		/* Ignore spurious event */
+		CPRINTS("in tablet mode skip lid close");
+		return;
+	}
+#endif
+	/* Notify host */
 	CPRINTS("lid close");
 	debounced_lid_open = 0;
 	hook_notify(HOOK_LID_CHANGE);

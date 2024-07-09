@@ -287,7 +287,7 @@
 			gpios = <&gpioa 0 GPIO_INPUT>;
 		};
 		gpio_usb_c0_rt_rst_l: usb_c0_rt_rst_l {
-			gpios = <&gpio1 0 GPIO_ODR_HIGH>;
+			gpios = <&gpio1 0 GPIO_ODR_LOW>;
 		};
 		gpio_usb_c0_tcpc_int_odl: usb_c0_tcpc_int_odl {
 			gpios = <&gpioe 0 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
@@ -307,7 +307,7 @@
 			gpios = <&gpio7 2 GPIO_INPUT>;
 		};
 		gpio_usb_c1_rt_rst_l: usb_c1_rt_rst_l {
-			gpios = <&gpio3 7 GPIO_ODR_HIGH>;
+			gpios = <&gpio3 7 GPIO_ODR_LOW>;
 		};
 		gpio_usb_c1_tcpc_int_odl: usb_c1_tcpc_int_odl {
 			gpios = <&gpio3 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
@@ -327,7 +327,7 @@
 			gpios = <&gpio9 7 GPIO_INPUT>;
 		};
 		gpio_usb_c2_rt_rst_l: usb_c2_rt_rst_l {
-			gpios = <&gpio1 1 GPIO_ODR_HIGH>;
+			gpios = <&gpio1 1 GPIO_ODR_LOW>;
 		};
 		gpio_usb_c2_tcpc_int_odl: usb_c2_tcpc_int_odl {
 			gpios = <&gpiod 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;

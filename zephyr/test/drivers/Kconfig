@@ -22,6 +22,9 @@ config LINK_TEST_SUITE_CONSOLE_CMD_CRASH
 config LINK_TEST_SUITE_CONSOLE_CMD_MFALLOW
 	bool "Link and test the console command mfallow test suite"
 
+config LINK_TEST_SUITE_ACPI_STRINGS_FIFO
+	bool "Link and test the ACPI strings FIFO tests"
+
 config LINK_TEST_SUITE_AMD_FP6_USB_MUX
 	bool "Link and test the AMD FP6 USB mux tests"
 
@@ -63,6 +66,9 @@ config LINK_TEST_SUITE_CEC_BITBANG
 
 config LINK_TEST_SUITE_CEC_IT83XX
 	bool "Link and run tests for driver/cec/it83xx"
+
+config LINK_TEST_SUITE_CHARGE_MANAGER
+	bool "Link and test the charge manager tests"
 
 config LINK_TEST_SUITE_CHARGESPLASH
 	bool "Link and test the chargesplash tests"
@@ -257,6 +263,10 @@ config LINK_TEST_SUITE_USBC_FRS
 	bool "Link tests for fast role swap support"
 	select LOG
 	select PLATFORM_EC_USB_PD_FRS
+
+config LINK_TEST_SUITE_USBC_POWER_CONTRACT
+	bool "Link tests for USBC Power Contract"
+	select LOG
 
 config LINK_TEST_SUITE_USBC_OCP
 	bool "Link tests for common USBC OCP code"

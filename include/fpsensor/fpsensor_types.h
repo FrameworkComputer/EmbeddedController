@@ -8,6 +8,10 @@
 #ifndef __CROS_EC_FPSENSOR_FPSENSOR_TYPES_H
 #define __CROS_EC_FPSENSOR_FPSENSOR_TYPES_H
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 enum fp_sensor_type {
 	FP_SENSOR_TYPE_UNKNOWN = -1,
 	FP_SENSOR_TYPE_FPC,
@@ -31,5 +35,9 @@ enum finger_state {
 	FINGER_PARTIAL = 1,
 	FINGER_PRESENT = 2,
 };
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_FPSENSOR_FPSENSOR_TYPES_H */

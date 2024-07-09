@@ -27,6 +27,7 @@ PAGE_SIZE = 0x1000
 
 
 def parseargs():
+    """Parse command line arguments."""
     parser = argparse.ArgumentParser()
     parser.add_argument(
         "-k",
@@ -53,18 +54,18 @@ def parseargs():
 
 def gen_manifest(ext_id, comp_app_name, code_offset, module_size):
     """Returns a binary blob that represents a manifest entry"""
-    m = bytearray(MANIFEST_ENTRY_SIZE)
+    manifest = bytearray(MANIFEST_ENTRY_SIZE)
 
     # 4 bytes of ASCII encode ID (little endian)
-    struct.pack_into("<4s", m, 0, ext_id)
+    struct.pack_into("<4s", manifest, 0, ext_id)
     # 8 bytes of ASCII encode ID (little endian)
-    struct.pack_into("<8s", m, 32, comp_app_name)
+    struct.pack_into("<8s", manifest, 32, comp_app_name)
     # 4 bytes of code offset (little endian)
-    struct.pack_into("<I", m, 96, code_offset)
+    struct.pack_into("<I", manifest, 96, code_offset)
     # 2 bytes of module in page size increments (little endian)
-    struct.pack_into("<H", m, 100, module_size)
+    struct.pack_into("<H", manifest, 100, module_size)
 
-    return m
+    return manifest
 
 
 def roundup_page(size):
@@ -73,14 +74,15 @@ def roundup_page(size):
 
 
 def main():
+    """Main function."""
     args = parseargs()
     print("    Packing EC image file for ISH")
 
-    with open(args.output, "wb") as f:
+    with open(args.output, "wb") as output_file:
         print("      kernel binary size:", args.kernel_size)
         kern_rdup_pg_size = roundup_page(args.kernel_size)
         # Add manifest for main ISH binary
-        f.write(
+        output_file.write(
             gen_manifest(b"ISHM", b"ISH_KERN", HEADER_SIZE, kern_rdup_pg_size)
         )
 
@@ -88,7 +90,7 @@ def main():
             print("      AON binary size:   ", args.aon_size)
             aon_rdup_pg_size = roundup_page(args.aon_size)
             # Add manifest for aontask binary
-            f.write(
+            output_file.write(
                 gen_manifest(
                     b"ISHM",
                     b"AON_TASK",
@@ -102,26 +104,34 @@ def main():
             )
 
         # Add manifest that signals end of manifests
-        f.write(gen_manifest(b"ISHE", b"", 0, 0))
+        output_file.write(gen_manifest(b"ISHE", b"", 0, 0))
 
         # Pad the remaining HEADER with 0s
         if args.aon is not None:
-            f.write(b"\x00" * (HEADER_SIZE - (MANIFEST_ENTRY_SIZE * 3)))
+            output_file.write(
+                b"\x00" * (HEADER_SIZE - (MANIFEST_ENTRY_SIZE * 3))
+            )
         else:
-            f.write(b"\x00" * (HEADER_SIZE - (MANIFEST_ENTRY_SIZE * 2)))
+            output_file.write(
+                b"\x00" * (HEADER_SIZE - (MANIFEST_ENTRY_SIZE * 2))
+            )
 
         # Append original kernel image
         with open(args.kernel, "rb") as in_file:
-            f.write(in_file.read())
+            output_file.write(in_file.read())
         # Filling padings due to size round up as pages
-        f.write(b"\x00" * (kern_rdup_pg_size * PAGE_SIZE - args.kernel_size))
+        output_file.write(
+            b"\x00" * (kern_rdup_pg_size * PAGE_SIZE - args.kernel_size)
+        )
 
         if args.aon is not None:
             # Append original aon image
             with open(args.aon, "rb") as in_file:
-                f.write(in_file.read())
+                output_file.write(in_file.read())
             # Filling padings due to size round up as pages
-            f.write(b"\x00" * (aon_rdup_pg_size * PAGE_SIZE - args.aon_size))
+            output_file.write(
+                b"\x00" * (aon_rdup_pg_size * PAGE_SIZE - args.aon_size)
+            )
 
 
 if __name__ == "__main__":

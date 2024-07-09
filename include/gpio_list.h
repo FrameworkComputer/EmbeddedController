@@ -7,6 +7,10 @@
 #include "gpio.h"
 #include "gpio_signal.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef CONFIG_COMMON_GPIO_SHORTNAMES
 #define GPIO(name, pin, flags) { GPIO_NAME_BY_##pin, GPIO_##pin, flags },
 #define GPIO_INT(name, pin, flags, signal) \
@@ -133,5 +137,9 @@ const int ioex_ih_count = ARRAY_SIZE(ioex_irq_handlers);
 	static const int _expin_##a##_##b##_##c                         \
 		__attribute__((unused, section(".unused"))) = __LINE__; \
 	BUILD_ASSERT(a < CONFIG_IO_EXPANDER_PORT_COUNT);
+
+#ifdef __cplusplus
+}
+#endif
 
 #include "gpio.wrap"

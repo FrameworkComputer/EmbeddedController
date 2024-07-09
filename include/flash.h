@@ -11,6 +11,10 @@
 #include "common.h"
 #include "ec_commands.h" /* For EC_FLASH_PROTECT_* flags */
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifdef CONFIG_FLASH_MULTIPLE_REGION
 #ifndef CONFIG_ZEPHYR
 extern struct ec_flash_bank const
@@ -481,5 +485,9 @@ static inline void crec_flash_lock_mapped_storage(int lock){};
  * @return EC_RES_* status code.
  */
 int crec_board_flash_select(int select);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_FLASH_H */

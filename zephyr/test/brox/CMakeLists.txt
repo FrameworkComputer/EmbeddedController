@@ -10,3 +10,5 @@ add_subdirectory(${PLATFORM_EC}/zephyr/test/test_utils test_utils)
 
 add_subdirectory(tests/common)
 add_subdirectory_ifdef(CONFIG_TEST_BOARD_BASEBOARD tests/baseboard)
+add_subdirectory_ifdef(CONFIG_TEST_BOARD_LOTSO tests/lotso)
+add_subdirectory_ifdef(CONFIG_TEST_BOARD_GREENBAYUPOC tests/greenbayupoc)

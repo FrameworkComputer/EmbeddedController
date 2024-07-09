@@ -1,0 +1,71 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+/ {
+	fans {
+		compatible = "cros-ec,fans";
+		fan_0 {
+			pwms = <&pwm2 PWM_CHANNEL_2 PWM_KHZ(25) PWM_POLARITY_NORMAL>;
+			tach = <&tach1>;
+			rpm_min = <2500>;
+			rpm_start = <2500>;
+			rpm_max = <4100>;
+			rpm_deviation = <1>;
+			enable_gpio = <&gpio_fan_enable>;
+		};
+	};
+	fan_steps {
+		compatible = "cros-ec,fan-steps";
+		level_0 {
+			temp_on = <43 47 0>;
+			temp_off = <99 99 99>;
+			rpm_target = <0>;
+		};
+		level_1 {
+			temp_on = <46 48 0>;
+			temp_off = <40 45 99>;
+			rpm_target = <2600>;
+		};
+		level_2 {
+			temp_on = <49 49 0>;
+			temp_off = <44 46 99>;
+			rpm_target = <2800>;
+		};
+		level_3 {
+			temp_on = <53 50 54>;
+			temp_off = <47 47 51>;
+			rpm_target = <3100>;
+		};
+		level_4 {
+			temp_on = <56 56 60>;
+			temp_off = <51 48 52>;
+			rpm_target = <3300>;
+		};
+		level_5 {
+			temp_on = <60 60 64>;
+			temp_off = <54 52 56>;
+			rpm_target = <3600>;
+		};
+		level_6 {
+			temp_on = <100 100 100>;
+			temp_off = <58 54 58>;
+			rpm_target = <4000>;
+		};
+	};
+};
+/* pwm for fan */
+&pwm2 {
+	status = "okay";
+	prescaler-cx = <PWM_PRESCALER_C6>;
+	pinctrl-0 = <&pwm2_gpa2_default>;
+	pinctrl-names = "default";
+};
+/* fan tachometer sensor */
+&tach1 {
+	status = "okay";
+	channel = <IT8XXX2_TACH_CHANNEL_A>;
+	pulses-per-round = <2>;
+	pinctrl-0 = <&tach1a_gpd7_default>;
+	pinctrl-names = "default";
+};

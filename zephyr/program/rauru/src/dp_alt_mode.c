@@ -67,9 +67,18 @@ void rauru_set_dp_path(enum rauru_dp_port port)
 		GPIO_DT_FROM_NODELABEL(gpio_dp_path_usb_c1_en);
 	const struct gpio_dt_spec *hdmi_en =
 		GPIO_DT_FROM_NODELABEL(gpio_dp_path_hdmi_en);
+	const struct gpio_dt_spec *dp_in_hpd[] = {
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c0_dp_in_hpd),
+		GPIO_DT_FROM_NODELABEL(gpio_usb_c1_dp_in_hpd),
+	};
 
 	if (port == active_dp_port) {
 		return;
+	}
+
+	/* Enable retimer/redriver transmitting */
+	for (int i = 0; i < DP_PORT_HDMI; i++) {
+		gpio_pin_set_dt(dp_in_hpd[i], i == port);
 	}
 
 	/*
@@ -130,7 +139,7 @@ __override void svdm_dp_post_config(int port)
 
 int rauru_is_dp_muxable(enum rauru_dp_port port)
 {
-	return port == active_dp_port || port == DP_PORT_NONE;
+	return port == active_dp_port || active_dp_port == DP_PORT_NONE;
 }
 
 __override int svdm_dp_attention(int port, uint32_t *payload)
@@ -149,11 +158,11 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	}
 
 	if (lvl) {
+		/* connect the DP pipeline before setting HPD if HPG high */
 		rauru_set_dp_path(port);
 		usb_mux_set(port, mux_mode, USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(port)));
 	} else {
-		rauru_detach_dp_path(port);
 		usb_mux_set(port, mux_mode & (~USB_PD_MUX_USB_ENABLED),
 			    USB_SWITCH_CONNECT,
 			    polarity_rm_dts(pd_get_polarity(port)));
@@ -173,6 +182,11 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 		return 0;
 	}
 
+	if (!lvl) {
+		/* detach DP pipeline after setting HPD */
+		rauru_detach_dp_path(port);
+	}
+
 	/*
 	 * Populate MUX state before dp path mux, so we can keep the HPD status.
 	 */
@@ -184,7 +198,7 @@ __override int svdm_dp_attention(int port, uint32_t *payload)
 	return 1;
 }
 
-__overridable void svdm_exit_dp_mode(int port)
+__override void svdm_exit_dp_mode(int port)
 {
 	dp_flags[port] = 0;
 	dp_status[port] = 0;

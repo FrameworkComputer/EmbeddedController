@@ -7,6 +7,10 @@
 
 #include <zephyr/devicetree.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define ISL923X_CHG_COMPAT intersil_isl923x
 #define ISL923X_EMUL_COMPAT cros_isl923x_emul
 
@@ -16,3 +20,7 @@
 		.i2c_addr_flags = DT_REG_ADDR(id), \
 		.drv = &isl923x_drv,               \
 	},
+
+#ifdef __cplusplus
+}
+#endif

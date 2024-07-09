@@ -22,4 +22,10 @@ itim32_5:
 itim32_6:
     apb2Frequency: 1000000
 
+GPIO_WP: Miscellaneous.Button @ gpioa 4
+    invert: true
+    -> gpioa@4
+    init:
+        ReleaseOnReset false
+
 fpsensor: Sensors.GenericSPISensor @ spip

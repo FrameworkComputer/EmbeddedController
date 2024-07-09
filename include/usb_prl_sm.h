@@ -13,6 +13,10 @@
 #include "usb_pd_tcpm.h"
 #include "usb_sm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Returns TX success time stamp.
  *
@@ -150,5 +154,9 @@ void prl_execute_hard_reset(int port);
  * @param enable True to enable checking, false to disable checking
  */
 void prl_set_data_role_check(int port, bool enable);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_PRL_H */

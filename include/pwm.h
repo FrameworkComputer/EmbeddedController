@@ -10,6 +10,10 @@
 
 #include <inttypes.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define PWM_RAW_TO_PERCENT(v) DIV_ROUND_NEAREST((uint32_t)(v) * 100, UINT16_MAX)
 #define PWM_PERCENT_TO_RAW(v) ((uint32_t)(v) * UINT16_MAX / 100)
 
@@ -75,4 +79,9 @@ int pwm_get_duty(enum pwm_channel ch);
  * PWM channel's IO type is open-drain, if enabled. (default IO is push-pull.)
  */
 #define PWM_CONFIG_OPEN_DRAIN BIT(5)
+
+#ifdef __cplusplus
+}
+#endif
+
 #endif /* __CROS_EC_PWM_H */

@@ -8,15 +8,12 @@
 
 #include "benchmark.h"
 #include "console.h"
+#include "test_util.h"
+#include "trng.h"
 
 #include <array>
 #include <cstdint>
 #include <cstdlib>
-
-extern "C" {
-#include "test_util.h"
-#include "trng.h"
-}
 
 test_static int test_trng_rand_bytes()
 {

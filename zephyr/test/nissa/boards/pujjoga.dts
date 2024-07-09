@@ -40,7 +40,7 @@
 			enum-name = "GPIO_ENTERING_RW";
 		};
 
-		gpio_en_pp5000_pen_x: en_pp5000_pen_x {
+		gpio_en_pp5000_pen: en_pp5000_pen {
 			gpios = <&gpioe 2 GPIO_OUTPUT>;
 		};
 
@@ -103,6 +103,10 @@
 			gpios = <&gpioc 3 GPIO_OUTPUT_LOW>;
 		};
 
+		gpio_pen_detect_odl: pen_detect_odl {
+			gpios = <&gpio9 6 GPIO_INPUT_PULL_UP>;
+		};
+
 		ioex_usb_c0_frs_en: usb_c0_frs_en {
 			gpios = <&ioex_port1 6 GPIO_OUTPUT_LOW>;
 			enum-name = "GPIO_USB_C0_FRS_EN";
@@ -121,6 +125,11 @@
 			irq-pin = <&gpio_imu_int_l>;
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "lsm6dsm_interrupt";
+		};
+		int_pen_det_l: pen_det_l {
+			irq-pin = <&gpio_pen_detect_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "pen_detect_interrupt";
 		};
 	};
 

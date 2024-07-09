@@ -6,9 +6,13 @@
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_pdc.h"
+#include "emul/emul_smbus_ara.h"
 #include "emul_realtek_rts54xx.h"
+#include "usbc/utils.h"
 #include "zephyr/sys/util.h"
 #include "zephyr/sys/util_macro.h"
+
+#include <stdint.h>
 
 #include <zephyr/device.h>
 #include <zephyr/drivers/emul.h>
@@ -26,6 +30,9 @@
 #define LOG_LEVEL CONFIG_I2C_LOG_LEVEL
 LOG_MODULE_REGISTER(realtek_rts5453_emul);
 
+/* TODO(b/349609367): Do not rely on this test-only driver function. */
+bool pdc_rts54xx_test_idle_wait(void);
+
 static bool send_response(struct rts5453p_emul_pdc_data *data);
 
 struct rts5453p_emul_data {
@@ -34,6 +41,12 @@ struct rts5453p_emul_data {
 
 	/** Data required to simulate PD Controller */
 	struct rts5453p_emul_pdc_data pdc_data;
+
+	uint8_t port;
+
+	/* Pointer to ara implementation so we can queue alert addresses ahead
+	 * of the interrupt firing. */
+	const struct emul *ara_emul;
 };
 
 struct rts5453p_emul_pdc_data *
@@ -130,6 +143,23 @@ static int get_ic_status(struct rts5453p_emul_pdc_data *data,
 	data->response.ic_status.running_flash_bank_offset =
 		data->info.running_in_flash_bank;
 
+	memcpy(data->response.ic_status.project_name, data->info.project_name,
+	       sizeof(data->response.ic_status.project_name));
+
+	send_response(data);
+
+	return 0;
+}
+
+static int get_lpm_ppm_info(struct rts5453p_emul_pdc_data *data,
+			    const union rts54_request *req)
+{
+	LOG_INF("UCSI_GET_LPM_PPM_INFO");
+
+	data->response.lpm_ppm_info.byte_count = sizeof(struct lpm_ppm_info_t);
+
+	data->response.lpm_ppm_info.info = data->lpm_ppm_info;
+
 	send_response(data);
 
 	return 0;
@@ -146,6 +176,27 @@ static int ppm_reset(struct rts5453p_emul_pdc_data *data,
 		     const union rts54_request *req)
 {
 	LOG_INF("PPM_RESET port=%d", req->ppm_reset.port_num);
+
+	memset(&data->response, 0, sizeof(union rts54_response));
+	send_response(data);
+
+	return 0;
+}
+
+static int ack_cc_ci(struct rts5453p_emul_pdc_data *data,
+		     const union rts54_request *req)
+{
+	uint16_t ci_mask;
+
+	/*
+	 * The bits which are set in the change indicator bits should clear any
+	 * change indicator bits which are set the connector status message.
+	 */
+	ci_mask = ~req->ack_cc_ci.ci.raw_value;
+	data->connector_status.raw_conn_status_change_bits &= ci_mask;
+
+	LOG_INF("ACK_CC_CI port=%d, ci.raw = 0x%x", req->ack_cc_ci.port_num,
+		req->ack_cc_ci.ci.raw_value);
 
 	memset(&data->response, 0, sizeof(union rts54_response));
 	send_response(data);
@@ -313,6 +364,21 @@ static int get_rtk_status(struct rts5453p_emul_pdc_data *data,
 	/* BYTE 12 */
 	data->response.rtk_status.plug_direction =
 		data->connector_status.orientation & BIT_MASK(1);
+
+	/* Byte 14 */
+	/* If the partner type supports PD (alternate mode or USB4(),
+	 * set the alternate mode status as if all configuration is complete.
+	 */
+	if (data->connector_status.connect_status &&
+	    data->connector_status.conn_partner_flags &
+		    CONNECTOR_PARTNER_PD_CAPABLE) {
+		/* 6 = DP Configure Command Done */
+		data->response.rtk_status.alt_mode_related_status = 0x6;
+	} else {
+		/* 0 = Discovery Identity not done, partner doesn't support PD
+		 */
+		data->response.rtk_status.alt_mode_related_status = 0x0;
+	}
 
 	/* BYTE 16-17 */
 	data->response.rtk_status.average_current_low = 0;
@@ -601,6 +667,54 @@ static int get_vdo(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
+static int get_pch_data_status(struct rts5453p_emul_pdc_data *data,
+			       const union rts54_request *req)
+{
+	uint32_t pch_data_status_output = 0;
+
+	memset(&data->response, 0, sizeof(data->response));
+
+	/* Data transfer Length */
+	data->response.get_pch_data_status.byte_count = 5;
+
+	/* Data_Connection_Present */
+	pch_data_status_output =
+		data->connector_status.connect_status ? BIT(0) : 0;
+	/* Connection Orientation */
+	pch_data_status_output |= data->connector_status.orientation ? BIT(1) :
+								       0;
+	/* USB2_Connection */
+	pch_data_status_output |=
+		data->connector_status.conn_partner_flags & BIT(0) ? BIT(4) : 0;
+	/* USB3.2_Connection */
+	pch_data_status_output |=
+		data->connector_status.conn_partner_flags & BIT(0) ? BIT(5) : 0;
+	/* DP_Connection */
+	pch_data_status_output |=
+		data->connector_status.conn_partner_flags & BIT(1) ? BIT(8) : 0;
+	/* USB4 */
+	pch_data_status_output |=
+		data->connector_status.conn_partner_flags & BIT(2) ? BIT(23) :
+								     0;
+	pch_data_status_output |=
+		data->connector_status.conn_partner_flags & BIT(3) ? BIT(23) :
+								     0;
+
+	data->response.get_pch_data_status.pch_data_status[0] =
+		pch_data_status_output & 0xFF;
+	data->response.get_pch_data_status.pch_data_status[1] =
+		(pch_data_status_output >> 8) & 0xFF;
+	data->response.get_pch_data_status.pch_data_status[2] =
+		(pch_data_status_output >> 16) & 0xFF;
+	data->response.get_pch_data_status.pch_data_status[3] =
+		(pch_data_status_output >> 24) & 0xFF;
+	LOG_INF("GET_PCH_DATA_STATUS PORT_NUM:%d data_status:0x%x",
+		req->get_pch_data_status.port_num, pch_data_status_output);
+
+	send_response(data);
+	return 0;
+}
+
 static bool send_response(struct rts5453p_emul_pdc_data *data)
 {
 	if (data->delay_ms > 0) {
@@ -682,6 +796,7 @@ const struct commands sub_cmd_x08[] = {
 	{ .code = 0xA8, HANDLER_DEF(unsupported) },
 	{ .code = 0xA9, HANDLER_DEF(unsupported) },
 	{ .code = 0xAA, HANDLER_DEF(unsupported) },
+	{ .code = 0xE0, HANDLER_DEF(get_pch_data_status) },
 };
 
 const struct commands sub_cmd_x0E[] = {
@@ -701,6 +816,7 @@ const struct commands sub_cmd_x0E[] = {
 	{ .code = 0x12, HANDLER_DEF(get_connector_status) },
 	{ .code = 0x13, HANDLER_DEF(get_error_status) },
 	{ .code = 0x1E, HANDLER_DEF(read_power_level) },
+	{ .code = 0x22, HANDLER_DEF(get_lpm_ppm_info) },
 };
 
 const struct commands sub_cmd_x12[] = {
@@ -716,7 +832,7 @@ const struct commands rts54_commands[] = {
 	{ .code = 0x01, SUBCMD_DEF(sub_cmd_x01) },
 	{ .code = 0x08, SUBCMD_DEF(sub_cmd_x08) },
 	{ .code = 0x09, HANDLER_DEF(get_rtk_status) },
-	{ .code = 0x0A, HANDLER_DEF(unsupported) },
+	{ .code = 0x0A, HANDLER_DEF(ack_cc_ci) },
 	{ .code = 0x0E, SUBCMD_DEF(sub_cmd_x0E) },
 	{ .code = 0x12, SUBCMD_DEF(sub_cmd_x12) },
 	{ .code = 0x20, SUBCMD_DEF(sub_cmd_x20) },
@@ -935,7 +1051,8 @@ static int emul_realtek_rts54xx_reset(const struct emul *target)
 	memset(data->src_pdos, 0xFF, sizeof(data->src_pdos));
 	memset(data->snk_pdos, 0xFF, sizeof(data->snk_pdos));
 
-	data->src_pdos[0] = RTS5453P_FIXED_SRC;
+	data->src_pdos[0] = RTS5453P_FIXED1_SRC;
+	data->src_pdos[1] = RTS5453P_FIXED2_SRC;
 
 	data->snk_pdos[0] = RTS5453P_FIXED_SNK;
 	data->snk_pdos[1] = RTS5453P_BATT_SNK;
@@ -1196,7 +1313,11 @@ static int emul_realtek_rts54xx_pulse_irq(const struct emul *target)
 {
 	struct rts5453p_emul_pdc_data *data =
 		rts5453p_emul_get_pdc_data(target);
+	struct rts5453p_emul_data *emul_data = target->data;
+	const struct i2c_common_emul_cfg *cfg = target->cfg;
 
+	emul_smbus_ara_queue_address(emul_data->ara_emul, emul_data->port,
+				     cfg->addr);
 	gpio_emul_input_set(data->irq_gpios.port, data->irq_gpios.pin, 1);
 	gpio_emul_input_set(data->irq_gpios.port, data->irq_gpios.pin, 0);
 
@@ -1210,6 +1331,18 @@ static int emul_realtek_rts54xx_set_info(const struct emul *target,
 		rts5453p_emul_get_pdc_data(target);
 
 	data->info = *info;
+
+	return 0;
+}
+
+static int
+emul_realtek_rts54xx_set_lpm_ppm_info(const struct emul *target,
+				      const struct lpm_ppm_info_t *info)
+{
+	struct rts5453p_emul_pdc_data *data =
+		rts5453p_emul_get_pdc_data(target);
+
+	data->lpm_ppm_info = *info;
 
 	return 0;
 }
@@ -1256,6 +1389,19 @@ emul_realtek_rts54xx_set_cable_property(const struct emul *target,
 	return 0;
 }
 
+static int emul_realtek_rts54xx_idle_wait(const struct emul *target)
+{
+	/* TODO(b/349609367): This should be handled entirely in the emulator,
+	 * not in the driver, and it should be specific to the passed-in target.
+	 */
+
+	ARG_UNUSED(target);
+
+	if (pdc_rts54xx_test_idle_wait())
+		return 0;
+	return -ETIMEDOUT;
+}
+
 struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.reset = emul_realtek_rts54xx_reset,
 	.set_response_delay = emul_realtek_rts54xx_set_response_delay,
@@ -1275,10 +1421,12 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 	.get_reconnect_req = emul_realtek_rts54xx_get_reconnect_req,
 	.pulse_irq = emul_realtek_rts54xx_pulse_irq,
 	.set_info = emul_realtek_rts54xx_set_info,
+	.set_lpm_ppm_info = emul_realtek_rts54xx_set_lpm_ppm_info,
 	.set_pdos = emul_realtek_rts54xx_set_pdos,
 	.get_pdos = emul_realtek_rts54xx_get_pdos,
 	.get_cable_property = emul_realtek_rts54xx_get_cable_property,
 	.set_cable_property = emul_realtek_rts54xx_set_cable_property,
+	.idle_wait = emul_realtek_rts54xx_idle_wait,
 };
 
 #define RTS5453P_EMUL_DEFINE(n)                                             \
@@ -1295,6 +1443,8 @@ struct emul_pdc_api_t emul_realtek_rts54xx_api = {
 		.pdc_data = {						\
 			.irq_gpios = GPIO_DT_SPEC_INST_GET(n, irq_gpios), \
 		},							\
+		.port = USBC_PORT_FROM_DRIVER_NODE(DT_DRV_INST(n), pdc),  \
+		.ara_emul = EMUL_DT_GET(DT_NODELABEL(smbus_ara_emul)),       \
 	};       \
 	static const struct i2c_common_emul_cfg rts5453p_emul_cfg_##n = {   \
 		.dev_label = DT_NODE_FULL_NAME(DT_DRV_INST(n)),             \

@@ -88,6 +88,11 @@ bool pd_capable(int port)
 	return pdc_power_mgmt_pd_capable(port);
 }
 
+enum pd_dual_role_states pd_get_dual_role(int port)
+{
+	return pdc_power_mgmt_get_dual_role(port);
+}
+
 void pd_set_dual_role(int port, enum pd_dual_role_states state)
 {
 	pdc_power_mgmt_set_dual_role(port, state);

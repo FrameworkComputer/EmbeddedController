@@ -1,0 +1,109 @@
+/* Copyright 2024 The Chromium OS Authors. All rights reserved
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	aliases {
+		gpio-wp = &ec_spi_oe_mecc;
+	};
+
+	named-gpios {
+		/* IOEX present on main board */
+		cs-indicate-led {
+			gpios = <&pca95xx_1 15  GPIO_INPUT>;
+		};
+		c10-gate-led {
+			gpios = <&pca95xx_1 14  GPIO_INPUT>;
+		};
+		kbc-scrollock {
+			gpios = <&pca95xx_1 13  GPIO_INPUT>;
+		};
+		tp-ec-typec-sink-disable1{
+			gpios = <&pca95xx_1 12  GPIO_INPUT>;
+		};
+		tp-ec-typec-sink-disable2{
+			gpios = <&pca95xx_1 11  GPIO_INPUT>;
+		};
+		pd-aic-detect-slot-id {
+			gpios = <&pca95xx_1 10  GPIO_INPUT>;
+		};
+		tp-ec-io1-1 {
+			gpios = <&pca95xx_1 9  GPIO_INPUT>;
+		};
+		espi-testcrd-det {
+			gpios = <&pca95xx_1 8  GPIO_INPUT>;
+		};
+		virtual-dock-det-n {
+			gpios = <&pca95xx_1 7  GPIO_INPUT>;
+		};
+		virtual-battery {
+			gpios = <&pca95xx_1 6  GPIO_INPUT>;
+		};
+		ec-m2-ssd-pln-delay {
+			gpios = <&pca95xx_1 5  GPIO_INPUT>;
+		};
+		ec-soc-vr-cntrl-pe {
+			gpios = <&pca95xx_1 4  GPIO_INPUT>;
+		};
+		pmc-gpio-boot-halt {
+			gpios = <&pca95xx_1 3  GPIO_INPUT>;
+		};
+		pnp-npnp-sku {
+			gpios = <&pca95xx_1 2  GPIO_INPUT>;
+		};
+		mod-tcss2-detect {
+			gpios = <&pca95xx_1 1  GPIO_INPUT>;
+		};
+		mod-tcss1-detect {
+			gpios = <&pca95xx_1 0  GPIO_INPUT>;
+		};
+
+		/* KBD IOEX configuration, IOEX present on GSC AIC */
+		chgr-led-pwm4 {
+			gpios = <&ioex_it8801_port1 5 GPIO_INPUT>;
+		};
+		chgr-led-pwm3 {
+			gpios = <&ioex_it8801_port1 4 GPIO_INPUT>;
+		};
+		plt-config-1 {
+			gpios = <&ioex_it8801_port1 3 GPIO_INPUT>;
+		};
+		slate-mode-indication {
+			gpios = <&ioex_it8801_port1 2 GPIO_INPUT>;
+		};
+		plt-config-2 {
+			gpios = <&ioex_it8801_port1 1 GPIO_INPUT>;
+		};
+		sys-rst-odl-ec {
+			enum-name = "GPIO_SYS_RST_ODL";
+			gpios = <&ioex_it8801_port1 0 GPIO_OUTPUT_HIGH>;
+		};
+		ec_spi_oe_mecc: ec-eeprom-wp {
+			gpios = <&ioex_it8801_port2 0 GPIO_INPUT>;
+		};
+		smc-lid-ec {
+			gpios = <&ioex_it8801_port2 1 GPIO_INPUT>;
+		};
+		tp11 {
+			gpios = <&ioex_it8801_port2 2 GPIO_INPUT>;
+		};
+		tp-kso-15 {
+			gpios = <&ioex_it8801_port0 0 GPIO_INPUT>;
+		};
+		tp-gpio03 {
+			gpios = <&ioex_it8801_port0 3 GPIO_OUTPUT_LOW>;
+		};
+		ec-h1-packet-mode {
+			gpios = <&ioex_it8801_port0 4 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_PACKET_MODE_EN";
+		};
+		rtc-rst {
+			gpios = <&ioex_it8801_port0 6 GPIO_OUTPUT_LOW>;
+		};
+		ec-entering-rw {
+			gpios = <&ioex_it8801_port0 7 GPIO_OUTPUT_LOW>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+};

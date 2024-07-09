@@ -120,6 +120,12 @@ config BOARD_CRAASKOV
 	  Build Google Craaskov reference board. Craaskov has Intel ADL-N SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_ORISA
+	bool "Google Orisa Board"
+	help
+	  Build Google Orisa reference board. Orisa has Intel ADL-N SoC
+	  with NPCX993FA0BX EC.
+
 config BOARD_QUANDISO
 	bool "Google Quandiso Board"
 	help
@@ -156,8 +162,18 @@ config BOARD_RIVEN
 	  Build Google Riven board. Riven has Intel TWL SoC
 	  with NPCX993FA0BX EC.
 
+config BOARD_DOMIKA
+	bool "Google Domika Board"
+	help
+	  Build Google Domika board. Domika has Intel TWL SoC
+	  with IT81302 EC.
+
 module = NISSA
 module-str = Nissa board-specific code
 source "subsys/logging/Kconfig.template.log_config"
+
+choice PLATFORM_EC_USBC_STACK
+	default PLATFORM_EC_USB_PD_CONTROLLER if BOARD_ORISA
+endchoice
 
 source "Kconfig.zephyr"

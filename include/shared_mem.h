@@ -21,6 +21,10 @@
 
 #include <stddef.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Returns the maximum amount of shared memory which can be acquired, in
  * bytes.
@@ -88,6 +92,10 @@ struct shm_buffer {
 void set_map_bit(uint32_t mask);
 extern struct shm_buffer *free_buf_chain;
 extern struct shm_buffer *allocced_buf_chain;
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_SHARED_MEM_H */

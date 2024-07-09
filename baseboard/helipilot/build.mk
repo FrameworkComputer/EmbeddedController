@@ -32,8 +32,9 @@ test-list-y = \
        exception \
        flash_physical \
        flash_write_protect \
-       fpsensor \
+       fp_transport \
        fpsensor_auth_crypto_stateful \
+       fpsensor_auth_crypto_stateful_otp \
        fpsensor_auth_crypto_stateless \
        fpsensor_crypto \
        fpsensor_hw \
@@ -53,6 +54,7 @@ test-list-y = \
        pingpong \
        printf \
        queue \
+       ram_lock \
        restricted_console \
        rng_benchmark \
        rollback \
@@ -78,4 +80,6 @@ test-list-y = \
        utils_str
 
 # This is relative to the EC root directory.
--include private/board/helipilot/build.mk
+ifneq ($(BOARD_BUCCANEER),y)
+-include ../ec-private/board/helipilot/build.mk
+endif

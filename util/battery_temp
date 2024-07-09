@@ -14,25 +14,27 @@ batt_temp_sysfs() {
 
     for psdir in /sys/class/power_supply/* ; do
         if [[ -e "${psdir}/temp" ]] ; then
-            pstype=$(cat $psdir/type)
-            if [[ "${pstype}" -eq "Battery" ]] ; then
-                temp=$(bc <<< "scale=2; $(cat ${psdir}/temp)/10")
+            pstype=$(cat "${psdir}/type")
+            if [[ "${pstype}" = "Battery" ]] ; then
+                temp=$(bc <<< "scale=2; $(cat "${psdir}/temp")/10")
                 break
             fi
         fi
     done
-    echo ${temp}
+    echo "${temp}"
 }
 
 # Read battery temperature from EC and return in degC.
 batt_temp_ec() {
     local temp=""
 
-    local sensor_str=$(ectool tempsinfo all 2>/dev/null | grep Battery)
-    if [[ $? -eq 0 ]] && [[ ! -z "${sensor_str}" ]] ; then
-        local idx=$(echo ${sensor_str} | cut -d: -f1)
+    local sensor_str
+    if sensor_str=$(ectool tempsinfo all 2>/dev/null | grep Battery) \
+        && [[ -n "${sensor_str}" ]] ; then
+        local idx
+        idx=$(echo "${sensor_str}" | cut -d: -f1)
         # ectool temps <idx> looks like 'Reading temperature...298 K'
-        temp_str=$(ectool temps ${idx})
+        temp_str=$(ectool temps "${idx}")
         temp="${temp_str//[!0-9]/}"
         if [[ -z "${temp}" ]] ; then
             temp="error"
@@ -40,7 +42,7 @@ batt_temp_ec() {
             temp=$(bc <<< "scale=2; ${temp} - 273.15")
         fi
     fi
-    echo $temp
+    echo "${temp}"
 }
 
 # Main
@@ -52,5 +54,5 @@ fi
 if [[ -z "${TEMP_DEGC}" ]] ; then
     echo "unknown"
 else
-    echo ${TEMP_DEGC}
+    echo "${TEMP_DEGC}"
 fi

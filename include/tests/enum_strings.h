@@ -8,6 +8,10 @@
 #include "usb_pd.h"
 #include "usb_pd_tcpm.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #ifndef __CROS_EC_TEST_ENUM_STINGS_H
 #define __CROS_EC_TEST_ENUM_STINGS_H
 
@@ -90,5 +94,9 @@ static inline const char *from_pd_data_role(enum pd_data_role value)
 		return "UNKNOWN";
 	}
 }
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_TEST_ENUM_STINGS_H */

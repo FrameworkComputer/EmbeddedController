@@ -1,0 +1,56 @@
+description: "DYNAPACK AS3GXXD3KB B140435"
+compatible: "dynapack,b140435"
+
+include: battery-smart.yaml
+
+properties:
+  enum-name:
+    type: string
+    default: "dynapack,b140435"
+
+  # Fuel gauge
+  manuf_name:
+    default: "AS3GXXD3KB"
+  device_name:
+    default: "B140435"
+  ship_mode_reg_addr:
+    default: 0x00
+  ship_mode_reg_data:
+    default: [0x0010, 0x0010]
+  # Documentation: b/150833879
+  # Charging/Discharging FETs Status
+  # Register SBS_PackStatus_ACCESS (0x99)
+  # Bit-3: XDSG
+  # Bit-2: XCHG
+  fet_reg_addr:
+    default: 0x99
+  fet_reg_mask:
+    default: 0x8
+  fet_disconnect_val:
+    default: 0x8
+  fet_cfet_mask:
+    default: 0x4
+  fet_cfet_off_val:
+    default: 0x4
+
+  # Battery info
+  voltage_max:
+    default: 13200
+  voltage_normal:
+    default: 11850
+  voltage_min:
+    default: 9000
+  precharge_current:
+    default: 256
+  start_charging_min_c:
+    default: 0
+  start_charging_max_c:
+    default: 45
+  charging_min_c:
+    default: 0
+  charging_max_c:
+    default: 60
+  discharging_min_c:
+    default: -20
+  discharging_max_c:
+    default: 60

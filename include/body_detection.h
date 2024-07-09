@@ -9,6 +9,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct body_detect_params {
 	int var_noise_factor;
 	int var_threshold;
@@ -35,5 +39,9 @@ int body_detect_get_enable(void);
 
 void body_detect_set_spoof(int enable);
 bool body_detect_get_spoof(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_BODY_DETECTION_H */

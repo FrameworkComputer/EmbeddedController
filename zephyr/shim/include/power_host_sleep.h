@@ -20,6 +20,10 @@
 #include "lpc.h"
 #include "system.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /********************************************************************/
 /* power.h */
 enum power_state {
@@ -65,5 +69,9 @@ void power_set_host_sleep_state(enum host_sleep_event state);
 #endif /* CONFIG_AP_PWRSEQ_HOST_SLEEP */
 
 #endif /* CONFIG_AP_PWRSEQ */
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __POWER_HOST_SLEEP_H */

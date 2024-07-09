@@ -77,3 +77,8 @@ target_sources_ifdef(
         src/ponyta_board.c)
 
 target_sources_ifdef(CONFIG_TEST_KYOGRE_SENSOR_PROBE app PRIVATE src/kyogre_sensor.c)
+target_sources_ifdef(CONFIG_TEST_SQUIRTLE
+			app PRIVATE
+                        src/voltorb_usbc.c
+			${PLATFORM_EC_PROGRAM_DIR}/corsola/squirtle/src/usbc.c
+                        )

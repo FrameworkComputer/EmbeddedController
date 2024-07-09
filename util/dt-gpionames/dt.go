@@ -28,7 +28,7 @@ import (
 var input = flag.String("input", "", "Input DTB file")
 var output = flag.String("output", "", "Output file")
 
-type Gpio struct {
+type gpio struct {
 	node *dt.Node // Device tree node
 	pins []string // Slice of pin names
 	max  int      // Last slice entry containing a name
@@ -62,7 +62,7 @@ func main() {
 // string array property for each of the GPIO controllers
 // TODO: It may be cleaner to use a template rather than
 // generating each line separately.
-func writeLineNames(of io.Writer, gm map[dt.PHandle]*Gpio) {
+func writeLineNames(of io.Writer, gm map[dt.PHandle]*gpio) {
 	fmt.Fprintf(of, "/ {\n")
 	fmt.Fprintf(of, "\tsoc {\n")
 	for _, g := range gm {
@@ -90,8 +90,8 @@ func writeLineNames(of io.Writer, gm map[dt.PHandle]*Gpio) {
 // flattened device tree, detecting the
 // GPIO controller nodes (which should have the 'gpio-controller'
 // property on them), and adds them to the map.
-func findGpioControllers(fdt *dt.FDT) map[dt.PHandle]*Gpio {
-	gm := make(map[dt.PHandle]*Gpio)
+func findGpioControllers(fdt *dt.FDT) map[dt.PHandle]*gpio {
+	gm := make(map[dt.PHandle]*gpio)
 	// Walk the tree and find all the GPIO controllers
 	gpios, err := fdt.Root().FindAll(func(n *dt.Node) bool {
 		_, ok := n.LookProperty("gpio-controller")
@@ -125,7 +125,7 @@ func findGpioControllers(fdt *dt.FDT) map[dt.PHandle]*Gpio {
 			log.Printf("%s illegal phandle (%v), ignored\n", n.Name, err)
 			continue
 		}
-		gpio := new(Gpio)
+		gpio := new(gpio)
 		gpio.node = n
 		gpio.pins = make([]string, npins)
 		gpio.max = -1
@@ -157,7 +157,7 @@ func findNamedGpios(fdt *dt.FDT) []*dt.Node {
 
 // setLineNames will add the named-gpio node names to the GPIO controller
 // line names for the associated pin.
-func setLineNames(gm map[dt.PHandle]*Gpio, ngList []*dt.Node) {
+func setLineNames(gm map[dt.PHandle]*gpio, ngList []*dt.Node) {
 	for _, ng := range ngList {
 		gp, ok := ng.LookProperty("gpios")
 		if !ok {

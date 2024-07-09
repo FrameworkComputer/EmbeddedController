@@ -28,6 +28,10 @@
 #include <zephyr/devicetree.h>
 #include <zephyr/sys/util_macro.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * @brief List of USB mux drivers compatibles and their configurations. Each
  *        element of list has to have (compatible, config) format.
@@ -491,5 +495,9 @@ USB_MUX_FOREACH_MUX(USB_MUX_DECLARE)
  */
 USB_MUX_FOREACH_CHAIN_VARGS(USB_MUX_FOREACH_NO_ROOT_MUX,
 			    USB_MUX_CHAIN_STRUCT_DECLARE_EXTERN_OP)
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* ZEPHYR_CHROME_USBC_USB_MUXES_H */

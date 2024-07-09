@@ -8,11 +8,19 @@
 
 #include "ec_commands.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Updates ap boot time data.
  *
  * @param boot time param needs to be updated
  */
 void update_ap_boot_time(enum boot_time_param param);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_SYSTEM_BOOT_TIME_H */

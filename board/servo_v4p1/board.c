@@ -41,6 +41,9 @@
 
 #include <driver/gl3590.h>
 
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+
 /*
  * Important part of servo functionality is dependent on poweron config feature.
  * We enable all USB ports and CCD in apply_poweron_config function. Therefore
@@ -249,7 +252,7 @@ void hpd_irq_deferred(void)
 
 	if (dp_mode) {
 		pd_send_hpd(DUT, hpd_irq);
-		ccprintf("HPD IRQ");
+		CPRINTF("HPD IRQ");
 	}
 }
 DECLARE_DEFERRED(hpd_irq_deferred);
@@ -266,7 +269,7 @@ void hpd_lvl_deferred(void)
 
 	if (dp_mode) {
 		pd_send_hpd(DUT, level ? hpd_high : hpd_low);
-		ccprintf("HPD: %d", level);
+		CPRINTF("HPD: %d", level);
 	}
 }
 DECLARE_DEFERRED(hpd_lvl_deferred);
@@ -322,7 +325,7 @@ static void hub_evt(enum gpio_signal signal)
 
 static void dut_pwr_evt(enum gpio_signal signal)
 {
-	ccprintf("dut_pwr_evt\n");
+	CPRINTF("dut_pwr_evt\n");
 }
 
 void ext_hpd_detection_enable(int enable)

@@ -141,6 +141,46 @@ int verify_key_v2(int c, int r, int pressed, int expect_more)
 	return 1;
 }
 
+static int verify_key_v3(int c, int r, int pressed, int expect_more)
+{
+	struct host_cmd_handler_args args;
+	struct ec_response_get_next_event_v3 event;
+	int i;
+
+	args.version = 3;
+	args.command = EC_CMD_GET_NEXT_EVENT;
+	args.params = NULL;
+	args.params_size = 0;
+	args.response = &event;
+	args.response_max = sizeof(event);
+	args.response_size = 0;
+
+	if (c >= 0 && r >= 0) {
+		ccprintf("Verify %s (%d, %d). Expect %smore.\n",
+			 action[pressed], c, r, expect_more ? "" : "no ");
+		set_state(c, r, pressed);
+
+		if (host_command_process(&args) != EC_RES_SUCCESS)
+			return 0;
+
+		if (!!(event.event_type & EC_MKBP_HAS_MORE_EVENTS) !=
+		    expect_more) {
+			ccprintf("Incorrect more events!\n");
+			return 0;
+		}
+
+		for (i = 0; i < KEYBOARD_COLS_MAX; ++i)
+			if (event.data.key_matrix[i] != state[i])
+				return 0;
+	} else {
+		ccprintf("Verify no events available\n");
+		if (host_command_process(&args) != EC_RES_UNAVAILABLE)
+			return 0;
+	}
+
+	return 1;
+}
+
 int mkbp_config(struct ec_params_mkbp_set_config params)
 {
 	struct host_cmd_handler_args args;
@@ -237,6 +277,24 @@ int single_key_press_v2(void)
 	return EC_SUCCESS;
 }
 
+int single_key_press_v3(void)
+{
+	keyboard_clear_buffer();
+	clear_state();
+	TEST_ASSERT(press_key(0, 0, 1) == EC_SUCCESS);
+	TEST_ASSERT(FIFO_NOT_EMPTY());
+	TEST_ASSERT(press_key(0, 0, 0) == EC_SUCCESS);
+	TEST_ASSERT(FIFO_NOT_EMPTY());
+
+	clear_state();
+	TEST_ASSERT(verify_key_v3(0, 0, 1, 1));
+	TEST_ASSERT(FIFO_NOT_EMPTY());
+	TEST_ASSERT(verify_key_v3(0, 0, 0, 0));
+	TEST_ASSERT(FIFO_EMPTY());
+
+	return EC_SUCCESS;
+}
+
 int test_fifo_size(void)
 {
 	keyboard_clear_buffer();
@@ -295,6 +353,7 @@ void run_test(int argc, const char **argv)
 	clear_mkbp_events();
 	RUN_TEST(single_key_press);
 	RUN_TEST(single_key_press_v2);
+	RUN_TEST(single_key_press_v3);
 	RUN_TEST(test_fifo_size);
 	RUN_TEST(test_enable);
 	RUN_TEST(fifo_underrun);

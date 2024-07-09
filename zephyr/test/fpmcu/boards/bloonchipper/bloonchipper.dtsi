@@ -5,7 +5,7 @@
 
 #include <zephyr/dt-bindings/clock/stm32f4_clock.h>
 #include <zephyr/dt-bindings/reset/stm32f2_4_7_reset.h>
-#include "../native_posix.overlay"
+#include "../native_sim.overlay"
 
 / {
 	soc {

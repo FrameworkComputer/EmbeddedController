@@ -1,0 +1,20 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "native_sim.overlay"
+
+&i2c0 {
+        pdc_emul1: tps6699-pdc@20 {
+                compatible = "ti,tps6699-pdc";
+                reg = <0x20>;
+                irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
+        };
+
+        pdc_emul2: tps6699-pdc@24 {
+                compatible = "ti,tps6699-pdc";
+                reg = <0x24>;
+                irq-gpios = <&gpiof 5 GPIO_ACTIVE_LOW>;
+        };
+};

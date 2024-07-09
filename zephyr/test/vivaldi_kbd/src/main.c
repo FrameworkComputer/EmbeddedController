@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include "cros_cbi.h"
+
 #include <zephyr/input/input.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/ztest.h>
@@ -43,8 +45,32 @@ struct keyboard_scan_config keyscan_config;
 #if CONFIG_VIVALDI_KBD_TEST_USE_IDX
 int8_t board_vivaldi_keybd_idx(void)
 {
+	if (IS_ENABLED(CONFIG_VIVALDI_KBD_CBI_RACE_TEST)) {
+		uint32_t val;
+		int ret;
+
+		ret = cros_cbi_get_fw_config(FW_CONFIG_FIELD_1, &val);
+		zassert_equal(ret, 0);
+		zassert_equal(val, 1);
+	}
+
 	return CONFIG_VIVALDI_KBD_TEST_IDX_VALUE;
 }
+#endif
+
+#if CONFIG_VIVALDI_KBD_CBI_RACE_TEST
+static int early_cbi_test(void)
+{
+	uint32_t val;
+	int ret;
+
+	ret = cros_cbi_get_fw_config(FW_CONFIG_FIELD_1, &val);
+	TC_PRINT("early cros_cbi_get_fw_config: %d\n", ret);
+	zassert_equal(ret, -EINVAL);
+
+	return 0;
+}
+SYS_INIT(early_cbi_test, POST_KERNEL, CONFIG_KERNEL_INIT_PRIORITY_DEVICE);
 #endif
 
 ZTEST(vivaldi_kbd, test_matching_codes)

@@ -3,7 +3,7 @@
  * found in the LICENSE file.
  */
 
-#include "boards/native_posix.overlay"
+#include "boards/native_sim.overlay"
 
 / {
 	chosen {

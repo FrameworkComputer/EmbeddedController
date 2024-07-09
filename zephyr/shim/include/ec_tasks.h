@@ -16,6 +16,10 @@
 
 #include <zephyr/kernel.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /** Starts all of the shimmed EC tasks. Requires CONFIG_SHIMMED_TASKS=y. */
 void start_ec_tasks(void);
 
@@ -39,6 +43,10 @@ task_id_t thread_id_to_task_id(k_tid_t thread_id);
  * require to run in any task context.
  */
 void set_test_runner_tid(void);
+#endif
+
+#ifdef __cplusplus
+}
 #endif
 
 #endif /* __CROS_EC_EC_TASKS_H */

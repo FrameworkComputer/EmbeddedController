@@ -12,6 +12,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 struct still_det {
 	/** Variance threshold for the stillness confidence score. [units]^2 */
 	fp_t var_threshold;
@@ -68,5 +72,9 @@ struct still_det {
  */
 bool still_det_update(struct still_det *still_det, uint32_t sample_time, fp_t x,
 		      fp_t y, fp_t z);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_STILLNESS_DETECTOR_H */

@@ -8,7 +8,7 @@
 #include "console.h"
 #include "driver/bc12/pi3usb9201_public.h"
 #include "driver/ppc/syv682x_public.h"
-#include "driver/retimer/ps8818_public.h"
+#include "driver/retimer/bb_retimer_public.h"
 #include "driver/tcpm/rt1715.h"
 #include "driver/tcpm/tcpci.h"
 #include "ec_commands.h"
@@ -68,25 +68,14 @@ static const struct usb_mux_chain usbc0_tcss_usb_mux = {
 		},
 };
 
-static int board_c0_ps8818_mux_set(const struct usb_mux *me,
-				   mux_state_t mux_state)
-{
-	if (mux_state & USB_PD_MUX_DP_ENABLED)
-		gpio_set_level(GPIO_USB_C0_HPD, 1);
-	else
-		gpio_set_level(GPIO_USB_C0_HPD, 0);
-
-	return 0;
-}
-
 const struct usb_mux_chain usb_muxes[] = {
 	[USBC_PORT_C0] = {
 		.mux = &(const struct usb_mux) {
 			.usb_port = USBC_PORT_C0,
-			.driver = &ps8818_usb_retimer_driver,
+			.driver = &bb_usb_retimer,
+			.hpd_update = bb_retimer_hpd_update,
 			.i2c_port = I2C_PORT_USB_C0_MUX,
-			.i2c_addr_flags = PS8818_I2C_ADDR3_FLAGS,
-			.board_set = &board_c0_ps8818_mux_set,
+			.i2c_addr_flags = USBC_PORT_C0_BB_RETIMER_I2C_ADDR,
 		},
 		.next = &usbc0_tcss_usb_mux,
 	},
@@ -101,6 +90,41 @@ const struct pi3usb9201_config_t pi3usb9201_bc12_chips[] = {
 	},
 };
 BUILD_ASSERT(ARRAY_SIZE(pi3usb9201_bc12_chips) == USBC_PORT_COUNT);
+
+__override int bb_retimer_power_enable(const struct usb_mux *me, bool enable)
+{
+	enum gpio_signal rst_signal;
+
+	if (me->usb_port == USBC_PORT_C0) {
+		rst_signal = GPIO_USB_C0_RT_RST_ODL;
+	} else {
+		return EC_ERROR_INVAL;
+	}
+
+	/*
+	 * We do not have a load switch for the burnside bridge chips,
+	 * so we only need to sequence reset.
+	 */
+
+	if (enable) {
+		/*
+		 * Tpw, minimum time from VCC to RESET_N de-assertion is 100us.
+		 * For boards that don't provide a load switch control, the
+		 * retimer_init() function ensures power is up before calling
+		 * this function.
+		 */
+		gpio_set_level(rst_signal, 1);
+		/*
+		 * Allow 1ms time for the retimer to power up lc_domain
+		 * which powers I2C controller within retimer
+		 */
+		crec_msleep(1);
+	} else {
+		gpio_set_level(rst_signal, 0);
+		crec_msleep(1);
+	}
+	return EC_SUCCESS;
+}
 
 void board_reset_pd_mcu(void)
 {

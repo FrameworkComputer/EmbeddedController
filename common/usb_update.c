@@ -23,6 +23,8 @@
 
 #ifdef CONFIG_PLATFORM_EC_ONE_WIRE_UART
 #include "drivers/one_wire_uart_stream.h"
+#elif defined(CONFIG_USB_DEVICE_GOOGLE_UPDATE)
+#include "drivers/usb_stream.h"
 #else
 #include "usb-stream.h"
 #endif
@@ -310,11 +312,13 @@ static int try_vendor_command(struct consumer const *consumer, size_t count)
 				break;
 			}
 
-			response_size = touchpad_get_info(&tp);
-			if (response_size < 1) {
+			int ret = touchpad_get_info(&tp);
+
+			if (ret < 1) {
 				response = EC_RES_ERROR;
 				break;
 			}
+			response_size = ret;
 
 #ifdef CONFIG_TOUCHPAD_VIRTUAL_OFF
 			tp.fw_address = CONFIG_TOUCHPAD_VIRTUAL_OFF;

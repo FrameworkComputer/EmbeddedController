@@ -9,6 +9,7 @@ def register_fpmcu_variant(
     project_name,
     zephyr_board,
     variant_modules=(),
+    variant_optional_modules=(),
     variant_dts_overlays=(),
     variant_kconfig_files=(),
     signer=(),
@@ -18,6 +19,7 @@ def register_fpmcu_variant(
         project_name=project_name,
         zephyr_board=zephyr_board,
         modules=["ec", *variant_modules],
+        optional_modules=[*variant_optional_modules],
         supported_toolchains=["llvm", "zephyr"],
         dts_overlays=[*variant_dts_overlays],
         kconfig_files=[here / "prj.conf", *variant_kconfig_files],
@@ -29,6 +31,7 @@ bloonchipper = register_fpmcu_variant(
     project_name="bloonchipper",
     zephyr_board="google_dragonclaw",
     variant_modules=["hal_stm32", "cmsis"],
+    variant_optional_modules=["fpc"],
     variant_dts_overlays=[
         here / "bloonchipper" / "bloonchipper.dts",
         here / "bloonchipper" / "ec_quirks.dts",

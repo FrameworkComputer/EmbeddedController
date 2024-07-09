@@ -71,7 +71,7 @@ endif # CONFIG_CROS_SYSTEM_XEC
 
 menuconfig CROS_SYSTEM_NATIVE_POSIX
 	bool "Native POSIX cros system driver (test only)"
-	depends on SOC_POSIX && CROS_EC
+	depends on (SOC_POSIX || SOC_NSIM) && CROS_EC
 	default y
 	help
 	  This option enables the cros system driver for the native POSIX

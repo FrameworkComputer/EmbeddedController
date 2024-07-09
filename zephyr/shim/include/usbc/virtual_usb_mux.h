@@ -8,6 +8,10 @@
 
 #include "usb_mux.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 #define VIRTUAL_USB_MUX_COMPAT cros_ec_usbc_mux_virtual
 
 #define USB_MUX_CONFIG_VIRTUAL(mux_id)                     \
@@ -16,5 +20,9 @@
 			.driver = &virtual_usb_mux_driver, \
 			.hpd_update = &virtual_hpd_update, \
 	}
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __ZEPHYR_SHIM_VIRTUAL_USB_MUX_H */

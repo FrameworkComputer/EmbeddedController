@@ -10,6 +10,10 @@
 
 #include "accelgyro.h"
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* I2C Interface */
 #define TCS3400_I2C_ADDR_FLAGS 0x39
 
@@ -72,5 +76,9 @@ extern const struct accelgyro_drv tcs3400_rgb_drv;
 
 void tcs3400_interrupt(enum gpio_signal signal);
 int tcs3400_get_integration_time(int atime);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_DRIVER_ALS_TCS3400_PUBLIC_H */

@@ -10,6 +10,10 @@
 
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /**
  * Programs when the next timer should fire an interrupt.
  *
@@ -117,5 +121,9 @@ void hwtimer_setup_watchdog(void);
 
 /* Reset the watchdog timer, to avoid the watchdog warning */
 void hwtimer_reset_watchdog(void);
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_HWTIMER_H */

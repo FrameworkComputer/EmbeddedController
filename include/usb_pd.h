@@ -23,6 +23,10 @@
 #include <stdbool.h>
 #include <stdint.h>
 
+#ifdef __cplusplus
+extern "C" {
+#endif
+
 /* PD Host command timeout */
 #define PD_HOST_COMMAND_TIMEOUT_US SECOND
 
@@ -3659,5 +3663,9 @@ __override_proto enum pd_sdb_power_indicator
 board_get_pd_sdb_power_indicator(enum pd_sdb_power_state power_state);
 
 /****************************************************************************/
+
+#ifdef __cplusplus
+}
+#endif
 
 #endif /* __CROS_EC_USB_PD_H */

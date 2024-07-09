@@ -12,7 +12,8 @@ BUILD_DIR := $(firstword $(subst /, ,$(out)))
 
 # Don't do a build test on the following boards:
 skip_boards = OWNERS cr50 host
-boards := $(filter-out $(skip_boards),$(notdir $(wildcard board/* private*/board/*)))
+boards := $(filter-out $(skip_boards), \
+	$(notdir $(wildcard board/* ../private*/board/*)))
 
 # Create output directories if necessary
 _common_dir_create := $(foreach d,$(common_dirs) $(common-dirs-y),\
@@ -676,14 +677,6 @@ $(out)/RO/%.a:
 	$(call quiet,o_to_a,AR     )
 $(out)/RW/%.a:
 	$(call quiet,o_to_a,AR     )
-
-# Pull in private static archive, if available. We copy the archive, instead of
-# using it inplace, to make it easier for vendors to build their static archive
-# in tree, when the private repo archive doesn't yet exist.
-$(out)/RO/private/%.a:private/%.a
-	$(call quiet,cp,CP     )
-$(out)/RW/private/%.a:private/%.a
-	$(call quiet,cp,CP     )
 
 # Conditionally force the rebuilding of ec_version.h only if it would be
 # changed.

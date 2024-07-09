@@ -218,6 +218,12 @@
 	pinctrl-names = "default";
 };
 
+&i2c0 {
+       charger: rt9490@53 {
+               eoc-current = <120>;
+       };
+};
+
 &i2c2 {
 	/delete-node/ rt1739@70;
 	/delete-node/ tusb546-mux-0@44;

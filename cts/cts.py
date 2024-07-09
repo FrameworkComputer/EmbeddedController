@@ -1,30 +1,27 @@
-#!/usr/bin/env python
+#!/usr/bin/env python3
 # Copyright 2016 The ChromiumOS Authors
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-# A script which builds, flashes, and runs EC CTS
-#
-# Software prerequisites:
-# - openocd version 0.10 or above
-# - lsusb
-# - udevadm
-#
-# To try it out, hook two boards (DEFAULT_TH and DEFAULT_DUT) with USB cables
-# to the host and execute the script:
-#   $ ./cts.py
-# It'll run mock tests. The result will be stored in CTS_TEST_RESULT_DIR.
+"""A script which builds, flashes, and runs EC CTS
 
-# Note: This is a py2/3 compatible file.
+Software prerequisites:
+- openocd version 0.10 or above
+- lsusb
+- udevadm
 
-from __future__ import print_function
+To try it out, hook two boards (DEFAULT_TH and DEFAULT_DUT) with USB cables
+to the host and execute the script:
+  $ ./cts.py
+It'll run mock tests. The result will be stored in CTS_TEST_RESULT_DIR.
+"""
 
 import argparse
 import os
 import shutil
 import time
 
-import common.board as board
+from common import board
 
 
 CTS_RC_PREFIX = "CTS_RC_"
@@ -40,19 +37,19 @@ CTS_RC_DUPLICATE_RUN = -3  # test was run multiple times.
 CTS_RC_INVALID_RETURN_CODE = -4  # failed to parse return code
 
 
-class Cts(object):
+class Cts:
     """Class that represents a eCTS run.
 
     Attributes:
       dut: DeviceUnderTest object representing DUT
-      th: TestHarness object representing a test harness
+      test_harness: TestHarness object representing a test harness
       module: Name of module to build/run tests for
       testlist: List of strings of test names contained in given module
       return_codes: Dict of strings of return codes, with a code's integer
         value being the index for the corresponding string representation
     """
 
-    def __init__(self, ec_dir, th, dut, module):
+    def __init__(self, ec_dir, test_harness, dut, module):
         """Initializes cts class object with given arguments.
 
         Args:
@@ -69,34 +66,37 @@ class Cts(object):
         self.ec_dir = ec_dir
         self.module = module
         serial_path = os.path.join(CTS_TEST_RESULT_DIR, "th_serial")
-        self.th = board.TestHarness(th, module, self.results_dir, serial_path)
-        self.dut = board.DeviceUnderTest(dut, self.th, module, self.results_dir)
+        self.test_harness = board.TestHarness(
+            test_harness, module, self.results_dir, serial_path
+        )
+        self.dut = board.DeviceUnderTest(
+            dut, self.test_harness, module, self.results_dir
+        )
         cts_dir = os.path.join(self.ec_dir, "cts")
         testlist_path = os.path.join(cts_dir, self.module, "cts.testlist")
         return_codes_path = os.path.join(cts_dir, "common", "cts.rc")
         self.get_return_codes(return_codes_path)
         self.testlist = self.get_macro_args(testlist_path, "CTS_TEST")
+        self.formatted_results = ""
 
     def build(self):
         """Build images for DUT and TH."""
         print("Building DUT image...")
         if not self.dut.build(self.ec_dir):
-            raise RuntimeError(
-                "Building module %s for DUT failed" % (self.module)
-            )
+            raise RuntimeError(f"Building module {self.module} for DUT failed")
         print("Building TH image...")
-        if not self.th.build(self.ec_dir):
-            raise RuntimeError(
-                "Building module %s for TH failed" % (self.module)
-            )
+        if not self.test_harness.build(self.ec_dir):
+            raise RuntimeError(f"Building module {self.module} for TH failed")
 
     def flash_boards(self):
         """Flashes TH and DUT with their most recently built ec.bin."""
         cts_module = "cts_" + self.module
-        image_path = os.path.join("build", self.th.board, cts_module, "ec.bin")
+        image_path = os.path.join(
+            "build", self.test_harness.board, cts_module, "ec.bin"
+        )
         self.identify_boards()
         print("Flashing TH with", image_path)
-        if not self.th.flash(image_path):
+        if not self.test_harness.flash(image_path):
             raise RuntimeError("Flashing TH failed")
         image_path = os.path.join("build", self.dut.board, cts_module, "ec.bin")
         print("Flashing DUT with", image_path)
@@ -105,11 +105,11 @@ class Cts(object):
 
     def setup(self):
         """Setup boards."""
-        self.th.save_serial()
+        self.test_harness.save_serial()
 
     def identify_boards(self):
         """Updates serials of TH and DUT in that order (order matters)."""
-        self.th.get_serial()
+        self.test_harness.get_serial()
         self.dut.get_serial()
 
     def get_macro_args(self, filepath, macro):
@@ -126,31 +126,33 @@ class Cts(object):
             'dut_string': Expected string from DUT,
         """
         tests = []
-        with open(filepath, "r") as f:
-            lines = f.readlines()
+        with open(filepath, "r", encoding="utf-8") as macro_file:
+            lines = macro_file.readlines()
             joined = "".join(lines).replace("\\\n", "").splitlines()
-            for l in joined:
-                if not l.strip().startswith(macro):
+            for line in joined:
+                if not line.strip().startswith(macro):
                     continue
-                d = {}
-                l = l.strip()[len(macro) :]
-                l = l.strip("()").split(",")
-                d["name"] = l[0].strip()
-                d["th_rc"] = self.get_return_code_value(l[1].strip().strip('"'))
-                d["th_string"] = l[2].strip().strip('"')
-                d["dut_rc"] = self.get_return_code_value(
-                    l[3].strip().strip('"')
+                entry = {}
+                line = line.strip()[len(macro) :]
+                line = line.strip("()").split(",")
+                entry["name"] = line[0].strip()
+                entry["th_rc"] = self.get_return_code_value(
+                    line[1].strip().strip('"')
                 )
-                d["dut_string"] = l[4].strip().strip('"')
-                tests.append(d)
+                entry["th_string"] = line[2].strip().strip('"')
+                entry["dut_rc"] = self.get_return_code_value(
+                    line[3].strip().strip('"')
+                )
+                entry["dut_string"] = line[4].strip().strip('"')
+                tests.append(entry)
         return tests
 
     def get_return_codes(self, filepath):
         """Read return code names from the return code definition file."""
         self.return_codes = {}
         val = 0
-        with open(filepath, "r") as f:
-            for line in f:
+        with open(filepath, "r", encoding="utf-8") as input_file:
+            for line in input_file:
                 line = line.strip()
                 if not line.startswith(CTS_RC_PREFIX):
                     continue
@@ -188,10 +190,10 @@ class Cts(object):
             i += 1
 
         i = 0
-        for ln in [ln.strip() for ln in output.split("\n")]:
+        for line in [ln.strip() for ln in output.split("\n")]:
             if i + 1 > len(results):
                 break
-            tokens = ln.split()
+            tokens = line.split()
             if len(tokens) >= 2:
                 if tokens[0].strip() == results[i]["name"]:
                     if tokens[1].strip() == "start":
@@ -202,7 +204,7 @@ class Cts(object):
                             results[i]["rc"] = CTS_RC_DID_NOT_END
                             results[i]["started"] = True
                         continue
-                    elif results[i]["started"] and tokens[1].strip() == "end":
+                    if results[i]["started"] and tokens[1].strip() == "end":
                         # end line found
                         results[i]["rc"] = CTS_RC_INVALID_RETURN_CODE
                         if len(tokens) == 3:
@@ -215,14 +217,15 @@ class Cts(object):
                         i += 1
                         continue
             if results[i]["started"]:
-                results[i]["output"].append(ln)
+                results[i]["output"].append(line)
 
         return results
 
     def get_return_code_name(self, code, strip_prefix=False):
+        """Converts a return code into a name."""
         name = ""
-        for k, v in self.return_codes.items():
-            if v == code:
+        for k, val in self.return_codes.items():
+            if val == code:
                 if strip_prefix:
                     name = k[len(CTS_RC_PREFIX) :]
                 else:
@@ -230,6 +233,7 @@ class Cts(object):
         return name
 
     def get_return_code_value(self, name):
+        """Converts a return name into a code."""
         if name:
             return self.return_codes[name]
         return 0
@@ -249,12 +253,15 @@ class Cts(object):
         dut_results = self.parse_output(dut_output)
 
         # Search for expected string in each output
-        for i, v in enumerate(self.testlist):
-            if v["th_string"] in th_results[i]["output"] or not v["th_string"]:
+        for i, val in enumerate(self.testlist):
+            if (
+                val["th_string"] in th_results[i]["output"]
+                or not val["th_string"]
+            ):
                 th_results[i]["string"] = True
             if (
-                v["dut_string"] in dut_results[i]["output"]
-                or not v["dut_string"]
+                val["dut_string"] in dut_results[i]["output"]
+                or not val["dut_string"]
             ):
                 dut_results[i]["string"] = True
 
@@ -289,7 +296,7 @@ class Cts(object):
         self.formatted_results = head.format(
             "TEST NAME", "TH_RC", "DUT_RC", " TH_STR", " DUT_STR", " RESULT"
         )
-        for i, d in enumerate(dut_results):
+        for i, ddd in enumerate(dut_results):
             th_cn = self.get_return_code_name(th_results[i]["rc"], True)
             dut_cn = self.get_return_code_name(dut_results[i]["rc"], True)
             th_res = self.evaluate_result(
@@ -303,7 +310,7 @@ class Cts(object):
                 self.testlist[i]["dut_string"],
             )
             self.formatted_results += fmt.format(
-                d["name"],
+                ddd["name"],
                 th_cn,
                 dut_cn,
                 "YES" if th_results[i]["string"] else "NO",
@@ -311,7 +318,9 @@ class Cts(object):
                 "PASS" if th_res and dut_res else "FAIL",
             )
 
-    def evaluate_result(self, result, expected_rc, expected_string):
+    @staticmethod
+    def evaluate_result(result, expected_rc, expected_string):
+        """Converts a result string to boolean."""
         if result["rc"] != expected_rc:
             return False
         if expected_string and expected_string not in result["output"]:
@@ -325,7 +334,7 @@ class Cts(object):
         print("Opening DUT tty...")
         self.dut.setup_tty()
         print("Opening TH tty...")
-        self.th.setup_tty()
+        self.test_harness.setup_tty()
 
         # Boards might be still writing to tty. Wait a few seconds before flashing.
         time.sleep(3)
@@ -334,20 +343,20 @@ class Cts(object):
         print("Clearing DUT tty...")
         self.dut.read_tty()
         print("Clearing TH tty...")
-        self.th.read_tty()
+        self.test_harness.read_tty()
 
         # Resets the boards and allows them to run tests
         # Due to current (7/27/16) version of sync function,
         # both boards must be rest and halted, with the th
         # resuming first, in order for the test suite to run in sync
         print("Halting TH...")
-        if not self.th.reset_halt():
+        if not self.test_harness.reset_halt():
             raise RuntimeError("Failed to halt TH")
         print("Halting DUT...")
         if not self.dut.reset_halt():
             raise RuntimeError("Failed to halt DUT")
         print("Resuming TH...")
-        if not self.th.resume():
+        if not self.test_harness.resume():
             raise RuntimeError("Failed to resume TH")
         print("Resuming DUT...")
         if not self.dut.resume():
@@ -359,11 +368,11 @@ class Cts(object):
         dut_output, _ = self.dut.read_tty()
         self.dut.close_tty()
         print("Reading TH tty...")
-        th_output, _ = self.th.read_tty()
-        self.th.close_tty()
+        th_output, _ = self.test_harness.read_tty()
+        self.test_harness.close_tty()
 
         print("Halting TH...")
-        if not self.th.reset_halt():
+        if not self.test_harness.reset_halt():
             raise RuntimeError("Failed to halt TH")
         print("Halting DUT...")
         if not self.dut.reset_halt():
@@ -376,7 +385,7 @@ class Cts(object):
                 "again."
             )
 
-            print("Pursing results...")
+        print("Pursing results...")
         th_results, dut_results = self.evaluate_run(dut_output, th_output)
 
         # Print out results
@@ -384,16 +393,16 @@ class Cts(object):
 
         # Write results
         dest = os.path.join(self.results_dir, "results.log")
-        with open(dest, "w") as fl:
-            fl.write(self.formatted_results)
+        with open(dest, "w", encoding="utf-8") as rfile:
+            rfile.write(self.formatted_results)
 
         # Write UART outputs
         dest = os.path.join(self.results_dir, "uart_th.log")
-        with open(dest, "w") as fl:
-            fl.write(th_output)
+        with open(dest, "w", encoding="utf-8") as rfile:
+            rfile.write(th_output)
         dest = os.path.join(self.results_dir, "uart_dut.log")
-        with open(dest, "w") as fl:
-            fl.write(dut_output)
+        with open(dest, "w", encoding="utf-8") as rfile:
+            rfile.write(dut_output)
 
         print(self.formatted_results)
 
@@ -401,6 +410,7 @@ class Cts(object):
 
 
 def main():
+    """Main function."""
     ec_dir = os.path.realpath(
         os.path.join(os.path.dirname(os.path.abspath(__file__)), "..")
     )
