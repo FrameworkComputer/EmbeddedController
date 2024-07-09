@@ -61,6 +61,9 @@
 		smp_ap18c7k {
 			compatible = "smp,ap18c7k", "battery-smart";
 		};
+		smp_ap23a7l {
+			compatible = "smp,ap23a7l", "battery-smart";
+		};
 	};
 
 	cros-keyscan {
