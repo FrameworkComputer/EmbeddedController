@@ -159,7 +159,7 @@ __staticlib int fp_sensor_maintenance(uint8_t *image_data,
  * are a manufacturing id, are truncated).
  * @return
  * - EC_SUCCESS on success
- * - EC_ERROR_INVAL or EC_ERROR_HW_INTERNAL on error
+ * - EC_ERROR_INVAL or FP_ERROR_SPI_COMM on error
  */
 int fpc_get_hwid(uint16_t *id);
 
