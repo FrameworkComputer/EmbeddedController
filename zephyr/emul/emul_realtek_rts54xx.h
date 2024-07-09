@@ -19,6 +19,8 @@
 #include "emul/emul_realtek_rts54xx_public.h"
 #include "zephyr/kernel.h"
 
+#include <stdint.h>
+
 #include <zephyr/drivers/emul.h>
 #include <zephyr/drivers/i2c.h>
 #include <zephyr/drivers/i2c_emul.h>
