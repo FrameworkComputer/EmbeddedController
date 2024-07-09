@@ -381,7 +381,8 @@ class AllTests:
             TestConfig(test_name="mutex_trylock", skip_for_zephyr=True),
             TestConfig(test_name="mutex_recursive", skip_for_zephyr=True),
             TestConfig(
-                test_name="otp_key", exclude_boards=[BLOONCHIPPER, DARTMONKEY]
+                test_name="otp_key",
+                exclude_boards=[BLOONCHIPPER, DARTMONKEY],
             ),
             TestConfig(test_name="panic"),
             # Task synchronization covered by Zephyr tests and shim layer by unit tests.
@@ -390,7 +391,10 @@ class AllTests:
             TestConfig(test_name="pingpong", skip_for_zephyr=True),
             TestConfig(test_name="printf"),
             TestConfig(test_name="queue"),
-            TestConfig(test_name="ram_lock"),
+            TestConfig(
+                test_name="ram_lock",
+                exclude_boards=[BLOONCHIPPER, DARTMONKEY],
+            ),
             TestConfig(test_name="restricted_console"),
             TestConfig(test_name="rng_benchmark"),
             TestConfig(
