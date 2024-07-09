@@ -200,7 +200,7 @@
 		};
 		gpio_me_en: me_en {
 			/* ME flash, strap default low before PLT_PWROK*/
-			gpios = <&gpio7 4 (GPIO_OUTPUT_LOW | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpio7 4 GPIO_OUTPUT_LOW>;
 		};
 		gpio_mux_sub_uart_flip: mux_sub_uart_flip {
 			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;	/*TBT SBU MUX*/

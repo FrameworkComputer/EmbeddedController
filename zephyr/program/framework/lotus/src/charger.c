@@ -375,6 +375,7 @@ int board_discharge_on_ac(int enable)
 {
 	int chgnum;
 	int rv = EC_SUCCESS;
+	CPRINTS("DischargeOnAC %d", enable);
 
 	bypass_force_disable = enable;
 	/*
@@ -569,13 +570,18 @@ static int chgbypass_cmd(int argc, const char **argv)
 	if (argc >= 2) {
 		if (!strncmp(argv[1], "en", 2)) {
 			bypass_force_en = true;
+			bypass_force_disable = false;
 		} else if (!strncmp(argv[1], "dis", 3)) {
 			bypass_force_en = false;
+			bypass_force_disable = true;
+		} else if (!strncmp(argv[1], "auto", 4)) {
+			bypass_force_en = false;
+			bypass_force_disable = false;
 		} else {
 			return EC_ERROR_PARAM1;
 		}
 	}
 	return EC_SUCCESS;
 }
-DECLARE_CONSOLE_COMMAND(chargerbypass, chgbypass_cmd, "[en/dis]",
+DECLARE_CONSOLE_COMMAND(chargerbypass, chgbypass_cmd, "[en/dis/auto]",
 			"Force charger bypass enabled");

@@ -29,12 +29,6 @@
 #define FP_LED_MEDIUM 40
 #define FP_LED_LOW 15
 
-#define BREATH_ON_LENGTH_HIGH	62
-#define BREATH_ON_LENGTH_MID	72
-#define BREATH_ON_LENGTH_LOW	90
-
-#define BREATH_OFF_LENGTH 200
-
 enum led_color {
 	LED_OFF,
 	LED_RED,
@@ -172,7 +166,7 @@ void led_set_color_with_pattern(const struct led_pattern_node_t *led);
  */
 void board_led_apply_color(void);
 
-void pwm_set_breath_dt(int percent);
+void update_pwr_led_level(void);
 
 #ifdef TEST_BUILD
 const struct led_pins_node_t *led_get_node(enum led_color color,

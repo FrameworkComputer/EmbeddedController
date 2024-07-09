@@ -97,7 +97,7 @@ static void thermal_control(void)
 	int fmax = 0;
 	int temp_fan_configured = 0;
 #else
-	int temp[TEMP_SENSOR_COUNT];
+	int temp[TEMP_SENSOR_COUNT] = {0};
 #endif
 #endif
 
@@ -121,15 +121,15 @@ static void thermal_control(void)
 		/* read one */
 		rv = temp_sensor_read(i, &t);
 
-#if defined(CONFIG_FANS) && defined(CONFIG_CUSTOM_FAN_CONTROL)
-		/* Store all sensors value */
-		temp[i] = K_TO_C(t);
-#endif
-
 		if (rv != EC_SUCCESS)
 			continue;
 		else
 			num_sensors_read++;
+
+#if defined(CONFIG_FANS) && defined(CONFIG_CUSTOM_FAN_CONTROL)
+		/* Store all sensors value */
+		temp[i] = K_TO_C(t);
+#endif
 
 		/* check all the limits */
 		for (j = 0; j < EC_TEMP_THRESH_COUNT; j++) {

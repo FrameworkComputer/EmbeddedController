@@ -102,8 +102,31 @@
 
 			power_led {
 				led-id = "EC_LED_ID_POWER_LED";
+				transition = "LED_TRANSITION_LINEAR";
+
+				/* period-ms =
+				 *	target time * tick time (200ms) / deferred time (10ms)
+				 */
+
+				/* Fade time target 600ms (In, low to high) */
 				color-0 {
+					led-color = "LED_WHITE";
+					period-ms = <12000>;
+				};
+				/* Duration time target 900ms */
+				color-1 {
+					led-color = "LED_WHITE";
+					period-ms = <18000>;
+				};
+				/* Fade time target 600ms (Out, high to low) */
+				color-2 {
 					led-color = "LED_OFF";
+					period-ms = <12000>;
+				};
+				/* Interval time target 1900ms */
+				color-3 {
+					led-color = "LED_OFF";
+					period-ms = <37000>;
 				};
 			};
 		};

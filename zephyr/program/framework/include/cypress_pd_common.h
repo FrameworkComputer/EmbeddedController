@@ -20,6 +20,9 @@
 #define CCG_I2C_CHIP1	0x40
 #endif
 
+#define PRODUCT_ID	CONFIG_PD_USB_PID
+#define VENDOR_ID	0x32ac
+
 #define BB_PWR_DOWN_TIMEOUT (4000*MSEC)
 
 /*
@@ -49,9 +52,18 @@
 #define CCG_CUST_C_CTRL_CONTROL_REG	0x003B
 #define CCG_HPI_VERSION			0x003C
 /*User registers from 0x40 to 0x48 are used for BB retimer */
+#ifdef CONFIG_PD_CHIP_CCG8
 #define CCG_DPM_CMD_REG			0x0040
 #define CCG_MUX_CFG_REG			0x0041
 #define CCG_DEINIT_PORT_REG		0x0042
+#elif defined(CONFIG_PD_CHIP_CCG6)
+#define CCG_DPM_CMD_REG			0x004B
+#define CCG_MUX_CFG_REG			0x004D
+#define CCG_DEINIT_PORT_REG		0x004E
+#ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
+#define CCG_BATTERT_STATE		0x004F
+#endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
+#endif
 #define CCG_ICL_STS_REG			0x0042
 #define CCG_ICL_BB_RETIMER_CMD_REG	0x0046
 #define CCG_ICL_BB_RETIMER_DAT_REG	0x0048
@@ -219,6 +231,13 @@
 #ifdef CONFIG_PD_CHIP_CCG6
 #define CCG6_AC_AT_PORT				0xC4
 #define CCG_ICL_CTRL_REG	0x0040
+
+#ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
+#define CCG6_BATT_IS_PRESENT		BIT(1)
+#define CCG6_BATT_IS_DISCHARGING	BIT(2)
+#define CCG6_BATT_IS_IDLE			BIT(3)
+#endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
+
 #endif
 
 /************************************************/
@@ -520,6 +539,30 @@ struct pd_chip_ucsi_info_t {
 	int wait_ack;
 };
 
+#ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
+
+/**
+ * follow CCG6 vendor Format
+ * byte[0] - reg, 0x0 = batt_cap, 0x01 = batt_status.
+ * ohters byte follow PD Spec format
+ */
+struct pd_battery_cap_t {
+	uint8_t  reg;
+	uint16_t vid;
+	uint16_t pid;
+	uint16_t design_cap;
+	uint16_t last_full_cap;
+	uint8_t	 battery_type;
+} __packed;
+
+struct pd_battery_status_t {
+	uint8_t reg;
+	uint8_t reserved;
+	uint8_t battery_info;
+	uint16_t batt_present_cap;
+} __packed;
+#endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
+
 /**
  * extern struct for ccg6 or ccg8 use.
  */
@@ -650,29 +693,18 @@ void exit_tbt_mode(int controller);
  */
 int check_tbt_mode(int controller);
 
-#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
+#ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
 /**
- * Function can cmd PD to do disconnect both ports.
- *
- * @param controller	PD chip controller
- * @return int
+ * Set battery_cap info to PD
  */
-int cypd_reconnect_port_disable(int controller);
+void cypd_customize_battery_cap(void);
 
 /**
- * Function can cmd PD to do connect both ports.
- *
- * @param controller	PD chip controller
- * @return int
+ * Set battery_status info to PD
  */
-int cypd_reconnect_port_enable(int controller);
+void cypd_customize_battery_status(void);
+#endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
 
-/**
- * Delay 100 MSEC execution PD event CCG_EVT_PORT_DISABLE
- */
-void cypd_reconnect(void);
-
-#endif /* CONFIG_PD_CCG6_ERROR_RECOVERY */
 #endif /* CONFIG_PD_CHIP_CCG6 */
 
 /**
@@ -765,6 +797,13 @@ int cypd_vbus_state_check(void);
  * @return int
  */
 int cypd_get_ac_power(void);
+
+/**
+ * Return active port voltage, return by mV.
+ *
+ * @return int
+ */
+int cypd_get_active_port_voltage(void);
 
 /**
  * Set Pdo profile for safety action

@@ -25,6 +25,10 @@
 #include "throttle_ap.h"
 #include "zephyr_console_shim.h"
 
+#ifdef CONFIG_BOARD_MARIGOLD
+#include "marigold/charger.h"
+#endif
+
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
@@ -266,7 +270,6 @@ int board_set_active_charge_port(int charge_port)
 		/* store current port and update power limit */
 		update_active_charge_pd_port(charge_port);
 		hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
-		CPRINTS("Updating %s port %d", __func__, charge_port);
 		return EC_SUCCESS;
 	}
 
@@ -295,183 +298,107 @@ int board_set_active_charge_port(int charge_port)
 	}
 
 	hook_call_deferred(&update_power_state_deferred_data, 100 * MSEC);
-	CPRINTS("Updating %s port %d", __func__, charge_port);
+
+#ifdef CONFIG_BOARD_MARIGOLD
+	acok_control(pd_port_states[charge_port].voltage, charge_port);
+#endif	/*CONFIG_BOARD_MARIGOLD*/
 
 	return EC_SUCCESS;
 }
 #endif /* CONFIG_PD_COMMON_VBUS_CONTROL */
 
 #ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
-
 /*****************************************************************
  * Error Recovery Functions
  ****************************************************************/
 
-static bool reconnect_flag;
-void cypd_set_error_recovery(void)
+static void perform_error_recovery(int controller)
 {
 	int i;
+	uint8_t data[2] = {0x00, CCG_PD_USER_CMD_TYPEC_ERR_RECOVERY};
+	uint32_t batt_os_percentage = get_system_percentage();
 
-	for (i = 0;  i < PD_CHIP_COUNT; i++) {
-		/* We use port reconnect (0x2C) to replace error recovery (0xC1) for GRL issue.
-		 * GRL FV 3.1.2.3.
-		 * 0xC0 means no recovery.
-		 */
-		cypd_write_reg8_wait_ack(i, CCG_SYS_PWR_STATE, 0xC0);
-	}
-}
+	if (controller < 2)
+		for (i = 0; i < 2; i++) {
+			if (!((controller*2 + i) == get_active_charge_pd_port() &&
+				battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
 
-void update_system_power_state(int controller)
-{
-	enum power_state ps = power_get_state();
-
-	switch (ps) {
-	case POWER_G3:
-	case POWER_S5G3:
-		cypd_set_power_state(CCG_POWERSTATE_G3, controller);
-		break;
-	case POWER_S5:
-	case POWER_S3S5:
-	case POWER_S4S5:
-		cypd_set_power_state(CCG_POWERSTATE_S5, controller);
-		reconnect_flag = true;
-		break;
-	case POWER_S3:
-	case POWER_S4S3:
-	case POWER_S5S3:
-	case POWER_S0S3:
-	case POWER_S0ixS3: /* S0ix -> S3 */
-		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
-		break;
-	case POWER_S0:
-	case POWER_S3S0:
-	case POWER_S0ixS0: /* S0ix -> S0 */
-		cypd_set_error_recovery();
-		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
-		if (reconnect_flag) {
-			CPRINTS("CYPD reconnect");
-			cypd_reconnect();
-			reconnect_flag = false;
+				data[0] = PORT_TO_CONTROLLER_PORT(i);
+				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
+									CCG_DPM_CMD_REG,
+									data, 2);
+			}
 		}
-		break;
-	case POWER_S0ix:
-	case POWER_S3S0ix: /* S3 -> S0ix */
-	case POWER_S0S0ix: /* S0 -> S0ix */
-		cypd_set_power_state(CCG_POWERSTATE_S0ix, controller);
-		break;
+	else {
+		/* Hard reset all ports that are not supplying power in dead battery mode */
+		for (i = 0; i < PD_PORT_COUNT; i++) {
+			if (!(i == get_active_charge_pd_port() &&
+			    battery_get_disconnect_state() != BATTERY_NOT_DISCONNECTED)) {
 
-	default:
-		break;
+				if ((pd_port_states[i].c_state == CCG_STATUS_SOURCE) &&
+				   (batt_os_percentage < 3) && (i == get_active_charge_pd_port()))
+					continue;
+
+				data[0] = PORT_TO_CONTROLLER_PORT(i);
+				cypd_write_reg_block(PORT_TO_CONTROLLER(i),
+									CCG_DPM_CMD_REG,
+									data, 2);
+			}
+		}
 	}
-
 }
-
-int cypd_reconnect_port_disable(int controller)
-{
-	int rv;
-	uint8_t pd_status_reg[4];
-	int port_power_role;
-	int portEnable = 0; /* default disable all port*/
-	bool battery_can_discharge = (battery_is_present() == BP_YES) &
-			battery_get_disconnect_state();
-
-	/* check the first port's status */
-	rv = cypd_read_reg_block(controller, CCG_PD_STATUS_REG(0), pd_status_reg, 4);
-	if (rv != EC_SUCCESS)
-		CPRINTS("CCG_PD_STATUS_REG failed");
-
-	port_power_role = pd_status_reg[1] & BIT(0);
-	/* Does not disable the source port */
-	if (port_power_role == PD_ROLE_SINK && (pd_status_reg[1] & BIT(2)) == BIT(2))
-		portEnable |= BIT(0);
-
-	/* check the second port's status */
-	rv = cypd_read_reg_block(controller, CCG_PD_STATUS_REG(1), pd_status_reg, 4);
-	if (rv != EC_SUCCESS)
-		CPRINTS("CCG_PD_STATUS_REG failed");
-
-	port_power_role = pd_status_reg[1] & BIT(0);
-	/* Does not disable the source port */
-	if (port_power_role == PD_ROLE_SINK && (pd_status_reg[1] & BIT(2)) == BIT(2))
-		portEnable |= BIT(1);
-
-	/* If there is DC, just force reconnect port. */
-	if (battery_can_discharge)
-		portEnable = 0x0;
-
-	rv = cypd_write_reg8(controller, CCG_PDPORT_ENABLE_REG, portEnable);
-	if (rv != EC_SUCCESS)
-		return rv;
-
-	CPRINTS("disable controller: %d, Port: 0x%02x", controller, portEnable);
-
-	return rv;
-}
-
-int cypd_reconnect_port_enable(int controller)
-{
-	int rv;
-
-	rv = cypd_write_reg8(controller, CCG_PDPORT_ENABLE_REG, 3);
-	if (rv != EC_SUCCESS)
-		return rv;
-
-	CPRINTS("enable controller: %d", controller);
-
-	return rv;
-}
-
-void cypd_reconnect(void)
-{
-	int events;
-
-	/* trigger port reconnect, will check ac status while disable port */
-	events = task_wait_event_mask(TASK_EVENT_TIMER, 100*MSEC);
-	if (events & TASK_EVENT_TIMER)
-		task_set_event(TASK_ID_CYPD, CCG_EVT_PORT_DISABLE);
-}
-#else
+#endif /* CONFIG_PD_CCG6_ERROR_RECOVERY */
 
 void update_system_power_state(int controller)
 {
 	enum power_state ps = power_get_state();
+	/* CCG6 does not support power state G3, just for initial state */
+	static uint8_t pre_state = CCG_POWERSTATE_G3;
 
 	switch (ps) {
 	case POWER_G3:
 	case POWER_S5G3:
-		cypd_set_power_state(CCG_POWERSTATE_G3, controller);
-		break;
 	case POWER_S5:
 	case POWER_S3S5:
 	case POWER_S4S5:
-		cypd_set_power_state(CCG_POWERSTATE_S5, controller);
+		/* Do not update the same state again */
+		if (pre_state != CCG_POWERSTATE_S5)
+			cypd_set_power_state(CCG_POWERSTATE_S5, controller);
+		pre_state = CCG_POWERSTATE_S5;
 		break;
 	case POWER_S3:
 	case POWER_S4S3:
 	case POWER_S5S3:
 	case POWER_S0S3:
-	case POWER_S0ixS3: /* S0ix -> S3 */
-		cypd_set_power_state(CCG_POWERSTATE_S3, controller);
+		/* Do not update the same state again */
+		if (pre_state != CCG_POWERSTATE_S3)
+			cypd_set_power_state(CCG_POWERSTATE_S3, controller);
+		pre_state = CCG_POWERSTATE_S3;
 		break;
 	case POWER_S0:
 	case POWER_S3S0:
 	case POWER_S0ixS0: /* S0ix -> S0 */
-		cypd_set_power_state(CCG_POWERSTATE_S0, controller);
+		if (pre_state != CCG_POWERSTATE_S0) {
+			cypd_set_power_state(CCG_POWERSTATE_S0, controller);
+#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
+			/* only execute the error recovery when the system power on */
+			if (pre_state != CCG_POWERSTATE_S0ix)
+				perform_error_recovery(controller);
+#endif
+		}
+		pre_state = CCG_POWERSTATE_S0;
 		break;
 	case POWER_S0ix:
-	case POWER_S3S0ix: /* S3 -> S0ix */
 	case POWER_S0S0ix: /* S0 -> S0ix */
-		cypd_set_power_state(CCG_POWERSTATE_S0ix, controller);
+		/* Do not update the same state again */
+		if (pre_state != CCG_POWERSTATE_S0ix)
+			cypd_set_power_state(CCG_POWERSTATE_S3, controller);
+		pre_state = CCG_POWERSTATE_S0ix;
 		break;
-
 	default:
 		break;
 	}
-
 }
-
-#endif /* PD_CCG6_ERROR_RECOVERY */
-
 
 /*****************************************************************
  * BB Retimer Functions
@@ -517,7 +444,14 @@ void entry_tbt_mode(int controller)
 {
 	int rv;
 	uint8_t force_tbt_mode = 0x01;
+	int debug_ctl = 0x0100;
 
+	/* Write 0x0100 to address 0x0046 */
+	rv = cypd_write_reg16(controller, CCG_ICL_BB_RETIMER_CMD_REG, debug_ctl);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_BB_RETIMER_CMD_REG fail");
+
+	/* Write 0x01 to address 0x0040 */
 	rv = cypd_write_reg8(controller, CCG_ICL_CTRL_REG, force_tbt_mode);
 	if (rv != EC_SUCCESS)
 		CPRINTS("Write CYP5525_ICL_CTRL_REG fail");
@@ -527,10 +461,17 @@ void exit_tbt_mode(int controller)
 {
 	int rv;
 	uint8_t force_tbt_mode = 0x00;
+	int debug_ctl = 0x0000;
 
+	/* Write 0x00 to address 0x0040 */
 	rv = cypd_write_reg8(controller, CCG_ICL_CTRL_REG, force_tbt_mode);
 	if (rv != EC_SUCCESS)
 		CPRINTS("Write CYP5525_ICL_CTRL_REG fail");
+
+	/* Write 0x0000 to address 0x0046 */
+	rv = cypd_write_reg16(controller, CCG_ICL_BB_RETIMER_CMD_REG, debug_ctl);
+	if (rv != EC_SUCCESS)
+		CPRINTS("Write CYP5525_ICL_BB_RETIMER_CMD_REG fail");
 }
 
 int check_tbt_mode(int controller)
@@ -544,3 +485,142 @@ int check_tbt_mode(int controller)
 
 	return data;
 }
+
+#ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
+/*****************************************************************
+ * Customize response battery status
+ ****************************************************************/
+
+static struct pd_battery_cap_t pd_battery_cap;
+static struct pd_battery_status_t pd_battery_status;
+static int pd_batt_soc;
+bool cypd_batt_update;
+
+void cypd_customize_battery_cap(void)
+{
+	int i;
+	uint32_t c, v;
+	bool battery_can_discharge = (battery_is_present() == BP_YES) &
+		battery_get_disconnect_state();
+
+	/* only send status when PD ready */
+	if (!(pd_chip_config[0].state == CCG_STATE_READY &&
+		pd_chip_config[1].state == CCG_STATE_READY)) {
+		return;
+	}
+
+	if (!battery_can_discharge) {
+		cypd_batt_update = false;
+		pd_battery_cap.design_cap = 0x0000;
+		pd_battery_cap.last_full_cap = 0x0000;
+		pd_battery_cap.battery_type = 0x1;
+
+	} else {
+		cypd_batt_update = true;
+		pd_battery_cap.reg = 0;
+		pd_battery_cap.vid = VENDOR_ID;
+		pd_battery_cap.pid = PRODUCT_ID;
+		pd_battery_cap.battery_type = 0x0;
+
+		if (battery_design_voltage(&v) == 0) {
+			if (battery_design_capacity(&c) == 0) {
+				/*
+				 * Wh = (c * v) / 1000000
+				 * 10th of a Wh = Wh * 10
+				 */
+				pd_battery_cap.design_cap = DIV_ROUND_NEAREST((c * v),
+							100000);
+			}
+			if (battery_full_charge_capacity(&c) == 0) {
+				/*
+				 * Wh = (c * v) / 1000000
+				 * 10th of a Wh = Wh * 10
+				 */
+				pd_battery_cap.last_full_cap = DIV_ROUND_NEAREST((c * v),
+							100000);
+			}
+		}
+	}
+
+	for (i = 0; i < PD_CHIP_COUNT; i++)
+		cypd_write_reg_block(i, CCG_BATTERT_STATE,
+				&pd_battery_cap, sizeof(pd_battery_cap));
+
+}
+
+void cypd_customize_battery_status(void)
+{
+	int i, soc_wh;
+	uint8_t	batt_info;
+	uint32_t c, v;
+	struct batt_params batt;
+	bool battery_can_discharge = (battery_is_present() == BP_YES) &
+		battery_get_disconnect_state();
+
+	battery_get_params(&batt);
+
+	/* only send status when PD ready */
+	if (!(pd_chip_config[0].state == CCG_STATE_READY &&
+		pd_chip_config[1].state == CCG_STATE_READY)) {
+		return;
+	}
+
+	/* only update data when soc change */
+	if (batt.state_of_charge == pd_batt_soc)
+		return;
+
+	pd_batt_soc = batt.state_of_charge;
+
+	if (!battery_can_discharge) {
+
+		pd_battery_status.reg = 0x1;
+		pd_battery_status.battery_info = 0;
+		pd_battery_status.batt_present_cap = 0xFFFF;
+
+	} else {
+
+		/**
+		 * if battery didn't set cap info at first time pd init
+		 * need set again when battery ready.
+		 * ex: resume from dead battery, or ac only boot and then plug-in batt
+		 */
+		if (!cypd_batt_update)
+			cypd_customize_battery_cap();
+
+		if (battery_design_voltage(&v) == 0) {
+			if (battery_remaining_capacity(&c) == 0) {
+				/*
+				 * Wh = (c * v) / 1000000
+				 * 10th of a Wh = Wh * 10
+				 */
+				soc_wh = DIV_ROUND_NEAREST((c * v), 100000);
+			}
+		}
+
+		if (battery_status(&c) != 0) {
+			batt_info = 0; /* batt not present */
+		} else {
+			if (c & STATUS_FULLY_CHARGED)
+				/* Fully charged */
+				batt_info = CCG6_BATT_IS_IDLE | CCG6_BATT_IS_PRESENT;
+			else if (c & STATUS_DISCHARGING)
+				/* Discharging */
+				batt_info = CCG6_BATT_IS_DISCHARGING | CCG6_BATT_IS_PRESENT;
+			else
+				/* else battery is charging.*/
+				batt_info = CCG6_BATT_IS_PRESENT;
+		}
+
+		pd_battery_status.reg = 0x1;
+		pd_battery_status.battery_info = batt_info;
+		pd_battery_status.batt_present_cap = soc_wh;
+	}
+
+	for (i = 0; i < PD_CHIP_COUNT; i++)
+		cypd_write_reg_block(i, CCG_BATTERT_STATE,
+				&pd_battery_status, sizeof(pd_battery_status));
+
+}
+DECLARE_HOOK(HOOK_AC_CHANGE, cypd_customize_battery_status, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_BATTERY_SOC_CHANGE, cypd_customize_battery_status, HOOK_PRIO_DEFAULT);
+#endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */

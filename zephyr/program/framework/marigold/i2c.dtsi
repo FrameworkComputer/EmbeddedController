@@ -31,7 +31,7 @@
 			i2c-port = <&i2c2_0>;
 			enum-names = "I2C_PORT_PD_MCU1";
 		};
-		i2c_battery: battery{
+		i2c_battery: battery {
 			i2c-port = <&i2c3_0>;
 			enum-names = "I2C_PORT_BATTERY",
 				"I2C_PORT_CHARGER";
@@ -170,7 +170,6 @@
 		reg = <0x4d>;
 	};
 
-	//TODO: Add thermal sensor F75397 to this bus
 	/* QN3 */
 	local_f75397: local_f75397@4c {
 		compatible = "cros-ec,temp-sensor-f75397";

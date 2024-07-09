@@ -37,10 +37,6 @@
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBCHARGE, format, ##args)
 
-
-#define PRODUCT_ID	0x0001
-#define VENDOR_ID	0x32ac
-
 #undef CCG_INIT_STATE
 #ifdef CONFIG_PD_CHIP_CCG6
 #define CCG_INIT_STATE CCG_STATE_WAIT_STABLE
@@ -398,7 +394,11 @@ static int pd_3a_flag;
 static int pd_3a_set;
 static int pd_3a_controller;
 static int pd_3a_port;
+static int first_3a_controller;
+static int first_3a_port;
+static int first_port_idx;
 static int pd_ports_1_5A_flag[PD_PORT_COUNT];
+static int rdo_3a_flag[PD_PORT_COUNT];
 
 int cypd_port_3a_status(int controller, int port)
 {
@@ -424,6 +424,16 @@ int cypd_port_3a_set(int controller, int port)
 	pd_3a_port = port_idx;
 
 	return true;
+}
+
+void cypd_port_3a_change(int controller, int port)
+{
+	int port_idx = (controller << 1) + port;
+
+	pd_3a_set = 1;
+	pd_3a_flag = 1;
+	pd_3a_controller = controller;
+	pd_3a_port = port_idx;
 }
 
 void cypd_port_1_5a_set(int controller, int port)
@@ -462,6 +472,7 @@ void cypd_release_port(int controller, int port)
 		pd_3a_flag = 0;
 	}
 	pd_ports_1_5A_flag[port_idx] = 0;
+	rdo_3a_flag[port_idx] = 0;
 }
 
 void cypd_clear_port(int controller, int port)
@@ -473,6 +484,7 @@ void cypd_clear_port(int controller, int port)
 		pd_3a_flag = 0;
 	}
 	pd_ports_1_5A_flag[port_idx] = 0;
+	rdo_3a_flag[port_idx] = 0;
 }
 
 /*
@@ -584,6 +596,7 @@ void cypd_set_typec_profile(int controller, int port)
 	uint8_t rdo_reg[4];
 
 	int rdo_max_current = 0;
+	int rdo_3a_idx = 0;
 	int port_idx = (controller << 1) + port;
 
 	rv = cypd_read_reg_block(controller, CCG_PD_STATUS_REG(port), pd_status_reg, 4);
@@ -605,25 +618,39 @@ void cypd_set_typec_profile(int controller, int port)
 
 			cypd_read_reg_block(controller, CCG_CURRENT_RDO_REG(port), rdo_reg, 4);
 			rdo_max_current = (((rdo_reg[1]>>2) + (rdo_reg[2]<<6)) & 0x3FF)*10;
+			if (rdo_max_current > 1500) {
+				rdo_3a_flag[port_idx] = 1;
+				for (int i = 0; i < PD_PORT_COUNT; i++) {
+					rdo_3a_idx += rdo_3a_flag[i];
+				}
+			}
 
-			if ((cypd_port_force_3A(controller, port) && !pd_3a_flag) ||
+			/* The first device force 3A PDO */
+			if (!pd_3a_flag && cypd_port_3a_set(controller, port)) {
+				rv = cypd_modify_profile(controller, port,
+						CCG_PD_CMD_SET_TYPEC_3A);
+				first_3a_controller = controller;
+				first_3a_port = port;
+				first_port_idx = (controller << 1) + port;
+			/* Another device requires 3A, and the first device can drop to 1.5A */
+			} else if (rdo_3a_flag[port_idx] && rdo_3a_idx == 1) {
+				if (first_port_idx == port_idx)
+					return;
+				rv = cypd_modify_profile(controller, port,
+						CCG_PD_CMD_SET_TYPEC_3A);
+				cypd_select_rp(first_port_idx, CCG_PD_CMD_SET_TYPEC_1_5A);
+				rv = cypd_modify_profile(first_3a_controller, first_3a_port,
+						CCG_PD_CMD_SET_TYPEC_1_5A);
+				cypd_port_3a_change(controller, port);
+			} else if ((cypd_port_force_3A(controller, port) && !pd_3a_flag) ||
 				cypd_port_3a_status(controller, port)) {
 				if (!cypd_port_3a_set(controller, port))
 					return;
 				rv = cypd_modify_profile(controller, port,
 						CCG_PD_CMD_SET_TYPEC_3A);
-			} else if (rdo_max_current <= 1500) {
-				if (cypd_profile_check(controller, port))
-					return;
+			} else if (!cypd_port_3a_status(controller, port))
 				rv = cypd_modify_profile(controller, port,
 						CCG_PD_CMD_SET_TYPEC_1_5A);
-			} else if (!pd_3a_flag && cypd_port_3a_set(controller, port))
-				rv = cypd_modify_profile(controller, port,
-						CCG_PD_CMD_SET_TYPEC_3A);
-			else if (!cypd_profile_check(controller, port))
-				rv = cypd_modify_profile(controller, port,
-						CCG_PD_CMD_SET_TYPEC_1_5A);
-
 		} else {
 			cypd_write_reg8(controller, CCG_PD_CONTROL_REG(port),
 				CCG_PD_CMD_SET_TYPEC_1_5A);
@@ -656,6 +683,7 @@ static void cypd_ppm_port_clear(void)
 	hook_call_deferred(&pdo_init_deferred_data, 1);
 }
 
+#ifdef CONFIG_PD_COMMON_EXTENDED_MESSAGE
 /*
  * send a message using DM_CONTROL to port partner
  * pd_header is using chromium PD header with upper bits defining SOP type
@@ -713,6 +741,7 @@ void cypd_send_msg(int controller, int port, uint32_t pd_header, uint16_t ext_hd
 
 	cypd_write_reg16(controller, CCG_DM_CONTROL_REG(port), dm_control_data);
 }
+
 
 void cypd_response_get_battery_capability(int controller, int port,
 	uint32_t pd_header, enum tcpci_msg_type sop_type)
@@ -911,6 +940,7 @@ int cypd_handle_extend_msg(int controller, int port, int len, enum tcpci_msg_typ
 
 	return rv;
 }
+#endif
 
 static void clear_port_state(int controller, int port)
 {
@@ -926,6 +956,7 @@ static void clear_port_state(int controller, int port)
 	pd_port_states[port_idx].current = 0;
 	pd_port_states[port_idx].voltage = 0;
 }
+
 void cypd_update_port_state(int controller, int port)
 {
 	int rv;
@@ -1012,6 +1043,8 @@ void cypd_update_port_state(int controller, int port)
 		typec_set_input_current_limit(port_idx, type_c_current, TYPE_C_VOLTAGE);
 		charge_manager_set_ceil(port_idx, CEIL_REQUESTOR_PD,
 							type_c_current);
+		pd_port_states[port_idx].current = type_c_current;
+		pd_port_states[port_idx].voltage = TYPE_C_VOLTAGE;
 	} else {
 		typec_set_input_current_limit(port_idx, 0, 0);
 		charge_manager_set_ceil(port,
@@ -1160,6 +1193,15 @@ __overridable void cypd_customize_app_setup(int controller)
 	 */
 }
 
+#ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
+static void pd_batt_init_deferred(void)
+{
+	cypd_customize_battery_cap();
+	cypd_customize_battery_status();
+}
+DECLARE_DEFERRED(pd_batt_init_deferred);
+#endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
+
 static void cypd_handle_state(int controller)
 {
 	int data;
@@ -1225,8 +1267,12 @@ static void cypd_handle_state(int controller)
 			gpio_enable_interrupt(pd_chip_config[controller].gpio);
 
 			/* Update PDO format after init complete */
-			if (controller)
+			if (controller) {
+#ifdef CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE
+				hook_call_deferred(&pd_batt_init_deferred_data, 100 * MSEC);
+#endif /* CONFIG_PD_CCG6_CUSTOMIZE_BATT_MESSAGE */
 				hook_call_deferred(&pdo_init_deferred_data, 25 * MSEC);
+			}
 
 			CPRINTS("CYPD %d Ready!", controller);
 			pd_chip_config[controller].state = CCG_STATE_READY;
@@ -1349,6 +1395,11 @@ int cypd_get_ac_power(void)
 	return (ac_power_mW / 1000);
 }
 
+int cypd_get_active_port_voltage(void)
+{
+	return pd_port_states[prev_charge_port].voltage;
+}
+
 /*****************************************************************************/
 /* Interrupt handler */
 
@@ -1375,7 +1426,9 @@ int cypd_device_int(int controller)
 			CPRINTS("PD%d Message Overflow", controller);
 			break;
 		default:
-			CPRINTS("INTR_REG CTRL:%d TODO Device 0x%x", controller, data & 0xFF);
+			/* reduce the EC logs without debugging */
+			if (verbose_msg_logging)
+				CPRINTS("C%d device response: 0x%x", controller, data & 0xFF);
 		}
 	} else
 		return EC_ERROR_INVAL;
@@ -1504,6 +1557,8 @@ void cypd_port_int(int controller, int port)
 	uint16_t addr_flags = pd_chip_config[controller].addr_flags;
 	int port_idx = (controller << 1) + port;
 	enum tcpci_msg_type sop_type;
+	static int snk_transition_flags;
+
 	/* enum pd_msg_type sop_type; */
 	rv = i2c_read_offset16_block(i2c_port, addr_flags,
 		CCG_PORT_PD_RESPONSE_REG(port), data2, 4);
@@ -1573,6 +1628,8 @@ void cypd_port_int(int controller, int port)
 			pd_port_states[port_idx].epr_support = 1;
 			CPRINTS("P%d EPR mode capable", port_idx);
 		}
+
+		snk_transition_flags = 1;
 		break;
 #ifdef CONFIG_PD_CCG8_EPR
 	case CCG_RESPONSE_EPR_EVENT:
@@ -1581,6 +1638,13 @@ void cypd_port_int(int controller, int port)
 		cypd_update_port_state(controller, port);
 		break;
 #endif
+	case CCG_RESPONSE_ACCEPT_MSG_RX:
+		CPRINTS("CCG_RESPONSE_ACCEPT_MSG_RX %d", port_idx);
+		if (snk_transition_flags) {
+			charge_manager_force_ceil(port_idx, 500);
+			snk_transition_flags = 0;
+		}
+		break;
 	case CCG_RESPONSE_EXT_MSG_SOP_RX:
 	case CCG_RESPONSE_EXT_SOP1_RX:
 	case CCG_RESPONSE_EXT_SOP2_RX:
@@ -1590,8 +1654,13 @@ void cypd_port_int(int controller, int port)
 			sop_type = TCPCI_MSG_SOP_PRIME;
 		else if (data2[0] == CCG_RESPONSE_EXT_MSG_SOP_RX)
 			sop_type = TCPCI_MSG_SOP_PRIME_PRIME;
+#ifdef CONFIG_PD_COMMON_EXTENDED_MESSAGE
 		cypd_handle_extend_msg(controller, port, response_len, sop_type);
 		CPRINTS("CYP_RESPONSE_RX_EXT_MSG");
+#endif /* CONFIG_PD_COMMON_EXTENDED_MESSAGE */
+		break;
+	case CCG_RESPONSE_OVER_CURRENT:
+		CPRINTS("CCG_RESPONSE_OVER_CURRENT %d", port_idx);
 		break;
 	case CCG_RESPONSE_VDM_RX:
 		i2c_read_offset16_block(i2c_port, addr_flags,
@@ -1682,9 +1751,7 @@ static int ucsi_tunnel_disabled;
 void cypd_interrupt_handler_task(void *p)
 {
 	int i, j, evt;
-#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
-	int events;
-#endif /* CONFIG_PD_CCG6_ERROR_RECOVERY */
+
 	/* Initialize all charge suppliers to 0 */
 	for (i = 0; i < CHARGE_PORT_COUNT; i++) {
 		for (j = 0; j < CHARGE_SUPPLIER_COUNT; j++)
@@ -1734,29 +1801,6 @@ void cypd_interrupt_handler_task(void *p)
 			cypd_handle_state(1);
 			task_wait_event_mask(TASK_EVENT_TIMER,10);
 		}
-
-#ifdef CONFIG_PD_CCG6_ERROR_RECOVERY
-
-		if (evt & CCG_EVT_PORT_DISABLE) {
-			CPRINTS("CCG_EVT_PORT_DISABLE");
-			cypd_reconnect_port_disable(0);
-			cypd_reconnect_port_disable(1);
-			/*
-			 * In the specification section 4.2.3.14, stopping an active
-			 * PD port can take a long time (~1 second) in case VBus is
-			 * being provided andneeds to be discharged
-			 */
-			events = task_wait_event_mask(TASK_EVENT_TIMER, 1000*MSEC);
-			if (events & TASK_EVENT_TIMER)
-				task_set_event(TASK_ID_CYPD, CCG_EVT_PORT_ENABLE);
-		}
-
-		if (evt & CCG_EVT_PORT_ENABLE) {
-			CPRINTS("CCG_EVT_PORT_ENABLE");
-			cypd_reconnect_port_enable(0);
-			cypd_reconnect_port_enable(1);
-		}
-#endif /* CONFIG_PD_CCG6_ERROR_RECOVERY */
 
 		if (evt & CCG_EVT_PDO_INIT_0) {
 			/* update new PDO format to select pdo register */
@@ -1824,13 +1868,14 @@ enum pd_power_role pd_get_power_role(int port)
 
 void pd_request_power_swap(int port)
 {
-	CPRINTS("TODO Implement %s port %d", __func__, port);
+	/* We probably dont need to do this */
+	return;
 }
 
 void pd_set_new_power_request(int port)
 {
 	/* We probably dont need to do this since we will always request max. */
-	CPRINTS("TODO Implement %s port %d", __func__, port);
+	return;
 }
 
 int pd_is_connected(int port)
@@ -1875,6 +1920,8 @@ int get_active_charge_pd_port(void)
 
 void update_active_charge_pd_port(int update_charger_port)
 {
+	CPRINTS("%s port %d, prev:%d", __func__, update_charger_port, prev_charge_port);
+
 	prev_charge_port = update_charger_port;
 }
 

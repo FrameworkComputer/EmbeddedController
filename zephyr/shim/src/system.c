@@ -131,6 +131,18 @@ static int bbram_lookup(enum system_bbram_idx idx, int *offset_out,
 		break;
 
 #endif
+#if BBRAM_HAS_REGION(system_jump_rw_flag)
+	case SYSTEM_BBRAM_IDX_SYSTEM_JUMP_RW_FLAG:
+		*offset_out = BBRAM_REGION_OFFSET(system_jump_rw_flag);
+		*size_out = BBRAM_REGION_SIZE(system_jump_rw_flag);
+		break;
+#endif
+#if BBRAM_HAS_REGION(system_jump_rw_success)
+	case SYSTEM_BBRAM_IDX_SYSTEM_JUMP_RW_SUCCESS:
+		*offset_out = BBRAM_REGION_OFFSET(system_jump_rw_success);
+		*size_out = BBRAM_REGION_SIZE(system_jump_rw_success);
+		break;
+#endif
 #endif /* CONFIG_PLATFORM_EC_CUSTOMIZED_DESIGN */
 	default:
 		return EC_ERROR_INVAL;
