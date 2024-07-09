@@ -62,7 +62,7 @@ static int tps6699x_emul_start_write(const struct emul *emul, int reg)
 
 	LOG_DBG("start_write reg=%#x", reg);
 
-	if (register_is_valid(data, reg)) {
+	if (!register_is_valid(data, reg)) {
 		return -EIO;
 	}
 
@@ -80,7 +80,7 @@ static int tps6699x_emul_write_byte(const struct emul *emul, int reg,
 
 	LOG_DBG("write_byte reg=%#x, val=%#02x, bytes=%d", reg, val, bytes);
 
-	if (register_access_is_valid(data, reg, bytes)) {
+	if (!register_access_is_valid(data, reg, bytes)) {
 		return -EIO;
 	}
 
@@ -105,7 +105,7 @@ static int tps6699x_emul_start_read(const struct emul *emul, int reg)
 
 	LOG_DBG("start_read reg=%#x", reg);
 
-	if (register_is_valid(data, reg)) {
+	if (!register_is_valid(data, reg)) {
 		return -EIO;
 	}
 
@@ -119,7 +119,7 @@ static int tps6699x_emul_read_byte(const struct emul *emul, int reg,
 {
 	struct tps6699x_emul_pdc_data *data = tps6699x_emul_get_pdc_data(emul);
 
-	if (register_access_is_valid(data, reg, bytes)) {
+	if (!register_access_is_valid(data, reg, bytes)) {
 		return -EIO;
 	}
 
