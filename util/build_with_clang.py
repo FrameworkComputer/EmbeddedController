@@ -243,6 +243,7 @@ NDS32_BOARDS = [
     "adlrvpm_ite",
     "adlrvpp_ite",
     "ampton",
+    "awasuki",
     "beadrix",
     "beetley",
     "blipper",
