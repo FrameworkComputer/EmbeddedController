@@ -104,6 +104,8 @@ enum cmd_t {
 	CMD_GET_IDENTITY_DISCOVERY,
 	/** CMD_GET_PCH_DATA_STATUS */
 	CMD_GET_PCH_DATA_STATUS,
+	/** CMD_SET_DRP_MODE */
+	CMD_SET_DRP_MODE,
 };
 
 /**
@@ -194,6 +196,8 @@ struct pdc_data_t {
 	union pdr_t pdr;
 	/** UOR */
 	union uor_t uor;
+	/** DRP mode */
+	enum drp_mode_t drp_mode;
 	/** Pointer to user data */
 	uint8_t *user_buf;
 	/** Command mutex */
@@ -222,6 +226,7 @@ static const char *const state_names[] = {
 
 static const struct smf_state states[];
 
+static void cmd_set_drp_mode(struct pdc_data_t *data);
 static void cmd_set_tpc_rp(struct pdc_data_t *data);
 static void cmd_get_rdo(struct pdc_data_t *data);
 static void cmd_get_ic_status(struct pdc_data_t *data);
@@ -537,6 +542,9 @@ static void st_idle_run(void *o)
 		case CMD_SET_TPC_RP:
 			cmd_set_tpc_rp(data);
 			break;
+		case CMD_SET_DRP_MODE:
+			cmd_set_drp_mode(data);
+			break;
 		case CMD_SET_RETIMER_FW_UPDATE_MODE:
 			task_ucsi(data, UCSI_SET_RETIMER_MODE);
 			break;
@@ -612,6 +620,52 @@ static void st_suspended_run(void *o)
 	}
 
 	set_state(data, ST_INIT);
+}
+
+static void cmd_set_drp_mode(struct pdc_data_t *data)
+{
+	struct pdc_config_t const *cfg = data->dev->config;
+	union reg_port_configuration pdc_port_configuration;
+	int rv;
+
+	/* Read PDC port configuration */
+	rv = tps_rw_port_configuration(&cfg->i2c, &pdc_port_configuration,
+				       I2C_MSG_READ);
+	if (rv) {
+		LOG_ERR("Read port configuration failed");
+		set_state(data, ST_ERROR_RECOVERY);
+		return;
+	}
+
+	/* Modify */
+	switch (data->drp_mode) {
+	case DRP_NORMAL:
+	case DRP_TRY_SRC:
+		pdc_port_configuration.typec_support_options = data->drp_mode;
+		break;
+	default:
+		LOG_ERR("Unsupported DRP mode");
+		set_state(data, ST_IDLE);
+		return;
+	}
+
+	/* Write PDC port configuration */
+	rv = tps_rw_port_configuration(&cfg->i2c, &pdc_port_configuration,
+				       I2C_MSG_WRITE);
+	if (rv) {
+		LOG_ERR("Write port configuration failed");
+		set_state(data, ST_ERROR_RECOVERY);
+		return;
+	}
+
+	/* Command has completed */
+	data->cci_event.command_completed = 1;
+	/* Inform the system of the event */
+	call_cci_event_cb(data);
+
+	/* Transition to idle state */
+	set_state(data, ST_IDLE);
+	return;
 }
 
 static void cmd_set_tpc_rp(struct pdc_data_t *data)
@@ -1479,6 +1533,15 @@ static int tps_set_pdr(const struct device *dev, union pdr_t pdr)
 	return tps_post_command(dev, CMD_SET_PDR, NULL);
 }
 
+static int tps_set_drp_mode(const struct device *dev, enum drp_mode_t dm)
+{
+	struct pdc_data_t *data = dev->data;
+
+	data->drp_mode = dm;
+
+	return tps_post_command(dev, CMD_SET_DRP_MODE, NULL);
+}
+
 static int tps_get_current_pdo(const struct device *dev, uint32_t *pdo)
 {
 	/* TODO */
@@ -1588,6 +1651,7 @@ static const struct pdc_driver_api_t pdc_driver_api = {
 	.set_ccom = tps_set_ccom,
 	.set_uor = tps_set_uor,
 	.set_pdr = tps_set_pdr,
+	.set_drp_mode = tps_set_drp_mode,
 	.set_sink_path = tps_set_sink_path,
 	.get_connector_status = tps_get_connector_status,
 	.get_pdos = tps_get_pdos,
