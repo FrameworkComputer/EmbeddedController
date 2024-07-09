@@ -1292,11 +1292,6 @@ static void pdc_unattached_entry(void *obj)
 	set_attached_pdc_state(port, UNATTACHED_STATE);
 	port->send_cmd.intern.pending = false;
 
-	/* Clear all events except for disconnect. */
-	pdc_power_mgmt_clear_event(port_number,
-				   BIT_MASK(PD_STATUS_EVENT_COUNT));
-	pdc_power_mgmt_notify_event(port_number, PD_STATUS_EVENT_DISCONNECTED);
-
 	/* Clear any previously set cable property information */
 	port->cable_prop.raw_value[0] = 0;
 	port->cable_prop.raw_value[1] = 0;
@@ -1313,6 +1308,12 @@ static void pdc_unattached_entry(void *obj)
 		/* Update source current limit policy */
 		pdc_dpm_remove_sink(port_number);
 		pdc_dpm_remove_source(port_number);
+
+		/* Clear all events except for disconnect. */
+		pdc_power_mgmt_clear_event(port_number,
+					   BIT_MASK(PD_STATUS_EVENT_COUNT));
+		pdc_power_mgmt_notify_event(port_number,
+					    PD_STATUS_EVENT_DISCONNECTED);
 	}
 }
 
