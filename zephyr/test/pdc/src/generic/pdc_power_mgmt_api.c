@@ -4,6 +4,7 @@
  */
 
 #include "chipset.h"
+#include "drivers/intel_altmode.h"
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_pdc.h"
 #include "hooks.h"
@@ -346,6 +347,38 @@ ZTEST_USER(pdc_power_mgmt_api, test_unattached_public_cmd)
 	memset(&connector_status, 0, sizeof(union connector_status_t));
 
 	run_toggle_test(&connector_status);
+}
+
+ZTEST_USER(pdc_power_mgmt_api, test_connectionless_cmds)
+{
+	struct pdc_info_t pdc_info;
+	struct lpm_ppm_info_t lpm_ppm_info;
+	union data_status_reg status;
+
+	LOG_INF("Emul PDC disconnect partner");
+	emul_pdc_disconnect(emul);
+	zassert_false(TEST_WAIT_FOR(pd_capable(TEST_PORT), PDC_TEST_TIMEOUT));
+
+	/* These commands are expected to succeed without a connection. */
+	LOG_INF("Sending PDC RESET");
+	zassert_ok(pdc_power_mgmt_reset(TEST_PORT));
+
+	emul_pdc_disconnect(emul);
+	zassert_false(TEST_WAIT_FOR(pd_capable(TEST_PORT), PDC_TEST_TIMEOUT));
+
+	LOG_INF("Sending GET INFO");
+	zassert_ok(pdc_power_mgmt_get_info(TEST_PORT, &pdc_info, true));
+
+	LOG_INF("Sending GET PCH DATA_STATUS");
+	zassert_ok(pdc_power_mgmt_get_pch_data_status(TEST_PORT,
+						      status.raw_value));
+
+	LOG_INF("Sending GET LPM PPM INFO");
+	zassert_ok(pdc_power_mgmt_get_lpm_ppm_info(TEST_PORT, &lpm_ppm_info));
+
+	/* Send a command that requires a connection. It should fail. */
+	LOG_INF("Sending SET DRP");
+	zassert_equal(-EIO, pdc_power_mgmt_set_trysrc(TEST_PORT, true));
 }
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_partner_usb_comm_capable)
