@@ -51,4 +51,10 @@ config TEST_SUITE_PDC_TRACE_MSG
 	  since that config enables an alternate implementation of the
 	  code to be tested here.
 
+config TEST_DISABLE_INLINE_CHIPSET_IN_STATE
+	bool "Disable chipset_in_state inline method"
+	help
+	  This is used to not define chipset_in_state method as inline
+	  function.
+
 source "Kconfig.zephyr"

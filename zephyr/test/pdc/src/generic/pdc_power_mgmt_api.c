@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "chipset.h"
 #include "drivers/ucsi_v3.h"
 #include "emul/emul_pdc.h"
 #include "hooks.h"
@@ -11,6 +12,7 @@
 
 #include <zephyr/devicetree.h>
 #include <zephyr/drivers/emul.h>
+#include <zephyr/fff.h>
 #include <zephyr/logging/log.h>
 #include <zephyr/ztest.h>
 
@@ -27,23 +29,49 @@ bool pdc_power_mgmt_test_wait_attached(int port);
 bool test_pdc_power_mgmt_is_snk_typec_attached_run(int port);
 bool test_pdc_power_mgmt_is_src_typec_attached_run(int port);
 
-void pdc_power_mgmt_setup(void)
+/* Test-specific FFF fakes */
+FAKE_VALUE_FUNC(int, system_jumped_late);
+FAKE_VALUE_FUNC(int, chipset_in_state, int);
+
+static enum chipset_state_mask fake_chipset_state = CHIPSET_STATE_ON;
+
+static int custom_fake_chipset_in_state(int mask)
+{
+	return !!(fake_chipset_state & mask);
+}
+
+static void reset_fakes(void)
+{
+	RESET_FAKE(system_jumped_late);
+	RESET_FAKE(chipset_in_state);
+
+	chipset_in_state_fake.custom_fake = custom_fake_chipset_in_state;
+}
+
+static void pdc_power_mgmt_setup(void)
 {
 	zassume(TEST_PORT < CONFIG_USB_PD_PORT_MAX_COUNT,
 		"TEST_PORT is invalid");
 }
 
-void pdc_power_mgmt_before(void *fixture)
+static void pdc_power_mgmt_before(void *fixture)
 {
 	emul_pdc_set_response_delay(emul, 0);
 	emul_pdc_disconnect(emul);
 	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
 
 	zassert_ok(emul_pdc_idle_wait(emul));
+
+	reset_fakes();
+}
+
+static void pdc_power_mgmt_after(void *fixture)
+{
+	reset_fakes();
 }
 
 ZTEST_SUITE(pdc_power_mgmt_api, NULL, pdc_power_mgmt_setup,
-	    pdc_power_mgmt_before, NULL, NULL);
+	    pdc_power_mgmt_before, pdc_power_mgmt_after, NULL);
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_usb_pd_port_count)
 {
@@ -1320,4 +1348,81 @@ ZTEST_USER(pdc_power_mgmt_api, test_names)
 		zassert_not_null(pdc_cmd_names[i],
 				 "PDC command %d missing name", i);
 	}
+}
+
+/**
+ * @brief Poll up to PDC_TEST_TIMEOUT milliseconds for the expected CCOM
+ *        value to be returned by emul_pdc_get_ccom()
+ */
+static void helper_wait_for_ccom_mode(enum ccom_t expected)
+{
+	enum ccom_t ccom;
+	uint32_t timeout = k_ms_to_cyc_ceil32(PDC_TEST_TIMEOUT);
+	uint32_t start;
+
+	start = k_cycle_get_32();
+	while (k_cycle_get_32() - start < timeout) {
+		k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
+		zassert_ok(emul_pdc_get_ccom(emul, &ccom),
+			   "Invalid CCOM value in emul");
+
+		if (ccom != expected)
+			continue;
+
+		break;
+	}
+
+	zassert_equal(expected, ccom, "Got CCOM %d but expected %d", ccom,
+		      expected);
+}
+
+ZTEST_USER(pdc_power_mgmt_api, test_sysjump_policy_shutdown)
+{
+	/* Mock a late sysjump while AP is off. */
+	fake_chipset_state = CHIPSET_STATE_HARD_OFF;
+	system_jumped_late_fake.return_val = 1;
+
+	/* PDC should go into PD_DRP_FORCE_SINK mode, which means CC operating
+	 * mode is CCOM_RD.
+	 */
+
+	/* This forces a pass through the init state */
+	zassert_ok(pdc_power_mgmt_reset(TEST_PORT));
+	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+
+	helper_wait_for_ccom_mode(CCOM_RD);
+}
+
+ZTEST_USER(pdc_power_mgmt_api, test_sysjump_policy_suspend)
+{
+	/* Mock a late sysjump while AP is off. */
+	fake_chipset_state = CHIPSET_STATE_SUSPEND;
+	system_jumped_late_fake.return_val = 1;
+
+	/* PDC should go into PD_DRP_TOGGLE_OFF mode, which means CC operating
+	 * mode is CCOM_RD.
+	 */
+
+	/* This forces a pass through the init state */
+	zassert_ok(pdc_power_mgmt_reset(TEST_PORT));
+	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+
+	helper_wait_for_ccom_mode(CCOM_RD);
+}
+
+ZTEST_USER(pdc_power_mgmt_api, test_sysjump_policy_on)
+{
+	/* Mock a late sysjump while AP is off. */
+	fake_chipset_state = CHIPSET_STATE_ON;
+	system_jumped_late_fake.return_val = 1;
+
+	/* PDC should go into PD_DRP_TOGGLE_ON mode, which means CC operating
+	 * mode is CCOM_DRP.
+	 */
+
+	/* This forces a pass through the init state */
+	zassert_ok(pdc_power_mgmt_reset(TEST_PORT));
+	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+
+	helper_wait_for_ccom_mode(CCOM_DRP);
 }
