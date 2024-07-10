@@ -2216,6 +2216,10 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
+        name = "teliks",
+        board = "teliks",
+    )
+    ec_target(
         name = "tentacruel",
         board = "tentacruel",
     )

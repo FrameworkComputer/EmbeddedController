@@ -168,6 +168,12 @@ config BOARD_DOMIKA
 	  Build Google Domika board. Domika has Intel TWL SoC
 	  with IT81302 EC.
 
+config BOARD_TELIKS
+	bool "Google Teliks Board"
+	help
+	  Build Google Teliks reference board. Teliks has Intel TWL SoC
+	  with IT81302 EC.
+
 module = NISSA
 module-str = Nissa board-specific code
 source "subsys/logging/Kconfig.template.log_config"

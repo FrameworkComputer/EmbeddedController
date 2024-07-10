@@ -1,0 +1,126 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include <it8xxx2_emul.dts>
+
+#include "../program/nissa/cbi.dtsi"
+#include "../program/nissa/teliks/cbi.dtsi"
+#include "../program/nissa/teliks/motionsense.dtsi"
+
+/ {
+	named-gpios {
+		compatible = "named-gpios";
+
+		gpio_ec_entering_rw: ec_entering_rw {
+			gpios = <&gpioc 7 GPIO_OUTPUT>;
+			enum-name = "GPIO_ENTERING_RW";
+		};
+		gpio_en_usb_c0_cc1_vconn: en_usb_c0_cc1_vconn {
+			gpios = <&gpioh 4 GPIO_OUTPUT>;
+		};
+		gpio_en_usb_c0_cc2_vconn: en_usb_c0_cc2_vconn {
+			gpios = <&gpioh 6 GPIO_OUTPUT>;
+		};
+		gpio_usb_c0_int_odl: usb_c0_int_odl {
+			gpios = <&gpiok 0 GPIO_INPUT_PULL_UP>;
+		};
+		gpio_imu_int_l: imu_int_l {
+			gpios = <&gpioj 0 GPIO_INPUT>;
+		};
+		gpio_acc_int_l: acc_int_l {
+			gpios = <&gpioc 0 GPIO_INPUT>;
+		};
+		gpio_tablet_mode_l: tablet_mode_l {
+			gpios = <&gpioa 7 GPIO_INPUT>;
+			enum-name = "GPIO_TABLET_MODE_L";
+		};
+		gpio_ec_battery_pres_odl: ec_battery_pres_odl {
+			gpios = <&gpiol 5 GPIO_INPUT>;
+			enum-name = "GPIO_BATT_PRES_ODL";
+		};
+	};
+
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_tablet_mode: tablet_mode {
+			irq-pin = <&gpio_tablet_mode_l>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "gmr_tablet_switch_isr";
+		};
+		int_imu: ec_imu {
+			irq-pin = <&gpio_imu_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "motion_interrupt";
+		};
+		int_lid_imu: lid_imu {
+			irq-pin = <&gpio_acc_int_l>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "lid_accel_interrupt";
+		};
+	};
+
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		i2c_ec_i2c_sensor: ec_i2c_sensor {
+			i2c-port = <&i2c0>;
+			enum-names = "I2C_PORT_SENSOR";
+		};
+		i2c_ec_i2c_batt: ec_i2c_batt {
+			i2c-port = <&i2c1>;
+			enum-names = "I2C_PORT_BATTERY";
+		};
+	};
+
+	usbc {
+		#address-cells = <1>;
+		#size-cells = <0>;
+		port0@0 {
+			compatible = "named-usbc-port";
+			reg = <0>;
+			tcpc = <&tcpci_emul_0>;
+			usb-mux-chain-0 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_0>;
+			};
+		};
+		port1@1 {
+			compatible = "named-usbc-port";
+			reg = <1>;
+			tcpc = <&tcpci_emul_1>;
+			usb-mux-chain-1 {
+				compatible = "cros-ec,usb-mux-chain";
+				usb-muxes = <&virtual_mux_1>;
+			};
+		};
+		port0-muxes {
+			virtual_mux_0: virtual-mux-0 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+		port1-muxes {
+			virtual_mux_1: virtual-mux-1 {
+				compatible = "cros-ec,usbc-mux-virtual";
+			};
+		};
+	};
+};
+
+&i2c4 {
+	tcpci_emul_0: tcpci_emul@82 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x82>;
+	};
+};
+
+&i2c4 {
+	tcpci_emul_1: tcpci_emul@84 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x84>;
+	};
+};

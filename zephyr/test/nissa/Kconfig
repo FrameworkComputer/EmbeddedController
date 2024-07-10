@@ -131,6 +131,11 @@ choice TEST_TARGET
 	  bool "Tests for Domika-specific code"
 	  help
 		The test target that exercises nissa/domika/*.c
+
+	config TEST_NISSA_TELIKS
+	  bool "Tests for Teliks-specific code"
+	  help
+		The test target that exercises nissa/teliks/*.c
 endchoice
 
 config TEST_DISABLE_INLINE_CHIPSET_IN_STATE

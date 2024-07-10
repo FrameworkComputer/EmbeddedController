@@ -303,3 +303,13 @@ if(CONFIG_TEST_NISSA_DOMIKA)
             ${PLATFORM_EC_PROGRAM_DIR}/nissa/domika/src/usbc.c
     )
 endif()
+
+if(CONFIG_TEST_NISSA_TELIKS)
+    zephyr_include_directories("${PLATFORM_EC_PROGRAM_DIR}/nissa/teliks/include")
+    target_compile_definitions(app PRIVATE CHARGER_PRIMARY=0)
+    target_sources(
+            app PRIVATE
+            src/teliks.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/teliks/src/board.c
+    )
+endif()
