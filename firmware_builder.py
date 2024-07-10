@@ -164,11 +164,22 @@ def build(opts):
     with open(opts.metrics, "w", encoding="utf-8") as file:
         file.write(json_format.MessageToJson(metric_list))
 
-    # Ensure that there are no regressions for boards that build successfully
-    # with clang: b/172020503.
-    cmd = ["./util/build_with_clang.py"]
-    print(f'# Running {" ".join(cmd)}.')
-    subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+    gcc_build_dir = build_dir + ".gcc"
+    try:
+        # b/352025405: build_with_clang.py deletes the build directory, but
+        # we want to preserve the gcc build artifacts for uploading (bundling).
+        # Temporarily rename the gcc build output directory and restore after
+        # the clang build finishes.
+        os.rename(build_dir, gcc_build_dir)
+
+        # Ensure that there are no regressions for boards that build
+        # successfully with clang: b/172020503.
+        cmd = ["./util/build_with_clang.py"]
+        print(f'# Running {" ".join(cmd)}.')
+        subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
+    finally:
+        shutil.rmtree(build_dir)
+        os.rename(gcc_build_dir, build_dir)
 
 
 UNITS = {
