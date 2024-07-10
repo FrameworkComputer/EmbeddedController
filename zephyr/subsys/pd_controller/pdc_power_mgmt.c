@@ -2960,6 +2960,7 @@ test_mockable void pdc_power_mgmt_set_dual_role(int port,
 		 * and reconnect as Sink.
 		 */
 		port_data->una_policy.cc_mode = CCOM_RD;
+		atomic_set_bit(port_data->una_policy.flags, UNA_POLICY_CC_MODE);
 		atomic_set_bit(port_data->src_policy.flags,
 			       SRC_POLICY_FORCE_SNK);
 		break;
