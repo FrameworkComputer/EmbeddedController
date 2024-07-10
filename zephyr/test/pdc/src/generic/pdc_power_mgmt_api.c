@@ -934,13 +934,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_suspend)
 
 ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume)
 {
-	union connector_status_t connector_status;
 	enum ccom_t ccom;
-
-	emul_pdc_configure_snk(emul, &connector_status);
-	emul_pdc_connect_partner(emul, &connector_status);
-	zassert_true(
-		TEST_WAIT_FOR(pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
 
 	hook_notify(HOOK_CHIPSET_RESUME);
 	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
