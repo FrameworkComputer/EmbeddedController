@@ -865,7 +865,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_set_dual_role)
 			k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
 
 			if (test[i].e.check_cc_mode) {
-				emul_pdc_get_ccom(emul, &ccom);
+				zassert_ok(emul_pdc_get_ccom(emul, &ccom),
+					   "Invalid CCOM value in emul");
 
 				if (test[i].e.cc_mode != ccom)
 					continue;
@@ -919,7 +920,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_suspend)
 	start = k_cycle_get_32();
 	while (k_cycle_get_32() - start < timeout) {
 		k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
-		emul_pdc_get_ccom(emul, &ccom);
+		zassert_ok(emul_pdc_get_ccom(emul, &ccom),
+			   "Invalid CCOM value in emul");
 
 		if (ccom != CCOM_RD)
 			continue;
@@ -943,7 +945,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume)
 	hook_notify(HOOK_CHIPSET_RESUME);
 	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
 
-	emul_pdc_get_ccom(emul, &ccom);
+	zassert_ok(emul_pdc_get_ccom(emul, &ccom),
+		   "Invalid CCOM value in emul");
 	zassert_equal(CCOM_DRP, ccom);
 }
 
@@ -967,7 +970,8 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_startup)
 	start = k_cycle_get_32();
 	while (k_cycle_get_32() - start < timeout) {
 		k_msleep(TEST_WAIT_FOR_INTERVAL_MS);
-		emul_pdc_get_ccom(emul, &ccom);
+		zassert_ok(emul_pdc_get_ccom(emul, &ccom),
+			   "Invalid CCOM value in emul");
 
 		if (ccom != CCOM_RD)
 			continue;

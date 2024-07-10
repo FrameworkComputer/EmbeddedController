@@ -34,7 +34,7 @@
 			};
 		};
 
-		usbc1: port1@0 {
+		usbc1: port1@1 {
 			compatible = "named-usbc-port";
 			reg = <1>;
 			pdc = <&pdc_emul2>;
