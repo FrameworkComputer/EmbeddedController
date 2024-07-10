@@ -1,0 +1,90 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/* Contains emulators for devices normally found on MCHP chips.
+ * To use, include this file, then the board's gpio definitions.
+ */
+
+#include <dt-bindings/gpio_defines.h>
+
+/ {
+	gpio_000_036: gpio@00 {
+	        status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x00 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <32>;
+	};
+
+	gpio_040_076: gpio@400 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x400 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <16>;
+	};
+
+	gpio_100_136: gpio@1000 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x1000 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <16>;
+	};
+
+	gpio_140_176: gpio@1400 {
+		status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x1400 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <16>;
+	};
+
+	gpio_200_236: gpio@2000 {
+	        status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x1000 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <32>;
+	};
+
+	gpio_240_276: gpio@2400 {
+	        status = "okay";
+		compatible = "zephyr,gpio-emul";
+		reg = <0x2400 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+};
