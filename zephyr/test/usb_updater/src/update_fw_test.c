@@ -8,7 +8,6 @@
 #include "update_fw.h"
 
 #include <zephyr/device.h>
-#include <zephyr/drivers/flash/flash_simulator.h>
 #include <zephyr/fff.h>
 #include <zephyr/sys/byteorder.h>
 #include <zephyr/ztest.h>
@@ -158,6 +157,8 @@ static void *update_fw_setup(void)
 	};
 
 	memcpy(touchpad_fw_hashes[0], checksum, SHA256_DIGEST_SIZE);
+
+	system_get_version_fake.return_val = "fake-version-str";
 
 	return NULL;
 }
