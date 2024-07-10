@@ -28,13 +28,9 @@
 #define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
-#if !defined(CONFIG_MAPPED_STORAGE)
+#if !defined(CONFIG_MAPPED_STORAGE) && !defined(CONFIG_ZTEST)
 #error rwsig implementation assumes mem-mapped storage.
 #endif
-
-/* RW firmware reset vector */
-static uint32_t *const rw_rst =
-	(uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE + CONFIG_RW_MEM_OFF + 4);
 
 void rwsig_jump_now(void)
 {
@@ -98,9 +94,20 @@ int rwsig_check_signature(void)
 	const uint8_t *sig;
 	uint8_t *hash;
 	uint32_t *rsa_workbuf = NULL;
+	int good = 0;
+
+#ifdef CONFIG_MAPPED_STORAGE
 	const uint8_t *rwdata = (uint8_t *)CONFIG_MAPPED_STORAGE_BASE +
 				CONFIG_EC_WRITABLE_STORAGE_OFF;
-	int good = 0;
+	/* RW firmware reset vector */
+	uint32_t *const rw_rst = (uint32_t *)(CONFIG_PROGRAM_MEMORY_BASE +
+					      CONFIG_RW_MEM_OFF + 4);
+#elif defined(CONFIG_ZTEST)
+	static uint8_t rwdata[CONFIG_RW_SIZE];
+	const uint32_t *const rw_rst = (const uint32_t *)(rwdata + 4);
+
+	crec_flash_read(CONFIG_EC_WRITABLE_STORAGE_OFF, CONFIG_RW_SIZE, rwdata);
+#endif
 
 	unsigned int rwlen;
 #ifdef CONFIG_RWSIG_TYPE_RWSIG
