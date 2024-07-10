@@ -86,5 +86,7 @@ target_sources_ifdef(CONFIG_TEST_VELUZA
 	src/fake.c
 	src/ppc_veluza.c
 	src/temp_veluza.c
+	src/sensor_veluza.c
 	${PLATFORM_EC_PROGRAM_DIR}/corsola/veluza/src/ppc.c
-	${PLATFORM_EC_PROGRAM_DIR}/corsola/veluza/src/temp.c)
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/veluza/src/temp.c
+	${PLATFORM_EC_PROGRAM_DIR}/corsola/veluza/src/sensor.c)
