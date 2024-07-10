@@ -11,5 +11,5 @@ CHIP_FAMILY:=it8320
 CHIP_VARIANT:=it8320dx
 BASEBOARD:=dedede
 
-board-y=board.o cbi_ssfc.o led.o usb_pd_policy.o
+board-y=board.o cbi_ssfc.o keyboard_customization.o led.o usb_pd_policy.o
 board-$(CONFIG_BATTERY_SMART)+=battery.o

@@ -74,6 +74,11 @@
 #define CONFIG_USB_MUX_IT5205 /* ITE Mux */
 #define I2C_PORT_USB_MUX I2C_PORT_USB_C0 /* Required for ITE Mux */
 
+/* keyboard */
+#define CONFIG_KEYBOARD_CUSTOMIZATION
+#define CONFIG_KEYBOARD_REFRESH_ROW3
+#define CONFIG_KEYBOARD_VIVALDI
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h"
