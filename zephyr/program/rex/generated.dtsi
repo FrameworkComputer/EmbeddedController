@@ -18,13 +18,13 @@
 			enum-name = "ADC_TEMP_SENSOR_2_AMBIENT";
 			io-channels = <&adc0 1>;
 		};
-		adc_temp_sensor_4: temp_sensor_4 {
-			enum-name = "ADC_TEMP_SENSOR_4_WWAN";
-			io-channels = <&adc0 7>;
-		};
 		adc_temp_sensor_3: temp_sensor_3 {
 			enum-name = "ADC_TEMP_SENSOR_3_CHARGER";
 			io-channels = <&adc0 8>;
+		};
+		adc_temp_sensor_4: temp_sensor_4 {
+			enum-name = "ADC_TEMP_SENSOR_4_WWAN";
+			io-channels = <&adc0 7>;
 		};
 	};
 
@@ -292,8 +292,8 @@
 	status = "okay";
 	pinctrl-0 = <&adc0_chan0_gp45
 		&adc0_chan1_gp44
-		&adc0_chan7_gpe1
-		&adc0_chan8_gpf1>;
+		&adc0_chan8_gpf1
+		&adc0_chan7_gpe1>;
 	pinctrl-names = "default";
 };
 
