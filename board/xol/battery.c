@@ -415,12 +415,14 @@ int charger_profile_override(struct charge_state_data *curr)
 					data_v = bat_cell_ovp_volt;
 			}
 
-			if (curr->requested_current != data_c) {
+			if (curr->requested_current != data_c &&
+			    /* If charging current of battery is 0(fully
+			     * charged), then EC shouldn't change it for AC
+			     * standby power */
+			    curr->requested_current != 0) {
 				curr->requested_current = data_c;
 			}
-			if (curr->requested_voltage != data_v) {
-				curr->requested_voltage = data_v;
-			}
+			curr->requested_voltage = data_v;
 		} else {
 			temp_zone = NORMAL_TEMP;
 		}
