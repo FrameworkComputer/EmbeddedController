@@ -7,7 +7,9 @@ ifeq ($(CROSS_COMPILE_CC_NAME),clang)
 CROSS_COMPILE_ARM_DEFAULT:=armv7m-cros-eabi-
 else
 # coreboot sdk
-CROSS_COMPILE_ARM_DEFAULT:=/opt/coreboot-sdk/bin/arm-eabi-
+CROSS_COMPILE_ARM_DEFAULT:=arm-eabi
+COREBOOT_TOOLCHAIN:=arm
+USE_COREBOOT_SDK:=1
 endif
 CMAKE_SYSTEM_PROCESSOR ?= armv7
 # TODO(b/275450331): Enable the asm after we fix the crash.
