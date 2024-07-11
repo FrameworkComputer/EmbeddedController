@@ -21,6 +21,11 @@
 			flags = <GPIO_INT_EDGE_FALLING>;
 			handler = "io_expander_it8801_interrupt";
 		};
+		int_lid_switch_intr: lid_switch_intr {
+			irq-pin = <&smc_lid_n>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "lid_interrupt";
+		};
 		int_power_button: power_button {
 			irq-pin = <&pwrbtn>;
 			flags = <GPIO_INT_EDGE_BOTH>;
