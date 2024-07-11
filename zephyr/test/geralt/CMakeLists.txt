@@ -18,5 +18,7 @@ target_sources(app PRIVATE
 
 target_sources_ifdef(CONFIG_TEST_GERALT
 	app PRIVATE
+	src/common.c
+	src/fakes.c
 	src/main.c
-	src/common.c)
+	src/usbc_config.c)

@@ -11,6 +11,12 @@
 		status = "disabled";
 	};
 
+	named-gpios {
+		usb_c0_frs_en: usb-c0-frs-en {
+			gpios = <&gpioa 3 GPIO_OUTPUT_LOW>;
+		};
+	};
+
 	named-i2c-ports {
 		compatible = "named-i2c-ports";
 
@@ -162,9 +168,11 @@
 	};
 
 	ppc_port0: rt1739@70 {
-		compatible = "zephyr,rt1739-emul", "richtek,rt1739-ppc";
+		compatible = "zephyr,syv682x-emul";
 		status = "okay";
-		reg = <0x70>;
+		reg = <0x42>;
+		frs_en_gpio = <&usb_c0_frs_en>;
+		alert_gpio = <&usb_c0_ppc_bc12_int_odl>;
 	};
 
 	tusb546_mux_0: tusb546-mux-0@44 {

@@ -20,6 +20,9 @@
 /delete-node/ &int_lid_360;
 /delete-node/ &int_lid_imu;
 
+/* no need to maintain the unused-pins list in test code */
+/delete-node/ &{/unused-pins};
+
 &{/aliases} {
 	/delete-property/ int-wp;
 };

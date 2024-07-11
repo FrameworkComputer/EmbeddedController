@@ -10,6 +10,7 @@
 #include "driver/ppc/syv682x_public.h"
 #include "emul/emul_common_i2c.h"
 #include "emul/emul_syv682x.h"
+#include "fakes.h"
 #include "i2c/i2c.h"
 #include "test_state.h"
 #include "usb_pd.h"
@@ -20,8 +21,6 @@
 #include <zephyr/drivers/emul.h>
 #include <zephyr/fff.h>
 #include <zephyr/ztest.h>
-
-FAKE_VALUE_FUNC(enum battery_present, battery_is_present);
 
 ZTEST(geralt_common, test_none)
 {
