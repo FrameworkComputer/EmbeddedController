@@ -27,11 +27,11 @@
 #include "../power_signals.dtsi"
 #include "../power_signals_gpios.dtsi"
 #include "../pwm.dtsi"
-#include "../temp_sensors.dtsi"
 #include "../usb_typec.dtsi"
 #include "../usba.dtsi"
 
-/* Brox project DTS includes*/
+/* Jubilant project DTS includes*/
+#include "temp_sensors.dtsi"
 
 /* Brox overrides follow... */
 
