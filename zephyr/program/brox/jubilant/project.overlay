@@ -14,12 +14,10 @@
 
 #include <cros/cbi_flash.dtsi>
 
-#include "../adc.dtsi"
 #include "../binman.dtsi"
 #include "../brox.dtsi"
 #include "../fan.dtsi"
-#include "../generated.dtsi"
-#include "../gpio.dtsi"
+#include "gpio.dtsi"
 #include "../i2c.dtsi"
 #include "../interrupts.dtsi"
 #include "../led_pins.dtsi"
