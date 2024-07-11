@@ -49,12 +49,6 @@
 		en_pp5000_usb_a1_vbus_x: en_pp5000_usb_a1_vbus_x {
 			gpios = <&gpioa 7 GPIO_OUTPUT_LOW>;
 		};
-		gpio_battery_led_amber_l: battery_led_amber_l {
-			gpios = <&gpioa 1 GPIO_OUTPUT_HIGH>;
-		};
-		gpio_battery_led_white_l: battery_led_white_l {
-			gpios = <&gpioa 2 GPIO_OUTPUT_HIGH>;
-		};
 	};
 	unused-pins {
 		unused-gpios =
