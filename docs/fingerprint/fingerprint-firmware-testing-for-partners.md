@@ -60,6 +60,7 @@ This document will assume you are using Servo V4.
 # enter the chroot
 (outside chroot) $ cros_sdk
 ```
+
 ### Servod setup
 
 Follow [servod outside chroot] instructions.
@@ -70,8 +71,8 @@ Follow [servod outside chroot] instructions.
 (outside) $ start-servod --channel=release --board=$BOARD -p 9999
 ```
 
-At this point the servod daemon should be running and listening to port 9999.
-If it isn't, check the hardware connection.
+At this point the servod daemon should be running and listening to port 9999. If
+it isn't, check the hardware connection.
 
 ## Run a Single Fingerprint Firmware Test
 
