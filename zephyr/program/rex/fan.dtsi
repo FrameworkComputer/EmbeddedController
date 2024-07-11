@@ -18,22 +18,6 @@
 	};
 };
 
-/* Tachemeter for fan speed measurement */
-&tach1 {
-	status = "okay";
-	pinctrl-0 = <&ta1_1_in_gp40>;
-	pinctrl-names = "default";
-	port = <NPCX_TACH_PORT_A>; /* port-A is selected */
-	sample-clk = <NPCX_TACH_FREQ_LFCLK>; /* Use LFCLK as sampling clock */
-	pulses-per-round = <2>; /* number of pulses per round of encoder */
-};
-
 &pwm5_gpb7 {
 	drive-open-drain;
-};
-
-&pwm5 {
-	status = "okay";
-	pinctrl-0 = <&pwm5_gpb7>;
-	pinctrl-names = "default";
 };

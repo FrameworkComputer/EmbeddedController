@@ -166,29 +166,14 @@
 	pinctrl-0 = <&psl_in1_gpd2 &psl_in2_gp00 &psl_in4_gp02>;
 };
 
-/* ADC and GPIO alt-function specifications */
-&adc0 {
-	pinctrl-0 = <&adc0_chan0_gp45
-		     &adc0_chan1_gp44
-		     &adc0_chan8_gpf1
-		     &adc0_chan7_gpe1>;
-	pinctrl-names = "default";
-};
-
 &i2c0_0 {
 	label = "I2C_SENSOR";
 	clock-frequency = <I2C_BITRATE_FAST>;
-
-	pinctrl-0 = <&i2c0_0_sda_scl_gpb4_b5>;
-	pinctrl-names = "default";
 };
 
 &i2c1_0 {
 	label = "I2C_USB_C0_TCPC";
 	clock-frequency = <I2C_BITRATE_FAST>;
-
-	pinctrl-0 = <&i2c1_0_sda_scl_gp87_90>;
-	pinctrl-names = "default";
 
 	nct3807_C0: nct38xx@70 {
 		compatible = "nuvoton,nct38xx";
@@ -248,9 +233,6 @@
 	label = "I2C_PPC0";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
-	pinctrl-0 = <&i2c2_0_sda_scl_gp91_92>;
-	pinctrl-names = "default";
-
 	bc12_port0: pi3usb9201@5f {
 		compatible = "pericom,pi3usb9201";
 		status = "okay";
@@ -275,9 +257,6 @@
 	label = "I2C_USB_C0_RT";
 	clock-frequency = <I2C_BITRATE_FAST>;
 
-	pinctrl-0 = <&i2c3_0_sda_scl_gpd0_d1>;
-	pinctrl-names = "default";
-
 	usb_c0_hb_retimer: jhl9040r-c0@56 {
 		compatible = "intel,jhl9040r";
 		reg = <0x56>;
@@ -290,9 +269,6 @@
 &i2c4_1 {
 	label = "I2C_USB_C1_TCPC";
 	clock-frequency = <I2C_BITRATE_FAST>;
-
-	pinctrl-0 = <&i2c4_1_sda_scl_gpf2_f3>;
-	pinctrl-names = "default";
 
 	tcpc_rt1716_port1: rt1716@4e {
 		compatible = "richtek,rt1715-tcpc";
@@ -312,16 +288,13 @@
 	label = "I2C_BATTERY";
 	clock-frequency = <I2C_BITRATE_STANDARD>;
 
+	/* Upstream zephyr uses an irregular name here */
 	pinctrl-0 = <&i2c5_0_sda_scl_gp33_36>;
-	pinctrl-names = "default";
 };
 
 &i2c6_1 {
 	label = "I2C_USB_1_MIX";
 	clock-frequency = <I2C_BITRATE_FAST>;
-
-	pinctrl-0 = <&i2c6_1_sda_scl_gpe3_e4>;
-	pinctrl-names = "default";
 
 	bc12_port1: pi3usb9201@5f {
 		compatible = "pericom,pi3usb9201";
@@ -394,9 +367,6 @@
 &i2c7_0 {
 	label = "I2C_CHARGER";
 	clock-frequency = <I2C_BITRATE_FAST>;
-
-	pinctrl-0 = <&i2c7_0_sda_scl_gpb2_b3>;
-	pinctrl-names = "default";
 
 	charger: isl9241@9 {
 		compatible = "intersil,isl9241";

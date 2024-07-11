@@ -3,6 +3,12 @@
  * found in the LICENSE file.
  */
 
+&pwm3 {
+	status = "okay";
+	pinctrl-0 = <&pwm3_gp80>;
+	pinctrl-names = "default";
+};
+
 &kbd_config_0 {
 	vivaldi-codes = <
 		VIVALDI_TK_BACK              /* T1 */
