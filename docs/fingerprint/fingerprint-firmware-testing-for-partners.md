@@ -85,7 +85,7 @@ Use another terminal and enter the chroot like before:
 To run a single test, use this command in your chroot:
 
 ```bash
-test_that --board=<BOARD> <IP> <test name>
+tast run <IP> <test name>
 ```
 
 For example:
