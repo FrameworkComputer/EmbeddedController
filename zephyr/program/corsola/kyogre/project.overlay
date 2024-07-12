@@ -500,3 +500,7 @@
 		&kso17_gpb1
 	>;
 };
+
+&i2c2_0 {
+	clock-frequency = <I2C_BITRATE_FAST>;
+};
