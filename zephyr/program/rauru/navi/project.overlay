@@ -74,6 +74,12 @@
 			gpios = <&gpioa 5 (GPIO_INPUT)>;
 			enum-name = "GPIO_POWER_BUTTON_L";
 		};
+		gpio_usb_c1_dp_in_hpd_l: ec_ap_dp_hpd_l {
+			gpios = <&gpiof 3 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_usb_c0_dp_in_hpd_l: usb_c0_dp_in_hpd {
+			gpios = <&gpiof 2 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_HIGH)>;
+		};
 	};
 
 	/* Rotation matrix used by drivers. */
