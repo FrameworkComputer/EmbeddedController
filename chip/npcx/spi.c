@@ -25,9 +25,6 @@
 #define CPRINTS(format, args...) cprints(CC_SPI, format, ##args)
 #endif
 
-/* SPI IP as SPI controller */
-#define SPI_CLK 8000000
-
 static struct mutex spi_lock;
 
 /**
@@ -44,19 +41,19 @@ static void clear_databuf(void)
 }
 
 /**
- * Preset SPI operation clock.
+ * Set SPI operation clock.
  *
- * @param   none
+ * @param   divisor division factor for SPI clock
  * @return  none
- * @notes   changed when initial or HOOK_FREQ_CHANGE command
+ * @notes   Set core clock division factor in order to obtain the SPI clock
  */
-void spi_freq_changed(void)
+static void set_spi_frequency(uint8_t divisor)
 {
 	uint8_t prescaler_divider = 0;
 
 	/* Set clock prescaler divider to SPI module*/
-	prescaler_divider =
-		(uint8_t)((uint32_t)clock_get_apb2_freq() / 2 / SPI_CLK);
+	prescaler_divider = DIV_ROUND_UP(divisor, 2);
+
 	if (prescaler_divider >= 1)
 		prescaler_divider = prescaler_divider - 1;
 	if (prescaler_divider > 0x7F)
@@ -67,7 +64,6 @@ void spi_freq_changed(void)
 		(NPCX_SPI_CTL1 & (~(((1 << 7) - 1) << NPCX_SPI_CTL1_SCDV))) |
 		(prescaler_divider << NPCX_SPI_CTL1_SCDV);
 }
-DECLARE_HOOK(HOOK_FREQ_CHANGE, spi_freq_changed, HOOK_PRIO_FIRST);
 
 /**
  * Set SPI enabled.
@@ -91,6 +87,9 @@ int spi_enable(const struct spi_device_t *spi_device, int enable)
 		gpio_set_flags(gpio, GPIO_OUTPUT);
 		/* Make sure CS# is deselected */
 		gpio_set_level(gpio, 1);
+		/* Set core clock division factor in order to obtain the spi
+		 * clock */
+		set_spi_frequency(spi_device->div);
 
 		/* Enabling spi module */
 		SET_BIT(NPCX_SPI_CTL1, NPCX_SPI_CTL1_SPIEN);
@@ -234,8 +233,6 @@ static void spi_init(void)
 	CLEAR_BIT(NPCX_SPI_CTL1, NPCX_SPI_CTL1_SCM);
 	/* Setting 8bit mode transfer */
 	CLEAR_BIT(NPCX_SPI_CTL1, NPCX_SPI_CTL1_MOD);
-	/* Set core clock division factor in order to obtain the spi clock */
-	spi_freq_changed();
 
 	/* We emit zeros in idle (default behaivor) */
 	CLEAR_BIT(NPCX_SPI_CTL1, NPCX_SPI_CTL1_SCIDL);
