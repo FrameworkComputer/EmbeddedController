@@ -128,12 +128,12 @@ void base_force_state(enum ec_set_base_state_cmd state)
 	case EC_SET_BASE_STATE_ATTACH:
 		base_detect_enable(false);
 		attached = true;
-		hook_call_deferred(&base_update_data, 0);
+		base_update();
 		break;
 	case EC_SET_BASE_STATE_DETACH:
 		base_detect_enable(false);
 		attached = false;
-		hook_call_deferred(&base_update_data, 0);
+		base_update();
 		break;
 	case EC_SET_BASE_STATE_RESET:
 		base_detect_enable(true);
