@@ -6,6 +6,7 @@ config CROS_EC_COL_GPIO_DRIVE
 	bool "GPIO driven column keyboard matrix hook"
 	depends on CROS_EC_KEYBOARD_INPUT
 	depends on DT_HAS_CROS_EC_COL_GPIO_ENABLED
+	depends on PM_DEVICE_RUNTIME
 	default y
 	select INPUT_KBD_DRIVE_COLUMN_HOOK
 	help

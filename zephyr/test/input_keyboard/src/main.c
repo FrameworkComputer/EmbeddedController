@@ -13,6 +13,8 @@
 #include <zephyr/fff.h>
 #include <zephyr/input/input.h>
 #include <zephyr/input/input_kbd_matrix.h>
+#include <zephyr/pm/device.h>
+#include <zephyr/pm/device_runtime.h>
 #include <zephyr/shell/shell_dummy.h>
 #include <zephyr/sys/util.h>
 #include <zephyr/ztest.h>
@@ -27,9 +29,19 @@ static const struct input_kbd_matrix_common_config kbd_cfg = {
 static const struct device *const fake_dev =
 	DEVICE_DT_GET(DT_NODELABEL(fake_input_device));
 
-DEVICE_DT_DEFINE(DT_INST(0, vnd_keyboard_input_device), NULL, NULL, NULL,
-		 &kbd_cfg, PRE_KERNEL_1, CONFIG_KERNEL_INIT_PRIORITY_DEVICE,
-		 NULL);
+static int vnd_keyboard_pm_action(const struct device *dev,
+				  enum pm_device_action action)
+{
+	return 0;
+}
+
+#define VND_KEYBOARD_NODE DT_INST(0, vnd_keyboard_input_device)
+
+PM_DEVICE_DT_DEFINE(VND_KEYBOARD_NODE, vnd_keyboard_pm_action);
+
+DEVICE_DT_DEFINE(VND_KEYBOARD_NODE, NULL, PM_DEVICE_DT_GET(VND_KEYBOARD_NODE),
+		 NULL, &kbd_cfg, PRE_KERNEL_1,
+		 CONFIG_KERNEL_INIT_PRIORITY_DEVICE, NULL);
 
 FAKE_VALUE_FUNC(int, system_is_locked);
 FAKE_VOID_FUNC(keyboard_state_changed, int, int, int);
@@ -59,41 +71,34 @@ ZTEST(keyboard_input, test_keyboard_input_events)
 
 ZTEST(keyboard_input, test_keyboard_input_enable_disable)
 {
-	zassert_equal(keyboard_state_changed_fake.call_count, 0);
+	enum pm_device_state state;
 
-	input_report_abs(fake_dev, INPUT_ABS_X, 1, false, K_FOREVER);
-	input_report_abs(fake_dev, INPUT_ABS_Y, 2, false, K_FOREVER);
-	input_report_key(fake_dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
-
-	zassert_equal(keyboard_state_changed_fake.call_count, 1);
+	pm_device_state_get(fake_dev, &state);
+	zassert_equal(state, PM_DEVICE_STATE_ACTIVE);
 
 	/* disable A */
 	keyboard_scan_enable(0, KB_SCAN_DISABLE_LID_CLOSED);
 
-	input_report_key(fake_dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
-
-	zassert_equal(keyboard_state_changed_fake.call_count, 1);
+	pm_device_state_get(fake_dev, &state);
+	zassert_equal(state, PM_DEVICE_STATE_SUSPENDED);
 
 	/* disable B */
 	keyboard_scan_enable(0, KB_SCAN_DISABLE_POWER_BUTTON);
 
-	input_report_key(fake_dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
-
-	zassert_equal(keyboard_state_changed_fake.call_count, 1);
+	pm_device_state_get(fake_dev, &state);
+	zassert_equal(state, PM_DEVICE_STATE_SUSPENDED);
 
 	/* enable A */
 	keyboard_scan_enable(1, KB_SCAN_DISABLE_LID_CLOSED);
 
-	input_report_key(fake_dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
-
-	zassert_equal(keyboard_state_changed_fake.call_count, 1);
+	pm_device_state_get(fake_dev, &state);
+	zassert_equal(state, PM_DEVICE_STATE_SUSPENDED);
 
 	/* enable B */
 	keyboard_scan_enable(1, KB_SCAN_DISABLE_POWER_BUTTON);
 
-	input_report_key(fake_dev, INPUT_BTN_TOUCH, 1, true, K_FOREVER);
-
-	zassert_equal(keyboard_state_changed_fake.call_count, 2);
+	pm_device_state_get(fake_dev, &state);
+	zassert_equal(state, PM_DEVICE_STATE_ACTIVE);
 }
 
 ZTEST(keyboard_input, test_kso_gpio)

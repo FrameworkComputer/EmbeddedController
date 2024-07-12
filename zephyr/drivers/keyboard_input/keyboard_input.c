@@ -16,6 +16,8 @@
 #include <zephyr/input/input.h>
 #include <zephyr/input/input_kbd_matrix.h>
 #include <zephyr/logging/log.h>
+#include <zephyr/pm/device.h>
+#include <zephyr/pm/device_runtime.h>
 #include <zephyr/shell/shell.h>
 #include <zephyr/sys/atomic.h>
 
@@ -44,12 +46,35 @@ uint8_t keyboard_get_rows(void)
 
 void keyboard_scan_enable(int enable, enum kb_scan_disable_masks mask)
 {
+	int prev_mask;
+
 	if (enable) {
-		atomic_and(&disable_scan_mask, ~mask);
+		prev_mask = atomic_and(&disable_scan_mask, ~mask);
 	} else {
-		atomic_or(&disable_scan_mask, mask);
+		prev_mask = atomic_or(&disable_scan_mask, mask);
+	}
+
+	if (!pm_device_runtime_is_enabled(kbd_dev)) {
+		LOG_WRN("device %s does not support runtime PM", kbd_dev->name);
+		return;
+	}
+
+	if (prev_mask == 0 && atomic_get(&disable_scan_mask) != 0) {
+		pm_device_runtime_put(kbd_dev);
+	} else if (prev_mask != 0 && atomic_get(&disable_scan_mask) == 0) {
+		pm_device_runtime_get(kbd_dev);
 	}
 }
+
+static int keyboard_pm_init(void)
+{
+	/* Initialize as active */
+	pm_device_runtime_get(kbd_dev);
+
+	return 0;
+}
+
+SYS_INIT(keyboard_pm_init, APPLICATION, 0);
 
 static void keyboard_input_cb(struct input_event *evt, void *user_data)
 {
@@ -67,10 +92,6 @@ static void keyboard_input_cb(struct input_event *evt, void *user_data)
 	case INPUT_BTN_TOUCH:
 		pressed = evt->value;
 		break;
-	}
-
-	if (atomic_get(&disable_scan_mask) != 0) {
-		return;
 	}
 
 	if (evt->sync) {
