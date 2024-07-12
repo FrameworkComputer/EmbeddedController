@@ -21,8 +21,12 @@
 
 /* SPI devices */
 const struct spi_device_t spi_devices[] = {
-	/* Fingerprint sensor (SCLK at 4Mhz) */
-	{ .port = CONFIG_SPI_FP_PORT, .div = 3, .gpio_cs = GPIO_FP_SPI_CS }
+	/* Fingerprint sensor (SCLK at 4Mhz)
+	 * The SPI clock uses the APB2_CLK. The current setting of APB2_CLK is
+	 * 15MHz (90MHz/6). Thus, the divider must be set to 4 as close as 4MHz
+	 * SCLK. So actually the SCLK will be 3.75MHz (15MHz/4).
+	 */
+	{ .port = CONFIG_SPI_FP_PORT, .div = 4, .gpio_cs = GPIO_FP_SPI_CS }
 };
 const unsigned int spi_devices_used = ARRAY_SIZE(spi_devices);
 
