@@ -165,14 +165,14 @@
 	/* Rotation matrix used by drivers. */
 	motionsense-rotation-ref {
 		lid_rot_ref_bma422: lid-rotation-ref-bma422 {
-			mat33 = <0 1 0
+			mat33 = <0 (-1) 0
 				 1 0 0
 				 0 0 (-1)>;
 		};
 
 		base_rot_ref_bmi323: base-rotation-ref-bmi323 {
 			mat33 = <0 1 0
-				 (-1) 0 0
+				 1 0 0
 				 0 0 1>;
 		};
 	};
@@ -233,7 +233,7 @@
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&base_mutex>;
 			port = <&i2c_sensor>;
-			rot-standard-ref = <&base_rot_ref>;
+			rot-standard-ref = <&base_rot_ref_bmi323>;
 			drv-data = <&bmi323_data>;
 			configs {
 				compatible =
@@ -255,7 +255,7 @@
 			location = "MOTIONSENSE_LOC_BASE";
 			mutex = <&base_mutex>;
 			port = <&i2c_sensor>;
-			rot-standard-ref = <&base_rot_ref>;
+			rot-standard-ref = <&base_rot_ref_bmi323>;
 			drv-data = <&bmi323_data>;
 		};
 	};
