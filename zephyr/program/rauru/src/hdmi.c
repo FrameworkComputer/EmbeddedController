@@ -6,14 +6,20 @@
 #include "ap_power/ap_power.h"
 #include "chipset.h"
 #include "console.h"
+#include "cros_board_info.h"
+#include "cros_cbi.h"
 #include "gpio/gpio_int.h"
 #include "hooks.h"
 #include "rauru_dp.h"
 #include "timer.h"
 #include "usb_pd.h"
 
+#include <zephyr/logging/log.h>
+
 #define CPRINTS(format, args...) cprints(CC_USBPD, format, ##args)
 #define CPRINTF(format, args...) cprintf(CC_USBPD, format, ##args)
+
+LOG_MODULE_DECLARE(rauru, CONFIG_RAURU_LOG_LEVEL);
 
 static void hdmi_hpd_low_deferred(void)
 {
@@ -22,6 +28,41 @@ static void hdmi_hpd_low_deferred(void)
 	}
 }
 DECLARE_DEFERRED(hdmi_hpd_low_deferred);
+
+bool rauru_has_hdmi_port(void)
+{
+	static bool init;
+	static bool rauru_has_hdmi;
+	int ret;
+	uint32_t val;
+
+	if (init) {
+		return rauru_has_hdmi;
+	}
+
+	init = true;
+	ret = cros_cbi_get_fw_config(FW_HDMI, &val);
+	if (ret != 0) {
+		LOG_WRN("Error retrieving CBI FW_CONFIG field %d", FW_HDMI);
+		return rauru_has_hdmi;
+	}
+
+	switch (val) {
+	default:
+		LOG_WRN("HDMI: Unknown %d", val);
+		break;
+	case FW_HDMI_NOT_PRESENT:
+		rauru_has_hdmi = false;
+		LOG_INF("HDMI: Not present");
+		break;
+
+	case FW_HDMI_PRESENT:
+		rauru_has_hdmi = true;
+		LOG_INF("HDMI: Present");
+		break;
+	}
+	return rauru_has_hdmi;
+}
 
 void hdmi_hpd_interrupt(enum gpio_signal signal)
 {
@@ -48,6 +89,9 @@ static void board_hdmi_suspend(struct ap_power_ev_callback *cb,
 {
 	int value;
 
+	if (!rauru_has_hdmi_port()) {
+		return;
+	}
 	switch (data.event) {
 	default:
 		return;

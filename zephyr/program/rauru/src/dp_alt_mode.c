@@ -43,7 +43,8 @@ void rauru_detach_dp_path(enum rauru_dp_port port)
 
 	/* Detach and then rotate. Priority: HDMI -> C0 -> C1 */
 #if CONFIG_RAURU_BOARD_HAS_HDMI_SUPPORT
-	if (port != DP_PORT_HDMI && rauru_is_hpd_high(DP_PORT_HDMI)) {
+	if (rauru_has_hdmi_port() && port != DP_PORT_HDMI &&
+	    rauru_is_hpd_high(DP_PORT_HDMI)) {
 		rauru_set_dp_path(DP_PORT_HDMI);
 		return;
 	}

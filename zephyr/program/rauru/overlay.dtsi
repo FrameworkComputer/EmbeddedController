@@ -14,6 +14,39 @@
 	rauru-fw-config {
 		compatible = "cros-ec,cbi-fw-config";
 
+		hdmi {
+			enum-name = "FW_HDMI";
+			start = <13>;
+			size = <1>;
+			hdmi-not-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_HDMI_NOT_PRESENT";
+				value = <0>;
+			};
+			hdmi-present {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_HDMI_PRESENT";
+				value = <1>;
+				default;
+			};
+		};
+		fingerprint {
+			enum-name = "FW_FINGERPRINT";
+			start = <14>;
+			size = <2>;
+
+			fp-disabled {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FP_DISABLED";
+				value = <0>;
+				default;
+			};
+			fp-helipilot {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_FP_HELIPILOT";
+				value = <1>;
+			};
+		};
 		form-factor {
 			enum-name = "FW_FORM_FACTOR";
 			start = <16>;
