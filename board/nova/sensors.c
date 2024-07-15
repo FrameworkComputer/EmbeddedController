@@ -91,10 +91,22 @@ static const struct ec_thermal_config thermal_cpu = {
 		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
 	},
 	.temp_host_release = {
-		[EC_TEMP_THRESH_HIGH] = C_TO_K(78),
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(82),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(88),
 	},
-	.temp_fan_off = C_TO_K(35),
-	.temp_fan_max = C_TO_K(55),
+	.temp_fan_off = C_TO_K(45),
+	.temp_fan_max = C_TO_K(85),
+};
+
+static const struct ec_thermal_config thermal_other = {
+	.temp_host = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(85),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(90),
+	},
+	.temp_host_release = {
+		[EC_TEMP_THRESH_HIGH] = C_TO_K(82),
+		[EC_TEMP_THRESH_HALT] = C_TO_K(88),
+	},
 };
 
 /*
@@ -103,9 +115,9 @@ static const struct ec_thermal_config thermal_cpu = {
 /* this should really be "const" */
 struct ec_thermal_config thermal_params[] = {
 	[TEMP_SENSOR_1_CPU] = thermal_cpu,
-	[TEMP_SENSOR_2_CPU_VR] = thermal_cpu,
-	[TEMP_SENSOR_3_WIFI] = thermal_cpu,
-	[TEMP_SENSOR_4_DIMM] = thermal_cpu,
+	[TEMP_SENSOR_2_CPU_VR] = thermal_other,
+	[TEMP_SENSOR_3_WIFI] = thermal_other,
+	[TEMP_SENSOR_4_DIMM] = thermal_other,
 };
 BUILD_ASSERT(ARRAY_SIZE(thermal_params) == TEMP_SENSOR_COUNT);
 
