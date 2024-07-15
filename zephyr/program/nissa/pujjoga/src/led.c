@@ -7,16 +7,25 @@
  * Power LED is white on sub-board. Battery LEDs is green and red on board.
  */
 
+#include "board_led.h"
 #include "common.h"
-#include "gpio.h"
 #include "led_common.h"
 #include "led_onoff_states.h"
+#include "util.h"
 
-#define CPRINTS(format, args...) cprints(CC_CHARGER, format, ##args)
-#define CPRINTF(format, args...) cprintf(CC_CHARGER, format, ##args)
+#include <zephyr/drivers/pwm.h>
+#include <zephyr/logging/log.h>
 
-#define LED_OFF_LVL 1
-#define LED_ON_LVL 0
+LOG_MODULE_REGISTER(board_led, LOG_LEVEL_ERR);
+
+#define BOARD_LED_PWM_PERIOD_NS BOARD_LED_HZ_TO_PERIOD_NS(100)
+
+static const struct board_led_pwm_dt_channel board_led_battery_red =
+	BOARD_LED_PWM_DT_CHANNEL_INITIALIZER(DT_NODELABEL(led_battery_red));
+static const struct board_led_pwm_dt_channel board_led_battery_green =
+	BOARD_LED_PWM_DT_CHANNEL_INITIALIZER(DT_NODELABEL(led_battery_green));
+static const struct board_led_pwm_dt_channel board_led_power_white =
+	BOARD_LED_PWM_DT_CHANNEL_INITIALIZER(DT_NODELABEL(led_power_white));
 
 __override const int led_charge_lvl_1 = 5;
 
@@ -58,43 +67,59 @@ const enum ec_led_id supported_led_ids[] = { EC_LED_ID_BATTERY_LED,
 
 const int supported_led_ids_count = ARRAY_SIZE(supported_led_ids);
 
+static void board_led_pwm_set_duty(const struct board_led_pwm_dt_channel *ch,
+				   int percent)
+{
+	uint32_t pulse_ns;
+	int rv;
+
+	if (!device_is_ready(ch->dev)) {
+		LOG_ERR("device %s not ready", ch->dev->name);
+		return;
+	}
+
+	pulse_ns = DIV_ROUND_NEAREST(BOARD_LED_PWM_PERIOD_NS * percent, 100);
+
+	LOG_DBG("Board LED PWM %s set percent (%d), pulse %d", ch->dev->name,
+		percent, pulse_ns);
+
+	rv = pwm_set(ch->dev, ch->channel, BOARD_LED_PWM_PERIOD_NS, pulse_ns,
+		     ch->flags);
+	if (rv) {
+		LOG_ERR("pwm_set() failed %s (%d)", ch->dev->name, rv);
+	}
+}
+
 __override void led_set_color_power(enum ec_led_colors color)
 {
-	if (color == EC_LED_COLOR_WHITE)
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_power_led),
-				LED_ON_LVL);
-	else
-		/* LED_OFF and unsupported colors */
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_power_led),
-				LED_OFF_LVL);
+	switch (color) {
+	case EC_LED_COLOR_WHITE:
+		board_led_pwm_set_duty(&board_led_power_white, 100);
+		break;
+	default:
+		board_led_pwm_set_duty(&board_led_power_white, 0);
+		break;
+	}
 }
 
 __override void led_set_color_battery(enum ec_led_colors color)
 {
 	switch (color) {
 	case EC_LED_COLOR_AMBER:
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led_1_odl),
-				LED_ON_LVL);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led_2_odl),
-				LED_ON_LVL);
+		board_led_pwm_set_duty(&board_led_battery_red, 30);
+		board_led_pwm_set_duty(&board_led_battery_green, 100);
 		break;
 	case EC_LED_COLOR_RED:
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led_1_odl),
-				LED_ON_LVL);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led_2_odl),
-				LED_OFF_LVL);
+		board_led_pwm_set_duty(&board_led_battery_red, 100);
+		board_led_pwm_set_duty(&board_led_battery_green, 0);
 		break;
 	case EC_LED_COLOR_GREEN:
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led_1_odl),
-				LED_OFF_LVL);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led_2_odl),
-				LED_ON_LVL);
+		board_led_pwm_set_duty(&board_led_battery_red, 0);
+		board_led_pwm_set_duty(&board_led_battery_green, 100);
 		break;
 	default: /* LED_OFF and other unsupported colors */
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led_1_odl),
-				LED_OFF_LVL);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_led_2_odl),
-				LED_OFF_LVL);
+		board_led_pwm_set_duty(&board_led_battery_red, 0);
+		board_led_pwm_set_duty(&board_led_battery_green, 0);
 		break;
 	}
 }
@@ -102,8 +127,8 @@ __override void led_set_color_battery(enum ec_led_colors color)
 void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 {
 	if (led_id == EC_LED_ID_BATTERY_LED) {
-		brightness_range[EC_LED_COLOR_RED] = 1;
 		brightness_range[EC_LED_COLOR_AMBER] = 1;
+		brightness_range[EC_LED_COLOR_RED] = 1;
 		brightness_range[EC_LED_COLOR_GREEN] = 1;
 	} else if (led_id == EC_LED_ID_POWER_LED) {
 		brightness_range[EC_LED_COLOR_WHITE] = 1;
@@ -113,14 +138,15 @@ void led_get_brightness_range(enum ec_led_id led_id, uint8_t *brightness_range)
 int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 {
 	if (led_id == EC_LED_ID_BATTERY_LED) {
-		if (brightness[EC_LED_COLOR_RED] != 0)
+		if (brightness[EC_LED_COLOR_RED] != 0) {
 			led_set_color_battery(EC_LED_COLOR_RED);
-		else if (brightness[EC_LED_COLOR_AMBER] != 0)
+		} else if (brightness[EC_LED_COLOR_AMBER] != 0) {
 			led_set_color_battery(EC_LED_COLOR_AMBER);
-		else if (brightness[EC_LED_COLOR_GREEN] != 0)
+		} else if (brightness[EC_LED_COLOR_GREEN] != 0) {
 			led_set_color_battery(EC_LED_COLOR_GREEN);
-		else
+		} else {
 			led_set_color_battery(LED_OFF);
+		}
 	} else if (led_id == EC_LED_ID_POWER_LED) {
 		if (brightness[EC_LED_COLOR_WHITE] != 0)
 			led_set_color_power(EC_LED_COLOR_WHITE);
@@ -129,4 +155,20 @@ int led_set_brightness(enum ec_led_id led_id, const uint8_t *brightness)
 	}
 
 	return EC_SUCCESS;
+}
+
+__override void led_control(enum ec_led_id led_id, enum ec_led_state state)
+{
+	if ((led_id != EC_LED_ID_RECOVERY_HW_REINIT_LED) &&
+	    (led_id != EC_LED_ID_SYSRQ_DEBUG_LED))
+		return;
+
+	if (state == LED_STATE_RESET) {
+		led_auto_control(EC_LED_ID_BATTERY_LED, 1);
+		return;
+	}
+
+	led_auto_control(EC_LED_ID_BATTERY_LED, 0);
+
+	led_set_color_battery(state ? EC_LED_COLOR_RED : EC_LED_COLOR_INVALID);
 }
