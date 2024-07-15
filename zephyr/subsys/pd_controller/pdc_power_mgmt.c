@@ -53,11 +53,16 @@ LOG_MODULE_REGISTER(pdc_power_mgmt, CONFIG_USB_PDC_LOG_LEVEL);
 #define PUBLIC_CMD_DELAY_MS 10
 
 /**
+ * @brief Maximum time to wait for a command to complete.
+ */
+#define PDC_CMD_TIMEOUT_MS 2000
+
+/**
  * @brief maximum number of times to try and send a command, or wait for a
  * public API command to execute (Time is 2s)
  *
  */
-#define WAIT_MAX (2000 / LOOP_DELAY_MS)
+#define WAIT_MAX (PDC_CMD_TIMEOUT_MS / LOOP_DELAY_MS)
 
 /**
  * @brief maximum number of times to try and send a command, or wait for a
@@ -601,8 +606,6 @@ struct pdc_port_t {
 	union cable_property_t cable_prop;
 	/** PDC version and other information */
 	struct pdc_info_t info;
-	/** Public API block counter */
-	uint8_t block_counter;
 	/** Command mutex */
 	struct k_mutex mtx;
 	/** PDC command to send */
@@ -2395,19 +2398,20 @@ static int public_api_block(int port, enum pdc_cmd_t pdc_cmd)
 {
 	int ret;
 	struct cmd_t *public_cmd;
+	k_timepoint_t cmd_timepoint;
 
 	ret = queue_public_cmd(&pdc_data[port]->port, pdc_cmd);
 	if (ret) {
 		return ret;
 	}
 
-	/* Reset block counter */
-	pdc_data[port]->port.block_counter = 0;
 	public_cmd = &pdc_data[port]->port.send_cmd.public;
 
 	/* TODO: Investigate using a semaphore here instead of while loop */
 	/* Block calling thread until command is processed, errors or timeout
 	 * occurs. */
+	cmd_timepoint = sys_timepoint_calc(K_MSEC(PDC_CMD_TIMEOUT_MS));
+
 	while (public_cmd->pending && !public_cmd->error) {
 		/* block until command completes or max block count is reached
 		 */
@@ -2422,13 +2426,7 @@ static int public_api_block(int port, enum pdc_cmd_t pdc_cmd)
 				      PDC_PUBLIC_CMD_COMPLETE_EVENT);
 		}
 
-		pdc_data[port]->port.block_counter++;
-		/*
-		 * TODO(b/325070749): This timeout value likely needs to be
-		 * adjusted given that internal commands may be resent up to 2
-		 * times with a 2 second timeout for each send attempt.
-		 */
-		if (pdc_data[port]->port.block_counter > WAIT_MAX) {
+		if (sys_timepoint_expired(cmd_timepoint)) {
 			/* something went wrong */
 			LOG_ERR("C%d: Public API blocking timeout: %s", port,
 				pdc_cmd_names[public_cmd->cmd]);
