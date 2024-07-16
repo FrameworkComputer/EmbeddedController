@@ -13,11 +13,13 @@ zephyr_include_directories(
 	include)
 
 target_sources(app PRIVATE
+	${PLATFORM_EC_PROGRAM_DIR}/geralt/src/base_detect.c
 	${PLATFORM_EC_PROGRAM_DIR}/geralt/src/usbc_config.c
 	${PLATFORM_EC_PROGRAM_DIR}/geralt/src/usb_pd_policy.c)
 
 target_sources_ifdef(CONFIG_TEST_GERALT
 	app PRIVATE
+	src/base_detect.c
 	src/common.c
 	src/fakes.c
 	src/main.c

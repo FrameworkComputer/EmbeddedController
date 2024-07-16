@@ -26,15 +26,19 @@ static void base_update(bool attached)
 {
 	const struct gpio_dt_spec *en_cc_lid_base_pu =
 		GPIO_DT_FROM_NODELABEL(en_cc_lid_base_pu);
+#ifndef CONFIG_ZTEST
 	const static struct device *one_wire_uart =
 		DEVICE_DT_GET(DT_NODELABEL(one_wire_uart));
+#endif
 
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(en_ppvar_base_x), attached);
+#ifndef CONFIG_ZTEST
 	if (attached) {
 		one_wire_uart_enable(one_wire_uart);
 	} else {
 		one_wire_uart_disable(one_wire_uart);
 	}
+#endif
 
 	base_set_state(attached);
 	tablet_set_mode(!attached, TABLET_TRIGGER_BASE);
