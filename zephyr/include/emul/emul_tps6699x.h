@@ -6,6 +6,8 @@
 #ifndef __EMUL_TPS6699X_H_
 #define __EMUL_TPS6699X_H_
 
+#include "drivers/ucsi_v3.h"
+
 #include <stdint.h>
 
 #include <zephyr/drivers/gpio.h>
@@ -21,6 +23,8 @@ struct tps6699x_emul_pdc_data {
 	 * TODO(b/345292002): Define a real data structure for registers.
 	 */
 	uint8_t reg_val[0xa4][64];
+
+	union connector_reset_t reset_cmd;
 };
 
 #endif /* __EMUL_TPS6699X_H_ */
