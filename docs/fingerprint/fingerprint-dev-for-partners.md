@@ -66,9 +66,9 @@ This FPMCU board is Quincy Rev 3. |
 
 <!-- mdformat off(b/139308852) -->
 *** note
-**Googlers**: You can pick up an Quincy development board at Chromestop.
+**Googlers**: You can pick up a Quincy development board at Chromestop.
 
-**Partners**: You can request an Quincy development board from Google.
+**Partners**: You can request a Quincy development board from Google.
 ***
 <!-- mdformat on -->
 
