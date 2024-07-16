@@ -54,8 +54,6 @@
 #define CONFIG_IO_EXPANDER_NCT38XX
 #define CONFIG_IO_EXPANDER_PORT_COUNT 2
 
-#define CONFIG_USB_PD_FRS_PPC
-
 /* I2C speed console command */
 #define CONFIG_CMD_I2C_SPEED
 
