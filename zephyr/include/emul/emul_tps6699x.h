@@ -13,7 +13,10 @@
 struct tps6699x_emul_pdc_data {
 	struct gpio_dt_spec irq_gpios;
 	uint32_t delay_ms;
+	/* The register address currently being read or written. */
 	uint8_t reg_addr;
+	/* The stated length of the current read or write. */
+	uint8_t transaction_bytes;
 	/* There are 0xa4 registers, and the biggest is 512 bits long.
 	 * TODO(b/345292002): Define a real data structure for registers.
 	 */

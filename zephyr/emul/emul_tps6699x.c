@@ -47,13 +47,29 @@ tps6699x_emul_get_pdc_data(const struct emul *emul)
 static bool register_is_valid(const struct tps6699x_emul_pdc_data *data,
 			      int reg)
 {
-	return reg <= sizeof(data->reg_val) / sizeof(*data->reg_val);
+	return reg < sizeof(data->reg_val) / sizeof(*data->reg_val);
 }
 
+/** Check that a register access is valid. A valid access has
+ *  1) a valid register address,
+ *  2) a byte offset less than the size of that register, and
+ *  3) a byte offset less than the size of the read or write indicated at the
+ *     start of this transaction.
+ *
+ *  @param data  Emulator data; not really used at runtime, but makes offset
+ *               checks shorter and more obviously correct
+ *  @param reg   Register address from first byte of write message
+ *  @param bytes Offset within register of current byte; for writes, this is 1
+ *               less than the offset within the message body, because byte 0 is
+ *               the write length.
+ *  @return True if register access is valid
+ */
 static bool register_access_is_valid(const struct tps6699x_emul_pdc_data *data,
 				     int reg, int bytes)
 {
-	return register_is_valid(data, reg) && bytes <= sizeof(*data->reg_val);
+	return register_is_valid(data, reg) &&
+	       bytes <= sizeof(*data->reg_val) &&
+	       bytes <= data->transaction_bytes;
 }
 
 static int tps6699x_emul_start_write(const struct emul *emul, int reg)
@@ -75,12 +91,23 @@ static int tps6699x_emul_write_byte(const struct emul *emul, int reg,
 				    uint8_t val, int bytes)
 {
 	struct tps6699x_emul_pdc_data *data = tps6699x_emul_get_pdc_data(emul);
+	/* The first byte of the write message is the length. */
+	int data_bytes = bytes - 1;
 
-	if (!register_access_is_valid(data, reg, bytes)) {
+	__ASSERT(bytes > 0, "start_write implicitly consumes byte 0");
+
+	if (bytes == 1) {
+		data->transaction_bytes = val;
+		return 0;
+	}
+
+	if (!register_access_is_valid(data, reg, data_bytes)) {
+		LOG_ERR("Invalid register access of %#02x[%#02x]", reg,
+			data_bytes);
 		return -EIO;
 	}
 
-	data->reg_val[reg][bytes] = val;
+	data->reg_val[reg][data_bytes] = val;
 
 	return 0;
 }
@@ -89,6 +116,14 @@ static int tps6699x_emul_finish_write(const struct emul *emul, int reg,
 				      int bytes)
 {
 	/* TODO(b/345292002): Actually handle register accesses. */
+	__ASSERT(bytes > 0,
+		 "start_write and write_byte implicitly consume bytes 0-1");
+
+	LOG_DBG("finish_write reg=%#x, bytes=%d+2", reg, bytes - 2);
+
+	/* No need to validate inputs; this function will only be called if
+	 * write_byte validated its inputs and succeeded.
+	 */
 
 	return 0;
 }
