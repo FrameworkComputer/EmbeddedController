@@ -1,0 +1,22 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config PLATFORM_EC_USB_I2C
+	bool "I2C over USB support"
+	help
+	  Enable the I2C transaction over USB interface.
+
+config PLATFORM_EC_USB_I2C_MAX_READ_COUNT
+	int "Max. I2C read count"
+	depends on PLATFORM_EC_USB_I2C
+	default 1018
+	help
+	  The maximum count of I2C receive.
+
+config PLATFORM_EC_USB_I2C_MAX_WRITE_COUNT
+	int "Max. I2C write count"
+	depends on PLATFORM_EC_USB_I2C
+	default 1020
+	help
+	  The maximum count of I2C transmitters.
