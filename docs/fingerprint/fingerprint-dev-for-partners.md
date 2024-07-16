@@ -34,9 +34,9 @@ of the board, please request a replacement.
 ***
 <!-- mdformat on -->
 
-This FPMCU board is the Dragonclaw Rev 0.3. |
-------------------------------------------- |
-![Dragonclaw board]                         |
+This FPMCU board is the Dragonclaw Rev 4. |
+----------------------------------------- |
+![Dragonclaw board]                       |
 
 Download the [Dragonclaw schematics, layout, and BOM][dragonclaw schematics].
 
@@ -605,7 +605,7 @@ Make sure that this interface is disabled:
 
 [Servo Micro]: ../images/servo_micro.jpg
 [Servo Micro with Dragonclaw]: ../images/servomicro_dragonclaw.jpg
-[Dragonclaw board]: ../images/dragonclaw_v0.3.jpg
+[Dragonclaw board]: ../images/dragonclaw_v4.jpg
 [Dragonclaw servo fix diagram]: ../images/dragonclaw_servo_fix.jpg
 [Icetower board]: ../images/icetower_v3.jpg
 [Quincy board]: ../images/quincy_v2.jpg
