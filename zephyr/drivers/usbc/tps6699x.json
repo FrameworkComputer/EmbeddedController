@@ -3133,8 +3133,8 @@
                 "end position": 31,
                 "name": "Customer Use Word 1",
                 "start position": 0,
-                "value (EDITABLE)": "0x3",
-                "value description": "0x3"
+                "value (EDITABLE)": "0x4",
+                "value description": "0x4"
               },
               {
                 "end position": 63,
@@ -3154,22 +3154,22 @@
                 "end position": 1,
                 "name": "PD Hardreset",
                 "start position": 1,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 3,
                 "name": "Plug Insert or Removal",
                 "start position": 3,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 4,
                 "name": "Power Swap Complete",
                 "start position": 4,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 5,
@@ -3182,8 +3182,8 @@
                 "end position": 6,
                 "name": "FR Swap Complete",
                 "start position": 6,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 8,
@@ -3287,8 +3287,8 @@
                 "end position": 26,
                 "name": "Status Updated",
                 "start position": 26,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 27,
@@ -3336,8 +3336,8 @@
                 "end position": 35,
                 "name": "Power Event Occurred Error",
                 "start position": 35,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 36,
@@ -3497,8 +3497,8 @@
                 "end position": 61,
                 "name": "External DCDC Event Received",
                 "start position": 61,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 62,
@@ -4470,8 +4470,8 @@
                 "end position": 1,
                 "name": "TypeC Current",
                 "start position": 0,
-                "value (EDITABLE)": "0x1",
-                "value description": "1.5 A"
+                "value (EDITABLE)": "0x2",
+                "value description": "3.0 A"
               },
               {
                 "end position": 4,
@@ -4533,8 +4533,8 @@
                 "end position": 12,
                 "name": "Process Swap to UFP",
                 "start position": 12,
-                "value (EDITABLE)": "0x1",
-                "value description": "True"
+                "value (EDITABLE)": "0x0",
+                "value description": "False"
               },
               {
                 "end position": 13,
@@ -4547,8 +4547,8 @@
                 "end position": 14,
                 "name": "Process Swap to DFP",
                 "start position": 14,
-                "value (EDITABLE)": "0x1",
-                "value description": "True"
+                "value (EDITABLE)": "0x0",
+                "value description": "False"
               },
               {
                 "end position": 15,
@@ -8528,8 +8528,8 @@
                 "end position": 31,
                 "name": "Customer Use Word 1",
                 "start position": 0,
-                "value (EDITABLE)": "0x3",
-                "value description": "0x3"
+                "value (EDITABLE)": "0x4",
+                "value description": "0x4"
               },
               {
                 "end position": 63,
@@ -8549,22 +8549,22 @@
                 "end position": 1,
                 "name": "PD Hardreset",
                 "start position": 1,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 3,
                 "name": "Plug Insert or Removal",
                 "start position": 3,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 4,
                 "name": "Power Swap Complete",
                 "start position": 4,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 5,
@@ -8577,8 +8577,8 @@
                 "end position": 6,
                 "name": "FR Swap Complete",
                 "start position": 6,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 8,
@@ -8682,8 +8682,8 @@
                 "end position": 26,
                 "name": "Status Updated",
                 "start position": 26,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 27,
@@ -8731,8 +8731,8 @@
                 "end position": 35,
                 "name": "Power Event Occurred Error",
                 "start position": 35,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 36,
@@ -8892,8 +8892,8 @@
                 "end position": 61,
                 "name": "External DCDC Event Received",
                 "start position": 61,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 62,
@@ -9928,8 +9928,8 @@
                 "end position": 12,
                 "name": "Process Swap to UFP",
                 "start position": 12,
-                "value (EDITABLE)": "0x1",
-                "value description": "True"
+                "value (EDITABLE)": "0x0",
+                "value description": "False"
               },
               {
                 "end position": 13,
@@ -9942,8 +9942,8 @@
                 "end position": 14,
                 "name": "Process Swap to DFP",
                 "start position": 14,
-                "value (EDITABLE)": "0x1",
-                "value description": "True"
+                "value (EDITABLE)": "0x0",
+                "value description": "False"
               },
               {
                 "end position": 15,
@@ -13926,7 +13926,7 @@
     "mode": "config",
     "noOfConnectedDevices": "1",
     "sharedSettings": true,
-    "timeStamp": "7-8-2024_14-6-7"
+    "timeStamp": "7-18-2024_11-39-59"
   },
   "miscellaneous": {
     "configuration mapping": {
