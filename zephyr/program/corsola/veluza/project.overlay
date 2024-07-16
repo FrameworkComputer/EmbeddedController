@@ -166,13 +166,13 @@
 	motionsense-rotation-ref {
 		lid_rot_ref_bma422: lid-rotation-ref-bma422 {
 			mat33 = <0 (-1) 0
-				 1 0 0
+				 (-1) 0 0
 				 0 0 (-1)>;
 		};
 
 		base_rot_ref_bmi323: base-rotation-ref-bmi323 {
 			mat33 = <0 1 0
-				 1 0 0
+				 (-1) 0 0
 				 0 0 1>;
 		};
 	};
