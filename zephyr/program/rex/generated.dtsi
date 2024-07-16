@@ -93,7 +93,10 @@
 			gpios = <&gpioc 1 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_HIGH | GPIO_OUTPUT_INIT_LOW)>;
 			enum-name = "GPIO_PCH_PWRBTN_L";
 		};
-		gpio_ec_soc_rsmrst_l: ec_soc_rsmrst_l {
+		gpio_ec_soc_rec_switch_r_odl: ec_soc_rec_switch_r_odl {
+			gpios = <&gpio9 4 (GPIO_OUTPUT | GPIO_OPEN_DRAIN | GPIO_ACTIVE_LOW | GPIO_OUTPUT_INIT_HIGH)>;
+		};
+		gpio_ec_soc_rsmrst_l_r: ec_soc_rsmrst_l_r {
 			gpios = <&gpioa 6 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_soc_rtcrst: ec_soc_rtcrst {
@@ -110,12 +113,6 @@
 		};
 		gpio_ec_spare_gpio66: ec_spare_gpio66 {
 			gpios = <&gpio6 6 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
-		};
-		gpio_ec_spare_gpio94: ec_spare_gpio94 {
-			gpios = <&gpio9 4 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
-		};
-		gpio_ec_spare_gpioa2: ec_spare_gpioa2 {
-			gpios = <&gpioa 2 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_ec_spare_gpioa4: ec_spare_gpioa4 {
 			gpios = <&gpioa 4 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
@@ -187,7 +184,10 @@
 		gpio_sochot_odl: sochot_odl {
 			gpios = <&gpio9 6 (GPIO_INPUT)>;
 		};
-		gpio_soc_pwrok: soc_pwrok {
+		gpio_soc_ec_ish_nb_mode: soc_ec_ish_nb_mode {
+			gpios = <&gpioa 2 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
+		gpio_soc_pwrok_r: soc_pwrok_r {
 			gpios = <&gpioa 5 (GPIO_OUTPUT | GPIO_ACTIVE_HIGH)>;
 		};
 		gpio_sys_pwrok: sys_pwrok {
