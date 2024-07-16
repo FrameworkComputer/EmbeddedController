@@ -60,8 +60,6 @@ static int tps6699x_emul_start_write(const struct emul *emul, int reg)
 {
 	struct tps6699x_emul_pdc_data *data = tps6699x_emul_get_pdc_data(emul);
 
-	LOG_DBG("start_write reg=%#x", reg);
-
 	if (!register_is_valid(data, reg)) {
 		return -EIO;
 	}
@@ -78,8 +76,6 @@ static int tps6699x_emul_write_byte(const struct emul *emul, int reg,
 {
 	struct tps6699x_emul_pdc_data *data = tps6699x_emul_get_pdc_data(emul);
 
-	LOG_DBG("write_byte reg=%#x, val=%#02x, bytes=%d", reg, val, bytes);
-
 	if (!register_access_is_valid(data, reg, bytes)) {
 		return -EIO;
 	}
@@ -92,8 +88,6 @@ static int tps6699x_emul_write_byte(const struct emul *emul, int reg,
 static int tps6699x_emul_finish_write(const struct emul *emul, int reg,
 				      int bytes)
 {
-	LOG_DBG("finish_write reg=%#x, bytes=%d", reg, bytes);
-
 	/* TODO(b/345292002): Actually handle register accesses. */
 
 	return 0;
@@ -102,8 +96,6 @@ static int tps6699x_emul_finish_write(const struct emul *emul, int reg,
 static int tps6699x_emul_start_read(const struct emul *emul, int reg)
 {
 	struct tps6699x_emul_pdc_data *data = tps6699x_emul_get_pdc_data(emul);
-
-	LOG_DBG("start_read reg=%#x", reg);
 
 	if (!register_is_valid(data, reg)) {
 		return -EIO;
@@ -134,8 +126,6 @@ static int tps6699x_emul_read_byte(const struct emul *emul, int reg,
 	} else {
 		*val = data->reg_val[reg][bytes];
 	}
-
-	LOG_DBG("read_byte reg=%#x, bytes=%d, val=%#02x", reg, bytes, *val);
 
 	return 0;
 }
