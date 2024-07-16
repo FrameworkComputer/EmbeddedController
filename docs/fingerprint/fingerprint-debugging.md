@@ -23,7 +23,7 @@ used for JTAG and SWD for ARM devices.
     this document assumes that you're using a
     [Segger J-Trace PRO for Cortex-M][J-Trace].
 *   [Dragonclaw v4 Development board][FPMCU dev board] or
-    [Icetower v0.1 Development board][FPMCU dev board].
+    [Icetower v3 Development board][FPMCU dev board].
 *   [Servo Micro].
 
 ## Software Required
