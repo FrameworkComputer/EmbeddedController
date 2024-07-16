@@ -1159,6 +1159,11 @@ static void task_ucsi(struct pdc_data_t *data, enum ucsi_command_t ucsi_command)
 	}
 
 	rv = write_task_cmd(cfg, COMMAND_TASK_UCSI, &cmd_data);
+	if (rv) {
+		LOG_ERR("Failed to write command");
+		set_state(data, ST_ERROR_RECOVERY);
+		return;
+	}
 
 	/* Transition to wait state */
 	set_state(data, ST_TASK_WAIT);
