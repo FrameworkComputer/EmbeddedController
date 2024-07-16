@@ -253,7 +253,7 @@ Ozone is a free standalone debugger provided by Segger that works with the
 gdbserver can provide. For example, Ozone has a register mapping for the MCUs we
 use, so you can easily inspect CPU registers. It can also be automated with a
 scripting language and show code coverage when used with a [J-Trace] that is
-connected to the trace pins on a board. Note that the Dragonclaw v0.3 uses an
+connected to the trace pins on a board. Note that the Dragonclaw v4 uses an
 STM32F412 package that does not have the synchronous trace pins, but the
 [Nucleo STM32F412ZG] does have the trace pins.
 

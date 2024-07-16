@@ -81,7 +81,7 @@ debug a running program.
 
 There are several variants of Servo and the fingerprint team uses the
 [Servo Micro](#servo-micro) for its simplicity. It lacks builtin JTAG/SWD
-support for single step debugging, but Dragonclaw v0.3 and Icetower v3 have an
+support for single step debugging, but Dragonclaw, Icetower, and Quincy have an
 [SWD connector](#servo-micro-swd) that can be used.
 
 [Servo Micro](#servo-micro) |
