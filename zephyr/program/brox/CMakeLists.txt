@@ -25,9 +25,12 @@ elseif(DEFINED CONFIG_BOARD_JUBILANT)
 	project(jubilant)
 	add_subdirectory(jubilant)
 
+	zephyr_include_directories("jubilant/include")
 	zephyr_library_sources("src/hibernate.c")
 	zephyr_library_sources("src/suspend_resume.c")
 	zephyr_library_sources("src/usbc.c")
+	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_KEYBOARD_CUSTOMIZATION
+					"jubilant/src/keyboard_customization.c")
 elseif(DEFINED CONFIG_BOARD_LOTSO)
 	project(lotso)
 	add_subdirectory(lotso)

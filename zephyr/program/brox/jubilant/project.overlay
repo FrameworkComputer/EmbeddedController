@@ -22,7 +22,6 @@
 #include "../interrupts.dtsi"
 #include "../led_pins.dtsi"
 #include "../led_policy.dtsi"
-#include "../keyboard.dtsi"
 #include "../motionsense.dtsi"
 #include "../power_signals.dtsi"
 #include "../power_signals_gpios.dtsi"
@@ -32,6 +31,7 @@
 
 /* Jubilant project DTS includes*/
 #include "temp_sensors.dtsi"
+#include "keyboard.dtsi"
 
 /* Brox overrides follow... */
 
