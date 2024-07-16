@@ -13,7 +13,13 @@
 #include "queue_policies.h"
 #include "registers.h"
 #include "task.h"
+
+#if defined(CONFIG_PLATFORM_EC_USB_I2C)
+#include "drivers/usb_stream.h"
+#else
 #include "usb-stream.h"
+#endif
+
 #include "usb_descriptor.h"
 #include "usb_i2c.h"
 #include "util.h"

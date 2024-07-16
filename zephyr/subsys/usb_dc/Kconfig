@@ -121,3 +121,5 @@ config HID_INTERRUPT_EP_MPS
 	default 64
 
 endif # CROS_EC_RW
+
+rsource "Kconfig.gi2c"

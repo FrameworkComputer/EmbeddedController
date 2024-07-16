@@ -17,31 +17,33 @@
 
 #include <usb_descriptor.h>
 
-LOG_MODULE_REGISTER(usb_google_update, LOG_LEVEL_INF);
+LOG_MODULE_REGISTER(usb_google_i2c, LOG_LEVEL_INF);
 
 #define AUTO_EP_IN 0x80
 #define AUTO_EP_OUT 0x00
 
-NET_BUF_POOL_FIXED_DEFINE(update_rx_pool, 2, 128, USB_MAX_FS_BULK_MPS, NULL);
-NET_BUF_POOL_FIXED_DEFINE(update_tx_pool, 2, 128, USB_MAX_FS_BULK_MPS, NULL);
+#define TX_POOL_COUNT \
+	(CONFIG_PLATFORM_EC_USB_I2C_MAX_READ_COUNT / USB_MAX_FS_BULK_MPS) + 1
 
-static K_KERNEL_STACK_DEFINE(rx_thread_stack,
-			     CONFIG_GOOGLE_UPDATE_RX_STACK_SIZE);
+NET_BUF_POOL_FIXED_DEFINE(i2c_rx_pool, 1, USB_MAX_FS_BULK_MPS, 0, NULL);
+NET_BUF_POOL_FIXED_DEFINE(i2c_tx_pool, TX_POOL_COUNT, USB_MAX_FS_BULK_MPS, 0,
+			  NULL);
+
+static K_KERNEL_STACK_DEFINE(rx_thread_stack, CONFIG_GOOGLE_I2C_RX_STACK_SIZE);
 static struct k_thread rx_thread_data;
-static K_KERNEL_STACK_DEFINE(tx_thread_stack,
-			     CONFIG_GOOGLE_UPDATE_TX_STACK_SIZE);
+static K_KERNEL_STACK_DEFINE(tx_thread_stack, CONFIG_GOOGLE_I2C_TX_STACK_SIZE);
 static struct k_thread tx_thread_data;
 
 static K_FIFO_DEFINE(rx_queue);
 static K_FIFO_DEFINE(tx_queue);
 
-enum google_update_ep_index {
+enum google_i2c_ep_index {
 	OUT_EP_IDX = 0,
 	IN_EP_IDX,
 	EP_NUM,
 };
 
-struct usb_google_update_config {
+struct usb_google_i2c_config {
 	struct usb_if_descriptor if0;
 	struct usb_ep_descriptor if0_out_ep;
 	struct usb_ep_descriptor if0_in_ep;
@@ -67,14 +69,13 @@ struct usb_google_update_config {
 
 /* Coreboot only parses the first interface descriptor for boot keyboard
  * detection. And the USB descriptors are sorted by name in the linker
- * scripts. The string "gupdate" is set in the instance field to ensure
- * that the Google update descriptor is placed after the HID class.
+ * scripts. The string "gi2c" is set in the instance field to ensure
+ * that the Google i2c descriptor is placed after the HID class.
  */
-USBD_CLASS_DESCR_DEFINE(primary, gupdate)
-struct usb_google_update_config google_update_cfg = {
-	.if0 = INITIALIZER_IF(EP_NUM, USB_BCC_VENDOR,
-			      USB_SUBCLASS_GOOGLE_UPDATE,
-			      USB_PROTOCOL_GOOGLE_UPDATE),
+USBD_CLASS_DESCR_DEFINE(primary, gi2c)
+struct usb_google_i2c_config google_i2c_cfg = {
+	.if0 = INITIALIZER_IF(EP_NUM, USB_BCC_VENDOR, USB_SUBCLASS_GOOGLE_I2C,
+			      USB_PROTOCOL_GOOGLE_I2C),
 	.if0_out_ep = INITIALIZER_IF_EP(AUTO_EP_OUT, USB_DC_EP_BULK,
 					USB_MAX_FS_BULK_MPS),
 	.if0_in_ep = INITIALIZER_IF_EP(AUTO_EP_IN, USB_DC_EP_BULK,
@@ -92,7 +93,7 @@ static struct usb_ep_cfg_data ep_cfg[] = {
 	},
 };
 
-static void google_update_read(uint8_t ep, int size, void *priv)
+static void google_i2c_read(uint8_t ep, int size, void *priv)
 {
 	ARG_UNUSED(priv);
 
@@ -101,9 +102,9 @@ static void google_update_read(uint8_t ep, int size, void *priv)
 	if (size > 0) {
 		struct net_buf *buf;
 
-		buf = net_buf_alloc(&update_rx_pool, K_NO_WAIT);
+		buf = net_buf_alloc(&i2c_rx_pool, K_NO_WAIT);
 		if (!buf) {
-			LOG_ERR("failed to allocate memory");
+			LOG_ERR("failed to allocate rx memory");
 			return;
 		}
 		net_buf_add_mem(buf, data, size);
@@ -111,60 +112,61 @@ static void google_update_read(uint8_t ep, int size, void *priv)
 	}
 
 	/* Start a new read transfer */
-	usb_transfer(ep_cfg[OUT_EP_IDX].ep_addr, data, USB_MAX_FS_BULK_MPS,
-		     USB_TRANS_READ, google_update_read, NULL);
+	usb_transfer(ep, data, USB_MAX_FS_BULK_MPS, USB_TRANS_READ,
+		     google_i2c_read, NULL);
 }
 
-static void google_update_status_cb(struct usb_cfg_data *cfg,
-				    enum usb_dc_status_code status,
-				    const uint8_t *param)
+static void google_i2c_status_cb(struct usb_cfg_data *cfg,
+				 enum usb_dc_status_code status,
+				 const uint8_t *param)
 {
-	ARG_UNUSED(cfg);
 	ARG_UNUSED(param);
 
 	switch (status) {
 	case USB_DC_CONFIGURED:
 		LOG_DBG("USB device configured");
-		google_update_read(ep_cfg[OUT_EP_IDX].ep_addr, 0, NULL);
+		google_i2c_read(cfg->endpoint[OUT_EP_IDX].ep_addr, 0, NULL);
 		break;
 	default:
 		break;
 	}
 }
 
-void usb_update_stream_written(struct consumer const *consumer, size_t count)
+static void google_i2c_interface_config(struct usb_desc_header *head,
+					uint8_t bInterfaceNumber)
+{
+	ARG_UNUSED(head);
+
+	google_i2c_cfg.if0.bInterfaceNumber = bInterfaceNumber;
+}
+
+void i2c_usb__stream_written(struct consumer const *consumer, size_t count)
 {
 	static uint8_t data[USB_MAX_FS_BULK_MPS];
+	struct net_buf *buf;
 
-	while (!queue_is_empty(consumer->queue)) {
-		struct net_buf *buf;
+	if (queue_is_empty(consumer->queue)) {
+		LOG_ERR("consumer queue is empty");
+		return;
+	}
 
-		if (count > USB_MAX_FS_BULK_MPS) {
-			LOG_ERR("invaild data count");
-			return;
-		}
-
+	do {
+		count = (count > USB_MAX_FS_BULK_MPS) ? 64 : count;
 		queue_peek_units(consumer->queue, data, 0, count);
-		buf = net_buf_alloc(&update_tx_pool, K_NO_WAIT);
+		buf = net_buf_alloc(&i2c_tx_pool, K_NO_WAIT);
 		if (!buf) {
+			LOG_ERR("failed to allocate tx memory");
 			return;
 		}
 
 		net_buf_add_mem(buf, data, count);
 		net_buf_put(&tx_queue, buf);
 		queue_advance_head(consumer->queue, count);
-	}
+		count = queue_count(consumer->queue);
+	} while (count != 0);
 }
 
-static void google_update_interface_config(struct usb_desc_header *head,
-					   uint8_t bInterfaceNumber)
-{
-	ARG_UNUSED(head);
-
-	google_update_cfg.if0.bInterfaceNumber = bInterfaceNumber;
-}
-
-static void google_update_tx_thread(void *p1, void *p2, void *p3)
+static void google_i2c_tx_thread(void *p1, void *p2, void *p3)
 {
 	ARG_UNUSED(p1);
 	ARG_UNUSED(p2);
@@ -174,7 +176,8 @@ static void google_update_tx_thread(void *p1, void *p2, void *p3)
 		struct net_buf *buf;
 
 		buf = net_buf_get(&tx_queue, K_FOREVER);
-		LOG_HEXDUMP_DBG(buf->data, buf->len, "Tx:");
+		LOG_HEXDUMP_DBG(buf->data, buf->len,
+				"Google I2C Tx(EC -> Host):");
 
 		usb_transfer_sync(ep_cfg[IN_EP_IDX].ep_addr, buf->data,
 				  buf->len, USB_TRANS_WRITE);
@@ -183,7 +186,7 @@ static void google_update_tx_thread(void *p1, void *p2, void *p3)
 	}
 }
 
-static void google_update_rx_thread(void *p1, void *p2, void *p3)
+static void google_i2c_rx_thread(void *p1, void *p2, void *p3)
 {
 	ARG_UNUSED(p1);
 	ARG_UNUSED(p2);
@@ -191,48 +194,48 @@ static void google_update_rx_thread(void *p1, void *p2, void *p3)
 
 	while (true) {
 		struct net_buf *buf;
-		const struct queue *usb_to_update = usb_update.producer.queue;
+		const struct queue *usb_to_i2c = i2c_usb_.producer.queue;
 
 		buf = net_buf_get(&rx_queue, K_FOREVER);
-		if (buf->len > queue_space(usb_to_update)) {
+		if (buf->len > queue_space(usb_to_i2c)) {
 			LOG_ERR("queue is full");
 			continue;
 		}
-		queue_add_units(usb_to_update, buf->data, buf->len);
-		LOG_HEXDUMP_DBG(buf->data, buf->len, "Rx:");
+		queue_add_units(usb_to_i2c, buf->data, buf->len);
+		LOG_HEXDUMP_DBG(buf->data, buf->len,
+				"Google I2C Rx(Host -> EC):");
 		net_buf_unref(buf);
 	}
 }
 
-static int usb_google_update_init(void)
+static int usb_google_i2c_init(void)
 {
 	k_thread_create(&rx_thread_data, rx_thread_stack,
 			K_KERNEL_STACK_SIZEOF(rx_thread_stack),
-			google_update_rx_thread, NULL, NULL, NULL,
-			K_PRIO_COOP(CONFIG_GOOGLE_UPDATE_RX_THREAD_PRIORTY), 0,
+			google_i2c_rx_thread, NULL, NULL, NULL,
+			K_PRIO_COOP(CONFIG_GOOGLE_I2C_RX_THREAD_PRIORTY), 0,
 			K_NO_WAIT);
 
-	k_thread_name_set(&rx_thread_data, "gupdate_rx");
+	k_thread_name_set(&rx_thread_data, "gi2c_rx");
 
 	k_thread_create(&tx_thread_data, tx_thread_stack,
 			K_KERNEL_STACK_SIZEOF(tx_thread_stack),
-			google_update_tx_thread, NULL, NULL, NULL,
-			K_PRIO_COOP(CONFIG_GOOGLE_UPDATE_TX_THREAD_PRIORTY), 0,
+			google_i2c_tx_thread, NULL, NULL, NULL,
+			K_PRIO_COOP(CONFIG_GOOGLE_I2C_TX_THREAD_PRIORTY), 0,
 			K_NO_WAIT);
 
-	k_thread_name_set(&tx_thread_data, "gupdate_tx");
+	k_thread_name_set(&tx_thread_data, "gi2c_tx");
 
 	return 0;
 }
 
-SYS_INIT(usb_google_update_init, APPLICATION,
-	 CONFIG_KERNEL_INIT_PRIORITY_DEVICE);
+SYS_INIT(usb_google_i2c_init, APPLICATION, CONFIG_KERNEL_INIT_PRIORITY_DEVICE);
 
-USBD_DEFINE_CFG_DATA(google_update_config) = {
+USBD_DEFINE_CFG_DATA(google_i2c_config) = {
 	.usb_device_description = NULL,
-	.interface_config = google_update_interface_config,
-	.interface_descriptor = &google_update_cfg.if0,
-	.cb_usb_status = google_update_status_cb,
+	.interface_config = google_i2c_interface_config,
+	.interface_descriptor = &google_i2c_cfg.if0,
+	.cb_usb_status = google_i2c_status_cb,
 	.interface = {
 		.class_handler = NULL,
 		.custom_handler = NULL,
