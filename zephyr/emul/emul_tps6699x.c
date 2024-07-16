@@ -156,8 +156,8 @@ static int tps6699x_emul_access_reg(const struct emul *emul, int reg, int bytes,
 	return reg;
 }
 
-static int emul_tps669x_set_response_delay(const struct emul *target,
-					   uint32_t delay_ms)
+static int emul_tps6699x_set_response_delay(const struct emul *target,
+					    uint32_t delay_ms)
 {
 	struct tps6699x_emul_pdc_data *data =
 		tps6699x_emul_get_pdc_data(target);
@@ -181,7 +181,7 @@ static int tps6699x_emul_idle_wait(const struct emul *emul)
 
 static struct emul_pdc_api_t emul_tps6699x_api = {
 	.reset = NULL,
-	.set_response_delay = emul_tps669x_set_response_delay,
+	.set_response_delay = emul_tps6699x_set_response_delay,
 	.get_connector_reset = NULL,
 	.set_capability = NULL,
 	.set_connector_capability = NULL,
