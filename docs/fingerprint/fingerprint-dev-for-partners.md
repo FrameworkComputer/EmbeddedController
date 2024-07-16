@@ -60,7 +60,7 @@ This FPMCU board is Icetower Rev 3. |
 ***
 <!-- mdformat on -->
 
-This FPMCU board is Quincy Rev 2. |
+This FPMCU board is Quincy Rev 3. |
 --------------------------------- |
 ![Quincy board]                   |
 
@@ -608,7 +608,7 @@ Make sure that this interface is disabled:
 [Dragonclaw board]: ../images/dragonclaw_v4.jpg
 [Dragonclaw servo fix diagram]: ../images/dragonclaw_servo_fix.jpg
 [Icetower board]: ../images/icetower_v3.jpg
-[Quincy board]: ../images/quincy_v2.jpg
+[Quincy board]: ../images/quincy_v3.jpg
 
 <!-- If you make changes to the docs below make sure to regenerate the JPEGs by
      appending "export/pdf" to the Google Drive link. -->
