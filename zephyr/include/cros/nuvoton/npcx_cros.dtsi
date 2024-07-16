@@ -1,0 +1,102 @@
+/*
+ * Copyright 2021 The ChromiumOS Authors
+ *
+ * SPDX-License-Identifier: Apache-2.0
+ */
+
+#include <cros/binman.dtsi>
+
+/ {
+	chosen {
+		cros-ec,bbram = &bbram;
+		cros-ec,espi = &espi0;
+		cros-ec,flash = &flash1;
+		cros-ec,flash-controller = &fiu0;
+		cros-ec,raw-kb = &cros_kb_raw;
+		cros-ec,watchdog = &twd0;
+	};
+
+	named-bbram-regions {
+		compatible = "named-bbram-regions";
+
+		scratchpad {
+			offset = <0x00>;
+			size = <0x04>;
+		};
+		saved-reset-flags {
+			offset = <0x04>;
+			size = <0x04>;
+		};
+		wake {
+			offset = <0x08>;
+			size = <0x04>;
+		};
+		pd0 {
+			offset = <0x0c>;
+			size = <0x01>;
+		};
+		pd1 {
+			offset = <0x0d>;
+			size = <0x01>;
+		};
+		try_slot {
+			offset = <0x0e>;
+			size = <0x01>;
+		};
+		pd2 {
+			offset = <0x0f>;
+			size = <0x01>;
+		};
+		ramlog {
+			offset = <0x20>;
+			size = <0x01>;
+		};
+		panic_flags {
+			offset = <0x23>;
+			size = <0x01>;
+		};
+		panic_bkup {
+			offset = <0x24>;
+			size = <0x1c>;
+		};
+		lct_time {
+			offset = <0x40>;
+			size = <0x04>;
+		};
+	};
+
+	fiu0: cros-flash {
+		compatible = "nuvoton,npcx-cros-flash";
+	};
+
+	soc {
+
+		cros_kb_raw: cros-kb-raw@400a3000 {
+			compatible = "nuvoton,npcx-cros-kb-raw";
+			reg = <0x400a3000 0x2000>;
+			interrupts = <49 4>;
+			clocks = <&pcc NPCX_CLOCK_BUS_APB1 NPCX_PWDWN_CTL1 0>;
+			wui_maps = <&wui_io31 &wui_io30 &wui_io27 &wui_io26
+				    &wui_io25 &wui_io24 &wui_io23 &wui_io22>;
+			status = "disabled";
+		};
+
+		mtc: mtc@400b7000 {
+			compatible = "nuvoton,npcx-cros-mtc";
+			reg = <0x400b7000 0x2000>;
+			mtc-alarm = <&wui_mtc>;
+		};
+	};
+};
+
+&suspend_to_idle0 {
+	min-residency-us = <500>;
+};
+
+&bbram {
+	status = "okay";
+};
+
+&mdc {
+	status = "okay";
+};

@@ -6,13 +6,5 @@
 
 #include <nuvoton/npcx/npcx9.dtsi>
 #include <cros/nuvoton/npcx.dtsi>
+#include <cros/nuvoton/npcx9_cros.dtsi>
 
-/ {
-	chosen {
-		cros-ec,sha = &sha0;
-	};
-
-	soc {
-
-	};
-};

@@ -4,5 +4,14 @@
  * SPDX-License-Identifier: Apache-2.0
  */
 
-#include <nuvoton/npcx/npcx.dtsi>
 #include <cros/nuvoton/npcx_cros.dtsi>
+
+/ {
+	chosen {
+		cros-ec,sha = &sha0;
+	};
+
+	soc {
+
+	};
+};
