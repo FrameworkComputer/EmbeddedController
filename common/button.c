@@ -366,16 +366,16 @@ static void button_change_deferred(void)
 	}
 }
 
-/*
- * Handle a button interrupt.
- */
-void button_interrupt(enum gpio_signal signal)
-{
-	int i;
-	uint64_t time_now = get_time().val;
+static atomic_val_t pending_irqs;
 
-	for (i = 0; i < BUTTON_COUNT; i++) {
-		if (buttons[i].gpio != signal ||
+/* bottom half of irq handler */
+void button_irq_handler(void)
+{
+	uint64_t time_now = get_time().val;
+	int irqs = atomic_clear(&pending_irqs);
+
+	for (int i = 0; i < BUTTON_COUNT; i++) {
+		if ((irqs & BIT(i)) == 0 ||
 		    (buttons[i].flags & BUTTON_FLAG_DISABLED))
 			continue;
 
@@ -386,6 +386,22 @@ void button_interrupt(enum gpio_signal signal)
 			hook_call_deferred(&button_change_deferred_data,
 					   next_deferred_time - time_now);
 		}
+	}
+}
+DECLARE_DEFERRED(button_irq_handler);
+
+/*
+ * Handle a button interrupt.
+ */
+void button_interrupt(enum gpio_signal signal)
+{
+	for (int i = 0; i < BUTTON_COUNT; i++) {
+		if (buttons[i].gpio != signal ||
+		    (buttons[i].flags & BUTTON_FLAG_DISABLED))
+			continue;
+
+		atomic_or(&pending_irqs, BIT(i));
+		hook_call_deferred(&button_irq_handler_data, 0);
 		break;
 	}
 }
