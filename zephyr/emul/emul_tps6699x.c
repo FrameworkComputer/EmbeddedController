@@ -123,22 +123,28 @@ static void tps6699x_emul_handle_command(struct tps6699x_emul_pdc_data *data,
 					 enum tps6699x_command_task task,
 					 uint8_t *data_reg)
 {
-	char task_str[5] = {
-		((char *)&task)[0],
-		((char *)&task)[1],
-		((char *)&task)[2],
-		((char *)&task)[3],
-		'\0',
-	};
-
 	/* TODO(b/345292002): Respond to commands asynchronously. */
 
 	switch (task) {
 	case COMMAND_TASK_UCSI:
 		tps6699x_emul_handle_ucsi(data, data_reg);
 		break;
-	default:
+	default: {
+		char task_str[5] = {
+			((char *)&task)[0],
+			((char *)&task)[1],
+			((char *)&task)[2],
+			((char *)&task)[3],
+			'\0',
+		};
+		enum tps6699x_command_task *cmd_reg =
+			(enum tps6699x_command_task *)&data
+				->reg_val[TPS6699X_REG_COMMAND_I2C1];
+
 		LOG_WRN("emul_tps6699x: Unimplemented task %s", task_str);
+		/* Indicate an error to the PPM. */
+		*cmd_reg = COMMAND_TASK_NO_COMMAND;
+	}
 	}
 }
 
