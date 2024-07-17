@@ -168,6 +168,7 @@ static int tps6699x_emul_start_write(const struct emul *emul, int reg)
 		return -EIO;
 	}
 
+	/* TODO(b/345292002): Only clear bytes to be written by transaction. */
 	memset(&data->reg_val[reg], 0, sizeof(data->reg_val[reg]));
 
 	data->reg_addr = reg;
@@ -179,8 +180,10 @@ static int tps6699x_emul_write_byte(const struct emul *emul, int reg,
 				    uint8_t val, int bytes)
 {
 	struct tps6699x_emul_pdc_data *data = tps6699x_emul_get_pdc_data(emul);
-	/* The first byte of the write message is the length. */
-	int data_bytes = bytes - 1;
+	/* Byte 0 of a write is the register address. Byte 1 (if present) is the
+	 * number of bytes to be written.
+	 */
+	const int data_bytes = bytes - 2;
 
 	__ASSERT(bytes > 0, "start_write implicitly consumes byte 0");
 
@@ -208,13 +211,20 @@ static int tps6699x_emul_finish_write(const struct emul *emul, int reg,
 	__ASSERT(bytes > 0,
 		 "start_write and write_byte implicitly consume bytes 0-1");
 
-	LOG_DBG("finish_write reg=%#x, bytes=%d+2", reg, bytes - 2);
-
 	/* No need to validate inputs; this function will only be called if
 	 * write_byte validated its inputs and succeeded.
 	 */
 
-	tps6699x_emul_handle_write(data, reg);
+	/* A 1-byte write only contains a register offset and is used to
+	 * initiate a read of that register. Do not treat it as a write to that
+	 * register.
+	 */
+	if (bytes > 1) {
+		const int data_bytes = bytes - 2;
+
+		LOG_DBG("finish_write reg=%#x, bytes=%d+2", reg, data_bytes);
+		tps6699x_emul_handle_write(data, reg);
+	}
 
 	return 0;
 }
@@ -237,20 +247,22 @@ static int tps6699x_emul_read_byte(const struct emul *emul, int reg,
 {
 	struct tps6699x_emul_pdc_data *data = tps6699x_emul_get_pdc_data(emul);
 
-	if (!register_access_is_valid(data, reg, bytes)) {
-		return -EIO;
-	}
-
 	/*
-	 * Response byte 0 is always the number of bytes read.
-	 * Remaining bytes are read starting at offset.
-	 * Note that the byte following the number of bytes is
-	 * considered to be at offset 0.
+	 * Response byte 0 is always the number of bytes in the register.
+	 * Remaining bytes are read starting at offset. Note that the byte
+	 * following the number of bytes is considered to be at offset 0.
 	 */
 	if (bytes == 0) {
-		*val = bytes;
+		*val = sizeof(data->reg_val[reg]);
+		data->transaction_bytes = *val;
+
 	} else {
-		*val = data->reg_val[reg][bytes];
+		const int data_bytes = bytes - 1;
+
+		if (!register_access_is_valid(data, reg, data_bytes)) {
+			return -EIO;
+		}
+		*val = data->reg_val[reg][data_bytes];
 	}
 
 	return 0;
@@ -259,7 +271,9 @@ static int tps6699x_emul_read_byte(const struct emul *emul, int reg,
 static int tps6699x_emul_finish_read(const struct emul *emul, int reg,
 				     int bytes)
 {
-	LOG_DBG("finish_read reg=%#x, bytes=%d", reg, bytes);
+	const int data_bytes = bytes - 1;
+
+	LOG_DBG("finish_read reg=%#x, bytes=%d", reg, data_bytes);
 
 	/* TODO(b/345292002): Actually handle register accesses. */
 
