@@ -93,8 +93,9 @@ static void tps6699x_emul_connector_reset(struct tps6699x_emul_pdc_data *data,
 	data->reset_cmd = reset_cmd;
 }
 
-static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
-				      uint8_t *data_reg)
+static enum tps6699x_command_result
+tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
+			  uint8_t *data_reg)
 {
 	/* For all UCSI commands, the first 3 data fields are
 	 * the UCSI command (8 bits),
@@ -117,17 +118,24 @@ static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 	default:
 		LOG_WRN("tps6699x_emul: Unimplemented UCSI command %#04x", cmd);
 	};
+
+	return COMMAND_RESULT_SUCCESS;
 }
 
 static void tps6699x_emul_handle_command(struct tps6699x_emul_pdc_data *data,
 					 enum tps6699x_command_task task,
 					 uint8_t *data_reg)
 {
+	enum tps6699x_command_task *cmd_reg =
+		(enum tps6699x_command_task *)&data
+			->reg_val[TPS6699X_REG_COMMAND_I2C1];
+	enum tps6699x_command_result result = COMMAND_RESULT_REJECTED;
+
 	/* TODO(b/345292002): Respond to commands asynchronously. */
 
 	switch (task) {
 	case COMMAND_TASK_UCSI:
-		tps6699x_emul_handle_ucsi(data, data_reg);
+		result = tps6699x_emul_handle_ucsi(data, data_reg);
 		break;
 	default: {
 		char task_str[5] = {
@@ -137,15 +145,19 @@ static void tps6699x_emul_handle_command(struct tps6699x_emul_pdc_data *data,
 			((char *)&task)[3],
 			'\0',
 		};
-		enum tps6699x_command_task *cmd_reg =
-			(enum tps6699x_command_task *)&data
-				->reg_val[TPS6699X_REG_COMMAND_I2C1];
 
 		LOG_WRN("emul_tps6699x: Unimplemented task %s", task_str);
 		/* Indicate an error to the PPM. */
 		*cmd_reg = COMMAND_TASK_NO_COMMAND;
+		return;
 	}
 	}
+
+	/* By default, indicate task success.
+	 * TODO(b/345292002): Allow a test to emulate task failure.
+	 */
+	*data_reg = result;
+	*cmd_reg = COMMAND_TASK_COMPLETE;
 }
 
 static void tps6699x_emul_handle_write(struct tps6699x_emul_pdc_data *data,

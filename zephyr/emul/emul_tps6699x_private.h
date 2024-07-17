@@ -25,6 +25,10 @@ enum tps6699x_reg_offset {
  * test it.
  */
 enum tps6699x_command_task {
+	/* Command complete: Not a real command. The TPS6699x clears the command
+	 * register when a command completes.
+	 */
+	COMMAND_TASK_COMPLETE = 0,
 	/* Invalid command */
 	COMMAND_TASK_NO_COMMAND = 0x444d4321,
 	/* Cold reset request */
@@ -90,6 +94,17 @@ enum tps6699x_command_task {
 	COMMAND_TASK_I2CW,
 	/* UCSI tasks */
 	COMMAND_TASK_UCSI = 0x49534355,
+};
+
+/* Results of a task, indicated by the PDC in byte 1 of the relevant DATAX
+ * register after a command completes. See TPS6699x TRM May 2023, table 10-1
+ * Standard Task Response.
+ */
+enum tps6699x_command_result {
+	COMMAND_RESULT_SUCCESS = 0,
+	COMMAND_RESULT_TIMEOUT = 1,
+	COMMAND_RESULT_REJECTED = 2,
+	COMMAND_RESULT_RX_LOCKED = 4,
 };
 
 #endif /* __EMUL_TPS6699X_PRIVATE_H_ */
