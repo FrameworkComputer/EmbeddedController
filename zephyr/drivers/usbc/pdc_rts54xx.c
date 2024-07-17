@@ -82,8 +82,7 @@ LOG_MODULE_REGISTER(pdc_rts54, LOG_LEVEL_INF);
 /**
  * @brief Offsets of data fields in the GET_IC_STATUS response
  *
- * Note that in the Realtek spec version 3.3.22, bit offsets and byte
- * numbers are inconsistent. Byte numbers appear to be accurate.
+ * These are based on the Realtek spec version 3.3.25.
  *
  * "Data Byte 0" is the first byte after "Byte Count" and is available
  * at .rd_buf[1].
