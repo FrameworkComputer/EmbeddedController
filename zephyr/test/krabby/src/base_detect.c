@@ -98,7 +98,7 @@ ZTEST(baes_detect, test_base_detect_interrupt)
 	hook_notify(HOOK_INIT);
 	zassert_ok(adc_emul_const_value_set(adc_dev, adc_channel,
 					    ATTACH_MAX_THRESHOLD_MV));
-	k_sleep(K_MSEC(500));
+	k_sleep(K_MSEC(1000));
 	zassert_equal(0, tablet_get_mode(), NULL);
 
 	zassert_ok(adc_emul_const_value_set(adc_dev, adc_channel,

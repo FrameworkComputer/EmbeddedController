@@ -44,7 +44,8 @@ static void base_detect_tick(void)
 {
 	static bool debouncing;
 	int mv = adc_read_channel(ADC_BASE_DET);
-	if (mv >= ATTACH_MAX_THRESHOLD_MV && base_get_state()) {
+	if ((mv > ATTACH_MAX_THRESHOLD_MV || mv < ATTACH_MIN_THRESHOLD_MV) &&
+	    base_get_state()) {
 		if (!debouncing) {
 			debouncing = true;
 		} else {
@@ -113,7 +114,8 @@ SYS_INIT(base_init, APPLICATION, 1);
 
 void base_init_setting(void)
 {
-	if (adc_read_channel(ADC_BASE_DET) > ATTACH_MAX_THRESHOLD_MV) {
+	if (adc_read_channel(ADC_BASE_DET) > ATTACH_MAX_THRESHOLD_MV ||
+	    adc_read_channel(ADC_BASE_DET) < ATTACH_MIN_THRESHOLD_MV) {
 		attached = false;
 		hook_call_deferred(&base_update_data, 0);
 	}
