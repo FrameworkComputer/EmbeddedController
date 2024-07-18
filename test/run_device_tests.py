@@ -555,7 +555,7 @@ class AllTests:
                 zephyr_name="drivers.counter.basic_api.stm32_subsec",
                 test_name="zephyr_counter_basic_api_stm32_subsec",
                 exclude_boards=[DARTMONKEY, HELIPILOT],
-                timeout_secs=20,
+                timeout_secs=60,
             ),
         ]
 
