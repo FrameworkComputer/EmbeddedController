@@ -177,57 +177,6 @@
 			enum-name = "GPIO_ENTERING_RW";
 		};
 		/* default output level */
-		gpio_en_pp5000_fan: en_pp5000_fan {
-			gpios = <&gpioa 6 GPIO_OUTPUT_LOW>;
-		};
-		gpio_ec_cbi_wp: ec_cbi_wp {
-			gpios = <&gpioc 5 GPIO_OUTPUT_LOW>;
-		};
-		gpio_usb_c1_frs_en: usb_c1_frs_en {
-			gpios = <&gpiod 3 GPIO_OUTPUT_LOW>;
-		};
-		gpio_usb_c1_dp_in_hpd: usb_c1_dp_in_hpd {
-			gpios = <&gpiod 5 GPIO_OUTPUT_LOW>;
-		};
-		gpio_ec_gsc_packet_mode_en: ec_gsc_packet_mode_en {
-			gpios = <&gpioe 6 GPIO_OUTPUT_LOW>;
-		};
-		gpio_usb_c0_frs_en: usb_c0_frs_en {
-			gpios = <&gpiof 0 GPIO_OUTPUT_LOW>;
-		};
-		gpio_usb_c0_dp_in_hpd: usb_c0_dp_in_hpd {
-			gpios = <&gpiof 2 GPIO_OUTPUT_LOW>;
-		};
-		gpio_ec_ap_dp_hpd_l: ec_ap_dp_hpd_l {
-			gpios = <&gpiof 3 GPIO_OUTPUT_HIGH>;
-		};
-		gpio_dp_path_usb_c1_en: dp_path_usb_c1_en {
-			gpios = <&gpiog 0 GPIO_OUTPUT_LOW>;
-		};
-		gpio_en_pp5000_usba_vbus: en_pp5000_usba_vbus {
-			gpios = <&gpiog 1 GPIO_OUTPUT_LOW>;
-		};
-		gpio_en_pp5000_pen_l: en_pp5000_pen_l {
-			gpios = <&gpiog 3 GPIO_OUTPUT_HIGH>;
-		};
-		gpio_en_ulp: en_ulp {
-			gpios = <&gpioh 0 GPIO_OUTPUT_LOW>;
-		};
-		gpio_en_pp5000_z1: en_pp5000_z1 {
-			gpios = <&gpioh 3 GPIO_OUTPUT_HIGH>;
-		};
-		gpio_en_hdmi_pwr: en_hdmi_pwr {
-			gpios = <&gpioi 5 GPIO_OUTPUT_LOW>;
-		};
-		gpio_dp_path_hdmi_en: dp_path_hdmi_en {
-			gpios = <&gpioi 6 GPIO_OUTPUT_LOW>;
-		};
-		gpio_usb_c0_ppc_int_odl: usb_c0_ppc_int_odl {
-			gpios = <&gpiof 1 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-		};
-		gpio_usb_c1_ppc_int_odl: usb_c1_ppc_int_odl {
-			gpios = <&gpiod 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
-		};
 		gpio_ec_kso_02_inv: ec_kso_02_inv {
 			gpios = <&gpioksol 2 GPIO_OUTPUT_HIGH>;
 		};
@@ -259,24 +208,10 @@
 			gpios = <&gpioj 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
 					   GPIO_ACTIVE_LOW)>;
 		};
-		/* Arbitrage doesn't generate ODR_HIGH correctly */
-		ec_pmic_en_odl {
-			gpios = <&gpioj 0 GPIO_ODR_HIGH>;
+		/* Adapt generated nodelabel to the current nodelabel. */
+		gpio_ec_pmic_en_odl: ec_pmic_en_odl_r {
 		};
-		ec_ap_hid_int_odl {
-			gpios = <&gpiod 7 GPIO_ODR_HIGH>;
-		};
-		ec_ap_int_odl {
-			gpios = <&gpiom 6 GPIO_ODR_HIGH>;
-		};
-		ec_led1_odl {
-			gpios = <&gpioa 0 GPIO_ODR_HIGH>;
-		};
-		ec_led2_odl {
-			gpios = <&gpioa 1 GPIO_ODR_HIGH>;
-		};
-		sys_rst_odl {
-			gpios = <&gpioj 5 GPIO_ODR_HIGH>;
+		gpio_ap_xhci_init_done: ap_xhci_init_done_r {
 		};
 	};
 
