@@ -174,7 +174,7 @@ def build(opts):
 
         # Ensure that there are no regressions for boards that build
         # successfully with clang: b/172020503.
-        cmd = ["./util/build_with_clang.py"]
+        cmd = ["./util/build_with_clang.py", f"-j{opts.cpus}"]
         print(f'# Running {" ".join(cmd)}.')
         subprocess.run(cmd, cwd=os.path.dirname(__file__), check=True)
     finally:
