@@ -313,16 +313,21 @@ static uint8_t device_caps_response[] = {
 static void hid_tp_proc_queue(void);
 DECLARE_DEFERRED(hid_tp_proc_queue);
 
-static void write_tp_report(struct usb_hid_touchpad_report *report)
+static int write_tp_report(struct usb_hid_touchpad_report *report)
 {
+	int ret = -EBUSY;
+
 	if (!atomic_test_and_set_bit(hid_ep_in_busy, HID_EP_BUSY_FLAG)) {
-		int ret = hid_int_ep_write(hid_dev, (uint8_t *)report,
-					   sizeof(*report), NULL);
+		ret = hid_int_ep_write(hid_dev, (uint8_t *)report,
+				       sizeof(*report), NULL);
 
 		if (ret) {
 			LOG_ERR("hid tp write error, %d", ret);
+			atomic_clear_bit(hid_ep_in_busy, HID_EP_BUSY_FLAG);
 		}
 	}
+
+	return ret;
 }
 
 static int tp_get_report(const struct device *dev,
@@ -365,7 +370,9 @@ __overridable void set_touchpad_report(struct usb_hid_touchpad_report *report)
 
 	if (!check_usb_is_suspended()) {
 		if (queue_is_empty(&report_queue)) {
-			write_tp_report(report);
+			if (write_tp_report(report) == -EBUSY) {
+				goto add_queue;
+			}
 			mutex_unlock(report_queue_mutex);
 			return;
 		}
@@ -376,6 +383,7 @@ __overridable void set_touchpad_report(struct usb_hid_touchpad_report *report)
 		}
 	}
 
+add_queue:
 	if (queue_is_full(&report_queue)) {
 		if (print_full)
 			LOG_WRN("touchpad queue full\n");
@@ -413,9 +421,9 @@ static void hid_tp_proc_queue(void)
 
 	queue_peek_units(&report_queue, &report, 0, 1);
 
-	write_tp_report(&report);
-
-	queue_advance_head(&report_queue, 1);
+	if (write_tp_report(&report) != -EBUSY) {
+		queue_advance_head(&report_queue, 1);
+	}
 
 	mutex_unlock(report_queue_mutex);
 	hook_call_deferred(&hid_tp_proc_queue_data, 1 * MSEC);

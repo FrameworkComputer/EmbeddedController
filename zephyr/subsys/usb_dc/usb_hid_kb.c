@@ -380,6 +380,7 @@ static void hid_kb_proc_queue(void)
 				       NULL);
 		if (ret) {
 			LOG_INF("hid kb write error, %d", ret);
+			atomic_clear_bit(hid_ep_in_busy, HID_EP_BUSY_FLAG);
 		} else {
 			queue_advance_head(&report_queue, 1);
 		}

@@ -120,6 +120,9 @@ config USB_HID_BOOT_PROTOCOL
 config HID_INTERRUPT_EP_MPS
 	default 64
 
+config USB_HID_POLL_INTERVAL_MS
+	default 1
+
 endif # CROS_EC_RW
 
 rsource "Kconfig.gi2c"
