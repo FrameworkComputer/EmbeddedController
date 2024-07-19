@@ -16,10 +16,4 @@
 #define KEYBOARD_COLS_MAX 18
 #define KEYBOARD_ROWS 8
 
-/*
- * WARNING: Do not directly modify it. You should call keyboard_raw_set_cols,
- * instead. It checks whether you're eligible or not.
- */
-extern uint8_t keyboard_cols;
-
 #endif /* __KEYBOARD_CUSTOMIZATION_H */

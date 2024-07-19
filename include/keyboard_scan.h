@@ -53,6 +53,12 @@ struct boot_key_entry {
 	uint8_t row;
 };
 
+/*
+ * WARNING: Do not directly modify it. You should call keyboard_raw_set_cols,
+ * instead. It checks whether you're eligible or not.
+ */
+extern uint8_t keyboard_cols;
+
 /**
  * Get the current keyboard column size.
  */
