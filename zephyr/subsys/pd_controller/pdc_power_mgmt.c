@@ -2402,6 +2402,8 @@ static int public_api_block(int port, enum pdc_cmd_t pdc_cmd)
 
 	ret = queue_public_cmd(&pdc_data[port]->port, pdc_cmd);
 	if (ret) {
+		LOG_ERR("C%d: Could not queue %s: %d", port,
+			pdc_cmd_names[pdc_cmd], ret);
 		return ret;
 	}
 
@@ -2442,6 +2444,8 @@ static int public_api_block(int port, enum pdc_cmd_t pdc_cmd)
 		/* The system is blocking on a command that requires a
 		 * connection, so return if disconnected */
 		if (!pdc_power_mgmt_is_connected(port)) {
+			LOG_ERR("C%d: Command %s requires connection", port,
+				pdc_cmd_names[public_cmd->cmd]);
 			return -EIO;
 		}
 	}

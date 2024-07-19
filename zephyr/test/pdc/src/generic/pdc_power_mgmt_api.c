@@ -1459,3 +1459,46 @@ ZTEST_USER(pdc_power_mgmt_api, test_sysjump_policy_on)
 
 	helper_wait_for_ccom_mode(CCOM_DRP);
 }
+
+/*
+ * Suspended PDC - These tests take place with the PDC Power Mgmt subsystem
+ * in the suspended state, when communication with the PDC is not allowed.
+ */
+
+static void *pdc_power_mgmt_suspend_setup(void)
+{
+	zassert_ok(pdc_power_mgmt_set_comms_state(false));
+
+	return NULL;
+}
+
+static void pdc_power_mgmt_suspend_before(void *fixture)
+{
+	reset_fakes();
+}
+
+static void pdc_power_mgmt_suspend_after(void *fixture)
+{
+	reset_fakes();
+}
+
+static void pdc_power_mgmt_suspend_teardown(void *fixture)
+{
+	zassert_ok(pdc_power_mgmt_set_comms_state(true));
+
+	zassert_ok(emul_pdc_idle_wait(emul));
+}
+
+ZTEST_SUITE(pdc_power_mgmt_api_suspended, NULL, pdc_power_mgmt_suspend_setup,
+	    pdc_power_mgmt_suspend_before, pdc_power_mgmt_suspend_after,
+	    pdc_power_mgmt_suspend_teardown);
+
+ZTEST_USER(pdc_power_mgmt_api_suspended, test_get_info)
+{
+	struct pdc_info_t info;
+	int rv;
+
+	rv = pdc_power_mgmt_get_info(TEST_PORT, &info, true);
+	zassert_equal(-ENOTCONN, rv, "Expected %d (-ENOTCONN) but got %d",
+		      -ENOTCONN, rv);
+}
