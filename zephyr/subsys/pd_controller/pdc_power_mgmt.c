@@ -202,8 +202,6 @@ enum snk_attached_local_state_t {
 	SNK_ATTACHED_SET_DR_SWAP_POLICY,
 	/** SNK_ATTACHED_SET_PR_SWAP_POLICY */
 	SNK_ATTACHED_SET_PR_SWAP_POLICY,
-	/** SNK_ATTACHED_READ_POWER_LEVEL */
-	SNK_ATTACHED_READ_POWER_LEVEL,
 	/** SNK_ATTACHED_GET_PDOS */
 	SNK_ATTACHED_GET_PDOS,
 	/** SNK_ATTACHED_GET_VDO */
@@ -234,6 +232,8 @@ enum src_attached_local_state_t {
 	SRC_ATTACHED_SET_DR_SWAP_POLICY,
 	/** SRC_ATTACHED_SET_PR_SWAP_POLICY */
 	SRC_ATTACHED_SET_PR_SWAP_POLICY,
+	/** SRC_ATTACHED_READ_POWER_LEVEL */
+	SRC_ATTACHED_READ_POWER_LEVEL,
 	/** SRC_ATTACHED_GET_VDO */
 	SRC_ATTACHED_GET_VDO,
 	/** SRC_ATTACHED_GET_PDOS */
@@ -1423,12 +1423,16 @@ static void pdc_src_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_SET_UOR);
 		return;
 	case SRC_ATTACHED_SET_PR_SWAP_POLICY:
-		port->src_attached_local_state = SRC_ATTACHED_GET_VDO;
+		port->src_attached_local_state = SRC_ATTACHED_READ_POWER_LEVEL;
 		/* TODO: read from DT */
 		port->pdr = (union pdr_t){ .accept_pr_swap = 1,
 					   .swap_to_src = 1,
 					   .swap_to_snk = 0 };
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
+		return;
+	case SRC_ATTACHED_READ_POWER_LEVEL:
+		port->src_attached_local_state = SRC_ATTACHED_GET_VDO;
+		queue_internal_cmd(port, CMD_PDC_READ_POWER_LEVEL);
 		return;
 	case SRC_ATTACHED_GET_VDO:
 		port->src_attached_local_state = SRC_ATTACHED_GET_PDOS;
@@ -1513,16 +1517,12 @@ static void pdc_snk_attached_run(void *obj)
 		queue_internal_cmd(port, CMD_PDC_SET_UOR);
 		return;
 	case SNK_ATTACHED_SET_PR_SWAP_POLICY:
-		port->snk_attached_local_state = SNK_ATTACHED_READ_POWER_LEVEL;
+		port->snk_attached_local_state = SNK_ATTACHED_GET_VDO;
 		/* TODO: read from DT */
 		port->pdr = (union pdr_t){ .accept_pr_swap = 1,
 					   .swap_to_src = 0,
 					   .swap_to_snk = 1 };
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
-		return;
-	case SNK_ATTACHED_READ_POWER_LEVEL:
-		port->snk_attached_local_state = SNK_ATTACHED_GET_VDO;
-		queue_internal_cmd(port, CMD_PDC_READ_POWER_LEVEL);
 		return;
 	case SNK_ATTACHED_GET_VDO:
 		port->snk_attached_local_state = SNK_ATTACHED_GET_PDOS;
