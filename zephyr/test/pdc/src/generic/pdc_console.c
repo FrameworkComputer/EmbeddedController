@@ -171,18 +171,22 @@ ZTEST_USER(console_cmd_pdc, test_trysrc)
 	const char *outbuffer;
 	size_t buffer_size;
 
-	/* Invalid param */
-	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc enable");
+	/* Invalid port number */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 99 0");
 	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
 
 	/* Invalid param */
-	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 2");
+	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 0 enable");
+	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
+
+	/* Invalid param */
+	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 0 2");
 	zassert_equal(rv, -EINVAL, "Expected %d, but got %d", -EINVAL, rv);
 
 	/* Internal failure of pdc_power_mgmt_set_trysrc() */
 	pdc_power_mgmt_set_trysrc_fake.return_val = 1;
 
-	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 0");
+	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 0 0");
 	zassert_equal(rv, pdc_power_mgmt_set_trysrc_fake.return_val,
 		      "Expected %d, but got %d",
 		      pdc_power_mgmt_set_trysrc_fake.return_val, rv);
@@ -191,7 +195,7 @@ ZTEST_USER(console_cmd_pdc, test_trysrc)
 
 	/* Disable Try.SRC */
 	shell_backend_dummy_clear_output(get_ec_shell());
-	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 0");
+	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 0 0");
 	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
 		      rv);
 	k_sleep(K_MSEC(SLEEP_MS));
@@ -204,7 +208,7 @@ ZTEST_USER(console_cmd_pdc, test_trysrc)
 
 	/* Enable Try.SRC */
 	shell_backend_dummy_clear_output(get_ec_shell());
-	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 1");
+	rv = shell_execute_cmd(get_ec_shell(), "pdc trysrc 0 1");
 	zassert_equal(rv, EC_SUCCESS, "Expected %d, but got %d", EC_SUCCESS,
 		      rv);
 	k_sleep(K_MSEC(SLEEP_MS));

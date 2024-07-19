@@ -376,9 +376,15 @@ static int cmd_pdc_trysrc(const struct shell *sh, size_t argc, char **argv)
 {
 	int rv;
 	uint8_t enable = 0;
+	uint8_t port;
 	char *e;
 
-	enable = strtoul(argv[1], &e, 10);
+	/* Get PD port number */
+	rv = cmd_get_pd_port(sh, argv[1], &port);
+	if (rv)
+		return rv;
+
+	enable = strtoul(argv[2], &e, 10);
 	if (*e) {
 		shell_error(sh, "unable to parse TrySrc value");
 		return -EINVAL;
@@ -388,12 +394,13 @@ static int cmd_pdc_trysrc(const struct shell *sh, size_t argc, char **argv)
 		return -EINVAL;
 	}
 
-	rv = pdc_power_mgmt_set_trysrc(0, enable);
+	rv = pdc_power_mgmt_set_trysrc(port, enable);
 	if (rv) {
-		shell_error(sh, "Could not set trysrc %d", rv);
+		shell_error(sh, "Could not set trysrc: %d (port %u)", rv, port);
 		return rv;
 	}
-	shell_info(sh, "Try.SRC Forced %s", enable ? "ON" : "OFF");
+	shell_info(sh, "Try.SRC Forced %s (port %u)", enable ? "ON" : "OFF",
+		   port);
 	return EC_SUCCESS;
 }
 
@@ -662,8 +669,8 @@ SHELL_STATIC_SUBCMD_SET_CREATE(
 		      cmd_pdc_dualrole, 2, 1),
 	SHELL_CMD_ARG(trysrc, NULL,
 		      "Set trysrc mode\n"
-		      "Usage: pdc trysrc [0|1]",
-		      cmd_pdc_trysrc, 2, 0),
+		      "Usage: pdc trysrc <port> [0|1]",
+		      cmd_pdc_trysrc, 3, 0),
 	SHELL_CMD_ARG(conn_reset, NULL,
 		      "Trigger hard or data reset\n"
 		      "Usage: pdc conn_reset  <port> [hard|data]",
