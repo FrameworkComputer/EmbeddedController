@@ -1021,6 +1021,12 @@ int main(int argc, char **argv)
 		return 0;
 	}
 
+	if ((conf.read_file_name != NULL) &&
+	    (conf.read_start_addr == NO_READ)) {
+		/* User requested to read the entire image. */
+		conf.read_start_addr = 0;
+	}
+
 	if ((conf.file_name == NULL) && (conf.read_start_addr == NO_READ) &&
 	    (conf.read_range == 0)) {
 		printf("choose a file to flash..\n\r");
