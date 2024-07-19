@@ -75,9 +75,9 @@
 		plt-config-2 {
 			gpios = <&ioex_it8801_port1 1 GPIO_INPUT>;
 		};
-		sys-rst-odl-ec {
+		sys_rst_odl: sys-rst-odl-ec {
 			enum-name = "GPIO_SYS_RST_ODL";
-			gpios = <&ioex_it8801_port1 0 GPIO_OUTPUT_HIGH>;
+			gpios = <&ioex_it8801_port1 0 (GPIO_ODR_HIGH | GPIO_ACTIVE_LOW)>;
 		};
 		ec_spi_oe_mecc: ec-eeprom-wp {
 			gpios = <&ioex_it8801_port2 0 GPIO_INPUT>;
