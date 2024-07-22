@@ -120,7 +120,7 @@ __staticlib_hook int elan_write_reg_vector(const uint8_t *reg_table, int length)
 	return ret;
 }
 
-__staticlib_hook int raw_capture(uint16_t *short_raw)
+__staticlib_hook int elan_raw_capture(uint16_t *short_raw)
 {
 	int ret = 0, i = 0, cnt_timer = 0, rx_index = 0;
 	uint8_t regdata[4] = { 0 };
@@ -186,14 +186,14 @@ __staticlib_hook int elan_execute_calibration(void)
 	while (retry_time < REK_TIMES) {
 		elan_write_cmd(SRST);
 		elan_write_cmd(FUSE_LOAD);
-		register_initialization();
+		elan_register_initialization();
 
 		if (IC_SELECTION == EFSA80SG)
 			elan_set_hv_chip(0);
 
 		elan_sensing_mode();
 
-		ret = calibration();
+		ret = elan_calibration();
 		if (ret == 0)
 			break;
 
@@ -216,7 +216,7 @@ int elan_fp_maintenance(uint16_t *error_state)
 	*error_state &= 0xFC00;
 	sensor_info.num_defective_pixels = 0;
 	sensor_info.sensor_error_code = 0;
-	rv = fp_sensor_maintenance(&sensor_info);
+	rv = elan_fp_sensor_maintenance(&sensor_info);
 	LOGE_SA("Maintenance took %d ms", time_since32(start) / MSEC);
 
 	if (rv != 0) {
@@ -284,7 +284,7 @@ int elan_set_hv_chip(bool state)
 	return ret;
 }
 
-__staticlib_hook int usleep(unsigned int us)
+__staticlib_hook int elan_usleep(unsigned int us)
 {
 	return crec_usleep(us);
 }

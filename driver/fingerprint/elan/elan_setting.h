@@ -7,6 +7,7 @@
 #define ELAN_SETTING_H
 
 #include "common.h"
+#include "elan_misc.h"
 
 #include <stdint.h>
 
@@ -98,7 +99,7 @@
 #define REK_TIMES 3
 
 /* Console output macros */
-#define LOGE_SA(format, args...) cprints(CC_FP, format, ##args)
+#define LOGE_SA(format, args...) elan_log_var(format, ##args)
 
 /**
  * Set ELAN fingerprint sensor register initialization
@@ -106,7 +107,7 @@
  * @return 0 on success.
  *         negative value on error.
  */
-__staticlib int register_initialization(void);
+__staticlib int elan_register_initialization(void);
 
 /**
  * To calibrate ELAN fingerprint sensor and keep the calibration results
@@ -115,6 +116,6 @@ __staticlib int register_initialization(void);
  * @return 0 on success.
  *         negative value on error.
  */
-__staticlib int calibration(void);
+__staticlib int elan_calibration(void);
 
 #endif /* _ELAN_SETTING_H */

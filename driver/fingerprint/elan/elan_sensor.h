@@ -43,7 +43,7 @@ __staticlib int elan_sensing_mode(void);
  * To initialize parameters of the ELAN matching algorithm
  *
  */
-__staticlib void algorithm_parameter_setting(void);
+__staticlib void elan_alg_param_setting(void);
 
 /**
  * Compares given finger image against enrolled templates.
@@ -142,15 +142,6 @@ __staticlib enum finger_state elan_sensor_finger_status(void);
  * @return 0 on success or a negative error code.
  */
 __staticlib int elan_enrollment_finish(void *templ);
-
-/**
- * Fill the 'ec_response_fp_alg_info' buffer with the sensor alg information
- *
- * @param[out] resp      retrieve the algorithm information
- *
- * @return EC_SUCCESS on success otherwise error.
- */
-__staticlib int elan_sensor_get_alg_info(struct ec_response_fp_info *resp);
 
 /**
  * Runs a test for defective pixels.

@@ -88,7 +88,7 @@ int fp_sensor_init(void)
 
 	errors = 0;
 	elan_execute_reset();
-	algorithm_parameter_setting();
+	elan_alg_param_setting();
 	if (IC_SELECTION == EFSA80SG)
 		elan_set_hv_chip(1);
 
@@ -278,22 +278,4 @@ int fp_maintenance(void)
 {
 	CPRINTF("========%s=======\n", __func__);
 	return elan_fp_maintenance(&errors);
-}
-
-/**
- * Provides the init_trng function required by the elan library using the EC
- * trng API
- */
-void init_trng(void)
-{
-	trng_init();
-}
-
-/**
- * Provides the exit_trng function required by the elan library using the EC
- * trng API
- */
-void exit_trng(void)
-{
-	trng_exit();
 }
