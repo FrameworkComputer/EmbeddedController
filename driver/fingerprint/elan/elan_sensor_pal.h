@@ -75,6 +75,17 @@ int elan_spi_transaction(uint8_t *tx, int tx_len, uint8_t *rx, int rx_len);
 __staticlib_hook int elan_write_register(uint8_t regaddr, uint8_t regdata);
 
 /**
+ * @brief Read fp register data from sensor
+ *
+ * @param[in]    regaddr  One byte register address to read
+ * @param[out]   regdata  Single byte value read from register
+ *
+ * @return 0 on success.
+ *         negative value on error.
+ */
+int elan_read_register(uint8_t regaddr, uint8_t *regdata);
+
+/**
  * @brief Select sensor RAM page of register
  *
  * @param[in]   page    The number of RAM page control registers

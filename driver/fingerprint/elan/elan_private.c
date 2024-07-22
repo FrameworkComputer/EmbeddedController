@@ -39,6 +39,38 @@ static struct ec_response_fp_info ec_fp_sensor_info = {
 	.bpp = FP_SENSOR_RES_BPP_ELAN,
 };
 
+int elan_get_hwid(uint16_t *id)
+{
+	int rc;
+	uint8_t id_hi = 0, id_lo = 0;
+	if (id == NULL)
+		return EC_ERROR_INVAL;
+	rc = elan_read_register(0x02, &id_hi);
+	rc |= elan_read_register(0x04, &id_lo);
+	if (rc) {
+		CPRINTS("ELAN HW ID read failed %d", rc);
+		return FP_ERROR_SPI_COMM;
+	}
+	*id = (id_hi << 8) | id_lo;
+	return EC_SUCCESS;
+}
+
+int elan_check_hwid(void)
+{
+	uint16_t id = 0;
+	int status;
+
+	status = elan_get_hwid(&id);
+	if (id != FP_SENSOR_HWID_ELAN) {
+		CPRINTS("ELAN unknown silicon 0x%04x", id);
+		return FP_ERROR_BAD_HWID;
+	}
+	if (status == EC_SUCCESS)
+		CPRINTS("ELAN HWID 0x%04x", id);
+
+	return status;
+}
+
 /**
  * set fingerprint sensor into power saving mode
  */
@@ -60,6 +92,7 @@ int fp_sensor_init(void)
 	if (IC_SELECTION == EFSA80SG)
 		elan_set_hv_chip(1);
 
+	errors |= elan_check_hwid();
 	if (elan_execute_calibration() < 0)
 		errors |= FP_ERROR_INIT_FAIL;
 	if (elan_woe_mode() != 0)
@@ -86,16 +119,16 @@ int fp_sensor_deinit(void)
  */
 int fp_sensor_get_info(struct ec_response_fp_info *resp)
 {
-	int ret = 0;
+	uint16_t id = 0;
 
 	CPRINTF("========%s=======\n", __func__);
 	memcpy(resp, &ec_fp_sensor_info, sizeof(struct ec_response_fp_info));
-	elan_sensor_get_alg_info(resp);
-	resp->errors |= errors;
-	CPRINTF("##%s## FrameSize=%d, errors=0x%04x\n", __func__,
-		resp->frame_size, resp->errors);
+	elan_get_hwid(&id);
 
-	return ret;
+	resp->model_id = id;
+	resp->errors = errors;
+
+	return EC_SUCCESS;
 }
 
 /**
