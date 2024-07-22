@@ -26,22 +26,22 @@
 		otg_en {
 			gpios = <&gpioc 5 GPIO_OUTPUT_LOW>;
 		};
-		ec_smb_ck0 {
+		ec_i2c0_scl0 {
 			gpios = <&gpiob 5 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
-		ec_smb_da0 {
+		ec_i2c0_sda0 {
 			gpios = <&gpiob 4 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
 		};
-		ec_smb_ck1 {
+		ec_i2c1_scl0 {
 			gpios = <&gpio9 0 GPIO_INPUT>;
 		};
-		ec_smb_da1 {
+		ec_i2c1_sda0 {
 			gpios = <&gpio8 7 GPIO_INPUT>;
 		};
-		ec_smb_ck2 {
+		ec_i2c2_scl0 {
 			gpios = <&gpio9 2 GPIO_INPUT>;
 		};
-		ec_smb_da2 {
+		ec_i2c2_sda0 {
 			gpios = <&gpio9 1 GPIO_INPUT>;
 		};
 		ec_smb_ck3 {
@@ -50,16 +50,16 @@
 		ec_smb_da3 {
 			gpios = <&gpiod 0 GPIO_INPUT>;
 		};
-		ec_smb_ck4 {
+		ec_i2c4_scl1 {
 			gpios = <&gpiof 3 GPIO_INPUT>;
 		};
-		ec_smb_da4 {
+		ec_i2c4_sda1 {
 			gpios = <&gpiof 2 GPIO_INPUT>;
 		};
-		ec_smb_ck7 {
+		ec_i2c7_scl0 {
 			gpios = <&gpiob 3 GPIO_INPUT>;
 		};
-		ec_smb_da7 {
+		ec_i2c7_sda0 {
 			gpios = <&gpiob 2 GPIO_INPUT>;
 		};
 		gpio_mic_sw: mic_sw {
@@ -124,11 +124,12 @@
 		gpio_syson: syson {
 			gpios = <&gpioa 6 GPIO_OUTPUT_LOW>;
 		};
-		gpio_cap_led: cap_led {
-			gpios = <&gpiob 1 GPIO_OUTPUT_LOW>;
+		/* TODO: implement touchpad DB Power Gate feature */
+		gpio_tp_board_id_pug: tp_board_id_pug {
+			gpios = <&gpio0 3 GPIO_OUTPUT_LOW>; /* Control FET for TP board ID pullup */
 		};
-		en_3v_chgrtc {
-			gpios = <&gpio4 4 GPIO_OUTPUT_LOW>;	/* reserved */
+		gpio_cap_led: cap_led {
+			gpios = <&gpiob 1 GPIO_OUTPUT_LOW>; /* Capslock LED on keyboard */
 		};
 		ac_present_pd_l {
 			gpios = <&gpio4 3 GPIO_INPUT>;		/* Monitor AC present from PD */
@@ -139,7 +140,7 @@
 		gpio_fp_control: fp_control {
 			gpios = <&gpio3 4 GPIO_INPUT>;		/* Finger Printer feature */
 		};
-		enbkl_apu {
+		apu_enbkl_r {
 			gpios = <&gpioe 0 GPIO_INPUT>;		/* monitor APU EDP BKL */
 		};
 		gpio_sm_panel_bken_ec: ec_bkoff_l {
@@ -163,6 +164,9 @@
 		gpio_cam_sw: cam_sw {
 			gpios = <&gpio9 3 GPIO_INPUT>;
 		};
+		gpio_ec_fp_en: ec_fp_en {
+			gpios = <&gpioa 7 GPIO_OUTPUT_LOW>; /* Control power rail for fingerprint LED */
+		};
 		gpio_spok: pwr_3v5v_pg {
 			gpios = <&gpio9 4 GPIO_INPUT>;		/* Monitor 3VALW PWR OK */
 			enum-name = "GPIO_POWER_GOOD_3VALW";
@@ -183,7 +187,7 @@
 		gpio_wlan_en: wlan_en {
 			gpios = <&gpio7 2 GPIO_OUTPUT_LOW>;
 		};
-		ec_acc_int_l {
+		gpio_ddr5_sodimm_pwrgd_r: ddr5_sodimm_pwrgd_r {
 			gpios = <&gpiod 5 GPIO_INPUT>;
 		};
 		gpio_pd_chip1_interrupt: pd_b_i2c_int_ec_l {
