@@ -24,3 +24,9 @@ target_sources_ifdef(CONFIG_TEST_GERALT
 	src/fakes.c
 	src/main.c
 	src/usbc_config.c)
+
+target_sources_ifdef(CONFIG_TEST_CIRI
+	app PRIVATE
+	src/fakes.c
+	src/board_ciri.c
+	${PLATFORM_EC_PROGRAM_DIR}/geralt/ciri/src/board_config.c)

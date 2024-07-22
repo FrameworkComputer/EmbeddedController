@@ -11,4 +11,10 @@ config TEST_GERALT
 	  Run the tests for geralt common code.
 endchoice
 
+config TEST_CIRI
+	bool "Run the tests intended for ciri"
+	help
+	  Include board_ciri test into the binary to test
+	  board_config.c.
+
 source "Kconfig.zephyr"
