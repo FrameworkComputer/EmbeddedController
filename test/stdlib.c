@@ -464,7 +464,7 @@ static int test_memcpy(void)
 /* Plain memset, used as a reference to measure speed gain */
 static void *dumb_memset(void *dest, int c, int len)
 {
-	char *d = (char *)dest;
+	volatile char *d = (char *)dest;
 	while (len > 0) {
 		*(d++) = c;
 		len--;
