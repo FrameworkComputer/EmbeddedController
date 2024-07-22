@@ -71,6 +71,19 @@ __staticlib int elan_match(void *templ, uint32_t templ_count, uint8_t *image,
 			   int32_t *match_index, uint32_t *update_bitmap);
 
 /**
+ * Update the enrolled template.
+ *
+ * @param[in]  templ            a pointer to the array of template buffers.
+ * @param[in]  match_index      index of the matched finger in the template
+ *                              array if any.
+ *
+ * @return negative value on error, else one of the following code :
+ * - EC_MKBP_FP_ERR_MATCH_YES_UPDATED if template was updated with new data
+ * - EC_MKBP_FP_ERR_MATCH_YES if template was not updated with new data
+ */
+__staticlib int elan_template_update(void *templ, int32_t match_index);
+
+/**
  * start a finger enrollment session and initialize enrollment data
  *
  * @return 0 on success.

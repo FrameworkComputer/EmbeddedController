@@ -156,9 +156,13 @@ int fp_sensor_get_info(struct ec_response_fp_info *resp)
 int fp_finger_match(void *templ, uint32_t templ_count, uint8_t *image,
 		    int32_t *match_index, uint32_t *update_bitmap)
 {
+	int res;
 	CPRINTF("========%s=======\n", __func__);
-	return elan_match(templ, templ_count, image, match_index,
-			  update_bitmap);
+	res = elan_match(templ, templ_count, image, match_index, update_bitmap);
+	if (res == EC_MKBP_FP_ERR_MATCH_YES)
+		res = elan_template_update(templ, *match_index);
+
+	return res;
 }
 
 /**
