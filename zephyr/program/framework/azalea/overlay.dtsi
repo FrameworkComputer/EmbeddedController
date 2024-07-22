@@ -14,26 +14,26 @@
 	named-temp-sensors {
 		compatible = "cros-ec,temp-sensors";
 		local-f75303 {
-			temp_host_warn = <70>;
-			temp_host_high = <80>;
+			temp_host_warn = <80>;
+			temp_host_high = <90>;
 			temp_host_halt = <120>;
-			temp_host_release_warn = <50>;
-			temp_host_release_high = <55>;
+			temp_host_release_warn = <70>;
+			temp_host_release_high = <75>;
 			temp_host_release_halt = <115>;
-			temp_fan_off = <40>;
+			temp_fan_off = <50>;
 			temp_fan_max = <70>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&local_f75303>;
 		};
 		cpu-f75303 {
-			temp_host_warn = <70>;
-			temp_host_high = <80>;
+			temp_host_warn = <80>;
+			temp_host_high = <90>;
 			temp_host_halt = <120>;
-			temp_host_release_warn = <53>;
-			temp_host_release_high = <55>;
+			temp_host_release_warn = <70>;
+			temp_host_release_high = <75>;
 			temp_host_release_halt = <115>;
-			temp_fan_off = <46>;
-			temp_fan_max = <54>;
+			temp_fan_off = <50>;
+			temp_fan_max = <68>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&cpu_f75303>;
 		};
@@ -41,11 +41,11 @@
 			temp_host_warn = <70>;
 			temp_host_high = <80>;
 			temp_host_halt = <120>;
-			temp_host_release_warn = <50>;
-			temp_host_release_high = <55>;
+			temp_host_release_warn = <63>;
+			temp_host_release_high = <65>;
 			temp_host_release_halt = <115>;
-			temp_fan_off = <128>;
-			temp_fan_max = <128>;
+			temp_fan_off = <46>;
+			temp_fan_max = <60>;
 			power-good-pin = <&gpio_slp_s3_l>;
 			sensor = <&ddr_f75303>;
 		};
