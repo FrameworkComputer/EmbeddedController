@@ -347,7 +347,7 @@ get_default_fw() {
   # one firmware file on disk.
 
   local -a fws
-  mapfile -t fws < <(find /opt/google/biod/fw -name "${board}*.bin")
+  mapfile -t fws < <(find /opt/google/biod/fw -maxdepth 1 -name "${board}*.bin")
 
   if [[ "${#fws[@]}" -ne 1 ]]; then
     return 1
