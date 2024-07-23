@@ -126,6 +126,10 @@ tests:
     - CONFIG_EEPROM=y
     - CONFIG_EEPROM_SIMULATOR=n
     - CONFIG_PLATFORM_EC_USB_MUX_TUSB546=n
+    - CONFIG_PLATFORM_EC_LED_COMMON=y
+    - CONFIG_PLATFORM_EC_LED_PWM=n
+    - CONFIG_PLATFORM_EC_LED_ONOFF_STATES=n
+    - CONFIG_PWM=y
     extra_dtc_overlay_files:
     - krabby.skitty.overlay
   krabby.veluza:

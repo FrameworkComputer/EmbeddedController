@@ -2,6 +2,7 @@
  * Use of this source code is governed by a BSD-style license that can be
  * found in the LICENSE file.
  */
+#include <dt-bindings/pwm/pwm.h>
 
 #include "common.dtsi"
 #include "../program/corsola/ite_gpio.dtsi"
@@ -99,6 +100,35 @@
 			ppc_alt = <&ppc_port0>;
 		};
 		/delete-node/ port1@1;
+	};
+
+	/* LEDs need to exist for testing, but aren't actually used. */
+	led-pwms {
+		#address-cells = <1>;
+		#size-cells = <1>;
+
+		pwm1: pwm@1 {
+			compatible = "cros,pwm-mock";
+			reg = <0 1>;
+			#pwm-cells = <3>;
+		};
+
+		pwm2: pwm@2 {
+			compatible = "cros,pwm-mock";
+			reg = <0 1>;
+			#pwm-cells = <3>;
+		};
+	};
+
+	pwmleds {
+		compatible = "pwm-leds";
+
+		pwm_battery_amber_led: ec_led1_odl {
+			pwms = <&pwm1 1 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
+		pwm_battery_white_led: ec_led2_odl {
+			pwms = <&pwm2 2 PWM_HZ(100) PWM_POLARITY_INVERTED>;
+		};
 	};
 };
 
