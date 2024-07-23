@@ -544,6 +544,12 @@ enum power_state power_handle_state(enum power_state state)
 		hook_notify(HOOK_CHIPSET_RESUME);
 		peripheral_power_resume();
 
+		/*
+		 * Disable idle task deep sleep. This means that the low
+		 * power idle task will not go into deep sleep while in S0.
+		 */
+		disable_sleep(SLEEP_MASK_AP_RUN);
+
 		/* set the PD chip system power state "S0" */
 		cypd_set_power_active();
 
@@ -610,6 +616,13 @@ enum power_state power_handle_state(enum power_state state)
 
 		lpc_s0ix_resume_restore_masks();
 		hook_notify(HOOK_CHIPSET_RESUME);
+
+		/*
+		 * Disable idle task deep sleep. This means that the low
+		 * power idle task will not go into deep sleep while in S0.
+		 */
+		disable_sleep(SLEEP_MASK_AP_RUN);
+
 		return POWER_S0;
 
 		break;
@@ -619,6 +632,13 @@ enum power_state power_handle_state(enum power_state state)
 		system_in_s0ix = 1;
 		lpc_s0ix_suspend_clear_masks();
 		hook_notify(HOOK_CHIPSET_SUSPEND);
+
+		/*
+		 * Enable idle task deep sleep. Allow the low power idle task
+		 * to go into deep sleep in S3 or lower.
+		 */
+		enable_sleep(SLEEP_MASK_AP_RUN);
+
 		return POWER_S0ix;
 
 		break;
@@ -635,6 +655,12 @@ enum power_state power_handle_state(enum power_state state)
 		/* Call hooks before we remove power rails */
 		hook_notify(HOOK_CHIPSET_SUSPEND);
 		peripheral_power_suspend();
+
+		/*
+		 * Enable idle task deep sleep. Allow the low power idle task
+		 * to go into deep sleep in S3 or lower.
+		 */
+		enable_sleep(SLEEP_MASK_AP_RUN);
 
 		/* set the PD chip system power state "S3" */
 		cypd_set_power_active();
