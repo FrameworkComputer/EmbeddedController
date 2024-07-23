@@ -1793,6 +1793,11 @@ def all_targets():
         extra_modules = ["cmsis"],
     )
     ec_target(
+        name = "orisa_ti",
+        board = "orisa_ti",
+        extra_modules = ["cmsis"],
+    )
+    ec_target(
         name = "osiris",
         baseboard = "brya",
         board = "osiris",

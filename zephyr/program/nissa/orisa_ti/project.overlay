@@ -1,0 +1,36 @@
+/* Copyright 2022 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "../cbi.dtsi"
+
+#include "../orisa/cbi.dtsi"
+#include "../orisa/generated.dtsi"
+#include "../orisa/keyboard.dtsi"
+#include "../orisa/motionsense.dtsi"
+#include "../orisa/overlay.dtsi"
+#include "../orisa/power_signals.dtsi"
+#include "../orisa/led_pins.dtsi"
+#include "../orisa/led_policy.dtsi"
+
+/delete-node/ &pdc_power_p0;
+
+&i2c3_0 {
+	label = "I2C_PORT_PD";
+	clock-frequency = <I2C_BITRATE_FAST_PLUS>;
+
+	pdc_power_p0: tps6699-pdc@20 {
+		compatible = "ti,tps6699-pdc";
+		reg = <0x20>;
+		irq-gpios = <&gpio0 2 GPIO_ACTIVE_LOW>;
+	};
+};
+
+&gpio_usb_pd_int_odl {
+	no-auto-init;
+};
+
+&gpio_ec_i2c_pmc_pd_int_odl {
+	no-auto-init;
+};
