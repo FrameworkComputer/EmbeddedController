@@ -35,6 +35,13 @@ config SHELL_BACKEND_SERIAL_TX_RING_BUFFER_SIZE
 config SHELL_BACKEND_SERIAL_RX_RING_BUFFER_SIZE
 	default 192
 
+config PLATFORM_EC_CONSOLE_INIT_PRIORITY
+	int "EC console shim init priority"
+	default 61
+	help
+	  Console shim initialization priority.  This must be a lower priority
+	  than CONFIG_CONSOLE_INIT_PRIORITY.
+
 config PLATFORM_EC_ISR_CONSOLE_OUTPUT
 	bool "Log in ISRs"
 	depends on CONSOLE
