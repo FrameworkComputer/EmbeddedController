@@ -77,6 +77,7 @@ int usb_console_tx_blocked(void);
 
 #define usb_va_start va_start
 #define usb_va_end va_end
+#define usb_va_copy va_copy
 #else
 #define usb_puts(x) EC_SUCCESS
 #define usb_vprintf(x, y) EC_SUCCESS
@@ -84,6 +85,7 @@ int usb_console_tx_blocked(void);
 #define usb_getc(x) (-1)
 #define usb_va_start(x, y)
 #define usb_va_end(x)
+#define usb_va_copy(d, s)
 #define usb_console_tx_blocked() (0)
 
 #ifdef __cplusplus
