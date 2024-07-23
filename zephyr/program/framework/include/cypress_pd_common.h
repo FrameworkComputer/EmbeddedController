@@ -536,6 +536,7 @@ struct pd_port_current_state_t {
 	uint8_t cc;
 	uint8_t epr_active;
 	uint8_t epr_support;
+	uint8_t epr_retry_count;
 
 	enum pd_power_role power_role;
 	enum pd_data_role data_role;

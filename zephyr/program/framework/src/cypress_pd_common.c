@@ -845,6 +845,7 @@ static void clear_port_state(int controller, int port)
 	pd_port_states[port_idx].vconn = PD_ROLE_VCONN_OFF;
 	pd_port_states[port_idx].epr_active = 0;
 	pd_port_states[port_idx].epr_support = 0;
+	pd_port_states[port_idx].epr_retry_count = 0;
 	pd_port_states[port_idx].cc = POLARITY_CC1;
 	pd_port_states[port_idx].c_state = 0;
 	pd_port_states[port_idx].current = 0;
