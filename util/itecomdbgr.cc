@@ -171,6 +171,7 @@ static void hexdump(uint8_t *buffer, int len)
 static int init_file(struct itecomdbgr_config *conf)
 {
 	int r = 0;
+	int bytes;
 	struct stat st;
 
 	if (conf->read_start_addr != NO_READ)
@@ -192,7 +193,13 @@ static int init_file(struct itecomdbgr_config *conf)
 		if (conf->g_readbuf == NULL) {
 			printf("alloc g_readbuf fail\n\r");
 		}
-		fread(conf->g_writebuf, 1, conf->file_size, conf->fi);
+		bytes = fread(conf->g_writebuf, 1, conf->file_size, conf->fi);
+
+		if (bytes != conf->file_size) {
+			printf("File read only returned %d bytes, %d bytes expected\n",
+			       bytes, conf->file_size);
+			r = ITE_ERR;
+		}
 	} else {
 		printf("open file error : %s\n", conf->file_name);
 		r = ITE_ERR;
@@ -245,9 +252,15 @@ static int write_com(struct itecomdbgr_config *conf, const uint8_t *lpOutBuffer,
 static uint8_t debug_getc(struct itecomdbgr_config *conf)
 {
 	uint8_t data[1];
+	int res;
 
-	read(conf->g_fd, data, 1);
-	return data[0];
+	res = read(conf->g_fd, data, 1);
+
+	if (res > 0) {
+		return data[0];
+	} else {
+		return 0xFF;
+	}
 }
 
 static void rw_reg(struct itecomdbgr_config *conf, unsigned long Address,
