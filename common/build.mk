@@ -54,9 +54,9 @@ common-$(CONFIG_BLUETOOTH_LE_STACK)+=btle_hci_controller.o btle_ll.o
 common-$(CONFIG_BODY_DETECTION)+=body_detection.o
 common-$(CONFIG_CAPSENSE)+=capsense.o
 common-$(CONFIG_CEC)+=cec.o
-common-$(CONFIG_CBI_EEPROM)+=cbi.o cbi_config.o cbi_eeprom.o
+common-$(CONFIG_CBI_EEPROM)+=cbi.o cbi_common.o cbi_config.o cbi_eeprom.o
 common-$(CONFIG_USB_PD_FLAGS)+=usb_pd_flags.o
-common-$(CONFIG_CBI_GPIO)+=cbi.o cbi_config.o cbi_gpio.o
+common-$(CONFIG_CBI_GPIO)+=cbi.o cbi_common.o cbi_config.o cbi_gpio.o
 ifeq ($(HAS_MOCK_CHARGE_MANAGER),)
 common-$(CONFIG_CHARGE_MANAGER)+=charge_manager.o
 endif

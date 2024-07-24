@@ -332,6 +332,7 @@ zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_OCPC
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI
                                                 "${PLATFORM_EC}/common/cbi.c"
+                                                "${PLATFORM_EC}/common/cbi_common.c"
                                                 "${PLATFORM_EC}/common/cbi_config.c")
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_CBI_GPIO
                                                 "${PLATFORM_EC}/common/cbi_gpio.c")
