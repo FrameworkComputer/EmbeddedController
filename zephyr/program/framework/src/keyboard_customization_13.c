@@ -338,7 +338,7 @@ int hotkey_special_key(uint16_t *key_code, int8_t pressed)
 	const uint16_t prss_key = *key_code;
 
 	switch (prss_key) {
-	case SCANCODE_DELETE:  /* INSERST */
+	case SCANCODE_DELETE:  /* INSERT */
 		if (fn_table_set(pressed, KB_FN_DELETE))
 			*key_code = 0xe070;
 		break;

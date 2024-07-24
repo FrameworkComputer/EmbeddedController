@@ -73,7 +73,7 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 			"azalea/src/charger.c"
 			"azalea/src/cpu_power.c"
 			"azalea/src/power_sequence.c"
-			"azalea/src/keyboard_customization.c"
+			"src/keyboard_customization_13.c"
 			"azalea/src/project_diagnostics.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
@@ -90,7 +90,7 @@ if(DEFINED CONFIG_BOARD_MARIGOLD)
 			"marigold/src/charger.c"
 			"marigold/src/cpu_power.c"
 			"marigold/src/power_sequence.c"
-			"marigold/src/keyboard_customization.c"
+			"src/keyboard_customization_13.c"
 			"marigold/src/project_diagnostics.c"
 			"marigold/src/temperature.c"
 			"marigold/src/thermal.c"
