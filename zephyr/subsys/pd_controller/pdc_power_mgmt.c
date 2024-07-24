@@ -1180,7 +1180,7 @@ static bool should_swap_to_source(struct pdc_port_t *port)
 
 	/* If all of the following are true, swap to source:
 	 *  a) Source caps were received from the port partner
-	 *  b) Port partner supports unconstrained power and DRP
+	 *  b) Port partner supports DRP and does not offer unconstrained power
 	 *  c) Port isn't the active charging port.
 	 */
 
@@ -1188,8 +1188,8 @@ static bool should_swap_to_source(struct pdc_port_t *port)
 		return false;
 	}
 
-	if (!(port->snk_policy.pdo & PDO_FIXED_GET_UNCONSTRAINED_PWR) &&
-	    (port->snk_policy.pdo & PDO_FIXED_DUAL_ROLE)) {
+	if (port->snk_policy.pdo & PDO_FIXED_GET_UNCONSTRAINED_PWR ||
+	    !(port->snk_policy.pdo & PDO_FIXED_DUAL_ROLE)) {
 		return false;
 	}
 
