@@ -118,6 +118,9 @@ void base_init_setting(void)
 	    adc_read_channel(ADC_BASE_DET) < ATTACH_MIN_THRESHOLD_MV) {
 		attached = false;
 		hook_call_deferred(&base_update_data, 0);
+	} else {
+		attached = true;
+		hook_call_deferred(&base_update_data, 0);
 	}
 	base_detect_enable(true);
 }
