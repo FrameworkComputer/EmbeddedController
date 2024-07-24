@@ -103,9 +103,9 @@ int cvprintf(enum console_channel channel, const char *format, va_list args)
 	if (console_channel_is_disabled(channel))
 		return EC_SUCCESS;
 
-	usb_va_copy(temp_args, args);
+	va_copy(temp_args, args);
 	rv1 = usb_vprintf(format, temp_args);
-	usb_va_end(temp_args);
+	va_end(temp_args);
 
 	va_copy(temp_args, args);
 	rv2 = uart_vprintf(format, temp_args);
