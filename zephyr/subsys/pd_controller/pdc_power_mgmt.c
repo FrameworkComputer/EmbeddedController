@@ -1211,6 +1211,8 @@ static void run_snk_policies(struct pdc_port_t *port)
 		return;
 	} else if (atomic_test_and_clear_bit(port->snk_policy.flags,
 					     SNK_POLICY_SWAP_TO_SRC)) {
+		port->pdr.swap_to_src = 1;
+		port->pdr.swap_to_snk = 0;
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
 		return;
 	} else if (atomic_test_and_clear_bit(port->snk_policy.flags,
@@ -1220,8 +1222,9 @@ static void run_snk_policies(struct pdc_port_t *port)
 	} else if (atomic_test_and_clear_bit(port->snk_policy.flags,
 					     SNK_POLICY_EVAL_SWAP_TO_SRC)) {
 		if (should_swap_to_source(port)) {
-			pdc_power_mgmt_request_power_swap_intern(
-				port_num, PD_ROLE_SOURCE);
+			atomic_set_bit(
+				pdc_data[port_num]->port.snk_policy.flags,
+				SNK_POLICY_SWAP_TO_SRC);
 		}
 		return;
 	}
@@ -1236,6 +1239,8 @@ static void run_src_policies(struct pdc_port_t *port)
 
 	if (atomic_test_and_clear_bit(port->src_policy.flags,
 				      SRC_POLICY_SWAP_TO_SNK)) {
+		port->pdr.swap_to_src = 0;
+		port->pdr.swap_to_snk = 1;
 		queue_internal_cmd(port, CMD_PDC_SET_PDR);
 		return;
 	} else if (atomic_test_and_clear_bit(port->src_policy.flags,
