@@ -252,7 +252,7 @@ static void chipset_force_g3(void)
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 0);
 	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
-	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ac_present), 0);
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ac_present_cpu), 0);
 }
 
 void chipset_force_shutdown(enum chipset_shutdown_reason reason)
@@ -330,7 +330,7 @@ enum power_state power_handle_state(enum power_state state)
 		me_gpio_change(me_change & ME_UNLOCK ? GPIO_OUTPUT_HIGH : GPIO_OUTPUT_LOW);
 
 		if (extpower_is_present())
-			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ac_present), 1);
+			gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ac_present_cpu), 1);
 
 		/* Customizes power button out signal without PB task for powering on. */
 		k_msleep(90);
@@ -519,7 +519,7 @@ enum power_state power_handle_state(enum power_state state)
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pbtn_out), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_wlan_en), 0);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_pch_pwr_en), 0);
-		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ac_present), 0);
+		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ac_present_cpu), 0);
 		k_msleep(1);
 		gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ec_soc_rsmrst_l), 0);
 

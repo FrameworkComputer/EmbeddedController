@@ -213,6 +213,18 @@ static void set_initial_pwrbtn_state(void)
 	} else if (((reset_flags & EC_RESET_FLAG_HIBERNATE) == EC_RESET_FLAG_HIBERNATE) &&
 		(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_hw_acav_in)) == 0)) {
 		/**
+		 * If EC wake from power button and the power button already release.
+		 * check the chassis status and standalone mode status.
+		 */
+		if ((gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_chassis_open_l)) == 0) &&
+			(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_on_off_btn_l)) == 1) &&
+			!get_standalone_mode()) {
+			pwrbtn_state = PWRBTN_STATE_IDLE;
+			CPRINTS("PB ignore signal");
+			return;
+		}
+
+		/**
 		 * EC needs to auto power on after exiting the hibernate mode w/o external power
 		 */
 		pwrbtn_state = PWRBTN_STATE_INIT_ON;
@@ -233,6 +245,10 @@ static void set_initial_pwrbtn_state(void)
  */
 static void board_extpower(void)
 {
+	/* AC present to CPU */
+#if DT_NODE_EXISTS(DT_NODELABEL(gpio_ac_present_cpu))
+	gpio_pin_set_dt(GPIO_DT_FROM_NODELABEL(gpio_ac_present_cpu), extpower_is_present());
+#endif
 	if (chipset_in_state(CHIPSET_STATE_ANY_OFF) &&
 		extpower_is_present() && ac_boot_status()) {
 		CPRINTS("Power on from boot on AC present");
@@ -265,7 +281,16 @@ static void state_machine(uint64_t tnow)
 			 */
 			reset_diagnostics();
 			chipset_exit_hard_off();
-			pwrbtn_state = PWRBTN_STATE_IDLE;
+
+			/*
+			 * Workaround: the pch now have leakage,
+			 * need keep pchbtn to low for while,
+			 * if use idle will set to high by release event.
+			 *
+			 * when HW solved leakage will go back check
+			 * should still nedd eat release
+			 */
+			pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
 		} else {
 			/*
 			 * when in preOS still need send power button signal
@@ -343,7 +368,15 @@ static void state_machine(uint64_t tnow)
 		 */
 		reset_diagnostics();
 		chipset_exit_hard_off();
-		pwrbtn_state = PWRBTN_STATE_IDLE;
+		/*
+		 * Workaround: the pch now have leakage,
+		 * need keep pchbtn to low for while,
+		 * if use idle will set to high by release event.
+		 *
+		 * when HW solved leakage will go back check
+		 * should still nedd eat release
+		 */
+		pwrbtn_state = PWRBTN_STATE_EAT_RELEASE;
 		break;
 	case PWRBTN_STATE_HELD:
 
@@ -439,7 +472,7 @@ static void powerbtn_x86_init(void)
 {
 	set_initial_pwrbtn_state();
 }
-DECLARE_HOOK(HOOK_INIT, powerbtn_x86_init, HOOK_PRIO_DEFAULT + 1);
+DECLARE_HOOK(HOOK_INIT, powerbtn_x86_init, HOOK_PRIO_DEFAULT + 2);
 
 void chipset_power_on(void)
 {

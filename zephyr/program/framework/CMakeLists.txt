@@ -17,6 +17,7 @@ zephyr_library_sources("src/ucsi.c")
 zephyr_library_sources("src/als.c")
 zephyr_library_sources("src/hid_device.c")
 zephyr_library_sources("src/temperature_filter.c")
+zephyr_library_sources("src/power_button_x86.c")
 
 zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_LED_COMMON
 	"src/led_pwm.c")
@@ -48,7 +49,6 @@ if(DEFINED CONFIG_BOARD_LOTUS)
 			"lotus/src/power_sequence.c"
 			"lotus/src/f75303.c"
 			"lotus/src/project_diagnostics.c"
-			"lotus/src/power_button_x86.c"
 			"lotus/src/amd_r23m.c"
 			"lotus/src/ej889i.c"
 			"lotus/src/thermal.c"
@@ -75,7 +75,6 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 			"azalea/src/power_sequence.c"
 			"azalea/src/keyboard_customization.c"
 			"azalea/src/project_diagnostics.c"
-			"azalea/src/power_button_x86.c"
 	)
 	zephyr_library_sources_ifdef(CONFIG_PLATFORM_EC_AMD_STT
 	"azalea/src/stt.c")
@@ -93,7 +92,6 @@ if(DEFINED CONFIG_BOARD_MARIGOLD)
 			"marigold/src/power_sequence.c"
 			"marigold/src/keyboard_customization.c"
 			"marigold/src/project_diagnostics.c"
-			"marigold/src/power_button_x86.c"
 			"marigold/src/temperature.c"
 			"marigold/src/thermal.c"
 	)
