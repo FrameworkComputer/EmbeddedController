@@ -7,6 +7,7 @@ on:
       - lotus*
       - azalea*
       - fwk*
+      - pr-*
       - framework*
   #  paths:
   #    - 'zephyr/program/framework/**'
