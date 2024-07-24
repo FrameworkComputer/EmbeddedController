@@ -69,7 +69,7 @@ if(DEFINED CONFIG_BOARD_AZALEA)
 	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_AZALEA include)
 	zephyr_include_directories("include/azalea")
 	zephyr_library_sources(
-			"azalea/src/battery.c"
+			"src/battery_13.c"
 			"azalea/src/charger.c"
 			"azalea/src/cpu_power.c"
 			"azalea/src/power_sequence.c"
@@ -86,7 +86,7 @@ if(DEFINED CONFIG_BOARD_MARIGOLD)
 	cros_ec_library_include_directories_ifdef(CONFIG_BOARD_MARIGOLD include)
 	zephyr_include_directories("include/marigold")
 	zephyr_library_sources(
-			"marigold/src/battery.c"
+			"src/battery_13.c"
 			"marigold/src/charger.c"
 			"marigold/src/cpu_power.c"
 			"marigold/src/power_sequence.c"
