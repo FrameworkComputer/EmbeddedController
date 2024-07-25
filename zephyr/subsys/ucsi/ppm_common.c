@@ -499,9 +499,10 @@ static void ppm_common_handle_pending_command(struct ucsi_ppm_device *dev)
 		ret = ppm_common_execute_pending_cmd(dev);
 		if (ret < 0) {
 			/* CCI error bits are handled by
-			 * execute_pending_command
+			 * execute_pending_command. Errors in execution still
+			 * need to be acked.
 			 */
-			dev->ppm_state = PPM_STATE_IDLE_NOTIFY;
+			dev->ppm_state = PPM_STATE_WAITING_CC_ACK;
 			ppm_common_opm_notify(dev);
 			break;
 		}
