@@ -3,6 +3,8 @@
  * found in the LICENSE file.
  */
 
+#include "ectool_pdc.h"
+
 /** @brief A handler for an `ectool` command.  */
 struct command {
 	/** The name of the command. */

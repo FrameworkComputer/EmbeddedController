@@ -33,6 +33,7 @@ iteflash-objs = iteflash.o usb_if.o
 itecomdbgr-objs = itecomdbgr.o
 ectool-objs=ectool.o ectool_keyscan.o ec_flash.o $(comm-objs)
 ectool-objs+=ectool_i2c.o
+ectool-objs+=ectool_pdc_trace.o
 ectool-objs+=../common/crc.o
 ectool_servo-objs=$(ectool-objs) comm-servo-spi.o
 lbplay-objs=lbplay.o $(comm-objs)

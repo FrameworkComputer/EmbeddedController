@@ -12405,6 +12405,7 @@ const struct command commands[] = {
 	{ "pdcontrol", cmd_pd_control,
 	  "[suspend|resume|reset|disable|on]\n"
 	  "\tControls the PD chip." },
+	{ "pdctrace", cmd_pdc_trace, cmd_pdc_trace_usage },
 	{ "pdgetmode", cmd_pd_get_amode,
 	  "<port>\n"
 	  "\tGet All USB-PD alternate SVIDs and modes on <port>." },
