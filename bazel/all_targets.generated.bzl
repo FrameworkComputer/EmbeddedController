@@ -1807,6 +1807,11 @@ def all_targets():
         extra_modules = ["cmsis"],
     )
     ec_target(
+        name = "orisa-ish",
+        board = "orisa-ish",
+        extra_modules = ["cmsis", "hal_intel_public"],
+    )
+    ec_target(
         name = "osiris",
         baseboard = "brya",
         board = "osiris",

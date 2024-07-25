@@ -196,6 +196,18 @@ teliks = register_nissa_project(
     project_name="teliks",
     chip="it8xxx2/it81302bx",
 )
+
+register_ish_project(
+    project_name="orisa-ish",
+    zephyr_board="intel_ish_5_4_1",
+    dts_overlays=[
+        here / "orisa-ish" / "project.overlay",
+    ],
+    kconfig_files=[
+        here / "orisa-ish" / "prj.conf",
+    ],
+)
+
 # Note for reviews, do not let anyone edit these assertions, the addresses
 # must not change after the first RO release.
 assert_rw_fwid_DO_NOT_EDIT(project_name="anraggar", addr=0xBFFE0)
