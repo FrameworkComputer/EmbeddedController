@@ -117,6 +117,8 @@ void base_init_setting(void)
 {
 	if (adc_read_channel(ADC_BASE_DET) > DETACH_MIN_THRESHOLD_MV) {
 		base_update(false);
+	} else if (adc_read_channel(ADC_BASE_DET) < ATTACH_MAX_THRESHOLD_MV) {
+		base_update(true);
 	}
 
 	/* For system jump case to enable base detect */
@@ -124,7 +126,7 @@ void base_init_setting(void)
 		base_detect_enable(true);
 	}
 }
-DECLARE_HOOK(HOOK_INIT, base_init_setting, HOOK_PRIO_DEFAULT);
+DECLARE_HOOK(HOOK_INIT, base_init_setting, HOOK_PRIO_POST_DEFAULT);
 
 void base_force_state(enum ec_set_base_state_cmd state)
 {

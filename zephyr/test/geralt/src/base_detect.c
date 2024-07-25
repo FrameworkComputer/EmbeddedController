@@ -20,6 +20,19 @@ static void set_base_detect_adc(int voltage)
 	adc_emul_const_value_set(adc_dev, channel, voltage);
 }
 
+ZTEST(base_detect, test_init_attach_detach)
+{
+	set_base_detect_adc(0);
+	k_sleep(K_SECONDS(1));
+	hook_notify(HOOK_INIT);
+	zassert_true(base_get_state());
+
+	set_base_detect_adc(3300);
+	k_sleep(K_SECONDS(1));
+	hook_notify(HOOK_INIT);
+	zassert_false(base_get_state());
+}
+
 ZTEST(base_detect, test_s0_attach_detach)
 {
 	hook_notify(HOOK_CHIPSET_STARTUP);
