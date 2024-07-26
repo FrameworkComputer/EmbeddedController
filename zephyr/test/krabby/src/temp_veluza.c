@@ -20,7 +20,8 @@
 
 #define ADC_DEVICE_NODE DT_NODELABEL(adc0)
 #define CHARGER_TEMP TEMP_SENSOR_ID(DT_NODELABEL(temp_charger))
-#define ORIGINAL_CURRENT 5000
+#define ORIGINAL_CURRENT 2554
+#define LOW_CURRENT 365
 
 struct charge_state_data curr;
 static int fake_voltage;
@@ -29,12 +30,37 @@ int count;
 /* Limit charging current table : 3600/3000/2400/1800
  * note this should be in descending order.
  */
-static uint16_t current_table[] = {
-	3600,
-	3000,
-	2400,
-	1600,
+
+struct current_table_struct {
+	int temperature;
+	int current;
 };
+
+static const struct current_table_struct current_table[] = {
+	{ 0, 2554 },
+	{ 55, 1400 },
+	{ 57, 365 },
+};
+
+#define CURRENT_LEVELS ARRAY_SIZE(current_table)
+
+static void heating_device(void)
+{
+	for (int i = 0; i < 55; i++) {
+		hook_notify(HOOK_SECOND);
+		curr.requested_current = ORIGINAL_CURRENT;
+		charger_profile_override(&curr);
+	}
+}
+
+static void cool_down_device(void)
+{
+	for (int i = 0; i < 55; i++) {
+		hook_notify(HOOK_SECOND);
+		curr.requested_current = LOW_CURRENT;
+		charger_profile_override(&curr);
+	}
+}
 
 int setup_faketemp(int fake_voltage)
 {
@@ -47,60 +73,78 @@ int setup_faketemp(int fake_voltage)
 	return emul_temp;
 }
 
-static void ignore_first_minute(void)
+ZTEST(temp_veluza, test_decrease_current_level)
 {
-	for (int i = 0; i < 60; i++) {
-		hook_notify(HOOK_SECOND);
-	}
-}
-
-ZTEST(temp_veluza, test_decrease_current)
-{
-	fake_voltage = 411;
+	fake_voltage = 350;
 	curr.batt.flags |= BATT_FLAG_RESPONSIVE;
 	count = 0;
 
 	setup_faketemp(fake_voltage);
-	/* Calculate per minute temperature.
-	 * It's expected low temperature when the first 60 seconds.
-	 */
-	ignore_first_minute();
-	for (int i = 1; i < 26; i++) {
+	heating_device();
+	zassert_equal(curr.requested_current, current_table[count].current);
+	for (int uptime_time = 0; uptime_time < 13; uptime_time++) {
 		hook_notify(HOOK_SECOND);
 		curr.requested_current = ORIGINAL_CURRENT;
 		charger_profile_override(&curr);
-		if (i % 6 == 0) {
-			zassert_equal(current_table[count],
-				      curr.requested_current, NULL);
-			count++;
+		if (uptime_time % 6 == 0) {
+			if (curr.requested_current != ORIGINAL_CURRENT) {
+				count++;
+				zassert_equal(curr.requested_current,
+					      current_table[count].current);
+			}
 		}
 	}
-	zassert_equal(count, 4, NULL);
 }
 
 ZTEST(temp_veluza, test_increase_current)
 {
-	fake_voltage = 446;
+	fake_voltage = 400;
 	curr.batt.flags |= BATT_FLAG_RESPONSIVE;
-	count = 3;
+	count = 2;
 
 	setup_faketemp(fake_voltage);
-	for (int i = 1; i < 26; i++) {
+	cool_down_device();
+	zassert_equal(curr.requested_current, current_table[count].current);
+
+	for (int uptime_time = 0; uptime_time < 60; uptime_time++) {
 		hook_notify(HOOK_SECOND);
 		curr.requested_current = ORIGINAL_CURRENT;
 		charger_profile_override(&curr);
-		if (i % 5 == 0) {
-			if (curr.requested_current == ORIGINAL_CURRENT) {
-				zassert_equal(ORIGINAL_CURRENT,
-					      curr.requested_current, NULL);
-			} else {
-				zassert_equal(current_table[count],
-					      curr.requested_current, NULL);
+		if (uptime_time % 6 == 0) {
+			if (curr.requested_current != ORIGINAL_CURRENT) {
 				count--;
+				zassert_equal(curr.requested_current,
+					      current_table[count].current);
 			}
 		}
 	}
-	zassert_equal(count, -1, NULL);
+}
+
+ZTEST(temp_veluza, test_battery_no_response)
+{
+	int rv;
+
+	curr.batt.flags &= ~BATT_FLAG_RESPONSIVE;
+	rv = charger_profile_override(&curr);
+	zassert_equal(rv, 0);
+}
+
+ZTEST(temp_veluza, test_charger_profile_override_get_param)
+{
+	int rv;
+
+	rv = charger_profile_override_get_param(0, 0);
+
+	zassert_equal(rv, 3);
+}
+
+ZTEST(temp_veluza, test_charger_profile_override_set_param)
+{
+	int rv;
+
+	rv = charger_profile_override_set_param(0, 0);
+
+	zassert_equal(rv, 3);
 }
 
 ZTEST_SUITE(temp_veluza, NULL, NULL, NULL, NULL, NULL);
