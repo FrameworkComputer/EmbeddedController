@@ -11,6 +11,7 @@
 #include "typec_control.h"
 #include "usb_charge.h"
 #include "usb_pd.h"
+#include "usbc_ppc.h"
 
 #include <zephyr/drivers/gpio/gpio_emul.h>
 #include <zephyr/fff.h>
@@ -18,7 +19,6 @@
 #include <zephyr/ztest.h>
 
 #include <dt-bindings/gpio_defines.h>
-#include <typec_control.h>
 
 void reset_nct38xx_port(int port);
 
@@ -34,8 +34,10 @@ FAKE_VALUE_FUNC(int, ppc_vbus_sink_enable, int, int);
 FAKE_VOID_FUNC(nct38xx_reset_notify, int);
 FAKE_VALUE_FUNC(int, extpower_is_present);
 FAKE_VOID_FUNC(extpower_handle_update, int);
+FAKE_VALUE_FUNC(int, ppc_set_vbus_source_current_limit, int,
+		enum tcpc_rp_value);
 
-int ppc_cnt = 2;
+unsigned int ppc_cnt = 2;
 
 static void test_before(void *fixture)
 {
@@ -49,6 +51,7 @@ static void test_before(void *fixture)
 	RESET_FAKE(nct38xx_reset_notify);
 	RESET_FAKE(extpower_is_present);
 	RESET_FAKE(extpower_handle_update);
+	RESET_FAKE(ppc_set_vbus_source_current_limit);
 }
 
 ZTEST_SUITE(sundance, NULL, NULL, test_before, NULL, NULL);
@@ -249,4 +252,20 @@ ZTEST(sundance, test_led_brightness_range)
 		      "LED_1 is not on");
 	zassert_false(gpio_pin_get_dt(GPIO_DT_FROM_NODELABEL(gpio_led_2_odl)),
 		      "LED_2 is on");
+}
+
+ZTEST(sundance, test_typec_set_source_current_limit)
+{
+	typec_set_source_current_limit(0, TYPEC_RP_1A5);
+
+	zassert_equal(ppc_set_vbus_source_current_limit_fake.call_count, 1);
+	zassert_equal(ppc_set_vbus_source_current_limit_fake.arg0_val, 0);
+	zassert_equal(ppc_set_vbus_source_current_limit_fake.arg1_val,
+		      TYPEC_RP_1A5);
+
+	typec_set_source_current_limit(1, TYPEC_RP_1A5);
+	zassert_equal(ppc_set_vbus_source_current_limit_fake.call_count, 2);
+	zassert_equal(ppc_set_vbus_source_current_limit_fake.arg0_val, 1);
+	zassert_equal(ppc_set_vbus_source_current_limit_fake.arg1_val,
+		      TYPEC_RP_1A5);
 }

@@ -163,3 +163,14 @@ int board_vbus_source_enabled(int port)
 {
 	return ppc_is_sourcing_vbus(port);
 }
+
+__override void typec_set_source_current_limit(int port, enum tcpc_rp_value rp)
+{
+	int rv = 0;
+	const int current = TYPEC_RP_1A5;
+	rv = ppc_set_vbus_source_current_limit(port, current);
+	if (rv != EC_SUCCESS) {
+		LOG_WRN("Failed to set source ilimit on port %d to %d: %d",
+			port, current, rv);
+	}
+}
