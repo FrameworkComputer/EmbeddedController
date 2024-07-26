@@ -12,6 +12,8 @@
 #include "openssl/rand.h"
 #include "sha256.h"
 
+#include <errno.h>
+
 #include <zephyr/ztest.h>
 
 #include <array>
