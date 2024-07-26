@@ -5,7 +5,7 @@
 
 #include "console.h"
 #include "host_command.h"
-#include "test/drivers/test_state.h"
+#include "test_state.h"
 #include "uart.h"
 
 #include <zephyr/kernel.h>
@@ -221,5 +221,5 @@ ZTEST_USER(uart_hostcmd, test_uart_hc_read_recent_v1)
 			  response);
 }
 
-ZTEST_SUITE(uart_hostcmd, drivers_predicate_post_main, NULL,
+ZTEST_SUITE(uart_hostcmd, predicate_post_main, NULL,
 	    setup_snapshots_and_messages, NULL, NULL);
