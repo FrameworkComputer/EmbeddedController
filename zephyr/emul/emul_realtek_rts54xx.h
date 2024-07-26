@@ -231,7 +231,7 @@ union rts54_request {
 		uint8_t port_num;
 		struct {
 			uint8_t src : 1;
-			uint8_t partner : 1;
+			enum pdo_source_t partner : 1;
 			uint8_t offset : 3;
 			uint8_t num : 3;
 		};

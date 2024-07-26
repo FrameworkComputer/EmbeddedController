@@ -586,11 +586,11 @@ static int set_pdos_direct(struct rts5453p_emul_pdc_data *data,
 static int get_pdos_direct(struct rts5453p_emul_pdc_data *data,
 			   enum pdo_type_t pdo_type,
 			   enum pdo_offset_t pdo_offset, uint8_t num_pdos,
-			   bool port_partner_pdo, uint32_t *pdos)
+			   enum pdo_source_t source, uint32_t *pdos)
 {
 	const uint32_t *target_pdos = get_pdo_data(data, pdo_type);
 
-	if (port_partner_pdo) {
+	if (source == PARTNER_PDO) {
 		/*
 		 * TODO b/317065172: Implement when we have port partner
 		 * support.
@@ -617,14 +617,13 @@ static int get_pdos(struct rts5453p_emul_pdc_data *data,
 	enum pdo_offset_t pdo_offset = req->get_pdos.offset;
 	/* GET_PDOS stops at the end if there's a requested overflow. */
 	uint8_t pdo_count = MIN(PDO_OFFSET_MAX - pdo_offset, req->get_pdos.num);
-	bool partner = req->get_pdos.partner;
 
 	LOG_INF("GET_PDO type=%d, offset=%d, count=%d", pdo_type, pdo_offset,
 		pdo_count);
 
 	memset(&data->response, 0, sizeof(data->response));
-	get_pdos_direct(data, pdo_type, pdo_offset, pdo_count, partner,
-			data->response.get_pdos.pdos);
+	get_pdos_direct(data, pdo_type, pdo_offset, pdo_count,
+			req->get_pdos.partner, data->response.get_pdos.pdos);
 	data->response.get_pdos.byte_count = sizeof(uint32_t) * pdo_count;
 
 	send_response(data);
@@ -1352,12 +1351,13 @@ static int emul_realtek_rts54xx_get_pdos(const struct emul *target,
 					 enum pdo_type_t pdo_type,
 					 enum pdo_offset_t pdo_offset,
 					 uint8_t num_pdos,
-					 bool port_partner_pdo, uint32_t *pdos)
+					 enum pdo_source_t source,
+					 uint32_t *pdos)
 {
 	struct rts5453p_emul_pdc_data *data =
 		rts5453p_emul_get_pdc_data(target);
-	return get_pdos_direct(data, pdo_type, pdo_offset, num_pdos,
-			       port_partner_pdo, pdos);
+	return get_pdos_direct(data, pdo_type, pdo_offset, num_pdos, source,
+			       pdos);
 }
 
 static int emul_realtek_rts54xx_set_pdos(const struct emul *target,

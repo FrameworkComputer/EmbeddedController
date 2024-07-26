@@ -200,7 +200,7 @@ struct pdc_data_t {
 	/** PDOS */
 	uint32_t *pdos;
 	/** Port Partner PDO */
-	bool port_partner_pdo;
+	enum pdo_source_t pdo_source;
 	/** CCOM */
 	enum ccom_t ccom;
 	/** PDR */
@@ -1246,7 +1246,7 @@ static void task_ucsi(struct pdc_data_t *data, enum ucsi_command_t ucsi_command)
 		break;
 	case CMD_GET_PDOS:
 		/* Partner PDO: Byte 2, bits 7 */
-		cmd_data.data[2] |= (data->port_partner_pdo << 7);
+		cmd_data.data[2] |= (data->pdo_source << 7);
 		/* PDO Offset: Byte 3, bits 7:0 */
 		cmd_data.data[3] = data->pdo_offset;
 		/* Number of PDOs: Byte 4, bits 1:0 */
@@ -1577,7 +1577,7 @@ static int tps_get_rdo(const struct device *dev, uint32_t *rdo)
 
 static int tps_get_pdos(const struct device *dev, enum pdo_type_t pdo_type,
 			enum pdo_offset_t pdo_offset, uint8_t num_pdos,
-			bool port_partner_pdo, uint32_t *pdos)
+			enum pdo_source_t source, uint32_t *pdos)
 {
 	struct pdc_data_t *data = dev->data;
 
@@ -1588,7 +1588,7 @@ static int tps_get_pdos(const struct device *dev, enum pdo_type_t pdo_type,
 	data->pdo_type = pdo_type;
 	data->pdo_offset = pdo_offset;
 	data->num_pdos = num_pdos;
-	data->port_partner_pdo = port_partner_pdo;
+	data->pdo_source = source;
 
 	return tps_post_command(dev, CMD_GET_PDOS, pdos);
 }

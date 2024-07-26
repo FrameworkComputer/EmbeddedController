@@ -42,7 +42,7 @@ typedef int (*emul_pdc_set_vbus_t)(const struct emul *target,
 typedef int (*emul_pdc_get_pdos_t)(const struct emul *target,
 				   enum pdo_type_t pdo_type,
 				   enum pdo_offset_t pdo_offset,
-				   uint8_t num_pdos, bool port_partner_pdo,
+				   uint8_t num_pdos, enum pdo_source_t source,
 				   uint32_t *pdos);
 typedef int (*emul_pdc_set_pdos_t)(const struct emul *target,
 				   enum pdo_type_t pdo_type,
@@ -302,7 +302,7 @@ static inline int emul_pdc_set_vbus(const struct emul *target,
 static inline int emul_pdc_get_pdos(const struct emul *target,
 				    enum pdo_type_t pdo_type,
 				    enum pdo_offset_t pdo_offset,
-				    uint8_t num_pdos, bool port_partner_pdo,
+				    uint8_t num_pdos, enum pdo_source_t source,
 				    uint32_t *pdos)
 {
 	if (!target || !target->backend_api) {
@@ -313,7 +313,7 @@ static inline int emul_pdc_get_pdos(const struct emul *target,
 
 	if (api->get_pdos) {
 		return api->get_pdos(target, pdo_type, pdo_offset, num_pdos,
-				     port_partner_pdo, pdos);
+				     source, pdos);
 	}
 	return -ENOSYS;
 }
