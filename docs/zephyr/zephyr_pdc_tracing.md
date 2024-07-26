@@ -69,6 +69,9 @@ two mechanisms:
                  requested all ports.
                  Port `on` or `all` enables tracing on all PDC ports.
                  Port `off` or `none` disables tracing.
+   * `-s`        Report trace messages on stdout. This is the default
+                 only when no other destinations are specified.
+   * `-w <FILE>` Write trace messages to PCAP file.
 
    `ectool pdctrace -p none` disables tracing and exits.
    `ectool pdctrace` continues running, performing the requested operation
