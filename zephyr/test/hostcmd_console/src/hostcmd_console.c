@@ -37,7 +37,7 @@ static void setup_snapshots_and_messages(void *unused)
 
 	/* Set first snapshot before first message */
 	zassert_equal(EC_RES_SUCCESS, ec_cmd_console_snapshot(NULL));
-	cputs(CC_COMMAND, msg1);
+	cputs(CC_SYSTEM, msg1);
 
 	/* Read everything from buffer */
 	do {
@@ -49,7 +49,7 @@ static void setup_snapshots_and_messages(void *unused)
 
 	/* Set second snapshot after first message */
 	zassert_equal(EC_RES_SUCCESS, ec_cmd_console_snapshot(NULL));
-	cputs(CC_COMMAND, msg2);
+	cputs(CC_SYSTEM, msg2);
 }
 
 /**
