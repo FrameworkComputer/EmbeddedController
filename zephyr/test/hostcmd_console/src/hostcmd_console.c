@@ -11,10 +11,16 @@
 #include <zephyr/kernel.h>
 #include <zephyr/ztest.h>
 
+/* Note - the logging subsystem adds a \r after \n characters for all
+ * log modes, except LOG_MODE_MINIMAL. The test purposely skips including
+ * a newline test messages.
+ */
+#define LOG_TEST_MSG "EC output via logging"
+
 /** Messages used in test */
 static const char msg1[] = "test";
-static const char msg2[] = "uart_hostcmd";
-static const char msg3[] = "message3";
+static const char msg2[] = "hostcmd console";
+static const char msg3[] = LOG_TEST_MSG;
 
 /** Length of message excluding NULL char at the end */
 #define MSG_LEN(msg) (sizeof(msg) - 1)
@@ -108,8 +114,8 @@ static void test_uart_hc_read_next(int ver)
 			  "expected \"%s\", got \"%.*s\"", msg1, MSG_LEN(msg1),
 			  msg1_start);
 
-	/* Append third message */
-	cputs(CC_COMMAND, msg3);
+	/* Append third message, but use Zephyr's logging subsystem. */
+	LOG_RAW(LOG_TEST_MSG);
 
 	/* Check read next without new snapshot, no data should be read */
 	read_args.response_size = 0;
@@ -193,8 +199,8 @@ ZTEST_USER(uart_hostcmd, test_uart_hc_read_recent_v1)
 			  "expected \"%s\", got \"%.*s\"", msg2, MSG_LEN(msg2),
 			  response);
 
-	/* Append third message */
-	cputs(CC_COMMAND, msg3);
+	/* Append third message, but use Zephyr's logging subsystem. */
+	LOG_RAW(LOG_TEST_MSG);
 
 	/* Check that message is not read without setting snapshot */
 	read_args.response_size = 0;

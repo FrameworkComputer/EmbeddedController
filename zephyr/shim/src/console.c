@@ -337,9 +337,17 @@ static int init_ec_shell(void)
 }
 SYS_INIT(init_ec_shell, PRE_KERNEL_1, CONFIG_PLATFORM_EC_CONSOLE_INIT_PRIORITY);
 
+#ifdef CONFIG_LOG_MODE_MINIMAL
 BUILD_ASSERT(CONFIG_PLATFORM_EC_CONSOLE_INIT_PRIORITY >
 		     CONFIG_CONSOLE_INIT_PRIORITY,
 	     "The console shim must be initialized after the console.");
+
+#ifdef CONFIG_POSIX_ARCH_CONSOLE
+BUILD_ASSERT(CONFIG_PLATFORM_EC_CONSOLE_INIT_PRIORITY >
+		     CONFIG_POSIX_ARCH_CONSOLE_INIT_PRIORITY,
+	     "The console shim must be initialized after the posix console.");
+#endif /* CONFIG_POSIX_ARCH_CONSOLE */
+#endif /* CONFIG_LOG_MODE_MINIMAL */
 
 #ifdef TEST_BUILD
 const struct shell *get_ec_shell(void)
