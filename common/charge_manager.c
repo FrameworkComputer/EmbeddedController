@@ -40,6 +40,8 @@
 #error Mock defined HAS_MOCK_CHARGE_MANAGER
 #endif
 
+#line 44
+
 #define CPRINTS(format, args...) cprints(CC_USBCHARGE, format, ##args)
 
 #define POWER(charge_port) ((charge_port.current) * (charge_port.voltage))
