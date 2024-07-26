@@ -35,9 +35,6 @@ $(error Could not determine path to libclang_rt.builtins)
 endif
 LDFLAGS_EXTRA+=\
 	"$(clang_resource_dir)/lib/baremetal/libclang_rt.builtins-armv7m.a"
-ifneq ($(.SHELLSTATUS),0)
-$(error Could not determine path to libclang_rt.builtins)
-endif
 else
 CFLAGS_CPU+=-Os
 CFLAGS_CPU+=-mno-sched-prolog
