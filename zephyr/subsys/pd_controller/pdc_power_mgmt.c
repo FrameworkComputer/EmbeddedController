@@ -1424,7 +1424,10 @@ static void pdc_src_attached_run(void *obj)
 	case SRC_ATTACHED_SET_DR_SWAP_POLICY:
 		port->src_attached_local_state =
 			SRC_ATTACHED_SET_PR_SWAP_POLICY;
-		port->uor.accept_dr_swap = 1; /* TODO read from DT */
+		/* TODO read from DT */
+		port->uor.swap_to_dfp = 1;
+		port->uor.swap_to_ufp = 0;
+		port->uor.accept_dr_swap = 1;
 		queue_internal_cmd(port, CMD_PDC_SET_UOR);
 		return;
 	case SRC_ATTACHED_SET_PR_SWAP_POLICY:
@@ -1518,7 +1521,10 @@ static void pdc_snk_attached_run(void *obj)
 	case SNK_ATTACHED_SET_DR_SWAP_POLICY:
 		port->snk_attached_local_state =
 			SNK_ATTACHED_SET_PR_SWAP_POLICY;
-		port->uor.accept_dr_swap = 1; /* TODO read from DT */
+		/* TODO read from DT */
+		port->uor.swap_to_dfp = 1;
+		port->uor.swap_to_ufp = 0;
+		port->uor.accept_dr_swap = 1;
 		queue_internal_cmd(port, CMD_PDC_SET_UOR);
 		return;
 	case SNK_ATTACHED_SET_PR_SWAP_POLICY:
