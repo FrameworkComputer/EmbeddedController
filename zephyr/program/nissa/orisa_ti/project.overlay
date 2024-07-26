@@ -8,11 +8,20 @@
 #include "../orisa/cbi.dtsi"
 #include "../orisa/generated.dtsi"
 #include "../orisa/keyboard.dtsi"
-#include "../orisa/motionsense.dtsi"
 #include "../orisa/overlay.dtsi"
 #include "../orisa/power_signals.dtsi"
 #include "../orisa/led_pins.dtsi"
 #include "../orisa/led_policy.dtsi"
+
+/ {
+	named-gpios {
+		/delete-node/ gpio_acc_int_l;
+		/delete-node/ gpio_imu_int_l;
+		/delete-node/ gpio_tablet_mode_l;
+		/delete-node/ i2c1_0;
+		/delete-node/ i2c_ec_i2c_sensor;
+	};
+};
 
 /delete-node/ &pdc_power_p0;
 

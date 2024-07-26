@@ -59,16 +59,6 @@
 			flags = <GPIO_INT_EDGE_BOTH>;
 			handler = "lid_interrupt";
 		};
-		int_tablet_mode: tablet_mode {
-			irq-pin = <&gpio_tablet_mode_l>;
-			flags = <GPIO_INT_EDGE_BOTH>;
-			handler = "gmr_tablet_switch_isr";
-		};
-		int_lid_accel: ec_lid_accel  {
-			irq-pin = <&gpio_acc_int_l>;
-			flags = <GPIO_INT_EDGE_FALLING>;
-			handler = "bma4xx_interrupt";
-		};
 		int_vol_down: vol_down {
 			irq-pin = <&gpio_voldn_btn_odl>;
 			flags = <GPIO_INT_EDGE_BOTH>;
@@ -113,10 +103,10 @@
 			gpios = <&gpio7 3 GPIO_INPUT_PULL_UP>;
 		};
 		ec-i2c-sensor-scl {
-			gpios = <&gpio9 0 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpio9 0 GPIO_INPUT>;
 		};
 		ec-i2c-sensor-sda {
-			gpios = <&gpio8 7 (GPIO_INPUT | GPIO_VOLTAGE_1P8)>;
+			gpios = <&gpio8 7 GPIO_INPUT>;
 		};
 	};
 
@@ -216,11 +206,14 @@
 			<&gpio3 3 0>,
 			<&gpio3 5 0>,
 			<&gpio3 6 0>,
+			<&gpio5 0 0>,
+			<&gpio5 6 0>,
 			<&gpio5 7 0>,
 			<&gpio6 0 0>,
 			<&gpio6 6 0>,
 			<&gpio8 3 0>,
 			<&gpio8 6 0>,
+			<&gpio9 5 0>,
 			<&gpio9 6 0>,
 			<&gpioa 0 0>,
 			<&gpiob 1 0>,
