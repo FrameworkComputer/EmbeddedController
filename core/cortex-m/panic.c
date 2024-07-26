@@ -131,7 +131,11 @@ uint32_t get_panic_stack_pointer(const struct panic_data *pdata)
 }
 
 #ifdef CONFIG_DEBUG_EXCEPTIONS
-/* Names for each of the bits in the cfs register, starting at bit 0 */
+/*
+ * Names for each of the bits in the cfs register, starting at bit 0
+ *
+ * Note that __builtin_trap will usually cause "Undefined instruction".
+ */
 static const char *const cfsr_name[32] = {
 	/* MMFSR */
 	[0] = "Instruction access violation",
