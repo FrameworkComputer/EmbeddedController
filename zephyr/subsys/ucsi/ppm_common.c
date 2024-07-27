@@ -274,8 +274,10 @@ static void ppm_common_handle_async_event(struct ucsi_ppm_device *dev)
 			"and changing state from %d (%s)",
 			port + 1, dev->ppm_state,
 			ppm_state_to_string(dev->ppm_state));
-		/* Notify the OPM that we have data for it to read. */
-		clear_cci(dev);
+		/* Notify the OPM that we have data for it to read. We can't
+		 * clear CCI at this point because a previous ACK may not yet
+		 * have been seen.
+		 */
 		dev->last_connector_changed = port + 1;
 		dev->ucsi_data.cci.connector_change = port + 1;
 		ppm_common_opm_notify(dev);

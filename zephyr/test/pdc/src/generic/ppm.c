@@ -460,7 +460,10 @@ const union cci_event_t cci_cmd_complete = { .command_completed = 1 };
 const union cci_event_t cci_busy = { .busy = 1 };
 const union cci_event_t cci_error = { .error = 1, .command_completed = 1 };
 const union cci_event_t cci_ack_command = { .acknowledge_command = 1 };
-const union cci_event_t cci_connector_change_1 = { .connector_change = 1 };
+const union cci_event_t cci_connector_change_1_with_ack = {
+	.acknowledge_command = 1,
+	.connector_change = 1
+};
 
 ZTEST_SUITE(ppm_test, /*predicate=*/NULL, ppm_test_setup, ppm_test_before,
 	    /*after=*/NULL, /*teardown=*/NULL);
@@ -587,7 +590,8 @@ ZTEST_USER_F(ppm_test,
 	zassert_true(wait_for_async_event_to_process(fixture));
 	zassert_true(wait_for_notification(fixture, ++notified_count));
 
-	union cci_event_t cci = { .connector_change = PDC_DEFAULT_CONNECTOR };
+	union cci_event_t cci = { .acknowledge_command = 1,
+				  .connector_change = PDC_DEFAULT_CONNECTOR };
 	zassert_true(check_cci_matches(fixture, &cci));
 }
 
@@ -862,10 +866,14 @@ ZTEST_USER_F(ppm_test, test_CIACK_ack_immediately)
 	initialize_fake_to_idle_notify(fixture);
 	int notified_count = fixture->notified_count;
 
+	/* We should have an acknowledge from setting up above. */
+	zassert_true(check_cci_matches(fixture, &cci_ack_command));
+
 	trigger_expected_connector_change(fixture, PDC_DEFAULT_CONNECTOR);
 	zassert_true(wait_for_async_event_to_process(fixture));
 	zassert_true(wait_for_notification(fixture, ++notified_count));
-	zassert_true(check_cci_matches(fixture, &cci_connector_change_1));
+	zassert_true(
+		check_cci_matches(fixture, &cci_connector_change_1_with_ack));
 
 	notified_count = 0;
 	fixture->notified_count = 0;
@@ -883,7 +891,8 @@ ZTEST_USER_F(ppm_test, test_CIACK_ack_immediately)
 	trigger_expected_connector_change(fixture, PDC_DEFAULT_CONNECTOR);
 	zassert_true(wait_for_async_event_to_process(fixture));
 	zassert_true(wait_for_notification(fixture, ++notified_count));
-	zassert_true(check_cci_matches(fixture, &cci_connector_change_1));
+	zassert_true(
+		check_cci_matches(fixture, &cci_connector_change_1_with_ack));
 
 	/* Trying to do command complete in ASYNC_EV_ACK stage should fail. */
 	zassert_false(write_ack_command(fixture,
