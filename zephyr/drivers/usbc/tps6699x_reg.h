@@ -119,6 +119,16 @@ enum std_task_response {
 };
 
 /**
+ * @brief Px_EXT VBUS Switch Status
+ */
+enum px_ext_vbus_sw {
+	EXT_VBUS_SWITCH_DISABLED = 0,
+	EXT_VBUS_SWITCH_DISABLED_FAULT = 1,
+	EXT_VBUS_SWITCH_ENABLED_OUTPUT = 2,
+	EXT_VBUS_SWITCH_ENABLED_INPUT = 3,
+};
+
+/**
  * @brief 4.1 Vendor ID Register (Offset = 0x00)
  *
  * Intel-assigned Thunderbolt Vendor ID

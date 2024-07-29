@@ -1151,15 +1151,36 @@ static void task_srdy(struct pdc_data_t *data)
 {
 	struct pdc_config_t const *cfg = data->dev->config;
 	union reg_data cmd_data;
+	union reg_power_path_status pdc_power_path_status;
 	int rv;
+	uint32_t ext_vbus_sw;
 
-	if (data->snk_fet_en) {
+	rv = tps_rd_power_path_status(&cfg->i2c, &pdc_power_path_status);
+	if (rv) {
+		LOG_ERR("Failed to power path status");
+		goto error_recovery;
+	}
+
+	ext_vbus_sw = (cfg->connector_number == 0 ?
+			       pdc_power_path_status.pa_ext_vbus_sw :
+			       pdc_power_path_status.pb_ext_vbus_sw);
+	if (data->snk_fet_en && ext_vbus_sw != EXT_VBUS_SWITCH_ENABLED_INPUT) {
 		/* Enable Sink FET */
 		cmd_data.data[0] = cfg->connector_number ? 0x02 : 0x03;
 		rv = write_task_cmd(cfg, COMMAND_TASK_SRDY, &cmd_data);
-	} else {
+	} else if (!data->snk_fet_en &&
+		   ext_vbus_sw == EXT_VBUS_SWITCH_ENABLED_INPUT) {
 		/* Disable Sink FET */
 		rv = write_task_cmd(cfg, COMMAND_TASK_SRYR, NULL);
+	} else {
+		/* Sink already in desired state. Mark command completed */
+		data->cci_event.command_completed = 1;
+		/* Inform the system of the event */
+		call_cci_event_cb(data);
+
+		/* Transition to idle state */
+		set_state(data, ST_IDLE);
+		return;
 	}
 
 	if (rv) {
