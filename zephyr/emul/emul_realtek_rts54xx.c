@@ -530,13 +530,13 @@ static int read_power_level(struct rts5453p_emul_pdc_data *data,
 	return 0;
 }
 
-static inline uint32_t *get_pdo_data(struct rts5453p_emul_pdc_data *data,
-				     enum pdo_type_t pdo_type)
+static uint32_t *get_pdo_data(struct rts5453p_emul_pdc_data *data,
+			      enum pdo_type_t pdo_type)
 {
 	return (pdo_type == SOURCE_PDO) ? data->src_pdos : data->snk_pdos;
 }
 
-static inline bool is_epr_pdo(uint32_t pdo)
+static bool is_epr_pdo(uint32_t pdo)
 {
 	uint32_t type = PDO_GET_TYPE(pdo);
 
