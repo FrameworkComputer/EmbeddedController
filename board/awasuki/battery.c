@@ -10,7 +10,7 @@
 #include "common.h"
 
 /*
- * Battery info for all Storo battery types. Note that the fields
+ * Battery info for all Awasuki battery types. Note that the fields
  * start_charging_min/max and charging_min/max are not used for the charger.
  * The effective temperature limits are given by discharging_min/max_c.
  *
@@ -52,7 +52,7 @@ const struct batt_conf_embed board_battery_info[] = {
 			},
 			.batt_info = {
 				.voltage_max		= 13200,
-				.voltage_normal		= 11550, /* mV */
+				.voltage_normal		= 11880, /* mV */
 				.voltage_min		= 9000, /* mV */
 				.precharge_current	= 256,	/* mA */
 				.start_charging_min_c	= 0,
@@ -60,7 +60,7 @@ const struct batt_conf_embed board_battery_info[] = {
 				.charging_min_c		= 0,
 				.charging_max_c		= 60,
 				.discharging_min_c	= -20,
-				.discharging_max_c	= 40,
+				.discharging_max_c	= 60,
 			},
 		},
 	},
@@ -85,12 +85,12 @@ const struct batt_conf_embed board_battery_info[] = {
 			},
 			.batt_info = {
 				.voltage_max		= 13200,
-				.voltage_normal		= 11550, /* mV */
+				.voltage_normal		= 11850, /* mV */
 				.voltage_min		= 9000, /* mV */
 				.precharge_current	= 256,	/* mA */
-				.start_charging_min_c	= 1,
+				.start_charging_min_c	= 0,
 				.start_charging_max_c	= 45,
-				.charging_min_c		= 1,
+				.charging_min_c		= 0,
 				.charging_max_c		= 60,
 				.discharging_min_c	= -20,
 				.discharging_max_c	= 60,
