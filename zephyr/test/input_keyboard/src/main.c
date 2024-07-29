@@ -193,7 +193,7 @@ struct {
 	int count;
 } last_evt;
 
-static void test_input_cb_handler(struct input_event *evt)
+static void test_input_cb_handler(struct input_event *evt, void *user_data)
 {
 	if (evt->type == INPUT_EV_ABS && evt->code == INPUT_ABS_X) {
 		last_evt.x = evt->value;
@@ -205,7 +205,7 @@ static void test_input_cb_handler(struct input_event *evt)
 	last_evt.count++;
 }
 
-INPUT_CALLBACK_DEFINE(fake_dev, test_input_cb_handler);
+INPUT_CALLBACK_DEFINE(fake_dev, test_input_cb_handler, NULL);
 
 ZTEST(keyboard_input, test_kbpress)
 {

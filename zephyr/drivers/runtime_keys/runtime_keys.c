@@ -97,7 +97,7 @@ static void process_key(uint8_t row, uint8_t col, bool pressed)
 	}
 }
 
-static void runtime_keys_input_cb(struct input_event *evt)
+static void runtime_keys_input_cb(struct input_event *evt, void *user_data)
 {
 	static uint8_t row;
 	static uint8_t col;
@@ -122,7 +122,7 @@ static void runtime_keys_input_cb(struct input_event *evt)
 	process_key(row, col, pressed);
 }
 INPUT_CALLBACK_DEFINE(DEVICE_DT_GET(CROS_EC_KEYBOARD_NODE),
-		      runtime_keys_input_cb);
+		      runtime_keys_input_cb, NULL);
 
 #if CONFIG_TEST
 void test_reinit(void)

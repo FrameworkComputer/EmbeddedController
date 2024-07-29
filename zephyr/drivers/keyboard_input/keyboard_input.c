@@ -51,7 +51,7 @@ void keyboard_scan_enable(int enable, enum kb_scan_disable_masks mask)
 	}
 }
 
-static void keyboard_input_cb(struct input_event *evt)
+static void keyboard_input_cb(struct input_event *evt, void *user_data)
 {
 	static int row;
 	static int col;
@@ -78,7 +78,7 @@ static void keyboard_input_cb(struct input_event *evt)
 		keyboard_state_changed(row, col, pressed);
 	}
 }
-INPUT_CALLBACK_DEFINE(kbd_dev, keyboard_input_cb);
+INPUT_CALLBACK_DEFINE(kbd_dev, keyboard_input_cb, NULL);
 
 /* referenced in common/keyboard_8042.c */
 uint8_t keyboard_cols = DT_PROP(CROS_EC_KEYBOARD_NODE, col_size);
