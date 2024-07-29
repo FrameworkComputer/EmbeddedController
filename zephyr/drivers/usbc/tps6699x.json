@@ -3133,8 +3133,8 @@
                 "end position": 31,
                 "name": "Customer Use Word 1",
                 "start position": 0,
-                "value (EDITABLE)": "0x4",
-                "value description": "0x4"
+                "value (EDITABLE)": "0x5",
+                "value description": "0x5"
               },
               {
                 "end position": 63,
@@ -3175,8 +3175,8 @@
                 "end position": 5,
                 "name": "Data Swap Complete",
                 "start position": 5,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 6,
@@ -4281,8 +4281,8 @@
                 "end position": 12,
                 "name": "DebugAccessory Support",
                 "start position": 12,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 14,
@@ -4554,8 +4554,8 @@
                 "end position": 15,
                 "name": "Initiate Swap to DFP",
                 "start position": 15,
-                "value (EDITABLE)": "0x1",
-                "value description": "True"
+                "value (EDITABLE)": "0x0",
+                "value description": "False"
               },
               {
                 "end position": 16,
@@ -6423,8 +6423,8 @@
                 "end position": 3,
                 "name": "No Capabality Mismatch",
                 "start position": 3,
-                "value (EDITABLE)": "0x1",
-                "value description": "The capability mismatch bit will not be asserted"
+                "value (EDITABLE)": "0x0",
+                "value description": "The capability mismatch bit will be asserted to indicate to the attached source that more power is desired"
               },
               {
                 "end position": 4,
@@ -6465,8 +6465,8 @@
                 "end position": 9,
                 "name": "Auto Enable Standby SRDY",
                 "start position": 9,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 21,
@@ -6654,15 +6654,15 @@
                 "end position": 23,
                 "name": "Vendor ID",
                 "start position": 8,
-                "value (EDITABLE)": "0x451",
-                "value description": "0x451"
+                "value (EDITABLE)": "0x18d1",
+                "value description": "0x18d1"
               },
               {
                 "end position": 23,
                 "name": "Vendor ID",
                 "start position": 8,
-                "value (EDITABLE)": "0x451",
-                "value description": "0x451"
+                "value (EDITABLE)": "0x18d1",
+                "value description": "0x18d1"
               },
               {
                 "end position": 30,
@@ -6780,15 +6780,15 @@
                 "end position": 103,
                 "name": "USB Product ID",
                 "start position": 88,
-                "value (EDITABLE)": "0x0",
-                "value description": "0x0"
+                "value (EDITABLE)": "0x506c",
+                "value description": "0x506c"
               },
               {
                 "end position": 103,
                 "name": "USB Product ID",
                 "start position": 88,
-                "value (EDITABLE)": "0x0",
-                "value description": "0x0"
+                "value (EDITABLE)": "0x506c",
+                "value description": "0x506c"
               },
               {
                 "end position": 105,
@@ -8528,8 +8528,8 @@
                 "end position": 31,
                 "name": "Customer Use Word 1",
                 "start position": 0,
-                "value (EDITABLE)": "0x4",
-                "value description": "0x4"
+                "value (EDITABLE)": "0x5",
+                "value description": "0x5"
               },
               {
                 "end position": 63,
@@ -8570,8 +8570,8 @@
                 "end position": 5,
                 "name": "Data Swap Complete",
                 "start position": 5,
-                "value (EDITABLE)": "0x0",
-                "value description": "False"
+                "value (EDITABLE)": "0x1",
+                "value description": "True"
               },
               {
                 "end position": 6,
@@ -9949,8 +9949,8 @@
                 "end position": 15,
                 "name": "Initiate Swap to DFP",
                 "start position": 15,
-                "value (EDITABLE)": "0x1",
-                "value description": "True"
+                "value (EDITABLE)": "0x0",
+                "value description": "False"
               },
               {
                 "end position": 16,
@@ -12049,15 +12049,15 @@
                 "end position": 23,
                 "name": "Vendor ID",
                 "start position": 8,
-                "value (EDITABLE)": "0x451",
-                "value description": "0x451"
+                "value (EDITABLE)": "0x18d1",
+                "value description": "0x18d1"
               },
               {
                 "end position": 23,
                 "name": "Vendor ID",
                 "start position": 8,
-                "value (EDITABLE)": "0x451",
-                "value description": "0x451"
+                "value (EDITABLE)": "0x18d1",
+                "value description": "0x18d1"
               },
               {
                 "end position": 30,
@@ -12175,15 +12175,15 @@
                 "end position": 103,
                 "name": "USB Product ID",
                 "start position": 88,
-                "value (EDITABLE)": "0x0",
-                "value description": "0x0"
+                "value (EDITABLE)": "0x506c",
+                "value description": "0x506c"
               },
               {
                 "end position": 103,
                 "name": "USB Product ID",
                 "start position": 88,
-                "value (EDITABLE)": "0x0",
-                "value description": "0x0"
+                "value (EDITABLE)": "0x506c",
+                "value description": "0x506c"
               },
               {
                 "end position": 105,
@@ -13926,7 +13926,7 @@
     "mode": "config",
     "noOfConnectedDevices": "1",
     "sharedSettings": true,
-    "timeStamp": "7-18-2024_11-39-59"
+    "timeStamp": "8-2-2024_11-23-7"
   },
   "miscellaneous": {
     "configuration mapping": {
