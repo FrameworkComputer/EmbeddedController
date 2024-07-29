@@ -1053,24 +1053,7 @@ static void task_srdy(struct pdc_data_t *data)
 {
 	struct pdc_config_t const *cfg = data->dev->config;
 	union reg_data cmd_data;
-	union reg_autonegotiate_sink an_snk;
 	int rv;
-
-	rv = tps_rw_autonegotiate_sink(&cfg->i2c, &an_snk, I2C_MSG_READ);
-	if (rv) {
-		LOG_ERR("Failed to read auto-negotiate sink");
-		goto error_recovery;
-	}
-
-	an_snk.auto_neg_rdo_priority = 1;
-	an_snk.no_capability_mismatch = 0;
-	an_snk.auto_enable_standby_srdy = 1;
-
-	rv = tps_rw_autonegotiate_sink(&cfg->i2c, &an_snk, I2C_MSG_WRITE);
-	if (rv) {
-		LOG_ERR("Failed to read auto-negotiate sink");
-		goto error_recovery;
-	}
 
 	if (data->snk_fet_en) {
 		/* Enable Sink FET */
