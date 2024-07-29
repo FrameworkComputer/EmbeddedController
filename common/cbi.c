@@ -78,6 +78,7 @@ struct cbi_data *cbi_find_tag(const void *buf, enum cbi_data_tag tag)
 #ifndef HOST_TOOLS_BUILD
 
 #define CPRINTS(format, args...) cprints(CC_SYSTEM, "CBI " format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, "CBI " format, ##args)
 
 static int cache_status = CBI_CACHE_STATUS_INVALID;
 static uint8_t cbi[CBI_IMAGE_SIZE];
@@ -531,8 +532,8 @@ static enum ec_status hc_cbi_bin_write(struct host_cmd_handler_args *args)
 			cbi_invalidate_cache();
 			cbi_read();
 			if (cbi_get_cache_status() != CBI_CACHE_STATUS_SYNCED) {
-				ccprintf("Cannot Read CBI (Error %d)\n",
-					 cbi_get_cache_status());
+				CPRINTF("Cannot Read CBI (Error %d)\n",
+					cbi_get_cache_status());
 				return EC_RES_ERROR;
 			}
 		} else {

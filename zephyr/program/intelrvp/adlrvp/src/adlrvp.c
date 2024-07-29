@@ -29,8 +29,8 @@
 #include "usbc_ppc.h"
 #include "util.h"
 
-#define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ##args)
-#define CPRINTS(format, args...) cprints(CC_COMMAND, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
 
 /* TCPC AIC GPIO Configuration */
 const struct mecc_1_0_tcpc_aic_gpio_config_t mecc_1_0_tcpc_aic_gpios[] = {

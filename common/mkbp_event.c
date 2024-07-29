@@ -25,9 +25,9 @@
 #include "timer.h"
 #include "util.h"
 
-#define CPUTS(outstr) cputs(CC_COMMAND, outstr)
-#define CPRINTS(format, args...) cprints(CC_COMMAND, format, ##args)
-#define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ##args)
+#define CPUTS(outstr) cputs(CC_SYSTEM, outstr)
+#define CPRINTS(format, args...) cprints(CC_SYSTEM, format, ##args)
+#define CPRINTF(format, args...) cprintf(CC_SYSTEM, format, ##args)
 
 /*
  * Tracks the current state of the MKBP interrupt send from the EC to the AP.
