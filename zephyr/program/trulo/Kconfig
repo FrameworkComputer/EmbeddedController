@@ -1,0 +1,15 @@
+# Copyright 2024 The ChromiumOS Authors
+# Use of this source code is governed by a BSD-style license that can be
+# found in the LICENSE file.
+
+config BOARD_TRULO
+	bool "Google Trulo Board"
+	help
+	  Build Google Trulo reference board.  This board uses an Intel TWL SoC
+	  and NUVATON EC
+
+module = Trulo
+module-str = Trulo board-specific code
+source "subsys/logging/Kconfig.template.log_config"
+
+source "Kconfig.zephyr"
