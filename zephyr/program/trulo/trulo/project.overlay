@@ -4,8 +4,9 @@
  */
 
 /* Trulo program common DTS includes */
+#include "../generated.dtsi"
+#include "../i2c.dtsi"
 #include "../trulo.dtsi"
-#include "../trulo_stub.dts"
 
 /* Trulo project DTS includes*/
 

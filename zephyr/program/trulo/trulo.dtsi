@@ -4,3 +4,18 @@
  */
 
 #include <cros/integrated_fwid.dtsi>
+
+/ {
+	aliases {
+		gpio-wp = &gpio_ec_wp_odl;
+	};
+
+	named-gpios {
+		compatible = "named-gpios";
+
+		/* The legacy system code requires GPIO_ENTERING_RW symbol */
+		gpio_ec_entering_rw: ec_entering_rw {
+			enum-name = "GPIO_ENTERING_RW";
+		};
+	};
+};
