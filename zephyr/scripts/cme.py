@@ -72,6 +72,18 @@ CTYPE_SUFFIXES = {
     "charger": [],  # chargers do not use suffixes
     "als": ["clear"],
     "accel": ["accel", "gyro"],
+    "mux": [],
+}
+
+CTYPE_PREFFIXES = {
+    "pdc": [],
+    "ppc": [],
+    "tcpc": [],
+    "bc12": [],
+    "charger": [],
+    "als": [],
+    "accel": [],
+    "mux": ["mux", "usbc", "amd"],
 }
 
 
@@ -383,22 +395,33 @@ def compatible_name_parser(ctype, name):
         Corrected component name
     """
 
-    compatible = name.rsplit("-", 1)
-    if len(compatible) > 1:
-        for suffix in CTYPE_SUFFIXES[ctype]:
-            if compatible[1] == suffix:
-                return compatible[0]
+    vendor, compatible = name.split(",", 1)
+
+    chip = compatible.split("-", 1)
+
+    while len(chip) > 1:
+        if chip[0] in CTYPE_PREFFIXES[ctype]:
+            compatible = chip[1]
+            chip = compatible.split("-", 1)
+        else:
+            break
+
+    chip = compatible.rsplit("-", 1)
+    if len(chip) > 1:
+        if chip[1] in CTYPE_SUFFIXES[ctype]:
+            compatible = chip[0]
 
     # TODO: add more cases for other compatibles as need arrises.
 
     # it is valid for compatibles to have a hyphen without any ctype
-    return name
+    return vendor + "," + compatible
 
 
 def insert_i2c_component(ctype, node, usbc_port, i2c_portmap, manifest):
     """Insert the I2C component to the manifest.
 
     Args:
+        ctype: type of component
         node: Devicetree node object.
         usbc_port: USB-C port number
         i2c_portmap: Dict of the mapping from I2C name to remote port number.
@@ -416,11 +439,6 @@ def insert_i2c_component(ctype, node, usbc_port, i2c_portmap, manifest):
 
     if not node_is_valid(node, i2c_node, i2c_portmap):
         return
-
-    # TODO(b/308031064): Add the probe methods if multiple components share the
-    # same compatible. These components need to be identified.
-
-    # TODO(b/308031075): Add the SSFC field.
 
     manifest.insert_component(
         ctype,
@@ -476,6 +494,14 @@ def iterate_usbc_components(edtlib, edt, i2c_portmap, manifest):
         if "pdc" in node.props:
             pdc = node.props["pdc"].val
             insert_i2c_component("pdc", pdc, port, i2c_portmap, manifest)
+
+        for mux_chain in node.children.values():
+            if "usb-muxes" in mux_chain.props:
+                muxes_list = mux_chain.props["usb-muxes"].val
+                for mux in muxes_list:
+                    insert_i2c_component(
+                        "mux", mux, port, i2c_portmap, manifest
+                    )
 
 
 def insert_motionsense_component(
