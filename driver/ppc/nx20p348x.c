@@ -545,10 +545,9 @@ static int nx20p348x_dev_is_connected(int port, enum ppc_device_role dev)
 	/* VBUS Discharge must be off in sink mode. */
 	if (dev == PPC_DEV_SRC || dev == PPC_DEV_SNK)
 		return nx20p348x_discharge_vbus(port, 0);
-	else if (dev == PPC_DEV_DISCONNECTED)
-		return nx20p348x_discharge_vbus(port, 1);
 
-	return EC_SUCCESS;
+	/* PPC_DEV_DISCONNECTED and other possible cases */
+	return nx20p348x_discharge_vbus(port, 1);
 }
 
 const struct ppc_drv nx20p348x_drv = {
