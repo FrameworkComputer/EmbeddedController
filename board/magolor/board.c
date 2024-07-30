@@ -18,6 +18,7 @@
 #include "compile_time_macros.h"
 #include "cros_board_info.h"
 #include "driver/accel_bma2x2.h"
+#include "driver/accel_bma422.h"
 #include "driver/accel_kionix.h"
 #include "driver/accelgyro_bmi323.h"
 #include "driver/accelgyro_bmi_common.h"
@@ -631,6 +632,8 @@ static struct icm_drv_data_t g_icm426xx_data;
 static struct bmi_drv_data_t g_bmi323_data;
 /* KX022 private data */
 static struct kionix_accel_data g_kx022_data;
+/* BMA422 private data */
+static struct accelgyro_saved_data_t g_bma422_data;
 
 struct motion_sensor_t kx022_lid_accel = {
 	.name = "Lid Accel",
@@ -655,6 +658,35 @@ struct motion_sensor_t kx022_lid_accel = {
 		/* EC use accel for angle detection */
 		[SENSOR_CONFIG_EC_S3] = {
 			.odr = 10000 | ROUND_UP_FLAG,
+		},
+	},
+};
+
+struct motion_sensor_t bma422_lid_accel = {
+	.name = "Lid Accel",
+	.active_mask = SENSOR_ACTIVE_S0_S3,
+	.chip = MOTIONSENSE_CHIP_BMA422,
+	.type = MOTIONSENSE_TYPE_ACCEL,
+	.location = MOTIONSENSE_LOC_LID,
+	.drv = &bma4_accel_drv,
+	.mutex = &g_lid_mutex,
+	.drv_data = &g_bma422_data,
+	.port = I2C_PORT_ACCEL,
+	.i2c_spi_addr_flags = BMA4_I2C_ADDR_PRIMARY,
+	.rot_standard_ref = &lid_standard_ref,
+	.min_frequency = BMA4_ACCEL_MIN_FREQ,
+	.max_frequency = BMA4_ACCEL_MAX_FREQ,
+	.default_range = 2, /* g, enough for laptop. */
+	.config = {
+		/* EC use accel for angle detection */
+		[SENSOR_CONFIG_EC_S0] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+			.ec_rate = 100 * MSEC,
+		},
+		/* Sensor on in S3 */
+		[SENSOR_CONFIG_EC_S3] = {
+			.odr = 12500 | ROUND_UP_FLAG,
+			.ec_rate = 0,
 		},
 	},
 };
@@ -954,6 +986,14 @@ void board_init(void)
 				ccprints("Magister");
 			}
 			ccprints("LID_ACCEL is KX022");
+		} else if (get_cbi_ssfc_lid_sensor() == SSFC_SENSOR_BMA422) {
+			motion_sensors[LID_ACCEL] = bma422_lid_accel;
+			if (check_magister_skuid()) {
+				motion_sensors[LID_ACCEL].rot_standard_ref =
+					&lid_magister_ref;
+				ccprints("Magister");
+			}
+			ccprints("LID_ACCEL is BMA422");
 		} else {
 			if (check_magister_skuid()) {
 				motion_sensors[LID_ACCEL].rot_standard_ref =
