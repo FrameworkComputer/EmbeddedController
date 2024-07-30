@@ -996,7 +996,7 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_suspend)
 	zassert_equal(CCOM_RD, ccom);
 }
 
-ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume)
+ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume_no_partner)
 {
 	enum ccom_t ccom;
 
@@ -1006,6 +1006,55 @@ ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume)
 	zassert_ok(emul_pdc_get_ccom(emul, &ccom),
 		   "Invalid CCOM value in emul");
 	zassert_equal(CCOM_DRP, ccom);
+}
+
+ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume_drp_partner)
+{
+	union connector_status_t connector_status;
+	union pdr_t pdr;
+	const uint32_t pdos[] = {
+		PDO_FIXED(5000, 3000, PDO_FIXED_DUAL_ROLE),
+	};
+
+	emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_1, 1, PARTNER_PDO, pdos);
+	emul_pdc_configure_snk(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+
+	zassert_true(
+		TEST_WAIT_FOR(pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
+
+	hook_notify(HOOK_CHIPSET_RESUME);
+	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+
+	zassert_ok(emul_pdc_get_pdr(emul, &pdr), "Invalid PDR value in emul");
+	zassert_equal(pdr.swap_to_src, 1);
+	zassert_equal(pdr.accept_pr_swap, 1);
+
+	zassert_true(pd_is_connected(TEST_PORT));
+}
+
+ZTEST_USER(pdc_power_mgmt_api, test_chipset_resume_up_drp_partner)
+{
+	union connector_status_t connector_status;
+	union pdr_t pdr;
+	const uint32_t pdos[] = {
+		PDO_FIXED(5000, 3000,
+			  PDO_FIXED_DUAL_ROLE |
+				  PDO_FIXED_GET_UNCONSTRAINED_PWR),
+	};
+
+	emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_0, 1, PARTNER_PDO, pdos);
+	emul_pdc_configure_snk(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+
+	zassert_true(
+		TEST_WAIT_FOR(pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
+
+	hook_notify(HOOK_CHIPSET_RESUME);
+	TEST_WORKING_DELAY(PDC_TEST_TIMEOUT);
+
+	zassert_ok(emul_pdc_get_pdr(emul, &pdr), "Invalid PDR value in emul");
+	zassert_equal(pdr.swap_to_src, 0);
 }
 
 ZTEST_USER(pdc_power_mgmt_api, test_chipset_startup)
