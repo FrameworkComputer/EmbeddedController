@@ -117,7 +117,7 @@ ZTEST_USER(rts54xx, test_emul_reset)
 	zassert_equal(pdos[1], RTS5453P_FIXED2_SRC);
 
 	for (int i = 1; i < 7; i++) {
-		zassert_equal(pdos[i + 1], 0xFFFFFFFF);
+		zassert_equal(pdos[i + 1], 0);
 	}
 
 	/* Test sink PDO reset values. */
@@ -128,7 +128,7 @@ ZTEST_USER(rts54xx, test_emul_reset)
 	zassert_equal(pdos[2], RTS5453P_VAR_SNK);
 
 	for (int i = 3; i < 7; i++) {
-		zassert_equal(pdos[i + 1], 0xFFFFFFFF);
+		zassert_equal(pdos[i + 1], 0);
 	}
 }
 
