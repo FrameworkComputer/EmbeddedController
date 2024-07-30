@@ -20,7 +20,7 @@ endif
 
 # Default to clang if TEST_ASAN is enabled
 ifneq ($(TEST_FUZZ)$(TEST_ASAN)$(TEST_MSAN)$(TEST_UBSAN),)
-CC=clang
+CROSS_COMPILE_CC_NAME=clang
 endif
 
 # When set to 1, use the subset of the C standard library implemented in EC
@@ -49,41 +49,26 @@ CLANG_BOARDS:= \
 	nucleo-f412zg \
 
 ifeq ($(filter $(BOARD), $(CLANG_BOARDS)), $(BOARD))
-CC=clang
+CROSS_COMPILE_CC_NAME=clang
 USE_BUILTIN_STDLIB:=0
 USE_CXX_COMPILER:=1
 # b/144957935: Generate exception on signed integer overflow.
-COMMON_WARN+=-ftrapv
+COMMON_WARN-clang+=-ftrapv
+else
+CROSS_COMPILE_CC_NAME?=gcc
 endif
+
 ifeq ($(BOARD), host)
 USE_BUILTIN_STDLIB:=0
+ifeq ($(COVERAGE),)
+CROSS_COMPILE_CC_NAME=clang
+endif
 endif
 
 ifeq ($(USE_CXX_COMPILER), 1)
-COMPILER=$(CXX)
+COMPILER=$(CROSS_COMPILE)$(CROSS_COMPILE_CXX_NAME)
 else
-COMPILER=$(CC)
-endif
-
-# Set the prefix for the compiler if specified (e.g., "x86_64-pc-linux-gnu-").
-ifeq ($(origin BUILDCC_PREFIX),undefined)
-# If building with Portage use the environment variable it provides.
-# https://wiki.gentoo.org/wiki/Embedded_Handbook/General/Introduction#Environment_variables
-ifneq ($(CBUILD),)
-BUILDCC_PREFIX:=$(CBUILD)-
-else
-BUILDCC_PREFIX:=x86_64-pc-linux-gnu-
-endif
-endif
-
-# Extract cc-name
-cc-name:=$(shell $(BUILDCC_PREFIX)$(CC) -v 2>&1 | grep -q "clang version" && echo clang || echo gcc)
-
-# Assume we want to use same compiler for both C and C++
-ifeq ($(cc-name),gcc)
-cxx-name:=g++
-else
-cxx-name:=clang++
+COMPILER=$(CCACHE) $(CROSS_COMPILE)$(CROSS_COMPILE_CC_NAME)
 endif
 
 # Try not to assume too much about optional tools and prefixes
@@ -94,14 +79,21 @@ ifeq ($(origin HOST_CROSS_COMPILE),undefined)
 ifneq ($(CHOST),)
 HOST_CROSS_COMPILE:=$(CHOST)-
 else
-HOST_CROSS_COMPILE:=$(if $(shell which x86_64-pc-linux-gnu-$(cc-name) 2>/dev/null),x86_64-pc-linux-gnu-,)
+HOST_CROSS_COMPILE:=$(if $(shell which x86_64-pc-linux-gnu-$(CROSS_COMPILE_CC_NAME) 2>/dev/null),x86_64-pc-linux-gnu-,)
 endif
 endif
 
+# Assume we want to use same compiler for both C and C++
+ifeq ($(CROSS_COMPILE_CC_NAME),gcc)
+CROSS_COMPILE_CXX_NAME?=g++
+else
+CROSS_COMPILE_CXX_NAME?=$(CROSS_COMPILE_CC_NAME)++
+endif
+
 AR=$(CROSS_COMPILE)ar
-CC=$(CCACHE) $(CROSS_COMPILE)$(cc-name)
+CC=$(CCACHE) $(CROSS_COMPILE)$(CROSS_COMPILE_CC_NAME)
 CPP=$(CC) -E
-CXX=$(CROSS_COMPILE)$(cxx-name)
+CXX=$(CROSS_COMPILE)$(CROSS_COMPILE_CXX_NAME)
 LD=$(CROSS_COMPILE)ld
 NM=$(CROSS_COMPILE)nm
 OBJCOPY=$(CROSS_COMPILE)objcopy
@@ -109,16 +101,21 @@ OBJDUMP=$(CROSS_COMPILE)objdump
 ADDR2LINE=$(CROSS_COMPILE)addr2line
 PKG_CONFIG?=pkg-config
 BUILD_PKG_CONFIG?=$(PKG_CONFIG)
-BUILDCC?=$(CCACHE) $(BUILDCC_PREFIX)$(cc-name)
-HOSTCC?=$(CCACHE) $(HOST_CROSS_COMPILE)$(cc-name)
-HOSTCXX?=$(CCACHE) $(HOST_CROSS_COMPILE)clang++
+ifeq ($(shell which /usr/bin/x86_64-pc-linux-gnu-$(CROSS_COMPILE_CC_NAME) 2>/dev/null),)
+BUILDCC?=$(CCACHE) $(CROSS_COMPILE_CC_NAME)
+else
+BUILDCC?=$(CCACHE) /usr/bin/x86_64-pc-linux-gnu-$(CROSS_COMPILE_CC_NAME)
+endif
+BUILDCC_NAME?=$(CROSS_COMPILE_CC_NAME)
+HOSTCC?=$(CCACHE) $(HOST_CROSS_COMPILE)$(CROSS_COMPILE_CC_NAME)
+HOSTCXX?=$(CCACHE) $(HOST_CROSS_COMPILE)$(CROSS_COMPILE_CXX_NAME)
 HOST_PKG_CONFIG?=$(HOST_CROSS_COMPILE)pkg-config
 PROTOC?=protoc
 GCOV=$(CROSS_COMPILE)gcov
-ifeq ($(cc-name),gcc)
-HOSTGCOV=$(HOST_CROSS_COMPILE)gcov
-else
+ifeq ($(CROSS_COMPILE_CC_NAME),clang)
 HOSTGCOV=$(CURDIR)/util/llvm-gcov.sh
+else
+HOSTGCOV=$(HOST_CROSS_COMPILE)gcov
 endif
 
 C_WARN = -Wstrict-prototypes -Wno-pointer-sign
@@ -131,29 +128,27 @@ COMMON_WARN+=-fno-exceptions -fno-unwind-tables -fno-asynchronous-unwind-tables
 
 ifndef ALLOW_WARNINGS
 COMMON_WARN+=-Werror
-ifeq ($(cc-name),clang)
-COMMON_WARN+=-Werror=uninitialized
-endif
-ifeq ($(cc-name),gcc)
-COMMON_WARN+=-Werror=maybe-uninitialized
-endif
+COMMON_WARN-clang+=-Werror=uninitialized
+COMMON_WARN-gcc+=-Werror=maybe-uninitialized
 endif
 
-ifeq ($(cc-name),clang)
 # TODO(b/172020503): Re-enabling this warning requires a large CL.
-C_WARN+= -Wno-ignored-attributes
+C_WARN-clang+= -Wno-ignored-attributes
 # TODO(b/172020503): Re-enabling this warning requires the following large CLs:
 # https://crrev.com/c/3223973
 # https://crrev.com/c/3227261
-COMMON_WARN+= -Wno-unused-function
-endif
+COMMON_WARN-clang+= -Wno-unused-function
 
 UBSAN_FLAGS=-fsanitize=array-bounds,vla-bound \
 	-fno-sanitize=vptr \
 	-fno-sanitize-recover=all
 
-CFLAGS_WARN = $(COMMON_WARN) $(C_WARN)
-CXXFLAGS_WARN = $(COMMON_WARN)
+CFLAGS_WARN = $(COMMON_WARN) $(C_WARN) \
+	$(COMMON_WARN-$(CROSS_COMPILE_CC_NAME)) $(C_WARN-$(CROSS_COMPILE_CC_NAME))
+CXXFLAGS_WARN = $(COMMON_WARN) $(COMMON_WARN-$(CROSS_COMPILE_CC_NAME))
+BUILDCC_WARN = $(COMMON_WARN) $(C_WARN) \
+	$(COMMON_WARN-$(BUILDCC_NAME)) $(C_WARN-$(BUILDCC_NAME))
+BUILDCXX_WARN = $(COMMON_WARN) $(COMMON_WARN-$(BUILDCC_NAME))
 CFLAGS_DEBUG= -g
 CFLAGS_DEBUG+=$(CFLAGS_DEBUG_CHIP)
 CFLAGS_INCLUDE=$(foreach i,$(filter-out builtin, $(includes)),-I$(i) ) -I.
@@ -203,11 +198,11 @@ else
 CPPFLAGS+=-Og
 endif
 CPPFLAGS+= -DCHROMIUM_EC=$(EMPTY)
-CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(COMMON_WARN) $(CFLAGS_y)
+CFLAGS=$(CPPFLAGS) $(CFLAGS_CPU) $(CFLAGS_DEBUG) $(COMMON_WARN) $(COMMON_WARN-$(CROSS_COMPILE_CC_NAME)) $(CFLAGS_y)
 CFLAGS+= -ffunction-sections
 CFLAGS+= -fno-delete-null-pointer-checks
 CFLAGS+= -fno-PIC
-ifneq ($(cc-name),clang)
+ifneq ($(CROSS_COMPILE_CC_NAME),clang)
 CFLAGS+= -ffat-lto-objects
 CFLAGS+= -fconserve-stack
 endif
@@ -246,7 +241,7 @@ LIBPROTOBUF_MUTATOR_LDLIBS:=$(shell $(PKG_CONFIG) --libs libprotobuf-mutator) \
 endif
 
 BUILD_CFLAGS=$(LIBFTDIUSB_BUILD_CFLAGS) $(BUILD_CPPFLAGS) -O3 $(CFLAGS_DEBUG)
-BUILD_CFLAGS+=$(CFLAGS_WARN)
+BUILD_CFLAGS+=$(BUILDCC_WARN)
 BUILD_CFLAGS+=-DCHROMIUM_EC=$(EMPTY)
 HOST_CFLAGS=$(HOST_CPPFLAGS) -O3 $(CFLAGS_DEBUG) $(CFLAGS_WARN) \
 	    -DHOST_TOOLS_BUILD=$(EMPTY)
@@ -265,7 +260,7 @@ else
 LDFLAGS+=-lnosys
 endif
 MEMSIZE_FLAGS=
-ifeq ($(cc-name),gcc)
+ifeq ($(CROSS_COMPILE_CC_NAME),gcc)
 MEMSIZE_FLAGS+=-Wl,--print-memory-usage
 endif
 BUILD_LDFLAGS=$(LIBFTDIUSB_BUILD_LDLIBS)

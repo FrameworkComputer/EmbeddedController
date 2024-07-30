@@ -8,7 +8,7 @@
 
 # FPU compilation flags
 CFLAGS_FPU-$(CONFIG_FPU)=-mfloat-abi=hard
-ifeq ($(cc-name),gcc)
+ifneq ($(CROSS_COMPILE_CC_NAME),clang)
 # -mfpu=auto will choose correct hardware based on settings of -mcpu and -march
 # https://gcc.gnu.org/onlinedocs/gcc/ARM-Options.html.
 #
@@ -23,7 +23,7 @@ endif
 
 # CPU specific compilation flags
 CFLAGS_CPU+=-mthumb
-ifeq ($(cc-name),clang)
+ifeq ($(CROSS_COMPILE_CC_NAME),clang)
 CFLAGS_CPU+=-Oz		# Like -Os (and thus -O2), but reduces code size further.
 # b/256193799: Reduce inline threshold to decrease code size.
 CFLAGS_CPU+=-Wl,-mllvm -Wl,-inline-threshold=-10
@@ -49,7 +49,7 @@ endif
 
 core-y=cpu.o debug.o init.o vecttable.o
 # When using clang, we get these as builtins from compiler-rt.
-ifneq ($(cc-name),clang)
+ifneq ($(CROSS_COMPILE_CC_NAME),clang)
 core-y+=ldivmod.o llsr.o uldivmod.o
 endif
 core-$(CONFIG_ARMV7M_CACHE)+=cache.o

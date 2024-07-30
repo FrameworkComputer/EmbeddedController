@@ -2,12 +2,12 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
-ifeq ($(cc-name),gcc)
-# coreboot sdk
-CROSS_COMPILE_ARM_DEFAULT:=/opt/coreboot-sdk/bin/arm-eabi-
-else
+ifeq ($(CROSS_COMPILE_CC_NAME),clang)
 # llvm sdk
 CROSS_COMPILE_ARM_DEFAULT:=arm-none-eabi-
+else
+# coreboot sdk
+CROSS_COMPILE_ARM_DEFAULT:=/opt/coreboot-sdk/bin/arm-eabi-
 endif
 
 $(call set-option,CROSS_COMPILE,\

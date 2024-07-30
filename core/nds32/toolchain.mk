@@ -2,6 +2,9 @@
 # Use of this source code is governed by a BSD-style license that can be
 # found in the LICENSE file.
 
+# LLVM does not support Andes architecture.
+CROSS_COMPILE_CC_NAME:=gcc
+
 # Set coreboot-sdk as the default toolchain for nds32
 NDS32_DEFAULT_COMPILE=/opt/coreboot-sdk/bin/nds32le-elf-
 

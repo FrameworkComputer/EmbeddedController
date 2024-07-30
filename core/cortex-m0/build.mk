@@ -16,7 +16,7 @@ endif
 
 # CPU specific compilation flags
 CFLAGS_CPU+=-mthumb
-ifeq ($(cc-name),clang)
+ifeq ($(CROSS_COMPILE_CC_NAME),clang)
 CFLAGS_CPU+=-Oz		# Like -Os (and thus -O2), but reduces code size further.
 # b/256193799: Reduce inline threshold to decrease code size.
 CFLAGS_CPU+=-Wl,-mllvm -Wl,-inline-threshold=-10

@@ -93,7 +93,7 @@ cmd_bin_to_hex = $(OBJCOPY) -I binary -O ihex \
 cmd_smap = $(NM) $< | sort > $@
 cmd_elf = $(COMPILER) $(objs) $(libsharedobjs_elf-y) $(LDFLAGS) \
 	-o $@ -Wl,-T,$< -Wl,-Map,$(patsubst %.elf,%.map,$@)
-ifeq ($(cc-name),gcc)
+ifneq ($(CROSS_COMPILE_CC_NAME),clang)
 cmd_elf+= -flto-partition=one
 endif
 ifneq ($(MEMSIZE_FLAGS),)
@@ -104,9 +104,11 @@ cmd_fuzz_exe = $(CXX) $^ $(HOST_TEST_LDFLAGS) $(LDFLAGS_EXTRA) -o $@
 cmd_run_fuzz = build/host/$*/$*.exe -seed=1 -runs=1 $(silent) \
 	$(silent_err) || (echo "Test $* failed!" && false)
 cmd_exe = $(CXX) $(ro-objs) $(HOST_TEST_LDFLAGS) $(LDFLAGS_EXTRA) -o $@
-cmd_c_to_o = $(CC) -std=gnu11 $(C_WARN) $(CFLAGS) -MMD -MP -MF $@.d -c $< \
+cmd_c_to_o = $(CC) -std=gnu11 $(C_WARN) $(C_WARN-$(CROSS_COMPILE_CC_NAME)) \
+		$(CFLAGS) -MMD -MP -MF $@.d -c $< \
 		-MT $(@D)/$(@F) -o $(@D)/$(@F)
-cmd_c_to_s = $(CC) -S $(C_WARN) $(CFLAGS) -fno-lto -MMD -MP -MF $@.d -c $< \
+cmd_c_to_s = $(CC) -S $(C_WARN) $(CFLAGS) $(C_WARN-$(CROSS_COMPILE_CC_NAME)) \
+		-fno-lto -MMD -MP -MF $@.d -c $< \
 		-MT $(@D)/$(@F) -o $(@D)/$(@F)
 cmd_cxx_to_o = $(CXX) -std=gnu++2a $(CFLAGS) $(CXXFLAGS) -MMD -MP -MF $@.d \
 		      -c $< -MT $(@D)/$(@F) -o $(@D)/$(@F)

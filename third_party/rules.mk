@@ -77,8 +77,8 @@ BORINGSSL_TOOLCHAIN := \
 $(BORINGSSL_OUTDIR)/libcrypto.a:
 	mkdir -p $(out)/third_party/boringssl/
 	cmake \
-		-DCC_NAME=$(cc-name) \
-		-DCXX_NAME=$(cxx-name) \
+		-DCC_NAME=$(CROSS_COMPILE_CC_NAME) \
+		-DCXX_NAME=$(CROSS_COMPILE_CXX_NAME) \
 		-DCROSS_COMPILE=$(CROSS_COMPILE) \
 		-DCMAKE_SYSTEM_PROCESSOR=$(CMAKE_SYSTEM_PROCESSOR) \
 		-DCMAKE_SYSROOT=$(SYSROOT) \
