@@ -844,7 +844,7 @@ const char *system_get_cros_fwid(enum ec_image copy)
 }
 
 #ifdef CONFIG_ROLLBACK
-int32_t system_get_rollback_version(enum ec_image copy)
+test_mockable int32_t system_get_rollback_version(enum ec_image copy)
 {
 	const struct image_data *data = system_get_image_data(copy);
 

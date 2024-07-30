@@ -150,7 +150,12 @@ int rwsig_check_signature(void)
 	rwlen = CONFIG_RW_SIZE - CONFIG_RW_SIG_SIZE;
 #elif defined(CONFIG_RWSIG_TYPE_RWSIG)
 	vb21_key = vb21_get_packed_key();
+
+#ifdef CONFIG_MAPPED_STORAGE
 	vb21_sig = (const struct vb21_signature *)CONFIG_RWSIG_READ_ADDR;
+#elif defined(CONFIG_ZTEST)
+	vb21_sig = (const struct vb21_signature *)(rwdata + RW_SIG_OFFSET);
+#endif
 
 	if (vb21_key->c.magic != VB21_MAGIC_PACKED_KEY ||
 	    vb21_key->key_size != sizeof(struct rsa_public_key)) {
