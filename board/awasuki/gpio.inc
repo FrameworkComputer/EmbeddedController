@@ -56,6 +56,7 @@ GPIO(EC_PROCHOT_ODL,		PIN(I, 1), GPIO_ODR_HIGH | GPIO_SEL_1P8V)
 GPIO(EC_AP_VCCST_PWRGD_OD,	PIN(E, 5), GPIO_ODR_LOW)
 GPIO(ALL_SYS_PWRGD,		PIN(B, 7), GPIO_OUT_LOW)
 GPIO(EN_SLP_Z,			PIN(K, 3), GPIO_OUT_LOW)
+GPIO(DOOR_OPEN_EC,		PIN(L, 3), GPIO_INPUT)
 
 /* Required for icelake chipset code, but implemented through other means for dedede */
 UNIMPLEMENTED(AC_PRESENT)

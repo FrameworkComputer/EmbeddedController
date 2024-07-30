@@ -114,6 +114,7 @@ enum battery_type {
 	BATTERY_TYPE_COUNT,
 };
 
+int als_enable_status(void);
 #endif /* !__ASSEMBLER__ */
 
 #endif /* __CROS_EC_BOARD_H */

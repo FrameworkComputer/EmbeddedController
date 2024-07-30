@@ -230,6 +230,10 @@ int board_set_active_charge_port(int port)
 
 	CPRINTS("New chg p%d", port);
 
+	/* for als function */
+	if (!gpio_get_level(GPIO_DOOR_OPEN_EC) && als_enable_status())
+		return EC_SUCCESS;
+
 	/* Disable all ports. */
 	if (port == CHARGE_PORT_NONE) {
 		tcpc_write(0, TCPC_REG_COMMAND, TCPC_REG_COMMAND_SNK_CTRL_LOW);
