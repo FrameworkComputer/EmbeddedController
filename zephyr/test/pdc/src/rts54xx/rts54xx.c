@@ -95,13 +95,15 @@ static int emul_get_snk_pdos(enum pdo_offset_t pdo_offset, uint8_t pdo_count,
 static int emul_set_src_pdos(enum pdo_offset_t pdo_offset, uint8_t pdo_count,
 			     const uint32_t *pdos)
 {
-	return emul_pdc_set_pdos(emul, SOURCE_PDO, pdo_offset, pdo_count, pdos);
+	return emul_pdc_set_pdos(emul, SOURCE_PDO, pdo_offset, pdo_count,
+				 LPM_PDO, pdos);
 }
 
 static int emul_set_snk_pdos(enum pdo_offset_t pdo_offset, uint8_t pdo_count,
 			     const uint32_t *pdos)
 {
-	return emul_pdc_set_pdos(emul, SINK_PDO, pdo_offset, pdo_count, pdos);
+	return emul_pdc_set_pdos(emul, SINK_PDO, pdo_offset, pdo_count, LPM_PDO,
+				 pdos);
 }
 
 ZTEST_SUITE(rts54xx, NULL, NULL, rts54xx_before_test, NULL, NULL);
@@ -137,10 +139,10 @@ ZTEST_USER(rts54xx, test_emul_pdos)
 	uint32_t pdos[PDO_OFFSET_MAX];
 
 	/* Port partner PDOs aren't currently supported. */
-	zassert_not_ok(emul_pdc_get_pdos(emul, SOURCE_PDO, PDO_OFFSET_0, 1,
-					 PARTNER_PDO, pdos));
-	zassert_not_ok(emul_pdc_get_pdos(emul, SINK_PDO, PDO_OFFSET_0, 1,
-					 PARTNER_PDO, pdos));
+	zassert_ok(emul_pdc_get_pdos(emul, SOURCE_PDO, PDO_OFFSET_0, 1,
+				     PARTNER_PDO, pdos));
+	zassert_ok(emul_pdc_get_pdos(emul, SINK_PDO, PDO_OFFSET_0, 1,
+				     PARTNER_PDO, pdos));
 
 	/* Test that offset zero is invalid for setting. */
 	zassert_not_ok(emul_set_src_pdos(PDO_OFFSET_0, 1, pdos));
