@@ -165,6 +165,9 @@
 #define KEYBOARD_COLS_MAX 18
 #define CONFIG_KEYBOARD_KEYPAD
 
+/* Remove bringup features */
+#undef CONFIG_CMD_POWERINDEBUG
+
 #ifndef __ASSEMBLER__
 
 #include "gpio_signal.h" /* needed by registers.h */
