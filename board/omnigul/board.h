@@ -82,6 +82,7 @@
 
 #define CONFIG_USBC_PPC_SYV682X
 #define CONFIG_USBC_PPC_NX20P3483
+#define CONFIG_USBC_NX20P348X_RCP_5VSRC_MASK_ENABLE
 
 /* TODO: b/177608416 - measure and check these values on brya */
 #define PD_POWER_SUPPLY_TURN_ON_DELAY 30000 /* us */
