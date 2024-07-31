@@ -89,7 +89,7 @@ static void set_lid(bool open, bool inhibit_boot)
 		   "Failed to set lid switch GPIO");
 
 	while (lid_is_open() != open) {
-		crec_usleep(LID_DEBOUNCE_US + 1);
+		crec_usleep(CONFIG_LID_DEBOUNCE_US + 1);
 	}
 
 	if (inhibit_boot) {

@@ -3,6 +3,7 @@
  * found in the LICENSE file.
  */
 
+#include "config.h"
 #include "cros_cbi.h"
 #include "gpio/gpio_int.h"
 #include "gpio_signal.h"
@@ -37,7 +38,7 @@ static int cbi_get_touch_en_config(enum cbi_fw_config_field_id field,
 #define TEST_DELAY_MS 1
 #define TOUCH_ENABLE_DELAY_MS (500 + TEST_DELAY_MS)
 #define TOUCH_DISABLE_DELAY_MS (0 + TEST_DELAY_MS)
-#define TEST_LID_DEBOUNCE_MS (LID_DEBOUNCE_US / MSEC + 1)
+#define TEST_LID_DEBOUNCE_MS (CONFIG_LID_DEBOUNCE_US / MSEC + 1)
 
 static void touch_config_before(void *fixture)
 {

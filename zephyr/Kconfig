@@ -569,6 +569,12 @@ config PLATFORM_EC_LID_SWITCH
 
 	  This requires a GPIO named GPIO_LID_OPEN to be defined or aliased.
 
+config PLATFORM_EC_LID_DEBOUNCE_US
+	int "Lid switch debounce delay (microseconds)"
+	default 30000
+	help
+	  Delay between seeing a lid switch change and sampling the new state.
+
 config PLATFORM_EC_CONSOLE_CMD_MMAPINFO
 	bool "Console command: mmapinfo"
 	default y

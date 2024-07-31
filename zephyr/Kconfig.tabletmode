@@ -44,4 +44,13 @@ config PLATFORM_EC_TABLET_MODE_SKIP_LID_CLOSE
       when devices are stacked, this configuration skips lid close event when
       the system is in tablet mode
 
+config PLATFORM_EC_GMR_SENSOR_DEBOUNCE_US
+	int "GMR tablet mode sensor debounce delay (microseconds)"
+	default 40000
+	help
+	  Delay between seeing a table mode switch change and sampling
+	  the new state.
+	  Default is 10 milliseconds longer than the default lid switch
+	  debounce delay (LID_DEBOUNCE_US).
+
 endif # PLATFORM_EC_TABLET_MODE

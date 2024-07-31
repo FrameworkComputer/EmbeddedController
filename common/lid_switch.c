@@ -12,9 +12,10 @@
 #line 13
 
 #include "common.h"
+#include "config.h"
 #include "console.h"
 #include "gpio.h"
-#line 18
+#line 19
 #include "hooks.h"
 #include "host_command.h"
 #include "keyboard_scan.h"
@@ -132,7 +133,7 @@ DECLARE_DEFERRED(lid_change_deferred);
 void lid_interrupt(enum gpio_signal signal)
 {
 	/* Reset lid debounce time */
-	hook_call_deferred(&lid_change_deferred_data, LID_DEBOUNCE_US);
+	hook_call_deferred(&lid_change_deferred_data, CONFIG_LID_DEBOUNCE_US);
 }
 
 void enable_lid_detect(bool enable)

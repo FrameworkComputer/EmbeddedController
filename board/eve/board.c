@@ -89,7 +89,7 @@ DECLARE_DEFERRED(enable_input_devices);
 
 void tablet_mode_interrupt(enum gpio_signal signal)
 {
-	hook_call_deferred(&enable_input_devices_data, LID_DEBOUNCE_US);
+	hook_call_deferred(&enable_input_devices_data, CONFIG_LID_DEBOUNCE_US);
 }
 
 /* Send event to wake AP based on trackpad input */

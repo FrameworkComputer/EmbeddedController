@@ -22,11 +22,6 @@ extern "C" {
 #endif
 
 /**
- * Debounce time for lid switch
- */
-#define LID_DEBOUNCE_US (30 * MSEC)
-
-/**
  * Return non-zero if lid is open.
  *
  * Uses the debounced lid state, not the raw signal from the GPIO.

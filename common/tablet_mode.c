@@ -239,12 +239,11 @@ DECLARE_DEFERRED(gmr_tablet_switch_interrupt_debounce);
  * the tablet_mode to be clamshell, but |gmr_sensor_at_360| will still be true,
  * the request will be ignored.
  */
-#define GMR_SENSOR_DEBOUNCE_US (LID_DEBOUNCE_US + 10 * MSEC)
 
 void gmr_tablet_switch_isr(enum gpio_signal signal)
 {
 	hook_call_deferred(&gmr_tablet_switch_interrupt_debounce_data,
-			   GMR_SENSOR_DEBOUNCE_US);
+			   CONFIG_GMR_SENSOR_DEBOUNCE_US);
 }
 
 /*
