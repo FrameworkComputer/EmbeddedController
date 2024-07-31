@@ -1365,6 +1365,18 @@ static void st_task_wait_run(void *o)
 	case CMD_GET_CONNECTOR_STATUS:
 		offset = 1;
 		len = sizeof(union connector_status_t);
+		if (((union connector_status_t *)&cmd_data.data[offset])
+			    ->conn_partner_type == DEBUG_ACCESSORY_ATTACHED) {
+			union reg_status pdc_status;
+			rv = tps_rd_status(&cfg->i2c, &pdc_status);
+			if (!rv) {
+				((union connector_status_t *)&cmd_data
+					 .data[offset])
+					->conn_partner_type =
+					(pdc_status.data_role ? UFP_ATTACHED :
+								DFP_ATTACHED);
+			}
+		}
 		/* TODO(b/345783692): Cache result */
 		break;
 	case CMD_GET_CABLE_PROPERTY:
