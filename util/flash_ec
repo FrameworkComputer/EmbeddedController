@@ -315,7 +315,10 @@ function dut_control_get_or_die {
 	    die "command exited $? (non-zero): dut-control --value_only $*"
 }
 
-: "${BOARD:=${FLAGS_board}}"
+if [[ -n "${FLAGS_board}" ]]; then
+	# Explicit --board flag overrides environment.
+	BOARD="${FLAGS_board}"
+fi
 
 in_array() {
 	local n=$#
