@@ -767,10 +767,23 @@ ZTEST_USER(pdc_power_mgmt_api, test_request_data_swap)
 ZTEST_USER(pdc_power_mgmt_api, test_get_partner_unconstr_power)
 {
 	union connector_status_t connector_status;
+	const uint32_t pdos_no_up[] = {
+		PDO_FIXED(5000, 3000, PDO_FIXED_DUAL_ROLE),
+	};
+	const uint32_t pdos_up[] = {
+		PDO_FIXED(5000, 3000,
+			  PDO_FIXED_DUAL_ROLE |
+				  PDO_FIXED_GET_UNCONSTRAINED_PWR),
+	};
 
 	zassert_false(
 		pd_get_partner_unconstr_power(CONFIG_USB_PD_PORT_MAX_COUNT));
 
+	/* If the port is not in Attached.SNK, unconstrained power is considered
+	 * to be false.
+	 */
+	emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
+			  pdos_up);
 	emul_pdc_configure_src(emul, &connector_status);
 	emul_pdc_connect_partner(emul, &connector_status);
 
@@ -781,11 +794,27 @@ ZTEST_USER(pdc_power_mgmt_api, test_get_partner_unconstr_power)
 	zassert_true(
 		TEST_WAIT_FOR(!pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
 
+	/* If the port is in Attached.SNK, unconstrained power should be the
+	 * partner's advertised capability.
+	 */
+	emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
+			  pdos_no_up);
 	emul_pdc_configure_snk(emul, &connector_status);
 	emul_pdc_connect_partner(emul, &connector_status);
 
 	zassert_false(TEST_WAIT_FOR(pd_get_partner_unconstr_power(TEST_PORT),
 				    PDC_TEST_TIMEOUT));
+
+	emul_pdc_disconnect(emul);
+	zassert_true(
+		TEST_WAIT_FOR(!pd_is_connected(TEST_PORT), PDC_TEST_TIMEOUT));
+
+	emul_pdc_set_pdos(emul, SOURCE_PDO, PDO_OFFSET_0, 1, PARTNER_PDO,
+			  pdos_up);
+	emul_pdc_configure_snk(emul, &connector_status);
+	emul_pdc_connect_partner(emul, &connector_status);
+	zassert_true(TEST_WAIT_FOR(pd_get_partner_unconstr_power(TEST_PORT),
+				   PDC_TEST_TIMEOUT));
 }
 
 ZTEST_USER(pdc_power_mgmt_api, test_get_vbus_voltage)
