@@ -20,8 +20,6 @@
 #include "gpio.dtsi"
 #include "../i2c.dtsi"
 #include "../interrupts.dtsi"
-#include "../led_pins.dtsi"
-#include "../led_policy.dtsi"
 #include "../motionsense.dtsi"
 #include "../power_signals.dtsi"
 #include "../power_signals_gpios.dtsi"
@@ -29,9 +27,11 @@
 #include "../usb_typec.dtsi"
 #include "../usba.dtsi"
 
-/* Jubilant project DTS includes*/
-#include "temp_sensors.dtsi"
+/* Jubilant project DTS includes */
 #include "keyboard.dtsi"
+#include "led_pins.dtsi"
+#include "led_policy.dtsi"
+#include "temp_sensors.dtsi"
 
 /* Brox overrides follow... */
 
