@@ -1893,10 +1893,12 @@ function preserve_sections() {
 		local CUR_IMG
 		local CUR_FMAP_HEADER
 
-		NEW_FMAP=$(dump_fmap "${NEW_IMG}" -e FMAP)
+		NEW_FMAP=$(dump_fmap "${NEW_IMG}" -e FMAP) || NEW_FMAP=''
 		NEW_FMAP_NFIELD=$(echo "${NEW_FMAP}" | awk '{print NF}')
 		if [ "${NEW_FMAP_NFIELD}" -ne 4 ]; then
-			die "The output of dump_fmap is not expected; try update_chroot"
+			die "The output of dump_fmap is not expected; try update_chroot" \
+			    "or flash_ec --no_preserve" \
+			    "if preserved FMAP regions are not supported."
 		fi
 
 		NEW_FMAP_OFFSET=$(echo "${NEW_FMAP}" | awk '{print $2}')
