@@ -40,4 +40,9 @@ void board_set_vbus_source_current_limit(int port, enum tcpc_rp_value rp);
 int board_is_dc_jack_present(void);
 void board_dc_jack_interrupt(enum gpio_signal signal);
 bool is_typec_port(int port);
+
+#ifdef CONFIG_ZTEST
+void board_charge_init(void);
+#endif
+
 #endif /* __INTELRVP_BOARD_H */
