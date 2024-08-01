@@ -109,6 +109,14 @@ config HW_TEST_PANIC
 	help
 	  The test verifies panic data.
 
+config HW_TEST_PANIC_DATA
+	bool "Panic data test"
+	select ZTEST
+	select ASSERT
+	select PLATFORM_EC_DEBUG_ASSERT
+	help
+	  It verifies panic data across different reboots.
+
 config HW_TEST_PRINTF
 	bool "printf test"
 	select ZTEST
