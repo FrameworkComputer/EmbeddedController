@@ -33,7 +33,7 @@
 		low-level;
 		gpio-controller;
 		#gpio-cells = <2>;
-		ngpios = <16>;
+		ngpios = <32>;
 	};
 
 	gpio_100_136: gpio@1000 {
@@ -46,7 +46,7 @@
 		low-level;
 		gpio-controller;
 		#gpio-cells = <2>;
-		ngpios = <16>;
+		ngpios = <32>;
 	};
 
 	gpio_140_176: gpio@1400 {
@@ -59,7 +59,7 @@
 		low-level;
 		gpio-controller;
 		#gpio-cells = <2>;
-		ngpios = <16>;
+		ngpios = <32>;
 	};
 
 	gpio_200_236: gpio@2000 {
@@ -85,6 +85,6 @@
 		low-level;
 		gpio-controller;
 		#gpio-cells = <2>;
-		ngpios = <8>;
+		ngpios = <32>;
 	};
 };
