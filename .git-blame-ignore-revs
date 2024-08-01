@@ -17,6 +17,8 @@
 
 # $ git show --no-patch --format="# %cs - %s%n%H" <commit-hash>
 
+# 2019-11-26 - cortex-m/m0: Reformat linkers script with tabs
+bd7f034b6cf01380cc7e14f28c3bd72ad42daaf2
 # 2021-01-28 - docs: Run mdformat on all .md files
 2f40b71b625bcd826fd0cb4a005985abef0b8903
 # 2022-06-27 - baseboard/kalista/led.c: Format with clang-format
