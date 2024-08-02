@@ -49,6 +49,14 @@ tests:
     extra_dtc_overlay_files:
     - "./boards/rts5453p.overlay"
 
+  pdc.tps6699x:
+    extra_configs:
+    - CONFIG_TEST_SUITE_PDC_TPS6699X=y
+    - CONFIG_TEST_PDC_MESSAGE_TRACING=y
+    - CONFIG_USBC_PDC_TRACE_MSG=y
+    extra_dtc_overlay_files:
+    - "./boards/tps6699x.overlay"
+
   pdc.retimer_fw_update:
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_RETIMER_FW_UPDATE=y

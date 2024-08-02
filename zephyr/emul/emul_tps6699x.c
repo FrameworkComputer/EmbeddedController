@@ -93,9 +93,8 @@ static void tps6699x_emul_connector_reset(struct tps6699x_emul_pdc_data *data,
 	data->reset_cmd = reset_cmd;
 }
 
-static enum tps6699x_command_result
-tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
-			  uint8_t *data_reg)
+static void tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
+				      uint8_t *data_reg)
 {
 	/* For all UCSI commands, the first 3 data fields are
 	 * the UCSI command (8 bits),
@@ -115,11 +114,21 @@ tps6699x_emul_handle_ucsi(struct tps6699x_emul_pdc_data *data,
 		tps6699x_emul_connector_reset(
 			data, (union connector_reset_t)data_reg[2]);
 		break;
+	case UCSI_GET_CONNECTOR_STATUS:
+		memcpy(&data_reg[1], &data->connector_status,
+		       sizeof(union connector_status_t));
+
+		/* TPS6699x clears the connector status change on read. */
+		data->connector_status.raw_conn_status_change_bits = 0;
+		break;
 	default:
 		LOG_WRN("tps6699x_emul: Unimplemented UCSI command %#04x", cmd);
 	};
 
-	return COMMAND_RESULT_SUCCESS;
+	/* By default, indicate task success.
+	 * TODO(b/345292002): Allow a test to emulate task failure.
+	 */
+	data_reg[0] = COMMAND_RESULT_SUCCESS;
 }
 
 static void tps6699x_emul_handle_command(struct tps6699x_emul_pdc_data *data,
@@ -129,18 +138,17 @@ static void tps6699x_emul_handle_command(struct tps6699x_emul_pdc_data *data,
 	enum tps6699x_command_task *cmd_reg =
 		(enum tps6699x_command_task *)&data
 			->reg_val[TPS6699X_REG_COMMAND_I2C1];
-	enum tps6699x_command_result result = COMMAND_RESULT_REJECTED;
 
 	/* TODO(b/345292002): Respond to commands asynchronously. */
 
 	switch (task) {
 	case COMMAND_TASK_UCSI:
-		result = tps6699x_emul_handle_ucsi(data, data_reg);
+		tps6699x_emul_handle_ucsi(data, data_reg);
 		break;
 	case COMMAND_TASK_SRYR:
 	case COMMAND_TASK_SRDY:
 		/* TODO(b/345292002) - Actually implement support for these. */
-		result = COMMAND_TASK_COMPLETE;
+		*data_reg = COMMAND_TASK_COMPLETE;
 		break;
 	default: {
 		char task_str[5] = {
@@ -158,10 +166,6 @@ static void tps6699x_emul_handle_command(struct tps6699x_emul_pdc_data *data,
 	}
 	}
 
-	/* By default, indicate task success.
-	 * TODO(b/345292002): Allow a test to emulate task failure.
-	 */
-	*data_reg = result;
 	*cmd_reg = COMMAND_TASK_COMPLETE;
 }
 
@@ -322,6 +326,18 @@ static int emul_tps6699x_set_response_delay(const struct emul *target,
 	return 0;
 }
 
+static int emul_tps6699x_set_connector_status(
+	const struct emul *target,
+	const union connector_status_t *connector_status)
+{
+	struct tps6699x_emul_pdc_data *data =
+		tps6699x_emul_get_pdc_data(target);
+
+	data->connector_status = *connector_status;
+
+	return 0;
+}
+
 static int tps6699x_emul_init(const struct emul *emul,
 			      const struct device *parent)
 {
@@ -340,7 +356,7 @@ static struct emul_pdc_api_t emul_tps6699x_api = {
 	.set_capability = NULL,
 	.set_connector_capability = NULL,
 	.set_error_status = NULL,
-	.set_connector_status = NULL,
+	.set_connector_status = emul_tps6699x_set_connector_status,
 	.get_uor = NULL,
 	.get_pdr = NULL,
 	.get_requested_power_level = NULL,

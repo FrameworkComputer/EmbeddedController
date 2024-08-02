@@ -27,6 +27,7 @@ struct tps6699x_emul_pdc_data {
 	 */
 	uint8_t reg_val[TPS6699X_MAX_REG][TPS6699X_REG_SIZE];
 
+	union connector_status_t connector_status;
 	union connector_reset_t reset_cmd;
 };
 
