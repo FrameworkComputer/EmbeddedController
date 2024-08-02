@@ -1623,7 +1623,16 @@ static int tps_get_info(const struct device *dev, struct pdc_info_t *info,
 static int tps_get_bus_info(const struct device *dev,
 			    struct pdc_bus_info_t *info)
 {
-	/* TODO */
+	const struct pdc_config_t *cfg =
+		(const struct pdc_config_t *)dev->config;
+
+	if (info == NULL) {
+		return -EINVAL;
+	}
+
+	info->bus_type = PDC_BUS_TYPE_I2C;
+	info->i2c = cfg->i2c;
+
 	return 0;
 }
 
