@@ -1448,6 +1448,8 @@ static void st_task_wait_run(void *o)
 		}
 	}
 
+	/* Set cci.data_len. This will be zero if no data is available. */
+	data->cci_event.data_len = len;
 	/* Command has completed */
 	data->cci_event.command_completed = 1;
 	/* Inform the system of the event */
