@@ -137,6 +137,11 @@ static void tps6699x_emul_handle_command(struct tps6699x_emul_pdc_data *data,
 	case COMMAND_TASK_UCSI:
 		result = tps6699x_emul_handle_ucsi(data, data_reg);
 		break;
+	case COMMAND_TASK_SRYR:
+	case COMMAND_TASK_SRDY:
+		/* TODO(b/345292002) - Actually implement support for these. */
+		result = COMMAND_TASK_COMPLETE;
+		break;
 	default: {
 		char task_str[5] = {
 			((char *)&task)[0],
