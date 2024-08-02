@@ -1299,6 +1299,19 @@ union get_vdo_t {
 };
 
 /**
+ * @brief SET_SINK_PATH command
+ */
+union set_sink_path_t {
+	struct {
+		/** Connector number */
+		uint8_t connector_number : 7;
+		/** Sink path enable control */
+		uint8_t sink_path_enable : 1;
+	};
+	uint8_t raw_value;
+};
+
+/**
  * @brief GET_PD_MESSAGE command
  */
 union get_pd_message_t {

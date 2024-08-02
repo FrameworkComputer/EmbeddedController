@@ -5,10 +5,12 @@
 
 /* UCSI PPM Driver */
 
+#include "charge_manager.h"
 #include "cros_board_info.h"
 #include "ec_commands.h"
 #include "ppm_common.h"
 #include "usb_pd.h"
+#include "usbc/pdc_power_mgmt.h"
 #include "util.h"
 
 #include <zephyr/devicetree.h>
@@ -141,6 +143,8 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	uint32_t events;
 	k_timepoint_t timeout;
 	int rv;
+	int charge_port;
+	union set_sink_path_t set_sink_path;
 
 	if (ucsi_command == 0 || ucsi_command >= UCSI_CMD_MAX) {
 		LOG_ERR("Invalid command 0x%x", ucsi_command);
@@ -190,6 +194,34 @@ static int ucsi_ppm_execute_cmd_sync(const struct device *device,
 	case UCSI_GET_ALTERNATE_MODES:
 		conn = UCSI_7BIT_PORTMASK(control->command_specific[1]);
 		break;
+	case UCSI_SET_SINK_PATH:
+		/*
+		 * Intercept UCSI_SET_SINK_PATH. This command will be sent by
+		 * the ucsi kernel driver with enable set or cleared. If the
+		 * enable bit in the command is set, then use the port number
+		 * for the override port. If the enable bit is clear, then pass
+		 * OVERIDE_OFF to the charge manager, disabling any previous
+		 * override.
+		 *
+		 * If this requires a change to the charging port, then the
+		 * charge_manager will call into the PDM which in turn will
+		 * cause SET_SINK_PATH to get sent the PDC. So this command
+		 * should not be passed directly to the PDC from the PPM.
+		 */
+		set_sink_path.raw_value = control->command_specific[0];
+		conn = set_sink_path.connector_number - 1;
+		charge_port = set_sink_path.sink_path_enable ? conn :
+							       OVERRIDE_OFF;
+
+		if (charge_port == OVERRIDE_OFF ||
+		    (pdc_power_mgmt_get_power_role(charge_port) ==
+			     PD_ROLE_SINK &&
+		     pdc_power_mgmt_is_connected(charge_port))) {
+			rv = charge_manager_set_override(charge_port);
+			return rv == EC_SUCCESS ? 0 : -EINVAL;
+		} else {
+			return -EINVAL;
+		}
 	default:
 		conn = 1;
 	}
