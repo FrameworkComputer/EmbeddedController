@@ -102,11 +102,11 @@ class FakeJobClient(zmake.jobserver.JobClient):
         """See base class."""
         return zmake.jobserver.JobHandle(lambda: None)
 
-    def popen(self, argv, env=None, **kwargs):
+    def popen(self, argv, **kwargs):
         """See base class."""
-        env = dict(env or {})
+        kwargs.setdefault("env", {})
         self.captured_argv = [str(arg) for arg in argv]
-        self.captured_env = {str(k): str(v) for k, v in env.items()}
+        self.captured_env = {str(k): str(v) for k, v in kwargs["env"].items()}
 
 
 def parse_cmake_args(argv):
