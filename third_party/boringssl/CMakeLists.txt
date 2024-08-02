@@ -13,7 +13,6 @@ zephyr_interface_library_named(boringssl)
 if (DEFINED ENV{MODULES_DIR})
 	set(BORINGSSL_SOURCES $ENV{MODULES_DIR}/boringssl)
 # If MODULES_DIR is not available, look for BoringSSL in modules/boringssl
-# which should be correct in Gitlab CI.
 elseif(EXISTS ${ZEPHYR_BASE}/../../modules/boringssl)
 	set(BORINGSSL_SOURCES ${ZEPHYR_BASE}/../../modules/boringssl)
 # When releasing FPMCU firmware, the directory structure is

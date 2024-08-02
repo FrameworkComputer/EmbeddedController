@@ -139,9 +139,9 @@ def find_checkout() -> Path:
 def find_paths():
     """Find EC base, Zephyr base, and Zephyr modules paths and return as a 3-tuple."""
 
-    # Determine where the source tree is checked out. Will be None if operating outside
-    # of the chroot (e.g. Gitlab builds). In this case, additional paths need to be
-    # passed in through environment variables.
+    # Determine where the source tree is checked out. Will be None if operating
+    # outside of the chroot. In this case, additional paths need to be passed in
+    # through environment variables.
     cros_checkout = find_checkout()
 
     if cros_checkout:
