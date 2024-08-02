@@ -3,11 +3,8 @@ name: Build Framework Zephyr EC firmware
 on:
   push:
     branches:
-      - marigold*
-      - lotus*
-      - azalea*
-      - fwk*
-      - framework*
+      - fwk-*
+      - pr-*
   #  paths:
   #    - 'zephyr/program/framework/**'
   #pull_request:
