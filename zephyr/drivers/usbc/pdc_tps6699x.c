@@ -998,7 +998,7 @@ static int cmd_get_ic_status_sync_internal(const struct i2c_dt_spec *i2c,
 	info->fw_config_version = customer_val.fw_config_version;
 
 	/* TI VID PID (little-endian) */
-	info->vid_pid = (*(uint16_t *)tx_identity.vendor_id) << 2 |
+	info->vid_pid = (*(uint16_t *)tx_identity.vendor_id) << 16 |
 			*(uint16_t *)tx_identity.product_id;
 
 	/* TI Running flash bank offset */

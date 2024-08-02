@@ -104,7 +104,7 @@ int tps_rd_uid(const struct i2c_dt_spec *i2c, union reg_uid *buf)
 int tps_rw_tx_identity(const struct i2c_dt_spec *i2c,
 		       union reg_tx_identity *buf, int flag)
 {
-	return tps_xfer_reg(i2c, REG_COMMAND_FOR_I2C1, buf->raw_value,
+	return tps_xfer_reg(i2c, REG_TX_IDENTITY, buf->raw_value,
 			    sizeof(union reg_tx_identity), flag);
 }
 
