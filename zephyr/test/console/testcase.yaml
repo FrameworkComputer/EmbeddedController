@@ -1,6 +1,14 @@
 common:
   platform_allow: native_sim
 tests:
+  console.output:
+    extra_conf_files:
+    - console_output.conf
+    extra_dtc_overlay_files:
+    - boards/native_sim.overlay
+    - console_output.dts
+    extra_configs:
+    - CONFIG_TEST_CONSOLE_OUTPUT=y
   console.restricted:
     extra_configs:
     - CONFIG_TEST_CONSOLE_RESTRICTED=y

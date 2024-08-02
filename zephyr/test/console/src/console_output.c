@@ -1,0 +1,179 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+#include "common.h"
+#include "console.h"
+#include "ec_app_main.h"
+
+#include <zephyr/drivers/serial/uart_emul.h>
+#include <zephyr/drivers/uart.h>
+#include <zephyr/logging/log.h>
+#include <zephyr/shell/shell.h>
+#include <zephyr/shell/shell_backend.h>
+#include <zephyr/shell/shell_uart.h>
+#include <zephyr/ztest.h>
+
+LOG_MODULE_REGISTER(test_console_out, LOG_LEVEL_DBG);
+
+#define EMUL_UART_NODE DT_NODELABEL(euart0)
+#define EMUL_UART_RX_FIFO_SIZE DT_PROP(EMUL_UART_NODE, rx_fifo_size)
+#define EMUL_UART_TX_FIFO_SIZE DT_PROP(EMUL_UART_NODE, tx_fifo_size)
+
+#define SAMPLE_DATA_SIZE MIN(EMUL_UART_RX_FIFO_SIZE, EMUL_UART_TX_FIFO_SIZE) - 1
+
+struct console_output_fixture {
+	const struct device *dev;
+};
+
+static void *setup(void)
+{
+	static struct console_output_fixture fixture = {
+		.dev = DEVICE_DT_GET(EMUL_UART_NODE),
+	};
+
+	zassert_not_null(fixture.dev);
+
+	return &fixture;
+}
+
+static void before(void *f)
+{
+	struct console_output_fixture *fixture = f;
+
+	uart_irq_tx_enable(fixture->dev);
+	uart_irq_rx_enable(fixture->dev);
+
+	zassert_ok(uart_err_check(fixture->dev));
+
+	console_channel_enable("system");
+	console_channel_enable("zephyr_log");
+}
+
+ZTEST_SUITE(console_output, NULL, setup, before, NULL, NULL);
+
+static const char *cputs_message = "cputs() test output";
+static const char *cprints_message = "cprints() test output";
+static const char *cprintf_message = "cprintf() test output";
+
+/**
+ * @brief Test non-shell output from the legacy EC.
+ */
+ZTEST_F(console_output, test_legacy_debug_output)
+{
+	uint8_t tx_content[SAMPLE_DATA_SIZE];
+	uint32_t tx_bytes;
+
+	/* We expect an exact match with cputs() output. */
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
+	cputs(CC_SYSTEM, cputs_message);
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_equal(tx_bytes, strlen(cputs_message));
+	zassert_mem_equal(tx_content, cputs_message, strlen(tx_content));
+
+	/* cprints() adds "[]" characters and a timestamp, so an exact
+	 * match isn't possible
+	 */
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
+	cprints(CC_SYSTEM, "%s", cprints_message);
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_true(tx_bytes >= strlen(cprints_message));
+	zassert_not_null(strstr((char *)tx_content, cprints_message));
+
+	/* We expect an exact match with cprintf() output. */
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
+	cprintf(CC_SYSTEM, "%s", cprintf_message);
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_equal(tx_bytes, strlen(cprintf_message));
+	zassert_mem_equal(tx_content, cprintf_message, strlen(tx_content));
+
+	/* Filter out CC_SYSTEM, no output should be generated. */
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
+
+	console_channel_disable("system");
+	cputs(CC_SYSTEM, cputs_message);
+	cprints(CC_SYSTEM, "%s", cprints_message);
+	cprintf(CC_SYSTEM, "%s", cprintf_message);
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_equal(tx_bytes, 0);
+}
+
+static const char *log_raw_message = "LOG_RAW test output";
+static const char *log_err_message = "LOG_ERR test output";
+static const char *log_inf_message = "LOG_INF test output";
+static const char *log_dbg_message = "LOG_DBG test output";
+
+ZTEST_F(console_output, test_log_output)
+{
+	uint8_t tx_content[SAMPLE_DATA_SIZE];
+	uint32_t tx_bytes;
+
+	/* We expect an exact match with LOG_RAW() output. */
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
+	LOG_RAW("%s", log_raw_message);
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_equal(tx_bytes, strlen(log_raw_message));
+	zassert_mem_equal(tx_content, log_raw_message, strlen(tx_content));
+
+	/* LOG_ERR prepends the output, so an exact match isn't possible. */
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
+	LOG_ERR("%s", log_err_message);
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_true(tx_bytes >= strlen(log_err_message));
+	zassert_not_null(strstr((char *)tx_content, log_err_message));
+
+	/* LOG_INF prepends the output, so an exact match isn't possible. */
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
+	LOG_INF("%s", log_inf_message);
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_true(tx_bytes >= strlen(log_inf_message));
+	zassert_not_null(strstr((char *)tx_content, log_inf_message));
+
+	/* LOG_DBG prepends the output, so an exact match isn't possible. */
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
+	LOG_DBG("%s", log_dbg_message);
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_true(tx_bytes >= strlen(log_dbg_message));
+	zassert_not_null(strstr((char *)tx_content, log_dbg_message));
+
+	/* Filter out CC_ZEPHR_LOG, no output should be generated. */
+	console_channel_disable("zephyr_log");
+	LOG_RAW("%s", log_raw_message);
+	LOG_ERR("%s", log_err_message);
+	LOG_INF("%s", log_inf_message);
+	LOG_DBG("%s", log_dbg_message);
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_equal(tx_bytes, 0);
+}
+
+void test_main(void)
+{
+	ec_app_main();
+
+	/* Allow Zephyr defined threads a chance to run. */
+	k_sleep(K_MSEC(10));
+
+	/* Run all the suites that depend on main being called */
+	ztest_run_test_suites(NULL, false, 1, 1);
+
+	/* Check that every suite ran */
+	ztest_verify_all_test_suites_ran();
+}
