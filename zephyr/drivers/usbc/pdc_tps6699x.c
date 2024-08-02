@@ -1384,6 +1384,10 @@ static void st_task_wait_run(void *o)
 	}
 
 	switch (data->cmd) {
+	case CMD_GET_CAPABILITY:
+		offset = 1;
+		len = sizeof(struct capability_t);
+		break;
 	case CMD_GET_CONNECTOR_CAPABILITY:
 		offset = 1;
 		len = sizeof(union connector_capability_t);
