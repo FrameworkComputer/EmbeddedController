@@ -186,9 +186,6 @@ static int tps6699x_emul_start_write(const struct emul *emul, int reg)
 		return -EIO;
 	}
 
-	/* TODO(b/345292002): Only clear bytes to be written by transaction. */
-	memset(&data->reg_val[reg], 0, sizeof(data->reg_val[reg]));
-
 	data->reg_addr = reg;
 
 	return 0;
@@ -239,6 +236,10 @@ static int tps6699x_emul_finish_write(const struct emul *emul, int reg,
 	 */
 	if (bytes > 1) {
 		const int data_bytes = bytes - 2;
+		const int rem_bytes = TPS6699X_REG_SIZE - data_bytes;
+
+		__ASSERT(rem_bytes >= 0, "write size exceeds register size");
+		memset(&data->reg_val[reg][data_bytes], 0, rem_bytes);
 
 		LOG_DBG("finish_write reg=%#x, bytes=%d+2", reg, data_bytes);
 		tps6699x_emul_handle_write(data, reg);
