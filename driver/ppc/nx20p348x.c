@@ -255,6 +255,14 @@ __maybe_unused static int nx20p3483_vbus_source_enable(int port, int enable)
 	if (rv)
 		return rv;
 
+	/* We want to control vbus discharge with source enable */
+	if (IS_ENABLED(CONFIG_USBC_NX20P348X_VBUS_DISCHARGE_BY_SRC_EN)) {
+		if (enable)
+			nx20p348x_discharge_vbus(port, 0);
+		else
+			nx20p348x_discharge_vbus(port, 1);
+	}
+
 	/*
 	 * Wait up to NX20P348X_SWITCH_STATUS_DEBOUNCE_MSEC for the status
 	 * to reflect the control command.
