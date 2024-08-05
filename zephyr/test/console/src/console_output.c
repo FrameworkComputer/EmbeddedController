@@ -215,6 +215,38 @@ ZTEST_F(console_output, test_log_output)
 	zassert_equal(tx_bytes, 0);
 }
 
+static const char *shell_message = "Zephyr shell test output";
+
+ZTEST_F(console_output, test_shell_output)
+{
+	uint8_t tx_content[SAMPLE_DATA_SIZE];
+	uint32_t tx_bytes;
+	const struct shell *ec_sh;
+
+	/* Disable "all" legacy channels.  Output from the shell subsystem
+	 * should remain enabled.
+	 */
+	ec_sh = get_ec_shell();
+	zassert_ok(shell_execute_cmd(ec_sh, "chan 0"));
+	k_sleep(K_MSEC(1));
+
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
+	shell_fprintf(ec_sh, SHELL_NORMAL, "%s", shell_message);
+	k_sleep(K_MSEC(1));
+
+	/* The shell backend inserts a prompt and other control characters.
+	 * Just look for our substring in the output.
+	 */
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_true(tx_bytes >= strlen(shell_message));
+	zassert_not_null(strstr((char *)tx_content, shell_message));
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chan restore"));
+	k_sleep(K_MSEC(1));
+}
+
 void test_main(void)
 {
 	ec_app_main();
