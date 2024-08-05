@@ -16,6 +16,7 @@ extern int charge_port;
 
 void clamshell_init(void);
 void fan_init(void);
+void kb_init(void);
 void thermal_init(void);
 
 #endif /* ZEPHYR_TEST_NISSA_INCLUDE_RIVEN_H_ */

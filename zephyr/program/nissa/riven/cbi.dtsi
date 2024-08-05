@@ -50,6 +50,27 @@
 			};
 		};
 
+		/*
+		 * FW_CONFIG field to change scancode setting for special
+		 * keyboard type.
+		 */
+		kb-type {
+			enum-name = "FW_KB_TYPE";
+			start = <11>;
+			size = <2>;
+
+			kb-type-default {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_TYPE_DEFAULT";
+				value = <0>;
+			};
+			kb-type-ca-fr {
+				compatible = "cros-ec,cbi-fw-config-value";
+				enum-name = "FW_KB_TYPE_CA_FR";
+				value = <1>;
+			};
+		};
+
 	};
 	/* Craask-specific ssfc fields. */
 	cbi-ssfc {
