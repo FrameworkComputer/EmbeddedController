@@ -103,14 +103,14 @@ static void update_os_power_slider(int mode, bool with_dc, int active_mpower)
 		break;
 	case EC_AC_BALANCED:
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL] =
-			(gpu_present() ? 95000 : 40000);
+			(gpu_present() ? 120000 : 40000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT] =
-			(gpu_present() ? 95000 : 48000);
+			(gpu_present() ? 120000 : 48000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT] =
-			(gpu_present() ? 95000 : 58000);
+			(gpu_present() ? 120000 : 58000);
 		power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT] =
 			(gpu_present() ? 50000 : 0);
-		slider_stt_table = (gpu_present() ? 2 : 9);
+		slider_stt_table = (gpu_present() ? 32 : 9);
 		CPRINTS("AC BALANCED");
 		break;
 	case EC_AC_BEST_EFFICIENCY:
@@ -136,13 +136,7 @@ static void update_thermal_power_limit(int battery_percent, int active_mpower,
 				       bool with_dc, int mode)
 {
 	if (gpu_present()) {
-		if ((active_mpower >= 240000) && with_dc && (mode == EC_AC_BALANCED)) {
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 120000;
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 120000;
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 120000;
-			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] = 50000;
-			thermal_stt_table = 32;
-		} else if ((active_mpower >= 180000) && with_dc) {
+		if ((active_mpower >= 240000) && with_dc) {
 			/* limited by update_os_power_slider */
 			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] =
 				power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
@@ -153,6 +147,27 @@ static void update_thermal_power_limit(int battery_percent, int active_mpower,
 			power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] =
 				power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT];
 			thermal_stt_table = slider_stt_table;
+		} else if (active_mpower >= 180000) {
+			if (mode == EC_AC_BALANCED) {
+				/* limited by update_os_power_slider */
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] = 950000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] = 950000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] = 950000;
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT]
+					= 50000;
+				thermal_stt_table = 2;
+			} else {
+				/* limited by update_os_power_slider */
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPL] =
+					power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPL];
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_SPPT] =
+					power_limit[FUNCTION_SLIDER].mwatt[TYPE_SPPT];
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_FPPT] =
+					power_limit[FUNCTION_SLIDER].mwatt[TYPE_FPPT];
+				power_limit[FUNCTION_THERMAL_PMF].mwatt[TYPE_APU_ONLY_SPPT] =
+					power_limit[FUNCTION_SLIDER].mwatt[TYPE_APU_ONLY_SPPT];
+				thermal_stt_table = slider_stt_table;
+			}
 		} else if (active_mpower >= 140000) {
 			if (with_dc) {
 				if (mode == EC_AC_BEST_PERFORMANCE) {
@@ -1074,13 +1089,15 @@ void update_soc_power_limit(bool force_update, bool force_no_adapter)
 			power_limit[FUNCTION_THERMAL].mwatt[TYPE_APU_ONLY_SPPT] = 0;
 	}
 
-	/* choose the lowest one */
 	for (int item = TYPE_SPL; item < TYPE_COUNT; item++) {
 		/* use slider as default */
 		target_func[item] = FUNCTION_SLIDER;
 		for (int func = FUNCTION_DEFAULT; func < FUNCTION_COUNT; func++) {
+			/* Ignored the zero value */
 			if (power_limit[func].mwatt[item] < 1)
 				continue;
+
+			/* choose the lowest one */
 			if (power_limit[target_func[item]].mwatt[item]
 				> power_limit[func].mwatt[item])
 				target_func[item] = func;
