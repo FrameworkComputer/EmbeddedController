@@ -6,6 +6,7 @@
 #include "common.h"
 #include "console.h"
 #include "ec_app_main.h"
+#include "zephyr/kernel.h"
 
 #include <zephyr/drivers/serial/uart_emul.h>
 #include <zephyr/drivers/uart.h>
@@ -105,6 +106,56 @@ ZTEST_F(console_output, test_legacy_debug_output)
 	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
 					 sizeof(tx_content));
 	zassert_equal(tx_bytes, 0);
+}
+
+ZTEST_F(console_output, test_legacy_shell_output)
+{
+	uint8_t tx_content[SAMPLE_DATA_SIZE];
+	uint32_t tx_bytes;
+
+	/* Disable "all" legacy channels.  The CC_COMMAND channel
+	 * Should remain enabled.
+	 */
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chan 0"));
+	k_sleep(K_MSEC(1));
+
+	/* The shell backend inserts a prompt and other control characters.
+	 * Just look for our substring in the output.
+	 */
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
+	cputs(CC_COMMAND, cputs_message);
+	/* Shell backend needs CPU time to flush the TX buffer. */
+	k_sleep(K_MSEC(1));
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_true(tx_bytes >= strlen(cputs_message));
+	zassert_not_null(strstr((char *)tx_content, cputs_message));
+
+	/* Test cprints() to the shell. */
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
+	cprints(CC_COMMAND, "%s", cprints_message);
+	/* Shell backend needs CPU time to flush the TX buffer. */
+	k_sleep(K_MSEC(1));
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_true(tx_bytes >= strlen(cprints_message));
+	zassert_not_null(strstr((char *)tx_content, cprints_message));
+
+	/* Test cprintf() to the shell. */
+	uart_emul_flush_tx_data(fixture->dev);
+	memset(tx_content, 0, sizeof(tx_content));
+	cprintf(CC_COMMAND, "%s", cprintf_message);
+	/* Shell backend needs CPU time to flush the TX buffer. */
+	k_sleep(K_MSEC(1));
+	tx_bytes = uart_emul_get_tx_data(fixture->dev, tx_content,
+					 sizeof(tx_content));
+	zassert_true(tx_bytes >= strlen(cprintf_message));
+	zassert_not_null(strstr((char *)tx_content, cprintf_message));
+
+	zassert_ok(shell_execute_cmd(get_ec_shell(), "chan restore"));
+	k_sleep(K_MSEC(1));
 }
 
 static const char *log_raw_message = "LOG_RAW test output";
