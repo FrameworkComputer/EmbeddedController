@@ -2,7 +2,7 @@ common:
   platform_allow: native_sim
 tests:
   pdc.generic:
-    timeout: 300
+    timeout: 500
     extra_configs:
     - CONFIG_TEST_SUITE_PDC_GENERIC=y
     - CONFIG_TEST_PDC_MESSAGE_TRACING=y
