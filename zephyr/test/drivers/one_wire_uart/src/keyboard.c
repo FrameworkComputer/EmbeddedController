@@ -20,16 +20,12 @@
 #include <zephyr/ztest_assert.h>
 #include <zephyr/ztest_test.h>
 
-void keyboard_state_changed(int row, int col, int is_pressed);
-
 const static struct device *dev = DEVICE_DT_GET(DT_NODELABEL(one_wire_uart));
 
 static const struct queue update_to_usb = QUEUE_NULL(64, uint8_t);
 static const struct queue usb_to_update = QUEUE_NULL(64, uint8_t);
 USB_STREAM_CONFIG_FULL(usb_update, 0, 0, 0, 0, 0, 0, 0, 0, usb_to_update,
 		       update_to_usb, 0, 0);
-
-FAKE_VALUE_FUNC(int, mkbp_keyboard_add, const uint8_t *);
 
 ZTEST(one_wire_uart_keyboard, test_keyboard_event)
 {
@@ -39,20 +35,20 @@ ZTEST(one_wire_uart_keyboard, test_keyboard_event)
 
 	test_keyboard_scan_debounce_reset();
 
-	keyboard_state_changed(0, 0, 1);
+	expected_key_state[0] = 1;
+	one_wire_uart_keyboard_add(expected_key_state);
 	zassert_equal(k_msgq_num_used_get(data->tx_queue), 1);
 	zassert_ok(k_msgq_get(data->tx_queue, &msg, K_NO_WAIT));
 	zassert_equal(msg.header.payload_len, KEYBOARD_COLS_MAX + 1);
 	zassert_equal(msg.payload[0], ROACH_CMD_KEYBOARD_MATRIX);
-	expected_key_state[0] = 1;
 	zassert_mem_equal(msg.payload + 1, expected_key_state,
 			  KEYBOARD_COLS_MAX);
 
-	keyboard_state_changed(0, 0, 0);
+	expected_key_state[0] = 0;
+	one_wire_uart_keyboard_add(expected_key_state);
 	zassert_ok(k_msgq_get(data->tx_queue, &msg, K_NO_WAIT));
 	zassert_equal(msg.header.payload_len, KEYBOARD_COLS_MAX + 1);
 	zassert_equal(msg.payload[0], ROACH_CMD_KEYBOARD_MATRIX);
-	expected_key_state[0] = 0;
 	zassert_mem_equal(msg.payload + 1, expected_key_state,
 			  KEYBOARD_COLS_MAX);
 }
@@ -117,8 +113,6 @@ ZTEST(one_wire_uart_keyboard, test_updater_to_ap)
 static void keyboard_before(void *fixture)
 {
 	one_wire_uart_reset(dev);
-
-	RESET_FAKE(mkbp_keyboard_add);
 }
 
 ZTEST_SUITE(one_wire_uart_keyboard, drivers_predicate_post_main, NULL,
