@@ -1909,7 +1909,7 @@ static int pdc_init(const struct device *dev)
 }
 
 /* LCOV_EXCL_START - temporary code */
-
+#ifdef CONFIG_USBC_PDC_TPS6699X_FW_UPDATER
 /* See tps6699x_fwup.c */
 extern int tps6699x_do_firmware_update_internal(const struct i2c_dt_spec *dev);
 
@@ -1921,6 +1921,7 @@ int tps_pdc_do_firmware_update(void)
 
 	return tps6699x_do_firmware_update_internal(&cfg->i2c);
 }
+#endif /* CONFIG_USBC_PDC_TPS6699X_FW_UPDATER */
 /* LCOV_EXCL_STOP - temporary code */
 
 static void tps_thread(void *dev, void *unused1, void *unused2)
