@@ -110,12 +110,15 @@ def launch(opts: argparse.Namespace) -> int:
         wp_state = GPIO_WP_ENABLE if enable_write_protect else GPIO_WP_DISABLE
         renode_execute.append(f"{GPIO_WP_MAP[board]} {wp_state};")
 
-    # Expose the console UART as a PTY on /tmp/renode-uart. You can connect to
-    # the PTY with minicom, screen, etc.
-    renode_execute.append(
-        'emulation CreateUartPtyTerminal "term" "/tmp/renode-uart" True;'
-    )
-    renode_execute.append("connector Connect " + CONSOLE_MAP[board] + " term;")
+    if board in CONSOLE_MAP:
+        # Expose the console UART as a PTY on /tmp/renode-uart. You can connect to
+        # the PTY with minicom, screen, etc.
+        renode_execute.append(
+            'emulation CreateUartPtyTerminal "term" "/tmp/renode-uart" True;'
+        )
+        renode_execute.append(
+            "connector Connect " + CONSOLE_MAP[board] + " term;"
+        )
 
     renode_execute.append("start;")
 
