@@ -21,6 +21,7 @@ DEFAULT_PROJECT = "ec"
 
 CONSOLE_MAP: dict[str, str] = {
     "bloonchipper": "sysbus.usart2",
+    "buccaneer": "sysbus.cr_uart1",
     "dartmonkey": "sysbus.usart1",
     "helipilot": "sysbus.cr_uart1",
 }
