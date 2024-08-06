@@ -4,6 +4,7 @@
  */
 
 #include "common.h"
+#include "gpio.h"
 #include "irq_chip.h"
 #include "keyboard_raw.h"
 #include "keyboard_scan.h"
@@ -11,6 +12,7 @@
 #include "task.h"
 
 #define KSOH_PIN_MASK (((1 << (KEYBOARD_COLS_MAX - 8)) - 1) & 0xff)
+#define KSOH2_PIN_MASK GENMASK(1, 0)
 
 /*
  * Initialize the raw keyboard interface.
@@ -21,6 +23,8 @@ void keyboard_raw_init(void)
 
 	/* Ensure top-level interrupt is disabled */
 	keyboard_raw_enable_interrupt(0);
+
+	gpio_config_module(MODULE_KEYBOARD_SCAN, 1);
 
 	/*
 	 * bit2, Setting 1 enables the internal pull-up of the KSO[15:0] pins.
@@ -52,7 +56,9 @@ void keyboard_raw_init(void)
 	 *       rest be configured as GPIO output mode. In this case that we
 	 *       disable the ISR in critical section to avoid race condition.
 	 */
-	IT83XX_KBS_KSOH1 &= ~KSOH_PIN_MASK;
+	IT83XX_KBS_KSOH2 &= ~KSOH2_PIN_MASK;
+	IT83XX_KBS_KSOH1 &= (uint8_t)~KSOH_PIN_MASK;
+
 	/* restore interrupts */
 	set_int_mask(int_mask);
 
@@ -88,13 +94,13 @@ test_mockable void keyboard_raw_drive_column(int col)
 
 	/* Tri-state all outputs */
 	if (col == KEYBOARD_COLUMN_NONE)
-		mask = 0xffff;
+		mask = 0x3ffff;
 	/* Assert all outputs */
 	else if (col == KEYBOARD_COLUMN_ALL)
 		mask = 0;
 	/* Assert a single output */
 	else
-		mask = 0xffff ^ BIT(col);
+		mask = 0x3ffff ^ BIT(col);
 
 #ifdef CONFIG_KEYBOARD_COL2_INVERTED
 	/* KSO[2] is inverted. */
@@ -114,6 +120,9 @@ test_mockable void keyboard_raw_drive_column(int col)
 			   ((mask >> 8) & KSOH_PIN_MASK);
 	/* restore interrupts */
 	set_int_mask(int_mask);
+	/* Set KSO[17:16] output data */
+	IT83XX_KBS_KSOH2 = (IT83XX_KBS_KSOH2 & ~KSOH2_PIN_MASK) |
+			   ((mask >> 16) & KSOH2_PIN_MASK);
 }
 
 /*
