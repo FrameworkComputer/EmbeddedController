@@ -15,6 +15,7 @@ import selectors
 import shlex
 import subprocess
 import sys
+from typing import Dict, Optional
 
 import zmake
 
@@ -54,7 +55,7 @@ class JobClient:
         """Returns the file descriptors that should be passed to subprocesses."""
         return []
 
-    def popen(self, argv, **kwargs):
+    def popen(self, argv, env: Optional[Dict[str, str]] = None, **kwargs):
         """Start a process using subprocess.Popen
 
         All other arguments are passed to subprocess.Popen.
@@ -63,24 +64,36 @@ class JobClient:
             A Popen object.
         """
         # By default, we scrub the environment for all commands we run, setting
-        # the bare minimum (PATH only).  This prevents us from building obscure
-        # dependencies on the environment variables.
-        kwargs.setdefault(
-            "env", {"PATH": "/bin:/usr/bin", "PYTHONPATH": ":".join(sys.path)}
-        )
+        # the bare minimum.  This prevents us from building obscure dependencies
+        # on the environment variables.
+        env = dict(env or {})
+
+        if not env:
+            env["PYTHONPATH"] = ":".join(sys.path)
+
+        env.setdefault("PATH", os.environ.get("PATH", os.defpath))
+        for keep_env in [
+            "HOME",
+            "XDG_CACHE_HOME",
+            "JAVA_HOME",
+            "JDK_HOME",
+            "JAVAC",
+        ]:
+            if keep_env in os.environ:
+                env.setdefault(keep_env, os.environ[keep_env])
+        env.update(self.env())
+
         kwargs.setdefault("pass_fds", [])
-        kwargs["env"].update(self.env())
         kwargs["pass_fds"] += self.pass_fds()
 
         logger = logging.getLogger(self.__class__.__name__)
         logger.debug(
-            "Running `env -i %s%s%s`",
-            " ".join(f"{k}={shlex.quote(v)}" for k, v in kwargs["env"].items()),
-            " " if kwargs["env"] else "",
+            "Running `env -i %s %s`",
+            " ".join(f"{k}={shlex.quote(v)}" for k, v in env.items()),
             zmake.util.repr_command(argv),
         )
         return subprocess.Popen(  # pylint:disable=consider-using-with
-            argv, **kwargs
+            argv, env=env, **kwargs
         )
 
 

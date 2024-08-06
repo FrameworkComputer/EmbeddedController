@@ -6,6 +6,7 @@
 
 import os
 import pathlib
+import shutil
 
 # pylint: disable=import-error
 import pytest
@@ -42,28 +43,27 @@ def mockfs(monkeypatch, tmp_path: pathlib.Path):
 
 
 @pytest.fixture
-def coreboot_sdk_exists(mockfs):
-    """Provide a mock coreboot-sdk."""
-    coreboot_sdk_dir = mockfs / "opt" / "coreboot-sdk"
-    coreboot_sdk_dir.mkdir(parents=True)
-
-
-@pytest.fixture
-def llvm_exists(mockfs):
+def llvm_exists(monkeypatch):
     """Provide a mock llvm."""
-    llvm_file = mockfs / "usr" / "bin" / "x86_64-pc-linux-gnu-clang"
-    llvm_file.parent.mkdir(parents=True)
-    llvm_file.write_text("")
+
+    def which(name):
+        if name == "x86_64-pc-linux-gnu-clang":
+            return "/usr/bin/x86_64-pc-linux-gnu-clang"
+        return None
+
+    monkeypatch.setattr(shutil, "which", which)
 
 
 @pytest.fixture
-def host_toolchain_exists(mockfs, monkeypatch):
+def host_toolchain_exists(monkeypatch):
     """Provide a mock host toolchain."""
-    monkeypatch.setattr(os, "environ", {})
 
-    gcc_file = mockfs / "usr" / "bin" / "gcc"
-    gcc_file.parent.mkdir(parents=True)
-    gcc_file.write_text("")
+    def which(name):
+        if name == "gcc":
+            return "/usr/bin/gcc"
+        return None
+
+    monkeypatch.setattr(shutil, "which", which)
 
 
 @pytest.fixture
@@ -82,17 +82,18 @@ def no_environ(monkeypatch):
 
 
 @pytest.fixture
-def fake_project(tmp_path):
+def fake_project(tmp_path, monkeypatch):
     """Create a project that can be used in all the tests."""
+    monkeypatch.setattr(shutil, "which", lambda _: None)
     return project.Project(
         project.ProjectConfig(
             project_name="foo",
             zephyr_board="foo",
             supported_toolchains=[
-                "coreboot-sdk",
                 "host",
                 "llvm",
                 "zephyr",
+                "coreboot-sdk",
             ],
             output_packer=zmake.output_packers.RawBinPacker,
             project_dir=tmp_path,
@@ -105,7 +106,7 @@ module_paths = {
 }
 
 
-def test_coreboot_sdk(fake_project: project.Project, coreboot_sdk_exists):
+def test_coreboot_sdk(fake_project: project.Project, no_environ):
     """Test that the corebook sdk can be found."""
     chain = fake_project.get_toolchain(module_paths)
     assert isinstance(chain, toolchains.CorebootSdkToolchain)
@@ -114,7 +115,6 @@ def test_coreboot_sdk(fake_project: project.Project, coreboot_sdk_exists):
     assert config.cmake_defs == {
         "ZEPHYR_TOOLCHAIN_VARIANT": "coreboot-sdk",
         "TOOLCHAIN_ROOT": "/mnt/host/source/src/platform/ec/zephyr",
-        "COREBOOT_SDK_ROOT": "/opt/coreboot-sdk",
     }
 
 
@@ -183,14 +183,6 @@ def test_generic_toolchain():
     """Verify that GenericToolchain.probe() returns False."""
     chain = toolchains.GenericToolchain("name")
     assert not chain.probe()
-
-
-def test_no_toolchains(fake_project: project.Project, mockfs, no_environ):
-    """Check for error when there are no toolchains."""
-    with pytest.raises(
-        OSError, match=r"No supported toolchains could be found on your system"
-    ):
-        fake_project.get_toolchain(module_paths)
 
 
 def test_override_without_sdk(

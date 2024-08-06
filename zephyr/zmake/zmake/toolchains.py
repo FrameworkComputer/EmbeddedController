@@ -6,6 +6,7 @@
 
 import os
 import pathlib
+import shutil
 
 from zmake import build_config
 
@@ -46,31 +47,22 @@ class GenericToolchain:
 class CorebootSdkToolchain(GenericToolchain):
     """Coreboot SDK toolchain installed in default location."""
 
-    @staticmethod
-    def _find_coreboot_sdk():
-        """Find coreboot-sdk, if available.
-
-        Returns:
-            The path to coreboot-sdk, or None if unavailable.
-        """
-        path = pathlib.Path(
-            os.environ.get("COREBOOT_SDK_ROOT", "/opt/coreboot-sdk")
-        ).resolve()
-        if path.is_dir():
-            return path
-        return None
-
     def probe(self):
-        return bool(self._find_coreboot_sdk())
+        """coreboot-sdk is always available, as it downloads on demand."""
+        return True
 
     def get_build_config(self):
+        cmake_defs = {
+            "TOOLCHAIN_ROOT": str(self.modules["ec"] / "zephyr"),
+        }
+
+        # Pass-along COREBOOT_SDK_ROOT* variables from the environment.
+        for var, val in os.environ.items():
+            if var.startswith("COREBOOT_SDK_ROOT"):
+                cmake_defs[var] = val
+
         return (
-            build_config.BuildConfig(
-                cmake_defs={
-                    "TOOLCHAIN_ROOT": str(self.modules["ec"] / "zephyr"),
-                    "COREBOOT_SDK_ROOT": str(self._find_coreboot_sdk()),
-                },
-            )
+            build_config.BuildConfig(cmake_defs=cmake_defs)
             | super().get_build_config()
         )
 
@@ -143,7 +135,7 @@ class LlvmToolchain(GenericToolchain):
     def probe(self):
         # TODO: differentiate chroot llvm path vs. something more
         # generic?
-        return pathlib.Path("/usr/bin/x86_64-pc-linux-gnu-clang").exists()
+        return bool(shutil.which("x86_64-pc-linux-gnu-clang"))
 
     def get_build_config(self):
         # TODO: this contains custom settings for the chroot.  Plumb a
@@ -163,10 +155,7 @@ class HostToolchain(GenericToolchain):
 
     def probe(self):
         # "host" toolchain for Zephyr means GCC.
-        for search_path in os.getenv("PATH", "/usr/bin").split(":"):
-            if (pathlib.Path(search_path) / "gcc").exists():
-                return True
-        return False
+        return bool(shutil.which("gcc"))
 
 
 # Mapping of toolchain names -> support class
