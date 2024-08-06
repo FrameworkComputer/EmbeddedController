@@ -375,7 +375,7 @@ static int load_fifo(struct motion_sensor_t *s, const struct fstatus *fsts)
 /**
  * lsm6dsm_interrupt - interrupt from int1/2 pin of sensor
  */
-void lsm6dsm_interrupt(enum gpio_signal signal)
+test_mockable void lsm6dsm_interrupt(enum gpio_signal signal)
 {
 	last_interrupt_timestamp = __hw_clock_source_read();
 

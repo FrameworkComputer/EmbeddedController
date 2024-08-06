@@ -194,6 +194,7 @@ if(CONFIG_TEST_NISSA_ANRAGGAR)
     target_sources(
             app PRIVATE
             src/anraggar.c
+            ${PLATFORM_EC_PROGRAM_DIR}/nissa/anraggar/src/board.c
     )
 endif()
 

@@ -8,4 +8,7 @@
 
 extern const struct ec_response_keybd_config anraggar_kb;
 
+void board_setup_init(void);
+void alt_sensor_init(void);
+
 #endif /* ZEPHYR_TEST_NISSA_INCLUDE_ANRAGGAR_H_ */

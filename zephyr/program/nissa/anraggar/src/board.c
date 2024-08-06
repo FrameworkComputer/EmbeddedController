@@ -27,7 +27,7 @@
 
 LOG_MODULE_REGISTER(board_init, LOG_LEVEL_ERR);
 
-static void board_setup_init(void)
+test_export_static void board_setup_init(void)
 {
 	int ret;
 	uint32_t val;
@@ -71,7 +71,7 @@ void lid_accel_interrupt(enum gpio_signal signal)
 	}
 }
 
-static void alt_sensor_init(void)
+test_export_static void alt_sensor_init(void)
 {
 	base_use_alt_sensor = cros_cbi_ssfc_check_match(
 		CBI_SSFC_VALUE_ID(DT_NODELABEL(base_sensor_lsm6dsm)));
