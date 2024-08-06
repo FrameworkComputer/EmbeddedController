@@ -208,6 +208,9 @@
 			gpios = <&gpioj 1 (GPIO_INPUT | GPIO_VOLTAGE_1P8 |
 					   GPIO_ACTIVE_LOW)>;
 		};
+		ec_flash_wp_odl {
+			gpios = <&gpioc 4 (GPIO_INPUT | GPIO_ACTIVE_LOW)>;
+		};
 		/* Adapt generated nodelabel to the current nodelabel. */
 		gpio_ec_pmic_en_odl: ec_pmic_en_odl_r {
 		};
