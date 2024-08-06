@@ -19,3 +19,15 @@
 		};
 	};
 };
+
+/* The eSPI shim requires this GPIO nodelabel */
+gpio_ec_pch_wake_odl: &gpio_ec_soc_wake_odl {
+};
+
+
+/* host interface */
+&espi0 {
+	status = "okay";
+	pinctrl-0 = <&espi_lpc_gp46_47_51_52_53_54_55_57>;
+	pinctrl-names = "default";
+};
