@@ -303,24 +303,24 @@ __no_optimization static void test_strcspn(void)
 	const char str1[] = "abc";
 	const char str2[] = "This is a string\nwith newlines!";
 
-	zassert_equal(strcspn(str1, "a"), (size_t)0, "%zu");
-	zassert_equal(strcspn(str1, "b"), (size_t)1, "%zu");
-	zassert_equal(strcspn(str1, "c"), (size_t)2, "%zu");
-	zassert_equal(strcspn(str1, "ccc"), (size_t)2, "%zu");
-	zassert_equal(strcspn(str1, "cba"), (size_t)0, "%zu");
-	zassert_equal(strcspn(str1, "cb"), (size_t)1, "%zu");
-	zassert_equal(strcspn(str1, "bc"), (size_t)1, "%zu");
-	zassert_equal(strcspn(str1, "cbc"), (size_t)1, "%zu");
-	zassert_equal(strcspn(str1, "z"), strlen(str1), "%zu");
-	zassert_equal(strcspn(str1, "xyz"), strlen(str1), "%zu");
-	zassert_equal(strcspn(str1, ""), strlen(str1), "%zu");
+	zassert_equal(strcspn(str1, "a"), (size_t)0);
+	zassert_equal(strcspn(str1, "b"), (size_t)1);
+	zassert_equal(strcspn(str1, "c"), (size_t)2);
+	zassert_equal(strcspn(str1, "ccc"), (size_t)2);
+	zassert_equal(strcspn(str1, "cba"), (size_t)0);
+	zassert_equal(strcspn(str1, "cb"), (size_t)1);
+	zassert_equal(strcspn(str1, "bc"), (size_t)1);
+	zassert_equal(strcspn(str1, "cbc"), (size_t)1);
+	zassert_equal(strcspn(str1, "z"), strlen(str1));
+	zassert_equal(strcspn(str1, "xyz"), strlen(str1));
+	zassert_equal(strcspn(str1, ""), strlen(str1));
 
-	zassert_equal(strcspn(str2, " "), (size_t)4, "%zu");
-	zassert_equal(strcspn(str2, "\n"), (size_t)16, "%zu");
-	zassert_equal(strcspn(str2, "\n "), (size_t)4, "%zu");
-	zassert_equal(strcspn(str2, "!"), strlen(str2) - 1, "%zu");
-	zassert_equal(strcspn(str2, "z"), strlen(str2), "%zu");
-	zassert_equal(strcspn(str2, "z!"), strlen(str2) - 1, "%zu");
+	zassert_equal(strcspn(str2, " "), (size_t)4);
+	zassert_equal(strcspn(str2, "\n"), (size_t)16);
+	zassert_equal(strcspn(str2, "\n "), (size_t)4);
+	zassert_equal(strcspn(str2, "!"), strlen(str2) - 1);
+	zassert_equal(strcspn(str2, "z"), strlen(str2));
+	zassert_equal(strcspn(str2, "z!"), strlen(str2) - 1);
 }
 
 ZTEST(stdlib, test_strcspn)

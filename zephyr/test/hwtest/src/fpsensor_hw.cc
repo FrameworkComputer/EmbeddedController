@@ -33,6 +33,6 @@ ZTEST(fpsernsor_hw, test_fp_check_hwid)
 		/* The lower 4-bits of the sensor hardware id are a
 		 * manufacturing ID that is ok to vary.
 		 */
-		zassert_equal(fp_sensor_hwid, info.model_id >> 4, "%d");
+		zassert_equal(fp_sensor_hwid, info.model_id >> 4);
 	};
 }

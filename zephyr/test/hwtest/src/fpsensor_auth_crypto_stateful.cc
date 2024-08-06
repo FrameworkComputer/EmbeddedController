@@ -60,7 +60,7 @@ ZTEST(fpsensor_auth_crypto_stateful, test_fp_encrypt_decrypt_data)
 					    kFakeTpmSeed, data),
 		      EC_SUCCESS);
 
-	zassert_equal(info.struct_version, version, "%d");
+	zassert_equal(info.struct_version, version);
 
 	/* The encrypted data should not be the same as the input. */
 	zassert_false(memcmp(data.data(), input.data(), data.size()) == 0);
@@ -83,18 +83,18 @@ ZTEST(fpsensor_auth_crypto_stateful, test_fp_encrypt_decrypt_key)
 	bssl::UniquePtr<EC_KEY> key =
 		create_ec_key_from_privkey(privkey.data(), privkey.size());
 
-	zassert_not_equal(key.get(), nullptr, "%p");
+	zassert_not_equal(key.get(), nullptr);
 
 	auto enc_key = create_encrypted_private_key(*key, version, kFakeUserId,
 						    kFakeTpmSeed);
 	zassert_true(enc_key.has_value());
 
-	zassert_equal(enc_key->info.struct_version, version, "%d");
+	zassert_equal(enc_key->info.struct_version, version);
 
 	bssl::UniquePtr<EC_KEY> out_key =
 		decrypt_private_key(*enc_key, kFakeUserId, kFakeTpmSeed);
 
-	zassert_not_equal(key.get(), nullptr, "%p");
+	zassert_not_equal(key.get(), nullptr);
 
 	std::array<uint8_t, 32> output_privkey;
 	EC_KEY_priv2oct(out_key.get(), output_privkey.data(),

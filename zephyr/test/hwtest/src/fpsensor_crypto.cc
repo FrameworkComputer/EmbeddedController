@@ -204,7 +204,7 @@ ZTEST(fpsernsor_crypto, test_aes_128_gcm_encrypt_in_place)
 
 	ec_error_list ret =
 		aes_128_gcm_encrypt(key, plaintext, plaintext, nonce, tag);
-	zassert_equal(ret, EC_SUCCESS, "%d");
+	zassert_equal(ret, EC_SUCCESS);
 	zassert_mem_equal(plaintext.data(), expected_ciphertext.data(),
 			  plaintext.size());
 	zassert_mem_equal(tag.data(), expected_tag.data(), tag.size());
@@ -253,7 +253,7 @@ ZTEST(fpsernsor_crypto, test_aes_128_gcm_decrypt_in_place)
 	ec_error_list ret =
 		aes_128_gcm_decrypt(key, ciphertext, ciphertext, nonce, tag);
 	;
-	zassert_equal(ret, EC_SUCCESS, "%d");
+	zassert_equal(ret, EC_SUCCESS);
 	zassert_mem_equal(ciphertext.data(), expected_plaintext.data(),
 			  ciphertext.size());
 }
@@ -268,7 +268,7 @@ ZTEST(fpsernsor_crypto, test_aes_128_gcm_encrypt_invalid_nonce_size)
 	constexpr std::array<uint8_t, FP_CONTEXT_NONCE_BYTES - 1> nonce{};
 
 	ec_error_list ret = aes_128_gcm_encrypt(key, text, text, nonce, tag);
-	zassert_equal(ret, EC_ERROR_INVAL, "%d");
+	zassert_equal(ret, EC_ERROR_INVAL);
 }
 
 ZTEST(fpsernsor_crypto, test_aes_128_gcm_decrypt_invalid_nonce_size)
@@ -281,7 +281,7 @@ ZTEST(fpsernsor_crypto, test_aes_128_gcm_decrypt_invalid_nonce_size)
 	constexpr std::array<uint8_t, FP_CONTEXT_NONCE_BYTES - 1> nonce{};
 
 	ec_error_list ret = aes_128_gcm_decrypt(key, text, text, nonce, tag);
-	zassert_equal(ret, EC_ERROR_INVAL, "%d");
+	zassert_equal(ret, EC_ERROR_INVAL);
 }
 
 ZTEST(fpsernsor_crypto, test_aes_128_gcm_encrypt_invalid_key_size)
@@ -295,7 +295,7 @@ ZTEST(fpsernsor_crypto, test_aes_128_gcm_encrypt_invalid_key_size)
 	constexpr std::array<uint8_t, 15> key{};
 
 	ec_error_list ret = aes_128_gcm_encrypt(key, text, text, nonce, tag);
-	zassert_equal(ret, EC_ERROR_UNKNOWN, "%d");
+	zassert_equal(ret, EC_ERROR_UNKNOWN);
 }
 
 ZTEST(fpsernsor_crypto, test_aes_128_gcm_decrypt_invalid_key_size)
@@ -309,5 +309,5 @@ ZTEST(fpsernsor_crypto, test_aes_128_gcm_decrypt_invalid_key_size)
 	constexpr std::array<uint8_t, 15> key{};
 
 	ec_error_list ret = aes_128_gcm_decrypt(key, text, text, nonce, tag);
-	zassert_equal(ret, EC_ERROR_UNKNOWN, "%d");
+	zassert_equal(ret, EC_ERROR_UNKNOWN);
 }

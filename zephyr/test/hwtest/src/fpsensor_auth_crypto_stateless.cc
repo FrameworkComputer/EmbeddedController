@@ -39,8 +39,8 @@ ZTEST(fpsensor_auth_crypto_stateless, test_fp_create_ec_key_from_pubkey)
 
 	bssl::UniquePtr<EC_KEY> key = create_ec_key_from_pubkey(pubkey);
 
-	zassert_not_equal(key.get(), nullptr, "%p");
-	zassert_equal(EC_KEY_check_key(key.get()), 1, "%d");
+	zassert_not_equal(key.get(), nullptr);
+	zassert_equal(EC_KEY_check_key(key.get()), 1);
 }
 
 ZTEST(fpsensor_auth_crypto_stateless, test_fp_create_ec_key_from_pubkey_fail)
@@ -52,7 +52,7 @@ ZTEST(fpsensor_auth_crypto_stateless, test_fp_create_ec_key_from_pubkey_fail)
 
 	bssl::UniquePtr<EC_KEY> key = create_ec_key_from_pubkey(pubkey);
 
-	zassert_equal(key.get(), nullptr, "%p");
+	zassert_equal(key.get(), nullptr);
 }
 
 ZTEST(fpsensor_auth_crypto_stateless, test_fp_create_pubkey_from_ec_key)
@@ -74,8 +74,8 @@ ZTEST(fpsensor_auth_crypto_stateless, test_fp_create_pubkey_from_ec_key)
 
 	bssl::UniquePtr<EC_KEY> key = create_ec_key_from_pubkey(pubkey);
 
-	zassert_not_equal(key.get(), nullptr, "%p");
-	zassert_equal(EC_KEY_check_key(key.get()), 1, "%d");
+	zassert_not_equal(key.get(), nullptr);
+	zassert_equal(EC_KEY_check_key(key.get()), 1);
 
 	auto result = create_pubkey_from_ec_key(*key);
 	zassert_true(result.has_value());
@@ -93,7 +93,7 @@ ZTEST(fpsensor_auth_crypto_stateless, test_fp_create_ec_key_from_privkey)
 	bssl::UniquePtr<EC_KEY> key =
 		create_ec_key_from_privkey(data.data(), data.size());
 
-	zassert_not_equal(key.get(), nullptr, "%p");
+	zassert_not_equal(key.get(), nullptr);
 
 	/* There is nothing to check for the private key. */
 }
@@ -105,7 +105,7 @@ ZTEST(fpsensor_auth_crypto_stateless, test_fp_create_ec_key_from_privkey_fail)
 	bssl::UniquePtr<EC_KEY> key =
 		create_ec_key_from_privkey(data.data(), data.size());
 
-	zassert_equal(key.get(), nullptr, "%p");
+	zassert_equal(key.get(), nullptr);
 }
 
 ZTEST(fpsensor_auth_crypto_stateless, test_fp_generate_ecdh_shared_secret)
@@ -127,7 +127,7 @@ ZTEST(fpsensor_auth_crypto_stateless, test_fp_generate_ecdh_shared_secret)
 
 	bssl::UniquePtr<EC_KEY> public_key = create_ec_key_from_pubkey(pubkey);
 
-	zassert_not_equal(public_key.get(), nullptr, "%p");
+	zassert_not_equal(public_key.get(), nullptr);
 
 	std::array<uint8_t, 32> privkey = { 1, 1, 2, 3, 4, 5, 6, 7, 8, 9, 0,
 					    1, 2, 3, 4, 5, 6, 7, 8, 9, 0, 1,
@@ -136,13 +136,13 @@ ZTEST(fpsensor_auth_crypto_stateless, test_fp_generate_ecdh_shared_secret)
 	bssl::UniquePtr<EC_KEY> private_key =
 		create_ec_key_from_privkey(privkey.data(), privkey.size());
 
-	zassert_not_equal(private_key.get(), nullptr, "%p");
+	zassert_not_equal(private_key.get(), nullptr);
 
 	std::array<uint8_t, 32> shared_secret;
 	zassert_equal(generate_ecdh_shared_secret(*private_key, *public_key,
 						  shared_secret.data(),
 						  shared_secret.size()),
-		      EC_SUCCESS, "%d");
+		      EC_SUCCESS);
 
 	std::array<uint8_t, 32> expected_result = {
 		0x46, 0x86, 0xca, 0x75, 0xce, 0xa1, 0xde, 0x23,
@@ -171,7 +171,7 @@ ZTEST(fpsensor_auth_crypto_stateless, test_fp_generate_gsc_session_key)
 
 	zassert_equal(generate_gsc_session_key(auth_nonce, gsc_nonce,
 					       pairing_key, gsc_session_key),
-		      EC_SUCCESS, "%d");
+		      EC_SUCCESS);
 
 	std::array<uint8_t, 32> expected_gsc_session_key = {
 		0x1a, 0x1a, 0x3c, 0x33, 0x7f, 0xae, 0xf9, 0x3e,
@@ -203,7 +203,7 @@ ZTEST(fpsensor_auth_crypto_stateless, test_fp_generate_gsc_session_key_fail)
 	zassert_not_equal(generate_gsc_session_key(auth_nonce, gsc_nonce,
 						   pairing_key,
 						   gsc_session_key),
-			  EC_SUCCESS, "%d");
+			  EC_SUCCESS);
 }
 
 ZTEST(fpsensor_auth_crypto_stateless,
@@ -226,7 +226,7 @@ ZTEST(fpsensor_auth_crypto_stateless,
 
 	zassert_equal(decrypt_data_with_gsc_session_key_in_place(
 			      gsc_session_key, iv, data),
-		      EC_SUCCESS, "%d");
+		      EC_SUCCESS);
 
 	std::array<uint8_t, 32> expected_data = {
 		0x6d, 0xed, 0xad, 0x04, 0xf8, 0xdb, 0xae, 0x51,
@@ -260,7 +260,7 @@ ZTEST(fpsensor_auth_crypto_stateless,
 
 	zassert_not_equal(decrypt_data_with_gsc_session_key_in_place(
 				  gsc_session_key, iv, data),
-			  EC_SUCCESS, "%d");
+			  EC_SUCCESS);
 }
 
 ZTEST(fpsensor_auth_crypto_stateless,
@@ -276,7 +276,7 @@ ZTEST(fpsensor_auth_crypto_stateless,
 
 	zassert_true(pubkey.has_value());
 
-	zassert_not_equal(ecdh_key.get(), nullptr, "%p");
+	zassert_not_equal(ecdh_key.get(), nullptr);
 
 	struct fp_elliptic_curve_public_key response_pubkey;
 
@@ -293,7 +293,7 @@ ZTEST(fpsensor_auth_crypto_stateless,
 
 	zassert_equal(encrypt_data_with_ecdh_key_in_place(*pubkey, enc_secret,
 							  iv, response_pubkey),
-		      EC_SUCCESS, "%d");
+		      EC_SUCCESS);
 
 	/* The encrypted data should not be the same as the input. */
 	zassert_true(memcmp(enc_secret.data(), secret.data(), secret.size()) !=
@@ -305,17 +305,17 @@ ZTEST(fpsensor_auth_crypto_stateless,
 	bssl::UniquePtr<EC_KEY> output_key =
 		create_ec_key_from_pubkey(response_pubkey);
 
-	zassert_not_equal(output_key.get(), nullptr, "%p");
+	zassert_not_equal(output_key.get(), nullptr);
 
 	std::array<uint8_t, 32> share_secret;
 	zassert_equal(generate_ecdh_shared_secret(*ecdh_key, *output_key,
 						  share_secret.data(),
 						  share_secret.size()),
-		      EC_SUCCESS, "%d");
+		      EC_SUCCESS);
 
 	AES_KEY aes_key;
 	zassert_equal(AES_set_encrypt_key(share_secret.data(), 256, &aes_key),
-		      0, "%d");
+		      0);
 
 	unsigned int block_num = 0;
 	std::array<uint8_t, AES_BLOCK_SIZE> ecount_buf;

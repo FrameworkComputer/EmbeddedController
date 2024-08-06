@@ -38,7 +38,7 @@ ZTEST(malloc, test_malloc_different_sizes)
 
 	for (int i = 0; i < ARRAY_SIZE(test_data); i++) {
 		uint8_t *volatile ptr = malloc(test_data[i].size);
-		zassert_not_equal(ptr, NULL, "%p");
+		zassert_not_equal(ptr, NULL);
 		test_data[i].data = ptr;
 		for (int j = 0; j < test_data[i].size; j++) {
 			ptr[j] = test_data[i].val;
@@ -62,7 +62,7 @@ ZTEST(malloc, test_malloc_large)
 	/* Trim to make sure that previous tests haven't fragmented the heap. */
 	malloc_trim(0);
 	uint8_t *volatile ptr = malloc(shared_mem_size() * 0.8);
-	zassert_not_equal(ptr, NULL, "%p");
+	zassert_not_equal(ptr, NULL);
 	free(ptr);
 }
 
@@ -71,7 +71,7 @@ ZTEST(malloc, test_malloc_too_large)
 	/* Trim to make sure that previous tests haven't fragmented the heap. */
 	malloc_trim(0);
 	uint8_t *volatile ptr = malloc(shared_mem_size() + 1);
-	zassert_equal(ptr, NULL, "%p");
+	zassert_equal(ptr, NULL);
 	free(ptr);
 }
 
@@ -94,7 +94,7 @@ ZTEST(malloc, test_malloc_too_large)
 ZTEST(malloc, test_malloc_double_free)
 {
 	uint8_t *volatile ptr = malloc(10);
-	zassert_not_equal(ptr, NULL, "%p");
+	zassert_not_equal(ptr, NULL);
 	free(ptr);
 	free(ptr);
 }

@@ -37,7 +37,7 @@ ZTEST(benchmark, test_num_iterations)
 
 	auto result = benchmark.run("call_counter", [&] { ++num_calls; });
 	zassert_true(result.has_value());
-	zassert_equal(num_calls, 5, "%d");
+	zassert_equal(num_calls, 5);
 
 	benchmark.print_results();
 }
@@ -51,12 +51,12 @@ ZTEST(benchmark, test_multiple_benchmarks)
 
 	auto result1 = benchmark1.run("call_counter1", [&] { ++num_calls; });
 	zassert_true(result1.has_value());
-	zassert_equal(num_calls, 5, "%d");
+	zassert_equal(num_calls, 5);
 
 	num_calls = 0;
 	auto result2 = benchmark2.run("call_counter2", [&] { ++num_calls; });
 	zassert_true(result2.has_value());
-	zassert_equal(num_calls, 3, "%d");
+	zassert_equal(num_calls, 3);
 
 	benchmark1.print_results();
 	benchmark2.print_results();
@@ -72,7 +72,7 @@ ZTEST(benchmark, test_long_benchmark)
 		udelay(10000);
 	});
 	zassert_true(result.has_value());
-	zassert_equal(num_calls, 100, "%d");
+	zassert_equal(num_calls, 100);
 
 	benchmark.print_results();
 }

@@ -484,22 +484,22 @@ ZTEST(printf, test_snprintf_timestamp)
 	/* Success cases. */
 
 	ret = snprintf_timestamp(str, sizeof(str), ts);
-	zassert_equal(ret, 8, "%d");
+	zassert_equal(ret, 8);
 	zassert_mem_equal(str, "0.000000", sizeof("0.000000"));
 
 	ts = 123456;
 	ret = snprintf_timestamp(str, sizeof(str), ts);
-	zassert_equal(ret, 8, "%d");
+	zassert_equal(ret, 8);
 	zassert_mem_equal(str, "0.123456", sizeof("0.123456"));
 
 	ts = 9999999000000;
 	ret = snprintf_timestamp(str, sizeof(str), ts);
-	zassert_equal(ret, 14, "%d");
+	zassert_equal(ret, 14);
 	zassert_mem_equal(str, "9999999.000000", sizeof("9999999.000000"));
 
 	ts = UINT64_MAX;
 	ret = snprintf_timestamp(str, sizeof(str), ts);
-	zassert_equal(ret, 21, "%d");
+	zassert_equal(ret, 21);
 	zassert_mem_equal(str, "18446744073709.551615",
 			  sizeof("18446744073709.551615"));
 
@@ -510,24 +510,24 @@ ZTEST(printf, test_snprintf_timestamp)
 	ts = UINT64_MAX;
 	str[0] = 'f';
 	ret = snprintf_timestamp(str, size, ts);
-	zassert_equal(ret, -EC_ERROR_OVERFLOW, "%d");
-	zassert_equal(str[0], '\0', "%d");
+	zassert_equal(ret, -EC_ERROR_OVERFLOW);
+	zassert_equal(str[0], '\0');
 
 	/* Size is zero. */
 	size = 0;
 	ts = UINT64_MAX;
 	str[0] = 'f';
 	ret = snprintf_timestamp(str, size, ts);
-	zassert_equal(ret, -EC_ERROR_INVAL, "%d");
-	zassert_equal(str[0], 'f', "%d");
+	zassert_equal(ret, -EC_ERROR_INVAL);
+	zassert_equal(str[0], 'f');
 
 	/* Size is one. */
 	size = 1;
 	ts = UINT64_MAX;
 	str[0] = 'f';
 	ret = snprintf_timestamp(str, size, ts);
-	zassert_equal(ret, -EC_ERROR_OVERFLOW, "%d");
-	zassert_equal(str[0], '\0', "%d");
+	zassert_equal(ret, -EC_ERROR_OVERFLOW);
+	zassert_equal(str[0], '\0');
 }
 
 ZTEST(printf, test_snprintf_hex_buffer)
@@ -545,17 +545,17 @@ ZTEST(printf, test_snprintf_hex_buffer)
 	memset(str_buf, 0xff, sizeof(str_buf));
 	rv = snprintf_hex_buffer(str_buf, sizeof(str_buf), HEX_BUF(bytes, 2));
 	zassert_mem_equal(str_buf, "ab5e", sizeof("ab5e"));
-	zassert_equal(rv, 4, "%d");
+	zassert_equal(rv, 4);
 
 	memset(str_buf, 0xff, sizeof(str_buf));
 	rv = snprintf_hex_buffer(str_buf, sizeof(str_buf), HEX_BUF(bytes, 0));
 	zassert_mem_equal(str_buf, "", sizeof(""));
-	zassert_equal(rv, 0, "%d");
+	zassert_equal(rv, 0);
 
 	memset(str_buf, 0xff, sizeof(str_buf));
 	rv = snprintf_hex_buffer(str_buf, sizeof(str_buf), HEX_BUF(bytes, 1));
 	zassert_mem_equal(str_buf, "ab", sizeof("ab"));
-	zassert_equal(rv, 2, "%d");
+	zassert_equal(rv, 2);
 
 	/* Error cases. */
 
@@ -563,7 +563,7 @@ ZTEST(printf, test_snprintf_hex_buffer)
 	memset(str_buf, 0xff, sizeof(str_buf));
 	zassert_mem_equal(str_buf, buf_ff, ARRAY_SIZE(str_buf));
 	rv = snprintf_hex_buffer(str_buf, 0, HEX_BUF(bytes, 2));
-	zassert_equal(rv, -EC_ERROR_INVAL, "%d");
+	zassert_equal(rv, -EC_ERROR_INVAL);
 	zassert_mem_equal(str_buf, buf_ff, ARRAY_SIZE(str_buf));
 
 	/* Buffer only has space for terminating '\0'. */
@@ -571,12 +571,12 @@ ZTEST(printf, test_snprintf_hex_buffer)
 	zassert_mem_equal(str_buf, buf_ff, ARRAY_SIZE(str_buf));
 	rv = snprintf_hex_buffer(str_buf, 1, HEX_BUF(bytes, 1));
 	zassert_mem_equal(str_buf, "", sizeof(""));
-	zassert_equal(rv, -EC_ERROR_OVERFLOW, "%d");
+	zassert_equal(rv, -EC_ERROR_OVERFLOW);
 
 	/* Buffer only has space for one character and '\0'. */
 	memset(str_buf, 0xff, sizeof(str_buf));
 	zassert_mem_equal(str_buf, buf_ff, ARRAY_SIZE(str_buf));
 	rv = snprintf_hex_buffer(str_buf, 2, HEX_BUF(bytes, 1));
 	zassert_mem_equal(str_buf, "a", sizeof("a"));
-	zassert_equal(rv, -EC_ERROR_OVERFLOW, "%d");
+	zassert_equal(rv, -EC_ERROR_OVERFLOW);
 }

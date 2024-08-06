@@ -40,27 +40,27 @@ ZTEST(boringssl_crypto, test_ecc_keygen)
 {
 	bssl::UniquePtr<EC_KEY> key1 = generate_elliptic_curve_key();
 
-	zassert_not_equal(key1.get(), nullptr, "%p");
+	zassert_not_equal(key1.get(), nullptr);
 
 	/* The generated key should be valid.*/
-	zassert_equal(EC_KEY_check_key(key1.get()), 1, "%d");
+	zassert_equal(EC_KEY_check_key(key1.get()), 1);
 
 	bssl::UniquePtr<EC_KEY> key2 = generate_elliptic_curve_key();
 
-	zassert_not_equal(key2.get(), nullptr, "%p");
+	zassert_not_equal(key2.get(), nullptr);
 
 	/* The generated key should be valid. */
-	zassert_equal(EC_KEY_check_key(key2.get()), 1, "%d");
+	zassert_equal(EC_KEY_check_key(key2.get()), 1);
 
 	const BIGNUM *priv1 = EC_KEY_get0_private_key(key1.get());
 	const BIGNUM *priv2 = EC_KEY_get0_private_key(key2.get());
 
 	/* The generated keys should not be the same. */
-	zassert_not_equal(BN_cmp(priv1, priv2), 0, "%d");
+	zassert_not_equal(BN_cmp(priv1, priv2), 0);
 
 	/* The generated keys should not be zero. */
-	zassert_equal(BN_is_zero(priv1), 0, "%d");
-	zassert_equal(BN_is_zero(priv2), 0, "%d");
+	zassert_equal(BN_is_zero(priv1), 0);
+	zassert_equal(BN_is_zero(priv2), 0);
 }
 
 ZTEST(boringssl_crypto, test_cleanse_wrapper_std_array)
@@ -148,11 +148,11 @@ ZTEST(boringssl_crypto, test_cleanse_wrapper_custom_struct)
 		.data = { 0x7fffffffu, 0x12345678u, 0x0u, 0x42u },
 	});
 
-	zassert_equal(data->used, true, "%d");
-	zassert_equal(data->data[0], 0x7fffffffu, "%d");
-	zassert_equal(data->data[1], 0x12345678u, "%d");
-	zassert_equal(data->data[2], 0x0u, "%d");
-	zassert_equal(data->data[3], 0x42u, "%d");
+	zassert_equal(data->used, true);
+	zassert_equal(data->data[0], 0x7fffffffu);
+	zassert_equal(data->data[1], 0x12345678u);
+	zassert_equal(data->data[2], 0x0u);
+	zassert_equal(data->data[3], 0x42u);
 
 	/* Call the destructor. */
 	data->~Wrapped();
@@ -183,11 +183,11 @@ ZTEST(boringssl_crypto, test_cleanse_wrapper_normal_usage)
 		.data = { 0x7fffffffu, 0x12345678u, 0x0u, 0x42u },
 	});
 
-	zassert_equal(data.used, true, "%d");
-	zassert_equal(data.data[0], 0x7fffffffu, "%d");
-	zassert_equal(data.data[1], 0x12345678u, "%d");
-	zassert_equal(data.data[2], 0x0u, "%d");
-	zassert_equal(data.data[3], 0x42u, "%d");
+	zassert_equal(data.used, true);
+	zassert_equal(data.data[0], 0x7fffffffu);
+	zassert_equal(data.data[1], 0x12345678u);
+	zassert_equal(data.data[2], 0x0u);
+	zassert_equal(data.data[3], 0x42u);
 
 	CleanseWrapper<struct sha256_ctx> ctx;
 
@@ -215,15 +215,15 @@ ZTEST(boringssl_crypto, test_getentropy_too_large)
 	std::array<uint8_t, 256 + 1> buf{};
 
 	int ret = getentropy(buf.data(), buf.size());
-	zassert_equal(ret, -1, "%d");
-	zassert_equal(errno, EIO, "%d");
+	zassert_equal(ret, -1);
+	zassert_equal(errno, EIO);
 }
 
 ZTEST(boringssl_crypto, test_getentropy_null_buffer)
 {
 	int ret = getentropy(nullptr, 0);
-	zassert_equal(ret, -1, "%d");
-	zassert_equal(errno, EFAULT, "%d");
+	zassert_equal(ret, -1);
+	zassert_equal(errno, EFAULT);
 }
 
 ZTEST(boringssl_crypto, test_getentropy)
@@ -233,10 +233,10 @@ ZTEST(boringssl_crypto, test_getentropy)
 	std::array<uint8_t, 256> buf2{};
 
 	int ret = getentropy(buf1.data(), buf1.size());
-	zassert_equal(ret, 0, "%d");
+	zassert_equal(ret, 0);
 
 	ret = getentropy(buf2.data(), buf2.size());
-	zassert_equal(ret, 0, "%d");
+	zassert_equal(ret, 0);
 
 	zassert_true(buf1 != zero);
 	zassert_true(buf2 != zero);

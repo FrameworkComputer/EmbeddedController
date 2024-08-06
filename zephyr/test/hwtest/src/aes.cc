@@ -336,7 +336,7 @@ ZTEST(aes, test_aes_gcm)
 	}
 
 	constexpr size_t kExpectedNumTestVectors = 10;
-	zassert_equal(test_vectors.size(), kExpectedNumTestVectors, "%zu");
+	zassert_equal(test_vectors.size(), kExpectedNumTestVectors);
 	for (const auto &test_vector : test_vectors) {
 		test_aes_gcm_raw(test_vector.key.data(), test_vector.key.size(),
 				 test_vector.plaintext.data(),
