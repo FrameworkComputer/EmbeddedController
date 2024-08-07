@@ -10,8 +10,15 @@
 
 #include <zephyr/init.h>
 #include <zephyr/kernel.h>
+#include <zephyr/sys/crc.h>
 #include <zephyr/ztest.h>
 #include <zephyr/ztest_test.h>
+
+/* Unique step zero for tests. Divide by 2 not to overflow scratchpad area and
+ * shift to assume 0 is an incorrect value for step zero.
+ */
+#define TEST_STEP_ZERO(steps) \
+	((crc16_itu_t(0, (const uint8_t *)(steps), sizeof(steps)) / 2) + 1)
 
 /**
  * @brief Register a multi-step test.
@@ -23,11 +30,26 @@
  * to a void function that takes no arguments.
  */
 #define MULTISTEP_TEST(name, steps)                                          \
+	static void *multisetep_test_setup(void)                             \
+	{                                                                    \
+		uint32_t step = 0;                                           \
+		int ret = 0;                                                 \
+                                                                             \
+		ret = system_get_scratchpad(&step);                          \
+		if ((step < TEST_STEP_ZERO(steps)) ||                        \
+		    (step >= (TEST_STEP_ZERO(steps) + ARRAY_SIZE(steps)))) { \
+			system_set_scratchpad(TEST_STEP_ZERO(steps));        \
+		}                                                            \
+		zassert_equal(ret, 0);                                       \
+                                                                             \
+		return NULL;                                                 \
+	}                                                                    \
 	static void multisetep_test_teardown(void *fixture)                  \
 	{                                                                    \
 		system_set_scratchpad(0);                                    \
 	}                                                                    \
-	ZTEST_SUITE(name, NULL, NULL, NULL, NULL, multisetep_test_teardown); \
+	ZTEST_SUITE(name, NULL, multisetep_test_setup, NULL, NULL,           \
+		    multisetep_test_teardown);                               \
 	ZTEST(name, test_##name)                                             \
 	{                                                                    \
 		uint32_t step = 0;                                           \
@@ -37,7 +59,7 @@
 		zassert_equal(ret, 0);                                       \
 		ret = system_set_scratchpad(step + 1);                       \
                                                                              \
-		steps[step]();                                               \
+		steps[step - TEST_STEP_ZERO(steps)]();                       \
 	}                                                                    \
                                                                              \
 	/* If the test shell is enabled, the test will be run once by a test \
@@ -52,7 +74,9 @@
 				   uint32_t step = 0;                        \
                                                                              \
 				   system_get_scratchpad(&step);             \
-				   if (step != 0) {                          \
+				   if ((step > TEST_STEP_ZERO(steps)) &&     \
+				       (step < (TEST_STEP_ZERO(steps) +      \
+						ARRAY_SIZE(steps)))) {       \
 					   ztest_run_test_suite(name, false, \
 								1, 1);       \
 				   }                                         \
