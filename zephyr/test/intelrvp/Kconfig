@@ -35,4 +35,9 @@ config TEST_AP_PWRSEQ_PP5500
         help
           Enable PP5500 rail tests for board power.
 
+config TEST_PROJECT_INTELRVP_TCPC
+	bool "Run tests for tcpc.c"
+	help
+	  Include tcpc.c into the binary and test its functions.
+
 source "Kconfig.zephyr"
