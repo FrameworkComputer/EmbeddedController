@@ -3133,15 +3133,15 @@
                 "end position": 31,
                 "name": "Customer Use Word 1",
                 "start position": 0,
-                "value (EDITABLE)": "0x5",
-                "value description": "0x5"
+                "value (EDITABLE)": "0x474f4f47",
+                "value description": "0x474f4f47"
               },
               {
                 "end position": 63,
                 "name": "Customer Use Word 2",
                 "start position": 32,
-                "value (EDITABLE)": "0x0",
-                "value description": "0x0"
+                "value (EDITABLE)": "0x30363230",
+                "value description": "0x30363230"
               }
             ],
             "length in bytes": "8",
@@ -8528,15 +8528,15 @@
                 "end position": 31,
                 "name": "Customer Use Word 1",
                 "start position": 0,
-                "value (EDITABLE)": "0x5",
-                "value description": "0x5"
+                "value (EDITABLE)": "0x474f4f47",
+                "value description": "0x474f4f47"
               },
               {
                 "end position": 63,
                 "name": "Customer Use Word 2",
                 "start position": 32,
-                "value (EDITABLE)": "0x0",
-                "value description": "0x0"
+                "value (EDITABLE)": "0x30363230",
+                "value description": "0x30363230"
               }
             ],
             "length in bytes": "8",
@@ -13926,7 +13926,7 @@
     "mode": "config",
     "noOfConnectedDevices": "1",
     "sharedSettings": true,
-    "timeStamp": "8-2-2024_11-23-7"
+    "timeStamp": "8-7-2024_21-53-48"
   },
   "miscellaneous": {
     "configuration mapping": {
