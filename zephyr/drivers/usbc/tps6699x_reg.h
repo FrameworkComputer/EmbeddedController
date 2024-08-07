@@ -129,6 +129,22 @@ enum px_ext_vbus_sw {
 };
 
 /**
+ * @brief Chip operating modes
+ */
+enum tps_mode {
+	/** Chip is booting */
+	REG_MODE_BOOT = 0x544f4f42,
+	/** Firmware update / both banks corrupted */
+	REG_MODE_F211 = 0x31313246,
+	/** Flash code running pre-appconfig */
+	REG_MODE_APP0 = 0x30505041,
+	/** Flash code running post-appconfig */
+	REG_MODE_APP1 = 0x31505041,
+	/** Flash code is waiting for power */
+	REG_MODE_WTPR = 0x52505457,
+};
+
+/**
  * @brief 4.1 Vendor ID Register (Offset = 0x00)
  *
  * Intel-assigned Thunderbolt Vendor ID
@@ -237,8 +253,7 @@ union reg_customer_use {
 		 * The first byte is a version code, set using the firmware
 		 * config tool.
 		 */
-		uint8_t fw_config_version;
-		uint8_t data[7];
+		uint8_t data[8];
 	} __packed;
 	uint8_t raw_value[10];
 };

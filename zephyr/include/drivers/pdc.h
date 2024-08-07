@@ -59,8 +59,6 @@ extern "C" {
 struct pdc_info_t {
 	/** Firmware version running on the PDC */
 	uint32_t fw_version;
-	/** Config version of the firmware, specific to this firmware version */
-	uint8_t fw_config_version;
 	/** Power Delivery Revision supported by the PDC */
 	uint16_t pd_revision;
 	/** Power Delivery Version supported by the PDC */

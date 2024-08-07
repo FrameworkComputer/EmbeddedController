@@ -8,6 +8,7 @@
  */
 
 #include <assert.h>
+#include <stdio.h>
 #include <string.h>
 
 #include <zephyr/devicetree.h>
@@ -49,6 +50,12 @@ LOG_MODULE_REGISTER(tps6699x, CONFIG_USBC_LOG_LEVEL);
 /* TODO: b/323371550 */
 BUILD_ASSERT(NUM_PDC_TPS6699X_PORTS <= 2,
 	     "tps6699x driver supports a maximum of 2 ports");
+
+/* Make sure pdc_info_t::project_name has enough space for the config identifier
+ * string stored in the customer-use register plus a NUL-terminator byte.
+ */
+BUILD_ASSERT(sizeof(((union reg_customer_use *)0)->data) + 1 <=
+	     sizeof(((struct pdc_info_t *)0)->project_name));
 
 /**
  * @brief PDC commands
@@ -963,8 +970,9 @@ static int cmd_get_ic_status_sync_internal(const struct i2c_dt_spec *i2c,
 {
 	union reg_version version;
 	union reg_tx_identity tx_identity;
-	int rv;
 	union reg_customer_use customer_val;
+	union reg_mode mode_reg;
+	int rv;
 
 	if (info == NULL) {
 		return -EINVAL;
@@ -988,14 +996,19 @@ static int cmd_get_ic_status_sync_internal(const struct i2c_dt_spec *i2c,
 		return rv;
 	}
 
-	/* TI Is running flash code */
-	info->is_running_flash_code = 1;
+	rv = tps_rd_mode(i2c, &mode_reg);
+	if (rv) {
+		LOG_ERR("Failed to read mode");
+		return rv;
+	}
+
+	uint32_t mode = *(uint32_t *)mode_reg.data;
+
+	info->is_running_flash_code =
+		(mode == REG_MODE_APP0 || mode == REG_MODE_APP1);
 
 	/* TI FW main version */
 	info->fw_version = version.version;
-
-	/* FW config version for this FW version */
-	info->fw_config_version = customer_val.fw_config_version;
 
 	/* TI VID PID (little-endian) */
 	info->vid_pid = (*(uint16_t *)tx_identity.vendor_id) << 16 |
@@ -1009,6 +1022,19 @@ static int cmd_get_ic_status_sync_internal(const struct i2c_dt_spec *i2c,
 
 	/* TI PD Version (big-endian) */
 	info->pd_version = 0x0000;
+
+	if (memcmp(customer_val.data, "GOOG", strlen("GOOG")) == 0) {
+		/* Using the unified config identifier scheme */
+		memcpy(info->project_name, customer_val.data,
+		       sizeof(customer_val.data));
+		info->project_name[sizeof(customer_val.data)] = '\0';
+	} else {
+		/* Old scheme of incrementing an integer in the customer use
+		 * reg. Convert to an ASCII string.
+		 */
+		snprintf(info->project_name, sizeof(info->project_name), "TI%d",
+			 customer_val.data[0]);
+	}
 
 	return 0;
 }
