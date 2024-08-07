@@ -1,0 +1,38 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+/ {
+	gpio-interrupts {
+		compatible = "cros-ec,gpio-interrupts";
+
+		int_usb_c0_c1_tcpc: usb_c0_tcpc {
+			irq-pin = <&usbc_tcpc_alrt_p0>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcpc_alert_event";
+		};
+		int_usb_c2_tcpc: usb_c2_tcpc {
+			irq-pin = <&usbc_tcpc_alrt_p2>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcpc_alert_event";
+		};
+		int_usb_c3_tcpc: usb_c3_tcpc {
+			irq-pin = <&usbc_tcpc_alrt_p3>;
+			flags = <GPIO_INT_EDGE_FALLING>;
+			handler = "tcpc_alert_event";
+		};
+		int_ccd_mode: ccd_mode {
+			irq-pin = <&ccd_mode_odl>;
+			flags = <GPIO_INT_EDGE_BOTH>;
+			handler = "board_connect_c0_sbu";
+		};
+	};
+
+	hibernate-wake-pins {
+		wakeup-irqs = <
+			&int_usb_c0_c1_tcpc
+			&int_usb_c2_tcpc
+			&int_usb_c3_tcpc
+		>;
+	};
+};

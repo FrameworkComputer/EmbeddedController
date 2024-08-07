@@ -1,0 +1,160 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	named-i2c-ports {
+		compatible = "named-i2c-ports";
+
+		typec_aic1: typec-aic1 {
+			i2c-port = <&I2C_TYPEC_AIC1>;
+			enum-names = "I2C_PORT_TYPEC_AIC_1";
+		};
+		typec_aic2: typec-aic2 {
+			i2c-port = <&I2C_TYPEC_AIC2>;
+			enum-names = "I2C_PORT_TYPEC_AIC_2";
+		};
+	};
+
+	I2C_TYPEC_AIC1: I2C_TYPEC_AIC1@100 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x100 6>;
+	};
+
+	I2C_TYPEC_AIC2: I2C_TYPEC_AIC2@200 {
+		status = "okay";
+		compatible = "zephyr,i2c-emul-controller";
+		clock-frequency = <I2C_BITRATE_STANDARD>;
+		#address-cells = <1>;
+		#size-cells = <0>;
+		reg = <0x200 6>;
+	};
+
+	ioex_c0: gpio@0 {
+		compatible = "zephyr,gpio-emul";
+		reg = <0x101 0x4>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+
+	ioex_c1: gpio@1 {
+		compatible = "zephyr,gpio-emul";
+		reg = <0x110 0x4>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+
+	};
+};
+
+/* typec_aic1 */
+&I2C_TYPEC_AIC1 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	tcpci_emul0: tcpci_emul@73 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		int-pin = <&usbc_tcpc_alrt_p0>;
+		reg = <0x73>;
+	};
+
+	tcpci_emul1: tcpci_emul@77 {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		int-pin = <&usbc_tcpc_alrt_p0>;
+		reg = <0x77>;
+	};
+
+	ppc0_emul: sn5s330@40 {
+		compatible = "ti,sn5s330","cros,i2c-mock";
+		status = "okay";
+		reg = <0x40>;
+		/* a duplicate of the <&usbc_tcpc_ppc_alrt_p0> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <GPIO_USBC_TCPC_PPC_ALRT_P0 GPIO_ACTIVE_LOW>;
+	};
+
+	ppc1_emul: sn5s330@41 {
+		compatible = "ti,sn5s330","cros,i2c-mock";
+		status = "okay";
+		reg = <0x41>;
+		/* a duplicate of the <&usbc_tcpc_ppc_alrt_p1> node in
+		 * "named-gpios". This is the Zephyr preferred style,
+		 * the "named-gpios" node will be dealt with at a later date.
+		 */
+		irq-gpios = <GPIO_USBC_TCPC_PPC_ALRT_P1 GPIO_ACTIVE_LOW>;
+	};
+
+	usb_c0_hb_retimer: jhl9040r-c0@56 {
+		compatible = "intel,jhl9040r","cros,i2c-mock";
+		status = "okay";
+		reg = <0x56>;
+		reset-pin = <&usb_c0_hb_retimer_rst>;
+		ls-en-pin = <&usb_c0_hb_retimer_ls_en>;
+	};
+
+	usb_c1_hb_retimer: jhl9040r-c1@57 {
+		compatible = "intel,jhl9040r","cros,i2c-mock";
+		status = "okay";
+		reg = <0x57>;
+		reset-pin = <&usb_c1_hb_retimer_rst>;
+		ls-en-pin = <&usb_c1_hb_retimer_ls_en>;
+	};
+};
+
+/* typec_aic2 */
+&I2C_TYPEC_AIC2 {
+	status = "okay";
+	clock-frequency = <I2C_BITRATE_FAST>;
+
+	tcpci_emul2: tcpci_emul@b {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0xb>;
+		int-pin = <&usbc_tcpc_alrt_p2>;
+	};
+
+	tcpci_emul3: tcpci_emul@1b {
+		compatible = "cros,tcpci-generic-emul";
+		status = "okay";
+		reg = <0x1b>;
+		int-pin = <&usbc_tcpc_alrt_p3>;
+	};
+
+	usb_c2_hb_retimer: jhl9040r-c2@58 {
+		compatible = "intel,jhl9040r","cros,i2c-mock";
+		reg = <0x58>;
+		reset-pin = <&usb_c2_hb_retimer_rst>;
+		ls-en-pin = <&usb_c2_hb_retimer_ls_en>;
+	};
+
+	usb_c2_alt_hb_retimer: jhl9040r-c2@56 {
+		compatible = "intel,jhl9040r","cros,i2c-mock";
+		reg = <0x56>;
+		reset-pin = <&usb_c2_hb_retimer_rst>;
+		ls-en-pin = <&usb_c2_hb_retimer_ls_en>;
+	};
+
+	usb_c3_hb_retimer: jhl9040r-c3@59 {
+		compatible = "intel,jhl9040r","cros,i2c-mock";
+		reg = <0x59>;
+		reset-pin = <&usb_c3_hb_retimer_rst>;
+		ls-en-pin = <&usb_c3_hb_retimer_ls_en>;
+	};
+
+	usb_c3_alt_hb_retimer: jhl9040r-c3@57 {
+		compatible = "intel,jhl9040r","cros,i2c-mock";
+		reg = <0x57>;
+		reset-pin = <&usb_c3_hb_retimer_rst>;
+		ls-en-pin = <&usb_c3_hb_retimer_ls_en>;
+	};
+};

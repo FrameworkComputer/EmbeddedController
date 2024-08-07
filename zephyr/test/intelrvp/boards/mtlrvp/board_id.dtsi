@@ -1,0 +1,39 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	pca95xx: pca95xx@22 {
+		compatible = "zephyr,gpio-emul";
+		reg = <0x22 0x4>;
+		rising-edge;
+		falling-edge;
+		high-level;
+		low-level;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <16>;
+	};
+
+	rvp_board_id: rvp-board-id {
+		compatible = "intel,rvp-board-id";
+
+		/*
+		 * BOM ID [2]   : IOEX[0]
+		 * BOM ID [1:0] : IOEX[15:14]
+		 */
+		bom-gpios = <&pca95xx 0 0>, <&pca95xx 15 0>, <&pca95xx 14 0>;
+
+		/*
+		 * FAB ID [1:0] : IOEX[2:1]
+		 */
+		fab-gpios = <&pca95xx 2 0>, <&pca95xx 1 0>;
+
+		/*
+		 * BOARD ID[5:0] : IOEX[13:8]
+		 */
+		board-gpios = <&pca95xx 13 0>, <&pca95xx 12 0>, <&pca95xx 11 0>,
+			      <&pca95xx 10 0>, <&pca95xx 9 0>, <&pca95xx 8 0>;
+	};
+};

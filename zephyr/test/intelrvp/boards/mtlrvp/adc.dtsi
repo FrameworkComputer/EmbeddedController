@@ -1,0 +1,27 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+        named-adc-channels {
+		compatible = "named-adc-channels";
+
+		adc_ambient: ambient {
+			enum-name = "ADC_TEMP_SENSOR_1";
+			io-channels = <&adc0 3>;
+		};
+		adc_ddr: ddr {
+			enum-name = "ADC_TEMP_SENSOR_2";
+			io-channels = <&adc0 4>;
+		};
+		adc_skin: skin {
+			enum-name = "ADC_TEMP_SENSOR_3";
+			io-channels = <&adc0 2>;
+		};
+		adc_vr: vr {
+			enum-name = "ADC_TEMP_SENSOR_4";
+			io-channels = <&adc0 1>;
+		};
+	};
+};

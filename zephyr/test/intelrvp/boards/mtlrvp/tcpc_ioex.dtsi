@@ -1,0 +1,35 @@
+/* Copyright 2024 The ChromiumOS Authors
+ * Use of this source code is governed by a BSD-style license that can be
+ * found in the LICENSE file.
+ */
+
+/ {
+	ioex_c2_port0: ioex-c2-port@0 {
+		compatible = "zephyr,gpio-emul";
+		reg = <0 0x4>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	ioex_c2_port1: ioex-c2-port@1 {
+		compatible = "zephyr,gpio-emul";
+		reg = <1 0x4>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	ioex_c2_port2: ioex-c2-port@2 {
+		compatible = "zephyr,gpio-emul";
+		reg = <2 0x4>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+	ioex_c2_port3: ioex-c2-port@3 {
+		compatible = "zephyr,gpio-emul";
+		reg = <3 0x4>;
+		gpio-controller;
+		#gpio-cells = <2>;
+		ngpios = <8>;
+	};
+};
