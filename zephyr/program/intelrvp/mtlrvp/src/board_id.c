@@ -5,39 +5,11 @@
 
 #include "common.h"
 #include "console.h"
-#include "extpower.h"
-#include "gpio.h"
-#include "gpio/gpio_int.h"
-#include "hooks.h"
 #include "intel_rvp_board_id.h"
 #include "intelrvp.h"
-#include "keyboard_raw.h"
-#include "task.h"
-
-#include <zephyr/drivers/espi.h>
 
 #define CPRINTF(format, args...) cprintf(CC_COMMAND, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_COMMAND, format, ##args)
-
-/* eSPI device */
-#define espi_dev DEVICE_DT_GET(DT_CHOSEN(cros_ec_espi))
-
-__override void board_overcurrent_event(int port, int is_overcurrented)
-{
-	/*
-	 * Meteorlake PCH uses Virtual Wire for over current error,
-	 * hence Send 'Over Current Virtual Wire' eSPI signal.
-	 */
-	espi_send_vwire(espi_dev, port + ESPI_VWIRE_SIGNAL_TARGET_GPIO_0,
-			!is_overcurrented);
-}
-
-/******************************************************************************/
-/* KSO mapping for discrete keyboard */
-__override const uint8_t it8801_kso_mapping[] = {
-	0, 1, 20, 3, 4, 5, 6, 11, 12, 13, 14, 15, 16,
-};
-BUILD_ASSERT(ARRAY_SIZE(it8801_kso_mapping) == KEYBOARD_COLS_MAX);
 
 /*
  * Returns board information (board id[7:0] and Fab id[15:8]) on success

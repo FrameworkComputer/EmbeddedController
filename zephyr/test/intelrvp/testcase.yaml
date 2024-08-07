@@ -90,3 +90,13 @@ tests:
     extra_configs:
       - CONFIG_TEST_PROJECT_MTLRVPP_NPCX=y
       - CONFIG_TEST_PROJECT_INTELRVP_DC_JACK=y
+
+  intelrvp.mtlrvp.board_id:
+    extra_dtc_overlay_files:
+      - boards/intelrvp.dtsi
+      - boards/mtlrvp_npcx/mtlrvp_npcx.dtsi
+    extra_conf_files:
+      - boards/mtlrvp/mtlrvp.conf
+    extra_configs:
+      - CONFIG_TEST_PROJECT_MTLRVPP_COMMON=y
+      - CONFIG_TEST_PROJECT_INTELRVP_BOARD_ID=y

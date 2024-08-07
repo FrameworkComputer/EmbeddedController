@@ -50,4 +50,17 @@ config TEST_PROJECT_INTELRVP_DC_JACK
 	help
 	  Include dc_jack.c into the binary and test its functions.
 
+config TEST_PROJECT_INTELRVP_BOARD_ID
+	bool "Run INTELRVP board id test"
+	help
+	  Run board ID test for INTELRVP.
+
+config TEST_PROJECT_INTELRVP_BOARD_ID_VAL
+	int "Value to be used for board ID test"
+	depends on TEST_PROJECT_INTELRVP_BOARD_ID
+	default 1051 if TEST_PROJECT_MTLRVPP_COMMON
+	default 1078 if TEST_PROJECT_PTLRVPP_MCHP
+	help
+	  Value to be used for board ID test.
+
 source "Kconfig.zephyr"
