@@ -12,6 +12,7 @@
 		 */
 		bmi3xx-int = &base_accel;
 		lsm6dsm-int = &base_accel;
+		icm42607-int = &base_accel;
 		bma4xx-int = &lid_accel;
 		lis2dw12-int = &lid_accel;
 	};
@@ -58,6 +59,12 @@
 				 1 0 0
 				 0 0 1>;
 		};
+
+		base_rot_icm42607: base-rotation-ref-icm42607 {
+			mat33 = <0 (-1) 0
+				 1 0 0
+				 0 0 1>;
+		};
 	};
 
 	/*
@@ -91,6 +98,11 @@
 		};
 		lsm6dsm_gyro_data: lsm6dsm-gyro-drv-data {
 			compatible = "cros-ec,drvdata-lsm6dsm";
+			status = "okay";
+		};
+
+		icm42607_data: icm42607-drv-data {
+			compatible = "cros-ec,drvdata-icm42607";
 			status = "okay";
 		};
 	};
@@ -226,6 +238,44 @@
 			default-range = <(1000 | ROUND_UP_FLAG)>; /* dps */
 			alternate-for = <&base_gyro>;
 			alternate-ssfc-indicator = <&base_sensor_lsm6dsm>;
+		};
+
+		alt_base_accel_2: alt-base-accel-2 {
+			compatible = "cros-ec,icm42607-accel";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&base_rot_icm42607>;
+			drv-data = <&icm42607_data>;
+			alternate-for = <&base_accel>;
+			alternate-ssfc-indicator = <&base_sensor_icm42607>;
+			configs {
+				compatible =
+					"cros-ec,motionsense-sensor-config";
+				ec-s0 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+				ec-s3 {
+					odr = <(10000 | ROUND_UP_FLAG)>;
+				};
+			};
+		};
+
+		alt_base_gyro_2: alt-base-gyro-2 {
+			compatible = "cros-ec,icm42607-gyro";
+			status = "okay";
+
+			active-mask = "SENSOR_ACTIVE_S0_S3";
+			location = "MOTIONSENSE_LOC_BASE";
+			mutex = <&base_mutex>;
+			port = <&i2c_ec_i2c_sensor>;
+			rot-standard-ref = <&base_rot_icm42607>;
+			drv-data = <&icm42607_data>;
+			alternate-for = <&base_gyro>;
+			alternate-ssfc-indicator = <&base_sensor_icm42607>;
 		};
 	};
 
