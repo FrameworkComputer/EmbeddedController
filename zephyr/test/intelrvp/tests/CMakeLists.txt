@@ -24,10 +24,10 @@ target_sources(app PRIVATE ${PLATFORM_EC_PROGRAM_DIR}/intelrvp/mtlrvp/src/board_
 target_sources(app PRIVATE "${PLATFORM_EC_PROGRAM_DIR}/intelrvp/src/chg_usb_pd_mecc_1_1.c")
 target_sources(app PRIVATE "${PLATFORM_EC_PROGRAM_DIR}/intelrvp/src/usb_pd_policy_mecc_1_1.c")
 target_sources(app PRIVATE "${PLATFORM_EC_PROGRAM_DIR}/intelrvp/src/chg_usb_tcpc.c")
-target_sources(app PRIVATE "${PLATFORM_EC_PROGRAM_DIR}/intelrvp/mtlrvp/src/tcpc.c")
 
 # Remove source files if tests provide fake functions
 target_sources_ifndef(CONFIG_TEST_PROJECT_INTELRVP_TCPC app PRIVATE "${PLATFORM_EC_PROGRAM_DIR}/intelrvp/mtlrvp/src/mtlrvp.c")
+target_sources_ifndef(CONFIG_TEST_PROJECT_INTELRVP_CHG_USB_PD_MECC app PRIVATE "${PLATFORM_EC_PROGRAM_DIR}/intelrvp/mtlrvp/src/tcpc.c")
 
 # Common fake funtions
 target_sources_ifndef(CONFIG_TEST_PROJECT_INTELRVP_TCPC app PRIVATE intelrvp/src/fakes.c)
@@ -35,3 +35,4 @@ endif()
 
 target_sources_ifdef(CONFIG_TEST_PROJECT_MTL_BOARD_POWER app PRIVATE power/board_power.c)
 target_sources_ifdef(CONFIG_TEST_PROJECT_INTELRVP_TCPC app PRIVATE mtlrvp/src/tcpc.c)
+target_sources_ifdef(CONFIG_TEST_PROJECT_INTELRVP_CHG_USB_PD_MECC app PRIVATE intelrvp/src/chg_usb_pd_mecc_1_1.c)
