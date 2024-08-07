@@ -1596,11 +1596,6 @@ def all_targets():
         zephyr = False,
     )
     ec_target(
-        name = "myst",
-        board = "myst",
-        extra_modules = ["cmsis"],
-    )
-    ec_target(
         name = "naktal",
         board = "naktal",
     )
