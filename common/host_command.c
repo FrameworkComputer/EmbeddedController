@@ -26,7 +26,7 @@
 #define CPRINTF(format, args...) cprintf(CC_HOSTCMD, format, ##args)
 #define CPRINTS(format, args...) cprints(CC_HOSTCMD, format, ##args)
 
-#ifndef CONFIG_HOSTCMD_X86
+#if !defined(CONFIG_HOSTCMD_X86) || defined(CONFIG_ZTEST)
 /*
  * Simulated memory map.  Must be word-aligned, because some of the elements
  * in the memory map are words.
@@ -36,7 +36,7 @@ static uint8_t host_memmap[EC_MEMMAP_SIZE] __aligned(4);
 
 uint8_t *host_get_memmap(int offset)
 {
-#ifdef CONFIG_HOSTCMD_X86
+#if defined(CONFIG_HOSTCMD_X86) && !defined(CONFIG_ZTEST)
 	return lpc_get_memmap_range() + offset;
 #else
 	return host_memmap + offset;
