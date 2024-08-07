@@ -3,7 +3,6 @@
  * found in the LICENSE file.
  */
 
-#include "ap_power/ap_pwrseq_sm.h"
 #include "gpio.h"
 #include "gpio_signal.h"
 #include "system_boot_time.h"
@@ -12,6 +11,9 @@
 #include <zephyr/logging/log.h>
 
 #include <power_signals.h>
+#ifdef CONFIG_AP_PWRSEQ_DRIVER
+#include <ap_power/ap_pwrseq_sm.h>
+#endif
 
 LOG_MODULE_DECLARE(ap_pwrseq, LOG_LEVEL_INF);
 
@@ -38,6 +40,7 @@ void board_ap_power_force_shutdown(void)
 		LOG_WRN("RSMRST_PWRGD didn't go low!  Assuming G3.");
 }
 
+#ifdef CONFIG_AP_PWRSEQ_DRIVER
 int board_ap_power_action_g3_entry(void *data)
 {
 	board_ap_power_force_shutdown();
@@ -60,6 +63,7 @@ static int board_ap_power_action_g3_run(void *data)
 
 AP_POWER_APP_STATE_DEFINE(AP_POWER_STATE_G3, board_ap_power_action_g3_entry,
 			  board_ap_power_action_g3_run, NULL);
+#endif /* CONFIG_AP_PWRSEQ_DRIVER */
 
 int board_power_signal_get(enum power_signal signal)
 {
