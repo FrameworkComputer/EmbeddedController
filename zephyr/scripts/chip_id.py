@@ -598,4 +598,13 @@ DISAMBIGUATION_DICTIONARY = {
             None,
         ),
     ],
+    "realtek,rts54": [
+        CompatibleInfo(
+            "realtek,rts5453p",
+            None,
+            None,
+            None,
+            None,
+        ),
+    ],
 }
